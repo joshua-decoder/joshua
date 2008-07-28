@@ -1,4 +1,5 @@
 <?xml version="1.0"?>
+<!-- Build file for Joshua. Last changed: $LastChangedDate$ -->
 <project name="JHU Decoder" default="compile" basedir=".">
 	
 	<property name="src" value="./src" />

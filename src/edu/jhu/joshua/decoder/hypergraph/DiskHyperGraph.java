@@ -1,3 +1,19 @@
+/* This file is part of the Joshua Machine Translation System.
+ * 
+ * Joshua is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 2.1 of the License, or 
+ * (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful, but 
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public
+ * License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this library; if not, write to the Free Software Foundation,
+ * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ */
 package edu.jhu.joshua.decoder.hypergraph;
 
 import java.io.BufferedReader;
@@ -17,15 +33,12 @@ import edu.jhu.joshua.decoder.hypergraph.HyperGraph.Deduction;
 import edu.jhu.joshua.decoder.hypergraph.HyperGraph.Item;
 import edu.jhu.lzfUtility.FileUtility;
 
-/* Zhifei Li, <zhifei.work@gmail.com>
-* Johns Hopkins University
-*/
-
-/*#################### DiskHyperGraph class
+/**
  * this class implements functions of writting/reading hypergraph on disk
- **/
-
-
+ * 
+ * @author Zhifei Li, <zhifei.work@gmail.com>
+ * @version $LastChangedDate$
+ */
 //Bottom-up
 //line: SENTENCE_TAG, sent_id, sent_len, num_items, num_deductions (in average, num_deductions is about 10 times larger than the num_items, which is in average about 4000)
 //line: ITEM_TAG, item id, i, j, lhs, num_deductions, tbl_state;

@@ -1,3 +1,19 @@
+/* This file is part of the Joshua Machine Translation System.
+ * 
+ * Joshua is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 2.1 of the License, or 
+ * (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful, but 
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public
+ * License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this library; if not, write to the Free Software Foundation,
+ * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ */
 package edu.jhu.joshua.decoder.feature_function.language_model;
 
 import java.io.IOException;
@@ -16,16 +32,15 @@ import edu.jhu.joshua.decoder.Symbol;
 import edu.jhu.joshua.decoder.feature_function.language_model.srilm.LMGrammar_SRILM;
 import edu.jhu.lzfUtility.FileUtility;
 
-/* Zhifei Li, <zhifei.work@gmail.com>
-* Johns Hopkins University
-*/
-
-/*this class implement 
+/**
+ * this class implement 
  * (1) load lm file
  * (2) listen to connection request
  * (3) serve request for LM probablity
+ * 
+ * @author Zhifei Li, <zhifei.work@gmail.com>
+ * @version $LastChangedDate$
  */
-
 public class LMServer {
     //common options
 	static public int port = 9800;   
@@ -116,7 +131,7 @@ public class LMServer {
 			//p_lm = new LMGrammar_JAVA(g_lm_order, lm_file, use_left_euqivalent_state);
 			//big bug: should load the consistent symbol files			
 			Symbol.init_sym_tbl_from_file(remote_symbol_tbl,true);
-			p_lm = new LMGrammar_JAVA_GENERAL(g_lm_order, use_left_euqivalent_state, use_right_euqivalent_state);
+			p_lm = new LMGrammar_JAVA(g_lm_order, use_left_euqivalent_state, use_right_euqivalent_state);
 		}		
 	}
     

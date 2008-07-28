@@ -1,3 +1,19 @@
+/* This file is part of the Joshua Machine Translation System.
+ * 
+ * Joshua is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 2.1 of the License, or 
+ * (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful, but 
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public
+ * License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this library; if not, write to the Free Software Foundation,
+ * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ */
 package edu.jhu.joshua.decoder.hypergraph;
 
 import java.io.BufferedWriter;
@@ -15,24 +31,20 @@ import edu.jhu.joshua.decoder.hypergraph.HyperGraph.Deduction;
 import edu.jhu.joshua.decoder.hypergraph.HyperGraph.Item;
 import edu.jhu.lzfUtility.FileUtility;
 
-/* Zhifei Li, <zhifei.work@gmail.com>
-* Johns Hopkins University
-*/
-
-/*this class implement 
+/**
+ * this class implement 
  * (1) lazy k-best extraction on a hyper-graph
- */
-
-
-/*to seed the kbest extraction, it only needs that each deduction should have the best_cost properly set, and it does not require any list being sorted
+ *to seed the kbest extraction, it only needs that each deduction should have the best_cost properly set, and it does not require any list being sorted
  *instead, the priority queue heap_cands will do internal sorting
  *In fact, the real crucial cost is the transition-cost at each deduction. We store the best-cost instead of the transition cost since it is easy to do pruning and
- *find one-best. Moreover, the transition cost can be recovered by get_transition_cost(), though somewhat expensive*/
-
-/*to recover the model cost for each individual model, we should either have access to the model, or store the model cost in the deduction 
+ *find one-best. Moreover, the transition cost can be recovered by get_transition_cost(), though somewhat expensive
+ *
+ * to recover the model cost for each individual model, we should either have access to the model, or store the model cost in the deduction 
  * (for example, in the case of disk-hypergraph, we need to store all these model cost at each deduction)
- **/
-
+ *
+ * @author Zhifei Li, <zhifei.work@gmail.com>
+ * @version $LastChangedDate$
+ */
 public class KbestExtraction {
 
 	HashMap tbl_virtual_items = new HashMap();

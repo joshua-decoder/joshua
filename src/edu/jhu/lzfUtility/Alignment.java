@@ -1,13 +1,29 @@
+/* This file is part of the Joshua Machine Translation System.
+ * 
+ * Joshua is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 2.1 of the License, or 
+ * (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful, but 
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public
+ * License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this library; if not, write to the Free Software Foundation,
+ * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ */
 package edu.jhu.lzfUtility;
 
-/* Zhifei Li, <zhifei.work@gmail.com>
-* Johns Hopkins University
-*/
-
-
-//read the alignment into a hashtable, provide lookup, and min and max span
-
-//assumption: positions start from zero, alingment link is: frenchpos-englishpos
+/**
+ * read the alignment into a hashtable, provide lookup, and min and max span
+ *
+ * assumption: positions start from zero, alingment link is: frenchpos-englishpos
+ * 
+ * @author Zhifei Li, <zhifei.work@gmail.com>
+ * @version $LastChangedDate$
+ */
 public class Alignment {
 	public int[] french_wrds;
 	public int[] english_wrds;

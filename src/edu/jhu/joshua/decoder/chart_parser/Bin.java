@@ -1,3 +1,19 @@
+/* This file is part of the Joshua Machine Translation System.
+ * 
+ * Joshua is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 2.1 of the License, or 
+ * (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful, but 
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public
+ * License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this library; if not, write to the Free Software Foundation,
+ * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ */
 package edu.jhu.joshua.decoder.chart_parser;
 
 import java.util.ArrayList;
@@ -17,20 +33,16 @@ import edu.jhu.joshua.decoder.hypergraph.HyperGraph;
 import edu.jhu.joshua.decoder.hypergraph.HyperGraph.Deduction;
 import edu.jhu.joshua.decoder.hypergraph.HyperGraph.Item;
 
-/* Zhifei Li, <zhifei.work@gmail.com>
-* Johns Hopkins University
-*/
-
-/*#################### Bin class
+/**
  * this class implement functions: 
  * (1) combine small itesm into larger ones using rules, and create items and hyper-edges to construct a hyper-graph, 
  * (2) evaluate model cost for items, 
  * (3) cube-pruning
- * */
- 
-/* Note: Bin creates Items, but not all Items will be used in the hyper-graph
- * */
-
+ *  Note: Bin creates Items, but not all Items will be used in the hyper-graph
+ *  
+ * @author Zhifei Li, <zhifei.work@gmail.com>
+ * @version $LastChangedDate$
+ */
 public class Bin
 {	
 	/*we need always maintain the priority queue (worst first), so that we can do prunning effieciently

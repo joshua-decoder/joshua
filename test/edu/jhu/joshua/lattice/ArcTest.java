@@ -24,7 +24,7 @@ import org.testng.annotations.Test;
  * 
  * @author Lane Schwartz
  * @since 2008-07-09
- * @version $LastChangedDate: 2008-07-09 13:01:54 -0500 (Wed, 09 Jul 2008) $
+ * @version $LastChangedDate$
  */
 @Test(groups = { "lattice_arc" })
 public class ArcTest {

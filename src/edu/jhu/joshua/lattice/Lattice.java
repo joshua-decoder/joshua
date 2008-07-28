@@ -32,7 +32,7 @@ import java.util.regex.Pattern;
  * 
  * @author Lane Schwartz
  * @since 2008-07-08
- * @version $LastChangedDate: 2008-07-18 10:17:53 -0500 (Fri, 18 Jul 2008) $
+ * @version $LastChangedDate$
  *
  * @param <Label> Type of label associated with an arc.
  */

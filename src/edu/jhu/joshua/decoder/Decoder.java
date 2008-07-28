@@ -1,3 +1,19 @@
+/* This file is part of the Joshua Machine Translation System.
+ * 
+ * Joshua is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 2.1 of the License, or 
+ * (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful, but 
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public
+ * License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this library; if not, write to the Free Software Foundation,
+ * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ */
 package edu.jhu.joshua.decoder;
 
 import java.io.BufferedReader;
@@ -11,7 +27,7 @@ import edu.jhu.joshua.decoder.feature_function.Model.ArityPhrasePenalty;
 import edu.jhu.joshua.decoder.feature_function.Model.PhraseModel;
 import edu.jhu.joshua.decoder.feature_function.Model.WordPenalty;
 import edu.jhu.joshua.decoder.feature_function.language_model.LMGrammar;
-import edu.jhu.joshua.decoder.feature_function.language_model.LMGrammar_JAVA_GENERAL;
+import edu.jhu.joshua.decoder.feature_function.language_model.LMGrammar_JAVA;
 import edu.jhu.joshua.decoder.feature_function.language_model.LMGrammar_REMOTE;
 import edu.jhu.joshua.decoder.feature_function.language_model.LMModel;
 import edu.jhu.joshua.decoder.feature_function.language_model.srilm.LMGrammar_SRILM;
@@ -22,16 +38,14 @@ import edu.jhu.joshua.decoder.hypergraph.HyperGraph;
 import edu.jhu.joshua.decoder.hypergraph.KbestExtraction;
 import edu.jhu.lzfUtility.FileUtility;
 
-/* Zhifei Li, <zhifei.work@gmail.com>
-* Johns Hopkins University
-*/
-
-/*#################### Decoder class
+/**
  * this class implements: 
  * (1) read config file, initialize, call the chart-parsing functions 
  * (2) parallel decoding
- * */
-
+ * 
+ * @author Zhifei Li, <zhifei.work@gmail.com>
+ * @version $LastChangedDate$
+ */
 public class Decoder {
 	//input files
 	public static String lm_file;
@@ -364,7 +378,7 @@ public class Decoder {
 			p_lm = new LMGrammar_SRILM(g_lm_order);
 		}else{			
 			//p_lm = new LMGrammar_JAVA(g_lm_order, lm_file, use_left_euqivalent_state);
-			p_lm = new LMGrammar_JAVA_GENERAL(g_lm_order, use_left_euqivalent_state, use_right_euqivalent_state);
+			p_lm = new LMGrammar_JAVA(g_lm_order, use_left_euqivalent_state, use_right_euqivalent_state);
 		}
 	}
 	

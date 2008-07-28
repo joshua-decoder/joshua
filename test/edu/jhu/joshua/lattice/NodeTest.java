@@ -24,7 +24,7 @@ import org.testng.annotations.Test;
  * 
  * @author Lane Schwartz
  * @since 2008-07-09
- * @version $LastChangedDate: 2008-07-18 10:17:53 -0500 (Fri, 18 Jul 2008) $
+ * @version $LastChangedDate$
  */
 @Test(groups = { "lattice_node" })
 public class NodeTest {

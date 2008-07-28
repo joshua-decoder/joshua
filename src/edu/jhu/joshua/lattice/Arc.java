@@ -21,7 +21,7 @@ package edu.jhu.joshua.lattice;
  * 
  * @author Lane Schwartz
  * @since 2008-07-08
- * @version $LastChangedDate: 2008-07-09 13:01:54 -0500 (Wed, 09 Jul 2008) $
+ * @version $LastChangedDate$
  *
  * @param <Label> Type of label associated with an arc.
  */

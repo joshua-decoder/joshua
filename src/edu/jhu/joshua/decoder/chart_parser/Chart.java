@@ -1,4 +1,21 @@
+/* This file is part of the Joshua Machine Translation System.
+ * 
+ * Joshua is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 2.1 of the License, or 
+ * (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful, but 
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public
+ * License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this library; if not, write to the Free Software Foundation,
+ * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ */
 package edu.jhu.joshua.decoder.chart_parser;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -16,30 +33,27 @@ import edu.jhu.joshua.decoder.feature_function.translation_model.TMGrammar_Memor
 import edu.jhu.joshua.decoder.hypergraph.HyperGraph;
 import edu.jhu.joshua.decoder.hypergraph.HyperGraph.Item;
 
-/* Zhifei Li, <zhifei.work@gmail.com>
-* Johns Hopkins University
-*/
 
-
-/*#################### Chart class
+/**
+ * Chart class
  * this class implements chart-parsing: 
  * (1) seeding the chart 
  * (2) cky main loop over bins, 
  * (3) identify applicable rules in each bin
- */
-
-/* Note: the combination operation will be done in Bin
- * */
-
-/*Signatures of class:
+ * Note: the combination operation will be done in Bin
+ * 
+ * Signatures of class:
  * Bin: i, j
  * SuperItem (used for CKY check): i,j, lhs
  * Item (or node): i,j, lhs, edge ngrams
- * Deduction (and node)*/
-
-/* index of sentences: start from zero
+ * Deduction (and node)
+ * 
+ * index of sentences: start from zero
  * index of cell: cell (i,j) represent span of words indexed [i,j-1] where i is in [0,n-1] and j is in [1,n]
- * */
+ * 
+ * @author Zhifei Li, <zhifei.work@gmail.com>
+ * @version $LastChangedDate$
+ */
 public class Chart {
 	public TMGrammar[] l_grammars;
 	public DotChart[] l_dotcharts;//each grammar should have a dotchart associated with it

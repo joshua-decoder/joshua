@@ -1,3 +1,19 @@
+/* This file is part of the Joshua Machine Translation System.
+ * 
+ * Joshua is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 2.1 of the License, or 
+ * (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful, but 
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public
+ * License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this library; if not, write to the Free Software Foundation,
+ * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ */
 package edu.jhu.joshua.decoder.chart_parser;
 
 import java.util.ArrayList;
@@ -6,19 +22,16 @@ import edu.jhu.joshua.decoder.chart_parser.Bin.SuperItem;
 import edu.jhu.joshua.decoder.feature_function.translation_model.TMGrammar;
 import edu.jhu.joshua.decoder.feature_function.translation_model.TMGrammar.TrieNode;
 
-/* Zhifei Li, <zhifei.work@gmail.com>
-* Johns Hopkins University
-*/
-
-//#################### DotChart class: 
-/*This class implements:
+/**
+ * This class implements:
  * (1) seeding
  * (2) extend the dot by accessing the TM grammar, and create and remember DotItems
+ * 
+ * Note: the purpose of this class: (1) do CKY parsing in an efficient way (i.e., identify the applicable rules fastly); (2) binarization on the fly; (3) remember the partial application of rules
+ * 
+ * @author Zhifei Li, <zhifei.work@gmail.com>
+ * @version $LastChangedDate$
  */
-
-/*Note: the purpose of this class: (1) do CKY parsing in an efficient way (i.e., identify the applicable rules fastly); (2) binarization on the fly; (3) remember the partial application of rules
-*/
-
 public class DotChart
 { 
 	public Chart p_chart; //pointer the Chart that it associated with
