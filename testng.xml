@@ -8,4 +8,13 @@
 
 <suite name="TestSuite"    verbose="1" >
 
+  <test name="Lattice" >
+    <classes>
+       <class name="edu.jhu.joshua.lattice.NodeTest" />    
+       <class name="edu.jhu.joshua.lattice.ArcTest"  />
+       <class name="edu.jhu.joshua.lattice.LatticeTest" />
+    </classes>
+  </test>
+
+
 </suite>
