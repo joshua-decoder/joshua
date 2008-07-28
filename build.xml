@@ -1,81 +1,84 @@
 <?xml version="1.0"?>
 <project name="JHU Decoder" default="compile" basedir=".">
+	
 	<property name="src" value="./src" />
 	<property name="test" value="./test" />
 	<property name="build" value="./bin" />
 	<property name="doc" value="./javadoc" />
 	<property name="testng" value="./lib/testng-5.8-jdk15.jar"/>
 
+	<!-- Define the unit testing task -->
 	<taskdef resource="testngtasks" classpath="${testng}"/>
 
-
-	<target name="test" depends="compile,compile-tests">
-
-	<testng classpath="bin" sourcedir="test">
-	   <xmlfileset dir="." includes="testng.xml"/>
-	   </testng>
-	   
-	   <!--
-	   <java classpath="lib/testng-5.8-jdk15.jar:bin" classname="org.testng.TestNG">
-	   <arg line="testng.xml" />
-	   </java>
-	   -->
-	   </target>
-
+	
+	<!-- Create the build directory for compiled class files -->	
 	<target name="init">
-	<!-- Create the time stamp -->
-	<tstamp/>
-	<!-- Create the build directory structure used by compile -->
-	<mkdir dir="${build}"/>
+		<tstamp/>
+		<mkdir dir="${build}"/>
 	</target>
 
-	<target name="compile" depends="init"> 
-	  <!-- Compile the java code -->
-	  <javac compiler="javac1.5" srcdir="${src}" destdir="${build}" debug="on"/> 
-	</target>
-
-
-	<target name="compile-tests" depends="init"> 
-	  <!-- Compile the java code -->
-	  <javac compiler="javac1.5" srcdir="${test}" destdir="${build}" classpath="${testng}" debug="on"/> 
-	</target>
 	
+	<!-- Compile the Java code -->
+	<target name="compile" depends="init">
+		<javac compiler="javac1.5" srcdir="${src}" destdir="${build}" debug="on"/> 
+	</target>
+
+	
+	<!-- Compile the Javadocs into web pages -->
 	<target name="javadoc">
-	<mkdir dir="${doc}"/>
-		<!-- Compile the java code -->
-                <javadoc packagenames="edu.*"
-                         sourcepath="${src}"
-                         destdir="${doc}"
-                         author="true"
-                         version="true"
-                />
+		<mkdir dir="${doc}"/>
+		<javadoc packagenames="edu.*"
+        	sourcepath="${src}"
+			destdir="${doc}"
+			author="true"
+			version="true"
+		/>
 	</target>
 	
+	
+	<!-- Delete the compiled files -->
 	<target name="clean">
-		<!-- remove class files -->
 		<delete verbose="true">
-                <!-- Remove all *.class files in this directory  -->
 			<fileset dir="${build}">
 				<include name="**/*.class"/>
 			</fileset>
 		</delete>
 	</target>
 	
-	<target name="jar">
-		<jar destfile="${build}/jhu.jar">
+	
+	<!-- Create a JAR file of the compiled classes -->
+	<target name="jar" depends="compile">
+		<jar destfile="${build}/joshua.jar">
 			<fileset dir="${build}">
 				<include name="**/*.class"/>
 			</fileset>
 		</jar>
 	</target>
 
-	<target name="source">
-		<jar destfile="${build}/jhu.jar">
+	
+	<!-- Create a JAR file of the source code -->
+	<target name="source-jar">
+		<jar destfile="${build}/joshua-src.jar">
 			<fileset dir="${build}">
 				<include name="**/*.java"/>
-				<include name="**/*.class"/>
 			</fileset>
 		</jar>
 	</target>
+	
+	
+	<!-- Compile the unit test code -->
+	<target name="compile-tests" depends="init"> 
+		<javac compiler="javac1.5" srcdir="${test}" destdir="${build}" classpath="${testng}" debug="on"/> 
+	</target>
+	
+	
+	<!-- Run the unit tests -->
+	<target name="test" depends="compile,compile-tests">
+		<testng classpath="bin" sourcedir="test">
+			<xmlfileset dir="." includes="testng.xml"/>
+		</testng>
+	</target>
+
+	
 </project>
 
