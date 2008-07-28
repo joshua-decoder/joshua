@@ -1,0 +1,11 @@
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
+
+<!-- 
+	Test suite for Joshua 
+	Authors: Lane Schwartz
+	Last changed: $LastChangedDate$
+-->
+
+<suite name="TestSuite"    verbose="1" >
+
+</suite>
