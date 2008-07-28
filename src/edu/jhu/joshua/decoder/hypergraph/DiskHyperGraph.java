@@ -15,7 +15,6 @@ import edu.jhu.joshua.decoder.feature_function.translation_model.TMGrammar_Memor
 import edu.jhu.joshua.decoder.hypergraph.HyperGraph;
 import edu.jhu.joshua.decoder.hypergraph.HyperGraph.Deduction;
 import edu.jhu.joshua.decoder.hypergraph.HyperGraph.Item;
-import edu.jhu.joshua.discriminative_training.ForestPruning;
 import edu.jhu.lzfUtility.FileUtility;
 
 /* Zhifei Li, <zhifei.work@gmail.com>
@@ -38,7 +37,7 @@ public class DiskHyperGraph {
 	BufferedWriter writer_out =null;//write items
 	BufferedReader reader_in =null;//read items
 	
-	ForestPruning forest_pruner=null;
+	HyperGraphPruning forest_pruner=null;
 	
 	String start_line=null; //this will be set if the previous sentence is skipped
 	HashMap tbl_selected_sents = null;
@@ -92,7 +91,7 @@ public class DiskHyperGraph {
 //for writting hyper-graph: (1) saving each hyper-graph; (2) remember each regualar rule used; (3) dump the rule jointly (in case parallel decoding)      
     public void init_write(String f_items, boolean use_forest_pruning, double threshold){
     	writer_out =  FileUtility.handle_null_file(f_items);
-    	if(use_forest_pruning==true)  forest_pruner = new ForestPruning(true, threshold, threshold, 1, 1);//TODO
+    	if(use_forest_pruning==true)  forest_pruner = new HyperGraphPruning(true, threshold, threshold, 1, 1);//TODO
     }    
  
     public void init_read(String f_hypergraphs, String f_rule_tbl, HashMap tbl_sent_sel_tbl){

@@ -20,7 +20,6 @@ import edu.jhu.joshua.decoder.feature_function.translation_model.TMGrammar_Memor
 import edu.jhu.joshua.decoder.hypergraph.DiskHyperGraph;
 import edu.jhu.joshua.decoder.hypergraph.HyperGraph;
 import edu.jhu.joshua.decoder.hypergraph.KbestExtraction;
-import edu.jhu.joshua.discriminative_training.ConfusionCollection;
 import edu.jhu.lzfUtility.FileUtility;
 
 /* Zhifei Li, <zhifei.work@gmail.com>
@@ -104,7 +103,6 @@ public class Decoder {
 	//debug
 	public static boolean extract_confusion_grammar = false; //non-parallel version
 	public static String f_confusion_grammar="C:\\Users\\zli\\Documents\\confusion.hg.grammar";
-	public static ConfusionCollection g_con = new ConfusionCollection();
 	
 	public static void main(String[] args) {	
 		long start= System.currentTimeMillis();
