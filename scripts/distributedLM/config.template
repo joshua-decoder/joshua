@@ -1,0 +1,11 @@
+#lm config
+use_srilm=true
+lm_ceiling_cost=100
+use_left_euqivalent_state=false
+use_right_euqivalent_state=false
+order=5
+
+remote_symbol_tbl=/home/zli/work/zli@gale/mt06-data/gale_p3_run/remote.symbol.tbl
+
+remote_lm_server_port=9000
+
