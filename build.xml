@@ -1,9 +1,26 @@
 <?xml version="1.0"?>
 <project name="JHU Decoder" default="compile" basedir=".">
 	<property name="src" value="./src" />
+	<property name="test" value="./test" />
 	<property name="build" value="./bin" />
 	<property name="doc" value="./javadoc" />
+	<property name="testng" value="./lib/testng-5.8-jdk15.jar"/>
 
+	<taskdef resource="testngtasks" classpath="${testng}"/>
+
+
+	<target name="test" depends="compile,compile-tests">
+
+	<testng classpath="bin" sourcedir="test">
+	   <xmlfileset dir="." includes="testng.xml"/>
+	   </testng>
+	   
+	   <!--
+	   <java classpath="lib/testng-5.8-jdk15.jar:bin" classname="org.testng.TestNG">
+	   <arg line="testng.xml" />
+	   </java>
+	   -->
+	   </target>
 
 	<target name="init">
 	<!-- Create the time stamp -->
@@ -15,8 +32,13 @@
 	<target name="compile" depends="init"> 
 	  <!-- Compile the java code -->
 	  <javac compiler="javac1.5" srcdir="${src}" destdir="${build}" debug="on"/> 
-	  </target>
+	</target>
 
+
+	<target name="compile-tests" depends="init"> 
+	  <!-- Compile the java code -->
+	  <javac compiler="javac1.5" srcdir="${test}" destdir="${build}" classpath="${testng}" debug="on"/> 
+	</target>
 	
 	<target name="javadoc">
 	<mkdir dir="${doc}"/>
