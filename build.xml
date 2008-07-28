@@ -1,17 +1,25 @@
 <?xml version="1.0"?>
 <project name="JHU Decoder" default="compile" basedir=".">
-	<property name="src" value="./" />
-        <property name="build" value="./" />
+	<property name="src" value="./src" />
+	<property name="build" value="./bin" />
 	<property name="doc" value="./javadoc" />
 
 
-	<target name="compile"> 
+	<target name="init">
+	<!-- Create the time stamp -->
+	<tstamp/>
+	<!-- Create the build directory structure used by compile -->
+	<mkdir dir="${build}"/>
+	</target>
+
+	<target name="compile" depends="init"> 
 	  <!-- Compile the java code -->
 	  <javac compiler="javac1.5" srcdir="${src}" destdir="${build}" debug="on"/> 
 	  </target>
 
 	
 	<target name="javadoc">
+	<mkdir dir="${doc}"/>
 		<!-- Compile the java code -->
                 <javadoc packagenames="edu.*"
                          sourcepath="${src}"
