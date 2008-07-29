@@ -21,6 +21,8 @@ import java.util.Comparator;
 import java.util.HashMap ;
 import java.util.PriorityQueue;
 import java.util.ArrayList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import edu.jhu.joshua.decoder.Decoder;
 import edu.jhu.joshua.decoder.Support;
@@ -52,6 +54,8 @@ public class TMGrammar_Memory extends TMGrammar {
 	static int rule_id =1; //three kinds of rule: regular rule (id>0); oov rule (id=0), and null rule (id=-1)
 	static private double tem_estcost =0.0;//debug
 	
+	private static final Logger logger = Logger.getLogger(TMGrammar_Memory.class.getName());
+	
 	/*TMGrammar is composed by Trie nodes
 	Each trie node has: 
 	(1) RuleBin: a list of rules matching the french sides so far
@@ -65,7 +69,7 @@ public class TMGrammar_Memory extends TMGrammar {
 	public void read_tm_grammar_from_file(String grammar_file){
 		root = new TrieNode_Memory(); //root should not have valid ruleBin entries
 		BufferedReader t_reader_tree = FileUtility.getReadFileStream(grammar_file,"utf8");		
-		Support.write_log_line("Reading grammar from file " + grammar_file, Support.INFO);
+		if (logger.isLoggable(Level.INFO)) logger.info("Reading grammar from file " + grammar_file);
 		String line;
 		while((line=FileUtility.read_line_lzf(t_reader_tree))!=null){
 			add_rule(line, default_owner);
@@ -150,8 +154,10 @@ public class TMGrammar_Memory extends TMGrammar {
 	}
 	
 	protected void print_grammar(){
-		Support.write_log_line("###########Grammar###########",Support.INFO);
-		Support.write_log_line(String.format("####num_rules: %d; num_bins: %d; num_pruned: %d; sumest_cost: %.5f",num_rule_read, num_rule_bin, num_rule_pruned, tem_estcost) ,Support.INFO);
+		if (logger.isLoggable(Level.INFO)) {
+			logger.info("###########Grammar###########");
+			logger.info(String.format("####num_rules: %d; num_bins: %d; num_pruned: %d; sumest_cost: %.5f",num_rule_read, num_rule_bin, num_rule_pruned, tem_estcost));
+		}
 		/*if(root!=null)
 			root.print_info(Support.DEBUG);*/
 	}

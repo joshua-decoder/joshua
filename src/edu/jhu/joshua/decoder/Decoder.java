@@ -20,6 +20,8 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import edu.jhu.joshua.decoder.chart_parser.Chart;
 import edu.jhu.joshua.decoder.feature_function.Model;
@@ -118,7 +120,12 @@ public class Decoder {
 	public static boolean extract_confusion_grammar = false; //non-parallel version
 	public static String f_confusion_grammar="C:\\Users\\zli\\Documents\\confusion.hg.grammar";
 	
+	private static final Logger logger = Logger.getLogger(Decoder.class.getName());
+	
 	public static void main(String[] args) {	
+		
+		if (logger.isLoggable(Level.FINEST)) logger.finest("Starting decoder");
+		
 		long start= System.currentTimeMillis();
 		if(args.length!=3){
 			System.out.println("wrong command, correct command should be: java Decoder config_file test_file outfile");
@@ -157,7 +164,7 @@ public class Decoder {
 		
 		//###### statistics
 		double t_sec = (System.currentTimeMillis()-start)/1000;
-		Support.write_log_line("before translation, loaddingtime is " +t_sec , Support.INFO);
+		if (logger.isLoggable(Level.INFO)) logger.info("before translation, loaddingtime is " +t_sec);
 
 		//###### decode the sentences, maybe in parallel
 		if(num_parallel_decoders==1){
@@ -168,7 +175,7 @@ public class Decoder {
 			if(save_disk_hg == true)d_hg.write_rules_non_parallel(nbest_file + ".hg.rules");
 		}else{//>1: parallel decoder
 			if(use_remote_lm_server==true){//TODO
-				System.out.println("You cannot run parallel decoder and remote lm server together");
+				if (logger.isLoggable(Level.SEVERE)) logger.severe("You cannot run parallel decoder and remote lm server together");
 				System.exit(0);
 			}
 			run_parallel_decoder(test_file,nbest_file);	
@@ -177,7 +184,7 @@ public class Decoder {
 		//#### clean up
 		p_lm.end_lm_grammar();//to end the threads
 		t_sec = (System.currentTimeMillis()-start)/1000;
-		Support.write_log_line("Total running time is " + t_sec, Support.INFO);
+		if (logger.isLoggable(Level.INFO)) logger.info("Total running time is " + t_sec);
 	}
 		 
 	public static void run_parallel_decoder(String test_file, String nbest_file){
@@ -189,7 +196,7 @@ public class Decoder {
 		l_parallel_nbest_files=new String[num_parallel_decoders];
 		l_parallel_disk_hgs = new DiskHyperGraph[num_parallel_decoders];
 		l_parallel_kbest_extractors = new KbestExtraction[num_parallel_decoders];
-		System.out.println("num_per_file_double: " + num_per_thread_double + "num_per_file_int: " + num_per_thread);
+		if (logger.isLoggable(Level.INFO)) logger.info("num_per_file_double: " + num_per_thread_double + "num_per_file_int: " + num_per_thread);
 		BufferedReader t_reader_test = FileUtility.getReadFileStream(test_file,"UTF-8");
 		
 		//run the main control job
@@ -248,7 +255,7 @@ public class Decoder {
 		
 		//run all the jobs
 		for(int i=0; i<l_parallel_decode_threads.length; i++){
-			System.out.println("##############start thread " +i);
+			if (logger.isLoggable(Level.INFO)) logger.info("##############start thread " +i);
 			l_parallel_decode_threads[i].start();
 		}
 		
@@ -257,7 +264,7 @@ public class Decoder {
     		 try {	        		 
     			 l_parallel_decode_threads[i].join();       
              } catch (InterruptedException e) {
-            	  System.out.println("Warning: thread is interupted for server " + i);
+            	 if (logger.isLoggable(Level.WARNING)) logger.warning("Warning: thread is interupted for server " + i);
              } 
     	}
 		
@@ -328,7 +335,7 @@ public class Decoder {
 		String cn_sent;
 		int sent_id=start_sent_id;//if no sent tag, then this will be used
 		while((cn_sent=FileUtility.read_line_lzf(t_reader_test))!=null){
-			System.out.println("now translate\n" + cn_sent);		
+			if (logger.isLoggable(Level.FINE)) logger.fine("now translate\n" + cn_sent);		
 			int[] tem_id = new int[1];
 			cn_sent  = get_sent_id(cn_sent, tem_id);			
 			if(tem_id[0]>0)	sent_id = tem_id[0];
@@ -353,7 +360,7 @@ public class Decoder {
 	
 		
 	public static void load_lm_grammar_file(String new_lm_file){
-		System.out.println("############## reload lm from file" + new_lm_file);
+		if (logger.isLoggable(Level.FINER)) logger.finer("############## reload lm from file" + new_lm_file);
 		lm_file = new_lm_file;
 		p_lm.read_lm_grammar_from_file(lm_file);		
 	}
@@ -366,13 +373,13 @@ public class Decoder {
 		*/
 		if(use_remote_lm_server==true){
 			if(use_left_euqivalent_state==true || use_right_euqivalent_state==true){
-				System.out.println("use local srilm, we cannot use suffix/prefix stuff");
+				if (logger.isLoggable(Level.SEVERE)) logger.severe("use local srilm, we cannot use suffix/prefix stuff");
 				System.exit(0);
 			}
 			p_lm = new LMGrammar_REMOTE(g_lm_order, remote_symbol_tbl, f_remote_server_list, num_remote_lm_servers);
 		}else if(use_srilm==true){
 			if(use_left_euqivalent_state==true || use_right_euqivalent_state==true){
-				System.out.println("use remote lm, we cannot use suffix/prefix stuff");
+				if (logger.isLoggable(Level.SEVERE)) logger.severe("use remote lm, we cannot use suffix/prefix stuff");
 				System.exit(0);
 			}				
 			p_lm = new LMGrammar_SRILM(g_lm_order);
@@ -383,7 +390,7 @@ public class Decoder {
 	}
 	
 	public static void load_tm_grammar_file(String new_tm_file){
-		System.out.println("############## reload tm from file" + new_tm_file);
+		if (logger.isLoggable(Level.FINER)) logger.finer("############## reload tm from file" + new_tm_file);
 		tm_file=new_tm_file;		
 		p_tm_grammars[0].read_tm_grammar_glue_rules();//glue grammar
 		p_tm_grammars[1].read_tm_grammar_from_file(tm_file);//regular grammar
@@ -408,13 +415,13 @@ public class Decoder {
 		
 		Chart chart = new Chart(sentence_numeric,l_models,sent_id);
 		chart.seed(grs,l_default_nonterminals, sentence_numeric); 
-		System.out.println("after seed, time: " + (System.currentTimeMillis()-start)/1000);
+		if (logger.isLoggable(Level.FINER)) logger.finer("after seed, time: " + (System.currentTimeMillis()-start)/1000);
 		HyperGraph p_hyper_graph =  chart.expand();
 		
-		System.out.println("after expand, time: " + (System.currentTimeMillis()-start)/1000);
+		if (logger.isLoggable(Level.FINER)) logger.finer("after expand, time: " + (System.currentTimeMillis()-start)/1000);
 		//p_hyper_graph.lazy_k_best_extract(l_models, topN, use_unique_nbest, sent_id,t_writer_nbest, use_tree_nbest,add_combined_cost);
 		kbest_extractor.lazy_k_best_extract_hg(p_hyper_graph,l_models, topN, use_unique_nbest, sent_id,t_writer_nbest, use_tree_nbest,add_combined_cost);
-		System.out.println("after kbest, time: " + (System.currentTimeMillis()-start)/1000);	
+		if (logger.isLoggable(Level.FINER)) logger.finer("after kbest, time: " + (System.currentTimeMillis()-start)/1000);	
 		if(dhg!=null) dhg.save_hyper_graph(p_hyper_graph);
 		
 		//debug
@@ -438,26 +445,26 @@ public class Decoder {
 					double weight =(new Double(fds[1].trim())).doubleValue();
 					p_lm_model = new LMModel(g_lm_order, p_lm, weight);
 					l_models.add(p_lm_model);
-					System.out.println(String.format("Line: %s\nAdd LM, order: %d; weight: %.3f;", line, g_lm_order, weight));
+					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("Line: %s\nAdd LM, order: %d; weight: %.3f;", line, g_lm_order, weight));
 				}else if(fds[0].compareTo("phrasemodel")==0 && fds.length == 4){//phrasemodel owner column(0-indexed) weight
 					int owner = Symbol.add_terminal_symbol(fds[1]);
 					int column = (new Integer(fds[2].trim())).intValue();
 					double weight =(new Double(fds[3].trim())).doubleValue();
 					l_models.add(new Model.PhraseModel(owner, column, weight));
-					System.out.println(String.format("Process Line: %s\nAdd PhraseModel, owner: %s; column: %d; weight: %.3f", line, owner, column, weight));
+					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("Process Line: %s\nAdd PhraseModel, owner: %s; column: %d; weight: %.3f", line, owner, column, weight));
 				}else if(fds[0].compareTo("arityphrasepenalty")==0 && fds.length == 5){//arityphrasepenalty owner start_arity end_arity weight
 					int owner = Symbol.add_terminal_symbol(fds[1]);
 					int start_arity = (new Integer(fds[2].trim())).intValue();
 					int end_arity = (new Integer(fds[3].trim())).intValue();
 					double weight =(new Double(fds[4].trim())).doubleValue();
 					l_models.add(new Model.ArityPhrasePenalty(owner, start_arity, end_arity, weight));
-					System.out.println(String.format("Process Line: %s\nAdd ArityPhrasePenalty, owner: %s; start_arity: %d; end_arity: %d; weight: %.3f", line, owner, start_arity, end_arity, weight));
+					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("Process Line: %s\nAdd ArityPhrasePenalty, owner: %s; start_arity: %d; end_arity: %d; weight: %.3f", line, owner, start_arity, end_arity, weight));
 				}else if(fds[0].compareTo("wordpenalty")==0 && fds.length == 2){//wordpenalty weight
 					double weight =(new Double(fds[1].trim())).doubleValue();
 					l_models.add(new Model.WordPenalty(weight));
-					System.out.println(String.format("Process Line: %s\nAdd WordPenalty, weight: %.3f", line, weight));
+					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("Process Line: %s\nAdd WordPenalty, weight: %.3f", line, weight));
 				}else{
-					Support.write_log_line("Wrong config line: " + line, Support.ERROR);
+					if (logger.isLoggable(Level.SEVERE)) logger.severe("Wrong config line: " + line);
 					System.exit(0);
 				}
 			}
@@ -479,120 +486,120 @@ public class Decoder {
 			if(line.indexOf("=")!=-1){//parameters
 				String[] fds = line.split("\\s*=\\s*");
 				if(fds.length!=2){
-					Support.write_log_line("Wrong config line: " + line, Support.ERROR);
+					if (logger.isLoggable(Level.SEVERE)) logger.severe("Wrong config line: " + line);
 					System.exit(0);
 				}
 				
 				if(fds[0].compareTo("lm_file")==0){
 					lm_file = fds[1].trim();
-					System.out.println(String.format("lm file: %s", lm_file));
+					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("lm file: %s", lm_file));
 				}else if(fds[0].compareTo("tm_file")==0){
 					tm_file = fds[1].trim();
-					System.out.println(String.format("tm file: %s", tm_file));
+					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("tm file: %s", tm_file));
 				}else if(fds[0].compareTo("use_srilm")==0){
 					use_srilm = new Boolean(fds[1]);
-					System.out.println(String.format("use_srilm: %s", use_srilm));
+					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("use_srilm: %s", use_srilm));
 				}else if(fds[0].compareTo("lm_ceiling_cost")==0){
 					lm_ceiling_cost = new Double(fds[1]);
-					System.out.println(String.format("lm_ceiling_cost: %s", lm_ceiling_cost));
+					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("lm_ceiling_cost: %s", lm_ceiling_cost));
 				}else if(fds[0].compareTo("use_left_euqivalent_state")==0){
 					use_left_euqivalent_state = new Boolean(fds[1]);
-					System.out.println(String.format("use_left_euqivalent_state: %s", use_left_euqivalent_state));
+					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("use_left_euqivalent_state: %s", use_left_euqivalent_state));
 				}else if(fds[0].compareTo("use_right_euqivalent_state")==0){
 					use_right_euqivalent_state = new Boolean(fds[1]);
-					System.out.println(String.format("use_right_euqivalent_state: %s", use_right_euqivalent_state));
+					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("use_right_euqivalent_state: %s", use_right_euqivalent_state));
 				}else if(fds[0].compareTo("order")==0){
 					g_lm_order = new Integer(fds[1]);
-					System.out.println(String.format("g_lm_order: %s", g_lm_order));
+					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("g_lm_order: %s", g_lm_order));
 				}else if(fds[0].compareTo("use_sent_specific_lm")==0){
 					use_sent_specific_lm = new Boolean(fds[1]);
-					System.out.println(String.format("use_sent_specific_lm: %s", use_sent_specific_lm));
+					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("use_sent_specific_lm: %s", use_sent_specific_lm));
 				}else if(fds[0].compareTo("sent_lm_file_name_prefix")==0){
 					g_sent_lm_file_name_prefix = fds[1].trim();
-					System.out.println(String.format("sent_lm_file_name_prefix: %s", g_sent_lm_file_name_prefix));
+					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("sent_lm_file_name_prefix: %s", g_sent_lm_file_name_prefix));
 				}else if(fds[0].compareTo("use_sent_specific_tm")==0){
 					use_sent_specific_tm = new Boolean(fds[1]);
-					System.out.println(String.format("use_sent_specific_tm: %s", use_sent_specific_tm));
+					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("use_sent_specific_tm: %s", use_sent_specific_tm));
 				}else if(fds[0].compareTo("sent_tm_file_name_prefix")==0){
 					g_sent_tm_file_name_prefix = fds[1].trim();
-					System.out.println(String.format("sent_tm_file_name_prefix: %s", g_sent_tm_file_name_prefix));
+					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("sent_tm_file_name_prefix: %s", g_sent_tm_file_name_prefix));
 				}else if(fds[0].compareTo("span_limit")==0){
 					span_limit = new Integer(fds[1]);
-					System.out.println(String.format("span_limit: %s", span_limit));
+					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("span_limit: %s", span_limit));
 				}else if(fds[0].compareTo("phrase_owner")==0){
 					phrase_owner = fds[1].trim();
-					System.out.println(String.format("phrase_owner: %s", phrase_owner));
+					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("phrase_owner: %s", phrase_owner));
 				}else if(fds[0].compareTo("mono_owner")==0){
 					mono_owner = fds[1].trim();
-					System.out.println(String.format("mono_owner: %s", mono_owner));
+					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("mono_owner: %s", mono_owner));
 				}else if(fds[0].compareTo("begin_mono_owner")==0){
 					begin_mono_owner = fds[1].trim();
-					System.out.println(String.format("begin_mono_owner: %s", begin_mono_owner));
+					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("begin_mono_owner: %s", begin_mono_owner));
 				}else if(fds[0].compareTo("default_non_terminal")==0){
 					default_non_terminal = fds[1].trim();
-					System.out.println(String.format("default_non_terminal: %s", default_non_terminal));
+					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("default_non_terminal: %s", default_non_terminal));
 				}else if(fds[0].compareTo("fuzz1")==0){
 					fuzz1 = new Double(fds[1]);
-					System.out.println(String.format("fuzz1: %s", fuzz1));
+					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("fuzz1: %s", fuzz1));
 				}else if(fds[0].compareTo("fuzz2")==0){
 					fuzz2 = new Double(fds[1]);
-					System.out.println(String.format("fuzz2: %s", fuzz2));
+					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("fuzz2: %s", fuzz2));
 				}else if(fds[0].compareTo("max_n_items")==0){
 					max_n_items = new Integer(fds[1]);
-					System.out.println(String.format("max_n_items: %s", max_n_items));
+					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("max_n_items: %s", max_n_items));
 				}else if(fds[0].compareTo("relative_threshold")==0){
 					relative_threshold = new Double(fds[1]);
-					System.out.println(String.format("relative_threshold: %s", relative_threshold));
+					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("relative_threshold: %s", relative_threshold));
 				}else if(fds[0].compareTo("max_n_rules")==0){
 					max_n_rules = new Integer(fds[1]);
-					System.out.println(String.format("max_n_rules: %s", max_n_rules));
+					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("max_n_rules: %s", max_n_rules));
 				}else if(fds[0].compareTo("rule_relative_threshold")==0){
 					rule_relative_threshold = new Double(fds[1]);
-					System.out.println(String.format("rule_relative_threshold: %s", rule_relative_threshold));
+					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("rule_relative_threshold: %s", rule_relative_threshold));
 				}else if(fds[0].compareTo("use_unique_nbest")==0){
 					use_unique_nbest = new Boolean(fds[1]);
-					System.out.println(String.format("use_unique_nbest: %s", use_unique_nbest));
+					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("use_unique_nbest: %s", use_unique_nbest));
 				}else if(fds[0].compareTo("add_combined_cost")==0){
 					add_combined_cost = new Boolean(fds[1]);
-					System.out.println(String.format("add_combined_cost: %s", add_combined_cost));
+					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("add_combined_cost: %s", add_combined_cost));
 				}else if(fds[0].compareTo("use_tree_nbest")==0){
 					use_tree_nbest = new Boolean(fds[1]);
-					System.out.println(String.format("use_tree_nbest: %s", use_tree_nbest));
+					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("use_tree_nbest: %s", use_tree_nbest));
 				}else if(fds[0].compareTo("top_n")==0){
 					topN = new Integer(fds[1]);
-					System.out.println(String.format("topN: %s", topN));
+					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("topN: %s", topN));
 				}else if(fds[0].compareTo("use_remote_lm_server")==0){
 					use_remote_lm_server = new Boolean(fds[1]);
-					System.out.println(String.format("use_remote_lm_server: %s", use_remote_lm_server));
+					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("use_remote_lm_server: %s", use_remote_lm_server));
 				}else if(fds[0].compareTo("f_remote_server_list")==0){
 					f_remote_server_list = new String(fds[1]);
-					System.out.println(String.format("f_remote_server_list: %s", f_remote_server_list));
+					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("f_remote_server_list: %s", f_remote_server_list));
 				}else if(fds[0].compareTo("num_remote_lm_servers")==0){
 					num_remote_lm_servers = new Integer(fds[1]);
-					System.out.println(String.format("num_remote_lm_servers: %s", num_remote_lm_servers));
+					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("num_remote_lm_servers: %s", num_remote_lm_servers));
 				}else if(fds[0].compareTo("remote_symbol_tbl")==0){
 					remote_symbol_tbl = new String(fds[1]);
-					System.out.println(String.format("remote_symbol_tbl: %s", remote_symbol_tbl));
+					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("remote_symbol_tbl: %s", remote_symbol_tbl));
 				}else if(fds[0].compareTo("remote_lm_server_port")==0){
 					//port = new Integer(fds[1]);
-					System.out.println(String.format("remote_lm_server_port: not used"));					
+					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("remote_lm_server_port: not used"));					
 				}else if(fds[0].compareTo("parallel_files_prefix")==0){
 					parallel_files_prefix = new String(fds[1]);
-					System.out.println(String.format("parallel_files_prefix: %s", parallel_files_prefix));
+					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("parallel_files_prefix: %s", parallel_files_prefix));
 				}else if(fds[0].compareTo("num_parallel_decoders")==0){
 					num_parallel_decoders = new Integer(fds[1]);
-					System.out.println(String.format("num_parallel_decoders: %s", num_parallel_decoders));
+					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("num_parallel_decoders: %s", num_parallel_decoders));
 				}else if(fds[0].compareTo("save_disk_hg")==0){
 					save_disk_hg = new Boolean(fds[1]);
-					System.out.println(String.format("save_disk_hg: %s", save_disk_hg));
+					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("save_disk_hg: %s", save_disk_hg));
 				}else if(fds[0].compareTo("forest_pruning")==0){
 					forest_pruning = new Boolean(fds[1]);
-					System.out.println(String.format("forest_pruning: %s", forest_pruning));
+					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("forest_pruning: %s", forest_pruning));
 				}else if(fds[0].compareTo("forest_pruning_threshold")==0){
 					forest_pruning_threshold = new Double(fds[1]);
-					System.out.println(String.format("forest_pruning_threshold: %s", forest_pruning_threshold));
+					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("forest_pruning_threshold: %s", forest_pruning_threshold));
 				}else{
-					Support.write_log_line("Wrong config line: " + line, Support.ERROR);
+					if (logger.isLoggable(Level.SEVERE)) logger.severe("Wrong config line: " + line);
 					System.exit(0);
 				}
 			}

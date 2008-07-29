@@ -61,6 +61,30 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
 		this.costs = calculateAllPairsShortestPath(nodes);
 		
 	}
+	
+	public Lattice(Value[] linearChain) {
+		
+		this.nodes = new ArrayList<Node<Value>>();
+	
+		Node<Value> previous = new Node<Value>(0);
+		nodes.add(previous);
+		
+		int i=1;
+		
+		for (Value value : linearChain) {
+			
+			Node<Value> current = new Node<Value>(i);
+			previous.addArc(current, 1.0, value);
+			
+			nodes.add(current);
+			
+			previous = current;
+			i++;
+		}
+		
+		this.costs = calculateAllPairsShortestPath(nodes);
+		
+	}
 
 	/**
 	 * Constructs a lattice from a given string representation.

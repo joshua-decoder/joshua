@@ -20,7 +20,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.PriorityQueue;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import edu.jhu.joshua.decoder.Decoder;
 import edu.jhu.joshua.decoder.Support;
@@ -52,7 +55,7 @@ public class Bin
 	//heap_items: the only purpose is to help deecide which items should be removed from tbl_items during pruning 
 	private PriorityQueue<Item> heap_items =  new PriorityQueue(1, Item.NegtiveCostComparator);//TODO: initial capacity?
 	private HashMap  tbl_items=new HashMap (); //to maintain uniqueness of items		
-	private HashMap  tbl_super_items=new HashMap ();//signature by lhs
+	private Map<Integer,SuperItem>  tbl_super_items=new HashMap<Integer,SuperItem>();//signature by lhs
 	private ArrayList<Item> l_sorted_items=null;//sort values in tbl_item_signature, we need this list whenever necessary
 	
 	//pruning parameters
@@ -60,6 +63,8 @@ public class Bin
 	public double cut_off_cost =  Symbol.IMPOSSIBLE_COST; //cutoff=best_item_cost+relative_threshold	
 	int dead_items=0;//num of corrupted items in heap_items, note that the item in tbl_items is always good
 	Chart p_chart =null;
+	
+	private static final Logger logger = Logger.getLogger(Bin.class.getName());
 	
 	public Bin(Chart chart){
 		p_chart=chart;
@@ -140,11 +145,11 @@ public class Bin
                 }
             } 
         }
-        Support.write_log_line(String.format("Goal item, best cost is %.3f",goal_item.best_deduction.best_cost),  Support.INFO);
+        if (logger.isLoggable(Level.INFO)) logger.info(String.format("Goal item, best cost is %.3f",goal_item.best_deduction.best_cost));
         ensure_sorted();
         
         if(get_sorted_items().size()!=1){
-			Support.write_log_line("warning: the goal_bin does not have exactly one item", Support.ERROR);
+        	if (logger.isLoggable(Level.SEVERE)) logger.severe("warning: the goal_bin does not have exactly one item");
 			System.exit(0);
 		}
     }
@@ -399,8 +404,8 @@ public class Bin
 		}
 	}
 	
-	public void print_info(int level){
-		Support.write_log_line(String.format("#### Stat of Bin, n_items=%d, n_super_items=%d",tbl_items.size(),tbl_super_items.size()), level);			
+	public void print_info(Level level){
+		if (logger.isLoggable(level)) logger.log(level, String.format("#### Stat of Bin, n_items=%d, n_super_items=%d",tbl_items.size(),tbl_super_items.size()));			
 		ensure_sorted();
 		for(Item it : l_sorted_items)
         	it.print_info(level);
@@ -483,7 +488,7 @@ public class Bin
         return l_sorted_items;
 	}
 	
-	public HashMap  get_sorted_super_items(){
+	public Map<Integer,SuperItem> get_sorted_super_items(){
 		ensure_sorted();
         return tbl_super_items;
 	}

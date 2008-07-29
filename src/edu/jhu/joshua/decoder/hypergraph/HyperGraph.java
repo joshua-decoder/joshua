@@ -19,6 +19,8 @@ package edu.jhu.joshua.decoder.hypergraph;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import edu.jhu.joshua.decoder.Support;
 import edu.jhu.joshua.decoder.Symbol;
@@ -41,6 +43,7 @@ public class HyperGraph {
 	public int sent_id = -1;
 	public int sent_len = -1;
 	
+	private static final Logger logger = Logger.getLogger(HyperGraph.class.getName());
 	
 	public HyperGraph(Item g_item, int n_items, int n_deducts, int s_id, int s_len){
 		goal_item = g_item;
@@ -100,8 +103,8 @@ public class HyperGraph {
 			for(Deduction dt : l_dt) add_deduction_in_item(dt);			
 		}	
 				
-		public void print_info(int level){
-			Support.write_log_line(String.format("lhs: %s; cost: %.3f",lhs, best_deduction.best_cost), level);
+		public void print_info(Level level){
+			if (logger.isLoggable(level)) logger.log(level, String.format("lhs: %s; cost: %.3f",lhs, best_deduction.best_cost));
 		}		
 		
 		//signature of this item: lhs, states (we do not need i, j)

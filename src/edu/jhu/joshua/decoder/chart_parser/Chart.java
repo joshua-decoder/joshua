@@ -18,6 +18,8 @@ package edu.jhu.joshua.decoder.chart_parser;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import edu.jhu.joshua.decoder.Decoder;
 import edu.jhu.joshua.decoder.Support;
@@ -76,8 +78,9 @@ public class Chart {
 	int n_added=0;
 	int n_dotitem_added=0;//note: there is no pruning in dot-item
 	int n_called_compute_item=0;
-	public void print_info(int level){
-		Support.write_log_line(String.format("ADD: %d; MERGED: %d; pruned: %d; pre-pruned: %d ,fuzz1: %d, fuzz2: %d; n_dotitem_added: %d", n_added, n_merged,n_pruned,n_prepruned, n_prepruned_fuzz1, n_prepruned_fuzz2, n_dotitem_added), level);
+	public void print_info(Level level){
+		if (logger.isLoggable(level)) 
+			logger.log(level, String.format("ADD: %d; MERGED: %d; pruned: %d; pre-pruned: %d ,fuzz1: %d, fuzz2: %d; n_dotitem_added: %d", n_added, n_merged,n_pruned,n_prepruned, n_prepruned_fuzz1, n_prepruned_fuzz2, n_dotitem_added));
 	}
 	
 	//time-profile variables, debug purpose
@@ -88,8 +91,9 @@ public class Chart {
 	static long g_time_check_nonterminal=0;
 	static long g_time_kbest_extract=0;
 	
-	public Chart(int[] sentence_in, ArrayList<Model> models, int sent_id1)
-	{   
+	private static final Logger logger = Logger.getLogger(Chart.class.getName());
+	
+	public Chart(int[] sentence_in, ArrayList<Model> models, int sent_id1) {   
 		sentence = sentence_in;
 		sent_len = sentence.length;
 		l_models = models;
@@ -115,7 +119,7 @@ public class Chart {
 	        	 add_axiom(i, i+1, r);
 	         }
 		 }
-		 System.out.println("####finisehd seeding");
+		 if (logger.isLoggable(Level.FINE)) logger.fine("####finished seeding");
 	}
 	
 	//construct the hypergraph with the help from DotChart
@@ -197,13 +201,13 @@ public class Chart {
 				//print_info(Support.INFO);
 			}
 		}
-		print_info(Support.INFO);
+		print_info(Level.FINE);
 				
 		//transition_final: setup a goal item, which may have many deductions
 		if(l_bins[0][sent_len]!=null){
 			goal_bin.transit_to_goal(l_bins[0][sent_len]);//update goal_bin				
 		}else{
-			Support.write_log_line("No complet item in the cell(0,n)", Support.ERROR);
+			if (logger.isLoggable(Level.SEVERE)) logger.severe("No complet item in the cell(0,n)");
 			System.exit(0);
 		}
 		

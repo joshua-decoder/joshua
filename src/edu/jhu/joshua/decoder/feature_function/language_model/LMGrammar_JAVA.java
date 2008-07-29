@@ -18,6 +18,8 @@ package edu.jhu.joshua.decoder.feature_function.language_model;
 
 import java.io.BufferedReader;
 import java.util.HashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import edu.jhu.joshua.decoder.Decoder;
 import edu.jhu.joshua.decoder.Support;
@@ -31,7 +33,7 @@ import edu.jhu.lzfUtility.FileUtility;
  * (3) get equivilent state 
  * 
  * @author Zhifei Li, <zhifei.work@gmail.com>
- * @version $LastChangedDate$
+ * @version $LastChangedDate:2008-07-28 18:44:45 -0400 (Mon, 28 Jul 2008) $
  */
 public class LMGrammar_JAVA extends LMGrammar {
 	/*a backoff node is a hashtable, it may include:
@@ -57,10 +59,11 @@ public class LMGrammar_JAVA extends LMGrammar {
 	HashMap request_cache_right_equiv = new HashMap();//cmd with result
 	int cache_size_limit= 250000;
 	
+	private static final Logger logger = Logger.getLogger(LMGrammar_JAVA.class.getName());
 	
 	public LMGrammar_JAVA(int order, boolean is_add_suffix_infor, boolean is_add_prefix_infor){
 		super(order);		
-		System.out.println("use java lm");		
+		if (logger.isLoggable(Level.INFO)) logger.info("use java lm");		
 		g_is_add_prefix_infor = is_add_prefix_infor;
 		g_is_add_suffix_infor = is_add_suffix_infor;
 		Symbol.add_global_symbols(true);
@@ -97,7 +100,7 @@ public class LMGrammar_JAVA extends LMGrammar {
 	}
 	
 	public void write_vocab_map_srilm(String fname){
-		System.out.println("Error: call write_vocab_map_srilm in java, must exit");
+		if (logger.isLoggable(Level.SEVERE)) logger.severe("Error: call write_vocab_map_srilm in java, must exit");
 		System.exit(0);
 	}
 
@@ -130,7 +133,7 @@ public class LMGrammar_JAVA extends LMGrammar {
 	    }else{
 		    //TODO: untranslated words
 			if(root==null){
-				System.out.println("root is null");
+				if (logger.isLoggable(Level.SEVERE)) logger.severe("root is null");
 				System.exit(0);
 			}		
 			int last_word_id = ngram_wrds[ngram_wrds.length-1];
@@ -404,7 +407,7 @@ public class LMGrammar_JAVA extends LMGrammar {
 		root.put(Symbol.BACKOFF_WGHT_SYM_ID, NON_EXIST_WEIGHT);
 	
 		BufferedReader t_reader_tree = FileUtility.getReadFileStream(grammar_file,"utf8");		
-		Support.write_log_line("Reading grammar from file " + grammar_file, Support.INFO);		
+		if (logger.isLoggable(Level.INFO)) logger.info("Reading grammar from file " + grammar_file);		
 		String line;
 		boolean start=false;
 		int order=0;
@@ -419,26 +422,26 @@ public class LMGrammar_JAVA extends LMGrammar {
 				order = (new Integer(line.substring(1, 2))).intValue();
 				if(order > g_order)
 					break;
-				System.out.println("begin to read ngrams with order " + order);
+				if (logger.isLoggable(Level.INFO)) logger.info("begin to read ngrams with order " + order);
 				continue; //skip this line
 			}			
 			if(start==true)
 				add_rule(line,order, g_is_add_suffix_infor, g_is_add_prefix_infor);			
 		}
 		
-		System.out.println("# of bow nodes: " + g_n_bow_nodes + " ; # of suffix nodes: " + g_n_suffix_nodes);
-		System.out.println("add LMHash  " + g_n_bow_nodes);					
-		System.out.println("##### mem used (kb): " + Support.getMemoryUse());
-		System.out.println("##### time used (seconds): " + (System.currentTimeMillis()-start_loading_time)/1000);
+		if (logger.isLoggable(Level.FINE)) logger.fine("# of bow nodes: " + g_n_bow_nodes + " ; # of suffix nodes: " + g_n_suffix_nodes);
+		if (logger.isLoggable(Level.FINE)) logger.fine("add LMHash  " + g_n_bow_nodes);					
+		if (logger.isLoggable(Level.FINE)) logger.fine("##### mem used (kb): " + Support.getMemoryUse());
+		if (logger.isLoggable(Level.FINE)) logger.fine("##### time used (seconds): " + (System.currentTimeMillis()-start_loading_time)/1000);
 	}
 	
 	
 	private void add_rule(String line, int order, boolean is_add_suffix_infor, boolean is_add_prefix_infor){//format: prob \t ngram \t backoff-weight
 		num_rule_read++;
 		if(num_rule_read%1000000==0){
-			System.out.println("read rules " + num_rule_read);
+			if (logger.isLoggable(Level.FINE)) logger.fine("read rules " + num_rule_read);
 			//System.out.println("##### mem used (kb): " + Support.getMemoryUse());
-			System.out.println("##### time used (seconds): " + (System.currentTimeMillis()-start_loading_time)/1000);
+			if (logger.isLoggable(Level.FINE)) logger.fine("##### time used (seconds): " + (System.currentTimeMillis()-start_loading_time)/1000);
 		}
 		String[] wrds = line.trim().split("\\s+");
 	
@@ -473,9 +476,9 @@ public class LMGrammar_JAVA extends LMGrammar {
 				
 				g_n_bow_nodes++;				
 				if(g_n_bow_nodes%1000000==0){
-					System.out.println("add LMHash  " + g_n_bow_nodes);					
+					if (logger.isLoggable(Level.FINE)) logger.fine("add LMHash  " + g_n_bow_nodes);					
 					//System.out.println("##### mem used (kb): " + Support.getMemoryUse());
-					System.out.println("##### time used (seconds): " + (System.currentTimeMillis()-start_loading_time)/1000);
+					if (logger.isLoggable(Level.FINE)) logger.fine("##### time used (seconds): " + (System.currentTimeMillis()-start_loading_time)/1000);
 				}
 			}
 			if (pos.containsKey(Symbol.BACKOFF_WGHT_SYM_ID)==false)
@@ -506,9 +509,9 @@ public class LMGrammar_JAVA extends LMGrammar {
 						
 						g_n_bow_nodes++;				
 						if(g_n_bow_nodes%1000000==0){
-							System.out.println("add LMHash  " + g_n_bow_nodes);					
+							if (logger.isLoggable(Level.FINE)) logger.fine("add LMHash  " + g_n_bow_nodes);					
 							//System.out.println("##### mem used (kb): " + Support.getMemoryUse());
-							System.out.println("##### time used (seconds): " + (System.currentTimeMillis()-start_loading_time)/1000);
+							if (logger.isLoggable(Level.FINE)) logger.fine("##### time used (seconds): " + (System.currentTimeMillis()-start_loading_time)/1000);
 						}
 					}
 				}
@@ -532,9 +535,9 @@ public class LMGrammar_JAVA extends LMGrammar {
 					
 					g_n_bow_nodes++;				
 					if(g_n_bow_nodes%1000000==0){
-						System.out.println("add LMHash  " + g_n_bow_nodes);					
+						if (logger.isLoggable(Level.FINE)) logger.fine("add LMHash  " + g_n_bow_nodes);					
 						//System.out.println("##### mem used (kb): " + Support.getMemoryUse());
-						System.out.println("##### time used (seconds): " + (System.currentTimeMillis()-start_loading_time)/1000);
+						if (logger.isLoggable(Level.FINE)) logger.fine("##### time used (seconds): " + (System.currentTimeMillis()-start_loading_time)/1000);
 					}
 				}				
 				
@@ -633,7 +636,7 @@ public class LMGrammar_JAVA extends LMGrammar {
 		
 		public void put(int key, Object value) {
 			if(value==null){
-				System.out.println("LMHash, value is null");
+				if (logger.isLoggable(Level.SEVERE)) logger.severe("LMHash, value is null");
 				System.exit(0);
 			}
 			
