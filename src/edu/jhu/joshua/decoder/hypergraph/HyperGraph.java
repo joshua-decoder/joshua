@@ -25,7 +25,7 @@ import java.util.logging.Logger;
 import edu.jhu.joshua.decoder.Support;
 import edu.jhu.joshua.decoder.Symbol;
 import edu.jhu.joshua.decoder.feature_function.translation_model.TMGrammar;
-import edu.jhu.joshua.decoder.feature_function.translation_model.TMGrammar.Rule;
+import edu.jhu.joshua.decoder.feature_function.translation_model.Rule;
 
 /**
  * this class implement 
@@ -107,30 +107,46 @@ public class HyperGraph {
 			if (logger.isLoggable(level)) logger.log(level, String.format("lhs: %s; cost: %.3f",lhs, best_deduction.best_cost));
 		}		
 		
+		
 		//signature of this item: lhs, states (we do not need i, j)
-		public String get_signature(){
-			if(signature!=null)
-				return signature;
-			StringBuffer res = new StringBuffer();
-			res.append(lhs);
-			for(Integer st_name : Symbol.l_model_state_names){
-				int[] st = (int[])tbl_states.get(st_name);//TODO assume the state is an int[] array
-				if(st!=null){
-					res.append(SIG_SEP);					
-					for(int i=0; i<st.length; i++){
-						if(true/* st[i]!=Symbol.NULL_RIGHT_LM_STATE_SYM_ID && 
-						   st[i]!=Symbol.NULL_LEFT_LM_STATE_SYM_ID && 
-						   st[i]!=Symbol.LM_STATE_OVERLAP_SYM_ID*/){//TODO: equivalnce: number of <null> or <bo>?
-							res.append(st[i]);//the symbol id
-							if(i<st.length-1)res.append(" ");
-						}
-					}					
-				}else{System.out.println("state is null"); System.exit(0);}
+		public String get_signature() {
+			if (null != this.signature) {
+				return this.signature;
 			}
-			signature=res.toString();
+			StringBuffer signature_ = new StringBuffer();
+			signature_.append(lhs);
+			
+			for (Integer state_name : Symbol.l_model_state_names) {
+				int[] states = (int[])this.tbl_states.get(state_name);
+				
+				if (null != states) {
+					signature_.append(SIG_SEP);
+					for (int i = 0; i < states.length; i++) {
+						if (true
+							//TODO: equivalnce: number of <null> or <bo>?
+							/* states[i]!=Symbol.NULL_RIGHT_LM_STATE_SYM_ID
+							 * && states[i]!=Symbol.NULL_LEFT_LM_STATE_SYM_ID
+							 * && states[i]!=Symbol.LM_STATE_OVERLAP_SYM_ID*/
+						) {
+							signature_.append(states[i]);
+							
+							if (i < states.length - 1) {
+								signature_.append(" ");
+							}
+						}
+					}
+				} else {
+					System.out.println("state is null");
+					Thread.dumpStack();
+					System.exit(1);
+				}
+			}
+			
+			this.signature = signature_.toString();
 			//Support.write_log_line(String.format("Signature is %s", res), Support.INFO);
-			return signature;
+			return this.signature;
 		}
+		
 		
 		//the state_str does not lhs, it contain the original words (not symbol id)
 		public static String get_string_from_state_tbl(HashMap tbl){
@@ -141,7 +157,11 @@ public class HyperGraph {
 				if(st!=null){										
 					res.append(Symbol.get_string(st));					
 					if(t<Symbol.l_model_state_names.size()-1) res.append(SIG_SEP);
-				}else{System.out.println("state is null"); System.exit(0);}
+				} else {
+					System.out.println("state is null");
+					Thread.dumpStack();
+					System.exit(1);
+				}
 			}
 			return res.toString();
 		}
@@ -170,18 +190,21 @@ public class HyperGraph {
 		    	return 1;    
 		}
 		
-		public static Comparator NegtiveCostComparator = new Comparator() {
-		    public int compare(Object item1, Object item2) {
-		      double cost1=  ((Item) item1).est_total_cost;
-		      double cost2=  ((Item) item2).est_total_cost;
-		      if(cost1 > cost2)
-			    	return -1;
-			    else if(cost1==cost2)
-			    	return 0;
-			    else
-			    	return 1; 
-		    }
-		 };		
+		public static Comparator<Item> NegtiveCostComparator
+			= new Comparator<Item>() {
+				
+				public int compare(Item item1, Item item2) {
+					double cost1 = item1.est_total_cost;
+					double cost2 = item2.est_total_cost;
+					if (cost1 > cost2) {
+						return -1;
+					} else if (cost1 == cost2) {
+						return 0;
+					} else {
+						return 1;
+					}
+				}
+			};
 	}
 	
 	
@@ -282,8 +305,10 @@ public class HyperGraph {
 	}
 	
 	public static Deduction clone_deduction(Deduction dt_in){
-		ArrayList l_ant_items = null;
-		if(dt_in.l_ant_items!=null) l_ant_items = new ArrayList(dt_in.l_ant_items);//l_ant_items will be changed in get_1best_tree_item
+		ArrayList<Item> l_ant_items = null;
+		if (null != dt_in.l_ant_items) {
+			l_ant_items = new ArrayList<Item>(dt_in.l_ant_items);//l_ant_items will be changed in get_1best_tree_item
+		}
 		Deduction res = new Deduction(dt_in.rule, dt_in.best_cost, dt_in.transition_cost, l_ant_items);
 		return res;
 	}

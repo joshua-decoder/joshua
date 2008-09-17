@@ -29,7 +29,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 
 import edu.jhu.joshua.decoder.Symbol;
-import edu.jhu.joshua.decoder.feature_function.Model;
+import edu.jhu.joshua.decoder.feature_function.FeatureFunction;
 
 /**
  * Note: this code is originally developed by Chris Dyer at UMD (email: redpony@umd.edu)
@@ -45,8 +45,14 @@ public class TMGrammar_Disk  extends TMGrammar {
 	Vocabulary nonTerminals; //map non-terminal symbols to strings
 	TrieNode_Disk root;
 
-	public TMGrammar_Disk(ArrayList<Model> l_models, String default_ow, int span_limit_in, String non_terminal_regexp_in, String non_terminal_replace_regexp_in){
-		super(l_models, default_ow, span_limit_in, non_terminal_regexp_in, non_terminal_replace_regexp_in);
+	public TMGrammar_Disk(
+		ArrayList<FeatureFunction> l_models,
+		String default_owner,
+		int    span_limit,
+		String nonterminal_regexp,
+		String nonterminal_replace_regexp
+	) {
+		super(l_models, default_owner, span_limit, nonterminal_regexp, nonterminal_replace_regexp);
 	}
 	
 	public void read_tm_grammar_from_file(String filenamePrefix) {
@@ -219,7 +225,7 @@ public class TMGrammar_Disk  extends TMGrammar {
 	
 	
 	public class RuleBin_Disk extends RuleBin{
-		private ArrayList<Rule> l_sorted_rules = new ArrayList();
+		private ArrayList<Rule> l_sorted_rules = new ArrayList<Rule>();
 		//ShortRule[] rules;		
 		//int lhs;		
 		//private TMGrammar_Disk g;
@@ -310,7 +316,7 @@ public class TMGrammar_Disk  extends TMGrammar {
 					bb.asFloatBuffer().get(scores, 0, slen);
 									
 					//add rules
-					l_sorted_rules.add( new Rule_Disk(lhs, french, eng, default_owner, scores, arity));//TODO: sorted?
+					l_sorted_rules.add( new Rule_Disk(lhs, french, eng, TMGrammar_Disk.defaultOwner, scores, arity));//TODO: sorted?
 				}
 				loaded = true;
 			} catch (IOException e) {
@@ -330,42 +336,17 @@ public class TMGrammar_Disk  extends TMGrammar {
 		}
 		
 		//obtain statelesscost
-		protected float estimate_rule(){
-		    statelesscost = (float)0.0;
-		    for(Model m_i : p_l_models){
-		        double mdcost = m_i.estimate(this)*m_i.weight();
-		        //estcost += mdcost;
-		        if(m_i.isStateless()==true)
-		            statelesscost += mdcost;
-		    }		    
-		    return -1;
-		}
-		
-		/*public String toString() {
-			return toString(null,null);
-		}
-		
-		public String toString(Vocabulary t, Vocabulary nt) {
-			StringBuffer sb = new StringBuffer();
-			boolean hasVocab = (t != null && nt != null);
-			sb.append("< LHS=");
-			if (hasVocab) sb.append('[').append(nt.getValue(lhs)).append(']'); else sb.append(lhs);
-			sb.append(" --> ");
-			for (int w: e) {
-				if (hasVocab)
-					if (w < 0) sb.append(nt.getValue(w)); else sb.append(t.getValue(w));
-				else
-					sb.append(w);
-				sb.append(' ');
+		protected float estimate_rule() {
+			this.statelesscost = (float)0.0;
+			for (FeatureFunction ff : TMGrammar.p_l_models) {
+				double mdcost = ff.estimate(this) * ff.getWeight();
+				//estcost += mdcost;
+				if(! ff.isStateful()) {
+					this.statelesscost += mdcost;
+				}
 			}
-			sb.append("|||");
-			for (float f : scores) {
-				sb.append(' ').append(f);
-			}
-			sb.append(" >");
-			return sb.toString(); 
-		}*/
-
+			return -1;
+		}
 	}
 
 	public static class Vocabulary {

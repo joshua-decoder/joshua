@@ -25,10 +25,10 @@ import edu.jhu.joshua.decoder.Decoder;
 import edu.jhu.joshua.decoder.Support;
 import edu.jhu.joshua.decoder.Symbol;
 import edu.jhu.joshua.decoder.chart_parser.DotChart.DotItem;
-import edu.jhu.joshua.decoder.feature_function.Model;
+import edu.jhu.joshua.decoder.feature_function.FeatureFunction;
 import edu.jhu.joshua.decoder.feature_function.translation_model.TMGrammar;
 import edu.jhu.joshua.decoder.feature_function.translation_model.TMGrammar_Memory;
-import edu.jhu.joshua.decoder.feature_function.translation_model.TMGrammar.Rule;
+import edu.jhu.joshua.decoder.feature_function.translation_model.Rule;
 import edu.jhu.joshua.decoder.feature_function.translation_model.TMGrammar.RuleBin;
 import edu.jhu.joshua.decoder.feature_function.translation_model.TMGrammar.TrieNode;
 import edu.jhu.joshua.decoder.feature_function.translation_model.TMGrammar_Memory.Rule_Memory;
@@ -66,7 +66,7 @@ public class Chart {
 	private int sent_id;
 	
 	//decoder-wide variables
-	ArrayList<Model> l_models;
+	ArrayList<FeatureFunction> l_models;
 	
 	//statistics
 	int gtem=0;
@@ -93,7 +93,7 @@ public class Chart {
 	
 	private static final Logger logger = Logger.getLogger(Chart.class.getName());
 	
-	public Chart(int[] sentence_in, ArrayList<Model> models, int sent_id1) {   
+	public Chart(int[] sentence_in, ArrayList<FeatureFunction> models, int sent_id1) {   
 		sentence = sentence_in;
 		sent_len = sentence.length;
 		l_models = models;
@@ -217,8 +217,8 @@ public class Chart {
 		//Support.write_log_line(String.format("Step1: %d; step2: %d; step3: %d; step4: %d", time_step1, time_step2, time_step3, time_step4), Support.INFO);
 		
 		/*Support.write_log_line(String.format("t_compute_item: %d; t_add_deduction: %d;", g_time_compute_item/1000,g_time_add_deduction/1000), Support.INFO);
-		for(Model m: l_models){
-			Support.write_log_line("Model cost: " + m.time_consumed/1000, Support.INFO);
+		for(FeatureFunction m: l_models){
+			Support.write_log_line("FeatureFunction cost: " + m.time_consumed/1000, Support.INFO);
 		}*/
 
 		//Support.write_log_line(String.format("t_lm: %d; t_score_lm: %d; t_check_nonterminal: %d", g_time_lm, g_time_score_sent, g_time_check_nonterminal), Support.INFO);
@@ -231,12 +231,15 @@ public class Chart {
 	
 	//agenda based extension: this is necessary in case more than two unary rules can be applied in topological order s->x; ss->s
 	//for unary rules like s->x, once x is complete, then s is also complete
-	private int add_unary_items(TMGrammar gr, int i, int j){
-		Bin chart_bin = l_bins[i][j];
-		if(chart_bin==null)	return 0;
-		int res=0;		
-		ArrayList t_queue = new ArrayList(chart_bin.get_sorted_items());//init queue		
-		while(t_queue.size()>0){
+	private int add_unary_items(TMGrammar gr, int i, int j) {
+		Bin chart_bin = this.l_bins[i][j];
+		if (null == chart_bin) {
+			return 0;
+		}
+		int res = 0;
+		ArrayList<Item> t_queue
+			= new ArrayList<Item>(chart_bin.get_sorted_items());
+		while (t_queue.size() > 0) {
 			Item it = (Item)t_queue.remove(0);
 			TrieNode child_tnode = gr.get_root().match_symbol(it.lhs);//match rule and complete part
 			if(child_tnode != null && child_tnode.get_rule_bin()!=null && child_tnode.get_rule_bin().get_arity()==1){//have unary rules under this trienode					

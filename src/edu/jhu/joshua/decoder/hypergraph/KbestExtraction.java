@@ -23,10 +23,11 @@ import java.util.PriorityQueue;
 
 import edu.jhu.joshua.decoder.Support;
 import edu.jhu.joshua.decoder.Symbol;
-import edu.jhu.joshua.decoder.feature_function.Model;
+import edu.jhu.joshua.decoder.feature_function.FeatureFunction;
+import edu.jhu.joshua.decoder.feature_function.MapFFState;
 import edu.jhu.joshua.decoder.feature_function.language_model.LMModel;
 import edu.jhu.joshua.decoder.feature_function.translation_model.TMGrammar;
-import edu.jhu.joshua.decoder.feature_function.translation_model.TMGrammar.Rule;
+import edu.jhu.joshua.decoder.feature_function.translation_model.Rule;
 import edu.jhu.joshua.decoder.hypergraph.HyperGraph.Deduction;
 import edu.jhu.joshua.decoder.hypergraph.HyperGraph.Item;
 import edu.jhu.lzfUtility.FileUtility;
@@ -50,7 +51,7 @@ public class KbestExtraction {
 	HashMap tbl_virtual_items = new HashMap();
 	
 //	########################################## kbest extraction algorithm ##########################	
-	public  void lazy_k_best_extract_hg(HyperGraph hg, ArrayList<Model> l_models, int global_n, boolean extract_unique_nbest, int sent_id, 
+	public  void lazy_k_best_extract_hg(HyperGraph hg, ArrayList<FeatureFunction> l_models, int global_n, boolean extract_unique_nbest, int sent_id, 
 			BufferedWriter out, boolean extract_nbest_tree, boolean add_combined_score){
 		//long start = System.currentTimeMillis();
 		reset_state();
@@ -88,14 +89,14 @@ public class KbestExtraction {
 	 * add_combined_score==f: do not add combined model cost
 	 * */
 	//***************** you may need to reset_state() before you call this function for the first time
-	public String get_kth_hyp(Item it, int k,  int sent_id, ArrayList<Model> l_models, boolean extract_unique_nbest, boolean extract_nbest_tree, boolean add_combined_score){
+	public String get_kth_hyp(Item it, int k,  int sent_id, ArrayList<FeatureFunction> l_models, boolean extract_unique_nbest, boolean extract_nbest_tree, boolean add_combined_score){
 		VirtualItem virtual_item = add_virtual_item(it);
 		DerivationState cur = virtual_item.lazy_k_best_extract_item(this,k,extract_unique_nbest,extract_nbest_tree);
 		if( cur==null) return null;
 		return get_kth_hyp(cur, sent_id, l_models, extract_nbest_tree, add_combined_score);
 	}
 	
-	private String get_kth_hyp(DerivationState cur, int sent_id, ArrayList<Model> l_models, boolean extract_nbest_tree, boolean add_combined_score){
+	private String get_kth_hyp(DerivationState cur, int sent_id, ArrayList<FeatureFunction> l_models, boolean extract_nbest_tree, boolean add_combined_score){
 		double[] model_cost = null;
 		if(l_models!=null) model_cost = new double[l_models.size()];		
 		String str_hyp_numeric = cur.get_hyp(this, extract_nbest_tree, model_cost,l_models);	
@@ -110,7 +111,7 @@ public class KbestExtraction {
 	 * l_models==null: do not add model cost
 	 * add_combined_score==f: do not add combined model cost
 	 * */
-	private static String convert_hyp_2_string(int sent_id, DerivationState cur, ArrayList<Model> l_models, String str_hyp_numeric, 
+	private static String convert_hyp_2_string(int sent_id, DerivationState cur, ArrayList<FeatureFunction> l_models, String str_hyp_numeric, 
 			boolean extract_nbest_tree, boolean add_combined_score, double[] model_cost){
 		String[] tem = str_hyp_numeric.split("\\s+");
 		StringBuffer str_hyp =new StringBuffer();
@@ -150,7 +151,7 @@ public class KbestExtraction {
 			double tem_sum=0.0;
 			for(int k=0; k<model_cost.length; k++){/*note that all the transition cost (including finaltransition cost) is already stored in the deduction*/				
 				str_hyp.append(String.format(" %.3f", -model_cost[k]));
-				tem_sum += model_cost[k]*l_models.get(k).weight();
+				tem_sum += model_cost[k]*l_models.get(k).getWeight();
 			}
 			//sanity check
 			if(Math.abs(cur.cost-tem_sum)>1e-2){
@@ -414,28 +415,28 @@ public class KbestExtraction {
 				for(Item ant: dt.get_ant_items())
 					ants_states.add(ant.tbl_states);
 			}
-			//System.out.println("Rule is: " + dt.rule.convert_to_string());
+			//System.out.println("Rule is: " + dt.rule.toString());
 			double stateless_transition_cost =0;
-			Model lm_model =null;
+			FeatureFunction lm_model =null;
 			int lm_model_index = -1;
 			for(int k=0; k< l_models.size(); k++){
-				Model m = (Model) l_models.get(k);	
+				FeatureFunction m = (FeatureFunction) l_models.get(k);	
 				double t_res =0;
 				if((m instanceof LMModel)==false){					
 					if(dt.get_rule()!=null){//deductions under goal item do not have rules
-						HashMap  tem_tbl = m.transition(dt.get_rule(), ants_states, -1, -1, -1);
+						MapFFState tem_tbl = (MapFFState) m.transition(dt.get_rule(), ants_states, -1, -1);
 						t_res = ((Double)tem_tbl.get(Symbol.TRANSITION_COST_SYM_ID)).doubleValue();
 					}else{//final transtion
-						t_res = m.finaltransition((HashMap)ants_states.get(0));
+						t_res = m.finalTransition(new MapFFState((HashMap)ants_states.get(0)));
 					}
 					model_cost[k] += t_res;
-					stateless_transition_cost += t_res*m.weight();
+					stateless_transition_cost += t_res*m.getWeight();
 				}else{
 					lm_model = m;
 					lm_model_index = k;
 				}
 			}	
-			model_cost[lm_model_index] += (dt.get_transition_cost(false)-stateless_transition_cost)/lm_model.weight();
+			model_cost[lm_model_index] += (dt.get_transition_cost(false)-stateless_transition_cost)/lm_model.getWeight();
 		}
 		
 		/*
@@ -447,7 +448,7 @@ public class KbestExtraction {
 				for(Item ant: dt.get_ant_items())
 					ants_states.add(ant.tbl_states);
 			}
-			//System.out.println("Rule is: " + dt.rule.convert_to_string());
+			//System.out.println("Rule is: " + dt.rule.toString());
 			for(int k=0; k< l_models.size(); k++){
 				Model m = (Model) l_models.get(k);	
 				double t_res =0;					

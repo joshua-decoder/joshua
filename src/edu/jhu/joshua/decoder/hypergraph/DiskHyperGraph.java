@@ -26,7 +26,7 @@ import edu.jhu.joshua.decoder.Decoder;
 import edu.jhu.joshua.decoder.Symbol;
 import edu.jhu.joshua.decoder.feature_function.translation_model.TMGrammar;
 import edu.jhu.joshua.decoder.feature_function.translation_model.TMGrammar_Memory;
-import edu.jhu.joshua.decoder.feature_function.translation_model.TMGrammar.Rule;
+import edu.jhu.joshua.decoder.feature_function.translation_model.Rule;
 import edu.jhu.joshua.decoder.feature_function.translation_model.TMGrammar_Memory.Rule_Memory;
 import edu.jhu.joshua.decoder.hypergraph.HyperGraph;
 import edu.jhu.joshua.decoder.hypergraph.HyperGraph.Deduction;
@@ -231,7 +231,7 @@ public class DiskHyperGraph {
     }
 	
     private static void save_rule(BufferedWriter out_rules, Rule rl, int rule_id){
-    	String str_rule = rl.convert_to_string();
+    	String str_rule = rl.toString();
 		String owner = Symbol.get_string(rl.owner);
 		//rule_id owner RULE_TBL_SEP rule
 		FileUtility.write_lzf(out_rules, rule_id +" " + owner  + RULE_TBL_SEP  +str_rule  +"\n");//note (inverse): rule-id RULE_TBL_SEP rule
@@ -309,12 +309,17 @@ public class DiskHyperGraph {
 		return item;
 	}
 	
-	private void save_deduction(BufferedWriter out, Item item, Deduction cur_d){
+	private void save_deduction(
+		BufferedWriter out, Item item, Deduction deduction
+	) {
 		//get rule id
-		int rule_id= NULL_RULE_ID;
-		if(cur_d.get_rule()!=null){		
-			rule_id = cur_d.get_rule().rule_id;
-			if(rule_id!=OOV_RULE_ID) tbl_associated_grammar.put(rule_id, cur_d.get_rule()); //remember used regular rule
+		int rule_id = NULL_RULE_ID;
+		final Rule deduction_rule = deduction.get_rule();
+		if (null != deduction_rule) {
+			rule_id = deduction_rule.getRuleID();
+			if	(! deduction_rule.isOutOfVocabularyRule()) {
+				tbl_associated_grammar.put(rule_id, deduction_rule); //remember used regular rule
+			}
 		}
 		
 		StringBuffer res = new StringBuffer();		
@@ -323,30 +328,34 @@ public class DiskHyperGraph {
 			res.append(OPTIMAL_DEDUCTION_TAG);//best deduction flag "*"
 		else
 			res.append(DEDUCTION_TAG);
-		res.append(String.format(" %.4f ", cur_d.best_cost));*/
-		res.append(String.format("%.4f ", cur_d.best_cost));
+		res.append(String.format(" %.4f ", deduction.best_cost));*/
+		res.append(String.format("%.4f ", deduction.best_cost));
 		//res.append(" "); res.append(cur_d.best_cost); res.append(" ");//this 1.2 faster than the previous statement
 		
 		//res.append(String.format("%.4f ", cur_d.get_transition_cost(false)));
 		//res.append(cur_d.get_transition_cost(false)); res.append(" ");//this 1.2 faster than the previous statement, but cost 1.4 larger disk space
 		
-		if(cur_d.get_ant_items()==null)	res.append(0);
-		else{
-			res.append(cur_d.get_ant_items().size());
-			for(int i=0; i< cur_d.get_ant_items().size(); i++){
+		if (null == deduction.get_ant_items()) {
+			res.append(0);
+		} else {
+			final int qty_items = deduction.get_ant_items().size();
+			res.append(qty_items);
+			for (int i = 0; i < qty_items; i++) {
 				res.append(" ");
-				res.append((Integer)tbl_item_2_id.get( cur_d.get_ant_items().get(i) ));	 
+				res.append((Integer)tbl_item_2_id.get(
+					deduction.get_ant_items().get(i) ));
 			}
 		}
 		res.append(" ");
 		res.append(rule_id);
-		if(rule_id==OOV_RULE_ID){
-			res.append(" "); res.append(Symbol.get_string(cur_d.get_rule().lhs));
-			res.append(" "); res.append(Symbol.get_string(cur_d.get_rule().english));
+		if (rule_id == OOV_RULE_ID) {
+			res.append(" "); res.append(Symbol.get_string(deduction_rule.lhs));
+			res.append(" "); res.append(Symbol.get_string(deduction_rule.english));
 		}
 		res.append("\n");
 		FileUtility.write_lzf(out, res.toString());
 	}
+	
 	
 	//assumption: has tbl_associated_grammar and tbl_id_2_item
 	private Deduction read_deduction(BufferedReader in){		

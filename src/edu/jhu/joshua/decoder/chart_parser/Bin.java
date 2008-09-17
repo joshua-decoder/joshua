@@ -16,6 +16,7 @@
  */
 package edu.jhu.joshua.decoder.chart_parser;
 
+import java.util.List;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -28,9 +29,11 @@ import java.util.logging.Logger;
 import edu.jhu.joshua.decoder.Decoder;
 import edu.jhu.joshua.decoder.Support;
 import edu.jhu.joshua.decoder.Symbol;
-import edu.jhu.joshua.decoder.feature_function.Model;
+import edu.jhu.joshua.decoder.feature_function.FeatureFunction;
+import edu.jhu.joshua.decoder.feature_function.FFState;
+import edu.jhu.joshua.decoder.feature_function.MapFFState;
 import edu.jhu.joshua.decoder.feature_function.translation_model.TMGrammar;
-import edu.jhu.joshua.decoder.feature_function.translation_model.TMGrammar.Rule;
+import edu.jhu.joshua.decoder.feature_function.translation_model.Rule;
 import edu.jhu.joshua.decoder.feature_function.translation_model.TMGrammar.RuleBin;
 import edu.jhu.joshua.decoder.hypergraph.HyperGraph;
 import edu.jhu.joshua.decoder.hypergraph.HyperGraph.Deduction;
@@ -53,7 +56,7 @@ public class Bin
 	
 	//NOTE: MIN-HEAP, we put the worst-cost item at the top of the heap by manipulating the compare function
 	//heap_items: the only purpose is to help deecide which items should be removed from tbl_items during pruning 
-	private PriorityQueue<Item> heap_items =  new PriorityQueue(1, Item.NegtiveCostComparator);//TODO: initial capacity?
+	private PriorityQueue<Item> heap_items =  new PriorityQueue<Item>(1, Item.NegtiveCostComparator);//TODO: initial capacity?
 	private HashMap  tbl_items=new HashMap (); //to maintain uniqueness of items		
 	private Map<Integer,SuperItem>  tbl_super_items=new HashMap<Integer,SuperItem>();//signature by lhs
 	private ArrayList<Item> l_sorted_items=null;//sort values in tbl_item_signature, we need this list whenever necessary
@@ -62,97 +65,169 @@ public class Bin
 	public double best_item_cost = Symbol.IMPOSSIBLE_COST;//remember the cost of the best item in the bin
 	public double cut_off_cost =  Symbol.IMPOSSIBLE_COST; //cutoff=best_item_cost+relative_threshold	
 	int dead_items=0;//num of corrupted items in heap_items, note that the item in tbl_items is always good
-	Chart p_chart =null;
+	Chart p_chart = null;
 	
 	private static final Logger logger = Logger.getLogger(Bin.class.getName());
 	
-	public Bin(Chart chart){
-		p_chart=chart;
+	public Bin(Chart chart) {
+		this.p_chart = chart;
 	}
 	
-	//TODO reply on the correctness of rl.statelesscost
+	
+	//TODO reply on the correctness of rule.statelesscost
 	/*compute cost and the states of this item
 	 *returned ArrayList: expected_total_cost, finalized_total_cost, transition_cost, bonus, list of states*/
-	public HashMap compute_item(Rule rl, ArrayList<Item> ants_items, int i, int j){
-		long start = Support.current_time();
-		p_chart.n_called_compute_item++;
+	
+	public HashMap compute_item(
+		Rule rule, ArrayList<Item> previous_items, int i, int j
+	) {
+		long start_time = Support.current_time();
+		this.p_chart.n_called_compute_item++;
 		
-		double finalized_total_cost=0;	
-		ArrayList ants_states = new ArrayList();
-		if(ants_items!=null)
-			for(Item ant: ants_items){
-				finalized_total_cost += ant.best_deduction.best_cost;
-				ants_states.add(ant.tbl_states);
-			}		
-		HashMap  res_tbl_item_states = new HashMap ();
-		double transition_cost = 0.0;//transition cost: the sum of costs of the deduction/rule, including stateless and non-stateless
-		double bonus = 0.0;
-		for( Model m: p_chart.l_models){//not just the stateful ones because anything might have a prior
-			long start2 = Support.current_time();
-			if(m.isStateless()==false && m.isContextual()==false){				
-				HashMap  tem_tbl = m.transition(rl, ants_states, i, j, 0);
-				transition_cost += ((Double)tem_tbl.get(Symbol.TRANSITION_COST_SYM_ID)).doubleValue()*m.weight();
-				HashMap  tem_states_tbl = (HashMap )tem_tbl.get(Symbol.ITEM_STATES_SYM_ID);
-				bonus += ((Double)tem_tbl.get(Symbol.BONUS_SYM_ID))*m.weight();//future cost estimation
-				if(tem_states_tbl!=null){
-					res_tbl_item_states.putAll(tem_states_tbl);
-				}
-			}else{
-				bonus +=0; //TODO: future cost estimation is zero
+		double finalized_total_cost = 0.0;
+		
+		//// See bug note in FeatureFunction about List vs ArrayList
+		ArrayList<MapFFState> previous_states = new ArrayList<MapFFState>();
+		if (null != previous_items) {
+			for (Item item : previous_items) {
+				finalized_total_cost += item.best_deduction.best_cost;
+				previous_states.add(new MapFFState(
+					(HashMap<Integer,Object>)item.tbl_states ));
 			}
-			m.time_consumed += Support.current_time()-start2;
 		}
-		transition_cost += rl.statelesscost;//add statelesscost
-		finalized_total_cost += transition_cost;
-		double expected_total_cost = finalized_total_cost + bonus;
 		
-		HashMap  res = new HashMap ();
-		res.put(Symbol.EXPECTED_TOTAL_COST_SYM_ID,expected_total_cost); 
-		res.put(Symbol.FINALIZED_TOTAL_COST_SYM_ID,finalized_total_cost);
-		res.put(Symbol.TRANSITION_COST_SYM_ID, transition_cost);
-		//res.put(BONUS,bonus); //NOT USED
-		res.put(Symbol.ITEM_STATES_SYM_ID,res_tbl_item_states);
-		//System.out.println("t_cost: " + total_cost + "; a_cost: " + additive_cost +" ;t_cost: " + transition_cost +"; bonus: " + bonus );
-		p_chart.g_time_compute_item += Support.current_time()-start;
-		return res;
+		Map    all_item_states        = new HashMap(); //// What kind?
+		double transition_cost_sum    = 0.0;
+		double future_cost_estimation = 0.0;
+		
+		/* HACK: we iterate with <MapFFState> since that's
+		 * what we're passing into transition(). That is not
+		 * correct however.
+		 */
+		for (FeatureFunction<MapFFState> ff : this.p_chart.l_models) {
+			////long start2 = Support.current_time();
+			if (ff.isStateful()) {
+				
+				FFState state = ff.transition(rule, previous_states, i, j);
+				if (null == state) {
+					logger.severe("compute_item: transition returned null state");
+					continue;
+				}
+				
+				transition_cost_sum
+					+= ff.getWeight() * state.getTransitionCost();
+				
+				future_cost_estimation
+					+= ff.getWeight() * state.getFutureCostEstimation();
+				
+				Map item_state = state.getStateForItem();
+				if (null != item_state) {
+					all_item_states.putAll(item_state);
+				} else {
+					logger.severe("compute_item: null getStateForItem()"
+						+ "\n*"
+						+ "\n* This will lead insidiously to a crash in"
+						+ "\n* HyperGraph$Item.get_signature() since noone"
+						+ "\n* checks invariant conditions before then."
+						+ "\n*"
+						+ "\n* Good luck tracking it down\n");
+				}
+				
+			/*// TODO: future cost estimation is zero
+			} else {
+				future_cost_estimation += 0.0;
+			//*/
+			}
+			////ff.time_consumed += Support.current_time() - start2;
+		}
+		transition_cost_sum  += rule.statelesscost;
+		finalized_total_cost += transition_cost_sum;
+		double expected_total_cost
+			= finalized_total_cost + future_cost_estimation;
+		
+		HashMap item_map = new HashMap(); //// What kind?
+		item_map.put(Symbol.EXPECTED_TOTAL_COST_SYM_ID, expected_total_cost); 
+		item_map.put(Symbol.FINALIZED_TOTAL_COST_SYM_ID,finalized_total_cost);
+		item_map.put(Symbol.TRANSITION_COST_SYM_ID,     transition_cost_sum);
+		item_map.put(Symbol.ITEM_STATES_SYM_ID,         all_item_states);
+		
+		this.p_chart.g_time_compute_item
+			+= Support.current_time() - start_time;
+		
+		return item_map;
 	}
+	
 	
 	/*add all the items with GOAL_SYM state into the goal bin
 	 * the goal bin has only one Item, which itself has many deductions
 	 * only "goal bin" should call this function*/
-	public void transit_to_goal(Bin bin1){//bin1: the bin[0][n], this is not goal bin
-		l_sorted_items = new ArrayList();
-		Item goal_item = null;		
-        for(Item item1 : bin1.get_sorted_items()){
-            if( item1.lhs==Symbol.GOAL_SYM_ID){
-                double cost = item1.best_deduction.best_cost;
-                double final_transition_cost = 0.0;
-                for(Model  m_i : p_chart.l_models){
-                    double mdcost = m_i.finaltransition(item1.tbl_states);
-                    final_transition_cost += mdcost*m_i.weight();
-                }
-                ArrayList l_ants = new ArrayList();
-                l_ants.add(item1);
-                Deduction dt = new Deduction(null, cost+final_transition_cost, final_transition_cost, l_ants); 
-                //Support.write_log_line(String.format("Goal item, total_cost: %.3f; ant_cost: %.3f; final_tran: %.3f; ",cost+final_transition_cost,cost,final_transition_cost),  Support.INFO);
-                if(goal_item==null){
-                	goal_item = new Item(0,p_chart.sent_len+1,Symbol.GOAL_SYM_ID,null,dt, cost+final_transition_cost);
-                	l_sorted_items.add(goal_item);
-                }else{
-                	goal_item.add_deduction_in_item(dt);
-                	if(goal_item.best_deduction.best_cost>dt.best_cost)
-                		goal_item.best_deduction=dt;
-                }
-            } 
-        }
-        if (logger.isLoggable(Level.INFO)) logger.info(String.format("Goal item, best cost is %.3f",goal_item.best_deduction.best_cost));
-        ensure_sorted();
-        
-        if(get_sorted_items().size()!=1){
-        	if (logger.isLoggable(Level.SEVERE)) logger.severe("warning: the goal_bin does not have exactly one item");
+	public void transit_to_goal(Bin bin){//the bin[0][n], this is not goal bin
+		this.l_sorted_items = new ArrayList<Item>();
+		Item goal_item = null;
+		
+		for (Item item : bin.get_sorted_items()) {
+			if (item.lhs == Symbol.GOAL_SYM_ID) {
+				double cost                  = item.best_deduction.best_cost;
+				double final_transition_cost = 0.0;
+				
+				//// BUG: too specific this casting
+				for (FeatureFunction<MapFFState> ff : this.p_chart.l_models) {
+					final_transition_cost
+						+= ff.getWeight()
+						*  ff.finalTransition(new MapFFState(
+							(Map<Integer,Object>)item.tbl_states ));
+				}
+				
+				ArrayList<Item> previous_items = new ArrayList<Item>();
+				previous_items.add(item);
+				
+				Deduction dt = new Deduction(
+					null,
+					cost + final_transition_cost,
+					final_transition_cost, previous_items);
+				
+				if (logger.isLoggable(Level.FINE)) {
+					logger.fine(String.format(
+						"Goal item, total_cost: %.3f; ant_cost: %.3f; final_tran: %.3f; ",
+						cost + final_transition_cost,
+						cost,
+						final_transition_cost));
+				}
+				
+				if (null == goal_item) {
+					goal_item = new Item(
+						0,
+						this.p_chart.sent_len + 1,
+						Symbol.GOAL_SYM_ID,
+						null,
+						dt,
+						cost + final_transition_cost);
+					
+					this.l_sorted_items.add(goal_item);
+				} else {
+					goal_item.add_deduction_in_item(dt);
+					if (goal_item.best_deduction.best_cost > dt.best_cost) {
+						goal_item.best_deduction = dt;
+					}
+				}
+			} // End if item.lhs == Symbol.GOAL_SYM_ID
+		} // End foreach Item in bin.get_sorted_items()
+		
+		
+		if (logger.isLoggable(Level.INFO)) {
+			logger.info(String.format(
+				"Goal item, best cost is %.3f", 
+				goal_item.best_deduction.best_cost));
+		}
+		ensure_sorted();
+
+		if (1 != get_sorted_items().size()) {
+			if (logger.isLoggable(Level.SEVERE)) {
+				logger.severe("the goal_bin does not have exactly one item");
+			}
 			System.exit(0);
 		}
-    }
+	}
 	
 	
 	//axiom is for the zero-arity rules

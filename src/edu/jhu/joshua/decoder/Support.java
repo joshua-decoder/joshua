@@ -33,8 +33,8 @@ public class Support {
 	public static int ERROR=3;
 	public static int log_level= INFO;//0:debug, panic, error
 	
-	public static Iterator get_sorted_keys_iterator(HashMap tbl){
-		ArrayList<String> v = new ArrayList(tbl.keySet());
+	public static Iterator get_sorted_keys_iterator(HashMap<String,Object> tbl){
+		ArrayList<String> v = new ArrayList<String>(tbl.keySet());
 	    Collections.sort(v);
 	    return v.iterator();
 	}

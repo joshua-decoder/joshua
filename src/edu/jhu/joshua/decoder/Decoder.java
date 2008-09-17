@@ -24,10 +24,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import edu.jhu.joshua.decoder.chart_parser.Chart;
-import edu.jhu.joshua.decoder.feature_function.Model;
-import edu.jhu.joshua.decoder.feature_function.Model.ArityPhrasePenalty;
-import edu.jhu.joshua.decoder.feature_function.Model.PhraseModel;
-import edu.jhu.joshua.decoder.feature_function.Model.WordPenalty;
+import edu.jhu.joshua.decoder.feature_function.FeatureFunction;
+import edu.jhu.joshua.decoder.feature_function.ArityPhrasePenaltyFF;
+import edu.jhu.joshua.decoder.feature_function.PhraseModelFF;
+import edu.jhu.joshua.decoder.feature_function.WordPenaltyFF;
 import edu.jhu.joshua.decoder.feature_function.language_model.LMGrammar;
 import edu.jhu.joshua.decoder.feature_function.language_model.LMGrammar_JAVA;
 import edu.jhu.joshua.decoder.feature_function.language_model.LMGrammar_REMOTE;
@@ -107,7 +107,7 @@ public class Decoder {
 	public static LMModel p_lm_model=null;//general model
 	public static TMGrammar[] p_tm_grammars=null;
 	
-	public static  ArrayList<Model> p_l_models=null;
+	public static  ArrayList<FeatureFunction> p_l_models=null;
 	public static ArrayList<Integer> l_default_nonterminals=null; 
 	
 	//disk
@@ -408,7 +408,7 @@ public class Decoder {
 	}
 	
 	//translate a sentence
-	static void translate(TMGrammar[] grs,ArrayList<Model> l_models, String sentence, ArrayList<Integer> l_default_nonterminals, BufferedWriter t_writer_nbest, int sent_id, int topN, DiskHyperGraph dhg, KbestExtraction kbest_extractor){
+	static void translate(TMGrammar[] grs,ArrayList<FeatureFunction> l_models, String sentence, ArrayList<Integer> l_default_nonterminals, BufferedWriter t_writer_nbest, int sent_id, int topN, DiskHyperGraph dhg, KbestExtraction kbest_extractor){
 		long start = System.currentTimeMillis();
 		int[] sentence_numeric = Symbol.get_terminal_ids_for_sentence(sentence);
 		
@@ -428,10 +428,10 @@ public class Decoder {
 		//g_con.get_confusion_in_hyper_graph_cell_specific(p_hyper_graph,p_hyper_graph.sent_len);
 	}
 		
-	public static ArrayList<Model>  init_models(String config_file, LMGrammar p_lm){
+	public static ArrayList<FeatureFunction>  init_models(String config_file, LMGrammar p_lm){
 		BufferedReader t_reader_config = FileUtility.getReadFileStream(config_file,"UTF-8");
 		String line;
-		ArrayList<Model> l_models =new ArrayList<Model>();
+		ArrayList<FeatureFunction> l_models =new ArrayList<FeatureFunction>();
 		while((line=FileUtility.read_line_lzf(t_reader_config))!=null){
 			//line = line.trim().toLowerCase();
 			line = line.trim();
@@ -450,18 +450,18 @@ public class Decoder {
 					int owner = Symbol.add_terminal_symbol(fds[1]);
 					int column = (new Integer(fds[2].trim())).intValue();
 					double weight =(new Double(fds[3].trim())).doubleValue();
-					l_models.add(new Model.PhraseModel(owner, column, weight));
+					l_models.add(new PhraseModelFF(weight, owner, column));
 					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("Process Line: %s\nAdd PhraseModel, owner: %s; column: %d; weight: %.3f", line, owner, column, weight));
 				}else if(fds[0].compareTo("arityphrasepenalty")==0 && fds.length == 5){//arityphrasepenalty owner start_arity end_arity weight
 					int owner = Symbol.add_terminal_symbol(fds[1]);
 					int start_arity = (new Integer(fds[2].trim())).intValue();
 					int end_arity = (new Integer(fds[3].trim())).intValue();
 					double weight =(new Double(fds[4].trim())).doubleValue();
-					l_models.add(new Model.ArityPhrasePenalty(owner, start_arity, end_arity, weight));
+					l_models.add(new ArityPhrasePenaltyFF(weight, owner, start_arity, end_arity));
 					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("Process Line: %s\nAdd ArityPhrasePenalty, owner: %s; start_arity: %d; end_arity: %d; weight: %.3f", line, owner, start_arity, end_arity, weight));
 				}else if(fds[0].compareTo("wordpenalty")==0 && fds.length == 2){//wordpenalty weight
 					double weight =(new Double(fds[1].trim())).doubleValue();
-					l_models.add(new Model.WordPenalty(weight));
+					l_models.add(new WordPenaltyFF(weight));
 					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("Process Line: %s\nAdd WordPenalty, weight: %.3f", line, weight));
 				}else{
 					if (logger.isLoggable(Level.SEVERE)) logger.severe("Wrong config line: " + line);
