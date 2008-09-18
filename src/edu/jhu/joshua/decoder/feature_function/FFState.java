@@ -27,8 +27,13 @@ import java.util.Map;
  * @version $LastChangedDate: 2008-07-28 18:44:45 -0400 (Mon, 28 Jul 2008) $
  */
 public interface FFState {
-	/* Attributes */
+	/* Attributes */	
 	double getTransitionCost();
-	Map    getStateForItem(); // null unless "stateful"
+	
+	/** @return null unless "stateful" */
+	@SuppressWarnings("unchecked")
+	Map    getStateForItem();
+	
 	double getFutureCostEstimation();
+	
 }
