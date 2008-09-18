@@ -17,6 +17,7 @@
 package edu.jhu.joshua.decoder.feature_function.translation_model;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import edu.jhu.joshua.decoder.Symbol;
 import edu.jhu.joshua.decoder.feature_function.FeatureFunction;
@@ -32,7 +33,7 @@ import edu.jhu.joshua.decoder.feature_function.FeatureFunction;
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate$
  */
-public abstract class TMGrammar {
+public abstract class TMGrammar implements TMGrammarInterface<Integer> {
 	/*TMGrammar is composed by Trie nodes
 	Each trie node has: 
 	(1) RuleBin: a list of rules matching the french sides so far
@@ -64,6 +65,12 @@ public abstract class TMGrammar {
 	}
 	
 	public abstract TrieNode get_root();
+	
+	public Trie<Integer,Rule> getGrammarForSentence(List<Integer> sentence) {
+		throw new RuntimeException("Not yet implemented");
+		//TODO Implement this method as:
+		//     return get_root();
+	}
 	
 	public abstract void read_tm_grammar_from_file(final String grammar_file);
 	
