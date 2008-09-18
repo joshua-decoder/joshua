@@ -34,6 +34,7 @@ import edu.jhu.joshua.decoder.feature_function.translation_model.TMGrammar.TrieN
 import edu.jhu.joshua.decoder.feature_function.translation_model.TMGrammar_Memory.Rule_Memory;
 import edu.jhu.joshua.decoder.hypergraph.HyperGraph;
 import edu.jhu.joshua.decoder.hypergraph.HyperGraph.Item;
+import edu.jhu.joshua.lattice.Lattice;
 
 
 /**
@@ -61,7 +62,7 @@ public class Chart {
 	public DotChart[] l_dotcharts;//each grammar should have a dotchart associated with it
 	public Bin[][] l_bins;//note that in some cell, it might be null
 	private Bin goal_bin;
-	private int[] sentence;//a list of foreign words
+	private Lattice<Integer> sentence;//a list of foreign words
 	public int sent_len;//foreign sent len
 	private int sent_id;
 	
@@ -93,9 +94,12 @@ public class Chart {
 	
 	private static final Logger logger = Logger.getLogger(Chart.class.getName());
 	
-	public Chart(int[] sentence_in, ArrayList<FeatureFunction> models, int sent_id1) {   
+	//public Chart(int[] sentence_in, ArrayList<Model> models, int sent_id1) {
+//	public Chart(Lattice<Integer> sentence_in, ArrayList<Model> models, int sent_id1) {
+		public Chart(Lattice<Integer> sentence_in, ArrayList<FeatureFunction> models, int sent_id1) {
+//	public Chart(int[] sentence_in, ArrayList<FeatureFunction> models, int sent_id1) {   
 		sentence = sentence_in;
-		sent_len = sentence.length;
+		sent_len = sentence.size();
 		l_models = models;
 		l_bins = new Bin[sent_len][sent_len+1];		
 		sent_id = sent_id1;

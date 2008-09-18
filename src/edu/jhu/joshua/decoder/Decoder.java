@@ -38,6 +38,7 @@ import edu.jhu.joshua.decoder.feature_function.translation_model.TMGrammar_Memor
 import edu.jhu.joshua.decoder.hypergraph.DiskHyperGraph;
 import edu.jhu.joshua.decoder.hypergraph.HyperGraph;
 import edu.jhu.joshua.decoder.hypergraph.KbestExtraction;
+import edu.jhu.joshua.lattice.Lattice;
 import edu.jhu.lzfUtility.FileUtility;
 
 /**
@@ -412,8 +413,18 @@ public class Decoder {
 		long start = System.currentTimeMillis();
 		int[] sentence_numeric = Symbol.get_terminal_ids_for_sentence(sentence);
 		
+		Lattice<Integer> inputLattice; {
+			
+			Integer[] input = new Integer[sentence_numeric.length];
+			for (int i=0; i<sentence_numeric.length; i++) {
+				input[i] = sentence_numeric[i];
+			}
+
+			inputLattice = new Lattice<Integer>(input);
+		}
+
 		
-		Chart chart = new Chart(sentence_numeric,l_models,sent_id);
+		Chart chart = new Chart(inputLattice,l_models,sent_id);
 		chart.seed(grs,l_default_nonterminals, sentence_numeric); 
 		if (logger.isLoggable(Level.FINER)) logger.finer("after seed, time: " + (System.currentTimeMillis()-start)/1000);
 		HyperGraph p_hyper_graph =  chart.expand();
