@@ -237,17 +237,17 @@ public class TMGrammar_Disk  extends TMGrammar {
 			this.fOff = offset;
 		}
 		
-		public ArrayList<Rule> get_sorted_rules(){
+		public ArrayList<Rule> getSortedRules(){
 			if (!loaded) load();
 			return l_sorted_rules;
 		}
 		
-		public  int[] get_french(){
+		public  int[] getSourceSide(){
 			if (!loaded) load();
 			return french;
 		}		
 		
-		public int get_arity(){
+		public int getArity(){
 			if (!loaded) load();
 			return arity;
 		}
@@ -331,8 +331,12 @@ public class TMGrammar_Disk  extends TMGrammar {
 
 		//TODO: this function is wrong
 		public Rule_Disk(int lhs_in, int[] fr_in, int[] eng_in, int owner_in, float[] feat_scores_in, int arity_in){
-			super();			
+			super(TMGrammar.OOV_RULE_ID, lhs_in, fr_in, eng_in, owner_in, feat_scores_in, arity_in);			
+			
 			estimate_rule();//estimate lower-bound, and set statelesscost
+			
+			throw new RuntimeException("Rule_Disk constructor is out of date");
+			
 		}
 		
 		//obtain statelesscost

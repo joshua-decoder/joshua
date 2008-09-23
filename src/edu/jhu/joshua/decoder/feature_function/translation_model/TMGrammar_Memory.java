@@ -148,7 +148,7 @@ public class TMGrammar_Memory extends TMGrammar {
 		return p_rule;
 	}
 		
-	private static String replace_french_non_terminal(String symbol){
+	static String replace_french_non_terminal(String symbol){
 		return symbol.replaceAll(TMGrammar_Memory.nonterminalReplaceRegexp, "");//remove [, ], and numbers
 	}
 		
@@ -192,7 +192,7 @@ public class TMGrammar_Memory extends TMGrammar {
 		//recursive call, to make sure all rules are sorted
 		private void ensure_sorted(){
 			if(rule_bin!=null)
-				rule_bin.get_sorted_rules();
+				rule_bin.getSortedRules();
 			if(tbl_children!=null){
 				Object[] tem = tbl_children.values().toArray();
 				for(int i=0; i< tem.length; i++){					
@@ -217,19 +217,20 @@ public class TMGrammar_Memory extends TMGrammar {
 		}
 	}
 
-	//contain all rules with the same french side (and thus same arity)
+	/** contain all rules with the same french side (and thus same arity) */
 	public class RuleBin_Memory extends TMGrammar.RuleBin {
 		private PriorityQueue<Rule_Memory> heap_rules = null;
 		private double cutoff=Symbol.IMPOSSIBLE_COST;
         private boolean sorted=false;
 		private ArrayList<Rule> l_sorted_rules = new ArrayList<Rule>();
 		
-		
-		//TODO: now, we assume this function will be called only after all the rules have been read
-		//this method need to be synchronized as we will call this function only after the decoding begins
-		//to avoid the synchronized method, we should call this once the grammar is finished
+		/**
+		 * TODO: now, we assume this function will be called only after all the rules have been read
+		 * this method need to be synchronized as we will call this function only after the decoding begins
+		 * to avoid the synchronized method, we should call this once the grammar is finished
+		 */
 		//public synchronized ArrayList<Rule> get_sorted_rules(){		
-		public ArrayList<Rule> get_sorted_rules(){
+		public ArrayList<Rule> getSortedRules(){
 			if(sorted==false){//sort once				
 				l_sorted_rules.clear();
 				while(this.heap_rules.size()>0){
@@ -242,11 +243,11 @@ public class TMGrammar_Memory extends TMGrammar {
 			return l_sorted_rules;
 		}
 		
-		public  int[] get_french(){
+		public  int[] getSourceSide(){
 			return french;
 		}
 		
-		public int get_arity(){
+		public int getArity(){
 			return arity;
 		}
 		
@@ -283,77 +284,40 @@ public class TMGrammar_Memory extends TMGrammar {
 		
 		private void print_info(int level){
 			Support.write_log_line(String.format("RuleBin, arity is %d",arity),level);
-			ArrayList t_l = get_sorted_rules();
+			ArrayList t_l = getSortedRules();
 			for(int i=0; i< t_l.size(); i++)
 				((Rule_Memory)t_l.get(i)).print_info(level);
 		}
 	}
 
 	public static class Rule_Memory extends Rule {
-		private float est_cost=0;/*estimate_cost depends on rule itself, nothing else: statelesscost + transition_cost(non-stateless/non-contexual models),
-		it is only used in TMGrammar pruning and chart.prepare_rulebin, shownup in chart.expand_unary but not really used*/
+		
+		/** 
+		 * estimate_cost depends on rule itself, nothing else: statelesscost + transition_cost(non-stateless/non-contexual models),
+		 * it is only used in TMGrammar pruning and chart.prepare_rulebin, shownup in chart.expand_unary but not really used
+		 */
+		private float est_cost=0;
 
 		
-//		only called when creating rule in Chart, all others should call the other contructor
-		/*the transition cost for phrase model, arity penalty, word penalty are all zero, except the LM cost*/
+		/** 
+		 * only called when creating rule in Chart, all others should call the other contructor
+		 * the transition cost for phrase model, arity penalty, word penalty are all zero, except the LM cost
+		 */
 		public Rule_Memory(int lhs_in, int fr_in, int owner_in){
-			super();
-			lhs = lhs_in;
-		   	french = new int[1];
-		   	french[0]= fr_in;
-		   	english = new int[1];
-		   	english[0]= fr_in;
-		   	feat_scores = new float[1];
-		   	feat_scores[0]=0;
-		   	arity=0;
-		   	owner = owner_in;		   	
+			super(TMGrammar.OOV_RULE_ID, lhs_in, fr_in, owner_in);
+			  	
 		   	tem_estcost += estimate_rule();//estimate lower-bound for pruning purse, and set statelesscost
 		}
 					
 		public Rule_Memory(int r_id, String line, int owner_in){
-			super(line);
-			rule_id = r_id;
-			owner  = owner_in;
-//			######1: parse the line
-			String[] fds = line.split("\\s+\\|{3}\\s+");		
-			if(fds.length != 4){
-				Support.write_log_line("rule line does not have four fds; " + line, Support.ERROR);
-			}			
-			lhs = Symbol.add_non_terminal_symbol(TMGrammar_Memory.replace_french_non_terminal(fds[0]));
-				
-			arity=0;
-			String[] french_tem= fds[1].split("\\s+");
-			french = new int[french_tem.length];			
-			for(int i=0; i< french_tem.length; i++){				
-				if(is_non_terminal(french_tem[i])==true){
-					arity++;
-					//french[i]= Symbol.add_non_terminal_symbol(TMGrammar_Memory.replace_french_non_terminal(french_tem[i]));
-					french[i]= Symbol.add_non_terminal_symbol(french_tem[i]);//when storing hyper-graph, we need this
-				}else
-					french[i]= Symbol.add_terminal_symbol(french_tem[i]);
-			}
-			
-			//english side
-			String[] english_tem= fds[2].split("\\s+");
-			english = new int[english_tem.length];			
-			for(int i=0; i< english_tem.length; i++){				
-				if(is_non_terminal(english_tem[i])==true){
-					english[i]= Symbol.add_non_terminal_symbol(english_tem[i]);
-				}else
-					english[i]=Symbol.add_terminal_symbol(english_tem[i]);
-			}
-			
-			String[] t_scores = fds[3].split("\\s+");
-			feat_scores = new float[t_scores.length];
-			int i=0;
-			for(String score : t_scores)
-				feat_scores[i++] = (new Float(score)).floatValue();
+			super(r_id, line, owner_in);
 			
 			tem_estcost += estimate_rule();//estimate lower-bound, and set statelesscost, this must be called
 		}
 
 		
-		/* set the stateless cost, and set a lower-bound
+		/** 
+		 * set the stateless cost, and set a lower-bound
 		 * estimate inside the rule returns full estimate.
 		 */
 		protected float estimate_rule() {
@@ -361,11 +325,10 @@ public class TMGrammar_Memory extends TMGrammar {
 				return 0;
 			}
 			
-			// Need to cast because java complains about loosing precision
-			float estcost      = (float)0.0;
-			this.statelesscost = (float)0.0;
+			float estcost      = 0.0f;
+			this.statelesscost = 0.0f;
 			
-			for (FeatureFunction ff : TMGrammar.p_l_models) {
+			for (FeatureFunction<?> ff : TMGrammar.p_l_models) {
 				double mdcost = ff.estimate(this) * ff.getWeight();
 				estcost += mdcost;
 				if (! ff.isStateful()) {

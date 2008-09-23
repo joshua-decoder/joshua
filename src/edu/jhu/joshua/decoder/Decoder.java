@@ -408,8 +408,20 @@ public class Decoder {
 		p_tm_grammars[1]=regular_gr;
 	}
 	
-	//translate a sentence
-	static void translate(TMGrammar[] grs,ArrayList<FeatureFunction> l_models, String sentence, ArrayList<Integer> l_default_nonterminals, BufferedWriter t_writer_nbest, int sent_id, int topN, DiskHyperGraph dhg, KbestExtraction kbest_extractor){
+	/**
+	 * Translate a sentence.
+	 * 
+	 * @param grammars Translation grammars to be used during translation.
+	 * @param models Models to be used when scoring rules.
+	 * @param sentence The sentence to be translated.
+	 * @param defaultNonterminals
+	 * @param out
+	 * @param sentenceID
+	 * @param topN
+	 * @param diskHyperGraph
+	 * @param kbestExtractor
+	 */
+	static void translate(TMGrammar[] grammars,ArrayList<FeatureFunction> models, String sentence, ArrayList<Integer> defaultNonterminals, BufferedWriter out, int sentenceID, int topN, DiskHyperGraph diskHyperGraph, KbestExtraction kbestExtractor){
 		long start = System.currentTimeMillis();
 		int[] sentence_numeric = Symbol.get_terminal_ids_for_sentence(sentence);
 		
@@ -424,16 +436,16 @@ public class Decoder {
 		}
 
 		
-		Chart chart = new Chart(inputLattice,l_models,sent_id);
-		chart.seed(grs,l_default_nonterminals, sentence_numeric); 
+		Chart chart = new Chart(inputLattice,models,sentenceID);
+		chart.seed(grammars,defaultNonterminals, sentence_numeric); 
 		if (logger.isLoggable(Level.FINER)) logger.finer("after seed, time: " + (System.currentTimeMillis()-start)/1000);
 		HyperGraph p_hyper_graph =  chart.expand();
 		
 		if (logger.isLoggable(Level.FINER)) logger.finer("after expand, time: " + (System.currentTimeMillis()-start)/1000);
 		//p_hyper_graph.lazy_k_best_extract(l_models, topN, use_unique_nbest, sent_id,t_writer_nbest, use_tree_nbest,add_combined_cost);
-		kbest_extractor.lazy_k_best_extract_hg(p_hyper_graph,l_models, topN, use_unique_nbest, sent_id,t_writer_nbest, use_tree_nbest,add_combined_cost);
+		kbestExtractor.lazy_k_best_extract_hg(p_hyper_graph,models, topN, use_unique_nbest, sentenceID,out, use_tree_nbest,add_combined_cost);
 		if (logger.isLoggable(Level.FINER)) logger.finer("after kbest, time: " + (System.currentTimeMillis()-start)/1000);	
-		if(dhg!=null) dhg.save_hyper_graph(p_hyper_graph);
+		if(diskHyperGraph!=null) diskHyperGraph.save_hyper_graph(p_hyper_graph);
 		
 		//debug
 		//g_con.get_confusion_in_hyper_graph_cell_specific(p_hyper_graph,p_hyper_graph.sent_len);

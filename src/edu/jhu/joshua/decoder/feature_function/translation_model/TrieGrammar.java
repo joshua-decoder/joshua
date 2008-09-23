@@ -29,12 +29,12 @@ import java.util.List;
  * @author wren ng thornton <wren@users.sourceforge.net>
  * @version $LastChangedDate: 2008-08-03 04:12:57 -0400 (Sun, 03 Aug 2008) $
  */
-public interface Trie<Symbol,Result> {
+public interface TrieGrammar<Symbol,Result> {
 	
 	/**
 	 * Traverse one ply further down the trie.
 	 */
-	Trie<Symbol,Result> matchOne(Symbol symbol);
+	TrieGrammar<Symbol,Result> matchOne(Symbol symbol);
 	
 	
 	/**
@@ -43,7 +43,7 @@ public interface Trie<Symbol,Result> {
 	 * repeatedly, however some data structures may have a more
 	 * efficient implementation.
 	 */
-	Trie<Symbol,Result> matchPrefix(List<Symbol> symbols);
+	TrieGrammar<Symbol,Result> matchPrefix(List<Symbol> symbols);
 	
 	
 	/**

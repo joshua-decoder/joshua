@@ -14,17 +14,23 @@
  * along with this library; if not, write to the Free Software Foundation,
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package edu.jhu.joshua.decoder.feature_function.translation_model;
+package edu.jhu.sa.util.suffix_array;
 
-import java.util.List;
+import org.testng.Assert;
+import org.testng.annotations.Test;
 
 /**
- * 
+ * Front to end tests to extract rules from a sample corpus using suffix arrays.
+ *
  * @author Lane Schwartz
- * @version $LastChangedDate$
+ * @version $LastChangedDate:2008-09-18 12:47:23 -0500 (Thu, 18 Sep 2008) $
  */
-public interface TMGrammarInterface<Symbol> {
+public class ExtractRules {
 
-	public Trie<Symbol,Rule> getGrammarForSentence(List<Symbol> sentence);
+	//@Test(dependsOnMethods={"edu.jhu.util.suffix_array.SuffixArrayTest.findPhrase"})
+	@Test
+	public void setup() {
+		Assert.assertEquals(true, true);
+	}
 	
 }

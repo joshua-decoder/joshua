@@ -18,6 +18,7 @@ package edu.jhu.joshua.decoder.chart_parser;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -96,8 +97,8 @@ public class Chart {
 	
 	//public Chart(int[] sentence_in, ArrayList<Model> models, int sent_id1) {
 //	public Chart(Lattice<Integer> sentence_in, ArrayList<Model> models, int sent_id1) {
-		public Chart(Lattice<Integer> sentence_in, ArrayList<FeatureFunction> models, int sent_id1) {
-//	public Chart(int[] sentence_in, ArrayList<FeatureFunction> models, int sent_id1) {   
+	public Chart(Lattice<Integer> sentence_in, ArrayList<FeatureFunction> models, int sent_id1) {
+//		public Chart(int[] sentence_in, ArrayList<FeatureFunction> models, int sent_id1) {   
 		sentence = sentence_in;
 		sent_len = sentence.size();
 		l_models = models;
@@ -106,7 +107,7 @@ public class Chart {
 		goal_bin= new Bin(this);
 	}
 
-	//add un-translated wrds into the chart as item (with large cost)
+	/** add un-translated wrds into the chart as item (with large cost) */
 	//TODO: grammar specific?
 	public void seed(TMGrammar[] grs, ArrayList<Integer> default_nonterminals, int[] sentence_str){
 		l_grammars = grs;
@@ -126,7 +127,7 @@ public class Chart {
 		 if (logger.isLoggable(Level.FINE)) logger.fine("####finished seeding");
 	}
 	
-	//construct the hypergraph with the help from DotChart
+	/** construct the hypergraph with the help from DotChart */
 	public HyperGraph expand(){
 		//long start = System.currentTimeMillis();
 		long time_step1=0,time_step2=0,time_step3=0,time_step4=0;		
@@ -151,8 +152,8 @@ public class Chart {
 					if(l_grammars[k].filter_span(i, j, sent_len) && l_dotcharts[k].l_dot_bins[i][j]!=null){					
 						for(DotItem dt: l_dotcharts[k].l_dot_bins[i][j].l_dot_items){
 							if(dt.tnode.get_rule_bin()!=null){//have rules under this trienode									
-								if(dt.tnode.get_rule_bin().get_arity()==0){//rules without any non-terminal
-									ArrayList<Rule> l_rules = dt.tnode.get_rule_bin().get_sorted_rules();
+								if(dt.tnode.get_rule_bin().getArity()==0){//rules without any non-terminal
+									List<Rule> l_rules = dt.tnode.get_rule_bin().getSortedRules();
 									for(Rule rl : l_rules)										
 										add_axiom(i,j,rl);									
 								}else{//rules with non-terminal									
@@ -233,8 +234,10 @@ public class Chart {
 		return new HyperGraph((Item)goal_bin.get_sorted_items().get(0), -1, -1, sent_id, sent_len);//num_items/deductions : -1
 	}	
 	
-	//agenda based extension: this is necessary in case more than two unary rules can be applied in topological order s->x; ss->s
-	//for unary rules like s->x, once x is complete, then s is also complete
+	/**
+	 * agenda based extension: this is necessary in case more than two unary rules can be applied in topological order s->x; ss->s
+	 * for unary rules like s->x, once x is complete, then s is also complete
+	 */
 	private int add_unary_items(TMGrammar gr, int i, int j) {
 		Bin chart_bin = this.l_bins[i][j];
 		if (null == chart_bin) {
@@ -246,10 +249,10 @@ public class Chart {
 		while (t_queue.size() > 0) {
 			Item it = (Item)t_queue.remove(0);
 			TrieNode child_tnode = gr.get_root().match_symbol(it.lhs);//match rule and complete part
-			if(child_tnode != null && child_tnode.get_rule_bin()!=null && child_tnode.get_rule_bin().get_arity()==1){//have unary rules under this trienode					
+			if(child_tnode != null && child_tnode.get_rule_bin()!=null && child_tnode.get_rule_bin().getArity()==1){//have unary rules under this trienode					
 				ArrayList<Item> l_ants = new ArrayList<Item>();
 				l_ants.add(it);
-				ArrayList<Rule> l_rules = child_tnode.get_rule_bin().get_sorted_rules();
+				List<Rule> l_rules = child_tnode.get_rule_bin().getSortedRules();
 				for(Rule rl : l_rules){//for each unary rules								
 					HashMap  tbl_states = chart_bin.compute_item(rl, l_ants, i, j);				
 					Item res_item = chart_bin.add_deduction_in_bin( tbl_states, rl, i, j, l_ants);
@@ -263,7 +266,7 @@ public class Chart {
 		return res;
 	}
 		
-	//axiom is for rules with zero-arity
+	/** axiom is for rules with zero-arity */
 	private void add_axiom(int i, int j, Rule rl){
 		if(l_bins[i][j]==null)
 			l_bins[i][j]=new Bin(this);

@@ -239,10 +239,10 @@ public class Bin
 	/*add complete Items in Chart
 	 * pruning inside this function*/
 	public void complete_cell(int i, int j, ArrayList<SuperItem> l_super_items, RuleBin rb){//each super-item is a list of items	
-		ArrayList<Rule> l_rules = rb.get_sorted_rules();
+		List<Rule> l_rules = rb.getSortedRules();
 		//System.out.println(String.format("Complet_cell is called, n_rules: %d ", l_rules.size()));
 		for(Rule rl : l_rules){		
-			if(rb.get_arity()==1){				
+			if(rb.getArity()==1){				
 				SuperItem super_ant1 = (SuperItem)l_super_items.get(0);
 				//System.out.println(String.format("Complet_cell, size %d ", super_ant1.l_items.size()));
 				//rl.print_info(Support.DEBUG);
@@ -252,7 +252,7 @@ public class Bin
 					HashMap  tbl_states = compute_item(rl, l_ants, i, j);			
 					add_deduction_in_bin(tbl_states, rl, i, j, l_ants);
 				}
-			}else if(rb.get_arity()==2){
+			}else if(rb.getArity()==2){
 				SuperItem super_ant1 = (SuperItem)l_super_items.get(0);
 				SuperItem super_ant2 = (SuperItem)l_super_items.get(1);
 				//System.out.println(String.format("Complet_cell, size %d * %d ", super_ant1.l_items.size(),super_ant2.l_items.size()));
@@ -282,7 +282,7 @@ public class Bin
 		PriorityQueue<CubePruneState> heap_cands=new PriorityQueue<CubePruneState>();// in the paper, it is called cand[v]		
 		HashMap  cube_state_tbl = new HashMap ();//rememeber which state has been explored
 		
-		ArrayList<Rule> l_rules = rb.get_sorted_rules();
+		List<Rule> l_rules = rb.getSortedRules();
 		if(l_rules==null || l_rules.size()<=0)
 			return;
 			

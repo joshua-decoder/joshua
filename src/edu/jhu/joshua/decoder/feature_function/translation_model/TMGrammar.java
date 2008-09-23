@@ -33,7 +33,7 @@ import edu.jhu.joshua.decoder.feature_function.FeatureFunction;
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate$
  */
-public abstract class TMGrammar implements TMGrammarInterface<Integer> {
+public abstract class TMGrammar implements GrammarFactory<Integer> {
 	/*TMGrammar is composed by Trie nodes
 	Each trie node has: 
 	(1) RuleBin: a list of rules matching the french sides so far
@@ -66,7 +66,7 @@ public abstract class TMGrammar implements TMGrammarInterface<Integer> {
 	
 	public abstract TrieNode get_root();
 	
-	public Trie<Integer,Rule> getGrammarForSentence(List<Integer> sentence) {
+	public TrieGrammar<Integer,Rule> getGrammarForSentence(List<Integer> sentence) {
 		throw new RuntimeException("Not yet implemented");
 		//TODO Implement this method as:
 		//     return get_root();
@@ -77,7 +77,7 @@ public abstract class TMGrammar implements TMGrammarInterface<Integer> {
 	public abstract void read_tm_grammar_glue_rules();
 	
 	
-	//if the span covered by the chart bin is greather than the limit, then return false
+	/** if the span covered by the chart bin is greather than the limit, then return false */
 	public boolean filter_span(final int start, final int end, final int len) {
 		if (this.spanLimit == -1) {//mono-glue grammar
 			return (start == 0);
@@ -90,10 +90,13 @@ public abstract class TMGrammar implements TMGrammarInterface<Integer> {
 		//long start = Support.current_time();
 		/*String new_str = symbol.replaceAll("[\\[\\]\\,]+", "");//TODO
 		int res = new Integer(new_str.substring(new_str.length()-1, new_str.length())).intValue()-1;//TODO: assume only one integer, start from one*/
-		//// BUG: why are we constructing an Integer only to get its intValue?
+		int res = Integer.parseInt(symbol.substring(symbol.length() - 2, symbol.length() - 1)) - 1; //TODO: assume only one integer, start from one
+
+		
+/*		//// BUG: why are we constructing an Integer only to get its intValue?
 		int res = new Integer(
 				symbol.substring(symbol.length() - 2, symbol.length() - 1)
-			).intValue() - 1;//TODO: assume only one integer, start from one
+			).intValue() - 1; */
 		//Chart.g_time_check_nonterminal += Support.current_time()-start;
 		return res;
 		//return (new Integer(new_str.substring(new_str.length()-1, new_str.length()))).intValue();//TODO: assume only one integer, start from zero
@@ -112,18 +115,9 @@ public abstract class TMGrammar implements TMGrammarInterface<Integer> {
 	}
 	
 	//contain all rules with the same french side (and thus same arity)
-	public abstract class RuleBin {
+	public abstract class RuleBin implements RuleCollection {
 		protected int arity = 0;//number of non-terminals
 		protected int[] french;
 		
-		//TODO: now, we assume this function will be called only after all the rules have been read
-		//this method need to be synchronized as we will call this function only after the decoding begins
-		//to avoid the synchronized method, we should call this once the grammar is finished
-		//public synchronized ArrayList<Rule> get_sorted_rules(){
-		public abstract ArrayList<Rule> get_sorted_rules();
-		
-		public abstract int[] get_french();
-		
-		public abstract int get_arity();
 	}
 }
