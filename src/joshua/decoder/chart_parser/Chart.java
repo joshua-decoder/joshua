@@ -118,14 +118,15 @@ public class Chart {
 		}
 		//add OOV rules
 		//TODO: the transition cost for phrase model, arity penalty, word penalty are all zero, except the LM cost
-		 for(int i=0; i< sent_len; i++){
-	         for( int lhs : default_nonterminals){//create a rule, but do not add into the grammar trie     
-	        	 Rule r =  new TMGrammar_Memory.Rule_Memory(lhs, sentence_str[i], Symbol.UNTRANS_SYM_ID);//TODO: change onwer
+		 for (int i=0; i < sent_len; i++) {
+	         for (int lhs : default_nonterminals) {//create a rule, but do not add into the grammar trie
+	        	 Rule r = new TMGrammar_Memory.Rule_Memory(lhs, sentence_str[i], Symbol.UNTRANS_SYM_ID);//TODO: change onwer
 	        	 add_axiom(i, i+1, r);
 	         }
 		 }
 		 if (logger.isLoggable(Level.FINE)) logger.fine("####finished seeding");
 	}
+	
 	
 	/** construct the hypergraph with the help from DotChart */
 	public HyperGraph expand(){

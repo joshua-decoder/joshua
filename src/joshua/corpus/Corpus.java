@@ -14,11 +14,10 @@
  * along with this library; if not, write to the Free Software Foundation,
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package edu.jhu.joshua.corpus;
+package joshua.corpus;
 
-// Imports
-import edu.jhu.util.sentence.Phrase;
-import edu.jhu.util.sentence.Vocabulary;
+import joshua.util.sentence.Phrase;
+import joshua.util.sentence.Vocabulary;
 
 /**
  * Corpus is an interface that contains methods for accessing
@@ -47,19 +46,19 @@ public interface Corpus {
 	
 	
 	/**
-	 * @returns the number of words in the corpus.
+	 * @return the number of words in the corpus.
 	 */
 	public int getNumWords();
 	
 	
 	/**
-	 * @returns the sentence at the specified index
+	 * @return the sentence at the specified index
 	 */
 	public Phrase getSentence(int sentenceIndex);
 	
 	
 	/**
-	 * @returns the number of time that the specified phrase occurs 
+	 * @return the number of time that the specified phrase occurs 
 	 * in the corpus.
 	 */
 	public int getNumOccurrences(Phrase phrase);
@@ -67,6 +66,7 @@ public interface Corpus {
 
 	/** Returns a list of the sentence numbers which contain 
 	  * the specified phrase.
+	  * 
 	  * @param the phrase to look for
 	  * @return a list of the sentence numbers
 	  */
@@ -75,11 +75,12 @@ public interface Corpus {
 	
 	/** Returns a list of the sentence numbers which contain 
 	  * the specified phrase.
+	  * 
 	  * @param the phrase to look for
 	  * @param the maximum number of sentences to return
 	  * @return a list of the sentence numbers
 	  */
 	public int[] findSentencesContaining(Phrase phrase, int maxSentences);
-		
+	
 }
 

@@ -14,10 +14,9 @@
  * along with this library; if not, write to the Free Software Foundation,
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package edu.jhu.joshua.corpus;
+package joshua.corpus;
 
-// Imports
-import edu.jhu.util.sentence.*;
+import joshua.util.sentence.*;
 
 /**
  * ParallelCorpus is an interface that contains methods for accessing
@@ -37,7 +36,8 @@ public interface ParallelCorpus {
 	 * @return the source corpus 
 	 */
 	public Corpus getSourceCorpus();
-
+	
+	
 	/** 
 	 * @return the target corpus 
 	 */	
@@ -45,9 +45,10 @@ public interface ParallelCorpus {
 	
 	
 	/**
-	 * @returns the number of sentences in the corpus.
+	 * @return the number of sentences in the corpus.
 	 */
 	public int getNumSentences();
+	
 	
 	/** 
 	 * @return the alignment for the specified sentence pair.
@@ -60,20 +61,22 @@ public interface ParallelCorpus {
 	 */
 	public PhraseExtractor getPhraseExtractor();
 	
-			
+	
 	/** 
 	 * @return the phrase extractor to use in the getTranslations methods.
 	 */
 	public void setPhraseExtractor(PhraseExtractor phraseExtractor);
-
-
-	/** Collects all of the translations for the specified source phrase
-	  * and returns a collection of the translations (in the form of 
-	  * Alignments) associated with their frequency.
+	
+	
+	/**
+	 * Collects all of the translations for the specified source phrase and returns a collection of the translations (in the form of Alignments) associated with their frequency.
+	  *
 	  * @param sourcePhrase the phrase to find translations of
 	  * @param resultsSet the TranslationResultsSet to add the translation to
 	  */
-	public void getTranslationsOfSource(Phrase sourcePhrase, TranslationResultsSet resultsSet);
+	public void getTranslationsOfSource(
+		Phrase sourcePhrase,
+		TranslationResultsSet resultsSet);
 	
 	
 	/** Collects up to a specified number of translations of the 

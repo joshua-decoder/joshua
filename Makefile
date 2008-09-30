@@ -16,20 +16,20 @@ all:
 
 joshua:
 	( cd $(SRC) && \
-		find -X edu/jhu/joshua/decoder/ -name '*.java' \
+		find -X joshua/decoder/ -name '*.java' \
 		| xargs javac $(JAVA_FLAGS) )
 
 test:
 	java -Xmx2000m -Xms2000m           \
 		-classpath $(SRC)              \
-		edu.jhu.joshua.decoder.Decoder \
+		joshua.decoder.Decoder         \
 		$(EXAMPLE).config.javalm       \
 		$(EXAMPLE).test.in             \
 		$(EXAMPLE).nbest.javalm.out    \
 		2>&1 | tee $(EXAMPLE).nbest.javalm.err
 
 srilm_inter:
-	( cd $(SRC)edu/jhu/ckyDecoder && make )
+	( cd $(SRC)joshua/decoder && make )
 
 clean:
 	find ./$(SRC) -name '*.class' -exec rm {} \;
