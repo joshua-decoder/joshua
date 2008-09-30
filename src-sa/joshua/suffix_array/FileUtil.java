@@ -14,7 +14,7 @@
  * along with this library; if not, write to the Free Software Foundation,
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package edu.jhu.sa.util;
+package joshua.suffix_array;
 
 // Imports
 import java.io.*;
@@ -101,7 +101,7 @@ public class FileUtil {
 		File rootDir = new File(directory);
 		String[] allFilenames = rootDir.list();
 		
-		Pattern pattern = Pattern.compile(filterRegexp);
+		java.util.regex.Pattern pattern = java.util.regex.Pattern.compile(filterRegexp);
 		
 		List<String> filteredFilenames = new ArrayList<String>();
 		for(int i = 0; i < allFilenames.length; i++) {
