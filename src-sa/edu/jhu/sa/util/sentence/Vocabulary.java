@@ -17,10 +17,11 @@
 package edu.jhu.sa.util.sentence;
 
 // Imports
-import edu.jhu.sa.util.suffix_array.BasicPhrase;
-import edu.jhu.sa.util.suffix_array.SuffixArrayFactory;
 
 import java.util.*;
+
+import joshua.suffix_array.BasicPhrase;
+import joshua.suffix_array.SuffixArrayFactory;
 
 /**
  * Vocabulary is the class that keeps track of the unique words

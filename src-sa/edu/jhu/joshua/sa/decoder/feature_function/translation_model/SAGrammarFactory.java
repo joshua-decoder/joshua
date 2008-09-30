@@ -21,11 +21,11 @@ import java.util.List;
 import joshua.decoder.ff.tm.GrammarFactory;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.TrieGrammar;
+import joshua.suffix_array.AlignmentArray;
+import joshua.suffix_array.CorpusArray;
+import joshua.suffix_array.PrefixTree;
+import joshua.suffix_array.SuffixArray;
 
-import edu.jhu.sa.util.suffix_array.AlignmentArray;
-import edu.jhu.sa.util.suffix_array.CorpusArray;
-import edu.jhu.sa.util.suffix_array.PrefixTree;
-import edu.jhu.sa.util.suffix_array.SuffixArray;
 
 public class SAGrammarFactory implements GrammarFactory<Integer> {
 

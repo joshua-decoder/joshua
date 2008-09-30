@@ -1,4 +1,4 @@
-package edu.jhu.sa.util.suffix_array;
+package joshua.suffix_array;
 
 import java.util.Arrays;
 

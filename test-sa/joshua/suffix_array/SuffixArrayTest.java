@@ -15,10 +15,16 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
-package edu.jhu.sa.util.suffix_array;
+package joshua.suffix_array;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+
+import joshua.suffix_array.BasicPhrase;
+import joshua.suffix_array.ContiguousPhrase;
+import joshua.suffix_array.CorpusArray;
+import joshua.suffix_array.SuffixArray;
+import joshua.suffix_array.SuffixArray.Collocations;
 
 
 import org.testng.Assert;
@@ -26,11 +32,6 @@ import org.testng.annotations.Test;
 
 import edu.jhu.sa.util.sentence.Phrase;
 import edu.jhu.sa.util.sentence.Vocabulary;
-import edu.jhu.sa.util.suffix_array.BasicPhrase;
-import edu.jhu.sa.util.suffix_array.ContiguousPhrase;
-import edu.jhu.sa.util.suffix_array.CorpusArray;
-import edu.jhu.sa.util.suffix_array.SuffixArray;
-import edu.jhu.sa.util.suffix_array.SuffixArray.Collocations;
 
 public class SuffixArrayTest {
 

@@ -14,9 +14,14 @@
  * along with this library; if not, write to the Free Software Foundation,
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package edu.jhu.sa.util.suffix_array;
+package joshua.suffix_array;
 
 import java.io.IOException;
+
+import joshua.suffix_array.AlignmentArray;
+import joshua.suffix_array.CorpusArray;
+import joshua.suffix_array.SuffixArray;
+import joshua.suffix_array.SuffixArrayFactory;
 
 
 import org.testng.Assert;
@@ -24,10 +29,6 @@ import org.testng.annotations.Test;
 
 import edu.jhu.sa.util.sentence.Span;
 import edu.jhu.sa.util.sentence.Vocabulary;
-import edu.jhu.sa.util.suffix_array.AlignmentArray;
-import edu.jhu.sa.util.suffix_array.CorpusArray;
-import edu.jhu.sa.util.suffix_array.SuffixArray;
-import edu.jhu.sa.util.suffix_array.SuffixArrayFactory;
 
 /**
  * Unit tests for PrefixTree.Node
