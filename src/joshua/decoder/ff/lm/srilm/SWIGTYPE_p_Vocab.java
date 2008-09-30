@@ -6,7 +6,7 @@
  * the SWIG interface file instead.
  * ----------------------------------------------------------------------------- */
 
-package edu.jhu.joshua.decoder.feature_function.language_model.srilm;
+package joshua.decoder;
 
 
 public class SWIGTYPE_p_Vocab {

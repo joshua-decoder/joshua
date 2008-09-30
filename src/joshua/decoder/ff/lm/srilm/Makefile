@@ -20,7 +20,7 @@ srilm_java_wrap.o: srilm_java_wrap.cxx
 
 
 srilm_java_wrap.cxx: srilm_java.i
-	swig -c++ -java -package edu.jhu.ckyDecoder -outdir . $<
+	swig -c++ -java -package joshua.decoder -outdir . $<
 
 
 
