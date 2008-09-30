@@ -18,9 +18,10 @@ package edu.jhu.joshua.sa.decoder.feature_function.translation_model;
 
 import java.util.List;
 
-import edu.jhu.joshua.decoder.feature_function.translation_model.Rule;
-import edu.jhu.joshua.decoder.feature_function.translation_model.GrammarFactory;
-import edu.jhu.joshua.decoder.feature_function.translation_model.TrieGrammar;
+import joshua.decoder.ff.tm.GrammarFactory;
+import joshua.decoder.ff.tm.Rule;
+import joshua.decoder.ff.tm.TrieGrammar;
+
 import edu.jhu.sa.util.suffix_array.AlignmentArray;
 import edu.jhu.sa.util.suffix_array.CorpusArray;
 import edu.jhu.sa.util.suffix_array.PrefixTree;

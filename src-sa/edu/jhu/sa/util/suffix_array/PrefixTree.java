@@ -30,8 +30,9 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import edu.jhu.joshua.decoder.feature_function.translation_model.Rule;
-import edu.jhu.joshua.decoder.feature_function.translation_model.TrieGrammar;
+import joshua.decoder.ff.tm.Rule;
+import joshua.decoder.ff.tm.TrieGrammar;
+
 import edu.jhu.sa.util.LabelledSpan;
 import edu.jhu.sa.util.sentence.Phrase;
 import edu.jhu.sa.util.sentence.Span;
