@@ -1,9 +1,10 @@
-package edu.jhu.sa.util.sentence;
+package joshua.util.sentence;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import edu.jhu.sa.util.sentence.Vocabulary;
+import joshua.util.sentence.Vocabulary;
+
 
 
 

@@ -10,13 +10,13 @@ import joshua.suffix_array.HierarchicalPhrase;
 import joshua.suffix_array.PrefixTree;
 import joshua.suffix_array.SuffixArray;
 import joshua.suffix_array.PrefixTree.Node;
+import joshua.util.sentence.Span;
+import joshua.util.sentence.Vocabulary;
 
 
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import edu.jhu.sa.util.sentence.Span;
-import edu.jhu.sa.util.sentence.Vocabulary;
 
 public class PrefixTreeAdvancedTest {
 

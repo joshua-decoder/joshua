@@ -18,14 +18,15 @@ package joshua.suffix_array;
 
 // Imports
 import edu.jhu.joshua.sa.corpus.*;
-import edu.jhu.sa.util.ReverseOrder;
-import edu.jhu.sa.util.sentence.Phrase;
-import edu.jhu.sa.util.sentence.Vocabulary;
 
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.io.*;
+
+import joshua.util.ReverseOrder;
+import joshua.util.sentence.Phrase;
+import joshua.util.sentence.Vocabulary;
 
 
 

@@ -34,11 +34,11 @@ import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.TrieGrammar;
 import joshua.suffix_array.Pattern.PrefixCase;
 import joshua.suffix_array.Pattern.SuffixCase;
+import joshua.util.sentence.LabelledSpan;
+import joshua.util.sentence.Phrase;
+import joshua.util.sentence.Span;
+import joshua.util.sentence.Vocabulary;
 
-import edu.jhu.sa.util.LabelledSpan;
-import edu.jhu.sa.util.sentence.Phrase;
-import edu.jhu.sa.util.sentence.Span;
-import edu.jhu.sa.util.sentence.Vocabulary;
 
 
 

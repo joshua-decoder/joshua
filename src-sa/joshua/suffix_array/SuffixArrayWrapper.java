@@ -19,9 +19,10 @@ package joshua.suffix_array;
 import java.util.Collections;
 import java.util.List;
 
+import joshua.util.sentence.Phrase;
+import joshua.util.sentence.Span;
 
-import edu.jhu.sa.util.sentence.Phrase;
-import edu.jhu.sa.util.sentence.Span;
+
 
 
 //TODO Come up with a better name for this class

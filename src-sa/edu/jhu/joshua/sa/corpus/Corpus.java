@@ -16,8 +16,8 @@
  */
 package edu.jhu.joshua.sa.corpus;
 
-import edu.jhu.sa.util.sentence.Phrase;
-import edu.jhu.sa.util.sentence.Vocabulary;
+import joshua.util.sentence.Phrase;
+import joshua.util.sentence.Vocabulary;
 
 
 // Imports

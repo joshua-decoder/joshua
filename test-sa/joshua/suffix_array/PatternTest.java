@@ -19,12 +19,12 @@ package joshua.suffix_array;
 
 import joshua.suffix_array.Pattern;
 import joshua.suffix_array.PrefixTree;
+import joshua.util.sentence.Phrase;
+import joshua.util.sentence.Vocabulary;
 
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import edu.jhu.sa.util.sentence.Phrase;
-import edu.jhu.sa.util.sentence.Vocabulary;
 
 /**
  *

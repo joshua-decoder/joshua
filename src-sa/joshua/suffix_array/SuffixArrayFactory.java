@@ -19,10 +19,11 @@ package joshua.suffix_array;
 // Imports
 import edu.jhu.joshua.sa.corpus.*;
 import edu.jhu.sa.util.FileUtil;
-import edu.jhu.sa.util.sentence.Vocabulary;
 
 import java.util.*;
 import java.io.*;
+
+import joshua.util.sentence.Vocabulary;
 
 
 /**

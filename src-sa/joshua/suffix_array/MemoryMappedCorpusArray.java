@@ -21,7 +21,8 @@ import java.io.RandomAccessFile;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 
-import edu.jhu.sa.util.sentence.Vocabulary;
+import joshua.util.sentence.Vocabulary;
+
 
 
 

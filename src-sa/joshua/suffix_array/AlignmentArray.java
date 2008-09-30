@@ -19,7 +19,8 @@ package joshua.suffix_array;
 // Imports
 import java.io.*;
 
-import edu.jhu.sa.util.sentence.Span;
+import joshua.util.sentence.Span;
+
 
 /**
  * AlignmentArray is an auxiliary class which stores alignment information for  

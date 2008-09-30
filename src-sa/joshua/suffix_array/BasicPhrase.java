@@ -20,9 +20,10 @@ package joshua.suffix_array;
 import java.util.ArrayList;
 import java.util.List;
 
-import edu.jhu.sa.util.sentence.AbstractPhrase;
-import edu.jhu.sa.util.sentence.Phrase;
-import edu.jhu.sa.util.sentence.Vocabulary;
+import joshua.util.sentence.AbstractPhrase;
+import joshua.util.sentence.Phrase;
+import joshua.util.sentence.Vocabulary;
+
 
 
 

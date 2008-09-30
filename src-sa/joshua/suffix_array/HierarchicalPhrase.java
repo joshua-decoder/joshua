@@ -20,10 +20,11 @@ import java.util.List;
 
 import java.util.ArrayList;
 
-import edu.jhu.sa.util.sentence.AbstractPhrase;
-import edu.jhu.sa.util.sentence.Phrase;
-import edu.jhu.sa.util.sentence.Span;
-import edu.jhu.sa.util.sentence.Vocabulary;
+import joshua.util.sentence.AbstractPhrase;
+import joshua.util.sentence.Phrase;
+import joshua.util.sentence.Span;
+import joshua.util.sentence.Vocabulary;
+
 
 
 /**

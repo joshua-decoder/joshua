@@ -22,13 +22,13 @@ import joshua.suffix_array.AlignmentArray;
 import joshua.suffix_array.CorpusArray;
 import joshua.suffix_array.SuffixArray;
 import joshua.suffix_array.SuffixArrayFactory;
+import joshua.util.sentence.Span;
+import joshua.util.sentence.Vocabulary;
 
 
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import edu.jhu.sa.util.sentence.Span;
-import edu.jhu.sa.util.sentence.Vocabulary;
 
 /**
  * Unit tests for PrefixTree.Node

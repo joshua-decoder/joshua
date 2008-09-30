@@ -5,12 +5,12 @@ import java.io.IOException;
 import joshua.suffix_array.CorpusArray;
 import joshua.suffix_array.MemoryMappedCorpusArray;
 import joshua.suffix_array.SuffixArrayFactory;
+import joshua.util.sentence.Vocabulary;
 
 
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import edu.jhu.sa.util.sentence.Vocabulary;
 
 
 public class CorpusArrayTest {

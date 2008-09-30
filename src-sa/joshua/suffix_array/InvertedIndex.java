@@ -17,10 +17,11 @@
 package joshua.suffix_array;
 
 // Imports
-import edu.jhu.sa.util.Cache;
-import edu.jhu.sa.util.sentence.Phrase;
 
 import java.util.*;
+
+import joshua.util.Cache;
+import joshua.util.sentence.Phrase;
 
 
 
