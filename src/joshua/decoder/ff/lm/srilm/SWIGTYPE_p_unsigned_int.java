@@ -6,7 +6,7 @@
  * the SWIG interface file instead.
  * ----------------------------------------------------------------------------- */
 
-package joshua.decoder;
+package joshua.decoder.ff.lm.srilm;
 
 
 public class SWIGTYPE_p_unsigned_int {
