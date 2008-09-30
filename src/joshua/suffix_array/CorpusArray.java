@@ -17,7 +17,6 @@
 package joshua.suffix_array;
 
 // Imports
-import java.io.BufferedWriter;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.*;

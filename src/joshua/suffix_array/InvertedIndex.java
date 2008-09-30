@@ -77,7 +77,7 @@ public class InvertedIndex {
 			for (Phrase phrase : phrases) {
 				int[] boundsInSuffixArray = suffixArray.findPhrase(phrase);
 				int[] positions = suffixArray.getAllPositions(boundsInSuffixArray);
-				int length = phrase.size();
+				//int length = phrase.size();
 				Pattern pattern = new Pattern(phrase);
 				List<HierarchicalPhrase> hierarchicalPhrases = getHierarchicalPhrases(positions, pattern);
 				matchingPhrases.put(pattern, hierarchicalPhrases);

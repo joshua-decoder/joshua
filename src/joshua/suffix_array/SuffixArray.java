@@ -455,7 +455,7 @@ public class SuffixArray implements Corpus {
 		return collocations;
 	 }
 
-	 
+	 /*
 	 public List<int[]> queryIntersect(List<int[]> prefixMatches, List<int[]> suffixMatches) {
 		 
 		 List<int[]> result = new ArrayList<int[]>();
@@ -479,6 +479,7 @@ public class SuffixArray implements Corpus {
 		 
 		 return result;
 	 }
+	 */
 	 /*
 	 public boolean matchPrecedes(int[] matchA, int[] matchB) {
 		 int sentenceIndexA = corpus.getSentenceIndex(matchA[0]);
@@ -583,6 +584,8 @@ public class SuffixArray implements Corpus {
 
 	 }
 
+	 //TODO This comparator appears to not be used. What is it, and why isn't it used if it's still here? Should it be deleted?
+	 /*
 	 private final Comparator<int[]> matchXComparator = new Comparator<int[]>() {
 		 public int compare(int[] m1, int[] m2) {
 			 
@@ -603,6 +606,7 @@ public class SuffixArray implements Corpus {
 			 }
 		 } 
 	 };
+	 */
 	 
 	/**
 	 * Builds a HashMap of all the occurrences of the phrase, keying them based on the
@@ -614,7 +618,7 @@ public class SuffixArray implements Corpus {
 	 */
 	public HashMap<Integer,HashSet<Integer>> keyPositionsWithSentenceNumber(Phrase phrase) {
 		// keys are the sentence numbers of partial matches
-		HashMap<Integer,HashSet<Integer>> positionsKeyedWithSentenceNumber = new HashMap(size());
+		HashMap<Integer,HashSet<Integer>> positionsKeyedWithSentenceNumber = new HashMap<Integer,HashSet<Integer>>(size());
 		int[] bounds = findPhrase(phrase);
 		if(bounds == null)  return positionsKeyedWithSentenceNumber;
 		

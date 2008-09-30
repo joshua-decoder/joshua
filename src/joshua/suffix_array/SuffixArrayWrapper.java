@@ -16,11 +16,7 @@
  */
 package joshua.suffix_array;
 
-import java.util.Collections;
 import java.util.List;
-
-import joshua.util.sentence.Phrase;
-import joshua.util.sentence.Span;
 
 
 
