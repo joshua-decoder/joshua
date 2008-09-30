@@ -32,15 +32,15 @@ public class Support {
 	public static int ERROR=3;
 	public static int log_level= INFO;//0:debug, panic, error
 	
-	public static Iterator get_sorted_keys_iterator(HashMap<String,Object> tbl){
+	public static Iterator<String> get_sorted_keys_iterator(HashMap<String,Object> tbl){
 		ArrayList<String> v = new ArrayList<String>(tbl.keySet());
 	    Collections.sort(v);
 	    return v.iterator();
 	}
 	
-	public static void print_hash_tbl(HashMap tbl){
+	public static void print_hash_tbl(HashMap<String,?> tbl){
 		System.out.println("########### Hash table is #####");
-		for(Iterator it = tbl.keySet().iterator(); it.hasNext(); ){
+		for(Iterator<String> it = tbl.keySet().iterator(); it.hasNext(); ){
 			String key = (String) it.next();
 			System.out.println(key + " -|||- " + tbl.get(key));
 			//System.out.println(key + " -|||- " + ((Double[])tbl.get(key))[0]);
@@ -59,10 +59,10 @@ public class Support {
 		return res;
 	}
 	
-	public static int[] sub_int_array(ArrayList in, int start, int end){//start: inclusive; end: exclusive
+	public static int[] sub_int_array(ArrayList<Integer> in, int start, int end){//start: inclusive; end: exclusive
 		int[] res = new int[end-start];
 		for(int i=start; i<end; i++)
-			res[i-start]=(Integer)in.get(i);
+			res[i-start]=in.get(i);
 		return res;
 	}
 	
@@ -100,9 +100,9 @@ public class Support {
 		 long fSLEEP_INTERVAL = 100;
 	    try {
 	      System.gc();
-	      Thread.currentThread().sleep(fSLEEP_INTERVAL);
+	      Thread.sleep(fSLEEP_INTERVAL);
 	      System.runFinalization();
-	      Thread.currentThread().sleep(fSLEEP_INTERVAL);
+	      Thread.sleep(fSLEEP_INTERVAL);
 	    }
 	    catch (InterruptedException ex){
 	      ex.printStackTrace();
