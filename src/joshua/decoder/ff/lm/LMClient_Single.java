@@ -17,7 +17,7 @@
 package joshua.decoder.ff.lm;
 
 import joshua.decoder.Support;
-import edu.jhu.lzfUtility.SocketUtility; // BUG: needs reorg
+import joshua.util.SocketUtility;
 
 import java.util.ArrayList;
 import java.util.HashMap;

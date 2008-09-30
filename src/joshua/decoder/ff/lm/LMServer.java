@@ -19,7 +19,7 @@ package joshua.decoder.ff.lm;
 import joshua.decoder.Support;
 import joshua.decoder.Symbol;
 import joshua.decoder.ff.lm.srilm.LMGrammar_SRILM;
-import edu.jhu.lzfUtility.FileUtility; // BUG: needs reorg
+import joshua.util.FileUtility;
 
 import java.io.IOException;
 import java.net.InetAddress;

@@ -32,7 +32,7 @@ import joshua.decoder.hypergraph.DiskHyperGraph;
 import joshua.decoder.hypergraph.HyperGraph;
 import joshua.decoder.hypergraph.KbestExtraction;
 import joshua.lattice.Lattice;
-import edu.jhu.lzfUtility.FileUtility; // BUG: needs reorg
+import joshua.util.FileUtility;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;

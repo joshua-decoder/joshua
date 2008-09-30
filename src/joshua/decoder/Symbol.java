@@ -18,7 +18,7 @@ package joshua.decoder;
 
 import joshua.decoder.ff.lm.srilm.srilm;
 import joshua.decoder.ff.tm.TMGrammar;
-import edu.jhu.lzfUtility.FileUtility; // BUG: needs reorg
+import joshua.util.FileUtility;
 
 import java.io.BufferedReader;
 import java.util.ArrayList;

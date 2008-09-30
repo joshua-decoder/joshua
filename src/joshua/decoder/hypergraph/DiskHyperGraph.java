@@ -25,7 +25,7 @@ import joshua.decoder.ff.tm.TMGrammar_Memory.Rule_Memory;
 import joshua.decoder.hypergraph.HyperGraph;
 import joshua.decoder.hypergraph.HyperGraph.Deduction;
 import joshua.decoder.hypergraph.HyperGraph.Item;
-import edu.jhu.lzfUtility.FileUtility; // BUG: needs reorg
+import joshua.util.FileUtility;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;

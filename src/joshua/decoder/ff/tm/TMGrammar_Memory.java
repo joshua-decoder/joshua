@@ -20,7 +20,7 @@ import joshua.decoder.Decoder;
 import joshua.decoder.Support;
 import joshua.decoder.Symbol;
 import joshua.decoder.ff.FeatureFunction;
-import edu.jhu.lzfUtility.FileUtility; // BUG: needs reorg
+import joshua.util.FileUtility;
 
 import java.io.BufferedReader;
 import java.util.Comparator;
