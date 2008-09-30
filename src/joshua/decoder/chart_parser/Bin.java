@@ -14,7 +14,20 @@
  * along with this library; if not, write to the Free Software Foundation,
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package edu.jhu.joshua.decoder.chart_parser;
+package joshua.decoder.chart_parser;
+
+import joshua.decoder.Decoder;
+import joshua.decoder.Support;
+import joshua.decoder.Symbol;
+import joshua.decoder.ff.FeatureFunction;
+import joshua.decoder.ff.FFState;
+import joshua.decoder.ff.MapFFState;
+import joshua.decoder.ff.tm.TMGrammar;
+import joshua.decoder.ff.tm.Rule;
+import joshua.decoder.ff.tm.TMGrammar.RuleBin;
+import joshua.decoder.hypergraph.HyperGraph;
+import joshua.decoder.hypergraph.HyperGraph.Deduction;
+import joshua.decoder.hypergraph.HyperGraph.Item;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -25,19 +38,6 @@ import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import edu.jhu.joshua.decoder.Decoder;
-import edu.jhu.joshua.decoder.Support;
-import edu.jhu.joshua.decoder.Symbol;
-import edu.jhu.joshua.decoder.feature_function.FeatureFunction;
-import edu.jhu.joshua.decoder.feature_function.FFState;
-import edu.jhu.joshua.decoder.feature_function.MapFFState;
-import edu.jhu.joshua.decoder.feature_function.translation_model.TMGrammar;
-import edu.jhu.joshua.decoder.feature_function.translation_model.Rule;
-import edu.jhu.joshua.decoder.feature_function.translation_model.TMGrammar.RuleBin;
-import edu.jhu.joshua.decoder.hypergraph.HyperGraph;
-import edu.jhu.joshua.decoder.hypergraph.HyperGraph.Deduction;
-import edu.jhu.joshua.decoder.hypergraph.HyperGraph.Item;
 
 /**
  * this class implement functions: 
