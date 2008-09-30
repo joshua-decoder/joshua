@@ -17,8 +17,6 @@
 package joshua.suffix_array;
 
 // Imports
-import edu.jhu.joshua.sa.corpus.*;
-
 import java.util.*;
 import java.io.*;
 

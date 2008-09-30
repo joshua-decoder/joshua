@@ -24,9 +24,6 @@ import joshua.util.sentence.AbstractPhrase;
 import joshua.util.sentence.Phrase;
 import joshua.util.sentence.Vocabulary;
 
-import edu.jhu.joshua.sa.corpus.*;
-
-
 
 /**
  * SuffixArrayPhrase implements the Phrase interface by linking into indices within a corpus.  

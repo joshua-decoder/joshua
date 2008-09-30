@@ -17,8 +17,6 @@
 package joshua.suffix_array;
 
 // Imports
-import edu.jhu.joshua.sa.corpus.*;
-
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
