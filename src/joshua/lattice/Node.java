@@ -14,7 +14,7 @@
  * along with this library; if not, write to the Free Software Foundation,
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package edu.jhu.joshua.lattice;
+package joshua.lattice;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -35,17 +35,23 @@ public class Node<Label> implements Comparable<Node<Label>> {
 	//Member variables
 	//===============================================================
 	
-	/** Numeric integer identifier of this node. Package-private scope so that Lattice can quickly access this variable. */
+	/** 
+	 * Numeric integer identifier of this node. Package-private
+	 * scope so that Lattice can quickly access this variable.
+	 */
 	final Integer id;
 
-	/** Arcs which begin at this node. Package-private scope so that Lattice can quickly access this variable. */
+	/** 
+	 * Arcs which begin at this node. Package-private scope so
+	 * that Lattice can quickly access this variable.
+	 */
 	final List<Arc<Label>> outgoingArcs;
 	
-
+	
 	//===============================================================
 	//Constructor(s)
 	//===============================================================
-
+	
 	/**
 	 * Constructs a new node with the specified numeric identifier.
 	 */
@@ -53,6 +59,7 @@ public class Node<Label> implements Comparable<Node<Label>> {
 		this.id = id;
 		this.outgoingArcs = new ArrayList<Arc<Label>>();
 	}
+	
 	
 	//===========================================================
 	// Accessor methods (set/get)
@@ -67,6 +74,7 @@ public class Node<Label> implements Comparable<Node<Label>> {
 		return id;
 	}
 	
+	
 	/** 
 	 * Gets the arcs that begin at this node. 
 	 * 
@@ -76,11 +84,15 @@ public class Node<Label> implements Comparable<Node<Label>> {
 		return outgoingArcs;
 	}
 	
+	
 	/**
-	 * Gets an iterable object capable of iterating over all nodes directly reachable from this node.
-	 * This will be all nodes which are the target of an outgoing arc from this node.
+	 * Gets an iterable object capable of iterating over all
+	 * nodes directly reachable from this node. This will be
+	 * all nodes which are the target of an outgoing arc from
+	 * this node.
 	 * 
-	 * @return An iterable object capable of iterating over all nodes directly reachable from this node.
+	 * @return An iterable object capable of iterating over all
+	 *         nodes directly reachable from this node.
 	 */
 	public Iterable<Node<Label>> reachableNodes() {
 		final Iterator<Arc<Label>> arcIterator = outgoingArcs.iterator();
@@ -100,16 +112,16 @@ public class Node<Label> implements Comparable<Node<Label>> {
 					public void remove() {
 						throw new UnsupportedOperationException();	
 					}
-					
 				};
 			}
-			
 		};
 	}
 	
+	
 	/**
-	 * Adds a new outgoing arc to this node that points to the specified destination.
-	 * The new arc will have the specified weight and specified label.
+	 * Adds a new outgoing arc to this node that points to the
+	 * specified destination. The new arc will have the specified
+	 * weight and specified label.
 	 *   
 	 * @param destination Destination node of the new outgoing arc.
 	 * @param weight Weight of the new outgoing arc.
@@ -118,6 +130,7 @@ public class Node<Label> implements Comparable<Node<Label>> {
 	public void addArc(Node<Label> destination, double weight, Label label) {
 		outgoingArcs.add(new Arc<Label>(this, destination, weight, label));
 	}
+	
 	
 	/**
 	 * Gets the number of outgoing arcs that begin at this node.
@@ -128,12 +141,14 @@ public class Node<Label> implements Comparable<Node<Label>> {
 		return outgoingArcs.size();
 	}
 	
+	
 	public String toString() {
 		return "Node-"+id;
 	}
-
+	
+	
 	public int compareTo(Node<Label> o) {
 		return id.compareTo(o.id);
 	}
+	
 }
-

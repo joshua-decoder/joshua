@@ -14,24 +14,25 @@
  * along with this library; if not, write to the Free Software Foundation,
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package edu.jhu.util.suffix_array;
+package joshua.util.suffix_array;
 
-// Imports
-import edu.jhu.util.sentence.*;
-import edu.jhu.joshua.corpus.*;
+import joshua.util.sentence.*;
+import joshua.corpus.*;
 
 import java.util.*;
 import java.io.*;
 
 /**
- * SuffixArray is the main class for producing suffix arrays from corpora,
- * and manipulating them once created.  Suffix arrays are a space economical
- * way of storing a corpus and allowing very quick searching of any substring
- * within the corpus.  A suffix array contains a list of references to every
- * point in a corpus, and each reference denotes the suffix starting at that
- * point and continuing to the end of the corpus.  The suffix array is sorted
- * alphabetically, so any substring within the corpus can be found with a 
- * binary search in O(log n) time, were n is the length of the corpus.
+ * SuffixArray is the main class for producing suffix arrays from
+ * corpora, and manipulating them once created. Suffix arrays are
+ * a space economical way of storing a corpus and allowing very
+ * quick searching of any substring within the corpus. A suffix
+ * array contains a list of references to every point in a corpus,
+ * and each reference denotes the suffix starting at that point and
+ * continuing to the end of the corpus. The suffix array is sorted
+ * alphabetically, so any substring within the corpus can be found
+ * with a binary search in O(log n) time, were n is the length of
+ * the corpus.
  *
  * @author  Colin Bannard
  * @since   10 December 2004
@@ -51,12 +52,14 @@ public class SuffixArray implements Corpus {
 //===============================================================
 
 	/**
-	 * A random number generator used in the quick sort implementation.
+	 * A random number generator used in the quick sort
+	 * implementation.
 	 */
 	public static final Random RAND = new Random();   
 	
+	
 	/**
-	 * The maximum length suffix to consider during sorting. 
+	 * The maximum length suffix to consider during sorting.
 	 */
 	public static int MAX_COMPARISON_LENGTH = 20;
 
@@ -72,7 +75,7 @@ public class SuffixArray implements Corpus {
 //===============================================================
 
 	/** 
-	 * Constructor takes a CorpusArray and creates a sorted 
+	 * Constructor takes a CorpusArray and creates a sorted
 	 * suffix array from it.
 	 */
 	public SuffixArray(CorpusArray corpusArray) {
@@ -80,7 +83,7 @@ public class SuffixArray implements Corpus {
 		suffixes = new int[corpusArray.size()];
 
 		// Create an array of suffix IDs
-		for(int i = 0; i < corpusArray.size(); i++) {
+		for (int i = 0; i < corpusArray.size(); i++) {
 			suffixes[i] = i;
 		}
 		// Sort the array of suffixe
@@ -89,7 +92,9 @@ public class SuffixArray implements Corpus {
 
 
 	/**
-	 * Protected constructor takes in the already prepared member variables.
+	 * Protected constructor takes in the already prepared
+	 * member variables.
+	 * 
 	 * @see SuffixArrayFactor.createSuffixArray(CorpusArray)
 	 * @see SuffixArrayFactor.loadSuffixArray(String,String,String,CorpusArray)
 	 */
@@ -97,6 +102,7 @@ public class SuffixArray implements Corpus {
 		this.suffixes = suffixes;
 		this.corpus = corpusArray;
 	}
+	
 	
 	// ccb - an empty constructor allows us to have the RmiSuffixArray
 	// be a subclass of the SuffixArray.
@@ -116,48 +122,46 @@ public class SuffixArray implements Corpus {
 	
 	/**
 	 * Implemented for the Corpus interface. 
-	 * @returns the vocabulary that compriseds this corpus
+	 * 
+	 * @return the vocabulary that compriseds this corpus
 	 */
 	public Vocabulary getVocabulary() {
 		return corpus.vocab;
 	}
 	
 	
-	/** Implemented for the Corpus interface.
-	 */
+	/** Implemented for the Corpus interface. */
 	public int getNumSentences() {
 		return corpus.getNumSentences();
 	}
 	
 	
 	
-	/** Implemented for the Corpus interface.
-	 */
+	/** Implemented for the Corpus interface. */
 	public int getNumWords() {
 		return corpus.size();
 	}
 	
 	
 	
-	/** Implemented for the Corpus interface.
-	 */
+	/** Implemented for the Corpus interface. */
 	public Phrase getSentence(int sentenceIndex) {
 		return corpus.getSentence(sentenceIndex);
 	}
 	
 	
 	/**
-	 * @return the phrase spanning the specificied indicies in the corpus.
+	 * @return the phrase spanning the specificied indicies in
+	 *         the corpus.
 	 */
 	public Phrase getPhrase(int startPosition, int endPosition) {
 		return corpus.getPhrase(startPosition, endPosition);
 	}
 	
 	
-		
 	/**
-	 * @returns the number of time that the specified phrase occurs 
-	 * in the corpus.
+	 * @return the number of time that the specified phrase
+	 8         occurs in the corpus.
 	 */
 	public int getNumOccurrences(Phrase phrase) {
 		int[] bounds = findPhrase(phrase);
@@ -168,32 +172,35 @@ public class SuffixArray implements Corpus {
 	
 
 	/**
-	 * Returns the number of suffixes in the suffix array, which is
-	 * identical to the length of the corpus.
+	 * Returns the number of suffixes in the suffix array, which
+	 * is identical to the length of the corpus.
 	 */
 	public int size() {
 		return suffixes.length;
 	}
 	
+	
 	/** 
-	 * @return the position in the corpus corresponding to the 
-	 * specified index in the suffix array.
+	 * @return the position in the corpus corresponding to the
+	 *         specified index in the suffix array.
 	 */
 	public int getCorpusIndex(int suffixIndex) {
 		return suffixes[suffixIndex];
 	}
 	
+	
 	/**
-	 * @return the sentence number corresponding the specified 
-	 * corpus index.
+	 * @return the sentence number corresponding the specified
+	 *         corpus index.
 	 */
 	public int getSentenceIndex(int corpusIndex) {
 		return corpus.getSentenceIndex(corpusIndex);
 	}
 	
+	
 	/**
 	 * @return the corpus index that corresponds to the start
-	 * of the sentence.
+	 *         of the sentence.
 	 */
 	public int getSentencePosition(int sentenceIndex) {
 		return corpus.getSentencePosition(sentenceIndex);
@@ -206,22 +213,26 @@ public class SuffixArray implements Corpus {
 	
 	
 	
-	/** Returns a list of the sentence numbers which contain 
-	  * the specified phrase.
-	  * @param phrase the phrase to look for
-	  * @return a list of the sentence numbers
-	  */
+	/**
+	 * Returns a list of the sentence numbers which contain the
+	 * specified phrase.
+	 * 
+	 * @param phrase the phrase to look for
+	 * @return a list of the sentence numbers
+	 */
 	public int[] findSentencesContaining(Phrase phrase) {
 		return findSentencesContaining(phrase, Integer.MAX_VALUE);
 	}
 	
 	
-	/** Returns a list of the sentence numbers which contain 
-	  * the specified phrase.
-	  * @param phrase the phrase to look for
-	  * @param maxSentences the maximum number of sentences to return
-	  * @return a list of the sentence numbers
-	  */
+	/**
+	 * Returns a list of the sentence numbers which contain the
+	 * specified phrase.
+	 * 
+	 * @param phrase the phrase to look for
+	 * @param maxSentences the maximum number of sentences to return
+	 * @return a list of the sentence numbers
+	 */
 	public int[] findSentencesContaining(Phrase phrase, int maxSentences) {
 		int[] bounds = findPhrase(phrase);
 		if(bounds == null) return null;
@@ -238,9 +249,10 @@ public class SuffixArray implements Corpus {
 	
 	/**
 	 * Finds a phrase in the suffix array.  
+	 * 
 	 * @param phrase the search phrase
-	 * @return a tuple containing the start and the end bounds in the suffix array
-	 * for the phrase
+	 * @return a tuple containing the start and the end bounds
+	 *         in the suffix array for the phrase
 	 */
 	public int[] findPhrase(Phrase phrase) {
 		return findPhrase(phrase, 0, phrase.size());	
@@ -257,11 +269,11 @@ public class SuffixArray implements Corpus {
 	//===============================================================
 
 	/**
-	 * Constructs an auxiliary array that stores longest common prefixes.  
-	 * The length of the array is the corpus size+1.  Each elements lcp[i]
-	 * indicates the length of the common prefix between two positions 
-	 * s[i-1] and s[i] in the suffix array.
-	 *
+	 * Constructs an auxiliary array that stores longest common
+	 * prefixes. The length of the array is the corpus size+1.
+	 * Each elements lcp[i] indicates the length of the common
+	 * prefix between two positions s[i-1] and s[i] in the suffix
+	 * array.
 	 */
 	protected int[] calculateLongestCommonPrefixes() {
 		int[] longestCommonPrefixes = new int[suffixes.length +1];
@@ -284,13 +296,17 @@ public class SuffixArray implements Corpus {
 	// should be protected
 	
 	/**
-	 * Finds a phrase in the suffix array.  The phrase is extracted
-	 * from the sentence given the start and end points.     
-	 * @param sentence the sentence/superphrase to draw the search phrase from
-	 * @param phraseStart the start of the phrase in the sentence (inclusive)
-	 * @param phraseEnd the end of the phrase in the sentence (exclusive)
-	 * @return a tuple containing the start and the end bounds in the suffix array
-	 * for the phrase
+	 * Finds a phrase in the suffix array. The phrase is
+	 * extracted from the sentence given the start and end points.
+	 * 
+	 * @param sentence    the sentence/superphrase to draw the
+	 *                    search phrase from
+	 * @param phraseStart the start of the phrase in the sentence
+	 *                    (inclusive)
+	 * @param phraseEnd   the end of the phrase in the sentence
+	 *                    (exclusive)
+	 * @return a tuple containing the start and the end bounds
+	 *         in the suffix array for the phrase
 	 */
 	public int[] findPhrase(Phrase sentence, int phraseStart, int phraseEnd) {
 		return findPhrase(sentence.getWordIDArray(), phraseStart, phraseEnd);
@@ -298,13 +314,19 @@ public class SuffixArray implements Corpus {
 	
 	
 	/**
-	 * Finds a phrase in the suffix array.  The phrase is extracted
-	 * from the sentence given the start and end points.     
-	 * @param wordIDs an in representatino of the sentence/superphrase to draw the search phrase from
-	 * @param phraseStart the start of the phrase in the sentence (inclusive)
-	 * @param phraseEnd the end of the phrase in the sentence (exclusive)
-	 * @return a tuple containing the start and the end bounds in the suffix array
-	 * for the phrase, or null if the phrase is not found.
+	 * Finds a phrase in the suffix array. The phrase is extracted
+	 * from the sentence given the start and end points.
+	 * 
+	 * @param wordIDs     an in representatino of the
+	 *                    sentence/superphrase to draw the
+	 *                    search phrase from
+	 * @param phraseStart the start of the phrase in the sentence
+	 *                    (inclusive)
+	 * @param phraseEnd   the end of the phrase in the sentence
+	 *                    (exclusive)
+	 * @return a tuple containing the start and the end bounds
+	 *         in the suffix array for the phrase, or null if
+	 *         the phrase is not found.
 	 */
 	public int[] findPhrase(int[] wordIDs, int phraseStart, int phraseEnd) {
 		return findPhrase(wordIDs, phraseStart, phraseEnd, 0, suffixes.length-1);
@@ -313,19 +335,27 @@ public class SuffixArray implements Corpus {
 	
 	
 	/**
-	 * Finds a phrase in the suffix array.  The phrase is extracted
-	 * from the sentence given the start and end points. This version
-	 * of the method allows bounds to be specified in the suffix array,
-	 * which is useful when searching for increasingly longer subrphases 
-	 * in a sentences. 
+	 * Finds a phrase in the suffix array. The phrase is
+	 * extracted from the sentence given the start and end
+	 * points. This version of the method allows bounds to be
+	 * specified in the suffix array, which is useful when
+	 * searching for increasingly longer subrphases in a
+	 * sentences.
 	 *
-	 * @param wordIDs an in representatino of the sentence/superphrase to draw the search phrase from
-	 * @param phraseStart the start of the phrase in the sentence (inclusive)
-	 * @param phraseEnd the end of the phrase in the sentence (exclusive)
-	 * @param lowerBound the first index in the suffix array that will bound the search 
-	 * @param upperBound the last index in the suffix array that will bound the search
-	 * @return a tuple containing the start and the end bounds in the suffix array
-	 * for the phrase, or null if the phrase is not found.
+	 * @param wordIDs     an in representatino of the
+	 *                    sentence/superphrase to draw the
+	 *                    search phrase from
+	 * @param phraseStart the start of the phrase in the sentence
+	 *                    (inclusive)
+	 * @param phraseEnd   the end of the phrase in the sentence
+	 *                    (exclusive)
+	 * @param lowerBound  the first index in the suffix array
+	 *                    that will bound the search
+	 * @param upperBound  the last index in the suffix array
+	 *                    that will bound the search
+	 * @return a tuple containing the start and the end bounds
+	 *         in the suffix array for the phrase, or null if
+	 *         the phrase is not found.
 	 */
 	public int[] findPhrase(int[] wordIDs, int phraseStart, int phraseEnd, int lowerBound, int upperBound) {
 		int[] bounds = new int[2];
@@ -339,8 +369,10 @@ public class SuffixArray implements Corpus {
 	
 
 
-// ccb - debugging -- writing a method to find all subphrases within a sentence, using the "bounds" trick 
-// that recognizes that all phrases starting with the same sequence will be found within a particular bounds.
+// ccb - debugging -- writing a method to find all subphrases within
+// a sentence, using the "bounds" trick that recognizes that all
+// phrases starting with the same sequence will be found within a
+// particular bounds.
 
 	public HashMap findAllSubphrases(Phrase sentence) {
 		HashMap phraseToBoundsMap = new HashMap();
@@ -349,14 +381,18 @@ public class SuffixArray implements Corpus {
 			// the one word case...
 			int phraseEnd = phraseStart+1;
 			Phrase subphrase = sentence.subPhrase(phraseStart, phraseEnd);
-			// note that the bounds may be null if the word doesn't occur in the corpus
+			// note that the bounds may be null if the
+			// word doesn't occur in the corpus
 			int[] bounds = findPhrase(wordIDs, phraseStart, phraseEnd, 0, suffixes.length-1);
 			phraseToBoundsMap.put(subphrase, bounds);
 
 			// multi-word phrases...
 			for(phraseEnd = phraseStart+2; phraseEnd <= wordIDs.length && bounds != null; phraseEnd++) {
-				// incrementally longer subphrases occur in the suffix array within
-				//  the bounds of the previous subphrase, giving improved efficiency 
+				// incrementally longer subphrases
+				// occur in the suffix array within
+				// the bounds of the previous
+				// subphrase, giving improved
+				// efficiency
 				int lowerBound = bounds[0];
 				int upperBound = bounds[1];
 				bounds = findPhrase(wordIDs, phraseStart, phraseEnd, lowerBound, upperBound);
@@ -370,11 +406,9 @@ public class SuffixArray implements Corpus {
 	}
 
 
-
-	
 	/** 
-	 * Sorts the initalized, unsorted suffixes.  Uses quick sort and
-	 * the compareSuffixes method defined in CorpusArray.
+	 * Sorts the initalized, unsorted suffixes.  Uses quick
+	 * sort and the compareSuffixes method defined in CorpusArray.
 	 */ 
     protected void sort(int[] suffixes) {
         qsort(suffixes, 0, suffixes.length - 1);
@@ -382,8 +416,8 @@ public class SuffixArray implements Corpus {
 
 
 	/**
-	 * Creates a string of the semi-infinite strings in the corpus array.
-	 * Only use this on small suffixArrays!
+	 * Creates a string of the semi-infinite strings in the
+	 * corpus array. Only use this on small suffixArrays!
 	 */
 	public String toString() {
 		String str = "";
@@ -410,6 +444,7 @@ public class SuffixArray implements Corpus {
         array[j] = tmp;
     }
 	
+	
 	/** part of the quick sort implementation. */	
     private int partition(int[] array, int begin, int end) {
         int index = begin + RAND.nextInt(end - begin + 1);
@@ -423,7 +458,8 @@ public class SuffixArray implements Corpus {
         swap(array, index, end);        
         return (index);
     }
-
+	
+	
 	/** Quick sort */	
     private void qsort(int[] array, int begin, int end) {
         if (end > begin) {
@@ -434,21 +470,32 @@ public class SuffixArray implements Corpus {
     }
 
 
-	/** Finds the first or last occurrence of a phrase in the suffix array, within a subset
-	  * of the suffix array that is bounded by suffixArrayStart and suffixArrayEnd.  For efficiency
-	  * of looking up all subphrases in a sentence we do not require that multplie int[]s 
-	  * be created for each subphrase.  Instead this method will look for the subphrase within
-	  * the sentence between phraseStart and phraseEnd.  
-	  *
-	  * @param sentence the sentence/superphrase in int representation to draw the search phrase from
-	  * @param phraseStart the start of the phrase in the sentence (inclusive)
-	  * @param phraseEnd the end of the phrase in the sentence (exclusive)
-	  * @param suffixArrayStart the point at which to start the search in the suffix array
-	  * @param suffixArrayEnd the end point in the suffix array beyond which the search doesn't
-	  *        need to take place
-	  * @param findFirst a flag that indicates whether we should find the first or last 
-	  *        occurrence of the phrase
-	  */
+	/**
+	 * Finds the first or last occurrence of a phrase in the
+	 * suffix array, within a subset of the suffix array that
+	 * is bounded by suffixArrayStart and suffixArrayEnd. For
+	 * efficiency of looking up all subphrases in a sentence
+	 * we do not require that multplie int[]s be created for
+	 * each subphrase. Instead this method will look for the
+	 * subphrase within the sentence between phraseStart and
+	 * phraseEnd.
+	 *
+	 * @param sentence         the sentence/superphrase in int
+	 *                         representation to draw the search
+	 *                         phrase from
+	 * @param phraseStart      the start of the phrase in the
+	 *                         sentence (inclusive)
+	 * @param phraseEnd        the end of the phrase in the
+	 *                         sentence (exclusive)
+	 * @param suffixArrayStart the point at which to start the
+	 *                         search in the suffix array
+	 * @param suffixArrayEnd   the end point in the suffix array
+	 *                         beyond which the search doesn't
+	 *                         need to take place
+	 * @param findFirst        a flag that indicates whether
+	 *                         we should find the first or last
+	 *                         occurrence of the phrase
+	 */
 	private int findPhraseBound(int[] sentence, int phraseStart, int phraseEnd,
 								int suffixArrayStart, int suffixArrayEnd, boolean findFirst) {
 		int low = suffixArrayStart;
@@ -459,10 +506,13 @@ public class SuffixArray implements Corpus {
 			int mid = (low + high) >> 1;
 			int start = suffixes[mid];
 			int diff = corpus.comparePhrase(start, sentence, phraseStart, phraseEnd);
-			if (diff==0) {
-				// If the difference between the search phrase and the phrase in the corpus 
-				// is 0, then we have found it.  However, there might be multiple matches in
-				// the corpus, so we need to continue searching until we find the end point
+			if (diff == 0) {
+				// If the difference between the search phrase
+				// and the phrase in the corpus is 0, then we
+				// have found it.  However, there might be
+				// multiple matches in the corpus, so we need
+				// to continue searching until we find the end
+				// point
 				int neighbor = mid;
 				if (findFirst) {
 					neighbor--;
@@ -472,8 +522,9 @@ public class SuffixArray implements Corpus {
 				if (neighbor>=suffixArrayStart && neighbor<=suffixArrayEnd) {
 					int nextDiff = corpus.comparePhrase(suffixes[neighbor],sentence,phraseStart,phraseEnd);
 					if (nextDiff == 0) {
-						// There's another equivalent phrase, so we need to specify 
-						// in which direction to continue searching
+						// There's another equivalent phrase,
+						// so we need to specify in which
+						// direction to continue searching
 						if (findFirst) diff = 1; //search lower
 						else diff = -1; //search higher
 					}					
@@ -499,8 +550,7 @@ public class SuffixArray implements Corpus {
 // Main 
 //===============================================================
 
-	public static void main(String[] args) throws IOException
-	{
+	public static void main(String[] args) throws IOException {
 		// ccb - debugging
 		String lang = args[0];
 		String corpusName = args[1];

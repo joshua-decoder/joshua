@@ -14,10 +14,10 @@
  * along with this library; if not, write to the Free Software Foundation,
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package edu.jhu.util.sentence;
+package joshua.util.sentence;
 
-// Imports
-import edu.jhu.util.sentence.phrase_extraction.*;
+import joshua.util.sentence.phrase_extraction.*;
+
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Arrays;
@@ -65,18 +65,18 @@ public class Alignment {
 // Constructor(s)
 //===============================================================
 
-    /**
-     * Constructor that takes in already parsed alignment data.
+	/**
+	 * Constructor that takes in already parsed alignment data.
 	 *
-     * @param source the source sentence or phrase
-     * @param target  the target sentence or phrase
-     * @param grid a Grid representing the word-level alignment between the sentences.
-     */
-    public Alignment(Phrase source, Phrase target, Grid grid) {
-        this.source = source;
-        this.target = target;
-        this.grid = grid;
-    }
+	 * @param source the source sentence or phrase
+	 * @param target  the target sentence or phrase
+	 * @param grid a Grid representing the word-level alignment between the sentences.
+	 */
+	public Alignment(Phrase source, Phrase target, Grid grid) {
+		this.source = source;
+		this.target = target;
+		this.grid = grid;
+	}
 
 	
 	
@@ -87,45 +87,49 @@ public class Alignment {
 	//===========================================================
 	// Accessor methods (set/get)
 	//===========================================================
-    
-    /**
-     * @return the source Phrase
-     */
-    public Phrase getSource() {
-        return source;
-    }
-    
-    /**
-     * @return the target Phrase
-     */
-    public Phrase getTarget() {
-        return target;
-    }
-
-    /**
-     * @return the number of words in the source sentence
-     */
-    public int getSourceLength() {
-        return source.size();
-    }
-    
-    /**
-     * @return the number of words in the target sentence
-     */
-    public int getTargetLength() {
-        return target.size();
-    }
-     
 	
 	/**
-     * Sets the current alignment points stored with this phrase to the
-     * Grid.
+	 * @return the source Phrase
+	 */
+	public Phrase getSource() {
+		return source;
+	}
+	
+	
+	/**
+	 * @return the target Phrase
+	 */
+	public Phrase getTarget() {
+		return target;
+	}
+	
+	
+	/**
+	 * @return the number of words in the source sentence
+	 */
+	public int getSourceLength() {
+		return source.size();
+	}
+	
+	
+	/**
+	 * @return the number of words in the target sentence
+	 */
+	public int getTargetLength() {
+		return target.size();
+	}
+	
+	
+	/**
+	 * Sets the current alignment points stored with this phrase to the
+	 * Grid.
 	 *
-     * @param newAlignmentPoints the grid to use for this phrase
-     */
-    public void setAlignmentPoints(Grid newAlignmentPoints) {
-        grid = newAlignmentPoints;
-    }
+	 * @param newAlignmentPoints the grid to use for this phrase
+	 */
+	public void setAlignmentPoints(Grid newAlignmentPoints) {
+		grid = newAlignmentPoints;
+	}
+	
 	
 	/**
 	 * Gets the current alignment points stored with this phrase.
@@ -135,14 +139,16 @@ public class Alignment {
 	public Grid getAlignmentPoints() {
 		return grid;
 	}
-    
 	
-	/** Returns a portion of this alignment deliniated by the span.
-	  * Creates subphrases spanning the sourceStart-sourceEnd and 
-	  * targetStart-targetEnd indexes, and creates a MaskedGrid for the area.
-	  * These operations are all reasonably compact in memory, since
-	  * they reuse the superphrases and the larger grid.
-	  */
+	
+	/**
+	 * Returns a portion of this alignment deliniated by the
+	 * span. Creates subphrases spanning the sourceStart-sourceEnd
+	 * and targetStart-targetEnd indexes, and creates a MaskedGrid
+	 * for the area. These operations are all reasonably compact
+	 * in memory, since they reuse the superphrases and the larger
+	 * grid.
+	 */
 	public Alignment getSubAlignment(Span span) {
 		Phrase sourcePhrase = getSource().subPhrase(span.getSourceStart(), span.getSourceEnd());
 		Phrase targetPhrase = getTarget().subPhrase(span.getTargetStart(), span.getTargetEnd());
@@ -150,27 +156,30 @@ public class Alignment {
 		return new Alignment(sourcePhrase, targetPhrase, subgrid);
 	}
 	
+	
 	//===========================================================
 	// Methods
 	//===========================================================
 
-    /**
-     * Transposes the Alignment. Source becomes target and vice versa,
-     * @see edu.jhu.util.sentence.Grid#transpose()
-     */
-    public void transpose() {
-        Phrase oldSource = source;
-        source = target;
-        target = oldSource;
-        grid.transpose();
-    }
+	/**
+	 * Transposes the Alignment. Source becomes target and vice versa,
+	 * @see joshua.util.sentence.Grid#transpose()
+	 */
+	public void transpose() {
+		Phrase oldSource = source;
+		source = target;
+		target = oldSource;
+		grid.transpose();
+	}
 
 
 	/** 
-	 * This method is used in decoding to incrementally build up larger alignments
-	 * by expands the target phrase.  The source sentence is given from the outset,
-	 * so this alignment will aready have all the source words.  We simply append 
-	 * the target phrase and integrate its alignments points at the appropriate offset.
+	 * This method is used in decoding to incrementally build
+	 * up larger alignments by expands the target phrase. The
+	 * source sentence is given from the outset, so this alignment
+	 * will aready have all the source words. We simply append
+	 * the target phrase and integrate its alignments points at
+	 * the appropriate offset.
 	 */
 	public Alignment expandTarget(Alignment expandedAlignment, int sourcePosition) {
 		int targetLength = getTargetLength();
@@ -190,25 +199,26 @@ public class Alignment {
 										
 		return new Alignment(this.source, expandedTarget, expandedGrid);
 	}
-
-
-			
+	
+	
 	/**
-	 * Two alignments are equal if they have the same source and target.  
-	 * Note that grid is not used in the calculation. 
+	 * Two alignments are equal if they have the same source
+	 * and target. Note that grid is not used in the calculation.
 	 */
 	public boolean equals(Object o) {
 		if (o == null || !o.getClass().isInstance(this)) return false;
-        Alignment other = (Alignment)o;
+		Alignment other = (Alignment)o;
 		return (this.source.equals(other.source) &&
 					  this.target.equals(other.target));
 	}
 	
+	
 	/**
 	 * Uses the standard java approach of calculating hashCode.
-	 * Start with a seed, add in every value multiplying the exsiting
-	 * hash times an offset.
-	 * @return int hashCode for the list
+	 * Start with a seed, add in every value multiplying the
+	 * exsiting hash times an offset.
+	 *
+	 *  @return int hashCode for the list
 	 */
 	public int hashCode() {
 		int result = HASH_SEED;
@@ -221,33 +231,37 @@ public class Alignment {
 		return result;
 	}
 	
+	
 	/**
-     * Returns a string representation of the Alignment.
-     * @return a String representation.
-     */
+	 * Returns a string representation of the Alignment.
+	 * 
+	 * @return a String representation.
+	 */
 	public String toString() {
 		return toString(true);
 	}
 	
-    /**
-     * Returns a string representation of the Alignment.
+	
+	/**
+	 * Returns a string representation of the Alignment.
+	 * 
 	 * @param includeGrid a flag that allows the grid to be optionally printed
-     * @return a String representation.
-     */
-    public String toString(boolean includeGrid) {
-        StringBuffer buf = new StringBuffer();
-        buf.append("<\"");
-        buf.append(source.toString());
-        buf.append("\", \"");
-        buf.append(target.toString());
+	 * @return a String representation.
+	 */
+	public String toString(boolean includeGrid) {
+		StringBuffer buf = new StringBuffer();
+		buf.append("<\"");
+		buf.append(source.toString());
+		buf.append("\", \"");
+		buf.append(target.toString());
 		buf.append("\"");
-		if(includeGrid) {
+		if (includeGrid) {
 			buf.append(", ");
 			buf.append(grid.toString());
 		}
 		buf.append(">");
-        return buf.toString();
-    }
+		return buf.toString();
+	}
 	
 	
 	/** 
@@ -257,7 +271,7 @@ public class Alignment {
 		StringBuffer buffer = new StringBuffer();
 		
 		int longestTargetWord = 0;
-		for(int i = 0; i < getTargetLength(); i++) {
+		for (int i = 0; i < getTargetLength(); i++) {
 			longestTargetWord = Math.max(longestTargetWord, target.get(i).toString().length());
 		}
 		
@@ -265,9 +279,9 @@ public class Alignment {
 		Arrays.fill(space, ' ');
 
 		// print the source words
-		for(int i = 0; i < getSourceLength(); i++) {
+		for (int i = 0; i < getSourceLength(); i++) {
 			buffer.append(space);
-			for(int j = 0; j <= i; j++) {
+			for (int j = 0; j <= i; j++) {
 				buffer.append("  |");
 			}
 			buffer.append(source.get(i));
@@ -280,14 +294,14 @@ public class Alignment {
 		Arrays.fill(space, '-');
 		buffer.append(space);
 		buffer.append('\n');
-								
+		
 		// print the target words and the graph
 		boolean[][] array = grid.generateBooleanArray();
-		for(int row = 0; row < getTargetLength(); row++) {
+		for (int row = 0; row < getTargetLength(); row++) {
 			String targetWord = target.get(row).toString();
 			space = new char[longestTargetWord - targetWord.length()];
 			Arrays.fill(space, ' ');
-			buffer.append(space);			
+			buffer.append(space);
 			buffer.append(targetWord);
 			buffer.append("  |");
 			for(int column = 0; column < getSourceLength(); column++) {
@@ -300,14 +314,11 @@ public class Alignment {
 			}
 			buffer.append("\n");
 		}
-
-		return buffer.toString();	
+		
+		return buffer.toString();
 	}
 	
 	
-	
-	
-		
 //===============================================================
 // Protected 
 //===============================================================
@@ -333,8 +344,7 @@ public class Alignment {
 // Main 
 //===============================================================
 
-	public static void main(String[] args) throws Exception
-	{
+	public static void main(String[] args) throws Exception {
 		Vocabulary enVocab = new Vocabulary();
 		Vocabulary deVocab = new Vocabulary();
 		Phrase source = new Phrase("the minutes of yesterday ' s sitting have been distributed .", enVocab);

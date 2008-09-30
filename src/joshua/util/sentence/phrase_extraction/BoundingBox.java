@@ -14,10 +14,9 @@
  * along with this library; if not, write to the Free Software Foundation,
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package edu.jhu.util.sentence.phrase_extraction;
+package joshua.util.sentence.phrase_extraction;
 
-// Imports
-import edu.jhu.util.sentence.*;
+import joshua.util.sentence.*;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -64,21 +63,24 @@ public class BoundingBox implements PhraseExtractor {
 	// Methods
 	//===========================================================
 
-	/** Returns the set of all phrase alignments that are contained 
-	  * in the alignment.
-	  *
-	  * @param alignment the Alignment to extract phrase alignments from
-	  */ 
+	/**
+	 * Returns the set of all phrase alignments that are contained
+	 * in the alignment.
+	 *
+	 * @param alignment the Alignment to extract phrase alignments from
+	 */ 
 	public Collection getAllPhraseAlignments(Alignment alignment) {
 		return getAllPhraseAlignments(alignment, Math.max(alignment.getSourceLength(), alignment.getTargetLength()));
 	}
-
-	/** Returns the set of all phrase alignments up to the specified
-	  * maximum length that are contained in the alignment.
-	  *
-	  * @param alignment the Alignment to extract phrase alignments from
-	  * @param maxLength the maximum length for both the source and target phrases 
-	  */ 	
+	
+	
+	/**
+	 * Returns the set of all phrase alignments up to the
+	 * specified maximum length that are contained in the alignment.
+	 *
+	 * @param alignment the Alignment to extract phrase alignments from
+	 * @param maxLength the maximum length for both the source and target phrases 
+	 */ 	
 	public Collection getAllPhraseAlignments(Alignment alignment, int maxLength) {
 		ArrayList phraseAlignments = new ArrayList();
 		// i is the start point of the source phrase
@@ -102,13 +104,15 @@ public class BoundingBox implements PhraseExtractor {
 	}
 	
 	
-	/** Returns the phrase alignments for the specified source phrase.  If
-	  * the source phrase is unaligned, returns an empty set.
-	  *
-	  * @param alignment the Alignment to use when extracting the aligned phrase
-	  * @param targetStart the first word of the source phrase (inclusive)
-	  * @param targetEnd the final word of the source phrase (exclusive)
-	  */
+	/**
+	 * Returns the phrase alignments for the specified source
+	 * phrase. If the source phrase is unaligned, returns an
+	 * empty set.
+	 *
+	 * @param alignment the Alignment to use when extracting the aligned phrase
+	 * @param targetStart the first word of the source phrase (inclusive)
+	 * @param targetEnd the final word of the source phrase (exclusive)
+	 */
 	public Collection getSourceAlignments(Alignment alignment, int sourceStart, int sourceEnd) {
 		int[] points = alignment.getAlignmentPoints().getRowPoints(sourceStart, sourceEnd);
 		if(points == null || points.length == 0) return new ArrayList();
@@ -126,13 +130,15 @@ public class BoundingBox implements PhraseExtractor {
 	
 	
 	
-	/** Returns the phrase alignments for the specified target phrase.  If
-	  * the source phrase is unaligned, returns an empty set.
-	  *
-	  * @param alignment the Alignment to use when extracting the aligned phrase
-	  * @param targetStart the first word of the target phrase (inclusive)
-	  * @param targetEnd the final word of the target phrase (exclusive)
-	  */
+	/**
+	 * Returns the phrase alignments for the specified target
+	 * phrase. If the source phrase is unaligned, returns an
+	 * empty set.
+	 *
+	 * @param alignment the Alignment to use when extracting the aligned phrase
+	 * @param targetStart the first word of the target phrase (inclusive)
+	 * @param targetEnd the final word of the target phrase (exclusive)
+	 */
 	public Collection getTargetAlignments(Alignment alignment, int targetStart, int targetEnd) {
 		int[] points = alignment.getAlignmentPoints().getColumnPoints(targetStart, targetEnd);
 		if(points == null || points.length == 0) return new ArrayList();
@@ -150,8 +156,10 @@ public class BoundingBox implements PhraseExtractor {
 
 
 
-	/** Returns the set of all spans of phasal alignments up to the specified
-	 * maximum length that are contained in the alignment.
+	/**
+	 * Returns the set of all spans of phasal alignments up to
+	 * the specified maximum length that are contained in the
+	 * alignment.
 	 *
 	 * @param alignment the Alignment to extract phrase alignments from
 	 * @param maxLength the maximum length for both the source and target phrases 
@@ -164,15 +172,17 @@ public class BoundingBox implements PhraseExtractor {
 
 
 
-	/** Returns a collection of spans for the phrase alignments that match the specified
-	  * source phrase.  If the source phrase is unaligned, returns an empty set.
-	  *
-	  * @param alignment the Alignment to use when extracting the aligned phrase
-	  * @param sourceStart the first word of the source phrase (inclusive)
-	  * @param sourceEnd the first word of the source phrase (inclusive)
-	  * @param sourceOffset the start position of the alignment's source sentence in the source corpus
-	  * @param targetOffset the start position of the alignment's target sentence in the target corpus
-	  */	
+	/**
+	 * Returns a collection of spans for the phrase alignments
+	 * that match the specified source phrase. If the source
+	 * phrase is unaligned, returns an empty set.
+	 *
+	 * @param alignment the Alignment to use when extracting the aligned phrase
+	 * @param sourceStart the first word of the source phrase (inclusive)
+	 * @param sourceEnd the first word of the source phrase (inclusive)
+	 * @param sourceOffset the start position of the alignment's source sentence in the source corpus
+	 * @param targetOffset the start position of the alignment's target sentence in the target corpus
+	 */	
 	public Collection getSourceAlignmentSpans(Grid alignmentPoints, int sourceStart, int sourceEnd, int sourceOffset, int targetOffset) {
 		ArrayList spans = new ArrayList();
 	
@@ -189,15 +199,17 @@ public class BoundingBox implements PhraseExtractor {
 	}
    
    
-	/** Returns a collection of spans for the phrase alignments that match the specified
-	  * target phrase.  If the target phrase is unaligned, returns an empty set.
-	  *
-	  * @param alignment the Alignment to use when extracting the aligned phrase
-	  * @param targetStart the first word of the target phrase (inclusive)
-	  * @param targetEnd the first word of the target phrase (inclusive)
-	  * @param sourceOffset the start position of the alignment's source sentence in the source corpus
-	  * @param targetOffset the start position of the alignment's target sentence in the target corpus
-	  */	
+	/**
+	 * Returns a collection of spans for the phrase alignments
+	 * that match the specified target phrase. If the target
+	 * phrase is unaligned, returns an empty set.
+	 *
+	 * @param alignment the Alignment to use when extracting the aligned phrase
+	 * @param targetStart the first word of the target phrase (inclusive)
+	 * @param targetEnd the first word of the target phrase (inclusive)
+	 * @param sourceOffset the start position of the alignment's source sentence in the source corpus
+	 * @param targetOffset the start position of the alignment's target sentence in the target corpus
+	 */	
 	public Collection getTargetAlignmentSpans(Grid alignmentPoints, int targetStart, int targetEnd, int sourceOffset, int targetOffset) {
 		ArrayList spans = new ArrayList();
 	
@@ -241,9 +253,8 @@ public class BoundingBox implements PhraseExtractor {
 // Main 
 //===============================================================
 
-	public static void main(String[] args)
-	{
-
+	public static void main(String[] args) {
+		
 	}
 }
 

@@ -14,7 +14,7 @@
  * along with this library; if not, write to the Free Software Foundation,
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package edu.jhu.util.sentence;
+package joshua.util.sentence;
 
 import java.util.*;
 
@@ -77,42 +77,51 @@ public class MaskedGrid extends Grid {
 	//===========================================================
 
 	/**
-	 * compares this object to another. If it is also a grid, first
-	 * checks height and width compatibility, then checks that all
-	 * coordinates are equal.
+	 * compares this object to another. If it is also a grid,
+	 * first checks height and width compatibility, then checks
+	 * that all coordinates are equal.
+	 * 
 	 * @param o object to comare to
-	 * @return true if o is a Grid of the same size and containing the same points
-	 * as this one
+	 * @return true if o is a Grid of the same size and containing
+	 *         the same points as this one
 	 * @TODO make this smarter
 	 */
 	public boolean equals(Object o) {
-		if (o==null) return false;
-        if (!o.getClass().isInstance(this)) return false;
+		if (o == null) {
+				return false;
+		}
+        if (! o.getClass().isInstance(this)) {
+				return false;
+		}
 		MaskedGrid other = (MaskedGrid)o;
-		return (this.getWidth()==other.getWidth() &&
-				this.getHeight()==other.getHeight() &&
+		return (this.getWidth() == other.getWidth() &&
+				this.getHeight() == other.getHeight() &&
 				Arrays.equals(this.getCoordinates(),other.getCoordinates()));
 	}
 
 	
 	/**
-	 * Returns a sorted list of the row points that are items for the column span
-	 * end is exclusive
+	 * Returns a sorted list of the row points that are items
+	 * for the column span end is exclusive
 	 */
 	public int[] getRowPoints(int columnStart, int columnEnd) {
 		int[] points = super.getRowPoints(columnStart + getXOffset(), columnEnd + getXOffset());
-		//the resulting list is populated with offset points which we need to move to our coordinate system
+		// the resulting list is populated with offset
+		// points which we need to move to our coordinate
+		// system
 		return offsetPoints(points, getYOffset());
 	}
 
+	
 	/**
-	 * Returns a sorted list of the column points that are items for the row span
-	 * end is exclusive
+	 * Returns a sorted list of the column points that are items
+	 * for the row span end is exclusive
 	 */
 	public int[] getColumnPoints (int rowStart, int rowEnd) {
 		int[] points =  super.getColumnPoints(rowStart + getYOffset(), rowEnd + getYOffset());
 		return offsetPoints(points, getXOffset());
 	}
+	
 	
 	public int[] offsetPoints(int[] points, int offset) {
 		//count final size
@@ -131,9 +140,6 @@ public class MaskedGrid extends Grid {
 	}
 	
 	
-
-	
-	
 //===============================================================
 // Protected 
 //===============================================================
@@ -147,10 +153,12 @@ public class MaskedGrid extends Grid {
 		else return yOffset;
 	}
 	
+	
 	protected int getYOffset() {
 		if (!transposed) return yOffset;
 		else return xOffset;
 	}
+	
 	
 	/**
 	 * generates the short value stored for a given x,y pair
@@ -160,6 +168,7 @@ public class MaskedGrid extends Grid {
 		int storedY = y+getYOffset();
 		return super.getKey(storedX,storedY);
 	}
+	
 	
 	/**
 	 * generates the location of a coordinate from a key

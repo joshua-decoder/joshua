@@ -14,7 +14,7 @@
  * along with this library; if not, write to the Free Software Foundation,
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package edu.jhu.joshua.lattice;
+package joshua.lattice;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -38,34 +38,41 @@ import java.util.regex.Pattern;
  */
 public class Lattice<Value> implements Iterable<Node<Value>> {
 
-	/** Costs of the best path between each pair of nodes in the lattice. */
+	/** 
+	 * Costs of the best path between each pair of nodes in the
+	 * lattice.
+	 */
 	private final double[][] costs;
 
-	/** List of all nodes in the lattice. Nodes are assumed to be in topological order. */
+	/**
+	 * List of all nodes in the lattice. Nodes are assumed to
+	 * be in topological order.
+	 */
 	private final List<Node<Value>> nodes;
 	
 	/** Logger for this class. */
-	private static final Logger logger = Logger.getLogger(Lattice.class.getName());
+	private static final Logger logger =
+		Logger.getLogger(Lattice.class.getName());
 	
 	/**
-	 * Constructs a new lattice from an existing list of (connected) nodes.
+	 * Constructs a new lattice from an existing list of
+	 * (connected) nodes.
 	 * <p>
 	 * The list of nodes must already be in topological order.
-	 * If the list is not in topological order, the behavior of the lattice is not defined.
+	 * If the list is not in topological order, the behavior
+	 * of the lattice is not defined.
 	 * 
 	 * @param nodes A list of nodes which must be in topological order.
 	 */
 	public Lattice(List<Node<Value>> nodes) {
-		
 		this.nodes = nodes;
 		this.costs = calculateAllPairsShortestPath(nodes);
-		
 	}
 	
-	public Lattice(Value[] linearChain) {
-		
-		this.nodes = new ArrayList<Node<Value>>();
 	
+	public Lattice(Value[] linearChain) {
+		this.nodes = new ArrayList<Node<Value>>();
+		
 		Node<Value> previous = new Node<Value>(0);
 		nodes.add(previous);
 		
@@ -83,9 +90,9 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
 		}
 		
 		this.costs = calculateAllPairsShortestPath(nodes);
-		
 	}
-
+	
+	
 	/**
 	 * Constructs a lattice from a given string representation.
 	 * 
@@ -95,21 +102,21 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
 	public static Lattice<String> createFromString(String data) {
 		
 		Map<Integer,Node<String>> nodes = new HashMap<Integer,Node<String>>();
-
+		
 		Pattern nodePattern = Pattern.compile("(.+?)\\((\\(.+?\\),)\\)(.*)");
 		Pattern arcPattern = Pattern.compile("\\('(.+?)',(\\d+.\\d+),(\\d+)\\),(.*)");
-
+		
 		Matcher nodeMatcher = nodePattern.matcher(data);
-
+		
 		int nodeID = -1;
-
+		
 		while (nodeMatcher.matches()) {
-
+			
 			String nodeData = nodeMatcher.group(2);
 			String remainingData = nodeMatcher.group(3);
-
+			
 			nodeID++;
-
+			
 			Node<String> currentNode;
 			if (nodes.containsKey(nodeID)) {
 				currentNode = nodes.get(nodeID);
@@ -117,16 +124,16 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
 				currentNode = new Node<String>(nodeID);
 				nodes.put(nodeID, currentNode);
 			}
-
+			
 			if (logger.isLoggable(Level.FINE)) logger.fine("Node " + nodeID + ":");
-
+			
 			Matcher arcMatcher = arcPattern.matcher(nodeData);
-
+			
 			while (arcMatcher.matches()) {
 				String arcLabel = arcMatcher.group(1);
 				double arcWeight = Double.valueOf(arcMatcher.group(2));
 				int destinationNodeID = nodeID + Integer.valueOf(arcMatcher.group(3));
-
+				
 				Node<String> destinationNode;
 				if (nodes.containsKey(destinationNodeID)) {
 					destinationNode = nodes.get(destinationNodeID);
@@ -134,27 +141,27 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
 					destinationNode = new Node<String>(destinationNodeID);
 					nodes.put(destinationNodeID, destinationNode);
 				}
-
+				
 				String remainingArcs = arcMatcher.group(4);
 				
 				if (logger.isLoggable(Level.FINE)) logger.fine("\t" + arcLabel + " " + arcWeight + " " + destinationNodeID);
-
+				
 				currentNode.addArc(destinationNode, arcWeight, arcLabel);
-
+				
 				arcMatcher = arcPattern.matcher(remainingArcs);
 			}
-
+			
 			nodeMatcher = nodePattern.matcher(remainingData);
-
 		}
-
+		
 		List<Node<String>> nodeList = new ArrayList<Node<String>>(nodes.values());
 		Collections.sort(nodeList);
-
+		
 		if (logger.isLoggable(Level.FINE)) logger.fine(nodeList.toString());
 		
 		return new Lattice<String>(nodeList);
 	}
+	
 	
 	/**
 	 * Gets the cost of the shortest path between two nodes.
@@ -167,6 +174,7 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
 		return costs[from][to];
 	}
 	
+	
 	/**
 	 * Gets the node with a specified integer identifier.
 	 * 
@@ -177,6 +185,7 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
 		return nodes.get(index);
 	}
 	
+	
 	/**
 	 * Returns an iterator over the nodes in this lattice.
 	 * 
@@ -185,6 +194,7 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
 	public Iterator<Node<Value>> iterator() {
 		return nodes.iterator();
 	}
+	
 	
 	/**
 	 * Returns the number of nodes in this lattice.
@@ -195,11 +205,13 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
 		return nodes.size();
 	}
 	
+	
 	/**
 	 * Calculate the all-pairs shortest path for all pairs of nodes.
 	 * <p>
 	 * Note: This method assumes no backward arcs. 
-	 * If there are backward arcs, the returned shortest path costs for that node may not be accurate.
+	 * If there are backward arcs, the returned shortest path
+	 * costs for that node may not be accurate.
 	 * 
 	 * @param nodes A list of nodes which must be in topological order.
 	 * @return The all-pairs shortest path for all pairs of nodes.
@@ -209,14 +221,16 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
 		int size = nodes.size();
 		double[][] costs = new double[size][size];
 		
-		// Initialize pairwise costs to be infinite for each pair of nodes
+		// Initialize pairwise costs to be infinite for
+		// each pair of nodes
 		for (int from = 0; from < size; from++) {
 			for (int to = 0; to < size; to++) {
 				costs[from][to] = Double.POSITIVE_INFINITY;
 			}
 		}
 		
-		// Loop over all pairs of immediate neighbors and record the actual costs.
+		// Loop over all pairs of immediate neighbors and
+		// record the actual costs.
 		for (Node<Value> head : nodes) {
 			for (Arc<Value> arc : head.outgoingArcs) {
 				Node<Value> tail = arc.tail;
@@ -225,37 +239,47 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
 				int to = tail.id;
 				double weight = arc.weight;
 				
-				if (weight < costs[from][to])
+				if (weight < costs[from][to]) {
 					costs[from][to] = weight;
+				}
 			}
 		}
 		
 		
-		// Loop over every possible starting node (the last node is assumed to not be a starting node)
+		// Loop over every possible starting node (the last
+		// node is assumed to not be a starting node)
 		for (int i=0; i < size-2; i++) {
 			
-			// Loop over every possible ending node, starting two nodes past the starting node (this assumes no backward arcs)
+			// Loop over every possible ending node,
+			// starting two nodes past the starting
+			// node (this assumes no backward arcs)
 			for (int j=i+2; j < size; j++) {
 				
-				// Loop over every possible middle node, starting one node past the starting node (this assumes no backward arcs)
+				// Loop over every possible middle
+				// node, starting one node past the
+				// starting node (this assumes no
+				// backward arcs)
 				for (int k=i+1; k < j; k++) {
 					
-					// The best cost is the minimum of the previously recorded cost and the sum of costs in the currently considered path
+					// The best cost is the
+					// minimum of the previously
+					// recorded cost and the sum
+					// of costs in the currently
+					// considered path
 					costs[i][j] = Math.min(costs[i][j], costs[i][k] + costs[k][j]);
 					
 				}
-				
 			}
-			
 		}
 		
 		return costs;
 	}
 	
+	
 	public static void main(String[] args) {
 		
 		List<Node<String>> nodes = new ArrayList<Node<String>>();
-		for (int i=0; i<4; i++) {
+		for (int i=0; i < 4; i++) {
 			nodes.add(new Node<String>(i));
 		}
 		
@@ -268,8 +292,6 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
 		Lattice<String> graph = new Lattice<String>(nodes);
 		
 		System.out.println("Shortest path from 0 to 3: " + graph.getShortestPath(0,3));
-		
-		
 	}
 
 }

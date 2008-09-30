@@ -14,18 +14,18 @@
  * along with this library; if not, write to the Free Software Foundation,
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package edu.jhu.util.suffix_array;
+package joshua.util.suffix_array;
 
-// Imports
-import edu.jhu.joshua.corpus.*;
-import edu.jhu.util.sentence.*;
-import edu.jhu.util.FileUtil;
+import joshua.corpus.*;
+import joshua.util.sentence.*;
+import joshua.util.FileUtil;
+
 import java.util.*;
 import java.util.zip.*;
 import java.io.*;
 
 /**
- * SuffixArrayFactory is the class that handles the loading and 
+ * SuffixArrayFactory is the class that handles the loading and
  * saving of SuffixArrays and their associated classes.
  * 
  * @author Chris Callison-Burch
@@ -51,55 +51,59 @@ public class SuffixArrayFactory {
 		return(lang+"_"+corpus+"_vocab.txt"); 
 	}
 	
+	
 	/**
 	 * Gets the standard filename for a CorpusArray.
-	 */		
-	 public static String getCorpusArrayFileName(String lang, String corpus) {
+	 */
+	public static String getCorpusArrayFileName(String lang, String corpus) {
 		return (lang+"_"+corpus+"_sentences.txt"); 
-	 }
-	 
+	}
+	
+	
 	/**
 	 * Gets the standard filename for a SuffixArray.
-	 */		
-	 public static String getSuffixArrayFileName(String lang, String corpus) {
+	 */
+	public static String getSuffixArrayFileName(String lang, String corpus) {
 		return (lang+"_"+corpus+"_suffixes.txt"); 
-	 }
-	 
+	}
+	
+	
 	/**
 	 * Gets the standard filename for a SuffixArrayServer RMI service.
 	 */			 
-	 public static String getSuffixArrayServiceName(String lang, String corpus) {
+	public static String getSuffixArrayServiceName(String lang, String corpus) {
 		return (lang+"_"+corpus+"_suffix_array_server");
-	 }
+	}
 	
-		 
+	
 	/**
 	 * Gets the standard filename for an alignments file.
-	 */		
-	 public static String getAlignmentsFileName(String sourceLang, String targetLang, String corpus) {
+	 */
+	public static String getAlignmentsFileName(String sourceLang, String targetLang, String corpus) {
 		return (sourceLang+"_"+targetLang+"_"+corpus+"_alignments.txt"); 
-	 }
-	 
-	 
+	}
+	
+	
 	/**
 	 * Gets the standard filename for a probable alignments file.
-	 */		
-	 public static String getProbableAlignmentsFileName(String sourceLang, String targetLang, String corpus) {
+	 */
+	public static String getProbableAlignmentsFileName(String sourceLang, String targetLang, String corpus) {
 		return (sourceLang+"_"+targetLang+"_"+corpus+"_probable_alignments.txt"); 
-	 }
-		 
-		 
+	}
+	
+	
 	/**
 	 * Gets the standard filename for a GridServer RMI service.
 	 */			 
-	 public static String getGridServiceName(String sourceLang, String targetLang, String corpus) {
+	public static String getGridServiceName(String sourceLang, String targetLang, String corpus) {
 		return (sourceLang+"_"+targetLang+"_"+corpus+"_grid_server");
-	 }
+	}
 	
-		
+	
 	
 	/**
 	 * Creates a new Vocabulary from a plain text file.
+	 * 
 	 * @param inputFilename the plain text file
 	 * @param vocab the Vocabulary to instantiate 
 	 * @return a tuple containing the 
@@ -123,15 +127,17 @@ public class SuffixArrayFactory {
 		return numberOfWordsSentences;
 	}
 	
+	
 	/**
 	 * Creates a new CorpusArray from an ArrayList of sentences.
+	 *
 	 * @param sentences a list of Phrase objects
 	 */
 	public static CorpusArray createCorpusArray(ArrayList sentences, Vocabulary vocab) {
 		// Fix the vocabulary.
 		vocab.fixVocabulary();
 		vocab.alphabetize();
-	
+		
 		int numWords = 0;
 		
 		for(int i = 0; i < sentences.size(); i++) {
@@ -152,18 +158,25 @@ public class SuffixArrayFactory {
 				wordCounter++;
 			}
 		}
-
+		
 		return new CorpusArray(corpus, sentenceIndexes, vocab);
 	}
-
+	
 	
 	/**
-	 * Creates a new CorpusArray from a plain text file, given a Vocabulary
-	 * created from the same file.
-	 * @param numWords the number of words in the file (returned by createVocabulary)
-	 * @param numSentences the number of lines in the file (returned by createVocabulary)
+	 * Creates a new CorpusArray from a plain text file, given
+	 * a Vocabulary created from the same file.
+	 *
+	 * @param numWords     the number of words in the file
+	 *                     (returned by createVocabulary)
+	 * @param numSentences the number of lines in the file
+	 *                     (returned by createVocabulary)
 	 */
-	public static CorpusArray createCorpusArray(String inputFilename, Vocabulary vocab, int numWords, int numSentences) throws IOException {
+	public static CorpusArray createCorpusArray(
+		String inputFilename,
+		Vocabulary vocab,
+		int numWords, int numSentences
+	) throws IOException {
 		BufferedReader reader = FileUtil.getBufferedReader(inputFilename);
 		// initalize the arrays.
 		int[] corpus = new int[numWords];
@@ -189,26 +202,30 @@ public class SuffixArrayFactory {
 		return new CorpusArray(corpus, sentenceIndexes, vocab);
 	}
 	
-
 	
 	/**
-	 * Creates a new SuffixArray from a CorpusArray created from the same file.
+	 * Creates a new SuffixArray from a CorpusArray created
+	 * from the same file.
 	 */
 	public static SuffixArray createSuffixArray(CorpusArray corpusArray) throws IOException {
 		return new SuffixArray(corpusArray);
 	}
-
-
-	
 	
 	
 	/**
-	 * Writes the Vocabulary to a file.  The file starts with a line which indicates the number of words,
-	 * and then contains an alphabetically sorted list of words, one per line.
+	 * Writes the Vocabulary to a file. The file starts with a
+	 * line which indicates the number of words, and then
+	 * contains an alphabetically sorted list of words, one per
+	 * line.
 	 */
-	public static void saveVocabulary(Vocabulary vocab, String lang, String corpus, String directory) throws IOException {
+	public static void saveVocabulary(
+		Vocabulary vocab,
+		String lang,
+		String corpus,
+		String directory
+	) throws IOException {
 		BufferedWriter writer = FileUtil.getBufferedWriter(directory, getVocabularyFileName(lang, corpus));
-
+		
 		int vocabSize = vocab.size();
 		writer.write(Integer.toString(vocabSize));
 		writer.newLine();
@@ -219,43 +236,54 @@ public class SuffixArrayFactory {
 		writer.close();
 		if(SHOW_PROGRESS) System.out.println("Vocabulary saved!");
 	}
-
 	
-	 
-	 /**
-	  * Writes out the corpus in integer representation.  The first line of the
-	  * file indicates the number of words and the number of sentences.
-	  */
-	public static void saveCorpusArray(CorpusArray corpusArray, String lang, String corpus, String directory) throws IOException {
+	
+	/**
+	 * Writes out the corpus in integer representation. The
+	 * first line of the file indicates the number of words and
+	 * the number of sentences.
+	 */
+	public static void saveCorpusArray(
+		CorpusArray corpusArray,
+		String lang,
+		String corpus,
+		String directory
+	) throws IOException {
 		BufferedWriter writer = FileUtil.getBufferedWriter(directory, getCorpusArrayFileName(lang, corpus));
-
-		 //write out size data on first line
-		 writer.write(Integer.toString(corpusArray.size()));
-		 writer.write(" ");
-		 writer.write(Integer.toString(corpusArray.getNumSentences()));
-		 int sentenceNum = 0;
-		 for(int i = 0; i<corpusArray.size(); i++) {
-			 if (sentenceNum<corpusArray.getNumSentences() && corpusArray.sentences[sentenceNum]==i) {
-				 sentenceNum++;
-				 writer.newLine();
-			 } else {
-				 writer.write(" ");
-			 }
-			 writer.write(Integer.toString(corpusArray.corpus[i]));
+		
+		//write out size data on first line
+		writer.write(Integer.toString(corpusArray.size()));
+		writer.write(" ");
+		writer.write(Integer.toString(corpusArray.getNumSentences()));
+		int sentenceNum = 0;
+		for(int i = 0; i<corpusArray.size(); i++) {
+			if (sentenceNum<corpusArray.getNumSentences() && corpusArray.sentences[sentenceNum]==i) {
+				sentenceNum++;
+				writer.newLine();
+			} else {
+				writer.write(" ");
+			}
+			writer.write(Integer.toString(corpusArray.corpus[i]));
 		}
 		writer.newLine();
 		writer.close();
 	}
-
-
-
-	 /**
-	  * Writes the suffix array to file.  The first line of the
-	  * file indicates the number of words and the number of sentences.
-	  */
-	public static void saveSuffixArray(SuffixArray suffixArray, String lang, String corpus, String directory) throws IOException {
+	
+	
+	
+	/**
+	 * Writes the suffix array to file. The first line of the
+	 * file indicates the number of words and the number of
+	 * sentences.
+	 */
+	public static void saveSuffixArray(
+		SuffixArray suffixArray,
+		String lang,
+		String corpus,
+		String directory
+	) throws IOException {
 		BufferedWriter writer = FileUtil.getBufferedWriter(directory, getSuffixArrayFileName(lang, corpus));
-
+		
 		//write out size data on first line
 		int numSuffixes = suffixArray.size();
 		writer.write(Integer.toString(numSuffixes));
@@ -268,12 +296,19 @@ public class SuffixArrayFactory {
 		writer.newLine();
 		writer.close();
 	}
-
+	
+	
 	/**
-	 * Writes a collection of alignment points to a file, with the alignment for each sentence
-	 * pair on one line.
+	 * Writes a collection of alignment points to a file, with
+	 * the alignment for each sentence pair on one line.
 	 */
-	public static void saveAlignments(Grids grids, String sourceLang, String targetLang, String corpusName, String directory) throws IOException {
+	public static void saveAlignments(
+		Grids grids,
+		String sourceLang,
+		String targetLang,
+		String corpusName,
+		String directory
+	) throws IOException {
 		String alignmentsFilename = getAlignmentsFileName(sourceLang, targetLang, corpusName);
 		
 		BufferedWriter writer = FileUtil.getBufferedWriter(directory, alignmentsFilename);
@@ -288,13 +323,18 @@ public class SuffixArrayFactory {
 		writer.flush();
 		writer.close();
 	}
-
-
+	
+	
 	/**
-	 * Loads a Vocabulary from a file containing an alphabetized list of words, one on each line. 
-	 * The first of the file line contains the number of words.
+	 * Loads a Vocabulary from a file containing an alphabetized
+	 * list of words, one on each line. The first of the file
+	 * line contains the number of words.
 	 */
-	public static Vocabulary loadVocabulary(String lang, String corpus, String directory) throws IOException {
+	public static Vocabulary loadVocabulary(
+		String lang,
+		String corpus,
+		String directory
+	) throws IOException {
 		BufferedReader reader = FileUtil.getBufferedReader(directory, getVocabularyFileName(lang, corpus));
 		int vocabSize = Integer.parseInt(reader.readLine());
 		Vocabulary vocab = new Vocabulary();
@@ -311,12 +351,16 @@ public class SuffixArrayFactory {
 	}
 	
 	
-	 /**
-	  * Reads in a corpus that is already in integer representation.  Assumes that the
-	  * first line indicates the number of words and the number of sentences, as ouput
-	  * by saveCorpusArray.
-	  */
-	public static CorpusArray loadCorpusArray(String lang, String corpusName, String directory) throws IOException {
+	/**
+	 * Reads in a corpus that is already in integer representation.
+	 * Assumes that the first line indicates the number of words
+	 * and the number of sentences, as ouput by saveCorpusArray.
+	 */
+	public static CorpusArray loadCorpusArray(
+		String lang,
+		String corpusName,
+		String directory
+	) throws IOException {
 		Vocabulary vocab = loadVocabulary(lang, corpusName, directory);
 		BufferedReader reader = FileUtil.getBufferedReader(directory, getCorpusArrayFileName(lang, corpusName));
 		 
@@ -342,18 +386,20 @@ public class SuffixArrayFactory {
 		reader.close();
 		return new CorpusArray(corpus, sentences, vocab);
 	}
-
-
-
-
-	 /**
-	  * Reads a sorted suffix array from a file.  The first line of the
-	  * file indicates the number of suffixes.
-	  */
-	 public static SuffixArray loadSuffixArray(String lang, String corpusName, String directory) throws IOException {
+	
+	
+	/**
+	 * Reads a sorted suffix array from a file. The first line
+	 * of the file indicates the number of suffixes.
+	 */
+	public static SuffixArray loadSuffixArray(
+		String lang,
+		String corpusName,
+		String directory
+	) throws IOException {
 		CorpusArray corpusArray = loadCorpusArray(lang, corpusName, directory);
 		BufferedReader reader = FileUtil.getBufferedReader(directory, getSuffixArrayFileName(lang, corpusName));
-
+		
 		//read in size data from the first line
 		int numSuffixes = Integer.parseInt(reader.readLine());
 		int[] suffixes = new int[numSuffixes];
@@ -364,16 +410,27 @@ public class SuffixArrayFactory {
 		
 		return new SuffixArray(suffixes, corpusArray);
 	 }
-
-
+	 
+	 
 	 /**
 	  * Reads in a file containing alignment grids.
-	  * @param sourceCorpus source sentence lengths are used to ensure the width of each Grid is long enough
-	  * @param targetCorpus target sentence lengths are used to ensure the height of each Grid is long enough
-	  * @returns an ArrayList of Grid objects
+	  *
+	  * @param sourceCorpus source sentence lengths are used
+	  *                     to ensure the width of each Grid
+	  *                     is long enough
+	  * @param targetCorpus target sentence lengths are used
+	  *                     to ensure the height of each Grid
+	  *                     is long enough
+	  * @return an ArrayList of Grid objects
 	  */
-	public static Grids loadAlignments(String sourceLang, String targetLang, String corpusName, String directory, 
-										Corpus sourceCorpus, Corpus targetCorpus) throws IOException {
+	public static Grids loadAlignments(
+		String sourceLang,
+		String targetLang,
+		String corpusName,
+		String directory,
+		Corpus sourceCorpus,
+		Corpus targetCorpus
+	) throws IOException {
 		String alignmentsFilename = getAlignmentsFileName(sourceLang, targetLang, corpusName);
 		String reverseAlignmentsFilename = getAlignmentsFileName(targetLang, sourceLang, corpusName);
 		
@@ -400,8 +457,9 @@ public class SuffixArrayFactory {
 		}
 		reader.close();
 		
-		// if we don't have alignments for all of the sentences in the corpora,
-		// then create empty alignments for the remainder
+		// if we don't have alignments for all of the
+		// sentences in the corpora, then create empty
+		// alignments for the remainder
 		for(int i = counter; i < sourceCorpus.getNumSentences(); i++) {
 			int sourceLength = sourceCorpus.getSentence(counter).size();
 			int targetLength = targetCorpus.getSentence(counter).size();
@@ -411,10 +469,8 @@ public class SuffixArrayFactory {
 		
 		return new Grids(alignments, shouldTranspose);
 	}
-
-	 	
-
-		
+	
+	
 //===============================================================
 // Main 
 //===============================================================
@@ -434,8 +490,10 @@ public class SuffixArrayFactory {
 		Vocabulary vocab = new Vocabulary();
 		int[] numberOfWordsSentences = SuffixArrayFactory.createVocabulary(inputFilename, vocab);
 		
-		// Check to see if a vocabulary file already exists in the outputDir, if so use it 
-		// ccb - todo - might want to check that the existing vocabulary file is a superset of this one. 
+		// Check to see if a vocabulary file already exists
+		// in the outputDir, if so use it
+		// ccb - todo - might want to check that the existing
+		// vocabulary file is a superset of this one.
 		if(FileUtil.exists(outputDirectory, getVocabularyFileName(lang, corpusName))) {
 			System.out.println("Using existing vocabulary file at " + getVocabularyFileName(lang, corpusName));
 			vocab = loadVocabulary(lang, corpusName, outputDirectory);
@@ -450,4 +508,3 @@ public class SuffixArrayFactory {
 		SuffixArrayFactory.saveSuffixArray(suffixArray, lang, corpusName, outputDirectory);
 	}
 }
-

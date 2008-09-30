@@ -14,23 +14,23 @@
  * along with this library; if not, write to the Free Software Foundation,
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package edu.jhu.joshua.decoder.hypergraph;
+package joshua.decoder.hypergraph;
+
+import joshua.decoder.Support;
+import joshua.decoder.Symbol;
+import joshua.decoder.ff.FeatureFunction;
+import joshua.decoder.ff.MapFFState;
+import joshua.decoder.ff.lm.LMModel;
+import joshua.decoder.ff.tm.TMGrammar;
+import joshua.decoder.ff.tm.Rule;
+import joshua.decoder.hypergraph.HyperGraph.Deduction;
+import joshua.decoder.hypergraph.HyperGraph.Item;
+import edu.jhu.lzfUtility.FileUtility; // BUG: needs reorg
 
 import java.io.BufferedWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.PriorityQueue;
-
-import edu.jhu.joshua.decoder.Support;
-import edu.jhu.joshua.decoder.Symbol;
-import edu.jhu.joshua.decoder.feature_function.FeatureFunction;
-import edu.jhu.joshua.decoder.feature_function.MapFFState;
-import edu.jhu.joshua.decoder.feature_function.language_model.LMModel;
-import edu.jhu.joshua.decoder.feature_function.translation_model.TMGrammar;
-import edu.jhu.joshua.decoder.feature_function.translation_model.Rule;
-import edu.jhu.joshua.decoder.hypergraph.HyperGraph.Deduction;
-import edu.jhu.joshua.decoder.hypergraph.HyperGraph.Item;
-import edu.jhu.lzfUtility.FileUtility;
 
 /**
  * this class implement 

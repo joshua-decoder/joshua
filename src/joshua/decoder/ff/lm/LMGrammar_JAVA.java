@@ -14,17 +14,17 @@
  * along with this library; if not, write to the Free Software Foundation,
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package edu.jhu.joshua.decoder.feature_function.language_model;
+package joshua.decoder.ff.lm;
+
+import joshua.decoder.Decoder;
+import joshua.decoder.Support;
+import joshua.decoder.Symbol;
+import edu.jhu.lzfUtility.FileUtility; // BUG: needs reorg
 
 import java.io.BufferedReader;
 import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import edu.jhu.joshua.decoder.Decoder;
-import edu.jhu.joshua.decoder.Support;
-import edu.jhu.joshua.decoder.Symbol;
-import edu.jhu.lzfUtility.FileUtility;
 
 /**
  * this class implement 

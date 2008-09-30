@@ -14,9 +14,8 @@
  * along with this library; if not, write to the Free Software Foundation,
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package edu.jhu.util;
+package joshua.util;
 
-// Imports
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -25,8 +24,8 @@ import java.util.Iterator;
 import java.util.Map;
 
 /**
- * Counts is the class that increments and decrements
- * the number of times an object is seen.
+ * Counts is the class that increments and decrements the number
+ * of times an object is seen.
  *
  * @author Chris Callison-Burch
  * @since  4 January 2005
@@ -62,64 +61,73 @@ public class Counts {
 	// Accessor methods (set/get)
 	//===========================================================
 	
-	/** Returns the count for the object.
-	  */
+	/** Returns the count for the object. */
 	public int getCount(Object obj) {
 		return getCount(counts, obj);
 	}
 	
 	
-	/** Returns the collective total of all of the counts
-	  * of all of the objects stored in then Counts.
-	  */
+	/**
+	 * Returns the collective total of all of the counts of all
+	 * of the objects stored in then Counts.
+	 */
 	public int getTotalCount() {
 		return totalCount;
 	}
 	
-	/** Returns the number of unique objects in the Counts. 
-	  */
+	/**
+	 * Returns the number of unique objects in the Counts.
+	 */
 	public int getNumObjects() {
 		return counts.keySet().size();
 	}
 	
 	
-	/** Increments the count for the object by 1. 
-	  */
+	/**
+	 * Increments the count for the object by 1. 
+	 */
 	public void incrementCount(Object obj) {
 		incrementCount(obj, 1);
 	}
 	
-	/** Increments the count for the object by the specified amount. 
-	  */
+	
+	/** 
+	 * Increments the count for the object by the specified
+	 * amount.
+	 */
 	public void incrementCount(Object obj, int amount) {
 		incrementCount(counts, obj, amount);
 		totalCount += amount;
 	}
 	
 	
-	/** Increments the counts for all objects in the collection. 
-	  */
+	/**
+	 * Increments the counts for all objects in the collection.
+	 */
 	public void incrementAll(Collection c) {
-		if(c != null) {
+		if (c != null) {
 			Iterator it = c.iterator();
-			while(it.hasNext()) {
+			while (it.hasNext()) {
 				incrementCount(it.next());
 			}
 		}
 	}
 	
 	
-	/** Returns a collection of the objects in the Counts.
-	  */
+	/**
+	 * Returns a collection of the objects in the Counts.
+	 */
 	public ArrayList keys() {
 		ArrayList keys = new ArrayList();
 		keys.addAll(counts.keySet());
 		return keys;
 	}
 	
-	/** Returns a collection of the objects in the Counts, sorted by
-	  * their values.
-	  */
+	
+	/**
+	 * Returns a collection of the objects in the Counts, sorted
+	 * by their values.
+	 */
 	public ArrayList keys(boolean sortAscending) {
 		ArrayList keys = new ArrayList();
 		keys.addAll(counts.keySet());
@@ -128,16 +136,18 @@ public class Counts {
 	}
 	
 	
-	/** Returns an iterator over the objects in the Counts.
-	  */
+	/**
+	 * Returns an iterator over the objects in the Counts.
+	 */
 	public Iterator iterator() {
 		return counts.keySet().iterator();
 	}
 	
 	
-	/** Returns an iterator over the Counts objects,
-	  * sorted by their frequency.
-	  */
+	/**
+	 * Returns an iterator over the Counts objects, sorted by
+	 * their frequency.
+	 */
 	public Iterator iterator(boolean sortAscending) {
 		ArrayList keys = new ArrayList();
 		keys.addAll(counts.keySet());
@@ -149,8 +159,9 @@ public class Counts {
 	// Methods
 	//===========================================================
 
-	/** Adds the counts of the specified counts to this one. 
-	  */
+	/**
+	 * Adds the counts of the specified counts to this one.
+	 */
 	public void merge(Counts counts) {
 		Iterator it = counts.iterator();
 		while(it.hasNext()) {
@@ -159,10 +170,12 @@ public class Counts {
 			this.incrementCount(obj, count);
 		}
 	}
-
-	/** Prints a sorted list of the objects and their counts, allows
-	  * the order to be specified as asending or decending.
-	  */	
+	
+	
+	/**
+	 * Prints a sorted list of the objects and their counts,
+	 * allows the order to be specified as asending or decending.
+	 */
 	public String toString(boolean sortAscending) {
 		ArrayList keys = new ArrayList();
 		keys.addAll(counts.keySet());
@@ -182,9 +195,11 @@ public class Counts {
 		}
 	}
 	
-	/** Prints a list of the objects and their counts, and sorts them
-	  * by count in decending order.
-	  */
+	
+	/**
+	 * Prints a list of the objects and their counts, and sorts
+	 * them by count in decending order.
+	 */
 	public String toString() {
 		return toString(false);
 	}
@@ -223,11 +238,12 @@ public class Counts {
 		incrementCount(hash, obj, 1);
 	}
 	
+	
 	private static void incrementCount(Map hash, Object obj, int amount) {
 		int count = getCount(hash, obj);
 		count += amount;
 		hash.put(obj, new Integer(count));
-	}	
+	}
 	
 	
 	private static HashMap mergeCounts(Map hash1, Map hash2) {
@@ -247,8 +263,7 @@ public class Counts {
 // Main 
 //===============================================================
 
-	public static void main(String[] args)
-	{
+	public static void main(String[] args) {
 
 	}
 }

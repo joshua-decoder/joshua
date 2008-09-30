@@ -14,17 +14,17 @@
  * along with this library; if not, write to the Free Software Foundation,
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package edu.jhu.util.sentence;
+package joshua.util.sentence;
 
-// Imports
-import edu.jhu.util.suffix_array.SuffixArrayFactory;
+import joshua.util.suffix_array.SuffixArrayFactory;
+
 import java.util.*;
 
 /**
  * Vocabulary is the class that keeps track of the unique words
- * that occur in a corpus of text for a particular language.  
- * It assigns integer IDs to Words, which is useful when we are
- * creating suffix arrays or doing similar things.
+ * that occur in a corpus of text for a particular language. It
+ * assigns integer IDs to Words, which is useful when we are creating
+ * suffix arrays or doing similar things.
  *
  * @author Chris Callison-Burch
  * @since  8 February 2005
@@ -47,7 +47,9 @@ public class Vocabulary {
 	Hashtable wordToIDMap;
 	Vector vocabList;
 	
-	/** Determines whether new words may be added to the vocabulary. */
+	/** 
+	 * Determines whether new words may be added to the vocabulary.
+	 */
 	boolean isFixed;
 	
 //===============================================================
@@ -62,9 +64,11 @@ public class Vocabulary {
 		vocabList = new Vector();
 		isFixed = false;
 	}
-
+	
+	
 	/** 
-	 * Constructor creates a fixed vocabulary from the given set of words.
+	 * Constructor creates a fixed vocabulary from the given
+	 * set of words.
 	 */
 	public Vocabulary (Set words) {
 		wordToIDMap = new Hashtable();
@@ -111,12 +115,15 @@ public class Vocabulary {
 		return (Word) vocabList.get(id);
 	}
 	
+	
 	/** 
-	 * @return the Word object associated with the specified string
+	 * @return the Word object associated with the specified
+	 *         string
 	 */	
 	public Word getWord(String wordString) {
 		return getWord(getID(wordString));
 	}
+	
 	
 	/**
 	 * @return an Interator over all words in the Vocabulary.
@@ -125,6 +132,7 @@ public class Vocabulary {
 		return vocabList.iterator();
 	}
 	
+	
 	public List getWords() {
 		return vocabList;
 	}
@@ -132,6 +140,7 @@ public class Vocabulary {
 	
 	/**
 	 * Gets IDs for each of the words in the phrase.
+	 * 
 	 * @return an array of IDs of the same length as the phrase
 	 */
 	public int[] getIDs(Phrase phrase) {
@@ -160,8 +169,9 @@ public class Vocabulary {
 	
 	/** 
 	 * Adds a word to the vocabulary.
-	 * @returns the ID of the word, or UNKNOWN_WORD if 
-	 * the word is new and the vocabulary is fixed.
+	 * 
+	 * @return the ID of the word, or UNKNOWN_WORD if the word
+	 *         is new and the vocabulary is fixed.
 	 */
 	public int addWord(Word word) {
 		String wordString = word.getString();
@@ -178,6 +188,7 @@ public class Vocabulary {
 		}
 	}
 		
+
 	/**
 	 * @return the number of unique words in the vocabulary.
 	 */
@@ -185,13 +196,15 @@ public class Vocabulary {
 		return vocabList.size();
 	}
 	
+	
 	/** 
-	 * Fixes the size of the vocabulary so that new words
-	 * may not be added.
+	 * Fixes the size of the vocabulary so that new words may
+	 * not be added.
 	 */
 	public void fixVocabulary() {
 		isFixed = true;
 	}
+	
 	
 	/**
 	 * @return true if there are unknown words in the phrase
@@ -205,31 +218,43 @@ public class Vocabulary {
 	
 	
 	/**
-	 * Checks that the Vocabularies are the same, by first checking that they have
-	 * the same number of items, and then checking that each word corresoponds
-	 * to the same ID
+	 * Checks that the Vocabularies are the same, by first
+	 * checking that they have the same number of items, and
+	 * then checking that each word corresoponds to the same
+	 * ID.
+	 * 
 	 * @param o the Vocabulary to check equivalence with
-	 * @return true if the other object is a Vocabulary representing the same set of
-	 * words with identically assigned IDs
+	 * @return true if the other object is a Vocabulary
+	 *         representing the same set of words with identically
+	 *         assigned IDs
 	 */
 	public boolean equals(Object o) {
-		if (o==null) return false;
-        if (!o.getClass().isInstance(this)) return false;
-        else {
-            Vocabulary other = (Vocabulary) o;
-			if(other.size() != this.size()) return false;
-			for(int i = 0; i < this.size(); i++) {
+		if (o == null) {
+				return false;
+		}
+		if (! o.getClass().isInstance(this)) {
+				return false;
+		} else {
+			Vocabulary other = (Vocabulary) o;
+			if (other.size() != this.size()) {
+					return false;
+			}
+			for (int i = 0; i < this.size(); i++) {
 				Word thisWord = (Word) this.vocabList.get(i);
 				Word otherWord = (Word) other.vocabList.get(i);
-				if(!(thisWord.equals(otherWord))) return false;
+				if (!(thisWord.equals(otherWord))) {
+						return false;
+				}
 				Integer thisID = (Integer) this.wordToIDMap.get(thisWord);
 				Integer otherID = (Integer) other.wordToIDMap.get(otherWord);
-				if(thisID != null && otherID != null) {
-					if(!(thisID.equals(otherID))) return false;
+				if (thisID != null && otherID != null) {
+					if (!(thisID.equals(otherID))) {
+							return false;
+					}
 				}
 			}
 			return true;
-        }
+		}
 	}
 	
 	//===========================================================
@@ -250,6 +275,7 @@ public class Vocabulary {
 			wordToIDMap.put(word.getString(), new Integer(i));
 		}
 	}
+	
 	
 	public String toString() {
 		return vocabList.toString();
@@ -281,7 +307,7 @@ public class Vocabulary {
 
 
 	public static void main(String[] args) throws Exception {
-		if(args.length != 4) {
+		if (args.length != 4) {
 			System.out.println("Usage: java Vocabulary file corpusName lang outputDir");
 			System.exit(0);
 		}

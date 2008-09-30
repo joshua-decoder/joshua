@@ -14,10 +14,10 @@
  * along with this library; if not, write to the Free Software Foundation,
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package edu.jhu.util.sentence.phrase_extraction;
+package joshua.util.sentence.phrase_extraction;
 
-// Imports
-import edu.jhu.util.sentence.*;
+import joshua.util.sentence.*;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -71,21 +71,24 @@ public class Consistent implements PhraseExtractor {
 	// Methods
 	//===========================================================
 
-	/** Returns the set of all phrase alignments that are contained 
-	  * in the alignment.
-	  *
-	  * @param alignment the Alignment to extract phrase alignments from
-	  */ 
+	/**
+	 * Returns the set of all phrase alignments that are contained
+	 * in the alignment.
+	 *
+	 * @param alignment the Alignment to extract phrase alignments from
+	 */ 
 	public Collection getAllPhraseAlignments(Alignment alignment) {
 		return getAllPhraseAlignments(alignment, Math.max(alignment.getSourceLength(), alignment.getTargetLength()));
 	}
-
-	/** Returns the set of all phrase alignments up to the specified
-	  * maximum length that are contained in the alignment.
-	  *
-	  * @param alignment the Alignment to extract phrase alignments from
-	  * @param maxLength the maximum length for both the source and target phrases 
-	  */ 	
+	
+	
+	/**
+	 * Returns the set of all phrase alignments up to the
+	 * specified maximum length that are contained in the alignment.
+	 *
+	 * @param alignment the Alignment to extract phrase alignments from
+	 * @param maxLength the maximum length for both the source and target phrases 
+	 */ 	
 	public Collection getAllPhraseAlignments(Alignment alignment, int maxLength) {
 		ArrayList phraseAlignments = new ArrayList();
 		// i is the start point of the source phrase
@@ -108,15 +111,18 @@ public class Consistent implements PhraseExtractor {
 		return phraseAlignments;
 	}
 	
-	/** Returns a set of phrase alignments for the specified target phrase.  The 
-	  * extraction algorithm checks that all aligned points fall within the bounding
-	  * box, and adds additional alignment points if there are adjacent unaligned 
-	  * source words.
-	  *
-	  * @param alignment the Alignment to use when extracting the aligned phrase
-	  * @param targetStart the first word of the target phrase (inclusive)
-	  * @param targetEnd the final word of the target phrase (exclusive)
-	  */
+	
+	/**
+	 * Returns a set of phrase alignments for the specified
+	 * target phrase. The extraction algorithm checks that all
+	 * aligned points fall within the bounding box, and adds
+	 * additional alignment points if there are adjacent unaligned
+	 * source words.
+	 *
+	 * @param alignment the Alignment to use when extracting the aligned phrase
+	 * @param targetStart the first word of the target phrase (inclusive)
+	 * @param targetEnd the final word of the target phrase (exclusive)
+	 */
 	public Collection getTargetAlignments(Alignment alignment, int targetStart, int targetEnd) {
 		Collection spans = getTargetAlignmentSpans(alignment.getAlignmentPoints(), targetStart, targetEnd, 0, 0);
 		ArrayList alignments = new ArrayList(spans.size());
@@ -135,15 +141,17 @@ public class Consistent implements PhraseExtractor {
 	}
 
 	
-	/** Returns a set of phrase alignments for the specified source phrase.  The 
-	  * extraction algorithm checks that all aligned points fall within the bounding
-	  * box, and adds additional alignment points if there are adjacent unaligned 
-	  * target words.
-	  *
-	  * @param alignment the Alignment to use when extracting the aligned phrase
-	  * @param targetStart the first word of the source phrase (inclusive)
-	  * @param targetEnd the final word of the source phrase (exclusive)
-	  */
+	/**
+	 * Returns a set of phrase alignments for the specified
+	 * source phrase. The extraction algorithm checks that all
+	 * aligned points fall within the bounding box, and adds
+	 * additional alignment points if there are adjacent unaligned
+	 * target words.
+	 *
+	 * @param alignment the Alignment to use when extracting the aligned phrase
+	 * @param targetStart the first word of the source phrase (inclusive)
+	 * @param targetEnd the final word of the source phrase (exclusive)
+	 */
 	public Collection getSourceAlignments(Alignment alignment, int sourceStart, int sourceEnd) {
 		Collection spans = getSourceAlignmentSpans(alignment.getAlignmentPoints(), sourceStart, sourceEnd, 0, 0);
 		ArrayList alignments = new ArrayList(spans.size());
@@ -162,8 +170,10 @@ public class Consistent implements PhraseExtractor {
 	}
 
 
-	/** Returns the set of all spans of phasal alignments up to the specified
-	 * maximum length that are contained in the alignment.
+	/**
+	 * Returns the set of all spans of phasal alignments up to
+	 * the specified maximum length that are contained in the
+	 * alignment.
 	 *
 	 * @param alignment the Alignment to extract phrase alignments from
 	 * @param maxLength the maximum length for both the source and target phrases 
@@ -176,21 +186,24 @@ public class Consistent implements PhraseExtractor {
 
 
 
-	/** Returns a collection of spans for the phrase alignments that match the specified
-	  * source phrase.  If the source phrase is unaligned, returns an empty set.
-	  *
-	  * @param alignment the Alignment to use when extracting the aligned phrase
-	  * @param sourceStart the first word of the source phrase (inclusive)
-	  * @param sourceEnd the first word of the source phrase (inclusive)
-	  * @param sourceOffset the start position of the alignment's source sentence in the source corpus
-	  * @param targetOffset the start position of the alignment's target sentence in the target corpus
-	  */	
+	/**
+	 * Returns a collection of spans for the phrase alignments
+	 * that match the specified source phrase. If the source
+	 * phrase is unaligned, returns an empty set.
+	 *
+	 * @param alignment the Alignment to use when extracting the aligned phrase
+	 * @param sourceStart the first word of the source phrase (inclusive)
+	 * @param sourceEnd the first word of the source phrase (inclusive)
+	 * @param sourceOffset the start position of the alignment's source sentence in the source corpus
+	 * @param targetOffset the start position of the alignment's target sentence in the target corpus
+	 */	
 	public Collection getSourceAlignmentSpans(Grid alignmentPoints, int sourceStart, int sourceEnd, int sourceOffset, int targetOffset) {
 		ArrayList spans = new ArrayList();
 	
 		//Consistency check:
-		//check that none of the target words within the target span
-		//are aligned with source words outside of the source span
+		// check that none of the target words within the
+		// target span are aligned with source words outside
+		// of the source span
 		boolean isConsistent = true;
 		int[] targetPoints = alignmentPoints.getRowPoints(sourceStart, sourceEnd);
 		int targetStart = 0;
@@ -214,8 +227,10 @@ public class Consistent implements PhraseExtractor {
 		
 		if(isConsistent) {
 			//Expansion:
-			//we add additional alignments for all target points which are unaligned,
-			//since se have no evidence that they they are not part of the alignment
+			// we add additional alignments for all
+			// target points which are unaligned, since
+			// we have no evidence that they they are not
+			// part of the alignment
 			boolean[][] booleanArray = alignmentPoints.generateBooleanArray();
 			int targetSentenceLength = alignmentPoints.getHeight();
 			for(int i = targetStart; i >= 0 && (i == targetStart || Grid.rowEmpty(i, booleanArray)); i--) {
@@ -229,21 +244,24 @@ public class Consistent implements PhraseExtractor {
 	}
    
    
-	/** Returns a collection of spans for the phrase alignments that match the specified
-	  * target phrase.  If the target phrase is unaligned, returns an empty set.
-	  *
-	  * @param alignment the Alignment to use when extracting the aligned phrase
-	  * @param targetStart the first word of the target phrase (inclusive)
-	  * @param targetEnd the first word of the target phrase (inclusive)
-	  * @param sourceOffset the start position of the alignment's source sentence in the source corpus
-	  * @param targetOffset the start position of the alignment's target sentence in the target corpus
-	  */	
+	/**
+	 * Returns a collection of spans for the phrase alignments
+	 * that match the specified target phrase. If the target
+	 * phrase is unaligned, returns an empty set.
+	 *
+	 * @param alignment the Alignment to use when extracting the aligned phrase
+	 * @param targetStart the first word of the target phrase (inclusive)
+	 * @param targetEnd the first word of the target phrase (inclusive)
+	 * @param sourceOffset the start position of the alignment's source sentence in the source corpus
+	 * @param targetOffset the start position of the alignment's target sentence in the target corpus
+	 */	
 	public Collection getTargetAlignmentSpans(Grid alignmentPoints, int targetStart, int targetEnd, int sourceOffset, int targetOffset) {
 		ArrayList spans = new ArrayList();
 	
 		//Consistency check:
-		//check that none of the target words within the target span
-		//are aligned with source words outside of the source span
+		// check that none of the target words within the
+		// target span are aligned with source words outside
+		// of the source span
 		boolean isConsistent = true;
 		int[] sourcePoints = alignmentPoints.getColumnPoints(targetStart, targetEnd);
 		int sourceStart = 0;
@@ -267,8 +285,10 @@ public class Consistent implements PhraseExtractor {
 		
 		if(isConsistent) {
 			//Expansion:
-			//we add additional alignments for all target points which are unaligned,
-			//since se have no evidence that they they are not part of the alignment
+			// we add additional alignments for all
+			// target points which are unaligned, since
+			// we have no evidence that they they are not
+			// part of the alignment
 			boolean[][] booleanArray = alignmentPoints.generateBooleanArray();
 			int sourceSentenceLength = alignmentPoints.getWidth();
 			for(int i = sourceStart; i >= 0 && (i == sourceStart || Grid.columnEmpty(i, booleanArray)); i--) {
@@ -312,8 +332,7 @@ public class Consistent implements PhraseExtractor {
 // Main 
 //===============================================================
 
-	public static void main(String[] args)
-	{
+	public static void main(String[] args) {
 		// ccb - debugging
 		Phrase source = new Phrase("AsbAnyA tnfy tjmyd AlmsAEdp AlmmnwHp llmgrb", new Vocabulary());
 		Phrase target = new Phrase("spain denies suspending aid to morocco", new Vocabulary());

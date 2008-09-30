@@ -14,7 +14,7 @@
  * along with this library; if not, write to the Free Software Foundation,
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package edu.jhu.joshua.lattice;
+package joshua.lattice;
 
 /**
  * An arc in a directed graph.
@@ -27,16 +27,28 @@ package edu.jhu.joshua.lattice;
  */
 public class Arc<Label> {
 
-	/** Weight of this arc. Package-private scope so that Node and Lattice can quickly access this variable. */
+	/**
+	 * Weight of this arc. Package-private scope so that Node
+	 * and Lattice can quickly access this variable.
+	 */
 	final double weight;
 	
-	/** Node where this arc begins. Package-private scope so that Node and Lattice can quickly access this variable. */
+	/**
+	 * Node where this arc begins. Package-private scope so
+	 * that Node and Lattice can quickly access this variable.
+	 */
 	final Node<Label> head;
 	
-	/** Node where this arc ends. Package-private scope so that Node and Lattice can quickly access this variable. */
+	/** 
+	 * Node where this arc ends. Package-private scope so that
+	 * Node and Lattice can quickly access this variable.
+	 */
 	final Node<Label> tail;
 	
-	/** Label associated with this arc. Package-private scope so that Node and Lattice can quickly access this variable. */
+	/** 
+	 * Label associated with this arc. Package-private scope
+	 * so that Node and Lattice can quickly access this variable.
+	 */
 	final Label label;
 	
 	/**

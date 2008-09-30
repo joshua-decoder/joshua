@@ -14,16 +14,15 @@
  * along with this library; if not, write to the Free Software Foundation,
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package edu.jhu.util.sentence;
+package joshua.util.sentence;
 
-// Imports
 import java.util.ArrayList;
 
 /**
- * Grids is a class that provides access to a list of Grids objects.  It 
- * mainly acts as an interface for the GridServer / RmiGrids, but we have
- * also provided a simple implementation here that as a wrapper around an 
- * an ArrayList for less advance tasks.
+ * Grids is a class that provides access to a list of Grids objects.
+ * It mainly acts as an interface for the GridServer / RmiGrids,
+ * but we have also provided a simple implementation here that as
+ * a wrapper around an an ArrayList for less advance tasks.
  *
  * @author Chris Callison-Burch
  * @since  10 October 2005
@@ -76,23 +75,28 @@ public class Grids {
 	public Grid getGrid(int i) {
 		Grid grid = (Grid) grids.get(i);
 		if(grid == null) return null;
-		// ccb - todo - this method might not be safe if we're having multiple threads accessing
-		// the same set of alignments...
+		// ccb - todo - this method might not be safe if
+		// we're having multiple threads accessing the same
+		// set of alignments...
 		if(transpose != grid.isTransposed()) grid.transpose();
 		return grid;
 	}
+	
 	
 	public int size() {
 		return grids.size();
 	}
 	
+	
 	public void setGrid(int i, Grid grid) {
 		grids.set(i, grid);
 	}
 	
+	
 	public boolean isTransposed() {
 		return transpose;
 	}
+	
 	
 	//===========================================================
 	// Methods
@@ -126,8 +130,7 @@ public class Grids {
 // Main 
 //===============================================================
 
-	public static void main(String[] args)
-	{
+	public static void main(String[] args) {
 
 	}
 }

@@ -14,24 +14,24 @@
  * along with this library; if not, write to the Free Software Foundation,
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package edu.jhu.joshua.decoder.hypergraph;
+package joshua.decoder.hypergraph;
+
+import joshua.decoder.Decoder;
+import joshua.decoder.Symbol;
+import joshua.decoder.ff.tm.TMGrammar;
+import joshua.decoder.ff.tm.TMGrammar_Memory;
+import joshua.decoder.ff.tm.Rule;
+import joshua.decoder.ff.tm.TMGrammar_Memory.Rule_Memory;
+import joshua.decoder.hypergraph.HyperGraph;
+import joshua.decoder.hypergraph.HyperGraph.Deduction;
+import joshua.decoder.hypergraph.HyperGraph.Item;
+import edu.jhu.lzfUtility.FileUtility; // BUG: needs reorg
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
-
-import edu.jhu.joshua.decoder.Decoder;
-import edu.jhu.joshua.decoder.Symbol;
-import edu.jhu.joshua.decoder.feature_function.translation_model.TMGrammar;
-import edu.jhu.joshua.decoder.feature_function.translation_model.TMGrammar_Memory;
-import edu.jhu.joshua.decoder.feature_function.translation_model.Rule;
-import edu.jhu.joshua.decoder.feature_function.translation_model.TMGrammar_Memory.Rule_Memory;
-import edu.jhu.joshua.decoder.hypergraph.HyperGraph;
-import edu.jhu.joshua.decoder.hypergraph.HyperGraph.Deduction;
-import edu.jhu.joshua.decoder.hypergraph.HyperGraph.Item;
-import edu.jhu.lzfUtility.FileUtility;
 
 /**
  * this class implements functions of writting/reading hypergraph on disk

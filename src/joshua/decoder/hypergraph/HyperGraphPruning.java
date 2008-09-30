@@ -14,19 +14,19 @@
  * along with this library; if not, write to the Free Software Foundation,
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package edu.jhu.joshua.decoder.hypergraph;
+package joshua.decoder.hypergraph;
+
+import joshua.decoder.Decoder;
+import joshua.decoder.Symbol;
+import joshua.decoder.hypergraph.DiskHyperGraph;
+import joshua.decoder.hypergraph.HyperGraph;
+import joshua.decoder.hypergraph.HyperGraph.Deduction;
+import joshua.decoder.hypergraph.HyperGraph.Item;
+import edu.jhu.lzfUtility.FileUtility; // BUG: needs reorg
 
 import java.io.BufferedReader;
 import java.util.ArrayList;
 import java.util.HashMap;
-
-import edu.jhu.joshua.decoder.Decoder;
-import edu.jhu.joshua.decoder.Symbol;
-import edu.jhu.joshua.decoder.hypergraph.DiskHyperGraph;
-import edu.jhu.joshua.decoder.hypergraph.HyperGraph;
-import edu.jhu.joshua.decoder.hypergraph.HyperGraph.Deduction;
-import edu.jhu.joshua.decoder.hypergraph.HyperGraph.Item;
-import edu.jhu.lzfUtility.FileUtility;
 
 /**
  * during the pruning process, many Item/Deductions may not be explored at all due to the early-stop in pruning_deduction

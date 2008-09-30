@@ -14,17 +14,19 @@
  * along with this library; if not, write to the Free Software Foundation,
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package edu.jhu.util.sentence;
+package joshua.util.sentence;
 
 import java.util.*;
 
 /**
- * Representation of a 2-dimensional grid. This implementation is designed to 
- * be as memory-efficient as possible for storing many grids in memory. Most JVMs
- * use 32bit ints to store byte, short, and boolean individual primitives, but will actually
- * make efficient use of memory when these small primitives are stored in arrays. Therefore,
- * we create a single sorted array of shorts, where both the X and Y coordinate for a given 
- * "true" point are the grid are encoded in one short.
+ * Representation of a 2-dimensional grid. This implementation is
+ * designed to be as memory-efficient as possible for storing many
+ * grids in memory. Most JVMs use 32bit ints to store byte, short,
+ * and boolean individual primitives, but will actually make efficient
+ * use of memory when these small primitives are stored in arrays.
+ * Therefore, we create a single sorted array of shorts, where both
+ * the X and Y coordinate for a given "true" point are the grid are
+ * encoded in one short.
  *
  * @author Josh Schroeder
  * @since 09 Dec 2004
@@ -42,6 +44,7 @@ public class Grid {
 	 */
 	static public final int MAX_LENGTH = 100;
 	
+
 	/**
 	 * Constant used for generating coordinate short value
 	 */
@@ -63,7 +66,9 @@ public class Grid {
 //===============================================================
 
 	/**
-	 * Constructor takes in the size of the Grid to create and a set of coordinates
+	 * Constructor takes in the size of the Grid to create and
+	 * a set of coordinates.
+	 * 
 	 * @param width the width (X-value limit) of the grid
 	 * @param height the height (Y-value limit) of the grid
 	 * @param coordinates a Set of Coordinate objects representing all the points to be added
@@ -76,7 +81,9 @@ public class Grid {
 	
 
 	/**
-	 * Constructor takes in the size of the Grid to create and a 2d array of booleans
+	 * Constructor takes in the size of the Grid to create and
+	 * a 2d array of booleans.
+	 * 
 	 * @param width the width (X-value limit) of the grid
 	 * @param height the height (Y-value limit) of the grid
 	 * @param array a 2d collection of booleans representing all the points to be added
@@ -87,9 +94,11 @@ public class Grid {
 		initializeCoordinates(array);
 	}
 	
+	
 	/**
-	 * Constructor takes the dimensions of the Grid, and creates an initially empty
-	 * grid.
+	 * Constructor takes the dimensions of the Grid, and creates
+	 * an initially empty grid.
+	 * 
 	 * @param width the width (X-value limit) of the grid
 	 * @param height the height (Y-value limit) of the grid
 	 */
@@ -97,9 +106,11 @@ public class Grid {
 		this(width, height, false);
 	}
 
+	
 	/**
-	 * Constructor takes the dimensions of the Grid, and creates either an entirely
-	 
+	 * Constructor takes the dimensions of the Grid, and creates
+	 * either an entirely
+	 *
 	 * @param width the width (X-value limit) of the grid
 	 * @param height the height (Y-value limit) of the grid
 	 * @param fill true if the grid should be filled, false if it should be empty
@@ -117,8 +128,11 @@ public class Grid {
 		}
 	}
 	
+	
 	/**
-	 * Constructor takes the small string representation of alignment points.
+	 * Constructor takes the small string representation of
+	 * alignment points.
+	 * 
 	 * @param alignmentPoints the string representation of alignments.
 	 */
 	public Grid(String alignmentPoints) {
@@ -135,8 +149,11 @@ public class Grid {
 		initializeCoordinates(coordinates);
 	}
 	
+	
 	/**
-	 * Constructor takes the small string representation of alignment points.
+	 * Constructor takes the small string representation of
+	 * alignment points.
+	 * 
 	 * @param alignmentPoints the string representation of alignments.
 	 */
 	public Grid(int width, int height, String alignmentPoints) {
@@ -153,9 +170,10 @@ public class Grid {
 		initializeCoordinates(coordinates);
 	}
 	
+	
 	/**
-	 * This protected constructor is used in the initalization of the
-	 * MaskedGrid subclass.
+	 * This protected constructor is used in the initalization
+	 * of the MaskedGrid subclass.
 	 */
 	protected Grid(Grid fullGrid) {
 		this.coordinates = fullGrid.coordinates;
@@ -179,6 +197,7 @@ public class Grid {
 		return coordinates.length;
 	}
 	
+
 	/**
 	 * @return the width (X size) of the Grid
 	 */
@@ -186,6 +205,7 @@ public class Grid {
 		if (transposed) return height;
 		else return width;
 	}
+
 
 	/**
 	 * @return the height (Y size) of the Grid
@@ -195,25 +215,27 @@ public class Grid {
 		else return height;
 	}
 	
+
 	public boolean isTransposed() {
 		return transposed;
 	}
 	
 	
 	/**
-	 * Checks if a coordinate's values fall within the bounds of the Grid.
-	 * DOES NOT check for the existance of the coordinate in the grid. Use
-	 * contains for that purpose.
+	 * Checks if a coordinate's values fall within the bounds
+	 * of the Grid. DOES NOT check for the existance of the
+	 * coordinate in the grid. Use contains for that purpose.
+	 * 
 	 * @param x the x value of the location to check validity for
 	 * @param y the y value of the location to check validity for
 	 * @return true if the location is in bounds
 	 * @see #contains(int,int)
 	 */
 	public boolean isValid(int x, int y) {
-		return (x>=0 &&
-				y>=0 &&
-				x<getWidth() &&
-				y<getHeight());
+		return (x >= 0 &&
+				y >= 0 &&
+				x < getWidth() &&
+				y < getHeight());
 	}
 
 	
@@ -223,51 +245,65 @@ public class Grid {
 
 
 	/**
-	 * compares this object to another. If it is also a grid, first
-	 * checks height and width compatibility, then checks that all
-	 * coordinates are equal.
+	 * compares this object to another. If it is also a grid,
+	 * first checks height and width compatibility, then checks
+	 * that all coordinates are equal.
+	 * 
 	 * @param o object to comare to
-	 * @return true if o is a Grid of the same size and containing the same points
-	 * as this one
+	 * @return true if o is a Grid of the same size and containing
+	 *         the same points as this one
 	 */
 	public boolean equals(Object o) {
-		if (o==null) return false;
-        if (!o.getClass().isInstance(this)) return false;
+		if (o == null) {
+				return false;
+		}
+        if (! o.getClass().isInstance(this)) {
+				return false;
+		}
 		Grid other = (Grid)o;
 		return (this.getWidth()==other.getWidth() &&
 				this.getHeight()==other.getHeight() &&
 				Arrays.equals(this.getCoordinates(),other.getCoordinates()));
 	}
 	
+	
 	/**
 	 * Checks if the given location is occupied in this grid.
+	 * 
 	 * @param location the coordinate location to check for.
-	 * @return true if the coordinate is within the bounds of the Grid and exists (is set to true)
+	 * @return true if the coordinate is within the bounds of
+	 *         the Grid and exists (is set to true)
 	 */
 	public boolean contains(Coordinate location) {
 		return contains(location.x,location.y);
 	}
 	
+	
 	/**
 	 * Checks if a given location is present in the grid.
+	 * 
 	 * @param x the x value of the coordinate to check for
 	 * @param y the y value of the coordinate to check for
-	 * @return true if the coordinate represented by the integers is in bounds and exists
+	 * @return true if the coordinate represented by the integers
+	 *         is in bounds and exists
 	 */
 	public boolean contains(int x, int y) {
 		if (isValid(x,y)) {
 			int index = Arrays.binarySearch(getCoordinates(), getKey(x,y));
-			//the index returned by a binarySearch is positive if the number exists
+			// the index returned by a binarySearch is
+			// positive if the number exists
 			return (index>=0);			
 		}
 		else throw new ArrayIndexOutOfBoundsException("("+x+","+y+")");
 	}
 
 	/**
-	 * Exports the contents of this grid to a 2-d boolean array, of the size
-	 * array[width][height]. Coordinates contained in this grid will be set to
-	 * true, all others false.
-	 * @return boolean[][] a 2-d boolean array representation of this grid.
+	 * Exports the contents of this grid to a 2-d boolean array,
+	 * of the size array[width][height]. Coordinates contained
+	 * in this grid will be set to true, all others false.
+	 * 
+	 * @return boolean[][] a 2-d boolean array representation
+	 *         of this grid.
 	 */
 	public boolean[][] generateBooleanArray() {
 		int width = getWidth();
@@ -278,14 +314,17 @@ public class Grid {
 				array[x][y]=false;
 		for (int i=0;i<getCoordinates().length;i++) {
 			short[] location = getLocation(getCoordinates()[i]);
-			//location may be null if some coordinates are masked (see MaskedGrid)
+			// location may be null if some coordinates
+			// are masked (see MaskedGrid)
 			if (location !=null) array[location[0]][location[1]] = true;
 		}
 		return array;	
 	}
 	
+	
 	/**
-	 * Exports the contents of this grid to a collection of Coordinates.
+	 * Exports the contents of this grid to a collection of
+	 * Coordinates.
 	 */
 	public Collection generateCoordinates() {
 		HashSet coordinates = new HashSet();
@@ -298,16 +337,20 @@ public class Grid {
 		return coordinates;
 	}
 	
+	
 	/**
-	 * Grid's transpose just sets a boolean flag. Due to dual arrays, neither
-	 * direction is faster than the other
+	 * Grid's transpose just sets a boolean flag. Due to dual
+	 * arrays, neither direction is faster than the other
 	 */
 	public void transpose() {
 		transposed = !transposed;
 	}
 	
+	
 	/**
-	 * Returns a sorted list of the row points that are items for the column span.
+	 * Returns a sorted list of the row points that are items
+	 * for the column span.
+	 * 
 	 * @param columnEnd is exclusive
 	 */
 	public int[] getRowPoints(int columnStart, int columnEnd) {
@@ -316,7 +359,9 @@ public class Grid {
 	
 
 	/**
-	 * Returns a sorted list of the column points that are items for the row span.
+	 * Returns a sorted list of the column points that are items
+	 * for the row span.
+	 * 
 	 * @param rowEnd is exclusive
 	 */
 	public int[] getColumnPoints (int rowStart, int rowEnd) {
@@ -337,7 +382,6 @@ public class Grid {
 		}
 		Arrays.sort(result);
 		return result;
-		
 	}
 	
 //===============================================================
@@ -386,7 +430,7 @@ public class Grid {
 	
 	
 	/**
-	 * Called by the constructor to create an entirely filled 
+	 * Called by the constructor to create an entirely filled
 	 * grid.  Note that this is not a desirable case, because
 	 * this data structure is designed to be memory compact for
 	 * sparse grids.     
@@ -403,9 +447,7 @@ public class Grid {
 				index++;
 			}
 		}
-		
 	}
-	
 	
 	
 	/**
@@ -416,9 +458,12 @@ public class Grid {
 		return (short)key;
 	}
 	
+	
 	/**
 	 * generates the location of a coordinate from a key
-	 * @return the coordinate from the key, or null if coordinate would be invalid (used in MaskedGrid)
+	 * 
+	 * @return the coordinate from the key, or null if coordinate
+	 *         would be invalid (used in MaskedGrid)
 	 */
 	protected short[] getLocation(short key) {
 		short[] location = new short[2];
@@ -428,11 +473,12 @@ public class Grid {
 	}	
 	
 	
-		
 	/**
-	 * Returns a representation of the grid's contents in the smallest number of 
-	 * characters. The format is <code>x1.y1,x2.y2,....xN.yN</code>. NOTE: This does
-	 * NOT tell you the full width and height of the array, only the points
+	 * Returns a representation of the grid's contents in the
+	 * smallest number of characters. The format is
+	 * <code>x1.y1,x2.y2,....xN.yN</code>. NOTE: This does NOT
+	 * tell you the full width and height of the array, only
+	 * the points
 	 *
 	 * @return a "thin" String representation of the grid.
 	 */
@@ -441,7 +487,8 @@ public class Grid {
 		
 		for (int i=0;i<getCoordinates().length;i++) {
 			short[] location = getLocation(getCoordinates()[i]);
-			//location may be null if some coordinates are masked (see MaskedGrid)
+			// location may be null if some coordinates
+			// are masked (see MaskedGrid)
 			if (location !=null){
 				buf.append(location[0]);
 				buf.append('-');
@@ -454,10 +501,9 @@ public class Grid {
 	}
 	
 	
-	
-	
-	/** Prints an ASCII graph of the grid.
-	  */
+	/**
+	 * Prints an ASCII graph of the grid.
+	 */
 	public String toAsciiGraph() {
 		StringBuffer buffer = new StringBuffer();
 		boolean[][] array = generateBooleanArray();
@@ -502,12 +548,15 @@ public class Grid {
 // Static
 //===============================================================
 
-	/** Returns a new grid extends this grid by the specified grid.  
-	  * The width of the new grid is the width of this grid plus the
-	  * width of the specified grid, and the same for the height.
-	  * @param grid the grid to append to this one.
-	  * @return a new Grid
-	  */
+	/**
+	 * Returns a new grid extends this grid by the specified
+	 * grid. The width of the new grid is the width of this
+	 * grid plus the width of the specified grid, and the same
+	 * for the height.
+	 * 
+	 * @param grid the grid to append to this one.
+	 * @return a new Grid
+	 */
 	public static Grid extend(Grid grid1, Grid grid2) {
 		int width = grid1.getWidth() + grid2.getWidth();
 		int height = grid1.getHeight() + grid2.getHeight();
@@ -532,9 +581,10 @@ public class Grid {
 	}
 	
 	
-	/** A version of extend which allows for more flexibility in how the 
-	  * grid is extended.
-	  */
+	/**
+	 * A version of extend which allows for more flexibility
+	 * in how the grid is extended.
+	 */
 	protected static Grid extend(int width, int height, 
 								Grid grid1, int xOffset1, int yOffset1,
 								Grid grid2, int xOffset2, int yOffset2) {
@@ -556,7 +606,8 @@ public class Grid {
 
   
 	/**
-	 * Creates the intersection of two grids with identical dimensions.
+	 * Creates the intersection of two grids with identical
+	 * dimensions.
 	 */
 	public static Grid intersection(Grid grid1, Grid grid2) {
 		boolean[][] array1 = grid1.generateBooleanArray();
@@ -572,6 +623,7 @@ public class Grid {
 		}
 		return new Grid(intersection);	
 	}
+	
 	
 	/**
 	 * Creates the union of two grids with identical dimensions.
@@ -592,15 +644,17 @@ public class Grid {
 	}
   
 
-
 	/**
-	 * Creates a new grid containing the delta of two grids. The delta is defined
-	 * as the the set of points in one of the two grids but not both.
-	 * Note that the underlying coordinates will be shared with the original grids
-	 * to conserve memory.
+	 * Creates a new grid containing the delta of two grids.
+	 * The delta is defined as the the set of points in one of
+	 * the two grids but not both. Note that the underlying
+	 * coordinates will be shared with the original grids to
+	 * conserve memory.
+	 * 
 	 * @param g1
 	 * @param g2
-	 * @return Grid a new Grid containing those points in the union but not the intersection
+	 * @return Grid a new Grid containing those points in the
+	 *         union but not the intersection
 	 */
 	public static Grid delta(Grid grid1, Grid grid2) {
 		boolean[][] union = union(grid1, grid2).generateBooleanArray();
@@ -618,11 +672,10 @@ public class Grid {
 	}
 	
 	
-	
-	
 	/**
-	 * Checks if a given row in the array is empty (contains no
-	 * true values).
+	 * Checks if a given row in the array is empty (contains
+	 * no true values).
+	 * 
 	 * @param y the row to check
 	 * @param array the array of points
 	 * @return true if array[*][y] is all false
@@ -636,9 +689,11 @@ public class Grid {
 		return true;
 	}
 	
+	
 	/**
-	 * Checks if a given column in the array is empty (contains no
-	 * true values).
+	 * Checks if a given column in the array is empty (contains
+	 * no true values).
+	 * 
 	 * @param x the column to check
 	 * @param array the array of points
 	 * @return true if array[x][*] is all false
@@ -654,15 +709,18 @@ public class Grid {
 	
 	
 	
-  /**
-     * Utility method for checking around a point in a 2-d array to see
-     * if the point itself or any of the nearby points have both horizontal
-     * and vertical neighbors. Checks the area from x-1 to x+1 and y-1 to y+1
-     * (9 points total)
-     * @param x the x coordinate
-     * @param y the y coordinate
+	/**
+	 * Utility method for checking around a point in a 2-d array
+	 * to see if the point itself or any of the nearby points
+	 * have both horizontal and vertical neighbors. Checks the
+	 * area from x-1 to x+1 and y-1 to y+1 (9 points total)
+	 *
+	 * @param x the x coordinate
+	 * @param y the y coordinate
      * @param points the boolean array of points
-     * @return true if any of the points in the 9-element area surrounding x,y have both horizontal and vertical neighbors
+     * @return true if any of the points in the 9-element area
+     *         surrounding x,y have both horizontal and vertical
+     *         neighbors
      */
     static public boolean generatesBothNeighbors(int x, int y, boolean[][] points) {
         if (hasBothNeighbors(x,y,points)) return true;
@@ -676,9 +734,12 @@ public class Grid {
         return false;           
     }
     
+	
     /**
-     * Checks if (x,y) has a horizonal or vertical neighbor in array[][].
-     * @param x the x coordinate
+     * Checks if (x,y) has a horizonal or vertical neighbor in
+     * array[][].
+     * 
+	 * @param x the x coordinate
      * @param y the y coordinate
      * @param array the boolean array of points
      * @return true if (x,y) has a horizontal or vertical neighbor
@@ -689,9 +750,12 @@ public class Grid {
 				);
     }
     
+	
     /**
-     * Checks if (x,y) has a horizonal and vertical neighbor in array[][].
-     * @param x the x coordinate
+     * Checks if (x,y) has a horizonal and vertical neighbor in
+     * array[][].
+     * 
+	 * @param x the x coordinate
      * @param y the y coordinate
      * @param array the boolean array of points
      * @return true if (x,y) has a horizontal and vertical neighbor
@@ -700,34 +764,42 @@ public class Grid {
         return (hasVerticalNeighbor(x,y,array) && hasHorizontalNeighbor(x,y,array));
     }    
     
+	
     /**
      * Checks if (x,y) has a vertical neighbor in array[][]. 
-     * @param x the x coordinate
+     * 
+	 * @param x the x coordinate
      * @param y the y coordinate
      * @param array the boolean array of points
-     * @return true if either (x, y-1) or (x, y+1) are in bounds and true
+     * @return true if either (x, y-1) or (x, y+1) are in bounds
+     *         and true
      */
     static public boolean hasVerticalNeighbor(int x, int y, boolean[][] array) {
         return (hasAboveNeighbor(x, y, array) || hasBelowNeighbor(x, y, array));
     }
     
+	
     /**
-     * Checks if (x,y) has a horizontal neighbor in array[][]. 
-     * @param x the x coordinate
+     * Checks if (x,y) has a horizontal neighbor in array[][].
+     * 
+	 * @param x the x coordinate
      * @param y the y coordinate
      * @param array the boolean array of points
      * @return true if either (x-1,y) or (x+1,y) are in bounds and true
-     */    
+     */
     static public boolean hasHorizontalNeighbor(int x, int y, boolean[][] array) {
         return (hasLeftNeighbor(x, y, array) || hasRightNeighbor(x, y, array));
     }
     
+	
     /**
      * Checks if (x,y) has a diagonal neighbor in array[][]. 
-     * @param x the x coordinate
+     * 
+	 * @param x the x coordinate
      * @param y the y coordinate
      * @param array the boolean array of points
-     * @return true if any of {(x-1,y-1), (x+1,y-1), (x+1, y+1), (x-1,y+1)} are in bounds and true
+     * @return true if any of {(x-1,y-1), (x+1,y-1), (x+1, y+1),
+     *         (x-1,y+1)} are in bounds and true
      */    
     static public boolean hasDiagonalNeighbor(int x, int y, boolean[][] array) {
         for (int i=x-1;i<=x+1;i++) {
@@ -739,13 +811,16 @@ public class Grid {
         }
         return false;
     }
-
+	
+	
     /**
      * Checks if (x,y) is within the bounds of the array.
-     * @param x the x coordinate
+     * 
+	 * @param x the x coordinate
      * @param y the y coordinate
      * @param array the boolean array of points
-     * @return true if x and y are >=0 and less than the width and height (respectively) of the array
+     * @return true if x and y are >=0 and less than the width and
+     *         height (respectively) of the array
      */
     static public boolean inBounds(int x, int y, boolean[][] array) {
             return (x>=0 &&
@@ -754,9 +829,11 @@ public class Grid {
                 y<array[x].length);
     }
 	
+	
 	/**
      * Checks if (x+1,y) is within the bounds of the array and true.
-     * @param x the x coordinate
+     * 
+	 * @param x the x coordinate
      * @param y the y coordinate
      * @param array the boolean array of points
      * @return true if (x+1,y) is true and in-bounds
@@ -768,9 +845,11 @@ public class Grid {
         return false;
 	}
 	
+	
 	/**
      * Checks if (x-1,y) is within the bounds of the array and true.
-     * @param x the x coordinate
+     * 
+	 * @param x the x coordinate
      * @param y the y coordinate
      * @param array the boolean array of points
      * @return true if (x-1,y) is true and in-bounds
@@ -782,9 +861,11 @@ public class Grid {
 		return false;
 	}
 	
+	
 	/**
      * Checks if (x,y-1) is within the bounds of the array and true.
-     * @param x the x coordinate
+     * 
+	 * @param x the x coordinate
      * @param y the y coordinate
      * @param array the boolean array of points
      * @return true if (x,y-1) is true and in-bounds
@@ -796,9 +877,11 @@ public class Grid {
 		return false;
 	}
 	
+	
 	/**
      * Checks if (x,y+1) is within the bounds of the array and true.
-     * @param x the x coordinate
+     * 
+	 * @param x the x coordinate
      * @param y the y coordinate
      * @param array the boolean array of points
      * @return true if (x,y+1) is true and in-bounds
@@ -810,9 +893,11 @@ public class Grid {
         return false;
 	}
 	
+	
 	/**
      * Checks if (x+1,y+1) is within the bounds of the array and true.
-     * @param x the x coordinate
+     * 
+	 * @param x the x coordinate
      * @param y the y coordinate
      * @param array the boolean array of points
      * @return true if (x+1,y+1) is true and in-bounds
@@ -824,23 +909,23 @@ public class Grid {
 		return false;
 	}
 	
+	
 	/**
-     * Checks if (x,y) is the upper left corner of a rectangle, meaning that
-	 * it has a right neighbor, a below neighbor, and a below-right diagonal neighbor.
-     * @param x the x coordinate
+     * Checks if (x,y) is the upper left corner of a rectangle,
+     * meaning that it has a right neighbor, a below neighbor, and
+     * a below-right diagonal neighbor.
+     * 
+	 * @param x the x coordinate
      * @param y the y coordinate
      * @param array the boolean array of points
-     * @return true if (x,y) has true points below, right, and below-right of it.
+     * @return true if (x,y) has true points below, right, and
+     *         below-right of it.
      */
 	static public boolean isRectangleUpperLeft(int x, int y, boolean[][] array) {
 		return (hasRightNeighbor(x, y, array) &&
 				hasBelowNeighbor(x, y, array) &&
 				hasBelowRightNeighbor(x, y, array));
 	}
-	
-
-	
-	
 	
 
 //===============================================================

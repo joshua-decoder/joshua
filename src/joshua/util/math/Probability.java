@@ -14,9 +14,8 @@
  * along with this library; if not, write to the Free Software Foundation,
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package edu.jhu.util.math;
+package joshua.util.math;
 
-// Imports
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -127,7 +126,7 @@ public class Probability implements Comparable {
 		double nonLogValue = Math.exp(logValue) + Math.exp(prob.logValue);
 		return new Probability(Math.log(nonLogValue), false);
 	}
-
+	
 	
 	/**
 	 * @return true if this probability is greater than the other.
@@ -135,21 +134,24 @@ public class Probability implements Comparable {
 	public boolean isGreaterThan(Probability other) {
 		return this.logValue > other.logValue;
 	}
-
+	
+	
 	/**
 	 * @return true if this probability is less than the other.
 	 */
 	public boolean isLessThan(Probability other) {
 		return this.logValue < other.logValue;
 	}
-
+	
+	
 	/**
 	 * @return true if this probability is zero.
 	 */
 	public boolean isZero() {
 		return this.logValue == LOG_ZERO;
 	}
-
+	
+	
 	public int compareTo(Object obj) throws ClassCastException {
 		Probability other = (Probability) obj;
 		if(this.logValue > other.logValue) { 
@@ -159,8 +161,9 @@ public class Probability implements Comparable {
 		} else {
 			return 0;
 		}
-	} 
-
+	}
+	
+	
 	/** 
 	 * @return the distance from this probability to another
 	 * @see divide
@@ -168,8 +171,8 @@ public class Probability implements Comparable {
 	public double distanceFrom(Probability other) {
 		return Math.exp(this.logValue - other.logValue);
 	}
-
-
+	
+	
 	public String toString() {
 		return probabilityFormatter.format(Math.exp(logValue));
 	}
@@ -181,6 +184,7 @@ public class Probability implements Comparable {
 		if(convertToPercentage) number = number * 100;
 		return probabilityFormatter.format(number);
 	}
+	
 	
 	public String toString(boolean printLogProb) {
 		if(!printLogProb) return toString();
@@ -195,17 +199,20 @@ public class Probability implements Comparable {
 	// Methods
 	//===============================================================
 
-	/** Checks that the probability is greater than or equal to zero,
-	  * and less than or equal to one.
-	  */
+	/**
+	 * Checks that the probability is greater than or equal to
+	 * zero, and less than or equal to one.
+	 */
 	protected void checkValidity(double logValue) throws ArithmeticException {
 		if(logValue < LOG_ZERO) throw new ArithmeticException("Probability is less than zero.");
 		if(logValue > LOG_ONE) throw new ArithmeticException("Probability is greater than one.");
 	}
-
-	/** Checks to see whether there is numeric underflow when manipulating non log
-	  * values. 
-	  */
+	
+	
+	/**
+	 * Checks to see whether there is numeric underflow when
+	 * manipulating non log values.
+	 */
 	protected boolean underflow(Probability prob) {
 		if(prob.logValue < prob.UNDER_FLOW_LOG) return true;
 		double nonLogValue = Math.exp(prob.logValue);
@@ -235,16 +242,16 @@ public class Probability implements Comparable {
 		double naturalLog = logProb * Math.log(logBase);
 		return new Probability(naturalLog, false);
 	}
-
-
+	
+	
 	/** 
 	 * Creates a new Probability out of the logProb value.
 	 */
 	public static Probability toProbability(double logProb) {
 		return new Probability(logProb, false);
 	}
-
-
+	
+	
 	public static Probability product(Probability[] probabilities) {
 		if(probabilities == null || probabilities.length == 0) return null;
 		Probability prob = new Probability(1);
@@ -253,14 +260,15 @@ public class Probability implements Comparable {
 		}
 		return prob;
 	}
-
+	
+	
 	public static Probability product(List probabilities) {
-		if(probabilities == null || probabilities.size() == 0) return null;
+		if (probabilities == null || probabilities.size() == 0) return null;
 		Probability prob = new Probability(1);
-		for(int i = 0; i < probabilities.size(); i++) {
+		for (int i = 0; i < probabilities.size(); i++) {
 			prob = prob.multiply((Probability) probabilities.get(i));
 		}
-		return prob;	
+		return prob;
 	}
 
 
@@ -268,8 +276,7 @@ public class Probability implements Comparable {
 // Main 
 //===============================================================
 
-	public static void main(String[] args)
-	{
+	public static void main(String[] args) {
 		ArrayList list = new ArrayList();
 		list.add(new Probability(0.1));
 		list.add(new Probability(0.001));
@@ -279,11 +286,11 @@ public class Probability implements Comparable {
 		Collections.sort(list);
 		
 		Probability best = (Probability) list.get(list.size()-1);
-		for(int i = list.size()-1; i >= 0; i--) {
+		for (int i = list.size()-1; i >= 0; i--) {
 			System.out.println(best.distanceFrom((Probability) list.get(i)));
 		}
 		
 		System.out.println(list);
 	}
+	
 }
-

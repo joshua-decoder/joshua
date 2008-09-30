@@ -14,9 +14,8 @@
  * along with this library; if not, write to the Free Software Foundation,
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package edu.jhu.util.sentence;
+package joshua.util.sentence;
 
-// Imports
 
 /**
  * Word. Contains of String.
@@ -67,6 +66,7 @@ public class Word implements Comparable {
 	
 	/**
 	 * Gets the String represented by this word.
+	 * 
 	 * @return String version of this word
 	 */
 	public String getString() {
@@ -76,6 +76,7 @@ public class Word implements Comparable {
 	
 	/**
 	 * Gets the word ID
+	 * 
 	 * @return the ID of this word
 	 */
 	public int getID() {
@@ -84,7 +85,7 @@ public class Word implements Comparable {
 	
 	
 	/**
-	 * @resuts the vocabulary that this word is included in.
+	 * @return the vocabulary that this word is included in.
 	 */
 	public Vocabulary getVocab() {
 		return vocab;
@@ -96,8 +97,14 @@ public class Word implements Comparable {
 	//===========================================================
 
 	/**
-	 * Uses comparison of underlying String object stored by word
-	 * @return the value 0 if the argument string is equal to this string; a value less than 0 if this string is lexicographically less than the string argument; and a value greater than 0 if this string is lexicographically greater than the string argument.
+	 * Uses comparison of underlying String object stored by
+	 * word.
+	 * 
+	 * @return the value 0 if the argument string is equal to
+	 *         this string; a value less than 0 if this string
+	 *         is lexicographically less than the string argument;
+	 *         and a value greater than 0 if this string is
+	 *         lexicographically greater than the string argument.
 	 * @see java.lang.String#compareTo(String)
 	 */
 	public int compareTo(Object obj) throws ClassCastException {
@@ -105,31 +112,41 @@ public class Word implements Comparable {
 		return word.compareTo(otherWord.word);
 	}
 	
+	
 	/**
 	 * Uses String's hashcode
+	 * 
 	 * @return hashCode value of the underlying word String
 	 */
 	public int hashCode() {
 		return word.hashCode();
 	}
 	
+	
 	/**
 	 * Checks that the strings are the same, assuming the other
 	 * object is a Word
+	 * 
 	 * @param o the object to comapre to
-	 * @return true if the other object is a Word representing the same String
+	 * @return true if the other object is a Word representing
+	 *         the same String
 	 */
 	public boolean equals(Object o) {
-		if (o==null) return false;
-        if (!o.getClass().isInstance(this)) return false;
-        else {
-            Word other = (Word)o;
+		if (o == null) {
+			return false;
+		}
+		if (! o.getClass().isInstance(this)) {
+			return false;
+		} else {
+			Word other = (Word)o;
 			return (this.word.equals(other.word));
-        }
+		}
 	}
+	
 	
 	/**
 	 * Returns the String represented by this word.
+	 * 
 	 * @return String of the word
 	 */
 	public String toString() {
@@ -165,8 +182,7 @@ public class Word implements Comparable {
 // Main 
 //===============================================================
 
-	public static void main(String[] args)
-	{
+	public static void main(String[] args) {
 
 	}
 }

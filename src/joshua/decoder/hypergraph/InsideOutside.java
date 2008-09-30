@@ -14,13 +14,13 @@
  * along with this library; if not, write to the Free Software Foundation,
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package edu.jhu.joshua.decoder.hypergraph;
+package joshua.decoder.hypergraph;
+
+import joshua.decoder.hypergraph.HyperGraph;
+import joshua.decoder.hypergraph.HyperGraph.Deduction;
+import joshua.decoder.hypergraph.HyperGraph.Item;
 
 import java.util.HashMap;
-
-import edu.jhu.joshua.decoder.hypergraph.HyperGraph;
-import edu.jhu.joshua.decoder.hypergraph.HyperGraph.Deduction;
-import edu.jhu.joshua.decoder.hypergraph.HyperGraph.Item;
 
 
 /**

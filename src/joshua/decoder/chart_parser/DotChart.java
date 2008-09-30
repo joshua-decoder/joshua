@@ -14,20 +14,20 @@
  * along with this library; if not, write to the Free Software Foundation,
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package edu.jhu.joshua.decoder.chart_parser;
+package joshua.decoder.chart_parser;
+
+import joshua.decoder.chart_parser.Bin.SuperItem;
+import joshua.decoder.ff.tm.TMGrammar;
+import joshua.decoder.ff.tm.TMGrammar.TrieNode;
+import joshua.lattice.Arc;
+import joshua.lattice.Lattice;
+import joshua.lattice.Node;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import edu.jhu.joshua.decoder.chart_parser.Bin.SuperItem;
-import edu.jhu.joshua.decoder.feature_function.translation_model.TMGrammar;
-import edu.jhu.joshua.decoder.feature_function.translation_model.TMGrammar.TrieNode;
-import edu.jhu.joshua.lattice.Arc;
-import edu.jhu.joshua.lattice.Lattice;
-import edu.jhu.joshua.lattice.Node;
 
 /**
  * This class implements:

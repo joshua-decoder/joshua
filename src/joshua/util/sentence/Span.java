@@ -14,13 +14,12 @@
  * along with this library; if not, write to the Free Software Foundation,
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package edu.jhu.util.sentence;
+package joshua.util.sentence;
 
-// Imports
 
 /**
- * Span is the class that keeps track of the starting points and offsets of 
- * phrases extracted from an alignment.
+ * Span is the class that keeps track of the starting points and
+ * offsets of phrases extracted from an alignment.
  *
  * @author Chris Callison-Burch
  * @since  25 September 2005
@@ -56,6 +55,7 @@ public class Span implements Comparable {
 		this.targetOffset = targetOffset;
 	}
 	
+	
 	public Span(int sourceStart, int sourceEnd, int targetStart, int targetEnd) {
 		this(sourceStart, sourceEnd, targetStart, targetEnd, 0, 0);
 	}
@@ -76,29 +76,36 @@ public class Span implements Comparable {
 	public int getSourceStart() {
 		return sourceStart;
 	}
-
+	
+	
 	public int getSourceEnd() {
 		return sourceEnd;
 	}
-
+	
+	
 	public int getSourceOffset() {
 		return sourceOffset;
 	}
-
+	
+	
 	public int getTargetStart() {
 		return targetStart;
 	}
-
+	
+	
 	public int getTargetEnd() {
 		return targetEnd;
 	}
-
+	
+	
 	public int getTargetOffset() {
 		return targetOffset;
 	}
 	
+	
 	/**
 	 * Sort to order spans along source
+	 * 
 	 * @param o
 	 * @return
 	 * @throws ClassCastException
@@ -115,7 +122,6 @@ public class Span implements Comparable {
 		}
 		return -1;
 	}	
-
 
 
 	/**
@@ -168,8 +174,7 @@ public class Span implements Comparable {
 // Main 
 //===============================================================
 
-	public static void main(String[] args)
-	{
+	public static void main(String[] args) {
 
 	}
 }

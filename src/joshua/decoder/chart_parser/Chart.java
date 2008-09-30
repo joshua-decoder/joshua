@@ -14,28 +14,28 @@
  * along with this library; if not, write to the Free Software Foundation,
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package edu.jhu.joshua.decoder.chart_parser;
+package joshua.decoder.chart_parser;
+
+import joshua.decoder.Decoder;
+import joshua.decoder.Support;
+import joshua.decoder.Symbol;
+import joshua.decoder.chart_parser.DotChart.DotItem;
+import joshua.decoder.ff.FeatureFunction;
+import joshua.decoder.ff.tm.TMGrammar;
+import joshua.decoder.ff.tm.TMGrammar_Memory;
+import joshua.decoder.ff.tm.Rule;
+import joshua.decoder.ff.tm.TMGrammar.RuleBin;
+import joshua.decoder.ff.tm.TMGrammar.TrieNode;
+import joshua.decoder.ff.tm.TMGrammar_Memory.Rule_Memory;
+import joshua.decoder.hypergraph.HyperGraph;
+import joshua.decoder.hypergraph.HyperGraph.Item;
+import joshua.lattice.Lattice;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import edu.jhu.joshua.decoder.Decoder;
-import edu.jhu.joshua.decoder.Support;
-import edu.jhu.joshua.decoder.Symbol;
-import edu.jhu.joshua.decoder.chart_parser.DotChart.DotItem;
-import edu.jhu.joshua.decoder.feature_function.FeatureFunction;
-import edu.jhu.joshua.decoder.feature_function.translation_model.TMGrammar;
-import edu.jhu.joshua.decoder.feature_function.translation_model.TMGrammar_Memory;
-import edu.jhu.joshua.decoder.feature_function.translation_model.Rule;
-import edu.jhu.joshua.decoder.feature_function.translation_model.TMGrammar.RuleBin;
-import edu.jhu.joshua.decoder.feature_function.translation_model.TMGrammar.TrieNode;
-import edu.jhu.joshua.decoder.feature_function.translation_model.TMGrammar_Memory.Rule_Memory;
-import edu.jhu.joshua.decoder.hypergraph.HyperGraph;
-import edu.jhu.joshua.decoder.hypergraph.HyperGraph.Item;
-import edu.jhu.joshua.lattice.Lattice;
 
 
 /**

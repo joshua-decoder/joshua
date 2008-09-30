@@ -14,17 +14,17 @@
  * along with this library; if not, write to the Free Software Foundation,
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package edu.jhu.joshua.decoder.feature_function.language_model;
+package joshua.decoder.ff.lm;
+
+import joshua.decoder.Decoder;
+import joshua.decoder.Support;
+import joshua.decoder.Symbol;
+import joshua.decoder.ff.DefaultFF;
+import joshua.decoder.ff.MapFFState;
+import joshua.decoder.ff.tm.Rule;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-
-import edu.jhu.joshua.decoder.Decoder;
-import edu.jhu.joshua.decoder.Support;
-import edu.jhu.joshua.decoder.Symbol;
-import edu.jhu.joshua.decoder.feature_function.DefaultFF;
-import edu.jhu.joshua.decoder.feature_function.MapFFState;
-import edu.jhu.joshua.decoder.feature_function.translation_model.Rule;
 
 /**
  * this class implement 

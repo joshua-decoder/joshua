@@ -14,12 +14,13 @@
  * along with this library; if not, write to the Free Software Foundation,
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package edu.jhu.joshua.decoder.feature_function.language_model.srilm;
+package joshua.decoder.ff.lm.srilm;
+
+import joshua.decoder.Decoder;
+import joshua.decoder.Symbol;
+import joshua.decoder.ff.lm.LMGrammar;
 
 import java.util.ArrayList;
-import edu.jhu.joshua.decoder.Decoder;
-import edu.jhu.joshua.decoder.Symbol;
-import edu.jhu.joshua.decoder.feature_function.language_model.LMGrammar;
 
 /**
  * 

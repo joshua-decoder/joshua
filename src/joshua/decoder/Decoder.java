@@ -14,7 +14,25 @@
  * along with this library; if not, write to the Free Software Foundation,
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package edu.jhu.joshua.decoder;
+package joshua.decoder;
+
+import joshua.decoder.chart_parser.Chart;
+import joshua.decoder.ff.FeatureFunction;
+import joshua.decoder.ff.ArityPhrasePenaltyFF;
+import joshua.decoder.ff.PhraseModelFF;
+import joshua.decoder.ff.WordPenaltyFF;
+import joshua.decoder.ff.lm.LMGrammar;
+import joshua.decoder.ff.lm.LMGrammar_JAVA;
+import joshua.decoder.ff.lm.LMGrammar_REMOTE;
+import joshua.decoder.ff.lm.LMModel;
+import joshua.decoder.ff.lm.srilm.LMGrammar_SRILM;
+import joshua.decoder.ff.tm.TMGrammar;
+import joshua.decoder.ff.tm.TMGrammar_Memory;
+import joshua.decoder.hypergraph.DiskHyperGraph;
+import joshua.decoder.hypergraph.HyperGraph;
+import joshua.decoder.hypergraph.KbestExtraction;
+import joshua.lattice.Lattice;
+import edu.jhu.lzfUtility.FileUtility; // BUG: needs reorg
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -22,24 +40,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import edu.jhu.joshua.decoder.chart_parser.Chart;
-import edu.jhu.joshua.decoder.feature_function.FeatureFunction;
-import edu.jhu.joshua.decoder.feature_function.ArityPhrasePenaltyFF;
-import edu.jhu.joshua.decoder.feature_function.PhraseModelFF;
-import edu.jhu.joshua.decoder.feature_function.WordPenaltyFF;
-import edu.jhu.joshua.decoder.feature_function.language_model.LMGrammar;
-import edu.jhu.joshua.decoder.feature_function.language_model.LMGrammar_JAVA;
-import edu.jhu.joshua.decoder.feature_function.language_model.LMGrammar_REMOTE;
-import edu.jhu.joshua.decoder.feature_function.language_model.LMModel;
-import edu.jhu.joshua.decoder.feature_function.language_model.srilm.LMGrammar_SRILM;
-import edu.jhu.joshua.decoder.feature_function.translation_model.TMGrammar;
-import edu.jhu.joshua.decoder.feature_function.translation_model.TMGrammar_Memory;
-import edu.jhu.joshua.decoder.hypergraph.DiskHyperGraph;
-import edu.jhu.joshua.decoder.hypergraph.HyperGraph;
-import edu.jhu.joshua.decoder.hypergraph.KbestExtraction;
-import edu.jhu.joshua.lattice.Lattice;
-import edu.jhu.lzfUtility.FileUtility;
 
 /**
  * this class implements: 

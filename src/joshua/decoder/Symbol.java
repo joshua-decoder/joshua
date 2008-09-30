@@ -14,16 +14,16 @@
  * along with this library; if not, write to the Free Software Foundation,
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package edu.jhu.joshua.decoder;
+package joshua.decoder;
+
+import joshua.decoder.ff.lm.srilm.srilm;
+import joshua.decoder.ff.tm.TMGrammar;
+import edu.jhu.lzfUtility.FileUtility; // BUG: needs reorg
 
 import java.io.BufferedReader;
 import java.util.ArrayList;
-import java.util.HashMap ;
+import java.util.HashMap;
 import java.util.List;
-
-import edu.jhu.joshua.decoder.feature_function.language_model.srilm.srilm;
-import edu.jhu.joshua.decoder.feature_function.translation_model.TMGrammar;
-import edu.jhu.lzfUtility.FileUtility;
 
 /**
  * this class implement 

@@ -14,7 +14,10 @@
  * along with this library; if not, write to the Free Software Foundation,
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package edu.jhu.joshua.decoder.feature_function.translation_model;
+package joshua.decoder.ff.tm;
+
+import joshua.decoder.Symbol;
+import joshua.decoder.ff.FeatureFunction;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
@@ -27,9 +30,6 @@ import java.nio.LongBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-
-import edu.jhu.joshua.decoder.Symbol;
-import edu.jhu.joshua.decoder.feature_function.FeatureFunction;
 
 /**
  * Note: this code is originally developed by Chris Dyer at UMD (email: redpony@umd.edu)
