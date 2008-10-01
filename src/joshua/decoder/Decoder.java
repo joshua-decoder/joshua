@@ -1,18 +1,19 @@
 /* This file is part of the Joshua Machine Translation System.
  * 
- * Joshua is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation; either version 2.1 of the License, or 
- * (at your option) any later version.
+ * Joshua is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1
+ * of the License, or (at your option) any later version.
  *
- * This library is distributed in the hope that it will be useful, but 
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public
- * License for more details.
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU Lesser General Public License
- * along with this library; if not, write to the Free Software Foundation,
- * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free
+ * Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 package joshua.decoder;
 
@@ -26,12 +27,14 @@ import joshua.decoder.ff.lm.LMGrammar_JAVA;
 import joshua.decoder.ff.lm.LMGrammar_REMOTE;
 import joshua.decoder.ff.lm.LMModel;
 import joshua.decoder.ff.lm.srilm.LMGrammar_SRILM;
-import joshua.decoder.ff.tm.TMGrammar;
-import joshua.decoder.ff.tm.TMGrammar_Memory;
+import joshua.decoder.ff.tm.GrammarFactory;
+import joshua.decoder.ff.tm.Grammar;
+import joshua.decoder.ff.tm.TMGrammar_Memory; // HACK:
 import joshua.decoder.hypergraph.DiskHyperGraph;
 import joshua.decoder.hypergraph.HyperGraph;
 import joshua.decoder.hypergraph.KbestExtraction;
 import joshua.lattice.Lattice;
+import joshua.util.sentence.Phrase;
 import joshua.util.FileUtility;
 
 import java.io.BufferedReader;
@@ -55,98 +58,104 @@ public class Decoder {
 	public static String tm_file;
 
 	//lm config
-	public static boolean use_srilm=false;
-	public static double lm_ceiling_cost=100;
-	public static boolean use_left_euqivalent_state=false;
-	public static boolean use_right_euqivalent_state=true;
-	public static int g_lm_order=3;
-	public static boolean use_sent_specific_lm=false;
-	public static String g_sent_lm_file_name_prefix="lm.";
+	public static boolean use_srilm                  = false;
+	public static double  lm_ceiling_cost            = 100;
+	public static boolean use_left_euqivalent_state  = false;
+	public static boolean use_right_euqivalent_state = true;
+	public static int     g_lm_order                 = 3;
+	public static boolean use_sent_specific_lm       = false;
+	public static String  g_sent_lm_file_name_prefix = "lm.";
 	
 	//tm config
-	public static int span_limit =10;
+	public static int span_limit = 10;
 	//note: owner should be different from each other, it can have same value as a word in LM/TM
-	public static String phrase_owner="pt";
-	public static String mono_owner="mono";
-	public static String begin_mono_owner="begin_mono";//if such a rule is get applied, then no reordering is possible
-	public static String default_non_terminal="PHRASE";
-	public static boolean use_sent_specific_tm=false;
-	public static String g_sent_tm_file_name_prefix="tm.";
+	public static String  phrase_owner               = "pt";
+	public static String  mono_owner                 = "mono";
+	public static String  begin_mono_owner           = "begin_mono";//if such a rule is get applied, then no reordering is possible
+	public static String  default_non_terminal       = "PHRASE";
+	public static boolean use_sent_specific_tm       = false;
+	public static String  g_sent_tm_file_name_prefix = "tm.";
 	
 	//pruning config
-	public static boolean use_cube_prune=true;
-	public static double fuzz1=0.1;
-	public static double fuzz2=0.1;
-	public static int max_n_items=30;
-	public static double relative_threshold=10.0;
-	public static int max_n_rules=50;
-	public static double rule_relative_threshold=10.0;
+	public static boolean use_cube_prune          = true;
+	public static double  fuzz1                   = 0.1;
+	public static double  fuzz2                   = 0.1;
+	public static int     max_n_items             = 30;
+	public static double  relative_threshold      = 10.0;
+	public static int     max_n_rules             = 50;
+	public static double  rule_relative_threshold = 10.0;
 	
 	//nbest config
-	public static boolean use_unique_nbest =false;
-	public static boolean use_tree_nbest =false;
-	public static boolean add_combined_cost =true;//in the nbest file, compute the final socre
-	public static int topN=500;
+	public static boolean use_unique_nbest  = false;
+	public static boolean use_tree_nbest    = false;
+	public static boolean add_combined_cost = true; //in the nbest file, compute the final socre
+	public static int topN = 500;
 	
 	//remote lm server
-	public static boolean use_remote_lm_server=false;
-	public static String remote_symbol_tbl = "null"; //this file will first be created by remote_lm_server, and read by remote_suffix_server and the decoder	
-	public static int num_remote_lm_servers =1;
-	public static String f_remote_server_list="null";
+	public static boolean use_remote_lm_server = false;
+	public static String remote_symbol_tbl     = "null"; //this file will first be created by remote_lm_server, and read by remote_suffix_server and the decoder	
+	public static int num_remote_lm_servers    = 1;
+	public static String f_remote_server_list  = "null";
 	
 	//parallel decoding
-	public static String parallel_files_prefix="/tmp/temp.parallel"; // C:\\Users\\zli\\Documents\\temp.parallel; used for parallel decoding
-	public static int num_parallel_decoders=1; //number of threads should run
+	public static String   parallel_files_prefix = "/tmp/temp.parallel"; // C:\\Users\\zli\\Documents\\temp.parallel; used for parallel decoding
+	public static int      num_parallel_decoders = 1; //number of threads should run
 	public static Thread[] l_parallel_decode_threads;
 	public static String[] l_parallel_test_files;
 	public static String[] l_parallel_nbest_files;
-	public static DiskHyperGraph[] l_parallel_disk_hgs;
+	public static DiskHyperGraph[]  l_parallel_disk_hgs;
 	public static KbestExtraction[] l_parallel_kbest_extractors;
 	
 	//### global variables
-	public static LMGrammar p_lm=null;//the lm itself
-	public static LMModel p_lm_model=null;//general model
-	public static TMGrammar[] p_tm_grammars=null;
+	public static LMGrammar        p_lm          = null;//the lm itself
+	public static LMModel          p_lm_model    = null;//general model
+	public static GrammarFactory[] p_tm_grammars = null;
 	
-	public static  ArrayList<FeatureFunction> p_l_models=null;
-	public static ArrayList<Integer> l_default_nonterminals=null; 
+	public static ArrayList<FeatureFunction> p_l_models     = null;
+	public static ArrayList<Integer> l_default_nonterminals = null;
 	
 	//disk
-	public static boolean save_disk_hg = false;//if true, save three files: fnbest, fnbest.hg.items, fnbest.hg.rules
-	public static boolean forest_pruning =false;
-	public static double forest_pruning_threshold=10;
+	public static boolean save_disk_hg             = false; //if true, save three files: fnbest, fnbest.hg.items, fnbest.hg.rules
+	public static boolean forest_pruning           = false;
+	public static double  forest_pruning_threshold = 10;
 	
 	
 	//debug
 	public static boolean extract_confusion_grammar = false; //non-parallel version
-	public static String f_confusion_grammar="C:\\Users\\zli\\Documents\\confusion.hg.grammar";
+	public static String f_confusion_grammar = "C:\\Users\\zli\\Documents\\confusion.hg.grammar";
 	
-	private static final Logger logger = Logger.getLogger(Decoder.class.getName());
+	private static final Logger logger = 
+		Logger.getLogger(Decoder.class.getName());
 	
-	public static void main(String[] args) {	
+	
+	
+	public static void main(String[] args) {
 		
 		if (logger.isLoggable(Level.FINEST)) logger.finest("Starting decoder");
 		
 		long start= System.currentTimeMillis();
-		if(args.length!=3){
+		if (args.length != 3) {
 			System.out.println("wrong command, correct command should be: java Decoder config_file test_file outfile");
 			System.out.println("num of args is "+ args.length);
-			for(int i=0; i <args.length; i++)System.out.println("arg is: " + args[i]);
-			System.exit(0);		
+			for (int i = 0; i < args.length; i++) {
+				System.out.println("arg is: " + args[i]);
+			}
+			System.exit(0);
 		}		
 		String config_file = args[0].trim();
-		String test_file = args[1].trim();
-		String nbest_file = args[2].trim();
+		String test_file   = args[1].trim();
+		String nbest_file  = args[2].trim();
 		
 		//##### procedure: read config, init lm, init sym tbl, init models, read lm, read tm
 		
 		//##### read config file
 		read_config_file(config_file);	
-			
-		if(use_remote_lm_server==false && use_srilm)
-			   System.loadLibrary("srilm");//load once		
 		
-		init_lm_grammar();//inside, it will init sym tbl (and add global symbols)
+		if (use_remote_lm_server == false && use_srilm) {
+			   System.loadLibrary("srilm"); // load once
+		}
+		
+		init_lm_grammar(); // inside, it will init sym tbl (and add global symbols)
 
 		//##### initialize the models(need to read config file again)
 		p_l_models = init_models(config_file,p_lm);
@@ -154,13 +163,17 @@ public class Decoder {
 		init_tm_grammar();//create grammars
 		
 		//##### read LM grammar
-		if(use_sent_specific_lm==false)load_lm_grammar_file(lm_file);
+		if (! use_sent_specific_lm) {
+			load_lm_grammar_file(lm_file);
+		}
 		
 		//##### load TM grammar
-		if(use_sent_specific_tm==false)load_tm_grammar_file(tm_file);
+		if (! use_sent_specific_tm) {
+			load_tm_grammar_file(tm_file);
+		}
 		
 		//TODO ##### add default non-terminals
-	    l_default_nonterminals= new ArrayList<Integer>();
+		l_default_nonterminals = new ArrayList<Integer>();
 		l_default_nonterminals.add(Symbol.add_non_terminal_symbol(default_non_terminal));		
 		
 		//###### statistics
@@ -187,8 +200,12 @@ public class Decoder {
 		t_sec = (System.currentTimeMillis()-start)/1000;
 		if (logger.isLoggable(Level.INFO)) logger.info("Total running time is " + t_sec);
 	}
-		 
-	public static void run_parallel_decoder(String test_file, String nbest_file){
+	
+	
+	public static void run_parallel_decoder(
+		String test_file,
+		String nbest_file
+	) {
 		int n_lines = FileUtility.number_lines_in_file(test_file);
 		double num_per_thread_double = n_lines*1.0/num_parallel_decoders;
 		int num_per_thread= (int)num_per_thread_double;
@@ -201,42 +218,57 @@ public class Decoder {
 		BufferedReader t_reader_test = FileUtility.getReadFileStream(test_file,"UTF-8");
 		
 		//run the main control job
-		int n_decoder_to_commit=1;
-		String cur_test_file=parallel_files_prefix+".test."+n_decoder_to_commit;
-		String cur_nbest_file=parallel_files_prefix+".nbest."+n_decoder_to_commit;
-		BufferedWriter t_writer_test = FileUtility.getWriteFileStream(cur_test_file,"UTF-8");
-		int sent_id=0;
-		int start_sent_id= sent_id;
+		int n_decoder_to_commit = 1;
+		String cur_test_file = parallel_files_prefix + ".test." + n_decoder_to_commit;
+		String cur_nbest_file = parallel_files_prefix + ".nbest." + n_decoder_to_commit;
+		BufferedWriter t_writer_test =
+			FileUtility.getWriteFileStream(cur_test_file,"UTF-8");
+		int sent_id       = 0;
+		int start_sent_id = sent_id;
 		
 		String cn_sent;
-		while((cn_sent=FileUtility.read_line_lzf(t_reader_test))!=null){
+		while ((cn_sent = FileUtility.read_line_lzf(t_reader_test)) != null) {
 			sent_id++;
 			FileUtility.write_lzf(t_writer_test,cn_sent+"\n");
 			
 			//make the Symbol table is finalized before running multiple threads, this is to avoid synchronization among threads
-			String t_wrds[] =cn_sent.split("\\s+");for(int wt=0; wt<t_wrds.length; wt++)Symbol.add_terminal_symbol(t_wrds[wt]);//TODO	
+			String t_wrds[] = cn_sent.split("\\s+");
+			for (int wt = 0; wt < t_wrds.length; wt++) {
+				Symbol.add_terminal_symbol(t_wrds[wt]);//TODO	
+			}
 			
-			if(sent_id!=0 && 
-			   n_decoder_to_commit < num_parallel_decoders && //we will include all additional lines into last file 
-			   sent_id%num_per_thread==0){				
+			if (0 != sent_id
+			&& n_decoder_to_commit < num_parallel_decoders //we will include all additional lines into last file 
+			&& sent_id % num_per_thread == 0) {
 				//submit current job
 				FileUtility.flush_lzf(t_writer_test);	
 				FileUtility.close_write_file(t_writer_test);
 				DiskHyperGraph dhg = null;
-				if(save_disk_hg==true) { dhg = new  DiskHyperGraph(); dhg.init_write(cur_nbest_file+".hg.items", forest_pruning, forest_pruning_threshold);}
+				if (save_disk_hg) {
+					dhg = new  DiskHyperGraph();
+					dhg.init_write(
+						cur_nbest_file + ".hg.items",
+						forest_pruning,
+						forest_pruning_threshold);
+				}
 				KbestExtraction kbest_extrator = new KbestExtraction();
-				ParallelDecoder pdecoder = new ParallelDecoder(cur_test_file, cur_nbest_file, start_sent_id, dhg,kbest_extrator);
-				l_parallel_decode_threads[n_decoder_to_commit-1]=pdecoder;
-				l_parallel_test_files[n_decoder_to_commit-1]=cur_test_file;
-				l_parallel_nbest_files[n_decoder_to_commit-1]=cur_nbest_file;
-				l_parallel_disk_hgs[n_decoder_to_commit-1]=dhg;
-				l_parallel_kbest_extractors[n_decoder_to_commit-1]=kbest_extrator;
+				ParallelDecoder pdecoder = new ParallelDecoder(
+					cur_test_file,
+					cur_nbest_file,
+					start_sent_id,
+					dhg,
+					kbest_extrator);
+				l_parallel_decode_threads[n_decoder_to_commit-1] = pdecoder;
+				l_parallel_test_files[n_decoder_to_commit-1] = cur_test_file;
+				l_parallel_nbest_files[n_decoder_to_commit-1] = cur_nbest_file;
+				l_parallel_disk_hgs[n_decoder_to_commit-1] = dhg;
+				l_parallel_kbest_extractors[n_decoder_to_commit-1] = kbest_extrator;
 				
 				//prepare next job
-				start_sent_id=sent_id;
+				start_sent_id = sent_id;
 				n_decoder_to_commit++;
-				cur_test_file=parallel_files_prefix+".test."+n_decoder_to_commit;
-				cur_nbest_file=parallel_files_prefix+".nbest."+n_decoder_to_commit;
+				cur_test_file = parallel_files_prefix + ".test." + n_decoder_to_commit;
+				cur_nbest_file = parallel_files_prefix + ".nbest." + n_decoder_to_commit;
 				t_writer_test = FileUtility.getWriteFileStream(cur_test_file,"UTF-8");					
 			}
 		}
@@ -244,7 +276,13 @@ public class Decoder {
 		FileUtility.flush_lzf(t_writer_test);
 		FileUtility.close_write_file(t_writer_test);					
 		DiskHyperGraph dhg = null;
-		if(save_disk_hg==true) { dhg = new DiskHyperGraph(); dhg.init_write(cur_nbest_file+".hg.items", forest_pruning, forest_pruning_threshold);}
+		if (save_disk_hg) {
+			dhg = new DiskHyperGraph();
+			dhg.init_write(
+				cur_nbest_file + ".hg.items",
+				forest_pruning,
+				forest_pruning_threshold);
+		}
 		KbestExtraction kbest_extrator = new KbestExtraction();
 		ParallelDecoder pdecoder = new ParallelDecoder(cur_test_file, cur_nbest_file, start_sent_id, dhg,kbest_extrator);
 		l_parallel_decode_threads[n_decoder_to_commit-1]=pdecoder;
@@ -255,25 +293,31 @@ public class Decoder {
 		FileUtility.close_read_file(t_reader_test);
 		
 		//run all the jobs
-		for(int i=0; i<l_parallel_decode_threads.length; i++){
-			if (logger.isLoggable(Level.INFO)) logger.info("##############start thread " +i);
+		for (int i = 0; i < l_parallel_decode_threads.length; i++) {
+			if (logger.isLoggable(Level.INFO)) logger.info(
+				"##############start thread " +i);
 			l_parallel_decode_threads[i].start();
 		}
 		
 		//### wait for the threads finish
-		for(int i=0; i<l_parallel_decode_threads.length; i++){
-    		 try {	        		 
-    			 l_parallel_decode_threads[i].join();       
-             } catch (InterruptedException e) {
-            	 if (logger.isLoggable(Level.WARNING)) logger.warning("Warning: thread is interupted for server " + i);
-             } 
-    	}
+		for (int i = 0; i < l_parallel_decode_threads.length; i++) {
+			try {
+				l_parallel_decode_threads[i].join();
+			} catch (InterruptedException e) {
+				if (logger.isLoggable(Level.WARNING)) logger.warning(
+					"Warning: thread is interupted for server " + i);
+			}
+		}
 		
 		//#### merge the nbest files, and remove tmp files
-		BufferedWriter t_writer_nbest = FileUtility.getWriteFileStream(nbest_file,"UTF-8");
+		BufferedWriter t_writer_nbest =
+			FileUtility.getWriteFileStream(nbest_file,"UTF-8");
 		BufferedWriter t_writer_dhg_items = null;
-		if(save_disk_hg) t_writer_dhg_items = FileUtility.getWriteFileStream(nbest_file+".hg.items","UTF-8");
-		for(int i=0; i<l_parallel_decode_threads.length; i++){
+		if (save_disk_hg) {
+			t_writer_dhg_items = 
+				FileUtility.getWriteFileStream(nbest_file+".hg.items","UTF-8");
+		}
+		for (int i = 0; i < l_parallel_decode_threads.length; i++) {
 			String sent;
 			//merge nbest
 			BufferedReader t_reader = FileUtility.getReadFileStream(l_parallel_nbest_files[i],"UTF-8");
@@ -308,46 +352,77 @@ public class Decoder {
 			FileUtility.close_write_file(t_writer_dhg_rules);
 		}
 	}
+	
+	
 	public static class ParallelDecoder extends Thread {
-		 String test_file;
-		 String nbest_file;
-		 int start_sent_id; //start sent id
-		 DiskHyperGraph dpg;
-		 KbestExtraction kbest_extractor;
-		  public ParallelDecoder( String test_file_in, String nbest_file_in, int start_sent_id_in, DiskHyperGraph dpg_in, KbestExtraction extractor ){
-		    	test_file = test_file_in;
-		    	nbest_file = nbest_file_in;
-		    	start_sent_id = start_sent_id_in;
-		    	dpg = dpg_in;
-		    	kbest_extractor = extractor;
-		  }
-		    
-		  public void run() {		    	
-		   	decode_a_file(test_file, nbest_file, start_sent_id, dpg, kbest_extractor);
-		  }
+		String          test_file;
+		String          nbest_file;
+		int             start_sent_id; //start sent id
+		DiskHyperGraph  dpg;
+		KbestExtraction kbest_extractor;
+		
+		
+		public ParallelDecoder(
+			String          test_file_in,
+			String          nbest_file_in,
+			int             start_sent_id_in,
+			DiskHyperGraph  dpg_in,
+			KbestExtraction extractor
+		) {
+			this.test_file       = test_file_in;
+			this.nbest_file      = nbest_file_in;
+			this.start_sent_id   = start_sent_id_in;
+			this.dpg             = dpg_in;
+			this.kbest_extractor = extractor;
+		}
+		
+		
+		public void run() {
+			decode_a_file(test_file, nbest_file, start_sent_id, dpg, kbest_extractor);
+		}
 	}
 	
 	
 	//TODO: log file is not properly handled for parallel decoding
-	public static void decode_a_file(String test_file, String nbest_file, int start_sent_id, DiskHyperGraph dhg, KbestExtraction kbest_extractor){
-		BufferedReader t_reader_test = FileUtility.getReadFileStream(test_file,"UTF-8");
-		BufferedWriter t_writer_nbest = FileUtility.getWriteFileStream(nbest_file,"UTF-8");
+	public static void decode_a_file(
+		String          test_file,
+		String          nbest_file,
+		int             start_sent_id,
+		DiskHyperGraph  dhg,
+		KbestExtraction kbest_extractor
+	) {
+		BufferedReader t_reader_test =
+			FileUtility.getReadFileStream(test_file,"UTF-8");
+		BufferedWriter t_writer_nbest =
+			FileUtility.getWriteFileStream(nbest_file,"UTF-8");
 		
 		String cn_sent;
-		int sent_id=start_sent_id;//if no sent tag, then this will be used
-		while((cn_sent=FileUtility.read_line_lzf(t_reader_test))!=null){
-			if (logger.isLoggable(Level.FINE)) logger.fine("now translate\n" + cn_sent);		
+		int sent_id = start_sent_id;//if no sent tag, then this will be used
+		while ((cn_sent = FileUtility.read_line_lzf(t_reader_test)) != null) {
+			if (logger.isLoggable(Level.FINE)) logger.fine(
+				"now translate\n" + cn_sent);
 			int[] tem_id = new int[1];
-			cn_sent  = get_sent_id(cn_sent, tem_id);			
-			if(tem_id[0]>0)	sent_id = tem_id[0];
-			if(use_sent_specific_lm==true){
+			cn_sent  = get_sent_id(cn_sent, tem_id);
+			if (tem_id[0] > 0) {
+				sent_id = tem_id[0];
+			}
+			if (use_sent_specific_lm) {
 				load_lm_grammar_file(g_sent_lm_file_name_prefix+sent_id+".gz");
 			}
-			if(use_sent_specific_tm==true){
+			if (use_sent_specific_tm) {
 				load_tm_grammar_file(g_sent_tm_file_name_prefix+sent_id+".gz");
 			}
 			
-			translate(p_tm_grammars,p_l_models, cn_sent ,l_default_nonterminals, t_writer_nbest, sent_id, topN, dhg,kbest_extractor);
+			translate(
+				p_tm_grammars,
+				p_l_models,
+				cn_sent,
+				l_default_nonterminals,
+				t_writer_nbest,
+				sent_id,
+				topN,
+				dhg,
+				kbest_extractor);
 			sent_id++;
 			//if(sent_id>10)break;
 		}
@@ -359,54 +434,75 @@ public class Decoder {
 		//g_con.print_confusion_tbl(f_confusion_grammar);
 	}
 	
-		
+	
 	public static void load_lm_grammar_file(String new_lm_file){
-		if (logger.isLoggable(Level.FINER)) logger.finer("############## reload lm from file" + new_lm_file);
+		if (logger.isLoggable(Level.FINER)) logger.finer(
+			"############## reload lm from file" + new_lm_file);
 		lm_file = new_lm_file;
-		p_lm.read_lm_grammar_from_file(lm_file);		
+		p_lm.read_lm_grammar_from_file(lm_file);
 	}
-
-	public static void init_lm_grammar(){
+	
+	
+	public static void init_lm_grammar() {
 		/*we assume there are only three possible configurations:
 		 * (1) both lm and suffix are remote
 		 * (2) both lm and suffix are local java
 		 * (3) if local srilm is used, then we cannot use suffix related stuff 
 		*/
-		if(use_remote_lm_server==true){
-			if(use_left_euqivalent_state==true || use_right_euqivalent_state==true){
-				if (logger.isLoggable(Level.SEVERE)) logger.severe("use local srilm, we cannot use suffix/prefix stuff");
+		if (use_remote_lm_server) {
+			if (use_left_euqivalent_state || use_right_euqivalent_state) {
+				if (logger.isLoggable(Level.SEVERE)) logger.severe(
+					"use local srilm, we cannot use suffix/prefix stuff");
 				System.exit(0);
 			}
 			p_lm = new LMGrammar_REMOTE(g_lm_order, remote_symbol_tbl, f_remote_server_list, num_remote_lm_servers);
-		}else if(use_srilm==true){
-			if(use_left_euqivalent_state==true || use_right_euqivalent_state==true){
-				if (logger.isLoggable(Level.SEVERE)) logger.severe("use remote lm, we cannot use suffix/prefix stuff");
+			
+		} else if (use_srilm) {
+			if (use_left_euqivalent_state || use_right_euqivalent_state) {
+				if (logger.isLoggable(Level.SEVERE)) logger.severe(
+					"use remote lm, we cannot use suffix/prefix stuff");
 				System.exit(0);
-			}				
+			}
 			p_lm = new LMGrammar_SRILM(g_lm_order);
-		}else{			
+			
+		} else {
 			//p_lm = new LMGrammar_JAVA(g_lm_order, lm_file, use_left_euqivalent_state);
 			p_lm = new LMGrammar_JAVA(g_lm_order, use_left_euqivalent_state, use_right_euqivalent_state);
 		}
 	}
 	
-	public static void load_tm_grammar_file(String new_tm_file){
-		if (logger.isLoggable(Level.FINER)) logger.finer("############## reload tm from file" + new_tm_file);
-		tm_file=new_tm_file;		
-		p_tm_grammars[0].read_tm_grammar_glue_rules();//glue grammar
-		p_tm_grammars[1].read_tm_grammar_from_file(tm_file);//regular grammar
-	}
-
-	public static void init_tm_grammar(){
-		//###### Initialize the regular TM grammar
-		TMGrammar regular_gr = new TMGrammar_Memory(p_l_models, phrase_owner, span_limit, "^\\[[A-Z]+\\,[0-9]*\\]$", "[\\[\\]\\,0-9]+");
+	
+	public static void load_tm_grammar_file(String new_tm_file) {
+		if (logger.isLoggable(Level.FINER)) logger.finer(
+			"############## reload tm from file" + new_tm_file);
 		
-		//##### add the glue grammar	
-		TMGrammar glue_gr = new TMGrammar_Memory(p_l_models, phrase_owner, -1, "^\\[[A-Z]+\\,[0-9]*\\]$", "[\\[\\]\\,0-9]+");
-		p_tm_grammars = new TMGrammar[2];		
-		p_tm_grammars[0]=glue_gr;
-		p_tm_grammars[1]=regular_gr;
+		tm_file = new_tm_file;
+		Decoder.p_tm_grammars[0].read_tm_grammar_glue_rules(); // glue grammar
+		Decoder.p_tm_grammars[1].read_tm_grammar_from_file(tm_file); // regular grammar
 	}
+	
+	
+	public static void init_tm_grammar() {
+		
+		Decoder.p_tm_grammars = new GrammarFactory[2];
+		
+		// Glue Grammar
+		Decoder.p_tm_grammars[0] = new TMGrammar_Memory(
+			Decoder.p_l_models,
+			Decoder.phrase_owner,
+			-1,
+			"^\\[[A-Z]+\\,[0-9]*\\]$",
+			"[\\[\\]\\,0-9]+");
+		
+		// Regular TM Grammar
+		Decoder.p_tm_grammars[1] = new TMGrammar_Memory(
+			Decoder.p_l_models,
+			Decoder.phrase_owner,
+			Decoder.span_limit,
+			"^\\[[A-Z]+\\,[0-9]*\\]$",
+			"[\\[\\]\\,0-9]+");
+	}
+	
 	
 	/**
 	 * Translate a sentence.
@@ -421,14 +517,25 @@ public class Decoder {
 	 * @param diskHyperGraph
 	 * @param kbestExtractor
 	 */
-	static void translate(TMGrammar[] grammars,ArrayList<FeatureFunction> models, String sentence, ArrayList<Integer> defaultNonterminals, BufferedWriter out, int sentenceID, int topN, DiskHyperGraph diskHyperGraph, KbestExtraction kbestExtractor){
-		long start = System.currentTimeMillis();
-		int[] sentence_numeric = Symbol.get_terminal_ids_for_sentence(sentence);
+	static void translate(
+		GrammarFactory[]           grammarFactories,
+		ArrayList<FeatureFunction> models,
+		String                     sentence,
+		ArrayList<Integer>         defaultNonterminals,
+		BufferedWriter             out,
+		int                        sentenceID,
+		int                        topN,
+		DiskHyperGraph             diskHyperGraph,
+		KbestExtraction            kbestExtractor
+	) {
+		long  start = System.currentTimeMillis();
+		int[] sentence_numeric = 
+			Symbol.get_terminal_ids_for_sentence(sentence);
 		
 		Lattice<Integer> inputLattice; {
 			
 			Integer[] input = new Integer[sentence_numeric.length];
-			for (int i=0; i<sentence_numeric.length; i++) {
+			for (int i = 0; i < sentence_numeric.length; i++) {
 				input[i] = sentence_numeric[i];
 			}
 
@@ -436,21 +543,44 @@ public class Decoder {
 		}
 
 		
-		Chart chart = new Chart(inputLattice,models,sentenceID);
-		chart.seed(grammars,defaultNonterminals, sentence_numeric); 
-		if (logger.isLoggable(Level.FINER)) logger.finer("after seed, time: " + (System.currentTimeMillis()-start)/1000);
-		HyperGraph p_hyper_graph =  chart.expand();
+		Chart chart; {
+			Grammar[] grammars = new Grammar[ grammarFactories.length ];
+			Phrase sentencePhrase = new SomePhrase(sentence);
+			for (int i = 0; i < grammarFactories.length; i++) {
+				grammars[i] =
+					grammarFactories[i].getGrammarForSentence(sentencePhrase);
+			}
+			chart = new Chart(inputLattice, models, sentenceID);
+			chart.seed(grammars, defaultNonterminals, sentence_numeric);
+		}
+		if (logger.isLoggable(Level.FINER)) logger.finer(
+			"after seed, time: " + (System.currentTimeMillis() - start) / 1000);
+		HyperGraph p_hyper_graph = chart.expand();
 		
-		if (logger.isLoggable(Level.FINER)) logger.finer("after expand, time: " + (System.currentTimeMillis()-start)/1000);
+		
+		if (logger.isLoggable(Level.FINER)) logger.finer(
+			"after expand, time: " + (System.currentTimeMillis() - start)/1000);
 		//p_hyper_graph.lazy_k_best_extract(l_models, topN, use_unique_nbest, sent_id,t_writer_nbest, use_tree_nbest,add_combined_cost);
-		kbestExtractor.lazy_k_best_extract_hg(p_hyper_graph,models, topN, use_unique_nbest, sentenceID,out, use_tree_nbest,add_combined_cost);
-		if (logger.isLoggable(Level.FINER)) logger.finer("after kbest, time: " + (System.currentTimeMillis()-start)/1000);	
-		if(diskHyperGraph!=null) diskHyperGraph.save_hyper_graph(p_hyper_graph);
+		kbestExtractor.lazy_k_best_extract_hg(
+			p_hyper_graph,
+			models,
+			topN,
+			use_unique_nbest,
+			sentenceID,
+			out,
+			use_tree_nbest,
+			add_combined_cost);
+		if (logger.isLoggable(Level.FINER)) logger.finer(
+			"after kbest, time: " + (System.currentTimeMillis() - start)/1000);
+		if (null != diskHyperGraph) {
+			diskHyperGraph.save_hyper_graph(p_hyper_graph);
+		}
 		
 		//debug
 		//g_con.get_confusion_in_hyper_graph_cell_specific(p_hyper_graph,p_hyper_graph.sent_len);
 	}
-		
+	
+	
 	public static ArrayList<FeatureFunction>  init_models(String config_file, LMGrammar p_lm){
 		BufferedReader t_reader_config = FileUtility.getReadFileStream(config_file,"UTF-8");
 		String line;
@@ -458,36 +588,50 @@ public class Decoder {
 		while((line=FileUtility.read_line_lzf(t_reader_config))!=null){
 			//line = line.trim().toLowerCase();
 			line = line.trim();
-			if(  (line.matches("^\\s*\\#.*$")==true)//comment line
-			   || (line.matches("^\\s*$")==true))//empty line
+			if (line.matches("^\\s*\\#.*$") || line.matches("^\\s*$")) {
 				continue;
+			}
 			
-			if(line.indexOf("=")==-1){//model weights				
-				String[] fds = line.split("\\s+");		
-				if(fds[0].compareTo("lm")==0 && fds.length == 2){//lm order weight
-					double weight =(new Double(fds[1].trim())).doubleValue();
+			if (line.indexOf("=") == -1) { // model weights
+				String[] fds = line.split("\\s+");
+				if (fds[0].compareTo("lm") == 0 && fds.length == 2) { // lm order weight
+					double weight = (new Double(fds[1].trim())).doubleValue();
 					p_lm_model = new LMModel(g_lm_order, p_lm, weight);
 					l_models.add(p_lm_model);
-					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("Line: %s\nAdd LM, order: %d; weight: %.3f;", line, g_lm_order, weight));
-				}else if(fds[0].compareTo("phrasemodel")==0 && fds.length == 4){//phrasemodel owner column(0-indexed) weight
+					if (logger.isLoggable(Level.FINEST)) logger.finest(
+						String.format(
+							"Line: %s\nAdd LM, order: %d; weight: %.3f;",
+							line, g_lm_order, weight));
+				
+				} else if (0 == fds[0].compareTo("phrasemodel")
+				&& fds.length == 4) { // phrasemodel owner column(0-indexed) weight
 					int owner = Symbol.add_terminal_symbol(fds[1]);
 					int column = (new Integer(fds[2].trim())).intValue();
-					double weight =(new Double(fds[3].trim())).doubleValue();
+					double weight = (new Double(fds[3].trim())).doubleValue();
 					l_models.add(new PhraseModelFF(weight, owner, column));
 					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("Process Line: %s\nAdd PhraseModel, owner: %s; column: %d; weight: %.3f", line, owner, column, weight));
-				}else if(fds[0].compareTo("arityphrasepenalty")==0 && fds.length == 5){//arityphrasepenalty owner start_arity end_arity weight
+				
+				} else if (0 == fds[0].compareTo("arityphrasepenalty")
+				&& fds.length == 5){//arityphrasepenalty owner start_arity end_arity weight
 					int owner = Symbol.add_terminal_symbol(fds[1]);
 					int start_arity = (new Integer(fds[2].trim())).intValue();
 					int end_arity = (new Integer(fds[3].trim())).intValue();
-					double weight =(new Double(fds[4].trim())).doubleValue();
+					double weight = (new Double(fds[4].trim())).doubleValue();
 					l_models.add(new ArityPhrasePenaltyFF(weight, owner, start_arity, end_arity));
-					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("Process Line: %s\nAdd ArityPhrasePenalty, owner: %s; start_arity: %d; end_arity: %d; weight: %.3f", line, owner, start_arity, end_arity, weight));
-				}else if(fds[0].compareTo("wordpenalty")==0 && fds.length == 2){//wordpenalty weight
-					double weight =(new Double(fds[1].trim())).doubleValue();
+					if (logger.isLoggable(Level.FINEST)) logger.finest(
+						String.format(
+							"Process Line: %s\nAdd ArityPhrasePenalty, owner: %s; start_arity: %d; end_arity: %d; weight: %.3f",
+							line, owner, start_arity, end_arity, weight));
+				
+				} else if (0 == fds[0].compareTo("wordpenalty")
+				&& fds.length == 2) { // wordpenalty weight
+					double weight = (new Double(fds[1].trim())).doubleValue();
 					l_models.add(new WordPenaltyFF(weight));
 					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("Process Line: %s\nAdd WordPenalty, weight: %.3f", line, weight));
-				}else{
-					if (logger.isLoggable(Level.SEVERE)) logger.severe("Wrong config line: " + line);
+				
+				} else {
+					if (logger.isLoggable(Level.SEVERE)) logger.severe(
+						"Wrong config line: " + line);
 					System.exit(0);
 				}
 			}
@@ -496,133 +640,173 @@ public class Decoder {
 		return l_models;
 	}
 	
-	public static void  read_config_file(String config_file){
-		BufferedReader t_reader_config = FileUtility.getReadFileStream(config_file,"UTF-8");
+	
+	public static void read_config_file(String config_file) {
+		BufferedReader t_reader_config =
+			FileUtility.getReadFileStream(config_file,"UTF-8");
 		String line;
-		while((line=FileUtility.read_line_lzf(t_reader_config))!=null){
+		while ((line = FileUtility.read_line_lzf(t_reader_config)) != null) {
 			//line = line.trim().toLowerCase();
 			line = line.trim();
-			if(  (line.matches("^\\s*\\#.*$")==true)//comment line
-			   || (line.matches("^\\s*$")==true))//empty line
+			if (line.matches("^\\s*\\#.*$") || line.matches("^\\s*$")) {
 				continue;
+			}
 			
-			if(line.indexOf("=")!=-1){//parameters
+			if (line.indexOf("=") != -1) { // parameters
 				String[] fds = line.split("\\s*=\\s*");
-				if(fds.length!=2){
-					if (logger.isLoggable(Level.SEVERE)) logger.severe("Wrong config line: " + line);
+				if (fds.length != 2) {
+					if (logger.isLoggable(Level.SEVERE)) logger.severe(
+						"Wrong config line: " + line);
 					System.exit(0);
 				}
 				
-				if(fds[0].compareTo("lm_file")==0){
+				if (0 == fds[0].compareTo("lm_file")) {
 					lm_file = fds[1].trim();
 					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("lm file: %s", lm_file));
-				}else if(fds[0].compareTo("tm_file")==0){
+					
+				} else if (0 == fds[0].compareTo("tm_file")) {
 					tm_file = fds[1].trim();
 					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("tm file: %s", tm_file));
-				}else if(fds[0].compareTo("use_srilm")==0){
+					
+				} else if (0 == fds[0].compareTo("use_srilm")) {
 					use_srilm = new Boolean(fds[1]);
 					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("use_srilm: %s", use_srilm));
-				}else if(fds[0].compareTo("lm_ceiling_cost")==0){
+					
+				} else if (0 == fds[0].compareTo("lm_ceiling_cost")) {
 					lm_ceiling_cost = new Double(fds[1]);
 					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("lm_ceiling_cost: %s", lm_ceiling_cost));
-				}else if(fds[0].compareTo("use_left_euqivalent_state")==0){
+					
+				} else if (0 == fds[0].compareTo("use_left_euqivalent_state")) {
 					use_left_euqivalent_state = new Boolean(fds[1]);
 					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("use_left_euqivalent_state: %s", use_left_euqivalent_state));
-				}else if(fds[0].compareTo("use_right_euqivalent_state")==0){
+					
+				} else if (0 == fds[0].compareTo("use_right_euqivalent_state")) {
 					use_right_euqivalent_state = new Boolean(fds[1]);
 					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("use_right_euqivalent_state: %s", use_right_euqivalent_state));
-				}else if(fds[0].compareTo("order")==0){
+					
+				} else if (0 == fds[0].compareTo("order")) {
 					g_lm_order = new Integer(fds[1]);
 					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("g_lm_order: %s", g_lm_order));
-				}else if(fds[0].compareTo("use_sent_specific_lm")==0){
+					
+				} else if (0 == fds[0].compareTo("use_sent_specific_lm")) {
 					use_sent_specific_lm = new Boolean(fds[1]);
 					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("use_sent_specific_lm: %s", use_sent_specific_lm));
-				}else if(fds[0].compareTo("sent_lm_file_name_prefix")==0){
+					
+				} else if (0 == fds[0].compareTo("sent_lm_file_name_prefix")) {
 					g_sent_lm_file_name_prefix = fds[1].trim();
 					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("sent_lm_file_name_prefix: %s", g_sent_lm_file_name_prefix));
-				}else if(fds[0].compareTo("use_sent_specific_tm")==0){
+					
+				} else if (0 == fds[0].compareTo("use_sent_specific_tm")) {
 					use_sent_specific_tm = new Boolean(fds[1]);
 					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("use_sent_specific_tm: %s", use_sent_specific_tm));
-				}else if(fds[0].compareTo("sent_tm_file_name_prefix")==0){
+					
+				} else if (0 == fds[0].compareTo("sent_tm_file_name_prefix")) {
 					g_sent_tm_file_name_prefix = fds[1].trim();
 					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("sent_tm_file_name_prefix: %s", g_sent_tm_file_name_prefix));
-				}else if(fds[0].compareTo("span_limit")==0){
+					
+				} else if (0 == fds[0].compareTo("span_limit")) {
 					span_limit = new Integer(fds[1]);
 					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("span_limit: %s", span_limit));
-				}else if(fds[0].compareTo("phrase_owner")==0){
+					
+				} else if (0 == fds[0].compareTo("phrase_owner")) {
 					phrase_owner = fds[1].trim();
 					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("phrase_owner: %s", phrase_owner));
-				}else if(fds[0].compareTo("mono_owner")==0){
+					
+				} else if (0 == fds[0].compareTo("mono_owner")) {
 					mono_owner = fds[1].trim();
 					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("mono_owner: %s", mono_owner));
-				}else if(fds[0].compareTo("begin_mono_owner")==0){
+					
+				} else if (0 == fds[0].compareTo("begin_mono_owner")) {
 					begin_mono_owner = fds[1].trim();
 					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("begin_mono_owner: %s", begin_mono_owner));
-				}else if(fds[0].compareTo("default_non_terminal")==0){
+					
+				} else if (0 == fds[0].compareTo("default_non_terminal")) {
 					default_non_terminal = fds[1].trim();
 					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("default_non_terminal: %s", default_non_terminal));
-				}else if(fds[0].compareTo("fuzz1")==0){
+					
+				} else if (0 == fds[0].compareTo("fuzz1")) {
 					fuzz1 = new Double(fds[1]);
 					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("fuzz1: %s", fuzz1));
-				}else if(fds[0].compareTo("fuzz2")==0){
+					
+				} else if (0 == fds[0].compareTo("fuzz2")) {
 					fuzz2 = new Double(fds[1]);
 					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("fuzz2: %s", fuzz2));
-				}else if(fds[0].compareTo("max_n_items")==0){
+					
+				} else if (0 == fds[0].compareTo("max_n_items")) {
 					max_n_items = new Integer(fds[1]);
 					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("max_n_items: %s", max_n_items));
-				}else if(fds[0].compareTo("relative_threshold")==0){
+					
+				} else if (0 == fds[0].compareTo("relative_threshold")) {
 					relative_threshold = new Double(fds[1]);
 					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("relative_threshold: %s", relative_threshold));
-				}else if(fds[0].compareTo("max_n_rules")==0){
+					
+				} else if (0 == fds[0].compareTo("max_n_rules")) {
 					max_n_rules = new Integer(fds[1]);
 					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("max_n_rules: %s", max_n_rules));
-				}else if(fds[0].compareTo("rule_relative_threshold")==0){
+					
+				} else if (0 == fds[0].compareTo("rule_relative_threshold")) {
 					rule_relative_threshold = new Double(fds[1]);
 					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("rule_relative_threshold: %s", rule_relative_threshold));
-				}else if(fds[0].compareTo("use_unique_nbest")==0){
+					
+				} else if (0 == fds[0].compareTo("use_unique_nbest")) {
 					use_unique_nbest = new Boolean(fds[1]);
 					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("use_unique_nbest: %s", use_unique_nbest));
-				}else if(fds[0].compareTo("add_combined_cost")==0){
+					
+				} else if (0 == fds[0].compareTo("add_combined_cost")) {
 					add_combined_cost = new Boolean(fds[1]);
 					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("add_combined_cost: %s", add_combined_cost));
-				}else if(fds[0].compareTo("use_tree_nbest")==0){
+					
+				} else if (0 == fds[0].compareTo("use_tree_nbest")) {
 					use_tree_nbest = new Boolean(fds[1]);
 					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("use_tree_nbest: %s", use_tree_nbest));
-				}else if(fds[0].compareTo("top_n")==0){
+					
+				} else if (0 == fds[0].compareTo("top_n")) {
 					topN = new Integer(fds[1]);
 					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("topN: %s", topN));
-				}else if(fds[0].compareTo("use_remote_lm_server")==0){
+					
+				} else if (0 == fds[0].compareTo("use_remote_lm_server")) {
 					use_remote_lm_server = new Boolean(fds[1]);
 					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("use_remote_lm_server: %s", use_remote_lm_server));
-				}else if(fds[0].compareTo("f_remote_server_list")==0){
+					
+				} else if (0 == fds[0].compareTo("f_remote_server_list")) {
 					f_remote_server_list = new String(fds[1]);
 					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("f_remote_server_list: %s", f_remote_server_list));
-				}else if(fds[0].compareTo("num_remote_lm_servers")==0){
+					
+				} else if (0 == fds[0].compareTo("num_remote_lm_servers")) {
 					num_remote_lm_servers = new Integer(fds[1]);
 					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("num_remote_lm_servers: %s", num_remote_lm_servers));
-				}else if(fds[0].compareTo("remote_symbol_tbl")==0){
+					
+				} else if (0 == fds[0].compareTo("remote_symbol_tbl")) {
 					remote_symbol_tbl = new String(fds[1]);
 					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("remote_symbol_tbl: %s", remote_symbol_tbl));
-				}else if(fds[0].compareTo("remote_lm_server_port")==0){
+					
+				} else if (0 == fds[0].compareTo("remote_lm_server_port")) {
 					//port = new Integer(fds[1]);
-					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("remote_lm_server_port: not used"));					
-				}else if(fds[0].compareTo("parallel_files_prefix")==0){
+					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("remote_lm_server_port: not used"));
+					
+				} else if (0 == fds[0].compareTo("parallel_files_prefix")) {
 					parallel_files_prefix = new String(fds[1]);
 					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("parallel_files_prefix: %s", parallel_files_prefix));
-				}else if(fds[0].compareTo("num_parallel_decoders")==0){
+					
+				} else if (0 == fds[0].compareTo("num_parallel_decoders")) {
 					num_parallel_decoders = new Integer(fds[1]);
 					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("num_parallel_decoders: %s", num_parallel_decoders));
-				}else if(fds[0].compareTo("save_disk_hg")==0){
+					
+				} else if (0 == fds[0].compareTo("save_disk_hg")) {
 					save_disk_hg = new Boolean(fds[1]);
 					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("save_disk_hg: %s", save_disk_hg));
-				}else if(fds[0].compareTo("forest_pruning")==0){
+					
+				} else if (0 == fds[0].compareTo("forest_pruning")) {
 					forest_pruning = new Boolean(fds[1]);
 					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("forest_pruning: %s", forest_pruning));
-				}else if(fds[0].compareTo("forest_pruning_threshold")==0){
+					
+				} else if (0 == fds[0].compareTo("forest_pruning_threshold")) {
 					forest_pruning_threshold = new Double(fds[1]);
 					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("forest_pruning_threshold: %s", forest_pruning_threshold));
-				}else{
-					if (logger.isLoggable(Level.SEVERE)) logger.severe("Wrong config line: " + line);
+					
+				} else {
+					if (logger.isLoggable(Level.SEVERE)) logger.severe(
+						"Wrong config line: " + line);
 					System.exit(0);
 				}
 			}
@@ -630,22 +814,30 @@ public class Decoder {
 		FileUtility.close_read_file(t_reader_config);
 	}
 	
+	
 	//return sent without the tag
 	//if no sent id, then return -1 in sent_id[]
-    static String get_sent_id(String sent, int[] sent_id){
-            if(sent.matches("^<seg\\s+id=.*$")){//havd sent id
-                    String res_sent = sent.replaceAll("^<seg\\s+id=\"", "");
-                    String str_id ="";
-                    for(int i=0; i<res_sent.length(); i++){
-                            char cur = res_sent.charAt(i);
-                            if(cur != '"') str_id += cur; else break;
-                    }
-                    int res_id= (new Integer(str_id)).intValue();
-                    res_sent = res_sent.replaceFirst(str_id+"\">", "");
-                    res_sent = res_sent.replaceAll("</seg>", "");
-                    sent_id[0]=res_id;
-                    return res_sent;
-            }else{  sent_id[0]=-1;return sent;}
+	static String get_sent_id(String sent, int[] sent_id) {
+		if (sent.matches("^<seg\\s+id=.*$")) {//havd sent id
+			String res_sent = sent.replaceAll("^<seg\\s+id=\"", "");
+			String str_id   = "";
+			for (int i = 0; i < res_sent.length(); i++) {
+				char cur = res_sent.charAt(i);
+				if (cur != '"') {
+					str_id += cur;
+				} else {
+					break;
+				}
+			}
+			int res_id = (new Integer(str_id)).intValue();
+			res_sent   = res_sent.replaceFirst(str_id+"\">", "");
+			res_sent   = res_sent.replaceAll("</seg>", "");
+			sent_id[0] = res_id;
+			return res_sent;
+		} else {
+			sent_id[0] = -1;
+			return sent;
+		}
     }
+	
 }
-

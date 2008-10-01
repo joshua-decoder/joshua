@@ -1,18 +1,19 @@
 /* This file is part of the Joshua Machine Translation System.
  * 
- * Joshua is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation; either version 2.1 of the License, or 
- * (at your option) any later version.
+ * Joshua is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1
+ * of the License, or (at your option) any later version.
  *
- * This library is distributed in the hope that it will be useful, but 
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public
- * License for more details.
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU Lesser General Public License
- * along with this library; if not, write to the Free Software Foundation,
- * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free
+ * Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 package joshua.decoder.chart_parser;
 
@@ -22,9 +23,8 @@ import joshua.decoder.Symbol;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.FFState;
 import joshua.decoder.ff.MapFFState;
-import joshua.decoder.ff.tm.TMGrammar;
 import joshua.decoder.ff.tm.Rule;
-import joshua.decoder.ff.tm.TMGrammar.RuleBin;
+import joshua.decoder.ff.tm.RuleCollection;
 import joshua.decoder.hypergraph.HyperGraph;
 import joshua.decoder.hypergraph.HyperGraph.Deduction;
 import joshua.decoder.hypergraph.HyperGraph.Item;
@@ -104,7 +104,7 @@ public class Bin
 		 * what we're passing into transition(). That is not
 		 * correct however.
 		 */
-		for (FeatureFunction<MapFFState> ff : this.p_chart.l_models) {
+		for (FeatureFunction<MapFFState> ff : this.p_chart.models) {
 			////long start2 = Support.current_time();
 			if (ff.isStateful()) {
 				
@@ -171,7 +171,7 @@ public class Bin
 				double final_transition_cost = 0.0;
 				
 				//// BUG: too specific this casting
-				for (FeatureFunction<MapFFState> ff : this.p_chart.l_models) {
+				for (FeatureFunction<MapFFState> ff : this.p_chart.models) {
 					final_transition_cost
 						+= ff.getWeight()
 						*  ff.finalTransition(new MapFFState(
@@ -238,7 +238,12 @@ public class Bin
 	
 	/*add complete Items in Chart
 	 * pruning inside this function*/
-	public void complete_cell(int i, int j, ArrayList<SuperItem> l_super_items, RuleBin rb){//each super-item is a list of items	
+	public void complete_cell(
+		int i,
+		int j,
+		ArrayList<SuperItem> l_super_items,
+		RuleCollection rb
+	) {
 		List<Rule> l_rules = rb.getSortedRules();
 		//System.out.println(String.format("Complet_cell is called, n_rules: %d ", l_rules.size()));
 		for(Rule rl : l_rules){		
@@ -278,7 +283,12 @@ public class Bin
 	 * pruning inside this function*/
 	//TODO: our implementation do the prunining for each DotItem under each grammar, not aggregated as in the python version
 	//TODO: the implementation is little bit different from the description in Liang'2007 ACL paper 
-	public void complete_cell_cube_prune(int i, int j, ArrayList<SuperItem> l_super_items, RuleBin rb){//combinations: rules, antecent items
+	public void complete_cell_cube_prune(
+		int i,
+		int j,
+		ArrayList<SuperItem> l_super_items,
+		RuleCollection rb
+	) { //combinations: rules, antecent items
 		PriorityQueue<CubePruneState> heap_cands=new PriorityQueue<CubePruneState>();// in the paper, it is called cand[v]		
 		HashMap  cube_state_tbl = new HashMap ();//rememeber which state has been explored
 		

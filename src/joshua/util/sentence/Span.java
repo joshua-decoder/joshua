@@ -1,18 +1,19 @@
 /* This file is part of the Joshua Machine Translation System.
  * 
- * Joshua is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation; either version 2.1 of the License, or 
- * (at your option) any later version.
+ * Joshua is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1
+ * of the License, or (at your option) any later version.
  *
- * This library is distributed in the hope that it will be useful, but 
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public
- * License for more details.
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU Lesser General Public License
- * along with this library; if not, write to the Free Software Foundation,
- * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free
+ * Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 package joshua.util.sentence;
 
@@ -32,6 +33,7 @@ public class Span implements Iterable<Integer>, Comparable<Span> {
 	/** Exclusive ending index of this span. */
 	public int end;
 	
+	
 	/**
 	 * Constructs a new span with the given inclusive starting and exclusive ending indices.
 	 * 
@@ -43,6 +45,7 @@ public class Span implements Iterable<Integer>, Comparable<Span> {
 		this.end = end;
 	}
 	
+	
 	/**
 	 * Returns the length of the span.
 	 * 
@@ -52,10 +55,12 @@ public class Span implements Iterable<Integer>, Comparable<Span> {
 	public int size() {
 		return end-start;
 	}
-
+	
+	
 	public String toString() {
 		return "["+start+"-"+end+")";
 	}
+	
 	
 	public Iterator<Integer> iterator() {
 		return new Iterator<Integer>() {
@@ -63,10 +68,11 @@ public class Span implements Iterable<Integer>, Comparable<Span> {
 			int next = start;
 			
 			public boolean hasNext() {
-				if (next < end)
+				if (next < end) {
 					return true;
-				else
+				} else {
 					return false;
+				}
 			}
 
 			public Integer next() {
@@ -79,28 +85,29 @@ public class Span implements Iterable<Integer>, Comparable<Span> {
 			
 		};
 	}
-
+	
+	
 	public int compareTo(Span o) {
-		
-		if (start<o.start)
+		if (start < o.start) {
 			return -1;
-		else if (start>o.start)
+		} else if (start > o.start) {
 			return 1;
-		else {
-			if (end<o.end)
+		} else {
+			if (end < o.end) {
 				return -1;
-			else if (end>o.end)
+			} else if (end > o.end) {
 				return 1;
-			else
+			} else {
 				return 0;
+			}
 		}
-		
 	}
+	
 	
 	public boolean equals(Object o) {
 		if (o instanceof Span) {
 			Span other = (Span) o;
-			if (start==other.start && end==other.end) {
+			if (start == other.start && end == other.end) {
 				return true;
 			} else {
 				return false;

@@ -1,10 +1,26 @@
+/* This file is part of the Joshua Machine Translation System.
+ * 
+ * Joshua is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1
+ * of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free
+ * Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
+ */
 package joshua.suffix_array;
-
-import java.util.Arrays;
 
 import joshua.util.sentence.Phrase;
 import joshua.util.sentence.Vocabulary;
 
+import java.util.Arrays;
 
 
 /**
@@ -49,6 +65,7 @@ public class Pattern extends BasicPhrase {
 		this.prefixCase = prefixCase(words);
 	}
 	
+	
 	/**
 	 * Constructs a pattern by copying an existing phrase.
 	 * 
@@ -66,6 +83,7 @@ public class Pattern extends BasicPhrase {
 		this.suffixCase = suffixCase(words);
 		this.prefixCase = prefixCase(words);
 	}
+	
 	
 	//TODO What does this constructor do?
 	public Pattern(Pattern pattern, int... word) {
@@ -103,6 +121,7 @@ public class Pattern extends BasicPhrase {
 	public int arity() {
 		return arity;
 	}
+	
 	
 	public String toString() {
 		return Arrays.toString(words);

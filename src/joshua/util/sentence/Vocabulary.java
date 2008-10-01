@@ -1,27 +1,26 @@
 /* This file is part of the Joshua Machine Translation System.
  * 
- * Joshua is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation; either version 2.1 of the License, or 
- * (at your option) any later version.
+ * Joshua is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1
+ * of the License, or (at your option) any later version.
  *
- * This library is distributed in the hope that it will be useful, but 
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public
- * License for more details.
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU Lesser General Public License
- * along with this library; if not, write to the Free Software Foundation,
- * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free
+ * Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 package joshua.util.sentence;
 
-// Imports
-
-import java.util.*;
-
 import joshua.suffix_array.BasicPhrase;
 import joshua.suffix_array.SuffixArrayFactory;
+
+import java.util.*;
 
 /**
  * Vocabulary is the class that keeps track of the unique words
@@ -73,7 +72,7 @@ public class Vocabulary implements Iterable<String> {
 	/** 
 	 * Constructor creates a fixed vocabulary from the given set of words.
 	 */
-	public Vocabulary (Set<String> words) {
+	public Vocabulary(Set<String> words) {
 		//XXX Is wordToIdMap accessed by multiple threads? If not, should use HashMap instead of Hashtable.
 		wordToIDMap = new Hashtable<String,Integer>();
 		vocabList = new Vector<String>();
@@ -132,7 +131,7 @@ public class Vocabulary implements Iterable<String> {
 	
 	/** 
 	 * Adds a word to the vocabulary.
-	 * @returns the ID of the word, or UNKNOWN_WORD if 
+	 * @return the ID of the word, or UNKNOWN_WORD if 
 	 * the word is new and the vocabulary is fixed.
 	 */
 	public int addWord(String wordString) {

@@ -1,18 +1,19 @@
 /* This file is part of the Joshua Machine Translation System.
  * 
- * Joshua is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation; either version 2.1 of the License, or 
- * (at your option) any later version.
+ * Joshua is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1
+ * of the License, or (at your option) any later version.
  *
- * This library is distributed in the hope that it will be useful, but 
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public
- * License for more details.
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU Lesser General Public License
- * along with this library; if not, write to the Free Software Foundation,
- * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free
+ * Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 package joshua.decoder.ff.tm;
 
@@ -38,13 +39,15 @@ import java.util.HashMap;
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate$
  */
-public class TMGrammar_Disk  extends TMGrammar {
+public class TMGrammar_Disk
+extends TMGrammar {
 	RandomAccessFile grammarTrieFile;
 	RandomAccessFile dataFile;
-	Vocabulary terminals;//map terminal symbols to strings
-	Vocabulary nonTerminals; //map non-terminal symbols to strings
-	TrieNode_Disk root;
-
+	Vocabulary       terminals;//map terminal symbols to strings
+	Vocabulary       nonTerminals; //map non-terminal symbols to strings
+	TrieNode_Disk    root;
+	
+	
 	public TMGrammar_Disk(
 		ArrayList<FeatureFunction> l_models,
 		String default_owner,
@@ -55,8 +58,9 @@ public class TMGrammar_Disk  extends TMGrammar {
 		super(l_models, default_owner, span_limit, nonterminal_regexp, nonterminal_replace_regexp);
 	}
 	
+	
 	public void read_tm_grammar_from_file(String filenamePrefix) {
-		try{
+		try {
 			root = new TrieNode_Disk();
 			grammarTrieFile = new RandomAccessFile(filenamePrefix + ".bin.trie", "r");
 			dataFile = new RandomAccessFile(filenamePrefix + ".bin.data", "r");			
@@ -68,32 +72,40 @@ public class TMGrammar_Disk  extends TMGrammar {
 		}
 	}
 	
-	public void read_tm_grammar_glue_rules(){
+	
+	public void read_tm_grammar_glue_rules() {
 		 System.out.println("Error: call read_tm_grammar_glue_rules in TMGrammar_Disk, must exit");
 		 System.exit(0);
 	}
 	
-	public TrieNode get_root(){
+	
+	public TrieGrammar getTrieRoot() {
 		return root;
 	}
 	
-	private Vocabulary getTerminals() { 
+	
+	private Vocabulary getTerminals() {
 		return terminals;
 	}
+	
 	
 	private Vocabulary getNonTerminals() {
 		return nonTerminals; 
 	}
 	
+	
 	private static int getIndex(int nt) {
 		return nt & 7;
 	}
+	
 	
 	private static int clearIndex(int nt) {
 		return -(-nt & ~7);
 	}
 	
-	private static long readLongLittleEndian(RandomAccessFile f) throws IOException {
+	
+	private static long readLongLittleEndian(RandomAccessFile f)
+	throws IOException {
 		long a = f.readUnsignedByte(); 
 		a |= (long)f.readUnsignedByte() << 8;
 		a |= (long)f.readUnsignedByte() << 16;
@@ -105,7 +117,9 @@ public class TMGrammar_Disk  extends TMGrammar {
 		return a;
 	}
 	
-	private static int readIntLittleEndian(RandomAccessFile f) throws IOException {
+	
+	private static int readIntLittleEndian(RandomAccessFile f)
+	throws IOException {
 		int a = f.readUnsignedByte(); 
 		a |= f.readUnsignedByte() << 8;
 		a |= f.readUnsignedByte() << 16;
@@ -113,65 +127,85 @@ public class TMGrammar_Disk  extends TMGrammar {
 		return a;
 	}
 	
-	public class TrieNode_Disk extends TrieNode{	
-		private boolean loaded = false;
-		private long fOff;
-		private int[] keys;//disk id for words
+	
+	public class TrieNode_Disk
+	implements TrieGrammar {
+		private boolean         loaded = false;
+		private long            fOff;
+		private int[]           keys; //disk id for words
 		private TrieNode_Disk[] p_child_trienodes;
-		private RuleBin rule_bin;
-				
-		public TrieNode_Disk() {			
-			fOff = 0;
+		private RuleBin         rule_bin;
+		
+		
+		public TrieNode_Disk() {
+			this.fOff = 0;
 		}
+		
+		
 		private TrieNode_Disk(long offset) {
-			fOff = offset;
-		}
-		
-		public boolean is_no_child_trienodes(){
-			return (p_child_trienodes==null);
-		}
-		
-		public RuleBin get_rule_bin(){
-			return rule_bin;
+			this.fOff = offset;
 		}
 		
 		
-		public TrieNode_Disk match_symbol(int sym_id){//looking for the next layer trinode corresponding to this symbol
+		public boolean hasExtensions() {
+			return (null != this.p_child_trienodes);
+		}
+		
+		
+		public boolean hasRules() {
+			return (null != this.rule_bin);
+		}
+		
+		
+		public RuleCollection getRules() {
+			return this.rule_bin;
+		}
+		
+		
+		public TrieNode_Disk matchOne(int sym_id) {
+			//looking for the next layer trinode corresponding to this symbol
 			int id_disk_voc;
-			if(Symbol.is_nonterminal(sym_id))
+			if (Symbol.is_nonterminal(sym_id)) {
 				id_disk_voc = nonTerminals.convert_lm_index_2_disk_index(sym_id);
-			else
+			} else {
 				id_disk_voc = terminals.convert_lm_index_2_disk_index(sym_id);
+			}
 			
-			if(p_child_trienodes==null)
+			if (null == p_child_trienodes) {
 				return null;
-			return advance(findKey(id_disk_voc));
+			} else {
+				return advance(findKey(id_disk_voc));
+			}
 		}
+		
 		
 		//find the position of the key in the p_child_trienodes array
 		private int findKey(int key) {
-			if (!loaded) load();
+			if (! loaded) load();
 			int index = Arrays.binarySearch(keys, key);
-			if (index < 0 || index == keys.length || keys[index] != key)
+			
+			if (index < 0
+			|| index == keys.length
+			|| keys[index] != key) {
 				return keys.length;
-			return index;
+			} else {
+				return index;
+			}
 		}
+		
 		
 		private TrieNode_Disk advance(int keyIndex) {
 			return p_child_trienodes[keyIndex];
 		}
 		
-		/*public RuleBin ruleBin(int keyIndex) {
-			return ruleBins[keyIndex];
-		}*/
 		
 		public int getNumKeys() {
-			if (!loaded) load();
+			if (! loaded) load();
 			return keys.length;
 		}
 		
-
-		//size keys dsize pointers-to-rule-bins pointers-to-TrieNodes 
+		
+		//size keys dsize pointers-to-rule-bins pointers-to-TrieGrammars
 		private void load() {
 			try {
 				if (loaded) return;
@@ -183,38 +217,44 @@ public class TMGrammar_Disk  extends TMGrammar {
 				System.err.println("TRIE: Read size: " + size);
 				keys     = new int[size];
 				RuleBin[] ruleBins = new RuleBin[size];
-				p_child_trienodes     = new TrieNode_Disk[size];
+				p_child_trienodes  = new TrieNode_Disk[size];
 				
 				// read keys: disk id for words
 				ByteBuffer bb=ByteBuffer.allocate(size * 4);
 				bb.order(ByteOrder.LITTLE_ENDIAN);
 				grammarTrieFile.readFully(bb.array());
 				bb.asIntBuffer().get(keys);
-				for (int i = 0; i < size; i++)
+				for (int i = 0; i < size; i++) {
 					System.err.println("k[" +i + "]=" + keys[i]);
+				}
 				
 				// read rule data ptrs: the offset for each rulebin at next layer 
 				int dsize = (int)TMGrammar_Disk.readLongLittleEndian(grammarTrieFile);
 				bb = ByteBuffer.allocate(dsize * 8).order(ByteOrder.LITTLE_ENDIAN);
 				grammarTrieFile.readFully(bb.array());
 				LongBuffer lb = bb.asLongBuffer();
-				for (int i = 0; i < size; i++)
-					if (lb.get(i) > 0) 
+				for (int i = 0; i < size; i++) {
+					if (lb.get(i) > 0) {
 						ruleBins[i] = new RuleBin_Disk(lb.get(i));
-				for (int i = 0; i < size; i++)
+					}
+				}
+				for (int i = 0; i < size; i++) {
 					System.err.println("rb[" +i + "]=" + lb.get(i));
+				}
 
-				// read ptrs: the offset for each TrieNode at next layer 
+				// read ptrs: the offset for each TrieGrammar at next layer
 				bb.clear();
 				grammarTrieFile.readFully(bb.array());
 				lb = bb.asLongBuffer();
-				for (int i = 0; i < size; i++)
+				for (int i = 0; i < size; i++) {
 					if (lb.get(i) > 0) {
 						p_child_trienodes[i] = new TrieNode_Disk(lb.get(i));
 						p_child_trienodes[i].rule_bin=ruleBins[i];
 					}
+				}
 				
 				loaded = true;
+				
 			} catch (IOException e) {
 				e.printStackTrace();
 				throw new RuntimeException("Caught " + e);
@@ -224,39 +264,45 @@ public class TMGrammar_Disk  extends TMGrammar {
 	
 	
 	
-	public class RuleBin_Disk extends RuleBin{
+	public class RuleBin_Disk
+	extends RuleBin {
 		private ArrayList<Rule> l_sorted_rules = new ArrayList<Rule>();
 		//ShortRule[] rules;		
 		//int lhs;		
 		//private TMGrammar_Disk g;
-		private long fOff;
-		private boolean loaded = false;		
-
+		private long    fOff;
+		private boolean loaded = false;
+		
+		
 		public RuleBin_Disk(long offset) {
 			super();
 			this.fOff = offset;
 		}
 		
-		public ArrayList<Rule> getSortedRules(){
-			if (!loaded) load();
+		
+		public ArrayList<Rule> getSortedRules() {
+			if (! loaded) load();
 			return l_sorted_rules;
 		}
 		
-		public  int[] getSourceSide(){
-			if (!loaded) load();
-			return french;
-		}		
 		
-		public int getArity(){
-			if (!loaded) load();
+		public  int[] getSourceSide() {
+			if (! loaded) load();
+			return french;
+		}
+		
+		
+		public int getArity() {
+			if (! loaded) load();
 			return arity;
 		}
 		
 		
 		/*public int getLHS() {
-			if (!loaded) load();
+			if (! loaded) load();
 			return lhs;
 		}*/
+		
 		
 		//we should convert the disk id to decoder lm id
 		private void load() {
@@ -270,21 +316,23 @@ public class TMGrammar_Disk  extends TMGrammar {
 				System.err.println("DATA: Read fsize: " + fsize);
 				french = new int[fsize];			
 				int bsize = 20;
-				ByteBuffer bb=ByteBuffer.allocate(bsize).order(ByteOrder.LITTLE_ENDIAN);
+				ByteBuffer bb = ByteBuffer.allocate(bsize).order(ByteOrder.LITTLE_ENDIAN);
 				bb.limit(fsize * 4).clear();
 				dataFile.readFully(bb.array(), 0, fsize * 4);
 				bb.asIntBuffer().get(french, 0, fsize);
 				
-				//convert to lm id				
-				for(int k=0; k<fsize; k++){
-					if(french[k]<0)
+				//convert to lm id
+				for (int k = 0; k < fsize; k++) {
+					if (french[k] < 0) {
 						arity++;
-					if(french[k]<0)
-						french[k]= nonTerminals.convert_disk_index_2_lm_index(french[k]);
-					else
-						french[k]= terminals.convert_disk_index_2_lm_index(french[k]);
+					}
+					if (french[k] < 0) {
+						french[k] = nonTerminals.convert_disk_index_2_lm_index(french[k]);
+					} else {
+						french[k] = terminals.convert_disk_index_2_lm_index(french[k]);
+					}
 				}
-			
+				
 				//all the rules
 				int numRules = TMGrammar_Disk.readIntLittleEndian(dataFile);
 				System.err.println("DATA: Read numRules: " + numRules);				
@@ -297,17 +345,21 @@ public class TMGrammar_Disk  extends TMGrammar {
 					//eng, get integer indexed by the disk-grammar itself
 					int elen = (int)TMGrammar_Disk.readLongLittleEndian(dataFile);
 					int[] eng = new int[elen];
-					if (elen * 4 > bsize) { bsize *= 2; bb=ByteBuffer.allocate(bsize).order(ByteOrder.LITTLE_ENDIAN); } 
+					if (elen * 4 > bsize) {
+						bsize *= 2;
+						bb = ByteBuffer.allocate(bsize).order(ByteOrder.LITTLE_ENDIAN); 
+					}
 					bb.limit(elen * 4).clear();
 					dataFile.readFully(bb.array(), 0, elen * 4);
-					bb.asIntBuffer().get(eng);					
+					bb.asIntBuffer().get(eng);
 					//convert to lm id
-					for(int k=0; k<elen; k++){
-						if(eng[k]<0)
-							eng[k]= nonTerminals.convert_disk_index_2_lm_index(eng[k]);
-						else
-							eng[k]= terminals.convert_disk_index_2_lm_index(eng[k]);
-					}	
+					for (int k = 0; k < elen; k++) {
+						if (eng[k] < 0) {
+							eng[k] = nonTerminals.convert_disk_index_2_lm_index(eng[k]);
+						} else {
+							eng[k] = terminals.convert_disk_index_2_lm_index(eng[k]);
+						}
+					}
 					//feat scores
 					int slen = (int)TMGrammar_Disk.readLongLittleEndian(dataFile);
 					float[] scores = new float[slen];
@@ -319,18 +371,27 @@ public class TMGrammar_Disk  extends TMGrammar {
 					l_sorted_rules.add( new Rule_Disk(lhs, french, eng, TMGrammar_Disk.defaultOwner, scores, arity));//TODO: sorted?
 				}
 				loaded = true;
+				
 			} catch (IOException e) {
 				e.printStackTrace();
 				throw new RuntimeException("Caught " + e);
 			}
 		}
 	}
-
 	
-	public class Rule_Disk extends Rule {
-
+	
+	public class Rule_Disk
+	extends Rule {
+		
 		//TODO: this function is wrong
-		public Rule_Disk(int lhs_in, int[] fr_in, int[] eng_in, int owner_in, float[] feat_scores_in, int arity_in){
+		public Rule_Disk(
+			int     lhs_in,
+			int[]   fr_in,
+			int[]   eng_in,
+			int     owner_in,
+			float[] feat_scores_in,
+			int     arity_in
+		) {
 			super(TMGrammar.OOV_RULE_ID, lhs_in, fr_in, eng_in, owner_in, feat_scores_in, arity_in);			
 			
 			estimate_rule();//estimate lower-bound, and set statelesscost
@@ -339,78 +400,85 @@ public class TMGrammar_Disk  extends TMGrammar {
 			
 		}
 		
+		
 		//obtain statelesscost
 		protected float estimate_rule() {
-			this.statelesscost = (float)0.0;
+			this.statelesscost = 0.0f;
 			for (FeatureFunction ff : TMGrammar.p_l_models) {
 				double mdcost = ff.estimate(this) * ff.getWeight();
 				//estcost += mdcost;
-				if(! ff.isStateful()) {
+				if (! ff.isStateful()) {
 					this.statelesscost += mdcost;
 				}
 			}
 			return -1;
 		}
 	}
-
+	
+	
 	public static class Vocabulary {
 		HashMap<String, Integer> str2index;
 		String[] index2str;
 		
 		public Vocabulary(BufferedReader r) throws IOException {
-			int l=0;
+			int l = 0;
 			str2index = new HashMap<String, Integer>();
 			index2str = new String[1];
 			String line;
 			while ((line = r.readLine()) != null) {
 				String[] fields = line.split(" ");
-				if (fields.length != 2) throw new RuntimeException("Bad format: " + l);
+				if (fields.length != 2) {
+					throw new RuntimeException("Bad format: " + l);
+				}
 				int index = Integer.parseInt(fields[0]);
 				if (index > index2str.length) {
 					String[] x = new String[index+1];
-					System.arraycopy(index2str,0,x,0,index2str.length);
+					System.arraycopy(index2str, 0, x, 0, index2str.length);
 					index2str = x;
 				}
-				index2str[index]=fields[1];
+				index2str[index] = fields[1];
 				str2index.put(fields[1], index);
 			}
 		}
+		
 		
 		public int getIndex(String key) {
 			return str2index.get(key);
 		}
 		
+		
 		public String getValue(int index) {
-			if (index < 0) return index2str[(-index >> 3) - 1]; 
-			return index2str[index];
+			if (index < 0) {
+				return index2str[(-index >> 3) - 1];
+			} else {
+				return index2str[index];
+			}
 		}
 		
 		
 //		/conver the integer in LM VOC to disk-grammar-voc integer 
 		public int convert_disk_index_2_lm_index(int disk_id){
-			StringBuffer symbol =new StringBuffer();
-			if (disk_id < 0){
+			StringBuffer symbol = new StringBuffer();
+			if (disk_id < 0) {
 				symbol.append("[");
 				symbol.append(getValue(disk_id));
 				
 				int pos = (-disk_id & 7);
-				if( pos != 0){//indexed-nonterminal: [PHRASE,1]					
+				if (pos != 0) { //indexed-nonterminal: [PHRASE,1]					
 					symbol.append(",");
-					symbol.append(pos);					
-				}				
-				symbol.append("]");							
-			}else{
-				symbol.append(getValue(disk_id));				
-			} 
+					symbol.append(pos);	
+				}
+				symbol.append("]");	
+			} else {
+				symbol.append(getValue(disk_id));
+			}
 			return Symbol.add_non_terminal_symbol(symbol.toString());
 		}
 		
-		 	
-		public int convert_lm_index_2_disk_index(int lm_id){			
+		
+		public int convert_lm_index_2_disk_index(int lm_id) {
 			return getIndex(Symbol.get_string(lm_id));
 		}
-		
 	}
 
 }
-

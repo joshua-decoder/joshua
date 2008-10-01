@@ -1,18 +1,19 @@
 /* This file is part of the Joshua Machine Translation System.
  * 
- * Joshua is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation; either version 2.1 of the License, or 
- * (at your option) any later version.
+ * Joshua is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1
+ * of the License, or (at your option) any later version.
  *
- * This library is distributed in the hope that it will be useful, but 
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public
- * License for more details.
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU Lesser General Public License
- * along with this library; if not, write to the Free Software Foundation,
- * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free
+ * Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 package joshua.decoder.ff.lm;
 
@@ -60,7 +61,8 @@ extends DefaultFF {
 	/*when calculate transition prob: when saw a <bo>, then need to add backoff weights, start from non-state words*/
 	//	return states and cost
 	private MapFFState lookup_words1_equv_state(
-		int[] en_words, ArrayList<MapFFState> previous_states
+		int[] en_words,
+		ArrayList<MapFFState> previous_states
 	) {
 		//long start_step1 = Support.current_time();
 		//for left state
@@ -68,8 +70,8 @@ extends DefaultFF {
 		//boolean keep_left_state = true;//stop if: (1) end of rule; (2) left_state_org_wrds.size()==this.ngramOrder-1; (3) seperating point;
 		
 		//before l_context finish, left state words are in current_ngram, after that, all words will be replaced with right state words
-		ArrayList<Integer> current_ngram = new ArrayList<Integer>();
-		double           transition_cost = 0.0;
+		ArrayList<Integer> current_ngram   = new ArrayList<Integer>();
+		double             transition_cost = 0.0;
 		
 		for (int c = 0; c < en_words.length; c++) {
 			int c_id = en_words[c];

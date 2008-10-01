@@ -1,30 +1,30 @@
 /* This file is part of the Joshua Machine Translation System.
  * 
- * Joshua is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation; either version 2.1 of the License, or 
- * (at your option) any later version.
+ * Joshua is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1
+ * of the License, or (at your option) any later version.
  *
- * This library is distributed in the hope that it will be useful, but 
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public
- * License for more details.
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU Lesser General Public License
- * along with this library; if not, write to the Free Software Foundation,
- * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free
+ * Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 package joshua.suffix_array;
 
-// Imports
+import joshua.util.sentence.Vocabulary;
+
 import java.util.*;
 import java.io.*;
 
-import joshua.util.sentence.Vocabulary;
-
 
 /**
- * SuffixArrayFactory is the class that handles the loading and 
+ * SuffixArrayFactory is the class that handles the loading and
  * saving of SuffixArrays and their associated classes.
  * 
  * @author Chris Callison-Burch
@@ -46,37 +46,39 @@ public class SuffixArrayFactory {
 	
 	/**
 	 * Gets the standard filename for a Vocabulary.
-	 */	 
+	 */
 	public static String getVocabularyFileName(String lang, String corpus) {
 		return(lang+"_"+corpus+"_vocab.txt"); 
 	}
 	
+	
 	/**
 	 * Gets the standard filename for a CorpusArray.
-	 */		
-	 public static String getCorpusArrayFileName(String lang, String corpus) {
+	 */
+	public static String getCorpusArrayFileName(String lang, String corpus) {
 		return (lang+"_"+corpus+"_sentences.txt"); 
-	 }
-	 
+	}
+	
+	
 	/**
 	 * Gets the standard filename for a SuffixArray.
-	 */		
-	 public static String getSuffixArrayFileName(String lang, String corpus) {
+	 */
+	public static String getSuffixArrayFileName(String lang, String corpus) {
 		return (lang+"_"+corpus+"_suffixes.txt"); 
-	 }
-	 
+	}
+	
+	
 	/**
 	 * Gets the standard filename for an AlignmentArray.
 	 */		
-	 public static String getAlignmentArrayFileName(String sourceLang, String targetLang, String corpus) {
+	public static String getAlignmentArrayFileName(String sourceLang, String targetLang, String corpus) {
 		return (sourceLang+"_"+targetLang+"_"+corpus+"_alignment_array.txt"); 
-	 }
-	 
-	 
-		 
+	}
+	
 	
 	/**
 	 * Creates a new Vocabulary from a plain text file.
+	 *
 	 * @param inputFilename the plain text file
 	 * @param vocab the Vocabulary to instantiate 
 	 * @return a tuple containing the 
@@ -100,13 +102,15 @@ public class SuffixArrayFactory {
 		return numberOfWordsSentences;
 	}
 	
-
 	
 	/**
-	 * Creates a new CorpusArray from a plain text file, given a Vocabulary
-	 * created from the same file.
-	 * @param numWords the number of words in the file (returned by createVocabulary)
-	 * @param numSentences the number of lines in the file (returned by createVocabulary)
+	 * Creates a new CorpusArray from a plain text file, given
+	 * a Vocabulary created from the same file.
+	 *
+	 * @param numWords     the number of words in the file
+	 *                     (returned by createVocabulary)
+	 * @param numSentences the number of lines in the file
+	 *                     (returned by createVocabulary)
 	 */
 	public static CorpusArray createCorpusArray(String inputFilename, Vocabulary vocab, int numWords, int numSentences) throws IOException {
 		BufferedReader reader = FileUtil.getBufferedReader(inputFilename);
@@ -132,19 +136,19 @@ public class SuffixArrayFactory {
 		return new CorpusArray(corpus, sentenceIndexes, vocab);
 	}
 	
-
-
+	
 	/**
-	 * Creates a new SuffixArray from a CorpusArray created from the same file.
+	 * Creates a new SuffixArray from a CorpusArray created
+	 * from the same file.
 	 */
 	public static SuffixArray createSuffixArray(CorpusArray corpusArray) throws IOException {
 		return new SuffixArray(corpusArray);
 	}
-
-
-
+	
+	
 	/**
-	 * Creates an AlignmentArray from a file containing Moses-style alignments, and a source and target corpus.  
+	 * Creates an AlignmentArray from a file containing Moses-style
+	 * alignments, and a source and target corpus.
 	 */
 	public static AlignmentArray createAlignmentArray(String alignmentsFilename, SuffixArray sourceCorpus, SuffixArray targetCorpus) throws IOException {
 		int [] lowestAlignedTargetIndex = initalizeArray(sourceCorpus.size(), AlignmentArray.UNALIGNED);
@@ -176,13 +180,13 @@ public class SuffixArrayFactory {
 		
 		return new AlignmentArray(lowestAlignedTargetIndex, highestAlignedTargetIndex, lowestAlignedSourceIndex, highestAlignedSourceIndex);
 	}
-
-
-
+	
 	
 	/**
-	 * Writes the Vocabulary to a file.  The file starts with a line which indicates the number of words,
-	 * and then contains an alphabetically sorted list of words, one per line.
+	 * Writes the Vocabulary to a file. The file starts with a
+	 * line which indicates the number of words, and then
+	 * contains an alphabetically sorted list of words, one per
+	 * line.
 	 */
 	public static void saveVocabulary(Vocabulary vocab, String lang, String corpus, String directory) throws IOException {
 		BufferedWriter writer = FileUtil.getBufferedWriter(directory, getVocabularyFileName(lang, corpus));
@@ -197,43 +201,43 @@ public class SuffixArrayFactory {
 		writer.close();
 		if(SHOW_PROGRESS) System.out.println("Vocabulary saved!");
 	}
-
 	
-	 
-	 /**
-	  * Writes out the corpus in integer representation.  The first line of the
-	  * file indicates the number of words and the number of sentences.
-	  */
+	
+	/**
+	 * Writes out the corpus in integer representation. The
+	 * first line of the file indicates the number of words and
+	 * the number of sentences.
+	 */
 	public static void saveCorpusArray(CorpusArray corpusArray, String lang, String corpus, String directory) throws IOException {
 		BufferedWriter writer = FileUtil.getBufferedWriter(directory, getCorpusArrayFileName(lang, corpus));
-
-		 //write out size data on first line
-		 writer.write(Integer.toString(corpusArray.size()));
-		 writer.write(" ");
-		 writer.write(Integer.toString(corpusArray.getNumSentences()));
-		 int sentenceNum = 0;
-		 for(int i = 0; i<corpusArray.size(); i++) {
-			 if (sentenceNum<corpusArray.getNumSentences() && corpusArray.sentences[sentenceNum]==i) {
-				 sentenceNum++;
-				 writer.newLine();
-			 } else {
-				 writer.write(" ");
-			 }
-			 writer.write(Integer.toString(corpusArray.corpus[i]));
+		
+		//write out size data on first line
+		writer.write(Integer.toString(corpusArray.size()));
+		writer.write(" ");
+		writer.write(Integer.toString(corpusArray.getNumSentences()));
+		int sentenceNum = 0;
+		for(int i = 0; i<corpusArray.size(); i++) {
+			if (sentenceNum<corpusArray.getNumSentences() && corpusArray.sentences[sentenceNum]==i) {
+				sentenceNum++;
+				writer.newLine();
+			} else {
+				writer.write(" ");
+			}
+			writer.write(Integer.toString(corpusArray.corpus[i]));
 		}
 		writer.newLine();
 		writer.close();
 	}
-
-
-
-	 /**
-	  * Writes the suffix array to file.  The first line of the
-	  * file indicates the number of words and the number of sentences.
-	  */
+	
+	
+	/**
+	 * Writes the suffix array to file. The first line of the
+	 * file indicates the number of words and the number of
+	 * sentences.
+	 */
 	public static void saveSuffixArray(SuffixArray suffixArray, String lang, String corpus, String directory) throws IOException {
 		BufferedWriter writer = FileUtil.getBufferedWriter(directory, getSuffixArrayFileName(lang, corpus));
-
+		
 		//write out size data on first line
 		int numSuffixes = suffixArray.size();
 		writer.write(Integer.toString(numSuffixes));
@@ -245,15 +249,15 @@ public class SuffixArrayFactory {
 		}
 		writer.close();
 	}
-
-
-
-	 /**
-	  * Writes an alignment array to file.  The first line of the file contains two numbers:
-	  * The number of lines in the alignedTargetIndex arrays and the alignedSourceIndex arrays 
-	  * (which correspond to the number of words in the source and the target corpus, respectively).
-	  *
-	  */
+	
+	
+	/**
+	 * Writes an alignment array to file. The first line of the
+	 * file contains two numbers: The number of lines in the
+	 * alignedTargetIndex arrays and the alignedSourceIndex
+	 * arrays (which correspond to the number of words in the
+	 * source and the target corpus, respectively).
+	 */
 	public static void saveAlignmentArray(AlignmentArray alignmentArray, String sourceLang, String targetLang, String corpus, String directory) throws IOException {
 		BufferedWriter writer = FileUtil.getBufferedWriter(directory, getAlignmentArrayFileName(sourceLang, targetLang, corpus));
 
@@ -279,8 +283,9 @@ public class SuffixArrayFactory {
 
 
 	/**
-	 * Loads a Vocabulary from a file containing an alphabetized list of words, one on each line. 
-	 * The first of the file line contains the number of words.
+	 * Loads a Vocabulary from a file containing an alphabetized
+	 * list of words, one on each line. The first of the file
+	 * line contains the number of words.
 	 */
 	public static Vocabulary loadVocabulary(String lang, String corpus, String directory) throws IOException {
 		BufferedReader reader = FileUtil.getBufferedReader(directory, getVocabularyFileName(lang, corpus));
@@ -301,9 +306,9 @@ public class SuffixArrayFactory {
 	
 	
 	 /**
-	  * Reads in a corpus that is already in integer representation.  Assumes that the
-	  * first line indicates the number of words and the number of sentences, as ouput
-	  * by saveCorpusArray.
+	  * Reads in a corpus that is already in integer representation.
+	  * Assumes that the first line indicates the number of words
+	  * and the number of sentences, as ouput by saveCorpusArray.
 	  */
 	public static CorpusArray loadCorpusArray(String lang, String corpusName, String directory) throws IOException {
 		Vocabulary vocab = loadVocabulary(lang, corpusName, directory);
@@ -333,11 +338,9 @@ public class SuffixArrayFactory {
 	}
 
 
-
-
 	 /**
-	  * Reads a sorted suffix array from a file.  The first line of the
-	  * file indicates the number of suffixes.
+	  * Reads a sorted suffix array from a file. The first line
+	  * of the file indicates the number of suffixes.
 	  */
 	 public static SuffixArray loadSuffixArray(String lang, String corpusName, String directory) throws IOException {
 		CorpusArray corpusArray = loadCorpusArray(lang, corpusName, directory);
@@ -355,12 +358,11 @@ public class SuffixArrayFactory {
 	 }
 
 
-
-
-	 /**
-	  * Reads an allignment array from a file.  The first line of the file indicates the 
-	  * number of elements in the alignedTargetIndex arrays and the alignedSourceIndex arrays.
-	  */
+	/**
+	 * Reads an allignment array from a file.  The first line
+	 * of the file indicates the number of elements in the
+	 * alignedTargetIndex arrays and the alignedSourceIndex arrays.
+	 */
 	public static AlignmentArray loadAlignmentArray(String sourceLang, String targetLang, String corpus, String directory) throws IOException {
 		BufferedReader reader = FileUtil.getBufferedReader(directory, getAlignmentArrayFileName(sourceLang, targetLang, corpus));
 		// read the header line...
@@ -397,7 +399,7 @@ public class SuffixArrayFactory {
 
 	
 	/**
-	 * Creates an int array of the specified length where every 
+	 * Creates an int array of the specified length where every
 	 * cell is set to the specified initialValue.
 	 */
 	private static int[] initalizeArray(int length, int initialValue) {

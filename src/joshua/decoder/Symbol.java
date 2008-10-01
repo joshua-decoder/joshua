@@ -1,18 +1,19 @@
 /* This file is part of the Joshua Machine Translation System.
  * 
- * Joshua is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation; either version 2.1 of the License, or 
- * (at your option) any later version.
+ * Joshua is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1
+ * of the License, or (at your option) any later version.
  *
- * This library is distributed in the hope that it will be useful, but 
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public
- * License for more details.
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU Lesser General Public License
- * along with this library; if not, write to the Free Software Foundation,
- * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free
+ * Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 package joshua.decoder;
 
@@ -320,12 +321,25 @@ public class Symbol {
 		return (id<lm_start_sym_id)? true : false;
 	}
 	
-	static public int get_eng_non_terminal_id(int id){
-		if(is_nonterminal(id)==false)//terminal
+	
+	static public int get_eng_non_terminal_id(int id) {
+		if (is_nonterminal(id) == false) {
 			return -1;
-		else
-			return TMGrammar.get_eng_non_terminal_id(get_string(id));//TODO
+		} else {
+			// TODO: get rid of this expensive interim object
+			String symbol = get_string(id);
+			
+			// Assumes the last character is a digit
+			// and extracts it, starting from one.
+			// Assumes the whole prefix is the
+			// nonterminal-ID portion of the string
+			return Integer.parseInt(
+				symbol.substring(
+					symbol.length() - 2,
+					symbol.length() - 1)) - 1;
+		}
 	}
+	
 	
 //	srilm begin
 	 /*private static int get_nonterminal_sym_id_srilm(String str){//

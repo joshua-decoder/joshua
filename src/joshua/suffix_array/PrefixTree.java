@@ -1,20 +1,31 @@
 /* This file is part of the Joshua Machine Translation System.
  * 
- * Joshua is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation; either version 2.1 of the License, or 
- * (at your option) any later version.
+ * Joshua is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1
+ * of the License, or (at your option) any later version.
  *
- * This library is distributed in the hope that it will be useful, but 
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public
- * License for more details.
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU Lesser General Public License
- * along with this library; if not, write to the Free Software Foundation,
- * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free
+ * Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 package joshua.suffix_array;
+
+import joshua.decoder.ff.tm.Rule;
+import joshua.decoder.ff.tm.RuleCollection;
+import joshua.decoder.ff.tm.TrieGrammar;
+import joshua.suffix_array.Pattern.PrefixCase;
+import joshua.suffix_array.Pattern.SuffixCase;
+import joshua.util.sentence.LabelledSpan;
+import joshua.util.sentence.Phrase;
+import joshua.util.sentence.Span;
+import joshua.util.sentence.Vocabulary;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -29,16 +40,6 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import joshua.decoder.ff.tm.Rule;
-import joshua.decoder.ff.tm.TrieGrammar;
-import joshua.suffix_array.Pattern.PrefixCase;
-import joshua.suffix_array.Pattern.SuffixCase;
-import joshua.util.sentence.LabelledSpan;
-import joshua.util.sentence.Phrase;
-import joshua.util.sentence.Span;
-import joshua.util.sentence.Vocabulary;
-
 
 
 
@@ -316,7 +317,7 @@ public class PrefixTree {
 		this(null, null, null, sentence, maxPhraseSpan, maxPhraseLength, maxNonterminals);
 	}
 
-	public TrieGrammar<Integer,Rule> getRoot() {
+	public TrieGrammar getRoot() {
 		return root;
 	}
 
@@ -768,7 +769,7 @@ public class PrefixTree {
 	 * @author Lane Schwartz
 	 * @see Lopez (2008) PhD Thesis, Sec 4.3.1,2, p 71-74.
 	 */
-	class Node implements Comparable<Node>, TrieGrammar<Integer,Rule> {
+	class Node implements Comparable<Node>, TrieGrammar {
 
 		static final boolean   ACTIVE = true;
 		static final boolean INACTIVE = false;
@@ -805,27 +806,32 @@ public class PrefixTree {
 			this.results = Collections.emptyList();
 		}
 		
-		public Iterator<Rule> getResults() {
-					
-			return results.iterator();
-			
+		
+		public RuleCollection getRules() {
+			// return RuleCollection.newFromList( this.results );
+			throw new RuntimeException(PrefixTree.class.getName() + ".getRules(): not implemented");
 		}
-
+		
+		
 		public boolean hasExtensions() {
-			if (children.isEmpty())
+			if (children.isEmpty()) {
 				return false;
-			else
+			} else {
 				return true;
+			}
 		}
-
-		public boolean hasResults() {
-			if (hierarchicalPhrases.isEmpty())
+		
+		
+		public boolean hasRules() {
+			if (hierarchicalPhrases.isEmpty()) {
 				return false;
-			else
+			} else {
 				return true;
+			}
 		}
-
-		public TrieGrammar<Integer, Rule> matchOne(Integer symbol) {
+		
+		
+		public TrieGrammar matchOne(int symbol) {
 			if (children.containsKey(symbol)) {
 				return children.get(symbol);
 			} else {
@@ -834,7 +840,7 @@ public class PrefixTree {
 			}
 		}
 
-		public TrieGrammar<Integer, Rule> matchPrefix(List<Integer> symbols) {
+		public TrieGrammar matchPrefix(List<Integer> symbols) {
 			
 			Node node = this;
 			
