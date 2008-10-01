@@ -72,9 +72,7 @@ implements GrammarFactory, Grammar {
 	
 	
 	public Grammar getGrammarForSentence(Phrase sentence) {
-		throw new RuntimeException("Not yet implemented");
-		//TODO Implement this method as:
-		//     return get_root();
+		return this
 	}
 	
 	
@@ -90,7 +88,7 @@ implements GrammarFactory, Grammar {
 		final int endIndex,
 		final int pathLength
 	) {
-		if (this.spanLimit == -1) {//mono-glue grammar
+		if (this.spanLimit == -1) { // mono-glue grammar
 			return (startIndex == 0);
 		} else {
 			return (endIndex - startIndex <= this.spanLimit);

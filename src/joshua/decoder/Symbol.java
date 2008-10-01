@@ -45,8 +45,8 @@ public class Symbol {
 
 	//terminal symbol may get from a tbl file, srilm, or a lm file
 	//**non-terminal symbol is always from myself	
-	static HashMap  str_2_num_tbl = new HashMap ();
-	static HashMap  num_2_str_tbl = new HashMap ();
+	static HashMap<String,Integer> str_2_num_tbl = new HashMap();
+	static HashMap<Integer,String> num_2_str_tbl = new HashMap();
 	public static int lm_start_sym_id = 10000;//1-10000 reserved for non-terminal
 	public static int lm_end_sym_id = 2000001;//max vocab 1000k
 	
@@ -284,6 +284,7 @@ public class Symbol {
 		return res;
 	}	
 	
+	/** Get int for string (initial, or recover) */
 	static public int add_terminal_symbol(String str){
 		if(use_my_own_tbl==false)
 			return get_terminal_sym_id_srilm(str);
