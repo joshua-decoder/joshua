@@ -33,7 +33,7 @@ import joshua.decoder.ff.tm.TMGrammar_Memory; // HACK:
 import joshua.decoder.hypergraph.DiskHyperGraph;
 import joshua.decoder.hypergraph.HyperGraph;
 import joshua.decoder.hypergraph.KbestExtraction;
-import joshua.lattice.Lattice;
+//import joshua.lattice.Lattice;
 import joshua.util.sentence.Phrase;
 import joshua.util.FileUtility;
 
@@ -592,15 +592,15 @@ public class Decoder {
 		int[] sentence_numeric = 
 			Symbol.get_terminal_ids_for_sentence(sentence);
 		
-		Lattice<Integer> inputLattice; {
-			
-			Integer[] input = new Integer[sentence_numeric.length];
-			for (int i = 0; i < sentence_numeric.length; i++) {
-				input[i] = sentence_numeric[i];
-			}
-
-			inputLattice = new Lattice<Integer>(input);
-		}
+//		Lattice<Integer> inputLattice; {
+//			
+//			Integer[] input = new Integer[sentence_numeric.length];
+//			for (int i = 0; i < sentence_numeric.length; i++) {
+//				input[i] = sentence_numeric[i];
+//			}
+//
+//			inputLattice = new Lattice<Integer>(input);
+//		}
 
 		
 		Chart chart; {
@@ -611,12 +611,11 @@ public class Decoder {
 					grammarFactories[i].getGrammarForSentence(sentencePhrase);
 			}
 			chart = new Chart(
-				inputLattice,
+				sentence_numeric,
 				models,
 				sentenceID,
 				grammars,
-				defaultNonterminals,
-				sentence_numeric);
+				defaultNonterminals);
 		}
 		if (logger.isLoggable(Level.FINER)) logger.finer(
 			"after seed, time: " + (System.currentTimeMillis() - start) / 1000);

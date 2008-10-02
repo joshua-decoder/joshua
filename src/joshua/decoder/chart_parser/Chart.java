@@ -66,7 +66,8 @@ public class Chart {
 	public  Bin[][]          bins;//note that in some cell, it might be null
 	private Bin              goal_bin;
 	
-	private Lattice<Integer> sentence;//a list of foreign words
+	//private Lattice<Integer> sentence;//a list of foreign words
+	private int[] sentence;
 	public  int              sent_len;//foreign sent len
 	private int              sent_id;
 	
@@ -112,16 +113,17 @@ public class Chart {
 	//public Chart(int[] sentence_in, ArrayList<Model> models, int sent_id1) {
 //	public Chart(Lattice<Integer> sentence_in, ArrayList<Model> models, int sent_id1) {
 	public Chart(
-		Lattice<Integer>           sentence_,
+		//Lattice<Integer>           sentence_,
+		int[] sentence,
 		ArrayList<FeatureFunction> models_,
 		int                        sent_id_,
 		Grammar[]                  grammars_,
-		ArrayList<Integer>         default_nonterminals,
-		int[]                      sentence_str
+		ArrayList<Integer>         default_nonterminals
 	) {
 //		public Chart(int[] sentence_in, ArrayList<FeatureFunction> models, int sent_id1) {   
-		this.sentence = sentence_;
-		this.sent_len = sentence.size();
+		this.sentence = sentence;
+		this.sent_len = sentence.length;
+		//this.sent_len = sentence.size();
 		this.models   = models_;
 		this.bins     = new Bin[sent_len][sent_len+1];		
 		this.sent_id  = sent_id_;
@@ -141,16 +143,16 @@ public class Chart {
 		}
 		//add OOV rules
 		//TODO: the transition cost for phrase model, arity penalty, word penalty are all zero, except the LM cost
-		if (sentence_str.length+1 != this.sent_len) {
-			if (logger.isLoggable(Level.SEVERE)) logger.severe(
-				"In Chart constructor, length of (?)integerized string(?) does not match length of integerized lattice");
-			System.exit(1);
-		}
+//		if (sentence_str.length+1 != this.sent_len) {
+//			if (logger.isLoggable(Level.SEVERE)) logger.severe(
+//				"In Chart constructor, length of (?)integerized string(?) does not match length of integerized lattice");
+//			System.exit(1);
+//		}
 		for (int i = 0; i < this.sent_len; i++) {
 			for (int lhs : default_nonterminals) {//create a rule, but do not add into the grammar trie     
 				Rule rule = new TMGrammar_Memory.Rule_Memory(
 					lhs,
-					sentence_str[i],
+					sentence[i],
 					Symbol.UNTRANS_SYM_ID);//TODO: change onwer
 				add_axiom(i, i+1, rule);
 			}
