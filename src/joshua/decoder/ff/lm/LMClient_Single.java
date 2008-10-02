@@ -90,7 +90,7 @@ extends LMClient {
 	//cmd: prob order wrd1 wrd2 ...
 	public double get_prob_backoff_state(int[] ngram, int n_additional_bow) {
 		System.out.println("Error: call get_prob_backoff_state in lmclient, must exit");
-		System.exit(0);
+		System.exit(1);
 		return -1;
 		/*double res=0.0;
 		String packet= encode_packet("problbo", n_additional_bow, ngram);    	
@@ -102,7 +102,7 @@ extends LMClient {
 	
 	public int[] get_left_euqi_state(int[] original_state_wrds, int order, double[] cost) {
 		System.out.println("Error: call get_left_euqi_state in lmclient, must exit");
-		System.exit(0);
+		System.exit(1);
 		return null;
 		/*
 		double res=0.0;    	
@@ -115,7 +115,7 @@ extends LMClient {
 	
 	public int[] get_right_euqi_state(int[] original_state, int order) {
 		System.out.println("Error: call get_right_euqi_state in lmclient, must exit");
-		System.exit(0);
+		System.exit(1);
 		return null;
 		/*
 		double res=0.0;

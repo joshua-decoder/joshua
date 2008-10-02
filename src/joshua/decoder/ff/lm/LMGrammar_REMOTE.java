@@ -95,8 +95,8 @@ public class LMGrammar_REMOTE  extends LMGrammar {
 			System.out.println("lm server: " + "lm_file: " + lm_file +"; host: " + host + "; port: " + port + "; weight: " + weight);
 		}
 		if(count!=num_servers){
-		    System.out.println("num of lm servers does not mathc");
-		    System.exit(0);
+		    System.out.println("num of lm servers does not match");
+		    System.exit(1);
 		}
 		FileUtility.close_read_file(t_reader);
 	}
@@ -116,7 +116,7 @@ public class LMGrammar_REMOTE  extends LMGrammar {
 				String[] fds = line.split("\\s*=\\s*");
 				if(fds.length!=2){
 					Support.write_log_line("Wrong config line: " + line, Support.ERROR);
-					System.exit(0);
+					System.exit(1);
 				}
 				if(fds[0].compareTo("lm_file")==0){
 					String lm_file = fds[1].trim();
@@ -136,7 +136,7 @@ public class LMGrammar_REMOTE  extends LMGrammar {
 					System.out.println(String.format("interpolation_weightt: %s", interpolation_weight));					
 				}else{
 					Support.write_log_line("Warning: not used config line: " + line, Support.ERROR);
-					//System.exit(0);
+					//System.exit(1);
 				}
 			}
 		}
@@ -155,7 +155,7 @@ public class LMGrammar_REMOTE  extends LMGrammar {
 			String[] fds = line.split("\\s+");
 			if(fds.length!=4){
 			    System.out.println("read index, bad line: " + line);
-			    System.exit(0);
+			    System.exit(1);
 			}
 			String lm_file=fds[0];
 			String host = fds[1];
@@ -168,8 +168,8 @@ public class LMGrammar_REMOTE  extends LMGrammar {
 			System.out.println("lm server: " + "lm_file: " + lm_file +"; host: " + host + "; port: " + port + "; weight: " + weight);
 		}
 		if(count!=num_servers){
-		    System.out.println("num of lm servers does not mathc");
-		    System.exit(0);
+		    System.out.println("num of lm servers does not match");
+		    System.exit(1);
 		}
 		FileUtility.close_read_file(t_reader);
 	}
@@ -187,12 +187,12 @@ public class LMGrammar_REMOTE  extends LMGrammar {
 		
    public void write_vocab_map_srilm(String fname){
 		System.out.println("Error: call write_vocab_map_srilm in remote, must exit");
-		System.exit(0);
+		System.exit(1);
 	}
 	
    protected double get_prob_backoff_state_specific(int[] ngram_wrds, int order, int n_additional_bow){
 	    System.out.println("Error: call get_prob_backoff_state_specific in LMGrammar_REMOTE, must exit");
-		System.exit(0);
+		System.exit(1);
 		return -1;
 	   //return p_lm_client.get_prob_backoff_state(ngram_wrds, n_additional_bow);
 	}
@@ -213,7 +213,7 @@ public class LMGrammar_REMOTE  extends LMGrammar {
    
    public int replace_with_unk(int in){
 	   System.out.println("Error: call replace_with_unk in LMGrammar_REMOTE, must exit");
-	   System.exit(0);
+	   System.exit(1);
 	   return 0;
    }
 	   

@@ -80,11 +80,12 @@ public class HyperGraphPruning extends InsideOutside {
 //	######################### pruning here ##############
 	public void pruning_hg(HyperGraph hg){
 		run_inside_outside(hg, 1, 1);//viterbi-min, log-semiring
-		if(fix_threshold_pruning){
+		if (fix_threshold_pruning) {
 			pruning_hg_real(hg);
 			super.clear_state();
-		}else{
-			System.out.println("wrong call"); System.exit(0);
+		} else {
+			System.out.println("wrong call");
+			System.exit(1);
 		}			
 	}
 	
@@ -123,9 +124,10 @@ public class HyperGraphPruning extends InsideOutside {
 		
 		/*by defintion: "should_surive==false" should be impossible, since if I got called, then my upper-deduction must survive, then i will survive
 		* because there must be one way to reach me from lower part in order for my upper-deduction survive*/
-		if(should_surive==false){
-			System.out.println("item explored but does not survive");System.exit(0);//TODO: since we always keep the best_deduction, this should never be true
-		}else{
+		if (! should_surive) {
+			System.out.println("item explored but does not survive");
+			System.exit(1);//TODO: since we always keep the best_deduction, this should never be true
+		} else {
 			num_survived_item++;
 		}
 	}
@@ -168,7 +170,7 @@ public class HyperGraphPruning extends InsideOutside {
 		merit = multi_in_semiring(merit, get_deduction_score(dt, parent));
 		
 		//sanity check
-		//if(merit>worst_cost || merit < best_cost){System.out.println("merit is not between best and worst, best: " + best_cost +"; worset:" + worst_cost + "; merit: " + merit); System.exit(0);}
+		//if(merit>worst_cost || merit < best_cost){System.out.println("merit is not between best and worst, best: " + best_cost +"; worset:" + worst_cost + "; merit: " + merit); System.exit(1);}
 		 
 		if(dt.get_rule()!=null && dt.get_rule().owner == glue_grammar_owner && dt.get_rule().arity==2){//specicial rule: S->S X
 			//TODO

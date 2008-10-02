@@ -101,8 +101,9 @@ public class LMGrammar_JAVA extends LMGrammar {
 	}
 	
 	public void write_vocab_map_srilm(String fname){
-		if (logger.isLoggable(Level.SEVERE)) logger.severe("Error: call write_vocab_map_srilm in java, must exit");
-		System.exit(0);
+		if (logger.isLoggable(Level.SEVERE)) logger.severe(
+			"Error: call write_vocab_map_srilm in java, must exit");
+		System.exit(1);
 	}
 
 	
@@ -134,8 +135,9 @@ public class LMGrammar_JAVA extends LMGrammar {
 	    }else{
 		    //TODO: untranslated words
 			if(root==null){
-				if (logger.isLoggable(Level.SEVERE)) logger.severe("root is null");
-				System.exit(0);
+				if (logger.isLoggable(Level.SEVERE)) logger.severe(
+					"root is null");
+				System.exit(1);
 			}		
 			int last_word_id = ngram_wrds[ngram_wrds.length-1];
 			LMHash  pos =root;
@@ -636,9 +638,10 @@ public class LMGrammar_JAVA extends LMGrammar {
 		}
 		
 		public void put(int key, Object value) {
-			if(value==null){
-				if (logger.isLoggable(Level.SEVERE)) logger.severe("LMHash, value is null");
-				System.exit(0);
+			if (null == value) {
+				if (logger.isLoggable(Level.SEVERE)) logger.severe(
+					"LMHash, value is null");
+				System.exit(1);
 			}
 			
 			int pos = hash_pos(key, key_array.length);			

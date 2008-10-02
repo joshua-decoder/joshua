@@ -78,7 +78,7 @@ extends DefaultFF {
 			if (Symbol.is_nonterminal(c_id)) {
 				if (null == previous_states) {
 					System.out.println("LMModel>>lookup_words1_equv_state: null previous_states");
-					System.exit(0);
+					System.exit(1);
 				}
 				
 				int     index     = Symbol.get_eng_non_terminal_id(c_id);
@@ -87,7 +87,7 @@ extends DefaultFF {
 				int[]   r_context = (int[])state.get(Symbol.LM_R_STATE_SYM_ID);
 				if (l_context.length != r_context.length) {
 					System.out.println("LMModel>>lookup_words1_equv_state: left and right contexts have unequal lengths");
-					System.exit(0);
+					System.exit(1);
 				}
 				
 				//##################left context
@@ -174,7 +174,7 @@ extends DefaultFF {
 		}
 		res_tbl.put(Symbol.BONUS_SYM_ID, estimated_future_cost);
 		//##### get right equiv state
-		//if(current_ngram.size()>this.ngramOrder-1 || equiv_l_state.length>this.ngramOrder-1)	System.exit(0);
+		//if(current_ngram.size()>this.ngramOrder-1 || equiv_l_state.length>this.ngramOrder-1)	System.exit(1);
 		int[] equiv_r_state = this.lmGrammar.get_right_equi_state(
 			Support.sub_int_array(current_ngram, 0, current_ngram.size()),
 			this.ngramOrder,
@@ -301,7 +301,7 @@ extends DefaultFF {
 		int[] r_context = (int[])state.get(Symbol.LM_R_STATE_SYM_ID);
 		if (l_context.length != r_context.length) {
 			System.out.println("LMModel>>compute_equiv_state_final_transition: left and right contexts have unequal lengths");
-			System.exit(0);
+			System.exit(1);
 		}
 		
 		//##################left context

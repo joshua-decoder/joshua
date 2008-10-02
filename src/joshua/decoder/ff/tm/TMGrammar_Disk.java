@@ -75,7 +75,7 @@ extends TMGrammar {
 	
 	public void read_tm_grammar_glue_rules() {
 		 System.out.println("Error: call read_tm_grammar_glue_rules in TMGrammar_Disk, must exit");
-		 System.exit(0);
+		 System.exit(1);
 	}
 	
 	

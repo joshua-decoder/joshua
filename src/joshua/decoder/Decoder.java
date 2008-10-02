@@ -142,7 +142,7 @@ public class Decoder {
 			for (int i = 0; i < args.length; i++) {
 				System.out.println("arg is: " + args[i]);
 			}
-			System.exit(0);
+			System.exit(1);
 		}		
 		String config_file = args[0].trim();
 		String test_file   = args[1].trim();
@@ -208,7 +208,7 @@ public class Decoder {
 			if (Decoder.use_remote_lm_server) { // TODO
 				if (logger.isLoggable(Level.SEVERE)) logger.severe(
 					"You cannot run parallel decoder and remote lm server together");
-				System.exit(0);
+				System.exit(1);
 			}
 			run_parallel_decoder(test_file, nbest_file);
 		}
@@ -507,7 +507,7 @@ public class Decoder {
 			|| Decoder.use_right_euqivalent_state) {
 				if (logger.isLoggable(Level.SEVERE)) logger.severe(
 					"use local srilm, we cannot use suffix/prefix stuff");
-				System.exit(0);
+				System.exit(1);
 			}
 			Decoder.p_lm = new LMGrammar_REMOTE(g_lm_order, remote_symbol_tbl, f_remote_server_list, num_remote_lm_servers);
 			
@@ -516,7 +516,7 @@ public class Decoder {
 			|| Decoder.use_right_euqivalent_state) {
 				if (logger.isLoggable(Level.SEVERE)) logger.severe(
 					"use remote lm, we cannot use suffix/prefix stuff");
-				System.exit(0);
+				System.exit(1);
 			}
 			Decoder.p_lm = new LMGrammar_SRILM(g_lm_order);
 			
@@ -700,7 +700,7 @@ public class Decoder {
 				} else {
 					if (logger.isLoggable(Level.SEVERE)) logger.severe(
 						"Wrong config line: " + line);
-					System.exit(0);
+					System.exit(1);
 				}
 			}
 		}
@@ -725,7 +725,7 @@ public class Decoder {
 				if (fds.length != 2) {
 					if (logger.isLoggable(Level.SEVERE)) logger.severe(
 						"Wrong config line: " + line);
-					System.exit(0);
+					System.exit(1);
 				}
 				
 				if (0 == fds[0].compareTo("lm_file")) {
@@ -875,7 +875,7 @@ public class Decoder {
 				} else {
 					if (logger.isLoggable(Level.SEVERE)) logger.severe(
 						"Wrong config line: " + line);
-					System.exit(0);
+					System.exit(1);
 				}
 			}
 		}

@@ -258,7 +258,7 @@ public class Vocabulary implements Iterable<String> {
 
 
 	public static void main(String[] args) throws Exception {
-		if(args.length != 4) {
+		if (args.length != 4) {
 			System.out.println("Usage: java Vocabulary file corpusName lang outputDir");
 			System.exit(0);
 		}

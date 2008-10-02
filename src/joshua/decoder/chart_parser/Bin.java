@@ -225,7 +225,7 @@ public class Bin
 			if (logger.isLoggable(Level.SEVERE)) {
 				logger.severe("the goal_bin does not have exactly one item");
 			}
-			System.exit(0);
+			System.exit(1);
 		}
 	}
 	
@@ -274,7 +274,7 @@ public class Bin
 				}
 			}else{
 				System.out.println("Sorry, we can only deal with rules with at most TWO non-terminals");
-				System.exit(0);
+				System.exit(1);
 			}
 		}		
 	}
@@ -548,7 +548,7 @@ public class Bin
             	SuperItem si = ((SuperItem)tbl_super_items.get(it.lhs));
             	if(si==null){//sanity check
             		Support.write_log_line("Does not have super Item, have to exist", Support.ERROR);
-            		System.exit(0);	            	
+            		System.exit(1);	            	
             	}
             	si.l_items.add(it);
             }

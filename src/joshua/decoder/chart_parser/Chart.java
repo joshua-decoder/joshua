@@ -137,17 +137,22 @@ public class Chart {
 				this.sentence,
 				this.grammars[i],
 				this);
-			this.dotcharts[i].seed();
+			this.dotcharts[i].seed(); // TODO: should fold into the constructor
 		}
 		//add OOV rules
 		//TODO: the transition cost for phrase model, arity penalty, word penalty are all zero, except the LM cost
-		for (int i = 0; i < sent_len; i++) {
+		if (sentence_str.length != this.sent_len) {
+			if (logger.isLoggable(Level.SEVERE)) logger.severe(
+				"In Chart constructor, length of (?)integerized string(?) does not match length of integerized lattice");
+			System.exit(1);
+		}
+		for (int i = 0; i < this.sent_len; i++) {
 			for (int lhs : default_nonterminals) {//create a rule, but do not add into the grammar trie     
-				Rule r = new TMGrammar_Memory.Rule_Memory(
+				Rule rule = new TMGrammar_Memory.Rule_Memory(
 					lhs,
 					sentence_str[i],
 					Symbol.UNTRANS_SYM_ID);//TODO: change onwer
-				add_axiom(i, i+1, r);
+				add_axiom(i, i+1, rule);
 			}
 		}
 		if (logger.isLoggable(Level.FINE)) logger.fine("####finished seeding");
@@ -249,8 +254,9 @@ public class Chart {
 		if (null != this.bins[0][sent_len]) {
 			goal_bin.transit_to_goal(this.bins[0][sent_len]);//update goal_bin				
 		} else {
-			if (logger.isLoggable(Level.SEVERE)) logger.severe("No complete item in the cell(0,n)");
-			System.exit(0);
+			if (logger.isLoggable(Level.SEVERE)) logger.severe(
+				"No complete item in the cell(0,n)");
+			System.exit(1);
 		}
 		
 		//debug purpose

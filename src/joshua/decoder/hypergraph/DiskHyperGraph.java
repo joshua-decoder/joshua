@@ -129,7 +129,10 @@ public class DiskHyperGraph {
     	while((line = FileUtility.read_line_lzf(reader_rules))!=null){
     		//rule_id owner RULE_TBL_SEP rule
     		String[] fds = line.split(RULE_TBL_SEP);
-    		if(fds.length!=2){System.out.println("wrong RULE line"); System.exit(0);}
+    		if (fds.length != 2) {
+				System.out.println("wrong RULE line");
+				System.exit(1);
+			}
     		String[] wrds = line.split("\\s+");
     		int rule_id = new Integer(wrds[0]);
     		int default_owner = Symbol.add_terminal_symbol(wrds[1]);
@@ -149,7 +152,10 @@ public class DiskHyperGraph {
 		
 		
 		//we save the hypergraph in a bottom-up way: so that reading is easy
-		if(tbl_id_2_item.size()!=tbl_item_2_id.size()){System.out.println("Number of Items not equal"); System.exit(0);}
+		if (tbl_id_2_item.size() != tbl_item_2_id.size()) {
+			System.out.println("Number of Items not equal");
+			System.exit(1);
+		}
 		for(int i=1; i<= tbl_id_2_item.size(); i++){
 			Item it = (Item) tbl_id_2_item.get(i);
 			save_item(writer_out,it);
@@ -179,7 +185,10 @@ public class DiskHyperGraph {
 			line = FileUtility.read_line_lzf(reader_in);
 		start_line=null;
 		
-		if(line.startsWith(SENTENCE_TAG)!=true){System.out.println("wrong sent tag line: " + line); System.exit(0);}
+		if (! line.startsWith(SENTENCE_TAG)) {
+			System.out.println("wrong sent tag line: " + line);
+			System.exit(1);
+		}
 		
 		if(should_skip_sent(line)){//skip the hypergraph for this sentence
 			while((line=FileUtility.read_line_lzf(reader_in))!=null){
@@ -202,7 +211,10 @@ public class DiskHyperGraph {
 			
 			//create hyper graph
 			Item goal_item = (Item)tbl_id_2_item.get(num_items);
-			if(goal_item==null){System.out.println("no goal item"); System.exit(0);}
+			if (null == goal_item) {
+				System.out.println("no goal item");
+				System.exit(1);
+			}
 			HyperGraph res = new HyperGraph(goal_item, num_items, num_deducts, sent_id, sent_len);
 			return res;
 		}
@@ -284,9 +296,12 @@ public class DiskHyperGraph {
 	private  Item read_item(BufferedReader in){		
 		//line: ITEM_TAG, item id, i, j, lhs, num_deductions, ITEM_STATE_TAG, item_state;
 		String line=FileUtility.read_line_lzf(in);		
-		//if(line.startsWith(ITEM_TAG)!=true){System.out.println("wrong item tag"); System.exit(0);}
+		//if(line.startsWith(ITEM_TAG)!=true){System.out.println("wrong item tag"); System.exit(1);}
 		String[] fds = line.split(ITEM_STATE_TAG);
-		if(fds.length!=2){System.out.println("wrong item line"); System.exit(0);}
+		if (fds.length != 2) {
+			System.out.println("wrong item line");
+			System.exit(1);
+		}
 		String[] wrds1 = fds[0].split("\\s+");
 		int item_id = new Integer(wrds1[1]);
 		int i = new Integer(wrds1[2]);
@@ -371,7 +386,7 @@ public class DiskHyperGraph {
 		String[] fds = line.split("\\s+");
 		
 		/*//flag
-		if(fds[0].startsWith(DEDUCTION_TAG)!=true){	System.out.println("wrong deduction start line"); System.exit(0);}
+		if(fds[0].startsWith(DEDUCTION_TAG)!=true){	System.out.println("wrong deduction start line"); System.exit(1);}
 		if(fds[0].compareTo(DEDUCTION_TAG)!=0)
 			is_best[0]=true;
 		*/
@@ -385,7 +400,10 @@ public class DiskHyperGraph {
 			for(int t=0; t< num_ant_items; t++){
 				int item_id = new Integer(fds[2+t]);
 				Item t_it = (Item)tbl_id_2_item.get(item_id);
-				if(t_it==null){System.out.println("item is null for id: " + item_id); System.exit(0);}
+				if (null == t_it) {
+					System.out.println("item is null for id: " + item_id);
+					System.exit(1);
+				}
 				l_ant_items.add(t_it);
 			}
 		}		
@@ -395,7 +413,10 @@ public class DiskHyperGraph {
 		if(r_id!=NULL_RULE_ID){
 			if(r_id!=OOV_RULE_ID){
 				rule = (Rule)tbl_associated_grammar.get(r_id);
-				if(rule==null){System.out.println("rule is null but id is " + r_id); System.exit(0);}	
+				if (null == rule) {
+					System.out.println("rule is null but id is " + r_id);
+					System.exit(1);
+				}
 				//System.out.println("nonoov rule str: " + str_rule + "; arity: " + rule.arity);
 			}else{
 				int lhs = Symbol.add_non_terminal_symbol(fds[3+num_ant_items]);

@@ -248,8 +248,11 @@ public class HyperGraph {
 		Deduction p_edge = item.best_deduction;
 		Rule rl = p_edge.get_rule();
 		
-		if(rl==null){//deductions under "goal item" does not have rule
-			if(p_edge.get_ant_items().size()!=1){System.out.println("error deduction under goal item have not equal one item"); System.exit(0);}
+		if (null == rl) { // deductions under "goal item" does not have rule
+			if (p_edge.get_ant_items().size() != 1) {
+				System.out.println("error deduction under goal item have not equal one item");
+				System.exit(1);
+			}
 			return extract_best_string((Item)p_edge.get_ant_items().get(0));
 		}	
 		

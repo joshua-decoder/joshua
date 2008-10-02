@@ -74,7 +74,7 @@ public class LMServer {
 			for (int i = 0; i < args.length; i++) {
 				System.out.println("arg is: " + args[i]);
 			}
-			System.exit(0);
+			System.exit(1);
 		}
 		String config_file = args[0].trim();
 		read_config_file(config_file);
@@ -232,7 +232,7 @@ public class LMServer {
 			return InetAddress.getLocalHost().getHostAddress();
 		} catch (UnknownHostException e) {
 			System.out.println("Unknown host address");
-			System.exit(0);
+			System.exit(1);
 			return null;
 		}
 	}
@@ -340,7 +340,7 @@ public class LMServer {
 				return get_right_equiv_state(ds);
 			} else {
 				System.out.println("error : Wrong request line: " + line);
-				//System.exit(0);
+				//System.exit(1);
 				return "";
 			}
 		}
@@ -356,7 +356,7 @@ public class LMServer {
 		// format: prob order wrds
 		private String get_prob_backoff_state(DecodedStructure ds) {
 			System.out.println("Error: call get_prob_backoff_state in lmserver, must exit");
-			System.exit(0);
+			System.exit(1);
 			return null;
 			/*Double res =  p_lm.get_prob_backoff_state(ds.wrds, ds.num, ds.num);
 			return res.toString();*/
@@ -366,7 +366,7 @@ public class LMServer {
 		// format: prob order wrds
 		private String get_left_equiv_state(DecodedStructure ds) {
 			System.out.println("Error: call get_left_equiv_state in lmserver, must exit");
-			System.exit(0);
+			System.exit(1);
 			return null;
 		}
 		
@@ -374,7 +374,7 @@ public class LMServer {
 		// format: prob order wrds
 		private String get_right_equiv_state(DecodedStructure ds) {
 			System.out.println("Error: call get_right_equiv_state in lmserver, must exit");
-			System.exit(0);
+			System.exit(1);
 			return null;
 		}
 		

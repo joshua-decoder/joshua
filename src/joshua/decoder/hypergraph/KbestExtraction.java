@@ -154,9 +154,12 @@ public class KbestExtraction {
 				tem_sum += model_cost[k]*l_models.get(k).getWeight();
 			}
 			//sanity check
-			if(Math.abs(cur.cost-tem_sum)>1e-2){
+			if (Math.abs(cur.cost - tem_sum) > 1e-2) {
 				System.out.println("In nbest extraction, Cost does not match; cur.cost: " + cur.cost + "; temsum: " +tem_sum);
-				for(int k=0; k<model_cost.length; k++) System.out.println(model_cost[k]); System.exit(0);
+				for (int k = 0; k < model_cost.length; k++) {
+					System.out.println(model_cost[k]);
+				}
+				System.exit(1);
 			}
 		}
 		
@@ -183,57 +186,64 @@ public class KbestExtraction {
 	/*to seed the kbest extraction, it only needs that each deduction should have the best_cost properly set, and it does not require any list being sorted
 	  *instead, the priority queue heap_cands will do internal sorting*/
 
-	private static class VirtualItem 
-	{
+	private static class VirtualItem {
 		public ArrayList l_nbest = new ArrayList();//sorted ArrayList of DerivationState, in the paper is: D(^) [v]
-		private PriorityQueue<DerivationState> heap_cands=null;//remember frontier states, best-first;  in the paper, it is called cand[v]		
-		private HashMap<String, Integer>  derivation_tbl = null;//rememeber which DerivationState has been explored; why duplicate, e.g., 1 2 + 1 0 == 2 1 + 0 1 
-		private HashMap  nbest_str_tbl =null;
+		private PriorityQueue<DerivationState> heap_cands = null; // remember frontier states, best-first;  in the paper, it is called cand[v]
+		private HashMap<String, Integer>  derivation_tbl = null; // rememeber which DerivationState has been explored; why duplicate, e.g., 1 2 + 1 0 == 2 1 + 0 1 
+		private HashMap nbest_str_tbl = null;
 		Item p_item = null;
 		
-		public VirtualItem(Item it){
-			p_item = it;
+		public VirtualItem(Item it) {
+			this.p_item = it;
 		}
 		
 		//return: the k-th hyp or null; k is started from one
-		private DerivationState lazy_k_best_extract_item(KbestExtraction kbest_extator,  int k, boolean extract_unique_nbest, boolean extract_nbest_tree){
-			if(l_nbest.size()>=k){//no need to continue
-				return  (DerivationState)l_nbest.get(k-1);
+		private DerivationState lazy_k_best_extract_item(
+			KbestExtraction kbest_extator,
+			int             k,
+			boolean         extract_unique_nbest,
+			boolean         extract_nbest_tree
+		) {
+			if (l_nbest.size() >= k) { // no need to continue
+				return (DerivationState)l_nbest.get(k-1);
 			}
 			
 			//### we need to fill in the l_nest in order to get k-th hyp
-			DerivationState res=null;
-			if(heap_cands==null){
-				get_candidates(kbest_extator, extract_unique_nbest, extract_nbest_tree);				
+			DerivationState res = null;
+			if (null == heap_cands) {
+				get_candidates(kbest_extator, extract_unique_nbest, extract_nbest_tree);
 			}
-			int t_added =0; //sanity check
-			while(l_nbest.size()<k){	
-				if(heap_cands.size()>0){
+			int t_added = 0; //sanity check
+			while (l_nbest.size() < k) {
+				if (heap_cands.size() > 0) {
 					res = heap_cands.poll();
-					//derivation_tbl.remove(res.get_signature());//TODO: should remove? note that two state may be tied because the cost is the same					
-					if(extract_unique_nbest==true){
+					//derivation_tbl.remove(res.get_signature());//TODO: should remove? note that two state may be tied because the cost is the same
+					if (extract_unique_nbest) {
 						String res_str = res.get_hyp(kbest_extator, extract_nbest_tree,null,null);
-						if(nbest_str_tbl.containsKey(res_str)==false){
+						if (! nbest_str_tbl.containsKey(res_str)) {
 							l_nbest.add(res);
 							nbest_str_tbl.put(res_str,1);
 						}
-					} else{
+					} else {
 						l_nbest.add(res);
 					}
 					lazy_next(kbest_extator, res, extract_unique_nbest, extract_nbest_tree);//always extend the last, add all new hyp into heap_cands
 					
 					//debug: sanity check
-					t_added++;					
-					if( extract_unique_nbest==false && t_added>1){//this is possible only when extracting unique nbest
-						Support.write_log_line("In lazy_k_best_extract, add more than one time, k is " + k, Support.ERROR);	System.exit(0);
-					}					
-				}else{
+					t_added++;
+					if ( ! extract_unique_nbest && t_added > 1){//this is possible only when extracting unique nbest
+						Support.write_log_line("In lazy_k_best_extract, add more than one time, k is " + k, Support.ERROR);
+						System.exit(1);
+					}
+				} else {
 					break;
-				}				
+				}
 			}
-			if(l_nbest.size()<k) res=null;//in case we do not get to the depth of k			
+			if (l_nbest.size() < k) {
+				res = null;//in case we do not get to the depth of k
+			}
 			//debug: sanity check
-			//if(l_nbest.size()>=k && l_nbest.get(k-1)!=res){System.out.println("In lazy_k_best_extract, ranking is not correct ");System.exit(0);}
+			//if(l_nbest.size()>=k && l_nbest.get(k-1)!=res){System.out.println("In lazy_k_best_extract, ranking is not correct ");System.exit(1);}
 			
 			return res;
 		}
@@ -276,7 +286,10 @@ public class KbestExtraction {
 			if(extract_unique_nbest==true)
 				nbest_str_tbl=new HashMap ();
 			//sanity check
-			if(p_item.l_deductions==null){System.out.println("Error, l_deductions is null in get_candidates, must be wrong");System.exit(0);}
+			if (null == p_item.l_deductions) {
+				System.out.println("Error, l_deductions is null in get_candidates, must be wrong");
+				System.exit(1);
+			}
 			int pos=0;
 			for(Deduction hyper_edge : p_item.l_deductions){				
 				DerivationState t = get_best_derivation(kbest_extator, hyper_edge,pos, extract_unique_nbest, extract_nbest_tree);
@@ -288,7 +301,7 @@ public class KbestExtraction {
 					System.out.println("Error: get duplicate derivation in get_candidates, this should not happen");
 					System.out.println("signature is " + t.get_signature());
 					System.out.println("l_deduction size is " + p_item.l_deductions.size());
-					System.exit(0);
+					System.exit(1);
 				}
 				pos++;
 			}	

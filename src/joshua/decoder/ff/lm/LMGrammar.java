@@ -109,7 +109,7 @@ public abstract class LMGrammar {
 	) {
 		if (ngram_words.length > order) {
 			System.out.println("ngram length is greather than the max order");
-			System.exit(0);
+			System.exit(1);
 		}
 		int hist_size = ngram_words.length - 1;
 		if (hist_size >= order
@@ -158,11 +158,11 @@ public abstract class LMGrammar {
 	) {
 		if (ngram_words.length > order) {
 			System.out.println("ngram length is greather than the max order");
-			System.exit(0);
+			System.exit(1);
 		}
 		if (ngram_words[ngram_words.length-1] != Symbol.BACKOFF_LEFT_LM_STATE_SYM_ID) {
 			System.out.println("last wrd is not <bow>");
-			System.exit(0);
+			System.exit(1);
 		}
 		if (n_additional_bow > 0) {
 			return get_prob_backoff_state_specific(

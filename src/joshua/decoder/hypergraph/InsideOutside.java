@@ -123,8 +123,11 @@ public abstract class InsideOutside {
 	
 	private void outside_estimation_item(Item cur_it, Item upper_item, Deduction parent_dt, double parent_deduct_cost){
 		Integer num_called = (Integer)tbl_num_parent_deductions.get(cur_it);
-		if(num_called==null || num_called==0){System.out.println("un-expected call, must be wrong"); System.exit(0);}
-		tbl_num_parent_deductions.put(cur_it, num_called-1);		
+		if (null == num_called || num_called == 0) {
+			System.out.println("un-expected call, must be wrong");
+			System.exit(1);
+		}
+		tbl_num_parent_deductions.put(cur_it, num_called - 1);
 		
 		double old_outside_cost = ZERO_IN_SEMIRING;
 		if(tbl_outside_cost.containsKey(cur_it))
@@ -180,62 +183,73 @@ public abstract class InsideOutside {
 		ADD_MODE=add_mode;		
 		SEMIRING = semiring;
 		if(SEMIRING==LOG_SEMIRING){
-			if(ADD_MODE==0){//sum
+			if (ADD_MODE == 0) { // sum
 				ZERO_IN_SEMIRING = Double.NEGATIVE_INFINITY;
 				ONE_IN_SEMIRING = 0;
-			}else if (ADD_MODE==1){//viter-min
+			} else if (ADD_MODE == 1) { // viter-min
 				ZERO_IN_SEMIRING = Double.POSITIVE_INFINITY;
 				ONE_IN_SEMIRING = 0;
-			}else if (ADD_MODE==2){//viter-max
+			} else if (ADD_MODE == 2) { // viter-max
 				ZERO_IN_SEMIRING = Double.NEGATIVE_INFINITY;
 				ONE_IN_SEMIRING = 0;
-			}else{
-				System.out.println("invalid add mode"); System.exit(0);
-			}			
-		}else{
-			System.out.println("un-supported semiring"); System.exit(0);
+			} else {
+				System.out.println("invalid add mode");
+				System.exit(1);
+			}
+		} else {
+			System.out.println("un-supported semiring");
+			System.exit(1);
 		}
 	}
 	
 	protected double multi_in_semiring(double x, double y){
-		if(SEMIRING==LOG_SEMIRING){
+		if (SEMIRING == LOG_SEMIRING) {
 			return multi_in_log_semiring(x,y);
-		}else{
-			System.out.println("un-supported semiring"); System.exit(0); return -1;
+		} else {
+			System.out.println("un-supported semiring");
+			System.exit(1);
+			return -1;
 		}
 	} 	
 	
 	protected double add_in_semiring(double x, double y){
-		if(SEMIRING==LOG_SEMIRING){
+		if (SEMIRING == LOG_SEMIRING) {
 			return add_in_log_semiring(x,y);
-		}else{
-			System.out.println("un-supported semiring"); System.exit(0); return -1;
+		} else {
+			System.out.println("un-supported semiring");
+			System.exit(1);
+			return -1;
 		}
 	} 	
 	
 	//AND
-	private double multi_in_log_semiring(double x, double y){//value is cost
+	private double multi_in_log_semiring(double x, double y) { //value is cost
 		return x + y;
 	}
 	
 	//OR: return Math.log(Math.exp(x) + Math.exp(y));
-	private double add_in_log_semiring(double x, double y){//prevent over-flow 
-		if(ADD_MODE==0){//sum
-			if(x==Double.NEGATIVE_INFINITY)//if y is also n-infinity, then return n-infinity
+	private double add_in_log_semiring(double x, double y) { //prevent over-flow 
+		if (ADD_MODE == 0) {//sum
+			if (x == Double.NEGATIVE_INFINITY) { // if y is also n-infinity, then return n-infinity
 				return y;
-			if(y==Double.NEGATIVE_INFINITY)
+			}
+			if (y == Double.NEGATIVE_INFINITY) {
 				return x;
+			}
 			
-			if(y<=x)
-				return x + Math.log(1+Math.exp(y-x));
-			else//x<y
-				return y + Math.log(1+Math.exp(x-y));
-		}else if (ADD_MODE==1){//viter-min
-			return (x<=y)?x:y;
-		}else if (ADD_MODE==2){//viter-max
-			return (x>=y)?x:y;
-		}else{
-			System.out.println("invalid add mode"); System.exit(0); return 0;
+			if (y <= x) {
+				return x + Math.log(1 + Math.exp(y - x));
+			} else {
+				return y + Math.log(1 + Math.exp(x - y));
+			}
+		} else if (ADD_MODE == 1) { //viter-min
+			return (x <= y) ? x : y;
+		} else if (ADD_MODE == 2) { //viter-max
+			return (x >= y) ? x : y;
+		} else {
+			System.out.println("invalid add mode");
+			System.exit(1);
+			return 0;
 		}
 	}
 //############ end common #####################	
