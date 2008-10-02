@@ -74,106 +74,94 @@ public class FileUtility{
 	}	
 	
 	public static BufferedReader getReadFileStream(String filename, String enc) {
-		BufferedReader in =null;
+		BufferedReader in = null;
 		try {
-			if(filename.endsWith(".gz")==true){
-				in = new BufferedReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(filename)),enc));
-			}else{
-				in = new BufferedReader(new InputStreamReader(new FileInputStream(filename),enc));
+			if (filename.endsWith(".gz")) {
+				in = new BufferedReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(filename)), enc));
+			} else {
+				in = new BufferedReader(new InputStreamReader(new FileInputStream(filename), enc));
 			}
-		}
-		catch (IOException e) {
+		} catch (IOException e) {
 			e.printStackTrace();
 		}
 		return in;
 	}
 	
 	public static BufferedReader getReadFileStream(String filename) {
-		BufferedReader in =null;
-		try {
-			if(filename.endsWith(".gz")==true){
-				in = new BufferedReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(filename)),"UTF-8"));
-			}else{
-				in = new BufferedReader(new InputStreamReader(new FileInputStream(filename),"UTF-8"));
-			}
-		}
-		catch (IOException e) {
-			e.printStackTrace();
-		}
-		return in;
+		return getReadFileStream(filename, "UTF-8");
 	}
-
+	
+	
 	public static BufferedWriter handle_null_writer(BufferedWriter out) {
-		BufferedWriter out2=null;
-		if(out==null)
+		BufferedWriter out2 = null;
+		if (null == out) {
 			out2 = new BufferedWriter(new OutputStreamWriter(System.out));
-		else
-			out2 = out;	
+		} else {
+			out2 = out;
+		}
 		return out2;
 	}
+	
+	
 	public static BufferedWriter handle_null_file(String f_out) {
-		BufferedWriter out=null;
-		if(f_out==null)
+		BufferedWriter out = null;
+		if (null == f_out) {
 			out = new BufferedWriter(new OutputStreamWriter(System.out));
-		else
-			out = FileUtility.getWriteFileStream(f_out,"UTF-8");
+		} else {
+			out = FileUtility.getWriteFileStream(f_out);
+		}
 		return out;
 	}
 	
-	public static int number_lines_in_file(String file){
-		BufferedReader t_reader_test = FileUtility.getReadFileStream(file,"UTF-8");
-		int i=0;
-		while((read_line_lzf(t_reader_test))!=null){
+	
+	public static int number_lines_in_file(String file) {
+		BufferedReader t_reader_test = FileUtility.getReadFileStream(file);
+		int i = 0;
+		while ((read_line_lzf(t_reader_test)) != null) {
 			i++;
 		}
 		close_read_file(t_reader_test);
 		return i;
 	}
 	
+	
 	public static BufferedWriter getWriteFileStream(String filename, String enc) {
-		BufferedWriter out=null;
+		BufferedWriter out = null;
 		try {
-			out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(filename) , enc));	
-		}
-		catch (IOException e) {
+			out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(filename), enc));
+		} catch (IOException e) {
 			e.printStackTrace();
 		}
 		return out;
 	}
+	
+	public static BufferedWriter getWriteFileStream(String filename) {
+		return getWriteFileStream(filename, "UTF-8");
+	}
+	
 	
 	//do not overwrite, append
 	public static BufferedWriter getWriteFileStream_append(String filename, String enc) {
-		BufferedWriter out=null;
+		BufferedWriter out = null;
 		try {
-			out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(filename,true) , enc));	
-		}
-		catch (IOException e) {
+			out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(filename,true), enc));
+		} catch (IOException e) {
 			e.printStackTrace();
 		}
 		return out;
 	}
 	
-	public static 	BufferedWriter getWriteFileStream(String filename) {
-		BufferedWriter out=null;
-		try {
-			out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(filename) , "UTF-8"));	
-		}
-		catch (IOException e) {
-			e.printStackTrace();
-		}
-		return out;
-	}
 	
-	public static String read_line_lzf(BufferedReader in){
-		String str="";
+	public static String read_line_lzf(BufferedReader in) {
+		String str = "";
 		try {
-			str = in.readLine();	
-		}
-		catch (IOException e) {
+			str = in.readLine();
+		} catch (IOException e) {
 			e.printStackTrace();
-		}	
+		}
 		return str;
 	}
+	
 	
 	public static void write_lzf(BufferedWriter out, String str){
 		try {

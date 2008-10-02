@@ -49,11 +49,11 @@ public class Vocabulary implements Iterable<String> {
 // Member variables
 //===============================================================
 
-	Map<String,Integer> wordToIDMap;
-	List<String> vocabList;
+	protected Map<String,Integer> wordToIDMap;
+	protected List<String>        vocabList;
 	
 	/** Determines whether new words may be added to the vocabulary. */
-	boolean isFixed;
+	protected boolean isFixed;
 	
 //===============================================================
 // Constructor(s)
@@ -109,7 +109,7 @@ public class Vocabulary implements Iterable<String> {
 	 * @return the String for a word ID
 	 */
 	public String getWord(int wordID) {
-		if(wordID >= vocabList.size() || wordID < 0) {
+		if (wordID >= vocabList.size() || wordID < 0) {
 			return UNKNOWN_WORD_STRING;
 		}
 		return vocabList.get(wordID);

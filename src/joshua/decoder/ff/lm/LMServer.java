@@ -150,7 +150,7 @@ public class LMServer {
 	
 	
 	public static void read_config_file(String config_file) {
-		BufferedReader t_reader_config = FileUtility.getReadFileStream(config_file,"UTF-8");
+		BufferedReader t_reader_config = FileUtility.getReadFileStream(config_file);
 		String line;
 		while((line = FileUtility.read_line_lzf(t_reader_config)) != null) {
 			//line = line.trim().toLowerCase();
@@ -208,7 +208,7 @@ public class LMServer {
 	
 	
 	private static String read_host_name(String fhostname) {
-		BufferedReader t_reader_config = FileUtility.getReadFileStream(fhostname,"UTF-8");
+		BufferedReader t_reader_config = FileUtility.getReadFileStream(fhostname);
 		String res = null;
 		String line;
 		while((line = FileUtility.read_line_lzf(t_reader_config)) != null) {

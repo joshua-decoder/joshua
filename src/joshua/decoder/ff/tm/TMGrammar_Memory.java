@@ -68,19 +68,19 @@ extends TMGrammar {
 	
 	public TMGrammar_Memory(
 		ArrayList<FeatureFunction> l_models,
-		String default_owner,
-		int    span_limit,
-		String nonterminal_regexp,
-		String nonterminal_replace_regexp
+		String                     default_owner,
+		int                        span_limit,
+		String                     nonterminal_regexp,
+		String                     nonterminal_replace_regexp
 	) {
-		super(l_models, default_owner, span_limit, nonterminal_regexp, nonterminal_replace_regexp);	
+		super(l_models, default_owner, span_limit, nonterminal_regexp, nonterminal_replace_regexp);
 	}
 	
 	
 	public void read_tm_grammar_from_file(String grammar_file) {
 		this.root = new TrieNode_Memory(); //root should not have valid ruleBin entries
 		BufferedReader t_reader_tree = 
-			FileUtility.getReadFileStream(grammar_file,"utf8");
+			FileUtility.getReadFileStream(grammar_file,"utf8");  // BUG? shouldn't this be the implicit "UTF-8" instead?
 		if (logger.isLoggable(Level.INFO)) logger.info(
 			"Reading grammar from file " + grammar_file);
 		

@@ -407,7 +407,7 @@ public class LMGrammar_JAVA extends LMGrammar {
 		root = new LMHash();
 		root.put(Symbol.BACKOFF_WGHT_SYM_ID, NON_EXIST_WEIGHT);
 	
-		BufferedReader t_reader_tree = FileUtility.getReadFileStream(grammar_file,"utf8");		
+		BufferedReader t_reader_tree = FileUtility.getReadFileStream(grammar_file,"utf8"); // BUG? shouldn't this be the implicit "UTF-8" instead?
 		if (logger.isLoggable(Level.INFO)) logger.info("Reading grammar from file " + grammar_file);		
 		String line;
 		boolean start=false;

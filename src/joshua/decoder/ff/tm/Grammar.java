@@ -29,7 +29,9 @@ import joshua.decoder.ff.tm.TrieGrammar;
  */
 public interface Grammar {
 	
-	/** Returns the root of the trie. */
+	/**
+	 * Returns the root of the trie (as a small constant-time function).
+	 */
 	public TrieGrammar getTrieRoot();
 	
 	

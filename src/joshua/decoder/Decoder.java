@@ -100,11 +100,11 @@ public class Decoder {
 	//parallel decoding
 	public static String   parallel_files_prefix = "/tmp/temp.parallel"; // C:\\Users\\zli\\Documents\\temp.parallel; used for parallel decoding
 	public static int      num_parallel_decoders = 1; //number of threads should run
-	public static Thread[] l_parallel_decode_threads;
-	public static String[] l_parallel_test_files;
-	public static String[] l_parallel_nbest_files;
-	public static DiskHyperGraph[]  l_parallel_disk_hgs;
-	public static KbestExtraction[] l_parallel_kbest_extractors;
+	public static Thread[]          parallel_threads;
+	public static String[]          parallel_testFiles;
+	public static String[]          parallel_nbestFiles;
+	public static DiskHyperGraph[]  parallel_DHGs;
+	public static KbestExtraction[] parallel_kbestExtractors;
 	
 	//### global variables
 	public static LMGrammar        p_lm          = null;//the lm itself
@@ -129,13 +129,15 @@ public class Decoder {
 	
 	
 	
+//===============================================================
+//===============================================================
 	public static void main(String[] args) {
 		
 		if (logger.isLoggable(Level.FINEST)) logger.finest("Starting decoder");
 		
-		long start= System.currentTimeMillis();
+		long start = System.currentTimeMillis();
 		if (args.length != 3) {
-			System.out.println("wrong command, correct command should be: java Decoder config_file test_file outfile");
+			System.out.println("Usage: java joshua.decoder.Decoder config_file test_file outfile");
 			System.out.println("num of args is "+ args.length);
 			for (int i = 0; i < args.length; i++) {
 				System.out.println("arg is: " + args[i]);
@@ -151,101 +153,131 @@ public class Decoder {
 		//##### read config file
 		read_config_file(config_file);	
 		
-		if (use_remote_lm_server == false && use_srilm) {
+		if (Decoder.use_srilm && ! Decoder.use_remote_lm_server) {
 			   System.loadLibrary("srilm"); // load once
 		}
 		
-		init_lm_grammar(); // inside, it will init sym tbl (and add global symbols)
-
-		//##### initialize the models(need to read config file again)
-		p_l_models = init_models(config_file,p_lm);
-
-		init_tm_grammar();//create grammars
+		// inside, it will init sym tbl (and add global symbols)
+		initializeLanguageModel();
 		
+		//##### initialize the models(need to read config file again)
+		Decoder.p_l_models = init_models(config_file, Decoder.p_lm);
+		
+	
 		//##### read LM grammar
-		if (! use_sent_specific_lm) {
+		if (! Decoder.use_sent_specific_lm) {
 			load_lm_grammar_file(lm_file);
 		}
 		
+		
 		//##### load TM grammar
-		if (! use_sent_specific_tm) {
-			load_tm_grammar_file(tm_file);
+		// If we don't get it here, we'll get it per-sentence in decode_a_file()
+		if (! Decoder.use_sent_specific_tm) {
+			// See hidden dependency note (at function definition)
+			initializeTranslationGrammars(tm_file);
 		}
 		
+		
 		//TODO ##### add default non-terminals
-		l_default_nonterminals = new ArrayList<Integer>();
-		l_default_nonterminals.add(Symbol.add_non_terminal_symbol(default_non_terminal));		
+		Decoder.l_default_nonterminals = new ArrayList<Integer>();
+		Decoder.l_default_nonterminals.add(
+			Symbol.add_non_terminal_symbol(Decoder.default_non_terminal));
 		
 		//###### statistics
-		double t_sec = (System.currentTimeMillis()-start)/1000;
-		if (logger.isLoggable(Level.INFO)) logger.info("before translation, loaddingtime is " +t_sec);
+		double t_sec = (System.currentTimeMillis() - start) / 1000;
+		if (logger.isLoggable(Level.INFO)) logger.info(
+			"before translation, loaddingtime is " + t_sec);
 
 		//###### decode the sentences, maybe in parallel
-		if(num_parallel_decoders==1){
-			DiskHyperGraph d_hg = null;	
+		if (Decoder.num_parallel_decoders == 1) {
+			DiskHyperGraph  d_hg = null;
 			KbestExtraction kbest_extrator = new KbestExtraction();
-			if(save_disk_hg == true){d_hg = new DiskHyperGraph(); d_hg.init_write(nbest_file+".hg.items", forest_pruning, forest_pruning_threshold);}
-			decode_a_file(test_file,nbest_file,0,d_hg,kbest_extrator);
-			if(save_disk_hg == true)d_hg.write_rules_non_parallel(nbest_file + ".hg.rules");
-		}else{//>1: parallel decoder
-			if(use_remote_lm_server==true){//TODO
-				if (logger.isLoggable(Level.SEVERE)) logger.severe("You cannot run parallel decoder and remote lm server together");
+			if (save_disk_hg) {
+				d_hg = new DiskHyperGraph();
+				d_hg.init_write(
+					nbest_file + ".hg.items",
+					Decoder.forest_pruning,
+					Decoder.forest_pruning_threshold);
+			}
+			decode_a_file(test_file, nbest_file, 0, d_hg, kbest_extrator);
+			if (Decoder.save_disk_hg) {
+				d_hg.write_rules_non_parallel(nbest_file + ".hg.rules");
+			}
+			
+		} else {
+			if (Decoder.use_remote_lm_server) { // TODO
+				if (logger.isLoggable(Level.SEVERE)) logger.severe(
+					"You cannot run parallel decoder and remote lm server together");
 				System.exit(0);
 			}
-			run_parallel_decoder(test_file,nbest_file);	
+			run_parallel_decoder(test_file, nbest_file);
 		}
 		
 		//#### clean up
-		p_lm.end_lm_grammar();//to end the threads
-		t_sec = (System.currentTimeMillis()-start)/1000;
-		if (logger.isLoggable(Level.INFO)) logger.info("Total running time is " + t_sec);
-	}
+		Decoder.p_lm.end_lm_grammar(); // to end the threads
+		t_sec = (System.currentTimeMillis() - start) / 1000;
+		if (logger.isLoggable(Level.INFO)) logger.info(
+			"Total running time is " + t_sec);
+		
+	} // end main()
+//===============================================================
+//===============================================================
 	
 	
 	public static void run_parallel_decoder(
 		String test_file,
 		String nbest_file
 	) {
-		int n_lines = FileUtility.number_lines_in_file(test_file);
-		double num_per_thread_double = n_lines*1.0/num_parallel_decoders;
-		int num_per_thread= (int)num_per_thread_double;
-		l_parallel_decode_threads=new Thread[num_parallel_decoders];
-		l_parallel_test_files=new String[num_parallel_decoders];
-		l_parallel_nbest_files=new String[num_parallel_decoders];
-		l_parallel_disk_hgs = new DiskHyperGraph[num_parallel_decoders];
-		l_parallel_kbest_extractors = new KbestExtraction[num_parallel_decoders];
-		if (logger.isLoggable(Level.INFO)) logger.info("num_per_file_double: " + num_per_thread_double + "num_per_file_int: " + num_per_thread);
-		BufferedReader t_reader_test = FileUtility.getReadFileStream(test_file,"UTF-8");
+		int    n_lines           = FileUtility.number_lines_in_file(test_file);
+		double num_per_thread_double = n_lines * 1.0 / num_parallel_decoders;
+		int    num_per_thread    = (int)num_per_thread_double;
+		parallel_threads         = new Thread[         num_parallel_decoders];
+		parallel_testFiles       = new String[         num_parallel_decoders];
+		parallel_nbestFiles      = new String[         num_parallel_decoders];
+		parallel_DHGs            = new DiskHyperGraph[ num_parallel_decoders];
+		parallel_kbestExtractors = new KbestExtraction[num_parallel_decoders];
 		
-		//run the main control job
-		int n_decoder_to_commit = 1;
-		String cur_test_file = parallel_files_prefix + ".test." + n_decoder_to_commit;
-		String cur_nbest_file = parallel_files_prefix + ".nbest." + n_decoder_to_commit;
+		if (logger.isLoggable(Level.INFO)) logger.info(
+			"num_per_file_double: " + num_per_thread_double
+			+ "num_per_file_int: " + num_per_thread);
+		BufferedReader t_reader_test = 
+			FileUtility.getReadFileStream(test_file);
+		
+		
+		// // Initialize all threads and their input files
+		int decoder_i = 1;
+		String cur_test_file  = parallel_files_prefix + ".test."  + decoder_i;
+		String cur_nbest_file = parallel_files_prefix + ".nbest." + decoder_i;
 		BufferedWriter t_writer_test =
-			FileUtility.getWriteFileStream(cur_test_file,"UTF-8");
+			FileUtility.getWriteFileStream(cur_test_file);
 		int sent_id       = 0;
 		int start_sent_id = sent_id;
 		
 		String cn_sent;
 		while ((cn_sent = FileUtility.read_line_lzf(t_reader_test)) != null) {
 			sent_id++;
-			FileUtility.write_lzf(t_writer_test,cn_sent+"\n");
+			FileUtility.write_lzf(t_writer_test, cn_sent + "\n");
 			
 			//make the Symbol table is finalized before running multiple threads, this is to avoid synchronization among threads
-			String t_wrds[] = cn_sent.split("\\s+");
-			for (int wt = 0; wt < t_wrds.length; wt++) {
-				Symbol.add_terminal_symbol(t_wrds[wt]);//TODO	
+			{
+				String words[] = cn_sent.split("\\s+");
+				for (int i = 0; i < words.length; i++) {
+					Symbol.add_terminal_symbol(words[i]); // TODO
+				}
 			}
 			
+			
 			if (0 != sent_id
-			&& n_decoder_to_commit < num_parallel_decoders //we will include all additional lines into last file 
+			// we will include all additional lines into last file
+			&& decoder_i < num_parallel_decoders
 			&& sent_id % num_per_thread == 0) {
-				//submit current job
-				FileUtility.flush_lzf(t_writer_test);	
+			
+				// submit current job
+				FileUtility.flush_lzf(t_writer_test);
 				FileUtility.close_write_file(t_writer_test);
 				DiskHyperGraph dhg = null;
-				if (save_disk_hg) {
-					dhg = new  DiskHyperGraph();
+				if (Decoder.save_disk_hg) {
+					dhg = new DiskHyperGraph();
 					dhg.init_write(
 						cur_nbest_file + ".hg.items",
 						forest_pruning,
@@ -258,23 +290,25 @@ public class Decoder {
 					start_sent_id,
 					dhg,
 					kbest_extrator);
-				l_parallel_decode_threads[n_decoder_to_commit-1] = pdecoder;
-				l_parallel_test_files[n_decoder_to_commit-1] = cur_test_file;
-				l_parallel_nbest_files[n_decoder_to_commit-1] = cur_nbest_file;
-				l_parallel_disk_hgs[n_decoder_to_commit-1] = dhg;
-				l_parallel_kbest_extractors[n_decoder_to_commit-1] = kbest_extrator;
+				parallel_threads[        decoder_i-1] = pdecoder;
+				parallel_testFiles[      decoder_i-1] = cur_test_file;
+				parallel_nbestFiles[     decoder_i-1] = cur_nbest_file;
+				parallel_DHGs[           decoder_i-1] = dhg;
+				parallel_kbestExtractors[decoder_i-1] = kbest_extrator;
 				
-				//prepare next job
-				start_sent_id = sent_id;
-				n_decoder_to_commit++;
-				cur_test_file = parallel_files_prefix + ".test." + n_decoder_to_commit;
-				cur_nbest_file = parallel_files_prefix + ".nbest." + n_decoder_to_commit;
-				t_writer_test = FileUtility.getWriteFileStream(cur_test_file,"UTF-8");					
+				// prepare next job
+				start_sent_id  = sent_id;
+				decoder_i++;
+				cur_test_file  = parallel_files_prefix + ".test."  + decoder_i;
+				cur_nbest_file = parallel_files_prefix + ".nbest." + decoder_i;
+				t_writer_test  = 
+					FileUtility.getWriteFileStream(cur_test_file);
 			}
 		}
-		//####prepare the the last job
+		
+		// submit the the last job
 		FileUtility.flush_lzf(t_writer_test);
-		FileUtility.close_write_file(t_writer_test);					
+		FileUtility.close_write_file(t_writer_test);
 		DiskHyperGraph dhg = null;
 		if (save_disk_hg) {
 			dhg = new DiskHyperGraph();
@@ -284,25 +318,33 @@ public class Decoder {
 				forest_pruning_threshold);
 		}
 		KbestExtraction kbest_extrator = new KbestExtraction();
-		ParallelDecoder pdecoder = new ParallelDecoder(cur_test_file, cur_nbest_file, start_sent_id, dhg,kbest_extrator);
-		l_parallel_decode_threads[n_decoder_to_commit-1]=pdecoder;
-		l_parallel_test_files[n_decoder_to_commit-1]=cur_test_file;
-		l_parallel_nbest_files[n_decoder_to_commit-1]=cur_nbest_file;
-		l_parallel_disk_hgs[n_decoder_to_commit-1]=dhg;		
-		l_parallel_kbest_extractors[n_decoder_to_commit-1]=kbest_extrator;
+		ParallelDecoder pdecoder = new ParallelDecoder(
+			cur_test_file,
+			cur_nbest_file,
+			start_sent_id,
+			dhg,
+			kbest_extrator);
+		parallel_threads[        decoder_i-1] = pdecoder;
+		parallel_testFiles[      decoder_i-1] = cur_test_file;
+		parallel_nbestFiles[     decoder_i-1] = cur_nbest_file;
+		parallel_DHGs[           decoder_i-1] = dhg;		
+		parallel_kbestExtractors[decoder_i-1] = kbest_extrator;
 		FileUtility.close_read_file(t_reader_test);
+		// // End initializing threads and their files
 		
-		//run all the jobs
-		for (int i = 0; i < l_parallel_decode_threads.length; i++) {
+		
+		
+		// run all the jobs
+		for (int i = 0; i < Decoder.parallel_threads.length; i++) {
 			if (logger.isLoggable(Level.INFO)) logger.info(
-				"##############start thread " +i);
-			l_parallel_decode_threads[i].start();
+				"##############start thread " + i);
+			Decoder.parallel_threads[i].start();
 		}
 		
-		//### wait for the threads finish
-		for (int i = 0; i < l_parallel_decode_threads.length; i++) {
+		// wait for the threads finish
+		for (int i = 0; i < Decoder.parallel_threads.length; i++) {
 			try {
-				l_parallel_decode_threads[i].join();
+				Decoder.parallel_threads[i].join();
 			} catch (InterruptedException e) {
 				if (logger.isLoggable(Level.WARNING)) logger.warning(
 					"Warning: thread is interupted for server " + i);
@@ -311,43 +353,50 @@ public class Decoder {
 		
 		//#### merge the nbest files, and remove tmp files
 		BufferedWriter t_writer_nbest =
-			FileUtility.getWriteFileStream(nbest_file,"UTF-8");
+			FileUtility.getWriteFileStream(nbest_file);
 		BufferedWriter t_writer_dhg_items = null;
 		if (save_disk_hg) {
 			t_writer_dhg_items = 
-				FileUtility.getWriteFileStream(nbest_file+".hg.items","UTF-8");
+				FileUtility.getWriteFileStream(nbest_file + ".hg.items");
 		}
-		for (int i = 0; i < l_parallel_decode_threads.length; i++) {
+		for (int i = 0; i < Decoder.parallel_threads.length; i++) {
 			String sent;
 			//merge nbest
-			BufferedReader t_reader = FileUtility.getReadFileStream(l_parallel_nbest_files[i],"UTF-8");
-			while((sent=FileUtility.read_line_lzf(t_reader))!=null){
-				FileUtility.write_lzf(t_writer_nbest,sent+"\n");				
+			BufferedReader t_reader =
+				FileUtility.getReadFileStream(parallel_nbestFiles[i]);
+			while ((sent = FileUtility.read_line_lzf(t_reader)) != null) {
+				FileUtility.write_lzf(t_writer_nbest,sent+"\n");
 			}
 			FileUtility.close_read_file(t_reader);	
 			//TODO: remove the tem nbest file
 			
 			//merge hypergrpah items
-			if(save_disk_hg){
-				BufferedReader t_reader_dhg_items = FileUtility.getReadFileStream(l_parallel_nbest_files[i]+".hg.items","UTF-8");
-				while((sent=FileUtility.read_line_lzf(t_reader_dhg_items))!=null){
-					FileUtility.write_lzf(t_writer_dhg_items,sent+"\n");				
+			if (save_disk_hg) {
+				BufferedReader t_reader_dhg_items = 
+					FileUtility.getReadFileStream(
+						parallel_nbestFiles[i] + ".hg.items");
+				while ((sent = FileUtility.read_line_lzf(t_reader_dhg_items)) != null) {
+					FileUtility.write_lzf(t_writer_dhg_items, sent + "\n");
 				}
-				FileUtility.close_read_file(t_reader_dhg_items);	
+				FileUtility.close_read_file(t_reader_dhg_items);
 				//TODO: remove the tem nbest file
 			}
-			
 		}
 		FileUtility.flush_lzf(t_writer_nbest);	
 		FileUtility.close_write_file(t_writer_nbest);
-		if(save_disk_hg){FileUtility.flush_lzf(t_writer_dhg_items);	FileUtility.close_write_file(t_writer_dhg_items);}
+		if (save_disk_hg) {
+			FileUtility.flush_lzf(t_writer_dhg_items);
+			FileUtility.close_write_file(t_writer_dhg_items);
+		}
 		
 		//merge the grammar rules for disk hyper-graphs
-		if(save_disk_hg){
+		if (save_disk_hg) {
 			HashMap tbl_done = new HashMap();
-			BufferedWriter t_writer_dhg_rules = FileUtility.getWriteFileStream(nbest_file+".hg.rules","UTF-8");
-			for(DiskHyperGraph dhg2 : l_parallel_disk_hgs)
+			BufferedWriter t_writer_dhg_rules = 
+				FileUtility.getWriteFileStream(nbest_file + ".hg.rules");
+			for (DiskHyperGraph dhg2 : parallel_DHGs) {
 				dhg2.write_rules_parallel(t_writer_dhg_rules, tbl_done);
+			}
 			FileUtility.flush_lzf(t_writer_dhg_rules);
 			FileUtility.close_write_file(t_writer_dhg_rules);
 		}
@@ -378,7 +427,8 @@ public class Decoder {
 		
 		
 		public void run() {
-			decode_a_file(test_file, nbest_file, start_sent_id, dpg, kbest_extractor);
+			decode_a_file(
+				test_file, nbest_file, start_sent_id, dpg, kbest_extractor);
 		}
 	}
 	
@@ -392,25 +442,28 @@ public class Decoder {
 		KbestExtraction kbest_extractor
 	) {
 		BufferedReader t_reader_test =
-			FileUtility.getReadFileStream(test_file,"UTF-8");
+			FileUtility.getReadFileStream(test_file);
 		BufferedWriter t_writer_nbest =
-			FileUtility.getWriteFileStream(nbest_file,"UTF-8");
+			FileUtility.getWriteFileStream(nbest_file);
 		
 		String cn_sent;
-		int sent_id = start_sent_id;//if no sent tag, then this will be used
+		int sent_id = start_sent_id; // if no sent tag, then this will be used
 		while ((cn_sent = FileUtility.read_line_lzf(t_reader_test)) != null) {
 			if (logger.isLoggable(Level.FINE)) logger.fine(
 				"now translate\n" + cn_sent);
 			int[] tem_id = new int[1];
-			cn_sent  = get_sent_id(cn_sent, tem_id);
+			cn_sent = get_sent_id(cn_sent, tem_id);
 			if (tem_id[0] > 0) {
 				sent_id = tem_id[0];
 			}
-			if (use_sent_specific_lm) {
-				load_lm_grammar_file(g_sent_lm_file_name_prefix+sent_id+".gz");
+			if (Decoder.use_sent_specific_lm) {
+				load_lm_grammar_file(
+					g_sent_lm_file_name_prefix + sent_id + ".gz");
 			}
-			if (use_sent_specific_tm) {
-				load_tm_grammar_file(g_sent_tm_file_name_prefix+sent_id+".gz");
+			if (Decoder.use_sent_specific_tm) {
+				// See hidden dependency note (at function definition)
+				initializeTranslationGrammars(
+					g_sent_tm_file_name_prefix + sent_id + ".gz");
 			}
 			
 			translate(
@@ -424,7 +477,7 @@ public class Decoder {
 				dhg,
 				kbest_extractor);
 			sent_id++;
-			//if(sent_id>10)break;
+			//if (sent_id > 10) break;
 		}
 		FileUtility.close_read_file(t_reader_test);
 		FileUtility.flush_lzf(t_writer_nbest);		
@@ -438,69 +491,76 @@ public class Decoder {
 	public static void load_lm_grammar_file(String new_lm_file){
 		if (logger.isLoggable(Level.FINER)) logger.finer(
 			"############## reload lm from file" + new_lm_file);
-		lm_file = new_lm_file;
-		p_lm.read_lm_grammar_from_file(lm_file);
+		Decoder.lm_file = new_lm_file;
+		Decoder.p_lm.read_lm_grammar_from_file(lm_file);
 	}
 	
 	
-	public static void init_lm_grammar() {
+	public static void initializeLanguageModel() {
 		/*we assume there are only three possible configurations:
 		 * (1) both lm and suffix are remote
 		 * (2) both lm and suffix are local java
 		 * (3) if local srilm is used, then we cannot use suffix related stuff 
 		*/
-		if (use_remote_lm_server) {
-			if (use_left_euqivalent_state || use_right_euqivalent_state) {
+		if (Decoder.use_remote_lm_server) {
+			if (Decoder.use_left_euqivalent_state
+			|| Decoder.use_right_euqivalent_state) {
 				if (logger.isLoggable(Level.SEVERE)) logger.severe(
 					"use local srilm, we cannot use suffix/prefix stuff");
 				System.exit(0);
 			}
-			p_lm = new LMGrammar_REMOTE(g_lm_order, remote_symbol_tbl, f_remote_server_list, num_remote_lm_servers);
+			Decoder.p_lm = new LMGrammar_REMOTE(g_lm_order, remote_symbol_tbl, f_remote_server_list, num_remote_lm_servers);
 			
-		} else if (use_srilm) {
-			if (use_left_euqivalent_state || use_right_euqivalent_state) {
+		} else if (Decoder.use_srilm) {
+			if (Decoder.use_left_euqivalent_state
+			|| Decoder.use_right_euqivalent_state) {
 				if (logger.isLoggable(Level.SEVERE)) logger.severe(
 					"use remote lm, we cannot use suffix/prefix stuff");
 				System.exit(0);
 			}
-			p_lm = new LMGrammar_SRILM(g_lm_order);
+			Decoder.p_lm = new LMGrammar_SRILM(g_lm_order);
 			
 		} else {
 			//p_lm = new LMGrammar_JAVA(g_lm_order, lm_file, use_left_euqivalent_state);
-			p_lm = new LMGrammar_JAVA(g_lm_order, use_left_euqivalent_state, use_right_euqivalent_state);
+			Decoder.p_lm = new LMGrammar_JAVA(g_lm_order, use_left_euqivalent_state, use_right_euqivalent_state);
 		}
 	}
 	
 	
-	public static void load_tm_grammar_file(String new_tm_file) {
+	
+	// This depends (invisibly) on the language model in order to do pruning of the LM at load time.
+	public static void initializeTranslationGrammars(String new_tm_file) {
 		if (logger.isLoggable(Level.FINER)) logger.finer(
 			"############## reload tm from file" + new_tm_file);
-		
-		tm_file = new_tm_file;
-		Decoder.p_tm_grammars[0].read_tm_grammar_glue_rules(); // glue grammar
-		Decoder.p_tm_grammars[1].read_tm_grammar_from_file(tm_file); // regular grammar
-	}
-	
-	
-	public static void init_tm_grammar() {
 		
 		Decoder.p_tm_grammars = new GrammarFactory[2];
 		
 		// Glue Grammar
-		Decoder.p_tm_grammars[0] = new TMGrammar_Memory(
+		TMGrammar_Memory glueGrammar = new TMGrammar_Memory(
 			Decoder.p_l_models,
 			Decoder.phrase_owner,
 			-1,
 			"^\\[[A-Z]+\\,[0-9]*\\]$",
 			"[\\[\\]\\,0-9]+");
 		
+		glueGrammar.read_tm_grammar_glue_rules(); // TODO: glue grammar should read from file too
+		
+		Decoder.p_tm_grammars[0] = glueGrammar;
+		
+		
 		// Regular TM Grammar
-		Decoder.p_tm_grammars[1] = new TMGrammar_Memory(
+		TMGrammar_Memory regularGrammar = new TMGrammar_Memory(
 			Decoder.p_l_models,
 			Decoder.phrase_owner,
 			Decoder.span_limit,
 			"^\\[[A-Z]+\\,[0-9]*\\]$",
 			"[\\[\\]\\,0-9]+");
+		
+		regularGrammar.read_tm_grammar_from_file(tm_file); // TODO: reading from file should be erased into the constructor.
+		
+		Decoder.p_tm_grammars[1] = regularGrammar;
+		
+		Decoder.tm_file = new_tm_file;
 	}
 	
 	
@@ -545,13 +605,18 @@ public class Decoder {
 		
 		Chart chart; {
 			Grammar[] grammars = new Grammar[ grammarFactories.length ];
-			Phrase sentencePhrase = new SomePhrase(sentence);
+			Phrase sentencePhrase = null; // HACK!
 			for (int i = 0; i < grammarFactories.length; i++) {
 				grammars[i] =
 					grammarFactories[i].getGrammarForSentence(sentencePhrase);
 			}
-			chart = new Chart(inputLattice, models, sentenceID);
-			chart.seed(grammars, defaultNonterminals, sentence_numeric);
+			chart = new Chart(
+				inputLattice,
+				models,
+				sentenceID,
+				grammars,
+				defaultNonterminals,
+				sentence_numeric);
 		}
 		if (logger.isLoggable(Level.FINER)) logger.finer(
 			"after seed, time: " + (System.currentTimeMillis() - start) / 1000);
@@ -581,11 +646,14 @@ public class Decoder {
 	}
 	
 	
-	public static ArrayList<FeatureFunction>  init_models(String config_file, LMGrammar p_lm){
-		BufferedReader t_reader_config = FileUtility.getReadFileStream(config_file,"UTF-8");
+	public static ArrayList<FeatureFunction>
+	init_models(String config_file, LMGrammar p_lm) {
+		BufferedReader t_reader_config = 
+			FileUtility.getReadFileStream(config_file);
+		ArrayList<FeatureFunction> l_models = new ArrayList<FeatureFunction>();
+		
 		String line;
-		ArrayList<FeatureFunction> l_models =new ArrayList<FeatureFunction>();
-		while((line=FileUtility.read_line_lzf(t_reader_config))!=null){
+		while ((line = FileUtility.read_line_lzf(t_reader_config)) != null){
 			//line = line.trim().toLowerCase();
 			line = line.trim();
 			if (line.matches("^\\s*\\#.*$") || line.matches("^\\s*$")) {
@@ -643,7 +711,7 @@ public class Decoder {
 	
 	public static void read_config_file(String config_file) {
 		BufferedReader t_reader_config =
-			FileUtility.getReadFileStream(config_file,"UTF-8");
+			FileUtility.getReadFileStream(config_file);
 		String line;
 		while ((line = FileUtility.read_line_lzf(t_reader_config)) != null) {
 			//line = line.trim().toLowerCase();

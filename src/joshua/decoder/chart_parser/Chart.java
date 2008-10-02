@@ -114,7 +114,10 @@ public class Chart {
 	public Chart(
 		Lattice<Integer>           sentence_,
 		ArrayList<FeatureFunction> models_,
-		int                        sent_id_
+		int                        sent_id_,
+		Grammar[]                  grammars_,
+		ArrayList<Integer>         default_nonterminals,
+		int[]                      sentence_str
 	) {
 //		public Chart(int[] sentence_in, ArrayList<FeatureFunction> models, int sent_id1) {   
 		this.sentence = sentence_;
@@ -123,16 +126,10 @@ public class Chart {
 		this.bins     = new Bin[sent_len][sent_len+1];		
 		this.sent_id  = sent_id_;
 		this.goal_bin = new Bin(this);
-	}
-	
-	
-	/** add un-translated wrds into the chart as item (with large cost) */
-	//TODO: grammar specific?
-	public void seed(
-		Grammar[]          grammars_,
-		ArrayList<Integer> default_nonterminals,
-		int[]              sentence_str
-	) {
+		
+		
+		/** add un-translated words into the chart as item (with large cost) */
+		//TODO: grammar specific?
 		this.grammars  = grammars_;
 		this.dotcharts = new DotChart[this.grammars.length];//each grammar will have a dot chart
 		for (int i = 0; i < this.grammars.length; i++) {

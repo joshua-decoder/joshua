@@ -102,10 +102,17 @@ public class DiskHyperGraph {
 	}
 	
 //for writting hyper-graph: (1) saving each hyper-graph; (2) remember each regualar rule used; (3) dump the rule jointly (in case parallel decoding)      
-    public void init_write(String f_items, boolean use_forest_pruning, double threshold){
-    	writer_out =  FileUtility.handle_null_file(f_items);
-    	if(use_forest_pruning==true)  forest_pruner = new HyperGraphPruning(true, threshold, threshold, 1, 1);//TODO
-    }    
+	public void init_write(
+		String  f_items,
+		boolean use_forest_pruning,
+		double  threshold
+	) {
+		this.writer_out = FileUtility.handle_null_file(f_items);
+		if (use_forest_pruning) {
+			this.forest_pruner = new HyperGraphPruning(true, threshold, threshold, 1, 1);//TODO
+		}
+	}
+	
  
     public void init_read(String f_hypergraphs, String f_rule_tbl, HashMap tbl_sent_sel_tbl){
     	reader_in = FileUtility.getReadFileStream(f_hypergraphs);

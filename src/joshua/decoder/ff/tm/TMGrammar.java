@@ -59,8 +59,8 @@ implements GrammarFactory, Grammar {
 		final String nonterminal_replace_regexp
 	) {
 		// BUG: These are all static, should not be set by constructor!
-		p_l_models     = l_models;
-		defaultOwner   = Symbol.add_terminal_symbol(default_owner);
+		p_l_models               = l_models;
+		defaultOwner             = Symbol.add_terminal_symbol(default_owner);
 		nonterminalRegexp        = nonterminal_regexp;
 		nonterminalReplaceRegexp = nonterminal_replace_regexp;
 		
@@ -72,7 +72,7 @@ implements GrammarFactory, Grammar {
 	
 	
 	public Grammar getGrammarForSentence(Phrase sentence) {
-		return this
+		return this;
 	}
 	
 	

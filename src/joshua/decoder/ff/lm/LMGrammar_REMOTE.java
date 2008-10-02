@@ -76,7 +76,7 @@ public class LMGrammar_REMOTE  extends LMGrammar {
 	
 //	format: lm_file host port weight
 	private void read_lm_server_lists(String f_server_lists, int num_servers, String[] l_lm_server_hosts, int[] l_lm_server_ports, double[] l_lm_server_weights ){			
-		BufferedReader t_reader = FileUtility.getReadFileStream(f_server_lists,"UTF-8");
+		BufferedReader t_reader = FileUtility.getReadFileStream(f_server_lists);
 		String line;
 		int count=0;
 		while((line=FileUtility.read_line_lzf(t_reader))!=null){
@@ -103,7 +103,7 @@ public class LMGrammar_REMOTE  extends LMGrammar {
 	
 	private static Hashtable  read_config_file(String config_file){
 		Hashtable res =new Hashtable();
-		BufferedReader t_reader_config = FileUtility.getReadFileStream(config_file,"UTF-8");
+		BufferedReader t_reader_config = FileUtility.getReadFileStream(config_file);
 		String line;
 		while((line=FileUtility.read_line_lzf(t_reader_config))!=null){
 			//line = line.trim().toLowerCase();
@@ -148,7 +148,7 @@ public class LMGrammar_REMOTE  extends LMGrammar {
 	
 	//format: lm_file host port weight
 	private void read_lm_server_lists_old(String f_server_lists, int num_servers, String[] l_lm_server_hosts, int[] l_lm_server_ports, double[] l_lm_server_weights ){			
-		BufferedReader t_reader = FileUtility.getReadFileStream(f_server_lists,"UTF-8");
+		BufferedReader t_reader = FileUtility.getReadFileStream(f_server_lists);
 		String line;
 		int count=0;
 		while((line=FileUtility.read_line_lzf(t_reader))!=null){

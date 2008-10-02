@@ -164,7 +164,7 @@ public class Symbol {
 		//### read file into tbls
 		HashMap tbl_str_2_id = new HashMap();
 		HashMap tbl_id_2_str = new HashMap();
-		BufferedReader t_reader_sym = FileUtility.getReadFileStream(fname,"UTF-8");
+		BufferedReader t_reader_sym = FileUtility.getReadFileStream(fname);
 		String line;		
 		while((line=FileUtility.read_line_lzf(t_reader_sym))!=null){
 			String[] fds = line.split("\\s+");

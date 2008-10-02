@@ -37,8 +37,8 @@ public interface Phrase extends Comparable<Phrase> {
 	 * @return the vocabulary that the words in this phrase are drawn from.
 	 */
 	public Vocabulary getVocab();
-
-
+	
+	
 	/**
 	 * Returns the integer word id of the word at the specified position.
 	 * 
@@ -46,7 +46,8 @@ public interface Phrase extends Comparable<Phrase> {
 	 * @return the integer word id of the word at the specified position.
 	 */
 	public int getWordID(int position);
-
+	
+	
 	/**
 	 * Returns the number of words in this phrase.
 	 * 
@@ -57,9 +58,9 @@ public interface Phrase extends Comparable<Phrase> {
 
 
 	/**
-	 * Gets all possible subphrases of this phrase, up to and including
-	 * the phrase itself. For example, the phrase "I like cheese ." would return
-	 * the following:
+	 * Gets all possible subphrases of this phrase, up to and
+	 * including the phrase itself. For example, the phrase "I
+	 * like cheese ." would return the following:
 	 * <ul>
 	 * <li>I
 	 * <li>like
@@ -75,38 +76,41 @@ public interface Phrase extends Comparable<Phrase> {
 	 * @return List of all possible subphrases.
 	 */
 	public List<Phrase> getSubPhrases();
-
+	
+	
 	/**
-	 * Returns a list of subphrases only of length <code>maxLength</code>
-	 * or smaller. 
+	 * Returns a list of subphrases only of length
+	 * <code>maxLength</code> or smaller.
+	 *
 	 * @param maxLength the maximum length phrase to return.
-	 * @return List of all possible subphrases of length maxLength or less
+	 * @return List of all possible subphrases of length maxLength
+	 *         or less
 	 * @see #getSubPhrases()
 	 */
 	public List<Phrase> getSubPhrases(int maxLength);
-
-
+	
+	
 	/**
 	 * creates a new phrase object from the indexes provided.
 	 * <P>
-	 * NOTE: subList merely creates a "view" of the existing Phrase
-	 * object. Memory taken up by other Words in the Phrase is not 
-	 * freed since the underlying subList object still points to the 
-	 * complete Phrase List.
+	 * NOTE: subList merely creates a "view" of the existing
+	 * Phrase object. Memory taken up by other Words in the
+	 * Phrase is not freed since the underlying subList object
+	 * still points to the complete Phrase List.
 	 *
 	 * @see ArrayList#subList(int, int)
 	 */
 	public Phrase subPhrase(int start, int end);
-
+	
+	
 	/**
-	 * Compares the two strings based on the lexicographic order of words
-	 * defined in the Vocabulary.  
+	 * Compares the two strings based on the lexicographic order
+	 * of words defined in the Vocabulary.
 	 *
 	 * @param obj the object to compare to
-	 * @return -1 if this object is less than the parameter, 0 if equals, 1 if greater
+	 * @return -1 if this object is less than the parameter, 0
+	 *         if equals, 1 if greater
 	 */
 	public int compareTo(Phrase other);
 
-
-	
 }
