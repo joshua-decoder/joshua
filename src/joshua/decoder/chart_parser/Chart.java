@@ -141,7 +141,7 @@ public class Chart {
 		}
 		//add OOV rules
 		//TODO: the transition cost for phrase model, arity penalty, word penalty are all zero, except the LM cost
-		if (sentence_str.length != this.sent_len) {
+		if (sentence_str.length+1 != this.sent_len) {
 			if (logger.isLoggable(Level.SEVERE)) logger.severe(
 				"In Chart constructor, length of (?)integerized string(?) does not match length of integerized lattice");
 			System.exit(1);
