@@ -82,7 +82,7 @@ implements GrammarFactory, Grammar {
 	public abstract void read_tm_grammar_glue_rules();
 	
 	
-	/** if the span covered by the chart bin is greather than the limit, then return false */
+	/** if the span covered by the chart bin is greater than the limit, then return false */
 	public boolean hasRuleForSpan(
 		final int startIndex,
 		final int endIndex,

@@ -17,6 +17,7 @@
  */
 package joshua.suffix_array;
 
+import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.RuleCollection;
 import joshua.decoder.ff.tm.TrieGrammar;
@@ -61,6 +62,7 @@ public class PrefixTree {
 	private final int maxPhraseSpan;
 	private final int maxPhraseLength;
 	private final int maxNonterminals;
+	private final int spanLimit;
 
 	static final int ROOT_NODE_ID = -999;
 	static final int BOT_NODE_ID = -2000;
@@ -100,6 +102,7 @@ public class PrefixTree {
 		maxPhraseSpan = Integer.MIN_VALUE;
 		maxPhraseLength = Integer.MIN_VALUE;
 		maxNonterminals = Integer.MIN_VALUE;
+		spanLimit = Integer.MAX_VALUE;
 	}
 	
 	static PrefixTree getDummyPrefixTree() {
@@ -117,7 +120,7 @@ public class PrefixTree {
 	 * @param maxPhraseLength
 	 * @param maxNonterminals
 	 */
-	public PrefixTree(SuffixArray suffixArray, CorpusArray targetCorpus, AlignmentArray alignments, int[] sentence, int maxPhraseSpan, int maxPhraseLength, int maxNonterminals) {
+	public PrefixTree(SuffixArray suffixArray, CorpusArray targetCorpus, AlignmentArray alignments, int[] sentence, int maxPhraseSpan, int maxPhraseLength, int maxNonterminals, int spanLimit) {
 
 		if (logger.isLoggable(Level.FINE)) logger.fine("\n\n\nConstructing new PrefixTree\n\n");
 
@@ -127,6 +130,7 @@ public class PrefixTree {
 		this.maxPhraseSpan = maxPhraseSpan;
 		this.maxPhraseLength = maxPhraseLength;
 		this.maxNonterminals = maxNonterminals;
+		this.spanLimit = spanLimit;
 
 		int START_OF_SENTENCE = 0;
 		int END_OF_SENTENCE = sentence.length - 1;
@@ -313,11 +317,11 @@ public class PrefixTree {
 	 * @param maxPhraseLength
 	 * @param maxNonterminals
 	 */
-	PrefixTree(int[] sentence, int maxPhraseSpan, int maxPhraseLength, int maxNonterminals) {
-		this(null, null, null, sentence, maxPhraseSpan, maxPhraseLength, maxNonterminals);
+	PrefixTree(int[] sentence, int maxPhraseSpan, int maxPhraseLength, int maxNonterminals, int spanLimit) {
+		this(null, null, null, sentence, maxPhraseSpan, maxPhraseLength, maxNonterminals, spanLimit);
 	}
 
-	public TrieGrammar getRoot() {
+	public Grammar getRoot() {
 		return root;
 	}
 
@@ -769,7 +773,7 @@ public class PrefixTree {
 	 * @author Lane Schwartz
 	 * @see Lopez (2008) PhD Thesis, Sec 4.3.1,2, p 71-74.
 	 */
-	class Node implements Comparable<Node>, TrieGrammar {
+	class Node implements Comparable<Node>, Grammar, TrieGrammar {
 
 		static final boolean   ACTIVE = true;
 		static final boolean INACTIVE = false;
@@ -1184,6 +1188,18 @@ public class PrefixTree {
 			return i.compareTo(j);
 		}
 
+		public TrieGrammar getTrieRoot() {
+			return this;
+		}
+
+		public boolean hasRuleForSpan(int startIndex, int endIndex, int pathLength) {
+			if (PrefixTree.this.spanLimit == -1) { // mono-glue grammar
+				return (startIndex == 0);
+			} else {
+				return (endIndex - startIndex <= PrefixTree.this.spanLimit);
+			}
+		}
+
 	}
 
 	/**
@@ -1283,8 +1299,9 @@ public class PrefixTree {
 		int maxPhraseSpan = 10;
 		int maxPhraseLength = 10;
 		int maxNonterminals = 2;
+		int spanLimit = 8;
 		
-		PrefixTree prefixTree = new PrefixTree(suffixArray, targetCorpus, alignments, querySentence.getWordIDs(), maxPhraseSpan, maxPhraseLength, maxNonterminals);
+		PrefixTree prefixTree = new PrefixTree(suffixArray, targetCorpus, alignments, querySentence.getWordIDs(), maxPhraseSpan, maxPhraseLength, maxNonterminals, spanLimit);
 		
 		System.out.println(prefixTree.toString());
 		System.out.println();

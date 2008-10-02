@@ -17,13 +17,9 @@
  */
 package joshua.suffix_array;
 
+import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.GrammarFactory;
-import joshua.decoder.ff.tm.Rule;
-import joshua.decoder.ff.tm.TrieGrammar;
 import joshua.util.sentence.Phrase;
-
-import java.util.List;
-
 
 public class SAGrammarFactory implements GrammarFactory {
 
@@ -34,23 +30,26 @@ public class SAGrammarFactory implements GrammarFactory {
 	private final int maxPhraseSpan;
 	private final int maxPhraseLength;
 	private final int maxNonterminals;
+	private final int spanLimit;
 	
-	
-	/** Constructs a new grammar backed by a suffix array */
-	public SAGrammarFactory(
-		SuffixArray    sourceSuffixArray,
-		CorpusArray    targetCorpus,
-		AlignmentArray alignments,
-		int            maxPhraseSpan,
-		int            maxPhraseLength,
-		int            maxNonterminals
-	) {
+	/**
+	 * Constructs a factory capable of getting a grammar backed by a suffix array.
+	 * 
+	 * @param sourceSuffixArray
+	 * @param targetCorpus
+	 * @param alignments
+	 * @param maxPhraseSpan
+	 * @param maxPhraseLength
+	 * @param maxNonterminals
+	 */
+	public SAGrammarFactory(SuffixArray sourceSuffixArray, CorpusArray targetCorpus, AlignmentArray alignments, int maxPhraseSpan, int maxPhraseLength, int maxNonterminals, int spanLimit) {
 		this.sourceSuffixArray = sourceSuffixArray;
 		this.targetCorpus      = targetCorpus;
 		this.alignments        = alignments;
 		this.maxPhraseSpan     = maxPhraseSpan;
 		this.maxPhraseLength   = maxPhraseLength;
 		this.maxNonterminals   = maxNonterminals;
+		this.spanLimit         = spanLimit;
 	}
 	
 	
@@ -62,21 +61,14 @@ public class SAGrammarFactory implements GrammarFactory {
 	 * @return a grammar, structured as a trie, that represents
 	 *         a set of translation rules
 	 */
-	public TrieGrammar getGrammarForSentence(Phrase sentence) {
+	public Grammar getGrammarForSentence(Phrase sentence) {
 		
 		int[] words = new int[sentence.size()];
 		for (int i = 0; i < words.length; i++) {
-			words[i] = sentence.get(i);
+			words[i] = sentence.getWordID(i);
 		}
 		
-		PrefixTree prefixTree = new PrefixTree(
-			sourceSuffixArray,
-			targetCorpus,
-			alignments,
-			words,
-			maxPhraseSpan,
-			maxPhraseLength,
-			maxNonterminals);
+		PrefixTree prefixTree = new PrefixTree(sourceSuffixArray, targetCorpus, alignments, words, maxPhraseSpan, maxPhraseLength, maxNonterminals, spanLimit);
 		
 		return prefixTree.getRoot();
 	}

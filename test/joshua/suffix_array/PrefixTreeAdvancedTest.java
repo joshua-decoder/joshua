@@ -10,7 +10,6 @@ import joshua.suffix_array.HierarchicalPhrase;
 import joshua.suffix_array.PrefixTree;
 import joshua.suffix_array.SuffixArray;
 import joshua.suffix_array.PrefixTree.Node;
-import joshua.util.sentence.Span;
 import joshua.util.sentence.Vocabulary;
 
 
@@ -76,6 +75,7 @@ public class PrefixTreeAdvancedTest {
 		int maxPhraseSpan = 10;
 		int maxPhraseLength = 10;
 		int maxNonterminals = 2;
+		int spanLimit = 8;
 		
 		CorpusArray targetCorpusArray = new CorpusArray(targetCorpus, targetSentenceStartPositions, targetVocab);
 		
@@ -96,7 +96,7 @@ public class PrefixTreeAdvancedTest {
 		
 		AlignmentArray alignments = new AlignmentArray(lowestAlignedTargetIndex, highestAlignedTargetIndex, lowestAlignedSourceIndex, highestAlignedSourceIndex);
 		
-		PrefixTree prefixTree = new PrefixTree(suffixArray, targetCorpusArray, alignments, querySentence.getWordIDs(), maxPhraseSpan, maxPhraseLength, maxNonterminals);
+		PrefixTree prefixTree = new PrefixTree(suffixArray, targetCorpusArray, alignments, querySentence.getWordIDs(), maxPhraseSpan, maxPhraseLength, maxNonterminals, spanLimit);
 		
 		
 		//System.out.println(prefixTree.toString(vocab));
