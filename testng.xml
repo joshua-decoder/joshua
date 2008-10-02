@@ -10,11 +10,39 @@
 
   <test name="Lattice" >
     <classes>
-       <class name="edu.jhu.joshua.lattice.NodeTest" />    
-       <class name="edu.jhu.joshua.lattice.ArcTest"  />
-       <class name="edu.jhu.joshua.lattice.LatticeTest" />
+       <class name="joshua.lattice.NodeTest" />    
+       <class name="joshua.lattice.ArcTest"  />
+       <class name="joshua.lattice.LatticeTest" />
     </classes>
   </test>
 
+  <test name="Pattern" >
+    <classes>
+       <class name="joshua.suffix_array.PatternTest" />    
+    </classes>
+  </test>
+
+  <test name="PrefixTree" >
+    <classes>
+       <class name="joshua.suffix_array.PrefixTreeTest" />
+       <class name="joshua.suffix_array.PrefixTreeAdvancedTest" />    
+    </classes>
+  </test>
+ 
+  
+    <test name="Vocab" >
+    <classes>
+       <class name="joshua.util.sentence.VocabularyTest" />  
+       <class name="joshua.suffix_array.CorpusArrayTest" />  
+    </classes>
+  </test>
+
+
+  <test name="SuffixArray" >
+    <classes>
+       <class name="joshua.suffix_array.SuffixArrayTest" /> 
+       <class name="joshua.suffix_array.ExtractRules" />    
+    </classes>
+  </test>
 
 </suite>

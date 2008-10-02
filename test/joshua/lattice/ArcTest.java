@@ -36,7 +36,7 @@ public class ArcTest {
 	
 	private Arc<String> arc;
 	
-	@Test(dependsOnMethods = { "edu.jhu.joshua.lattice.NodeTest.constructNode" })
+	@Test(dependsOnMethods = { "joshua.lattice.NodeTest.constructNode" })
 	//@Test(dependsOnGroups = {"lattice_node" })
 	public void constructArc() {
 

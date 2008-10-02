@@ -28,12 +28,14 @@ import joshua.util.sentence.Phrase;
 import joshua.util.sentence.Span;
 import joshua.util.sentence.Vocabulary;
 
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -53,6 +55,8 @@ public class PrefixTree {
 	public static int MAX_PHRASE_LENGTH = 9; //XXX Should this be stored elsewhere?
 	public static int SAMPLE_SIZE = 100; //XXX Should this be stored elsewhere?
 	
+	private final int spanLimit; //XXX Should this be stored elsewhere?
+	
 	/** Integer representation of the nonterminal X. All nonterminals are guaranteed to be represented by negative integers. */
 	static final int X = -1;
 
@@ -62,7 +66,7 @@ public class PrefixTree {
 	private final int maxPhraseSpan;
 	private final int maxPhraseLength;
 	private final int maxNonterminals;
-	private final int spanLimit;
+
 
 	static final int ROOT_NODE_ID = -999;
 	static final int BOT_NODE_ID = -2000;
@@ -636,6 +640,18 @@ public class PrefixTree {
 		return root.size();
 	}
 
+	public void print(OutputStream out) throws UnsupportedEncodingException, IOException {
+		
+		Vocabulary sourceVocab = (suffixArray==null) ? null : suffixArray.getVocabulary();
+		Vocabulary targetVocab = (targetCorpus==null) ? null : targetCorpus.vocab;
+		
+		for (Node node : root.children.values()) {
+			//String sourcePhrase = (vocab==null) ? ""+node.incomingArcValue : ""+node.incomingArcValue;
+			node.print("", out, sourceVocab, targetVocab);
+			//out.write(node.toRuleString(vocab).getBytes("UTF-8"));
+		}
+	}
+	
 	/**
 	 * Builds a hierarchical phrase in the target language substituting the terminal sequences
 	 *  in the target side with nonterminal symbols corresponding to the source nonterminals.
@@ -865,19 +881,21 @@ public class PrefixTree {
 			this.hierarchicalPhrases = hierarchicalPhrases;
 			this.sourceWords = sourceWords;
 			
-			this.results = new ArrayList<Rule>(hierarchicalPhrases.size());
+			//TODO Implement this so that we store rules instead of just hierarchical phrases
 			
-			int dummyRuleID = 1;
-			int dummyOwner = 1;
-			
-			for (HierarchicalPhrase targetPhrase : hierarchicalPhrases) {
-				
-				//TODO Implement this
-				float[] featureScores = null;
-				if (true) throw new RuntimeException("Not yet implemented");
-
-				results.add(new Rule(dummyRuleID, X, sourceWords, targetPhrase.pattern.words, dummyOwner, featureScores, targetPhrase.pattern.arity));
-			}
+//			this.results = new ArrayList<Rule>(hierarchicalPhrases.size());
+//			
+//			int dummyRuleID = 1;
+//			int dummyOwner = 1;
+//			
+//			for (HierarchicalPhrase targetPhrase : hierarchicalPhrases) {
+//				
+//				
+//				float[] featureScores = null;
+//				if (true) throw new RuntimeException("Assigning features to rules is not yet implemented");
+//
+//				results.add(new Rule(dummyRuleID, X, sourceWords, targetPhrase.pattern.words, dummyOwner, featureScores, targetPhrase.pattern.arity));
+//			}
 			
 		}
 		
@@ -1133,6 +1151,49 @@ public class PrefixTree {
 			return toString(null);
 		}
 
+		private void print(String partialSourcePhrase, OutputStream out, Vocabulary sourceVocab, Vocabulary targetVocab) throws UnsupportedEncodingException, IOException {
+			
+			String leftHandSide = "[X]";
+			
+			String sourceSide = partialSourcePhrase;
+			if (incomingArcValue==PrefixTree.X) {
+				sourceSide += "[X] ";
+			} else if (sourceVocab==null) {
+				sourceSide += incomingArcValue + " ";
+			} else {
+				sourceSide += sourceVocab.getWord(incomingArcValue) + " ";
+			}
+			
+			String targetSide = "";
+			for (HierarchicalPhrase phrase : hierarchicalPhrases) {
+				
+				int[] targetWords = phrase.pattern.words;
+				for (int targetWord : targetWords) {
+					if (targetWord < 0) {
+						targetSide += "[X," + (-1 * targetWord) + "] ";
+					} else if (targetVocab==null) {
+						targetSide += targetWord + " ";
+					} else {
+						targetSide += targetVocab.getWord(targetWord) + " ";
+					}
+				}
+				
+			}
+			
+			out.write(leftHandSide.getBytes("UTF-8"));
+			out.write("||| ".getBytes("UTF-8"));
+			out.write(sourceSide.getBytes("UTF-8"));
+			out.write("||| ".getBytes("UTF-8"));
+			out.write(targetSide.getBytes("UTF-8"));
+			out.write("||| ".getBytes("UTF-8"));
+
+			
+			for (Node node : children.values()) {
+				node.print(sourceSide, out, sourceVocab, targetVocab);
+			}
+			
+		}
+		
 		String toTreeString(String tabs, Vocabulary vocab) {
 
 			StringBuilder s = new StringBuilder();

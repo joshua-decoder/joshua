@@ -61,7 +61,7 @@ public class NodeTest {
 	}
 	
 	
-	@Test(dependsOnMethods = { "constructNode", "edu.jhu.joshua.lattice.ArcTest.constructArc" })
+	@Test(dependsOnMethods = { "constructNode", "joshua.lattice.ArcTest.constructArc" })
 	public void addArc() {
 		
 		Node<String> n2 = new Node<String>(2);
