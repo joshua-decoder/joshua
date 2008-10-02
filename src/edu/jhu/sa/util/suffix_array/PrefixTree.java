@@ -15,14 +15,12 @@
  * Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  * MA 02111-1307 USA
  */
-package joshua.suffix_array;
+package edu.jhu.sa.util.suffix_array;
 
 import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.RuleCollection;
 import joshua.decoder.ff.tm.TrieGrammar;
-import joshua.suffix_array.Pattern.PrefixCase;
-import joshua.suffix_array.Pattern.SuffixCase;
 import joshua.util.sentence.LabelledSpan;
 import joshua.util.sentence.Phrase;
 import joshua.util.sentence.Span;
@@ -43,6 +41,9 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import edu.jhu.sa.util.suffix_array.Pattern.PrefixCase;
+import edu.jhu.sa.util.suffix_array.Pattern.SuffixCase;
 
 
 

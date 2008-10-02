@@ -14,20 +14,21 @@
  * along with this library; if not, write to the Free Software Foundation,
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package joshua.suffix_array;
+package edu.jhu.sa.util.suffix_array;
 
 import java.io.IOException;
 
-import joshua.suffix_array.AlignmentArray;
-import joshua.suffix_array.CorpusArray;
-import joshua.suffix_array.SuffixArray;
-import joshua.suffix_array.SuffixArrayFactory;
 import joshua.util.sentence.Span;
 import joshua.util.sentence.Vocabulary;
 
 
 import org.testng.Assert;
 import org.testng.annotations.Test;
+
+import edu.jhu.sa.util.suffix_array.AlignmentArray;
+import edu.jhu.sa.util.suffix_array.CorpusArray;
+import edu.jhu.sa.util.suffix_array.SuffixArray;
+import edu.jhu.sa.util.suffix_array.SuffixArrayFactory;
 
 
 /**

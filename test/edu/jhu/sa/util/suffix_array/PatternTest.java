@@ -14,16 +14,17 @@
  * along with this library; if not, write to the Free Software Foundation,
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package joshua.suffix_array;
+package edu.jhu.sa.util.suffix_array;
 
 
-import joshua.suffix_array.Pattern;
-import joshua.suffix_array.PrefixTree;
 import joshua.util.sentence.Phrase;
 import joshua.util.sentence.Vocabulary;
 
 import org.testng.Assert;
 import org.testng.annotations.Test;
+
+import edu.jhu.sa.util.suffix_array.Pattern;
+import edu.jhu.sa.util.suffix_array.PrefixTree;
 
 
 /**

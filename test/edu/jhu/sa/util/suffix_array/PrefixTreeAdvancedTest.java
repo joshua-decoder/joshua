@@ -1,20 +1,21 @@
-package joshua.suffix_array;
+package edu.jhu.sa.util.suffix_array;
 
 import java.util.HashSet;
 import java.util.Set;
 
-import joshua.suffix_array.AlignmentArray;
-import joshua.suffix_array.BasicPhrase;
-import joshua.suffix_array.CorpusArray;
-import joshua.suffix_array.HierarchicalPhrase;
-import joshua.suffix_array.PrefixTree;
-import joshua.suffix_array.SuffixArray;
-import joshua.suffix_array.PrefixTree.Node;
 import joshua.util.sentence.Vocabulary;
 
 
 import org.testng.Assert;
 import org.testng.annotations.Test;
+
+import edu.jhu.sa.util.suffix_array.AlignmentArray;
+import edu.jhu.sa.util.suffix_array.BasicPhrase;
+import edu.jhu.sa.util.suffix_array.CorpusArray;
+import edu.jhu.sa.util.suffix_array.HierarchicalPhrase;
+import edu.jhu.sa.util.suffix_array.PrefixTree;
+import edu.jhu.sa.util.suffix_array.SuffixArray;
+import edu.jhu.sa.util.suffix_array.PrefixTree.Node;
 
 
 public class PrefixTreeAdvancedTest {

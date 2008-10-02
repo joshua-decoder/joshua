@@ -19,13 +19,14 @@ package joshua.util.sentence;
 import java.io.IOException;
 import java.util.HashSet;
 
-import joshua.suffix_array.BasicPhrase;
-import joshua.suffix_array.SuffixArrayFactory;
 import joshua.util.sentence.Vocabulary;
 
 
 import org.testng.Assert;
 import org.testng.annotations.Test;
+
+import edu.jhu.sa.util.suffix_array.BasicPhrase;
+import edu.jhu.sa.util.suffix_array.SuffixArrayFactory;
 
 
 /**

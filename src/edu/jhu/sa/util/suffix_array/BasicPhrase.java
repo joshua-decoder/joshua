@@ -15,48 +15,74 @@
  * Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  * MA 02111-1307 USA
  */
-package joshua.suffix_array;
+package edu.jhu.sa.util.suffix_array;
 
 import joshua.util.sentence.AbstractPhrase;
 import joshua.util.sentence.Phrase;
 import joshua.util.sentence.Vocabulary;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 
 /**
- * SuffixArrayPhrase implements the Phrase interface by linking
- * into indices within a corpus. This is intended to be a very
- * low-memory implementation of the class.
+ * Phrase encapsulates an int[] of word IDs, and provides some basic
+ * functionality for manipulating phrases.
  *
+ * @author Josh Schroeder
+ * @since  30 July 2003
  * @author Chris Callison-Burch
  * @since  29 May 2008
- * @version $LastChangedDate:2008-09-18 12:47:23 -0500 (Thu, 18 Sep 2008) $
+ * @version $LastChangedDate:2008-07-30 17:15:52 -0400 (Wed, 30 Jul 2008) $
  */
-public class ContiguousPhrase extends AbstractPhrase {
+public class BasicPhrase extends AbstractPhrase {
 
-//===============================================================
-// Constants
-//===============================================================
-	
+
+
 //===============================================================
 // Member variables
 //===============================================================
 
-	protected int startIndex;
-	protected int endIndex;
-	protected CorpusArray corpusArray;
+	protected Vocabulary vocab;
+	protected int[] words;
+ 
  
 //===============================================================
 // Constructor(s)
 //===============================================================
 	
-	public ContiguousPhrase(int startIndex, int endIndex, CorpusArray corpusArray) {
-		this.startIndex  = startIndex;
-		this.endIndex    = endIndex;
-		this.corpusArray = corpusArray;
+	/**
+	 * Constructor takes in an int[] representing the words. 
+  	 */
+	public BasicPhrase(int[] words, Vocabulary vocab) {
+		this.vocab = vocab;
+		this.words = words;
 	}
 	
+	
+	/**
+	 * Constructor tokenizes the phrase string at whitespace
+	 * characters and looks up the IDs of the words using the
+	 * Vocabulary.
+	 * 
+	 * @param phraseString a String of the format "Hello , world ."
+  	 */
+	public BasicPhrase(String phraseString, Vocabulary vocab) {
+		this.vocab = vocab;
+		String[] wordStrings = phraseString.split("\\s+");
+		words = new int[wordStrings.length];
+		for (int i = 0; i < wordStrings.length; i++) {
+			words[i] = vocab.addWord(wordStrings[i]);
+		}
+	}
+	
+	
+	/**
+	 * A protected constructor for subclasses.
+	 */
+	protected BasicPhrase() {
+	
+	}
 
 //===============================================================
 // Public
@@ -71,7 +97,17 @@ public class ContiguousPhrase extends AbstractPhrase {
 	 *         drawn from.
 	 */
 	public Vocabulary getVocab() {
-		return corpusArray.vocab;
+		return vocab;
+	}
+	
+	
+	public int getWordID(int position) {
+		return words[position];
+	}
+	
+	
+	public int size() {
+		return words.length;
 	}
 	
 	
@@ -83,27 +119,30 @@ public class ContiguousPhrase extends AbstractPhrase {
 	 *         in the phrase
 	 */
 	public int[] getWordIDs() {
-		int[] words = new int[endIndex-startIndex];
-		for (int i = startIndex; i < endIndex; i++) {
-			words[i-startIndex] = corpusArray.corpus[i];
-		}
 		return words;
-	}
-	
-	
-	public int getWordID(int position) {
-		return corpusArray.corpus[startIndex+position];
-	}
-	
-	
-	public int size() {
-		return endIndex-startIndex;
 	}
 	
 	
 	//===========================================================
 	// Methods
 	//===========================================================
+	
+	
+	/**
+	 * @return a space-delimited string of the words in this
+	 *         Phrase
+	 */
+	public String toString() {
+		StringBuffer buf = new StringBuffer();
+        for (int i = 0; i < size(); i++) {
+			String word = vocab.getWord(words[i]);
+            buf.append(word);
+            if (i < size() - 1) {
+				buf.append(' ');
+			}
+        }
+        return buf.toString();
+	}
 	
 	
 	/**
@@ -122,8 +161,8 @@ public class ContiguousPhrase extends AbstractPhrase {
 	 * <li>like cheese .
 	 * <li>I like cheese .
 	 * </ul>
-	 * 
-	 * @return ArrayList of all possible subphrases.
+	 *
+	 * @return List of all possible subphrases.
 	 */
 	public List<Phrase> getSubPhrases() {
 		return getSubPhrases(size());
@@ -135,16 +174,19 @@ public class ContiguousPhrase extends AbstractPhrase {
 	 * <code>maxLength</code> or smaller.
 	 * 
 	 * @param maxLength the maximum length phrase to return.
-	 * @return ArrayList of all possible subphrases of length
-	 *         maxLength or less
+	 * @return List of all possible subphrases of length maxLength
+	 *         or less
 	 * @see #getSubPhrases()
 	 */
 	public List<Phrase> getSubPhrases(int maxLength) {
-		if (maxLength > size()) return getSubPhrases(size());
-		List<Phrase> phrases=new ArrayList<Phrase>();
+		if (maxLength > size()) {
+			return getSubPhrases(size());
+		}
+		List<Phrase> phrases = new ArrayList<Phrase>();
+		
 		for (int i = 0; i < size(); i++) {
-			for (int j=i+1; (j <= size()) && (j-i <= maxLength); j++) {
-				Phrase subPhrase = subPhrase(i,j);
+			for (int j = i + 1; (j <= size()) && (j - i <= maxLength); j++) {
+				BasicPhrase subPhrase = subPhrase(i,j);
 				phrases.add(subPhrase);
 			}
 		}
@@ -157,13 +199,46 @@ public class ContiguousPhrase extends AbstractPhrase {
 	 * <P>
 	 * NOTE: subList merely creates a "view" of the existing
 	 * Phrase object. Memory taken up by other Words in the
-	 * Phrase is not freed since the underlying subList object
+	 * Phrase is not  freed since the underlying subList object
 	 * still points to the complete Phrase List.
 	 *
 	 * @see ArrayList#subList(int, int)
 	 */
-	public Phrase subPhrase(int start, int end) {
-		return new ContiguousPhrase(startIndex+start, startIndex+end, corpusArray);
+	public BasicPhrase subPhrase(int start, int end) {
+		int subPhraseLength = end - start;
+		int[] subPhraseWords = new int[subPhraseLength];
+		for (int i = 0; i < subPhraseLength; i++) {
+			subPhraseWords[i] = words[i+start];
+		}
+		return new BasicPhrase(subPhraseWords, vocab);
+	}
+	
+	
+	/**
+	 * Compares the two strings based on the lexicographic order
+	 * of words defined in the Vocabulary.
+	 *
+	 * @param obj the object to compare to
+	 * @return -1 if this object is less than the parameter, 0
+	 *         if equals, 1 if greater
+	 */
+	public int compareTo(Phrase other) {
+		for (int i = 0; i < words.length; i++) {
+			if (i < other.size()) {
+				int difference = words[i] - other.getWordID(i);
+				if (difference != 0) {
+					return difference;
+				}
+			} else {
+				//same but other is shorter, so we are after
+				return 1;
+			}
+		}
+		if (size() < other.size()) {
+			return -1;
+		} else {
+			return 0;
+		}
 	}
 	
 	
@@ -198,7 +273,7 @@ public class ContiguousPhrase extends AbstractPhrase {
 	 * Main contains test code
 	 */
 	public static void main(String[] args) {
-		
+
 	}
 }
 
