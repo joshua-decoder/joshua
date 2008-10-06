@@ -377,7 +377,7 @@ public class Bin
 			}		
 		}	
 	}
-	private static class CubePruneState implements Comparable {
+	private static class CubePruneState implements Comparable<CubePruneState> {
 		int[] ranks;
 		HashMap  tbl_states;
 		Rule rule;
@@ -404,7 +404,7 @@ public class Bin
 			return get_signature(ranks);
 		}			
 		//natual order by cost
-		public int compareTo(Object another) throws ClassCastException {
+		public int compareTo(CubePruneState another) throws ClassCastException {
 		    if (!(another instanceof CubePruneState))
 		      throw new ClassCastException("An CubePruneState object expected.");
 		    if((Double)this.tbl_states.get(Symbol.EXPECTED_TOTAL_COST_SYM_ID) < (Double)((CubePruneState)another).tbl_states.get(Symbol.EXPECTED_TOTAL_COST_SYM_ID))

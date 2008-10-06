@@ -345,7 +345,7 @@ public class KbestExtraction {
 	 * used for kbest extraction*/
 	
 	//each DerivationState rougly correponds a hypothesis 
-	private static class DerivationState implements Comparable 
+	private static class DerivationState implements Comparable<DerivationState> 
 	{
 		Deduction p_edge;//in the paper, it is "e"		
 		//**lesson: once we define this as a static variable, which cause big trouble
@@ -476,7 +476,7 @@ public class KbestExtraction {
 		}*/
 		
 		//natual order by cost
-		public int compareTo(Object another) throws ClassCastException {
+		public int compareTo(DerivationState another) throws ClassCastException {
 		    if (!(another instanceof DerivationState))
 		      throw new ClassCastException("An Derivation object expected.");
 		    if(this.cost < ((DerivationState)another).cost)

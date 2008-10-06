@@ -57,7 +57,7 @@ public class HyperGraph {
 	/*in and/or graph, Item is a "or" node/vertex
 	*it remembers all possible deduction that leads to the same symbol (e.g., NP)
 	*state: lhs and edge ngram*/
-	public static class Item implements Comparable 
+	public static class Item implements Comparable<Item> 
 	{
 		public int i, j;
 		public ArrayList<Deduction> l_deductions=null;//each deduction is a "and" node
@@ -179,7 +179,7 @@ public class HyperGraph {
 		}
 		
 		//sort by est_total_cost: for prunning purpose
-		public int compareTo(Object anotherItem) throws ClassCastException {
+		public int compareTo(Item anotherItem) throws ClassCastException {
 		    if (!(anotherItem instanceof Item))
 		      throw new ClassCastException("An Item object expected.");
 		    if(this.est_total_cost < ((Item)anotherItem).est_total_cost)
