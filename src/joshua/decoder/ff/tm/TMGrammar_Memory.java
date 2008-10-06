@@ -128,10 +128,10 @@ extends TMGrammar {
 	
 	private Rule add_rule(String line, int owner) {
 		this.num_rule_read++;
-		this.rule_id++;
+		TMGrammar_Memory.rule_id++;
 		//######1: parse the line
 		//######2: create a rule
-		Rule_Memory p_rule = new Rule_Memory(this.rule_id, line, owner);
+		Rule_Memory p_rule = new Rule_Memory(TMGrammar_Memory.rule_id, line, owner);
 		
 		
 		//######### identify the position, and insert the trinodes if necessary
@@ -241,7 +241,7 @@ extends TMGrammar {
 			}
 		}
 		
-		
+/* TODO Possibly remove - this method is never called.		
 		private void print_info(int level) {
 			Support.write_log_line("###########TrieGrammar###########",level);
 			if (null != rule_bin) {
@@ -256,6 +256,7 @@ extends TMGrammar {
 				}
 			}
 		}
+*/
 	}
 	
 	
@@ -340,16 +341,17 @@ extends TMGrammar {
 			return n_pruned++;
 		}
 		
-		
+/* TODO Possibly remove - this method is never called.		
 		private void print_info(int level) {
 			Support.write_log_line(
 				String.format("RuleBin, arity is %d", this.arity),
 				level);
-			ArrayList t_l = getSortedRules();
+			ArrayList<Rule> t_l = getSortedRules();
 			for (int i = 0; i < t_l.size(); i++) {
 				((Rule_Memory)t_l.get(i)).print_info(level);
 			}
 		}
+*/		
 	}
 	
 	

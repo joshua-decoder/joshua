@@ -42,7 +42,7 @@ public abstract class LMClient {
 	
 	
 	//cmd: prob order wrd1 wrd2 ...
-	public abstract double get_prob(ArrayList ngram, int order);
+	public abstract double get_prob(ArrayList<Integer> ngram, int order);
 	
 	//cmd: prob order wrd1 wrd2 ...
 	public abstract double get_prob(int[] ngram, int order);

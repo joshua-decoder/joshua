@@ -66,7 +66,7 @@ extends DefaultFF {
 	) {
 		//long start_step1 = Support.current_time();
 		//for left state
-		ArrayList left_state_org_wrds = new ArrayList();
+		ArrayList<Integer> left_state_org_wrds = new ArrayList<Integer>();
 		//boolean keep_left_state = true;//stop if: (1) end of rule; (2) left_state_org_wrds.size()==this.ngramOrder-1; (3) seperating point;
 		
 		//before l_context finish, left state words are in current_ngram, after that, all words will be replaced with right state words
@@ -188,7 +188,7 @@ extends DefaultFF {
 	
 	
 	private double score_chunk(
-		ArrayList words,
+		ArrayList<Integer> words,
 		boolean consider_incomplete_ngrams,
 		boolean skip_start
 	) {
@@ -218,7 +218,7 @@ extends DefaultFF {
 	private double estimate_rule_prob(int[] en_words) {
 		double    estimate   = 0.0;
 		boolean   consider_incomplete_ngrams = true;
-		ArrayList words      = new ArrayList();
+		ArrayList<Integer> words      = new ArrayList<Integer>();
 		boolean   skip_start = (en_words[0] == Symbol.START_SYM_ID);
 		
 		for (int c = 0; c < en_words.length; c++) {
@@ -258,12 +258,12 @@ extends DefaultFF {
 		int[] l_context = (int[])state.get(Symbol.LM_L_STATE_SYM_ID);
 		
 		if (null != l_context) {
-			ArrayList list;
+			ArrayList<Integer> list;
 			if (add_start == true) {
-				list = new ArrayList(l_context.length + 1);
+				list = new ArrayList<Integer>(l_context.length + 1);
 				list.add(Symbol.START_SYM_ID);
 			} else {
-				list = new ArrayList(l_context.length);
+				list = new ArrayList<Integer>(l_context.length);
 			}
 			for (int k = 0; k < l_context.length; k++) {
 				//if(l_context[k]!=Symbol.LM_STATE_OVERLAP_SYM_ID)
@@ -281,7 +281,7 @@ extends DefaultFF {
 		}*/
 		if (add_end == true) {//only when add_end is true, we get a complete ngram, otherwise, all ngrams in r_state are incomplete and we should do nothing
 			int[] r_context = (int[])state.get(Symbol.LM_R_STATE_SYM_ID);
-			ArrayList list = new ArrayList(r_context.length+1);
+			ArrayList<Integer> list = new ArrayList<Integer>(r_context.length+1);
 			for (int k = 0; k < r_context.length; k++) {
 				list.add(r_context[k]);
 			}
@@ -296,7 +296,7 @@ extends DefaultFF {
 	
 	private double compute_equiv_state_final_transition(HashMap state) {
 		double res = 0.0;
-		ArrayList current_ngram = new ArrayList();
+		ArrayList<Integer> current_ngram = new ArrayList<Integer>();
 		int[] l_context = (int[])state.get(Symbol.LM_L_STATE_SYM_ID);
 		int[] r_context = (int[])state.get(Symbol.LM_R_STATE_SYM_ID);
 		if (l_context.length != r_context.length) {

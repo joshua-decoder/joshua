@@ -808,10 +808,15 @@ public class PrefixTree {
 
 		Map<Integer,Node> children;
 		
+		/** Source side hierarchical phrases for this node. */
 		List<HierarchicalPhrase> hierarchicalPhrases;
+
+		/** Integer representation of the source side tokens corresponding to the hierarchical phrases for this node. */
+		int[] sourceWords;
+		
+		/** Translation rules for this node. */
 		List<Rule> results;
 		
-		int[] sourceWords;
 		
 		Node(int incomingArcValue) {
 			this(true,incomingArcValue);
@@ -877,29 +882,6 @@ public class PrefixTree {
 			return node;
 		}
 		
-		
-		public void setHierarchicalPhrases(List<HierarchicalPhrase> hierarchicalPhrases, int[] sourceWords) {
-			this.hierarchicalPhrases = hierarchicalPhrases;
-			this.sourceWords = sourceWords;
-			
-			//TODO Implement this so that we store rules instead of just hierarchical phrases
-			
-//			this.results = new ArrayList<Rule>(hierarchicalPhrases.size());
-//			
-//			int dummyRuleID = 1;
-//			int dummyOwner = 1;
-//			
-//			for (HierarchicalPhrase targetPhrase : hierarchicalPhrases) {
-//				
-//				
-//				float[] featureScores = null;
-//				if (true) throw new RuntimeException("Assigning features to rules is not yet implemented");
-//
-//				results.add(new Rule(dummyRuleID, X, sourceWords, targetPhrase.pattern.words, dummyOwner, featureScores, targetPhrase.pattern.arity));
-//			}
-			
-		}
-		
 		public boolean hasChild(int child) {
 			return children.containsKey(child);
 		}
@@ -924,6 +906,49 @@ public class PrefixTree {
 			highBoundIndex = bounds[1];
 		}
 
+
+		public void setHierarchicalPhrases(List<HierarchicalPhrase> hierarchicalPhrases, int[] sourceWords) {
+			this.hierarchicalPhrases = hierarchicalPhrases;
+			this.sourceWords = sourceWords;
+			
+			//TODO Implement this so that we store rules instead of just hierarchical phrases
+			
+			this.results = new ArrayList<Rule>(hierarchicalPhrases.size());
+			
+			int dummyRuleID = 1;
+			int dummyOwner = 1;
+			
+			
+			List<Pattern> translations = this.translate();
+			
+			Map<Pattern,Integer> counts = new HashMap<Pattern,Integer>();
+			
+			for (Pattern translation : translations) {
+				
+				Integer count = counts.get(translation);
+				
+				if (count==null) count = 1;
+				else count++;
+				
+				counts.put(translation, count);
+				
+			}
+			
+			float denominator = translations.size();
+			
+			
+			//TODO Add all required features in block below. Using only one features is bogus.
+			logger.severe("P(e|f) is the only feature being calculated for rules in PrefixTree.Node. This is highly bogus");
+			
+			for (Pattern translation : translations) {
+				
+				float[] featureScores = { counts.get(translation) / denominator };
+				
+				results.add(new Rule(dummyRuleID, X, sourceWords, translation.words, dummyOwner, featureScores, translation.arity));
+			}
+			
+		}
+		
 		/**
 		 * Given a node in a prefix tree, find a list of translations for the source phrase represented by that node.
 		 * 

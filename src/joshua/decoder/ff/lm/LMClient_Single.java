@@ -22,8 +22,6 @@ import joshua.util.SocketUtility;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.io.IOException;
-import java.nio.*;
 
 
 /**
@@ -53,14 +51,14 @@ extends LMClient {
 	
 	
 	//cmd: prob order wrd1 wrd2 ...
-	public double get_prob(ArrayList ngram, int order) {
+	public double get_prob(ArrayList<Integer> ngram, int order) {
 		return get_prob(Support.sub_int_array(ngram, 0, ngram.size()), order);
 	}
 	
 	
 	//cmd: prob order wrd1 wrd2 ...
 	public double get_prob(int[] ngram, int order) {
-		double res     = 0.0;
+		//double res     = 0.0;
 		String packet  = encode_packet("prob", order, ngram);
 		String cmd_res = exe_request(packet);
 		return new Double(cmd_res);
@@ -138,7 +136,7 @@ extends LMClient {
 		return packet.toString();
 	}
 	
-	
+/*  TODO Possibly remove - this method is never called.		
 	private String encode_packet(String cmd, int num, ArrayList words) {
 		StringBuffer packet = new StringBuffer();
 		packet.append(cmd);
@@ -150,7 +148,7 @@ extends LMClient {
 		}
 		return packet.toString();
 	}
-	
+*/	
 	
 	private String exe_request(String packet) {
 		//search cache

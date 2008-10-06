@@ -98,7 +98,7 @@ extends LMClient {
 	
 	
 	//cmd: prob order wrd1 wrd2 ...
-	public double get_prob(ArrayList ngram, int order) {
+	public double get_prob(ArrayList<Integer> ngram, int order) {
 		return get_prob(Support.sub_int_array(ngram, 0, ngram.size()), order);
 	}
 	
@@ -161,7 +161,7 @@ extends LMClient {
 		return packet.toString();
 	}
 	
-	
+/*  TODO Possibly remove - this method is never called.	
 	private String encode_packet(String cmd, int num, ArrayList words) {
 		StringBuffer packet = new StringBuffer();
 		packet.append(cmd);
@@ -173,7 +173,7 @@ extends LMClient {
 		}
 		return packet.toString();
 	}
-	
+*/	
 	
 	private double exe_request(String packet) {
 		//search cache

@@ -67,7 +67,7 @@ public class LMGrammar_SRILM  extends LMGrammar {
        //TODO in principle, there should not have bad left-side state symbols, though need to check
        if(check_bad_stuff ==true && Decoder.use_right_euqivalent_state==true){
 	       //make sure the state input does not have null words, as otherwise the srilm will replace it with unk    
-		   ArrayList clean_ngram = ignore_null_right_words(ngram_wrds);	
+		   ArrayList<Integer> clean_ngram = ignore_null_right_words(ngram_wrds);	
 		   hist_size = clean_ngram.size()-1;
 		   if(hist_size>=order || hist_size<0){
 				  System.out.println("Error: hist size is " + hist_size);
@@ -89,20 +89,16 @@ public class LMGrammar_SRILM  extends LMGrammar {
        return res;
    }
   
+/*  TODO Possibly remove - this method is never called.	   
    //TODO: big bug, assume left-equiv state is not used by srilm
    //TODO: now,we assume this function is called by get_prob_backoff_state, which have only left_context as input, so only the last wrd is <bo>, all backoff_wrds are good
 	private double get_backoff_weight_sum(int[] backoff_wrds, int req_num_backoff){
 	    System.out.println("Error: call get_backoff_weight_sum in srilm, must exit");
 		System.exit(0);
-		return -1;
-	   /*SWIGTYPE_p_unsigned_int hist = srilm.new_unsigned_array(backoff_wrds.length);
-       for(int i=0; i< backoff_wrds.length; i++){
-           srilm.unsigned_array_setitem(hist, i, backoff_wrds[i]);
-       }
-       int min_len = backoff_wrds.length - req_num_backoff + 1;
-       return srilm.get_backoff_weight_sum(p_srilm, hist, backoff_wrds.length, min_len);*/		
+		return -1;	
 	}
-	
+*/
+   
 	public int[] get_left_equi_state(int[] original_state_wrds, int order, double[] cost){
 		//int[] original_state_wrds = replace_with_unk(original_state_wrds_in);//???
 		if(Decoder.use_left_euqivalent_state==false){
@@ -125,27 +121,16 @@ public class LMGrammar_SRILM  extends LMGrammar {
 		return 0;
 	}
 	
+/*  TODO Possibly remove - this method is never called.		
     //	if exist backoff weight for backoff_words, then return the accumated backoff weight
 	private boolean check_backoff_weight(int[] backoff_words, double[] sum_bow, int num_backoff){
 		System.out.println("Error: call check_backoff_weight in srilm, must exit");
 		System.exit(0);
-		return true;
-		/*
-		if(num_backoff>0)
-			sum_bow[0]= get_backoff_weight_sum(backoff_words, num_backoff);
-		
-		SWIGTYPE_p_unsigned_int srilm_hist = srilm.new_unsigned_array(backoff_words.length);
-		for(int i=0; i<backoff_words.length; i++){
-		        srilm.unsigned_array_setitem(srilm_hist, i, backoff_words[i]);
-		}	
-		long depth = srilm.getBOW_depth(p_srilm, srilm_hist, backoff_words.length);
-		if(depth >=backoff_words.length){//canot be finalized
-			System.out.println("cannot be finalized");
-			return false;
-		}else
-			return true;*/		
+		return true;	
 	}
-		  
+*/
+
+/*  TODO Possibly remove - this method is never called.		
 	private long getBOW_depth(int[] hist, int order){
 		  SWIGTYPE_p_unsigned_int srilm_hist = srilm.new_unsigned_array(hist.length);
 		  for(int i=0; i<hist.length; i++){
@@ -153,6 +138,7 @@ public class LMGrammar_SRILM  extends LMGrammar {
 		  }	
 		  return srilm.getBOW_depth(p_srilm, srilm_hist, hist.length);  
 	  }
+*/
 	
 	 //the returned array lenght must be the same the len of original_state
 	 //the only change to the original_state is: replace with more non-null state words to null state
@@ -203,8 +189,8 @@ public class LMGrammar_SRILM  extends LMGrammar {
 	  }
 	  
 	  //both left and right must be clean
-	   private static ArrayList ignore_null_right_words(int[] ngram_wrds){
-		   ArrayList t_ngram = new ArrayList();
+	   private static ArrayList<Integer> ignore_null_right_words(int[] ngram_wrds){
+		   ArrayList<Integer> t_ngram = new ArrayList<Integer>();
 		   for(int t=ngram_wrds.length-1; t>=0; t--){
 			   if(ngram_wrds[t]==Symbol.NULL_RIGHT_LM_STATE_SYM_ID)//skip all the null words left
 				   break;
@@ -219,10 +205,12 @@ public class LMGrammar_SRILM  extends LMGrammar {
 			System.exit(0);
 			return 0;
 	  }
-		
+
+/*  TODO Possibly remove - this method is never called.			
 		private  int[] backoff_ngram_with_suffix(int[] suffix){
 			System.out.println("Error: call backoff_ngram_with_suffix in srilm, must exit");
 			System.exit(0);
 			return null;
 		}
+*/
 }

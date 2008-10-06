@@ -52,7 +52,7 @@ public abstract class LMGrammar {
 	
 	
 	public final double score_a_sent(
-		ArrayList words_in,
+		ArrayList<Integer> words_in,
 		int       order,
 		int       start_index //1-indexed
 	) {
@@ -91,7 +91,7 @@ public abstract class LMGrammar {
 	//Note: it seems the List or ArrayList is much slower than the int array, e.g., from 11 to 9 seconds
 	//so try to avoid call this function
 	public final double get_prob(
-		ArrayList ngram_words,
+		ArrayList<Integer> ngram_words,
 		int       order,
 		boolean   check_bad_stuff
 	) {
@@ -140,7 +140,7 @@ public abstract class LMGrammar {
 	//must be: ngram_words.length <= order
 	
 	public final double get_prob_backoff_state(
-		ArrayList ngram_words,
+		ArrayList<Integer> ngram_words,
 		int       order,
 		int       n_additional_bow
 	) {
