@@ -18,7 +18,6 @@
 package joshua.decoder;
 
 import joshua.decoder.ff.lm.srilm.srilm;
-import joshua.decoder.ff.tm.TMGrammar;
 import joshua.util.FileUtility;
 
 import java.io.BufferedReader;
@@ -45,8 +44,8 @@ public class Symbol {
 
 	//terminal symbol may get from a tbl file, srilm, or a lm file
 	//**non-terminal symbol is always from myself	
-	static HashMap<String,Integer> str_2_num_tbl = new HashMap();
-	static HashMap<Integer,String> num_2_str_tbl = new HashMap();
+	static HashMap<String,Integer> str_2_num_tbl = new HashMap<String,Integer>();
+	static HashMap<Integer,String> num_2_str_tbl = new HashMap<Integer,String>();
 	public static int lm_start_sym_id = 10000;//1-10000 reserved for non-terminal
 	public static int lm_end_sym_id = 2000001;//max vocab 1000k
 	
@@ -162,8 +161,8 @@ public class Symbol {
 		use_my_own_tbl=u_own_tbl;
 		
 		//### read file into tbls
-		HashMap tbl_str_2_id = new HashMap();
-		HashMap tbl_id_2_str = new HashMap();
+		HashMap<String, Integer> tbl_str_2_id = new HashMap<String, Integer>();
+		HashMap<Integer, String> tbl_id_2_str = new HashMap<Integer, String>();
 		BufferedReader t_reader_sym = FileUtility.getReadFileStream(fname);
 		String line;		
 		while((line=FileUtility.read_line_lzf(t_reader_sym))!=null){
@@ -262,13 +261,13 @@ public class Symbol {
 		return res;
 	}
 	
-	static public String get_string(List ids){
+	static public String get_string(List<Integer> ids){
 		String res = "";
 		for(int t=0; t<ids.size(); t++){
 			if(t==0)
-				res += get_string((Integer)ids.get(t));
+				res += get_string(ids.get(t));
 			else
-				res += " " + get_string((Integer)ids.get(t));
+				res += " " + get_string(ids.get(t));
 		}
 		return res;
 	}
