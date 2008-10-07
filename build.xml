@@ -75,7 +75,8 @@
 	
 	<!-- Run the unit tests -->
 	<target name="test" depends="compile,compile-tests">
-		<testng classpath="bin" sourcedir="test">
+		<testng classpath="${build}" sourcedir="${test}">
+			<jvmarg value="-Djava.util.logging.config.file=logging.properties"/>
 			<xmlfileset dir="." includes="testng.xml"/>
 		</testng>
 	</target>
