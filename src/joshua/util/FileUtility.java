@@ -19,6 +19,7 @@ package joshua.util;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -198,6 +199,27 @@ public class FileUtility{
 		catch (IOException e) {
 			e.printStackTrace();
 		}		
+	}
+	
+	/**
+	 * Recursively delete the specified file or directory.
+	 * 
+	 * @param f File or directory to delete
+	 * @return <code>true</code> if the specified file or directory was deleted, <code>false</code> otherwise
+	 */
+	public static boolean delete(File f) {
+		if (f!=null) {
+			if (f.isDirectory()) {
+				for (File child : f.listFiles()) {
+					delete(child);
+				}
+				return f.delete();
+			} else {
+				return f.delete();
+			}
+		} else {
+			return false;
+		}
 	}
 }
 //end of utility for file options
