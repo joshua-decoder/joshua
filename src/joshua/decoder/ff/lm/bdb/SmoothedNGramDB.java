@@ -144,11 +144,6 @@ public class SmoothedNGramDB extends LanguageModel {
 			}
 
 			for (int order=1; order <= maxOrder; order++) {
-
-				if (order==2) {
-					int x=0;
-					x++;
-				}
 				
 				// Eat header up through \order-grams:
 				while (!scanner.nextLine().startsWith("\\" + order + "-grams:"));
@@ -163,13 +158,10 @@ public class SmoothedNGramDB extends LanguageModel {
 					}
 
 					// Read in the base-10 log, and convert to natural log
-					//double logProb = Math.log(Math.pow(10, Double.valueOf(elements[0])));
-					//double logProb = Double.valueOf(elements[0]);
 					double logProb = Math.log(Math.pow(10, Double.valueOf(elements[0])));
 					
 					double backoff;
 					if (elements.length==order+2 && FormatUtil.isNumber(elements[elements.length-1])) {
-						//backoff = Double.valueOf(elements[elements.length-1]);
 						backoff = Math.log(Math.pow(10, Double.valueOf(elements[elements.length-1])));
 					} else {
 						backoff = 0.0; // Math.log(1)
@@ -203,6 +195,15 @@ public class SmoothedNGramDB extends LanguageModel {
 		}
 	}
 	
+	/**
+	 * Store a key and its associated 
+	 * log probability and backoff weight 
+	 * in the Berkeley database.
+	 *  
+	 * @param key The phrase to store.
+	 * @param logProb N-gram log probability of the phrase.
+	 * @param backoff Backoff weight for the phrase.
+	 */
 	private void put(String key, double logProb, double backoff) {
 		try {
 			
@@ -247,8 +248,8 @@ public class SmoothedNGramDB extends LanguageModel {
 	 */
 	public double get(String key) {
 				
-		/*
-		 * 
+/*		 
+
 reading 10209 1-grams
 reading 78195 2-grams
 reading 20317 3-grams
@@ -267,12 +268,11 @@ the man in
 file sample.txt: 1 sentences, 3 words, 0 OOVs
 0 zeroprobs, logprob= -8.98136 ppl= 175.93 ppl1= 985.797
 
-		 */
+*/
 		
 		String[] completePhrase = key.split("\\s+");
 		
 		int contextLength = completePhrase.length - 1;
-		//int found = 0;
 		
 		double logProb = Double.NEGATIVE_INFINITY; // Math.log(0)
 		double backoffWeight = 0.0; // Math.log(1)
@@ -288,7 +288,6 @@ file sample.txt: 1 sentences, 3 words, 0 OOVs
 			if (ngram != null) {
 				logProb = ngram.getLogProb();
 				backoffWeight = 0.0; // Math.log(1)
-				//found = i + 1;
 			}
 			
 			if  (i >= contextLength) break;
@@ -310,13 +309,7 @@ file sample.txt: 1 sentences, 3 words, 0 OOVs
 				break;
 			}
 		}
-		/*
-		if (found > 0) {
-			System.err.print("["+found+"gram] ");
-		} else {
-			System.err.print("[OOV] ");
-		}
-		*/
+
 		return logProb + backoffWeight;
 	}
 
