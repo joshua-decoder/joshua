@@ -1,7 +1,8 @@
 
-SRC        =src/
-EXAMPLE    =example/example
-JAVA_FLAGS =
+SRC           =src/
+EXAMPLE       =example2/example2
+EXAMPLE_SUFFIX=src
+JAVA_FLAGS    =
 
 
 .SUFFIXES:
@@ -12,7 +13,8 @@ JAVA_FLAGS =
 all:
 	@$(MAKE) clean
 	@$(MAKE) joshua
-	@$(MAKE) test
+	@$(MAKE) test EXAMPLE='example/example'   EXAMPLE_SUFFIX='test.in'
+	@$(MAKE) test EXAMPLE='example2/example2' EXAMPLE_SUFFIX='src'
 
 joshua:
 	( cd $(SRC) && \
@@ -24,7 +26,7 @@ test:
 		-classpath $(SRC)              \
 		joshua.decoder.Decoder         \
 		$(EXAMPLE).config.javalm       \
-		$(EXAMPLE).test.in             \
+		$(EXAMPLE).$(EXAMPLE_SUFFIX)   \
 		$(EXAMPLE).nbest.javalm.out    \
 		2>&1 | tee $(EXAMPLE).nbest.javalm.err
 
@@ -33,3 +35,8 @@ srilm_inter:
 
 clean:
 	find ./$(SRC) -name '*.class' -exec rm {} \;
+	rm -f                                  \
+		example/example.nbest.javalm.out   \
+		example/example.nbest.javalm.err   \
+		example2/example2.nbest.javalm.out \
+		example2/example2.nbest.javalm.err 
