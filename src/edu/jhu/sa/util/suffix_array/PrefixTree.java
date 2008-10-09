@@ -52,15 +52,18 @@ public class PrefixTree {
 	/** Logger for this class. */
 	private static final Logger logger = Logger.getLogger(PrefixTree.class.getName());
 
-	public static int MAX_NT_SPAN = 5; //XXX Should this be stored elsewhere?
-	public static int MAX_PHRASE_LENGTH = 9; //XXX Should this be stored elsewhere?
-	public static int SAMPLE_SIZE = 100; //XXX Should this be stored elsewhere?
+	public static final int MAX_NT_SPAN = 5; //XXX Should this be stored elsewhere?
+	public static final int MAX_PHRASE_LENGTH = 9; //XXX Should this be stored elsewhere?
+	public static final int SAMPLE_SIZE = 100; //XXX Should this be stored elsewhere?
 	
 	private final int spanLimit; //XXX Should this be stored elsewhere?
 	
 	/** Integer representation of the nonterminal X. All nonterminals are guaranteed to be represented by negative integers. */
 	static final int X = -1;
-
+	static final Map<Integer,String> ntVocab = new HashMap<Integer,String>();
+	static { ntVocab.put(X, "X"); }
+	private static final byte[] newline = System.getProperty("line.separator").getBytes();
+	
 	final Node root;
 	final Phrase sentence;
 
@@ -104,6 +107,7 @@ public class PrefixTree {
 		suffixArray = null;
 		targetCorpus = null;
 		alignments = null;
+		xnode = null;
 		maxPhraseSpan = Integer.MIN_VALUE;
 		maxPhraseLength = Integer.MIN_VALUE;
 		maxNonterminals = Integer.MIN_VALUE;
@@ -113,6 +117,8 @@ public class PrefixTree {
 	static PrefixTree getDummyPrefixTree() {
 		return new PrefixTree();
 	}
+	
+	private final Node xnode;
 	
 	/**
 	 * Constructs a new prefix tree with suffix links
@@ -164,12 +170,25 @@ public class PrefixTree {
 
 
 
+		// 1: children(p_eps) <-- children(p_eps) U p_x
 
-		{	// 1: children(p_eps) <-- children(p_eps) U p_x
-
-			// Add a link from root node to X
-			Node xnode = root.addChild(X);
-			xnode.hierarchicalPhrases = Collections.emptyList();
+		// Add a link from root node to X
+		xnode = root.addChild(X);
+		
+		{	
+			
+			{ 	// TODO Is this block doing the right thing?
+				
+				// What should the hierarchical phrases be for the X node that comes off of ROOT?
+				// Should it be empty? Should it be everything in this suffix array?
+				xnode.hierarchicalPhrases = Collections.emptyList();
+				
+				// What should the bounds be for the X node that comes off of ROOT?
+				if (suffixArray!=null) {
+					int[] bounds = {0, suffixArray.size()-1};
+					xnode.setBounds(bounds);
+				}
+			}
 
 			// Add a suffix link from X back to root
 			Node suffixLink = calculateSuffixLink(root, X);
@@ -193,7 +212,7 @@ public class PrefixTree {
 
 		// 2: for i from 1 to I
 		for (int i=START_OF_SENTENCE; i<=END_OF_SENTENCE; i++) {
-			if (logger.isLoggable(Level.FINEST)) logger.finest("Adding tuple (" + i + ","+ i +","+root+",{"+sentence[i]+"})");
+			if (logger.isLoggable(Level.FINEST)) logger.finest("Adding tuple (" + i + ","+ i +","+root+",{"+intToString(sentence[i])+"})");
 
 			// 3: Add <f_i, i, i+1, p_eps> to queue
 			queue.add(new Tuple(i, i, root, epsilon));
@@ -202,7 +221,7 @@ public class PrefixTree {
 
 		// 4: for i from 1 to I
 		for (int i=START_OF_SENTENCE+1; i<=END_OF_SENTENCE; i++) {
-			if (logger.isLoggable(Level.FINEST)) logger.finest("Adding tuple (" + (i-1) + ","+(i)+","+root+",{"+X+","+sentence[i]+"})");
+			if (logger.isLoggable(Level.FINEST)) logger.finest("Adding tuple (" + (i-1) + ","+(i)+","+root+",{"+X+","+intToString(sentence[i])+"})");
 
 			// 5: Add <X f_i, i-1, i+1, p_x> to queue
 			queue.add(new Tuple(i-1, i, root.getChild(X), new Pattern(vocab,X)));
@@ -234,26 +253,32 @@ public class PrefixTree {
 
 					// 9: If p_alphaBetaF_i is inactive then
 					if (prefixNode.getChild(sentence[j]).active == Node.INACTIVE) {
+						
 						// 10: Continue to next item in queue
 						continue;
-					} else { // 11: Else
-						// 12: EXTEND_QUEUE(alpha beta f_j, i, j, f_1^I
+						
+						// 11: Else
+					} else { 
+						
+						// 12: EXTEND_QUEUE(alpha beta f_j, i, j, f_1^I)
 						if (logger.isLoggable(Level.FINER)) logger.finer("TREE BEFOR EXTEND: " + root);
 						if (logger.isLoggable(Level.FINER)) logger.finer("Calling EXTEND_QUEUE("+i+","+j+","+pattern+","+prefixNode);
 						extendQueue(queue, i, j, sentence, new Pattern(pattern,sentence[j]), prefixNode.getChild(sentence[j]));
 						if (logger.isLoggable(Level.FINER)) logger.finer("TREE AFTER EXTEND: " + root);
+						
 					}
 
 				} else { // 13: Else
 
-					// Add new child node
 					// 14: children(alphaBeta) <-- children(alphaBeta) U p_alphaBetaF_j
+					//     (Add new child node)
 					if (logger.isLoggable(Level.FINER)) logger.finer("Adding new node to " + prefixNode);
 					Node newNode = prefixNode.addChild(sentence[j]);
 					if (logger.isLoggable(Level.FINER)) logger.finer("Created new node " + newNode +" for \"" + sentence[j] + "\" and \n  added new node " + newNode + " to " + prefixNode);
 
 
-
+					// 15: p_beta <-- suffix_link(p_alpha_beta)
+					//     suffixNode in this code is p_beta_f_j, not p_beta
 					Node suffixNode = calculateSuffixLink(prefixNode, sentence[j]);
 
 					if (logger.isLoggable(Level.FINEST)) {
@@ -261,35 +286,48 @@ public class PrefixTree {
 						String newSuffixLink = (suffixNode==null) ? "null" : "id"+suffixNode.objectID;
 						logger.finest("Changing suffix link from " + oldSuffixLink + " to " + newSuffixLink + " for node " + newNode + " (prefix node " + prefixNode + " ) with token " + sentence[j]);
 					}
-
+					
 					newNode.linkToSuffix( suffixNode );
 
-					//Node suffixNode = prefixNode.suffixLink;
-					//Node suffixChild = suffixNode.getChild(sentence[j]);
 
-					//if (suffixChild.active == Node.INACTIVE) {
+					// 16: if p_beta_f_j is inactive then
 					if (suffixNode.active == Node.INACTIVE) {
+						
+						// 17: Mark p_alpha_beta_f_j inactive
 						newNode.active = Node.INACTIVE;
-					} else {
+						
+						// 18: else
+					} else { 
 
 						Pattern extendedPattern = new Pattern(pattern,sentence[j]);
-						//Pattern p = new Pattern(extendedPattern,suffixArray.getVocabulary());
-
-						// Q_alpha-beta-f_j <-- query(alpha-beta-f_j, Q_alpha-beta, Q_beta-f_j
 
 						List<HierarchicalPhrase> result = null;
 						
 						if (suffixArray != null) {
+							// 19: Q_alpha-beta-f_j <-- query(alpha-beta-f_j, Q_alpha-beta, Q_beta-f_j)
+							// XXX BUG - The following call incorrectly returns an empty list when prefixNode==xnode 
 							result = query(extendedPattern, newNode, prefixNode, suffixNode);
+							/*
+							if (result==null && extendedPattern.endsWithNonTerminal()) {
+								result = new ArrayList<HierarchicalPhrase>(suffixNode.hierarchicalPhrases);
+								newNode.storeResults(result, extendedPattern.words);
+							}*/
 						}
 
-
+						// 20: if Q_alpha_beta_f_j = ∅ (meaning that no results were found for this query)
+						//if (result != null && result.isEmpty()) {// && prefixNode != xnode) {
 						if (result != null && result.isEmpty()) {
+							
+							// 21: Mark p_alpha_beta_f_j inactive
 							newNode.active = Node.INACTIVE;
 							
+							// 22: else
 						} else {
 							
+							// 23: Mark p_alpha_beta_f_j active
 							newNode.active = Node.ACTIVE;
+							
+							// 24: EXTEND_QUEUE(alpha beta f_j, i, j, f_1^I)
 							extendQueue(queue, i, j, sentence, extendedPattern, newNode);
 							
 						}
@@ -330,6 +368,13 @@ public class PrefixTree {
 		return root;
 	}
 
+	private String intToString(int word) {
+		if (suffixArray==null)
+			return ""+word;
+		else
+			return suffixArray.corpus.vocab.getWord(word)+" (" + word + ")";
+	}
+	
 	final Comparator<HierarchicalPhrase> nonOverlapping = new Comparator<HierarchicalPhrase>() {
 		public int compare(HierarchicalPhrase m1, HierarchicalPhrase m2) {
 			if (m1.sentenceNumber < m2.sentenceNumber)
@@ -445,20 +490,33 @@ public class PrefixTree {
 			return nonOverlapping.compare(m_a_alpha, m_alpha_b);
 	}
 
+	/**
+	 * Implements the root QUERY algorithm (Algorithm 4) of Adam Lopez's (2008) doctoral thesis.
+	 * 
+	 * @param pattern
+	 * @param node
+	 * @param prefixNode
+	 * @param suffixNode
+	 * @return
+	 */
 	public List<HierarchicalPhrase> query(Pattern pattern, Node node, Node prefixNode, Node suffixNode) {
 
+		if (logger.isLoggable(Level.FINE)) logger.fine("PrefixTree.query( " + pattern + ",\n\t   new node " + node + ",\n\tprefix node " + prefixNode + ",\n\tsuffix node " + suffixNode + ")");
+		
 		List<HierarchicalPhrase> result;
 
-		int prefixLowerBound = prefixNode.lowBoundIndex;
-		int prefixUpperBound = prefixNode.highBoundIndex;
+		int arity = pattern.arity();
 		
-		// If the pattern is contiguous, look up the pattern in the suffix array
-		if (pattern.arity() == 0) {
+		// 1: if alpha=u then
+		//    If the pattern is contiguous, look up the pattern in the suffix array
+		if (arity == 0) {
 
+			// 2: SUFFIX-ARRAY-LOOKUP(SA_f, a alpha b, l_a_alpha, h_a_alpha
 			// Get the first and last index in the suffix array for the specified pattern
-			int[] bounds = suffixArray.findPhrase(pattern, 0, pattern.size(), prefixLowerBound, prefixUpperBound);
+			int[] bounds = suffixArray.findPhrase(pattern, 0, pattern.size(), prefixNode.lowBoundIndex, prefixNode.highBoundIndex);
 			if (bounds==null) {
 				result = Collections.emptyList();
+				//TOOD Should node.setBounds(bounds) be called here?
 			} else {
 				node.setBounds(bounds);
 				int[] startingPositions = suffixArray.getAllPositions(bounds);
@@ -467,18 +525,40 @@ public class PrefixTree {
 			
 		} else {
 
+			// 8: If M_a_alpha_b has been precomputed (then result will be non-null)
+			// 9: Retrieve M_a_alpha_b from cache of precomputations
 			result = suffixArray.invertedIndex.getMatchingPhrases(pattern);
 			
-			//if (result != null)
-			//	return result;
-			//else {
+			// 10: else
 			if (result == null) {
-				result = queryIntersect(pattern, prefixNode.hierarchicalPhrases, suffixNode.hierarchicalPhrases);
+				
+				// 16: M_a_alpha_b <-- QUERY_INTERSECT(M_a_alpha, M_alpha_b)
+				// TODO This seems to be problematic when prefixNode is the X off of root, because hierarchicalPhrases for that node is empty
+				
+				if (arity==1) {
+					
+					if (pattern.startsWithNonTerminal()) {
+						result = new ArrayList<HierarchicalPhrase>(suffixNode.hierarchicalPhrases);
+						int[] bounds = {suffixNode.lowBoundIndex, suffixNode.highBoundIndex};
+						node.setBounds(bounds);
+					} else if (pattern.endsWithNonTerminal()) {
+						result = new ArrayList<HierarchicalPhrase>(prefixNode.hierarchicalPhrases);
+						int[] bounds = {prefixNode.lowBoundIndex, prefixNode.highBoundIndex};
+						node.setBounds(bounds);
+					} else {
+						result = queryIntersect(pattern, prefixNode.hierarchicalPhrases, suffixNode.hierarchicalPhrases);
+					}
+					
+				} else {
+					result = queryIntersect(pattern, prefixNode.hierarchicalPhrases, suffixNode.hierarchicalPhrases);
+				}
+				
 				suffixArray.invertedIndex.setMatchingPhrases(pattern, result);
 			}
 		}
 
-		node.setHierarchicalPhrases(result, pattern.words);
+		// 17: Return M_a_alpha_b
+		node.storeResults(result, pattern.words);
 		return result;
 
 	}
@@ -563,7 +643,7 @@ public class PrefixTree {
 		if (alphaPattern.size() < maxPhraseLength  &&  (j+1)-i+1 <= maxPhraseSpan  && (j+1)<sentence.length) {
 
 			// Add new tuple to the queue
-			if (logger.isLoggable(Level.FINEST)) logger.finest("Adding tuple (" + i + ","+ (j+1) +","+prefixNode+",{"+(new Pattern(alphaPattern,sentence[j+1]))+"})");
+			if (logger.isLoggable(Level.FINEST)) logger.finest("\nextendQueue: Adding tuple (" + i + ","+ (j+1) +","+prefixNode+",{"+alphaPattern+"})");//(new Pattern(alphaPattern,sentence[j+1]))+"})");
 			queue.add(new Tuple(i, j+1, prefixNode, alphaPattern));//, sentence[j+1]));
 
 
@@ -594,14 +674,14 @@ public class PrefixTree {
 
 				// Q_alphaX <-- Q_alpha
 				
-				xNode.setHierarchicalPhrases(prefixNode.hierarchicalPhrases, pattern(alphaPattern.words, X));
+				xNode.storeResults(prefixNode.hierarchicalPhrases, pattern(alphaPattern.words, X));
 				
 				if (logger.isLoggable(Level.FINEST)) logger.finest("Alpha pattern is " + alphaPattern);
 
 				int I = sentence.length-1;
 				int min = (I<i+maxPhraseLength) ? I : i+maxPhraseLength-1;
 				for (int k=j+2; k<=min; k++) {
-					if (logger.isLoggable(Level.FINEST)) logger.finest("Adding tuple ("+i+","+k+","+xNode+","+alphaPattern+"+X+"+sentence[k] + " ) in EXTEND_QUEUE ****************************************" );
+					if (logger.isLoggable(Level.FINEST)) logger.finest("extendQueue: Adding tuple ("+i+","+k+","+xNode+","+alphaPattern+"+X" + " ) in EXTEND_QUEUE ****************************************" );
 					queue.add(new Tuple(i, k, xNode, alphaPattern, X));
 				}
 			}
@@ -648,7 +728,7 @@ public class PrefixTree {
 		
 		for (Node node : root.children.values()) {
 			//String sourcePhrase = (vocab==null) ? ""+node.incomingArcValue : ""+node.incomingArcValue;
-			node.print("", out, sourceVocab, targetVocab);
+			node.print(out, sourceVocab, targetVocab);
 			//out.write(node.toRuleString(vocab).getBytes("UTF-8"));
 		}
 	}
@@ -907,17 +987,23 @@ public class PrefixTree {
 		}
 
 
-		public void setHierarchicalPhrases(List<HierarchicalPhrase> hierarchicalPhrases, int[] sourceWords) {
+		/**
+		 * Stores in this node
+		 * a list of source language hierarchical phrases, 
+		 * the associated source language pattern,
+		 * and the list of associated translation rules.
+		 * <p>
+		 * This method is responsible for creating and storing
+		 * translation rules from the provided list 
+		 * of source language hierarchical phrases.
+		 * 
+		 * @param hierarchicalPhrases Source language hierarchical phrases.
+		 * @param sourceTokens Source language pattern that should correspond to the hierarchical phrases.
+		 */
+		public void storeResults(List<HierarchicalPhrase> hierarchicalPhrases, int[] sourceTokens) {
 			this.hierarchicalPhrases = hierarchicalPhrases;
-			this.sourceWords = sourceWords;
-			
-			//TODO Implement this so that we store rules instead of just hierarchical phrases
-			
+			this.sourceWords = sourceTokens;
 			this.results = new ArrayList<Rule>(hierarchicalPhrases.size());
-			
-			int dummyRuleID = 1;
-			int dummyOwner = 1;
-			
 			
 			List<Pattern> translations = this.translate();
 			
@@ -938,13 +1024,13 @@ public class PrefixTree {
 			
 			
 			//TODO Add all required features in block below. Using only one features is bogus.
-			logger.severe("P(e|f) is the only feature being calculated for rules in PrefixTree.Node. This is highly bogus");
+			if (logger.isLoggable(Level.FINE)) logger.fine("P(e|f) is the only feature being calculated for rules in PrefixTree.Node. This is highly bogus");
 			
 			for (Pattern translation : translations) {
 				
 				float[] featureScores = { counts.get(translation) / denominator };
 				
-				results.add(new Rule(dummyRuleID, X, sourceWords, translation.words, dummyOwner, featureScores, translation.arity));
+				results.add(new Rule(X, sourceTokens, translation.words, featureScores, translation.arity));
 			}
 			
 		}
@@ -958,7 +1044,12 @@ public class PrefixTree {
 			List<Pattern> translations = new ArrayList<Pattern>();
 			
 			int totalPossibleTranslations = hierarchicalPhrases.size();
-			int step = totalPossibleTranslations / SAMPLE_SIZE;
+			
+			int step = (totalPossibleTranslations<SAMPLE_SIZE) ? 
+					1 :
+					totalPossibleTranslations / SAMPLE_SIZE;
+			
+			if (logger.isLoggable(Level.FINEST)) logger.finest("\n" + totalPossibleTranslations + " possible translations. Step size is " + step);
 			
 			// Sample from cached hierarchicalPhrases
 			List<HierarchicalPhrase> samples = new ArrayList<HierarchicalPhrase>(SAMPLE_SIZE);
@@ -1174,11 +1265,15 @@ public class PrefixTree {
 		}
 		
 		public String toString() {
-			return toString(null);
+			if (suffixArray==null || suffixArray.getVocabulary()==null)
+				return toString(null);
+			else
+				return toString(suffixArray.getVocabulary());
 		}
 
-		private void print(String partialSourcePhrase, OutputStream out, Vocabulary sourceVocab, Vocabulary targetVocab) throws UnsupportedEncodingException, IOException {
+		private void print(OutputStream out, Vocabulary sourceVocab, Vocabulary targetVocab) throws UnsupportedEncodingException, IOException {
 			
+			/*
 			String leftHandSide = "[X]";
 			
 			String sourceSide = partialSourcePhrase;
@@ -1212,10 +1307,20 @@ public class PrefixTree {
 			out.write("||| ".getBytes("UTF-8"));
 			out.write(targetSide.getBytes("UTF-8"));
 			out.write("||| ".getBytes("UTF-8"));
-
+*/
+			out.write(("// Node " + objectID + ":\n").getBytes());
+			
+			if (results.isEmpty()) {
+				out.write(("\t EMPTY\n").getBytes());
+			}
+			
+			for (Rule rule : results) {
+				out.write(rule.toString(ntVocab, sourceVocab, targetVocab).getBytes("UTF-8"));
+				out.write(newline);
+			}
 			
 			for (Node node : children.values()) {
-				node.print(sourceSide, out, sourceVocab, targetVocab);
+				node.print(out, sourceVocab, targetVocab);
 			}
 			
 		}

@@ -17,9 +17,12 @@
  */
 package joshua.decoder.ff.tm;
 
+import java.util.Map;
+
 import joshua.decoder.ff.tm.TMGrammar;
 import joshua.decoder.Support;
 import joshua.decoder.Symbol;
+import joshua.util.sentence.Vocabulary;
 
 
 /**
@@ -39,6 +42,10 @@ public class Rule {
 	public  final float[] feat_scores; // the feature scores for this rule
 	public  final int     arity;// = 0;   // TODO: disk-grammar does not have this information, so, arity-penalty feature is not supported in disk-grammar
 	
+	//TODO Ideally, we shouldn't have to have dummy rule IDs and dummy owners. How can this need be eliminated?
+	private static final int DUMMY_RULE_ID = 1;
+	private static final int DUMMY_OWNER = 1;
+	
 	/* this remember all the stateless cost: sum of cost of all
 	 * stateless models (e..g, phrase model, word-penalty,
 	 * phrase-penalty). The LM model cost is not included here.
@@ -47,7 +54,13 @@ public class Rule {
 	public float statelesscost = 0.0f; //this is set in estimate_rule()
 	
 	
-	/* ~~~~~ Constructors */
+	/**
+	 * Constructs a rule from a formatted string.
+	 * 
+	 * @param r_id
+	 * @param line
+	 * @param owner_in
+	 */
 	public Rule(int r_id, String line, int owner_in) {
 		
 		rule_id = r_id;
@@ -99,8 +112,8 @@ public class Rule {
 	 * For use in constructing out of vocabulary rules.
 	 * 
 	 * @param rule_id
-	 * @param lhs
-	 * @param fr_in
+	 * @param lhs Left-hand side of the rule.
+	 * @param fr_in Source language right-hand side of the rule.
 	 * @param owner
 	 */
 	public Rule(int rule_id, int lhs, int fr_in, int owner) {
@@ -121,12 +134,12 @@ public class Rule {
 	 * For use in reading rules from disk.
 	 * 
 	 * @param rule_id
-	 * @param lhs
-	 * @param fr_in
-	 * @param eng_in
+	 * @param lhs Left-hand side of the rule.
+	 * @param fr_in Source language right-hand side of the rule.
+	 * @param eng_in Target language right-hand side of the rule.
 	 * @param owner
-	 * @param feat_scores_in
-	 * @param arity_in
+	 * @param feat_scores_in Feature value scores for the rule.
+	 * @param arity_in Number of nonterminals in the source language right-hand side.
 	 */
 	public Rule(int rule_id, int lhs, int[] fr_in, int[] eng_in, int owner, float[] feat_scores_in, int arity_in) {
 		this.rule_id     = rule_id;
@@ -136,6 +149,21 @@ public class Rule {
 		this.owner       = owner;
 		this.feat_scores = feat_scores_in;
 		this.arity       = arity_in;
+	}
+	
+	
+	/**
+	 * Constructs a new rule using the provided parameters.
+	 * The owner and rule id for this rule are undefined.
+	 * 
+	 * @param lhs Left-hand side of the rule.
+	 * @param source_rhs Source language right-hand side of the rule.
+	 * @param target_rhs Target language right-hand side of the rule.
+	 * @param feature_scores Feature value scores for the rule.
+	 * @param arity Number of nonterminals in the source language right-hand side.
+	 */
+	public Rule(int lhs, int[] source_rhs, int[] target_rhs, float[] feature_scores, int arity) {
+		this(DUMMY_RULE_ID, lhs, source_rhs, target_rhs, DUMMY_OWNER, feature_scores, arity);
 	}
 	
 	
@@ -162,6 +190,23 @@ public class Rule {
 			sb.append(Symbol.get_string(this.french));
 			sb.append(" ||| ");
 			sb.append(Symbol.get_string(this.english));
+			sb.append(" |||");
+			for (int i = 0; i < this.feat_scores.length; i++) {
+				sb.append(String.format(" %.4f", this.feat_scores[i]));
+			}
+			this.cachedToString = sb.toString();
+		}
+		return this.cachedToString;
+	}
+	
+	public String toString(Map<Integer,String> ntVocab, Vocabulary sourceVocab, Vocabulary targetVocab) {
+		if (null == this.cachedToString) {
+			StringBuffer sb = new StringBuffer("[");
+			sb.append(ntVocab.get(this.lhs));
+			sb.append("] ||| ");
+			sb.append(sourceVocab.getWords(this.french));
+			sb.append(" ||| ");
+			sb.append(targetVocab.getWords(this.english));
 			sb.append(" |||");
 			for (int i = 0; i < this.feat_scores.length; i++) {
 				sb.append(String.format(" %.4f", this.feat_scores[i]));

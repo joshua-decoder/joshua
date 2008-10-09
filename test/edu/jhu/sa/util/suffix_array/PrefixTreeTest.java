@@ -68,8 +68,13 @@ public class PrefixTreeTest {
 		
 		tree = new PrefixTree(sentence, maxPhraseSpan, maxPhraseLength, maxNonterminals, spanLimit);
 		
-//		System.err.println(tree.toString());		
-//		System.err.println(tree.size());
+		//System.err.println(tree.toString());		
+		//System.err.println(tree.size());
+	}
+	
+	@Test(dependsOnMethods = {"setup"})
+	public void size() {
+		Assert.assertEquals(tree.size(), 134);
 	}
 	
 	@Test(dependsOnMethods = {"prefixTreeNodes"})

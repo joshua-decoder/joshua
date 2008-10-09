@@ -20,8 +20,6 @@ package edu.jhu.sa.util.suffix_array;
 import joshua.util.sentence.Phrase;
 import joshua.util.sentence.Vocabulary;
 
-import java.util.Arrays;
-
 
 /**
  * Represents a pattern of terminals and nonterminals.
@@ -124,7 +122,28 @@ public class Pattern extends BasicPhrase {
 	
 	
 	public String toString() {
-		return Arrays.toString(words);
+		
+		StringBuilder s = new StringBuilder();
+
+		s.append('[');
+		
+		for (int i=0; i<words.length; i++) {
+			
+			if (i>0) {
+				s.append(' ');
+			}
+			
+			if (words[i] >= 0)
+				s.append(vocab.getWord(words[i]));
+			else
+				s.append('X');
+			
+		}
+
+		s.append(']');
+		
+		return s.toString();
+		
 	}
 
 //===============================================================

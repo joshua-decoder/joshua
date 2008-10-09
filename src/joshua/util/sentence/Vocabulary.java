@@ -116,7 +116,29 @@ public class Vocabulary implements Iterable<String> {
 		return vocabList.get(wordID);
 	}
 	
+	public String getWords(int[] wordIDs) {
+		StringBuilder s = new StringBuilder();
+		
+		for(int t=0; t<wordIDs.length; t++){
+			if(t>0) {
+				s.append(' ');
+			}
+			
+			int wordID = wordIDs[t];
+			
+			if (wordID >= vocabList.size()) { 
+				s.append(UNKNOWN_WORD_STRING);
+			} else if (wordID < 0) {
+				s.append("[X]"); //XXX This should NOT be hardcoded here!
+			} else {
+				s.append(vocabList.get(wordID));
+			}
 
+		}
+		
+		return s.toString();
+	}
+	
 	
 	/**
 	 * @return an Interator over all words in the Vocabulary.
