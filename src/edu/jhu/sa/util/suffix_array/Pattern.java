@@ -134,7 +134,10 @@ public class Pattern extends BasicPhrase {
 			}
 			
 			if (words[i] >= 0)
-				s.append(vocab.getWord(words[i]));
+				if (vocab==null)
+					s.append(words[i]);
+				else
+					s.append(vocab.getWord(words[i]));
 			else
 				s.append('X');
 			

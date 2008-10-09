@@ -48,7 +48,7 @@ public class PrefixTreeAdvancedTest {
 
 		corpusSentence = new BasicPhrase(corpusString, sourceVocab);
 		
-		targetCorpusString = "es macht ihn und es beschädigt ihn , es setzt ihn auf und es führt ihn aus .";
+		targetCorpusString = "das macht ihn und es beschädigt ihn , es setzt ihn auf und es führt ihn aus .";
 		Set<String> targetWords = new HashSet<String>();
 		for (String targetWord : targetCorpusString.split("\\s+")) {
 			targetWords.add(targetWord);
@@ -262,8 +262,8 @@ public class PrefixTreeAdvancedTest {
 		
 	}
 	
-	//@Test(dependsOnMethods={"verifyNodes"})
-	@Test
+	@Test(dependsOnMethods={"verifyNodes"})
+	//@Test
 	public void testPrint() throws UnsupportedEncodingException, IOException {
 		//System.err.println(prefixTree.size());
 		//System.err.println(prefixTree);
@@ -313,11 +313,11 @@ public class PrefixTreeAdvancedTest {
 		
 		//////
 		
-		Assert.assertNotNull(prefixTree.root.getChild(sourceVocab.getID("it")).hierarchicalPhrases);
+		Assert.assertNotNull(prefixTree.root.getChild(sourceVocab.getID("it")).sourceHierarchicalPhrases);
 		
 		for (Node node : prefixTree.root.children.values()) {
 			
-			Assert.assertNotNull(node.hierarchicalPhrases);
+			Assert.assertNotNull(node.sourceHierarchicalPhrases);
 			Assert.assertNotNull(node.results);
 			//System.out.println(node.hierarchicalPhrases.size());
 			
@@ -336,7 +336,7 @@ public class PrefixTreeAdvancedTest {
 		
 		for (Node node : prefixTree.root.getChild(sourceVocab.getID("him")).children.values()) {
 			
-			Assert.assertNotNull(node.hierarchicalPhrases);
+			Assert.assertNotNull(node.sourceHierarchicalPhrases);
 			Assert.assertNotNull(node.results);
 			
 			//System.out.println("Current node: " + node.toString(vocab));

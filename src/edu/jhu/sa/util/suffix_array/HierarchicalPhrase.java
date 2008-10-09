@@ -106,12 +106,12 @@ public class HierarchicalPhrase extends AbstractPhrase {
 	 *                    of the pattern
 	 */
 	public HierarchicalPhrase(
-		Pattern     pattern,
-		int[]       terminalSequenceStartIndices,
-		int[]       terminalSequenceEndIndices,
-		CorpusArray corpusArray,
-		int         length
-	) {
+			Pattern     pattern,
+			int[]       terminalSequenceStartIndices,
+			int[]       terminalSequenceEndIndices,
+			CorpusArray corpusArray,
+			int         length) {
+		
 		this.pattern = pattern;
 		this.terminalSequenceStartIndices = terminalSequenceStartIndices;
 		this.terminalSequenceEndIndices = terminalSequenceEndIndices;
@@ -201,10 +201,9 @@ public class HierarchicalPhrase extends AbstractPhrase {
 	 * @param suffix
 	 */
 	protected HierarchicalPhrase(
-		Pattern            pattern,
-		HierarchicalPhrase prefix,
-		HierarchicalPhrase suffix
-	) {
+			Pattern            pattern,
+			HierarchicalPhrase prefix,
+			HierarchicalPhrase suffix) {
 		
 		//TODO This constructor is almost certainly not
 		// correct. It currently merges the prefix and

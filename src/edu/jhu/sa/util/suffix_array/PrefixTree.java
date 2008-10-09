@@ -147,7 +147,7 @@ public class PrefixTree {
 		int END_OF_SENTENCE = sentence.length - 1;
 
 		Node bot = new Node(BOT_NODE_ID);
-		bot.hierarchicalPhrases = Collections.emptyList();
+		bot.sourceHierarchicalPhrases = Collections.emptyList();
 		
 		this.root = new Node(ROOT_NODE_ID);
 		bot.children = botMap(root);
@@ -164,7 +164,7 @@ public class PrefixTree {
 			int[] bounds = {0, suffixArray.size()-1};
 			root.setBounds(bounds);
 		}
-		root.hierarchicalPhrases = Collections.emptyList();
+		root.sourceHierarchicalPhrases = Collections.emptyList();
 
 		Pattern epsilon = new Pattern(vocab);
 
@@ -181,7 +181,9 @@ public class PrefixTree {
 				
 				// What should the hierarchical phrases be for the X node that comes off of ROOT?
 				// Should it be empty? Should it be everything in this suffix array?
-				xnode.hierarchicalPhrases = Collections.emptyList();
+				xnode.sourceHierarchicalPhrases = Collections.emptyList();
+				if (suffixArray != null)
+					xnode.sourcePattern = new Pattern(suffixArray.getVocabulary(), X);
 				
 				// What should the bounds be for the X node that comes off of ROOT?
 				if (suffixArray!=null) {
@@ -274,7 +276,10 @@ public class PrefixTree {
 					//     (Add new child node)
 					if (logger.isLoggable(Level.FINER)) logger.finer("Adding new node to " + prefixNode);
 					Node newNode = prefixNode.addChild(sentence[j]);
-					if (logger.isLoggable(Level.FINER)) logger.finer("Created new node " + newNode +" for \"" + sentence[j] + "\" and \n  added new node " + newNode + " to " + prefixNode);
+					if (logger.isLoggable(Level.FINER)) {
+						String word = (suffixArray==null) ? ""+sentence[j] : suffixArray.getVocabulary().getWord(sentence[j]);
+						logger.finer("Created new node " + newNode +" for \"" + word + "\" and \n  added new node " + newNode + " to " + prefixNode);
+					}
 
 
 					// 15: p_beta <-- suffix_link(p_alpha_beta)
@@ -535,22 +540,25 @@ public class PrefixTree {
 				// 16: M_a_alpha_b <-- QUERY_INTERSECT(M_a_alpha, M_alpha_b)
 				// TODO This seems to be problematic when prefixNode is the X off of root, because hierarchicalPhrases for that node is empty
 				
-				if (arity==1) {
+				if (arity==1 && prefixNode.sourcePattern.startsWithNonTerminal() && prefixNode.sourcePattern.endsWithNonTerminal()) {
 					
-					if (pattern.startsWithNonTerminal()) {
-						result = new ArrayList<HierarchicalPhrase>(suffixNode.hierarchicalPhrases);
-						int[] bounds = {suffixNode.lowBoundIndex, suffixNode.highBoundIndex};
-						node.setBounds(bounds);
-					} else if (pattern.endsWithNonTerminal()) {
-						result = new ArrayList<HierarchicalPhrase>(prefixNode.hierarchicalPhrases);
-						int[] bounds = {prefixNode.lowBoundIndex, prefixNode.highBoundIndex};
-						node.setBounds(bounds);
-					} else {
-						result = queryIntersect(pattern, prefixNode.hierarchicalPhrases, suffixNode.hierarchicalPhrases);
+					result = new ArrayList<HierarchicalPhrase>(suffixNode.sourceHierarchicalPhrases.size());
+					
+					Vocabulary vocab = (suffixArray==null) ? null : suffixArray.getVocabulary();
+					
+					int[] xwords = new int[suffixNode.sourcePattern.words.length+1];
+					xwords[0] = X;
+					for (int i=0; i<suffixNode.sourcePattern.words.length; i++) {
+						xwords[i+1] = suffixNode.sourcePattern.words[i];
+					}
+					Pattern xpattern = new Pattern(vocab, xwords);
+					
+					for (HierarchicalPhrase phrase : suffixNode.sourceHierarchicalPhrases) {
+						result.add(new HierarchicalPhrase(xpattern, phrase.terminalSequenceStartIndices, phrase.terminalSequenceEndIndices, phrase.corpusArray, phrase.length));
 					}
 					
 				} else {
-					result = queryIntersect(pattern, prefixNode.hierarchicalPhrases, suffixNode.hierarchicalPhrases);
+					result = queryIntersect(pattern, prefixNode.sourceHierarchicalPhrases, suffixNode.sourceHierarchicalPhrases);
 				}
 				
 				suffixArray.invertedIndex.setMatchingPhrases(pattern, result);
@@ -631,19 +639,19 @@ public class PrefixTree {
 	/**
 	 * Implements Function EXTEND_QUEUE from Lopez (2008) PhD Thesis, Algorithm 2, p 76
 	 * 
-	 * @param queue
-	 * @param i
+	 * @param queue Queue of tuples
+	 * @param i Start index of the pattern in the source input sentence (inclusive, 1-based).
 	 * @param j
 	 * @param sentence
-	 * @param alphaPattern
-	 * @param prefixNode
+	 * @param alphaPattern Pattern for which a new node will eventually be constructed.
+	 * @param prefixNode Node in the prefix tree to which a new node (corresponding to the pattern) will be attached.
 	 */
 	private void extendQueue(Queue<Tuple> queue, int i, int j, int[] sentence, Pattern alphaPattern, Node prefixNode) {
 
 		if (alphaPattern.size() < maxPhraseLength  &&  (j+1)-i+1 <= maxPhraseSpan  && (j+1)<sentence.length) {
 
 			// Add new tuple to the queue
-			if (logger.isLoggable(Level.FINEST)) logger.finest("\nextendQueue: Adding tuple (" + i + ","+ (j+1) +","+prefixNode+",{"+alphaPattern+"})");//(new Pattern(alphaPattern,sentence[j+1]))+"})");
+			if (logger.isLoggable(Level.FINEST)) logger.finest("\nextendQueue: Adding tuple (" + i + ","+ (j+1) +","+prefixNode+","+alphaPattern+")");//(new Pattern(alphaPattern,sentence[j+1]))+"})");
 			queue.add(new Tuple(i, j+1, prefixNode, alphaPattern));//, sentence[j+1]));
 
 
@@ -673,8 +681,16 @@ public class PrefixTree {
 				}
 
 				// Q_alphaX <-- Q_alpha
+				List<HierarchicalPhrase> phrasesWithFinalX = new ArrayList<HierarchicalPhrase>(prefixNode.sourceHierarchicalPhrases.size());
 				
-				xNode.storeResults(prefixNode.hierarchicalPhrases, pattern(alphaPattern.words, X));
+				Vocabulary vocab = (suffixArray==null) ? null : suffixArray.getVocabulary();
+				
+				Pattern xpattern = new Pattern(vocab, pattern(alphaPattern.words, X));
+				for (HierarchicalPhrase phrase : prefixNode.sourceHierarchicalPhrases) {
+					phrasesWithFinalX.add(new HierarchicalPhrase(xpattern, phrase));
+				}
+				//xNode.storeResults(prefixNode.sourceHierarchicalPhrases, pattern(alphaPattern.words, X));
+				xNode.storeResults(phrasesWithFinalX, xpattern.words);
 				
 				if (logger.isLoggable(Level.FINEST)) logger.finest("Alpha pattern is " + alphaPattern);
 
@@ -889,10 +905,11 @@ public class PrefixTree {
 		Map<Integer,Node> children;
 		
 		/** Source side hierarchical phrases for this node. */
-		List<HierarchicalPhrase> hierarchicalPhrases;
+		List<HierarchicalPhrase> sourceHierarchicalPhrases;
 
 		/** Integer representation of the source side tokens corresponding to the hierarchical phrases for this node. */
 		int[] sourceWords;
+		Pattern sourcePattern;
 		
 		/** Translation rules for this node. */
 		List<Rule> results;
@@ -908,7 +925,7 @@ public class PrefixTree {
 			this.children = new HashMap<Integer,Node>();
 			this.incomingArcValue = incomingArcValue;
 			this.objectID = nodeIDCounter++;
-			this.hierarchicalPhrases = Collections.emptyList();
+			this.sourceHierarchicalPhrases = Collections.emptyList();
 			this.results = Collections.emptyList();
 		}
 		
@@ -929,7 +946,7 @@ public class PrefixTree {
 		
 		
 		public boolean hasRules() {
-			if (hierarchicalPhrases.isEmpty()) {
+			if (sourceHierarchicalPhrases.isEmpty()) {
 				return false;
 			} else {
 				return true;
@@ -1001,8 +1018,10 @@ public class PrefixTree {
 		 * @param sourceTokens Source language pattern that should correspond to the hierarchical phrases.
 		 */
 		public void storeResults(List<HierarchicalPhrase> hierarchicalPhrases, int[] sourceTokens) {
-			this.hierarchicalPhrases = hierarchicalPhrases;
+			this.sourceHierarchicalPhrases = hierarchicalPhrases;
 			this.sourceWords = sourceTokens;
+			Vocabulary vocab = (suffixArray==null) ? null : suffixArray.getVocabulary();
+			this.sourcePattern = new Pattern(vocab, sourceTokens);
 			this.results = new ArrayList<Rule>(hierarchicalPhrases.size());
 			
 			List<Pattern> translations = this.translate();
@@ -1043,18 +1062,18 @@ public class PrefixTree {
 		public List<Pattern> translate() {
 			List<Pattern> translations = new ArrayList<Pattern>();
 			
-			int totalPossibleTranslations = hierarchicalPhrases.size();
+			int totalPossibleTranslations = sourceHierarchicalPhrases.size();
 			
 			int step = (totalPossibleTranslations<SAMPLE_SIZE) ? 
 					1 :
 					totalPossibleTranslations / SAMPLE_SIZE;
 			
-			if (logger.isLoggable(Level.FINEST)) logger.finest("\n" + totalPossibleTranslations + " possible translations. Step size is " + step);
+			if (logger.isLoggable(Level.FINEST)) logger.finest("\n" + totalPossibleTranslations + " possible translations of " + sourcePattern + ". Step size is " + step);
 			
 			// Sample from cached hierarchicalPhrases
 			List<HierarchicalPhrase> samples = new ArrayList<HierarchicalPhrase>(SAMPLE_SIZE);
 			for (int i=0; i<totalPossibleTranslations; i+=step) {
-				samples.add(hierarchicalPhrases.get(i));
+				samples.add(sourceHierarchicalPhrases.get(i));
 			}
 			
 			
@@ -1257,6 +1276,7 @@ public class PrefixTree {
 				s.append(' ');
 			}
 
+			if (!active) s.append('*');
 			s.append(']');
 
 			return s.toString();
@@ -1366,6 +1386,7 @@ public class PrefixTree {
 				s.append(' ');
 			}
 
+			if (!active) s.append('*');
 			s.append(']');
 
 			return s.toString();
@@ -1402,18 +1423,25 @@ public class PrefixTree {
 	 */
 	private static class Tuple {
 
+		/** Pattern for which a new node will be constructed. */
 		final Pattern pattern;
+		
+		/** Start index of the pattern in the source input sentence (inclusive, 1-based). */
 		final int spanStart;
+		
+		/** End index of the pattern in the source input sentence (inclusive, 1-based). */
 		final int spanEnd;
+		
+		/** Node in the prefix tree to which a new node (corresponding to the pattern) will be attached. */
 		final Node prefixNode;
 
 		/**
 		 * Constructs a new tuple.
 		 * 
-		 * @param spanStart
-		 * @param spanEnd
-		 * @param prefixNode
-		 * @param pattern
+		 * @param spanStart Start index of the pattern in the source input sentence (inclusive, 1-based).
+		 * @param spanEnd End index of the pattern in the source input sentence (inclusive, 1-based).
+		 * @param prefixNode Node in the prefix tree to which a new node (corresponding to the pattern) will be attached.
+		 * @param pattern Pattern for which a new node will be constructed.
 		 */
 		Tuple(int spanStart, int spanEnd, Node prefixNode, Pattern pattern) {
 			this.pattern = pattern;
@@ -1425,22 +1453,14 @@ public class PrefixTree {
 		/**
 		 * Constructs a new tuple.
 		 * 
-		 * @param spanStart
-		 * @param spanEnd
-		 * @param prefixNode
-		 * @param oldPattern
-		 * @param newPattern
+		 * @param spanStart Start index of the pattern in the source input sentence (inclusive, 1-based).
+		 * @param spanEnd End index of the pattern in the source input sentence (inclusive, 1-based).
+		 * @param prefixNode Node in the prefix tree to which a new node (corresponding to the pattern) will be attached.
+		 * @param startOfPattern Beginning of pattern for which a new node will be constructed.
+		 * @param restOfPattern Remainder of pattern for which a new node will be constructed (goes after startOfPattern).
 		 */
-		Tuple(int spanStart, int spanEnd, Node prefixNode, Pattern oldPattern, int... newPattern) {
-			this.pattern = new Pattern(oldPattern, newPattern);/*new int[oldPattern.length + newPattern.length];
-
-			for (int index=0; index<oldPattern.length; index++) {
-				pattern[index] = oldPattern[index];
-			}
-			for (int index=oldPattern.length; index<oldPattern.length+newPattern.length; index++) {
-				pattern[index] = newPattern[index - oldPattern.length];
-			}
-			 */
+		Tuple(int spanStart, int spanEnd, Node prefixNode, Pattern startOfPattern, int... restOfPattern) {
+			this.pattern = new Pattern(startOfPattern, restOfPattern);
 			this.spanStart = spanStart;
 			this.spanEnd = spanEnd;
 			this.prefixNode = prefixNode;
