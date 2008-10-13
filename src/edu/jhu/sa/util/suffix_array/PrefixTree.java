@@ -764,6 +764,12 @@ public class PrefixTree {
 
 	}
 
+	public Collection<Rule> getAllRules() {
+		
+		return root.getAllRules();
+		
+	}
+	
 
 	/** Maps from integer word ids to strings. Used only for debugging. */
 	static Map<Integer,String> idsToStrings;
@@ -955,7 +961,7 @@ public class PrefixTree {
 		List<HierarchicalPhrase> sourceHierarchicalPhrases;
 
 		/** Integer representation of the source side tokens corresponding to the hierarchical phrases for this node. */
-		int[] sourceWords;
+		int[] sourceWords; //TODO Do we need to store both the int[] and the Pattern??
 		Pattern sourcePattern;
 		
 		/** Translation rules for this node. */
@@ -978,8 +984,45 @@ public class PrefixTree {
 		
 		
 		public RuleCollection getRules() {
-			// return RuleCollection.newFromList( this.results );
-			throw new RuntimeException(PrefixTree.class.getName() + ".getRules(): not implemented");
+			
+			int[] empty = {};
+			
+			final int[] sourceSide = (sourcePattern==null) ? empty : sourcePattern.words;
+			final int arity = (sourcePattern==null) ? 0 : sourcePattern.arity;
+			final List<Rule> sortedResults = (results==null) ? Collections.<Rule>emptyList() : results;
+			
+			return new RuleCollection() {
+
+				public int getArity() {
+					return arity;
+				}
+
+				public List<Rule> getSortedRules() {
+					return sortedResults;
+				}
+
+				public int[] getSourceSide() {
+					return sourceSide;
+				}
+				
+			};
+			
+		}
+		
+		/**
+		 * Gets rules for this node and the children of this node.
+		 * 
+		 * @return rules for this node and the children of this node.
+		 */
+		public Collection<Rule> getAllRules() {
+			
+			List<Rule> result = new ArrayList<Rule>(getRules().getSortedRules());
+			
+			for (Node child : children.values()) {
+				result.addAll(child.getAllRules());
+			}
+			
+			return result;
 		}
 		
 		
@@ -1005,8 +1048,8 @@ public class PrefixTree {
 			if (children.containsKey(symbol)) {
 				return children.get(symbol);
 			} else {
-				//TODO Implement this
-				throw new RuntimeException("Not yet implemented");
+				//TOOD Is this the right thing to do here?
+				return null;
 			}
 		}
 
@@ -1018,8 +1061,8 @@ public class PrefixTree {
 				if (node.children.containsKey(symbol)) {
 					node = node.children.get(symbol);
 				} else {
-					//TODO Implement this
-					throw new RuntimeException("Not yet implemented");
+					//TOOD Is this the right thing to do here?
+					return null;
 				}
 			}
 			

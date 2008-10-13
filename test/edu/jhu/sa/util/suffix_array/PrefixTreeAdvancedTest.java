@@ -464,6 +464,15 @@ public class PrefixTreeAdvancedTest {
 		 
 		 */
 
+		/*
+		java.util.Collection<joshua.decoder.ff.tm.Rule> allRules = prefixTree.getAllRules();
+		
+		for (joshua.decoder.ff.tm.Rule rule : allRules) {
+			System.out.println(rule.toString(ntVocab, sourceVocab, targetVocab));
+		}
+		
+		System.out.println(allRules.size() + " total rules");
+		*/
 	}
 	
 	
