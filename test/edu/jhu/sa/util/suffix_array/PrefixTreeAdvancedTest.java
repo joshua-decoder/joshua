@@ -115,7 +115,7 @@ public class PrefixTreeAdvancedTest {
 	PrefixTree simplePrefixTree;
 	
 	@Test(dependsOnMethods={"setup"})
-	public void verifyNodes() {
+	public void verifyNodesShort() {
 		int maxPhraseSpan = 10;
 		int maxPhraseLength = 10;
 		int maxNonterminals = 2;
@@ -126,19 +126,8 @@ public class PrefixTreeAdvancedTest {
 		//BasicPhrase query = new BasicPhrase("it makes him and it mars him , it sets him on and it takes him off .", sourceVocab);
 		simplePrefixTree = new PrefixTree(suffixArray, targetCorpusArray, alignments, query.getWordIDs(), maxPhraseSpan, maxPhraseLength, maxNonterminals, spanLimit);
 
-		System.out.println("Hello");
-		System.out.println(simplePrefixTree.toString());
-		/*
-		try {
-			simplePrefixTree.print(System.out);
-		} catch (UnsupportedEncodingException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		*/
+		//System.out.println(simplePrefixTree.toString());
+	
 		//int[] sentence = {sourceVocab.getID("it"), sourceVocab.getID("makes"), sourceVocab.getID("him"), sourceVocab.getID("and"), sourceVocab.getID("it"), sourceVocab.getID("mars"), sourceVocab.getID("him"), sourceVocab.getID(","), sourceVocab.getID("it"), sourceVocab.getID("sets"), sourceVocab.getID("him"), sourceVocab.getID("on"), sourceVocab.getID("and"), sourceVocab.getID("it"), sourceVocab.getID("takes"), sourceVocab.getID("him"), sourceVocab.getID("off"), sourceVocab.getID(".")};
 		//PrefixTree dumbTree = new PrefixTree(sentence, maxPhraseSpan, maxPhraseLength, maxNonterminals, spanLimit);
 		//System.err.println(dumbTree.toString(sourceVocab));
@@ -260,9 +249,225 @@ public class PrefixTreeAdvancedTest {
 		
 		/////////////////////////////
 		
+		Assert.assertEquals(root_X_makes_him.children.size(), 0);
+		
+		/////////////////////////////
+
+		Assert.assertEquals(root_X_makes_X.children.size(), 0);
+		
+		/////////////////////////////
+
 	}
 	
-	@Test(dependsOnMethods={"verifyNodes"})
+	
+	@Test(dependsOnMethods={"setup"})
+	public void verifyNodes() {
+		int maxPhraseSpan = 10;
+		int maxPhraseLength = 10;
+		int maxNonterminals = 2;
+		int spanLimit = 8;
+		
+		//BasicPhrase query = new BasicPhrase("it makes him", sourceVocab);
+		//BasicPhrase query = new BasicPhrase("it makes him and it mars him", sourceVocab);
+		BasicPhrase query = new BasicPhrase("it makes him and it mars him , it sets him on and it takes him off .", sourceVocab);
+		PrefixTree prefixTree = new PrefixTree(suffixArray, targetCorpusArray, alignments, query.getWordIDs(), maxPhraseSpan, maxPhraseLength, maxNonterminals, spanLimit);
+
+		//System.out.println(prefixTree.toString());
+	
+		//int[] sentence = {sourceVocab.getID("it"), sourceVocab.getID("makes"), sourceVocab.getID("him"), sourceVocab.getID("and"), sourceVocab.getID("it"), sourceVocab.getID("mars"), sourceVocab.getID("him"), sourceVocab.getID(","), sourceVocab.getID("it"), sourceVocab.getID("sets"), sourceVocab.getID("him"), sourceVocab.getID("on"), sourceVocab.getID("and"), sourceVocab.getID("it"), sourceVocab.getID("takes"), sourceVocab.getID("him"), sourceVocab.getID("off"), sourceVocab.getID(".")};
+		//PrefixTree dumbTree = new PrefixTree(sentence, maxPhraseSpan, maxPhraseLength, maxNonterminals, spanLimit);
+		//System.err.println(dumbTree.toString(sourceVocab));
+		
+		Assert.assertNotNull(prefixTree.root);
+		Assert.assertNotNull(prefixTree.root.children);
+		
+		/////////////////////////////
+		
+		Assert.assertEquals(prefixTree.root.children.size(), 12);
+		
+		Assert.assertTrue(prefixTree.root.children.containsKey(sourceVocab.getID("it")));
+		Assert.assertTrue(prefixTree.root.children.containsKey(sourceVocab.getID("makes")));
+		Assert.assertTrue(prefixTree.root.children.containsKey(sourceVocab.getID("him")));
+		Assert.assertTrue(prefixTree.root.children.containsKey(sourceVocab.getID("and")));
+		Assert.assertTrue(prefixTree.root.children.containsKey(sourceVocab.getID("mars")));
+		Assert.assertTrue(prefixTree.root.children.containsKey(sourceVocab.getID(",")));
+		Assert.assertTrue(prefixTree.root.children.containsKey(sourceVocab.getID("sets")));
+		Assert.assertTrue(prefixTree.root.children.containsKey(sourceVocab.getID("on")));
+		Assert.assertTrue(prefixTree.root.children.containsKey(sourceVocab.getID("takes")));
+		Assert.assertTrue(prefixTree.root.children.containsKey(sourceVocab.getID("off")));
+		Assert.assertTrue(prefixTree.root.children.containsKey(sourceVocab.getID(".")));
+		Assert.assertTrue(prefixTree.root.children.containsKey(PrefixTree.X));
+		
+		Node root_it = prefixTree.root.children.get(sourceVocab.getID("it"));
+		Node root_makes = prefixTree.root.children.get(sourceVocab.getID("makes"));
+		Node root_him = prefixTree.root.children.get(sourceVocab.getID("him"));
+		Node root_and = prefixTree.root.children.get(sourceVocab.getID("and"));
+		Node root_mars = prefixTree.root.children.get(sourceVocab.getID("mars"));
+		Node root_comma = prefixTree.root.children.get(sourceVocab.getID(","));
+		Node root_sets = prefixTree.root.children.get(sourceVocab.getID("sets"));
+		Node root_on = prefixTree.root.children.get(sourceVocab.getID("on"));
+		Node root_takes = prefixTree.root.children.get(sourceVocab.getID("takes"));
+		Node root_off = prefixTree.root.children.get(sourceVocab.getID("off"));
+		Node root_period = prefixTree.root.children.get(sourceVocab.getID("."));
+		Node root_X = prefixTree.root.children.get(PrefixTree.X);
+		
+		Assert.assertNotNull(root_it);
+		Assert.assertNotNull(root_makes);
+		Assert.assertNotNull(root_him);
+		Assert.assertNotNull(root_and);
+		Assert.assertNotNull(root_mars);
+		Assert.assertNotNull(root_comma);
+		Assert.assertNotNull(root_sets);
+		Assert.assertNotNull(root_on);
+		Assert.assertNotNull(root_takes);
+		Assert.assertNotNull(root_off);
+		Assert.assertNotNull(root_period);
+		Assert.assertNotNull(root_X);
+		
+		/////////////////////////////
+		
+		Assert.assertEquals(root_it.children.size(), 5);
+		
+		Assert.assertTrue(root_it.children.containsKey(sourceVocab.getID("makes")));
+		Assert.assertTrue(root_it.children.containsKey(PrefixTree.X));
+		
+		Node root_it_makes = root_it.children.get(sourceVocab.getID("makes"));
+		Node root_it_mars = root_it.children.get(sourceVocab.getID("mars"));
+		Node root_it_sets = root_it.children.get(sourceVocab.getID("sets"));
+		Node root_it_takes = root_it.children.get(sourceVocab.getID("takes"));
+		Node root_it_X = root_it.children.get(PrefixTree.X);
+				
+		Assert.assertNotNull(root_it_makes);
+		Assert.assertNotNull(root_it_mars);
+		Assert.assertNotNull(root_it_sets);
+		Assert.assertNotNull(root_it_takes);
+		Assert.assertNotNull(root_it_X);
+
+		/////////////////////////////
+		
+		Assert.assertEquals(root_makes.children.size(), 2);
+		
+		Assert.assertTrue(root_makes.children.containsKey(sourceVocab.getID("him")));
+		Assert.assertTrue(root_makes.children.containsKey(PrefixTree.X));
+		
+		Node root_makes_him = root_makes.children.get(sourceVocab.getID("him"));
+		Node root_makes_X = root_makes.children.get(PrefixTree.X);
+				
+		Assert.assertNotNull(root_makes_him);
+		Assert.assertNotNull(root_makes_X);
+		
+		/////////////////////////////
+		
+		Assert.assertEquals(root_X.children.size(), 11);
+
+		Assert.assertTrue(root_X.children.containsKey(sourceVocab.getID("it")));
+		Assert.assertTrue(root_X.children.containsKey(sourceVocab.getID("makes")));
+		Assert.assertTrue(root_X.children.containsKey(sourceVocab.getID("him")));
+		Assert.assertTrue(root_X.children.containsKey(sourceVocab.getID("and")));
+		Assert.assertTrue(root_X.children.containsKey(sourceVocab.getID("mars")));
+		Assert.assertTrue(root_X.children.containsKey(sourceVocab.getID(",")));
+		Assert.assertTrue(root_X.children.containsKey(sourceVocab.getID("sets")));
+		Assert.assertTrue(root_X.children.containsKey(sourceVocab.getID("on")));
+		Assert.assertTrue(root_X.children.containsKey(sourceVocab.getID("takes")));
+		Assert.assertTrue(root_X.children.containsKey(sourceVocab.getID("off")));
+		Assert.assertTrue(root_X.children.containsKey(sourceVocab.getID(".")));
+		
+		Node root_X_it = root_X.children.get(sourceVocab.getID("it"));
+		Node root_X_makes = root_X.children.get(sourceVocab.getID("makes"));
+		Node root_X_him = root_X.children.get(sourceVocab.getID("him"));
+		Node root_X_and = root_X.children.get(sourceVocab.getID("and"));
+		Node root_X_mars = root_X.children.get(sourceVocab.getID("mars"));
+		Node root_X_comma = root_X.children.get(sourceVocab.getID(","));
+		Node root_X_sets = root_X.children.get(sourceVocab.getID("sets"));
+		Node root_X_on = root_X.children.get(sourceVocab.getID("on"));
+		Node root_X_takes = root_X.children.get(sourceVocab.getID("takes"));
+		Node root_X_off = root_X.children.get(sourceVocab.getID("off"));
+		Node root_X_period = root_X.children.get(sourceVocab.getID("."));
+		
+		Assert.assertNotNull(root_X_it);		
+		Assert.assertNotNull(root_X_makes);
+		Assert.assertNotNull(root_X_him);
+		Assert.assertNotNull(root_X_and);
+		Assert.assertNotNull(root_X_mars);
+		Assert.assertNotNull(root_X_comma);
+		Assert.assertNotNull(root_X_sets);
+		Assert.assertNotNull(root_X_on);
+		Assert.assertNotNull(root_X_takes);
+		Assert.assertNotNull(root_X_off);
+		Assert.assertNotNull(root_X_period);
+		
+		//TODO Finish implementing this test!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		
+		/////////////////////////////
+		/*
+		Assert.assertEquals(root_him.children.size(), 0);
+				
+		/////////////////////////////
+		// Level 3 in the tree
+		/////////////////////////////		
+		
+		Assert.assertEquals(root_it_makes.children.size(), 2);
+		
+		Assert.assertTrue(root_it_makes.children.containsKey(sourceVocab.getID("him")));
+		Assert.assertTrue(root_it_makes.children.containsKey(PrefixTree.X));
+		
+		Node root_it_makes_him = root_it_makes.children.get(sourceVocab.getID("him"));
+		Node root_it_makes_X = root_it_makes.children.get(PrefixTree.X);
+				
+		Assert.assertNotNull(root_it_makes_him);
+		Assert.assertNotNull(root_it_makes_X);
+
+		/////////////////////////////
+		
+		Assert.assertEquals(root_it_X.children.size(), 1);
+		
+		Assert.assertTrue(root_it_X.children.containsKey(sourceVocab.getID("him")));
+		
+		Node root_it_X_him = root_it_X.children.get(sourceVocab.getID("him"));
+				
+		Assert.assertNotNull(root_it_X_him);
+
+		/////////////////////////////
+		
+		Assert.assertEquals(root_makes_him.children.size(), 0);
+		
+		/////////////////////////////
+		
+		Assert.assertEquals(root_makes_X.children.size(), 0);
+		
+		/////////////////////////////
+		
+		Assert.assertEquals(root_X_him.children.size(), 0);
+		
+		/////////////////////////////
+		
+		Assert.assertEquals(root_X_makes.children.size(), 2);
+		
+		Assert.assertTrue(root_X_makes.children.containsKey(sourceVocab.getID("him")));
+		Assert.assertTrue(root_X_makes.children.containsKey(PrefixTree.X));
+		
+		Node root_X_makes_him = root_makes.children.get(sourceVocab.getID("him"));
+		Node root_X_makes_X = root_makes.children.get(PrefixTree.X);
+				
+		Assert.assertNotNull(root_X_makes_him);
+		Assert.assertNotNull(root_X_makes_X);
+		
+		/////////////////////////////
+		
+		Assert.assertEquals(root_X_makes_him.children.size(), 0);
+		
+		/////////////////////////////
+
+		Assert.assertEquals(root_X_makes_X.children.size(), 0);
+		
+		/////////////////////////////
+		 
+		 */
+
+	}
+	
+	
+	//@Test(dependsOnMethods={"verifyNodesShort"})
 	//@Test
 	public void testPrint() throws UnsupportedEncodingException, IOException {
 		//System.err.println(prefixTree.size());

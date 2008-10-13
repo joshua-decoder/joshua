@@ -22,6 +22,7 @@ import joshua.util.sentence.Phrase;
 import joshua.util.sentence.Span;
 import joshua.util.sentence.Vocabulary;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.ArrayList;
 
@@ -154,8 +155,8 @@ public class HierarchicalPhrase extends AbstractPhrase {
 	
 	
 	/**
-	 * Constructs a hierarchical phrase appending the final
-	 * symbol of a pattern to an existing hierarchical phrase.
+	 * Constructs a hierarchical phrase appending a final
+	 * nonterminal symbol to an existing hierarchical phrase.
 	 * <p>
 	 * This constructor is used during the query intersection
 	 * algorithm in prefix tree construction.
@@ -163,10 +164,10 @@ public class HierarchicalPhrase extends AbstractPhrase {
 	 * @param pattern
 	 * @param prefix
 	 */
-	protected HierarchicalPhrase(Pattern pattern, HierarchicalPhrase prefix) {
+	protected HierarchicalPhrase(HierarchicalPhrase prefix, int nonterminal) {
 		
 		// Use the pattern that was provided
-		this.pattern = pattern;
+		this.pattern = new Pattern(prefix.pattern, nonterminal);
 		
 		// Use the sentence number and corpus array from the prefix.
 		this.sentenceNumber = prefix.sentenceNumber;
@@ -183,14 +184,65 @@ public class HierarchicalPhrase extends AbstractPhrase {
 			terminalSequenceEndIndices[i] = prefix.terminalSequenceEndIndices[i];
 		}
 		
-		if (pattern.endsWithNonTerminal()) {
-			this.length = prefix.length;
-		} else {
-			this.length = prefix.length + 1;
-			terminalSequenceEndIndices[terminalSequenceEndIndices.length-1] += 1;
-		}
+		this.length = prefix.length;
+		
 	}
 	
+	
+	protected HierarchicalPhrase(Pattern pattern, HierarchicalPhrase prefix, HierarchicalPhrase suffix) {
+		
+		// Use the pattern that was provided
+		this.pattern = pattern;
+		
+		// Use the sentence number and corpus array from the prefix.
+		this.sentenceNumber = prefix.sentenceNumber;
+		this.corpusArray = prefix.corpusArray;
+		
+		boolean prefixEndsWithNonterminal = prefix.endsWithNonterminal();
+		
+		if (prefixEndsWithNonterminal) {
+			this.terminalSequenceEndIndices = new int[prefix.terminalSequenceEndIndices.length+1];
+			this.terminalSequenceStartIndices = new int[prefix.terminalSequenceStartIndices.length+1];
+		} else {
+			this.terminalSequenceEndIndices = new int[prefix.terminalSequenceEndIndices.length];
+			this.terminalSequenceStartIndices = new int[prefix.terminalSequenceStartIndices.length];
+		}
+
+		for (int i = 0; i < prefix.terminalSequenceStartIndices.length; i++) {
+			terminalSequenceStartIndices[i] = prefix.terminalSequenceStartIndices[i];	
+		}
+
+		for (int i = 0; i < prefix.terminalSequenceEndIndices.length; i++) {
+			terminalSequenceEndIndices[i] = prefix.terminalSequenceEndIndices[i];
+		}
+			
+		boolean patternEndsWithNonterminal = pattern.endsWithNonTerminal();
+		
+		if (prefixEndsWithNonterminal) {
+			int lastStartIndex = suffix.terminalSequenceStartIndices[suffix.terminalSequenceStartIndices.length-1];
+			terminalSequenceStartIndices[prefix.terminalSequenceStartIndices.length] = lastStartIndex;
+			terminalSequenceEndIndices[prefix.terminalSequenceStartIndices.length] = lastStartIndex+1;
+			
+			if (patternEndsWithNonterminal) {
+				// This means that the pattern ends with two adjacent nonterminals. 
+				// This is not well defined.
+				this.length = prefix.length;
+			} else {
+				this.length = (lastStartIndex+1) - terminalSequenceStartIndices[0];
+			}
+		} else {
+			if (patternEndsWithNonterminal) {
+				this.length = prefix.length;
+			} else {
+				this.length = prefix.length + 1;
+				terminalSequenceEndIndices[terminalSequenceEndIndices.length-1] += 1;
+			}
+		}
+		
+		
+		
+		
+	}
 	
 	/**
 	 * Constructs a hierarchical phrase by merging two existing
@@ -199,7 +251,7 @@ public class HierarchicalPhrase extends AbstractPhrase {
 	 * @param pattern
 	 * @param prefix
 	 * @param suffix
-	 */
+	 */ /*
 	protected HierarchicalPhrase(
 			Pattern            pattern,
 			HierarchicalPhrase prefix,
@@ -299,7 +351,7 @@ public class HierarchicalPhrase extends AbstractPhrase {
 			terminalSequenceStartIndices[i+prefixLength] = suffix.terminalSequenceStartIndices[i];
 		}
 	}
-	
+	*/
 	
 	/**
 	 * Returns the index in the corpus of the first terminal
@@ -409,11 +461,15 @@ public class HierarchicalPhrase extends AbstractPhrase {
 		
 		int[] wordIDs = pattern.getWords();
 		for (int i = 0; i < wordIDs.length; i++) {
-			s.append(corpusArray.vocab.getWord(wordIDs[i]));
-			if (i != wordIDs.length - 1) {
+			if (wordIDs[i]<0) s.append('X');
+			else s.append(corpusArray.vocab.getWord(wordIDs[i]));
+			
+			//if (i != wordIDs.length - 1) {
 				s.append(' ');
-			}
+			
 		}
+		
+		s.append(Arrays.toString(terminalSequenceStartIndices));
 		
 		return s.toString();
 	}

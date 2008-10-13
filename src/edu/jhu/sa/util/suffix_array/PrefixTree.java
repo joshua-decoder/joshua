@@ -214,19 +214,23 @@ public class PrefixTree {
 
 		// 2: for i from 1 to I
 		for (int i=START_OF_SENTENCE; i<=END_OF_SENTENCE; i++) {
-			if (logger.isLoggable(Level.FINEST)) logger.finest("Adding tuple (" + i + ","+ i +","+root+",{"+intToString(sentence[i])+"})");
-
+			//if (logger.isLoggable(Level.FINEST)) logger.finest("Adding tuple (" + i + ","+ i +","+root+",{"+intToString(sentence[i])+"})");
+			if (logger.isLoggable(Level.FINEST)) logger.finest("Adding tuple (\u03b5," + i + ","+ i +","+root +")");
+			
 			// 3: Add <f_i, i, i+1, p_eps> to queue
-			queue.add(new Tuple(i, i, root, epsilon));
+			queue.add(new Tuple(epsilon, i, i, root));
 		}
 
-
-		// 4: for i from 1 to I
-		for (int i=START_OF_SENTENCE+1; i<=END_OF_SENTENCE; i++) {
-			if (logger.isLoggable(Level.FINEST)) logger.finest("Adding tuple (" + (i-1) + ","+(i)+","+root+",{"+X+","+intToString(sentence[i])+"})");
-
-			// 5: Add <X f_i, i-1, i+1, p_x> to queue
-			queue.add(new Tuple(i-1, i, root.getChild(X), new Pattern(vocab,X)));
+		{	Pattern xpattern = new Pattern(vocab,X);
+			
+			// 4: for i from 1 to I
+			for (int i=START_OF_SENTENCE+1; i<=END_OF_SENTENCE; i++) {
+				//if (logger.isLoggable(Level.FINEST)) logger.finest("Adding tuple (" + (i-1) + ","+(i)+","+root+",{"+X+","+intToString(sentence[i])+"})");
+				if (logger.isLoggable(Level.FINEST)) logger.finest("Adding tuple (X," + (i-1) + ","+ i +","+xnode +")");
+				
+				// 5: Add <X f_i, i-1, i+1, p_x> to queue
+				queue.add(new Tuple(xpattern, i-1, i, xnode));
+			}
 		}
 
 
@@ -242,19 +246,22 @@ public class PrefixTree {
 			int i = tuple.spanStart;
 			int j = tuple.spanEnd;
 			Node prefixNode = tuple.prefixNode;
-			Pattern pattern = tuple.pattern;
+			Pattern prefixPattern = tuple.pattern;
 
-			if (logger.isLoggable(Level.FINER)) logger.finer("Have tuple (" + i + ","+j+","+prefixNode+","+pattern+")");
+			if (logger.isLoggable(Level.FINER)) logger.finer("Have tuple (" +prefixPattern+","+ i + ","+j+","+prefixNode+")");
 
 			if (j <= END_OF_SENTENCE) {
 
 				// 8: If p_alphaBetaF_i elementOf children(p_alphaBeta) then
 				if (prefixNode.hasChild(sentence[j])) {
 
-					if (logger.isLoggable(Level.FINER)) logger.finer("EXISTING node for \"" + sentence[j] + "\" from " + prefixNode + " to node " + prefixNode.getChild(sentence[j])+ " with pattern " + pattern);
+					if (logger.isLoggable(Level.FINER)) logger.finer("EXISTING node for \"" + sentence[j] + "\" from " + prefixNode + " to node " + prefixNode.getChild(sentence[j])+ " with pattern " + prefixPattern);
 
-					// 9: If p_alphaBetaF_i is inactive then
-					if (prefixNode.getChild(sentence[j]).active == Node.INACTIVE) {
+					// child is p_alphaBetaF_j
+					Node child = prefixNode.getChild(sentence[j]);
+					
+					// 9: If p_alphaBetaF_j is inactive then
+					if (child.active == Node.INACTIVE) {
 						
 						// 10: Continue to next item in queue
 						continue;
@@ -264,8 +271,11 @@ public class PrefixTree {
 						
 						// 12: EXTEND_QUEUE(alpha beta f_j, i, j, f_1^I)
 						if (logger.isLoggable(Level.FINER)) logger.finer("TREE BEFOR EXTEND: " + root);
-						if (logger.isLoggable(Level.FINER)) logger.finer("Calling EXTEND_QUEUE("+i+","+j+","+pattern+","+prefixNode);
-						extendQueue(queue, i, j, sentence, new Pattern(pattern,sentence[j]), prefixNode.getChild(sentence[j]));
+						if (logger.isLoggable(Level.FINER)) logger.finer("Calling EXTEND_QUEUE("+i+","+j+","+prefixPattern+","+prefixNode);
+						//if (true) throw new RuntimeException("Probably buggy call to extendQueue"); //TODO verify this
+						//extendQueue(queue, i, j, sentence, new Pattern(prefixPattern,sentence[j]), prefixNode.getChild(sentence[j])); //XXX Is this right? Should it be prefixNode instead of prefixNode.getChild?
+						//extendQueue(queue, i, j, sentence, child.sourcePattern, child);
+						extendQueue(queue, i, j, sentence, new Pattern(prefixPattern,sentence[j]), child);
 						if (logger.isLoggable(Level.FINER)) logger.finer("TREE AFTER EXTEND: " + root);
 						
 					}
@@ -304,7 +314,7 @@ public class PrefixTree {
 						// 18: else
 					} else { 
 
-						Pattern extendedPattern = new Pattern(pattern,sentence[j]);
+						Pattern extendedPattern = new Pattern(prefixPattern,sentence[j]);
 
 						List<HierarchicalPhrase> result = null;
 						
@@ -372,14 +382,14 @@ public class PrefixTree {
 	public Grammar getRoot() {
 		return root;
 	}
-
+/*
 	private String intToString(int word) {
 		if (suffixArray==null)
 			return ""+word;
 		else
 			return suffixArray.corpus.vocab.getWord(word)+" (" + word + ")";
 	}
-	
+	*/
 	final Comparator<HierarchicalPhrase> nonOverlapping = new Comparator<HierarchicalPhrase>() {
 		public int compare(HierarchicalPhrase m1, HierarchicalPhrase m2) {
 			if (m1.sentenceNumber < m2.sentenceNumber)
@@ -558,6 +568,9 @@ public class PrefixTree {
 					}
 					
 				} else {
+					
+					if (logger.isLoggable(Level.FINEST)) logger.finest("Calling queryIntersect("+pattern+" M_a_alpha.pattern=="+prefixNode.sourcePattern + ", M_alpha_b.pattern=="+suffixNode.sourcePattern+")");
+					
 					result = queryIntersect(pattern, prefixNode.sourceHierarchicalPhrases, suffixNode.sourceHierarchicalPhrases);
 				}
 				
@@ -582,6 +595,17 @@ public class PrefixTree {
 	 */
 	List<HierarchicalPhrase> queryIntersect(Pattern pattern, List<HierarchicalPhrase> M_a_alpha, List<HierarchicalPhrase> M_alpha_b) {
 
+		if (logger.isLoggable(Level.FINEST)) {
+			logger.finest("queryIntersect("+pattern+" M_a_alpha.size=="+M_a_alpha.size() + ", M_alpha_b.size=="+M_alpha_b.size());
+			
+			logger.finest("M_a_alpha phrases:");
+			for (HierarchicalPhrase phrase : M_a_alpha) logger.finest(phrase.toString());
+			
+			logger.finest("M_alpha_b phrases:");
+			for (HierarchicalPhrase phrase : M_alpha_b) logger.finest(phrase.toString());
+			
+		}
+		
 		// results is M_{a_alpha_b} in the paper
 		List<HierarchicalPhrase> results = new ArrayList<HierarchicalPhrase>();
 
@@ -593,20 +617,23 @@ public class PrefixTree {
 
 		while (i<I && j<J) {
 
-			HierarchicalPhrase m_a_alpha, m_alpha_b;
-			m_a_alpha = M_a_alpha.get(i);
-			m_alpha_b = M_alpha_b.get(j);
+//			HierarchicalPhrase m_a_alpha, m_alpha_b;
+//			m_a_alpha = M_a_alpha.get(i);
+//			m_alpha_b = M_alpha_b.get(j);
 			
-			while (j<J && compare(m_a_alpha, m_alpha_b) > 0) {
+			while (j<J && compare(M_a_alpha.get(i), M_alpha_b.get(j)) > 0) {
 				j++; // advance j past no longer needed item in M_alpha_b
-				m_alpha_b = M_alpha_b.get(j);
+				//m_alpha_b = M_alpha_b.get(j);
 			}
 
-			int k = i;
+			if (j>=J) break;
+			
+			//int k = i;
 			int l = j;
 			
 			// Process all matchings in M_alpha_b with same first element
-			while (M_alpha_b.get(i).terminalSequenceStartIndices[0] == M_alpha_b.get(k).terminalSequenceStartIndices[0]) {
+			ProcessMatchings:
+			while (M_alpha_b.get(j).terminalSequenceStartIndices[0] == M_alpha_b.get(l).terminalSequenceStartIndices[0]) {
 				
 				int compare_i_l = compare(M_a_alpha.get(i), M_alpha_b.get(l));
 				while (compare_i_l >= 0) {
@@ -614,18 +641,24 @@ public class PrefixTree {
 					if (compare_i_l == 0) {
 						
 						// append M_a_alpha[i] |><| M_alpha_b[l] to M_a_alpha_b
-						results.add(new HierarchicalPhrase(pattern, M_a_alpha.get(i)));
-						//results.add(new HierarchicalPhrase(pattern, M_a_alpha.get(i), M_alpha_b.get(l)));
+						results.add(new HierarchicalPhrase(pattern, M_a_alpha.get(i), M_alpha_b.get(l)));
 						
 					} // end if
 					
 					l++; // we can visit m_alpha_b[l] again, but only next time through outermost loop
 					
-					compare_i_l = compare(M_a_alpha.get(i), M_alpha_b.get(l));
+					if (l < J) {
+						compare_i_l = compare(M_a_alpha.get(i), M_alpha_b.get(l));
+					} else {
+						i++;
+						break ProcessMatchings;
+					}
 					
 				} // end while
 				
 				i++; // advance i past no longer needed item in M_a_alpha
+				
+				if (i >= I) break;
 				
 			} // end while
 			
@@ -641,64 +674,78 @@ public class PrefixTree {
 	 * 
 	 * @param queue Queue of tuples
 	 * @param i Start index of the pattern in the source input sentence (inclusive, 1-based).
-	 * @param j
+	 * @param j End index of the pattern in the source input sentence (inclusive, 1-based).
 	 * @param sentence
-	 * @param alphaPattern Pattern for which a new node will eventually be constructed.
-	 * @param prefixNode Node in the prefix tree to which a new node (corresponding to the pattern) will be attached.
+	 * @param pattern Pattern corresponding to the prefix node. In Lopez's terminology, this pattern is alpha f_j.
+	 * @param node Node in the prefix tree to which a new node (corresponding to the pattern) will eventually be attached.
 	 */
-	private void extendQueue(Queue<Tuple> queue, int i, int j, int[] sentence, Pattern alphaPattern, Node prefixNode) {
+	private void extendQueue(Queue<Tuple> queue, int i, int j, int[] sentence, Pattern pattern, Node node) {
 
-		if (alphaPattern.size() < maxPhraseLength  &&  (j+1)-i+1 <= maxPhraseSpan  && (j+1)<sentence.length) {
+		// 1: if |alpha| < MaxPhraseLength  and  j-i+1<=MaxPhraseSpan then 
+		if (pattern.size() < maxPhraseLength  &&  (j+1)-i+1 <= maxPhraseSpan  && (j+1)<sentence.length) {
 
-			// Add new tuple to the queue
-			if (logger.isLoggable(Level.FINEST)) logger.finest("\nextendQueue: Adding tuple (" + i + ","+ (j+1) +","+prefixNode+","+alphaPattern+")");//(new Pattern(alphaPattern,sentence[j+1]))+"})");
-			queue.add(new Tuple(i, j+1, prefixNode, alphaPattern));//, sentence[j+1]));
+			// 2: Add <alpha f_j, i, j+1, p_alpha> to queue
+			//    (add new tuple to the queue)
+			if (logger.isLoggable(Level.FINEST)) logger.finest("\nextendQueue: Adding tuple (" +pattern+","+ i + ","+ (j+1) +","+node+")");//(new Pattern(alphaPattern,sentence[j+1]))+"})");
+			queue.add(new Tuple(pattern, i, j+1, node));//, sentence[j+1]));
 
-
-			if (alphaPattern.arity() < maxNonterminals) {
+			// 3: if arity(alpha) < MaxNonterminals then
+			if (pattern.arity() < maxNonterminals) {
 				Node xNode;
 
-				if (! prefixNode.children.containsKey(X)) {
+				if (! node.children.containsKey(X)) {
 
-					// Add new child node in tree and mark in as active
-					xNode = prefixNode.addChild(X);
-					if (logger.isLoggable(Level.FINEST)) logger.finest("Adding node for \"" + X + "\" from " + prefixNode + " to new node " + xNode + " with alphaPattern " + alphaPattern + "  (in extendQueue)");
+					// 4: children(p_alpha) <-- children(p_alpha) U p_alphaX
+					//    (add new child node in tree and mark in as active)
+					xNode = node.addChild(X);
+					if (logger.isLoggable(Level.FINEST)) logger.finest("Adding node for \"" + X + "\" from " + node + " to new node " + xNode + " with alphaPattern " + pattern + "  (in extendQueue)");
 
-					Node suffixLink = calculateSuffixLink(prefixNode, X);
+					Node suffixLink = calculateSuffixLink(node, X);
 
 					if (logger.isLoggable(Level.FINEST)) {
 						String oldSuffixLink = (xNode.suffixLink==null) ? "null" : "id"+xNode.suffixLink.objectID;
 						String newSuffixLink = (suffixLink==null) ? "null" : "id"+suffixLink.objectID;
-						logger.finest("Changing suffix link from " + oldSuffixLink + " to " + newSuffixLink + " for node " + xNode + " (prefix node " + prefixNode + " ) with token " + X);
+						logger.finest("Changing suffix link from " + oldSuffixLink + " to " + newSuffixLink + " for node " + xNode + " (prefix node " + node + " ) with token " + X);
 					}
 
 					xNode.linkToSuffix( suffixLink );
 
 				} else {
-					xNode = prefixNode.children.get(X);
-					xNode.active = Node.ACTIVE;
-					if (logger.isLoggable(Level.FINEST)) logger.finest("X Node is already " + xNode + " for prefixNode " + prefixNode);
+					// TODO Should this method simply return (or throw an exception) in this case?
+					xNode = node.children.get(X);
+					if (logger.isLoggable(Level.FINEST)) logger.finest("X Node is already " + xNode + " for prefixNode " + node);
 				}
 
-				// Q_alphaX <-- Q_alpha
-				List<HierarchicalPhrase> phrasesWithFinalX = new ArrayList<HierarchicalPhrase>(prefixNode.sourceHierarchicalPhrases.size());
+				// 5: Mark p_alphaX active
+				xNode.active = Node.ACTIVE;
 				
-				Vocabulary vocab = (suffixArray==null) ? null : suffixArray.getVocabulary();
-				
-				Pattern xpattern = new Pattern(vocab, pattern(alphaPattern.words, X));
-				for (HierarchicalPhrase phrase : prefixNode.sourceHierarchicalPhrases) {
-					phrasesWithFinalX.add(new HierarchicalPhrase(xpattern, phrase));
+				// 6: Q_alphaX <-- Q_alpha
+				{
+					List<HierarchicalPhrase> phrasesWithFinalX = new ArrayList<HierarchicalPhrase>(node.sourceHierarchicalPhrases.size());
+
+					Vocabulary vocab = (suffixArray==null) ? null : suffixArray.getVocabulary();
+
+					Pattern xpattern = new Pattern(vocab, pattern(pattern.words, X));
+					for (HierarchicalPhrase phrase : node.sourceHierarchicalPhrases) {
+						phrasesWithFinalX.add(new HierarchicalPhrase(phrase, X));
+					}
+					//xNode.storeResults(prefixNode.sourceHierarchicalPhrases, pattern(alphaPattern.words, X));
+					xNode.storeResults(phrasesWithFinalX, xpattern.words);
 				}
-				//xNode.storeResults(prefixNode.sourceHierarchicalPhrases, pattern(alphaPattern.words, X));
-				xNode.storeResults(phrasesWithFinalX, xpattern.words);
 				
-				if (logger.isLoggable(Level.FINEST)) logger.finest("Alpha pattern is " + alphaPattern);
+				if (logger.isLoggable(Level.FINEST)) logger.finest("Alpha pattern is " + pattern);
 
 				int I = sentence.length-1;
 				int min = (I<i+maxPhraseLength) ? I : i+maxPhraseLength-1;
+				Pattern patternX = new Pattern(pattern, X);
+				
+				// 7: for k from j+1 to min(I, i+MaxPhraseLength) do
 				for (int k=j+2; k<=min; k++) {
-					if (logger.isLoggable(Level.FINEST)) logger.finest("extendQueue: Adding tuple ("+i+","+k+","+xNode+","+alphaPattern+"+X" + " ) in EXTEND_QUEUE ****************************************" );
-					queue.add(new Tuple(i, k, xNode, alphaPattern, X));
+					
+					// 8: Add <alpha f_j X, i, k, p_alphaX> to queue
+					if (logger.isLoggable(Level.FINEST)) logger.finest("extendQueue: Adding tuple ("+patternX+","+i+","+k+","+xNode+ " ) in EXTEND_QUEUE ****************************************" );
+					queue.add(new Tuple(patternX, i, k, xNode));
+					
 				}
 			}
 		}
@@ -1423,7 +1470,7 @@ public class PrefixTree {
 	 */
 	private static class Tuple {
 
-		/** Pattern for which a new node will be constructed. */
+		/** Pattern corresponding to the prefix node (NOT the pattern corresponding to the new node that will be constructed). */
 		final Pattern pattern;
 		
 		/** Start index of the pattern in the source input sentence (inclusive, 1-based). */
@@ -1438,12 +1485,12 @@ public class PrefixTree {
 		/**
 		 * Constructs a new tuple.
 		 * 
+		 * @param pattern Pattern corresponding to the prefix node (NOT the pattern corresponding to the new node that will be constructed).
 		 * @param spanStart Start index of the pattern in the source input sentence (inclusive, 1-based).
 		 * @param spanEnd End index of the pattern in the source input sentence (inclusive, 1-based).
 		 * @param prefixNode Node in the prefix tree to which a new node (corresponding to the pattern) will be attached.
-		 * @param pattern Pattern for which a new node will be constructed.
 		 */
-		Tuple(int spanStart, int spanEnd, Node prefixNode, Pattern pattern) {
+		Tuple(Pattern pattern, int spanStart, int spanEnd, Node prefixNode) {
 			this.pattern = pattern;
 			this.spanStart = spanStart;
 			this.spanEnd = spanEnd;
@@ -1456,15 +1503,15 @@ public class PrefixTree {
 		 * @param spanStart Start index of the pattern in the source input sentence (inclusive, 1-based).
 		 * @param spanEnd End index of the pattern in the source input sentence (inclusive, 1-based).
 		 * @param prefixNode Node in the prefix tree to which a new node (corresponding to the pattern) will be attached.
-		 * @param startOfPattern Beginning of pattern for which a new node will be constructed.
-		 * @param restOfPattern Remainder of pattern for which a new node will be constructed (goes after startOfPattern).
+		 * @param startOfPattern Beginning of pattern for the prefixNode
+		 * @param restOfPattern Remainder of pattern for the prefixNode (goes after startOfPattern).
 		 */
-		Tuple(int spanStart, int spanEnd, Node prefixNode, Pattern startOfPattern, int... restOfPattern) {
+		/*Tuple(int spanStart, int spanEnd, Node prefixNode, Pattern startOfPattern, int... restOfPattern) {
 			this.pattern = new Pattern(startOfPattern, restOfPattern);
 			this.spanStart = spanStart;
 			this.spanEnd = spanEnd;
 			this.prefixNode = prefixNode;
-		}
+		}*/
 	}
 
 	protected static int[] pattern(int[] oldPattern, int... newPattern) {

@@ -7,6 +7,7 @@
 	<property name="build" value="./bin" />
 	<property name="doc" value="./javadoc" />
 	<property name="testng" value="./lib/testng-5.8-jdk15.jar"/>
+	<property name="bdb" value="./lib/je-3.2.23.jar"/>
 
 	<!-- Define the unit testing task -->
 	<taskdef resource="testngtasks" classpath="${testng}"/>
@@ -21,7 +22,7 @@
 	
 	<!-- Compile the Java code -->
 	<target name="compile" depends="init">
-		<javac compiler="javac1.5" srcdir="${src}" destdir="${build}" debug="on"/> 
+		<javac compiler="javac1.5" srcdir="${src}" destdir="${build}" classpath="${bdb}" debug="on"/> 
 	</target>
 
 	
