@@ -68,7 +68,7 @@ public class SAGrammarFactory implements GrammarFactory {
 			words[i] = sentence.getWordID(i);
 		}
 		
-		PrefixTree prefixTree = new PrefixTree(sourceSuffixArray, targetCorpus, alignments, words, maxPhraseSpan, maxPhraseLength, maxNonterminals, spanLimit);
+		PrefixTree prefixTree = new PrefixTree(sourceSuffixArray, targetCorpus, alignments, words, maxPhraseSpan, maxPhraseLength, maxNonterminals);
 		
 		return prefixTree.getRoot();
 	}

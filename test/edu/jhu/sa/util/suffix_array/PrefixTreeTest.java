@@ -45,7 +45,6 @@ public class PrefixTreeTest {
 	int maxPhraseSpan = 5;
 	int maxPhraseLength = 5;
 	int maxNonterminals = 2;
-	int spanLimit = 8;
 	
 	
 	
@@ -66,7 +65,7 @@ public class PrefixTreeTest {
 		
 		PrefixTree.idsToStrings = idToString;
 		
-		tree = new PrefixTree(sentence, maxPhraseSpan, maxPhraseLength, maxNonterminals, spanLimit);
+		tree = new PrefixTree(sentence, maxPhraseSpan, maxPhraseLength, maxNonterminals);
 		
 		//System.err.println(tree.toString());		
 		//System.err.println(tree.size());

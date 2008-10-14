@@ -55,7 +55,6 @@ public class ExtractRules {
 		Option<Integer> maxPhraseSpan = commandLine.addIntegerOption("maxPhraseSpan","MAX_PHRASE_SPAN",10, "Max phrase span");
 		Option<Integer> maxPhraseLength = commandLine.addIntegerOption("maxPhraseLength","MAX_PHRASE_LENGTH",10, "Max phrase length");
 		Option<Integer> maxNonterminals = commandLine.addIntegerOption("maxNonterminals","MAX_NONTERMINALS",2, "Max nonterminals");
-		Option<Integer> spanLimit = commandLine.addIntegerOption("spanLimit","SPAN_LIMIT",8, "Span limit");
 		
 		
 		commandLine.parse(args);
@@ -96,7 +95,7 @@ public class ExtractRules {
 		while (testFileScanner.hasNextLine()) {
 			String line = testFileScanner.nextLine();
 			int[] words = sourceVocab.getIDs(line);
-			PrefixTree prefixTree = new PrefixTree(sourceSuffixArray, targetCorpusArray, alignmentArray, words, commandLine.getValue(maxPhraseSpan), commandLine.getValue(maxPhraseLength), commandLine.getValue(maxNonterminals), commandLine.getValue(spanLimit));
+			PrefixTree prefixTree = new PrefixTree(sourceSuffixArray, targetCorpusArray, alignmentArray, words, commandLine.getValue(maxPhraseSpan), commandLine.getValue(maxPhraseLength), commandLine.getValue(maxNonterminals));
 			
 			for (Rule rule : prefixTree.getAllRules()) {
 				System.out.println(rule.toString(ntVocab, sourceVocab, targetVocab));

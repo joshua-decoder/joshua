@@ -119,12 +119,11 @@ public class PrefixTreeAdvancedTest {
 		int maxPhraseSpan = 10;
 		int maxPhraseLength = 10;
 		int maxNonterminals = 2;
-		int spanLimit = 8;
 		
 		BasicPhrase query = new BasicPhrase("it makes him", sourceVocab);
 		//BasicPhrase query = new BasicPhrase("it makes him and it mars him", sourceVocab);
 		//BasicPhrase query = new BasicPhrase("it makes him and it mars him , it sets him on and it takes him off .", sourceVocab);
-		simplePrefixTree = new PrefixTree(suffixArray, targetCorpusArray, alignments, query.getWordIDs(), maxPhraseSpan, maxPhraseLength, maxNonterminals, spanLimit);
+		simplePrefixTree = new PrefixTree(suffixArray, targetCorpusArray, alignments, query.getWordIDs(), maxPhraseSpan, maxPhraseLength, maxNonterminals);
 
 		//System.out.println(simplePrefixTree.toString());
 	
@@ -265,12 +264,11 @@ public class PrefixTreeAdvancedTest {
 		int maxPhraseSpan = 10;
 		int maxPhraseLength = 10;
 		int maxNonterminals = 2;
-		int spanLimit = 8;
 		
 		//BasicPhrase query = new BasicPhrase("it makes him", sourceVocab);
 		//BasicPhrase query = new BasicPhrase("it makes him and it mars him", sourceVocab);
 		BasicPhrase query = new BasicPhrase("it makes him and it mars him , it sets him on and it takes him off .", sourceVocab);
-		PrefixTree prefixTree = new PrefixTree(suffixArray, targetCorpusArray, alignments, query.getWordIDs(), maxPhraseSpan, maxPhraseLength, maxNonterminals, spanLimit);
+		PrefixTree prefixTree = new PrefixTree(suffixArray, targetCorpusArray, alignments, query.getWordIDs(), maxPhraseSpan, maxPhraseLength, maxNonterminals);
 
 		//System.out.println(prefixTree.toString());
 	
@@ -490,7 +488,6 @@ public class PrefixTreeAdvancedTest {
 		int maxPhraseSpan = 10;
 		int maxPhraseLength = 10;
 		int maxNonterminals = 2;
-		int spanLimit = 8;
 		
 		
 		String queryString = "it persuades him and it disheartens him";
@@ -500,7 +497,7 @@ public class PrefixTreeAdvancedTest {
 		Assert.assertEquals(querySentence.toString(), "it UNK him and it UNK him");
 		Assert.assertEquals(corpusSentence.toString(), corpusString);
 		
-		PrefixTree prefixTree = new PrefixTree(suffixArray, targetCorpusArray, alignments, querySentence.getWordIDs(), maxPhraseSpan, maxPhraseLength, maxNonterminals, spanLimit);
+		PrefixTree prefixTree = new PrefixTree(suffixArray, targetCorpusArray, alignments, querySentence.getWordIDs(), maxPhraseSpan, maxPhraseLength, maxNonterminals);
 		
 
 		

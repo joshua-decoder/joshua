@@ -52,11 +52,6 @@ public class PrefixTree {
 	/** Logger for this class. */
 	private static final Logger logger = Logger.getLogger(PrefixTree.class.getName());
 
-	public static final int MAX_NT_SPAN = 5; //XXX Should this be stored elsewhere?
-	public static final int MAX_PHRASE_LENGTH = 9; //XXX Should this be stored elsewhere?
-	public static final int SAMPLE_SIZE = 100; //XXX Should this be stored elsewhere?
-	
-	private final int spanLimit; //XXX Should this be stored elsewhere?
 	
 	/** Integer representation of the nonterminal X. All nonterminals are guaranteed to be represented by negative integers. */
 	static final int X = -1;
@@ -67,11 +62,22 @@ public class PrefixTree {
 	final Node root;
 	final Phrase sentence;
 
-	private final int maxPhraseSpan;
+	/** Max span in the source corpus of any extracted hierarchical phrase */
+	private final int maxPhraseSpan;   
+	
+	/** Maximum number of terminals plus nonterminals allowed in any extracted hierarchical phrase. */
 	private final int maxPhraseLength;
+	
+	/** Maximum number of nonterminals allowed in any extracted hierarchical phrase. */
 	private final int maxNonterminals;
+	
+	/** Maximum span in the source corpus of any nonterminal in an extracted hierarchical phrase. */
+	private final int maxNonterminalSpan;
 
-
+	/** Maximum number of instances of a source phrase from the source corpus to use when translating a source phrase. */
+	private final int sampleSize = 100;
+		
+	
 	static final int ROOT_NODE_ID = -999;
 	static final int BOT_NODE_ID = -2000;
 
@@ -111,7 +117,7 @@ public class PrefixTree {
 		maxPhraseSpan = Integer.MIN_VALUE;
 		maxPhraseLength = Integer.MIN_VALUE;
 		maxNonterminals = Integer.MIN_VALUE;
-		spanLimit = Integer.MAX_VALUE;
+		maxNonterminalSpan = Integer.MIN_VALUE;
 	}
 	
 	static PrefixTree getDummyPrefixTree() {
@@ -131,7 +137,7 @@ public class PrefixTree {
 	 * @param maxPhraseLength
 	 * @param maxNonterminals
 	 */
-	public PrefixTree(SuffixArray suffixArray, CorpusArray targetCorpus, AlignmentArray alignments, int[] sentence, int maxPhraseSpan, int maxPhraseLength, int maxNonterminals, int spanLimit) {
+	public PrefixTree(SuffixArray suffixArray, CorpusArray targetCorpus, AlignmentArray alignments, int[] sentence, int maxPhraseSpan, int maxPhraseLength, int maxNonterminals) {
 
 		if (logger.isLoggable(Level.FINE)) logger.fine("\n\n\nConstructing new PrefixTree\n\n");
 
@@ -139,9 +145,9 @@ public class PrefixTree {
 		this.targetCorpus = targetCorpus;
 		this.alignments = alignments;
 		this.maxPhraseSpan = maxPhraseSpan;
+		this.maxNonterminalSpan = maxPhraseSpan;
 		this.maxPhraseLength = maxPhraseLength;
 		this.maxNonterminals = maxNonterminals;
-		this.spanLimit = spanLimit;
 
 		int START_OF_SENTENCE = 0;
 		int END_OF_SENTENCE = sentence.length - 1;
@@ -375,8 +381,8 @@ public class PrefixTree {
 	 * @param maxPhraseLength
 	 * @param maxNonterminals
 	 */
-	PrefixTree(int[] sentence, int maxPhraseSpan, int maxPhraseLength, int maxNonterminals, int spanLimit) {
-		this(null, null, null, sentence, maxPhraseSpan, maxPhraseLength, maxNonterminals, spanLimit);
+	PrefixTree(int[] sentence, int maxPhraseSpan, int maxPhraseLength, int maxNonterminals) {
+		this(null, null, null, sentence, maxPhraseSpan, maxPhraseLength, maxNonterminals);
 	}
 
 	public Grammar getRoot() {
@@ -1185,14 +1191,14 @@ public class PrefixTree {
 			
 			int totalPossibleTranslations = sourceHierarchicalPhrases.size();
 			
-			int step = (totalPossibleTranslations<SAMPLE_SIZE) ? 
+			int step = (totalPossibleTranslations<sampleSize) ? 
 					1 :
-					totalPossibleTranslations / SAMPLE_SIZE;
+					totalPossibleTranslations / sampleSize;
 			
 			if (logger.isLoggable(Level.FINER)) logger.finer("\n" + totalPossibleTranslations + " possible translations of " + sourcePattern + ". Step size is " + step);
 			
 			// Sample from cached hierarchicalPhrases
-			List<HierarchicalPhrase> samples = new ArrayList<HierarchicalPhrase>(SAMPLE_SIZE);
+			List<HierarchicalPhrase> samples = new ArrayList<HierarchicalPhrase>(sampleSize);
 			for (int i=0; i<totalPossibleTranslations; i+=step) {
 				samples.add(sourceHierarchicalPhrases.get(i));
 			}
@@ -1243,8 +1249,8 @@ public class PrefixTree {
 					//      (this is variable because we don't know the length of the NT span)
 					//      looking for a source span with a consistent translation
 					while (possibleSourceSpan.start >= startOfSentence && 
-							startOfTerminalSequence-possibleSourceSpan.start<=MAX_NT_SPAN && 
-							endOfTerminalSequence-possibleSourceSpan.start<=MAX_PHRASE_LENGTH) {
+							startOfTerminalSequence-possibleSourceSpan.start<=maxNonterminalSpan && 
+							endOfTerminalSequence-possibleSourceSpan.start<=maxPhraseSpan) {
 						
 						// Get target span
 						Span targetSpan = alignments.getConsistentTargetSpan(possibleSourceSpan);
@@ -1286,8 +1292,8 @@ public class PrefixTree {
 					//      (this is variable because we don't know the length of the NT span)
 					//      looking for a source span with a consistent translation
 					while (possibleSourceSpan.end < endOfSentence && 
-							startOfTerminalSequence-possibleSourceSpan.start<=MAX_NT_SPAN && 
-							endOfTerminalSequence-possibleSourceSpan.start<=MAX_PHRASE_LENGTH) {
+							startOfTerminalSequence-possibleSourceSpan.start<=maxNonterminalSpan && 
+							endOfTerminalSequence-possibleSourceSpan.start<=maxPhraseSpan) {
 						
 						// Get target span
 						Span targetSpan = alignments.getConsistentTargetSpan(possibleSourceSpan);
@@ -1333,8 +1339,8 @@ public class PrefixTree {
 					//      looking for a source span with a consistent translation
 					while (possibleSourceSpan.start >= startOfSentence && 
 							possibleSourceSpan.end < endOfSentence && 
-							startOfTerminalSequence-possibleSourceSpan.start<=MAX_NT_SPAN && 
-							endOfTerminalSequence-possibleSourceSpan.start<=MAX_PHRASE_LENGTH) {
+							startOfTerminalSequence-possibleSourceSpan.start<=maxNonterminalSpan && 
+							endOfTerminalSequence-possibleSourceSpan.start<=maxPhraseSpan) {
 						
 						// Get target span
 						Span targetSpan = alignments.getConsistentTargetSpan(possibleSourceSpan);
@@ -1545,10 +1551,10 @@ public class PrefixTree {
 		}
 
 		public boolean hasRuleForSpan(int startIndex, int endIndex, int pathLength) {
-			if (PrefixTree.this.spanLimit == -1) { // mono-glue grammar
+			if (PrefixTree.this.maxPhraseSpan == -1) { // mono-glue grammar
 				return (startIndex == 0);
 			} else {
-				return (endIndex - startIndex <= PrefixTree.this.spanLimit);
+				return (endIndex - startIndex <= PrefixTree.this.maxPhraseSpan);
 			}
 		}
 
@@ -1620,42 +1626,4 @@ public class PrefixTree {
 	}
 
 
-	/** 
-	 * For testing purposes...
-	 */
-	public static void main(String[] args) {
-		// Adam Lopez's example...
-		String corpusString = "it makes him and it mars him , it sets him on and it takes him off .";
-		String queryString = "it persuades him and it disheartens him";
-		
-		Vocabulary vocab = new Vocabulary();
-		BasicPhrase corpusSentence = new BasicPhrase(corpusString, vocab);
-		BasicPhrase querySentence = new BasicPhrase(queryString, vocab);
-		vocab.alphabetize();
-		vocab.fixVocabulary();
-		
-		// create the suffix array...
-		int[] sentences = new int[1];
-		sentences[0] = 0;
-		int[] corpus = new int[corpusSentence.size()];
-		for(int i = 0; i < corpusSentence.size(); i++) {
-			corpus[i] = corpusSentence.getWordID(i);
-		}
-		CorpusArray corpusArray = new CorpusArray(corpus, sentences, vocab);
-		SuffixArray suffixArray = new SuffixArray(corpusArray);
-		
-		CorpusArray targetCorpus = null;
-		AlignmentArray alignments = null;
-		
-		int maxPhraseSpan = 10;
-		int maxPhraseLength = 10;
-		int maxNonterminals = 2;
-		int spanLimit = 8;
-		
-		PrefixTree prefixTree = new PrefixTree(suffixArray, targetCorpus, alignments, querySentence.getWordIDs(), maxPhraseSpan, maxPhraseLength, maxNonterminals, spanLimit);
-		
-		System.out.println(prefixTree.toString());
-		System.out.println();
-		System.out.println(prefixTree.size());
-	}
 }
