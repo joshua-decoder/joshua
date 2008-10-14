@@ -808,11 +808,17 @@ public class PrefixTree {
 	 * <p>
 	 * This assumes that the source and target spans are consistent.
 	 * 
+	 * @param sourcePhrase Source language phrase to be translated.
 	 * @param sourceSpan Span in the corpus of the source phrase; this is needed because the accurate span will not be in the sourcePhrase if it starts or ends with a nonterminal
+	 * @param targetSpan Span in the target corpus of the target phrase.
+	 * @param sourceStartsWithNT Indicates whether or not the source phrase starts with a nonterminal.
+	 * @param sourceEndsWithNT Indicates whether or not the source phrase ends with a nonterminal.
 	 * 
 	 * @return null if no translation can be constructed
 	 */
 	Pattern constructTranslation(HierarchicalPhrase sourcePhrase, Span sourceSpan, Span targetSpan, boolean sourceStartsWithNT, boolean sourceEndsWithNT) {
+		
+		if (logger.isLoggable(Level.FINER)) logger.finer("Constructing translation for source span " + sourceSpan + ", target span " + targetSpan);
 		
 		// Construct a pattern for the trivial case where there are no nonterminals
 		if (sourcePhrase.pattern.arity == 0) {
@@ -845,7 +851,7 @@ public class PrefixTree {
 			
 			Span nonterminalTargetSpan = alignments.getConsistentTargetSpan(nonterminalSourceSpan);
 			
-			if (nonterminalTargetSpan==null) return null;
+			if (nonterminalTargetSpan==null || nonterminalTargetSpan.equals(targetSpan)) return null;
 			
 			targetNTSpans.add(new LabelledSpan(nonterminalID,nonterminalTargetSpan));
 			nonterminalID--;
@@ -860,7 +866,7 @@ public class PrefixTree {
 			
 			Span nonterminalTargetSpan = alignments.getConsistentTargetSpan(nonterminalSourceSpan);
 			
-			if (nonterminalTargetSpan==null) return null;
+			if (nonterminalTargetSpan==null || nonterminalTargetSpan.equals(targetSpan)) return null;
 			
 			targetNTSpans.add(new LabelledSpan(nonterminalID,nonterminalTargetSpan));
 			nonterminalID--;
@@ -870,12 +876,14 @@ public class PrefixTree {
 		// If the source phrase starts with a nonterminal, we have to handle that NT as a special case
 		if (sourceEndsWithNT) {
 			
-			// If the source phrase starts with NT, then we need to calculate the span of the first NT
+			// If the source phrase ends with NT, then we need to calculate the span of the last NT
 			Span nonterminalSourceSpan = new Span(sourcePhrase.terminalSequenceEndIndices[sourcePhrase.terminalSequenceEndIndices.length-1],sourceSpan.end);
 			
 			Span nonterminalTargetSpan = alignments.getConsistentTargetSpan(nonterminalSourceSpan);
+			if (logger.isLoggable(Level.FINEST)) logger.finest("Consistent target span " + nonterminalTargetSpan + " for NT source span " + nonterminalSourceSpan);
 			
-			if (nonterminalTargetSpan==null) return null;
+			
+			if (nonterminalTargetSpan==null || nonterminalTargetSpan.equals(targetSpan)) return null;
 			
 			targetNTSpans.add(new LabelledSpan(nonterminalID,nonterminalTargetSpan));
 			nonterminalID--;
@@ -1108,6 +1116,16 @@ public class PrefixTree {
 		 * @param sourceTokens Source language pattern that should correspond to the hierarchical phrases.
 		 */
 		public void storeResults(List<HierarchicalPhrase> hierarchicalPhrases, int[] sourceTokens) {
+			
+			if (logger.isLoggable(Level.FINER)) {
+				logger.finer("Storing " + hierarchicalPhrases.size() + " source phrases:");
+				if (logger.isLoggable(Level.FINEST)) {
+					for (HierarchicalPhrase phrase : hierarchicalPhrases) {
+						logger.finest("\t" + phrase);
+					}
+				}
+			}
+			
 			this.sourceHierarchicalPhrases = hierarchicalPhrases;
 			this.sourceWords = sourceTokens;
 			Vocabulary vocab = (suffixArray==null) ? null : suffixArray.getVocabulary();
@@ -1158,7 +1176,7 @@ public class PrefixTree {
 					1 :
 					totalPossibleTranslations / SAMPLE_SIZE;
 			
-			if (logger.isLoggable(Level.FINEST)) logger.finest("\n" + totalPossibleTranslations + " possible translations of " + sourcePattern + ". Step size is " + step);
+			if (logger.isLoggable(Level.FINER)) logger.finer("\n" + totalPossibleTranslations + " possible translations of " + sourcePattern + ". Step size is " + step);
 			
 			// Sample from cached hierarchicalPhrases
 			List<HierarchicalPhrase> samples = new ArrayList<HierarchicalPhrase>(SAMPLE_SIZE);
@@ -1173,18 +1191,24 @@ public class PrefixTree {
 				// Case 1:  If sample !startsWithNT && !endsWithNT
 				if (!sourcePhrase.startsWithNonterminal() && !sourcePhrase.endsWithNonterminal()) {
 					
+					if (logger.isLoggable(Level.FINER)) logger.finer("Case 1: Source phrase !startsWithNT && !endsWithNT");
+					
 					// Get target span
 					Span sourceSpan = new Span(sourcePhrase.terminalSequenceStartIndices[0], sourcePhrase.terminalSequenceEndIndices[sourcePhrase.terminalSequenceEndIndices.length-1]);//+sample.length); 
 					
 					Span targetSpan = alignments.getConsistentTargetSpan(sourceSpan);
 					
 					// If target span and source span are consistent
-					if (targetSpan!=null) {
+					//if (targetSpan!=null) {
+					if (targetSpan!=null && targetSpan.size()>=sourcePhrase.pattern.arity+1) {
 						
 						// Construct a translation
 						Pattern translation = constructTranslation(sourcePhrase, sourceSpan, targetSpan, false, false);
 						
-						if (translation != null) translations.add(translation);
+						if (translation != null) {
+							if (logger.isLoggable(Level.FINEST)) logger.finest("\tCase 1: Adding translation: '" + translation + "' for target span " + targetSpan + " from source span " + sourceSpan);
+							translations.add(translation);
+						}
 						
 					}
 					
@@ -1192,6 +1216,8 @@ public class PrefixTree {
 				
 				// Case 2: If sourcePhrase startsWithNT && !endsWithNT
 				else if (sourcePhrase.startsWithNonterminal() && !sourcePhrase.endsWithNonterminal()) {
+					
+					if (logger.isLoggable(Level.FINER)) logger.finer("Case 2: Source phrase startsWithNT && !endsWithNT");
 					
 					int startOfSentence = suffixArray.corpus.getSentencePosition(sourcePhrase.sentenceNumber);
 					int startOfTerminalSequence = sourcePhrase.terminalSequenceStartIndices[0];
@@ -1211,12 +1237,14 @@ public class PrefixTree {
 						Span targetSpan = alignments.getConsistentTargetSpan(possibleSourceSpan);
 
 						// If target span and source span are consistent
-						if (targetSpan!=null) {
+						//if (targetSpan!=null) {
+						if (targetSpan!=null && targetSpan.size()>=sourcePhrase.pattern.arity+1) {
 
 							// Construct a translation
 							Pattern translation = constructTranslation(sourcePhrase, possibleSourceSpan, targetSpan, true, false);
 
 							if (translation != null) {
+								if (logger.isLoggable(Level.FINEST)) logger.finest("\tCase 2: Adding translation: '" + translation + "' for target span " + targetSpan + " from source span " + possibleSourceSpan);
 								translations.add(translation);
 								break;
 							}
@@ -1231,6 +1259,8 @@ public class PrefixTree {
 				
 				// Case 3: If sourcePhrase !startsWithNT && endsWithNT
 				else if (!sourcePhrase.startsWithNonterminal() && sourcePhrase.endsWithNonterminal()) {
+					
+					if (logger.isLoggable(Level.FINER)) logger.finer("Case 3: Source phrase !startsWithNT && endsWithNT");
 					
 					int endOfSentence = suffixArray.corpus.getSentencePosition(sourcePhrase.sentenceNumber+1);
 					int startOfTerminalSequence = sourcePhrase.terminalSequenceStartIndices[0];
@@ -1250,12 +1280,14 @@ public class PrefixTree {
 						Span targetSpan = alignments.getConsistentTargetSpan(possibleSourceSpan);
 
 						// If target span and source span are consistent
-						if (targetSpan!=null) {
+						//if (targetSpan!=null) {
+						if (targetSpan!=null && targetSpan.size()>=sourcePhrase.pattern.arity+1) {
 
 							// Construct a translation
 							Pattern translation = constructTranslation(sourcePhrase, possibleSourceSpan, targetSpan, false, true);
 
 							if (translation != null) {
+								if (logger.isLoggable(Level.FINEST)) logger.finest("\tCase 3: Adding translation: '" + translation + "' for target span " + targetSpan + " from source span " + possibleSourceSpan);
 								translations.add(translation);
 								break;
 							}
@@ -1270,6 +1302,8 @@ public class PrefixTree {
 				
 				// Case 4: If sourcePhrase startsWithNT && endsWithNT
 				else if (sourcePhrase.startsWithNonterminal() && sourcePhrase.endsWithNonterminal()) {
+					
+					if (logger.isLoggable(Level.FINER)) logger.finer("Case 4: Source phrase startsWithNT && endsWithNT");
 					
 					int startOfSentence = suffixArray.corpus.getSentencePosition(sourcePhrase.sentenceNumber);
 					int endOfSentence = suffixArray.corpus.getSentencePosition(sourcePhrase.sentenceNumber+1);
@@ -1293,12 +1327,14 @@ public class PrefixTree {
 						Span targetSpan = alignments.getConsistentTargetSpan(possibleSourceSpan);
 
 						// If target span and source span are consistent
-						if (targetSpan!=null) {
+						//if (targetSpan!=null) {
+						if (targetSpan!=null && targetSpan.size()>=sourcePhrase.pattern.arity+1) {
 
 							// Construct a translation
 							Pattern translation = constructTranslation(sourcePhrase, possibleSourceSpan, targetSpan, true, true);
 
 							if (translation != null) {
+								if (logger.isLoggable(Level.FINEST)) logger.finest("\tCase 4: Adding translation: '" + translation + "' for target span " + targetSpan + " from source span " + possibleSourceSpan);
 								translations.add(translation);
 								break;
 							}
@@ -1318,7 +1354,7 @@ public class PrefixTree {
 				
 			}
 			
-			
+			if (logger.isLoggable(Level.FINER)) logger.finer(translations.size() + " actual translations of " + sourcePattern + " being stored.");
 			return translations;
 		}
 		

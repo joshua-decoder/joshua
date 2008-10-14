@@ -18,6 +18,7 @@
 package joshua.util.sentence;
 
 
+import java.io.IOException;
 import java.util.*;
 
 import edu.jhu.sa.util.suffix_array.BasicPhrase;
@@ -83,6 +84,11 @@ public class Vocabulary implements Iterable<String> {
 		UNKNOWN_WORD = vocabList.size();
 	}
 	
+	public Vocabulary(String fileName) throws IOException {
+		this();
+		SuffixArrayFactory.createVocabulary(fileName, this);
+	}
+	
 //===============================================================
 // Public
 //===============================================================
@@ -104,7 +110,18 @@ public class Vocabulary implements Iterable<String> {
 		}
 	}
 
-
+	public int[] getIDs(String sentence) {
+		String[] words = sentence.split(" ");
+		int[] wordIDs = new int[words.length];
+		
+		for (int i=0; i<words.length; i++) {
+			wordIDs[i] = getID(words[i]);
+		}
+		
+		return wordIDs;
+	}
+	
+	
 	
 	/**
 	 * @return the String for a word ID
@@ -116,9 +133,10 @@ public class Vocabulary implements Iterable<String> {
 		return vocabList.get(wordID);
 	}
 	
-	public String getWords(int[] wordIDs) {
+	public String getWords(int[] wordIDs, boolean ntIndexIncrements) {
 		StringBuilder s = new StringBuilder();
 		
+		int nextNTIndex = 1;
 		for(int t=0; t<wordIDs.length; t++){
 			if(t>0) {
 				s.append(' ');
@@ -129,7 +147,13 @@ public class Vocabulary implements Iterable<String> {
 			if (wordID >= vocabList.size()) { 
 				s.append(UNKNOWN_WORD_STRING);
 			} else if (wordID < 0) {
-				s.append("[X]"); //XXX This should NOT be hardcoded here!
+				s.append("[X,"); //XXX This should NOT be hardcoded here!
+				if (ntIndexIncrements) {
+					s.append(nextNTIndex++);
+				} else {
+					s.append(-1*wordID);
+				}
+				s.append(']');
 			} else {
 				s.append(vocabList.get(wordID));
 			}

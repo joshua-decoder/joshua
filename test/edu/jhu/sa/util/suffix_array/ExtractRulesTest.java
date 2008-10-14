@@ -25,7 +25,7 @@ import org.testng.annotations.Test;
  * @author Lane Schwartz
  * @version $LastChangedDate:2008-09-18 12:47:23 -0500 (Thu, 18 Sep 2008) $
  */
-public class ExtractRules {
+public class ExtractRulesTest {
 
 	//@Test(dependsOnMethods={"edu.jhu.util.suffix_array.SuffixArrayTest.findPhrase"})
 	@Test

@@ -204,9 +204,10 @@ public class Rule {
 			StringBuffer sb = new StringBuffer("[");
 			sb.append(ntVocab.get(this.lhs));
 			sb.append("] ||| ");
-			sb.append(sourceVocab.getWords(this.french));
+			sb.append(sourceVocab.getWords(this.french,true));
 			sb.append(" ||| ");
-			sb.append(targetVocab.getWords(this.english));
+			sb.append(targetVocab.getWords(this.english,false));
+			//sb.append(java.util.Arrays.toString(this.english));
 			sb.append(" |||");
 			for (int i = 0; i < this.feat_scores.length; i++) {
 				sb.append(String.format(" %.4f", this.feat_scores[i]));
