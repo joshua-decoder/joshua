@@ -896,10 +896,23 @@ public class PrefixTree {
 		
 		Collections.sort(targetNTSpans);
 		
-		// if we don't start with a non-terminal, then write out all the words
-		// until we get to the first non-terminal
-		if(targetNTSpans.get(0).getSpan().start != targetSpan.start) {
-			// the target pattern starts with a non-terminal
+		
+
+		if (targetNTSpans.get(0).getSpan().start == targetSpan.start) {
+			
+			int ntCumulativeSpan = 0;
+			
+			for (LabelledSpan span : targetNTSpans) {
+				ntCumulativeSpan += span.size();
+			}
+			
+			if (ntCumulativeSpan >= targetSpan.size()) {
+				return null;
+			}
+			
+		} else {
+			// if we don't start with a non-terminal, then write out all the words
+			// until we get to the first non-terminal
 			for(int i = targetSpan.start; i < targetNTSpans.get(0).getSpan().start; i++) {
 				words[patterCounter] = targetCorpus.getWordID(i);
 				patterCounter++;

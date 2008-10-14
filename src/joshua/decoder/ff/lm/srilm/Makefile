@@ -29,4 +29,4 @@ srilm.o: srilm.c
 	g++ -c -fpic $< -I/usr/local/include/ -I$(SRILM_INC)
 
 clean:
-	\rm -rf srilm.o srilm*.java srilm_*_wrap.* SWIGTYPE*.java libsrilm.so 
+	rm -rf srilm.o srilm*.java srilm_*_wrap.* SWIGTYPE*.java libsrilm.so 

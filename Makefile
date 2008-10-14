@@ -1,14 +1,11 @@
 
-SRC           =src/
+SRC           =src
 EXAMPLE       =example2/example2
 EXAMPLE_SUFFIX=src
 JAVA_FLAGS    =
 
 
-.SUFFIXES:
-.SUFFIXES: .java .class
-
-.PHONY: all joshua test srilm_inter clean
+.PHONY: all joshua test srilm_inter srilm_clean clean
 
 all:
 	@$(MAKE) clean
@@ -17,11 +14,9 @@ all:
 	@$(MAKE) test EXAMPLE='example2/example2' EXAMPLE_SUFFIX='src'
 
 joshua:
-	( cd $(SRC) && \
-		find -X joshua/decoder/ -name '*.java' \
-		| xargs javac $(JAVA_FLAGS) )
+	ant compile
 
-test:
+test: joshua
 	java -Xmx2000m -Xms2000m           \
 		-classpath $(SRC)              \
 		joshua.decoder.Decoder         \
@@ -31,10 +26,13 @@ test:
 		2>&1 | tee $(EXAMPLE).nbest.javalm.err
 
 srilm_inter:
-	( cd $(SRC)joshua/decoder && make )
+	$(MAKE) -C $(SRC)/joshua/decoder/ff/lm/srilm
 
-clean:
-	find ./$(SRC) -name '*.class' -exec rm {} \;
+srilm_clean:
+	$(MAKE) -C $(SRC)/joshua/decoder/ff/lm/srilm clean
+
+clean: srilm_clean
+	ant clean
 	rm -f                                  \
 		example/example.nbest.javalm.out   \
 		example/example.nbest.javalm.err   \
