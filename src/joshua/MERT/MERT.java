@@ -1172,7 +1172,7 @@ private static void test_error(String inFileName, int candPerSen, int testIndex,
     } // while (i)
 
     if (dirPrefix.length() > 0) {
-      if (!dirPrefix.endsWith("\\") && !dirPrefix.endsWith("/")) { dirPrefix = dirPrefix + "\\"; }
+      if (!dirPrefix.endsWith("\\") && !dirPrefix.endsWith("/")) { dirPrefix = dirPrefix + "/"; }
 
       sourceFileName = dirPrefix + sourceFileName;
       refFileName = dirPrefix + refFileName;
