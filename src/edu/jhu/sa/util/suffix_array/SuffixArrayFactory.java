@@ -156,29 +156,60 @@ public class SuffixArrayFactory {
 		int [] lowestAlignedSourceIndex = initalizeArray(targetCorpus.size(), AlignmentArray.UNALIGNED);
 		int [] highestAlignedSourceIndex = initalizeArray(targetCorpus.size(), -1);
 
+		List<List<Integer>> alignedSourceList = new ArrayList<List<Integer>>(targetCorpus.size());
+		for (int i=0; i<targetCorpus.size(); i++) alignedSourceList.add(new ArrayList<Integer>());
+		
+		List<List<Integer>> alignedTargetList = new ArrayList<List<Integer>>(sourceCorpus.size());
+		for (int i=0; i<sourceCorpus.size(); i++) alignedTargetList.add(new ArrayList<Integer>());
+		
+		int[][] alignedSourceIndices = new int[targetCorpus.size()][];
+		int[][] alignedTargetIndices = new int[sourceCorpus.size()][];
+		
 		// set the values of the arrays based on the alignments file...
 		int sentenceCounter = 0;
 		BufferedReader reader = FileUtil.getBufferedReader(alignmentsFilename);
 		while (reader.ready()) {
 			int sourceOffset = sourceCorpus.getSentencePosition(sentenceCounter);
 			int targetOffset = targetCorpus.getSentencePosition(sentenceCounter);
+			
 			// parse the alignment points
 			String[] alignments = reader.readLine().split("\\s+");
 			for(int i = 0; i < alignments.length; i++) {
 				String[] points = alignments[i].split("-");
 				int sourceIndex = sourceOffset + Integer.parseInt(points[0]);
 				int targetIndex = targetOffset + Integer.parseInt(points[1]);
+				
+				alignedSourceList.get(targetIndex).add(sourceIndex);
+				alignedTargetList.get(sourceIndex).add(targetIndex);
+				
 				// set the loweset aligned and highest aligned points
 				lowestAlignedTargetIndex[sourceIndex]  = Math.min(lowestAlignedTargetIndex[sourceIndex], targetIndex);
 				highestAlignedTargetIndex[sourceIndex] = Math.max(highestAlignedTargetIndex[sourceIndex], targetIndex);
 				lowestAlignedSourceIndex[targetIndex]  = Math.min(lowestAlignedSourceIndex[targetIndex], sourceIndex);
 				highestAlignedSourceIndex[targetIndex] = Math.max(highestAlignedSourceIndex[targetIndex], sourceIndex);
 			}
+			
 			sentenceCounter++;
 		}
 		reader.close();
 		
-		return new AlignmentArray(lowestAlignedTargetIndex, highestAlignedTargetIndex, lowestAlignedSourceIndex, highestAlignedSourceIndex);
+		for (int i=0; i<targetCorpus.size(); i++) {
+			Collections.sort(alignedSourceList.get(i));
+			List<Integer> sourceList = alignedSourceList.get(i);
+			int size=sourceList.size();
+			alignedSourceIndices[i] = new int[size];
+			for (int j=0; j<size; j++) alignedSourceIndices[i][j] = sourceList.get(j);
+		}
+		
+		for (int i=0; i<sourceCorpus.size(); i++) {
+			Collections.sort(alignedTargetList.get(i));
+			List<Integer> targetList = alignedTargetList.get(i);
+			int size=targetList.size();
+			alignedTargetIndices[i] = new int[size];
+			for (int j=0; j<size; j++) alignedTargetIndices[i][j] = targetList.get(j);
+		}
+		
+		return new AlignmentArray(lowestAlignedTargetIndex, highestAlignedTargetIndex, lowestAlignedSourceIndex, highestAlignedSourceIndex, alignedTargetIndices, alignedSourceIndices);
 	}
 	
 	
@@ -363,7 +394,7 @@ public class SuffixArrayFactory {
 	 * of the file indicates the number of elements in the
 	 * alignedTargetIndex arrays and the alignedSourceIndex arrays.
 	 */
-	public static AlignmentArray loadAlignmentArray(String sourceLang, String targetLang, String corpus, String directory) throws IOException {
+/*	public static AlignmentArray loadAlignmentArray(String sourceLang, String targetLang, String corpus, String directory) throws IOException {
 		BufferedReader reader = FileUtil.getBufferedReader(directory, getAlignmentArrayFileName(sourceLang, targetLang, corpus));
 		// read the header line...
 		String[] fields = reader.readLine().split("\\s+");
@@ -390,7 +421,7 @@ public class SuffixArrayFactory {
 		reader.close();
 		return new AlignmentArray(lowestAlignedTargetIndex, highestAlignedTargetIndex, lowestAlignedSourceIndex, highestAlignedSourceIndex);
 	}
-	
+*/	
 	
 
 //===============================================================

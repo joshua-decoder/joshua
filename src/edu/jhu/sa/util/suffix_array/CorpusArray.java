@@ -144,6 +144,20 @@ public class CorpusArray {
 		return sentences[sentenceID];
 	}
 	
+	/**
+	 * Gets the exclusive end position of a sentence in the corpus.
+	 * 
+	 * @return the position in the corpus one past the last word of
+	 *         the specified sentence.  If the sentenceID is
+	 *         outside of the bounds of the sentences, then it
+	 *         returns one past the last position in the corpus.
+	 */
+	public int getSentenceEndPosition(int sentenceID) {
+		if (sentenceID >= sentences.length-1) {
+			return corpus.length;
+		}
+		return sentences[sentenceID+1];
+	}
 	
 	/** 
 	 * Gets the sentence at the specified index (starting from

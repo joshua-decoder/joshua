@@ -74,6 +74,9 @@ public class PrefixTree {
 	/** Maximum span in the source corpus of any nonterminal in an extracted hierarchical phrase. */
 	private final int maxNonterminalSpan;
 
+	/** Maximum span in the source corpus of any nonterminal in an extracted hierarchical phrase. */
+	private final int minNonterminalSpan = 2;
+	
 	/** Maximum number of instances of a source phrase from the source corpus to use when translating a source phrase. */
 	private final int sampleSize = 100;
 		
@@ -826,18 +829,26 @@ public class PrefixTree {
 		
 		if (logger.isLoggable(Level.FINER)) logger.finer("Constructing translation for source span " + sourceSpan + ", target span " + targetSpan);
 		
+		if (sourceSpan.size() > this.maxPhraseSpan)
+			return null;
+		
 		// Construct a pattern for the trivial case where there are no nonterminals
 		if (sourcePhrase.pattern.arity == 0) {
-			//return new HierarchicalPhrase(targetSpan, targetCorpus);
-			
-			int[] words = new int[targetSpan.size()];
-			
-			for (int i=targetSpan.start; i<targetSpan.end; i++) {
-				words[i-targetSpan.start] = targetCorpus.corpus[i];
+
+			if (sourceSpan.size() > this.maxPhraseLength) {
+				
+				return null;
+				
+			} else {
+				
+				int[] words = new int[targetSpan.size()];
+
+				for (int i=targetSpan.start; i<targetSpan.end; i++) {
+					words[i-targetSpan.start] = targetCorpus.corpus[i];
+				}
+
+				return new Pattern(targetCorpus.vocab, words);
 			}
-			
-			return new Pattern(targetCorpus.vocab, words);
-			
 		}
 
 		
@@ -852,49 +863,72 @@ public class PrefixTree {
 		// If the source phrase starts with a nonterminal, we have to handle that NT as a special case
 		if (sourceStartsWithNT) {
 			
-			// If the source phrase starts with NT, then we need to calculate the span of the first NT
-			Span nonterminalSourceSpan = new Span(sourceSpan.start, sourcePhrase.terminalSequenceStartIndices[0]);
-			
-			Span nonterminalTargetSpan = alignments.getConsistentTargetSpan(nonterminalSourceSpan);
-			
-			if (nonterminalTargetSpan==null || nonterminalTargetSpan.equals(targetSpan)) return null;
-			
-			targetNTSpans.add(new LabelledSpan(nonterminalID,nonterminalTargetSpan));
-			nonterminalID--;
-			// the pattern length will be reduced by the length of the non-terminal, and increased by 1 for the NT itself.
-			patternSize = patternSize - nonterminalTargetSpan.size() +1;
+			if (sourcePhrase.terminalSequenceStartIndices[0] - sourceSpan.start < minNonterminalSpan) {
+				
+				return null;
+				
+			} else {
+				// If the source phrase starts with NT, then we need to calculate the span of the first NT
+				Span nonterminalSourceSpan = new Span(sourceSpan.start, sourcePhrase.terminalSequenceStartIndices[0]);
+				Span nonterminalTargetSpan = alignments.getConsistentTargetSpan(nonterminalSourceSpan);
+
+				if (nonterminalTargetSpan==null || nonterminalTargetSpan.equals(targetSpan)) return null;
+
+				targetNTSpans.add(new LabelledSpan(nonterminalID,nonterminalTargetSpan));
+				nonterminalID--;
+				// the pattern length will be reduced by the length of the non-terminal, and increased by 1 for the NT itself.
+				patternSize = patternSize - nonterminalTargetSpan.size() +1;
+			}
 		}
 		
 		// Process all internal nonterminals
 		for (int i=0; i<sourcePhrase.terminalSequenceStartIndices.length-1; i++) {
 			
-			Span nonterminalSourceSpan = new Span(sourcePhrase.terminalSequenceEndIndices[i], sourcePhrase.terminalSequenceStartIndices[i+1]);
-			
-			Span nonterminalTargetSpan = alignments.getConsistentTargetSpan(nonterminalSourceSpan);
-			
-			if (nonterminalTargetSpan==null || nonterminalTargetSpan.equals(targetSpan)) return null;
-			
-			targetNTSpans.add(new LabelledSpan(nonterminalID,nonterminalTargetSpan));
-			nonterminalID--;
-			patternSize = patternSize - nonterminalTargetSpan.size() + 1;
+			if (sourcePhrase.terminalSequenceStartIndices[i+1] - sourcePhrase.terminalSequenceEndIndices[i] < minNonterminalSpan) {
+				
+				return null;
+				
+			} else {
+				
+				Span nonterminalSourceSpan = new Span(sourcePhrase.terminalSequenceEndIndices[i], sourcePhrase.terminalSequenceStartIndices[i+1]);
+
+				Span nonterminalTargetSpan = alignments.getConsistentTargetSpan(nonterminalSourceSpan);
+
+				if (nonterminalTargetSpan==null || nonterminalTargetSpan.equals(targetSpan)) return null;
+
+				targetNTSpans.add(new LabelledSpan(nonterminalID,nonterminalTargetSpan));
+				nonterminalID--;
+				patternSize = patternSize - nonterminalTargetSpan.size() + 1;
+				
+			}
 		}
 			
 		// If the source phrase starts with a nonterminal, we have to handle that NT as a special case
 		if (sourceEndsWithNT) {
 			
-			// If the source phrase ends with NT, then we need to calculate the span of the last NT
-			Span nonterminalSourceSpan = new Span(sourcePhrase.terminalSequenceEndIndices[sourcePhrase.terminalSequenceEndIndices.length-1],sourceSpan.end);
-			
-			Span nonterminalTargetSpan = alignments.getConsistentTargetSpan(nonterminalSourceSpan);
-			if (logger.isLoggable(Level.FINEST)) logger.finest("Consistent target span " + nonterminalTargetSpan + " for NT source span " + nonterminalSourceSpan);
-			
-			
-			if (nonterminalTargetSpan==null || nonterminalTargetSpan.equals(targetSpan)) return null;
-			
-			targetNTSpans.add(new LabelledSpan(nonterminalID,nonterminalTargetSpan));
-			nonterminalID--;
-			patternSize = patternSize - nonterminalTargetSpan.size() + 1;
+			if (sourceSpan.end - sourcePhrase.terminalSequenceEndIndices[sourcePhrase.terminalSequenceEndIndices.length-1] < minNonterminalSpan) {
+				
+				return null;
+				
+			} else {
+
+				// If the source phrase ends with NT, then we need to calculate the span of the last NT
+				Span nonterminalSourceSpan = new Span(sourcePhrase.terminalSequenceEndIndices[sourcePhrase.terminalSequenceEndIndices.length-1],sourceSpan.end);
+
+				Span nonterminalTargetSpan = alignments.getConsistentTargetSpan(nonterminalSourceSpan);
+				if (logger.isLoggable(Level.FINEST)) logger.finest("Consistent target span " + nonterminalTargetSpan + " for NT source span " + nonterminalSourceSpan);
+
+
+				if (nonterminalTargetSpan==null || nonterminalTargetSpan.equals(targetSpan)) return null;
+
+				targetNTSpans.add(new LabelledSpan(nonterminalID,nonterminalTargetSpan));
+				nonterminalID--;
+				patternSize = patternSize - nonterminalTargetSpan.size() + 1;
+
+			}
 		}
+		
+		boolean foundAlignedTerminal = false;
 		
 		// Create the pattern...
 		int[] words = new int[patternSize];
@@ -902,8 +936,6 @@ public class PrefixTree {
 		
 		Collections.sort(targetNTSpans);
 		
-		
-
 		if (targetNTSpans.get(0).getSpan().start == targetSpan.start) {
 			
 			int ntCumulativeSpan = 0;
@@ -919,7 +951,10 @@ public class PrefixTree {
 		} else {
 			// if we don't start with a non-terminal, then write out all the words
 			// until we get to the first non-terminal
-			for(int i = targetSpan.start; i < targetNTSpans.get(0).getSpan().start; i++) {
+			for (int i = targetSpan.start; i < targetNTSpans.get(0).getSpan().start; i++) {
+				if (!foundAlignedTerminal) {
+					foundAlignedTerminal = alignments.hasAlignedTerminal(i, sourcePhrase);
+				}
 				words[patterCounter] = targetCorpus.getWordID(i);
 				patterCounter++;
 			}
@@ -935,6 +970,9 @@ public class PrefixTree {
 			LabelledSpan NT2 = targetNTSpans.get(i);
 			
 			for(int j = NT1.getSpan().end; j < NT2.getSpan().start; j++) {
+				if (!foundAlignedTerminal) {
+					foundAlignedTerminal = alignments.hasAlignedTerminal(j, sourcePhrase);
+				}
 				words[patterCounter] = targetCorpus.getWordID(j);
 				patterCounter++;
 			}
@@ -946,12 +984,21 @@ public class PrefixTree {
 		if(targetNTSpans.get(targetNTSpans.size()-1).getSpan().end != targetSpan.end) {
 			// the target pattern starts with a non-terminal
 			for(int i = targetNTSpans.get(targetNTSpans.size()-1).getSpan().end; i < targetSpan.end; i++) {
+				if (!foundAlignedTerminal) {
+					foundAlignedTerminal = alignments.hasAlignedTerminal(i, sourcePhrase);
+				}
 				words[patterCounter] = targetCorpus.getWordID(i);
 				patterCounter++;
 			}
 		}
 		
-		return new Pattern(targetCorpus.vocab, words);
+		if (foundAlignedTerminal) {
+			return new Pattern(targetCorpus.vocab, words);
+		} else {
+			if (logger.isLoggable(Level.FINEST)) logger.finest("Potential translation contained no aligned terminals");
+			return null;
+		}
+		
 	}
 	
 	static int nodeIDCounter = 0;
@@ -1189,6 +1236,12 @@ public class PrefixTree {
 		public List<Pattern> translate() {
 			List<Pattern> translations = new ArrayList<Pattern>();
 			
+			if (sourcePattern.toString().equals("[X une X]")) {
+			//if (sourceWords.length==2 && sourceWords[0]==suffixArray.getVocabulary().getID("une") && sourceWords[1]==-1) {
+			//if (sourceWords.length>2 && sourceWords[1]==suffixArray.getVocabulary().getID("une") && sourceWords[0]==-1) {
+				int x=1; x++;
+			}
+			
 			int totalPossibleTranslations = sourceHierarchicalPhrases.size();
 			
 			int step = (totalPossibleTranslations<sampleSize) ? 
@@ -1281,9 +1334,10 @@ public class PrefixTree {
 					
 					if (logger.isLoggable(Level.FINER)) logger.finer("Case 3: Source phrase !startsWithNT && endsWithNT");
 					
-					int endOfSentence = suffixArray.corpus.getSentencePosition(sourcePhrase.sentenceNumber+1);
-					int startOfTerminalSequence = sourcePhrase.terminalSequenceStartIndices[0];
+					int endOfSentence = suffixArray.corpus.getSentenceEndPosition(sourcePhrase.sentenceNumber);
+					//int startOfTerminalSequence = sourcePhrase.terminalSequenceStartIndices[0];
 					int endOfTerminalSequence = sourcePhrase.terminalSequenceEndIndices[sourcePhrase.terminalSequenceEndIndices.length-1];
+					//int startOfNT = endOfTerminalSequence + 1;
 					
 					// Start by assuming the initial source nonterminal starts one word after the last source terminal 
 					Span possibleSourceSpan = new Span(sourcePhrase.terminalSequenceStartIndices[0], sourcePhrase.terminalSequenceEndIndices[sourcePhrase.terminalSequenceEndIndices.length-1]+1); 
@@ -1291,9 +1345,11 @@ public class PrefixTree {
 					// Loop over all legal source spans 
 					//      (this is variable because we don't know the length of the NT span)
 					//      looking for a source span with a consistent translation
-					while (possibleSourceSpan.end < endOfSentence && 
-							startOfTerminalSequence-possibleSourceSpan.start<=maxNonterminalSpan && 
-							endOfTerminalSequence-possibleSourceSpan.start<=maxPhraseSpan) {
+					while (possibleSourceSpan.end <= endOfSentence && 
+							//startOfTerminalSequence-possibleSourceSpan.start<=maxNonterminalSpan && 
+							possibleSourceSpan.end - endOfTerminalSequence < maxNonterminalSpan &&
+							possibleSourceSpan.size()<=maxPhraseSpan) {
+							//endOfTerminalSequence-possibleSourceSpan.start<=maxPhraseSpan) {
 						
 						// Get target span
 						Span targetSpan = alignments.getConsistentTargetSpan(possibleSourceSpan);
@@ -1325,7 +1381,7 @@ public class PrefixTree {
 					if (logger.isLoggable(Level.FINER)) logger.finer("Case 4: Source phrase startsWithNT && endsWithNT");
 					
 					int startOfSentence = suffixArray.corpus.getSentencePosition(sourcePhrase.sentenceNumber);
-					int endOfSentence = suffixArray.corpus.getSentencePosition(sourcePhrase.sentenceNumber+1);
+					int endOfSentence = suffixArray.corpus.getSentenceEndPosition(sourcePhrase.sentenceNumber);
 					int startOfTerminalSequence = sourcePhrase.terminalSequenceStartIndices[0];
 					int endOfTerminalSequence = sourcePhrase.terminalSequenceEndIndices[sourcePhrase.terminalSequenceEndIndices.length-1];
 					
@@ -1338,9 +1394,15 @@ public class PrefixTree {
 					//      (this is variable because we don't know the length of the NT span)
 					//      looking for a source span with a consistent translation
 					while (possibleSourceSpan.start >= startOfSentence && 
-							possibleSourceSpan.end < endOfSentence && 
+							possibleSourceSpan.end <= endOfSentence && 
 							startOfTerminalSequence-possibleSourceSpan.start<=maxNonterminalSpan && 
-							endOfTerminalSequence-possibleSourceSpan.start<=maxPhraseSpan) {
+							possibleSourceSpan.end-endOfTerminalSequence<maxNonterminalSpan &&
+							possibleSourceSpan.size()<=maxPhraseSpan) {
+							//endOfTerminalSequence-possibleSourceSpan.start<=maxPhraseSpan) {
+						
+						if (sourcePattern.toString().equals("[X une X]") && possibleSourceSpan.start==3 && possibleSourceSpan.end>=11) {
+							int x = 1; x++;
+						}
 						
 						// Get target span
 						Span targetSpan = alignments.getConsistentTargetSpan(possibleSourceSpan);
@@ -1360,10 +1422,10 @@ public class PrefixTree {
 
 						} 
 						
-						if (possibleSourceSpan.end+1 < endOfSentence) {
+						if (possibleSourceSpan.end < endOfSentence) {
 							possibleSourceSpan.end++;
 						} else {
-							possibleSourceSpan.end = 1;
+							possibleSourceSpan.end = endOfTerminalSequence+1;//1;
 							possibleSourceSpan.start--;
 						}
 												

@@ -19,7 +19,8 @@ package edu.jhu.sa.util.suffix_array;
 
 import joshua.util.sentence.Span;
 
-import java.io.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 
 /**
@@ -53,30 +54,46 @@ public class AlignmentArray {
 	 * Stores the lowest index of aligned target words for each
 	 * word in the source corpus.
 	 */
-	protected int[] lowestAlignedTargetIndex;
+	protected final int[] lowestAlignedTargetIndex;
 	
 	
 	/**
 	 * Stores the highest index of aligned target words for
 	 * each word in the source corpus.
 	 */
-	protected int[] highestAlignedTargetIndex;
+	protected final int[] highestAlignedTargetIndex;
+	
+	/**
+	 * Stores the indices of all aligned target words for
+	 * each word in the source corpus.
+	 */
+	protected final int[][] alignedTargetIndices;
 	
 	
 	/**
 	 * Stores the lowest index of aligned source words for each
 	 * word in the target corpus.
 	 */
-	protected int[] lowestAlignedSourceIndex;
+	protected final int[] lowestAlignedSourceIndex;
 	
 	
 	/**
 	 * Stores the highest index of aligned source words for
 	 * each word in the target corpus.
 	 */
-	protected int[] highestAlignedSourceIndex;
+	protected final int[] highestAlignedSourceIndex;
+	
+	/**
+	 * Stores the indices of all aligned source words for
+	 * each word in the target corpus.
+	 */
+	protected final int[][] alignedSourceIndices;
 
-
+	protected final boolean requireTightSpans = true;
+	
+	/** Logger for this class. */
+	private static final Logger logger = Logger.getLogger(AlignmentArray.class.getName());
+	
 
 //===============================================================
 // Constructor(s)
@@ -88,12 +105,16 @@ public class AlignmentArray {
 	 * SuffixArrayFactory.createAlignmentArray methods.
 	 */
 	protected AlignmentArray(int[] lowestAlignedTargetIndex, int[] highestAlignedTargetIndex,
-							 int[] lowestAlignedSourceIndex, int[] highestAlignedSourceIndex) {
+							 int[] lowestAlignedSourceIndex, int[] highestAlignedSourceIndex,
+							 int[][] alignedTargetIndices,   int[][] alignedSourceIndices) {
 		this.lowestAlignedTargetIndex = lowestAlignedTargetIndex;
 		this.highestAlignedTargetIndex = highestAlignedTargetIndex;
 		this.lowestAlignedSourceIndex = lowestAlignedSourceIndex;
 		this.highestAlignedSourceIndex = highestAlignedSourceIndex;
+		this.alignedTargetIndices = alignedTargetIndices;
+		this.alignedSourceIndices = alignedSourceIndices;
 	}
+	
 
 //===============================================================
 // Public
@@ -166,6 +187,37 @@ public class AlignmentArray {
 		}
 	}
 	
+	/**
+	 * Determines if any terminal in the source phrase aligns with the provided index into the target corpus.
+	 * 
+	 * @param targetIndex
+	 * @param sourcePhrase
+	 * @return
+	 */
+	public boolean hasAlignedTerminal(int targetIndex, HierarchicalPhrase sourcePhrase) {
+		
+		//XXX I think that to correctly implement this method, 
+		//    we need the complete array of aligned points,
+		//    not just the high and low points.
+		/*
+		for (int i=0; i<sourcePhrase.terminalSequenceStartIndices.length; i++) {
+			
+		}
+		*/
+		
+		for (int alignedSourceIndex : alignedSourceIndices[targetIndex]) {
+			for (int i=0; i<sourcePhrase.terminalSequenceStartIndices.length; i++) {
+				if (alignedSourceIndex >= sourcePhrase.terminalSequenceStartIndices[i] &&
+						alignedSourceIndex < sourcePhrase.terminalSequenceEndIndices[i]) {
+					if (logger.isLoggable(Level.FINEST)) logger.finest("Target index " + targetIndex + ", source index " + alignedSourceIndex + " is in source phrase at range ["+sourcePhrase.terminalSequenceStartIndices[i] + "-" + sourcePhrase.terminalSequenceEndIndices[i] + ")");
+					return true;
+				}
+			}
+		}
+		
+		if (logger.isLoggable(Level.FINEST)) logger.warning("No aligned point");
+		return false;
+	}
 
 	/**
 	 * Gets a target span that is consistent with the provided
@@ -244,6 +296,9 @@ public class AlignmentArray {
 				lowestHighestMax = (highestAlignedIndex[i] > lowestHighestMax) ? highestAlignedIndex[i] : lowestHighestMax; //Math.max(highestAlignedIndex[i], lowestHighestMax);
 				//lowestHighest[0] = Math.min(lowestAlignedIndex[i], lowestHighest[0]);
 				//lowestHighest[1] = Math.max(highestAlignedIndex[i], lowestHighest[1]);
+			} else if (requireTightSpans) {
+				// If requiring tight spans
+				return new Span(UNALIGNED, UNALIGNED);
 			}
 		}
 		
@@ -255,6 +310,24 @@ public class AlignmentArray {
 	}
 	
 
+	private Span getAlignedSpan(int startIndex, int endIndex, int[][] alignedIndices) {
+		int lowestHighestMin = UNALIGNED;
+		int lowestHighestMax = -1;
+
+		for(int i = startIndex; i < endIndex; i++) {
+			if (alignedIndices[i].length > 0) {
+				lowestHighestMin = (alignedIndices[i][0] < lowestHighestMin) ?  alignedIndices[i][0] : lowestHighestMin;
+				lowestHighestMax = (alignedIndices[i][alignedIndices[i].length-1] > lowestHighestMax) ? alignedIndices[i][alignedIndices[i].length-1] : lowestHighestMax;
+			} else if (requireTightSpans) {
+				return new Span(UNALIGNED, UNALIGNED);
+			}
+		}
+		
+		lowestHighestMax++;
+		
+		return new Span(lowestHighestMin,lowestHighestMax);
+	}
+	
 	
 //===============================================================
 // Static
@@ -264,8 +337,9 @@ public class AlignmentArray {
 //===============================================================
 // Main 
 //===============================================================
-
+/*
 	public static void main(String[] args) throws IOException {
+		
 		
 		if (args.length != 5) {
 			System.out.println("Usage: java AlignmentArray sourceLang targetLang corpusName dir alignmentsFilename");
@@ -296,5 +370,6 @@ public class AlignmentArray {
 			}
 		}
 	}
+	*/
 }
 

@@ -96,17 +96,26 @@ public class PrefixTreeAdvancedTest {
 			int[] lowestAlignedSourceIndex = new int[targetCorpusSentence.size()];
 			int[] highestAlignedSourceIndex = new int[targetCorpusSentence.size()];
 			
+			int[][] alignedTargetIndices = new int[corpusSentence.size()][];
+			int[][] alignedSourceIndices = new int[targetCorpusSentence.size()][];
+			
 			{
 				for (int i=0; i<18; i++) {
 					lowestAlignedTargetIndex[i] = i;
 					highestAlignedTargetIndex[i] = i;
 					lowestAlignedSourceIndex[i] = i;
 					highestAlignedSourceIndex[i] = i;
+					
+					alignedTargetIndices[i] = new int[1];
+					alignedTargetIndices[i][0] = i;
+					
+					alignedSourceIndices[i] = new int[1];
+					alignedSourceIndices[i][0] = i;
 				}
 			}
 			
 			
-			alignments = new AlignmentArray(lowestAlignedTargetIndex, highestAlignedTargetIndex, lowestAlignedSourceIndex, highestAlignedSourceIndex);
+			alignments = new AlignmentArray(lowestAlignedTargetIndex, highestAlignedTargetIndex, lowestAlignedSourceIndex, highestAlignedSourceIndex, alignedTargetIndices, alignedSourceIndices);
 			
 			
 		}
