@@ -123,15 +123,18 @@ public class MERT
       // set numParams and numSentences, and initialize lambda[], 
       // and do any initialization required for the chosen evaluation metric
 
-println("Testing error function on references:",2);
-test_error(refFileName, refsPerSen, 0, true,2);
-println("",2);
-println("Testing error function on decoder output:",2);
-test_error(decoderOutFileName, sizeOfNBest, 0, false,2);
-println("",2);
+for (int r = 0; r < refsPerSen; ++r) {
+  println("Testing error function on reference set " + r + ":",2);
+  test_error(refFileName, refsPerSen, r, true,2);
+  println("",2);
+}
 
     run_MERT(maxMERTIterations);
       // optimize lambda[]!!!
+
+println("Testing error function on final decoder output:",2);
+test_error(decoderOutFileName, sizeOfNBest, 0, false,2);
+println("",2);
 
     finalize(finalLambdasFileName);
       // write final values to file
@@ -344,19 +347,33 @@ println("",2);
       // RUN DECODER //
       /***************/
 
-//      Runtime rt = Runtime.getRuntime();
-//      Process p = rt.exec (decoderCommand);
+      println("Running decoder...",1);
 
+      Runtime rt = Runtime.getRuntime();
+      Process p = rt.exec (decoderCommand);
+      InputStream is = p.getErrorStream();
+      InputStreamReader isr = new InputStreamReader(is);
+      BufferedReader br = new BufferedReader(isr);
+      String dummy_line = null;
+      while ((dummy_line = br.readLine()) != null);
+      p.waitFor();
+
+      println("...finished decoding.",1);
 
       BufferedReader inFile = new BufferedReader(new FileReader(decoderOutFileName));
       String line, candidate_str;
+
+      fixDecoderOutput();
+        // makes sure each sentence has sizeOfNBest candidate translations in
+        // decoderOutFileName, since some sentences might produce fewer
+        // candidates (e.g. sentence is too short or has too many OOV's)
 
       boolean newCandidatesAdded = false;
 
       for (int i = 0; i < numSentences; ++i) {
         for (int n = 0; n < sizeOfNBest; ++n) {
 
-          // read nth candidate for ith sentence, along with its feature values,
+          // read nth candidate for the ith sentence, along with its feature values,
           // and then add them to candidates[i], if not already there
 
 /*
@@ -835,6 +852,62 @@ line format:
 
   } // double[] line_opt(int c)
 
+
+  private static void fixDecoderOutput() throws Exception
+  {
+    copyFile(decoderOutFileName,decoderOutFileName+".temp.MERT");
+    BufferedReader inFile = new BufferedReader(new FileReader(decoderOutFileName+".temp.MERT"));
+    PrintWriter outFile = new PrintWriter(decoderOutFileName);
+    String line, prevLine;
+
+    int i = 0; int n = 0;
+    line = inFile.readLine();
+    prevLine = "";
+
+    while (line != null) {
+
+/*
+line format:
+
+.* ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numParams_val .*
+
+*/
+
+      // in a well formed file, we'd find the nth candidate for the ith sentence
+
+      int read_i = Integer.parseInt(line.substring(0,line.indexOf(" |||")));
+
+      if (read_i != i) { // bad; add dummy copies of last seen candidate
+        while (n < sizeOfNBest) {
+          outFile.println(prevLine);
+          ++n;
+        }
+        n = 0; ++i;
+      }
+
+      outFile.println(line);
+      ++n;
+      if (n == sizeOfNBest) { n = 0; ++i; }
+
+      prevLine = line;
+      line = inFile.readLine();
+    }
+
+    if (i != numSentences) { // last sentence had too few candidates
+      while (n < sizeOfNBest) {
+        outFile.println(prevLine);
+        ++n;
+      }
+    }
+
+    inFile.close();
+    outFile.close();
+
+    // delete temp copy of old decoder output
+    File cp = new File(decoderOutFileName+".temp.MERT");
+    cp.delete();
+
+  }
 
   private static void createConfigFile(double[] params, String cfgFileName, String templateFileName) throws Exception
   {
