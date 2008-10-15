@@ -1,5 +1,1 @@
-java -Xmx200m -Xms200m -cp bin joshua.decoder.Decoder example/example.config.javalm example/example.test.in example/example.nbest.javalm.out
-
-java -Xmx200m -Xms200m -cp bin joshua.decoder.Decoder example2/example2.config.javalm example2/example2.src example2/example2.nbest.javalm.out
-
-java MERT -dir MERT_example -s source.txt -r reference.txt -rps 1 -decOut output.nbest -init initial_lambdas.txt -N 5 -maxIt 10 -v 7 -m BLEU -opi 1 -names param_names.txt 
+java -Xmx200m -Xms200m -cp bin joshua.decoder.Decoder MERT_example/config.txt MERT_example/src.txt MERT_example/nbest.out

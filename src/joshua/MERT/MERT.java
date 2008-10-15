@@ -97,6 +97,7 @@ public class MERT
   static int suffStatsCount;
     // number of sufficient statistics for the error metric
 
+  static String dirPrefix; // where are all these files located?
   static String paramNamesFileName, initLambdasFileName, finalLambdasFileName;
   static String sourceFileName, refFileName, decoderOutFileName;
   static String configFileName, decoderCommandFileName;
@@ -113,21 +114,21 @@ public class MERT
     processArgs(args);
       // non-specified args will be set to default values in processArgs
 
-    print("java MERT_OZ ",4);
-    for (int j = 0; j < args.length; ++j) print(args[j] + " ",4);
-    println("",4);
-    println("",4);
+    print("java MERT ",1);
+    for (int j = 0; j < args.length; ++j) print(args[j] + " ",1);
+    println("",1);
+    println("",1);
 
     initialize();
       // set numParams and numSentences, and initialize lambda[], 
       // and do any initialization required for the chosen evaluation metric
 
-println("Testing error function on references:",3);
-test_error(refFileName, refsPerSen, 0, true, 3);
-println("",3);
-println("Testing error function on decoder output:",3);
-test_error(decoderOutFileName, sizeOfNBest, 0, false, 3);
-println("",3);
+println("Testing error function on references:",2);
+test_error(refFileName, refsPerSen, 0, true,2);
+println("",2);
+println("Testing error function on decoder output:",2);
+test_error(decoderOutFileName, sizeOfNBest, 0, false,2);
+println("",2);
 
     run_MERT(maxMERTIterations);
       // optimize lambda[]!!!
@@ -141,10 +142,10 @@ println("",3);
 
   private static void initialize() throws Exception
   {
-    println("----------------------------------------------------",4);
-    println("Initializing...",4);
-    println("----------------------------------------------------",4);
-    println("",4);
+    println("----------------------------------------------------",1);
+    println("Initializing...",1);
+    println("----------------------------------------------------",1);
+    println("",1);
 
     numParams = countLines(initLambdasFileName);
     numSentences = countLines(sourceFileName);
@@ -200,8 +201,8 @@ println("",3);
       else { maxValue[c] = Double.parseDouble(dummy); }
 
       if (minValue[c] == maxValue[c] && isOptimizable[c]) {
-        println("Warning: lambda[" + c + "] is optimizable but has minValue = maxValue = " + minValue[c] + ".",4);
-        println("         Making it a fixed parameter at " + minValue[c] + ".",4);
+        println("Warning: lambda[" + c + "] is optimizable but has minValue = maxValue = " + minValue[c] + ".",1);
+        println("         Making it a fixed parameter at " + minValue[c] + ".",1);
         isOptimizable[c] = false;
         lambda[c] = minValue[c];
       } else if (minValue[c] > maxValue[c]) {
@@ -216,8 +217,8 @@ println("",3);
       }
 
       if (!(minValue[c] <= lambda[c] && lambda[c] <= maxValue[c]) && isOptimizable[c]) {
-        println("Warning: lambda[" + c + "] is optimizable but has initial value (" + lambda[c] + ")",4);
-        println("         that is outside its specified interval [" + minValue[c] + "," + maxValue[c] + "]",4);
+        println("Warning: lambda[" + c + "] is optimizable but has initial value (" + lambda[c] + ")",1);
+        println("         that is outside its specified interval [" + minValue[c] + "," + maxValue[c] + "]",1);
       }
 
     }
@@ -267,30 +268,30 @@ println("",3);
 
     suffStatsCount = errMetric.get_suffStatsCount();
 
-    println("numSentences = " + numSentences,4);
-    println("numParams = " + numParams,4);
-    print("  {");
+    println("numSentences = " + numSentences,1);
+    println("numParams = " + numParams,1);
+    print("  {",1);
     for (int c = 1; c <= numParams; ++c) {
-      print("\"" + paramNames[c] + "\"");
-      if (c < numParams) print(",");
+      print("\"" + paramNames[c] + "\"",1);
+      if (c < numParams) print(",",1);
     }
-    println("}",4);
-    println("",4);
+    println("}",1);
+    println("",1);
 
-    println("c    initial\toptimizable?    range",4);
+    println("c    initial\toptimizable?    range",1);
 
     for (int c = 1; c <= numParams; ++c) {
-      print(c + "    " + f3.format(lambda[c]) + "\t",4);
-      if (isOptimizable[c]) print("   Yes          ",4);
-      else print("   No           ",4);
-      print("[" + minValue[c] + "," + maxValue[c] + "] @ " + precision[c] + " precision",4);
-      println("",4);
+      print(c + "    " + f3.format(lambda[c]) + "\t",1);
+      if (isOptimizable[c]) print("   Yes          ",1);
+      else print("   No           ",1);
+      print("[" + minValue[c] + "," + maxValue[c] + "] @ " + precision[c] + " precision",1);
+      println("",1);
     }
 
-    println("",4);
+    println("",1);
 
-    println("----------------------------------------------------",4);
-    println("",4);
+    println("----------------------------------------------------",1);
+    println("",1);
 
   } // void initialize(...)
 
@@ -319,7 +320,7 @@ println("",3);
 
     for (int iteration = 1; iteration <= maxIts; ++iteration) {
 
-      println("Starting MERT iteration #" + iteration,4);
+      println("Starting MERT iteration #" + iteration,1);
 
       // initCandidateCount[i] stores number of candidate translations added
       // so far for the ith sentence, before generation of the N-best set
@@ -372,7 +373,7 @@ line format:
           SentenceInfo candidate = new SentenceInfo(candidate_str);
 
           if (!candidatesSentences[i].contains(candidate_str)) {
-            print("Adding candidate " + n + " of sentence " + i + ": ",6);
+            print("Adding candidate " + n + " of sentence " + i + ": ",3);
             line = line.substring(line.indexOf("||| ")); // get rid of candidate
 
             String[] featVal_str = line.split(" ");
@@ -391,9 +392,9 @@ line format:
             //debugging version
             for (int c = 1; c <= numParams; ++c) {
               featVal[c] = Double.parseDouble(featVal_str[c]);
-              print("fV[" + c + "]=" + featVal[c] + " ",6);
+              print("fV[" + c + "]=" + featVal[c] + " ",3);
             }
-            println("",6);
+            println("",3);
 
 
             featVal[0] = n; // order of appearance in file
@@ -403,7 +404,7 @@ line format:
             newCandidatesAdded = true;
 
           } else {
-            println("Skipping candidate " + n + " of sentence " + i + " (already seen)",6);
+            println("Skipping candidate " + n + " of sentence " + i + " (already seen)",3);
           }
 
         } // for (n)
@@ -412,7 +413,7 @@ line format:
       inFile.close();
 
       if (!newCandidatesAdded) {
-        println("Note: No new candidates added in this iteration.",4);
+        println("Note: No new candidates added in this iteration.",1);
         // no new candidate translations; not necessarily done (if doing one
         // parameter per MERT iteration).
       }
@@ -433,9 +434,9 @@ line format:
         // investigate lambda[c]
 
           if (!isOptimizable[c]) {
-            println("Not investigating lambda[" + c + "]",4);
+            println("Not investigating lambda[" + c + "]",1);
           } else {
-            println("Investigating lambda[" + c + "]",4);
+            println("Investigating lambda[" + c + "]",1);
 
             double[] lowestErrInfo_c = line_opt(c,candidates);
               // get lowest error and its lambda value
@@ -456,12 +457,12 @@ line format:
         // now c_best is the parameter giving the best result
 
         if (errMetric.isBetter(lowestErr,baseErr)) {
-          println("*** Changing lambda[" + c_best + "] from " + f4.format(lambda[c_best]) + " (score: " + f4.format(baseErr) + ") to " + f4.format(bestLambdaVal) + " (score: " + f4.format(lowestErr) + ") ***",4);
+          println("*** Changing lambda[" + c_best + "] from " + f4.format(lambda[c_best]) + " (score: " + f4.format(baseErr) + ") to " + f4.format(bestLambdaVal) + " (score: " + f4.format(lowestErr) + ") ***",1);
           lambda[c_best] = bestLambdaVal;
           paramChanged[c_best] = true;
           anyParamChanged = true;
         } else {
-          println("*** No change to any lambda[] ***",4);
+          println("*** No change to any lambda[] ***",1);
         }
 
       } else {
@@ -470,9 +471,9 @@ line format:
         // optimize lambda[c]
 
           if (!isOptimizable[c]) {
-            println("Not optimizing lambda[" + c + "]",4);
+            println("Not optimizing lambda[" + c + "]",1);
           } else {
-            println("Optimizing lambda[" + c + "]",4);
+            println("Optimizing lambda[" + c + "]",1);
 
             double baseErr = error(lambda,candidates);
 
@@ -483,12 +484,12 @@ line format:
             double bestLambdaVal_c = lowestErrInfo_c[1];
 
             if (errMetric.isBetter(lowestErr_c,baseErr)) {
-              println("*** Changing lambda[" + c + "] from " + f4.format(lambda[c]) + " (score: " + f4.format(baseErr) + ") to " + f4.format(bestLambdaVal_c) + " (score: " + f4.format(lowestErr_c) + ") ***",4);
+              println("*** Changing lambda[" + c + "] from " + f4.format(lambda[c]) + " (score: " + f4.format(baseErr) + ") to " + f4.format(bestLambdaVal_c) + " (score: " + f4.format(lowestErr_c) + ") ***",1);
               lambda[c] = bestLambdaVal_c;
               paramChanged[c] = true;
               anyParamChanged = true;
             } else {
-              println("*** No change to lambda[" + c + "] ***",4);
+              println("*** No change to lambda[" + c + "] ***",1);
             }
 
           } // if (!isOptimizable[c])
@@ -498,7 +499,7 @@ line format:
       }
 
       if (!anyParamChanged) {
-        println("No parameter values changed in this iteration; exiting MERT.",4);
+        println("No parameter values changed in this iteration; exiting MERT.",1);
         break;
       }
 
@@ -533,7 +534,7 @@ line format:
           for (int i = 0; i < numSentences; ++i) {
           // find threshold points contributed by ith sentence
 
-            println("Processing the " + i + "th sentence",5);
+            println("Processing the " + i + "th sentence",3);
 
             thresholds[i].clear();
 
@@ -568,7 +569,7 @@ line format:
 
               // debugging
               println("@ (i,k,n)=(" + i + "," + k + "," + (int)featVal[0] + "), "
-                     + "slope = " + slope[k] + "; offset = " + offset[k],6);
+                     + "slope = " + slope[k] + "; offset = " + offset[k],3);
 
               if (slope[k] < minSlope || (slope[k] == minSlope && offset[k] > offset_minSlope)) {
                 minSlopeIndex = k;
@@ -586,8 +587,8 @@ line format:
             // PS: now k equals numCandidates-1
 
             // debugging
-            println("minSlope is @ k = " + minSlopeIndex + ": slope " + minSlope + " (offset " + offset_minSlope + ")",6);
-            println("maxSlope is @ k = " + maxSlopeIndex + ": slope " + maxSlope + " (offset " + offset_maxSlope + ")",6);
+            println("minSlope is @ k = " + minSlopeIndex + ": slope " + minSlope + " (offset " + offset_minSlope + ")",3);
+            println("maxSlope is @ k = " + maxSlopeIndex + ": slope " + maxSlope + " (offset " + offset_maxSlope + ")",3);
 
 
             // some lines can be eliminated: the ones that have a lower offset
@@ -598,18 +599,18 @@ line format:
             // (This is actually important to do as it eliminates a bug.)
 
             HashSet discardedIndices = new HashSet();
-            print("discarding: ",6);
+            print("discarding: ",3);
             for (int k1 = 0; k1 < numCandidates; ++k1) {
               for (int k2 = 0; k2 < numCandidates; ++k2) {
                 if (k1 != k2 && slope[k1] == slope[k2] && offset[k1] > offset[k2]) {
                   discardedIndices.add(k2);
-                  print(k2 + " ",6);
+                  print(k2 + " ",3);
                 }
               }
             }
-            println("",6);
+            println("",3);
 
-            println("Extracting thresholds[(i,c)=(" + i + "," + c + ")]",6);
+            println("Extracting thresholds[(i,c)=(" + i + "," + c + ")]",3);
 
             int currIndex = minSlopeIndex;
               // As we traverse the lambda_c dimension, the "winner" candidate will
@@ -626,7 +627,7 @@ line format:
 
             while (currIndex != maxSlopeIndex) {
 
-              print("cI=" + currIndex + " ",6);
+              print("cI=" + currIndex + " ",3);
 
               // find the candidate whose line is the first to intersect the current
               // line.  ("first" meaning with an intersection point that has the
@@ -649,7 +650,7 @@ line format:
                 }
               }
 
-              print("ip=" + f4.format(nearestIntersectionPoint) + " ",6);
+              print("ip=" + f4.format(nearestIntersectionPoint) + " ",3);
               ++ipCount;
 
               int[] th_info = {i,currIndex,nearestIntersectingLineIndex};
@@ -663,12 +664,12 @@ line format:
 
             } // end while (currIndex != maxSlopeIndex)
 
-            println("cI=" + currIndex + "(=? " + maxSlopeIndex + " = mxSI)",6);
+            println("cI=" + currIndex + "(=? " + maxSlopeIndex + " = mxSI)",3);
 
             // now thresholds[i] has the values for lambda_c at which error changes
             // based on the candidates for the ith sentence
 
-            println("",6);
+            println("",3);
 
           } // for (i)
 
@@ -704,9 +705,9 @@ line format:
 
           double smallest_th = (Double)thresholdsAll.firstKey();
           double largest_th = (Double)thresholdsAll.lastKey();
-          println("Smallest extracted threshold: " + smallest_th,6);
-          println("Largest extracted threshold: " + largest_th,6);
-          println("",6);
+          println("Smallest extracted threshold: " + smallest_th,3);
+          println("Largest extracted threshold: " + largest_th,3);
+          println("",3);
 
           if (maxValue[c] != PosInf) {
             thresholdsAll.put(maxValue[c],null);
@@ -776,7 +777,7 @@ line format:
           double lowestErr = errMetric.score(suffStats_tot);
           double bestLambdaVal = temp_lambda[c];
           double nextLambdaVal = bestLambdaVal;
-          println("At lambda[" + c + "] = " + bestLambdaVal + ",\t" + metricName + " = " + lowestErr + ") *",6);
+          println("At lambda[" + c + "] = " + bestLambdaVal + ",\t" + metricName + " = " + lowestErr + " (*)",3);
 
           Iterator It = (thresholdsAll.keySet()).iterator();
           if (It.hasNext()) { ip_curr = (Double)It.next(); }
@@ -807,14 +808,14 @@ line format:
             }
 
             double nextTestErr = errMetric.score(suffStats_tot);
-            print("At lambda[" + c + "] = " + nextLambdaVal + ",\t" + metricName + " = " + nextTestErr + ")",6);
+            print("At lambda[" + c + "] = " + nextLambdaVal + ",\t" + metricName + " = " + nextTestErr,3);
 
             if (errMetric.isBetter(nextTestErr,lowestErr)) {
               lowestErr = nextTestErr;
               bestLambdaVal = nextLambdaVal;
-              print(" *",6);
+              print(" (*)",3);
             }
-            println("",6);
+            println("",3);
 
           }
 
@@ -1004,8 +1005,9 @@ private static void test_error(String inFileName, int candPerSen, int testIndex,
     println("Oops, you provided " + argsLen + " args!");
     println("");
     println("Usage:");
-    println("MERT_OZ [-s sourceFile] [-r refFile] [-rps refsPerSen] [-maxGL maxGramLength]\n        [-decOut decoderOutFile] [-names paramNames] [-init initLambdas]\n        [-fin finalLambdas] [-N N] [-maxIt maxMERTIts] [-cfg configFile]\n        [-cmd commandFile] [-opi onePerIt] [-m metricName]\n        [-xx xxx] [-v verbosity]");
+    println("MERT [-dir dirPrefix] [-s sourceFile] [-r refFile] [-rps refsPerSen]\n     [-maxGL maxGramLength] [-decOut decoderOutFile] [-names paramNames]\n     [-init initLambdas] [-fin finalLambdas] [-N N] [-maxIt maxMERTIts]\n     [-cfg configFile] [-cmd commandFile] [-opi onePerIt] [-m metricName]\n     [-xx xxx] [-v verbosity]");
     println("");
+    println(" (*) -dir dirPrefix: location of relevant files\n       [[default: empty string (i.e. they are in the current directory)]]");
     println(" (*) -s sourceFile: source sentences (foreign sentences) of the MERT dataset\n       [[default: source.txt]]");
     println(" (*) -r refFile: target sentences (reference translations) of the MERT dataset\n       [[default: reference.txt]]");
     println(" (*) -rps refsPerSen: number of reference translations per sentence\n       [[default: 1]]");
@@ -1020,14 +1022,15 @@ private static void test_error(String inFileName, int candPerSen, int testIndex,
     println(" (*) -maxIt maxMERTIts: maximum number of MERT iterations\n       [[default: 10]]");
     println(" (*) -opi onePerIt: modify a single parameter per iteration (1) or not (0)\n       [[default: 0]]");
     println(" (*) -m metricName: name of the evaluation metric optimized by MERT\n       [[default: BLEU]]");
-    println(" (*) -v verbosity: output verbosity level (higher value => more verbose)\n       [[default: 5]]");
+    println(" (*) -v verbosity: output verbosity level (0-4; higher value => more verbose)\n       [[default: 1]]");
     println("");
-    println("Ex.: java MERT_OZ -s DEV07_es.txt -r DEV07_en.txt -rps 4 -init initFile.txt -N 500 -maxIt 50 -v 0");
+    println("Ex.: java MERT -s DEV07_es.txt -r DEV07_en.txt -rps 4 -init initFile.txt -N 500 -maxIt 50 -v 0");
   }
 
   private static void processArgs(String[] args)
   {
     // set default values
+    dirPrefix = "";
     sourceFileName = "source.txt";
     refFileName = "reference.txt";
     refsPerSen = 1;
@@ -1042,7 +1045,7 @@ private static void test_error(String inFileName, int candPerSen, int testIndex,
     sizeOfNBest = 100;
     maxMERTIterations = 10;
     oneParamPerIteration = false;
-    verbosity = 5;
+    verbosity = 1;
 
     int i = 0;
 
@@ -1059,6 +1062,7 @@ private static void test_error(String inFileName, int candPerSen, int testIndex,
         if (maxGramLength < 1) { println("maxGramLength must be positive."); System.exit(10); }
       }
       else if (option.equals("-decOut")) { decoderOutFileName = args[i+1]; }
+      else if (option.equals("-dir")) { dirPrefix = args[i+1]; }
       else if (option.equals("-init")) { initLambdasFileName = args[i+1]; }
       else if (option.equals("-fin")) { finalLambdasFileName = args[i+1]; }
       else if (option.equals("-cmd")) { decoderCommandFileName = args[i+1]; }
@@ -1084,7 +1088,7 @@ private static void test_error(String inFileName, int candPerSen, int testIndex,
       }
       else if (option.equals("-v")) {
         verbosity = Integer.parseInt(args[i+1]);
-        if (verbosity < 0 || verbosity > 7) { println("verbosity should be between 0 and 7"); System.exit(10); }
+        if (verbosity < 0 || verbosity > 4) { println("verbosity should be between 0 and 4"); System.exit(10); }
       }
       else {
         println("Unknown option " + option); System.exit(10);
@@ -1092,6 +1096,19 @@ private static void test_error(String inFileName, int candPerSen, int testIndex,
 
       i += 2;
 
+    } // while (i)
+
+    if (dirPrefix.length() > 0) {
+      if (!dirPrefix.endsWith("\\") && !dirPrefix.endsWith("/")) { dirPrefix = dirPrefix + "\\"; }
+
+      sourceFileName = dirPrefix + sourceFileName;
+      refFileName = dirPrefix + refFileName;
+      decoderOutFileName = dirPrefix + decoderOutFileName;
+      paramNamesFileName = dirPrefix + paramNamesFileName;
+      initLambdasFileName = dirPrefix + initLambdasFileName;
+      finalLambdasFileName = dirPrefix + finalLambdasFileName;
+      decoderCommandFileName = dirPrefix + decoderCommandFileName;
+      configFileName = dirPrefix + configFileName;
     }
 
   } // processArgs(String[] args)
@@ -1176,7 +1193,7 @@ private static void test_error(String inFileName, int candPerSen, int testIndex,
   private static void showProgress()
   {
     ++progress;
-    if (progress % 10000 == 0) print(".",4);
+    if (progress % 10000 == 0) print(".",1);
   }
 
 }
