@@ -1236,7 +1236,7 @@ public class PrefixTree {
 		public List<Pattern> translate() {
 			List<Pattern> translations = new ArrayList<Pattern>();
 			
-			if (sourcePattern.toString().equals("[X une X]")) {
+			if (sourcePattern.toString().equals("[en X]")) {
 			//if (sourceWords.length==2 && sourceWords[0]==suffixArray.getVocabulary().getID("une") && sourceWords[1]==-1) {
 			//if (sourceWords.length>2 && sourceWords[1]==suffixArray.getVocabulary().getID("une") && sourceWords[0]==-1) {
 				int x=1; x++;
