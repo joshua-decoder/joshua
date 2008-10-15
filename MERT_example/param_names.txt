@@ -1,0 +1,5 @@
+lm
+phrasemodel pt 0
+phrasemodel pt 1
+phrasemodel pt 2
+wordpenalty

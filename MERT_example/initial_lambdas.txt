@@ -1,0 +1,5 @@
+1.000000	Fix	-Inf	+Inf	0.0
+1.066893	Opt	-Inf	+Inf	0.0
+0.752247	Opt	-Inf	+Inf	0.0
+0.589793	Opt	-Inf	+Inf	0.0
+-2.844814	Opt	-Inf	+Inf	0.0
