@@ -32,8 +32,9 @@ public class Arc<Label> {
 	/**
 	 * Weight of this arc. Package-private scope so that Node
 	 * and Lattice can quickly access this variable.
+         * @todo should be a vector of costs
 	 */
-	final double weight;
+	final double cost;
 	
 	/**
 	 * Node where this arc begins. Package-private scope so
@@ -54,27 +55,29 @@ public class Arc<Label> {
 	final Label label;
 	
 	/**
-	 * Creates an arc with the specified head, tail, weight, and label.
+	 * Creates an arc with the specified head, tail, cost, and label.
 	 * 
 	 * @param head The node where this arc begins.
 	 * @param tail The node where this arc ends.
-	 * @param weight The weight of this arc.
+	 * @param cost The cost of this arc.
 	 * @param label The label associated with this arc.
 	 */
-	public Arc(Node<Label> head, Node<Label> tail, double weight, Label label) {
+	public Arc(Node<Label> head, Node<Label> tail, double cost, Label label) {
 		this.head = head;
 		this.tail = tail;
-		this.weight = weight;
+		this.cost = cost;
 		this.label = label;
 	}
 
 	/**
-	 * Gets the weight of this arc.
+	 * Gets the cost of this arc.
 	 * 
-	 * @return The weight of this arc.
+	 * @return The cost of this arc.
+         * @todo should support indexing for multiple costs associated
+         * with each arc
 	 */
-	public double getWeight() {
-		return weight;
+	public double getCost() {
+		return cost;
 	}
 
 	/**

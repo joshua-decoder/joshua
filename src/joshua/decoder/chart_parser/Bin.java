@@ -231,9 +231,9 @@ public class Bin
 	
 	
 	//axiom is for the zero-arity rules
-	public void add_axiom(int i, int j, Rule rl){
+	public void add_axiom(int i, int j, Rule rl, float lattice_cost){
 		HashMap  tbl_states = compute_item(rl, null, i, j);
-		add_deduction_in_bin(tbl_states, rl, i, j, null);
+		add_deduction_in_bin(tbl_states, rl, i, j, null, lattice_cost);
 	}
 	
 	/*add complete Items in Chart
@@ -242,11 +242,12 @@ public class Bin
 		int i,
 		int j,
 		ArrayList<SuperItem> l_super_items,
-		RuleCollection rb
+		RuleCollection rb,
+		float lattice_cost
 	) {
 		List<Rule> l_rules = rb.getSortedRules();
 		//System.out.println(String.format("Complet_cell is called, n_rules: %d ", l_rules.size()));
-		for(Rule rl : l_rules){		
+		for(Rule rl : l_rules){
 			if(rb.getArity()==1){				
 				SuperItem super_ant1 = (SuperItem)l_super_items.get(0);
 				//System.out.println(String.format("Complet_cell, size %d ", super_ant1.l_items.size()));
@@ -255,7 +256,7 @@ public class Bin
 					ArrayList<Item> l_ants = new ArrayList<Item>();
 					l_ants.add(it_ant1);
 					HashMap  tbl_states = compute_item(rl, l_ants, i, j);			
-					add_deduction_in_bin(tbl_states, rl, i, j, l_ants);
+					add_deduction_in_bin(tbl_states, rl, i, j, l_ants, lattice_cost);
 				}
 			}else if(rb.getArity()==2){
 				SuperItem super_ant1 = (SuperItem)l_super_items.get(0);
@@ -269,7 +270,7 @@ public class Bin
 						l_ants.add(it_ant1);
 						l_ants.add(it_ant2);
 						HashMap  tbl_states = compute_item(rl, l_ants, i, j);				
-						add_deduction_in_bin(tbl_states, rl, i, j,l_ants);
+						add_deduction_in_bin(tbl_states, rl, i, j, l_ants, lattice_cost);
 					}					
 				}
 			}else{
@@ -287,7 +288,8 @@ public class Bin
 		int i,
 		int j,
 		ArrayList<SuperItem> l_super_items,
-		RuleCollection rb
+		RuleCollection rb,
+		float lattice_cost
 	) { //combinations: rules, antecent items
 		PriorityQueue<CubePruneState> heap_cands=new PriorityQueue<CubePruneState>();// in the paper, it is called cand[v]		
 		HashMap  cube_state_tbl = new HashMap ();//rememeber which state has been explored
@@ -322,7 +324,7 @@ public class Bin
 			cur_rl = cur_state.rule;
 			l_cur_ants = new ArrayList<Item>(cur_state.l_ants);//critical to create a new list			
 			//cube_state_tbl.remove(cur_state.get_signature());//TODO, repeat
-			add_deduction_in_bin(cur_state.tbl_states, cur_state.rule, i, j,cur_state.l_ants);//pre-pruning inside this function
+			add_deduction_in_bin(cur_state.tbl_states, cur_state.rule, i, j,cur_state.l_ants, lattice_cost);//pre-pruning inside this function
 			
 			//if the best state is pruned, then all the remaining states should be pruned away
 			if(((Double)cur_state.tbl_states.get(Symbol.EXPECTED_TOTAL_COST_SYM_ID)).doubleValue()>cut_off_cost+Decoder.fuzz1){
@@ -417,9 +419,11 @@ public class Bin
 	}
 	
 	
-	public Item add_deduction_in_bin(HashMap  tbl_states, Rule rl, int i, int j,  ArrayList<Item> ants){
+	public Item add_deduction_in_bin(HashMap  tbl_states, Rule rl, int i, int j,  ArrayList<Item> ants, float lattice_cost){
 		long start = Support.current_time();
 		Item res=null;
+		if (lattice_cost != 0.0f)
+			rl = rl.cloneAndAddLatticeCost(lattice_cost);
 		HashMap  item_state_tbl = (HashMap )tbl_states.get(Symbol.ITEM_STATES_SYM_ID);
 		double expected_total_cost=((Double)tbl_states.get(Symbol.EXPECTED_TOTAL_COST_SYM_ID)).doubleValue();//including outside estimation
 		double transition_cost=((Double)tbl_states.get(Symbol.TRANSITION_COST_SYM_ID)).doubleValue(); 

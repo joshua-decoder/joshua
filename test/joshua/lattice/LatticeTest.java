@@ -66,35 +66,35 @@ public class LatticeTest {
 			
 				// Node 0
 				"("+
-					"('A',1.0,5),"+ // Arc with label A and weight 1.0. Destination is Node 5 (Node 0 + span of 5)  
-					"('B',1.0,2),"+ // Arc with label B and weight 1.0. Destination is Node 2 (Node 0 + span of 2)
-					"('C',1.0,3),"+ // Arc with label C and weight 1.0. Destination is Node 3 (Node 0 + span of 3)
-					"('D',1.0,1),"+ // Arc with label D and weight 1.0. Destination is Node 1 (Node 0 + span of 1)
+					"('A',1.0,5),"+ // Arc with label A and cost 1.0. Destination is Node 5 (Node 0 + span of 5)  
+					"('B',1.0,2),"+ // Arc with label B and cost 1.0. Destination is Node 2 (Node 0 + span of 2)
+					"('C',1.0,3),"+ // Arc with label C and cost 1.0. Destination is Node 3 (Node 0 + span of 3)
+					"('D',1.0,1),"+ // Arc with label D and cost 1.0. Destination is Node 1 (Node 0 + span of 1)
 				")," +
 				
 				// Node 1
 				"(" +
-					"('E',1.0,4)," + // Arc with label E and weight 1.0. Destination is Node 5 (Node 1 + span of 4)
+					"('E',1.0,4)," + // Arc with label E and cost 1.0. Destination is Node 5 (Node 1 + span of 4)
 				")," +
 				
 				// Node 2
 				"(" +
-					"('C',1.0,3)," + // Arc with label C and weight 1.0. Destination is Node 5 (Node 2 + span of 3)
+					"('C',1.0,3)," + // Arc with label C and cost 1.0. Destination is Node 5 (Node 2 + span of 3)
 				")," +
 				
 				// Node 3
 				"(" +
-					"('D',1.0,1)," + // Arc with label D and weight 1.0. Destination is Node 4 (Node 3 + span of 1)
+					"('D',1.0,1)," + // Arc with label D and cost 1.0. Destination is Node 4 (Node 3 + span of 1)
 				")," +
 				
 				// Node 4
 				"(" +
-					"('E',1.0,1)," + // Arc with label E and weight 1.0. Destination is Node 5 (Node 4 + span of 1)
+					"('E',1.0,1)," + // Arc with label E and cost 1.0. Destination is Node 5 (Node 4 + span of 1)
 				")," +
 				
 				// Node 5
 				"(" +
-					"('X',1.0,1)," + // Arc with label X and weight 1.0. Destination is Node 6 (Node 5 + span of 1)
+					"('X',1.0,1)," + // Arc with label X and cost 1.0. Destination is Node 6 (Node 5 + span of 1)
 				")," +
 				
 				// There is an implicit final state (Node 6).
@@ -131,25 +131,25 @@ public class LatticeTest {
 		Assert.assertEquals(arcA_0_5.getLabel(), "A");
 		Assert.assertEquals(arcA_0_5.getHead(), node0);
 		Assert.assertEquals(arcA_0_5.getTail(), node5);
-		Assert.assertEquals(arcA_0_5.getWeight(), 1.0);
+		Assert.assertEquals(arcA_0_5.getCost(), 1.0);
 		
 		Arc<String> arcB_0_2 = node0.outgoingArcs.get(1);
 		Assert.assertEquals(arcB_0_2.getLabel(), "B");
 		Assert.assertEquals(arcB_0_2.getHead(), node0);
 		Assert.assertEquals(arcB_0_2.getTail(), node2);
-		Assert.assertEquals(arcB_0_2.getWeight(), 1.0);		
+		Assert.assertEquals(arcB_0_2.getCost(), 1.0);		
 		
 		Arc<String> arcC_0_3 = node0.outgoingArcs.get(2);
 		Assert.assertEquals(arcC_0_3.getLabel(), "C");
 		Assert.assertEquals(arcC_0_3.getHead(), node0);
 		Assert.assertEquals(arcC_0_3.getTail(), node3);
-		Assert.assertEquals(arcC_0_3.getWeight(), 1.0);	
+		Assert.assertEquals(arcC_0_3.getCost(), 1.0);	
 		
 		Arc<String> arcD_0_1 = node0.outgoingArcs.get(3);
 		Assert.assertEquals(arcD_0_1.getLabel(), "D");
 		Assert.assertEquals(arcD_0_1.getHead(), node0);
 		Assert.assertEquals(arcD_0_1.getTail(), node1);
-		Assert.assertEquals(arcD_0_1.getWeight(), 1.0);
+		Assert.assertEquals(arcD_0_1.getCost(), 1.0);
 		
 		
 		// Node 1 outgoing arcs
@@ -157,7 +157,7 @@ public class LatticeTest {
 		Assert.assertEquals(arcE_1_5.getLabel(), "E");
 		Assert.assertEquals(arcE_1_5.getHead(), node1);
 		Assert.assertEquals(arcE_1_5.getTail(), node5);
-		Assert.assertEquals(arcE_1_5.getWeight(), 1.0);
+		Assert.assertEquals(arcE_1_5.getCost(), 1.0);
 		
 		
 		// Node 2 outgoing arcs
@@ -165,7 +165,7 @@ public class LatticeTest {
 		Assert.assertEquals(arcC_2_5.getLabel(), "C");
 		Assert.assertEquals(arcC_2_5.getHead(), node2);
 		Assert.assertEquals(arcC_2_5.getTail(), node5);
-		Assert.assertEquals(arcC_2_5.getWeight(), 1.0);
+		Assert.assertEquals(arcC_2_5.getCost(), 1.0);
 		
 		
 		// Node 3 outgoing arcs
@@ -173,7 +173,7 @@ public class LatticeTest {
 		Assert.assertEquals(arcD_3_4.getLabel(), "D");
 		Assert.assertEquals(arcD_3_4.getHead(), node3);
 		Assert.assertEquals(arcD_3_4.getTail(), node4);
-		Assert.assertEquals(arcD_3_4.getWeight(), 1.0);
+		Assert.assertEquals(arcD_3_4.getCost(), 1.0);
 		
 		
 		// Node 4 outgoing arcs
@@ -181,7 +181,7 @@ public class LatticeTest {
 		Assert.assertEquals(arcE_4_5.getLabel(), "E");
 		Assert.assertEquals(arcE_4_5.getHead(), node4);
 		Assert.assertEquals(arcE_4_5.getTail(), node5);
-		Assert.assertEquals(arcE_1_5.getWeight(), 1.0);
+		Assert.assertEquals(arcE_1_5.getCost(), 1.0);
 		
 		
 		// Node 5 outgoing arcs
@@ -189,6 +189,6 @@ public class LatticeTest {
 		Assert.assertEquals(arcX_5_6.getLabel(), "X");
 		Assert.assertEquals(arcX_5_6.getHead(), node5);
 		Assert.assertEquals(arcX_5_6.getTail(), node6);
-		Assert.assertEquals(arcX_5_6.getWeight(), 1.0);
+		Assert.assertEquals(arcX_5_6.getCost(), 1.0);
 	}
 }

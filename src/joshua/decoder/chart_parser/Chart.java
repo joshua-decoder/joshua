@@ -32,6 +32,8 @@ import joshua.decoder.ff.tm.TMGrammar_Memory.Rule_Memory;
 import joshua.decoder.hypergraph.HyperGraph;
 import joshua.decoder.hypergraph.HyperGraph.Item;
 import joshua.lattice.Lattice;
+import joshua.lattice.Arc;
+import joshua.lattice.Node;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -66,8 +68,8 @@ public class Chart {
 	public  Bin[][]          bins;//note that in some cell, it might be null
 	private Bin              goal_bin;
 	
-	//private Lattice<Integer> sentence;//a list of foreign words
-	private int[] sentence;
+	private Lattice<Integer> sentence;//a list of foreign words
+	//private int[] sentence;
 	public  int              sent_len;//foreign sent len
 	private int              sent_id;
 	
@@ -113,17 +115,17 @@ public class Chart {
 	//public Chart(int[] sentence_in, ArrayList<Model> models, int sent_id1) {
 //	public Chart(Lattice<Integer> sentence_in, ArrayList<Model> models, int sent_id1) {
 	public Chart(
-		//Lattice<Integer>           sentence_,
-		int[] sentence,
+		Lattice<Integer>           sentence_,
+		//int[] sentence,
 		ArrayList<FeatureFunction> models_,
 		int                        sent_id_,
 		Grammar[]                  grammars_,
 		ArrayList<Integer>         default_nonterminals
 	) {
 //		public Chart(int[] sentence_in, ArrayList<FeatureFunction> models, int sent_id1) {   
-		this.sentence = sentence;
-		this.sent_len = sentence.length;
-		//this.sent_len = sentence.size();
+		this.sentence = sentence_;
+		//this.sent_len = sentence.length;
+		this.sent_len = sentence.size() - 1;
 		this.models   = models_;
 		this.bins     = new Bin[sent_len][sent_len+1];		
 		this.sent_id  = sent_id_;
@@ -148,13 +150,16 @@ public class Chart {
 //				"In Chart constructor, length of (?)integerized string(?) does not match length of integerized lattice");
 //			System.exit(1);
 //		}
-		for (int i = 0; i < this.sent_len; i++) {
-			for (int lhs : default_nonterminals) {//create a rule, but do not add into the grammar trie     
-				Rule rule = new TMGrammar_Memory.Rule_Memory(
-					lhs,
-					sentence[i],
-					Symbol.UNTRANS_SYM_ID);//TODO: change onwer
-				add_axiom(i, i+1, rule);
+		for (Node<Integer> node : sentence) {
+			for (Arc<Integer> arc : node.getOutgoingArcs()) {
+				for (int lhs : default_nonterminals) {//create a rule, but do not add into the grammar trie     
+					Rule rule = new TMGrammar_Memory.Rule_Memory(
+						lhs,
+						arc.getLabel(),
+						Symbol.UNTRANS_SYM_ID);//TODO: change onwer
+					// Tail and head are switched - FIX names:
+					add_axiom(node.getNumber(), arc.getTail().getNumber(), rule, (float)arc.getCost());
+				}
 			}
 		}
 		if (logger.isLoggable(Level.FINE)) logger.fine("####finished seeding");
@@ -190,19 +195,19 @@ public class Chart {
 					if (this.grammars[k].hasRuleForSpan(i, j, sent_len)
 					&& null != this.dotcharts[k].l_dot_bins[i][j]) {
 						for (DotItem dt: this.dotcharts[k].l_dot_bins[i][j].l_dot_items) {
+							float lattice_cost = dt.lattice_cost;
 							RuleCollection rules = dt.tnode.getRules();
-							
-							if (null != rules) {//have rules under this trienode									
+							if (null != rules) {//have rules under this trienode
 								if (rules.getArity() == 0) {//rules without any non-terminal
 									List<Rule> l_rules = rules.getSortedRules();
 									for (Rule rule : l_rules) {
-										add_axiom(i, j, rule);
+										add_axiom(i, j, rule, lattice_cost);
 									}
 								} else {//rules with non-terminal
 									if (Decoder.use_cube_prune) {
-										complete_cell_cube_prune(i, j, dt, rules);
+										complete_cell_cube_prune(i, j, dt, rules, lattice_cost);
 									} else {
-										complete_cell(i, j, dt, rules);//populate chart.bin[i][j] with rules from dotchart[i][j]
+										complete_cell(i, j, dt, rules, lattice_cost);//populate chart.bin[i][j] with rules from dotchart[i][j]
 									}
 								}
 							}
@@ -251,7 +256,7 @@ public class Chart {
 			}
 		}
 		print_info(Level.FINE);
-				
+		System.err.println("sent_len = " + sent_len);
 		//transition_final: setup a goal item, which may have many deductions
 		if (null != this.bins[0][sent_len]) {
 			goal_bin.transit_to_goal(this.bins[0][sent_len]);//update goal_bin				
@@ -312,7 +317,7 @@ public class Chart {
 				
 				for (Rule rule : l_rules){//for each unary rules								
 					HashMap tbl_states = chart_bin.compute_item(rule, l_ants, i, j);				
-					Item res_item = chart_bin.add_deduction_in_bin(tbl_states, rule, i, j, l_ants);
+					Item res_item = chart_bin.add_deduction_in_bin(tbl_states, rule, i, j, l_ants, 0.0f);
 					if (null != res_item) {
 						t_queue.add(res_item);
 						count_of_additions_to_t_queue++;
@@ -325,19 +330,19 @@ public class Chart {
 	
 	
 	/** axiom is for rules with zero-arity */
-	private void add_axiom(int i, int j, Rule rule) {
+	private void add_axiom(int i, int j, Rule rule, float lattice_cost) {
 		if (null == this.bins[i][j]) {
 			this.bins[i][j] = new Bin(this);
 		}
-		this.bins[i][j].add_axiom(i, j, rule);
+		this.bins[i][j].add_axiom(i, j, rule, lattice_cost);
 	}
 	
 	
-	private void complete_cell(int i, int j, DotItem dt, RuleCollection rb) {
+	private void complete_cell(int i, int j, DotItem dt, RuleCollection rb, float lattice_cost) {
 		if (null == this.bins[i][j]) {
 			this.bins[i][j] = new Bin(this);
 		}
-		this.bins[i][j].complete_cell(i, j, dt.l_ant_super_items, rb);//combinations: rules, antecent items
+		this.bins[i][j].complete_cell(i, j, dt.l_ant_super_items, rb, lattice_cost);//combinations: rules, antecent items
 	}
 	
 	
@@ -345,11 +350,12 @@ public class Chart {
 		int i,
 		int j,
 		DotItem dt,
-		RuleCollection rb
+		RuleCollection rb,
+		float lattice_cost
 	) {
 		if (null == this.bins[i][j]) {
 			this.bins[i][j] = new Bin(this);
 		}
-		this.bins[i][j].complete_cell_cube_prune(i, j, dt.l_ant_super_items, rb);//combinations: rules, antecent items
+		this.bins[i][j].complete_cell_cube_prune(i, j, dt.l_ant_super_items, rb, lattice_cost);//combinations: rules, antecent items
 	}
 }

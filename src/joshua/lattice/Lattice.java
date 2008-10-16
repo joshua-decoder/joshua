@@ -83,7 +83,9 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
 		for (Value value : linearChain) {
 			
 			Node<Value> current = new Node<Value>(i);
-			previous.addArc(current, 1.0, value);
+			float cost = 0.0f;
+			// if (i > 4) cost = (float)i/1.53432f;
+			previous.addArc(current, cost, value);
 			
 			nodes.add(current);
 			
@@ -239,10 +241,16 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
 				
 				int from = head.id;
 				int to = tail.id;
-				double weight = arc.weight;
+				// this is slightly different
+				// than it was defined in Dyer et al 2008
+				double cost = arc.cost;
+				// minimally, cost should be weighted by
+				// the feature weight assigned, so we just
+				// set this to 1.0 for now
+				cost = 1.0;
 				
-				if (weight < costs[from][to]) {
-					costs[from][to] = weight;
+				if (cost < costs[from][to]) {
+					costs[from][to] = cost;
 				}
 			}
 		}

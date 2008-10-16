@@ -31,7 +31,7 @@ public class ArcTest {
 
 	private final Node<String> head = new Node<String>(1);
 	private final Node<String> tail = new Node<String>(2);
-	private final double weight = Math.PI;
+	private final double cost = Math.PI;
 	private final String label = "pi";
 	
 	private Arc<String> arc;
@@ -40,11 +40,11 @@ public class ArcTest {
 	//@Test(dependsOnGroups = {"lattice_node" })
 	public void constructArc() {
 
-		arc = new Arc<String>(head, tail, weight, label);
+		arc = new Arc<String>(head, tail, cost, label);
 		
 		Assert.assertEquals(arc.head, head);
 		Assert.assertEquals(arc.tail, tail);
-		Assert.assertEquals(arc.weight, weight);
+		Assert.assertEquals(arc.cost, cost);
 		Assert.assertEquals(arc.label, label);
 		
 	}
@@ -66,9 +66,9 @@ public class ArcTest {
 	
 	
 	@Test(dependsOnMethods = { "constructArc" })
-	public void getWeight() {
+	public void getCost() {
 		
-		Assert.assertEquals(arc.getWeight(), weight);
+		Assert.assertEquals(arc.getCost(), cost);
 		
 	}
 	

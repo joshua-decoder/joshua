@@ -1,0 +1,2 @@
+To get SRILM working on MacOSX, I had to remove references to TCL from the
+library.  Then, I had to change -shared to -dynamiclib in the link line.

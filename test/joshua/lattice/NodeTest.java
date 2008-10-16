@@ -83,7 +83,7 @@ public class NodeTest {
 		Arc<String> a2 = node.outgoingArcs.get(0);
 		Assert.assertEquals(a2.head, node);
 		Assert.assertEquals(a2.tail, n2);
-		Assert.assertEquals(a2.weight, w2);
+		Assert.assertEquals(a2.cost, w2);
 		Assert.assertEquals(a2.label, l2);
 		
 		node.addArc(n3, w3, l3);
@@ -91,7 +91,7 @@ public class NodeTest {
 		Arc<String> a3 = node.outgoingArcs.get(1);
 		Assert.assertEquals(a3.head, node);
 		Assert.assertEquals(a3.tail, n3);
-		Assert.assertEquals(a3.weight, w3);
+		Assert.assertEquals(a3.cost, w3);
 		Assert.assertEquals(a3.label, l3);
 		
 		node.addArc(n4, w4, l4);
@@ -99,7 +99,7 @@ public class NodeTest {
 		Arc<String> a4 = node.outgoingArcs.get(2);
 		Assert.assertEquals(a4.head, node);
 		Assert.assertEquals(a4.tail, n4);
-		Assert.assertEquals(a4.weight, w4);
+		Assert.assertEquals(a4.cost, w4);
 		Assert.assertEquals(a4.label, l4);
 		
 	}
