@@ -34,7 +34,8 @@ public interface FFState {
 	/** @return null unless "stateful" */
 	@SuppressWarnings("unchecked")
 	Map    getStateForItem();
-	
+
+	// who is using this?	
 	double getFutureCostEstimation();
-	
+
 }
