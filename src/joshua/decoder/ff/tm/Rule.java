@@ -40,20 +40,26 @@ public class Rule {
 	public  final int[]   english;
 	public  final int     owner;
 	public  final float[] feat_scores; // the feature scores for this rule
+	public	final float lattice_cost;
 	public  final int     arity;// = 0;   // TODO: disk-grammar does not have this information, so, arity-penalty feature is not supported in disk-grammar
 	
 	//TODO Ideally, we shouldn't have to have dummy rule IDs and dummy owners. How can this need be eliminated?
 	private static final int DUMMY_RULE_ID = 1;
 	private static final int DUMMY_OWNER = 1;
-	
+
+	// create a copy of the rule and set the lattice cost field
+	public Rule cloneAndAddLatticeCost(float cost) {
+		Rule r = new Rule(rule_id, lhs, french, english, owner, feat_scores, arity, statelesscost, cost);
+		return r;
+	}
+
 	/* this remember all the stateless cost: sum of cost of all
 	 * stateless models (e..g, phrase model, word-penalty,
 	 * phrase-penalty). The LM model cost is not included here.
 	 * this will be set by Grmmar.estimate_rule
 	 */
-	public float statelesscost = 0.0f; //this is set in estimate_rule()
-	
-	
+	public float statelesscost; //this is set in estimate_rule()
+
 	/**
 	 * Constructs a rule from a formatted string.
 	 * 
@@ -65,6 +71,7 @@ public class Rule {
 		
 		rule_id = r_id;
 		owner   = owner_in;
+		statelesscost = 0;
 		
 		String[] fds = line.split("\\s+\\|{3}\\s+");
 		if (fds.length != 4) {
@@ -103,7 +110,7 @@ public class Rule {
 		for (String score : t_scores) {
 			feat_scores[i++] = (new Float(score)).floatValue();
 		}
-		
+		lattice_cost = 0;
 		//tem_estcost += estimate_rule();//estimate lower-bound, and set statelesscost, this must be called
 	}
 	
@@ -127,6 +134,8 @@ public class Rule {
 	   	this.english[0] = fr_in;
 	   	feat_scores     = new float[1];
 	   	feat_scores[0]  = 0;
+		statelesscost = 0;
+		lattice_cost	= 0;
 	}
 	
 	
@@ -149,6 +158,21 @@ public class Rule {
 		this.owner       = owner;
 		this.feat_scores = feat_scores_in;
 		this.arity       = arity_in;
+		statelesscost = 0;
+		this.lattice_cost= 0;
+	}
+	
+	// just used by cloneAndAddLatticeCost:
+	private Rule(int rule_id, int lhs, int[] fr_in, int[] eng_in, int owner, float[] feat_scores_in, int arity_in, float statelesscost, float src_cost) {
+		this.rule_id     = rule_id;
+		this.lhs         = lhs;
+		this.french      = fr_in;
+		this.english     = eng_in;
+		this.owner       = owner;
+		this.feat_scores = feat_scores_in;
+		this.arity       = arity_in;
+		this.statelesscost = statelesscost;
+		this.lattice_cost = src_cost;
 	}
 	
 	

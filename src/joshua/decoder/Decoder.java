@@ -22,6 +22,7 @@ import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.ArityPhrasePenaltyFF;
 import joshua.decoder.ff.PhraseModelFF;
 import joshua.decoder.ff.WordPenaltyFF;
+import joshua.decoder.ff.SourceLatticeArcCostFF;
 import joshua.decoder.ff.lm.LMGrammar;
 import joshua.decoder.ff.lm.LMGrammar_JAVA;
 import joshua.decoder.ff.lm.LMGrammar_REMOTE;
@@ -33,7 +34,7 @@ import joshua.decoder.ff.tm.TMGrammar_Memory; // HACK:
 import joshua.decoder.hypergraph.DiskHyperGraph;
 import joshua.decoder.hypergraph.HyperGraph;
 import joshua.decoder.hypergraph.KbestExtraction;
-//import joshua.lattice.Lattice;
+import joshua.lattice.Lattice;
 import joshua.util.sentence.Phrase;
 import joshua.util.FileUtility;
 
@@ -592,15 +593,15 @@ public class Decoder {
 		int[] sentence_numeric = 
 			Symbol.get_terminal_ids_for_sentence(sentence);
 		
-//		Lattice<Integer> inputLattice; {
-//			
-//			Integer[] input = new Integer[sentence_numeric.length];
-//			for (int i = 0; i < sentence_numeric.length; i++) {
-//				input[i] = sentence_numeric[i];
-//			}
-//
-//			inputLattice = new Lattice<Integer>(input);
-//		}
+		Lattice<Integer> inputLattice; {
+			
+			Integer[] input = new Integer[sentence_numeric.length];
+			for (int i = 0; i < sentence_numeric.length; i++) {
+				input[i] = sentence_numeric[i];
+			}
+
+			inputLattice = new Lattice<Integer>(input);
+		}
 
 		
 		Chart chart; {
@@ -611,7 +612,7 @@ public class Decoder {
 					grammarFactories[i].getGrammarForSentence(sentencePhrase);
 			}
 			chart = new Chart(
-				sentence_numeric,
+				inputLattice,
 				models,
 				sentenceID,
 				grammars,
@@ -670,6 +671,14 @@ public class Decoder {
 							"Line: %s\nAdd LM, order: %d; weight: %.3f;",
 							line, g_lm_order, weight));
 				
+				} else if (0 == fds[0].compareTo("latticecost")
+				&& fds.length == 2) {
+					double weight = Double.parseDouble(fds[1].trim());
+					l_models.add(new SourceLatticeArcCostFF(weight));
+					if (logger.isLoggable(Level.FINEST)) logger.finest(
+						String.format(
+							"Line: %s\nAdd Source lattice cost, weight: %.3f",
+							weight));
 				} else if (0 == fds[0].compareTo("phrasemodel")
 				&& fds.length == 4) { // phrasemodel owner column(0-indexed) weight
 					int owner = Symbol.add_terminal_symbol(fds[1]);
