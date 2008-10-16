@@ -391,15 +391,22 @@ public class PrefixTree {
 	public Grammar getRoot() {
 		return root;
 	}
-/*
-	private String intToString(int word) {
-		if (suffixArray==null)
-			return ""+word;
-		else
-			return suffixArray.corpus.vocab.getWord(word)+" (" + word + ")";
-	}
-	*/
+
+	/**
+	 * Implements the dotted operators from Lopez (2008), p78,
+	 * for the case when the phrases do not overlap on any words.
+	 * <p>
+	 * The <code>compare</code> method of this comparator behaves as follows
+	 * when provided prefix phrase m1 and suffix phrase m2:
+	 * <ul>
+	 * <li>Returns 0 if m1 and m2 can be paired.</li>
+	 * <li>Returns -1 if m1 and m2 cannot be paired, and m1 precedes m2 in the corpus.</li>
+	 * <li>Returns  1 if m1 and m2 cannot be paired, and m1 follows m2 in the corpus.</li>
+	 * </ul>
+	 * 
+	 */
 	final Comparator<HierarchicalPhrase> nonOverlapping = new Comparator<HierarchicalPhrase>() {
+
 		public int compare(HierarchicalPhrase m1, HierarchicalPhrase m2) {
 			if (m1.sentenceNumber < m2.sentenceNumber)
 				return -1;
@@ -416,6 +423,22 @@ public class PrefixTree {
 		}
 	};
 
+	
+	/**
+	 * Implements the dotted operators from Lopez (2008), p78-79,
+	 * for the case when the phrases overlap on all words
+	 * with the possible exceptions of the first word of the prefix phrase
+	 * and the final word of the suffix phrase.
+	 * <p>
+	 * The <code>compare</code> method of this comparator behaves as follows
+	 * when provided prefix phrase m1 and suffix phrase m2:
+	 * <ul>
+	 * <li>Returns 0 if m1 and m2 can be paired.</li>
+	 * <li>Returns -1 if m1 and m2 cannot be paired, and m1 precedes m2 in the corpus.</li>
+	 * <li>Returns  1 if m1 and m2 cannot be paired, and m1 follows m2 in the corpus.</li>
+	 * </ul>
+	 * 
+	 */
 	final Comparator<HierarchicalPhrase> overlapping = new Comparator<HierarchicalPhrase>() {
 		
 		//TODO This method may or may not be correct!!!!!
@@ -474,13 +497,88 @@ public class PrefixTree {
 		
 		//int suffixStart = m_alpha_b.getCorpusStartPosition();
 		boolean matchesOverlap;
-		if (m_a_alpha.pattern.endsWithNonTerminal() && m_alpha_b.pattern.startsWithNonTerminal()) 
+		if (m_a_alpha.pattern.endsWithNonTerminal() && 
+				m_alpha_b.pattern.startsWithNonTerminal() &&
+				m_a_alpha.terminalSequenceStartIndices.length==1 &&
+				m_alpha_b.terminalSequenceStartIndices.length==1 &&
+				m_a_alpha.terminalSequenceEndIndices[0]-m_a_alpha.terminalSequenceStartIndices[0]==1 &&
+				m_alpha_b.terminalSequenceEndIndices[0]-m_alpha_b.terminalSequenceStartIndices[0]==1) 
 			matchesOverlap = false;
 		else
 			matchesOverlap = true;
 		
-		if (matchesOverlap)
-			return overlapping.compare(m_a_alpha, m_alpha_b);
+		if (matchesOverlap) {
+			//return overlapping.compare(m_a_alpha, m_alpha_b);
+			int[] m_alpha_b_prefix;
+			
+			// If the m_alpha_b pattern ends with a nonterminal
+			if (m_alpha_b.endsWithNonterminal() ||
+					// ...or if the m_alpha_b pattern ends with two terminals
+					m_alpha_b.pattern.words[m_alpha_b.pattern.words.length-2] >= 0) {
+				
+				m_alpha_b_prefix = m_alpha_b.terminalSequenceStartIndices;
+				
+			} else { // Then the m_alpha_b pattern ends with a nonterminal followed by a terminal
+				int size = m_alpha_b.terminalSequenceStartIndices.length-1;
+				m_alpha_b_prefix = new int[size];
+				for (int i=0; i<size; i++) {
+					m_alpha_b_prefix[i] = m_alpha_b.terminalSequenceStartIndices[i];
+				}
+			}
+			
+			int[] m_a_alpha_suffix;
+			
+			// If the m_a_alpha pattern ends with a nonterminal
+			if (m_a_alpha.startsWithNonterminal()) {
+				m_a_alpha_suffix = m_a_alpha.terminalSequenceStartIndices;	
+			} else if (m_a_alpha.pattern.words[1] >= 0) {
+				int size = m_a_alpha.terminalSequenceStartIndices.length;
+				m_a_alpha_suffix = new int[size];
+				for (int i=0; i<size; i++) {
+					m_a_alpha_suffix[i] = m_a_alpha.terminalSequenceStartIndices[i];
+				}
+				m_a_alpha_suffix[0]++;
+			} else {
+				int size = m_a_alpha.terminalSequenceStartIndices.length-1;
+				m_a_alpha_suffix = new int[size];
+				for (int i=0; i<size; i++) {
+					m_a_alpha_suffix[i] = m_a_alpha.terminalSequenceStartIndices[i+1];
+				}
+			}
+			
+			
+			if (m_alpha_b_prefix.length != m_a_alpha_suffix.length) {
+				throw new RuntimeException("Length of s(m_a_alpha) and p(m_alpha_b) do not match");
+			} else {
+				
+				int result = 0;
+				
+				for (int i=0; i<m_a_alpha_suffix.length; i++) {
+					if (m_a_alpha_suffix[i] > m_alpha_b_prefix[i]) {
+						result = 1;
+						break;
+					} else if (m_a_alpha_suffix[i] < m_alpha_b_prefix[i]) {
+						result = -1;
+						break;
+					}
+				}
+				
+				if (result==0) {
+					int length = m_alpha_b.terminalSequenceEndIndices[m_alpha_b.terminalSequenceEndIndices.length-1] - m_a_alpha.terminalSequenceStartIndices[0];
+					if (m_alpha_b.endsWithNonterminal())
+						length += this.minNonterminalSpan;
+					if (m_a_alpha.startsWithNonterminal())
+						length += this.minNonterminalSpan;
+					
+					if (length > this.maxPhraseSpan) {
+						result = -1;
+					}
+				}
+				
+				return result;
+			}
+			
+		}
 		else
 			return nonOverlapping.compare(m_a_alpha, m_alpha_b);
 	}
@@ -498,7 +596,7 @@ public class PrefixTree {
 
 		if (logger.isLoggable(Level.FINE)) logger.fine("PrefixTree.query( " + pattern + ",\n\t   new node " + node + ",\n\tprefix node " + prefixNode + ",\n\tsuffix node " + suffixNode + ")");
 		
-		if (prefixNode.sourcePattern!=null && suffixNode.sourcePattern!=null && prefixNode.sourcePattern.toString().equals("[( le X une]") && suffixNode.sourcePattern.toString().equals("[le X une minute]")) {
+		if (prefixNode.sourcePattern!=null && suffixNode.sourcePattern!=null && prefixNode.sourcePattern.toString().equals("[( le parlement X]") && suffixNode.sourcePattern.toString().equals("[le parlement X minute]")) {
 			int x=1; x++;
 		}
 		
