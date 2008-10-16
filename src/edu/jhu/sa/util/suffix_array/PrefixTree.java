@@ -441,49 +441,16 @@ public class PrefixTree {
 			
 			m1End   = m1.terminalSequenceStartIndices.length - 1;
 			m2Start = 0;
-			/*
-			switch(m1Suffix) {
-				
-				case STARTS_WITH_NONTERMINAL:
-				case STARTS_WITH_TWO_TERMINALS:
-					m1Start = 0; 
-					break;
-					
-				case STARTS_WITH_TERMINAL_NONTERMINAL:
-					m1Start = 1; 
-					break;
-				
-				default:
-					if (m2Prefix==PrefixCase.EMPTY_PREFIX)
-						return 0;
-					else
-						throw new RuntimeException("Overlapping phrases by definition should not have an empty suffix");
-			}
-			
-			
-			switch(m2Prefix) {
-				
-				case ENDS_WITH_NONTERMINAL:
-				case ENDS_WITH_TWO_TERMINALS: 
-					m2End   = m2.corpusIndicesOfTerminalSequences.length - 1; 
-					break;
-					
-				case ENDS_WITH_NONTERMINAL_TERMINAL: 
-					m2End   = m2.corpusIndicesOfTerminalSequences.length - 2; 
-					break;
-					
-				case EMPTY_PREFIX:
-				default:
-					throw new RuntimeException("Overlapping phrases by definition should not have an empty prefix");
-			}
-			*/
-			//int m2Length = m2.corpusIndicesOfTerminalSequences.length;
 			
 			int result = m1.terminalSequenceStartIndices[m1End] - m2.terminalSequenceStartIndices[m2Start];
 			
+			
 			if (result == 0) {
 				
+				//XXX It's possible that this endPosition calculation is bogus, but it works.
 				int endPosition = m2.terminalSequenceStartIndices[0] + m2.terminalSequenceStartIndices.length;
+				
+				//XXX This length could be incorrect, if m1 starts with a nonterminal
 				int combinedLength = endPosition - m1.terminalSequenceStartIndices[0];
 				
 				if (combinedLength <= maxPhraseSpan) 
@@ -491,6 +458,10 @@ public class PrefixTree {
 				else
 					return 1;
 				
+			} else if (result < 0 && m2.terminalSequenceStartIndices[m2Start]<m1.terminalSequenceEndIndices[m1End]) {
+				//XXX We maybe should be checking here to make sure 
+				//    that the combined span is not greater than maxPhraseSpan
+				result = 0;
 			}
 			
 			return result;
@@ -526,6 +497,10 @@ public class PrefixTree {
 	public List<HierarchicalPhrase> query(Pattern pattern, Node node, Node prefixNode, Node suffixNode) {
 
 		if (logger.isLoggable(Level.FINE)) logger.fine("PrefixTree.query( " + pattern + ",\n\t   new node " + node + ",\n\tprefix node " + prefixNode + ",\n\tsuffix node " + suffixNode + ")");
+		
+		if (prefixNode.sourcePattern!=null && suffixNode.sourcePattern!=null && prefixNode.sourcePattern.toString().equals("[( le X une]") && suffixNode.sourcePattern.toString().equals("[le X une minute]")) {
+			int x=1; x++;
+		}
 		
 		List<HierarchicalPhrase> result;
 
@@ -744,17 +719,26 @@ public class PrefixTree {
 				
 				if (logger.isLoggable(Level.FINEST)) logger.finest("Alpha pattern is " + pattern);
 
-				int I = sentence.length-1;
-				int min = (I<i+maxPhraseLength) ? I : i+maxPhraseLength-1;
-				Pattern patternX = new Pattern(pattern, X);
-				
-				// 7: for k from j+1 to min(I, i+MaxPhraseLength) do
-				for (int k=j+2; k<=min; k++) {
+				// For efficiency, don't add any tuples to the queue whose patterns would exceed the max allowed number of tokens
+				if (pattern.words.length+2 < maxPhraseLength) {
 					
-					// 8: Add <alpha f_j X, i, k, p_alphaX> to queue
-					if (logger.isLoggable(Level.FINEST)) logger.finest("extendQueue: Adding tuple ("+patternX+","+i+","+k+","+xNode+ " ) in EXTEND_QUEUE ****************************************" );
-					queue.add(new Tuple(patternX, i, k, xNode));
-					
+					int I = sentence.length-1;
+					//int min = (I<i+maxPhraseLength) ? I : i+maxPhraseLength-1;
+					int min = (I<i+maxPhraseSpan) ? I : i+maxPhraseSpan-1;
+					Pattern patternX = new Pattern(pattern, X);
+
+					if (patternX.toString().equals("[( le X ]")) {
+						int q=1; q++;
+					}
+
+					// 7: for k from j+1 to min(I, i+MaxPhraseLength) do
+					for (int k=j+2; k<=min; k++) {
+
+						// 8: Add <alpha f_j X, i, k, p_alphaX> to queue
+						if (logger.isLoggable(Level.FINEST)) logger.finest("extendQueue: Adding tuple ("+patternX+","+i+","+k+","+xNode+ " ) in EXTEND_QUEUE ****************************************" );
+						queue.add(new Tuple(patternX, i, k, xNode));
+
+					}
 				}
 			}
 		}
@@ -1236,9 +1220,7 @@ public class PrefixTree {
 		public List<Pattern> translate() {
 			List<Pattern> translations = new ArrayList<Pattern>();
 			
-			if (sourcePattern.toString().equals("[en X]")) {
-			//if (sourceWords.length==2 && sourceWords[0]==suffixArray.getVocabulary().getID("une") && sourceWords[1]==-1) {
-			//if (sourceWords.length>2 && sourceWords[1]==suffixArray.getVocabulary().getID("une") && sourceWords[0]==-1) {
+			if (sourcePattern.toString().equals("[( le X minute]")) {
 				int x=1; x++;
 			}
 			
@@ -1272,7 +1254,7 @@ public class PrefixTree {
 					
 					// If target span and source span are consistent
 					//if (targetSpan!=null) {
-					if (targetSpan!=null && targetSpan.size()>=sourcePhrase.pattern.arity+1) {
+					if (targetSpan!=null && targetSpan.size()>=sourcePhrase.pattern.arity+1 && targetSpan.size()<=maxPhraseSpan) {
 						
 						// Construct a translation
 						Pattern translation = constructTranslation(sourcePhrase, sourceSpan, targetSpan, false, false);
@@ -1310,7 +1292,7 @@ public class PrefixTree {
 
 						// If target span and source span are consistent
 						//if (targetSpan!=null) {
-						if (targetSpan!=null && targetSpan.size()>=sourcePhrase.pattern.arity+1) {
+						if (targetSpan!=null && targetSpan.size()>=sourcePhrase.pattern.arity+1 && targetSpan.size()<=maxPhraseSpan) {
 
 							// Construct a translation
 							Pattern translation = constructTranslation(sourcePhrase, possibleSourceSpan, targetSpan, true, false);
@@ -1347,7 +1329,7 @@ public class PrefixTree {
 					//      looking for a source span with a consistent translation
 					while (possibleSourceSpan.end <= endOfSentence && 
 							//startOfTerminalSequence-possibleSourceSpan.start<=maxNonterminalSpan && 
-							possibleSourceSpan.end - endOfTerminalSequence < maxNonterminalSpan &&
+							possibleSourceSpan.end - endOfTerminalSequence <= maxNonterminalSpan &&
 							possibleSourceSpan.size()<=maxPhraseSpan) {
 							//endOfTerminalSequence-possibleSourceSpan.start<=maxPhraseSpan) {
 						
@@ -1356,7 +1338,7 @@ public class PrefixTree {
 
 						// If target span and source span are consistent
 						//if (targetSpan!=null) {
-						if (targetSpan!=null && targetSpan.size()>=sourcePhrase.pattern.arity+1) {
+						if (targetSpan!=null && targetSpan.size()>=sourcePhrase.pattern.arity+1 && targetSpan.size()<=maxPhraseSpan) {
 
 							// Construct a translation
 							Pattern translation = constructTranslation(sourcePhrase, possibleSourceSpan, targetSpan, false, true);
@@ -1396,11 +1378,11 @@ public class PrefixTree {
 					while (possibleSourceSpan.start >= startOfSentence && 
 							possibleSourceSpan.end <= endOfSentence && 
 							startOfTerminalSequence-possibleSourceSpan.start<=maxNonterminalSpan && 
-							possibleSourceSpan.end-endOfTerminalSequence<maxNonterminalSpan &&
+							possibleSourceSpan.end-endOfTerminalSequence<=maxNonterminalSpan &&
 							possibleSourceSpan.size()<=maxPhraseSpan) {
 							//endOfTerminalSequence-possibleSourceSpan.start<=maxPhraseSpan) {
 						
-						if (sourcePattern.toString().equals("[X une X]") && possibleSourceSpan.start==3 && possibleSourceSpan.end>=11) {
+						if (sourcePattern.toString().equals("[X pour X]") && possibleSourceSpan.start<=1 && possibleSourceSpan.end>=8) {
 							int x = 1; x++;
 						}
 						
@@ -1409,7 +1391,7 @@ public class PrefixTree {
 
 						// If target span and source span are consistent
 						//if (targetSpan!=null) {
-						if (targetSpan!=null && targetSpan.size()>=sourcePhrase.pattern.arity+1) {
+						if (targetSpan!=null && targetSpan.size()>=sourcePhrase.pattern.arity+1 && targetSpan.size()<=maxPhraseSpan) {
 
 							// Construct a translation
 							Pattern translation = constructTranslation(sourcePhrase, possibleSourceSpan, targetSpan, true, true);
@@ -1422,7 +1404,7 @@ public class PrefixTree {
 
 						} 
 						
-						if (possibleSourceSpan.end < endOfSentence) {
+						if (possibleSourceSpan.end < endOfSentence && possibleSourceSpan.end-endOfTerminalSequence+1<=maxNonterminalSpan && possibleSourceSpan.size()+1<maxPhraseSpan) {
 							possibleSourceSpan.end++;
 						} else {
 							possibleSourceSpan.end = endOfTerminalSequence+1;//1;

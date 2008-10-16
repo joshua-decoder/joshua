@@ -296,7 +296,7 @@ public class AlignmentArray {
 				lowestHighestMax = (highestAlignedIndex[i] > lowestHighestMax) ? highestAlignedIndex[i] : lowestHighestMax; //Math.max(highestAlignedIndex[i], lowestHighestMax);
 				//lowestHighest[0] = Math.min(lowestAlignedIndex[i], lowestHighest[0]);
 				//lowestHighest[1] = Math.max(highestAlignedIndex[i], lowestHighest[1]);
-			} else if (requireTightSpans) {
+			} else if (requireTightSpans && (i==startIndex || i==endIndex-1)) { //XXX Is this the correct way to ensure tight spans?
 				// If requiring tight spans
 				return new Span(UNALIGNED, UNALIGNED);
 			}
