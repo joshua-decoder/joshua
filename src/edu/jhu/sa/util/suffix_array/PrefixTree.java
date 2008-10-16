@@ -806,8 +806,8 @@ public class PrefixTree {
 					List<HierarchicalPhrase> phrasesWithFinalX = new ArrayList<HierarchicalPhrase>(node.sourceHierarchicalPhrases.size());
 
 					Vocabulary vocab = (suffixArray==null) ? null : suffixArray.getVocabulary();
-
 					Pattern xpattern = new Pattern(vocab, pattern(pattern.words, X));
+					
 					for (HierarchicalPhrase phrase : node.sourceHierarchicalPhrases) {
 						phrasesWithFinalX.add(new HierarchicalPhrase(phrase, X));
 					}
@@ -818,7 +818,7 @@ public class PrefixTree {
 				if (logger.isLoggable(Level.FINEST)) logger.finest("Alpha pattern is " + pattern);
 
 				// For efficiency, don't add any tuples to the queue whose patterns would exceed the max allowed number of tokens
-				if (pattern.words.length+2 < maxPhraseLength) {
+				if (pattern.words.length+2 <= maxPhraseLength) {
 					
 					int I = sentence.length-1;
 					//int min = (I<i+maxPhraseLength) ? I : i+maxPhraseLength-1;
@@ -837,6 +837,8 @@ public class PrefixTree {
 						queue.add(new Tuple(patternX, i, k, xNode));
 
 					}
+				} else if (logger.isLoggable(Level.FINEST)) {
+					logger.finest("Not extending " + pattern + "+X ");
 				}
 			}
 		}
