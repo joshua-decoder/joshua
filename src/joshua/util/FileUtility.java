@@ -25,8 +25,11 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.zip.GZIPInputStream;
+
 
 /**
  * utility functions for file operations
@@ -57,13 +60,15 @@ public class FileUtility{
 			FileUtility.close_write_file(out);
 	}	
 	
-	public static void print_hash_tbl_above_threshold(Map<String,Double> tbl, String f_out, boolean key_only, double threshold){
+//	choose features with counts >= threshold
+	public static void print_hash_tbl_above_threshold(HashMap tbl, String f_out, boolean key_only, double threshold){
 		//	#### write hashtable
 			BufferedWriter out = FileUtility.getWriteFileStream(f_out);
 			System.out.println("########### write hash table to file " + f_out);
-			for (String key : tbl.keySet()) {
-				Double val = tbl.get(key);
-				if(val>threshold){
+			for(Iterator it = tbl.keySet().iterator(); it.hasNext(); ){
+				String key = (String) it.next();
+				Double val = (Double)tbl.get(key);
+				if(val>=threshold){
 					if(key_only)
 						FileUtility.write_lzf(out, key + "\n");
 					else{

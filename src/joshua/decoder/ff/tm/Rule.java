@@ -34,7 +34,7 @@ public class Rule {
 	/* The string format of Rule is:
 	 *     [Phrase] ||| french ||| english ||| feature scores
 	 */
-	private final int     rule_id;
+	public final int     rule_id;
 	public  final int     lhs;         // tag of this rule, state to upper layer
 	public        int[]   french;      // only need to maintain at rulebine
 	public  final int[]   english;
@@ -240,4 +240,13 @@ public class Rule {
 		}
 		return this.cachedToString;
 	}
+	
+
+    public String toStringWithoutFeatScores(){
+            StringBuffer res = new StringBuffer();
+            res.append("["); res.append(Symbol.get_string(lhs)); res.append("] ||| ");
+            res.append(Symbol.get_string(french)); res.append(" ||| ");
+            res.append(Symbol.get_string(english));
+            return res.toString();
+    }
 }

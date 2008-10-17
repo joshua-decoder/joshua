@@ -30,20 +30,38 @@ import java.util.HashMap;
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate$
  */
+
 //TODO: currently assume log semiring, need to generalize to other semiring
+//already implement both max-product and sum-product algortithms for log-semiring
+//Note: this class does not require the correctness of the best_cost?
+
 public abstract class InsideOutside {
-	HashMap tbl_inside_cost =  new HashMap();//remember inside cost of each item
-	HashMap tbl_outside_cost =  new HashMap();//remember outside cost of each item
-	
-	private HashMap tbl_num_parent_deductions = new HashMap();//for each item, remember how many deductions pointering to me, this is needed for outside estimation
-	//an item will recursive call its deductions only after it itself is done with outside estimation, this is necessary because 
-	//the outside estimation of the items under its deductions require its outside value
-	
+	/*Two operations: add and multi
+	 * add: different hyperedges lead to a specific item
+	 * multi: prob of a derivation is a multi of all constituents
+	 **/
 	int ADD_MODE=0; //0: sum; 1: viterbi-min, 2: viterbi-max
 	int LOG_SEMIRING=1;
-	int SEMIRING=LOG_SEMIRING; //default is in log
+	int SEMIRING=LOG_SEMIRING; //default is in log; or real, or logic
 	double ZERO_IN_SEMIRING = Double.NEGATIVE_INFINITY;//log-domain
 	double ONE_IN_SEMIRING = 0;//log-domain
+	
+	HashMap tbl_inside_cost =  new HashMap();//remember inside cost of each item: 
+	HashMap tbl_outside_cost =  new HashMap();//remember outside cost of each item
+	double normalization_constant = ONE_IN_SEMIRING;
+	
+	/* for each item, remember how many deductions pointering to me, this is needed for outside estimation
+	 * during outside estimation, an item will recursive call its deductions to do outside-estimation only after it itself is done with outside estimation, this is necessary because
+	 * the outside estimation of the items under its deductions require the item's outside value
+	 */
+	private HashMap tbl_num_parent_deductions = new HashMap();
+	
+	private HashMap tbl_for_sanity_check = null;
+	double g_sanity_post_prob =0;
+	
+	//get feature-set specific score for deduction
+	protected abstract double get_deduction_score(Deduction dt, Item parent_it);
+	
 	
 	//the results are stored in tbl_inside_cost and tbl_outside_cost
 	public void run_inside_outside(HyperGraph hg, int add_mode, int semiring){//add_mode||| 0: sum; 1: viterbi-min, 2: viterbi-max
@@ -53,21 +71,87 @@ public abstract class InsideOutside {
 		inside_estimation_hg(hg);
 		//System.out.println("inside estimation");
 		outside_estimation_hg(hg);
+		normalization_constant = (Double)tbl_inside_cost.get(hg.goal_item);
 		tbl_num_parent_deductions.clear();
 	}
 	
-	
+	//to save memory, external class should call this method
 	public  void clear_state(){
 		tbl_num_parent_deductions.clear();
 		tbl_inside_cost.clear();
 		tbl_outside_cost.clear();
 	}
+
+	//######### use of inside-outside costs ##########################
+	//this is the logZ
+    public double get_normalization_constant(){
+    	return normalization_constant;
+    }
 	
-	//get feature-set specific score for deduction
-	protected abstract double get_deduction_score(Deduction dt, Item parent_it);
+	//this is the expected log cost of this deduction, without normalization
+	public double get_deduction_merit(Deduction dt, Item parent){
+		//### outside of parent
+		double outside = (Double)tbl_outside_cost.get(parent);
+		
+		//### get inside cost of all my ant-items
+		double inside = ONE_IN_SEMIRING;
+		if(dt.get_ant_items()!=null){
+			for(Item ant_it : dt.get_ant_items())
+				inside = multi_in_semiring(inside,(Double)tbl_inside_cost.get(ant_it));
+		}
+		
+		//### add deduction/rule specific cost
+		double merit = multi_in_semiring(inside, outside);
+		merit = multi_in_semiring(merit, get_deduction_score(dt, parent));
+		
+		return merit;
+	}	
+	
+	public double get_deduction_post_prob(Deduction dt, Item parent ){		
+		if(SEMIRING==LOG_SEMIRING){
+			return Math.exp((get_deduction_merit(dt, parent)-normalization_constant));
+		}else{
+			System.out.println("not implemented"); System.exit(0);
+			return 1;
+		}
+	}
+	
+	
+	public void sanity_check_hg(HyperGraph hg){		
+		tbl_for_sanity_check = new HashMap();
+		sanity_check_item(hg.goal_item);
+		System.out.println("g_sanity_post_prob is " + g_sanity_post_prob);
+		tbl_for_sanity_check.clear();
+	}
+	
+	private void sanity_check_item(Item it){
+		if(tbl_for_sanity_check.containsKey(it))return;
+		tbl_for_sanity_check.put(it,1);
+		
+		//### recursive call on each deduction
+		for(Deduction dt : it.l_deductions){
+			g_sanity_post_prob += get_deduction_post_prob(dt,it);
+			sanity_check_deduction(dt);//deduction-specifc operation
+		}
+		
+		//### item-specific operation
+	}
+	
+	private void sanity_check_deduction(Deduction dt){
+		//### recursive call on each ant item
+		if(dt.get_ant_items()!=null)
+			for(Item ant_it : dt.get_ant_items())
+				sanity_check_item(ant_it);
+		
+		//### deduction-specific operation				
+		
+	}
+	//################## end use of inside-outside costs 
+	
+	
 	
 //############ bottomn-up insdide estimation ##########################	
-	private void inside_estimation_hg(HyperGraph hg){		
+	private void inside_estimation_hg(HyperGraph hg){
 		tbl_inside_cost.clear(); 
 		tbl_num_parent_deductions.clear();
 		inside_estimation_item(hg.goal_item);
@@ -114,7 +198,7 @@ public abstract class InsideOutside {
 
 //############ top-downn outside estimation ##########################
 	
-	private void outside_estimation_hg(HyperGraph hg){		
+	private void outside_estimation_hg(HyperGraph hg){	
 		tbl_outside_cost.clear(); 
 		tbl_outside_cost.put(hg.goal_item, ONE_IN_SEMIRING);//initialize
 		for(Deduction dt : hg.goal_item.l_deductions)
@@ -123,47 +207,48 @@ public abstract class InsideOutside {
 	
 	private void outside_estimation_item(Item cur_it, Item upper_item, Deduction parent_dt, double parent_deduct_cost){
 		Integer num_called = (Integer)tbl_num_parent_deductions.get(cur_it);
-		if (null == num_called || num_called == 0) {
-			System.out.println("un-expected call, must be wrong");
-			System.exit(1);
-		}
-		tbl_num_parent_deductions.put(cur_it, num_called - 1);
+		if(num_called==null || num_called==0){System.out.println("un-expected call, must be wrong"); System.exit(0);}
+		tbl_num_parent_deductions.put(cur_it, num_called-1);		
 		
 		double old_outside_cost = ZERO_IN_SEMIRING;
 		if(tbl_outside_cost.containsKey(cur_it))
 			old_outside_cost = (Double) tbl_outside_cost.get(cur_it);
 		
-		double outside_cost = ONE_IN_SEMIRING;
+		double additional_outside_cost = ONE_IN_SEMIRING;
 		
 		//### add parent deduction cost
-		outside_cost =  multi_in_semiring(outside_cost, parent_deduct_cost);
+		additional_outside_cost =  multi_in_semiring(additional_outside_cost, parent_deduct_cost);
 		
 		//### sibing specifc
 		if(parent_dt.get_ant_items()!=null && parent_dt.get_ant_items().size()>1)
 			for(Item ant_it : parent_dt.get_ant_items()){
 				if(ant_it != cur_it){
-					double inside_item =(Double)tbl_inside_cost.get(ant_it);//inside cost
-					outside_cost =  multi_in_semiring(outside_cost, inside_item);
+					double inside_cost_item =(Double)tbl_inside_cost.get(ant_it);//inside cost
+					additional_outside_cost =  multi_in_semiring(additional_outside_cost, inside_cost_item);
 				}				
 			}
 				
 		//### upper item
-		double outside_item = (Double)tbl_outside_cost.get(upper_item);//outside cost
-		outside_cost =  multi_in_semiring(outside_cost, outside_item);
+		double outside_cost_item = (Double)tbl_outside_cost.get(upper_item);//outside cost
+		additional_outside_cost =  multi_in_semiring(additional_outside_cost, outside_cost_item);
 		
 		//#### add to old cost 
-		outside_cost = add_in_semiring(outside_cost, old_outside_cost);		
+		additional_outside_cost = add_in_semiring(additional_outside_cost, old_outside_cost);		
 		
-		tbl_outside_cost.put(cur_it, outside_cost);
+		tbl_outside_cost.put(cur_it, additional_outside_cost);
 		
 		//### recursive call on each deduction
 		if( num_called-1<=0){//i am done
-			for(Deduction dt : cur_it.l_deductions)
+			for(Deduction dt : cur_it.l_deductions){
+				//TODO: potentially, we can collect the feature expection in each hyperedge here, to avoid another pass of the hypergraph to get the counts
 				outside_estimation_deduction(dt, cur_it);
+			}
 		}
 	}
 	
-	private void outside_estimation_deduction(Deduction dt, Item parent_item){	
+	
+	private void outside_estimation_deduction(Deduction dt, Item parent_item){
+		//we do not need to outside cost if no ant items
 		if(dt.get_ant_items()!=null){
 			//### deduction specific cost
 			double deduction_cost = get_deduction_score(dt, parent_item);//feature-set specific
@@ -183,73 +268,71 @@ public abstract class InsideOutside {
 		ADD_MODE=add_mode;		
 		SEMIRING = semiring;
 		if(SEMIRING==LOG_SEMIRING){
-			if (ADD_MODE == 0) { // sum
+			if(ADD_MODE==0){//sum
 				ZERO_IN_SEMIRING = Double.NEGATIVE_INFINITY;
 				ONE_IN_SEMIRING = 0;
-			} else if (ADD_MODE == 1) { // viter-min
+			}else if (ADD_MODE==1){//viter-min
 				ZERO_IN_SEMIRING = Double.POSITIVE_INFINITY;
 				ONE_IN_SEMIRING = 0;
-			} else if (ADD_MODE == 2) { // viter-max
+			}else if (ADD_MODE==2){//viter-max
 				ZERO_IN_SEMIRING = Double.NEGATIVE_INFINITY;
 				ONE_IN_SEMIRING = 0;
-			} else {
-				System.out.println("invalid add mode");
-				System.exit(1);
-			}
-		} else {
-			System.out.println("un-supported semiring");
-			System.exit(1);
+			}else{
+				System.out.println("invalid add mode"); System.exit(0);
+			}			
+		}else{
+			System.out.println("un-supported semiring"); System.exit(0);
 		}
 	}
 	
-	protected double multi_in_semiring(double x, double y){
-		if (SEMIRING == LOG_SEMIRING) {
+	private double multi_in_semiring(double x, double y){
+		if(SEMIRING==LOG_SEMIRING){
 			return multi_in_log_semiring(x,y);
-		} else {
-			System.out.println("un-supported semiring");
-			System.exit(1);
-			return -1;
+		}else{
+			System.out.println("un-supported semiring"); System.exit(0); return -1;
 		}
 	} 	
 	
-	protected double add_in_semiring(double x, double y){
-		if (SEMIRING == LOG_SEMIRING) {
+	
+	private double divide_in_semiring(double x, double y){// x/y
+		if(SEMIRING==LOG_SEMIRING){
+			return x-y;
+		}else{
+			System.out.println("un-supported semiring"); System.exit(0); return -1;
+		}
+	} 	
+	
+	private double add_in_semiring(double x, double y){
+		if(SEMIRING==LOG_SEMIRING){
 			return add_in_log_semiring(x,y);
-		} else {
-			System.out.println("un-supported semiring");
-			System.exit(1);
-			return -1;
+		}else{
+			System.out.println("un-supported semiring"); System.exit(0); return -1;
 		}
 	} 	
 	
 	//AND
-	private double multi_in_log_semiring(double x, double y) { //value is cost
+	private double multi_in_log_semiring(double x, double y){//value is cost
 		return x + y;
 	}
 	
 	//OR: return Math.log(Math.exp(x) + Math.exp(y));
-	private double add_in_log_semiring(double x, double y) { //prevent over-flow 
-		if (ADD_MODE == 0) {//sum
-			if (x == Double.NEGATIVE_INFINITY) { // if y is also n-infinity, then return n-infinity
+	private double add_in_log_semiring(double x, double y){//prevent over-flow 
+		if(ADD_MODE==0){//sum
+			if(x==Double.NEGATIVE_INFINITY)//if y is also n-infinity, then return n-infinity
 				return y;
-			}
-			if (y == Double.NEGATIVE_INFINITY) {
+			if(y==Double.NEGATIVE_INFINITY)
 				return x;
-			}
 			
-			if (y <= x) {
-				return x + Math.log(1 + Math.exp(y - x));
-			} else {
-				return y + Math.log(1 + Math.exp(x - y));
-			}
-		} else if (ADD_MODE == 1) { //viter-min
-			return (x <= y) ? x : y;
-		} else if (ADD_MODE == 2) { //viter-max
-			return (x >= y) ? x : y;
-		} else {
-			System.out.println("invalid add mode");
-			System.exit(1);
-			return 0;
+			if(y<=x)
+				return x + Math.log(1+Math.exp(y-x));
+			else//x<y
+				return y + Math.log(1+Math.exp(x-y));
+		}else if (ADD_MODE==1){//viter-min
+			return (x<=y)?x:y;
+		}else if (ADD_MODE==2){//viter-max
+			return (x>=y)?x:y;
+		}else{
+			System.out.println("invalid add mode"); System.exit(0); return 0;
 		}
 	}
 //############ end common #####################	

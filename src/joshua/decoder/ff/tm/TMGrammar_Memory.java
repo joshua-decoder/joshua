@@ -54,7 +54,7 @@ extends TMGrammar {
 	private int num_rule_bin     = 0;
 	private TrieNode_Memory root = null;
 	
-	static int rule_id = 1; //three kinds of rule: regular rule (id>0); oov rule (id=0), and null rule (id=-1)
+	static int rule_id_count =1; //three kinds of rule: regular rule (id>0); oov rule (id=0), and null rule (id=-1)
 	static private double tem_estcost = 0.0;//debug
 	
 	private static final Logger logger =
@@ -128,10 +128,12 @@ extends TMGrammar {
 	
 	private Rule add_rule(String line, int owner) {
 		this.num_rule_read++;
-		TMGrammar_Memory.rule_id++;
+		num_rule_read++;
+		rule_id_count++;
 		//######1: parse the line
 		//######2: create a rule
-		Rule_Memory p_rule = new Rule_Memory(TMGrammar_Memory.rule_id, line, owner);
+		Rule_Memory p_rule = new Rule_Memory(rule_id_count, line, owner);		
+		
 		
 		
 		//######### identify the position, and insert the trinodes if necessary
