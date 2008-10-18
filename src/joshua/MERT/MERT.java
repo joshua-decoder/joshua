@@ -360,6 +360,8 @@ println("",2);
 
       println("...finished decoding.",1);
 
+      checkFile(decoderOutFileName);
+
       BufferedReader inFile = new BufferedReader(new FileReader(decoderOutFileName));
       String line, candidate_str;
 
@@ -1192,7 +1194,27 @@ private static void test_score(String inFileName, int candPerSen, int testIndex,
       }
     }
 
+    checkFile(sourceFileName);
+    checkFile(paramNamesFileName);
+    checkFile(initLambdasFileName);
+    checkFile(decoderCommandFileName);
+    checkFile(configFileName);
+
   } // processArgs(String[] args)
+
+  private static void checkFile(String fileName)
+  {
+    if (!fileExists(sourceFileName)) {
+      println("The file " + sourceFileName + " was not found!");
+      System.exit(20);
+    }
+  }
+
+  private static boolean fileExists(String fileName)
+  {
+    File checker = new File(fileName);
+    return checker.exists();
+  }
 
   private static String createUnifiedRefFile(String prefix, int numFiles) throws Exception
   {
