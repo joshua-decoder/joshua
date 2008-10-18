@@ -1,5 +1,5 @@
-lm_file=example2/example2.4gram.lm.gz
-tm_file=example2/example2.heiro.tm.gz
+lm_file=./example2.4gram.lm.gz
+tm_file=./example2.heiro.tm.gz
 
 #lm config
 use_srilm=true

@@ -1,0 +1,1 @@
+/home/damianos/MT/EVAL08_P3/SCORING/audio/scripts/bleu/bleu-1.04.pl

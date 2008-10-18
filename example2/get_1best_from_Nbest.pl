@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 # This script converts an N-best list from Joshua into a 1-best list
 #
 # Original by Zhifei Li
