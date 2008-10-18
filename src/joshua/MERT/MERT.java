@@ -1100,7 +1100,7 @@ private static void test_score(String inFileName, int candPerSen, int testIndex,
     println("Ex.: java MERT -s DEV07_es.txt -r DEV07_en.txt -rps 4 -init initFile.txt -N 500 -maxIt 50 -v 0");
   }
 
-  private static void processArgs(String[] args)
+  private static void processArgs(String[] args) throws Exception
   {
     // set default values
     dirPrefix = "";
@@ -1184,7 +1184,71 @@ private static void test_score(String inFileName, int candPerSen, int testIndex,
       configFileName = dirPrefix + configFileName;
     }
 
+    if (refsPerSen > 1) {
+      // the provided refFileName might be a prefix
+      File dummy = new File(refFileName);
+      if (!dummy.exists()) {
+        refFileName = createUnifiedRefFile(refFileName,refsPerSen);
+      }
+    }
+
   } // processArgs(String[] args)
+
+  private static String createUnifiedRefFile(String prefix, int numFiles) throws Exception
+  {
+    if (numFiles < 2) {
+      println("Warning: createUnifiedRefFile called with numFiles = " + numFiles + "; doing nothing.");
+      return prefix;
+    } else {
+      File checker;
+      checker = new File(prefix+"1");
+
+      if (!checker.exists()) {
+        checker = new File(prefix+".1");
+        if (!checker.exists()) {
+          println("Can't find reference files.");
+          System.exit(0);
+        } else {
+          prefix = prefix + ".";
+        }
+      }
+
+      String outFileName;
+      if (prefix.endsWith(".")) { outFileName = prefix+"all"; }
+      else { outFileName = prefix+".all"; }
+
+      PrintWriter outFile = new PrintWriter(outFileName);
+
+      BufferedReader[] inFile = new BufferedReader[numFiles];
+
+      int nextIndex;
+      checker = new File(prefix+"0");
+      if (checker.exists()) { nextIndex = 0; }
+      else { nextIndex = 1; }
+
+      for (int r = 0; r < numFiles; ++r) {
+        inFile[r] = new BufferedReader(new FileReader(prefix+nextIndex));
+        ++nextIndex;
+      }
+
+      String line;
+
+      for (int i = 0; i < numSentences; ++i) {
+        for (int r = 0; r < numFiles; ++r) {
+          line = inFile[r].readLine();
+          outFile.println(line);
+        }
+      }
+
+      outFile.close();
+
+      for (int r = 0; r < numFiles; ++r) { inFile[r].close(); }
+
+      return outFileName;
+
+    }
+
+  } // createUnifiedRefFile(String prefix, int numFiles)
 
   private static int countLines(String fileName) throws Exception
   {
