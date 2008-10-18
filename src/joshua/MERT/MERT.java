@@ -1322,15 +1322,20 @@ private static void test_score(String inFileName, int candPerSen, int testIndex,
       checker = new File(prefix+"0");
       if (checker.exists()) { nextIndex = 0; }
       else { nextIndex = 1; }
+      int lineCount = countLines(prefix+nextIndex);
 
       for (int r = 0; r < numFiles; ++r) {
+        if (countLines(prefix+nextIndex) != lineCount) {
+          println("Line count mismatch in " + (prefix+nextIndex) + ".");
+          System.exit(20);
+        }
         inFile[r] = new BufferedReader(new FileReader(prefix+nextIndex));
         ++nextIndex;
       }
 
       String line;
 
-      for (int i = 0; i < numSentences; ++i) {
+      for (int i = 0; i < lineCount; ++i) {
         for (int r = 0; r < numFiles; ++r) {
           line = inFile[r].readLine();
           outFile.println(line);
