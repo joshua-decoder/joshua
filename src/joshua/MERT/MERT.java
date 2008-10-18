@@ -338,14 +338,13 @@ println("",2);
 
       println("Starting MERT iteration #" + iteration,1);
 
-
-      if (resetCandList) {
+      if (iteration > 1 && resetCandList) {
         println("Clearing candidate translations from previous MERT iteration.",1);
         for (int i = 0; i < numSentences; ++i) {
           candidates[i].clear();
         }
-      } else {
-        println("Carried over candidate translations from previous MERT iteration.",1);
+      } else if (iteration > 1) {
+        println("Carrying over candidate translations from previous MERT iteration.",1);
       }
 
       // initCandidateCount[i] stores number of candidate translations added
@@ -476,6 +475,7 @@ line format:
       if (oneParamPerIteration) {
 
         double baseScore = score(lambda,candidates);
+        println("(Base score: " + baseScore + ")",1);
 
         int c_best = 0;
         double bestLambdaVal = 0.0;
@@ -532,6 +532,7 @@ line format:
             println("Optimizing lambda[" + c + "]",1);
 
             double baseScore = score(lambda,candidates);
+            println("(Base score: " + baseScore + ")",1);
 
             double[] bestScoreInfo_c = line_opt(c,candidates);
               // get best score and its lambda value
@@ -575,7 +576,7 @@ line format:
     for (int c = 1; c <= numParams-1; ++c) {
       retStr += "" + lambda[c] + ", ";
     }
-    retStr += "}";
+    retStr += "" + lambda[numParams] + "}";
 
     return retStr;
 
