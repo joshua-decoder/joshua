@@ -28,7 +28,7 @@ rule_relative_threshold=10.0
 use_unique_nbest=true
 use_tree_nbest=false
 add_combined_cost=true
-top_n=50
+top_n=300
 
 
 #remoter lm server config,we should first prepare remote_symbol_tbl before starting any jobs
