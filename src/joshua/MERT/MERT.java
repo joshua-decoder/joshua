@@ -332,9 +332,12 @@ println("",2);
       candidates[i] = new Vector();
     }
 
+    println("Initial lambda[]: " + lambdaToString(),1);
+
     for (int iteration = 1; iteration <= maxIts; ++iteration) {
 
       println("Starting MERT iteration #" + iteration,1);
+
 
       if (resetCandList) {
         println("Clearing candidate translations from previous MERT iteration.",1);
@@ -506,11 +509,16 @@ line format:
 
         if (evalMetric.isBetter(bestScore,baseScore)) {
           println("*** Changing lambda[" + c_best + "] from " + f4.format(lambda[c_best]) + " (score: " + f4.format(baseScore) + ") to " + f4.format(bestLambdaVal) + " (score: " + f4.format(bestScore) + ") ***",1);
+
+          println("*** Old lambda[]: " + lambdaToString() + " ***",1);
           lambda[c_best] = bestLambdaVal;
+          println("*** New lambda[]: " + lambdaToString() + " ***",1);
+
           paramChanged[c_best] = true;
           anyParamChanged = true;
         } else {
-          println("*** No change to any lambda[] ***",1);
+          println("*** No change to any lambda ***",1);
+          println("*** lambda[]: " + lambdaToString() + " ***",1);
         }
 
       } else {
@@ -533,11 +541,17 @@ line format:
 
             if (evalMetric.isBetter(bestScore_c,baseScore)) {
               println("*** Changing lambda[" + c + "] from " + f4.format(lambda[c]) + " (score: " + f4.format(baseScore) + ") to " + f4.format(bestLambdaVal_c) + " (score: " + f4.format(bestScore_c) + ") ***",1);
+
+              println("*** Old lambda[]: " + lambdaToString() + " ***",1);
+              lambda[c] = bestLambdaVal_c;
+              println("*** New lambda[]: " + lambdaToString() + " ***",1);
+
               lambda[c] = bestLambdaVal_c;
               paramChanged[c] = true;
               anyParamChanged = true;
             } else {
               println("*** No change to lambda[" + c + "] ***",1);
+              println("*** lambda[]: " + lambdaToString() + " ***",1);
             }
 
           } // if (!isOptimizable[c])
@@ -555,6 +569,17 @@ line format:
 
   } // void run_MERT(int maxIts)
 
+  private static String lambdaToString()
+  {
+    String retStr = "{";
+    for (int c = 1; c <= numParams-1; ++c) {
+      retStr += "" + lambda[c] + ", ";
+    }
+    retStr += "}";
+
+    return retStr;
+
+  }
 
   public static double[] line_opt(int c, Vector[] candidates)
   {
