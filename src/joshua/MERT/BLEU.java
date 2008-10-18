@@ -3,7 +3,7 @@ import java.math.*;
 import java.util.*;
 import java.io.*;
 
-public class BLEU extends ErrorMetric
+public class BLEU extends EvaluationMetric
 {
   private int maxGramLength;
   private HashMap[][] maxNgramCounts;

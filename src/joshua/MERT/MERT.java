@@ -89,13 +89,13 @@ public class MERT
     // examined.
 
   static String metricName;
-    // name of metric optimized by MERT
+    // name of evaluation metric optimized by MERT
 
-  static ErrorMetric errMetric;
-    // the metric used by MERT
+  static EvaluationMetric evalMetric;
+    // the evaluation metric used by MERT
 
   static int suffStatsCount;
-    // number of sufficient statistics for the error metric
+    // number of sufficient statistics for the evaluation metric
 
   static String dirPrefix; // where are all these files located?
   static String paramNamesFileName, initLambdasFileName, finalLambdasFileName;
@@ -109,7 +109,7 @@ public class MERT
       System.exit(0);
     }
 
-    ErrorMetric.set_knownNames();
+    EvaluationMetric.set_knownNames();
 
     processArgs(args);
       // non-specified args will be set to default values in processArgs
@@ -124,16 +124,16 @@ public class MERT
       // and do any initialization required for the chosen evaluation metric
 
 for (int r = 0; r < refsPerSen; ++r) {
-  println("Testing error function on reference set " + r + ":",2);
-  test_error(refFileName, refsPerSen, r, true,2);
+  println("Testing evaluation metric calculation on reference set " + r + ":",2);
+  test_score(refFileName, refsPerSen, r, true,2);
   println("",2);
 }
 
     run_MERT(maxMERTIterations);
       // optimize lambda[]!!!
 
-println("Testing error function on final decoder output:",2);
-test_error(decoderOutFileName, sizeOfNBest, 0, false,2);
+println("Testing evaluation metric calculation on final decoder output:",2);
+test_score(decoderOutFileName, sizeOfNBest, 0, false,2);
 println("",2);
 
     finalize(finalLambdasFileName);
@@ -257,19 +257,19 @@ println("",2);
     decoderCommand = inFile_comm.readLine();
     inFile_comm.close();
 
-    // set static data members for the ErrorMetric class
-    ErrorMetric.set_numSentences(numSentences);
-    ErrorMetric.set_refsPerSen(refsPerSen);
-    ErrorMetric.set_refSentenceInfo(refSentenceInfo);
+    // set static data members for the EvaluationMetric class
+    EvaluationMetric.set_numSentences(numSentences);
+    EvaluationMetric.set_refsPerSen(refsPerSen);
+    EvaluationMetric.set_refSentenceInfo(refSentenceInfo);
 
     // do necessary initialization for the evaluation metric
     if (metricName.equals("BLEU")) {
-      errMetric = new BLEU(4);
+      evalMetric = new BLEU(4);
     } else if (metricName.equals("01LOSS")) {
-      errMetric = new ZeroOneLoss();
+      evalMetric = new ZeroOneLoss();
     }
 
-    suffStatsCount = errMetric.get_suffStatsCount();
+    suffStatsCount = evalMetric.get_suffStatsCount();
 
     println("numSentences = " + numSentences,1);
     println("numParams = " + numParams,1);
@@ -441,11 +441,11 @@ line format:
 
       if (oneParamPerIteration) {
 
-        double baseErr = error(lambda,candidates);
+        double baseScore = score(lambda,candidates);
 
         int c_best = 0;
         double bestLambdaVal = 0.0;
-        double lowestErr = errMetric.worstPossibleScore()-1;
+        double bestScore = evalMetric.worstPossibleScore()-1;
 
         for (int c = 1; c <= numParams; ++c) {
         // investigate lambda[c]
@@ -455,14 +455,14 @@ line format:
           } else {
             println("Investigating lambda[" + c + "]",1);
 
-            double[] lowestErrInfo_c = line_opt(c,candidates);
-              // get lowest error and its lambda value
+            double[] bestScoreInfo_c = line_opt(c,candidates);
+              // get best score and its lambda value
 
-            double lowestErr_c = lowestErrInfo_c[0];
-            double bestLambdaVal_c = lowestErrInfo_c[1];
+            double bestScore_c = bestScoreInfo_c[0];
+            double bestLambdaVal_c = bestScoreInfo_c[1];
 
-            if (errMetric.isBetter(lowestErr_c,lowestErr)) {
-              lowestErr = lowestErr_c;
+            if (evalMetric.isBetter(bestScore_c,bestScore)) {
+              bestScore = bestScore_c;
               c_best = c;
               bestLambdaVal = bestLambdaVal_c;
             }
@@ -473,8 +473,8 @@ line format:
 
         // now c_best is the parameter giving the best result
 
-        if (errMetric.isBetter(lowestErr,baseErr)) {
-          println("*** Changing lambda[" + c_best + "] from " + f4.format(lambda[c_best]) + " (score: " + f4.format(baseErr) + ") to " + f4.format(bestLambdaVal) + " (score: " + f4.format(lowestErr) + ") ***",1);
+        if (evalMetric.isBetter(bestScore,baseScore)) {
+          println("*** Changing lambda[" + c_best + "] from " + f4.format(lambda[c_best]) + " (score: " + f4.format(baseScore) + ") to " + f4.format(bestLambdaVal) + " (score: " + f4.format(bestScore) + ") ***",1);
           lambda[c_best] = bestLambdaVal;
           paramChanged[c_best] = true;
           anyParamChanged = true;
@@ -492,16 +492,16 @@ line format:
           } else {
             println("Optimizing lambda[" + c + "]",1);
 
-            double baseErr = error(lambda,candidates);
+            double baseScore = score(lambda,candidates);
 
-            double[] lowestErrInfo_c = line_opt(c,candidates);
-              // get lowest error and its lambda value
+            double[] bestScoreInfo_c = line_opt(c,candidates);
+              // get best score and its lambda value
 
-            double lowestErr_c = lowestErrInfo_c[0];
-            double bestLambdaVal_c = lowestErrInfo_c[1];
+            double bestScore_c = bestScoreInfo_c[0];
+            double bestLambdaVal_c = bestScoreInfo_c[1];
 
-            if (errMetric.isBetter(lowestErr_c,baseErr)) {
-              println("*** Changing lambda[" + c + "] from " + f4.format(lambda[c]) + " (score: " + f4.format(baseErr) + ") to " + f4.format(bestLambdaVal_c) + " (score: " + f4.format(lowestErr_c) + ") ***",1);
+            if (evalMetric.isBetter(bestScore_c,baseScore)) {
+              println("*** Changing lambda[" + c + "] from " + f4.format(lambda[c]) + " (score: " + f4.format(baseScore) + ") to " + f4.format(bestLambdaVal_c) + " (score: " + f4.format(bestScore_c) + ") ***",1);
               lambda[c] = bestLambdaVal_c;
               paramChanged[c] = true;
               anyParamChanged = true;
@@ -543,7 +543,7 @@ line format:
 //      }
     }
 
-          double[] lowestErrInfo = new double[2];
+          double[] bestScoreInfo = new double[2];
 
           // Find threshold points
 
@@ -683,7 +683,7 @@ line format:
 
             println("cI=" + currIndex + "(=? " + maxSlopeIndex + " = mxSI)",3);
 
-            // now thresholds[i] has the values for lambda_c at which error changes
+            // now thresholds[i] has the values for lambda_c at which score changes
             // based on the candidates for the ith sentence
 
             println("",3);
@@ -709,7 +709,7 @@ line format:
             }
           }
 
-          // now thresholdsAll has the values for lambda_c at which error changes
+          // now thresholdsAll has the values for lambda_c at which score changes
           // based on the candidates for *all* the sentences (that satisfy
           // range constraints).
           // Each lambda_c value maps to a Vector of th_info.  All of these
@@ -783,7 +783,7 @@ line format:
 
           // Now, set suffStats[][], and increment suffStats_tot[]
           for (int i = 0; i < numSentences; ++i) {
-            suffStats[i] = errMetric.suffStats((SentenceInfo)candidates[i].elementAt(indexOfCurrBest[i]),i);
+            suffStats[i] = evalMetric.suffStats((SentenceInfo)candidates[i].elementAt(indexOfCurrBest[i]),i);
 
             for (int s = 0; s < suffStatsCount; ++s) {
               suffStats_tot[s] += suffStats[i][s];
@@ -791,10 +791,10 @@ line format:
           }
 
 
-          double lowestErr = errMetric.score(suffStats_tot);
+          double bestScore = evalMetric.score(suffStats_tot);
           double bestLambdaVal = temp_lambda[c];
           double nextLambdaVal = bestLambdaVal;
-          println("At lambda[" + c + "] = " + bestLambdaVal + ",\t" + metricName + " = " + lowestErr + " (*)",3);
+          println("At lambda[" + c + "] = " + bestLambdaVal + ",\t" + metricName + " = " + bestScore + " (*)",3);
 
           Iterator It = (thresholdsAll.keySet()).iterator();
           if (It.hasNext()) { ip_curr = (Double)It.next(); }
@@ -816,7 +816,7 @@ line format:
               }
 
               indexOfCurrBest[i] = new_k;
-              suffStats[i] = errMetric.suffStats((SentenceInfo)candidates[i].elementAt(indexOfCurrBest[i]),i);
+              suffStats[i] = evalMetric.suffStats((SentenceInfo)candidates[i].elementAt(indexOfCurrBest[i]),i);
 
               for (int s = 0; s < suffStatsCount; ++s) {
                 suffStats_tot[s] += suffStats[i][s]; // add stats for candidate old_k
@@ -824,11 +824,11 @@ line format:
 
             }
 
-            double nextTestErr = errMetric.score(suffStats_tot);
-            print("At lambda[" + c + "] = " + nextLambdaVal + ",\t" + metricName + " = " + nextTestErr,3);
+            double nextTestScore = evalMetric.score(suffStats_tot);
+            print("At lambda[" + c + "] = " + nextLambdaVal + ",\t" + metricName + " = " + nextTestScore,3);
 
-            if (errMetric.isBetter(nextTestErr,lowestErr)) {
-              lowestErr = nextTestErr;
+            if (evalMetric.isBetter(nextTestScore,bestScore)) {
+              bestScore = nextTestScore;
               bestLambdaVal = nextLambdaVal;
               print(" (*)",3);
             }
@@ -845,10 +845,10 @@ line format:
           /*************************************************/
           /*************************************************/
 
-          lowestErrInfo[0] = lowestErr;
-          lowestErrInfo[1] = bestLambdaVal;
+          bestScoreInfo[0] = bestScore;
+          bestScoreInfo[1] = bestLambdaVal;
 
-          return lowestErrInfo;
+          return bestScoreInfo;
 
   } // double[] line_opt(int c)
 
@@ -955,7 +955,7 @@ line format:
     outFile.close();
   }
 
-private static void test_error(String inFileName, int candPerSen, int testIndex, boolean isRefFile, int v) throws Exception
+private static void test_score(String inFileName, int candPerSen, int testIndex, boolean isRefFile, int v) throws Exception
 {
     // test that the translations in inFileName get the expected scores
 
@@ -1010,17 +1010,17 @@ private static void test_error(String inFileName, int candPerSen, int testIndex,
     inFile.close();
 
     if (v <= verbosity) {
-      errMetric.print_detailed_score(candSentenceInfo);
+      evalMetric.print_detailed_score(candSentenceInfo);
     }
 
-} // void test_error(...)
+} // void test_score(...)
 
 
 
 
 
 
-  private static double error(double[] lambda, Vector[] candidates) throws Exception
+  private static double score(double[] lambda, Vector[] candidates) throws Exception
   {
     SentenceInfo[] candSentenceInfo = new SentenceInfo[numSentences];
 
@@ -1049,7 +1049,7 @@ private static void test_error(String inFileName, int candPerSen, int testIndex,
 
     inFile.close();
 
-    return errMetric.score(candSentenceInfo);
+    return evalMetric.score(candSentenceInfo);
 
   }
 
@@ -1143,7 +1143,7 @@ private static void test_error(String inFileName, int candPerSen, int testIndex,
       else if (option.equals("-names")) { paramNamesFileName = args[i+1]; }
       else if (option.equals("-m")) {
         metricName = args[i+1];
-        if (!ErrorMetric.knownMetricName(metricName)) { println("Unknown metric name " + metricName + "."); System.exit(10); }
+        if (!EvaluationMetric.knownMetricName(metricName)) { println("Unknown metric name " + metricName + "."); System.exit(10); }
       }
       else if (option.equals("-N")) {
         sizeOfNBest = Integer.parseInt(args[i+1]);

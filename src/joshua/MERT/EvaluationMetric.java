@@ -4,7 +4,7 @@ import java.util.*;
 import java.io.*;
 import java.text.DecimalFormat;
 
-public abstract class ErrorMetric
+public abstract class EvaluationMetric
 {
   /* static data members */
   private static TreeSet knownNames; // set of valid metric names

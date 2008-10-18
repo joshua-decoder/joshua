@@ -3,7 +3,7 @@ import java.math.*;
 import java.util.*;
 import java.io.*;
 
-public class NewErrorMetric extends ErrorMetric
+public class NewEvaluationMetric extends EvaluationMetric
 {
   /*
     private data members for this error metric
@@ -15,13 +15,13 @@ public class NewErrorMetric extends ErrorMetric
   /*
   */
 
-  public NewErrorMetric()
+  public NewEvaluationMetric()
   {
     mainVar = 0.0; // default
     initialize();
   }
 
-  public NewErrorMetric(double x)
+  public NewEvaluationMetric(double x)
   {
     mainVar = x;
     initialize();

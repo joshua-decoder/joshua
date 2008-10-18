@@ -3,7 +3,7 @@ import java.math.*;
 import java.util.*;
 import java.io.*;
 
-public class ZeroOneLoss extends ErrorMetric
+public class ZeroOneLoss extends EvaluationMetric
 {
   public ZeroOneLoss()
   {
