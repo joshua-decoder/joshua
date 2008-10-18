@@ -75,6 +75,10 @@ public class MERT
   static String decoderCommand;
     // the command that runs the decoder; read from decoderCommandFileName
 
+  static int decVerbosity;
+    // verbosity level for decoder output.  If 0, decoder output is ignored.
+    // If 1, decoder output is printed.
+
   static int validDecoderExitValue;
     // return value from running the decoder command that indicates success
 
@@ -371,7 +375,11 @@ println("",2);
       InputStreamReader isr = new InputStreamReader(is);
       BufferedReader br = new BufferedReader(isr);
       String dummy_line = null;
-      while ((dummy_line = br.readLine()) != null);
+      while ((dummy_line = br.readLine()) != null) {
+        if (decVerbosity == 1) {
+          println(dummy_line);
+        }
+      }
       int decStatus = p.waitFor();
 
       if (decStatus != validDecoderExitValue) {
@@ -1121,6 +1129,8 @@ private static void test_score(String inFileName, int candPerSen, int testIndex,
     println(" (*) -opi onePerIt: modify a single parameter per iteration (1) or not (0)\n       [[default: 0]]");
     println(" (*) -m metricName: name of the evaluation metric optimized by MERT\n       [[default: BLEU]]");
     println(" (*) -v verbosity: output verbosity level (0-4; higher value => more verbose)\n       [[default: 1]]");
+    println(" (*) -decV decVerbosity: should decoder output be printed (1) or ignored (0)\n       [[default: 0]]");
+
     println("");
     println("Ex.: java MERT -s DEV07_es.txt -r DEV07_en.txt -rps 4 -init initFile.txt -N 500 -maxIt 50 -v 0");
   }
@@ -1146,6 +1156,7 @@ private static void test_score(String inFileName, int candPerSen, int testIndex,
     maxMERTIterations = 10;
     oneParamPerIteration = false;
     verbosity = 1;
+    decVerbosity = 0;
 
     int i = 0;
 
@@ -1198,6 +1209,10 @@ private static void test_score(String inFileName, int candPerSen, int testIndex,
       else if (option.equals("-v")) {
         verbosity = Integer.parseInt(args[i+1]);
         if (verbosity < 0 || verbosity > 4) { println("verbosity should be between 0 and 4"); System.exit(10); }
+      }
+      else if (option.equals("-decV")) {
+        decVerbosity = Integer.parseInt(args[i+1]);
+        if (decVerbosity < 0 || decVerbosity > 1) { println("decVerbosity should be either 0 or 1"); System.exit(10); }
       }
       else {
         println("Unknown option " + option); System.exit(10);
