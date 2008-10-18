@@ -261,6 +261,9 @@ public class BLEU extends EvaluationMetric
       s += 2;
     }
 
+    System.out.println("Length of candidate corpus = " + c_len);
+    System.out.println("Length of reference corpus = " + r_len);
+
     double BP = 1.0;
     if (c_len < r_len) BP = Math.exp(1-(r_len/c_len));
       // if c_len > r_len, no penalty applies
