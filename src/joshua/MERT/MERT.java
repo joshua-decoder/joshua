@@ -12,8 +12,6 @@ public class MERT
   static DecimalFormat f3 = new DecimalFormat("###0.000");
   static DecimalFormat f4 = new DecimalFormat("###0.0000");
 
-  static Date myDate;
-
   static final double NegInf = (-1.0 / 0.0);
   static final double PosInf = (+1.0 / 0.0);
   static final double epsilon = 1.0 / 1000000;
@@ -124,6 +122,8 @@ public class MERT
 
     processArgs(args);
       // non-specified args will be set to default values in processArgs
+
+    println("MERT started @ " + (new Date()) + " with the command:",1);
 
     print("java MERT ",1);
     for (int j = 0; j < args.length; ++j) print(args[j] + " ",1);
@@ -339,7 +339,7 @@ println("",2);
 
     for (int iteration = 1; iteration <= maxIts; ++iteration) {
 
-      println("Starting MERT iteration #" + iteration,1);
+      println("Starting MERT iteration #" + iteration + " @ " + (new Date()),1);
 
       if (iteration > 1 && resetCandList) {
         println("Clearing candidate translations from previous MERT iteration.",1);
@@ -392,7 +392,7 @@ println("",2);
         System.exit(30);
       }
 
-      println("...finished decoding.",1);
+      println("...finished decoding @ " + (new Date()),1);
 
       println("Ensuring proper decoder output.",2);
 
@@ -1010,19 +1010,31 @@ line format:
 
   private static void copyFile(String sourceFileName, String targetFileName) throws Exception
   {
-    BufferedReader inFile = new BufferedReader(new FileReader(sourceFileName));
-    PrintWriter outFile = new PrintWriter(targetFileName);
+    InputStream inStream = new FileInputStream(new File(sourceFileName));
+    BufferedReader inFile = new BufferedReader(new InputStreamReader(inStream, "utf8"));
 
-    String line = inFile.readLine();
+    FileOutputStream outStream = new FileOutputStream(targetFileName, false); // false: don't append
+    OutputStreamWriter outStreamWriter = new OutputStreamWriter(outStream, "utf8");
+    BufferedWriter outFile = new BufferedWriter(outStreamWriter);
 
-    while (line != null) {
-      outFile.println(line);
+    String line;
+    while(inFile.ready()) {
       line = inFile.readLine();
+      writeLine(line, outFile);
     }
 
     inFile.close();
     outFile.close();
   }
+
+
+  private static void writeLine(String line, BufferedWriter writer) throws IOException {
+    writer.write(line, 0, line.length());
+    writer.newLine();
+    writer.flush();
+  }
+
+
 
 private static void test_score(String inFileName, int candPerSen, int testIndex, boolean isRefFile, int v) throws Exception
 {
@@ -1261,6 +1273,16 @@ private static void test_score(String inFileName, int candPerSen, int testIndex,
     } // while (i)
 
     if (dirPrefix.length() > 0) {
+      sourceFileName = fullPath(dirPrefix,sourceFileName);
+      refFileName = fullPath(dirPrefix,refFileName);
+      decoderOutFileName = fullPath(dirPrefix,decoderOutFileName);
+      paramNamesFileName = fullPath(dirPrefix,paramNamesFileName);
+      initLambdasFileName = fullPath(dirPrefix,initLambdasFileName);
+      finalLambdasFileName = fullPath(dirPrefix,finalLambdasFileName);
+      decoderCommandFileName = fullPath(dirPrefix,decoderCommandFileName);
+      configFileName = fullPath(dirPrefix,configFileName);
+
+/*
       if (!dirPrefix.endsWith("\\") && !dirPrefix.endsWith("/")) { dirPrefix = dirPrefix + "/"; }
 
       sourceFileName = dirPrefix + sourceFileName;
@@ -1271,6 +1293,7 @@ private static void test_score(String inFileName, int candPerSen, int testIndex,
       finalLambdasFileName = dirPrefix + finalLambdasFileName;
       decoderCommandFileName = dirPrefix + decoderCommandFileName;
       configFileName = dirPrefix + configFileName;
+*/
     }
 
     if (refsPerSen > 1) {
@@ -1433,6 +1456,12 @@ private static void test_score(String inFileName, int candPerSen, int testIndex,
       else return c2;
     }
 
+  }
+
+  private static String fullPath(String dir, String fileName)
+  {
+    File dummyFile = new File(dir,fileName);
+    return dummyFile.getAbsolutePath();
   }
 
   private static void println(Object obj, int priority) { if (priority <= verbosity) println(obj); }
