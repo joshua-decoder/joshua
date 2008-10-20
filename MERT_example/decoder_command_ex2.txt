@@ -1,1 +1,1 @@
-java -Xmx1000m -Xms1000m -cp bin joshua.decoder.Decoder MERT_example/config_ex2.txt MERT_example/src.txt MERT_example/nbest_ex2.out
+java -Xmx1200m -Xms1200m -cp bin joshua.decoder.Decoder MERT_example/config_ex2.txt MERT_example/src.txt MERT_example/nbest_ex2.out
