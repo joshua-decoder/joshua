@@ -275,7 +275,7 @@ println("",2);
 
     // do necessary initialization for the evaluation metric
     if (metricName.equals("BLEU")) {
-      evalMetric = new BLEU(4);
+      evalMetric = new BLEU(maxGramLength);
     } else if (metricName.equals("01LOSS")) {
       evalMetric = new ZeroOneLoss();
     }
@@ -334,17 +334,20 @@ println("",2);
 
     println("Initial lambda[]: " + lambdaToString(),1);
 
+    int totalCandidateCount = 0;
+      // total number of candidates stored in candidates[]
+
     for (int iteration = 1; iteration <= maxIts; ++iteration) {
 
       println("Starting MERT iteration #" + iteration,1);
 
       if (iteration > 1 && resetCandList) {
         println("Clearing candidate translations from previous MERT iteration.",1);
-        for (int i = 0; i < numSentences; ++i) {
-          candidates[i].clear();
-        }
+        for (int i = 0; i < numSentences; ++i) { candidates[i].clear(); }
+        totalCandidateCount = 0;
       } else if (iteration > 1) {
-        println("Carrying over candidate translations from previous MERT iteration.",1);
+        print("Carrying over " + totalCandidateCount + " candidate translations from previous MERT iteration.",1);
+        println(" (About " + totalCandidateCount/numSentences + " candidate translation per sentence.)",1);
       }
 
       // initCandidateCount[i] stores number of candidate translations added
@@ -391,15 +394,20 @@ println("",2);
 
       println("...finished decoding.",1);
 
-      checkFile(decoderOutFileName);
+      println("Ensuring proper decoder output.",2);
 
-      BufferedReader inFile = new BufferedReader(new FileReader(decoderOutFileName));
-      String line, candidate_str;
+      checkFile(decoderOutFileName);
 
       fixDecoderOutput();
         // makes sure each sentence has sizeOfNBest candidate translations in
         // decoderOutFileName, since some sentences might produce fewer
         // candidates (e.g. sentence is too short or has too many OOV's)
+
+      println("Reading candidate translations.",1);
+      progress = 0;
+
+      BufferedReader inFile = new BufferedReader(new FileReader(decoderOutFileName));
+      String line, candidate_str;
 
       boolean newCandidatesAdded = false;
 
@@ -420,9 +428,8 @@ line format:
           line = line.substring(line.indexOf("||| ")+4); // get rid of initial text
           candidate_str = line.substring(0,line.indexOf(" |||"));
 
-          SentenceInfo candidate = new SentenceInfo(candidate_str);
-
-          if (!candidatesSentences[i].contains(candidate_str)) {
+          if (!candidatesSentences[i].contains(candidate_str.intern())) {
+            SentenceInfo candidate = new SentenceInfo(candidate_str.intern());
             print("Adding candidate " + n + " of sentence " + i + ": ",3);
             line = line.substring(line.indexOf("||| ")); // get rid of candidate
 
@@ -448,17 +455,22 @@ line format:
 
 
             featVal[0] = n; // order of appearance in file
-            candidatesSentences[i].add(candidate_str);
+            candidatesSentences[i].add(candidate_str.intern());
             candidate.set_featVals(featVal);
             candidates[i].add(candidate);
+            ++totalCandidateCount;
             newCandidatesAdded = true;
 
           } else {
             println("Skipping candidate " + n + " of sentence " + i + " (already seen)",3);
           }
 
+          showProgress();
+
         } // for (n)
       } // for (i)
+
+      println("",1);
 
       inFile.close();
 
@@ -1432,7 +1444,7 @@ private static void test_score(String inFileName, int candPerSen, int testIndex,
   private static void showProgress()
   {
     ++progress;
-    if (progress % 10000 == 0) print(".",1);
+    if (progress % 1000 == 0) print(".",1);
   }
 
 }

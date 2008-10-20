@@ -10,8 +10,6 @@ public class SentenceInfo
 
   private String sentence;
   private int senLength;
-  private String[] words;
-  private HashMap[] ngramCounts;
   private double[] featVals;
 
   // Default constructor
@@ -20,8 +18,6 @@ public class SentenceInfo
     checkStaticVars();
     sentence = "";
     senLength = 0;
-    words = new String[senLength];
-    set_ngramCounts();
     featVals = null;
   }
 
@@ -29,10 +25,8 @@ public class SentenceInfo
   public SentenceInfo(SentenceInfo other)
   {
     checkStaticVars();
-    sentence = other.sentence;
-    words = sentence.split(" ");
-    senLength = words.length;
-    set_ngramCounts();
+    sentence = (other.sentence).intern();
+    senLength = other.getLength();
     featVals = null; // why not copy from other ????????????
   }
 
@@ -40,10 +34,8 @@ public class SentenceInfo
   public SentenceInfo(String sentence_str)
   {
     checkStaticVars();
-    sentence = sentence_str;
-    words = sentence.split(" ");
-    senLength = words.length;
-    set_ngramCounts();
+    sentence = sentence_str.intern();
+    senLength = (sentence_str.split(" ")).length;
     featVals = null;
   }
 
@@ -52,12 +44,10 @@ public class SentenceInfo
   {
     checkStaticVars();
     senLength = wordArray.length;
-    words = new String[senLength];
-    for (int i = 0; i < senLength; ++i) { words[i] = wordArray[i]; }
     sentence = "";
-    for (int i = 0; i < senLength-1; ++i) { sentence = sentence + words[i] + " "; }
-    sentence = sentence + words[senLength-1];
-    set_ngramCounts();
+    for (int i = 0; i < senLength-1; ++i) { sentence = sentence + wordArray[i] + " "; }
+    sentence = sentence + wordArray[senLength-1];
+    sentence = sentence.intern();
     featVals = null;
   }
 
@@ -103,7 +93,9 @@ public class SentenceInfo
 
   public int getLength() { return senLength; }
 
-  public String getSentence() { return sentence; }
+  public String getSentence() {
+    return toString();
+  }
 
   public String getWordAt(int i)
   {
@@ -113,7 +105,7 @@ public class SentenceInfo
       System.exit(41);
     }
 
-    return words[i];
+    return (sentence.split(" "))[i];
 
   }
 
@@ -137,7 +129,6 @@ public class SentenceInfo
     }
 
     return featVals[c];
-
   }
 
   public double[] getFeats()
@@ -147,13 +138,31 @@ public class SentenceInfo
     double[] retA = new double[1+numParams];
     System.arraycopy(featVals,0,retA,0,1+numParams);
     return retA;
-
   }
 
-  private void set_ngramCounts()
+
+  public void set_featVals(double[] A)
   {
-    ngramCounts = new HashMap[1+maxGramLength];
+    if (A == null) {
+      System.out.println("set_featVals called with an uninitialized array object.");
+      System.exit(61);
+    } else if (A.length != 1+numParams) {
+      System.out.println("set_featVals called with an array of incorrect length " + (A.length+1));
+      System.out.println("(was expecting an array of length 1+numParams = " + (1+numParams) + ")");
+      System.exit(62);
+    } else {
+      featVals = new double[1+numParams];
+      System.arraycopy(A,0,featVals,0,1+numParams);
+        // [0] stores order of appearance in file
+    }
+  }
+
+  public HashMap[] getNgramCounts()
+  {
+    HashMap[] ngramCounts = new HashMap[1+maxGramLength];
     String gram = "";
+
+    String[] words = sentence.split(" ");
 
     for (int n = 1; n <= maxGramLength; ++n) {
     // process grams of length n
@@ -179,62 +188,15 @@ public class SentenceInfo
 
     } // for (n)
 
-  }
-
-  public void set_featVals(double[] A)
-  {
-    if (A == null) {
-      System.out.println("set_featVals called with an uninitialized array object.");
-      System.exit(61);
-    } else if (A.length != 1+numParams) {
-      System.out.println("set_featVals called with an array of incorrect length " + (A.length+1));
-      System.out.println("(was expecting an array of length 1+numParams = " + (1+numParams) + ")");
-      System.exit(62);
-    } else {
-      featVals = new double[1+numParams];
-      System.arraycopy(A,0,featVals,0,1+numParams);
-        // [0] stores order of appearance in file
-    }
-
-
+    return ngramCounts;
 
   }
 
-/*
-  public Iterator ngramCounts_keyIterator()
-  {
-    return (ngramCounts.keySet()).iterator();
-  }
 
-  public Set ngramCounts_keySet()
-  {
-    return ngramCounts.keySet();
-  }
-*/
-/*
-  public int gramCount(String gram)
-  {
-    if (ngramCounts.containsKey(gram)) {
-      return (Integer)ngramCounts.get(gram);
-    } else {
-      return 0;
-    }
-  }
-*/
-/*
-  public HashMap[] getNgramCounts()
-  {
-    HashMap[] retMapArray = new HashMap[1+maxGramLength];
-    for (int n = 1; n <= maxGramLength; ++n) {
-      retMapArray[n] = getNgramCounts(n);
-    }
-    return retMapArray;
-  }
-*/
   public HashMap getNgramCounts(int gramLength)
   {
     // check 1 <= gramLength <= maxGramLength
-    HashMap retMap = new HashMap(ngramCounts[gramLength]);
+    HashMap retMap = new HashMap(getNgramCounts()[gramLength]);
     return retMap;
   }
 
