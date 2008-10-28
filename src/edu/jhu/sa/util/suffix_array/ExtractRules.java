@@ -16,17 +16,22 @@
  */
 package edu.jhu.sa.util.suffix_array;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.zip.GZIPInputStream;
 
 import joshua.decoder.ff.tm.Rule;
 import joshua.util.CommandLineParser;
 import joshua.util.CommandLineParser.Option;
+import joshua.util.lexprob.LexProbs;
 import joshua.util.sentence.Vocabulary;
 
 
@@ -55,6 +60,12 @@ public class ExtractRules {
 		Option<Integer> maxPhraseSpan = commandLine.addIntegerOption("maxPhraseSpan","MAX_PHRASE_SPAN",10, "Max phrase span");
 		Option<Integer> maxPhraseLength = commandLine.addIntegerOption("maxPhraseLength","MAX_PHRASE_LENGTH",10, "Max phrase length");
 		Option<Integer> maxNonterminals = commandLine.addIntegerOption("maxNonterminals","MAX_NONTERMINALS",2, "Max nonterminals");
+		
+		Option<String> target_given_source_counts = commandLine.addStringOption("target-given-source-counts","FILENAME","file containing co-occurence counts of source and target word pairs, sorted by source words");
+		Option<String> source_given_target_counts = commandLine.addStringOption("source-given-target-counts","FILENAME","file containing co-occurence counts of target and source word pairs, sorted by target words");
+		
+		Option<Boolean> target_given_source_gz = commandLine.addBooleanOption("target-given-source-gzipped",false,"is the target given source word pair counts file gzipped");
+		Option<Boolean> source_given_target_gz = commandLine.addBooleanOption("source-given-target-gzipped",false,"is the source given target word pair counts file gzipped");
 		
 		
 		commandLine.parse(args);
@@ -87,6 +98,24 @@ public class ExtractRules {
 		String alignmentFileName = commandLine.getValue(alignment);
 		AlignmentArray alignmentArray = SuffixArrayFactory.createAlignmentArray(alignmentFileName, sourceSuffixArray, targetSuffixArray);
 		
+		// Set up the source text for reading
+		Scanner target_given_source;
+		if (commandLine.getValue(target_given_source_counts).endsWith(".gz") || commandLine.getValue(target_given_source_gz))
+			target_given_source = new Scanner(new BufferedReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(commandLine.getValue(target_given_source_counts))),commandLine.getValue(encoding))));
+		else
+			target_given_source = new Scanner( new File(commandLine.getValue(target_given_source_counts)), commandLine.getValue(encoding));
+
+		
+		// Set up the target text for reading
+		Scanner source_given_target;
+		if (commandLine.getValue(source_given_target_counts).endsWith(".gz") || commandLine.getValue(source_given_target_gz))
+			source_given_target = new Scanner(new BufferedReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(commandLine.getValue(source_given_target_counts))),commandLine.getValue(encoding))));
+		else
+			source_given_target = new Scanner( new File(commandLine.getValue(source_given_target_counts)), commandLine.getValue(encoding));
+		
+		LexProbs lexProbs = new LexProbs(source_given_target, target_given_source, sourceVocab, targetVocab);
+		
+		
 		Map<Integer,String> ntVocab = new HashMap<Integer,String>();
 		ntVocab.put(PrefixTree.X, "X");
 		
@@ -95,7 +124,7 @@ public class ExtractRules {
 		while (testFileScanner.hasNextLine()) {
 			String line = testFileScanner.nextLine();
 			int[] words = sourceVocab.getIDs(line);
-			PrefixTree prefixTree = new PrefixTree(sourceSuffixArray, targetCorpusArray, alignmentArray, words, commandLine.getValue(maxPhraseSpan), commandLine.getValue(maxPhraseLength), commandLine.getValue(maxNonterminals));
+			PrefixTree prefixTree = new PrefixTree(sourceSuffixArray, targetCorpusArray, alignmentArray, lexProbs, words, commandLine.getValue(maxPhraseSpan), commandLine.getValue(maxPhraseLength), commandLine.getValue(maxNonterminals));
 			
 			for (Rule rule : prefixTree.getAllRules()) {
 				System.out.println(rule.toString(ntVocab, sourceVocab, targetVocab));

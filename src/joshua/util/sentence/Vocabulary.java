@@ -45,6 +45,7 @@ public class Vocabulary implements Iterable<String> {
 	  * ensuring that it is outside of the vocabulary. */
 	public static int UNKNOWN_WORD = 0;
 
+	/** String representation for out-of-vocabulary words. */
 	public static final String UNKNOWN_WORD_STRING = "UNK";
 
 //===============================================================
@@ -84,6 +85,12 @@ public class Vocabulary implements Iterable<String> {
 		UNKNOWN_WORD = vocabList.size();
 	}
 	
+	/**
+	 * Constructs a vocabulary from a text file.
+	 * 
+	 * @param fileName Filename of a text file.
+	 * @throws IOException
+	 */
 	public Vocabulary(String fileName) throws IOException {
 		this();
 		SuffixArrayFactory.createVocabulary(fileName, this);
@@ -99,7 +106,16 @@ public class Vocabulary implements Iterable<String> {
 	
 
 	/**
-	 * @return the ID for wordString
+	 * Gets an integer identifier for the word.
+	 * <p>
+	 * If the word is in the vocabulary,
+	 * the integer returned will uniquely identify that word.
+	 * 
+	 * If the word is not in the vocabulary,
+	 * the constant  <code>UNKNOWN_WORD</code> will be returned.
+	 * 
+	 * @return the unique integer identifier for wordString, 
+	 *         or UNKNOWN_WORD if wordString is not in the vocabulary
 	 */
 	public int getID(String wordString) {
 		Integer ID = wordToIDMap.get(wordString);
@@ -110,6 +126,18 @@ public class Vocabulary implements Iterable<String> {
 		}
 	}
 
+	/**
+	 * Gets the integer identifiers 
+	 * for all words in the provided sentence.
+	 * <p>
+	 * The sentence will be split (on spaces) into words,
+	 * then the integer identifier for each word 
+	 * will be retrieved using <code>getID</code>.
+	 * 
+	 * @see getID(String)
+	 * @param sentence String of words, separated by spaces.
+	 * @return Array of integer identifiers for each word in the sentence
+	 */
 	public int[] getIDs(String sentence) {
 		String[] words = sentence.split(" ");
 		int[] wordIDs = new int[words.length];
@@ -124,7 +152,11 @@ public class Vocabulary implements Iterable<String> {
 	
 	
 	/**
-	 * @return the String for a word ID
+	 * Gets the String that corresponds to the specified integer identifier.
+	 * 
+	 * @return the String that corresponds to the specified integer identifier,
+	 *         or <code>UNKNOWN_WORD_STRING</code> if the identifier 
+	 *         does not correspond to a word in the vocabulary
 	 */
 	public String getWord(int wordID) {
 		if (wordID >= vocabList.size() || wordID < 0) {
@@ -171,6 +203,11 @@ public class Vocabulary implements Iterable<String> {
 		return vocabList.iterator();
 	}
 	
+	/**
+	 * Gets the list of all words represented by this vocabulary.
+	 * 
+	 * @return the list of all words represented by this vocabulary
+	 */
 	public List<String> getWords() {
 		return vocabList;
 	}
@@ -178,8 +215,9 @@ public class Vocabulary implements Iterable<String> {
 	
 	/** 
 	 * Adds a word to the vocabulary.
+	 * 
 	 * @return the ID of the word, or UNKNOWN_WORD if 
-	 * the word is new and the vocabulary is fixed.
+	 *         the word is new and the vocabulary is fixed.
 	 */
 	public int addWord(String wordString) {
 		Integer ID = wordToIDMap.get(wordString);
@@ -197,6 +235,8 @@ public class Vocabulary implements Iterable<String> {
 	}
 		
 	/**
+	 * Gets the number of unique words in the vocabulary.
+	 * 
 	 * @return the number of unique words in the vocabulary.
 	 */
 	public int size() {
@@ -212,7 +252,11 @@ public class Vocabulary implements Iterable<String> {
 	}
 	
 	/**
-	 * @return true if there are unknown words in the phrase
+	 * Determines if the phrase contains any words
+	 * that are not in the vocabulary.
+	 * 
+	 * @return <code>true</code> if there are unknown words in the phrase,
+	 *         <code>false</code> otherwise
 	 */
 	public boolean containsUnknownWords(BasicPhrase phrase) {
 		for(int i = 0; i < phrase.size(); i++) {
@@ -224,11 +268,14 @@ public class Vocabulary implements Iterable<String> {
 	
 	/**
 	 * Checks that the Vocabularies are the same, by first checking that they have
-	 * the same number of items, and then checking that each word corresoponds
-	 * to the same ID
-	 * @param o the Vocabulary to check equivalence with
-	 * @return true if the other object is a Vocabulary representing the same set of
-	 * words with identically assigned IDs
+	 * the same number of items, and then checking that each word corresponds
+	 * to the same ID.
+	 * 
+	 * @param o the object to check equivalence with
+	 * @return <code>true</code> if the other object is 
+	 *         a Vocabulary representing the same set of
+	 *         words with identically assigned IDs,
+	 *         <code>false</code> otherwise
 	 */
 	public boolean equals(Object o) {
 		if (o==this) return true;

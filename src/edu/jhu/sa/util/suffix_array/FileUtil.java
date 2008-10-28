@@ -84,6 +84,26 @@ public class FileUtil {
 		return file.delete();
 	}
 	
+	/**
+	 * Recursively delete the specified file or directory.
+	 * 
+	 * @param f File or directory to delete
+	 * @return <code>true</code> if the specified file or directory was deleted, <code>false</code> otherwise
+	 */
+	public static boolean delete(File f) {
+		if (f!=null) {
+			if (f.isDirectory()) {
+				for (File child : f.listFiles()) {
+					delete(child);
+				}
+				return f.delete();
+			} else {
+				return f.delete();
+			}
+		} else {
+			return false;
+		}
+	}
 
 	/** 
 	 * @return the full path filename of the filename in the directory.

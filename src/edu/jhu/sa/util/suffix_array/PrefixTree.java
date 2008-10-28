@@ -21,6 +21,7 @@ import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.RuleCollection;
 import joshua.decoder.ff.tm.TrieGrammar;
+import joshua.util.lexprob.LexProbs;
 import joshua.util.sentence.LabelledSpan;
 import joshua.util.sentence.Phrase;
 import joshua.util.sentence.Span;
@@ -42,26 +43,45 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.sun.tools.javac.util.Pair;
+
 import edu.jhu.sa.util.suffix_array.Pattern.PrefixCase;
 import edu.jhu.sa.util.suffix_array.Pattern.SuffixCase;
 
 
+//TODO Ask Adam if he has an efficient way of calculating lexical translation probabilities
 
+/**
+ * 
+ * @author Lane Schwartz
+ * @version $LastChangedDate$
+ */
 public class PrefixTree {
 
 	/** Logger for this class. */
 	private static final Logger logger = Logger.getLogger(PrefixTree.class.getName());
 
-	
 	/** Integer representation of the nonterminal X. All nonterminals are guaranteed to be represented by negative integers. */
 	static final int X = -1;
+	
+	/** 
+	 * Vocabulary of nonterminal symbols. 
+	 * Maps from the integer representation of a nonterminal 
+	 * to the string representation of the nonterminal.
+	 */
 	static final Map<Integer,String> ntVocab = new HashMap<Integer,String>();
 	static { ntVocab.put(X, "X"); }
+	
+	/** Operating system-specific end of line character(s). */
 	private static final byte[] newline = System.getProperty("line.separator").getBytes();
 	
+	/** Root node of this tree. */
 	final Node root;
+	
+	/** Source language sentence which this tree represents. */
 	final Phrase sentence;
 
+	
 	/** Max span in the source corpus of any extracted hierarchical phrase */
 	private final int maxPhraseSpan;   
 	
@@ -74,7 +94,7 @@ public class PrefixTree {
 	/** Maximum span in the source corpus of any nonterminal in an extracted hierarchical phrase. */
 	private final int maxNonterminalSpan;
 
-	/** Maximum span in the source corpus of any nonterminal in an extracted hierarchical phrase. */
+	/** Minimum span in the source corpus of any nonterminal in an extracted hierarchical phrase. */
 	private final int minNonterminalSpan = 2;
 	
 	/** Maximum number of instances of a source phrase from the source corpus to use when translating a source phrase. */
@@ -101,32 +121,24 @@ public class PrefixTree {
 		};
 	}
 
+	/** Suffix array representing the source language corpus. */
 	final SuffixArray suffixArray;
+	
+	/** Corpus array representing the target language corpus. */
 	final CorpusArray targetCorpus;
+	
+	/** Represents alignments between words in the source corpus and the target corpus. */
 	final AlignmentArray alignments;
 	
-	/**
-	 * Default constructor - for testing purposes only.
-	 * <p>
-	 * The unit tests for Node require a dummy PrefixTree.
+	/** Lexical translation probabilities. */
+	final LexProbs lexProbs;
+	
+	
+	
+	/** 
+	 * Node representing phrases that start with the nonterminal X. 
+	 * This node's parent is the root node of the tree. 
 	 */
-	private PrefixTree() {
-		root = null;
-		sentence = null;
-		suffixArray = null;
-		targetCorpus = null;
-		alignments = null;
-		xnode = null;
-		maxPhraseSpan = Integer.MIN_VALUE;
-		maxPhraseLength = Integer.MIN_VALUE;
-		maxNonterminals = Integer.MIN_VALUE;
-		maxNonterminalSpan = Integer.MIN_VALUE;
-	}
-	
-	static PrefixTree getDummyPrefixTree() {
-		return new PrefixTree();
-	}
-	
 	private final Node xnode;
 	
 	/**
@@ -140,13 +152,14 @@ public class PrefixTree {
 	 * @param maxPhraseLength
 	 * @param maxNonterminals
 	 */
-	public PrefixTree(SuffixArray suffixArray, CorpusArray targetCorpus, AlignmentArray alignments, int[] sentence, int maxPhraseSpan, int maxPhraseLength, int maxNonterminals) {
+	public PrefixTree(SuffixArray suffixArray, CorpusArray targetCorpus, AlignmentArray alignments, LexProbs lexProbs, int[] sentence, int maxPhraseSpan, int maxPhraseLength, int maxNonterminals) {
 
 		if (logger.isLoggable(Level.FINE)) logger.fine("\n\n\nConstructing new PrefixTree\n\n");
 
 		this.suffixArray = suffixArray;
 		this.targetCorpus = targetCorpus;
 		this.alignments = alignments;
+		this.lexProbs = lexProbs;
 		this.maxPhraseSpan = maxPhraseSpan;
 		this.maxNonterminalSpan = maxPhraseSpan;
 		this.maxPhraseLength = maxPhraseLength;
@@ -385,7 +398,7 @@ public class PrefixTree {
 	 * @param maxNonterminals
 	 */
 	PrefixTree(int[] sentence, int maxPhraseSpan, int maxPhraseLength, int maxNonterminals) {
-		this(null, null, null, sentence, maxPhraseSpan, maxPhraseLength, maxNonterminals);
+		this(null, null, null, null, sentence, maxPhraseSpan, maxPhraseLength, maxNonterminals);
 	}
 
 	public Grammar getRoot() {
@@ -1282,11 +1295,93 @@ public class PrefixTree {
 			this.sourcePattern = new Pattern(vocab, sourceTokens);
 			this.results = new ArrayList<Rule>(hierarchicalPhrases.size());
 			
-			List<Pattern> translations = this.translate();
+			List<Pattern> translations = new ArrayList<Pattern>();// = this.translate();
+			List<Pair<Float,Float>> lexProbsList = new ArrayList<Pair<Float,Float>>();
+			
+			int totalPossibleTranslations = sourceHierarchicalPhrases.size();
+
+			// Step size for doing sampling
+			int step = (totalPossibleTranslations<sampleSize) ? 
+					1 :
+						totalPossibleTranslations / sampleSize;
+
+			if (logger.isLoggable(Level.FINER)) logger.finer("\n" + totalPossibleTranslations + " possible translations of " + sourcePattern + ". Step size is " + step);
+
+			// Sample from cached hierarchicalPhrases
+			List<HierarchicalPhrase> samples = new ArrayList<HierarchicalPhrase>(sampleSize);
+			for (int i=0; i<totalPossibleTranslations; i+=step) {
+				samples.add(sourceHierarchicalPhrases.get(i));
+			}
+
+
+			// For each sample HierarchicalPhrase
+			for (HierarchicalPhrase sourcePhrase : samples) {
+				Pattern translation = getTranslation(sourcePhrase);
+				if (translation != null) {
+					translations.add(translation);
+					lexProbsList.add(calculateLexProbs(sourcePhrase));
+				}
+			}
+
+			if (logger.isLoggable(Level.FINER)) logger.finer(translations.size() + " actual translations of " + sourcePattern + " being stored.");
+
 			
 			Map<Pattern,Integer> counts = new HashMap<Pattern,Integer>();
 			
-			for (Pattern translation : translations) {
+			// Calculate the number of times each pattern was found as a translation
+			// This is needed for relative frequency estimation of p_e_given_f
+			// Simultaneously, calculate the max (or average) 
+			//    lexical translation probabilities for the given translation.
+			
+			Map<Pattern,Float> cumulativeSourceGivenTargetLexProbs = new HashMap<Pattern,Float>();
+			Map<Pattern,Integer> counterSourceGivenTargetLexProbs = new HashMap<Pattern,Integer>();
+			
+			Map<Pattern,Float> cumulativeTargetGivenSourceLexProbs = new HashMap<Pattern,Float>();
+			Map<Pattern,Integer> counterTargetGivenSourceLexProbs = new HashMap<Pattern,Integer>();
+			
+			
+			for (int i=0; i<translations.size(); i++) {	
+				
+				Pattern translation = translations.get(i);
+				
+				Pair<Float,Float> lexProbsPair = lexProbsList.get(i);
+				
+				{	// Perform lexical translation probability calculations
+					float sourceGivenTargetLexProb = lexProbsPair.fst;
+					
+					if (!cumulativeSourceGivenTargetLexProbs.containsKey(translation)) {
+						cumulativeSourceGivenTargetLexProbs.put(translation,sourceGivenTargetLexProb);
+					} else {
+						float runningTotal = cumulativeSourceGivenTargetLexProbs.get(translation) + sourceGivenTargetLexProb;
+						cumulativeSourceGivenTargetLexProbs.put(translation,runningTotal);
+					} 
+
+					if (!counterSourceGivenTargetLexProbs.containsKey(translation)) {
+						counterSourceGivenTargetLexProbs.put(translation, 1);
+					} else {
+						counterSourceGivenTargetLexProbs.put(translation, 
+								1 + counterSourceGivenTargetLexProbs.get(translation));
+					}
+				}
+				
+				
+				{	// Perform reverse lexical translation probability calculations
+					float targetGivenSourceLexProb = lexProbsPair.snd;
+					
+					if (!cumulativeTargetGivenSourceLexProbs.containsKey(translation)) {
+						cumulativeTargetGivenSourceLexProbs.put(translation,targetGivenSourceLexProb);
+					} else {
+						float runningTotal = cumulativeTargetGivenSourceLexProbs.get(translation) + targetGivenSourceLexProb;
+						cumulativeTargetGivenSourceLexProbs.put(translation,runningTotal);
+					} 
+
+					if (!counterTargetGivenSourceLexProbs.containsKey(translation)) {
+						counterTargetGivenSourceLexProbs.put(translation, 1);
+					} else {
+						counterTargetGivenSourceLexProbs.put(translation, 
+								1 + counterTargetGivenSourceLexProbs.get(translation));
+					}
+				}
 				
 				Integer count = counts.get(translation);
 				
@@ -1297,231 +1392,301 @@ public class PrefixTree {
 				
 			}
 			
-			float denominator = translations.size();
+			float p_e_given_f_denominator = translations.size();
+			
 			
 			
 			//TODO Add all required features in block below. Using only one features is bogus.
-			if (logger.isLoggable(Level.FINE)) logger.fine("P(e|f) is the only feature being calculated for rules in PrefixTree.Node. This is highly bogus");
+			//if (logger.isLoggable(Level.FINE)) logger.fine("P(e|f) is the only feature being calculated for rules in PrefixTree.Node. This is highly bogus");
 			
 			for (Pattern translation : translations) {
 				
-				float[] featureScores = { counts.get(translation) / denominator };
+				float p_e_given_f = counts.get(translation) / p_e_given_f_denominator;
+				
+				float lex_p_e_given_f = cumulativeSourceGivenTargetLexProbs.get(translation) / counterSourceGivenTargetLexProbs.get(translation);
+				float lex_p_f_given_e = cumulativeTargetGivenSourceLexProbs.get(translation) / counterTargetGivenSourceLexProbs.get(translation);
+				
+				float[] featureScores = { p_e_given_f, lex_p_e_given_f, lex_p_f_given_e };
 				
 				results.add(new Rule(X, sourceTokens, translation.words, featureScores, translation.arity));
 			}
 			
 		}
 		
+		
 		/**
-		 * Given a node in a prefix tree, find a list of translations for the source phrase represented by that node.
+		 * Gets the target side translation pattern for a particular source phrase.
+		 * <p>
+		 * This is a fairly involved method -
+		 * the complications arise because we must handle 4 cases:
+		 * <ul>
+		 * <li>The source phrase neither starts nor ends with a nonterminal</li>
+		 * <li>The source phrase starts but doesn't end with a nonterminal</li>
+		 * <li>The source phrase ends but doesn't start with a nonterminal</li>
+		 * <li>The source phrase both starts and ends with a nonterminal</li>
+		 * </ul>
+		 * <p>
+		 * When a hierarchical phrase begins (or ends) with a nonterminal
+		 * its start (or end) point is <em>not</em> explicitly stored. 
+		 * This is by design to allow a hierarchical phrase to describe 
+		 * a set of possibly matching points in the corpus,
+		 * but it complicates this method.
 		 * 
-		 * @return a list of translations for the source phrase represented by this node.
+		 * @param sourcePhrase
+		 * @return the target side translation pattern for a particular source phrase.
 		 */
-		public List<Pattern> translate() {
-			List<Pattern> translations = new ArrayList<Pattern>();
-			
-			if (sourcePattern.toString().equals("[( le X minute]")) {
-				int x=1; x++;
-			}
-			
-			int totalPossibleTranslations = sourceHierarchicalPhrases.size();
-			
-			int step = (totalPossibleTranslations<sampleSize) ? 
-					1 :
-					totalPossibleTranslations / sampleSize;
-			
-			if (logger.isLoggable(Level.FINER)) logger.finer("\n" + totalPossibleTranslations + " possible translations of " + sourcePattern + ". Step size is " + step);
-			
-			// Sample from cached hierarchicalPhrases
-			List<HierarchicalPhrase> samples = new ArrayList<HierarchicalPhrase>(sampleSize);
-			for (int i=0; i<totalPossibleTranslations; i+=step) {
-				samples.add(sourceHierarchicalPhrases.get(i));
-			}
-			
-			
-			// For each sample HierarchicalPhrase
-			for (HierarchicalPhrase sourcePhrase : samples) {
+		private Pattern getTranslation(HierarchicalPhrase sourcePhrase) {
+
+
+			// Case 1:  If sample !startsWithNT && !endsWithNT
+			if (!sourcePhrase.startsWithNonterminal() && !sourcePhrase.endsWithNonterminal()) {
 				
-				// Case 1:  If sample !startsWithNT && !endsWithNT
-				if (!sourcePhrase.startsWithNonterminal() && !sourcePhrase.endsWithNonterminal()) {
+				if (logger.isLoggable(Level.FINER)) logger.finer("Case 1: Source phrase !startsWithNT && !endsWithNT");
+				
+				// Get target span
+				Span sourceSpan = new Span(sourcePhrase.terminalSequenceStartIndices[0], sourcePhrase.terminalSequenceEndIndices[sourcePhrase.terminalSequenceEndIndices.length-1]);//+sample.length); 
+				
+				Span targetSpan = alignments.getConsistentTargetSpan(sourceSpan);
+				
+				// If target span and source span are consistent
+				//if (targetSpan!=null) {
+				if (targetSpan!=null && targetSpan.size()>=sourcePhrase.pattern.arity+1 && targetSpan.size()<=maxPhraseSpan) {
 					
-					if (logger.isLoggable(Level.FINER)) logger.finer("Case 1: Source phrase !startsWithNT && !endsWithNT");
+					// Construct a translation
+					Pattern translation = constructTranslation(sourcePhrase, sourceSpan, targetSpan, false, false);
+					
+					
+					
+					if (translation != null) {
+						if (logger.isLoggable(Level.FINEST)) logger.finest("\tCase 1: Adding translation: '" + translation + "' for target span " + targetSpan + " from source span " + sourceSpan);
+						//translations.add(translation);
+						return translation;
+					}
+					
+				}
+				
+			}
+			
+			// Case 2: If sourcePhrase startsWithNT && !endsWithNT
+			else if (sourcePhrase.startsWithNonterminal() && !sourcePhrase.endsWithNonterminal()) {
+				
+				if (logger.isLoggable(Level.FINER)) logger.finer("Case 2: Source phrase startsWithNT && !endsWithNT");
+				
+				int startOfSentence = suffixArray.corpus.getSentencePosition(sourcePhrase.sentenceNumber);
+				int startOfTerminalSequence = sourcePhrase.terminalSequenceStartIndices[0];
+				int endOfTerminalSequence = sourcePhrase.terminalSequenceEndIndices[sourcePhrase.terminalSequenceEndIndices.length-1];
+				
+				// Start by assuming the initial source nonterminal starts one word before the first source terminal 
+				Span possibleSourceSpan = new Span(sourcePhrase.terminalSequenceStartIndices[0]-1, sourcePhrase.terminalSequenceEndIndices[sourcePhrase.terminalSequenceEndIndices.length-1]);//+sample.length); 
+				
+				// Loop over all legal source spans 
+				//      (this is variable because we don't know the length of the NT span)
+				//      looking for a source span with a consistent translation
+				while (possibleSourceSpan.start >= startOfSentence && 
+						startOfTerminalSequence-possibleSourceSpan.start<=maxNonterminalSpan && 
+						endOfTerminalSequence-possibleSourceSpan.start<=maxPhraseSpan) {
 					
 					// Get target span
-					Span sourceSpan = new Span(sourcePhrase.terminalSequenceStartIndices[0], sourcePhrase.terminalSequenceEndIndices[sourcePhrase.terminalSequenceEndIndices.length-1]);//+sample.length); 
-					
-					Span targetSpan = alignments.getConsistentTargetSpan(sourceSpan);
-					
+					Span targetSpan = alignments.getConsistentTargetSpan(possibleSourceSpan);
+
 					// If target span and source span are consistent
 					//if (targetSpan!=null) {
 					if (targetSpan!=null && targetSpan.size()>=sourcePhrase.pattern.arity+1 && targetSpan.size()<=maxPhraseSpan) {
-						
+
 						// Construct a translation
-						Pattern translation = constructTranslation(sourcePhrase, sourceSpan, targetSpan, false, false);
-						
+						Pattern translation = constructTranslation(sourcePhrase, possibleSourceSpan, targetSpan, true, false);
+
 						if (translation != null) {
-							if (logger.isLoggable(Level.FINEST)) logger.finest("\tCase 1: Adding translation: '" + translation + "' for target span " + targetSpan + " from source span " + sourceSpan);
-							translations.add(translation);
+							if (logger.isLoggable(Level.FINEST)) logger.finest("\tCase 2: Adding translation: '" + translation + "' for target span " + targetSpan + " from source span " + possibleSourceSpan);
+							//translations.add(translation);
+							//break;
+							return translation;
 						}
-						
-					}
-					
-				}
-				
-				// Case 2: If sourcePhrase startsWithNT && !endsWithNT
-				else if (sourcePhrase.startsWithNonterminal() && !sourcePhrase.endsWithNonterminal()) {
-					
-					if (logger.isLoggable(Level.FINER)) logger.finer("Case 2: Source phrase startsWithNT && !endsWithNT");
-					
-					int startOfSentence = suffixArray.corpus.getSentencePosition(sourcePhrase.sentenceNumber);
-					int startOfTerminalSequence = sourcePhrase.terminalSequenceStartIndices[0];
-					int endOfTerminalSequence = sourcePhrase.terminalSequenceEndIndices[sourcePhrase.terminalSequenceEndIndices.length-1];
-					
-					// Start by assuming the initial source nonterminal starts one word before the first source terminal 
-					Span possibleSourceSpan = new Span(sourcePhrase.terminalSequenceStartIndices[0]-1, sourcePhrase.terminalSequenceEndIndices[sourcePhrase.terminalSequenceEndIndices.length-1]);//+sample.length); 
-					
-					// Loop over all legal source spans 
-					//      (this is variable because we don't know the length of the NT span)
-					//      looking for a source span with a consistent translation
-					while (possibleSourceSpan.start >= startOfSentence && 
-							startOfTerminalSequence-possibleSourceSpan.start<=maxNonterminalSpan && 
-							endOfTerminalSequence-possibleSourceSpan.start<=maxPhraseSpan) {
-						
-						// Get target span
-						Span targetSpan = alignments.getConsistentTargetSpan(possibleSourceSpan);
 
-						// If target span and source span are consistent
-						//if (targetSpan!=null) {
-						if (targetSpan!=null && targetSpan.size()>=sourcePhrase.pattern.arity+1 && targetSpan.size()<=maxPhraseSpan) {
-
-							// Construct a translation
-							Pattern translation = constructTranslation(sourcePhrase, possibleSourceSpan, targetSpan, true, false);
-
-							if (translation != null) {
-								if (logger.isLoggable(Level.FINEST)) logger.finest("\tCase 2: Adding translation: '" + translation + "' for target span " + targetSpan + " from source span " + possibleSourceSpan);
-								translations.add(translation);
-								break;
-							}
-
-						} 
-						
-						possibleSourceSpan.start--;
-						
-					}
+					} 
 					
-				}
-				
-				// Case 3: If sourcePhrase !startsWithNT && endsWithNT
-				else if (!sourcePhrase.startsWithNonterminal() && sourcePhrase.endsWithNonterminal()) {
-					
-					if (logger.isLoggable(Level.FINER)) logger.finer("Case 3: Source phrase !startsWithNT && endsWithNT");
-					
-					int endOfSentence = suffixArray.corpus.getSentenceEndPosition(sourcePhrase.sentenceNumber);
-					//int startOfTerminalSequence = sourcePhrase.terminalSequenceStartIndices[0];
-					int endOfTerminalSequence = sourcePhrase.terminalSequenceEndIndices[sourcePhrase.terminalSequenceEndIndices.length-1];
-					//int startOfNT = endOfTerminalSequence + 1;
-					
-					// Start by assuming the initial source nonterminal starts one word after the last source terminal 
-					Span possibleSourceSpan = new Span(sourcePhrase.terminalSequenceStartIndices[0], sourcePhrase.terminalSequenceEndIndices[sourcePhrase.terminalSequenceEndIndices.length-1]+1); 
-					
-					// Loop over all legal source spans 
-					//      (this is variable because we don't know the length of the NT span)
-					//      looking for a source span with a consistent translation
-					while (possibleSourceSpan.end <= endOfSentence && 
-							//startOfTerminalSequence-possibleSourceSpan.start<=maxNonterminalSpan && 
-							possibleSourceSpan.end - endOfTerminalSequence <= maxNonterminalSpan &&
-							possibleSourceSpan.size()<=maxPhraseSpan) {
-							//endOfTerminalSequence-possibleSourceSpan.start<=maxPhraseSpan) {
-						
-						// Get target span
-						Span targetSpan = alignments.getConsistentTargetSpan(possibleSourceSpan);
-
-						// If target span and source span are consistent
-						//if (targetSpan!=null) {
-						if (targetSpan!=null && targetSpan.size()>=sourcePhrase.pattern.arity+1 && targetSpan.size()<=maxPhraseSpan) {
-
-							// Construct a translation
-							Pattern translation = constructTranslation(sourcePhrase, possibleSourceSpan, targetSpan, false, true);
-
-							if (translation != null) {
-								if (logger.isLoggable(Level.FINEST)) logger.finest("\tCase 3: Adding translation: '" + translation + "' for target span " + targetSpan + " from source span " + possibleSourceSpan);
-								translations.add(translation);
-								break;
-							}
-
-						} 
-						
-						possibleSourceSpan.end++;
-						
-					}
-					
-				}
-				
-				// Case 4: If sourcePhrase startsWithNT && endsWithNT
-				else if (sourcePhrase.startsWithNonterminal() && sourcePhrase.endsWithNonterminal()) {
-					
-					if (logger.isLoggable(Level.FINER)) logger.finer("Case 4: Source phrase startsWithNT && endsWithNT");
-					
-					int startOfSentence = suffixArray.corpus.getSentencePosition(sourcePhrase.sentenceNumber);
-					int endOfSentence = suffixArray.corpus.getSentenceEndPosition(sourcePhrase.sentenceNumber);
-					int startOfTerminalSequence = sourcePhrase.terminalSequenceStartIndices[0];
-					int endOfTerminalSequence = sourcePhrase.terminalSequenceEndIndices[sourcePhrase.terminalSequenceEndIndices.length-1];
-					
-					// Start by assuming the initial source nonterminal 
-					//   starts one word before the first source terminal and
-					//   ends one word after the last source terminal 
-					Span possibleSourceSpan = new Span(sourcePhrase.terminalSequenceStartIndices[0]-1, sourcePhrase.terminalSequenceEndIndices[sourcePhrase.terminalSequenceEndIndices.length-1]+1); 
-					
-					// Loop over all legal source spans 
-					//      (this is variable because we don't know the length of the NT span)
-					//      looking for a source span with a consistent translation
-					while (possibleSourceSpan.start >= startOfSentence && 
-							possibleSourceSpan.end <= endOfSentence && 
-							startOfTerminalSequence-possibleSourceSpan.start<=maxNonterminalSpan && 
-							possibleSourceSpan.end-endOfTerminalSequence<=maxNonterminalSpan &&
-							possibleSourceSpan.size()<=maxPhraseSpan) {
-							//endOfTerminalSequence-possibleSourceSpan.start<=maxPhraseSpan) {
-						
-						if (sourcePattern.toString().equals("[X pour X]") && possibleSourceSpan.start<=1 && possibleSourceSpan.end>=8) {
-							int x = 1; x++;
-						}
-						
-						// Get target span
-						Span targetSpan = alignments.getConsistentTargetSpan(possibleSourceSpan);
-
-						// If target span and source span are consistent
-						//if (targetSpan!=null) {
-						if (targetSpan!=null && targetSpan.size()>=sourcePhrase.pattern.arity+1 && targetSpan.size()<=maxPhraseSpan) {
-
-							// Construct a translation
-							Pattern translation = constructTranslation(sourcePhrase, possibleSourceSpan, targetSpan, true, true);
-
-							if (translation != null) {
-								if (logger.isLoggable(Level.FINEST)) logger.finest("\tCase 4: Adding translation: '" + translation + "' for target span " + targetSpan + " from source span " + possibleSourceSpan);
-								translations.add(translation);
-								break;
-							}
-
-						} 
-						
-						if (possibleSourceSpan.end < endOfSentence && possibleSourceSpan.end-endOfTerminalSequence+1<=maxNonterminalSpan && possibleSourceSpan.size()+1<maxPhraseSpan) {
-							possibleSourceSpan.end++;
-						} else {
-							possibleSourceSpan.end = endOfTerminalSequence+1;//1;
-							possibleSourceSpan.start--;
-						}
-												
-					}
+					possibleSourceSpan.start--;
 					
 				}
 				
 			}
 			
-			if (logger.isLoggable(Level.FINER)) logger.finer(translations.size() + " actual translations of " + sourcePattern + " being stored.");
-			return translations;
+			// Case 3: If sourcePhrase !startsWithNT && endsWithNT
+			else if (!sourcePhrase.startsWithNonterminal() && sourcePhrase.endsWithNonterminal()) {
+				
+				if (logger.isLoggable(Level.FINER)) logger.finer("Case 3: Source phrase !startsWithNT && endsWithNT");
+				
+				int endOfSentence = suffixArray.corpus.getSentenceEndPosition(sourcePhrase.sentenceNumber);
+				//int startOfTerminalSequence = sourcePhrase.terminalSequenceStartIndices[0];
+				int endOfTerminalSequence = sourcePhrase.terminalSequenceEndIndices[sourcePhrase.terminalSequenceEndIndices.length-1];
+				//int startOfNT = endOfTerminalSequence + 1;
+				
+				// Start by assuming the initial source nonterminal starts one word after the last source terminal 
+				Span possibleSourceSpan = new Span(sourcePhrase.terminalSequenceStartIndices[0], sourcePhrase.terminalSequenceEndIndices[sourcePhrase.terminalSequenceEndIndices.length-1]+1); 
+				
+				// Loop over all legal source spans 
+				//      (this is variable because we don't know the length of the NT span)
+				//      looking for a source span with a consistent translation
+				while (possibleSourceSpan.end <= endOfSentence && 
+						//startOfTerminalSequence-possibleSourceSpan.start<=maxNonterminalSpan && 
+						possibleSourceSpan.end - endOfTerminalSequence <= maxNonterminalSpan &&
+						possibleSourceSpan.size()<=maxPhraseSpan) {
+						//endOfTerminalSequence-possibleSourceSpan.start<=maxPhraseSpan) {
+					
+					// Get target span
+					Span targetSpan = alignments.getConsistentTargetSpan(possibleSourceSpan);
+
+					// If target span and source span are consistent
+					//if (targetSpan!=null) {
+					if (targetSpan!=null && targetSpan.size()>=sourcePhrase.pattern.arity+1 && targetSpan.size()<=maxPhraseSpan) {
+
+						// Construct a translation
+						Pattern translation = constructTranslation(sourcePhrase, possibleSourceSpan, targetSpan, false, true);
+
+						if (translation != null) {
+							if (logger.isLoggable(Level.FINEST)) logger.finest("\tCase 3: Adding translation: '" + translation + "' for target span " + targetSpan + " from source span " + possibleSourceSpan);
+							//translations.add(translation);
+							//break;
+							return translation;
+						}
+
+					} 
+					
+					possibleSourceSpan.end++;
+					
+				}
+				
+			}
+			
+			// Case 4: If sourcePhrase startsWithNT && endsWithNT
+			else if (sourcePhrase.startsWithNonterminal() && sourcePhrase.endsWithNonterminal()) {
+				
+				if (logger.isLoggable(Level.FINER)) logger.finer("Case 4: Source phrase startsWithNT && endsWithNT");
+				
+				int startOfSentence = suffixArray.corpus.getSentencePosition(sourcePhrase.sentenceNumber);
+				int endOfSentence = suffixArray.corpus.getSentenceEndPosition(sourcePhrase.sentenceNumber);
+				int startOfTerminalSequence = sourcePhrase.terminalSequenceStartIndices[0];
+				int endOfTerminalSequence = sourcePhrase.terminalSequenceEndIndices[sourcePhrase.terminalSequenceEndIndices.length-1];
+				
+				// Start by assuming the initial source nonterminal 
+				//   starts one word before the first source terminal and
+				//   ends one word after the last source terminal 
+				Span possibleSourceSpan = new Span(sourcePhrase.terminalSequenceStartIndices[0]-1, sourcePhrase.terminalSequenceEndIndices[sourcePhrase.terminalSequenceEndIndices.length-1]+1); 
+				
+				// Loop over all legal source spans 
+				//      (this is variable because we don't know the length of the NT span)
+				//      looking for a source span with a consistent translation
+				while (possibleSourceSpan.start >= startOfSentence && 
+						possibleSourceSpan.end <= endOfSentence && 
+						startOfTerminalSequence-possibleSourceSpan.start<=maxNonterminalSpan && 
+						possibleSourceSpan.end-endOfTerminalSequence<=maxNonterminalSpan &&
+						possibleSourceSpan.size()<=maxPhraseSpan) {
+						//endOfTerminalSequence-possibleSourceSpan.start<=maxPhraseSpan) {
+					
+					if (sourcePattern.toString().equals("[X pour X]") && possibleSourceSpan.start<=1 && possibleSourceSpan.end>=8) {
+						int x = 1; x++;
+					}
+					
+					// Get target span
+					Span targetSpan = alignments.getConsistentTargetSpan(possibleSourceSpan);
+
+					// If target span and source span are consistent
+					//if (targetSpan!=null) {
+					if (targetSpan!=null && targetSpan.size()>=sourcePhrase.pattern.arity+1 && targetSpan.size()<=maxPhraseSpan) {
+
+						// Construct a translation
+						Pattern translation = constructTranslation(sourcePhrase, possibleSourceSpan, targetSpan, true, true);
+
+						if (translation != null) {
+							if (logger.isLoggable(Level.FINEST)) logger.finest("\tCase 4: Adding translation: '" + translation + "' for target span " + targetSpan + " from source span " + possibleSourceSpan);
+							//translations.add(translation);
+							//break;
+							return translation;
+						}
+
+					} 
+					
+					if (possibleSourceSpan.end < endOfSentence && possibleSourceSpan.end-endOfTerminalSequence+1<=maxNonterminalSpan && possibleSourceSpan.size()+1<maxPhraseSpan) {
+						possibleSourceSpan.end++;
+					} else {
+						possibleSourceSpan.end = endOfTerminalSequence+1;//1;
+						possibleSourceSpan.start--;
+					}
+											
+				}
+				
+			}
+			
+			return null;
+			//throw new Error("Bug in translation code");
 		}
 		
-		
+		/**
+		 * Calculates the lexical translation probabilities (in both directions) 
+		 * for a specific instance of a source phrase in the corpus.
+		 *  
+		 * @param sourcePhrase
+		 * @return the lexical probability and reverse lexical probability
+		 */
+		private Pair<Float,Float> calculateLexProbs(HierarchicalPhrase sourcePhrase) {
+			
+			//XXX We are not handling NULL aligned points according to Koehn et al (2003)
+			
+			float sourceGivenTarget = 1.0f;
+			
+			Map<Integer,List<Integer>> reverseAlignmentPoints = new HashMap<Integer,List<Integer>>(); 
+			
+			// Iterate over each terminal sequence in the source phrase
+			for (int seq=0; seq<sourcePhrase.terminalSequenceStartIndices.length; seq++) {
+				
+				// Iterate over each source index in the current terminal sequence
+				for (int sourceWordIndex=sourcePhrase.terminalSequenceStartIndices[seq]; 
+						sourceWordIndex<sourcePhrase.terminalSequenceEndIndices[seq]; sourceWordIndex++) {
+					
+					float sum = 0.0f;
+					
+					int sourceWord = suffixArray.corpus.corpus[sourceWordIndex];
+					int[] targetIndices = alignments.alignedTargetIndices[sourceWordIndex];
+					
+					// Iterate over each target index aligned to the current source word
+					for (int targetIndex : targetIndices) {
+						
+						int targetWord = targetCorpus.corpus[targetIndex];
+						sum += lexProbs.sourceGivenTarget(sourceWord, targetWord);
+						
+						// Keeping track of the reverse alignment points (we need to do this convoluted step because we don't actually have a HierarchicalPhrase for the target side)
+						if (!reverseAlignmentPoints.containsKey(targetIndex)) {
+							reverseAlignmentPoints.put(targetIndex, new ArrayList<Integer>());
+						}
+						reverseAlignmentPoints.get(targetIndex).add(sourceWord);
+						
+					}
+					
+					float average = sum / targetIndices.length;
+					sourceGivenTarget *= average;
+				}
+				
+			}
+			
+			float targetGivenSource = 1.0f;
+			
+			// Actually calculate the reverse lexical translation probabilities
+			for (Map.Entry<Integer, List<Integer>> entry : reverseAlignmentPoints.entrySet()) {
+				
+				int targetWord = targetCorpus.corpus[entry.getKey()];
+				float sum = 0.0f;
+				
+				List<Integer> alignedSourceWords = entry.getValue();
+				
+				for (int sourceWord : alignedSourceWords) {
+					sum += lexProbs.targetGivenSource(targetWord, sourceWord);
+				}
+				
+				targetGivenSource *= (sum / alignedSourceWords.size());
+			}
+			
+			return new Pair<Float,Float>(sourceGivenTarget,targetGivenSource);
+		}
 		
 		
 		public int size() {
@@ -1769,5 +1934,34 @@ public class PrefixTree {
 		return pattern;
 	}
 
+	/**
+	 * Default constructor - for testing purposes only.
+	 * <p>
+	 * The unit tests for Node require a dummy PrefixTree.
+	 */
+	private PrefixTree() {
+		root = null;
+		sentence = null;
+		suffixArray = null;
+		targetCorpus = null;
+		alignments = null;
+		lexProbs = null;
+		xnode = null;
+		maxPhraseSpan = Integer.MIN_VALUE;
+		maxPhraseLength = Integer.MIN_VALUE;
+		maxNonterminals = Integer.MIN_VALUE;
+		maxNonterminalSpan = Integer.MIN_VALUE;
+	}
+	
+	/**
+	 * Gets an invalid, dummy prefix tree.
+	 * <p>
+	 * For testing purposes only.
+	 * 
+	 * @return an invalid, dummy prefix tree
+	 */
+	static PrefixTree getDummyPrefixTree() {
+		return new PrefixTree();
+	}
 
 }

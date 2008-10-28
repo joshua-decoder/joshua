@@ -5,8 +5,10 @@ import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Scanner;
 import java.util.Set;
 
+import joshua.util.lexprob.LexProbs;
 import joshua.util.sentence.Vocabulary;
 
 
@@ -30,7 +32,7 @@ public class PrefixTreeAdvancedTest {
 	SuffixArray suffixArray;
 	AlignmentArray alignments;
 	CorpusArray targetCorpusArray;
-	
+	LexProbs lexProbs;
 
 	@Test
 	public void setup() {
@@ -119,6 +121,41 @@ public class PrefixTreeAdvancedTest {
 			
 			
 		}
+		
+		{
+			String targetGivenSourceCounts =
+				"   1 , ," + "\n" +
+				"   1 . ." + "\n" +
+				"   2 and und" + "\n" +
+				"   4 him ihn" + "\n" +
+				"   1 it das" + "\n" +
+				"   3 it es" + "\n" +
+				"   1 makes macht" + "\n" +
+				"   1 mars beschädigt" + "\n" +
+				"   1 off aus" + "\n" +
+				"   1 on auf" + "\n" +
+				"   1 sets setzt" + "\n" +
+				"   1 takes führt" + "\n";
+			
+			String sourceGivenTargetCounts =
+				"   1 , ," + "\n" +
+				"   1 . ." + "\n" +
+				"   1 auf on" + "\n" +
+				"   1 aus off" + "\n" +
+				"   1 beschädigt mars" + "\n" +
+				"   1 das it" + "\n" +
+				"   3 es it" + "\n" +
+				"   1 führt takes" + "\n" +
+				"   4 ihn him" + "\n" +
+				"   1 macht makes" + "\n" +
+				"   1 setzt sets" + "\n" +
+				"   2 und and" + "\n";
+			
+			Scanner sourceGivenTarget = new Scanner(sourceGivenTargetCounts);
+			Scanner targetGivenSource = new Scanner(targetGivenSourceCounts);
+			
+			lexProbs = new LexProbs(sourceGivenTarget, targetGivenSource, sourceVocab, targetVocab);
+		}
 	}
 	
 	PrefixTree simplePrefixTree;
@@ -132,7 +169,7 @@ public class PrefixTreeAdvancedTest {
 		BasicPhrase query = new BasicPhrase("it makes him", sourceVocab);
 		//BasicPhrase query = new BasicPhrase("it makes him and it mars him", sourceVocab);
 		//BasicPhrase query = new BasicPhrase("it makes him and it mars him , it sets him on and it takes him off .", sourceVocab);
-		simplePrefixTree = new PrefixTree(suffixArray, targetCorpusArray, alignments, query.getWordIDs(), maxPhraseSpan, maxPhraseLength, maxNonterminals);
+		simplePrefixTree = new PrefixTree(suffixArray, targetCorpusArray, alignments, lexProbs, query.getWordIDs(), maxPhraseSpan, maxPhraseLength, maxNonterminals);
 
 		//System.out.println(simplePrefixTree.toString());
 	
@@ -277,7 +314,7 @@ public class PrefixTreeAdvancedTest {
 		//BasicPhrase query = new BasicPhrase("it makes him", sourceVocab);
 		//BasicPhrase query = new BasicPhrase("it makes him and it mars him", sourceVocab);
 		BasicPhrase query = new BasicPhrase("it makes him and it mars him , it sets him on and it takes him off .", sourceVocab);
-		PrefixTree prefixTree = new PrefixTree(suffixArray, targetCorpusArray, alignments, query.getWordIDs(), maxPhraseSpan, maxPhraseLength, maxNonterminals);
+		PrefixTree prefixTree = new PrefixTree(suffixArray, targetCorpusArray, alignments, lexProbs, query.getWordIDs(), maxPhraseSpan, maxPhraseLength, maxNonterminals);
 
 		//System.out.println(prefixTree.toString());
 	
@@ -506,7 +543,7 @@ public class PrefixTreeAdvancedTest {
 		Assert.assertEquals(querySentence.toString(), "it UNK him and it UNK him");
 		Assert.assertEquals(corpusSentence.toString(), corpusString);
 		
-		PrefixTree prefixTree = new PrefixTree(suffixArray, targetCorpusArray, alignments, querySentence.getWordIDs(), maxPhraseSpan, maxPhraseLength, maxNonterminals);
+		PrefixTree prefixTree = new PrefixTree(suffixArray, targetCorpusArray, alignments, lexProbs, querySentence.getWordIDs(), maxPhraseSpan, maxPhraseLength, maxNonterminals);
 		
 
 		

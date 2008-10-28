@@ -50,6 +50,8 @@ public class AlignmentArray {
 // Member variables
 //===============================================================
 
+	//TODO Probably can drop lowestAlignedTargetIndex and related variables...
+	
 	/**
 	 * Stores the lowest index of aligned target words for each
 	 * word in the source corpus.
