@@ -19,6 +19,7 @@ package edu.jhu.sa.util.suffix_array;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
@@ -27,6 +28,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 import joshua.decoder.ff.tm.Rule;
 import joshua.util.CommandLineParser;
@@ -55,6 +57,9 @@ public class ExtractRules {
 		Option<String> alignment = commandLine.addStringOption('a',"alignments","ALIGNMENTS_FILE","Source-target alignments training file");	
 		Option<String> test = commandLine.addStringOption('t',"test","TEST_FILE","Source language test file");
 		
+		Option<String> output = commandLine.addStringOption('o',"output","OUTPUT_FILE","-","Output file");
+		
+		
 		Option<String> encoding = commandLine.addStringOption("encoding","ENCODING","UTF-8","File encoding format");
 		
 		Option<Integer> maxPhraseSpan = commandLine.addIntegerOption("maxPhraseSpan","MAX_PHRASE_SPAN",10, "Max phrase span");
@@ -64,6 +69,7 @@ public class ExtractRules {
 		Option<String> target_given_source_counts = commandLine.addStringOption("target-given-source-counts","FILENAME","file containing co-occurence counts of source and target word pairs, sorted by source words");
 		Option<String> source_given_target_counts = commandLine.addStringOption("source-given-target-counts","FILENAME","file containing co-occurence counts of target and source word pairs, sorted by target words");
 		
+		Option<Boolean> output_gz = commandLine.addBooleanOption("output-gzipped",false,"snould the outpu file be gzipped");
 		Option<Boolean> target_given_source_gz = commandLine.addBooleanOption("target-given-source-gzipped",false,"is the target given source word pair counts file gzipped");
 		Option<Boolean> source_given_target_gz = commandLine.addBooleanOption("source-given-target-gzipped",false,"is the source given target word pair counts file gzipped");
 		
@@ -113,6 +119,18 @@ public class ExtractRules {
 		else
 			source_given_target = new Scanner( new File(commandLine.getValue(source_given_target_counts)), commandLine.getValue(encoding));
 		
+		PrintStream out;
+		if ("-".equals(commandLine.getValue(output))) {
+			out = System.out;
+		} else if (commandLine.getValue(output).endsWith(".gz") || commandLine.getValue(output_gz)) {
+			//XXX This currently doesn't work
+			out = new PrintStream(new GZIPOutputStream(new FileOutputStream(commandLine.getValue(output))));
+			System.err.println("GZIP output not currently working properly");
+			System.exit(-1);
+		} else {
+			out = new PrintStream(commandLine.getValue(output));
+		}
+		
 		LexProbs lexProbs = new LexProbs(source_given_target, target_given_source, sourceVocab, targetVocab);
 		
 		
@@ -127,7 +145,7 @@ public class ExtractRules {
 			PrefixTree prefixTree = new PrefixTree(sourceSuffixArray, targetCorpusArray, alignmentArray, lexProbs, words, commandLine.getValue(maxPhraseSpan), commandLine.getValue(maxPhraseLength), commandLine.getValue(maxNonterminals));
 			
 			for (Rule rule : prefixTree.getAllRules()) {
-				System.out.println(rule.toString(ntVocab, sourceVocab, targetVocab));
+				out.println(rule.toString(ntVocab, sourceVocab, targetVocab));
 			}
 		}
 		

@@ -13,6 +13,9 @@ all:
 	@$(MAKE) test EXAMPLE='example/example'   EXAMPLE_SUFFIX='test.in'
 	@$(MAKE) test EXAMPLE='example2/example2' EXAMPLE_SUFFIX='src'
 
+rules:
+	@$(MAKE) -f Makefile.lexprobs
+
 joshua:
 	ant compile
 
@@ -33,6 +36,7 @@ srilm_clean:
 
 clean: srilm_clean
 	ant clean
+	@$(MAKE) -f Makefile.lexprobs clean
 	rm -f                                  \
 		example/example.nbest.javalm.out   \
 		example/example.nbest.javalm.err   \
