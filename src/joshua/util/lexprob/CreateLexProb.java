@@ -41,7 +41,7 @@ import joshua.util.sentence.Vocabulary;
  * given word pair count data.
  * 
  * @author Lane Schwartz
- * @version $LastChangedDate: 2007-11-14 09:28:40 -0600 (Wed, 14 Nov 2007) $
+ * @version $LastChangedDate$
  */
 public class CreateLexProb {
 

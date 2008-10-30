@@ -22,6 +22,7 @@ import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.RuleCollection;
 import joshua.decoder.ff.tm.TrieGrammar;
 import joshua.util.lexprob.LexProbs;
+import joshua.util.lexprob.LexicalProbabilities;
 import joshua.util.sentence.LabelledSpan;
 import joshua.util.sentence.Phrase;
 import joshua.util.sentence.Span;
@@ -131,7 +132,7 @@ public class PrefixTree {
 	final AlignmentArray alignments;
 	
 	/** Lexical translation probabilities. */
-	final LexProbs lexProbs;
+	final LexicalProbabilities lexProbs;
 	
 	
 	
@@ -152,7 +153,7 @@ public class PrefixTree {
 	 * @param maxPhraseLength
 	 * @param maxNonterminals
 	 */
-	public PrefixTree(SuffixArray suffixArray, CorpusArray targetCorpus, AlignmentArray alignments, LexProbs lexProbs, int[] sentence, int maxPhraseSpan, int maxPhraseLength, int maxNonterminals) {
+	public PrefixTree(SuffixArray suffixArray, CorpusArray targetCorpus, AlignmentArray alignments, LexicalProbabilities lexProbs, int[] sentence, int maxPhraseSpan, int maxPhraseLength, int maxNonterminals) {
 
 		if (logger.isLoggable(Level.FINE)) logger.fine("\n\n\nConstructing new PrefixTree\n\n");
 

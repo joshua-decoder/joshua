@@ -23,11 +23,11 @@ import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+//import java.util.logging.Level;
+//import java.util.logging.Logger;
 
-import joshua.util.CommandLineParser;
-import joshua.util.CommandLineParser.Option;
+//import joshua.util.CommandLineParser;
+//import joshua.util.CommandLineParser.Option;
 import joshua.util.sentence.Vocabulary;
 
 import com.sleepycat.bind.EntryBinding;
@@ -49,15 +49,15 @@ import edu.jhu.sa.util.suffix_array.FileUtil;
  * This class works only with regular probabilities, not with log probabibilities.
  * 
  * @author Lane Schwartz
- * @version $LastChangedDate: 2007-11-26 10:42:44 -0600 (Mon, 26 Nov 2007) $
+ * @version $LastChangedDate$
  */
-public class LexicalTranslationProbabilityDistribution {
+public class LexProbsDB implements LexicalProbabilities {
 
 	/** Use the non-printable character ASCII UNIT SEPARATOR (\u001F) as delimiter. */
 	private static final char DELIMITER = '\u001F';
 	
 	/** Logger for this class. */
-	private static final Logger logger = Logger.getLogger(LexicalTranslationProbabilityDistribution.class.getName());
+	//private static final Logger logger = Logger.getLogger(LexProbsDB.class.getName());
 	
 	private Environment dbEnvironment;
 	private Database targetGivenSourceDatabase;
@@ -66,6 +66,9 @@ public class LexicalTranslationProbabilityDistribution {
 	private final String encoding;
 	
 	private final File dbDirectory;
+	
+	private final Vocabulary sourceVocab;
+	private final Vocabulary targetVocab;
 	
 	/**
 	 * Construct a LexicalTranslationProbabilityDistribution 
@@ -76,7 +79,10 @@ public class LexicalTranslationProbabilityDistribution {
 	 * @param dbEncoding text encoding used by the database
 	 * @throws FileNotFoundException
 	 */
-	public LexicalTranslationProbabilityDistribution(String dbDirectoryName, String dbEncoding) throws FileNotFoundException {
+	public LexProbsDB(String dbDirectoryName, String dbEncoding, Vocabulary sourceVocab, Vocabulary targetVocab) throws FileNotFoundException {
+		
+		this.sourceVocab = sourceVocab;
+		this.targetVocab = targetVocab;
 		
 		dbDirectory = new File(dbDirectoryName);
 		if (! dbDirectory.exists()) {
@@ -121,7 +127,10 @@ public class LexicalTranslationProbabilityDistribution {
 	 * @param dbDirectoryName location where the database will be created
 	 * @param dbEncoding text encoding to be used by the database
 	 */
-	public LexicalTranslationProbabilityDistribution(Scanner sourceToTargetFile, Scanner targetToSourceFile, String dbDirectoryName, String dbEncoding) {
+	public LexProbsDB(Scanner sourceToTargetFile, Scanner targetToSourceFile, String dbDirectoryName, String dbEncoding, Vocabulary sourceVocab, Vocabulary targetVocab) {
+		
+		this.sourceVocab = sourceVocab;
+		this.targetVocab = targetVocab;
 		
 		dbDirectory = new File(dbDirectoryName);
 		if (dbDirectory.exists()) {
@@ -276,8 +285,8 @@ public class LexicalTranslationProbabilityDistribution {
 	 * @param targetWord the target language word
 	 * @return the lexical translation probability
 	 */
-	public double sourceGivenTarget(String sourceWord, String targetWord) {
-		return lookup((sourceWord + DELIMITER + targetWord),this.sourceGivenTargetDatabase);
+	public float sourceGivenTarget(String sourceWord, String targetWord) {
+		return (float) lookup((sourceWord + DELIMITER + targetWord),this.sourceGivenTargetDatabase);
 	}
 	
 	/**
@@ -287,8 +296,16 @@ public class LexicalTranslationProbabilityDistribution {
 	 * @param sourceWord the source language word
 	 * @return the lexical translation probability
 	 */
-	public double targetGivenSource(String targetWord,String sourceWord) {
-		return lookup((targetWord + DELIMITER + sourceWord),this.targetGivenSourceDatabase);
+	public float targetGivenSource(String targetWord,String sourceWord) {
+		return (float) lookup((targetWord + DELIMITER + sourceWord),this.targetGivenSourceDatabase);
+	}
+	
+	public float sourceGivenTarget(int sourceWord, int targetWord) {
+		return sourceGivenTarget(sourceVocab.getWord(sourceWord), targetVocab.getWord(targetWord));
+	}
+
+	public float targetGivenSource(int targetWord, int sourceWord) {
+		return targetGivenSource(targetVocab.getWord(targetWord), sourceVocab.getWord(sourceWord));
 	}
 	
 	private double lookup(String key, Database probabilities) {
@@ -345,6 +362,7 @@ public class LexicalTranslationProbabilityDistribution {
 	 * 
 	 * @param args
 	 */
+	/*
 	public static void main(String[] args) {
 		
 		CommandLineParser commandLine = new CommandLineParser();
@@ -358,12 +376,12 @@ public class LexicalTranslationProbabilityDistribution {
 		
 		commandLine.parse(args);
 		
-		LexicalTranslationProbabilityDistribution lexProbs = null;
+		LexProbsDB lexProbs = null;
 		
 		try {
 			
 			lexProbs = 
-				new LexicalTranslationProbabilityDistribution(commandLine.getValue(dbDirectory), commandLine.getValue(encoding));
+				new LexProbsDB(commandLine.getValue(dbDirectory), commandLine.getValue(encoding));
 			
 			System.out.println(lexProbs.sourceGivenTarget(commandLine.getValue(source_word), commandLine.getValue(target_word)));
 			
@@ -399,13 +417,16 @@ public class LexicalTranslationProbabilityDistribution {
 			
 		}
 	}
-
+	*/
+	
 	/**
 	 * To be used only during unit testing.
 	 */
-	LexicalTranslationProbabilityDistribution(){
+	LexProbsDB(){
+		this.sourceVocab = null;
+		this.targetVocab = null;
 		encoding = null;
 		dbDirectory = null;
 	}
-	
+
 }

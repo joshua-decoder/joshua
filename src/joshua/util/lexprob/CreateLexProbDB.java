@@ -37,7 +37,7 @@ import joshua.util.CommandLineParser.Option;
  * given word pair count data.
  * 
  * @author Lane Schwartz
- * @version $LastChangedDate: 2007-11-14 09:28:40 -0600 (Wed, 14 Nov 2007) $
+ * @version $LastChangedDate$
  */
 public class CreateLexProbDB {
 
@@ -62,7 +62,7 @@ public class CreateLexProbDB {
 		
 		commandLine.parse(args);
 		
-		LexicalTranslationProbabilityDistribution lexProbs = null;
+		LexProbsDB lexProbs = null;
 		
 		try {
 			
@@ -92,7 +92,7 @@ public class CreateLexProbDB {
 				target_to_source = new Scanner( new File(commandLine.getValue(target_to_source_counts)), commandLine.getValue(encoding));
 			
 			
-			lexProbs = new LexicalTranslationProbabilityDistribution(source_to_target, target_to_source,commandLine.getValue(dbDirectory), commandLine.getValue(encoding));
+			lexProbs = new LexProbsDB(source_to_target, target_to_source,commandLine.getValue(dbDirectory), commandLine.getValue(encoding), null, null);
 			
 		}  catch (FileNotFoundException e) {
 			e.printStackTrace();

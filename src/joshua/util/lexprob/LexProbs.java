@@ -27,11 +27,13 @@ import joshua.util.sentence.Vocabulary;
 
 /**
  * Represents lexical probability distributions in both directions.
+ * <p>
+ * This class calculates the probabilities from sorted word pair counts.
  * 
  * @author Lane Schwartz
  * @version $LastChangedDate$
  */
-public class LexProbs {
+public class LexProbs implements LexicalProbabilities {
 	
 	//TODO Investigate doing all of this via sampling using the suffix array
 	//     and/or allow reading it from the GIZA++ lexprob output

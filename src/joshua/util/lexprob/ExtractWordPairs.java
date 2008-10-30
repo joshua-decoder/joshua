@@ -47,7 +47,7 @@ import joshua.util.CommandLineParser.Option;
  * The files used must use Unix-style newlines. 
  * 
  * @author Lane Schwartz
- * @version $LastChangedDate: 2007-11-14 09:28:40 -0600 (Wed, 14 Nov 2007) $
+ * @version $LastChangedDate$
  * @see Section 4.4 of "Statistical Phrase-Based Translation" by Philipp Koehn, Franz Josef Och, & Daniel Marcu (HLT-NAACL, 2003)
  */
 public class ExtractWordPairs {

@@ -19,7 +19,7 @@ package edu.jhu.sa.util.suffix_array;
 
 import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.GrammarFactory;
-import joshua.util.lexprob.LexProbs;
+import joshua.util.lexprob.LexicalProbabilities;
 import joshua.util.sentence.Phrase;
 
 public class SAGrammarFactory implements GrammarFactory {
@@ -27,7 +27,7 @@ public class SAGrammarFactory implements GrammarFactory {
 	private final SuffixArray sourceSuffixArray;
 	private final CorpusArray targetCorpus;
 	private final AlignmentArray alignments;
-	private final LexProbs lexProbs;
+	private final LexicalProbabilities lexProbs;
 	
 	private final int maxPhraseSpan;
 	private final int maxPhraseLength;
@@ -44,7 +44,7 @@ public class SAGrammarFactory implements GrammarFactory {
 	 * @param maxPhraseLength
 	 * @param maxNonterminals
 	 */
-	public SAGrammarFactory(SuffixArray sourceSuffixArray, CorpusArray targetCorpus, AlignmentArray alignments, LexProbs lexProbs, int maxPhraseSpan, int maxPhraseLength, int maxNonterminals, int spanLimit) {
+	public SAGrammarFactory(SuffixArray sourceSuffixArray, CorpusArray targetCorpus, AlignmentArray alignments, LexicalProbabilities lexProbs, int maxPhraseSpan, int maxPhraseLength, int maxNonterminals, int spanLimit) {
 		this.sourceSuffixArray = sourceSuffixArray;
 		this.targetCorpus      = targetCorpus;
 		this.alignments        = alignments;
