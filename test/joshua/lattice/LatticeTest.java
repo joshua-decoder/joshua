@@ -49,11 +49,11 @@ public class LatticeTest {
 		Lattice<String> graph = new Lattice<String>(nodes);
 		
 		Assert.assertEquals(graph.getShortestPath(0, 1), 1.0);
-		Assert.assertEquals(graph.getShortestPath(0, 2), 1.5);
+		Assert.assertEquals(graph.getShortestPath(0, 2), 1.0);
 		Assert.assertEquals(graph.getShortestPath(1, 2), 1.0);
-		Assert.assertEquals(graph.getShortestPath(0, 3), 4.5);
-		Assert.assertEquals(graph.getShortestPath(1, 3), 4.0);
-		Assert.assertEquals(graph.getShortestPath(2, 3), 3.0);
+		Assert.assertEquals(graph.getShortestPath(0, 3), 2.0);
+		Assert.assertEquals(graph.getShortestPath(1, 3), 2.0);
+		Assert.assertEquals(graph.getShortestPath(2, 3), 1.0);
 	}
 	
 	@Test
