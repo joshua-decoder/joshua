@@ -19,7 +19,7 @@ package joshua.decoder.ff.lm;
 
 import java.util.ArrayList;
 
-import joshua.decoder.Decoder;
+import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.Support;
 import joshua.decoder.Symbol;
 
@@ -28,7 +28,7 @@ import joshua.decoder.Symbol;
  * (1) LMGrammar interface 
  * 
  * @author Zhifei Li, <zhifei.work@gmail.com>
- * @version $LastChangedDate$
+ * @version $LastChangedDate: 2008-10-17 01:41:03 -0400 (星期五, 17 十月 2008) $
  */
 public abstract class LMGrammar {
 	protected int  g_order = 3;
@@ -118,8 +118,8 @@ public abstract class LMGrammar {
 			return 0;//TODO: zero cost?
 		}
 		double res = get_prob_specific(ngram_words, order, check_bad_stuff);
-		if (res < -Decoder.lm_ceiling_cost) {
-			res = -Decoder.lm_ceiling_cost;
+		if (res < -JoshuaConfiguration.lm_ceiling_cost) {
+			res = -JoshuaConfiguration.lm_ceiling_cost;
 		}
 			
 		//System.out.println("Prob: "+ Symbol.get_string(ngram_words) + "; " + res);

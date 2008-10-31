@@ -35,12 +35,7 @@ extends StatelessOwnedFF {
 	private final int max_arity;
 	
 	
-	public ArityPhrasePenaltyFF(
-		final double weight_,
-		final int owner_,
-		final int min,
-		final int max
-	) {
+	public ArityPhrasePenaltyFF(final double weight_, final int owner_,	final int min, final int max) {
 		super(weight_, owner_);
 		this.min_arity = min;
 		this.max_arity = max;

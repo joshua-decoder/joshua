@@ -15,17 +15,18 @@
  * Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  * MA 02111-1307 USA
  */
-package joshua.decoder.ff.lm;
-
-import joshua.decoder.Decoder;
-import joshua.decoder.Support;
-import joshua.decoder.Symbol;
-import joshua.util.FileUtility;
+package joshua.decoder.ff.lm.buildin_lm;
 
 import java.io.BufferedReader;
 import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import joshua.decoder.JoshuaConfiguration;
+import joshua.decoder.Support;
+import joshua.decoder.Symbol;
+import joshua.decoder.ff.lm.LMGrammar;
+import joshua.util.FileUtility;
 
 /**
  * this class implement 
@@ -36,7 +37,7 @@ import java.util.logging.Logger;
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate:2008-07-28 18:44:45 -0400 (Mon, 28 Jul 2008) $
  */
-public class LMGrammar_JAVA extends LMGrammar {
+public class LMGrammarJAVA extends LMGrammar {
 	/*a backoff node is a hashtable, it may include:
 	 * (1) probabilititis for next words
 	 * (2) pointers to a next-layer backoff node (hashtable)
@@ -60,9 +61,9 @@ public class LMGrammar_JAVA extends LMGrammar {
 	HashMap request_cache_right_equiv = new HashMap();//cmd with result
 	int cache_size_limit= 250000;
 	
-	private static final Logger logger = Logger.getLogger(LMGrammar_JAVA.class.getName());
+	private static final Logger logger = Logger.getLogger(LMGrammarJAVA.class.getName());
 	
-	public LMGrammar_JAVA(int order, boolean is_add_suffix_infor, boolean is_add_prefix_infor){
+	public LMGrammarJAVA(int order, boolean is_add_suffix_infor, boolean is_add_prefix_infor){
 		super(order);		
 		if (logger.isLoggable(Level.INFO)) logger.info("use java lm");		
 		g_is_add_prefix_infor = is_add_prefix_infor;
@@ -131,7 +132,7 @@ public class LMGrammar_JAVA extends LMGrammar {
 		
 		int[] ngram_wrds=replace_with_unk(ngram_wrds_in);//TODO
 	    if(ngram_wrds[ngram_wrds.length-1]==Symbol.UNK_SYM_ID){//TODO: wrong implementation in hiero
-			res= -Decoder.lm_ceiling_cost;
+			res= -JoshuaConfiguration.lm_ceiling_cost;
 	    }else{
 		    //TODO: untranslated words
 			if(root==null){
@@ -202,7 +203,7 @@ public class LMGrammar_JAVA extends LMGrammar {
     //the only change to the original_state is: replace with more non-null state words to null state
 	//O(n^2)
 	 public int[] get_right_equi_state(int[] original_state_in, int order, boolean check_bad_stuff){		 	
-			if(Decoder.use_right_euqivalent_state==false || original_state_in.length!=g_order-1)
+			if(JoshuaConfiguration.use_right_euqivalent_state==false || original_state_in.length!=g_order-1)
 				return original_state_in;
 			int[] res;
 			//cache
@@ -266,7 +267,7 @@ public class LMGrammar_JAVA extends LMGrammar {
 	//return: (1) the equivlant state vector; (2) the finalized cost; (3) the estimated cost
 //	O(n^2)
 	 public int[] get_left_equi_state(int[] original_state_wrds_in, int order, double[] cost){		    		    
-			if(Decoder.use_left_euqivalent_state==false){
+			if(JoshuaConfiguration.use_left_euqivalent_state==false){
 				return original_state_wrds_in;
 			}		
 			

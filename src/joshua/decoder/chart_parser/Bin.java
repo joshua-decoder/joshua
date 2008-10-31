@@ -17,7 +17,7 @@
  */
 package joshua.decoder.chart_parser;
 
-import joshua.decoder.Decoder;
+import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.Support;
 import joshua.decoder.Symbol;
 import joshua.decoder.ff.FeatureFunction;
@@ -25,7 +25,6 @@ import joshua.decoder.ff.FFState;
 import joshua.decoder.ff.MapFFState;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.RuleCollection;
-import joshua.decoder.hypergraph.HyperGraph;
 import joshua.decoder.hypergraph.HyperGraph.Deduction;
 import joshua.decoder.hypergraph.HyperGraph.Item;
 
@@ -172,10 +171,7 @@ public class Bin
 				
 				//// BUG: too specific this casting
 				for (FeatureFunction<MapFFState> ff : this.p_chart.models) {
-					final_transition_cost
-						+= ff.getWeight()
-						*  ff.finalTransition(new MapFFState(
-							(Map<Integer,Object>)item.tbl_states ));
+					final_transition_cost += ff.getWeight()	*  ff.finalTransition(new MapFFState( (Map<Integer,Object>)item.tbl_states ));
 				}
 				
 				ArrayList<Item> previous_items = new ArrayList<Item>();
@@ -327,7 +323,7 @@ public class Bin
 			add_deduction_in_bin(cur_state.tbl_states, cur_state.rule, i, j,cur_state.l_ants, lattice_cost);//pre-pruning inside this function
 			
 			//if the best state is pruned, then all the remaining states should be pruned away
-			if(((Double)cur_state.tbl_states.get(Symbol.EXPECTED_TOTAL_COST_SYM_ID)).doubleValue()>cut_off_cost+Decoder.fuzz1){
+			if(((Double)cur_state.tbl_states.get(Symbol.EXPECTED_TOTAL_COST_SYM_ID)).doubleValue()>cut_off_cost+JoshuaConfiguration.fuzz1){
 				//n_prepruned += heap_cands.size();
 				p_chart.n_prepruned_fuzz1 += heap_cands.size();
 				/*if(heap_cands.size()>1){gtem++;System.out.println("gtem is " +gtem + "; size:" + heap_cands.size());}*/
@@ -364,7 +360,7 @@ public class Bin
 				//add state into heap		
 				cube_state_tbl.put(new_sig,1);
 						
-				if(((Double)tbl_states2.get(Symbol.EXPECTED_TOTAL_COST_SYM_ID)).doubleValue()<cut_off_cost+Decoder.fuzz2){
+				if(((Double)tbl_states2.get(Symbol.EXPECTED_TOTAL_COST_SYM_ID)).doubleValue()<cut_off_cost+JoshuaConfiguration.fuzz2){
 					heap_cands.add(t_state);		
 				}else{
 					//n_prepruned +=1;
@@ -468,7 +464,7 @@ public class Bin
 			add_new_item(new_item);
 			res=true;
 		}			
-		cut_off_cost = Support.find_min(best_item_cost+Decoder.relative_threshold, Symbol.IMPOSSIBLE_COST);			
+		cut_off_cost = Support.find_min(best_item_cost+JoshuaConfiguration.relative_threshold, Symbol.IMPOSSIBLE_COST);			
 		run_pruning();
 		return res;
 	}
@@ -514,7 +510,7 @@ public class Bin
 			dead_items=0;
 			return;
 		}
-		while(heap_items.size()-dead_items>Decoder.max_n_items //bin limit pruning 
+		while(heap_items.size()-dead_items>JoshuaConfiguration.max_n_items //bin limit pruning 
 			  ||  heap_items.peek().est_total_cost>=cut_off_cost){//relative threshold pruning
 			Item worst_item = (Item)heap_items.poll();
 			if(worst_item.is_dead==true)//clear the corrupted item
@@ -525,7 +521,7 @@ public class Bin
 				//Support.write_log_line(String.format("Run_pruning: %d; cutoff=%.3f, realcost: %.3f",p_chart.n_pruned,cut_off_cost,worst_item.est_total_cost), Support.INFO);
 			}					
 		}
-		if(heap_items.size()-dead_items==Decoder.max_n_items){//TODO:??	
+		if(heap_items.size()-dead_items==JoshuaConfiguration.max_n_items){//TODO:??	
 			cut_off_cost = Support.find_min(cut_off_cost, heap_items.peek().est_total_cost+Symbol.EPSILON);
 		}			
 	}

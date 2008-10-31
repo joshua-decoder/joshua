@@ -77,13 +77,13 @@ public class Rule {
 		if (fds.length != 4) {
 			Support.write_log_line("rule line does not have four fds; " + line, Support.ERROR);
 		}			
-		this.lhs = Symbol.add_non_terminal_symbol(TMGrammar_Memory.replace_french_non_terminal(fds[0]));
+		this.lhs = Symbol.add_non_terminal_symbol(MemoryBasedTMGrammar.replace_french_non_terminal(fds[0]));
 		
 		int arity = 0;
 		String[] french_tem = fds[1].split("\\s+");
 		french = new int[french_tem.length];
 		for (int i = 0; i < french_tem.length; i++) {
-			if (TMGrammar_Memory.is_non_terminal(french_tem[i])) {
+			if (MemoryBasedTMGrammar.is_non_terminal(french_tem[i])) {
 				arity++;
 				//french[i]= Symbol.add_non_terminal_symbol(TMGrammar_Memory.replace_french_non_terminal(french_tem[i]));
 				french[i]= Symbol.add_non_terminal_symbol(french_tem[i]);//when storing hyper-graph, we need this
@@ -97,7 +97,7 @@ public class Rule {
 		String[] english_tem = fds[2].split("\\s+");
 		english = new int[english_tem.length];
 		for (int i = 0; i < english_tem.length; i++) {
-			if (TMGrammar_Memory.is_non_terminal(english_tem[i])) {
+			if (MemoryBasedTMGrammar.is_non_terminal(english_tem[i])) {
 				english[i] = Symbol.add_non_terminal_symbol(english_tem[i]);
 			} else {
 				english[i] = Symbol.add_terminal_symbol(english_tem[i]);

@@ -15,7 +15,7 @@
  * Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  * MA 02111-1307 USA
  */
-package joshua.decoder.ff.lm;
+package joshua.decoder.ff.lm.distributed_lm;
 
 import joshua.decoder.Support;
 import joshua.util.SocketUtility;
@@ -31,7 +31,7 @@ import java.util.HashMap;
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate$
  */
-public class LMClient_Single
+public class LMClientSingle
 extends LMClient {
 	SocketUtility.ClientConnection  p_client;
 	HashMap    request_cache    = new HashMap();
@@ -39,7 +39,7 @@ extends LMClient {
 	static int BYTES_PER_CHAR   = 2;//TODO big bug
 	
 	
-	public LMClient_Single(String hostname, int port) {
+	public LMClientSingle(String hostname, int port) {
 		this.p_client = SocketUtility.open_connection_client(hostname, port);
 	}
 	

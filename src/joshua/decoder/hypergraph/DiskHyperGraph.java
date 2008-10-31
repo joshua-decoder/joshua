@@ -17,11 +17,10 @@
  */
 package joshua.decoder.hypergraph;
 
-import joshua.decoder.Decoder;
+import joshua.decoder.JoshuaDecoder;
 import joshua.decoder.Symbol;
+import joshua.decoder.ff.tm.MemoryBasedTMGrammar;
 import joshua.decoder.ff.tm.Rule;
-import joshua.decoder.ff.tm.TMGrammar_Memory; // Only for Rule_Memory
-import joshua.decoder.ff.tm.TMGrammar_Memory.Rule_Memory;
 import joshua.decoder.hypergraph.HyperGraph;
 import joshua.decoder.hypergraph.HyperGraph.Deduction;
 import joshua.decoder.hypergraph.HyperGraph.Item;
@@ -80,7 +79,7 @@ public class DiskHyperGraph {
 		String f_rule_tbl="C:\\Users\\zli\\Documents\\mt03.src.txt.ss.nbest.hg.rules";
 	
 		String config_file="C:\\data_disk\\java_work_space\\example.config.javalm";
-		ArrayList l_models = Decoder.init_models(config_file,null);
+		ArrayList l_models = JoshuaDecoder.init_models(config_file,null);
 		BufferedWriter nbest_out = FileUtility.getWriteFileStream("C:\\Users\\zli\\Documents\\hg.mt03.nbest");
 		int total_num_sent = 919;//919	
 		
@@ -136,7 +135,7 @@ public class DiskHyperGraph {
     		String[] wrds = line.split("\\s+");
     		int rule_id = new Integer(wrds[0]);
     		int default_owner = Symbol.add_terminal_symbol(wrds[1]);
-    		Rule rule = new TMGrammar_Memory.Rule_Memory(rule_id, fds[1], default_owner);//TODO: the stateless cost if not correct due to estimate_rule
+    		Rule rule = new MemoryBasedTMGrammar.Rule_Memory(rule_id, fds[1], default_owner);//TODO: the stateless cost if not correct due to estimate_rule
     		tbl_associated_grammar.put(rule_id, rule);
     	}
     	FileUtility.close_read_file(reader_rules);
@@ -421,7 +420,7 @@ public class DiskHyperGraph {
 			}else{
 				int lhs = Symbol.add_non_terminal_symbol(fds[3+num_ant_items]);
 				int french_symbol = Symbol.add_terminal_symbol(fds[4+num_ant_items]);
-				rule = new TMGrammar_Memory.Rule_Memory(lhs, french_symbol, Symbol.UNTRANS_SYM_ID);//TODO: change owner
+				rule = new MemoryBasedTMGrammar.Rule_Memory(lhs, french_symbol, Symbol.UNTRANS_SYM_ID);//TODO: change owner
 				//System.out.println("oov rule str: " + str_rule + "; arity: " + rule.arity);
 			}
 			

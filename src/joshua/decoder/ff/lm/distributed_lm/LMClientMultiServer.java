@@ -15,7 +15,7 @@
  * Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  * MA 02111-1307 USA
  */
-package joshua.decoder.ff.lm;
+package joshua.decoder.ff.lm.distributed_lm;
 
 import joshua.decoder.Support;
 import joshua.util.SocketUtility;
@@ -31,7 +31,10 @@ import java.util.HashMap;
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate$
  */
-public class LMClient_MultiServer
+
+
+
+public class LMClientMultiServer
 extends LMClient {
 	public static SocketUtility.ClientConnection[] l_clients = null;
 	public static double[]   probs             = null;
@@ -44,7 +47,10 @@ extends LMClient {
 	
 	HashMap request_cache = new HashMap(); //cmd with result
 	int cache_size_limit  = 3000000;
-	
+
+	/* Performance considerations: we do not want to initiate new threads for each specific n-gram request. Instead,
+	 * we want to have several threads always sitting there, and wait for n-gram requests. This is also true the socket we try to maintain.
+	 * */
 	//thread communcation
 	static boolean[] response_ready;//set by the children-thread, read by the main thread
 	static boolean   request_ready;//set by the main thread, read by children-threads
@@ -57,7 +63,7 @@ extends LMClient {
 	static int g_n_cache_hit = 0;
 	
 	
-	public LMClient_MultiServer(
+	public LMClientMultiServer(
 		String[] hostnames,
 		int[]    ports,
 		double[] weights_,
@@ -175,6 +181,8 @@ extends LMClient {
 	}
 */	
 	
+	
+	//TODO: synchronization problem to request_cache, if we use more than one LMClientMultiServer
 	private double exe_request(String packet) {
 		//search cache
 		Double cmd_res = (Double)request_cache.get(packet);
@@ -203,7 +211,7 @@ extends LMClient {
 	}
 	
 	
-	//  This is the funciton that application specific
+	//  This is the function that application specific
 	private double process_request_parallel(String packet) {
 		g_packet = packet;
 		request_ready = true;
@@ -218,7 +226,7 @@ extends LMClient {
 		boolean all_finished = false;
 		while (! all_finished) {
 			try {
-				Thread.sleep(g_time_interval); //sleep foroever until get interupted, big bug
+				Thread.sleep(g_time_interval); //sleep forever until get interrupted, big bug
 			} catch (InterruptedException e) { //at least a new one is finished or timer expired
 				all_finished = true;
 				for (int i = 0; i < num_lm_servers; i++) {
@@ -245,8 +253,8 @@ extends LMClient {
 	//a thread to a single lm server
 	private static class LMThread
 	extends Thread {
-		//TODO: if the thread is dead due to exception, we should we start the thread
-		int pos;//remember where should i write back the results
+		//TODO: if the thread is dead due to exception, we should restart the thread
+		int pos;//remember where i should write back the results
 		
 		public LMThread(int p) {
 			pos = p;
@@ -256,7 +264,7 @@ extends LMClient {
 		public void run() {
 			while (true) {
 				try {
-					Thread.sleep(g_time_interval);//sleep foroever until get interupted
+					Thread.sleep(g_time_interval);//sleep forever until get interrupted
 				} catch (InterruptedException e) { //three possibilities: expired, request_ready, or should_finish
 					if (request_ready) {
 						String cmd_res = l_clients[pos].exe_request(g_packet);

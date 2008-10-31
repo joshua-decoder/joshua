@@ -18,7 +18,6 @@
 package joshua.decoder.chart_parser;
 
 import joshua.decoder.chart_parser.Bin.SuperItem;
-import joshua.decoder.ff.tm.GrammarFactory;
 import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.TrieGrammar;
 import joshua.lattice.Arc;
@@ -26,7 +25,6 @@ import joshua.lattice.Lattice;
 import joshua.lattice.Node;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -128,6 +126,9 @@ public class DotChart {
 	public void seed() {
 		for (int j = 0; j <= sent_len - 1; j++) {
 			if (p_grammar.hasRuleForSpan(j, j, sent_len)) {
+				if(p_grammar.getTrieRoot()==null){
+					System.out.println("trie root is null"); System.exit(0);
+				}
 				add_dot_item(p_grammar.getTrieRoot(), j, j, null, null, 0.0f);
 			}
 		}
@@ -160,9 +161,12 @@ public class DotChart {
 			if (logger.isLoggable(Level.FINEST)) logger.finest("last_word=="+last_word+ " for node " +node.getNumber());
 			
 			//int last_word=foreign_sent[j-1]; // input.getNode(j-1).getNumber(); //	
-
+			
 			if (l_dot_bins[i][j-1] != null) {
-				for (DotItem dt: l_dot_bins[i][j-1].l_dot_items) { //dotitem in dot_bins[i][k]: looking for an item in the right to the dot			
+				for (DotItem dt: l_dot_bins[i][j-1].l_dot_items) { //dotitem in dot_bins[i][k]: looking for an item in the right to the dot
+					if(dt.tnode==null){
+						System.out.println("dt is null");
+					}
 					TrieGrammar child_tnode = dt.tnode.matchOne(last_word);//match the terminal
 					if (child_tnode != null) {
 						add_dot_item(child_tnode, i, j - 1 + arc_len, dt.l_ant_super_items, null, dt.lattice_cost + cost);//we do not have an ant for the terminal
@@ -282,8 +286,8 @@ public class DotChart {
 		public DotItem(int i_in, int j_in, TrieGrammar tnode_in, ArrayList<SuperItem> ant_super_items_in, float lattice_cost) {
 			//i = i_in;
 			//j = j_in;
-			tnode = tnode_in;
-			l_ant_super_items = ant_super_items_in;
+			this.tnode = tnode_in;
+			this.l_ant_super_items = ant_super_items_in;
 			this.lattice_cost = lattice_cost;
 		}
 	}

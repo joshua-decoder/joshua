@@ -25,19 +25,14 @@ import joshua.decoder.ff.tm.Rule;
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate: 2008-07-28 18:44:45 -0400 (Mon, 28 Jul 2008) $
  */
-public final class PhraseModelFF
-extends StatelessOwnedFF {
+public final class PhraseModelFF extends StatelessOwnedFF {
 	/* the feature will be activated only when the owner is the
 	 * same as the rule, we need an owner to distinguish different
 	 * feature in different phrase table/source
 	 */
 	private final int columnIndex; // = -1;//zero-indexed
 	
-	public PhraseModelFF(
-		final double weight_,
-		final int owner_,
-		final int column_index
-	) {
+	public PhraseModelFF(final double weight_,	final int owner_, final int column_index) {
 		super(weight_, owner_);
 		this.columnIndex = column_index;
 	}

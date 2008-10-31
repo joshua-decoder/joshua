@@ -80,8 +80,8 @@ public class SocketUtility {
 		Socket socket;
 		public BufferedReader in;
 	    public PrintWriter out;
-           //public DataOutputStream data_out; //debug
-           //public DataInputStream data_in; //debug
+        //public DataOutputStream data_out; //debug
+        //public DataInputStream data_in; //debug
 
 	    
 	    public String exe_request(String line_out){

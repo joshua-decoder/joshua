@@ -30,8 +30,7 @@ import joshua.decoder.ff.DefaultFF;
  * @author wren ng thornton <wren@users.sourceforge.net>
  * @version $LastChangedDate: 2008-07-28 18:44:45 -0400 (Mon, 28 Jul 2008) $
  */
-public abstract class StatelessOwnedFF
-extends DefaultFF {
+public abstract class StatelessOwnedFF extends DefaultFF {
 	protected final int owner;
 	
 	public StatelessOwnedFF(final double weight_, final int owner_) {

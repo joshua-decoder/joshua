@@ -17,18 +17,16 @@
  */
 package joshua.decoder.chart_parser;
 
-import joshua.decoder.Decoder;
-import joshua.decoder.Support;
+
+import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.Symbol;
 import joshua.decoder.chart_parser.DotChart.DotItem;
 import joshua.decoder.ff.FeatureFunction;
-import joshua.decoder.ff.tm.GrammarFactory;
 import joshua.decoder.ff.tm.Grammar;
+import joshua.decoder.ff.tm.MemoryBasedTMGrammar;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.RuleCollection;
 import joshua.decoder.ff.tm.TrieGrammar;
-import joshua.decoder.ff.tm.TMGrammar_Memory; // Only for Rule_Memory
-import joshua.decoder.ff.tm.TMGrammar_Memory.Rule_Memory;
 import joshua.decoder.hypergraph.HyperGraph;
 import joshua.decoder.hypergraph.HyperGraph.Item;
 import joshua.lattice.Lattice;
@@ -137,10 +135,7 @@ public class Chart {
 		this.grammars  = grammars_;
 		this.dotcharts = new DotChart[this.grammars.length];//each grammar will have a dot chart
 		for (int i = 0; i < this.grammars.length; i++) {
-			this.dotcharts[i] = new DotChart(
-				this.sentence,
-				this.grammars[i],
-				this);
+			this.dotcharts[i] = new DotChart(this.sentence,	this.grammars[i], this);
 			this.dotcharts[i].seed(); // TODO: should fold into the constructor
 		}
 		//add OOV rules
@@ -153,7 +148,7 @@ public class Chart {
 		for (Node<Integer> node : sentence) {
 			for (Arc<Integer> arc : node.getOutgoingArcs()) {
 				for (int lhs : default_nonterminals) {//create a rule, but do not add into the grammar trie     
-					Rule rule = new TMGrammar_Memory.Rule_Memory(
+					Rule rule = new MemoryBasedTMGrammar.Rule_Memory(
 						lhs,
 						arc.getLabel(),
 						Symbol.UNTRANS_SYM_ID);//TODO: change onwer
@@ -204,7 +199,7 @@ public class Chart {
 										add_axiom(i, j, rule, lattice_cost);
 									}
 								} else {//rules with non-terminal
-									if (Decoder.use_cube_prune) {
+									if (JoshuaConfiguration.use_cube_prune) {
 										complete_cell_cube_prune(i, j, dt, rules, lattice_cost);
 									} else {
 										complete_cell(i, j, dt, rules, lattice_cost);//populate chart.bin[i][j] with rules from dotchart[i][j]

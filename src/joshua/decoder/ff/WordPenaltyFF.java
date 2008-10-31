@@ -26,8 +26,7 @@ import joshua.decoder.ff.tm.Rule;
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate: 2008-07-28 18:44:45 -0400 (Mon, 28 Jul 2008) $
  */
-public final class WordPenaltyFF
-extends DefaultFF {
+public final class WordPenaltyFF extends DefaultFF {
 	private static final double OMEGA = Math.log10(Math.E);
 	
 	public WordPenaltyFF(final double weight_) {

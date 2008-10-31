@@ -17,7 +17,8 @@
  */
 package joshua.decoder.ff.tm;
 
-import joshua.decoder.Decoder;
+
+import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.Support;
 import joshua.decoder.Symbol;
 import joshua.decoder.ff.FeatureFunction;
@@ -47,8 +48,7 @@ import java.util.logging.Logger;
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate$
  */
-public class TMGrammar_Memory
-extends TMGrammar {
+public class MemoryBasedTMGrammar extends TMGrammar {
 	private int num_rule_read    = 0;
 	private int num_rule_pruned  = 0;
 	private int num_rule_bin     = 0;
@@ -57,8 +57,7 @@ extends TMGrammar {
 	static int rule_id_count =1; //three kinds of rule: regular rule (id>0); oov rule (id=0), and null rule (id=-1)
 	static private double tem_estcost = 0.0;//debug
 	
-	private static final Logger logger =
-		Logger.getLogger(TMGrammar_Memory.class.getName());
+	private static final Logger logger = Logger.getLogger(MemoryBasedTMGrammar.class.getName());
 	
 	/*TMGrammar is composed by Trie nodes
 	Each trie node has: 
@@ -66,18 +65,37 @@ extends TMGrammar {
 	(2) a HashMap  of next-layer trie nodes, the next french word used as the key in HashMap  
 	*/
 	
-	public TMGrammar_Memory(
+	public MemoryBasedTMGrammar(
+		String grammar_file,
+		boolean is_glue_grammar,
 		ArrayList<FeatureFunction> l_models,
 		String                     default_owner,
 		int                        span_limit,
 		String                     nonterminal_regexp,
 		String                     nonterminal_replace_regexp
-	) {
-		super(l_models, default_owner, span_limit, nonterminal_regexp, nonterminal_replace_regexp);
+	) {		
+		super(grammar_file,  l_models, default_owner, span_limit, nonterminal_regexp, nonterminal_replace_regexp);
+		
+		//read the grammar from file
+		if(is_glue_grammar==true){
+			if(grammar_file!=null){
+				if (logger.isLoggable(Level.SEVERE)) 
+					logger.severe("You provide a grammar file, but you also indicate it is a glue grammar, there must be sth wrong");
+				System.exit(1);
+			}
+			read_tm_grammar_glue_rules();
+		}else{
+			if(grammar_file==null){
+				if (logger.isLoggable(Level.SEVERE)) 
+					logger.severe("You must provide a grammar file for MemoryBasedTMGrammar");
+				System.exit(1);
+			}
+			read_tm_grammar_from_file(grammar_file);
+		}
 	}
 	
 	
-	public void read_tm_grammar_from_file(String grammar_file) {
+	protected void read_tm_grammar_from_file(String grammar_file) {
 		this.root = new TrieNode_Memory(); //root should not have valid ruleBin entries
 		BufferedReader t_reader_tree = 
 			FileUtility.getReadFileStream(grammar_file,"utf8");  // BUG? shouldn't this be the implicit "UTF-8" instead?
@@ -86,35 +104,35 @@ extends TMGrammar {
 		
 		String line;
 		while ((line = FileUtility.read_line_lzf(t_reader_tree)) != null) {
-			this.add_rule(line, TMGrammar_Memory.defaultOwner);
+			this.add_rule(line, MemoryBasedTMGrammar.defaultOwner);
 		}
 		this.print_grammar();
 		this.ensure_grammar_sorted();
 	}
 	
-	
-	public void read_tm_grammar_glue_rules() {
+
+	//	TODO: this should read from file
+	protected void read_tm_grammar_glue_rules() {
 		final double alpha = Math.log10(Math.E); // cost
 		this.root = new TrieNode_Memory(); //root should not have valid ruleBin entries
-
-		//TODO: this should read from file
+		
 		this.add_rule(
 			"S ||| ["
-				+ Decoder.default_non_terminal
+				+ JoshuaConfiguration.default_non_terminal
 				+ ",1] ||| ["
-				+ Decoder.default_non_terminal
+				+ JoshuaConfiguration.default_non_terminal
 				+ ",1] ||| 0",
-			Symbol.add_terminal_symbol(Decoder.begin_mono_owner));//this does not have any cost	
+			Symbol.add_terminal_symbol(JoshuaConfiguration.begin_mono_owner));//this does not have any cost	
 		//TODO: search consider_start_sym (Decoder.java, LMModel.java, and Chart.java)
 		//glue_gr.add_rule("S ||| [PHRASE,1] ||| "+Symbol.START_SYM+" [PHRASE,1] ||| 0", begin_mono_owner);//this does not have any cost
 		this.add_rule(
 			"S ||| [S,1] ["
-				+ Decoder.default_non_terminal
+				+ JoshuaConfiguration.default_non_terminal
 				+ ",2] ||| [S,1] ["
-				+ Decoder.default_non_terminal
+				+ JoshuaConfiguration.default_non_terminal
 				+ ",2] ||| "
 				+ alpha,
-			Symbol.add_terminal_symbol(Decoder.begin_mono_owner));
+			Symbol.add_terminal_symbol(JoshuaConfiguration.begin_mono_owner));
 		//glue_gr.add_rule("S ||| [S,1] [PHRASE,2] [PHRASE,3] ||| [S,1] [PHRASE,2] [PHRASE,3] ||| "+alpha, MONO_OWNER);
 		print_grammar();
 		ensure_grammar_sorted();
@@ -122,7 +140,7 @@ extends TMGrammar {
 	
 	
 	public TrieGrammar getTrieRoot() {
-		return root;
+		return this.root;
 	}
 	
 	
@@ -141,7 +159,7 @@ extends TMGrammar {
 		for (int k = 0; k < p_rule.french.length; k++) {
 			int cur_sym_id = p_rule.french[k];
 			if (Symbol.is_nonterminal(p_rule.french[k])) { //TODO: p_rule.french store the original format like "[X,1]"
-				cur_sym_id = Symbol.add_non_terminal_symbol(TMGrammar_Memory.replace_french_non_terminal(Symbol.get_string(p_rule.french[k])));
+				cur_sym_id = Symbol.add_non_terminal_symbol(MemoryBasedTMGrammar.replace_french_non_terminal(Symbol.get_string(p_rule.french[k])));
 			}
 			
 			TrieNode_Memory next_layer = pos.matchOne(cur_sym_id);
@@ -174,8 +192,8 @@ extends TMGrammar {
 	}
 	
 	
-	static String replace_french_non_terminal(String symbol) {
-		return symbol.replaceAll(TMGrammar_Memory.nonterminalReplaceRegexp, "");//remove [, ], and numbers
+	public static String replace_french_non_terminal(String symbol) {
+		return symbol.replaceAll(MemoryBasedTMGrammar.nonterminalReplaceRegexp, "");//remove [, ], and numbers
 	}
 	
 	
@@ -320,8 +338,8 @@ extends TMGrammar {
 				return;
 			}
 			this.heapRules.add(rule);	//TODO: what is offer()
-			if (rule.est_cost + Decoder.rule_relative_threshold < this.cutoff) {
-				this.cutoff = rule.est_cost + Decoder.rule_relative_threshold;
+			if (rule.est_cost + JoshuaConfiguration.rule_relative_threshold < this.cutoff) {
+				this.cutoff = rule.est_cost + JoshuaConfiguration.rule_relative_threshold;
 			}
 			rule.french = this.french; //TODO: this will release the memory in each rule, but still have a pointer
 		}
@@ -329,12 +347,12 @@ extends TMGrammar {
 		
 		private int run_pruning() {
 			int n_pruned = 0;
-			while (this.heapRules.size() > Decoder.max_n_rules
+			while (this.heapRules.size() > JoshuaConfiguration.max_n_rules
 			|| this.heapRules.peek().est_cost >= this.cutoff) {
 				n_pruned++;
 				this.heapRules.poll();
 			}
-			if (this.heapRules.size() == Decoder.max_n_rules) {
+			if (this.heapRules.size() == JoshuaConfiguration.max_n_rules) {
 				this.cutoff =
 					(this.cutoff < this.heapRules.peek().est_cost)
 					? this.cutoff
@@ -357,8 +375,7 @@ extends TMGrammar {
 	}
 	
 	
-	public static class Rule_Memory
-	extends Rule {
+	public static class Rule_Memory	extends Rule {
 		
 		/** 
 		 * estimate_cost depends on rule itself, nothing
@@ -372,7 +389,7 @@ extends TMGrammar {
 		
 		
 		/** 
-		 * only called when creating rule in Chart, all
+		 * only called when creating oov rule in Chart, all
 		 * others should call the other contructor the
 		 * transition cost for phrase model, arity penalty,
 		 * word penalty are all zero, except the LM cost

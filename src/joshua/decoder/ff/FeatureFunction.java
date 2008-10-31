@@ -39,15 +39,9 @@ public interface FeatureFunction<S extends FFState> {
 	
 	/* Methods */
 	/** Only used when initializing Translation Grammars (for pruning) */
-	double estimate(Rule rule);
+	double estimate(Rule rule);	
 	
-	
-	S transition(
-		Rule         rule,
-		ArrayList<S> previous_states,
-		int          span_start,
-		int          span_end);
-	
-	
+	S transition(Rule rule,	ArrayList<S> previous_states, int span_start, int span_end);
+		
 	double finalTransition(S state);
 }

@@ -22,7 +22,9 @@ import joshua.decoder.ff.FeatureFunction;
 import joshua.util.sentence.Phrase;
 
 import java.util.ArrayList;
-import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 
 
 /**
@@ -35,8 +37,7 @@ import java.util.List;
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate$
  */
-public abstract class TMGrammar
-implements GrammarFactory, Grammar {
+public abstract class TMGrammar implements GrammarFactory, Grammar {
 	/*TMGrammar is composed by Trie nodes
 	Each trie node has: 
 	(1) RuleBin: a list of rules matching the french sides so far
@@ -45,19 +46,21 @@ implements GrammarFactory, Grammar {
 	public    static int OOV_RULE_ID          = 0;
 	protected static ArrayList<FeatureFunction> p_l_models = null;
 	protected static int defaultOwner         = 0; //will change autotmatically
-	protected static String nonterminalRegexp = "^\\[[A-Z]+\\,[0-9]*\\]$";//e.g., [X,1]
+	protected  static String nonterminalRegexp = "^\\[[A-Z]+\\,[0-9]*\\]$";//e.g., [X,1]
 	protected static String nonterminalReplaceRegexp = "[\\[\\]\\,0-9]+";
 	
 	protected int spanLimit = 10;
 	
+	private static final Logger logger = Logger.getLogger(TMGrammar.class.getName());
 	
 	public TMGrammar(
+		String grammar_file,
 		ArrayList<FeatureFunction> l_models,
 		final String default_owner,
 		final int    span_limit,
 		final String nonterminal_regexp,
 		final String nonterminal_replace_regexp
-	) {
+	) {	
 		// BUG: These are all static, should not be set by constructor!
 		p_l_models               = l_models;
 		defaultOwner             = Symbol.add_terminal_symbol(default_owner);
@@ -76,12 +79,6 @@ implements GrammarFactory, Grammar {
 	}
 	
 	
-	public abstract void read_tm_grammar_from_file(final String grammar_file);
-	
-	
-	public abstract void read_tm_grammar_glue_rules();
-	
-	
 	/** if the span covered by the chart bin is greater than the limit, then return false */
 	public boolean hasRuleForSpan(
 		final int startIndex,
@@ -96,8 +93,8 @@ implements GrammarFactory, Grammar {
 	}
 	
 	
-	//	TODO: we assume all the Chinese training text is lowercased, and all the non-terminal symbols are in [A-Z]+
-	public static final boolean is_non_terminal(final String symbol) {
+	//TODO: we assume all the Chinese training text is lowercased, and all the non-terminal symbols are in [A-Z]+
+	public  static final boolean is_non_terminal(final String symbol) {
 		return symbol.matches(TMGrammar.nonterminalRegexp);
 	}
 	

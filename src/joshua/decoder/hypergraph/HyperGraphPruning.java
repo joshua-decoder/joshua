@@ -17,7 +17,7 @@
  */
 package joshua.decoder.hypergraph;
 
-import joshua.decoder.Decoder;
+import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.Symbol;
 import joshua.decoder.hypergraph.HyperGraph;
 import joshua.decoder.hypergraph.HyperGraph.Deduction;
@@ -59,7 +59,7 @@ public class HyperGraphPruning extends InsideOutside {
 		CUR_THRESHOLD_GLUE = THRESHOLD_GLUE;
 		THRESHOLD_STEP_GENERAL = step_general;
 		THRESHOLD_STEP_GLUE = step_glue;
-		glue_grammar_owner = Symbol.add_terminal_symbol(Decoder.begin_mono_owner);//TODO
+		glue_grammar_owner = Symbol.add_terminal_symbol(JoshuaConfiguration.begin_mono_owner);//TODO
 	}
 	
 	

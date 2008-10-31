@@ -32,10 +32,9 @@ import java.util.ArrayList;
  * @author wren ng thornton <wren@users.sourceforge.net>
  * @version $LastChangedDate: 2008-07-28 18:44:45 -0400 (Mon, 28 Jul 2008) $
  */
-public abstract class DefaultFF
-implements FeatureFunction<MapFFState> {
+public abstract class DefaultFF implements FeatureFunction<MapFFState> {
 	private   boolean stateful = true;
-	protected double  weight   = 0.0;
+	private   double  weight   = 0.0;
 	
 	public DefaultFF(double weight_) {
 		this.weight = weight_;
@@ -53,7 +52,7 @@ implements FeatureFunction<MapFFState> {
 		return this.weight;
 	}
 	
-	public void putWeight(final double weight_) {
+	public final void putWeight(final double weight_) {
 		this.weight = weight_;
 	}
 	
@@ -62,7 +61,7 @@ implements FeatureFunction<MapFFState> {
 	 * Generic estimator for FeatureFunctions which are Stateless
 	 */
 	public double estimate(final Rule rule) {
-		if (this.stateful) {
+		if (this.stateful) {//TODO: wren, should this be the "not this.stateful" (by zhifei)
 			// TODO: Throw exception?
 			return 0.0;
 		} else {
@@ -86,19 +85,14 @@ implements FeatureFunction<MapFFState> {
 	/**
 	 * Generic transition function assuming our estimator is correct
 	 */
-	public MapFFState transition(
-		final Rule rule,
-		final ArrayList<MapFFState> previous_states,
-		final int i,
-		final int j
-	) {
+	public MapFFState transition(final Rule rule, final ArrayList<MapFFState> previous_states, final int i,	final int j) {
 		MapFFState state = new MapFFState();
 		state.putTransitionCost(this.estimate(rule));
 		return state;
 	}
 	
 	
-	public double finalTransition(final MapFFState state) {
+	public double finalTransition(final MapFFState state){
 		return 0.0;
 	}
 }

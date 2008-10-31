@@ -15,10 +15,11 @@
  * Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  * MA 02111-1307 USA
  */
-package joshua.decoder.ff.lm;
+package joshua.decoder.ff.lm.distributed_lm;
 
 import joshua.decoder.Support;
 import joshua.decoder.Symbol;
+import joshua.decoder.ff.lm.LMGrammar;
 import joshua.util.FileUtility;
 
 import java.io.BufferedReader;
@@ -31,17 +32,17 @@ import java.util.Hashtable;
  * (3) get lm probablity for n-gram remotely 
  * 
  * @author Zhifei Li, <zhifei.work@gmail.com>
- * @version $LastChangedDate$
+ * @version $LastChangedDate: 2008-10-02 02:02:16 -0400 (星期四, 02 十月 2008) $
  */
 //PATH: this => LMClient => network => LMServer => LMGrammar => LMGrammar_JAVA/SRILM; and then reverse the path
-public class LMGrammar_REMOTE  extends LMGrammar {
+public class LMGrammarRemote  extends LMGrammar {
 	
 //	if remote method is used	
 	LMClient p_lm_client=null;
 	//LMClient p_suffix_client=null;
 	
 	//!!! we assume both suffix and lm are remoted, if one is remoted
-	public LMGrammar_REMOTE(int order, String remote_symbol_tbl, String f_server_lists, int num_servers){
+	public LMGrammarRemote(int order, String remote_symbol_tbl, String f_server_lists, int num_servers){
 		super(order);
 		System.out.println("use remote suffix and lm server");
 		String[] hosts =new String[num_servers];
@@ -50,7 +51,7 @@ public class LMGrammar_REMOTE  extends LMGrammar {
 		
 		read_lm_server_lists(f_server_lists,num_servers, hosts,ports,weights);
 		if(num_servers==1){
-			p_lm_client = new LMClient_Single(hosts[0], ports[0]);
+			p_lm_client = new LMClientSingle(hosts[0], ports[0]);
 /*
 			//debug begin
 			System.out.println("begin to call msrlm");
@@ -64,7 +65,7 @@ public class LMGrammar_REMOTE  extends LMGrammar {
 */
 		}
 		else
-			p_lm_client = new LMClient_MultiServer(hosts, ports, weights, num_servers);
+			p_lm_client = new LMClientMultiServer(hosts, ports, weights, num_servers);
 		
 		//read the symbol tbl here (note that the file may already contains the global symbols)
 		Symbol.init_sym_tbl_from_file(remote_symbol_tbl,true);//it will also add the global nonterminal symbol

@@ -49,7 +49,7 @@ public class Symbol {
 	public static int lm_start_sym_id = 10000;//1-10000 reserved for non-terminal
 	public static int lm_end_sym_id = 2000001;//max vocab 1000k
 	
-	static public boolean use_my_own_tbl=false;//for terminal only: use my own table (both java and remote mehtod use this) or srilm table
+	static public boolean use_my_own_tbl=false;//for terminal only: use my own table (both java and remote method use this) or srilm table
 	
 	public static int nonterminal_cur_id=1;//start from 1
 	public static int terminal_cur_id =lm_start_sym_id ;

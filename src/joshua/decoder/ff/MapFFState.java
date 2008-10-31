@@ -30,9 +30,7 @@ import java.util.HashMap;
  * @author wren ng thornton <wren@users.sourceforge.net>
  * @version $LastChangedDate: 2008-07-28 18:44:45 -0400 (Mon, 28 Jul 2008) $
  */
-public final class MapFFState
-extends    HashMap<Integer,Object>
-implements FFState {
+public final class MapFFState extends    HashMap<Integer,Object> implements FFState {
 	private static final int
 		TRANSITION_COST        = Symbol.TRANSITION_COST_SYM_ID;
 	private static final int
@@ -59,8 +57,7 @@ implements FFState {
 	
 	
 	public double getTransitionCost() {
-		final Double transition_cost = (Double)
-			this.get(TRANSITION_COST);
+		final Double transition_cost = (Double)	this.get(TRANSITION_COST);
 		
 		if (null == transition_cost) {
 			return 0.0;
@@ -81,8 +78,7 @@ implements FFState {
 	
 	
 	public double getFutureCostEstimation() {
-		final Double future_cost_estimation = (Double)
-			this.get(FUTURE_COST_ESTIMATION);
+		final Double future_cost_estimation = (Double)	this.get(FUTURE_COST_ESTIMATION);
 		
 		if (null == future_cost_estimation) {
 			return 0.0;

@@ -31,6 +31,9 @@ import java.nio.LongBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 
 /**
  * Note: this code is originally developed by Chris Dyer at UMD (email: redpony@umd.edu)
@@ -39,7 +42,7 @@ import java.util.HashMap;
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate$
  */
-public class TMGrammar_Disk
+public class DiskBasedTMGrammar
 extends TMGrammar {
 	RandomAccessFile grammarTrieFile;
 	RandomAccessFile dataFile;
@@ -47,19 +50,38 @@ extends TMGrammar {
 	Vocabulary       nonTerminals; //map non-terminal symbols to strings
 	TrieNode_Disk    root;
 	
+	private static final Logger logger = Logger.getLogger(DiskBasedTMGrammar.class.getName());
 	
-	public TMGrammar_Disk(
+	public DiskBasedTMGrammar(
+		String grammar_file,
+		boolean is_glue_grammar,
 		ArrayList<FeatureFunction> l_models,
 		String default_owner,
 		int    span_limit,
 		String nonterminal_regexp,
 		String nonterminal_replace_regexp
 	) {
-		super(l_models, default_owner, span_limit, nonterminal_regexp, nonterminal_replace_regexp);
+		super(grammar_file, l_models, default_owner, span_limit, nonterminal_regexp, nonterminal_replace_regexp);
+//		read the grammar from file
+		if(is_glue_grammar==true){
+			if(grammar_file!=null){
+				if (logger.isLoggable(Level.SEVERE)) 
+					logger.severe("You provide a grammar file, but you also indicate it is a glue grammar, there must be sth wrong");
+				System.exit(1);
+			}
+			read_tm_grammar_glue_rules();
+		}else{
+			if(grammar_file==null){
+				if (logger.isLoggable(Level.SEVERE)) 
+					logger.severe("You must provide a grammar file for MemoryBasedTMGrammar");
+				System.exit(1);
+			}
+			read_tm_grammar_from_file(grammar_file);
+		}
 	}
 	
 	
-	public void read_tm_grammar_from_file(String filenamePrefix) {
+	protected void read_tm_grammar_from_file(String filenamePrefix) {
 		try {
 			root = new TrieNode_Disk();
 			grammarTrieFile = new RandomAccessFile(filenamePrefix + ".bin.trie", "r");
@@ -73,7 +95,7 @@ extends TMGrammar {
 	}
 	
 	
-	public void read_tm_grammar_glue_rules() {
+	protected void read_tm_grammar_glue_rules() {
 		 System.out.println("Error: call read_tm_grammar_glue_rules in TMGrammar_Disk, must exit");
 		 System.exit(1);
 	}
@@ -213,7 +235,7 @@ extends TMGrammar {
 				grammarTrieFile.seek(fOff);
 				
 				// get size: number of children
-				int size = (int)TMGrammar_Disk.readLongLittleEndian(grammarTrieFile);
+				int size = (int)DiskBasedTMGrammar.readLongLittleEndian(grammarTrieFile);
 				System.err.println("TRIE: Read size: " + size);
 				keys     = new int[size];
 				RuleBin[] ruleBins = new RuleBin[size];
@@ -229,7 +251,7 @@ extends TMGrammar {
 				}
 				
 				// read rule data ptrs: the offset for each rulebin at next layer 
-				int dsize = (int)TMGrammar_Disk.readLongLittleEndian(grammarTrieFile);
+				int dsize = (int)DiskBasedTMGrammar.readLongLittleEndian(grammarTrieFile);
 				bb = ByteBuffer.allocate(dsize * 8).order(ByteOrder.LITTLE_ENDIAN);
 				grammarTrieFile.readFully(bb.array());
 				LongBuffer lb = bb.asLongBuffer();
@@ -312,7 +334,7 @@ extends TMGrammar {
 				dataFile.seek(fOff);
 				
 				//french
-				int fsize = (int)TMGrammar_Disk.readLongLittleEndian(dataFile);
+				int fsize = (int)DiskBasedTMGrammar.readLongLittleEndian(dataFile);
 				System.err.println("DATA: Read fsize: " + fsize);
 				french = new int[fsize];			
 				int bsize = 20;
@@ -334,16 +356,16 @@ extends TMGrammar {
 				}
 				
 				//all the rules
-				int numRules = TMGrammar_Disk.readIntLittleEndian(dataFile);
+				int numRules = DiskBasedTMGrammar.readIntLittleEndian(dataFile);
 				System.err.println("DATA: Read numRules: " + numRules);				
 				for (int i = 0; i < numRules; i++) {
 					//TODO: lhs, should not have this
-					int lhs = TMGrammar_Disk.readIntLittleEndian(dataFile);
+					int lhs = DiskBasedTMGrammar.readIntLittleEndian(dataFile);
 					System.out.println("LHS: " + lhs);
 					lhs = nonTerminals.convert_disk_index_2_lm_index(lhs);
 					
 					//eng, get integer indexed by the disk-grammar itself
-					int elen = (int)TMGrammar_Disk.readLongLittleEndian(dataFile);
+					int elen = (int)DiskBasedTMGrammar.readLongLittleEndian(dataFile);
 					int[] eng = new int[elen];
 					if (elen * 4 > bsize) {
 						bsize *= 2;
@@ -361,14 +383,14 @@ extends TMGrammar {
 						}
 					}
 					//feat scores
-					int slen = (int)TMGrammar_Disk.readLongLittleEndian(dataFile);
+					int slen = (int)DiskBasedTMGrammar.readLongLittleEndian(dataFile);
 					float[] scores = new float[slen];
 					bb.limit(slen * 4).clear();
 					dataFile.readFully(bb.array(), 0, slen * 4);
 					bb.asFloatBuffer().get(scores, 0, slen);
 									
 					//add rules
-					l_sorted_rules.add( new Rule_Disk(lhs, french, eng, TMGrammar_Disk.defaultOwner, scores, arity));//TODO: sorted?
+					l_sorted_rules.add( new Rule_Disk(lhs, french, eng, DiskBasedTMGrammar.defaultOwner, scores, arity));//TODO: sorted?
 				}
 				loaded = true;
 				

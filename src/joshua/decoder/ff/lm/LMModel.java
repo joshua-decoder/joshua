@@ -17,7 +17,7 @@
  */
 package joshua.decoder.ff.lm;
 
-import joshua.decoder.Decoder;
+import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.Support;
 import joshua.decoder.Symbol;
 import joshua.decoder.ff.DefaultFF;
@@ -29,15 +29,14 @@ import java.util.HashMap;
 
 /**
  * this class implement 
- * (1) Get the additional LM score due to cominations of small items into larger ones by using rules
+ * (1) Get the additional LM score due to combinations of small items into larger ones by using rules
  * (2) get the LM state 
  * (3) get the left-side LM state estimation score
  * 
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate$
  */
-public class LMModel
-extends DefaultFF {
+public class LMModel extends DefaultFF {
 	/* we assume the LM is in ARPA format
 	 * for equivalent state: 
 	 * (1)we assume it is a backoff lm, and high-order ngram implies low-order ngram; absense of low-order ngram implies high-order ngram
@@ -47,8 +46,8 @@ extends DefaultFF {
 	Pharaoh: cap at a minimum score exp(-10), including unknown words
 	*/
 	
-	protected LMGrammar lmGrammar  = null;
-	protected int       ngramOrder = 3;
+	private LMGrammar lmGrammar  = null;
+	private int       ngramOrder = 3;//we always use this order of ngram, though the LMGrammar may provide higher order probability
 	//boolean add_boundary=false; //this is needed unless the text already has <s> and </s>
 	
 	public LMModel(int ngram_order, LMGrammar lm_grammar, double weight_) {
@@ -57,13 +56,34 @@ extends DefaultFF {
 		this.lmGrammar  = lm_grammar;
 	}
 	
+	/*the transition cost for LM: sum of the costs of the new ngrams created
+	 * depends on the antstates and current rule*/
+	//antstates: ArrayList of states of this model in ant items
+	public MapFFState transition(Rule rule, ArrayList<MapFFState> previous_states, int i, int j) {
+		//long start = Support.current_time();		
+		MapFFState state = this.lookup_words1_equv_state(rule.english, previous_states);	
+		//	Chart.g_time_lm += Support.current_time()-start;
+		return state;
+	}
+
+	/*depends on the rule only*/
+	/*will consider all the complete ngrams, and all the incomplete-ngrams that will have sth fit into its left side*/
+	public double estimate(Rule rule) {
+		return estimate_rule_prob(rule.english);
+	}
+	
+	//only called after a complete hyp for the whole input sentence is obtaned
+	public double finalTransition(MapFFState state) {
+		if (null != state) {
+			return compute_equiv_state_final_transition(state);
+		} else {
+			return 0.0;
+		}
+	}
 	
 	/*when calculate transition prob: when saw a <bo>, then need to add backoff weights, start from non-state words*/
 	//	return states and cost
-	private MapFFState lookup_words1_equv_state(
-		int[] en_words,
-		ArrayList<MapFFState> previous_states
-	) {
+	private MapFFState lookup_words1_equv_state(int[] en_words,	ArrayList<MapFFState> previous_states) {
 		//long start_step1 = Support.current_time();
 		//for left state
 		ArrayList<Integer> left_state_org_wrds = new ArrayList<Integer>();
@@ -167,7 +187,7 @@ extends DefaultFF {
 		res_tbl.put(Symbol.TRANSITION_COST_SYM_ID, transition_cost);
 		//System.out.println("##tran cost: " + transition_cost +" lm_l_cost[0]: " + lm_l_cost[0]);
 		double estimated_future_cost;
-		if (Decoder.use_left_euqivalent_state) {
+		if (JoshuaConfiguration.use_left_euqivalent_state) {
 			estimated_future_cost = lm_l_cost[1];
 		} else {
 			estimated_future_cost = estimate_state_prob(model_states,false,false);//bonus function
@@ -187,11 +207,7 @@ extends DefaultFF {
 	}
 	
 	
-	private double score_chunk(
-		ArrayList<Integer> words,
-		boolean consider_incomplete_ngrams,
-		boolean skip_start
-	) {
+	private double score_chunk(ArrayList<Integer> words, boolean consider_incomplete_ngrams, boolean skip_start) {
 		if (words.size() <= 0) {
 			return 0.0;
 		}
@@ -249,11 +265,7 @@ extends DefaultFF {
 	//in state, all the ngrams are incomplete
 	//only get the estimation for the left-state
 	//get the true prob for right-state, if add_end==true
-	private double estimate_state_prob(
-		HashMap state,
-		boolean add_start,
-		boolean add_end
-	) {
+	private double estimate_state_prob(HashMap state, boolean add_start, boolean add_end) {
 		double res = 0.0;
 		int[] l_context = (int[])state.get(Symbol.LM_L_STATE_SYM_ID);
 		
@@ -334,42 +346,9 @@ extends DefaultFF {
 		}
 		
 		current_ngram.add(Symbol.STOP_SYM_ID);
-		res -= this.lmGrammar.get_prob(
-			current_ngram, current_ngram.size(), false);
+		res -= this.lmGrammar.get_prob(current_ngram, current_ngram.size(), false);
 		return res;
 	}
-
-
-	/*the transition cost for LM: sum of the costs of the new ngrams created
-	 * depends on the antstates and current rule*/
-	//antstates: ArrayList of states of this model in ant items
-	public MapFFState transition(
-		Rule rule, ArrayList<MapFFState> previous_states, int i, int j
-	) {
-		//long start = Support.current_time();
-		
-		MapFFState state = lookup_words1_equv_state(rule.english, previous_states);
-		
-		//	Chart.g_time_lm += Support.current_time()-start;
-		return state;
-	}
-
-
-
-
-	/*depends on the rule only*/
-	/*will consider all the complete ngrams, and all the incomplete-ngrams that will have sth fit into its left side*/
-	public double estimate(Rule rule) {
-		return estimate_rule_prob(rule.english);
-	}
 	
-	//only called after a complete hyp for the whole input sentence is obtaned
-	public double finalTransition(HashMap state) {
-		if (null != state) {
-			return compute_equiv_state_final_transition(state);
-		} else {
-			return 0.0;
-		}
-	}
 }
 

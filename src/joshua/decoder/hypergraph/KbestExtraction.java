@@ -111,7 +111,7 @@ public class KbestExtraction {
 	 * l_models==null: do not add model cost
 	 * add_combined_score==f: do not add combined model cost
 	 * */
-	private static String convert_hyp_2_string(int sent_id, DerivationState cur, ArrayList<FeatureFunction> l_models, String str_hyp_numeric, 
+	private String convert_hyp_2_string(int sent_id, DerivationState cur, ArrayList<FeatureFunction> l_models, String str_hyp_numeric, 
 			boolean extract_nbest_tree, boolean add_combined_score, double[] model_cost){
 		String[] tem = str_hyp_numeric.split("\\s+");
 		StringBuffer str_hyp =new StringBuffer();
