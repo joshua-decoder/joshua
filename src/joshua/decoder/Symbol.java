@@ -40,6 +40,7 @@ import java.util.List;
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate$
  */
+
 public class Symbol {
 
 	//terminal symbol may get from a tbl file, srilm, or a lm file
