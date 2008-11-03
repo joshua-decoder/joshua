@@ -20,12 +20,13 @@ package joshua.decoder.ff.lm;
 import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.Support;
 import joshua.decoder.Symbol;
-import joshua.decoder.ff.DefaultFF;
-import joshua.decoder.ff.MapFFState;
+import joshua.decoder.ff.DefaultStatefulFF;
+import joshua.decoder.ff.FFDPState;
+import joshua.decoder.ff.StatefulFFTransitionResult;
 import joshua.decoder.ff.tm.Rule;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+
 
 /**
  * this class implement 
@@ -36,7 +37,14 @@ import java.util.HashMap;
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate$
  */
-public class LMModel extends DefaultFF {
+
+
+public class LMFeatureFunction extends DefaultStatefulFF {
+	static String START_SYM="<s>";
+	public  int START_SYM_ID;
+	static String STOP_SYM="</s>";
+	public int STOP_SYM_ID;
+	
 	/* we assume the LM is in ARPA format
 	 * for equivalent state: 
 	 * (1)we assume it is a backoff lm, and high-order ngram implies low-order ngram; absense of low-order ngram implies high-order ngram
@@ -50,22 +58,29 @@ public class LMModel extends DefaultFF {
 	private int       ngramOrder = 3;//we always use this order of ngram, though the LMGrammar may provide higher order probability
 	//boolean add_boundary=false; //this is needed unless the text already has <s> and </s>
 	
-	public LMModel(int ngram_order, LMGrammar lm_grammar, double weight_) {
+	private Symbol p_symbol = null;
+	
+	public LMFeatureFunction(int ngram_order, Symbol psymbol, LMGrammar lm_grammar, double weight_) {
 		super(weight_);
 		this.ngramOrder = ngram_order;
 		this.lmGrammar  = lm_grammar;
+		this.p_symbol = psymbol;
+		this.START_SYM_ID = psymbol.addTerminalSymbol(START_SYM);
+		this.STOP_SYM_ID = psymbol.addTerminalSymbol(STOP_SYM);		
 	}
 	
 	/*the transition cost for LM: sum of the costs of the new ngrams created
 	 * depends on the antstates and current rule*/
 	//antstates: ArrayList of states of this model in ant items
-	public MapFFState transition(Rule rule, ArrayList<MapFFState> previous_states, int i, int j) {
+	public StatefulFFTransitionResult transition(Rule rule, ArrayList<FFDPState> previous_states, int span_start, int span_end) {
 		//long start = Support.current_time();		
-		MapFFState state = this.lookup_words1_equv_state(rule.english, previous_states);	
+		StatefulFFTransitionResult res = this.lookup_words1_equv_state(rule.english, previous_states);	
 		//	Chart.g_time_lm += Support.current_time()-start;
-		return state;
+		return res;
 	}
 
+
+	
 	/*depends on the rule only*/
 	/*will consider all the complete ngrams, and all the incomplete-ngrams that will have sth fit into its left side*/
 	public double estimate(Rule rule) {
@@ -73,9 +88,9 @@ public class LMModel extends DefaultFF {
 	}
 	
 	//only called after a complete hyp for the whole input sentence is obtaned
-	public double finalTransition(MapFFState state) {
+	public double finalTransition(FFDPState state) {
 		if (null != state) {
-			return compute_equiv_state_final_transition(state);
+			return compute_equiv_state_final_transition((LMFFDPState)state);
 		} else {
 			return 0.0;
 		}
@@ -83,7 +98,7 @@ public class LMModel extends DefaultFF {
 	
 	/*when calculate transition prob: when saw a <bo>, then need to add backoff weights, start from non-state words*/
 	//	return states and cost
-	private MapFFState lookup_words1_equv_state(int[] en_words,	ArrayList<MapFFState> previous_states) {
+	private StatefulFFTransitionResult lookup_words1_equv_state(int[] en_words,	ArrayList<FFDPState> previous_states) {
 		//long start_step1 = Support.current_time();
 		//for left state
 		ArrayList<Integer> left_state_org_wrds = new ArrayList<Integer>();
@@ -95,16 +110,16 @@ public class LMModel extends DefaultFF {
 		
 		for (int c = 0; c < en_words.length; c++) {
 			int c_id = en_words[c];
-			if (Symbol.is_nonterminal(c_id)) {
+			if (p_symbol.isNonterminal(c_id)) {
 				if (null == previous_states) {
 					System.out.println("LMModel>>lookup_words1_equv_state: null previous_states");
 					System.exit(1);
 				}
 				
-				int     index     = Symbol.get_eng_non_terminal_id(c_id);
-				HashMap state     = (HashMap) previous_states.get(index);
-				int[]   l_context = (int[])state.get(Symbol.LM_L_STATE_SYM_ID);
-				int[]   r_context = (int[])state.get(Symbol.LM_R_STATE_SYM_ID);
+				int     index     = p_symbol.getEngNonTerminalIndex(c_id);
+				LMFFDPState state     = (LMFFDPState) previous_states.get(index);
+				int[]   l_context = state.getLeftLMStateWords();
+				int[]   r_context = state.getRightLMStateWords();
 				if (l_context.length != r_context.length) {
 					System.out.println("LMModel>>lookup_words1_equv_state: left and right contexts have unequal lengths");
 					System.exit(1);
@@ -117,7 +132,7 @@ public class LMModel extends DefaultFF {
 					current_ngram.add(t);
 					
 					//always calculate cost for <bo>: additional backoff weight
-					if (t == Symbol.BACKOFF_LEFT_LM_STATE_SYM_ID) {
+					if (t == lmGrammar.BACKOFF_LEFT_LM_STATE_SYM_ID) {
 						int additional_backoff_weight
 							= current_ngram.size() - (i+1);
 						
@@ -168,9 +183,9 @@ public class LMModel extends DefaultFF {
 			}
 		}
 		//### create tabl
-		MapFFState res_tbl = new MapFFState();
-		HashMap  model_states = new HashMap();
-		res_tbl.put(Symbol.ITEM_STATES_SYM_ID, model_states);
+		StatefulFFTransitionResult res_tbl = new StatefulFFTransitionResult();
+		LMFFDPState  model_states = new LMFFDPState();
+		res_tbl.putStateForItem(model_states);
 		
 		//##### get left euquiv state 
 		double[] lm_l_cost = new double[2];
@@ -179,27 +194,29 @@ public class LMModel extends DefaultFF {
 				left_state_org_wrds, 0, left_state_org_wrds.size()),
 			this.ngramOrder,
 			lm_l_cost);
-		model_states.put(Symbol.LM_L_STATE_SYM_ID, equiv_l_state);
+		model_states.setLeftLMStateWords(equiv_l_state);
 		//System.out.println("left state: " + Symbol.get_string(equiv_l_state));
 		
 		//##### trabsition and estimate cost
 		transition_cost += lm_l_cost[0];//add finalized cost for the left state words
-		res_tbl.put(Symbol.TRANSITION_COST_SYM_ID, transition_cost);
+		res_tbl.putTransitionCost(transition_cost);
 		//System.out.println("##tran cost: " + transition_cost +" lm_l_cost[0]: " + lm_l_cost[0]);
-		double estimated_future_cost;
-		if (JoshuaConfiguration.use_left_euqivalent_state) {
-			estimated_future_cost = lm_l_cost[1];
-		} else {
-			estimated_future_cost = estimate_state_prob(model_states,false,false);//bonus function
+		double estimated_future_cost=0.0;
+		if(this.ngramOrder>1){//no estiamtion for unigram lm
+			if (JoshuaConfiguration.use_left_euqivalent_state) {
+				estimated_future_cost = lm_l_cost[1];
+			} else {
+				estimated_future_cost = estimate_state_prob(model_states,false,false);//bonus function
+			}
 		}
-		res_tbl.put(Symbol.BONUS_SYM_ID, estimated_future_cost);
+		res_tbl.putFutureCostEstimation(estimated_future_cost);
 		//##### get right equiv state
 		//if(current_ngram.size()>this.ngramOrder-1 || equiv_l_state.length>this.ngramOrder-1)	System.exit(1);
 		int[] equiv_r_state = this.lmGrammar.get_right_equi_state(
 			Support.sub_int_array(current_ngram, 0, current_ngram.size()),
 			this.ngramOrder,
 			true);
-		model_states.put(Symbol.LM_R_STATE_SYM_ID, equiv_r_state);
+		model_states.setRightLMStateWords(equiv_r_state);
 		//System.out.println("right state: " + Symbol.get_string(right_state));
 		
 		//time_step2 += Support.current_time()-start_step2;
@@ -235,7 +252,7 @@ public class LMModel extends DefaultFF {
 		double    estimate   = 0.0;
 		boolean   consider_incomplete_ngrams = true;
 		ArrayList<Integer> words      = new ArrayList<Integer>();
-		boolean   skip_start = (en_words[0] == Symbol.START_SYM_ID);
+		boolean   skip_start = (en_words[0] == START_SYM_ID);
 		
 		for (int c = 0; c < en_words.length; c++) {
 			int c_wrd = en_words[c];
@@ -245,7 +262,7 @@ public class LMModel extends DefaultFF {
 				consider_incomplete_ngrams = false;//for the LM bonus function: this simply means the right state will not be considered at all because all the ngrams in right-context will be incomplete
 				words.clear();
 				skip_start = false;
-			} else*/ if (Symbol.is_nonterminal(c_wrd)) {
+			} else*/ if (p_symbol.isNonterminal(c_wrd)) {
 				estimate += score_chunk(
 					words, consider_incomplete_ngrams, skip_start);
 				consider_incomplete_ngrams = true;
@@ -265,15 +282,16 @@ public class LMModel extends DefaultFF {
 	//in state, all the ngrams are incomplete
 	//only get the estimation for the left-state
 	//get the true prob for right-state, if add_end==true
-	private double estimate_state_prob(HashMap state, boolean add_start, boolean add_end) {
+	private double estimate_state_prob(LMFFDPState state, boolean add_start, boolean add_end) {
 		double res = 0.0;
-		int[] l_context = (int[])state.get(Symbol.LM_L_STATE_SYM_ID);
+		
+		int[]   l_context = state.getLeftLMStateWords();		
 		
 		if (null != l_context) {
 			ArrayList<Integer> list;
 			if (add_start == true) {
 				list = new ArrayList<Integer>(l_context.length + 1);
-				list.add(Symbol.START_SYM_ID);
+				list.add(START_SYM_ID);
 			} else {
 				list = new ArrayList<Integer>(l_context.length);
 			}
@@ -283,7 +301,7 @@ public class LMModel extends DefaultFF {
 			}
 			boolean consider_incomplete_ngrams = true;
 			boolean skip_start = true;
-			if ((Integer)list.get(0) != Symbol.START_SYM_ID) {
+			if ((Integer)list.get(0) != START_SYM_ID) {
 				skip_start = false;
 			}
 			res += score_chunk(list, consider_incomplete_ngrams, skip_start);
@@ -292,12 +310,12 @@ public class LMModel extends DefaultFF {
 			System.out.println("left context: " +Symbol.get_string(l_context) + ";prob "+res);
 		}*/
 		if (add_end == true) {//only when add_end is true, we get a complete ngram, otherwise, all ngrams in r_state are incomplete and we should do nothing
-			int[] r_context = (int[])state.get(Symbol.LM_R_STATE_SYM_ID);
+			int[]   r_context = state.getRightLMStateWords();
 			ArrayList<Integer> list = new ArrayList<Integer>(r_context.length+1);
 			for (int k = 0; k < r_context.length; k++) {
 				list.add(r_context[k]);
 			}
-			list.add(Symbol.STOP_SYM_ID);
+			list.add(STOP_SYM_ID);
 			double tem = score_chunk(list, false, false);
 			res += tem;
 			//System.out.println("right context:"+ Symbol.get_string(r_context) + "; score: "  + tem);
@@ -306,23 +324,23 @@ public class LMModel extends DefaultFF {
 	}
 	
 	
-	private double compute_equiv_state_final_transition(HashMap state) {
+	private double compute_equiv_state_final_transition(LMFFDPState state) {
 		double res = 0.0;
 		ArrayList<Integer> current_ngram = new ArrayList<Integer>();
-		int[] l_context = (int[])state.get(Symbol.LM_L_STATE_SYM_ID);
-		int[] r_context = (int[])state.get(Symbol.LM_R_STATE_SYM_ID);
+		int[]   l_context = state.getLeftLMStateWords();		
+		int[]   r_context = state.getRightLMStateWords();
 		if (l_context.length != r_context.length) {
 			System.out.println("LMModel>>compute_equiv_state_final_transition: left and right contexts have unequal lengths");
 			System.exit(1);
 		}
 		
 		//##################left context
-		current_ngram.add(Symbol.START_SYM_ID);
+		current_ngram.add(START_SYM_ID);
 		for (int i = 0; i < l_context.length; i++) {
 			int t = l_context[i];
 			current_ngram.add(t);
 			
-			if (t == Symbol.BACKOFF_LEFT_LM_STATE_SYM_ID) {//calculate cost for <bo>: additional backoff weight
+			if (t == lmGrammar.BACKOFF_LEFT_LM_STATE_SYM_ID) {//calculate cost for <bo>: additional backoff weight
 				int additional_backoff_weight = current_ngram.size() - (i+1);
 				//compute additional backoff weight
 				res -= this.lmGrammar.get_prob_backoff_state(
@@ -345,10 +363,12 @@ public class LMModel extends DefaultFF {
 			current_ngram.set(t_size - r_context.length + i, r_context[i]);
 		}
 		
-		current_ngram.add(Symbol.STOP_SYM_ID);
+		current_ngram.add(STOP_SYM_ID);
 		res -= this.lmGrammar.get_prob(current_ngram, current_ngram.size(), false);
 		return res;
 	}
+
 	
+
 }
 

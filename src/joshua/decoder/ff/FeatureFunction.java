@@ -29,19 +29,33 @@ import java.util.ArrayList; //// BUG: should be List but that causes bugs
  * @author wren ng thornton <wren@users.sourceforge.net>
  * @version $LastChangedDate: 2008-07-28 18:44:45 -0400 (Mon, 28 Jul 2008) $
  */
-public interface FeatureFunction<S extends FFState> {
+
+/*How to add a featureFunction
+ * (1) implement FeatureFunction
+ * (2) implement FFState
+ * */
+
+public interface FeatureFunction<Res extends FFTransitionResult, DPS extends FFDPState> {
 
 	/* Attributes */
 	void    putWeight(double weight);
+	
 	double  getWeight();
+	
 	boolean isStateful();
 	
 	
 	/* Methods */
-	/** Only used when initializing Translation Grammars (for pruning) */
+	/** Only used when initializing Translation Grammars (for pruning purpose, and to get stateless cost for each rule) */
 	double estimate(Rule rule);	
 	
-	S transition(Rule rule,	ArrayList<S> previous_states, int span_start, int span_end);
+
+	/* Functions:
+	 * (1) calculate transition cost
+	 * (2) estimate future cost
+	 * (3) extract dynamical programming state
+	 * */
+	Res transition(Rule rule,	ArrayList<DPS> previous_states, int span_start, int span_end);
 		
-	double finalTransition(S state);
+	double finalTransition(DPS state);
 }

@@ -17,13 +17,16 @@
  */
 package joshua.decoder.hypergraph;
 
-import joshua.decoder.Support;
 import joshua.decoder.Symbol;
+import joshua.decoder.ff.FFDPState;
+import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.tm.Rule;
 
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -42,6 +45,8 @@ public class HyperGraph {
 	public int num_deduction = -1;
 	public int sent_id = -1;
 	public int sent_len = -1;
+	
+	Symbol p_symbol = null;
 	
 	private static final Logger logger = Logger.getLogger(HyperGraph.class.getName());
 	
@@ -63,7 +68,7 @@ public class HyperGraph {
 		public ArrayList<Deduction> l_deductions=null;//each deduction is a "and" node
 		public Deduction best_deduction=null;//used in pruning, compute_item, and transit_to_goal
 		public int lhs; //this is the symbol like: NP, VP, and so on
-		public HashMap tbl_states; //remember the state required by each model, for example, edge-ngrams for LM model
+		private HashMap<FeatureFunction, FFDPState> tbl_ff_dpstates; //remember the state required by each model, for example, edge-ngrams for LM model
 		
 		//######### auxiluary variables, no need to store on disk
 		private String signature=null;//signature of this item: lhs, states
@@ -73,24 +78,24 @@ public class HyperGraph {
 		public boolean is_dead=false;
 		public double est_total_cost=0.0; //it includes the bonus cost
 				
-		public Item(int i_in, int j_in, int lhs_in, HashMap  states_in, Deduction init_deduction, double est_total_cost_in){
+		public Item(int i_in, int j_in, int lhs_in, HashMap<FeatureFunction, FFDPState>   states_in, Deduction init_deduction, double est_total_cost_in){
 			i = i_in;
 			j= j_in;					
 			lhs = lhs_in;
-			tbl_states = states_in;
+			tbl_ff_dpstates = states_in;
 			est_total_cost=est_total_cost_in;
 			add_deduction_in_item(init_deduction);
 		}
 
 		
 		//used by disk hg
-		public Item(int i_in, int j_in, int lhs_in,  ArrayList<Deduction> l_deductions_in, Deduction best_deduction_in, HashMap  states_in){
+		public Item(int i_in, int j_in, int lhs_in,  ArrayList<Deduction> l_deductions_in, Deduction best_deduction_in, HashMap<FeatureFunction, FFDPState> states_in){
 			i = i_in;
 			j= j_in;
 			lhs = lhs_in;
 			l_deductions = l_deductions_in;
 			best_deduction = best_deduction_in;			
-			tbl_states = states_in;
+			tbl_ff_dpstates = states_in;
 		}
 				
 		public void add_deduction_in_item(Deduction dt){
@@ -102,7 +107,20 @@ public class HyperGraph {
 		public void add_deductions_in_item(ArrayList<Deduction> l_dt){
 			for(Deduction dt : l_dt) add_deduction_in_item(dt);			
 		}	
-				
+			
+		
+		public HashMap<FeatureFunction, FFDPState>  getTblFeatDPStates(){
+			return tbl_ff_dpstates;
+		}
+		
+		
+		public FFDPState getFeatDPState(FeatureFunction ff){
+			if(tbl_ff_dpstates==null)
+				return null;
+			else
+				return (FFDPState) tbl_ff_dpstates.get(ff);
+		}
+		
 		public void print_info(Level level){
 			if (logger.isLoggable(level)) logger.log(level, String.format("lhs: %s; cost: %.3f",lhs, best_deduction.best_cost));
 		}		
@@ -110,72 +128,23 @@ public class HyperGraph {
 		
 		//signature of this item: lhs, states (we do not need i, j)
 		public String get_signature() {
-			if (null != this.signature) {
-				return this.signature;
-			}
-			StringBuffer signature_ = new StringBuffer();
-			signature_.append(lhs);
-			
-			for (Integer state_name : Symbol.l_model_state_names) {
-				int[] states = (int[])this.tbl_states.get(state_name);
+			if (null == this.signature) {				
+				StringBuffer signature_ = new StringBuffer();
+				signature_.append(lhs);
 				
-				if (null != states) {
-					signature_.append(SIG_SEP);
-					for (int i = 0; i < states.length; i++) {
-						if (true
-							//TODO: equivalnce: number of <null> or <bo>?
-							/* states[i]!=Symbol.NULL_RIGHT_LM_STATE_SYM_ID
-							 * && states[i]!=Symbol.NULL_LEFT_LM_STATE_SYM_ID
-							 * && states[i]!=Symbol.LM_STATE_OVERLAP_SYM_ID*/
-						) {
-							signature_.append(states[i]);
-							
-							if (i < states.length - 1) {
-								signature_.append(" ");
-							}
-						}
+				if(tbl_ff_dpstates!=null && tbl_ff_dpstates.size()>0){
+					for (Iterator iter = tbl_ff_dpstates.entrySet().iterator(); iter.hasNext();){//for each model
+		                Map.Entry entry = (Map.Entry)iter.next();
+		                FFDPState dpstate = (FFDPState)entry.getValue();
+		                signature_.append(dpstate.getSignature(false));
 					}
-				} else {
-					System.out.println("state is null");
-					Thread.dumpStack();
-					System.exit(1);
 				}
+				
+				this.signature = signature_.toString();
 			}
-			
-			this.signature = signature_.toString();
+			//System.out.println("sig is: " +signature);
 			//Support.write_log_line(String.format("Signature is %s", res), Support.INFO);
 			return this.signature;
-		}
-		
-		
-		//the state_str does not lhs, it contain the original words (not symbol id)
-		public static String get_string_from_state_tbl(HashMap tbl){
-			StringBuffer res = new StringBuffer();
-			for(int t=0; t<Symbol.l_model_state_names.size(); t++){
-				Integer st_name = Symbol.l_model_state_names.get(t);	
-				int[] st = (int[])tbl.get(st_name);//TODO assume the state is an int[] array
-				if(st!=null){										
-					res.append(Symbol.get_string(st));					
-					if(t<Symbol.l_model_state_names.size()-1) res.append(SIG_SEP);
-				} else {
-					System.out.println("state is null");
-					Thread.dumpStack();
-					System.exit(1);
-				}
-			}
-			return res.toString();
-		}
-		
-		//the state_str does not lhs, it contain the original words (not symbol id)
-		public static HashMap get_state_tbl_from_string(String state_str){
-			HashMap res =new HashMap();
-			String[] states = state_str.split(SIG_SEP);
-			for(int i=0; i<Symbol.l_model_state_names.size(); i++){
-				String[] state_wrds = states[i].split("\\s+");
-				Integer st_name = Symbol.l_model_state_names.get(i);		
-				res.put(st_name, Symbol.get_terminal_ids(state_wrds));//TODO assume the state is an int[] array
-			}							
-			return res;
 		}
 		
 		//sort by est_total_cost: for prunning purpose
@@ -213,7 +182,7 @@ public class HyperGraph {
 	public static class Deduction
 	{
 		private Double transition_cost=null;//this remember the stateless + non_stateless cost assocated with the rule (excluding the best-cost from ant items)
-		public double best_cost=Symbol.IMPOSSIBLE_COST;//the 1-best cost of all possible derivation: best costs of ant items + non_stateless_transition_cost + r.statelesscost
+		public double best_cost= Double.POSITIVE_INFINITY;//the 1-best cost of all possible derivation: best costs of ant items + non_stateless_transition_cost + r.statelesscost
 		private Rule rule;
 		//if(l_ant_items==null), then this shoud be the terminal rule
 		private ArrayList<Item> l_ant_items=null; //ant items. In comparison, in a derivation, the parent should be the sub-derivation of the tail of the hyper-arc
@@ -242,7 +211,7 @@ public class HyperGraph {
 	
 	
 	//get one-best string under item
-	public static String extract_best_string(Item item){
+	public static String extract_best_string(Symbol p_symbol, Item item){
 		StringBuffer res = new StringBuffer();
 
 		Deduction p_edge = item.best_deduction;
@@ -253,16 +222,16 @@ public class HyperGraph {
 				System.out.println("error deduction under goal item have not equal one item");
 				System.exit(1);
 			}
-			return extract_best_string((Item)p_edge.get_ant_items().get(0));
+			return extract_best_string(p_symbol, (Item)p_edge.get_ant_items().get(0));
 		}	
 		
 		for(int c=0; c<rl.english.length; c++){
-    		if(Symbol.is_nonterminal(rl.english[c])==true){
-    			int id=Symbol.get_eng_non_terminal_id(rl.english[c]);
+    		if(p_symbol.isNonterminal(rl.english[c])==true){
+    			int id=p_symbol.getEngNonTerminalIndex(rl.english[c]);
     			Item child = (Item)p_edge.get_ant_items().get(id);
-    			res.append(extract_best_string(child));
+    			res.append(extract_best_string(p_symbol, child));
     		}else{
-    			res.append(Symbol.get_string(rl.english[c]));
+    			res.append(p_symbol.getWord(rl.english[c]));
     		}
     		if(c<rl.english.length-1) res.append(" ");
 		}
@@ -292,7 +261,7 @@ public class HyperGraph {
 		ArrayList<Deduction> l_deductions = new ArrayList<Deduction>(1);
 		Deduction clone_dt = clone_deduction(it_in.best_deduction);
 		l_deductions.add(clone_dt);
-		return new Item(it_in.i, it_in.j, it_in.lhs,  l_deductions, clone_dt, it_in.tbl_states);	
+		return new Item(it_in.i, it_in.j, it_in.lhs,  l_deductions, clone_dt, it_in.tbl_ff_dpstates);	
 	}
 	
 	//TODO: tbl_states
@@ -304,7 +273,7 @@ public class HyperGraph {
 			Deduction clone_dt = clone_deduction(dt); 
 			l_deductions.add(clone_dt);
 		}
-		return new Item(it_in.i, it_in.j, it_in.lhs,  l_deductions, best_dt, it_in.tbl_states);	
+		return new Item(it_in.i, it_in.j, it_in.lhs,  l_deductions, best_dt, it_in.tbl_ff_dpstates);	
 	}
 	
 	public static Deduction clone_deduction(Deduction dt_in){

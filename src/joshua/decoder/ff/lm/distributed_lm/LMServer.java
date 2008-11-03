@@ -17,6 +17,8 @@
  */
 package joshua.decoder.ff.lm.distributed_lm;
 
+import joshua.decoder.BuildinSymbol;
+import joshua.decoder.SrilmSymbol;
 import joshua.decoder.Support;
 import joshua.decoder.Symbol;
 import joshua.decoder.ff.lm.LMGrammar;
@@ -47,11 +49,11 @@ import java.io.PrintWriter;
 public class LMServer {
 	//common options
 	public static int     port            = 9800;
-	       static boolean use_srilm       = true;
+	static boolean use_srilm       = true;
 	public static boolean use_left_euqivalent_state  = false;
 	public static boolean use_right_euqivalent_state = false;
-	       static int     g_lm_order      = 3;
-	       static double  lm_ceiling_cost = 100;//TODO: make sure LMGrammar is using this number
+	static int     g_lm_order      = 3;
+	static double  lm_ceiling_cost = 100;//TODO: make sure LMGrammar is using this number
 	static String remote_symbol_tbl    = null;
 	
 	//lm specific
@@ -68,6 +70,7 @@ public class LMServer {
 	static int g_n_request   = 0;
 	static int g_n_cache_hit = 0;
 	
+	static Symbol p_symbol;
 	
 	public static void main(String[] args) {
 		if (args.length != 1) {
@@ -102,7 +105,7 @@ public class LMServer {
 				System.exit(0);
 			}
 			init_lm_grammar();
-			load_lm_grammar_file(lm_file);
+			
 			System.out.println("finished lm reading, wait for connection");
 			
 			//   serverSocket = new ServerSocket(0);//0 means any free port
@@ -125,30 +128,25 @@ public class LMServer {
 		}
 	}
 	
+	 
 	
 	public static void init_lm_grammar() {
 		if (use_srilm) {
-			if (use_left_euqivalent_state
-			|| use_right_euqivalent_state) {
+			if (use_left_euqivalent_state || use_right_euqivalent_state) {
 				System.out.println("use local srilm, we cannot use suffix stuff");
 				System.exit(0);
 			}
-			p_lm = new LMGrammarSRILM(g_lm_order);
-			Symbol.init_sym_tbl_from_file(remote_symbol_tbl, false);
+			p_symbol = new SrilmSymbol(remote_symbol_tbl);
+			p_lm = new LMGrammarSRILM((SrilmSymbol)p_symbol, g_lm_order, lm_file);
+			
 		} else {
 			//p_lm = new LMGrammar_JAVA(g_lm_order, lm_file, use_left_euqivalent_state);
 			//big bug: should load the consistent symbol files
-			Symbol.init_sym_tbl_from_file(remote_symbol_tbl, true);
-			p_lm = new LMGrammarJAVA(g_lm_order, use_left_euqivalent_state, use_right_euqivalent_state);
+			p_symbol = new BuildinSymbol(remote_symbol_tbl);
+			p_lm = new LMGrammarJAVA((BuildinSymbol)p_symbol, g_lm_order, lm_file, use_left_euqivalent_state, use_right_euqivalent_state);
 		}
 	}
 	
-	
-	public static void load_lm_grammar_file(String new_lm_file) {
-		System.out.println("############## load lm from file" + new_lm_file);
-		lm_file = new_lm_file;
-		p_lm.read_lm_grammar_from_file(lm_file);
-	}
 	
 	
 	public static void read_config_file(String config_file) {

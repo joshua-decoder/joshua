@@ -25,7 +25,6 @@ import joshua.decoder.ff.FeatureFunction;
 import joshua.util.FileUtility;
 
 import java.io.BufferedReader;
-import java.util.Comparator;
 import java.util.HashMap ;
 import java.util.PriorityQueue;
 import java.util.ArrayList;
@@ -49,6 +48,9 @@ import java.util.logging.Logger;
  * @version $LastChangedDate$
  */
 public class MemoryBasedTMGrammar extends TMGrammar {
+	private static double EPSILON = 0.000001;	
+	private static int IMPOSSIBLE_COST=99999;//max cost
+	
 	private int num_rule_read    = 0;
 	private int num_rule_pruned  = 0;
 	private int num_rule_bin     = 0;
@@ -66,6 +68,7 @@ public class MemoryBasedTMGrammar extends TMGrammar {
 	*/
 	
 	public MemoryBasedTMGrammar(
+		Symbol psymbol,
 		String grammar_file,
 		boolean is_glue_grammar,
 		ArrayList<FeatureFunction> l_models,
@@ -74,7 +77,7 @@ public class MemoryBasedTMGrammar extends TMGrammar {
 		String                     nonterminal_regexp,
 		String                     nonterminal_replace_regexp
 	) {		
-		super(grammar_file,  l_models, default_owner, span_limit, nonterminal_regexp, nonterminal_replace_regexp);
+		super(psymbol, grammar_file, l_models, default_owner, span_limit, nonterminal_regexp, nonterminal_replace_regexp);
 		
 		//read the grammar from file
 		if(is_glue_grammar==true){
@@ -104,7 +107,7 @@ public class MemoryBasedTMGrammar extends TMGrammar {
 		
 		String line;
 		while ((line = FileUtility.read_line_lzf(t_reader_tree)) != null) {
-			this.add_rule(line, MemoryBasedTMGrammar.defaultOwner);
+			this.add_rule(line,  defaultOwner);
 		}
 		this.print_grammar();
 		this.ensure_grammar_sorted();
@@ -116,23 +119,10 @@ public class MemoryBasedTMGrammar extends TMGrammar {
 		final double alpha = Math.log10(Math.E); // cost
 		this.root = new TrieNode_Memory(); //root should not have valid ruleBin entries
 		
-		this.add_rule(
-			"S ||| ["
-				+ JoshuaConfiguration.default_non_terminal
-				+ ",1] ||| ["
-				+ JoshuaConfiguration.default_non_terminal
-				+ ",1] ||| 0",
-			Symbol.add_terminal_symbol(JoshuaConfiguration.begin_mono_owner));//this does not have any cost	
+		this.add_rule("S ||| ["	+ JoshuaConfiguration.default_non_terminal + ",1] ||| [" + JoshuaConfiguration.default_non_terminal	+ ",1] ||| 0",	this.p_symbol.addTerminalSymbol(JoshuaConfiguration.begin_mono_owner));//this does not have any cost	
 		//TODO: search consider_start_sym (Decoder.java, LMModel.java, and Chart.java)
 		//glue_gr.add_rule("S ||| [PHRASE,1] ||| "+Symbol.START_SYM+" [PHRASE,1] ||| 0", begin_mono_owner);//this does not have any cost
-		this.add_rule(
-			"S ||| [S,1] ["
-				+ JoshuaConfiguration.default_non_terminal
-				+ ",2] ||| [S,1] ["
-				+ JoshuaConfiguration.default_non_terminal
-				+ ",2] ||| "
-				+ alpha,
-			Symbol.add_terminal_symbol(JoshuaConfiguration.begin_mono_owner));
+		this.add_rule("S ||| [S,1] [" + JoshuaConfiguration.default_non_terminal + ",2] ||| [S,1] [" + JoshuaConfiguration.default_non_terminal + ",2] ||| " + alpha,this.p_symbol.addTerminalSymbol(JoshuaConfiguration.begin_mono_owner));
 		//glue_gr.add_rule("S ||| [S,1] [PHRASE,2] [PHRASE,3] ||| [S,1] [PHRASE,2] [PHRASE,3] ||| "+alpha, MONO_OWNER);
 		print_grammar();
 		ensure_grammar_sorted();
@@ -150,16 +140,16 @@ public class MemoryBasedTMGrammar extends TMGrammar {
 		rule_id_count++;
 		//######1: parse the line
 		//######2: create a rule
-		Rule_Memory p_rule = new Rule_Memory(rule_id_count, line, owner);		
-		
-		
+		//MemoryBasedRule p_rule = new MemoryBasedRule(this,rule_id_count, line, owner);	
+		MemoryBasedRule p_rule = new  MemoryBasedRule(p_symbol, p_l_models, nonterminalRegexp, nonterminalReplaceRegexp,rule_id_count, line, owner);
+		tem_estcost += p_rule.getEstCost();
 		
 		//######### identify the position, and insert the trinodes if necessary
 		TrieNode_Memory pos = root;
 		for (int k = 0; k < p_rule.french.length; k++) {
 			int cur_sym_id = p_rule.french[k];
-			if (Symbol.is_nonterminal(p_rule.french[k])) { //TODO: p_rule.french store the original format like "[X,1]"
-				cur_sym_id = Symbol.add_non_terminal_symbol(MemoryBasedTMGrammar.replace_french_non_terminal(Symbol.get_string(p_rule.french[k])));
+			if (this.p_symbol.isNonterminal(p_rule.french[k])) { //TODO: p_rule.french store the original format like "[X,1]"
+				cur_sym_id = this.p_symbol.addNonTerminalSymbol(replace_french_non_terminal(nonterminalReplaceRegexp, this.p_symbol.getWord(p_rule.french[k])));
 			}
 			
 			TrieNode_Memory next_layer = pos.matchOne(cur_sym_id);
@@ -182,18 +172,13 @@ public class MemoryBasedTMGrammar extends TMGrammar {
 			pos.rule_bin.arity  = p_rule.arity;
 			num_rule_bin++;
 		}
-		if (p_rule.est_cost > pos.rule_bin.cutoff) {
+		if (p_rule.getEstCost() > pos.rule_bin.cutoff) {
 			num_rule_pruned++;
 		} else {
 			pos.rule_bin.add_rule(p_rule);
 			num_rule_pruned += pos.rule_bin.run_pruning();
 		}
 		return p_rule;
-	}
-	
-	
-	public static String replace_french_non_terminal(String symbol) {
-		return symbol.replaceAll(MemoryBasedTMGrammar.nonterminalReplaceRegexp, "");//remove [, ], and numbers
 	}
 	
 	
@@ -215,8 +200,7 @@ public class MemoryBasedTMGrammar extends TMGrammar {
 	}
 	
 	
-	public class TrieNode_Memory
-	implements TrieGrammar {
+	public class TrieNode_Memory implements TrieGrammar {
 		private RuleBin_Memory rule_bin     = null;
 		private HashMap        tbl_children = null;
 		
@@ -281,10 +265,9 @@ public class MemoryBasedTMGrammar extends TMGrammar {
 	
 	
 	/** contain all rules with the same french side (and thus same arity) */
-	public class RuleBin_Memory
-	extends RuleBin {
-		private PriorityQueue<Rule_Memory> heapRules   = null;
-		private double                     cutoff      = Symbol.IMPOSSIBLE_COST;
+	public class RuleBin_Memory	extends RuleBin {
+		private PriorityQueue<MemoryBasedRule> heapRules   = null;
+		private double                     cutoff      = IMPOSSIBLE_COST;
 		private boolean                    sorted      = false;
 		private ArrayList<Rule>            sortedRules = new ArrayList<Rule>();
 		
@@ -322,11 +305,9 @@ public class MemoryBasedTMGrammar extends TMGrammar {
 		}
 		
 		
-		private void add_rule(Rule_Memory rule) {
+		private void add_rule(MemoryBasedRule rule) {
 			if (null == this.heapRules) {
-				this.heapRules = new PriorityQueue<Rule_Memory>(
-					1,
-					Rule_Memory.NegtiveCostComparator);//TODO: initial capacity?
+				this.heapRules = new PriorityQueue<MemoryBasedRule>(1, MemoryBasedRule.NegtiveCostComparator);//TODO: initial capacity?
 				this.arity = rule.arity;
 			}
 			if (rule.arity != this.arity) {
@@ -338,8 +319,8 @@ public class MemoryBasedTMGrammar extends TMGrammar {
 				return;
 			}
 			this.heapRules.add(rule);	//TODO: what is offer()
-			if (rule.est_cost + JoshuaConfiguration.rule_relative_threshold < this.cutoff) {
-				this.cutoff = rule.est_cost + JoshuaConfiguration.rule_relative_threshold;
+			if (rule.getEstCost() + JoshuaConfiguration.rule_relative_threshold < this.cutoff) {
+				this.cutoff = rule.getEstCost() + JoshuaConfiguration.rule_relative_threshold;
 			}
 			rule.french = this.french; //TODO: this will release the memory in each rule, but still have a pointer
 		}
@@ -348,15 +329,15 @@ public class MemoryBasedTMGrammar extends TMGrammar {
 		private int run_pruning() {
 			int n_pruned = 0;
 			while (this.heapRules.size() > JoshuaConfiguration.max_n_rules
-			|| this.heapRules.peek().est_cost >= this.cutoff) {
+			|| this.heapRules.peek().getEstCost() >= this.cutoff) {
 				n_pruned++;
 				this.heapRules.poll();
 			}
 			if (this.heapRules.size() == JoshuaConfiguration.max_n_rules) {
 				this.cutoff =
-					(this.cutoff < this.heapRules.peek().est_cost)
+					(this.cutoff < this.heapRules.peek().getEstCost())
 					? this.cutoff
-					: this.heapRules.peek().est_cost + Symbol.EPSILON;//TODO
+					: this.heapRules.peek().getEstCost() + EPSILON;//TODO
 			}
 			return n_pruned++;
 		}
@@ -374,93 +355,4 @@ public class MemoryBasedTMGrammar extends TMGrammar {
 */		
 	}
 	
-	
-	public static class Rule_Memory	extends Rule {
-		
-		/** 
-		 * estimate_cost depends on rule itself, nothing
-		 * else: statelesscost +
-		 * transition_cost(non-stateless/non-contexual
-		 * models), it is only used in TMGrammar pruning
-		 * and chart.prepare_rulebin, shownup in
-		 * chart.expand_unary but not really used
-		 */
-		private float est_cost = 0;
-		
-		
-		/** 
-		 * only called when creating oov rule in Chart, all
-		 * others should call the other contructor the
-		 * transition cost for phrase model, arity penalty,
-		 * word penalty are all zero, except the LM cost
-		 */
-		public Rule_Memory(int lhs_in, int fr_in, int owner_in) {
-			super(TMGrammar.OOV_RULE_ID, lhs_in, fr_in, owner_in);
-			
-		   	tem_estcost += estimate_rule();//estimate lower-bound for pruning purse, and set statelesscost
-		}
-		
-		
-		public Rule_Memory(int r_id, String line, int owner_in) {
-			super(r_id, line, owner_in);
-			
-			tem_estcost += estimate_rule();//estimate lower-bound, and set statelesscost, this must be called
-		}
-		
-		
-		/** 
-		 * set the stateless cost, and set a lower-bound
-		 * estimate inside the rule returns full estimate.
-		 */
-		protected float estimate_rule() {
-			if (null == TMGrammar.p_l_models) {
-				return 0;
-			}
-			
-			float estcost      = 0.0f;
-			this.statelesscost = 0.0f;
-			
-			for (FeatureFunction<?> ff : TMGrammar.p_l_models) {
-				double mdcost = ff.estimate(this) * ff.getWeight();
-				estcost += mdcost;
-				if (! ff.isStateful()) {
-					this.statelesscost += mdcost;
-				}
-			}
-			this.est_cost = estcost;
-			return estcost;
-		}
-		
-		
-		protected void print_info(int level) {
-			//Support.write_log("Rule is: "+ lhs + " ||| " + Support.arrayToString(french, " ") + " ||| " + Support.arrayToString(english, " ") + " |||", level);
-			Support.write_log("Rule is: "+ Symbol.get_string(lhs) +  " ||| ", level);
-			for (int i = 0; i < english.length; i++) {
-				Support.write_log(Symbol.get_string(english[i]) +" ", level);
-			}
-			Support.write_log("||| ", level);
-			for (int i = 0; i < feat_scores.length; i++) {
-				Support.write_log(" " + feat_scores[i],level);
-			}			
-			Support.write_log_line(" ||| owner: " + owner + "; statelesscost: " + String.format("%.3f",statelesscost) + String.format("; estcost: %.3f",est_cost)+"; arity:" + arity,level);
-		}
-		
-		
-		protected static Comparator<Rule_Memory> NegtiveCostComparator
-			= new Comparator<Rule_Memory>() {
-				public int compare(Rule_Memory rule1, Rule_Memory rule2) {
-					float cost1 = rule1.est_cost;
-					float cost2 = rule2.est_cost;
-					if (cost1 > cost2) {
-						return -1;
-					} else if (cost1 == cost2) {
-						return 0;
-					} else {
-						return 1;
-					}
-				}
-			};
-	}
-	
-
 }

@@ -31,12 +31,24 @@ import joshua.decoder.Symbol;
  * @version $LastChangedDate: 2008-10-17 01:41:03 -0400 (星期五, 17 十月 2008) $
  */
 public abstract class LMGrammar {
-	protected int  g_order = 3;
+	
+	static String BACKOFF_LEFT_LM_STATE_SYM="<lzfbo>";
+	public int BACKOFF_LEFT_LM_STATE_SYM_ID;//used for equivelant state
+	static String NULL_RIGHT_LM_STATE_SYM="<lzfrnull>";
+	public int NULL_RIGHT_LM_STATE_SYM_ID;//used for equivelant state
+	 
+	
+	protected  final Symbol p_symbol;
+	
+	protected final int  g_order;
+	
 	protected long start_loading_time;
 	
-	//init
-	public LMGrammar(int order) {
-		this.g_order = order;
+	public LMGrammar(Symbol symbol_, int order_){
+		p_symbol = symbol_;
+		g_order = order_;
+		this.BACKOFF_LEFT_LM_STATE_SYM_ID = p_symbol.addTerminalSymbol(BACKOFF_LEFT_LM_STATE_SYM);
+		this.NULL_RIGHT_LM_STATE_SYM_ID = p_symbol.addTerminalSymbol(NULL_RIGHT_LM_STATE_SYM);
 	}
 	
 	
@@ -51,15 +63,8 @@ public abstract class LMGrammar {
 	public abstract void write_vocab_map_srilm(String fname);
 	
 	
-	public final double score_a_sent(
-		ArrayList<Integer> words_in,
-		int       order,
-		int       start_index //1-indexed
-	) {
-		return score_a_sent(
-			Support.sub_int_array(words_in, 0, words_in.size()),
-			order,
-			start_index);
+	public final double score_a_sent(ArrayList<Integer> words_in, int order, int  start_index){ //1-indexed
+		return score_a_sent(Support.sub_int_array(words_in, 0, words_in.size()),	order,	start_index);
 	}
 	
 	
@@ -90,23 +95,12 @@ public abstract class LMGrammar {
 	
 	//Note: it seems the List or ArrayList is much slower than the int array, e.g., from 11 to 9 seconds
 	//so try to avoid call this function
-	public final double get_prob(
-		ArrayList<Integer> ngram_words,
-		int       order,
-		boolean   check_bad_stuff
-	) {
-		return get_prob(
-			Support.sub_int_array(ngram_words, 0, ngram_words.size()),
-			order,
-			check_bad_stuff);
+	public final double get_prob(ArrayList<Integer> ngram_words, int order,	boolean check_bad_stuff) {
+		return get_prob(Support.sub_int_array(ngram_words, 0, ngram_words.size()),	order,	check_bad_stuff);
 	}
 	
 	
-	public final double get_prob(
-		int[]   ngram_words,
-		int     order,
-		boolean check_bad_stuff
-	) {
+	public final double get_prob(int[]   ngram_words,	int     order,		boolean check_bad_stuff) {
 		if (ngram_words.length > order) {
 			System.out.println("ngram length is greather than the max order");
 			System.exit(1);
@@ -160,7 +154,7 @@ public abstract class LMGrammar {
 			System.out.println("ngram length is greather than the max order");
 			System.exit(1);
 		}
-		if (ngram_words[ngram_words.length-1] != Symbol.BACKOFF_LEFT_LM_STATE_SYM_ID) {
+		if (ngram_words[ngram_words.length-1] != BACKOFF_LEFT_LM_STATE_SYM_ID) {
 			System.out.println("last wrd is not <bow>");
 			System.exit(1);
 		}

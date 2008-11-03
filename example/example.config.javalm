@@ -59,8 +59,7 @@ phrasemodel pt 2 0.589793
 
 #phrasemodel mono 0 0.5
 
-
 #wordpenalty weight
 wordpenalty -2.844814
-
 #latticecost 1.0
+

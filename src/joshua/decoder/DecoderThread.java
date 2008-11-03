@@ -45,9 +45,9 @@ public class DecoderThread {
 //		###### decode the sentences, maybe in parallel
 		if (JoshuaConfiguration.num_parallel_decoders == 1) {
 			DiskHyperGraph  d_hg = null;
-			KbestExtraction kbest_extrator = new KbestExtraction();
+			KbestExtraction kbest_extrator = new KbestExtraction(p_main_controller.p_symbol);
 			if (JoshuaConfiguration.save_disk_hg) {
-				d_hg = new DiskHyperGraph();
+				d_hg = new DiskHyperGraph(p_main_controller.p_symbol);
 				d_hg.init_write(nbest_file + ".hg.items", JoshuaConfiguration.forest_pruning, JoshuaConfiguration.forest_pruning_threshold);
 			}
 			decode_a_file(test_file, nbest_file, 0, d_hg, kbest_extrator);
@@ -97,10 +97,8 @@ public class DecoderThread {
 			
 			//make the Symbol table finalized before running multiple threads, this is to avoid synchronization among threads
 			{
-				String words[] = cn_sent.split("\\s+");
-				for (int i = 0; i < words.length; i++) {
-					Symbol.add_terminal_symbol(words[i]); // TODO
-				}
+				String words[] = cn_sent.split("\\s+");				
+				p_main_controller.p_symbol.addTerminalSymbols(words); // TODO				
 			}			
 			
 			if (0 != sent_id
@@ -112,10 +110,10 @@ public class DecoderThread {
 				FileUtility.close_write_file(t_writer_test);
 				DiskHyperGraph dhg = null;
 				if (JoshuaConfiguration.save_disk_hg) {
-					dhg = new DiskHyperGraph();
+					dhg = new DiskHyperGraph(p_main_controller.p_symbol);
 					dhg.init_write(	cur_nbest_file + ".hg.items",  JoshuaConfiguration.forest_pruning,  JoshuaConfiguration.forest_pruning_threshold);
 				}
-				KbestExtraction kbest_extrator = new KbestExtraction();
+				KbestExtraction kbest_extrator = new KbestExtraction(p_main_controller.p_symbol);
 				ParallelDecoderThread pdecoder = new ParallelDecoderThread(cur_test_file, cur_nbest_file,	start_sent_id, dhg, kbest_extrator);
 				parallel_threads[        decoder_i-1] = pdecoder;
 				parallel_testFiles[      decoder_i-1] = cur_test_file;
@@ -137,10 +135,10 @@ public class DecoderThread {
 		FileUtility.close_write_file(t_writer_test);
 		DiskHyperGraph dhg = null;
 		if (JoshuaConfiguration.save_disk_hg) {
-			dhg = new DiskHyperGraph();
+			dhg = new DiskHyperGraph(p_main_controller.p_symbol);
 			dhg.init_write(	cur_nbest_file + ".hg.items", JoshuaConfiguration.forest_pruning,  JoshuaConfiguration.forest_pruning_threshold);
 		}
-		KbestExtraction kbest_extrator = new KbestExtraction();
+		KbestExtraction kbest_extrator = new KbestExtraction(p_main_controller.p_symbol);
 		ParallelDecoderThread pdecoder = new ParallelDecoderThread(cur_test_file, cur_nbest_file,	start_sent_id,	dhg, kbest_extrator);
 		parallel_threads[        decoder_i-1] = pdecoder;
 		parallel_testFiles[      decoder_i-1] = cur_test_file;
@@ -266,7 +264,7 @@ public class DecoderThread {
 				initializeTranslationGrammars(JoshuaConfiguration.g_sent_tm_file_name_prefix + sent_id + ".gz");
 			}*/
 			
-			translate(p_main_controller.p_tm_grammars, p_main_controller.p_l_models, cn_sent, p_main_controller.l_default_nonterminals, t_writer_nbest, sent_id, JoshuaConfiguration.topN, dhg, kbest_extractor);
+			translate(p_main_controller.p_tm_grammars, p_main_controller.p_l_feat_functions, cn_sent, p_main_controller.l_default_nonterminals, t_writer_nbest, sent_id, JoshuaConfiguration.topN, dhg, kbest_extractor);
 			sent_id++;
 			//if (sent_id > 10) break;//debug
 		}
@@ -296,7 +294,7 @@ public class DecoderThread {
 	private void translate(GrammarFactory[]  grammarFactories, ArrayList<FeatureFunction> models, String sentence, ArrayList<Integer>   defaultNonterminals,
 		BufferedWriter out, int  sentenceID, int   topN, DiskHyperGraph diskHyperGraph, KbestExtraction kbestExtractor) {
 		long  start = System.currentTimeMillis();
-		int[] sentence_numeric = Symbol.get_terminal_ids_for_sentence(sentence);
+		int[] sentence_numeric = p_main_controller.p_symbol.addTerminalSymbols(sentence);
 		
 		Integer[] input = new Integer[sentence_numeric.length];
 		for (int i = 0; i < sentence_numeric.length; i++) {
@@ -313,7 +311,7 @@ public class DecoderThread {
 		}
 		
 		//seeding: the chart only sees the grammars, not the grammarFactories
-		Chart chart  = new Chart(inputLattice,	models,	sentenceID,	grammars, defaultNonterminals);		
+		Chart chart  = new Chart(inputLattice, models,	this.p_main_controller.p_symbol, sentenceID,	grammars, defaultNonterminals, JoshuaConfiguration.untranslated_owner, this.p_main_controller.have_lm_model);//TODO: owner		
 		if (logger.isLoggable(Level.FINER)) 
 			logger.finer("after seed, time: " + (System.currentTimeMillis() - start) / 1000);
 		

@@ -44,29 +44,23 @@ public abstract class TMGrammar implements GrammarFactory, Grammar {
 	(2) a HashMap  of next-layer trie nodes, the next french word used as the key in HashMap  
 	*/
 	public    static int OOV_RULE_ID          = 0;
-	protected static ArrayList<FeatureFunction> p_l_models = null;
-	protected static int defaultOwner         = 0; //will change autotmatically
-	protected  static String nonterminalRegexp = "^\\[[A-Z]+\\,[0-9]*\\]$";//e.g., [X,1]
-	protected static String nonterminalReplaceRegexp = "[\\[\\]\\,0-9]+";
+	protected  ArrayList<FeatureFunction> p_l_models = null;
+	protected int defaultOwner  ; //will change autotmatically
+	protected  String nonterminalRegexp = "^\\[[A-Z]+\\,[0-9]*\\]$";//e.g., [X,1]
+	protected String nonterminalReplaceRegexp = "[\\[\\]\\,0-9]+";
 	
 	protected int spanLimit = 10;
 	
 	private static final Logger logger = Logger.getLogger(TMGrammar.class.getName());
 	
-	public TMGrammar(
-		String grammar_file,
-		ArrayList<FeatureFunction> l_models,
-		final String default_owner,
-		final int    span_limit,
-		final String nonterminal_regexp,
-		final String nonterminal_replace_regexp
-	) {	
-		// BUG: These are all static, should not be set by constructor!
-		p_l_models               = l_models;
-		defaultOwner             = Symbol.add_terminal_symbol(default_owner);
-		nonterminalRegexp        = nonterminal_regexp;
-		nonterminalReplaceRegexp = nonterminal_replace_regexp;
-		
+	Symbol p_symbol = null;
+	
+	public TMGrammar(Symbol psymbol, String grammar_file, ArrayList<FeatureFunction> l_models, final String default_owner,	final int span_limit, final String nonterminal_regexp,	final String nonterminal_replace_regexp) {	
+		this.p_symbol = psymbol;
+		this.p_l_models               = l_models;
+		this.defaultOwner             = p_symbol.addTerminalSymbol(default_owner);
+		this.nonterminalRegexp        = nonterminal_regexp;
+		this.nonterminalReplaceRegexp = nonterminal_replace_regexp;		
 		this.spanLimit = span_limit;
 	}
 	
@@ -80,11 +74,7 @@ public abstract class TMGrammar implements GrammarFactory, Grammar {
 	
 	
 	/** if the span covered by the chart bin is greater than the limit, then return false */
-	public boolean hasRuleForSpan(
-		final int startIndex,
-		final int endIndex,
-		final int pathLength
-	) {
+	public boolean hasRuleForSpan(final int startIndex,	final int endIndex,	final int pathLength) {
 		if (this.spanLimit == -1) { // mono-glue grammar
 			return (startIndex == 0);
 		} else {
@@ -92,10 +82,13 @@ public abstract class TMGrammar implements GrammarFactory, Grammar {
 		}
 	}
 	
+	public static final String replace_french_non_terminal(String nonterminalReplaceRegexp_, String symbol) {
+		return symbol.replaceAll(nonterminalReplaceRegexp_, "");//remove [, ], and numbers
+	}
 	
 	//TODO: we assume all the Chinese training text is lowercased, and all the non-terminal symbols are in [A-Z]+
-	public  static final boolean is_non_terminal(final String symbol) {
-		return symbol.matches(TMGrammar.nonterminalRegexp);
+	public  static final boolean is_non_terminal(String nonterminalRegexp_, final String symbol) {
+		return symbol.matches(nonterminalRegexp_);
 	}
 	
 	

@@ -17,32 +17,28 @@
  */
 package joshua.decoder.ff;
 
-import joshua.decoder.ff.DefaultFF;
 import joshua.decoder.ff.tm.Rule;
-import java.util.Map;
-import java.util.ArrayList;
 
 /**
  * 
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate: 2008-07-28 18:44:45 -0400 (Mon, 28 Jul 2008) $
  */
-public final class SourceLatticeArcCostFF
-extends DefaultFF {
+public final class SourceLatticeArcCostFF extends DefaultStatelessFF {
 	
 	public SourceLatticeArcCostFF(final double weight_) {
-		super(weight_);
-		this.setStateless();
+		super(weight_, -1);//TODO: owner
 	}
 
-	public MapFFState transition(
-		final Rule rule,
-		final ArrayList<MapFFState> previous_states,
-		final int i,
-		final int j
-	) {
-		MapFFState state = new MapFFState();
-		state.putTransitionCost(rule.lattice_cost);
-		return state;
+	public double estimate(final Rule rule) {
+		//TODO: why not check the owner
+		/*if (this.owner == rule.owner) {
+			return rule.lattice_cost;
+		} else {
+			return 0.0;
+		}*/
+		return rule.lattice_cost;
 	}
+	
+
 }

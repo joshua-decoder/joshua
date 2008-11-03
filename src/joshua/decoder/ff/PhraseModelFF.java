@@ -17,7 +17,6 @@
  */
 package joshua.decoder.ff;
 
-import joshua.decoder.ff.StatelessOwnedFF;
 import joshua.decoder.ff.tm.Rule;
 
 /**
@@ -25,7 +24,7 @@ import joshua.decoder.ff.tm.Rule;
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate: 2008-07-28 18:44:45 -0400 (Mon, 28 Jul 2008) $
  */
-public final class PhraseModelFF extends StatelessOwnedFF {
+public final class PhraseModelFF extends DefaultStatelessFF  {
 	/* the feature will be activated only when the owner is the
 	 * same as the rule, we need an owner to distinguish different
 	 * feature in different phrase table/source
@@ -43,6 +42,8 @@ public final class PhraseModelFF extends StatelessOwnedFF {
 			if (this.columnIndex < rule.feat_scores.length) {
 				return rule.feat_scores[this.columnIndex];
 			} else {
+				System.out.println("In PhraseModelFF: columnIndex is not right");
+				System.exit(0);
 				return 0.0;
 			}
 		} else {

@@ -17,25 +17,26 @@
  */
 package joshua.decoder.ff;
 
-import java.util.Map;
 
 /**
  * This interface provide the contract for what the outside world
  * needs from the internal state used by a class implementing the
  * FeatureFunction interface
  * 
- * @author wren ng thornton <wren@users.sourceforge.net>
+ * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate: 2008-07-28 18:44:45 -0400 (Mon, 28 Jul 2008) $
  */
-public interface FFState {
-	/* Attributes */	
-	double getTransitionCost();
+public interface FFTransitionResult {
+	public double getTransitionCost();
 	
-	/** @return null unless "stateful" */
-	@SuppressWarnings("unchecked")
-	Map    getStateForItem();
-
-	// who is using this?	
-	double getFutureCostEstimation();
+	public void putTransitionCost(double transition_cost_);
+	
+	public FFDPState getStateForItem();
+	
+	public void putStateForItem(FFDPState map);
+	
+	public double getFutureCostEstimation();
+	
+	public void putFutureCostEstimation(double cost);
 
 }

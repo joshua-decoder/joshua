@@ -18,7 +18,7 @@
 package joshua.decoder.ff.lm.srilm;
 
 import joshua.decoder.JoshuaConfiguration;
-import joshua.decoder.Symbol;
+import joshua.decoder.SrilmSymbol;
 import joshua.decoder.ff.lm.LMGrammar;
 
 import java.util.ArrayList;
@@ -31,11 +31,12 @@ import java.util.ArrayList;
 public class LMGrammarSRILM  extends LMGrammar {
 	SWIGTYPE_p_Ngram p_srilm=null;
 	
-	public LMGrammarSRILM(int order){
-		super(order);
+	public LMGrammarSRILM(SrilmSymbol psymbol, int order_, String lm_file){
+		super(psymbol, order_);
+	 
 		System.out.println("use local srilm");
-		p_srilm = srilm.initLM(order, Symbol.lm_start_sym_id, Symbol.lm_end_sym_id );
-		Symbol.add_global_symbols(false);
+		p_srilm = srilm.initLM(order_, p_symbol.getLMStartID(), p_symbol.getLMEndID() );
+		read_lm_grammar_from_file(lm_file);//TODO: what about sentence-specific?
 	}
 	
 //	read grammar locally by the Java implementation
@@ -189,10 +190,10 @@ public class LMGrammarSRILM  extends LMGrammar {
 	  }
 	  
 	  //both left and right must be clean
-	   private static ArrayList<Integer> ignore_null_right_words(int[] ngram_wrds){
+	   private ArrayList<Integer> ignore_null_right_words(int[] ngram_wrds){
 		   ArrayList<Integer> t_ngram = new ArrayList<Integer>();
 		   for(int t=ngram_wrds.length-1; t>=0; t--){
-			   if(ngram_wrds[t]==Symbol.NULL_RIGHT_LM_STATE_SYM_ID)//skip all the null words left
+			   if(ngram_wrds[t]== NULL_RIGHT_LM_STATE_SYM_ID)//skip all the null words left
 				   break;
 			   t_ngram.add(0,ngram_wrds[t]);	   
 		   }

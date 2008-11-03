@@ -23,14 +23,13 @@ import joshua.decoder.ff.ArityPhrasePenaltyFF;
 import joshua.decoder.ff.PhraseModelFF;
 import joshua.decoder.ff.WordPenaltyFF;
 import joshua.decoder.ff.SourceLatticeArcCostFF;
+import joshua.decoder.ff.lm.LMFeatureFunction;
 import joshua.decoder.ff.lm.LMGrammar;
-import joshua.decoder.ff.lm.LMModel;
 import joshua.decoder.ff.lm.buildin_lm.LMGrammarJAVA;
 import joshua.decoder.ff.lm.distributed_lm.LMGrammarRemote;
 import joshua.decoder.ff.lm.srilm.LMGrammarSRILM;
 import joshua.decoder.ff.tm.GrammarFactory;
 import joshua.decoder.ff.tm.MemoryBasedTMGrammar;
-import joshua.decoder.ff.tm.TMGrammar;
 import joshua.util.FileUtility;
 
 import java.io.BufferedReader;
@@ -50,12 +49,16 @@ public class JoshuaDecoder {
 	GrammarFactory[] p_tm_grammars = null;
 	
 	//TODO: deal with cases of multiple LMs or no LM at all
-	LMGrammar       p_lm_grammar  = null;//the lm grammar itself (not lm model)
+	//LMGrammar       p_lm_grammar  = null;//the lm grammar itself (not lm model)
 	
-	ArrayList<FeatureFunction> p_l_models     = null;
+	boolean have_lm_model = false;
+	
+	ArrayList<FeatureFunction> p_l_feat_functions     = null;
 	ArrayList<Integer> l_default_nonterminals = null;
 		
 	private static final Logger logger = Logger.getLogger(JoshuaDecoder.class.getName());
+	
+	Symbol p_symbol = null;//TODO
 	
 //===============================================================
 //===============================================================
@@ -79,7 +82,7 @@ public class JoshuaDecoder {
 		
 		JoshuaDecoder p_decoder = new JoshuaDecoder();
 		
-		//############ initialize the decoder ########		
+		//############ Step-1: initialize the decoder ########		
 		p_decoder.initializeDecoder(config_file);
 				
 		//###### statistics
@@ -87,10 +90,10 @@ public class JoshuaDecoder {
 		if (logger.isLoggable(Level.INFO)) 
 			logger.info("before translation, loaddingtime is " + t_sec);
 
-		//############ Decoding ########
+		//############ Step-2: Decoding ########
 		p_decoder.decodingTestSet(test_file, nbest_file);
 		
-		//############ clean up ########
+		//############ Step-3: clean up ########
 		p_decoder.cleanUp();
 		
 		t_sec = (System.currentTimeMillis() - start) / 1000;
@@ -101,6 +104,7 @@ public class JoshuaDecoder {
 //===============================================================
 //===============================================================
 	
+	
 //	##### procedures: read config, init lm, init sym tbl, init models, read lm, read tm
 	public void initializeDecoder(String config_file){
 //		##### read config file
@@ -108,20 +112,19 @@ public class JoshuaDecoder {
 		
 		p_decoder_thread = new DecoderThread(this);
 		
+		//#### initialize symbol table
+		initSymbolTbl();
+		
+		
 		//TODO ##### add default non-terminals
 		setDefaultNonTerminals(JoshuaConfiguration.default_non_terminal);
-		
-		//##### inside, it will init sym tbl (and add global symbols)
-		initializeLanguageModel();
+	
 				
 		//##### initialize the models(need to read config file again)
-		p_l_models = init_models(config_file, p_lm_grammar);
+		p_l_feat_functions = initializeFeatureFunctions(p_symbol, config_file);
 		
-		//##### read LM grammar
-		if (! JoshuaConfiguration.use_sent_specific_lm) {
-			load_lm_grammar_file(JoshuaConfiguration.lm_file);
-		}
-				
+		have_lm_model = haveLMFeature(p_l_feat_functions);//check to see if there is a LM feature
+		
 		//##### load TM grammar
 		if (! JoshuaConfiguration.use_sent_specific_tm) {
 			initializeTranslationGrammars(JoshuaConfiguration.tm_file);
@@ -143,11 +146,12 @@ public class JoshuaDecoder {
 	}
 	
 	public void cleanUp(){
-		p_lm_grammar.end_lm_grammar(); //end the threads
+		//TODO
+		//p_lm_grammar.end_lm_grammar(); //end the threads
 	}
 	
 	
-	public static ArrayList<FeatureFunction>  init_models(String config_file, LMGrammar lm_grammar){
+	public  static ArrayList<FeatureFunction>  initializeFeatureFunctions(Symbol psymbol, String config_file){
 		BufferedReader t_reader_config = FileUtility.getReadFileStream(config_file);
 		ArrayList<FeatureFunction> l_models = new ArrayList<FeatureFunction>();
 		
@@ -161,8 +165,9 @@ public class JoshuaDecoder {
 			if (line.indexOf("=") == -1) { //ignore lines with "="
 				String[] fds = line.split("\\s+");
 				if (fds[0].compareTo("lm") == 0 && fds.length == 2) { // lm order weight
-					double weight = (new Double(fds[1].trim())).doubleValue();
-					l_models.add(new LMModel(JoshuaConfiguration.g_lm_order, lm_grammar, weight));
+					double weight = (new Double(fds[1].trim())).doubleValue();					
+					LMGrammar lm_grammar = initializeLanguageModel(psymbol);					
+					l_models.add(new LMFeatureFunction(JoshuaConfiguration.g_lm_order, psymbol, lm_grammar, weight));
 					if (logger.isLoggable(Level.FINEST)) 
 						logger.finest( String.format("Line: %s\nAdd LM, order: %d; weight: %.3f;", line, JoshuaConfiguration.g_lm_order, weight));				
 				} else if (0 == fds[0].compareTo("latticecost")	&& fds.length == 2) {
@@ -171,14 +176,14 @@ public class JoshuaDecoder {
 					if (logger.isLoggable(Level.FINEST)) logger.finest(
 						String.format("Line: %s\nAdd Source lattice cost, weight: %.3f", weight));
 				} else if (0 == fds[0].compareTo("phrasemodel")	&& fds.length == 4) { // phrasemodel owner column(0-indexed) weight
-					int owner = Symbol.add_terminal_symbol(fds[1]);
+					int owner = psymbol.addTerminalSymbol(fds[1]);
 					int column = (new Integer(fds[2].trim())).intValue();
 					double weight = (new Double(fds[3].trim())).doubleValue();
 					l_models.add(new PhraseModelFF(weight, owner, column));
 					if (logger.isLoggable(Level.FINEST)) 
 						logger.finest(String.format("Process Line: %s\nAdd PhraseModel, owner: %s; column: %d; weight: %.3f", line, owner, column, weight));				
 				} else if (0 == fds[0].compareTo("arityphrasepenalty") && fds.length == 5){//arityphrasepenalty owner start_arity end_arity weight
-					int owner = Symbol.add_terminal_symbol(fds[1]);
+					int owner = psymbol.addTerminalSymbol(fds[1]);
 					int start_arity = (new Integer(fds[2].trim())).intValue();
 					int end_arity = (new Integer(fds[3].trim())).intValue();
 					double weight = (new Double(fds[4].trim())).doubleValue();
@@ -203,54 +208,67 @@ public class JoshuaDecoder {
 	private void setDefaultNonTerminals(String default_non_terminal){
 		//TODO ##### add default non-terminals
 		l_default_nonterminals = new ArrayList<Integer>();
-		l_default_nonterminals.add(Symbol.add_non_terminal_symbol(default_non_terminal));
+		l_default_nonterminals.add(this.p_symbol.addNonTerminalSymbol(default_non_terminal));
 	}
 	
 	
-	private void initializeLanguageModel() {
+	private void initSymbolTbl(){
+		if (JoshuaConfiguration.use_remote_lm_server) {
+			this.p_symbol = new BuildinSymbol(JoshuaConfiguration.remote_symbol_tbl);//within decoder, we assume to use buildin table when remote lm is used
+		}else  if (JoshuaConfiguration.use_srilm) {
+			System.loadLibrary("srilm"); //load once
+			this.p_symbol = new SrilmSymbol(null);
+		}else{//using the built-in JAVA implementatoin of LM
+			this.p_symbol = new BuildinSymbol(null);
+		}
+	}
+	
+	
+	private static LMGrammar initializeLanguageModel(Symbol psymbol) {
+		LMGrammar lm_grammar;
 		if (JoshuaConfiguration.use_remote_lm_server) {
 			if (JoshuaConfiguration.use_left_euqivalent_state || JoshuaConfiguration.use_right_euqivalent_state){
 				if (logger.isLoggable(Level.SEVERE)) 
-					logger.severe("use local srilm, we cannot use suffix/prefix stuff");
+					logger.severe("use remote LM, we cannot use suffix/prefix stuff");
 				System.exit(1);
 			}
-			p_lm_grammar = new LMGrammarRemote(JoshuaConfiguration.g_lm_order, JoshuaConfiguration.remote_symbol_tbl, JoshuaConfiguration.f_remote_server_list, JoshuaConfiguration.num_remote_lm_servers);			
+			lm_grammar = new LMGrammarRemote(psymbol, JoshuaConfiguration.g_lm_order, JoshuaConfiguration.f_remote_server_list, JoshuaConfiguration.num_remote_lm_servers);			
 		} else if (JoshuaConfiguration.use_srilm) {
-			System.loadLibrary("srilm"); //load once
-			if (JoshuaConfiguration.use_left_euqivalent_state || JoshuaConfiguration.use_right_euqivalent_state) {
+			if (JoshuaConfiguration.use_left_euqivalent_state || JoshuaConfiguration.use_right_euqivalent_state){
 				if (logger.isLoggable(Level.SEVERE)) 
 					logger.severe("use SRILM, we cannot use suffix/prefix stuff");
 				System.exit(1);
 			}			
-			p_lm_grammar = new LMGrammarSRILM(JoshuaConfiguration.g_lm_order);			
+			lm_grammar = new LMGrammarSRILM((SrilmSymbol)psymbol, JoshuaConfiguration.g_lm_order, JoshuaConfiguration.lm_file);			
 		} else {//using the built-in JAVA implementatoin of LM, may not be as scalable as SRILM
-			p_lm_grammar = new LMGrammarJAVA(JoshuaConfiguration.g_lm_order, JoshuaConfiguration.use_left_euqivalent_state, JoshuaConfiguration.use_right_euqivalent_state);
+			lm_grammar = new LMGrammarJAVA((BuildinSymbol)psymbol, JoshuaConfiguration.g_lm_order, JoshuaConfiguration.lm_file, JoshuaConfiguration.use_left_euqivalent_state, JoshuaConfiguration.use_right_euqivalent_state);
 		}
+		
+		return lm_grammar;
 	}	
 	
-	private void load_lm_grammar_file(String lm_file){
-		if (logger.isLoggable(Level.FINER)) logger.finer(
-			"############## load lm from file" + lm_file);
-		p_lm_grammar.read_lm_grammar_from_file(lm_file);
-	}
 	
 	// This depends (invisibly) on the language model in order to do pruning of the TM at load time.
-	private  void initializeTranslationGrammars(String tm_file) {
-		if (logger.isLoggable(Level.FINER)) 
-			logger.finer("############## load tm from file" + tm_file);
-		
+	private  void initializeTranslationGrammars(String tm_file) {	
 		p_tm_grammars = new GrammarFactory[2];
 		
 		// Glue Grammar
-		GrammarFactory glueGrammar = new MemoryBasedTMGrammar(null, true, p_l_models, JoshuaConfiguration.phrase_owner, -1, "^\\[[A-Z]+\\,[0-9]*\\]$", "[\\[\\]\\,0-9]+");	
+		GrammarFactory glueGrammar = new MemoryBasedTMGrammar(p_symbol, null, true, p_l_feat_functions, JoshuaConfiguration.phrase_owner, -1, "^\\[[A-Z]+\\,[0-9]*\\]$", "[\\[\\]\\,0-9]+");	
 		p_tm_grammars[0] = glueGrammar;		
-		if(((TMGrammar)glueGrammar).getTrieRoot()==null){
-			System.out.println("grammar  getTrieRoot is null; i is 0"); System.exit(0);
-		}
 		
 		// Regular TM Grammar
-		GrammarFactory regularGrammar = new MemoryBasedTMGrammar(tm_file, false, p_l_models, JoshuaConfiguration.phrase_owner, JoshuaConfiguration.span_limit, "^\\[[A-Z]+\\,[0-9]*\\]$", "[\\[\\]\\,0-9]+");				
+		GrammarFactory regularGrammar = new MemoryBasedTMGrammar(p_symbol, tm_file, false, p_l_feat_functions, JoshuaConfiguration.phrase_owner, JoshuaConfiguration.span_limit, "^\\[[A-Z]+\\,[0-9]*\\]$", "[\\[\\]\\,0-9]+");				
 		p_tm_grammars[1] = regularGrammar;
 	}
 	
+	private boolean haveLMFeature(ArrayList<FeatureFunction> l_models){
+		boolean res =false;
+		for(FeatureFunction ff : l_models){
+			if(ff instanceof LMFeatureFunction){
+				res= true;
+				break;
+			}
+		}
+		return res;
+	}
 }

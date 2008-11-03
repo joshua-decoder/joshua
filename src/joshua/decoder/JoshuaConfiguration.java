@@ -27,6 +27,8 @@ public class JoshuaConfiguration {
 	public static String  phrase_owner               = "pt";
 	public static String  mono_owner                 = "mono";
 	public static String  begin_mono_owner           = "begin_mono";//if such a rule is get applied, then no reordering is possible
+	//public static String untranslated_owner          = "<unt>";
+	public static String untranslated_owner          = phrase_owner;
 	public static String  default_non_terminal       = "PHRASE";
 	public static boolean use_sent_specific_tm       = false;
 	public static String  g_sent_tm_file_name_prefix = "tm.";

@@ -38,12 +38,13 @@ import java.util.Hashtable;
 public class LMGrammarRemote  extends LMGrammar {
 	
 //	if remote method is used	
-	LMClient p_lm_client=null;
+	private LMClient p_lm_client=null;
 	//LMClient p_suffix_client=null;
 	
 	//!!! we assume both suffix and lm are remoted, if one is remoted
-	public LMGrammarRemote(int order, String remote_symbol_tbl, String f_server_lists, int num_servers){
-		super(order);
+	public LMGrammarRemote(Symbol psymbol, int order, String f_server_lists, int num_servers){
+		super(psymbol, order);
+	
 		System.out.println("use remote suffix and lm server");
 		String[] hosts =new String[num_servers];
 		int[] ports =new int[num_servers];
@@ -66,10 +67,8 @@ public class LMGrammarRemote  extends LMGrammar {
 		}
 		else
 			p_lm_client = new LMClientMultiServer(hosts, ports, weights, num_servers);
-		
-		//read the symbol tbl here (note that the file may already contains the global symbols)
-		Symbol.init_sym_tbl_from_file(remote_symbol_tbl,true);//it will also add the global nonterminal symbol
 	}	
+	
 	public void end_lm_grammar(){
 		p_lm_client.close_client();
 	}

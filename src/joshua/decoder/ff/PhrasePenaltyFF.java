@@ -17,7 +17,6 @@
  */
 package joshua.decoder.ff;
 
-import joshua.decoder.ff.StatelessOwnedFF;
 import joshua.decoder.ff.tm.Rule;
 
 
@@ -26,7 +25,7 @@ import joshua.decoder.ff.tm.Rule;
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate: 2008-07-28 18:44:45 -0400 (Mon, 28 Jul 2008) $
  */
-public final class PhrasePenaltyFF extends StatelessOwnedFF {
+public final class PhrasePenaltyFF extends DefaultStatelessFF {
 	private static final double ALPHA = Math.log10(Math.E);
 	
 	

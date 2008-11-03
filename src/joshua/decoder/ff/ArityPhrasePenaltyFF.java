@@ -17,7 +17,6 @@
  */
 package joshua.decoder.ff;
 
-import joshua.decoder.ff.StatelessOwnedFF;
 import joshua.decoder.ff.tm.Rule;
 
 
@@ -26,8 +25,7 @@ import joshua.decoder.ff.tm.Rule;
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate: 2008-07-28 18:44:45 -0400 (Mon, 28 Jul 2008) $
  */
-public final class ArityPhrasePenaltyFF
-extends StatelessOwnedFF {
+public final class ArityPhrasePenaltyFF extends DefaultStatelessFF {
 	private static final double ALPHA = Math.log10(Math.E);
 	
 	// when the rule.arity is in the range, then this feature is activated
@@ -43,10 +41,7 @@ extends StatelessOwnedFF {
 	
 	
 	public double estimate(final Rule rule) {
-		if (this.owner == rule.owner
-			&& this.min_arity <= rule.arity
-			&& this.max_arity >= rule.arity
-		) {
+		if (this.owner == rule.owner && this.min_arity <= rule.arity && this.max_arity >= rule.arity) {
 			return ALPHA;
 		} else {
 			return 0.0;

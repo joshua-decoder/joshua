@@ -20,7 +20,6 @@ package joshua.decoder.ff.tm;
 import java.util.Map;
 
 import joshua.decoder.ff.tm.TMGrammar;
-import joshua.decoder.Support;
 import joshua.decoder.Symbol;
 import joshua.util.sentence.Vocabulary;
 
@@ -34,87 +33,38 @@ public class Rule {
 	/* The string format of Rule is:
 	 *     [Phrase] ||| french ||| english ||| feature scores
 	 */
-	public final int     rule_id;
-	public  final int     lhs;         // tag of this rule, state to upper layer
-	public        int[]   french;      // only need to maintain at rulebine
-	public  final int[]   english;
-	public  final int     owner;
-	public  final float[] feat_scores; // the feature scores for this rule
-	public	final float lattice_cost;
-	public  final int     arity;// = 0;   // TODO: disk-grammar does not have this information, so, arity-penalty feature is not supported in disk-grammar
+	public  int     rule_id;
+	public  int     lhs;         // tag of this rule, state to upper layer
+	public  int[]   french;      // only need to maintain at rulebine
+	public  int[]   english;
 	
-	//TODO Ideally, we shouldn't have to have dummy rule IDs and dummy owners. How can this need be eliminated?
-	private static final int DUMMY_RULE_ID = 1;
-	private static final int DUMMY_OWNER = 1;
-
-	// create a copy of the rule and set the lattice cost field
-	public Rule cloneAndAddLatticeCost(float cost) {
-		Rule r = new Rule(rule_id, lhs, french, english, owner, feat_scores, arity, statelesscost, cost);
-		return r;
-	}
-
+	/* a feature function will be applied  for this rule 
+	 * only if the owner of the rule matches the owner of the feature function
+	 * */
+	public  int     owner;
+	
+	public  float[] feat_scores; // the feature scores for this rule
+	public	float lattice_cost;
+	public  int     arity;// = 0;   // TODO: disk-grammar does not have this information, so, arity-penalty feature is not supported in disk-grammar
+	
 	/* this remember all the stateless cost: sum of cost of all
 	 * stateless models (e..g, phrase model, word-penalty,
 	 * phrase-penalty). The LM model cost is not included here.
 	 * this will be set by Grmmar.estimate_rule
 	 */
-	public float statelesscost; //this is set in estimate_rule()
+	protected float statelesscost = 0; //TODO: this is set in estimate_rule(); we should use an abstract class to enforce this behavior
 
-	/**
-	 * Constructs a rule from a formatted string.
-	 * 
-	 * @param r_id
-	 * @param line
-	 * @param owner_in
-	 */
-	public Rule(int r_id, String line, int owner_in) {
 		
-		rule_id = r_id;
-		owner   = owner_in;
-		statelesscost = 0;
-		
-		String[] fds = line.split("\\s+\\|{3}\\s+");
-		if (fds.length != 4) {
-			Support.write_log_line("rule line does not have four fds; " + line, Support.ERROR);
-		}			
-		this.lhs = Symbol.add_non_terminal_symbol(MemoryBasedTMGrammar.replace_french_non_terminal(fds[0]));
-		
-		int arity = 0;
-		String[] french_tem = fds[1].split("\\s+");
-		french = new int[french_tem.length];
-		for (int i = 0; i < french_tem.length; i++) {
-			if (MemoryBasedTMGrammar.is_non_terminal(french_tem[i])) {
-				arity++;
-				//french[i]= Symbol.add_non_terminal_symbol(TMGrammar_Memory.replace_french_non_terminal(french_tem[i]));
-				french[i]= Symbol.add_non_terminal_symbol(french_tem[i]);//when storing hyper-graph, we need this
-			} else {
-				french[i] = Symbol.add_terminal_symbol(french_tem[i]);
-			}
-		}
-		this.arity = arity;
-		
-		//english side
-		String[] english_tem = fds[2].split("\\s+");
-		english = new int[english_tem.length];
-		for (int i = 0; i < english_tem.length; i++) {
-			if (MemoryBasedTMGrammar.is_non_terminal(english_tem[i])) {
-				english[i] = Symbol.add_non_terminal_symbol(english_tem[i]);
-			} else {
-				english[i] = Symbol.add_terminal_symbol(english_tem[i]);
-			}
-		}
-		
-		String[] t_scores = fds[3].split("\\s+");
-		feat_scores = new float[t_scores.length];
-		int i = 0;
-		for (String score : t_scores) {
-			feat_scores[i++] = (new Float(score)).floatValue();
-		}
-		lattice_cost = 0;
-		//tem_estcost += estimate_rule();//estimate lower-bound, and set statelesscost, this must be called
+	
+//	TODO Ideally, we shouldn't have to have dummy rule IDs and dummy owners. How can this need be eliminated?
+	private static final int DUMMY_RULE_ID = 1;
+	private static final int DUMMY_OWNER = 1;
+	
+	public Rule(){
+		//do nothing
 	}
 	
-	
+
 	/**
 	 * For use in constructing out of vocabulary rules.
 	 * 
@@ -123,7 +73,7 @@ public class Rule {
 	 * @param fr_in Source language right-hand side of the rule.
 	 * @param owner
 	 */
-	public Rule(int rule_id, int lhs, int fr_in, int owner) {
+	public Rule(int rule_id, int lhs, int fr_in, int owner, int num_feats) {
 		this.rule_id    = rule_id;
 		this.lhs        = lhs;
 		this.owner      = owner;
@@ -132,9 +82,7 @@ public class Rule {
 	   	this.french[0]  = fr_in;
 	   	this.english    = new int[1];
 	   	this.english[0] = fr_in;
-	   	feat_scores     = new float[1];
-	   	feat_scores[0]  = 0;
-		statelesscost = 0;
+	   	feat_scores     = new float[num_feats];
 		lattice_cost	= 0;
 	}
 	
@@ -158,12 +106,11 @@ public class Rule {
 		this.owner       = owner;
 		this.feat_scores = feat_scores_in;
 		this.arity       = arity_in;
-		statelesscost = 0;
 		this.lattice_cost= 0;
 	}
 	
 	// just used by cloneAndAddLatticeCost:
-	private Rule(int rule_id, int lhs, int[] fr_in, int[] eng_in, int owner, float[] feat_scores_in, int arity_in, float statelesscost, float src_cost) {
+	private Rule(int rule_id, int lhs, int[] fr_in, int[] eng_in, int owner, float[] feat_scores_in, int arity_in, float src_cost) {
 		this.rule_id     = rule_id;
 		this.lhs         = lhs;
 		this.french      = fr_in;
@@ -171,7 +118,6 @@ public class Rule {
 		this.owner       = owner;
 		this.feat_scores = feat_scores_in;
 		this.arity       = arity_in;
-		this.statelesscost = statelesscost;
 		this.lattice_cost = src_cost;
 	}
 	
@@ -191,6 +137,17 @@ public class Rule {
 	}
 	
 	
+	public float getStatelessCost(){
+		return statelesscost;
+	}
+	
+	
+//	 create a copy of the rule and set the lattice cost field
+	public Rule cloneAndAddLatticeCost(float cost) {
+		Rule r = new Rule(rule_id, lhs, french, english, owner, feat_scores, arity, cost);
+		return r;
+	}
+	
 	/* ~~~~~ Attributes (only used in DiskHyperGraph) */
 	public final boolean isOutOfVocabularyRule() {
 		return (this.rule_id == TMGrammar.OOV_RULE_ID);
@@ -206,22 +163,6 @@ public class Rule {
 	// Caching this method significantly improves performance
 	// We mark it transient because it is, though cf java.io.Serializable
 	private transient String cachedToString = null;
-	public String toString() {
-		if (null == this.cachedToString) {
-			StringBuffer sb = new StringBuffer("[");
-			sb.append(Symbol.get_string(this.lhs));
-			sb.append("] ||| ");
-			sb.append(Symbol.get_string(this.french));
-			sb.append(" ||| ");
-			sb.append(Symbol.get_string(this.english));
-			sb.append(" |||");
-			for (int i = 0; i < this.feat_scores.length; i++) {
-				sb.append(String.format(" %.4f", this.feat_scores[i]));
-			}
-			this.cachedToString = sb.toString();
-		}
-		return this.cachedToString;
-	}
 	
 	public String toString(Map<Integer,String> ntVocab, Vocabulary sourceVocab, Vocabulary targetVocab) {
 		if (null == this.cachedToString) {
@@ -241,12 +182,28 @@ public class Rule {
 		return this.cachedToString;
 	}
 	
-
-    public String toStringWithoutFeatScores(){
+	public String toString(Symbol p_symbol) {
+		if (null == this.cachedToString) {
+			StringBuffer sb = new StringBuffer("[");
+			sb.append(p_symbol.getWord(this.lhs));
+			sb.append("] ||| ");
+			sb.append(p_symbol.getWords(this.french));
+			sb.append(" ||| ");
+			sb.append(p_symbol.getWords(this.english));
+			sb.append(" |||");
+			for (int i = 0; i < this.feat_scores.length; i++) {
+				sb.append(String.format(" %.4f", this.feat_scores[i]));
+			}
+			this.cachedToString = sb.toString();
+		}
+		return this.cachedToString;
+	}
+	
+    public String toStringWithoutFeatScores(Symbol p_symbol){
             StringBuffer res = new StringBuffer();
-            res.append("["); res.append(Symbol.get_string(lhs)); res.append("] ||| ");
-            res.append(Symbol.get_string(french)); res.append(" ||| ");
-            res.append(Symbol.get_string(english));
+            res.append("["); res.append(p_symbol.getWord(lhs)); res.append("] ||| ");
+            res.append(p_symbol.getWords(french)); res.append(" ||| ");
+            res.append(p_symbol.getWords(english));
             return res.toString();
     }
 }

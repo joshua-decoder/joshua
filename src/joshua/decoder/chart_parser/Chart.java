@@ -20,21 +20,21 @@ package joshua.decoder.chart_parser;
 
 import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.Symbol;
+import joshua.decoder.chart_parser.Bin.ComputeItemResult;
 import joshua.decoder.chart_parser.DotChart.DotItem;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.tm.Grammar;
-import joshua.decoder.ff.tm.MemoryBasedTMGrammar;
+import joshua.decoder.ff.tm.MemoryBasedRule;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.RuleCollection;
+import joshua.decoder.ff.tm.TMGrammar;
 import joshua.decoder.ff.tm.TrieGrammar;
 import joshua.decoder.hypergraph.HyperGraph;
 import joshua.decoder.hypergraph.HyperGraph.Item;
 import joshua.lattice.Lattice;
 import joshua.lattice.Arc;
 import joshua.lattice.Node;
-
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -61,6 +61,9 @@ import java.util.logging.Logger;
  * @version $LastChangedDate$
  */
 public class Chart {
+
+    public int UNTRANS_OWNER_SYM_ID = 0;//untranslated word id
+	
 	public  Grammar[]        grammars;
 	public  DotChart[]       dotcharts;//each grammar should have a dotchart associated with it
 	public  Bin[][]          bins;//note that in some cell, it might be null
@@ -72,7 +75,9 @@ public class Chart {
 	private int              sent_id;
 	
 	//decoder-wide variables
-	ArrayList<FeatureFunction> models;
+	ArrayList<FeatureFunction> p_l_models;
+	
+	Symbol p_symbol;
 	
 	//statistics
 	int gtem                  = 0;
@@ -93,21 +98,9 @@ public class Chart {
 	static long g_time_check_nonterminal = 0;
 	static long g_time_kbest_extract     = 0;
 	
-	private static final Logger logger =
-		Logger.getLogger(Chart.class.getName());
+	private static final Logger logger = Logger.getLogger(Chart.class.getName());
 	
-	public void print_info(Level level) {
-		if (logger.isLoggable(level)) 
-			logger.log(level,
-				String.format("ADD: %d; MERGED: %d; pruned: %d; pre-pruned: %d ,fuzz1: %d, fuzz2: %d; n_dotitem_added: %d",
-					this.n_added,
-					this.n_merged,
-					this.n_pruned,
-					this.n_prepruned,
-					this.n_prepruned_fuzz1,
-					this.n_prepruned_fuzz2,
-					this.n_dotitem_added));
-	}
+	
 	
 	
 	//public Chart(int[] sentence_in, ArrayList<Model> models, int sent_id1) {
@@ -116,19 +109,23 @@ public class Chart {
 		Lattice<Integer>           sentence_,
 		//int[] sentence,
 		ArrayList<FeatureFunction> models_,
+		Symbol symbol_,
 		int                        sent_id_,
 		Grammar[]                  grammars_,
-		ArrayList<Integer>         default_nonterminals
+		ArrayList<Integer>         default_nonterminals,
+		String untranslated_owner_,
+		boolean have_lm_model
 	) {
 //		public Chart(int[] sentence_in, ArrayList<FeatureFunction> models, int sent_id1) {   
 		this.sentence = sentence_;
 		//this.sent_len = sentence.length;
 		this.sent_len = sentence.size() - 1;
-		this.models   = models_;
+		this.p_l_models   = models_;
+		this.p_symbol = symbol_;
 		this.bins     = new Bin[sent_len][sent_len+1];		
 		this.sent_id  = sent_id_;
 		this.goal_bin = new Bin(this);
-		
+		this.UNTRANS_OWNER_SYM_ID = this.p_symbol.addTerminalSymbol(untranslated_owner_);
 		
 		/** add un-translated words into the chart as item (with large cost) */
 		//TODO: grammar specific?
@@ -148,10 +145,7 @@ public class Chart {
 		for (Node<Integer> node : sentence) {
 			for (Arc<Integer> arc : node.getOutgoingArcs()) {
 				for (int lhs : default_nonterminals) {//create a rule, but do not add into the grammar trie     
-					Rule rule = new MemoryBasedTMGrammar.Rule_Memory(
-						lhs,
-						arc.getLabel(),
-						Symbol.UNTRANS_SYM_ID);//TODO: change onwer
+					Rule rule = new MemoryBasedRule(p_l_models, TMGrammar.OOV_RULE_ID, lhs, arc.getLabel(), this.UNTRANS_OWNER_SYM_ID, have_lm_model);
 					// Tail and head are switched - FIX names:
 					add_axiom(node.getNumber(), arc.getTail().getNumber(), rule, (float)arc.getCost());
 				}
@@ -276,14 +270,21 @@ public class Chart {
 		//Support.write_log_line(String.format("LM lookupwords1, step1: %d; step2: %d; step3: %d",tm_lm.time_step1,tm_lm.time_step2,tm_lm.time_step3),Support.INFO);
 		//debug end
 		
-		return new HyperGraph(
-			(Item)goal_bin.get_sorted_items().get(0),
-			-1,
-			-1,
-			sent_id,
-			sent_len);//num_items/deductions : -1
+		return new HyperGraph((Item)goal_bin.get_sorted_items().get(0),	-1,	-1,	sent_id, sent_len);//num_items/deductions : -1
 	}
 	
+	public void print_info(Level level) {
+		if (logger.isLoggable(level)) 
+			logger.log(level,
+				String.format("ADD: %d; MERGED: %d; pruned: %d; pre-pruned: %d ,fuzz1: %d, fuzz2: %d; n_dotitem_added: %d",
+					this.n_added,
+					this.n_merged,
+					this.n_pruned,
+					this.n_prepruned,
+					this.n_prepruned_fuzz1,
+					this.n_prepruned_fuzz2,
+					this.n_dotitem_added));
+	}
 	
 	/**
 	 * agenda based extension: this is necessary in case more than two unary rules can be applied in topological order s->x; ss->s
@@ -311,7 +312,7 @@ public class Chart {
 					child_tnode.getRules().getSortedRules();
 				
 				for (Rule rule : l_rules){//for each unary rules								
-					HashMap tbl_states = chart_bin.compute_item(rule, l_ants, i, j);				
+					ComputeItemResult tbl_states = chart_bin.compute_item(rule, l_ants, i, j);				
 					Item res_item = chart_bin.add_deduction_in_bin(tbl_states, rule, i, j, l_ants, 0.0f);
 					if (null != res_item) {
 						t_queue.add(res_item);

@@ -17,10 +17,17 @@
  */
 package joshua.decoder.hypergraph;
 
+import joshua.decoder.BuildinSymbol;
+import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.JoshuaDecoder;
 import joshua.decoder.Symbol;
+import joshua.decoder.chart_parser.Chart;
+import joshua.decoder.ff.FFDPState;
+import joshua.decoder.ff.FeatureFunction;
+import joshua.decoder.ff.tm.MemoryBasedRule;
 import joshua.decoder.ff.tm.MemoryBasedTMGrammar;
 import joshua.decoder.ff.tm.Rule;
+import joshua.decoder.ff.tm.TMGrammar;
 import joshua.decoder.hypergraph.HyperGraph;
 import joshua.decoder.hypergraph.HyperGraph.Deduction;
 import joshua.decoder.hypergraph.HyperGraph.Item;
@@ -31,6 +38,7 @@ import java.io.BufferedWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 
 /**
  * this class implements functions of writting/reading hypergraph on disk
@@ -43,6 +51,8 @@ import java.util.Iterator;
 //line: ITEM_TAG, item id, i, j, lhs, num_deductions, tbl_state;
 //line: best_cost, num_items, item_ids, rule id,  OOV-Non-Terminal (optional), OOV (optional),
 public class DiskHyperGraph {
+	public int UNTRANS_OWNER_SYM_ID=0;//untranslated word id
+	   
 //	shared by many hypergraphs
 	public HashMap tbl_associated_grammar = new HashMap();
 	//static int cur_rule_id=1;
@@ -73,33 +83,51 @@ public class DiskHyperGraph {
     
     static String RULE_TBL_SEP =" -LZF- ";
     
-    public static void main(String[] args) {	
-		Symbol.add_global_symbols(true);		
+    Symbol p_symbol = null; //TODO
+   
+	ArrayList<FeatureFunction> p_l_models;
+	
+	//TODO: this should be changed
+	protected  String nonterminalRegexp = "^\\[[A-Z]+\\,[0-9]*\\]$";//e.g., [X,1]
+	protected String nonterminalReplaceRegexp = "[\\[\\]\\,0-9]+";
+	
+    public static void main(String[] args) {
+    	Symbol psymbol = new BuildinSymbol(null);
+    
+    	
 		String f_hypergraphs="C:\\Users\\zli\\Documents\\mt03.src.txt.ss.nbest.hg.items";
 		String f_rule_tbl="C:\\Users\\zli\\Documents\\mt03.src.txt.ss.nbest.hg.rules";
 	
 		String config_file="C:\\data_disk\\java_work_space\\example.config.javalm";
-		ArrayList l_models = JoshuaDecoder.init_models(config_file,null);
+		ArrayList<FeatureFunction> p_l_models = JoshuaDecoder.initializeFeatureFunctions(psymbol, config_file);
+
+		
 		BufferedWriter nbest_out = FileUtility.getWriteFileStream("C:\\Users\\zli\\Documents\\hg.mt03.nbest");
 		int total_num_sent = 919;//919	
 		
 		long start_time = System.currentTimeMillis();		
 		
-		DiskHyperGraph dhg = new DiskHyperGraph();
-		KbestExtraction kbest_extractor = new KbestExtraction();
+		DiskHyperGraph dhg = new DiskHyperGraph(psymbol);
+		KbestExtraction kbest_extractor = new KbestExtraction(psymbol);
 		
 		dhg.init_read(f_hypergraphs, f_rule_tbl, null);			
 		for(int sent_id=0; sent_id < total_num_sent; sent_id ++){
 			System.out.println("############Process sentence " + sent_id);
 			HyperGraph hg = dhg.read_hyper_graph();				
 			//hg.lazy_k_best_extract(l_models, 300, true, sent_id, nbest_out, false, true);//nbest extracvtion				
-			kbest_extractor.lazy_k_best_extract_hg(hg, l_models, 300, true, sent_id, nbest_out, false, true);//nbest extracvtion
+			kbest_extractor.lazy_k_best_extract_hg(hg, p_l_models, 300, true, sent_id, nbest_out, false, true);//nbest extracvtion
 		}			
 	
 		FileUtility.close_write_file(nbest_out);
 		System.out.println("perceptron: " + (System.currentTimeMillis()-start_time)/1000);	
 	}
 	
+    public DiskHyperGraph(Symbol symbol_){
+    	this.p_symbol = symbol_;
+    	this.UNTRANS_OWNER_SYM_ID = this.p_symbol.addTerminalSymbol(JoshuaConfiguration.untranslated_owner);
+		
+    }
+    
 //for writting hyper-graph: (1) saving each hyper-graph; (2) remember each regualar rule used; (3) dump the rule jointly (in case parallel decoding)      
 	public void init_write(
 		String  f_items,
@@ -108,7 +136,7 @@ public class DiskHyperGraph {
 	) {
 		this.writer_out = FileUtility.handle_null_file(f_items);
 		if (use_forest_pruning) {
-			this.forest_pruner = new HyperGraphPruning(true, threshold, threshold, 1, 1);//TODO
+			this.forest_pruner = new HyperGraphPruning(p_symbol, true, threshold, threshold, 1, 1);//TODO
 		}
 	}
 	
@@ -134,8 +162,9 @@ public class DiskHyperGraph {
 			}
     		String[] wrds = line.split("\\s+");
     		int rule_id = new Integer(wrds[0]);
-    		int default_owner = Symbol.add_terminal_symbol(wrds[1]);
-    		Rule rule = new MemoryBasedTMGrammar.Rule_Memory(rule_id, fds[1], default_owner);//TODO: the stateless cost if not correct due to estimate_rule
+    		int default_owner = this.p_symbol.addTerminalSymbol(wrds[1]);
+    		//Rule rule = new MemoryBasedTMGrammar.Rule_Memory(rule_id, fds[1], default_owner);//TODO: the stateless cost if not correct due to estimate_rule
+    		Rule rule = new MemoryBasedRule(p_symbol, p_l_models, nonterminalRegexp, nonterminalReplaceRegexp, rule_id, fds[1], default_owner);
     		tbl_associated_grammar.put(rule_id, rule);
     	}
     	FileUtility.close_read_file(reader_rules);
@@ -248,9 +277,9 @@ public class DiskHyperGraph {
     	FileUtility.flush_lzf(out_rules);
     }
 	
-    private static void save_rule(BufferedWriter out_rules, Rule rl, int rule_id){
+    private void save_rule(BufferedWriter out_rules, Rule rl, int rule_id){
     	String str_rule = rl.toString();
-		String owner = Symbol.get_string(rl.owner);
+		String owner = this.p_symbol.getWord(rl.owner);
 		//rule_id owner RULE_TBL_SEP rule
 		FileUtility.write_lzf(out_rules, rule_id +" " + owner  + RULE_TBL_SEP  +str_rule  +"\n");//note (inverse): rule-id RULE_TBL_SEP rule
 	}
@@ -267,7 +296,7 @@ public class DiskHyperGraph {
 		//line: ITEM_TAG, item id, i, j, lhs, num_deductions, tbl_state;
 		res.append(ITEM_TAG); res.append(" "); res.append((Integer)tbl_item_2_id.get(item)); res.append(" ");
 		res.append(item.i);	res.append(" "); res.append(item.j);//i,j
-		res.append(" "); res.append(Symbol.get_string(item.lhs)); res.append(" ");//lhs
+		res.append(" "); res.append(this.p_symbol.getWord(item.lhs)); res.append(" ");//lhs
 		
 		if(item.l_deductions==null)//TODO
 			res.append(0);
@@ -276,8 +305,8 @@ public class DiskHyperGraph {
 	
 		res.append(ITEM_STATE_TAG);
 		//signature (created from HashMap tbl_states)
-		if(item.tbl_states!=null)
-			res.append(item.get_string_from_state_tbl(item.tbl_states));
+		if(item.getTblFeatDPStates()!=null)
+			res.append(get_string_from_state_tbl(p_symbol, item.getTblFeatDPStates()));
 		else
 			res.append(NULL_ITEM_STATE);
 		res.append("\n");		
@@ -305,12 +334,12 @@ public class DiskHyperGraph {
 		int item_id = new Integer(wrds1[1]);
 		int i = new Integer(wrds1[2]);
 		int j = new Integer(wrds1[3]);
-		int lhs = Symbol.add_non_terminal_symbol(wrds1[4]);
+		int lhs = this.p_symbol.addNonTerminalSymbol(wrds1[4]);
 		int num_deductions = new Integer(wrds1[5]);
 		
-		HashMap tbl_states = null;//item state: signature (created from HashMap tbl_states)
+		HashMap<FeatureFunction, FFDPState> tbl_dpstates = null;//item state: signature (created from HashMap tbl_states)
 		if(fds[1].compareTo(NULL_ITEM_STATE)!=0){
-			tbl_states = Item.get_state_tbl_from_string(fds[1]);//create statte
+			tbl_dpstates = get_state_tbl_from_string(p_symbol, p_l_models, fds[1]);//create statte;;;;;;;;;;;;;;;;;;;;;; TODO
 		}	
 		
 		ArrayList<Deduction> l_deductions = null;
@@ -325,14 +354,34 @@ public class DiskHyperGraph {
 			}				
 		}
 
-		Item item = new Item(i, j, lhs,  l_deductions, best_deduction, tbl_states);
+		Item item = new Item(i, j, lhs,  l_deductions, best_deduction, tbl_dpstates);
 		tbl_id_2_item.put(item_id, item);
 		return item;
 	}
 	
-	private void save_deduction(
-		BufferedWriter out, Item item, Deduction deduction
-	) {
+//################################## error begin ###############################	
+//	the state_str does not have lhs, also it contain the original words (not symbol id)
+	public static String get_string_from_state_tbl(Symbol p_symbol, HashMap<FeatureFunction, FFDPState> tbl){
+		StringBuffer res = new StringBuffer();
+		for (Iterator iter = tbl.entrySet().iterator(); iter.hasNext();){//for each model
+            Map.Entry entry = (Map.Entry)iter.next();
+            FFDPState dpstate = (FFDPState)entry.getValue();
+            res.append(dpstate.getSignature(false));
+		}
+		//TODO: not working
+		return res.toString();
+	}
+	
+	//the state_str does not lhs, it contain the original words (not symbol id)
+	public static HashMap<FeatureFunction, FFDPState> get_state_tbl_from_string(Symbol p_symbol, ArrayList<FeatureFunction> p_l_models, String state_str){
+		HashMap res =new HashMap<FeatureFunction, FFDPState> ();
+		String[] states = state_str.split(Item.SIG_SEP);
+		//TODO: for eachg model						
+		return res;
+	}
+//	##################################  error end ###############################	
+	
+	private void save_deduction(BufferedWriter out, Item item, Deduction deduction) {
 		//get rule id
 		int rule_id = NULL_RULE_ID;
 		final Rule deduction_rule = deduction.get_rule();
@@ -370,8 +419,8 @@ public class DiskHyperGraph {
 		res.append(" ");
 		res.append(rule_id);
 		if (rule_id == OOV_RULE_ID) {
-			res.append(" "); res.append(Symbol.get_string(deduction_rule.lhs));
-			res.append(" "); res.append(Symbol.get_string(deduction_rule.english));
+			res.append(" "); res.append(this.p_symbol.getWord(deduction_rule.lhs));
+			res.append(" "); res.append(this.p_symbol.getWords(deduction_rule.english));
 		}
 		res.append("\n");
 		FileUtility.write_lzf(out, res.toString());
@@ -418,9 +467,11 @@ public class DiskHyperGraph {
 				}
 				//System.out.println("nonoov rule str: " + str_rule + "; arity: " + rule.arity);
 			}else{
-				int lhs = Symbol.add_non_terminal_symbol(fds[3+num_ant_items]);
-				int french_symbol = Symbol.add_terminal_symbol(fds[4+num_ant_items]);
-				rule = new MemoryBasedTMGrammar.Rule_Memory(lhs, french_symbol, Symbol.UNTRANS_SYM_ID);//TODO: change owner
+				int lhs = this.p_symbol.addNonTerminalSymbol(fds[3+num_ant_items]);
+				int french_symbol = this.p_symbol.addTerminalSymbol(fds[4+num_ant_items]);
+				//rule = new MemoryBasedTMGrammar.Rule_Memory(lhs, french_symbol, Chart.UNTRANS_SYM_ID);//TODO: change owner
+				rule = new MemoryBasedRule(p_l_models, TMGrammar.OOV_RULE_ID, lhs, french_symbol, this.UNTRANS_OWNER_SYM_ID, false);
+				
 				//System.out.println("oov rule str: " + str_rule + "; arity: " + rule.arity);
 			}
 			

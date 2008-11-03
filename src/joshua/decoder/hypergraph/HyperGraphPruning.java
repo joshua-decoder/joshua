@@ -49,9 +49,10 @@ public class HyperGraphPruning extends InsideOutside {
 	
 	int glue_grammar_owner=0;//TODO
 	
+
 //####	
 	
-	public HyperGraphPruning(boolean fix_threshold, double threshold_general, double threshold_glue, double step_general, double step_glue){
+	public HyperGraphPruning(Symbol p_symbol, boolean fix_threshold, double threshold_general, double threshold_glue, double step_general, double step_glue){
 		fix_threshold_pruning = fix_threshold;
 		THRESHOLD_GENERAL = threshold_general;
 		THRESHOLD_GLUE = threshold_glue;
@@ -59,7 +60,7 @@ public class HyperGraphPruning extends InsideOutside {
 		CUR_THRESHOLD_GLUE = THRESHOLD_GLUE;
 		THRESHOLD_STEP_GENERAL = step_general;
 		THRESHOLD_STEP_GLUE = step_glue;
-		glue_grammar_owner = Symbol.add_terminal_symbol(JoshuaConfiguration.begin_mono_owner);//TODO
+		glue_grammar_owner = p_symbol.addTerminalSymbol(JoshuaConfiguration.begin_mono_owner);//TODO
 	}
 	
 	

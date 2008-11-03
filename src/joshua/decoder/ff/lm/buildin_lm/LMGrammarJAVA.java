@@ -22,9 +22,9 @@ import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import joshua.decoder.BuildinSymbol;
 import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.Support;
-import joshua.decoder.Symbol;
 import joshua.decoder.ff.lm.LMGrammar;
 import joshua.util.FileUtility;
 
@@ -38,6 +38,17 @@ import joshua.util.FileUtility;
  * @version $LastChangedDate:2008-07-28 18:44:45 -0400 (Mon, 28 Jul 2008) $
  */
 public class LMGrammarJAVA extends LMGrammar {
+
+	static String BACKOFF_WGHT_SYM="<bow>";
+	public  int BACKOFF_WGHT_SYM_ID;//used by LMModel
+	
+	static String LM_HAVE_PREFIX_SYM="<havelzfprefix>"; //to indicate that lm trie node has children
+	public  int LM_HAVE_PREFIX_SYM_ID; 
+	
+	static String UNK_SYM="<unk>";//unknown lm word
+	public int UNK_SYM_ID;
+	
+	
 	/*a backoff node is a hashtable, it may include:
 	 * (1) probabilititis for next words
 	 * (2) pointers to a next-layer backoff node (hashtable)
@@ -61,14 +72,24 @@ public class LMGrammarJAVA extends LMGrammar {
 	HashMap request_cache_right_equiv = new HashMap();//cmd with result
 	int cache_size_limit= 250000;
 	
+	
 	private static final Logger logger = Logger.getLogger(LMGrammarJAVA.class.getName());
 	
-	public LMGrammarJAVA(int order, boolean is_add_suffix_infor, boolean is_add_prefix_infor){
-		super(order);		
-		if (logger.isLoggable(Level.INFO)) logger.info("use java lm");		
+	public LMGrammarJAVA(BuildinSymbol psymbol, int order, String lm_file, boolean is_add_suffix_infor, boolean is_add_prefix_infor){
+		super(psymbol, order);		
+		if (logger.isLoggable(Level.INFO)) 
+			logger.info("use java lm");
+		
+		this.BACKOFF_WGHT_SYM_ID = psymbol.addTerminalSymbol(BACKOFF_WGHT_SYM);
+		this.LM_HAVE_PREFIX_SYM_ID = psymbol.addTerminalSymbol(LM_HAVE_PREFIX_SYM);
+		this.UNK_SYM_ID = psymbol.addTerminalSymbol(UNK_SYM);
+		
 		g_is_add_prefix_infor = is_add_prefix_infor;
 		g_is_add_suffix_infor = is_add_suffix_infor;
-		Symbol.add_global_symbols(true);
+		
+		read_lm_grammar_from_file(lm_file);//TODO: what about sentence-specific?
+		
+		//Symbol.add_global_symbols(true);
 		/*//debug 
 		LMHash[] t_arrays = new LMHash[10000000];
 		System.out.println("##### mem used (kb): " + Support.getMemoryUse());
@@ -131,7 +152,7 @@ public class LMGrammarJAVA extends LMGrammar {
 		//if(res!=null)return res;
 		
 		int[] ngram_wrds=replace_with_unk(ngram_wrds_in);//TODO
-	    if(ngram_wrds[ngram_wrds.length-1]==Symbol.UNK_SYM_ID){//TODO: wrong implementation in hiero
+	    if(ngram_wrds[ngram_wrds.length-1]==UNK_SYM_ID){//TODO: wrong implementation in hiero
 			res= -JoshuaConfiguration.lm_ceiling_cost;
 	    }else{
 		    //TODO: untranslated words
@@ -146,7 +167,7 @@ public class LMGrammarJAVA extends LMGrammar {
 			Double prob=get_valid_prob(pos,last_word_id);
 			double bow_sum=0;
 			for(int i=ngram_wrds.length-2; i>=0; i--){//reverse search, start from the second-last word			
-				LMHash  next_layer=(LMHash) pos.get(ngram_wrds[i]+Symbol.lm_end_sym_id);
+				LMHash  next_layer=(LMHash) pos.get(ngram_wrds[i]+p_symbol.getLMEndID());
 				if(next_layer!=null){//have context/bow node
 					pos=next_layer;
 					//Double prob2=(Double)pos.get(last_word_id);
@@ -155,7 +176,7 @@ public class LMGrammarJAVA extends LMGrammar {
 						prob=prob2;
 						bow_sum =0;
 					}else{
-						Double bow = (Double) pos.get( Symbol.BACKOFF_WGHT_SYM_ID );
+						Double bow = (Double) pos.get(BACKOFF_WGHT_SYM_ID );
 						if(bow!=null)
 							bow_sum += bow; 
 					}
@@ -219,7 +240,7 @@ public class LMGrammarJAVA extends LMGrammar {
 			for(int i=1; i<=original_state.length; i++){//forward search				
 				int[] cur_wrds = Support.sub_int_array(original_state, i-1, original_state.length);
 				if(have_prefix(cur_wrds)==false){
-					res[i-1]=Symbol.NULL_RIGHT_LM_STATE_SYM_ID;
+					res[i-1]=NULL_RIGHT_LM_STATE_SYM_ID;
 				}else{
 					for(int j=i; j<=original_state.length; j++)
 						res[j-1] = original_state[j-1];
@@ -240,14 +261,14 @@ public class LMGrammarJAVA extends LMGrammar {
 		 LMHash pos=root;
 		 int i=words.length-1;
 		 for( ; i>=0; i--){//reverse search
-				LMHash  next_layer=(LMHash) pos.get(words[i]+Symbol.lm_end_sym_id);
+				LMHash  next_layer=(LMHash) pos.get(words[i]+p_symbol.getLMEndID());
 				if(next_layer!=null){
 					pos=next_layer;					
 				}else{
 					break;
 				}
 		 }
-		 if(i==-1 && pos.containsKey(Symbol.LM_HAVE_PREFIX_SYM_ID))
+		 if(i==-1 && pos.containsKey(LM_HAVE_PREFIX_SYM_ID))
 			 return true;
 		 else
 			 return false;
@@ -290,14 +311,14 @@ public class LMGrammarJAVA extends LMGrammar {
 				int[] cur_wrds = Support.sub_int_array(original_state_wrds, 0, i);
 				if(have_suffix(cur_wrds)==false){
 					int last_wrd = cur_wrds[i-1];
-					if(last_wrd==Symbol.UNK_SYM_ID){
+					if(last_wrd==UNK_SYM_ID){
 						 res_equi_state[i-1] = last_wrd;
 						 res_est_cost += -get_prob(cur_wrds, cur_wrds.length, false);//est cost						 
 					 }else{
-						 if(last_wrd!=Symbol.BACKOFF_LEFT_LM_STATE_SYM_ID )
+						 if(last_wrd!=BACKOFF_LEFT_LM_STATE_SYM_ID )
 							 res_final_cost += -get_prob(cur_wrds, cur_wrds.length, false);
 						 
-						 res_equi_state[i-1]=Symbol.BACKOFF_LEFT_LM_STATE_SYM_ID;
+						 res_equi_state[i-1]=BACKOFF_LEFT_LM_STATE_SYM_ID;
 						 /*//TODO: for simplicity, we may just need BACKOFF_LEFT_LM_STATE_SYM_ID??
 						 int[] backoff_history = Support.sub_int_array(cur_wrds, 0, cur_wrds.length-1);//ignore last wrd
 						 double[] bow = new double[1];
@@ -329,7 +350,7 @@ public class LMGrammarJAVA extends LMGrammar {
 	 private boolean have_suffix(int[] words){
 		 LMHash pos=root;
 		 for(int i=words.length-2; i>=0; i--){//reverse search, start from the second-last word			
-				LMHash  next_layer=(LMHash) pos.get(words[i]+Symbol.lm_end_sym_id);
+				LMHash  next_layer=(LMHash) pos.get(words[i]+p_symbol.getLMEndID());
 				if(next_layer!=null){
 					pos=next_layer;
 				}else{
@@ -366,9 +387,9 @@ public class LMGrammarJAVA extends LMGrammar {
 		Double bow=null;
 		int i=backoff_words.length-1;
 		for(; i>=0; i--){
-			LMHash next_layer=(LMHash) pos.get(backoff_words[i]+Symbol.lm_end_sym_id);
+			LMHash next_layer=(LMHash) pos.get(backoff_words[i]+p_symbol.getLMEndID());
 			if(next_layer!=null){				
-				bow = (Double)next_layer.get(Symbol.BACKOFF_WGHT_SYM_ID);
+				bow = (Double)next_layer.get( BACKOFF_WGHT_SYM_ID);
 				if(bow!=null && i<=start_use_i)
 					sum += bow;
 				pos=next_layer;
@@ -388,11 +409,11 @@ public class LMGrammarJAVA extends LMGrammar {
 //	######################################## general helper function ###########################################
 	protected int replace_with_unk(int in){ 	
        if(root.containsKey(in)==true || 
-    	   in == Symbol.NULL_RIGHT_LM_STATE_SYM_ID ||       
-    	   in == Symbol.BACKOFF_LEFT_LM_STATE_SYM_ID)
+    	   in == NULL_RIGHT_LM_STATE_SYM_ID ||       
+    	   in == BACKOFF_LEFT_LM_STATE_SYM_ID)
 		 return in;
 	   else
-		 return Symbol.UNK_SYM_ID;
+		 return UNK_SYM_ID;
 	}
 	
 //	######################################## read LM grammar by the Java implementation ###########################################
@@ -408,7 +429,7 @@ public class LMGrammarJAVA extends LMGrammar {
 	public void read_lm_grammar_from_file(String grammar_file){
 		start_loading_time = System.currentTimeMillis();
 		root = new LMHash();
-		root.put(Symbol.BACKOFF_WGHT_SYM_ID, NON_EXIST_WEIGHT);
+		root.put( BACKOFF_WGHT_SYM_ID, NON_EXIST_WEIGHT);
 	
 		BufferedReader t_reader_tree = FileUtility.getReadFileStream(grammar_file,"utf8"); // BUG? shouldn't this be the implicit "UTF-8" instead?
 		if (logger.isLoggable(Level.INFO)) logger.info("Reading grammar from file " + grammar_file);		
@@ -453,7 +474,7 @@ public class LMGrammarJAVA extends LMGrammar {
 			//Support.write_log_line("wrong line: "+ line, Support.ERROR);
 			return;			
 		}	
-		int last_word_id = Symbol.add_terminal_symbol(wrds[order]);
+		int last_word_id = p_symbol.addTerminalSymbol(wrds[order]);
 		
 		//##### identify the BOW position, insert the backoff node if necessary, and add suffix information
 		LMHash  pos =root;
@@ -469,13 +490,13 @@ public class LMGrammarJAVA extends LMGrammar {
 					pos.put(last_word_id, SUFFIX_ONLY);
 				}				
 			}			
-			int cur_sym_id = Symbol.add_terminal_symbol(wrds[i]);
-			LMHash  next_layer=(LMHash) pos.get(cur_sym_id+Symbol.lm_end_sym_id);
+			int cur_sym_id = p_symbol.addTerminalSymbol(wrds[i]);
+			LMHash  next_layer=(LMHash) pos.get(cur_sym_id+p_symbol.getLMEndID());
 			if(next_layer!=null){
 				pos=next_layer;
 			}else{
 				LMHash  new_tnode = new LMHash();//create new bow node													
-				pos.put(cur_sym_id+Symbol.lm_end_sym_id, new_tnode);
+				pos.put(cur_sym_id+p_symbol.getLMEndID(), new_tnode);
 				pos = new_tnode;
 				
 				g_n_bow_nodes++;				
@@ -485,8 +506,8 @@ public class LMGrammarJAVA extends LMGrammar {
 					if (logger.isLoggable(Level.FINE)) logger.fine("##### time used (seconds): " + (System.currentTimeMillis()-start_loading_time)/1000);
 				}
 			}
-			if (pos.containsKey(Symbol.BACKOFF_WGHT_SYM_ID)==false)
-				pos.put(Symbol.BACKOFF_WGHT_SYM_ID, NON_EXIST_WEIGHT);//indicate it is a backoof node, to distinguish from a pure prefix node			
+			if (pos.containsKey( BACKOFF_WGHT_SYM_ID)==false)
+				pos.put( BACKOFF_WGHT_SYM_ID, NON_EXIST_WEIGHT);//indicate it is a backoof node, to distinguish from a pure prefix node			
 		}
 		
 		//##### add probability
@@ -498,17 +519,17 @@ public class LMGrammarJAVA extends LMGrammar {
 		
 		//##### add prefix infor, a prefix node is just like a BOW node
 		if(is_add_prefix_infor==true){
-			pos.put(Symbol.LM_HAVE_PREFIX_SYM_ID, 1);//for preifx [1,order-1]  
+			pos.put( LM_HAVE_PREFIX_SYM_ID, 1);//for preifx [1,order-1]  
 			for(int i=1; i<order-1; i++){//ignore the last prefix
 				pos=root;//reset pos
 				for(int j=i; j>=1; j--){//reverse search: [1,i]
-					int cur_sym_id = Symbol.add_terminal_symbol(wrds[j]);	
-					LMHash  next_layer=(LMHash) pos.get(cur_sym_id+Symbol.lm_end_sym_id);
+					int cur_sym_id = p_symbol.addTerminalSymbol(wrds[j]);	
+					LMHash  next_layer=(LMHash) pos.get(cur_sym_id+p_symbol.getLMEndID());
 					if(next_layer!=null){
 						pos=next_layer;
 					}else{
 						LMHash  new_tnode = new LMHash();//create new prefix node						
-						pos.put(cur_sym_id+Symbol.lm_end_sym_id, new_tnode);
+						pos.put(cur_sym_id+p_symbol.getLMEndID(), new_tnode);
 						pos = new_tnode;
 						
 						g_n_bow_nodes++;				
@@ -519,7 +540,7 @@ public class LMGrammarJAVA extends LMGrammar {
 						}
 					}
 				}
-				pos.put(Symbol.LM_HAVE_PREFIX_SYM_ID, 1);//only the last node should have this flag
+				pos.put( LM_HAVE_PREFIX_SYM_ID, 1);//only the last node should have this flag
 			}			
 		}	
 		
@@ -528,13 +549,13 @@ public class LMGrammarJAVA extends LMGrammar {
 		if( wrds.length==order+2){ //have bow weight to add
 			pos=root;
 			for(int i=order; i>=1; i--){//reverse search, start from the last word
-				int cur_sym_id = Symbol.add_terminal_symbol(wrds[i]);			
-				LMHash  next_layer=(LMHash) pos.get(cur_sym_id+Symbol.lm_end_sym_id);
+				int cur_sym_id = p_symbol.addTerminalSymbol(wrds[i]);			
+				LMHash  next_layer=(LMHash) pos.get(cur_sym_id+p_symbol.getLMEndID());
 				if(next_layer!=null){
 					pos=next_layer;					
 				}else{
 					LMHash  new_tnode = new LMHash();//create new bow node					
-					pos.put(cur_sym_id+Symbol.lm_end_sym_id, new_tnode);
+					pos.put(cur_sym_id+p_symbol.getLMEndID(), new_tnode);
 					pos = new_tnode;
 					
 					g_n_bow_nodes++;				
@@ -548,10 +569,10 @@ public class LMGrammarJAVA extends LMGrammar {
 				//add bow weight here				
 				if(i==1){//force to override the backoff weight
 					Double backoff_weight = new Double(wrds[order+1]);
-					pos.put(Symbol.BACKOFF_WGHT_SYM_ID, backoff_weight.doubleValue());
+					pos.put( BACKOFF_WGHT_SYM_ID, backoff_weight.doubleValue());
 				}else{ 
-					if (pos.containsKey(Symbol.BACKOFF_WGHT_SYM_ID)==false)
-						pos.put(Symbol.BACKOFF_WGHT_SYM_ID, NON_EXIST_WEIGHT);//indicate it is a backoof node, to distinguish from a pure prefix node		
+					if (pos.containsKey( BACKOFF_WGHT_SYM_ID)==false)
+						pos.put( BACKOFF_WGHT_SYM_ID, NON_EXIST_WEIGHT);//indicate it is a backoof node, to distinguish from a pure prefix node		
 				}				
 			}			
 		}				
@@ -563,7 +584,7 @@ public class LMGrammarJAVA extends LMGrammar {
 		 LMHash pos=root;
 		 int i=words.length-1;
 		 for(; i>=0; i--){//reverse search			
-				LMHash  next_layer=(LMHash) pos.get(words[i]+Symbol.lm_end_sym_id);
+				LMHash  next_layer=(LMHash) pos.get(words[i]+p_symbol.getLMEndID());
 				if(next_layer!=null){
 					pos=next_layer;					
 				}else{

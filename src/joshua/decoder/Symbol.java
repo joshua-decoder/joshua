@@ -17,12 +17,6 @@
  */
 package joshua.decoder;
 
-import joshua.decoder.ff.lm.srilm.srilm;
-import joshua.util.FileUtility;
-
-import java.io.BufferedReader;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -41,332 +35,36 @@ import java.util.List;
  * @version $LastChangedDate$
  */
 
-public class Symbol {
+public interface Symbol {
+	public int addTerminalSymbol(String wordString);
+	public int[] addTerminalSymbols(String sentence);
+	public int[] addTerminalSymbols(String[] words);
 
-	//terminal symbol may get from a tbl file, srilm, or a lm file
-	//**non-terminal symbol is always from myself	
-	static HashMap<String,Integer> str_2_num_tbl = new HashMap<String,Integer>();
-	static HashMap<Integer,String> num_2_str_tbl = new HashMap<Integer,String>();
-	public static int lm_start_sym_id = 10000;//1-10000 reserved for non-terminal
-	public static int lm_end_sym_id = 2000001;//max vocab 1000k
+	public int getLMEndID();
+	public int getLMStartID();
 	
-	static public boolean use_my_own_tbl=false;//for terminal only: use my own table (both java and remote method use this) or srilm table
-	
-	public static int nonterminal_cur_id=1;//start from 1
-	public static int terminal_cur_id =lm_start_sym_id ;
-	
-	
-	//all the global sym id
-	static String BACKOFF_WGHT_SYM="<bow>";
-	public static int BACKOFF_WGHT_SYM_ID=0;//used by LMModel
-	static String BACKOFF_LEFT_LM_STATE_SYM="<lzfbo>";
-	public static int BACKOFF_LEFT_LM_STATE_SYM_ID=0;
-	static String NULL_LEFT_LM_STATE_SYM="<lzflnull>";
-	public static int NULL_LEFT_LM_STATE_SYM_ID=0;
-	static String NULL_RIGHT_LM_STATE_SYM="<lzfrnull>";
-	public static int NULL_RIGHT_LM_STATE_SYM_ID=0;
-	static String LM_STATE_OVERLAP_SYM="<lzfoverlap>";
-	public static int LM_STATE_OVERLAP_SYM_ID=0;
-	static String LM_HAVE_SUFFIX_SYM="<havelzfsuffix>"; //to indicate that lm trie node has children
-	public static int LM_HAVE_SUFFIX_SYM_ID=0; 
-	static String LM_HAVE_PREFIX_SYM="<havelzfprefix>"; //to indicate that lm trie node has children
-	public static int LM_HAVE_PREFIX_SYM_ID=0; 
-	static String LM_PROB_SYM="<lmlzfprob>";
-	static int LM_PROB_SYM_ID=0;
-	static String START_SYM="<s>";
-	public static int START_SYM_ID=0;
-	static String STOP_SYM="</s>";
-	public static int STOP_SYM_ID=0;
-	static String ECLIPS_SYM="<e>";
-	static int ECLIPS_SYM_ID=0;
-	static String UNK_SYM="<unk>";//unknown lm word
-	public static int UNK_SYM_ID=0;
-	static String UNTRANS_SYM="<unt>";
-	public static int UNTRANS_SYM_ID=0;//untranslated word id
-	static String GOAL_SYM="S"; 
-	public static int GOAL_SYM_ID=0;
-	
-//	used in chart
-//	state name definition
-	static String EXPECTED_TOTAL_COST_SYM = "<etotalcost>";//total cost of the deduction(i.e., rule with ant-items)
-	static String FINALIZED_TOTAL_COST_SYM = "<ftotalcost>";
-	static String TRANSITION_COST_SYM = "<transitioncost>";//sum of transition cost by non-stateless/non-contexual models, Hiero: dcost
-	static String BONUS_SYM = "<bonuscost>";//outside estimation cost
-	static String ITEM_STATES_SYM = "<itemstates>";//to remember model states (e.g., LM_LEFT or LM_RIGHT)
-	//model specific state names	
-	static String LM_L_STATE_SYM="<llS>";
-	static String LM_R_STATE_SYM="<lrS>";
-	
-	public static int EXPECTED_TOTAL_COST_SYM_ID = 0;//including outside estimation, for prunining purpose
-	public static int FINALIZED_TOTAL_COST_SYM_ID =0;
-	public static int TRANSITION_COST_SYM_ID = 0;
-	public static int BONUS_SYM_ID = 0;//the future cost estimation
-	public static int ITEM_STATES_SYM_ID = 0;	
-	static public int LM_L_STATE_SYM_ID = 0;
-	static public int LM_R_STATE_SYM_ID = 0;
-	
-	//used in chart-parsing	
-	public static ArrayList<Integer> l_model_state_names;
-	private static void set_state_names_list(){//must call after add_static_symbols 
-		l_model_state_names = new ArrayList<Integer>();
-		l_model_state_names.add(Symbol.LM_L_STATE_SYM_ID);
-		l_model_state_names.add(Symbol.LM_R_STATE_SYM_ID);
-	}
-	
-	
-	//###since the Symbol class will be referenced by all applications, we also put the global static variables here
-	public static double EPSILON = 0.000001;	
-	public static int IMPOSSIBLE_COST=99999;//max cost
-	
-	
-	/*############# How to initialize the Symbol
-	 * Having multiple LM modes complicate the class, we have four LM mode: JAVA_LM, SRILM, Distributed_LM, and NONE_LM. The NONE_LM and JAVA_LM will be treated as same. 
-	 *JAVA_LM and NONE_LM: call add_global_symbols(true) to initialize
-	 *SRILM: the SRILM must first be initialized, then call add_global_symbols(false)
-	 *DistributedLM (from decoder): call init_sym_tbl_from_file(true)
-	 *DistributedLM (from LMServer): call init_sym_tbl_from_file(true/false)
-	 * */
+	public int addNonTerminalSymbol(String wordString);
 
-	static public void add_global_symbols(boolean use_own_tbl){
-		use_my_own_tbl=use_own_tbl;
-		BACKOFF_WGHT_SYM_ID = add_terminal_symbol(BACKOFF_WGHT_SYM);
-		BACKOFF_LEFT_LM_STATE_SYM_ID = add_terminal_symbol(BACKOFF_LEFT_LM_STATE_SYM);
-		NULL_LEFT_LM_STATE_SYM_ID = add_terminal_symbol(NULL_LEFT_LM_STATE_SYM);
-		NULL_RIGHT_LM_STATE_SYM_ID =  add_terminal_symbol(NULL_RIGHT_LM_STATE_SYM);
-		LM_STATE_OVERLAP_SYM_ID = add_terminal_symbol(LM_STATE_OVERLAP_SYM);
-		LM_HAVE_SUFFIX_SYM_ID = add_terminal_symbol(LM_HAVE_SUFFIX_SYM);
-		LM_HAVE_PREFIX_SYM_ID = add_terminal_symbol(LM_HAVE_PREFIX_SYM);
-		LM_PROB_SYM_ID = add_terminal_symbol(LM_PROB_SYM);
-		START_SYM_ID = add_terminal_symbol(START_SYM);
-		STOP_SYM_ID = add_terminal_symbol(STOP_SYM);
-		ECLIPS_SYM_ID = add_terminal_symbol(ECLIPS_SYM);
-		UNK_SYM_ID = add_terminal_symbol(UNK_SYM);
-		UNTRANS_SYM_ID = add_terminal_symbol(UNTRANS_SYM);
-		GOAL_SYM_ID = add_non_terminal_symbol(GOAL_SYM);
-		
-		//used in chart
-		EXPECTED_TOTAL_COST_SYM_ID = add_terminal_symbol(EXPECTED_TOTAL_COST_SYM);
-		FINALIZED_TOTAL_COST_SYM_ID = add_terminal_symbol(FINALIZED_TOTAL_COST_SYM);
-		TRANSITION_COST_SYM_ID = add_terminal_symbol(TRANSITION_COST_SYM);
-		BONUS_SYM_ID = add_terminal_symbol(BONUS_SYM);
-		ITEM_STATES_SYM_ID =add_terminal_symbol(ITEM_STATES_SYM);	
-		LM_L_STATE_SYM_ID =add_terminal_symbol(LM_L_STATE_SYM);
-		LM_R_STATE_SYM_ID = add_terminal_symbol(LM_R_STATE_SYM);
-		set_state_names_list();
-	}
-
-
-	//make sure the file contains all the global symbols
-	//this function will call the add_global_symbols to set the gloabl symbols
-	static public void init_sym_tbl_from_file(String fname, boolean u_own_tbl){	
-		use_my_own_tbl=u_own_tbl;
-		
-		//### read file into tbls
-		HashMap<String, Integer> tbl_str_2_id = new HashMap<String, Integer>();
-		HashMap<Integer, String> tbl_id_2_str = new HashMap<Integer, String>();
-		BufferedReader t_reader_sym = FileUtility.getReadFileStream(fname);
-		String line;		
-		while((line=FileUtility.read_line_lzf(t_reader_sym))!=null){
-			String[] fds = line.split("\\s+");
-			if(fds.length!=2){
-			    System.out.println("Warning: read index, bad line: " + line);
-			    continue;
-			}
-			String str = fds[0].trim();
-			int id = new Integer(fds[1]);
-
-			String uqniue_str;
-			if (null != tbl_str_2_id.get(str)) { // it is quite possible that java will treat two stings as the same when other language (e.g., C or perl) treat them differently, due to unprintable symbols
-				 System.out.println("Warning: duplicate string (add fake): " + line);
-				 uqniue_str = str + id;//fake string
-				 //System.exit(1);//TODO
-			} else {
-				uqniue_str = str;
-			}
-			tbl_str_2_id.put(uqniue_str,id);
-			
-			//it is guranteed that the strings in tbl_id_2_str are different
-			if (null != tbl_id_2_str.get(id)) {
-				 System.out.println("Error: duplicate id, have to exit; " + line);
-				 System.exit(1);
-			} else {
-				tbl_id_2_str.put(id, uqniue_str);
-			}
-		}
-		FileUtility.close_read_file(t_reader_sym);
-		if (tbl_id_2_str.size() >= lm_end_sym_id - lm_start_sym_id) {
-			System.out.println("Error: read symbol tbl, tlb is too big");
-			System.exit(1);
-		}
-		
-		//#### now add the tbl into srilm/java-tbl
-		int n_added = 0;
-		for (int i = lm_start_sym_id; i < lm_end_sym_id; i++) {
-			String str = (String) tbl_id_2_str.get(i); // it is guranteed that the strings in tbl_id_2_str are different
-			int res_id;
-			if (null != str) {
-				res_id = add_terminal_symbol(str);
-				n_added++;
-			} else { // non-continous index
-				System.out.println("Warning: add fake symbol, be alert");
-				res_id = add_terminal_symbol("lzf"+i);
-			}	
-			if (res_id != i) {
-				System.out.println("id supposed: " + i +" != assinged " + res_id + " symbol:" + str);
-				System.exit(1);
-			}		
-			if (n_added >= tbl_id_2_str.size()) {
-				break;
-			}
-		}
-		Symbol.add_global_symbols(u_own_tbl); // the above already load all the symbols except the global non-terminal symbols, but we need to call this function to set the SYM_ID correctly
-	}
+	public boolean isNonterminal(int id);
 	
+	public int getEngNonTerminalIndex(int id);//return the index of a nonterminal, e.g., input X1 will return 1; input X0 will return 0 
 	
-	static public String get_string(int id) {
-		if (! use_my_own_tbl && ! is_nonterminal(id)) {
-			return get_terminal_str_srilm(id);
-		}
-		
-		String res = (String)num_2_str_tbl.get(id);
-		if (null == res) {
-			System.out.println("unknown id: "+id);
-			//throw new IOException();
-			System.exit(1);
-		} else {
-			return res;
-		}
-		return res;
-	}
-	
-	
-	static public String get_string(Integer[] ids){
-		String res = "";
-		for(int t=0; t<ids.length; t++){
-			if(t==0)
-				res += get_string(ids[t]);
-			else
-				res += " " + get_string(ids[t]);
-		}
-		return res;
-	}
-	
-	static public String get_string(int[] ids){
-		String res = "";
-		for(int t=0; t<ids.length; t++){
-			if(t==0)
-				res += get_string(ids[t]);
-			else
-				res += " " + get_string(ids[t]);
-		}
-		return res;
-	}
-	
-	static public String get_string(List<Integer> ids){
-		String res = "";
-		for(int t=0; t<ids.size(); t++){
-			if(t==0)
-				res += get_string(ids.get(t));
-			else
-				res += " " + get_string(ids.get(t));
-		}
-		return res;
-	}
-	
-	
-	static public int[] get_terminal_ids_for_sentence(String sentence){
-		String[] sent_wrds = sentence.split("\\s+");		
-		return get_terminal_ids(sent_wrds);
-	}	
-	
-	
-	static public int[] get_terminal_ids(String[] strings){
-		int[] res =new int[strings.length];
-		for(int t=0; t<strings.length; t++)
-			res[t]=add_terminal_symbol(strings[t]);
-		return res;
-	}	
-	
-	/** Get int for string (initial, or recover) */
-	static public int add_terminal_symbol(String str){
-		if(use_my_own_tbl==false)
-			return get_terminal_sym_id_srilm(str);
-		else{
-			Integer res_id = (Integer)str_2_num_tbl.get(str);
-			if (null != res_id) { // already have this symbol
-				if (is_nonterminal(res_id)) {
-					System.out.println("Error, terminal symbol mix with non-terminal, Sym: " + str + "; id: " + res_id);
-					System.exit(1);
-				}
-				return res_id;
-			} else {
-				str_2_num_tbl.put(str, terminal_cur_id);
-				num_2_str_tbl.put(terminal_cur_id, str);
-				terminal_cur_id++;
-				//System.out.println("Sym: " + str + "; id: " + positive_id);
-				return (terminal_cur_id-1);
-			}
-		}
-	}
-	
-//	####### following funcitons used for TM only
-	static public int add_non_terminal_symbol(String str){
-		Integer res_id = (Integer)str_2_num_tbl.get(str);
-		if (null != res_id) { // already have this symbol
-			if (! is_nonterminal(res_id)) {
-				System.out.println("Error, NONTSym: " + str + "; id: " + res_id);
-				System.exit(1);
-			}
-			return res_id;
-		} else {
-			str_2_num_tbl.put(str, nonterminal_cur_id);
-			num_2_str_tbl.put(nonterminal_cur_id, str);
-			nonterminal_cur_id++;
-			//System.out.println("Sym: " + str + "; id: " + negative_id);
-			return (nonterminal_cur_id-1);
-		}
-	}
-	
-	
-	static public boolean is_nonterminal(int id) {
-		return (id < lm_start_sym_id);
-	}
-	
-	
-	static public int get_eng_non_terminal_id(int id) {
-		if (! is_nonterminal(id)) {
-			return -1;
-		} else {
-			// TODO: get rid of this expensive interim object
-			String symbol = get_string(id);
-			
-			// Assumes the last character is a digit
-			// and extracts it, starting from one.
-			// Assumes the whole prefix is the
-			// nonterminal-ID portion of the string
-			return Integer.parseInt(
-				symbol.substring(
-					symbol.length() - 2,
-					symbol.length() - 1)) - 1;
-		}
-	}
-	
-	
-//	srilm begin
-	 /*private static int get_nonterminal_sym_id_srilm(String str){//
-		 return  (int)srilm.getIndexForWord_Vocab(p_srilm_nonterminal_vocab, str);
-	 }*/
+	/**
+	 * @return the ID for wordString
+	 */
+	//public int getID(String wordString);//can be terminal or non-terminal
 	 
-	 private static int get_terminal_sym_id_srilm(String str) {
-		 return  (int)srilm.getIndexForWord(str);
-	 }
-	 
-	 /*private static String get_nonterminal_str_srilm(int id){//
-		 return  srilm.getWordForIndex_Vocab(p_srilm_nonterminal_vocab, id);
-	 }*/
-	 
-	 private static String get_terminal_str_srilm(int id) {
-		 return srilm.getWordForIndex(id);
-	 }
-	 
+	//public int[] getIDs(String sentence);//can be mix of nonterminal and terminal
+	
+
+	/**
+	 * @return the String for a word ID
+	 */
+	public String getWord(int wordID);//can be terminal or non-terminal
+	
+	public String getWords(int[] wordIDs);//can be mix of terminal and non-terminal
+	
+	public String getWords(Integer[] wordIDs);//can be mix of terminal and non-terminal
+
+	public String getWords(List<Integer> wordIDs);//can be mix of terminal and non-terminal
 }

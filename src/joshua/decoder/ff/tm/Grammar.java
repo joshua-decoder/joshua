@@ -44,8 +44,5 @@ public interface Grammar {
 	 * than the span limit. Other grammars, e.g. for rule-based
 	 * systems, may have different behaviors.
 	 */
-	public boolean hasRuleForSpan(
-		int startIndex,
-		int endIndex,
-		int pathLength);
+	public boolean hasRuleForSpan(int startIndex, int endIndex,	int pathLength);
 }
