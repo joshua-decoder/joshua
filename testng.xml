@@ -46,4 +46,10 @@
     </classes>
   </test>
 
+  <test name="Util" >
+    <classes>
+       <class name="joshua.util.CacheTest" /> 
+    </classes>
+  </test>
+  
 </suite>

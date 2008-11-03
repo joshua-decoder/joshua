@@ -21,6 +21,7 @@ import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.RuleCollection;
 import joshua.decoder.ff.tm.TrieGrammar;
+import joshua.util.Pair;
 import joshua.util.lexprob.LexProbs;
 import joshua.util.lexprob.LexicalProbabilities;
 import joshua.util.sentence.LabelledSpan;
@@ -43,8 +44,6 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import com.sun.tools.javac.util.Pair;
 
 import edu.jhu.sa.util.suffix_array.Pattern.PrefixCase;
 import edu.jhu.sa.util.suffix_array.Pattern.SuffixCase;
@@ -1348,7 +1347,7 @@ public class PrefixTree {
 				Pair<Float,Float> lexProbsPair = lexProbsList.get(i);
 				
 				{	// Perform lexical translation probability calculations
-					float sourceGivenTargetLexProb = lexProbsPair.fst;
+					float sourceGivenTargetLexProb = lexProbsPair.first;
 					
 					if (!cumulativeSourceGivenTargetLexProbs.containsKey(translation)) {
 						cumulativeSourceGivenTargetLexProbs.put(translation,sourceGivenTargetLexProb);
@@ -1367,7 +1366,7 @@ public class PrefixTree {
 				
 				
 				{	// Perform reverse lexical translation probability calculations
-					float targetGivenSourceLexProb = lexProbsPair.snd;
+					float targetGivenSourceLexProb = lexProbsPair.second;
 					
 					if (!cumulativeTargetGivenSourceLexProbs.containsKey(translation)) {
 						cumulativeTargetGivenSourceLexProbs.put(translation,targetGivenSourceLexProb);
@@ -1395,10 +1394,6 @@ public class PrefixTree {
 			
 			float p_e_given_f_denominator = translations.size();
 			
-			
-			
-			//TODO Add all required features in block below. Using only one features is bogus.
-			//if (logger.isLoggable(Level.FINE)) logger.fine("P(e|f) is the only feature being calculated for rules in PrefixTree.Node. This is highly bogus");
 			
 			for (Pattern translation : translations) {
 				
@@ -1438,7 +1433,13 @@ public class PrefixTree {
 		 */
 		private Pattern getTranslation(HierarchicalPhrase sourcePhrase) {
 
-
+			//TODO It may be that this method should be moved to the AlignmentArray class.
+			//     Doing so would require that the maxPhraseSpan and similar variables be accessible from AlignmentArray.
+			//     It would also require storing the SuffixArary as a member variable of AlignmentArray, and
+			//     making the constructTranslation method visible to AlignmentArray.
+			
+			
+			
 			// Case 1:  If sample !startsWithNT && !endsWithNT
 			if (!sourcePhrase.startsWithNonterminal() && !sourcePhrase.endsWithNonterminal()) {
 				
@@ -1630,6 +1631,11 @@ public class PrefixTree {
 		 * @return the lexical probability and reverse lexical probability
 		 */
 		private Pair<Float,Float> calculateLexProbs(HierarchicalPhrase sourcePhrase) {
+			
+			//TODO It may be that this method should be in the LexProbs or HierarchicalPhrase class
+			//     Unfortunately, moving it means that we will have to use accessor methods
+			//     instead of having direct access to member variables (because LexProbs is in a different package).
+			//     We would also have to store suffixArray, corpusArray, and alignments in the other class.
 			
 			//XXX We are not handling NULL aligned points according to Koehn et al (2003)
 			
