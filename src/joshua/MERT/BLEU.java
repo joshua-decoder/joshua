@@ -210,11 +210,18 @@ public class BLEU extends EvaluationMetric
     for (int n = 1; n <= maxGramLength; ++n) {
       correctGramCount = stats[s];
       totalGramCount = stats[s+1];
-      double prec_n = correctGramCount/totalGramCount;
-        // what if totalGramCount is zero ???????????????????????????????
+
+      double prec_n;
+      if (totalGramCount > 0) {
+        prec_n = correctGramCount/totalGramCount;
+      } else {
+        prec_n = 1; // following bleu-1.04.pl ???????
+      }
+
       if (prec_n == 0) {
         smooth_addition *= 0.5;
         prec_n = smooth_addition / (c_len-n+1);
+        // isn't c_len-n+1 just totalGramCount ???????
       }
 
       BLEUsum += w_n * Math.log(prec_n);
