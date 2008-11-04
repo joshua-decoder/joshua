@@ -1,0 +1,24 @@
+### Commonly used parameters
+-dir	MERT_example # location of relevant files
+-s	src.txt # source sentences file name
+-r	ref # target sentences file name (in this case, file name prefix)
+-rps	4 # references per sentence
+-cmd	decoder_command_ex2.txt # file containing command to run decoder
+-dcfg	config_ex2.txt # decoder config file
+-decOut	nbest_ex2.out # file prodcued by decoder
+-N	300 # size of N-best list generated each iteration
+-p	params.txt # parameter file
+-maxIt	30 # maximum MERT iterations
+-opi	1 # should MERT modify a single parameter per iteration?
+-v	1 # verbosity level (0-4; higher value => more verbose)
+
+# Notice that comments are allowed :)
+
+### Other parameters and their default values
+#-maxGL 4 # max gram length
+#-decExit 0 # return value by decoder indicating success
+#-fin final_lambdas.txt # output file for final values
+#-save 0 # should MERT save intermediate config files?
+#-reset 0 # should candidate list be reset each iteration?
+#-m BLEU # name of evaluation metric
+#-decV 0 # should decoder output be printed?

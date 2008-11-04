@@ -112,25 +112,23 @@ public class MERT
   static String dirPrefix; // where are all these files located?
   static String paramsFileName, finalLambdasFileName;
   static String sourceFileName, refFileName, decoderOutFileName;
-  static String configFileName, decoderCommandFileName;
+  static String decoderConfigFileName, decoderCommandFileName;
 
   public static void main(String[] args) throws Exception
   {
-    if (args.length < 2) {
-      printUsage(args.length);
-      System.exit(0);
-    }
-
     EvaluationMetric.set_knownNames();
 
-    processArgs(args);
-      // non-specified args will be set to default values in processArgs
+    if (args.length == 0) {
+      printUsage(args.length);
+      System.exit(0);
+    } else if (args.length == 1) {
+      processArgsArray(cfgFileToArgsArray(args[0]));
+    } else {
+      processArgsArray(args);
+    }
+    // non-specified args will be set to default values in processArgsArray
 
-    println("MERT started @ " + (new Date()) + " with the command:",1);
-
-    print("java MERT ",1);
-    for (int j = 0; j < args.length; ++j) print(args[j] + " ",1);
-    println("",1);
+    println("MERT started @ " + (new Date()),1);
     println("",1);
 
     initialize();
@@ -174,7 +172,7 @@ println("",2);
     // do we really need the source sentences ????????????????????????????????????????
 
     // create copy of config file
-    copyFile(configFileName,configFileName+".orig.MERT");
+    copyFile(decoderConfigFileName,decoderConfigFileName+".orig.MERT");
 
 
 
@@ -373,7 +371,7 @@ println("",2);
       // CREATE DECODER CONFIG FILE //
       /******************************/
 
-      createConfigFile(lambda,configFileName,configFileName+".orig.MERT");
+      createConfigFile(lambda,decoderConfigFileName,decoderConfigFileName+".orig.MERT");
 
       /***************/
       // RUN DECODER //
@@ -440,7 +438,7 @@ line format:
             print("Adding candidate " + n + " of sentence " + i + ": ",3);
             line = line.substring(line.indexOf("||| ")); // get rid of candidate
 
-            String[] featVal_str = line.split(" ");
+            String[] featVal_str = line.split("\\s+");
               // extract feature values
               // [0] will be |||, otherwise [i] will be feat-i_val
 
@@ -587,7 +585,7 @@ line format:
 
       if (saveInterCfg) {
         // create config file with current values
-        createConfigFile(lambda, configFileName+"."+iteration,configFileName+".orig.MERT");
+        createConfigFile(lambda, decoderConfigFileName+"."+iteration,decoderConfigFileName+".orig.MERT");
       }
 
     } // for (iteration)
@@ -1155,13 +1153,13 @@ private static void test_score(String inFileName, int candPerSen, int testIndex,
     outFile_lambdas.close();
 
     // create config file with final values
-    createConfigFile(lambda, configFileName+".final.MERT",configFileName+".orig.MERT");
+    createConfigFile(lambda, decoderConfigFileName+".final.MERT",decoderConfigFileName+".orig.MERT");
 
     // resotre original config file
-    copyFile(configFileName+".orig.MERT",configFileName);
+    copyFile(decoderConfigFileName+".orig.MERT",decoderConfigFileName);
 
     // delete copy of original config file
-    File cp = new File(configFileName+".orig.MERT");
+    File cp = new File(decoderConfigFileName+".orig.MERT");
     cp.delete();
 
   }
@@ -1171,20 +1169,24 @@ private static void test_score(String inFileName, int candPerSen, int testIndex,
     println("Oops, you provided " + argsLen + " args!");
     println("");
     println("Usage:");
-    println("MERT [-dir dirPrefix] [-s sourceFile] [-r refFile] [-rps refsPerSen]\n     [-maxGL maxGramLength] [-decOut decoderOutFile] [-decExit validExit]\n     [-p paramsFile] [-fin finalLambdas] [-N N] [-maxIt maxMERTIts]\n     [-cfg configFile] [-save saveInterCfg] [-cmd commandFile] [-opi onePerIt]\n     [-m metricName]\n     [-xx xxx] [-v verbosity]");
+    println(" MERT MERT_configFile");
     println("");
-    println(" (*) -dir dirPrefix: location of relevant files\n       [[default: empty string (i.e. they are in the current directory)]]");
+    println("   OR:");
+    println("");
+    println(" MERT [-dir dirPrefix] [-s sourceFile] [-r refFile] [-rps refsPerSen]\n      [-maxGL maxGramLength] [-decOut decoderOutFile] [-decExit validExit]\n      [-p paramsFile] [-fin finalLambdas] [-N N] [-maxIt maxMERTIts]\n      [-dcfg decConfigFile] [-save saveInterCfg] [-cmd commandFile]\n      [-opi onePerIt] [-m metricName]\n      [-xx xxx] [-v verbosity]");
+    println("");
+    println(" (*) -dir dirPrefix: location of relevant files\n       [[default: null string (i.e. they are in the current directory)]]");
     println(" (*) -s sourceFile: source sentences (foreign sentences) of the MERT dataset\n       [[default: source.txt]]");
     println(" (*) -r refFile: target sentences (reference translations) of the MERT dataset\n       [[default: reference.txt]]");
     println(" (*) -rps refsPerSen: number of reference translations per sentence\n       [[default: 1]]");
     println(" (*) -maxGL maxGramLength: maximum word gram length to collect statistics for\n       [[default: 4]]");
     println(" (*) -decOut decoderOutFile: name of the output file produced by your decoder\n       [[default: output.nbest]]");
     println(" (*) -decExit validExit: value returned by decoder to indicate success\n       [[default: 0]]");
-    println(" (***) -names paramNames: file containing parameter names\n       [[default: param_names.txt]]");
-    println(" (***) -init initLambdas: initial lambda[] values\n       [[default: initial_lambdas.txt]]");
+//    println(" (***) -names paramNames: file containing parameter names\n       [[default: param_names.txt]]");
+//    println(" (***) -init initLambdas: initial lambda[] values\n       [[default: initial_lambdas.txt]]");
     println(" (*) -p paramsFile: file containing parameter names, initial values, and ranges\n       [[default: params.txt]]");
     println(" (*) -fin finalLambdas: file name for final lambda[] values\n       [[default: final_lambdas.txt]]");
-    println(" (*) -cfg configFile: name of decoder config file\n       [[default: config_file.txt]]");
+    println(" (*) -dcfg decConfigFile: name of decoder config file\n       [[default: config_file.txt]]");
     println(" (*) -save saveInterCfg: save intermediate config files (1) or not (0)\n       [[default: 0]]");
     println(" (*) -cmd commandFile: name of file containing command to run the decoder\n       [[default: decoder_command.txt]]");
     println(" (*) -N N: size of N-best list (per sentence) generated in each MERT iteration\n       [[default: 100]]");
@@ -1194,15 +1196,66 @@ private static void test_score(String inFileName, int candPerSen, int testIndex,
     println(" (*) -m metricName: name of the evaluation metric optimized by MERT\n       [[default: BLEU]]");
     println(" (*) -v verbosity: output verbosity level (0-4; higher value => more verbose)\n       [[default: 1]]");
     println(" (*) -decV decVerbosity: should decoder output be printed (1) or ignored (0)\n       [[default: 0]]");
-
     println("");
-    println("Ex.: java MERT -s DEV07_es.txt -r DEV07_en.txt -rps 4 -init initFile.txt -N 500 -maxIt 50 -v 0");
+    println("Ex.: java MERT MERT_config.txt");
+    println("             OR:");
+    println("     java MERT -s DEV07_es.txt -r DEV07_en.txt -rps 4 -init initFile.txt -N 500 -maxIt 50 -v 0");
   }
 
-  private static void processArgs(String[] args) throws Exception
+  private static String[] cfgFileToArgsArray(String fileName) throws Exception
+  {
+    checkFile(fileName);
+
+    Vector argsVector = new Vector();
+
+
+    BufferedReader inFile = new BufferedReader(new FileReader(fileName));
+
+    String line, origLine;
+    do {
+      line = inFile.readLine();
+      origLine = line; // for error reporting purposes
+
+      if (line != null && line.length() > 0 && line.charAt(0) != '#') {
+
+        if (line.indexOf("#") != -1) { // discard comment
+          line = line.substring(0,line.indexOf("#"));
+        }
+
+        line = line.trim();
+
+        // now line should look like "-xxx XXX"
+
+        String[] paramA = line.split("\\s+");
+
+        if (paramA.length == 2 && paramA[0].charAt(0) == '-') {
+          argsVector.add(paramA[0]);
+          argsVector.add(paramA[1]);
+        } else {
+          println("Malformed line in config file:");
+          println(origLine);
+          System.exit(70);
+        }
+
+      }
+    }  while (line != null);
+
+    inFile.close();
+
+
+	String[] argsArray = new String[argsVector.size()];
+
+    for (int i = 0; i < argsVector.size(); ++i) {
+      argsArray[i] = (String)(argsVector.elementAt(i));
+    }
+
+    return argsArray;
+  }
+
+  private static void processArgsArray(String[] args) throws Exception
   {
     // set default values
-    dirPrefix = "";
+    dirPrefix = null;
     sourceFileName = "source.txt";
     refFileName = "reference.txt";
     refsPerSen = 1;
@@ -1212,7 +1265,7 @@ private static void test_score(String inFileName, int candPerSen, int testIndex,
     paramsFileName = "params.txt";
     finalLambdasFileName = "final_lambdas.txt";
     decoderCommandFileName = "decoder_command.txt";
-    configFileName = "config.txt";
+    decoderConfigFileName = "config.txt";
     metricName = "BLEU";
     sizeOfNBest = 100;
     saveInterCfg = false;
@@ -1244,7 +1297,7 @@ private static void test_score(String inFileName, int candPerSen, int testIndex,
       else if (option.equals("-p")) { paramsFileName = args[i+1]; }
       else if (option.equals("-fin")) { finalLambdasFileName = args[i+1]; }
       else if (option.equals("-cmd")) { decoderCommandFileName = args[i+1]; }
-      else if (option.equals("-cfg")) { configFileName = args[i+1]; }
+      else if (option.equals("-dcfg")) { decoderConfigFileName = args[i+1]; }
       else if (option.equals("-save")) {
         int save = Integer.parseInt(args[i+1]);
         if (save == 1) saveInterCfg = true;
@@ -1298,7 +1351,7 @@ private static void test_score(String inFileName, int candPerSen, int testIndex,
       paramsFileName = fullPath(dirPrefix,paramsFileName);
       finalLambdasFileName = fullPath(dirPrefix,finalLambdasFileName);
       decoderCommandFileName = fullPath(dirPrefix,decoderCommandFileName);
-      configFileName = fullPath(dirPrefix,configFileName);
+      decoderConfigFileName = fullPath(dirPrefix,decoderConfigFileName);
     }
 
     if (refsPerSen > 1) {
@@ -1312,15 +1365,25 @@ private static void test_score(String inFileName, int candPerSen, int testIndex,
     checkFile(sourceFileName);
     checkFile(paramsFileName);
     checkFile(decoderCommandFileName);
-    checkFile(configFileName);
+    checkFile(decoderConfigFileName);
+
+
+
+    println("Processed the following args array:",1);
+    print("  ",1);
+    for (i = 0; i < args.length; ++i) {
+      print(args[i] + " ",1);
+    }
+    println("",1);
+    println("",1);
 
   } // processArgs(String[] args)
 
   private static void checkFile(String fileName)
   {
-    if (!fileExists(sourceFileName)) {
-      println("The file " + sourceFileName + " was not found!");
-      System.exit(20);
+    if (!fileExists(fileName)) {
+      println("The file " + fileName + " was not found!");
+      System.exit(40);
     }
   }
 
@@ -1343,7 +1406,7 @@ private static void test_score(String inFileName, int candPerSen, int testIndex,
         checker = new File(prefix+".1");
         if (!checker.exists()) {
           println("Can't find reference files.");
-          System.exit(0);
+          System.exit(50);
         } else {
           prefix = prefix + ".";
         }
@@ -1366,7 +1429,7 @@ private static void test_score(String inFileName, int candPerSen, int testIndex,
       for (int r = 0; r < numFiles; ++r) {
         if (countLines(prefix+nextIndex) != lineCount) {
           println("Line count mismatch in " + (prefix+nextIndex) + ".");
-          System.exit(20);
+          System.exit(60);
         }
         inFile[r] = new BufferedReader(new FileReader(prefix+nextIndex));
         ++nextIndex;
