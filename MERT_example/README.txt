@@ -52,7 +52,7 @@ provided as the sole argument to the MERT module, as in:
 
 or:
 
-  java -Xmx1200m -Xms1200m -cp bin.joshua.MERT.MERT MERT_example/MERT_config_ex2.txt
+  java -Xmx1200m -Xms1200m -cp bin joshua.MERT.MERT MERT_example/MERT_config_ex2.txt
 
 This should make running MERT much easier, since the parameters are all
 specified in the config file.  For replicability purposes, the MERT module
@@ -60,3 +60,32 @@ first spits out the arguments it is processing, whether it read them from
 the command line or from the MERT config file.
 
 We highly recommend specifying the parameters in a config file :)
+
+
+Randomization:
+--------------
+
+If the -rand argument is set to 1, the parameters will be initialized
+randomly when MERT is started.  Furthermore, if the -runs argument is set
+to be larger than 1, the random initialization will occur multiple times.
+At the start of each run, a new random number generator is created using
+a new seed.  For replicability(*) purposes, the new seed is itself chosen
+by the previous random number generator.  This way, only the first seed
+needs to be noted in order to replicate a (full) MERT run.
+
+The -seed argument specifies what that initial seed is.  This argument can
+be set either to "time" or some numberical value.  If a numerical value is
+supplied, that value will be used as the first seed.  If "time" is
+provided, the first seed will be set to the value returned by a Java
+System.currentTimeMillis() call at the start of the (full) MERT run.
+Either way, MERT's output will indicate what the first seed is, which makes
+it possible to replicate the (full) MERT run even when setting -seed to
+"time" (simply take note of the chosen first seed and supply it to -seed to
+replicate the (full) MERT run).
+
+// need to describe: how the first seed generates the actual seeds
+// -seed argument still needs to be implemented, actually
+
+---------------------------------------------------------------------------
+
+(*) My new favorite word.

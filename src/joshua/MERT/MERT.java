@@ -91,6 +91,13 @@ public class MERT
     // if true, the candidate list is cleared at the beginning of each MERT
     // iteration.  If false, the list is carried over to the next iteration.
 
+  static boolean randInits;
+    // if true, parameters are initialized randomly.  If false, parameters
+    // are initialized using values from parameter file.
+
+  static int runCount;
+    // number of restarts.  If > 1, randInits must be set to true.
+
   static int maxMERTIterations;
     // maximum number of MERT iterations
 
@@ -141,8 +148,12 @@ for (int r = 0; r < refsPerSen; ++r) {
   println("",2);
 }
 
-    run_MERT(maxMERTIterations);
-      // optimize lambda[]!!!
+    for (int run = 1; run <= runCount; ++run) {
+      println("MERT run #" + run + " started @ " + (new Date()),1);
+      println("",1);
+      run_MERT(maxMERTIterations);
+        // optimize lambda[]!!!
+    }
 
 println("Testing evaluation metric calculation on final decoder output:",2);
 test_score(decoderOutFileName, sizeOfNBest, 0, false,2);
@@ -337,6 +348,23 @@ println("",2);
       candidates[i] = new Vector();
     }
 
+    if (randInits) {
+      long mySeed = System.currentTimeMillis();
+      println("Initializing lambda[] randomly; using seed " + mySeed,1);
+      Random randGen = new Random(mySeed);
+
+      // initialize optimizable parameters randomly (sampling uniformly from that parameter's range)
+      for (int c = 1; c <= numParams; ++c) {
+        if (isOptimizable[c]) {
+
+          double randVal = randGen.nextDouble(); // number in [0.0,1.0]
+          randVal = randVal * (maxValue[c] - minValue[c]); // number in [0.0,max-min]
+          randVal = minValue[c] + randVal; // number in [min,max]
+          lambda[c] = randVal;
+        }
+      }
+    }
+
     println("Initial lambda[]: " + lambdaToString(),1);
 
     int totalCandidateCount = 0;
@@ -352,7 +380,7 @@ println("",2);
         totalCandidateCount = 0;
       } else if (iteration > 1) {
         print("Carrying over " + totalCandidateCount + " candidate translations from previous MERT iteration.",1);
-        println(" (About " + totalCandidateCount/numSentences + " candidate translation per sentence.)",1);
+        println(" (About " + totalCandidateCount/numSentences + " candidate translations per sentence.)",1);
       }
 
       // initCandidateCount[i] stores number of candidate translations added
@@ -601,7 +629,6 @@ line format:
     retStr += "" + lambda[numParams] + "}";
 
     return retStr;
-
   }
 
   public static double[] line_opt(int c, Vector[] candidates)
@@ -1173,7 +1200,7 @@ private static void test_score(String inFileName, int candPerSen, int testIndex,
     println("");
     println("   OR:");
     println("");
-    println(" MERT [-dir dirPrefix] [-s sourceFile] [-r refFile] [-rps refsPerSen]\n      [-maxGL maxGramLength] [-decOut decoderOutFile] [-decExit validExit]\n      [-p paramsFile] [-fin finalLambdas] [-N N] [-maxIt maxMERTIts]\n      [-dcfg decConfigFile] [-save saveInterCfg] [-cmd commandFile]\n      [-opi onePerIt] [-m metricName]\n      [-xx xxx] [-v verbosity]");
+    println(" MERT [-dir dirPrefix] [-s sourceFile] [-r refFile] [-rps refsPerSen]\n      [-maxGL maxGramLength] [-decOut decoderOutFile] [-decExit validExit]\n      [-p paramsFile] [-rand randInits] [-runs runCount] [-seed firstSeed]\n      [-N N] [-maxIt maxMERTIts] [-dcfg decConfigFile] [-save saveInterCfg]\n      [-cmd commandFile] [-opi onePerIt] [-m metricName] [-fin finalLambdas]\n      [-xx xxx] [-v verbosity]");
     println("");
     println(" (*) -dir dirPrefix: location of relevant files\n       [[default: null string (i.e. they are in the current directory)]]");
     println(" (*) -s sourceFile: source sentences (foreign sentences) of the MERT dataset\n       [[default: source.txt]]");
@@ -1182,10 +1209,10 @@ private static void test_score(String inFileName, int candPerSen, int testIndex,
     println(" (*) -maxGL maxGramLength: maximum word gram length to collect statistics for\n       [[default: 4]]");
     println(" (*) -decOut decoderOutFile: name of the output file produced by your decoder\n       [[default: output.nbest]]");
     println(" (*) -decExit validExit: value returned by decoder to indicate success\n       [[default: 0]]");
-//    println(" (***) -names paramNames: file containing parameter names\n       [[default: param_names.txt]]");
-//    println(" (***) -init initLambdas: initial lambda[] values\n       [[default: initial_lambdas.txt]]");
     println(" (*) -p paramsFile: file containing parameter names, initial values, and ranges\n       [[default: params.txt]]");
-    println(" (*) -fin finalLambdas: file name for final lambda[] values\n       [[default: final_lambdas.txt]]");
+    println(" (*) -rand randInits: initialize parameters randomly (1) or from paramsFile (0)\n       [[default: 0]]");
+    println(" (*) -runs runCount: number of restarts; if > 1, randInits must be set to 1\n       [[default: 1]]");
+    println(" (X) -seed firstSeed: first seed used for random number generation\n       [[default: time; please see documentation on how to use this parameter]]");
     println(" (*) -dcfg decConfigFile: name of decoder config file\n       [[default: config_file.txt]]");
     println(" (*) -save saveInterCfg: save intermediate config files (1) or not (0)\n       [[default: 0]]");
     println(" (*) -cmd commandFile: name of file containing command to run the decoder\n       [[default: decoder_command.txt]]");
@@ -1194,6 +1221,7 @@ private static void test_score(String inFileName, int candPerSen, int testIndex,
     println(" (*) -maxIt maxMERTIts: maximum number of MERT iterations\n       [[default: 10]]");
     println(" (*) -opi onePerIt: modify a single parameter per iteration (1) or not (0)\n       [[default: 0]]");
     println(" (*) -m metricName: name of the evaluation metric optimized by MERT\n       [[default: BLEU]]");
+    println(" (*) -fin finalLambdas: file name for final lambda[] values\n       [[default: final_lambdas.txt]]");
     println(" (*) -v verbosity: output verbosity level (0-4; higher value => more verbose)\n       [[default: 1]]");
     println(" (*) -decV decVerbosity: should decoder output be printed (1) or ignored (0)\n       [[default: 0]]");
     println("");
@@ -1263,6 +1291,8 @@ private static void test_score(String inFileName, int candPerSen, int testIndex,
     decoderOutFileName = "output.nbest";
     validDecoderExitValue = 0;
     paramsFileName = "params.txt";
+    randInits = false;
+    runCount = 1;
     finalLambdasFileName = "final_lambdas.txt";
     decoderCommandFileName = "decoder_command.txt";
     decoderConfigFileName = "config.txt";
@@ -1295,6 +1325,16 @@ private static void test_score(String inFileName, int candPerSen, int testIndex,
       }
       else if (option.equals("-dir")) { dirPrefix = args[i+1]; }
       else if (option.equals("-p")) { paramsFileName = args[i+1]; }
+      else if (option.equals("-rand")) {
+        int rand = Integer.parseInt(args[i+1]);
+        if (rand == 1) randInits = true;
+        else if (rand == 0) randInits = false;
+        else { println("randInits must be either 0 or 1."); System.exit(10); }
+      }
+      else if (option.equals("-runs")) {
+        runCount = Integer.parseInt(args[i+1]);
+        if (runCount < 1) { println("runCount must be positive."); System.exit(10); }
+      }
       else if (option.equals("-fin")) { finalLambdasFileName = args[i+1]; }
       else if (option.equals("-cmd")) { decoderCommandFileName = args[i+1]; }
       else if (option.equals("-dcfg")) { decoderConfigFileName = args[i+1]; }
@@ -1344,7 +1384,9 @@ private static void test_score(String inFileName, int candPerSen, int testIndex,
 
     } // while (i)
 
-    if (dirPrefix.length() > 0) {
+    if (runCount > 1 && randInits == false) { println("For runCount > 1, randInits must be set to 1."); System.exit(10); }
+
+    if (dirPrefix != null) {
       sourceFileName = fullPath(dirPrefix,sourceFileName);
       refFileName = fullPath(dirPrefix,refFileName);
       decoderOutFileName = fullPath(dirPrefix,decoderOutFileName);

@@ -12,11 +12,14 @@
 -opi	1 # should MERT modify a single parameter per iteration?
 -v	1 # verbosity level (0-4; higher value => more verbose)
 
-# Notice that comments are allowed :)
+# Notice that comments are allowed
 
 ### Other parameters and their default values
 #-maxGL 4 # max gram length
 #-decExit 0 # return value by decoder indicating success
+#-rand 0 # should parameters be initialized randomly?
+#-runs 1 # number of restarts (if > 1, -rand must have 1 as argument)
+#-seed time # random number generator seeding (see documentation)
 #-fin final_lambdas.txt # output file for final values
 #-save 0 # should MERT save intermediate config files?
 #-reset 0 # should candidate list be reset each iteration?
