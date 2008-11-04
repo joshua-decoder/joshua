@@ -1,4 +1,5 @@
 package joshua.MERT;
+import joshua.decoder.*;
 import java.math.*;
 import java.util.*;
 import java.io.*;
@@ -69,6 +70,9 @@ public class MERT
 
   /* *********************************************************** */
   /* *********************************************************** */
+
+  static JoshuaDecoder myDecoder;
+    // COMMENT OUT if decoder is not Joshua
 
   static String decoderCommand;
     // the command that runs the decoder; read from decoderCommandFileName
@@ -148,11 +152,22 @@ for (int r = 0; r < refsPerSen; ++r) {
   println("",2);
 }
 
+    if (true) { // change to: if (Joshua integration)
+      myDecoder = new JoshuaDecoder();
+      println("Loading Joshua decoder...",1);
+      myDecoder.initializeDecoder(decoderConfigFileName);
+      println("...finished loading @ " + (new Date()),1);
+    }
+
     for (int run = 1; run <= runCount; ++run) {
       println("MERT run #" + run + " started @ " + (new Date()),1);
       println("",1);
       run_MERT(maxMERTIterations);
         // optimize lambda[]!!!
+    }
+
+    if (true) { // change to: if (Joshua integration)
+      myDecoder.cleanUp();
     }
 
 println("Testing evaluation metric calculation on final decoder output:",2);
@@ -405,6 +420,11 @@ println("",2);
       // RUN DECODER //
       /***************/
 
+      println("Running Joshua decoder...",1);
+      myDecoder.initializeDecoder(decoderConfigFileName);
+      myDecoder.decodingTestSet(sourceFileName, decoderOutFileName);
+
+/*
       println("Running decoder...",1);
 
       Runtime rt = Runtime.getRuntime();
@@ -424,6 +444,7 @@ println("",2);
         println("Call to decoder returned " + decStatus + "; was expecting " + validDecoderExitValue + ".");
         System.exit(30);
       }
+*/
 
       println("...finished decoding @ " + (new Date()),1);
 
@@ -721,7 +742,7 @@ line format:
             //   then k2 can be eliminated.
             // (This is actually important to do as it eliminates a bug.)
 
-            HashSet discardedIndices = new HashSet();
+            HashSet<Integer> discardedIndices = new HashSet<Integer>();
             print("discarding: ",3);
             for (int k1 = 0; k1 < numCandidates; ++k1) {
               for (int k2 = 0; k2 < numCandidates; ++k2) {
@@ -796,7 +817,7 @@ line format:
 
           } // for (i)
 
-          TreeMap thresholdsAll = new TreeMap();
+          TreeMap<Double,Vector> thresholdsAll = new TreeMap<Double,Vector>();
           for (int i = 0; i < numSentences; ++i) {
             Iterator It = (thresholds[i].keySet()).iterator();
             while (It.hasNext()) {
@@ -807,7 +828,7 @@ line format:
                   A.add(thresholds[i].get(ip));
                   thresholdsAll.put(ip,A);
                 } else { // not likely to happen, but should account for it
-                  Vector A = (Vector)thresholdsAll.get(ip);
+                  Vector A = thresholdsAll.get(ip);
                   A.add(thresholds[i].get(ip));
                   thresholdsAll.put(ip,A);
                 }
@@ -826,8 +847,8 @@ line format:
           /*************************************************/
           /*************************************************/
 
-          double smallest_th = (Double)thresholdsAll.firstKey();
-          double largest_th = (Double)thresholdsAll.lastKey();
+          double smallest_th = thresholdsAll.firstKey();
+          double largest_th = thresholdsAll.lastKey();
           println("Smallest extracted threshold: " + smallest_th,3);
           println("Largest extracted threshold: " + largest_th,3);
           println("",3);
@@ -835,7 +856,7 @@ line format:
           if (maxValue[c] != PosInf) {
             thresholdsAll.put(maxValue[c],null);
           } else {
-            thresholdsAll.put(((Double)thresholdsAll.lastKey() + 0.1),null);
+            thresholdsAll.put((thresholdsAll.lastKey() + 0.1),null);
           }
 
           int[] indexOfCurrBest = new int[numSentences];
@@ -910,7 +931,7 @@ line format:
             ip_curr = (Double)It.next();
             nextLambdaVal = (ip_prev + ip_curr)/2.0;
 
-            Vector th_info_V = (Vector)thresholdsAll.get(ip_prev);
+            Vector th_info_V = thresholdsAll.get(ip_prev);
             for (int t = 0; t < th_info_V.size(); ++t) {
               int[] th_info = (int[])th_info_V.elementAt(t);
               int i = th_info[0];
@@ -1234,7 +1255,7 @@ private static void test_score(String inFileName, int candPerSen, int testIndex,
   {
     checkFile(fileName);
 
-    Vector argsVector = new Vector();
+    Vector<String> argsVector = new Vector<String>();
 
 
     BufferedReader inFile = new BufferedReader(new FileReader(fileName));
@@ -1274,7 +1295,7 @@ private static void test_score(String inFileName, int candPerSen, int testIndex,
 	String[] argsArray = new String[argsVector.size()];
 
     for (int i = 0; i < argsVector.size(); ++i) {
-      argsArray[i] = (String)(argsVector.elementAt(i));
+      argsArray[i] = argsVector.elementAt(i);
     }
 
     return argsArray;
