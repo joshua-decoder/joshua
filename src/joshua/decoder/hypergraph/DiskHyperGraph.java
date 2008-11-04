@@ -21,16 +21,12 @@ import joshua.decoder.BuildinSymbol;
 import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.JoshuaDecoder;
 import joshua.decoder.Symbol;
-import joshua.decoder.chart_parser.Chart;
 import joshua.decoder.ff.FFDPState;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.tm.MemoryBasedRule;
-import joshua.decoder.ff.tm.MemoryBasedTMGrammar;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.TMGrammar;
 import joshua.decoder.hypergraph.HyperGraph;
-import joshua.decoder.hypergraph.HyperGraph.Deduction;
-import joshua.decoder.hypergraph.HyperGraph.Item;
 import joshua.util.FileUtility;
 
 import java.io.BufferedReader;
@@ -185,7 +181,7 @@ public class DiskHyperGraph {
 			System.exit(1);
 		}
 		for(int i=1; i<= tbl_id_2_item.size(); i++){
-			Item it = (Item) tbl_id_2_item.get(i);
+			HGNode it = (HGNode) tbl_id_2_item.get(i);
 			save_item(writer_out,it);
 		}
 		if(forest_pruner!=null) forest_pruner.clear_state();
@@ -238,7 +234,7 @@ public class DiskHyperGraph {
 			//TODO check if the file reaches EOF, or if the num_deducts matches 
 			
 			//create hyper graph
-			Item goal_item = (Item)tbl_id_2_item.get(num_items);
+			HGNode goal_item = (HGNode)tbl_id_2_item.get(num_items);
 			if (null == goal_item) {
 				System.out.println("no goal item");
 				System.exit(1);
@@ -291,7 +287,7 @@ public class DiskHyperGraph {
 	   	total_num_deducts=0;
 	}
 	
-	private  void save_item(BufferedWriter out, Item item){		
+	private  void save_item(BufferedWriter out, HGNode item){		
 		StringBuffer res = new StringBuffer();		
 		//line: ITEM_TAG, item id, i, j, lhs, num_deductions, tbl_state;
 		res.append(ITEM_TAG); res.append(" "); res.append((Integer)tbl_item_2_id.get(item)); res.append(" ");
@@ -315,13 +311,13 @@ public class DiskHyperGraph {
 		//for each hyper-edge
 		if(item.l_deductions!=null)
 			for(int i=0; i< item.l_deductions.size(); i++){
-				Deduction dt = (Deduction)  item.l_deductions.get(i);
+				HyperEdge dt = (HyperEdge)  item.l_deductions.get(i);
 				save_deduction(out, item, dt);
 			}		
 		FileUtility.flush_lzf(out);
 	}
 	
-	private  Item read_item(BufferedReader in){		
+	private  HGNode read_item(BufferedReader in){		
 		//line: ITEM_TAG, item id, i, j, lhs, num_deductions, ITEM_STATE_TAG, item_state;
 		String line=FileUtility.read_line_lzf(in);		
 		//if(line.startsWith(ITEM_TAG)!=true){System.out.println("wrong item tag"); System.exit(1);}
@@ -337,31 +333,31 @@ public class DiskHyperGraph {
 		int lhs = this.p_symbol.addNonTerminalSymbol(wrds1[4]);
 		int num_deductions = new Integer(wrds1[5]);
 		
-		HashMap<FeatureFunction, FFDPState> tbl_dpstates = null;//item state: signature (created from HashMap tbl_states)
+		HashMap<Integer, FFDPState> tbl_dpstates = null;//item state: signature (created from HashMap tbl_states)
 		if(fds[1].compareTo(NULL_ITEM_STATE)!=0){
 			tbl_dpstates = get_state_tbl_from_string(p_symbol, p_l_models, fds[1]);//create statte;;;;;;;;;;;;;;;;;;;;;; TODO
 		}	
 		
-		ArrayList<Deduction> l_deductions = null;
-		Deduction best_deduction=null;
+		ArrayList<HyperEdge> l_deductions = null;
+		HyperEdge best_deduction=null;
 		double best_cost= Double.POSITIVE_INFINITY;
 		if(num_deductions>0){
-			l_deductions = new ArrayList<Deduction>();	
+			l_deductions = new ArrayList<HyperEdge>();	
 			for(int t=0; t<num_deductions; t++){				
-				Deduction dt = read_deduction(in);
+				HyperEdge dt = read_deduction(in);
 				l_deductions.add(dt);
 				if( dt.best_cost<best_cost) {best_cost=dt.best_cost; best_deduction = dt;} 
 			}				
 		}
 
-		Item item = new Item(i, j, lhs,  l_deductions, best_deduction, tbl_dpstates);
+		HGNode item = new HGNode(i, j, lhs,  l_deductions, best_deduction, tbl_dpstates);
 		tbl_id_2_item.put(item_id, item);
 		return item;
 	}
 	
 //################################## error begin ###############################	
 //	the state_str does not have lhs, also it contain the original words (not symbol id)
-	public static String get_string_from_state_tbl(Symbol p_symbol, HashMap<FeatureFunction, FFDPState> tbl){
+	public static String get_string_from_state_tbl(Symbol p_symbol, HashMap<Integer, FFDPState> tbl){
 		StringBuffer res = new StringBuffer();
 		for (Iterator iter = tbl.entrySet().iterator(); iter.hasNext();){//for each model
             Map.Entry entry = (Map.Entry)iter.next();
@@ -373,15 +369,15 @@ public class DiskHyperGraph {
 	}
 	
 	//the state_str does not lhs, it contain the original words (not symbol id)
-	public static HashMap<FeatureFunction, FFDPState> get_state_tbl_from_string(Symbol p_symbol, ArrayList<FeatureFunction> p_l_models, String state_str){
-		HashMap res =new HashMap<FeatureFunction, FFDPState> ();
-		String[] states = state_str.split(Item.SIG_SEP);
+	public static HashMap<Integer, FFDPState> get_state_tbl_from_string(Symbol p_symbol, ArrayList<FeatureFunction> p_l_models, String state_str){
+		HashMap res =new HashMap<Integer, FFDPState> ();
+		String[] states = state_str.split(HGNode.SIG_SEP);
 		//TODO: for eachg model						
 		return res;
 	}
 //	##################################  error end ###############################	
 	
-	private void save_deduction(BufferedWriter out, Item item, Deduction deduction) {
+	private void save_deduction(BufferedWriter out, HGNode item, HyperEdge deduction) {
 		//get rule id
 		int rule_id = NULL_RULE_ID;
 		final Rule deduction_rule = deduction.get_rule();
@@ -428,7 +424,7 @@ public class DiskHyperGraph {
 	
 	
 	//assumption: has tbl_associated_grammar and tbl_id_2_item
-	private Deduction read_deduction(BufferedReader in){		
+	private HyperEdge read_deduction(BufferedReader in){		
 		//line: flag, best_cost, num_items, item_ids, rule id,  OOV-Non-Terminal (optional), OOV (optional),		
 		String line=FileUtility.read_line_lzf(in);
 		String[] fds = line.split("\\s+");
@@ -441,13 +437,13 @@ public class DiskHyperGraph {
 		
 		//best_cost transition_cost num_items item_ids
 		double best_cost =new Double(fds[0]);
-		ArrayList<Item> l_ant_items=null;
+		ArrayList<HGNode> l_ant_items=null;
 		int num_ant_items =new Integer(fds[1]);	
 		if(num_ant_items>0){
-			l_ant_items = new ArrayList<Item>();
+			l_ant_items = new ArrayList<HGNode>();
 			for(int t=0; t< num_ant_items; t++){
 				int item_id = new Integer(fds[2+t]);
-				Item t_it = (Item)tbl_id_2_item.get(item_id);
+				HGNode t_it = (HGNode)tbl_id_2_item.get(item_id);
 				if (null == t_it) {
 					System.out.println("item is null for id: " + item_id);
 					System.exit(1);
@@ -476,7 +472,7 @@ public class DiskHyperGraph {
 			}
 			
 		}	
-		Deduction dt = new Deduction(rule, best_cost, null, l_ant_items);
+		HyperEdge dt = new HyperEdge(rule, best_cost, null, l_ant_items);
 		return dt;		
 	}
 	
@@ -487,14 +483,14 @@ public class DiskHyperGraph {
 		reset_states();	
 		construct_item_id_tbl(hg.goal_item);
 	}
-	private void construct_item_id_tbl(Item it){
+	private void construct_item_id_tbl(HGNode it){
 		if(tbl_item_2_id.containsKey(it))
 			return;
 		//first: assign id to all my ants
-		for(Deduction dt : it.l_deductions){
+		for(HyperEdge dt : it.l_deductions){
 			total_num_deducts++;
 			if(dt.get_ant_items()!=null)
-				for(Item ant_it : dt.get_ant_items())
+				for(HGNode ant_it : dt.get_ant_items())
 					construct_item_id_tbl(ant_it);
 		}		
 		//second: assign id to myself

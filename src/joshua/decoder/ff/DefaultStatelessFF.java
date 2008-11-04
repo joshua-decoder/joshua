@@ -30,12 +30,14 @@ import joshua.decoder.ff.tm.Rule;
  */
 
 public abstract class DefaultStatelessFF implements FeatureFunction<StatelessFFTransitionResult, FFDPState> {
-	private   double  weight   = 0.0;	
+	private   double  weight   = 0.0;
+	private int feat_id;
 	protected final int owner;
 	
-	public DefaultStatelessFF(final double weight_, final int owner_) {
+	public DefaultStatelessFF(final double weight_, final int owner_, int id_) {
 		this.weight = weight_;
 		this.owner = owner_;
+		this.feat_id = id_; //the unique integer that identifies a feature
 	}
 	
 	public final boolean isStateful() {
@@ -50,6 +52,14 @@ public abstract class DefaultStatelessFF implements FeatureFunction<StatelessFFT
 		this.weight = weight_;
 	}
 
+	
+	public final int getFeatureID() {
+		return this.feat_id;
+	}
+	
+	public final void putFeatureID(final int id_) {
+		this.feat_id = id_;
+	}
 	
 	/**
 	 * Generic transition for FeatureFunctions which are Stateless

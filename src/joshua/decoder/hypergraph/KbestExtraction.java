@@ -24,8 +24,6 @@ import joshua.decoder.ff.FFTransitionResult;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.lm.LMFeatureFunction;
 import joshua.decoder.ff.tm.Rule;
-import joshua.decoder.hypergraph.HyperGraph.Deduction;
-import joshua.decoder.hypergraph.HyperGraph.Item;
 import joshua.util.FileUtility;
 
 import java.io.BufferedWriter;
@@ -96,7 +94,7 @@ public class KbestExtraction {
 	 * add_combined_score==f: do not add combined model cost
 	 * */
 	//***************** you may need to reset_state() before you call this function for the first time
-	public String get_kth_hyp(Item it, int k,  int sent_id, ArrayList<FeatureFunction> l_models, boolean extract_unique_nbest, boolean extract_nbest_tree, boolean add_combined_score){
+	public String get_kth_hyp(HGNode it, int k,  int sent_id, ArrayList<FeatureFunction> l_models, boolean extract_unique_nbest, boolean extract_nbest_tree, boolean add_combined_score){
 		VirtualItem virtual_item = add_virtual_item(it);
 		DerivationState cur = virtual_item.lazy_k_best_extract_item(p_symbol, this,k,extract_unique_nbest,extract_nbest_tree);
 		if( cur==null) return null;
@@ -179,7 +177,7 @@ public class KbestExtraction {
 		
 	
 //add the virtualitem is necessary
-	private VirtualItem add_virtual_item(Item it){
+	private VirtualItem add_virtual_item(HGNode it){
 		VirtualItem res = (VirtualItem)tbl_virtual_items.get(it);
 		if(res == null){
 			res = new VirtualItem(it);
@@ -198,9 +196,9 @@ public class KbestExtraction {
 		private PriorityQueue<DerivationState> heap_cands = null; // remember frontier states, best-first;  in the paper, it is called cand[v]
 		private HashMap<String, Integer>  derivation_tbl = null; // rememeber which DerivationState has been explored; why duplicate, e.g., 1 2 + 1 0 == 2 1 + 0 1 
 		private HashMap nbest_str_tbl = null;
-		Item p_item = null;
+		HGNode p_item = null;
 		
-		public VirtualItem(Item it) {
+		public VirtualItem(HGNode it) {
 			this.p_item = it;
 		}
 		
@@ -261,7 +259,7 @@ public class KbestExtraction {
 			if(last.p_edge.get_ant_items()==null)
 				return;
 			for(int i=0; i < last.p_edge.get_ant_items().size();i++){//slide the ant item
-				Item it = (Item) last.p_edge.get_ant_items().get(i);
+				HGNode it = (HGNode) last.p_edge.get_ant_items().get(i);
 				VirtualItem virtual_it = kbest_extator.add_virtual_item(it);
 				int[] new_ranks = new int[last.ranks.length];
 				for(int c=0; c<new_ranks.length;c++)
@@ -298,7 +296,7 @@ public class KbestExtraction {
 				System.exit(1);
 			}
 			int pos=0;
-			for(Deduction hyper_edge : p_item.l_deductions){				
+			for(HyperEdge hyper_edge : p_item.l_deductions){				
 				DerivationState t = get_best_derivation(p_symbol,kbest_extator, hyper_edge,pos, extract_unique_nbest, extract_nbest_tree);
 //				why duplicate, e.g., 1 2 + 1 0 == 2 1 + 0 1 , but here we should not get duplicate				
 				if(derivation_tbl.containsKey(t.get_signature())==false){
@@ -324,7 +322,7 @@ public class KbestExtraction {
 		}
 		
 		//get my best derivation, and recursively add 1best for all my children, used by get_candidates only
-		private DerivationState get_best_derivation(Symbol p_symbol, KbestExtraction kbest_extator, Deduction hyper_edge, int deduct_pos,  boolean extract_unique_nbest,boolean extract_nbest_tree){
+		private DerivationState get_best_derivation(Symbol p_symbol, KbestExtraction kbest_extator, HyperEdge hyper_edge, int deduct_pos,  boolean extract_unique_nbest,boolean extract_nbest_tree){
 			int[] ranks;
 			double cost=0;
 			if(hyper_edge.get_ant_items()==null){//axiom
@@ -334,7 +332,7 @@ public class KbestExtraction {
 				ranks = new int[hyper_edge.get_ant_items().size()];					
 				for(int i=0; i < hyper_edge.get_ant_items().size();i++){//make sure the 1best at my children is ready
 					ranks[i]=1;//rank start from one									
-					Item child_it = (Item) hyper_edge.get_ant_items().get(i);//add the 1best for my children
+					HGNode child_it = (HGNode) hyper_edge.get_ant_items().get(i);//add the 1best for my children
 					VirtualItem virtual_child_it = kbest_extator.add_virtual_item(child_it);
 					virtual_child_it.lazy_k_best_extract_item(p_symbol, kbest_extator,  ranks[i], extract_unique_nbest,extract_nbest_tree);
 				}
@@ -354,13 +352,13 @@ public class KbestExtraction {
 	//each DerivationState rougly correponds a hypothesis 
 	private static class DerivationState implements Comparable<DerivationState> 
 	{
-		Deduction p_edge;//in the paper, it is "e"		
+		HyperEdge p_edge;//in the paper, it is "e"		
 		//**lesson: once we define this as a static variable, which cause big trouble
 		int deduction_pos; //this is my position in my parent's Item.l_deductions, used for signature calculation
 		int[] ranks;//in the paper, it is "j", which is a ArrayList of size |e|
 		double cost;//the cost of this hypthesis
 		
-		public DerivationState(Deduction e, int[] r, double c ,int pos){
+		public DerivationState(HyperEdge e, int[] r, double c ,int pos){
 			p_edge =e ;
 			ranks = r;
 			cost=c;
@@ -371,7 +369,7 @@ public class KbestExtraction {
 			return get_signature(p_edge, ranks,deduction_pos);
 		}
 		
-		private static String get_signature(Deduction p_edge2, int[] ranks2, int pos){
+		private static String get_signature(HyperEdge p_edge2, int[] ranks2, int pos){
 			StringBuffer res = new StringBuffer();
 			//res.apend(p_edge2.toString());//Wrong: this may not be unique to identify a Deduction (as it represent the class name and hashcode which my be equal for different objects)
 			res.append(pos);
@@ -396,7 +394,7 @@ public class KbestExtraction {
 				if(tree_format==true)
 					res.append("(ROOT ");
 				for(int id=0; id < p_edge.get_ant_items().size();id++){
-					Item child = (Item)p_edge.get_ant_items().get(id);
+					HGNode child = (HGNode)p_edge.get_ant_items().get(id);
 					VirtualItem virtual_child = kbest_extator.add_virtual_item(child);
 					res.append(((DerivationState)virtual_child.l_nbest.get(ranks[id]-1)).get_hyp(p_symbol,kbest_extator, tree_format, model_cost,l_models));
 	    			if(id<p_edge.get_ant_items().size()-1) res.append(" ");		
@@ -411,7 +409,7 @@ public class KbestExtraction {
 				for(int c=0; c<rl.english.length; c++){
 		    		if(p_symbol.isNonterminal(rl.english[c])==true){
 		    			int id=p_symbol.getEngNonTerminalIndex(rl.english[c]);
-		    			Item child = (Item)p_edge.get_ant_items().get(id);
+		    			HGNode child = (HGNode)p_edge.get_ant_items().get(id);
 		    			VirtualItem virtual_child =kbest_extator.add_virtual_item(child);
 		    			res.append(((DerivationState)virtual_child.l_nbest.get(ranks[id]-1)).get_hyp(p_symbol,kbest_extator, tree_format, model_cost, l_models));
 		    		}else{
@@ -427,7 +425,7 @@ public class KbestExtraction {
 		
 		//TODO: we assume only one lm, and the LM is the only non-stateles model
 		//accumulate deduction cost into model_cost[], used by get_hyp()
-		private void compute_cost(Deduction dt, double[] model_cost, ArrayList l_models){
+		private void compute_cost(HyperEdge dt, double[] model_cost, ArrayList l_models){
 			if(model_cost==null) return;
 			
 			//System.out.println("Rule is: " + dt.rule.toString());

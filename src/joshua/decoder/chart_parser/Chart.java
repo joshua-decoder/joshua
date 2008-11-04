@@ -29,8 +29,8 @@ import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.RuleCollection;
 import joshua.decoder.ff.tm.TMGrammar;
 import joshua.decoder.ff.tm.TrieGrammar;
+import joshua.decoder.hypergraph.HGNode;
 import joshua.decoder.hypergraph.HyperGraph;
-import joshua.decoder.hypergraph.HyperGraph.Item;
 import joshua.lattice.Lattice;
 import joshua.lattice.Arc;
 import joshua.lattice.Node;
@@ -229,7 +229,7 @@ public class Chart {
 				//Support.write_log_line(String.format("After Process span (%d, %d), called:= %d",i,j,n_called_compute_item), Support.INFO);
 				if (null != this.bins[i][j]) {
 					//this.bins[i][j].print_info(Support.INFO);
-					ArrayList<Item> l_s_its = this.bins[i][j].get_sorted_items();//this is required
+					ArrayList<HGNode> l_s_its = this.bins[i][j].get_sorted_items();//this is required
 					
 					/*sanity check with this cell
 					int sum_d=0; double sum_c =0.0;	double sum_total=0.0;
@@ -270,7 +270,7 @@ public class Chart {
 		//Support.write_log_line(String.format("LM lookupwords1, step1: %d; step2: %d; step3: %d",tm_lm.time_step1,tm_lm.time_step2,tm_lm.time_step3),Support.INFO);
 		//debug end
 		
-		return new HyperGraph((Item)goal_bin.get_sorted_items().get(0),	-1,	-1,	sent_id, sent_len);//num_items/deductions : -1
+		return new HyperGraph((HGNode)goal_bin.get_sorted_items().get(0),	-1,	-1,	sent_id, sent_len);//num_items/deductions : -1
 	}
 	
 	public void print_info(Level level) {
@@ -296,24 +296,24 @@ public class Chart {
 			return 0;
 		}
 		int count_of_additions_to_t_queue = 0;
-		ArrayList<Item> t_queue
-			= new ArrayList<Item>(chart_bin.get_sorted_items());
+		ArrayList<HGNode> t_queue
+			= new ArrayList<HGNode>(chart_bin.get_sorted_items());
 		
 		
 		while (t_queue.size() > 0) {
-			Item item = (Item)t_queue.remove(0);
+			HGNode item = (HGNode)t_queue.remove(0);
 			TrieGrammar child_tnode = gr.getTrieRoot().matchOne(item.lhs);//match rule and complete part
 			if (child_tnode != null
 			&& child_tnode.getRules() != null
 			&& child_tnode.getRules().getArity() == 1) {//have unary rules under this trienode					
-				ArrayList<Item> l_ants = new ArrayList<Item>();
+				ArrayList<HGNode> l_ants = new ArrayList<HGNode>();
 				l_ants.add(item);
 				List<Rule> l_rules =
 					child_tnode.getRules().getSortedRules();
 				
 				for (Rule rule : l_rules){//for each unary rules								
 					ComputeItemResult tbl_states = chart_bin.compute_item(rule, l_ants, i, j);				
-					Item res_item = chart_bin.add_deduction_in_bin(tbl_states, rule, i, j, l_ants, 0.0f);
+					HGNode res_item = chart_bin.add_deduction_in_bin(tbl_states, rule, i, j, l_ants, 0.0f);
 					if (null != res_item) {
 						t_queue.add(res_item);
 						count_of_additions_to_t_queue++;

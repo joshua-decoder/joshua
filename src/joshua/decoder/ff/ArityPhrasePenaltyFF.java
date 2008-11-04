@@ -33,8 +33,8 @@ public final class ArityPhrasePenaltyFF extends DefaultStatelessFF {
 	private final int max_arity;
 	
 	
-	public ArityPhrasePenaltyFF(final double weight_, final int owner_,	final int min, final int max) {
-		super(weight_, owner_);
+	public ArityPhrasePenaltyFF(final int feat_id_, final double weight_, final int owner_,	final int min, final int max) {
+		super(weight_, owner_, feat_id_);
 		this.min_arity = min;
 		this.max_arity = max;
 	}
@@ -47,4 +47,6 @@ public final class ArityPhrasePenaltyFF extends DefaultStatelessFF {
 			return 0.0;
 		}
 	}
+
+
 }

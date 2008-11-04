@@ -20,8 +20,6 @@ package joshua.decoder.hypergraph;
 import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.Symbol;
 import joshua.decoder.hypergraph.HyperGraph;
-import joshua.decoder.hypergraph.HyperGraph.Deduction;
-import joshua.decoder.hypergraph.HyperGraph.Item;
 
 import java.util.HashMap;
 
@@ -65,7 +63,7 @@ public class HyperGraphPruning extends InsideOutside {
 	
 	
 	//used by inside-outside estimation
-	protected  double get_deduction_score(Deduction dt, Item parent_it){
+	protected  double get_deduction_score(HyperEdge dt, HGNode parent_it){
 		return dt.get_transition_cost(false);//TODO this is very bad in terms of computation
 	}
 	
@@ -102,13 +100,13 @@ public class HyperGraphPruning extends InsideOutside {
 	}
 		
 	
-	private void pruning_item(Item it){
+	private void pruning_item(HGNode it){
 		if(tbl_processed_items.containsKey(it))return;
 		tbl_processed_items.put(it,true);
 		boolean should_survive=false;
 		//### recursive call on each deduction
 		for(int i=0; i < it.l_deductions.size(); i++){
-			Deduction dt = (Deduction) it.l_deductions.get(i);
+			HyperEdge dt = (HyperEdge) it.l_deductions.get(i);
 			boolean survived = pruning_deduction(dt, it);//deduction-specifc operation
 			if(survived) 
 				should_survive=true;//at least one deduction survive
@@ -131,7 +129,7 @@ public class HyperGraphPruning extends InsideOutside {
 		
 	//if survive, return true
 	//best-deduction is always kept
-	private boolean pruning_deduction(Deduction dt, Item parent){
+	private boolean pruning_deduction(HyperEdge dt, HGNode parent){
 		//TODO: theoretically, if an item is get called, then its best deduction should always be kept even just by the threshold-checling. In reality, due to precision of Double, the threshold-checking may not be perfect
 		if(dt != parent.best_deduction){//best deduction should always survive if the Item is get called
 			//### prune?
@@ -142,7 +140,7 @@ public class HyperGraphPruning extends InsideOutside {
 		
 		//### still survive, recursive call all my ant-items
 		if(dt.get_ant_items()!=null){
-			for(Item ant_it : dt.get_ant_items())
+			for(HGNode ant_it : dt.get_ant_items())
 				pruning_item(ant_it);//recursive call on each ant item, note: the ant_it will not be pruned as I need it
 		}
 		
@@ -151,7 +149,7 @@ public class HyperGraphPruning extends InsideOutside {
 		return true;//survive
 	}
 	 
-	private boolean should_prune_deduction(Deduction dt, Item parent){
+	private boolean should_prune_deduction(HyperEdge dt, HGNode parent){
 		//### get merit
 		double merit = get_deduction_merit(dt, parent);
 		

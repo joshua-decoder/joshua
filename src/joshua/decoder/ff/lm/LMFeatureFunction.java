@@ -60,8 +60,8 @@ public class LMFeatureFunction extends DefaultStatefulFF {
 	
 	private Symbol p_symbol = null;
 	
-	public LMFeatureFunction(int ngram_order, Symbol psymbol, LMGrammar lm_grammar, double weight_) {
-		super(weight_);
+	public LMFeatureFunction(int feat_id_, int ngram_order, Symbol psymbol, LMGrammar lm_grammar, double weight_) {
+		super(weight_, feat_id_);
 		this.ngramOrder = ngram_order;
 		this.lmGrammar  = lm_grammar;
 		this.p_symbol = psymbol;
@@ -133,21 +133,17 @@ public class LMFeatureFunction extends DefaultStatefulFF {
 					
 					//always calculate cost for <bo>: additional backoff weight
 					if (t == lmGrammar.BACKOFF_LEFT_LM_STATE_SYM_ID) {
-						int additional_backoff_weight
-							= current_ngram.size() - (i+1);
+						int additional_backoff_weight = current_ngram.size() - (i+1);
 						
 						//compute additional backoff weight
-						transition_cost
-							-= this.lmGrammar.get_prob_backoff_state(
-								current_ngram, current_ngram.size(), additional_backoff_weight);
+						transition_cost	-= this.lmGrammar.get_prob_backoff_state(current_ngram, current_ngram.size(), additional_backoff_weight);
 						
 						if (current_ngram.size() == this.ngramOrder) {
 							current_ngram.remove(0);
 						}
 					} else if (current_ngram.size() == this.ngramOrder) {
 						// compute the current word probablity, and remove it
-						transition_cost -= this.lmGrammar.get_prob(
-							current_ngram, this.ngramOrder, false);
+						transition_cost -= this.lmGrammar.get_prob(current_ngram, this.ngramOrder, false);
 						
 						current_ngram.remove(0);
 					}

@@ -29,8 +29,8 @@ public final class PhrasePenaltyFF extends DefaultStatelessFF {
 	private static final double ALPHA = Math.log10(Math.E);
 	
 	
-	public PhrasePenaltyFF(final double weight_, final int owner_) {
-		super(weight_, owner_);
+	public PhrasePenaltyFF(final int feat_id_, final double weight_, final int owner_) {
+		super(weight_, owner_, feat_id_);
 	}
 	
 	

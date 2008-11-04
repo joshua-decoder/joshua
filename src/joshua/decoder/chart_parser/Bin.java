@@ -25,8 +25,8 @@ import joshua.decoder.ff.FeatureFunction;
 
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.RuleCollection;
-import joshua.decoder.hypergraph.HyperGraph.Deduction;
-import joshua.decoder.hypergraph.HyperGraph.Item;
+import joshua.decoder.hypergraph.HGNode;
+import joshua.decoder.hypergraph.HyperEdge;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -61,10 +61,10 @@ public class Bin
 	
 	//NOTE: MIN-HEAP, we put the worst-cost item at the top of the heap by manipulating the compare function
 	//heap_items: the only purpose is to help deecide which items should be removed from tbl_items during pruning 
-	private PriorityQueue<Item> heap_items =  new PriorityQueue<Item>(1, Item.NegtiveCostComparator);//TODO: initial capacity?
+	private PriorityQueue<HGNode> heap_items =  new PriorityQueue<HGNode>(1, HGNode.NegtiveCostComparator);//TODO: initial capacity?
 	private HashMap  tbl_items=new HashMap (); //to maintain uniqueness of items		
 	private Map<Integer,SuperItem>  tbl_super_items=new HashMap<Integer,SuperItem>();//signature by lhs
-	private ArrayList<Item> l_sorted_items=null;//sort values in tbl_item_signature, we need this list whenever necessary
+	private ArrayList<HGNode> l_sorted_items=null;//sort values in tbl_item_signature, we need this list whenever necessary
 	
 	//pruning parameters
 	public double best_item_cost =  IMPOSSIBLE_COST;//remember the cost of the best item in the bin
@@ -84,7 +84,7 @@ public class Bin
 	/*compute cost and the states of this item
 	 *returned ArrayList: expected_total_cost, finalized_total_cost, transition_cost, bonus, list of states*/
 	
-	public ComputeItemResult compute_item(Rule rule, ArrayList<Item> previous_items, int i, int j) {
+	public ComputeItemResult compute_item(Rule rule, ArrayList<HGNode> previous_items, int i, int j) {
 		long start_time = Support.current_time();
 		this.p_chart.n_called_compute_item++;
 		
@@ -93,19 +93,15 @@ public class Bin
 		//// See bug note in FeatureFunction about List vs ArrayList
 		
 		if (null != previous_items) {
-			for (Item item : previous_items) {
+			for (HGNode item : previous_items) {
 				finalized_total_cost += item.best_deduction.best_cost;
 			}
 		}
 		
-		HashMap<FeatureFunction, FFDPState>   all_item_states    = null;
+		HashMap<Integer, FFDPState>   all_item_states    = null;
 		double transition_cost_sum    = 0.0;
 		double future_cost_estimation = 0.0;
 		
-		/* HACK: we iterate with <MapFFState> since that's
-		 * what we're passing into transition(). That is not
-		 * correct however.
-		 */
 		for (FeatureFunction<FFTransitionResult,FFDPState> ff : this.p_chart.p_l_models) {
 			////long start2 = Support.current_time();
 			if (ff.isStateful()) {
@@ -113,7 +109,7 @@ public class Bin
 				ArrayList<FFDPState> previous_states = null;
 				if (null != previous_items) {
 					previous_states = new ArrayList<FFDPState>();
-					for (Item it : previous_items) {
+					for (HGNode it : previous_items) {
 						previous_states.add( it.getFeatDPState(ff) );
 					}
 				}
@@ -129,8 +125,8 @@ public class Bin
 				
 				FFDPState item_state = state.getStateForItem();
 				if (null != item_state) {
-					if(all_item_states == null)	all_item_states = new HashMap<FeatureFunction, FFDPState>();
-					all_item_states.put(ff,item_state);
+					if(all_item_states == null)	all_item_states = new HashMap<Integer, FFDPState>();
+					all_item_states.put(ff.getFeatureID(),item_state);
 				} else {
 					logger.severe("compute_item: null getStateForItem()"
 						+ "\n*"
@@ -168,23 +164,22 @@ public class Bin
 	 * the goal bin has only one Item, which itself has many deductions
 	 * only "goal bin" should call this function*/
 	public void transit_to_goal(Bin bin){//the bin[0][n], this is not goal bin
-		this.l_sorted_items = new ArrayList<Item>();
-		Item goal_item = null;
+		this.l_sorted_items = new ArrayList<HGNode>();
+		HGNode goal_item = null;
 		
-		for (Item item : bin.get_sorted_items()) {
+		for (HGNode item : bin.get_sorted_items()) {
 			if (item.lhs == GOAL_SYM_ID) {
 				double cost                  = item.best_deduction.best_cost;
 				double final_transition_cost = 0.0;
 				
-				//// BUG: too specific this casting
 				for (FeatureFunction<FFTransitionResult,FFDPState> ff : this.p_chart.p_l_models) {
 					final_transition_cost += ff.getWeight()	*  ff.finalTransition( item.getFeatDPState(ff) );
 				}
 				
-				ArrayList<Item> previous_items = new ArrayList<Item>();
+				ArrayList<HGNode> previous_items = new ArrayList<HGNode>();
 				previous_items.add(item);
 				
-				Deduction dt = new Deduction(
+				HyperEdge dt = new HyperEdge(
 					null,
 					cost + final_transition_cost,
 					final_transition_cost, previous_items);
@@ -198,7 +193,7 @@ public class Bin
 				}
 				
 				if (null == goal_item) {
-					goal_item = new Item(0,	this.p_chart.sent_len + 1,	GOAL_SYM_ID,	null, dt, cost + final_transition_cost);					
+					goal_item = new HGNode(0,	this.p_chart.sent_len + 1,	GOAL_SYM_ID,	null, dt, cost + final_transition_cost);					
 					this.l_sorted_items.add(goal_item);
 				} else {
 					goal_item.add_deduction_in_item(dt);
@@ -240,8 +235,8 @@ public class Bin
 				SuperItem super_ant1 = (SuperItem)l_super_items.get(0);
 				//System.out.println(String.format("Complet_cell, size %d ", super_ant1.l_items.size()));
 				//rl.print_info(Support.DEBUG);
-				for(Item it_ant1: super_ant1.l_items){
-					ArrayList<Item> l_ants = new ArrayList<Item>();
+				for(HGNode it_ant1: super_ant1.l_items){
+					ArrayList<HGNode> l_ants = new ArrayList<HGNode>();
 					l_ants.add(it_ant1);
 					ComputeItemResult cres = compute_item(rl, l_ants, i, j);			
 					add_deduction_in_bin(cres, rl, i, j, l_ants, lattice_cost);
@@ -251,10 +246,10 @@ public class Bin
 				SuperItem super_ant2 = (SuperItem)l_super_items.get(1);
 				//System.out.println(String.format("Complet_cell, size %d * %d ", super_ant1.l_items.size(),super_ant2.l_items.size()));
 				//rl.print_info(Support.DEBUG);
-				for(Item it_ant1: super_ant1.l_items){
-					for(Item it_ant2: super_ant2.l_items){
+				for(HGNode it_ant1: super_ant1.l_items){
+					for(HGNode it_ant2: super_ant2.l_items){
 						//System.out.println(String.format("Complet_cell, ant1(%d, %d), ant2(%d, %d) ",it_ant1.i,it_ant1.j,it_ant2.i,it_ant2.j ));
-						ArrayList<Item> l_ants = new ArrayList<Item>();						
+						ArrayList<HGNode> l_ants = new ArrayList<HGNode>();						
 						l_ants.add(it_ant1);
 						l_ants.add(it_ant2);
 						ComputeItemResult cres = compute_item(rl, l_ants, i, j);				
@@ -282,7 +277,7 @@ public class Bin
 			
 		//seed the heap with best item
 		Rule cur_rl = (Rule)l_rules.get(0);
-		ArrayList<Item> l_cur_ants = new ArrayList<Item>();
+		ArrayList<HGNode> l_cur_ants = new ArrayList<HGNode>();
 		for(SuperItem si : l_super_items)
 			l_cur_ants.add(si.l_items.get(0)); //TODO: si.l_items must be sorted
 		ComputeItemResult  cres = compute_item(cur_rl, l_cur_ants, i, j);
@@ -298,13 +293,13 @@ public class Bin
 		
 		//extend the heap
 		Rule old_rl=null;
-		Item old_item=null;
+		HGNode old_item=null;
 		int tem_c=0;
 		while(heap_cands.size()>0){
 			tem_c++;
 			CubePruneState cur_state = heap_cands.poll();
 			cur_rl = cur_state.rule;
-			l_cur_ants = new ArrayList<Item>(cur_state.l_ants);//critical to create a new list			
+			l_cur_ants = new ArrayList<HGNode>(cur_state.l_ants);//critical to create a new list			
 			//cube_state_tbl.remove(cur_state.get_signature());//TODO, repeat
 			add_deduction_in_bin(cur_state.tbl_item_states, cur_state.rule, i, j,cur_state.l_ants, lattice_cost);//pre-pruning inside this function
 			
@@ -365,12 +360,12 @@ public class Bin
 		int[] ranks;
 		ComputeItemResult tbl_item_states;
 		Rule rule;
-		ArrayList<Item> l_ants;
-		public CubePruneState(ComputeItemResult  st, int[] ranks_in, Rule rl, ArrayList<Item> ants){
+		ArrayList<HGNode> l_ants;
+		public CubePruneState(ComputeItemResult  st, int[] ranks_in, Rule rl, ArrayList<HGNode> ants){
 			tbl_item_states = st;
 			ranks = ranks_in;
 			rule=rl;
-			l_ants=new ArrayList<Item>(ants);//create a new vector is critical, because l_cur_ants will change later
+			l_ants=new ArrayList<HGNode>(ants);//create a new vector is critical, because l_cur_ants will change later
 		}
 		public CubePruneState(int[] ranks_in){//fake: for equals			
 			ranks = ranks_in;		
@@ -401,20 +396,20 @@ public class Bin
 	}
 	
 	
-	public Item add_deduction_in_bin(ComputeItemResult  compute_item_res, Rule rl, int i, int j,  ArrayList<Item> ants, float lattice_cost){
+	public HGNode add_deduction_in_bin(ComputeItemResult  compute_item_res, Rule rl, int i, int j,  ArrayList<HGNode> ants, float lattice_cost){
 		long start = Support.current_time();
-		Item res=null;
+		HGNode res=null;
 		if (lattice_cost != 0.0f)
 			rl = rl.cloneAndAddLatticeCost(lattice_cost);
-		HashMap<FeatureFunction, FFDPState>  item_state_tbl = compute_item_res.getFeatDPStates();
+		HashMap<Integer, FFDPState>  item_state_tbl = compute_item_res.getFeatDPStates();
 		double expected_total_cost = compute_item_res.getExpectedTotalCost();//including outside estimation
 		double transition_cost = compute_item_res.getTransitionTotalCost();
 		double finalized_total_cost = compute_item_res.getFinalizedTotalCost();
 		  
 		//double bonus = ((Double)tbl_states.get(BONUS)).doubleValue();//not used
 		if(should_prune(expected_total_cost)==false){
-			Deduction dt = new Deduction(rl,finalized_total_cost,transition_cost,ants);
-			Item item = new Item(i,j,rl.lhs,item_state_tbl,dt, expected_total_cost);
+			HyperEdge dt = new HyperEdge(rl,finalized_total_cost,transition_cost,ants);
+			HGNode item = new HGNode(i,j,rl.lhs,item_state_tbl,dt, expected_total_cost);
 			add_deduction(item);
 			//Support.write_log_line(String.format("add an deduction with arity %d", rl.arity),Support.DEBUG);
 			//rl.print_info(Support.DEBUG);
@@ -431,9 +426,9 @@ public class Bin
 	
 	/* each item has a list of deductions
 	 * need to check whether the item is already exist, if yes, just add the deductions*/
-	private boolean add_deduction( Item new_item){
+	private boolean add_deduction( HGNode new_item){
 		boolean res=false;
-		Item old_item = (Item)tbl_items.get(new_item.get_signature());		
+		HGNode old_item = (HGNode)tbl_items.get(new_item.get_signature());		
 		if(old_item!=null){//have an item with same states, combine items
 			p_chart.n_merged++;
 			if(new_item.est_total_cost<old_item.est_total_cost){
@@ -457,7 +452,7 @@ public class Bin
 	}
 	
 //	this function is called only there is no such item in the tbl
-	private void add_new_item(Item item){
+	private void add_new_item(HGNode item){
 		tbl_items.put(item.get_signature(), item);//add/replace the item	
 		l_sorted_items=null; //reset the list
 		heap_items.add(item);
@@ -479,7 +474,7 @@ public class Bin
 	public void print_info(Level level){
 		if (logger.isLoggable(level)) logger.log(level, String.format("#### Stat of Bin, n_items=%d, n_super_items=%d",tbl_items.size(),tbl_super_items.size()));			
 		ensure_sorted();
-		for(Item it : l_sorted_items)
+		for(HGNode it : l_sorted_items)
         	it.print_info(level);
 	}
 	
@@ -499,7 +494,7 @@ public class Bin
 		}
 		while(heap_items.size()-dead_items>JoshuaConfiguration.max_n_items //bin limit pruning 
 			  ||  heap_items.peek().est_total_cost>=cut_off_cost){//relative threshold pruning
-			Item worst_item = (Item)heap_items.poll();
+			HGNode worst_item = (HGNode)heap_items.poll();
 			if(worst_item.is_dead==true)//clear the corrupted item
 				dead_items--;
 			else{
@@ -521,9 +516,9 @@ public class Bin
         	//get a sorted items ArrayList
         	Object[] t_col = tbl_items.values().toArray();
         	Arrays.sort(t_col);
-        	l_sorted_items = new ArrayList<Item>();
+        	l_sorted_items = new ArrayList<HGNode>();
         	for(int c=0; c<t_col.length;c++)
-        		l_sorted_items.add((Item)t_col[c]);
+        		l_sorted_items.add((HGNode)t_col[c]);
         	//TODO: we cannot create new SuperItem here because the DotItem link to them
         	
         	//update tbl_super_items
@@ -531,7 +526,7 @@ public class Bin
         	for(SuperItem t_si : tem_list)
         		t_si.l_items.clear();
         	
-            for(Item it :  l_sorted_items){
+            for(HGNode it :  l_sorted_items){
             	SuperItem si = ((SuperItem)tbl_super_items.get(it.lhs));
             	if(si==null){//sanity check
             		Support.write_log_line("Does not have super Item, have to exist", Support.ERROR);
@@ -555,7 +550,7 @@ public class Bin
         }
 	}
 	
-	public ArrayList<Item> get_sorted_items(){
+	public ArrayList<HGNode> get_sorted_items(){
         ensure_sorted();
         return l_sorted_items;
 	}
@@ -565,7 +560,7 @@ public class Bin
         return tbl_super_items;
 	}
 	
-	public Item getitem(int pos){//not used 
+	public HGNode getitem(int pos){//not used 
 		ensure_sorted();
 		return l_sorted_items.get(pos);
 	}
@@ -573,7 +568,7 @@ public class Bin
 	/*list of items that have the same lhs but may have different LM states*/
 	public class SuperItem{
 		int lhs;//state
-		ArrayList<Item> l_items=new ArrayList<Item>();
+		ArrayList<HGNode> l_items=new ArrayList<HGNode>();
 		public SuperItem(int lhs_in){
 			lhs = lhs_in;			
 		}
@@ -583,7 +578,7 @@ public class Bin
 		private double expected_total_cost; 
 		private double finalized_total_cost;
 		private double transition_total_cost;
-		private HashMap<FeatureFunction, FFDPState>   tbl_feat_dpstates;//tbl of dpstate for each stateful feature
+		private HashMap<Integer, FFDPState>   tbl_feat_dpstates;//the key is feature id; tbl of dpstate for each stateful feature
 		
 		public void setExpectedTotalCost(double cost_){
 			this.expected_total_cost = cost_;
@@ -609,11 +604,11 @@ public class Bin
 			return this.transition_total_cost;
 		}
 		
-		public void setFeatDPStates(HashMap<FeatureFunction, FFDPState> states_){
+		public void setFeatDPStates(HashMap<Integer, FFDPState> states_){
 			this.tbl_feat_dpstates = states_;
 		} 
 		
-		public  HashMap<FeatureFunction, FFDPState>   getFeatDPStates( ){
+		public  HashMap<Integer, FFDPState>   getFeatDPStates( ){
 			return this.tbl_feat_dpstates;
 		} 
 	}

@@ -167,19 +167,19 @@ public class JoshuaDecoder {
 				if (fds[0].compareTo("lm") == 0 && fds.length == 2) { // lm order weight
 					double weight = (new Double(fds[1].trim())).doubleValue();					
 					LMGrammar lm_grammar = initializeLanguageModel(psymbol);					
-					l_models.add(new LMFeatureFunction(JoshuaConfiguration.g_lm_order, psymbol, lm_grammar, weight));
+					l_models.add(new LMFeatureFunction(l_models.size(), JoshuaConfiguration.g_lm_order, psymbol, lm_grammar, weight));
 					if (logger.isLoggable(Level.FINEST)) 
 						logger.finest( String.format("Line: %s\nAdd LM, order: %d; weight: %.3f;", line, JoshuaConfiguration.g_lm_order, weight));				
 				} else if (0 == fds[0].compareTo("latticecost")	&& fds.length == 2) {
 					double weight = Double.parseDouble(fds[1].trim());
-					l_models.add(new SourceLatticeArcCostFF(weight));
+					l_models.add(new SourceLatticeArcCostFF(l_models.size(), weight));
 					if (logger.isLoggable(Level.FINEST)) logger.finest(
 						String.format("Line: %s\nAdd Source lattice cost, weight: %.3f", weight));
 				} else if (0 == fds[0].compareTo("phrasemodel")	&& fds.length == 4) { // phrasemodel owner column(0-indexed) weight
 					int owner = psymbol.addTerminalSymbol(fds[1]);
 					int column = (new Integer(fds[2].trim())).intValue();
 					double weight = (new Double(fds[3].trim())).doubleValue();
-					l_models.add(new PhraseModelFF(weight, owner, column));
+					l_models.add(new PhraseModelFF(l_models.size(), weight, owner, column));
 					if (logger.isLoggable(Level.FINEST)) 
 						logger.finest(String.format("Process Line: %s\nAdd PhraseModel, owner: %s; column: %d; weight: %.3f", line, owner, column, weight));				
 				} else if (0 == fds[0].compareTo("arityphrasepenalty") && fds.length == 5){//arityphrasepenalty owner start_arity end_arity weight
@@ -187,12 +187,12 @@ public class JoshuaDecoder {
 					int start_arity = (new Integer(fds[2].trim())).intValue();
 					int end_arity = (new Integer(fds[3].trim())).intValue();
 					double weight = (new Double(fds[4].trim())).doubleValue();
-					l_models.add(new ArityPhrasePenaltyFF(weight, owner, start_arity, end_arity));
+					l_models.add(new ArityPhrasePenaltyFF(l_models.size(), weight, owner, start_arity, end_arity));
 					if (logger.isLoggable(Level.FINEST)) 
 						logger.finest(String.format("Process Line: %s\nAdd ArityPhrasePenalty, owner: %s; start_arity: %d; end_arity: %d; weight: %.3f",line, owner, start_arity, end_arity, weight));			
 				} else if (0 == fds[0].compareTo("wordpenalty")	&& fds.length == 2) { // wordpenalty weight
 					double weight = (new Double(fds[1].trim())).doubleValue();
-					l_models.add(new WordPenaltyFF(weight));
+					l_models.add(new WordPenaltyFF(l_models.size(), weight));
 					if (logger.isLoggable(Level.FINEST)) 
 						logger.finest(String.format("Process Line: %s\nAdd WordPenalty, weight: %.3f", line, weight));
 				} else {

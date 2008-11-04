@@ -164,12 +164,16 @@ public abstract class DefaultSymbol implements Symbol {
 			// TODO: get rid of this expensive interim object
 			String symbol = getWord(id);
 			
-			// Assumes the last character is a digit
-			// and extracts it, starting from one.
-			// Assumes the whole prefix is the
-			// nonterminal-ID portion of the string
-			return Integer.parseInt( symbol.substring(symbol.length() - 2,	symbol.length() - 1) ) - 1;
+			return getEngNonTerminalIndex(symbol);
 		}
+	}
+	
+	final public int getEngNonTerminalIndex(String wrd) {
+		// Assumes the last character is a digit
+		// and extracts it, starting from one.
+		// Assumes the whole prefix is the
+		// nonterminal-ID portion of the string
+		return Integer.parseInt( wrd.substring(wrd.length() - 2,	wrd.length() - 1) ) - 1;
 	}
 	
 	private void initializeSymTblFromFile(String fname){	

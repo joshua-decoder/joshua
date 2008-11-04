@@ -38,6 +38,13 @@ import java.util.ArrayList; //// BUG: should be List but that causes bugs
 public interface FeatureFunction<Res extends FFTransitionResult, DPS extends FFDPState> {
 
 	/* Attributes */
+	
+	/* It is essential to make sure the feature ID is unique for each feature
+	 * */
+	void putFeatureID(int id);
+	
+	int getFeatureID();
+	
 	void    putWeight(double weight);
 	
 	double  getWeight();

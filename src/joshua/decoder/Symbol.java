@@ -48,6 +48,7 @@ public interface Symbol {
 	public boolean isNonterminal(int id);
 	
 	public int getEngNonTerminalIndex(int id);//return the index of a nonterminal, e.g., input X1 will return 1; input X0 will return 0 
+	public int getEngNonTerminalIndex(String word);
 	
 	/**
 	 * @return the ID for wordString

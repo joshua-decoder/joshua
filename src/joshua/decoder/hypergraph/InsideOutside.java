@@ -18,8 +18,6 @@
 package joshua.decoder.hypergraph;
 
 import joshua.decoder.hypergraph.HyperGraph;
-import joshua.decoder.hypergraph.HyperGraph.Deduction;
-import joshua.decoder.hypergraph.HyperGraph.Item;
 
 import java.util.HashMap;
 
@@ -60,7 +58,7 @@ public abstract class InsideOutside {
 	double g_sanity_post_prob =0;
 	
 	//get feature-set specific score for deduction
-	protected abstract double get_deduction_score(Deduction dt, Item parent_it);
+	protected abstract double get_deduction_score(HyperEdge dt, HGNode parent_it);
 	
 	
 	//the results are stored in tbl_inside_cost and tbl_outside_cost
@@ -89,14 +87,14 @@ public abstract class InsideOutside {
     }
 	
 	//this is the expected log cost of this deduction, without normalization
-	public double get_deduction_merit(Deduction dt, Item parent){
+	public double get_deduction_merit(HyperEdge dt, HGNode parent){
 		//### outside of parent
 		double outside = (Double)tbl_outside_cost.get(parent);
 		
 		//### get inside cost of all my ant-items
 		double inside = ONE_IN_SEMIRING;
 		if(dt.get_ant_items()!=null){
-			for(Item ant_it : dt.get_ant_items())
+			for(HGNode ant_it : dt.get_ant_items())
 				inside = multi_in_semiring(inside,(Double)tbl_inside_cost.get(ant_it));
 		}
 		
@@ -107,7 +105,7 @@ public abstract class InsideOutside {
 		return merit;
 	}	
 	
-	public double get_deduction_post_prob(Deduction dt, Item parent ){		
+	public double get_deduction_post_prob(HyperEdge dt, HGNode parent ){		
 		if(SEMIRING==LOG_SEMIRING){
 			return Math.exp((get_deduction_merit(dt, parent)-normalization_constant));
 		}else{
@@ -124,12 +122,12 @@ public abstract class InsideOutside {
 		tbl_for_sanity_check.clear();
 	}
 	
-	private void sanity_check_item(Item it){
+	private void sanity_check_item(HGNode it){
 		if(tbl_for_sanity_check.containsKey(it))return;
 		tbl_for_sanity_check.put(it,1);
 		
 		//### recursive call on each deduction
-		for(Deduction dt : it.l_deductions){
+		for(HyperEdge dt : it.l_deductions){
 			g_sanity_post_prob += get_deduction_post_prob(dt,it);
 			sanity_check_deduction(dt);//deduction-specifc operation
 		}
@@ -137,10 +135,10 @@ public abstract class InsideOutside {
 		//### item-specific operation
 	}
 	
-	private void sanity_check_deduction(Deduction dt){
+	private void sanity_check_deduction(HyperEdge dt){
 		//### recursive call on each ant item
 		if(dt.get_ant_items()!=null)
-			for(Item ant_it : dt.get_ant_items())
+			for(HGNode ant_it : dt.get_ant_items())
 				sanity_check_item(ant_it);
 		
 		//### deduction-specific operation				
@@ -157,7 +155,7 @@ public abstract class InsideOutside {
 		inside_estimation_item(hg.goal_item);
 	}
 	
-	private double inside_estimation_item(Item it){
+	private double inside_estimation_item(HGNode it){
 		//### get number of deductions that point to me
 		Integer num_called = (Integer)tbl_num_parent_deductions.get(it);
 		if(num_called!=null)
@@ -170,7 +168,7 @@ public abstract class InsideOutside {
 		double inside_cost = ZERO_IN_SEMIRING;
 		
 		//### recursive call on each deduction
-		for(Deduction dt : it.l_deductions){
+		for(HyperEdge dt : it.l_deductions){
 			double v_dt = inside_estimation_deduction(dt, it);//deduction-specifc operation
 			inside_cost = add_in_semiring(inside_cost, v_dt);
 		}		
@@ -180,11 +178,11 @@ public abstract class InsideOutside {
 		return inside_cost;
 	}
 	
-	private double inside_estimation_deduction(Deduction dt, Item parent_item){
+	private double inside_estimation_deduction(HyperEdge dt, HGNode parent_item){
 		double inside_cost = ONE_IN_SEMIRING; 
 		//### recursive call on each ant item
 		if(dt.get_ant_items()!=null)
-			for(Item ant_it : dt.get_ant_items()){
+			for(HGNode ant_it : dt.get_ant_items()){
 				double v_item = inside_estimation_item(ant_it);
 				inside_cost =  multi_in_semiring(inside_cost, v_item);				
 			}
@@ -201,11 +199,11 @@ public abstract class InsideOutside {
 	private void outside_estimation_hg(HyperGraph hg){	
 		tbl_outside_cost.clear(); 
 		tbl_outside_cost.put(hg.goal_item, ONE_IN_SEMIRING);//initialize
-		for(Deduction dt : hg.goal_item.l_deductions)
+		for(HyperEdge dt : hg.goal_item.l_deductions)
 			outside_estimation_deduction(dt, hg.goal_item);	
 	}
 	
-	private void outside_estimation_item(Item cur_it, Item upper_item, Deduction parent_dt, double parent_deduct_cost){
+	private void outside_estimation_item(HGNode cur_it, HGNode upper_item, HyperEdge parent_dt, double parent_deduct_cost){
 		Integer num_called = (Integer)tbl_num_parent_deductions.get(cur_it);
 		if(num_called==null || num_called==0){System.out.println("un-expected call, must be wrong"); System.exit(0);}
 		tbl_num_parent_deductions.put(cur_it, num_called-1);		
@@ -221,7 +219,7 @@ public abstract class InsideOutside {
 		
 		//### sibing specifc
 		if(parent_dt.get_ant_items()!=null && parent_dt.get_ant_items().size()>1)
-			for(Item ant_it : parent_dt.get_ant_items()){
+			for(HGNode ant_it : parent_dt.get_ant_items()){
 				if(ant_it != cur_it){
 					double inside_cost_item =(Double)tbl_inside_cost.get(ant_it);//inside cost
 					additional_outside_cost =  multi_in_semiring(additional_outside_cost, inside_cost_item);
@@ -239,7 +237,7 @@ public abstract class InsideOutside {
 		
 		//### recursive call on each deduction
 		if( num_called-1<=0){//i am done
-			for(Deduction dt : cur_it.l_deductions){
+			for(HyperEdge dt : cur_it.l_deductions){
 				//TODO: potentially, we can collect the feature expection in each hyperedge here, to avoid another pass of the hypergraph to get the counts
 				outside_estimation_deduction(dt, cur_it);
 			}
@@ -247,14 +245,14 @@ public abstract class InsideOutside {
 	}
 	
 	
-	private void outside_estimation_deduction(Deduction dt, Item parent_item){
+	private void outside_estimation_deduction(HyperEdge dt, HGNode parent_item){
 		//we do not need to outside cost if no ant items
 		if(dt.get_ant_items()!=null){
 			//### deduction specific cost
 			double deduction_cost = get_deduction_score(dt, parent_item);//feature-set specific
 			
 			//### recursive call on each ant item
-			for(Item ant_it : dt.get_ant_items()){
+			for(HGNode ant_it : dt.get_ant_items()){
 				outside_estimation_item(ant_it, parent_item, dt, deduction_cost);
 			}
 		}
