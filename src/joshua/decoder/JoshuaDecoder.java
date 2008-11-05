@@ -18,6 +18,7 @@
 package joshua.decoder;
 
 
+import joshua.decoder.ff.Context;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.ArityPhrasePenaltyFF;
 import joshua.decoder.ff.PhraseModelFF;
@@ -202,6 +203,9 @@ public class JoshuaDecoder {
 			}
 		}
 		FileUtility.close_read_file(t_reader_config);
+
+		// the following tells the models where their state belongs
+		Context.initializeContextStatePositions(l_models);
 		return l_models;
 	}
 	

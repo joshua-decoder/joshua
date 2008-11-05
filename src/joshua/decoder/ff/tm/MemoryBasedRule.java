@@ -39,7 +39,24 @@ public class MemoryBasedRule extends Rule {
 	   	estimate_rule(p_l_models);//estimate lower-bound for pruning purpose, and set statelesscost
 	   	//System.out.println("stateless cost is " + this.statelesscost);
 	}
-	
+
+	private MemoryBasedRule(float est_cost, int rule_id, int lhs, int[] fr_in, int[] eng_in, int owner, float[] feat_scores_in, int arity_in, float statelesscost, float src_cost) {
+		this.rule_id     = rule_id;
+		this.lhs         = lhs;
+		this.french      = fr_in;
+		this.english     = eng_in;
+		this.owner       = owner;
+		this.feat_scores = feat_scores_in;
+		this.arity       = arity_in;
+		this.statelesscost = statelesscost;
+		this.lattice_cost = src_cost;
+		this.est_cost = est_cost;
+	}
+	public Rule cloneAndAddLatticeCostIfNonZero(float cost) {
+		if (cost == 0.0f) return this;
+		Rule r = new MemoryBasedRule(est_cost,rule_id, lhs, french, english, owner, feat_scores, arity, statelesscost, cost);
+		return r;
+	}
 	
 	public MemoryBasedRule(Symbol p_symbol, ArrayList<FeatureFunction> p_l_models, String nonterminalRegexp_, String nonterminalReplaceRegexp_, int r_id, String line, int owner_in) {
 		this.rule_id = r_id;
@@ -81,7 +98,7 @@ public class MemoryBasedRule extends Rule {
 		this.feat_scores = new float[t_scores.length];
 		int i = 0;
 		for (String score : t_scores) {
-			this.feat_scores[i++] = (new Float(score)).floatValue();
+			this.feat_scores[i++] = Float.parseFloat(score);
 		}
 		this.lattice_cost = 0;
 		//tem_estcost += estimate_rule();//estimate lower-bound, and set statelesscost, this must be called

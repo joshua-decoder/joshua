@@ -102,7 +102,7 @@ public class HyperGraph {
 		ArrayList<HyperEdge> l_deductions = new ArrayList<HyperEdge>(1);
 		HyperEdge clone_dt = clone_deduction(it_in.best_deduction);
 		l_deductions.add(clone_dt);
-		return new HGNode(it_in.i, it_in.j, it_in.lhs,  l_deductions, clone_dt, it_in.tbl_ff_dpstates);	
+		return new HGNode(it_in.i, it_in.j, l_deductions, clone_dt, it_in.dpstate);	
 	}
 	
 	//TODO: tbl_states
@@ -114,7 +114,7 @@ public class HyperGraph {
 			HyperEdge clone_dt = clone_deduction(dt); 
 			l_deductions.add(clone_dt);
 		}
-		return new HGNode(it_in.i, it_in.j, it_in.lhs,  l_deductions, best_dt, it_in.tbl_ff_dpstates);	
+		return new HGNode(it_in.i, it_in.j, l_deductions, best_dt, it_in.dpstate);
 	}
 	
 	public static HyperEdge clone_deduction(HyperEdge dt_in){
@@ -122,8 +122,7 @@ public class HyperGraph {
 		if (null != dt_in.l_ant_items) {
 			l_ant_items = new ArrayList<HGNode>(dt_in.l_ant_items);//l_ant_items will be changed in get_1best_tree_item
 		}
-		HyperEdge res = new HyperEdge(dt_in.rule, dt_in.best_cost, dt_in.transition_cost, l_ant_items);
-		return res;
+		return new HyperEdge(dt_in.rule, dt_in.best_cost, dt_in.transition_cost, l_ant_items);
 	}
 	//###end
 	

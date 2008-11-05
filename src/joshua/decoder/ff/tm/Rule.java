@@ -110,7 +110,7 @@ public class Rule {
 	}
 	
 	// just used by cloneAndAddLatticeCost:
-	private Rule(int rule_id, int lhs, int[] fr_in, int[] eng_in, int owner, float[] feat_scores_in, int arity_in, float src_cost) {
+	private Rule(int rule_id, int lhs, int[] fr_in, int[] eng_in, int owner, float[] feat_scores_in, int arity_in, float statelesscost, float src_cost) {
 		this.rule_id     = rule_id;
 		this.lhs         = lhs;
 		this.french      = fr_in;
@@ -118,6 +118,7 @@ public class Rule {
 		this.owner       = owner;
 		this.feat_scores = feat_scores_in;
 		this.arity       = arity_in;
+		this.statelesscost = statelesscost;
 		this.lattice_cost = src_cost;
 	}
 	
@@ -143,8 +144,9 @@ public class Rule {
 	
 	
 //	 create a copy of the rule and set the lattice cost field
-	public Rule cloneAndAddLatticeCost(float cost) {
-		Rule r = new Rule(rule_id, lhs, french, english, owner, feat_scores, arity, cost);
+	public Rule cloneAndAddLatticeCostIfNonZero(float cost) {
+		if (cost == 0.0f) return this;
+		Rule r = new Rule(rule_id, lhs, french, english, owner, feat_scores, arity, statelesscost, cost);
 		return r;
 	}
 	

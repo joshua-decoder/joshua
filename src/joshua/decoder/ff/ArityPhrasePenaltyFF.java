@@ -25,21 +25,21 @@ import joshua.decoder.ff.tm.Rule;
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate: 2008-07-28 18:44:45 -0400 (Mon, 28 Jul 2008) $
  */
-public final class ArityPhrasePenaltyFF extends DefaultStatelessFF {
+public final class ArityPhrasePenaltyFF extends FeatureFunction {
 	private static final double ALPHA = Math.log10(Math.E);
-	
+
 	// when the rule.arity is in the range, then this feature is activated
 	private final int min_arity;
 	private final int max_arity;
-	
-	
+	private final int owner;
+
 	public ArityPhrasePenaltyFF(final int feat_id_, final double weight_, final int owner_,	final int min, final int max) {
-		super(weight_, owner_, feat_id_);
+		super(weight_, feat_id_);
+		this.owner = owner_;
 		this.min_arity = min;
 		this.max_arity = max;
 	}
-	
-	
+
 	public double estimate(final Rule rule) {
 		if (this.owner == rule.owner && this.min_arity <= rule.arity && this.max_arity >= rule.arity) {
 			return ALPHA;
@@ -47,6 +47,5 @@ public final class ArityPhrasePenaltyFF extends DefaultStatelessFF {
 			return 0.0;
 		}
 	}
-
 
 }

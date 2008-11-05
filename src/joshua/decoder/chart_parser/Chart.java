@@ -76,7 +76,8 @@ public class Chart {
 	
 	//decoder-wide variables
 	ArrayList<FeatureFunction> p_l_models;
-	
+	int                        reserved_state_size;  // how many bytes for context?
+
 	Symbol p_symbol;
 	
 	//statistics
@@ -121,6 +122,7 @@ public class Chart {
 		//this.sent_len = sentence.length;
 		this.sent_len = sentence.size() - 1;
 		this.p_l_models   = models_;
+		this.reserved_state_size = models_.get(models_.size() - 1).getStateEndOffset();
 		this.p_symbol = symbol_;
 		this.bins     = new Bin[sent_len][sent_len+1];		
 		this.sent_id  = sent_id_;
@@ -302,7 +304,7 @@ public class Chart {
 		
 		while (t_queue.size() > 0) {
 			HGNode item = (HGNode)t_queue.remove(0);
-			TrieGrammar child_tnode = gr.getTrieRoot().matchOne(item.lhs);//match rule and complete part
+			TrieGrammar child_tnode = gr.getTrieRoot().matchOne(item.getLHS());//match rule and complete part
 			if (child_tnode != null
 			&& child_tnode.getRules() != null
 			&& child_tnode.getRules().getArity() == 1) {//have unary rules under this trienode					
@@ -313,7 +315,7 @@ public class Chart {
 				
 				for (Rule rule : l_rules){//for each unary rules								
 					ComputeItemResult tbl_states = chart_bin.compute_item(rule, l_ants, i, j);				
-					HGNode res_item = chart_bin.add_deduction_in_bin(tbl_states, rule, i, j, l_ants, 0.0f);
+					HGNode res_item = chart_bin.add_deduction_in_bin(tbl_states, rule, i, j, l_ants);
 					if (null != res_item) {
 						t_queue.add(res_item);
 						count_of_additions_to_t_queue++;
