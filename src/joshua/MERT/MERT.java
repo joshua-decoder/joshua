@@ -196,6 +196,9 @@ println("",2);
       System.exit(20);
     }
     // do we really need the source sentences ????????????????????????????????????????
+    // well, we need the file containing them, so that the decoder would know
+    // what to translate.  But the sentences themselves are not needed for MERT.  Are we
+    // storing them anywhere?
 
     // create copy of config file
     copyFile(decoderConfigFileName,decoderConfigFileName+".orig.MERT");
@@ -1149,7 +1152,7 @@ private static void test_score(String inFileName, int candPerSen, int testIndex,
     inFile.close();
 
     if (v <= verbosity) {
-      evalMetric.print_detailed_score(candSentenceInfo);
+      evalMetric.printDetailedScore(candSentenceInfo,false);
     }
 
 } // void test_score(...)
@@ -1423,6 +1426,8 @@ private static void test_score(String inFileName, int candPerSen, int testIndex,
       if (!dummy.exists()) {
         refFileName = createUnifiedRefFile(refFileName,refsPerSen);
       }
+    } else {
+      checkFile(refFileName);
     }
 
     checkFile(sourceFileName);

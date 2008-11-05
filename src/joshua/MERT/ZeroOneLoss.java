@@ -56,11 +56,15 @@ public class ZeroOneLoss extends EvaluationMetric
     return 1.0 - (stats[0]/numSentences);
   }
 
-  public void print_detailed_score(SentenceInfo[] candSentenceInfo)
+  public void printDetailedScore_fromStats(double[] stats, boolean oneLiner)
   {
-    double[] stats = suffStats(candSentenceInfo);
-
-    System.out.println("01LOSS = 1.0 - " + (int)stats[0] + " / " + numSentences + " = " + f4.format(1.0 - (stats[0]/numSentences)));
+    if (oneLiner) {
+      System.out.println("01LOSS = 1.0 - " + (int)stats[0] + "/" + numSentences + " = " + f4.format(1.0 - (stats[0]/numSentences)));
+    } else {
+      System.out.println("# correct = " + (int)stats[0]);
+      System.out.println("# sentences = " + numSentences);
+      System.out.println("01LOSS = 1.0 - " + (int)stats[0] + "/" + numSentences + " = " + f4.format(1.0 - (stats[0]/numSentences)));
+    }
   }
 
 }

@@ -311,10 +311,8 @@ public class BLEU extends EvaluationMetric
 
   }
 
-  public void print_detailed_score(SentenceInfo[] candSentenceInfo)
+  public void printDetailedScore_fromStats(double[] stats, boolean oneLiner)
   {
-    double[] stats = suffStats(candSentenceInfo);
-
     double w_n = 1.0/maxGramLength;
     double BLEUsum = 0.0;
     double smooth_addition = 1.0; // following bleu-1.04.pl
@@ -324,17 +322,26 @@ public class BLEU extends EvaluationMetric
     double correctGramCount, totalGramCount;
     int s = 0;
 
+    if (oneLiner) {
+      System.out.print("Precisions: ");
+    }
+
     for (int n = 1; n <= maxGramLength; ++n) {
       correctGramCount = stats[s];
       totalGramCount = stats[s+1];
       double prec_n = correctGramCount/totalGramCount;
         // what if totalGramCount is zero ???????????????????????????????
-      if (prec_n > 0) {
-        System.out.println("BLEU_precision(" + n + ") = " + (int)correctGramCount + " / " + (int)totalGramCount + " = " + f4.format(prec_n));
+
+      if (oneLiner) {
+        System.out.print(n + "=" + f4.format(prec_n) + ", ");
       } else {
-        smooth_addition *= 0.5;
-        prec_n = smooth_addition / (c_len-n+1);
-        System.out.println("BLEU_precision(" + n + ") = " + (int)correctGramCount + " / " + (int)totalGramCount + " ==smoothed==> " + f4.format(prec_n));
+        if (prec_n > 0) {
+          System.out.println("BLEU_precision(" + n + ") = " + (int)correctGramCount + " / " + (int)totalGramCount + " = " + f4.format(prec_n));
+        } else {
+          smooth_addition *= 0.5;
+          prec_n = smooth_addition / (c_len-n+1);
+          System.out.println("BLEU_precision(" + n + ") = " + (int)correctGramCount + " / " + (int)totalGramCount + " ==smoothed==> " + f4.format(prec_n));
+        }
       }
 
       BLEUsum += w_n * Math.log(prec_n);
@@ -342,16 +349,27 @@ public class BLEU extends EvaluationMetric
       s += 2;
     }
 
-    System.out.println("Length of candidate corpus = " + (int)c_len);
-    System.out.println("Effective length of reference corpus = " + (int)r_len);
+    if (oneLiner) {
+      System.out.print("(overall=" + f4.format(Math.exp(BLEUsum)) + "), ");
+    } else {
+      System.out.println("BLEU_precision = " + f4.format(Math.exp(BLEUsum)));
+      System.out.println("");
+    }
 
     double BP = 1.0;
     if (c_len < r_len) BP = Math.exp(1-(r_len/c_len));
       // if c_len > r_len, no penalty applies
 
-    System.out.println("BLEU_BP = " + f4.format(BP));
+    if (oneLiner) {
+      System.out.print("BP=" + f4.format(BP) + ", ");
+    } else {
+      System.out.println("Length of candidate corpus = " + (int)c_len);
+      System.out.println("Effective length of reference corpus = " + (int)r_len);
+      System.out.println("BLEU_BP = " + f4.format(BP));
+      System.out.println("");
+    }
 
     System.out.println("BLEU = " + f4.format(BP*Math.exp(BLEUsum)));
-
   }
+
 }

@@ -74,7 +74,7 @@ public class NewEvaluationMetric extends EvaluationMetric
 	return 0.0;
   }
 
-  public void print_detailed_score(SentenceInfo[] candSentenceInfo)
+  public void printDetailedScore_fromStats(double[] stats, boolean oneLiner)
   {
   }
 

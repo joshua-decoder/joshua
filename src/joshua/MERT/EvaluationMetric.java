@@ -63,14 +63,12 @@ public abstract class EvaluationMetric
   public double score(SentenceInfo cand, int i)
   {
     double[] stats = suffStats(cand,i);
-
     return score(stats);
   }
 
   public double score(SentenceInfo[] candSentenceInfo)
   {
     double[] stats = suffStats(candSentenceInfo);
-
     return score(stats);
   }
 
@@ -88,6 +86,18 @@ public abstract class EvaluationMetric
     return totStats;
   }
 
+  public void printDetailedScore(SentenceInfo[] candSentenceInfo, boolean oneLiner)
+  {
+    double[] stats = suffStats(candSentenceInfo);
+    printDetailedScore_fromStats(stats,oneLiner);
+  }
+
+  public void printDetailedScore(SentenceInfo cand, int i, boolean oneLiner)
+  {
+    double[] stats = suffStats(cand,i);
+    printDetailedScore_fromStats(stats,oneLiner);
+  }
+
   /* abstract (=> also non-static) methods */
   protected abstract void initialize();
   public abstract double bestPossibleScore();
@@ -95,6 +105,6 @@ public abstract class EvaluationMetric
   protected abstract void set_suffStatsCount();
   public abstract double[] suffStats(SentenceInfo cand, int i);
   public abstract double score(double[] stats);
-  public abstract void print_detailed_score(SentenceInfo[] candSentenceInfo);
+  public abstract void printDetailedScore_fromStats(double[] stats, boolean oneLiner);
 }
 
