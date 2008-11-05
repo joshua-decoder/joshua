@@ -45,12 +45,12 @@ public abstract class FeatureFunction {
 	protected int state_offset;
 
 	// by default, stateless
-	public FeatureFunction(double weight, int feat_id) {
+	protected FeatureFunction(double weight, int feat_id) {
 		this.weight_ = weight;
 		this.feat_id = feat_id;
 		state_bytes = 0;
 	}
-	public FeatureFunction(double weight, int feat_id, int num_bytes) {
+	protected FeatureFunction(double weight, int feat_id, int num_bytes) {
 		this.weight_ = weight;
 		this.feat_id = feat_id;
 		state_bytes = num_bytes;
