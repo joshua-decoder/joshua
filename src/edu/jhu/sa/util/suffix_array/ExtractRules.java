@@ -98,14 +98,18 @@ public class ExtractRules {
 		String sourceFileName = commandLine.getValue(source);
 		Vocabulary sourceVocab = new Vocabulary();
 		int[] sourceWordsSentences = SuffixArrayFactory.createVocabulary(sourceFileName, sourceVocab);
+		if (logger.isLoggable(Level.FINE)) logger.fine("Constructing source language corpus array.");
 		CorpusArray sourceCorpusArray = SuffixArrayFactory.createCorpusArray(sourceFileName, sourceVocab, sourceWordsSentences[0], sourceWordsSentences[1]);
+		if (logger.isLoggable(Level.FINE)) logger.fine("Constructing source language suffix arra.");
 		SuffixArray sourceSuffixArray = SuffixArrayFactory.createSuffixArray(sourceCorpusArray);
 		
 		if (logger.isLoggable(Level.FINE)) logger.fine("Constructing target language vocabulary.");		
 		String targetFileName = commandLine.getValue(target);
 		Vocabulary targetVocab = new Vocabulary();
 		int[] targetWordsSentences = SuffixArrayFactory.createVocabulary(commandLine.getValue(target), targetVocab);
+		if (logger.isLoggable(Level.FINE)) logger.fine("Constructing target language corpus array.");
 		CorpusArray targetCorpusArray = SuffixArrayFactory.createCorpusArray(targetFileName, targetVocab, targetWordsSentences[0], targetWordsSentences[1]);
+		if (logger.isLoggable(Level.FINE)) logger.fine("Constructing target language suffix array.");
 		SuffixArray targetSuffixArray = SuffixArrayFactory.createSuffixArray(targetCorpusArray);
 		
 		if (logger.isLoggable(Level.FINE)) logger.fine("Reading alignment data.");
