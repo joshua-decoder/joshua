@@ -6,19 +6,64 @@ import java.io.*;
 public class BLEU extends EvaluationMetric
 {
   private int maxGramLength;
+  private int effLengthMethod;
+    // 1: closest, 2: shortest, 3: average
   private HashMap[][] maxNgramCounts;
 
   public BLEU()
   {
     maxGramLength = 4; // default
+    effLengthMethod = 1; // default
     initialize();
   }
 
   public BLEU(int mxGrmLn)
   {
     maxGramLength = mxGrmLn;
+    effLengthMethod = 1; // default
     initialize();
   }
+
+  public BLEU(String methodStr)
+  {
+    maxGramLength = 4; // default
+
+    if (methodStr.equals("closest")) {
+      effLengthMethod = 1;
+    } else if (methodStr.equals("shortest")) {
+      effLengthMethod = 2;
+    } else if (methodStr.equals("average")) {
+      effLengthMethod = 3;
+    } else {
+      System.out.println("Unknown effective length method string " + methodStr + ".");
+      System.out.println("Should be one of closest, shortest, or average.");
+      System.exit(1);
+    }
+
+    initialize();
+  }
+
+  public BLEU(int mxGrmLn,String methodStr)
+  {
+    maxGramLength = mxGrmLn;
+
+    if (methodStr.equals("closest")) {
+      effLengthMethod = 1;
+    } else if (methodStr.equals("shortest")) {
+      effLengthMethod = 2;
+    } else if (methodStr.equals("average")) {
+      effLengthMethod = 3;
+    } else {
+      System.out.println("Unknown effective length method string " + methodStr + ".");
+      System.out.println("Should be one of closest, shortest, or average.");
+      System.exit(1);
+    }
+
+    initialize();
+
+  }
+
+
 
   protected void initialize()
   {
@@ -140,25 +185,54 @@ public class BLEU extends EvaluationMetric
     double[] lengths = new double[2];
 
     int candLength = cand.getLength();
-    int closestRefLength = refSentenceInfo[i][0].getLength();
-    int minDiff = Math.abs(candLength-closestRefLength);
+    lengths[0] = candLength;
 
-    for (int r = 1; r < refsPerSen; ++r) {
-      int nextRefLength = refSentenceInfo[i][r].getLength();
-      int nextDiff = Math.abs(candLength-nextRefLength);
-      if (nextDiff < minDiff) {
-        closestRefLength = nextRefLength;
-        minDiff = nextDiff;
-      } else if (nextDiff == minDiff && nextRefLength < closestRefLength) {
-        closestRefLength = nextRefLength;
-        minDiff = nextDiff;
+    if (effLengthMethod == 1) { // closest
+
+      int closestRefLength = refSentenceInfo[i][0].getLength();
+      int minDiff = Math.abs(candLength-closestRefLength);
+
+      for (int r = 1; r < refsPerSen; ++r) {
+        int nextRefLength = refSentenceInfo[i][r].getLength();
+        int nextDiff = Math.abs(candLength-nextRefLength);
+        if (nextDiff < minDiff) {
+          closestRefLength = nextRefLength;
+          minDiff = nextDiff;
+        } else if (nextDiff == minDiff && nextRefLength < closestRefLength) {
+          closestRefLength = nextRefLength;
+          minDiff = nextDiff;
+        }
       }
+
+      lengths[1] = closestRefLength;
+
+    } else if (effLengthMethod == 2) { // shortest
+
+      int shortestRefLength = refSentenceInfo[i][0].getLength();
+
+      for (int r = 1; r < refsPerSen; ++r) {
+        int nextRefLength = refSentenceInfo[i][r].getLength();
+        if (nextRefLength < shortestRefLength) {
+          shortestRefLength = nextRefLength;
+        }
+      }
+
+      lengths[1] = shortestRefLength;
+
+    } else { // average
+
+      int totalRefLength = refSentenceInfo[i][0].getLength();
+
+      for (int r = 1; r < refsPerSen; ++r) {
+        totalRefLength += refSentenceInfo[i][r].getLength();
+      }
+
+      lengths[1] = totalRefLength/(double)refsPerSen;
+
     }
 
-    lengths[0] = candLength;
-    lengths[1] = closestRefLength;
-
     return lengths;
+
   }
 
   public double[] prec_suffStats(int gramLength, SentenceInfo[] candSentenceInfo)
@@ -195,7 +269,7 @@ public class BLEU extends EvaluationMetric
   {
     if (stats.length != suffStatsCount) {
       System.out.println("Mismatch between stats.length and suffStatsCount (" + stats.length + " vs. " + suffStatsCount + ")");
-      System.exit(1);
+      System.exit(2);
     }
 
     double w_n = 1.0/maxGramLength;

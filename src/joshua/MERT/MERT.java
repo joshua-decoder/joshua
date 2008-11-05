@@ -306,7 +306,7 @@ println("",2);
 
     // do necessary initialization for the evaluation metric
     if (metricName.equals("BLEU")) {
-      evalMetric = new BLEU(maxGramLength);
+      evalMetric = new BLEU(maxGramLength,"closest");
     } else if (metricName.equals("01LOSS")) {
       evalMetric = new ZeroOneLoss();
     }
