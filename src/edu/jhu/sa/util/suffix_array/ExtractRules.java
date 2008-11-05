@@ -94,19 +94,21 @@ public class ExtractRules {
 		}
 		
 		
-		
+		if (logger.isLoggable(Level.FINE)) logger.fine("Constructing source language vocabulary.");
 		String sourceFileName = commandLine.getValue(source);
 		Vocabulary sourceVocab = new Vocabulary();
 		int[] sourceWordsSentences = SuffixArrayFactory.createVocabulary(sourceFileName, sourceVocab);
 		CorpusArray sourceCorpusArray = SuffixArrayFactory.createCorpusArray(sourceFileName, sourceVocab, sourceWordsSentences[0], sourceWordsSentences[1]);
 		SuffixArray sourceSuffixArray = SuffixArrayFactory.createSuffixArray(sourceCorpusArray);
-
+		
+		if (logger.isLoggable(Level.FINE)) logger.fine("Constructing target language vocabulary.");		
 		String targetFileName = commandLine.getValue(target);
 		Vocabulary targetVocab = new Vocabulary();
 		int[] targetWordsSentences = SuffixArrayFactory.createVocabulary(commandLine.getValue(target), targetVocab);
 		CorpusArray targetCorpusArray = SuffixArrayFactory.createCorpusArray(targetFileName, targetVocab, targetWordsSentences[0], targetWordsSentences[1]);
 		SuffixArray targetSuffixArray = SuffixArrayFactory.createSuffixArray(targetCorpusArray);
 		
+		if (logger.isLoggable(Level.FINE)) logger.fine("Reading alignment data.");
 		String alignmentFileName = commandLine.getValue(alignment);
 		AlignmentArray alignmentArray = SuffixArrayFactory.createAlignmentArray(alignmentFileName, sourceSuffixArray, targetSuffixArray);
 		
@@ -137,8 +139,11 @@ public class ExtractRules {
 			out = new PrintStream(commandLine.getValue(output));
 		}
 		
-		LexProbs lexProbs = new LexProbs(source_given_target, target_given_source, sourceVocab, targetVocab);
+		if (logger.isLoggable(Level.FINE)) logger.fine("Constructing lexical probabilities table");
 		
+		LexProbs lexProbs = new LexProbs(source_given_target, target_given_source, sourceVocab, targetVocab);
+	
+		if (logger.isLoggable(Level.FINE)) logger.fine("Done constructing lexical probabilities table");
 		
 		Map<Integer,String> ntVocab = new HashMap<Integer,String>();
 		ntVocab.put(PrefixTree.X, "X");
