@@ -28,8 +28,7 @@ import joshua.decoder.ff.tm.Rule;
  */
 
 /*How to add a featureFunction
- * (1) implement FeatureFunction
- * (2) implement FFState
+ * implement FeatureFunction by overriding estimate, transition, and finalTransition
  * */
 
 public abstract class FeatureFunction {
