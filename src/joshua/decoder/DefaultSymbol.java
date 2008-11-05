@@ -49,13 +49,9 @@ public abstract class DefaultSymbol implements Symbol {
 	 
 	protected abstract String  getTerminalWord(int id);
 
-	public DefaultSymbol(String fname){
-		if(fname !=null){
-			System.out.println("Construct the symbol table from a file " +fname);
-			initializeSymTblFromFile(fname);
-		}else{
-			System.out.println("Construct the symbol table on the fly");
-		}
+	
+	public DefaultSymbol(){
+		//do nothing here, because we want the sub-class doing specific things
 	}
 	
 	
@@ -176,7 +172,7 @@ public abstract class DefaultSymbol implements Symbol {
 		return Integer.parseInt( wrd.substring(wrd.length() - 2,	wrd.length() - 1) ) - 1;
 	}
 	
-	private void initializeSymTblFromFile(String fname){	
+	protected void initializeSymTblFromFile(String fname){	
 		is_reading_from_file =true;
 		//### read file into tbls
 		HashMap<String, Integer> tbl_str_2_id = new HashMap<String, Integer>();

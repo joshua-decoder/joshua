@@ -19,6 +19,7 @@ package joshua.decoder.ff.lm.srilm;
 
 import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.SrilmSymbol;
+import joshua.decoder.Symbol;
 import joshua.decoder.ff.lm.LMGrammar;
 
 import java.util.ArrayList;
@@ -35,7 +36,8 @@ public class LMGrammarSRILM  extends LMGrammar {
 		super(psymbol, order_);
 	 
 		System.out.println("use local srilm");
-		p_srilm = srilm.initLM(order_, p_symbol.getLMStartID(), p_symbol.getLMEndID() );
+		//p_srilm = srilm.initLM(order_, p_symbol.getLMStartID(), p_symbol.getLMEndID() );//TODO
+		p_srilm = psymbol.getSrilmPointer();
 		read_lm_grammar_from_file(lm_file);//TODO: what about sentence-specific?
 	}
 	

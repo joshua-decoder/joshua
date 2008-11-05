@@ -10,7 +10,12 @@ public class BuildinSymbol extends DefaultSymbol {
 	private int cur_terminal_id = lm_start_sym_id ;//must be positive
 	
 	public BuildinSymbol(String fname){
-		super(fname);
+		if(fname !=null){
+			System.out.println("Construct the symbol table from a file " +fname);
+			initializeSymTblFromFile(fname);
+		}else{
+			System.out.println("Construct the symbol table on the fly");
+		}
 	}
 
 	/** Get int for string (initial, or recover) */

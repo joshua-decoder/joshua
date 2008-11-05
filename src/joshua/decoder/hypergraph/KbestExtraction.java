@@ -423,7 +423,8 @@ public class KbestExtraction {
 			return res.toString();
 		}
 		
-		//TODO: we assume only one lm, and the LM is the only non-stateles model
+		//TODO: we assume at most one lm, and the LM is the only non-stateles model
+		//another potential difficulty in handling multiple LMs: symbol synchronization among the LMs
 		//accumulate deduction cost into model_cost[], used by get_hyp()
 		private void compute_cost(HyperEdge dt, double[] model_cost, ArrayList l_models){
 			if(model_cost==null) return;

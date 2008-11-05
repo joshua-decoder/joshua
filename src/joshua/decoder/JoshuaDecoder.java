@@ -216,8 +216,10 @@ public class JoshuaDecoder {
 		if (JoshuaConfiguration.use_remote_lm_server) {
 			this.p_symbol = new BuildinSymbol(JoshuaConfiguration.remote_symbol_tbl);//within decoder, we assume to use buildin table when remote lm is used
 		}else  if (JoshuaConfiguration.use_srilm) {
-			System.loadLibrary("srilm"); //load once
-			this.p_symbol = new SrilmSymbol(null);
+			this.p_symbol = new SrilmSymbol(null, JoshuaConfiguration.g_lm_order);
+			if (logger.isLoggable(Level.FINEST)) 
+				logger.finest("Using SRILM symbol table");
+			
 		}else{//using the built-in JAVA implementatoin of LM
 			this.p_symbol = new BuildinSymbol(null);
 		}
@@ -238,10 +240,12 @@ public class JoshuaDecoder {
 				if (logger.isLoggable(Level.SEVERE)) 
 					logger.severe("use SRILM, we cannot use suffix/prefix stuff");
 				System.exit(1);
-			}			
-			lm_grammar = new LMGrammarSRILM((SrilmSymbol)psymbol, JoshuaConfiguration.g_lm_order, JoshuaConfiguration.lm_file);			
+			}
+			
+			lm_grammar = new LMGrammarSRILM( (SrilmSymbol)psymbol, JoshuaConfiguration.g_lm_order, JoshuaConfiguration.lm_file);
+			//lm_grammar = new LMGrammarSRILM((SrilmSymbol)psymbol, JoshuaConfiguration.g_lm_order, JoshuaConfiguration.lm_file);			
 		} else {//using the built-in JAVA implementatoin of LM, may not be as scalable as SRILM
-			lm_grammar = new LMGrammarJAVA((BuildinSymbol)psymbol, JoshuaConfiguration.g_lm_order, JoshuaConfiguration.lm_file, JoshuaConfiguration.use_left_euqivalent_state, JoshuaConfiguration.use_right_euqivalent_state);
+			lm_grammar = new LMGrammarJAVA( (BuildinSymbol)psymbol, JoshuaConfiguration.g_lm_order, JoshuaConfiguration.lm_file, JoshuaConfiguration.use_left_euqivalent_state, JoshuaConfiguration.use_right_euqivalent_state);
 		}
 		
 		return lm_grammar;

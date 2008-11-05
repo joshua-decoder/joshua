@@ -87,10 +87,6 @@ public class LMServer {
 		ServerSocket serverSocket = null;
 		LMServer server = new LMServer();
 		
-		if (use_srilm) {
-			System.loadLibrary("srilm");
-		}
-		
 		//p_lm.write_vocab_map_srilm(remote_symbol_tbl);
 		//####write host infomation
 		//String hostname=LMServer.findHostName();//this one is not stable, sometimes throw exception
@@ -136,7 +132,7 @@ public class LMServer {
 				System.out.println("use local srilm, we cannot use suffix stuff");
 				System.exit(0);
 			}
-			p_symbol = new SrilmSymbol(remote_symbol_tbl);
+			p_symbol = new SrilmSymbol(remote_symbol_tbl, g_lm_order);
 			p_lm = new LMGrammarSRILM((SrilmSymbol)p_symbol, g_lm_order, lm_file);
 			
 		} else {
