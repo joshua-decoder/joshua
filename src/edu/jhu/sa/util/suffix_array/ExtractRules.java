@@ -27,6 +27,8 @@ import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
@@ -44,6 +46,10 @@ import joshua.util.sentence.Vocabulary;
  */
 public class ExtractRules {
 
+	/** Logger for this class. */
+	private static final Logger logger = Logger.getLogger(ExtractRules.class.getName());
+	
+	
 	/**
 	 * @param args
 	 * @throws IOException 
@@ -142,10 +148,17 @@ public class ExtractRules {
 		while (testFileScanner.hasNextLine()) {
 			String line = testFileScanner.nextLine();
 			int[] words = sourceVocab.getIDs(line);
+			
+			if (logger.isLoggable(Level.FINE)) logger.fine("Constructing prefix tree for source line: " + line);
+			
 			PrefixTree prefixTree = new PrefixTree(sourceSuffixArray, targetCorpusArray, alignmentArray, lexProbs, words, commandLine.getValue(maxPhraseSpan), commandLine.getValue(maxPhraseLength), commandLine.getValue(maxNonterminals));
 			
+			if (logger.isLoggable(Level.FINER)) logger.finer("Outputting rules for source line: " + line);
+
 			for (Rule rule : prefixTree.getAllRules()) {
-				out.println(rule.toString(ntVocab, sourceVocab, targetVocab));
+				String ruleString = rule.toString(ntVocab, sourceVocab, targetVocab);
+				if (logger.isLoggable(Level.FINEST)) logger.finest("Rule: " + ruleString);
+				out.println(ruleString);
 			}
 		}
 		
