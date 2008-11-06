@@ -332,14 +332,19 @@ public class BLEU extends EvaluationMetric
       double prec_n = correctGramCount/totalGramCount;
         // what if totalGramCount is zero ???????????????????????????????
 
-      if (oneLiner) {
-        System.out.print(n + "=" + f4.format(prec_n) + ", ");
-      } else {
-        if (prec_n > 0) {
-          System.out.println("BLEU_precision(" + n + ") = " + (int)correctGramCount + " / " + (int)totalGramCount + " = " + f4.format(prec_n));
+      if (prec_n > 0) {
+        if (oneLiner) {
+          System.out.print(n + "=" + f4.format(prec_n) + ", ");
         } else {
-          smooth_addition *= 0.5;
-          prec_n = smooth_addition / (c_len-n+1);
+          System.out.println("BLEU_precision(" + n + ") = " + (int)correctGramCount + " / " + (int)totalGramCount + " = " + f4.format(prec_n));
+        }
+      } else {
+        smooth_addition *= 0.5;
+        prec_n = smooth_addition / (c_len-n+1);
+
+        if (oneLiner) {
+          System.out.print(n + "~" + f4.format(prec_n) + ", ");
+        } else {
           System.out.println("BLEU_precision(" + n + ") = " + (int)correctGramCount + " / " + (int)totalGramCount + " ==smoothed==> " + f4.format(prec_n));
         }
       }

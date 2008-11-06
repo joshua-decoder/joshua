@@ -7,15 +7,7 @@ import java.text.DecimalFormat;
 
 public class JoshuaEval
 {
-  static DecimalFormat f0 = new DecimalFormat("###0");
-  static DecimalFormat f1 = new DecimalFormat("###0.0");
-  static DecimalFormat f2 = new DecimalFormat("###0.00");
-  static DecimalFormat f3 = new DecimalFormat("###0.000");
   static DecimalFormat f4 = new DecimalFormat("###0.0000");
-
-  static final double NegInf = (-1.0 / 0.0);
-  static final double PosInf = (+1.0 / 0.0);
-  static final double epsilon = 1.0 / 1000000;
 
   static int progress;
 
@@ -47,6 +39,8 @@ public class JoshuaEval
     // if true, the reference set(s) is (are) evaluated
 
   static String refFileName, candFileName;
+    // file names for input files.  When refsPerSen > 1, refFileName can be
+    // the name of a single file, or a file name prefix.
 
   public static void main(String[] args) throws Exception
   {
@@ -63,6 +57,7 @@ public class JoshuaEval
     println("");
 
     if (evaluateRefs) {
+      println("SANITY CHECK:");
       println("This metric's scores range from "
             + evalMetric.worstPossibleScore() + " (worst) to "
             + evalMetric.bestPossibleScore() + " (best).");
@@ -128,6 +123,16 @@ public class JoshuaEval
     inFile.close();
 
     evalMetric.printDetailedScore(candSentenceInfo,false);
+    println("");
+
+    if (verbose) {
+      println("Printing detailed scores for individual sentences...");
+      for (int i = 0; i < numSentences; ++i) {
+        print("Sentence #" + i + ": ");
+        evalMetric.printDetailedScore(candSentenceInfo[i],i,true);
+          // already prints a \n
+      }
+    }
 
   } // void evaluate(...)
 
@@ -138,7 +143,7 @@ public class JoshuaEval
     println("Oops, you provided " + argsLen + " args!");
     println("");
     println("Usage:");
-    println(" JoshuaEval [-cand candFile] [-ref refFile] [-rps refsPerSen]\n      [-maxGL maxGramLength] [-m metricName] [-evr evalRefs] \n      [-v verbose]");
+    println(" JoshuaEval [-cand candFile] [-ref refFile] [-rps refsPerSen]\n            [-maxGL maxGramLength] [-m metricName] [-evr evalRefs] \n            [-v verbose]");
     println("");
     println(" (*) -cand candFile: candidate translations\n       [[default: candidates.txt]]");
     println(" (*) -ref refFile: reference translations\n       [[default: references.txt]]");
