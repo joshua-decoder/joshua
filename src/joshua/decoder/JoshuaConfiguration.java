@@ -65,7 +65,7 @@ public class JoshuaConfiguration {
 	public static double  forest_pruning_threshold = 10;
 	
 	//variational decoding 
-	public static boolean use_variational_decoding   = true;
+	public static boolean use_variational_decoding   = false;
 	
 	//debug
 	public static boolean extract_confusion_grammar = false; //non-parallel version
