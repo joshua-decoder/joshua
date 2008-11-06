@@ -146,13 +146,7 @@ public class MERT
       // set numParams and numSentences, and initialize lambda[], 
       // and do any initialization required for the chosen evaluation metric
 
-for (int r = 0; r < refsPerSen; ++r) {
-  println("Testing evaluation metric calculation on reference set " + r + ":",2);
-  test_score(refFileName, refsPerSen, r, true,2);
-  println("",2);
-}
-
-    if (true) { // change to: if (Joshua integration)
+    if (decoderCommand == null) {
       myDecoder = new JoshuaDecoder();
       println("Loading Joshua decoder...",1);
       myDecoder.initializeDecoder(decoderConfigFileName);
@@ -166,13 +160,9 @@ for (int r = 0; r < refsPerSen; ++r) {
         // optimize lambda[]!!!
     }
 
-    if (true) { // change to: if (Joshua integration)
+    if (decoderCommand == null) {
       myDecoder.cleanUp();
     }
-
-println("Testing evaluation metric calculation on final decoder output:",2);
-test_score(decoderOutFileName, sizeOfNBest, 0, false,2);
-println("",2);
 
     finalize(finalLambdasFileName);
       // write final values to file
@@ -296,11 +286,14 @@ println("",2);
     inFile_refs.close();
 
 
-    // read in decoder command
-
-    BufferedReader inFile_comm = new BufferedReader(new FileReader(decoderCommandFileName));
-    decoderCommand = inFile_comm.readLine();
-    inFile_comm.close();
+    // read in decoder command, if any
+    if (decoderCommandFileName != null) {
+      BufferedReader inFile_comm = new BufferedReader(new FileReader(decoderCommandFileName));
+      decoderCommand = inFile_comm.readLine();
+      inFile_comm.close();
+    } else {
+      decoderCommand = null;
+    }
 
     // set static data members for the EvaluationMetric class
     EvaluationMetric.set_numSentences(numSentences);
@@ -423,31 +416,31 @@ println("",2);
       // RUN DECODER //
       /***************/
 
-      println("Running Joshua decoder...",1);
-      myDecoder.initializeDecoder(decoderConfigFileName);
-      myDecoder.decodingTestSet(sourceFileName, decoderOutFileName);
+      if (decoderCommand == null) {
+        println("Running Joshua decoder...",1);
+        myDecoder.initializeDecoder(decoderConfigFileName);
+        myDecoder.decodingTestSet(sourceFileName, decoderOutFileName);
+      } else {
+        println("Running decoder...",1);
 
-/*
-      println("Running decoder...",1);
+        Runtime rt = Runtime.getRuntime();
+        Process p = rt.exec(decoderCommand);
+        InputStream is = p.getErrorStream();
+        InputStreamReader isr = new InputStreamReader(is);
+        BufferedReader br = new BufferedReader(isr);
+        String dummy_line = null;
+        while ((dummy_line = br.readLine()) != null) {
+          if (decVerbosity == 1) {
+            println(dummy_line);
+          }
+        }
+        int decStatus = p.waitFor();
 
-      Runtime rt = Runtime.getRuntime();
-      Process p = rt.exec (decoderCommand);
-      InputStream is = p.getErrorStream();
-      InputStreamReader isr = new InputStreamReader(is);
-      BufferedReader br = new BufferedReader(isr);
-      String dummy_line = null;
-      while ((dummy_line = br.readLine()) != null) {
-        if (decVerbosity == 1) {
-          println(dummy_line);
+        if (decStatus != validDecoderExitValue) {
+          println("Call to decoder returned " + decStatus + "; was expecting " + validDecoderExitValue + ".");
+          System.exit(30);
         }
       }
-      int decStatus = p.waitFor();
-
-      if (decStatus != validDecoderExitValue) {
-        println("Call to decoder returned " + decStatus + "; was expecting " + validDecoderExitValue + ".");
-        System.exit(30);
-      }
-*/
 
       println("...finished decoding @ " + (new Date()),1);
 
@@ -1095,73 +1088,6 @@ line format:
     writer.flush();
   }
 
-
-
-private static void test_score(String inFileName, int candPerSen, int testIndex, boolean isRefFile, int v) throws Exception
-{
-    // test that the translations in inFileName get the expected scores
-
-    // candPerSen: how many candidates are provided per sentence?
-    // testIndex: which of the candidates (for each sentence) should be tested?
-    //            e.g. testIndex=0 means first candidate should be evaluated
-    //                 testIndex=candPerSen-1 means last candidate should be evaluated
-    // isRefFile: if true, then no formatting; if false, then decoder output format
-
-    if (candPerSen < 0) {
-      println("candPerSen must be positive.");
-      System.exit(30);
-    }
-
-    if (testIndex < 0 || testIndex > candPerSen-1) {
-      println("testIndex must be in [0,candPerSen-1]");
-      System.exit(31);
-    }
-
-    // read the candidates
-    SentenceInfo[] candSentenceInfo = new SentenceInfo[numSentences];
-
-    BufferedReader inFile = new BufferedReader(new FileReader(inFileName));
-    String line, candidate_str;
-
-    for (int i = 0; i < numSentences; ++i) {
-
-      for (int n = 0; n < testIndex; ++n){
-      // skip candidates 0 through testIndex-1
-        line = inFile.readLine();
-      }
-
-      // read candidate testIndex
-      line = inFile.readLine();
-
-      if (isRefFile) {
-        candidate_str = line;
-      } else {
-        line = line.substring(line.indexOf("||| ")+4); // get rid of initial text
-        candidate_str = line.substring(0,line.indexOf(" |||"));
-      }
-
-      candSentenceInfo[i] = new SentenceInfo(candidate_str);
-
-      for (int n = testIndex+1; n < candPerSen; ++n){
-      // skip candidates testIndex+1 through candPerSen-1
-        line = inFile.readLine();
-      }
-
-    }
-
-    inFile.close();
-
-    if (v <= verbosity) {
-      evalMetric.printDetailedScore(candSentenceInfo,false);
-    }
-
-} // void test_score(...)
-
-
-
-
-
-
   private static double score(double[] lambda, Vector[] candidates) throws Exception
   {
     SentenceInfo[] candSentenceInfo = new SentenceInfo[numSentences];
@@ -1239,7 +1165,7 @@ private static void test_score(String inFileName, int candPerSen, int testIndex,
     println(" (X) -seed firstSeed: first seed used for random number generation\n       [[default: time; please see documentation on how to use this parameter]]");
     println(" (*) -dcfg decConfigFile: name of decoder config file\n       [[default: config_file.txt]]");
     println(" (*) -save saveInterCfg: save intermediate config files (1) or not (0)\n       [[default: 0]]");
-    println(" (*) -cmd commandFile: name of file containing command to run the decoder\n       [[default: decoder_command.txt]]");
+    println(" (*) -cmd commandFile: name of file containing command to run the decoder\n       [[default: null string (i.e. decoder is a JoshuaDecoder object)]]");
     println(" (*) -N N: size of N-best list (per sentence) generated in each MERT iteration\n       [[default: 100]]");
     println(" (*) -reset resetCandList: reset candidate list every iteration (1) or not (0)\n       [[default: 0]]");
     println(" (*) -maxIt maxMERTIts: maximum number of MERT iterations\n       [[default: 10]]");
@@ -1318,7 +1244,7 @@ private static void test_score(String inFileName, int candPerSen, int testIndex,
     randInits = false;
     runCount = 1;
     finalLambdasFileName = "final_lambdas.txt";
-    decoderCommandFileName = "decoder_command.txt";
+    decoderCommandFileName = null;
     decoderConfigFileName = "config.txt";
     metricName = "BLEU";
     sizeOfNBest = 100;
@@ -1416,7 +1342,9 @@ private static void test_score(String inFileName, int candPerSen, int testIndex,
       decoderOutFileName = fullPath(dirPrefix,decoderOutFileName);
       paramsFileName = fullPath(dirPrefix,paramsFileName);
       finalLambdasFileName = fullPath(dirPrefix,finalLambdasFileName);
-      decoderCommandFileName = fullPath(dirPrefix,decoderCommandFileName);
+      if (decoderCommandFileName != null) {
+        decoderCommandFileName = fullPath(dirPrefix,decoderCommandFileName);
+      }
       decoderConfigFileName = fullPath(dirPrefix,decoderConfigFileName);
     }
 
@@ -1432,7 +1360,9 @@ private static void test_score(String inFileName, int candPerSen, int testIndex,
 
     checkFile(sourceFileName);
     checkFile(paramsFileName);
-    checkFile(decoderCommandFileName);
+    if (decoderCommandFileName != null) {
+      checkFile(decoderCommandFileName);
+    }
     checkFile(decoderConfigFileName);
 
 

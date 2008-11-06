@@ -57,7 +57,9 @@ public class JoshuaEval
     println("");
 
     if (evaluateRefs) {
-      println("SANITY CHECK:");
+      // evaluate the references themselves; useful if developing a new evaluation metric
+
+      println("PERFORMING SANITY CHECK:");
       println("This metric's scores range from "
             + evalMetric.worstPossibleScore() + " (worst) to "
             + evalMetric.bestPossibleScore() + " (best).");
@@ -123,7 +125,6 @@ public class JoshuaEval
     inFile.close();
 
     evalMetric.printDetailedScore(candSentenceInfo,false);
-    println("");
 
     if (verbose) {
       println("Printing detailed scores for individual sentences...");
