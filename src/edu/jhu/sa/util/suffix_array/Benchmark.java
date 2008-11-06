@@ -13,7 +13,7 @@ public class Benchmark {
 		int cachePrecomputationFrequencyThreshold = 1000;
 		
 		System.err.println(new Date() + " Constructing source language vocabulary.");
-		String sourceFileName = "data/europarl001.en";
+		String sourceFileName = (args.length==0) ? "data/europarl001.en" : args[0];
 		Vocabulary sourceVocab = new Vocabulary();
 		int[] sourceWordsSentences = SuffixArrayFactory.createVocabulary(sourceFileName, sourceVocab);
 		System.err.println(new Date() + " Constructing source language corpus array.");
