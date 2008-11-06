@@ -67,7 +67,7 @@ public class SuffixArray implements Corpus {
 	
 	
 	public static int INVERTED_INDEX_CAPACITY = 1000000;
-	public static boolean POPULATE_INVERTED_INDEX = true;
+	public static boolean POPULATE_INVERTED_INDEX = false;
 	
 	
 	/** Logger for this class. */
