@@ -141,8 +141,8 @@ public class SuffixArrayFactory {
 	 * Creates a new SuffixArray from a CorpusArray created
 	 * from the same file.
 	 */
-	public static SuffixArray createSuffixArray(CorpusArray corpusArray) throws IOException {
-		return new SuffixArray(corpusArray);
+	public static SuffixArray createSuffixArray(CorpusArray corpusArray, int cachePrecomputationFrequencyThreshold) throws IOException {
+		return new SuffixArray(corpusArray, cachePrecomputationFrequencyThreshold);
 	}
 	
 	
@@ -373,7 +373,7 @@ public class SuffixArrayFactory {
 	  * Reads a sorted suffix array from a file. The first line
 	  * of the file indicates the number of suffixes.
 	  */
-	 public static SuffixArray loadSuffixArray(String lang, String corpusName, String directory) throws IOException {
+	 public static SuffixArray loadSuffixArray(String lang, String corpusName, String directory, int cachePrecomputationFrequencyThreshold) throws IOException {
 		CorpusArray corpusArray = loadCorpusArray(lang, corpusName, directory);
 		BufferedReader reader = FileUtil.getBufferedReader(directory, getSuffixArrayFileName(lang, corpusName));
 
@@ -385,7 +385,7 @@ public class SuffixArrayFactory {
 		}
 		reader.close();
 		
-		return new SuffixArray(suffixes, corpusArray);
+		return new SuffixArray(suffixes, corpusArray, cachePrecomputationFrequencyThreshold);
 	 }
 
 
@@ -459,12 +459,13 @@ public class SuffixArrayFactory {
 		String targetLang = args[4];
 		String corpusName = args[5];
 		String outputDirectory = args[6];
+		int cachePrecomputationFrequencyThreshold = Integer.valueOf(args[7]);
 		
 		// Create the vocab, corpus, and suffix arrays for the source corpus
 		Vocabulary sourceVocab = new Vocabulary();
 		int[] numberOfSourceWordsSentences = SuffixArrayFactory.createVocabulary(sourceFilename, sourceVocab);
 		CorpusArray sourceCorpusArray = SuffixArrayFactory.createCorpusArray(sourceFilename, sourceVocab, numberOfSourceWordsSentences[0], numberOfSourceWordsSentences[1]);
-		SuffixArray sourceSuffixArray = SuffixArrayFactory.createSuffixArray(sourceCorpusArray);
+		SuffixArray sourceSuffixArray = SuffixArrayFactory.createSuffixArray(sourceCorpusArray, cachePrecomputationFrequencyThreshold);
 		
 		SuffixArrayFactory.saveVocabulary(sourceVocab, sourceLang, corpusName, outputDirectory);
 		SuffixArrayFactory.saveCorpusArray(sourceCorpusArray, sourceLang, corpusName, outputDirectory);
@@ -475,7 +476,7 @@ public class SuffixArrayFactory {
 		Vocabulary targetVocab = new Vocabulary();
 		int[] numberOfTargetWordsSentences = SuffixArrayFactory.createVocabulary(targetFilename, targetVocab);
 		CorpusArray targetCorpusArray = SuffixArrayFactory.createCorpusArray(targetFilename, targetVocab, numberOfTargetWordsSentences[0], numberOfTargetWordsSentences[1]);
-		SuffixArray targetSuffixArray = SuffixArrayFactory.createSuffixArray(targetCorpusArray);
+		SuffixArray targetSuffixArray = SuffixArrayFactory.createSuffixArray(targetCorpusArray, cachePrecomputationFrequencyThreshold);
 
 		SuffixArrayFactory.saveVocabulary(targetVocab, targetLang, corpusName, outputDirectory);
 		SuffixArrayFactory.saveCorpusArray(targetCorpusArray, targetLang, corpusName, outputDirectory);
@@ -499,6 +500,7 @@ public class SuffixArrayFactory {
 		String corpusName = args[1];
 		String lang = args[2];
 		String outputDirectory = args[3];
+		int cachePrecomputationFrequencyThreshold = Integer.valueOf(args[4]);
 		
 		// Create the vocab, corpus, and suffix arrays
 		Vocabulary vocab = new Vocabulary();
@@ -512,7 +514,7 @@ public class SuffixArrayFactory {
 		}
 		
 		CorpusArray corpusArray = SuffixArrayFactory.createCorpusArray(inputFilename, vocab, numberOfWordsSentences[0], numberOfWordsSentences[1]);
-		SuffixArray suffixArray = SuffixArrayFactory.createSuffixArray(corpusArray);
+		SuffixArray suffixArray = SuffixArrayFactory.createSuffixArray(corpusArray, cachePrecomputationFrequencyThreshold);
 
 		// Save them
 		SuffixArrayFactory.saveVocabulary(vocab, lang, corpusName, outputDirectory);

@@ -57,26 +57,24 @@ public class InvertedIndex {
 	/**
 	 * @param suffixArray the suffix array to index
 	 * @param capacity    the number of phrases to store in memory
+	 * @param minFrequency the minimum number of times a phrase must appear before it will be pre-stored in the cache for this object
 	 * @param preloadMostFrequentItems a flag that tells whether
 	 *                    to do a pre-pass to load the most
 	 *                    frequent items into memory.
 	 */
-	public InvertedIndex(SuffixArray suffixArray, int capacity, boolean preloadMostFrequentItems) {
+	public InvertedIndex(SuffixArray suffixArray, int capacity, int minFrequency, boolean preloadMostFrequentItems) {
 		this.matchingPhrases = new Cache<Pattern,List<HierarchicalPhrase>>(capacity);
 		this.suffixArray = suffixArray;
 		if (preloadMostFrequentItems) {
-			List<Phrase> phrases = new ArrayList<Phrase>(capacity);
-			List<Integer> frequencies = new ArrayList<Integer>(capacity);
-			int minFrequency = 2;
-			suffixArray.getMostFrequentPhrases(phrases, frequencies, minFrequency, capacity, MAX_PHRASE_LENGTH_INITIAL);
 			
-			//Iterator<Phrase> it = phrases.iterator();
-			//while(it.hasNext()) {
-			//	Phrase phrase = it.next();
+			List<Integer> frequencies = new ArrayList<Integer>(capacity);
+			//int minFrequency = 2;
+			List<Phrase> phrases = suffixArray.getMostFrequentPhrases(new ArrayList<Phrase>(capacity), frequencies, minFrequency, capacity, MAX_PHRASE_LENGTH_INITIAL);
+	
 			for (Phrase phrase : phrases) {
 				int[] boundsInSuffixArray = suffixArray.findPhrase(phrase);
 				int[] positions = suffixArray.getAllPositions(boundsInSuffixArray);
-				//int length = phrase.size();
+				
 				Pattern pattern = new Pattern(phrase);
 				List<HierarchicalPhrase> hierarchicalPhrases = getHierarchicalPhrases(positions, pattern);
 				matchingPhrases.put(pattern, hierarchicalPhrases);

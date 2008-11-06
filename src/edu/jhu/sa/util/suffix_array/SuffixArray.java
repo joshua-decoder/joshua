@@ -91,7 +91,7 @@ public class SuffixArray implements Corpus {
 	 * Constructor takes a CorpusArray and creates a sorted
 	 * suffix array from it.
 	 */
-	public SuffixArray(CorpusArray corpusArray) {
+	public SuffixArray(CorpusArray corpusArray, int cachePrecomputationFrequencyThreshold) {
 		this.corpus = corpusArray;
 		suffixes = new int[corpusArray.size()];
 
@@ -102,7 +102,7 @@ public class SuffixArray implements Corpus {
 		// Sort the array of suffixes
 		sort(suffixes);
 		
-		invertedIndex = new InvertedIndex(this, INVERTED_INDEX_CAPACITY, POPULATE_INVERTED_INDEX);
+		invertedIndex = new InvertedIndex(this, INVERTED_INDEX_CAPACITY, cachePrecomputationFrequencyThreshold, POPULATE_INVERTED_INDEX);
 	}
 	
 	
@@ -113,10 +113,10 @@ public class SuffixArray implements Corpus {
 	 * @see SuffixArrayFactor.createSuffixArray(CorpusArray)
 	 * @see SuffixArrayFactor.loadSuffixArray(String,String,String,CorpusArray)
 	 */
-	protected SuffixArray(int[] suffixes, CorpusArray corpusArray) {
+	protected SuffixArray(int[] suffixes, CorpusArray corpusArray, int cachePrecomputationFrequencyThreshold) {
 		this.suffixes = suffixes;
 		this.corpus = corpusArray;
-		invertedIndex = new InvertedIndex(this, INVERTED_INDEX_CAPACITY, POPULATE_INVERTED_INDEX);
+		invertedIndex = new InvertedIndex(this, INVERTED_INDEX_CAPACITY, cachePrecomputationFrequencyThreshold, POPULATE_INVERTED_INDEX);
 	}
 	
 	
@@ -314,20 +314,43 @@ public class SuffixArray implements Corpus {
 	 * set for the minimum frequency to remember, as well as
 	 * the maximum number of phrases.
 	 *
-	 * @param phrases      a list which is used to record the
-	 *                     most frequent phrases
 	 * @param frequencies  a list of the phrases frequencies
 	 * @param minFrequency the minimum frequency required to
 	 *                     retain phrases
 	 * @param maxPhrases   the maximum number of phrases to return
+	 * @return the most frequent phrases
 	 */
-	public void getMostFrequentPhrases(
-		List<Phrase>  phrases,
+	public List<Phrase> getMostFrequentPhrases(
 		List<Integer> frequencies,
 		int minFrequency,
 		int maxPhrases,
 		int maxPhraseLength
 	) {
+		return getMostFrequentPhrases(new ArrayList<Phrase>(), frequencies, minFrequency, maxPhrases, maxPhraseLength);
+	}
+	
+	/**
+	 * Calculates the most frequent phrases in the corpus.
+	 * Populates the phrases list with them, and the frequencies
+	 * list with their frequenies.  Allows a threshold to be
+	 * set for the minimum frequency to remember, as well as
+	 * the maximum number of phrases.
+	 *
+	 * @param phrases      a list to store the most frequent phrases; this object will be returned
+	 * @param frequencies  a list of the phrases frequencies
+	 * @param minFrequency the minimum frequency required to
+	 *                     retain phrases
+	 * @param maxPhrases   the maximum number of phrases to return
+	 * @return the most frequent phrases (same object as the <code>phrases</code> parameter
+	 */
+	public List<Phrase> getMostFrequentPhrases(
+		List<Phrase> phrases,
+		List<Integer> frequencies,
+		int minFrequency,
+		int maxPhrases,
+		int maxPhraseLength
+	) {
+		
 		phrases.clear();
 		frequencies.clear();
 		Comparator<Integer> comparator = new ReverseOrder<Integer>();
@@ -378,6 +401,8 @@ public class SuffixArray implements Corpus {
 				frequencies.remove(i);
 			}
 		}
+		
+		return phrases;
 	}
 	
 	
@@ -731,7 +756,7 @@ public class SuffixArray implements Corpus {
 		int                 maxPhraseLength,
 		Comparator<Integer> comparator
 	) {
-		int longestBoundingLCP = Math.max(longestCommonPrefixes[i], longestCommonPrefixes[j+1]);
+		int longestBoundingLCP = Math.max(longestCommonPrefixes[i], longestCommonPrefixes[j+1]); //(longestCommonPrefixes[i] > longestCommonPrefixes[j+1]) ? longestCommonPrefixes[i] : longestCommonPrefixes[j+1];//
 		int shortestInteriorLCP = longestCommonPrefixes[k];
 		if(shortestInteriorLCP == 0) {
 			shortestInteriorLCP = size() - suffixes[i];
@@ -761,8 +786,8 @@ public class SuffixArray implements Corpus {
 				int sentenceNumber = getSentenceIndex(startIndex);
 				int endOfSentence = getSentencePosition(sentenceNumber+1);
 				int distanceToEndOfSentence = endOfSentence-startIndex;
-				int maxLength = Math.min(shortestInteriorLCP-1, distanceToEndOfSentence);
-				maxLength = Math.min(maxLength, maxPhraseLength);
+				int maxLength = Math.min(shortestInteriorLCP-1, distanceToEndOfSentence); //(shortestInteriorLCP-1 < distanceToEndOfSentence) ? shortestInteriorLCP-1 : distanceToEndOfSentence;//
+				maxLength = Math.min(maxLength, maxPhraseLength); //(maxLength<maxPhraseLength) ? maxLength : maxPhraseLength; //
 				// ccb - debugging
 				//System.out.println("SILCP: " + shortestInteriorLCP + ", SENT_LN: " + (getSentencePosition(sentenceNumber+1)-startIndex) + ", MAX_PHRASE_LN: " + maxPhraseLength + " = MAX_LENGTH of " + maxLength);
 				//System.out.println("SENT NUM: " + sentenceNumber + ", START_INDEX: " + startIndex + ", SENT_POSITION: " + (getSentencePosition(sentenceNumber+1)));
@@ -902,32 +927,88 @@ public class SuffixArray implements Corpus {
 
 
 	/** part of the quick sort implementation. */
-    private void swap(int[] array, int i, int j) {
+    /*
+	private void swap(int[] array, int i, int j) {
         int tmp = array[i];
         array[i] = array[j];
         array[j] = tmp;
     }
+    */
 	
 	
 	/** part of the quick sort implementation. */	
-    private int partition(int[] array, int begin, int end) {
+    /*
+	private int partition(int[] array, int begin, int end) {
         int index = begin + RAND.nextInt(end - begin + 1);
         int pivot = array[index];
-        swap(array, index, end);
+        
+        // swap(array, index, end);
+        {
+        	int tmp = array[index];
+        	array[index] = array[end];
+        	array[end] = tmp;
+        }
+        
         for (int i = index = begin; i < end; ++ i) {
             if (corpus.compareSuffixes(array[i], pivot, MAX_COMPARISON_LENGTH) <= 0) {
-                swap(array, index++, i);
+                
+            	//swap(array, index++, i);
+                {
+                	int tmp = array[index];
+                	array[index] = array[i];
+                	array[i] = tmp;
+                	index++;
+                }
             }
         }
-        swap(array, index, end);
+        // swap(array, index, end);
+        {
+        	int tmp = array[index];
+        	array[index] = array[end];
+        	array[end] = tmp;
+        }
+        
+        
         return (index);
     }
-	
+	*/
 	
 	/** Quick sort */	
     private void qsort(int[] array, int begin, int end) {
         if (end > begin) {
-            int index = partition(array, begin, end);
+        	
+            int index; 
+            // partition(array, begin, end);
+            {	index = begin + RAND.nextInt(end - begin + 1);
+                int pivot = array[index];
+                
+                // swap(array, index, end);
+                {
+                	int tmp = array[index];
+                	array[index] = array[end];
+                	array[end] = tmp;
+                }
+                
+                for (int i = index = begin; i < end; ++ i) {
+                    if (corpus.compareSuffixes(array[i], pivot, MAX_COMPARISON_LENGTH) <= 0) {
+                        
+                    	//swap(array, index++, i);
+                        {
+                        	int tmp = array[index];
+                        	array[index] = array[i];
+                        	array[i] = tmp;
+                        	index++;
+                        }
+                    }
+                }
+                // swap(array, index, end);
+                {
+                	int tmp = array[index];
+                	array[index] = array[end];
+                	array[end] = tmp;
+                }
+            }
+            
             qsort(array, begin, index - 1);
             qsort(array, index + 1,  end);
         }
@@ -1103,7 +1184,7 @@ public class SuffixArray implements Corpus {
 // Main 
 //===============================================================
 
-
+/*
 	public static void main2(String[] args) throws IOException {
 		if (args.length != 6) {
 			System.out.println("Usage: java SuffixArray lang corpusName dir minFrequency maxPhrasesToRetain maxPhraseLength");
@@ -1118,9 +1199,9 @@ public class SuffixArray implements Corpus {
 
 		
 		SuffixArray suffixArray = SuffixArrayFactory.loadSuffixArray(lang, corpusName, directory);
-		ArrayList<Phrase> phrases = new ArrayList<Phrase>();
+		//ArrayList<Phrase> phrases = new ArrayList<Phrase>();
 		ArrayList<Integer> frequencies = new ArrayList<Integer>();
-		suffixArray.getMostFrequentPhrases(phrases, frequencies, minFrequency, maxPhrasesToRetain, maxPhraseLength);
+		List<Phrase> phrases = suffixArray.getMostFrequentPhrases(frequencies, minFrequency, maxPhrasesToRetain, maxPhraseLength);
 			
 		System.out.println("NUM PHRASES: " + phrases.size());
 		System.out.println("FREQ\tPHRASE");
@@ -1131,12 +1212,13 @@ public class SuffixArray implements Corpus {
 		Collocations collocations = suffixArray.getCollocations(new HashSet<Phrase>(phrases), maxPhraseLength, 10);
 		System.out.println(collocations);
 	}
-	
+	*/
 	
 	/**
 	 * This method tests out the suffix array using the example
 	 * sentence given in the Yamamoto and Church CL article.
 	 */
+	/*
 	public static void mainChris(String[] args) throws IOException {
 		// this method creates a sample corpus ...
 		//String corpusString = "t o _ b e _ o r _ n o t _ t o _ b e";
@@ -1168,12 +1250,12 @@ public class SuffixArray implements Corpus {
 		}
 		System.out.println();
 		
-		ArrayList<Phrase> phrases = new ArrayList<Phrase>();
+		//ArrayList<Phrase> phrases = new ArrayList<Phrase>();
 		ArrayList<Integer> frequencies = new ArrayList<Integer>();
 		int minFrequency = 1;
 		int maxPhrasesToRetain = 100;
 		int maxPhraseLength = 100;
-		suffixArray.getMostFrequentPhrases(phrases, frequencies, minFrequency, maxPhrasesToRetain, maxPhraseLength);
+		List<Phrase> phrases = suffixArray.getMostFrequentPhrases(frequencies, minFrequency, maxPhrasesToRetain, maxPhraseLength);
 		
 		System.out.println("Frequency\tphrase");
 		for(int i = 0; i < phrases.size(); i++) {
@@ -1204,7 +1286,7 @@ public class SuffixArray implements Corpus {
 		}
 		System.out.println();
 	}
-	
+	*/
 	
 	public static void main(String[] args) {
 		fastIntersection();

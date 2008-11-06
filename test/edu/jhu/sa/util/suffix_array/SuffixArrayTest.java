@@ -19,6 +19,7 @@ package edu.jhu.sa.util.suffix_array;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 
 import joshua.util.sentence.Phrase;
 import joshua.util.sentence.Vocabulary;
@@ -56,8 +57,10 @@ public class SuffixArrayTest {
 			corpus[i] = exampleSentence.getWordID(i);
 		}
 		
+		int cachePrecomputationFrequencyThreshold = 100;
+		
 		CorpusArray corpusArray = new CorpusArray(corpus, sentences, vocab);
-		suffixArray = new SuffixArray(corpusArray);
+		suffixArray = new SuffixArray(corpusArray, cachePrecomputationFrequencyThreshold);
 		
 		int i = 1;
 		int j=2;
@@ -104,12 +107,12 @@ public class SuffixArrayTest {
 		}
 		System.out.println();
 		
-		ArrayList<Phrase> phrases = new ArrayList<Phrase>();
+		//ArrayList<Phrase> phrases = new ArrayList<Phrase>();
 		ArrayList<Integer> frequencies = new ArrayList<Integer>();
 		int minFrequency = 1;
 		int maxPhrasesToRetain = 100;
 		int maxPhraseLength = 100;
-		suffixArray.getMostFrequentPhrases(phrases, frequencies, minFrequency, maxPhrasesToRetain, maxPhraseLength);
+		List<Phrase> phrases = suffixArray.getMostFrequentPhrases(frequencies, minFrequency, maxPhrasesToRetain, maxPhraseLength);
 		
 		System.out.println("Frequency\tphrase");
 		for(int i = 0; i < phrases.size(); i++) {
