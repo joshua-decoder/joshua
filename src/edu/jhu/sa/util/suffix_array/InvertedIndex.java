@@ -68,9 +68,11 @@ public class InvertedIndex {
 		if (preloadMostFrequentItems) {
 			
 			List<Integer> frequencies = new ArrayList<Integer>(capacity);
-			//int minFrequency = 2;
 			List<Phrase> phrases = suffixArray.getMostFrequentPhrases(new ArrayList<Phrase>(capacity), frequencies, minFrequency, capacity, MAX_PHRASE_LENGTH_INITIAL);
 	
+			// ccb - debugging
+			System.out.println(new Date() + " Finished looking up frequent phrases; calculating Hierarchical phrases.");
+			
 			for (Phrase phrase : phrases) {
 				int[] boundsInSuffixArray = suffixArray.findPhrase(phrase);
 				int[] positions = suffixArray.getAllPositions(boundsInSuffixArray);

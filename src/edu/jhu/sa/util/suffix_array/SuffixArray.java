@@ -101,7 +101,10 @@ public class SuffixArray implements Corpus {
 		}
 		// Sort the array of suffixes
 		sort(suffixes);
-		
+	
+		// ccb - debugging
+		System.out.println(new Date() + " Constructing the inverted index.");
+
 		invertedIndex = new InvertedIndex(this, INVERTED_INDEX_CAPACITY, cachePrecomputationFrequencyThreshold, POPULATE_INVERTED_INDEX);
 	}
 	
@@ -362,7 +365,7 @@ public class SuffixArray implements Corpus {
 		Stack<Integer> shortestInteriorLCPIndices = new Stack<Integer>();
 		startIndices.push(0);
 		shortestInteriorLCPIndices.push(0);
-		for (int j = 0; j < suffixes.length; j++) {
+		for (int j = 0; j < suffixes.length; j++) {			
 			// trivial interval i==j, frequecy=1
 			recordPhraseFrequencies(
 				longestCommonPrefixes, j, j, 0, phrases, frequencies,
@@ -374,34 +377,33 @@ public class SuffixArray implements Corpus {
 			}
 			startIndices.push(shortestInteriorLCPIndices.peek());
 			shortestInteriorLCPIndices.push(j+1);
-		}
 		
 		
-		// trim the lists if they're too long...
-		if (phrases.size() > maxPhrases) {
-			int frequency = frequencies.get(maxPhrases);
-			int cutPoint = maxPhrases;
-			if (phrases.size() >= maxPhrases
-			&& frequency == frequencies.get(maxPhrases)) {
-				cutPoint = Collections.binarySearch(frequencies, frequency, comparator);
-				if (cutPoint < 0) {
-					cutPoint = -1 * cutPoint;
-					cutPoint--;
+			// trim the lists if they're too long...
+			if (phrases.size() > maxPhrases) {
+				int frequency = frequencies.get(maxPhrases);
+				int cutPoint = maxPhrases;
+				if (phrases.size() >= maxPhrases
+				&& frequency == frequencies.get(maxPhrases)) {
+					cutPoint = Collections.binarySearch(frequencies, frequency, comparator);
+					if (cutPoint < 0) {
+						cutPoint = -1 * cutPoint;
+						cutPoint--;
+					}
+					while (cutPoint > 0 && frequencies.get(cutPoint-1) == frequency) {
+						cutPoint--;
+					}
 				}
-				while (cutPoint > 0 && frequencies.get(cutPoint-1) == frequency) {
-					cutPoint--;
+				// ccb - not sure why the subList operation didn't carry over outside this method...
+				//phrases = phrases.subList(0, cutPoint);
+				//frequencies = frequencies.subList(0, cutPoint);
+				// for now it seems that we have to explicity remove the elements. 
+				for (int i = phrases.size()-1; i >= cutPoint; i--) {
+					phrases.remove(i);
+					frequencies.remove(i);
 				}
 			}
-			// ccb - not sure why the subList operation didn't carry over outside this method...
-			//phrases = phrases.subList(0, cutPoint);
-			//frequencies = frequencies.subList(0, cutPoint);
-			// for now it seems that we have to explicity remove the elements. 
-			for (int i = phrases.size()-1; i >= cutPoint; i--) {
-				phrases.remove(i);
-				frequencies.remove(i);
-			}
 		}
-		
 		return phrases;
 	}
 	
@@ -788,18 +790,11 @@ public class SuffixArray implements Corpus {
 				int distanceToEndOfSentence = endOfSentence-startIndex;
 				int maxLength = Math.min(shortestInteriorLCP-1, distanceToEndOfSentence); //(shortestInteriorLCP-1 < distanceToEndOfSentence) ? shortestInteriorLCP-1 : distanceToEndOfSentence;//
 				maxLength = Math.min(maxLength, maxPhraseLength); //(maxLength<maxPhraseLength) ? maxLength : maxPhraseLength; //
-				// ccb - debugging
-				//System.out.println("SILCP: " + shortestInteriorLCP + ", SENT_LN: " + (getSentencePosition(sentenceNumber+1)-startIndex) + ", MAX_PHRASE_LN: " + maxPhraseLength + " = MAX_LENGTH of " + maxLength);
-				//System.out.println("SENT NUM: " + sentenceNumber + ", START_INDEX: " + startIndex + ", SENT_POSITION: " + (getSentencePosition(sentenceNumber+1)));
-
+				
 				// ccb - should this be < maxLength or <= maxLength
 				for(int length = longestBoundingLCP; length <= maxLength; length++) {
 					int endIndex = startIndex + length+1;
 					Phrase phrase = new ContiguousPhrase(startIndex, endIndex, corpus);
-
-					// ccb - debugging
-					//System.out.println(phrase + "\t[" + startIndex + "-" + endIndex + "]");
-
 					phrases.add(position, phrase);
 					frequencies.add(position, frequency);
 					position++;
