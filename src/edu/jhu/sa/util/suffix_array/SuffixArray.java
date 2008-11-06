@@ -68,6 +68,7 @@ public class SuffixArray implements Corpus {
 	
 	public static int INVERTED_INDEX_CAPACITY = 1000000;
 	public static boolean POPULATE_INVERTED_INDEX = false;
+	public static int INVERTED_INDEX_PRECOMPUTATION_MIN_FREQ = 1000;
 	
 	
 	/** Logger for this class. */
@@ -91,7 +92,7 @@ public class SuffixArray implements Corpus {
 	 * Constructor takes a CorpusArray and creates a sorted
 	 * suffix array from it.
 	 */
-	public SuffixArray(CorpusArray corpusArray, int cachePrecomputationFrequencyThreshold) {
+	public SuffixArray(CorpusArray corpusArray) {
 		this.corpus = corpusArray;
 		suffixes = new int[corpusArray.size()];
 
@@ -105,7 +106,7 @@ public class SuffixArray implements Corpus {
 		// ccb - debugging
 		System.out.println(new Date() + " Constructing the inverted index.");
 
-		invertedIndex = new InvertedIndex(this, INVERTED_INDEX_CAPACITY, cachePrecomputationFrequencyThreshold, POPULATE_INVERTED_INDEX);
+		invertedIndex = new InvertedIndex(this, INVERTED_INDEX_CAPACITY, INVERTED_INDEX_PRECOMPUTATION_MIN_FREQ, POPULATE_INVERTED_INDEX);
 	}
 	
 	
@@ -116,10 +117,10 @@ public class SuffixArray implements Corpus {
 	 * @see SuffixArrayFactor.createSuffixArray(CorpusArray)
 	 * @see SuffixArrayFactor.loadSuffixArray(String,String,String,CorpusArray)
 	 */
-	protected SuffixArray(int[] suffixes, CorpusArray corpusArray, int cachePrecomputationFrequencyThreshold) {
+	protected SuffixArray(int[] suffixes, CorpusArray corpusArray) {
 		this.suffixes = suffixes;
 		this.corpus = corpusArray;
-		invertedIndex = new InvertedIndex(this, INVERTED_INDEX_CAPACITY, cachePrecomputationFrequencyThreshold, POPULATE_INVERTED_INDEX);
+		invertedIndex = new InvertedIndex(this, INVERTED_INDEX_CAPACITY, INVERTED_INDEX_PRECOMPUTATION_MIN_FREQ, POPULATE_INVERTED_INDEX);
 	}
 	
 	

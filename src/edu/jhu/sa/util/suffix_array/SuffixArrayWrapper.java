@@ -33,8 +33,8 @@ public class SuffixArrayWrapper {
 	final CorpusArray target;
 	final AlignmentArray alignments;
 	
-	public SuffixArrayWrapper(CorpusArray source, CorpusArray target, AlignmentArray alignments, int cachePrecomputationFrequencyThreshold) {
-		this(new SuffixArray(source, cachePrecomputationFrequencyThreshold), target, alignments);
+	public SuffixArrayWrapper(CorpusArray source, CorpusArray target, AlignmentArray alignments) {
+		this(new SuffixArray(source), target, alignments);
 	}
 	
 	public SuffixArrayWrapper(SuffixArray source, CorpusArray target, AlignmentArray alignments) {

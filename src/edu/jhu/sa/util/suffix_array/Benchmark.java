@@ -10,7 +10,6 @@ public class Benchmark {
 
 	public static void main(String[] args) throws IOException {
 
-		int cachePrecomputationFrequencyThreshold = 1000;
 		
 		System.err.println(new Date() + " Constructing source language vocabulary.");
 		String sourceFileName = (args.length==0) ? "data/europarl001.en" : args[0];
@@ -20,7 +19,7 @@ public class Benchmark {
 		CorpusArray sourceCorpusArray = SuffixArrayFactory.createCorpusArray(sourceFileName, sourceVocab, sourceWordsSentences[0], sourceWordsSentences[1]);
 		System.err.println(new Date() + " Constructing source language suffix array.");
 		//SuffixArray sourceSuffixArray = 
-			SuffixArrayFactory.createSuffixArray(sourceCorpusArray, cachePrecomputationFrequencyThreshold);
+			SuffixArrayFactory.createSuffixArray(sourceCorpusArray);
 		System.err.println(new Date() + " Done");
 	}
 

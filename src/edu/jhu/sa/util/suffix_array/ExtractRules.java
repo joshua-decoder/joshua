@@ -79,7 +79,8 @@ public class ExtractRules {
 		Option<Boolean> target_given_source_gz = commandLine.addBooleanOption("target-given-source-gzipped",false,"is the target given source word pair counts file gzipped");
 		Option<Boolean> source_given_target_gz = commandLine.addBooleanOption("source-given-target-gzipped",false,"is the source given target word pair counts file gzipped");
 		
-		Option<Integer> cachePrecomputationFrequencyThreshold = commandLine.addIntegerOption("c", "CACHE_PRECOMPUTATION_FREQUENCY_THRESHOLD", 100, "the minimum number of times a phrase must appear before it will be pre-stored in the inverted index cache");
+		Option<Integer> inverted_index_precomputation_min_freq = commandLine.addIntegerOption("c", "CACHE_PRECOMPUTATION_FREQUENCY_THRESHOLD", 100, "the minimum number of times a phrase must appear before it will be pre-stored in the inverted index cache");
+		
 		
 		commandLine.parse(args);
 
@@ -94,6 +95,8 @@ public class ExtractRules {
 			System.err.println("Security manager is configured to disallow changes to System.out or System.err; using system default encoding.");
 		}
 		
+		// ccb - todo -
+		//SuffixArray.INVERTED_INDEX_PRECOMPUTATION_MIN_FREQ = commandLine.getValue("CACHE_PRECOMPUTATION_FREQUENCY_THRESHOLD");
 		
 		if (logger.isLoggable(Level.FINE)) logger.fine("Constructing source language vocabulary.");
 		String sourceFileName = commandLine.getValue(source);
@@ -102,7 +105,7 @@ public class ExtractRules {
 		if (logger.isLoggable(Level.FINE)) logger.fine("Constructing source language corpus array.");
 		CorpusArray sourceCorpusArray = SuffixArrayFactory.createCorpusArray(sourceFileName, sourceVocab, sourceWordsSentences[0], sourceWordsSentences[1]);
 		if (logger.isLoggable(Level.FINE)) logger.fine("Constructing source language suffix arra.");
-		SuffixArray sourceSuffixArray = SuffixArrayFactory.createSuffixArray(sourceCorpusArray, commandLine.getValue(cachePrecomputationFrequencyThreshold));
+		SuffixArray sourceSuffixArray = SuffixArrayFactory.createSuffixArray(sourceCorpusArray);
 		
 		if (logger.isLoggable(Level.FINE)) logger.fine("Constructing target language vocabulary.");		
 		String targetFileName = commandLine.getValue(target);
@@ -111,7 +114,7 @@ public class ExtractRules {
 		if (logger.isLoggable(Level.FINE)) logger.fine("Constructing target language corpus array.");
 		CorpusArray targetCorpusArray = SuffixArrayFactory.createCorpusArray(targetFileName, targetVocab, targetWordsSentences[0], targetWordsSentences[1]);
 		if (logger.isLoggable(Level.FINE)) logger.fine("Constructing target language suffix array.");
-		SuffixArray targetSuffixArray = SuffixArrayFactory.createSuffixArray(targetCorpusArray, commandLine.getValue(cachePrecomputationFrequencyThreshold));
+		SuffixArray targetSuffixArray = SuffixArrayFactory.createSuffixArray(targetCorpusArray);
 		
 		if (logger.isLoggable(Level.FINE)) logger.fine("Reading alignment data.");
 		String alignmentFileName = commandLine.getValue(alignment);
