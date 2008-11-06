@@ -25,11 +25,11 @@ package joshua.decoder.ff;
  * @version $LastChangedDate: 2008-07-28 18:44:45 -0400 (Mon, 28 Jul 2008) $
  */
 
-public abstract class DefaultStatefulFF implements FeatureFunction<StatefulFFTransitionResult, FFDPState> {
-	private   double  weight   = 0.0;
-	private   int feat_id; //the unique integer that identifies a feature
+public abstract class DefaultStatefulFF implements FeatureFunction {
+	private double weight = 0.0;
+	private int    feat_id; //the unique integer that identifies a feature
 	
-	public DefaultStatefulFF(double weight_, int id_){
+	public DefaultStatefulFF(double weight_, int id_) {
 		this.weight = weight_;
 		this.feat_id = id_;
 	}

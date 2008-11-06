@@ -29,9 +29,9 @@ import joshua.decoder.ff.tm.Rule;
  * @version $LastChangedDate: 2008-07-28 18:44:45 -0400 (Mon, 28 Jul 2008) $
  */
 
-public abstract class DefaultStatelessFF implements FeatureFunction<StatelessFFTransitionResult, FFDPState> {
-	private   double  weight   = 0.0;
-	private int feat_id;
+public abstract class DefaultStatelessFF implements FeatureFunction {
+	private double weight = 0.0;
+	private int    feat_id;
 	protected final int owner;
 	
 	public DefaultStatelessFF(final double weight_, final int owner_, int id_) {
@@ -43,7 +43,7 @@ public abstract class DefaultStatelessFF implements FeatureFunction<StatelessFFT
 	public final boolean isStateful() {
 		return false;
 	}
-
+	
 	public final double getWeight() {
 		return this.weight;
 	}
@@ -51,7 +51,7 @@ public abstract class DefaultStatelessFF implements FeatureFunction<StatelessFFT
 	public final void putWeight(final double weight_) {
 		this.weight = weight_;
 	}
-
+	
 	
 	public final int getFeatureID() {
 		return this.feat_id;
@@ -61,25 +61,26 @@ public abstract class DefaultStatelessFF implements FeatureFunction<StatelessFFT
 		this.feat_id = id_;
 	}
 	
+	
 	/**
 	 * Generic transition for FeatureFunctions which are Stateless
 	 * (1) use estimate() to get transition cost
 	 * (2) no future cost estimation
 	 */
 	public StatelessFFTransitionResult transition(Rule rule, ArrayList<FFDPState> previous_states, int span_start, int span_end) {
-		if(previous_states!=null){
+		if (null != previous_states) {
 			System.out.println("transition: previous states for a stateless feature is NOT null");
 			System.exit(0);
 		}
-		StatelessFFTransitionResult res = new StatelessFFTransitionResult();
-		res.putTransitionCost(this.estimate(rule));
-		return res;
+		StatelessFFTransitionResult result = new StatelessFFTransitionResult();
+		result.putTransitionCost(this.estimate(rule));
+		return result;
 	}
 	
-	/* default implementation of finalTransition
-	 * */
-	public double finalTransition(FFDPState state){
-		if(state!=null){
+	
+	/** Default implementation of finalTransition **/
+	public double finalTransition(FFDPState state) {
+		if (null != state) {
 			System.out.println("finalTransition: state for a stateless feature is NOT null");
 			System.exit(0);
 		}

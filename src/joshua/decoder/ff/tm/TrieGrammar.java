@@ -33,7 +33,8 @@ import joshua.decoder.ff.tm.RuleCollection;
 public interface TrieGrammar {
 	
 	/**
-	 * Traverse one ply further down the trie.
+	 * Traverse one ply further down the trie. If there is no
+	 * match, the result is null
 	 */
 	TrieGrammar matchOne(int wordID);
 	

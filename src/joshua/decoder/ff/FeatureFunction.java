@@ -24,7 +24,8 @@ import java.util.ArrayList; //// BUG: should be List but that causes bugs
 
 /**
  * This interface provide ways to calculate cost based on rule and
- * state information
+ * state information.
+ *
  * 
  * @author wren ng thornton <wren@users.sourceforge.net>
  * @version $LastChangedDate: 2008-07-28 18:44:45 -0400 (Mon, 28 Jul 2008) $
@@ -35,15 +36,15 @@ import java.util.ArrayList; //// BUG: should be List but that causes bugs
  * (2) implement FFState
  * */
 
-public interface FeatureFunction<Res extends FFTransitionResult, DPS extends FFDPState> {
+public interface FeatureFunction {
 
 	/* Attributes */
 	
 	/* It is essential to make sure the feature ID is unique for each feature
-	 * */
-	void putFeatureID(int id);
+	 */
+	void    putFeatureID(int id);
 	
-	int getFeatureID();
+	int     getFeatureID();
 	
 	void    putWeight(double weight);
 	
@@ -54,15 +55,15 @@ public interface FeatureFunction<Res extends FFTransitionResult, DPS extends FFD
 	
 	/* Methods */
 	/** Only used when initializing Translation Grammars (for pruning purpose, and to get stateless cost for each rule) */
-	double estimate(Rule rule);	
+	double estimate(Rule rule);
 	
-
+	
 	/* Functions:
 	 * (1) calculate transition cost
 	 * (2) estimate future cost
 	 * (3) extract dynamical programming state
 	 * */
-	Res transition(Rule rule,	ArrayList<DPS> previous_states, int span_start, int span_end);
-		
-	double finalTransition(DPS state);
+	FFTransitionResult transition(Rule rule,	ArrayList<FFDPState> previous_states, int span_start, int span_end);
+	
+	double finalTransition(FFDPState state);
 }

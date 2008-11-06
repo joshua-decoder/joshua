@@ -102,7 +102,7 @@ public class Bin
 		double transition_cost_sum    = 0.0;
 		double future_cost_estimation = 0.0;
 		
-		for (FeatureFunction<FFTransitionResult,FFDPState> ff : this.p_chart.p_l_models) {
+		for (FeatureFunction ff : this.p_chart.p_l_models) {
 			////long start2 = Support.current_time();
 			if (ff.isStateful()) {
 				//System.out.println("class name is " + ff.getClass().getName());
@@ -172,7 +172,7 @@ public class Bin
 				double cost                  = item.best_deduction.best_cost;
 				double final_transition_cost = 0.0;
 				
-				for (FeatureFunction<FFTransitionResult,FFDPState> ff : this.p_chart.p_l_models) {
+				for (FeatureFunction ff : this.p_chart.p_l_models) {
 					final_transition_cost += ff.getWeight()	*  ff.finalTransition( item.getFeatDPState(ff) );
 				}
 				
