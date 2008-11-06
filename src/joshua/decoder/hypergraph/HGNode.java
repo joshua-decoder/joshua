@@ -42,8 +42,8 @@ import java.util.Map;
 
 import java.util.logging.Level;
 
+import joshua.decoder.ff.FFDPState;
 import joshua.decoder.ff.FeatureFunction;
-import joshua.decoder.ff.Context;
 
 /**
  * this class implement Hypergraph node (i.e., HGNode); also known as Item in parsing 
@@ -58,31 +58,35 @@ public class HGNode implements Comparable<HGNode> {
 	public int i, j;
 	public ArrayList<HyperEdge> l_deductions=null;//each deduction is a "and" node
 	public HyperEdge best_deduction=null;//used in pruning, compute_item, and transit_to_goal
-	Context dpstate = null;
+	public int lhs; //this is the symbol like: NP, VP, and so on
+	HashMap<Integer, FFDPState> tbl_ff_dpstates; //the key is the feature id; remember the state required by each model, for example, edge-ngrams for LM model
+	
+	//######### auxiluary variables, no need to store on disk
+	private String signature=null;//signature of this item: lhs, states
+	static String SIG_SEP = " -S- "; //seperator for state in signature
 	
 	//######## for pruning purpose
 	public boolean is_dead=false;
 	public double est_total_cost=0.0; //it includes the bonus cost
 			
-	public HGNode(int i_in, int j_in, Context states_in, HyperEdge init_deduction, double est_total_cost_in){
+	public HGNode(int i_in, int j_in, int lhs_in, HashMap<Integer, FFDPState>   states_in, HyperEdge init_deduction, double est_total_cost_in){
 		i = i_in;
 		j= j_in;					
-		dpstate = states_in;
+		lhs = lhs_in;
+		tbl_ff_dpstates = states_in;
 		est_total_cost=est_total_cost_in;
 		add_deduction_in_item(init_deduction);
 	}
 
-	public final int getLHS() {
-		return dpstate.getLHS();
-	}
 	
 	//used by disk hg
-	public HGNode(int i_in, int j_in,  ArrayList<HyperEdge> l_deductions_in, HyperEdge best_deduction_in, Context states_in){
+	public HGNode(int i_in, int j_in, int lhs_in,  ArrayList<HyperEdge> l_deductions_in, HyperEdge best_deduction_in, HashMap<Integer, FFDPState> states_in){
 		i = i_in;
 		j= j_in;
+		lhs = lhs_in;
 		l_deductions = l_deductions_in;
 		best_deduction = best_deduction_in;			
-		dpstate = states_in;
+		tbl_ff_dpstates = states_in;
 	}
 			
 	public void add_deduction_in_item(HyperEdge dt){
@@ -96,12 +100,46 @@ public class HGNode implements Comparable<HGNode> {
 	}	
 		
 	
-	public final Context getDPState(){
-		return dpstate;
+	public HashMap<Integer, FFDPState>  getTblFeatDPStates(){
+		return tbl_ff_dpstates;
 	}
-
+	
+	
+	public FFDPState getFeatDPState(FeatureFunction ff){			
+		return getFeatDPState(ff.getFeatureID());
+	}
+	
+	public FFDPState getFeatDPState(int feat_id){
+		if(tbl_ff_dpstates==null)
+			return null;
+		else
+			return (FFDPState) tbl_ff_dpstates.get(feat_id);
+	}
+	
 	public void print_info(Level level){
-		if (HyperGraph.logger.isLoggable(level)) HyperGraph.logger.log(level, String.format("lhs: %s; cost: %.3f",dpstate.getLHS(), best_deduction.best_cost));
+		if (HyperGraph.logger.isLoggable(level)) HyperGraph.logger.log(level, String.format("lhs: %s; cost: %.3f",lhs, best_deduction.best_cost));
+	}		
+	
+	
+	//signature of this item: lhs, states (we do not need i, j)
+	public String get_signature() {
+		if (null == this.signature) {				
+			StringBuffer signature_ = new StringBuffer();
+			signature_.append(lhs);
+			
+			if(tbl_ff_dpstates!=null && tbl_ff_dpstates.size()>0){
+				for (Iterator iter = tbl_ff_dpstates.entrySet().iterator(); iter.hasNext();){//for each model
+	                Map.Entry entry = (Map.Entry)iter.next();
+	                FFDPState dpstate = (FFDPState)entry.getValue();
+	                signature_.append(dpstate.getSignature(false));
+				}
+			}
+			
+			this.signature = signature_.toString();
+		}
+		//System.out.println("sig is: " +signature);
+		//Support.write_log_line(String.format("Signature is %s", res), Support.INFO);
+		return this.signature;
 	}
 	
 	//sort by est_total_cost: for prunning purpose
@@ -115,7 +153,7 @@ public class HGNode implements Comparable<HGNode> {
 	    else
 	    	return 1;    
 	}
-
+	
 	public static Comparator<HGNode> NegtiveCostComparator
 		= new Comparator<HGNode>() {
 			

@@ -26,14 +26,14 @@ import java.util.HashMap;
  * to use the functions here, one need to extend the class  to provide a way to calculate the deduction cost based on feature set
  *
  * @author Zhifei Li, <zhifei.work@gmail.com>
- * @version $LastChangedDate$
+ * @version $LastChangedDate: 2008-11-05 11:40:13 -0500 (星期三, 05 十一月 2008) $
  */
 
 //TODO: currently assume log semiring, need to generalize to other semiring
 //already implement both max-product and sum-product algortithms for log-semiring
 //Note: this class does not require the correctness of the best_cost?
 
-public abstract class InsideOutside {
+public abstract class DefaultInsideOutside {
 	/*Two operations: add and multi
 	 * add: different hyperedges lead to a specific item
 	 * multi: prob of a derivation is a multi of all constituents
@@ -107,7 +107,7 @@ public abstract class InsideOutside {
 	
 	public double get_deduction_post_prob(HyperEdge dt, HGNode parent ){		
 		if(SEMIRING==LOG_SEMIRING){
-			return Math.exp((get_deduction_merit(dt, parent)-normalization_constant));
+			return Math.exp((get_deduction_merit(dt, parent)-normalization_constant));//TODO get_deduction_merit seems return cost????????????????????????????
 		}else{
 			System.out.println("not implemented"); System.exit(0);
 			return 1;

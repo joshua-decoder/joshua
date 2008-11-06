@@ -25,16 +25,17 @@ import joshua.decoder.ff.tm.Rule;
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate: 2008-07-28 18:44:45 -0400 (Mon, 28 Jul 2008) $
  */
-public final class PhrasePenaltyFF extends FeatureFunction {
+public final class PhrasePenaltyFF extends DefaultStatelessFF {
 	private static final double ALPHA = Math.log10(Math.E);
-	private final int owner;
-
+	
+	
 	public PhrasePenaltyFF(final int feat_id_, final double weight_, final int owner_) {
 		super(weight_, owner_, feat_id_);
-		owner = owner_;
 	}
-
+	
+	
 	public double estimate(final Rule rule) {
+		//Support.write_log_line("model owner: " + owner + "; rule owner: "+r.owner, Support.DEBUG);
 		if (this.owner == rule.owner) {
 			return ALPHA;
 		} else {

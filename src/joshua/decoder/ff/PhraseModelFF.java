@@ -24,23 +24,28 @@ import joshua.decoder.ff.tm.Rule;
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate: 2008-07-28 18:44:45 -0400 (Mon, 28 Jul 2008) $
  */
-public final class PhraseModelFF extends FeatureFunction {
+public final class PhraseModelFF extends DefaultStatelessFF  {
 	/* the feature will be activated only when the owner is the
 	 * same as the rule, we need an owner to distinguish different
 	 * feature in different phrase table/source
 	 */
 	private final int columnIndex; // = -1;//zero-indexed
-	private final int owner;
-
+	
 	public PhraseModelFF(final int feat_id_, final double weight_,	final int owner_, final int column_index) {
-		super(weight_, feat_id_);
-		this.owner = owner_;
+		super(weight_, owner_, feat_id_);
 		this.columnIndex = column_index;
 	}
-
+	
 	public double estimate(final Rule rule) {
+		//Support.write_log_line("model owner: " + owner + "; rule owner: "+r.owner, Support.INFO);
 		if (this.owner == rule.owner) {
-			return rule.feat_scores[this.columnIndex];
+			if (this.columnIndex < rule.feat_scores.length) {
+				return rule.feat_scores[this.columnIndex];
+			} else {
+				System.out.println("In PhraseModelFF: columnIndex is not right");
+				System.exit(0);
+				return 0.0;
+			}
 		} else {
 			return 0.0;
 		}

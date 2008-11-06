@@ -17,36 +17,26 @@
  */
 package joshua.decoder.ff;
 
-import joshua.decoder.ff.tm.Rule;
-
 
 /**
+ * This interface provide the contract for what the outside world
+ * needs from the internal state used by a class implementing the
+ * FeatureFunction interface
  * 
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate: 2008-07-28 18:44:45 -0400 (Mon, 28 Jul 2008) $
  */
-public final class ArityPhrasePenaltyFF extends DefaultStatelessFF {
-	private static final double ALPHA = Math.log10(Math.E);
+public interface FFTransitionResult {
+	public double getTransitionCost();
 	
-	// when the rule.arity is in the range, then this feature is activated
-	private final int min_arity;
-	private final int max_arity;
+	public void putTransitionCost(double transition_cost_);
 	
+	public FFDPState getStateForItem();
 	
-	public ArityPhrasePenaltyFF(final int feat_id_, final double weight_, final int owner_,	final int min, final int max) {
-		super(weight_, owner_, feat_id_);
-		this.min_arity = min;
-		this.max_arity = max;
-	}
+	public void putStateForItem(FFDPState map);
 	
+	public double getFutureCostEstimation();
 	
-	public double estimate(final Rule rule) {
-		if (this.owner == rule.owner && this.min_arity <= rule.arity && this.max_arity >= rule.arity) {
-			return ALPHA;
-		} else {
-			return 0.0;
-		}
-	}
-
+	public void putFutureCostEstimation(double cost);
 
 }

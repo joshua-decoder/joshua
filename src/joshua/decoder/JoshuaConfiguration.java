@@ -64,7 +64,9 @@ public class JoshuaConfiguration {
 	public static boolean forest_pruning           = false;
 	public static double  forest_pruning_threshold = 10;
 	
-
+	//variational decoding 
+	public static boolean use_variational_decoding   = true;
+	
 	//debug
 	public static boolean extract_confusion_grammar = false; //non-parallel version
 	public static String f_confusion_grammar = "C:\\Users\\zli\\Documents\\confusion.hg.grammar";

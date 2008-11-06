@@ -19,7 +19,10 @@ package joshua.decoder.hypergraph;
 
 import joshua.decoder.Support;
 import joshua.decoder.Symbol;
+import joshua.decoder.ff.FFDPState;
+import joshua.decoder.ff.FFTransitionResult;
 import joshua.decoder.ff.FeatureFunction;
+import joshua.decoder.ff.lm.LMFeatureFunction;
 import joshua.decoder.ff.tm.Rule;
 import joshua.util.FileUtility;
 
@@ -419,15 +422,7 @@ public class KbestExtraction {
 			
 			return res.toString();
 		}
-/*
-		private void compute_cost(HyperEdge dt, double[] model_cost, ArrayList l_models){
-			if(model_cost==null) return;
-			for(int k=0; k< l_models.size(); k++){
-				model_cost[k] += dt.feature_values[k];
-                        }
-                }
-*/
-	
+		
 		//TODO: we assume at most one lm, and the LM is the only non-stateles model
 		//another potential difficulty in handling multiple LMs: symbol synchronization among the LMs
 		//accumulate deduction cost into model_cost[], used by get_hyp()
@@ -443,7 +438,8 @@ public class KbestExtraction {
 				double t_res =0;
 				if(m.isStateful() == false){//stateless feature
 					if(dt.get_rule()!=null){//deductions under goal item do not have rules
-						t_res =  m.transition(dt.get_rule(), null, null, -1, -1, null, null);
+						FFTransitionResult tem_tbl =  m.transition(dt.get_rule(), null, -1, -1);
+						t_res = tem_tbl.getTransitionCost();
 					}else{//final transtion
 						t_res = m.finalTransition(null);
 					}

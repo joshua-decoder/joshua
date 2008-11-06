@@ -12,8 +12,10 @@ import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.GrammarFactory;
 import joshua.decoder.hypergraph.DiskHyperGraph;
+import joshua.decoder.hypergraph.HGNode;
 import joshua.decoder.hypergraph.HyperGraph;
 import joshua.decoder.hypergraph.KbestExtraction;
+import joshua.decoder.hypergraph.VariationalDecoder;
 import joshua.lattice.Lattice;
 import joshua.util.FileUtility;
 import joshua.util.sentence.Phrase;
@@ -328,6 +330,15 @@ public class DecoderThread {
 		if (null != diskHyperGraph) {
 			diskHyperGraph.save_hyper_graph(p_hyper_graph);
 		}
+		
+		//debug
+		if(JoshuaConfiguration.use_variational_decoding){
+			VariationalDecoder vd = new VariationalDecoder();
+			vd.decoding(p_hyper_graph);
+			System.out.println("#### new 1best is #####\n" + HyperGraph.extract_best_string(p_main_controller.p_symbol,p_hyper_graph.goal_item));
+		}
+		//end
+		
 		
 		//debug
 		//g_con.get_confusion_in_hyper_graph_cell_specific(p_hyper_graph,p_hyper_graph.sent_len);

@@ -19,6 +19,9 @@ package joshua.decoder.ff;
 
 import joshua.decoder.ff.tm.Rule;
 
+import java.util.ArrayList; //// BUG: should be List but that causes bugs
+
+
 /**
  * This interface provide ways to calculate cost based on rule and
  * state information
@@ -28,91 +31,38 @@ import joshua.decoder.ff.tm.Rule;
  */
 
 /*How to add a featureFunction
- * implement FeatureFunction by overriding estimate, transition, and finalTransition
+ * (1) implement FeatureFunction
+ * (2) implement FFState
  * */
 
-public abstract class FeatureFunction {
-
-	public static class TransitionCosts {
-		public double transition_cost;
-		public double estimated_future_cost;
-	}
+public interface FeatureFunction<Res extends FFTransitionResult, DPS extends FFDPState> {
 
 	/* Attributes */
-	private double weight_;
-	protected final int feat_id;
-	private final int state_bytes;
-	protected int state_offset;
-
-	// by default, stateless
-	protected FeatureFunction(double weight, int feat_id) {
-		this.weight_ = weight;
-		this.feat_id = feat_id;
-		state_bytes = 0;
-	}
-	protected FeatureFunction(double weight, int feat_id, int num_bytes) {
-		this.weight_ = weight;
-		this.feat_id = feat_id;
-		state_bytes = num_bytes;
-	}
-	public final int getStateOffset() {
-		return state_offset;
-	}
-	public final int getStateEndOffset() {
-		return state_offset + state_bytes;
-	}
-	public final int getNumStateBytes() {
-		return state_bytes;
-	}
-	public void setOffset(int offset) {
-		state_offset = offset;
-	}
-
-	public final int getFeatureID() {
-		return feat_id;
-	}
 	
-	public final void    putWeight(double weight) {
-		weight_ = weight;
-	}
+	/* It is essential to make sure the feature ID is unique for each feature
+	 * */
+	void putFeatureID(int id);
 	
-	public final double  getWeight() {
-		return weight_;
-	}
+	int getFeatureID();
 	
-	public final boolean isStateful() {
-		return state_bytes > 0;
-	}
+	void    putWeight(double weight);
+	
+	double  getWeight();
+	
+	boolean isStateful();
 	
 	
 	/* Methods */
 	/** Only used when initializing Translation Grammars (for pruning purpose, and to get stateless cost for each rule) */
-	public double estimate(Rule rule) {
-		return 0.0;
-	}
+	double estimate(Rule rule);	
+	
 
 	/* Functions:
 	 * (1) calculate transition cost
-	 * (2) estimate future cost (if out_costs != null)
+	 * (2) estimate future cost
 	 * (3) extract dynamical programming state
-	 * @returns transition cost
-	 **/
-	public double transition(Rule rule,
-		Context prev_state1,
-		Context prev_state2,
-		int span_start,
-		int span_end,
-		TransitionCosts out_costs,
-		Context res_state) {
-		double est = this.estimate(rule);
-		if (out_costs != null) {
-			out_costs.transition_cost = est;
-			out_costs.estimated_future_cost = 0.0;
-		}
-		return est;
-	}
-
-	public double finalTransition(Context state) {
-		return 0.0;
-	}
+	 * */
+	Res transition(Rule rule,	ArrayList<DPS> previous_states, int span_start, int span_end);
+		
+	double finalTransition(DPS state);
 }

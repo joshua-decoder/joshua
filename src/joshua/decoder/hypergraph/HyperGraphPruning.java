@@ -30,7 +30,7 @@ import java.util.HashMap;
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate$
  */
-public class HyperGraphPruning extends InsideOutside {
+public class HyperGraphPruning extends TrivialInsideOutside {
 	HashMap tbl_processed_items = new HashMap();
 	double best_cost;//viterbi cost in the hypergraph
 	
@@ -62,10 +62,7 @@ public class HyperGraphPruning extends InsideOutside {
 	}
 	
 	
-	//used by inside-outside estimation
-	protected  double get_deduction_score(HyperEdge dt, HGNode parent_it){
-		return dt.get_transition_cost(false);//TODO this is very bad in terms of computation
-	}
+	
 	
 	public void clear_state(){
 		tbl_processed_items.clear();

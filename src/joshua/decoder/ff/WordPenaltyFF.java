@@ -25,14 +25,21 @@ import joshua.decoder.ff.tm.Rule;
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate: 2008-07-28 18:44:45 -0400 (Mon, 28 Jul 2008) $
  */
-public final class WordPenaltyFF extends FeatureFunction {
+public final class WordPenaltyFF extends DefaultStatelessFF {
 	private static final double OMEGA = Math.log10(Math.E);
 	
 	public WordPenaltyFF(int feat_id_, double weight_) {
-		super(weight_, feat_id_);
+		super(weight_, -1, feat_id_);//TODO: owner
 	}
 
 	public double estimate(final Rule rule) {
+		//we do not check for owner because we want this feature used for all the time, e.g., under oov_owner case
+		//TODO: why not check the owner
+		/*if (this.owner == rule.owner) {
+			return OMEGA * (rule.english.length - rule.arity);
+		} else {
+			return 0.0;
+		}*/
 		return OMEGA * (rule.english.length - rule.arity);
 	}
 }

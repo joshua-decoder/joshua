@@ -21,6 +21,7 @@ import joshua.decoder.BuildinSymbol;
 import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.JoshuaDecoder;
 import joshua.decoder.Symbol;
+import joshua.decoder.ff.FFDPState;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.tm.MemoryBasedRule;
 import joshua.decoder.ff.tm.Rule;
@@ -286,8 +287,7 @@ public class DiskHyperGraph {
 	   	total_num_deducts=0;
 	}
 	
-	private  void save_item(BufferedWriter out, HGNode item){
-/*
+	private  void save_item(BufferedWriter out, HGNode item){		
 		StringBuffer res = new StringBuffer();		
 		//line: ITEM_TAG, item id, i, j, lhs, num_deductions, tbl_state;
 		res.append(ITEM_TAG); res.append(" "); res.append((Integer)tbl_item_2_id.get(item)); res.append(" ");
@@ -314,10 +314,10 @@ public class DiskHyperGraph {
 				HyperEdge dt = (HyperEdge)  item.l_deductions.get(i);
 				save_deduction(out, item, dt);
 			}		
-		FileUtility.flush_lzf(out); */
+		FileUtility.flush_lzf(out);
 	}
 	
-	private  HGNode read_item(BufferedReader in){		/*
+	private  HGNode read_item(BufferedReader in){		
 		//line: ITEM_TAG, item id, i, j, lhs, num_deductions, ITEM_STATE_TAG, item_state;
 		String line=FileUtility.read_line_lzf(in);		
 		//if(line.startsWith(ITEM_TAG)!=true){System.out.println("wrong item tag"); System.exit(1);}
@@ -333,7 +333,7 @@ public class DiskHyperGraph {
 		int lhs = this.p_symbol.addNonTerminalSymbol(wrds1[4]);
 		int num_deductions = new Integer(wrds1[5]);
 		
-		byte[] tbl_dpstates = null;//item state: signature (created from HashMap tbl_states)
+		HashMap<Integer, FFDPState> tbl_dpstates = null;//item state: signature (created from HashMap tbl_states)
 		if(fds[1].compareTo(NULL_ITEM_STATE)!=0){
 			tbl_dpstates = get_state_tbl_from_string(p_symbol, p_l_models, fds[1]);//create statte;;;;;;;;;;;;;;;;;;;;;; TODO
 		}	
@@ -352,28 +352,28 @@ public class DiskHyperGraph {
 
 		HGNode item = new HGNode(i, j, lhs,  l_deductions, best_deduction, tbl_dpstates);
 		tbl_id_2_item.put(item_id, item);
-		return item; */ return null;
+		return item;
 	}
 	
 //################################## error begin ###############################	
 //	the state_str does not have lhs, also it contain the original words (not symbol id)
-	public static String get_string_from_state_tbl(Symbol p_symbol, byte[] tbl){
-		StringBuffer res = new StringBuffer(); /*
+	public static String get_string_from_state_tbl(Symbol p_symbol, HashMap<Integer, FFDPState> tbl){
+		StringBuffer res = new StringBuffer();
 		for (Iterator iter = tbl.entrySet().iterator(); iter.hasNext();){//for each model
             Map.Entry entry = (Map.Entry)iter.next();
             FFDPState dpstate = (FFDPState)entry.getValue();
             res.append(dpstate.getSignature(false));
 		}
-		*/
+		//TODO: not working
 		return res.toString();
 	}
 	
 	//the state_str does not lhs, it contain the original words (not symbol id)
-	public static byte[] get_state_tbl_from_string(Symbol p_symbol, ArrayList<FeatureFunction> p_l_models, String state_str){
-		/*HashMap res =new HashMap<Integer, FFDPState> ();
+	public static HashMap<Integer, FFDPState> get_state_tbl_from_string(Symbol p_symbol, ArrayList<FeatureFunction> p_l_models, String state_str){
+		HashMap res =new HashMap<Integer, FFDPState> ();
 		String[] states = state_str.split(HGNode.SIG_SEP);
-		//TODO: for eachg model			*/	
-		return null;
+		//TODO: for eachg model						
+		return res;
 	}
 //	##################################  error end ###############################	
 	

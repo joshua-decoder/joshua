@@ -17,7 +17,6 @@
  */
 package joshua.decoder.ff;
 
-import java.util.ArrayList;
 import joshua.decoder.ff.tm.Rule;
 
 /**
@@ -25,20 +24,21 @@ import joshua.decoder.ff.tm.Rule;
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate: 2008-07-28 18:44:45 -0400 (Mon, 28 Jul 2008) $
  */
-public final class SourceLatticeArcCostFF extends FeatureFunction {
-
+public final class SourceLatticeArcCostFF extends DefaultStatelessFF {
+	
 	public SourceLatticeArcCostFF(final int feat_id_, final double weight_) {
-		super(weight_, feat_id_, 1);
+		super(weight_, -1, feat_id_);//TODO: owner
 	}
 
-	public double transition(Rule rule,
-		Context prev_state1,
-		Context prev_state2,
-		int span_start,
-		int span_end,
-		TransitionCosts out_costs,
-		Context res_state) {
-		res_state.insertByte(this.getStateOffset(), 0);
-		return super.transition(rule, null, null, span_start, span_end, out_costs, null);
+	public double estimate(final Rule rule) {
+		//TODO: why not check the owner
+		/*if (this.owner == rule.owner) {
+			return rule.lattice_cost;
+		} else {
+			return 0.0;
+		}*/
+		return rule.lattice_cost;
 	}
+	
+
 }
