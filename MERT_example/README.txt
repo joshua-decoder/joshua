@@ -33,7 +33,7 @@ To test the MERT module on the larger dataset (100 sentences) and the
 larger .tm.gz and .lm.gz files in the trunk/example2/ folder instead, have
 MERT use config_ex2.txt:
 
-  java -Xmx1200m -Xms1200m -cp bin joshua.MERT.MERT -dir MERT_example -s src.txt -r ref -rps 4 -cmd decoder_command_ex2.txt -dcfg config_ex2.txt -decOut nbest_ex2.out -N 300 -p params.txt -maxIt 30 -opi 1 -v 1
+  java -Xmx300m -Xms300m -cp bin joshua.MERT.MERT -dir MERT_example -s src.txt -r ref -rps 4 -cmd decoder_command_ex2.txt -dcfg config_ex2.txt -decOut nbest_ex2.out -N 300 -p params.txt -maxIt 30 -opi 1 -v 1
 
 Notice that the MERT arguments for sourceFile, configFile, and
 decoderOutFile (-s, -cfg, and -decOut) must match the Joshua arguments
@@ -74,7 +74,7 @@ by the previous random number generator.  This way, only the first seed
 needs to be noted in order to replicate a (full) MERT run.
 
 The -seed argument specifies what that initial seed is.  This argument can
-be set either to "time" or some numberical value.  If a numerical value is
+be set either to "time" or some numerical value.  If a numerical value is
 supplied, that value will be used as the first seed.  If "time" is
 provided, the first seed will be set to the value returned by a Java
 System.currentTimeMillis() call at the start of the (full) MERT run.
@@ -83,8 +83,11 @@ it possible to replicate the (full) MERT run even when setting -seed to
 "time" (simply take note of the chosen first seed and supply it to -seed to
 replicate the (full) MERT run).
 
-// need to describe: how the first seed generates the actual seeds
-// -seed argument still needs to be implemented, actually
+As mentioned above, this initial seed is used in the first MERT run to
+choose the random initial weights, and then to choose the seed for the
+next MERT run, by randomly choosing a number between 0 and 1,000,000.  In
+other words, the nth seed is used to generate initial weights in the nth
+MERT run, as well as the (n+1)th seed.
 
 ---------------------------------------------------------------------------
 
