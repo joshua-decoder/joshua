@@ -629,7 +629,7 @@ public class PrefixTree {
 			} else {
 				node.setBounds(bounds);
 				int[] startingPositions = suffixArray.getAllPositions(bounds);
-				result = suffixArray.createHierarchicalPhrases(startingPositions, pattern);
+				result = suffixArray.createHierarchicalPhrases(startingPositions, pattern, sampleSize);
 			}
 			
 		} else {

@@ -308,28 +308,35 @@ public class SuffixArray implements Corpus {
 	 * will want to perform some of the HierarchialPhrase
 	 * operations on them). Sorts the positions. Adds the results
 	 * to the cache.  
-	 *
+	 *<p>
 	 * The construction of more complex hierarchical phrases is handled
 	 * within the prefix tree. 
-	 *
-	 * @param pattern a contiguous phrase
 	 * @param startPositions an unsorted list of the positions
 	 *                in the corpus where the matched phrases begin
+	 * @param pattern a contiguous phrase
+	 * @param sampleSize Maximum number of hierarchical phrases to create
+	 *
 	 * @return a list of trivially hierarchical phrases
 	 */ 
-	public List<HierarchicalPhrase> createHierarchicalPhrases(int[] startPositions, Pattern pattern) {
-		if (startPositions == null) return Collections.emptyList();
-		Arrays.sort(startPositions);
-		int length = pattern.size();
-		ArrayList<HierarchicalPhrase> hierarchicalPhrases = new ArrayList<HierarchicalPhrase>(startPositions.length);
-		for(int i = 0; i < startPositions.length; i++) { 
-			int[] position = {startPositions[i]};
-			int[] endPosition = {startPositions[i] + length};
-			HierarchicalPhrase hierarchicalPhrase = new HierarchicalPhrase(pattern, position, endPosition, corpus, length);
-			hierarchicalPhrases.add(hierarchicalPhrase);
-		}	
-		hierarchicalPhraseCache.put(pattern, hierarchicalPhrases);
-		return hierarchicalPhrases;
+	protected List<HierarchicalPhrase> createHierarchicalPhrases(int[] startPositions, Pattern pattern, int sampleSize) {
+		if (startPositions == null) {
+			return Collections.emptyList();
+		} else if (hierarchicalPhraseCache.containsKey(pattern)) {
+			return hierarchicalPhraseCache.get(pattern);
+		} else {
+			Arrays.sort(startPositions);
+			int length = pattern.size();
+			ArrayList<HierarchicalPhrase> hierarchicalPhrases = new ArrayList<HierarchicalPhrase>(startPositions.length);
+			int step = (length<sampleSize) ? 1 : length / sampleSize;
+			for(int i = 0; i < startPositions.length; i+=step) { 
+				int[] position = {startPositions[i]};
+				int[] endPosition = {startPositions[i] + length};
+				HierarchicalPhrase hierarchicalPhrase = new HierarchicalPhrase(pattern, position, endPosition, corpus, length);
+				hierarchicalPhrases.add(hierarchicalPhrase);
+			}	
+			hierarchicalPhraseCache.put(pattern, hierarchicalPhrases);
+			return hierarchicalPhrases;
+		}
 	}
 	
 	/**
