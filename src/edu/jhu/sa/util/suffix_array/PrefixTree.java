@@ -630,14 +630,14 @@ public class PrefixTree {
 			} else {
 				node.setBounds(bounds);
 				int[] startingPositions = suffixArray.getAllPositions(bounds);
-				result = suffixArray.invertedIndex.getHierarchicalPhrases(startingPositions, pattern);
+				result = suffixArray.createHierarchicalPhrases(startingPositions, pattern);
 			}
 			
 		} else {
 
 			// 8: If M_a_alpha_b has been precomputed (then result will be non-null)
 			// 9: Retrieve M_a_alpha_b from cache of precomputations
-			result = suffixArray.invertedIndex.getMatchingPhrases(pattern);
+			result = suffixArray.getMatchingPhrases(pattern);
 			
 			// 10: else
 			if (result == null) {
@@ -669,7 +669,7 @@ public class PrefixTree {
 					result = queryIntersect(pattern, prefixNode.sourceHierarchicalPhrases, suffixNode.sourceHierarchicalPhrases);
 				}
 				
-				suffixArray.invertedIndex.setMatchingPhrases(pattern, result);
+				suffixArray.setMatchingPhrases(pattern, result);
 			}
 		}
 
@@ -1103,6 +1103,13 @@ public class PrefixTree {
 	static void resetNodeCounter() {
 		nodeIDCounter = 0;
 	}
+
+
+
+
+
+
+
 	
 	/**
 	 * Represents a node in a prefix tree with suffix links.

@@ -95,7 +95,7 @@ public class ExtractRules {
 			System.err.println("Security manager is configured to disallow changes to System.out or System.err; using system default encoding.");
 		}
 		
-		// ccb - todo -
+		// Lane - TODO -
 		//SuffixArray.INVERTED_INDEX_PRECOMPUTATION_MIN_FREQ = commandLine.getValue("CACHE_PRECOMPUTATION_FREQUENCY_THRESHOLD");
 		
 		if (logger.isLoggable(Level.FINE)) logger.fine("Constructing source language vocabulary.");

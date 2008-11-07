@@ -20,6 +20,7 @@ package edu.jhu.sa.util.suffix_array;
 import joshua.util.ReverseOrder;
 import joshua.util.sentence.Phrase;
 import joshua.util.sentence.Vocabulary;
+import joshua.util.Cache;
 
 import java.util.*;
 import java.util.logging.Level;
@@ -65,11 +66,8 @@ public class SuffixArray implements Corpus {
 	 */
 	public static int MAX_COMPARISON_LENGTH = 20;
 	
-	
-	public static int INVERTED_INDEX_CAPACITY = 1000000;
-	public static boolean POPULATE_INVERTED_INDEX = false;
-	public static int INVERTED_INDEX_PRECOMPUTATION_MIN_FREQ = 1000;
-	
+	public static int CACHE_CAPACITY = 1000000;
+	protected Cache<Pattern,List<HierarchicalPhrase>> hierarchicalPhraseCache;
 	
 	/** Logger for this class. */
 	private static final Logger logger = 
@@ -82,8 +80,7 @@ public class SuffixArray implements Corpus {
 
 	protected int[] suffixes;
 	protected CorpusArray corpus;
-	
-	protected InvertedIndex invertedIndex;
+		
 //===============================================================
 // Constructor(s)
 //===============================================================
@@ -103,10 +100,7 @@ public class SuffixArray implements Corpus {
 		// Sort the array of suffixes
 		sort(suffixes);
 	
-		// ccb - debugging
-		System.out.println(new Date() + " Constructing the inverted index.");
-
-		invertedIndex = new InvertedIndex(this, INVERTED_INDEX_CAPACITY, INVERTED_INDEX_PRECOMPUTATION_MIN_FREQ, POPULATE_INVERTED_INDEX);
+		this.hierarchicalPhraseCache = new Cache<Pattern,List<HierarchicalPhrase>>(CACHE_CAPACITY);
 	}
 	
 	
@@ -120,7 +114,7 @@ public class SuffixArray implements Corpus {
 	protected SuffixArray(int[] suffixes, CorpusArray corpusArray) {
 		this.suffixes = suffixes;
 		this.corpus = corpusArray;
-		invertedIndex = new InvertedIndex(this, INVERTED_INDEX_CAPACITY, INVERTED_INDEX_PRECOMPUTATION_MIN_FREQ, POPULATE_INVERTED_INDEX);
+		this.hierarchicalPhraseCache = new Cache<Pattern,List<HierarchicalPhrase>>(CACHE_CAPACITY);
 	}
 	
 	
@@ -285,6 +279,55 @@ public class SuffixArray implements Corpus {
 	public int[] findPhrase(Phrase phrase) {
 		return findPhrase(phrase, 0, phrase.size());	
 	}
+	
+	
+
+	
+	/**
+	 * This method creates a list of trivially HierarchicalPhrases
+	 * (i.e. they're really just contiguous phrases, but we
+	 * will want to perform some of the HierarchialPhrase
+	 * operations on them). Sorts the positions. Adds the results
+	 * to the cache.  
+	 *
+	 * The construction of more complex hierarchical phrases is handled
+	 * within the prefix tree. 
+	 *
+	 * @param pattern a contiguous phrase
+	 * @param startPositions an unsorted list of the positions
+	 *                in the corpus where the matched phrases begin
+	 * @return a list of trivially hierarchical phrases
+	 */ 
+	public List<HierarchicalPhrase> createHierarchicalPhrases(int[] startPositions, Pattern pattern) {
+		if (startPositions == null) return Collections.emptyList();
+		Arrays.sort(startPositions);
+		int length = pattern.size();
+		ArrayList<HierarchicalPhrase> hierarchicalPhrases = new ArrayList<HierarchicalPhrase>(startPositions.length);
+		for(int i = 0; i < startPositions.length; i++) { 
+			int[] position = {startPositions[i]};
+			int[] endPosition = {startPositions[i] + length};
+			HierarchicalPhrase hierarchicalPhrase = new HierarchicalPhrase(pattern, position, endPosition, corpus, length);
+			hierarchicalPhrases.add(hierarchicalPhrase);
+		}	
+		hierarchicalPhraseCache.put(pattern, hierarchicalPhrases);
+		return hierarchicalPhrases;
+	}
+	
+	/**
+	 * @return a list of hierarchical phrases that match the pattern if they are already cached
+	 *         or null if the pattern is not in the cache.
+	 */
+	public List<HierarchicalPhrase> getMatchingPhrases(Pattern pattern) {
+		return hierarchicalPhraseCache.get(pattern);
+	}
+	
+	/** 
+	 * Caches the matching hierarchical phrases for the pattern. 
+	 */
+	public void setMatchingPhrases(Pattern pattern, List<HierarchicalPhrase> matchings) {
+		hierarchicalPhraseCache.put(pattern, matchings);
+	}
+	
 	
 	
 	/**
