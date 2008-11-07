@@ -25,7 +25,6 @@ import joshua.util.Cache;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.io.*;
 
 
 /**
@@ -55,19 +54,33 @@ public class SuffixArray implements Corpus {
 //===============================================================
 
 	/**
-	 * A random number generator used in the quick sort
-	 * implementation.
-	 */
-	public static final Random RAND = new Random();
-	
-	
-	/**
 	 * The maximum length suffix to consider during sorting.
 	 */
 	public static int MAX_COMPARISON_LENGTH = 20;
 	
+	/** 
+	 * Maximum number of items that can be stored 
+	 * in the cache of patterns and hierarchical phrases. 
+	 */
 	public static int CACHE_CAPACITY = 1000000;
+	
+	/**
+	 * Maps from patterns to lists of hierarchical phrases
+	 * that match the corresponding pattern in the corpus.
+	 * <p>
+	 * This cache is a most-recently accessed map, 
+	 * so commonly accessed patterns will remain in the cache,
+	 * while rare patterns will eventually drop out of the cache.
+	 */
 	protected Cache<Pattern,List<HierarchicalPhrase>> hierarchicalPhraseCache;
+	
+	
+	/**
+	 * A random number generator used in the quick sort
+	 * implementation.
+	 */
+	private static final Random RAND = new Random();
+	
 	
 	/** Logger for this class. */
 	private static final Logger logger = 
@@ -79,6 +92,8 @@ public class SuffixArray implements Corpus {
 //===============================================================
 
 	protected int[] suffixes;
+	
+	/** Integer array representation of the corpus for this suffix array. */
 	protected CorpusArray corpus;
 		
 //===============================================================

@@ -76,7 +76,7 @@ public class AlignmentArrayTest {
 		Assert.assertEquals(alignmentArray.getAlignedSourceSpan(2, 3),new Span(2,3));
 		Assert.assertEquals(alignmentArray.getAlignedSourceSpan(3, 4),new Span(3,4));
 	}
-	
+	/*
 	@Test(dependsOnMethods={"setup"})
 	public void testAll() {
 		// ccb - debugging
@@ -91,5 +91,5 @@ public class AlignmentArrayTest {
 		}
 
 	}
-	
+	*/
 }

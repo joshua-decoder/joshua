@@ -22,7 +22,6 @@ import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.RuleCollection;
 import joshua.decoder.ff.tm.TrieGrammar;
 import joshua.util.Pair;
-import joshua.util.lexprob.LexProbs;
 import joshua.util.lexprob.LexicalProbabilities;
 import joshua.util.sentence.LabeledSpan;
 import joshua.util.sentence.Phrase;

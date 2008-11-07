@@ -79,8 +79,6 @@ public class ExtractRules {
 		Option<Boolean> target_given_source_gz = commandLine.addBooleanOption("target-given-source-gzipped",false,"is the target given source word pair counts file gzipped");
 		Option<Boolean> source_given_target_gz = commandLine.addBooleanOption("source-given-target-gzipped",false,"is the source given target word pair counts file gzipped");
 		
-		Option<Integer> inverted_index_precomputation_min_freq = commandLine.addIntegerOption("c", "CACHE_PRECOMPUTATION_FREQUENCY_THRESHOLD", 100, "the minimum number of times a phrase must appear before it will be pre-stored in the inverted index cache");
-		
 		
 		commandLine.parse(args);
 

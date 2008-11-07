@@ -311,7 +311,7 @@ public class AlignmentArray {
 		return new Span(lowestHighestMin,lowestHighestMax);
 	}
 	
-
+/*
 	private Span getAlignedSpan(int startIndex, int endIndex, int[][] alignedIndices) {
 		int lowestHighestMin = UNALIGNED;
 		int lowestHighestMax = -1;
@@ -329,7 +329,7 @@ public class AlignmentArray {
 		
 		return new Span(lowestHighestMin,lowestHighestMax);
 	}
-	
+*/	
 	
 //===============================================================
 // Static
