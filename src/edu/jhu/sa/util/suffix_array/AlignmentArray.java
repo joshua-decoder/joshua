@@ -56,14 +56,14 @@ public class AlignmentArray {
 	 * Stores the lowest index of aligned target words for each
 	 * word in the source corpus.
 	 */
-	protected final int[] lowestAlignedTargetIndex;
+	//protected final int[] lowestAlignedTargetIndex;
 	
 	
 	/**
 	 * Stores the highest index of aligned target words for
 	 * each word in the source corpus.
 	 */
-	protected final int[] highestAlignedTargetIndex;
+	//protected final int[] highestAlignedTargetIndex;
 	
 	/**
 	 * Stores the indices of all aligned target words for
@@ -76,14 +76,14 @@ public class AlignmentArray {
 	 * Stores the lowest index of aligned source words for each
 	 * word in the target corpus.
 	 */
-	protected final int[] lowestAlignedSourceIndex;
+	//protected final int[] lowestAlignedSourceIndex;
 	
 	
 	/**
 	 * Stores the highest index of aligned source words for
 	 * each word in the target corpus.
 	 */
-	protected final int[] highestAlignedSourceIndex;
+	//protected final int[] highestAlignedSourceIndex;
 	
 	/**
 	 * Stores the indices of all aligned source words for
@@ -106,16 +106,26 @@ public class AlignmentArray {
 	 * SuffixArrayFactory.loadAlignmentArray and
 	 * SuffixArrayFactory.createAlignmentArray methods.
 	 */
-	protected AlignmentArray(int[] lowestAlignedTargetIndex, int[] highestAlignedTargetIndex,
-							 int[] lowestAlignedSourceIndex, int[] highestAlignedSourceIndex,
-							 int[][] alignedTargetIndices,   int[][] alignedSourceIndices) {
-		this.lowestAlignedTargetIndex = lowestAlignedTargetIndex;
-		this.highestAlignedTargetIndex = highestAlignedTargetIndex;
-		this.lowestAlignedSourceIndex = lowestAlignedSourceIndex;
-		this.highestAlignedSourceIndex = highestAlignedSourceIndex;
+	protected AlignmentArray(int[][] alignedTargetIndices, int[][] alignedSourceIndices) {
 		this.alignedTargetIndices = alignedTargetIndices;
 		this.alignedSourceIndices = alignedSourceIndices;
 	}
+	
+	/**
+	 * This protected constructor is used by the
+	 * SuffixArrayFactory.loadAlignmentArray and
+	 * SuffixArrayFactory.createAlignmentArray methods.
+	 */
+//	protected AlignmentArray(int[] lowestAlignedTargetIndex, int[] highestAlignedTargetIndex,
+//							 int[] lowestAlignedSourceIndex, int[] highestAlignedSourceIndex,
+//							 int[][] alignedTargetIndices,   int[][] alignedSourceIndices) {
+//		this.lowestAlignedTargetIndex = lowestAlignedTargetIndex;
+//		this.highestAlignedTargetIndex = highestAlignedTargetIndex;
+//		this.lowestAlignedSourceIndex = lowestAlignedSourceIndex;
+//		this.highestAlignedSourceIndex = highestAlignedSourceIndex;
+//		this.alignedTargetIndices = alignedTargetIndices;
+//		this.alignedSourceIndices = alignedSourceIndices;
+//	}
 	
 
 //===============================================================
@@ -139,12 +149,14 @@ public class AlignmentArray {
 	 *         value will be <UNALIGNED, undefined>
 	 */
 	public Span getAlignedTargetSpan(int startSourceIndex, int endSourceIndex) {
-		return getAlignedSpan(startSourceIndex, endSourceIndex, lowestAlignedTargetIndex, highestAlignedTargetIndex);
+		//return getAlignedSpan(startSourceIndex, endSourceIndex, lowestAlignedTargetIndex, highestAlignedTargetIndex);
+		return getAlignedSpan(startSourceIndex, endSourceIndex, alignedTargetIndices);
 	}
 	
 
 	public Span getAlignedTargetSpan(Span sourceSpan) {
-		return getAlignedSpan(sourceSpan.start, sourceSpan.end, lowestAlignedTargetIndex, highestAlignedTargetIndex);
+		//return getAlignedSpan(sourceSpan.start, sourceSpan.end, lowestAlignedTargetIndex, highestAlignedTargetIndex);
+		return getAlignedSpan(sourceSpan.start, sourceSpan.end, alignedTargetIndices);
 	}
 	
 	
@@ -161,7 +173,8 @@ public class AlignmentArray {
 	 be <UNALIGNED, undefined>
 	 */
 	public Span getAlignedSourceSpan(int startTargetIndex, int endTargetIndex) {
-		return getAlignedSpan(startTargetIndex, endTargetIndex, lowestAlignedSourceIndex, highestAlignedSourceIndex);
+		//return getAlignedSpan(startTargetIndex, endTargetIndex, lowestAlignedSourceIndex, highestAlignedSourceIndex);
+		return getAlignedSpan(startTargetIndex, endTargetIndex, alignedSourceIndices);
 	}
 	
 	
@@ -274,16 +287,8 @@ public class AlignmentArray {
 
 	
 	
-	/**
-	 * This method looks up the minimum and maximum aligned
-	 * indices for the span.
-	 * 
-	 * @param startIndex the staring word (inclusive)
-	 * @param endIndex the end word (exclusive) 
-	 * @return a tuple containing the min (inclusive) and max
-	 *         (exclusive) aligned indices, if the span is
-	 *         unaligned the value will be <UNALIGNED, ?>
-	 */
+
+	/*
 	private Span getAlignedSpan(int startIndex, int endIndex, int[] lowestAlignedIndex, int[] highestAlignedIndex) {
 		int lowestHighestMin = UNALIGNED;
 		int lowestHighestMax = -1;
@@ -309,6 +314,35 @@ public class AlignmentArray {
 		
 		//return lowestHighest;
 		return new Span(lowestHighestMin,lowestHighestMax);
+	}
+	*/
+	
+	/**
+	 * This method looks up the minimum and maximum aligned
+	 * indices for the span.
+	 * 
+	 * @param startIndex the staring word (inclusive)
+	 * @param endIndex the end word (exclusive) 
+	 * @return a tuple containing the min (inclusive) and max
+	 *         (exclusive) aligned indices, if the span is
+	 *         unaligned the value will be <UNALIGNED, ?>
+	 */
+	private Span getAlignedSpan(int startIndex, int endIndex, int[][] alignedIndices) {
+		int lowestHighestMin = UNALIGNED;
+		int lowestHighestMax = -1;
+		
+		for(int i = startIndex; i < endIndex; i++) {
+			if (alignedIndices[i] != null) {
+				lowestHighestMin = ( alignedIndices[i][0] < lowestHighestMin) ?  alignedIndices[i][0] : lowestHighestMin; //Math.min(lowestAlignedIndex[i], lowestHighestMin);
+				lowestHighestMax = (alignedIndices[i][alignedIndices[i].length-1] > lowestHighestMax) ? alignedIndices[i][alignedIndices[i].length-1] : lowestHighestMax; //Math.max(highestAlignedIndex[i], lowestHighestMax);
+			} else if (requireTightSpans && (i==startIndex || i==endIndex-1)) { //XXX Is this the correct way to ensure tight spans?
+				// If requiring tight spans
+				return new Span(UNALIGNED, UNALIGNED);
+			}
+		}
+		
+		lowestHighestMax++;
+		return new Span(lowestHighestMin,lowestHighestMax);	
 	}
 	
 /*

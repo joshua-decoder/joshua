@@ -22,6 +22,12 @@
     </classes>
   </test>
 
+  <test name="AlignmentArray" >
+    <classes>
+       <class name="edu.jhu.sa.util.suffix_array.AlignmentArrayTest" />    
+    </classes>
+  </test>
+
   <test name="PrefixTree" >
     <classes>
        <class name="edu.jhu.sa.util.suffix_array.PrefixTreeTest" />
