@@ -36,6 +36,7 @@ import joshua.decoder.ff.tm.Rule;
 import joshua.util.CommandLineParser;
 import joshua.util.CommandLineParser.Option;
 import joshua.util.lexprob.LexProbs;
+import joshua.util.lexprob.LexicalProbabilities;
 import joshua.util.sentence.Vocabulary;
 
 
@@ -67,6 +68,8 @@ public class ExtractRules {
 		
 		
 		Option<String> encoding = commandLine.addStringOption("encoding","ENCODING","UTF-8","File encoding format");
+		
+		Option<Integer> sampleSize = commandLine.addIntegerOption("sampleSize","SAMPLE_SIZE",100, "Size to use when sampling for lexical probability calculations");
 		
 		Option<Integer> maxPhraseSpan = commandLine.addIntegerOption("maxPhraseSpan","MAX_PHRASE_SPAN",10, "Max phrase span");
 		Option<Integer> maxPhraseLength = commandLine.addIntegerOption("maxPhraseLength","MAX_PHRASE_LENGTH",10, "Max phrase length");
@@ -119,19 +122,19 @@ public class ExtractRules {
 		AlignmentArray alignmentArray = SuffixArrayFactory.createAlignmentArray(alignmentFileName, sourceSuffixArray, targetSuffixArray);
 		
 		// Set up the source text for reading
-		Scanner target_given_source;
-		if (commandLine.getValue(target_given_source_counts).endsWith(".gz") || commandLine.getValue(target_given_source_gz))
-			target_given_source = new Scanner(new BufferedReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(commandLine.getValue(target_given_source_counts))),commandLine.getValue(encoding))));
-		else
-			target_given_source = new Scanner( new File(commandLine.getValue(target_given_source_counts)), commandLine.getValue(encoding));
-
-		
-		// Set up the target text for reading
-		Scanner source_given_target;
-		if (commandLine.getValue(source_given_target_counts).endsWith(".gz") || commandLine.getValue(source_given_target_gz))
-			source_given_target = new Scanner(new BufferedReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(commandLine.getValue(source_given_target_counts))),commandLine.getValue(encoding))));
-		else
-			source_given_target = new Scanner( new File(commandLine.getValue(source_given_target_counts)), commandLine.getValue(encoding));
+//		Scanner target_given_source;
+//		if (commandLine.getValue(target_given_source_counts).endsWith(".gz") || commandLine.getValue(target_given_source_gz))
+//			target_given_source = new Scanner(new BufferedReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(commandLine.getValue(target_given_source_counts))),commandLine.getValue(encoding))));
+//		else
+//			target_given_source = new Scanner( new File(commandLine.getValue(target_given_source_counts)), commandLine.getValue(encoding));
+//
+//		
+//		// Set up the target text for reading
+//		Scanner source_given_target;
+//		if (commandLine.getValue(source_given_target_counts).endsWith(".gz") || commandLine.getValue(source_given_target_gz))
+//			source_given_target = new Scanner(new BufferedReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(commandLine.getValue(source_given_target_counts))),commandLine.getValue(encoding))));
+//		else
+//			source_given_target = new Scanner( new File(commandLine.getValue(source_given_target_counts)), commandLine.getValue(encoding));
 		
 		PrintStream out;
 		if ("-".equals(commandLine.getValue(output))) {
@@ -147,8 +150,10 @@ public class ExtractRules {
 		
 		if (logger.isLoggable(Level.FINE)) logger.fine("Constructing lexical probabilities table");
 		
-		LexProbs lexProbs = new LexProbs(source_given_target, target_given_source, sourceVocab, targetVocab);
-	
+		LexicalProbabilities lexProbs = 
+			new SampledLexProbs(commandLine.getValue(sampleSize), sourceSuffixArray, targetSuffixArray, alignmentArray, false);
+			//new LexProbs(source_given_target, target_given_source, sourceVocab, targetVocab);
+			
 		if (logger.isLoggable(Level.FINE)) logger.fine("Done constructing lexical probabilities table");
 		
 		Map<Integer,String> ntVocab = new HashMap<Integer,String>();

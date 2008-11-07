@@ -58,7 +58,11 @@ public class BasicPhrase extends AbstractPhrase {
 		this.vocab = vocab;
 		this.words = words;
 	}
-	
+
+	public BasicPhrase(Vocabulary vocab, int...words) {
+		this.vocab = vocab;
+		this.words = words;
+	}
 	
 	/**
 	 * Constructor tokenizes the phrase string at whitespace

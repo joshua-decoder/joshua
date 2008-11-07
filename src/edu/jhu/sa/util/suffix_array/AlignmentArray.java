@@ -159,6 +159,13 @@ public class AlignmentArray {
 		return getAlignedSpan(sourceSpan.start, sourceSpan.end, alignedTargetIndices);
 	}
 	
+	public int[] getAlignedSourceIndices(int targetIndex) {
+		return alignedSourceIndices[targetIndex];
+	}
+
+	public int[] getAlignedTargetIndices(int sourceIndex) {
+		return alignedTargetIndices[sourceIndex];
+	}
 	
 	/**
 	 * This method looks up source span for the given target span

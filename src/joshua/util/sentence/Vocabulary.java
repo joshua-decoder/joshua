@@ -203,6 +203,10 @@ public class Vocabulary implements Iterable<String> {
 		return vocabList.iterator();
 	}
 	
+	public Collection<Integer> getAllIDs() {
+		return wordToIDMap.values(); 
+	}
+	
 	/**
 	 * Gets the list of all words represented by this vocabulary.
 	 * 

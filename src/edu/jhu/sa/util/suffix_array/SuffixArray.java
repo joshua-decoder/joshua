@@ -196,6 +196,10 @@ public class SuffixArray implements Corpus {
 		return results;
 	}
 	
+	protected int getWord(int position) {
+		int corpusIndex = getCorpusIndex(position);
+		return corpus.getWordID(corpusIndex);
+	}
 	
 	/**
 	 * @return the number of time that the specified phrase
