@@ -57,13 +57,9 @@ public class SuffixArrayTest {
 			corpus[i] = exampleSentence.getWordID(i);
 		}
 		
-		int cachePrecomputationFrequencyThreshold = 100;
-		
 		CorpusArray corpusArray = new CorpusArray(corpus, sentences, vocab);
-		suffixArray = new SuffixArray(corpusArray, cachePrecomputationFrequencyThreshold);
+		suffixArray = new SuffixArray(corpusArray);
 		
-		int i = 1;
-		int j=2;
 	}
 	
 	@Test

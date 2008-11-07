@@ -72,10 +72,8 @@ public class PrefixTreeAdvancedTest {
 				corpus[i] = corpusSentence.getWordID(i);
 			}
 			
-			int cachePrecomputationFrequencyThreshold = 100;
-			
 			CorpusArray corpusArray = new CorpusArray(corpus, sentenceStartPositions, sourceVocab);
-			suffixArray = new SuffixArray(corpusArray, cachePrecomputationFrequencyThreshold);
+			suffixArray = new SuffixArray(corpusArray);
 			
 
 
