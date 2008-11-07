@@ -24,7 +24,7 @@ import joshua.decoder.ff.tm.TrieGrammar;
 import joshua.util.Pair;
 import joshua.util.lexprob.LexProbs;
 import joshua.util.lexprob.LexicalProbabilities;
-import joshua.util.sentence.LabelledSpan;
+import joshua.util.sentence.LabeledSpan;
 import joshua.util.sentence.Phrase;
 import joshua.util.sentence.Span;
 import joshua.util.sentence.Vocabulary;
@@ -950,7 +950,7 @@ public class PrefixTree {
 
 		
 		// Handle the more complex cases...
-		List<LabelledSpan> targetNTSpans = new ArrayList<LabelledSpan>();
+		List<LabeledSpan> targetNTSpans = new ArrayList<LabeledSpan>();
 		int patternSize = targetSpan.size();
 		
 		int nonterminalID = -1;
@@ -971,7 +971,7 @@ public class PrefixTree {
 
 				if (nonterminalTargetSpan==null || nonterminalTargetSpan.equals(targetSpan)) return null;
 
-				targetNTSpans.add(new LabelledSpan(nonterminalID,nonterminalTargetSpan));
+				targetNTSpans.add(new LabeledSpan(nonterminalID,nonterminalTargetSpan));
 				nonterminalID--;
 				// the pattern length will be reduced by the length of the non-terminal, and increased by 1 for the NT itself.
 				patternSize = patternSize - nonterminalTargetSpan.size() +1;
@@ -993,7 +993,7 @@ public class PrefixTree {
 
 				if (nonterminalTargetSpan==null || nonterminalTargetSpan.equals(targetSpan)) return null;
 
-				targetNTSpans.add(new LabelledSpan(nonterminalID,nonterminalTargetSpan));
+				targetNTSpans.add(new LabeledSpan(nonterminalID,nonterminalTargetSpan));
 				nonterminalID--;
 				patternSize = patternSize - nonterminalTargetSpan.size() + 1;
 				
@@ -1018,7 +1018,7 @@ public class PrefixTree {
 
 				if (nonterminalTargetSpan==null || nonterminalTargetSpan.equals(targetSpan)) return null;
 
-				targetNTSpans.add(new LabelledSpan(nonterminalID,nonterminalTargetSpan));
+				targetNTSpans.add(new LabeledSpan(nonterminalID,nonterminalTargetSpan));
 				nonterminalID--;
 				patternSize = patternSize - nonterminalTargetSpan.size() + 1;
 
@@ -1037,7 +1037,7 @@ public class PrefixTree {
 			
 			int ntCumulativeSpan = 0;
 			
-			for (LabelledSpan span : targetNTSpans) {
+			for (LabeledSpan span : targetNTSpans) {
 				ntCumulativeSpan += span.size();
 			}
 			
@@ -1063,8 +1063,8 @@ public class PrefixTree {
 		
 		// add everything until the final non-terminal
 		for(int i = 1; i < targetNTSpans.size(); i++) {
-			LabelledSpan NT1 = targetNTSpans.get(i-1);
-			LabelledSpan NT2 = targetNTSpans.get(i);
+			LabeledSpan NT1 = targetNTSpans.get(i-1);
+			LabeledSpan NT2 = targetNTSpans.get(i);
 			
 			for(int j = NT1.getSpan().end; j < NT2.getSpan().start; j++) {
 				if (!foundAlignedTerminal) {

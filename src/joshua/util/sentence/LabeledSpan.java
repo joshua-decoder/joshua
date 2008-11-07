@@ -27,12 +27,12 @@ package joshua.util.sentence;
  * 
  * @since 2008-08-29
  */
-public class LabelledSpan implements Comparable<LabelledSpan> {// extends Span {
+public class LabeledSpan implements Comparable<LabeledSpan> {// extends Span {
 
 	protected final int label;
 	protected final Span span;
 	
-	public LabelledSpan(int label, Span span) {
+	public LabeledSpan(int label, Span span) {
 		//super(start, end);
 		this.span = span;
 		this.label = label;
@@ -50,7 +50,7 @@ public class LabelledSpan implements Comparable<LabelledSpan> {// extends Span {
 		return span.size();
 	}
 
-	public int compareTo(LabelledSpan o) {
+	public int compareTo(LabeledSpan o) {
 		
 		if (span.start<o.span.start)
 			return -1;
