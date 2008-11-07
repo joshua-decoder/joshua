@@ -218,21 +218,14 @@ public class AlignmentArray {
 	 */
 	public boolean hasAlignedTerminal(int targetIndex, HierarchicalPhrase sourcePhrase) {
 		
-		//XXX I think that to correctly implement this method, 
-		//    we need the complete array of aligned points,
-		//    not just the high and low points.
-		/*
-		for (int i=0; i<sourcePhrase.terminalSequenceStartIndices.length; i++) {
-			
-		}
-		*/
-		
-		for (int alignedSourceIndex : alignedSourceIndices[targetIndex]) {
-			for (int i=0; i<sourcePhrase.terminalSequenceStartIndices.length; i++) {
-				if (alignedSourceIndex >= sourcePhrase.terminalSequenceStartIndices[i] &&
-						alignedSourceIndex < sourcePhrase.terminalSequenceEndIndices[i]) {
-					if (logger.isLoggable(Level.FINEST)) logger.finest("Target index " + targetIndex + ", source index " + alignedSourceIndex + " is in source phrase at range ["+sourcePhrase.terminalSequenceStartIndices[i] + "-" + sourcePhrase.terminalSequenceEndIndices[i] + ")");
-					return true;
+		if (alignedSourceIndices[targetIndex]!=null) {
+			for (int alignedSourceIndex : alignedSourceIndices[targetIndex]) {
+				for (int i=0; i<sourcePhrase.terminalSequenceStartIndices.length; i++) {
+					if (alignedSourceIndex >= sourcePhrase.terminalSequenceStartIndices[i] &&
+							alignedSourceIndex < sourcePhrase.terminalSequenceEndIndices[i]) {
+						if (logger.isLoggable(Level.FINEST)) logger.finest("Target index " + targetIndex + ", source index " + alignedSourceIndex + " is in source phrase at range ["+sourcePhrase.terminalSequenceStartIndices[i] + "-" + sourcePhrase.terminalSequenceEndIndices[i] + ")");
+						return true;
+					}
 				}
 			}
 		}
