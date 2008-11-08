@@ -355,20 +355,7 @@ public class MERT
       // candidates[i] stores the translation candidates for the ith sentence
       // each element in the array is a Vector of SentenceInfo objects
 
-    HashSet[] candidatesSentences = new HashSet[numSentences];
-      // only stores sentences
-
-      // ***********************************************************
-      // *** old implementation not using the SentenceInfo class ***
-      // ***********************************************************
-//    HashMap[] candidatesInfo = new HashMap[numSentences];
-      // candidatesInfo[i] stores the translation candidates for the ith sentence
-      // each element in the array is a <candidate sentence,featVal[]> HashMap
-      // The jth feature function is also known as h_j.
-      // ***************************************************************
-
     for (int i = 0; i < numSentences; ++i) {
-      candidatesSentences[i] = new HashSet();
       candidates[i] = new Vector();
     }
 
@@ -379,7 +366,6 @@ public class MERT
       // initialize optimizable parameters randomly (sampling uniformly from that parameter's range)
       for (int c = 1; c <= numParams; ++c) {
         if (isOptimizable[c]) {
-
           double randVal = randGen.nextDouble(); // number in [0.0,1.0]
           randVal = randVal * (maxValue[c] - minValue[c]); // number in [0.0,max-min]
           randVal = minValue[c] + randVal; // number in [min,max]
@@ -478,6 +464,9 @@ public class MERT
       boolean newCandidatesAdded = false;
 
       for (int i = 0; i < numSentences; ++i) {
+
+        HashSet<String> existingCandidates = candVectorToStringHashSet(candidates[i]);
+
         for (int n = 0; n < sizeOfNBest; ++n) {
 
           // read nth candidate for the ith sentence, along with its feature values,
@@ -494,8 +483,8 @@ line format:
           line = line.substring(line.indexOf("||| ")+4); // get rid of initial text
           candidate_str = line.substring(0,line.indexOf(" |||"));
 
-          if (!candidatesSentences[i].contains(candidate_str.intern())) {
-            SentenceInfo candidate = new SentenceInfo(candidate_str.intern());
+          if (!existingCandidates.contains(candidate_str)) {
+            SentenceInfo candidate = new SentenceInfo(candidate_str);
             print("Adding candidate " + n + " of sentence " + i + ": ",3);
             line = line.substring(line.indexOf("||| ")); // get rid of candidate
 
@@ -504,13 +493,6 @@ line format:
               // [0] will be |||, otherwise [i] will be feat-i_val
 
             double[] featVal = new double[1+numParams];
-
-
-/*
-            for (int c = 1; c <= numParams; ++c) {
-              featVal[c] = Double.parseDouble(featVal_str[c]);
-            }
-*/
 
             //debugging version
             for (int c = 1; c <= numParams; ++c) {
@@ -521,7 +503,7 @@ line format:
 
 
             featVal[0] = n; // order of appearance in file
-            candidatesSentences[i].add(candidate_str.intern());
+            existingCandidates.add(candidate_str);
             candidate.set_featVals(featVal);
             candidates[i].add(candidate);
             ++totalCandidateCount;
@@ -534,6 +516,9 @@ line format:
           showProgress();
 
         } // for (n)
+
+        existingCandidates.clear();
+
       } // for (i)
 
       println("",1);
@@ -555,9 +540,14 @@ line format:
         double baseScore = score(lambda,candidates);
         println("(Base score: " + baseScore + ")",1);
 
-        int c_best = 0;
+        int c_best = 0; // which parameter to change?
         double bestLambdaVal = 0.0;
-        double bestScore = evalMetric.worstPossibleScore()-1;
+        double bestScore;
+        if (evalMetric.getToBeMinimized()) {
+          bestScore = evalMetric.worstPossibleScore() + 1.0;
+        } else {
+          bestScore = evalMetric.worstPossibleScore() - 1.0;
+        }
 
         for (int c = 1; c <= numParams; ++c) {
         // investigate lambda[c]
@@ -660,6 +650,8 @@ line format:
 
     println("",1);
 
+    for (int i = 0; i < numSentences; ++i) { candidates[i].clear(); }
+
   } // void run_MERT(int maxIts)
 
   private static String lambdaToString()
@@ -671,6 +663,20 @@ line format:
     retStr += "" + lambda[numParams] + "}";
 
     return retStr;
+  }
+
+  private static HashSet<String> candVectorToStringHashSet(Vector<SentenceInfo> candidates)
+  {
+    HashSet<String> retSet = new HashSet();
+
+    int numCandidates = candidates.size();
+    String sentence;
+    for (int k = 0; k < numCandidates; ++k) {
+      sentence = (candidates.elementAt(k)).toString();
+      retSet.add(sentence);
+    }
+
+    return retSet;
   }
 
   public static double[] line_opt(int c, Vector[] candidates)
@@ -994,12 +1000,15 @@ line format:
       println("",2);
 
     }
+    println("",2);
 
+    // what is the purpose of this block of code ?????????????????????
     if (maxValue[c] != PosInf) {
       nextLambdaVal = (largest_th + maxValue[c]) / 2.0;
     } else {
       nextLambdaVal = largest_th + 0.05;
     }
+    // ???????????????????????????????????????????????????????????????
 
     /*************************************************/
     /*************************************************/
@@ -1126,7 +1135,7 @@ line format:
 
   private static double score(double[] lambda, Vector[] candidates)
   {
-    SentenceInfo[] candSentenceInfo = new SentenceInfo[numSentences];
+    SentenceInfo[] bestCand = new SentenceInfo[numSentences];
 
     String line, candidate_str;
 
@@ -1147,10 +1156,10 @@ line format:
         }
       }
 
-      candSentenceInfo[i] = new SentenceInfo((SentenceInfo)candidates[i].elementAt(indexOfMax));
+      bestCand[i] = new SentenceInfo((SentenceInfo)candidates[i].elementAt(indexOfMax));
     }
 
-    return evalMetric.score(candSentenceInfo);
+    return evalMetric.score(bestCand);
 
   }
 
@@ -1195,14 +1204,14 @@ line format:
     println(" (*) -p paramsFile: file containing parameter names, initial values, and ranges\n       [[default: params.txt]]");
     println(" (*) -rand randInits: initialize parameters randomly (1) or from paramsFile (0)\n       [[default: 0]]");
     println(" (*) -runs runCount: number of restarts; if > 1, randInits must be set to 1\n       [[default: 1]]");
-    println(" (X) -seed firstSeed: first seed used for random number generation\n       [[default: time; please see documentation on how to use this parameter]]");
+    println(" (*) -seed firstSeed: first seed used for random number generation\n       [[default: time; please see documentation on how to use this parameter]]");
     println(" (*) -dcfg decConfigFile: name of decoder config file\n       [[default: config_file.txt]]");
     println(" (*) -save saveInterCfg: save intermediate config files (1) or not (0)\n       [[default: 0]]");
     println(" (*) -cmd commandFile: name of file containing command to run the decoder\n       [[default: null string (i.e. decoder is a JoshuaDecoder object)]]");
     println(" (*) -N N: size of N-best list (per sentence) generated in each MERT iteration\n       [[default: 100]]");
     println(" (*) -reset resetCandList: reset candidate list every iteration (1) or not (0)\n       [[default: 0]]");
     println(" (*) -maxIt maxMERTIts: maximum number of MERT iterations\n       [[default: 10]]");
-    println(" (*) -opi onePerIt: modify a single parameter per iteration (1) or not (0)\n       [[default: 0]]");
+    println(" (*) -opi onePerIt: modify a single parameter per iteration (1) or not (0)\n       [[default: 1]]");
     println(" (*) -m metricName: name of the evaluation metric optimized by MERT\n       [[default: BLEU]]");
     println(" (*) -fin finalLambdas: file name for final lambda[] values\n       [[default: final_lambdas.txt]]");
     println(" (*) -v verbosity: output verbosity level (0-4; higher value => more verbose)\n       [[default: 1]]");
@@ -1274,6 +1283,7 @@ line format:
     decoderOutFileName = "output.nbest";
     validDecoderExitValue = 0;
     paramsFileName = "params.txt";
+    currSeed = System.currentTimeMillis();
     randInits = false;
     runCount = 1;
     finalLambdasFileName = "final_lambdas.txt";
@@ -1284,7 +1294,7 @@ line format:
     saveInterCfg = false;
     resetCandList = false;
     maxMERTIterations = 10;
-    oneParamPerIteration = false;
+    oneParamPerIteration = true;
     verbosity = 1;
     decVerbosity = 0;
 

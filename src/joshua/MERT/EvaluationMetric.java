@@ -50,6 +50,7 @@ public abstract class EvaluationMetric
   /* non-abstract, non-static methods */
   public int get_suffStatsCount() { return suffStatsCount; }
   public String get_metricName() { return metricName; }
+  public boolean getToBeMinimized() { return toBeMinimized; }
   public boolean isBetter(double x, double y)
   {
     // return true if x is better than y

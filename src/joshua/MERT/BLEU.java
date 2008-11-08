@@ -184,16 +184,16 @@ public class BLEU extends EvaluationMetric
   {
     double[] lengths = new double[2];
 
-    int candLength = cand.getLength();
+    int candLength = cand.getWordCount();
     lengths[0] = candLength;
 
     if (effLengthMethod == 1) { // closest
 
-      int closestRefLength = refSentenceInfo[i][0].getLength();
+      int closestRefLength = refSentenceInfo[i][0].getWordCount();
       int minDiff = Math.abs(candLength-closestRefLength);
 
       for (int r = 1; r < refsPerSen; ++r) {
-        int nextRefLength = refSentenceInfo[i][r].getLength();
+        int nextRefLength = refSentenceInfo[i][r].getWordCount();
         int nextDiff = Math.abs(candLength-nextRefLength);
         if (nextDiff < minDiff) {
           closestRefLength = nextRefLength;
@@ -208,10 +208,10 @@ public class BLEU extends EvaluationMetric
 
     } else if (effLengthMethod == 2) { // shortest
 
-      int shortestRefLength = refSentenceInfo[i][0].getLength();
+      int shortestRefLength = refSentenceInfo[i][0].getWordCount();
 
       for (int r = 1; r < refsPerSen; ++r) {
-        int nextRefLength = refSentenceInfo[i][r].getLength();
+        int nextRefLength = refSentenceInfo[i][r].getWordCount();
         if (nextRefLength < shortestRefLength) {
           shortestRefLength = nextRefLength;
         }
@@ -221,10 +221,10 @@ public class BLEU extends EvaluationMetric
 
     } else { // average
 
-      int totalRefLength = refSentenceInfo[i][0].getLength();
+      int totalRefLength = refSentenceInfo[i][0].getWordCount();
 
       for (int r = 1; r < refsPerSen; ++r) {
-        totalRefLength += refSentenceInfo[i][r].getLength();
+        totalRefLength += refSentenceInfo[i][r].getWordCount();
       }
 
       lengths[1] = totalRefLength/(double)refsPerSen;

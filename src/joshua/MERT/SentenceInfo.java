@@ -8,16 +8,16 @@ public class SentenceInfo
   private static int maxGramLength = 0;
   private static int numParams = 0;
 
-  private String sentence;
-  private int senLength;
+  private String[] words;
+  private int wordCount;
   private double[] featVals;
 
   // Default constructor
   public SentenceInfo()
   {
     checkStaticVars();
-    sentence = "";
-    senLength = 0;
+    words = new String[0];
+    wordCount = 0;
     featVals = null;
   }
 
@@ -25,8 +25,9 @@ public class SentenceInfo
   public SentenceInfo(SentenceInfo other)
   {
     checkStaticVars();
-    sentence = (other.sentence).intern();
-    senLength = other.getLength();
+    wordCount = other.getWordCount();
+    words = new String[wordCount];
+    for (int i = 0; i < wordCount; ++i) { words[i] = (other.getWordAt(i)).intern(); }
     featVals = null; // why not copy from other ????????????
   }
 
@@ -34,8 +35,10 @@ public class SentenceInfo
   public SentenceInfo(String sentence_str)
   {
     checkStaticVars();
-    sentence = sentence_str.intern();
-    senLength = (sentence_str.split(" ")).length;
+    String[] sentence_str_words = sentence_str.split("\\s+");
+    wordCount = sentence_str_words.length;
+    words = new String[wordCount];
+    for (int i = 0; i < wordCount; ++i) { words[i] = (sentence_str_words[i]).intern(); }
     featVals = null;
   }
 
@@ -43,11 +46,9 @@ public class SentenceInfo
   public SentenceInfo(String[] wordArray)
   {
     checkStaticVars();
-    senLength = wordArray.length;
-    sentence = "";
-    for (int i = 0; i < senLength-1; ++i) { sentence = sentence + wordArray[i] + " "; }
-    sentence = sentence + wordArray[senLength-1];
-    sentence = sentence.intern();
+    wordCount = wordArray.length;
+    words = new String[wordCount];
+    for (int i = 0; i < wordCount; ++i) { words[i] = wordArray[i].intern(); }
     featVals = null;
   }
 
@@ -91,7 +92,7 @@ public class SentenceInfo
     }
   }
 
-  public int getLength() { return senLength; }
+  public int getWordCount() { return wordCount; }
 
   public String getSentence() {
     return toString();
@@ -99,19 +100,22 @@ public class SentenceInfo
 
   public String getWordAt(int i)
   {
-    if (i < 0 || i >= senLength) {
+    if (i < 0 || i >= wordCount) {
       System.out.println("getWordAt called with an invalid index " + i);
-      System.out.println("(was expecting an value in [0," + senLength + ")).");
+      System.out.println("(was expecting an value in [0," + wordCount + ")).");
       System.exit(41);
     }
 
-    return (sentence.split(" "))[i];
+    return words[i];
 
   }
 
   public String toString()
   {
-    return sentence;
+    String retStr = "";
+    for (int i = 0; i < wordCount-1; ++i) { retStr = retStr + words[i] + " "; }
+    retStr = retStr + words[wordCount-1];
+    return retStr;
   }
 
   public double getFeatAt(int c)
@@ -162,13 +166,11 @@ public class SentenceInfo
     HashMap[] ngramCounts = new HashMap[1+maxGramLength];
     String gram = "";
 
-    String[] words = sentence.split(" ");
-
     for (int n = 1; n <= maxGramLength; ++n) {
     // process grams of length n
 
       ngramCounts[n] = new HashMap();
-      for (int start = 0; start <= senLength-n; ++start) {
+      for (int start = 0; start <= wordCount-n; ++start) {
       // process n-gram starting at start and ending at start+(n-1)
 
         int end = start + (n-1);
@@ -202,8 +204,8 @@ public class SentenceInfo
 
   public int gramCount(int gramLength)
   {
-    if (gramLength <= senLength) {
-      return senLength-(gramLength-1);
+    if (gramLength <= wordCount) {
+      return wordCount-(gramLength-1);
     } else {
       return 0;
     }
@@ -211,8 +213,8 @@ public class SentenceInfo
 
   public int hashCode()
   {
-    return sentence.hashCode();
-      // allows us to ignore the feature values when hashing a SentencInfo object
+    return getSentence().hashCode();
+      // allows us to ignore the feature values when hashing a SentenceInfo object
   }
 
   public boolean equals(SentenceInfo other)
@@ -220,7 +222,7 @@ public class SentenceInfo
     // NOTE: this returns true based only on checking the sentence string,
     //       and so differences in featVals will not matter.
 
-    if (sentence.equals(other.sentence)) {
+    if (toString().equals(other.toString())) {
       return true;
     } else {
       return false;
