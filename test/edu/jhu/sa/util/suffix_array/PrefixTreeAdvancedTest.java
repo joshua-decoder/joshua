@@ -170,7 +170,7 @@ public class PrefixTreeAdvancedTest {
 		BasicPhrase query = new BasicPhrase("it makes him", sourceVocab);
 		//BasicPhrase query = new BasicPhrase("it makes him and it mars him", sourceVocab);
 		//BasicPhrase query = new BasicPhrase("it makes him and it mars him , it sets him on and it takes him off .", sourceVocab);
-		simplePrefixTree = new PrefixTree(suffixArray, targetCorpusArray, alignments, lexProbs, query.getWordIDs(), maxPhraseSpan, maxPhraseLength, maxNonterminals);
+		simplePrefixTree = new PrefixTree(suffixArray, targetCorpusArray, alignments, lexProbs, query.getWordIDs(), maxPhraseSpan, maxPhraseLength, maxNonterminals, 100);
 
 		//System.out.println(simplePrefixTree.toString());
 	
@@ -315,7 +315,7 @@ public class PrefixTreeAdvancedTest {
 		//BasicPhrase query = new BasicPhrase("it makes him", sourceVocab);
 		//BasicPhrase query = new BasicPhrase("it makes him and it mars him", sourceVocab);
 		BasicPhrase query = new BasicPhrase("it makes him and it mars him , it sets him on and it takes him off .", sourceVocab);
-		PrefixTree prefixTree = new PrefixTree(suffixArray, targetCorpusArray, alignments, lexProbs, query.getWordIDs(), maxPhraseSpan, maxPhraseLength, maxNonterminals);
+		PrefixTree prefixTree = new PrefixTree(suffixArray, targetCorpusArray, alignments, lexProbs, query.getWordIDs(), maxPhraseSpan, maxPhraseLength, maxNonterminals, 100);
 
 		//System.out.println(prefixTree.toString());
 	
@@ -544,7 +544,7 @@ public class PrefixTreeAdvancedTest {
 		Assert.assertEquals(querySentence.toString(), "it UNK him and it UNK him");
 		Assert.assertEquals(corpusSentence.toString(), corpusString);
 		
-		PrefixTree prefixTree = new PrefixTree(suffixArray, targetCorpusArray, alignments, lexProbs, querySentence.getWordIDs(), maxPhraseSpan, maxPhraseLength, maxNonterminals);
+		PrefixTree prefixTree = new PrefixTree(suffixArray, targetCorpusArray, alignments, lexProbs, querySentence.getWordIDs(), maxPhraseSpan, maxPhraseLength, maxNonterminals, 100);
 		
 
 		

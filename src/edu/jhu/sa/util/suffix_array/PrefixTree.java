@@ -97,7 +97,7 @@ public class PrefixTree {
 	private final int minNonterminalSpan = 2;
 	
 	/** Maximum number of instances of a source phrase from the source corpus to use when translating a source phrase. */
-	private final int sampleSize = 100;
+	private final int sampleSize;
 		
 	
 	static final int ROOT_NODE_ID = -999;
@@ -150,8 +150,9 @@ public class PrefixTree {
 	 * @param maxPhraseSpan
 	 * @param maxPhraseLength
 	 * @param maxNonterminals
+	 * @param sampleSize TODO
 	 */
-	public PrefixTree(SuffixArray suffixArray, CorpusArray targetCorpus, AlignmentArray alignments, LexicalProbabilities lexProbs, int[] sentence, int maxPhraseSpan, int maxPhraseLength, int maxNonterminals) {
+	public PrefixTree(SuffixArray suffixArray, CorpusArray targetCorpus, AlignmentArray alignments, LexicalProbabilities lexProbs, int[] sentence, int maxPhraseSpan, int maxPhraseLength, int maxNonterminals, int sampleSize) {
 
 		if (logger.isLoggable(Level.FINE)) logger.fine("\n\n\nConstructing new PrefixTree\n\n");
 
@@ -163,6 +164,7 @@ public class PrefixTree {
 		this.maxNonterminalSpan = maxPhraseSpan;
 		this.maxPhraseLength = maxPhraseLength;
 		this.maxNonterminals = maxNonterminals;
+		this.sampleSize = sampleSize;
 
 		int START_OF_SENTENCE = 0;
 		int END_OF_SENTENCE = sentence.length - 1;
@@ -397,7 +399,7 @@ public class PrefixTree {
 	 * @param maxNonterminals
 	 */
 	PrefixTree(int[] sentence, int maxPhraseSpan, int maxPhraseLength, int maxNonterminals) {
-		this(null, null, null, null, sentence, maxPhraseSpan, maxPhraseLength, maxNonterminals);
+		this(null, null, null, null, sentence, maxPhraseSpan, maxPhraseLength, maxNonterminals, 100);
 	}
 
 	public Grammar getRoot() {
@@ -1964,6 +1966,7 @@ public class PrefixTree {
 		maxPhraseLength = Integer.MIN_VALUE;
 		maxNonterminals = Integer.MIN_VALUE;
 		maxNonterminalSpan = Integer.MIN_VALUE;
+		sampleSize = Integer.MIN_VALUE;
 	}
 	
 	/**

@@ -69,7 +69,8 @@ public class ExtractRules {
 		
 		Option<String> encoding = commandLine.addStringOption("encoding","ENCODING","UTF-8","File encoding format");
 		
-		Option<Integer> sampleSize = commandLine.addIntegerOption("sampleSize","SAMPLE_SIZE",100, "Size to use when sampling for lexical probability calculations");
+		Option<Integer> lexSampleSize = commandLine.addIntegerOption("lexSampleSize","LEX_SAMPLE_SIZE",100, "Size to use when sampling for lexical probability calculations");
+		Option<Integer> ruleSampleSize = commandLine.addIntegerOption("ruleSampleSize","RULE_SAMPLE_SIZE",100, "Maximum number of rules to store at each node in the prefix tree");
 		
 		Option<Integer> maxPhraseSpan = commandLine.addIntegerOption("maxPhraseSpan","MAX_PHRASE_SPAN",10, "Max phrase span");
 		Option<Integer> maxPhraseLength = commandLine.addIntegerOption("maxPhraseLength","MAX_PHRASE_LENGTH",10, "Max phrase length");
@@ -151,7 +152,7 @@ public class ExtractRules {
 		if (logger.isLoggable(Level.FINE)) logger.fine("Constructing lexical probabilities table");
 		
 		LexicalProbabilities lexProbs = 
-			new SampledLexProbs(commandLine.getValue(sampleSize), sourceSuffixArray, targetSuffixArray, alignmentArray, false);
+			new SampledLexProbs(commandLine.getValue(lexSampleSize), sourceSuffixArray, targetSuffixArray, alignmentArray, false);
 			//new LexProbs(source_given_target, target_given_source, sourceVocab, targetVocab);
 			
 		if (logger.isLoggable(Level.FINE)) logger.fine("Done constructing lexical probabilities table");
@@ -167,7 +168,7 @@ public class ExtractRules {
 			
 			if (logger.isLoggable(Level.FINE)) logger.fine("Constructing prefix tree for source line: " + line);
 			
-			PrefixTree prefixTree = new PrefixTree(sourceSuffixArray, targetCorpusArray, alignmentArray, lexProbs, words, commandLine.getValue(maxPhraseSpan), commandLine.getValue(maxPhraseLength), commandLine.getValue(maxNonterminals));
+			PrefixTree prefixTree = new PrefixTree(sourceSuffixArray, targetCorpusArray, alignmentArray, lexProbs, words, commandLine.getValue(maxPhraseSpan), commandLine.getValue(maxPhraseLength), commandLine.getValue(maxNonterminals), commandLine.getValue(ruleSampleSize));
 			
 			if (logger.isLoggable(Level.FINER)) logger.finer("Outputting rules for source line: " + line);
 
