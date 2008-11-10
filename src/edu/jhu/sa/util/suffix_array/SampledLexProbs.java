@@ -86,7 +86,7 @@ public class SampledLexProbs implements LexicalProbabilities {
 	 * @param targetWord
 	 * @return
 	 */
-	public float sourceGivenTarget(int sourceWord, int targetWord) {
+	public float sourceGivenTarget(Integer sourceWord, Integer targetWord) {
 		
 		if (!sourceGivenTarget.containsKey(targetWord)) {
 			calculateSourceGivenTarget(targetWord);
@@ -107,7 +107,7 @@ public class SampledLexProbs implements LexicalProbabilities {
 	 * @param sourceWord
 	 * @return
 	 */
-	public float targetGivenSource(int targetWord, int sourceWord) {
+	public float targetGivenSource(Integer targetWord, Integer sourceWord) {
 		
 		if (!targetGivenSource.containsKey(sourceWord)) {
 			calculateTargetGivenSource(sourceWord);

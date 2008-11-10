@@ -1663,22 +1663,29 @@ public class PrefixTree {
 					int sourceWord = suffixArray.corpus.corpus[sourceWordIndex];
 					int[] targetIndices = alignments.alignedTargetIndices[sourceWordIndex];
 					
-					// Iterate over each target index aligned to the current source word
-					for (int targetIndex : targetIndices) {
+					if (targetIndices==null) {
 						
-						int targetWord = targetCorpus.corpus[targetIndex];
-						sum += lexProbs.sourceGivenTarget(sourceWord, targetWord);
+						float sourceGivenNullAlignment = lexProbs.sourceGivenTarget(sourceWord, null);
+						sourceGivenTarget *= sourceGivenNullAlignment;
 						
-						// Keeping track of the reverse alignment points (we need to do this convoluted step because we don't actually have a HierarchicalPhrase for the target side)
-						if (!reverseAlignmentPoints.containsKey(targetIndex)) {
-							reverseAlignmentPoints.put(targetIndex, new ArrayList<Integer>());
+					} else {
+						// Iterate over each target index aligned to the current source word
+						for (int targetIndex : targetIndices) {
+
+							int targetWord = targetCorpus.corpus[targetIndex];
+							sum += lexProbs.sourceGivenTarget(sourceWord, targetWord);
+
+							// Keeping track of the reverse alignment points (we need to do this convoluted step because we don't actually have a HierarchicalPhrase for the target side)
+							if (!reverseAlignmentPoints.containsKey(targetIndex)) {
+								reverseAlignmentPoints.put(targetIndex, new ArrayList<Integer>());
+							}
+							reverseAlignmentPoints.get(targetIndex).add(sourceWord);
+
 						}
-						reverseAlignmentPoints.get(targetIndex).add(sourceWord);
-						
+
+						float average = sum / targetIndices.length;
+						sourceGivenTarget *= average;
 					}
-					
-					float average = sum / targetIndices.length;
-					sourceGivenTarget *= average;
 				}
 				
 			}

@@ -300,11 +300,11 @@ public class LexProbsDB implements LexicalProbabilities {
 		return (float) lookup((targetWord + DELIMITER + sourceWord),this.targetGivenSourceDatabase);
 	}
 	
-	public float sourceGivenTarget(int sourceWord, int targetWord) {
+	public float sourceGivenTarget(Integer sourceWord, Integer targetWord) {
 		return sourceGivenTarget(sourceVocab.getWord(sourceWord), targetVocab.getWord(targetWord));
 	}
 
-	public float targetGivenSource(int targetWord, int sourceWord) {
+	public float targetGivenSource(Integer targetWord, Integer sourceWord) {
 		return targetGivenSource(targetVocab.getWord(targetWord), sourceVocab.getWord(sourceWord));
 	}
 	

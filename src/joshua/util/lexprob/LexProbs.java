@@ -67,7 +67,7 @@ public class LexProbs implements LexicalProbabilities {
 	 * @param targetWord
 	 * @return
 	 */
-	public float sourceGivenTarget(int sourceWord, int targetWord) {
+	public float sourceGivenTarget(Integer sourceWord, Integer targetWord) {
 		return sourceGivenTarget.get(targetWord).get(sourceWord);
 	}
 	
@@ -77,7 +77,7 @@ public class LexProbs implements LexicalProbabilities {
 	 * @param sourceWord
 	 * @return
 	 */
-	public float targetGivenSource(int targetWord, int sourceWord) {
+	public float targetGivenSource(Integer targetWord, Integer sourceWord) {
 		return targetGivenSource.get(sourceWord).get(targetWord);
 	}
 	
