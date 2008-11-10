@@ -8,10 +8,8 @@ import java.text.DecimalFormat;
 public class MERT
 {
   static DecimalFormat f0 = new DecimalFormat("###0");
-  static DecimalFormat f1 = new DecimalFormat("###0.0");
-  static DecimalFormat f2 = new DecimalFormat("###0.00");
-  static DecimalFormat f3 = new DecimalFormat("###0.000");
   static DecimalFormat f4 = new DecimalFormat("###0.0000");
+  static final Runtime myRuntime = Runtime.getRuntime();
 
   static final double NegInf = (-1.0 / 0.0);
   static final double PosInf = (+1.0 / 0.0);
@@ -160,6 +158,7 @@ public class MERT
     for (int run = 1; run <= runCount; ++run) {
       println("----------------------------------------------------",1);
       println("MERT run #" + run + " started @ " + (new Date()),1);
+      printMemoryUsage();
       println("----------------------------------------------------",1);
       println("",1);
 
@@ -168,6 +167,7 @@ public class MERT
 
       println("----------------------------------------------------",1);
       println("MERT run #" + run + " ended @ " + (new Date()),1);
+      printMemoryUsage();
       println("----------------------------------------------------",1);
       println("",1);
       println("",1);
@@ -335,7 +335,7 @@ public class MERT
     println("c    initial\toptimizable?    range",1);
 
     for (int c = 1; c <= numParams; ++c) {
-      print(c + "    " + f3.format(lambda[c]) + "\t",1);
+      print(c + "    " + f4.format(lambda[c]) + "\t",1);
       if (isOptimizable[c]) print("   Yes          ",1);
       else print("   No           ",1);
       print("[" + minValue[c] + "," + maxValue[c] + "] @ " + precision[c] + " precision",1);
@@ -386,11 +386,13 @@ public class MERT
     for (int iteration = 1; ; ++iteration) {
 
       println("--- Starting MERT iteration #" + iteration + " @ " + (new Date()) + " ---",1);
+      printMemoryUsage();
 
       if (iteration > 1 && resetCandList) {
         println("Clearing candidate translations from previous MERT iteration.",1);
         for (int i = 0; i < numSentences; ++i) { candidates[i].clear(); }
         totalCandidateCount = 0;
+        cleanupMemory();
       } else if (iteration > 1) {
         print(totalCandidateCount + " candidate translations carried over from previous MERT iteration.",1);
         println(" (About " + totalCandidateCount/numSentences + " candidate translations per sentence.)",1);
@@ -525,6 +527,8 @@ line format:
 
       inFile.close();
 
+      cleanupMemory();
+
       if (!newCandidatesAdded) {
         println("Note: No new candidates added in this iteration.",1);
         // no new candidate translations; not necessarily done (if doing one
@@ -646,11 +650,14 @@ line format:
         break;
       }
 
+      printMemoryUsage();
+
     } // for (iteration)
 
     println("",1);
 
     for (int i = 0; i < numSentences; ++i) { candidates[i].clear(); }
+    cleanupMemory();
 
   } // void run_MERT(int maxIts)
 
@@ -959,7 +966,7 @@ line format:
     double bestScore = evalMetric.score(suffStats_tot);
     double bestLambdaVal = temp_lambda[c];
     double nextLambdaVal = bestLambdaVal;
-    println("At lambda[" + c + "] = " + bestLambdaVal + ",\t" + metricName + " = " + bestScore + " (*)",2);
+    println("At lambda[" + c + "] = " + bestLambdaVal + ",\t" + metricName + " = " + bestScore + " (*)",3);
 
     Iterator It = (thresholdsAll.keySet()).iterator();
     if (It.hasNext()) { ip_curr = (Double)It.next(); }
@@ -990,17 +997,17 @@ line format:
       }
 
       double nextTestScore = evalMetric.score(suffStats_tot);
-      print("At lambda[" + c + "] = " + nextLambdaVal + ",\t" + metricName + " = " + nextTestScore,2);
+      print("At lambda[" + c + "] = " + nextLambdaVal + ",\t" + metricName + " = " + nextTestScore,3);
 
       if (evalMetric.isBetter(nextTestScore,bestScore)) {
         bestScore = nextTestScore;
         bestLambdaVal = nextLambdaVal;
-        print(" (*)",2);
+        print(" (*)",3);
       }
-      println("",2);
+      println("",3);
 
     }
-    println("",2);
+    println("",3);
 
     // what is the purpose of this block of code ?????????????????????
     if (maxValue[c] != PosInf) {
@@ -1577,6 +1584,46 @@ line format:
   {
     File dummyFile = new File(dir,fileName);
     return dummyFile.getAbsolutePath();
+  }
+
+  private static void cleanupMemory()
+  {
+    int bytesPerMB = 1024 * 1024;
+
+    long totalMemBefore = myRuntime.totalMemory();
+    long freeMemBefore = myRuntime.freeMemory();
+    long usedMemBefore = totalMemBefore - freeMemBefore;
+
+
+    long usedCurr = usedMemBefore; long usedPrev = usedCurr;
+
+    for (int i = 1; i <= 100; ++i) {
+      myRuntime.runFinalization();
+      myRuntime.gc();
+      (Thread.currentThread()).yield();
+
+      usedPrev = usedCurr;
+      usedCurr = myRuntime.totalMemory() - myRuntime.freeMemory();
+
+      if (usedCurr == usedPrev) break;
+    }
+
+
+    long totalMemAfter = myRuntime.totalMemory();
+    long freeMemAfter = myRuntime.freeMemory();
+    long usedMemAfter = totalMemAfter - freeMemAfter;
+
+    println("GC: d_used = " + ((usedMemAfter - usedMemBefore) / bytesPerMB) + " MB (d_tot = " + ((totalMemAfter - totalMemBefore) / bytesPerMB) + " MB).",2);
+  }
+
+  private static void printMemoryUsage()
+  {
+    int bytesPerMB = 1024 * 1024;
+    long totalMem = myRuntime.totalMemory();
+    long freeMem = myRuntime.freeMemory();
+    long usedMem = totalMem - freeMem;
+
+    println("Allocated memory: " + (totalMem / bytesPerMB) + " MB (of which " + (usedMem / bytesPerMB) + " MB is being used).",2);
   }
 
   private static void println(Object obj, int priority) { if (priority <= verbosity) println(obj); }
