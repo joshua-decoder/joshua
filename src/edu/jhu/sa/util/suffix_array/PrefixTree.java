@@ -1665,8 +1665,8 @@ public class PrefixTree {
 					
 					if (targetIndices==null) {
 						
-						float sourceGivenNullAlignment = lexProbs.sourceGivenTarget(sourceWord, null);
-						sourceGivenTarget *= sourceGivenNullAlignment;
+						//float sourceGivenNullAlignment = lexProbs.sourceGivenTarget(sourceWord, null);
+						//sourceGivenTarget *= sourceGivenNullAlignment;
 						
 					} else {
 						// Iterate over each target index aligned to the current source word

@@ -147,7 +147,7 @@ public class SampledLexProbs implements LexicalProbabilities {
 	}
 
 	
-	private void calculateSourceGivenTarget(int targetWord) {
+	private void calculateSourceGivenTarget(Integer targetWord) {
 
 		Map<Integer,Integer> counts = new HashMap<Integer,Integer>();
 		
