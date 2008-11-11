@@ -19,7 +19,6 @@ package edu.jhu.sa.util.suffix_array;
 
 import joshua.util.sentence.AbstractPhrase;
 import joshua.util.sentence.Phrase;
-import joshua.util.sentence.Span;
 import joshua.util.sentence.Vocabulary;
 
 import java.util.Arrays;
@@ -130,28 +129,28 @@ public class HierarchicalPhrase extends AbstractPhrase {
 	 * @param span
 	 * @param corpus
 	 */
-	public HierarchicalPhrase(Span span, CorpusArray corpusArray) {
-		
-		this.corpusArray = corpusArray;
-		
-		int[] words = new int[span.size()];
-		
-		for (int i = span.start; i < span.end; i++) {
-			words[i-span.start] = corpusArray.corpus[i];
-		}
-		
-		this.pattern = new Pattern(corpusArray.vocab, words);
-		
-		this.terminalSequenceStartIndices = new int[1];
-		this.terminalSequenceStartIndices[0] = span.start;
-		
-		this.terminalSequenceEndIndices = new int[1];
-		this.terminalSequenceEndIndices[0] = span.end;
-		
-		this.length = span.size();
-		
-		this.sentenceNumber = corpusArray.getSentenceIndex(terminalSequenceStartIndices[0]);
-	}
+//	public HierarchicalPhrase(Span span, CorpusArray corpusArray) {
+//		
+//		this.corpusArray = corpusArray;
+//		
+//		int[] words = new int[span.size()];
+//		
+//		for (int i = span.start; i < span.end; i++) {
+//			words[i-span.start] = corpusArray.corpus[i];
+//		}
+//		
+//		this.pattern = new Pattern(corpusArray.vocab, words);
+//		
+//		this.terminalSequenceStartIndices = new int[1];
+//		this.terminalSequenceStartIndices[0] = span.start;
+//		
+//		this.terminalSequenceEndIndices = new int[1];
+//		this.terminalSequenceEndIndices[0] = span.end;
+//		
+//		this.length = span.size();
+//		
+//		this.sentenceNumber = corpusArray.getSentenceIndex(terminalSequenceStartIndices[0]);
+//	}
 	
 	
 	/**

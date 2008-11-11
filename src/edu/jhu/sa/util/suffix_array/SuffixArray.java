@@ -62,7 +62,7 @@ public class SuffixArray implements Corpus {
 	 * Maximum number of items that can be stored 
 	 * in the cache of patterns and hierarchical phrases. 
 	 */
-	public static int CACHE_CAPACITY = 1000000;
+	public static int CACHE_CAPACITY = 100000;
 	
 	/**
 	 * Maps from patterns to lists of hierarchical phrases
