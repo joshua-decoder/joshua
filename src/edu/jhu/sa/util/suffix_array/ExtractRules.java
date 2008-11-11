@@ -44,136 +44,144 @@ public class ExtractRules {
 
 	/** Logger for this class. */
 	private static final Logger logger = Logger.getLogger(ExtractRules.class.getName());
-	
-	
+
+
 	/**
 	 * @param args
 	 * @throws IOException 
 	 */
 	public static void main(String[] args) throws IOException {
-		
-		CommandLineParser commandLine = new CommandLineParser();
-		
-		Option<String> source = commandLine.addStringOption('f',"source","SOURCE_FILE","Source language training file");
-		Option<String> target = commandLine.addStringOption('e',"target","TARGET_FILE","Target language training file");		
-		Option<String> alignment = commandLine.addStringOption('a',"alignments","ALIGNMENTS_FILE","Source-target alignments training file");	
-		Option<String> test = commandLine.addStringOption('t',"test","TEST_FILE","Source language test file");
-		
-		Option<String> output = commandLine.addStringOption('o',"output","OUTPUT_FILE","-","Output file");
-		
-		
-		Option<String> encoding = commandLine.addStringOption("encoding","ENCODING","UTF-8","File encoding format");
-		
-		Option<Integer> lexSampleSize = commandLine.addIntegerOption("lexSampleSize","LEX_SAMPLE_SIZE",100, "Size to use when sampling for lexical probability calculations");
-		Option<Integer> ruleSampleSize = commandLine.addIntegerOption("ruleSampleSize","RULE_SAMPLE_SIZE",100, "Maximum number of rules to store at each node in the prefix tree");
-		
-		Option<Integer> maxPhraseSpan = commandLine.addIntegerOption("maxPhraseSpan","MAX_PHRASE_SPAN",10, "Max phrase span");
-		Option<Integer> maxPhraseLength = commandLine.addIntegerOption("maxPhraseLength","MAX_PHRASE_LENGTH",10, "Max phrase length");
-		Option<Integer> maxNonterminals = commandLine.addIntegerOption("maxNonterminals","MAX_NONTERMINALS",2, "Max nonterminals");
-		
-//		Option<String> target_given_source_counts = commandLine.addStringOption("target-given-source-counts","FILENAME","file containing co-occurence counts of source and target word pairs, sorted by source words");
-//		Option<String> source_given_target_counts = commandLine.addStringOption("source-given-target-counts","FILENAME","file containing co-occurence counts of target and source word pairs, sorted by target words");
-		
-		Option<Boolean> output_gz = commandLine.addBooleanOption("output-gzipped",false,"snould the outpu file be gzipped");
-//		Option<Boolean> target_given_source_gz = commandLine.addBooleanOption("target-given-source-gzipped",false,"is the target given source word pair counts file gzipped");
-//		Option<Boolean> source_given_target_gz = commandLine.addBooleanOption("source-given-target-gzipped",false,"is the source given target word pair counts file gzipped");
-		
-		
-		commandLine.parse(args);
 
-		
-		// Set System.out and System.err to use the provided character encoding
 		try {
-			System.setOut(new PrintStream(System.out, true, commandLine.getValue(encoding)));
-			System.setErr(new PrintStream(System.err, true, commandLine.getValue(encoding)));
-		} catch (UnsupportedEncodingException e1) {
-			System.err.println(commandLine.getValue(encoding) + " is not a valid encoding; using system default encoding for System.out and System.err.");
-		} catch (SecurityException e2) {
-			System.err.println("Security manager is configured to disallow changes to System.out or System.err; using system default encoding.");
-		}
-		
-		// Lane - TODO -
-		//SuffixArray.INVERTED_INDEX_PRECOMPUTATION_MIN_FREQ = commandLine.getValue("CACHE_PRECOMPUTATION_FREQUENCY_THRESHOLD");
-		
-		if (logger.isLoggable(Level.FINE)) logger.fine("Constructing source language vocabulary.");
-		String sourceFileName = commandLine.getValue(source);
-		Vocabulary sourceVocab = new Vocabulary();
-		int[] sourceWordsSentences = SuffixArrayFactory.createVocabulary(sourceFileName, sourceVocab);
-		if (logger.isLoggable(Level.FINE)) logger.fine("Constructing source language corpus array.");
-		CorpusArray sourceCorpusArray = SuffixArrayFactory.createCorpusArray(sourceFileName, sourceVocab, sourceWordsSentences[0], sourceWordsSentences[1]);
-		if (logger.isLoggable(Level.FINE)) logger.fine("Constructing source language suffix arra.");
-		SuffixArray sourceSuffixArray = SuffixArrayFactory.createSuffixArray(sourceCorpusArray);
-		
-		if (logger.isLoggable(Level.FINE)) logger.fine("Constructing target language vocabulary.");		
-		String targetFileName = commandLine.getValue(target);
-		Vocabulary targetVocab = new Vocabulary();
-		int[] targetWordsSentences = SuffixArrayFactory.createVocabulary(commandLine.getValue(target), targetVocab);
-		if (logger.isLoggable(Level.FINE)) logger.fine("Constructing target language corpus array.");
-		CorpusArray targetCorpusArray = SuffixArrayFactory.createCorpusArray(targetFileName, targetVocab, targetWordsSentences[0], targetWordsSentences[1]);
-		if (logger.isLoggable(Level.FINE)) logger.fine("Constructing target language suffix array.");
-		SuffixArray targetSuffixArray = SuffixArrayFactory.createSuffixArray(targetCorpusArray);
-		
-		if (logger.isLoggable(Level.FINE)) logger.fine("Reading alignment data.");
-		String alignmentFileName = commandLine.getValue(alignment);
-		AlignmentArray alignmentArray = SuffixArrayFactory.createAlignmentArray(alignmentFileName, sourceSuffixArray, targetSuffixArray);
-		
-		// Set up the source text for reading
-//		Scanner target_given_source;
-//		if (commandLine.getValue(target_given_source_counts).endsWith(".gz") || commandLine.getValue(target_given_source_gz))
-//			target_given_source = new Scanner(new BufferedReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(commandLine.getValue(target_given_source_counts))),commandLine.getValue(encoding))));
-//		else
-//			target_given_source = new Scanner( new File(commandLine.getValue(target_given_source_counts)), commandLine.getValue(encoding));
-//
-//		
-//		// Set up the target text for reading
-//		Scanner source_given_target;
-//		if (commandLine.getValue(source_given_target_counts).endsWith(".gz") || commandLine.getValue(source_given_target_gz))
-//			source_given_target = new Scanner(new BufferedReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(commandLine.getValue(source_given_target_counts))),commandLine.getValue(encoding))));
-//		else
-//			source_given_target = new Scanner( new File(commandLine.getValue(source_given_target_counts)), commandLine.getValue(encoding));
-		
-		PrintStream out;
-		if ("-".equals(commandLine.getValue(output))) {
-			out = System.out;
-		} else if (commandLine.getValue(output).endsWith(".gz") || commandLine.getValue(output_gz)) {
-			//XXX This currently doesn't work
-			out = new PrintStream(new GZIPOutputStream(new FileOutputStream(commandLine.getValue(output))));
-			System.err.println("GZIP output not currently working properly");
-			System.exit(-1);
-		} else {
-			out = new PrintStream(commandLine.getValue(output));
-		}
-		
-		if (logger.isLoggable(Level.FINE)) logger.fine("Constructing lexical probabilities table");
-		
-		LexicalProbabilities lexProbs = 
-			new SampledLexProbs(commandLine.getValue(lexSampleSize), sourceSuffixArray, targetSuffixArray, alignmentArray, false);
-			//new LexProbs(source_given_target, target_given_source, sourceVocab, targetVocab);
-			
-		if (logger.isLoggable(Level.FINE)) logger.fine("Done constructing lexical probabilities table");
-		
-		Map<Integer,String> ntVocab = new HashMap<Integer,String>();
-		ntVocab.put(PrefixTree.X, "X");
-		
-		Scanner testFileScanner = new Scanner(new File(commandLine.getValue(test)), commandLine.getValue(encoding));
-		
-		while (testFileScanner.hasNextLine()) {
-			String line = testFileScanner.nextLine();
-			int[] words = sourceVocab.getIDs(line);
-			
-			if (logger.isLoggable(Level.FINE)) logger.fine("Constructing prefix tree for source line: " + line);
-			
-			PrefixTree prefixTree = new PrefixTree(sourceSuffixArray, targetCorpusArray, alignmentArray, lexProbs, words, commandLine.getValue(maxPhraseSpan), commandLine.getValue(maxPhraseLength), commandLine.getValue(maxNonterminals), commandLine.getValue(ruleSampleSize));
-			
-			if (logger.isLoggable(Level.FINER)) logger.finer("Outputting rules for source line: " + line);
+			CommandLineParser commandLine = new CommandLineParser();
 
-			for (Rule rule : prefixTree.getAllRules()) {
-				String ruleString = rule.toString(ntVocab, sourceVocab, targetVocab);
-				if (logger.isLoggable(Level.FINEST)) logger.finest("Rule: " + ruleString);
-				out.println(ruleString);
+			Option<String> source = commandLine.addStringOption('f',"source","SOURCE_FILE","Source language training file");
+			Option<String> target = commandLine.addStringOption('e',"target","TARGET_FILE","Target language training file");		
+			Option<String> alignment = commandLine.addStringOption('a',"alignments","ALIGNMENTS_FILE","Source-target alignments training file");	
+			Option<String> test = commandLine.addStringOption('t',"test","TEST_FILE","Source language test file");
+
+			Option<String> output = commandLine.addStringOption('o',"output","OUTPUT_FILE","-","Output file");
+
+
+			Option<String> encoding = commandLine.addStringOption("encoding","ENCODING","UTF-8","File encoding format");
+
+			Option<Integer> lexSampleSize = commandLine.addIntegerOption("lexSampleSize","LEX_SAMPLE_SIZE",100, "Size to use when sampling for lexical probability calculations");
+			Option<Integer> ruleSampleSize = commandLine.addIntegerOption("ruleSampleSize","RULE_SAMPLE_SIZE",100, "Maximum number of rules to store at each node in the prefix tree");
+
+			Option<Integer> maxPhraseSpan = commandLine.addIntegerOption("maxPhraseSpan","MAX_PHRASE_SPAN",10, "Max phrase span");
+			Option<Integer> maxPhraseLength = commandLine.addIntegerOption("maxPhraseLength","MAX_PHRASE_LENGTH",10, "Max phrase length");
+			Option<Integer> maxNonterminals = commandLine.addIntegerOption("maxNonterminals","MAX_NONTERMINALS",2, "Max nonterminals");
+
+//			Option<String> target_given_source_counts = commandLine.addStringOption("target-given-source-counts","FILENAME","file containing co-occurence counts of source and target word pairs, sorted by source words");
+//			Option<String> source_given_target_counts = commandLine.addStringOption("source-given-target-counts","FILENAME","file containing co-occurence counts of target and source word pairs, sorted by target words");
+
+			Option<Boolean> output_gz = commandLine.addBooleanOption("output-gzipped",false,"snould the outpu file be gzipped");
+//			Option<Boolean> target_given_source_gz = commandLine.addBooleanOption("target-given-source-gzipped",false,"is the target given source word pair counts file gzipped");
+//			Option<Boolean> source_given_target_gz = commandLine.addBooleanOption("source-given-target-gzipped",false,"is the source given target word pair counts file gzipped");
+
+
+			commandLine.parse(args);
+
+
+			// Set System.out and System.err to use the provided character encoding
+			try {
+				System.setOut(new PrintStream(System.out, true, commandLine.getValue(encoding)));
+				System.setErr(new PrintStream(System.err, true, commandLine.getValue(encoding)));
+			} catch (UnsupportedEncodingException e1) {
+				System.err.println(commandLine.getValue(encoding) + " is not a valid encoding; using system default encoding for System.out and System.err.");
+			} catch (SecurityException e2) {
+				System.err.println("Security manager is configured to disallow changes to System.out or System.err; using system default encoding.");
 			}
+
+			// Lane - TODO -
+			//SuffixArray.INVERTED_INDEX_PRECOMPUTATION_MIN_FREQ = commandLine.getValue("CACHE_PRECOMPUTATION_FREQUENCY_THRESHOLD");
+
+			if (logger.isLoggable(Level.FINE)) logger.fine("Constructing source language vocabulary.");
+			String sourceFileName = commandLine.getValue(source);
+			Vocabulary sourceVocab = new Vocabulary();
+			int[] sourceWordsSentences = SuffixArrayFactory.createVocabulary(sourceFileName, sourceVocab);
+			if (logger.isLoggable(Level.FINE)) logger.fine("Constructing source language corpus array.");
+			CorpusArray sourceCorpusArray = SuffixArrayFactory.createCorpusArray(sourceFileName, sourceVocab, sourceWordsSentences[0], sourceWordsSentences[1]);
+			if (logger.isLoggable(Level.FINE)) logger.fine("Constructing source language suffix arra.");
+			SuffixArray sourceSuffixArray = SuffixArrayFactory.createSuffixArray(sourceCorpusArray);
+
+			if (logger.isLoggable(Level.FINE)) logger.fine("Constructing target language vocabulary.");		
+			String targetFileName = commandLine.getValue(target);
+			Vocabulary targetVocab = new Vocabulary();
+			int[] targetWordsSentences = SuffixArrayFactory.createVocabulary(commandLine.getValue(target), targetVocab);
+			if (logger.isLoggable(Level.FINE)) logger.fine("Constructing target language corpus array.");
+			CorpusArray targetCorpusArray = SuffixArrayFactory.createCorpusArray(targetFileName, targetVocab, targetWordsSentences[0], targetWordsSentences[1]);
+			if (logger.isLoggable(Level.FINE)) logger.fine("Constructing target language suffix array.");
+			SuffixArray targetSuffixArray = SuffixArrayFactory.createSuffixArray(targetCorpusArray);
+
+			if (logger.isLoggable(Level.FINE)) logger.fine("Reading alignment data.");
+			String alignmentFileName = commandLine.getValue(alignment);
+			AlignmentArray alignmentArray = SuffixArrayFactory.createAlignmentArray(alignmentFileName, sourceSuffixArray, targetSuffixArray);
+
+			// Set up the source text for reading
+//			Scanner target_given_source;
+//			if (commandLine.getValue(target_given_source_counts).endsWith(".gz") || commandLine.getValue(target_given_source_gz))
+//			target_given_source = new Scanner(new BufferedReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(commandLine.getValue(target_given_source_counts))),commandLine.getValue(encoding))));
+//			else
+//			target_given_source = new Scanner( new File(commandLine.getValue(target_given_source_counts)), commandLine.getValue(encoding));
+
+
+//			// Set up the target text for reading
+//			Scanner source_given_target;
+//			if (commandLine.getValue(source_given_target_counts).endsWith(".gz") || commandLine.getValue(source_given_target_gz))
+//			source_given_target = new Scanner(new BufferedReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(commandLine.getValue(source_given_target_counts))),commandLine.getValue(encoding))));
+//			else
+//			source_given_target = new Scanner( new File(commandLine.getValue(source_given_target_counts)), commandLine.getValue(encoding));
+
+			PrintStream out;
+			if ("-".equals(commandLine.getValue(output))) {
+				out = System.out;
+			} else if (commandLine.getValue(output).endsWith(".gz") || commandLine.getValue(output_gz)) {
+				//XXX This currently doesn't work
+				out = new PrintStream(new GZIPOutputStream(new FileOutputStream(commandLine.getValue(output))));
+				System.err.println("GZIP output not currently working properly");
+				System.exit(-1);
+			} else {
+				out = new PrintStream(commandLine.getValue(output));
+			}
+
+			if (logger.isLoggable(Level.FINE)) logger.fine("Constructing lexical probabilities table");
+
+			LexicalProbabilities lexProbs = 
+				new SampledLexProbs(commandLine.getValue(lexSampleSize), sourceSuffixArray, targetSuffixArray, alignmentArray, false);
+			//new LexProbs(source_given_target, target_given_source, sourceVocab, targetVocab);
+
+			if (logger.isLoggable(Level.FINE)) logger.fine("Done constructing lexical probabilities table");
+
+			if (logger.isLoggable(Level.FINE)) logger.fine("Should store a max of " + commandLine.getValue(ruleSampleSize) + " rules at each node in a prefix tree.");
+
+			Map<Integer,String> ntVocab = new HashMap<Integer,String>();
+			ntVocab.put(PrefixTree.X, "X");
+
+			Scanner testFileScanner = new Scanner(new File(commandLine.getValue(test)), commandLine.getValue(encoding));
+
+			while (testFileScanner.hasNextLine()) {
+				String line = testFileScanner.nextLine();
+				int[] words = sourceVocab.getIDs(line);
+
+				if (logger.isLoggable(Level.FINE)) logger.fine("Constructing prefix tree for source line: " + line);
+
+				PrefixTree prefixTree = new PrefixTree(sourceSuffixArray, targetCorpusArray, alignmentArray, lexProbs, words, commandLine.getValue(maxPhraseSpan), commandLine.getValue(maxPhraseLength), commandLine.getValue(maxNonterminals), commandLine.getValue(ruleSampleSize));
+
+				if (logger.isLoggable(Level.FINER)) logger.finer("Outputting rules for source line: " + line);
+
+				for (Rule rule : prefixTree.getAllRules()) {
+					String ruleString = rule.toString(ntVocab, sourceVocab, targetVocab);
+					if (logger.isLoggable(Level.FINEST)) logger.finest("Rule: " + ruleString);
+					out.println(ruleString);
+				}
+			}
+
+		} catch (Throwable e) {
+			e.printStackTrace();
+		} finally {
+			if (logger.isLoggable(Level.FINE)) logger.fine("Done extracting rules");
 		}
-		
 	}
 
 }

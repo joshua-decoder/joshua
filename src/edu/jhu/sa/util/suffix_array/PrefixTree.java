@@ -609,11 +609,7 @@ public class PrefixTree {
 	public List<HierarchicalPhrase> query(Pattern pattern, Node node, Node prefixNode, Node suffixNode) {
 
 		if (logger.isLoggable(Level.FINE)) logger.fine("PrefixTree.query( " + pattern + ",\n\t   new node " + node + ",\n\tprefix node " + prefixNode + ",\n\tsuffix node " + suffixNode + ")");
-		
-		if (prefixNode.sourcePattern!=null && suffixNode.sourcePattern!=null && prefixNode.sourcePattern.toString().equals("[( le parlement X]") && suffixNode.sourcePattern.toString().equals("[le parlement X minute]")) {
-			int x=1; x++;
-		}
-		
+			
 		List<HierarchicalPhrase> result;
 
 		int arity = pattern.arity();
