@@ -160,11 +160,16 @@ public class ExtractRules {
 
 			Scanner testFileScanner = new Scanner(new File(commandLine.getValue(test)), commandLine.getValue(encoding));
 
+			int lineNumber = 0;
+			
+			SuffixArray.CACHE_CAPACITY = 1000;
+			
 			while (testFileScanner.hasNextLine()) {
 				String line = testFileScanner.nextLine();
+				lineNumber++;
 				int[] words = sourceVocab.getIDs(line);
 
-				if (logger.isLoggable(Level.FINE)) logger.fine("Constructing prefix tree for source line: " + line);
+				if (logger.isLoggable(Level.FINE)) logger.fine("Constructing prefix tree for source line " + lineNumber + ": " + line);
 
 				PrefixTree prefixTree = new PrefixTree(sourceSuffixArray, targetCorpusArray, alignmentArray, lexProbs, words, commandLine.getValue(maxPhraseSpan), commandLine.getValue(maxPhraseLength), commandLine.getValue(maxNonterminals), commandLine.getValue(ruleSampleSize));
 
