@@ -703,7 +703,7 @@ public class PrefixTree {
 		}
 		
 		// results is M_{a_alpha_b} in the paper
-		List<HierarchicalPhrase> results = new ArrayList<HierarchicalPhrase>();
+		ArrayList<HierarchicalPhrase> results = new ArrayList<HierarchicalPhrase>();
 
 		int I = M_a_alpha.size();
 		int J = M_alpha_b.size();
@@ -759,6 +759,21 @@ public class PrefixTree {
 			} // end while
 			
 		} // end while
+		
+		if (results.size() > sampleSize) {
+			int size = results.size();
+			int step = sampleSize / results.size();
+			
+			if (step > 1) {
+				for (int index=0, total=0; total<sampleSize; index+=step) {
+					results.set(total, results.get(index));
+				}
+			}
+			
+			for (int index=size-1; index>=sampleSize; index--) {
+				results.remove(index);
+			}
+		}
 		
 		return results;
 		
