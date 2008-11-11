@@ -96,7 +96,13 @@ public class PrefixTree {
 	/** Minimum span in the source corpus of any nonterminal in an extracted hierarchical phrase. */
 	private final int minNonterminalSpan = 2;
 	
-	/** Maximum number of instances of a source phrase from the source corpus to use when translating a source phrase. */
+	/** 
+	 * Maximum number of instances of a source phrase 
+	 * from the source corpus to use when translating a source phrase. 
+	 * 
+	 * This should also be the maximum number of hierarchical phrases
+	 * to store at each node in the prefix tree.
+	 */
 	private final int sampleSize;
 		
 	
@@ -758,7 +764,7 @@ public class PrefixTree {
 		
 		if (results.size() > sampleSize) {
 			int size = results.size();
-			int step = sampleSize / results.size();
+			int step = results.size() / sampleSize;
 			
 			if (step > 1) {
 				for (int index=0, total=0; total<sampleSize; index+=step) {
@@ -1308,7 +1314,7 @@ public class PrefixTree {
 				}
 			}
 			
-			this.sourceHierarchicalPhrases = hierarchicalPhrases;
+			//this.sourceHierarchicalPhrases = hierarchicalPhrases;
 			this.sourceWords = sourceTokens;
 			Vocabulary vocab = (suffixArray==null) ? null : suffixArray.getVocabulary();
 			this.sourcePattern = new Pattern(vocab, sourceTokens);
@@ -1317,7 +1323,7 @@ public class PrefixTree {
 			List<Pattern> translations = new ArrayList<Pattern>();// = this.translate();
 			List<Pair<Float,Float>> lexProbsList = new ArrayList<Pair<Float,Float>>();
 			
-			int totalPossibleTranslations = sourceHierarchicalPhrases.size();
+			int totalPossibleTranslations = hierarchicalPhrases.size();
 
 			// Step size for doing sampling
 			int step = (totalPossibleTranslations<sampleSize) ? 
@@ -1329,9 +1335,9 @@ public class PrefixTree {
 			// Sample from cached hierarchicalPhrases
 			List<HierarchicalPhrase> samples = new ArrayList<HierarchicalPhrase>(sampleSize);
 			for (int i=0; i<totalPossibleTranslations; i+=step) {
-				samples.add(sourceHierarchicalPhrases.get(i));
+				samples.add(hierarchicalPhrases.get(i));
 			}
-
+			this.sourceHierarchicalPhrases = samples;
 
 			// For each sample HierarchicalPhrase
 			for (HierarchicalPhrase sourcePhrase : samples) {
