@@ -62,7 +62,7 @@ public class SampledLexProbs implements LexicalProbabilities {
 		this.alignments = alignments;
 		this.sourceVocab = sourceSuffixArray.getVocabulary();
 		this.targetVocab = targetSuffixArray.getVocabulary();
-		this.floorProbability = 1/(sampleSize*100);
+		this.floorProbability = 1.0f/(sampleSize*100);
 		this.sourceGivenTarget = new HashMap<Integer,Map<Integer,Float>>();
 		this.targetGivenSource = new HashMap<Integer,Map<Integer,Float>>();
 		
@@ -151,13 +151,14 @@ public class SampledLexProbs implements LexicalProbabilities {
 
 		Map<Integer,Integer> counts = new HashMap<Integer,Integer>();
 		
-		int[] bounds = targetSuffixArray.findPhrase(new BasicPhrase(targetVocab, targetWord));
-		int step = (bounds[1]-bounds[0]<sampleSize) ? 1 : bounds[1]-bounds[0] / sampleSize;
+		int[] targetSuffixArrayBounds = targetSuffixArray.findPhrase(new BasicPhrase(targetVocab, targetWord));
+		int step = (targetSuffixArrayBounds[1]-targetSuffixArrayBounds[0]<sampleSize) ? 1 : targetSuffixArrayBounds[1]-targetSuffixArrayBounds[0] / sampleSize;
 		
 		float total = 0;
 		
-		for (int targetIndex=bounds[0],samples=0; targetIndex<bounds[1] && samples<sampleSize; targetIndex+=step, samples++) {
-			int[] alignedSourceIndices = alignments.getAlignedSourceIndices(targetIndex);
+		for (int targetSuffixArrayIndex=targetSuffixArrayBounds[0],samples=0; targetSuffixArrayIndex<=targetSuffixArrayBounds[1] && samples<sampleSize; targetSuffixArrayIndex+=step, samples++) {
+			int targetCorpusIndex = targetSuffixArray.suffixes[targetSuffixArrayIndex];
+			int[] alignedSourceIndices = alignments.getAlignedSourceIndices(targetCorpusIndex);
 			if (alignedSourceIndices==null) {
 				if (!counts.containsKey(null)) {
 					counts.put(null,1);
@@ -168,7 +169,7 @@ public class SampledLexProbs implements LexicalProbabilities {
 				total++;
 			} else {
 				for (int sourceIndex : alignedSourceIndices) {
-					int sourceWord = targetSuffixArray.getWord(sourceIndex);
+					int sourceWord = sourceSuffixArray.corpus.getWordID(sourceIndex);
 					if (!counts.containsKey(sourceWord)) {
 						counts.put(sourceWord,1);
 					} else {
@@ -191,13 +192,14 @@ public class SampledLexProbs implements LexicalProbabilities {
 
 		Map<Integer,Integer> counts = new HashMap<Integer,Integer>();
 		
-		int[] bounds = sourceSuffixArray.findPhrase(new BasicPhrase(sourceVocab, sourceWord));
-		int step = (bounds[1]-bounds[0]<sampleSize) ? 1 : bounds[1]-bounds[0] / sampleSize;
+		int[] sourceSuffixArrayBounds = sourceSuffixArray.findPhrase(new BasicPhrase(sourceVocab, sourceWord));
+		int step = (sourceSuffixArrayBounds[1]-sourceSuffixArrayBounds[0]<sampleSize) ? 1 : sourceSuffixArrayBounds[1]-sourceSuffixArrayBounds[0] / sampleSize;
 		
 		float total = 0;
 		
-		for (int sourceIndex=bounds[0],samples=0; sourceIndex<bounds[1] && samples<sampleSize; sourceIndex+=step, samples++) {
-			int[] alignedTargetIndices = alignments.getAlignedTargetIndices(sourceIndex);
+		for (int sourceSuffixArrayIndex=sourceSuffixArrayBounds[0],samples=0; sourceSuffixArrayIndex<=sourceSuffixArrayBounds[1] && samples<sampleSize; sourceSuffixArrayIndex+=step, samples++) {
+			int sourceCorpusIndex = sourceSuffixArray.suffixes[sourceSuffixArrayIndex];
+			int[] alignedTargetIndices = alignments.getAlignedTargetIndices(sourceCorpusIndex);
 			if (alignedTargetIndices==null) {
 				if (!counts.containsKey(null)) {
 					counts.put(null,1);
@@ -208,7 +210,7 @@ public class SampledLexProbs implements LexicalProbabilities {
 				total++;
 			} else {
 				for (int targetIndex : alignedTargetIndices) {
-					int targetWord = targetSuffixArray.getWord(targetIndex);
+					int targetWord = targetSuffixArray.corpus.getWordID(targetIndex);
 					if (!counts.containsKey(targetWord)) {
 						counts.put(targetWord,1);
 					} else {

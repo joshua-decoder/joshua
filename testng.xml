@@ -32,6 +32,7 @@
     <classes>
        <class name="edu.jhu.sa.util.suffix_array.PrefixTreeTest" />
        <class name="edu.jhu.sa.util.suffix_array.PrefixTreeAdvancedTest" />
+       <class name="edu.jhu.sa.util.suffix_array.SampledLexProbsTest" />
        <class name="joshua.util.lexprob.LexProbsTest" />    
     </classes>
   </test>

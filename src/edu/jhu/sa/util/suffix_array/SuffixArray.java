@@ -292,7 +292,7 @@ public class SuffixArray implements Corpus {
 	 * Finds a phrase in the suffix array.
 	 *
 	 * @param phrase the search phrase
-	 * @return a tuple containing the start and the end bounds
+	 * @return a tuple containing the (inclusive) start and the (inclusive) end bounds
 	 *         in the suffix array for the phrase
 	 */
 	public int[] findPhrase(Phrase phrase) {
@@ -884,7 +884,7 @@ public class SuffixArray implements Corpus {
 	 *                    (inclusive)
 	 * @param phraseEnd   the end of the phrase in the sentence
 	 *                    (exclusive)
-	 * @return a tuple containing the start and the end bounds
+	 * @return a tuple containing the (inclusive) start and the (inclusive) end bounds
 	 *         in the suffix array for the phrase
 	 */
 	protected int[] findPhrase(Phrase sentence, int phraseStart, int phraseEnd) {
@@ -909,7 +909,7 @@ public class SuffixArray implements Corpus {
 	 *                    that will bound the search
 	 * @param upperBound  the last index in the suffix array
 	 *                    that will bound the search
-	 * @return a tuple containing the start and the end bounds
+	 * @return a tuple containing the (inclusive) start and the (inclusive) end bounds 
 	 *         in the suffix array for the phrase, or null if
 	 *         the phrase is not found.
 	 */

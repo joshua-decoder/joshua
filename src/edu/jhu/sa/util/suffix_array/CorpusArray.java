@@ -135,11 +135,11 @@ public class CorpusArray {
 	 * @return the position in the corpus of the first word of
 	 *         the specified sentence.  If the sentenceID is
 	 *         outside of the bounds of the sentences, then it
-	 *         returns the last position in the corpus.
+	 *         returns the last position in the corpus + 1.
 	 */
 	public int getSentencePosition(int sentenceID) {
 		if (sentenceID >= sentences.length) {
-			return corpus.length - 1;
+			return corpus.length;
 		}
 		return sentences[sentenceID];
 	}

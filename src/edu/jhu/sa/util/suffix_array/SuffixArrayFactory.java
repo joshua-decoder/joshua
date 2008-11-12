@@ -81,7 +81,7 @@ public class SuffixArrayFactory {
 	 *
 	 * @param inputFilename the plain text file
 	 * @param vocab the Vocabulary to instantiate 
-	 * @return a tuple containing the 
+	 * @return a tuple containing the number of words in the corpus and number of sentences in the corpus
 	 */
 	public static int[] createVocabulary(String inputFilename, Vocabulary vocab) throws IOException {
 		BufferedReader reader = FileUtil.getBufferedReader(inputFilename);

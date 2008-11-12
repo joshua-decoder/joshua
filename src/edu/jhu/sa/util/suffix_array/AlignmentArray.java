@@ -159,10 +159,26 @@ public class AlignmentArray {
 		return getAlignedSpan(sourceSpan.start, sourceSpan.end, alignedTargetIndices);
 	}
 	
+	/**
+	 * Gets the indices of all source words aligned with 
+	 * a particular location in the target corpus.
+	 * 
+	 * @param index Index into the target corpus
+	 * @return The indices of all source words aligned with 
+	 *         the given location in the target corpus.
+	 */
 	public int[] getAlignedSourceIndices(int targetIndex) {
 		return alignedSourceIndices[targetIndex];
 	}
 
+	/**
+	 * Gets the indices of all target words aligned with 
+	 * a particular location in the source corpus.
+	 * 
+	 * @param index Index into the source corpus
+	 * @return The indices of all target words aligned with 
+	 *         the given location in the source corpus.
+	 */
 	public int[] getAlignedTargetIndices(int sourceIndex) {
 		return alignedTargetIndices[sourceIndex];
 	}

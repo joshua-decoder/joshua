@@ -48,7 +48,7 @@ public class LexProbsTest {
 			"   1 on auf" + "\n" +
 			"   1 sets setzt" + "\n" +
 			"   1 takes führt" + "\n" +
-			"   1 yet and" + "\n";
+			"   1 yet und" + "\n";
 		
 		String sourceGivenTargetCounts =
 			"   1 , ," + "\n" +
@@ -129,7 +129,7 @@ public class LexProbsTest {
 		Assert.assertEquals(lexProbs.targetGivenSource("auf", "on"), 1.0f);
 		Assert.assertEquals(lexProbs.targetGivenSource("setzt", "sets"), 1.0f);
 		Assert.assertEquals(lexProbs.targetGivenSource("führt", "takes"), 1.0f);
-		Assert.assertEquals(lexProbs.targetGivenSource("and", "yet"), 1.0f);
+		Assert.assertEquals(lexProbs.targetGivenSource("und", "yet"), 1.0f);
 		
 	}
 	
@@ -148,7 +148,7 @@ public class LexProbsTest {
 		Assert.assertEquals(lexProbs.targetGivenSource(targetVocab.getID("auf"), sourceVocab.getID("on")), 1.0f);
 		Assert.assertEquals(lexProbs.targetGivenSource(targetVocab.getID("setzt"), sourceVocab.getID("sets")), 1.0f);
 		Assert.assertEquals(lexProbs.targetGivenSource(targetVocab.getID("führt"), sourceVocab.getID("takes")), 1.0f);
-		Assert.assertEquals(lexProbs.targetGivenSource(targetVocab.getID("and"), sourceVocab.getID("yet")), 1.0f);
+		Assert.assertEquals(lexProbs.targetGivenSource(targetVocab.getID("und"), sourceVocab.getID("yet")), 1.0f);
 		
 	}
 }
