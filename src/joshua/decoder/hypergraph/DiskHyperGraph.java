@@ -23,6 +23,8 @@ import joshua.decoder.JoshuaDecoder;
 import joshua.decoder.Symbol;
 import joshua.decoder.ff.FFDPState;
 import joshua.decoder.ff.FeatureFunction;
+import joshua.decoder.ff.lm.LMFFDPState;
+import joshua.decoder.ff.lm.LMFeatureFunction;
 import joshua.decoder.ff.tm.MemoryBasedRule;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.TMGrammar;
@@ -34,7 +36,7 @@ import java.io.BufferedWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Map;
+
 
 /**
  * this class implements functions of writting/reading hypergraph on disk
@@ -42,6 +44,14 @@ import java.util.Map;
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate$
  */
+
+/* Limitations of this version
+ * (1) cannot recover each individual feature, notably the LM feature
+ * (2) assume we only have one stateful featuure, which must be a LM feature
+ * */
+
+
+
 //Bottom-up
 //line: SENTENCE_TAG, sent_id, sent_len, num_items, num_deductions (in average, num_deductions is about 10 times larger than the num_items, which is in average about 4000)
 //line: ITEM_TAG, item id, i, j, lhs, num_deductions, tbl_state;
@@ -75,13 +85,15 @@ public class DiskHyperGraph {
     static String ITEM_STATE_TAG= " ST ";
     static String NULL_ITEM_STATE= "nullstate";    
     static int NULL_RULE_ID = -1;//three kinds of rule: regular rule (id>0); oov rule (id=0), and null rule (id=-1)
-    static int OOV_RULE_ID = 0;
+   // static int OOV_RULE_ID = 0;
     
     static String RULE_TBL_SEP =" -LZF- ";
     
-    Symbol p_symbol = null; //TODO
+    Symbol p_symbol = null;
    
-	ArrayList<FeatureFunction> p_l_models;
+	//ArrayList<FeatureFunction> p_l_models;
+    //ArrayList<Integer> p_l_statefull_feat_ids;
+    int lm_feat_id = 0;
 	
 	//TODO: this should be changed
 	protected  String nonterminalRegexp = "^\\[[A-Z]+\\,[0-9]*\\]$";//e.g., [X,1]
@@ -103,7 +115,9 @@ public class DiskHyperGraph {
 		
 		long start_time = System.currentTimeMillis();		
 		
-		DiskHyperGraph dhg = new DiskHyperGraph(psymbol);
+		int lm_feat_id = 0;
+		
+		DiskHyperGraph dhg = new DiskHyperGraph(psymbol,lm_feat_id);
 		KbestExtraction kbest_extractor = new KbestExtraction(psymbol);
 		
 		dhg.init_read(f_hypergraphs, f_rule_tbl, null);			
@@ -118,18 +132,15 @@ public class DiskHyperGraph {
 		System.out.println("perceptron: " + (System.currentTimeMillis()-start_time)/1000);	
 	}
 	
-    public DiskHyperGraph(Symbol symbol_){
+    public DiskHyperGraph(Symbol symbol_, int lm_feat_id_){
     	this.p_symbol = symbol_;
+    	this.lm_feat_id = lm_feat_id_;
     	this.UNTRANS_OWNER_SYM_ID = this.p_symbol.addTerminalSymbol(JoshuaConfiguration.untranslated_owner);
 		
     }
     
 //for writting hyper-graph: (1) saving each hyper-graph; (2) remember each regualar rule used; (3) dump the rule jointly (in case parallel decoding)      
-	public void init_write(
-		String  f_items,
-		boolean use_forest_pruning,
-		double  threshold
-	) {
+	public void init_write(String  f_items, boolean use_forest_pruning, double  threshold) {
 		this.writer_out = FileUtility.handle_null_file(f_items);
 		if (use_forest_pruning) {
 			this.forest_pruner = new HyperGraphPruning(p_symbol, true, threshold, threshold, 1, 1);//TODO
@@ -160,7 +171,10 @@ public class DiskHyperGraph {
     		int rule_id = new Integer(wrds[0]);
     		int default_owner = this.p_symbol.addTerminalSymbol(wrds[1]);
     		//Rule rule = new MemoryBasedTMGrammar.Rule_Memory(rule_id, fds[1], default_owner);//TODO: the stateless cost if not correct due to estimate_rule
-    		Rule rule = new MemoryBasedRule(p_symbol, p_l_models, nonterminalRegexp, nonterminalReplaceRegexp, rule_id, fds[1], default_owner);
+    		
+    		//stateless cost is not properly set, so cannot extract individual features during kbest extraction
+    		Rule rule = new MemoryBasedRule(p_symbol, null, nonterminalRegexp, nonterminalReplaceRegexp, rule_id, fds[1], default_owner);
+//    		Rule rule = new MemoryBasedRule(p_symbol, p_l_models, nonterminalRegexp, nonterminalReplaceRegexp, rule_id, fds[1], default_owner);
     		tbl_associated_grammar.put(rule_id, rule);
     	}
     	FileUtility.close_read_file(reader_rules);
@@ -177,7 +191,7 @@ public class DiskHyperGraph {
 		
 		//we save the hypergraph in a bottom-up way: so that reading is easy
 		if (tbl_id_2_item.size() != tbl_item_2_id.size()) {
-			System.out.println("Number of Items not equal");
+			System.out.println("Number of Items is not equal");
 			System.exit(1);
 		}
 		for(int i=1; i<= tbl_id_2_item.size(); i++){
@@ -188,16 +202,6 @@ public class DiskHyperGraph {
 		
 	}	
     
-	private boolean should_skip_sent(String s_line){
-		if(tbl_selected_sents==null)return false;
-		String[] fds = s_line.split("\\s+");
-		int sent_id = new Integer(fds[1]);	
-		if(tbl_selected_sents.containsKey(sent_id)){
-			return false;
-		}else{
-			return true;
-		}
-	}
 	
 	public HyperGraph read_hyper_graph(){
 		reset_states();	
@@ -243,7 +247,18 @@ public class DiskHyperGraph {
 			return res;
 		}
 	}
-	 
+	private boolean should_skip_sent(String s_line){
+		if(tbl_selected_sents==null)return false;
+		String[] fds = s_line.split("\\s+");
+		int sent_id = new Integer(fds[1]);	
+		if(tbl_selected_sents.containsKey(sent_id)){
+			return false;
+		}else{
+			return true;
+		}
+	} 
+	
+	
 	public HashMap get_used_grammar_tbl(){
 	   	return tbl_associated_grammar;
 	}
@@ -260,6 +275,8 @@ public class DiskHyperGraph {
     	FileUtility.close_write_file(out_rules);
     }
 
+    
+    //tbl_done: remmber what kind of rules have already been saved
     public void write_rules_parallel(BufferedWriter out_rules, HashMap tbl_done){
     	System.out.println("writing rules in a partition");
     	for(Iterator it = tbl_associated_grammar.keySet().iterator(); it.hasNext(); ){
@@ -274,7 +291,7 @@ public class DiskHyperGraph {
     }
 	
     private void save_rule(BufferedWriter out_rules, Rule rl, int rule_id){
-    	String str_rule = rl.toString();
+    	String str_rule = rl.toString(this.p_symbol);
 		String owner = this.p_symbol.getWord(rl.owner);
 		//rule_id owner RULE_TBL_SEP rule
 		FileUtility.write_lzf(out_rules, rule_id +" " + owner  + RULE_TBL_SEP  +str_rule  +"\n");//note (inverse): rule-id RULE_TBL_SEP rule
@@ -289,7 +306,7 @@ public class DiskHyperGraph {
 	
 	private  void save_item(BufferedWriter out, HGNode item){		
 		StringBuffer res = new StringBuffer();		
-		//line: ITEM_TAG, item id, i, j, lhs, num_deductions, tbl_state;
+		//line: ITEM_TAG, item id, i, j, lhs, num_deductions, ITEM_STATE_TAG, tbl_state;
 		res.append(ITEM_TAG); res.append(" "); res.append((Integer)tbl_item_2_id.get(item)); res.append(" ");
 		res.append(item.i);	res.append(" "); res.append(item.j);//i,j
 		res.append(" "); res.append(this.p_symbol.getWord(item.lhs)); res.append(" ");//lhs
@@ -302,7 +319,9 @@ public class DiskHyperGraph {
 		res.append(ITEM_STATE_TAG);
 		//signature (created from HashMap tbl_states)
 		if(item.getTblFeatDPStates()!=null)
-			res.append(get_string_from_state_tbl(p_symbol, item.getTblFeatDPStates()));
+			//res.append(get_string_from_state_tbl(p_symbol, p_l_statefull_feat_ids, item.getTblFeatDPStates()));
+			//res.append(get_string_from_state_tbl(p_symbol, p_l_models, item.getTblFeatDPStates()));
+			res.append(get_string_from_state_tbl(p_symbol, this.lm_feat_id, item.getTblFeatDPStates()));
 		else
 			res.append(NULL_ITEM_STATE);
 		res.append("\n");		
@@ -335,7 +354,9 @@ public class DiskHyperGraph {
 		
 		HashMap<Integer, FFDPState> tbl_dpstates = null;//item state: signature (created from HashMap tbl_states)
 		if(fds[1].compareTo(NULL_ITEM_STATE)!=0){
-			tbl_dpstates = get_state_tbl_from_string(p_symbol, p_l_models, fds[1]);//create statte;;;;;;;;;;;;;;;;;;;;;; TODO
+			//tbl_dpstates = get_state_tbl_from_string(p_symbol, p_l_models, fds[1]);
+			//tbl_dpstates = get_state_tbl_from_string(p_symbol, p_l_statefull_feat_ids, fds[1]);
+			tbl_dpstates = get_state_tbl_from_string(p_symbol, this.lm_feat_id, fds[1]);
 		}	
 		
 		ArrayList<HyperEdge> l_deductions = null;
@@ -355,27 +376,61 @@ public class DiskHyperGraph {
 		return item;
 	}
 	
-//################################## error begin ###############################	
-//	the state_str does not have lhs, also it contain the original words (not symbol id)
-	public static String get_string_from_state_tbl(Symbol p_symbol, HashMap<Integer, FFDPState> tbl){
+	
+	
+	public static String get_string_from_state_tbl(Symbol p_symbol, ArrayList<FeatureFunction> p_l_models, HashMap<Integer, FFDPState> tbl){
 		StringBuffer res = new StringBuffer();
-		for (Iterator iter = tbl.entrySet().iterator(); iter.hasNext();){//for each model
-            Map.Entry entry = (Map.Entry)iter.next();
-            FFDPState dpstate = (FFDPState)entry.getValue();
-            res.append(dpstate.getSignature(false));
+		boolean first=true;
+		for (FeatureFunction ff : p_l_models){//for each model
+			if(ff.isStateful()){
+				if(first)
+					first =false;
+				else
+					res.append(HGNode.FF_SIG_SEP);
+                FFDPState dpstate = (FFDPState)tbl.get(ff.getFeatureID());
+                res.append(dpstate.getSignature(p_symbol, false));
+            }
 		}
-		//TODO: not working
-		return res.toString();
+		return res.toString();	
 	}
 	
+		
 	//the state_str does not lhs, it contain the original words (not symbol id)
 	public static HashMap<Integer, FFDPState> get_state_tbl_from_string(Symbol p_symbol, ArrayList<FeatureFunction> p_l_models, String state_str){
-		HashMap res =new HashMap<Integer, FFDPState> ();
-		String[] states = state_str.split(HGNode.SIG_SEP);
-		//TODO: for eachg model						
+		HashMap res =new HashMap<Integer, FFDPState>();
+		String[] states = state_str.split(HGNode.FF_SIG_SEP);
+		int i=0;
+		for (FeatureFunction ff : p_l_models){//for each model
+			if(ff.isStateful()){
+				if(ff instanceof LMFeatureFunction){
+					FFDPState ffdps = new LMFFDPState(p_symbol, states[i++]);
+					res.put(ff.getFeatureID(), ffdps);
+				}else{
+					System.out.println("unimplemented FFDPState deserialization method");
+					System.exit(0);
+				}
+			}
+		}		
 		return res;
 	}
-//	##################################  error end ###############################	
+	
+	
+//######	assume the only stateful feature is lm feature
+	public static String get_string_from_state_tbl(Symbol p_symbol, int  lm_feat_id, HashMap<Integer, FFDPState> tbl){
+		StringBuffer res = new StringBuffer();		 
+	    FFDPState dpstate = (FFDPState)tbl.get(lm_feat_id);
+	    res.append(dpstate.getSignature(p_symbol,true));
+		return res.toString();	
+	}
+
+	public static HashMap<Integer, FFDPState> get_state_tbl_from_string(Symbol p_symbol, int lm_feat_id, String state_str){
+		HashMap res =new HashMap<Integer, FFDPState>();
+		FFDPState ffdps = new LMFFDPState(p_symbol, state_str);//assume the only stateful feature is lm feature
+		res.put(lm_feat_id, ffdps);			
+		return res;
+	}
+//##### end	
+	
 	
 	private void save_deduction(BufferedWriter out, HGNode item, HyperEdge deduction) {
 		//get rule id
@@ -414,7 +469,7 @@ public class DiskHyperGraph {
 		}
 		res.append(" ");
 		res.append(rule_id);
-		if (rule_id == OOV_RULE_ID) {
+		if (rule_id == TMGrammar.OOV_RULE_ID) {
 			res.append(" "); res.append(this.p_symbol.getWord(deduction_rule.lhs));
 			res.append(" "); res.append(this.p_symbol.getWords(deduction_rule.english));
 		}
@@ -455,7 +510,7 @@ public class DiskHyperGraph {
 		Rule rule = null;
 		int r_id = new Integer(fds[2+num_ant_items]);
 		if(r_id!=NULL_RULE_ID){
-			if(r_id!=OOV_RULE_ID){
+			if(r_id!=TMGrammar.OOV_RULE_ID){
 				rule = (Rule)tbl_associated_grammar.get(r_id);
 				if (null == rule) {
 					System.out.println("rule is null but id is " + r_id);
@@ -466,13 +521,18 @@ public class DiskHyperGraph {
 				int lhs = this.p_symbol.addNonTerminalSymbol(fds[3+num_ant_items]);
 				int french_symbol = this.p_symbol.addTerminalSymbol(fds[4+num_ant_items]);
 				//rule = new MemoryBasedTMGrammar.Rule_Memory(lhs, french_symbol, Chart.UNTRANS_SYM_ID);//TODO: change owner
-				rule = new MemoryBasedRule(p_l_models, TMGrammar.OOV_RULE_ID, lhs, french_symbol, this.UNTRANS_OWNER_SYM_ID, false);
 				
+				//stateless cost is not properly set, so cannot extract individual features during kbest extraction
+				rule = new MemoryBasedRule(null, 1, TMGrammar.OOV_RULE_ID, lhs, french_symbol, this.UNTRANS_OWNER_SYM_ID, false);
+				//rule = new MemoryBasedRule(p_l_models, TMGrammar.OOV_RULE_ID, lhs, french_symbol, this.UNTRANS_OWNER_SYM_ID, false);
 				//System.out.println("oov rule str: " + str_rule + "; arity: " + rule.arity);
-			}
-			
+			}			
+		}else{
+			//DO nothing: goal item has null rule
+			//System.out.println("get null rule id; line is " +line);	System.exit(0);
 		}	
 		HyperEdge dt = new HyperEdge(rule, best_cost, null, l_ant_items);
+		dt.get_transition_cost(true);//to set the transition cost
 		return dt;		
 	}
 	

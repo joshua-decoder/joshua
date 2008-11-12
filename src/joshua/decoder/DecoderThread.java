@@ -7,15 +7,15 @@ import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+
+
 import joshua.decoder.chart_parser.Chart;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.GrammarFactory;
 import joshua.decoder.hypergraph.DiskHyperGraph;
-import joshua.decoder.hypergraph.HGNode;
 import joshua.decoder.hypergraph.HyperGraph;
 import joshua.decoder.hypergraph.KbestExtraction;
-import joshua.decoder.hypergraph.VariationalDecoder;
 import joshua.lattice.Lattice;
 import joshua.util.FileUtility;
 import joshua.util.sentence.Phrase;
@@ -49,7 +49,8 @@ public class DecoderThread {
 			DiskHyperGraph  d_hg = null;
 			KbestExtraction kbest_extrator = new KbestExtraction(p_main_controller.p_symbol);
 			if (JoshuaConfiguration.save_disk_hg) {
-				d_hg = new DiskHyperGraph(p_main_controller.p_symbol);
+				//d_hg = new DiskHyperGraph(p_main_controller.p_symbol, p_main_controller.p_l_feat_functions);
+				d_hg = new DiskHyperGraph(p_main_controller.p_symbol, p_main_controller.haveLMFeature(p_main_controller.p_l_feat_functions).getFeatureID());
 				d_hg.init_write(nbest_file + ".hg.items", JoshuaConfiguration.forest_pruning, JoshuaConfiguration.forest_pruning_threshold);
 			}
 			decode_a_file(test_file, nbest_file, 0, d_hg, kbest_extrator);
@@ -112,7 +113,8 @@ public class DecoderThread {
 				FileUtility.close_write_file(t_writer_test);
 				DiskHyperGraph dhg = null;
 				if (JoshuaConfiguration.save_disk_hg) {
-					dhg = new DiskHyperGraph(p_main_controller.p_symbol);
+					//dhg = new DiskHyperGraph(p_main_controller.p_symbol, p_main_controller.p_l_feat_functions);
+					dhg = new DiskHyperGraph(p_main_controller.p_symbol, p_main_controller.haveLMFeature(p_main_controller.p_l_feat_functions).getFeatureID());
 					dhg.init_write(	cur_nbest_file + ".hg.items",  JoshuaConfiguration.forest_pruning,  JoshuaConfiguration.forest_pruning_threshold);
 				}
 				KbestExtraction kbest_extrator = new KbestExtraction(p_main_controller.p_symbol);
@@ -137,7 +139,8 @@ public class DecoderThread {
 		FileUtility.close_write_file(t_writer_test);
 		DiskHyperGraph dhg = null;
 		if (JoshuaConfiguration.save_disk_hg) {
-			dhg = new DiskHyperGraph(p_main_controller.p_symbol);
+			//dhg = new DiskHyperGraph(p_main_controller.p_symbol, p_main_controller.p_l_feat_functions);
+			dhg = new DiskHyperGraph(p_main_controller.p_symbol, p_main_controller.haveLMFeature(p_main_controller.p_l_feat_functions).getFeatureID());
 			dhg.init_write(	cur_nbest_file + ".hg.items", JoshuaConfiguration.forest_pruning,  JoshuaConfiguration.forest_pruning_threshold);
 		}
 		KbestExtraction kbest_extrator = new KbestExtraction(p_main_controller.p_symbol);
@@ -332,10 +335,11 @@ public class DecoderThread {
 		}
 		
 		//debug
-		if(JoshuaConfiguration.use_variational_decoding){
-			VariationalDecoder vd = new VariationalDecoder();
+		if(JoshuaConfiguration.use_variational_decoding){/*
+			ConstituentVariationalDecoder vd = new ConstituentVariationalDecoder();
 			vd.decoding(p_hyper_graph);
 			System.out.println("#### new 1best is #####\n" + HyperGraph.extract_best_string(p_main_controller.p_symbol,p_hyper_graph.goal_item));
+			*/
 		}
 		//end
 		

@@ -18,6 +18,11 @@
 
 package joshua.decoder.ff;
 
+import java.util.ArrayList;
+
+import joshua.decoder.ff.tm.Rule;
+import joshua.decoder.hypergraph.HyperEdge;
+
 
 /**
  * 
@@ -54,4 +59,13 @@ public abstract class DefaultStatefulFF implements FeatureFunction {
 		this.feat_id = id_;
 	}
 	
+	/*default behavior: ignore "edge"*/
+	public FFTransitionResult transition(HyperEdge edge, Rule rule, ArrayList<FFDPState> previous_states, int span_start, int span_end){
+		return transition(rule, previous_states, span_start,span_end);
+	}
+	
+	/*default behavior: ignore "edge"*/
+	public double finalTransition(HyperEdge edge, FFDPState state){
+		return finalTransition(state);
+	}
 }

@@ -42,7 +42,7 @@ public abstract class DefaultSymbol implements Symbol {
 	private HashMap<Integer,String> nonterminal_num_2_str_tbl = new HashMap<Integer,String>();
 	private  int nonterminal_cur_id=-1;//start from -1
 
-	protected  int lm_start_sym_id = 10000;//1-10000 reserved for non-terminal
+	protected  int lm_start_sym_id = 10000;//1-10000 reserved for special purpose
 	protected  int lm_end_sym_id = 5000001;//max vocab 1000k
 	
 	public boolean is_reading_from_file = false;
@@ -213,7 +213,7 @@ public abstract class DefaultSymbol implements Symbol {
 		}*/
 		
 		//#### now add the tbl into srilm/java-tbl
-		int n_added = 0;
+		/*int n_added = 0;
 		int i=0;
 		while (n_added < tbl_id_2_str.size()) {
 			String str = (String) tbl_id_2_str.get(i); // it is guaranteed that the strings in tbl_id_2_str are different
@@ -230,7 +230,26 @@ public abstract class DefaultSymbol implements Symbol {
 				System.exit(1);
 			}		
 			i++;
-		}
+		}*/
+		int n_added=0;
+        for(int i=lm_start_sym_id; i<lm_end_sym_id; i++){
+                String str = (String) tbl_id_2_str.get(i);//it is guranteed that the strings in tbl_id_2_str are different
+                int res_id;
+                if(str!=null){
+                        res_id = addTerminalSymbol(str);
+                        n_added++;
+                }else{//non-continous index
+                        System.out.println("Warning: add fake symbol, be alert");
+                        res_id = addTerminalSymbol("lzf"+i);
+                }
+                if(res_id!=i){
+                        System.out.println("id supposed: " + i +" != assinged " + res_id + " symbol:" + str);
+                        System.exit(0);
+                }
+                if(n_added>=tbl_id_2_str.size())
+                        break;
+        }
+
 		
 	}
 

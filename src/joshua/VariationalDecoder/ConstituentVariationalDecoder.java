@@ -1,5 +1,4 @@
-package joshua.decoder.hypergraph;
-
+package edu.jhu.joshua.VariationalDecoder;
 
 import java.util.HashMap;
 
@@ -8,22 +7,22 @@ import joshua.decoder.hypergraph.HyperEdge;
 import joshua.decoder.hypergraph.HyperGraph;
 import joshua.decoder.hypergraph.TrivialInsideOutside;
 
-public class VariationalDecoder extends TrivialInsideOutside {
-	HashMap g_tbl_processed_items = new HashMap();
-	
-	//return changed hg
-	public HyperGraph decoding(HyperGraph hg){
-		run_inside_outside(hg, 0, 1);//ADD_MODE=0=sum; LOG_SEMIRING=1;
-		rerankHG(hg);
-		clear_state();
-		return hg;
-	}
-	
-	public void clear_state(){
-		g_tbl_processed_items.clear();
-		super.clear_state();
-	}
-	
+
+
+public class ConstituentVariationalDecoder extends TrivialInsideOutside {
+    HashMap g_tbl_processed_items = new HashMap();
+
+    //return changed hg
+    public HyperGraph decoding(HyperGraph hg){
+            run_inside_outside(hg, 0, 1);//ADD_MODE=0=sum; LOG_SEMIRING=1;
+            rerankHG(hg);
+            clear_state();
+          
+            
+            return hg;
+    }
+
+    //  #################### rerank HG #######
 	private void rerankHG(HyperGraph hg){
 		//### change the best_pointer and best_cost in hypergraph in hg
 		g_tbl_processed_items.clear();
@@ -59,4 +58,5 @@ public class VariationalDecoder extends TrivialInsideOutside {
 			}
 		}
 	}
+	
 }

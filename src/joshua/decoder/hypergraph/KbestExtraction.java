@@ -19,10 +19,8 @@ package joshua.decoder.hypergraph;
 
 import joshua.decoder.Support;
 import joshua.decoder.Symbol;
-import joshua.decoder.ff.FFDPState;
 import joshua.decoder.ff.FFTransitionResult;
 import joshua.decoder.ff.FeatureFunction;
-import joshua.decoder.ff.lm.LMFeatureFunction;
 import joshua.decoder.ff.tm.Rule;
 import joshua.util.FileUtility;
 
@@ -30,10 +28,10 @@ import java.io.BufferedWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.PriorityQueue;
+import java.util.logging.Logger;
 
 /**
- * this class implement 
- * (1) lazy k-best extraction on a hyper-graph
+ * this class implement:  lazy k-best extraction on a hyper-graph
  *to seed the kbest extraction, it only needs that each deduction should have the best_cost properly set, and it does not require any list being sorted
  *instead, the priority queue heap_cands will do internal sorting
  *In fact, the real crucial cost is the transition-cost at each deduction. We store the best-cost instead of the transition cost since it is easy to do pruning and
@@ -46,12 +44,17 @@ import java.util.PriorityQueue;
  * @version $LastChangedDate$
  */
 public class KbestExtraction {
-
+	private static final Logger logger = Logger.getLogger(KbestExtraction.class.getName());
+	
 	HashMap tbl_virtual_items = new HashMap();
 	Symbol p_symbol = null;
 	
+	static String root_sym = "ROOT";
+	static int root_id;//TODO: bug
+	
 	public KbestExtraction(Symbol symbol_){
 		p_symbol = symbol_;
+		root_id = p_symbol.addNonTerminalSymbol(root_sym);
 	}
 	
 	
@@ -391,8 +394,10 @@ public class KbestExtraction {
 			StringBuffer res = new StringBuffer();			
 			Rule rl = p_edge.get_rule();
 			if(rl==null){//deductions under "goal item" does not have rule
-				if(tree_format==true)
-					res.append("(ROOT ");
+				if(tree_format==true){
+					//res.append("(ROOT ");
+					res.append("("); res.append(root_id); res.append(" ");
+				}
 				for(int id=0; id < p_edge.get_ant_items().size();id++){
 					HGNode child = (HGNode)p_edge.get_ant_items().get(id);
 					VirtualItem virtual_child = kbest_extator.add_virtual_item(child);
@@ -423,10 +428,11 @@ public class KbestExtraction {
 			return res.toString();
 		}
 		
+		/*
 		//TODO: we assume at most one lm, and the LM is the only non-stateles model
 		//another potential difficulty in handling multiple LMs: symbol synchronization among the LMs
 		//accumulate deduction cost into model_cost[], used by get_hyp()
-		private void compute_cost(HyperEdge dt, double[] model_cost, ArrayList l_models){
+		private void compute_cost_not_used(HyperEdge dt, double[] model_cost, ArrayList l_models){
 			if(model_cost==null) return;
 			
 			//System.out.println("Rule is: " + dt.rule.toString());
@@ -453,29 +459,27 @@ public class KbestExtraction {
 			if(lm_model_index!=-1)//have lm model
 				model_cost[lm_model_index] += (dt.get_transition_cost(false)-stateless_transition_cost)/lm_model.getWeight();
 		}
+		*/
 		
-		/*
-		private void compute_cost(Deduction dt, double[] model_cost, ArrayList l_models){
+		
+		private void compute_cost(HyperEdge dt, double[] model_cost, ArrayList l_models){
 			if(model_cost==null) return;
-			ArrayList ants_states =null;
-			if(dt.get_ant_items()!=null){
-				ants_states = new ArrayList();
-				for(Item ant: dt.get_ant_items())
-					ants_states.add(ant.tbl_states);
-			}
 			//System.out.println("Rule is: " + dt.rule.toString());
+			
 			for(int k=0; k< l_models.size(); k++){
-				Model m = (Model) l_models.get(k);	
-				double t_res =0;					
-					if(dt.get_rule()!=null){//deductions under goal item do not have rules
-						HashMap  tem_tbl = m.transition(dt.get_rule(), ants_states, -1, -1, -1);
-						t_res = ((Double)tem_tbl.get(Symbol.TRANSITION_COST_SYM_ID)).doubleValue();
-					}else{//final transtion
-						t_res = m.finaltransition((HashMap)ants_states.get(0));
-					}
-					model_cost[k] += t_res;						
-			}
-		}*/
+				FeatureFunction m = (FeatureFunction) l_models.get(k);	
+				double t_res =0;
+							
+				if(dt.get_rule()!=null){//deductions under goal item do not have rules
+					FFTransitionResult tem_tbl =  HyperGraph.computeTransition(dt, m, -1, -1);
+					t_res = tem_tbl.getTransitionCost();
+				}else{//final transtion
+					t_res = HyperGraph.computeFinalTransition(dt, m);
+				}
+				model_cost[k] += t_res;
+			}			
+		}
+		
 		
 		//natual order by cost
 		public int compareTo(DerivationState another) throws ClassCastException {

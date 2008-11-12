@@ -18,6 +18,7 @@
 package joshua.decoder.ff;
 
 import joshua.decoder.ff.tm.Rule;
+import joshua.decoder.hypergraph.HyperEdge;
 
 import java.util.ArrayList; //// BUG: should be List but that causes bugs
 
@@ -63,7 +64,13 @@ public interface FeatureFunction {
 	 * (2) estimate future cost
 	 * (3) extract dynamical programming state
 	 * */
-	FFTransitionResult transition(Rule rule,	ArrayList<FFDPState> previous_states, int span_start, int span_end);
+	FFTransitionResult transition(Rule rule, ArrayList<FFDPState> previous_states, int span_start, int span_end);
+	
+	/*In general, it is quite possible that the edge is not created yet when this function is called. In this case, simply pass a null pointer*/
+	FFTransitionResult transition(HyperEdge edge, Rule rule, ArrayList<FFDPState> previous_states, int span_start, int span_end);
+	
 	
 	double finalTransition(FFDPState state);
+	/*In general, it is quite possible that the edge is not created yet when this function is called. In this case, simply pass a null pointer*/
+	double finalTransition(HyperEdge edge, FFDPState state);
 }

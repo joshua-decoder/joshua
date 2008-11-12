@@ -18,6 +18,9 @@
 package joshua.decoder.hypergraph;
 
 import joshua.decoder.Symbol;
+import joshua.decoder.ff.FFDPState;
+import joshua.decoder.ff.FFTransitionResult;
+import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.tm.Rule;
 
 import java.util.ArrayList;
@@ -119,13 +122,49 @@ public class HyperGraph {
 	
 	public static HyperEdge clone_deduction(HyperEdge dt_in){
 		ArrayList<HGNode> l_ant_items = null;
-		if (null != dt_in.l_ant_items) {
-			l_ant_items = new ArrayList<HGNode>(dt_in.l_ant_items);//l_ant_items will be changed in get_1best_tree_item
+		if (null != dt_in.get_ant_items()) {
+			l_ant_items = new ArrayList<HGNode>(dt_in.get_ant_items());//l_ant_items will be changed in get_1best_tree_item
 		}
-		HyperEdge res = new HyperEdge(dt_in.rule, dt_in.best_cost, dt_in.transition_cost, l_ant_items);
+		HyperEdge res = new HyperEdge(dt_in.get_rule(), dt_in.best_cost, dt_in.get_transition_cost(false), l_ant_items);
 		return res;
 	}
 	//###end
+	
+	
+	static public FFTransitionResult computeTransition(HyperEdge dt, FeatureFunction m, int start_span, int end_span){
+		return computeTransition(dt, dt.get_rule(), dt.get_ant_items(), m,  start_span,  end_span);
+	}
+	
+	static public FFTransitionResult computeTransition(HyperEdge dt, Rule rl,  ArrayList<HGNode> l_ant_hgnodes, FeatureFunction m, int start_span, int end_span){
+		FFTransitionResult res = null;
+		if(m.isStateful() == false){//stateless feature
+			res = m.transition(dt, rl, null, start_span, end_span);
+		}else{
+			ArrayList<FFDPState> previous_states = null;
+			if (l_ant_hgnodes != null) {
+				previous_states = new ArrayList<FFDPState>();
+				for (HGNode it : l_ant_hgnodes) {
+					previous_states.add( it.getFeatDPState(m) );
+				}
+			}
+			res = m.transition(dt, rl, previous_states, start_span, end_span);
+		}
+		if (null == res) {
+			logger.severe("compute_item: transition returned null state");
+			System.exit(0);
+		}
+		return res;
+	} 
+	
+	static public double computeFinalTransition(HyperEdge dt, FeatureFunction m){
+		double res = 0;
+		if(m.isStateful() == false){//stateless feature
+			res = m.finalTransition(dt, null);
+		}else{//stateful feature
+			res = m.finalTransition(dt, dt.get_ant_items().get(0).getFeatDPState(m));
+		}
+		return res;
+	} 
 	
 	
 	

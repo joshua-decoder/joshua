@@ -82,8 +82,8 @@ public class Rule {
 	   	this.french[0]  = fr_in;
 	   	this.english    = new int[1];
 	   	this.english[0] = fr_in;
-	   	feat_scores     = new float[num_feats];
-		lattice_cost	= 0;
+	   	this.feat_scores     = new float[num_feats];
+	   	this.lattice_cost	= 0;
 	}
 	
 	

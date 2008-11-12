@@ -104,6 +104,20 @@ public class JoshuaDecoder {
 //===============================================================
 //===============================================================
 	
+	/*this assumes that the weight_vector is ordered according to the decoder config file
+	 * */
+	public void changeFeatureWeightVector(double[] weight_vector){
+		if(p_l_feat_functions.size()!=weight_vector.length){
+			System.out.println("In updateFeatureWeightVector: number of weights does not match number of feature functions");
+			System.exit(0);
+		}
+		for(int i=0; i<p_l_feat_functions.size(); i++){
+			FeatureFunction ff = p_l_feat_functions.get(i);
+			double old_weight = ff.getWeight();
+			ff.putWeight(weight_vector[i]);
+			System.out.println("Feature function : " + ff.getClass().getSimpleName() + "; weight changed from " + old_weight + " to " + ff.getWeight());
+		}
+	}
 	
 //	##### procedures: read config, init lm, init sym tbl, init models, read lm, read tm
 	public void initializeDecoder(String config_file){
@@ -123,8 +137,8 @@ public class JoshuaDecoder {
 		//##### initialize the models(need to read config file again)
 		p_l_feat_functions = initializeFeatureFunctions(p_symbol, config_file);
 		
-		have_lm_model = haveLMFeature(p_l_feat_functions);//check to see if there is a LM feature
-		
+		have_lm_model = (haveLMFeature(p_l_feat_functions) !=null) ? true : false;//check to see if there is a LM feature
+		System.out.println("have lm model: " + have_lm_model);
 		//##### load TM grammar
 		if (! JoshuaConfiguration.use_sent_specific_tm) {
 			initializeTranslationGrammars(JoshuaConfiguration.tm_file);
@@ -265,14 +279,12 @@ public class JoshuaDecoder {
 		p_tm_grammars[1] = regularGrammar;
 	}
 	
-	private boolean haveLMFeature(ArrayList<FeatureFunction> l_models){
-		boolean res =false;
+	static public FeatureFunction haveLMFeature(ArrayList<FeatureFunction> l_models){
 		for(FeatureFunction ff : l_models){
 			if(ff instanceof LMFeatureFunction){
-				res= true;
-				break;
+				return ff;
 			}
 		}
-		return res;
+		return null;
 	}
 }

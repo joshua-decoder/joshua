@@ -26,8 +26,8 @@ public class MemoryBasedRule extends Rule {
 	 * transition cost for phrase model, arity penalty,
 	 * word penalty are all zero, except the LM cost
 	 */
-	public MemoryBasedRule(ArrayList<FeatureFunction> p_l_models, int oov_rule_id, int lhs_in, int fr_in, int owner_in, boolean have_lm_model) {
-		super(oov_rule_id, lhs_in, fr_in, owner_in, p_l_models.size());
+	public MemoryBasedRule(ArrayList<FeatureFunction> p_l_models, int num_feats, int oov_rule_id, int lhs_in, int fr_in, int owner_in, boolean have_lm_model) {
+		super(oov_rule_id, lhs_in, fr_in, owner_in, num_feats);
 
 	   	/**TODO
 	   	 * This is a hack to make the decoding without a LM works
@@ -52,11 +52,7 @@ public class MemoryBasedRule extends Rule {
 		this.lattice_cost = src_cost;
 		this.est_cost = est_cost;
 	}
-	public Rule cloneAndAddLatticeCostIfNonZero(float cost) {
-		if (cost == 0.0f) return this;
-		Rule r = new MemoryBasedRule(est_cost,rule_id, lhs, french, english, owner, feat_scores, arity, statelesscost, cost);
-		return r;
-	}
+	
 	
 	public MemoryBasedRule(Symbol p_symbol, ArrayList<FeatureFunction> p_l_models, String nonterminalRegexp_, String nonterminalReplaceRegexp_, int r_id, String line, int owner_in) {
 		this.rule_id = r_id;
@@ -105,6 +101,12 @@ public class MemoryBasedRule extends Rule {
 		
 		estimate_rule(p_l_models);//estimate lower-bound, and set statelesscost, this must be called
 
+	}
+	
+	public Rule cloneAndAddLatticeCostIfNonZero(float cost) {
+		if (cost == 0.0f) return this;
+		Rule r = new MemoryBasedRule(est_cost,rule_id, lhs, french, english, owner, feat_scores, arity, statelesscost, cost);
+		return r;
 	}
 	
 	public double getEstCost(){

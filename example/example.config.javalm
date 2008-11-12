@@ -43,6 +43,8 @@ remote_lm_server_port=9000
 num_parallel_decoders=1
 parallel_files_prefix=/tmp/
 
+#disk hg
+save_disk_hg=true
 
 ###### model weights
 #lm order weight

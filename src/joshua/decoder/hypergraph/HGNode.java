@@ -63,7 +63,7 @@ public class HGNode implements Comparable<HGNode> {
 	
 	//######### auxiluary variables, no need to store on disk
 	private String signature=null;//signature of this item: lhs, states
-	static String SIG_SEP = " -S- "; //seperator for state in signature
+	static String FF_SIG_SEP = " -f- "; //seperator for the signature for each feature function
 	
 	//######## for pruning purpose
 	public boolean is_dead=false;
@@ -92,7 +92,7 @@ public class HGNode implements Comparable<HGNode> {
 	public void add_deduction_in_item(HyperEdge dt){
 		if(l_deductions==null)l_deductions = new ArrayList<HyperEdge>();			
 		l_deductions.add(dt);
-		if(best_deduction==null || best_deduction.best_cost>dt.best_cost) best_deduction=dt;			
+		if(best_deduction==null || best_deduction.best_cost>dt.best_cost) best_deduction=dt;//no change when tied			
 	}
 	
 	public void add_deductions_in_item(ArrayList<HyperEdge> l_dt){
@@ -132,6 +132,7 @@ public class HGNode implements Comparable<HGNode> {
 	                Map.Entry entry = (Map.Entry)iter.next();
 	                FFDPState dpstate = (FFDPState)entry.getValue();
 	                signature_.append(dpstate.getSignature(false));
+	                if(iter.hasNext()) signature_.append(FF_SIG_SEP);
 				}
 			}
 			
@@ -168,5 +169,8 @@ public class HGNode implements Comparable<HGNode> {
 					return 1;
 				}
 			}
-		};
+	};
+	
+	
+
 }

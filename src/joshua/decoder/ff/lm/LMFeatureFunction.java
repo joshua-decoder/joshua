@@ -185,11 +185,7 @@ public class LMFeatureFunction extends DefaultStatefulFF {
 		
 		//##### get left euquiv state 
 		double[] lm_l_cost = new double[2];
-		int[] equiv_l_state = this.lmGrammar.get_left_equi_state(
-			Support.sub_int_array(
-				left_state_org_wrds, 0, left_state_org_wrds.size()),
-			this.ngramOrder,
-			lm_l_cost);
+		int[] equiv_l_state = this.lmGrammar.get_left_equi_state(Support.sub_int_array(left_state_org_wrds, 0, left_state_org_wrds.size()),	this.ngramOrder, lm_l_cost);
 		model_states.setLeftLMStateWords(equiv_l_state);
 		//System.out.println("left state: " + Symbol.get_string(equiv_l_state));
 		
@@ -208,10 +204,7 @@ public class LMFeatureFunction extends DefaultStatefulFF {
 		res_tbl.putFutureCostEstimation(estimated_future_cost);
 		//##### get right equiv state
 		//if(current_ngram.size()>this.ngramOrder-1 || equiv_l_state.length>this.ngramOrder-1)	System.exit(1);
-		int[] equiv_r_state = this.lmGrammar.get_right_equi_state(
-			Support.sub_int_array(current_ngram, 0, current_ngram.size()),
-			this.ngramOrder,
-			true);
+		int[] equiv_r_state = this.lmGrammar.get_right_equi_state(Support.sub_int_array(current_ngram, 0, current_ngram.size()), this.ngramOrder, true);
 		model_states.setRightLMStateWords(equiv_r_state);
 		//System.out.println("right state: " + Symbol.get_string(right_state));
 		

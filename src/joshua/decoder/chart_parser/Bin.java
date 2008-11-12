@@ -27,6 +27,7 @@ import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.RuleCollection;
 import joshua.decoder.hypergraph.HGNode;
 import joshua.decoder.hypergraph.HyperEdge;
+import joshua.decoder.hypergraph.HyperGraph;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -106,18 +107,7 @@ public class Bin
 			////long start2 = Support.current_time();
 			if (ff.isStateful()) {
 				//System.out.println("class name is " + ff.getClass().getName());
-				ArrayList<FFDPState> previous_states = null;
-				if (null != previous_items) {
-					previous_states = new ArrayList<FFDPState>();
-					for (HGNode it : previous_items) {
-						previous_states.add( it.getFeatDPState(ff) );
-					}
-				}
-				FFTransitionResult state = ff.transition(rule, previous_states, i, j);
-				if (null == state) {
-					logger.severe("compute_item: transition returned null state");
-					continue;
-				}
+				FFTransitionResult state =  HyperGraph.computeTransition(null, rule, previous_items, ff,  i,  j);
 				
 				transition_cost_sum	+= ff.getWeight() * state.getTransitionCost();
 				
@@ -179,10 +169,7 @@ public class Bin
 				ArrayList<HGNode> previous_items = new ArrayList<HGNode>();
 				previous_items.add(item);
 				
-				HyperEdge dt = new HyperEdge(
-					null,
-					cost + final_transition_cost,
-					final_transition_cost, previous_items);
+				HyperEdge dt = new HyperEdge(null, cost + final_transition_cost, final_transition_cost, previous_items);
 				
 				if (logger.isLoggable(Level.FINE)) {
 					logger.fine(String.format(
