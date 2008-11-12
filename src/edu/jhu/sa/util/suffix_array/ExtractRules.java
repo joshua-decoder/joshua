@@ -72,6 +72,9 @@ public class ExtractRules {
 			Option<Integer> maxPhraseLength = commandLine.addIntegerOption("maxPhraseLength","MAX_PHRASE_LENGTH",10, "Max phrase length");
 			Option<Integer> maxNonterminals = commandLine.addIntegerOption("maxNonterminals","MAX_NONTERMINALS",2, "Max nonterminals");
 
+			Option<Integer> cacheSize = commandLine.addIntegerOption("cache","CACHE",1000, "Max number of patterns for which to cache hierarchical phrases");
+
+			
 //			Option<String> target_given_source_counts = commandLine.addStringOption("target-given-source-counts","FILENAME","file containing co-occurence counts of source and target word pairs, sorted by source words");
 //			Option<String> source_given_target_counts = commandLine.addStringOption("source-given-target-counts","FILENAME","file containing co-occurence counts of target and source word pairs, sorted by target words");
 
@@ -96,6 +99,9 @@ public class ExtractRules {
 			// Lane - TODO -
 			//SuffixArray.INVERTED_INDEX_PRECOMPUTATION_MIN_FREQ = commandLine.getValue("CACHE_PRECOMPUTATION_FREQUENCY_THRESHOLD");
 
+			SuffixArray.CACHE_CAPACITY = commandLine.getValue(cacheSize);
+			if (logger.isLoggable(Level.FINE)) logger.fine("Suffix array will cache hierarchical phrases for at most " + SuffixArray.CACHE_CAPACITY + " patterns.");
+			
 			if (logger.isLoggable(Level.FINE)) logger.fine("Constructing source language vocabulary.");
 			String sourceFileName = commandLine.getValue(source);
 			Vocabulary sourceVocab = new Vocabulary();
@@ -161,8 +167,6 @@ public class ExtractRules {
 			Scanner testFileScanner = new Scanner(new File(commandLine.getValue(test)), commandLine.getValue(encoding));
 
 			int lineNumber = 0;
-			
-			SuffixArray.CACHE_CAPACITY = 1000;
 			
 			while (testFileScanner.hasNextLine()) {
 				String line = testFileScanner.nextLine();
