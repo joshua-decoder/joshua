@@ -237,6 +237,7 @@ public class MERT
 
     SentenceInfo.setMaxGramLength(maxGramLength);
     SentenceInfo.setNumParams(numParams);
+    SentenceInfo.createV(); // uncomment ONLY IF using vocabulary implementation of SentenceInfo
 
 
     refSentenceInfo = new SentenceInfo[numSentences][refsPerSen];
@@ -472,11 +473,11 @@ line format:
               // extract feature values
               // [0] will be |||, otherwise [i] will be feat-i_val
 
-            double[] featVal = new double[1+numParams];
+            float[] featVal = new float[1+numParams];
 
             //debugging version
             for (int c = 1; c <= numParams; ++c) {
-              featVal[c] = Double.parseDouble(featVal_str[c]);
+              featVal[c] = Float.parseFloat(featVal_str[c]);
               print("fV[" + c + "]=" + featVal[c] + " ",3);
             }
             println("",3);
@@ -1517,6 +1518,8 @@ line format:
 
     long usedCurr = usedMemBefore; long usedPrev = usedCurr;
 
+    // perform garbage collection repeatedly, until there is no decrease in
+    // the amount of used memory
     for (int i = 1; i <= 100; ++i) {
       myRuntime.runFinalization();
       myRuntime.gc();

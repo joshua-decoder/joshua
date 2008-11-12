@@ -29,12 +29,12 @@ public class ZeroOneLoss extends EvaluationMetric
   {
     double[] stats = new double[suffStatsCount];
 
-    String candSentence = cand.getSentence();
+    String candSentence = cand.toString();
 
     boolean matchFound = false;
 
     for (int r = 0; r < refsPerSen; ++r) {
-      if (candSentence.equals(refSentenceInfo[i][r].getSentence())) {
+      if (candSentence.equals(refSentenceInfo[i][r].toString())) {
         matchFound = true;
         break;
       }
