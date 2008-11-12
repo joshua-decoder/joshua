@@ -102,7 +102,7 @@ public class ExtractRules {
 			int[] sourceWordsSentences = SuffixArrayFactory.createVocabulary(sourceFileName, sourceVocab);
 			if (logger.isLoggable(Level.FINE)) logger.fine("Constructing source language corpus array.");
 			CorpusArray sourceCorpusArray = SuffixArrayFactory.createCorpusArray(sourceFileName, sourceVocab, sourceWordsSentences[0], sourceWordsSentences[1]);
-			if (logger.isLoggable(Level.FINE)) logger.fine("Constructing source language suffix arra.");
+			if (logger.isLoggable(Level.FINE)) logger.fine("Constructing source language suffix array.");
 			SuffixArray sourceSuffixArray = SuffixArrayFactory.createSuffixArray(sourceCorpusArray);
 
 			if (logger.isLoggable(Level.FINE)) logger.fine("Constructing target language vocabulary.");		

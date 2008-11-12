@@ -327,7 +327,7 @@ public class SuffixArray implements Corpus {
 			Arrays.sort(startPositions);
 			int length = pattern.size();
 			ArrayList<HierarchicalPhrase> hierarchicalPhrases = new ArrayList<HierarchicalPhrase>(startPositions.length);
-			int step = (length<sampleSize) ? 1 : length / sampleSize;
+			int step = (startPositions.length<sampleSize) ? 1 : startPositions.length / sampleSize;
 			for(int i = 0; i < startPositions.length; i+=step) { 
 				int[] position = {startPositions[i]};
 				int[] endPosition = {startPositions[i] + length};
