@@ -85,14 +85,12 @@ public class JoshuaDecoder {
 		//############ Step-1: initialize the decoder ########		
 		p_decoder.initializeDecoder(config_file);
 		
-		double[] new_weights = new double[5];
-		new_weights[0] =1;
-		new_weights[1] =1;
-		new_weights[2] =1;
-		new_weights[3] =1;
-		new_weights[4] =1;
+		/* debug
+		double[] weights = new double[5];
+		weights[0]=1;weights[1]=1;weights[2]=1;weights[3]=1;weights[4]=1;
+		p_decoder.changeFeatureWeightVector(weights);
+		*/
 		
-		p_decoder.changeFeatureWeightVector(new_weights);
 		//###### statistics
 		double t_sec = (System.currentTimeMillis() - start) / 1000;
 		if (logger.isLoggable(Level.INFO)) 
@@ -118,7 +116,7 @@ public class JoshuaDecoder {
 		if(p_l_feat_functions.size()!=weight_vector.length){
 			System.out.println("In updateFeatureWeightVector: number of weights does not match number of feature functions");
 			System.exit(0);
-		}
+		}		
 		for(int i=0; i<p_l_feat_functions.size(); i++){
 			FeatureFunction ff = p_l_feat_functions.get(i);
 			double old_weight = ff.getWeight();

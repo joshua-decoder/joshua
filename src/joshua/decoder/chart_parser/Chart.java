@@ -115,7 +115,7 @@ public class Chart {
 		ArrayList<Integer>         default_nonterminals,
 		String untranslated_owner_,
 		boolean have_lm_model
-	) {
+	) {	
 //		public Chart(int[] sentence_in, ArrayList<FeatureFunction> models, int sent_id1) {   
 		this.sentence = sentence_;
 		//this.sent_len = sentence.length;

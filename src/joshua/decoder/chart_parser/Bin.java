@@ -81,7 +81,7 @@ public class Bin
 	}
 	
 	
-	//TODO reply on the correctness of rule.statelesscost
+	
 	/*compute cost and the states of this item
 	 *returned ArrayList: expected_total_cost, finalized_total_cost, transition_cost, bonus, list of states*/
 	
@@ -125,16 +125,24 @@ public class Bin
 						+ "\n* checks invariant conditions before then."
 						+ "\n*"
 						+ "\n* Good luck tracking it down\n");
+					System.exit(0);
 				}
-				
-			/*// TODO: future cost estimation is zero
 			} else {
+				FFTransitionResult state =  HyperGraph.computeTransition(null, rule, previous_items, ff,  i,  j);
+				transition_cost_sum	+= ff.getWeight() * state.getTransitionCost();
+				
 				future_cost_estimation += 0.0;
-			//*/
 			}
 			////ff.time_consumed += Support.current_time() - start2;
 		}
-		transition_cost_sum  += rule.getStatelessCost();
+		
+		/*if we use this one (instead of compute transition cost on the fly, we will rely on the correctness of rule.statelesscost. This will cause a nasty bug for MERT.
+		 * specifically, even we change the weight vector for features along the iteration, the HG cost does not reflect that as the Grammar is not reestimated!!!
+		 * Of course, compute it on the fly will slow down the decoding (e.g., from 5 seconds to 6 seconds, for the example test set)
+		*/
+		//transition_cost_sum  += rule.getStatelessCost();
+		
+		
 		finalized_total_cost += transition_cost_sum;
 		double expected_total_cost = finalized_total_cost + future_cost_estimation;
 		
