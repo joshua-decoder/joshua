@@ -165,7 +165,7 @@ public class KbestExtraction {
 			if (Math.abs(cur.cost - tem_sum) > 1e-2) {
 				System.out.println("In nbest extraction, Cost does not match; cur.cost: " + cur.cost + "; temsum: " +tem_sum);
 				for (int k = 0; k < model_cost.length; k++) {
-					System.out.println(model_cost[k]);
+					System.out.println("model weight: " + l_models.get(k).getWeight() + "; cost: " +model_cost[k]);
 				}
 				System.exit(1);
 			}

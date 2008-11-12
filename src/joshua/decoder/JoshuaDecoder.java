@@ -84,7 +84,15 @@ public class JoshuaDecoder {
 		
 		//############ Step-1: initialize the decoder ########		
 		p_decoder.initializeDecoder(config_file);
-				
+		
+		double[] new_weights = new double[5];
+		new_weights[0] =1;
+		new_weights[1] =1;
+		new_weights[2] =1;
+		new_weights[3] =1;
+		new_weights[4] =1;
+		
+		p_decoder.changeFeatureWeightVector(new_weights);
 		//###### statistics
 		double t_sec = (System.currentTimeMillis() - start) / 1000;
 		if (logger.isLoggable(Level.INFO)) 
