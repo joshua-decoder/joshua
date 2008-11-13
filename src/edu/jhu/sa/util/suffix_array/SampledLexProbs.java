@@ -218,6 +218,34 @@ public class SampledLexProbs implements LexicalProbabilities {
 	 * <p>
 	 * This method does NOT currently handle NULL aligned points 
 	 * according to Koehn et al (2003). This may change in future releases.
+	 * <p>
+	 * The problem arises when we need to calculate the word-to-word lexical weights
+	 * using the sourceGivenTarget and targetGivenSource methods
+	 * (actual calculations occur in calculateSourceGivenTarget and calculateTargetGivenSource).
+	 * <p>
+	 * Let's say we want to calculate P(s14 | t75). 
+	 * (s14 is a source word, t75 is a target word)
+	 * We call sourceGivenTarget and see that we haven't calculated
+	 * the map for P(? | t75), so we call calculateSourceGivenTarget(t75).
+	 * <p>
+	 * The calculateSourceGivenTarget method looks up 
+	 * all instances of t75 in the target suffix array.
+	 * It then samples some of those instances and 
+	 * looks up the aligned source word(s) for each sampled target word.
+	 * Based on that, probabilities are calculated and stored.
+	 * <p>
+	 * Now, what happens if instead of t75, we have NULL?
+	 * <p>
+	 * The calculateSourceGivenTarget cannot look up all instances 
+	 * of NULL in the target suffix array. This is a problem.
+	 * <p>
+	 * We have access to all the information we need 
+	 * to calculate null lexical translation probabilities.
+	 * But, this would probably be best done as a pre-process.
+	 * <p>
+	 * One possible solution would be to have a pre-process 
+	 * that steps through each line in the alignment array 
+	 * to find null alignment points and calculates null probabilities at that point.
 	 * 
 	 * @param sourcePhrase
 	 * @return the lexical probability and reverse lexical probability
@@ -225,7 +253,7 @@ public class SampledLexProbs implements LexicalProbabilities {
 	public Pair<Float,Float> calculateLexProbs(HierarchicalPhrase sourcePhrase) {
 		
 		//XXX We are not handling NULL aligned points according to Koehn et al (2003)
-		
+	
 		float sourceGivenTarget = 1.0f;
 		
 		Map<Integer,List<Integer>> reverseAlignmentPoints = new HashMap<Integer,List<Integer>>(); 
