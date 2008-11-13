@@ -9,6 +9,7 @@ import java.util.Scanner;
 import java.util.Set;
 
 import joshua.util.lexprob.LexProbs;
+import joshua.util.lexprob.LexicalProbabilities;
 import joshua.util.sentence.Vocabulary;
 
 
@@ -32,7 +33,7 @@ public class PrefixTreeAdvancedTest {
 	SuffixArray suffixArray;
 	AlignmentArray alignments;
 	CorpusArray targetCorpusArray;
-	LexProbs lexProbs;
+	LexicalProbabilities lexProbs;
 
 	@Test
 	public void setup() {
@@ -101,6 +102,8 @@ public class PrefixTreeAdvancedTest {
 			int[][] alignedTargetIndices = new int[corpusSentence.size()][];
 			int[][] alignedSourceIndices = new int[targetCorpusSentence.size()][];
 			
+			
+			
 			{
 				for (int i=0; i<18; i++) {
 					lowestAlignedTargetIndex[i] = i;
@@ -124,6 +127,7 @@ public class PrefixTreeAdvancedTest {
 		}
 		
 		{
+			/*
 			String targetGivenSourceCounts =
 				"   1 , ," + "\n" +
 				"   1 . ." + "\n" +
@@ -154,8 +158,15 @@ public class PrefixTreeAdvancedTest {
 			
 			Scanner sourceGivenTarget = new Scanner(sourceGivenTargetCounts);
 			Scanner targetGivenSource = new Scanner(targetGivenSourceCounts);
-			
-			lexProbs = new LexProbs(sourceGivenTarget, targetGivenSource, sourceVocab, targetVocab);
+			*/
+			String alignmentString = "0-0 1-1 2-2 3-3 4-4 5-5 6-6 7-7 8-8 9-9 10-10 11-11 12-12 13-13 14-14 15-15 16-16 17-17";
+		
+			try {
+				lexProbs = SampledLexProbs.getSampledLexProbs(corpusString, targetCorpusString, alignmentString);
+			} catch (IOException e) {
+				Assert.fail("Unable to initialize lexprobs");
+			}
+		//	lexProbs = new LexProbs(sourceGivenTarget, targetGivenSource, sourceVocab, targetVocab);
 		}
 	}
 	

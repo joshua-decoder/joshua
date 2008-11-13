@@ -17,10 +17,17 @@
  */
 package edu.jhu.sa.util.suffix_array;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
+import joshua.util.Pair;
 import joshua.util.lexprob.LexicalProbabilities;
 import joshua.util.sentence.Vocabulary;
 
@@ -45,6 +52,10 @@ public class SampledLexProbs implements LexicalProbabilities {
 	private final SuffixArray sourceSuffixArray;
 	private final SuffixArray targetSuffixArray;
 	
+	/** Corpus array representing the target language corpus. */
+	final CorpusArray targetCorpus; 
+	
+	/** Represents alignments between words in the source corpus and the target corpus. */
 	private final AlignmentArray alignments;
 	
 	private final Vocabulary sourceVocab;
@@ -59,6 +70,7 @@ public class SampledLexProbs implements LexicalProbabilities {
 		this.sampleSize = sampleSize;
 		this.sourceSuffixArray = sourceSuffixArray;
 		this.targetSuffixArray = targetSuffixArray;
+		this.targetCorpus = targetSuffixArray.corpus;
 		this.alignments = alignments;
 		this.sourceVocab = sourceSuffixArray.getVocabulary();
 		this.targetVocab = targetSuffixArray.getVocabulary();
@@ -79,6 +91,59 @@ public class SampledLexProbs implements LexicalProbabilities {
 		
 	}
 	
+	/**
+	 * For unit testing.
+	 * 
+	 * @param sourceCorpusString
+	 * @param targetCorpusString
+	 * @param alignmentString
+	 * @return
+	 * @throws IOException
+	 */
+	static SampledLexProbs getSampledLexProbs(String sourceCorpusString, String targetCorpusString, String alignmentString) throws IOException {
+
+		String sourceFileName;
+		{
+			File sourceFile = File.createTempFile("source", new Date().toString());
+			PrintStream sourcePrintStream = new PrintStream(sourceFile);
+			sourcePrintStream.println(sourceCorpusString);
+			sourcePrintStream.close();
+			sourceFileName = sourceFile.getAbsolutePath();
+		}
+	
+		String targetFileName;
+		{
+			File targetFile = File.createTempFile("target", new Date().toString());
+			PrintStream targetPrintStream = new PrintStream(targetFile);
+			targetPrintStream.println(targetCorpusString);
+			targetPrintStream.close();
+			targetFileName = targetFile.getAbsolutePath();
+		}
+		
+		String alignmentFileName;
+		{
+			File alignmentFile = File.createTempFile("alignment", new Date().toString());
+			PrintStream alignmentPrintStream = new PrintStream(alignmentFile);
+			alignmentPrintStream.println(alignmentString);
+			alignmentPrintStream.close();
+			alignmentFileName = alignmentFile.getAbsolutePath();
+		}
+		
+		Vocabulary sourceVocab = new Vocabulary();
+		int[] sourceWordsSentences = SuffixArrayFactory.createVocabulary(sourceFileName, sourceVocab);
+		CorpusArray sourceCorpusArray = SuffixArrayFactory.createCorpusArray(sourceFileName, sourceVocab, sourceWordsSentences[0], sourceWordsSentences[1]);
+		SuffixArray sourceSuffixArray = SuffixArrayFactory.createSuffixArray(sourceCorpusArray);
+
+		Vocabulary targetVocab = new Vocabulary();
+		int[] targetWordsSentences = SuffixArrayFactory.createVocabulary(targetFileName, targetVocab);
+		CorpusArray targetCorpusArray = SuffixArrayFactory.createCorpusArray(targetFileName, targetVocab, targetWordsSentences[0], targetWordsSentences[1]);
+		SuffixArray targetSuffixArray = SuffixArrayFactory.createSuffixArray(targetCorpusArray);
+
+		AlignmentArray alignmentArray = SuffixArrayFactory.createAlignmentArray(alignmentFileName, sourceSuffixArray, targetSuffixArray);
+
+		return new SampledLexProbs(Integer.MAX_VALUE, sourceSuffixArray, targetSuffixArray, alignmentArray, false);
+		
+	}
 	
 	/**
 	 * 
@@ -147,12 +212,107 @@ public class SampledLexProbs implements LexicalProbabilities {
 	}
 
 	
+	/**
+	 * Calculates the lexical translation probabilities (in both directions) 
+	 * for a specific instance of a source phrase in the corpus.
+	 * <p>
+	 * This method does NOT currently handle NULL aligned points 
+	 * according to Koehn et al (2003). This may change in future releases.
+	 * 
+	 * @param sourcePhrase
+	 * @return the lexical probability and reverse lexical probability
+	 */
+	public Pair<Float,Float> calculateLexProbs(HierarchicalPhrase sourcePhrase) {
+		
+		//XXX We are not handling NULL aligned points according to Koehn et al (2003)
+		
+		float sourceGivenTarget = 1.0f;
+		
+		Map<Integer,List<Integer>> reverseAlignmentPoints = new HashMap<Integer,List<Integer>>(); 
+		
+		// Iterate over each terminal sequence in the source phrase
+		for (int seq=0; seq<sourcePhrase.terminalSequenceStartIndices.length; seq++) {
+			
+			// Iterate over each source index in the current terminal sequence
+			for (int sourceWordIndex=sourcePhrase.terminalSequenceStartIndices[seq]; 
+					sourceWordIndex<sourcePhrase.terminalSequenceEndIndices[seq]; 
+					sourceWordIndex++) {
+				
+				float sum = 0.0f;
+				
+				int sourceWord = sourceSuffixArray.corpus.corpus[sourceWordIndex];
+				int[] targetIndices = alignments.alignedTargetIndices[sourceWordIndex];
+				
+				if (targetIndices==null) {
+					
+					//float sourceGivenNullAlignment = sourceGivenTarget(sourceWord, null);
+					//sourceGivenTarget *= sourceGivenNullAlignment;
+					
+					//throw new RuntimeException("No alignments for source word at index " + sourceWordIndex);
+					
+				} else {
+					// Iterate over each target index aligned to the current source word
+					for (int targetIndex : targetIndices) {
+
+						int targetWord = targetCorpus.corpus[targetIndex];
+						sum += sourceGivenTarget(sourceWord, targetWord);
+
+						// Keeping track of the reverse alignment points (we need to do this convoluted step because we don't actually have a HierarchicalPhrase for the target side)
+						if (!reverseAlignmentPoints.containsKey(targetIndex)) {
+							reverseAlignmentPoints.put(targetIndex, new ArrayList<Integer>());
+						}
+						reverseAlignmentPoints.get(targetIndex).add(sourceWord);
+
+					}
+
+					float average = sum / targetIndices.length;
+					sourceGivenTarget *= average;
+				}
+			}
+			
+		}
+		
+		float targetGivenSource = 1.0f;
+		
+		// Actually calculate the reverse lexical translation probabilities
+		for (Map.Entry<Integer, List<Integer>> entry : reverseAlignmentPoints.entrySet()) {
+			
+			int targetWord = targetCorpus.corpus[entry.getKey()];
+			float sum = 0.0f;
+			
+			List<Integer> alignedSourceWords = entry.getValue();
+			
+			for (int sourceWord : alignedSourceWords) {
+				sum += targetGivenSource(targetWord, sourceWord);
+			}
+			
+			targetGivenSource *= (sum / alignedSourceWords.size());
+		}
+		
+		if (sourceGivenTarget <= floorProbability) {
+			sourceGivenTarget =  floorProbability;
+		}
+		
+		if (targetGivenSource <= floorProbability) {
+			targetGivenSource =  floorProbability;
+		}
+		
+//		if (sourceGivenTarget==0.0f || targetGivenSource==0.0f) {
+//			int x = 1;
+//			x++;
+//		}
+		
+		return new Pair<Float,Float>(sourceGivenTarget,targetGivenSource);
+	}
+	
+	
+	
 	private void calculateSourceGivenTarget(Integer targetWord) {
 
 		Map<Integer,Integer> counts = new HashMap<Integer,Integer>();
 		
 		int[] targetSuffixArrayBounds = targetSuffixArray.findPhrase(new BasicPhrase(targetVocab, targetWord));
-		int step = (targetSuffixArrayBounds[1]-targetSuffixArrayBounds[0]<sampleSize) ? 1 : targetSuffixArrayBounds[1]-targetSuffixArrayBounds[0] / sampleSize;
+		int step = (targetSuffixArrayBounds[1]-targetSuffixArrayBounds[0]<sampleSize) ? 1 : (targetSuffixArrayBounds[1]-targetSuffixArrayBounds[0]) / sampleSize;
 		
 		float total = 0;
 		
@@ -225,6 +385,10 @@ public class SampledLexProbs implements LexicalProbabilities {
 		Map<Integer,Float> targetProbs = new HashMap<Integer,Float>();
 		for (Map.Entry<Integer,Integer> entry : counts.entrySet()) {
 			targetProbs.put(entry.getKey(), entry.getValue()/total);
+			if (entry.getValue()/total <= floorProbability) {
+				int q = 1;
+				q++;
+			}
 		}
 		targetGivenSource.put(sourceWord, targetProbs);
 		

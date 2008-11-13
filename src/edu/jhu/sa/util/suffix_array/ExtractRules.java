@@ -153,7 +153,7 @@ public class ExtractRules {
 
 			if (logger.isLoggable(Level.FINE)) logger.fine("Constructing lexical probabilities table");
 
-			LexicalProbabilities lexProbs = 
+			SampledLexProbs lexProbs = 
 				new SampledLexProbs(commandLine.getValue(lexSampleSize), sourceSuffixArray, targetSuffixArray, alignmentArray, false);
 			//new LexProbs(source_given_target, target_given_source, sourceVocab, targetVocab);
 

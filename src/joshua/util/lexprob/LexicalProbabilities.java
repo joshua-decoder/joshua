@@ -1,5 +1,8 @@
 package joshua.util.lexprob;
 
+import joshua.util.Pair;
+import edu.jhu.sa.util.suffix_array.HierarchicalPhrase;
+
 /**
  * Represents lexical probability distributions in both directions.
  * 
@@ -39,5 +42,7 @@ public interface LexicalProbabilities {
 	 * @return
 	 */
 	public float targetGivenSource(String targetWord, String sourceWord);
+
+	public Pair<Float, Float> calculateLexProbs(HierarchicalPhrase sourcePhrase);
 	
 }

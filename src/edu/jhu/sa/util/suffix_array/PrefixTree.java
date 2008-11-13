@@ -137,6 +137,7 @@ public class PrefixTree {
 	
 	/** Lexical translation probabilities. */
 	final LexicalProbabilities lexProbs;
+	//final LexicalProbabilities lexProbs;
 	
 	
 	
@@ -1344,7 +1345,7 @@ public class PrefixTree {
 				Pattern translation = getTranslation(sourcePhrase);
 				if (translation != null) {
 					translations.add(translation);
-					lexProbsList.add(calculateLexProbs(sourcePhrase));
+					lexProbsList.add(lexProbs.calculateLexProbs(sourcePhrase));
 				}
 			}
 
@@ -1646,85 +1647,6 @@ public class PrefixTree {
 			
 			return null;
 			//throw new Error("Bug in translation code");
-		}
-		
-		/**
-		 * Calculates the lexical translation probabilities (in both directions) 
-		 * for a specific instance of a source phrase in the corpus.
-		 *  
-		 * @param sourcePhrase
-		 * @return the lexical probability and reverse lexical probability
-		 */
-		private Pair<Float,Float> calculateLexProbs(HierarchicalPhrase sourcePhrase) {
-			
-			//TODO It may be that this method should be in the LexProbs or HierarchicalPhrase class
-			//     Unfortunately, moving it means that we will have to use accessor methods
-			//     instead of having direct access to member variables (because LexProbs is in a different package).
-			//     We would also have to store suffixArray, corpusArray, and alignments in the other class.
-			
-			//XXX We are not handling NULL aligned points according to Koehn et al (2003)
-			
-			float sourceGivenTarget = 1.0f;
-			
-			Map<Integer,List<Integer>> reverseAlignmentPoints = new HashMap<Integer,List<Integer>>(); 
-			
-			// Iterate over each terminal sequence in the source phrase
-			for (int seq=0; seq<sourcePhrase.terminalSequenceStartIndices.length; seq++) {
-				
-				// Iterate over each source index in the current terminal sequence
-				for (int sourceWordIndex=sourcePhrase.terminalSequenceStartIndices[seq]; 
-						sourceWordIndex<sourcePhrase.terminalSequenceEndIndices[seq]; sourceWordIndex++) {
-					
-					float sum = 0.0f;
-					
-					int sourceWord = suffixArray.corpus.corpus[sourceWordIndex];
-					int[] targetIndices = alignments.alignedTargetIndices[sourceWordIndex];
-					
-					if (targetIndices==null) {
-						
-						//float sourceGivenNullAlignment = lexProbs.sourceGivenTarget(sourceWord, null);
-						//sourceGivenTarget *= sourceGivenNullAlignment;
-						
-					} else {
-						// Iterate over each target index aligned to the current source word
-						for (int targetIndex : targetIndices) {
-
-							int targetWord = targetCorpus.corpus[targetIndex];
-							sum += lexProbs.sourceGivenTarget(sourceWord, targetWord);
-
-							// Keeping track of the reverse alignment points (we need to do this convoluted step because we don't actually have a HierarchicalPhrase for the target side)
-							if (!reverseAlignmentPoints.containsKey(targetIndex)) {
-								reverseAlignmentPoints.put(targetIndex, new ArrayList<Integer>());
-							}
-							reverseAlignmentPoints.get(targetIndex).add(sourceWord);
-
-						}
-
-						float average = sum / targetIndices.length;
-						sourceGivenTarget *= average;
-					}
-				}
-				
-			}
-			
-			float targetGivenSource = 1.0f;
-			
-			// Actually calculate the reverse lexical translation probabilities
-			for (Map.Entry<Integer, List<Integer>> entry : reverseAlignmentPoints.entrySet()) {
-				
-				int targetWord = targetCorpus.corpus[entry.getKey()];
-				float sum = 0.0f;
-				
-				List<Integer> alignedSourceWords = entry.getValue();
-				
-				for (int sourceWord : alignedSourceWords) {
-					sum += lexProbs.targetGivenSource(targetWord, sourceWord);
-				}
-				
-				targetGivenSource *= (sum / alignedSourceWords.size());
-			}
-			
-			return new Pair<Float,Float>(sourceGivenTarget,targetGivenSource);
 		}
 		
 		
