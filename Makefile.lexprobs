@@ -38,7 +38,7 @@ $(BASEDIR)/$(CORPUS).$(SRC)-$(TGT).aligned-word-pairs-counts.$(TGT)-$(SRC).gz: $
 
 # Extract rule set
 $(BASEDIR)/$(CORPUS).$(SRC)-$(TGT).rules: $(BASEDIR)/$(CORPUS).$(SRC) $(BASEDIR)/$(CORPUS).$(TGT) $(BASEDIR)/$(CORPUS).$(SRC)-$(TGT).aligned-word-pairs-counts.$(SRC)-$(TGT).gz $(BASEDIR)/$(CORPUS).$(SRC)-$(TGT).alignment $(BASEDIR)/$(CORPUS).$(SRC)-$(TGT).aligned-word-pairs-counts.$(TGT)-$(SRC).gz
-	java $(LOG) $(MEM) -cp bin edu.jhu.sa.util.suffix_array.ExtractRules --source=$(BASEDIR)/$(CORPUS).$(SRC) --target=$(BASEDIR)/$(CORPUS).$(TGT) --alignments=$(BASEDIR)/$(CORPUS).$(SRC)-$(TGT).alignment --test=$(BASEDIR)/$(CORPUS).$(SRC) --maxPhraseLength=$(MAXPHRASELENGTH) --output=$(BASEDIR)/$(CORPUS).$(SRC)-$(TGT).rules
+	java $(LOG) $(MEM) -cp bin joshua.sarray.ExtractRules --source=$(BASEDIR)/$(CORPUS).$(SRC) --target=$(BASEDIR)/$(CORPUS).$(TGT) --alignments=$(BASEDIR)/$(CORPUS).$(SRC)-$(TGT).alignment --test=$(BASEDIR)/$(CORPUS).$(SRC) --maxPhraseLength=$(MAXPHRASELENGTH) --output=$(BASEDIR)/$(CORPUS).$(SRC)-$(TGT).rules
 #--target-given-source-counts=$(BASEDIR)/$(CORPUS).$(SRC)-$(TGT).aligned-word-pairs-counts.$(SRC)-$(TGT).gz --source-given-target-counts=$(BASEDIR)/$(CORPUS).$(SRC)-$(TGT).aligned-word-pairs-counts.$(TGT)-$(SRC).gz 
 
 

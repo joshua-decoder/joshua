@@ -18,21 +18,21 @@
 
   <test name="Pattern" >
     <classes>
-       <class name="edu.jhu.sa.util.suffix_array.PatternTest" />    
+       <class name="joshua.sarray.PatternTest" />    
     </classes>
   </test>
 
   <test name="AlignmentArray" >
     <classes>
-       <class name="edu.jhu.sa.util.suffix_array.AlignmentArrayTest" />    
+       <class name="joshua.sarray.AlignmentArrayTest" />    
     </classes>
   </test>
 
   <test name="PrefixTree" >
     <classes>
-       <class name="edu.jhu.sa.util.suffix_array.PrefixTreeTest" />
-       <class name="edu.jhu.sa.util.suffix_array.PrefixTreeAdvancedTest" />
-       <class name="edu.jhu.sa.util.suffix_array.SampledLexProbsTest" />
+       <class name="joshua.sarray.PrefixTreeTest" />
+       <class name="joshua.sarray.PrefixTreeAdvancedTest" />
+       <class name="joshua.sarray.SampledLexProbsTest" />
        <class name="joshua.util.lexprob.LexProbsTest" />    
     </classes>
   </test>
@@ -41,15 +41,15 @@
     <test name="Vocab" >
     <classes>
        <class name="joshua.util.sentence.VocabularyTest" />  
-       <class name="edu.jhu.sa.util.suffix_array.CorpusArrayTest" />  
+       <class name="joshua.sarray.CorpusArrayTest" />  
     </classes>
   </test>
 
 
   <test name="SuffixArray" >
     <classes>
-       <class name="edu.jhu.sa.util.suffix_array.SuffixArrayTest" /> 
-       <class name="edu.jhu.sa.util.suffix_array.ExtractRules" />    
+       <class name="joshua.sarray.SuffixArrayTest" /> 
+       <class name="joshua.sarray.ExtractRules" />    
     </classes>
   </test>
 

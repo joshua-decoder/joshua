@@ -1,7 +1,7 @@
 package joshua.util.lexprob;
 
+import joshua.sarray.HierarchicalPhrase;
 import joshua.util.Pair;
-import edu.jhu.sa.util.suffix_array.HierarchicalPhrase;
 
 /**
  * Represents lexical probability distributions in both directions.

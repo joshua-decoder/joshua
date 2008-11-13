@@ -28,6 +28,8 @@ import java.util.Scanner;
 
 //import joshua.util.CommandLineParser;
 //import joshua.util.CommandLineParser.Option;
+import joshua.sarray.FileUtil;
+import joshua.sarray.HierarchicalPhrase;
 import joshua.util.Pair;
 import joshua.util.sentence.Vocabulary;
 
@@ -42,8 +44,6 @@ import com.sleepycat.je.EnvironmentConfig;
 import com.sleepycat.je.LockMode;
 import com.sleepycat.je.OperationStatus;
 
-import edu.jhu.sa.util.suffix_array.FileUtil;
-import edu.jhu.sa.util.suffix_array.HierarchicalPhrase;
 
 /**
  * Lexical translation probability distribution, stored as a Berkeley DB JE database.

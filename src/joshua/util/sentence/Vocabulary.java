@@ -21,8 +21,9 @@ package joshua.util.sentence;
 import java.io.IOException;
 import java.util.*;
 
-import edu.jhu.sa.util.suffix_array.BasicPhrase;
-import edu.jhu.sa.util.suffix_array.SuffixArrayFactory;
+import joshua.sarray.BasicPhrase;
+import joshua.sarray.SuffixArrayFactory;
+
 
 /**
  * Vocabulary is the class that keeps track of the unique words

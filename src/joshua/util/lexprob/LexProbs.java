@@ -23,8 +23,8 @@ import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import edu.jhu.sa.util.suffix_array.HierarchicalPhrase;
 
+import joshua.sarray.HierarchicalPhrase;
 import joshua.util.Pair;
 import joshua.util.sentence.Vocabulary;
 
