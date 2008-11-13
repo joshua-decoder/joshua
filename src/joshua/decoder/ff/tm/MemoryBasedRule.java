@@ -8,6 +8,9 @@ import joshua.decoder.Symbol;
 import joshua.decoder.ff.FeatureFunction;
 
 
+/* Normally, the feature score in the grammar should be *cost*, so that the feature weight should be positive
+ * */
+
 public class MemoryBasedRule extends Rule {
 	/** 
 	 * estimate_cost depends on rule itself, nothing

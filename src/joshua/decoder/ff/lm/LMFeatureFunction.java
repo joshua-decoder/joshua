@@ -39,6 +39,11 @@ import java.util.ArrayList;
  */
 
 
+
+/*Note: the LMGrammar returns LogP; while the LMFeatureFunction needs to return cost (i.e., -LogP)
+ * */
+
+
 public class LMFeatureFunction extends DefaultStatefulFF {
 	static String START_SYM="<s>";
 	public  int START_SYM_ID;
@@ -168,8 +173,7 @@ public class LMFeatureFunction extends DefaultStatefulFF {
 				current_ngram.add(c_id);
 				if (current_ngram.size() == this.ngramOrder) {
 					// compute the current word probablity, and remove it
-					transition_cost -= this.lmGrammar.get_prob(
-						current_ngram, this.ngramOrder, true);
+					transition_cost -= this.lmGrammar.get_prob(current_ngram, this.ngramOrder, true);
 					
 					current_ngram.remove(0);
 				}
@@ -219,15 +223,12 @@ public class LMFeatureFunction extends DefaultStatefulFF {
 		}
 		if (consider_incomplete_ngrams == true) {
 			if (skip_start == true) {
-				return -this.lmGrammar.score_a_sent(
-					words, this.ngramOrder, 2);
+				return -this.lmGrammar.score_a_sent(words, this.ngramOrder, 2);
 			} else {
-				return -this.lmGrammar.score_a_sent(
-					words, this.ngramOrder, 1);
+				return -this.lmGrammar.score_a_sent(words, this.ngramOrder, 1);
 			}
 		} else {
-			return -this.lmGrammar.score_a_sent(
-				words, this.ngramOrder, this.ngramOrder);
+			return -this.lmGrammar.score_a_sent(words, this.ngramOrder, this.ngramOrder);
 		}
 	}
 	
@@ -332,12 +333,10 @@ public class LMFeatureFunction extends DefaultStatefulFF {
 			if (t == lmGrammar.BACKOFF_LEFT_LM_STATE_SYM_ID) {//calculate cost for <bo>: additional backoff weight
 				int additional_backoff_weight = current_ngram.size() - (i+1);
 				//compute additional backoff weight
-				res -= this.lmGrammar.get_prob_backoff_state(
-					current_ngram, current_ngram.size(), additional_backoff_weight);
+				res -= this.lmGrammar.get_prob_backoff_state(current_ngram, current_ngram.size(), additional_backoff_weight);
 			} else {//partial ngram
 				//compute the current word probablity
-				res -= this.lmGrammar.get_prob(
-					current_ngram, current_ngram.size(), false);
+				res -= this.lmGrammar.get_prob(current_ngram, current_ngram.size(), false);
 			}
 			if (current_ngram.size() == this.ngramOrder) {
 				current_ngram.remove(0);

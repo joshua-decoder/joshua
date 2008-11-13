@@ -30,6 +30,10 @@ import joshua.decoder.Symbol;
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate: 2008-10-17 01:41:03 -0400 (星期五, 17 十月 2008) $
  */
+
+
+/*All the function here returns LogP, not the cost
+ * */
 public abstract class LMGrammar {
 	
 	static String BACKOFF_LEFT_LM_STATE_SYM="<lzfbo>";
@@ -63,6 +67,7 @@ public abstract class LMGrammar {
 	public abstract void write_vocab_map_srilm(String fname);
 	
 	
+	//return LogP
 	public final double score_a_sent(ArrayList<Integer> words_in, int order, int  start_index){ //1-indexed
 		return score_a_sent(Support.sub_int_array(words_in, 0, words_in.size()),	order,	start_index);
 	}
@@ -122,10 +127,7 @@ public abstract class LMGrammar {
 	}
 	
 	
-	protected abstract double get_prob_specific(
-		int[]   ngram_words,
-		int     order,
-		boolean check_bad_stuff);
+	protected abstract double get_prob_specific(int[]   ngram_words, int     order, boolean check_bad_stuff);
 	
 	
 	// called by LMModel to calculate additional bow for backoff Symbol.BACKOFF_LEFT_LM_STATE_SYM_ID

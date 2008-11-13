@@ -180,11 +180,7 @@ public class Bin
 				HyperEdge dt = new HyperEdge(null, cost + final_transition_cost, final_transition_cost, previous_items);
 				
 				if (logger.isLoggable(Level.FINE)) {
-					logger.fine(String.format(
-						"Goal item, total_cost: %.3f; ant_cost: %.3f; final_tran: %.3f; ",
-						cost + final_transition_cost,
-						cost,
-						final_transition_cost));
+					logger.fine(String.format("Goal item, total_cost: %.3f; ant_cost: %.3f; final_tran: %.3f; ", cost + final_transition_cost,	cost,	final_transition_cost));
 				}
 				
 				if (null == goal_item) {

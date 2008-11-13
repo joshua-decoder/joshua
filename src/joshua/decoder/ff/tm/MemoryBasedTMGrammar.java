@@ -116,7 +116,7 @@ public class MemoryBasedTMGrammar extends TMGrammar {
 
 	//	TODO: this should read from file
 	protected void read_tm_grammar_glue_rules() {
-		final double alpha = Math.log10(Math.E); // cost
+		final double alpha = Math.log10(Math.E); //Cost
 		this.root = new TrieNode_Memory(); //root should not have valid ruleBin entries
 		
 		this.add_rule("S ||| ["	+ JoshuaConfiguration.default_non_terminal + ",1] ||| [" + JoshuaConfiguration.default_non_terminal	+ ",1] ||| 0",	this.p_symbol.addTerminalSymbol(JoshuaConfiguration.begin_mono_owner));//this does not have any cost	

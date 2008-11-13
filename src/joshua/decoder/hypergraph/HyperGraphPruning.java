@@ -32,12 +32,12 @@ import java.util.HashMap;
  */
 public class HyperGraphPruning extends TrivialInsideOutside {
 	HashMap tbl_processed_items = new HashMap();
-	double best_cost;//viterbi cost in the hypergraph
+	double best_log_prob;//viterbi unnormalized log prob in the hypergraph
 	
 	
 	boolean fix_threshold_pruning = true;
-	double THRESHOLD_GENERAL = 10;//if the merit is worse than the best_cost by this number, then prune
-	double THRESHOLD_GLUE = 10;//if the merit is worse than the best_cost by this number, then prune
+	double THRESHOLD_GENERAL = 10;//if the merit is worse than the best_log_prob by this number, then prune
+	double THRESHOLD_GLUE = 10;//if the merit is worse than the best_log_prob by this number, then prune
 	double CUR_THRESHOLD_GENERAL = THRESHOLD_GENERAL;
 	double CUR_THRESHOLD_GLUE = THRESHOLD_GLUE;
 	double THRESHOLD_STEP_GENERAL = 1;
@@ -72,7 +72,7 @@ public class HyperGraphPruning extends TrivialInsideOutside {
 
 //	######################### pruning here ##############
 	public void pruning_hg(HyperGraph hg){
-		run_inside_outside(hg, 1, 1);//viterbi-min, log-semiring
+		run_inside_outside(hg, 1, 2);//viterbi-max, log-semiring
 		if(fix_threshold_pruning){
 			pruning_hg_real(hg);
 			super.clear_state();
@@ -82,7 +82,7 @@ public class HyperGraphPruning extends TrivialInsideOutside {
 	}
 	
 	private void  pruning_hg_real(HyperGraph hg){
-		best_cost = get_normalization_constant();//set the best_cost
+		this.best_log_prob = get_normalization_constant();//set the best_log_prob
 		
 		num_survived_deduction = 0;
 		num_survived_item = 0;
@@ -148,16 +148,16 @@ public class HyperGraphPruning extends TrivialInsideOutside {
 	 
 	private boolean should_prune_deduction(HyperEdge dt, HGNode parent){
 		//### get merit
-		double merit = get_deduction_merit(dt, parent);
+		double post_log_prob = get_deduction_unnormalized_posterior_log_prob(dt, parent);
 		
 		//sanity check
 		//if(merit>worst_cost || merit < best_cost){System.out.println("merit is not between best and worst, best: " + best_cost +"; worset:" + worst_cost + "; merit: " + merit); System.exit(0);}
 		 
 		if(dt.get_rule()!=null && dt.get_rule().owner == glue_grammar_owner && dt.get_rule().arity==2){//specicial rule: S->S X
 			//TODO
-			return (merit-best_cost>CUR_THRESHOLD_GLUE) ? true:false;
+			return (post_log_prob-this.best_log_prob<CUR_THRESHOLD_GLUE) ? true:false;
 		}else{		
-			return (merit-best_cost>CUR_THRESHOLD_GENERAL) ? true:false;
+			return (post_log_prob-this.best_log_prob<CUR_THRESHOLD_GENERAL) ? true:false;
 		}		
 	}
 	

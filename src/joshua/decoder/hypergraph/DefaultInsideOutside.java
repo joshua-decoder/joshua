@@ -31,7 +31,7 @@ import java.util.HashMap;
 
 //TODO: currently assume log semiring, need to generalize to other semiring
 //already implement both max-product and sum-product algortithms for log-semiring
-//Note: this class does not require the correctness of the best_cost?
+//Note: this class requires the correctness of transition prob of each hyperedge, which itself may require the correctness of best_cost at each item
 
 public abstract class DefaultInsideOutside {
 	/*Two operations: add and multi
@@ -44,8 +44,8 @@ public abstract class DefaultInsideOutside {
 	double ZERO_IN_SEMIRING = Double.NEGATIVE_INFINITY;//log-domain
 	double ONE_IN_SEMIRING = 0;//log-domain
 	
-	HashMap tbl_inside_cost =  new HashMap();//remember inside cost of each item: 
-	HashMap tbl_outside_cost =  new HashMap();//remember outside cost of each item
+	private HashMap tbl_inside_prob =  new HashMap();//remember inside prob of each item: 
+	private HashMap tbl_outside_prob =  new HashMap();//remember outside prob of each item
 	double normalization_constant = ONE_IN_SEMIRING;
 	
 	/* for each item, remember how many deductions pointering to me, this is needed for outside estimation
@@ -57,11 +57,11 @@ public abstract class DefaultInsideOutside {
 	private HashMap tbl_for_sanity_check = null;
 	double g_sanity_post_prob =0;
 	
-	//get feature-set specific score for deduction
-	protected abstract double get_deduction_score(HyperEdge dt, HGNode parent_it);
+	//get feature-set specific **log probability** for each hyperedge
+	protected abstract double get_deduction_prob(HyperEdge dt, HGNode parent_it);
 	
 	
-	//the results are stored in tbl_inside_cost and tbl_outside_cost
+	//the results are stored in tbl_inside_prob and tbl_outside_prob
 	public void run_inside_outside(HyperGraph hg, int add_mode, int semiring){//add_mode||| 0: sum; 1: viterbi-min, 2: viterbi-max
 		setup_semiring(semiring, add_mode);
 		
@@ -69,54 +69,66 @@ public abstract class DefaultInsideOutside {
 		inside_estimation_hg(hg);
 		//System.out.println("inside estimation");
 		outside_estimation_hg(hg);
-		normalization_constant = (Double)tbl_inside_cost.get(hg.goal_item);
+		normalization_constant = (Double)tbl_inside_prob.get(hg.goal_item);
+		System.out.println("normalization constant is " + normalization_constant);
 		tbl_num_parent_deductions.clear();
+		sanity_check_hg(hg);
 	}
 	
 	//to save memory, external class should call this method
 	public  void clear_state(){
 		tbl_num_parent_deductions.clear();
-		tbl_inside_cost.clear();
-		tbl_outside_cost.clear();
+		tbl_inside_prob.clear();
+		tbl_outside_prob.clear();
 	}
 
-	//######### use of inside-outside costs ##########################
-	//this is the logZ
+	//######### use of inside-outside probs ##########################
+	//this is the logZ where Z is the sum[ exp( log prob ) ]
     public double get_normalization_constant(){
     	return normalization_constant;
     }
 	
-	//this is the expected log cost of this deduction, without normalization
-	public double get_deduction_merit(HyperEdge dt, HGNode parent){
+	//this is the log of expected/posterior prob (i.e., LogP, where P is the posterior probability), without normalization
+	public double get_deduction_unnormalized_posterior_log_prob(HyperEdge dt, HGNode parent){
 		//### outside of parent
-		double outside = (Double)tbl_outside_cost.get(parent);
+		double outside = (Double)tbl_outside_prob.get(parent);
 		
-		//### get inside cost of all my ant-items
+		//### get inside prob of all my ant-items
 		double inside = ONE_IN_SEMIRING;
 		if(dt.get_ant_items()!=null){
 			for(HGNode ant_it : dt.get_ant_items())
-				inside = multi_in_semiring(inside,(Double)tbl_inside_cost.get(ant_it));
+				inside = multi_in_semiring(inside,(Double)tbl_inside_prob.get(ant_it));
 		}
 		
-		//### add deduction/rule specific cost
+		//### add deduction/rule specific prob
 		double merit = multi_in_semiring(inside, outside);
-		merit = multi_in_semiring(merit, get_deduction_score(dt, parent));
+		merit = multi_in_semiring(merit, get_deduction_prob(dt, parent));
 		
 		return merit;
 	}	
 	
-	public double get_deduction_post_prob(HyperEdge dt, HGNode parent ){		
+	//normalized probabily in [0,1]
+	public double get_deduction_posterior_prob(HyperEdge dt, HGNode parent ){
 		if(SEMIRING==LOG_SEMIRING){
-			return Math.exp((get_deduction_merit(dt, parent)-normalization_constant));//TODO get_deduction_merit seems return cost????????????????????????????
+			double res = Math.exp((get_deduction_unnormalized_posterior_log_prob(dt, parent)-get_normalization_constant()));
+			//System.out.println("dt cost: " + dt.get_transition_cost(false)+" ;merit: " + get_deduction_unnormalized_posterior_log_prob(dt, parent) + "; prob: " + res);
+			if(res<0.0-1e-2 || res >1.0+1e-2){
+				System.out.println("res is not within [0,1], must be wrong value: " + res);
+				System.exit(0);
+			}
+			return res;
 		}else{
 			System.out.println("not implemented"); System.exit(0);
 			return 1;
 		}
 	}
 	
-	
+	/*Originally, to see if the sum of the posterior probabilities of all the hyperedges sum to one
+	 * However, this won't work! The sum should be greater than 1.
+	 * */
 	public void sanity_check_hg(HyperGraph hg){		
 		tbl_for_sanity_check = new HashMap();
+		g_sanity_post_prob =0;
 		sanity_check_item(hg.goal_item);
 		System.out.println("g_sanity_post_prob is " + g_sanity_post_prob);
 		tbl_for_sanity_check.clear();
@@ -128,7 +140,7 @@ public abstract class DefaultInsideOutside {
 		
 		//### recursive call on each deduction
 		for(HyperEdge dt : it.l_deductions){
-			g_sanity_post_prob += get_deduction_post_prob(dt,it);
+			g_sanity_post_prob += get_deduction_posterior_prob(dt,it);
 			sanity_check_deduction(dt);//deduction-specifc operation
 		}
 		
@@ -144,13 +156,13 @@ public abstract class DefaultInsideOutside {
 		//### deduction-specific operation				
 		
 	}
-	//################## end use of inside-outside costs 
+	//################## end use of inside-outside probs 
 	
 	
 	
 //############ bottomn-up insdide estimation ##########################	
 	private void inside_estimation_hg(HyperGraph hg){
-		tbl_inside_cost.clear(); 
+		tbl_inside_prob.clear(); 
 		tbl_num_parent_deductions.clear();
 		inside_estimation_item(hg.goal_item);
 	}
@@ -163,77 +175,77 @@ public abstract class DefaultInsideOutside {
 		else
 			tbl_num_parent_deductions.put(it, 1);
 		
-		if(tbl_inside_cost.containsKey(it))
-			return (Double) tbl_inside_cost.get(it);
-		double inside_cost = ZERO_IN_SEMIRING;
+		if(tbl_inside_prob.containsKey(it))
+			return (Double) tbl_inside_prob.get(it);
+		double inside_prob = ZERO_IN_SEMIRING;
 		
 		//### recursive call on each deduction
 		for(HyperEdge dt : it.l_deductions){
 			double v_dt = inside_estimation_deduction(dt, it);//deduction-specifc operation
-			inside_cost = add_in_semiring(inside_cost, v_dt);
+			inside_prob = add_in_semiring(inside_prob, v_dt);
 		}		
-		//### item-specific operation, but all the cost should be factored into each deduction
+		//### item-specific operation, but all the prob should be factored into each deduction
 		
-		tbl_inside_cost.put(it,inside_cost);
-		return inside_cost;
+		tbl_inside_prob.put(it,inside_prob);
+		return inside_prob;
 	}
 	
 	private double inside_estimation_deduction(HyperEdge dt, HGNode parent_item){
-		double inside_cost = ONE_IN_SEMIRING; 
+		double inside_prob = ONE_IN_SEMIRING; 
 		//### recursive call on each ant item
 		if(dt.get_ant_items()!=null)
 			for(HGNode ant_it : dt.get_ant_items()){
 				double v_item = inside_estimation_item(ant_it);
-				inside_cost =  multi_in_semiring(inside_cost, v_item);				
+				inside_prob =  multi_in_semiring(inside_prob, v_item);				
 			}
 				
 		//### deduction operation
-		double deduct_cost = get_deduction_score(dt, parent_item);//feature-set specific	
-		inside_cost =  multi_in_semiring(inside_cost, deduct_cost);	
-		return inside_cost;
+		double deduct_prob = get_deduction_prob(dt, parent_item);//feature-set specific	
+		inside_prob =  multi_in_semiring(inside_prob, deduct_prob);	
+		return inside_prob;
 	}
 //########### end inside estimation	
 
 //############ top-downn outside estimation ##########################
 	
 	private void outside_estimation_hg(HyperGraph hg){	
-		tbl_outside_cost.clear(); 
-		tbl_outside_cost.put(hg.goal_item, ONE_IN_SEMIRING);//initialize
+		tbl_outside_prob.clear(); 
+		tbl_outside_prob.put(hg.goal_item, ONE_IN_SEMIRING);//initialize
 		for(HyperEdge dt : hg.goal_item.l_deductions)
 			outside_estimation_deduction(dt, hg.goal_item);	
 	}
 	
-	private void outside_estimation_item(HGNode cur_it, HGNode upper_item, HyperEdge parent_dt, double parent_deduct_cost){
+	private void outside_estimation_item(HGNode cur_it, HGNode upper_item, HyperEdge parent_dt, double parent_deduct_prob){
 		Integer num_called = (Integer)tbl_num_parent_deductions.get(cur_it);
 		if(num_called==null || num_called==0){System.out.println("un-expected call, must be wrong"); System.exit(0);}
 		tbl_num_parent_deductions.put(cur_it, num_called-1);		
 		
-		double old_outside_cost = ZERO_IN_SEMIRING;
-		if(tbl_outside_cost.containsKey(cur_it))
-			old_outside_cost = (Double) tbl_outside_cost.get(cur_it);
+		double old_outside_prob = ZERO_IN_SEMIRING;
+		if(tbl_outside_prob.containsKey(cur_it))
+			old_outside_prob = (Double) tbl_outside_prob.get(cur_it);
 		
-		double additional_outside_cost = ONE_IN_SEMIRING;
+		double additional_outside_prob = ONE_IN_SEMIRING;
 		
-		//### add parent deduction cost
-		additional_outside_cost =  multi_in_semiring(additional_outside_cost, parent_deduct_cost);
+		//### add parent deduction prob
+		additional_outside_prob =  multi_in_semiring(additional_outside_prob, parent_deduct_prob);
 		
 		//### sibing specifc
 		if(parent_dt.get_ant_items()!=null && parent_dt.get_ant_items().size()>1)
 			for(HGNode ant_it : parent_dt.get_ant_items()){
 				if(ant_it != cur_it){
-					double inside_cost_item =(Double)tbl_inside_cost.get(ant_it);//inside cost
-					additional_outside_cost =  multi_in_semiring(additional_outside_cost, inside_cost_item);
+					double inside_prob_item =(Double)tbl_inside_prob.get(ant_it);//inside prob
+					additional_outside_prob =  multi_in_semiring(additional_outside_prob, inside_prob_item);
 				}				
 			}
 				
 		//### upper item
-		double outside_cost_item = (Double)tbl_outside_cost.get(upper_item);//outside cost
-		additional_outside_cost =  multi_in_semiring(additional_outside_cost, outside_cost_item);
+		double outside_prob_item = (Double)tbl_outside_prob.get(upper_item);//outside prob
+		additional_outside_prob =  multi_in_semiring(additional_outside_prob, outside_prob_item);
 		
-		//#### add to old cost 
-		additional_outside_cost = add_in_semiring(additional_outside_cost, old_outside_cost);		
+		//#### add to old prob 
+		additional_outside_prob = add_in_semiring(additional_outside_prob, old_outside_prob);		
 		
-		tbl_outside_cost.put(cur_it, additional_outside_cost);
+		tbl_outside_prob.put(cur_it, additional_outside_prob);
 		
 		//### recursive call on each deduction
 		if( num_called-1<=0){//i am done
@@ -246,14 +258,14 @@ public abstract class DefaultInsideOutside {
 	
 	
 	private void outside_estimation_deduction(HyperEdge dt, HGNode parent_item){
-		//we do not need to outside cost if no ant items
+		//we do not need to outside prob if no ant items
 		if(dt.get_ant_items()!=null){
-			//### deduction specific cost
-			double deduction_cost = get_deduction_score(dt, parent_item);//feature-set specific
+			//### deduction specific prob
+			double deduction_prob = get_deduction_prob(dt, parent_item);//feature-set specific
 			
 			//### recursive call on each ant item
 			for(HGNode ant_it : dt.get_ant_items()){
-				outside_estimation_item(ant_it, parent_item, dt, deduction_cost);
+				outside_estimation_item(ant_it, parent_item, dt, deduction_prob);
 			}
 		}
 	}
@@ -309,7 +321,7 @@ public abstract class DefaultInsideOutside {
 	} 	
 	
 	//AND
-	private double multi_in_log_semiring(double x, double y){//value is cost
+	private double multi_in_log_semiring(double x, double y){//value is Log prob
 		return x + y;
 	}
 	
