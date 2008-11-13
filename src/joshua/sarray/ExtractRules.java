@@ -37,7 +37,7 @@ import joshua.util.sentence.Vocabulary;
 /**
  * 
  * @author Lane Schwartz
- * @version $LastChangedDate$
+ * @version $LastChangedDate:2008-11-13 13:13:31 -0600 (Thu, 13 Nov 2008) $
  */
 public class ExtractRules {
 
@@ -64,8 +64,8 @@ public class ExtractRules {
 
 			Option<String> encoding = commandLine.addStringOption("encoding","ENCODING","UTF-8","File encoding format");
 
-			Option<Integer> lexSampleSize = commandLine.addIntegerOption("lexSampleSize","LEX_SAMPLE_SIZE",100, "Size to use when sampling for lexical probability calculations");
-			Option<Integer> ruleSampleSize = commandLine.addIntegerOption("ruleSampleSize","RULE_SAMPLE_SIZE",100, "Maximum number of rules to store at each node in the prefix tree");
+			Option<Integer> lexSampleSize = commandLine.addIntegerOption("lexSampleSize","LEX_SAMPLE_SIZE",1000, "Size to use when sampling for lexical probability calculations");
+			Option<Integer> ruleSampleSize = commandLine.addIntegerOption("ruleSampleSize","RULE_SAMPLE_SIZE",300, "Maximum number of rules to store at each node in the prefix tree");
 
 			Option<Integer> maxPhraseSpan = commandLine.addIntegerOption("maxPhraseSpan","MAX_PHRASE_SPAN",10, "Max phrase span");
 			Option<Integer> maxPhraseLength = commandLine.addIntegerOption("maxPhraseLength","MAX_PHRASE_LENGTH",10, "Max phrase length");

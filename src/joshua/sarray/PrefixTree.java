@@ -53,7 +53,7 @@ import java.util.logging.Logger;
 /**
  * 
  * @author Lane Schwartz
- * @version $LastChangedDate$
+ * @version $LastChangedDate:2008-11-13 13:13:31 -0600 (Thu, 13 Nov 2008) $
  */
 public class PrefixTree {
 
@@ -1423,10 +1423,10 @@ public class PrefixTree {
 			
 			for (Pattern translation : translations) {
 				
-				float p_e_given_f = counts.get(translation) / p_e_given_f_denominator;
+				float p_e_given_f = (float) Math.log(counts.get(translation) / p_e_given_f_denominator);
 				
-				float lex_p_e_given_f = cumulativeSourceGivenTargetLexProbs.get(translation) / counterSourceGivenTargetLexProbs.get(translation);
-				float lex_p_f_given_e = cumulativeTargetGivenSourceLexProbs.get(translation) / counterTargetGivenSourceLexProbs.get(translation);
+				float lex_p_e_given_f = (float) Math.log(cumulativeSourceGivenTargetLexProbs.get(translation) / counterSourceGivenTargetLexProbs.get(translation));
+				float lex_p_f_given_e = (float) Math.log(cumulativeTargetGivenSourceLexProbs.get(translation) / counterTargetGivenSourceLexProbs.get(translation));
 				
 				float[] featureScores = { p_e_given_f, lex_p_e_given_f, lex_p_f_given_e };
 				
