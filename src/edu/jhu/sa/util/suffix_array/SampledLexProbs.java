@@ -289,13 +289,13 @@ public class SampledLexProbs implements LexicalProbabilities {
 			targetGivenSource *= (sum / alignedSourceWords.size());
 		}
 		
-		if (sourceGivenTarget <= floorProbability) {
-			sourceGivenTarget =  floorProbability;
-		}
-		
-		if (targetGivenSource <= floorProbability) {
-			targetGivenSource =  floorProbability;
-		}
+//		if (sourceGivenTarget <= floorProbability) {
+//			sourceGivenTarget =  floorProbability;
+//		}
+//		
+//		if (targetGivenSource <= floorProbability) {
+//			targetGivenSource =  floorProbability;
+//		}
 		
 //		if (sourceGivenTarget==0.0f || targetGivenSource==0.0f) {
 //			int x = 1;

@@ -31,7 +31,6 @@ import java.util.zip.GZIPOutputStream;
 import joshua.decoder.ff.tm.Rule;
 import joshua.util.CommandLineParser;
 import joshua.util.CommandLineParser.Option;
-import joshua.util.lexprob.LexicalProbabilities;
 import joshua.util.sentence.Vocabulary;
 
 
