@@ -13,7 +13,8 @@ The MERT module has the following main parameters:
  (*) -N N:                   size of N-best list (per sentence) generated in each MERT iteration
  (*) -p paramsFile:          file containing parameter names, initial values, and ranges
  (*) -maxIt maxMERTIts:      maximum number of MERT iterations
- (*) -opi onePerIt:          modify a single parameter per iteration (1) or not (0)
+ (*) -ipi initsPerIt:        number of intermediate initial points per iteration
+ (*) -opi onePerIt:          modify a parameter only once per iteration (1) or not (0)
  (*) -v verbosity:           output verbosity level (0-4; higher value => more verbose)
 
 (For a full list of parameters, and their default values, run MERT with no arguments.)
@@ -24,7 +25,7 @@ Testing MERT:
 
 To test the MERT module on the *_small dataset (5 sentences), run the command:
 
-  java -Xmx300m -cp bin joshua.MERT.MERT -dir MERT_example -s src_small.txt -r ref_small -rps 4 -cmd decoder_command_ex1.txt -dcfg config_ex1.txt -decOut nbest_ex1.out -N 300 -p params.txt -maxIt 30 -opi 1 -v 1
+  java -Xmx300m -cp bin joshua.MERT.MERT_runner -dir MERT_example -s src_small.txt -r ref_small -rps 4 -cmd decoder_command_ex1.txt -dcfg config_ex1.txt -decOut nbest_ex1.out -N 300 -p params.txt -maxIt 30 -opi 1 -v 1
 
 The file config_ex1.txt instructs Joshua to use the .tm.gz and .lm.gz files
 in the trunk/example/ folder.
@@ -33,7 +34,7 @@ To test the MERT module on the larger dataset (100 sentences) and the
 larger .tm.gz and .lm.gz files in the trunk/example2/ folder instead, have
 MERT use config_ex2.txt:
 
-  java -Xmx300m -cp bin joshua.MERT.MERT -dir MERT_example -s src.txt -r ref -rps 4 -cmd decoder_command_ex2.txt -dcfg config_ex2.txt -decOut nbest_ex2.out -N 300 -p params.txt -maxIt 30 -opi 1 -v 1
+  java -Xmx300m -cp bin joshua.MERT.MERT_runner -dir MERT_example -s src.txt -r ref -rps 4 -cmd decoder_command_ex2.txt -dcfg config_ex2.txt -decOut nbest_ex2.out -N 300 -p params.txt -maxIt 30 -opi 1 -v 1
 
 Notice that the MERT arguments for sourceFile, configFile, and
 decoderOutFile (-s, -cfg, and -decOut) must match the Joshua arguments
@@ -48,11 +49,11 @@ MERT Config Files:
 Alternatively, one could specify the MERT parameters in a MERT config file,
 provided as the sole argument to the MERT module, as in:
 
-  java -Xmx300m -cp bin joshua.MERT.MERT MERT_example/MERT_config_ex1.txt
+  java -Xmx300m -cp bin joshua.MERT.MERT_runner MERT_example/MERT_config_ex1.txt
 
 or:
 
-  java -Xmx300m -cp bin joshua.MERT.MERT MERT_example/MERT_config_ex2.txt
+  java -Xmx300m -cp bin joshua.MERT.MERT_runer MERT_example/MERT_config_ex2.txt
 
 This should make running MERT much easier, since the parameters are all
 specified in the config file.  For replicability purposes, the MERT module
@@ -62,33 +63,56 @@ the command line or from the MERT config file.
 We highly recommend specifying the parameters in a config file :)
 
 
-Randomization:
---------------
+MERT Iterations:
+----------------
 
-If the -rand argument is set to 1, the parameters will be initialized
-randomly when MERT is started.  Furthermore, if the -runs argument is set
-to be larger than 1, the random initialization will occur multiple times.
-At the start of each run, a new random number generator is created using
-a new seed.  For replicability(*) purposes, the new seed is itself chosen
-by the previous random number generator.  This way, only the first seed
-needs to be noted in order to replicate a (full) MERT run.
+MERT alternates between producing an N-best candidate list and optimizing
+a weight vector (to yield a better score on that candidate list).  In other
+words, each MERT iteration starts with decoding the MERT data set using
+some weight vector.  How often should MERT redecode the sentences?  You can
+instruct MERT to either redecode once it changes any single weight, or to
+redecode once a local maximum has been reached on the current candidate
+list.  In other words, MERT can be instructed to either change a single
+weight per iteration, or to "fully" optimize the weight vector.  This can
+be specified using the oncePerIt argument (-opi).  If it is set to 1, each
+MERT iteration will make a single weight change (the one giving the most
+gain).  If it is set to 0, each MERT iteration will perform this process
+(of changing the weight giving the most gain) repeatedly until no weight
+change can improve the score on the current candidate list.
 
-The -seed argument specifies what that initial seed is.  This argument can
-be set either to "time" or some numerical value.  If a numerical value is
-supplied, that value will be used as the first seed.  If "time" is
-provided, the first seed will be set to the value returned by a Java
-System.currentTimeMillis() call at the start of the (full) MERT run.
-Either way, MERT's output will indicate what the first seed is, which makes
-it possible to replicate the (full) MERT run even when setting -seed to
-"time" (simply take note of the chosen first seed and supply it to -seed to
-replicate the (full) MERT run).
 
-As mentioned above, this initial seed is used in the first MERT run to
-choose the random initial weights, and then to choose the seed for the
-next MERT run, by randomly choosing a number between 0 and 1,000,000.  In
-other words, the nth seed is used to generate initial weights in the nth
-MERT run, as well as the (n+1)th seed.
+Escaping Local Optima:
+----------------------
+
+The error surface may not have a single best optimum.  That is, a single
+MERT run (as described so far) might yield a weight vector that is not the
+best globally.  The natural way around this is to run MERT multiple times
+with different randomly chosen weight vectors provided as starting points.
+
+In practice, doing this is quite time-consuming, due to the amount of time
+needed to decode the sentences over and over again.  An alternative
+approach is to generate a number of random weight vectors IN EACH MERT
+ITERATION and optimize each of them individually IN ADDITION TO optimizing
+the weight vector that generated the latest N-best list.  The initsPerIt
+argument (-ipi) tells MERT how many weight vectors should be used as
+starting points in each iteration, including the one surviving from the
+previous iteration.  For instance, MERT as described up until this section
+can be achieved by setting -ipi to 1.  If you set -ipi to 20 (its default
+value) then, in addition to optimizing the weight vector that generated the
+latest N-best list, each MERT iteration will create 19 random weight
+vectors and optimize each of them individually.  Of the 20 intermediate
+"final" vectors, the one giving the best score survives, and is the one
+used to redecode in the next iteration.
+
+For replicability(*) purposes, all the random numbers in a MERT run are
+generated by a single random number generator, and the seed used to
+initialize that generator can be provided by the -seed argument.  This
+argument can be set either to "time" or some numerical value.  If
+a numerical value is supplied, that value will be used as the seed.  If
+"time" is provided, the seed will be set to the value returned by a Java
+System.currentTimeMillis() call at the start of the MERT run.  Either way,
+MERT will print out the seed as part of its output.
 
 ---------------------------------------------------------------------------
 
-(*) My new favorite word.
+(*) Is this a real word?
