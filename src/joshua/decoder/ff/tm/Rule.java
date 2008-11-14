@@ -120,6 +120,8 @@ public class Rule {
 	 * @param feature_scores Feature value scores for the rule.
 	 * @param arity Number of nonterminals in the source language right-hand side.
 	 */
+	
+	/*TODO: this may not be correct, you need to set the stateless cost*/
 	public Rule(int lhs, int[] source_rhs, int[] target_rhs, float[] feature_scores, int arity) {
 		this(DUMMY_RULE_ID, lhs, source_rhs, target_rhs, DUMMY_OWNER, feature_scores, arity);
 	}

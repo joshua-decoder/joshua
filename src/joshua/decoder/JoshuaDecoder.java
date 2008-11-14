@@ -31,16 +31,12 @@ import joshua.decoder.ff.lm.srilm.LMGrammarSRILM;
 import joshua.decoder.ff.tm.GrammarFactory;
 import joshua.decoder.ff.tm.MemoryBasedBatchGrammarWithPrune;
 import joshua.util.FileUtility;
-import joshua.util.lexprob.LexicalProbabilities;
+
 
 import java.io.BufferedReader;
 import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import edu.jhu.sa.util.suffix_array.AlignmentArray;
-import edu.jhu.sa.util.suffix_array.CorpusArray;
-import edu.jhu.sa.util.suffix_array.SuffixArray;
 
 /**
  * this class implements:
@@ -50,20 +46,19 @@ import edu.jhu.sa.util.suffix_array.SuffixArray;
  * @version $LastChangedDate$
  */
 public class JoshuaDecoder {	
-	DecoderThread p_decoder_thread = null;//pointer to the main thread of decoding
-	GrammarFactory[] p_tm_grammars = null;
+	private DecoderFactory p_decoder_factory = null;//pointer to the main thread of decoding
+	private GrammarFactory[] p_tm_grammars = null;
+	private boolean have_lm_model = false;
+	private ArrayList<FeatureFunction> p_l_feat_functions  = null;
+	private ArrayList<Integer> l_default_nonterminals = null;
+	private Symbol p_symbol = null;
 	
-	//TODO: deal with cases of multiple LMs or no LM at all
+//	TODO: deal with cases of multiple LMs or no LM at all
 	//LMGrammar       p_lm_grammar  = null;//the lm grammar itself (not lm model)
 	
-	boolean have_lm_model = false;
 	
-	ArrayList<FeatureFunction> p_l_feat_functions     = null;
-	ArrayList<Integer> l_default_nonterminals = null;
-		
 	private static final Logger logger = Logger.getLogger(JoshuaDecoder.class.getName());
 	
-	Symbol p_symbol = null;//TODO
 	
 //===============================================================
 //===============================================================
@@ -135,8 +130,6 @@ public class JoshuaDecoder {
 //		##### read config file
 		JoshuaConfiguration.read_config_file(config_file);	
 		
-		p_decoder_thread = new DecoderThread(this);
-		
 		//#### initialize symbol table
 		initSymbolTbl();
 		
@@ -153,14 +146,18 @@ public class JoshuaDecoder {
 		//##### load TM grammar
 		if (! JoshuaConfiguration.use_sent_specific_tm) {
 			initializeTranslationGrammars(JoshuaConfiguration.tm_file);
-		}				
+		}
+		
+		//create factory
+		p_decoder_factory = new DecoderFactory(this.p_tm_grammars, this.have_lm_model, this.p_l_feat_functions, this.l_default_nonterminals, this.p_symbol);
+		
 	}
 	
 	/*Decoding a whole test set
 	 * This may be parallel
 	 * */
 	public void decodingTestSet(String test_file, String nbest_file){		
-		p_decoder_thread.decodingTestSet(test_file, nbest_file);
+		p_decoder_factory.decodingTestSet(test_file, nbest_file);
 	}
 	
 	/*Decoding a sentence
