@@ -25,6 +25,12 @@ import java.util.List;
  * @author Lane Schwartz
  * @version $LastChangedDate$
  */
+
+/* RuleColleciton is a set of rules that under a particular TriGrammar node. Therefore, all the rules under a RuleCollection will share:
+ * (1) arity
+ * (2) the source side
+ * */
+
 public interface RuleCollection {
 
 	// TODO: now, we assume this function will be called only
@@ -33,7 +39,7 @@ public interface RuleCollection {
 	// the decoding begins to avoid the synchronized method,
 	// we should call this once the grammar is finished
 	// // public synchronized ArrayList<Rule> get_sorted_rules(){
-	public abstract List<Rule> getSortedRules();
+	public abstract List<Rule> getSortedRules();  //only CubePruning requires that rules are sorted based on est_cost?
 	
 	public abstract int[] getSourceSide();
 	

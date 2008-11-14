@@ -27,7 +27,7 @@ import joshua.decoder.ff.lm.LMFFDPState;
 import joshua.decoder.ff.lm.LMFeatureFunction;
 import joshua.decoder.ff.tm.MemoryBasedRule;
 import joshua.decoder.ff.tm.Rule;
-import joshua.decoder.ff.tm.TMGrammar;
+import joshua.decoder.ff.tm.BatchGrammar;
 import joshua.decoder.hypergraph.HyperGraph;
 import joshua.util.FileUtility;
 
@@ -469,7 +469,7 @@ public class DiskHyperGraph {
 		}
 		res.append(" ");
 		res.append(rule_id);
-		if (rule_id == TMGrammar.OOV_RULE_ID) {
+		if (rule_id == BatchGrammar.OOV_RULE_ID) {
 			res.append(" "); res.append(this.p_symbol.getWord(deduction_rule.lhs));
 			res.append(" "); res.append(this.p_symbol.getWords(deduction_rule.english));
 		}
@@ -510,7 +510,7 @@ public class DiskHyperGraph {
 		Rule rule = null;
 		int r_id = new Integer(fds[2+num_ant_items]);
 		if(r_id!=NULL_RULE_ID){
-			if(r_id!=TMGrammar.OOV_RULE_ID){
+			if(r_id!=BatchGrammar.OOV_RULE_ID){
 				rule = (Rule)tbl_associated_grammar.get(r_id);
 				if (null == rule) {
 					System.out.println("rule is null but id is " + r_id);
@@ -523,7 +523,7 @@ public class DiskHyperGraph {
 				//rule = new MemoryBasedTMGrammar.Rule_Memory(lhs, french_symbol, Chart.UNTRANS_SYM_ID);//TODO: change owner
 				
 				//stateless cost is not properly set, so cannot extract individual features during kbest extraction
-				rule = new MemoryBasedRule(null, 1, TMGrammar.OOV_RULE_ID, lhs, french_symbol, this.UNTRANS_OWNER_SYM_ID, false);
+				rule = Rule.constructOOVRule(null, 1, BatchGrammar.OOV_RULE_ID, lhs, french_symbol, this.UNTRANS_OWNER_SYM_ID, false);
 				//rule = new MemoryBasedRule(p_l_models, TMGrammar.OOV_RULE_ID, lhs, french_symbol, this.UNTRANS_OWNER_SYM_ID, false);
 				//System.out.println("oov rule str: " + str_rule + "; arity: " + rule.arity);
 			}			

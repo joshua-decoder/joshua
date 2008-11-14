@@ -37,7 +37,13 @@ import java.util.logging.Logger;
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate$
  */
-public abstract class TMGrammar implements GrammarFactory, Grammar {
+
+
+/*This class provides an abstract way to implement BatchGrammar 
+ * (meaning the grammar is for the whole test set, not sentence specific)
+ * */
+
+public abstract class BatchGrammar implements GrammarFactory, Grammar {
 	/*TMGrammar is composed by Trie nodes
 	Each trie node has: 
 	(1) RuleBin: a list of rules matching the french sides so far
@@ -45,17 +51,17 @@ public abstract class TMGrammar implements GrammarFactory, Grammar {
 	*/
 	public    static int OOV_RULE_ID          = 0;
 	protected  ArrayList<FeatureFunction> p_l_models = null;
-	protected int defaultOwner  ; //will change autotmatically
+	protected int defaultOwner  ;
 	protected  String nonterminalRegexp = "^\\[[A-Z]+\\,[0-9]*\\]$";//e.g., [X,1]
 	protected String nonterminalReplaceRegexp = "[\\[\\]\\,0-9]+";
 	
 	protected int spanLimit = 10;
 	
-	private static final Logger logger = Logger.getLogger(TMGrammar.class.getName());
+	private static final Logger logger = Logger.getLogger(BatchGrammar.class.getName());
 	
 	Symbol p_symbol = null;
 	
-	public TMGrammar(Symbol psymbol, String grammar_file, ArrayList<FeatureFunction> l_models, final String default_owner,	final int span_limit, final String nonterminal_regexp,	final String nonterminal_replace_regexp) {	
+	public BatchGrammar(Symbol psymbol, String grammar_file, ArrayList<FeatureFunction> l_models, final String default_owner,	final int span_limit, final String nonterminal_regexp,	final String nonterminal_replace_regexp) {	
 		this.p_symbol = psymbol;
 		this.p_l_models               = l_models;
 		this.defaultOwner             = p_symbol.addTerminalSymbol(default_owner);

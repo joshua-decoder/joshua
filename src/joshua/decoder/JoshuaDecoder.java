@@ -29,13 +29,18 @@ import joshua.decoder.ff.lm.buildin_lm.LMGrammarJAVA;
 import joshua.decoder.ff.lm.distributed_lm.LMGrammarRemote;
 import joshua.decoder.ff.lm.srilm.LMGrammarSRILM;
 import joshua.decoder.ff.tm.GrammarFactory;
-import joshua.decoder.ff.tm.MemoryBasedTMGrammar;
+import joshua.decoder.ff.tm.MemoryBasedBatchGrammarWithPrune;
 import joshua.util.FileUtility;
+import joshua.util.lexprob.LexicalProbabilities;
 
 import java.io.BufferedReader;
 import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import edu.jhu.sa.util.suffix_array.AlignmentArray;
+import edu.jhu.sa.util.suffix_array.CorpusArray;
+import edu.jhu.sa.util.suffix_array.SuffixArray;
 
 /**
  * this class implements:
@@ -277,12 +282,14 @@ public class JoshuaDecoder {
 		p_tm_grammars = new GrammarFactory[2];
 		
 		// Glue Grammar
-		GrammarFactory glueGrammar = new MemoryBasedTMGrammar(p_symbol, null, true, p_l_feat_functions, JoshuaConfiguration.phrase_owner, -1, "^\\[[A-Z]+\\,[0-9]*\\]$", "[\\[\\]\\,0-9]+");	
+		GrammarFactory glueGrammar = new MemoryBasedBatchGrammarWithPrune(p_symbol, null, true, p_l_feat_functions, JoshuaConfiguration.phrase_owner, -1, "^\\[[A-Z]+\\,[0-9]*\\]$", "[\\[\\]\\,0-9]+");	
 		p_tm_grammars[0] = glueGrammar;		
 		
 		// Regular TM Grammar
-		GrammarFactory regularGrammar = new MemoryBasedTMGrammar(p_symbol, tm_file, false, p_l_feat_functions, JoshuaConfiguration.phrase_owner, JoshuaConfiguration.span_limit, "^\\[[A-Z]+\\,[0-9]*\\]$", "[\\[\\]\\,0-9]+");				
+		GrammarFactory regularGrammar = new MemoryBasedBatchGrammarWithPrune(p_symbol, tm_file, false, p_l_feat_functions, JoshuaConfiguration.phrase_owner, JoshuaConfiguration.span_limit, "^\\[[A-Z]+\\,[0-9]*\\]$", "[\\[\\]\\,0-9]+");				
 		p_tm_grammars[1] = regularGrammar;
+		
+		//TODO if suffix-array: call SAGrammarFactory(SuffixArray sourceSuffixArray, CorpusArray targetCorpus, AlignmentArray alignments, LexicalProbabilities lexProbs, int maxPhraseSpan, int maxPhraseLength, int maxNonterminals, int spanLimit) {
 	}
 	
 	static public FeatureFunction haveLMFeature(ArrayList<FeatureFunction> l_models){

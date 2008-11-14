@@ -17,9 +17,11 @@
  */
 package joshua.decoder.ff.tm;
 
+import java.util.ArrayList;
 import java.util.Map;
 
-import joshua.decoder.ff.tm.TMGrammar;
+import joshua.decoder.ff.FeatureFunction;
+
 import joshua.decoder.Symbol;
 import joshua.util.sentence.Vocabulary;
 
@@ -29,13 +31,20 @@ import joshua.util.sentence.Vocabulary;
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate: 2008-08-03 04:12:57 -0400 (Sun, 03 Aug 2008) $
  */
+
+
+/* Normally, the feature score in the rule should be *cost* (i.e., -LogP), 
+ * so that the feature weight should be positive
+ * */
+
+
 public class Rule {
 	/* The string format of Rule is:
 	 *     [Phrase] ||| french ||| english ||| feature scores
 	 */
 	public  int     rule_id;
 	public  int     lhs;         // tag of this rule, state to upper layer
-	public  int[]   french;      // only need to maintain at rulebine
+	public  int[]   french;      // only need to maintain at RuleCollection as all the rules under it share the same Source side
 	public  int[]   english;
 	
 	/* a feature function will be applied  for this rule 
@@ -55,35 +64,12 @@ public class Rule {
 	protected float statelesscost = 0; //TODO: this is set in estimate_rule(); we should use an abstract class to enforce this behavior
 
 		
-	
 //	TODO Ideally, we shouldn't have to have dummy rule IDs and dummy owners. How can this need be eliminated?
 	private static final int DUMMY_RULE_ID = 1;
 	private static final int DUMMY_OWNER = 1;
 	
 	public Rule(){
 		//do nothing
-	}
-	
-
-	/**
-	 * For use in constructing out of vocabulary rules.
-	 * 
-	 * @param rule_id
-	 * @param lhs Left-hand side of the rule.
-	 * @param fr_in Source language right-hand side of the rule.
-	 * @param owner
-	 */
-	public Rule(int rule_id, int lhs, int fr_in, int owner, int num_feats) {
-		this.rule_id    = rule_id;
-		this.lhs        = lhs;
-		this.owner      = owner;
-		this.arity      = 0;
-		this.french     = new int[1];
-	   	this.french[0]  = fr_in;
-	   	this.english    = new int[1];
-	   	this.english[0] = fr_in;
-	   	this.feat_scores     = new float[num_feats];
-	   	this.lattice_cost	= 0;
 	}
 	
 	
@@ -123,6 +109,7 @@ public class Rule {
 	}
 	
 	
+	
 	/**
 	 * Constructs a new rule using the provided parameters.
 	 * The owner and rule id for this rule are undefined.
@@ -136,11 +123,65 @@ public class Rule {
 	public Rule(int lhs, int[] source_rhs, int[] target_rhs, float[] feature_scores, int arity) {
 		this(DUMMY_RULE_ID, lhs, source_rhs, target_rhs, DUMMY_OWNER, feature_scores, arity);
 	}
+
+	
+
+	/** 
+	 * only called when creating oov rule in Chart or DiskHypergraph, all
+	 * others should call the other contructors; the
+	 * transition cost for phrase model, arity penalty,
+	 * word penalty are all zero, except the LM cost or the first feature if no LM feature is used
+	 */
+	public static Rule constructOOVRule(ArrayList<FeatureFunction> p_l_models, int num_feats, int oov_rule_id, int lhs_in, int fr_in, int owner_in, boolean have_lm_model) {
+		Rule r = new Rule();
+		r.rule_id    = oov_rule_id;
+		r.lhs        = lhs_in;
+		r.owner      = owner_in;
+		r.arity      = 0;
+		r.french     = new int[1];
+	   	r.french[0]  = fr_in;
+	   	r.english    = new int[1];
+	   	r.english[0] = fr_in;
+	   	r.feat_scores     = new float[num_feats];
+	   	r.lattice_cost	= 0;
+		
+
+	   	/**TODO
+	   	 * This is a hack to make the decoding without a LM works
+	   	 * */
+	   	if(have_lm_model==false){//no LM is used for decoding, so we should set the stateless cost
+	   		//this.feat_scores[0]=100.0/((FeatureFunction)p_l_models.get(0)).getWeight();//TODO
+	   		r.feat_scores[0]=100;//TODO
+	   	}
+	   	
+	   	r.computeStatelessCost(p_l_models);//set statelesscost
+		return r;
+	}
+	
 	
 	
 	public float getStatelessCost(){
-		return statelesscost;
+		return this.statelesscost;
 	}
+	
+	
+	/*compute and set stateless cost*/
+	public float computeStatelessCost(ArrayList<FeatureFunction> p_l_models) {
+		if (null == p_l_models) {
+			return 0;
+		}		
+		this.statelesscost = 0.0f;
+		
+		for (FeatureFunction ff : p_l_models) {
+			double mdcost = ff.estimate(this) * ff.getWeight();//TODO: should use transition()?
+			if (! ff.isStateful()) {
+				this.statelesscost += mdcost;
+			}
+		}
+		return this.statelesscost;
+	}
+	
+
 	
 	
 //	 create a copy of the rule and set the lattice cost field
@@ -152,7 +193,7 @@ public class Rule {
 	
 	/* ~~~~~ Attributes (only used in DiskHyperGraph) */
 	public final boolean isOutOfVocabularyRule() {
-		return (this.rule_id == TMGrammar.OOV_RULE_ID);
+		return (this.rule_id == BatchGrammar.OOV_RULE_ID);
 	}
 	
 	

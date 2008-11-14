@@ -27,7 +27,7 @@ import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.MemoryBasedRule;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.RuleCollection;
-import joshua.decoder.ff.tm.TMGrammar;
+import joshua.decoder.ff.tm.BatchGrammar;
 import joshua.decoder.ff.tm.TrieGrammar;
 import joshua.decoder.hypergraph.HGNode;
 import joshua.decoder.hypergraph.HyperGraph;
@@ -145,7 +145,7 @@ public class Chart {
 		for (Node<Integer> node : sentence) {
 			for (Arc<Integer> arc : node.getOutgoingArcs()) {
 				for (int lhs : default_nonterminals) {//create a rule, but do not add into the grammar trie     
-					Rule rule = new MemoryBasedRule(p_l_models, p_l_models.size(), TMGrammar.OOV_RULE_ID, lhs, arc.getLabel(), this.UNTRANS_OWNER_SYM_ID, have_lm_model);
+					Rule rule = Rule.constructOOVRule(p_l_models, p_l_models.size(), BatchGrammar.OOV_RULE_ID, lhs, arc.getLabel(), this.UNTRANS_OWNER_SYM_ID, have_lm_model);
 					// Tail and head are switched - FIX names:
 					add_axiom(node.getNumber(), arc.getTail().getNumber(), rule, (float)arc.getCost());
 				}
@@ -308,8 +308,7 @@ public class Chart {
 			&& child_tnode.getRules().getArity() == 1) {//have unary rules under this trienode					
 				ArrayList<HGNode> l_ants = new ArrayList<HGNode>();
 				l_ants.add(item);
-				List<Rule> l_rules =
-					child_tnode.getRules().getSortedRules();
+				List<Rule> l_rules = child_tnode.getRules().getSortedRules();
 				
 				for (Rule rule : l_rules){//for each unary rules								
 					ComputeItemResult tbl_states = chart_bin.compute_item(rule, l_ants, i, j);				

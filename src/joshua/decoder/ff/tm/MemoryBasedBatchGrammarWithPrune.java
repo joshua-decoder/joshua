@@ -47,19 +47,19 @@ import java.util.logging.Logger;
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate$
  */
-public class MemoryBasedTMGrammar extends TMGrammar {
+public class MemoryBasedBatchGrammarWithPrune extends BatchGrammar {
 	private static double EPSILON = 0.000001;	
 	private static int IMPOSSIBLE_COST=99999;//max cost
 	
 	private int num_rule_read    = 0;
 	private int num_rule_pruned  = 0;
 	private int num_rule_bin     = 0;
-	private TrieNode_Memory root = null;
+	private MemoryBasedTrieGrammar root = null;
 	
 	static int rule_id_count =1; //three kinds of rule: regular rule (id>0); oov rule (id=0), and null rule (id=-1)
 	static private double tem_estcost = 0.0;//debug
 	
-	private static final Logger logger = Logger.getLogger(MemoryBasedTMGrammar.class.getName());
+	private static final Logger logger = Logger.getLogger(MemoryBasedBatchGrammarWithPrune.class.getName());
 	
 	/*TMGrammar is composed by Trie nodes
 	Each trie node has: 
@@ -67,7 +67,7 @@ public class MemoryBasedTMGrammar extends TMGrammar {
 	(2) a HashMap  of next-layer trie nodes, the next french word used as the key in HashMap  
 	*/
 	
-	public MemoryBasedTMGrammar(
+	public MemoryBasedBatchGrammarWithPrune(
 		Symbol psymbol,
 		String grammar_file,
 		boolean is_glue_grammar,
@@ -99,7 +99,7 @@ public class MemoryBasedTMGrammar extends TMGrammar {
 	
 	
 	protected void read_tm_grammar_from_file(String grammar_file) {
-		this.root = new TrieNode_Memory(); //root should not have valid ruleBin entries
+		this.root = new MemoryBasedTrieGrammar(); //root should not have valid ruleBin entries
 		BufferedReader t_reader_tree = 
 			FileUtility.getReadFileStream(grammar_file,"utf8");  // BUG? shouldn't this be the implicit "UTF-8" instead?
 		if (logger.isLoggable(Level.INFO)) logger.info(
@@ -117,7 +117,7 @@ public class MemoryBasedTMGrammar extends TMGrammar {
 	//	TODO: this should read from file
 	protected void read_tm_grammar_glue_rules() {
 		final double alpha = Math.log10(Math.E); //Cost
-		this.root = new TrieNode_Memory(); //root should not have valid ruleBin entries
+		this.root = new MemoryBasedTrieGrammar(); //root should not have valid ruleBin entries
 		
 		this.add_rule("S ||| ["	+ JoshuaConfiguration.default_non_terminal + ",1] ||| [" + JoshuaConfiguration.default_non_terminal	+ ",1] ||| 0",	this.p_symbol.addTerminalSymbol(JoshuaConfiguration.begin_mono_owner));//this does not have any cost	
 		//TODO: search consider_start_sym (Decoder.java, LMModel.java, and Chart.java)
@@ -145,18 +145,18 @@ public class MemoryBasedTMGrammar extends TMGrammar {
 		tem_estcost += p_rule.getEstCost();
 		
 		//######### identify the position, and insert the trinodes if necessary
-		TrieNode_Memory pos = root;
+		MemoryBasedTrieGrammar pos = root;
 		for (int k = 0; k < p_rule.french.length; k++) {
 			int cur_sym_id = p_rule.french[k];
 			if (this.p_symbol.isNonterminal(p_rule.french[k])) { //TODO: p_rule.french store the original format like "[X,1]"
 				cur_sym_id = this.p_symbol.addNonTerminalSymbol(replace_french_non_terminal(nonterminalReplaceRegexp, this.p_symbol.getWord(p_rule.french[k])));
 			}
 			
-			TrieNode_Memory next_layer = pos.matchOne(cur_sym_id);
+			MemoryBasedTrieGrammar next_layer = pos.matchOne(cur_sym_id);
 			if (null != next_layer) {
 				pos = next_layer;
 			} else {
-				TrieNode_Memory tem = new TrieNode_Memory();//next layer node
+				MemoryBasedTrieGrammar tem = new MemoryBasedTrieGrammar();//next layer node
 				if (null == pos.tbl_children) {
 					pos.tbl_children = new HashMap ();
 				}
@@ -167,7 +167,7 @@ public class MemoryBasedTMGrammar extends TMGrammar {
 		
 		//#########3: now add the rule into the trinode
 		if (null == pos.rule_bin) {
-			pos.rule_bin        = new RuleBin_Memory();
+			pos.rule_bin        = new MemoryBasedRuleBin();
 			pos.rule_bin.french = p_rule.french;
 			pos.rule_bin.arity  = p_rule.arity;
 			num_rule_bin++;
@@ -200,19 +200,19 @@ public class MemoryBasedTMGrammar extends TMGrammar {
 	}
 	
 	
-	public class TrieNode_Memory implements TrieGrammar {
-		private RuleBin_Memory rule_bin     = null;
+	public class MemoryBasedTrieGrammar implements TrieGrammar {
+		private MemoryBasedRuleBin rule_bin     = null;
 		private HashMap        tbl_children = null;
 		
 		
-		public TrieNode_Memory matchOne(int sym_id) {
+		public MemoryBasedTrieGrammar matchOne(int sym_id) {
 			//looking for the next layer trinode corresponding to this symbol
 			/*if(sym_id==null)
 				Support.write_log_line("Match_symbol: sym is null", Support.ERROR);*/
 			if (null == tbl_children) {
 				return null;
 			} else {
-				return (TrieNode_Memory) tbl_children.get(sym_id);
+				return (MemoryBasedTrieGrammar) tbl_children.get(sym_id);
 			}
 		}
 		
@@ -240,7 +240,7 @@ public class MemoryBasedTMGrammar extends TMGrammar {
 			if (null != this.tbl_children) {
 				Object[] tem = this.tbl_children.values().toArray();
 				for (int i = 0; i < tem.length; i++) {
-					((TrieNode_Memory)tem[i]).ensure_sorted();
+					((MemoryBasedTrieGrammar)tem[i]).ensure_sorted();
 				}
 			}
 		}
@@ -265,7 +265,7 @@ public class MemoryBasedTMGrammar extends TMGrammar {
 	
 	
 	/** contain all rules with the same french side (and thus same arity) */
-	public class RuleBin_Memory	extends RuleBin {
+	public class MemoryBasedRuleBin	extends RuleBin {
 		private PriorityQueue<MemoryBasedRule> heapRules   = null;
 		private double                     cutoff      = IMPOSSIBLE_COST;
 		private boolean                    sorted      = false;

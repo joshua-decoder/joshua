@@ -22,41 +22,7 @@ public class MemoryBasedRule extends Rule {
 	 */
 	private float est_cost = 0;
 	
-	
-	/** 
-	 * only called when creating oov rule in Chart, all
-	 * others should call the other contructor the
-	 * transition cost for phrase model, arity penalty,
-	 * word penalty are all zero, except the LM cost
-	 */
-	public MemoryBasedRule(ArrayList<FeatureFunction> p_l_models, int num_feats, int oov_rule_id, int lhs_in, int fr_in, int owner_in, boolean have_lm_model) {
-		super(oov_rule_id, lhs_in, fr_in, owner_in, num_feats);
-
-	   	/**TODO
-	   	 * This is a hack to make the decoding without a LM works
-	   	 * */
-	   	if(have_lm_model==false){//no LM is used for decoding, so we should set the stateless cost
-	   		//this.feat_scores[0]=100.0/((FeatureFunction)p_l_models.get(0)).getWeight();//TODO
-	   		this.feat_scores[0]=100;//TODO
-	   	}	   	
-	   	estimate_rule(p_l_models);//estimate lower-bound for pruning purpose, and set statelesscost
-	   	//System.out.println("stateless cost is " + this.statelesscost);
-	}
-
-	private MemoryBasedRule(float est_cost, int rule_id, int lhs, int[] fr_in, int[] eng_in, int owner, float[] feat_scores_in, int arity_in, float statelesscost, float src_cost) {
-		this.rule_id     = rule_id;
-		this.lhs         = lhs;
-		this.french      = fr_in;
-		this.english     = eng_in;
-		this.owner       = owner;
-		this.feat_scores = feat_scores_in;
-		this.arity       = arity_in;
-		this.statelesscost = statelesscost;
-		this.lattice_cost = src_cost;
-		this.est_cost = est_cost;
-	}
-	
-	
+	//TODO: this contructor should be moved to highest level of the Grammar hiearchy
 	public MemoryBasedRule(Symbol p_symbol, ArrayList<FeatureFunction> p_l_models, String nonterminalRegexp_, String nonterminalReplaceRegexp_, int r_id, String line, int owner_in) {
 		this.rule_id = r_id;
 		this.owner   = owner_in;
@@ -66,13 +32,13 @@ public class MemoryBasedRule extends Rule {
 		if (fds.length != 4) {
 			Support.write_log_line("rule line does not have four fds; " + line, Support.ERROR);
 		}			
-		this.lhs = p_symbol.addNonTerminalSymbol(TMGrammar.replace_french_non_terminal(nonterminalReplaceRegexp_, fds[0]));
+		this.lhs = p_symbol.addNonTerminalSymbol(BatchGrammar.replace_french_non_terminal(nonterminalReplaceRegexp_, fds[0]));
 		
 		int arity = 0;
 		String[] french_tem = fds[1].split("\\s+");
 		this.french = new int[french_tem.length];
 		for (int i = 0; i < french_tem.length; i++) {
-			if (TMGrammar.is_non_terminal(nonterminalRegexp_, french_tem[i])) {
+			if (BatchGrammar.is_non_terminal(nonterminalRegexp_, french_tem[i])) {
 				arity++;
 				//french[i]= Symbol.add_non_terminal_symbol(TMGrammar_Memory.replace_french_non_terminal(french_tem[i]));
 				this.french[i] = p_symbol.addNonTerminalSymbol(french_tem[i]);//when storing hyper-graph, we need this
@@ -86,7 +52,7 @@ public class MemoryBasedRule extends Rule {
 		String[] english_tem = fds[2].split("\\s+");
 		this.english = new int[english_tem.length];
 		for (int i = 0; i < english_tem.length; i++) {
-			if (TMGrammar.is_non_terminal(nonterminalRegexp_, english_tem[i])) {
+			if (BatchGrammar.is_non_terminal(nonterminalRegexp_, english_tem[i])) {
 				this.english[i] = p_symbol.addNonTerminalSymbol(english_tem[i]);
 			} else {
 				this.english[i] = p_symbol.addTerminalSymbol(english_tem[i]);
@@ -106,16 +72,13 @@ public class MemoryBasedRule extends Rule {
 
 	}
 	
-	public Rule cloneAndAddLatticeCostIfNonZero(float cost) {
-		if (cost == 0.0f) return this;
-		Rule r = new MemoryBasedRule(est_cost,rule_id, lhs, french, english, owner, feat_scores, arity, statelesscost, cost);
-		return r;
-	}
+
 	
 	public double getEstCost(){
 		return est_cost;
 	}
 	
+		
 	/** 
 	 * set the stateless cost, and set a lower-bound
 	 * estimate inside the rule returns full estimate.
