@@ -237,7 +237,7 @@ public class MERT
 
     SentenceInfo.setMaxGramLength(maxGramLength);
     SentenceInfo.setNumParams(numParams);
-    SentenceInfo.createV(); // uncomment ONLY IF using vocabulary implementation of SentenceInfo
+//    SentenceInfo.createV(); // uncomment ONLY IF using vocabulary implementation of SentenceInfo
 
 
     refSentenceInfo = new SentenceInfo[numSentences][refsPerSen];
@@ -343,17 +343,7 @@ public class MERT
       println("Initializing lambda[] randomly.",1);
 
       // initialize optimizable parameters randomly (sampling uniformly from that parameter's range)
-      for (int c = 1; c <= numParams; ++c) {
-        if (isOptimizable[c]) {
-          double randVal = randGen.nextDouble(); // number in [0.0,1.0]
-          randVal = randVal * (maxValue[c] - minValue[c]); // number in [0.0,max-min]
-          randVal = minValue[c] + randVal; // number in [min,max]
-          lambda[c] = randVal;
-        } else {
-          lambda[c] = defaultLambda[c];
-        }
-      }
-
+      lambda = randomLambda();
     }
 
     println("Initial lambda[]: " + lambdaToString(lambda),1);
@@ -401,7 +391,10 @@ public class MERT
 
       if (decoderCommand == null) {
         println("Running Joshua decoder...",1);
-        myDecoder.initializeDecoder(decoderConfigFileName);
+//        myDecoder.initializeDecoder(decoderConfigFileName);
+        double[] zeroBased_lambda = new double[numParams];
+        System.arraycopy(lambda,1,zeroBased_lambda,0,numParams);
+        myDecoder.changeFeatureWeightVector(zeroBased_lambda);
         myDecoder.decodingTestSet(sourceFileName, decoderOutFileName);
       } else {
         println("Running decoder...",1);
@@ -473,11 +466,11 @@ line format:
               // extract feature values
               // [0] will be |||, otherwise [i] will be feat-i_val
 
-            float[] featVal = new float[1+numParams];
+            double[] featVal = new double[1+numParams];
 
             //debugging version
             for (int c = 1; c <= numParams; ++c) {
-              featVal[c] = Float.parseFloat(featVal_str[c]);
+              featVal[c] = Double.parseDouble(featVal_str[c]);
               print("fV[" + c + "]=" + featVal[c] + " ",3);
             }
             println("",3);
@@ -578,19 +571,17 @@ line format:
 
           if (evalMetric.isBetter(bestScore,baseScore)) {
             println("*** Changing currLambda[j=" + j + "][" + c_best + "] from " + f4.format(currLambda[c_best]) + " (score: " + f4.format(baseScore) + ") to " + f4.format(bestLambdaVal) + " (score: " + f4.format(bestScore) + ") ***",2);
-
             println("*** Old currLambda[]: " + lambdaToString(currLambda) + " ***",2);
             currLambda[c_best] = bestLambdaVal;
             println("*** New currLambda[]: " + lambdaToString(currLambda) + " ***",2);
             println("",2);
-
           } else {
             println("*** No change to any lambda ***",2);
             println("*** currLambda[]: " + lambdaToString(currLambda) + " ***",2);
             break; // exit while (true) loop
           }
 
-          if (oneModificationPerIteration) { break; }
+          if (oneModificationPerIteration) { break; } // exit while (true) loop
 
         } // while (true)
 
@@ -1565,7 +1556,7 @@ line format:
 
   private double[] randomLambda()
   {
-    double[] retVal = new double[numParams];
+    double[] retVal = new double[1+numParams];
 
     for (int c = 1; c <= numParams; ++c) {
       if (isOptimizable[c]) {

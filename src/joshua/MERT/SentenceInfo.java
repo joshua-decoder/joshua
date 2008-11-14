@@ -7,18 +7,16 @@ public class SentenceInfo
 {
   private static int maxGramLength = 0;
   private static int numParams = 0;
-  private static Vector<String> V = null;
-  private static TreeMap<String,Integer> V_index = null;
 
-  private int[] wordIndices;
+  private String[] words;
   private int wordCount;
-  private float[] featVals;
+  private double[] featVals;
 
   // Default constructor
   public SentenceInfo()
   {
     checkStaticVars();
-    wordIndices = new int[0];
+    words = new String[0];
     wordCount = 0;
     featVals = null;
   }
@@ -28,8 +26,8 @@ public class SentenceInfo
   {
     checkStaticVars();
     wordCount = other.getWordCount();
-    wordIndices = new int[wordCount];
-    for (int i = 0; i < wordCount; ++i) { wordIndices[i] = other.getWordIndexAt(i); }
+    words = new String[wordCount];
+    for (int i = 0; i < wordCount; ++i) { words[i] = (other.getWordAt(i)).intern(); }
     featVals = null; // why not copy from other ????????????
   }
 
@@ -38,10 +36,9 @@ public class SentenceInfo
   {
     checkStaticVars();
     String[] sentence_str_words = sentence_str.split("\\s+");
-    updateV(sentence_str_words);
     wordCount = sentence_str_words.length;
-    wordIndices = new int[wordCount];
-    for (int i = 0; i < wordCount; ++i) { wordIndices[i] = V_index.get(sentence_str_words[i]); }
+    words = new String[wordCount];
+    for (int i = 0; i < wordCount; ++i) { words[i] = (sentence_str_words[i]).intern(); }
     featVals = null;
   }
 
@@ -49,21 +46,10 @@ public class SentenceInfo
   public SentenceInfo(String[] wordArray)
   {
     checkStaticVars();
-    updateV(wordArray);
     wordCount = wordArray.length;
-    wordIndices = new int[wordCount];
-    for (int i = 0; i < wordCount; ++i) { wordIndices[i] = V_index.get(wordArray[i]); }
+    words = new String[wordCount];
+    for (int i = 0; i < wordCount; ++i) { words[i] = wordArray[i].intern(); }
     featVals = null;
-  }
-
-  private static void updateV(String[] words)
-  {
-    for (int i = 0; i < words.length; ++i) {
-      if (!V_index.containsKey(words[i])) {
-        V_index.put(words[i].intern(),V.size());
-        V.add(words[i].intern());
-      }
-    }
   }
 
   private static void checkStaticVars()
@@ -77,16 +63,6 @@ public class SentenceInfo
       System.out.println("SentenceInfo static variable numParams must be set");
       System.out.println("to a positive value before creating any objects...");
       System.exit(12);
-    }
-    if (V == null) {
-      System.out.println("SentenceInfo static variable V must be initialized");
-      System.out.println("before creating any objects...");
-      System.exit(13);
-    }
-    if (V_index == null) {
-      System.out.println("SentenceInfo static variable V_index must be initialized");
-      System.out.println("before creating any objects...");
-      System.exit(14);
     }
   }
 
@@ -118,33 +94,7 @@ public class SentenceInfo
     }
   }
 
-  public static void createV()
-  {
-    V = new Vector<String>();
-    V_index = new TreeMap<String,Integer>();
-  }
-
   public int getWordCount() { return wordCount; }
-
-  public int getWordIndexAt(int i)
-  {
-    if (i < 0 || i >= wordCount) {
-      System.out.println("getWordIndexAt called with an invalid index " + i);
-      System.out.println("(was expecting an value in [0," + wordCount + ")).");
-      System.exit(41);
-    }
-
-    return wordIndices[i];
-  }
-
-  public String[] getWordArray()
-  {
-    String[] retA = new String[wordCount];
-    for (int i = 0; i < wordCount; ++i) {
-      retA[i] = getWordAt(i);
-    }
-    return retA;
-  }
 
   public String getWordAt(int i)
   {
@@ -154,18 +104,18 @@ public class SentenceInfo
       System.exit(41);
     }
 
-    return V.elementAt(wordIndices[i]);
+    return words[i];
   }
 
   public String toString()
   {
     String retStr = "";
-    for (int i = 0; i < wordCount-1; ++i) { retStr = retStr + getWordAt(i) + " "; }
-    retStr = retStr + getWordAt(wordCount-1);
+    for (int i = 0; i < wordCount-1; ++i) { retStr = retStr + words[i] + " "; }
+    retStr = retStr + words[wordCount-1];
     return retStr;
   }
 
-  public float getFeatAt(int c)
+  public double getFeatAt(int c)
   {
     if (featVals == null) {
       System.out.println("getFeatAt called for an object with an uninitialized featVals[] array.");
@@ -196,7 +146,7 @@ public class SentenceInfo
     return retA;
   }
 
-  public void set_featVals(float[] A)
+  public void set_featVals(double[] A)
   {
     if (A == null) {
       System.out.println("set_featVals called with an uninitialized array object.");
@@ -206,7 +156,7 @@ public class SentenceInfo
       System.out.println("(was expecting an array of length 1+numParams = " + (1+numParams) + ")");
       System.exit(62);
     } else {
-      featVals = new float[1+numParams];
+      featVals = new double[1+numParams];
       System.arraycopy(A,0,featVals,0,1+numParams);
         // [0] stores order of appearance in file
     }
@@ -214,7 +164,6 @@ public class SentenceInfo
 
   public HashMap[] getNgramCounts()
   {
-    String[] words = getWordArray();
     HashMap[] ngramCounts = new HashMap[1+maxGramLength];
     String gram = "";
 
