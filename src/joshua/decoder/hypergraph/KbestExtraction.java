@@ -258,7 +258,7 @@ public class KbestExtraction {
 		
 		//last: the last item that has been selected, we need to extend it
 		//get the next hyp at the "last" deduction
-		private void lazy_next(Symbol p_symbol, KbestExtraction kbest_extator, DerivationState last,boolean extract_unique_nbest, boolean extract_nbest_tree){
+		private void lazy_next(Symbol p_symbol, KbestExtraction kbest_extator, DerivationState last, boolean extract_unique_nbest, boolean extract_nbest_tree){
 			if(last.p_edge.get_ant_items()==null)
 				return;
 			for(int i=0; i < last.p_edge.get_ant_items().size();i++){//slide the ant item
@@ -279,7 +279,7 @@ public class KbestExtraction {
 				if(new_ranks[i]<=virtual_it.l_nbest.size()//exist the new_ranks[i] derivation
 				  /*&& "t" is not in heap_cands*/ ){//already checked before, check this condition
 					double cost= last.cost - ((DerivationState)virtual_it.l_nbest.get(last.ranks[i]-1)).cost + ((DerivationState)virtual_it.l_nbest.get(new_ranks[i]-1)).cost;
-					DerivationState t = new DerivationState(last.p_edge, new_ranks, cost, last.deduction_pos);
+					DerivationState t = new DerivationState(last.p_parent_node, last.p_edge, new_ranks, cost, last.deduction_pos);
 					heap_cands.add(t);
 					derivation_tbl.put(new_sig,1);
 				}				
@@ -300,7 +300,7 @@ public class KbestExtraction {
 			}
 			int pos=0;
 			for(HyperEdge hyper_edge : p_item.l_deductions){				
-				DerivationState t = get_best_derivation(p_symbol,kbest_extator, hyper_edge,pos, extract_unique_nbest, extract_nbest_tree);
+				DerivationState t = get_best_derivation(p_symbol,kbest_extator, p_item, hyper_edge,pos, extract_unique_nbest, extract_nbest_tree);
 //				why duplicate, e.g., 1 2 + 1 0 == 2 1 + 0 1 , but here we should not get duplicate				
 				if(derivation_tbl.containsKey(t.get_signature())==false){
 					heap_cands.add(t);
@@ -325,7 +325,7 @@ public class KbestExtraction {
 		}
 		
 		//get my best derivation, and recursively add 1best for all my children, used by get_candidates only
-		private DerivationState get_best_derivation(Symbol p_symbol, KbestExtraction kbest_extator, HyperEdge hyper_edge, int deduct_pos,  boolean extract_unique_nbest,boolean extract_nbest_tree){
+		private DerivationState get_best_derivation(Symbol p_symbol, KbestExtraction kbest_extator, HGNode parent_item, HyperEdge hyper_edge, int deduct_pos,  boolean extract_unique_nbest,boolean extract_nbest_tree){
 			int[] ranks;
 			double cost=0;
 			if(hyper_edge.get_ant_items()==null){//axiom
@@ -341,7 +341,7 @@ public class KbestExtraction {
 				}
 				cost = hyper_edge.best_cost;//seeding
 			}				
-			DerivationState t = new DerivationState(hyper_edge, ranks, cost, deduct_pos );
+			DerivationState t = new DerivationState(parent_item, hyper_edge, ranks, cost, deduct_pos );
 			return t;
 		}
 	};
@@ -355,13 +355,15 @@ public class KbestExtraction {
 	//each DerivationState rougly correponds a hypothesis 
 	private static class DerivationState implements Comparable<DerivationState> 
 	{
+		HGNode p_parent_node;
 		HyperEdge p_edge;//in the paper, it is "e"		
 		//**lesson: once we define this as a static variable, which cause big trouble
 		int deduction_pos; //this is my position in my parent's Item.l_deductions, used for signature calculation
 		int[] ranks;//in the paper, it is "j", which is a ArrayList of size |e|
 		double cost;//the cost of this hypthesis
 		
-		public DerivationState(HyperEdge e, int[] r, double c ,int pos){
+		public DerivationState(HGNode pa, HyperEdge e, int[] r, double c ,int pos){
+			p_parent_node = pa;
 			p_edge =e ;
 			ranks = r;
 			cost=c;
@@ -388,7 +390,7 @@ public class KbestExtraction {
 		//if want to get model cost, then have to set model_cost and l_models
 		private String get_hyp(Symbol p_symbol, KbestExtraction kbest_extator, boolean tree_format, double[] model_cost, ArrayList l_models){
 			//### accumulate cost of p_edge into model_cost if necessary
-			if(model_cost!=null) compute_cost(p_edge, model_cost, l_models);
+			if(model_cost!=null) compute_cost(p_parent_node, p_edge, model_cost, l_models);
 			
 			//### get hyp string recursively
 			StringBuffer res = new StringBuffer();			
@@ -462,7 +464,7 @@ public class KbestExtraction {
 		*/
 		
 		
-		private void compute_cost(HyperEdge dt, double[] model_cost, ArrayList l_models){
+		private void compute_cost(HGNode parent_item, HyperEdge dt, double[] model_cost, ArrayList l_models){
 			if(model_cost==null) return;
 			//System.out.println("Rule is: " + dt.rule.toString());
 			
@@ -471,7 +473,7 @@ public class KbestExtraction {
 				double t_res =0;
 							
 				if(dt.get_rule()!=null){//deductions under goal item do not have rules
-					FFTransitionResult tem_tbl =  HyperGraph.computeTransition(dt, m, -1, -1);
+					FFTransitionResult tem_tbl =  HyperGraph.computeTransition(dt, m, parent_item.i, parent_item.j);
 					t_res = tem_tbl.getTransitionCost();
 				}else{//final transtion
 					t_res = HyperGraph.computeFinalTransition(dt, m);
