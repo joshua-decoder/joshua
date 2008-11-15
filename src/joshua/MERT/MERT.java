@@ -352,6 +352,8 @@ public class MERT
     int totalCandidateCount = 0;
       // total number of candidates stored in candidates[]
 
+    double FINAL_score = evalMetric.worstPossibleScore();
+
     for (int iteration = 1; ; ++iteration) {
 
       println("--- Starting MERT iteration #" + iteration + " @ " + (new Date()) + " ---",1);
@@ -388,6 +390,12 @@ public class MERT
       /***************/
       // RUN DECODER //
       /***************/
+
+      if (iteration == 1) {
+        println("Decoding using initial weight vector " + lambdaToString(lambda),1);
+      } else {
+        println("Redecoding using weight vector " + lambdaToString(lambda),1);
+      }
 
       if (decoderCommand == null) {
         println("Running Joshua decoder...",1);
@@ -495,11 +503,13 @@ line format:
 
       } // for (i)
 
-      println("",1);
+      println("",1); // to finish off progress dot line
 
       inFile.close();
 
       cleanupMemory();
+
+      println("",1);
 
       if (!newCandidatesAdded) {
         if (!oneModificationPerIteration) {
@@ -511,7 +521,7 @@ line format:
       }
 
 
-      double[][] initialLambda = new double[1+initsPerIt][1+numParams];
+      double[][] initialLambda = new double[1+initsPerIt][1+numParams]; // the intermediate "initial" lambdas
       System.arraycopy(lambda,1,initialLambda[1],1,numParams);
       for (int j = 2; j <= initsPerIt; ++j) { initialLambda[j] = randomLambda(); }
 
@@ -522,17 +532,17 @@ line format:
 
       for (int j = 1; j <= initsPerIt; ++j) {
 
-        println("Optimizing lambda[j=" + j + "].",1);
+        println("+++ Optimizing lambda[j=" + j + "] +++",1);
 
         double[] currLambda = new double[1+numParams];
         System.arraycopy(initialLambda[j],1,currLambda,1,numParams);
         initialScore[j] = score(currLambda,candidates);
-        println("(Initial score: " + initialScore[j] + ")",1);
+        println("Initial lambda[j=" + j + "]: " + lambdaToString(currLambda),1);
+        println("(Initial score[j=" + j + ": " + initialScore[j] + ")",1);
+        println("",1);
+        finalScore[j] = initialScore[j];
 
         while (true) {
-
-          double baseScore = score(currLambda,candidates);
-          println("(Intermediate base score: " + baseScore + ")",2);
 
           int c_best = 0; // which parameter to change?
           double bestLambdaVal = 0.0;
@@ -569,15 +579,17 @@ line format:
 
           // now c_best is the parameter giving the most gain
 
-          if (evalMetric.isBetter(bestScore,baseScore)) {
-            println("*** Changing currLambda[j=" + j + "][" + c_best + "] from " + f4.format(currLambda[c_best]) + " (score: " + f4.format(baseScore) + ") to " + f4.format(bestLambdaVal) + " (score: " + f4.format(bestScore) + ") ***",2);
-            println("*** Old currLambda[]: " + lambdaToString(currLambda) + " ***",2);
+          if (evalMetric.isBetter(bestScore,finalScore[j])) {
+            println("*** Changing lambda[j=" + j + "][" + c_best + "] from " + f4.format(currLambda[c_best]) + " (score: " + f4.format(finalScore[j]) + ") to " + f4.format(bestLambdaVal) + " (score: " + f4.format(bestScore) + ") ***",2);
+            println("*** Old lambda[j=" + j + "]: " + lambdaToString(currLambda) + " ***",2);
             currLambda[c_best] = bestLambdaVal;
-            println("*** New currLambda[]: " + lambdaToString(currLambda) + " ***",2);
+            finalScore[j] = bestScore;
+            println("*** New lambda[j=" + j + "]: " + lambdaToString(currLambda) + " ***",2);
             println("",2);
           } else {
-            println("*** No change to any lambda ***",2);
-            println("*** currLambda[]: " + lambdaToString(currLambda) + " ***",2);
+            println("*** Not changing to any weight in lambda[j=" + j + "] ***",2);
+            println("*** Final lambda[j=" + j + "]: " + lambdaToString(currLambda) + " ***",2);
+            println("",2);
             break; // exit while (true) loop
           }
 
@@ -588,8 +600,8 @@ line format:
         // now currLambda is the optimized weight vector on the current candidate list (corresponding to initialLambda[j])
 
         System.arraycopy(currLambda,1,finalLambda[j],1,numParams);
-        finalScore[j] = score(currLambda,candidates);
-        println("(Final score: " + finalScore[j] + ")",1);
+        println("(Final score[j=" + j + "]: " + finalScore[j] + ")",1);
+        println("",1);
 
       } // for (j)
 
@@ -602,6 +614,12 @@ line format:
           bestFinalScore = finalScore[j];
         }
       }
+
+      if (initsPerIt > 1) {
+        println("Best lambda is lambda[j=" + best_j + "] (score: " + f4.format(bestFinalScore) + ").",1);
+      }
+
+      FINAL_score = bestFinalScore;
 
       boolean anyParamChanged = false;
 
@@ -631,7 +649,13 @@ line format:
         break; // exit for (iteration) loop
       }
 
+      println("Next iteration will use lambda: " + lambdaToString(lambda),1);
+      println("",1);
+      println("---  MERT iteration #" + iteration + " ending @ " + (new Date()) + "  ---",1);
+      println("",1);
+
       printMemoryUsage();
+      println("",2);
 
     } // for (iteration)
 
@@ -645,6 +669,7 @@ line format:
     printMemoryUsage();
     println("----------------------------------------------------",1);
     println("",1);
+    println("FINAL lambda: " + lambdaToString(lambda) + " (score: " + FINAL_score + ")",1);
     println("",1);
 
   } // void run_MERT(int maxIts)
