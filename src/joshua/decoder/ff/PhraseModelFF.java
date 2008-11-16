@@ -42,7 +42,7 @@ public final class PhraseModelFF extends DefaultStatelessFF  {
 			if (this.columnIndex < rule.feat_scores.length) {
 				return rule.feat_scores[this.columnIndex];
 			} else {
-				System.out.println("In PhraseModelFF: columnIndex is not right");
+				System.out.println("In PhraseModelFF: columnIndex is not right, model columnIndex: " + columnIndex + "; max colum in rule: rule.feat_scores.length");
 				System.exit(0);
 				return 0.0;
 			}

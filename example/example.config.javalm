@@ -40,8 +40,8 @@ remote_lm_server_port=9000
 
 
 #parallel deocoder: it cannot be used together with remote lm
-num_parallel_decoders=1
-parallel_files_prefix=/tmp/
+num_parallel_decoders=2
+parallel_files_prefix=.
 
 #disk hg
 save_disk_hg=true
