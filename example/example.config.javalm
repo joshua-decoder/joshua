@@ -1,5 +1,6 @@
 lm_file=example/example.trigram.lm.gz
 tm_file=example/example.hiero.tm.gz
+tm_file=C:\Users\zli\Documents\corpus.ar-en.unique.fixed.rules
 
 #lm config
 use_srilm=false
@@ -40,7 +41,7 @@ remote_lm_server_port=9000
 
 
 #parallel deocoder: it cannot be used together with remote lm
-num_parallel_decoders=2
+num_parallel_decoders=1
 parallel_files_prefix=.
 
 #disk hg

@@ -312,10 +312,7 @@ public class MemoryBasedBatchGrammarWithPrune extends BatchGrammar {
 			}
 			if (rule.arity != this.arity) {
 				Support.write_log_line(
-					String.format(
-						"RuleBin: arity is not matching, old: %d; new: %d",
-						this.arity, rule.arity),
-					Support.ERROR);
+					String.format("RuleBin: arity is not matching, old: %d; new: %d", this.arity, rule.arity),	Support.ERROR);
 				return;
 			}
 			this.heapRules.add(rule);	//TODO: what is offer()
@@ -328,10 +325,11 @@ public class MemoryBasedBatchGrammarWithPrune extends BatchGrammar {
 		
 		private int run_pruning() {
 			int n_pruned = 0;
-			while (this.heapRules.size() > JoshuaConfiguration.max_n_rules
-			|| this.heapRules.peek().getEstCost() >= this.cutoff) {
+			
+			while (this.heapRules.size() > JoshuaConfiguration.max_n_rules || this.heapRules.peek().getEstCost() >= this.cutoff) {
 				n_pruned++;
 				this.heapRules.poll();
+				if(this.heapRules.peek()==null){System.out.println("the stack is empty, which is strange; cutoff:" + this.cutoff);}
 			}
 			if (this.heapRules.size() == JoshuaConfiguration.max_n_rules) {
 				this.cutoff =

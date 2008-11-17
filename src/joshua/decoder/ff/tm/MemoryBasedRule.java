@@ -75,6 +75,9 @@ public class MemoryBasedRule extends Rule {
 
 	
 	public double getEstCost(){
+		if(est_cost <= Double.NEGATIVE_INFINITY){
+			System.out.println("The est cost is neg infinity; must be bad rule; rule is:\n" +this.toString());
+		}
 		return est_cost;
 	}
 	

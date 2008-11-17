@@ -244,6 +244,25 @@ public class Rule {
 		return this.cachedToString;
 	}
 	
+	//print the rule in terms of Ingeters
+	public String toString() {
+		if (null == this.cachedToString) {
+			StringBuffer sb = new StringBuffer("[");
+			sb.append(this.lhs);
+			sb.append("] ||| ");
+			sb.append(this.french);
+			sb.append(" ||| ");
+			sb.append(this.english);
+			sb.append(" |||");
+			for (int i = 0; i < this.feat_scores.length; i++) {
+				sb.append(String.format(" %.4f", this.feat_scores[i]));
+			}
+			this.cachedToString = sb.toString();
+		}
+		return this.cachedToString;
+	}
+	
+	
     public String toStringWithoutFeatScores(Symbol p_symbol){
             StringBuffer res = new StringBuffer();
             res.append("["); res.append(p_symbol.getWord(lhs)); res.append("] ||| ");
