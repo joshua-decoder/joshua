@@ -40,7 +40,17 @@ public class MemoryMappedCorpusArray { // implements Corpus {
 	private final int numberOfWords;
 	private final int numberOfSentences;
 	
-	
+	/**
+	 * Constructs a memory mapped corpus array
+	 * from existing binary files.
+	 * 
+	 * @param vocabulary
+	 * @param binaryCorpusFileName
+	 * @param binaryCorpusFileSize
+	 * @param binarySentenceFileName
+	 * @param binarySentenceFileSize
+	 * @throws IOException
+	 */
 	public MemoryMappedCorpusArray(
 		Vocabulary vocabulary,
 		String     binaryCorpusFileName,

@@ -226,5 +226,30 @@ public class FileUtility{
 			return false;
 		}
 	}
+	
+	/**
+	 * Writes data from the integer array to disk
+	 * as raw bytes.
+	 * 
+	 * @param data The integer array to write to disk.
+	 * @param filename The filename where the data should be written.
+	 * @throws IOException
+	 */
+    public static void writeBytes(int[] data, String filename) throws IOException {
+    	
+    	FileOutputStream out = new FileOutputStream(filename);
+    	
+    	byte[] b = new byte[4];
+		 
+    	for (int word : data) {
+    		for (int i = 0; i < 4; i++) {
+    			int offset = (b.length - 1 - i) * 8;
+    			b[i] = (byte) ((word >>> offset) & 0xFF);
+    		}
+    		
+    		out.write(b);
+    	}
+    }
+	
 }
 //end of utility for file options

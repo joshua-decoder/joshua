@@ -17,12 +17,12 @@
  */
 package joshua.sarray;
 
+import joshua.util.FileUtility;
 import joshua.util.sentence.Phrase;
 import joshua.util.sentence.Vocabulary;
 
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.*;
+import java.util.Arrays;
 
 
 
@@ -272,30 +272,16 @@ public class CorpusArray {
 	
 	
     public void writeVocabToFile(String filename) throws IOException {
-    	writeToFile(corpus, filename);
+    	FileUtility.writeBytes(corpus, filename);
     }
     
 	
     public void writeSentencesToFile(String filename) throws IOException {
-    	writeToFile(sentences, filename);
+    	FileUtility.writeBytes(sentences, filename);
     }
     
 	
-    private void writeToFile(int[] data, String filename) throws IOException {
-    	
-    	FileOutputStream out = new FileOutputStream(filename);
-    	
-    	byte[] b = new byte[4];
-		 
-    	for (int word : data) {
-    		for (int i = 0; i < 4; i++) {
-    			int offset = (b.length - 1 - i) * 8;
-    			b[i] = (byte) ((word >>> offset) & 0xFF);
-    		}
-    		
-    		out.write(b);
-    	}
-    }
+
     
 //===============================================================
 // Protected 

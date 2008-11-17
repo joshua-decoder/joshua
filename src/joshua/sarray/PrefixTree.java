@@ -104,7 +104,10 @@ public class PrefixTree {
 	 * to store at each node in the prefix tree.
 	 */
 	private final int sampleSize;
-		
+	
+	/** Represents a very high cost, corresponding to a very unlikely probability. */
+	private static final float VERY_UNLIKELY = -1.0f * (float) Math.log(1.0e-9);
+	
 	
 	static final int ROOT_NODE_ID = -999;
 	static final int BOT_NODE_ID = -2000;
@@ -1420,13 +1423,16 @@ public class PrefixTree {
 			
 			float p_e_given_f_denominator = translations.size();
 			
-			
 			for (Pattern translation : translations) {
 				
-				float p_e_given_f = (float) Math.log(counts.get(translation) / p_e_given_f_denominator);
+				float p_e_given_f = -1.0f * (float) Math.log(counts.get(translation) / p_e_given_f_denominator);
+				if (Float.isInfinite(p_e_given_f)) p_e_given_f = VERY_UNLIKELY;
 				
-				float lex_p_e_given_f = (float) Math.log(cumulativeSourceGivenTargetLexProbs.get(translation) / counterSourceGivenTargetLexProbs.get(translation));
-				float lex_p_f_given_e = (float) Math.log(cumulativeTargetGivenSourceLexProbs.get(translation) / counterTargetGivenSourceLexProbs.get(translation));
+				float lex_p_e_given_f = -1.0f * (float) Math.log(cumulativeSourceGivenTargetLexProbs.get(translation) / counterSourceGivenTargetLexProbs.get(translation));
+				if (Float.isInfinite(lex_p_e_given_f)) lex_p_e_given_f = VERY_UNLIKELY;
+				
+				float lex_p_f_given_e = -1.0f * (float) Math.log(cumulativeTargetGivenSourceLexProbs.get(translation) / counterTargetGivenSourceLexProbs.get(translation));
+				if (Float.isInfinite(lex_p_f_given_e)) lex_p_f_given_e = VERY_UNLIKELY;
 				
 				float[] featureScores = { p_e_given_f, lex_p_e_given_f, lex_p_f_given_e };
 				
