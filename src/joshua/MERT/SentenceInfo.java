@@ -5,7 +5,7 @@ import java.io.*;
 
 public class SentenceInfo
 {
-  private static int numParams = 0;
+//  private static int numParams = 0;
 
   private String[] words;
   private short location_it;   // location
@@ -34,7 +34,14 @@ public class SentenceInfo
     setSentence(sentence_str);
   }
 
-
+  // Constructor given a word array
+  public SentenceInfo(String[] wordArray)
+  {
+//    checkStaticVars();
+    int wordCount = wordArray.length;
+    words = new String[wordCount];
+    for (int i = 0; i < wordCount; ++i) { words[i] = wordArray[i].intern(); }
+  }
 /*
   private static void checkStaticVars()
   {

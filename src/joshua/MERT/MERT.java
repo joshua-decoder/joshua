@@ -368,16 +368,6 @@ public class MERT
       cleanupMemory();
       printMemoryUsage();
 /*
-      if (iteration > 1 && resetCandList) {
-        println("Clearing candidate translations from previous MERT iteration.",1);
-        for (int i = 0; i < numSentences; ++i) { candidates[i].clear(); }
-        totalCandidateCount = 0;
-        cleanupMemory();
-      } else if (iteration > 1) {
-        print(totalCandidateCount + " candidate translations carried over from previous MERT iteration.",1);
-        println(" (About " + totalCandidateCount/numSentences + " candidate translations per sentence.)",1);
-      }
-
       // initCandidateCount[i] stores number of candidate translations added
       // so far for the ith sentence, before generation of the N-best set
       // in the current MERT iteration.
@@ -489,7 +479,6 @@ public class MERT
 
       for (int i = 0; i < numSentences; ++i) {
 
-//        HashSet<String> existingCandidates = candVectorToStringHashSet(candidates[i]);
         HashSet<String> existingCandidates = new HashSet<String>();
 
         for (int j = 1; j <= initsPerIt; ++j) {
@@ -763,20 +752,6 @@ line format:
     return retStr;
   }
 
-  private HashSet<String> candVectorToStringHashSet(Vector<SentenceInfo> candidates)
-  {
-    HashSet<String> retSet = new HashSet();
-
-    int numCandidates = candidates.size();
-    String sentence;
-    for (int k = 0; k < numCandidates; ++k) {
-      sentence = (candidates.elementAt(k)).toString();
-      retSet.add(sentence);
-    }
-
-    return retSet;
-  }
-
   private double[] line_opt(int c, Vector[] candidates, double[][][] featVal_array, double[] lambda, short minIt, short maxIt) throws Exception
   {
     TreeMap[] thresholds = new TreeMap[numSentences];
@@ -831,10 +806,7 @@ line format:
       double maxSlope = NegInf;        // ...and its slope...
       double offset_maxSlope = NegInf; // ...and its offset (needed to break ties)
 
-      SentenceInfo SI = null;
       for (int k = 0; k < numCandidates; ++k) {
-        SI = (SentenceInfo)candidates[i].elementAt(k);
-//        double[] featVal = SI.getFeats();
         double[] featVal = getFeats(featVal_array,i,k);
 
         slope[k] = featVal[c];
@@ -881,7 +853,7 @@ line format:
         for (int k2 = 0; k2 < numCandidates; ++k2) {
           if (k1 != k2 && slope[k1] == slope[k2] && offset[k1] > offset[k2]) {
             discardedIndices.add(k2);
-            print(k2 + " ",3);
+//            print(k2 + " ",3);
           }
         }
       }
@@ -932,10 +904,27 @@ line format:
 
         int[] th_info = {i,currIndex,nearestIntersectingLineIndex};
 
-        thresholds[i].put(nearestIntersectionPoint,th_info);
-          // i.e., at lambda_c = nIP, the (index of the) 1-best changes
-          // from currIndex to nearestIntersectingLineIndex (which is
-          // indicated in th_info)
+        if (!thresholds[i].containsKey(nearestIntersectionPoint)) {
+          thresholds[i].put(nearestIntersectionPoint,th_info);
+            // i.e., at lambda_c = nIP, the (index of the) 1-best changes
+            // from currIndex to nearestIntersectingLineIndex (which is
+            // indicated in th_info)
+        } else { // extremely rare, but causes problem if it does occur
+          // in essence, just replace the new_k of the existing th_info
+          int[] old_th_info = (int[])thresholds[i].get(nearestIntersectionPoint);
+          old_th_info[2] = th_info[2];
+          thresholds[i].put(nearestIntersectionPoint,old_th_info);
+          // When does this happen?  If two consecutive intersection points are so close
+          // to each other so as to appear as having the same value.  For instance, assume
+          // we have two intersection points ip1 and ip2 corresponding to two transitions,
+          // one from k_a to k_b, and the other from k_b to k_c.  It might be the case
+          // that ip2-ip1 is extremeley small, so that the ip2 entry would actually REPLACE
+          // the ip1 entry.  This would be bad.
+
+          // Instead, we pretend that k_b never happened, and just assume there is a single
+          // intersection point, ip (which equals whatever value Java calculates for ip1
+          // and ip2), with a corresponding transition of k_a to k_c.
+        }
 
         currIndex = nearestIntersectingLineIndex;
 
@@ -954,7 +943,7 @@ line format:
     for (int i = 0; i < numSentences; ++i) {
       Iterator It = (thresholds[i].keySet()).iterator();
       int[] th_info = null;
-      while (It.hasNext()) {
+      while (It.hasNext()) { // process intersection points contributd by this sentence
         double ip = (Double)It.next();
         if (ip > minValue[c] && ip < maxValue[c]) {
           th_info = (int[])(thresholds[i].get(ip));
@@ -962,7 +951,7 @@ line format:
             Vector A = new Vector();
             A.add(th_info);
             thresholdsAll.put(ip,A);
-          } else { // not likely to happen, but should account for it
+          } else { // though rare, it does happen
             Vector A = thresholdsAll.get(ip);
             A.add(th_info);
             thresholdsAll.put(ip,A);
@@ -974,8 +963,9 @@ line format:
 
           indicesOfInterest[loc_it][i].put(loc_cand,old_k);
 
-        }
-      }
+        } // if (in-range)
+
+      } // while (It.hasNext())
 
       if (th_info != null) {
         // new_k from the last th_info (previous new_k already appear as the next old_k)
@@ -986,7 +976,7 @@ line format:
         indicesOfInterest[loc_it][i].put(loc_cand,new_k);
       }
 
-    }
+    } // for (i)
 
     // now thresholdsAll has the values for lambda_c at which score changes
     // based on the candidates for *all* the sentences (that satisfy
@@ -1016,7 +1006,6 @@ line format:
     double largest_th = thresholdsAll.lastKey();
     println("Smallest extracted threshold: " + smallest_th,2);
     println("Largest extracted threshold: " + largest_th,2);
-    println("",2);
 
     if (maxValue[c] != PosInf) {
       thresholdsAll.put(maxValue[c],null);
@@ -1213,6 +1202,7 @@ line format:
     }
     cleanupMemory();
     printMemoryUsage();
+    println("",2);
 
     bestScoreInfo[0] = bestLambdaVal;
     bestScoreInfo[1] = bestScore;
@@ -1333,37 +1323,7 @@ line format:
     writer.newLine();
     writer.flush();
   }
-/*
-  private double score(double[] lambda, Vector[] candidates)
-  {
-    SentenceInfo[] bestCand = new SentenceInfo[numSentences];
 
-    String line, candidate_str;
-
-    for (int i = 0; i < numSentences; ++i) {
-      int numCandidates = candidates[i].size();
-      double max = NegInf;
-      int indexOfMax = -1;
-
-      for (int k = 0; k < numCandidates; ++k) {
-        double score = 0;
-        double[] featVals = ((SentenceInfo)candidates[i].elementAt(k)).getFeats();
-        for (int c = 1; c <= numParams; ++c) {
-          score += lambda[c] * featVals[c];
-        }
-        if (score > max) {
-          max = score;
-          indexOfMax = k;
-        }
-      }
-
-      bestCand[i] = new SentenceInfo((SentenceInfo)candidates[i].elementAt(indexOfMax));
-    }
-
-    return evalMetric.score(bestCand);
-
-  }
-*/
   public void finish() throws Exception
   {
     if (decoderCommand == null) {
