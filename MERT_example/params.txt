@@ -1,5 +1,5 @@
 lm			|||	1.000000		Fix	-5	+5
-phrasemodel pt 0	|||	0.252935654108541	Opt	-5	+5
-phrasemodel pt 1	|||	0.53039689226183	Opt	-5	+5
-phrasemodel pt 2	|||	0.257451527609142	Opt	-5	+5
-wordpenalty		|||	-0.253083167421746	Opt	-5	+5
+phrasemodel pt 0	|||	4.220173288837007	Opt	-1	+1
+phrasemodel pt 1	|||	-3.168872612579372	Opt	-1	+1
+phrasemodel pt 2	|||	-4.255599096555853	Opt	-1	+1
+wordpenalty		|||	4.6860307558005285	Opt	-5	0

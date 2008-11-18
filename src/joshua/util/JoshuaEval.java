@@ -228,8 +228,7 @@ public class JoshuaEval
       System.exit(20);
     }
 
-    SentenceInfo.setMaxGramLength(maxGramLength);
-    SentenceInfo.setNumParams(1); // dummy value for numParams
+//    SentenceInfo.setNumParams(1); // dummy value for numParams
 
     // read in reference sentences
     refSentenceInfo = new SentenceInfo[numSentences][refsPerSen];
