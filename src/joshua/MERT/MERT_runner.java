@@ -36,13 +36,12 @@ public class MERT_runner
     println("");
     println("   OR:");
     println("");
-    println(" MERT [-dir dirPrefix] [-s sourceFile] [-r refFile] [-rps refsPerSen]\n      [-maxGL maxGramLength] [-decOut decoderOutFile] [-decExit validExit]\n      [-p paramsFile] [-rand randInits] [ipi initsPerIt] [-seed firstSeed]\n      [-N N] [-maxIt maxMERTIts] [-dcfg decConfigFile] [-save saveInterCfg]\n      [-cmd commandFile] [-opi oncePerIt] [-m metricName] [-fin finalLambdas]\n      [-xx xxx] [-v verbosity]");
+    println(" MERT [-dir dirPrefix] [-s sourceFile] [-r refFile] [-rps refsPerSen]\n      [-decOut decoderOutFile] [-decExit validExit] [-p paramsFile]\n      [-rand randInits] [ipi initsPerIt] [-seed firstSeed] [-N N]\n      [-maxIt maxMERTIts] [-dcfg decConfigFile] [-save saveInter]\n      [-cmd commandFile] [-opi oncePerIt] [-m metricName] [-fin finalLambdas]\n      [-xx xxx] [-v verbosity]");
     println("");
     println(" (*) -dir dirPrefix: location of relevant files\n       [[default: null string (i.e. they are in the current directory)]]");
     println(" (*) -s sourceFile: source sentences (foreign sentences) of the MERT dataset\n       [[default: source.txt]]");
     println(" (*) -r refFile: target sentences (reference translations) of the MERT dataset\n       [[default: reference.txt]]");
     println(" (*) -rps refsPerSen: number of reference translations per sentence\n       [[default: 1]]");
-    println(" (*) -maxGL maxGramLength: maximum word gram length to collect statistics for\n       [[default: 4]]");
     println(" (*) -decOut decoderOutFile: name of the output file produced by your decoder\n       [[default: output.nbest]]");
     println(" (*) -decExit validExit: value returned by decoder to indicate success\n       [[default: 0]]");
     println(" (*) -p paramsFile: file containing parameter names, initial values, and ranges\n       [[default: params.txt]]");
@@ -50,7 +49,7 @@ public class MERT_runner
     println(" (*) -ipi initsPerIt: number of intermediate initial points per iteration\n       [[default: 20]]");
     println(" (*) -seed seed: seed used to initialize random number generator\n       [[default: time (i.e. value returned by System.currentTimeMillis()]]");
     println(" (*) -dcfg decConfigFile: name of decoder config file\n       [[default: config_file.txt]]");
-    println(" (*) -save saveInterCfg: save intermediate config files (1) or not (0)\n       [[default: 0]]");
+    println(" (*) -save save: save intermediate cfg files and decoder outputs (1) or not (0)\n       [[default: 1]]");
     println(" (*) -cmd commandFile: name of file containing command to run the decoder\n       [[default: null string (i.e. decoder is a JoshuaDecoder object)]]");
     println(" (*) -N N: size of N-best list (per sentence) generated in each MERT iteration\n       [[default: 100]]");
     println(" (*) -reset resetCandList: reset candidate list every iteration (1) or not (0)\n       [[default: 0]]");

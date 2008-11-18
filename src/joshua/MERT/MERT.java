@@ -18,7 +18,7 @@ public class MERT
   private int progress;
 
   private int verbosity; // anything of priority <= verbosity will be printed
-                        // (lower value for priority means more important)
+                         // (lower value for priority means more important)
 
   private Random randGen;
 
@@ -34,9 +34,6 @@ public class MERT
     // sentence information for the reference translations
     // refSentenceInfo[i][r] stores the information for the rth reference
     // translation of the ith sentence
-
-  private int maxGramLength;
-    // maximum gram length; needed for the SentenceInfo class
 
   private int numParams;
     // number of parameters for the log-linear model
@@ -81,7 +78,7 @@ public class MERT
   private int validDecoderExitValue;
     // return value from running the decoder command that indicates success
 
-  private boolean saveInterCfg;
+  private boolean saveInterFiles;
     // if true, intermediate config files are saved.  If false, they are not.
 
   private int sizeOfNBest;
@@ -235,8 +232,7 @@ public class MERT
     inFile_init.close();
 
 
-    SentenceInfo.setMaxGramLength(maxGramLength);
-    SentenceInfo.setNumParams(numParams);
+//    SentenceInfo.setNumParams(numParams);
 //    SentenceInfo.createV(); // uncomment ONLY IF using vocabulary implementation of SentenceInfo
 
 
@@ -274,7 +270,7 @@ public class MERT
 
     // do necessary initialization for the evaluation metric
     if (metricName.equals("BLEU")) {
-      evalMetric = new BLEU(maxGramLength,"closest");
+      evalMetric = new BLEU(4,"closest");
     } else if (metricName.equals("01LOSS")) {
       evalMetric = new ZeroOneLoss();
     }
@@ -334,9 +330,15 @@ public class MERT
     Vector[] candidates = new Vector[numSentences];
       // candidates[i] stores the translation candidates for the ith sentence
       // each element in the array is a Vector of SentenceInfo objects
+    double[][][] featVal_array = new double[1+numParams][numSentences][sizeOfNBest];
+    featVal_array[0] = null;
+    int[] lastUsedIndex = new int[numSentences];
+    int[] maxIndex = new int[numSentences];
 
     for (int i = 0; i < numSentences; ++i) {
-      candidates[i] = new Vector();
+      candidates[i] = new Vector(); // a Vector of SentenceInfo's
+      lastUsedIndex[i] = -1;
+      maxIndex[i] = sizeOfNBest - 1;
     }
 
     if (randInits) {
@@ -358,7 +360,14 @@ public class MERT
 
       println("--- Starting MERT iteration #" + iteration + " @ " + (new Date()) + " ---",1);
       printMemoryUsage();
-
+      for (int i = 0; i < numSentences; ++i) {
+        candidates[i].clear();
+        lastUsedIndex[i] = -1;
+      }
+      totalCandidateCount = 0;
+      cleanupMemory();
+      printMemoryUsage();
+/*
       if (iteration > 1 && resetCandList) {
         println("Clearing candidate translations from previous MERT iteration.",1);
         for (int i = 0; i < numSentences; ++i) { candidates[i].clear(); }
@@ -377,7 +386,7 @@ public class MERT
       for (int i = 0; i < numSentences; ++i) {
         initCandidateCount[i] = candidates[i].size();
       }
-
+*/
       // run the decoder on all the sentences, producing for each sentence a set of
       // sizeOfNBest candidates, with numParams feature values for each candidate
 
@@ -386,6 +395,11 @@ public class MERT
       /******************************/
 
       createConfigFile(lambda,decoderConfigFileName,decoderConfigFileName+".orig.MERT");
+
+      if (saveInterFiles) {
+        // create config file with current values
+        createConfigFile(lambda, decoderConfigFileName+".it"+iteration,decoderConfigFileName+".orig.MERT");
+      }
 
       /***************/
       // RUN DECODER //
@@ -428,31 +442,67 @@ public class MERT
 
       println("...finished decoding @ " + (new Date()),1);
 
-      println("Ensuring proper decoder output.",3);
-
       checkFile(decoderOutFileName);
+
+      if (saveInterFiles) {
+        // create copy of current decoder output
+        copyFile(decoderOutFileName,decoderOutFileName+".it"+iteration);
+      }
+
+      println("Ensuring proper decoder output.",3);
 
       fixDecoderOutput();
         // makes sure each sentence has sizeOfNBest candidate translations in
         // decoderOutFileName, since some sentences might produce fewer
         // candidates (e.g. sentence is too short or has too many OOV's)
 
-      println("Reading candidate translations.",1);
+
+      double[][] initialLambda = new double[1+initsPerIt][1+numParams]; // the intermediate "initial" lambdas
+      double[][] finalLambda = new double[1+initsPerIt][1+numParams]; // the intermediate "final" lambdas
+
+      // set initialLambda[][]
+      System.arraycopy(lambda,1,initialLambda[1],1,numParams);
+      for (int j = 2; j <= initsPerIt; ++j) { initialLambda[j] = randomLambda(); }
+
+      double[] initialScore = new double[1+initsPerIt];
+      double[] finalScore = new double[1+initsPerIt];
+
+      SentenceInfo[][] best1Cand = new SentenceInfo[1+initsPerIt][numSentences];
+        // used to calculate initialScore[]
+      String[][] best1Cand_sen = new String[1+initsPerIt][numSentences];
+      double[][] best1Score = new double[1+initsPerIt][numSentences];
+
+
+      println("Reading candidate translations.",2);
       progress = 0;
 
-      BufferedReader inFile = new BufferedReader(new FileReader(decoderOutFileName));
+      copyFile(decoderOutFileName,decoderOutFileName+".temp.it"+iteration);
+      boolean newCandidatesAdded = false;
+
+      BufferedReader[] inFile = new BufferedReader[1+iteration];
+      for (int it = 1; it <= iteration; ++it) {
+        inFile[it] = new BufferedReader(new FileReader(decoderOutFileName+".temp.it"+it));
+      }
+
       String line, candidate_str;
 
-      boolean newCandidatesAdded = false;
 
       for (int i = 0; i < numSentences; ++i) {
 
-        HashSet<String> existingCandidates = candVectorToStringHashSet(candidates[i]);
+//        HashSet<String> existingCandidates = candVectorToStringHashSet(candidates[i]);
+        HashSet<String> existingCandidates = new HashSet<String>();
 
-        for (int n = 0; n < sizeOfNBest; ++n) {
+        for (int j = 1; j <= initsPerIt; ++j) {
+          best1Cand[j][i] = null;
+          best1Cand_sen[j][i] = null;
+          best1Score[j][i] = NegInf;
+        }
 
-          // read nth candidate for the ith sentence, along with its feature values,
-          // and then add them to candidates[i], if not already there
+        for (short it = 1; it <= iteration; ++it) {
+
+          for (short n = 0; n < sizeOfNBest; ++n) {
+
+            // read nth candidate for the ith sentence, along with its feature values
 
 /*
 line format:
@@ -461,51 +511,74 @@ line format:
 
 */
 
-          line = inFile.readLine();
-          line = line.substring(line.indexOf("||| ")+4); // get rid of initial text
-          candidate_str = line.substring(0,line.indexOf(" |||"));
+            line = inFile[it].readLine();
+            line = line.substring(line.indexOf("||| ")+4); // get rid of initial text
+            candidate_str = line.substring(0,line.indexOf(" |||"));
 
-          if (!existingCandidates.contains(candidate_str)) {
-            SentenceInfo candidate = new SentenceInfo(candidate_str);
-            print("Adding candidate " + n + " of sentence " + i + ": ",3);
-            line = line.substring(line.indexOf("||| ")); // get rid of candidate
+            if (!existingCandidates.contains(candidate_str)) {
+              line = line.substring(line.indexOf("||| ")); // get rid of candidate
 
-            String[] featVal_str = line.split("\\s+");
-              // extract feature values
-              // [0] will be |||, otherwise [i] will be feat-i_val
+              String[] featVal_str = line.split("\\s+");
+                // extract feature values
+                // [0] will be |||, otherwise [i] will be feat-i_val
 
-            double[] featVal = new double[1+numParams];
+              double[] featVal = new double[1+numParams];
 
-            //debugging version
-            for (int c = 1; c <= numParams; ++c) {
-              featVal[c] = Double.parseDouble(featVal_str[c]);
-              print("fV[" + c + "]=" + featVal[c] + " ",3);
+              for (int c = 1; c <= numParams; ++c) {
+                featVal[c] = Double.parseDouble(featVal_str[c]);
+//                print("fV[" + c + "]=" + featVal[c] + " ",3);
+              }
+//              println("",3);
+
+
+              for (int j = 1; j <= initsPerIt; ++j) {
+                double score = 0;
+                for (int c = 1; c <= numParams; ++c) {
+                  score += initialLambda[j][c] * featVal[c];
+                }
+                if (score > best1Score[j][i]) {
+                  best1Score[j][i] = score;
+                  best1Cand_sen[j][i] = candidate_str;
+                }
+              }
+
+              existingCandidates.add(candidate_str);
+
+              SentenceInfo candidate = new SentenceInfo();
+//              candidate.set_featVals(featVal);
+              setFeats(featVal_array,i,lastUsedIndex,maxIndex,featVal);
+              candidate.setLocationInfo(it,n);
+              candidates[i].add(candidate);
+              ++totalCandidateCount;
+              if (it == iteration) {
+                newCandidatesAdded = true;
+              }
+
             }
-            println("",3);
 
+            showProgress();
 
-            featVal[0] = n; // order of appearance in file
-            existingCandidates.add(candidate_str);
-            candidate.set_featVals(featVal);
-            candidates[i].add(candidate);
-            ++totalCandidateCount;
-            newCandidatesAdded = true;
+          } // for (n)
 
-          } else {
-            println("Skipping candidate " + n + " of sentence " + i + " (already seen)",3);
-          }
+          existingCandidates.clear();
 
-          showProgress();
-
-        } // for (n)
-
-        existingCandidates.clear();
+        } // for (it)
 
       } // for (i)
 
-      println("",1); // to finish off progress dot line
 
-      inFile.close();
+      for (int i = 0; i < numSentences; ++i) {
+        for (int j = 1; j <= initsPerIt; ++j) {
+          best1Cand[j][i] = new SentenceInfo(best1Cand_sen[j][i]);
+          best1Cand_sen[j][i] = null;
+        }
+      }
+
+      for (int it = 1; it <= iteration; ++it) {
+        inFile[it].close();
+      }
+
+      println("",2); // to finish off progress dot line
 
       cleanupMemory();
 
@@ -514,6 +587,9 @@ line format:
       if (!newCandidatesAdded) {
         if (!oneModificationPerIteration) {
           println("No new candidates added in this iteration; exiting MERT.",1);
+          println("",1);
+          println("---  MERT iteration #" + iteration + " ending @ " + (new Date()) + "  ---",1);
+          println("",1);
           break; // exit for (iteration) loop
         } else {
           println("Note: No new candidates added in this iteration.",1);
@@ -521,24 +597,15 @@ line format:
       }
 
 
-      double[][] initialLambda = new double[1+initsPerIt][1+numParams]; // the intermediate "initial" lambdas
-      System.arraycopy(lambda,1,initialLambda[1],1,numParams);
-      for (int j = 2; j <= initsPerIt; ++j) { initialLambda[j] = randomLambda(); }
-
-      double[][] finalLambda = new double[1+initsPerIt][1+numParams];
-
-      double[] initialScore = new double[1+initsPerIt];
-      double[] finalScore = new double[1+initsPerIt];
-
       for (int j = 1; j <= initsPerIt; ++j) {
 
         println("+++ Optimizing lambda[j=" + j + "] +++",1);
 
         double[] currLambda = new double[1+numParams];
         System.arraycopy(initialLambda[j],1,currLambda,1,numParams);
-        initialScore[j] = score(currLambda,candidates);
-        println("Initial lambda[j=" + j + "]: " + lambdaToString(currLambda),1);
-        println("(Initial score[j=" + j + ": " + initialScore[j] + ")",1);
+        initialScore[j] = evalMetric.score(best1Cand[j]);
+        println("Initial lambda[j=" + j + "]: " + lambdaToString(initialLambda[j]),1);
+        println("(Initial score[j=" + j + "]: " + initialScore[j] + ")",1);
         println("",1);
         finalScore[j] = initialScore[j];
 
@@ -561,11 +628,11 @@ line format:
             } else {
               println("Investigating lambda[j=" + j + "][" + c + "]...",2);
 
-              double[] bestScoreInfo_c = line_opt(c,candidates,currLambda);
+              double[] bestScoreInfo_c = line_opt(c,candidates,featVal_array,currLambda,(short)1,(short)iteration);
                 // get best score and its lambda value
 
-              double bestScore_c = bestScoreInfo_c[0];
-              double bestLambdaVal_c = bestScoreInfo_c[1];
+              double bestLambdaVal_c = bestScoreInfo_c[0];
+              double bestScore_c = bestScoreInfo_c[1];
 
               if (evalMetric.isBetter(bestScore_c,bestScore)) {
                 bestScore = bestScore_c;
@@ -587,7 +654,7 @@ line format:
             println("*** New lambda[j=" + j + "]: " + lambdaToString(currLambda) + " ***",2);
             println("",2);
           } else {
-            println("*** Not changing to any weight in lambda[j=" + j + "] ***",2);
+            println("*** Not changing any weight in lambda[j=" + j + "] ***",2);
             println("*** Final lambda[j=" + j + "]: " + lambdaToString(currLambda) + " ***",2);
             println("",2);
             break; // exit while (true) loop
@@ -600,6 +667,7 @@ line format:
         // now currLambda is the optimized weight vector on the current candidate list (corresponding to initialLambda[j])
 
         System.arraycopy(currLambda,1,finalLambda[j],1,numParams);
+        println("Final lambda[j=" + j + "]: " + lambdaToString(finalLambda[j]),1);
         println("(Final score[j=" + j + "]: " + finalScore[j] + ")",1);
         println("",1);
 
@@ -616,7 +684,8 @@ line format:
       }
 
       if (initsPerIt > 1) {
-        println("Best lambda is lambda[j=" + best_j + "] (score: " + f4.format(bestFinalScore) + ").",1);
+        println("Best final lambda is lambda[j=" + best_j + "] (score: " + f4.format(bestFinalScore) + ").",1);
+        println("",1);
       }
 
       FINAL_score = bestFinalScore;
@@ -631,6 +700,9 @@ line format:
 
       if (!anyParamChanged) {
         println("No parameter values changed in this iteration; exiting MERT.",1);
+        println("",1);
+        println("---  MERT iteration #" + iteration + " ending @ " + (new Date()) + "  ---",1);
+        println("",1);
         break; // exit for (iteration) loop preemptively
       }
 
@@ -638,18 +710,16 @@ line format:
 
 
 
-      if (saveInterCfg) {
-        // create config file with current values
-        createConfigFile(lambda, decoderConfigFileName+"."+iteration,decoderConfigFileName+".orig.MERT");
-      }
-
       // if max iteration reached, exit
       if (iteration == maxIts) {
         println("Maximum number of MERT iterations reached; exiting MERT.",1);
+        println("",1);
+        println("---  MERT iteration #" + iteration + " ending @ " + (new Date()) + "  ---",1);
+        println("",1);
         break; // exit for (iteration) loop
       }
 
-      println("Next iteration will use lambda: " + lambdaToString(lambda),1);
+      println("Next iteration will decode with lambda: " + lambdaToString(lambda),1);
       println("",1);
       println("---  MERT iteration #" + iteration + " ending @ " + (new Date()) + "  ---",1);
       println("",1);
@@ -671,6 +741,14 @@ line format:
     println("",1);
     println("FINAL lambda: " + lambdaToString(lambda) + " (score: " + FINAL_score + ")",1);
     println("",1);
+
+    // delete intermediate *.temp.it* decoder output files
+    for (int iteration = 1; iteration <= maxIts; ++iteration) {
+      if (fileExists(decoderOutFileName+".temp.it"+iteration)) {
+        File cp = new File(decoderOutFileName+".temp.it"+iteration);
+        cp.delete();
+      }
+    }
 
   } // void run_MERT(int maxIts)
 
@@ -699,12 +777,8 @@ line format:
     return retSet;
   }
 
-  private double[] line_opt(int c, Vector[] candidates, double[] lambda)
+  private double[] line_opt(int c, Vector[] candidates, double[][][] featVal_array, double[] lambda, short minIt, short maxIt) throws Exception
   {
-    /* OLD; using 2-d array
-    TreeMap[][] thresholds = new TreeMap[numSentences][1+numParams];
-    */
-
     TreeMap[] thresholds = new TreeMap[numSentences];
       // thresholds[i] stores thresholds for the cth parameter obtained by
       // processing the candidates of sentence i.  It not only stores the
@@ -712,12 +786,23 @@ line format:
       // are indices that characterize the 1-best switch at this threshold.
 
     for (int i = 0; i < numSentences; ++i) {
-//      for (int c = 1; c <= numParams; ++c) {
-        thresholds[i] = new TreeMap();
-//      }
+      thresholds[i] = new TreeMap();
     }
 
     double[] bestScoreInfo = new double[2];
+      // to be returned: [0] will store the best lambda, and [1] will store its score
+
+
+    TreeMap[][] indicesOfInterest = new TreeMap[1+maxIt][numSentences];
+    for (short it = 0; it < minIt; ++it) {
+      indicesOfInterest[it] = null;
+    }
+    for (short it = minIt; it <= maxIt; ++it) {
+      for (int i = 0; i < numSentences; ++i) {
+        indicesOfInterest[it][i] = new TreeMap<Short,Integer>();
+        // maps order of appearance in file to index in candidates
+      }
+    }
 
     // Find threshold points
 
@@ -725,7 +810,7 @@ line format:
     for (int i = 0; i < numSentences; ++i) {
     // find threshold points contributed by ith sentence
 
-      println("Processing sentence #" + i,3);
+//      println("Processing sentence #" + i,3);
 
       thresholds[i].clear();
 
@@ -749,18 +834,19 @@ line format:
       SentenceInfo SI = null;
       for (int k = 0; k < numCandidates; ++k) {
         SI = (SentenceInfo)candidates[i].elementAt(k);
-        double[] featVal = SI.getFeats();
+//        double[] featVal = SI.getFeats();
+        double[] featVal = getFeats(featVal_array,i,k);
 
         slope[k] = featVal[c];
 
-        offset[k] = 0.0f;
+        offset[k] = 0.0;
         for (int c2 = 1; c2 <= numParams; ++c2) {
           if (c2 != c) { offset[k] += lambda[c2]*featVal[c2]; }
         }
 
         // debugging
-        println("@ (i,k,n)=(" + i + "," + k + "," + (int)featVal[0] + "), "
-               + "slope = " + slope[k] + "; offset = " + offset[k],3);
+//        println("@ (i,k,n)=(" + i + "," + k + "," + (int)featVal[0] + "), "
+//               + "slope = " + slope[k] + "; offset = " + offset[k],3);
 
         if (slope[k] < minSlope || (slope[k] == minSlope && offset[k] > offset_minSlope)) {
           minSlopeIndex = k;
@@ -783,7 +869,7 @@ line format:
 
 
       // some lines can be eliminated: the ones that have a lower offset
-      // than any other line with the same slope.
+      // than some other line with the same slope.
       // That is, for any k1 and k2:
       //   if slope[k1] = slope[k2] and offset[k1] > offset[k2],
       //   then k2 can be eliminated.
@@ -867,20 +953,39 @@ line format:
     TreeMap<Double,Vector> thresholdsAll = new TreeMap<Double,Vector>();
     for (int i = 0; i < numSentences; ++i) {
       Iterator It = (thresholds[i].keySet()).iterator();
+      int[] th_info = null;
       while (It.hasNext()) {
         double ip = (Double)It.next();
         if (ip > minValue[c] && ip < maxValue[c]) {
+          th_info = (int[])(thresholds[i].get(ip));
           if (!thresholdsAll.containsKey(ip)) {
             Vector A = new Vector();
-            A.add(thresholds[i].get(ip));
+            A.add(th_info);
             thresholdsAll.put(ip,A);
           } else { // not likely to happen, but should account for it
             Vector A = thresholdsAll.get(ip);
-            A.add(thresholds[i].get(ip));
+            A.add(th_info);
             thresholdsAll.put(ip,A);
           }
+          // th_info[0] = i, th_info[1] = old_k, th_info[2] = new_k
+          int old_k = th_info[1];
+          short loc_it = ((SentenceInfo)candidates[i].elementAt(old_k)).getLocationInfo_it();
+          short loc_cand = ((SentenceInfo)candidates[i].elementAt(old_k)).getLocationInfo_cand();
+
+          indicesOfInterest[loc_it][i].put(loc_cand,old_k);
+
         }
       }
+
+      if (th_info != null) {
+        // new_k from the last th_info (previous new_k already appear as the next old_k)
+        int new_k = th_info[2];
+        short loc_it = ((SentenceInfo)candidates[i].elementAt(new_k)).getLocationInfo_it();
+        short loc_cand = ((SentenceInfo)candidates[i].elementAt(new_k)).getLocationInfo_cand();
+
+        indicesOfInterest[loc_it][i].put(loc_cand,new_k);
+      }
+
     }
 
     // now thresholdsAll has the values for lambda_c at which score changes
@@ -889,6 +994,8 @@ line format:
     // Each lambda_c value maps to a Vector of th_info.  All of these
     // Vectors are probably of size 1.
 
+    // indicesOfInterest[][] tells us which candidate sentences are needed
+    // to read from the decoder output files.
 
 
     /*************************************************/
@@ -899,8 +1006,8 @@ line format:
       // simply return current value for this parameter
       println("No thresholds extracted!  Returning this parameter's current value...",2);
 
-      bestScoreInfo[0] = score(lambda,candidates);
-      bestScoreInfo[1] = lambda[c];
+      bestScoreInfo[0] = lambda[c];
+      bestScoreInfo[1] = evalMetric.worstPossibleScore();
 
       return bestScoreInfo;
     }
@@ -953,7 +1060,8 @@ line format:
       int indexOfMax = -1;
       for (int k = 0; k < numCandidates; ++k) {
         double score = 0;
-        double[] featVals = ((SentenceInfo)candidates[i].elementAt(k)).getFeats();
+//        double[] featVals = ((SentenceInfo)candidates[i].elementAt(k)).getFeats();
+        double[] featVals = getFeats(featVal_array,i,k);
 
         for (int c2 = 1; c2 <= numParams; ++c2) { score += temp_lambda[c2] * featVals[c2]; }
         if (score > max) {
@@ -964,7 +1072,61 @@ line format:
 
       indexOfCurrBest[i] = indexOfMax;
 
+      // add indexOfCurrBest[i] to indicesOfInterest
+      short loc_it = ((SentenceInfo)candidates[i].elementAt(indexOfMax)).getLocationInfo_it();
+      short loc_cand = ((SentenceInfo)candidates[i].elementAt(indexOfMax)).getLocationInfo_cand();
+      indicesOfInterest[loc_it][i].put(loc_cand,indexOfMax);
+
     }
+
+
+    // process the decoder output files, and read the sentences corresponding to the
+    // candidates of interest (use the info in indicesOfInterest to determine them)
+
+    for (int it = minIt; it <= maxIt; ++it) {
+
+      BufferedReader inFile = new BufferedReader(new FileReader(decoderOutFileName+".temp.it"+it));
+      String line, candidate_str;
+
+      for (int i = 0; i < numSentences; ++i) {
+
+        short currCand = 0;
+        Iterator It = (indicesOfInterest[it][i].keySet()).iterator();
+
+        while (It.hasNext()) {
+          short nextKey = (Short)It.next();
+          int nextIndex = (Integer)indicesOfInterest[it][i].get(nextKey);
+
+          // skip candidates until you get to the nextKey'th candidate
+          while (currCand < nextKey) {
+            line = inFile.readLine();
+            ++currCand;
+          }
+
+          // now currCand == nextKey, and the next line in inFile contains the sentence we want
+          line = inFile.readLine();
+          ++currCand;
+          line = line.substring(line.indexOf("||| ")+4); // get rid of initial text
+          candidate_str = line.substring(0,line.indexOf(" |||"));
+
+          ((SentenceInfo)candidates[i].elementAt(nextIndex)).setSentence(candidate_str);
+
+        }
+
+        // skip the rest of ith sentence's candidates
+        while (currCand < sizeOfNBest) {
+          line = inFile.readLine();
+          ++currCand;
+        }
+
+      }
+
+      inFile.close();
+
+    }
+
+
+
 
     // Now, set suffStats[][], and increment suffStats_tot[]
     for (int i = 0; i < numSentences; ++i) {
@@ -1004,7 +1166,7 @@ line format:
         suffStats[i] = evalMetric.suffStats((SentenceInfo)candidates[i].elementAt(indexOfCurrBest[i]),i);
 
         for (int s = 0; s < suffStatsCount; ++s) {
-          suffStats_tot[s] += suffStats[i][s]; // add stats for candidate old_k
+          suffStats_tot[s] += suffStats[i][s]; // add stats for candidate new_k
         }
 
       }
@@ -1017,9 +1179,11 @@ line format:
         bestLambdaVal = nextLambdaVal;
         print(" (*)",3);
       }
+
       println("",3);
 
-    }
+    } // while (It.hasNext())
+
     println("",3);
 
     // what is the purpose of this block of code ?????????????????????
@@ -1033,8 +1197,25 @@ line format:
     /*************************************************/
     /*************************************************/
 
-    bestScoreInfo[0] = bestScore;
-    bestScoreInfo[1] = bestLambdaVal;
+    printMemoryUsage();
+
+    // delete the sentences from the candidates formerly of interest
+    for (int it = minIt; it <= maxIt; ++it) {
+      for (int i = 0; i < numSentences; ++i) {
+        Iterator It2 = (indicesOfInterest[it][i].keySet()).iterator();
+        while (It2.hasNext()) {
+          short nextKey = (Short)It2.next();
+          int nextIndex = (Integer)indicesOfInterest[it][i].get(nextKey);
+          ((SentenceInfo)candidates[i].elementAt(nextIndex)).deleteSentence();
+        }
+        indicesOfInterest[it][i].clear();
+      }
+    }
+    cleanupMemory();
+    printMemoryUsage();
+
+    bestScoreInfo[0] = bestLambdaVal;
+    bestScoreInfo[1] = bestScore;
 
     return bestScoreInfo;
 
@@ -1045,7 +1226,7 @@ line format:
   {
     copyFile(decoderOutFileName,decoderOutFileName+".temp.MERT");
     BufferedReader inFile = new BufferedReader(new FileReader(decoderOutFileName+".temp.MERT"));
-    PrintWriter outFile = new PrintWriter(decoderOutFileName);
+    PrintWriter outFile = new PrintWriter(decoderOutFileName); // overwrite existing file
     String line, prevLine;
 
     int i = 0; int n = 0;
@@ -1152,7 +1333,7 @@ line format:
     writer.newLine();
     writer.flush();
   }
-
+/*
   private double score(double[] lambda, Vector[] candidates)
   {
     SentenceInfo[] bestCand = new SentenceInfo[numSentences];
@@ -1182,7 +1363,7 @@ line format:
     return evalMetric.score(bestCand);
 
   }
-
+*/
   public void finish() throws Exception
   {
     if (decoderCommand == null) {
@@ -1264,7 +1445,6 @@ line format:
     sourceFileName = "source.txt";
     refFileName = "reference.txt";
     refsPerSen = 1;
-    maxGramLength = 4;
     decoderOutFileName = "output.nbest";
     validDecoderExitValue = 0;
     paramsFileName = "params.txt";
@@ -1276,7 +1456,7 @@ line format:
     decoderConfigFileName = "config.txt";
     metricName = "BLEU";
     sizeOfNBest = 100;
-    saveInterCfg = false;
+    saveInterFiles = true;
     resetCandList = false;
     maxMERTIterations = 10;
     oneModificationPerIteration = false;
@@ -1292,10 +1472,6 @@ line format:
       else if (option.equals("-rps")) {
         refsPerSen = Integer.parseInt(args[i+1]);
         if (refsPerSen < 1) { println("refsPerSen must be positive."); System.exit(10); }
-      }
-      else if (option.equals("-maxGL")) {
-        maxGramLength = Integer.parseInt(args[i+1]);
-        if (maxGramLength < 1) { println("maxGramLength must be positive."); System.exit(10); }
       }
       else if (option.equals("-decOut")) { decoderOutFileName = args[i+1]; }
       else if (option.equals("-decExit")) {
@@ -1325,9 +1501,9 @@ line format:
       else if (option.equals("-dcfg")) { decoderConfigFileName = args[i+1]; }
       else if (option.equals("-save")) {
         int save = Integer.parseInt(args[i+1]);
-        if (save == 1) saveInterCfg = true;
-        else if (save == 0) saveInterCfg = false;
-        else { println("saveInterCfg must be either 0 or 1."); System.exit(10); }
+        if (save == 1) saveInterFiles = true;
+        else if (save == 0) saveInterFiles = false;
+        else { println("save must be either 0 or 1."); System.exit(10); }
       }
       else if (option.equals("-m")) {
         metricName = args[i+1];
@@ -1574,7 +1750,7 @@ line format:
   private void showProgress()
   {
     ++progress;
-    if (progress % 1000 == 0) print(".",1);
+    if (progress % 10000 == 0) print(".",2);
   }
 
 
@@ -1598,5 +1774,37 @@ line format:
   }
 
 
+  private double[] getFeats(double[][][] featVal_array, int i, int k)
+  {
+    double[] retA = new double[1+numParams];
+
+    for (int c = 1; c <= numParams; ++c) {
+      retA[c] = featVal_array[c][i][k];
+    }
+
+    return retA;
+  }
+
+  private void setFeats(double[][][] featVal_array, int i, int[] lastUsedIndex, int[] maxIndex, double[] featVal)
+  {
+    int k = lastUsedIndex[i] + 1;
+
+    if (k > maxIndex[i]) {
+      for (int c = 1; c <= numParams; ++c) {
+        double[] temp = featVal_array[c][i];
+        featVal_array[c][i] = new double[1+maxIndex[i]+sizeOfNBest];
+
+        for (int k2 = 0; k2 <= maxIndex[i]; ++k2) {
+          featVal_array[c][i][k2] = temp[k2];
+        }
+      }
+      maxIndex[i] += sizeOfNBest;
+    }
+
+    for (int c = 1; c <= numParams; ++c) {
+      featVal_array[c][i][k] = featVal[c];
+    }
+    lastUsedIndex[i] += 1;
+  }
 
 }
