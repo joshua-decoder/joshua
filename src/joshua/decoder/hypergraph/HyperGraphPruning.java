@@ -72,7 +72,7 @@ public class HyperGraphPruning extends TrivialInsideOutside {
 
 //	######################### pruning here ##############
 	public void pruning_hg(HyperGraph hg){
-		run_inside_outside(hg, 1, 2);//viterbi-max, log-semiring
+		run_inside_outside(hg, 1, 2, 1.0);//viterbi-max, log-semiring
 		if(fix_threshold_pruning){
 			pruning_hg_real(hg);
 			super.clear_state();

@@ -43,6 +43,7 @@ public abstract class DefaultInsideOutside {
 	int SEMIRING=LOG_SEMIRING; //default is in log; or real, or logic
 	double ZERO_IN_SEMIRING = Double.NEGATIVE_INFINITY;//log-domain
 	double ONE_IN_SEMIRING = 0;//log-domain
+	double scaling_factor ; //try to scale the original distribution: smooth or winner-take-all
 	
 	private HashMap tbl_inside_prob =  new HashMap();//remember inside prob of each item: 
 	private HashMap tbl_outside_prob =  new HashMap();//remember outside prob of each item
@@ -58,12 +59,13 @@ public abstract class DefaultInsideOutside {
 	double g_sanity_post_prob =0;
 	
 	//get feature-set specific **log probability** for each hyperedge
-	protected abstract double get_deduction_prob(HyperEdge dt, HGNode parent_it);
+	protected abstract double get_deduction_prob(HyperEdge dt, HGNode parent_it, double scaling_factor);
 	
 	
 	//the results are stored in tbl_inside_prob and tbl_outside_prob
-	public void run_inside_outside(HyperGraph hg, int add_mode, int semiring){//add_mode||| 0: sum; 1: viterbi-min, 2: viterbi-max
+	public void run_inside_outside(HyperGraph hg, int add_mode, int semiring, double scaling_factor_){//add_mode||| 0: sum; 1: viterbi-min, 2: viterbi-max
 		setup_semiring(semiring, add_mode);
+		scaling_factor = scaling_factor_;
 		
 		//System.out.println("outside estimation");
 		inside_estimation_hg(hg);
@@ -102,7 +104,7 @@ public abstract class DefaultInsideOutside {
 		
 		//### add deduction/rule specific prob
 		double merit = multi_in_semiring(inside, outside);
-		merit = multi_in_semiring(merit, get_deduction_prob(dt, parent));
+		merit = multi_in_semiring(merit, get_deduction_prob(dt, parent, this.scaling_factor));
 		
 		return merit;
 	}	
@@ -200,7 +202,7 @@ public abstract class DefaultInsideOutside {
 			}
 				
 		//### deduction operation
-		double deduct_prob = get_deduction_prob(dt, parent_item);//feature-set specific	
+		double deduct_prob = get_deduction_prob(dt, parent_item, this.scaling_factor);//feature-set specific	
 		inside_prob =  multi_in_semiring(inside_prob, deduct_prob);	
 		return inside_prob;
 	}
@@ -261,7 +263,7 @@ public abstract class DefaultInsideOutside {
 		//we do not need to outside prob if no ant items
 		if(dt.get_ant_items()!=null){
 			//### deduction specific prob
-			double deduction_prob = get_deduction_prob(dt, parent_item);//feature-set specific
+			double deduction_prob = get_deduction_prob(dt, parent_item, this.scaling_factor);//feature-set specific
 			
 			//### recursive call on each ant item
 			for(HGNode ant_it : dt.get_ant_items()){
