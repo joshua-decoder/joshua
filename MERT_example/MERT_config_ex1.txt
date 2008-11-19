@@ -3,25 +3,23 @@
 -s	src_small.txt # source sentences file name
 -r	ref_small # target sentences file name (in this case, file name prefix)
 -rps	4 # references per sentence
--cmd	decoder_command_ex1.txt # file containing command to run decoder
--dcfg	config_ex1.txt # decoder config file
--decOut	nbest_ex1.out # file prodcued by decoder
--N	300 # size of N-best list generated each iteration
 -p	params.txt # parameter file
--maxIt	30 # maximum MERT iterations
--opi	1 # should MERT modify a single parameter per iteration?
+-maxIt	15 # maximum MERT iterations
+-ipi	3 # number of intermediate initial points per iteration
+-cmd	decoder_command_ex1.txt # file containing command to run decoder
+-decOut	nbest_ex1.out # file prodcued by decoder
+-dcfg	config_ex1.txt # decoder config file
+-N	300 # size of N-best list generated each iteration
 -v	1 # verbosity level (0-4; higher value => more verbose)
 
 # Notice that comments are allowed
 
 ### Other parameters and their default values
-#-maxGL 4 # max gram length
-#-decExit 0 # return value by decoder indicating success
-#-rand 0 # should parameters be initialized randomly?
-#-runs 1 # number of restarts (if > 1, -rand must have 1 as argument)
-#-seed time # random number generator seeding (see documentation)
-#-fin final_lambdas.txt # output file for final values
-#-save 0 # should MERT save intermediate config files?
-#-reset 0 # should candidate list be reset each iteration?
+#-fin final_lambda.txt # output file for final values
 #-m BLEU # name of evaluation metric
+#-save 1 # should MERT save intermediate config and decoder output files?
+#-opi 0 # modify at most one parameter per iteration?
+#-rand 0 # should first initial point (of first iteration) be initialized randomly?
+#-seed time # random number generator seeding (see documentation)
+#-decExit 0 # return value by decoder indicating success
 #-decV 0 # should decoder output be printed?
