@@ -50,6 +50,8 @@ public class LMFeatureFunction extends DefaultStatefulFF {
 	static String STOP_SYM="</s>";
 	public int STOP_SYM_ID;
 	
+	boolean add_start_and_end_symbol = true;
+	
 	/* we assume the LM is in ARPA format
 	 * for equivalent state: 
 	 * (1)we assume it is a backoff lm, and high-order ngram implies low-order ngram; absense of low-order ngram implies high-order ngram
@@ -325,7 +327,8 @@ public class LMFeatureFunction extends DefaultStatefulFF {
 		}
 		
 		//##################left context
-		current_ngram.add(START_SYM_ID);
+		if(add_start_and_end_symbol)
+			current_ngram.add(START_SYM_ID);
 		for (int i = 0; i < l_context.length; i++) {
 			int t = l_context[i];
 			current_ngram.add(t);
@@ -333,10 +336,12 @@ public class LMFeatureFunction extends DefaultStatefulFF {
 			if (t == lmGrammar.BACKOFF_LEFT_LM_STATE_SYM_ID) {//calculate cost for <bo>: additional backoff weight
 				int additional_backoff_weight = current_ngram.size() - (i+1);
 				//compute additional backoff weight
+				//TOTO: may not work with the case that add_start_and_end_symbol=false
 				res -= this.lmGrammar.get_prob_backoff_state(current_ngram, current_ngram.size(), additional_backoff_weight);
 			} else {//partial ngram
 				//compute the current word probablity
-				res -= this.lmGrammar.get_prob(current_ngram, current_ngram.size(), false);
+				if(current_ngram.size()>=2)//start from bigram
+					res -= this.lmGrammar.get_prob(current_ngram, current_ngram.size(), false);
 			}
 			if (current_ngram.size() == this.ngramOrder) {
 				current_ngram.remove(0);
@@ -345,14 +350,16 @@ public class LMFeatureFunction extends DefaultStatefulFF {
 		
 		//####################right context
 		//switch context, we will never score the right context probablity because they are either duplicate or partional ngram
-		int t_size = current_ngram.size();
-		for (int i = 0; i < r_context.length; i++) {
-			//replace context
-			current_ngram.set(t_size - r_context.length + i, r_context[i]);
+		if(add_start_and_end_symbol){
+			int t_size = current_ngram.size();
+			for (int i = 0; i < r_context.length; i++) {
+				//replace context
+				current_ngram.set(t_size - r_context.length + i, r_context[i]);
+			}
+			
+			current_ngram.add(STOP_SYM_ID);
+			res -= this.lmGrammar.get_prob(current_ngram, current_ngram.size(), false);
 		}
-		
-		current_ngram.add(STOP_SYM_ID);
-		res -= this.lmGrammar.get_prob(current_ngram, current_ngram.size(), false);
 		return res;
 	}
 
