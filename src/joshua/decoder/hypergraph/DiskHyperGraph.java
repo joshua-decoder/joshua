@@ -95,6 +95,8 @@ public class DiskHyperGraph {
     //ArrayList<Integer> p_l_statefull_feat_ids;
     int lm_feat_id = 0;
 	
+    boolean store_model_costs = false;
+    
 	//TODO: this should be changed
 	protected  String nonterminalRegexp = "^\\[[A-Z]+\\,[0-9]*\\]$";//e.g., [X,1]
 	protected String nonterminalReplaceRegexp = "[\\[\\]\\,0-9]+";
@@ -395,7 +397,7 @@ public class DiskHyperGraph {
 	}
 	
 		
-	//the state_str does not lhs, it contain the original words (not symbol id)
+	//the state_str does not have lhs, it contain the original words (not symbol id)
 	public static HashMap<Integer, FFDPState> get_state_tbl_from_string(Symbol p_symbol, ArrayList<FeatureFunction> p_l_models, String state_str){
 		HashMap res =new HashMap<Integer, FFDPState>();
 		String[] states = state_str.split(HGNode.FF_SIG_SEP);
@@ -474,6 +476,12 @@ public class DiskHyperGraph {
 			res.append(" "); res.append(this.p_symbol.getWords(deduction_rule.english));
 		}
 		res.append("\n");
+		
+		//save model cost as a seprate line; optional
+		if(store_model_costs){
+			//TODO
+		}
+		
 		FileUtility.write_lzf(out, res.toString());
 	}
 	
@@ -531,6 +539,12 @@ public class DiskHyperGraph {
 			//DO nothing: goal item has null rule
 			//System.out.println("get null rule id; line is " +line);	System.exit(0);
 		}	
+		
+		//read model costs
+		if(store_model_costs){
+			//TODO
+		}
+		
 		HyperEdge dt = new HyperEdge(rule, best_cost, null, l_ant_items);
 		dt.get_transition_cost(true);//to set the transition cost
 		return dt;		
