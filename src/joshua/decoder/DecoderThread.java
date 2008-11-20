@@ -61,7 +61,8 @@ public class DecoderThread  extends Thread {
 		this.kbest_extractor = new KbestExtraction(this.p_symbol);
 		
 		if (JoshuaConfiguration.save_disk_hg) {
-			this.p_disk_hg = new DiskHyperGraph(this.p_symbol, JoshuaDecoder.haveLMFeature(this.p_l_feat_functions).getFeatureID());
+			//this.p_disk_hg = new DiskHyperGraph(this.p_symbol, JoshuaDecoder.haveLMFeature(this.p_l_feat_functions).getFeatureID());
+			this.p_disk_hg = new DiskHyperGraph(this.p_symbol, JoshuaDecoder.haveLMFeature(this.p_l_feat_functions).getFeatureID(), true, p_l_feat_functions);//always store model cost
 			this.p_disk_hg.init_write(	this.nbest_file + ".hg.items",  JoshuaConfiguration.forest_pruning,  JoshuaConfiguration.forest_pruning_threshold);
 		}
 	}

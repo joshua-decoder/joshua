@@ -22,6 +22,7 @@ import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.JoshuaDecoder;
 import joshua.decoder.Symbol;
 import joshua.decoder.ff.FFDPState;
+import joshua.decoder.ff.FFTransitionResult;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.lm.LMFFDPState;
 import joshua.decoder.ff.lm.LMFeatureFunction;
@@ -95,7 +96,10 @@ public class DiskHyperGraph {
     //ArrayList<Integer> p_l_statefull_feat_ids;
     int lm_feat_id = 0;
 	
-    boolean store_model_costs = false;
+    //when saving the hg, we simply compute all the model cost on the fly and store them on the disk
+    //TODO: when reading the hg, we read thm into a WithModelCostsHyperEdge; now, we let a program outside this class to figure out which model cost corresponds which feature function, we should avoid this in the future
+    ArrayList<FeatureFunction> l_feature_funcitons; 
+    boolean store_model_costs = false; //save model costs at each hyperEdge
     
 	//TODO: this should be changed
 	protected  String nonterminalRegexp = "^\\[[A-Z]+\\,[0-9]*\\]$";//e.g., [X,1]
@@ -138,7 +142,17 @@ public class DiskHyperGraph {
     	this.p_symbol = symbol_;
     	this.lm_feat_id = lm_feat_id_;
     	this.UNTRANS_OWNER_SYM_ID = this.p_symbol.addTerminalSymbol(JoshuaConfiguration.untranslated_owner);
-		
+    	this.store_model_costs =false;
+    }
+    
+    
+    //for saving purpose, one need to specify the l_feature_funcitons, for reading purpose, one do not need to provide the list
+    public DiskHyperGraph(Symbol symbol_, int lm_feat_id_, boolean store_model_costs_, ArrayList<FeatureFunction> l_feature_funcitons_){
+    	this.p_symbol = symbol_;
+    	this.lm_feat_id = lm_feat_id_;
+    	this.UNTRANS_OWNER_SYM_ID = this.p_symbol.addTerminalSymbol(JoshuaConfiguration.untranslated_owner);
+		this.store_model_costs = store_model_costs_;
+		this.l_feature_funcitons = l_feature_funcitons_;
     }
     
 //for writting hyper-graph: (1) saving each hyper-graph; (2) remember each regualar rule used; (3) dump the rule jointly (in case parallel decoding)      
@@ -479,11 +493,27 @@ public class DiskHyperGraph {
 		
 		//save model cost as a seprate line; optional
 		if(store_model_costs){
-			//TODO
+			for(int k=0; k< l_feature_funcitons.size(); k++){
+				FeatureFunction m = (FeatureFunction) l_feature_funcitons.get(k);	
+				double t_res =0;
+				if(deduction.get_rule()!=null){//deductions under goal item do not have rules
+					FFTransitionResult tem_tbl =  HyperGraph.computeTransition(deduction, m, item.i, item.j);
+					t_res = tem_tbl.getTransitionCost();
+				}else{//final transtion
+					t_res = HyperGraph.computeFinalTransition(deduction, m);
+				}
+				res.append(t_res);
+				if(k<l_feature_funcitons.size()-1)
+					res.append(" ");
+				else
+					res.append("\n");
+			}	
 		}
+		//end of saving model costs
 		
 		FileUtility.write_lzf(out, res.toString());
 	}
+	
 	
 	
 	//assumption: has tbl_associated_grammar and tbl_id_2_item
@@ -540,12 +570,18 @@ public class DiskHyperGraph {
 			//System.out.println("get null rule id; line is " +line);	System.exit(0);
 		}	
 		
+		HyperEdge dt;
 		//read model costs
 		if(store_model_costs){
-			//TODO
+			String line_costs=FileUtility.read_line_lzf(in);
+			String[] costs = line.split("\\s+");
+			double[] m_costs = new double[costs.length];
+			for(int i=0; i<costs.length; i++)
+				m_costs[i] = new Double(costs[i]);
+			dt = new WithModelCostsHyperEdge(rule, best_cost, null, l_ant_items, m_costs);
+		}else{
+			dt = new HyperEdge(rule, best_cost, null, l_ant_items);
 		}
-		
-		HyperEdge dt = new HyperEdge(rule, best_cost, null, l_ant_items);
 		dt.get_transition_cost(true);//to set the transition cost
 		return dt;		
 	}
