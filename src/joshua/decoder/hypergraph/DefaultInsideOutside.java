@@ -56,11 +56,13 @@ public abstract class DefaultInsideOutside {
 	private HashMap tbl_num_parent_deductions = new HashMap();
 	
 	private HashMap tbl_for_sanity_check = null;
-	double g_sanity_post_prob =0;
 	
 	//get feature-set specific **log probability** for each hyperedge
-	protected abstract double get_deduction_prob(HyperEdge dt, HGNode parent_it, double scaling_factor);
+	protected abstract double get_deduction_prob(HyperEdge dt, HGNode parent_it);
 	
+	protected  double get_deduction_prob(HyperEdge dt, HGNode parent_it, double scaling_factor){
+		return get_deduction_prob(dt, parent_it)*scaling_factor;
+	}
 	
 	//the results are stored in tbl_inside_prob and tbl_outside_prob
 	public void run_inside_outside(HyperGraph hg, int add_mode, int semiring, double scaling_factor_){//add_mode||| 0: sum; 1: viterbi-min, 2: viterbi-max
@@ -74,7 +76,7 @@ public abstract class DefaultInsideOutside {
 		normalization_constant = (Double)tbl_inside_prob.get(hg.goal_item);
 		System.out.println("normalization constant is " + normalization_constant);
 		tbl_num_parent_deductions.clear();
-		sanity_check_hg(hg);
+		//sanity_check_hg(hg);
 	}
 	
 	//to save memory, external class should call this method
@@ -125,27 +127,56 @@ public abstract class DefaultInsideOutside {
 		}
 	}
 	
+//	this is the log of expected/posterior prob (i.e., LogP, where P is the posterior probability), without normalization
+	public double get_hgnode_unnormalized_posterior_log_prob(HGNode node){
+		//### outside of parent
+		double inside =  (Double)tbl_inside_prob.get(node);
+		double outside = (Double)tbl_outside_prob.get(node);
+		return multi_in_semiring(inside, outside);
+	}	
+	
+	
+//	normalized probabily in [0,1]
+	public double get_hgnode_posterior_prob(HGNode node ){
+		if(SEMIRING==LOG_SEMIRING){
+			double res = Math.exp((get_hgnode_unnormalized_posterior_log_prob(node)-get_normalization_constant()));
+			//System.out.println("dt cost: " + dt.get_transition_cost(false)+" ;merit: " + get_deduction_unnormalized_posterior_log_prob(dt, parent) + "; prob: " + res);
+			if(res<0.0-1e-2 || res >1.0+1e-2){
+				System.out.println("res is not within [0,1], must be wrong value: " + res);
+				System.exit(0);
+			}
+			return res;
+		}else{
+			System.out.println("not implemented"); System.exit(0);
+			return 1;
+		}
+	}
+	
 	/*Originally, to see if the sum of the posterior probabilities of all the hyperedges sum to one
 	 * However, this won't work! The sum should be greater than 1.
 	 * */
-	public void sanity_check_hg(HyperGraph hg){		
+	public void sanity_check_hg(HyperGraph hg){	
 		tbl_for_sanity_check = new HashMap();
-		g_sanity_post_prob =0;
+		//System.out.println("num_dts: " + hg.goal_item.l_deductions.size());
 		sanity_check_item(hg.goal_item);
-		System.out.println("g_sanity_post_prob is " + g_sanity_post_prob);
-		tbl_for_sanity_check.clear();
+		System.out.println("survied sanity check!!!!");
 	}
 	
-	private void sanity_check_item(HGNode it){
+	private void sanity_check_item(HGNode it){		
 		if(tbl_for_sanity_check.containsKey(it))return;
 		tbl_for_sanity_check.put(it,1);
-		
+		double prob_sum=0;
 		//### recursive call on each deduction
 		for(HyperEdge dt : it.l_deductions){
-			g_sanity_post_prob += get_deduction_posterior_prob(dt,it);
+			prob_sum += get_deduction_posterior_prob(dt,it);
+			//System.out.println("tran_cost: " + dt.get_transition_cost(true) + "; prob: " +  get_deduction_posterior_prob(dt,it));
 			sanity_check_deduction(dt);//deduction-specifc operation
 		}
-		
+		double supposed_sum = get_hgnode_posterior_prob(it);
+		if(Math.abs(prob_sum-supposed_sum)>1e-3){
+			System.out.println("prob_sum=" + prob_sum + "; supposed_sum=" + supposed_sum + "; sanity check fail!!!!");
+			System.exit(0);
+		}
 		//### item-specific operation
 	}
 	
