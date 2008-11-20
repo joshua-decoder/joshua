@@ -502,7 +502,7 @@ public class DiskHyperGraph {
 				}else{//final transtion
 					t_res = HyperGraph.computeFinalTransition(deduction, m);
 				}
-				res.append(t_res);
+				res.append(String.format("%.4f ", t_res));
 				if(k<l_feature_funcitons.size()-1)
 					res.append(" ");
 				else
