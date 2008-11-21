@@ -6,6 +6,16 @@ import java.util.ArrayList;
 import joshua.util.FileUtility;
 
 
+/**
+ * this class implements: 
+ * (1) nbest min risk reranking using BLEU as a gain funtion
+ * 
+ * 
+ * @author Zhifei Li, <zhifei.work@gmail.com>
+ * @version $LastChangedDate: 2008-10-20 00:12:30 -0400 (星期一, 20 十月 2008) $
+ */
+
+
 public class NbestMinRiskReranker  {
 	BufferedWriter out;
 	boolean produce_reranked_nbest=false;//default is to produce 1best without any feature scores
