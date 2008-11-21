@@ -574,7 +574,8 @@ public class DiskHyperGraph {
 		//read model costs
 		if(store_model_costs){
 			String line_costs=FileUtility.read_line_lzf(in);
-			String[] costs = line.split("\\s+");
+			String[] costs = line_costs.split("\\s+");
+			//if(costs.length!=5){System.out.println("Hyperege does not have five model cost, must be wrong"); System.exit(1);}
 			double[] m_costs = new double[costs.length];
 			for(int i=0; i<costs.length; i++)
 				m_costs[i] = new Double(costs[i]);
