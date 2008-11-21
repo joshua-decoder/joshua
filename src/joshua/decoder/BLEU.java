@@ -16,30 +16,33 @@ import joshua.decoder.Support;
  */
 
 public class BLEU {
-	
 	//do_ngram_clip: consider global n-gram clip
 	
 	public  static double compute_sentence_bleu(String ref_sent, String hyp_sent, boolean do_ngram_clip, int bleu_order){
-		double res_bleu = 0;
-		int order =4;//max order
 		String[] ref_wrds = ref_sent.split("\\s+");
 		String[] hyp_wrds = hyp_sent.split("\\s+");
 		HashMap<String, Integer> ref_ngram_tbl = new HashMap<String, Integer>();
-		get_ngrams(ref_ngram_tbl, order, ref_wrds);
+		get_ngrams(ref_ngram_tbl, bleu_order, ref_wrds);
 		HashMap<String, Integer> hyp_ngram_tbl = new HashMap<String, Integer>();
-		get_ngrams(hyp_ngram_tbl, order, hyp_wrds);
+		get_ngrams(hyp_ngram_tbl, bleu_order, hyp_wrds);
 		
-		int[] num_ngram_match = new int[order];
+		return compute_sentence_bleu(ref_wrds.length, ref_ngram_tbl, hyp_wrds.length, hyp_ngram_tbl, do_ngram_clip, bleu_order);
+	}
+	
+	public  static double compute_sentence_bleu(int ref_len, HashMap<String, Integer> ref_ngram_tbl, int hyp_len, HashMap<String, Integer> hyp_ngram_tbl, boolean do_ngram_clip, int bleu_order){
+		double res_bleu = 0;
+		
+		int[] num_ngram_match = new int[bleu_order];
 		for(Iterator it = hyp_ngram_tbl.keySet().iterator(); it.hasNext();){
 			String ngram = (String) it.next();
 			if(ref_ngram_tbl.containsKey(ngram)){
 				if(do_ngram_clip)
-					num_ngram_match[ngram.split("\\s+").length-1] += Support.find_min((Integer)ref_ngram_tbl.get(ngram),(Integer)hyp_ngram_tbl.get(ngram)); //ngram clip
+					num_ngram_match[ngram.split("\\s+").length-1] += Support.find_min(ref_ngram_tbl.get(ngram), hyp_ngram_tbl.get(ngram)); //ngram clip
 				else
-					num_ngram_match[ngram.split("\\s+").length-1] += (Integer)hyp_ngram_tbl.get(ngram);//without ngram count clipping    			
+					num_ngram_match[ngram.split("\\s+").length-1] += hyp_ngram_tbl.get(ngram);//without ngram count clipping    			
     		}
 		}
-		res_bleu = compute_bleu(hyp_wrds.length, ref_wrds.length, num_ngram_match, bleu_order);
+		res_bleu = compute_bleu(hyp_len, ref_len, num_ngram_match, bleu_order);
 		//System.out.println("hyp_len: " + hyp_sent.length + "; ref_len:" + ref_sent.length + "; bleu: " + res_bleu +" num_ngram_matches: " + num_ngram_match[0] + " " +num_ngram_match[1]+
 		//		" " + num_ngram_match[2] + " " +num_ngram_match[3]);
 		//System.out.println("Blue is " + res_bleu);

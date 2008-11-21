@@ -2,6 +2,7 @@ package joshua.decoder;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import joshua.util.FileUtility;
 
@@ -22,7 +23,7 @@ public class NbestMinRiskReranker  {
 	double scaling_factor = 1.0;
 	
 	int bleu_order =4;
-	boolean do_ngram_clip =true;
+	boolean do_ngram_clip = true;
 	
 	public NbestMinRiskReranker(BufferedWriter out_, boolean produce_reranked_nbest_, double scaling_factor_){
 		this.out= FileUtility.handle_null_writer(out_);
@@ -39,10 +40,20 @@ public class NbestMinRiskReranker  {
 		ArrayList<String> l_hyp_itself = new ArrayList<String>();
 		//ArrayList<String> l_feat_scores = new ArrayList<String>();
 		ArrayList<Double> l_baseline_scores = new ArrayList<Double>();//linear combination of all baseline features
+		ArrayList<HashMap<String, Integer>> l_ngram_tbls = new ArrayList<HashMap<String, Integer>>();
+		ArrayList<Integer> l_sent_lens = new ArrayList<Integer>();
 		for(String hyp : nbest){
 			String[] fds = hyp.split("\\s+\\|{3}\\s+");
 			int t_sent_id = new Integer(fds[0]); if(sent_id != t_sent_id){System.out.println("sentence_id does not match"); System.exit(1);}
 			l_hyp_itself.add(fds[1]);
+			
+			String[] t_wrds = fds[1].split("\\s+");
+			l_sent_lens.add(t_wrds.length);
+			
+			HashMap<String, Integer> tbl_ngram = new HashMap<String, Integer>();
+			BLEU.get_ngrams(tbl_ngram, 4, t_wrds);
+			l_ngram_tbls.add(tbl_ngram);
+			
 			//l_feat_scores.add(fds[2]);
 			l_baseline_scores.add(new Double(fds[3]));
 			
@@ -57,8 +68,12 @@ public class NbestMinRiskReranker  {
 		ArrayList<Double> l_gains = new ArrayList<Double>();
 		ArrayList<Double> l_normalized_probs = l_baseline_scores;
 		for(int i=0; i<l_hyp_itself.size(); i++){
-			String cur_hyp = (String)l_hyp_itself.get(i);
-			double cur_gain = computeGain(cur_hyp, l_hyp_itself, l_normalized_probs); 
+			String cur_hyp = (String) l_hyp_itself.get(i);
+			int cur_hyp_len = (Integer) l_sent_lens.get(i);
+			HashMap<String, Integer> tbl_ngram_cur_hyp = l_ngram_tbls.get(i);
+			//double cur_gain = computeGain(cur_hyp, l_hyp_itself, l_normalized_probs); 
+			double cur_gain = computeGain(cur_hyp_len, tbl_ngram_cur_hyp, l_ngram_tbls, l_sent_lens,l_normalized_probs);
+			
 			l_gains.add( cur_gain);
 			if(i==0 || cur_gain > best_gain){//maximize
 				best_gain = cur_gain;
@@ -112,6 +127,24 @@ public class NbestMinRiskReranker  {
 	//Gain(e) = \sum_{e'} G(e, e')P(e')
 	//cur_hyp: e
 	//true_hyp: e'
+	public double computeGain(int cur_hyp_len, HashMap<String, Integer> tbl_ngram_cur_hyp, ArrayList<HashMap<String, Integer>> l_ngram_tbls, 
+			ArrayList<Integer> l_sent_lens, ArrayList<Double> nbest_probs){
+		//### get noralization constant, remember features, remember the combined linear score
+		double gain = 0;
+		
+		for(int i=0; i<nbest_probs.size(); i++){
+			HashMap<String, Integer> tbl_ngram_true_hyp = (HashMap<String, Integer>)l_ngram_tbls.get(i);
+			double true_prob = (Double) nbest_probs.get(i);
+			int true_len = (Integer) l_sent_lens.get(i);
+			gain += true_prob*BLEU.compute_sentence_bleu(true_len, tbl_ngram_true_hyp, cur_hyp_len, tbl_ngram_cur_hyp, do_ngram_clip, bleu_order);
+		}
+		//System.out.println("Gain is " + gain);
+		return gain;
+	} 
+	
+	//Gain(e) = \sum_{e'} G(e, e')P(e')
+	//cur_hyp: e
+	//true_hyp: e'
 	public double computeGain(String cur_hyp, ArrayList<String> nbest_hyps, ArrayList<Double> nbest_probs){
 		//### get noralization constant, remember features, remember the combined linear score
 		double gain = 0;
@@ -119,16 +152,12 @@ public class NbestMinRiskReranker  {
 		for(int i=0; i<nbest_hyps.size(); i++){
 			String true_hyp = (String)nbest_hyps.get(i);
 			double true_prob = (Double) nbest_probs.get(i);
-			gain += true_prob*computeGain(cur_hyp, true_hyp);
+			gain += true_prob*BLEU.compute_sentence_bleu(true_hyp, cur_hyp, do_ngram_clip, bleu_order);
 		}
 		//System.out.println("Gain is " + gain);
 		return gain;
 	} 
 	
-	//loss should be negative, the more negative, the worse
-	private double computeGain(String cur_hyp, String true_hyp){
-		return BLEU.compute_sentence_bleu(true_hyp, cur_hyp, do_ngram_clip, bleu_order);
-	}
 	
 	
 //	OR: return Math.log(Math.exp(x) + Math.exp(y));
@@ -191,6 +220,7 @@ public class NbestMinRiskReranker  {
 		
 		FileUtility.close_read_file(t_reader_nbest);
 		FileUtility.close_write_file(t_writer_out);
+		System.out.println("Total running time (seconds) is " + (System.currentTimeMillis()-start_time)/1000.0);
 	}
 	
 }
