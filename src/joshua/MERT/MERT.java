@@ -116,6 +116,7 @@ public class MERT
   private String paramsFileName, finalLambdaFileName;
   private String sourceFileName, refFileName, decoderOutFileName;
   private String decoderConfigFileName, decoderCommandFileName;
+  private int useDisk;
 
   public MERT(String[] args) throws Exception
   {
@@ -325,20 +326,6 @@ public class MERT
     println("----------------------------------------------------",1);
     println("",1);
 
-    Vector[] candidates = new Vector[numSentences];
-      // candidates[i] stores the translation candidates for the ith sentence
-      // each element in the array is a Vector of SentenceInfo objects
-    double[][][] featVal_array = new double[1+numParams][numSentences][sizeOfNBest];
-    featVal_array[0] = null;
-    int[] lastUsedIndex = new int[numSentences];
-    int[] maxIndex = new int[numSentences];
-
-    for (int i = 0; i < numSentences; ++i) {
-      candidates[i] = new Vector(); // a Vector of SentenceInfo's
-      lastUsedIndex[i] = -1;
-      maxIndex[i] = sizeOfNBest - 1;
-    }
-
     if (randInit) {
       println("Initializing lambda[] randomly.",1);
 
@@ -357,6 +344,7 @@ public class MERT
     for (int iteration = 1; ; ++iteration) {
 
       println("--- Starting MERT iteration #" + iteration + " @ " + (new Date()) + " ---",1);
+/*
       printMemoryUsage();
       for (int i = 0; i < numSentences; ++i) {
         candidates[i].clear();
@@ -364,17 +352,9 @@ public class MERT
       }
       totalCandidateCount = 0;
       cleanupMemory();
-      printMemoryUsage();
-/*
-      // initCandidateCount[i] stores number of candidate translations added
-      // so far for the ith sentence, before generation of the N-best set
-      // in the current MERT iteration.
-
-      int[] initCandidateCount = new int[numSentences];
-      for (int i = 0; i < numSentences; ++i) {
-        initCandidateCount[i] = candidates[i].size();
-      }
 */
+      printMemoryUsage();
+
       // run the decoder on all the sentences, producing for each sentence a set of
       // sizeOfNBest candidates, with numParams feature values for each candidate
 
@@ -399,34 +379,7 @@ public class MERT
         println("Redecoding using weight vector " + lambdaToString(lambda),1);
       }
 
-      if (decoderCommand == null) {
-        println("Running Joshua decoder...",1);
-//        myDecoder.initializeDecoder(decoderConfigFileName);
-        double[] zeroBased_lambda = new double[numParams];
-        System.arraycopy(lambda,1,zeroBased_lambda,0,numParams);
-        myDecoder.changeFeatureWeightVector(zeroBased_lambda);
-        myDecoder.decodingTestSet(sourceFileName, decoderOutFileName);
-      } else {
-        println("Running decoder...",1);
-
-        Runtime rt = Runtime.getRuntime();
-        Process p = rt.exec(decoderCommand);
-        InputStream is = p.getErrorStream();
-        InputStreamReader isr = new InputStreamReader(is);
-        BufferedReader br = new BufferedReader(isr);
-        String dummy_line = null;
-        while ((dummy_line = br.readLine()) != null) {
-          if (decVerbosity == 1) {
-            println(dummy_line);
-          }
-        }
-        int decStatus = p.waitFor();
-
-        if (decStatus != validDecoderExitValue) {
-          println("Call to decoder returned " + decStatus + "; was expecting " + validDecoderExitValue + ".");
-          System.exit(30);
-        }
-      }
+      run_decoder();
 
       println("...finished decoding @ " + (new Date()),1);
 
@@ -444,6 +397,21 @@ public class MERT
         // decoderOutFileName, since some sentences might produce fewer
         // candidates (e.g. sentence is too short or has too many OOV's)
 
+
+
+      Vector[] candidates = new Vector[numSentences];
+        // candidates[i] stores the translation candidates for the ith sentence
+        // each element in the array is a Vector of SentenceInfo objects
+      double[][][] featVal_array = new double[1+numParams][numSentences][sizeOfNBest];
+      featVal_array[0] = null;
+      int[] lastUsedIndex = new int[numSentences];
+      int[] maxIndex = new int[numSentences];
+
+      for (int i = 0; i < numSentences; ++i) {
+        candidates[i] = new Vector(); // a Vector of SentenceInfo's
+        lastUsedIndex[i] = -1;
+        maxIndex[i] = sizeOfNBest - 1;
+      }
 
       double[][] initialLambda = new double[1+initsPerIt][1+numParams]; // the intermediate "initial" lambdas
       double[][] finalLambda = new double[1+initsPerIt][1+numParams]; // the intermediate "final" lambdas
@@ -531,7 +499,12 @@ line format:
 
               existingCandidates.add(candidate_str);
 
-              SentenceInfo candidate = new SentenceInfo();
+              SentenceInfo candidate = null;
+              if (useDisk == 2) {
+                candidate = new SentenceInfo();
+              } else { // if (useDisk == 0 || useDisk == 1)
+                candidate = new SentenceInfo(candidate_str);
+              }
 //              candidate.set_featVals(featVal);
               setFeats(featVal_array,i,lastUsedIndex,maxIndex,featVal);
               candidate.setLocationInfo(it,n);
@@ -567,7 +540,7 @@ line format:
 
       println("",2); // to finish off progress dot line
 
-      cleanupMemory();
+//      cleanupMemory();
 
       println("",1);
 
@@ -712,14 +685,13 @@ line format:
       println("",1);
 
       printMemoryUsage();
+      for (int i = 0; i < numSentences; ++i) { candidates[i].clear(); }
+//      cleanupMemory();
       println("",2);
 
     } // for (iteration)
 
     println("",1);
-
-    for (int i = 0; i < numSentences; ++i) { candidates[i].clear(); }
-    cleanupMemory();
 
     println("----------------------------------------------------",1);
     println("MERT run ended @ " + (new Date()),1);
@@ -750,6 +722,38 @@ line format:
     return retStr;
   }
 
+  private void run_decoder() throws Exception
+  {
+    if (decoderCommand == null) {
+      println("Running Joshua decoder...",1);
+//      myDecoder.initializeDecoder(decoderConfigFileName);
+      double[] zeroBased_lambda = new double[numParams];
+      System.arraycopy(lambda,1,zeroBased_lambda,0,numParams);
+      myDecoder.changeFeatureWeightVector(zeroBased_lambda);
+      myDecoder.decodingTestSet(sourceFileName, decoderOutFileName);
+    } else {
+      println("Running decoder...",1);
+
+      Runtime rt = Runtime.getRuntime();
+      Process p = rt.exec(decoderCommand);
+      InputStream is = p.getErrorStream();
+      InputStreamReader isr = new InputStreamReader(is);
+      BufferedReader br = new BufferedReader(isr);
+      String dummy_line = null;
+      while ((dummy_line = br.readLine()) != null) {
+        if (decVerbosity == 1) {
+          println(dummy_line);
+        }
+      }
+      int decStatus = p.waitFor();
+
+      if (decStatus != validDecoderExitValue) {
+        println("Call to decoder returned " + decStatus + "; was expecting " + validDecoderExitValue + ".");
+        System.exit(30);
+      }
+    }
+  }
+
   private double[] line_opt(int c, Vector[] candidates, double[][][] featVal_array, double[] lambda, short minIt, short maxIt) throws Exception
   {
     TreeMap[] thresholds = new TreeMap[numSentences];
@@ -766,14 +770,18 @@ line format:
       // to be returned: [0] will store the best lambda, and [1] will store its score
 
 
-    TreeMap[][] indicesOfInterest = new TreeMap[1+maxIt][numSentences];
-    for (short it = 0; it < minIt; ++it) {
-      indicesOfInterest[it] = null;
-    }
-    for (short it = minIt; it <= maxIt; ++it) {
-      for (int i = 0; i < numSentences; ++i) {
-        indicesOfInterest[it][i] = new TreeMap<Short,Integer>();
-        // maps order of appearance in file to index in candidates
+    TreeMap[][] indicesOfInterest = null;
+
+    if (useDisk == 2) {
+      indicesOfInterest = new TreeMap[1+maxIt][numSentences];
+      for (short it = 0; it < minIt; ++it) {
+        indicesOfInterest[it] = null;
+      }
+      for (short it = minIt; it <= maxIt; ++it) {
+        for (int i = 0; i < numSentences; ++i) {
+          indicesOfInterest[it][i] = new TreeMap<Short,Integer>();
+          // maps order of appearance in file to index in candidates
+        }
       }
     }
 
@@ -844,18 +852,8 @@ line format:
       //   if slope[k1] = slope[k2] and offset[k1] > offset[k2],
       //   then k2 can be eliminated.
       // (This is actually important to do as it eliminates a bug.)
+      HashSet<Integer> discardedIndices = indicesToDiscard(numCandidates,slope,offset);
 
-      HashSet<Integer> discardedIndices = new HashSet<Integer>();
-      print("discarding: ",3);
-      for (int k1 = 0; k1 < numCandidates; ++k1) {
-        for (int k2 = 0; k2 < numCandidates; ++k2) {
-          if (k1 != k2 && slope[k1] == slope[k2] && offset[k1] > offset[k2]) {
-            discardedIndices.add(k2);
-//            print(k2 + " ",3);
-          }
-        }
-      }
-      println("",3);
 
       println("Extracting thresholds[(i,c)=(" + i + "," + c + ")]",3);
 
@@ -954,18 +952,21 @@ line format:
             A.add(th_info);
             thresholdsAll.put(ip,A);
           }
-          // th_info[0] = i, th_info[1] = old_k, th_info[2] = new_k
-          int old_k = th_info[1];
-          short loc_it = ((SentenceInfo)candidates[i].elementAt(old_k)).getLocationInfo_it();
-          short loc_cand = ((SentenceInfo)candidates[i].elementAt(old_k)).getLocationInfo_cand();
 
-          indicesOfInterest[loc_it][i].put(loc_cand,old_k);
+          if (useDisk == 2) {
+            // th_info[0] = i, th_info[1] = old_k, th_info[2] = new_k
+            int old_k = th_info[1];
+            short loc_it = ((SentenceInfo)candidates[i].elementAt(old_k)).getLocationInfo_it();
+            short loc_cand = ((SentenceInfo)candidates[i].elementAt(old_k)).getLocationInfo_cand();
+
+            indicesOfInterest[loc_it][i].put(loc_cand,old_k);
+          }
 
         } // if (in-range)
 
       } // while (It.hasNext())
 
-      if (th_info != null) {
+      if (useDisk == 2 && th_info != null) {
         // new_k from the last th_info (previous new_k already appear as the next old_k)
         int new_k = th_info[2];
         short loc_it = ((SentenceInfo)candidates[i].elementAt(new_k)).getLocationInfo_it();
@@ -1059,59 +1060,29 @@ line format:
 
       indexOfCurrBest[i] = indexOfMax;
 
-      // add indexOfCurrBest[i] to indicesOfInterest
-      short loc_it = ((SentenceInfo)candidates[i].elementAt(indexOfMax)).getLocationInfo_it();
-      short loc_cand = ((SentenceInfo)candidates[i].elementAt(indexOfMax)).getLocationInfo_cand();
-      indicesOfInterest[loc_it][i].put(loc_cand,indexOfMax);
+      if (useDisk == 2) {
+        // add indexOfCurrBest[i] to indicesOfInterest
+        short loc_it = ((SentenceInfo)candidates[i].elementAt(indexOfMax)).getLocationInfo_it();
+        short loc_cand = ((SentenceInfo)candidates[i].elementAt(indexOfMax)).getLocationInfo_cand();
+        indicesOfInterest[loc_it][i].put(loc_cand,indexOfMax);
+      }
 
     }
 
 
-    // process the decoder output files, and read the sentences corresponding to the
-    // candidates of interest (use the info in indicesOfInterest to determine them)
+    if (useDisk == 2) {
+      // process the decoder output files, and read the sentences corresponding to the
+      // candidates of interest (use the info in indicesOfInterest to determine them)
 
-    for (int it = minIt; it <= maxIt; ++it) {
+      for (int it = minIt; it <= maxIt; ++it) {
 
-      BufferedReader inFile = new BufferedReader(new FileReader(decoderOutFileName+".temp.it"+it));
-      String line, candidate_str;
-
-      for (int i = 0; i < numSentences; ++i) {
-
-        short currCand = 0;
-        Iterator It = (indicesOfInterest[it][i].keySet()).iterator();
-
-        while (It.hasNext()) {
-          short nextKey = (Short)It.next();
-          int nextIndex = (Integer)indicesOfInterest[it][i].get(nextKey);
-
-          // skip candidates until you get to the nextKey'th candidate
-          while (currCand < nextKey) {
-            line = inFile.readLine();
-            ++currCand;
-          }
-
-          // now currCand == nextKey, and the next line in inFile contains the sentence we want
-          line = inFile.readLine();
-          ++currCand;
-          line = line.substring(line.indexOf("||| ")+4); // get rid of initial text
-          candidate_str = line.substring(0,line.indexOf(" |||"));
-
-          ((SentenceInfo)candidates[i].elementAt(nextIndex)).setSentence(candidate_str);
-
-        }
-
-        // skip the rest of ith sentence's candidates
-        while (currCand < sizeOfNBest) {
-          line = inFile.readLine();
-          ++currCand;
-        }
+        setSentencesOfInterest(it,indicesOfInterest,candidates);
 
       }
 
-      inFile.close();
+    } // if (useDisk == 2)
 
-    }
-
+    // else sentences were already read and stored
 
 
 
@@ -1186,19 +1157,22 @@ line format:
 
     printMemoryUsage();
 
-    // delete the sentences from the candidates formerly of interest
-    for (int it = minIt; it <= maxIt; ++it) {
-      for (int i = 0; i < numSentences; ++i) {
-        Iterator It2 = (indicesOfInterest[it][i].keySet()).iterator();
-        while (It2.hasNext()) {
-          short nextKey = (Short)It2.next();
-          int nextIndex = (Integer)indicesOfInterest[it][i].get(nextKey);
-          ((SentenceInfo)candidates[i].elementAt(nextIndex)).deleteSentence();
+    if (useDisk == 2) {
+      // delete the sentences from the candidates formerly of interest
+      for (int it = minIt; it <= maxIt; ++it) {
+        for (int i = 0; i < numSentences; ++i) {
+          Iterator It2 = (indicesOfInterest[it][i].keySet()).iterator();
+          while (It2.hasNext()) {
+            short nextKey = (Short)It2.next();
+            int nextIndex = (Integer)indicesOfInterest[it][i].get(nextKey);
+            ((SentenceInfo)candidates[i].elementAt(nextIndex)).deleteSentence();
+          }
+          indicesOfInterest[it][i].clear();
         }
-        indicesOfInterest[it][i].clear();
       }
     }
-    cleanupMemory();
+
+//    cleanupMemory();
     printMemoryUsage();
     println("",2);
 
@@ -1410,10 +1384,11 @@ line format:
     metricName = "BLEU";
     maxMERTIterations = 20;
     saveInterFiles = true;
-    oneModificationPerIteration = false;
     initsPerIt = 20;
+    oneModificationPerIteration = false;
     randInit = false;
     seed = System.currentTimeMillis();
+    useDisk = 2;
     // Decoder specs
     decoderCommandFileName = null;
     decoderOutFileName = "output.nbest";
@@ -1453,15 +1428,15 @@ line format:
         else if (save == 0) saveInterFiles = false;
         else { println("save must be either 0 or 1."); System.exit(10); }
       }
+      else if (option.equals("-ipi")) {
+        initsPerIt = Integer.parseInt(args[i+1]);
+        if (initsPerIt < 1) { println("initsPerIt must be positive."); System.exit(10); }
+      }
       else if (option.equals("-opi")) {
         int opi = Integer.parseInt(args[i+1]);
         if (opi == 1) oneModificationPerIteration = true;
         else if (opi == 0) oneModificationPerIteration = false;
         else { println("oncePerIt must be either 0 or 1."); System.exit(10); }
-      }
-      else if (option.equals("-ipi")) {
-        initsPerIt = Integer.parseInt(args[i+1]);
-        if (initsPerIt < 1) { println("initsPerIt must be positive."); System.exit(10); }
       }
       else if (option.equals("-rand")) {
         int rand = Integer.parseInt(args[i+1]);
@@ -1475,6 +1450,10 @@ line format:
         } else {
           seed = Long.parseLong(args[i+1]);
         }
+      }
+      else if (option.equals("-ud")) {
+        useDisk = Integer.parseInt(args[i+1]);
+        if (useDisk < 0 || useDisk > 2) { println("useDisk should be between 0 and 2"); System.exit(10); }
       }
       // Decoder specs
       else if (option.equals("-cmd")) { decoderCommandFileName = args[i+1]; }
@@ -1777,6 +1756,99 @@ line format:
       featVal_array[c][i][k] = featVal[c];
     }
     lastUsedIndex[i] += 1;
+  }
+
+
+  private HashSet<Integer> indicesToDiscard(int numCandidates, double[] slope, double[] offset)
+  {
+    // some lines can be eliminated: the ones that have a lower offset
+    // than some other line with the same slope.
+    // That is, for any k1 and k2:
+    //   if slope[k1] = slope[k2] and offset[k1] > offset[k2],
+    //   then k2 can be eliminated.
+    // (This is actually important to do as it eliminates a bug.)
+    print("discarding: ",3);
+
+    HashSet<Integer> discardedIndices = new HashSet<Integer>();
+    HashMap<Double,Integer> indicesOfSlopes = new HashMap<Double,Integer>();
+    // maps slope to index of best candidate that has that slope.
+    // ("best" as in the one with the highest offset)
+
+    for (int k1 = 0; k1 < numCandidates; ++k1) {
+      double currSlope = slope[k1];
+      if (!indicesOfSlopes.containsKey(currSlope)) {
+        indicesOfSlopes.put(currSlope,k1);
+      } else {
+        int existingIndex = indicesOfSlopes.get(currSlope);
+        if (offset[existingIndex] > offset[k1]) {
+          discardedIndices.add(k1);
+//          print(k1 + " ",3);
+        } else if (offset[k1] > offset[existingIndex]) {
+          indicesOfSlopes.put(currSlope,k1);
+          discardedIndices.add(existingIndex);
+//          print(existingIndex + " ",3);
+        }
+      }
+    }
+
+
+    // old way of doing it; takes quadratic time (vs. linear time above)
+/*
+    for (int k1 = 0; k1 < numCandidates; ++k1) {
+      for (int k2 = 0; k2 < numCandidates; ++k2) {
+        if (k1 != k2 && slope[k1] == slope[k2] && offset[k1] > offset[k2]) {
+          discardedIndices.add(k2);
+//          print(k2 + " ",3);
+        }
+      }
+    }
+*/
+
+    println("",3);
+    return discardedIndices;
+  }
+
+  private void setSentencesOfInterest(int it, TreeMap[][] indicesOfInterest, Vector[] candidates) throws Exception
+  {
+    // process the decoder output file from it'th iteration, and read the sentences
+    // corresponding to the candidates of interest in that iteration
+    BufferedReader inFile = new BufferedReader(new FileReader(decoderOutFileName+".temp.it"+it));
+    String line, candidate_str;
+
+    for (int i = 0; i < numSentences; ++i) {
+
+      short currCand = 0;
+      Iterator It = (indicesOfInterest[it][i].keySet()).iterator();
+
+      while (It.hasNext()) {
+        short nextKey = (Short)It.next();
+        int nextIndex = (Integer)indicesOfInterest[it][i].get(nextKey);
+
+        // skip candidates until you get to the nextKey'th candidate
+        while (currCand < nextKey) {
+          line = inFile.readLine();
+          ++currCand;
+        }
+
+        // now currCand == nextKey, and the next line in inFile contains the sentence we want
+        line = inFile.readLine();
+        ++currCand;
+        line = line.substring(line.indexOf("||| ")+4); // get rid of initial text
+        candidate_str = line.substring(0,line.indexOf(" |||"));
+
+        ((SentenceInfo)candidates[i].elementAt(nextIndex)).setSentence(candidate_str);
+
+      }
+
+      // skip the rest of ith sentence's candidates
+      while (currCand < sizeOfNBest) {
+        line = inFile.readLine();
+        ++currCand;
+      }
+
+    }
+
+    inFile.close();
   }
 
 }

@@ -36,7 +36,7 @@ public class MERT_runner
     println("");
     println("   OR:");
     println("");
-    println(" MERT_runner [-dir dirPrefix] [-s sourceFile] [-r refFile] [-rps refsPerSen]\n      [-p paramsFile] [-fin finalLambda] [-m metricName] [-maxIt maxMERTIts]\n      [-save saveInter] [-opi oncePerIt] [-ipi initsPerIt] [-rand randInit]\n      [-seed firstSeed] [-cmd commandFile] [-decOut decoderOutFile]\n      [-decExit validExit] [-dcfg decConfigFile] [-N N]\n      [-xx xxx] [-v verbosity] [-decV decVerbosity]");
+    println(" MERT_runner [-dir dirPrefix] [-s sourceFile] [-r refFile] [-rps refsPerSen]\n      [-p paramsFile] [-fin finalLambda] [-m metricName] [-maxIt maxMERTIts]\n      [-save saveInter] [-ipi initsPerIt] [-opi oncePerIt] [-rand randInit]\n      [-seed seed] [-ud useDisk] [-cmd commandFile] [-decOut decoderOutFile]\n      [-decExit validExit] [-dcfg decConfigFile] [-N N]\n      [-xx xxx] [-v verbosity] [-decV decVerbosity]");
     println("");
     println("Relevant files:");
     println(" (*) -dir dirPrefix: location of relevant files\n       [[default: null string (i.e. they are in the current directory)]]");
@@ -50,10 +50,11 @@ public class MERT_runner
     println(" (*) -m metricName: name of the evaluation metric optimized by MERT\n       [[default: BLEU]]");
     println(" (*) -maxIt maxMERTIts: maximum number of MERT iterations\n       [[default: 20]]");
     println(" (*) -save save: save intermediate cfg files and decoder outputs (1) or not (0)\n       [[default: 1]]");
-    println(" (*) -opi oncePerIt: modify a parameter only once per iteration (1) or not (0)\n       [[default: 0]]");
     println(" (*) -ipi initsPerIt: number of intermediate initial points per iteration\n       [[default: 20]]");
+    println(" (*) -opi oncePerIt: modify a parameter only once per iteration (1) or not (0)\n       [[default: 0]]");
     println(" (*) -rand randInit: choose initial point randomly (1) or from paramsFile (0)\n       [[default: 0]]");
     println(" (*) -seed seed: seed used to initialize random number generator\n       [[default: time (i.e. value returned by System.currentTimeMillis()]]");
+    println(" (*) -ud useDisk: reliance on disk (0-2; higher value => more reliance)\n       [[default: 2]]");
     println("");
     println("Decoder specs:");
     println(" (*) -cmd commandFile: name of file containing command to run the decoder\n       [[default: null string (i.e. decoder is a JoshuaDecoder object)]]");
