@@ -477,7 +477,7 @@ line format:
 
             if (!existingCandidates.contains(candidate_str)) {
 
-              writeLine(orig_line, outFile);
+              writeLine(candidate_str, outFile);
 
               line = line.substring(line.indexOf("||| ")); // get rid of candidate
 
@@ -1935,10 +1935,14 @@ line format:
         }
 
         // now currCand == nextIndex, and the next line in inFile contains the sentence we want
+/*
         line = inFile.readLine();
         ++currCand;
         line = line.substring(line.indexOf("||| ")+4); // get rid of initial text
         candidate_str = line.substring(0,line.indexOf(" |||"));
+*/
+        candidate_str = inFile.readLine();
+        ++currCand;
 
         ((SentenceInfo)candidates[i].elementAt(nextIndex)).setSentence(candidate_str);
 
@@ -1953,6 +1957,7 @@ line format:
     }
 
     inFile.close();
+
   }
 
 }
