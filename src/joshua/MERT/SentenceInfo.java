@@ -8,8 +8,8 @@ public class SentenceInfo
 //  private static int numParams = 0;
 
   private String[] words;
-  private short location_it;   // location
-  private short location_cand; //          info
+//  private short location_it;   // location
+//  private short location_cand; //          info
 
   // Default constructor
   public SentenceInfo()
@@ -141,7 +141,7 @@ public class SentenceInfo
   {
     words = null;
   }
-
+/*
   public void setLocationInfo(short it, short cand)
   {
     location_it = it;
@@ -150,5 +150,5 @@ public class SentenceInfo
 
   public short getLocationInfo_it() { return location_it; }
   public short getLocationInfo_cand() { return location_cand; }
-
+*/
 }

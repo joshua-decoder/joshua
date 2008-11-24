@@ -435,13 +435,18 @@ public class MERT
       copyFile(decoderOutFileName,decoderOutFileName+".temp.it"+iteration);
       boolean newCandidatesAdded = false;
 
+      // each inFile corresponds to the output of an iteration
       BufferedReader[] inFile = new BufferedReader[1+iteration];
       for (int it = 1; it <= iteration; ++it) {
         inFile[it] = new BufferedReader(new FileReader(decoderOutFileName+".temp.it"+it));
       }
 
-      String line, candidate_str;
+      // the outFile will be used to merge the output files into a single one
+      FileOutputStream outStream = new FileOutputStream(decoderOutFileName+".temp.merged", false); // false: don't append
+      OutputStreamWriter outStreamWriter = new OutputStreamWriter(outStream, "utf8");
+      BufferedWriter outFile = new BufferedWriter(outStreamWriter);
 
+      String orig_line, line, candidate_str;
 
       for (int i = 0; i < numSentences; ++i) {
 
@@ -466,11 +471,14 @@ line format:
 
 */
 
-            line = inFile[it].readLine();
-            line = line.substring(line.indexOf("||| ")+4); // get rid of initial text
+            orig_line = inFile[it].readLine();
+            line = orig_line.substring(orig_line.indexOf("||| ")+4); // get rid of initial text
             candidate_str = line.substring(0,line.indexOf(" |||"));
 
             if (!existingCandidates.contains(candidate_str)) {
+
+              writeLine(orig_line, outFile);
+
               line = line.substring(line.indexOf("||| ")); // get rid of candidate
 
               String[] featVal_str = line.split("\\s+");
@@ -507,7 +515,7 @@ line format:
               }
 //              candidate.set_featVals(featVal);
               setFeats(featVal_array,i,lastUsedIndex,maxIndex,featVal);
-              candidate.setLocationInfo(it,n);
+//              candidate.setLocationInfo(it,n);
               candidates[i].add(candidate);
               ++totalCandidateCount;
               if (it == iteration) {
@@ -526,7 +534,6 @@ line format:
 
       } // for (i)
 
-
       for (int i = 0; i < numSentences; ++i) {
         for (int j = 1; j <= initsPerIt; ++j) {
           best1Cand[j][i] = new SentenceInfo(best1Cand_sen[j][i]);
@@ -537,6 +544,8 @@ line format:
       for (int it = 1; it <= iteration; ++it) {
         inFile[it].close();
       }
+
+      outFile.close();
 
       println("",2); // to finish off progress dot line
 
@@ -674,12 +683,18 @@ line format:
     println("FINAL lambda: " + lambdaToString(lambda) + " (score: " + FINAL_score + ")",1);
     println("",1);
 
-    // delete intermediate *.temp.it* decoder output files
+    // delete intermediate .temp.it* decoder output files
     for (int iteration = 1; iteration <= maxIts; ++iteration) {
       if (fileExists(decoderOutFileName+".temp.it"+iteration)) {
         File cp = new File(decoderOutFileName+".temp.it"+iteration);
         cp.delete();
       }
+    }
+
+    // delete .temp.merged file
+    if (fileExists(decoderOutFileName+".temp.merged")) {
+      File cp = new File(decoderOutFileName+".temp.merged");
+      cp.delete();
     }
 
   } // void run_MERT(int maxIts)
@@ -700,20 +715,14 @@ line format:
 
     // prep for line_opt
 
-    TreeMap[][] indicesOfInterest = null;
-    // indicesOfInterest[][] tells us which candidate sentences are needed
-    // to read from the decoder output files.
+    TreeSet[] indicesOfInterest = null;
+    // indicesOfInterest[i] tells us which candidates for the ith sentence need
+    // to be read from the merged decoder output file.
 
     if (useDisk == 2) {
-      indicesOfInterest = new TreeMap[1+maxIt][numSentences];
-      for (short it = 0; it < minIt; ++it) {
-        indicesOfInterest[it] = null;
-      }
-      for (short it = minIt; it <= maxIt; ++it) {
-        for (int i = 0; i < numSentences; ++i) {
-          indicesOfInterest[it][i] = new TreeMap<Short,Integer>();
-          // maps order of appearance in file to index in candidates
-        }
+      indicesOfInterest = new TreeSet[numSentences];
+      for (int i = 0; i < numSentences; ++i) {
+        indicesOfInterest[i] = new TreeSet<Integer>();
       }
     }
 
@@ -760,9 +769,15 @@ line format:
     if (useDisk == 2) {
       // process the decoder output files, and read the sentences corresponding to the
       // candidates of interest (use the info in indicesOfInterest to determine them)
+
+/*
       for (int it = minIt; it <= maxIt; ++it) {
         setSentencesOfInterest(it,indicesOfInterest,candidates);
       }
+*/
+
+      setSentencesOfInterest(indicesOfInterest,candidates);
+
     } // if (useDisk == 2)
 
 
@@ -800,17 +815,16 @@ line format:
 
     if (useDisk == 2) {
       // delete the sentences from the candidates formerly of interest
-      for (int it = minIt; it <= maxIt; ++it) {
-        for (int i = 0; i < numSentences; ++i) {
-          Iterator It2 = (indicesOfInterest[it][i].keySet()).iterator();
-          while (It2.hasNext()) {
-            short nextKey = (Short)It2.next();
-            int nextIndex = (Integer)indicesOfInterest[it][i].get(nextKey);
-            ((SentenceInfo)candidates[i].elementAt(nextIndex)).deleteSentence();
-          }
-          indicesOfInterest[it][i].clear();
+
+      for (int i = 0; i < numSentences; ++i) {
+        Iterator It2 = indicesOfInterest[i].iterator();
+        while (It2.hasNext()) {
+          int nextIndex = (Integer)It2.next();
+          ((SentenceInfo)candidates[i].elementAt(nextIndex)).deleteSentence();
         }
+        indicesOfInterest[i].clear();
       }
+
     }
 
 //    cleanupMemory();
@@ -1002,7 +1016,7 @@ line format:
   } // double[] line_opt(int c)
 
 
-  private TreeMap<Double,Vector> thresholdsForParam(int c, Vector[] candidates, double[][][] featVal_array, double[] lambda, TreeMap[][] indicesOfInterest)
+  private TreeMap<Double,Vector> thresholdsForParam(int c, Vector[] candidates, double[][][] featVal_array, double[] lambda, TreeSet[] indicesOfInterest)
   {
     TreeMap[] thresholds = new TreeMap[numSentences];
       // thresholds[i] stores thresholds for the cth parameter obtained by
@@ -1185,10 +1199,10 @@ line format:
           if (useDisk == 2) {
             // th_info[0] = i, th_info[1] = old_k, th_info[2] = new_k
             int old_k = th_info[1];
-            short loc_it = ((SentenceInfo)candidates[i].elementAt(old_k)).getLocationInfo_it();
-            short loc_cand = ((SentenceInfo)candidates[i].elementAt(old_k)).getLocationInfo_cand();
+//            short loc_it = ((SentenceInfo)candidates[i].elementAt(old_k)).getLocationInfo_it();
+//            short loc_cand = ((SentenceInfo)candidates[i].elementAt(old_k)).getLocationInfo_cand();
 
-            indicesOfInterest[loc_it][i].put(loc_cand,old_k);
+            indicesOfInterest[i].add(old_k);
           }
 
         } // if (in-range)
@@ -1198,10 +1212,10 @@ line format:
       if (useDisk == 2 && th_info != null) {
         // new_k from the last th_info (previous new_k already appear as the next old_k)
         int new_k = th_info[2];
-        short loc_it = ((SentenceInfo)candidates[i].elementAt(new_k)).getLocationInfo_it();
-        short loc_cand = ((SentenceInfo)candidates[i].elementAt(new_k)).getLocationInfo_cand();
+//        short loc_it = ((SentenceInfo)candidates[i].elementAt(new_k)).getLocationInfo_it();
+//        short loc_cand = ((SentenceInfo)candidates[i].elementAt(new_k)).getLocationInfo_cand();
 
-        indicesOfInterest[loc_it][i].put(loc_cand,new_k);
+        indicesOfInterest[i].add(new_k);
       }
 
     } // for (i)
@@ -1212,8 +1226,8 @@ line format:
     // Each lambda_c value maps to a Vector of th_info.  An overwhelming majority
     // of these Vectors are of size 1.
 
-    // indicesOfInterest[][] tells us which candidate sentences are needed
-    // to read from the decoder output files.
+    // indicesOfInterest[i] tells us which candidates for the ith sentence need
+    // to be read from the merged decoder output file.
 
     if (thresholdsAll.size() != 0) {
       double smallest_th = thresholdsAll.firstKey();
@@ -1233,7 +1247,7 @@ line format:
   } // TreeMap<Double,Vector> thresholdsForParam (int c)
 
 
-  private int[] initial_indexOfCurrBest(int c, Vector[] candidates, double[][][] featVal_array, double[] temp_lambda, TreeMap[][] indicesOfInterest)
+  private int[] initial_indexOfCurrBest(int c, Vector[] candidates, double[][][] featVal_array, double[] temp_lambda, TreeSet[] indicesOfInterest)
   {
     int[] indexOfCurrBest = new int[numSentences];
       // As we traverse lambda_c, indexOfCurrBest indicates which is the
@@ -1261,9 +1275,9 @@ line format:
 
       if (useDisk == 2) {
         // add indexOfCurrBest[i] to indicesOfInterest
-        short loc_it = ((SentenceInfo)candidates[i].elementAt(indexOfMax)).getLocationInfo_it();
-        short loc_cand = ((SentenceInfo)candidates[i].elementAt(indexOfMax)).getLocationInfo_cand();
-        indicesOfInterest[loc_it][i].put(loc_cand,indexOfMax);
+//        short loc_it = ((SentenceInfo)candidates[i].elementAt(indexOfMax)).getLocationInfo_it();
+//        short loc_cand = ((SentenceInfo)candidates[i].elementAt(indexOfMax)).getLocationInfo_cand();
+        indicesOfInterest[i].add(indexOfMax);
       }
 
     }
@@ -1898,29 +1912,29 @@ line format:
     return discardedIndices;
   }
 
-  private void setSentencesOfInterest(int it, TreeMap[][] indicesOfInterest, Vector[] candidates) throws Exception
+  private void setSentencesOfInterest(TreeSet[] indicesOfInterest, Vector[] candidates) throws Exception
   {
-    // process the decoder output file from it'th iteration, and read the sentences
-    // corresponding to the candidates of interest in that iteration
-    BufferedReader inFile = new BufferedReader(new FileReader(decoderOutFileName+".temp.it"+it));
+    // process the merged decoder output file, and read the candidates
+    // of interest
+    BufferedReader inFile = new BufferedReader(new FileReader(decoderOutFileName+".temp.merged"));
     String line, candidate_str;
 
     for (int i = 0; i < numSentences; ++i) {
+      int numCandidates = candidates[i].size();
 
       short currCand = 0;
-      Iterator It = (indicesOfInterest[it][i].keySet()).iterator();
+      Iterator It = indicesOfInterest[i].iterator();
 
       while (It.hasNext()) {
-        short nextKey = (Short)It.next();
-        int nextIndex = (Integer)indicesOfInterest[it][i].get(nextKey);
+        int nextIndex = (Integer)It.next();
 
         // skip candidates until you get to the nextKey'th candidate
-        while (currCand < nextKey) {
+        while (currCand < nextIndex) {
           line = inFile.readLine();
           ++currCand;
         }
 
-        // now currCand == nextKey, and the next line in inFile contains the sentence we want
+        // now currCand == nextIndex, and the next line in inFile contains the sentence we want
         line = inFile.readLine();
         ++currCand;
         line = line.substring(line.indexOf("||| ")+4); // get rid of initial text
@@ -1931,7 +1945,7 @@ line format:
       }
 
       // skip the rest of ith sentence's candidates
-      while (currCand < sizeOfNBest) {
+      while (currCand < numCandidates) {
         line = inFile.readLine();
         ++currCand;
       }
