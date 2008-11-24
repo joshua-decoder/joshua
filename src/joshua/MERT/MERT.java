@@ -571,38 +571,11 @@ line format:
 
         while (true) {
 
-          int c_best = 0; // which parameter to change?
-          double bestLambdaVal = 0.0;
-          double bestScore;
-          if (evalMetric.getToBeMinimized()) {
-            bestScore = evalMetric.worstPossibleScore() + 1.0;
-          } else {
-            bestScore = evalMetric.worstPossibleScore() - 1.0;
-          }
+          double[] c_best_info = bestParamToChange(j,currLambda,candidates,featVal_array,(short)1,(short)iteration);
 
-          for (int c = 1; c <= numParams; ++c) {
-          // investigate currLambda[j][c]
-
-            if (!isOptimizable[c]) {
-              println("Not investigating lambda[j=" + j + "][" + c + "].",2);
-            } else {
-              println("Investigating lambda[j=" + j + "][" + c + "]...",2);
-
-              double[] bestScoreInfo_c = line_opt(c,candidates,featVal_array,currLambda,(short)1,(short)iteration);
-                // get best score and its lambda value
-
-              double bestLambdaVal_c = bestScoreInfo_c[0];
-              double bestScore_c = bestScoreInfo_c[1];
-
-              if (evalMetric.isBetter(bestScore_c,bestScore)) {
-                bestScore = bestScore_c;
-                c_best = c;
-                bestLambdaVal = bestLambdaVal_c;
-              }
-
-            } // if (!isOptimizable[c])
-
-          }
+          int c_best = (int)c_best_info[0]; // which param to change?
+          double bestLambdaVal = c_best_info[1]; // what value to change to?
+          double bestScore = c_best_info[2]; // what score would be achieved?
 
           // now c_best is the parameter giving the most gain
 
@@ -711,6 +684,152 @@ line format:
 
   } // void run_MERT(int maxIts)
 
+  private double[] bestParamToChange(int j, double[] currLambda, Vector[] candidates, double[][][] featVal_array, short minIt, short maxIt) throws Exception
+  {
+    int c_best = 0; // which parameter to change?
+    double bestLambdaVal = 0.0;
+    double bestScore;
+    if (evalMetric.getToBeMinimized()) {
+      bestScore = evalMetric.worstPossibleScore() + 1.0;
+    } else {
+      bestScore = evalMetric.worstPossibleScore() - 1.0;
+    }
+
+
+
+
+    // prep for line_opt
+
+    TreeMap[][] indicesOfInterest = null;
+    // indicesOfInterest[][] tells us which candidate sentences are needed
+    // to read from the decoder output files.
+
+    if (useDisk == 2) {
+      indicesOfInterest = new TreeMap[1+maxIt][numSentences];
+      for (short it = 0; it < minIt; ++it) {
+        indicesOfInterest[it] = null;
+      }
+      for (short it = minIt; it <= maxIt; ++it) {
+        for (int i = 0; i < numSentences; ++i) {
+          indicesOfInterest[it][i] = new TreeMap<Short,Integer>();
+          // maps order of appearance in file to index in candidates
+        }
+      }
+    }
+
+    TreeMap[] thresholdsAll = new TreeMap[1+numParams];
+    int[][] indexOfCurrBest = new int[1+numParams][numSentences];
+
+    for (int c = 1; c <= numParams; ++c) {
+      if (!isOptimizable[c]) {
+        println("Not investigating lambda[j=" + j + "][" + c + "].",2);
+        thresholdsAll[c] = null;
+      } else {
+        println("Investigating lambda[j=" + j + "][" + c + "]...",2);
+        thresholdsAll[c] = thresholdsForParam(c,candidates,featVal_array,currLambda,indicesOfInterest);
+        // now thresholdsAll has the values for lambda_c at which score changes
+        // based on the candidates for *all* the sentences (that satisfy
+        // range constraints).
+        // Each lambda_c value maps to a Vector of th_info.  An overwhelming majority
+        // of these Vectors are of size 1.
+
+        if (thresholdsAll[c].size() != 0) {
+
+          double[] temp_lambda = new double[1+numParams];
+          System.arraycopy(currLambda,1,temp_lambda,1,numParams);
+
+          double smallest_th = (Double)(thresholdsAll[c].firstKey());
+
+          if (minValue[c] != NegInf) {
+            temp_lambda[c] = (minValue[c] + smallest_th) / 2.0;
+          } else {
+            temp_lambda[c] = smallest_th - 0.05;
+          }
+
+          indexOfCurrBest[c] = initial_indexOfCurrBest(c,candidates,featVal_array,temp_lambda,indicesOfInterest);
+        }
+      }
+
+      println("",2);
+
+    }
+
+
+
+
+    if (useDisk == 2) {
+      // process the decoder output files, and read the sentences corresponding to the
+      // candidates of interest (use the info in indicesOfInterest to determine them)
+      for (int it = minIt; it <= maxIt; ++it) {
+        setSentencesOfInterest(it,indicesOfInterest,candidates);
+      }
+    } // if (useDisk == 2)
+
+
+
+
+
+
+    for (int c = 1; c <= numParams; ++c) {
+    // investigate currLambda[j][c]
+
+      if (isOptimizable[c]) {
+        double[] bestScoreInfo_c = line_opt(thresholdsAll[c],indexOfCurrBest[c],c,candidates,featVal_array,currLambda,minIt,maxIt);
+          // get best score and its lambda value
+
+        double bestLambdaVal_c = bestScoreInfo_c[0];
+        double bestScore_c = bestScoreInfo_c[1];
+
+        if (evalMetric.isBetter(bestScore_c,bestScore)) {
+          c_best = c;
+          bestLambdaVal = bestLambdaVal_c;
+          bestScore = bestScore_c;
+        }
+
+      } // if (!isOptimizable[c])
+
+    }
+
+
+
+
+
+    // delete according to indicesOfInterest
+
+    printMemoryUsage();
+
+    if (useDisk == 2) {
+      // delete the sentences from the candidates formerly of interest
+      for (int it = minIt; it <= maxIt; ++it) {
+        for (int i = 0; i < numSentences; ++i) {
+          Iterator It2 = (indicesOfInterest[it][i].keySet()).iterator();
+          while (It2.hasNext()) {
+            short nextKey = (Short)It2.next();
+            int nextIndex = (Integer)indicesOfInterest[it][i].get(nextKey);
+            ((SentenceInfo)candidates[i].elementAt(nextIndex)).deleteSentence();
+          }
+          indicesOfInterest[it][i].clear();
+        }
+      }
+    }
+
+//    cleanupMemory();
+    printMemoryUsage();
+    println("",2);
+
+
+
+
+
+
+
+
+    double[] c_best_info = {c_best,bestLambdaVal,bestScore};
+    return c_best_info;
+
+  } // double[] bestParamToChange(int j, double[] currLambda)
+
+
   private String lambdaToString(double[] lambda)
   {
     String retStr = "{";
@@ -754,7 +873,136 @@ line format:
     }
   }
 
-  private double[] line_opt(int c, Vector[] candidates, double[][][] featVal_array, double[] lambda, short minIt, short maxIt) throws Exception
+  private double[] line_opt(TreeMap<Double,Vector> thresholdsAll, int[] indexOfCurrBest, int c, Vector[] candidates, double[][][] featVal_array, double[] lambda, short minIt, short maxIt) throws Exception
+  {
+    println("Line-optimizing lambda[" + c + "]...",3);
+
+    double[] bestScoreInfo = new double[2];
+      // to be returned: [0] will store the best lambda, and [1] will store its score
+
+    if (thresholdsAll.size() == 0) {
+      // no thresholds extracted!  Possible in theory...
+      // simply return current value for this parameter
+      println("No thresholds extracted!  Returning this parameter's current value...",2);
+
+      bestScoreInfo[0] = lambda[c];
+      bestScoreInfo[1] = evalMetric.worstPossibleScore();
+
+      return bestScoreInfo;
+    }
+
+    double smallest_th = thresholdsAll.firstKey();
+    double largest_th = thresholdsAll.lastKey();
+    println("Minimum threshold: " + smallest_th,3);
+    println("Maximum threshold: " + largest_th,3);
+
+    double[] temp_lambda = new double[1+numParams];
+    System.arraycopy(lambda,1,temp_lambda,1,numParams);
+
+    double ip_prev = 0.0, ip_curr = 0.0;
+
+    if (minValue[c] != NegInf) {
+      temp_lambda[c] = (minValue[c] + smallest_th) / 2.0;
+      ip_curr = minValue[c];
+    } else {
+      temp_lambda[c] = smallest_th - 0.05;
+      ip_curr = smallest_th - 0.1;
+    }
+
+
+
+
+    double[][] suffStats = new double[numSentences][suffStatsCount];
+      // suffStats[i][s] stores the contribution to the sth sufficient
+      // statistic from the candidate for the ith sentence (the candidate
+      // indicated by indexOfCurrBest[i]).
+
+    double[] suffStats_tot = new double[suffStatsCount];
+      // suffStats_tot[s] := SUM_i suffStats[i][s]
+
+    for (int s = 0; s < suffStatsCount; ++s) { suffStats_tot[s] = 0; }
+
+    // Now, set suffStats[][], and increment suffStats_tot[]
+    for (int i = 0; i < numSentences; ++i) {
+      suffStats[i] = evalMetric.suffStats((SentenceInfo)candidates[i].elementAt(indexOfCurrBest[i]),i);
+
+      for (int s = 0; s < suffStatsCount; ++s) {
+        suffStats_tot[s] += suffStats[i][s];
+      }
+    }
+
+
+
+    double bestScore = evalMetric.score(suffStats_tot);
+    double bestLambdaVal = temp_lambda[c];
+    double nextLambdaVal = bestLambdaVal;
+    println("At lambda[" + c + "] = " + bestLambdaVal + ",\t" + metricName + " = " + bestScore + " (*)",3);
+
+    Iterator It = (thresholdsAll.keySet()).iterator();
+    if (It.hasNext()) { ip_curr = (Double)It.next(); }
+
+    while (It.hasNext()) {
+      ip_prev = ip_curr;
+      ip_curr = (Double)It.next();
+      nextLambdaVal = (ip_prev + ip_curr)/2.0;
+
+      Vector th_info_V = thresholdsAll.get(ip_prev);
+      for (int t = 0; t < th_info_V.size(); ++t) {
+        int[] th_info = (int[])th_info_V.elementAt(t);
+        int i = th_info[0];
+        int old_k = th_info[1]; // should be equal to indexOfCurrBest[i]
+        int new_k = th_info[2];
+
+        for (int s = 0; s < suffStatsCount; ++s) {
+          suffStats_tot[s] -= suffStats[i][s]; // subtract stats for candidate old_k
+        }
+
+        indexOfCurrBest[i] = new_k;
+        suffStats[i] = evalMetric.suffStats((SentenceInfo)candidates[i].elementAt(indexOfCurrBest[i]),i);
+
+        for (int s = 0; s < suffStatsCount; ++s) {
+          suffStats_tot[s] += suffStats[i][s]; // add stats for candidate new_k
+        }
+
+      }
+
+      double nextTestScore = evalMetric.score(suffStats_tot);
+      print("At lambda[" + c + "] = " + nextLambdaVal + ",\t" + metricName + " = " + nextTestScore,3);
+
+      if (evalMetric.isBetter(nextTestScore,bestScore)) {
+        bestScore = nextTestScore;
+        bestLambdaVal = nextLambdaVal;
+        print(" (*)",3);
+      }
+
+      println("",3);
+
+    } // while (It.hasNext())
+
+    println("",3);
+
+    // what is the purpose of this block of code ?????????????????????
+/*
+    if (maxValue[c] != PosInf) {
+      nextLambdaVal = (largest_th + maxValue[c]) / 2.0;
+    } else {
+      nextLambdaVal = largest_th + 0.05;
+    }
+*/
+    // ???????????????????????????????????????????????????????????????
+
+    /*************************************************/
+    /*************************************************/
+
+    bestScoreInfo[0] = bestLambdaVal;
+    bestScoreInfo[1] = bestScore;
+
+    return bestScoreInfo;
+
+  } // double[] line_opt(int c)
+
+
+  private TreeMap<Double,Vector> thresholdsForParam(int c, Vector[] candidates, double[][][] featVal_array, double[] lambda, TreeMap[][] indicesOfInterest)
   {
     TreeMap[] thresholds = new TreeMap[numSentences];
       // thresholds[i] stores thresholds for the cth parameter obtained by
@@ -764,25 +1012,6 @@ line format:
 
     for (int i = 0; i < numSentences; ++i) {
       thresholds[i] = new TreeMap();
-    }
-
-    double[] bestScoreInfo = new double[2];
-      // to be returned: [0] will store the best lambda, and [1] will store its score
-
-
-    TreeMap[][] indicesOfInterest = null;
-
-    if (useDisk == 2) {
-      indicesOfInterest = new TreeMap[1+maxIt][numSentences];
-      for (short it = 0; it < minIt; ++it) {
-        indicesOfInterest[it] = null;
-      }
-      for (short it = minIt; it <= maxIt; ++it) {
-        for (int i = 0; i < numSentences; ++i) {
-          indicesOfInterest[it][i] = new TreeMap<Short,Integer>();
-          // maps order of appearance in file to index in candidates
-        }
-      }
     }
 
     // Find threshold points
@@ -852,7 +1081,7 @@ line format:
       //   if slope[k1] = slope[k2] and offset[k1] > offset[k2],
       //   then k2 can be eliminated.
       // (This is actually important to do as it eliminates a bug.)
-      HashSet<Integer> discardedIndices = indicesToDiscard(numCandidates,slope,offset);
+      HashSet<Integer> discardedIndices = indicesToDiscard(slope,offset);
 
 
       println("Extracting thresholds[(i,c)=(" + i + "," + c + ")]",3);
@@ -980,66 +1209,37 @@ line format:
     // now thresholdsAll has the values for lambda_c at which score changes
     // based on the candidates for *all* the sentences (that satisfy
     // range constraints).
-    // Each lambda_c value maps to a Vector of th_info.  All of these
-    // Vectors are probably of size 1.
+    // Each lambda_c value maps to a Vector of th_info.  An overwhelming majority
+    // of these Vectors are of size 1.
 
     // indicesOfInterest[][] tells us which candidate sentences are needed
     // to read from the decoder output files.
 
+    if (thresholdsAll.size() != 0) {
+      double smallest_th = thresholdsAll.firstKey();
+      double largest_th = thresholdsAll.lastKey();
+      println("Smallest extracted threshold: " + smallest_th,2);
+      println("Largest extracted threshold: " + largest_th,2);
 
-    /*************************************************/
-    /*************************************************/
-
-    if (thresholdsAll.size() == 0) {
-      // no thresholds extracted!  Possible in theory...
-      // simply return current value for this parameter
-      println("No thresholds extracted!  Returning this parameter's current value...",2);
-
-      bestScoreInfo[0] = lambda[c];
-      bestScoreInfo[1] = evalMetric.worstPossibleScore();
-
-      return bestScoreInfo;
+      if (maxValue[c] != PosInf) {
+        thresholdsAll.put(maxValue[c],null);
+      } else {
+        thresholdsAll.put((thresholdsAll.lastKey() + 0.1),null);
+      }
     }
 
-    double smallest_th = thresholdsAll.firstKey();
-    double largest_th = thresholdsAll.lastKey();
-    println("Smallest extracted threshold: " + smallest_th,2);
-    println("Largest extracted threshold: " + largest_th,2);
+    return thresholdsAll;
 
-    if (maxValue[c] != PosInf) {
-      thresholdsAll.put(maxValue[c],null);
-    } else {
-      thresholdsAll.put((thresholdsAll.lastKey() + 0.1),null);
-    }
+  } // TreeMap<Double,Vector> thresholdsForParam (int c)
 
+
+  private int[] initial_indexOfCurrBest(int c, Vector[] candidates, double[][][] featVal_array, double[] temp_lambda, TreeMap[][] indicesOfInterest)
+  {
     int[] indexOfCurrBest = new int[numSentences];
       // As we traverse lambda_c, indexOfCurrBest indicates which is the
       // current best candidate.
 
-    double[][] suffStats = new double[numSentences][suffStatsCount];
-      // suffStats[i][s] stores the contribution to the sth sufficient
-      // statistic from the candidate for the ith sentence (the candidate
-      // indicated by indexOfCurrBest[i]).
-
-    double[] suffStats_tot = new double[suffStatsCount];
-      // suffStats_tot[s] := SUM_i suffStats[i][s]
-
-    for (int s = 0; s < suffStatsCount; ++s) { suffStats_tot[s] = 0; }
-
     // initialize indexOfCurrBest[]
-
-    double[] temp_lambda = new double[1+numParams];
-    System.arraycopy(lambda,1,temp_lambda,1,numParams);
-
-    double ip_prev = 0.0, ip_curr = 0.0;
-
-    if (minValue[c] != NegInf) {
-      temp_lambda[c] = (minValue[c] + smallest_th) / 2.0;
-      ip_curr = minValue[c];
-    } else {
-      temp_lambda[c] = smallest_th - 0.05;
-      ip_curr = smallest_th - 0.1;
-    }
 
     for (int i = 0; i < numSentences; ++i) {
       int numCandidates = candidates[i].size();
@@ -1048,7 +1248,6 @@ line format:
       int indexOfMax = -1;
       for (int k = 0; k < numCandidates; ++k) {
         double score = 0;
-//        double[] featVals = ((SentenceInfo)candidates[i].elementAt(k)).getFeats();
         double[] featVals = getFeats(featVal_array,i,k);
 
         for (int c2 = 1; c2 <= numParams; ++c2) { score += temp_lambda[c2] * featVals[c2]; }
@@ -1069,119 +1268,9 @@ line format:
 
     }
 
+    return indexOfCurrBest;
 
-    if (useDisk == 2) {
-      // process the decoder output files, and read the sentences corresponding to the
-      // candidates of interest (use the info in indicesOfInterest to determine them)
-
-      for (int it = minIt; it <= maxIt; ++it) {
-
-        setSentencesOfInterest(it,indicesOfInterest,candidates);
-
-      }
-
-    } // if (useDisk == 2)
-
-    // else sentences were already read and stored
-
-
-
-    // Now, set suffStats[][], and increment suffStats_tot[]
-    for (int i = 0; i < numSentences; ++i) {
-      suffStats[i] = evalMetric.suffStats((SentenceInfo)candidates[i].elementAt(indexOfCurrBest[i]),i);
-
-      for (int s = 0; s < suffStatsCount; ++s) {
-        suffStats_tot[s] += suffStats[i][s];
-      }
-    }
-
-
-    double bestScore = evalMetric.score(suffStats_tot);
-    double bestLambdaVal = temp_lambda[c];
-    double nextLambdaVal = bestLambdaVal;
-    println("At lambda[" + c + "] = " + bestLambdaVal + ",\t" + metricName + " = " + bestScore + " (*)",3);
-
-    Iterator It = (thresholdsAll.keySet()).iterator();
-    if (It.hasNext()) { ip_curr = (Double)It.next(); }
-
-    while (It.hasNext()) {
-      ip_prev = ip_curr;
-      ip_curr = (Double)It.next();
-      nextLambdaVal = (ip_prev + ip_curr)/2.0;
-
-      Vector th_info_V = thresholdsAll.get(ip_prev);
-      for (int t = 0; t < th_info_V.size(); ++t) {
-        int[] th_info = (int[])th_info_V.elementAt(t);
-        int i = th_info[0];
-        int old_k = th_info[1]; // should be equal to indexOfCurrBest[i]
-        int new_k = th_info[2];
-
-        for (int s = 0; s < suffStatsCount; ++s) {
-          suffStats_tot[s] -= suffStats[i][s]; // subtract stats for candidate old_k
-        }
-
-        indexOfCurrBest[i] = new_k;
-        suffStats[i] = evalMetric.suffStats((SentenceInfo)candidates[i].elementAt(indexOfCurrBest[i]),i);
-
-        for (int s = 0; s < suffStatsCount; ++s) {
-          suffStats_tot[s] += suffStats[i][s]; // add stats for candidate new_k
-        }
-
-      }
-
-      double nextTestScore = evalMetric.score(suffStats_tot);
-      print("At lambda[" + c + "] = " + nextLambdaVal + ",\t" + metricName + " = " + nextTestScore,3);
-
-      if (evalMetric.isBetter(nextTestScore,bestScore)) {
-        bestScore = nextTestScore;
-        bestLambdaVal = nextLambdaVal;
-        print(" (*)",3);
-      }
-
-      println("",3);
-
-    } // while (It.hasNext())
-
-    println("",3);
-
-    // what is the purpose of this block of code ?????????????????????
-    if (maxValue[c] != PosInf) {
-      nextLambdaVal = (largest_th + maxValue[c]) / 2.0;
-    } else {
-      nextLambdaVal = largest_th + 0.05;
-    }
-    // ???????????????????????????????????????????????????????????????
-
-    /*************************************************/
-    /*************************************************/
-
-    printMemoryUsage();
-
-    if (useDisk == 2) {
-      // delete the sentences from the candidates formerly of interest
-      for (int it = minIt; it <= maxIt; ++it) {
-        for (int i = 0; i < numSentences; ++i) {
-          Iterator It2 = (indicesOfInterest[it][i].keySet()).iterator();
-          while (It2.hasNext()) {
-            short nextKey = (Short)It2.next();
-            int nextIndex = (Integer)indicesOfInterest[it][i].get(nextKey);
-            ((SentenceInfo)candidates[i].elementAt(nextIndex)).deleteSentence();
-          }
-          indicesOfInterest[it][i].clear();
-        }
-      }
-    }
-
-//    cleanupMemory();
-    printMemoryUsage();
-    println("",2);
-
-    bestScoreInfo[0] = bestLambdaVal;
-    bestScoreInfo[1] = bestScore;
-
-    return bestScoreInfo;
-
-  } // double[] line_opt(int c)
+  } // int[] initial_indexOfCurrBest (int c)
 
 
   private void fixDecoderOutput() throws Exception
@@ -1759,7 +1848,7 @@ line format:
   }
 
 
-  private HashSet<Integer> indicesToDiscard(int numCandidates, double[] slope, double[] offset)
+  private HashSet<Integer> indicesToDiscard(double[] slope, double[] offset)
   {
     // some lines can be eliminated: the ones that have a lower offset
     // than some other line with the same slope.
@@ -1769,6 +1858,7 @@ line format:
     // (This is actually important to do as it eliminates a bug.)
     print("discarding: ",3);
 
+    int numCandidates = slope.length;
     HashSet<Integer> discardedIndices = new HashSet<Integer>();
     HashMap<Double,Integer> indicesOfSlopes = new HashMap<Double,Integer>();
     // maps slope to index of best candidate that has that slope.
