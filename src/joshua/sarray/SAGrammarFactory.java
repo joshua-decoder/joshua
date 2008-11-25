@@ -32,6 +32,9 @@ public class SAGrammarFactory implements GrammarFactory {
 	private final int maxPhraseSpan;
 	private final int maxPhraseLength;
 	private final int maxNonterminals;
+
+	/** TODO This variable is never read - perhaps it should be removed? */
+	@SuppressWarnings("unused")
 	private final int spanLimit;
 	
 	/**

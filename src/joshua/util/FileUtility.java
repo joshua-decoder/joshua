@@ -26,7 +26,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.zip.GZIPInputStream;
 
@@ -61,13 +60,16 @@ public class FileUtility{
 	}	
 	
 //	choose features with counts >= threshold
-	public static void print_hash_tbl_above_threshold(HashMap tbl, String f_out, boolean key_only, double threshold){
+	public static void print_hash_tbl_above_threshold(HashMap<String,Double> tbl, String f_out, boolean key_only, double threshold){
 		//	#### write hashtable
 			BufferedWriter out = FileUtility.getWriteFileStream(f_out);
 			System.out.println("########### write hash table to file " + f_out);
-			for(Iterator it = tbl.keySet().iterator(); it.hasNext(); ){
-				String key = (String) it.next();
-				Double val = (Double)tbl.get(key);
+			for (Map.Entry<String, Double> entry : tbl.entrySet()) {
+				String key = entry.getKey();
+				Double val = entry.getValue();
+//			for(Iterator it = tbl.keySet().iterator(); it.hasNext(); ){
+//				String key = (String) it.next();
+//				Double val = (Double)tbl.get(key);
 				if(val>=threshold){
 					if(key_only)
 						FileUtility.write_lzf(out, key + "\n");

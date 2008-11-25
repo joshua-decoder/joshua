@@ -1,7 +1,5 @@
 package joshua.util;
 import joshua.MERT.*;
-import java.math.*;
-import java.util.*;
 import java.io.*;
 import java.text.DecimalFormat;
 
@@ -101,8 +99,13 @@ public class JoshuaEval
     SentenceInfo[] candSentenceInfo = new SentenceInfo[numSentences];
 
     BufferedReader inFile = new BufferedReader(new FileReader(inFileName));
-    String line, candidate_str;
+    
+    String candidate_str;
 
+    //TODO The variable line is never used. Perhaps it should be removed?
+    @SuppressWarnings("unused")
+	String line;
+    
     for (int i = 0; i < numSentences; ++i) {
 
       for (int n = 0; n < testIndex; ++n){
@@ -356,10 +359,11 @@ public class JoshuaEval
   private static void println(Object obj) { System.out.println(obj); }
   private static void print(Object obj) { System.out.print(obj); }
 
-  private static void showProgress()
-  {
-    ++progress;
-    if (progress % 1000 == 0) print(".");
-  }
+// TODO This method is never used - perhaps it should be removed
+//  private static void showProgress()
+//  {
+//    ++progress;
+//    if (progress % 1000 == 0) print(".");
+//  }
 
 }

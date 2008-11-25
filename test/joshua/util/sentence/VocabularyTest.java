@@ -16,10 +16,12 @@
  */
 package joshua.util.sentence;
 
+import java.io.File;
 import java.io.IOException;
+import java.io.PrintStream;
+import java.util.Date;
 import java.util.HashSet;
 
-import joshua.sarray.BasicPhrase;
 import joshua.sarray.SuffixArrayFactory;
 import joshua.util.sentence.Vocabulary;
 
@@ -87,16 +89,23 @@ public class VocabularyTest {
 	}
 
 	@Test
-	public void verifyWordIDs() {
+	public void verifyWordIDs() throws IOException {
+		
 		// Adam Lopez's example...
 		String corpusString = "it makes him and it mars him , it sets him on and it takes him off .";
-		String queryString = "it persuades him and it disheartens him";
+//		String queryString = "it persuades him and it disheartens him";
+		
+		String sourceFileName;
+		{
+			File sourceFile = File.createTempFile("source", new Date().toString());
+			PrintStream sourcePrintStream = new PrintStream(sourceFile, "UTF-8");
+			sourcePrintStream.println(corpusString);
+			sourcePrintStream.close();
+			sourceFileName = sourceFile.getAbsolutePath();
+		}
 		
 		Vocabulary vocab = new Vocabulary();
-		BasicPhrase corpusSentence = new BasicPhrase(corpusString, vocab);
-		BasicPhrase querySentence = new BasicPhrase(queryString, vocab);
-		vocab.fixVocabulary();
-		vocab.alphabetize();
+		SuffixArrayFactory.createVocabulary(sourceFileName, vocab);
 		
 		Assert.assertEquals(vocab.getWord(vocab.getID("it")), "it");
 		Assert.assertEquals(vocab.getWord(vocab.getID("makes")), "makes");
@@ -109,8 +118,8 @@ public class VocabularyTest {
 		Assert.assertEquals(vocab.getWord(vocab.getID("takes")), "takes");
 		Assert.assertEquals(vocab.getWord(vocab.getID("off")), "off");
 		
-		Assert.assertEquals(vocab.getWord(vocab.getID("persuades")), "persuades");
-		Assert.assertEquals(vocab.getWord(vocab.getID("disheartens")), "disheartens");
+		Assert.assertEquals(vocab.getWord(vocab.getID("persuades")), Vocabulary.UNKNOWN_WORD_STRING);
+		Assert.assertEquals(vocab.getWord(vocab.getID("disheartens")), Vocabulary.UNKNOWN_WORD_STRING);
 	}
 	
 	@Test

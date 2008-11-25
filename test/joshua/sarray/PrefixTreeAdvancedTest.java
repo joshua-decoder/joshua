@@ -5,7 +5,6 @@ import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Scanner;
 import java.util.Set;
 
 import joshua.sarray.AlignmentArray;
@@ -15,7 +14,6 @@ import joshua.sarray.PrefixTree;
 import joshua.sarray.SampledLexProbs;
 import joshua.sarray.SuffixArray;
 import joshua.sarray.PrefixTree.Node;
-import joshua.util.lexprob.LexProbs;
 import joshua.util.lexprob.LexicalProbabilities;
 import joshua.util.sentence.Vocabulary;
 

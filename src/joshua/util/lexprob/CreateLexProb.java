@@ -25,10 +25,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Scanner;
-import java.util.logging.Level;
 import java.util.zip.GZIPInputStream;
 
 import joshua.util.CommandLineParser;
@@ -68,8 +65,8 @@ public class CreateLexProb {
 		Option<String> encoding = commandLine.addStringOption('e',"encoding","ENCODING","UTF-8","input file encoding");
 		
 		
-		Option<String> source_word = commandLine.addStringOption('s',"source-word","WORD","source word to look up");
-		Option<String> target_word = commandLine.addStringOption('t',"target-word","WORD","target word to look up");
+//		Option<String> source_word = commandLine.addStringOption('s',"source-word","WORD","source word to look up");
+//		Option<String> target_word = commandLine.addStringOption('t',"target-word","WORD","target word to look up");
 		
 
 		
