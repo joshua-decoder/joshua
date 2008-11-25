@@ -87,9 +87,8 @@ public class SentenceInfo
   {
     int wordCount = words.length;
     if (wordCount == 0) return null;
-    String retStr = "";
-    for (int i = 0; i < wordCount-1; ++i) { retStr = retStr + words[i] + " "; }
-    retStr = retStr + words[wordCount-1];
+    String retStr = words[0];
+    for (int i = 1; i < wordCount; ++i) { retStr = retStr + " " + words[i]; }
     return retStr;
   }
 
@@ -97,25 +96,56 @@ public class SentenceInfo
   {
     HashMap ngramCounts = new HashMap();
     int wordCount = words.length;
-    String gram = "";
 
-    for (int start = 0; start <= wordCount-n; ++start) {
-    // process n-gram starting at start and ending at start+(n-1)
-
-      int end = start + (n-1);
-      // build the n-gram from words[start] to words[end]
-      gram = "";
-      for (int i = start; i < end; ++i) { gram = gram + words[i] + " "; }
-      gram = gram + words[end];
-
-      if (ngramCounts.containsKey(gram)) {
-        int oldCount = (Integer)ngramCounts.get(gram);
-        ngramCounts.put(gram,oldCount+1);
-      } else {
+    if (wordCount >= n) {
+      if (n > 1) { // for n == 1, less processing is needed
+        // build the first n-gram
+        int start = 0; int end = n-1;
+        String gram = "";
+        for (int i = start; i < end; ++i) { gram = gram + words[i] + " "; }
+        gram = gram + words[end];
         ngramCounts.put(gram,1);
-      }
 
-    } // for (start)
+        for (start = 1; start <= wordCount-n; ++start) {
+        // process n-gram starting at start and ending at start+(n-1)
+
+          end = start + (n-1);
+          // build the n-gram from words[start] to words[end]
+
+/*
+// old way of doing it
+          gram = "";
+          for (int i = start; i < end; ++i) { gram = gram + words[i] + " "; }
+          gram = gram + words[end];
+*/
+
+          gram = gram.substring(gram.indexOf(' ')+1) + " " + words[end];
+
+          if (ngramCounts.containsKey(gram)) {
+            int oldCount = (Integer)ngramCounts.get(gram);
+            ngramCounts.put(gram,oldCount+1);
+          } else {
+            ngramCounts.put(gram,1);
+          }
+
+        } // for (start)
+
+      } else { // if (n == 1)
+
+        String gram = "";
+        for (int j = 0; j < wordCount; ++j) {
+          gram = words[j];
+
+          if (ngramCounts.containsKey(gram)) {
+            int oldCount = (Integer)ngramCounts.get(gram);
+            ngramCounts.put(gram,oldCount+1);
+          } else {
+            ngramCounts.put(gram,1);
+          }
+
+        }
+      }
+    } // if (wordCount >= n)
 
     return ngramCounts;
   }

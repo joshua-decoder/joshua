@@ -1056,13 +1056,15 @@ line format:
       double offset_maxSlope = NegInf; // ...and its offset (needed to break ties)
 
       for (int k = 0; k < numCandidates; ++k) {
-        double[] featVal = getFeats(featVal_array,i,k);
+//        double[] featVal = getFeats(featVal_array,i,k);
 
-        slope[k] = featVal[c];
+//        slope[k] = featVal[c];
+        slope[k] = featVal_array[c][i][k];
 
         offset[k] = 0.0;
         for (int c2 = 1; c2 <= numParams; ++c2) {
-          if (c2 != c) { offset[k] += lambda[c2]*featVal[c2]; }
+//          if (c2 != c) { offset[k] += lambda[c2]*featVal[c2]; }
+          if (c2 != c) { offset[k] += lambda[c2]*featVal_array[c2][i][k]; }
         }
 
         // debugging
@@ -1262,9 +1264,10 @@ line format:
       int indexOfMax = -1;
       for (int k = 0; k < numCandidates; ++k) {
         double score = 0;
-        double[] featVals = getFeats(featVal_array,i,k);
+//        double[] featVals = getFeats(featVal_array,i,k);
 
-        for (int c2 = 1; c2 <= numParams; ++c2) { score += temp_lambda[c2] * featVals[c2]; }
+//        for (int c2 = 1; c2 <= numParams; ++c2) { score += temp_lambda[c2] * featVals[c2]; }
+        for (int c2 = 1; c2 <= numParams; ++c2) { score += temp_lambda[c2] * featVal_array[c2][i][k]; }
         if (score > max) {
           max = score;
           indexOfMax = k;
@@ -1826,7 +1829,7 @@ line format:
     return retVal;
   }
 
-
+/*
   private double[] getFeats(double[][][] featVal_array, int i, int k)
   {
     double[] retA = new double[1+numParams];
@@ -1837,7 +1840,7 @@ line format:
 
     return retA;
   }
-
+*/
   private void setFeats(double[][][] featVal_array, int i, int[] lastUsedIndex, int[] maxIndex, double[] featVal)
   {
     int k = lastUsedIndex[i] + 1;
