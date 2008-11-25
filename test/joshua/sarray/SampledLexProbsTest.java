@@ -3,6 +3,7 @@ package joshua.sarray;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.io.UnsupportedEncodingException;
 import java.util.Date;
 
 import joshua.sarray.AlignmentArray;
@@ -21,6 +22,9 @@ import org.testng.annotations.Test;
 
 public class SampledLexProbsTest {
 
+	// ä == \u00E4
+	// ü == \u00FC
+	
 	SampledLexProbs lexProbs;
 	Vocabulary sourceVocab, targetVocab;
 	AlignmentArray alignmentArray;
@@ -28,6 +32,16 @@ public class SampledLexProbsTest {
 	
 	@Test
 	public void setup() throws IOException {
+		
+		// Set System.out and System.err to use the provided character encoding
+		try {
+			System.setOut(new PrintStream(System.out, true, "UTF8"));
+			System.setErr(new PrintStream(System.err, true, "UTF8"));
+		} catch (UnsupportedEncodingException e1) {
+			System.err.println("UTF8 is not a valid encoding; using system default encoding for System.out and System.err.");
+		} catch (SecurityException e2) {
+			System.err.println("Security manager is configured to disallow changes to System.out or System.err; using system default encoding.");
+		}
 		
 		String sourceCorpusString = 
 			"it makes him and it mars him , it sets him on yet it takes him off ." + "\n" +
@@ -38,14 +52,14 @@ public class SampledLexProbsTest {
 		String sourceFileName;
 		{
 			File sourceFile = File.createTempFile("source", new Date().toString());
-			PrintStream sourcePrintStream = new PrintStream(sourceFile);
+			PrintStream sourcePrintStream = new PrintStream(sourceFile, "UTF-8");
 			sourcePrintStream.println(sourceCorpusString);
 			sourcePrintStream.close();
 			sourceFileName = sourceFile.getAbsolutePath();
 		}
-	
+
 		String targetCorpusString = 
-			"das macht ihn und es beschädigt ihn , es setzt ihn auf und es führt ihn aus ." + "\n" +
+			"das macht ihn und es besch\u00E4digt ihn , es setzt ihn auf und es f\u00FChrt ihn aus ." + "\n" +
 			"wiederaufnahme der sitzungsperiode ." + "\n" +
 			"von dem sitzung" + "\n" + 
 			"von dem sitzung";
@@ -53,7 +67,7 @@ public class SampledLexProbsTest {
 		String targetFileName;
 		{
 			File targetFile = File.createTempFile("target", new Date().toString());
-			PrintStream targetPrintStream = new PrintStream(targetFile);
+			PrintStream targetPrintStream = new PrintStream(targetFile, "UTF-8");
 			targetPrintStream.println(targetCorpusString);
 			targetPrintStream.close();
 			targetFileName = targetFile.getAbsolutePath();
@@ -91,6 +105,35 @@ public class SampledLexProbsTest {
 	}
 	
 	@Test(dependsOnMethods={"setup"})
+	public void verifyTargetVocabulary() {
+		// "das macht ihn und es besch\u00E4digt ihn , es setzt ihn auf und es f\u00FChrt ihn aus ." + "\n" +
+		//"wiederaufnahme der sitzungsperiode ." + "\n" +
+		//"von dem sitzung" + "\n" + 
+		//"von dem sitzung";
+		
+		Assert.assertEquals(targetVocab.getWord(targetVocab.getID("das")), "das");
+		Assert.assertEquals(targetVocab.getWord(targetVocab.getID("macht")), "macht");
+		Assert.assertEquals(targetVocab.getWord(targetVocab.getID("ihn")), "ihn");
+		Assert.assertEquals(targetVocab.getWord(targetVocab.getID("und")), "und");
+		Assert.assertEquals(targetVocab.getWord(targetVocab.getID("es")), "es");
+		Assert.assertEquals(targetVocab.getWord(targetVocab.getID("setzt")), "setzt");
+		Assert.assertEquals(targetVocab.getWord(targetVocab.getID(",")), ",");
+		Assert.assertEquals(targetVocab.getWord(targetVocab.getID("auf")), "auf");
+		Assert.assertEquals(targetVocab.getWord(targetVocab.getID("und")), "und");
+		Assert.assertEquals(targetVocab.getWord(targetVocab.getID("aus")), "aus");
+		Assert.assertEquals(targetVocab.getWord(targetVocab.getID(".")), ".");
+		Assert.assertEquals(targetVocab.getWord(targetVocab.getID("wiederaufnahme")), "wiederaufnahme");
+		Assert.assertEquals(targetVocab.getWord(targetVocab.getID("der")), "der");
+		Assert.assertEquals(targetVocab.getWord(targetVocab.getID("sitzungsperiode")), "sitzungsperiode");
+		Assert.assertEquals(targetVocab.getWord(targetVocab.getID("von")), "von");
+		Assert.assertEquals(targetVocab.getWord(targetVocab.getID("dem")), "dem");
+		Assert.assertEquals(targetVocab.getWord(targetVocab.getID("sitzung")), "sitzung");
+		Assert.assertEquals(targetVocab.getWord(targetVocab.getID("f\u00FChrt")), "f\u00FChrt");
+		Assert.assertEquals(targetVocab.getWord(targetVocab.getID("besch\u00E4digt")), "besch\u00E4digt");
+		
+	}
+	
+	@Test(dependsOnMethods={"setup"})
 	public void testAlignmentPoints() {
 	
 		for (int i=0; i<18; i++) {
@@ -115,7 +158,7 @@ public class SampledLexProbsTest {
 		Pair<Float,Float> results;
 		
 		//	"it makes him and it mars him , it sets him on yet it takes him off .";
-		// "das macht ihn und es beschädigt ihn , es setzt ihn auf und es führt ihn aus ."
+		// "das macht ihn und es besch\u00E4digt ihn , es setzt ihn auf und es f\u00FChrt ihn aus ."
 		
 		results = lexProbs.calculateLexProbs(getPhrase("it", 0, 1));
 		Assert.assertNotNull(results);
@@ -250,7 +293,7 @@ public class SampledLexProbsTest {
 		Pair<Float,Float> results;
 		
 		//	"it makes him and it mars him , it sets him on yet it takes him off .";
-		// "das macht ihn und es beschädigt ihn , es setzt ihn auf und es führt ihn aus ."
+		// "das macht ihn und es besch\u00E4digt ihn , es setzt ihn auf und es f\u00FChrt ihn aus ."
 		
 		results = lexProbs.calculateLexProbs(phrase);
 		Assert.assertNotNull(results);
@@ -281,10 +324,10 @@ public class SampledLexProbsTest {
 		Assert.assertEquals(lexProbs.sourceGivenTarget(".", "."), 1.0f);
 		Assert.assertEquals(lexProbs.sourceGivenTarget("on", "auf"), 1.0f);
 		Assert.assertEquals(lexProbs.sourceGivenTarget("off", "aus"), 1.0f);
-		Assert.assertEquals(lexProbs.sourceGivenTarget("mars", "beschädigt"), 1.0f);
+		Assert.assertEquals(lexProbs.sourceGivenTarget("mars", "besch\u00E4digt"), 1.0f);
 		Assert.assertEquals(lexProbs.sourceGivenTarget("it", "das"), 1.0f);
 		Assert.assertEquals(lexProbs.sourceGivenTarget("it", "es"), 1.0f);
-		Assert.assertEquals(lexProbs.sourceGivenTarget("takes", "führt"), 1.0f);
+		Assert.assertEquals(lexProbs.sourceGivenTarget("takes", "f\u00FChrt"), 1.0f);
 		Assert.assertEquals(lexProbs.sourceGivenTarget("him", "ihn"), 1.0f);
 		Assert.assertEquals(lexProbs.sourceGivenTarget("makes", "macht"), 1.0f);
 		Assert.assertEquals(lexProbs.sourceGivenTarget("sets", "setzt"), 1.0f);
@@ -302,10 +345,10 @@ public class SampledLexProbsTest {
 		Assert.assertEquals(lexProbs.sourceGivenTarget(sourceVocab.getID("."), targetVocab.getID(".")), 1.0f);
 		Assert.assertEquals(lexProbs.sourceGivenTarget(sourceVocab.getID("on"), targetVocab.getID("auf")), 1.0f);
 		Assert.assertEquals(lexProbs.sourceGivenTarget(sourceVocab.getID("off"), targetVocab.getID("aus")), 1.0f);
-		Assert.assertEquals(lexProbs.sourceGivenTarget(sourceVocab.getID("mars"), targetVocab.getID("beschädigt")), 1.0f);
+		Assert.assertEquals(lexProbs.sourceGivenTarget(sourceVocab.getID("mars"), targetVocab.getID("besch\u00E4digt")), 1.0f);
 		Assert.assertEquals(lexProbs.sourceGivenTarget(sourceVocab.getID("it"), targetVocab.getID("das")), 1.0f);
 		Assert.assertEquals(lexProbs.sourceGivenTarget(sourceVocab.getID("it"), targetVocab.getID("es")), 1.0f);
-		Assert.assertEquals(lexProbs.sourceGivenTarget(sourceVocab.getID("takes"), targetVocab.getID("führt")), 1.0f);
+		Assert.assertEquals(lexProbs.sourceGivenTarget(sourceVocab.getID("takes"), targetVocab.getID("f\u00FChrt")), 1.0f);
 		Assert.assertEquals(lexProbs.sourceGivenTarget(sourceVocab.getID("him"), targetVocab.getID("ihn")), 1.0f);
 		Assert.assertEquals(lexProbs.sourceGivenTarget(sourceVocab.getID("makes"), targetVocab.getID("macht")), 1.0f);
 		Assert.assertEquals(lexProbs.sourceGivenTarget(sourceVocab.getID("sets"), targetVocab.getID("setzt")), 1.0f);
@@ -324,11 +367,11 @@ public class SampledLexProbsTest {
 		Assert.assertEquals(lexProbs.targetGivenSource("das", "it"), 0.25f);
 		Assert.assertEquals(lexProbs.targetGivenSource("es", "it"), 0.75f);
 		Assert.assertEquals(lexProbs.targetGivenSource("macht", "makes"), 1.0f);
-		Assert.assertEquals(lexProbs.targetGivenSource("beschädigt", "mars"), 1.0f);
+		Assert.assertEquals(lexProbs.targetGivenSource("besch\u00E4digt", "mars"), 1.0f);
 		Assert.assertEquals(lexProbs.targetGivenSource("aus", "off"), 1.0f);
 		Assert.assertEquals(lexProbs.targetGivenSource("auf", "on"), 1.0f);
 		Assert.assertEquals(lexProbs.targetGivenSource("setzt", "sets"), 1.0f);
-		Assert.assertEquals(lexProbs.targetGivenSource("führt", "takes"), 1.0f);
+		Assert.assertEquals(lexProbs.targetGivenSource("f\u00FChrt", "takes"), 1.0f);
 		Assert.assertEquals(lexProbs.targetGivenSource("und", "yet"), 1.0f);
 		
 	}
@@ -343,11 +386,11 @@ public class SampledLexProbsTest {
 		Assert.assertEquals(lexProbs.targetGivenSource(targetVocab.getID("das"), sourceVocab.getID("it")), 0.25f);
 		Assert.assertEquals(lexProbs.targetGivenSource(targetVocab.getID("es"), sourceVocab.getID("it")), 0.75f);
 		Assert.assertEquals(lexProbs.targetGivenSource(targetVocab.getID("macht"), sourceVocab.getID("makes")), 1.0f);
-		Assert.assertEquals(lexProbs.targetGivenSource(targetVocab.getID("beschädigt"), sourceVocab.getID("mars")), 1.0f);
+		Assert.assertEquals(lexProbs.targetGivenSource(targetVocab.getID("besch\u00E4digt"), sourceVocab.getID("mars")), 1.0f);
 		Assert.assertEquals(lexProbs.targetGivenSource(targetVocab.getID("aus"), sourceVocab.getID("off")), 1.0f);
 		Assert.assertEquals(lexProbs.targetGivenSource(targetVocab.getID("auf"), sourceVocab.getID("on")), 1.0f);
 		Assert.assertEquals(lexProbs.targetGivenSource(targetVocab.getID("setzt"), sourceVocab.getID("sets")), 1.0f);
-		Assert.assertEquals(lexProbs.targetGivenSource(targetVocab.getID("führt"), sourceVocab.getID("takes")), 1.0f);
+		Assert.assertEquals(lexProbs.targetGivenSource(targetVocab.getID("f\u00FChrt"), sourceVocab.getID("takes")), 1.0f);
 		Assert.assertEquals(lexProbs.targetGivenSource(targetVocab.getID("und"), sourceVocab.getID("yet")), 1.0f);
 		
 	}

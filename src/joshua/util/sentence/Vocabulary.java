@@ -44,7 +44,7 @@ public class Vocabulary implements Iterable<String> {
 
 	/** The unknown word's ID will be the size of the vocabulary,
 	  * ensuring that it is outside of the vocabulary. */
-	public static int UNKNOWN_WORD = 0;
+	int UNKNOWN_WORD;
 
 	/** String representation for out-of-vocabulary words. */
 	public static final String UNKNOWN_WORD_STRING = "UNK";
@@ -71,6 +71,7 @@ public class Vocabulary implements Iterable<String> {
 		wordToIDMap = new Hashtable<String,Integer>();  
 		vocabList = new Vector<String>();
 		isFixed = false;
+		UNKNOWN_WORD = 0; // Initially, the vocab size is zero
 	}
 
 	/** 
@@ -95,6 +96,7 @@ public class Vocabulary implements Iterable<String> {
 	public Vocabulary(String fileName) throws IOException {
 		this();
 		SuffixArrayFactory.createVocabulary(fileName, this);
+		UNKNOWN_WORD = vocabList.size();
 	}
 	
 //===============================================================

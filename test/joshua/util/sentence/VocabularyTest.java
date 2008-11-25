@@ -50,9 +50,9 @@ public class VocabularyTest {
 		Assert.assertEquals(vocab1.getWords(), vocab1.vocabList);
 
 		Assert.assertEquals(vocab1.size(), 0);
-		Assert.assertEquals(vocab1.getWord(Vocabulary.UNKNOWN_WORD), Vocabulary.UNKNOWN_WORD_STRING);
+		Assert.assertEquals(vocab1.getWord(vocab1.UNKNOWN_WORD), Vocabulary.UNKNOWN_WORD_STRING);
 
-		Assert.assertEquals(vocab1.getID("sample"), Vocabulary.UNKNOWN_WORD);
+		Assert.assertEquals(vocab1.getID("sample"), vocab1.UNKNOWN_WORD);
 
 		try {
 			vocab1.getID(null);
@@ -72,9 +72,9 @@ public class VocabularyTest {
 		Assert.assertEquals(vocab2.getWords(), vocab2.vocabList);
 
 		Assert.assertEquals(vocab2.size(), 0);
-		Assert.assertEquals(vocab2.getWord(Vocabulary.UNKNOWN_WORD), Vocabulary.UNKNOWN_WORD_STRING);
+		Assert.assertEquals(vocab2.getWord(vocab2.UNKNOWN_WORD), Vocabulary.UNKNOWN_WORD_STRING);
 
-		Assert.assertEquals(vocab2.getID("sample"), Vocabulary.UNKNOWN_WORD);
+		Assert.assertEquals(vocab2.getID("sample"), vocab2.UNKNOWN_WORD);
 
 		try {
 			vocab2.getID(null);

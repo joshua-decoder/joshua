@@ -25,6 +25,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import joshua.util.Pair;
@@ -38,7 +39,7 @@ import joshua.util.sentence.Vocabulary;
  * This class calculates the probabilities by sampling directly from a parallel corpus.
  * 
  * @author Lane Schwartz
- * @version $LastChangedDate$
+ * @version $LastChangedDate:2008-11-13 13:13:31 -0600 (Thu, 13 Nov 2008) $
  */
 public class SampledLexProbs implements LexicalProbabilities {
 
@@ -161,6 +162,7 @@ public class SampledLexProbs implements LexicalProbabilities {
 		if (map.containsKey(sourceWord)) {
 			return sourceGivenTarget.get(targetWord).get(sourceWord);
 		} else {
+			if (logger.isLoggable(Level.FINE)) logger.fine("No source given target lexprob found for p(" + sourceVocab.getWord(sourceWord) + " | " + targetVocab.getWord(targetWord) + "); returning FLOOR_PROBABILITY " + floorProbability);
 			return floorProbability;
 		}
 
@@ -174,15 +176,19 @@ public class SampledLexProbs implements LexicalProbabilities {
 	 */
 	public float targetGivenSource(Integer targetWord, Integer sourceWord) {
 		
+		if (logger.isLoggable(Level.FINE)) logger.fine("Need to get target given source lexprob p(" + targetVocab.getWord(targetWord) + " | " + sourceVocab.getWord(sourceWord) + "); sourceWord ID == " + sourceWord + "; targetWord ID == " + targetWord);
+		
 		if (!targetGivenSource.containsKey(sourceWord)) {
 			calculateTargetGivenSource(sourceWord);
 		}
 
 		Map<Integer,Float> map = targetGivenSource.get(sourceWord);
 		if (map.containsKey(targetWord)) {
-			return targetGivenSource.get(sourceWord).get(targetWord);
+			return map.get(targetWord);
 		} else {
-			return floorProbability;
+			if (logger.isLoggable(Level.FINE)) logger.fine("No target given source lexprob found for p(" + targetVocab.getWord(targetWord) + " | " + sourceVocab.getWord(sourceWord) + "); returning FLOOR_PROBABILITY " + floorProbability + "; sourceWord ID == " + sourceWord + "; targetWord ID == " + targetWord);
+			//return floorProbability;
+			throw new RuntimeException("No target given source lexprob found for p(" + targetVocab.getWord(targetWord) + " | " + sourceVocab.getWord(sourceWord) + "); returning FLOOR_PROBABILITY " + floorProbability + "; sourceWord ID == " + sourceWord + "; targetWord ID == " + targetWord);
 		}
 		
 	}
@@ -206,6 +212,7 @@ public class SampledLexProbs implements LexicalProbabilities {
 	 * @return
 	 */
 	public float targetGivenSource(String targetWord, String sourceWord) {
+		if (logger.isLoggable(Level.FINER)) logger.finer("Need to get target given source lexprob p(" + targetWord + " | " + sourceWord + "); sourceID==" +sourceVocab.getID(sourceWord) + "; targetID=="+targetVocab.getID(targetWord));
 		int targetID = targetVocab.getID(targetWord);
 		int sourceID = sourceVocab.getID(sourceWord);
 		return targetGivenSource(targetID, sourceID);
@@ -378,6 +385,8 @@ public class SampledLexProbs implements LexicalProbabilities {
 	
 	private void calculateTargetGivenSource(int sourceWord) {
 
+		if (logger.isLoggable(Level.FINE)) logger.fine("Calculating lexprob distribution P( TARGET | " + sourceVocab.getWord(sourceWord) + "); sourceWord ID == " + sourceWord);
+				
 		Map<Integer,Integer> counts = new HashMap<Integer,Integer>();
 		
 		int[] sourceSuffixArrayBounds = sourceSuffixArray.findPhrase(new BasicPhrase(sourceVocab, sourceWord));
@@ -390,34 +399,38 @@ public class SampledLexProbs implements LexicalProbabilities {
 			int[] alignedTargetIndices = alignments.getAlignedTargetIndices(sourceCorpusIndex);
 			if (alignedTargetIndices==null) {
 				if (!counts.containsKey(null)) {
+					if (logger.isLoggable(Level.FINEST)) logger.finest("Setting count(null | " + sourceVocab.getWord(sourceWord) + ") = 1");
 					counts.put(null,1);
 				} else {
-					counts.put(null,
-							counts.get(null) + 1);
+					int incrementedCount = counts.get(null) + 1;
+					if (logger.isLoggable(Level.FINEST)) logger.finest("Setting count(null | " + sourceVocab.getWord(sourceWord) + ") = " + incrementedCount);
+					counts.put(null,incrementedCount);
 				}
-				total++;
+				total += 1.0f;
 			} else {
 				for (int targetIndex : alignedTargetIndices) {
 					int targetWord = targetSuffixArray.corpus.getWordID(targetIndex);
 					if (!counts.containsKey(targetWord)) {
+						if (logger.isLoggable(Level.FINEST)) logger.finest("Setting count(" +targetVocab.getWord(targetWord) + " | " + sourceVocab.getWord(sourceWord) + ") = 1" + "; sourceWord ID == " + sourceWord + "; targetWord ID == " + targetWord);
 						counts.put(targetWord,1);
 					} else {
-						counts.put(targetWord,
-								counts.get(targetWord) + 1);
+						int incrementedCount = counts.get(targetWord) + 1;
+						if (logger.isLoggable(Level.FINEST)) logger.finest("Setting count(" +targetVocab.getWord(targetWord) + " | " + sourceVocab.getWord(sourceWord) + ") = " + incrementedCount + "; sourceWord ID == " + sourceWord + "; targetWord ID == " + targetWord);
+						counts.put(targetWord,incrementedCount);
 					}
-					total++;
+					total += 1.0f;
 				}
 			}
 		}
 		
 		Map<Integer,Float> targetProbs = new HashMap<Integer,Float>();
 		for (Map.Entry<Integer,Integer> entry : counts.entrySet()) {
-			targetProbs.put(entry.getKey(), entry.getValue()/total);
-			if (entry.getValue()/total <= floorProbability) {
-				int q = 1;
-				q++;
-			}
+			int targetWord = entry.getKey();
+			float prob = ((float) entry.getValue())/total;
+			if (logger.isLoggable(Level.FINEST)) logger.finest("Setting p(" +targetVocab.getWord(entry.getKey()) + " | " + sourceVocab.getWord(sourceWord) + ") = " + prob + "; sourceWord ID == " + sourceWord + "; targetWord ID == " + targetWord);
+			targetProbs.put(targetWord, prob);
 		}
+		if (logger.isLoggable(Level.FINER)) logger.finer("Storing " + targetProbs.size() + " probabilities for lexprob distribution P( TARGET | " + sourceVocab.getWord(sourceWord) + ")");
 		targetGivenSource.put(sourceWord, targetProbs);
 		
 	}
