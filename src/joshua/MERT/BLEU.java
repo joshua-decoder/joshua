@@ -169,6 +169,8 @@ public class BLEU extends EvaluationMetric
 
       clippedCount = Math.min(candGramCount,maxRefGramCount);
 
+//      clippedCount = (candGramCount < maxRefGramCount ? candGramCount : maxRefGramCount);
+
       correctGramCount += clippedCount;
       totalGramCount += candGramCount;
 
@@ -192,9 +194,16 @@ public class BLEU extends EvaluationMetric
       int closestRefLength = refSentenceInfo[i][0].getWordCount();
       int minDiff = Math.abs(candLength-closestRefLength);
 
+//int minDiff = candLength-closestRefLength;
+//if (minDiff < 0) minDiff = -minDiff;
+
       for (int r = 1; r < refsPerSen; ++r) {
         int nextRefLength = refSentenceInfo[i][r].getWordCount();
         int nextDiff = Math.abs(candLength-nextRefLength);
+
+//int nextDiff = candLength-nextRefLength;
+//if (nextDiff < 0) nextDiff = -nextDiff;
+
         if (nextDiff < minDiff) {
           closestRefLength = nextRefLength;
           minDiff = nextDiff;
@@ -376,5 +385,17 @@ public class BLEU extends EvaluationMetric
 
     System.out.println("BLEU = " + f4.format(BP*Math.exp(BLEUsum)));
   }
+/*
+  private int myMin(int x, int y)
+  {
+    return Math.min(x,y);
+//    return (x < y ? x : y);
+  }
 
+  private int myAbs(int x)
+  {
+    return Math.abs(x);
+//    return (x > 0 ? x : -x);
+  }
+*/
 }

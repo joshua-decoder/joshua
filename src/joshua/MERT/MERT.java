@@ -116,7 +116,7 @@ public class MERT
   private String paramsFileName, finalLambdaFileName;
   private String sourceFileName, refFileName, decoderOutFileName;
   private String decoderConfigFileName, decoderCommandFileName;
-  private int useDisk;
+//  private int useDisk;
 
   public MERT(String[] args) throws Exception
   {
@@ -380,6 +380,7 @@ public class MERT
       }
 
       run_decoder();
+//run_fake_decoder(sizeOfNBest,iteration); // use only with ex2_ipi20opi0seed1226091488390
 
       println("...finished decoding @ " + (new Date()),1);
 
@@ -390,12 +391,9 @@ public class MERT
         copyFile(decoderOutFileName,decoderOutFileName+".it"+iteration);
       }
 
-      println("Ensuring proper decoder output.",3);
+      println("Producing temp files for iteration "+iteration,3);
 
-      fixDecoderOutput();
-        // makes sure each sentence has sizeOfNBest candidate translations in
-        // decoderOutFileName, since some sentences might produce fewer
-        // candidates (e.g. sentence is too short or has too many OOV's)
+      produceTempFiles(iteration);
 
 
 
@@ -406,11 +404,16 @@ public class MERT
       featVal_array[0] = null;
       int[] lastUsedIndex = new int[numSentences];
       int[] maxIndex = new int[numSentences];
+        // used to grow featVal_array dynamically
+      TreeMap[] suffStats_array = new TreeMap[numSentences];
+        // suffStats_array[i] maps candidates of interest for sentence i to an array
+        // storing the sufficient statistics for that candidate
 
       for (int i = 0; i < numSentences; ++i) {
         candidates[i] = new Vector(); // a Vector of SentenceInfo's
         lastUsedIndex[i] = -1;
         maxIndex[i] = sizeOfNBest - 1;
+        suffStats_array[i] = new TreeMap();
       }
 
       double[][] initialLambda = new double[1+initsPerIt][1+numParams]; // the intermediate "initial" lambdas
@@ -432,21 +435,30 @@ public class MERT
       println("Reading candidate translations.",2);
       progress = 0;
 
-      copyFile(decoderOutFileName,decoderOutFileName+".temp.it"+iteration);
       boolean newCandidatesAdded = false;
 
+
       // each inFile corresponds to the output of an iteration
-      BufferedReader[] inFile = new BufferedReader[1+iteration];
+      BufferedReader[] inFile_sents = new BufferedReader[1+iteration];
+      BufferedReader[] inFile_feats = new BufferedReader[1+iteration];
+      BufferedReader[] inFile_stats = new BufferedReader[1+iteration];
       for (int it = 1; it <= iteration; ++it) {
-        inFile[it] = new BufferedReader(new FileReader(decoderOutFileName+".temp.it"+it));
+        inFile_sents[it] = new BufferedReader(new FileReader(decoderOutFileName+".temp.sents.it"+it));
+        inFile_feats[it] = new BufferedReader(new FileReader(decoderOutFileName+".temp.feats.it"+it));
+        inFile_stats[it] = new BufferedReader(new FileReader(decoderOutFileName+".temp.stats.it"+it));
       }
 
-      // the outFile will be used to merge the output files into a single one
-      FileOutputStream outStream = new FileOutputStream(decoderOutFileName+".temp.merged", false); // false: don't append
-      OutputStreamWriter outStreamWriter = new OutputStreamWriter(outStream, "utf8");
-      BufferedWriter outFile = new BufferedWriter(outStreamWriter);
+      // to be used to write sentences from all the output files into a single one
+/*
+      FileOutputStream outStream_sents = new FileOutputStream(decoderOutFileName+".temp.sents.merged", false); // false: don't append
+      OutputStreamWriter outStreamWriter_sents = new OutputStreamWriter(outStream_sents, "utf8");
+      BufferedWriter outFile_sents = new BufferedWriter(outStreamWriter_sents);
+*/
+      // to be used to write sufficient statistics from all the sentences from the output files into a single one
+      PrintWriter outFile_stats = new PrintWriter(decoderOutFileName+"temp.stats.merged");
 
-      String orig_line, line, candidate_str;
+//      String orig_line, line, candidate_str;
+      String sents_str, feats_str, stats_str;
 
       for (int i = 0; i < numSentences; ++i) {
 
@@ -462,33 +474,23 @@ public class MERT
 
           for (short n = 0; n < sizeOfNBest; ++n) {
 
-            // read nth candidate for the ith sentence, along with its feature values
+            // for the nth candidate for the ith sentence, read the sentence, feature values,
+            // and sufficient statistics from the various temp files
 
-/*
-line format:
+            sents_str = inFile_sents[it].readLine();
+            feats_str = inFile_feats[it].readLine();
+            stats_str = inFile_stats[it].readLine();
 
-.* ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numParams_val .*
+            if (!existingCandidates.contains(sents_str)) {
 
-*/
+              outFile_stats.println(stats_str);
 
-            orig_line = inFile[it].readLine();
-            line = orig_line.substring(orig_line.indexOf("||| ")+4); // get rid of initial text
-            candidate_str = line.substring(0,line.indexOf(" |||"));
-
-            if (!existingCandidates.contains(candidate_str)) {
-
-              writeLine(candidate_str, outFile);
-
-              line = line.substring(line.indexOf("||| ")); // get rid of candidate
-
-              String[] featVal_str = line.split("\\s+");
-                // extract feature values
-                // [0] will be |||, otherwise [i] will be feat-i_val
+              String[] featVal_str = feats_str.split("\\s+");
 
               double[] featVal = new double[1+numParams];
 
               for (int c = 1; c <= numParams; ++c) {
-                featVal[c] = Double.parseDouble(featVal_str[c]);
+                featVal[c] = Double.parseDouble(featVal_str[c-1]);
 //                print("fV[" + c + "]=" + featVal[c] + " ",3);
               }
 //              println("",3);
@@ -501,19 +503,14 @@ line format:
                 }
                 if (score > best1Score[j][i]) {
                   best1Score[j][i] = score;
-                  best1Cand_sen[j][i] = candidate_str;
+                  best1Cand_sen[j][i] = sents_str;
                 }
               }
 
-              existingCandidates.add(candidate_str);
+              existingCandidates.add(sents_str);
 
-              SentenceInfo candidate = null;
-              if (useDisk == 2) {
-                candidate = new SentenceInfo();
-              } else { // if (useDisk == 0 || useDisk == 1)
-                candidate = new SentenceInfo(candidate_str);
-              }
-//              candidate.set_featVals(featVal);
+              SentenceInfo candidate = new SentenceInfo();
+
               setFeats(featVal_array,i,lastUsedIndex,maxIndex,featVal);
 //              candidate.setLocationInfo(it,n);
               candidates[i].add(candidate);
@@ -542,10 +539,12 @@ line format:
       }
 
       for (int it = 1; it <= iteration; ++it) {
-        inFile[it].close();
+        inFile_sents[it].close();
+        inFile_feats[it].close();
+        inFile_stats[it].close();
       }
 
-      outFile.close();
+      outFile_stats.close();
 
       println("",2); // to finish off progress dot line
 
@@ -580,7 +579,7 @@ line format:
 
         while (true) {
 
-          double[] c_best_info = bestParamToChange(j,currLambda,candidates,featVal_array,(short)1,(short)iteration);
+          double[] c_best_info = bestParamToChange(j,currLambda,candidates,featVal_array,suffStats_array,(short)1,(short)iteration);
 
           int c_best = (int)c_best_info[0]; // which param to change?
           double bestLambdaVal = c_best_info[1]; // what value to change to?
@@ -683,23 +682,37 @@ line format:
     println("FINAL lambda: " + lambdaToString(lambda) + " (score: " + FINAL_score + ")",1);
     println("",1);
 
-    // delete intermediate .temp.it* decoder output files
+    // delete intermediate .temp.*.it* decoder output files
     for (int iteration = 1; iteration <= maxIts; ++iteration) {
-      if (fileExists(decoderOutFileName+".temp.it"+iteration)) {
-        File cp = new File(decoderOutFileName+".temp.it"+iteration);
+      if (fileExists(decoderOutFileName+".temp.sents.it"+iteration)) {
+        File cp = new File(decoderOutFileName+".temp.sents.it"+iteration);
+        cp.delete();
+      }
+      if (fileExists(decoderOutFileName+".temp.feats.it"+iteration)) {
+        File cp = new File(decoderOutFileName+".temp.feats.it"+iteration);
+        cp.delete();
+      }
+      if (fileExists(decoderOutFileName+".temp.stats.it"+iteration)) {
+        File cp = new File(decoderOutFileName+".temp.stats.it"+iteration);
         cp.delete();
       }
     }
 
-    // delete .temp.merged file
-    if (fileExists(decoderOutFileName+".temp.merged")) {
-      File cp = new File(decoderOutFileName+".temp.merged");
+    // delete .temp.stats.merged file
+/*
+    if (fileExists(decoderOutFileName+".temp.sent.merged")) {
+      File cp = new File(decoderOutFileName+".temp.sent.merged");
+      cp.delete();
+    }
+*/
+    if (fileExists(decoderOutFileName+"temp.stats.merged")) {
+      File cp = new File(decoderOutFileName+"temp.stats.merged");
       cp.delete();
     }
 
   } // void run_MERT(int maxIts)
 
-  private double[] bestParamToChange(int j, double[] currLambda, Vector[] candidates, double[][][] featVal_array, short minIt, short maxIt) throws Exception
+  private double[] bestParamToChange(int j, double[] currLambda, Vector[] candidates, double[][][] featVal_array, TreeMap[] suffStats_array, short minIt, short maxIt) throws Exception
   {
     int c_best = 0; // which parameter to change?
     double bestLambdaVal = 0.0;
@@ -719,12 +732,12 @@ line format:
     // indicesOfInterest[i] tells us which candidates for the ith sentence need
     // to be read from the merged decoder output file.
 
-    if (useDisk == 2) {
+//    if (useDisk == 2) {
       indicesOfInterest = new TreeSet[numSentences];
       for (int i = 0; i < numSentences; ++i) {
         indicesOfInterest[i] = new TreeSet<Integer>();
       }
-    }
+//    }
 
     TreeMap[] thresholdsAll = new TreeMap[1+numParams];
     int[][] indexOfCurrBest = new int[1+numParams][numSentences];
@@ -765,23 +778,18 @@ line format:
 
 
 
-
+/*
     if (useDisk == 2) {
       // process the decoder output files, and read the sentences corresponding to the
       // candidates of interest (use the info in indicesOfInterest to determine them)
 
-/*
-      for (int it = minIt; it <= maxIt; ++it) {
-        setSentencesOfInterest(it,indicesOfInterest,candidates);
-      }
-*/
-
       setSentencesOfInterest(indicesOfInterest,candidates);
 
     } // if (useDisk == 2)
+*/
 
 
-
+    set_suffStats_array(suffStats_array,indicesOfInterest,candidates);
 
 
 
@@ -789,7 +797,7 @@ line format:
     // investigate currLambda[j][c]
 
       if (isOptimizable[c]) {
-        double[] bestScoreInfo_c = line_opt(thresholdsAll[c],indexOfCurrBest[c],c,candidates,featVal_array,currLambda,minIt,maxIt);
+        double[] bestScoreInfo_c = line_opt(thresholdsAll[c],indexOfCurrBest[c],c,candidates,featVal_array,suffStats_array,currLambda,minIt,maxIt);
           // get best score and its lambda value
 
         double bestLambdaVal_c = bestScoreInfo_c[0];
@@ -813,19 +821,21 @@ line format:
 
     printMemoryUsage();
 
-    if (useDisk == 2) {
+//    if (useDisk == 2) {
       // delete the sentences from the candidates formerly of interest
 
       for (int i = 0; i < numSentences; ++i) {
+/*
         Iterator It2 = indicesOfInterest[i].iterator();
         while (It2.hasNext()) {
           int nextIndex = (Integer)It2.next();
           ((SentenceInfo)candidates[i].elementAt(nextIndex)).deleteSentence();
         }
+*/
         indicesOfInterest[i].clear();
       }
 
-    }
+//    }
 
 //    cleanupMemory();
     printMemoryUsage();
@@ -887,7 +897,14 @@ line format:
     }
   }
 
-  private double[] line_opt(TreeMap<Double,Vector> thresholdsAll, int[] indexOfCurrBest, int c, Vector[] candidates, double[][][] featVal_array, double[] lambda, short minIt, short maxIt) throws Exception
+  private void run_fake_decoder(int N, int iteration) throws Exception
+  {
+    println("Running fake decoder...",1);
+    // use only with ex2_ipi20opi0seed1226091488390
+    copyFile(decoderOutFileName+".N"+N+".it"+iteration,decoderOutFileName);
+  }
+
+  private double[] line_opt(TreeMap<Double,Vector> thresholdsAll, int[] indexOfCurrBest, int c, Vector[] candidates, double[][][] featVal_array, TreeMap[] suffStats_array, double[] lambda, short minIt, short maxIt) throws Exception
   {
     println("Line-optimizing lambda[" + c + "]...",3);
 
@@ -938,7 +955,8 @@ line format:
 
     // Now, set suffStats[][], and increment suffStats_tot[]
     for (int i = 0; i < numSentences; ++i) {
-      suffStats[i] = evalMetric.suffStats((SentenceInfo)candidates[i].elementAt(indexOfCurrBest[i]),i);
+//      suffStats[i] = evalMetric.suffStats((SentenceInfo)candidates[i].elementAt(indexOfCurrBest[i]),i);
+      suffStats[i] = (double[])suffStats_array[i].get(indexOfCurrBest[i]);
 
       for (int s = 0; s < suffStatsCount; ++s) {
         suffStats_tot[s] += suffStats[i][s];
@@ -972,7 +990,8 @@ line format:
         }
 
         indexOfCurrBest[i] = new_k;
-        suffStats[i] = evalMetric.suffStats((SentenceInfo)candidates[i].elementAt(indexOfCurrBest[i]),i);
+//        suffStats[i] = evalMetric.suffStats((SentenceInfo)candidates[i].elementAt(indexOfCurrBest[i]),i);
+        suffStats[i] = (double[])suffStats_array[i].get(indexOfCurrBest[i]);
 
         for (int s = 0; s < suffStatsCount; ++s) {
           suffStats_tot[s] += suffStats[i][s]; // add stats for candidate new_k
@@ -1198,20 +1217,21 @@ line format:
             thresholdsAll.put(ip,A);
           }
 
-          if (useDisk == 2) {
+//          if (useDisk == 2) {
             // th_info[0] = i, th_info[1] = old_k, th_info[2] = new_k
             int old_k = th_info[1];
 //            short loc_it = ((SentenceInfo)candidates[i].elementAt(old_k)).getLocationInfo_it();
 //            short loc_cand = ((SentenceInfo)candidates[i].elementAt(old_k)).getLocationInfo_cand();
 
             indicesOfInterest[i].add(old_k);
-          }
+//          }
 
         } // if (in-range)
 
       } // while (It.hasNext())
 
-      if (useDisk == 2 && th_info != null) {
+//      if (useDisk == 2 && th_info != null) {
+      if (th_info != null) {
         // new_k from the last th_info (previous new_k already appear as the next old_k)
         int new_k = th_info[2];
 //        short loc_it = ((SentenceInfo)candidates[i].elementAt(new_k)).getLocationInfo_it();
@@ -1276,12 +1296,12 @@ line format:
 
       indexOfCurrBest[i] = indexOfMax;
 
-      if (useDisk == 2) {
+//      if (useDisk == 2) {
         // add indexOfCurrBest[i] to indicesOfInterest
 //        short loc_it = ((SentenceInfo)candidates[i].elementAt(indexOfMax)).getLocationInfo_it();
 //        short loc_cand = ((SentenceInfo)candidates[i].elementAt(indexOfMax)).getLocationInfo_cand();
         indicesOfInterest[i].add(indexOfMax);
-      }
+//      }
 
     }
 
@@ -1290,16 +1310,31 @@ line format:
   } // int[] initial_indexOfCurrBest (int c)
 
 
-  private void fixDecoderOutput() throws Exception
+
+  private void produceTempFiles(int iteration) throws Exception
   {
-    copyFile(decoderOutFileName,decoderOutFileName+".temp.MERT");
-    BufferedReader inFile = new BufferedReader(new FileReader(decoderOutFileName+".temp.MERT"));
-    PrintWriter outFile = new PrintWriter(decoderOutFileName); // overwrite existing file
-    String line, prevLine;
+    String sentsFileName = decoderOutFileName+".temp.sents.it"+iteration;
+    String featsFileName = decoderOutFileName+".temp.feats.it"+iteration;
+    String statsFileName = decoderOutFileName+".temp.stats.it"+iteration;
+
+    FileOutputStream outStream_sents = new FileOutputStream(sentsFileName, false); // false: don't append
+    OutputStreamWriter outStreamWriter_sents = new OutputStreamWriter(outStream_sents, "utf8");
+    BufferedWriter outFile_sents = new BufferedWriter(outStreamWriter_sents);
+
+    PrintWriter outFile_feats = new PrintWriter(featsFileName);
+    PrintWriter outFile_stats = new PrintWriter(statsFileName);
+
+
+
+    BufferedReader inFile = new BufferedReader(new FileReader(decoderOutFileName));
+    String line; //, prevLine;
+    String candidate_str = "";
+    String feats_str = "";
+    double[] stats = new double[suffStatsCount];
 
     int i = 0; int n = 0;
     line = inFile.readLine();
-    prevLine = "";
+//    prevLine = "";
 
     while (line != null) {
 
@@ -1316,33 +1351,48 @@ line format:
 
       if (read_i != i) { // bad; add dummy copies of last seen candidate
         while (n < sizeOfNBest) {
-          outFile.println(prevLine);
+          writeLine(candidate_str, outFile_sents);
+          outFile_feats.println(feats_str);
+          for (int s = 0; s < suffStatsCount-1; ++s) { outFile_stats.print(stats[s] + " "); }
+          outFile_stats.println(stats[suffStatsCount-1]);
           ++n;
         }
         n = 0; ++i;
       }
 
-      outFile.println(line);
+      line = line.substring(line.indexOf("||| ")+4); // get rid of initial text
+
+      candidate_str = line.substring(0,line.indexOf(" |||"));
+      feats_str = line.substring(line.indexOf("||| ")+4); // get rid of candidate
+      feats_str = feats_str.substring(0,feats_str.indexOf(" |||"));
+      stats = evalMetric.suffStats((new SentenceInfo(candidate_str)),i);
+
+      writeLine(candidate_str, outFile_sents);
+      outFile_feats.println(feats_str);
+      for (int s = 0; s < suffStatsCount-1; ++s) { outFile_stats.print(stats[s] + " "); }
+      outFile_stats.println(stats[suffStatsCount-1]);
+
       ++n;
       if (n == sizeOfNBest) { n = 0; ++i; }
 
-      prevLine = line;
+//      prevLine = line;
       line = inFile.readLine();
     }
 
     if (i != numSentences) { // last sentence had too few candidates
       while (n < sizeOfNBest) {
-        outFile.println(prevLine);
+        writeLine(candidate_str, outFile_sents);
+        outFile_feats.println(feats_str);
+        for (int s = 0; s < suffStatsCount-1; ++s) { outFile_stats.print(stats[s] + " "); }
+        outFile_stats.println(stats[suffStatsCount-1]);
         ++n;
       }
     }
 
     inFile.close();
-    outFile.close();
-
-    // delete temp copy of old decoder output
-    File cp = new File(decoderOutFileName+".temp.MERT");
-    cp.delete();
+    outFile_sents.close();
+    outFile_feats.close();
+    outFile_stats.close();
 
   }
 
@@ -1393,6 +1443,17 @@ line format:
 
     inFile.close();
     outFile.close();
+  }
+
+  private void renameFile(String oldFileName, String newFileName)
+  {
+    if (fileExists(oldFileName)) {
+      File oldFile = new File(oldFileName);
+      File newFile = new File(newFileName);
+      oldFile.renameTo(newFile);
+    } else {
+      println("Warning: file " + oldFileName + " does not exist! (in renameFile)",1);
+    }
   }
 
 
@@ -1494,7 +1555,7 @@ line format:
     oneModificationPerIteration = false;
     randInit = false;
     seed = System.currentTimeMillis();
-    useDisk = 2;
+//    useDisk = 2;
     // Decoder specs
     decoderCommandFileName = null;
     decoderOutFileName = "output.nbest";
@@ -1557,10 +1618,12 @@ line format:
           seed = Long.parseLong(args[i+1]);
         }
       }
+/*
       else if (option.equals("-ud")) {
         useDisk = Integer.parseInt(args[i+1]);
         if (useDisk < 0 || useDisk > 2) { println("useDisk should be between 0 and 2"); System.exit(10); }
       }
+*/
       // Decoder specs
       else if (option.equals("-cmd")) { decoderCommandFileName = args[i+1]; }
       else if (option.equals("-decOut")) { decoderOutFileName = args[i+1]; }
@@ -1647,7 +1710,7 @@ line format:
   private String createUnifiedRefFile(String prefix, int numFiles) throws Exception
   {
     if (numFiles < 2) {
-      println("Warning: createUnifiedRefFile called with numFiles = " + numFiles + "; doing nothing.");
+      println("Warning: createUnifiedRefFile called with numFiles = " + numFiles + "; doing nothing.",1);
       return prefix;
     } else {
       File checker;
@@ -1914,7 +1977,7 @@ line format:
     println("",3);
     return discardedIndices;
   }
-
+/*
   private void setSentencesOfInterest(TreeSet[] indicesOfInterest, Vector[] candidates) throws Exception
   {
     // process the merged decoder output file, and read the candidates
@@ -1938,12 +2001,12 @@ line format:
         }
 
         // now currCand == nextIndex, and the next line in inFile contains the sentence we want
-/*
-        line = inFile.readLine();
-        ++currCand;
-        line = line.substring(line.indexOf("||| ")+4); // get rid of initial text
-        candidate_str = line.substring(0,line.indexOf(" |||"));
-*/
+
+//        line = inFile.readLine();
+//        ++currCand;
+//        line = line.substring(line.indexOf("||| ")+4); // get rid of initial text
+//        candidate_str = line.substring(0,line.indexOf(" |||"));
+
         candidate_str = inFile.readLine();
         ++currCand;
 
@@ -1961,6 +2024,57 @@ line format:
 
     inFile.close();
 
-  }
+  } // setSentencesOfInterest(TreeSet[] indicesOfInterest, Vector[] candidates)
+*/
+  private void set_suffStats_array(TreeMap[] suffStats_array, TreeSet[] indicesOfInterest, Vector[] candidates) throws Exception
+  {
+    // process the merged sufficient statistics file, and read (and store) the
+    // stats for candidates of interest
+    BufferedReader inFile = new BufferedReader(new FileReader(decoderOutFileName+"temp.stats.merged"));
+    String line, candidate_suffStats;
+
+    for (int i = 0; i < numSentences; ++i) {
+      int numCandidates = candidates[i].size();
+
+      short currCand = 0;
+      Iterator It = indicesOfInterest[i].iterator();
+
+      while (It.hasNext()) {
+        int nextIndex = (Integer)It.next();
+
+        // skip candidates until you get to the nextKey'th candidate
+        while (currCand < nextIndex) {
+          line = inFile.readLine();
+          ++currCand;
+        }
+
+        // now currCand == nextIndex, and the next line in inFile contains the sufficient statistics we want
+
+        candidate_suffStats = inFile.readLine();
+        ++currCand;
+
+        String[] suffStats_str = candidate_suffStats.split("\\s+");
+
+        double[] suffStats = new double[suffStatsCount];
+
+        for (int s = 0; s < suffStatsCount; ++s) {
+          suffStats[s] = Double.parseDouble(suffStats_str[s]);
+        }
+
+        suffStats_array[i].put(nextIndex,suffStats);
+
+      }
+
+      // skip the rest of ith sentence's candidates
+      while (currCand < numCandidates) {
+        line = inFile.readLine();
+        ++currCand;
+      }
+
+    }
+
+    inFile.close();
+
+  } // set_suffStats_array(TreeMap[] suffStats_array, TreeSet[] indicesOfInterest, Vector[] candidates)
 
 }
