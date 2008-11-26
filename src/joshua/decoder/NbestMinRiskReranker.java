@@ -3,6 +3,7 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map.Entry;
 
 import joshua.util.FileUtility;
 
@@ -32,7 +33,7 @@ public class NbestMinRiskReranker  {
 	}
 	
 	
-//	all hyp are represented as a hyper-graph
+	
 	public void process_one_sent( ArrayList<String> nbest, int sent_id){
 		System.out.println("Now process sentence " + sent_id);
 		//step-0: preprocess
@@ -94,7 +95,93 @@ public class NbestMinRiskReranker  {
 	}
 	
 	
+
+	public void process_one_sent_linear_corpus_bleu( ArrayList<String> nbest, int sent_id){
+		System.out.println("Now process sentence " + sent_id);
+		//step-0: preprocess
+		//assumption: each hyp has a formate: "sent_id ||| hyp_itself ||| feature scores ||| linear-combination-of-feature-scores(this should be logP)"
+		ArrayList<String> l_hyp_itself = new ArrayList<String>();
+		//ArrayList<String> l_feat_scores = new ArrayList<String>();
+		ArrayList<Double> l_baseline_scores = new ArrayList<Double>();//linear combination of all baseline features
+		ArrayList<HashMap<String, Integer>> l_ngram_tbls = new ArrayList<HashMap<String, Integer>>();
+		ArrayList<Integer> l_sent_lens = new ArrayList<Integer>();
+		for(String hyp : nbest){
+			String[] fds = hyp.split("\\s+\\|{3}\\s+");
+			int t_sent_id = new Integer(fds[0]); if(sent_id != t_sent_id){System.out.println("sentence_id does not match"); System.exit(1);}
+			l_hyp_itself.add(fds[1]);
+			
+			String[] t_wrds = fds[1].split("\\s+");
+			l_sent_lens.add(t_wrds.length);
+			
+			HashMap<String, Integer> tbl_ngram = new HashMap<String, Integer>();
+			BLEU.get_ngrams(tbl_ngram, 4, t_wrds);
+			l_ngram_tbls.add(tbl_ngram);
+			
+			//l_feat_scores.add(fds[2]);
+			l_baseline_scores.add(new Double(fds[3]));
+			
+		}
+		
+		//step-1: get normalized distribution
+		computeNormalizedProbs(l_baseline_scores);//value in l_baseline_scores will be changed to normalized probability
+		ArrayList<Double> l_normalized_probs = l_baseline_scores;
+		
+		//step-2: get posterior ngram count on the event space (defined in google's emnlp 2008 paper)
+		HashMap<String, Double> tbl_posterior_counts = new HashMap<String, Double>();
+		getGooglePosteriorCounts(l_ngram_tbls,l_normalized_probs, tbl_posterior_counts);
+		
+		//step-2: rerank the nbest
+		double best_gain = -1000000000;//set as worst gain
+		String best_hyp=null;
+		ArrayList<Double> l_gains = new ArrayList<Double>();
+		
+		for(int i=0; i<l_hyp_itself.size(); i++){
+			String cur_hyp = (String) l_hyp_itself.get(i);
+			int cur_hyp_len = (Integer) l_sent_lens.get(i);
+			HashMap<String, Integer> tbl_ngram_cur_hyp = l_ngram_tbls.get(i);
+			//double cur_gain = computeGain(cur_hyp, l_hyp_itself, l_normalized_probs); 
+			//double cur_gain = computeGain(cur_hyp_len, tbl_ngram_cur_hyp, l_ngram_tbls, l_sent_lens,l_normalized_probs);
+			double cur_gain = computeLinearCorpusGain(cur_hyp_len, tbl_ngram_cur_hyp, tbl_posterior_counts);
+			
+			l_gains.add( cur_gain);
+			if(i==0 || cur_gain > best_gain){//maximize
+				best_gain = cur_gain;
+				best_hyp = cur_hyp;
+			}
+		}
+		
+		//step-3: output the 1best or nbest
+		if(this.produce_reranked_nbest){
+			//TOTO: sort the list and write the reranked nbest; Use Collections.sort(List list, Comparator c)
+		}else{
+			FileUtility.write_lzf(this.out,best_hyp);
+			FileUtility.write_lzf(this.out,"\n");
+			FileUtility.flush_lzf(out);
+		}
+		System.out.println("best gain: " + best_gain);
+		//System.exit(1);
+	}
 	
+	void getGooglePosteriorCounts(ArrayList<HashMap<String, Integer>>  l_ngram_tbls, ArrayList<Double> l_normalized_probs, HashMap<String, Double> tbl_posterior_counts){
+		//TODO
+	}
+	
+	double computeLinearCorpusGain(int cur_hyp_len, HashMap<String, Integer> tbl_ngram_cur_hyp, HashMap<String, Double> tbl_posterior_counts){
+		//TODO
+		double[] thetas = new double[5];
+		thetas[0]=-1;thetas[1]=1;thetas[2]=1;thetas[3]=1;thetas[4]=1;//TODO
+		
+		double res=0;
+		res += thetas[0]*cur_hyp_len;
+		for(Entry<String, Integer> entry : tbl_ngram_cur_hyp.entrySet()){
+			String key = entry.getKey();
+			String[] tem = key.split("\\s+");
+			
+			double post_prob = tbl_posterior_counts.get(key);
+			res += entry.getValue()*post_prob*thetas[tem.length];
+		}
+		return res;
+	}
 	
 	//get a normalized distributeion and put it back to nbest_logps
 	public void computeNormalizedProbs(ArrayList<Double> nbest_logps){
