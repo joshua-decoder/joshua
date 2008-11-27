@@ -116,6 +116,7 @@ public class MERT
   private String paramsFileName, finalLambdaFileName;
   private String sourceFileName, refFileName, decoderOutFileName;
   private String decoderConfigFileName, decoderCommandFileName;
+  private String fakeFileNamePrefix;
 //  private int useDisk;
 
   public MERT(String[] args) throws Exception
@@ -379,8 +380,11 @@ public class MERT
         println("Redecoding using weight vector " + lambdaToString(lambda),1);
       }
 
-      run_decoder();
-//run_fake_decoder(sizeOfNBest,iteration); // use only with ex2_ipi20opi0seed1226091488390
+      if (fakeFileNamePrefix == null) {
+        run_decoder();
+      } else {
+        run_fake_decoder(iteration);
+      }
 
       println("...finished decoding @ " + (new Date()),1);
 
@@ -397,9 +401,10 @@ public class MERT
 
 
 
-      Vector[] candidates = new Vector[numSentences];
-        // candidates[i] stores the translation candidates for the ith sentence
-        // each element in the array is a Vector of SentenceInfo objects
+      int[] candCount = new int[numSentences];
+//      Vector[] candidates = new Vector[numSentences];
+//        // candidates[i] stores the translation candidates for the ith sentence
+//        // each element in the array is a Vector of SentenceInfo objects
       double[][][] featVal_array = new double[1+numParams][numSentences][sizeOfNBest];
       featVal_array[0] = null;
       int[] lastUsedIndex = new int[numSentences];
@@ -410,7 +415,7 @@ public class MERT
         // storing the sufficient statistics for that candidate
 
       for (int i = 0; i < numSentences; ++i) {
-        candidates[i] = new Vector(); // a Vector of SentenceInfo's
+//        candidates[i] = new Vector(); // a Vector of SentenceInfo's
         lastUsedIndex[i] = -1;
         maxIndex[i] = sizeOfNBest - 1;
         suffStats_array[i] = new TreeMap();
@@ -455,7 +460,7 @@ public class MERT
       BufferedWriter outFile_sents = new BufferedWriter(outStreamWriter_sents);
 */
       // to be used to write sufficient statistics from all the sentences from the output files into a single one
-      PrintWriter outFile_stats = new PrintWriter(decoderOutFileName+"temp.stats.merged");
+      PrintWriter outFile_stats = new PrintWriter(decoderOutFileName+".temp.stats.merged");
 
 //      String orig_line, line, candidate_str;
       String sents_str, feats_str, stats_str;
@@ -509,11 +514,12 @@ public class MERT
 
               existingCandidates.add(sents_str);
 
-              SentenceInfo candidate = new SentenceInfo();
+//              SentenceInfo candidate = new SentenceInfo();
 
               setFeats(featVal_array,i,lastUsedIndex,maxIndex,featVal);
 //              candidate.setLocationInfo(it,n);
-              candidates[i].add(candidate);
+//              candidates[i].add(candidate);
+              candCount[i] += 1;
               ++totalCandidateCount;
               if (it == iteration) {
                 newCandidatesAdded = true;
@@ -579,7 +585,7 @@ public class MERT
 
         while (true) {
 
-          double[] c_best_info = bestParamToChange(j,currLambda,candidates,featVal_array,suffStats_array,(short)1,(short)iteration);
+          double[] c_best_info = bestParamToChange(j,currLambda,candCount,featVal_array,suffStats_array,(short)1,(short)iteration);
 
           int c_best = (int)c_best_info[0]; // which param to change?
           double bestLambdaVal = c_best_info[1]; // what value to change to?
@@ -666,7 +672,10 @@ public class MERT
       println("",1);
 
       printMemoryUsage();
-      for (int i = 0; i < numSentences; ++i) { candidates[i].clear(); }
+      for (int i = 0; i < numSentences; ++i) {
+//        candidates[i].clear();
+        suffStats_array[i].clear();
+      }
 //      cleanupMemory();
       println("",2);
 
@@ -705,14 +714,14 @@ public class MERT
       cp.delete();
     }
 */
-    if (fileExists(decoderOutFileName+"temp.stats.merged")) {
-      File cp = new File(decoderOutFileName+"temp.stats.merged");
+    if (fileExists(decoderOutFileName+".temp.stats.merged")) {
+      File cp = new File(decoderOutFileName+".temp.stats.merged");
       cp.delete();
     }
 
   } // void run_MERT(int maxIts)
 
-  private double[] bestParamToChange(int j, double[] currLambda, Vector[] candidates, double[][][] featVal_array, TreeMap[] suffStats_array, short minIt, short maxIt) throws Exception
+  private double[] bestParamToChange(int j, double[] currLambda, int[] candCount, double[][][] featVal_array, TreeMap[] suffStats_array, short minIt, short maxIt) throws Exception
   {
     int c_best = 0; // which parameter to change?
     double bestLambdaVal = 0.0;
@@ -748,7 +757,7 @@ public class MERT
         thresholdsAll[c] = null;
       } else {
         println("Investigating lambda[j=" + j + "][" + c + "]...",2);
-        thresholdsAll[c] = thresholdsForParam(c,candidates,featVal_array,currLambda,indicesOfInterest);
+        thresholdsAll[c] = thresholdsForParam(c,candCount,featVal_array,currLambda,indicesOfInterest);
         // now thresholdsAll has the values for lambda_c at which score changes
         // based on the candidates for *all* the sentences (that satisfy
         // range constraints).
@@ -768,7 +777,7 @@ public class MERT
             temp_lambda[c] = smallest_th - 0.05;
           }
 
-          indexOfCurrBest[c] = initial_indexOfCurrBest(c,candidates,featVal_array,temp_lambda,indicesOfInterest);
+          indexOfCurrBest[c] = initial_indexOfCurrBest(c,candCount,featVal_array,temp_lambda,indicesOfInterest);
         }
       }
 
@@ -789,7 +798,7 @@ public class MERT
 */
 
 
-    set_suffStats_array(suffStats_array,indicesOfInterest,candidates);
+    set_suffStats_array(suffStats_array,indicesOfInterest,candCount);
 
 
 
@@ -797,7 +806,7 @@ public class MERT
     // investigate currLambda[j][c]
 
       if (isOptimizable[c]) {
-        double[] bestScoreInfo_c = line_opt(thresholdsAll[c],indexOfCurrBest[c],c,candidates,featVal_array,suffStats_array,currLambda,minIt,maxIt);
+        double[] bestScoreInfo_c = line_opt(thresholdsAll[c],indexOfCurrBest[c],c,candCount,featVal_array,suffStats_array,currLambda,minIt,maxIt);
           // get best score and its lambda value
 
         double bestLambdaVal_c = bestScoreInfo_c[0];
@@ -897,14 +906,13 @@ public class MERT
     }
   }
 
-  private void run_fake_decoder(int N, int iteration) throws Exception
+  private void run_fake_decoder(int iteration) throws Exception
   {
     println("Running fake decoder...",1);
-    // use only with ex2_ipi20opi0seed1226091488390
-    copyFile(decoderOutFileName+".N"+N+".it"+iteration,decoderOutFileName);
+    copyFile(fakeFileNamePrefix+iteration,decoderOutFileName);
   }
 
-  private double[] line_opt(TreeMap<Double,Vector> thresholdsAll, int[] indexOfCurrBest, int c, Vector[] candidates, double[][][] featVal_array, TreeMap[] suffStats_array, double[] lambda, short minIt, short maxIt) throws Exception
+  private double[] line_opt(TreeMap<Double,Vector> thresholdsAll, int[] indexOfCurrBest, int c, int[] candCount, double[][][] featVal_array, TreeMap[] suffStats_array, double[] lambda, short minIt, short maxIt) throws Exception
   {
     println("Line-optimizing lambda[" + c + "]...",3);
 
@@ -1035,7 +1043,7 @@ public class MERT
   } // double[] line_opt(int c)
 
 
-  private TreeMap<Double,Vector> thresholdsForParam(int c, Vector[] candidates, double[][][] featVal_array, double[] lambda, TreeSet[] indicesOfInterest)
+  private TreeMap<Double,Vector> thresholdsForParam(int c, int[] candCount, double[][][] featVal_array, double[] currLambda, TreeSet[] indicesOfInterest)
   {
     TreeMap[] thresholds = new TreeMap[numSentences];
       // thresholds[i] stores thresholds for the cth parameter obtained by
@@ -1057,14 +1065,14 @@ public class MERT
 
       thresholds[i].clear();
 
-      int numCandidates = candidates[i].size();
+      int numCandidates = candCount[i];
         // aka simply K
 
       double[] slope = new double[numCandidates];
         // will be h_c from candidatesInfo
         // repeated here for easy access
       double[] offset = new double[numCandidates];
-        // SUM_j!=c lambda_j*h_j(x)
+        // SUM_j!=c currLambda_j*h_j(x)
 
       int minSlopeIndex = -1;          // index of line with steepest descent...
       double minSlope = PosInf;        // ...and its slope...
@@ -1074,32 +1082,49 @@ public class MERT
       double maxSlope = NegInf;        // ...and its slope...
       double offset_maxSlope = NegInf; // ...and its offset (needed to break ties)
 
-      for (int k = 0; k < numCandidates; ++k) {
-//        double[] featVal = getFeats(featVal_array,i,k);
+      double bestScore_left = NegInf;  // these are used if the min/max values are
+      double bestScore_right = NegInf; // not neg/pos infinity
 
-//        slope[k] = featVal[c];
+      for (int k = 0; k < numCandidates; ++k) {
         slope[k] = featVal_array[c][i][k];
 
         offset[k] = 0.0;
         for (int c2 = 1; c2 <= numParams; ++c2) {
-//          if (c2 != c) { offset[k] += lambda[c2]*featVal[c2]; }
-          if (c2 != c) { offset[k] += lambda[c2]*featVal_array[c2][i][k]; }
+          if (c2 != c) { offset[k] += currLambda[c2]*featVal_array[c2][i][k]; }
         }
 
         // debugging
-//        println("@ (i,k,n)=(" + i + "," + k + "," + (int)featVal[0] + "), "
+//        println("@ (i,k)=(" + i + "," + k + "), "
 //               + "slope = " + slope[k] + "; offset = " + offset[k],3);
 
-        if (slope[k] < minSlope || (slope[k] == minSlope && offset[k] > offset_minSlope)) {
-          minSlopeIndex = k;
-          minSlope = slope[k];
-          offset_minSlope = offset[k];
+        if (minValue[c] == NegInf) {
+          if (slope[k] < minSlope || (slope[k] == minSlope && offset[k] > offset_minSlope)) {
+            minSlopeIndex = k;
+            minSlope = slope[k];
+            offset_minSlope = offset[k];
+          }
+        } else {
+          double score = offset[k] + ((minValue[c]-0.1)*featVal_array[c][i][k]);
+          if (score > bestScore_left) {
+            minSlopeIndex = k;
+            minSlope = slope[k];
+            bestScore_left = score;
+          }
         }
 
-        if (slope[k] > maxSlope || (slope[k] == maxSlope && offset[k] > offset_maxSlope)) {
-          maxSlopeIndex = k;
-          maxSlope = slope[k];
-          offset_maxSlope = offset[k];
+        if (maxValue[c] == PosInf) {
+          if (slope[k] > maxSlope || (slope[k] == maxSlope && offset[k] > offset_maxSlope)) {
+            maxSlopeIndex = k;
+            maxSlope = slope[k];
+            offset_maxSlope = offset[k];
+          }
+        } else {
+          double score = offset[k] + ((maxValue[c]+0.1)*featVal_array[c][i][k]);
+          if (score > bestScore_right) {
+            maxSlopeIndex = k;
+            maxSlope = slope[k];
+            bestScore_right = score;
+          }
         }
       }
 
@@ -1122,9 +1147,9 @@ public class MERT
       println("Extracting thresholds[(i,c)=(" + i + "," + c + ")]",3);
 
       int currIndex = minSlopeIndex;
-        // As we traverse the lambda_c dimension, the "winner" candidate will
-        // change at intersection points.  currIndex tells us which candidate
-        // is the winner in the interval currently under investigation.
+        // As we traverse the currLambda_c dimension, the "winner" candidate will
+        // change at intersection points.  currIndex tells us which candidate is
+        // the winner in the interval currently under investigation.
 
         // We traverse the lambda_c dimension starting at -Inf.  The line with
         // steepest descent is the winner as lambda_c -> -Inf, so we initialize
@@ -1269,7 +1294,7 @@ public class MERT
   } // TreeMap<Double,Vector> thresholdsForParam (int c)
 
 
-  private int[] initial_indexOfCurrBest(int c, Vector[] candidates, double[][][] featVal_array, double[] temp_lambda, TreeSet[] indicesOfInterest)
+  private int[] initial_indexOfCurrBest(int c, int[] candCount, double[][][] featVal_array, double[] temp_lambda, TreeSet[] indicesOfInterest)
   {
     int[] indexOfCurrBest = new int[numSentences];
       // As we traverse lambda_c, indexOfCurrBest indicates which is the
@@ -1278,7 +1303,7 @@ public class MERT
     // initialize indexOfCurrBest[]
 
     for (int i = 0; i < numSentences; ++i) {
-      int numCandidates = candidates[i].size();
+      int numCandidates = candCount[i];
 
       double max = NegInf;
       int indexOfMax = -1;
@@ -1562,6 +1587,7 @@ line format:
     validDecoderExitValue = 0;
     decoderConfigFileName = "config.txt";
     sizeOfNBest = 100;
+    fakeFileNamePrefix = null;
     // Output specs
     verbosity = 1;
     decVerbosity = 0;
@@ -1644,6 +1670,7 @@ line format:
         decVerbosity = Integer.parseInt(args[i+1]);
         if (decVerbosity < 0 || decVerbosity > 1) { println("decVerbosity should be either 0 or 1"); System.exit(10); }
       }
+      else if (option.equals("-fake")) { fakeFileNamePrefix = args[i+1]; }
       else {
         println("Unknown option " + option); System.exit(10);
       }
@@ -1662,6 +1689,7 @@ line format:
         decoderCommandFileName = fullPath(dirPrefix,decoderCommandFileName);
       }
       decoderConfigFileName = fullPath(dirPrefix,decoderConfigFileName);
+      fakeFileNamePrefix = fullPath(dirPrefix,fakeFileNamePrefix);
     }
 
     if (refsPerSen > 1) {
@@ -2026,15 +2054,15 @@ line format:
 
   } // setSentencesOfInterest(TreeSet[] indicesOfInterest, Vector[] candidates)
 */
-  private void set_suffStats_array(TreeMap[] suffStats_array, TreeSet[] indicesOfInterest, Vector[] candidates) throws Exception
+  private void set_suffStats_array(TreeMap[] suffStats_array, TreeSet[] indicesOfInterest, int[] candCount) throws Exception
   {
     // process the merged sufficient statistics file, and read (and store) the
     // stats for candidates of interest
-    BufferedReader inFile = new BufferedReader(new FileReader(decoderOutFileName+"temp.stats.merged"));
+    BufferedReader inFile = new BufferedReader(new FileReader(decoderOutFileName+".temp.stats.merged"));
     String line, candidate_suffStats;
 
     for (int i = 0; i < numSentences; ++i) {
-      int numCandidates = candidates[i].size();
+      int numCandidates = candCount[i];
 
       short currCand = 0;
       Iterator It = indicesOfInterest[i].iterator();
