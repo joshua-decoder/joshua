@@ -3,7 +3,7 @@ import java.math.*;
 import java.util.*;
 import java.io.*;
 
-public class NewEvaluationMetric extends EvaluationMetric
+public class UserMetric2 extends EvaluationMetric
 {
   /*
     private data members for this error metric
@@ -15,13 +15,13 @@ public class NewEvaluationMetric extends EvaluationMetric
   /*
   */
 
-  public NewEvaluationMetric()
+  public UserMetric2()
   {
     mainVar = 0.0; // default
     initialize();
   }
 
-  public NewEvaluationMetric(double x)
+  public UserMetric2(double x)
   {
     mainVar = x;
     initialize();
@@ -29,7 +29,7 @@ public class NewEvaluationMetric extends EvaluationMetric
 
   protected void initialize()
   {
-    metricName = "NewErrorMetric";
+    metricName = "UserMetric2";
     toBeMinimized = true;
     set_suffStatsCount();
 
@@ -54,9 +54,9 @@ public class NewEvaluationMetric extends EvaluationMetric
   /* potentially other methods to set other data members */
 
 
-  public double[] suffStats(SentenceInfo cand, int i)
+  public int[] suffStats(String cand_str, int i)
   {
-    double[] retA = new double[suffStatsCount];
+    int[] retA = new int[suffStatsCount];
 
     // set retA here!
 
@@ -64,7 +64,7 @@ public class NewEvaluationMetric extends EvaluationMetric
   }
 
 
-  public double score(double[] stats)
+  public double score(int[] stats)
   {
     if (stats.length != suffStatsCount) {
       System.out.println("Mismatch between stats.length and suffStatsCount (" + stats.length + " vs. " + suffStatsCount + ")");
@@ -74,7 +74,7 @@ public class NewEvaluationMetric extends EvaluationMetric
 	return 0.0;
   }
 
-  public void printDetailedScore_fromStats(double[] stats, boolean oneLiner)
+  public void printDetailedScore_fromStats(int[] stats, boolean oneLiner)
   {
   }
 

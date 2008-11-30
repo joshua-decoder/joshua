@@ -9,6 +9,8 @@ public class BLEU extends EvaluationMetric
   private int effLengthMethod;
     // 1: closest, 2: shortest, 3: average
   private HashMap[][] maxNgramCounts;
+  private int[][] refWordCount;
+  private double[] weights;
 
   public BLEU()
   {
@@ -70,6 +72,7 @@ public class BLEU extends EvaluationMetric
     metricName = "BLEU";
     toBeMinimized = false;
     set_suffStatsCount();
+    set_weightsArray();
     set_maxNgramCounts();
   }
 
@@ -78,8 +81,16 @@ public class BLEU extends EvaluationMetric
 
   protected void set_suffStatsCount()
   {
-    suffStatsCount = 2*(maxGramLength) + 2;
-      // 2 per gram length for its precision, and +2 for length info
+    suffStatsCount = 1 + maxGramLength + 2;
+      // 1 for number of segments, 1 per gram length for its precision, and 2 for length info
+  }
+
+  private void set_weightsArray()
+  {
+    weights = new double[1+maxGramLength];
+    for (int n = 1; n <= maxGramLength; ++n) {
+      weights[n] = 1.0/maxGramLength;
+    }
   }
 
   private void set_maxNgramCounts()
@@ -90,12 +101,12 @@ public class BLEU extends EvaluationMetric
 
     for (int n = 1; n <= maxGramLength; ++n) {
       for (int i = 0; i < numSentences; ++i) {
-        maxNgramCounts[i][n] = refSentenceInfo[i][0].getNgramCounts(n);
+        maxNgramCounts[i][n] = getNgramCounts(refSentences[i][0],n);
           // initialize to ngramCounts[n] of the first reference translation...
 
         // ...and update as necessary from the other reference translations
         for (int r = 1; r < refsPerSen; ++r) {
-          HashMap nextNgramCounts = refSentenceInfo[i][r].getNgramCounts(n);
+          HashMap nextNgramCounts = getNgramCounts(refSentences[i][r],n);
           Iterator it = (nextNgramCounts.keySet()).iterator();
 
           while (it.hasNext()) {
@@ -118,47 +129,60 @@ public class BLEU extends EvaluationMetric
       } // for (i)
 
     } // for (n)
+
+    // Reference sentences are not needed anymore, since the gram counts are stored.
+    // The only thing we need are their lenghts, to be used in BP_suffStats, so store
+    // the lengths before discarding the reference sentences...
+
+    refWordCount = new int[numSentences][refsPerSen];
+    for (int i = 0; i < numSentences; ++i) {
+      for (int r = 0; r < refsPerSen; ++r) {
+        refWordCount[i][r] = wordCount(refSentences[i][r]);
+        refSentences[i][r] = null;
+      }
+      refSentences[i] = null;
+    }
+
+    refSentences = null;
+
   }
 
 
 
 
-  public double[] suffStats(SentenceInfo cand, int i)
+  public int[] suffStats(String cand_str, int i)
   {
-    double[] stats = new double[suffStatsCount];
+    int[] stats = new int[suffStatsCount];
+    stats[0] = 1;
 
-    double[] nextStats = new double[2];
+    String[] words = cand_str.split("\\s+");
 
-    int s = 0;
+int wordCount = words.length;
+for (int j = 0; j < wordCount; ++j) { words[j] = words[j].intern(); }
+
     for (int n = 1; n <= maxGramLength; ++n) {
-      nextStats = prec_suffStats(n,cand,i);
-      stats[s] = nextStats[0];
-      stats[s+1] = nextStats[1];
-      s += 2;
+      stats[n] = prec_suffStats(n,words,i);
     }
 
-    nextStats = BP_suffStats(cand,i);
-    stats[s] = nextStats[0];
-    stats[s+1] = nextStats[1];
+    stats[maxGramLength+1] = words.length;
+    stats[maxGramLength+2] = BP_suffStats(words.length,i);
 
     return stats;
   }
 
-  public double[] prec_suffStats(int gramLength, SentenceInfo cand, int i)
+  public int prec_suffStats(int gramLength, String[] words, int i)
   {
-    double[] counts = new double[2];
-
     int correctGramCount = 0;
-    int totalGramCount = 0;
+//    int totalGramCount = 0;
     String gram = "";
     int candGramCount = 0, maxRefGramCount = 0, clippedCount = 0;
 
-    HashMap candCounts = cand.getNgramCounts(gramLength);
+    HashMap candCounts = getNgramCounts(words,gramLength);
 
     Iterator it = (candCounts.keySet()).iterator();
 
     while (it.hasNext()) {
-    // for each gram in the candidate
+    // for each gram type in the candidate
       gram = (String)it.next();
       candGramCount = (Integer)candCounts.get(gram);
       if (maxNgramCounts[i][gramLength].containsKey(gram)) {
@@ -172,33 +196,26 @@ public class BLEU extends EvaluationMetric
 //      clippedCount = (candGramCount < maxRefGramCount ? candGramCount : maxRefGramCount);
 
       correctGramCount += clippedCount;
-      totalGramCount += candGramCount;
+//      totalGramCount += candGramCount;
 
     }
 
-    counts[0] = correctGramCount;
-    counts[1] = totalGramCount;
+    return correctGramCount;
 
-    return counts;
   }
 
-  public double[] BP_suffStats(SentenceInfo cand, int i)
+  public int BP_suffStats(int candLength, int i)
   {
-    double[] lengths = new double[2];
-
-    int candLength = cand.getWordCount();
-    lengths[0] = candLength;
-
     if (effLengthMethod == 1) { // closest
 
-      int closestRefLength = refSentenceInfo[i][0].getWordCount();
+      int closestRefLength = refWordCount[i][0];
       int minDiff = Math.abs(candLength-closestRefLength);
 
 //int minDiff = candLength-closestRefLength;
 //if (minDiff < 0) minDiff = -minDiff;
 
       for (int r = 1; r < refsPerSen; ++r) {
-        int nextRefLength = refSentenceInfo[i][r].getWordCount();
+        int nextRefLength = refWordCount[i][r];
         int nextDiff = Math.abs(candLength-nextRefLength);
 
 //int nextDiff = candLength-nextRefLength;
@@ -213,86 +230,81 @@ public class BLEU extends EvaluationMetric
         }
       }
 
-      lengths[1] = closestRefLength;
+      return closestRefLength;
 
     } else if (effLengthMethod == 2) { // shortest
 
-      int shortestRefLength = refSentenceInfo[i][0].getWordCount();
+      int shortestRefLength = refWordCount[i][0];
 
       for (int r = 1; r < refsPerSen; ++r) {
-        int nextRefLength = refSentenceInfo[i][r].getWordCount();
+        int nextRefLength = refWordCount[i][r];
         if (nextRefLength < shortestRefLength) {
           shortestRefLength = nextRefLength;
         }
       }
 
-      lengths[1] = shortestRefLength;
-
-    } else { // average
-
-      int totalRefLength = refSentenceInfo[i][0].getWordCount();
-
-      for (int r = 1; r < refsPerSen; ++r) {
-        totalRefLength += refSentenceInfo[i][r].getWordCount();
-      }
-
-      lengths[1] = totalRefLength/(double)refsPerSen;
+      return shortestRefLength;
 
     }
+/* // commented out because it needs sufficient statistics to be doubles
+else { // average
 
-    return lengths;
+      int totalRefLength = refWordCount[i][0];
+
+      for (int r = 1; r < refsPerSen; ++r) {
+        totalRefLength += refWordCount[i][r];
+      }
+
+      return totalRefLength/(double)refsPerSen;
+
+    }
+*/
+    return candLength; // should never get here anyway
 
   }
 
-  public double[] prec_suffStats(int gramLength, SentenceInfo[] candSentenceInfo)
+  public int prec_suffStats(int gramLength, String[] topCand_str)
   {
-    double[] totCounts = new double[2];
-    totCounts[0] = 0; totCounts[1] = 0;
+    int totCount = 0;
 
     for (int i = 0; i < numSentences; ++i) {
-      double[] counts = prec_suffStats(gramLength,candSentenceInfo[i],i);
-
-      totCounts[0] += counts[0];
-      totCounts[1] += counts[1];
+      String[] words = topCand_str[i].split("\\s+");
+      totCount += prec_suffStats(gramLength,words,i);
     } // for (i)
 
-    return totCounts;
+    return totCount;
   }
 
-  public double[] BP_suffStats(SentenceInfo[] candSentenceInfo)
+  public int BP_suffStats(String[] topCand_str)
   {
-    double[] totLengths = new double[2];
-    totLengths[0] = 0; totLengths[1] = 0;
+    int totLength = 0;
 
     for (int i = 0; i < numSentences; ++i) {
-      double[] lengths = BP_suffStats(candSentenceInfo[i],i);
-
-      totLengths[0] += lengths[0];
-      totLengths[1] += lengths[1];
+      String[] words = topCand_str[i].split("\\s+");
+      totLength += BP_suffStats(words.length,i);
     } // for (i)
 
-    return totLengths;
+    return totLength;
   }
 
-  public double score(double[] stats)
+  public double score(int[] stats)
   {
     if (stats.length != suffStatsCount) {
       System.out.println("Mismatch between stats.length and suffStatsCount (" + stats.length + " vs. " + suffStatsCount + ")");
       System.exit(2);
     }
 
-    double w_n = 1.0/maxGramLength;
     double BLEUsum = 0.0;
     double smooth_addition = 1.0; // following bleu-1.04.pl
     double c_len = stats[suffStatsCount-2];
     double r_len = stats[suffStatsCount-1];
+    double numSegments = stats[0];
 
     double correctGramCount, totalGramCount;
-    int s = 0;
 
     for (int n = 1; n <= maxGramLength; ++n) {
-      correctGramCount = stats[s];
-      totalGramCount = stats[s+1];
+      correctGramCount = stats[n];
+      totalGramCount = c_len-((n-1)*numSegments);
 
       double prec_n;
       if (totalGramCount > 0) {
@@ -307,9 +319,8 @@ public class BLEU extends EvaluationMetric
         // isn't c_len-n+1 just totalGramCount ???????
       }
 
-      BLEUsum += w_n * Math.log(prec_n);
+      BLEUsum += weights[n] * Math.log(prec_n);
 
-      s += 2;
     }
 
     double BP = 1.0;
@@ -320,24 +331,23 @@ public class BLEU extends EvaluationMetric
 
   }
 
-  public void printDetailedScore_fromStats(double[] stats, boolean oneLiner)
+  public void printDetailedScore_fromStats(int[] stats, boolean oneLiner)
   {
-    double w_n = 1.0/maxGramLength;
     double BLEUsum = 0.0;
     double smooth_addition = 1.0; // following bleu-1.04.pl
     double c_len = stats[suffStatsCount-2];
     double r_len = stats[suffStatsCount-1];
+    double numSegments = stats[0];
 
     double correctGramCount, totalGramCount;
-    int s = 0;
 
     if (oneLiner) {
       System.out.print("Precisions: ");
     }
 
     for (int n = 1; n <= maxGramLength; ++n) {
-      correctGramCount = stats[s];
-      totalGramCount = stats[s+1];
+      correctGramCount = stats[n];
+      totalGramCount = c_len-((n-1)*numSegments);
       double prec_n = correctGramCount/totalGramCount;
         // what if totalGramCount is zero ???????????????????????????????
 
@@ -358,9 +368,8 @@ public class BLEU extends EvaluationMetric
         }
       }
 
-      BLEUsum += w_n * Math.log(prec_n);
+      BLEUsum += weights[n] * Math.log(prec_n);
 
-      s += 2;
     }
 
     if (oneLiner) {
@@ -398,4 +407,73 @@ public class BLEU extends EvaluationMetric
 //    return (x > 0 ? x : -x);
   }
 */
+
+
+  public HashMap getNgramCounts(String cand_str, int n)
+  {
+    return getNgramCounts(cand_str.split("\\s+"),n);
+  }
+
+  public HashMap getNgramCounts(String[] words, int n)
+  {
+    HashMap ngramCounts = new HashMap();
+    int wordCount = words.length;
+
+    if (wordCount >= n) {
+      if (n > 1) { // for n == 1, less processing is needed
+        // build the first n-gram
+        int start = 0; int end = n-1;
+        String gram = "";
+        for (int i = start; i < end; ++i) { gram = gram + words[i] + " "; }
+        gram = gram + words[end];
+        ngramCounts.put(gram,1);
+
+        for (start = 1; start <= wordCount-n; ++start) {
+        // process n-gram starting at start and ending at start+(n-1)
+
+          end = start + (n-1);
+          // build the n-gram from words[start] to words[end]
+
+/*
+// old way of doing it
+          gram = "";
+          for (int i = start; i < end; ++i) { gram = gram + words[i] + " "; }
+          gram = gram + words[end];
+*/
+
+          gram = gram.substring(gram.indexOf(' ')+1) + " " + words[end];
+
+          if (ngramCounts.containsKey(gram)) {
+            int oldCount = (Integer)ngramCounts.get(gram);
+            ngramCounts.put(gram,oldCount+1);
+          } else {
+            ngramCounts.put(gram,1);
+          }
+
+        } // for (start)
+
+      } else { // if (n == 1)
+
+        String gram = "";
+        for (int j = 0; j < wordCount; ++j) {
+          gram = words[j];
+
+          if (ngramCounts.containsKey(gram)) {
+            int oldCount = (Integer)ngramCounts.get(gram);
+            ngramCounts.put(gram,oldCount+1);
+          } else {
+            ngramCounts.put(gram,1);
+          }
+
+        }
+      }
+    } // if (wordCount >= n)
+
+    return ngramCounts;
+  }
+
+  private int wordCount(String cand_str)
+  {
+    return cand_str.split("\\s+").length;
+  }
 }

@@ -25,16 +25,16 @@ public class ZeroOneLoss extends EvaluationMetric
     suffStatsCount = 1;
   }
 
-  public double[] suffStats(SentenceInfo cand, int i)
+  public int[] suffStats(String cand_str, int i)
   {
-    double[] stats = new double[suffStatsCount];
+    int[] stats = new int[suffStatsCount];
 
-    String candSentence = cand.toString();
+//    String candSentence = cand.toString();
 
     boolean matchFound = false;
 
     for (int r = 0; r < refsPerSen; ++r) {
-      if (candSentence.equals(refSentenceInfo[i][r].toString())) {
+      if (cand_str.equals(refSentences[i][r])) {
         matchFound = true;
         break;
       }
@@ -46,24 +46,24 @@ public class ZeroOneLoss extends EvaluationMetric
     return stats;
   }
 
-  public double score(double[] stats)
+  public double score(int[] stats)
   {
     if (stats.length != suffStatsCount) {
       System.out.println("Mismatch between stats.length and suffStatsCount (" + stats.length + " vs. " + suffStatsCount + ")");
       System.exit(1);
     }
 
-    return 1.0 - (stats[0]/numSentences);
+    return 1.0 - (stats[0]/(double)numSentences);
   }
 
-  public void printDetailedScore_fromStats(double[] stats, boolean oneLiner)
+  public void printDetailedScore_fromStats(int[] stats, boolean oneLiner)
   {
     if (oneLiner) {
-      System.out.println("01LOSS = 1.0 - " + (int)stats[0] + "/" + numSentences + " = " + f4.format(1.0 - (stats[0]/numSentences)));
+      System.out.println("01LOSS = 1.0 - " + stats[0] + "/" + numSentences + " = " + f4.format(1.0 - (stats[0]/(double)numSentences)));
     } else {
-      System.out.println("# correct = " + (int)stats[0]);
+      System.out.println("# correct = " + stats[0]);
       System.out.println("# sentences = " + numSentences);
-      System.out.println("01LOSS = 1.0 - " + (int)stats[0] + "/" + numSentences + " = " + f4.format(1.0 - (stats[0]/numSentences)));
+      System.out.println("01LOSS = 1.0 - " + stats[0] + "/" + numSentences + " = " + f4.format(1.0 - (stats[0]/(double)numSentences)));
     }
   }
 

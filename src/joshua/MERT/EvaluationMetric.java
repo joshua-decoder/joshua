@@ -10,7 +10,7 @@ public abstract class EvaluationMetric
   private static TreeSet knownNames; // set of valid metric names
   protected static int numSentences; // number of sentences in the MERT set
   protected static int refsPerSen;
-  protected static SentenceInfo[][] refSentenceInfo;
+  protected static String[][] refSentences;
   protected static DecimalFormat f0 = new DecimalFormat("###0");
   protected static DecimalFormat f4 = new DecimalFormat("###0.0000");
 
@@ -19,7 +19,7 @@ public abstract class EvaluationMetric
   protected String metricName; // number of metric
   protected boolean toBeMinimized;
     // is this a metric that should be minimized?
-    // e.g. toBeMinimized = true for 01LOSS, WER
+    // e.g. toBeMinimized = true for 01LOSS, WER, TER
     //      toBeMinimized = false for BLEU
 
   /* static (=> also non-abstract) methods */
@@ -30,14 +30,14 @@ public abstract class EvaluationMetric
     knownNames.add("01LOSS"); // implemented in zero_one_loss.java
   }
 
-  public static void set_numSentences(int n) { numSentences = n; }
-  public static void set_refsPerSen(int n) { refsPerSen = n; }
-  public static void set_refSentenceInfo(SentenceInfo[][] refs)
+  public static void set_numSentences(int x) { numSentences = x; }
+  public static void set_refsPerSen(int x) { refsPerSen = x; }
+  public static void set_refSentences(String[][] refs)
   {
-    refSentenceInfo = new SentenceInfo[numSentences][refsPerSen];
+    refSentences = new String[numSentences][refsPerSen];
     for (int i = 0; i < numSentences; ++i) {
       for (int r = 0; r < refsPerSen; ++r) {
-        refSentenceInfo[i][r] = new SentenceInfo(refs[i][r]);
+        refSentences[i][r] = refs[i][r];
       }
     }
   }
@@ -61,25 +61,25 @@ public abstract class EvaluationMetric
     }
   }
 
-  public double score(SentenceInfo cand, int i)
+  public double score(String cand_str, int i)
   {
-    double[] stats = suffStats(cand,i);
+    int[] stats = suffStats(cand_str,i);
     return score(stats);
   }
 
-  public double score(SentenceInfo[] candSentenceInfo)
+  public double score(String[] topCand_str)
   {
-    double[] stats = suffStats(candSentenceInfo);
+    int[] stats = suffStats(topCand_str);
     return score(stats);
   }
 
-  public double[] suffStats(SentenceInfo[] candSentenceInfo)
+  public int[] suffStats(String[] topCand_str)
   {
-    double[] totStats = new double[suffStatsCount];
-    for (int s = 0; s < suffStatsCount; ++s) { totStats[s] = 0.0; }
+    int[] totStats = new int[suffStatsCount];
+    for (int s = 0; s < suffStatsCount; ++s) { totStats[s] = 0; }
 
     for (int i = 0; i < numSentences; ++i) {
-      double[] stats = suffStats(candSentenceInfo[i],i);
+      int[] stats = suffStats(topCand_str[i],i);
 
       for (int s = 0; s < suffStatsCount; ++s) { totStats[s] += stats[s]; }
     } // for (i)
@@ -87,15 +87,15 @@ public abstract class EvaluationMetric
     return totStats;
   }
 
-  public void printDetailedScore(SentenceInfo[] candSentenceInfo, boolean oneLiner)
+  public void printDetailedScore(String[] topCand_str, boolean oneLiner)
   {
-    double[] stats = suffStats(candSentenceInfo);
+    int[] stats = suffStats(topCand_str);
     printDetailedScore_fromStats(stats,oneLiner);
   }
 
-  public void printDetailedScore(SentenceInfo cand, int i, boolean oneLiner)
+  public void printDetailedScore(String cand_str, int i, boolean oneLiner)
   {
-    double[] stats = suffStats(cand,i);
+    int[] stats = suffStats(cand_str,i);
     printDetailedScore_fromStats(stats,oneLiner);
   }
 
@@ -104,8 +104,8 @@ public abstract class EvaluationMetric
   public abstract double bestPossibleScore();
   public abstract double worstPossibleScore();
   protected abstract void set_suffStatsCount();
-  public abstract double[] suffStats(SentenceInfo cand, int i);
-  public abstract double score(double[] stats);
-  public abstract void printDetailedScore_fromStats(double[] stats, boolean oneLiner);
+  public abstract int[] suffStats(String cand_str, int i);
+  public abstract double score(int[] stats);
+  public abstract void printDetailedScore_fromStats(int[] stats, boolean oneLiner);
 }
 
