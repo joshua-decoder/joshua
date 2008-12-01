@@ -8,7 +8,8 @@ public class BLEU extends EvaluationMetric
   private int maxGramLength;
   private int effLengthMethod;
     // 1: closest, 2: shortest, 3: average
-  private HashMap[][] maxNgramCounts;
+//  private HashMap[][] maxNgramCounts;
+  private HashMap[] maxNgramCounts;
   private int[][] refWordCount;
   private double[] weights;
 
@@ -21,7 +22,12 @@ public class BLEU extends EvaluationMetric
 
   public BLEU(int mxGrmLn)
   {
-    maxGramLength = mxGrmLn;
+    if (mxGrmLn >= 1) {
+      maxGramLength = mxGrmLn;
+    } else {
+      System.out.println("Maximum gram length must be positive");
+      System.exit(2);
+    }
     effLengthMethod = 1; // default
     initialize();
   }
@@ -47,7 +53,12 @@ public class BLEU extends EvaluationMetric
 
   public BLEU(int mxGrmLn,String methodStr)
   {
-    maxGramLength = mxGrmLn;
+    if (mxGrmLn >= 1) {
+      maxGramLength = mxGrmLn;
+    } else {
+      System.out.println("Maximum gram length must be positive");
+      System.exit(2);
+    }
 
     if (methodStr.equals("closest")) {
       effLengthMethod = 1;
@@ -95,31 +106,38 @@ public class BLEU extends EvaluationMetric
 
   private void set_maxNgramCounts()
   {
-    maxNgramCounts = new HashMap[numSentences][1+maxGramLength];
+//    maxNgramCounts = new HashMap[numSentences][1+maxGramLength];
+    maxNgramCounts = new HashMap[numSentences];
     String gram = "";
     int oldCount = 0, nextCount = 0;
 
-    for (int n = 1; n <= maxGramLength; ++n) {
+//    for (int n = 1; n <= maxGramLength; ++n) {
       for (int i = 0; i < numSentences; ++i) {
-        maxNgramCounts[i][n] = getNgramCounts(refSentences[i][0],n);
+//        maxNgramCounts[i][n] = getNgramCountsArray(refSentences[i][0])[n];
+        maxNgramCounts[i] = getNgramCountsAll(refSentences[i][0]);
           // initialize to ngramCounts[n] of the first reference translation...
 
         // ...and update as necessary from the other reference translations
         for (int r = 1; r < refsPerSen; ++r) {
-          HashMap nextNgramCounts = getNgramCounts(refSentences[i][r],n);
+//          HashMap nextNgramCounts = getNgramCountsArray(refSentences[i][r])[n];
+          HashMap nextNgramCounts = getNgramCountsAll(refSentences[i][r]);
           Iterator it = (nextNgramCounts.keySet()).iterator();
 
           while (it.hasNext()) {
             gram = (String)it.next();
             nextCount = (Integer)nextNgramCounts.get(gram);
 
-            if (maxNgramCounts[i][n].containsKey(gram)) { // update if necessary
-              oldCount = (Integer)maxNgramCounts[i][n].get(gram);
+//            if (maxNgramCounts[i][n].containsKey(gram)) { // update if necessary
+//              oldCount = (Integer)maxNgramCounts[i][n].get(gram);
+            if (maxNgramCounts[i].containsKey(gram)) { // update if necessary
+              oldCount = (Integer)maxNgramCounts[i].get(gram);
               if (nextCount > oldCount) {
-                maxNgramCounts[i][n].put(gram,nextCount);
+//                maxNgramCounts[i][n].put(gram,nextCount);
+                maxNgramCounts[i].put(gram,nextCount);
               }
             } else { // add it
-              maxNgramCounts[i][n].put(gram,nextCount);
+//              maxNgramCounts[i][n].put(gram,nextCount);
+              maxNgramCounts[i].put(gram,nextCount);
             }
 
           }
@@ -128,7 +146,7 @@ public class BLEU extends EvaluationMetric
 
       } // for (i)
 
-    } // for (n)
+//    } // for (n)
 
     // Reference sentences are not needed anymore, since the gram counts are stored.
     // The only thing we need are their lenghts, to be used in BP_suffStats, so store
@@ -160,46 +178,53 @@ public class BLEU extends EvaluationMetric
 int wordCount = words.length;
 for (int j = 0; j < wordCount; ++j) { words[j] = words[j].intern(); }
 
+    set_prec_suffStats(stats,words,i);
+/*
     for (int n = 1; n <= maxGramLength; ++n) {
       stats[n] = prec_suffStats(n,words,i);
     }
-
+*/
     stats[maxGramLength+1] = words.length;
     stats[maxGramLength+2] = BP_suffStats(words.length,i);
 
     return stats;
   }
 
-  public int prec_suffStats(int gramLength, String[] words, int i)
+  public void set_prec_suffStats(int[] stats, String[] words, int i)
   {
-    int correctGramCount = 0;
-    String gram = "";
-    int candGramCount = 0, maxRefGramCount = 0, clippedCount = 0;
+    HashMap[] candCountsArray = getNgramCountsArray(words);
 
-    HashMap candCounts = getNgramCounts(words,gramLength);
+    for (int n = 1; n <= maxGramLength; ++n) {
 
-    Iterator it = (candCounts.keySet()).iterator();
+      int correctGramCount = 0;
+      String gram = "";
+      int candGramCount = 0, maxRefGramCount = 0, clippedCount = 0;
 
-    while (it.hasNext()) {
-    // for each gram type in the candidate
-      gram = (String)it.next();
-      candGramCount = (Integer)candCounts.get(gram);
-      if (maxNgramCounts[i][gramLength].containsKey(gram)) {
-        maxRefGramCount = (Integer)maxNgramCounts[i][gramLength].get(gram);
-      } else {
-        maxRefGramCount = 0;
+      Iterator it = (candCountsArray[n].keySet()).iterator();
+
+      while (it.hasNext()) {
+      // for each gram type in the candidate
+        gram = (String)it.next();
+        candGramCount = (Integer)candCountsArray[n].get(gram);
+//        if (maxNgramCounts[i][n].containsKey(gram)) {
+//          maxRefGramCount = (Integer)maxNgramCounts[i][n].get(gram);
+        if (maxNgramCounts[i].containsKey(gram)) {
+          maxRefGramCount = (Integer)maxNgramCounts[i].get(gram);
+        } else {
+          maxRefGramCount = 0;
+        }
+
+        clippedCount = Math.min(candGramCount,maxRefGramCount);
+
+//        clippedCount = (candGramCount < maxRefGramCount ? candGramCount : maxRefGramCount);
+
+        correctGramCount += clippedCount;
+
       }
 
-      clippedCount = Math.min(candGramCount,maxRefGramCount);
-
-//      clippedCount = (candGramCount < maxRefGramCount ? candGramCount : maxRefGramCount);
-
-      correctGramCount += clippedCount;
+      stats[n] = correctGramCount;
 
     }
-
-    return correctGramCount;
-
   }
 
   public int BP_suffStats(int candLength, int i)
@@ -382,6 +407,38 @@ else { // average
   }
 */
 
+/*
+  public int prec_suffStats(int gramLength, String[] words, int i)
+  {
+    int correctGramCount = 0;
+    String gram = "";
+    int candGramCount = 0, maxRefGramCount = 0, clippedCount = 0;
+
+    HashMap candCounts = getNgramCounts(words,gramLength);
+
+    Iterator it = (candCounts.keySet()).iterator();
+
+    while (it.hasNext()) {
+    // for each gram type in the candidate
+      gram = (String)it.next();
+      candGramCount = (Integer)candCounts.get(gram);
+      if (maxNgramCounts[i][gramLength].containsKey(gram)) {
+        maxRefGramCount = (Integer)maxNgramCounts[i][gramLength].get(gram);
+      } else {
+        maxRefGramCount = 0;
+      }
+
+      clippedCount = Math.min(candGramCount,maxRefGramCount);
+
+//      clippedCount = (candGramCount < maxRefGramCount ? candGramCount : maxRefGramCount);
+
+      correctGramCount += clippedCount;
+
+    }
+
+    return correctGramCount;
+
+  }
 
   public HashMap getNgramCounts(String cand_str, int n)
   {
@@ -408,12 +465,10 @@ else { // average
           end = start + (n-1);
           // build the n-gram from words[start] to words[end]
 
-/*
-// old way of doing it
-          gram = "";
-          for (int i = start; i < end; ++i) { gram = gram + words[i] + " "; }
-          gram = gram + words[end];
-*/
+//// old way of doing it
+//          gram = "";
+//          for (int i = start; i < end; ++i) { gram = gram + words[i] + " "; }
+//          gram = gram + words[end];
 
           gram = gram.substring(gram.indexOf(' ')+1) + " " + words[end];
 
@@ -445,12 +500,157 @@ else { // average
 
     return ngramCounts;
   }
+*/
 
   private int wordCount(String cand_str)
   {
     return cand_str.split("\\s+").length;
   }
 
+
+
+
+
+  public HashMap[] getNgramCountsArray(String cand_str)
+  {
+    return getNgramCountsArray(cand_str.split("\\s+"));
+  }
+
+  public HashMap[] getNgramCountsArray(String[] words)
+  {
+    HashMap[] ngramCountsArray = new HashMap[1+maxGramLength];
+    ngramCountsArray[0] = null;
+    for (int n = 1; n <= maxGramLength; ++n) {
+      ngramCountsArray[n] = new HashMap();
+    }
+
+    int len = words.length;
+    String gram;
+    int st = 0;
+
+    for (; st <= len-maxGramLength; ++st) {
+
+      gram = words[st];
+      if (ngramCountsArray[1].containsKey(gram)) {
+        int oldCount = (Integer)ngramCountsArray[1].get(gram);
+        ngramCountsArray[1].put(gram,oldCount+1);
+      } else {
+        ngramCountsArray[1].put(gram,1);
+      }
+
+      for (int n = 2; n <= maxGramLength; ++n) {
+        gram = gram + " " + words[st+n-1];
+        if (ngramCountsArray[n].containsKey(gram)) {
+          int oldCount = (Integer)ngramCountsArray[n].get(gram);
+          ngramCountsArray[n].put(gram,oldCount+1);
+        } else {
+          ngramCountsArray[n].put(gram,1);
+        }
+      } // for (n)
+
+    } // for (st)
+
+    // now st is either len-maxGramLength+1 or zero (if above loop never entered, which
+    // happens with sentences that have fewer than maxGramLength words)
+
+    for (; st < len; ++st) {
+
+      gram = words[st];
+      if (ngramCountsArray[1].containsKey(gram)) {
+        int oldCount = (Integer)ngramCountsArray[1].get(gram);
+        ngramCountsArray[1].put(gram,oldCount+1);
+      } else {
+        ngramCountsArray[1].put(gram,1);
+      }
+
+      int n = 2;
+      for (int fin = st+1; fin < len; ++fin) {
+        gram = gram + " " + words[st+n-1];
+
+        if (ngramCountsArray[n].containsKey(gram)) {
+          int oldCount = (Integer)ngramCountsArray[n].get(gram);
+          ngramCountsArray[n].put(gram,oldCount+1);
+        } else {
+          ngramCountsArray[n].put(gram,1);
+        }
+        ++n;
+      } // for (fin)
+
+    } // for (st)
+
+    return ngramCountsArray;
+
+  }
+
+
+
+
+  public HashMap getNgramCountsAll(String cand_str)
+  {
+    return getNgramCountsAll(cand_str.split("\\s+"));
+  }
+
+  public HashMap getNgramCountsAll(String[] words)
+  {
+    HashMap ngramCountsAll = new HashMap();
+
+    int len = words.length;
+    String gram;
+    int st = 0;
+
+    for (; st <= len-maxGramLength; ++st) {
+
+      gram = words[st];
+      if (ngramCountsAll.containsKey(gram)) {
+        int oldCount = (Integer)ngramCountsAll.get(gram);
+        ngramCountsAll.put(gram,oldCount+1);
+      } else {
+        ngramCountsAll.put(gram,1);
+      }
+
+      for (int n = 2; n <= maxGramLength; ++n) {
+        gram = gram + " " + words[st+n-1];
+        if (ngramCountsAll.containsKey(gram)) {
+          int oldCount = (Integer)ngramCountsAll.get(gram);
+          ngramCountsAll.put(gram,oldCount+1);
+        } else {
+          ngramCountsAll.put(gram,1);
+        }
+      } // for (n)
+
+    } // for (st)
+
+    // now st is either len-maxGramLength+1 or zero (if above loop never entered, which
+    // happens with sentences that have fewer than maxGramLength words)
+
+    for (; st < len; ++st) {
+
+      gram = words[st];
+      if (ngramCountsAll.containsKey(gram)) {
+        int oldCount = (Integer)ngramCountsAll.get(gram);
+        ngramCountsAll.put(gram,oldCount+1);
+      } else {
+        ngramCountsAll.put(gram,1);
+      }
+
+      int n = 2;
+      for (int fin = st+1; fin < len; ++fin) {
+        gram = gram + " " + words[st+n-1];
+
+        if (ngramCountsAll.containsKey(gram)) {
+          int oldCount = (Integer)ngramCountsAll.get(gram);
+          ngramCountsAll.put(gram,oldCount+1);
+        } else {
+          ngramCountsAll.put(gram,1);
+        }
+        ++n;
+      } // for (fin)
+
+    } // for (st)
+
+    return ngramCountsAll;
+
+  }
 
 
 
