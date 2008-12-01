@@ -90,8 +90,11 @@ public class MERT
   private int initsPerIt;
     // number of intermediate initial points per iteration
 
-  private int maxMERTIterations;
-    // maximum number of MERT iterations
+  private int maxMERTIterations, minMERTIterations, prevMERTIterations;
+    // max: maximum number of MERT iterations
+    // min: minimum number of MERT iterations before exiting due to any of the secondary stopping criteria
+    // prev: number of previous MERT iterations from which to consider candidates (in addition to the
+    //       candidates from the current iteration)
 
   private boolean oneModificationPerIteration;
     // if true, each MERT iteration performs at most one parameter modification.
@@ -307,14 +310,14 @@ public class MERT
 
   public void run_MERT() throws Exception
   {
-    run_MERT(maxMERTIterations);
+    run_MERT(minMERTIterations,maxMERTIterations,prevMERTIterations);
   }
 
-  public void run_MERT(int maxIts) throws Exception
+  public void run_MERT(int minIts, int maxIts, int prevIts) throws Exception
   {
     println("----------------------------------------------------",1);
     println("MERT run started @ " + (new Date()),1);
-    printMemoryUsage();
+//    printMemoryUsage();
     println("----------------------------------------------------",1);
     println("",1);
 
@@ -337,7 +340,7 @@ public class MERT
 
       println("--- Starting MERT iteration #" + iteration + " @ " + (new Date()) + " ---",1);
 
-      printMemoryUsage();
+//      printMemoryUsage();
 
       // run the decoder on all the sentences, producing for each sentence a set of
       // sizeOfNBest candidates, with numParams feature values for each candidate
@@ -379,6 +382,7 @@ public class MERT
 
 
       int[] candCount = new int[numSentences];
+      for (int i = 0; i < numSentences; ++i) { candCount[i] = 0; }
       double[][][] featVal_array = new double[1+numParams][numSentences][sizeOfNBest];
       featVal_array[0] = null;
       int[] lastUsedIndex = new int[numSentences];
@@ -409,11 +413,15 @@ public class MERT
         // used to calculate initialScore[]
 
 
-      println("Reading candidate translations.",2);
+      int firstIt = Math.max(1,iteration-prevIts);
+        // i.e. only process candidates from the current iteration and candidates
+        // from up to prevIts previous iterations.
+      println("Reading candidate translations from iterations " + firstIt + "-" + iteration,2);
       progress = 0;
 
-      boolean newCandidatesAdded = false;
-
+//      boolean newCandidatesAdded = false;
+      int[] newCandidatesAdded = new int[1+iteration];
+      for (int it = 1; it <= iteration; ++it) { newCandidatesAdded[it] = 0; }
 
       // each inFile corresponds to the output of an iteration
       BufferedReader[] inFile_sents = new BufferedReader[1+iteration];
@@ -440,7 +448,7 @@ public class MERT
           best1Score[j][i] = NegInf;
         }
 
-        for (int it = 1; it <= iteration; ++it) {
+        for (int it = firstIt; it <= iteration; ++it) {
 
           for (int n = 0; n < sizeOfNBest; ++n) {
 
@@ -482,9 +490,11 @@ public class MERT
               setFeats(featVal_array,i,lastUsedIndex,maxIndex,featVal);
               candCount[i] += 1;
               ++totalCandidateCount;
-              if (it == iteration) {
-                newCandidatesAdded = true;
-              }
+
+              newCandidatesAdded[it] += 1;
+//              if (it == iteration) {
+//                newCandidatesAdded = true;
+//              }
 
             }
 
@@ -492,9 +502,9 @@ public class MERT
 
           } // for (n)
 
-          existingCandidates.clear();
-
         } // for (it)
+
+        existingCandidates.clear();
 
       } // for (i)
 
@@ -510,9 +520,13 @@ public class MERT
 
 //      cleanupMemory();
 
+      for (int it = firstIt; it <= iteration; ++it) {
+        println("newCandidatesAdded[it=" + it + "] = " + newCandidatesAdded[it] + " (about " + newCandidatesAdded[it]/numSentences + " per sentence)",2);
+      }
+
       println("",1);
 
-      if (!newCandidatesAdded) {
+      if (newCandidatesAdded[iteration] == 0) {
         if (!oneModificationPerIteration) {
           println("No new candidates added in this iteration; exiting MERT.",1);
           println("",1);
@@ -632,7 +646,7 @@ public class MERT
       println("---  MERT iteration #" + iteration + " ending @ " + (new Date()) + "  ---",1);
       println("",1);
 
-      printMemoryUsage();
+//      printMemoryUsage();
       for (int i = 0; i < numSentences; ++i) {
         suffStats_array[i].clear();
       }
@@ -645,7 +659,7 @@ public class MERT
 
     println("----------------------------------------------------",1);
     println("MERT run ended @ " + (new Date()),1);
-    printMemoryUsage();
+//    printMemoryUsage();
     println("----------------------------------------------------",1);
     println("",1);
     println("FINAL lambda: " + lambdaToString(lambda) + " (score: " + FINAL_score + ")",1);
@@ -765,7 +779,7 @@ public class MERT
 
     // delete according to indicesOfInterest
 
-    printMemoryUsage();
+//    printMemoryUsage();
 
 //    if (useDisk == 2) {
 
@@ -778,8 +792,8 @@ public class MERT
 //    }
 
 //    cleanupMemory();
-    printMemoryUsage();
-    println("",2);
+//    printMemoryUsage();
+//    println("",2);
 
 
 
@@ -842,7 +856,7 @@ public class MERT
 
   private double[] line_opt(TreeMap<Double,TreeMap> thresholdsAll, int[] indexOfCurrBest, int c, int[] candCount, double[][][] featVal_array, HashMap<Integer,int[]>[] suffStats_array, double[] lambda, int minIt, int maxIt) throws Exception
   {
-    println("Line-optimizing lambda[" + c + "]...",3);
+//    println("Line-optimizing lambda[" + c + "]...",3);
 
     double[] bestScoreInfo = new double[2];
       // to be returned: [0] will store the best lambda, and [1] will store its score
@@ -860,8 +874,8 @@ public class MERT
 
     double smallest_th = thresholdsAll.firstKey();
     double largest_th = thresholdsAll.lastKey();
-    println("Minimum threshold: " + smallest_th,3);
-    println("Maximum threshold: " + largest_th,3);
+//    println("Minimum threshold: " + smallest_th,3);
+//    println("Maximum threshold: " + largest_th,3);
 
     double[] temp_lambda = new double[1+numParams];
     System.arraycopy(lambda,1,temp_lambda,1,numParams);
@@ -1298,8 +1312,9 @@ public class MERT
     PrintWriter outFile_stats = new PrintWriter(statsFileName);
 
 
+    InputStream inStream = new FileInputStream(new File(decoderOutFileName));
+    BufferedReader inFile = new BufferedReader(new InputStreamReader(inStream, "utf8"));
 
-    BufferedReader inFile = new BufferedReader(new FileReader(decoderOutFileName));
     String line; //, prevLine;
     String candidate_str = "";
     String feats_str = "";
@@ -1532,6 +1547,8 @@ line format:
     // MERT specs
     metricName = "BLEU";
     maxMERTIterations = 20;
+    minMERTIterations = 5;
+    prevMERTIterations = 20;
     saveInterFiles = 3;
     initsPerIt = 20;
     oneModificationPerIteration = false;
@@ -1571,6 +1588,14 @@ line format:
       else if (option.equals("-maxIt")) {
         maxMERTIterations = Integer.parseInt(args[i+1]);
         if (maxMERTIterations < 1) { println("maxMERTIts must be positive."); System.exit(10); }
+      }
+      else if (option.equals("-minIt")) {
+        minMERTIterations = Integer.parseInt(args[i+1]);
+        if (minMERTIterations < 1) { println("minMERTIts must be positive."); System.exit(10); }
+      }
+      else if (option.equals("-prevIt")) {
+        prevMERTIterations = Integer.parseInt(args[i+1]);
+        if (prevMERTIterations < 0) { println("prevMERTIts must be non-negative."); System.exit(10); }
       }
       else if (option.equals("-save")) {
         int saveInterFiles = Integer.parseInt(args[i+1]);
@@ -1648,7 +1673,9 @@ line format:
         decoderCommandFileName = fullPath(dirPrefix,decoderCommandFileName);
       }
       decoderConfigFileName = fullPath(dirPrefix,decoderConfigFileName);
-      fakeFileNamePrefix = fullPath(dirPrefix,fakeFileNamePrefix);
+      if (fakeFileNamePrefix != null) {
+        fakeFileNamePrefix = fullPath(dirPrefix,fakeFileNamePrefix);
+      }
     }
 
     checkFile(paramsFileName);
@@ -2010,16 +2037,36 @@ line format:
 
 /*
 
+fake:
+-----
 ex2_N300:
-java -javaagent:shiftone-jrat.jar -Xmx300m -cp bin joshua.MERT.MERT_runner -dir MERT_example -s src.txt -r ref.all -rps 4 -cmd decoder_command_ex2.txt -dcfg config_ex2.txt -decOut nbest_ex2.out -N 300 -p params.txt -maxIt 25 -opi 0 -ipi 20 -v 2 -rand 0 -seed 1226091488390 -save 1 -fake nbest_ex2.out.N300.it > ex2_N300ipi20opi0_300max+defratios.internedSAimp_it05.nocopy.clean.typed.th-nowait.monitored.txt
+java -javaagent:shiftone-jrat.jar -Xmx300m -cp bin joshua.MERT.MERT_runner -dir MERT_example -s src.txt -r ref.all -rps 4 -cmd decoder_command_ex2.txt -dcfg config_ex2.txt -decOut nbest_ex2.out -N 300 -p params.txt -maxIt 25 -opi 0 -ipi 20 -v 2 -rand 0 -seed 1226091488390 -save 1 -fake nbest_ex2.out.N300.it > ex2_N300ipi20opi0_300max+defratios.itxx.noMemRep.bugFixes.monitored.txt
 
 ex2_N500:
-java -javaagent:shiftone-jrat.jar -Xmx300m -cp bin joshua.MERT.MERT_runner -dir MERT_example -s src.txt -r ref.all -rps 4 -cmd decoder_command_ex2.txt -dcfg config_ex2.txt -decOut nbest_ex2.out -N 500 -p params.txt -maxIt 25 -opi 0 -ipi 20 -v 2 -rand 0 -seed 1226091488390 -save 1 -fake nbest_ex2.out.N500.it > ex2_N500ipi20opi0_300max+defratios.internedSAimp_it10.nocopy.clean.typed.th-nowait.monitored.txt
+java -javaagent:shiftone-jrat.jar -Xmx300m -cp bin joshua.MERT.MERT_runner -dir MERT_example -s src.txt -r ref.all -rps 4 -cmd decoder_command_ex2.txt -dcfg config_ex2.txt -decOut nbest_ex2.out -N 500 -p params.txt -maxIt 25 -opi 0 -ipi 20 -v 2 -rand 0 -seed 1226091488390 -save 1 -fake nbest_ex2.out.N500.it > ex2_N500ipi20opi0_300max+defratios.itxx.noMemRep.bugFixes.monitored.txt
 
 exL_N300__600max:
-java -javaagent:shiftone-jrat.jar -Xmx600m -cp bin joshua.MERT.MERT_runner -dir MERT_example -s mt06_source.txt -r mt06_ref.all -rps 4 -cmd decoder_command_ex2.txt -dcfg config_ex2.txt -decOut nbest_exL.out -N 300 -p params.txt -maxIt 5 -opi 0 -ipi 20 -v 2 -rand 0 -seed 1226091488390 -save 1 -fake nbest_exL.out.it > exL_N300ipi20opi0_600max+defratios.internedSAimp_it05.nocopy.clean.typed.th-nowait.monitored.txt
+java -javaagent:shiftone-jrat.jar -Xmx600m -cp bin joshua.MERT.MERT_runner -dir MERT_example -s mt06_source.txt -r mt06_ref.all -rps 4 -cmd decoder_command_ex2.txt -dcfg config_ex2.txt -decOut nbest_exL.out -N 300 -p params.txt -maxIt 5 -opi 0 -ipi 20 -v 2 -rand 0 -seed 1226091488390 -save 1 -fake nbest_exL.out.it > exL_N300ipi20opi0_600max+defratios.itxx.noMemRep.bugFixes.monitored.txt
 
 exL_N300__300max:
-java -javaagent:shiftone-jrat.jar -Xmx300m -cp bin joshua.MERT.MERT_runner -dir MERT_example -s mt06_source.txt -r mt06_ref.all -rps 4 -cmd decoder_command_ex2.txt -dcfg config_ex2.txt -decOut nbest_exL.out -N 300 -p params.txt -maxIt 5 -opi 0 -ipi 20 -v 2 -rand 0 -seed 1226091488390 -save 1 -fake nbest_exL.out.it > exL_N300ipi20opi0_300max+defratios.internedSAimp_it05.nocopy.clean.typed.th-nowait.monitored.txt
+java -javaagent:shiftone-jrat.jar -Xmx300m -cp bin joshua.MERT.MERT_runner -dir MERT_example -s mt06_source.txt -r mt06_ref.all -rps 4 -cmd decoder_command_ex2.txt -dcfg config_ex2.txt -decOut nbest_exL.out -N 300 -p params.txt -maxIt 5 -opi 0 -ipi 20 -v 2 -rand 0 -seed 1226091488390 -save 1 -fake nbest_exL.out.it > exL_N300ipi20opi0_300max+defratios.itxx.noMemRep.bugFixes.monitored.txt
+
+gen:
+----
+ex2_N300:
+make sure top_n=300 in config_ex2.txt
+java -javaagent:shiftone-jrat.jar -Xmx300m -cp bin joshua.MERT.MERT_runner -dir MERT_example -s src.txt -r ref.all -rps 4 -cmd decoder_command_ex2.txt -dcfg config_ex2.txt -decOut nbest_ex2.out -N 300 -p params.txt -maxIt 25 -opi 0 -ipi 20 -v 2 -rand 0 -seed 1226091488390 -save 1 > ex2_N300ipi20opi0_300max+defratios.itxx.monitored.txt.gen
+
+ex2_N500:
+make sure top_n=500 in config_ex2.txt
+java -javaagent:shiftone-jrat.jar -Xmx300m -cp bin joshua.MERT.MERT_runner -dir MERT_example -s src.txt -r ref.all -rps 4 -cmd decoder_command_ex2.txt -dcfg config_ex2.txt -decOut nbest_ex2.out -N 500 -p params.txt -maxIt 25 -opi 0 -ipi 20 -v 2 -rand 0 -seed 1226091488390 -save 1 > ex2_N500ipi20opi0_300max+defratios.itxx.monitored.txt.gen
+
+exL_N300__600max:
+run on CLSP machines only! (e.g. z12)
+$JAVA_bin/java -javaagent:shiftone-jrat.jar -Xmx600m -cp bin joshua.MERT.MERT_runner -dir YOURDIR -s mt06_source.txt -r mt06_ref.all -rps 4 -cmd decoder_command.txt -dcfg config_exL.txt -decOut nbest_exL.out -N 300 -p params.txt -maxIt 25 -opi 0 -ipi 20 -v 2 -rand 0 -seed 1226091488390 -save 1 > exL_N300ipi20opi0_600max+defratios.itxx.monitored.txt.gen
+
+exL_N300__300max:
+run on CLSP machines only! (e.g. z12)
+$JAVA_bin/java -javaagent:shiftone-jrat.jar -Xmx300m -cp bin joshua.MERT.MERT_runner -dir YOURDIR -s mt06_source.txt -r mt06_ref.all -rps 4 -cmd decoder_command.txt -dcfg config_exL.txt -decOut nbest_exL.out -N 300 -p params.txt -maxIt 25 -opi 0 -ipi 20 -v 2 -rand 0 -seed 1226091488390 -save 1 > exL_N300ipi20opi0_600max+defratios.itxx.monitored.txt.gen
 
 */
