@@ -3,6 +3,7 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map.Entry;
 
 import joshua.util.FileUtility;
@@ -23,8 +24,8 @@ public class NbestMinRiskReranker  {
 	boolean produce_reranked_nbest=false;//default is to produce 1best without any feature scores
 	double scaling_factor = 1.0;
 	
-	int bleu_order =4;
-	boolean do_ngram_clip = true;
+	static int bleu_order =4;
+	static boolean do_ngram_clip = true;
 	
 	public NbestMinRiskReranker(BufferedWriter out_, boolean produce_reranked_nbest_, double scaling_factor_){
 		this.out= FileUtility.handle_null_writer(out_);
@@ -61,7 +62,7 @@ public class NbestMinRiskReranker  {
 		}
 		
 		//step-1: get normalized distribution
-		computeNormalizedProbs(l_baseline_scores);//value in l_baseline_scores will be changed to normalized probability
+		computeNormalizedProbs(l_baseline_scores, scaling_factor);//value in l_baseline_scores will be changed to normalized probability
 		
 		//step-2: rerank the nbest
 		double best_gain = -1000000000;//set as worst gain
@@ -123,7 +124,7 @@ public class NbestMinRiskReranker  {
 		}
 		
 		//step-1: get normalized distribution
-		computeNormalizedProbs(l_baseline_scores);//value in l_baseline_scores will be changed to normalized probability
+		computeNormalizedProbs(l_baseline_scores, scaling_factor);//value in l_baseline_scores will be changed to normalized probability
 		ArrayList<Double> l_normalized_probs = l_baseline_scores;
 		
 		//step-2: get posterior ngram count on the event space (defined in google's emnlp 2008 paper)
@@ -184,14 +185,14 @@ public class NbestMinRiskReranker  {
 	}
 	
 	//get a normalized distributeion and put it back to nbest_logps
-	public void computeNormalizedProbs(ArrayList<Double> nbest_logps){
+	static public void computeNormalizedProbs(List<Double> nbest_logps, double scaling_factor){
 		//### get noralization constant, remember features, remember the combined linear score
 		double normalization_constant = Double.NEGATIVE_INFINITY;//log-semiring
 		
 		for(double logp : nbest_logps){
 			normalization_constant = add_in_log_semiring(normalization_constant, logp*scaling_factor, 0);
 		}
-		System.out.println("normalization_constant (logP) is " + normalization_constant);
+		//System.out.println("normalization_constant (logP) is " + normalization_constant);
 		
 		//### get normalized prob for each hyp
 		double t_sum = 0;
@@ -232,7 +233,7 @@ public class NbestMinRiskReranker  {
 	//Gain(e) = \sum_{e'} G(e, e')P(e')
 	//cur_hyp: e
 	//true_hyp: e'
-	public double computeGain(String cur_hyp, ArrayList<String> nbest_hyps, ArrayList<Double> nbest_probs){
+	static public double computeGain(String cur_hyp, List<String> nbest_hyps, List<Double> nbest_probs){
 		//### get noralization constant, remember features, remember the combined linear score
 		double gain = 0;
 		
@@ -248,7 +249,7 @@ public class NbestMinRiskReranker  {
 	
 	
 //	OR: return Math.log(Math.exp(x) + Math.exp(y));
-	private double add_in_log_semiring(double x, double y, int add_mode){//prevent over-flow 
+	static private double add_in_log_semiring(double x, double y, int add_mode){//prevent over-flow 
 		if(add_mode==0){//sum
 			if(x==Double.NEGATIVE_INFINITY)//if y is also n-infinity, then return n-infinity
 				return y;
