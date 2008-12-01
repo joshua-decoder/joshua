@@ -173,7 +173,6 @@ for (int j = 0; j < wordCount; ++j) { words[j] = words[j].intern(); }
   public int prec_suffStats(int gramLength, String[] words, int i)
   {
     int correctGramCount = 0;
-//    int totalGramCount = 0;
     String gram = "";
     int candGramCount = 0, maxRefGramCount = 0, clippedCount = 0;
 
@@ -196,7 +195,6 @@ for (int j = 0; j < wordCount; ++j) { words[j] = words[j].intern(); }
 //      clippedCount = (candGramCount < maxRefGramCount ? candGramCount : maxRefGramCount);
 
       correctGramCount += clippedCount;
-//      totalGramCount += candGramCount;
 
     }
 
@@ -261,30 +259,6 @@ else { // average
 */
     return candLength; // should never get here anyway
 
-  }
-
-  public int prec_suffStats(int gramLength, String[] topCand_str)
-  {
-    int totCount = 0;
-
-    for (int i = 0; i < numSentences; ++i) {
-      String[] words = topCand_str[i].split("\\s+");
-      totCount += prec_suffStats(gramLength,words,i);
-    } // for (i)
-
-    return totCount;
-  }
-
-  public int BP_suffStats(String[] topCand_str)
-  {
-    int totLength = 0;
-
-    for (int i = 0; i < numSentences; ++i) {
-      String[] words = topCand_str[i].split("\\s+");
-      totLength += BP_suffStats(words.length,i);
-    } // for (i)
-
-    return totLength;
   }
 
   public double score(int[] stats)
@@ -476,4 +450,37 @@ else { // average
   {
     return cand_str.split("\\s+").length;
   }
+
+
+
+
+/*
+  // The following two functions are nice to have, I suppose, but they're never
+  // used, so they're commented out at the moment for clarity's sake
+  public int prec_suffStats(int gramLength, String[] topCand_str)
+  {
+    int totCount = 0;
+
+    for (int i = 0; i < numSentences; ++i) {
+      String[] words = topCand_str[i].split("\\s+");
+      totCount += prec_suffStats(gramLength,words,i);
+    } // for (i)
+
+    return totCount;
+  }
+
+  public int BP_suffStats(String[] topCand_str)
+  {
+    int totLength = 0;
+
+    for (int i = 0; i < numSentences; ++i) {
+      String[] words = topCand_str[i].split("\\s+");
+      totLength += BP_suffStats(words.length,i);
+    } // for (i)
+
+    return totLength;
+  }
+*/
+
+
 }

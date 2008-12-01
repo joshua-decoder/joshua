@@ -379,9 +379,6 @@ public class MERT
 
 
       int[] candCount = new int[numSentences];
-//      Vector[] candidates = new Vector[numSentences];
-//        // candidates[i] stores the translation candidates for the ith sentence
-//        // each element in the array is a Vector of SentenceInfo objects
       double[][][] featVal_array = new double[1+numParams][numSentences][sizeOfNBest];
       featVal_array[0] = null;
       int[] lastUsedIndex = new int[numSentences];
@@ -392,7 +389,6 @@ public class MERT
         // storing the sufficient statistics for that candidate
 
       for (int i = 0; i < numSentences; ++i) {
-//        candidates[i] = new Vector(); // a Vector of SentenceInfo's
         lastUsedIndex[i] = -1;
         maxIndex[i] = sizeOfNBest - 1;
         suffStats_array[i] = new HashMap<Integer,int[]>();
@@ -408,10 +404,9 @@ public class MERT
       double[] initialScore = new double[1+initsPerIt];
       double[] finalScore = new double[1+initsPerIt];
 
-//      SentenceInfo[][] best1Cand = new SentenceInfo[1+initsPerIt][numSentences];
-        // used to calculate initialScore[]
       String[][] best1Cand_sen = new String[1+initsPerIt][numSentences];
       double[][] best1Score = new double[1+initsPerIt][numSentences];
+        // used to calculate initialScore[]
 
 
       println("Reading candidate translations.",2);
@@ -484,11 +479,7 @@ public class MERT
 
               existingCandidates.add(sents_str);
 
-//              SentenceInfo candidate = new SentenceInfo();
-
               setFeats(featVal_array,i,lastUsedIndex,maxIndex,featVal);
-//              candidate.setLocationInfo(it,n);
-//              candidates[i].add(candidate);
               candCount[i] += 1;
               ++totalCandidateCount;
               if (it == iteration) {
@@ -506,14 +497,7 @@ public class MERT
         } // for (it)
 
       } // for (i)
-/*
-      for (int i = 0; i < numSentences; ++i) {
-        for (int j = 1; j <= initsPerIt; ++j) {
-          best1Cand[j][i] = new SentenceInfo(best1Cand_sen[j][i]);
-          best1Cand_sen[j][i] = null;
-        }
-      }
-*/
+
       for (int it = 1; it <= iteration; ++it) {
         inFile_sents[it].close();
         inFile_feats[it].close();
@@ -549,7 +533,6 @@ public class MERT
 
         double[] currLambda = new double[1+numParams];
         System.arraycopy(initialLambda[j],1,currLambda,1,numParams);
-//        initialScore[j] = evalMetric.score(best1Cand[j]);
         initialScore[j] = evalMetric.score(best1Cand_sen[j]);
         println("Initial lambda[j=" + j + "]: " + lambdaToString(initialLambda[j]),1);
         println("(Initial score[j=" + j + "]: " + initialScore[j] + ")",1);
@@ -651,7 +634,6 @@ public class MERT
 
       printMemoryUsage();
       for (int i = 0; i < numSentences; ++i) {
-//        candidates[i].clear();
         suffStats_array[i].clear();
       }
 //      cleanupMemory();
@@ -750,18 +732,11 @@ public class MERT
 
 
 
-/*
-    if (useDisk == 2) {
-      // process the decoder output files, and read the sentences corresponding to the
-      // candidates of interest (use the info in indicesOfInterest to determine them)
+//    if (useDisk == 2) {
 
-      setSentencesOfInterest(indicesOfInterest,candidates);
+      set_suffStats_array(suffStats_array,indicesOfInterest,candCount);
 
-    } // if (useDisk == 2)
-*/
-
-
-    set_suffStats_array(suffStats_array,indicesOfInterest,candCount);
+//    } // if (useDisk == 2)
 
 
 
@@ -788,23 +763,16 @@ public class MERT
 
 
 
-
     // delete according to indicesOfInterest
 
     printMemoryUsage();
 
 //    if (useDisk == 2) {
-      // delete the sentences from the candidates formerly of interest
 
       for (int i = 0; i < numSentences; ++i) {
-/*
-        Iterator It2 = indicesOfInterest[i].iterator();
-        while (It2.hasNext()) {
-          int nextIndex = (Integer)It2.next();
-          ((SentenceInfo)candidates[i].elementAt(nextIndex)).deleteSentence();
-        }
-*/
+
         indicesOfInterest[i].clear();
+
       }
 
 //    }
@@ -923,7 +891,6 @@ public class MERT
 
     // Now, set suffStats[][], and increment suffStats_tot[]
     for (int i = 0; i < numSentences; ++i) {
-//      suffStats[i] = evalMetric.suffStats((SentenceInfo)candidates[i].elementAt(indexOfCurrBest[i]),i);
       suffStats[i] = suffStats_array[i].get(indexOfCurrBest[i]);
 
       for (int s = 0; s < suffStatsCount; ++s) {
@@ -959,7 +926,6 @@ public class MERT
         }
 
         indexOfCurrBest[i] = new_k;
-//        suffStats[i] = evalMetric.suffStats((SentenceInfo)candidates[i].elementAt(indexOfCurrBest[i]),i);
         suffStats[i] = suffStats_array[i].get(indexOfCurrBest[i]);
 
         for (int s = 0; s < suffStatsCount; ++s) {
@@ -1307,8 +1273,6 @@ public class MERT
 
 //      if (useDisk == 2) {
         // add indexOfCurrBest[i] to indicesOfInterest
-//        short loc_it = ((SentenceInfo)candidates[i].elementAt(indexOfMax)).getLocationInfo_it();
-//        short loc_cand = ((SentenceInfo)candidates[i].elementAt(indexOfMax)).getLocationInfo_cand();
         indicesOfInterest[i].add(indexOfMax);
 //      }
 
@@ -1373,7 +1337,6 @@ line format:
       candidate_str = line.substring(0,line.indexOf(" |||"));
       feats_str = line.substring(line.indexOf("||| ")+4); // get rid of candidate
       feats_str = feats_str.substring(0,feats_str.indexOf(" |||"));
-//      stats = evalMetric.suffStats((new SentenceInfo(candidate_str)),i);
       stats = evalMetric.suffStats(candidate_str,i);
 
       writeLine(candidate_str, outFile_sents);
@@ -1991,55 +1954,7 @@ line format:
 //    println("",3);
     return discardedIndices;
   } // indicesToDiscard(double[] slope, double[] offset)
-/*
-  private void setSentencesOfInterest(TreeSet[] indicesOfInterest, Vector[] candidates) throws Exception
-  {
-    // process the merged decoder output file, and read the candidates
-    // of interest
-    BufferedReader inFile = new BufferedReader(new FileReader(decoderOutFileName+".temp.merged"));
-    String line, candidate_str;
 
-    for (int i = 0; i < numSentences; ++i) {
-      int numCandidates = candidates[i].size();
-
-      int currCand = 0;
-      Iterator It = indicesOfInterest[i].iterator();
-
-      while (It.hasNext()) {
-        int nextIndex = (Integer)It.next();
-
-        // skip candidates until you get to the nextKey'th candidate
-        while (currCand < nextIndex) {
-          line = inFile.readLine();
-          ++currCand;
-        }
-
-        // now currCand == nextIndex, and the next line in inFile contains the sentence we want
-
-//        line = inFile.readLine();
-//        ++currCand;
-//        line = line.substring(line.indexOf("||| ")+4); // get rid of initial text
-//        candidate_str = line.substring(0,line.indexOf(" |||"));
-
-        candidate_str = inFile.readLine();
-        ++currCand;
-
-        ((SentenceInfo)candidates[i].elementAt(nextIndex)).setSentence(candidate_str);
-
-      }
-
-      // skip the rest of ith sentence's candidates
-      while (currCand < numCandidates) {
-        line = inFile.readLine();
-        ++currCand;
-      }
-
-    }
-
-    inFile.close();
-
-  } // setSentencesOfInterest(TreeSet[] indicesOfInterest, Vector[] candidates)
-*/
   private void set_suffStats_array(HashMap<Integer,int[]>[] suffStats_array, TreeSet<Integer>[] indicesOfInterest, int[] candCount) throws Exception
   {
     // process the merged sufficient statistics file, and read (and store) the
