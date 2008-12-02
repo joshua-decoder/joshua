@@ -19,6 +19,7 @@ package joshua.sarray;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -75,7 +76,8 @@ public class ExtractRulesTest {
 		
 		{
 			File targetFile = File.createTempFile("target", new Date().toString());
-			PrintStream targetPrintStream = new PrintStream(targetFile, "UTF-8");
+			PrintWriter targetPrintStream = new PrintWriter(targetFile, "UTF-8");
+//			PrintStream targetPrintStream = new PrintStream(targetFile, "UTF-8");
 			targetPrintStream.println(targetCorpusString);
 			targetPrintStream.close();
 			targetFileName = targetFile.getAbsolutePath();
