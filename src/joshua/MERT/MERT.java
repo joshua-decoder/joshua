@@ -258,6 +258,8 @@ public class MERT
     // do necessary initialization for the evaluation metric
     if (metricName.equals("BLEU")) {
       evalMetric = new BLEU(4,"closest");
+    } else if (metricName.equals("BLEU_SBP")) {
+      evalMetric = new BLEU_SBP(4,"closest");
     } else if (metricName.equals("01LOSS")) {
       evalMetric = new ZeroOneLoss();
     } else if (metricName.equals("UserMetric1")) {
@@ -296,7 +298,7 @@ public class MERT
     println("",1);
 
 
-    if (decoderCommand == null) {
+    if (decoderCommand == null && fakeFileNamePrefix == null) {
       myDecoder = new JoshuaDecoder();
       println("Loading Joshua decoder...",1);
       myDecoder.initializeDecoder(decoderConfigFileName);
@@ -331,10 +333,26 @@ public class MERT
     println("Initial lambda[]: " + lambdaToString(lambda),1);
     println("",1);
 
-    int totalCandidateCount = 0;
-      // total number of candidates stored in candidates[]
-
     double FINAL_score = evalMetric.worstPossibleScore();
+
+
+    double[][][] featVal_array = new double[1+numParams][][]; // indexed by [param][sentence][candidate]
+    featVal_array[0] = null; // param indexing starts at 1
+    for (int c = 1; c <= numParams; ++c) {
+      featVal_array[c] = new double[numSentences][sizeOfNBest];
+        // will grow dynamically as needed
+    }
+    int[] lastUsedIndex = new int[numSentences];
+    int[] maxIndex = new int[numSentences];
+      // used to grow featVal_array dynamically
+    HashMap<Integer,int[]>[] suffStats_array = new HashMap[numSentences];
+      // suffStats_array[i] maps candidates of interest for sentence i to an array
+      // storing the sufficient statistics for that candidate
+    for (int i = 0; i < numSentences; ++i) {
+      lastUsedIndex[i] = -1;
+      maxIndex[i] = sizeOfNBest - 1;
+      suffStats_array[i] = new HashMap<Integer,int[]>();
+    }
 
     for (int iteration = 1; ; ++iteration) {
 
@@ -379,23 +397,11 @@ public class MERT
         renameFile(decoderOutFileName,decoderOutFileName+".MERT.it"+iteration);
       }
 
-
-
       int[] candCount = new int[numSentences];
-      for (int i = 0; i < numSentences; ++i) { candCount[i] = 0; }
-      double[][][] featVal_array = new double[1+numParams][numSentences][sizeOfNBest];
-      featVal_array[0] = null;
-      int[] lastUsedIndex = new int[numSentences];
-      int[] maxIndex = new int[numSentences];
-        // used to grow featVal_array dynamically
-      HashMap[] suffStats_array = new HashMap[numSentences];
-        // suffStats_array[i] maps candidates of interest for sentence i to an array
-        // storing the sufficient statistics for that candidate
-
       for (int i = 0; i < numSentences; ++i) {
+        candCount[i] = 0;
         lastUsedIndex[i] = -1;
-        maxIndex[i] = sizeOfNBest - 1;
-        suffStats_array[i] = new HashMap<Integer,int[]>();
+        suffStats_array[i].clear();
       }
 
       double[][] initialLambda = new double[1+initsPerIt][1+numParams]; // the intermediate "initial" lambdas
@@ -427,7 +433,7 @@ public class MERT
       BufferedReader[] inFile_sents = new BufferedReader[1+iteration];
       BufferedReader[] inFile_feats = new BufferedReader[1+iteration];
       BufferedReader[] inFile_stats = new BufferedReader[1+iteration];
-      for (int it = 1; it <= iteration; ++it) {
+      for (int it = firstIt; it <= iteration; ++it) {
         inFile_sents[it] = new BufferedReader(new FileReader(decoderOutFileName+".temp.sents.it"+it));
         inFile_feats[it] = new BufferedReader(new FileReader(decoderOutFileName+".temp.feats.it"+it));
         inFile_stats[it] = new BufferedReader(new FileReader(decoderOutFileName+".temp.stats.it"+it));
@@ -438,9 +444,13 @@ public class MERT
 
       String sents_str, feats_str, stats_str;
 
-      for (int i = 0; i < numSentences; ++i) {
+      HashSet<String> existingCandidates = new HashSet<String>();
+      double[] currFeatVal = new double[1+numParams];
+      String[] featVal_str;
 
-        HashSet<String> existingCandidates = new HashSet<String>();
+      int totalCandidateCount = 0;
+
+      for (int i = 0; i < numSentences; ++i) {
 
         for (int j = 1; j <= initsPerIt; ++j) {
 //          best1Cand[j][i] = null;
@@ -463,12 +473,10 @@ public class MERT
 
               outFile_stats.println(stats_str);
 
-              String[] featVal_str = feats_str.split("\\s+");
-
-              double[] featVal = new double[1+numParams];
+              featVal_str = feats_str.split("\\s+");
 
               for (int c = 1; c <= numParams; ++c) {
-                featVal[c] = Double.parseDouble(featVal_str[c-1]);
+                currFeatVal[c] = Double.parseDouble(featVal_str[c-1]);
 //                print("fV[" + c + "]=" + featVal[c] + " ",3);
               }
 //              println("",3);
@@ -477,7 +485,7 @@ public class MERT
               for (int j = 1; j <= initsPerIt; ++j) {
                 double score = 0;
                 for (int c = 1; c <= numParams; ++c) {
-                  score += initialLambda[j][c] * featVal[c];
+                  score += initialLambda[j][c] * currFeatVal[c];
                 }
                 if (score > best1Score[j][i]) {
                   best1Score[j][i] = score;
@@ -487,9 +495,9 @@ public class MERT
 
               existingCandidates.add(sents_str);
 
-              setFeats(featVal_array,i,lastUsedIndex,maxIndex,featVal);
+              setFeats(featVal_array,i,lastUsedIndex,maxIndex,currFeatVal);
               candCount[i] += 1;
-              ++totalCandidateCount;
+//              ++totalCandidateCount;
 
               newCandidatesAdded[it] += 1;
 //              if (it == iteration) {
@@ -505,6 +513,7 @@ public class MERT
         } // for (it)
 
         existingCandidates.clear();
+        totalCandidateCount += candCount[i];
 
       } // for (i)
 
@@ -520,6 +529,7 @@ public class MERT
 
 //      cleanupMemory();
 
+      println("Processed " + totalCandidateCount + " distinct candidates (about " + totalCandidateCount/numSentences + " per sentence):",2);
       for (int it = firstIt; it <= iteration; ++it) {
         println("newCandidatesAdded[it=" + it + "] = " + newCandidatesAdded[it] + " (about " + newCandidatesAdded[it]/numSentences + " per sentence)",2);
       }
@@ -538,6 +548,15 @@ public class MERT
         }
       }
 
+      TreeMap<Double,TreeMap>[] thresholdsAll = new TreeMap[1+numParams];
+      thresholdsAll[0] = null;
+      for (int c = 1; c <= numParams; ++c) {
+        if (isOptimizable[c]) {
+          thresholdsAll[c] = new TreeMap<Double,TreeMap>();
+        } else {
+          thresholdsAll[c] = null;
+        }
+      }
 
       for (int j = 1; j <= initsPerIt; ++j) {
 
@@ -556,7 +575,6 @@ public class MERT
         int c_best = 0; // which param to change?
         double bestLambdaVal = 0; // what value to change to?
         double bestScore = 0; // what score would be achieved?
-        TreeMap[] thresholdsAll = new TreeMap[1+numParams];
 
         while (true) {
 
@@ -693,7 +711,7 @@ public class MERT
 
     // prep for line_opt
 
-    TreeSet[] indicesOfInterest = null;
+    TreeSet<Integer>[] indicesOfInterest = null;
     // indicesOfInterest[i] tells us which candidates for the ith sentence need
     // to be read from the merged decoder output file.
 
@@ -709,11 +727,11 @@ public class MERT
     for (int c = 1; c <= numParams; ++c) {
       if (!isOptimizable[c]) {
         println("Not investigating lambda[j=" + j + "][" + c + "].",2);
-        thresholdsAll[c] = null;
       } else {
         if (c != lastChanged_c) {
           println("Investigating lambda[j=" + j + "][" + c + "]...",2);
-          thresholdsAll[c] = thresholdsForParam(c,candCount,featVal_array,currLambda,indicesOfInterest);
+//          thresholdsAll[c] = thresholdsForParam(c,candCount,featVal_array,currLambda,indicesOfInterest);
+          set_thresholdsForParam(thresholdsAll[c],c,candCount,featVal_array,currLambda,indicesOfInterest);
         } else {
           println("Keeping thresholds for lambda[j=" + j + "][" + c + "] from previous step.",2);
         }
@@ -825,14 +843,22 @@ public class MERT
       println("Running fake decoder (making copy of " + fakeFileNamePrefix+iteration + ")...",1);
       copyFile(fakeFileNamePrefix+iteration,decoderOutFileName);
     } else if (decoderCommand == null) {
-      println("Running Joshua decoder...",1);
+
+      if (myDecoder == null) {
+        myDecoder = new JoshuaDecoder();
+        println("Loading Joshua decoder...",1);
+        myDecoder.initializeDecoder(decoderConfigFileName);
+        println("...finished loading @ " + (new Date()),1);
+      }
+
+      println("Running Joshua decoder on source file " + sourceFileName + "...",1);
 //      myDecoder.initializeDecoder(decoderConfigFileName);
       double[] zeroBased_lambda = new double[numParams];
       System.arraycopy(lambda,1,zeroBased_lambda,0,numParams);
       myDecoder.changeFeatureWeightVector(zeroBased_lambda);
       myDecoder.decodingTestSet(sourceFileName, decoderOutFileName);
     } else {
-      println("Running decoder...",1);
+      println("Running external decoder...",1);
 
       Runtime rt = Runtime.getRuntime();
       Process p = rt.exec(decoderCommand);
@@ -919,18 +945,18 @@ public class MERT
     double nextLambdaVal = bestLambdaVal;
 //    println("At lambda[" + c + "] = " + bestLambdaVal + ",\t" + metricName + " = " + bestScore + " (*)",3);
 
-    Iterator It = (thresholdsAll.keySet()).iterator();
-    if (It.hasNext()) { ip_curr = (Double)It.next(); }
+    Iterator<Double> It = (thresholdsAll.keySet()).iterator();
+    if (It.hasNext()) { ip_curr = It.next(); }
 
     while (It.hasNext()) {
       ip_prev = ip_curr;
-      ip_curr = (Double)It.next();
+      ip_curr = It.next();
       nextLambdaVal = (ip_prev + ip_curr)/2.0;
 
       TreeMap<Integer,int[]> th_info_M = thresholdsAll.get(ip_prev);
-      Iterator It2 = (th_info_M.keySet()).iterator();
+      Iterator<Integer> It2 = (th_info_M.keySet()).iterator();
       while (It2.hasNext()) {
-        int i = (Integer)It2.next();
+        int i = It2.next();
         int[] th_info = th_info_M.get(i);
         int old_k = th_info[0]; // should be equal to indexOfCurrBest[i]
         int new_k = th_info[1];
@@ -984,7 +1010,8 @@ public class MERT
   } // double[] line_opt(int c)
 
 
-  private TreeMap<Double,TreeMap> thresholdsForParam(int c, int[] candCount, double[][][] featVal_array, double[] currLambda, TreeSet<Integer>[] indicesOfInterest)
+//  private TreeMap<Double,TreeMap> thresholdsForParam(int c, int[] candCount, double[][][] featVal_array, double[] currLambda, TreeSet<Integer>[] indicesOfInterest)
+  private void set_thresholdsForParam(TreeMap<Double,TreeMap> thresholdsAll, int c, int[] candCount, double[][][] featVal_array, double[] currLambda, TreeSet<Integer>[] indicesOfInterest)
   {
 /*
     TreeMap[] thresholds = new TreeMap[numSentences];
@@ -1001,7 +1028,8 @@ public class MERT
 //    TreeMap<Double,int[]> thresholds = new TreeMap<Double,int[]>();
 
     // Find threshold points
-    TreeMap<Double,TreeMap> thresholdsAll = new TreeMap<Double,TreeMap>();
+//    TreeMap<Double,TreeMap> thresholdsAll = new TreeMap<Double,TreeMap>();
+    thresholdsAll.clear();
 
     int ipCount = 0;
     for (int i = 0; i < numSentences; ++i) {
@@ -1101,6 +1129,16 @@ public class MERT
         // steepest *ascent* (i.e. max slope), and so we continue finding
         // intersection points until we hit that line.
 
+        // Notice that we didn't have to investigate the entire space (-Inf,+Inf)
+        // if the parameter's range is more restricted than that.  That is why, in
+        // the loop above, the "left-most" winner is not necessarily the one with
+        // the steepest descent (though it will be if minValue[c] is -Inf).
+        // And similarly, the "right-most" winner is not necessarily the one with
+        // the steepest ascent (though it will be if minValue[c] is +Inf).  The
+        // point of doing this is to avoid extracting thresholds that will end up
+        // being discarded anyway due to range constraints, this saving us a little
+        // bit of time.
+
       int last_new_k = -1;
 
       while (currIndex != maxSlopeIndex) {
@@ -1195,10 +1233,10 @@ public class MERT
 //      println("",3);
 
 /*
-      Iterator It = (thresholds.keySet()).iterator();
+      Iterator<Double> It = (thresholds.keySet()).iterator();
       int[] th_info = null;
       while (It.hasNext()) { // process intersection points contributed by this sentence
-        double ip = (Double)It.next();
+        double ip = It.next();
         if (ip > minValue[c] && ip < maxValue[c]) {
           th_info = thresholds.get(ip);
           if (!thresholdsAll.containsKey(ip)) {
@@ -1255,7 +1293,7 @@ public class MERT
       }
     }
 
-    return thresholdsAll;
+//    return thresholdsAll;
 
   } // TreeMap<Double,TreeMap> thresholdsForParam (int c)
 
@@ -1659,33 +1697,53 @@ line format:
 
     } // while (i)
 
-    if (dirPrefix != null) {
-      if (sourceFileName != null) {
-        sourceFileName = fullPath(dirPrefix,sourceFileName);
-      }
+    if (dirPrefix != null) { // append dirPrefix to file names
       refFileName = fullPath(dirPrefix,refFileName);
       decoderOutFileName = fullPath(dirPrefix,decoderOutFileName);
       paramsFileName = fullPath(dirPrefix,paramsFileName);
-      if (finalLambdaFileName != null) {
-        finalLambdaFileName = fullPath(dirPrefix,finalLambdaFileName);
-      }
-      if (decoderCommandFileName != null) {
-        decoderCommandFileName = fullPath(dirPrefix,decoderCommandFileName);
-      }
       decoderConfigFileName = fullPath(dirPrefix,decoderConfigFileName);
-      if (fakeFileNamePrefix != null) {
-        fakeFileNamePrefix = fullPath(dirPrefix,fakeFileNamePrefix);
-      }
+
+      if (sourceFileName != null) { sourceFileName = fullPath(dirPrefix,sourceFileName); }
+      if (finalLambdaFileName != null) { finalLambdaFileName = fullPath(dirPrefix,finalLambdaFileName); }
+      if (decoderCommandFileName != null) { decoderCommandFileName = fullPath(dirPrefix,decoderCommandFileName); }
+      if (fakeFileNamePrefix != null) { fakeFileNamePrefix = fullPath(dirPrefix,fakeFileNamePrefix); }
     }
 
     checkFile(paramsFileName);
     checkFile(decoderConfigFileName);
-    if (decoderCommandFileName == null && fakeFileNamePrefix == null) {
-      checkFile(sourceFileName);
+
+    boolean canRunCommand = fileExists(decoderCommandFileName);
+    boolean canRunJoshua = fileExists(sourceFileName);
+    boolean canRunFake = (fakeFileNamePrefix != null);
+
+    if (!canRunCommand && !canRunJoshua) { // can only run fake decoder
+
+      if (!canRunFake) {
+        println("MERT cannot decode; must provide one of: command file (for external decoder),");
+        println("                                         source file (for Joshua decoder),");
+        println("                                      or prefix for existing output files (for fake decoder).");
+        System.exit(11);
+      }
+
+      int lastGoodIt = 0;
+      for (int it = 1; it <= maxMERTIterations; ++it) {
+        if (fileExists(fakeFileNamePrefix+it)) {
+          lastGoodIt = it;
+        } else {
+          break; // from for (it) loop
+        }
+      }
+
+      if (lastGoodIt > 0) {
+        println("Warning: can only run fake decoder; existing output files are only available for the first " + lastGoodIt + "iteration(s).",1);
+      } else {
+        println("Fake decoder cannot find first output file " + (fakeFileNamePrefix+1));
+        System.exit(12);
+      }
+
     }
-    if (decoderCommandFileName != null) {
-      checkFile(decoderCommandFileName);
-    }
+
+
 
     if (refsPerSen > 1) {
       // the provided refFileName might be a prefix
@@ -1719,6 +1777,7 @@ line format:
 
   private boolean fileExists(String fileName)
   {
+    if (fileName == null) return false;
     File checker = new File(fileName);
     return checker.exists();
   }
@@ -1993,10 +2052,10 @@ line format:
       int numCandidates = candCount[i];
 
       int currCand = 0;
-      Iterator It = indicesOfInterest[i].iterator();
+      Iterator<Integer> It = indicesOfInterest[i].iterator();
 
       while (It.hasNext()) {
-        int nextIndex = (Integer)It.next();
+        int nextIndex = It.next();
 
         // skip candidates until you get to the nextIndex'th candidate
         while (currCand < nextIndex) {
@@ -2040,7 +2099,7 @@ line format:
 fake:
 -----
 ex2_N300:
-java -javaagent:shiftone-jrat.jar -Xmx300m -cp bin joshua.MERT.MERT_runner -dir MERT_example -s src.txt -r ref.all -rps 4 -cmd decoder_command_ex2.txt -dcfg config_ex2.txt -decOut nbest_ex2.out -N 300 -p params.txt -maxIt 25 -opi 0 -ipi 20 -v 2 -rand 0 -seed 1226091488390 -save 1 -fake nbest_ex2.out.N300.it > ex2_N300ipi20opi0_300max+defratios.itxx.noMemRep.bugFixes.monitored.txt
+java -javaagent:shiftone-jrat.jar -Xmx300m -cp bin joshua.MERT.MERT_runner -dir MERT_example -s src.txt -r ref.all -rps 4 -cmd decoder_command_ex2.txt -dcfg config_ex2.txt -decOut nbest_ex2.out -N 300 -p params.txt -maxIt 25 -opi 0 -ipi 20 -v 2 -rand 0 -seed 1226091488390 -save 1 -fake nbest_ex2.out.N300.it > ex2_N300ipi20opi0_300max+defratios.it10.noMemRep.bugFixes.monitored.txt
 
 ex2_N500:
 java -javaagent:shiftone-jrat.jar -Xmx300m -cp bin joshua.MERT.MERT_runner -dir MERT_example -s src.txt -r ref.all -rps 4 -cmd decoder_command_ex2.txt -dcfg config_ex2.txt -decOut nbest_ex2.out -N 500 -p params.txt -maxIt 25 -opi 0 -ipi 20 -v 2 -rand 0 -seed 1226091488390 -save 1 -fake nbest_ex2.out.N500.it > ex2_N500ipi20opi0_300max+defratios.itxx.noMemRep.bugFixes.monitored.txt
@@ -2054,11 +2113,11 @@ java -javaagent:shiftone-jrat.jar -Xmx300m -cp bin joshua.MERT.MERT_runner -dir 
 gen:
 ----
 ex2_N300:
-make sure top_n=300 in config_ex2.txt
+make sure top_n=300 in MERT_example\config_ex2.txt
 java -javaagent:shiftone-jrat.jar -Xmx300m -cp bin joshua.MERT.MERT_runner -dir MERT_example -s src.txt -r ref.all -rps 4 -cmd decoder_command_ex2.txt -dcfg config_ex2.txt -decOut nbest_ex2.out -N 300 -p params.txt -maxIt 25 -opi 0 -ipi 20 -v 2 -rand 0 -seed 1226091488390 -save 1 > ex2_N300ipi20opi0_300max+defratios.itxx.monitored.txt.gen
 
 ex2_N500:
-make sure top_n=500 in config_ex2.txt
+make sure top_n=500 in MERT_example\config_ex2.txt
 java -javaagent:shiftone-jrat.jar -Xmx300m -cp bin joshua.MERT.MERT_runner -dir MERT_example -s src.txt -r ref.all -rps 4 -cmd decoder_command_ex2.txt -dcfg config_ex2.txt -decOut nbest_ex2.out -N 500 -p params.txt -maxIt 25 -opi 0 -ipi 20 -v 2 -rand 0 -seed 1226091488390 -save 1 > ex2_N500ipi20opi0_300max+defratios.itxx.monitored.txt.gen
 
 exL_N300__600max:

@@ -44,7 +44,7 @@ public class MERT_runner
     println(" (*) -r refFile: target sentences (reference translations) of the MERT dataset\n       [[default: reference.txt]]");
     println(" (*) -rps refsPerSen: number of reference translations per sentence\n       [[default: 1]]");
     println(" (*) -p paramsFile: file containing parameter names, initial values, and ranges\n       [[default: params.txt]]");
-    println(" (*) -fin finalLambda: file name for final lambda[] values\n       [[default: null string (i.e. no such file is produced)]]");
+    println(" (*) -fin finalLambda: file name for final lambda[] values\n       [[default: null string (i.e. no such file is created)]]");
     println("");
     println("MERT specs:");
     println(" (*) -m metricName: name of the evaluation metric optimized by MERT\n       [[default: BLEU]]");
