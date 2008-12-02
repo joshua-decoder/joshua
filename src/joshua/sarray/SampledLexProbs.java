@@ -425,7 +425,7 @@ public class SampledLexProbs implements LexicalProbabilities {
 		
 		Map<Integer,Float> targetProbs = new HashMap<Integer,Float>();
 		for (Map.Entry<Integer,Integer> entry : counts.entrySet()) {
-			int targetWord = entry.getKey();
+			Integer targetWord = entry.getKey();
 			float prob = ((float) entry.getValue())/total;
 			if (logger.isLoggable(Level.FINEST)) logger.finest("Setting p(" +targetVocab.getWord(entry.getKey()) + " | " + sourceVocab.getWord(sourceWord) + ") = " + prob + "; sourceWord ID == " + sourceWord + "; targetWord ID == " + targetWord);
 			targetProbs.put(targetWord, prob);
