@@ -1,5 +1,7 @@
 package joshua.util;
 import joshua.MERT.*;
+import java.math.*;
+import java.util.*;
 import java.io.*;
 import java.text.DecimalFormat;
 
@@ -19,10 +21,8 @@ public class JoshuaEval
   static int refsPerSen;
     // number of reference translations per sentence
 
-  static SentenceInfo[][] refSentenceInfo;
-    // sentence information for the reference translations
-    // refSentenceInfo[i][r] stores the information for the rth reference
-    // translation of the ith sentence
+  static String[][] refSentences;
+    // refSentences[i][r] is the rth reference translation of the ith sentence
 
   static int maxGramLength;
     // maximum gram length; needed for the SentenceInfo class
@@ -96,16 +96,12 @@ public class JoshuaEval
     }
 
     // read the candidates
-    SentenceInfo[] candSentenceInfo = new SentenceInfo[numSentences];
+//    SentenceInfo[] candSentenceInfo = new SentenceInfo[numSentences];
+    String[] topCand_str = new String[numSentences];
 
     BufferedReader inFile = new BufferedReader(new FileReader(inFileName));
-    
-    String candidate_str;
+    String line, candidate_str;
 
-    //TODO The variable line is never used. Perhaps it should be removed?
-    @SuppressWarnings("unused")
-	String line;
-    
     for (int i = 0; i < numSentences; ++i) {
 
       for (int n = 0; n < testIndex; ++n){
@@ -116,7 +112,8 @@ public class JoshuaEval
       // read candidate testIndex
       candidate_str = inFile.readLine();
 
-      candSentenceInfo[i] = new SentenceInfo(candidate_str);
+//      candSentenceInfo[i] = new SentenceInfo(candidate_str);
+      topCand_str[i] = candidate_str;
 
       for (int n = testIndex+1; n < candPerSen; ++n){
       // skip candidates testIndex+1 through candPerSen-1
@@ -127,13 +124,13 @@ public class JoshuaEval
 
     inFile.close();
 
-    evalMetric.printDetailedScore(candSentenceInfo,false);
+    evalMetric.printDetailedScore(topCand_str,false);
 
     if (verbose) {
       println("Printing detailed scores for individual sentences...");
       for (int i = 0; i < numSentences; ++i) {
         print("Sentence #" + i + ": ");
-        evalMetric.printDetailedScore(candSentenceInfo[i],i,true);
+        evalMetric.printDetailedScore(topCand_str[i],i,true);
           // already prints a \n
       }
     }
@@ -234,15 +231,14 @@ public class JoshuaEval
 //    SentenceInfo.setNumParams(1); // dummy value for numParams
 
     // read in reference sentences
-    refSentenceInfo = new SentenceInfo[numSentences][refsPerSen];
+    refSentences = new String[numSentences][refsPerSen];
     BufferedReader inFile_refs = new BufferedReader(new FileReader(refFileName));
     String line;
 
     for (i = 0; i < numSentences; ++i) {
       for (int r = 0; r < refsPerSen; ++r) {
         // read the rth reference translation for the ith sentence
-        line = inFile_refs.readLine();
-        refSentenceInfo[i][r] = new SentenceInfo(line);
+        refSentences[i][r] = inFile_refs.readLine();
       }
     }
 
@@ -252,7 +248,7 @@ public class JoshuaEval
     // set static data members for the EvaluationMetric class
     EvaluationMetric.set_numSentences(numSentences);
     EvaluationMetric.set_refsPerSen(refsPerSen);
-    EvaluationMetric.set_refSentenceInfo(refSentenceInfo);
+    EvaluationMetric.set_refSentences(refSentences);
 
     // do necessary initialization for the evaluation metric
     if (metricName.equals("BLEU")) {
@@ -359,11 +355,10 @@ public class JoshuaEval
   private static void println(Object obj) { System.out.println(obj); }
   private static void print(Object obj) { System.out.print(obj); }
 
-// TODO This method is never used - perhaps it should be removed
-//  private static void showProgress()
-//  {
-//    ++progress;
-//    if (progress % 1000 == 0) print(".");
-//  }
+  private static void showProgress()
+  {
+    ++progress;
+    if (progress % 1000 == 0) print(".");
+  }
 
 }
