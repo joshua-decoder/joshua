@@ -200,6 +200,7 @@ public class NbestMinRiskReranker  {
 			double normalized_prob = Math.exp(nbest_logps.get(i)*scaling_factor-normalization_constant);
 			t_sum+= normalized_prob;
 			nbest_logps.set(i, normalized_prob);
+			if(Double.isNaN(normalized_prob)){System.out.println("prob is NaN, must be wrong");	System.exit(1);}
 			//System.out.println("probability: " + normalized_prob);
 		}
 		
