@@ -108,6 +108,11 @@ public class PrefixTree {
 	/** Represents a very high cost, corresponding to a very unlikely probability. */
 	private static final float VERY_UNLIKELY = -1.0f * (float) Math.log(1.0e-9);
 	
+	/** */
+	static boolean SENTENCE_INITIAL_X = false;
+	
+	/** */
+	static boolean SENTENCE_FINAL_X = false;
 	
 	static final int ROOT_NODE_ID = -999;
 	static final int BOT_NODE_ID = -2000;
@@ -256,8 +261,11 @@ public class PrefixTree {
 
 		{	Pattern xpattern = new Pattern(vocab,X);
 			
+			int start = START_OF_SENTENCE;
+			if (!SENTENCE_INITIAL_X) start += 1;
+		
 			// 4: for i from 1 to I
-			for (int i=START_OF_SENTENCE+1; i<=END_OF_SENTENCE; i++) {
+			for (int i=start; i<=END_OF_SENTENCE; i++) {
 				//if (logger.isLoggable(Level.FINEST)) logger.finest("Adding tuple (" + (i-1) + ","+(i)+","+root+",{"+X+","+intToString(sentence[i])+"})");
 				if (logger.isLoggable(Level.FINEST)) logger.finest("Adding tuple (X," + (i-1) + ","+ i +","+xnode +")");
 				
@@ -798,8 +806,11 @@ public class PrefixTree {
 	 */
 	private void extendQueue(Queue<Tuple> queue, int i, int j, int[] sentence, Pattern pattern, Node node) {
 
+		int J = j;
+		if (!SENTENCE_FINAL_X) J += 1;
+		
 		// 1: if |alpha| < MaxPhraseLength  and  j-i+1<=MaxPhraseSpan then 
-		if (pattern.size() < maxPhraseLength  &&  (j+1)-i+1 <= maxPhraseSpan  && (j+1)<sentence.length) {
+		if (pattern.size() < maxPhraseLength  &&  (j+1)-i+1 <= maxPhraseSpan  && J<sentence.length) {
 
 			// 2: Add <alpha f_j, i, j+1, p_alpha> to queue
 			//    (add new tuple to the queue)
@@ -855,14 +866,12 @@ public class PrefixTree {
 				// For efficiency, don't add any tuples to the queue whose patterns would exceed the max allowed number of tokens
 				if (pattern.words.length+2 <= maxPhraseLength) {
 					
-					int I = sentence.length-1;
+					int I = sentence.length;
+					if (!SENTENCE_FINAL_X) I -= 1;
+					
 					//int min = (I<i+maxPhraseLength) ? I : i+maxPhraseLength-1;
 					int min = (I<i+maxPhraseSpan) ? I : i+maxPhraseSpan-1;
 					Pattern patternX = new Pattern(pattern, X);
-
-					if (patternX.toString().equals("[( le X ]")) {
-						int q=1; q++;
-					}
 
 					// 7: for k from j+1 to min(I, i+MaxPhraseLength) do
 					for (int k=j+2; k<=min; k++) {

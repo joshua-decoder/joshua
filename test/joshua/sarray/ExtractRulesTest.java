@@ -98,10 +98,12 @@ public class ExtractRulesTest {
 	 * Extracts rules and returns the file name where the extracted rules are stored.
 	 * 
 	 * @param testCorpusString
+	 * @param sentenceInitialX TODO
+	 * @param sentenceFinalX TODO
 	 * @return
 	 * @throws IOException 
 	 */
-	private List<String> extractRules(String testCorpusString) throws IOException {
+	private List<String> extractRules(String testCorpusString, boolean sentenceInitialX, boolean sentenceFinalX) throws IOException {
 		
 		String testFileName;
 		{
@@ -120,6 +122,8 @@ public class ExtractRulesTest {
 		}
 		
 		String[] args = {
+				"--sentence-initial-X="+sentenceInitialX,
+				"--sentence-final-X="+sentenceFinalX,
 				"--maxPhraseLength=5",
 				"--source="+sourceFileName,
 				"--target="+targetFileName,
@@ -158,7 +162,7 @@ public class ExtractRulesTest {
 	@Test(dependsOnMethods={"setup"})
 	public void testRuleSet1() throws IOException {
 		
-		List<String> lines = extractRules("it");
+		List<String> lines = extractRules("it", false, false);
 		
 		Assert.assertEquals(lines.size(), 2);
 		
@@ -177,9 +181,34 @@ public class ExtractRulesTest {
 	}
 	
 	@Test(dependsOnMethods={"setup"})
+	public void testRuleSet1Expanded() throws IOException {
+		
+		List<String> lines = extractRules("it", true, true);
+		
+		Assert.assertEquals(lines.size(), 6);
+		
+		int n = 0;
+		verifyLine(lines.get(n++), "[X]", "[X,1] it [X,2]", "[X,1] es [X,2]");
+		verifyLine(lines.get(n++), "[X]", "[X,1] it", "[X,1] es");
+		verifyLine(lines.get(n++), "[X]", "it [X,1]", "das [X,1]");
+		verifyLine(lines.get(n++), "[X]", "it [X,1]", "es [X,1]");
+		verifyLine(lines.get(n++), "[X]", "it", "das");
+		verifyLine(lines.get(n++), "[X]", "it", "es");
+		
+//		From Hiero:
+//		[X] ||| [X,1] it ||| [X,1] es ||| 0.124938733876 -0.0 0.124938733876
+//		[X] ||| it [X,1] ||| es [X,1] ||| 0.124938733876 -0.0 0.124938733876
+//		[X] ||| it [X,1] ||| das [X,1] ||| 0.60206001997 -0.0 0.60206001997
+//		[X] ||| [X,1] it [X,2] ||| [X,1] es [X,2] ||| 0.124938733876 -0.0 0.124938733876
+//		[X] ||| it ||| das ||| 0.60206001997 -0.0 0.60206001997
+//		[X] ||| it ||| es ||| 0.124938733876 -0.0 0.124938733876
+
+	}
+	
+	@Test(dependsOnMethods={"setup"})
 	public void testRuleSet2() throws IOException {
 		
-		List<String> lines = extractRules("it makes");
+		List<String> lines = extractRules("it makes", false, false);
 		
 		Assert.assertEquals(lines.size(), 6);
 		
@@ -208,7 +237,7 @@ public class ExtractRulesTest {
 	@Test(dependsOnMethods={"setup"})
 	public void testRuleSet3() throws IOException {
 		
-		List<String> lines = extractRules("it makes him");
+		List<String> lines = extractRules("it makes him", false, false);
 		
 		Assert.assertEquals(lines.size(), 23-9);
 		
@@ -258,7 +287,7 @@ public class ExtractRulesTest {
 	@Test(dependsOnMethods={"setup"})
 	public void testRuleSet18() throws IOException {
 		
-		List<String> lines = extractRules("it makes him and it mars him , it sets him on yet it takes him off .");
+		List<String> lines = extractRules("it makes him and it mars him , it sets him on yet it takes him off .", false, false);
 		
 		
 		Assert.assertEquals(lines.size(), 922);
