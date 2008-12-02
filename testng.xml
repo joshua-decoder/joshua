@@ -49,7 +49,7 @@
   <test name="SuffixArray" >
     <classes>
        <class name="joshua.sarray.SuffixArrayTest" /> 
-       <class name="joshua.sarray.ExtractRules" />    
+       <class name="joshua.sarray.ExtractRulesTest" />    
     </classes>
   </test>
 

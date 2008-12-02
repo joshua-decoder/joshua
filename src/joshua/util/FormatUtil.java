@@ -16,6 +16,8 @@
  */
 package joshua.util;
 
+import java.io.PrintStream;
+import java.io.UnsupportedEncodingException;
 import java.util.regex.Pattern;
 
 /**
@@ -82,5 +84,26 @@ public class FormatUtil {
 			return false;
 	}
 	
+	/**
+	 * Set System.out and System.err to use the UTF8 character encoding.
+	 * 
+	 * @return <code>true</code> if both System.out and System.err 
+	 *         were successfully set to use UTF8,
+	 *         <code>false</code> otherwise.
+	 */
+	public static boolean useUTF8() {
+		
+		try {
+			System.setOut(new PrintStream(System.out, true, "UTF8"));
+			System.setErr(new PrintStream(System.err, true, "UTF8"));
+			return true;
+		} catch (UnsupportedEncodingException e1) {
+			System.err.println("UTF8 is not a valid encoding; using system default encoding for System.out and System.err.");
+			return false;
+		} catch (SecurityException e2) {
+			System.err.println("Security manager is configured to disallow changes to System.out or System.err; using system default encoding.");
+			return false;
+		}
+	}
 }
 
