@@ -1,0 +1,129 @@
+Processed the following args array:
+  -dir MERT_example -s src.txt -r ref -rps 4 -p params.txt -maxIt 2 -ipi 5 -cmd decoder_command_ex2.txt -decOut nbest_ex2.out -dcfg config_ex2.txt -N 300 -v 1 -seed 12341234 -fake nbest_ex2.out.fake.it 
+
+----------------------------------------------------
+Initializing...
+----------------------------------------------------
+
+Random number generator seed: 12341234
+
+Warning: lambda[2] is optimizable but has initial value (1.066893)
+         that is outside its specified interval [-1.0,1.0]
+numSentences = 100
+numParams = 5
+  {"lm","phrasemodel pt 0","phrasemodel pt 1","phrasemodel pt 2","wordpenalty"}
+
+c    initial	optimizable?    range
+1    1.0000	   Yes          [0.5,1.5]
+2    1.0669	   Yes          [-1.0,1.0]
+3    0.7522	   Yes          [-1.0,1.0]
+4    0.5898	   Yes          [-1.0,1.0]
+5    -2.8448	   Yes          [-5.0,0.0]
+
+----------------------------------------------------
+
+----------------------------------------------------
+MERT run started @ Tue Dec 02 23:14:04 EST 2008
+----------------------------------------------------
+
+Initial lambda[]: {1.0, 1.066893, 0.752247, 0.589793, -2.844814}
+
+--- Starting MERT iteration #1 @ Tue Dec 02 23:14:04 EST 2008 ---
+Decoding using initial weight vector {1.0, 1.066893, 0.752247, 0.589793, -2.844814}
+Running external decoder...
+...finished decoding @ Tue Dec 02 23:16:57 EST 2008
+
++++ Optimization of lambda[j=1] starting @ Tue Dec 02 23:17:00 EST 2008 +++
+Initial lambda[j=1]: {1.0, 1.066893, 0.752247, 0.589793, -2.844814}
+(Initial score[j=1]: 0.5315878325038089)
+
+Final lambda[j=1]: {1.472881669956492, 0.845880073019682, 0.8973064679748799, -0.20775136845796222, -2.844814}
+(Final score[j=1]: 0.5629581261584371)
+
++++ Optimization of lambda[j=2] starting @ Tue Dec 02 23:17:01 EST 2008 +++
+Initial lambda[j=2]: {0.9913845907274932, -0.6577977590753961, 0.46016061237234096, -0.5203200954373215, -2.262048059500863}
+(Initial score[j=2]: 0.5507235012718978)
+
+Final lambda[j=2]: {1.064862597065697, 0.4283377575186086, 0.5767242181075545, -0.46488329839005016, -1.5057547803312556}
+(Final score[j=2]: 0.5633816633950698)
+
++++ Optimization of lambda[j=3] starting @ Tue Dec 02 23:17:01 EST 2008 +++
+Initial lambda[j=3]: {0.9702632542004074, -0.6919952429797738, -0.8743327758402839, -0.6393613928095458, -0.5655106188328114}
+(Initial score[j=3]: 0.5379260462835211)
+
+Final lambda[j=3]: {0.9426089077313671, -0.15479784202473462, 0.764282091288035, -0.6393613928095458, -0.6382373430216332}
+(Final score[j=3]: 0.561861083593104)
+
++++ Optimization of lambda[j=4] starting @ Tue Dec 02 23:17:01 EST 2008 +++
+Initial lambda[j=4]: {1.3246918939072398, -0.5778133794884044, 0.2815800420089276, 0.15636862697411513, -0.8651160558376816}
+(Initial score[j=4]: 0.5463222206187416)
+
+Final lambda[j=4]: {1.3246918939072398, 0.13147169071095832, 0.2815800420089276, -0.9815082879146984, -1.3464367021115993}
+(Final score[j=4]: 0.5608010553508939)
+
++++ Optimization of lambda[j=5] starting @ Tue Dec 02 23:17:01 EST 2008 +++
+Initial lambda[j=5]: {1.1633493083131994, 0.009245077311689887, -0.9330111163449395, 0.6515944996339995, -2.279895055260242}
+(Initial score[j=5]: 0.5241401509002395)
+
+Final lambda[j=5]: {1.1593654767682184, 0.10720781610804561, 0.704199154669472, 0.13506059239642942, -2.279895055260242}
+(Final score[j=5]: 0.5617115224613879)
+
+Best final lambda is lambda[j=2] (score: 0.5634).
+
+Next iteration will decode with lambda: {1.064862597065697, 0.4283377575186086, 0.5767242181075545, -0.46488329839005016, -1.5057547803312556}
+
+---  MERT iteration #1 ending @ Tue Dec 02 23:17:02 EST 2008  ---
+
+--- Starting MERT iteration #2 @ Tue Dec 02 23:17:02 EST 2008 ---
+Redecoding using weight vector {1.064862597065697, 0.4283377575186086, 0.5767242181075545, -0.46488329839005016, -1.5057547803312556}
+Running external decoder...
+...finished decoding @ Tue Dec 02 23:19:43 EST 2008
+
++++ Optimization of lambda[j=1] starting @ Tue Dec 02 23:19:47 EST 2008 +++
+Initial lambda[j=1]: {1.064862597065697, 0.4283377575186086, 0.5767242181075545, -0.46488329839005016, -1.5057547803312556}
+(Initial score[j=1]: 0.49162556348365827)
+
+Final lambda[j=1]: {1.3910676004625644, 0.40219548621377443, 0.8520918984088794, -0.19911744752711164, -1.286642722138014}
+(Final score[j=1]: 0.5716966222849925)
+
++++ Optimization of lambda[j=2] starting @ Tue Dec 02 23:19:48 EST 2008 +++
+Initial lambda[j=2]: {1.4897502865040284, -0.004553671263154424, 0.8593774528720801, -0.01427276865927607, -1.236557087720195}
+(Initial score[j=2]: 0.5608016974200574)
+
+Final lambda[j=2]: {0.950297745221141, 0.21374708118989239, 0.6151842648567973, -0.040907206697614086, -1.236557087720195}
+(Final score[j=2]: 0.5712891594714438)
+
++++ Optimization of lambda[j=3] starting @ Tue Dec 02 23:19:48 EST 2008 +++
+Initial lambda[j=3]: {0.7143221888272017, -0.8739358729264859, 0.7980226618452084, -0.399205792984231, -3.8694784413312346}
+(Initial score[j=3]: 0.4150891528301671)
+
+Final lambda[j=3]: {0.8785630745808388, -0.8533952097156983, 0.8205280987197607, 0.9953276519443206, -2.178631238484773}
+(Final score[j=3]: 0.5541975736787302)
+
++++ Optimization of lambda[j=4] starting @ Tue Dec 02 23:19:49 EST 2008 +++
+Initial lambda[j=4]: {1.2972965063840105, -0.2974935383022126, 0.3275255626321376, -0.21052430917292875, -0.0454218308093175}
+(Initial score[j=4]: 0.5256005025240078)
+
+Final lambda[j=4]: {0.8406614850003286, 0.00508423852822072, 0.8890008809123134, -0.21052430917292875, -0.0454218308093175}
+(Final score[j=4]: 0.5695041971525324)
+
++++ Optimization of lambda[j=5] starting @ Tue Dec 02 23:19:49 EST 2008 +++
+Initial lambda[j=5]: {0.5948565625062981, 0.03753776574773382, 0.00790321507749736, 0.03620028521108054, -2.47511438964637}
+(Initial score[j=5]: 0.44515957316847027)
+
+Final lambda[j=5]: {0.6084359392501362, 0.016512452694389574, 0.14289841823620075, 0.5002022290160296, -2.390061628160896}
+(Final score[j=5]: 0.5578930650341198)
+
+Best final lambda is lambda[j=1] (score: 0.5717).
+
+Maximum number of MERT iterations reached; exiting MERT.
+
+---  MERT iteration #2 ending @ Tue Dec 02 23:19:50 EST 2008  ---
+
+
+----------------------------------------------------
+MERT run ended @ Tue Dec 02 23:19:50 EST 2008
+----------------------------------------------------
+
+FINAL lambda: {1.3910676004625644, 0.40219548621377443, 0.8520918984088794, -0.19911744752711164, -1.286642722138014} (score: 0.5716966222849925)
+

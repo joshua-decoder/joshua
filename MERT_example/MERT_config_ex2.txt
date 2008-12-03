@@ -1,25 +1,25 @@
 ### Commonly used parameters
--dir	MERT_example # location of relevant files
--s	src.txt # source sentences file name
--r	ref # target sentences file name (in this case, file name prefix)
--rps	4 # references per sentence
--p	params.txt # parameter file
--maxIt	15 # maximum MERT iterations
--ipi	3 # number of intermediate initial points per iteration
+-dir	MERT_example            # directory prefix (i.e. location of relevant files)
+-s	src.txt                 # source sentences file name
+-r	ref                     # target sentences file name (in this case, file name prefix)
+-rps	4                       # references per sentence
+-p	params.txt              # parameter file
+-maxIt	2                       # maximum MERT iterations
+-ipi	5                       # number of intermediate initial points per iteration
 -cmd	decoder_command_ex2.txt # file containing command to run decoder
--decOut	nbest_ex2.out # file prodcued by decoder
--dcfg	config_ex2.txt # decoder config file
--N	300 # size of N-best list generated each iteration
--v	1 # verbosity level (0-4; higher value => more verbose)
+-decOut	nbest_ex2.out           # file prodcued by decoder
+-dcfg	config_ex2.txt          # decoder config file
+-N	300                     # size of N-best list generated each iteration
+-v	1                       # verbosity level (0-2; higher value => more verbose)
+-seed   12341234                # random number generator seed
 
 # Notice that comments are allowed
 
-### Other parameters and their default values
-#-fin final_lambda.txt # output file for final values
-#-m BLEU # name of evaluation metric
-#-save 1 # should MERT save intermediate config and decoder output files?
-#-opi 0 # modify at most one parameter per iteration?
-#-rand 0 # should first initial point (of first iteration) be initialized randomly?
-#-seed time # random number generator seeding (see documentation)
-#-decExit 0 # return value by decoder indicating success
-#-decV 0 # should decoder output be printed?
+### Other parameters (run MERT_runner with no arguments for default values)
+#-fin     # output file for final values
+#-m       # name of evaluation metric
+#-save    # should MERT save intermediate config files or decoder output files? (or both? or neither?)
+#-opi     # should MERT modify at most one parameter per iteration?
+#-rand    # should first initial point (of first iteration) be initialized randomly?
+#-decExit # return value by decoder indicating success
+#-decV    # should decoder output be printed

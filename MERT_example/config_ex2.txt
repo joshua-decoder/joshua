@@ -49,9 +49,9 @@ parallel_files_prefix=/tmp/
 lm 1.0
 
 #phrasemodel owner column(0-indexed) weight
-phrasemodel pt 0 0.14238850789871677
-phrasemodel pt 1 0.9836989640463296
-phrasemodel pt 2 -0.321052149641214
+phrasemodel pt 0 1.066893
+phrasemodel pt 1 0.752247
+phrasemodel pt 2 0.589793
 
 #arityphrasepenalty owner start_arity end_arity weight
 #arityphrasepenalty pt 0 0 1.0
@@ -60,5 +60,5 @@ phrasemodel pt 2 -0.321052149641214
 #phrasemodel mono 0 0.5
 
 #wordpenalty weight
-wordpenalty -0.2293431468603258
+wordpenalty -2.844814
 
