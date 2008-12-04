@@ -24,11 +24,11 @@ public class JoshuaEval
   static String[][] refSentences;
     // refSentences[i][r] is the rth reference translation of the ith sentence
 
-  static int maxGramLength;
-    // maximum gram length; needed for the SentenceInfo class
-
   static String metricName;
     // name of evaluation metric
+
+  static String[] metricOptions;
+    // options for the evaluation metric (e.g. for BLEU, maxGramLength and effLengthMethod)
 
   static EvaluationMetric evalMetric;
     // the evaluation metric
@@ -40,6 +40,12 @@ public class JoshuaEval
     // file names for input files.  When refsPerSen > 1, refFileName can be
     // the name of a single file, or a file name prefix.
 
+  static String candFileFormat;
+    // format of the candidate file: "plain" if one candidate per sentence, and "nbest" if a decoder output
+
+  static int candRank;
+    // if format is nbest, evaluate the r'th candidate of each sentence
+
   public static void main(String[] args) throws Exception
   {
     if (args.length == 0) {
@@ -50,8 +56,13 @@ public class JoshuaEval
     }
     // non-specified args will be set to default values in processArgsAndInitialize
 
-    println("Evaluating candidate translations in " + candFileName + "...");
-    evaluate(candFileName, 1, 0);
+    if (candFileFormat.equals("plain")) {
+      println("Evaluating candidate translations in plain file " + candFileName + "...");
+      evaluateCands_plain(candFileName);
+    } else {
+      println("Evaluating set of " + candRank + "'th candidate translations from " + candFileName + "...");
+      evaluateCands_nbest(candFileName,candRank);
+    }
     println("");
 
     if (evaluateRefs) {
@@ -65,7 +76,7 @@ public class JoshuaEval
 
       for (int r = 0; r < refsPerSen; ++r) {
         println("Evaluating reference set " + r + ":");
-        evaluate(refFileName, refsPerSen, r);
+        evaluateRefSet(r);
         println("");
       }
     }
@@ -74,50 +85,115 @@ public class JoshuaEval
 
   } // main(String[] args)
 
-
-
-  private static void evaluate(String inFileName, int candPerSen, int testIndex) throws Exception
+  private static void evaluateCands_plain(String inFileName) throws Exception
   {
-    // test that the translations in inFileName get the expected scores
+    evaluate(candFileName, "plain", 1, 1);
+  }
 
+  private static void evaluateCands_nbest(String inFileName, int testIndex) throws Exception
+  {
+    evaluate(candFileName, "nbest", -1, testIndex);
+  }
+
+  private static void evaluateRefSet(int r) throws Exception
+  {
+    evaluate(refFileName, "plain", refsPerSen, r);
+  }
+
+  private static void evaluate(String inFileName, String inFileFormat, int candPerSen, int testIndex) throws Exception
+  {
     // candPerSen: how many candidates are provided per sentence?
+    //             (if inFileFormat is nbest, then candPerSen is ignored, since it is variable)
     // testIndex: which of the candidates (for each sentence) should be tested?
-    //            e.g. testIndex=0 means first candidate should be evaluated
-    //                 testIndex=candPerSen-1 means last candidate should be evaluated
+    //            e.g. testIndex=1 means first candidate should be evaluated
+    //                 testIndex=candPerSen means last candidate should be evaluated
 
-    if (candPerSen < 0) {
-      println("candPerSen must be positive.");
+    if (inFileFormat.equals("plain") && candPerSen < 1) {
+      println("candPerSen must be positive for a file in plain format.");
       System.exit(30);
     }
 
-    if (testIndex < 0 || testIndex > candPerSen-1) {
-      println("testIndex must be in [0,candPerSen-1]");
+    if (testIndex < 1 || testIndex > candPerSen) {
+      println("testIndex must be in [1,candPerSen]");
       System.exit(31);
     }
 
     // read the candidates
-//    SentenceInfo[] candSentenceInfo = new SentenceInfo[numSentences];
     String[] topCand_str = new String[numSentences];
 
     BufferedReader inFile = new BufferedReader(new FileReader(inFileName));
     String line, candidate_str;
 
-    for (int i = 0; i < numSentences; ++i) {
+    if (inFileFormat.equals("plain")) {
 
-      for (int n = 0; n < testIndex; ++n){
-      // skip candidates 0 through testIndex-1
-        line = inFile.readLine();
-      }
+      for (int i = 0; i < numSentences; ++i) {
 
-      // read candidate testIndex
-      candidate_str = inFile.readLine();
+        // skip candidates 1 through testIndex-1
+        for (int n = 1; n < testIndex; ++n){
+          line = inFile.readLine();
+        }
 
-//      candSentenceInfo[i] = new SentenceInfo(candidate_str);
-      topCand_str[i] = candidate_str;
+        // read testIndex'th candidate
+        candidate_str = inFile.readLine();
 
-      for (int n = testIndex+1; n < candPerSen; ++n){
-      // skip candidates testIndex+1 through candPerSen-1
-        line = inFile.readLine();
+        topCand_str[i] = candidate_str;
+
+        for (int n = testIndex+1; n < candPerSen; ++n){
+        // skip candidates testIndex+1 through candPerSen-1
+          line = inFile.readLine();
+        }
+
+      } // for (i)
+
+    } else { // nbest format
+
+      int i = 0; int n = 1;
+      line = inFile.readLine();
+
+      while (line != null) {
+
+/*
+line format:
+
+.* ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numParams_val .*
+
+*/
+
+        while (n < candRank) {
+          line = inFile.readLine();
+          ++n;
+        }
+
+        // at the moment, line stores the candRank'th candidate (1-indexed) of the i'th sentence (0-indexed)
+
+        if (line == null) {
+          println("Not enough candidates in " + inFileName + " to extract the " + candRank + "'th candidate for each sentence.");
+          println("(Failed to extract one for the " + i + "'th sentence (0-indexed).)");
+          System.exit(32);
+        }
+
+        int read_i = Integer.parseInt(line.substring(0,line.indexOf(" |||")));
+        if (read_i == i) {
+          line = line.substring(line.indexOf("||| ")+4); // get rid of initial text
+          candidate_str = line.substring(0,line.indexOf(" |||"));
+          topCand_str[i] = candidate_str;
+          while (read_i == i) {
+            line = inFile.readLine();
+            read_i = Integer.parseInt(line.substring(0,line.indexOf(" |||")));
+          }
+          n = 1;
+          i += 1;
+        } else {
+          println("Not enough candidates in " + inFileName + " to extract the " + candRank + "'th candidate for each sentence.");
+          println("(Failed to extract one for the " + i + "'th sentence (0-indexed).)");
+          System.exit(32);
+        }
+
+      } // while (line != null)
+
+      if (i != numSentences) {
+        println("");
+        System.exit(33);
       }
 
     }
@@ -144,17 +220,19 @@ public class JoshuaEval
     println("Oops, you provided " + argsLen + " args!");
     println("");
     println("Usage:");
-    println(" JoshuaEval [-cand candFile] [-ref refFile] [-rps refsPerSen]\n            [-maxGL maxGramLength] [-m metricName] [-evr evalRefs] \n            [-v verbose]");
+    println(" JoshuaEval [-cand candFile] [-ref refFile] [-rps refsPerSen]\n            [-m metricName metric options] [-evr evalRefs] \n            [-v verbose]");
     println("");
     println(" (*) -cand candFile: candidate translations\n       [[default: candidates.txt]]");
-    println(" (*) -ref refFile: reference translations\n       [[default: references.txt]]");
+    println(" (*) -format candFileFormat: is the candidate file a plain file (one candidate\n       per sentence) or does it contain multiple candidates per sentence (as in\n       Joshua decoder's output)?  For the first, use \"plain\".  For the second,\n       use \"nbest\".\n       [[default: nbest]]");
+    println(" (*) -rank r: if format=nbest, evaluate the set of r'th candidates.\n       [[default: 1]]");
+    println(" (*) -ref refFile: reference translations (or file name prefix)\n       [[default: references.txt]]");
     println(" (*) -rps refsPerSen: number of reference translations per sentence\n       [[default: 1]]");
     println(" (*) -maxGL maxGramLength: maximum word gram length to collect statistics for\n       [[default: 4]]");
-    println(" (*) -m metricName: name of evaluation metric\n       [[default: BLEU]]");
+    println(" (*) -m metricName metric options: name of evaluation metric and its options\n       [[default: BLEU 4 closest]]");
     println(" (*) -evr evalRefs: evaluate references (1) or not (0) (sanity check)\n       [[default: 0]]");
     println(" (*) -v verbose: evaluate individual sentences (1) or not (0)\n       [[default: 0]]");
     println("");
-    println("Ex.: java JoshuaEval -cand output.txt -ref refFile -rps 4");
+    println("Ex.: java JoshuaEval -cand output.txt -ref refFile -rps 4 -m BLEU 4 shortest");
   }
 
 
@@ -164,9 +242,10 @@ public class JoshuaEval
 
     // set default values
     candFileName = "candidates.txt";
+    candFileFormat = "nbest";
+    candRank = 1;
     refFileName = "reference.txt";
     refsPerSen = 1;
-    maxGramLength = 4;
     metricName = "BLEU";
     evaluateRefs = false;
     verbose = false;
@@ -176,18 +255,28 @@ public class JoshuaEval
     while (i < args.length) {
       String option = args[i];
       if (option.equals("-cand")) { candFileName = args[i+1]; }
+      else if (option.equals("-format")) {
+        candFileFormat = args[i+1];
+        if (!candFileFormat.equals("plain") && !candFileFormat.equals("nbest")) { println("candFileFormat must be either plain or nbest."); System.exit(10); }
+      }
+      else if (option.equals("-rank")) {
+        candRank = Integer.parseInt(args[i+1]);
+        if (refsPerSen < 1) { println("Argument for -rank must be positive."); System.exit(10); }
+      }
       else if (option.equals("-ref")) { refFileName = args[i+1]; }
       else if (option.equals("-rps")) {
         refsPerSen = Integer.parseInt(args[i+1]);
         if (refsPerSen < 1) { println("refsPerSen must be positive."); System.exit(10); }
       }
-      else if (option.equals("-maxGL")) {
-        maxGramLength = Integer.parseInt(args[i+1]);
-        if (maxGramLength < 1) { println("maxGramLength must be positive."); System.exit(10); }
-      }
       else if (option.equals("-m")) {
         metricName = args[i+1];
         if (!EvaluationMetric.knownMetricName(metricName)) { println("Unknown metric name " + metricName + "."); System.exit(10); }
+        if (metricName.equals("BLEU")) {
+          metricOptions = new String[2];
+          metricOptions[0] = args[i+2];
+          metricOptions[1] = args[i+3];
+          i += 2;
+        }
       }
       else if (option.equals("-evr")) {
         int evr = Integer.parseInt(args[i+1]);
@@ -221,14 +310,7 @@ public class JoshuaEval
 
 
     // initialize
-    numSentences = countLines(candFileName);
-
-    if (numSentences * refsPerSen != countLines(refFileName)) {
-      println("Line count mismatch between " + candFileName + " and " + refFileName);
-      System.exit(20);
-    }
-
-//    SentenceInfo.setNumParams(1); // dummy value for numParams
+    numSentences = countLines(refFileName) / refsPerSen;
 
     // read in reference sentences
     refSentences = new String[numSentences][refsPerSen];
@@ -252,7 +334,7 @@ public class JoshuaEval
 
     // do necessary initialization for the evaluation metric
     if (metricName.equals("BLEU")) {
-      evalMetric = new BLEU(maxGramLength,"closest");
+      evalMetric = new BLEU(Integer.parseInt(metricOptions[0]),metricOptions[1]);
     } else if (metricName.equals("01LOSS")) {
       evalMetric = new ZeroOneLoss();
     }
@@ -354,11 +436,5 @@ public class JoshuaEval
 
   private static void println(Object obj) { System.out.println(obj); }
   private static void print(Object obj) { System.out.print(obj); }
-
-  private static void showProgress()
-  {
-    ++progress;
-    if (progress % 1000 == 0) print(".");
-  }
 
 }
