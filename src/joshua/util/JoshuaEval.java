@@ -59,7 +59,7 @@ public class JoshuaEval
     if (candFileFormat.equals("plain")) {
       println("Evaluating candidate translations in plain file " + candFileName + "...");
       evaluateCands_plain(candFileName);
-    } else {
+    } else if (candFileFormat.equals("nbest")) {
       println("Evaluating set of " + candRank + "'th candidate translations from " + candFileName + "...");
       evaluateCands_nbest(candFileName,candRank);
     }
@@ -74,7 +74,7 @@ public class JoshuaEval
             + evalMetric.bestPossibleScore() + " (best).");
       println("");
 
-      for (int r = 0; r < refsPerSen; ++r) {
+      for (int r = 1; r <= refsPerSen; ++r) {
         println("Evaluating reference set " + r + ":");
         evaluateRefSet(r);
         println("");
@@ -220,19 +220,18 @@ line format:
     println("Oops, you provided " + argsLen + " args!");
     println("");
     println("Usage:");
-    println(" JoshuaEval [-cand candFile] [-ref refFile] [-rps refsPerSen]\n            [-m metricName metric options] [-evr evalRefs] \n            [-v verbose]");
+    println(" JoshuaEval [-cand candFile] [-format candFileformat] [-rank r]\n            [-ref refFile] [-rps refsPerSen] [-m metricName metric options]\n            [-evr evalRefs] [-v verbose]");
     println("");
     println(" (*) -cand candFile: candidate translations\n       [[default: candidates.txt]]");
     println(" (*) -format candFileFormat: is the candidate file a plain file (one candidate\n       per sentence) or does it contain multiple candidates per sentence (as in\n       Joshua decoder's output)?  For the first, use \"plain\".  For the second,\n       use \"nbest\".\n       [[default: nbest]]");
     println(" (*) -rank r: if format=nbest, evaluate the set of r'th candidates.\n       [[default: 1]]");
     println(" (*) -ref refFile: reference translations (or file name prefix)\n       [[default: references.txt]]");
     println(" (*) -rps refsPerSen: number of reference translations per sentence\n       [[default: 1]]");
-    println(" (*) -maxGL maxGramLength: maximum word gram length to collect statistics for\n       [[default: 4]]");
     println(" (*) -m metricName metric options: name of evaluation metric and its options\n       [[default: BLEU 4 closest]]");
     println(" (*) -evr evalRefs: evaluate references (1) or not (0) (sanity check)\n       [[default: 0]]");
     println(" (*) -v verbose: evaluate individual sentences (1) or not (0)\n       [[default: 0]]");
     println("");
-    println("Ex.: java JoshuaEval -cand output.txt -ref refFile -rps 4 -m BLEU 4 shortest");
+    println("Ex.: java JoshuaEval -cand nbest.out -ref ref.all -rps 4 -m BLEU 4 shortest");
   }
 
 
@@ -247,6 +246,9 @@ line format:
     refFileName = "reference.txt";
     refsPerSen = 1;
     metricName = "BLEU";
+    metricOptions = new String[2];
+    metricOptions[0] = "4";
+    metricOptions[1] = "closest";
     evaluateRefs = false;
     verbose = false;
 

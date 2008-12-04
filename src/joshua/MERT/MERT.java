@@ -529,9 +529,9 @@ public class MERT
 
 //      cleanupMemory();
 
-      println("Processed " + totalCandidateCount + " distinct candidates (about " + totalCandidateCount/numSentences + " per sentence):",2);
+      println("Processed " + totalCandidateCount + " distinct candidates (about " + totalCandidateCount/numSentences + " per sentence):",1);
       for (int it = firstIt; it <= iteration; ++it) {
-        println("newCandidatesAdded[it=" + it + "] = " + newCandidatesAdded[it] + " (about " + newCandidatesAdded[it]/numSentences + " per sentence)",2);
+        println("newCandidatesAdded[it=" + it + "] = " + newCandidatesAdded[it] + " (about " + newCandidatesAdded[it]/numSentences + " per sentence)",1);
       }
 
       println("",1);
