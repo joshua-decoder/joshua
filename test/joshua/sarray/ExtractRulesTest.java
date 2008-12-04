@@ -44,7 +44,7 @@ public class ExtractRulesTest {
 	// The following ruby one-liner can convert a Hiero grammar 
 	//     into useful Java assertions for unit testing:
 	//
-	// cat hiero.grammar | sort | ruby -e 'STDIN.each_line{ |line| words=line.split(" ||| "); puts "verifyLine(lines.get(n++), \"#{words[0]}\", \"#{words[1]}\", \"#{words[2]}\");"; }' > java-rules.txt
+	// cat hiero.grammar | sort | ruby -e 'STDIN.each_line{ |line| words=line.strip.split(" ||| "); puts "verifyLine(lines.get(n++), \"#{words[0]}\", \"#{words[1]}\", \"#{words[2]}\");"; }' > java-rules.txt
 	
 	String sourceFileName;
 	String targetFileName;
@@ -106,6 +106,10 @@ public class ExtractRulesTest {
 	 * @throws IOException 
 	 */
 	private List<String> extractRules(String testCorpusString, boolean sentenceInitialX, boolean sentenceFinalX) throws IOException {
+		return extractRules(sourceFileName, targetFileName, alignmentFileName, testCorpusString, sentenceInitialX, sentenceFinalX);
+	}
+	
+	private List<String> extractRules(String sourceFileName, String targetFileName, String alignmentFileName, String testCorpusString, boolean sentenceInitialX, boolean sentenceFinalX) throws IOException {
 		
 		String testFileName;
 		{
@@ -159,6 +163,271 @@ public class ExtractRulesTest {
 		Assert.assertEquals(part[0], lhs);
 		Assert.assertEquals(part[1], sourceRHS);
 		Assert.assertEquals(part[2], targetRHS);
+	}
+	
+	@Test
+	public void europarlSmall100() throws IOException {
+		
+		String sourceFileName = "data/europarl.es.small.100";
+		String targetFileName = "data/europarl.en.small.100";
+		String alignmentFileName = "data/es_en_europarl_alignments.txt.small.100";
+		
+		List<String> lines = extractRules(sourceFileName, targetFileName, alignmentFileName, "declaro reanudado el período de sesiones del parlamento europeo , interrumpido el viernes 17 de diciembre pasado , y reitero a sus señorías mi deseo de que hayan tenido unas buenas vacaciones .", true, true);
+
+		Assert.assertEquals(lines.size(), 539);
+		
+		int n = 0;
+	}
+	
+	@Test
+	public void europarlSmall1() throws IOException {
+		
+		String sourceFileName = "data/europarl.es.small.1";
+		String targetFileName = "data/europarl.en.small.1";
+		String alignmentFileName = "data/es_en_europarl_alignments.txt.small.1";
+		
+//		String testFileName = sourceFileName;
+//		
+//		int maxPhraseSpan = 10;
+//		int maxPhraseLength = 5;
+//		int maxNonterminals = 2;
+//		int ruleSampleSize = 300;
+//		int lexSampleSize = 1000;
+//		int cacheSize = 1000;
+//		
+//		PrefixTree tree = PrefixTree.getPrefixTree(sourceFileName,targetFileName,alignmentFileName,testFileName,maxPhraseSpan,maxPhraseLength,maxNonterminals,ruleSampleSize,lexSampleSize,cacheSize);
+//		
+//		FormatUtil.useUTF8();
+//		System.out.println(tree.toString());
+//		System.out.println(tree.size());
+//		
+//		System.out.println("****************************************************************");
+//		
+//		final Map<Integer,String> ntVocab = new HashMap<Integer,String>();
+//		ntVocab.put(PrefixTree.X, "X");
+//		
+//		final Vocabulary sourceVocab = tree.suffixArray.getVocabulary();
+//		final Vocabulary targetVocab = tree.targetCorpus.vocab;
+//		
+//		Comparator<Rule> compare = new Comparator<Rule>(){
+//			public int compare(Rule o1, Rule o2) {
+//				return o1.toString(ntVocab, sourceVocab, targetVocab).compareTo(o2.toString(ntVocab, sourceVocab, targetVocab));
+//			}
+//			
+//		};
+//		
+//		List<Rule> rules = tree.getAllRules();
+//		Collections.sort(rules,compare);
+//		
+//		for (Rule rule : rules) {
+//			System.out.println(rule.toString(ntVocab, sourceVocab, targetVocab));
+//		}
+//		
+//		System.out.println(rules.size());
+		
+		List<String> lines = extractRules(sourceFileName, targetFileName, alignmentFileName, "declaro reanudado el período de sesiones del parlamento europeo , interrumpido el viernes 17 de diciembre pasado , y reitero a sus señorías mi deseo de que hayan tenido unas buenas vacaciones .", true, true);
+
+		Assert.assertEquals(lines.size(), 197);
+		
+		int n = 0;
+		verifyLine(lines.get(n++), "[X]", ", [X,1] a [X,2]", ", [X,1] to wish [X,2]");
+		verifyLine(lines.get(n++), "[X]", ", [X,1] a sus señorías", ", [X,1] to wish you");
+		verifyLine(lines.get(n++), "[X]", ", [X,1] a", ", [X,1] to");
+		verifyLine(lines.get(n++), "[X]", ", [X,1] sus señorías", ", [X,1] wish you");
+		verifyLine(lines.get(n++), "[X]", ", [X,1]", ", [X,1]");
+		verifyLine(lines.get(n++), "[X]", ", y [X,1] sus señorías", ", and [X,1] wish you");
+		verifyLine(lines.get(n++), "[X]", ", y [X,1]", ", and [X,1]");
+		verifyLine(lines.get(n++), "[X]", ", y reitero [X,1]", ", and i would like once again [X,1]");
+		verifyLine(lines.get(n++), "[X]", ", y reitero a [X,1]", ", and i would like once again to wish [X,1]");
+		verifyLine(lines.get(n++), "[X]", ", y reitero a", ", and i would like once again to");
+		verifyLine(lines.get(n++), "[X]", ", y reitero", ", and i would like once again");
+		verifyLine(lines.get(n++), "[X]", ", y", ", and");
+		verifyLine(lines.get(n++), "[X]", ",", ",");
+		verifyLine(lines.get(n++), "[X]", ".", ".");
+		verifyLine(lines.get(n++), "[X]", "17 [X,1] , [X,2]", "17 [X,1] , [X,2]");
+		verifyLine(lines.get(n++), "[X]", "17 [X,1] , y reitero", "17 [X,1] , and i would like once again");
+		verifyLine(lines.get(n++), "[X]", "17 [X,1] , y", "17 [X,1] , and");
+		verifyLine(lines.get(n++), "[X]", "17 [X,1] ,", "17 [X,1] ,");
+		verifyLine(lines.get(n++), "[X]", "17 [X,1] reitero", "17 [X,1] i would like once again");
+		verifyLine(lines.get(n++), "[X]", "17 [X,1] y reitero", "17 [X,1] and i would like once again");
+		verifyLine(lines.get(n++), "[X]", "17 [X,1] y", "17 [X,1] and");
+		verifyLine(lines.get(n++), "[X]", "17 [X,1]", "17 [X,1]");
+		verifyLine(lines.get(n++), "[X]", "17 de diciembre pasado ,", "17 december 1999 ,");
+		verifyLine(lines.get(n++), "[X]", "17 de diciembre pasado [X,1]", "17 december 1999 [X,1]");
+		verifyLine(lines.get(n++), "[X]", "17 de diciembre pasado", "17 december 1999");
+		verifyLine(lines.get(n++), "[X]", "17", "17");
+		verifyLine(lines.get(n++), "[X]", "[X,1] , [X,2] 17", "[X,1] [X,2] 17");
+		verifyLine(lines.get(n++), "[X]", "[X,1] , [X,2] a", "[X,1] , [X,2] to");
+		verifyLine(lines.get(n++), "[X]", "[X,1] , [X,2]", "[X,1] , [X,2]");
+		verifyLine(lines.get(n++), "[X]", "[X,1] , interrumpido [X,2] 17", "[X,1] adjourned [X,2] 17");
+		verifyLine(lines.get(n++), "[X]", "[X,1] , interrumpido [X,2]", "[X,1] adjourned [X,2]");
+		verifyLine(lines.get(n++), "[X]", "[X,1] , interrumpido el viernes", "[X,1] adjourned on friday");
+		verifyLine(lines.get(n++), "[X]", "[X,1] , interrumpido", "[X,1] adjourned");
+		verifyLine(lines.get(n++), "[X]", "[X,1] , y [X,2]", "[X,1] , and [X,2]");
+		verifyLine(lines.get(n++), "[X]", "[X,1] , y reitero a", "[X,1] , and i would like once again to");
+		verifyLine(lines.get(n++), "[X]", "[X,1] , y reitero", "[X,1] , and i would like once again");
+		verifyLine(lines.get(n++), "[X]", "[X,1] , y", "[X,1] , and");
+		verifyLine(lines.get(n++), "[X]", "[X,1] ,", "[X,1] ,");
+		verifyLine(lines.get(n++), "[X]", "[X,1] .", "[X,1] .");
+		verifyLine(lines.get(n++), "[X]", "[X,1] 17 [X,2] , y", "[X,1] 17 [X,2] , and");
+		verifyLine(lines.get(n++), "[X]", "[X,1] 17 [X,2] ,", "[X,1] 17 [X,2] ,");
+		verifyLine(lines.get(n++), "[X]", "[X,1] 17 [X,2] y", "[X,1] 17 [X,2] and");
+		verifyLine(lines.get(n++), "[X]", "[X,1] 17 [X,2]", "[X,1] 17 [X,2]");
+		verifyLine(lines.get(n++), "[X]", "[X,1] 17 de diciembre pasado", "[X,1] 17 december 1999");
+		verifyLine(lines.get(n++), "[X]", "[X,1] 17", "[X,1] 17");
+		verifyLine(lines.get(n++), "[X]", "[X,1] a [X,2]", "[X,1] to wish [X,2]");
+		verifyLine(lines.get(n++), "[X]", "[X,1] a sus señorías", "[X,1] to wish you");
+		verifyLine(lines.get(n++), "[X]", "[X,1] a", "[X,1] to");
+		verifyLine(lines.get(n++), "[X]", "[X,1] de diciembre pasado ,", "[X,1] december 1999 ,");
+		verifyLine(lines.get(n++), "[X]", "[X,1] de diciembre pasado [X,2]", "[X,1] december 1999 [X,2]");
+		verifyLine(lines.get(n++), "[X]", "[X,1] de diciembre pasado", "[X,1] december 1999");
+		verifyLine(lines.get(n++), "[X]", "[X,1] de sesiones del [X,2]", "[X,1] session of [X,2]");
+		verifyLine(lines.get(n++), "[X]", "[X,1] de sesiones del", "[X,1] session of");
+		verifyLine(lines.get(n++), "[X]", "[X,1] el viernes 17 [X,2]", "[X,1] on friday 17 [X,2]");
+		verifyLine(lines.get(n++), "[X]", "[X,1] el viernes 17", "[X,1] on friday 17");
+		verifyLine(lines.get(n++), "[X]", "[X,1] el viernes [X,2]", "[X,1] on friday [X,2]");
+		verifyLine(lines.get(n++), "[X]", "[X,1] el viernes", "[X,1] on friday");
+		verifyLine(lines.get(n++), "[X]", "[X,1] hayan [X,2]", "[X,1] you [X,2]");
+		verifyLine(lines.get(n++), "[X]", "[X,1] hayan tenido [X,2]", "[X,1] you enjoyed [X,2]");
+		verifyLine(lines.get(n++), "[X]", "[X,1] hayan tenido", "[X,1] you enjoyed");
+		verifyLine(lines.get(n++), "[X]", "[X,1] hayan", "[X,1] you");
+		verifyLine(lines.get(n++), "[X]", "[X,1] mi [X,2] hayan", "[X,1] a happy new year [X,2] you");
+		verifyLine(lines.get(n++), "[X]", "[X,1] mi [X,2] que hayan", "[X,1] a happy new year [X,2] that you");
+		verifyLine(lines.get(n++), "[X]", "[X,1] mi [X,2] que", "[X,1] a happy new year [X,2] that");
+		verifyLine(lines.get(n++), "[X]", "[X,1] mi deseo de [X,2]", "[X,1] a happy new year in the hope [X,2]");
+		verifyLine(lines.get(n++), "[X]", "[X,1] mi deseo de que", "[X,1] a happy new year in the hope that");
+		verifyLine(lines.get(n++), "[X]", "[X,1] mi deseo de", "[X,1] a happy new year in the hope");
+		verifyLine(lines.get(n++), "[X]", "[X,1] parlamento europeo , [X,2]", "[X,1] the european parliament [X,2]");
+		verifyLine(lines.get(n++), "[X]", "[X,1] parlamento europeo , interrumpido", "[X,1] the european parliament adjourned");
+		verifyLine(lines.get(n++), "[X]", "[X,1] parlamento europeo", "[X,1] the european parliament");
+		verifyLine(lines.get(n++), "[X]", "[X,1] que [X,2]", "[X,1] that [X,2]");
+		verifyLine(lines.get(n++), "[X]", "[X,1] que hayan [X,2]", "[X,1] that you [X,2]");
+		verifyLine(lines.get(n++), "[X]", "[X,1] que hayan tenido [X,2]", "[X,1] that you enjoyed [X,2]");
+		verifyLine(lines.get(n++), "[X]", "[X,1] que hayan tenido", "[X,1] that you enjoyed");
+		verifyLine(lines.get(n++), "[X]", "[X,1] que hayan", "[X,1] that you");
+		verifyLine(lines.get(n++), "[X]", "[X,1] que", "[X,1] that");
+		verifyLine(lines.get(n++), "[X]", "[X,1] reitero [X,2]", "[X,1] i would like once again [X,2]");
+		verifyLine(lines.get(n++), "[X]", "[X,1] reitero a [X,2]", "[X,1] i would like once again to wish [X,2]");
+		verifyLine(lines.get(n++), "[X]", "[X,1] reitero a sus señorías", "[X,1] i would like once again to wish you");
+		verifyLine(lines.get(n++), "[X]", "[X,1] reitero a", "[X,1] i would like once again to");
+		verifyLine(lines.get(n++), "[X]", "[X,1] reitero", "[X,1] i would like once again");
+		verifyLine(lines.get(n++), "[X]", "[X,1] sus señorías", "[X,1] wish you");
+		verifyLine(lines.get(n++), "[X]", "[X,1] tenido [X,2] .", "[X,1] enjoyed [X,2] .");
+		verifyLine(lines.get(n++), "[X]", "[X,1] tenido [X,2]", "[X,1] enjoyed [X,2]");
+		verifyLine(lines.get(n++), "[X]", "[X,1] tenido unas buenas vacaciones", "[X,1] enjoyed a pleasant festive period");
+		verifyLine(lines.get(n++), "[X]", "[X,1] tenido", "[X,1] enjoyed");
+		verifyLine(lines.get(n++), "[X]", "[X,1] unas buenas vacaciones .", "[X,1] a pleasant festive period .");
+		verifyLine(lines.get(n++), "[X]", "[X,1] unas buenas vacaciones", "[X,1] a pleasant festive period");
+		verifyLine(lines.get(n++), "[X]", "[X,1] y [X,2]", "[X,1] and [X,2]");
+		verifyLine(lines.get(n++), "[X]", "[X,1] y reitero a", "[X,1] and i would like once again to");
+		verifyLine(lines.get(n++), "[X]", "[X,1] y reitero", "[X,1] and i would like once again");
+		verifyLine(lines.get(n++), "[X]", "[X,1] y", "[X,1] and");
+		verifyLine(lines.get(n++), "[X]", "a [X,1] mi [X,2]", "to wish [X,1] a happy new year [X,2]");
+		verifyLine(lines.get(n++), "[X]", "a [X,1] mi deseo de", "to wish [X,1] a happy new year in the hope");
+		verifyLine(lines.get(n++), "[X]", "a [X,1]", "to wish [X,1]");
+		verifyLine(lines.get(n++), "[X]", "a sus señorías mi [X,1]", "to wish you a happy new year [X,1]");
+		verifyLine(lines.get(n++), "[X]", "a sus señorías", "to wish you");
+		verifyLine(lines.get(n++), "[X]", "a", "to");
+		verifyLine(lines.get(n++), "[X]", "de diciembre pasado , [X,1]", "december 1999 , [X,1]");
+		verifyLine(lines.get(n++), "[X]", "de diciembre pasado , y", "december 1999 , and");
+		verifyLine(lines.get(n++), "[X]", "de diciembre pasado ,", "december 1999 ,");
+		verifyLine(lines.get(n++), "[X]", "de diciembre pasado [X,1] a", "december 1999 [X,1] to");
+		verifyLine(lines.get(n++), "[X]", "de diciembre pasado [X,1] reitero", "december 1999 [X,1] i would like once again");
+		verifyLine(lines.get(n++), "[X]", "de diciembre pasado [X,1]", "december 1999 [X,1]");
+		verifyLine(lines.get(n++), "[X]", "de diciembre pasado", "december 1999");
+		verifyLine(lines.get(n++), "[X]", "de sesiones del [X,1] 17", "session of [X,1] 17");
+		verifyLine(lines.get(n++), "[X]", "de sesiones del [X,1]", "session of [X,1]");
+		verifyLine(lines.get(n++), "[X]", "de sesiones del parlamento europeo", "session of the european parliament");
+		verifyLine(lines.get(n++), "[X]", "de sesiones del", "session of");
+		verifyLine(lines.get(n++), "[X]", "de", "in");
+		verifyLine(lines.get(n++), "[X]", "declaro reanudado el período [X,1]", "i declare resumed the [X,1]");
+		verifyLine(lines.get(n++), "[X]", "declaro reanudado el período", "i declare resumed the");
+		verifyLine(lines.get(n++), "[X]", "deseo de [X,1] tenido [X,2]", "in the hope [X,1] enjoyed [X,2]");
+		verifyLine(lines.get(n++), "[X]", "deseo de [X,1] tenido", "in the hope [X,1] enjoyed");
+		verifyLine(lines.get(n++), "[X]", "deseo de [X,1]", "in the hope [X,1]");
+		verifyLine(lines.get(n++), "[X]", "deseo de que [X,1]", "in the hope that [X,1]");
+		verifyLine(lines.get(n++), "[X]", "deseo de que hayan [X,1]", "in the hope that you [X,1]");
+		verifyLine(lines.get(n++), "[X]", "deseo de que hayan tenido", "in the hope that you enjoyed");
+		verifyLine(lines.get(n++), "[X]", "deseo de que hayan", "in the hope that you");
+		verifyLine(lines.get(n++), "[X]", "deseo de que", "in the hope that");
+		verifyLine(lines.get(n++), "[X]", "deseo de", "in the hope");
+		verifyLine(lines.get(n++), "[X]", "deseo", "hope");
+		verifyLine(lines.get(n++), "[X]", "el viernes 17 [X,1] ,", "on friday 17 [X,1] ,");
+		verifyLine(lines.get(n++), "[X]", "el viernes 17 [X,1] y", "on friday 17 [X,1] and");
+		verifyLine(lines.get(n++), "[X]", "el viernes 17 [X,1]", "on friday 17 [X,1]");
+		verifyLine(lines.get(n++), "[X]", "el viernes 17", "on friday 17");
+		verifyLine(lines.get(n++), "[X]", "el viernes [X,1] , y", "on friday [X,1] , and");
+		verifyLine(lines.get(n++), "[X]", "el viernes [X,1] ,", "on friday [X,1] ,");
+		verifyLine(lines.get(n++), "[X]", "el viernes [X,1] y", "on friday [X,1] and");
+		verifyLine(lines.get(n++), "[X]", "el viernes [X,1]", "on friday [X,1]");
+		verifyLine(lines.get(n++), "[X]", "el viernes", "on friday");
+		verifyLine(lines.get(n++), "[X]", "europeo", "the european");
+		verifyLine(lines.get(n++), "[X]", "hayan [X,1] .", "you [X,1] .");
+		verifyLine(lines.get(n++), "[X]", "hayan [X,1]", "you [X,1]");
+		verifyLine(lines.get(n++), "[X]", "hayan tenido [X,1] .", "you enjoyed [X,1] .");
+		verifyLine(lines.get(n++), "[X]", "hayan tenido [X,1]", "you enjoyed [X,1]");
+		verifyLine(lines.get(n++), "[X]", "hayan tenido unas buenas vacaciones", "you enjoyed a pleasant festive period");
+		verifyLine(lines.get(n++), "[X]", "hayan tenido", "you enjoyed");
+		verifyLine(lines.get(n++), "[X]", "hayan", "you");
+		verifyLine(lines.get(n++), "[X]", "interrumpido [X,1] , y", "adjourned [X,1] , and");
+		verifyLine(lines.get(n++), "[X]", "interrumpido [X,1] ,", "adjourned [X,1] ,");
+		verifyLine(lines.get(n++), "[X]", "interrumpido [X,1] 17 [X,2] ,", "adjourned [X,1] 17 [X,2] ,");
+		verifyLine(lines.get(n++), "[X]", "interrumpido [X,1] 17 [X,2] y", "adjourned [X,1] 17 [X,2] and");
+		verifyLine(lines.get(n++), "[X]", "interrumpido [X,1] 17 [X,2]", "adjourned [X,1] 17 [X,2]");
+		verifyLine(lines.get(n++), "[X]", "interrumpido [X,1] 17", "adjourned [X,1] 17");
+		verifyLine(lines.get(n++), "[X]", "interrumpido [X,1] de diciembre pasado", "adjourned [X,1] december 1999");
+		verifyLine(lines.get(n++), "[X]", "interrumpido [X,1] y", "adjourned [X,1] and");
+		verifyLine(lines.get(n++), "[X]", "interrumpido [X,1]", "adjourned [X,1]");
+		verifyLine(lines.get(n++), "[X]", "interrumpido el viernes 17 [X,1]", "adjourned on friday 17 [X,1]");
+		verifyLine(lines.get(n++), "[X]", "interrumpido el viernes 17", "adjourned on friday 17");
+		verifyLine(lines.get(n++), "[X]", "interrumpido el viernes [X,1] ,", "adjourned on friday [X,1] ,");
+		verifyLine(lines.get(n++), "[X]", "interrumpido el viernes [X,1] y", "adjourned on friday [X,1] and");
+		verifyLine(lines.get(n++), "[X]", "interrumpido el viernes [X,1]", "adjourned on friday [X,1]");
+		verifyLine(lines.get(n++), "[X]", "interrumpido el viernes", "adjourned on friday");
+		verifyLine(lines.get(n++), "[X]", "interrumpido", "adjourned");
+		verifyLine(lines.get(n++), "[X]", "parlamento europeo , [X,1] 17", "the european parliament [X,1] 17");
+		verifyLine(lines.get(n++), "[X]", "parlamento europeo , [X,1]", "the european parliament [X,1]");
+		verifyLine(lines.get(n++), "[X]", "parlamento europeo , interrumpido [X,1]", "the european parliament adjourned [X,1]");
+		verifyLine(lines.get(n++), "[X]", "parlamento europeo , interrumpido", "the european parliament adjourned");
+		verifyLine(lines.get(n++), "[X]", "parlamento europeo", "the european parliament");
+		verifyLine(lines.get(n++), "[X]", "parlamento", "parliament");
+		verifyLine(lines.get(n++), "[X]", "que [X,1] .", "that [X,1] .");
+		verifyLine(lines.get(n++), "[X]", "que [X,1] unas buenas vacaciones", "that [X,1] a pleasant festive period");
+		verifyLine(lines.get(n++), "[X]", "que [X,1]", "that [X,1]");
+		verifyLine(lines.get(n++), "[X]", "que hayan [X,1] .", "that you [X,1] .");
+		verifyLine(lines.get(n++), "[X]", "que hayan [X,1]", "that you [X,1]");
+		verifyLine(lines.get(n++), "[X]", "que hayan tenido [X,1] .", "that you enjoyed [X,1] .");
+		verifyLine(lines.get(n++), "[X]", "que hayan tenido [X,1]", "that you enjoyed [X,1]");
+		verifyLine(lines.get(n++), "[X]", "que hayan tenido", "that you enjoyed");
+		verifyLine(lines.get(n++), "[X]", "que hayan", "that you");
+		verifyLine(lines.get(n++), "[X]", "que", "that");
+		verifyLine(lines.get(n++), "[X]", "reitero [X,1]", "i would like once again [X,1]");
+		verifyLine(lines.get(n++), "[X]", "reitero a [X,1]", "i would like once again to wish [X,1]");
+		verifyLine(lines.get(n++), "[X]", "reitero a sus señorías", "i would like once again to wish you");
+		verifyLine(lines.get(n++), "[X]", "reitero a", "i would like once again to");
+		verifyLine(lines.get(n++), "[X]", "reitero", "i would like once again");
+		verifyLine(lines.get(n++), "[X]", "sesiones", "session");
+		verifyLine(lines.get(n++), "[X]", "sus señorías mi [X,1] hayan", "you a happy new year [X,1] you");
+		verifyLine(lines.get(n++), "[X]", "sus señorías mi [X,1] que", "you a happy new year [X,1] that");
+		verifyLine(lines.get(n++), "[X]", "sus señorías mi [X,1]", "you a happy new year [X,1]");
+		verifyLine(lines.get(n++), "[X]", "sus señorías mi deseo de", "you a happy new year in the hope");
+		verifyLine(lines.get(n++), "[X]", "sus señorías", "you");
+		verifyLine(lines.get(n++), "[X]", "tenido [X,1] .", "enjoyed [X,1] .");
+		verifyLine(lines.get(n++), "[X]", "tenido [X,1]", "enjoyed [X,1]");
+		verifyLine(lines.get(n++), "[X]", "tenido unas buenas vacaciones .", "enjoyed a pleasant festive period .");
+		verifyLine(lines.get(n++), "[X]", "tenido unas buenas vacaciones", "enjoyed a pleasant festive period");
+		verifyLine(lines.get(n++), "[X]", "tenido", "enjoyed");
+		verifyLine(lines.get(n++), "[X]", "unas buenas vacaciones .", "a pleasant festive period .");
+		verifyLine(lines.get(n++), "[X]", "unas buenas vacaciones", "a pleasant festive period");
+		verifyLine(lines.get(n++), "[X]", "y [X,1] sus señorías", "and [X,1] wish you");
+		verifyLine(lines.get(n++), "[X]", "y [X,1]", "and [X,1]");
+		verifyLine(lines.get(n++), "[X]", "y reitero [X,1]", "and i would like once again [X,1]");
+		verifyLine(lines.get(n++), "[X]", "y reitero a [X,1]", "and i would like once again to wish [X,1]");
+		verifyLine(lines.get(n++), "[X]", "y reitero a sus señorías", "and i would like once again to wish you");
+		verifyLine(lines.get(n++), "[X]", "y reitero a", "and i would like once again to");
+		verifyLine(lines.get(n++), "[X]", "y reitero", "and i would like once again");
+		verifyLine(lines.get(n++), "[X]", "y", "and");
+
 	}
 	
 	@Test(dependsOnMethods={"setup"})

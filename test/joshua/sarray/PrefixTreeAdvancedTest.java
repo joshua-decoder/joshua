@@ -1,12 +1,20 @@
 package joshua.sarray;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Scanner;
 import java.util.Set;
 
+import joshua.decoder.ff.tm.Rule;
 import joshua.sarray.AlignmentArray;
 import joshua.sarray.BasicPhrase;
 import joshua.sarray.CorpusArray;
@@ -14,6 +22,7 @@ import joshua.sarray.PrefixTree;
 import joshua.sarray.SampledLexProbs;
 import joshua.sarray.SuffixArray;
 import joshua.sarray.PrefixTree.Node;
+import joshua.util.FormatUtil;
 import joshua.util.lexprob.LexicalProbabilities;
 import joshua.util.sentence.Vocabulary;
 
@@ -620,7 +629,5 @@ public class PrefixTreeAdvancedTest {
 		
 		//prefixTree.print(System.out);
 	}
-	
-	
 	
 }
