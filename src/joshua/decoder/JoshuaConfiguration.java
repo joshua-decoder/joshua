@@ -1,6 +1,7 @@
 package joshua.decoder;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -76,8 +77,7 @@ public class JoshuaConfiguration {
 	private static final Logger logger = Logger.getLogger(JoshuaConfiguration.class.getName());
 
 	public static void read_config_file(String config_file) {
-		BufferedReader t_reader_config =
-			FileUtility.getReadFileStream(config_file);
+		BufferedReader t_reader_config = FileUtility.getReadFileStream(config_file);
 		String line;
 		while ((line = FileUtility.read_line_lzf(t_reader_config)) != null) {
 			//line = line.trim().toLowerCase();
@@ -247,5 +247,7 @@ public class JoshuaConfiguration {
 		}
 		FileUtility.close_read_file(t_reader_config);
 	}
+	
+	
 	
 }

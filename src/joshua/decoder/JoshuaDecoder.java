@@ -34,6 +34,7 @@ import joshua.util.FileUtility;
 
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -296,5 +297,31 @@ public class JoshuaDecoder {
 			}
 		}
 		return null;
+	}
+	
+	public void writeConfigFile(double[] new_weights, String template, String file_to_write){
+		BufferedReader t_reader_config = FileUtility.getReadFileStream(template);
+		BufferedWriter t_writer_config =	FileUtility.getWriteFileStream(file_to_write);		
+		String line;
+		int feat_id = 0;
+		while ((line = FileUtility.read_line_lzf(t_reader_config)) != null) {
+			line = line.trim();
+			if (line.matches("^\\s*\\#.*$") || line.matches("^\\s*$") || line.indexOf("=") != -1) {//comment, empty line, or parameter lines: just copy
+				 FileUtility.write_lzf(t_writer_config, line + "\n");
+			}else{//models: replace the weight
+				String[] fds = line.split("\\s+");
+				StringBuffer new_line = new StringBuffer();
+				if(fds[fds.length-1].matches("^[\\d\\.\\-\\+]+")==false){System.out.println("last field is not a number, must be wrong; the field is: " + fds[fds.length-1]); System.exit(1);};
+				for(int i=0; i<fds.length-1; i++){
+					new_line.append(fds[i]);
+					new_line.append(" ");
+				}
+				new_line.append(new_weights[feat_id++]);	
+				FileUtility.write_lzf(t_writer_config, new_line.toString() + "\n");
+			}				
+		}
+		if(feat_id!=new_weights.length){System.out.println("number of models does not match number of weights, must be wrong"); System.exit(1);};
+		FileUtility.close_read_file(t_reader_config);
+		FileUtility.close_write_file(t_writer_config);		
 	}
 }
