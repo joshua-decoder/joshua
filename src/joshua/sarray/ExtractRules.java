@@ -83,6 +83,11 @@ public class ExtractRules {
 
 			Option<Boolean> sentence_initial_X = commandLine.addBooleanOption("sentence-initial-X",false,"should rules with initial X be extracted from sentence-initial phrases");
 			Option<Boolean> sentence_final_X = commandLine.addBooleanOption("sentence-final-X",false,"should rules with final X be extracted from sentence-final phrases");
+			
+			Option<Boolean> print_prefixTree = commandLine.addBooleanOption("print-prefix-tree",false,"should prefix tree be printed to standard out (for debugging)");
+			Option<Boolean> print_rules = commandLine.addBooleanOption("print-rules",true,"should extracted rules be printed to standard out");
+			
+			
 			commandLine.parse(args);
 
 
@@ -180,12 +185,18 @@ public class ExtractRules {
 
 				PrefixTree prefixTree = new PrefixTree(sourceSuffixArray, targetCorpusArray, alignmentArray, lexProbs, words, commandLine.getValue(maxPhraseSpan), commandLine.getValue(maxPhraseLength), commandLine.getValue(maxNonterminals), commandLine.getValue(ruleSampleSize));
 
-				if (logger.isLoggable(Level.FINER)) logger.finer("Outputting rules for source line: " + line);
+				if (commandLine.getValue(print_prefixTree)==true) {
+					System.out.println(prefixTree.toString());
+				}
+			
+				if (commandLine.getValue(print_rules)) {
+					if (logger.isLoggable(Level.FINER)) logger.finer("Outputting rules for source line: " + line);
 
-				for (Rule rule : prefixTree.getAllRules()) {
-					String ruleString = rule.toString(ntVocab, sourceVocab, targetVocab);
-					if (logger.isLoggable(Level.FINEST)) logger.finest("Rule: " + ruleString);
-					out.println(ruleString);
+					for (Rule rule : prefixTree.getAllRules()) {
+						String ruleString = rule.toString(ntVocab, sourceVocab, targetVocab);
+						if (logger.isLoggable(Level.FINEST)) logger.finest("Rule: " + ruleString);
+						out.println(ruleString);
+					}
 				}
 			}
 

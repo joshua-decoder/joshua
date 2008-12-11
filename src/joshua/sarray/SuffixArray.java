@@ -311,6 +311,16 @@ public class SuffixArray implements Corpus {
 	 *<p>
 	 * The construction of more complex hierarchical phrases is handled
 	 * within the prefix tree. 
+	 * <p>
+	 * This method performs deterministic sampling, as described in Lopez (2008) p59:
+	 * <blockquote>
+	 * To resolve this issue, we used deterministic sampling. Whenever a source phrase occurs 
+more frequently than the maximum sample size, we take our samples at uniform intervals over 
+the set of locations returned by the sufﬁx array. With this strategy in place, hypotheses receive the 
+same feature weights between different runs of the decoder, the results are deterministic, and the 
+MERT algorithm converges at the same rate as it does without sampling.
+	 * </blockquote>
+	 * 
 	 * @param startPositions an unsorted list of the positions
 	 *                in the corpus where the matched phrases begin
 	 * @param pattern a contiguous phrase
@@ -327,7 +337,9 @@ public class SuffixArray implements Corpus {
 			Arrays.sort(startPositions);
 			int length = pattern.size();
 			ArrayList<HierarchicalPhrase> hierarchicalPhrases = new ArrayList<HierarchicalPhrase>(startPositions.length);
-			int step = (startPositions.length<sampleSize) ? 1 : startPositions.length / sampleSize;
+			//XXX Should we do sampling here or not?
+			int step = //(startPositions.length<sampleSize) ? 1 : startPositions.length / sampleSize;
+				1;
 			for(int i = 0; i < startPositions.length; i+=step) { 
 				int[] position = {startPositions[i]};
 				int[] endPosition = {startPositions[i] + length};

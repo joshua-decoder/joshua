@@ -333,6 +333,12 @@ public class PrefixTree {
 			Node prefixNode = tuple.prefixNode;
 			Pattern prefixPattern = tuple.pattern;
 
+			if (prefixNode.objectID==329 //) {
+					|| (prefixNode.objectID==28 && i==13 && j==17)) {
+				int x = -1;
+				x++;
+			}
+			
 			if (logger.isLoggable(Level.FINER)) logger.finer("Have tuple (" +prefixPattern+","+ i + ","+j+","+prefixNode+")");
 
 			if (j <= END_OF_SENTENCE) {
@@ -818,20 +824,21 @@ public class PrefixTree {
 			
 		} // end while
 		
-		if (results.size() > sampleSize) {
-			int size = results.size();
-			int step = results.size() / sampleSize;
-			
-			if (step > 1) {
-				for (int index=0, total=0; total<sampleSize; index+=step) {
-					results.set(total, results.get(index));
-				}
-			}
-			
-			for (int index=size-1; index>=sampleSize; index--) {
-				results.remove(index);
-			}
-		}
+//XXX Should we do sampling here or not?		
+//		if (results.size() > sampleSize) {
+//			int size = results.size();
+//			int step = results.size() / sampleSize;
+//			
+//			if (step > 1) {
+//				for (int index=0, total=0; total<sampleSize; index+=step) {
+//					results.set(total, results.get(index));
+//				}
+//			}
+//			
+//			for (int index=size-1; index>=sampleSize; index--) {
+//				results.remove(index);
+//			}
+//		}
 		
 		return results;
 		
@@ -1213,8 +1220,7 @@ public class PrefixTree {
 		/** Source side hierarchical phrases for this node. */
 		List<HierarchicalPhrase> sourceHierarchicalPhrases;
 
-		/** Integer representation of the source side tokens corresponding to the hierarchical phrases for this node. */
-		int[] sourceWords; //TODO Do we need to store both the int[] and the Pattern??
+		/** Representation of the source side tokens corresponding to the hierarchical phrases for this node. */
 		Pattern sourcePattern;
 		
 		/** Translation rules for this node. */
@@ -1363,7 +1369,7 @@ public class PrefixTree {
 		public void storeResults(List<HierarchicalPhrase> hierarchicalPhrases, int[] sourceTokens) {
 			
 			if (objectID==6543) {
-				System.out.println("!!!!!" + hierarchicalPhrases.size());
+			//	System.out.println("!!!!!" + hierarchicalPhrases.size());
 			}
 			
 			if (logger.isLoggable(Level.FINER)) {
@@ -1376,7 +1382,7 @@ public class PrefixTree {
 			}
 			
 			//this.sourceHierarchicalPhrases = hierarchicalPhrases;
-			this.sourceWords = sourceTokens;
+			//this.sourceWords = sourceTokens;
 			Vocabulary vocab = (suffixArray==null) ? null : suffixArray.getVocabulary();
 			this.sourcePattern = new Pattern(vocab, sourceTokens);
 			this.results = new ArrayList<Rule>(hierarchicalPhrases.size());
@@ -1393,15 +1399,19 @@ public class PrefixTree {
 
 			if (logger.isLoggable(Level.FINER)) logger.finer("\n" + totalPossibleTranslations + " possible translations of " + sourcePattern + ". Step size is " + step);
 
-			// Sample from cached hierarchicalPhrases
-			List<HierarchicalPhrase> samples = new ArrayList<HierarchicalPhrase>(sampleSize);
-			for (int i=0; i<totalPossibleTranslations; i+=step) {
-				samples.add(hierarchicalPhrases.get(i));
-			}
-			this.sourceHierarchicalPhrases = samples;
+//			// Sample from cached hierarchicalPhrases
+//			List<HierarchicalPhrase> samples = new ArrayList<HierarchicalPhrase>(sampleSize);
+//			for (int i=0; i<totalPossibleTranslations; i+=1) {
+//			//for (int i=0; i<totalPossibleTranslations; i+=step) {
+//				samples.add(hierarchicalPhrases.get(i));
+//			}
+//			this.sourceHierarchicalPhrases = samples;
+			this.sourceHierarchicalPhrases = hierarchicalPhrases;
 
 			// For each sample HierarchicalPhrase
-			for (HierarchicalPhrase sourcePhrase : samples) {
+			for (int i=0; i<totalPossibleTranslations; i+=step) { 
+				HierarchicalPhrase sourcePhrase = sourceHierarchicalPhrases.get(i);
+			//for (HierarchicalPhrase sourcePhrase : samples) {
 				Pattern translation = getTranslation(sourcePhrase);
 				if (translation != null) {
 					translations.add(translation);
@@ -1674,9 +1684,9 @@ public class PrefixTree {
 						possibleSourceSpan.size()<=maxPhraseSpan) {
 						//endOfTerminalSequence-possibleSourceSpan.start<=maxPhraseSpan) {
 					
-					if (sourcePattern.toString().equals("[X pour X]") && possibleSourceSpan.start<=1 && possibleSourceSpan.end>=8) {
-						int x = 1; x++;
-					}
+//					if (sourcePattern.toString().equals("[X pour X]") && possibleSourceSpan.start<=1 && possibleSourceSpan.end>=8) {
+//						int x = 1; x++;
+//					}
 					
 					// Get target span
 					Span targetSpan = alignments.getConsistentTargetSpan(possibleSourceSpan);

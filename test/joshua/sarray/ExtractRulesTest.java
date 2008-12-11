@@ -46,6 +46,9 @@ public class ExtractRulesTest {
 	//
 	// cat hiero.grammar | sort | ruby -e 'STDIN.each_line{ |line| words=line.strip.split(" ||| "); puts "verifyLine(lines.get(n++), \"#{words[0]}\", \"#{words[1]}\", \"#{words[2]}\");"; }' > java-rules.txt
 	
+	// Also
+	// cat hiero.grammar | sort | ruby -e 'STDIN.each_line{ |line| words=line.strip.split(" ||| "); puts "#{words[0]} ||| #{words[1]} ||| #{words[2]}"; }' > hiero.grammar.clean
+	
 	String sourceFileName;
 	String targetFileName;
 	String alignmentFileName;
@@ -106,10 +109,10 @@ public class ExtractRulesTest {
 	 * @throws IOException 
 	 */
 	private List<String> extractRules(String testCorpusString, boolean sentenceInitialX, boolean sentenceFinalX) throws IOException {
-		return extractRules(sourceFileName, targetFileName, alignmentFileName, testCorpusString, sentenceInitialX, sentenceFinalX);
+		return extractRules(sourceFileName, targetFileName, alignmentFileName, testCorpusString, sentenceInitialX, sentenceFinalX, false);
 	}
 	
-	private List<String> extractRules(String sourceFileName, String targetFileName, String alignmentFileName, String testCorpusString, boolean sentenceInitialX, boolean sentenceFinalX) throws IOException {
+	private List<String> extractRules(String sourceFileName, String targetFileName, String alignmentFileName, String testCorpusString, boolean sentenceInitialX, boolean sentenceFinalX, boolean printPrefixTree) throws IOException {
 		
 		String testFileName;
 		{
@@ -131,6 +134,7 @@ public class ExtractRulesTest {
 				"--sentence-initial-X="+sentenceInitialX,
 				"--sentence-final-X="+sentenceFinalX,
 				"--maxPhraseLength=5",
+				"--print-prefix-tree="+printPrefixTree,
 				"--source="+sourceFileName,
 				"--target="+targetFileName,
 				"--alignments="+alignmentFileName,
@@ -172,8 +176,16 @@ public class ExtractRulesTest {
 		String targetFileName = "data/europarl.en.small.100";
 		String alignmentFileName = "data/es_en_europarl_alignments.txt.small.100";
 		
-		List<String> lines = extractRules(sourceFileName, targetFileName, alignmentFileName, "declaro reanudado el período de sesiones del parlamento europeo , interrumpido el viernes 17 de diciembre pasado , y reitero a sus señorías mi deseo de que hayan tenido unas buenas vacaciones .", true, true);
+		String testSentence = "declaro reanudado el período de sesiones del parlamento europeo , interrumpido el viernes 17 de diciembre pasado , y reitero a sus señorías mi deseo de que hayan tenido unas buenas vacaciones .";
+		
+		boolean printPrefixTree = true;
+		
+		List<String> lines = extractRules(sourceFileName, targetFileName, alignmentFileName, testSentence, true, true, printPrefixTree);
 
+		for (String line : lines) {
+		//	System.out.println(line);
+		}
+		
 		Assert.assertEquals(lines.size(), 539);
 		
 		int n = 0;
@@ -185,6 +197,8 @@ public class ExtractRulesTest {
 		String sourceFileName = "data/europarl.es.small.1";
 		String targetFileName = "data/europarl.en.small.1";
 		String alignmentFileName = "data/es_en_europarl_alignments.txt.small.1";
+		
+		boolean printPrefixTree = false;
 		
 //		String testFileName = sourceFileName;
 //		
@@ -225,7 +239,7 @@ public class ExtractRulesTest {
 //		
 //		System.out.println(rules.size());
 		
-		List<String> lines = extractRules(sourceFileName, targetFileName, alignmentFileName, "declaro reanudado el período de sesiones del parlamento europeo , interrumpido el viernes 17 de diciembre pasado , y reitero a sus señorías mi deseo de que hayan tenido unas buenas vacaciones .", true, true);
+		List<String> lines = extractRules(sourceFileName, targetFileName, alignmentFileName, "declaro reanudado el período de sesiones del parlamento europeo , interrumpido el viernes 17 de diciembre pasado , y reitero a sus señorías mi deseo de que hayan tenido unas buenas vacaciones .", true, true, printPrefixTree);
 
 		Assert.assertEquals(lines.size(), 197);
 		
