@@ -333,11 +333,11 @@ public class PrefixTree {
 			Node prefixNode = tuple.prefixNode;
 			Pattern prefixPattern = tuple.pattern;
 
-			if (prefixNode.objectID==329 //) {
-					|| (prefixNode.objectID==28 && i==13 && j==17)) {
-				int x = -1;
-				x++;
-			}
+//			if (prefixNode.objectID==329 //) {
+//					|| (prefixNode.objectID==28 && i==13 && j==17)) {
+//				int x = -1;
+//				x++;
+//			}
 			
 			if (logger.isLoggable(Level.FINER)) logger.finer("Have tuple (" +prefixPattern+","+ i + ","+j+","+prefixNode+")");
 
@@ -1368,8 +1368,8 @@ public class PrefixTree {
 		 */
 		public void storeResults(List<HierarchicalPhrase> hierarchicalPhrases, int[] sourceTokens) {
 			
-			if (objectID==6543) {
-			//	System.out.println("!!!!!" + hierarchicalPhrases.size());
+			if (objectID==1265) {
+				System.out.println("!!!!!" + hierarchicalPhrases.size());
 			}
 			
 			if (logger.isLoggable(Level.FINER)) {
