@@ -324,11 +324,9 @@ MERT algorithm converges at the same rate as it does without sampling.
 	 * @param startPositions an unsorted list of the positions
 	 *                in the corpus where the matched phrases begin
 	 * @param pattern a contiguous phrase
-	 * @param sampleSize Maximum number of hierarchical phrases to create
-	 *
 	 * @return a list of trivially hierarchical phrases
 	 */ 
-	protected List<HierarchicalPhrase> createHierarchicalPhrases(int[] startPositions, Pattern pattern, int sampleSize) {
+	protected List<HierarchicalPhrase> createHierarchicalPhrases(int[] startPositions, Pattern pattern) {
 		if (startPositions == null) {
 			return Collections.emptyList();
 		} else if (hierarchicalPhraseCache.containsKey(pattern)) {

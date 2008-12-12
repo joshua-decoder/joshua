@@ -21,8 +21,6 @@ import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.RuleCollection;
 import joshua.decoder.ff.tm.TrieGrammar;
-import joshua.sarray.Pattern.PrefixCase;
-import joshua.sarray.Pattern.SuffixCase;
 import joshua.util.Pair;
 import joshua.util.lexprob.LexicalProbabilities;
 import joshua.util.sentence.LabeledSpan;
@@ -37,7 +35,6 @@ import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -116,9 +113,22 @@ public class PrefixTree {
 	/** */
 	static boolean SENTENCE_FINAL_X = false;
 	
+	/** Unique integer identifier for the root node. */
 	static final int ROOT_NODE_ID = -999;
+	
+	/** 
+	 * Unique integer identifier for the special ⊥ node that represents the suffix of the root node.
+	 * @see Lopez (2008), footnote 9 on p73
+	 */
 	static final int BOT_NODE_ID = -2000;
 
+	/**
+	 * Gets a special map that maps any integer key to the root node.
+	 *  
+	 * @param root Root node, which this map will always return as a value. 
+	 * @return Special map that maps any integer key to the root node.
+	 * @see Lopez (2008), footnote 9 on p73
+	 */
 	static Map<Integer,Node> botMap(final Node root) {
 		return new Map<Integer,Node>() {
 			public void clear() { throw new UnsupportedOperationException(); }
@@ -147,10 +157,7 @@ public class PrefixTree {
 	
 	/** Lexical translation probabilities. */
 	final LexicalProbabilities lexProbs;
-	//final LexicalProbabilities lexProbs;
-	
-	
-	
+		
 	/** 
 	 * Node representing phrases that start with the nonterminal X. 
 	 * This node's parent is the root node of the tree. 
@@ -280,13 +287,13 @@ public class PrefixTree {
 			if (logger.isLoggable(Level.FINEST)) {
 				String oldSuffixLink = (xnode.suffixLink==null) ? "null" : "id"+xnode.suffixLink.objectID;
 				String newSuffixLink = (suffixLink==null) ? "null" : "id"+suffixLink.objectID;
-				logger.finest("Changing suffix link from " + oldSuffixLink + " to " + newSuffixLink + " for node " + xnode + " with token " + X);
+				logger.finest("Changing suffix link from " + oldSuffixLink + " to " + newSuffixLink + " for node " + xnode.toShortString() + " with token " + X);
 			}
 
 			xnode.linkToSuffix(suffixLink);
 		}
 
-		if (logger.isLoggable(Level.FINE)) logger.fine("CURRENT TREE:  " + root);
+		if (logger.isLoggable(Level.FINEST)) logger.finest("CURRENT TREE:  " + root);
 
 		//int I = END_OF_SENTENCE; //sentence.length-1;
 
@@ -297,7 +304,7 @@ public class PrefixTree {
 		// 2: for i from 1 to I
 		for (int i=START_OF_SENTENCE; i<=END_OF_SENTENCE; i++) {
 			//if (logger.isLoggable(Level.FINEST)) logger.finest("Adding tuple (" + i + ","+ i +","+root+",{"+intToString(sentence[i])+"})");
-			if (logger.isLoggable(Level.FINEST)) logger.finest("Adding tuple (\u03b5," + i + ","+ i +","+root +")");
+			if (logger.isLoggable(Level.FINEST)) logger.finest("Adding tuple (\u03b5," + i + ","+ i +","+root.toShortString() +")");
 			
 			// 3: Add <f_i, i, i+1, p_eps> to queue
 			queue.add(new Tuple(epsilon, i, i, root));
@@ -311,7 +318,7 @@ public class PrefixTree {
 			// 4: for i from 1 to I
 			for (int i=start; i<=END_OF_SENTENCE; i++) {
 				//if (logger.isLoggable(Level.FINEST)) logger.finest("Adding tuple (" + (i-1) + ","+(i)+","+root+",{"+X+","+intToString(sentence[i])+"})");
-				if (logger.isLoggable(Level.FINEST)) logger.finest("Adding tuple (X," + (i-1) + ","+ i +","+xnode +")");
+				if (logger.isLoggable(Level.FINEST)) logger.finest("Adding tuple (X," + (i-1) + ","+ i +","+xnode.toShortString() +")");
 				
 				// 5: Add <X f_i, i-1, i+1, p_x> to queue
 				queue.add(new Tuple(xpattern, i-1, i, xnode));
@@ -322,9 +329,11 @@ public class PrefixTree {
 		// 6: While queue is not empty do
 		while (! queue.isEmpty()) {
 
-			if (logger.isLoggable(Level.FINER)) logger.finer("\n");
-			if (logger.isLoggable(Level.FINE)) logger.fine("CURRENT TREE:      " + root);
-
+			if (logger.isLoggable(Level.FINER)) {
+				logger.finer("\n");
+				if (logger.isLoggable(Level.FINEST)) logger.finest("CURRENT TREE:      " + root);
+			}
+			
 			// 7: Pop <alpha, i, j, p_alphaBeta> from queue
 			Tuple tuple = queue.remove();
 
@@ -339,14 +348,14 @@ public class PrefixTree {
 //				x++;
 //			}
 			
-			if (logger.isLoggable(Level.FINER)) logger.finer("Have tuple (" +prefixPattern+","+ i + ","+j+","+prefixNode+")");
+			if (logger.isLoggable(Level.FINER)) logger.finer("Have tuple (" +prefixPattern+","+ i + ","+j+","+prefixNode.toShortString()+")");
 
 			if (j <= END_OF_SENTENCE) {
 
 				// 8: If p_alphaBetaF_i elementOf children(p_alphaBeta) then
 				if (prefixNode.hasChild(sentence[j])) {
 
-					if (logger.isLoggable(Level.FINER)) logger.finer("EXISTING node for \"" + sentence[j] + "\" from " + prefixNode + " to node " + prefixNode.getChild(sentence[j])+ " with pattern " + prefixPattern);
+					if (logger.isLoggable(Level.FINER)) logger.finer("EXISTING node for \"" + sentence[j] + "\" from " + prefixNode.toShortString() + " to node " + prefixNode.getChild(sentence[j]).toShortString() + " with pattern " + prefixPattern);
 
 					// child is p_alphaBetaF_j
 					Node child = prefixNode.getChild(sentence[j]);
@@ -361,13 +370,12 @@ public class PrefixTree {
 					} else { 
 						
 						// 12: EXTEND_QUEUE(alpha beta f_j, i, j, f_1^I)
-						if (logger.isLoggable(Level.FINER)) logger.finer("TREE BEFOR EXTEND: " + root);
-						if (logger.isLoggable(Level.FINER)) logger.finer("Calling EXTEND_QUEUE("+i+","+j+","+prefixPattern+","+prefixNode);
-						//if (true) throw new RuntimeException("Probably buggy call to extendQueue"); //TODO verify this
-						//extendQueue(queue, i, j, sentence, new Pattern(prefixPattern,sentence[j]), prefixNode.getChild(sentence[j])); //XXX Is this right? Should it be prefixNode instead of prefixNode.getChild?
-						//extendQueue(queue, i, j, sentence, child.sourcePattern, child);
+						if (logger.isLoggable(Level.FINER)) {
+							logger.finer("Calling EXTEND_QUEUE("+i+","+j+","+prefixPattern+","+prefixNode.toShortString());
+							if (logger.isLoggable(Level.FINEST)) logger.finest("TREE BEFOR EXTEND: " + root);
+						}
 						extendQueue(queue, i, j, sentence, new Pattern(prefixPattern,sentence[j]), child);
-						if (logger.isLoggable(Level.FINER)) logger.finer("TREE AFTER EXTEND: " + root);
+						if (logger.isLoggable(Level.FINEST)) logger.finest("TREE AFTER EXTEND: " + root);
 						
 					}
 
@@ -375,11 +383,11 @@ public class PrefixTree {
 
 					// 14: children(alphaBeta) <-- children(alphaBeta) U p_alphaBetaF_j
 					//     (Add new child node)
-					if (logger.isLoggable(Level.FINER)) logger.finer("Adding new node to " + prefixNode);
+					if (logger.isLoggable(Level.FINER)) logger.finer("Adding new node to node " + prefixNode.toShortString());
 					Node newNode = prefixNode.addChild(sentence[j]);
 					if (logger.isLoggable(Level.FINER)) {
 						String word = (suffixArray==null) ? ""+sentence[j] : suffixArray.getVocabulary().getWord(sentence[j]);
-						logger.finer("Created new node " + newNode +" for \"" + word + "\" and \n  added new node " + newNode + " to " + prefixNode);
+						logger.finer("Created new node " + newNode.toShortString() +" for \"" + word + "\" and \n  added it to " + prefixNode.toShortString());
 					}
 
 
@@ -390,7 +398,7 @@ public class PrefixTree {
 					if (logger.isLoggable(Level.FINEST)) {
 						String oldSuffixLink = (newNode.suffixLink==null) ? "null" : "id"+newNode.suffixLink.objectID;
 						String newSuffixLink = (suffixNode==null) ? "null" : "id"+suffixNode.objectID;
-						logger.finest("Changing suffix link from " + oldSuffixLink + " to " + newSuffixLink + " for node " + newNode + " (prefix node " + prefixNode + " ) with token " + sentence[j]);
+						logger.finest("Changing suffix link from " + oldSuffixLink + " to " + newSuffixLink + " for node " + newNode.toShortString() + " (prefix node " + prefixNode.toShortString() + " ) with token " + sentence[j]);
 					}
 					
 					newNode.linkToSuffix( suffixNode );
@@ -443,9 +451,10 @@ public class PrefixTree {
 
 		}
 
-		if (logger.isLoggable(Level.FINER)) logger.finer("\n");
-		if (logger.isLoggable(Level.FINE)) logger.fine("FINAL TREE:  " + root);
-
+		if (logger.isLoggable(Level.FINER)) {
+			logger.finer("\n");
+			if (logger.isLoggable(Level.FINEST)) logger.finest("FINAL TREE:  " + root);
+		}
 
 	}
 
@@ -474,11 +483,112 @@ public class PrefixTree {
 		return root;
 	}
 
+//	/**
+//	 * Implements the dotted operators from Lopez (2008), p78,
+//	 * for the case when the phrases do not overlap on any words.
+//	 * <p>
+//	 * The <code>compare</code> method of this comparator behaves as follows
+//	 * when provided prefix phrase m1 and suffix phrase m2:
+//	 * <ul>
+//	 * <li>Returns 0 if m1 and m2 can be paired.</li>
+//	 * <li>Returns -1 if m1 and m2 cannot be paired, and m1 precedes m2 in the corpus.</li>
+//	 * <li>Returns  1 if m1 and m2 cannot be paired, and m1 follows m2 in the corpus.</li>
+//	 * </ul>
+//	 * 
+//	 */
+//	final Comparator<HierarchicalPhrase> nonOverlapping = new Comparator<HierarchicalPhrase>() {
+//
+//		public int compare(HierarchicalPhrase m1, HierarchicalPhrase m2) {
+//			if (m1.sentenceNumber < m2.sentenceNumber)
+//				return -1;
+//			else if (m1.sentenceNumber > m2.sentenceNumber)
+//				return 1;
+//			else {
+//				if (m1.terminalSequenceStartIndices[0] >= m2.terminalSequenceStartIndices[0]-1)
+//					return 1;
+//				else if (m1.terminalSequenceStartIndices[0] <= m2.terminalSequenceStartIndices[0]-maxPhraseSpan)
+//					return -1;
+//				else
+//					return 0;
+//			}
+//		}
+//	};
+
+	
+//	/**
+//	 * Implements the dotted operators from Lopez (2008), p78-79,
+//	 * for the case when the phrases overlap on all words
+//	 * with the possible exceptions of the first word of the prefix phrase
+//	 * and the final word of the suffix phrase.
+//	 * <p>
+//	 * The <code>compare</code> method of this comparator behaves as follows
+//	 * when provided prefix phrase m1 and suffix phrase m2:
+//	 * <ul>
+//	 * <li>Returns 0 if m1 and m2 can be paired.</li>
+//	 * <li>Returns -1 if m1 and m2 cannot be paired, and m1 precedes m2 in the corpus.</li>
+//	 * <li>Returns  1 if m1 and m2 cannot be paired, and m1 follows m2 in the corpus.</li>
+//	 * </ul>
+//	 * 
+//	 */
+//	final Comparator<HierarchicalPhrase> overlapping = new Comparator<HierarchicalPhrase>() {
+//		
+//		//TODO This method may or may not be correct!!!!!
+//		public int compare(HierarchicalPhrase m1, HierarchicalPhrase m2) {
+//			
+//			//int m1Start;
+//			int m2Start, m1End;
+//			//int m2End;
+//			
+//			SuffixCase m1Suffix = m1.pattern.suffixCase;
+//			PrefixCase m2Prefix = m2.pattern.prefixCase;
+//			
+//			if (m1Suffix == SuffixCase.EMPTY_SUFFIX) {
+//				if (m2Prefix == PrefixCase.EMPTY_PREFIX) {
+//					return 0;
+//				} else {
+//					throw new RuntimeException("Overlapping phrases should not have empty suffix but nonempty prefix");
+//				}	
+//			} else if (m2Prefix == PrefixCase.EMPTY_PREFIX) {
+//				throw new RuntimeException("Overlapping phrases should not have empty prefix but nonempty suffix");
+//			}
+//			
+//			
+//			m1End   = m1.terminalSequenceStartIndices.length - 1;
+//			m2Start = 0;
+//			
+//			int result = m1.terminalSequenceStartIndices[m1End] - m2.terminalSequenceStartIndices[m2Start];
+//			
+//			
+//			if (result == 0) {
+//				
+//				//XXX It's possible that this endPosition calculation is bogus, but it works.
+//				int endPosition = m2.terminalSequenceStartIndices[0] + m2.terminalSequenceStartIndices.length;
+//				
+//				//XXX This length could be incorrect, if m1 starts with a nonterminal
+//				int combinedLength = endPosition - m1.terminalSequenceStartIndices[0];
+//				
+//				if (combinedLength <= maxPhraseSpan) 
+//					return 0;
+//				else
+//					return 1;
+//				
+//			} else if (result < 0 && m2.terminalSequenceStartIndices[m2Start]<m1.terminalSequenceEndIndices[m1End]) {
+//				//XXX We maybe should be checking here to make sure 
+//				//    that the combined span is not greater than maxPhraseSpan
+//				result = 0;
+//			}
+//			
+//			return result;
+//			
+//			
+//		}
+//	};
+
 	/**
 	 * Implements the dotted operators from Lopez (2008), p78,
 	 * for the case when the phrases do not overlap on any words.
 	 * <p>
-	 * The <code>compare</code> method of this comparator behaves as follows
+	 * This method of this comparator behaves as follows
 	 * when provided prefix phrase m1 and suffix phrase m2:
 	 * <ul>
 	 * <li>Returns 0 if m1 and m2 can be paired.</li>
@@ -487,97 +597,31 @@ public class PrefixTree {
 	 * </ul>
 	 * 
 	 */
-	final Comparator<HierarchicalPhrase> nonOverlapping = new Comparator<HierarchicalPhrase>() {
-
-		public int compare(HierarchicalPhrase m1, HierarchicalPhrase m2) {
-			if (m1.sentenceNumber < m2.sentenceNumber)
-				return -1;
-			else if (m1.sentenceNumber > m2.sentenceNumber)
-				return 1;
-			else {
-				if (m1.terminalSequenceStartIndices[0] >= m2.terminalSequenceStartIndices[0]-1)
-					return 1;
-				else if (m1.terminalSequenceStartIndices[0] <= m2.terminalSequenceStartIndices[0]-maxPhraseSpan)
-					return -1;
-				else
-					return 0;
-			}
-		}
-	};
-
 	
 	/**
-	 * Implements the dotted operators from Lopez (2008), p78-79,
-	 * for the case when the phrases overlap on all words
-	 * with the possible exceptions of the first word of the prefix phrase
-	 * and the final word of the suffix phrase.
+	 * Implements the dotted operators (<̈, =̈, >̈) from Lopez (2008), p78-79.
 	 * <p>
-	 * The <code>compare</code> method of this comparator behaves as follows
-	 * when provided prefix phrase m1 and suffix phrase m2:
+	 * This method behaves as follows when provided prefix phrase m_a_alpha and suffix phrase m_alpha_b:
 	 * <ul>
-	 * <li>Returns 0 if m1 and m2 can be paired.</li>
-	 * <li>Returns -1 if m1 and m2 cannot be paired, and m1 precedes m2 in the corpus.</li>
-	 * <li>Returns  1 if m1 and m2 cannot be paired, and m1 follows m2 in the corpus.</li>
+	 * <li>Returns 0 if m_a_alpha and m_alpha_b can be paired.</li>
+	 * <li>Returns -1 if m_a_alpha and m_alpha_b cannot be paired, and m_a_alpha precedes m_alpha_b in the corpus.</li>
+	 * <li>Returns  1 if m_a_alpha and m_alpha_b cannot be paired, and m_a_alpha follows m_alpha_b in the corpus.</li>
 	 * </ul>
 	 * 
-	 */
-	final Comparator<HierarchicalPhrase> overlapping = new Comparator<HierarchicalPhrase>() {
+	 * @param m_a_alpha Prefix phrase
+	 * @param m_alpha_b Suffix phrase
+	 * @return
+	 * <ul>
+	 * <li>0 if m_a_alpha and m_alpha_b can be paired.</li>
+	 * <li>-1 if m_a_alpha and m_alpha_b cannot be paired, and m_a_alpha precedes m_alpha_b in the corpus.</li>
+	 * <li> 1 if m_a_alpha and m_alpha_b cannot be paired, and m_a_alpha follows m_alpha_b in the corpus.</li>
+	 * </ul>
+	 */	
+	//TODO Add unit test for this method
+	int compare(HierarchicalPhrase m_a_alpha, HierarchicalPhrase m_alpha_b) {
 		
-		//TODO This method may or may not be correct!!!!!
-		public int compare(HierarchicalPhrase m1, HierarchicalPhrase m2) {
-			
-			//int m1Start;
-			int m2Start, m1End;
-			//int m2End;
-			
-			SuffixCase m1Suffix = m1.pattern.suffixCase;
-			PrefixCase m2Prefix = m2.pattern.prefixCase;
-			
-			if (m1Suffix == SuffixCase.EMPTY_SUFFIX) {
-				if (m2Prefix == PrefixCase.EMPTY_PREFIX) {
-					return 0;
-				} else {
-					throw new RuntimeException("Overlapping phrases should not have empty suffix but nonempty prefix");
-				}	
-			} else if (m2Prefix == PrefixCase.EMPTY_PREFIX) {
-				throw new RuntimeException("Overlapping phrases should not have empty prefix but nonempty suffix");
-			}
-			
-			
-			m1End   = m1.terminalSequenceStartIndices.length - 1;
-			m2Start = 0;
-			
-			int result = m1.terminalSequenceStartIndices[m1End] - m2.terminalSequenceStartIndices[m2Start];
-			
-			
-			if (result == 0) {
-				
-				//XXX It's possible that this endPosition calculation is bogus, but it works.
-				int endPosition = m2.terminalSequenceStartIndices[0] + m2.terminalSequenceStartIndices.length;
-				
-				//XXX This length could be incorrect, if m1 starts with a nonterminal
-				int combinedLength = endPosition - m1.terminalSequenceStartIndices[0];
-				
-				if (combinedLength <= maxPhraseSpan) 
-					return 0;
-				else
-					return 1;
-				
-			} else if (result < 0 && m2.terminalSequenceStartIndices[m2Start]<m1.terminalSequenceEndIndices[m1End]) {
-				//XXX We maybe should be checking here to make sure 
-				//    that the combined span is not greater than maxPhraseSpan
-				result = 0;
-			}
-			
-			return result;
-			
-			
-		}
-	};
-
-	private int compare(HierarchicalPhrase m_a_alpha, HierarchicalPhrase m_alpha_b) {
-		
-		//int suffixStart = m_alpha_b.getCorpusStartPosition();
+		// Does the prefix (m_a_alpha) overlap with
+		//      the suffix (m_alpha_b) on any words?
 		boolean matchesOverlap;
 		if (m_a_alpha.pattern.endsWithNonTerminal() && 
 				m_alpha_b.pattern.startsWithNonTerminal() &&
@@ -661,8 +705,23 @@ public class PrefixTree {
 			}
 			
 		}
-		else
-			return nonOverlapping.compare(m_a_alpha, m_alpha_b);
+		else {
+//			return nonOverlapping.compare(m_a_alpha, m_alpha_b);
+
+			if (m_a_alpha.sentenceNumber < m_alpha_b.sentenceNumber)
+				return -1;
+			else if (m_a_alpha.sentenceNumber > m_alpha_b.sentenceNumber)
+				return 1;
+			else {
+				if (m_a_alpha.terminalSequenceStartIndices[0] >= m_alpha_b.terminalSequenceStartIndices[0]-1)
+					return 1;
+				else if (m_a_alpha.terminalSequenceStartIndices[0] <= m_alpha_b.terminalSequenceStartIndices[0]-maxPhraseSpan)
+					return -1;
+				else
+					return 0;
+			}
+
+		}
 	}
 
 	/**
@@ -695,7 +754,7 @@ public class PrefixTree {
 			} else {
 				node.setBounds(bounds);
 				int[] startingPositions = suffixArray.getAllPositions(bounds);
-				result = suffixArray.createHierarchicalPhrases(startingPositions, pattern, sampleSize);
+				result = suffixArray.createHierarchicalPhrases(startingPositions, pattern);
 			}
 			
 		} else {
@@ -748,21 +807,23 @@ public class PrefixTree {
 	 * Implements the QUERY_INTERSECT algorithm from Adam Lopez's thesis (Lopez 2008).
 	 * This implementation follows a corrected algorithm (Lopez, personal communication).
 	 * 
+	 * @param pattern
 	 * @param M_a_alpha
 	 * @param M_alpha_b
-	 * @param overlapping
 	 * @return
 	 */
 	List<HierarchicalPhrase> queryIntersect(Pattern pattern, List<HierarchicalPhrase> M_a_alpha, List<HierarchicalPhrase> M_alpha_b) {
 
-		if (logger.isLoggable(Level.FINEST)) {
-			logger.finest("queryIntersect("+pattern+" M_a_alpha.size=="+M_a_alpha.size() + ", M_alpha_b.size=="+M_alpha_b.size());
+		if (logger.isLoggable(Level.FINER)) {
+			logger.finer("queryIntersect("+pattern+" M_a_alpha.size=="+M_a_alpha.size() + ", M_alpha_b.size=="+M_alpha_b.size());
 			
-			logger.finest("M_a_alpha phrases:");
-			for (HierarchicalPhrase phrase : M_a_alpha) logger.finest(phrase.toString());
-			
-			logger.finest("M_alpha_b phrases:");
-			for (HierarchicalPhrase phrase : M_alpha_b) logger.finest(phrase.toString());
+			if (logger.isLoggable(Level.FINER)) {
+				logger.finest("M_a_alpha phrases:");
+				for (HierarchicalPhrase phrase : M_a_alpha) logger.finest(phrase.toString());
+
+				logger.finest("M_alpha_b phrases:");
+				for (HierarchicalPhrase phrase : M_alpha_b) logger.finest(phrase.toString());
+			}
 			
 		}
 		
@@ -1779,6 +1840,48 @@ public class PrefixTree {
 				return toString(suffixArray.getVocabulary());
 		}
 
+		public String toShortString() {
+			if (suffixArray==null || suffixArray.getVocabulary()==null)
+				return toShortString(null);
+			else
+				return toShortString(suffixArray.getVocabulary());
+		}
+		
+		public String toShortString(Vocabulary vocab) {
+
+			StringBuilder s = new StringBuilder();
+
+			s.append("[id");
+			s.append(objectID);
+			s.append(' ');
+			
+			if (incomingArcValue==PrefixTree.X) {
+				s.append('X');
+			} else if (incomingArcValue==PrefixTree.ROOT_NODE_ID) {
+				s.append("ROOT");
+			} else if (vocab!=null) {
+				s.append(vocab.getWord(incomingArcValue));
+			} else if (idsToStrings==null || !idsToStrings.containsKey(incomingArcValue)) {
+				s.append('v');
+				s.append(incomingArcValue);
+			} else {
+				s.append(idsToStrings.get(incomingArcValue));
+			}
+			s.append(" (");
+			if (suffixLink!=null) s.append(suffixLink.objectID); else s.append("null");
+			s.append(')');
+			s.append(' ');
+
+			s.append('{');
+			s.append(children.size());
+			s.append(" children}");
+
+			if (!active) s.append('*');
+			s.append(']');
+
+			return s.toString();
+		}
+		
 		private void print(OutputStream out, Vocabulary sourceVocab, Vocabulary targetVocab) throws UnsupportedEncodingException, IOException {
 			
 			/*
