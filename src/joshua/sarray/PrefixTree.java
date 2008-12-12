@@ -1623,6 +1623,8 @@ public class PrefixTree {
 						if (logger.isLoggable(Level.FINEST)) logger.finest("\tCase 1: Adding translation: '" + translation + "' for target span " + targetSpan + " from source span " + sourceSpan);
 						//translations.add(translation);
 						return translation;
+					} else if (logger.isLoggable(Level.FINER)) {
+						logger.finer("No valid translation returned from attempt to construct translation for source span " + sourceSpan + ", target span " + targetSpan);
 					}
 					
 				}
