@@ -22,7 +22,7 @@
 	
 	<!-- Compile the Java code -->
 	<target name="compile" depends="init">
-		<javac compiler="javac1.5" srcdir="${src}" destdir="${build}" classpath="${bdb}" debug="on"/> 
+		<javac compiler="javac1.5" srcdir="${src}" destdir="${build}" classpath="${bdb}" debug="on" encoding="utf8"/> 
 	</target>
 
 	
@@ -70,7 +70,7 @@
 	
 	<!-- Compile the unit test code -->
 	<target name="compile-tests" depends="init"> 
-		<javac compiler="javac1.5" srcdir="${test}" destdir="${build}" classpath="${testng}" debug="on"/> 
+		<javac compiler="javac1.5" srcdir="${test}" destdir="${build}" classpath="${testng}" debug="on" encoding="utf8"/> 
 	</target>
 	
 	

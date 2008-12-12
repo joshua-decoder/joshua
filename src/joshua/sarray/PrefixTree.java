@@ -1373,7 +1373,7 @@ public class PrefixTree {
 			}
 			
 			if (logger.isLoggable(Level.FINER)) {
-				logger.finer("Storing " + hierarchicalPhrases.size() + " source phrases:");
+				logger.finer("Storing " + hierarchicalPhrases.size() + " source phrases at node " + objectID + ":");
 				if (logger.isLoggable(Level.FINEST)) {
 					for (HierarchicalPhrase phrase : hierarchicalPhrases) {
 						logger.finest("\t" + phrase);
