@@ -1,0 +1,32 @@
+#change this
+SRILM_ROOT=/Users/zhifei/work/tools/srilm_1_5_7/
+SRILM_LIBS=$(SRILM_ROOT)/lib/macosx
+SRILM_INC=$(SRILM_ROOT)/include
+
+#change this
+JAVA_INC=/System/Library/Frameworks/JavaVM.framework/Versions/Current/Headers
+JAVA_INC_OS=/apps/share/jdk1.6.0_03/include/linux 
+
+#### input file: srilm.h, srilm.c, and srilm_java.i
+
+#java
+java: clean libsrilm.dylib
+
+libsrilm.dylib: srilm.o srilm_java_wrap.o
+	g++ -m64 -dynamiclib $^ -loolm -ldstruct -lmisc -L$(SRILM_LIBS) -o $@
+
+srilm_java_wrap.o: srilm_java_wrap.cxx
+	g++ -m64 -c -fpic $< -I/usr/local/include/ -I$(SRILM_INC) -I$(JAVA_INC) -I$(JAVA_INC_OS)
+
+
+srilm_java_wrap.cxx: srilm_java.i
+	swig -c++ -java -package joshua.decoder.ff.lm.srilm -outdir . $<
+
+
+
+#general
+srilm.o: srilm.c
+	g++ -m64 -c -fpic $< -I/usr/local/include/ -I$(SRILM_INC)
+
+clean:
+	rm -rf srilm.o srilm*.java srilm_*_wrap.* SWIGTYPE*.java libsrilm.dylib
