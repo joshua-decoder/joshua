@@ -55,6 +55,8 @@ public class ExtractRulesTest {
 	
 	// ä == \u00E4
 	// ü == \u00FC
+	// ñ == \u00F1
+	// í == \u00ED
 	
 	@Test
 	public void setup() throws IOException {
@@ -177,7 +179,7 @@ public class ExtractRulesTest {
 		String targetFileName = "data/europarl.en.small.100";
 		String alignmentFileName = "data/es_en_europarl_alignments.txt.small.100";
 		
-		String testSentence = "declaro reanudado el período de sesiones del parlamento europeo , interrumpido el viernes 17 de diciembre pasado , y reitero a sus señorías mi deseo de que hayan tenido unas buenas vacaciones .";
+		String testSentence = "declaro reanudado el per\u00EDodo de sesiones del parlamento europeo , interrumpido el viernes 17 de diciembre pasado , y reitero a sus se\u00F1or\u00EDas mi deseo de que hayan tenido unas buenas vacaciones .";
 		
 		boolean printPrefixTree = false;
 		
@@ -198,7 +200,7 @@ public class ExtractRulesTest {
 		verifyLine(lines.get(n++), "[X]", ", [X,1] ,", ", [X,1] ,");
 		verifyLine(lines.get(n++), "[X]", ", [X,1] a [X,2]", ", [X,1] to wish [X,2]");
 		verifyLine(lines.get(n++), "[X]", ", [X,1] a [X,2]", "too [X,1] to [X,2]");
-		verifyLine(lines.get(n++), "[X]", ", [X,1] a sus señorías", ", [X,1] to wish you");
+		verifyLine(lines.get(n++), "[X]", ", [X,1] a sus se\u00F1or\u00EDas", ", [X,1] to wish you");
 		verifyLine(lines.get(n++), "[X]", ", [X,1] a", ", [X,1] to");
 		verifyLine(lines.get(n++), "[X]", ", [X,1] a", "too [X,1] to");
 		verifyLine(lines.get(n++), "[X]", ", [X,1] de [X,2]", ", [X,1] [X,2]");
@@ -227,7 +229,7 @@ public class ExtractRulesTest {
 //		verifyLine(lines.get(n++), "[X]", ", [X,1] que [X,2]", ", [X,1] that [X,2]");
 		verifyLine(lines.get(n++), "[X]", ", [X,1] que", ", [X,1] that");
 		verifyLine(lines.get(n++), "[X]", ", [X,1] que", ", [X,1] which");
-		verifyLine(lines.get(n++), "[X]", ", [X,1] sus señorías", ", [X,1] wish you");
+		verifyLine(lines.get(n++), "[X]", ", [X,1] sus se\u00F1or\u00EDas", ", [X,1] wish you");
 //		verifyLine(lines.get(n++), "[X]", ", [X,1] y [X,2]", ", [X,1] and [X,2]");
 		verifyLine(lines.get(n++), "[X]", ", [X,1] y", ", [X,1] and");
 		verifyLine(lines.get(n++), "[X]", ", [X,1]", ", [X,1]");
@@ -240,7 +242,7 @@ public class ExtractRulesTest {
 		verifyLine(lines.get(n++), "[X]", ", [X,1]", "i [X,1]");
 		verifyLine(lines.get(n++), "[X]", ", [X,1]", "too [X,1]");
 		verifyLine(lines.get(n++), "[X]", ", y [X,1] de que", ", and [X,1] that");
-		verifyLine(lines.get(n++), "[X]", ", y [X,1] sus señorías", ", and [X,1] wish you");
+		verifyLine(lines.get(n++), "[X]", ", y [X,1] sus se\u00F1or\u00EDas", ", and [X,1] wish you");
 		verifyLine(lines.get(n++), "[X]", ", y [X,1]", ", and [X,1]");
 		verifyLine(lines.get(n++), "[X]", ", y reitero [X,1]", ", and i would like once again [X,1]");
 		verifyLine(lines.get(n++), "[X]", ", y reitero a [X,1]", ", and i would like once again to wish [X,1]");
@@ -320,7 +322,7 @@ public class ExtractRulesTest {
 		verifyLine(lines.get(n++), "[X]", "[X,1] a [X,2]", "[X,1] on [X,2]");
 		verifyLine(lines.get(n++), "[X]", "[X,1] a [X,2]", "[X,1] to [X,2]");
 		verifyLine(lines.get(n++), "[X]", "[X,1] a [X,2]", "[X,1] to wish [X,2]");
-		verifyLine(lines.get(n++), "[X]", "[X,1] a sus señorías", "[X,1] to wish you");
+		verifyLine(lines.get(n++), "[X]", "[X,1] a sus se\u00F1or\u00EDas", "[X,1] to wish you");
 		verifyLine(lines.get(n++), "[X]", "[X,1] a", "[X,1] on");
 		verifyLine(lines.get(n++), "[X]", "[X,1] a", "[X,1] to");
 		verifyLine(lines.get(n++), "[X]", "[X,1] de [X,2] ,", "[X,1] [X,2] ,");
@@ -458,10 +460,10 @@ public class ExtractRulesTest {
 		verifyLine(lines.get(n++), "[X]", "[X,1] que", "[X,1] who");
 		verifyLine(lines.get(n++), "[X]", "[X,1] reitero [X,2]", "[X,1] i would like once again [X,2]");
 		verifyLine(lines.get(n++), "[X]", "[X,1] reitero a [X,2]", "[X,1] i would like once again to wish [X,2]");
-		verifyLine(lines.get(n++), "[X]", "[X,1] reitero a sus señorías", "[X,1] i would like once again to wish you");
+		verifyLine(lines.get(n++), "[X]", "[X,1] reitero a sus se\u00F1or\u00EDas", "[X,1] i would like once again to wish you");
 		verifyLine(lines.get(n++), "[X]", "[X,1] reitero a", "[X,1] i would like once again to");
 		verifyLine(lines.get(n++), "[X]", "[X,1] reitero", "[X,1] i would like once again");
-		verifyLine(lines.get(n++), "[X]", "[X,1] sus señorías", "[X,1] wish you");
+		verifyLine(lines.get(n++), "[X]", "[X,1] sus se\u00F1or\u00EDas", "[X,1] wish you");
 		verifyLine(lines.get(n++), "[X]", "[X,1] sus", "[X,1] its");
 		verifyLine(lines.get(n++), "[X]", "[X,1] tenido [X,2] .", "[X,1] enjoyed [X,2] .");
 		verifyLine(lines.get(n++), "[X]", "[X,1] tenido [X,2]", "[X,1] enjoyed [X,2]");
@@ -493,8 +495,8 @@ public class ExtractRulesTest {
 		verifyLine(lines.get(n++), "[X]", "a [X,1]", "on [X,1]");
 		verifyLine(lines.get(n++), "[X]", "a [X,1]", "to [X,1]");
 		verifyLine(lines.get(n++), "[X]", "a [X,1]", "to wish [X,1]");
-		verifyLine(lines.get(n++), "[X]", "a sus señorías mi [X,1]", "to wish you a happy new year [X,1]");
-		verifyLine(lines.get(n++), "[X]", "a sus señorías", "to wish you");
+		verifyLine(lines.get(n++), "[X]", "a sus se\u00F1or\u00EDas mi [X,1]", "to wish you a happy new year [X,1]");
+		verifyLine(lines.get(n++), "[X]", "a sus se\u00F1or\u00EDas", "to wish you");
 		verifyLine(lines.get(n++), "[X]", "a", "as");
 		verifyLine(lines.get(n++), "[X]", "a", "on");
 		verifyLine(lines.get(n++), "[X]", "a", "to");
@@ -552,8 +554,8 @@ public class ExtractRulesTest {
 		verifyLine(lines.get(n++), "[X]", "de", "on");
 		verifyLine(lines.get(n++), "[X]", "de", "to");
 		verifyLine(lines.get(n++), "[X]", "de", "with");
-		verifyLine(lines.get(n++), "[X]", "declaro reanudado el período [X,1]", "i declare resumed the [X,1]");
-		verifyLine(lines.get(n++), "[X]", "declaro reanudado el período", "i declare resumed the");
+		verifyLine(lines.get(n++), "[X]", "declaro reanudado el per\u00EDodo [X,1]", "i declare resumed the [X,1]");
+		verifyLine(lines.get(n++), "[X]", "declaro reanudado el per\u00EDodo", "i declare resumed the");
 		verifyLine(lines.get(n++), "[X]", "del [X,1] , [X,2]", "by [X,1] , [X,2]");
 		verifyLine(lines.get(n++), "[X]", "del [X,1] ,", "by [X,1] ,");
 		verifyLine(lines.get(n++), "[X]", "del [X,1] ,", "of [X,1] ,");
@@ -686,19 +688,19 @@ public class ExtractRulesTest {
 		verifyLine(lines.get(n++), "[X]", "que", "who");
 		verifyLine(lines.get(n++), "[X]", "reitero [X,1]", "i would like once again [X,1]");
 		verifyLine(lines.get(n++), "[X]", "reitero a [X,1]", "i would like once again to wish [X,1]");
-		verifyLine(lines.get(n++), "[X]", "reitero a sus señorías", "i would like once again to wish you");
+		verifyLine(lines.get(n++), "[X]", "reitero a sus se\u00F1or\u00EDas", "i would like once again to wish you");
 		verifyLine(lines.get(n++), "[X]", "reitero a", "i would like once again to");
 		verifyLine(lines.get(n++), "[X]", "reitero", "i would like once again");
 		verifyLine(lines.get(n++), "[X]", "sesiones", "part-session");
 		verifyLine(lines.get(n++), "[X]", "sesiones", "session");
 		verifyLine(lines.get(n++), "[X]", "sus [X,1]", "its [X,1]");
 		verifyLine(lines.get(n++), "[X]", "sus [X,1]", "their [X,1]");
-		verifyLine(lines.get(n++), "[X]", "sus señorías [X,1]", "you [X,1]");
-		verifyLine(lines.get(n++), "[X]", "sus señorías mi [X,1] hayan", "you a happy new year [X,1] you");
-		verifyLine(lines.get(n++), "[X]", "sus señorías mi [X,1] que", "you a happy new year [X,1] that");
-		verifyLine(lines.get(n++), "[X]", "sus señorías mi [X,1]", "you a happy new year [X,1]");
-		verifyLine(lines.get(n++), "[X]", "sus señorías mi deseo de", "you a happy new year in the hope");
-		verifyLine(lines.get(n++), "[X]", "sus señorías", "you");
+		verifyLine(lines.get(n++), "[X]", "sus se\u00F1or\u00EDas [X,1]", "you [X,1]");
+		verifyLine(lines.get(n++), "[X]", "sus se\u00F1or\u00EDas mi [X,1] hayan", "you a happy new year [X,1] you");
+		verifyLine(lines.get(n++), "[X]", "sus se\u00F1or\u00EDas mi [X,1] que", "you a happy new year [X,1] that");
+		verifyLine(lines.get(n++), "[X]", "sus se\u00F1or\u00EDas mi [X,1]", "you a happy new year [X,1]");
+		verifyLine(lines.get(n++), "[X]", "sus se\u00F1or\u00EDas mi deseo de", "you a happy new year in the hope");
+		verifyLine(lines.get(n++), "[X]", "sus se\u00F1or\u00EDas", "you");
 		verifyLine(lines.get(n++), "[X]", "sus", "his");
 		verifyLine(lines.get(n++), "[X]", "sus", "its");
 		verifyLine(lines.get(n++), "[X]", "sus", "their");
@@ -715,14 +717,14 @@ public class ExtractRulesTest {
 		verifyLine(lines.get(n++), "[X]", "y [X,1] de", "and [X,1] of");
 		verifyLine(lines.get(n++), "[X]", "y [X,1] que [X,2]", "and [X,1] that [X,2]");
 		verifyLine(lines.get(n++), "[X]", "y [X,1] que", "and [X,1] that");
-		verifyLine(lines.get(n++), "[X]", "y [X,1] sus señorías", "and [X,1] wish you");
+		verifyLine(lines.get(n++), "[X]", "y [X,1] sus se\u00F1or\u00EDas", "and [X,1] wish you");
 		verifyLine(lines.get(n++), "[X]", "y [X,1]", ", that conference [X,1]");
 		verifyLine(lines.get(n++), "[X]", "y [X,1]", "and [X,1]");
 		verifyLine(lines.get(n++), "[X]", "y [X,1]", "and the [X,1]");
 		verifyLine(lines.get(n++), "[X]", "y [X,1]", "and which [X,1]");
 		verifyLine(lines.get(n++), "[X]", "y reitero [X,1]", "and i would like once again [X,1]");
 		verifyLine(lines.get(n++), "[X]", "y reitero a [X,1]", "and i would like once again to wish [X,1]");
-		verifyLine(lines.get(n++), "[X]", "y reitero a sus señorías", "and i would like once again to wish you");
+		verifyLine(lines.get(n++), "[X]", "y reitero a sus se\u00F1or\u00EDas", "and i would like once again to wish you");
 		verifyLine(lines.get(n++), "[X]", "y reitero a", "and i would like once again to");
 		verifyLine(lines.get(n++), "[X]", "y reitero", "and i would like once again");
 		verifyLine(lines.get(n++), "[X]", "y", ",");
@@ -739,17 +741,17 @@ public class ExtractRulesTest {
 		
 		boolean printPrefixTree = false;
 				
-		List<String> lines = extractRules(sourceFileName, targetFileName, alignmentFileName, "declaro reanudado el período de sesiones del parlamento europeo , interrumpido el viernes 17 de diciembre pasado , y reitero a sus señorías mi deseo de que hayan tenido unas buenas vacaciones .", true, true, printPrefixTree, 2);
+		List<String> lines = extractRules(sourceFileName, targetFileName, alignmentFileName, "declaro reanudado el per\u00EDodo de sesiones del parlamento europeo , interrumpido el viernes 17 de diciembre pasado , y reitero a sus se\u00F1or\u00EDas mi deseo de que hayan tenido unas buenas vacaciones .", true, true, printPrefixTree, 2);
 
 		Assert.assertEquals(lines.size(), 197);
 		
 		int n = 0;
 		verifyLine(lines.get(n++), "[X]", ", [X,1] a [X,2]", ", [X,1] to wish [X,2]");
-		verifyLine(lines.get(n++), "[X]", ", [X,1] a sus señorías", ", [X,1] to wish you");
+		verifyLine(lines.get(n++), "[X]", ", [X,1] a sus se\u00F1or\u00EDas", ", [X,1] to wish you");
 		verifyLine(lines.get(n++), "[X]", ", [X,1] a", ", [X,1] to");
-		verifyLine(lines.get(n++), "[X]", ", [X,1] sus señorías", ", [X,1] wish you");
+		verifyLine(lines.get(n++), "[X]", ", [X,1] sus se\u00F1or\u00EDas", ", [X,1] wish you");
 		verifyLine(lines.get(n++), "[X]", ", [X,1]", ", [X,1]");
-		verifyLine(lines.get(n++), "[X]", ", y [X,1] sus señorías", ", and [X,1] wish you");
+		verifyLine(lines.get(n++), "[X]", ", y [X,1] sus se\u00F1or\u00EDas", ", and [X,1] wish you");
 		verifyLine(lines.get(n++), "[X]", ", y [X,1]", ", and [X,1]");
 		verifyLine(lines.get(n++), "[X]", ", y reitero [X,1]", ", and i would like once again [X,1]");
 		verifyLine(lines.get(n++), "[X]", ", y reitero a [X,1]", ", and i would like once again to wish [X,1]");
@@ -790,7 +792,7 @@ public class ExtractRulesTest {
 		verifyLine(lines.get(n++), "[X]", "[X,1] 17 de diciembre pasado", "[X,1] 17 december 1999");
 		verifyLine(lines.get(n++), "[X]", "[X,1] 17", "[X,1] 17");
 		verifyLine(lines.get(n++), "[X]", "[X,1] a [X,2]", "[X,1] to wish [X,2]");
-		verifyLine(lines.get(n++), "[X]", "[X,1] a sus señorías", "[X,1] to wish you");
+		verifyLine(lines.get(n++), "[X]", "[X,1] a sus se\u00F1or\u00EDas", "[X,1] to wish you");
 		verifyLine(lines.get(n++), "[X]", "[X,1] a", "[X,1] to");
 		verifyLine(lines.get(n++), "[X]", "[X,1] de diciembre pasado ,", "[X,1] december 1999 ,");
 		verifyLine(lines.get(n++), "[X]", "[X,1] de diciembre pasado [X,2]", "[X,1] december 1999 [X,2]");
@@ -822,10 +824,10 @@ public class ExtractRulesTest {
 		verifyLine(lines.get(n++), "[X]", "[X,1] que", "[X,1] that");
 		verifyLine(lines.get(n++), "[X]", "[X,1] reitero [X,2]", "[X,1] i would like once again [X,2]");
 		verifyLine(lines.get(n++), "[X]", "[X,1] reitero a [X,2]", "[X,1] i would like once again to wish [X,2]");
-		verifyLine(lines.get(n++), "[X]", "[X,1] reitero a sus señorías", "[X,1] i would like once again to wish you");
+		verifyLine(lines.get(n++), "[X]", "[X,1] reitero a sus se\u00F1or\u00EDas", "[X,1] i would like once again to wish you");
 		verifyLine(lines.get(n++), "[X]", "[X,1] reitero a", "[X,1] i would like once again to");
 		verifyLine(lines.get(n++), "[X]", "[X,1] reitero", "[X,1] i would like once again");
-		verifyLine(lines.get(n++), "[X]", "[X,1] sus señorías", "[X,1] wish you");
+		verifyLine(lines.get(n++), "[X]", "[X,1] sus se\u00F1or\u00EDas", "[X,1] wish you");
 		verifyLine(lines.get(n++), "[X]", "[X,1] tenido [X,2] .", "[X,1] enjoyed [X,2] .");
 		verifyLine(lines.get(n++), "[X]", "[X,1] tenido [X,2]", "[X,1] enjoyed [X,2]");
 		verifyLine(lines.get(n++), "[X]", "[X,1] tenido unas buenas vacaciones", "[X,1] enjoyed a pleasant festive period");
@@ -839,8 +841,8 @@ public class ExtractRulesTest {
 		verifyLine(lines.get(n++), "[X]", "a [X,1] mi [X,2]", "to wish [X,1] a happy new year [X,2]");
 		verifyLine(lines.get(n++), "[X]", "a [X,1] mi deseo de", "to wish [X,1] a happy new year in the hope");
 		verifyLine(lines.get(n++), "[X]", "a [X,1]", "to wish [X,1]");
-		verifyLine(lines.get(n++), "[X]", "a sus señorías mi [X,1]", "to wish you a happy new year [X,1]");
-		verifyLine(lines.get(n++), "[X]", "a sus señorías", "to wish you");
+		verifyLine(lines.get(n++), "[X]", "a sus se\u00F1or\u00EDas mi [X,1]", "to wish you a happy new year [X,1]");
+		verifyLine(lines.get(n++), "[X]", "a sus se\u00F1or\u00EDas", "to wish you");
 		verifyLine(lines.get(n++), "[X]", "a", "to");
 		verifyLine(lines.get(n++), "[X]", "de diciembre pasado , [X,1]", "december 1999 , [X,1]");
 		verifyLine(lines.get(n++), "[X]", "de diciembre pasado , y", "december 1999 , and");
@@ -854,8 +856,8 @@ public class ExtractRulesTest {
 		verifyLine(lines.get(n++), "[X]", "de sesiones del parlamento europeo", "session of the european parliament");
 		verifyLine(lines.get(n++), "[X]", "de sesiones del", "session of");
 		verifyLine(lines.get(n++), "[X]", "de", "in");
-		verifyLine(lines.get(n++), "[X]", "declaro reanudado el período [X,1]", "i declare resumed the [X,1]");
-		verifyLine(lines.get(n++), "[X]", "declaro reanudado el período", "i declare resumed the");
+		verifyLine(lines.get(n++), "[X]", "declaro reanudado el per\u00EDodo [X,1]", "i declare resumed the [X,1]");
+		verifyLine(lines.get(n++), "[X]", "declaro reanudado el per\u00EDodo", "i declare resumed the");
 		verifyLine(lines.get(n++), "[X]", "deseo de [X,1] tenido [X,2]", "in the hope [X,1] enjoyed [X,2]");
 		verifyLine(lines.get(n++), "[X]", "deseo de [X,1] tenido", "in the hope [X,1] enjoyed");
 		verifyLine(lines.get(n++), "[X]", "deseo de [X,1]", "in the hope [X,1]");
@@ -917,15 +919,15 @@ public class ExtractRulesTest {
 		verifyLine(lines.get(n++), "[X]", "que", "that");
 		verifyLine(lines.get(n++), "[X]", "reitero [X,1]", "i would like once again [X,1]");
 		verifyLine(lines.get(n++), "[X]", "reitero a [X,1]", "i would like once again to wish [X,1]");
-		verifyLine(lines.get(n++), "[X]", "reitero a sus señorías", "i would like once again to wish you");
+		verifyLine(lines.get(n++), "[X]", "reitero a sus se\u00F1or\u00EDas", "i would like once again to wish you");
 		verifyLine(lines.get(n++), "[X]", "reitero a", "i would like once again to");
 		verifyLine(lines.get(n++), "[X]", "reitero", "i would like once again");
 		verifyLine(lines.get(n++), "[X]", "sesiones", "session");
-		verifyLine(lines.get(n++), "[X]", "sus señorías mi [X,1] hayan", "you a happy new year [X,1] you");
-		verifyLine(lines.get(n++), "[X]", "sus señorías mi [X,1] que", "you a happy new year [X,1] that");
-		verifyLine(lines.get(n++), "[X]", "sus señorías mi [X,1]", "you a happy new year [X,1]");
-		verifyLine(lines.get(n++), "[X]", "sus señorías mi deseo de", "you a happy new year in the hope");
-		verifyLine(lines.get(n++), "[X]", "sus señorías", "you");
+		verifyLine(lines.get(n++), "[X]", "sus se\u00F1or\u00EDas mi [X,1] hayan", "you a happy new year [X,1] you");
+		verifyLine(lines.get(n++), "[X]", "sus se\u00F1or\u00EDas mi [X,1] que", "you a happy new year [X,1] that");
+		verifyLine(lines.get(n++), "[X]", "sus se\u00F1or\u00EDas mi [X,1]", "you a happy new year [X,1]");
+		verifyLine(lines.get(n++), "[X]", "sus se\u00F1or\u00EDas mi deseo de", "you a happy new year in the hope");
+		verifyLine(lines.get(n++), "[X]", "sus se\u00F1or\u00EDas", "you");
 		verifyLine(lines.get(n++), "[X]", "tenido [X,1] .", "enjoyed [X,1] .");
 		verifyLine(lines.get(n++), "[X]", "tenido [X,1]", "enjoyed [X,1]");
 		verifyLine(lines.get(n++), "[X]", "tenido unas buenas vacaciones .", "enjoyed a pleasant festive period .");
@@ -933,11 +935,11 @@ public class ExtractRulesTest {
 		verifyLine(lines.get(n++), "[X]", "tenido", "enjoyed");
 		verifyLine(lines.get(n++), "[X]", "unas buenas vacaciones .", "a pleasant festive period .");
 		verifyLine(lines.get(n++), "[X]", "unas buenas vacaciones", "a pleasant festive period");
-		verifyLine(lines.get(n++), "[X]", "y [X,1] sus señorías", "and [X,1] wish you");
+		verifyLine(lines.get(n++), "[X]", "y [X,1] sus se\u00F1or\u00EDas", "and [X,1] wish you");
 		verifyLine(lines.get(n++), "[X]", "y [X,1]", "and [X,1]");
 		verifyLine(lines.get(n++), "[X]", "y reitero [X,1]", "and i would like once again [X,1]");
 		verifyLine(lines.get(n++), "[X]", "y reitero a [X,1]", "and i would like once again to wish [X,1]");
-		verifyLine(lines.get(n++), "[X]", "y reitero a sus señorías", "and i would like once again to wish you");
+		verifyLine(lines.get(n++), "[X]", "y reitero a sus se\u00F1or\u00EDas", "and i would like once again to wish you");
 		verifyLine(lines.get(n++), "[X]", "y reitero a", "and i would like once again to");
 		verifyLine(lines.get(n++), "[X]", "y reitero", "and i would like once again");
 		verifyLine(lines.get(n++), "[X]", "y", "and");
