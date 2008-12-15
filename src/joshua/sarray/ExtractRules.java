@@ -70,7 +70,8 @@ public class ExtractRules {
 			Option<Integer> maxPhraseSpan = commandLine.addIntegerOption("maxPhraseSpan","MAX_PHRASE_SPAN",10, "Max phrase span");
 			Option<Integer> maxPhraseLength = commandLine.addIntegerOption("maxPhraseLength","MAX_PHRASE_LENGTH",10, "Max phrase length");
 			Option<Integer> maxNonterminals = commandLine.addIntegerOption("maxNonterminals","MAX_NONTERMINALS",2, "Max nonterminals");
-
+			Option<Integer> minNonterminalSpan = commandLine.addIntegerOption("minNonterminalSpan","MIN_NONTERMINAL_SPAN", 2, "Minimum nonterminal span");
+			
 			Option<Integer> cacheSize = commandLine.addIntegerOption("cache","CACHE",1000, "Max number of patterns for which to cache hierarchical phrases");
 
 			
@@ -183,7 +184,7 @@ public class ExtractRules {
 
 				if (logger.isLoggable(Level.FINE)) logger.fine("Constructing prefix tree for source line " + lineNumber + ": " + line);
 
-				PrefixTree prefixTree = new PrefixTree(sourceSuffixArray, targetCorpusArray, alignmentArray, lexProbs, words, commandLine.getValue(maxPhraseSpan), commandLine.getValue(maxPhraseLength), commandLine.getValue(maxNonterminals), commandLine.getValue(ruleSampleSize));
+				PrefixTree prefixTree = new PrefixTree(sourceSuffixArray, targetCorpusArray, alignmentArray, lexProbs, words, commandLine.getValue(maxPhraseSpan), commandLine.getValue(maxPhraseLength), commandLine.getValue(maxNonterminals), commandLine.getValue(minNonterminalSpan), commandLine.getValue(ruleSampleSize));
 
 				if (commandLine.getValue(print_prefixTree)==true) {
 					System.out.println(prefixTree.toString());

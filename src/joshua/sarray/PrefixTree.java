@@ -93,13 +93,13 @@ public class PrefixTree {
 	private final int maxNonterminalSpan;
 
 	/** Minimum span in the source corpus of any nonterminal in an extracted hierarchical phrase. */
-	private final int minNonterminalSpan = 2;
+	private final int minNonterminalSpan;
 	
 	/** 
 	 * Maximum number of instances of a source phrase 
 	 * from the source corpus to use when translating a source phrase. 
-	 * 
-	 * This should also be the maximum number of hierarchical phrases
+	 * <p>
+	 * Note: This is <em>not</em> the maximum number of hierarchical phrases
 	 * to store at each node in the prefix tree.
 	 */
 	private final int sampleSize;
@@ -164,7 +164,7 @@ public class PrefixTree {
 	 */
 	private final Node xnode;
 	
-	public static PrefixTree getPrefixTree(String sourceFileName, String targetFileName, String alignmentFileName, String testFileName, int maxPhraseSpan, int maxPhraseLength, int maxNonterminals, int ruleSampleSize, int lexSampleSize, int cacheSize) throws IOException {
+	public static PrefixTree getPrefixTree(String sourceFileName, String targetFileName, String alignmentFileName, String testFileName, int maxPhraseSpan, int maxPhraseLength, int maxNonterminals, int ruleSampleSize, int lexSampleSize, int cacheSize, int minNonterminalSpan) throws IOException {
 		
 		SuffixArray.CACHE_CAPACITY = cacheSize;
 		if (logger.isLoggable(Level.FINE)) logger.fine("Suffix array will cache hierarchical phrases for at most " + SuffixArray.CACHE_CAPACITY + " patterns.");
@@ -203,7 +203,7 @@ public class PrefixTree {
 		
 		int[] sentence = sourceVocab.getIDs(line);
 		
-		return new PrefixTree(sourceSuffixArray, targetCorpusArray, alignments, lexProbs, sentence, maxPhraseSpan, maxPhraseLength, maxNonterminals, ruleSampleSize);
+		return new PrefixTree(sourceSuffixArray, targetCorpusArray, alignments, lexProbs, sentence, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan, ruleSampleSize);
 	}
 	
 	/**
@@ -216,9 +216,12 @@ public class PrefixTree {
 	 * @param maxPhraseSpan
 	 * @param maxPhraseLength
 	 * @param maxNonterminals
-	 * @param sampleSize TODO
+	 * @param minNonterminalSpan Minimum number of source language tokens 
+	 *                           a nonterminal is allowed to encompass.
+	 * @param sampleSize Maximum number of instances of a source phrase 
+	 *                   from the source corpus to use when translating a source phrase.
 	 */
-	public PrefixTree(SuffixArray suffixArray, CorpusArray targetCorpus, AlignmentArray alignments, LexicalProbabilities lexProbs, int[] sentence, int maxPhraseSpan, int maxPhraseLength, int maxNonterminals, int sampleSize) {
+	public PrefixTree(SuffixArray suffixArray, CorpusArray targetCorpus, AlignmentArray alignments, LexicalProbabilities lexProbs, int[] sentence, int maxPhraseSpan, int maxPhraseLength, int maxNonterminals, int minNonterminalSpan, int sampleSize) {
 
 		if (logger.isLoggable(Level.FINE)) logger.fine("\n\n\nConstructing new PrefixTree\n\n");
 
@@ -230,6 +233,7 @@ public class PrefixTree {
 		this.maxNonterminalSpan = maxPhraseSpan;
 		this.maxPhraseLength = maxPhraseLength;
 		this.maxNonterminals = maxNonterminals;
+		this.minNonterminalSpan = minNonterminalSpan;
 		this.sampleSize = sampleSize;
 
 		int START_OF_SENTENCE = 0;
@@ -261,20 +265,18 @@ public class PrefixTree {
 
 		// 1: children(p_eps) <-- children(p_eps) U p_x
 
-		// Add a link from root node to X
-		xnode = root.addChild(X);
-		
-		{	
+		{	// Create and set up the X node that comes off of ROOT
 			
-			{ 	// TODO Is this block doing the right thing?
-				
-				// What should the hierarchical phrases be for the X node that comes off of ROOT?
-				// Should it be empty? Should it be everything in this suffix array?
+			// Add a link from root node to X
+			xnode = root.addChild(X);
+			
+			{ 	// Set the list of hierarchical phrases be for the X node that comes off of ROOT to an empty list.
+				// Alternatively, one could consider every phrase in the corpus to match here.
 				xnode.sourceHierarchicalPhrases = Collections.emptyList();
 				if (suffixArray != null)
 					xnode.sourcePattern = new Pattern(suffixArray.getVocabulary(), X);
 				
-				// What should the bounds be for the X node that comes off of ROOT?
+				// Set the bounds of the X node to be the entire suffix array.
 				if (suffixArray!=null) {
 					int[] bounds = {0, suffixArray.size()-1};
 					xnode.setBounds(bounds);
@@ -418,14 +420,10 @@ public class PrefixTree {
 						List<HierarchicalPhrase> result = null;
 						
 						if (suffixArray != null) {
+							
 							// 19: Q_alpha-beta-f_j <-- query(alpha-beta-f_j, Q_alpha-beta, Q_beta-f_j)
-							// XXX BUG - The following call incorrectly returns an empty list when prefixNode==xnode 
 							result = query(extendedPattern, newNode, prefixNode, suffixNode);
-							/*
-							if (result==null && extendedPattern.endsWithNonTerminal()) {
-								result = new ArrayList<HierarchicalPhrase>(suffixNode.hierarchicalPhrases);
-								newNode.storeResults(result, extendedPattern.words);
-							}*/
+							
 						}
 
 						// 20: if Q_alpha_beta_f_j = ∅ (meaning that no results were found for this query)
@@ -476,113 +474,12 @@ public class PrefixTree {
 	 * @param maxNonterminals
 	 */
 	PrefixTree(int[] sentence, int maxPhraseSpan, int maxPhraseLength, int maxNonterminals) {
-		this(null, null, null, null, sentence, maxPhraseSpan, maxPhraseLength, maxNonterminals, 100);
+		this(null, null, null, null, sentence, maxPhraseSpan, maxPhraseLength, maxNonterminals, 2, 100);
 	}
 
 	public Grammar getRoot() {
 		return root;
 	}
-
-//	/**
-//	 * Implements the dotted operators from Lopez (2008), p78,
-//	 * for the case when the phrases do not overlap on any words.
-//	 * <p>
-//	 * The <code>compare</code> method of this comparator behaves as follows
-//	 * when provided prefix phrase m1 and suffix phrase m2:
-//	 * <ul>
-//	 * <li>Returns 0 if m1 and m2 can be paired.</li>
-//	 * <li>Returns -1 if m1 and m2 cannot be paired, and m1 precedes m2 in the corpus.</li>
-//	 * <li>Returns  1 if m1 and m2 cannot be paired, and m1 follows m2 in the corpus.</li>
-//	 * </ul>
-//	 * 
-//	 */
-//	final Comparator<HierarchicalPhrase> nonOverlapping = new Comparator<HierarchicalPhrase>() {
-//
-//		public int compare(HierarchicalPhrase m1, HierarchicalPhrase m2) {
-//			if (m1.sentenceNumber < m2.sentenceNumber)
-//				return -1;
-//			else if (m1.sentenceNumber > m2.sentenceNumber)
-//				return 1;
-//			else {
-//				if (m1.terminalSequenceStartIndices[0] >= m2.terminalSequenceStartIndices[0]-1)
-//					return 1;
-//				else if (m1.terminalSequenceStartIndices[0] <= m2.terminalSequenceStartIndices[0]-maxPhraseSpan)
-//					return -1;
-//				else
-//					return 0;
-//			}
-//		}
-//	};
-
-	
-//	/**
-//	 * Implements the dotted operators from Lopez (2008), p78-79,
-//	 * for the case when the phrases overlap on all words
-//	 * with the possible exceptions of the first word of the prefix phrase
-//	 * and the final word of the suffix phrase.
-//	 * <p>
-//	 * The <code>compare</code> method of this comparator behaves as follows
-//	 * when provided prefix phrase m1 and suffix phrase m2:
-//	 * <ul>
-//	 * <li>Returns 0 if m1 and m2 can be paired.</li>
-//	 * <li>Returns -1 if m1 and m2 cannot be paired, and m1 precedes m2 in the corpus.</li>
-//	 * <li>Returns  1 if m1 and m2 cannot be paired, and m1 follows m2 in the corpus.</li>
-//	 * </ul>
-//	 * 
-//	 */
-//	final Comparator<HierarchicalPhrase> overlapping = new Comparator<HierarchicalPhrase>() {
-//		
-//		//TODO This method may or may not be correct!!!!!
-//		public int compare(HierarchicalPhrase m1, HierarchicalPhrase m2) {
-//			
-//			//int m1Start;
-//			int m2Start, m1End;
-//			//int m2End;
-//			
-//			SuffixCase m1Suffix = m1.pattern.suffixCase;
-//			PrefixCase m2Prefix = m2.pattern.prefixCase;
-//			
-//			if (m1Suffix == SuffixCase.EMPTY_SUFFIX) {
-//				if (m2Prefix == PrefixCase.EMPTY_PREFIX) {
-//					return 0;
-//				} else {
-//					throw new RuntimeException("Overlapping phrases should not have empty suffix but nonempty prefix");
-//				}	
-//			} else if (m2Prefix == PrefixCase.EMPTY_PREFIX) {
-//				throw new RuntimeException("Overlapping phrases should not have empty prefix but nonempty suffix");
-//			}
-//			
-//			
-//			m1End   = m1.terminalSequenceStartIndices.length - 1;
-//			m2Start = 0;
-//			
-//			int result = m1.terminalSequenceStartIndices[m1End] - m2.terminalSequenceStartIndices[m2Start];
-//			
-//			
-//			if (result == 0) {
-//				
-//				//XXX It's possible that this endPosition calculation is bogus, but it works.
-//				int endPosition = m2.terminalSequenceStartIndices[0] + m2.terminalSequenceStartIndices.length;
-//				
-//				//XXX This length could be incorrect, if m1 starts with a nonterminal
-//				int combinedLength = endPosition - m1.terminalSequenceStartIndices[0];
-//				
-//				if (combinedLength <= maxPhraseSpan) 
-//					return 0;
-//				else
-//					return 1;
-//				
-//			} else if (result < 0 && m2.terminalSequenceStartIndices[m2Start]<m1.terminalSequenceEndIndices[m1End]) {
-//				//XXX We maybe should be checking here to make sure 
-//				//    that the combined span is not greater than maxPhraseSpan
-//				result = 0;
-//			}
-//			
-//			return result;
-//			
-//			
-//		}
-//	};
 
 	/**
 	 * Implements the dotted operators from Lopez (2008), p78,
@@ -767,8 +664,8 @@ public class PrefixTree {
 			if (result == null) {
 				
 				// 16: M_a_alpha_b <-- QUERY_INTERSECT(M_a_alpha, M_alpha_b)
-				// TODO This seems to be problematic when prefixNode is the X off of root, because hierarchicalPhrases for that node is empty
 				
+				// Special handling of case when prefixNode is the X off of root (hierarchicalPhrases for that node is empty)
 				if (arity==1 && prefixNode.sourcePattern.startsWithNonTerminal() && prefixNode.sourcePattern.endsWithNonTerminal()) {
 					
 					result = new ArrayList<HierarchicalPhrase>(suffixNode.sourceHierarchicalPhrases.size());
@@ -786,7 +683,9 @@ public class PrefixTree {
 						result.add(new HierarchicalPhrase(xpattern, phrase.terminalSequenceStartIndices, phrase.terminalSequenceEndIndices, phrase.corpusArray, phrase.length));
 					}
 					
-				} else {
+				} else { 
+					
+					// Normal query intersection case (when prefixNode != X off of root)
 					
 					if (logger.isLoggable(Level.FINEST)) logger.finest("Calling queryIntersect("+pattern+" M_a_alpha.pattern=="+prefixNode.sourcePattern + ", M_alpha_b.pattern=="+suffixNode.sourcePattern+")");
 					
@@ -885,22 +784,6 @@ public class PrefixTree {
 			
 		} // end while
 		
-//XXX Should we do sampling here or not?		
-//		if (results.size() > sampleSize) {
-//			int size = results.size();
-//			int step = results.size() / sampleSize;
-//			
-//			if (step > 1) {
-//				for (int index=0, total=0; total<sampleSize; index+=step) {
-//					results.set(total, results.get(index));
-//				}
-//			}
-//			
-//			for (int index=size-1; index>=sampleSize; index--) {
-//				results.remove(index);
-//			}
-//		}
-		
 		return results;
 		
 	}
@@ -918,10 +801,16 @@ public class PrefixTree {
 	 */
 	private void extendQueue(Queue<Tuple> queue, int i, int j, int[] sentence, Pattern pattern, Node node) {
 
+		
+			
+			
+		
+		
+		
 		int J = j;
 		if (!SENTENCE_FINAL_X) J += 1;
 		
-		// 1: if |alpha| < MaxPhraseLength  and  j-i+1<=MaxPhraseSpan then 
+		// 1: if |alpha| < MaxPhraseLength  and  j-i+1<=MaxPhraseSpan then 		
 		if (pattern.size() < maxPhraseLength  &&  (j+1)-i+1 <= maxPhraseSpan  && J<sentence.length) {
 
 			// 2: Add <alpha f_j, i, j+1, p_alpha> to queue
@@ -972,7 +861,7 @@ public class PrefixTree {
 					//xNode.storeResults(prefixNode.sourceHierarchicalPhrases, pattern(alphaPattern.words, X));
 					xNode.storeResults(phrasesWithFinalX, xpattern.words);
 				}
-				
+			
 				if (logger.isLoggable(Level.FINEST)) logger.finest("Alpha pattern is " + pattern);
 
 				// For efficiency, don't add any tuples to the queue whose patterns would exceed the max allowed number of tokens
@@ -981,7 +870,6 @@ public class PrefixTree {
 					int I = sentence.length;
 					if (!SENTENCE_FINAL_X) I -= 1;
 					
-					//int min = (I<i+maxPhraseLength) ? I : i+maxPhraseLength-1;
 					int min = (I<i+maxPhraseSpan) ? I : i+maxPhraseSpan-1;
 					Pattern patternX = new Pattern(pattern, X);
 
@@ -998,7 +886,7 @@ public class PrefixTree {
 				}
 			}
 		}
-
+		
 
 	}
 
@@ -1429,10 +1317,6 @@ public class PrefixTree {
 		 */
 		public void storeResults(List<HierarchicalPhrase> hierarchicalPhrases, int[] sourceTokens) {
 			
-			if (objectID==1265) {
-				System.out.println("!!!!!" + hierarchicalPhrases.size());
-			}
-			
 			if (logger.isLoggable(Level.FINER)) {
 				logger.finer("Storing " + hierarchicalPhrases.size() + " source phrases at node " + objectID + ":");
 				if (logger.isLoggable(Level.FINEST)) {
@@ -1441,9 +1325,7 @@ public class PrefixTree {
 					}
 				}
 			}
-			
-			//this.sourceHierarchicalPhrases = hierarchicalPhrases;
-			//this.sourceWords = sourceTokens;
+
 			Vocabulary vocab = (suffixArray==null) ? null : suffixArray.getVocabulary();
 			this.sourcePattern = new Pattern(vocab, sourceTokens);
 			this.results = new ArrayList<Rule>(hierarchicalPhrases.size());
@@ -2090,6 +1972,7 @@ public class PrefixTree {
 		maxPhraseLength = Integer.MIN_VALUE;
 		maxNonterminals = Integer.MIN_VALUE;
 		maxNonterminalSpan = Integer.MIN_VALUE;
+		minNonterminalSpan = Integer.MAX_VALUE;
 		sampleSize = Integer.MIN_VALUE;
 	}
 	
