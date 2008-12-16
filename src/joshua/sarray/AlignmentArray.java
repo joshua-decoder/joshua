@@ -18,6 +18,7 @@
 package joshua.sarray;
 
 import joshua.util.sentence.Span;
+import joshua.util.sentence.alignment.AbstractAlignments;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -35,16 +36,11 @@ import java.util.logging.Logger;
  *
  * @author Chris Callison-Burch
  * @since  13 May 2008
+ * @author Lane Schwartz
  * @version $LastChangedDate:2008-07-30 17:15:52 -0400 (Wed, 30 Jul 2008) $
  */
 
-public class AlignmentArray {
-
-//===============================================================
-// Constants
-//===============================================================
-
-	public static final int UNALIGNED = Integer.MAX_VALUE;
+public class AlignmentArray extends AbstractAlignments {
 	
 //===============================================================
 // Member variables
@@ -248,33 +244,6 @@ public class AlignmentArray {
 		
 		if (logger.isLoggable(Level.FINEST)) logger.warning("No aligned point");
 		return false;
-	}
-
-	/**
-	 * Gets a target span that is consistent with the provided
-	 * source span, if one exists. If no consistent span exists,
-	 * returns null.
-	 * 
-	 * @param sourceSpan
-	 * @return a target span that is consistent with the provided
-	 *         source span, if one exists, null otherwise
-	 */
-	public Span getConsistentTargetSpan(Span sourceSpan) {
-		Span targetSpan = getAlignedTargetSpan(sourceSpan);
-		
-		if (targetSpan.start == UNALIGNED) return null;
-		
-		// check back to see what sourceSpan the targetSpan
-		// aligns back to, so that we can check that it's
-		// within bounds
-		Span correspondingSourceSpan = getAlignedSourceSpan(targetSpan.start, targetSpan.end);
-		
-		if (correspondingSourceSpan.start < sourceSpan.start
-		|| correspondingSourceSpan.end > sourceSpan.end) {
-			return null;
-		} else {
-			return targetSpan;
-		}
 	}
 	
 	

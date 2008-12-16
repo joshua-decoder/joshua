@@ -31,6 +31,7 @@ import java.util.logging.Logger;
 import joshua.util.Pair;
 import joshua.util.lexprob.LexicalProbabilities;
 import joshua.util.sentence.Vocabulary;
+import joshua.util.sentence.alignment.Alignments;
 
 
 /**
@@ -44,7 +45,6 @@ import joshua.util.sentence.Vocabulary;
 public class SampledLexProbs implements LexicalProbabilities {
 
 	/** Logger for this class. */
-	@SuppressWarnings("unused")
 	private static final Logger logger = Logger.getLogger(SampledLexProbs.class.getName());
 	
 	private final Map<Integer,Map<Integer,Float>> sourceGivenTarget;
@@ -57,7 +57,7 @@ public class SampledLexProbs implements LexicalProbabilities {
 	final CorpusArray targetCorpus; 
 	
 	/** Represents alignments between words in the source corpus and the target corpus. */
-	private final AlignmentArray alignments;
+	private final Alignments alignments;
 	
 	private final Vocabulary sourceVocab;
 	private final Vocabulary targetVocab;
@@ -66,7 +66,7 @@ public class SampledLexProbs implements LexicalProbabilities {
 	
 	private final int sampleSize;
 	
-	public SampledLexProbs(int sampleSize, SuffixArray sourceSuffixArray, SuffixArray targetSuffixArray, AlignmentArray alignments, boolean precalculate) {
+	public SampledLexProbs(int sampleSize, SuffixArray sourceSuffixArray, SuffixArray targetSuffixArray, Alignments alignments, boolean precalculate) {
 		
 		this.sampleSize = sampleSize;
 		this.sourceSuffixArray = sourceSuffixArray;
@@ -140,7 +140,7 @@ public class SampledLexProbs implements LexicalProbabilities {
 		CorpusArray targetCorpusArray = SuffixArrayFactory.createCorpusArray(targetFileName, targetVocab, targetWordsSentences[0], targetWordsSentences[1]);
 		SuffixArray targetSuffixArray = SuffixArrayFactory.createSuffixArray(targetCorpusArray);
 
-		AlignmentArray alignmentArray = SuffixArrayFactory.createAlignmentArray(alignmentFileName, sourceSuffixArray, targetSuffixArray);
+		Alignments alignmentArray = SuffixArrayFactory.createAlignmentArray(alignmentFileName, sourceSuffixArray, targetSuffixArray);
 
 		return new SampledLexProbs(Integer.MAX_VALUE, sourceSuffixArray, targetSuffixArray, alignmentArray, false);
 		
@@ -276,7 +276,7 @@ public class SampledLexProbs implements LexicalProbabilities {
 				float sum = 0.0f;
 				
 				int sourceWord = sourceSuffixArray.corpus.corpus[sourceWordIndex];
-				int[] targetIndices = alignments.alignedTargetIndices[sourceWordIndex];
+				int[] targetIndices = alignments.getAlignedTargetIndices(sourceWordIndex);
 				
 				if (targetIndices==null) {
 					

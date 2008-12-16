@@ -31,6 +31,7 @@ import java.util.Set;
 import joshua.util.FormatUtil;
 
 import org.testng.Assert;
+import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
 /**
@@ -52,14 +53,15 @@ public class ExtractRulesTest {
 	String sourceFileName;
 	String targetFileName;
 	String alignmentFileName;
-	
+	String alignmentsType;
 	// ä == \u00E4
 	// ü == \u00FC
 	// ñ == \u00F1
 	// í == \u00ED
 	
+	@Parameters({"alignmentsType"})
 	@Test
-	public void setup() throws IOException {
+	public void setup(String alignmentsType) throws IOException {
 		
 		// Tell System.out and System.err to use UTF8
 		FormatUtil.useUTF8();
@@ -98,7 +100,8 @@ public class ExtractRulesTest {
 			alignmentPrintStream.close();
 			alignmentFileName = alignmentFile.getAbsolutePath();
 		}
-		
+
+		this.alignmentsType = alignmentsType;
 	}
 
 	/**
@@ -141,6 +144,7 @@ public class ExtractRulesTest {
 				"--source="+sourceFileName,
 				"--target="+targetFileName,
 				"--alignments="+alignmentFileName,
+				"--alignmentsType="+alignmentsType,
 				"--test="+testFileName,
 				"--output="+rulesFileName
 		};

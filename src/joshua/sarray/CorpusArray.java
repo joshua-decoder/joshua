@@ -237,6 +237,10 @@ public class CorpusArray {
 		return comparePhrase(corpusStart, phrase, 0, phrase.size());
 	}
 	
+	public Vocabulary getVocabulary() {
+		return vocab;
+	}
+	
 	
 	/** 
 	 * Compares the suffixes starting a positions index1 and

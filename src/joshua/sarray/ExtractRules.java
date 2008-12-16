@@ -32,6 +32,8 @@ import joshua.decoder.ff.tm.Rule;
 import joshua.util.CommandLineParser;
 import joshua.util.CommandLineParser.Option;
 import joshua.util.sentence.Vocabulary;
+import joshua.util.sentence.alignment.AlignmentGrids;
+import joshua.util.sentence.alignment.Alignments;
 
 
 /**
@@ -88,6 +90,7 @@ public class ExtractRules {
 			Option<Boolean> print_prefixTree = commandLine.addBooleanOption("print-prefix-tree",false,"should prefix tree be printed to standard out (for debugging)");
 			Option<Boolean> print_rules = commandLine.addBooleanOption("print-rules",true,"should extracted rules be printed to standard out");
 			
+			Option<String> alignmentType = commandLine.addStringOption("alignmentsType","ALIGNMENT_TYPE","AlignmentArray","Type of alignment data structure");
 			
 			commandLine.parse(args);
 
@@ -128,8 +131,15 @@ public class ExtractRules {
 
 			if (logger.isLoggable(Level.FINE)) logger.fine("Reading alignment data.");
 			String alignmentFileName = commandLine.getValue(alignment);
-			AlignmentArray alignmentArray = SuffixArrayFactory.createAlignmentArray(alignmentFileName, sourceSuffixArray, targetSuffixArray);
-
+			Alignments alignments;
+			if ("AlignmentArray".equals(commandLine.getValue(alignmentType))) {
+				if (logger.isLoggable(Level.FINE)) logger.fine("Using AlignmentArray");
+				alignments = SuffixArrayFactory.createAlignmentArray(alignmentFileName, sourceSuffixArray, targetSuffixArray);
+			} else {
+				if (logger.isLoggable(Level.FINE)) logger.fine("Using AlignmentGrids");
+				alignments = new AlignmentGrids(new Scanner(new File(alignmentFileName)), sourceCorpusArray, targetCorpusArray);
+			}
+			
 			// Set up the source text for reading
 //			Scanner target_given_source;
 //			if (commandLine.getValue(target_given_source_counts).endsWith(".gz") || commandLine.getValue(target_given_source_gz))
@@ -160,7 +170,7 @@ public class ExtractRules {
 			if (logger.isLoggable(Level.FINE)) logger.fine("Constructing lexical probabilities table");
 
 			SampledLexProbs lexProbs = 
-				new SampledLexProbs(commandLine.getValue(lexSampleSize), sourceSuffixArray, targetSuffixArray, alignmentArray, false);
+				new SampledLexProbs(commandLine.getValue(lexSampleSize), sourceSuffixArray, targetSuffixArray, alignments, false);
 			//new LexProbs(source_given_target, target_given_source, sourceVocab, targetVocab);
 
 			if (logger.isLoggable(Level.FINE)) logger.fine("Done constructing lexical probabilities table");
@@ -184,7 +194,7 @@ public class ExtractRules {
 
 				if (logger.isLoggable(Level.FINE)) logger.fine("Constructing prefix tree for source line " + lineNumber + ": " + line);
 
-				PrefixTree prefixTree = new PrefixTree(sourceSuffixArray, targetCorpusArray, alignmentArray, lexProbs, words, commandLine.getValue(maxPhraseSpan), commandLine.getValue(maxPhraseLength), commandLine.getValue(maxNonterminals), commandLine.getValue(minNonterminalSpan), commandLine.getValue(ruleSampleSize));
+				PrefixTree prefixTree = new PrefixTree(sourceSuffixArray, targetCorpusArray, alignments, lexProbs, words, commandLine.getValue(maxPhraseSpan), commandLine.getValue(maxPhraseLength), commandLine.getValue(maxNonterminals), commandLine.getValue(minNonterminalSpan), commandLine.getValue(ruleSampleSize));
 
 				if (commandLine.getValue(print_prefixTree)==true) {
 					System.out.println(prefixTree.toString());

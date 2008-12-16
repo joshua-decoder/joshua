@@ -23,8 +23,18 @@
   </test>
 
   <test name="AlignmentArray" >
+    <parameter name="alignmentsType" value="AlignmentArray" />
     <classes>
-       <class name="joshua.sarray.AlignmentArrayTest" />    
+       <class name="joshua.sarray.AlignmentArrayTest" /> 
+       <class name="joshua.util.sentence.alignment.AlignmentsTest" />   
+    </classes>
+  </test>
+
+  <test name="AlignmentGrids" >
+    <parameter name="alignmentsType" value="AlignmentGrids" />
+    <classes>
+       <class name="joshua.util.sentence.alignment.AlignmentGridTest" />
+       <class name="joshua.util.sentence.alignment.AlignmentsTest" />   
     </classes>
   </test>
 
@@ -48,10 +58,24 @@
 
   <test name="SuffixArray" >
     <classes>
-       <class name="joshua.sarray.SuffixArrayTest" /> 
-       <class name="joshua.sarray.ExtractRulesTest" />    
+       <class name="joshua.sarray.HierarchicalPhraseTest" />
+       <class name="joshua.sarray.SuffixArrayTest" />  
     </classes>
   </test>
+  
+  <test name="AlignmentArray RuleExtraction">
+     <parameter name="alignmentsType" value="AlignmentArray" />
+     <classes>
+       <class name="joshua.sarray.ExtractRulesTest" />  
+     </classes> 
+  </test>
+  
+  <test name="AlignmentsGrid RuleExtraction">
+     <parameter name="alignmentsType" value="AlignmentsGrid" />
+     <classes>
+       <class name="joshua.sarray.ExtractRulesTest" />  
+     </classes> 
+  </test>  
 
   <test name="Util" >
     <classes>

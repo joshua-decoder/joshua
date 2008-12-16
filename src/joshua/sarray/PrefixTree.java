@@ -27,6 +27,7 @@ import joshua.util.sentence.LabeledSpan;
 import joshua.util.sentence.Phrase;
 import joshua.util.sentence.Span;
 import joshua.util.sentence.Vocabulary;
+import joshua.util.sentence.alignment.Alignments;
 
 import java.io.File;
 import java.io.IOException;
@@ -60,7 +61,7 @@ public class PrefixTree {
 	private static final Logger logger = Logger.getLogger(PrefixTree.class.getName());
 
 	/** Integer representation of the nonterminal X. All nonterminals are guaranteed to be represented by negative integers. */
-	static final int X = -1;
+	public static final int X = -1;
 	
 	/** 
 	 * Vocabulary of nonterminal symbols. 
@@ -153,7 +154,7 @@ public class PrefixTree {
 	final CorpusArray targetCorpus;
 	
 	/** Represents alignments between words in the source corpus and the target corpus. */
-	final AlignmentArray alignments;
+	final Alignments alignments;
 	
 	/** Lexical translation probabilities. */
 	final LexicalProbabilities lexProbs;
@@ -186,7 +187,7 @@ public class PrefixTree {
 		SuffixArray targetSuffixArray = SuffixArrayFactory.createSuffixArray(targetCorpusArray);
 
 		if (logger.isLoggable(Level.FINE)) logger.fine("Reading alignment data.");
-		AlignmentArray alignments = SuffixArrayFactory.createAlignmentArray(alignmentFileName, sourceSuffixArray, targetSuffixArray);
+		Alignments alignments = SuffixArrayFactory.createAlignmentArray(alignmentFileName, sourceSuffixArray, targetSuffixArray);
 
 		if (logger.isLoggable(Level.FINE)) logger.fine("Constructing lexical probabilities table");
 
@@ -221,7 +222,7 @@ public class PrefixTree {
 	 * @param sampleSize Maximum number of instances of a source phrase 
 	 *                   from the source corpus to use when translating a source phrase.
 	 */
-	public PrefixTree(SuffixArray suffixArray, CorpusArray targetCorpus, AlignmentArray alignments, LexicalProbabilities lexProbs, int[] sentence, int maxPhraseSpan, int maxPhraseLength, int maxNonterminals, int minNonterminalSpan, int sampleSize) {
+	public PrefixTree(SuffixArray suffixArray, CorpusArray targetCorpus, Alignments alignments, LexicalProbabilities lexProbs, int[] sentence, int maxPhraseSpan, int maxPhraseLength, int maxNonterminals, int minNonterminalSpan, int sampleSize) {
 
 		if (logger.isLoggable(Level.FINE)) logger.fine("\n\n\nConstructing new PrefixTree\n\n");
 

@@ -60,7 +60,7 @@ public class AlignmentArrayTest {
 		CorpusArray targetArray = SuffixArrayFactory.createCorpusArray(targetFilename, targetVocab, numberOfTargetWordsAndSentences[0], numberOfTargetWordsAndSentences[1]);
 		targetCorpus = SuffixArrayFactory.createSuffixArray(targetArray);//SuffixArrayFactory.loadSuffixArray(targetLang, corpusName, directory);
 		
-		alignmentArray = SuffixArrayFactory.createAlignmentArray(alignmentsFilename, sourceCorpus, targetCorpus); //SuffixArrayFactory.loadAlignmentArray(sourceLang, targetLang, corpusName, directory);
+		alignmentArray = (AlignmentArray) SuffixArrayFactory.createAlignmentArray(alignmentsFilename, sourceCorpus, targetCorpus); //SuffixArrayFactory.loadAlignmentArray(sourceLang, targetLang, corpusName, directory);
 		
 	}
 	

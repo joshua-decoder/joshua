@@ -375,6 +375,24 @@ public class HierarchicalPhrase extends AbstractPhrase {
 		return terminalSequenceEndIndices[terminalSequenceEndIndices.length-1];
 	}
 	
+	/**
+	 * Gets whether this phrase contains a terminal at the specified index.
+	 * 
+	 * @return <code>true</code> this phrase contains a terminal at the specified index
+	 *         <code>false</code> otherwise
+	 */
+	public boolean containsTerminalAt(int alignedPointIndex) {
+
+		for (int i=0; i<terminalSequenceStartIndices.length; i++) {
+			if (alignedPointIndex >= terminalSequenceStartIndices[i] &&
+					alignedPointIndex < terminalSequenceEndIndices[i]) {
+				return true;
+			}
+		}		
+		
+		return false;
+	}
+	
 	
 	/**
 	 * Returns the index of the sentence in the corpus that the

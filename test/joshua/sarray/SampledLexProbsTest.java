@@ -6,7 +6,6 @@ import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.util.Date;
 
-import joshua.sarray.AlignmentArray;
 import joshua.sarray.CorpusArray;
 import joshua.sarray.HierarchicalPhrase;
 import joshua.sarray.Pattern;
@@ -16,6 +15,7 @@ import joshua.sarray.SuffixArray;
 import joshua.sarray.SuffixArrayFactory;
 import joshua.util.Pair;
 import joshua.util.sentence.Vocabulary;
+import joshua.util.sentence.alignment.Alignments;
 
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -27,7 +27,7 @@ public class SampledLexProbsTest {
 	
 	SampledLexProbs lexProbs;
 	Vocabulary sourceVocab, targetVocab;
-	AlignmentArray alignmentArray;
+	Alignments alignmentArray;
 	CorpusArray sourceCorpusArray;
 	
 	@Test

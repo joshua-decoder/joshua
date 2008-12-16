@@ -18,6 +18,7 @@
 package joshua.sarray;
 
 import joshua.util.sentence.Vocabulary;
+import joshua.util.sentence.alignment.Alignments;
 
 import java.util.*;
 import java.io.*;
@@ -150,7 +151,7 @@ public class SuffixArrayFactory {
 	 * Creates an AlignmentArray from a file containing Moses-style
 	 * alignments, and a source and target corpus.
 	 */
-	public static AlignmentArray createAlignmentArray(String alignmentsFilename, SuffixArray sourceCorpus, SuffixArray targetCorpus) throws IOException {
+	public static Alignments createAlignmentArray(String alignmentsFilename, SuffixArray sourceCorpus, SuffixArray targetCorpus) throws IOException {
 //		int [] lowestAlignedTargetIndex = initalizeArray(sourceCorpus.size(), AlignmentArray.UNALIGNED);
 //		int [] highestAlignedTargetIndex = initalizeArray(sourceCorpus.size(), -1);
 //		int [] lowestAlignedSourceIndex = initalizeArray(targetCorpus.size(), AlignmentArray.UNALIGNED);
