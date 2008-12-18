@@ -53,7 +53,7 @@ public class AlignmentGrids extends AbstractAlignments {
 	
 	public int[] getAlignedSourceIndices(int targetIndex) {
 		
-		int sentenceID = sourceCorpus.getSentenceIndex(targetIndex);
+		int sentenceID = targetCorpus.getSentenceIndex(targetIndex);
 		int sourceOffset = sourceCorpus.getSentencePosition(sentenceID);
 		int targetOffset = targetCorpus.getSentencePosition(sentenceID);
 		int normalizedTargetIndex = targetIndex - targetOffset;
@@ -75,7 +75,7 @@ public class AlignmentGrids extends AbstractAlignments {
 
 	public Span getAlignedSourceSpan(int startTargetIndex, int endTargetIndex) {
 		
-		int sentenceID = sourceCorpus.getSentenceIndex(startTargetIndex);
+		int sentenceID = targetCorpus.getSentenceIndex(startTargetIndex);
 		int sourceOffset = sourceCorpus.getSentencePosition(sentenceID);
 		int targetOffset = targetCorpus.getSentencePosition(sentenceID);
 		int normalizedTargetStartIndex = startTargetIndex - targetOffset;
@@ -136,7 +136,12 @@ public class AlignmentGrids extends AbstractAlignments {
 		
 		int[] targetIndices = grid.getTargetPoints(normalizedSourceStartIndex, normalizedSourceEndIndex);
 		
-		if (targetIndices==null || targetIndices.length==0) {
+		int[] startPoints = grid.getTargetPoints(normalizedSourceStartIndex, normalizedSourceStartIndex+1);
+		int[] endPoints = grid.getTargetPoints(normalizedSourceEndIndex-1, normalizedSourceEndIndex);
+		
+		if (targetIndices==null || targetIndices.length==0 || (requireTightSpans && (
+				startPoints==null || startPoints.length==0 ||
+				endPoints==null || endPoints.length==0))) {
 		
 			return new Span(UNALIGNED, UNALIGNED);
 		

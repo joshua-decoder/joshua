@@ -746,7 +746,7 @@ public class ExtractRulesTest {
 		boolean printPrefixTree = false;
 				
 		List<String> lines = extractRules(sourceFileName, targetFileName, alignmentFileName, "declaro reanudado el per\u00EDodo de sesiones del parlamento europeo , interrumpido el viernes 17 de diciembre pasado , y reitero a sus se\u00F1or\u00EDas mi deseo de que hayan tenido unas buenas vacaciones .", true, true, printPrefixTree, 2);
-
+		if (lines.size()==303) for (String line : lines) System.out.println(line);
 		Assert.assertEquals(lines.size(), 197);
 		
 		int n = 0;

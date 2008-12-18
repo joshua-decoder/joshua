@@ -234,6 +234,41 @@ public class AlignmentsTest {
 			
 		}
 		
+		{
+
+			Pattern     pattern = new Pattern(new Pattern(new Pattern(vocab, vocab.getIDs(",")), PrefixTree.X), vocab.getIDs(", y"));// del parlamento europeo"));
+			int[]       terminalSequenceStartIndices = {9,17};
+			int[]       terminalSequenceEndIndices = {10,19};
+			int         length = 10;
+
+			HierarchicalPhrase phrase = new HierarchicalPhrase(pattern, terminalSequenceStartIndices, terminalSequenceEndIndices, sourceCorpusArray, length);
+
+			Assert.assertFalse(alignments.hasAlignedTerminal(9, phrase));
+			
+			Assert.assertFalse(alignments.hasAlignedTerminal(10 , phrase));
+			Assert.assertFalse(alignments.hasAlignedTerminal(11 , phrase));			
+			Assert.assertFalse(alignments.hasAlignedTerminal(12 , phrase));
+			Assert.assertFalse(alignments.hasAlignedTerminal(13 , phrase));
+			Assert.assertFalse(alignments.hasAlignedTerminal(14 , phrase));
+
+			Assert.assertTrue(alignments.hasAlignedTerminal(15, phrase));
+			Assert.assertTrue(alignments.hasAlignedTerminal(16, phrase));
+			
+			Assert.assertFalse(alignments.hasAlignedTerminal(17, phrase));
+			Assert.assertFalse(alignments.hasAlignedTerminal(18, phrase));
+			Assert.assertFalse(alignments.hasAlignedTerminal(19, phrase));
+			Assert.assertFalse(alignments.hasAlignedTerminal(20, phrase));
+			Assert.assertFalse(alignments.hasAlignedTerminal(21, phrase));
+			Assert.assertFalse(alignments.hasAlignedTerminal(22, phrase));
+			Assert.assertFalse(alignments.hasAlignedTerminal(23, phrase));
+			
+			Assert.assertFalse(alignments.hasAlignedTerminal(24, phrase));
+
+			Assert.assertFalse(alignments.hasAlignedTerminal(25, phrase));
+			Assert.assertFalse(alignments.hasAlignedTerminal(26, phrase));
+			Assert.assertFalse(alignments.hasAlignedTerminal(27, phrase));			
+		
+		}
 	}
 	
 	

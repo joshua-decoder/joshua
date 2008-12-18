@@ -1490,7 +1490,7 @@ public class PrefixTree {
 				
 				// Get target span
 				Span sourceSpan = new Span(sourcePhrase.terminalSequenceStartIndices[0], sourcePhrase.terminalSequenceEndIndices[sourcePhrase.terminalSequenceEndIndices.length-1]);//+sample.length); 
-				
+	
 				Span targetSpan = alignments.getConsistentTargetSpan(sourceSpan);
 				
 				// If target span and source span are consistent

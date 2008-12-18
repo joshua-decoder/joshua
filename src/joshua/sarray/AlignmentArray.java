@@ -86,8 +86,6 @@ public class AlignmentArray extends AbstractAlignments {
 	 * each word in the target corpus.
 	 */
 	protected final int[][] alignedSourceIndices;
-
-	protected final boolean requireTightSpans = true;
 	
 	/** Logger for this class. */
 	private static final Logger logger = Logger.getLogger(AlignmentArray.class.getName());

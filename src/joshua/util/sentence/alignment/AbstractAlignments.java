@@ -26,6 +26,16 @@ import joshua.util.sentence.Span;
  */
 public abstract class AbstractAlignments implements Alignments {
 
+	protected final boolean requireTightSpans;
+	
+	public AbstractAlignments() {
+		this.requireTightSpans = true;
+	}
+	
+	public AbstractAlignments(boolean requireTightSpans) {
+		this.requireTightSpans = requireTightSpans;
+	}
+	
 	public Span getConsistentTargetSpan(Span sourceSpan) {
 		Span targetSpan = getAlignedTargetSpan(sourceSpan);
 		

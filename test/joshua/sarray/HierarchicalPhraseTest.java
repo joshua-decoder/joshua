@@ -20,13 +20,9 @@ package joshua.sarray;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.io.PrintWriter;
 import java.util.Date;
-import java.util.Scanner;
 
 import joshua.util.sentence.Vocabulary;
-import joshua.util.sentence.alignment.AlignmentGrid;
-import joshua.util.sentence.alignment.AlignmentGrids;
 
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -42,10 +38,10 @@ public class HierarchicalPhraseTest {
 	@Test
 	public void setup() throws IOException {
 
-		String alignmentString = 
-			"0-0 0-1 1-1 2-1 3-1 0-2 0-3 5-4 4-5 6-5 8-6 8-7 7-8 10-9 12-10 11-11 12-11 13-12 14-13 15-13 16-13 16-14 17-15 18-16 19-17 19-18 19-19 19-20 19-21 20-22 21-24 22-24 25-29 24-31 26-32 27-33 28-34 30-35 31-36 29-37 30-37 31-37 31-38 32-39" + "\n" +
-			"0-0 0-1 0-2 1-3 2-5 3-6 4-6 5-7 6-8 7-9 8-10 10-11 12-11 9-12 11-12 12-12 13-13 14-14 18-16 21-17 22-19 22-20 23-20 24-21 25-22 25-23 26-24 27-25 28-25 29-26 30-26 31-26 31-28 32-29 34-30 33-31 35-33 36-34 36-35 37-36" + "\n" +
-			"0-0 1-0 2-1 3-2 4-3 5-4 6-5 7-6 8-7 9-11 10-12 11-13 12-14 10-15 11-15 12-15 13-16 14-17 15-17 16-17 19-17 18-18 21-19 22-20" + "\n";
+//		String alignmentString = 
+//			"0-0 0-1 1-1 2-1 3-1 0-2 0-3 5-4 4-5 6-5 8-6 8-7 7-8 10-9 12-10 11-11 12-11 13-12 14-13 15-13 16-13 16-14 17-15 18-16 19-17 19-18 19-19 19-20 19-21 20-22 21-24 22-24 25-29 24-31 26-32 27-33 28-34 30-35 31-36 29-37 30-37 31-37 31-38 32-39" + "\n" +
+//			"0-0 0-1 0-2 1-3 2-5 3-6 4-6 5-7 6-8 7-9 8-10 10-11 12-11 9-12 11-12 12-12 13-13 14-14 18-16 21-17 22-19 22-20 23-20 24-21 25-22 25-23 26-24 27-25 28-25 29-26 30-26 31-26 31-28 32-29 34-30 33-31 35-33 36-34 36-35 37-36" + "\n" +
+//			"0-0 1-0 2-1 3-2 4-3 5-4 6-5 7-6 8-7 9-11 10-12 11-13 12-14 10-15 11-15 12-15 13-16 14-17 15-17 16-17 19-17 18-18 21-19 22-20" + "\n";
 
 		String sourceCorpusString = 
 			"declaro reanudado el período de sesiones del parlamento europeo , interrumpido el viernes 17 de diciembre pasado , y reitero a sus señorías mi deseo de que hayan tenido unas buenas vacaciones ." + "\n" + 
