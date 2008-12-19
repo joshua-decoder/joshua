@@ -76,6 +76,8 @@ public class ExtractRules {
 			
 			Option<Integer> cacheSize = commandLine.addIntegerOption("cache","CACHE",1000, "Max number of patterns for which to cache hierarchical phrases");
 
+			Option<Integer> trainingSize = commandLine.addIntegerOption("trainingSize","NUMBER_OF_TRAINING_SENTENCES",1000, "Expected number of training sentences");
+
 			
 //			Option<String> target_given_source_counts = commandLine.addStringOption("target-given-source-counts","FILENAME","file containing co-occurence counts of source and target word pairs, sorted by source words");
 //			Option<String> source_given_target_counts = commandLine.addStringOption("source-given-target-counts","FILENAME","file containing co-occurence counts of target and source word pairs, sorted by target words");
@@ -137,7 +139,7 @@ public class ExtractRules {
 				alignments = SuffixArrayFactory.createAlignmentArray(alignmentFileName, sourceSuffixArray, targetSuffixArray);
 			} else {
 				if (logger.isLoggable(Level.FINE)) logger.fine("Using AlignmentGrids");
-				alignments = new AlignmentGrids(new Scanner(new File(alignmentFileName)), sourceCorpusArray, targetCorpusArray);
+				alignments = new AlignmentGrids(new Scanner(new File(alignmentFileName)), sourceCorpusArray, targetCorpusArray, commandLine.getValue(trainingSize));
 			}
 			
 			// Set up the source text for reading
