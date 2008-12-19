@@ -61,8 +61,6 @@ public class PrefixTreeNodeTest {
 		
 		root.addChild(8803);
 		Assert.assertEquals(root.toString(), "[id1 ROOT (null) [id2 X (null) ] [id3 v8801 (null) [id4 X (null) ] ] [id5 v8802 (null) [id6 X (null) ] ] [id7 v8803 (null) ] ]");
-		
-		System.out.println(root);
-		
+				
 	}
 }
