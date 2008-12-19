@@ -237,7 +237,7 @@ line format:
 
   private static void processArgsAndInitialize(String[] args) throws Exception
   {
-    EvaluationMetric.set_knownNames();
+    EvaluationMetric.set_knownMetrics();
 
     // set default values
     candFileName = "candidates.txt";

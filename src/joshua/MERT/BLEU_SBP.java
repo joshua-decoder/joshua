@@ -7,8 +7,7 @@ public class BLEU_SBP extends BLEU
 {
   // constructors
   public BLEU_SBP() { super(); }
-  public BLEU_SBP(int mxGrmLn) { super(mxGrmLn); }
-  public BLEU_SBP(String methodStr) { super(methodStr); }
+  public BLEU_SBP(String[] BLEU_SBP_options) { super(BLEU_SBP_options); }
   public BLEU_SBP(int mxGrmLn,String methodStr) { super(mxGrmLn,methodStr); }
 
 

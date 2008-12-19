@@ -7,7 +7,8 @@ import java.text.DecimalFormat;
 public abstract class EvaluationMetric
 {
   /* static data members */
-  private static TreeSet knownNames; // set of valid metric names
+//  private static TreeSet<String> knownNames; // set of valid metric names
+  private static TreeMap<String,Integer> metricOptionCount; // maps metric names -> number of options for that metric
   protected static int numSentences; // number of sentences in the MERT set
   protected static int refsPerSen;
   protected static String[][] refSentences;
@@ -23,11 +24,39 @@ public abstract class EvaluationMetric
     //      toBeMinimized = false for BLEU
 
   /* static (=> also non-abstract) methods */
-  public static void set_knownNames()
+  public static void set_knownMetrics()
   {
-    knownNames = new TreeSet();
+/*
+    knownNames = new TreeSet<String>();
     knownNames.add("BLEU"); // implemented in BLEU.java
+    knownNames.add("BLEU_SBP"); // implemented in BLEU_SBP.java
     knownNames.add("01LOSS"); // implemented in zero_one_loss.java
+*/
+    metricOptionCount = new TreeMap<String,Integer>();
+    metricOptionCount.put("BLEU",2);         // the "BLEU" metric is implemented in BLEU.java
+    metricOptionCount.put("BLEU_SBP",2);     // the "BLEU_SBP" metric is implemented in BLEU_SBP.java (which extends BLEU.java)
+    metricOptionCount.put("01LOSS",0);       // the "01LOSS" metric is implemented in ZeroOneLoss.java
+    metricOptionCount.put("UserMetric1",1);  // the "UserMetric1" metric is implemented in UserMetric1.java
+    metricOptionCount.put("UserMetric2",1);  // the "UserMetric2" metric is implemented in UserMetric2.java
+  }
+
+  public static EvaluationMetric getMetric(String metricName, String[] metricOptions)
+  {
+    EvaluationMetric retMetric = null;
+
+    if (metricName.equals("BLEU")) {
+      retMetric = new BLEU(metricOptions);
+    } else if (metricName.equals("BLEU_SBP")) {
+      retMetric = new BLEU_SBP(metricOptions);
+    } else if (metricName.equals("01LOSS")) {
+      retMetric = new ZeroOneLoss(metricOptions);
+    } else if (metricName.equals("UserMetric1")) {
+      retMetric = new UserMetric1(metricOptions);
+    } else if (metricName.equals("UserMetric2")) {
+      retMetric = new UserMetric2(metricOptions);
+    }
+
+    return retMetric;
   }
 
   public static void set_numSentences(int x) { numSentences = x; }
@@ -44,7 +73,12 @@ public abstract class EvaluationMetric
 
   public static boolean knownMetricName(String name)
   {
-    return knownNames.contains(name);
+    return metricOptionCount.containsKey(name);
+  }
+
+  public static int metricOptionCount(String name)
+  {
+    return metricOptionCount.get(name);
   }
 
   /* non-abstract, non-static methods */

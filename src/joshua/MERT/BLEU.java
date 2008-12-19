@@ -15,40 +15,15 @@ public class BLEU extends EvaluationMetric
 
   public BLEU()
   {
-    maxGramLength = 4; // default
-    effLengthMethod = 1; // default
-    initialize();
+    this(4,"closest");
+//    maxGramLength = 4; // default
+//    effLengthMethod = 1; // default
+//    initialize();
   }
 
-  public BLEU(int mxGrmLn)
+  public BLEU(String[] BLEU_options)
   {
-    if (mxGrmLn >= 1) {
-      maxGramLength = mxGrmLn;
-    } else {
-      System.out.println("Maximum gram length must be positive");
-      System.exit(2);
-    }
-    effLengthMethod = 1; // default
-    initialize();
-  }
-
-  public BLEU(String methodStr)
-  {
-    maxGramLength = 4; // default
-
-    if (methodStr.equals("closest")) {
-      effLengthMethod = 1;
-    } else if (methodStr.equals("shortest")) {
-      effLengthMethod = 2;
-    } else if (methodStr.equals("average")) {
-      effLengthMethod = 3;
-    } else {
-      System.out.println("Unknown effective length method string " + methodStr + ".");
-      System.out.println("Should be one of closest, shortest, or average.");
-      System.exit(1);
-    }
-
-    initialize();
+    this(Integer.parseInt(BLEU_options[0]),BLEU_options[1]);
   }
 
   public BLEU(int mxGrmLn,String methodStr)

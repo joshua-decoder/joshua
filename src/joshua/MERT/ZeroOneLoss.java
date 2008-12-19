@@ -10,6 +10,11 @@ public class ZeroOneLoss extends EvaluationMetric
     initialize();
   }
 
+  public ZeroOneLoss(String[] ZOL_options)
+  {
+    this();
+  }
+
   protected void initialize()
   {
     metricName = "01LOSS";

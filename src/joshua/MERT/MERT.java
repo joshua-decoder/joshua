@@ -33,6 +33,14 @@ public class MERT
   private int numParams;
     // number of parameters for the log-linear model
 
+  private double[] normalizationOptions;
+    // How should a lambda[] vector be normalized (before decoding)?
+    //   nO[0] = 0: no normalization
+    //   nO[0] = 1: scale so that parameter nO[2] has absolute value nO[1]
+    //   nO[0] = 2: scale so that the maximum absolute value is nO[1]
+    //   nO[0] = 3: scale so that the minimum absolute value is nO[1]
+    //   nO[0] = 4: scale so that the L-nO[1] norm equals nO[2]
+
   /* *********************************************************** */
   /*   NOTE: indexing starts at 1 in the following few arrays:   */
   /* *********************************************************** */
@@ -46,13 +54,18 @@ public class MERT
   private boolean[] isOptimizable;
     // isOptimizable[c] = true iff lambda[c] should be optimized
 
-  private double[] minValue;
-  private double[] maxValue;
-    // when optimizing lambda[c], only values in [minValue,maxValue] will be
-    // considered.
-
-    // (*) minValue and maxValue can be real values as well as -Infinity and +Infinity
+  private double[] minThValue;
+  private double[] maxThValue;
+    // when investigating thresholds along the lambda[c] dimension, only values
+    // in the [minThValue[c],maxThValue[c]] range will be considered.
+    // (*) minThValue and maxThValue can be real values as well as -Infinity and +Infinity
     //     (coded as -Inf and +Inf, respectively, in an input file)
+
+  private double[] minRandValue;
+  private double[] maxRandValue;
+    // when choosing a random value for the lambda[c] parameter, it will be
+    // chosen from the [minRandValue[c],maxRandValue[c]] range.
+    // (*) minRandValue and maxRandValue must be real values, but not -Inf or +Inf
 
   private double[] defaultLambda;
     // "default" parameter values; simply the values read in the parameter file
@@ -92,9 +105,17 @@ public class MERT
 
   private int maxMERTIterations, minMERTIterations, prevMERTIterations;
     // max: maximum number of MERT iterations
-    // min: minimum number of MERT iterations before exiting due to any of the secondary stopping criteria
+    // min: minimum number of MERT iterations before an early MERT exit
     // prev: number of previous MERT iterations from which to consider candidates (in addition to the
     //       candidates from the current iteration)
+
+  private double stopSigValue;
+    // early MERT exit if no weight changes by more than stopSigValue
+    // (but see minMERTIterations above and stopMinIts below)
+
+  private int stopMinIts;
+    // some early stopping criterion must be satisfied in stopMinIts *consecutive* iterations before an early exit
+    // (but see minMERTIterations above)
 
   private boolean oneModificationPerIteration;
     // if true, each MERT iteration performs at most one parameter modification.
@@ -103,6 +124,9 @@ public class MERT
 
   private String metricName;
     // name of evaluation metric optimized by MERT
+
+  static String[] metricOptions;
+    // options for the evaluation metric (e.g. for BLEU, maxGramLength and effLengthMethod)
 
   private EvaluationMetric evalMetric;
     // the evaluation metric used by MERT
@@ -119,14 +143,14 @@ public class MERT
 
   public MERT(String[] args) throws Exception
   {
-    EvaluationMetric.set_knownNames();
+    EvaluationMetric.set_knownMetrics();
     processArgsArray(args);
     initialize();
   }
 
   public MERT(String configFileName) throws Exception
   {
-    EvaluationMetric.set_knownNames();
+    EvaluationMetric.set_knownMetrics();
     processArgsArray(cfgFileToArgsArray(configFileName));
     initialize();
   }
@@ -138,11 +162,12 @@ public class MERT
     println("----------------------------------------------------",1);
     println("",1);
 
-    println("Random number generator seed: " + seed,1);
+    println("Random number generator initialized using seed: " + seed,1);
     println("",1);
     randGen = new Random(seed);
 
-    numParams = countLines(paramsFileName);
+    numParams = countNonEmptyLines(paramsFileName) - 1;
+      // the parameter file contains one line per parameter and one line for the normalization method
     numSentences = countLines(refFileName) / refsPerSen;
 
     // rename original config file so it doesn't get overwritten (original name will be restored in finish())
@@ -153,73 +178,27 @@ public class MERT
     paramNames = new String[1+numParams];
     lambda = new double[1+numParams]; // indexing starts at 1 in these arrays
     isOptimizable = new boolean[1+numParams];
-    minValue = new double[1+numParams];
-    maxValue = new double[1+numParams];
+    minThValue = new double[1+numParams];
+    maxThValue = new double[1+numParams];
+    minRandValue = new double[1+numParams];
+    maxRandValue = new double[1+numParams];
 //    precision = new double[1+numParams];
     defaultLambda = new double[1+numParams];
+    normalizationOptions = new double[3];
 
     // read paramter names
     BufferedReader inFile_names = new BufferedReader(new FileReader(paramsFileName));
 
     for (int c = 1; c <= numParams; ++c) {
-      String line = inFile_names.readLine();
+      String line = "";
+      while (line != null && line.length() == 0) { line = inFile_names.readLine(); }
       paramNames[c] = (line.substring(0,line.indexOf("|||"))).trim();
     }
 
     inFile_names.close();
 
-
-    // initialize lambda[]
-    Scanner inFile_init = new Scanner(new FileReader(paramsFileName));
-
-    String dummy = "";
-
-    for (int c = 1; c <= numParams; ++c) {
-      while (!dummy.equals("|||")) { dummy = inFile_init.next(); }
-
-      lambda[c] = inFile_init.nextDouble();
-      defaultLambda[c] = lambda[c];
-
-      dummy = inFile_init.next();
-      if (dummy.equals("Opt")) { isOptimizable[c] = true; }
-      else if (dummy.equals("Fix")) { isOptimizable[c] = false; }
-      else { println("Unknown isOptimizable string " + dummy + " (must be either Opt or Fix)"); System.exit(21); }
-
-      dummy = inFile_init.next();
-      if (dummy.equals("-Inf")) { minValue[c] = NegInf; }
-      else if (dummy.equals("+Inf")) { minValue[c] = PosInf; } // who'd ever do that!?
-      else { minValue[c] = Double.parseDouble(dummy); }
-
-      dummy = inFile_init.next();
-      if (dummy.equals("-Inf")) { maxValue[c] = NegInf; } // who'd ever do that!?
-      else if (dummy.equals("+Inf")) { maxValue[c] = PosInf; }
-      else { maxValue[c] = Double.parseDouble(dummy); }
-
-      if (minValue[c] == maxValue[c] && isOptimizable[c]) {
-        println("Warning: lambda[" + c + "] is optimizable but has minValue = maxValue = " + minValue[c] + ".",1);
-        println("         This makes it a fixed parameter at " + minValue[c] + ".",1);
-        isOptimizable[c] = false;
-        lambda[c] = minValue[c];
-      } else if (minValue[c] > maxValue[c]) {
-        println("minValue[" + c + "]=" + minValue[c] + " > " + maxValue[c] + "=maxValue[" + c + "]!");
-        System.exit(21);
-      }
-/*
-      precision[c] = inFile_init.nextDouble();
-      if (precision[c] < 0) {
-        println("precision[" + c + "]=" + precision[c] + " < 0!  Must be non-negative.");
-        System.exit(21);
-      }
-*/
-      if (!(minValue[c] <= lambda[c] && lambda[c] <= maxValue[c]) && isOptimizable[c]) {
-        println("Warning: lambda[" + c + "] is optimizable but has initial value (" + lambda[c] + ")",1);
-        println("         that is outside its specified interval [" + minValue[c] + "," + maxValue[c] + "]",1);
-      }
-
-    }
-
-    inFile_init.close();
-
+    processParamFile();
+      // sets the arrays declared just above
 
 //    SentenceInfo.createV(); // uncomment ONLY IF using vocabulary implementation of SentenceInfo
 
@@ -256,6 +235,7 @@ public class MERT
     EvaluationMetric.set_refSentences(refSentences);
 
     // do necessary initialization for the evaluation metric
+/*
     if (metricName.equals("BLEU")) {
       evalMetric = new BLEU(4,"closest");
     } else if (metricName.equals("BLEU_SBP")) {
@@ -267,13 +247,14 @@ public class MERT
     } else if (metricName.equals("UserMetric2")) {
       evalMetric = new UserMetric2();
     }
-
+*/
+    evalMetric = EvaluationMetric.getMetric(metricName,metricOptions);
 
     suffStatsCount = evalMetric.get_suffStatsCount();
 
-    println("numSentences = " + numSentences,1);
-    println("numParams = " + numParams,1);
-    print("  {",1);
+    println("Number of sentences: " + numSentences,1);
+    println("Number of parameters: " + numParams,1);
+    print("Parameter names: {",1);
     for (int c = 1; c <= numParams; ++c) {
       print("\"" + paramNames[c] + "\"",1);
       if (c < numParams) print(",",1);
@@ -281,15 +262,34 @@ public class MERT
     println("}",1);
     println("",1);
 
-    println("c    initial\toptimizable?    range",1);
+    println("c    Default value\tOptimizable?\tCrit. val. range\tRand. val. range",1);
 
     for (int c = 1; c <= numParams; ++c) {
-      print(c + "    " + f4.format(lambda[c]) + "\t",1);
-      if (isOptimizable[c]) print("   Yes          ",1);
-      else print("   No           ",1);
-//      print("[" + minValue[c] + "," + maxValue[c] + "] @ " + precision[c] + " precision",1);
-      print("[" + minValue[c] + "," + maxValue[c] + "]",1);
-      println("",1);
+      print(c + "     " + f4.format(lambda[c]) + "\t\t",1);
+      if (!isOptimizable[c]) {
+        print(" No",1);
+      } else {
+        print(" Yes\t\t",1);
+//        print("[" + minThValue[c] + "," + maxThValue[c] + "] @ " + precision[c] + " precision",1);
+        print(" [" + minThValue[c] + "," + maxThValue[c] + "]",1);
+        print("\t\t",1);
+        print(" [" + minRandValue[c] + "," + maxRandValue[c] + "]",1);
+        println("",1);
+      }
+    }
+
+    println("",1);
+    print("Normalization method: ",1);
+    if (normalizationOptions[0] == 0) {
+      println("none.",1);
+    } else if (normalizationOptions[0] == 1) {
+      println("weights will be scaled so that the \"" + paramNames[(int)normalizationOptions[1]] + "\" weight has an absolute value of " + normalizationOptions[2] + ".",1);
+    } else if (normalizationOptions[0] == 2) {
+      println("weights will be scaled so that the maximum absolute value is " + normalizationOptions[1] + ".",1);
+    } else if (normalizationOptions[0] == 3) {
+      println("weights will be scaled so that the minimum absolute value is " + normalizationOptions[1] + ".",1);
+    } else if (normalizationOptions[0] == 4) {
+      println("weights will be scaled so that the L-" + normalizationOptions[1] + " norm is " + normalizationOptions[2] + ".",1);
     }
 
     println("",1);
@@ -326,7 +326,7 @@ public class MERT
     if (randInit) {
       println("Initializing lambda[] randomly.",1);
 
-      // initialize optimizable parameters randomly (sampling uniformly from that parameter's range)
+      // initialize optimizable parameters randomly (sampling uniformly from that parameter's random value range)
       lambda = randomLambda();
     }
 
@@ -353,6 +353,9 @@ public class MERT
       maxIndex[i] = sizeOfNBest - 1;
       suffStats_array[i] = new HashMap<Integer,int[]>();
     }
+
+    int earlyStop = 0;
+      // number of consecutive iteration an early stopping criterion was satisfied
 
     for (int iteration = 1; ; ++iteration) {
 
@@ -568,7 +571,7 @@ public class MERT
         System.arraycopy(initialLambda[j],1,currLambda,1,numParams);
         initialScore[j] = evalMetric.score(best1Cand_sen[j]);
         println("Initial lambda[j=" + j + "]: " + lambdaToString(initialLambda[j]),1);
-        println("(Initial score[j=" + j + "]: " + initialScore[j] + ")",1);
+        println("(Initial " + metricName + "[j=" + j + "]: " + initialScore[j] + ")",1);
         println("",1);
         finalScore[j] = initialScore[j];
 
@@ -587,7 +590,7 @@ public class MERT
           // now c_best is the parameter giving the most gain
 
           if (evalMetric.isBetter(bestScore,finalScore[j])) {
-            println("*** Changing lambda[j=" + j + "][" + c_best + "] from " + f4.format(currLambda[c_best]) + " (score: " + f4.format(finalScore[j]) + ") to " + f4.format(bestLambdaVal) + " (score: " + f4.format(bestScore) + ") ***",2);
+            println("*** Changing lambda[j=" + j + "][" + c_best + "] from " + f4.format(currLambda[c_best]) + " (" + metricName + ": " + f4.format(finalScore[j]) + ") to " + f4.format(bestLambdaVal) + " (" + metricName + ": " + f4.format(bestScore) + ") ***",2);
             println("*** Old lambda[j=" + j + "]: " + lambdaToString(currLambda) + " ***",2);
             currLambda[c_best] = bestLambdaVal;
             finalScore[j] = bestScore;
@@ -595,7 +598,7 @@ public class MERT
             println("",2);
           } else {
             println("*** Not changing any weight in lambda[j=" + j + "] ***",2);
-            println("*** Final lambda[j=" + j + "]: " + lambdaToString(currLambda) + " ***",2);
+            println("*** lambda[j=" + j + "]: " + lambdaToString(currLambda) + " ***",2);
             println("",2);
             break; // exit while (true) loop
           }
@@ -607,8 +610,15 @@ public class MERT
         // now currLambda is the optimized weight vector on the current candidate list (corresponding to initialLambda[j])
 
         System.arraycopy(currLambda,1,finalLambda[j],1,numParams);
+        normalizeLambda(finalLambda[j]);
+        // check if a lambda is outside its threshold range
+        for (int c = 1; c <= numParams; ++c) {
+          if (finalLambda[j][c] < minThValue[c] || finalLambda[j][c] > maxThValue[c]) {
+            println("Warning: after normalization, final lambda[j=" + j + "][" + c + "]=" + f4.format(finalLambda[j][c]) + " is outside its critical value range.",1);
+          }
+        }
         println("Final lambda[j=" + j + "]: " + lambdaToString(finalLambda[j]),1);
-        println("(Final score[j=" + j + "]: " + finalScore[j] + ")",1);
+        println("(Final " + metricName + "[j=" + j + "]: " + finalScore[j] + ")",1);
         println("",1);
 
       } // for (j)
@@ -624,44 +634,66 @@ public class MERT
       }
 
       if (initsPerIt > 1) {
-        println("Best final lambda is lambda[j=" + best_j + "] (score: " + f4.format(bestFinalScore) + ").",1);
+        println("Best final lambda is lambda[j=" + best_j + "] (" + metricName + ": " + f4.format(bestFinalScore) + ").",1);
         println("",1);
       }
 
       FINAL_score = bestFinalScore;
 
       boolean anyParamChanged = false;
+      boolean anyParamChangedSignificantly = false;
 
       for (int c = 1; c <= numParams; ++c) {
         if (finalLambda[best_j][c] != lambda[c]) {
           anyParamChanged = true;
         }
+        if (Math.abs(finalLambda[best_j][c] - lambda[c]) > stopSigValue) {
+          anyParamChangedSignificantly = true;
+        }
       }
 
+      System.arraycopy(finalLambda[best_j],1,lambda,1,numParams);
+      println("---  MERT iteration #" + iteration + " ending @ " + (new Date()) + "  ---",1);
+      println("",1);
+
       if (!anyParamChanged) {
-        println("No parameter values changed in this iteration; exiting MERT.",1);
-        println("",1);
-        println("---  MERT iteration #" + iteration + " ending @ " + (new Date()) + "  ---",1);
+        println("No parameter value changed in this iteration; exiting MERT.",1);
         println("",1);
         break; // exit for (iteration) loop preemptively
       }
 
-      System.arraycopy(finalLambda[best_j],1,lambda,1,numParams);
+      // check if a lambda is outside its threshold range
+      for (int c = 1; c <= numParams; ++c) {
+        if (lambda[c] < minThValue[c] || lambda[c] > maxThValue[c]) {
+          println("Warning: after normalization, lambda[" + c + "]=" + f4.format(lambda[c]) + " is outside its critical value range.",1);
+        }
+      }
 
+      // was an early stopping criterion satisfied?
+      boolean critSatisfied = false;
+      if (!anyParamChangedSignificantly && stopSigValue >= 0) {
+        println("Note: No parameter value changed significantly (i.e. by more than " + stopSigValue + ") in this iteration.",1);
+        critSatisfied = true;
+      }
 
+      if (critSatisfied) { ++earlyStop; println("",1); }
+      else { earlyStop = 0; }
 
-      // if max iteration reached, exit
-      if (iteration == maxIts) {
-        println("Maximum number of MERT iterations reached; exiting MERT.",1);
+      // if min number of iterations executed, investigate if early exit should happen
+      if (iteration >= minIts && earlyStop >= stopMinIts) {
+        println("Some early stopping criteria has been ovserved in " + stopMinIts + " consecutive iterations; exiting MERT.",1);
         println("",1);
-        println("---  MERT iteration #" + iteration + " ending @ " + (new Date()) + "  ---",1);
+        break; // exit for (iteration) loop preemptively
+      }
+
+      // if max number of iterations executed, exit
+      if (iteration >= maxIts) {
+        println("Maximum number of MERT iterations reached; exiting MERT.",1);
         println("",1);
         break; // exit for (iteration) loop
       }
 
       println("Next iteration will decode with lambda: " + lambdaToString(lambda),1);
-      println("",1);
-      println("---  MERT iteration #" + iteration + " ending @ " + (new Date()) + "  ---",1);
       println("",1);
 
 //      printMemoryUsage();
@@ -669,7 +701,7 @@ public class MERT
         suffStats_array[i].clear();
       }
 //      cleanupMemory();
-      println("",2);
+//      println("",2);
 
     } // for (iteration)
 
@@ -680,7 +712,13 @@ public class MERT
 //    printMemoryUsage();
     println("----------------------------------------------------",1);
     println("",1);
-    println("FINAL lambda: " + lambdaToString(lambda) + " (score: " + FINAL_score + ")",1);
+    println("FINAL lambda: " + lambdaToString(lambda) + " (" + metricName + ": " + FINAL_score + ")",1);
+    // check if a lambda is outside its threshold range
+    for (int c = 1; c <= numParams; ++c) {
+      if (lambda[c] < minThValue[c] || lambda[c] > maxThValue[c]) {
+        println("Warning: after normalization, lambda[" + c + "]=" + f4.format(lambda[c]) + " is outside its critical value range.",1);
+      }
+    }
     println("",1);
 
     // delete intermediate .temp.*.it* decoder output files
@@ -748,8 +786,8 @@ public class MERT
 
           double smallest_th = thresholdsAll[c].firstKey();
 
-          if (minValue[c] != NegInf) {
-            temp_lambda[c] = (minValue[c] + smallest_th) / 2.0;
+          if (minThValue[c] != NegInf) {
+            temp_lambda[c] = (minThValue[c] + smallest_th) / 2.0;
           } else {
             temp_lambda[c] = smallest_th - 0.05;
           }
@@ -826,13 +864,13 @@ public class MERT
   } // double[] bestParamToChange(int j, double[] currLambda)
 
 
-  private String lambdaToString(double[] lambda)
+  private String lambdaToString(double[] lambdaA)
   {
     String retStr = "{";
     for (int c = 1; c <= numParams-1; ++c) {
-      retStr += "" + lambda[c] + ", ";
+      retStr += "" + lambdaA[c] + ", ";
     }
-    retStr += "" + lambda[numParams] + "}";
+    retStr += "" + lambdaA[numParams] + "}";
 
     return retStr;
   }
@@ -908,9 +946,9 @@ public class MERT
 
     double ip_prev = 0.0, ip_curr = 0.0;
 
-    if (minValue[c] != NegInf) {
-      temp_lambda[c] = (minValue[c] + smallest_th) / 2.0;
-      ip_curr = minValue[c];
+    if (minThValue[c] != NegInf) {
+      temp_lambda[c] = (minThValue[c] + smallest_th) / 2.0;
+      ip_curr = minThValue[c];
     } else {
       temp_lambda[c] = smallest_th - 0.05;
       ip_curr = smallest_th - 0.1;
@@ -991,8 +1029,8 @@ public class MERT
 
     // what is the purpose of this block of code ?????????????????????
 /*
-    if (maxValue[c] != PosInf) {
-      nextLambdaVal = (largest_th + maxValue[c]) / 2.0;
+    if (maxThValue[c] != PosInf) {
+      nextLambdaVal = (largest_th + maxThValue[c]) / 2.0;
     } else {
       nextLambdaVal = largest_th + 0.05;
     }
@@ -1069,14 +1107,14 @@ public class MERT
 //        println("@ (i,k)=(" + i + "," + k + "), "
 //               + "slope = " + slope[k] + "; offset = " + offset[k],3);
 
-        if (minValue[c] == NegInf) {
+        if (minThValue[c] == NegInf) {
           if (slope[k] < minSlope || (slope[k] == minSlope && offset[k] > offset_minSlope)) {
             minSlopeIndex = k;
             minSlope = slope[k];
             offset_minSlope = offset[k];
           }
         } else {
-          double score = offset[k] + ((minValue[c]-0.1)*slope[k]);
+          double score = offset[k] + ((minThValue[c]-0.1)*slope[k]);
           if (score > bestScore_left || (score == bestScore_left && slope[k] > minSlope)) {
             minSlopeIndex = k;
             minSlope = slope[k];
@@ -1084,14 +1122,14 @@ public class MERT
           }
         }
 
-        if (maxValue[c] == PosInf) {
+        if (maxThValue[c] == PosInf) {
           if (slope[k] > maxSlope || (slope[k] == maxSlope && offset[k] > offset_maxSlope)) {
             maxSlopeIndex = k;
             maxSlope = slope[k];
             offset_maxSlope = offset[k];
           }
         } else {
-          double score = offset[k] + ((maxValue[c]+0.1)*slope[k]);
+          double score = offset[k] + ((maxThValue[c]+0.1)*slope[k]);
           if (score > bestScore_right || (score == bestScore_right && slope[k] < maxSlope)) {
             maxSlopeIndex = k;
             maxSlope = slope[k];
@@ -1132,9 +1170,9 @@ public class MERT
         // Notice that we didn't have to investigate the entire space (-Inf,+Inf)
         // if the parameter's range is more restricted than that.  That is why, in
         // the loop above, the "left-most" winner is not necessarily the one with
-        // the steepest descent (though it will be if minValue[c] is -Inf).
+        // the steepest descent (though it will be if minThValue[c] is -Inf).
         // And similarly, the "right-most" winner is not necessarily the one with
-        // the steepest ascent (though it will be if minValue[c] is +Inf).  The
+        // the steepest ascent (though it will be if minThValue[c] is +Inf).  The
         // point of doing this is to avoid extracting thresholds that will end up
         // being discarded anyway due to range constraints, this saving us a little
         // bit of time.
@@ -1170,7 +1208,7 @@ public class MERT
 //        print("ip=" + f4.format(nearestIntersectionPoint) + " ",3);
         ++ipCount;
 
-        if (nearestIntersectionPoint > minValue[c] && nearestIntersectionPoint < maxValue[c]) {
+        if (nearestIntersectionPoint > minThValue[c] && nearestIntersectionPoint < maxThValue[c]) {
 
           int[] th_info = {currIndex,nearestIntersectingLineIndex};
           last_new_k = nearestIntersectingLineIndex;
@@ -1237,7 +1275,7 @@ public class MERT
       int[] th_info = null;
       while (It.hasNext()) { // process intersection points contributed by this sentence
         double ip = It.next();
-        if (ip > minValue[c] && ip < maxValue[c]) {
+        if (ip > minThValue[c] && ip < maxThValue[c]) {
           th_info = thresholds.get(ip);
           if (!thresholdsAll.containsKey(ip)) {
             TreeMap A = new TreeMap();
@@ -1286,8 +1324,8 @@ public class MERT
       println("Smallest extracted threshold: " + smallest_th,2);
       println("Largest extracted threshold: " + largest_th,2);
 
-      if (maxValue[c] != PosInf) {
-        thresholdsAll.put(maxValue[c],null);
+      if (maxThValue[c] != PosInf) {
+        thresholdsAll.put(maxThValue[c],null);
       } else {
         thresholdsAll.put((thresholdsAll.lastKey() + 0.1),null);
       }
@@ -1450,6 +1488,166 @@ line format:
 
   }
 
+  private void processParamFile() throws Exception
+  {
+    // process parameter file
+    Scanner inFile_init = new Scanner(new FileReader(paramsFileName));
+
+    String dummy = "";
+
+    // initialize lambda[] and other related arrays
+    for (int c = 1; c <= numParams; ++c) {
+      // skip parameter name
+      while (!dummy.equals("|||")) { dummy = inFile_init.next(); }
+
+      // read default value
+      lambda[c] = inFile_init.nextDouble();
+      defaultLambda[c] = lambda[c];
+
+      // read isOptimizable
+      dummy = inFile_init.next();
+      if (dummy.equals("Opt")) { isOptimizable[c] = true; }
+      else if (dummy.equals("Fix")) { isOptimizable[c] = false; }
+      else { println("Unknown isOptimizable string " + dummy + " (must be either Opt or Fix)"); System.exit(21); }
+
+      if (!isOptimizable[c]) { // skip next four values
+        dummy = inFile_init.next();
+        dummy = inFile_init.next();
+        dummy = inFile_init.next();
+        dummy = inFile_init.next();
+      } else {
+        // set minThValue[c] and maxThValue[c] (range for thresholds to investigate)
+        dummy = inFile_init.next();
+        if (dummy.equals("-Inf")) { minThValue[c] = NegInf; }
+        else if (dummy.equals("+Inf")) { println("minThValue[" + c + "] cannot be +Inf!"); System.exit(21); }
+        else { minThValue[c] = Double.parseDouble(dummy); }
+
+        dummy = inFile_init.next();
+        if (dummy.equals("-Inf")) { println("maxThValue[" + c + "] cannot be -Inf!"); System.exit(21); }
+        else if (dummy.equals("+Inf")) { maxThValue[c] = PosInf; }
+        else { maxThValue[c] = Double.parseDouble(dummy); }
+
+        // set minRandValue[c] and maxRandValue[c] (range for random values)
+        dummy = inFile_init.next();
+        if (dummy.equals("-Inf") || dummy.equals("+Inf")) { println("minRandValue[" + c + "] cannot be -Inf or +Inf!"); System.exit(21); }
+        else { minRandValue[c] = Double.parseDouble(dummy); }
+
+        dummy = inFile_init.next();
+        if (dummy.equals("-Inf") || dummy.equals("+Inf")) { println("maxRandValue[" + c + "] cannot be -Inf or +Inf!"); System.exit(21); }
+        else { maxRandValue[c] = Double.parseDouble(dummy); }
+
+  
+        // check for illogical values
+        if (minThValue[c] > maxThValue[c]) {
+          println("minThValue[" + c + "]=" + minThValue[c] + " > " + maxThValue[c] + "=maxThValue[" + c + "]!");
+          System.exit(21);
+        }
+        if (minRandValue[c] > maxRandValue[c]) {
+          println("minRandValue[" + c + "]=" + minRandValue[c] + " > " + maxRandValue[c] + "=maxRandValue[" + c + "]!");
+          System.exit(21);
+        }
+
+        // check for odd values
+        if (!(minThValue[c] <= lambda[c] && lambda[c] <= maxThValue[c])) {
+          println("Warning: lambda[" + c + "] has initial value (" + lambda[c] + ")",1);
+          println("         that is outside its critical value range [" + minThValue[c] + "," + maxThValue[c] + "]",1);
+        }
+
+        if (minThValue[c] == maxThValue[c]) {
+          println("Warning: lambda[" + c + "] has minThValue = maxThValue = " + minThValue[c] + ".",1);
+        }
+
+        if (minRandValue[c] == maxRandValue[c]) {
+          println("Warning: lambda[" + c + "] has minRandValue = maxRandValue = " + minRandValue[c] + ".",1);
+        }
+
+        if (minRandValue[c] < minThValue[c] || minRandValue[c] > maxThValue[c] || maxRandValue[c] < minThValue[c] || maxRandValue[c] > maxThValue[c]) {
+          println("Warning: The random value range for lambda[" + c + "] is not contained",1);
+          println("         within its critical value range.",1);
+        }
+
+      } // if (!isOptimizable[c])
+
+/*
+      precision[c] = inFile_init.nextDouble();
+      if (precision[c] < 0) {
+        println("precision[" + c + "]=" + precision[c] + " < 0!  Must be non-negative.");
+        System.exit(21);
+      }
+*/
+
+    }
+
+    // set normalizationOptions[]
+    String origLine = "";
+    while (origLine != null && origLine.length() == 0) { origLine = inFile_init.nextLine(); }
+
+
+    // How should a lambda[] vector be normalized (before decoding)?
+    //   nO[0] = 0: no normalization
+    //   nO[0] = 1: scale so that parameter nO[2] has absolute value nO[1]
+    //   nO[0] = 2: scale so that the maximum absolute value is nO[1]
+    //   nO[0] = 3: scale so that the minimum absolute value is nO[1]
+    //   nO[0] = 4: scale so that the L-nO[1] norm equals nO[2]
+
+// normalization = none
+// normalization = absval 1 lm
+// normalization = maxabsval 1
+// normalization = minabsval 1
+// normalization = LNorm 2 1
+
+    dummy = (origLine.substring(origLine.indexOf("=")+1)).trim();
+    String[] dummyA = dummy.split("\\s+");
+
+    if (dummyA[0].equals("none")) {
+      normalizationOptions[0] = 0;
+    } else if (dummyA[0].equals("absval")) {
+      normalizationOptions[0] = 1;
+      normalizationOptions[1] = Double.parseDouble(dummyA[1]);
+      String pName = dummyA[2];
+      for (int i = 3; i < dummyA.length; ++i) { // in case parameter name has multiple words
+        pName = pName + " " + dummyA[i];
+      }
+      normalizationOptions[2] = c_fromParamName(pName);;
+
+      if (normalizationOptions[1] <= 0) {
+        println("Value for the absval normalization method must be positive.",1);
+        System.exit(21);
+      }
+      if (normalizationOptions[2] == 0) {
+        println("Unrecognized parameter name " + normalizationOptions[2] + " for absval normalization method.",1);
+        System.exit(21);
+      }
+    } else if (dummyA[0].equals("maxabsval")) {
+      normalizationOptions[0] = 2;
+      normalizationOptions[1] = Double.parseDouble(dummyA[1]);
+      if (normalizationOptions[1] <= 0) {
+        println("Value for the maxabsval normalization method must be positive.",1);
+        System.exit(21);
+      }
+    } else if (dummyA[0].equals("minabsval")) {
+      normalizationOptions[0] = 3;
+      normalizationOptions[1] = Double.parseDouble(dummyA[1]);
+      if (normalizationOptions[1] <= 0) {
+        println("Value for the minabsval normalization method must be positive.",1);
+        System.exit(21);
+      }
+    } else if (dummyA[0].equals("LNorm")) {
+      normalizationOptions[0] = 4;
+      normalizationOptions[1] = Double.parseDouble(dummyA[1]);
+      normalizationOptions[2] = Double.parseDouble(dummyA[2]);
+      if (normalizationOptions[1] <= 0 || normalizationOptions[2] <= 0) {
+        println("Both values for the LNorm normalization method must be positive.",1);
+        System.exit(21);
+      }
+    } else {
+      println("Unrecognized normalization method " + dummyA[0] + "; must be one of none, absval, maxabsval, and LNorm.",1);
+      System.exit(21);
+    } // if (dummyA[0])
+
+    inFile_init.close();
+  }
+
   private void copyFile(String origFileName, String newFileName) throws Exception
   {
     InputStream inStream = new FileInputStream(new File(origFileName));
@@ -1551,6 +1749,9 @@ line format:
         if (paramA.length == 2 && paramA[0].charAt(0) == '-') {
           argsVector.add(paramA[0]);
           argsVector.add(paramA[1]);
+        } else if (paramA.length > 2 && paramA[0].equals("-m")) {
+          // -m (metricName) is allowed to have extra optinos
+          for (int opt = 0; opt < paramA.length; ++opt) { argsVector.add(paramA[opt]); }
         } else {
           println("Malformed line in config file:");
           println(origLine);
@@ -1584,9 +1785,17 @@ line format:
     finalLambdaFileName = null;
     // MERT specs
     metricName = "BLEU";
+    metricOptions = new String[2];
+    metricOptions[0] = "4";
+    metricOptions[1] = "closest";
+    prevMERTIterations = 20;
     maxMERTIterations = 20;
     minMERTIterations = 5;
-    prevMERTIterations = 20;
+    stopSigValue = -1;
+//
+//  /* possibly other early stopping criteria here */
+//
+    stopMinIts = 3;
     saveInterFiles = 3;
     initsPerIt = 20;
     oneModificationPerIteration = false;
@@ -1621,7 +1830,18 @@ line format:
       // MERT specs
       else if (option.equals("-m")) {
         metricName = args[i+1];
-        if (!EvaluationMetric.knownMetricName(metricName)) { println("Unknown metric name " + metricName + "."); System.exit(10); }
+        if (EvaluationMetric.knownMetricName(metricName)) {
+          int optionCount = EvaluationMetric.metricOptionCount(metricName);
+          metricOptions = new String[optionCount];
+          for (int opt = 0; opt < optionCount; ++opt) { metricOptions[opt] = args[i+opt+2]; }
+          i += optionCount;
+        } else {
+          println("Unknown metric name " + metricName + "."); System.exit(10);
+        }
+      }
+      else if (option.equals("-prevIt")) {
+        prevMERTIterations = Integer.parseInt(args[i+1]);
+        if (prevMERTIterations < 0) { println("prevMERTIts must be non-negative."); System.exit(10); }
       }
       else if (option.equals("-maxIt")) {
         maxMERTIterations = Integer.parseInt(args[i+1]);
@@ -1631,9 +1851,15 @@ line format:
         minMERTIterations = Integer.parseInt(args[i+1]);
         if (minMERTIterations < 1) { println("minMERTIts must be positive."); System.exit(10); }
       }
-      else if (option.equals("-prevIt")) {
-        prevMERTIterations = Integer.parseInt(args[i+1]);
-        if (prevMERTIterations < 0) { println("prevMERTIts must be non-negative."); System.exit(10); }
+      else if (option.equals("-stopSig")) {
+        stopSigValue = Double.parseDouble(args[i+1]);
+      }
+//
+//  /* possibly other early stopping criteria here */
+//
+      else if (option.equals("-stopIt")) {
+        stopMinIts = Integer.parseInt(args[i+1]);
+        if (stopMinIts < 1) { println("stopMinIts must be positive."); System.exit(10); }
       }
       else if (option.equals("-save")) {
         int saveInterFiles = Integer.parseInt(args[i+1]);
@@ -1697,6 +1923,11 @@ line format:
 
     } // while (i)
 
+    if (maxMERTIterations < minMERTIterations) {
+      println("Warning: maxMERTIts is smaller than minMERTIts; decreasing minMERTIts to " + maxMERTIterations,1);
+      minMERTIterations = maxMERTIterations;
+    }
+
     if (dirPrefix != null) { // append dirPrefix to file names
       refFileName = fullPath(dirPrefix,refFileName);
       decoderOutFileName = fullPath(dirPrefix,decoderOutFileName);
@@ -1722,7 +1953,7 @@ line format:
         println("MERT cannot decode; must provide one of: command file (for external decoder),");
         println("                                         source file (for Joshua decoder),");
         println("                                      or prefix for existing output files (for fake decoder).");
-        System.exit(11);
+        System.exit(12);
       }
 
       int lastGoodIt = 0;
@@ -1738,7 +1969,7 @@ line format:
         println("Warning: can only run fake decoder; existing output files are only available for the first " + lastGoodIt + "iteration(s).",1);
       } else {
         println("Fake decoder cannot find first output file " + (fakeFileNamePrefix+1));
-        System.exit(12);
+        System.exit(13);
       }
 
     }
@@ -1859,6 +2090,22 @@ line format:
     return count;
   }
 
+  private int countNonEmptyLines(String fileName) throws Exception
+  {
+    BufferedReader inFile = new BufferedReader(new FileReader(fileName));
+
+    String line;
+    int count = 0;
+    do {
+      line = inFile.readLine();
+      if (line != null && line.length() > 0) ++count;
+    }  while (line != null);
+
+    inFile.close();
+
+    return count;
+  }
+
   private int countWords(String fileName) throws Exception
   {
     Scanner inFile = new Scanner(new FileReader(fileName));
@@ -1956,8 +2203,8 @@ line format:
     for (int c = 1; c <= numParams; ++c) {
       if (isOptimizable[c]) {
         double randVal = randGen.nextDouble(); // number in [0.0,1.0]
-        randVal = randVal * (maxValue[c] - minValue[c]); // number in [0.0,max-min]
-        randVal = minValue[c] + randVal; // number in [min,max]
+        randVal = randVal * (maxRandValue[c] - minRandValue[c]); // number in [0.0,max-min]
+        randVal = minRandValue[c] + randVal; // number in [min,max]
         retVal[c] = randVal;
       } else {
         retVal[c] = defaultLambda[c];
@@ -1965,6 +2212,84 @@ line format:
     }
 
     return retVal;
+  }
+
+  private void normalizeLambda(double[] origLambda)
+  {
+    // private String[] normalizationOptions;
+      // How should a lambda[] vector be normalized (before decoding)?
+      //   nO[0] = 0: no normalization
+      //   nO[0] = 1: scale so that parameter nO[2] has absolute value nO[1]
+      //   nO[0] = 2: scale so that the maximum absolute value is nO[1]
+      //   nO[0] = 3: scale so that the minimum absolute value is nO[1]
+      //   nO[0] = 4: scale so that the L-nO[1] norm equals nO[2]
+
+    int normalizationMethod = (int)normalizationOptions[0];
+    double scalingFactor = 1.0;
+    if (normalizationMethod == 0) {
+
+      scalingFactor = 1.0;
+
+    } else if (normalizationMethod == 1) {
+
+      int c = (int)normalizationOptions[2];
+      scalingFactor = normalizationOptions[1]/Math.abs(origLambda[c]);
+
+    } else if (normalizationMethod == 2) {
+
+      double maxAbsVal = -1;
+      int maxAbsVal_c = 0;
+      for (int c = 1; c <= numParams; ++c) {
+        if (Math.abs(origLambda[c]) > maxAbsVal) {
+          maxAbsVal = Math.abs(origLambda[c]);
+          maxAbsVal_c = c;
+        }
+      }
+      scalingFactor = normalizationOptions[1]/Math.abs(origLambda[maxAbsVal_c]);
+
+    } else if (normalizationMethod == 3) {
+
+      double minAbsVal = PosInf;
+      int minAbsVal_c = 0;
+      for (int c = 1; c <= numParams; ++c) {
+        if (Math.abs(origLambda[c]) < minAbsVal) {
+          minAbsVal = Math.abs(origLambda[c]);
+          minAbsVal_c = c;
+        }
+      }
+      scalingFactor = normalizationOptions[1]/Math.abs(origLambda[minAbsVal_c]);
+
+    } else if (normalizationMethod == 4) {
+
+      double pow = normalizationOptions[1];
+      double norm = L_norm(origLambda,pow);
+      scalingFactor = normalizationOptions[2]/norm;
+
+    }
+
+    for (int c = 1; c <= numParams; ++c) {
+      origLambda[c] *= scalingFactor;
+    }
+
+  }
+
+  private int c_fromParamName (String pName)
+  {
+    for (int c = 1; c <= numParams; ++c) {
+      if (paramNames[c].equals(pName)) return c;
+    }
+    return 0; // no parameter with that name!
+  }
+
+  private double L_norm(double[] A, double pow)
+  {
+    // calculates the L-pow norm of A[]
+    // NOTE: this calculation ignores A[0]
+    double sum = 0.0;
+    for (int i = 1; i < A.length; ++i) {
+      sum += Math.pow(Math.abs(A[i]),pow);
+    }
+    return Math.pow(sum,1/pow);
   }
 
   private void setFeats(double[][][] featVal_array, int i, int[] lastUsedIndex, int[] maxIndex, double[] featVal)
@@ -2102,13 +2427,13 @@ ex2_N300:
 java -javaagent:shiftone-jrat.jar -Xmx300m -cp bin joshua.MERT.MERT_runner -dir MERT_example -s src.txt -r ref.all -rps 4 -cmd decoder_command_ex2.txt -dcfg config_ex2.txt -decOut nbest_ex2.out -N 300 -p params.txt -maxIt 25 -opi 0 -ipi 20 -v 2 -rand 0 -seed 1226091488390 -save 1 -fake nbest_ex2.out.N300.it > ex2_N300ipi20opi0_300max+defratios.it10.noMemRep.bugFixes.monitored.txt
 
 ex2_N500:
-java -javaagent:shiftone-jrat.jar -Xmx300m -cp bin joshua.MERT.MERT_runner -dir MERT_example -s src.txt -r ref.all -rps 4 -cmd decoder_command_ex2.txt -dcfg config_ex2.txt -decOut nbest_ex2.out -N 500 -p params.txt -maxIt 25 -opi 0 -ipi 20 -v 2 -rand 0 -seed 1226091488390 -save 1 -fake nbest_ex2.out.N500.it > ex2_N500ipi20opi0_300max+defratios.itxx.noMemRep.bugFixes.monitored.txt
+java -javaagent:shiftone-jrat.jar -Xmx300m -cp bin joshua.MERT.MERT_runner -dir MERT_example -s src.txt -r ref.all -rps 4 -cmd decoder_command_ex2.txt -dcfg config_ex2.txt -decOut nbest_ex2.out -N 500 -p params.txt -maxIt 25 -opi 0 -ipi 20 -v 2 -rand 0 -seed 1226091488390 -save 1 -fake nbest_ex2.out.N500.it > ex2_N500ipi20opi0_300max+defratios.it05.noMemRep.bugFixes.monitored.txt
 
 exL_N300__600max:
-java -javaagent:shiftone-jrat.jar -Xmx600m -cp bin joshua.MERT.MERT_runner -dir MERT_example -s mt06_source.txt -r mt06_ref.all -rps 4 -cmd decoder_command_ex2.txt -dcfg config_ex2.txt -decOut nbest_exL.out -N 300 -p params.txt -maxIt 5 -opi 0 -ipi 20 -v 2 -rand 0 -seed 1226091488390 -save 1 -fake nbest_exL.out.it > exL_N300ipi20opi0_600max+defratios.itxx.noMemRep.bugFixes.monitored.txt
+java -javaagent:shiftone-jrat.jar -Xmx600m -cp bin joshua.MERT.MERT_runner -dir MERT_example -s mt06_source.txt -r mt06_ref.all -rps 4 -cmd decoder_command_ex2.txt -dcfg config_ex2.txt -decOut nbest_exL.out -N 300 -p params.txt -maxIt 5 -opi 0 -ipi 20 -v 2 -rand 0 -seed 1226091488390 -save 1 -fake nbest_exL.out.it > exL_N300ipi20opi0_600max+defratios.it05.noMemRep.bugFixes.monitored.txt
 
 exL_N300__300max:
-java -javaagent:shiftone-jrat.jar -Xmx300m -cp bin joshua.MERT.MERT_runner -dir MERT_example -s mt06_source.txt -r mt06_ref.all -rps 4 -cmd decoder_command_ex2.txt -dcfg config_ex2.txt -decOut nbest_exL.out -N 300 -p params.txt -maxIt 5 -opi 0 -ipi 20 -v 2 -rand 0 -seed 1226091488390 -save 1 -fake nbest_exL.out.it > exL_N300ipi20opi0_300max+defratios.itxx.noMemRep.bugFixes.monitored.txt
+java -javaagent:shiftone-jrat.jar -Xmx300m -cp bin joshua.MERT.MERT_runner -dir MERT_example -s mt06_source.txt -r mt06_ref.all -rps 4 -cmd decoder_command_ex2.txt -dcfg config_ex2.txt -decOut nbest_exL.out -N 300 -p params.txt -maxIt 5 -opi 0 -ipi 20 -v 2 -rand 0 -seed 1226091488390 -save 1 -fake nbest_exL.out.it > exL_N300ipi20opi0_300max+defratios.it05.noMemRep.bugFixes.monitored.txt
 
 gen:
 ----

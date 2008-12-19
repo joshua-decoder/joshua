@@ -9,21 +9,25 @@ public class UserMetric2 extends EvaluationMetric
     private data members for this error metric
   */
 
-  private double mainVar;
-  private double dummy;
+  private String mainVar;
+  private int dummy;
 
   /*
   */
 
   public UserMetric2()
   {
-    mainVar = 0.0; // default
-    initialize();
+    this("default_str");
   }
 
-  public UserMetric2(double x)
+  public UserMetric2(String[] UM2_options)
   {
-    mainVar = x;
+    this(UM2_options[0]);
+  }
+
+  public UserMetric2(String str)
+  {
+    mainVar = str;
     initialize();
   }
 
@@ -48,7 +52,7 @@ public class UserMetric2 extends EvaluationMetric
 
   private void set_dummy()
   {
-    dummy = mainVar * mainVar;
+    dummy = mainVar.length();
   }
 
   /* potentially other methods to set other data members */
@@ -71,7 +75,7 @@ public class UserMetric2 extends EvaluationMetric
       System.exit(1);
     }
 
-	return 0.0;
+    return 0.0;
   }
 
   public void printDetailedScore_fromStats(int[] stats, boolean oneLiner)
