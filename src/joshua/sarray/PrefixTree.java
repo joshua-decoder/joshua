@@ -1705,8 +1705,11 @@ public class PrefixTree {
 			s.append(')');
 			s.append(' ');
 
-			for (Map.Entry<Integer, Node> entry : children.entrySet()) {
-				s.append(entry.getValue().toString(vocab));
+			List<Node> kids = new ArrayList<Node>(children.values());
+			Collections.sort(kids);
+
+			for (Node kid : kids) {
+				s.append(kid.toString(vocab));
 				s.append(' ');
 			}
 

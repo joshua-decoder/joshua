@@ -16,6 +16,11 @@
  */
 package joshua.sarray;
 
+import joshua.sarray.PrefixTree.Node;
+
+import org.testng.Assert;
+import org.testng.annotations.Test;
+
 /**
  * Unit tests for PrefixTree.Node
  * 
@@ -26,4 +31,38 @@ public class PrefixTreeNodeTest {
 
 	//TODO Implement test case for PrefixTree.Node.translate()
 	
+	@Test
+	public void toStringTest() {
+		
+		PrefixTree.resetNodeCounter();
+		
+		PrefixTree tree = PrefixTree.getDummyPrefixTree();
+		
+		@SuppressWarnings("unused")
+		Node bot = tree.new Node(PrefixTree.BOT_NODE_ID);
+		
+		Node root = tree.new Node(PrefixTree.ROOT_NODE_ID);
+		Assert.assertEquals(root.toString(), "[id1 ROOT (null) ]");
+		
+		root.addChild(PrefixTree.X);
+		Assert.assertEquals(root.toString(), "[id1 ROOT (null) [id2 X (null) ] ]");
+		
+		Node three = root.addChild(8801);
+		Assert.assertEquals(root.toString(), "[id1 ROOT (null) [id2 X (null) ] [id3 v8801 (null) ] ]");
+		
+		three.addChild(PrefixTree.X);
+		Assert.assertEquals(root.toString(), "[id1 ROOT (null) [id2 X (null) ] [id3 v8801 (null) [id4 X (null) ] ] ]");
+		
+		Node five = root.addChild(8802);
+		Assert.assertEquals(root.toString(), "[id1 ROOT (null) [id2 X (null) ] [id3 v8801 (null) [id4 X (null) ] ] [id5 v8802 (null) ] ]");
+		
+		five.addChild(PrefixTree.X);
+		Assert.assertEquals(root.toString(), "[id1 ROOT (null) [id2 X (null) ] [id3 v8801 (null) [id4 X (null) ] ] [id5 v8802 (null) [id6 X (null) ] ] ]");
+		
+		root.addChild(8803);
+		Assert.assertEquals(root.toString(), "[id1 ROOT (null) [id2 X (null) ] [id3 v8801 (null) [id4 X (null) ] ] [id5 v8802 (null) [id6 X (null) ] ] [id7 v8803 (null) ] ]");
+		
+		System.out.println(root);
+		
+	}
 }
