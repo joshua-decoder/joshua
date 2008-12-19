@@ -335,11 +335,14 @@ line format:
     EvaluationMetric.set_refSentences(refSentences);
 
     // do necessary initialization for the evaluation metric
+/*
     if (metricName.equals("BLEU")) {
       evalMetric = new BLEU(Integer.parseInt(metricOptions[0]),metricOptions[1]);
     } else if (metricName.equals("01LOSS")) {
       evalMetric = new ZeroOneLoss();
     }
+*/
+    evalMetric = EvaluationMetric.getMetric(metricName,metricOptions);
 
     println("Processing " + numSentences + " sentences...");
 
