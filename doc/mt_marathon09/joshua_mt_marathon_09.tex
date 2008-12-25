@@ -1,0 +1,489 @@
+%
+% File acl08.tex
+%
+% Contact: nasmith@cs.cmu.edu\emph{\emph{}}
+
+\documentclass[11pt]{article}
+\usepackage{acl08}
+%\usepackage{acl08_thesis}
+\usepackage{times}
+\usepackage{latexsym}
+\usepackage{multirow}
+%\usepackage{tree-dvips}
+\usepackage{clrscode}
+\usepackage{epsfig}
+%\usepackage{psfrag}
+\usepackage{amscd}
+\usepackage{amsmath}
+\usepackage{amssymb}
+%\usepackage{a4}
+%\usepackage{psfig}
+\usepackage{float}
+%\usepackage{floatflt}
+\usepackage{subfigure}
+\usepackage{hyperref}
+\usepackage{color}
+\usepackage{CJK}
+
+
+%this is just a test
+
+\special{papersize=8.5in,11in}
+\setlength{\pdfpageheight}{\paperheight}
+\setlength{\pdfpagewidth}{\paperwidth}
+% You may need to change the horizontal offset to do what you
+% want. Setting \hoffset to a negative value moves all printed
+% material to the left on all pages; setting it to a positive value
+% moves all printed material to the right on all pages; not setting
+% it keeps all printed material in it's default position. \voffset
+% is the vertical offset: use negative value for up; don't set if
+% you want to use default position; use positive for down.
+% \hoffset = -0.2truein
+% \voffset = -0.2truein
+
+\setlength\titlebox{6.5cm}
+
+\title{Joshua: an Open-source Decoder for Parsing-based Machine Translation}
+
+%%% the order and names may change
+\author{%
+Zhifei Li,\,\,\,
+Chris Callison-Burch,\,\,\,
+Wren N.\,G.\,Thornton,\,\,\,
+{\textnormal{ and}}\,\,\,Sanjeev Khudanpur\\
+Department of Computer Science and Center for Language and Speech Processing\\
+Johns Hopkins University, Baltimore, MD 21218, USA\\
+{\{\tt zli19, callison-burch, winterkoninkje, khudanpur\}@jhu.edu}}
+
+
+\date{}
+
+\begin{document}
+\special{papersize=8.5in,11in}
+\setlength{\pdfpageheight}{\paperheight}
+\setlength{\pdfpagewidth}{\paperwidth}
+% You may need to change the horizontal offset to do what you
+% want. Setting \hoffset to a negative value moves all printed
+% material to the left on all pages; setting it to a positive value
+% moves all printed material to the right on all pages; not setting
+% it keeps all printed material in it's default position. \voffset
+% is the vertical offset: use negative value for up; don't set if
+% you want to use default position; use positive for down.
+% \hoffset = -0.2truein
+% \voffset = -0.2truein
+
+\maketitle
+\begin{abstract}
+We describe a scalable decoder for parsing-based machine translation. The decoder is written in Java and implements all the essential algorithms described in \newcite{hiero-david} and \newcite{zhifei-ssst08}: chart-parsing, $n$-gram language model integration, beam- and cube-pruning, and $k$-best extraction. Additionally, parallel and distributed computing techniques are exploited to make it scalable. We demonstrate experimentally that our decoder is more than 30 times faster than a baseline decoder written in Python.
+
+\end{abstract}
+
+
+%% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\section{Motivation}
+%%tree-based translation
+Large-scale parsing-based statistical machine translation (MT) has made remarkable progress in the last few years. The systems being developed differ in whether they use source- or target-language syntax.
+For instance, the hierarchical translation system of \newcite{hiero-david} extracts a synchronous grammar from pairs of strings, whereas \newcite{syntax-msr}, \newcite{ict-liu} and \newcite{liang-syntax} perform syntactic analyses in the source-language, and \newcite{syntax2006-isi} uses target-language syntax.
+
+
+%%complexity of a parsing-based decoder, and our decoder
+A critical component in parsing-based MT systems is the decoder, which is complex to implement and scale up for large data sets. Most of the systems described above employ tailor-made, dedicated decoders that are not open-source, which results in a high barrier to entry for other researchers in the field. However, with the algorithms proposed in \cite{liang-kbest,hiero-david,liang-cube}, it is possible to develop a general-purpose decoder that can be used by all the parsing-based systems. In this paper, we describe an important first-step towards an extensible, general-purpose, scalable, and open-source parsing-based MT decoder. Our decoder is written in Java and implements all the essential algorithms described in \newcite{hiero-david}: chart-parsing, $n$-gram language model integration, beam- and cube-pruning, and unique $k$-best extraction. Additionally, parallel and distributed computing techniques are exploited to make it scalable.
+
+%%experiments, and open source release
+We demonstrate experimentally that our decoder is 38 times faster than a previous decoder written in Python. Furthermore, the distributed computing permits improving translation quality via large-scale language models. The decoder has been used to translate roughly a million sentences in a parallel corpus for large-scale discriminative training experiments \cite{zhifei-amta08}. The decoder has also been successfully used by other researchers. For example, \newcite{sg-boxing} have demonstrated that our decoder achieves performance competitive with Moses \cite{moses}, another major open-source machine translation toolkit.
+We hope the release of the decoder will greatly contribute the progress of the syntax-based machine translation research.
+
+
+%% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\section{Parsing-based MT Decoder}\label{sec-parsing}
+In this section, we discuss the core algorithms implemented in our decoder. These algorithms have been discussed by \newcite{hiero-david} in detail, and we recapitulate the essential parts here for completeness.\footnote{Most of the descriptions here are adopted from \newcite{zhifei-ssst08}.}
+
+
+\subsection{Grammar Formalism}
+
+\begin{CJK}{GB}{gbsn}
+
+Our decoder assumes a probabilistic synchronous context-free grammar (SCFG). Following the notation in \newcite{cmu-decoder}, a probabilistic SCFG comprises a set of source-language terminal symbols, $T_{S}$, a set of target-language terminal symbols, $T_{T}$, a shared set of nonterminal symbols, $N$, and a set of rules of the form
+\begin{equation}
+%\vspace{-0.07in}
+ \label{eqn-grammar-rule}
+\text{X} \rightarrow \langle \gamma, \alpha, \sim, w \rangle
+\end{equation}
+where $X\in N$, ~$\gamma \in [N \cup T_{S}]^\ast$ is a (mixed) sequence of nonterminals and source terminals, $\alpha \in [N \cup T_{T}]^\ast$ is a sequence of nonterminals and target terminals, $\sim$ is a one-to-one correspondence or \emph{alignment} between the nonterminal elements of $\gamma$ and $\alpha$, and $w\geq0$ is a weight assigned to the rule. An illustrative rule for Chinese-to-English translation is
+\[
+\text{NP} \rightarrow \langle\, \text{NP}_{0} \textit{~µÄ~} \text{NP}_{1}\,,\,\text{NP}_{1} \textit{~of~} \text{NP}_{0}\,\rangle
+\]
+where the Chinese word µÄ (pronounced \textit{de} or \textit{di}) means \textit{of}, and the alignment, encoded via subscripts on the nonterminals, causes the two noun phrases around µÄ to be reordered around \textit{of} in the translation. The rule weight is omitted in this example.
+
+\end{CJK}
+
+
+A bilingual SCFG derivation is analogous to a monolingual CFG derivation. It begins with a pair of \emph{aligned} start symbols. At each step, an \emph{aligned} pair of nonterminals is rewritten as the two corresponding components of a single rule. In this sense, the derivations are generated synchronously.
+
+Our decoder presently handles SCFGs of the kind extracted by Heiro \cite{hiero-david}, but is easily extensible to more general SCFGs and closely related formalisms such as synchronous tree substitution grammars \cite{syntax-jason,sg-david}.
+
+\subsection{MT Decoding as Chart Parsing}\label{subsec-parsing}
+Given a source-language sentence, $f^\ast$, the decoder must find the target-language yield, $e(D)$, of the derivation $D$ which has the best composite weight, $w(D)$, among all derivations whose source-language yield, $f(D)$, is the source-language sentence. Or equationally,
+\begin{equation}
+%\vspace{-0.07in}
+ \label{eqn-bad-update}
+e^\ast \,\,\,=\,\,\, e\!\left(\operatornamewithlimits{arg\,max}_{D\,:\,f(D) = f^\ast} w(D)\right)
+\end{equation}
+The composite weight is a linear combination of feature function weights and feature function values. General feature functions include translation model features, language model features, and word penalty features.
+
+The actual decoding algorithm  maintains a \emph{chart}, which contains an array of \emph{cells}. Each cell in turn maintains a list of proven \emph{items}. The parsing process starts with the axioms, and proceeds by applying the inference rules repeatedly to prove new items until proving a goal item. Whenever the parser proves a new item, it adds the item to the appropriate chart cell. The new item also maintains backpointers to antecedent items, which are used for $k$-best extraction, as discussed in Section \ref{subsec-kbest} below.
+
+In a SCFG-based decoder, an \emph{item} is identified by its source-language span, left-side nonterminal label, and left- and right-contexts for the target-language $n$-gram LM. Therefore, in a given cell, the maximum possible number of items is $O(|N|\,|T_{T}|^{2(n-1)})$, and the worst case decoding complexity is
+\begin{equation}
+\label{eqn:decoding-complexity}
+O\!\left(l^3\,|N|^K\,|T_{T}|^{2K(n-1)}\right)
+\end{equation}
+where $K$ is the maximum number of nonterminal pairs per rule and $l$ is the source-language sentence length \cite{cmu-decoder}.
+
+
+\subsection{Pruning in a Decoder}\label{subsec-prune}
+Severe pruning is needed in order to make the decoding computationally feasible for SCFGs with large target-language vocabularies and detailed nonterminal sets. In our decoder, we incorporate two pruning techniques described by \cite{hiero-david,liang-cube}. For \emph{beam pruning}, in each cell, we discard all items whose weight is $\beta$-times worse than the weight of the best item in the same cell. If too many items pass that relative threshold, then only the top $b$ items by weight are retained in each cell. When applying an inference rule to combine smaller items and obtain a larger item, we use \emph{cube pruning} to simulate $k$-best extraction in each destination cell, discarding combinations which lead to an item whose weight is worse than the best item in that cell by a margin of $\epsilon$.
+
+\subsection{Hyper-graphs and $k$-best Extraction}\label{subsec-kbest}
+For each source-language sentence the output of the chart-parsing algorithm may be treated as a \emph{hyper-graph} representing a set of likely derivation hypotheses. Briefly, a hyper-graph is a set of \emph{vertices} and \emph{hyper-edge}s, with each hyper-edge connecting a \emph{set} of antecedent vertices to a consequent vertex, and a special vertex designated as the \emph{target vertex}. In parsing parlance, a vertex corresponds to an item in the chart, a hyper-edge corresponds to a SCFG rule with the nonterminals on the right-side replaced by back-pointers to antecedent items, and the target vertex corresponds to the goal item\footnote{In a decoder integrating an $n$-gram LM, there may be multiple goal items due to different LM contexts. However, one can image a \emph{single} goal item identified by the span $[0,n]$ and the goal nonterminal $S$, but not by the LM contexts.}.
+
+Given a hyper-graph for a source-language sentence $f^\ast$, we use the $k$-best extraction algorithm of \newcite{liang-kbest} to extract its $k$ most likely translations. Moreover, since many different derivations may lead to the same target-language yield $e(D)$, we adopt the modification described in \newcite{liang-syntax} to efficiently generate the \emph{unique} $k$ best translations of $f^\ast$.
+
+
+%% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\section{Underlying Methodologies}
+When designing our decoder we applied principles of software engineering to improve usability and hence utility to open-source users. Our three major design goals are: extendibility, end-to-end coherence, and scalability.
+
+
+%% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{Extendibility}
+To make Joshua a suitable baseline for future research it is necessary that it be easily extended by other researchers. As befitting a project of its size, the Joshua code is organized into separate \emph{packages} for each major aspect of functionality (e.g.\,chart parsing, feature functions, and hyper-graph algorithms). In this way it is clear which files contribute to a given functionality and researchers can focus on a single package without worrying about the rest of the system.
+
+Illicit interactions and unseen dependencies are a common hinderance to extensibility in large projects. To minimize these problems, all extensible components are defined by Java \emph{interfaces}. The interfaces are designed to be minimalistic so that they do not hinder radical departures from current implementations, such as using per-sentence or non-trie-based translation grammars. Where there is a clear point of departure for research, a basic implementation of each interface is provided as an \emph{abstract class} to minimize the work necessary for new extensions.
+
+A non-exhaustive list of future extensions we envisioned when designing our interfaces include:
+\begin{itemize}
+\item
+	Using a new decoding algorithm such as agenda-based parsing, instead of the default CKY algorithm;
+\item
+	Adding new pruning algorithms, beside the already implemented beam- and cube-pruning;
+\item
+	Using grammars with linguistic syntax such as the grammar described in \newcite{syntax2006-isi}, rather than Hiero-style grammars;
+\item
+	Handling non-SCFG grammar formalisms, e.g.\,synchronous tree substitution grammars \cite{syntax-jason};
+\item
+	Adding new feature functions, e.g.\,the source-side syntax constraints described by \newcite{soft-syntax};
+\item
+	Using novel language models like the bloom-filter LM described in \newcite{bloom-filter}, not just ARPA backoff $n$-gram models;
+\item
+	Adding new algorithms that operate on the hyper-graph, for example, hyper-graph reranking or discriminative training over the hyper-graph.
+\end{itemize}
+
+
+%% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{End-to-end Cohesion}
+There are many components to a machine translation pipeline aside from the decoder. One of the great difficulties with current MT pipelines is that these diverse components are often designed by separate groups and have different file format and interaction requirements. This leads to a large investment in scripts to convert formats and connect the different components, and often leads to untenable and non-portable projects as well as hindering repeatability of experiments.
+
+To combat these issues, the Joshua toolkit integrates other critical components of the machine translation pipeline as well as the decoder. Two critical components being integrated are suffix-array grammar extraction \cite{adam-suffix} and minimum error rate training (MERT) \cite{discriminative-mert}. Additional components we hope to integrate include tools for building language models and generating word alignments, as well as a general infrastructure for configuring and connecting segments of the pipeline.
+
+For researchers who have already invested much work into their pipelines, the decoder can be treated as a stand-alone tool and does not rely on the rest of the toolkit we provide.
+
+
+%% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{Scalability}
+Our third design goal was to ensure that the decoder is scalable to large models and data sets. The parsing and pruning algorithms are carefully implemented with dynamic programming strategies, and efficient data structures are used to minimize overhead.
+
+The integration of suffix-array grammar extraction and MERT also contributes to scalability. Suffix arrays are compact data structures which can store many more $n$-grams than a traditional phrase table with the same memory footprint. They are also amenable to extracting small per-sentence grammars on the fly, rather than needing a monolithic grammar for the entire test set. With MERT integration we do not need to start a new decoder instance each iteration, which means we can load the grammar into memory once (an expensive task compared to the decoding time itself) instead of repeatedly.
+
+We also implement \emph{parallel decoding} and a \emph{distributed language model}. Parallel decoding is able to exploit multi-core and multi-processor architectures by translating multiple sentences in separate threads and storing the language model and translation grammar in shared memory. Enabling the distributed language model reduces memory pressure and makes it feasible to use large LMs by running the LM on a separate machine from the decoder or decoders. More details on these two features are provided in \cite{zhifei-ssst08}.
+
+
+
+%% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\section{Using the Decoder}\label{sec-instructions}
+To produce a translation output for a test document, one needs to follow the following general five-step procedure.
+
+\begin{enumerate}
+\item
+	Train a language model using a toolkit such as the SRI LM tools \cite{srilm};
+\item
+	Extract a translation grammar for the test set. This step itself involves several sub-steps, e.g.\,preparing a bilingual corpus, obtaining word alignments with a tool like GIZA \cite{giza}, and extracting the grammar using the suffix-array infrastructure;
+\item
+	Find optimal weights for combining the different models and feature functions by using MERT or another training procedure;
+\item
+	Write the decoder's configuration file, specifying the language model, translation model, feature weights, and other options. The integrated MERT, when given an initial configuration file, will produce a modified configuration with the final weights. Table \ref{tbl-config} shows an example configuration file.
+\begin{table}[h]
+\begin{center}
+\begin{tabular}{ |l|}\hline
+
+\# lm file location\\
+lm\_file$=$example.trigram.lm.gz\\
+\\
+\# tm file location\\
+tm\_file$=$example.hiero.tm.gz\\
+\\
+\# lm model weight\\
+lm 1.000000\\
+\\
+\# translation model weights\\
+phrasemodel pt 0 1.066893\\
+phrasemodel pt 1 0.752247\\
+phrasemodel pt 2 0.589793\\
+\\
+\# wordpenalty weight\\
+wordpenalty -2.844814\\ \hline
+\end{tabular}
+\end{center}
+\caption{An example configuration file. For conciseness, this file neglects some standard configuration options (e.g.\,$k$-best size).}
+\label{tbl-config}
+\end{table}
+
+\item
+	Finally, run the decoder to produce the $k$ best translations for each sentence in the test document. For an input file, \texttt{test.in}, an output $k$-best file, \texttt{test.kbest}, and a configuration file, \texttt{config}, the decoder can be invoked with:\\\\ \texttt{java joshua.JoshuaDecoder \char`\\ \\ config test.in test.kbest}\\\\Often it is helpful to pass additional flags to the JVM to specify the minimum and maximum size of the heap, to adjust the minimum free-heap ratio, or to enable 64-bit mode.
+% The verbatim character \char`\\ is prettier here than \textbackslash
+\end{enumerate}
+
+
+
+%% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\section{Experimental Results}
+In this section, we evaluate the performance of our decoder on a large-scale Chinese to English translation task.\footnote{Again, most of the descriptions here are adopted from \newcite{zhifei-ssst08}.}
+
+\subsection{System Training}
+We use various parallel text corpora distributed by the Linguistic Data Consortium (LDC) for the NIST MT evaluation. The parallel data we select contains about 570K Chinese-English sentence pairs, adding up to about 19M words on each side. To train the English language models, we use the English side of the parallel text and a subset of the English Gigaword  corpus, for a total of about 130M words.
+
+We use the GIZA toolkit \cite{giza}, a suffix-array architecture \cite{adam-suffix}, the SRILM toolkit \cite{srilm}, and minimum error rate training \cite{discriminative-mert} to obtain word-alignments, a translation model, language models, and the optimal weights for combining these models, respectively.
+
+
+\subsection{Improvements in Decoding Speed}
+%%%lzf add umd here
+We use a Python implementation of a state-of-the-art decoder as our baseline\footnote{We are extremely thankful to Philip Resnik at University of Maryland for allowing us the use of their Python decoder as the baseline. Thanks also go to David Chiang who originally implemented the decoder.} for decoder comparisons. For a direct comparison, we use exactly the same models and pruning parameters. The SCFG contains about 3M rules, the $5$-gram LM explicitly lists about 49M $n$-grams, $n=1, 2, \ldots, 5$, and the pruning uses $\beta=10$, $b=30$ and $\epsilon=0.1$.
+\begin{table}[h]
+\begin{center}
+\begin{tabular}{ |c|c|c|c|}\hline
+\multirow{2}{*}{ Decoder}&	Speed&	\multicolumn{2}{c|}{ BLEU-4}\\\cline{3-4}
+&					(sec/sent)&	MT '03&	MT '05\\\hline\hline
+Python&			26.5&			34.4\%&		32.7\%\\\hline\hline
+Java&				1.2&			\multirow{2}{*}{{\bf \textcolor{blue}{34.5\%}}}&
+									\multirow{2}{*}{{\bf \textcolor{blue}{32.9\%}}}\\\cline{1-2}
+Java (parallel)&	\bf \textcolor{blue}{0.7}&		&\\\hline
+%excluding loading time for tm/lm (Java is also faster than Python in this part)
+%lm:5-gram, 49M lines; TM: 3.4M rules
+\end{tabular}
+\end{center}
+\caption{Decoder Comparison: Translation speed and quality on the 2003 and 2005 NIST MT benchmark tests.}
+\label{results-speed}
+\end{table}
+
+As shown in Table \ref{results-speed}, the Java decoder (without explicit parallelization) is 22 times \emph{faster} than the Python decoder, while achieving slightly \emph{better} translation quality as measured by BLEU-4 \cite{bleu-ibm}. The parallelization further speeds it up by a factor of 1.7, making the parallel Java decoder is 38 times faster than the Python decoder.
+
+We have also used the decoder to successfully decode about one million sentences for a large-scale discriminative training experiment \cite{zhifei-amta08}, showing that the decoder is stable and scalable.
+
+\subsection{Impact of a Distributed Language Model }
+We use the SRILM toolkit to build eight $7$-gram language models, and load and call the LMs using a distributed LM architecture as discussed before. As shown in Table \ref{results-dlm}, the $7$-gram distributed language model (DLM) significantly improves translation performance over the $5$-gram LM.
+However, decoding is significantly slower (12.2 sec/sent when using the non-parallel decoder) due to the added network communication overhead.
+\begin{table}[h]
+\begin{center}
+\begin{tabular}{l c c c c}\hline
+LM type&		\# $n$-grams&	MT '03&	MT '05 \\ \hline
+$5$-gram  LM&	49\,M&	34.5\%&		32.9\%\\
+$7$-gram DLM&   310\,M&	{\bf \textcolor{blue}{35.5\%}}&	{\bf \textcolor{blue}{33.9\%}}\\\hline
+\end{tabular}
+\end{center}
+\caption{Distributed language model: the $7$-gram LM cannot be loaded alongside the SCFG on a single machine; via distributed computing, it yields significant improvement in BLEU-4 over a $5$-gram.}
+\label{results-dlm}
+\end{table}
+
+%NIST MT08 experiments
+%System                                                                        MT03(DEV)                            MT05
+%UMD Decoder+UMD-5-gram-LM+nonum                         34.38                                     32.71
+%UMD Decoder+UMD-5-gram-LM+withnum                       ?                                           33.13
+%Java Decoder+UMD-5-gram-LM+nonum                          34.53                                     32.85
+%Java Decoder+JHU-7-gram-LM+nonum                           35.49                                     33.88
+%Java Decoder+JHU-7-gram-LM+beam50+nonum              35.69                                    34.26
+%Java Decoder+JHU-7-gram-LM+beam150+nonum            35.92                                     ?(failed due to out of memory)
+%
+%UMD Final submission                                                  35.07                                     33.71
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Conclusions}
+We have described a scalable decoder for parsing-based machine translation. It is written in Java and implements all the essential algorithms described in \newcite{hiero-david} and \newcite{zhifei-ssst08}: chart-parsing, $n$-gram language model integration, beam- and cube-pruning, and unique $k$-best extraction. Additionally, parallel and distributed computing techniques are exploited to make it scalable. We demonstrate that our decoder is 38 times faster than a baseline decoder written in Python, and that the distributed language model is very useful to improve translation quality in a large-scale task.
+The decoder has been used for decoding millions of sentences for a large-scale discriminative training task \cite{zhifei-ssst08}.
+
+
+%%%lzf add this section
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section*{Acknowledgments}
+We thank other Joshua developers Chris Dyer, Lane Schwartz, Jonathan Weese, Omar Zaidan for their contributions to the code. We also thank Adam Lopez, Smaranda Muresan and Philip Resnik  for very helpful discussions. This research was supported in part by the Defense Advanced Research Projects Agency's GALE program under Contract No.\,HR0011-06-2-0001 and the National Science Foundation under grants No.\,0713448 and 0840112. The views and findings are the authors' alone.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{thebibliography}{}
+\bibitem[\protect\citename{Brants \bgroup et al.\egroup}2007]{largelm-google}
+Thorsten Brants, Ashok C.\,Popat, Peng Xu, Franz J.\,Och, and Jeffrey Dean. 2006.
+Large Language Models in Machine Translation.
+\emph{In Proceedings of EMNLP 2007}.
+
+\bibitem[\protect\citename{Chen \bgroup et al.\egroup}2008]{sg-boxing}
+Boxing Chen, Deyi Xiong, Min Zhang, Aiti Aw and Haizhou Li. I2R Multi-Pass Machine Translation System for IWSLT 2008.
+\emph{In Proceedings of IWSLT 2008}.
+
+\bibitem[\protect\citename{Chiang}2006]{sg-david}
+David Chiang. 2006. An Introduction to Synchronous Grammars. Available at http://www.isi.edu/$\sim$chiang/papers/synchtut.pdf.
+
+\bibitem[\protect\citename{Chiang}2007]{hiero-david}
+David Chiang. 2007. Hierarchical phrase-based translation. \emph{Computational Linguistics}, 33(2):201-228.
+
+\bibitem[\protect\citename{Eisner} 2003]{syntax-jason}
+Jason Eisner. 2003. Learning non-isomorphic tree mappings
+for machine translation. \emph{In Proceedings of ACL 2003}.
+
+\bibitem[\protect\citename{Emami \bgroup et al.\egroup}2007]{largelm-ibm}
+Ahmad Emami, Kishore Papineni, and Jeffrey Sorensen. 2007.
+Large-scale distributed language modeling.
+\emph{In Proceedings of ICASSP 2007}.
+
+\bibitem[\protect\citename{Galley \bgroup et al.\egroup}2006]{syntax2006-isi}
+Michel Galley, Jonathan Graehl, Kevin Knight, Daniel Marcu, Steve DeNeefe, Wei Wang, and Ignacio
+Thayer. 2006. Scalable inference and training of
+context-rich syntactic translation models. \emph{In Proceedings of COLING/ACL 2006}.
+
+\bibitem[\protect\citename{Huang and Chiang}2005]{liang-kbest}
+Liang Huang and David Chiang. 2005.
+Better $k$-best parsing.
+\emph{In Proceedings of IWPT 2005}.
+
+\bibitem[\protect\citename{Huang and Chiang}2007]{liang-cube}
+Liang Huang and David Chiang. 2007.
+Forest Rescoring: Faster Decoding with Integrated Language Models.
+\emph{In Proceedings of the ACL 2007}.
+
+\bibitem[\protect\citename{Huang \bgroup et al.\egroup}2006]{liang-syntax}
+Liang Huang, Kevin Knight, and Aravind Joshi. 2006.
+Statistical syntax-directed translation with extended domain of locality.
+\emph{In Proceedings of AMTA 2006}.
+
+%\bibitem[\protect\citename{Kim \bgroup et al.\egroup}2003]{adaptedlm-kim}
+%Woosung Kim, and Sanjeev Khudanpur. 2003.
+%Language Model Adaptation Using Cross-Lingual Information [Poster].
+%\emph{In Proceedings of Eurospeech 2003}.
+
+\bibitem[\protect\citename{Koehn \bgroup et al.\egroup}2007]{moses}
+Philipp Koehn, Hieu Hoang, Alexandra Birch, Chris
+Callison-Burch, Marcello Federico, Nicola Bertoldi,
+Brooke Cowan,Wade Shen, Christine Moran, Richard
+Zens, Chris Dyer, Ondrej Bojar, Alexandra Constrantin,
+and Evan Herbst. 2007. Moses: Open source
+toolkit for statistical machine translation. \emph{In Proceedings
+of ACL}, Demonstration Session.
+
+%\bibitem[\protect\citename{Koehn \bgroup et al.\egroup}2003]{phrase-philip}
+%Philipp Koehn, Franz Josef Och, and Daniel Marcu.
+%2003. Statistical phrase-based translation. \emph{In Proceedings of NAACL 2003}.
+
+\bibitem[\protect\citename{Li and Khudanpur}2008a]{zhifei-ssst08}
+Zhifei Li and Sanjeev Khudanpur. 2008a.
+A Scalable Decoder for Parsing-based Machine Translation with Equivalent Language Model State Maintenance.
+\emph{In Proceedings SSST, ACL 2008 Workshop on Syntax and Structure in Statistical Translation}.
+
+\bibitem[\protect\citename{Li and Khudanpur}2008b]{zhifei-amta08}
+Zhifei Li and Sanjeev Khudanpur. 2008b.
+Large-scale Discriminative $n$-gram Language Models for Statistical Machine Translation.
+\emph{In Proceedings of AMTA 2008}.
+
+\bibitem[\protect\citename{Liu \bgroup et al.\egroup}2006]{ict-liu}
+Yang Liu, Qun Liu, and Shouxun Lin. 2006. Tree-to-string
+alignment template for statistical machine translation.
+\emph{In Proceedings of COLING-ACL 2006.}
+
+\bibitem[\protect\citename{Lopez}2007]{adam-suffix}
+Adam Lopez. 2007.
+Hierarchical Phrase-Based Translation with Suffix Arrays.
+\emph{In Proceedings of EMNLP 2007}.
+
+\bibitem[\protect\citename{Marton and Resnik}2008]{soft-syntax}
+Yuval Marton and Philip Resnik. 2008.
+Soft Syntactic Constraints for Hierarchical Phrased-Based Translation.
+\emph{In Proceedings of ACL 2008}.
+
+\bibitem[\protect\citename{Och}2003]{discriminative-mert}
+Franz Josef Och. 2003. Minimum error rate training in
+statistical machine translation.
+\emph{In Proceedings of ACL 2003}.
+
+\bibitem[\protect\citename{Och and Ney}2000]{giza}
+Franz Josef Och and Hermann Ney. 2000. Improved statistical
+alignment models. \emph{In Proceedings of ACL 2000}.
+
+%\bibitem[\protect\citename{Wu}1996]{wu-itg}
+%Dekai Wu. 1996. A polynomial-time algorithm for statistical
+%machine translation. \emph{In Proceedings of ACL 1996}.
+
+\bibitem[\protect\citename{Papineni \bgroup et al.\egroup}2002]{bleu-ibm}
+Kishore Papineni, Salim Roukos, Todd Ward, and Wei-Jing Zhu. 2002.
+BLEU: a method for automatic evaluation of machine translation.
+\emph{In Proceedings of ACL 2002}.
+
+\bibitem[\protect\citename{Quirk \bgroup et al.\egroup}2005]{syntax-msr}
+Chris Quirk, Arul Menezes, and Colin Cherry. 2005.
+Dependency Treelet Translation: Syntactically Informed Phrasal SMT.
+\emph{In Proceedings of ACL 2005}. %Ann Arbor, Michigan, USA, PAGES 271--279
+
+\bibitem[\protect\citename{Shieber \bgroup et al.\egroup}1995]{Shieber}
+Stuart Shieber, Yves Schabes, and Fernando Pereira.
+1995. Principles and implementation of deductive
+parsing. \emph{Journal of Logic Programming}, 24:3--15.
+
+\bibitem[\protect\citename{Stolcke}2002]{srilm}
+Andreas Stolcke. 2002. SRILM --- an extensible language
+modeling toolkit. \emph{In Proceedings of the International
+Conference on Spoken Language Processing}, volume 2, pages 901--904.
+
+\bibitem[\protect\citename{Talbot and Osborne}2007]{bloom-filter}
+David Talbot and Miles Osborne. 2007.
+Randomised Language Modelling for Statistical Machine Translation.
+\emph{In Proceedings of ACL 2007}.
+
+\bibitem[\protect\citename{Venugopal \bgroup et al.\egroup}2007]{cmu-decoder}
+Ashish Venugopal, Andreas Zollmann, Stephan Vogel. 2007.
+An Efficient Two-Pass Approach to Synchronous-CFG Driven Statistical MT.
+\emph{In Proceedings of NAACL 2007}.
+
+%\bibitem[\protect\citename{Watanabe}2006]{japan-decoder}
+%Taro Watanabe, Hajime Tsukada, and Hideki Isozaki.
+%2006. Left-to-right target generation for hierarchical
+%phrase based translation. \emph{In Proceedings of ACL 2006.}
+
+%\bibitem[\protect\citename{Zhang}2006]{Zhang-binary}
+%Hao Zhang, Liang Huang, Daniel Gildea, and Kevin
+%Knight. 2006. Synchronous binarization for machine
+%translation. \emph{In Proc.\,of HLT/NAACL.}
+
+%\bibitem[\protect\citename{Federico}2007]{largelm-Federico}
+%Marcello Federico and Mauro Cettolo. 2007.
+%Efficient Handling of $n$-gram Language Models for Statistical Machine Translation.
+%\emph{In Proceedings of ACL Workshop on SMT 2007}.
+
+%\bibitem[\protect\citename{Talbot}2007]{largelm-bloom}
+%David Talbot and Miles Osborne. 2007.
+%Smoothed Bloom filter language models: Tera-Scale LMs on the Cheap.
+%\emph{In Proceedings of EMNLP 2007}.
+
+\bibitem[\protect\citename{Zhang \bgroup et al.\egroup}2006]{largelm-joy}
+Ying Zhang, Almut Silja Hildebrand, and Stephan Vogel. 2006.
+Distributed language modeling for $n$-best list re-ranking.
+\emph{In Proceedings of EMNLP 2006}.
+
+%\bibitem[\protect\citename{Gusfield}1997]{Gusfield:97}
+%Dan Gusfield.
+%\newblock 1997.
+%\newblock {\em Algorithms on Strings, Trees and Sequences}.
+%\newblock Cambridge University Press, Cambridge, UK.
+
+\end{thebibliography}
+
+\end{document} 
