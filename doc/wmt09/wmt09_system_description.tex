@@ -127,14 +127,14 @@ the decoding algorithm  maintains a \emph{chart}, which contains an array of \em
 \textbf{Pruning:} Severe pruning is needed in order to make the decoding computationally feasible for SCFGs with large target-language vocabularies. In our decoder, we incorporate two pruning techniques: beam and cube pruning \cite{hiero-david}.
 
 \textbf{Hypergraphs and $k$-best extraction:}
-For each source-language sentence, the chart-parsing algorithm produces a \emph{hyper-graph}, which represents a set of likely derivation hypotheses. With the hyper-graph, we then extract its $k$ most likely derivations using the $k$-best extraction algorithm \cite{liang-kbest}.
+For each source-language sentence, the chart-parsing algorithm produces a \emph{hypergraph}, which represents an exponential set of likely derivation hypotheses. Using the $k$-best extraction algorithm \cite{liang-kbest}, we extract the $k$ most likely derivations from the hypergraph.
 
 \textbf{Parallel and distributed decoding:}
-We also implement \emph{parallel decoding} and a \emph{distributed language model} by exploiting the multi-core and multi-processor architectures and distributed computing techniques. More details on these two features are provided by \newcite{zhifei-ssst08}.
+We also implement \emph{parallel decoding} and a \emph{distributed language model} by exploiting multi-core and multi-processor architectures and distributed computing techniques. More details on these two features are provided by \newcite{zhifei-ssst08}.
 
 \subsection{Language Models}
 %Jonny: please check the bloom filter LM part
-In addition to the distributed LM mentioned before, we implement three more different ways in using a $n$-gram LM. Specifically, we first provide a Java implementation of the $n$-gram scoring function. The Java implementation is able to read the standard ARPA backoff $n$-gram models, and thus the decoder can be used independently from the SRILM toolkit.\footnote{This may be a good feature as people can give the Joshua toolkit an easy try without installing the SRILM toolkit. However, one should note that the Java implementation is not as scalable as the SRILM interface.} We also implement an interface such that the decoder can use the SRILM toolkit to read and score $n$-grams. This tight interface is more scalable than the Java implementation. A more scalable technique in using $n$-gram LMs is the so-called bloom-filter LM described in \newcite{bloom-filter}.
+In addition to the distributed LM mentioned above, we implement three local $n$-gram language models. Specifically, we first provide a straightforward implementation of the $n$-gram scoring function in Java. This Java implementation is able to read the standard ARPA backoff $n$-gram models, and thus the decoder can be used independently from the SRILM toolkit.\footnote{This feature allows users to easily try the Joshua toolkit without installing the SRILM toolkit and compiling the native bridge code. However, users should note that the basic Java LM implementation is not as scalable as the native bridge code.} We also provide a native code bridge that allows the decoder to use the SRILM toolkit to read and score $n$-grams. This native implementation is more scalable than the basic Java LM implementation. An additional, scalable $n$-gram LM implementation is the so-called bloom-filter LM described in \newcite{bloom-filter}, also written in Java.
 
 \subsection{Minimum Error Rate Training}
 Omar: please extend this paragraph
@@ -155,12 +155,12 @@ TM and LM data; TM and LM data; TM and LM data; TM and LM data; TM and LM data; 
 The translation scores for three different systems are reported in Table \ref{results-wmt09}.\footnote{Note that the implementation of the novel techniques used in the second and third system is not part of the current Joshua release, though we plan to incorporate it in the next release.}
 
 
-\textbf{Baseline: } In this system, we use the GIZA toolkit \cite{giza}, a suffix-array architecture \cite{adam-suffix}, the SRILM toolkit \cite{srilm}, and minimum error rate training \cite{discriminative-mert} to obtain word-alignments, a translation model, language models, and the optimal weights for combining these models, respectively.
+\textbf{Baseline: } In this system, we use the GIZA++ toolkit \cite{giza}, a suffix-array architecture \cite{adam-suffix}, the SRILM toolkit \cite{srilm}, and minimum error rate training \cite{discriminative-mert} to obtain word-alignments, a translation model, language models, and the optimal weights for combining these models, respectively.
 
 \textbf{Deterministic Annealing (DA): } In this system, instead of using the regular MERT \cite{discriminative-mert} whose training objective is to minimize the one-best error, we use the deterministic annealing training procedure described in \newcite{david-damert}, whose objective is to minimize the \emph{expected} error (together with the entropy regularization technique).
 
 \textbf{Variational Decoding (VD): }  A hierarchical machine translation system like Hiero exhibits \emph{spurious ambiguity}, a situation where the system
-produces many distinct derivation \emph{trees} that yield the same translation \emph{string}.\footnote{A regular phrase-based system also has spurious ambiguity due to different ways of segmenting the translation output.} However, no tractable extract algorithm is available to marginalize over derivations during decoding time. Therefore, most systems simply approximate the goodness of a translation string by using the goodness of its most-probable derivation. Instead, we have developed a novel approximation algorithm, using a \emph{variational principle}, to approximate the sum.
+produces many distinct derivation \emph{trees} that yield the same translation \emph{string}.\footnote{A regular phrase-based system also has spurious ambiguity due to different ways of segmenting the translation output.} However, no tractable extraction algorithm is available to marginalize over derivations during decoding time. Therefore, most systems simply approximate the goodness of a translation string by using the goodness of its most-probable derivation. Instead, we have developed a novel approximation algorithm, using a \emph{variational principle}, to approximate the sum.
 More details will be provided in \newcite{zhifei-vd}. In this system, we have used both DA (for training) and VD (for decoding).
 
 
