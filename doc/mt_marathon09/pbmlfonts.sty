@@ -1,0 +1,28 @@
+%% $Id: pbmlfonts.sty 81 2007-12-13 09:17:06Z zw $
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{pbmlfonts}%
+  [2007/12/12 Dummy font file for PBML if the user cannot install the files]
+
+% XeTeX test
+\IfFileExists{ifxetex.sty}{\RequirePackage{ifxetex}}{\newif\ifxetex}
+
+\ifxetex % for XeLaTeX
+
+% Font packages
+\RequirePackage{fontspec,xltxtra}
+
+% Paper size
+\AtBeginDocument{\special{papersize=\the\paperwidth,\the\paperheight}}
+
+% Driver for pgf (tikz) for XeTeX
+\def\pgfsysdriver{pgfsys-dvipdfm.def}
+
+\else % for LaTeX
+
+% Default encoding
+\RequirePackage[T1]{fontenc}
+
+% Prefer Latin Modern (if available)
+\IfFileExists{lmodern.sty}{\RequirePackage{lmodern}}{}
+
+\fi
