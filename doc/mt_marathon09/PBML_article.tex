@@ -1,0 +1,187 @@
+%% Sample file $Id: PBML_article.tex 92 2007-12-18 22:59:46Z zw $
+% 
+% This is a sample file for the PBML article.
+% 
+% The Prague Bulletin of Mathematical Linguistics is typeset by XeLaTeX. This
+% means that it is not guaranteed that the line and page breaks will come up
+% exactly the same in the final printed version as in your computer. It is
+% not required that you use XeLaTeX and the same fonts as will be used in the
+% journal but it is better to do so if you could. You can even used standard
+% LaTeX if XeLaTeX is not available on your computer.
+% 
+% 
+% Document class
+% ==============
+% 
+% The Prague Bulletin of Mathematical Linguistics uses its own document class.
+% You will thus start your document with:
+
+\documentclass{pbml}
+
+% If you process the document with XeLaTeX, fonts Minion Pro (distributed
+% with Adobe Reader) and DejaVu
+% (http://dejavu.sourceforge.net/wiki/index.php/Main_Page). If you do not
+% have these fonts and are not able to install them, you can instruct XeLaTeX
+% to use its default fonts by issuing \document[nofonts]{pbml}.
+% 
+% 
+% Packages
+% ========
+% 
+% I this place you will load required packages by the \usepackage commands.
+% Remember that other articles may require other packages and it is known
+% that some of them are in conflict. Please use only those packages that you
+% really need.
+% 
+% The following packages are loaded automatically by the class:
+% euler (for math fonts)
+% graphicx (for inclusion of images)
+% multicol (for multicolumn typesetting)
+% fullname (for bibliography citations)
+% 
+% If XeLaTeX is used, fontspec and xltxtra are loaded as well.
+% 
+% If standard LaTeX is used, the font encoding is switched to T1 and Latin
+% Modern fonts are used if they are found in your TeX distribution.
+% 
+% 
+% Graphics
+% ========
+% 
+% The most portable graphics package is tikz which is a front end to pgf.
+% This package is fully supported both in standard LaTeX and XeLaTeX.
+% PSTricks is not currently available for XeLaTeX. It will most probably be
+% supported in the future.
+% 
+% 
+% Fonts
+% =====
+% 
+% If you want to typset examples in east Asian scripts, you have to use
+% OpenType Unicode fonts that are freely redistributable and you have to
+% include them with your article. If you must use nonfree or non-Unicode
+% fonts, you must supply the examples as EPS or PDF with fonts embedded in
+% the files (as the required subset).
+% 
+% 
+% Definitions
+% ===========
+% 
+% You can use your own macros defined by \newcommand, \providecommand,
+% \DeclareRobustCommand (or even by \def) as well as environments declared by
+% \newenvironment. These definitions will automatically be local to your
+% article and will not clash with other parts of the journal. You can also
+% use \newcounter in order to declare your own counters.
+% 
+% 
+% Beginning of the document
+% =========================
+% 
+% Use the standard command:
+
+\begin{document}
+
+
+% Document title
+% ==============
+% 
+% Due to journal organization the article title and authors must be specified
+% AFTER \begin{document}. Give the article title:
+
+\title{Title of My Article}
+
+% You may optionally specify a subtitle:
+
+\subtitle{Optional Subtitle}
+
+% Now put the author names and adresses, one command for each authors. The
+% order of authors printed below the title will be the same as the order of
+% your commands:
+
+\author{firstname=Humpty, surname=Dumpty,
+       address={High Wall, Looking Glass}}
+\author{firstname=Mock, surname=Turtle, address=Sea Coast\\Wonderland}
+\author{firstname=Cheshire, surname=Cat,
+        address=Duchess Palace\\Wonderland}
+
+% The braces are mandatory only if the value contains a comma as in the first
+% author's address but they never make any harm, you can safely put all
+% values into braces.
+% 
+% The title and authors' names are used in the running head. If they are
+% long, you should define short versions. These definitions are optional. You
+% define them only if they are needed. The example follows:
+
+\shorttitle{Short}
+\shortauthor{H. Dumpty, M. Turtle, C. Cat}
+
+% Now print the title by:
+
+\maketitle
+
+
+% Abstract
+% ========
+% 
+% The abstract is placed within the "abstract" environment. It is a mandatory
+% part of the article.
+
+\begin{abstract}
+The abstract of the article...
+\end{abstract}
+
+
+% The body of the article
+% =======================
+% 
+% The PBML class is modelled after the standard article class. This means
+% that you can use almost everything that is allowed in articles as described
+% in the textbooks of LaTeX. We support sectioning commands \section,
+% \subsection and \subsubsection. In addition to standard LaTeX we support
+% \subsection and \subsubsection with an empty title (i.e. just with empty
+% braces {} that must not even contain a space). Such subsections will be
+% automatically numbered and properly formatted.
+% 
+% 
+% Figures and tables
+% ==================
+% 
+% Use figure and table environments. The \caption command is redefined in
+% order to comply with the graphic design.
+% 
+% 
+% Inclusion of images and other files
+% ===================================
+% 
+% All files required for your articles must reside in the same directory. You
+% are allowed to use subdirectories only exceptionally. When loading the file
+% you must use a relative path, never the full path. Load the images by
+% \includegraphics and other files by \input, never use \include.
+% 
+% 
+% Cross references
+% ================
+% 
+% You can safely used \label, \ref and \pageref with any identifiers. These
+% macros are modified in order not to collide with identifiers in other
+% articles.
+% 
+% 
+% Bibliography
+% ============
+% 
+% You may either enter the bibliography manually, possibly making use of
+% \label and \ref, or use BibTeX. The bibliography style is set
+% automatically. The \cite command is also modified so that it does not
+% collide with other articles. You process the bibliography by BibTeX in the
+% standard way and include it by:
+
+\bibliography{mybib}
+
+
+% End of the article
+% ==================
+% 
+% The article must end with:
+
+\end{document}

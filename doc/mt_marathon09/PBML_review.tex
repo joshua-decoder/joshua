@@ -1,0 +1,67 @@
+%% Sample file $Id: PBML_review.tex 92 2007-12-18 22:59:46Z zw $
+% 
+% This is a sample file for the PBML book review.
+% 
+% The Prague Bulletin of Mathematical Linguistics is typeset by XeLaTeX. This
+% means that it is not guaranteed that the line and page breaks will come up
+% exactly the same in the final printed version as in your computer. It is
+% not required that you use XeLaTeX and the same fonts as will be used in the
+% journal but it is better to do so if you could. You can even used standard
+% LaTeX if XeLaTeX is not available on your computer.
+% 
+% 
+% Document class
+% ==============
+% 
+% The Prague Bulletin of Mathematical Linguistics uses its own document class.
+% You will thus start your document with:
+
+\documentclass{pbml}
+
+% If you process the document with XeLaTeX, fonts Minion Pro (distributed
+% with Adobe Reader) and DejaVu
+% (http://dejavu.sourceforge.net/wiki/index.php/Main_Page). If you do not
+% have these fonts and are not able to install them, you can instruct XeLaTeX
+% to use its default fonts by issuing \document[nofonts]{pbml}.
+% 
+% 
+% Packages
+% ========
+% 
+% The review should not require any package.
+% 
+% 
+% Beginning of the document
+% =========================
+% 
+% Use the standard command:
+
+\begin{document}
+
+
+% The book title, book author, publisher and reviewer
+% ===================================================
+% 
+% Due to journal organization the review information  must be specified
+% AFTER \begin{document}. Give the information as:
+
+\PBMLreview{title={Pig, Pepper, Baby}, published={Duchess, June 1234},
+            author=Alice, reviewed=White Rabbit}
+
+% The braces are mandatory only if the value contains a comma as in the first
+% author's address but they never make any harm, you can safely put all
+% values into braces.
+% 
+% 
+% The body of the review
+% ======================
+% 
+% The reviews usually have no sectioning but you can use sections, tables and
+% figures similarly as in an article. See PBML_article.tex for details.
+
+% End of the review
+% =================
+% 
+% The review must end with:
+
+\end{document}

@@ -1,78 +1,38 @@
-%
-% File acl08.tex
-%
-% Contact: nasmith@cs.cmu.edu\emph{\emph{}}
+\documentclass{pbml}
 
-\documentclass[11pt]{article}
-\usepackage{acl08}
-%\usepackage{acl08_thesis}
 \usepackage{times}
-\usepackage{latexsym}
+\usepackage{float}
 \usepackage{multirow}
-%\usepackage{tree-dvips}
-\usepackage{clrscode}
-\usepackage{epsfig}
-%\usepackage{psfrag}
 \usepackage{amscd}
 \usepackage{amsmath}
 \usepackage{amssymb}
-%\usepackage{a4}
-%\usepackage{psfig}
-\usepackage{float}
-%\usepackage{floatflt}
-\usepackage{subfigure}
-\usepackage{hyperref}
 \usepackage{color}
 \usepackage{CJK}
 
 
-%this is just a test
-
-\special{papersize=8.5in,11in}
-\setlength{\pdfpageheight}{\paperheight}
-\setlength{\pdfpagewidth}{\paperwidth}
-% You may need to change the horizontal offset to do what you
-% want. Setting \hoffset to a negative value moves all printed
-% material to the left on all pages; setting it to a positive value
-% moves all printed material to the right on all pages; not setting
-% it keeps all printed material in it's default position. \voffset
-% is the vertical offset: use negative value for up; don't set if
-% you want to use default position; use positive for down.
-% \hoffset = -0.2truein
-% \voffset = -0.2truein
-
-\setlength\titlebox{6.5cm}
-
-\title{Joshua: an Open-source Decoder for Parsing-based Machine Translation}
-
-%%% the order and names may change
-\author{%
-Zhifei Li,\,\,\,
-Chris Callison-Burch,\,\,\,
-Wren N.\,G.\,Thornton,\,\,\,
-{\textnormal{ and}}\,\,\,Sanjeev Khudanpur\\
-Department of Computer Science and Center for Language and Speech Processing\\
-Johns Hopkins University, Baltimore, MD 21218, USA\\
-{\{\tt zli19, callison-burch, winterkoninkje, khudanpur\}@jhu.edu}}
-
-
-\date{}
+\newcommand{\newcite}{\cite}
 
 \begin{document}
-\special{papersize=8.5in,11in}
-\setlength{\pdfpageheight}{\paperheight}
-\setlength{\pdfpagewidth}{\paperwidth}
-% You may need to change the horizontal offset to do what you
-% want. Setting \hoffset to a negative value moves all printed
-% material to the left on all pages; setting it to a positive value
-% moves all printed material to the right on all pages; not setting
-% it keeps all printed material in it's default position. \voffset
-% is the vertical offset: use negative value for up; don't set if
-% you want to use default position; use positive for down.
-% \hoffset = -0.2truein
-% \voffset = -0.2truein
+
+\title{Decoding in Joshua}
+\subtitle{An Open-source Decoder for Parsing-based Machine Translation}
+
+
+\author{firstname=Zhifei, surname=Li,
+       address={Center for Language and Speech Processing, Johns Hopkins University, Baltimore MD 21218, USA}}
+\author{firstname=Chris, surname=Callison-Burch, address={Center for Language and Speech Processing, Johns Hopkins University, Baltimore MD 21218, USA}}
+\author{firstname=Sanjeev, surname=Khudanpur, address={Center for Language and Speech Processing, Johns Hopkins University, Baltimore MD 21218, USA}}
+\author{firstname=Wren, surname=Thornton, address={Center for Language and Speech Processing, Johns Wren University, Baltimore MD 21218, USA}}
+
+\shorttitle{Decoding in Joshua}
+\shortauthor{Z. Li, C. Callison-Burch, S. Khudanpur, W. Thornton}
+
+
 
 \maketitle
+
+
+
 \begin{abstract}
 We describe a scalable decoder for parsing-based machine translation. The decoder is written in Java and implements all the essential algorithms described in \newcite{hiero-david} and \newcite{zhifei-ssst08}: chart-parsing, $n$-gram language model integration, beam- and cube-pruning, and $k$-best extraction. Additionally, parallel and distributed computing techniques are exploited to make it scalable. We demonstrate experimentally that our decoder is more than 30 times faster than a baseline decoder written in Python.
 
@@ -82,7 +42,7 @@ We describe a scalable decoder for parsing-based machine translation. The decode
 %% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 \section{Motivation}
 %%tree-based translation
-Large-scale parsing-based statistical machine translation (MT) has made remarkable progress in the last few years. The systems being developed differ in whether they use source- or target-language syntax.
+Large-scale parsing-based statistical machine translation has made significant progress in the last few years. The systems being developed differ in whether they use source- or target-language syntax.
 For instance, the hierarchical translation system of \newcite{hiero-david} extracts a synchronous grammar from pairs of strings, whereas \newcite{syntax-msr}, \newcite{ict-liu} and \newcite{liang-syntax} perform syntactic analyses in the source-language, and \newcite{syntax2006-isi} uses target-language syntax.
 
 
