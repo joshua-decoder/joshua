@@ -59,7 +59,7 @@ Our toolkit is written in Java and implements all the essential algorithms descr
 
 The toolkit has been used to translate roughly a million sentences in a parallel corpus for large-scale discriminative training experiments \cite{Li2008}.
 %The decoder has also been successfully used by other researchers. For example, \newcite{sg-boxing} have demonstrated that our decoder achieves performance competitive with Moses \cite{Moses}.
-We hope the release of the toolkit will greatly contribute the progress of the syntax-based machine translation research.\footnote{The toolkit can be downloaded at http://www.jhu.edu/???, and the instructions in using the toolkit are at http://www.jhu.edu/????.}
+We hope the release of the toolkit will greatly contribute the progress of the syntax-based machine translation research.\footnote{The toolkit can be downloaded at http://sourceforge.net/projects/joshua, and the instructions in using the toolkit are at http://www.jhu.edu/????.}
 
 
 
@@ -80,9 +80,32 @@ Below we give a short description about the main functions implemented in our Jo
 Rather than inducing a grammar from the full parallel training data, we made use of a method proposed by Kishore Papineni (personal communication) to select the subset of the training data consisting of  sentences useful for inducing a grammar to translate a particular test set.  This method works as follows: for the development and test sets that will be translated, every $n$-gram (up to length 10) is gathered into a map $\mathcal{W}$ and associated with an initial count of zero.  Proceeding in order through the training data, for each sentence pair whose source-to-target length ratio is within one standard deviation of the average, if any $n$-gram found in the \emph{source sentence} is also found in $\mathcal{W}$ with a count of less than $k$, the sentence is selected.  When a sentence is selected, the count of every $n$-gram in $\mathcal{W}$ that is found in the source sentence is incremented by the number of its occurrences in the source sentence. \ignore{Thus, there are two conditions in which a sentence will not be selected: 1) it only contains $n$-grams that are not found in $\mathcal{W}$ (making it useless for learning in the highly lexicalized models we use) or 2) it only contains $n$-grams that have already been attested in the selected set $k$ or more times.} For our submission, we used $k=20$, which resulted in XXXXX (out of YYYYYY) sentence pairs being selected for use as training data.
 
 \subsection{Suffix-array Grammar Extraction}
-Lane: please extend this paragraph
 
-Suffix-array Translation Grammar ExtractionSuffix-array Translation Grammar ExtractionSuffix-array Translation Grammar ExtractionSuffix-array Translation Grammar ExtractionSuffix-array Translation Grammar ExtractionSuffix-array Translation Grammar ExtractionSuffix-array Translation Grammar ExtractionSuffix-array Translation Grammar ExtractionSuffix-array Translation Grammar ExtractionSuffix-array Translation Grammar ExtractionSuffix-array Translation Grammar ExtractionSuffix-array Translation Grammar ExtractionSuffix-array Translation Grammar ExtractionSuffix-array Translation Grammar ExtractionSuffix-array Translation Grammar ExtractionSuffix-array Translation Grammar ExtractionSuffix-array Translation Grammar ExtractionSuffix-array Translation Grammar ExtractionSuffix-array Translation Grammar ExtractionSuffix-array Translation Grammar ExtractionSuffix-array Translation Grammar
+Hierarchical phrase-based translation requires a translation grammar extracted from a parallel corpus, where grammar rules include associated feature values. In real translation tasks, the grammars extracted from large training corpora are often far too large to fit into available memory.
+
+% Features such as the translation probability $p(f|e)$ and reverse translation probability $p(e|f)$ are typically calculated using relative frequency estimation . 
+In such tasks, feature calculation is also very expensive in terms of time required; huge sets of extracted rules must be sorted in two directions for relative frequency calculation of such features as the translation probability $p(f|e)$ and reverse translation probability $p(e|f)$ \cite{Koehn2003}. Since the extraction steps must be re-run if any change is made to the input training data, the time required can be a major hindrance to researchers, especially those investigating the effects of tokenization or word segmentation.
+
+%Worse, the grammars extracted from large training corpora are often far too large to fit into available memory.
+
+To alleviate these issues, we extract only a subset of all available rules. Specifically, we follow \newcite{Lopez2007} and use suffix arrays to extract only those rules which will actually be used in translating a particular set of test sentences. 
+
+% which will be allow the decoder to extract a sub-set of rules
+
+%
+%Worse, the extracted grammars
+
+% to extract all allowed rules from a large parallel corpus, and to 
+
+%When rule extraction is performed over an entire large parallel corpus, 
+
+%With large training corpora, a substantial amount of processing time is required to extract all rules and to per
+
+%Traditional phrase-based and hierarchical translation approaches require a translation grammar extracted from a parallel corpus, where grammar rules include associated feature values. Features such as the translation probability $p(f|e)$ and reverse translation probability $p(e|f)$ are typically calculated using relative frequency estimation \cite{Koehn2003}. 
+
+%Lane: please extend this paragraph
+
+%Suffix-array Translation Grammar ExtractionSuffix-array Translation Grammar ExtractionSuffix-array Translation Grammar ExtractionSuffix-array Translation Grammar ExtractionSuffix-array Translation Grammar ExtractionSuffix-array Translation Grammar ExtractionSuffix-array Translation Grammar ExtractionSuffix-array Translation Grammar ExtractionSuffix-array Translation Grammar ExtractionSuffix-array Translation Grammar ExtractionSuffix-array Translation Grammar ExtractionSuffix-array Translation Grammar ExtractionSuffix-array Translation Grammar ExtractionSuffix-array Translation Grammar ExtractionSuffix-array Translation Grammar ExtractionSuffix-array Translation Grammar ExtractionSuffix-array Translation Grammar ExtractionSuffix-array Translation Grammar ExtractionSuffix-array Translation Grammar ExtractionSuffix-array Translation Grammar ExtractionSuffix-array Translation Grammar
 
 \subsection{Decoding Algorithms\footnote{More details on the decoding algorithms are provided in \cite{Li2008b}.}}
 
