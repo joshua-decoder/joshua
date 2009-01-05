@@ -102,7 +102,7 @@ We also implement \emph{parallel decoding} and a \emph{distributed language mode
 
 \subsection{Language Models}
 %Jonny: please check the bloom filter LM part
-In addition to the distributed LM mentioned above, we implement three local $n$-gram language models. Specifically, we first provide a straightforward implementation of the $n$-gram scoring function in Java. This Java implementation is able to read the standard ARPA backoff $n$-gram models, and thus the decoder can be used independently from the SRILM toolkit.\footnote{This feature allows users to easily try the Joshua toolkit without installing the SRILM toolkit and compiling the native bridge code. However, users should note that the basic Java LM implementation is not as scalable as the native bridge code.} We also provide a native code bridge that allows the decoder to use the SRILM toolkit to read and score $n$-grams. This native implementation is more scalable than the basic Java LM implementation. An additional, scalable $n$-gram LM implementation is the so-called Talbot2007a LM described in \newcite{Talbot2007a}, also written in Java.
+In addition to the distributed LM mentioned above, we implement three local $n$-gram language models. Specifically, we first provide a straightforward implementation of the $n$-gram scoring function in Java. This Java implementation is able to read the standard ARPA backoff $n$-gram models, and thus the decoder can be used independently from the SRILM toolkit.\footnote{This feature allows users to easily try the Joshua toolkit without installing the SRILM toolkit and compiling the native bridge code. However, users should note that the basic Java LM implementation is not as scalable as the native bridge code.} We also provide a native code bridge that allows the decoder to use the SRILM toolkit to read and score $n$-grams. This native implementation is more scalable than the basic Java LM implementation. An additional, scalable $n$-gram LM implementation is the Bloom Filter LM described in \newcite{Talbot2007a}, also written in Java.
 
 \subsection{Minimum Error Rate Training}
 Omar: please extend this paragraph
@@ -125,11 +125,11 @@ The translation scores for three different systems are reported in Table \ref{re
 
 \textbf{Baseline: } In this system, we use the GIZA++ toolkit \cite{Och2003}, a suffix-array architecture \cite{Lopez2007}, the SRILM toolkit \cite{Stolcke2002}, and minimum error rate training \cite{Och2003c} to obtain word-alignments, a translation model, language models, and the optimal weights for combining these models, respectively.
 
-\textbf{Deterministic Annealing (DA): } In this system, instead of using the regular MERT \cite{Och2003c} whose training objective is to minimize the one-best error, we use the deterministic annealing training procedure described in \newcite{Smith2006}, whose objective is to minimize the \emph{expected} error (together with the entropy regularization technique).
+\textbf{Deterministic Annealing: } In this system, instead of using the regular MERT \cite{Och2003c} whose training objective is to minimize the one-best error, we use the deterministic annealing training procedure described in \newcite{Smith2006}, whose objective is to minimize the \emph{expected} error (together with the entropy regularization technique).
 
-\textbf{Variational Decoding (VD): }  A hierarchical machine translation system like Hiero exhibits \emph{spurious ambiguity}, a situation where the system
+\textbf{Variational Decoding: }  A hierarchical machine translation system like Hiero exhibits \emph{spurious ambiguity}, a situation where the system
 produces many distinct derivation \emph{trees} that yield the same translation \emph{string}.\footnote{A regular phrase-based system also has spurious ambiguity due to different ways of segmenting the translation output.} However, no tractable extraction algorithm is available to marginalize over derivations during decoding time. Therefore, most systems simply approximate the goodness of a translation string by using the goodness of its most-probable derivation. Instead, we have developed a novel approximation algorithm, using a \emph{variational principle}, to approximate the sum.
-More details will be provided in \newcite{Li2009}. In this system, we have used both DA (for training) and VD (for decoding).
+More details will be provided in \newcite{Li2009}. In this system, we have used both deterministic annealing (for training) and variational decoding (for decoding).
 
 
 
@@ -137,9 +137,9 @@ More details will be provided in \newcite{Li2009}. In this system, we have used 
 \begin{center}
 \begin{tabular}{c c}\hline
 System & BLEU-4 \\ \hline
-Baseline & ?? \\
-DA & ?? \\
-VD & ?? \\ \hline
+Joshua Baseline & ?? \\
+Deterministic Annealing & 25.98 \\
+Variational Decoding & 26.52 \\ \hline
 \end{tabular}
 \end{center}
 \caption{BLEU scores on WMT-09 French-English Task.}
