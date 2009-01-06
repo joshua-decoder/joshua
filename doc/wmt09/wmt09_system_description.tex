@@ -88,7 +88,9 @@ In such tasks, feature calculation is also very expensive in terms of time requi
 
 %Worse, the grammars extracted from large training corpora are often far too large to fit into available memory.
 
-To alleviate these issues, we extract only a subset of all available rules. Specifically, we follow \newcite{Lopez2007} and use suffix arrays to extract only those rules which will actually be used in translating a particular set of test sentences. 
+To alleviate these issues, we extract only a subset of all available rules. Specifically, we follow \newcite{Lopez2007} and use a source language suffix array to extract only those rules which will actually be used in translating a particular set of test sentences. This results in a vastly smaller rule set than techniques which extract all rules from the training set.
+
+The current code requires suffix array rule extraction to be run as a pre-processing step to extract the rules needed to translate a particular test set. However, we are currently extending the decoder to directly access the suffix array. This will allow the decoder at runtime to efficiently extract exactly those rules needed to translate a particular sentence, without the need for a rule extraction pre-processing step.
 
 % which will be allow the decoder to extract a sub-set of rules
 
