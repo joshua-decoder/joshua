@@ -1,6 +1,5 @@
 % TODO:
 % * List the feature functions that we use in our decoder.
-% * Paragraph about MBR decoding
 
 \documentclass[11pt]{article}
 \usepackage{acl08}
@@ -44,7 +43,7 @@ $\star$ Natural Language Processing Lab, University of Minnesota, Minneapolis, M
 
 
 \begin{abstract}
-We describe \textbf{Joshua}, an open source toolkit for statistical machine translation.  Joshua implements all of the algorithms required for synchronous context free grammars (SCFGs): chart-parsing, $n$-gram language model integration, beam- and cube-pruning, and $k$-best extraction. The toolkit also implements suffix-array grammar extraction and minimum error rate training. It uses parallel and distributed computing techniques for scalability. We demonstrate that the toolkit achieves state of the art translation performance on the WMT09 translation task.
+We describe \textbf{Joshua}, an open source toolkit for statistical machine translation.  Joshua implements all of the algorithms required for synchronous context free grammars (SCFGs): chart-parsing, $n$-gram language model integration, beam- and cube-pruning, and $k$-best extraction. The toolkit also implements suffix-array grammar extraction and minimum error rate training. It uses parallel and distributed computing techniques for scalability. We demonstrate that the toolkit achieves state of the art translation performance on the WMT09 French-English translation task.
 
 \end{abstract}
 
@@ -130,7 +129,7 @@ In addition to the distributed LM mentioned above, we implement three local $n$-
 
 \subsection{Minimum Error Rate Training}
 
-Johsua's MERT module optimizes parameter weights so as to maximize performance on a development set as measuered by an automatic evaluation metric, such as BLEU. The optimization consists of a series of line-optimizations along the dimensions corresponding to the parameters. The search across a dimension uses the efficient method of \newcite{Och2003c}. Each iteration of our MERT implementation consists of multiple weight updates, each reflecting a greedy selection of the dimension giving the most gain. Each iteration also optimizes several random ``intermediate initial'' points in addition to the one surviving from the previous iteration, as an approximation to performing multiple random restarts. More details on the MERT method and the implementation can be found in \newcite{Zaidan2009forwmt}.\footnote{The module is also available as a standalone application, {\em Z-MERT}, that can be used with other MT systems. (Software and documentation at: \url{http://cs.jhu.edu/~ozaidan/zmert.html}.)}
+Johsua's MERT module optimizes parameter weights so as to maximize performance on a development set as measuered by an automatic evaluation metric, such as Bleu. The optimization consists of a series of line-optimizations along the dimensions corresponding to the parameters. The search across a dimension uses the efficient method of \newcite{Och2003c}. Each iteration of our MERT implementation consists of multiple weight updates, each reflecting a greedy selection of the dimension giving the most gain. Each iteration also optimizes several random ``intermediate initial'' points in addition to the one surviving from the previous iteration, as an approximation to performing multiple random restarts. More details on the MERT method and the implementation can be found in \newcite{Zaidan2009forwmt}.\footnote{The module is also available as a standalone application, {\em Z-MERT}, that can be used with other MT systems. (Software and documentation at: \url{http://cs.jhu.edu/~ozaidan/zmert.html}.)}
 
 
 
@@ -138,13 +137,13 @@ Johsua's MERT module optimizes parameter weights so as to maximize performance o
 %In this section, we report results on the WMT-09 French-English translation task.
 \subsection{Training and Dev Data}
 
-We assembled a very large French-English training corpus by conducting a web crawl that targted bilingual web sites \cite{billion-word-parallel-corpus} from the Canadian government, the European Union, and various international organizations like the Amnesty International and the Olympic Committee.  The crawl gathered approximately 40 million files, consisting of over 1TB of data.  We converted pdf, doc, html, asp, php, etc. files into text, and preserved the directory structure of the web crawl.  We wrote set of simple heuristics to transform French URLs onto English URLs, and considered matching documents to be translations of each other.  This yielded 2 million French documents paired with their English equivalents.  We split the sentences and paragraphs in these documents, performed sentence-aligned them using software that IBM Model 1 probabilities into account \cite{Moore2002}.   We filtered and de-duplcated the resulting parallel corpus.  After discarding 630 thousand sentence pairs which had more than 100 words, our final corpus had 21.9 million sentence pairs with 587,867,024 English words and 714,137,609 French words.  
+We assembled a very large French-English training corpus  \cite{billion-word-parallel-corpus} by conducting a web crawl that targted bilingual web sites from the Canadian government, the European Union, and various international organizations like the Amnesty International and the Olympic Committee.  The crawl gathered approximately 40 million files, consisting of over 1TB of data.  We converted pdf, doc, html, asp, php, etc. files into text, and preserved the directory structure of the web crawl.  We wrote set of simple heuristics to transform French URLs onto English URLs, and considered matching documents to be translations of each other.  This yielded 2 million French documents paired with their English equivalents.  We split the sentences and paragraphs in these documents, performed sentence-aligned them using software that IBM Model 1 probabilities into account \cite{Moore2002}.   We filtered and de-duplcated the resulting parallel corpus.  After discarding 630 thousand sentence pairs which had more than 100 words, our final corpus had 21.9 million sentence pairs with 587,867,024 English words and 714,137,609 French words.  
 
-We distributed the corpus to the other WMT09 participants, to use in addition to the Europarl v4 French-English parallel corpus \cite{Koehn-europarl}, which consists of approximately 1.4 million sentence pairs with 39 million English words and 44 million French words.  Our translation model was trained on these corpora using the subsampling descried in Section \ref{subsampling}.  
+We distributed the corpus to the other WMT09 participants to use in addition to the Europarl v4 French-English parallel corpus \cite{Koehn-europarl}, which consists of approximately 1.4 million sentence pairs with 39 million English words and 44 million French words.  Our translation model was trained on these corpora using the subsampling descried in Section \ref{subsampling}.  
 
 For language model training, we used the monolingual news and blog data that was assembled by the University of Edinburgh and distributed as part of WMT09.  This data consisted of 21.2 million English sentences with half a billion words.  We used SRILM to train a 5-gram language model using a vocabulary containing the 500,000 most frequent words in this corpus.  Note that we did not use the English side of the parallel corpus as language model training data.
 
-To tune the system parameters we used News Test Set from WMT08 \cite{Callison-Burch2008a}, which consists of 2,051 sentence pairs with 43 thousand English words and 46 thousand French words.  This is in-domain data that was gatered from the same news sources as the WMT09 test set.
+To tune the system parameters we used News Test Set from WMT08 \cite{Callison-Burch2008a}, which consists of 2,051 sentence pairs with 43 thousand English words and 46 thousand French words.  This is in-domain data that was gathered from the same news sources as the WMT09 test set.
 
 \subsection{Translation Scores}
 The translation scores for four different systems are reported in Table \ref{results-wmt09}.\footnote{Note that the implementation of the novel techniques used to produce the non-baseline results is not part of the current Joshua release, though we plan to incorporate it in the next release.}
