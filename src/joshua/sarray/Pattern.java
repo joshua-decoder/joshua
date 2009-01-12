@@ -112,6 +112,35 @@ public class Pattern extends BasicPhrase {
 		return words[words.length-1] < 0;
 	}
 	
+	/**
+	 * Gets the lengths of each terminal sequence in this pattern.
+	 * <p>
+	 * The result of this method is not well-defined 
+	 * for patterns that consist only of nonterminals.
+	 * 
+	 * @return
+	 */
+	public int[] getTerminalSequenceLengths() {
+		int[] result = new int[arity+1];
+		
+		int index=0;
+		int count=0;
+		
+		for (int word : words) {
+			if (word < 0) {
+				if (count > 0) {
+					result[index] = count;
+					index++;
+					count = 0;
+				}
+			} else {
+				count++;
+			}
+		}
+		
+		return result;
+	}
+	
 	//===========================================================
 	// Methods
 	//===========================================================
@@ -190,7 +219,8 @@ public class Pattern extends BasicPhrase {
 		int arity = 0;
 		
 		for (int element : words) {
-			if (element==PrefixTree.X) arity++;
+//			if (element==PrefixTree.X) arity++;
+			if (element < 0) arity++;
 		}
 		
 		return arity;
