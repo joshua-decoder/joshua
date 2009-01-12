@@ -215,7 +215,7 @@ public class HierarchicalPhrase extends AbstractPhrase {
 			terminalSequenceEndIndices[i] = prefix.terminalSequenceEndIndices[i];
 		}
 			
-		boolean patternEndsWithNonterminal = pattern.endsWithNonTerminal();
+		boolean patternEndsWithNonterminal = pattern.endsWithNonterminal();
 		
 		if (prefixEndsWithNonterminal) {
 			int lastStartIndex = suffix.terminalSequenceStartIndices[suffix.terminalSequenceStartIndices.length-1];

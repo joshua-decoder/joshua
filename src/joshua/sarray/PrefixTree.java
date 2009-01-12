@@ -81,19 +81,19 @@ public class PrefixTree {
 	
 	
 	/** Max span in the source corpus of any extracted hierarchical phrase */
-	private final int maxPhraseSpan;   
+	final int maxPhraseSpan;   
 	
 	/** Maximum number of terminals plus nonterminals allowed in any extracted hierarchical phrase. */
-	private final int maxPhraseLength;
+	final int maxPhraseLength;
 	
 	/** Maximum number of nonterminals allowed in any extracted hierarchical phrase. */
-	private final int maxNonterminals;
+	final int maxNonterminals;
 	
 	/** Maximum span in the source corpus of any nonterminal in an extracted hierarchical phrase. */
 //	private final int maxNonterminalSpan;
 
 	/** Minimum span in the source corpus of any nonterminal in an extracted hierarchical phrase. */
-	private final int minNonterminalSpan;
+	final int minNonterminalSpan;
 	
 	/** 
 	 * Maximum number of instances of a source phrase 
@@ -523,8 +523,8 @@ public class PrefixTree {
 		// Does the prefix (m_a_alpha) overlap with
 		//      the suffix (m_alpha_b) on any words?
 		boolean matchesOverlap;
-		if (m_a_alpha.pattern.endsWithNonTerminal() && 
-				m_alpha_b.pattern.startsWithNonTerminal() &&
+		if (m_a_alpha.pattern.endsWithNonterminal() && 
+				m_alpha_b.pattern.startsWithNonterminal() &&
 				m_a_alpha.terminalSequenceStartIndices.length==1 &&
 				m_alpha_b.terminalSequenceStartIndices.length==1 &&
 				m_a_alpha.terminalSequenceEndIndices[0]-m_a_alpha.terminalSequenceStartIndices[0]==1 &&
@@ -669,7 +669,7 @@ public class PrefixTree {
 				// 16: M_a_alpha_b <-- QUERY_INTERSECT(M_a_alpha, M_alpha_b)
 				
 				// Special handling of case when prefixNode is the X off of root (hierarchicalPhrases for that node is empty)
-				if (arity==1 && prefixNode.sourcePattern.startsWithNonTerminal() && prefixNode.sourcePattern.endsWithNonTerminal()) {
+				if (arity==1 && prefixNode.sourcePattern.startsWithNonterminal() && prefixNode.sourcePattern.endsWithNonterminal()) {
 					
 					result = new ArrayList<HierarchicalPhrase>(suffixNode.sourceHierarchicalPhrases.size());
 					
@@ -1355,6 +1355,10 @@ public class PrefixTree {
 	 * The unit tests for Node require a dummy PrefixTree.
 	 */
 	private PrefixTree() {
+		this(Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MAX_VALUE, Integer.MIN_VALUE);
+	}
+	
+	private PrefixTree(int maxPhraseSpan, int maxPhraseLength, int maxNonterminals, int minNonterminalSpan, int sampleSize) {
 		root = null;
 		sentence = null;
 		suffixArray = null;
@@ -1363,14 +1367,13 @@ public class PrefixTree {
 		lexProbs = null;
 		xnode = null;
 		ruleExtractor = null;
-		maxPhraseSpan = Integer.MIN_VALUE;
-		maxPhraseLength = Integer.MIN_VALUE;
-		maxNonterminals = Integer.MIN_VALUE;
-//		maxNonterminalSpan = Integer.MIN_VALUE;
-		minNonterminalSpan = Integer.MAX_VALUE;
-		sampleSize = Integer.MIN_VALUE;
+		this.maxPhraseSpan = maxPhraseSpan;
+		this.maxPhraseLength = maxPhraseLength;
+		this.maxNonterminals = maxNonterminals;
+		this.minNonterminalSpan = minNonterminalSpan;
+		this.sampleSize = sampleSize;
 	}
-	
+
 	/**
 	 * Gets an invalid, dummy prefix tree.
 	 * <p>
@@ -1381,5 +1384,17 @@ public class PrefixTree {
 	static PrefixTree getDummyPrefixTree() {
 		return new PrefixTree();
 	}
+	
+	/**
+	 * Gets an invalid, dummy prefix tree.
+	 * <p>
+	 * For testing purposes only.
+	 * 
+	 * @return an invalid, dummy prefix tree
+	 */
+	static PrefixTree getDummyPrefixTree(int maxPhraseSpan, int maxPhraseLength, int maxNonterminals, int minNonterminalSpan, int sampleSize) {
+		return new PrefixTree(maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan, sampleSize);
+	}
+	
 
 }

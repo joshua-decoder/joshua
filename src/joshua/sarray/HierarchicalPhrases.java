@@ -24,6 +24,9 @@ import java.util.logging.Logger;
 
 /**
  * HierarchicalPhrases represents a list of matched hierarchical phrases.
+ * <p>
+ * 
+ * TODO Add unit tests for this class.
  * 
  * @author Lane Schwartz 
  * @since Jan 9 2009
@@ -49,6 +52,7 @@ public class HierarchicalPhrases {
 	
 	private final int[] sentenceNumber;
 	
+	private final PrefixTree prefixTree;
 	
 	// der aoeu X mann snth nth ouad
 	// 7 8 13 16 78 79 81 84 
@@ -62,15 +66,16 @@ public class HierarchicalPhrases {
 	 * @param pattern
 	 * @param startPositions
 	 */
-	public HierarchicalPhrases(Pattern pattern, int[] startPositions, int[] sentenceNumbers) {
+	public HierarchicalPhrases(Pattern pattern, int[] startPositions, int[] sentenceNumbers, PrefixTree prefixTree) {
 		this.pattern = pattern;
 		this.size = startPositions.length;
 		this.terminalSequenceStartIndices = startPositions;
 		this.sentenceNumber = sentenceNumbers;
 		this.terminalSequenceLengths = pattern.getTerminalSequenceLengths();
+		this.prefixTree = prefixTree;
 	}
 	
-	protected HierarchicalPhrases(Pattern pattern, List<Integer> data, List<Integer> sentenceNumbers) {
+	protected HierarchicalPhrases(Pattern pattern, List<Integer> data, List<Integer> sentenceNumbers, PrefixTree prefixTree) {
 		this.pattern = pattern;
 		this.size = data.size();
 		
@@ -85,6 +90,7 @@ public class HierarchicalPhrases {
 		}
 		
 		this.terminalSequenceLengths = pattern.getTerminalSequenceLengths();
+		this.prefixTree = prefixTree;
 	}
 	
 //	protected HierarchicalPhrases(HierarchicalPhrases phrases, int nonterminal) {
@@ -112,7 +118,7 @@ public class HierarchicalPhrases {
 	 */
 	protected static void partiallyConstruct(Pattern pattern, HierarchicalPhrases M_a_alpha, int i, HierarchicalPhrases M_alpha_b, int j, List<Integer> list) {
 		
-		boolean prefixEndsWithNonterminal = M_a_alpha.pattern.endsWithNonTerminal();
+		boolean prefixEndsWithNonterminal = M_a_alpha.pattern.endsWithNonterminal();
 		
 		// Get all start positions for the prefix phrase, and append them to the running list
 //		M_a_alpha.extractStartPositions(i, list);
@@ -238,7 +244,7 @@ public class HierarchicalPhrases {
 			
 		} // end while
 		
-		return new HierarchicalPhrases(pattern, data, sentenceNumbers);
+		return new HierarchicalPhrases(pattern, data, sentenceNumbers, M_a_alpha.prefixTree);
 		
 	}
 	
@@ -261,116 +267,161 @@ public class HierarchicalPhrases {
 	 * <li> 1 if m_a_alpha and m_alpha_b cannot be paired, and m_a_alpha follows m_alpha_b in the corpus.</li>
 	 * </ul>
 	 */	
-	//TODO Add unit test for this method
 	static int compare(HierarchicalPhrases m_a_alpha, int i, HierarchicalPhrases m_alpha_b, int j) {
-		throw new RuntimeException();
+		if (true) 
+			throw new RuntimeException();
 		
-//		// Does the prefix (m_a_alpha) overlap with
-//		//      the suffix (m_alpha_b) on any words?
-//		boolean matchesOverlap;
-//		if (m_a_alpha.pattern.endsWithNonTerminal() && 
-//				m_alpha_b.pattern.startsWithNonTerminal() &&
-//				//m_a_alpha.terminalSequenceStartIndices.length==1 &&
-//				m_a_alpha.pattern.arity==0 &&
-//				//m_alpha_b.terminalSequenceStartIndices.length==1 &&
-//				m_alpha_b.pattern.arity==0 &&
-//				//m_a_alpha.terminalSequenceEndIndices[0]-m_a_alpha.terminalSequenceStartIndices[0]==1 &&
-//				m_a_alpha.getEndPosition(i, 0) - m_a_alpha.getStartPosition(i, 0) == 1 &&
-//				//m_alpha_b.terminalSequenceEndIndices[0]-m_alpha_b.terminalSequenceStartIndices[0]==1) 
-//				m_alpha_b.getEndPosition(j, 0) - m_alpha_b.getStartPosition(j, 0) == 1)
-//			matchesOverlap = false;
-//		else
-//			matchesOverlap = true;
-//		
-//		if (matchesOverlap) {
-//			//return overlapping.compare(m_a_alpha, m_alpha_b);
+		// Does the prefix (m_a_alpha) overlap with
+		//      the suffix (m_alpha_b) on any words?
+		boolean matchesOverlap;
+		if (m_a_alpha.pattern.endsWithNonterminal() && 
+				m_alpha_b.pattern.startsWithNonterminal() &&
+				//m_a_alpha.terminalSequenceStartIndices.length==1 &&
+				m_a_alpha.pattern.arity==1 &&
+				//m_alpha_b.terminalSequenceStartIndices.length==1 &&
+				m_alpha_b.pattern.arity==1 &&
+				//m_a_alpha.terminalSequenceEndIndices[0]-m_a_alpha.terminalSequenceStartIndices[0]==1 &&
+				//m_a_alpha.getEndPosition(i, 0) - m_a_alpha.getStartPosition(i, 0) == 1 &&
+				m_a_alpha.terminalSequenceLengths[0] == 1 &&
+				//m_alpha_b.terminalSequenceEndIndices[0]-m_alpha_b.terminalSequenceStartIndices[0]==1) 
+				//m_alpha_b.getEndPosition(j, 0) - m_alpha_b.getStartPosition(j, 0) == 1)
+				m_alpha_b.terminalSequenceLengths[0] == 1 )
+			matchesOverlap = false;
+		else
+			matchesOverlap = true;
+		
+		if (matchesOverlap) {
+			//return overlapping.compare(m_a_alpha, m_alpha_b);
 //			int[] m_alpha_b_prefix;
-//			
-//			// If the m_alpha_b pattern ends with a nonterminal
-//			if (m_alpha_b.pattern.endsWithNonTerminal() ||
-//					// ...or if the m_alpha_b pattern ends with two terminals
-//					m_alpha_b.pattern.words[m_alpha_b.pattern.words.length-2] >= 0) {
-//				
+			
+			int m_alpha_b_prefix_start = i*(1+m_alpha_b.pattern.arity);
+			int m_alpha_b_prefix_end;
+
+			// If the m_alpha_b pattern ends with a nonterminal
+			if (m_alpha_b.pattern.endsWithNonterminal() ||
+					// ...or if the m_alpha_b pattern ends with two terminals
+					m_alpha_b.pattern.words[m_alpha_b.pattern.words.length-2] >= 0) {
+				
 //				m_alpha_b_prefix = m_alpha_b.terminalSequenceStartIndices;
-//				
-//			} else { // Then the m_alpha_b pattern ends with a nonterminal followed by a terminal
+				m_alpha_b_prefix_end = m_alpha_b_prefix_start + m_alpha_b.pattern.arity;
+				
+			} else { // Then the m_alpha_b pattern ends with a nonterminal followed by a terminal
+				
+				m_alpha_b_prefix_end = m_alpha_b_prefix_start + m_alpha_b.pattern.arity - 1;
+				
 //				int size = m_alpha_b.terminalSequenceStartIndices.length-1;
 //				m_alpha_b_prefix = new int[size];
-//				for (int i=0; i<size; i++) {
-//					m_alpha_b_prefix[i] = m_alpha_b.terminalSequenceStartIndices[i];
+//				for (int index=0; index<size; index++) {
+//					m_alpha_b_prefix[index] = m_alpha_b.terminalSequenceStartIndices[index];
 //				}
-//			}
-//			
+			}
+			
 //			int[] m_a_alpha_suffix;
-//			
-//			// If the m_a_alpha pattern ends with a nonterminal
-//			if (m_a_alpha.startsWithNonterminal()) {
+			int m_a_alpha_suffix_start;// = i*(1+m_a_alpha.pattern.arity);
+			int m_a_alpha_suffix_end;
+			boolean increment_m_a_alpha_suffix_start;
+			
+			// If the m_a_alpha pattern starts with a nonterminal
+			if (m_a_alpha.pattern.startsWithNonterminal()) {
 //				m_a_alpha_suffix = m_a_alpha.terminalSequenceStartIndices;	
-//			} else if (m_a_alpha.pattern.words[1] >= 0) {
+				m_a_alpha_suffix_start = i*(1+m_a_alpha.pattern.arity);
+				m_a_alpha_suffix_end = m_a_alpha_suffix_start + m_a_alpha.pattern.arity;
+				increment_m_a_alpha_suffix_start = false;
+			} else if (m_a_alpha.pattern.words[1] >= 0) { 
+				// Then the m_a_alpha pattern starts with two terminals
+				
+				m_a_alpha_suffix_start = i*(1+m_a_alpha.pattern.arity);
+				m_a_alpha_suffix_end = m_a_alpha_suffix_start + m_a_alpha.pattern.arity;
+				
 //				int size = m_a_alpha.terminalSequenceStartIndices.length;
 //				m_a_alpha_suffix = new int[size];
-//				for (int i=0; i<size; i++) {
-//					m_a_alpha_suffix[i] = m_a_alpha.terminalSequenceStartIndices[i];
+//				for (int index=0; index<size; index++) {
+//					m_a_alpha_suffix[index] = m_a_alpha.terminalSequenceStartIndices[index];
 //				}
 //				m_a_alpha_suffix[0]++;
-//			} else {
+				increment_m_a_alpha_suffix_start = true;
+			} else {
+				// Then the m_a_alpha pattern starts with a terminal followed by a nonterminal
+				
+				m_a_alpha_suffix_start = i*(1+m_a_alpha.pattern.arity) + 1;
+				m_a_alpha_suffix_end = m_a_alpha_suffix_start + m_a_alpha.pattern.arity - 1;
+//				
 //				int size = m_a_alpha.terminalSequenceStartIndices.length-1;
 //				m_a_alpha_suffix = new int[size];
-//				for (int i=0; i<size; i++) {
-//					m_a_alpha_suffix[i] = m_a_alpha.terminalSequenceStartIndices[i+1];
+//				for (int index=0; index<size; index++) {
+//					m_a_alpha_suffix[index] = m_a_alpha.terminalSequenceStartIndices[index+1];
 //				}
-//			}
-//			
-//			
+				increment_m_a_alpha_suffix_start = false;
+			}
+			
+			int m_a_alpha_suffix_length = m_a_alpha_suffix_end - m_a_alpha_suffix_start;
+			int m_alpha_b_prefix_length = m_alpha_b_prefix_end - m_alpha_b_prefix_start;
+			
+			if (m_alpha_b_prefix_length != m_a_alpha_suffix_length) {
 //			if (m_alpha_b_prefix.length != m_a_alpha_suffix.length) {
-//				throw new RuntimeException("Length of s(m_a_alpha) and p(m_alpha_b) do not match");
-//			} else {
-//				
-//				int result = 0;
-//				
-//				for (int i=0; i<m_a_alpha_suffix.length; i++) {
-//					if (m_a_alpha_suffix[i] > m_alpha_b_prefix[i]) {
-//						result = 1;
-//						break;
-//					} else if (m_a_alpha_suffix[i] < m_alpha_b_prefix[i]) {
-//						result = -1;
-//						break;
-//					}
-//				}
-//				
-//				if (result==0) {
-//					int length = m_alpha_b.terminalSequenceEndIndices[m_alpha_b.terminalSequenceEndIndices.length-1] - m_a_alpha.terminalSequenceStartIndices[0];
-//					if (m_alpha_b.endsWithNonterminal())
-//						length += this.minNonterminalSpan;
-//					if (m_a_alpha.startsWithNonterminal())
-//						length += this.minNonterminalSpan;
-//					
-//					if (length > this.maxPhraseSpan) {
-//						result = -1;
-//					}
-//				}
-//				
-//				return result;
-//			}
-//			
-//		}
-//		else {
-////			return nonOverlapping.compare(m_a_alpha, m_alpha_b);
-//
-//			if (m_a_alpha.sentenceNumber < m_alpha_b.sentenceNumber)
-//				return -1;
-//			else if (m_a_alpha.sentenceNumber > m_alpha_b.sentenceNumber)
-//				return 1;
-//			else {
-//				if (m_a_alpha.terminalSequenceStartIndices[0] >= m_alpha_b.terminalSequenceStartIndices[0]-1)
-//					return 1;
-//				else if (m_a_alpha.terminalSequenceStartIndices[0] <= m_alpha_b.terminalSequenceStartIndices[0]-maxPhraseSpan)
-//					return -1;
-//				else
-//					return 0;
-//			}
-//
-//		}
+				throw new RuntimeException("Length of s(m_a_alpha) and p(m_alpha_b) do not match");
+			} else {
+				
+				int result = 0;
+				
+				for (int index=0; index<m_a_alpha_suffix_length; index++) {
+//				for (int index=0; index<m_a_alpha_suffix.length; index++) {
+					
+					int a = m_a_alpha.terminalSequenceStartIndices[m_a_alpha_suffix_start+index];
+					if (increment_m_a_alpha_suffix_start && index==0) {
+						a++;
+					}
+					
+					int b = m_alpha_b.terminalSequenceStartIndices[m_alpha_b_prefix_start+index];
+										
+					if (a > b) {
+//					if (m_a_alpha_suffix[index] > m_alpha_b_prefix[index]) {
+						result = 1;
+						break;
+					} else if (a < b) {
+//					} else if (m_a_alpha_suffix[index] < m_alpha_b_prefix[index]) {
+						result = -1;
+						break;
+					}
+				}
+				
+				if (result==0) {
+//					int length = m_alpha_b.terminalSequenceEndIndices[m_alpha_b.terminalSequenceEndIndices.length-1] - m_a_alpha.getStartPosition(i, 0);
+					int length = m_alpha_b.getEndPosition(j, m_alpha_b.pattern.arity) - m_a_alpha.getStartPosition(i, 0);
+					if (m_alpha_b.pattern.endsWithNonterminal())
+						length += m_a_alpha.prefixTree.minNonterminalSpan;
+					if (m_a_alpha.pattern.startsWithNonterminal())
+						length += m_a_alpha.prefixTree.minNonterminalSpan;
+					
+					if (length > m_a_alpha.prefixTree.maxPhraseSpan) {
+						result = -1;
+					}
+				}
+				
+				return result;
+			}
+			
+		}
+		else {
+//			return nonOverlapping.compare(m_a_alpha, m_alpha_b);
+
+			if (m_a_alpha.getSentenceNumber(i) < m_alpha_b.getSentenceNumber(j))
+				return -1;
+			else if (m_a_alpha.getSentenceNumber(i) > m_alpha_b.getSentenceNumber(j))
+				return 1;
+			else {
+				int prefixStartPosition = m_a_alpha.getStartPosition(i, 0);
+				int suffixStartPosition = m_alpha_b.getStartPosition(j, 0);
+				
+				if (prefixStartPosition >= suffixStartPosition-1)
+					return 1;
+				else if (prefixStartPosition <= suffixStartPosition-m_a_alpha.prefixTree.maxPhraseSpan)
+					return -1;
+				else
+					return 0;
+			}
+
+		}
 	}
 	
 	public int getStartPosition(int phraseIndex, int positionNumber) {

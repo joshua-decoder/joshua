@@ -101,15 +101,22 @@ public class Pattern extends BasicPhrase {
 	// Accessor methods (set/get)
 	//===========================================================
 	
-	public boolean startsWithNonTerminal() {
+	public boolean startsWithNonterminal() {
 		// we assume that the nonterminal symbols will be denoted with negative numbers
 		return words[0] < 0;
 	}
 	
 	
-	public boolean endsWithNonTerminal() {
+	public boolean endsWithNonterminal() {
 		// we assume that the nonterminal symbols will be denoted with negative numbers
 		return words[words.length-1] < 0;
+	}
+	
+	public boolean endsWithTwoTerminals() {
+		if (words.length > 1 && words[words.length-1] >= 0 && words[words.length-2] >= 0)
+			return true;
+		else
+			return false;
 	}
 	
 	/**
