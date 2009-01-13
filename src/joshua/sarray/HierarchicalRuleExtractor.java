@@ -20,6 +20,7 @@ package joshua.sarray;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
@@ -182,7 +183,10 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 
 		float p_e_given_f_denominator = translations.size();
 
-		for (Pattern translation : translations) {
+		// We don't want to produce duplicate rules
+		HashSet<Pattern> uniqueTranslations = new HashSet<Pattern>(translations);
+		
+		for (Pattern translation : uniqueTranslations) {
 
 			float p_e_given_f = -1.0f * (float) Math.log(counts.get(translation) / p_e_given_f_denominator);
 			if (Float.isInfinite(p_e_given_f)) p_e_given_f = PrefixTree.VERY_UNLIKELY;

@@ -23,10 +23,8 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Scanner;
-import java.util.Set;
 
 import joshua.util.FormatUtil;
 
@@ -154,16 +152,16 @@ public class ExtractRulesTest {
 		
 		Scanner scanner = new Scanner(new File(rulesFileName));
 		
-		Set<String> lineSet = new HashSet<String>();
+		ArrayList<String> lines = new ArrayList<String>();
 		
 		while (scanner.hasNextLine()) {
 			
 			String line = scanner.nextLine();
-			lineSet.add(line);
+			lines.add(line);
 			
 		}
 		
-		List<String> lines = new ArrayList<String>(lineSet);
+		
 		Collections.sort(lines);
 		
 		return lines;
