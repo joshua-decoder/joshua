@@ -53,6 +53,8 @@ public class ExtractRules {
 	 */
 	public static void main(String[] args) throws IOException {
 
+		boolean finalConfirmation = false;
+		
 		try {
 			CommandLineParser commandLine = new CommandLineParser();
 
@@ -93,9 +95,13 @@ public class ExtractRules {
 			Option<Boolean> print_rules = commandLine.addBooleanOption("print-rules",true,"should extracted rules be printed to standard out");
 			
 			Option<String> alignmentType = commandLine.addStringOption("alignmentsType","ALIGNMENT_TYPE","AlignmentGrids","Type of alignment data structure");
+			Option<Boolean> confirm = commandLine.addBooleanOption("confirm",false,"should program pause for user input before constructing prefix trees?");
 			
 			commandLine.parse(args);
 
+			if (commandLine.getValue(confirm)==true) {
+				finalConfirmation = true;
+			}
 
 			// Set System.out and System.err to use the provided character encoding
 			try {
@@ -184,6 +190,11 @@ public class ExtractRules {
 
 			Scanner testFileScanner = new Scanner(new File(commandLine.getValue(test)), commandLine.getValue(encoding));
 
+			if (commandLine.getValue(confirm)) {
+				if (logger.isLoggable(Level.INFO)) logger.info("Please press a key to continue");
+				System.in.read();
+			}
+			
 			PrefixTree.SENTENCE_INITIAL_X = commandLine.getValue(sentence_initial_X);
 			PrefixTree.SENTENCE_FINAL_X   = commandLine.getValue(sentence_final_X);
 			
@@ -213,11 +224,23 @@ public class ExtractRules {
 						out.println(ruleString);
 					}
 				}
+				
+				if (commandLine.getValue(confirm)) {
+					if (logger.isLoggable(Level.INFO)) logger.info("Please press a key to continue");
+					System.in.read();
+					if (logger.isLoggable(Level.FINE)) logger.fine("Prefix tree had " + prefixTree.size() + " nodes.");
+				}
 			}
-
+			
 		} catch (Throwable e) {
 			e.printStackTrace();
 		} finally {
+
+			if (finalConfirmation) {
+				if (logger.isLoggable(Level.INFO)) logger.info("Complete: Please press a key to end program.");
+				System.in.read();
+			}
+			
 			if (logger.isLoggable(Level.FINE)) logger.fine("Done extracting rules");
 		}
 	}
