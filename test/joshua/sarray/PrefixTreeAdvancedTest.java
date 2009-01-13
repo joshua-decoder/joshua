@@ -176,15 +176,15 @@ public class PrefixTreeAdvancedTest {
 		int maxPhraseSpan = 10;
 		int maxPhraseLength = 10;
 		int maxNonterminals = 2;
-		
+		int sampleSize = 300;
 		int minNonterminalSpan = 2;
-		RuleExtractor ruleExtractor = new HierarchicalRuleExtractor(suffixArray, targetCorpusArray, alignments, lexProbs, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan);
+		RuleExtractor ruleExtractor = new HierarchicalRuleExtractor(suffixArray, targetCorpusArray, alignments, lexProbs, sampleSize, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan);
 		
 		
 		BasicPhrase query = new BasicPhrase("it makes him", sourceVocab);
 		//BasicPhrase query = new BasicPhrase("it makes him and it mars him", sourceVocab);
 		//BasicPhrase query = new BasicPhrase("it makes him and it mars him , it sets him on and it takes him off .", sourceVocab);
-		simplePrefixTree = new PrefixTree(suffixArray, targetCorpusArray, alignments, lexProbs, ruleExtractor, query.getWordIDs(), maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan, 100);
+		simplePrefixTree = new PrefixTree(suffixArray, targetCorpusArray, alignments, lexProbs, ruleExtractor, query.getWordIDs(), maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan);
 
 		//System.out.println(simplePrefixTree.toString());
 	
@@ -325,15 +325,15 @@ public class PrefixTreeAdvancedTest {
 		int maxPhraseSpan = 10;
 		int maxPhraseLength = 10;
 		int maxNonterminals = 2;
-		
+		int sampleSize = 300;
 		int minNonterminalSpan = 2;
-		RuleExtractor ruleExtractor = new HierarchicalRuleExtractor(suffixArray, targetCorpusArray, alignments, lexProbs, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan);
+		RuleExtractor ruleExtractor = new HierarchicalRuleExtractor(suffixArray, targetCorpusArray, alignments, lexProbs, sampleSize, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan);
 		
 		
 		//BasicPhrase query = new BasicPhrase("it makes him", sourceVocab);
 		//BasicPhrase query = new BasicPhrase("it makes him and it mars him", sourceVocab);
 		BasicPhrase query = new BasicPhrase("it makes him and it mars him , it sets him on and it takes him off .", sourceVocab);
-		PrefixTree prefixTree = new PrefixTree(suffixArray, targetCorpusArray, alignments, lexProbs, ruleExtractor, query.getWordIDs(), maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan, 100);
+		PrefixTree prefixTree = new PrefixTree(suffixArray, targetCorpusArray, alignments, lexProbs, ruleExtractor, query.getWordIDs(), maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan);
 
 		//System.out.println(prefixTree.toString());
 	
@@ -555,7 +555,7 @@ public class PrefixTreeAdvancedTest {
 		int maxNonterminals = 2;
 		
 		int minNonterminalSpan = 2;
-		RuleExtractor ruleExtractor = new HierarchicalRuleExtractor(suffixArray, targetCorpusArray, alignments, lexProbs, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan);
+		RuleExtractor ruleExtractor = new HierarchicalRuleExtractor(suffixArray, targetCorpusArray, alignments, lexProbs, Integer.MAX_VALUE, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan);
 		
 		
 		String queryString = "it persuades him and it disheartens him";
@@ -565,7 +565,7 @@ public class PrefixTreeAdvancedTest {
 		Assert.assertEquals(querySentence.toString(), "it UNK him and it UNK him");
 		Assert.assertEquals(corpusSentence.toString(), corpusString);
 		
-		PrefixTree prefixTree = new PrefixTree(suffixArray, targetCorpusArray, alignments, lexProbs, ruleExtractor, querySentence.getWordIDs(), maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan, 100);
+		PrefixTree prefixTree = new PrefixTree(suffixArray, targetCorpusArray, alignments, lexProbs, ruleExtractor, querySentence.getWordIDs(), maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan);
 		
 
 		

@@ -49,6 +49,7 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 	/** Max span in the source corpus of any extracted hierarchical phrase */
 	protected final int maxPhraseSpan;
 	
+	
 	/** Maximum number of terminals plus nonterminals allowed in any extracted hierarchical phrase. */
 	protected final int maxPhraseLength;
 	
@@ -67,7 +68,9 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 	/** Represents alignments between words in the source corpus and the target corpus. */
 	protected final Alignments alignments;
 	
-	public HierarchicalRuleExtractor(SuffixArray suffixArray, CorpusArray targetCorpus, Alignments alignments, LexicalProbabilities lexProbs, int maxPhraseSpan, int maxPhraseLength, int minNonterminalSpan, int maxNonterminalSpan) {
+	protected final int sampleSize;
+	
+	public HierarchicalRuleExtractor(SuffixArray suffixArray, CorpusArray targetCorpus, Alignments alignments, LexicalProbabilities lexProbs, int sampleSize, int maxPhraseSpan, int maxPhraseLength, int minNonterminalSpan, int maxNonterminalSpan) {
 		this.lexProbs = lexProbs;
 		this.maxPhraseSpan = maxPhraseSpan;
 		this.maxPhraseLength = maxPhraseLength;
@@ -76,10 +79,20 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 		this.targetCorpus = targetCorpus;
 		this.alignments = alignments;
 		this.suffixArray = suffixArray;
+		this.sampleSize = sampleSize;
 	}
 
-	public List<Rule> extractRules(Pattern sourcePattern, List<HierarchicalPhrase> sourceHierarchicalPhrases) {
+	public List<Rule> extractRules(Pattern sourcePattern, HierarchicalPhrases sourceHierarchicalPhrases) {
 
+		int listSize = sourceHierarchicalPhrases.size();
+		int stepSize; {
+			if (listSize <= sampleSize) {
+				stepSize = 1;
+			} else {
+				stepSize = listSize / sampleSize;
+			}
+		}
+		
 		List<Rule> results = new ArrayList<Rule>(sourceHierarchicalPhrases.size());
 
 		List<Pattern> translations = new ArrayList<Pattern>();// = this.translate();
@@ -88,7 +101,7 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 		int totalPossibleTranslations = sourceHierarchicalPhrases.size();
 
 		// For each sample HierarchicalPhrase
-		for (int i=0; i<totalPossibleTranslations; i++) { 
+		for (int i=0; i<totalPossibleTranslations; i+=stepSize) { 
 			HierarchicalPhrase sourcePhrase = sourceHierarchicalPhrases.get(i);
 			//for (HierarchicalPhrase sourcePhrase : samples) {
 			Pattern translation = getTranslation(sourcePhrase);

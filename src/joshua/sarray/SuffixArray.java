@@ -72,7 +72,7 @@ public class SuffixArray implements Corpus {
 	 * so commonly accessed patterns will remain in the cache,
 	 * while rare patterns will eventually drop out of the cache.
 	 */
-	protected Cache<Pattern,List<HierarchicalPhrase>> hierarchicalPhraseCache;
+	protected Cache<Pattern,HierarchicalPhrases> hierarchicalPhraseCache;
 	
 	
 	/**
@@ -115,7 +115,7 @@ public class SuffixArray implements Corpus {
 		// Sort the array of suffixes
 		sort(suffixes);
 	
-		this.hierarchicalPhraseCache = new Cache<Pattern,List<HierarchicalPhrase>>(CACHE_CAPACITY);
+		this.hierarchicalPhraseCache = new Cache<Pattern,HierarchicalPhrases>(CACHE_CAPACITY);
 	}
 	
 	
@@ -129,7 +129,7 @@ public class SuffixArray implements Corpus {
 	protected SuffixArray(int[] suffixes, CorpusArray corpusArray) {
 		this.suffixes = suffixes;
 		this.corpus = corpusArray;
-		this.hierarchicalPhraseCache = new Cache<Pattern,List<HierarchicalPhrase>>(CACHE_CAPACITY);
+		this.hierarchicalPhraseCache = new Cache<Pattern,HierarchicalPhrases>(CACHE_CAPACITY);
 	}
 	
 	
@@ -302,6 +302,53 @@ public class SuffixArray implements Corpus {
 	
 
 	
+//	/**
+//	 * This method creates a list of trivially HierarchicalPhrases
+//	 * (i.e. they're really just contiguous phrases, but we
+//	 * will want to perform some of the HierarchialPhrase
+//	 * operations on them). Sorts the positions. Adds the results
+//	 * to the cache.  
+//	 *<p>
+//	 * The construction of more complex hierarchical phrases is handled
+//	 * within the prefix tree. 
+//	 * <p>
+//	 * This method performs deterministic sampling, as described in Lopez (2008) p59:
+//	 * <blockquote>
+//	 * To resolve this issue, we used deterministic sampling. Whenever a source phrase occurs 
+//more frequently than the maximum sample size, we take our samples at uniform intervals over 
+//the set of locations returned by the sufﬁx array. With this strategy in place, hypotheses receive the 
+//same feature weights between different runs of the decoder, the results are deterministic, and the 
+//MERT algorithm converges at the same rate as it does without sampling.
+//	 * </blockquote>
+//	 * 
+//	 * @param startPositions an unsorted list of the positions
+//	 *                in the corpus where the matched phrases begin
+//	 * @param pattern a contiguous phrase
+//	 * @return a list of trivially hierarchical phrases
+//	 */ 
+//	protected List<HierarchicalPhrase> createHierarchicalPhrases(int[] startPositions, Pattern pattern) {
+//		if (startPositions == null) {
+//			return Collections.emptyList();
+//		} else if (hierarchicalPhraseCache.containsKey(pattern)) {
+//			return hierarchicalPhraseCache.get(pattern);
+//		} else {
+//			Arrays.sort(startPositions);
+//			int length = pattern.size();
+//			ArrayList<HierarchicalPhrase> hierarchicalPhrases = new ArrayList<HierarchicalPhrase>(startPositions.length);
+//			//XXX Should we do sampling here or not?
+//			int step = //(startPositions.length<sampleSize) ? 1 : startPositions.length / sampleSize;
+//				1;
+//			for(int i = 0; i < startPositions.length; i+=step) { 
+//				int[] position = {startPositions[i]};
+//				int[] endPosition = {startPositions[i] + length};
+//				HierarchicalPhrase hierarchicalPhrase = new HierarchicalPhrase(pattern, position, endPosition, corpus, length);
+//				hierarchicalPhrases.add(hierarchicalPhrase);
+//			}	
+//			hierarchicalPhraseCache.put(pattern, hierarchicalPhrases);
+//			return hierarchicalPhrases;
+//		}
+//	}
+	
 	/**
 	 * This method creates a list of trivially HierarchicalPhrases
 	 * (i.e. they're really just contiguous phrases, but we
@@ -326,24 +373,25 @@ MERT algorithm converges at the same rate as it does without sampling.
 	 * @param pattern a contiguous phrase
 	 * @return a list of trivially hierarchical phrases
 	 */ 
-	protected List<HierarchicalPhrase> createHierarchicalPhrases(int[] startPositions, Pattern pattern) {
+	protected HierarchicalPhrases createHierarchicalPhrases(int[] startPositions, Pattern pattern, PrefixTree prefixTree) {
 		if (startPositions == null) {
-			return Collections.emptyList();
+			return HierarchicalPhrases.emptyList(prefixTree);
 		} else if (hierarchicalPhraseCache.containsKey(pattern)) {
 			return hierarchicalPhraseCache.get(pattern);
 		} else {
 			Arrays.sort(startPositions);
-			int length = pattern.size();
-			ArrayList<HierarchicalPhrase> hierarchicalPhrases = new ArrayList<HierarchicalPhrase>(startPositions.length);
-			//XXX Should we do sampling here or not?
-			int step = //(startPositions.length<sampleSize) ? 1 : startPositions.length / sampleSize;
-				1;
-			for(int i = 0; i < startPositions.length; i+=step) { 
-				int[] position = {startPositions[i]};
-				int[] endPosition = {startPositions[i] + length};
-				HierarchicalPhrase hierarchicalPhrase = new HierarchicalPhrase(pattern, position, endPosition, corpus, length);
-				hierarchicalPhrases.add(hierarchicalPhrase);
-			}	
+//			int length = pattern.size();
+			HierarchicalPhrases hierarchicalPhrases = new HierarchicalPhrases(pattern, startPositions, prefixTree);
+//			ArrayList<HierarchicalPhrase> hierarchicalPhrases = new ArrayList<HierarchicalPhrase>(startPositions.length);
+//			 
+//			int step = //(startPositions.length<sampleSize) ? 1 : startPositions.length / sampleSize;
+//				1;
+//			for(int i = 0; i < startPositions.length; i+=step) { 
+//				int[] position = {startPositions[i]};
+//				int[] endPosition = {startPositions[i] + length};
+//				HierarchicalPhrase hierarchicalPhrase = new HierarchicalPhrase(pattern, position, endPosition, corpus, length);
+//				hierarchicalPhrases.add(hierarchicalPhrase);
+//			}	
 			hierarchicalPhraseCache.put(pattern, hierarchicalPhrases);
 			return hierarchicalPhrases;
 		}
@@ -353,14 +401,14 @@ MERT algorithm converges at the same rate as it does without sampling.
 	 * @return a list of hierarchical phrases that match the pattern if they are already cached
 	 *         or null if the pattern is not in the cache.
 	 */
-	public List<HierarchicalPhrase> getMatchingPhrases(Pattern pattern) {
+	public HierarchicalPhrases getMatchingPhrases(Pattern pattern) {
 		return hierarchicalPhraseCache.get(pattern);
 	}
 	
 	/** 
 	 * Caches the matching hierarchical phrases for the pattern. 
 	 */
-	public void setMatchingPhrases(Pattern pattern, List<HierarchicalPhrase> matchings) {
+	public void setMatchingPhrases(Pattern pattern, HierarchicalPhrases matchings) {
 		hierarchicalPhraseCache.put(pattern, matchings);
 	}
 	

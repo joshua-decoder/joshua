@@ -50,7 +50,7 @@ public class SAGrammarFactory implements GrammarFactory {
 	 * @param maxPhraseLength
 	 * @param maxNonterminals
 	 */
-	public SAGrammarFactory(SuffixArray sourceSuffixArray, CorpusArray targetCorpus, AlignmentArray alignments, LexicalProbabilities lexProbs, int maxPhraseSpan, int maxPhraseLength, int maxNonterminals, int minNonterminalSpan, int spanLimit) {
+	public SAGrammarFactory(SuffixArray sourceSuffixArray, CorpusArray targetCorpus, AlignmentArray alignments, LexicalProbabilities lexProbs, int sampleSize, int maxPhraseSpan, int maxPhraseLength, int maxNonterminals, int minNonterminalSpan, int spanLimit) {
 		this.sourceSuffixArray = sourceSuffixArray;
 		this.targetCorpus      = targetCorpus;
 		this.alignments        = alignments;
@@ -60,7 +60,7 @@ public class SAGrammarFactory implements GrammarFactory {
 		this.maxNonterminals   = maxNonterminals;
 		this.minNonterminalSpan = minNonterminalSpan;
 		this.spanLimit         = spanLimit;
-		this.ruleExtractor = new HierarchicalRuleExtractor(sourceSuffixArray, targetCorpus, alignments, lexProbs, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan);
+		this.ruleExtractor = new HierarchicalRuleExtractor(sourceSuffixArray, targetCorpus, alignments, lexProbs, sampleSize, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan);
 		
 	}
 	
@@ -80,7 +80,7 @@ public class SAGrammarFactory implements GrammarFactory {
 			words[i] = sentence.getWordID(i);
 		}
 		
-		PrefixTree prefixTree = new PrefixTree(sourceSuffixArray, targetCorpus, alignments, lexProbs, ruleExtractor, words, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan, 100);
+		PrefixTree prefixTree = new PrefixTree(sourceSuffixArray, targetCorpus, alignments, lexProbs, ruleExtractor, words, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan);
 		
 		return prefixTree.getRoot();
 	}

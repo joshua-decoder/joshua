@@ -125,27 +125,51 @@ public class Pattern extends BasicPhrase {
 	 * The result of this method is not well-defined 
 	 * for patterns that consist only of nonterminals.
 	 * 
+	 * TODO Write unit tests for this method.
+	 * 
 	 * @return
 	 */
 	public int[] getTerminalSequenceLengths() {
-		int[] result = new int[arity+1];
 		
-		int index=0;
-		int count=0;
+		int size = 0;
+		boolean readyToStartSequence = true;
 		
 		for (int word : words) {
 			if (word < 0) {
-				if (count > 0) {
-					result[index] = count;
-					index++;
-					count = 0;
-				}
+				readyToStartSequence = true;
 			} else {
-				count++;
+				if (readyToStartSequence) {
+					size++;
+					readyToStartSequence = false;
+				}
 			}
 		}
 		
+		int[] result = new int[size];
+		
+		if (size > 0) {
+
+			int index=0;
+			int count=0;
+
+			for (int word : words) {
+				if (word < 0) {
+					if (count > 0) {
+						result[index] = count;
+						index++;
+						count = 0;
+					}
+				} else {
+					count++;
+				}
+			}
+			
+			if (count > 0) {
+				result[index] = count;
+			}
+		}
 		return result;
+		
 	}
 	
 	//===========================================================

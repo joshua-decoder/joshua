@@ -189,7 +189,7 @@ public class ExtractRules {
 			
 			int lineNumber = 0;
 
-			RuleExtractor ruleExtractor = new HierarchicalRuleExtractor(sourceSuffixArray, targetCorpusArray, alignments, lexProbs, commandLine.getValue(maxPhraseSpan), commandLine.getValue(maxPhraseLength), commandLine.getValue(minNonterminalSpan), commandLine.getValue(maxPhraseSpan));
+			RuleExtractor ruleExtractor = new HierarchicalRuleExtractor(sourceSuffixArray, targetCorpusArray, alignments, lexProbs, commandLine.getValue(ruleSampleSize), commandLine.getValue(maxPhraseSpan), commandLine.getValue(maxPhraseLength), commandLine.getValue(minNonterminalSpan), commandLine.getValue(maxPhraseSpan));
 			
 			while (testFileScanner.hasNextLine()) {
 				String line = testFileScanner.nextLine();
@@ -198,7 +198,7 @@ public class ExtractRules {
 
 				if (logger.isLoggable(Level.FINE)) logger.fine("Constructing prefix tree for source line " + lineNumber + ": " + line);
 
-				PrefixTree prefixTree = new PrefixTree(sourceSuffixArray, targetCorpusArray, alignments, lexProbs, ruleExtractor, words, commandLine.getValue(maxPhraseSpan), commandLine.getValue(maxPhraseLength), commandLine.getValue(maxNonterminals), commandLine.getValue(minNonterminalSpan), commandLine.getValue(ruleSampleSize));
+				PrefixTree prefixTree = new PrefixTree(sourceSuffixArray, targetCorpusArray, alignments, lexProbs, ruleExtractor, words, commandLine.getValue(maxPhraseSpan), commandLine.getValue(maxPhraseLength), commandLine.getValue(maxNonterminals), commandLine.getValue(minNonterminalSpan));
 
 				if (commandLine.getValue(print_prefixTree)==true) {
 					System.out.println(prefixTree.toString());

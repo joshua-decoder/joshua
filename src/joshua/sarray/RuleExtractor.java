@@ -32,11 +32,13 @@ public interface RuleExtractor {
 	/**
 	 * Extract translation rules for a source language pattern 
 	 * given a list of instances in the source corpus of that pattern.
+	 * <p>
+	 * This extractor is responsible for doing any sampling, if any is required.
 	 * 
 	 * @param sourcePattern
 	 * @param sourceHierarchicalPhrases
 	 * @return
 	 */
-	public List<Rule> extractRules(Pattern sourcePattern, List<HierarchicalPhrase> sourceHierarchicalPhrases);
+	public List<Rule> extractRules(Pattern sourcePattern, HierarchicalPhrases sourceHierarchicalPhrases);
 	
 }

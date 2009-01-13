@@ -244,6 +244,40 @@ public class AlignmentArray extends AbstractAlignments {
 		return false;
 	}
 	
+	/**
+	 * Determines if any terminal in the source phrase aligns with the provided index into the target corpus.
+	 * 
+	 * @param targetIndex
+	 * @param sourcePhrase
+	 * @return
+	 */
+	public boolean hasAlignedTerminal(int targetIndex, HierarchicalPhrases sourcePhrases, int sourcePhraseIndex) {
+		
+		int phraseLength = sourcePhrases.getNumberOfTerminalSequences();
+		
+		if (alignedSourceIndices[targetIndex]!=null) {
+			for (int alignedSourceIndex : alignedSourceIndices[targetIndex]) {
+//				for (int i=0; i<sourcePhrase.terminalSequenceStartIndices.length; i++) {
+				for (int i=0; i<phraseLength; i++) {
+					int sourceStart = sourcePhrases.getStartPosition(sourcePhraseIndex, i);
+					int sourceEnd = sourcePhrases.getEndPosition(sourcePhraseIndex, i);
+//					if (alignedSourceIndex >= sourcePhrase.terminalSequenceStartIndices[i] &&
+					if (alignedSourceIndex >= sourceStart &&
+//							alignedSourceIndex < sourcePhrase.terminalSequenceEndIndices[i]) {
+							alignedSourceIndex < sourceEnd) {
+//						if (logger.isLoggable(Level.FINEST)) logger.finest("Target index " + targetIndex + ", source index " + alignedSourceIndex + " is in source phrase at range ["+sourcePhrase.terminalSequenceStartIndices[i] + "-" + sourcePhrase.terminalSequenceEndIndices[i] + ")");
+						if (logger.isLoggable(Level.FINEST)) logger.finest("Target index " + targetIndex + ", source index " + alignedSourceIndex + " is in source phrase at range ["+sourceStart + "-" + sourceEnd + ")");
+						return true;
+					}
+				}
+			}
+		}
+		
+		if (logger.isLoggable(Level.FINEST)) logger.warning("No aligned point");
+		return false;
+	}
+	
+	
 	
 	//===========================================================
 	// Methods
