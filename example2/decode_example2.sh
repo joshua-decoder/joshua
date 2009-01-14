@@ -17,9 +17,9 @@ esac
 rm -f example2.nbest example2.1best example2.1best.sgm example2.refs.sgm
 
 
-java -classpath "$CLASS_PATH:../bin" \
+java    -classpath "$CLASS_PATH:../bin"  \
 	-Xmx${MEM}m -Xms${MEM}m          \
-	joshua.decoder.Decoder           \
+	joshua.decoder.JoshuaDecoder     \
 	example2.config.$1               \
 	example2.src                     \
 	example2.nbest

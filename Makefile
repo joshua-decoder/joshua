@@ -1,7 +1,7 @@
 
-SRC           =src
-EXAMPLE       =example2/example2
-EXAMPLE_SUFFIX=src
+SRC           = src
+EXAMPLE       = example2/example2
+EXAMPLE_SUFFIX= src
 JAVA_FLAGS    =
 
 
@@ -9,9 +9,13 @@ JAVA_FLAGS    =
 
 all:
 	@$(MAKE) clean
+	@$(MAKE) srilm_inter
 	@$(MAKE) joshua
-	@$(MAKE) test EXAMPLE='example/example'   EXAMPLE_SUFFIX='test.in'
-	@$(MAKE) test EXAMPLE='example2/example2' EXAMPLE_SUFFIX='src'
+#
+#	deactivated for now
+#
+#	@$(MAKE) test EXAMPLE='example/example'   EXAMPLE_SUFFIX='test.in'
+#	@$(MAKE) test EXAMPLE='example2/example2' EXAMPLE_SUFFIX='src'
 
 rules:
 	@$(MAKE) -f Makefile.lexprobs
@@ -19,14 +23,8 @@ rules:
 joshua:
 	ant compile
 
-test: joshua
-	java -Xmx2000m -Xms2000m           \
-		-classpath $(SRC)              \
-		joshua.decoder.Decoder         \
-		$(EXAMPLE).config.javalm       \
-		$(EXAMPLE).$(EXAMPLE_SUFFIX)   \
-		$(EXAMPLE).nbest.javalm.out    \
-		2>&1 | tee $(EXAMPLE).nbest.javalm.err
+test:	joshua
+	ant test	
 
 srilm_inter:
 	$(MAKE) -C $(SRC)/joshua/decoder/ff/lm/srilm

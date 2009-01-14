@@ -1,0 +1,123 @@
+##################################
+## JosHUa Getting Started Guide ##
+##################################
+
+ ----------------------------
+| Getting the Joshua Decoder |
+ ----------------------------
+
+The best way to obtain a copy of the Joshua source code is to check
+out from the main SVN repository. For this, you need Subversion, which
+is likely already present on your system. If not, if can be obtained
+freely at http://subversion.tigris.org/. If you already have a copy of
+Joshua, please skip to the Prerequisites or Installing & Compiling
+sections of this document.
+
+To set up your own copy of Joshua, you start by checking out the main
+development branch:
+
+$ cd projects 
+$ svn co https://joshua.svn.sourceforge.net/svnroot/joshua/trunk joshua
+
+This creates a subdirectory with your local copy of the source
+code. This directory is under version control, which means that your
+local copy is tied to the main repository. This facilitates keeping
+your code up-to-date as well as contributing your changes back to the
+repository.
+
+To fetch the latest changes, fixes or improvements to the decoder, you
+simply run:
+
+$ cd projects/joshua
+$ svn up
+
+A more detailed introduction on SVN can be found at
+http://subversion.tigris.org/.
+
+
+
+ ---------------
+| Prerequisites |
+ ---------------
+
+[ Java ]
+
+Joshua is written in Java, and thus requires a Java SDK to be
+installed. Please make sure you use a recent version of Java. Make
+sure you have $JAVA_HOME set to the SDK directory.
+
+For Mac OS X this usually is done by adding
+
+export JAVA_HOME="/Library/Java/Home"
+
+to your .bashrc, .bash_profile or .profile file.
+
+
+[ Build Tools ]
+
+For building as well as for the actual decoding, Joshua also requires
+a few additional software packages:
+
+- Apache Ant -
+is a Java building tool with functionality similar to the
+make tool. It can be found at 
+      http://ant.apache.org/
+
+- Swig - 
+is an inter-language wrapper and can be obtained at 
+      http://www.swig.org/
+
+- SRILM - 
+is a widely used language modeling toolkit, available for
+download at 
+      http://www.speech.sri.com/projects/srilm/
+
+Make sure you have the $SRILM variable set to the directory you
+installed SRILM in, i.e.
+
+$ export SRILM=/path/to/srilm
+
+
+
+ -------------------------------
+| Installing & Compiling Joshua |
+ -------------------------------
+
+First of all, make sure Ant and Swig are installed and properly set up
+(i.e. accessible from the command line). SRILM should be build prior
+to this step. Set the JOSHUA_HOME environment to the directory you
+installed Joshua in.
+
+To build Joshua, it is sufficient to change into its install directory
+and run make:
+
+$ cd $JOSHUA_HOME
+$ make
+
+This builds the Java source code, as well as the SRILM wrapper. If you
+have only made changes to the Java code, you can rebuild the decoder
+using
+
+$ ant compile
+
+To execute the unit tests shipped with Joshua, run
+
+$ ant test
+
+To pack the decoder into a JAR archive, either compiled or the source
+code, run
+
+$ ant jar
+
+or
+
+$ ant source-jar
+
+########################################################################
+
+For any further question of help, please turn to the Joshua support
+mailing list at 
+                joshua-support@lists.sourceforge.net
+
+
+
