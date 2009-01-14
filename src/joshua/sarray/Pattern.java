@@ -38,8 +38,8 @@ public class Pattern extends BasicPhrase {
 
 
 	final int arity;
-	final SuffixCase suffixCase;
-	final PrefixCase prefixCase;
+//	final SuffixCase suffixCase;
+//	final PrefixCase prefixCase;
 
 
 //===============================================================
@@ -59,8 +59,8 @@ public class Pattern extends BasicPhrase {
 		
 		this.arity = calculateArity(this.words);
 		
-		this.suffixCase = suffixCase(words);
-		this.prefixCase = prefixCase(words);
+//		this.suffixCase = suffixCase(words);
+//		this.prefixCase = prefixCase(words);
 	}
 	
 	
@@ -78,8 +78,8 @@ public class Pattern extends BasicPhrase {
 		}
 		this.arity = calculateArity(this.words);
 		
-		this.suffixCase = suffixCase(words);
-		this.prefixCase = prefixCase(words);
+//		this.suffixCase = suffixCase(words);
+//		this.prefixCase = prefixCase(words);
 	}
 	
 	
@@ -88,8 +88,8 @@ public class Pattern extends BasicPhrase {
 		super(PrefixTree.pattern(pattern.words, word),pattern.vocab);
 		this.arity = calculateArity(this.words);
 		
-		this.suffixCase = suffixCase(words);
-		this.prefixCase = prefixCase(words);
+//		this.suffixCase = suffixCase(words);
+//		this.prefixCase = prefixCase(words);
 	}
 	
 
@@ -222,19 +222,19 @@ public class Pattern extends BasicPhrase {
 		return words;
 	}
 	
-	enum PrefixCase {
-		EMPTY_PREFIX,
-		ENDS_WITH_NONTERMINAL,
-		ENDS_WITH_TWO_TERMINALS,
-		ENDS_WITH_NONTERMINAL_TERMINAL
-	}
-	
-	enum SuffixCase {
-		EMPTY_SUFFIX,
-		STARTS_WITH_NONTERMINAL,
-		STARTS_WITH_TWO_TERMINALS,
-		STARTS_WITH_TERMINAL_NONTERMINAL
-	}
+//	enum PrefixCase {
+//		EMPTY_PREFIX,
+//		ENDS_WITH_NONTERMINAL,
+//		ENDS_WITH_TWO_TERMINALS,
+//		ENDS_WITH_NONTERMINAL_TERMINAL
+//	}
+//	
+//	enum SuffixCase {
+//		EMPTY_SUFFIX,
+//		STARTS_WITH_NONTERMINAL,
+//		STARTS_WITH_TWO_TERMINALS,
+//		STARTS_WITH_TERMINAL_NONTERMINAL
+//	}
 	
 //===============================================================
 // Private 
@@ -258,72 +258,72 @@ public class Pattern extends BasicPhrase {
 	}
 	
 	
-	private PrefixCase prefixCase(int[] words) {
-		
-		if (words==null || words.length==0)
-			return PrefixCase.EMPTY_PREFIX;
-		
-		if (words[words.length-1] == PrefixTree.X) {
-			
-			return PrefixCase.ENDS_WITH_NONTERMINAL;
-			
-		} else {
-			
-			if (words.length > 1) {
-				
-				if (words[words.length-2] == PrefixTree.X) {
-					
-					return PrefixCase.ENDS_WITH_NONTERMINAL_TERMINAL;
-					
-				} else {
-					
-					return PrefixCase.ENDS_WITH_TWO_TERMINALS;
-					
-				}
-				
-			} else {
-				
-				return PrefixCase.EMPTY_PREFIX;
-				
-			}
-			
-		}
-		
-	}
+//	private PrefixCase prefixCase(int[] words) {
+//		
+//		if (words==null || words.length==0)
+//			return PrefixCase.EMPTY_PREFIX;
+//		
+//		if (words[words.length-1] == PrefixTree.X) {
+//			
+//			return PrefixCase.ENDS_WITH_NONTERMINAL;
+//			
+//		} else {
+//			
+//			if (words.length > 1) {
+//				
+//				if (words[words.length-2] == PrefixTree.X) {
+//					
+//					return PrefixCase.ENDS_WITH_NONTERMINAL_TERMINAL;
+//					
+//				} else {
+//					
+//					return PrefixCase.ENDS_WITH_TWO_TERMINALS;
+//					
+//				}
+//				
+//			} else {
+//				
+//				return PrefixCase.EMPTY_PREFIX;
+//				
+//			}
+//			
+//		}
+//		
+//	}
 	
 	
-	private SuffixCase suffixCase(int[] words) {
-		
-		if (words==null || words.length==0)
-			return SuffixCase.EMPTY_SUFFIX;;
-		
-		if (words[0] == PrefixTree.X) {
-		
-			return SuffixCase.STARTS_WITH_NONTERMINAL;
-		
-		} else {
-			
-			if (words.length > 1) {
-				
-				if (words[1] == PrefixTree.X) {
-					
-					return SuffixCase.STARTS_WITH_TERMINAL_NONTERMINAL;
-					
-				} else {
-					
-					return SuffixCase.STARTS_WITH_TWO_TERMINALS;
-					
-				}
-				
-				
-			} else {
-				
-				return SuffixCase.EMPTY_SUFFIX;
-				
-			}
-			
-		}
-		
-	}
+//	private SuffixCase suffixCase(int[] words) {
+//		
+//		if (words==null || words.length==0)
+//			return SuffixCase.EMPTY_SUFFIX;;
+//		
+//		if (words[0] == PrefixTree.X) {
+//		
+//			return SuffixCase.STARTS_WITH_NONTERMINAL;
+//		
+//		} else {
+//			
+//			if (words.length > 1) {
+//				
+//				if (words[1] == PrefixTree.X) {
+//					
+//					return SuffixCase.STARTS_WITH_TERMINAL_NONTERMINAL;
+//					
+//				} else {
+//					
+//					return SuffixCase.STARTS_WITH_TWO_TERMINALS;
+//					
+//				}
+//				
+//				
+//			} else {
+//				
+//				return SuffixCase.EMPTY_SUFFIX;
+//				
+//			}
+//			
+//		}
+//		
+//	}
 	
 }

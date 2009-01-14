@@ -44,17 +44,45 @@ public class HierarchicalPhrases {
 	 */
 	private final Pattern pattern;
 
+	/** 
+	 * Represents the length of each 
+	 * contiguous sequence of terminals in the pattern. 
+	 */
 	private final int[] terminalSequenceLengths;
 	
 	
 	/** Number of hierarchical phrases represented by this object. */
 	private final int size;
 	
-	/** */
+	/**
+	 * Represents all locations in the corpus
+	 * that match the <code>pattern</code>.
+	 * <p>
+	 * Specifically, for each location in the corpus
+	 * that matches the pattern, the corpus index of the
+	 * of the first word in each terminal sequence is stored.
+	 * <p>
+	 * The length of this array should be 
+	 * <code>size * terminalSequenceLengths.length</code>.
+	 */
 	private final int[] terminalSequenceStartIndices;
 	
+	/**
+	 * Represents the sentence numbers of each location 
+	 * in the corpus that matches the pattern.
+	 * <p>
+	 * To save memory, this variable could be deleted 
+	 * if the actual calculation of this data were moved 
+	 * from the constructor to the <code>getSentenceNumber</code> method.
+	 */
 	private final int[] sentenceNumber;
 	
+	/**
+	 * Prefix tree for which this object was created.
+	 * <p>
+	 * This reference is needed primarily to get access to 
+	 * <code>minNonterminalSpan</code> and <code>maxPhraseSpan</code>. 
+	 */
 	private final PrefixTree prefixTree;
 	
 	// der aoeu X mann snth nth ouad
@@ -66,8 +94,12 @@ public class HierarchicalPhrases {
 	/**
 	 * Constructs a list of hierarchical phrases.
 	 * 
-	 * @param pattern
-	 * @param startPositions
+	 * @param pattern 
+	 * @param startPositions Represents all locations in the corpus
+	 * that match the pattern. Specifically, for each location in the corpus
+	 * that matches the pattern, the corpus index of the
+	 * of the first word in each terminal sequence is stored.
+	 * @param prefixTree Prefix tree with which this object is associated
 	 */
 	public HierarchicalPhrases(Pattern pattern, int[] startPositions, PrefixTree prefixTree) {
 		this.pattern = pattern;
@@ -82,7 +114,7 @@ public class HierarchicalPhrases {
 	}
 	
 	/**
-	 * Constructs a list of hiearchical phrases
+	 * Constructs a list of hierarchical phrases
 	 * identical to the provided list of phrases,
 	 * except that it uses the provided pattern.
 	 * 
@@ -119,16 +151,7 @@ public class HierarchicalPhrases {
 		this.prefixTree = prefixTree;
 		this.size = numberOfPhrases;
 	}
-	
-//	protected HierarchicalPhrases(HierarchicalPhrases phrases, int nonterminal) {
-//		
-//		// Use the pattern that was provided
-//		this.pattern = new Pattern(phrases.pattern, nonterminal);
-//		
-//		this.data = phrases.data;
-//		this.sentenceNumber = phrases.sentenceNumber;
-//		this.size = phrases.size;
-//	}
+
 	
 	public int getNumberOfTerminalSequences() {
 		return terminalSequenceLengths.length;
@@ -190,31 +213,6 @@ public class HierarchicalPhrases {
 		
 	}
 
-//	/**
-//	 * Get the list of start positions for the phrase at the given index,
-//	 * and append that data to the provided list.
-//	 *  
-//	 * @param list List onto which the start positions should be appended.
-//	 */
-//	protected void extractStartPositions(int phraseIndex, List<Integer> list) {
-//		int inclusiveStart = phraseIndex*(1+pattern.arity);
-//		int exclusiveEnd = inclusiveStart + (1+pattern.arity);
-//		
-//		for (int i=inclusiveStart; i<exclusiveEnd; i++) {
-//			list.add(data[i]);
-//		}
-//	}
-//	
-//	/**
-//	 * Get the final start position for the phrase at the given index,
-//	 * and append that data to the provided list.
-//	 *  
-//	 * @param list List onto which the start positions should be appended.
-//	 */
-//	protected void extractFinalStartPosition(int phraseIndex, List<Integer> list) {
-//		int index = phraseIndex*(1+pattern.arity) + pattern.arity;
-//		list.add(data[index]);
-//	}
 	
 	/**
 	 * Implements the QUERY_INTERSECT algorithm from Adam Lopez's thesis (Lopez 2008).
@@ -477,40 +475,29 @@ public class HierarchicalPhrases {
 		}
 	}
 	
+	
+	/**
+	 * 
+	 * @param phraseIndex
+	 * @param positionNumber
+	 * @return
+	 */
 	public int getStartPosition(int phraseIndex, int positionNumber) {
-		
-//		int n = terminalSequenceLengths.length;
-		
-		return terminalSequenceStartIndices[phraseIndex*(terminalSequenceLengths.length)+positionNumber];
-		
-//		if (pattern.arity==0) {
-//			if (positionNumber==0) {
-//				return terminalSequenceStartIndices[phraseIndex];
-//			} else {
-//				throw new ArrayIndexOutOfBoundsException("Invalid position index " + positionNumber + "; the HierarchicalPhrase has arity " + pattern.arity);
-//			}
-//		} else {
-//			int index = phraseIndex*(2 * (1+pattern.arity)) + 2*positionNumber;
-//			return terminalSequenceStartIndices[index];
-//		}
+
+		return terminalSequenceStartIndices[phraseIndex*(terminalSequenceLengths.length)+positionNumber];	
 		
 	}
 	
+	/**
+	 * 
+	 * @param phraseIndex
+	 * @param positionNumber
+	 * @return
+	 */
 	public int getEndPosition(int phraseIndex, int positionNumber) {
 		
 		return terminalSequenceStartIndices[phraseIndex*(terminalSequenceLengths.length)+positionNumber] + terminalSequenceLengths[positionNumber];
-		
-//		if (pattern.arity==0) {
-//			if (positionNumber==0) {
-//				return data[phraseIndex] + pattern.size();
-//			} else {
-//				throw new ArrayIndexOutOfBoundsException("Invalid position index " + positionNumber + "; the HierarchicalPhrase has arity " + pattern.arity);
-//			}
-//		} else {
-//			int index = phraseIndex*(2 * (1+pattern.arity)) + 2*positionNumber + 1;
-//			return data[index];
-//		}
-		
+				
 	}
 	
 	/**
@@ -524,9 +511,17 @@ public class HierarchicalPhrases {
 		return sentenceNumber[phraseIndex];
 	}
 	
+	/**
+	 * Gets the number of locations in the corpus 
+	 * that match the pattern.
+	 * 
+	 * @return The number of locations in the corpus 
+	 * that match the pattern.
+	 */
 	public int size() {
 		return size;
 	}
+	
 	
 	public boolean isEmpty() {
 		if (size > 0)

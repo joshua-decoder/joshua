@@ -463,7 +463,7 @@ MERT algorithm converges at the same rate as it does without sampling.
 	/**
 	 * Calculates the most frequent phrases in the corpus.
 	 * Populates the phrases list with them, and the frequencies
-	 * list with their frequenies.  Allows a threshold to be
+	 * list with their frequencies.  Allows a threshold to be
 	 * set for the minimum frequency to remember, as well as
 	 * the maximum number of phrases.
 	 *
