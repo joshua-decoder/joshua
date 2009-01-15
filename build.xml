@@ -40,7 +40,7 @@
 	
 	<!-- Delete the compiled files -->
 	<target name="clean">
-		<delete verbose="true">
+		<delete verbose="true" quiet="true">
 			<fileset dir="${build}">
 				<include name="**/*.class"/>
 			</fileset>

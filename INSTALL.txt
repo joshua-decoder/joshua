@@ -16,7 +16,6 @@ sections of this document.
 To set up your own copy of Joshua, you start by checking out the main
 development branch:
 
-$ cd projects 
 $ svn co https://joshua.svn.sourceforge.net/svnroot/joshua/trunk joshua
 
 This creates a subdirectory with your local copy of the source
@@ -28,7 +27,7 @@ repository.
 To fetch the latest changes, fixes or improvements to the decoder, you
 simply run:
 
-$ cd projects/joshua
+$ cd joshua
 $ svn up
 
 A more detailed introduction on SVN can be found at
@@ -85,8 +84,8 @@ $ export SRILM=/path/to/srilm
 
 First of all, make sure Ant and Swig are installed and properly set up
 (i.e. accessible from the command line). SRILM should be build prior
-to this step. Set the JOSHUA_HOME environment to the directory you
-installed Joshua in.
+to this step. For convenience, you may wish to set the JOSHUA_HOME 
+environment to the directory you installed Joshua in.
 
 To build Joshua, it is sufficient to change into its install directory
 and run make:
