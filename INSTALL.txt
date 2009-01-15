@@ -99,18 +99,37 @@ using
 
 $ ant compile
 
-To execute the unit tests shipped with Joshua, run
+
+ -------------------------------
+| Testing Joshua               |
+ -------------------------------
+
+To run the Joshua unit tests:
 
 $ ant test
 
-To pack the decoder into a JAR archive, either compiled or the source
-code, run
+
+To run the example:
+
+$ cd example
+$ ./decode_example_javalm.sh
+
+
+ -------------------------------
+| Packaging Joshua (optional)  |
+ -------------------------------
+
+To pack the decoder into a JAR archive, 
+either compiled or the source code, run
 
 $ ant jar
 
 or
 
 $ ant source-jar
+
+
+
 
 ########################################################################
 
