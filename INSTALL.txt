@@ -91,13 +91,18 @@ To build Joshua, it is sufficient to change into its install directory
 and run make:
 
 $ cd $JOSHUA_HOME
-$ make
-
-This builds the Java source code, as well as the SRILM wrapper. If you
-have only made changes to the Java code, you can rebuild the decoder
-using
-
 $ ant compile
+
+This builds the Java source code, as well as the SRILM wrapper. Similarly, 
+if you have changes to the code, you can rebuild the decoder using the same 
+command.
+
+For a full rebuild of the decoder, simply run
+
+$ ant clean
+
+before building. This command will remove any previously compiled code.
+
 
 
  -------------------------------
@@ -114,6 +119,12 @@ To run the example:
 $ cd example
 $ ./decode_example_javalm.sh
 
+or
+
+$ cd example
+$ ./decode_example_srilm.sh
+
+
 
  -------------------------------
 | Packaging Joshua (optional)  |
@@ -127,7 +138,6 @@ $ ant jar
 or
 
 $ ant source-jar
-
 
 
 

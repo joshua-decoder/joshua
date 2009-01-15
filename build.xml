@@ -5,6 +5,7 @@
 	<property name="src" value="./src" />
 	<property name="test" value="./test" />
 	<property name="build" value="./bin" />
+	<property name="lib" value="./lib" />
 	<property name="doc" value="./javadoc" />
 	<property name="testng" value="./lib/testng-5.8-jdk15.jar"/>
 	<property name="bdb" value="./lib/je-3.2.23.jar"/>
@@ -17,12 +18,23 @@
 	<target name="init">
 		<tstamp/>
 		<mkdir dir="${build}"/>
+		<mkdir dir="${lib}"/>
 	</target>
-
+	
+	
+	<!-- Compile and install SRILM wrapper -->
+	<target name="srilm" depends="init">
+		<exec executable="make">
+			<arg value="-C" />
+			<arg value="${src}/joshua/decoder/ff/lm/srilm" />
+		</exec>
+	</target>
+	
 	
 	<!-- Compile the Java code -->
-	<target name="compile" depends="init">
-		<javac compiler="javac1.5" srcdir="${src}" destdir="${build}" classpath="${bdb}" debug="on" encoding="utf8"/> 
+	<target name="compile" depends="init,srilm">
+		<javac compiler="javac1.5" srcdir="${src}" destdir="${build}" 
+			classpath="${bdb}" debug="on" encoding="utf8"/> 
 	</target>
 
 	
@@ -40,6 +52,11 @@
 	
 	<!-- Delete the compiled files -->
 	<target name="clean">
+		<exec executable="make">
+			<arg value="-C" />
+			<arg value="${src}/joshua/decoder/ff/lm/srilm" />
+			<arg value="clean" />
+		</exec>
 		<delete verbose="true" quiet="true">
 			<fileset dir="${build}">
 				<include name="**/*.class"/>
@@ -70,7 +87,8 @@
 	
 	<!-- Compile the unit test code -->
 	<target name="compile-tests" depends="init"> 
-		<javac compiler="javac1.5" srcdir="${test}" destdir="${build}" classpath="${testng}" debug="on" encoding="utf8"/> 
+		<javac compiler="javac1.5" srcdir="${test}" destdir="${build}" 
+			classpath="${testng}" debug="on" encoding="utf8"/> 
 	</target>
 	
 	
