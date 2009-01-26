@@ -15,7 +15,7 @@ So what does a MERT config file look like?
 Examine the file MERT_example/MERT_config_ex2.txt.  You will find that it specifies
 the following "main" MERT parameters:
 
- (*) -dir dirPrefix:         location of relevant files
+ (*) -dir dirPrefix:         working directory
  (*) -s sourceFile:          source sentences (foreign sentences) of the MERT dataset
  (*) -r refFile:             target sentences (reference translations) of the MERT dataset
  (*) -rps refsPerSen:        number of reference translations per sentence
@@ -28,6 +28,10 @@ the following "main" MERT parameters:
  (*) -N N:                   size of N-best list (per sentence) generated in each MERT iteration
  (*) -v verbosity:           output verbosity level (0-2; higher value => more verbose)
  (*) -seed seed:             seed used to initialize the random number generator
+
+(Note that the -s parameter is only used if MERT is running Joshua as an internal
+ decoder. If Joshua is run as an external decoder, as is the case in this README,
+ then this parameter is ignored.)
 
 To test MERT_runner on the 100-sentence test set of example2, provide this config
 file to MERT_runner as follows (assuming you're in the trunk folder):

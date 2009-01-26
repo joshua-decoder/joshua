@@ -1,1777 +1,1645 @@
+Warning: maxMERTIts is smaller than minMERTIts; decreasing minMERTIts from 5 to maxMERTIts (i.e. 2).
 Processed the following args array:
-  -dir MERT_example -s src.txt -r ref -rps 4 -p params.txt -maxIt 2 -ipi 5 -cmd decoder_command_ex2.txt -decOut nbest_ex2.out -dcfg config_ex2.txt -N 300 -v 2 -seed 12341234 -fake nbest_ex2.out.fake.it 
+  -dir MERT_example -s src.txt -r ref -rps 4 -p params.txt -maxIt 2 -ipi 5 -cmd decoder_command_ex2.txt -decOut nbest_ex2.out -dcfg config_ex2.txt -N 300 -v 2 -seed 12341234 
 
 ----------------------------------------------------
 Initializing...
 ----------------------------------------------------
 
-Random number generator seed: 12341234
+Random number generator initialized using seed: 12341234
 
-Warning: lambda[2] is optimizable but has initial value (1.066893)
-         that is outside its specified interval [-1.0,1.0]
-numSentences = 100
-numParams = 5
-  {"lm","phrasemodel pt 0","phrasemodel pt 1","phrasemodel pt 2","wordpenalty"}
+Number of sentences: 100
+Number of parameters: 5
+Parameter names: {"lm","phrasemodel pt 0","phrasemodel pt 1","phrasemodel pt 2","wordpenalty"}
 
-c    initial	optimizable?    range
-1    1.0000	   Yes          [0.5,1.5]
-2    1.0669	   Yes          [-1.0,1.0]
-3    0.7522	   Yes          [-1.0,1.0]
-4    0.5898	   Yes          [-1.0,1.0]
-5    -2.8448	   Yes          [-5.0,0.0]
+c    Default value	Optimizable?	Crit. val. range	Rand. val. range
+1     1.0000		 Yes		 [-Infinity,Infinity]		 [0.5,1.5]
+2     1.0669		 Yes		 [-Infinity,Infinity]		 [-1.0,1.0]
+3     0.7522		 Yes		 [-Infinity,Infinity]		 [-1.0,1.0]
+4     0.5898		 Yes		 [-Infinity,Infinity]		 [-1.0,1.0]
+5     -2.8448		 Yes		 [-Infinity,Infinity]		 [-5.0,0.0]
 
-----------------------------------------------------
+Normalization method: none.
 
 ----------------------------------------------------
-MERT run started @ Tue Dec 02 23:27:57 EST 2008
+
+----------------------------------------------------
+MERT run started @ Mon Jan 26 12:55:36 EST 2009
 ----------------------------------------------------
 
 Initial lambda[]: {1.0, 1.066893, 0.752247, 0.589793, -2.844814}
 
---- Starting MERT iteration #1 @ Tue Dec 02 23:27:57 EST 2008 ---
+--- Starting MERT iteration #1 @ Mon Jan 26 12:55:36 EST 2009 ---
 Decoding using initial weight vector {1.0, 1.066893, 0.752247, 0.589793, -2.844814}
 Running external decoder...
-...finished decoding @ Tue Dec 02 23:30:50 EST 2008
+...finished decoding @ Mon Jan 26 12:58:29 EST 2009
 Reading candidate translations from iterations 1-1
-...
+
 Processed 28100 distinct candidates (about 281 per sentence):
 newCandidatesAdded[it=1] = 28100 (about 281 per sentence)
 
-+++ Optimization of lambda[j=1] starting @ Tue Dec 02 23:30:53 EST 2008 +++
++++ Optimization of lambda[j=1] starting @ Mon Jan 26 12:58:33 EST 2009 +++
 Initial lambda[j=1]: {1.0, 1.066893, 0.752247, 0.589793, -2.844814}
-(Initial score[j=1]: 0.5315878325038089)
+(Initial BLEU[j=1]: 0.5315878325038089)
 
 Investigating lambda[j=1][1]...
-Smallest extracted threshold: 0.5023560211640394
-Largest extracted threshold: 1.4974171560000005
+Smallest extracted threshold: -205.02971414291864
+Largest extracted threshold: 380.4327523333174
 
 Investigating lambda[j=1][2]...
-Smallest extracted threshold: -0.997938943999884
-Largest extracted threshold: 0.9995395705036025
+Smallest extracted threshold: -201.61548599999145
+Largest extracted threshold: 146.32239312500005
 
 Investigating lambda[j=1][3]...
-Smallest extracted threshold: -0.9969970859088572
-Largest extracted threshold: 0.9997842251759067
+Smallest extracted threshold: -103.51085660000237
+Largest extracted threshold: 71.46540250003905
 
 Investigating lambda[j=1][4]...
-Smallest extracted threshold: -0.9907190941704657
-Largest extracted threshold: 0.9996912983999948
+Smallest extracted threshold: -34.40783534999872
+Largest extracted threshold: 90.86319940001704
 
 Investigating lambda[j=1][5]...
-Smallest extracted threshold: -4.968441779310414
-Largest extracted threshold: -0.12453075691244236
+Smallest extracted threshold: -13.254166990783412
+Largest extracted threshold: 13.56862783908048
 
-*** Changing lambda[j=1][2] from 1.0669 (score: 0.5316) to -0.1022 (score: 0.5523) ***
+*** Changing lambda[j=1][2] from 1.0669 (BLEU: 0.5316) to -0.1022 (BLEU: 0.5523) ***
 *** Old lambda[j=1]: {1.0, 1.066893, 0.752247, 0.589793, -2.844814} ***
 *** New lambda[j=1]: {1.0, -0.10217744736099951, 0.752247, 0.589793, -2.844814} ***
 
 Investigating lambda[j=1][1]...
-Smallest extracted threshold: 0.5052758612189074
-Largest extracted threshold: 1.48191668837312
+Smallest extracted threshold: -96.94824452528437
+Largest extracted threshold: 140.383620475203
 
 Keeping thresholds for lambda[j=1][2] from previous step.
 
 Investigating lambda[j=1][3]...
-Smallest extracted threshold: -0.9830651388216849
-Largest extracted threshold: 0.9909840788299458
+Smallest extracted threshold: -414.17876438579435
+Largest extracted threshold: 127.38580522556353
 
 Investigating lambda[j=1][4]...
-Smallest extracted threshold: -0.9861333002656868
-Largest extracted threshold: 0.9764267102891445
+Smallest extracted threshold: -67.27347179089915
+Largest extracted threshold: 298.2201697820602
 
 Investigating lambda[j=1][5]...
-Smallest extracted threshold: -4.990228901372624
-Largest extracted threshold: -6.173463927574459E-4
+Smallest extracted threshold: -18.73900528228056
+Largest extracted threshold: 14.591359488186216
 
-*** Changing lambda[j=1][1] from 1.0000 (score: 0.5523) to 1.1748 (score: 0.5553) ***
+*** Changing lambda[j=1][1] from 1.0000 (BLEU: 0.5523) to 1.1748 (BLEU: 0.5553) ***
 *** Old lambda[j=1]: {1.0, -0.10217744736099951, 0.752247, 0.589793, -2.844814} ***
 *** New lambda[j=1]: {1.1747603445247834, -0.10217744736099951, 0.752247, 0.589793, -2.844814} ***
 
 Keeping thresholds for lambda[j=1][1] from previous step.
 
 Investigating lambda[j=1][2]...
-Smallest extracted threshold: -0.9268432237073692
-Largest extracted threshold: 0.9976245396226183
+Smallest extracted threshold: -326.16135819798063
+Largest extracted threshold: 158.86144784465313
 
 Investigating lambda[j=1][3]...
-Smallest extracted threshold: -0.949550236141377
-Largest extracted threshold: 0.9982370105660984
+Smallest extracted threshold: -473.6409716103489
+Largest extracted threshold: 132.7056032066733
 
 Investigating lambda[j=1][4]...
-Smallest extracted threshold: -0.9340449170581402
-Largest extracted threshold: 0.9734563151854039
+Smallest extracted threshold: -79.3943499718684
+Largest extracted threshold: 300.63186253650247
 
 Investigating lambda[j=1][5]...
-Smallest extracted threshold: -4.997260959260816
-Largest extracted threshold: -0.010442739987359055
+Smallest extracted threshold: -23.45229982758606
+Largest extracted threshold: 16.80057129173054
 
-*** Changing lambda[j=1][4] from 0.5898 (score: 0.5553) to 0.0740 (score: 0.5582) ***
+*** Changing lambda[j=1][4] from 0.5898 (BLEU: 0.5553) to 0.0740 (BLEU: 0.5582) ***
 *** Old lambda[j=1]: {1.1747603445247834, -0.10217744736099951, 0.752247, 0.589793, -2.844814} ***
 *** New lambda[j=1]: {1.1747603445247834, -0.10217744736099951, 0.752247, 0.07395313662317823, -2.844814} ***
 
 Investigating lambda[j=1][1]...
-Smallest extracted threshold: 0.5080692256387881
-Largest extracted threshold: 1.4994048236376043
+Smallest extracted threshold: -196.69877810565535
+Largest extracted threshold: 78.72179027757063
 
 Investigating lambda[j=1][2]...
-Smallest extracted threshold: -0.9771690640367562
-Largest extracted threshold: 0.9979481856628155
+Smallest extracted threshold: -170.56270488773566
+Largest extracted threshold: 260.6431008871917
 
 Investigating lambda[j=1][3]...
-Smallest extracted threshold: -0.9705737836299664
-Largest extracted threshold: 0.9978993274207375
+Smallest extracted threshold: -527.2453307462549
+Largest extracted threshold: 111.77254552556201
 
 Keeping thresholds for lambda[j=1][4] from previous step.
 
 Investigating lambda[j=1][5]...
-Smallest extracted threshold: -4.944024003232772
-Largest extracted threshold: -0.026097407081617962
+Smallest extracted threshold: -25.616697806574816
+Largest extracted threshold: 17.809720081922904
 
-*** Changing lambda[j=1][1] from 1.1748 (score: 0.5582) to 1.4919 (score: 0.5590) ***
+*** Changing lambda[j=1][1] from 1.1748 (BLEU: 0.5582) to 1.4919 (BLEU: 0.5590) ***
 *** Old lambda[j=1]: {1.1747603445247834, -0.10217744736099951, 0.752247, 0.07395313662317823, -2.844814} ***
 *** New lambda[j=1]: {1.4918867004253105, -0.10217744736099951, 0.752247, 0.07395313662317823, -2.844814} ***
 
 Keeping thresholds for lambda[j=1][1] from previous step.
 
 Investigating lambda[j=1][2]...
-Smallest extracted threshold: -0.9812455098782297
-Largest extracted threshold: 0.9937129128626806
+Smallest extracted threshold: -350.3014079683036
+Largest extracted threshold: 283.39691692305433
 
 Investigating lambda[j=1][3]...
-Smallest extracted threshold: -0.9744816961757634
-Largest extracted threshold: 0.9874647574667971
+Smallest extracted threshold: -635.1475733414053
+Largest extracted threshold: 126.93609023578738
 
 Investigating lambda[j=1][4]...
-Smallest extracted threshold: -0.9988473926187321
-Largest extracted threshold: 0.9793336990694992
+Smallest extracted threshold: -102.1999715627256
+Largest extracted threshold: 551.4530248439744
 
 Investigating lambda[j=1][5]...
-Smallest extracted threshold: -4.983897377343415
-Largest extracted threshold: -0.0019706650277839777
+Smallest extracted threshold: -34.47723741867104
+Largest extracted threshold: 23.74571751833396
 
-*** Changing lambda[j=1][4] from 0.0740 (score: 0.5590) to -0.0684 (score: 0.5595) ***
+*** Changing lambda[j=1][4] from 0.0740 (BLEU: 0.5590) to -0.0684 (BLEU: 0.5595) ***
 *** Old lambda[j=1]: {1.4918867004253105, -0.10217744736099951, 0.752247, 0.07395313662317823, -2.844814} ***
 *** New lambda[j=1]: {1.4918867004253105, -0.10217744736099951, 0.752247, -0.06837524645914957, -2.844814} ***
 
 Investigating lambda[j=1][1]...
-Smallest extracted threshold: 0.5142920051665514
-Largest extracted threshold: 1.499680791206154
+Smallest extracted threshold: -224.22152918416714
+Largest extracted threshold: 93.10712328195997
 
 Investigating lambda[j=1][2]...
-Smallest extracted threshold: -0.9333760495997494
-Largest extracted threshold: 0.9964184984208415
+Smallest extracted threshold: -294.6035673887462
+Largest extracted threshold: 311.4800860099864
 
 Investigating lambda[j=1][3]...
-Smallest extracted threshold: -0.9882036796330547
-Largest extracted threshold: 0.9832626443406214
+Smallest extracted threshold: -649.9378644833765
+Largest extracted threshold: 131.38215782159665
 
 Keeping thresholds for lambda[j=1][4] from previous step.
 
 Investigating lambda[j=1][5]...
-Smallest extracted threshold: -4.982575239541995
-Largest extracted threshold: -0.01070451183372531
+Smallest extracted threshold: -35.206588395572176
+Largest extracted threshold: 24.45797115194736
 
-*** Changing lambda[j=1][3] from 0.7522 (score: 0.5595) to 0.8417 (score: 0.5601) ***
+*** Changing lambda[j=1][3] from 0.7522 (BLEU: 0.5595) to 0.8417 (BLEU: 0.5601) ***
 *** Old lambda[j=1]: {1.4918867004253105, -0.10217744736099951, 0.752247, -0.06837524645914957, -2.844814} ***
 *** New lambda[j=1]: {1.4918867004253105, -0.10217744736099951, 0.8416580102768815, -0.06837524645914957, -2.844814} ***
 
 Investigating lambda[j=1][1]...
-Smallest extracted threshold: 0.5061657752950061
-Largest extracted threshold: 1.4961620014438988
+Smallest extracted threshold: -229.46324966164266
+Largest extracted threshold: 92.57704372103285
 
 Investigating lambda[j=1][2]...
-Smallest extracted threshold: -0.9599980772189945
-Largest extracted threshold: 0.9936186810297196
+Smallest extracted threshold: -304.25995649865723
+Largest extracted threshold: 315.810931820273
 
 Keeping thresholds for lambda[j=1][3] from previous step.
 
 Investigating lambda[j=1][4]...
-Smallest extracted threshold: -0.9869968866691082
-Largest extracted threshold: 0.9968024261635199
+Smallest extracted threshold: -100.39303382731505
+Largest extracted threshold: 492.0125852118913
 
 Investigating lambda[j=1][5]...
-Smallest extracted threshold: -4.9650595529029395
-Largest extracted threshold: -0.0029746468809711385
+Smallest extracted threshold: -34.24078467165971
+Largest extracted threshold: 23.61948541041071
 
-*** Changing lambda[j=1][2] from -0.1022 (score: 0.5601) to 0.4233 (score: 0.5609) ***
+*** Changing lambda[j=1][2] from -0.1022 (BLEU: 0.5601) to 0.4233 (BLEU: 0.5609) ***
 *** Old lambda[j=1]: {1.4918867004253105, -0.10217744736099951, 0.8416580102768815, -0.06837524645914957, -2.844814} ***
 *** New lambda[j=1]: {1.4918867004253105, 0.42325368382011175, 0.8416580102768815, -0.06837524645914957, -2.844814} ***
 
 Investigating lambda[j=1][1]...
-Smallest extracted threshold: 0.5123829373742252
-Largest extracted threshold: 1.4958464939160585
+Smallest extracted threshold: -181.87992893550953
+Largest extracted threshold: 126.4099856574875
 
 Keeping thresholds for lambda[j=1][2] from previous step.
 
 Investigating lambda[j=1][3]...
-Smallest extracted threshold: -0.9795205676423493
-Largest extracted threshold: 0.9989607809403878
+Smallest extracted threshold: -483.6826973921594
+Largest extracted threshold: 93.61778784421271
 
 Investigating lambda[j=1][4]...
-Smallest extracted threshold: -0.9907465525272603
-Largest extracted threshold: 0.9903478711478346
+Smallest extracted threshold: -79.21907941803549
+Largest extracted threshold: 476.9852548601062
 
 Investigating lambda[j=1][5]...
-Smallest extracted threshold: -4.9813961215182765
-Largest extracted threshold: -0.150077625532852
+Smallest extracted threshold: -27.56393515907027
+Largest extracted threshold: 21.230182196792565
 
-*** Changing lambda[j=1][4] from -0.0684 (score: 0.5609) to -0.2078 (score: 0.5612) ***
+*** Changing lambda[j=1][4] from -0.0684 (BLEU: 0.5609) to -0.2078 (BLEU: 0.5612) ***
 *** Old lambda[j=1]: {1.4918867004253105, 0.42325368382011175, 0.8416580102768815, -0.06837524645914957, -2.844814} ***
 *** New lambda[j=1]: {1.4918867004253105, 0.42325368382011175, 0.8416580102768815, -0.20775136845796222, -2.844814} ***
 
 Investigating lambda[j=1][1]...
-Smallest extracted threshold: 0.5012061684174892
-Largest extracted threshold: 1.483858352279992
+Smallest extracted threshold: -194.34413641712126
+Largest extracted threshold: 99.41747669705215
 
 Investigating lambda[j=1][2]...
-Smallest extracted threshold: -0.9481021930768194
-Largest extracted threshold: 0.9915900017753364
+Smallest extracted threshold: -249.71743408979327
+Largest extracted threshold: 343.31158289216347
 
 Investigating lambda[j=1][3]...
-Smallest extracted threshold: -0.9984377153291788
-Largest extracted threshold: 0.9967557213112523
+Smallest extracted threshold: -498.16619940320163
+Largest extracted threshold: 97.97163241712815
 
 Keeping thresholds for lambda[j=1][4] from previous step.
 
 Investigating lambda[j=1][5]...
-Smallest extracted threshold: -4.987722149781062
-Largest extracted threshold: -0.003600950092946628
+Smallest extracted threshold: -28.27815749852961
+Largest extracted threshold: 21.50284674810518
 
-*** Changing lambda[j=1][2] from 0.4233 (score: 0.5612) to 0.8459 (score: 0.5622) ***
+*** Changing lambda[j=1][2] from 0.4233 (BLEU: 0.5612) to 0.8459 (BLEU: 0.5622) ***
 *** Old lambda[j=1]: {1.4918867004253105, 0.42325368382011175, 0.8416580102768815, -0.20775136845796222, -2.844814} ***
 *** New lambda[j=1]: {1.4918867004253105, 0.845880073019682, 0.8416580102768815, -0.20775136845796222, -2.844814} ***
 
 Investigating lambda[j=1][1]...
-Smallest extracted threshold: 0.5010198785080795
-Largest extracted threshold: 1.4940451328987896
+Smallest extracted threshold: -244.63667673188476
+Largest extracted threshold: 186.1967619460276
 
 Keeping thresholds for lambda[j=1][2] from previous step.
 
 Investigating lambda[j=1][3]...
-Smallest extracted threshold: -0.992635697367385
-Largest extracted threshold: 0.9997432015991001
+Smallest extracted threshold: -364.4401660873109
+Largest extracted threshold: 67.99534638318856
 
 Investigating lambda[j=1][4]...
-Smallest extracted threshold: -0.986010351144695
-Largest extracted threshold: 0.9958532575414009
+Smallest extracted threshold: -62.71904080636901
+Largest extracted threshold: 464.8981401289988
 
 Investigating lambda[j=1][5]...
-Smallest extracted threshold: -4.991365641080541
-Largest extracted threshold: -0.003600950092946628
+Smallest extracted threshold: -22.907686216419844
+Largest extracted threshold: 20.531291830405017
 
-*** Changing lambda[j=1][1] from 1.4919 (score: 0.5622) to 1.4729 (score: 0.5625) ***
+*** Changing lambda[j=1][1] from 1.4919 (BLEU: 0.5622) to 1.4729 (BLEU: 0.5625) ***
 *** Old lambda[j=1]: {1.4918867004253105, 0.845880073019682, 0.8416580102768815, -0.20775136845796222, -2.844814} ***
 *** New lambda[j=1]: {1.472881669956492, 0.845880073019682, 0.8416580102768815, -0.20775136845796222, -2.844814} ***
 
 Keeping thresholds for lambda[j=1][1] from previous step.
 
 Investigating lambda[j=1][2]...
-Smallest extracted threshold: -0.9595338883588211
-Largest extracted threshold: 0.995354645044916
+Smallest extracted threshold: -236.17318237568512
+Largest extracted threshold: 341.9479719560258
 
 Investigating lambda[j=1][3]...
-Smallest extracted threshold: -0.974919987944233
-Largest extracted threshold: 0.9932157917833263
+Smallest extracted threshold: -357.97370447029493
+Largest extracted threshold: 66.82201200210157
 
 Investigating lambda[j=1][4]...
-Smallest extracted threshold: -0.9856357761944152
-Largest extracted threshold: 0.9923499002222984
+Smallest extracted threshold: -60.71163446310018
+Largest extracted threshold: 448.3941716698734
 
 Investigating lambda[j=1][5]...
-Smallest extracted threshold: -4.999216009870256
-Largest extracted threshold: -0.018708635603860525
+Smallest extracted threshold: -22.376683913505403
+Largest extracted threshold: 20.291042031444018
 
-*** Changing lambda[j=1][3] from 0.8417 (score: 0.5625) to 0.8973 (score: 0.5630) ***
+*** Changing lambda[j=1][3] from 0.8417 (BLEU: 0.5625) to 0.8973 (BLEU: 0.5630) ***
 *** Old lambda[j=1]: {1.472881669956492, 0.845880073019682, 0.8416580102768815, -0.20775136845796222, -2.844814} ***
 *** New lambda[j=1]: {1.472881669956492, 0.845880073019682, 0.8973064679748799, -0.20775136845796222, -2.844814} ***
 
 Investigating lambda[j=1][1]...
-Smallest extracted threshold: 0.5104809835996172
-Largest extracted threshold: 1.4954621539565718
+Smallest extracted threshold: -241.26597015131924
+Largest extracted threshold: 189.6840652951029
 
 Investigating lambda[j=1][2]...
-Smallest extracted threshold: -0.8135022934538326
-Largest extracted threshold: 0.9852994028903507
+Smallest extracted threshold: -242.18321580706507
+Largest extracted threshold: 344.6434441257723
 
 Keeping thresholds for lambda[j=1][3] from previous step.
 
 Investigating lambda[j=1][4]...
-Smallest extracted threshold: -0.985304148416206
-Largest extracted threshold: 0.9884803496604302
+Smallest extracted threshold: -59.17608483349592
+Largest extracted threshold: 411.3990769922333
 
 Investigating lambda[j=1][5]...
-Smallest extracted threshold: -4.999216009870256
-Largest extracted threshold: -0.038624815288219747
+Smallest extracted threshold: -21.775577992564774
+Largest extracted threshold: 20.503273735630177
 
 *** Not changing any weight in lambda[j=1] ***
-*** Final lambda[j=1]: {1.472881669956492, 0.845880073019682, 0.8973064679748799, -0.20775136845796222, -2.844814} ***
+*** lambda[j=1]: {1.472881669956492, 0.845880073019682, 0.8973064679748799, -0.20775136845796222, -2.844814} ***
 
 Final lambda[j=1]: {1.472881669956492, 0.845880073019682, 0.8973064679748799, -0.20775136845796222, -2.844814}
-(Final score[j=1]: 0.5629581261584371)
+(Final BLEU[j=1]: 0.5629581261584371)
 
-+++ Optimization of lambda[j=2] starting @ Tue Dec 02 23:30:54 EST 2008 +++
++++ Optimization of lambda[j=2] starting @ Mon Jan 26 12:58:34 EST 2009 +++
 Initial lambda[j=2]: {0.9913845907274932, -0.6577977590753961, 0.46016061237234096, -0.5203200954373215, -2.262048059500863}
-(Initial score[j=2]: 0.5507235012718978)
+(Initial BLEU[j=2]: 0.5507235012718978)
 
 Investigating lambda[j=2][1]...
-Smallest extracted threshold: 0.5080290254345255
-Largest extracted threshold: 1.4921770796968452
+Smallest extracted threshold: -331.2190459493112
+Largest extracted threshold: 135.86600747195507
 
 Investigating lambda[j=2][2]...
-Smallest extracted threshold: -0.979846292370048
-Largest extracted threshold: 0.9970732953496297
+Smallest extracted threshold: -624.2819886239258
+Largest extracted threshold: 318.9440181090996
 
 Investigating lambda[j=2][3]...
-Smallest extracted threshold: -0.9545111610501589
-Largest extracted threshold: 0.9993024158615853
+Smallest extracted threshold: -681.3374493319204
+Largest extracted threshold: 150.68617461738708
 
 Investigating lambda[j=2][4]...
-Smallest extracted threshold: -0.9900707485920395
-Largest extracted threshold: 0.9798619662721488
+Smallest extracted threshold: -104.18063201060313
+Largest extracted threshold: 377.4708478275803
 
 Investigating lambda[j=2][5]...
-Smallest extracted threshold: -4.965707742946819
-Largest extracted threshold: -0.01177496693663496
+Smallest extracted threshold: -33.75401642837194
+Largest extracted threshold: 26.077284965111115
 
-*** Changing lambda[j=2][5] from -2.2620 (score: 0.5507) to -1.5058 (score: 0.5556) ***
+*** Changing lambda[j=2][5] from -2.2620 (BLEU: 0.5507) to -1.5058 (BLEU: 0.5556) ***
 *** Old lambda[j=2]: {0.9913845907274932, -0.6577977590753961, 0.46016061237234096, -0.5203200954373215, -2.262048059500863} ***
 *** New lambda[j=2]: {0.9913845907274932, -0.6577977590753961, 0.46016061237234096, -0.5203200954373215, -1.5057547803312556} ***
 
 Investigating lambda[j=2][1]...
-Smallest extracted threshold: 0.5080796335521047
-Largest extracted threshold: 1.4927928916751632
+Smallest extracted threshold: -290.19013555441006
+Largest extracted threshold: 112.42091581770205
 
 Investigating lambda[j=2][2]...
-Smallest extracted threshold: -0.9931859626809901
-Largest extracted threshold: 0.9933337318413856
+Smallest extracted threshold: -295.29441218438177
+Largest extracted threshold: 277.8678393842003
 
 Investigating lambda[j=2][3]...
-Smallest extracted threshold: -0.999233891955207
-Largest extracted threshold: 0.9993024158615864
+Smallest extracted threshold: -653.984842401954
+Largest extracted threshold: 142.87114406596808
 
 Investigating lambda[j=2][4]...
-Smallest extracted threshold: -0.9937514117009916
-Largest extracted threshold: 0.9978116230782074
+Smallest extracted threshold: -104.18063201060313
+Largest extracted threshold: 443.11710445951536
 
 Keeping thresholds for lambda[j=2][5] from previous step.
 
-*** Changing lambda[j=2][2] from -0.6578 (score: 0.5556) to 0.4283 (score: 0.5596) ***
+*** Changing lambda[j=2][2] from -0.6578 (BLEU: 0.5556) to 0.4283 (BLEU: 0.5596) ***
 *** Old lambda[j=2]: {0.9913845907274932, -0.6577977590753961, 0.46016061237234096, -0.5203200954373215, -1.5057547803312556} ***
 *** New lambda[j=2]: {0.9913845907274932, 0.4283377575186086, 0.46016061237234096, -0.5203200954373215, -1.5057547803312556} ***
 
 Investigating lambda[j=2][1]...
-Smallest extracted threshold: 0.5088941562696886
-Largest extracted threshold: 1.4923534510571876
+Smallest extracted threshold: -162.9878866821429
+Largest extracted threshold: 134.21823794439993
 
 Keeping thresholds for lambda[j=2][2] from previous step.
 
 Investigating lambda[j=2][3]...
-Smallest extracted threshold: -0.9948114022045187
-Largest extracted threshold: 0.9907061003640598
+Smallest extracted threshold: -310.31346269301304
+Largest extracted threshold: 62.638085809187224
 
 Investigating lambda[j=2][4]...
-Smallest extracted threshold: -0.9973043647090707
-Largest extracted threshold: 0.9958965217045533
+Smallest extracted threshold: -54.85693639428178
+Largest extracted threshold: 412.05362868491903
 
 Investigating lambda[j=2][5]...
-Smallest extracted threshold: -4.862425505910163
-Largest extracted threshold: -0.01817770434922796
+Smallest extracted threshold: -19.952086995155536
+Largest extracted threshold: 14.320655089735071
 
-*** Changing lambda[j=2][1] from 0.9914 (score: 0.5596) to 1.0704 (score: 0.5606) ***
+*** Changing lambda[j=2][1] from 0.9914 (BLEU: 0.5596) to 1.0704 (BLEU: 0.5606) ***
 *** Old lambda[j=2]: {0.9913845907274932, 0.4283377575186086, 0.46016061237234096, -0.5203200954373215, -1.5057547803312556} ***
 *** New lambda[j=2]: {1.0703577259081807, 0.4283377575186086, 0.46016061237234096, -0.5203200954373215, -1.5057547803312556} ***
 
 Keeping thresholds for lambda[j=2][1] from previous step.
 
 Investigating lambda[j=2][2]...
-Smallest extracted threshold: -0.9907711556029821
-Largest extracted threshold: 0.999060122389343
+Smallest extracted threshold: -239.6183518818631
+Largest extracted threshold: 283.5341618334146
 
 Investigating lambda[j=2][3]...
-Smallest extracted threshold: -0.9904452752379624
-Largest extracted threshold: 0.9953917186847222
+Smallest extracted threshold: -337.1840719382399
+Largest extracted threshold: 67.51373675022349
 
 Investigating lambda[j=2][4]...
-Smallest extracted threshold: -0.9993434149008891
-Largest extracted threshold: 0.9967991400584308
+Smallest extracted threshold: -63.19847379774188
+Largest extracted threshold: 480.6338992758424
 
 Investigating lambda[j=2][5]...
-Smallest extracted threshold: -4.991356707366607
-Largest extracted threshold: -0.0029692979365273458
+Smallest extracted threshold: -22.15860367073389
+Largest extracted threshold: 15.318984446881267
 
-*** Changing lambda[j=2][3] from 0.4602 (score: 0.5606) to 0.5947 (score: 0.5622) ***
+*** Changing lambda[j=2][3] from 0.4602 (BLEU: 0.5606) to 0.5947 (BLEU: 0.5622) ***
 *** Old lambda[j=2]: {1.0703577259081807, 0.4283377575186086, 0.46016061237234096, -0.5203200954373215, -1.5057547803312556} ***
 *** New lambda[j=2]: {1.0703577259081807, 0.4283377575186086, 0.5946813590401907, -0.5203200954373215, -1.5057547803312556} ***
 
 Investigating lambda[j=2][1]...
-Smallest extracted threshold: 0.5021366414092989
-Largest extracted threshold: 1.4812717108938844
+Smallest extracted threshold: -164.4817457869036
+Largest extracted threshold: 124.01387844717485
 
 Investigating lambda[j=2][2]...
-Smallest extracted threshold: -0.9974743411673926
-Largest extracted threshold: 0.9898050604410625
+Smallest extracted threshold: -208.27501790816652
+Largest extracted threshold: 290.0500105001386
 
 Keeping thresholds for lambda[j=2][3] from previous step.
 
 Investigating lambda[j=2][4]...
-Smallest extracted threshold: -0.9999121369406871
-Largest extracted threshold: 0.9953620346551062
+Smallest extracted threshold: -59.48654194437614
+Largest extracted threshold: 391.204506891037
 
 Investigating lambda[j=2][5]...
-Smallest extracted threshold: -4.982627145610022
-Largest extracted threshold: -0.00296929793654368
+Smallest extracted threshold: -20.70553164221113
+Largest extracted threshold: 15.83201874279383
 
-*** Changing lambda[j=2][1] from 1.0704 (score: 0.5622) to 1.0649 (score: 0.5623) ***
+*** Changing lambda[j=2][1] from 1.0704 (BLEU: 0.5622) to 1.0649 (BLEU: 0.5623) ***
 *** Old lambda[j=2]: {1.0703577259081807, 0.4283377575186086, 0.5946813590401907, -0.5203200954373215, -1.5057547803312556} ***
 *** New lambda[j=2]: {1.064862597065697, 0.4283377575186086, 0.5946813590401907, -0.5203200954373215, -1.5057547803312556} ***
 
 Keeping thresholds for lambda[j=2][1] from previous step.
 
 Investigating lambda[j=2][2]...
-Smallest extracted threshold: -0.9976423688896594
-Largest extracted threshold: 0.9887319951259265
+Smallest extracted threshold: -212.14908374214463
+Largest extracted threshold: 289.6557350056901
 
 Investigating lambda[j=2][3]...
-Smallest extracted threshold: -0.9855489126313958
-Largest extracted threshold: 0.9894850189747608
+Smallest extracted threshold: -335.3143543495844
+Largest extracted threshold: 67.17447796240062
 
 Investigating lambda[j=2][4]...
-Smallest extracted threshold: -0.9911779018743799
-Largest extracted threshold: 0.991557161412068
+Smallest extracted threshold: -58.906118960388795
+Largest extracted threshold: 386.43253700422537
 
 Investigating lambda[j=2][5]...
-Smallest extracted threshold: -4.9531889553824495
-Largest extracted threshold: -0.002645321804895991
+Smallest extracted threshold: -20.551997235888702
+Largest extracted threshold: 15.762552734736785
 
-*** Changing lambda[j=2][4] from -0.5203 (score: 0.5623) to -0.4649 (score: 0.5627) ***
+*** Changing lambda[j=2][4] from -0.5203 (BLEU: 0.5623) to -0.4649 (BLEU: 0.5627) ***
 *** Old lambda[j=2]: {1.064862597065697, 0.4283377575186086, 0.5946813590401907, -0.5203200954373215, -1.5057547803312556} ***
 *** New lambda[j=2]: {1.064862597065697, 0.4283377575186086, 0.5946813590401907, -0.46488329839005016, -1.5057547803312556} ***
 
 Investigating lambda[j=2][1]...
-Smallest extracted threshold: 0.5000144744539826
-Largest extracted threshold: 1.4929605159416193
+Smallest extracted threshold: -153.76165515790058
+Largest extracted threshold: 116.2368877756919
 
 Investigating lambda[j=2][2]...
-Smallest extracted threshold: -0.9718575185809125
-Largest extracted threshold: 0.9969352773828819
+Smallest extracted threshold: -205.52828373933284
+Largest extracted threshold: 278.7173619883005
 
 Investigating lambda[j=2][3]...
-Smallest extracted threshold: -0.986784493727069
-Largest extracted threshold: 0.991177745057676
+Smallest extracted threshold: -329.55354718975605
+Largest extracted threshold: 65.44273801654322
 
 Keeping thresholds for lambda[j=2][4] from previous step.
 
 Investigating lambda[j=2][5]...
-Smallest extracted threshold: -4.997001907887556
-Largest extracted threshold: -0.00972439290504144
+Smallest extracted threshold: -20.267915584660276
+Largest extracted threshold: 15.654100517984542
 
-*** Changing lambda[j=2][3] from 0.5947 (score: 0.5627) to 0.5767 (score: 0.5634) ***
+*** Changing lambda[j=2][3] from 0.5947 (BLEU: 0.5627) to 0.5767 (BLEU: 0.5634) ***
 *** Old lambda[j=2]: {1.064862597065697, 0.4283377575186086, 0.5946813590401907, -0.46488329839005016, -1.5057547803312556} ***
 *** New lambda[j=2]: {1.064862597065697, 0.4283377575186086, 0.5767242181075545, -0.46488329839005016, -1.5057547803312556} ***
 
 Investigating lambda[j=2][1]...
-Smallest extracted threshold: 0.5099194173911623
-Largest extracted threshold: 1.4981053469587455
+Smallest extracted threshold: -152.70891777072615
+Largest extracted threshold: 117.59906518072336
 
 Investigating lambda[j=2][2]...
-Smallest extracted threshold: -0.9812312339577539
-Largest extracted threshold: 0.9969365550592839
+Smallest extracted threshold: -203.58891251860868
+Largest extracted threshold: 277.8475629743757
 
 Keeping thresholds for lambda[j=2][3] from previous step.
 
 Investigating lambda[j=2][4]...
-Smallest extracted threshold: -0.9928247805212451
-Largest extracted threshold: 0.9989628979399356
+Smallest extracted threshold: -59.40162381799865
+Largest extracted threshold: 398.3704442962438
 
 Investigating lambda[j=2][5]...
-Smallest extracted threshold: -4.998662490016975
-Largest extracted threshold: -0.01079501297127361
+Smallest extracted threshold: -20.46188580745336
+Largest extracted threshold: 15.585615697738008
 
 *** Not changing any weight in lambda[j=2] ***
-*** Final lambda[j=2]: {1.064862597065697, 0.4283377575186086, 0.5767242181075545, -0.46488329839005016, -1.5057547803312556} ***
+*** lambda[j=2]: {1.064862597065697, 0.4283377575186086, 0.5767242181075545, -0.46488329839005016, -1.5057547803312556} ***
 
 Final lambda[j=2]: {1.064862597065697, 0.4283377575186086, 0.5767242181075545, -0.46488329839005016, -1.5057547803312556}
-(Final score[j=2]: 0.5633816633950698)
+(Final BLEU[j=2]: 0.5633816633950698)
 
-+++ Optimization of lambda[j=3] starting @ Tue Dec 02 23:30:54 EST 2008 +++
++++ Optimization of lambda[j=3] starting @ Mon Jan 26 12:58:34 EST 2009 +++
 Initial lambda[j=3]: {0.9702632542004074, -0.6919952429797738, -0.8743327758402839, -0.6393613928095458, -0.5655106188328114}
-(Initial score[j=3]: 0.5379260462835211)
+(Initial BLEU[j=3]: 0.5379260462835211)
 
 Investigating lambda[j=3][1]...
-Smallest extracted threshold: 0.5230371246613043
-Largest extracted threshold: 1.4958675764742788
+Smallest extracted threshold: -188.17311630887096
+Largest extracted threshold: 284.365473699181
 
 Investigating lambda[j=3][2]...
-Smallest extracted threshold: -0.9784008528372634
-Largest extracted threshold: 0.9901847310330109
+Smallest extracted threshold: -367.46445610257547
+Largest extracted threshold: 484.51686180904994
 
 Investigating lambda[j=3][3]...
-Smallest extracted threshold: -0.9939273228597739
-Largest extracted threshold: 0.9974287229866237
+Smallest extracted threshold: -635.9838391584266
+Largest extracted threshold: 138.1616007734675
 
 Investigating lambda[j=3][4]...
-Smallest extracted threshold: -0.9968615159544584
-Largest extracted threshold: 0.9667997309020674
+Smallest extracted threshold: -167.3378073711422
+Largest extracted threshold: 1394.5377815610661
 
 Investigating lambda[j=3][5]...
-Smallest extracted threshold: -4.920608077607077
-Largest extracted threshold: -0.0024726780730276662
+Smallest extracted threshold: -48.6234510972701
+Largest extracted threshold: 33.8816936569259
 
-*** Changing lambda[j=3][3] from -0.8743 (score: 0.5379) to 0.7643 (score: 0.5567) ***
+*** Changing lambda[j=3][3] from -0.8743 (BLEU: 0.5379) to 0.7643 (BLEU: 0.5567) ***
 *** Old lambda[j=3]: {0.9702632542004074, -0.6919952429797738, -0.8743327758402839, -0.6393613928095458, -0.5655106188328114} ***
 *** New lambda[j=3]: {0.9702632542004074, -0.6919952429797738, 0.764282091288035, -0.6393613928095458, -0.5655106188328114} ***
 
 Investigating lambda[j=3][1]...
-Smallest extracted threshold: 0.5021711897255077
-Largest extracted threshold: 1.4771142862410724
+Smallest extracted threshold: -284.23691289415166
+Largest extracted threshold: 94.3276398534951
 
 Investigating lambda[j=3][2]...
-Smallest extracted threshold: -0.9976017908874333
-Largest extracted threshold: 0.9998496412352663
+Smallest extracted threshold: -360.1922475841525
+Largest extracted threshold: 263.5045925897337
 
 Keeping thresholds for lambda[j=3][3] from previous step.
 
 Investigating lambda[j=3][4]...
-Smallest extracted threshold: -0.9942009139730307
-Largest extracted threshold: 0.9904716102604445
+Smallest extracted threshold: -101.43496487709076
+Largest extracted threshold: 469.0512829697758
 
 Investigating lambda[j=3][5]...
-Smallest extracted threshold: -4.8557034994227966
-Largest extracted threshold: -0.009791121924843486
+Smallest extracted threshold: -30.923390044049913
+Largest extracted threshold: 23.804524263262138
 
-*** Changing lambda[j=3][2] from -0.6920 (score: 0.5567) to -0.1548 (score: 0.5618) ***
+*** Changing lambda[j=3][2] from -0.6920 (BLEU: 0.5567) to -0.1548 (BLEU: 0.5618) ***
 *** Old lambda[j=3]: {0.9702632542004074, -0.6919952429797738, 0.764282091288035, -0.6393613928095458, -0.5655106188328114} ***
 *** New lambda[j=3]: {0.9702632542004074, -0.15479784202473462, 0.764282091288035, -0.6393613928095458, -0.5655106188328114} ***
 
 Investigating lambda[j=3][1]...
-Smallest extracted threshold: 0.5100278959118602
-Largest extracted threshold: 1.4963658008974778
+Smallest extracted threshold: -218.16163257676274
+Largest extracted threshold: 81.35815974472618
 
 Keeping thresholds for lambda[j=3][2] from previous step.
 
 Investigating lambda[j=3][3]...
-Smallest extracted threshold: -0.9996492768914021
-Largest extracted threshold: 0.9969958751311638
+Smallest extracted threshold: -466.0056282062442
+Largest extracted threshold: 97.44971202966167
 
 Investigating lambda[j=3][4]...
-Smallest extracted threshold: -0.9991841017364211
-Largest extracted threshold: 0.9994617933596329
+Smallest extracted threshold: -79.76258451395476
+Largest extracted threshold: 316.80953953914207
 
 Investigating lambda[j=3][5]...
-Smallest extracted threshold: -4.891285001690686
-Largest extracted threshold: -0.03386591158022962
+Smallest extracted threshold: -24.097022149425445
+Largest extracted threshold: 17.348253195562833
 
-*** Changing lambda[j=3][5] from -0.5655 (score: 0.5618) to -0.6382 (score: 0.5618) ***
+*** Changing lambda[j=3][5] from -0.5655 (BLEU: 0.5618) to -0.6382 (BLEU: 0.5618) ***
 *** Old lambda[j=3]: {0.9702632542004074, -0.15479784202473462, 0.764282091288035, -0.6393613928095458, -0.5655106188328114} ***
 *** New lambda[j=3]: {0.9702632542004074, -0.15479784202473462, 0.764282091288035, -0.6393613928095458, -0.6382373430216332} ***
 
 Investigating lambda[j=3][1]...
-Smallest extracted threshold: 0.5052545732130709
-Largest extracted threshold: 1.4987114551832994
+Smallest extracted threshold: -222.1070573640015
+Largest extracted threshold: 83.61268819457919
 
 Investigating lambda[j=3][2]...
-Smallest extracted threshold: -0.9976017908874145
-Largest extracted threshold: 0.999971880818581
+Smallest extracted threshold: -339.14998205218814
+Largest extracted threshold: 267.4545627972391
 
 Investigating lambda[j=3][3]...
-Smallest extracted threshold: -0.9752276259586281
-Largest extracted threshold: 0.991433412080846
+Smallest extracted threshold: -468.63591139773973
+Largest extracted threshold: 98.2012215129461
 
 Investigating lambda[j=3][4]...
-Smallest extracted threshold: -0.9695430867828406
-Largest extracted threshold: 0.9961117200473616
+Smallest extracted threshold: -78.7754707471003
+Largest extracted threshold: 316.80953953914207
 
 Keeping thresholds for lambda[j=3][5] from previous step.
 
-*** Changing lambda[j=3][1] from 0.9703 (score: 0.5618) to 0.9426 (score: 0.5619) ***
+*** Changing lambda[j=3][1] from 0.9703 (BLEU: 0.5618) to 0.9426 (BLEU: 0.5619) ***
 *** Old lambda[j=3]: {0.9702632542004074, -0.15479784202473462, 0.764282091288035, -0.6393613928095458, -0.6382373430216332} ***
 *** New lambda[j=3]: {0.9426089077313671, -0.15479784202473462, 0.764282091288035, -0.6393613928095458, -0.6382373430216332} ***
 
 Keeping thresholds for lambda[j=3][1] from previous step.
 
 Investigating lambda[j=3][2]...
-Smallest extracted threshold: -0.9797013552601699
-Largest extracted threshold: 0.992411393358257
+Smallest extracted threshold: -319.4416511352616
+Largest extracted threshold: 265.4703634380855
 
 Investigating lambda[j=3][3]...
-Smallest extracted threshold: -0.9898108858846377
-Largest extracted threshold: 0.9959285030717268
+Smallest extracted threshold: -459.22652001164874
+Largest extracted threshold: 96.49389483689309
 
 Investigating lambda[j=3][4]...
-Smallest extracted threshold: -0.9997027604303248
-Largest extracted threshold: 0.996736864214269
+Smallest extracted threshold: -75.8544804013081
+Largest extracted threshold: 316.4279095578709
 
 Investigating lambda[j=3][5]...
-Smallest extracted threshold: -4.946821922887235
-Largest extracted threshold: -0.01710464551779362
+Smallest extracted threshold: -23.324357160292756
+Largest extracted threshold: 16.793190955719957
 
 *** Not changing any weight in lambda[j=3] ***
-*** Final lambda[j=3]: {0.9426089077313671, -0.15479784202473462, 0.764282091288035, -0.6393613928095458, -0.6382373430216332} ***
+*** lambda[j=3]: {0.9426089077313671, -0.15479784202473462, 0.764282091288035, -0.6393613928095458, -0.6382373430216332} ***
 
 Final lambda[j=3]: {0.9426089077313671, -0.15479784202473462, 0.764282091288035, -0.6393613928095458, -0.6382373430216332}
-(Final score[j=3]: 0.561861083593104)
+(Final BLEU[j=3]: 0.561861083593104)
 
-+++ Optimization of lambda[j=4] starting @ Tue Dec 02 23:30:55 EST 2008 +++
++++ Optimization of lambda[j=4] starting @ Mon Jan 26 12:58:34 EST 2009 +++
 Initial lambda[j=4]: {1.3246918939072398, -0.5778133794884044, 0.2815800420089276, 0.15636862697411513, -0.8651160558376816}
-(Initial score[j=4]: 0.5463222206187416)
+(Initial BLEU[j=4]: 0.5463222206187416)
 
 Investigating lambda[j=4][1]...
-Smallest extracted threshold: 0.5023412802900618
-Largest extracted threshold: 1.4846645475521332
+Smallest extracted threshold: -104.27343842779437
+Largest extracted threshold: 23.349132171236462
 
 Investigating lambda[j=4][2]...
-Smallest extracted threshold: -0.9873363386575349
-Largest extracted threshold: 0.9968307854407256
+Smallest extracted threshold: -785.3597447950057
+Largest extracted threshold: 392.20303532363744
 
 Investigating lambda[j=4][3]...
-Smallest extracted threshold: -0.982086235413847
-Largest extracted threshold: 0.9888109663553417
+Smallest extracted threshold: -648.5952579281067
+Largest extracted threshold: 184.56218767620445
 
 Investigating lambda[j=4][4]...
-Smallest extracted threshold: -0.9829024555704954
-Largest extracted threshold: 0.981013797615451
+Smallest extracted threshold: -142.9673812344145
+Largest extracted threshold: 904.6014177483495
 
 Investigating lambda[j=4][5]...
-Smallest extracted threshold: -4.963014215874603
-Largest extracted threshold: -0.04008385462904693
+Smallest extracted threshold: -40.51162126744108
+Largest extracted threshold: 27.50669523167202
 
-*** Changing lambda[j=4][4] from 0.1564 (score: 0.5463) to -0.9815 (score: 0.5563) ***
+*** Changing lambda[j=4][4] from 0.1564 (BLEU: 0.5463) to -1.8672 (BLEU: 0.5573) ***
 *** Old lambda[j=4]: {1.3246918939072398, -0.5778133794884044, 0.2815800420089276, 0.15636862697411513, -0.8651160558376816} ***
-*** New lambda[j=4]: {1.3246918939072398, -0.5778133794884044, 0.2815800420089276, -0.9815082879146984, -0.8651160558376816} ***
+*** New lambda[j=4]: {1.3246918939072398, -0.5778133794884044, 0.2815800420089276, -1.8671789489192607, -0.8651160558376816} ***
 
 Investigating lambda[j=4][1]...
-Smallest extracted threshold: 0.5000574974481466
-Largest extracted threshold: 1.4999601744771496
+Smallest extracted threshold: -495.5769509156972
+Largest extracted threshold: 299.7224838543121
 
 Investigating lambda[j=4][2]...
-Smallest extracted threshold: -0.9889701792331173
-Largest extracted threshold: 0.9976237856259197
+Smallest extracted threshold: -978.849087471723
+Largest extracted threshold: 524.0900388139671
 
 Investigating lambda[j=4][3]...
-Smallest extracted threshold: -0.9926496623038814
-Largest extracted threshold: 0.9700703413699102
+Smallest extracted threshold: -858.8755768563517
+Largest extracted threshold: 192.84060040543724
 
 Keeping thresholds for lambda[j=4][4] from previous step.
 
 Investigating lambda[j=4][5]...
-Smallest extracted threshold: -4.935413804038839
-Largest extracted threshold: -0.007595456936631794
+Smallest extracted threshold: -50.88113695589005
+Largest extracted threshold: 40.180816255709345
 
-*** Changing lambda[j=4][2] from -0.5778 (score: 0.5563) to 0.1199 (score: 0.5578) ***
-*** Old lambda[j=4]: {1.3246918939072398, -0.5778133794884044, 0.2815800420089276, -0.9815082879146984, -0.8651160558376816} ***
-*** New lambda[j=4]: {1.3246918939072398, 0.11992705791987282, 0.2815800420089276, -0.9815082879146984, -0.8651160558376816} ***
+*** Changing lambda[j=4][2] from -0.5778 (BLEU: 0.5573) to -0.4886 (BLEU: 0.5586) ***
+*** Old lambda[j=4]: {1.3246918939072398, -0.5778133794884044, 0.2815800420089276, -1.8671789489192607, -0.8651160558376816} ***
+*** New lambda[j=4]: {1.3246918939072398, -0.48862590108157483, 0.2815800420089276, -1.8671789489192607, -0.8651160558376816} ***
 
 Investigating lambda[j=4][1]...
-Smallest extracted threshold: 0.501810008508147
-Largest extracted threshold: 1.4920047395452634
+Smallest extracted threshold: -484.60689107167116
+Largest extracted threshold: 287.771361747797
 
 Keeping thresholds for lambda[j=4][2] from previous step.
 
 Investigating lambda[j=4][3]...
-Smallest extracted threshold: -0.9966669272421371
-Largest extracted threshold: 0.9964979612342137
+Smallest extracted threshold: -830.6551722304581
+Largest extracted threshold: 186.0814636490342
 
 Investigating lambda[j=4][4]...
-Smallest extracted threshold: -0.9810094126603335
-Largest extracted threshold: 0.9923873500481566
+Smallest extracted threshold: -139.48535343161475
+Largest extracted threshold: 902.050655865914
 
 Investigating lambda[j=4][5]...
-Smallest extracted threshold: -4.839472922848618
-Largest extracted threshold: -0.059612504361390206
-
-*** Changing lambda[j=4][5] from -0.8651 (score: 0.5578) to -1.3464 (score: 0.5607) ***
-*** Old lambda[j=4]: {1.3246918939072398, 0.11992705791987282, 0.2815800420089276, -0.9815082879146984, -0.8651160558376816} ***
-*** New lambda[j=4]: {1.3246918939072398, 0.11992705791987282, 0.2815800420089276, -0.9815082879146984, -1.3464367021115993} ***
-
-Investigating lambda[j=4][1]...
-Smallest extracted threshold: 0.5072151173880278
-Largest extracted threshold: 1.494468605209515
-
-Investigating lambda[j=4][2]...
-Smallest extracted threshold: -0.996355524224987
-Largest extracted threshold: 0.9889158401444589
-
-Investigating lambda[j=4][3]...
-Smallest extracted threshold: -0.98393989471571
-Largest extracted threshold: 0.9907535027268224
-
-Investigating lambda[j=4][4]...
-Smallest extracted threshold: -0.9956580335046289
-Largest extracted threshold: 0.9923873500481566
-
-Keeping thresholds for lambda[j=4][5] from previous step.
-
-*** Changing lambda[j=4][2] from 0.1199 (score: 0.5607) to 0.1315 (score: 0.5608) ***
-*** Old lambda[j=4]: {1.3246918939072398, 0.11992705791987282, 0.2815800420089276, -0.9815082879146984, -1.3464367021115993} ***
-*** New lambda[j=4]: {1.3246918939072398, 0.13147169071095832, 0.2815800420089276, -0.9815082879146984, -1.3464367021115993} ***
-
-Investigating lambda[j=4][1]...
-Smallest extracted threshold: 0.5000227839442947
-Largest extracted threshold: 1.489282526662842
-
-Keeping thresholds for lambda[j=4][2] from previous step.
-
-Investigating lambda[j=4][3]...
-Smallest extracted threshold: -0.9766722262483222
-Largest extracted threshold: 0.997943581044074
-
-Investigating lambda[j=4][4]...
-Smallest extracted threshold: -0.9899702281908022
-Largest extracted threshold: 0.9810137976154092
-
-Investigating lambda[j=4][5]...
-Smallest extracted threshold: -4.996127120071006
-Largest extracted threshold: -0.07012210110915716
+Smallest extracted threshold: -49.747798376595846
+Largest extracted threshold: 39.10892250600878
 
 *** Not changing any weight in lambda[j=4] ***
-*** Final lambda[j=4]: {1.3246918939072398, 0.13147169071095832, 0.2815800420089276, -0.9815082879146984, -1.3464367021115993} ***
+*** lambda[j=4]: {1.3246918939072398, -0.48862590108157483, 0.2815800420089276, -1.8671789489192607, -0.8651160558376816} ***
 
-Final lambda[j=4]: {1.3246918939072398, 0.13147169071095832, 0.2815800420089276, -0.9815082879146984, -1.3464367021115993}
-(Final score[j=4]: 0.5608010553508939)
+Final lambda[j=4]: {1.3246918939072398, -0.48862590108157483, 0.2815800420089276, -1.8671789489192607, -0.8651160558376816}
+(Final BLEU[j=4]: 0.5586200837876923)
 
-+++ Optimization of lambda[j=5] starting @ Tue Dec 02 23:30:55 EST 2008 +++
++++ Optimization of lambda[j=5] starting @ Mon Jan 26 12:58:34 EST 2009 +++
 Initial lambda[j=5]: {1.1633493083131994, 0.009245077311689887, -0.9330111163449395, 0.6515944996339995, -2.279895055260242}
-(Initial score[j=5]: 0.5241401509002395)
+(Initial BLEU[j=5]: 0.5241401509002395)
 
 Investigating lambda[j=5][1]...
-Smallest extracted threshold: 0.5339674405025195
-Largest extracted threshold: 1.4573820334358876
+Smallest extracted threshold: -140.69630856332122
+Largest extracted threshold: 204.88639621052945
 
 Investigating lambda[j=5][2]...
-Smallest extracted threshold: -0.9963793395768726
-Largest extracted threshold: 0.9976655630250975
+Smallest extracted threshold: -565.7167376242244
+Largest extracted threshold: 583.7905637618749
 
 Investigating lambda[j=5][3]...
-Smallest extracted threshold: -0.9823044438016323
-Largest extracted threshold: 0.9942652647914475
+Smallest extracted threshold: -407.6489816857898
+Largest extracted threshold: 119.9181504812403
 
 Investigating lambda[j=5][4]...
-Smallest extracted threshold: -0.9507264169773555
-Largest extracted threshold: 0.9966003140302491
+Smallest extracted threshold: -260.5858403987632
+Largest extracted threshold: 1432.3590294778796
 
 Investigating lambda[j=5][5]...
-Smallest extracted threshold: -4.950960439610388
-Largest extracted threshold: -0.0021082043558139046
+Smallest extracted threshold: -39.12579967159199
+Largest extracted threshold: 21.01469376195658
 
-*** Changing lambda[j=5][3] from -0.9330 (score: 0.5241) to 0.8649 (score: 0.5518) ***
+*** Changing lambda[j=5][3] from -0.9330 (BLEU: 0.5241) to 1.1370 (BLEU: 0.5523) ***
 *** Old lambda[j=5]: {1.1633493083131994, 0.009245077311689887, -0.9330111163449395, 0.6515944996339995, -2.279895055260242} ***
-*** New lambda[j=5]: {1.1633493083131994, 0.009245077311689887, 0.8649209397286479, 0.6515944996339995, -2.279895055260242} ***
+*** New lambda[j=5]: {1.1633493083131994, 0.009245077311689887, 1.136969198198622, 0.6515944996339995, -2.279895055260242} ***
 
 Investigating lambda[j=5][1]...
-Smallest extracted threshold: 0.5004027456065335
-Largest extracted threshold: 1.4802041575766012
+Smallest extracted threshold: -121.24871054603358
+Largest extracted threshold: 199.34052705755744
 
 Investigating lambda[j=5][2]...
-Smallest extracted threshold: -0.9963793395768732
-Largest extracted threshold: 0.9976655630250566
+Smallest extracted threshold: -547.2139586647681
+Largest extracted threshold: 133.8013188890058
 
 Keeping thresholds for lambda[j=5][3] from previous step.
 
 Investigating lambda[j=5][4]...
-Smallest extracted threshold: -0.9755865636662042
-Largest extracted threshold: 0.9942223189628093
+Smallest extracted threshold: -136.34030974772273
+Largest extracted threshold: 399.5489052527774
 
 Investigating lambda[j=5][5]...
-Smallest extracted threshold: -4.9755679715508405
-Largest extracted threshold: -0.019829680327597184
+Smallest extracted threshold: -19.88179800469443
+Largest extracted threshold: 17.746523562587544
 
-*** Changing lambda[j=5][4] from 0.6516 (score: 0.5518) to 0.3686 (score: 0.5573) ***
-*** Old lambda[j=5]: {1.1633493083131994, 0.009245077311689887, 0.8649209397286479, 0.6515944996339995, -2.279895055260242} ***
-*** New lambda[j=5]: {1.1633493083131994, 0.009245077311689887, 0.8649209397286479, 0.36859855486958526, -2.279895055260242} ***
+*** Changing lambda[j=5][4] from 0.6516 (BLEU: 0.5523) to 0.4317 (BLEU: 0.5557) ***
+*** Old lambda[j=5]: {1.1633493083131994, 0.009245077311689887, 1.136969198198622, 0.6515944996339995, -2.279895055260242} ***
+*** New lambda[j=5]: {1.1633493083131994, 0.009245077311689887, 1.136969198198622, 0.43167353482232107, -2.279895055260242} ***
 
 Investigating lambda[j=5][1]...
-Smallest extracted threshold: 0.5030965108080159
-Largest extracted threshold: 1.4930913660768919
+Smallest extracted threshold: -113.0069105790382
+Largest extracted threshold: 156.7491668723638
 
 Investigating lambda[j=5][2]...
-Smallest extracted threshold: -0.9038035719511601
-Largest extracted threshold: 0.9988597561035961
+Smallest extracted threshold: -461.1515544351349
+Largest extracted threshold: 177.19447425841022
 
 Investigating lambda[j=5][3]...
-Smallest extracted threshold: -0.9949846544936339
-Largest extracted threshold: 0.9829186520524644
+Smallest extracted threshold: -430.5024352791369
+Largest extracted threshold: 107.01612054562372
 
 Keeping thresholds for lambda[j=5][4] from previous step.
 
 Investigating lambda[j=5][5]...
-Smallest extracted threshold: -4.981452153767553
-Largest extracted threshold: -0.019913188389404448
+Smallest extracted threshold: -20.398662945035216
+Largest extracted threshold: 18.17675974892027
 
-*** Changing lambda[j=5][2] from 0.0092 (score: 0.5573) to 0.1072 (score: 0.5579) ***
-*** Old lambda[j=5]: {1.1633493083131994, 0.009245077311689887, 0.8649209397286479, 0.36859855486958526, -2.279895055260242} ***
-*** New lambda[j=5]: {1.1633493083131994, 0.10720781610804561, 0.8649209397286479, 0.36859855486958526, -2.279895055260242} ***
+*** Changing lambda[j=5][3] from 1.1370 (BLEU: 0.5557) to 0.8143 (BLEU: 0.5571) ***
+*** Old lambda[j=5]: {1.1633493083131994, 0.009245077311689887, 1.136969198198622, 0.43167353482232107, -2.279895055260242} ***
+*** New lambda[j=5]: {1.1633493083131994, 0.009245077311689887, 0.8142964522437366, 0.43167353482232107, -2.279895055260242} ***
 
 Investigating lambda[j=5][1]...
-Smallest extracted threshold: 0.5023319886277348
-Largest extracted threshold: 1.4867331732702036
+Smallest extracted threshold: -86.81042195494686
+Largest extracted threshold: 136.52834145919255
+
+Investigating lambda[j=5][2]...
+Smallest extracted threshold: -426.3028978720181
+Largest extracted threshold: 161.5650131262208
+
+Keeping thresholds for lambda[j=5][3] from previous step.
+
+Investigating lambda[j=5][4]...
+Smallest extracted threshold: -71.04310215015454
+Largest extracted threshold: 289.96924072651655
+
+Investigating lambda[j=5][5]...
+Smallest extracted threshold: -21.62261505885315
+Largest extracted threshold: 16.946152655726813
+
+*** Changing lambda[j=5][4] from 0.4317 (BLEU: 0.5571) to -0.1396 (BLEU: 0.5591) ***
+*** Old lambda[j=5]: {1.1633493083131994, 0.009245077311689887, 0.8142964522437366, 0.43167353482232107, -2.279895055260242} ***
+*** New lambda[j=5]: {1.1633493083131994, 0.009245077311689887, 0.8142964522437366, -0.13960569451586213, -2.279895055260242} ***
+
+Investigating lambda[j=5][1]...
+Smallest extracted threshold: -197.281542928083
+Largest extracted threshold: 79.73607643250598
+
+Investigating lambda[j=5][2]...
+Smallest extracted threshold: -202.74229279102644
+Largest extracted threshold: 274.28554606501075
+
+Investigating lambda[j=5][3]...
+Smallest extracted threshold: -489.8678685278601
+Largest extracted threshold: 99.08716181743227
+
+Keeping thresholds for lambda[j=5][4] from previous step.
+
+Investigating lambda[j=5][5]...
+Smallest extracted threshold: -24.306102321927437
+Largest extracted threshold: 18.063758688294165
+
+*** Changing lambda[j=5][3] from 0.8143 (BLEU: 0.5591) to 0.6756 (BLEU: 0.5609) ***
+*** Old lambda[j=5]: {1.1633493083131994, 0.009245077311689887, 0.8142964522437366, -0.13960569451586213, -2.279895055260242} ***
+*** New lambda[j=5]: {1.1633493083131994, 0.009245077311689887, 0.6756066084808695, -0.13960569451586213, -2.279895055260242} ***
+
+Investigating lambda[j=5][1]...
+Smallest extracted threshold: -189.1508508374948
+Largest extracted threshold: 80.55830907767137
+
+Investigating lambda[j=5][2]...
+Smallest extracted threshold: -187.76378966462676
+Largest extracted threshold: 267.56775675774645
+
+Keeping thresholds for lambda[j=5][3] from previous step.
+
+Investigating lambda[j=5][4]...
+Smallest extracted threshold: -72.93048201730964
+Largest extracted threshold: 362.9499660134695
+
+Investigating lambda[j=5][5]...
+Smallest extracted threshold: -25.804208284048002
+Largest extracted threshold: 17.597703454841273
+
+*** Changing lambda[j=5][2] from 0.0092 (BLEU: 0.5609) to 0.7138 (BLEU: 0.5619) ***
+*** Old lambda[j=5]: {1.1633493083131994, 0.009245077311689887, 0.6756066084808695, -0.13960569451586213, -2.279895055260242} ***
+*** New lambda[j=5]: {1.1633493083131994, 0.7138278990132798, 0.6756066084808695, -0.13960569451586213, -2.279895055260242} ***
+
+Investigating lambda[j=5][1]...
+Smallest extracted threshold: -197.86129380463797
+Largest extracted threshold: 161.8737065576157
 
 Keeping thresholds for lambda[j=5][2] from previous step.
 
 Investigating lambda[j=5][3]...
-Smallest extracted threshold: -0.9359920912721884
-Largest extracted threshold: 0.9998118991993138
+Smallest extracted threshold: -266.92612069445624
+Largest extracted threshold: 49.11210882102829
 
 Investigating lambda[j=5][4]...
-Smallest extracted threshold: -0.9867176505577075
-Largest extracted threshold: 0.9904715171111023
+Smallest extracted threshold: -45.42239435337687
+Largest extracted threshold: 342.7988973127995
 
 Investigating lambda[j=5][5]...
-Smallest extracted threshold: -4.993971726140144
-Largest extracted threshold: -0.009489244526117975
+Smallest extracted threshold: -16.85081136772481
+Largest extracted threshold: 15.915093694031672
 
-*** Changing lambda[j=5][4] from 0.3686 (score: 0.5579) to 0.2080 (score: 0.5582) ***
-*** Old lambda[j=5]: {1.1633493083131994, 0.10720781610804561, 0.8649209397286479, 0.36859855486958526, -2.279895055260242} ***
-*** New lambda[j=5]: {1.1633493083131994, 0.10720781610804561, 0.8649209397286479, 0.2079540757187951, -2.279895055260242} ***
+*** Changing lambda[j=5][5] from -2.2799 (BLEU: 0.5619) to -2.4872 (BLEU: 0.5621) ***
+*** Old lambda[j=5]: {1.1633493083131994, 0.7138278990132798, 0.6756066084808695, -0.13960569451586213, -2.279895055260242} ***
+*** New lambda[j=5]: {1.1633493083131994, 0.7138278990132798, 0.6756066084808695, -0.13960569451586213, -2.487189154692746} ***
 
 Investigating lambda[j=5][1]...
-Smallest extracted threshold: 0.5029552368748353
-Largest extracted threshold: 1.4896885668248032
+Smallest extracted threshold: -210.713527969457
+Largest extracted threshold: 161.8737065576157
 
 Investigating lambda[j=5][2]...
-Smallest extracted threshold: -0.9893929067872957
-Largest extracted threshold: 0.9976655630250975
+Smallest extracted threshold: -224.1313660496297
+Largest extracted threshold: 278.8264175331745
 
 Investigating lambda[j=5][3]...
-Smallest extracted threshold: -0.9753791744161316
-Largest extracted threshold: 0.9992482543878579
+Smallest extracted threshold: -274.4232572905979
+Largest extracted threshold: 52.066286876929965
 
-Keeping thresholds for lambda[j=5][4] from previous step.
+Investigating lambda[j=5][4]...
+Smallest extracted threshold: -42.60880881628781
+Largest extracted threshold: 324.8057694820552
 
-Investigating lambda[j=5][5]...
-Smallest extracted threshold: -4.991959385448254
-Largest extracted threshold: -0.0031093819221105455
+Keeping thresholds for lambda[j=5][5] from previous step.
 
-*** Changing lambda[j=5][3] from 0.8649 (score: 0.5582) to 0.6638 (score: 0.5596) ***
-*** Old lambda[j=5]: {1.1633493083131994, 0.10720781610804561, 0.8649209397286479, 0.2079540757187951, -2.279895055260242} ***
-*** New lambda[j=5]: {1.1633493083131994, 0.10720781610804561, 0.6638333103823149, 0.2079540757187951, -2.279895055260242} ***
+*** Changing lambda[j=5][2] from 0.7138 (BLEU: 0.5621) to 0.6736 (BLEU: 0.5627) ***
+*** Old lambda[j=5]: {1.1633493083131994, 0.7138278990132798, 0.6756066084808695, -0.13960569451586213, -2.487189154692746} ***
+*** New lambda[j=5]: {1.1633493083131994, 0.6736080506493016, 0.6756066084808695, -0.13960569451586213, -2.487189154692746} ***
 
 Investigating lambda[j=5][1]...
-Smallest extracted threshold: 0.501996558435609
-Largest extracted threshold: 1.4974186653368415
+Smallest extracted threshold: -205.92736601414208
+Largest extracted threshold: 153.6152310268798
+
+Keeping thresholds for lambda[j=5][2] from previous step.
+
+Investigating lambda[j=5][3]...
+Smallest extracted threshold: -287.14948764376635
+Largest extracted threshold: 54.10688423602782
+
+Investigating lambda[j=5][4]...
+Smallest extracted threshold: -44.17905872949801
+Largest extracted threshold: 325.9560571452662
+
+Investigating lambda[j=5][5]...
+Smallest extracted threshold: -17.36189999382465
+Largest extracted threshold: 16.007553115558043
+
+*** Changing lambda[j=5][3] from 0.6756 (BLEU: 0.5627) to 0.6920 (BLEU: 0.5628) ***
+*** Old lambda[j=5]: {1.1633493083131994, 0.6736080506493016, 0.6756066084808695, -0.13960569451586213, -2.487189154692746} ***
+*** New lambda[j=5]: {1.1633493083131994, 0.6736080506493016, 0.6920088676178986, -0.13960569451586213, -2.487189154692746} ***
+
+Investigating lambda[j=5][1]...
+Smallest extracted threshold: -204.93385774641334
+Largest extracted threshold: 154.64310593280047
 
 Investigating lambda[j=5][2]...
-Smallest extracted threshold: -0.9771723957657866
-Largest extracted threshold: 0.9976655630250975
+Smallest extracted threshold: -220.30963967069013
+Largest extracted threshold: 279.62090196012434
 
 Keeping thresholds for lambda[j=5][3] from previous step.
 
 Investigating lambda[j=5][4]...
-Smallest extracted threshold: -0.9930717929822608
-Largest extracted threshold: 0.9993454200574637
+Smallest extracted threshold: -43.72645889143541
+Largest extracted threshold: 315.05183527096693
 
 Investigating lambda[j=5][5]...
-Smallest extracted threshold: -4.988173730591184
-Largest extracted threshold: -0.058637126406902475
+Smallest extracted threshold: -17.184725360565686
+Largest extracted threshold: 16.070107938335806
 
-*** Changing lambda[j=5][4] from 0.2080 (score: 0.5596) to 0.1351 (score: 0.5614) ***
-*** Old lambda[j=5]: {1.1633493083131994, 0.10720781610804561, 0.6638333103823149, 0.2079540757187951, -2.279895055260242} ***
-*** New lambda[j=5]: {1.1633493083131994, 0.10720781610804561, 0.6638333103823149, 0.13506059239642942, -2.279895055260242} ***
+*** Changing lambda[j=5][2] from 0.6736 (BLEU: 0.5628) to 0.6681 (BLEU: 0.5632) ***
+*** Old lambda[j=5]: {1.1633493083131994, 0.6736080506493016, 0.6920088676178986, -0.13960569451586213, -2.487189154692746} ***
+*** New lambda[j=5]: {1.1633493083131994, 0.668066974086914, 0.6920088676178986, -0.13960569451586213, -2.487189154692746} ***
 
 Investigating lambda[j=5][1]...
-Smallest extracted threshold: 0.5007269548193888
-Largest extracted threshold: 1.4765009222269003
+Smallest extracted threshold: -204.27446963548903
+Largest extracted threshold: 153.50533821198977
 
-Investigating lambda[j=5][2]...
-Smallest extracted threshold: -0.9801904762176042
-Largest extracted threshold: 0.9977725050956536
+Keeping thresholds for lambda[j=5][2] from previous step.
 
 Investigating lambda[j=5][3]...
-Smallest extracted threshold: -0.990527457693082
-Largest extracted threshold: 0.9995773315993239
-
-Keeping thresholds for lambda[j=5][4] from previous step.
-
-Investigating lambda[j=5][5]...
-Smallest extracted threshold: -4.9766955112425135
-Largest extracted threshold: -0.00297574240605547
-
-*** Changing lambda[j=5][3] from 0.6638 (score: 0.5614) to 0.7042 (score: 0.5615) ***
-*** Old lambda[j=5]: {1.1633493083131994, 0.10720781610804561, 0.6638333103823149, 0.13506059239642942, -2.279895055260242} ***
-*** New lambda[j=5]: {1.1633493083131994, 0.10720781610804561, 0.704199154669472, 0.13506059239642942, -2.279895055260242} ***
-
-Investigating lambda[j=5][1]...
-Smallest extracted threshold: 0.5000027638084008
-Largest extracted threshold: 1.4753675871803225
-
-Investigating lambda[j=5][2]...
-Smallest extracted threshold: -0.9724844446568959
-Largest extracted threshold: 0.998393376568187
-
-Keeping thresholds for lambda[j=5][3] from previous step.
+Smallest extracted threshold: -288.9027766193815
+Largest extracted threshold: 54.4999048807744
 
 Investigating lambda[j=5][4]...
-Smallest extracted threshold: -0.9768221251402902
-Largest extracted threshold: 0.9896478896667861
+Smallest extracted threshold: -43.94279175555863
+Largest extracted threshold: 315.2103100606512
 
 Investigating lambda[j=5][5]...
-Smallest extracted threshold: -4.969289305015599
-Largest extracted threshold: -0.011629730167655162
-
-*** Changing lambda[j=5][1] from 1.1633 (score: 0.5615) to 1.1594 (score: 0.5617) ***
-*** Old lambda[j=5]: {1.1633493083131994, 0.10720781610804561, 0.704199154669472, 0.13506059239642942, -2.279895055260242} ***
-*** New lambda[j=5]: {1.1593654767682184, 0.10720781610804561, 0.704199154669472, 0.13506059239642942, -2.279895055260242} ***
-
-Keeping thresholds for lambda[j=5][1] from previous step.
-
-Investigating lambda[j=5][2]...
-Smallest extracted threshold: -0.9704988928325655
-Largest extracted threshold: 0.9942491071825406
-
-Investigating lambda[j=5][3]...
-Smallest extracted threshold: -0.9913415450087166
-Largest extracted threshold: 0.994753706100048
-
-Investigating lambda[j=5][4]...
-Smallest extracted threshold: -0.9961933505395542
-Largest extracted threshold: 0.9927540023898747
-
-Investigating lambda[j=5][5]...
-Smallest extracted threshold: -4.948846925175373
-Largest extracted threshold: -0.017097322689498633
+Smallest extracted threshold: -17.25513788877208
+Largest extracted threshold: 16.082846045375796
 
 *** Not changing any weight in lambda[j=5] ***
-*** Final lambda[j=5]: {1.1593654767682184, 0.10720781610804561, 0.704199154669472, 0.13506059239642942, -2.279895055260242} ***
+*** lambda[j=5]: {1.1633493083131994, 0.668066974086914, 0.6920088676178986, -0.13960569451586213, -2.487189154692746} ***
 
-Final lambda[j=5]: {1.1593654767682184, 0.10720781610804561, 0.704199154669472, 0.13506059239642942, -2.279895055260242}
-(Final score[j=5]: 0.5617115224613879)
+Final lambda[j=5]: {1.1633493083131994, 0.668066974086914, 0.6920088676178986, -0.13960569451586213, -2.487189154692746}
+(Final BLEU[j=5]: 0.5632382223710894)
 
-Best final lambda is lambda[j=2] (score: 0.5634).
+Best final lambda is lambda[j=2] (BLEU: 0.5634).
+
+---  MERT iteration #1 ending @ Mon Jan 26 12:58:35 EST 2009  ---
 
 Next iteration will decode with lambda: {1.064862597065697, 0.4283377575186086, 0.5767242181075545, -0.46488329839005016, -1.5057547803312556}
 
----  MERT iteration #1 ending @ Tue Dec 02 23:30:55 EST 2008  ---
-
-
---- Starting MERT iteration #2 @ Tue Dec 02 23:30:55 EST 2008 ---
+--- Starting MERT iteration #2 @ Mon Jan 26 12:58:35 EST 2009 ---
 Redecoding using weight vector {1.064862597065697, 0.4283377575186086, 0.5767242181075545, -0.46488329839005016, -1.5057547803312556}
 Running external decoder...
-...finished decoding @ Tue Dec 02 23:33:38 EST 2008
+...finished decoding @ Mon Jan 26 13:01:19 EST 2009
 Reading candidate translations from iterations 1-2
-......
+
 Processed 56069 distinct candidates (about 560 per sentence):
 newCandidatesAdded[it=1] = 28100 (about 281 per sentence)
 newCandidatesAdded[it=2] = 27969 (about 279 per sentence)
 
-+++ Optimization of lambda[j=1] starting @ Tue Dec 02 23:33:43 EST 2008 +++
++++ Optimization of lambda[j=1] starting @ Mon Jan 26 13:01:23 EST 2009 +++
 Initial lambda[j=1]: {1.064862597065697, 0.4283377575186086, 0.5767242181075545, -0.46488329839005016, -1.5057547803312556}
-(Initial score[j=1]: 0.49162556348365827)
+(Initial BLEU[j=1]: 0.49162556348365827)
 
 Investigating lambda[j=1][1]...
-Smallest extracted threshold: 0.5026900744730839
-Largest extracted threshold: 1.4984436367683844
+Smallest extracted threshold: -94.35537581656189
+Largest extracted threshold: 142.4754324870577
 
 Investigating lambda[j=1][2]...
-Smallest extracted threshold: -0.9947661211657066
-Largest extracted threshold: 0.99687513427579
+Smallest extracted threshold: -31.87051006850791
+Largest extracted threshold: 277.8475629743757
 
 Investigating lambda[j=1][3]...
-Smallest extracted threshold: -0.9729178702164417
-Largest extracted threshold: 0.995702000566125
+Smallest extracted threshold: -75.18590713017468
+Largest extracted threshold: 260.96455188533855
 
 Investigating lambda[j=1][4]...
-Smallest extracted threshold: -0.9980170656003537
-Largest extracted threshold: 0.9989628979399356
+Smallest extracted threshold: -13.466687082748813
+Largest extracted threshold: 398.3704442962438
 
 Investigating lambda[j=1][5]...
-Smallest extracted threshold: -4.969103924833152
-Largest extracted threshold: -0.01079501297127361
+Smallest extracted threshold: -14.659200180859772
+Largest extracted threshold: 15.585615697738008
 
-*** Changing lambda[j=1][4] from -0.4649 (score: 0.4916) to -0.1645 (score: 0.5650) ***
+*** Changing lambda[j=1][4] from -0.4649 (BLEU: 0.4916) to -0.1645 (BLEU: 0.5650) ***
 *** Old lambda[j=1]: {1.064862597065697, 0.4283377575186086, 0.5767242181075545, -0.46488329839005016, -1.5057547803312556} ***
 *** New lambda[j=1]: {1.064862597065697, 0.4283377575186086, 0.5767242181075545, -0.16445783646342022, -1.5057547803312556} ***
 
 Investigating lambda[j=1][1]...
-Smallest extracted threshold: 0.5000620107628369
-Largest extracted threshold: 1.4683140068981857
+Smallest extracted threshold: -35.434302953080135
+Largest extracted threshold: 92.24340288347523
 
 Investigating lambda[j=1][2]...
-Smallest extracted threshold: -0.9817803918746716
-Largest extracted threshold: 0.998061854783388
+Smallest extracted threshold: -47.86557604142917
+Largest extracted threshold: 218.56986401797786
 
 Investigating lambda[j=1][3]...
-Smallest extracted threshold: -0.9829855052715345
-Largest extracted threshold: 0.9989900069548279
+Smallest extracted threshold: -389.26591116711427
+Largest extracted threshold: 266.20834176624004
 
 Keeping thresholds for lambda[j=1][4] from previous step.
 
 Investigating lambda[j=1][5]...
-Smallest extracted threshold: -4.939275160939336
-Largest extracted threshold: -0.014046006492486003
+Smallest extracted threshold: -14.44391834063124
+Largest extracted threshold: 14.99788680555511
 
-*** Changing lambda[j=1][3] from 0.5767 (score: 0.5650) to 0.8521 (score: 0.5667) ***
+*** Changing lambda[j=1][3] from 0.5767 (BLEU: 0.5650) to 0.8521 (BLEU: 0.5667) ***
 *** Old lambda[j=1]: {1.064862597065697, 0.4283377575186086, 0.5767242181075545, -0.16445783646342022, -1.5057547803312556} ***
 *** New lambda[j=1]: {1.064862597065697, 0.4283377575186086, 0.8520918984088794, -0.16445783646342022, -1.5057547803312556} ***
 
 Investigating lambda[j=1][1]...
-Smallest extracted threshold: 0.5003212829146508
-Largest extracted threshold: 1.489231755284944
+Smallest extracted threshold: -59.8302319973812
+Largest extracted threshold: 109.4997775156911
 
 Investigating lambda[j=1][2]...
-Smallest extracted threshold: -0.9943086199397511
-Largest extracted threshold: 0.9999139144055296
+Smallest extracted threshold: -33.94051731170882
+Largest extracted threshold: 231.90798603257304
 
 Keeping thresholds for lambda[j=1][3] from previous step.
 
 Investigating lambda[j=1][4]...
-Smallest extracted threshold: -0.9931578574820014
-Largest extracted threshold: 0.983225147975038
+Smallest extracted threshold: -92.59482739813649
+Largest extracted threshold: 215.30601043188418
 
 Investigating lambda[j=1][5]...
-Smallest extracted threshold: -4.939275160939344
-Largest extracted threshold: -0.008531218332300122
+Smallest extracted threshold: -14.663451099581144
+Largest extracted threshold: 16.048082165600857
 
-*** Changing lambda[j=1][1] from 1.0649 (score: 0.5667) to 1.3911 (score: 0.5681) ***
+*** Changing lambda[j=1][1] from 1.0649 (BLEU: 0.5667) to 1.5322 (BLEU: 0.5682) ***
 *** Old lambda[j=1]: {1.064862597065697, 0.4283377575186086, 0.8520918984088794, -0.16445783646342022, -1.5057547803312556} ***
-*** New lambda[j=1]: {1.3910676004625644, 0.4283377575186086, 0.8520918984088794, -0.16445783646342022, -1.5057547803312556} ***
+*** New lambda[j=1]: {1.5321812228430074, 0.4283377575186086, 0.8520918984088794, -0.16445783646342022, -1.5057547803312556} ***
 
 Keeping thresholds for lambda[j=1][1] from previous step.
 
 Investigating lambda[j=1][2]...
-Smallest extracted threshold: -0.9989713468312846
-Largest extracted threshold: 0.9782472577092237
+Smallest extracted threshold: -86.43329053479809
+Largest extracted threshold: 265.43809743209624
 
 Investigating lambda[j=1][3]...
-Smallest extracted threshold: -0.9826203383177536
-Largest extracted threshold: 0.9891628842277902
+Smallest extracted threshold: -744.7618657763911
+Largest extracted threshold: 343.46568449760707
 
 Investigating lambda[j=1][4]...
-Smallest extracted threshold: -0.997047056925844
-Largest extracted threshold: 0.9915954190395024
+Smallest extracted threshold: -29.818358668728525
+Largest extracted threshold: 621.1255050569803
 
 Investigating lambda[j=1][5]...
-Smallest extracted threshold: -4.9950080295186465
-Largest extracted threshold: -0.005137188679062044
+Smallest extracted threshold: -22.09747827093265
+Largest extracted threshold: 21.9556341728409
 
-*** Changing lambda[j=1][2] from 0.4283 (score: 0.5681) to 0.4035 (score: 0.5694) ***
-*** Old lambda[j=1]: {1.3910676004625644, 0.4283377575186086, 0.8520918984088794, -0.16445783646342022, -1.5057547803312556} ***
-*** New lambda[j=1]: {1.3910676004625644, 0.4035117136278698, 0.8520918984088794, -0.16445783646342022, -1.5057547803312556} ***
+*** Changing lambda[j=1][3] from 0.8521 (BLEU: 0.5682) to 1.2621 (BLEU: 0.5701) ***
+*** Old lambda[j=1]: {1.5321812228430074, 0.4283377575186086, 0.8520918984088794, -0.16445783646342022, -1.5057547803312556} ***
+*** New lambda[j=1]: {1.5321812228430074, 0.4283377575186086, 1.2621056283353809, -0.16445783646342022, -1.5057547803312556} ***
 
 Investigating lambda[j=1][1]...
-Smallest extracted threshold: 0.5011300779186102
-Largest extracted threshold: 1.48994273580349
+Smallest extracted threshold: -99.17104938382279
+Largest extracted threshold: 135.193971257751
+
+Investigating lambda[j=1][2]...
+Smallest extracted threshold: -65.6993203645494
+Largest extracted threshold: 285.2981374754104
+
+Keeping thresholds for lambda[j=1][3] from previous step.
+
+Investigating lambda[j=1][4]...
+Smallest extracted threshold: -160.06605354204225
+Largest extracted threshold: 348.5483774017891
+
+Investigating lambda[j=1][5]...
+Smallest extracted threshold: -22.424355576357915
+Largest extracted threshold: 23.519341708353707
+
+*** Changing lambda[j=1][2] from 0.4283 (BLEU: 0.5701) to 0.2493 (BLEU: 0.5709) ***
+*** Old lambda[j=1]: {1.5321812228430074, 0.4283377575186086, 1.2621056283353809, -0.16445783646342022, -1.5057547803312556} ***
+*** New lambda[j=1]: {1.5321812228430074, 0.2492952555989255, 1.2621056283353809, -0.16445783646342022, -1.5057547803312556} ***
+
+Investigating lambda[j=1][1]...
+Smallest extracted threshold: -81.15042156560942
+Largest extracted threshold: 98.43057753024436
 
 Keeping thresholds for lambda[j=1][2] from previous step.
 
 Investigating lambda[j=1][3]...
-Smallest extracted threshold: -0.9750150307503271
-Largest extracted threshold: 0.9934862406657805
+Smallest extracted threshold: -557.4066762675299
+Largest extracted threshold: 353.26419232994004
 
 Investigating lambda[j=1][4]...
-Smallest extracted threshold: -0.9999566176947798
-Largest extracted threshold: 0.987474532456318
+Smallest extracted threshold: -220.34369585499877
+Largest extracted threshold: 379.1048968211332
 
 Investigating lambda[j=1][5]...
-Smallest extracted threshold: -4.987903326877713
-Largest extracted threshold: -0.034454411277468594
+Smallest extracted threshold: -23.70900615464799
+Largest extracted threshold: 23.930933666789773
 
-*** Changing lambda[j=1][5] from -1.5058 (score: 0.5694) to -1.2866 (score: 0.5708) ***
-*** Old lambda[j=1]: {1.3910676004625644, 0.4035117136278698, 0.8520918984088794, -0.16445783646342022, -1.5057547803312556} ***
-*** New lambda[j=1]: {1.3910676004625644, 0.4035117136278698, 0.8520918984088794, -0.16445783646342022, -1.286642722138014} ***
+*** Changing lambda[j=1][1] from 1.5322 (BLEU: 0.5709) to 1.6666 (BLEU: 0.5713) ***
+*** Old lambda[j=1]: {1.5321812228430074, 0.2492952555989255, 1.2621056283353809, -0.16445783646342022, -1.5057547803312556} ***
+*** New lambda[j=1]: {1.666617449991874, 0.2492952555989255, 1.2621056283353809, -0.16445783646342022, -1.5057547803312556} ***
 
-Investigating lambda[j=1][1]...
-Smallest extracted threshold: 0.5008341535098605
-Largest extracted threshold: 1.4887818813305538
+Keeping thresholds for lambda[j=1][1] from previous step.
 
 Investigating lambda[j=1][2]...
-Smallest extracted threshold: -0.9989713468312846
-Largest extracted threshold: 0.9919234842109349
+Smallest extracted threshold: -80.80021725894362
+Largest extracted threshold: 294.9439367733417
 
 Investigating lambda[j=1][3]...
-Smallest extracted threshold: -0.9992302944327667
-Largest extracted threshold: 0.9934862406657838
+Smallest extracted threshold: -659.6742347772372
+Largest extracted threshold: 385.46777946969297
 
 Investigating lambda[j=1][4]...
-Smallest extracted threshold: -0.9981270142401268
-Largest extracted threshold: 0.9969576993518928
+Smallest extracted threshold: -202.2844293413299
+Largest extracted threshold: 470.41341261279234
 
-Keeping thresholds for lambda[j=1][5] from previous step.
+Investigating lambda[j=1][5]...
+Smallest extracted threshold: -25.84759535334792
+Largest extracted threshold: 25.630393007230253
 
-*** Changing lambda[j=1][4] from -0.1645 (score: 0.5708) to -0.1991 (score: 0.5715) ***
-*** Old lambda[j=1]: {1.3910676004625644, 0.4035117136278698, 0.8520918984088794, -0.16445783646342022, -1.286642722138014} ***
-*** New lambda[j=1]: {1.3910676004625644, 0.4035117136278698, 0.8520918984088794, -0.19911744752711164, -1.286642722138014} ***
+*** Changing lambda[j=1][3] from 1.2621 (BLEU: 0.5713) to 1.3308 (BLEU: 0.5719) ***
+*** Old lambda[j=1]: {1.666617449991874, 0.2492952555989255, 1.2621056283353809, -0.16445783646342022, -1.5057547803312556} ***
+*** New lambda[j=1]: {1.666617449991874, 0.2492952555989255, 1.3308445608117467, -0.16445783646342022, -1.5057547803312556} ***
 
 Investigating lambda[j=1][1]...
-Smallest extracted threshold: 0.5017468097819727
-Largest extracted threshold: 1.470868775753462
+Smallest extracted threshold: -87.74592213671554
+Largest extracted threshold: 102.73821729876279
 
 Investigating lambda[j=1][2]...
-Smallest extracted threshold: -0.9989713468312846
-Largest extracted threshold: 0.9931618437072771
+Smallest extracted threshold: -77.32416055285428
+Largest extracted threshold: 298.2734788151655
+
+Keeping thresholds for lambda[j=1][3] from previous step.
+
+Investigating lambda[j=1][4]...
+Smallest extracted threshold: -224.1204968913271
+Largest extracted threshold: 424.7157703025003
+
+Investigating lambda[j=1][5]...
+Smallest extracted threshold: -26.035553732253735
+Largest extracted threshold: 25.892549073846993
+
+*** Changing lambda[j=1][4] from -0.1645 (BLEU: 0.5719) to -0.1737 (BLEU: 0.5724) ***
+*** Old lambda[j=1]: {1.666617449991874, 0.2492952555989255, 1.3308445608117467, -0.16445783646342022, -1.5057547803312556} ***
+*** New lambda[j=1]: {1.666617449991874, 0.2492952555989255, 1.3308445608117467, -0.17365162187063343, -1.5057547803312556} ***
+
+Investigating lambda[j=1][1]...
+Smallest extracted threshold: -85.93658516857647
+Largest extracted threshold: 100.95768752489766
+
+Investigating lambda[j=1][2]...
+Smallest extracted threshold: -76.83467073669091
+Largest extracted threshold: 300.08752759832606
 
 Investigating lambda[j=1][3]...
-Smallest extracted threshold: -0.955721231380645
-Largest extracted threshold: 0.9852025144969957
+Smallest extracted threshold: -647.6500768625082
+Largest extracted threshold: 385.4610930803062
 
 Keeping thresholds for lambda[j=1][4] from previous step.
 
 Investigating lambda[j=1][5]...
-Smallest extracted threshold: -4.982223664261089
-Largest extracted threshold: -0.01175793596948791
-
-*** Changing lambda[j=1][2] from 0.4035 (score: 0.5715) to 0.4022 (score: 0.5717) ***
-*** Old lambda[j=1]: {1.3910676004625644, 0.4035117136278698, 0.8520918984088794, -0.19911744752711164, -1.286642722138014} ***
-*** New lambda[j=1]: {1.3910676004625644, 0.40219548621377443, 0.8520918984088794, -0.19911744752711164, -1.286642722138014} ***
-
-Investigating lambda[j=1][1]...
-Smallest extracted threshold: 0.5013891852916472
-Largest extracted threshold: 1.476523678717724
-
-Keeping thresholds for lambda[j=1][2] from previous step.
-
-Investigating lambda[j=1][3]...
-Smallest extracted threshold: -0.9543090376685825
-Largest extracted threshold: 0.9856366274932822
-
-Investigating lambda[j=1][4]...
-Smallest extracted threshold: -0.9975299046656809
-Largest extracted threshold: 0.9972923851860936
-
-Investigating lambda[j=1][5]...
-Smallest extracted threshold: -4.980777027218371
-Largest extracted threshold: -0.01240551814196128
+Smallest extracted threshold: -25.90898461117851
+Largest extracted threshold: 25.910535077022953
 
 *** Not changing any weight in lambda[j=1] ***
-*** Final lambda[j=1]: {1.3910676004625644, 0.40219548621377443, 0.8520918984088794, -0.19911744752711164, -1.286642722138014} ***
+*** lambda[j=1]: {1.666617449991874, 0.2492952555989255, 1.3308445608117467, -0.17365162187063343, -1.5057547803312556} ***
 
-Final lambda[j=1]: {1.3910676004625644, 0.40219548621377443, 0.8520918984088794, -0.19911744752711164, -1.286642722138014}
-(Final score[j=1]: 0.5716966222849925)
+Final lambda[j=1]: {1.666617449991874, 0.2492952555989255, 1.3308445608117467, -0.17365162187063343, -1.5057547803312556}
+(Final BLEU[j=1]: 0.5723602652226237)
 
-+++ Optimization of lambda[j=2] starting @ Tue Dec 02 23:33:43 EST 2008 +++
++++ Optimization of lambda[j=2] starting @ Mon Jan 26 13:01:24 EST 2009 +++
 Initial lambda[j=2]: {1.4897502865040284, -0.004553671263154424, 0.8593774528720801, -0.01427276865927607, -1.236557087720195}
-(Initial score[j=2]: 0.5608016974200574)
+(Initial BLEU[j=2]: 0.5608016974200574)
 
 Investigating lambda[j=2][1]...
-Smallest extracted threshold: 0.5028653975960334
-Largest extracted threshold: 1.4736643387289456
+Smallest extracted threshold: -52.35676991475769
+Largest extracted threshold: 62.485060387649774
 
 Investigating lambda[j=2][2]...
-Smallest extracted threshold: -0.9834147971067935
-Largest extracted threshold: 0.9939762024695832
+Smallest extracted threshold: -95.34242848932222
+Largest extracted threshold: 275.51880635831867
 
 Investigating lambda[j=2][3]...
-Smallest extracted threshold: -0.9801460430220251
-Largest extracted threshold: 0.9893563389722391
+Smallest extracted threshold: -572.8234128410722
+Largest extracted threshold: 357.10173935359376
 
 Investigating lambda[j=2][4]...
-Smallest extracted threshold: -0.9960438458567336
-Largest extracted threshold: 0.9785615182888444
+Smallest extracted threshold: -164.05590722695578
+Largest extracted threshold: 615.1820979148769
 
 Investigating lambda[j=2][5]...
-Smallest extracted threshold: -4.99727279169241
-Largest extracted threshold: -0.013455481026827514
+Smallest extracted threshold: -27.246979492560026
+Largest extracted threshold: 22.14837659124744
 
-*** Changing lambda[j=2][2] from -0.0046 (score: 0.5608) to 0.2137 (score: 0.5673) ***
+*** Changing lambda[j=2][3] from 0.8594 (BLEU: 0.5608) to 1.5691 (BLEU: 0.5684) ***
 *** Old lambda[j=2]: {1.4897502865040284, -0.004553671263154424, 0.8593774528720801, -0.01427276865927607, -1.236557087720195} ***
-*** New lambda[j=2]: {1.4897502865040284, 0.21374708118989239, 0.8593774528720801, -0.01427276865927607, -1.236557087720195} ***
+*** New lambda[j=2]: {1.4897502865040284, -0.004553671263154424, 1.569146492558077, -0.01427276865927607, -1.236557087720195} ***
 
 Investigating lambda[j=2][1]...
-Smallest extracted threshold: 0.5141766720977707
-Largest extracted threshold: 1.4947859097594938
-
-Keeping thresholds for lambda[j=2][2] from previous step.
-
-Investigating lambda[j=2][3]...
-Smallest extracted threshold: -0.9932257032691288
-Largest extracted threshold: 0.9971311853859892
-
-Investigating lambda[j=2][4]...
-Smallest extracted threshold: -0.9988559527336024
-Largest extracted threshold: 0.998647048052124
-
-Investigating lambda[j=2][5]...
-Smallest extracted threshold: -4.99362455704764
-Largest extracted threshold: -0.043049554981029206
-
-*** Changing lambda[j=2][1] from 1.4898 (score: 0.5673) to 0.9503 (score: 0.5696) ***
-*** Old lambda[j=2]: {1.4897502865040284, 0.21374708118989239, 0.8593774528720801, -0.01427276865927607, -1.236557087720195} ***
-*** New lambda[j=2]: {0.950297745221141, 0.21374708118989239, 0.8593774528720801, -0.01427276865927607, -1.236557087720195} ***
-
-Keeping thresholds for lambda[j=2][1] from previous step.
+Smallest extracted threshold: -120.4591092726182
+Largest extracted threshold: 94.63400017058984
 
 Investigating lambda[j=2][2]...
-Smallest extracted threshold: -0.9844682538476108
-Largest extracted threshold: 0.9962991248767605
-
-Investigating lambda[j=2][3]...
-Smallest extracted threshold: -0.9289446970433728
-Largest extracted threshold: 0.9985303039753005
-
-Investigating lambda[j=2][4]...
-Smallest extracted threshold: -0.990521475525047
-Largest extracted threshold: 0.9810813136459856
-
-Investigating lambda[j=2][5]...
-Smallest extracted threshold: -4.971081978167784
-Largest extracted threshold: -0.02236502662650787
-
-*** Changing lambda[j=2][3] from 0.8594 (score: 0.5696) to 0.6152 (score: 0.5712) ***
-*** Old lambda[j=2]: {0.950297745221141, 0.21374708118989239, 0.8593774528720801, -0.01427276865927607, -1.236557087720195} ***
-*** New lambda[j=2]: {0.950297745221141, 0.21374708118989239, 0.6151842648567973, -0.01427276865927607, -1.236557087720195} ***
-
-Investigating lambda[j=2][1]...
-Smallest extracted threshold: 0.5034793390231599
-Largest extracted threshold: 1.484336753983105
-
-Investigating lambda[j=2][2]...
-Smallest extracted threshold: -0.9964929141271529
-Largest extracted threshold: 0.9984811347443985
+Smallest extracted threshold: -59.450142396235485
+Largest extracted threshold: 252.87181878283138
 
 Keeping thresholds for lambda[j=2][3] from previous step.
 
 Investigating lambda[j=2][4]...
-Smallest extracted threshold: -0.9874516229477218
-Largest extracted threshold: 0.9926998635842377
+Smallest extracted threshold: -389.52587216719735
+Largest extracted threshold: 554.7312132623701
 
 Investigating lambda[j=2][5]...
-Smallest extracted threshold: -4.9873744040508114
-Largest extracted threshold: -0.01454610410897654
+Smallest extracted threshold: -34.23182642458498
+Largest extracted threshold: 24.855288859843014
 
-*** Changing lambda[j=2][4] from -0.0143 (score: 0.5712) to -0.0409 (score: 0.5713) ***
-*** Old lambda[j=2]: {0.950297745221141, 0.21374708118989239, 0.6151842648567973, -0.01427276865927607, -1.236557087720195} ***
-*** New lambda[j=2]: {0.950297745221141, 0.21374708118989239, 0.6151842648567973, -0.040907206697614086, -1.236557087720195} ***
+*** Changing lambda[j=2][4] from -0.0143 (BLEU: 0.5684) to -0.1090 (BLEU: 0.5684) ***
+*** Old lambda[j=2]: {1.4897502865040284, -0.004553671263154424, 1.569146492558077, -0.01427276865927607, -1.236557087720195} ***
+*** New lambda[j=2]: {1.4897502865040284, -0.004553671263154424, 1.569146492558077, -0.10901536700931086, -1.236557087720195} ***
 
 Investigating lambda[j=2][1]...
-Smallest extracted threshold: 0.507458599310269
-Largest extracted threshold: 1.4871447446438406
+Smallest extracted threshold: -101.81376591733445
+Largest extracted threshold: 109.25671466479255
 
 Investigating lambda[j=2][2]...
-Smallest extracted threshold: -0.9998792488791339
-Largest extracted threshold: 0.9783981982671696
+Smallest extracted threshold: -54.405915780633656
+Largest extracted threshold: 271.565717719773
 
 Investigating lambda[j=2][3]...
-Smallest extracted threshold: -0.9879893239635142
-Largest extracted threshold: 0.9973031400846758
+Smallest extracted threshold: -448.913628856097
+Largest extracted threshold: 357.0328356457031
 
 Keeping thresholds for lambda[j=2][4] from previous step.
 
 Investigating lambda[j=2][5]...
-Smallest extracted threshold: -4.90035728069348
-Largest extracted threshold: -0.048519339651093785
+Smallest extracted threshold: -32.15316508474863
+Largest extracted threshold: 25.04063587408641
 
 *** Not changing any weight in lambda[j=2] ***
-*** Final lambda[j=2]: {0.950297745221141, 0.21374708118989239, 0.6151842648567973, -0.040907206697614086, -1.236557087720195} ***
+*** lambda[j=2]: {1.4897502865040284, -0.004553671263154424, 1.569146492558077, -0.10901536700931086, -1.236557087720195} ***
 
-Final lambda[j=2]: {0.950297745221141, 0.21374708118989239, 0.6151842648567973, -0.040907206697614086, -1.236557087720195}
-(Final score[j=2]: 0.5712891594714438)
+Final lambda[j=2]: {1.4897502865040284, -0.004553671263154424, 1.569146492558077, -0.10901536700931086, -1.236557087720195}
+(Final BLEU[j=2]: 0.5684308699564138)
 
-+++ Optimization of lambda[j=3] starting @ Tue Dec 02 23:33:44 EST 2008 +++
++++ Optimization of lambda[j=3] starting @ Mon Jan 26 13:01:24 EST 2009 +++
 Initial lambda[j=3]: {0.7143221888272017, -0.8739358729264859, 0.7980226618452084, -0.399205792984231, -3.8694784413312346}
-(Initial score[j=3]: 0.4150891528301671)
+(Initial BLEU[j=3]: 0.4150891528301671)
 
 Investigating lambda[j=3][1]...
-Smallest extracted threshold: 0.5002055675972861
-Largest extracted threshold: 1.4971108199152836
+Smallest extracted threshold: -404.8720491167004
+Largest extracted threshold: 891.009798373375
 
 Investigating lambda[j=3][2]...
-Smallest extracted threshold: -0.9568353128467962
-Largest extracted threshold: 0.993115476272143
+Smallest extracted threshold: -341.93684673723135
+Largest extracted threshold: 378.8361806044823
 
 Investigating lambda[j=3][3]...
-Smallest extracted threshold: -0.9879240265510117
-Largest extracted threshold: 0.9893789960269413
+Smallest extracted threshold: -543.4474099080713
+Largest extracted threshold: 333.8352595093494
 
 Investigating lambda[j=3][4]...
-Smallest extracted threshold: -0.9996409825228229
-Largest extracted threshold: 0.9906553038886412
+Smallest extracted threshold: -732.310182428772
+Largest extracted threshold: 528.5395685557316
 
 Investigating lambda[j=3][5]...
-Smallest extracted threshold: -4.987235632748372
-Largest extracted threshold: -0.006865406515210708
+Smallest extracted threshold: -24.78560918947624
+Largest extracted threshold: 32.76488790661559
 
-*** Changing lambda[j=3][4] from -0.3992 (score: 0.4151) to 0.9953 (score: 0.5153) ***
+*** Changing lambda[j=3][4] from -0.3992 (BLEU: 0.4151) to 1.4529 (BLEU: 0.5412) ***
 *** Old lambda[j=3]: {0.7143221888272017, -0.8739358729264859, 0.7980226618452084, -0.399205792984231, -3.8694784413312346} ***
-*** New lambda[j=3]: {0.7143221888272017, -0.8739358729264859, 0.7980226618452084, 0.9953276519443206, -3.8694784413312346} ***
+*** New lambda[j=3]: {0.7143221888272017, -0.8739358729264859, 0.7980226618452084, 1.4528660062076981, -3.8694784413312346} ***
 
 Investigating lambda[j=3][1]...
-Smallest extracted threshold: 0.5022484447182063
-Largest extracted threshold: 1.4658406466662093
+Smallest extracted threshold: -190.56497663875444
+Largest extracted threshold: 159.45101273561934
 
 Investigating lambda[j=3][2]...
-Smallest extracted threshold: -0.9887211545994335
-Largest extracted threshold: 0.9994034755431153
+Smallest extracted threshold: -122.93996103258297
+Largest extracted threshold: 80.63318375854254
 
 Investigating lambda[j=3][3]...
-Smallest extracted threshold: -0.9909858201467615
-Largest extracted threshold: 0.9874721071966046
+Smallest extracted threshold: -189.47207363667604
+Largest extracted threshold: 313.09205535841227
 
 Keeping thresholds for lambda[j=3][4] from previous step.
 
 Investigating lambda[j=3][5]...
-Smallest extracted threshold: -4.919894125216718
-Largest extracted threshold: -0.016032331585185494
+Smallest extracted threshold: -65.42023516160873
+Largest extracted threshold: 15.617891538222914
 
-*** Changing lambda[j=3][5] from -3.8695 (score: 0.5153) to -2.1786 (score: 0.5510) ***
-*** Old lambda[j=3]: {0.7143221888272017, -0.8739358729264859, 0.7980226618452084, 0.9953276519443206, -3.8694784413312346} ***
-*** New lambda[j=3]: {0.7143221888272017, -0.8739358729264859, 0.7980226618452084, 0.9953276519443206, -2.178631238484773} ***
+*** Changing lambda[j=3][1] from 0.7143 (BLEU: 0.5412) to 1.0021 (BLEU: 0.5499) ***
+*** Old lambda[j=3]: {0.7143221888272017, -0.8739358729264859, 0.7980226618452084, 1.4528660062076981, -3.8694784413312346} ***
+*** New lambda[j=3]: {1.0021487574457109, -0.8739358729264859, 0.7980226618452084, 1.4528660062076981, -3.8694784413312346} ***
 
-Investigating lambda[j=3][1]...
-Smallest extracted threshold: 0.5028410081922959
-Largest extracted threshold: 1.471197278581613
+Keeping thresholds for lambda[j=3][1] from previous step.
 
 Investigating lambda[j=3][2]...
-Smallest extracted threshold: -0.9964498053540096
-Largest extracted threshold: 0.995546846390761
+Smallest extracted threshold: -109.20487717810654
+Largest extracted threshold: 83.9014702034752
 
 Investigating lambda[j=3][3]...
-Smallest extracted threshold: -0.9694836476003229
-Largest extracted threshold: 0.9974718123431485
+Smallest extracted threshold: -214.88715964569136
+Largest extracted threshold: 352.6341671859709
 
 Investigating lambda[j=3][4]...
-Smallest extracted threshold: -0.9996409825228229
-Largest extracted threshold: 0.9865007336853759
+Smallest extracted threshold: -693.6454800443549
+Largest extracted threshold: 532.5115752026668
+
+Investigating lambda[j=3][5]...
+Smallest extracted threshold: -69.09433467807538
+Largest extracted threshold: 18.552844855672035
+
+*** Changing lambda[j=3][4] from 1.4529 (BLEU: 0.5499) to 1.3423 (BLEU: 0.5515) ***
+*** Old lambda[j=3]: {1.0021487574457109, -0.8739358729264859, 0.7980226618452084, 1.4528660062076981, -3.8694784413312346} ***
+*** New lambda[j=3]: {1.0021487574457109, -0.8739358729264859, 0.7980226618452084, 1.3423341807128533, -3.8694784413312346} ***
+
+Investigating lambda[j=3][1]...
+Smallest extracted threshold: -168.8123133813721
+Largest extracted threshold: 158.79065593202222
+
+Investigating lambda[j=3][2]...
+Smallest extracted threshold: -105.92429259741982
+Largest extracted threshold: 78.85845566527465
+
+Investigating lambda[j=3][3]...
+Smallest extracted threshold: -210.44378026079812
+Largest extracted threshold: 337.7224190919379
+
+Keeping thresholds for lambda[j=3][4] from previous step.
+
+Investigating lambda[j=3][5]...
+Smallest extracted threshold: -66.6692562394535
+Largest extracted threshold: 19.475556385091018
+
+*** Changing lambda[j=3][5] from -3.8695 (BLEU: 0.5515) to -3.6967 (BLEU: 0.5526) ***
+*** Old lambda[j=3]: {1.0021487574457109, -0.8739358729264859, 0.7980226618452084, 1.3423341807128533, -3.8694784413312346} ***
+*** New lambda[j=3]: {1.0021487574457109, -0.8739358729264859, 0.7980226618452084, 1.3423341807128533, -3.6966515661924313} ***
+
+Investigating lambda[j=3][1]...
+Smallest extracted threshold: -172.5626565718834
+Largest extracted threshold: 156.86297155547388
+
+Investigating lambda[j=3][2]...
+Smallest extracted threshold: -102.92401804500986
+Largest extracted threshold: 83.54638465341495
+
+Investigating lambda[j=3][3]...
+Smallest extracted threshold: -210.44378026079812
+Largest extracted threshold: 344.5412248928691
+
+Investigating lambda[j=3][4]...
+Smallest extracted threshold: -681.1155315967931
+Largest extracted threshold: 532.5115752026668
 
 Keeping thresholds for lambda[j=3][5] from previous step.
 
-*** Changing lambda[j=3][1] from 0.7143 (score: 0.5510) to 0.8185 (score: 0.5534) ***
-*** Old lambda[j=3]: {0.7143221888272017, -0.8739358729264859, 0.7980226618452084, 0.9953276519443206, -2.178631238484773} ***
-*** New lambda[j=3]: {0.8184806339567178, -0.8739358729264859, 0.7980226618452084, 0.9953276519443206, -2.178631238484773} ***
-
-Keeping thresholds for lambda[j=3][1] from previous step.
-
-Investigating lambda[j=3][2]...
-Smallest extracted threshold: -0.9984080719366625
-Largest extracted threshold: 0.9939402971425702
-
-Investigating lambda[j=3][3]...
-Smallest extracted threshold: -0.9958605966698522
-Largest extracted threshold: 0.9907577917286662
-
-Investigating lambda[j=3][4]...
-Smallest extracted threshold: -0.9938297012925803
-Largest extracted threshold: 0.9949678725106453
-
-Investigating lambda[j=3][5]...
-Smallest extracted threshold: -4.969859673877206
-Largest extracted threshold: -0.008860271945080845
-
-*** Changing lambda[j=3][2] from -0.8739 (score: 0.5534) to -0.8534 (score: 0.5537) ***
-*** Old lambda[j=3]: {0.8184806339567178, -0.8739358729264859, 0.7980226618452084, 0.9953276519443206, -2.178631238484773} ***
-*** New lambda[j=3]: {0.8184806339567178, -0.8533952097156983, 0.7980226618452084, 0.9953276519443206, -2.178631238484773} ***
-
-Investigating lambda[j=3][1]...
-Smallest extracted threshold: 0.501815904402848
-Largest extracted threshold: 1.4950573182572244
-
-Keeping thresholds for lambda[j=3][2] from previous step.
-
-Investigating lambda[j=3][3]...
-Smallest extracted threshold: -0.9623511235194273
-Largest extracted threshold: 0.9904044256867025
-
-Investigating lambda[j=3][4]...
-Smallest extracted threshold: -0.9651560177613483
-Largest extracted threshold: 0.9973701349363558
-
-Investigating lambda[j=3][5]...
-Smallest extracted threshold: -4.972113944667033
-Largest extracted threshold: -0.0335313641130008
-
-*** Changing lambda[j=3][1] from 0.8185 (score: 0.5537) to 0.8613 (score: 0.5539) ***
-*** Old lambda[j=3]: {0.8184806339567178, -0.8533952097156983, 0.7980226618452084, 0.9953276519443206, -2.178631238484773} ***
-*** New lambda[j=3]: {0.8613172543569207, -0.8533952097156983, 0.7980226618452084, 0.9953276519443206, -2.178631238484773} ***
-
-Keeping thresholds for lambda[j=3][1] from previous step.
-
-Investigating lambda[j=3][2]...
-Smallest extracted threshold: -0.9929231374242257
-Largest extracted threshold: 0.9942872018373218
-
-Investigating lambda[j=3][3]...
-Smallest extracted threshold: -0.9972873768682387
-Largest extracted threshold: 0.9841862558510929
-
-Investigating lambda[j=3][4]...
-Smallest extracted threshold: -0.9857593456595345
-Largest extracted threshold: 0.9972017097079776
-
-Investigating lambda[j=3][5]...
-Smallest extracted threshold: -4.971033449882481
-Largest extracted threshold: -0.026064104488288994
-
-*** Changing lambda[j=3][3] from 0.7980 (score: 0.5539) to 0.8205 (score: 0.5540) ***
-*** Old lambda[j=3]: {0.8613172543569207, -0.8533952097156983, 0.7980226618452084, 0.9953276519443206, -2.178631238484773} ***
-*** New lambda[j=3]: {0.8613172543569207, -0.8533952097156983, 0.8205280987197607, 0.9953276519443206, -2.178631238484773} ***
-
-Investigating lambda[j=3][1]...
-Smallest extracted threshold: 0.5035095509449328
-Largest extracted threshold: 1.4983825899586225
-
-Investigating lambda[j=3][2]...
-Smallest extracted threshold: -0.994993934106589
-Largest extracted threshold: 0.9942872018373218
-
-Keeping thresholds for lambda[j=3][3] from previous step.
-
-Investigating lambda[j=3][4]...
-Smallest extracted threshold: -0.9961955452885274
-Largest extracted threshold: 0.9913131528696949
-
-Investigating lambda[j=3][5]...
-Smallest extracted threshold: -4.99590363943098
-Largest extracted threshold: -0.0012487026045467536
-
-*** Changing lambda[j=3][1] from 0.8613 (score: 0.5540) to 0.8786 (score: 0.5542) ***
-*** Old lambda[j=3]: {0.8613172543569207, -0.8533952097156983, 0.8205280987197607, 0.9953276519443206, -2.178631238484773} ***
-*** New lambda[j=3]: {0.8785630745808388, -0.8533952097156983, 0.8205280987197607, 0.9953276519443206, -2.178631238484773} ***
-
-Keeping thresholds for lambda[j=3][1] from previous step.
-
-Investigating lambda[j=3][2]...
-Smallest extracted threshold: -0.9958964832673745
-Largest extracted threshold: 0.9995492734740381
-
-Investigating lambda[j=3][3]...
-Smallest extracted threshold: -0.9917938821820201
-Largest extracted threshold: 0.9991966114971584
-
-Investigating lambda[j=3][4]...
-Smallest extracted threshold: -0.9942737708241091
-Largest extracted threshold: 0.9986571372593609
-
-Investigating lambda[j=3][5]...
-Smallest extracted threshold: -4.994817910042627
-Largest extracted threshold: -0.01532015671662659
-
 *** Not changing any weight in lambda[j=3] ***
-*** Final lambda[j=3]: {0.8785630745808388, -0.8533952097156983, 0.8205280987197607, 0.9953276519443206, -2.178631238484773} ***
+*** lambda[j=3]: {1.0021487574457109, -0.8739358729264859, 0.7980226618452084, 1.3423341807128533, -3.6966515661924313} ***
 
-Final lambda[j=3]: {0.8785630745808388, -0.8533952097156983, 0.8205280987197607, 0.9953276519443206, -2.178631238484773}
-(Final score[j=3]: 0.5541975736787302)
+Final lambda[j=3]: {1.0021487574457109, -0.8739358729264859, 0.7980226618452084, 1.3423341807128533, -3.6966515661924313}
+(Final BLEU[j=3]: 0.5525852515997397)
 
-+++ Optimization of lambda[j=4] starting @ Tue Dec 02 23:33:44 EST 2008 +++
++++ Optimization of lambda[j=4] starting @ Mon Jan 26 13:01:25 EST 2009 +++
 Initial lambda[j=4]: {1.2972965063840105, -0.2974935383022126, 0.3275255626321376, -0.21052430917292875, -0.0454218308093175}
-(Initial score[j=4]: 0.5256005025240078)
+(Initial BLEU[j=4]: 0.5256005025240078)
 
 Investigating lambda[j=4][1]...
-Smallest extracted threshold: 0.5005495699584599
-Largest extracted threshold: 1.4960702583418857
+Smallest extracted threshold: -102.9185416967193
+Largest extracted threshold: 245.2623373306096
 
 Investigating lambda[j=4][2]...
-Smallest extracted threshold: -0.9874718728089923
-Largest extracted threshold: 0.9978718715187487
+Smallest extracted threshold: -116.93052675209042
+Largest extracted threshold: 387.89141063090005
 
 Investigating lambda[j=4][3]...
-Smallest extracted threshold: -0.9752349706281545
-Largest extracted threshold: 0.999978713122727
+Smallest extracted threshold: -387.61365457457407
+Largest extracted threshold: 326.8893827187881
 
 Investigating lambda[j=4][4]...
-Smallest extracted threshold: -0.9985169106016222
-Largest extracted threshold: 0.9701126401896177
+Smallest extracted threshold: -40.93082361654326
+Largest extracted threshold: 913.3989923874052
 
 Investigating lambda[j=4][5]...
-Smallest extracted threshold: -4.959731456948617
-Largest extracted threshold: -0.03085208591817122
+Smallest extracted threshold: -23.183702449704597
+Largest extracted threshold: 31.24577211046169
 
-*** Changing lambda[j=4][3] from 0.3275 (score: 0.5256) to 0.8923 (score: 0.5514) ***
+*** Changing lambda[j=4][3] from 0.3275 (BLEU: 0.5256) to 1.4980 (BLEU: 0.5585) ***
 *** Old lambda[j=4]: {1.2972965063840105, -0.2974935383022126, 0.3275255626321376, -0.21052430917292875, -0.0454218308093175} ***
-*** New lambda[j=4]: {1.2972965063840105, -0.2974935383022126, 0.8923422847390106, -0.21052430917292875, -0.0454218308093175} ***
+*** New lambda[j=4]: {1.2972965063840105, -0.2974935383022126, 1.4980302098573302, -0.21052430917292875, -0.0454218308093175} ***
 
 Investigating lambda[j=4][1]...
-Smallest extracted threshold: 0.5024792269347533
-Largest extracted threshold: 1.4923570220017088
+Smallest extracted threshold: -86.74500035838
+Largest extracted threshold: 137.5095316688382
 
 Investigating lambda[j=4][2]...
-Smallest extracted threshold: -0.9727674120990295
-Largest extracted threshold: 0.9929054884391428
+Smallest extracted threshold: -57.73931760878873
+Largest extracted threshold: 209.64791356253113
 
 Keeping thresholds for lambda[j=4][3] from previous step.
 
 Investigating lambda[j=4][4]...
-Smallest extracted threshold: -0.9985879800717725
-Largest extracted threshold: 0.9707543638056041
+Smallest extracted threshold: -405.0533399358318
+Largest extracted threshold: 610.9434198103994
 
 Investigating lambda[j=4][5]...
-Smallest extracted threshold: -4.988841652267634
-Largest extracted threshold: -0.03697417923376247
+Smallest extracted threshold: -32.32458299527788
+Largest extracted threshold: 23.208540993488203
 
-*** Changing lambda[j=4][2] from -0.2975 (score: 0.5514) to 0.1014 (score: 0.5667) ***
-*** Old lambda[j=4]: {1.2972965063840105, -0.2974935383022126, 0.8923422847390106, -0.21052430917292875, -0.0454218308093175} ***
-*** New lambda[j=4]: {1.2972965063840105, 0.1013958200272666, 0.8923422847390106, -0.21052430917292875, -0.0454218308093175} ***
+*** Changing lambda[j=4][2] from -0.2975 (BLEU: 0.5585) to -0.1895 (BLEU: 0.5682) ***
+*** Old lambda[j=4]: {1.2972965063840105, -0.2974935383022126, 1.4980302098573302, -0.21052430917292875, -0.0454218308093175} ***
+*** New lambda[j=4]: {1.2972965063840105, -0.18947630045219926, 1.4980302098573302, -0.21052430917292875, -0.0454218308093175} ***
 
 Investigating lambda[j=4][1]...
-Smallest extracted threshold: 0.500434097925359
-Largest extracted threshold: 1.4982016891078835
+Smallest extracted threshold: -82.24837122148953
+Largest extracted threshold: 124.351268551966
 
 Keeping thresholds for lambda[j=4][2] from previous step.
 
 Investigating lambda[j=4][3]...
-Smallest extracted threshold: -0.9981286603195885
-Largest extracted threshold: 0.9872627791753963
+Smallest extracted threshold: -497.93011648743186
+Largest extracted threshold: 320.9778938837232
 
 Investigating lambda[j=4][4]...
-Smallest extracted threshold: -0.9944837357491907
-Largest extracted threshold: 0.9554516306358577
+Smallest extracted threshold: -368.68753652631887
+Largest extracted threshold: 580.3313346037118
 
 Investigating lambda[j=4][5]...
-Smallest extracted threshold: -4.997999456862953
-Largest extracted threshold: -0.0049392108995236755
+Smallest extracted threshold: -30.27623767844469
+Largest extracted threshold: 22.960225504177824
 
-*** Changing lambda[j=4][1] from 1.2973 (score: 0.5667) to 0.8407 (score: 0.5687) ***
-*** Old lambda[j=4]: {1.2972965063840105, 0.1013958200272666, 0.8923422847390106, -0.21052430917292875, -0.0454218308093175} ***
-*** New lambda[j=4]: {0.8406614850003286, 0.1013958200272666, 0.8923422847390106, -0.21052430917292875, -0.0454218308093175} ***
-
-Keeping thresholds for lambda[j=4][1] from previous step.
-
-Investigating lambda[j=4][2]...
-Smallest extracted threshold: -0.9925467990651748
-Largest extracted threshold: 0.9889548882312308
-
-Investigating lambda[j=4][3]...
-Smallest extracted threshold: -0.9199929276891127
-Largest extracted threshold: 0.9994580350096809
-
-Investigating lambda[j=4][4]...
-Smallest extracted threshold: -0.9932274893704797
-Largest extracted threshold: 0.9822639737974724
-
-Investigating lambda[j=4][5]...
-Smallest extracted threshold: -4.905194395141683
-Largest extracted threshold: -0.018410200913378024
-
-*** Changing lambda[j=4][2] from 0.1014 (score: 0.5687) to 0.0051 (score: 0.5694) ***
-*** Old lambda[j=4]: {0.8406614850003286, 0.1013958200272666, 0.8923422847390106, -0.21052430917292875, -0.0454218308093175} ***
-*** New lambda[j=4]: {0.8406614850003286, 0.00508423852822072, 0.8923422847390106, -0.21052430917292875, -0.0454218308093175} ***
+*** Changing lambda[j=4][5] from -0.0454 (BLEU: 0.5682) to -0.0947 (BLEU: 0.5688) ***
+*** Old lambda[j=4]: {1.2972965063840105, -0.18947630045219926, 1.4980302098573302, -0.21052430917292875, -0.0454218308093175} ***
+*** New lambda[j=4]: {1.2972965063840105, -0.18947630045219926, 1.4980302098573302, -0.21052430917292875, -0.09468050076407777} ***
 
 Investigating lambda[j=4][1]...
-Smallest extracted threshold: 0.5030961236648392
-Largest extracted threshold: 1.4989272411114039
-
-Keeping thresholds for lambda[j=4][2] from previous step.
-
-Investigating lambda[j=4][3]...
-Smallest extracted threshold: -0.9879432326469356
-Largest extracted threshold: 0.9974934059246007
-
-Investigating lambda[j=4][4]...
-Smallest extracted threshold: -0.99161575572423
-Largest extracted threshold: 0.9930254601473797
-
-Investigating lambda[j=4][5]...
-Smallest extracted threshold: -4.991280033143716
-Largest extracted threshold: -0.01147698437629992
-
-*** Changing lambda[j=4][3] from 0.8923 (score: 0.5694) to 0.8890 (score: 0.5695) ***
-*** Old lambda[j=4]: {0.8406614850003286, 0.00508423852822072, 0.8923422847390106, -0.21052430917292875, -0.0454218308093175} ***
-*** New lambda[j=4]: {0.8406614850003286, 0.00508423852822072, 0.8890008809123134, -0.21052430917292875, -0.0454218308093175} ***
-
-Investigating lambda[j=4][1]...
-Smallest extracted threshold: 0.500983939954089
-Largest extracted threshold: 1.4958055542720705
+Smallest extracted threshold: -82.10025913083032
+Largest extracted threshold: 125.22485598442901
 
 Investigating lambda[j=4][2]...
-Smallest extracted threshold: -0.9901144429549035
-Largest extracted threshold: 0.9875495087061145
+Smallest extracted threshold: -56.632696109632604
+Largest extracted threshold: 212.32327507444884
 
-Keeping thresholds for lambda[j=4][3] from previous step.
+Investigating lambda[j=4][3]...
+Smallest extracted threshold: -476.5377798213554
+Largest extracted threshold: 320.9778938837232
 
 Investigating lambda[j=4][4]...
-Smallest extracted threshold: -0.9885277634716899
-Largest extracted threshold: 0.9835889134906282
+Smallest extracted threshold: -372.2587900980349
+Largest extracted threshold: 580.3313346037118
 
-Investigating lambda[j=4][5]...
-Smallest extracted threshold: -4.97555849716652
-Largest extracted threshold: -0.013791761327686043
+Keeping thresholds for lambda[j=4][5] from previous step.
 
 *** Not changing any weight in lambda[j=4] ***
-*** Final lambda[j=4]: {0.8406614850003286, 0.00508423852822072, 0.8890008809123134, -0.21052430917292875, -0.0454218308093175} ***
+*** lambda[j=4]: {1.2972965063840105, -0.18947630045219926, 1.4980302098573302, -0.21052430917292875, -0.09468050076407777} ***
 
-Final lambda[j=4]: {0.8406614850003286, 0.00508423852822072, 0.8890008809123134, -0.21052430917292875, -0.0454218308093175}
-(Final score[j=4]: 0.5695041971525324)
+Final lambda[j=4]: {1.2972965063840105, -0.18947630045219926, 1.4980302098573302, -0.21052430917292875, -0.09468050076407777}
+(Final BLEU[j=4]: 0.5687670864099627)
 
-+++ Optimization of lambda[j=5] starting @ Tue Dec 02 23:33:45 EST 2008 +++
++++ Optimization of lambda[j=5] starting @ Mon Jan 26 13:01:25 EST 2009 +++
 Initial lambda[j=5]: {0.5948565625062981, 0.03753776574773382, 0.00790321507749736, 0.03620028521108054, -2.47511438964637}
-(Initial score[j=5]: 0.44515957316847027)
+(Initial BLEU[j=5]: 0.44515957316847027)
 
 Investigating lambda[j=5][1]...
-Smallest extracted threshold: 0.500712027485647
-Largest extracted threshold: 1.4998106216649554
+Smallest extracted threshold: -89.22620898658829
+Largest extracted threshold: 151.79782206613166
 
 Investigating lambda[j=5][2]...
-Smallest extracted threshold: -0.9930780635064571
-Largest extracted threshold: 0.9962142210584534
+Smallest extracted threshold: -53.17134385575666
+Largest extracted threshold: 170.35065185209993
 
 Investigating lambda[j=5][3]...
-Smallest extracted threshold: -0.9782391433687297
-Largest extracted threshold: 0.9833501661354243
+Smallest extracted threshold: -69.6562858971337
+Largest extracted threshold: 195.1286375325032
 
 Investigating lambda[j=5][4]...
-Smallest extracted threshold: -0.9839916385543155
-Largest extracted threshold: 0.9956454289680736
+Smallest extracted threshold: -89.40960187388704
+Largest extracted threshold: 295.4058723753183
 
 Investigating lambda[j=5][5]...
-Smallest extracted threshold: -4.973090472801633
-Largest extracted threshold: -0.0015832924982430725
+Smallest extracted threshold: -9.173901679081121
+Largest extracted threshold: 12.13661917880545
 
-*** Changing lambda[j=5][4] from 0.0362 (score: 0.4452) to 0.4610 (score: 0.5498) ***
+*** Changing lambda[j=5][4] from 0.0362 (BLEU: 0.4452) to 0.4610 (BLEU: 0.5498) ***
 *** Old lambda[j=5]: {0.5948565625062981, 0.03753776574773382, 0.00790321507749736, 0.03620028521108054, -2.47511438964637} ***
 *** New lambda[j=5]: {0.5948565625062981, 0.03753776574773382, 0.00790321507749736, 0.46103406954148074, -2.47511438964637} ***
 
 Investigating lambda[j=5][1]...
-Smallest extracted threshold: 0.5003670923659976
-Largest extracted threshold: 1.4761534095111344
+Smallest extracted threshold: -53.56508751401471
+Largest extracted threshold: 97.48995417958773
 
 Investigating lambda[j=5][2]...
-Smallest extracted threshold: -0.9755899261345099
-Largest extracted threshold: 0.9991805881795128
+Smallest extracted threshold: -35.36050917139853
+Largest extracted threshold: 111.27053597963987
 
 Investigating lambda[j=5][3]...
-Smallest extracted threshold: -0.9749500995400194
-Largest extracted threshold: 0.9871700586431399
+Smallest extracted threshold: -85.9091169756968
+Largest extracted threshold: 202.54391813172512
 
 Keeping thresholds for lambda[j=5][4] from previous step.
 
 Investigating lambda[j=5][5]...
-Smallest extracted threshold: -4.979894751395341
-Largest extracted threshold: -0.008302522075988285
+Smallest extracted threshold: -17.267224544758
+Largest extracted threshold: 8.258297857337611
 
-*** Changing lambda[j=5][3] from 0.0079 (score: 0.5498) to 0.0486 (score: 0.5517) ***
+*** Changing lambda[j=5][3] from 0.0079 (BLEU: 0.5498) to 0.0486 (BLEU: 0.5517) ***
 *** Old lambda[j=5]: {0.5948565625062981, 0.03753776574773382, 0.00790321507749736, 0.46103406954148074, -2.47511438964637} ***
 *** New lambda[j=5]: {0.5948565625062981, 0.03753776574773382, 0.04864808383604592, 0.46103406954148074, -2.47511438964637} ***
 
 Investigating lambda[j=5][1]...
-Smallest extracted threshold: 0.5002373324831891
-Largest extracted threshold: 1.493659687380308
+Smallest extracted threshold: -54.051762335297234
+Largest extracted threshold: 100.04329928845632
 
 Investigating lambda[j=5][2]...
-Smallest extracted threshold: -0.9810108182111907
-Largest extracted threshold: 0.9964912951951773
+Smallest extracted threshold: -33.30008330814289
+Largest extracted threshold: 101.3811742623873
 
 Keeping thresholds for lambda[j=5][3] from previous step.
 
 Investigating lambda[j=5][4]...
-Smallest extracted threshold: -0.9935628649999559
-Largest extracted threshold: 0.9962321557581483
+Smallest extracted threshold: -102.35288851618867
+Largest extracted threshold: 268.3186836246294
 
 Investigating lambda[j=5][5]...
-Smallest extracted threshold: -4.994721162186132
-Largest extracted threshold: -0.02790851783570607
+Smallest extracted threshold: -17.47537308852247
+Largest extracted threshold: 7.391765279822836
 
-*** Changing lambda[j=5][4] from 0.4610 (score: 0.5517) to 0.5002 (score: 0.5533) ***
+*** Changing lambda[j=5][4] from 0.4610 (BLEU: 0.5517) to 0.5002 (BLEU: 0.5533) ***
 *** Old lambda[j=5]: {0.5948565625062981, 0.03753776574773382, 0.04864808383604592, 0.46103406954148074, -2.47511438964637} ***
 *** New lambda[j=5]: {0.5948565625062981, 0.03753776574773382, 0.04864808383604592, 0.5002022290160296, -2.47511438964637} ***
 
 Investigating lambda[j=5][1]...
-Smallest extracted threshold: 0.5018007259749047
-Largest extracted threshold: 1.4850952959703314
+Smallest extracted threshold: -58.36025987749748
+Largest extracted threshold: 107.62886617336072
 
 Investigating lambda[j=5][2]...
-Smallest extracted threshold: -0.9945931508611588
-Largest extracted threshold: 0.996107626157396
+Smallest extracted threshold: -35.38545014361551
+Largest extracted threshold: 104.97904948269183
 
 Investigating lambda[j=5][3]...
-Smallest extracted threshold: -0.9812508034389761
-Largest extracted threshold: 0.9672606459051741
+Smallest extracted threshold: -98.44852345890274
+Largest extracted threshold: 203.22758055164476
 
 Keeping thresholds for lambda[j=5][4] from previous step.
 
 Investigating lambda[j=5][5]...
-Smallest extracted threshold: -4.999904792399419
-Largest extracted threshold: -0.03540636063166641
+Smallest extracted threshold: -18.33472611736272
+Largest extracted threshold: 7.234348039444757
 
-*** Changing lambda[j=5][3] from 0.0486 (score: 0.5533) to 0.1429 (score: 0.5540) ***
+*** Changing lambda[j=5][3] from 0.0486 (BLEU: 0.5533) to 0.1429 (BLEU: 0.5540) ***
 *** Old lambda[j=5]: {0.5948565625062981, 0.03753776574773382, 0.04864808383604592, 0.5002022290160296, -2.47511438964637} ***
 *** New lambda[j=5]: {0.5948565625062981, 0.03753776574773382, 0.14289841823620075, 0.5002022290160296, -2.47511438964637} ***
 
 Investigating lambda[j=5][1]...
-Smallest extracted threshold: 0.5044951806445981
-Largest extracted threshold: 1.476962724957898
+Smallest extracted threshold: -62.219095767291364
+Largest extracted threshold: 113.53522046243691
 
 Investigating lambda[j=5][2]...
-Smallest extracted threshold: -0.9992509329343007
-Largest extracted threshold: 0.9978492876816215
+Smallest extracted threshold: -37.79556417056982
+Largest extracted threshold: 85.3360984680857
 
 Keeping thresholds for lambda[j=5][3] from previous step.
 
 Investigating lambda[j=5][4]...
-Smallest extracted threshold: -0.9878189986919269
-Largest extracted threshold: 0.9969655961790463
+Smallest extracted threshold: -132.29307807730441
+Largest extracted threshold: 205.6610613153947
 
 Investigating lambda[j=5][5]...
-Smallest extracted threshold: -4.998982945206853
-Largest extracted threshold: -0.08964354466552207
+Smallest extracted threshold: -19.262244961194607
+Largest extracted threshold: 6.999942184909471
 
-*** Changing lambda[j=5][5] from -2.4751 (score: 0.5540) to -2.3901 (score: 0.5560) ***
+*** Changing lambda[j=5][5] from -2.4751 (BLEU: 0.5540) to -2.3901 (BLEU: 0.5560) ***
 *** Old lambda[j=5]: {0.5948565625062981, 0.03753776574773382, 0.14289841823620075, 0.5002022290160296, -2.47511438964637} ***
 *** New lambda[j=5]: {0.5948565625062981, 0.03753776574773382, 0.14289841823620075, 0.5002022290160296, -2.390061628160896} ***
 
 Investigating lambda[j=5][1]...
-Smallest extracted threshold: 0.5017655297104403
-Largest extracted threshold: 1.4730100485982953
+Smallest extracted threshold: -64.06474069152594
+Largest extracted threshold: 113.53522046243691
 
 Investigating lambda[j=5][2]...
-Smallest extracted threshold: -0.9813768715113618
-Largest extracted threshold: 0.9978492876816215
+Smallest extracted threshold: -36.31904823118213
+Largest extracted threshold: 87.38249329977506
 
 Investigating lambda[j=5][3]...
-Smallest extracted threshold: -0.9849728262686686
-Largest extracted threshold: 0.9959706963874035
+Smallest extracted threshold: -108.01991235443403
+Largest extracted threshold: 199.87186250758128
 
 Investigating lambda[j=5][4]...
-Smallest extracted threshold: -0.9486721903123438
-Largest extracted threshold: 0.9990599768029944
+Smallest extracted threshold: -126.12675286960828
+Largest extracted threshold: 213.0436410123342
 
 Keeping thresholds for lambda[j=5][5] from previous step.
 
-*** Changing lambda[j=5][1] from 0.5949 (score: 0.5560) to 0.6084 (score: 0.5564) ***
+*** Changing lambda[j=5][1] from 0.5949 (BLEU: 0.5560) to 0.6084 (BLEU: 0.5564) ***
 *** Old lambda[j=5]: {0.5948565625062981, 0.03753776574773382, 0.14289841823620075, 0.5002022290160296, -2.390061628160896} ***
 *** New lambda[j=5]: {0.6084359392501362, 0.03753776574773382, 0.14289841823620075, 0.5002022290160296, -2.390061628160896} ***
 
 Keeping thresholds for lambda[j=5][1] from previous step.
 
 Investigating lambda[j=5][2]...
-Smallest extracted threshold: -0.9974930548996488
-Largest extracted threshold: 0.9971005433611312
+Smallest extracted threshold: -35.67104037296634
+Largest extracted threshold: 92.50676810961009
 
 Investigating lambda[j=5][3]...
-Smallest extracted threshold: -0.9965364105255403
-Largest extracted threshold: 0.9786125681964088
+Smallest extracted threshold: -118.34993823457401
+Largest extracted threshold: 201.99641772359462
 
 Investigating lambda[j=5][4]...
-Smallest extracted threshold: -0.9781342256641724
-Largest extracted threshold: 0.9918471898806632
+Smallest extracted threshold: -124.30258992702058
+Largest extracted threshold: 224.83597177668597
 
 Investigating lambda[j=5][5]...
-Smallest extracted threshold: -4.991343488578583
-Largest extracted threshold: -0.07544453906398597
+Smallest extracted threshold: -19.43558539244083
+Largest extracted threshold: 7.171604237126407
 
-*** Changing lambda[j=5][2] from 0.0375 (score: 0.5564) to 0.0165 (score: 0.5579) ***
+*** Changing lambda[j=5][2] from 0.0375 (BLEU: 0.5564) to 0.0165 (BLEU: 0.5579) ***
 *** Old lambda[j=5]: {0.6084359392501362, 0.03753776574773382, 0.14289841823620075, 0.5002022290160296, -2.390061628160896} ***
 *** New lambda[j=5]: {0.6084359392501362, 0.016512452694389574, 0.14289841823620075, 0.5002022290160296, -2.390061628160896} ***
 
 Investigating lambda[j=5][1]...
-Smallest extracted threshold: 0.5059505245211107
-Largest extracted threshold: 1.4921050925870851
+Smallest extracted threshold: -61.94854293270717
+Largest extracted threshold: 109.21802284881703
 
 Keeping thresholds for lambda[j=5][2] from previous step.
 
 Investigating lambda[j=5][3]...
-Smallest extracted threshold: -0.9809342781654388
-Largest extracted threshold: 0.9760484231885497
+Smallest extracted threshold: -100.99167566428682
+Largest extracted threshold: 199.88241806568547
 
 Investigating lambda[j=5][4]...
-Smallest extracted threshold: -0.9872255341439946
-Largest extracted threshold: 0.9981371103455059
+Smallest extracted threshold: -131.3811119883122
+Largest extracted threshold: 225.4372957300121
 
 Investigating lambda[j=5][5]...
-Smallest extracted threshold: -4.981334200504387
-Largest extracted threshold: -0.007631862710343553
+Smallest extracted threshold: -19.834291213705892
+Largest extracted threshold: 7.219938290122598
 
 *** Not changing any weight in lambda[j=5] ***
-*** Final lambda[j=5]: {0.6084359392501362, 0.016512452694389574, 0.14289841823620075, 0.5002022290160296, -2.390061628160896} ***
+*** lambda[j=5]: {0.6084359392501362, 0.016512452694389574, 0.14289841823620075, 0.5002022290160296, -2.390061628160896} ***
 
 Final lambda[j=5]: {0.6084359392501362, 0.016512452694389574, 0.14289841823620075, 0.5002022290160296, -2.390061628160896}
-(Final score[j=5]: 0.5578930650341198)
+(Final BLEU[j=5]: 0.5578930650341198)
 
-Best final lambda is lambda[j=1] (score: 0.5717).
+Best final lambda is lambda[j=1] (BLEU: 0.5724).
+
+---  MERT iteration #2 ending @ Mon Jan 26 13:01:26 EST 2009  ---
 
 Maximum number of MERT iterations reached; exiting MERT.
 
----  MERT iteration #2 ending @ Tue Dec 02 23:33:45 EST 2008  ---
-
 
 ----------------------------------------------------
-MERT run ended @ Tue Dec 02 23:33:45 EST 2008
+MERT run ended @ Mon Jan 26 13:01:26 EST 2009
 ----------------------------------------------------
 
-FINAL lambda: {1.3910676004625644, 0.40219548621377443, 0.8520918984088794, -0.19911744752711164, -1.286642722138014} (score: 0.5716966222849925)
+FINAL lambda: {1.666617449991874, 0.2492952555989255, 1.3308445608117467, -0.17365162187063343, -1.5057547803312556} (BLEU: 0.5723602652226237)
 

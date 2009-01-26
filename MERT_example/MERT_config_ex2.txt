@@ -1,5 +1,5 @@
 ### Commonly used parameters
--dir	MERT_example            # directory prefix (i.e. location of relevant files)
+-dir	MERT_example            # working directory (i.e. location of relevant files)
 -s	src.txt                 # source sentences file name
 -r	ref                     # target sentences file name (in this case, file name prefix)
 -rps	4                       # references per sentence
@@ -10,7 +10,7 @@
 -decOut	nbest_ex2.out           # file prodcued by decoder
 -dcfg	config_ex2.txt          # decoder config file
 -N	300                     # size of N-best list generated each iteration
--v	1                       # verbosity level (0-2; higher value => more verbose)
+-v	2                       # verbosity level (0-2; higher value => more verbose)
 -seed   12341234                # random number generator seed
 
 # Notice that comments are allowed
@@ -18,6 +18,10 @@
 ### Other parameters (run MERT_runner with no arguments for default values)
 #-fin     # output file for final values
 #-m       # name of evaluation metric
+#-minIt   # minimum MERT iterations before considering an early exit
+#-prevIt  # previous MERT iterations from which to consider candidates (in addition to the current iteration)
+#-stopSig # value over which a weight change is "significant" (for early exit purposes)
+#-stopIt  # number of consecutive iterations an early exit criterion must be satisfied before actually exiting
 #-save    # should MERT save intermediate config files or decoder output files? (or both? or neither?)
 #-opi     # should MERT modify at most one parameter per iteration?
 #-rand    # should first initial point (of first iteration) be initialized randomly?

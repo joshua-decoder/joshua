@@ -1,5 +1,6 @@
-lm			|||	1.000000		Opt	+0.5	+1.5
-phrasemodel pt 0	|||	1.066893		Opt	-1	+1
-phrasemodel pt 1	|||	0.752247		Opt	-1	+1
-phrasemodel pt 2	|||	0.589793		Opt	-1	+1
-wordpenalty		|||	-2.844814		Opt	-5	0
+lm			|||	1.000000		Opt	+0.5	+1.5	+0.5	+1.5
+phrasemodel pt 0	|||	1.066893		Opt	-1	+1	-1	+1
+phrasemodel pt 1	|||	0.752247		Opt	-1	+1	-1	+1
+phrasemodel pt 2	|||	0.589793		Opt	-1	+1	-1	+1
+wordpenalty		|||	-2.844814		Opt	-5	0	-5	0
+normalization = none

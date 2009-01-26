@@ -166,12 +166,9 @@ public class MERT
     println("",1);
     randGen = new Random(seed);
 
+    numSentences = countLines(refFileName) / refsPerSen;
     numParams = countNonEmptyLines(paramsFileName) - 1;
       // the parameter file contains one line per parameter and one line for the normalization method
-    numSentences = countLines(refFileName) / refsPerSen;
-
-    // rename original config file so it doesn't get overwritten (original name will be restored in finish())
-    renameFile(decoderConfigFileName,decoderConfigFileName+".orig.MERT");
 
 
 
@@ -221,12 +218,13 @@ public class MERT
 
 
     // read in decoder command, if any
+    decoderCommand = null;
     if (decoderCommandFileName != null) {
-      BufferedReader inFile_comm = new BufferedReader(new FileReader(decoderCommandFileName));
-      decoderCommand = inFile_comm.readLine();
-      inFile_comm.close();
-    } else {
-      decoderCommand = null;
+      if (fileExists(decoderCommandFileName)) {
+        BufferedReader inFile_comm = new BufferedReader(new FileReader(decoderCommandFileName));
+        decoderCommand = inFile_comm.readLine();
+        inFile_comm.close();
+      }
     }
 
     // set static data members for the EvaluationMetric class
@@ -298,10 +296,14 @@ public class MERT
     println("",1);
 
 
+
+    // rename original config file so it doesn't get overwritten (original name will be restored in finish())
+    renameFile(decoderConfigFileName,decoderConfigFileName+".orig.MERT");
+
     if (decoderCommand == null && fakeFileNamePrefix == null) {
       myDecoder = new JoshuaDecoder();
       println("Loading Joshua decoder...",1);
-      myDecoder.initializeDecoder(decoderConfigFileName);
+      myDecoder.initializeDecoder(decoderConfigFileName+".orig.MERT");
       println("...finished loading @ " + (new Date()),1);
     } else {
       myDecoder = null;
@@ -371,6 +373,7 @@ public class MERT
       /******************************/
 
       createConfigFile(lambda,decoderConfigFileName,decoderConfigFileName+".orig.MERT");
+        // i.e. use the original config file as a template
 
       /***************/
       // RUN DECODER //
@@ -885,7 +888,7 @@ public class MERT
       if (myDecoder == null) {
         myDecoder = new JoshuaDecoder();
         println("Loading Joshua decoder...",1);
-        myDecoder.initializeDecoder(decoderConfigFileName);
+        myDecoder.initializeDecoder(decoderConfigFileName+".orig.MERT");
         println("...finished loading @ " + (new Date()),1);
       }
 
@@ -1404,13 +1407,13 @@ public class MERT
 /*
 line format:
 
-.* ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numParams_val .*
+i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numParams_val .*
 
 */
 
       // in a well formed file, we'd find the nth candidate for the ith sentence
 
-      int read_i = Integer.parseInt(line.substring(0,line.indexOf(" |||")));
+      int read_i = Integer.parseInt((line.substring(0,line.indexOf("|||"))).trim());
 
       if (read_i != i) { // bad; add dummy copies of last seen candidate
         while (n < sizeOfNBest) {
@@ -1423,11 +1426,16 @@ line format:
         n = 0; ++i;
       }
 
-      line = line.substring(line.indexOf("||| ")+4); // get rid of initial text
+      line = (line.substring(line.indexOf("|||")+3)).trim(); // get rid of initial text
 
-      candidate_str = line.substring(0,line.indexOf(" |||"));
-      feats_str = line.substring(line.indexOf("||| ")+4); // get rid of candidate
-      feats_str = feats_str.substring(0,feats_str.indexOf(" |||"));
+      candidate_str = (line.substring(0,line.indexOf("|||"))).trim();
+      feats_str = (line.substring(line.indexOf("|||")+3)).trim(); // get rid of candidate string
+
+      int junk_i = feats_str.indexOf("|||");
+      if (junk_i >= 0) {
+        feats_str = (feats_str.substring(0,junk_i)).trim();
+      }
+
       stats = evalMetric.suffStats(candidate_str,i);
 
       writeLine(candidate_str, outFile_sents);
@@ -1839,10 +1847,6 @@ line format:
           println("Unknown metric name " + metricName + "."); System.exit(10);
         }
       }
-      else if (option.equals("-prevIt")) {
-        prevMERTIterations = Integer.parseInt(args[i+1]);
-        if (prevMERTIterations < 0) { println("prevMERTIts must be non-negative."); System.exit(10); }
-      }
       else if (option.equals("-maxIt")) {
         maxMERTIterations = Integer.parseInt(args[i+1]);
         if (maxMERTIterations < 1) { println("maxMERTIts must be positive."); System.exit(10); }
@@ -1850,6 +1854,10 @@ line format:
       else if (option.equals("-minIt")) {
         minMERTIterations = Integer.parseInt(args[i+1]);
         if (minMERTIterations < 1) { println("minMERTIts must be positive."); System.exit(10); }
+      }
+      else if (option.equals("-prevIt")) {
+        prevMERTIterations = Integer.parseInt(args[i+1]);
+        if (prevMERTIterations < 0) { println("prevMERTIts must be non-negative."); System.exit(10); }
       }
       else if (option.equals("-stopSig")) {
         stopSigValue = Double.parseDouble(args[i+1]);
@@ -1924,7 +1932,7 @@ line format:
     } // while (i)
 
     if (maxMERTIterations < minMERTIterations) {
-      println("Warning: maxMERTIts is smaller than minMERTIts; decreasing minMERTIts to " + maxMERTIterations,1);
+      println("Warning: maxMERTIts is smaller than minMERTIts; decreasing minMERTIts from " + minMERTIterations + " to maxMERTIts (i.e. " + maxMERTIterations + ").",1);
       minMERTIterations = maxMERTIterations;
     }
 
@@ -1944,7 +1952,15 @@ line format:
     checkFile(decoderConfigFileName);
 
     boolean canRunCommand = fileExists(decoderCommandFileName);
+    if (decoderCommandFileName != null && !canRunCommand) {
+      // i.e. a decoder command file was specified, but it was not found
+      println("Warning: specified decoder command file " + decoderCommandFileName + " was not found.",1);
+    }
     boolean canRunJoshua = fileExists(sourceFileName);
+    if (sourceFileName != null && !canRunJoshua) {
+      // i.e. a source file was specified, but it was not found
+      println("Warning: specified source file " + sourceFileName + " was not found.",1);
+    }
     boolean canRunFake = (fakeFileNamePrefix != null);
 
     if (!canRunCommand && !canRunJoshua) { // can only run fake decoder
@@ -1965,11 +1981,11 @@ line format:
         }
       }
 
-      if (lastGoodIt > 0) {
-        println("Warning: can only run fake decoder; existing output files are only available for the first " + lastGoodIt + "iteration(s).",1);
-      } else {
+      if (lastGoodIt == 0) {
         println("Fake decoder cannot find first output file " + (fakeFileNamePrefix+1));
         System.exit(13);
+      } else if (lastGoodIt < maxMERTIterations) {
+        println("Warning: can only run fake decoder; existing output files are only available for the first " + lastGoodIt + " iteration(s).",1);
       }
 
     }
@@ -2191,7 +2207,7 @@ line format:
   private void showProgress()
   {
     ++progress;
-    if (progress % 10000 == 0) print(".",2);
+    if (progress % 100000 == 0) print(".",2);
   }
 
 

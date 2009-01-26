@@ -56,9 +56,9 @@ public class MERT_runner
     println("");
     println("MERT specs:");
     println("  -m metricName metric options: name of evaluation metric and its options\n    [[default: BLEU 4 closest]]");
-    println("  -prevIt prevMERTIts: maximum number of previous MERT iterations to\n    construct candidate sets from\n    [[default: 20]]");
     println("  -maxIt maxMERTIts: maximum number of MERT iterations\n    [[default: 20]]");
     println("  -minIt minMERTIts: number of iterations before considering an early exit\n    [[default: 5]]");
+    println("  -prevIt prevMERTIts: maximum number of previous MERT iterations to\n    construct candidate sets from\n    [[default: 20]]");
     println("  -stopSig sigValue: early MERT exit if no weight changes by more than sigValue\n    [[default: -1 (i.e. this criterion is never investigated)]]");
     println("  -stopIt stopMinIts: some early stopping criterion must be satisfied in\n    stopMinIts *consecutive* iterations before an early exit\n    [[default: 3]]");
     println("  -save saveInter: save intermediate cfg files (1) or decoder outputs (2)\n    or both (3) or neither (0)\n    [[default: 3]]");
