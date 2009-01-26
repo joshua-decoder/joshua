@@ -116,13 +116,11 @@ $ ant test
 
 To run the example:
 
-$ cd example
-$ ./decode_example_javalm.sh
+$ ./example/decode_example_javalm.sh
 
 or
 
-$ cd example
-$ ./decode_example_srilm.sh
+$ ./example/decode_example_srilm.sh
 
 
 
