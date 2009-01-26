@@ -10,7 +10,7 @@
 -decOut	nbest_ex2.out           # file prodcued by decoder
 -dcfg	config_ex2.txt          # decoder config file
 -N	300                     # size of N-best list generated each iteration
--v	2                       # verbosity level (0-2; higher value => more verbose)
+-v	1                       # verbosity level (0-2; higher value => more verbose)
 -seed   12341234                # random number generator seed
 
 # Notice that comments are allowed
