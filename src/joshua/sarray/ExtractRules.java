@@ -117,34 +117,34 @@ public class ExtractRules {
 			//SuffixArray.INVERTED_INDEX_PRECOMPUTATION_MIN_FREQ = commandLine.getValue("CACHE_PRECOMPUTATION_FREQUENCY_THRESHOLD");
 
 			SuffixArray.CACHE_CAPACITY = commandLine.getValue(cacheSize);
-			if (logger.isLoggable(Level.FINE)) logger.fine("Suffix array will cache hierarchical phrases for at most " + SuffixArray.CACHE_CAPACITY + " patterns.");
+			if (logger.isLoggable(Level.INFO)) logger.info("Suffix array will cache hierarchical phrases for at most " + SuffixArray.CACHE_CAPACITY + " patterns.");
 			
-			if (logger.isLoggable(Level.FINE)) logger.fine("Constructing source language vocabulary.");
+			if (logger.isLoggable(Level.INFO)) logger.info("Constructing source language vocabulary.");
 			String sourceFileName = commandLine.getValue(source);
 			Vocabulary sourceVocab = new Vocabulary();
 			int[] sourceWordsSentences = SuffixArrayFactory.createVocabulary(sourceFileName, sourceVocab);
-			if (logger.isLoggable(Level.FINE)) logger.fine("Constructing source language corpus array.");
+			if (logger.isLoggable(Level.INFO)) logger.info("Constructing source language corpus array.");
 			CorpusArray sourceCorpusArray = SuffixArrayFactory.createCorpusArray(sourceFileName, sourceVocab, sourceWordsSentences[0], sourceWordsSentences[1]);
-			if (logger.isLoggable(Level.FINE)) logger.fine("Constructing source language suffix array.");
+			if (logger.isLoggable(Level.FINE)) logger.info("Constructing source language suffix array.");
 			SuffixArray sourceSuffixArray = SuffixArrayFactory.createSuffixArray(sourceCorpusArray);
 
-			if (logger.isLoggable(Level.FINE)) logger.fine("Constructing target language vocabulary.");		
+			if (logger.isLoggable(Level.INFO)) logger.info("Constructing target language vocabulary.");		
 			String targetFileName = commandLine.getValue(target);
 			Vocabulary targetVocab = new Vocabulary();
 			int[] targetWordsSentences = SuffixArrayFactory.createVocabulary(commandLine.getValue(target), targetVocab);
-			if (logger.isLoggable(Level.FINE)) logger.fine("Constructing target language corpus array.");
+			if (logger.isLoggable(Level.INFO)) logger.info("Constructing target language corpus array.");
 			CorpusArray targetCorpusArray = SuffixArrayFactory.createCorpusArray(targetFileName, targetVocab, targetWordsSentences[0], targetWordsSentences[1]);
-			if (logger.isLoggable(Level.FINE)) logger.fine("Constructing target language suffix array.");
+			if (logger.isLoggable(Level.INFO)) logger.info("Constructing target language suffix array.");
 			SuffixArray targetSuffixArray = SuffixArrayFactory.createSuffixArray(targetCorpusArray);
 
-			if (logger.isLoggable(Level.FINE)) logger.fine("Reading alignment data.");
+			if (logger.isLoggable(Level.INFO)) logger.info("Reading alignment data.");
 			String alignmentFileName = commandLine.getValue(alignment);
 			Alignments alignments;
 			if ("AlignmentArray".equals(commandLine.getValue(alignmentType))) {
-				if (logger.isLoggable(Level.FINE)) logger.fine("Using AlignmentArray");
+				if (logger.isLoggable(Level.INFO)) logger.info("Using AlignmentArray");
 				alignments = SuffixArrayFactory.createAlignmentArray(alignmentFileName, sourceSuffixArray, targetSuffixArray);
 			} else {
-				if (logger.isLoggable(Level.FINE)) logger.fine("Using AlignmentGrids");
+				if (logger.isLoggable(Level.INFO)) logger.info("Using AlignmentGrids");
 				alignments = new AlignmentGrids(new Scanner(new File(alignmentFileName)), sourceCorpusArray, targetCorpusArray, commandLine.getValue(trainingSize));
 			}
 			
@@ -175,15 +175,15 @@ public class ExtractRules {
 				out = new PrintStream(commandLine.getValue(output));
 			}
 
-			if (logger.isLoggable(Level.FINE)) logger.fine("Constructing lexical probabilities table");
+			if (logger.isLoggable(Level.INFO)) logger.info("Constructing lexical probabilities table");
 
 			SampledLexProbs lexProbs = 
 				new SampledLexProbs(commandLine.getValue(lexSampleSize), sourceSuffixArray, targetSuffixArray, alignments, false);
 			//new LexProbs(source_given_target, target_given_source, sourceVocab, targetVocab);
 
-			if (logger.isLoggable(Level.FINE)) logger.fine("Done constructing lexical probabilities table");
+			if (logger.isLoggable(Level.INFO)) logger.info("Done constructing lexical probabilities table");
 
-			if (logger.isLoggable(Level.FINE)) logger.fine("Should store a max of " + commandLine.getValue(ruleSampleSize) + " rules at each node in a prefix tree.");
+			if (logger.isLoggable(Level.INFO)) logger.info("Should store a max of " + commandLine.getValue(ruleSampleSize) + " rules at each node in a prefix tree.");
 
 			Map<Integer,String> ntVocab = new HashMap<Integer,String>();
 			ntVocab.put(PrefixTree.X, "X");
@@ -207,7 +207,7 @@ public class ExtractRules {
 				lineNumber++;
 				int[] words = sourceVocab.getIDs(line);
 
-				if (logger.isLoggable(Level.FINE)) logger.fine("Constructing prefix tree for source line " + lineNumber + ": " + line);
+				if (logger.isLoggable(Level.INFO)) logger.info("Constructing prefix tree for source line " + lineNumber + ": " + line);
 
 				PrefixTree prefixTree = new PrefixTree(sourceSuffixArray, targetCorpusArray, alignments, lexProbs, ruleExtractor, words, commandLine.getValue(maxPhraseSpan), commandLine.getValue(maxPhraseLength), commandLine.getValue(maxNonterminals), commandLine.getValue(minNonterminalSpan));
 
@@ -216,7 +216,7 @@ public class ExtractRules {
 				}
 			
 				if (commandLine.getValue(print_rules)) {
-					if (logger.isLoggable(Level.FINER)) logger.finer("Outputting rules for source line: " + line);
+					if (logger.isLoggable(Level.FINE)) logger.fine("Outputting rules for source line: " + line);
 
 					for (Rule rule : prefixTree.getAllRules()) {
 						String ruleString = rule.toString(ntVocab, sourceVocab, targetVocab);
@@ -228,7 +228,7 @@ public class ExtractRules {
 				if (commandLine.getValue(confirm)) {
 					if (logger.isLoggable(Level.INFO)) logger.info("Please press a key to continue");
 					System.in.read();
-					if (logger.isLoggable(Level.FINE)) logger.fine("Prefix tree had " + prefixTree.size() + " nodes.");
+					if (logger.isLoggable(Level.FINER)) logger.finer("Prefix tree had " + prefixTree.size() + " nodes.");
 				}
 			}
 			
@@ -241,7 +241,7 @@ public class ExtractRules {
 				System.in.read();
 			}
 			
-			if (logger.isLoggable(Level.FINE)) logger.fine("Done extracting rules");
+			if (logger.isLoggable(Level.INFO)) logger.info("Done extracting rules");
 		}
 	}
 
