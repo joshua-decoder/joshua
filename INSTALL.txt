@@ -139,6 +139,13 @@ $ ant source-jar
 
 
 
+ --------------------------
+| Extract a sample grammar |
+ --------------------------
+
+$ java -cp bin joshua.sarray.ExtractRules --source=data/europarl.es.small.100 --target=data/europarl.en.small.100 --alignments=data/es_en_europarl_alignments.txt.small.100 --test=data/europarl.es.small.1 --maxPhraseLength=5
+
+
 ########################################################################
 
 For any further question of help, please turn to the Joshua support
