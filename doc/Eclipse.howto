@@ -1,0 +1,40 @@
+Install the Subclipse SVN plugin in Eclipse.
+
+
+File -> New -> Other
+
+SVN -> Checkout project from SVN
+
+Click Next
+
+Select "Create a new repository location"
+Click Next
+Url: https://joshua.svn.sourceforge.net/svnroot/joshua/trunk
+Click Next
+
+In the Select folder dialog, 
+select the node for "https://joshua.svn.sourceforge.net/svnroot/joshua/trunk"
+
+Click Next
+
+
+In the dialog "Check out as a project configured using the New Project Wizard" should be selected.
+Click Finish.
+
+In the New Project dialog that pops up, select "Java Project".
+Click Next.
+
+In the New Java Project dialog, type in a Project name (ex: joshua).
+Click Finish.
+Click OK.
+
+A popup will show "SVN Checkout".
+You should now have the project checked out.
+
+Right-click on the project folder, and select Properties.
+Select Java Build Path.
+Select the Libraries tab.
+Click Add JARs.
+Select lib/je-3.2.23.jar
+Click OK.
+Click OK.
