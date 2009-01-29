@@ -15,7 +15,7 @@
 
 # Notice that comments are allowed
 
-### Other parameters (run MERT_runner with no arguments for default values)
+### Other parameters (run "MERT_runner -h" for default values)
 #-fin     # output file for final values
 #-m       # name of evaluation metric
 #-minIt   # minimum MERT iterations before considering an early exit
