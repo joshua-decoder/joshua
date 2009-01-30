@@ -6,24 +6,24 @@ public class MERT_runner
 {
   public static void main(String[] args) throws Exception
   {
-    boolean limitedMem = false;
+    boolean external = false;
 
     if (args.length == 1) {
       if (args[0].equals("-h")) {
         printUsage(args.length,true);
         System.exit(2);
       } else {
-        limitedMem = false;
+        external = false;
       }
-    } else if (args.length == 2) {
-      limitedMem = true;
+    } else if (args.length == 2 || args.length == 4) {
+      external = true;
     } else {
       printUsage(args.length,false);
       System.exit(1);
     }
 
 
-    if (!limitedMem) {
+    if (!external) {
 
       MERT myMERT = new MERT(args[0]);
 
@@ -33,6 +33,19 @@ public class MERT_runner
       myMERT.finish();
 
     } else {
+      int maxMem = 300;
+      String configFileName = "";
+      String stateFileName = "";
+
+      if (args.length == 2) {
+        configFileName = args[0];
+        stateFileName = args[1];
+      } else { // 4 arguments
+        maxMem = Integer.parseInt(args[1]);
+        configFileName = args[2];
+        stateFileName = args[3];
+      }
+
 
       boolean done = false;
       int iteration = 0;
@@ -40,7 +53,7 @@ public class MERT_runner
         ++iteration;
 
         Runtime rt = Runtime.getRuntime();
-        Process p = rt.exec("java -cp bin joshua.MERT.MERT " + args[0] + " " + args[1] + " " + iteration);
+        Process p = rt.exec("java -Xmx" + maxMem + "m -cp bin joshua.MERT.MERT " + configFileName + " " + stateFileName + " " + iteration);
 
         BufferedReader br_i = new BufferedReader(new InputStreamReader(p.getInputStream()));
         BufferedReader br_e = new BufferedReader(new InputStreamReader(p.getErrorStream()));
