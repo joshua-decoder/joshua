@@ -27,5 +27,3 @@
 #-rand    # should first initial point (of first iteration) be initialized randomly?
 #-decExit # return value by decoder indicating success
 #-decV    # should decoder output be printed
-
--fake nbest.out.temp.it

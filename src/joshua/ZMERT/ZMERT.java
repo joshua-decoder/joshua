@@ -35,7 +35,7 @@ public class ZMERT
     } else {
       int maxMem = Integer.parseInt(args[1]);
       String configFileName = args[2];
-      String stateFileName = "MERT.temp.state";
+      String stateFileName = "ZMERT.temp.state";
 
       boolean done = false;
       int iteration = 0;
@@ -43,7 +43,7 @@ public class ZMERT
         ++iteration;
 
         Runtime rt = Runtime.getRuntime();
-        Process p = rt.exec("java -Xmx" + maxMem + "m -cp bin joshua.MERT.MertCore " + configFileName + " " + stateFileName + " " + iteration);
+        Process p = rt.exec("java -Xmx" + maxMem + "m -cp bin joshua.ZMERT.MertCore " + configFileName + " " + stateFileName + " " + iteration);
 
         BufferedReader br_i = new BufferedReader(new InputStreamReader(p.getInputStream()));
         BufferedReader br_e = new BufferedReader(new InputStreamReader(p.getErrorStream()));
@@ -93,16 +93,22 @@ public class ZMERT
       println("Oops, you provided " + argsLen + " args!");
       println("");
       println("Usage:");
-      println("           ZMERT MERT_configFile");
+      println("           ZMERT -maxMem maxMemoryInMB MERT_configFile");
       println("");
-      println("Where the configuration file contains any subset of Z-MERT's 20-some parameters,");
-      println("one per line.  Run   ZMERT -h   for more details.");
+      println("Where -maxMem specifies the maximum amount of memory (in MB) Z-MERT is");
+      println("allowed to use when performing its calculations (no memroy is needed while");
+      println("the decoder is running),");
+      println("and the config file contains any subset of Z-MERT's 20-some parameters,");
+      println("one per line.  Run   ZMERT -h   for more details on those parameters.");
     } else {
       println("Usage:");
-      println("           ZMERT MERT_configFile");
+      println("           ZMERT -maxMem maxMemoryInMB MERT_configFile");
       println("");
-      println("Where the configuration file contains any subset of Z-MERT's 20-some parameters,");
-      println("one per line.  Z-MERT's parameters, and their default values, are:");
+      println("Where -maxMem specifies the maximum amount of memory (in MB) Z-MERT is");
+      println("allowed to use when performing its calculations (no memroy is needed while");
+      println("the decoder is running),");
+      println("and the config file contains any subset of Z-MERT's 20-some parameters,");
+      println("one per line.  Those parameters, and their default values, are:");
       println("");
       println("Relevant files:");
       println("  -dir dirPrefix: working directory\n    [[default: null string (i.e. they are in the current directory)]]");

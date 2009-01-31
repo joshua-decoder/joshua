@@ -449,7 +449,7 @@ public class MertCore
       println("",1);
 
       // rename original config file so it doesn't get overwritten (original name will be restored in finish())
-      renameFile(decoderConfigFileName,decoderConfigFileName+".orig.MERT");
+      renameFile(decoderConfigFileName,decoderConfigFileName+".orig.ZMERT");
 
     } // if (randsToSkip == 0)
 
@@ -457,7 +457,7 @@ public class MertCore
     if (decoderCommand == null && fakeFileNamePrefix == null) {
       myDecoder = new JoshuaDecoder();
       println("Loading Joshua decoder...",1);
-      myDecoder.initializeDecoder(decoderConfigFileName+".orig.MERT");
+      myDecoder.initializeDecoder(decoderConfigFileName+".orig.ZMERT");
       println("...finished loading @ " + (new Date()),1);
     } else {
       myDecoder = null;
@@ -591,7 +591,7 @@ public class MertCore
       // CREATE DECODER CONFIG FILE //
       /******************************/
 
-      createConfigFile(lambda,decoderConfigFileName,decoderConfigFileName+".orig.MERT");
+      createConfigFile(lambda,decoderConfigFileName,decoderConfigFileName+".orig.ZMERT");
         // i.e. use the original config file as a template
 
       /***************/
@@ -616,10 +616,10 @@ public class MertCore
       produceTempFiles(iteration);
 
       if (saveInterFiles == 1 || saveInterFiles == 3) {
-        copyFile(decoderConfigFileName,decoderConfigFileName+".MERT.it"+iteration);
+        copyFile(decoderConfigFileName,decoderConfigFileName+".ZMERT.it"+iteration);
       }
       if (saveInterFiles == 2 || saveInterFiles == 3) {
-        copyFile(decoderOutFileName,decoderOutFileName+".MERT.it"+iteration);
+        copyFile(decoderOutFileName,decoderOutFileName+".ZMERT.it"+iteration);
       }
 
       int[] candCount = new int[numSentences];
@@ -1098,7 +1098,7 @@ public class MertCore
       if (myDecoder == null) {
         myDecoder = new JoshuaDecoder();
         println("Loading Joshua decoder...",1);
-        myDecoder.initializeDecoder(decoderConfigFileName+".orig.MERT");
+        myDecoder.initializeDecoder(decoderConfigFileName+".orig.ZMERT");
         println("...finished loading @ " + (new Date()),1);
       }
 
@@ -1930,14 +1930,14 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
     }
 
     // create config file with final values
-    createConfigFile(lambda, decoderConfigFileName+".final.MERT",decoderConfigFileName+".orig.MERT");
+    createConfigFile(lambda, decoderConfigFileName+".final.ZMERT",decoderConfigFileName+".orig.ZMERT");
 
     // delete current decoder config file and decoder output
     deleteFile(decoderConfigFileName);
     deleteFile(decoderOutFileName);
 
     // restore original name for config file (name was changed in initialize() so it doesn't get overwritten)
-    renameFile(decoderConfigFileName+".orig.MERT",decoderConfigFileName);
+    renameFile(decoderConfigFileName+".orig.ZMERT",decoderConfigFileName);
 
   }
 
@@ -2666,33 +2666,33 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
 fake:
 -----
 ex2_N300:
-java -javaagent:shiftone-jrat.jar -Xmx300m -cp bin joshua.MERT.ZMERT -dir MERT_example -s src.txt -r ref.all -rps 4 -cmd decoder_command_ex2.txt -dcfg config_ex2.txt -decOut nbest_ex2.out -N 300 -p params.txt -maxIt 25 -opi 0 -ipi 20 -v 2 -rand 0 -seed 1226091488390 -save 1 -fake nbest_ex2.out.N300.it > ex2_N300ipi20opi0_300max+defratios.it10.noMemRep.bugFixes.monitored.txt
+java -javaagent:shiftone-jrat.jar -Xmx300m -cp bin joshua.ZMERT.ZMERT -dir MERT_example -s src.txt -r ref.all -rps 4 -cmd decoder_command_ex2.txt -dcfg config_ex2.txt -decOut nbest_ex2.out -N 300 -p params.txt -maxIt 25 -opi 0 -ipi 20 -v 2 -rand 0 -seed 1226091488390 -save 1 -fake nbest_ex2.out.N300.it > ex2_N300ipi20opi0_300max+defratios.it10.noMemRep.bugFixes.monitored.txt
 
 ex2_N500:
-java -javaagent:shiftone-jrat.jar -Xmx300m -cp bin joshua.MERT.ZMERT -dir MERT_example -s src.txt -r ref.all -rps 4 -cmd decoder_command_ex2.txt -dcfg config_ex2.txt -decOut nbest_ex2.out -N 500 -p params.txt -maxIt 25 -opi 0 -ipi 20 -v 2 -rand 0 -seed 1226091488390 -save 1 -fake nbest_ex2.out.N500.it > ex2_N500ipi20opi0_300max+defratios.it05.noMemRep.bugFixes.monitored.txt
+java -javaagent:shiftone-jrat.jar -Xmx300m -cp bin joshua.ZMERT.ZMERT -dir MERT_example -s src.txt -r ref.all -rps 4 -cmd decoder_command_ex2.txt -dcfg config_ex2.txt -decOut nbest_ex2.out -N 500 -p params.txt -maxIt 25 -opi 0 -ipi 20 -v 2 -rand 0 -seed 1226091488390 -save 1 -fake nbest_ex2.out.N500.it > ex2_N500ipi20opi0_300max+defratios.it05.noMemRep.bugFixes.monitored.txt
 
 exL_N300__600max:
-java -javaagent:shiftone-jrat.jar -Xmx600m -cp bin joshua.MERT.ZMERT -dir MERT_example -s mt06_source.txt -r mt06_ref.all -rps 4 -cmd decoder_command_ex2.txt -dcfg config_ex2.txt -decOut nbest_exL.out -N 300 -p params.txt -maxIt 5 -opi 0 -ipi 20 -v 2 -rand 0 -seed 1226091488390 -save 1 -fake nbest_exL.out.it > exL_N300ipi20opi0_600max+defratios.it05.noMemRep.bugFixes.monitored.txt
+java -javaagent:shiftone-jrat.jar -Xmx600m -cp bin joshua.ZMERT.ZMERT -dir MERT_example -s mt06_source.txt -r mt06_ref.all -rps 4 -cmd decoder_command_ex2.txt -dcfg config_ex2.txt -decOut nbest_exL.out -N 300 -p params.txt -maxIt 5 -opi 0 -ipi 20 -v 2 -rand 0 -seed 1226091488390 -save 1 -fake nbest_exL.out.it > exL_N300ipi20opi0_600max+defratios.it05.noMemRep.bugFixes.monitored.txt
 
 exL_N300__300max:
-java -javaagent:shiftone-jrat.jar -Xmx300m -cp bin joshua.MERT.ZMERT -dir MERT_example -s mt06_source.txt -r mt06_ref.all -rps 4 -cmd decoder_command_ex2.txt -dcfg config_ex2.txt -decOut nbest_exL.out -N 300 -p params.txt -maxIt 5 -opi 0 -ipi 20 -v 2 -rand 0 -seed 1226091488390 -save 1 -fake nbest_exL.out.it > exL_N300ipi20opi0_300max+defratios.it05.noMemRep.bugFixes.monitored.txt
+java -javaagent:shiftone-jrat.jar -Xmx300m -cp bin joshua.ZMERT.ZMERT -dir MERT_example -s mt06_source.txt -r mt06_ref.all -rps 4 -cmd decoder_command_ex2.txt -dcfg config_ex2.txt -decOut nbest_exL.out -N 300 -p params.txt -maxIt 5 -opi 0 -ipi 20 -v 2 -rand 0 -seed 1226091488390 -save 1 -fake nbest_exL.out.it > exL_N300ipi20opi0_300max+defratios.it05.noMemRep.bugFixes.monitored.txt
 
 gen:
 ----
 ex2_N300:
 make sure top_n=300 in MERT_example\config_ex2.txt
-java -javaagent:shiftone-jrat.jar -Xmx300m -cp bin joshua.MERT.ZMERT -dir MERT_example -s src.txt -r ref.all -rps 4 -cmd decoder_command_ex2.txt -dcfg config_ex2.txt -decOut nbest_ex2.out -N 300 -p params.txt -maxIt 25 -opi 0 -ipi 20 -v 2 -rand 0 -seed 1226091488390 -save 1 > ex2_N300ipi20opi0_300max+defratios.itxx.monitored.txt.gen
+java -javaagent:shiftone-jrat.jar -Xmx300m -cp bin joshua.ZMERT.ZMERT -dir MERT_example -s src.txt -r ref.all -rps 4 -cmd decoder_command_ex2.txt -dcfg config_ex2.txt -decOut nbest_ex2.out -N 300 -p params.txt -maxIt 25 -opi 0 -ipi 20 -v 2 -rand 0 -seed 1226091488390 -save 1 > ex2_N300ipi20opi0_300max+defratios.itxx.monitored.txt.gen
 
 ex2_N500:
 make sure top_n=500 in MERT_example\config_ex2.txt
-java -javaagent:shiftone-jrat.jar -Xmx300m -cp bin joshua.MERT.ZMERT -dir MERT_example -s src.txt -r ref.all -rps 4 -cmd decoder_command_ex2.txt -dcfg config_ex2.txt -decOut nbest_ex2.out -N 500 -p params.txt -maxIt 25 -opi 0 -ipi 20 -v 2 -rand 0 -seed 1226091488390 -save 1 > ex2_N500ipi20opi0_300max+defratios.itxx.monitored.txt.gen
+java -javaagent:shiftone-jrat.jar -Xmx300m -cp bin joshua.ZMERT.ZMERT -dir MERT_example -s src.txt -r ref.all -rps 4 -cmd decoder_command_ex2.txt -dcfg config_ex2.txt -decOut nbest_ex2.out -N 500 -p params.txt -maxIt 25 -opi 0 -ipi 20 -v 2 -rand 0 -seed 1226091488390 -save 1 > ex2_N500ipi20opi0_300max+defratios.itxx.monitored.txt.gen
 
 exL_N300__600max:
 run on CLSP machines only! (e.g. z12)
-$JAVA_bin/java -javaagent:shiftone-jrat.jar -Xmx600m -cp bin joshua.MERT.ZMERT -dir YOURDIR -s mt06_source.txt -r mt06_ref.all -rps 4 -cmd decoder_command.txt -dcfg config_exL.txt -decOut nbest_exL.out -N 300 -p params.txt -maxIt 25 -opi 0 -ipi 20 -v 2 -rand 0 -seed 1226091488390 -save 1 > exL_N300ipi20opi0_600max+defratios.itxx.monitored.txt.gen
+$JAVA_bin/java -javaagent:shiftone-jrat.jar -Xmx600m -cp bin joshua.ZMERT.ZMERT -dir YOURDIR -s mt06_source.txt -r mt06_ref.all -rps 4 -cmd decoder_command.txt -dcfg config_exL.txt -decOut nbest_exL.out -N 300 -p params.txt -maxIt 25 -opi 0 -ipi 20 -v 2 -rand 0 -seed 1226091488390 -save 1 > exL_N300ipi20opi0_600max+defratios.itxx.monitored.txt.gen
 
 exL_N300__300max:
 run on CLSP machines only! (e.g. z12)
-$JAVA_bin/java -javaagent:shiftone-jrat.jar -Xmx300m -cp bin joshua.MERT.ZMERT -dir YOURDIR -s mt06_source.txt -r mt06_ref.all -rps 4 -cmd decoder_command.txt -dcfg config_exL.txt -decOut nbest_exL.out -N 300 -p params.txt -maxIt 25 -opi 0 -ipi 20 -v 2 -rand 0 -seed 1226091488390 -save 1 > exL_N300ipi20opi0_600max+defratios.itxx.monitored.txt.gen
+$JAVA_bin/java -javaagent:shiftone-jrat.jar -Xmx300m -cp bin joshua.ZMERT.ZMERT -dir YOURDIR -s mt06_source.txt -r mt06_ref.all -rps 4 -cmd decoder_command.txt -dcfg config_exL.txt -decOut nbest_exL.out -N 300 -p params.txt -maxIt 25 -opi 0 -ipi 20 -v 2 -rand 0 -seed 1226091488390 -save 1 > exL_N300ipi20opi0_600max+defratios.itxx.monitored.txt.gen
 
 */
