@@ -1,5 +1,5 @@
 ### Commonly used parameters
--dir	MERT_example            # working directory (i.e. location of relevant files)
+-dir	ZMERT_example            # working directory (i.e. location of relevant files)
 -s	src.txt                 # source sentences file name
 -r	ref                     # target sentences file name (in this case, file name prefix)
 -rps	4                       # references per sentence
@@ -27,3 +27,5 @@
 #-rand    # should first initial point (of first iteration) be initialized randomly?
 #-decExit # return value by decoder indicating success
 #-decV    # should decoder output be printed
+
+-fake nbest.out.temp.it

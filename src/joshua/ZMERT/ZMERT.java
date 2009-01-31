@@ -1,8 +1,8 @@
-package joshua.MERT;
+package joshua.ZMERT;
 import java.util.*;
 import java.io.*;
 
-public class MERT_runner
+public class ZMERT
 {
   public static void main(String[] args) throws Exception
   {
@@ -15,7 +15,7 @@ public class MERT_runner
       } else {
         external = false;
       }
-    } else if (args.length == 2 || args.length == 4) {
+    } else if (args.length == 3) {
       external = true;
     } else {
       printUsage(args.length,false);
@@ -25,27 +25,17 @@ public class MERT_runner
 
     if (!external) {
 
-      MERT myMERT = new MERT(args[0]);
+      MertCore myMert = new MertCore(args[0]);
 
-      myMERT.run_MERT();
+      myMert.run_MERT();
         // optimize lambda[]!!!
 
-      myMERT.finish();
+      myMert.finish();
 
     } else {
-      int maxMem = 300;
-      String configFileName = "";
-      String stateFileName = "";
-
-      if (args.length == 2) {
-        configFileName = args[0];
-        stateFileName = args[1];
-      } else { // 4 arguments
-        maxMem = Integer.parseInt(args[1]);
-        configFileName = args[2];
-        stateFileName = args[3];
-      }
-
+      int maxMem = Integer.parseInt(args[1]);
+      String configFileName = args[2];
+      String stateFileName = "MERT.temp.state";
 
       boolean done = false;
       int iteration = 0;
@@ -53,7 +43,7 @@ public class MERT_runner
         ++iteration;
 
         Runtime rt = Runtime.getRuntime();
-        Process p = rt.exec("java -Xmx" + maxMem + "m -cp bin joshua.MERT.MERT " + configFileName + " " + stateFileName + " " + iteration);
+        Process p = rt.exec("java -Xmx" + maxMem + "m -cp bin joshua.MERT.MertCore " + configFileName + " " + stateFileName + " " + iteration);
 
         BufferedReader br_i = new BufferedReader(new InputStreamReader(p.getInputStream()));
         BufferedReader br_e = new BufferedReader(new InputStreamReader(p.getErrorStream()));
@@ -73,7 +63,7 @@ public class MERT_runner
         } else if (status == 91) {
           done = false;
         } else {
-          println("ZMERT exiting prematurely (MERT returned " + status + ")...");
+          println("ZMERT exiting prematurely (MertCore returned " + status + ")...");
           break;
         }
       }
@@ -105,14 +95,14 @@ public class MERT_runner
       println("Usage:");
       println("           ZMERT MERT_configFile");
       println("");
-      println("Where the configuration file contains any subset of MERT's 20-some parameters,");
+      println("Where the configuration file contains any subset of Z-MERT's 20-some parameters,");
       println("one per line.  Run   ZMERT -h   for more details.");
     } else {
       println("Usage:");
       println("           ZMERT MERT_configFile");
       println("");
-      println("Where the configuration file contains any subset of MERT's 20-some parameters,");
-      println("one per line.  MERT's parameters, and their default values, are:");
+      println("Where the configuration file contains any subset of Z-MERT's 20-some parameters,");
+      println("one per line.  Z-MERT's parameters, and their default values, are:");
       println("");
       println("Relevant files:");
       println("  -dir dirPrefix: working directory\n    [[default: null string (i.e. they are in the current directory)]]");

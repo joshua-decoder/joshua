@@ -1,9 +1,9 @@
-package joshua.MERT;
+package joshua.ZMERT;
 import java.math.*;
 import java.util.*;
 import java.io.*;
 
-public class UserMetric2 extends EvaluationMetric
+public class UserMetric1 extends EvaluationMetric
 {
   /*
     private data members for this error metric
@@ -15,17 +15,17 @@ public class UserMetric2 extends EvaluationMetric
   /*
   */
 
-  public UserMetric2()
+  public UserMetric1()
   {
     this("default_str");
   }
 
-  public UserMetric2(String[] UM2_options)
+  public UserMetric1(String[] UM1_options)
   {
-    this(UM2_options[0]);
+    this(UM1_options[0]);
   }
 
-  public UserMetric2(String str)
+  public UserMetric1(String str)
   {
     mainVar = str;
     initialize();
@@ -33,7 +33,7 @@ public class UserMetric2 extends EvaluationMetric
 
   protected void initialize()
   {
-    metricName = "UserMetric2";
+    metricName = "UserMetric1";
     toBeMinimized = true;
     set_suffStatsCount();
 

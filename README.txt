@@ -31,24 +31,25 @@ Notice that the file names for the two models, the size of the N-best list, and 
 feature weights, are all specified in Joshua's config file.
 
 
-Running MERT:
--------------
+Running Z-MERT, Joshua's MERT module:
+-------------------------------------
 
-((This MERT section is identical to the first section in trunk/MERT_example/MERT_README.txt))
+((Section (1) in trunk/ZMERT_example/README_ZMERT.txt is an expanded version of this section))
 
-The MERT module, called MERT_runner, expects a config file as its sole argument.
-The config file can be used to specify any subset of MERT's 20-some parameters.
-For a full list of those parameters, and their default values, run MERT_runner
-with no arguments as follows (assuming you're in the trunk folder):
+Joshua's MERT module, called Z-MERT, can be used by launching the driver
+program (ZMERT.java), which expects a config file as its main argument.  This
+config file can be used to specify any subset of MERT's 20-some parameters.
+For a full list of those parameters, and their default values, run ZMERT with
+a single -h argument as follows (assuming you're in the trunk folder):
 
-  java -cp bin joshua.MERT.MERT_runner
+  java -cp bin joshua.ZMERT.ZMERT -h
 
-So what does a MERT config file look like?
+So what does a Z-MERT config file look like?
 
-Examine the file MERT_example/MERT_config_ex2.txt.  You will find that it specifies
-the following "main" MERT parameters:
+Examine the file ZMERT_example/ZMERT_config_ex2.txt.  You will find that it
+specifies the following "main" MERT parameters:
 
- (*) -dir dirPrefix:         location of relevant files
+ (*) -dir dirPrefix:         working directory
  (*) -s sourceFile:          source sentences (foreign sentences) of the MERT dataset
  (*) -r refFile:             target sentences (reference translations) of the MERT dataset
  (*) -rps refsPerSen:        number of reference translations per sentence
@@ -62,36 +63,48 @@ the following "main" MERT parameters:
  (*) -v verbosity:           output verbosity level (0-2; higher value => more verbose)
  (*) -seed seed:             seed used to initialize the random number generator
 
-To test MERT_runner on the 100-sentence test set of example2, provide this config
-file to MERT_runner as follows (assuming you're in the trunk folder):
+(Note that the -s parameter is only used if Z-MERT is running Joshua as an
+ internal decoder.  If Joshua is run as an external decoder, as is the case in
+ this README, then this parameter is ignored.)
 
-  java -cp bin joshua.MERT.MERT_runner MERT_example/MERT_config_ex2.txt > MERT_example/MERT.out
+To test Z-MERT on the 100-sentence test set of example2, provide this config
+file to Z-MERT as follows (assuming you're in the trunk folder):
 
-This will run MERT for a couple of iterations on the data from the example2 folder.
-(Notice that we have made copies of the source and reference files from example2 and
-renamed them as src.txt and ref.* in the MERT_example folder, just to have all the
-files relevant to MERT in one place.)  Once the MERT run is complete, you should be
-able to inspect the log file to see what kinds of things it did.  If everything goes
-right, the run should take a few minutes, of which more than 95% is time spent by
-MERT waiting on Joshua to finish decoding the sentences (once per iteration).
+  java -cp bin joshua.ZMERT.ZMERT -maxMem 500 ZMERT_example/ZMERT_config_ex2.txt > ZMERT_example/ZMERT.out
 
-The output file you get should be equivalent to MERT.out.verbosity1.  If you rerun
-the experiment with the verbosity (-v) argument set to 2 instead of 1, the output
-file you get should be equivalent to MERT.out.verbosity2, which has more interesting
-details about what MERT does.
+This will run Z-MERT for a couple of iterations on the data from the example2
+folder.  (Notice that we have made copies of the source and reference files
+from example2 and renamed them as src.txt and ref.* in the MERT_example folder,
+just to have all the files needed by Z-MERT in one place.)  Once the Z-MERT run
+is complete, you should be able to inspect the log file to see what kinds of
+things it did.  If everything goes well, the run should take a few minutes, of
+which more than 95% is time spent by Z-MERT waiting on Joshua to finish
+decoding the sentences (once per iteration).
 
-A quick note about MERT's interaction with the decoder.  If you examine the file
-decoder_command_ex2.txt, which is provided as the commandFile (-cmd) argument in
-MERT's config file, you'll find it consists of exactly one line, containing the
-command one would use to run the decoder.  MERT uses that single command to launch
-an external process that runs the decoder.  After launching this external process,
-MERT waits for it to finish, then uses the resulting output file in its parameter
-tuning (in addition to the output files from previous iterations).
+The output file you get should be equivalent to ZMERT.out.verbosity1.  If you
+rerun the experiment with the verbosity (-v) argument set to 2 instead of 1,
+the output file you get should be equivalent to ZMERT.out.verbosity2, which has
+more interesting details about what Z-MERT does.
 
-Notice that the MERT arguments configFile and decoderOutFile (-cfg and -decOut)
-must match the Joshua arguments indicated in the command in commandFile (-cmd).
-Also, the MERT argument for N must match the value for top_n in configFile (-cfg).
+Notice the additional -maxMem argument.  It tells Z-MERT that it should not
+persist to use up memory while the decoder is running (during which time Z-MERT
+would be idle).  The 500 tells Z-MERT that it can only use a maximum of 500 MB.
+For more details on this issue, see section (4) in Z-MERT's readme.
 
-*********************************************************************
-*** For more on MERT, refer to trunk/MERT_example/README_MERT.txt ***
-*********************************************************************
+A quick note about Z-MERT's interaction with the decoder.  If you examine the
+file decoder_command_ex2.txt, which is provided as the commandFile (-cmd)
+argument in Z-MERT's config file, you'll find it consists of exactly one line,
+containing the command one would use to run the decoder.  MERT uses that single
+command to launch the decoder as an external process to produce translations.
+After launching this external process, Z-MERT waits for it to finish, then uses
+the resulting output file in its parameter tuning (in addition to the output
+files from previous iterations).
+
+Notice that the Z-MERT arguments configFile and decoderOutFile (-cfg and
+-decOut) must match the two Joshua arguments in the commandFile's (-cmd) single
+command.  Also, the Z-MERT argument for N must match the value for top_n in
+Joshua's config file, indicated by the Z-MERT argument configFile (-cfg).
+
+*******************************************************************************
+** For more details on Z-MERT, refer to trunk/ZMERT_example/README_ZMERT.txt **
+*******************************************************************************

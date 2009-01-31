@@ -1,11 +1,11 @@
-package joshua.MERT;
+package joshua.ZMERT;
 import joshua.decoder.*;
 import java.math.*;
 import java.util.*;
 import java.io.*;
 import java.text.DecimalFormat;
 
-public class MERT
+public class MertCore
 {
   private static DecimalFormat f0 = new DecimalFormat("###0");
   private static DecimalFormat f4 = new DecimalFormat("###0.0000");
@@ -163,7 +163,7 @@ public class MERT
       initialize(randsToSkip);
 
       println("----------------------------------------------------",1);
-      println("MERT run started @ " + (new Date()),1);
+      println("Z-MERT run started @ " + (new Date()),1);
 //      printMemoryUsage();
       println("----------------------------------------------------",1);
       println("",1);
@@ -251,7 +251,7 @@ public class MERT
       println("",1);
 
       println("----------------------------------------------------",1);
-      println("MERT run ended @ " + (new Date()),1);
+      println("Z-MERT run ended @ " + (new Date()),1);
 //      printMemoryUsage();
       println("----------------------------------------------------",1);
       println("",1);
@@ -284,14 +284,14 @@ public class MERT
   }
 
 
-  public MERT(String[] args) throws Exception
+  public MertCore(String[] args) throws Exception
   {
     EvaluationMetric.set_knownMetrics();
     processArgsArray(args);
     initialize(0);
   }
 
-  public MERT(String configFileName) throws Exception
+  public MertCore(String configFileName) throws Exception
   {
     EvaluationMetric.set_knownMetrics();
     processArgsArray(cfgFileToArgsArray(configFileName));
@@ -474,7 +474,7 @@ public class MERT
   public static void run_MERT(int minIts, int maxIts, int prevIts) throws Exception
   {
     println("----------------------------------------------------",1);
-    println("MERT run started @ " + (new Date()),1);
+    println("Z-MERT run started @ " + (new Date()),1);
 //    printMemoryUsage();
     println("----------------------------------------------------",1);
     println("",1);
@@ -529,7 +529,7 @@ public class MERT
     println("",1);
 
     println("----------------------------------------------------",1);
-    println("MERT run ended @ " + (new Date()),1);
+    println("Z-MERT run ended @ " + (new Date()),1);
 //    printMemoryUsage();
     println("----------------------------------------------------",1);
     println("",1);
@@ -580,7 +580,7 @@ public class MERT
 
 
     while (!done) { // NOTE: this "loop" will only be carried out once
-      println("--- Starting MERT iteration #" + iteration + " @ " + (new Date()) + " ---",1);
+      println("--- Starting Z-MERT iteration #" + iteration + " @ " + (new Date()) + " ---",1);
 
 //      printMemoryUsage();
 
@@ -766,9 +766,9 @@ public class MERT
 
       if (newCandidatesAdded[iteration] == 0) {
         if (!oneModificationPerIteration) {
-          println("No new candidates added in this iteration; exiting MERT.",1);
+          println("No new candidates added in this iteration; exiting Z-MERT.",1);
           println("",1);
-          println("---  MERT iteration #" + iteration + " ending @ " + (new Date()) + "  ---",1);
+          println("---  Z-MERT iteration #" + iteration + " ending @ " + (new Date()) + "  ---",1);
           println("",1);
           break; // exit for (iteration) loop
         } else {
@@ -878,11 +878,11 @@ public class MERT
       }
 
       System.arraycopy(finalLambda[best_j],1,lambda,1,numParams);
-      println("---  MERT iteration #" + iteration + " ending @ " + (new Date()) + "  ---",1);
+      println("---  Z-MERT iteration #" + iteration + " ending @ " + (new Date()) + "  ---",1);
       println("",1);
 
       if (!anyParamChanged) {
-        println("No parameter value changed in this iteration; exiting MERT.",1);
+        println("No parameter value changed in this iteration; exiting Z-MERT.",1);
         println("",1);
         break; // exit for (iteration) loop preemptively
       }
@@ -906,14 +906,14 @@ public class MERT
 
       // if min number of iterations executed, investigate if early exit should happen
       if (iteration >= minIts && earlyStop >= stopMinIts) {
-        println("Some early stopping criteria has been ovserved in " + stopMinIts + " consecutive iterations; exiting MERT.",1);
+        println("Some early stopping criteria has been ovserved in " + stopMinIts + " consecutive iterations; exiting Z-MERT.",1);
         println("",1);
         break; // exit for (iteration) loop preemptively
       }
 
       // if max number of iterations executed, exit
       if (iteration >= maxIts) {
-        println("Maximum number of MERT iterations reached; exiting MERT.",1);
+        println("Maximum number of MERT iterations reached; exiting Z-MERT.",1);
         println("",1);
         break; // exit for (iteration) loop
       }
@@ -2189,9 +2189,9 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
     if (!canRunCommand && !canRunJoshua) { // can only run fake decoder
 
       if (!canRunFake) {
-        println("MERT cannot decode; must provide one of: command file (for external decoder),");
-        println("                                         source file (for Joshua decoder),");
-        println("                                      or prefix for existing output files (for fake decoder).");
+        println("Z-MERT cannot decode; must provide one of: command file (for external decoder),");
+        println("                                           source file (for Joshua decoder),");
+        println("                                        or prefix for existing output files (for fake decoder).");
         System.exit(12);
       }
 
@@ -2666,33 +2666,33 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
 fake:
 -----
 ex2_N300:
-java -javaagent:shiftone-jrat.jar -Xmx300m -cp bin joshua.MERT.MERT_runner -dir MERT_example -s src.txt -r ref.all -rps 4 -cmd decoder_command_ex2.txt -dcfg config_ex2.txt -decOut nbest_ex2.out -N 300 -p params.txt -maxIt 25 -opi 0 -ipi 20 -v 2 -rand 0 -seed 1226091488390 -save 1 -fake nbest_ex2.out.N300.it > ex2_N300ipi20opi0_300max+defratios.it10.noMemRep.bugFixes.monitored.txt
+java -javaagent:shiftone-jrat.jar -Xmx300m -cp bin joshua.MERT.ZMERT -dir MERT_example -s src.txt -r ref.all -rps 4 -cmd decoder_command_ex2.txt -dcfg config_ex2.txt -decOut nbest_ex2.out -N 300 -p params.txt -maxIt 25 -opi 0 -ipi 20 -v 2 -rand 0 -seed 1226091488390 -save 1 -fake nbest_ex2.out.N300.it > ex2_N300ipi20opi0_300max+defratios.it10.noMemRep.bugFixes.monitored.txt
 
 ex2_N500:
-java -javaagent:shiftone-jrat.jar -Xmx300m -cp bin joshua.MERT.MERT_runner -dir MERT_example -s src.txt -r ref.all -rps 4 -cmd decoder_command_ex2.txt -dcfg config_ex2.txt -decOut nbest_ex2.out -N 500 -p params.txt -maxIt 25 -opi 0 -ipi 20 -v 2 -rand 0 -seed 1226091488390 -save 1 -fake nbest_ex2.out.N500.it > ex2_N500ipi20opi0_300max+defratios.it05.noMemRep.bugFixes.monitored.txt
+java -javaagent:shiftone-jrat.jar -Xmx300m -cp bin joshua.MERT.ZMERT -dir MERT_example -s src.txt -r ref.all -rps 4 -cmd decoder_command_ex2.txt -dcfg config_ex2.txt -decOut nbest_ex2.out -N 500 -p params.txt -maxIt 25 -opi 0 -ipi 20 -v 2 -rand 0 -seed 1226091488390 -save 1 -fake nbest_ex2.out.N500.it > ex2_N500ipi20opi0_300max+defratios.it05.noMemRep.bugFixes.monitored.txt
 
 exL_N300__600max:
-java -javaagent:shiftone-jrat.jar -Xmx600m -cp bin joshua.MERT.MERT_runner -dir MERT_example -s mt06_source.txt -r mt06_ref.all -rps 4 -cmd decoder_command_ex2.txt -dcfg config_ex2.txt -decOut nbest_exL.out -N 300 -p params.txt -maxIt 5 -opi 0 -ipi 20 -v 2 -rand 0 -seed 1226091488390 -save 1 -fake nbest_exL.out.it > exL_N300ipi20opi0_600max+defratios.it05.noMemRep.bugFixes.monitored.txt
+java -javaagent:shiftone-jrat.jar -Xmx600m -cp bin joshua.MERT.ZMERT -dir MERT_example -s mt06_source.txt -r mt06_ref.all -rps 4 -cmd decoder_command_ex2.txt -dcfg config_ex2.txt -decOut nbest_exL.out -N 300 -p params.txt -maxIt 5 -opi 0 -ipi 20 -v 2 -rand 0 -seed 1226091488390 -save 1 -fake nbest_exL.out.it > exL_N300ipi20opi0_600max+defratios.it05.noMemRep.bugFixes.monitored.txt
 
 exL_N300__300max:
-java -javaagent:shiftone-jrat.jar -Xmx300m -cp bin joshua.MERT.MERT_runner -dir MERT_example -s mt06_source.txt -r mt06_ref.all -rps 4 -cmd decoder_command_ex2.txt -dcfg config_ex2.txt -decOut nbest_exL.out -N 300 -p params.txt -maxIt 5 -opi 0 -ipi 20 -v 2 -rand 0 -seed 1226091488390 -save 1 -fake nbest_exL.out.it > exL_N300ipi20opi0_300max+defratios.it05.noMemRep.bugFixes.monitored.txt
+java -javaagent:shiftone-jrat.jar -Xmx300m -cp bin joshua.MERT.ZMERT -dir MERT_example -s mt06_source.txt -r mt06_ref.all -rps 4 -cmd decoder_command_ex2.txt -dcfg config_ex2.txt -decOut nbest_exL.out -N 300 -p params.txt -maxIt 5 -opi 0 -ipi 20 -v 2 -rand 0 -seed 1226091488390 -save 1 -fake nbest_exL.out.it > exL_N300ipi20opi0_300max+defratios.it05.noMemRep.bugFixes.monitored.txt
 
 gen:
 ----
 ex2_N300:
 make sure top_n=300 in MERT_example\config_ex2.txt
-java -javaagent:shiftone-jrat.jar -Xmx300m -cp bin joshua.MERT.MERT_runner -dir MERT_example -s src.txt -r ref.all -rps 4 -cmd decoder_command_ex2.txt -dcfg config_ex2.txt -decOut nbest_ex2.out -N 300 -p params.txt -maxIt 25 -opi 0 -ipi 20 -v 2 -rand 0 -seed 1226091488390 -save 1 > ex2_N300ipi20opi0_300max+defratios.itxx.monitored.txt.gen
+java -javaagent:shiftone-jrat.jar -Xmx300m -cp bin joshua.MERT.ZMERT -dir MERT_example -s src.txt -r ref.all -rps 4 -cmd decoder_command_ex2.txt -dcfg config_ex2.txt -decOut nbest_ex2.out -N 300 -p params.txt -maxIt 25 -opi 0 -ipi 20 -v 2 -rand 0 -seed 1226091488390 -save 1 > ex2_N300ipi20opi0_300max+defratios.itxx.monitored.txt.gen
 
 ex2_N500:
 make sure top_n=500 in MERT_example\config_ex2.txt
-java -javaagent:shiftone-jrat.jar -Xmx300m -cp bin joshua.MERT.MERT_runner -dir MERT_example -s src.txt -r ref.all -rps 4 -cmd decoder_command_ex2.txt -dcfg config_ex2.txt -decOut nbest_ex2.out -N 500 -p params.txt -maxIt 25 -opi 0 -ipi 20 -v 2 -rand 0 -seed 1226091488390 -save 1 > ex2_N500ipi20opi0_300max+defratios.itxx.monitored.txt.gen
+java -javaagent:shiftone-jrat.jar -Xmx300m -cp bin joshua.MERT.ZMERT -dir MERT_example -s src.txt -r ref.all -rps 4 -cmd decoder_command_ex2.txt -dcfg config_ex2.txt -decOut nbest_ex2.out -N 500 -p params.txt -maxIt 25 -opi 0 -ipi 20 -v 2 -rand 0 -seed 1226091488390 -save 1 > ex2_N500ipi20opi0_300max+defratios.itxx.monitored.txt.gen
 
 exL_N300__600max:
 run on CLSP machines only! (e.g. z12)
-$JAVA_bin/java -javaagent:shiftone-jrat.jar -Xmx600m -cp bin joshua.MERT.MERT_runner -dir YOURDIR -s mt06_source.txt -r mt06_ref.all -rps 4 -cmd decoder_command.txt -dcfg config_exL.txt -decOut nbest_exL.out -N 300 -p params.txt -maxIt 25 -opi 0 -ipi 20 -v 2 -rand 0 -seed 1226091488390 -save 1 > exL_N300ipi20opi0_600max+defratios.itxx.monitored.txt.gen
+$JAVA_bin/java -javaagent:shiftone-jrat.jar -Xmx600m -cp bin joshua.MERT.ZMERT -dir YOURDIR -s mt06_source.txt -r mt06_ref.all -rps 4 -cmd decoder_command.txt -dcfg config_exL.txt -decOut nbest_exL.out -N 300 -p params.txt -maxIt 25 -opi 0 -ipi 20 -v 2 -rand 0 -seed 1226091488390 -save 1 > exL_N300ipi20opi0_600max+defratios.itxx.monitored.txt.gen
 
 exL_N300__300max:
 run on CLSP machines only! (e.g. z12)
-$JAVA_bin/java -javaagent:shiftone-jrat.jar -Xmx300m -cp bin joshua.MERT.MERT_runner -dir YOURDIR -s mt06_source.txt -r mt06_ref.all -rps 4 -cmd decoder_command.txt -dcfg config_exL.txt -decOut nbest_exL.out -N 300 -p params.txt -maxIt 25 -opi 0 -ipi 20 -v 2 -rand 0 -seed 1226091488390 -save 1 > exL_N300ipi20opi0_600max+defratios.itxx.monitored.txt.gen
+$JAVA_bin/java -javaagent:shiftone-jrat.jar -Xmx300m -cp bin joshua.MERT.ZMERT -dir YOURDIR -s mt06_source.txt -r mt06_ref.all -rps 4 -cmd decoder_command.txt -dcfg config_exL.txt -decOut nbest_exL.out -N 300 -p params.txt -maxIt 25 -opi 0 -ipi 20 -v 2 -rand 0 -seed 1226091488390 -save 1 > exL_N300ipi20opi0_600max+defratios.itxx.monitored.txt.gen
 
 */
