@@ -42,8 +42,22 @@ public class Vocabulary implements Iterable<String> {
 // Constants
 //===============================================================
 
-	/** The unknown word's ID will be the size of the vocabulary,
-	  * ensuring that it is outside of the vocabulary. */
+	/**
+	 * The unknown word's ID will be the size of the vocabulary,
+	 * ensuring that it is outside of the vocabulary. Note that
+	 * for vocabularies which have not been fixed yet, this
+	 * means the actual value is volatile and therefore a word
+	 * ID can only be compared against UNKNOWN_WORD at the time
+	 * the word ID is generated (otherwise unknown words can
+	 * become "known" if new words are added to the vocabulary
+	 * before testing).
+	 *
+	 * Negative IDs are reserved for non-terminals and therefore
+	 * cannot be used to signify the UNKNOWN_WORD. @todo Perhaps
+	 * we could use 0 as the UNKNOWN_WORD (leaving negatives
+	 * for non-terminals, and positives for terminals), to
+	 * enable us to get away from all the book-keeping.
+	 */
 	int UNKNOWN_WORD;
 
 	/** String representation for out-of-vocabulary words. */
