@@ -34,7 +34,7 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-import org.apache.commons.cli2.util.HelpFormatter;
+import org.apache.commons.cli.HelpFormatter;
 
 
 /**
@@ -125,6 +125,14 @@ public class SubsamplerCLI {
 	}
 	
 	/**
+	 * This method should be overridden to return the class
+	 * used in runSubsampler.
+	 */
+	public String getClassName() {
+		return Subsampler.class.getName();
+	}
+	
+	/**
 	 * Callback to run the subsampler. This function needs
 	 * access to the variables holding teach Option, thus all
 	 * this closure nonsense.
@@ -151,8 +159,8 @@ public class SubsamplerCLI {
 			new GnuParser().parse(o, args);
 		} catch (ParseException pe) {
 			System.err.println("Error parsing command line: " + pe);
-			new org.apache.commons.cli.HelpFormatter().printHelp(
-				joshua.subsample.Subsampler.class.getName(), o);
+			// BUG: The class should be overridable too.
+			new HelpFormatter().printHelp(this.getClassName(), o);
 			System.exit(1);
 		}
 		

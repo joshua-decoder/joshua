@@ -111,6 +111,9 @@ public class AlignedSubsampler extends Subsampler {
 					.addOption(oapath);
 			}
 			
+			public String getClassName() {
+				return AlignedSubsampler.class.getName();
+			}
 			
 			public void runSubsampler(
 				String[] testFiles, int maxN, int targetCount, float ratio
