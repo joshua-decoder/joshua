@@ -29,11 +29,11 @@ Juri Ganitkevitch,$^+$\,\,\,
 Sanjeev Khudanpur,\,\,\, \\
 {\bf Lane Schwartz,$^\star$\,\,\,
 Wren N.\,G.\,Thornton,\,\,\,
-Jonathan Weese,\,\,\,
-{\textnormal{ and}}\,\,\,Omar F. Zaidan}\\
+Jonathan Weese\,\,
+{\textnormal{and}}\,\,\,Omar F. Zaidan}\\
 Center for Language and Speech Processing, Johns Hopkins University, Baltimore, MD\\
 $\dagger$ Computational Linguistics and Information Processing Lab, University of Maryland, College Park, MD\\
-$+$ Human Language Technology and Pattern Recognition group, RWTH Aachen University, Germany\\
+$+$ Human Language Technology and Pattern Recognition Group, RWTH Aachen University, Germany\\
 $\star$ Natural Language Processing Lab, University of Minnesota, Minneapolis, MN }
 
 
@@ -137,7 +137,7 @@ Johsua's MERT module optimizes parameter weights so as to maximize performance o
 
 \section{WMT-09 Translation Task Results}
 %In this section, we report results on the WMT-09 French-English translation task.
-\subsection{Training and Dev Data}
+\subsection{Training and Development Data}
 
 We assembled a very large French-English training corpus  \cite{billion-word-parallel-corpus} by conducting a web crawl that targted bilingual web sites from the Canadian government, the European Union, and various international organizations like the Amnesty International and the Olympic Committee.  The crawl gathered approximately 40 million files, consisting of over 1TB of data.  We converted pdf, doc, html, asp, php, etc. files into text, and preserved the directory structure of the web crawl.  We wrote set of simple heuristics to transform French URLs onto English URLs, and considered matching documents to be translations of each other.  This yielded 2 million French documents paired with their English equivalents.  We split the sentences and paragraphs in these documents, performed sentence-aligned them using software that IBM Model 1 probabilities into account \cite{Moore2002}.   We filtered and de-duplcated the resulting parallel corpus.  After discarding 630 thousand sentence pairs which had more than 100 words, our final corpus had 21.9 million sentence pairs with 587,867,024 English words and 714,137,609 French words.  
 
