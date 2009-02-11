@@ -1,3 +1,21 @@
+/* This file is part of the Joshua Machine Translation System.
+ * 
+ * Joshua is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1
+ * of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free
+ * Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
+ */
+
 package joshua.ZMERT;
 import java.math.*;
 import java.util.*;
@@ -7,7 +25,6 @@ import java.text.DecimalFormat;
 public abstract class EvaluationMetric
 {
   /* static data members */
-//  private static TreeSet<String> knownNames; // set of valid metric names
   private static TreeMap<String,Integer> metricOptionCount; // maps metric names -> number of options for that metric
   protected static int numSentences; // number of sentences in the MERT set
   protected static int refsPerSen;
@@ -26,18 +43,14 @@ public abstract class EvaluationMetric
   /* static (=> also non-abstract) methods */
   public static void set_knownMetrics()
   {
-/*
-    knownNames = new TreeSet<String>();
-    knownNames.add("BLEU"); // implemented in BLEU.java
-    knownNames.add("BLEU_SBP"); // implemented in BLEU_SBP.java
-    knownNames.add("01LOSS"); // implemented in zero_one_loss.java
-*/
     metricOptionCount = new TreeMap<String,Integer>();
-    metricOptionCount.put("BLEU",2);         // the "BLEU" metric is implemented in BLEU.java
-    metricOptionCount.put("BLEU_SBP",2);     // the "BLEU_SBP" metric is implemented in BLEU_SBP.java (which extends BLEU.java)
-    metricOptionCount.put("01LOSS",0);       // the "01LOSS" metric is implemented in ZeroOneLoss.java
-    metricOptionCount.put("UserMetric1",1);  // the "UserMetric1" metric is implemented in UserMetric1.java
-    metricOptionCount.put("UserMetric2",1);  // the "UserMetric2" metric is implemented in UserMetric2.java
+
+    metricOptionCount.put("BLEU",2);
+      // the "BLEU" metric expects an options array of length 2
+    metricOptionCount.put("BLEU_SBP",2);
+      // the "BLEU_SBP" metric expects an options array of length 2
+    metricOptionCount.put("01LOSS",0);
+      // the "01LOSS" metric expects an options array of length 0
   }
 
   public static EvaluationMetric getMetric(String metricName, String[] metricOptions)
@@ -45,15 +58,11 @@ public abstract class EvaluationMetric
     EvaluationMetric retMetric = null;
 
     if (metricName.equals("BLEU")) {
-      retMetric = new BLEU(metricOptions);
+      retMetric = new BLEU(metricOptions);        // the "BLEU" metric corresponds to the BLEU class
     } else if (metricName.equals("BLEU_SBP")) {
-      retMetric = new BLEU_SBP(metricOptions);
+      retMetric = new BLEU_SBP(metricOptions);    // the "BLEU_SBP" metric corresponds to the BLEU_SBP class
     } else if (metricName.equals("01LOSS")) {
-      retMetric = new ZeroOneLoss(metricOptions);
-    } else if (metricName.equals("UserMetric1")) {
-      retMetric = new UserMetric1(metricOptions);
-    } else if (metricName.equals("UserMetric2")) {
-      retMetric = new UserMetric2(metricOptions);
+      retMetric = new ZeroOneLoss(metricOptions); // the "01LOSS" metric corresponds to the ZeroOneLoss class
     }
 
     return retMetric;
@@ -137,7 +146,6 @@ public abstract class EvaluationMetric
   protected abstract void initialize();
   public abstract double bestPossibleScore();
   public abstract double worstPossibleScore();
-  protected abstract void set_suffStatsCount();
   public abstract int[] suffStats(String cand_str, int i);
   public abstract double score(int[] stats);
   public abstract void printDetailedScore_fromStats(int[] stats, boolean oneLiner);

@@ -1,3 +1,21 @@
+/* This file is part of the Joshua Machine Translation System.
+ * 
+ * Joshua is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1
+ * of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free
+ * Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
+ */
+
 package joshua.ZMERT;
 import joshua.decoder.*;
 import java.math.*;
@@ -31,7 +49,7 @@ public class MertCore
     // number of reference translations per sentence
 
   private static int numParams;
-    // number of parameters for the log-linear model
+    // number of features for the log-linear model
 
   private static double[] normalizationOptions;
     // How should a lambda[] vector be normalized (before decoding)?
@@ -46,10 +64,10 @@ public class MertCore
   /* *********************************************************** */
 
   private static String[] paramNames;
-    // parameter names, needed to read/create config file
+    // feature names, needed to read/create config file
 
   private static double[] lambda;
-    // the current parameter values. NOTE: indexing starts at 1.
+    // the current weight vector. NOTE: indexing starts at 1.
 
   private static boolean[] isOptimizable;
     // isOptimizable[c] = true iff lambda[c] should be optimized
@@ -223,12 +241,14 @@ public class MertCore
 
     double[] A = run_single_iteration(currIteration, minMERTIterations, maxMERTIterations, prevMERTIterations, earlyStop, maxIndex);
 
-    FINAL_score = A[0];
-    earlyStop = (int)A[1];
-    randsToSkip = generatedRands;
+    if (A != null) {
+      FINAL_score = A[0];
+      earlyStop = (int)A[1];
+      randsToSkip = generatedRands;
+    }
 
 
-    if (A[2] != 1) {
+    if (A != null && A[2] != 1) {
 
       double[] serA = new double[4+numParams+numSentences];
       serA[0] = currIteration;
@@ -404,8 +424,8 @@ public class MertCore
 
     if (randsToSkip == 0) {
       println("Number of sentences: " + numSentences,1);
-      println("Number of parameters: " + numParams,1);
-      print("Parameter names: {",1);
+      println("Number of features: " + numParams,1);
+      print("Feature names: {",1);
       for (int c = 1; c <= numParams; ++c) {
         print("\"" + paramNames[c] + "\"",1);
         if (c < numParams) print(",",1);
@@ -449,7 +469,7 @@ public class MertCore
       println("",1);
 
       // rename original config file so it doesn't get overwritten (original name will be restored in finish())
-      renameFile(decoderConfigFileName,decoderConfigFileName+".orig.ZMERT");
+      renameFile(decoderConfigFileName,decoderConfigFileName+".ZMERT.orig");
 
     } // if (randsToSkip == 0)
 
@@ -457,7 +477,7 @@ public class MertCore
     if (decoderCommand == null && fakeFileNamePrefix == null) {
       myDecoder = new JoshuaDecoder();
       println("Loading Joshua decoder...",1);
-      myDecoder.initializeDecoder(decoderConfigFileName+".orig.ZMERT");
+      myDecoder.initializeDecoder(decoderConfigFileName+".ZMERT.orig");
       println("...finished loading @ " + (new Date()),1);
     } else {
       myDecoder = null;
@@ -520,9 +540,13 @@ public class MertCore
     for (int iteration = 1; ; ++iteration) {
 
       double[] A = run_single_iteration(iteration, minIts, maxIts, prevIts, earlyStop, maxIndex);
-      FINAL_score = A[0];
-      earlyStop = (int)A[1];
-      if (A[2] == 1) break;
+      if (A != null) {
+        FINAL_score = A[0];
+        earlyStop = (int)A[1];
+        if (A[2] == 1) break;
+      } else {
+        break;
+      }
 
     } // for (iteration)
 
@@ -591,7 +615,7 @@ public class MertCore
       // CREATE DECODER CONFIG FILE //
       /******************************/
 
-      createConfigFile(lambda,decoderConfigFileName,decoderConfigFileName+".orig.ZMERT");
+      createConfigFile(lambda,decoderConfigFileName,decoderConfigFileName+".ZMERT.orig");
         // i.e. use the original config file as a template
 
       /***************/
@@ -770,7 +794,7 @@ public class MertCore
           println("",1);
           println("---  Z-MERT iteration #" + iteration + " ending @ " + (new Date()) + "  ---",1);
           println("",1);
-          break; // exit for (iteration) loop
+          return null; // THIS MEANS THAT THE OLD VALUES SHOULD BE KEPT BY THE CALLER
         } else {
           println("Note: No new candidates added in this iteration.",1);
         }
@@ -1098,7 +1122,7 @@ public class MertCore
       if (myDecoder == null) {
         myDecoder = new JoshuaDecoder();
         println("Loading Joshua decoder...",1);
-        myDecoder.initializeDecoder(decoderConfigFileName+".orig.ZMERT");
+        myDecoder.initializeDecoder(decoderConfigFileName+".ZMERT.orig");
         println("...finished loading @ " + (new Date()),1);
       }
 
@@ -1112,8 +1136,8 @@ public class MertCore
       println("Running external decoder...",1);
 
       Runtime rt = Runtime.getRuntime();
-      Process p = rt.exec(decoderCommand);
-
+      Process p = rt.exec(decoderCommandFileName);
+/*
       BufferedReader br_i = new BufferedReader(new InputStreamReader(p.getInputStream()));
       BufferedReader br_e = new BufferedReader(new InputStreamReader(p.getErrorStream()));
       String dummy_line = null;
@@ -1124,6 +1148,12 @@ public class MertCore
           println(dummy_line);
         }
       }
+*/
+      StreamGobbler errorGobbler = new StreamGobbler(p.getErrorStream(), decVerbosity);
+      StreamGobbler outputGobbler = new StreamGobbler(p.getInputStream(), decVerbosity);
+
+      errorGobbler.start();
+      outputGobbler.start();
 
       int decStatus = p.waitFor();
 
@@ -1836,7 +1866,7 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
         System.exit(21);
       }
       if (normalizationOptions[2] == 0) {
-        println("Unrecognized parameter name " + normalizationOptions[2] + " for absval normalization method.",1);
+        println("Unrecognized feature name " + normalizationOptions[2] + " for absval normalization method.",1);
         System.exit(21);
       }
     } else if (dummyA[0].equals("maxabsval")) {
@@ -1909,7 +1939,8 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
   }
 
 
-  private static void writeLine(String line, BufferedWriter writer) throws IOException {
+  private static void writeLine(String line, BufferedWriter writer) throws IOException
+  {
     writer.write(line, 0, line.length());
     writer.newLine();
     writer.flush();
@@ -1930,14 +1961,14 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
     }
 
     // create config file with final values
-    createConfigFile(lambda, decoderConfigFileName+".final.ZMERT",decoderConfigFileName+".orig.ZMERT");
+    createConfigFile(lambda, decoderConfigFileName+".ZMERT.final",decoderConfigFileName+".ZMERT.orig");
 
     // delete current decoder config file and decoder output
     deleteFile(decoderConfigFileName);
     deleteFile(decoderOutFileName);
 
     // restore original name for config file (name was changed in initialize() so it doesn't get overwritten)
-    renameFile(decoderConfigFileName+".orig.ZMERT",decoderConfigFileName);
+    renameFile(decoderConfigFileName+".ZMERT.orig",decoderConfigFileName);
 
   }
 
@@ -2014,14 +2045,14 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
     metricOptions = new String[2];
     metricOptions[0] = "4";
     metricOptions[1] = "closest";
-    prevMERTIterations = 20;
     maxMERTIterations = 20;
+    prevMERTIterations = 20;
     minMERTIterations = 5;
+    stopMinIts = 3;
     stopSigValue = -1;
 //
 //  /* possibly other early stopping criteria here */
 //
-    stopMinIts = 3;
     saveInterFiles = 3;
     initsPerIt = 20;
     oneModificationPerIteration = false;
@@ -2032,7 +2063,7 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
     decoderCommandFileName = null;
     decoderOutFileName = "output.nbest";
     validDecoderExitValue = 0;
-    decoderConfigFileName = "config.txt";
+    decoderConfigFileName = "dec_cfg.txt";
     sizeOfNBest = 100;
     fakeFileNamePrefix = null;
     // Output specs
@@ -2077,16 +2108,16 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
         prevMERTIterations = Integer.parseInt(args[i+1]);
         if (prevMERTIterations < 0) { println("prevMERTIts must be non-negative."); System.exit(10); }
       }
+      else if (option.equals("-stopIt")) {
+        stopMinIts = Integer.parseInt(args[i+1]);
+        if (stopMinIts < 1) { println("stopMinIts must be positive."); System.exit(10); }
+      }
       else if (option.equals("-stopSig")) {
         stopSigValue = Double.parseDouble(args[i+1]);
       }
 //
 //  /* possibly other early stopping criteria here */
 //
-      else if (option.equals("-stopIt")) {
-        stopMinIts = Integer.parseInt(args[i+1]);
-        if (stopMinIts < 1) { println("stopMinIts must be positive."); System.exit(10); }
-      }
       else if (option.equals("-save")) {
         int saveInterFiles = Integer.parseInt(args[i+1]);
         if (saveInterFiles < 0 || saveInterFiles > 3) { println("save should be between 0 and 3"); System.exit(10); }
@@ -2659,7 +2690,100 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
 
   } // set_suffStats_array(HashMap[] suffStats_array, TreeSet[] indicesOfInterest, Vector[] candidates)
 
+
+  public static void printZMERTUsage(int argsLen, boolean detailed)
+  {
+    if (!detailed) {
+      println("Oops, you provided " + argsLen + " args!");
+      println("");
+      println("Usage:");
+      println("           ZMERT -maxMem maxMemoryInMB MERT_configFile");
+      println("");
+      println("Where -maxMem specifies the maximum amount of memory (in MB) Z-MERT is");
+      println("allowed to use when performing its calculations (no memroy is needed while");
+      println("the decoder is running),");
+      println("and the config file contains any subset of Z-MERT's 20-some parameters,");
+      println("one per line.  Run   ZMERT -h   for more details on those parameters.");
+    } else {
+      println("Usage:");
+      println("           ZMERT -maxMem maxMemoryInMB MERT_configFile");
+      println("");
+      println("Where -maxMem specifies the maximum amount of memory (in MB) Z-MERT is");
+      println("allowed to use when performing its calculations (no memroy is needed while");
+      println("the decoder is running),");
+      println("and the config file contains any subset of Z-MERT's 20-some parameters,");
+      println("one per line.  Those parameters, and their default values, are:");
+      println("");
+      println("Relevant files:");
+      println("  -dir dirPrefix: working directory\n    [[default: null string (i.e. they are in the current directory)]]");
+      println("  -s sourceFile: source sentences (foreign sentences) of the MERT dataset\n    [[default: null string (i.e. file name is not needed by MERT)]]");
+      println("  -r refFile: target sentences (reference translations) of the MERT dataset\n    [[default: reference.txt]]");
+      println("  -rps refsPerSen: number of reference translations per sentence\n    [[default: 1]]");
+      println("  -p paramsFile: file containing parameter names, initial values, and ranges\n    [[default: params.txt]]");
+      println("  -fin finalLambda: file name for final lambda[] values\n    [[default: null string (i.e. no such file will be created)]]");
+      println("");
+      println("MERT specs:");
+      println("  -m metricName metric options: name of evaluation metric and its options\n    [[default: BLEU 4 closest]]");
+      println("  -maxIt maxMERTIts: maximum number of MERT iterations\n    [[default: 20]]");
+      println("  -prevIt prevMERTIts: maximum number of previous MERT iterations to\n    construct candidate sets from\n    [[default: 20]]");
+      println("  -minIt minMERTIts: number of iterations before considering an early exit\n    [[default: 5]]");
+      println("  -stopIt stopMinIts: some early stopping criterion must be satisfied in\n    stopMinIts *consecutive* iterations before an early exit\n    [[default: 3]]");
+      println("  -stopSig sigValue: early MERT exit if no weight changes by more than sigValue\n    [[default: -1 (i.e. this criterion is never investigated)]]");
+      println("  -save saveInter: save intermediate cfg files (1) or decoder outputs (2)\n    or both (3) or neither (0)\n    [[default: 3]]");
+      println("  -ipi initsPerIt: number of intermediate initial points per iteration\n    [[default: 20]]");
+      println("  -opi oncePerIt: modify a parameter only once per iteration (1) or not (0)\n    [[default: 0]]");
+      println("  -rand randInit: choose initial point randomly (1) or from paramsFile (0)\n    [[default: 0]]");
+      println("  -seed seed: seed used to initialize random number generator\n    [[default: time (i.e. value returned by System.currentTimeMillis()]]");
+      println("  -ud useDisk: reliance on disk (0-2; higher value => more reliance)\n    [[default: 2]]");
+      println("");
+      println("Decoder specs:");
+      println("  -cmd commandFile: name of file containing commands to run the decoder\n    [[default: null string (i.e. decoder is a JoshuaDecoder object)]]");
+      println("  -decOut decoderOutFile: name of the output file produced by the decoder\n    [[default: output.nbest]]");
+      println("  -decExit validExit: value returned by decoder to indicate success\n    [[default: 0]]");
+      println("  -dcfg decConfigFile: name of decoder config file\n    [[default: dec_cfg.txt]]");
+      println("  -N N: size of N-best list (per sentence) generated in each MERT iteration\n    [[default: 100]]");
+      println("");
+      println("Output specs:");
+      println("  -v verbosity: Z-MERT verbosity level (0-2; higher value => more verbose)\n    [[default: 1]]");
+      println("  -decV decVerbosity: should decoder output be printed (1) or ignored (0)\n    [[default: 0]]");
+      println("");
+    }
+  }
+
+
 }
+
+// based on:
+// http://www.javaworld.com/javaworld/jw-12-2000/jw-1229-traps.html?page=4
+class StreamGobbler extends Thread
+{
+  InputStream istream;
+  boolean verbose;
+
+  StreamGobbler(InputStream is, int p)
+  {
+    istream = is;
+    if (p == 0) verbose = false;
+    else verbose = true;
+  }
+
+  public void run()
+  {
+    try
+    {
+      InputStreamReader isreader = new InputStreamReader(istream);
+      BufferedReader br = new BufferedReader(isreader);
+      String line = null;
+      while ((line = br.readLine()) != null) {
+        if (verbose) System.out.println(line);    
+      }
+    } catch (IOException ioe)
+      {
+        ioe.printStackTrace();  
+      }
+  }
+}
+
 
 /*
 

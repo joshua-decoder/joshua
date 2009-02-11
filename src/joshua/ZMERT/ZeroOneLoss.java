@@ -1,3 +1,21 @@
+/* This file is part of the Joshua Machine Translation System.
+ * 
+ * Joshua is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1
+ * of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free
+ * Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
+ */
+
 package joshua.ZMERT;
 import java.math.*;
 import java.util.*;
@@ -19,22 +37,15 @@ public class ZeroOneLoss extends EvaluationMetric
   {
     metricName = "01LOSS";
     toBeMinimized = true;
-    set_suffStatsCount();
+    suffStatsCount = 2;
   }
 
   public double bestPossibleScore() { return 0.0; }
   public double worstPossibleScore() { return 1.0; }
 
-  protected void set_suffStatsCount()
-  {
-    suffStatsCount = 1;
-  }
-
   public int[] suffStats(String cand_str, int i)
   {
     int[] stats = new int[suffStatsCount];
-
-//    String candSentence = cand.toString();
 
     boolean matchFound = false;
 
@@ -48,6 +59,8 @@ public class ZeroOneLoss extends EvaluationMetric
     if (matchFound) stats[0] = 1;
     else stats[0] = 0;
 
+    stats[1] = 1;
+
     return stats;
   }
 
@@ -58,17 +71,17 @@ public class ZeroOneLoss extends EvaluationMetric
       System.exit(1);
     }
 
-    return 1.0 - (stats[0]/(double)numSentences);
+    return 1.0 - (stats[0]/(double)stats[1]);
   }
 
   public void printDetailedScore_fromStats(int[] stats, boolean oneLiner)
   {
     if (oneLiner) {
-      System.out.println("01LOSS = 1.0 - " + stats[0] + "/" + numSentences + " = " + f4.format(1.0 - (stats[0]/(double)numSentences)));
+      System.out.println("01LOSS = 1.0 - " + stats[0] + "/" + stats[1] + " = " + f4.format(1.0 - (stats[0]/(double)stats[1])));
     } else {
       System.out.println("# correct = " + stats[0]);
-      System.out.println("# sentences = " + numSentences);
-      System.out.println("01LOSS = 1.0 - " + stats[0] + "/" + numSentences + " = " + f4.format(1.0 - (stats[0]/(double)numSentences)));
+      System.out.println("# sentences = " + stats[1]);
+      System.out.println("01LOSS = 1.0 - " + stats[0] + "/" + stats[1] + " = " + f4.format(1.0 - (stats[0]/(double)stats[1])));
     }
   }
 

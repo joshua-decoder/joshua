@@ -1,3 +1,21 @@
+/* This file is part of the Joshua Machine Translation System.
+ * 
+ * Joshua is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1
+ * of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free
+ * Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
+ */
+
 package joshua.ZMERT;
 import java.math.*;
 import java.util.*;
@@ -16,9 +34,6 @@ public class BLEU extends EvaluationMetric
   public BLEU()
   {
     this(4,"closest");
-//    maxGramLength = 4; // default
-//    effLengthMethod = 1; // default
-//    initialize();
   }
 
   public BLEU(String[] BLEU_options)
@@ -39,11 +54,12 @@ public class BLEU extends EvaluationMetric
       effLengthMethod = 1;
     } else if (methodStr.equals("shortest")) {
       effLengthMethod = 2;
-    } else if (methodStr.equals("average")) {
-      effLengthMethod = 3;
+//    } else if (methodStr.equals("average")) {
+//      effLengthMethod = 3;
     } else {
       System.out.println("Unknown effective length method string " + methodStr + ".");
-      System.out.println("Should be one of closest, shortest, or average.");
+//      System.out.println("Should be one of closest, shortest, or average.");
+      System.out.println("Should be one of closest or shortest.");
       System.exit(1);
     }
 
@@ -57,19 +73,14 @@ public class BLEU extends EvaluationMetric
   {
     metricName = "BLEU";
     toBeMinimized = false;
-    set_suffStatsCount();
+    suffStatsCount = 1 + maxGramLength + 2;
+      // 1 for number of segments, 1 per gram length for its precision, and 2 for length info
     set_weightsArray();
     set_maxNgramCounts();
   }
 
   public double bestPossibleScore() { return 1.0; }
   public double worstPossibleScore() { return 0.0; }
-
-  protected void set_suffStatsCount()
-  {
-    suffStatsCount = 1 + maxGramLength + 2;
-      // 1 for number of segments, 1 per gram length for its precision, and 2 for length info
-  }
 
   protected void set_weightsArray()
   {
@@ -81,20 +92,16 @@ public class BLEU extends EvaluationMetric
 
   protected void set_maxNgramCounts()
   {
-//    maxNgramCounts = new HashMap[numSentences][1+maxGramLength];
     maxNgramCounts = new HashMap[numSentences];
     String gram = "";
     int oldCount = 0, nextCount = 0;
 
-//    for (int n = 1; n <= maxGramLength; ++n) {
       for (int i = 0; i < numSentences; ++i) {
-//        maxNgramCounts[i][n] = getNgramCountsArray(refSentences[i][0])[n];
         maxNgramCounts[i] = getNgramCountsAll(refSentences[i][0]);
           // initialize to ngramCounts[n] of the first reference translation...
 
         // ...and update as necessary from the other reference translations
         for (int r = 1; r < refsPerSen; ++r) {
-//          HashMap<String,Integer> nextNgramCounts = getNgramCountsArray(refSentences[i][r])[n];
           HashMap<String,Integer> nextNgramCounts = getNgramCountsAll(refSentences[i][r]);
           Iterator<String> it = (nextNgramCounts.keySet()).iterator();
 
@@ -102,16 +109,12 @@ public class BLEU extends EvaluationMetric
             gram = it.next();
             nextCount = nextNgramCounts.get(gram);
 
-//            if (maxNgramCounts[i][n].containsKey(gram)) { // update if necessary
-//              oldCount = maxNgramCounts[i][n].get(gram);
             if (maxNgramCounts[i].containsKey(gram)) { // update if necessary
               oldCount = maxNgramCounts[i].get(gram);
               if (nextCount > oldCount) {
-//                maxNgramCounts[i][n].put(gram,nextCount);
                 maxNgramCounts[i].put(gram,nextCount);
               }
             } else { // add it
-//              maxNgramCounts[i][n].put(gram,nextCount);
               maxNgramCounts[i].put(gram,nextCount);
             }
 
@@ -120,8 +123,6 @@ public class BLEU extends EvaluationMetric
         } // for (r)
 
       } // for (i)
-
-//    } // for (n)
 
     // Reference sentences are not needed anymore, since the gram counts are stored.
     // The only thing we need are their lenghts, to be used in effLength, so store
@@ -139,8 +140,6 @@ public class BLEU extends EvaluationMetric
     refSentences = null;
 
   }
-
-
 
 
   public int[] suffStats(String cand_str, int i)
@@ -187,8 +186,6 @@ for (int j = 0; j < wordCount; ++j) { words[j] = words[j].intern(); }
 
         clippedCount = Math.min(candGramCount,maxRefGramCount);
 
-//        clippedCount = (candGramCount < maxRefGramCount ? candGramCount : maxRefGramCount);
-
         correctGramCount += clippedCount;
 
       }
@@ -205,15 +202,9 @@ for (int j = 0; j < wordCount; ++j) { words[j] = words[j].intern(); }
       int closestRefLength = refWordCount[i][0];
       int minDiff = Math.abs(candLength-closestRefLength);
 
-//int minDiff = candLength-closestRefLength;
-//if (minDiff < 0) minDiff = -minDiff;
-
       for (int r = 1; r < refsPerSen; ++r) {
         int nextRefLength = refWordCount[i][r];
         int nextDiff = Math.abs(candLength-nextRefLength);
-
-//int nextDiff = candLength-nextRefLength;
-//if (nextDiff < 0) nextDiff = -nextDiff;
 
         if (nextDiff < minDiff) {
           closestRefLength = nextRefLength;
@@ -364,122 +355,12 @@ else { // average
 
     System.out.println("BLEU = " + f4.format(BP*Math.exp(BLEUsum)));
   }
-/*
-  protected int myMin(int x, int y)
-  {
-    return Math.min(x,y);
-//    return (x < y ? x : y);
-  }
 
-  protected int myAbs(int x)
-  {
-    return Math.abs(x);
-//    return (x > 0 ? x : -x);
-  }
-*/
-
-/*
-  public int prec_suffStats(int gramLength, String[] words, int i)
-  {
-    int correctGramCount = 0;
-    String gram = "";
-    int candGramCount = 0, maxRefGramCount = 0, clippedCount = 0;
-
-    HashMap candCounts = getNgramCounts(words,gramLength);
-
-    Iterator it = (candCounts.keySet()).iterator();
-
-    while (it.hasNext()) {
-    // for each gram type in the candidate
-      gram = (String)it.next();
-      candGramCount = (Integer)candCounts.get(gram);
-      if (maxNgramCounts[i][gramLength].containsKey(gram)) {
-        maxRefGramCount = (Integer)maxNgramCounts[i][gramLength].get(gram);
-      } else {
-        maxRefGramCount = 0;
-      }
-
-      clippedCount = Math.min(candGramCount,maxRefGramCount);
-
-//      clippedCount = (candGramCount < maxRefGramCount ? candGramCount : maxRefGramCount);
-
-      correctGramCount += clippedCount;
-
-    }
-
-    return correctGramCount;
-
-  }
-
-  public HashMap<String,Integer> getNgramCounts(String cand_str, int n)
-  {
-    return getNgramCounts(cand_str.split("\\s+"),n);
-  }
-
-  public HashMap<String,Integer> getNgramCounts(String[] words, int n)
-  {
-    HashMap<String,Integer> ngramCounts = new HashMap<String,Integer>();
-    int wordCount = words.length;
-
-    if (wordCount >= n) {
-      if (n > 1) { // for n == 1, less processing is needed
-        // build the first n-gram
-        int start = 0; int end = n-1;
-        String gram = "";
-        for (int i = start; i < end; ++i) { gram = gram + words[i] + " "; }
-        gram = gram + words[end];
-        ngramCounts.put(gram,1);
-
-        for (start = 1; start <= wordCount-n; ++start) {
-        // process n-gram starting at start and ending at start+(n-1)
-
-          end = start + (n-1);
-          // build the n-gram from words[start] to words[end]
-
-//// old way of doing it
-//          gram = "";
-//          for (int i = start; i < end; ++i) { gram = gram + words[i] + " "; }
-//          gram = gram + words[end];
-
-          gram = gram.substring(gram.indexOf(' ')+1) + " " + words[end];
-
-          if (ngramCounts.containsKey(gram)) {
-            int oldCount = ngramCounts.get(gram);
-            ngramCounts.put(gram,oldCount+1);
-          } else {
-            ngramCounts.put(gram,1);
-          }
-
-        } // for (start)
-
-      } else { // if (n == 1)
-
-        String gram = "";
-        for (int j = 0; j < wordCount; ++j) {
-          gram = words[j];
-
-          if (ngramCounts.containsKey(gram)) {
-            int oldCount = ngramCounts.get(gram);
-            ngramCounts.put(gram,oldCount+1);
-          } else {
-            ngramCounts.put(gram,1);
-          }
-
-        }
-      }
-    } // if (wordCount >= n)
-
-    return ngramCounts;
-  }
-*/
 
   protected int wordCount(String cand_str)
   {
     return cand_str.split("\\s+").length;
   }
-
-
-
 
 
   public HashMap<String,Integer>[] getNgramCountsArray(String cand_str)
@@ -554,8 +435,6 @@ else { // average
   }
 
 
-
-
   public HashMap<String,Integer> getNgramCountsAll(String cand_str)
   {
     return getNgramCountsAll(cand_str.split("\\s+"));
@@ -623,8 +502,6 @@ else { // average
 
   }
 
-
-
 /*
   // The following two functions are nice to have, I suppose, but they're never
   // used, so they're commented out at the moment for clarity's sake
@@ -652,6 +529,5 @@ else { // average
     return totLength;
   }
 */
-
 
 }

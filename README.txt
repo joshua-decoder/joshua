@@ -38,7 +38,7 @@ Running Z-MERT, Joshua's MERT module:
 
 Joshua's MERT module, called Z-MERT, can be used by launching the driver
 program (ZMERT.java), which expects a config file as its main argument.  This
-config file can be used to specify any subset of MERT's 20-some parameters.
+config file can be used to specify any subset of Z-MERT's 20-some parameters.
 For a full list of those parameters, and their default values, run ZMERT with
 a single -h argument as follows (assuming you're in the trunk folder):
 
@@ -56,7 +56,7 @@ specifies the following "main" MERT parameters:
  (*) -p paramsFile:          file containing parameter names, initial values, and ranges
  (*) -maxIt maxMERTIts:      maximum number of MERT iterations
  (*) -ipi initsPerIt:        number of intermediate initial points per iteration
- (*) -cmd commandFile:       name of file containing command to run the decoder
+ (*) -cmd commandFile:       name of file containing commands to run the decoder
  (*) -decOut decoderOutFile: name of the output file produced by the decoder
  (*) -dcfg decConfigFile:    name of decoder config file
  (*) -N N:                   size of N-best list (per sentence) generated in each MERT iteration
@@ -93,12 +93,14 @@ For more details on this issue, see section (4) in Z-MERT's readme.
 
 A quick note about Z-MERT's interaction with the decoder.  If you examine the
 file decoder_command_ex2.txt, which is provided as the commandFile (-cmd)
-argument in Z-MERT's config file, you'll find it consists of exactly one line,
-containing the command one would use to run the decoder.  MERT uses that single
-command to launch the decoder as an external process to produce translations.
-After launching this external process, Z-MERT waits for it to finish, then uses
-the resulting output file in its parameter tuning (in addition to the output
-files from previous iterations).
+argument in Z-MERT's config file, you'll find it contains the command one would
+use to run the decoder.  Z-MERT launches the commandFile as an external
+process, and assumes that it will launch the decoder to produce translations.
+(Make sure that commandFile is executable.)  After launching this external
+process, Z-MERT waits for it to finish, then uses the resulting output file for
+parameter tuning (in addition to the output files from previous iterations).
+The command file here only has a single command, but your command file could
+have multiple lines.  Just make sure the command file itself is executable.
 
 Notice that the Z-MERT arguments configFile and decoderOutFile (-cfg and
 -decOut) must match the two Joshua arguments in the commandFile's (-cmd) single

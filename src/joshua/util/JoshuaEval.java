@@ -1,3 +1,21 @@
+/* This file is part of the Joshua Machine Translation System.
+ * 
+ * Joshua is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1
+ * of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free
+ * Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
+ */
+
 package joshua.util;
 import joshua.ZMERT.*;
 import java.math.*;
@@ -68,14 +86,18 @@ public class JoshuaEval
     if (evaluateRefs) {
       // evaluate the references themselves; useful if developing a new evaluation metric
 
+      println("");
       println("PERFORMING SANITY CHECK:");
+      println("------------------------");
+      println("");
       println("This metric's scores range from "
             + evalMetric.worstPossibleScore() + " (worst) to "
             + evalMetric.bestPossibleScore() + " (best).");
-      println("");
 
       for (int r = 1; r <= refsPerSen; ++r) {
-        println("Evaluating reference set " + r + ":");
+        println("");
+        println("(*) Evaluating reference set " + r + ":");
+        println("");
         evaluateRefSet(r);
         println("");
       }
@@ -113,8 +135,8 @@ public class JoshuaEval
       System.exit(30);
     }
 
-    if (testIndex < 1 || testIndex > candPerSen) {
-      println("testIndex must be in [1,candPerSen]");
+    if (inFileFormat.equals("plain") && (testIndex < 1 || testIndex > candPerSen)) {
+      println("For the plain format, testIndex must be in [1,candPerSen]");
       System.exit(31);
     }
 
@@ -138,7 +160,7 @@ public class JoshuaEval
 
         topCand_str[i] = candidate_str;
 
-        for (int n = testIndex+1; n < candPerSen; ++n){
+        for (int n = testIndex+1; n <= candPerSen; ++n){
         // skip candidates testIndex+1 through candPerSen-1
           line = inFile.readLine();
         }
@@ -150,7 +172,7 @@ public class JoshuaEval
       int i = 0; int n = 1;
       line = inFile.readLine();
 
-      while (line != null) {
+      while (line != null && i < numSentences) {
 
 /*
 line format:
@@ -177,9 +199,11 @@ line format:
           line = line.substring(line.indexOf("||| ")+4); // get rid of initial text
           candidate_str = line.substring(0,line.indexOf(" |||"));
           topCand_str[i] = candidate_str;
-          while (read_i == i) {
-            line = inFile.readLine();
-            read_i = Integer.parseInt(line.substring(0,line.indexOf(" |||")));
+          if (i < numSentences-1) {
+            while (read_i == i) {
+              line = inFile.readLine();
+              read_i = Integer.parseInt(line.substring(0,line.indexOf(" |||")));
+            }
           }
           n = 1;
           i += 1;
@@ -192,7 +216,7 @@ line format:
       } // while (line != null)
 
       if (i != numSentences) {
-        println("");
+        println("Not enough candidates were found (i = " + i + "; was expecting " + numSentences + ")");
         System.exit(33);
       }
 
@@ -203,6 +227,7 @@ line format:
     evalMetric.printDetailedScore(topCand_str,false);
 
     if (verbose) {
+      println("");
       println("Printing detailed scores for individual sentences...");
       for (int i = 0; i < numSentences; ++i) {
         print("Sentence #" + i + ": ");
@@ -223,7 +248,7 @@ line format:
     println(" JoshuaEval [-cand candFile] [-format candFileformat] [-rank r]\n            [-ref refFile] [-rps refsPerSen] [-m metricName metric options]\n            [-evr evalRefs] [-v verbose]");
     println("");
     println(" (*) -cand candFile: candidate translations\n       [[default: candidates.txt]]");
-    println(" (*) -format candFileFormat: is the candidate file a plain file (one candidate\n       per sentence) or does it contain multiple candidates per sentence (as in\n       Joshua decoder's output)?  For the first, use \"plain\".  For the second,\n       use \"nbest\".\n       [[default: nbest]]");
+    println(" (*) -format candFileFormat: is the candidate file a plain file (one candidate\n       per sentence) or does it contain multiple candidates per sentence as\n       a decoder's output)?  For the first, use \"plain\".  For the second,\n       use \"nbest\".\n       [[default: plain]]");
     println(" (*) -rank r: if format=nbest, evaluate the set of r'th candidates.\n       [[default: 1]]");
     println(" (*) -ref refFile: reference translations (or file name prefix)\n       [[default: references.txt]]");
     println(" (*) -rps refsPerSen: number of reference translations per sentence\n       [[default: 1]]");
@@ -241,9 +266,9 @@ line format:
 
     // set default values
     candFileName = "candidates.txt";
-    candFileFormat = "nbest";
+    candFileFormat = "plain";
     candRank = 1;
-    refFileName = "reference.txt";
+    refFileName = "references.txt";
     refsPerSen = 1;
     metricName = "BLEU";
     metricOptions = new String[2];
@@ -270,6 +295,20 @@ line format:
         refsPerSen = Integer.parseInt(args[i+1]);
         if (refsPerSen < 1) { println("refsPerSen must be positive."); System.exit(10); }
       }
+
+      else if (option.equals("-m")) {
+        metricName = args[i+1];
+        if (EvaluationMetric.knownMetricName(metricName)) {
+          int optionCount = EvaluationMetric.metricOptionCount(metricName);
+          metricOptions = new String[optionCount];
+          for (int opt = 0; opt < optionCount; ++opt) { metricOptions[opt] = args[i+opt+2]; }
+          i += optionCount;
+        } else {
+          println("Unknown metric name " + metricName + "."); System.exit(10);
+        }
+      }
+
+/*
       else if (option.equals("-m")) {
         metricName = args[i+1];
         if (!EvaluationMetric.knownMetricName(metricName)) { println("Unknown metric name " + metricName + "."); System.exit(10); }
@@ -280,6 +319,7 @@ line format:
           i += 2;
         }
       }
+*/
       else if (option.equals("-evr")) {
         int evr = Integer.parseInt(args[i+1]);
         if (evr == 1) evaluateRefs = true;
@@ -335,13 +375,6 @@ line format:
     EvaluationMetric.set_refSentences(refSentences);
 
     // do necessary initialization for the evaluation metric
-/*
-    if (metricName.equals("BLEU")) {
-      evalMetric = new BLEU(Integer.parseInt(metricOptions[0]),metricOptions[1]);
-    } else if (metricName.equals("01LOSS")) {
-      evalMetric = new ZeroOneLoss();
-    }
-*/
     evalMetric = EvaluationMetric.getMetric(metricName,metricOptions);
 
     println("Processing " + numSentences + " sentences...");
