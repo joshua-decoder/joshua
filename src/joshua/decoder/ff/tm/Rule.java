@@ -220,7 +220,9 @@ public class Rule {
 			//sb.append(java.util.Arrays.toString(this.english));
 			sb.append(" |||");
 			for (int i = 0; i < this.feat_scores.length; i++) {
-				sb.append(String.format(" %.4f", this.feat_scores[i]));
+				//sb.append(String.format(" %.4f", this.feat_scores[i]));
+				sb.append(' ');
+				sb.append(Float.toString(this.feat_scores[i]));
 			}
 			this.cachedToString = sb.toString();
 		}

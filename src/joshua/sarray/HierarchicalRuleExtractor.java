@@ -181,20 +181,21 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 
 		}
 
-		float p_e_given_f_denominator = translations.size();
+		double p_e_given_f_denominator = translations.size();
 
 		// We don't want to produce duplicate rules
 		HashSet<Pattern> uniqueTranslations = new HashSet<Pattern>(translations);
 		
 		for (Pattern translation : uniqueTranslations) {
-
-			float p_e_given_f = -1.0f * (float) Math.log(counts.get(translation) / p_e_given_f_denominator);
+			if (logger.isLoggable(Level.FINE)) logger.fine(sourcePattern.toString() + " ||| " + translation.toString() + " :  " + counts.get(translation) + " / " + p_e_given_f_denominator);
+			
+			float p_e_given_f = -1.0f * (float) Math.log10(counts.get(translation) / p_e_given_f_denominator);
 			if (Float.isInfinite(p_e_given_f)) p_e_given_f = PrefixTree.VERY_UNLIKELY;
 
-			float lex_p_e_given_f = -1.0f * (float) Math.log(cumulativeSourceGivenTargetLexProbs.get(translation) / counterSourceGivenTargetLexProbs.get(translation));
+			float lex_p_e_given_f = (float) (-1.0f * Math.log10((double)cumulativeSourceGivenTargetLexProbs.get(translation) / (double)counterSourceGivenTargetLexProbs.get(translation)));
 			if (Float.isInfinite(lex_p_e_given_f)) lex_p_e_given_f = PrefixTree.VERY_UNLIKELY;
 
-			float lex_p_f_given_e = -1.0f * (float) Math.log(cumulativeTargetGivenSourceLexProbs.get(translation) / counterTargetGivenSourceLexProbs.get(translation));
+			float lex_p_f_given_e = (float) (-1.0f * Math.log10(((double)cumulativeTargetGivenSourceLexProbs.get(translation)) / ((double)counterTargetGivenSourceLexProbs.get(translation))));
 			if (Float.isInfinite(lex_p_f_given_e)) lex_p_f_given_e = PrefixTree.VERY_UNLIKELY;
 
 			float[] featureScores = { p_e_given_f, lex_p_e_given_f, lex_p_f_given_e };
