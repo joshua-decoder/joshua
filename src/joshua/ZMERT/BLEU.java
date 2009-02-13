@@ -309,18 +309,32 @@ else { // average
     for (int n = 1; n <= maxGramLength; ++n) {
       correctGramCount = stats[n];
       totalGramCount = c_len-((n-1)*numSegments);
-      double prec_n = correctGramCount/totalGramCount;
-        // what if totalGramCount is zero ???????????????????????????????
+
+      double prec_n;
+      if (totalGramCount > 0) {
+        prec_n = correctGramCount/totalGramCount;
+      } else {
+        prec_n = 1; // following bleu-1.04.pl ???????
+      }
 
       if (prec_n > 0) {
-        if (oneLiner) {
-          System.out.print(n + "=" + f4.format(prec_n) + ", ");
+        if (totalGramCount > 0) {
+          if (oneLiner) {
+            System.out.print(n + "=" + f4.format(prec_n) + ", ");
+          } else {
+            System.out.println("BLEU_precision(" + n + ") = " + (int)correctGramCount + " / " + (int)totalGramCount + " = " + f4.format(prec_n));
+          }
         } else {
-          System.out.println("BLEU_precision(" + n + ") = " + (int)correctGramCount + " / " + (int)totalGramCount + " = " + f4.format(prec_n));
+          if (oneLiner) {
+            System.out.print(n + "=N/A, ");
+          } else {
+            System.out.println("BLEU_precision(" + n + ") = N/A (candidate has no " + n + "-grams)");
+          }
         }
       } else {
         smooth_addition *= 0.5;
         prec_n = smooth_addition / (c_len-n+1);
+        // isn't c_len-n+1 just totalGramCount ???????
 
         if (oneLiner) {
           System.out.print(n + "~" + f4.format(prec_n) + ", ");
