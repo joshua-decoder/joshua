@@ -86,6 +86,49 @@ public class KbestExtraction {
 		//Support.write_log_line("time_kbest_extract: "+ Chart.g_time_kbest_extract, Support.INFO);
 	}
 	
+	//the only difference from the above function is: we store the nbest into an arraylist, instead of a file
+	public  void lazy_k_best_extract_hg(HyperGraph hg, ArrayList<FeatureFunction> l_models, int global_n, boolean extract_unique_nbest, int sent_id, 
+			ArrayList<String> out, boolean extract_nbest_tree, boolean add_combined_score){
+		//long start = System.currentTimeMillis();
+		reset_state();
+		if(hg.goal_item==null)return;		
+		//VirtualItem virtual_goal_item = add_virtual_item( hg.goal_item);
+		int next_n=0;
+		while(true){
+			/*
+			DerivationState cur = virtual_goal_item.lazy_k_best_extract_item(this ,++next_n,extract_unique_nbest,extract_nbest_tree);//global_n is not used at all
+			if( cur==null || virtual_goal_item.l_nbest.size()<next_n //do not have more hypthesis
+				|| virtual_goal_item.l_nbest.size()>global_n)//get enough hyps
+						break;
+			String hyp_str = get_kth_hyp(cur, sent_id, l_models, extract_nbest_tree, add_combined_score);
+			*/
+			String hyp_str = get_kth_hyp(hg.goal_item, ++next_n, sent_id, l_models, extract_unique_nbest, extract_nbest_tree, add_combined_score);
+			if(hyp_str==null || next_n > global_n) break;
+
+			//write to files
+			out.add(hyp_str);			
+		}
+		//g_time_kbest_extract += System.currentTimeMillis()-start;
+		//Support.write_log_line("time_kbest_extract: "+ Chart.g_time_kbest_extract, Support.INFO);
+	}
+	
+	//(ROOT (S (S (S (S (S (S (S (X scientists)) (X to (X vital))) (X early)) (X untransltedword)) (X the chromosome)) (X completed)) (X has)))
+	public static String get_hyp_string_from_tree(String tree_string){
+		String[] words = tree_string.split("\\s+");
+		StringBuffer res = new StringBuffer();
+		boolean first=true;
+		for(String wrd : words){
+			if(wrd.matches("^\\([A-Z]+$")==false){
+				if(first==true)	first=false;
+				else            res.append(" ");
+				if(wrd.matches("^\\)$")==false)//not just a single ")"
+					res.append(wrd.replaceAll("\\)", ""));
+			}
+		}
+		return res.toString();
+	}
+	
+	
 	public void reset_state(){
 		tbl_virtual_items.clear();
 	}
