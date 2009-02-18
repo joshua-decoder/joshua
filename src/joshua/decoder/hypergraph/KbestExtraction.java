@@ -112,6 +112,8 @@ public class KbestExtraction {
 		//Support.write_log_line("time_kbest_extract: "+ Chart.g_time_kbest_extract, Support.INFO);
 	}
 	
+	
+	/*TODO: this function does not work properly, do not use it !!!!!!!!!!!!!!!!!!!!!!*/
 	//(ROOT (S (S (S (S (S (S (S (X scientists)) (X to (X vital))) (X early)) (X untransltedword)) (X the chromosome)) (X completed)) (X has)))
 	public static String get_hyp_string_from_tree(String tree_string){
 		String[] words = tree_string.split("\\s+");

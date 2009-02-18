@@ -36,7 +36,7 @@ public class HyperEdge {
 	private Double transition_cost=null;//this remember the stateless + non_stateless cost assocated with the rule (excluding the best-cost from ant items)
 	private Rule rule;
 	//if(l_ant_items==null), then this shoud be the terminal rule
-	private ArrayList<HGNode> l_ant_items=null; //ant items. In comparison, in a derivation, the parent should be the sub-derivation of the tail of the hyper-arc
+	private ArrayList<HGNode> l_ant_items=null; //ant items. the items appear in the list as per the index of the Chinese side non-terminal
 	
 	public HyperEdge(Rule rl, double total_cost, Double trans_cost, ArrayList<HGNode> ant_items){
 		best_cost=total_cost;
