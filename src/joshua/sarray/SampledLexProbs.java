@@ -193,6 +193,8 @@ public class SampledLexProbs implements LexicalProbabilities {
 	 */
 	public float sourceGivenTarget(Integer sourceWord, Integer targetWord) {
 		
+		if (logger.isLoggable(Level.FINE)) logger.fine("Need to get source given target lexprob p(" + sourceVocab.getWord(sourceWord) + " | " +  targetVocab.getWord(targetWord) + "); sourceWord ID == " + sourceWord + "; targetWord ID == " + targetWord);
+				
 		if (!sourceGivenTarget.containsKey(targetWord)) {
 			calculateSourceGivenTarget(targetWord);
 		}
@@ -376,7 +378,7 @@ public class SampledLexProbs implements LexicalProbabilities {
 //			int x = 1;
 //			x++;
 //		}
-		
+
 		return new Pair<Float,Float>(sourceGivenTarget,targetGivenSource);
 	}
 	
@@ -440,7 +442,7 @@ public class SampledLexProbs implements LexicalProbabilities {
 		Map<Integer,Integer> counts = new HashMap<Integer,Integer>();
 		
 		int[] sourceSuffixArrayBounds = sourceSuffixArray.findPhrase(new BasicPhrase(sourceVocab, sourceWord));
-		int step = (sourceSuffixArrayBounds[1]-sourceSuffixArrayBounds[0]<sampleSize) ? 1 : sourceSuffixArrayBounds[1]-sourceSuffixArrayBounds[0] / sampleSize;
+		int step = (sourceSuffixArrayBounds[1]-sourceSuffixArrayBounds[0]<sampleSize) ? 1 : (sourceSuffixArrayBounds[1]-sourceSuffixArrayBounds[0]) / sampleSize;
 		
 		float total = 0;
 		
