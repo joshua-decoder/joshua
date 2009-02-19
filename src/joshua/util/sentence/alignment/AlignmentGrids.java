@@ -55,28 +55,6 @@ public class AlignmentGrids extends AbstractAlignments {
 		readAlignmentPoints(alignmentScanner);
 	}
 	
-	
-	public int[] getAlignedSourceIndices(int targetIndex) {
-		
-		int sentenceID = targetCorpus.getSentenceIndex(targetIndex);
-		int sourceOffset = sourceCorpus.getSentencePosition(sentenceID);
-		int targetOffset = targetCorpus.getSentencePosition(sentenceID);
-		int normalizedTargetIndex = targetIndex - targetOffset;
-				
-		AlignmentGrid grid = alignments.get(sentenceID);
-		
-		int[] sourceIndices = grid.getSourcePoints(normalizedTargetIndex, normalizedTargetIndex+1);
-		
-		for (int i=0; i<sourceIndices.length; i++) {
-			sourceIndices[i] += sourceOffset;
-		}
-		
-		if (sourceIndices.length==0)
-			return null;
-		else
-			return sourceIndices;
-	}
-	
 
 	public Span getAlignedSourceSpan(int startTargetIndex, int endTargetIndex) {
 		
@@ -105,7 +83,27 @@ public class AlignmentGrids extends AbstractAlignments {
 		
 	}
 
-
+	public int[] getAlignedSourceIndices(int targetIndex) {
+		
+		int sentenceID = targetCorpus.getSentenceIndex(targetIndex);
+		int sourceOffset = sourceCorpus.getSentencePosition(sentenceID);
+		int targetOffset = targetCorpus.getSentencePosition(sentenceID);
+		int normalizedTargetIndex = targetIndex - targetOffset;
+				
+		AlignmentGrid grid = alignments.get(sentenceID);
+		
+		int[] sourceIndices = grid.getSourcePoints(normalizedTargetIndex, normalizedTargetIndex+1);
+		
+		for (int i=0; i<sourceIndices.length; i++) {
+			sourceIndices[i] += sourceOffset;
+		}
+		
+		if (sourceIndices.length==0)
+			return null;
+		else
+			return sourceIndices;
+	}
+	
 	public int[] getAlignedTargetIndices(int sourceIndex) {
 		
 		int sentenceID = sourceCorpus.getSentenceIndex(sourceIndex);

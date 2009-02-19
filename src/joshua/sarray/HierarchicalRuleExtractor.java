@@ -105,9 +105,16 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 		for (int i=0; i<totalPossibleTranslations; i+=stepSize) { 
 			HierarchicalPhrase sourcePhrase = sourceHierarchicalPhrases.get(i);
 			//for (HierarchicalPhrase sourcePhrase : samples) {
+			// We may want to extract the alignment points at this point, rather than deeper on because we're doing this somewhat redundantly in getTranslation and calculateLexProbs
 			Pattern translation = getTranslation(sourcePhrase);
 			if (translation != null) {
 				translations.add(translation);
+				// We look up the lexprobs for this particular sourcePhrase (which corresponds to exactly one location in the source corpus)
+				// We have to do this because, even if we have multiple instances where a source pattern matches the same target pattern,
+				//    the alignment points for each pair may well be different.
+				// TODO: store a Grid that shows the alignment between source words and target words.  Defer the calculation of the
+				//       lexical probs until we have the unique <source pattern, target pattern, alignment> tuples.  I think that
+				//        this will be more efficient, because most of the time the alignments will be identical. 
 				lexProbsList.add(lexProbs.calculateLexProbs(sourcePhrase));
 			}
 		}
@@ -122,12 +129,10 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 		// Simultaneously, calculate the max (or average) 
 		//    lexical translation probabilities for the given translation.
 
+		// Pattern is the translation of the source phrase, Float is its cumulative lexical prob
 		Map<Pattern,Float> cumulativeSourceGivenTargetLexProbs = new HashMap<Pattern,Float>();
-		Map<Pattern,Integer> counterSourceGivenTargetLexProbs = new HashMap<Pattern,Integer>();
-
 		Map<Pattern,Float> cumulativeTargetGivenSourceLexProbs = new HashMap<Pattern,Float>();
-		Map<Pattern,Integer> counterTargetGivenSourceLexProbs = new HashMap<Pattern,Integer>();
-
+		Map<Pattern,Integer> counterLexProbs = new HashMap<Pattern,Integer>();
 
 		for (int i=0; i<translations.size(); i++) {	
 
@@ -135,42 +140,34 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 
 			Pair<Float,Float> lexProbsPair = lexProbsList.get(i);
 
-			{	// Perform lexical translation probability calculations
+			{	// Perform lexical translation probability averaging
+				// This is to deal with the situation that there may be 
+				//  multiple alignments for a particular source pattern-translation pair.
+				// Koehn uses the max, we follow Chiang (2005) in using an average.
+				
 				float sourceGivenTargetLexProb = lexProbsPair.first;
-
+				float targetGivenSourceLexProb = lexProbsPair.second;
+				
 				if (!cumulativeSourceGivenTargetLexProbs.containsKey(translation)) {
 					cumulativeSourceGivenTargetLexProbs.put(translation,sourceGivenTargetLexProb);
+					cumulativeTargetGivenSourceLexProbs.put(translation,targetGivenSourceLexProb);
+					
 				} else {
 					float runningTotal = cumulativeSourceGivenTargetLexProbs.get(translation) + sourceGivenTargetLexProb;
 					cumulativeSourceGivenTargetLexProbs.put(translation,runningTotal);
-				} 
 
-				if (!counterSourceGivenTargetLexProbs.containsKey(translation)) {
-					counterSourceGivenTargetLexProbs.put(translation, 1);
-				} else {
-					counterSourceGivenTargetLexProbs.put(translation, 
-							1 + counterSourceGivenTargetLexProbs.get(translation));
-				}
-			}
-
-
-			{	// Perform reverse lexical translation probability calculations
-				float targetGivenSourceLexProb = lexProbsPair.second;
-
-				if (!cumulativeTargetGivenSourceLexProbs.containsKey(translation)) {
-					cumulativeTargetGivenSourceLexProbs.put(translation,targetGivenSourceLexProb);
-				} else {
-					float runningTotal = cumulativeTargetGivenSourceLexProbs.get(translation) + targetGivenSourceLexProb;
+					runningTotal = cumulativeTargetGivenSourceLexProbs.get(translation) + targetGivenSourceLexProb;
 					cumulativeTargetGivenSourceLexProbs.put(translation,runningTotal);
 				} 
 
-				if (!counterTargetGivenSourceLexProbs.containsKey(translation)) {
-					counterTargetGivenSourceLexProbs.put(translation, 1);
+				if (!counterLexProbs.containsKey(translation)) {
+					counterLexProbs.put(translation, 1);
 				} else {
-					counterTargetGivenSourceLexProbs.put(translation, 
-							1 + counterTargetGivenSourceLexProbs.get(translation));
+					counterLexProbs.put(translation, 
+							1 + counterLexProbs.get(translation));
 				}
 			}
+
 
 			Integer count = counts.get(translation);
 
@@ -187,20 +184,26 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 		HashSet<Pattern> uniqueTranslations = new HashSet<Pattern>(translations);
 		
 		for (Pattern translation : uniqueTranslations) {
-			if (logger.isLoggable(Level.FINE)) logger.fine(sourcePattern.toString() + " ||| " + translation.toString() + " :  " + counts.get(translation) + " / " + p_e_given_f_denominator);
 			
 			float p_e_given_f = -1.0f * (float) Math.log10(counts.get(translation) / p_e_given_f_denominator);
 			if (Float.isInfinite(p_e_given_f)) p_e_given_f = PrefixTree.VERY_UNLIKELY;
-
-			float lex_p_e_given_f = (float) (-1.0f * Math.log10((double)cumulativeSourceGivenTargetLexProbs.get(translation) / (double)counterSourceGivenTargetLexProbs.get(translation)));
+			if (logger.isLoggable(Level.FINE)) logger.fine("   prob( "+ translation.toString() + " | " + sourcePattern.toString() + " ) =  -log10(" + counts.get(translation) + " / " + p_e_given_f_denominator + ") = " + p_e_given_f);
+			
+			float lex_p_e_given_f = (float) (-1.0f * Math.log10((double)cumulativeSourceGivenTargetLexProbs.get(translation) / (double)counterLexProbs.get(translation)));
 			if (Float.isInfinite(lex_p_e_given_f)) lex_p_e_given_f = PrefixTree.VERY_UNLIKELY;
-
-			float lex_p_f_given_e = (float) (-1.0f * Math.log10(((double)cumulativeTargetGivenSourceLexProbs.get(translation)) / ((double)counterTargetGivenSourceLexProbs.get(translation))));
+			if (logger.isLoggable(Level.FINE)) logger.fine("lexprob( " + translation.toString() + " | " + sourcePattern.toString() + " ) =  -log10(" + cumulativeSourceGivenTargetLexProbs.get(translation) + " / " + counterLexProbs.get(translation) + ") = " + lex_p_e_given_f);
+			
+			
+			//float lex_p_f_given_e = (float) (-1.0f * Math.log10(((double)cumulativeTargetGivenSourceLexProbs.get(translation)) / ((double)counterTargetGivenSourceLexProbs.get(translation))));
+			float lex_p_f_given_e = (float) (-1.0f * Math.log10(((double)cumulativeTargetGivenSourceLexProbs.get(translation)) / ((double)counterLexProbs.get(translation))));
 			if (Float.isInfinite(lex_p_f_given_e)) lex_p_f_given_e = PrefixTree.VERY_UNLIKELY;
-
+			if (logger.isLoggable(Level.FINE)) logger.fine("lexprob( " + sourcePattern.toString() + " | " + translation.toString() + " ) =  -log10(" + cumulativeTargetGivenSourceLexProbs.get(translation) + " / " + counterLexProbs.get(translation) + ") = " + lex_p_f_given_e);
+			
 			float[] featureScores = { p_e_given_f, lex_p_e_given_f, lex_p_f_given_e };
 
-			results.add(new Rule(PrefixTree.X, sourcePattern.words, translation.words, featureScores, translation.arity));
+			Rule rule = new Rule(PrefixTree.X, sourcePattern.words, translation.words, featureScores, translation.arity);
+			if (logger.isLoggable(Level.FINER)) logger.finer(rule.toString(PrefixTree.ntVocab, suffixArray.corpus.vocab, targetCorpus.vocab));
+			results.add(rule);
 		}
 
 		return results;

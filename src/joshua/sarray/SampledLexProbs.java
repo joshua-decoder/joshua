@@ -47,6 +47,7 @@ public class SampledLexProbs implements LexicalProbabilities {
 	/** Logger for this class. */
 	private static final Logger logger = Logger.getLogger(SampledLexProbs.class.getName());
 	
+	//TODO Make these Cache<Integer,Map<Integer,Float>>
 	private final Map<Integer,Map<Integer,Float>> sourceGivenTarget;
 	private final Map<Integer,Map<Integer,Float>> targetGivenSource;
 	
@@ -181,6 +182,10 @@ public class SampledLexProbs implements LexicalProbabilities {
 	}
 	
 	/**
+	 * Calculates the lexical probability of a source word given a target word.
+	 * <p>
+	 * If this information has not previously been stored,
+	 * this method calculates it. 
 	 * 
 	 * @param sourceWord
 	 * @param targetWord
@@ -326,7 +331,8 @@ public class SampledLexProbs implements LexicalProbabilities {
 						int targetWord = targetCorpus.corpus[targetIndex];
 						sum += sourceGivenTarget(sourceWord, targetWord);
 
-						// Keeping track of the reverse alignment points (we need to do this convoluted step because we don't actually have a HierarchicalPhrase for the target side)
+						// Keeping track of the reverse alignment points 
+						//   (we need to do this convoluted step because we don't actually have a HierarchicalPhrase for the target side)
 						if (!reverseAlignmentPoints.containsKey(targetIndex)) {
 							reverseAlignmentPoints.put(targetIndex, new ArrayList<Integer>());
 						}
@@ -354,8 +360,8 @@ public class SampledLexProbs implements LexicalProbabilities {
 			for (int sourceWord : alignedSourceWords) {
 				sum += targetGivenSource(targetWord, sourceWord);
 			}
-			
-			targetGivenSource *= (sum / alignedSourceWords.size());
+			float average = sum / ((float) alignedSourceWords.size());
+			targetGivenSource *= average;
 		}
 		
 //		if (sourceGivenTarget <= floorProbability) {
@@ -375,7 +381,11 @@ public class SampledLexProbs implements LexicalProbabilities {
 	}
 	
 	
-	
+	/**
+	 * Calculates the lexical probabilities for a target word.
+	 * 
+	 * @param targetWord
+	 */
 	private void calculateSourceGivenTarget(Integer targetWord) {
 
 		Map<Integer,Integer> counts = new HashMap<Integer,Integer>();
@@ -389,6 +399,7 @@ public class SampledLexProbs implements LexicalProbabilities {
 			int targetCorpusIndex = targetSuffixArray.suffixes[targetSuffixArrayIndex];
 			int[] alignedSourceIndices = alignments.getAlignedSourceIndices(targetCorpusIndex);
 			if (alignedSourceIndices==null) {
+				// TODO: might be better to have an int placeholder for null, so that we don't have to check whether the maps has a null key.
 				if (!counts.containsKey(null)) {
 					counts.put(null,1);
 				} else {
@@ -412,6 +423,11 @@ public class SampledLexProbs implements LexicalProbabilities {
 		
 		Map<Integer,Float> sourceProbs = new HashMap<Integer,Float>();
 		for (Map.Entry<Integer,Integer> entry : counts.entrySet()) {
+			// entry.getKey() corresponds to the source word
+			// entry.getValue() corresponds to the number of times we have seen this source/target word pair
+			// total is the number of times we saw this target with any source word
+			// TODO: check to see if the probability is beneith a certain threshold.
+			//       If so, then don't explicitly store a value.  When querying for a pair just return a floor value. (1/sampleSize) or something.
 			sourceProbs.put(entry.getKey(), entry.getValue()/total);
 		}
 		sourceGivenTarget.put(targetWord, sourceProbs);
@@ -436,11 +452,14 @@ public class SampledLexProbs implements LexicalProbabilities {
 					if (logger.isLoggable(Level.FINEST)) logger.finest("Setting count(null | " + sourceVocab.getWord(sourceWord) + ") = 1");
 					counts.put(null,1);
 				} else {
-					int incrementedCount = counts.get(null) + 1;
-					if (logger.isLoggable(Level.FINEST)) logger.finest("Setting count(null | " + sourceVocab.getWord(sourceWord) + ") = " + incrementedCount);
-					counts.put(null,incrementedCount);
+//					int incrementedCount = counts.get(null) + 1;
+//					if (logger.isLoggable(Level.FINEST)) logger.finest("Setting count(null | " + sourceVocab.getWord(sourceWord) + ") = " + incrementedCount);
+//					counts.put(null,incrementedCount);
+					counts.put(null,
+							counts.get(null) + 1);
 				}
-				total += 1.0f;
+				total++;
+				//total += 1.0f;
 			} else {
 				for (int targetIndex : alignedTargetIndices) {
 					int targetWord = targetSuffixArray.corpus.getWordID(targetIndex);
@@ -452,7 +471,8 @@ public class SampledLexProbs implements LexicalProbabilities {
 						if (logger.isLoggable(Level.FINEST)) logger.finest("Setting count(" +targetVocab.getWord(targetWord) + " | " + sourceVocab.getWord(sourceWord) + ") = " + incrementedCount + "; sourceWord ID == " + sourceWord + "; targetWord ID == " + targetWord);
 						counts.put(targetWord,incrementedCount);
 					}
-					total += 1.0f;
+					total++;
+					//total += 1.0f;
 				}
 			}
 		}
