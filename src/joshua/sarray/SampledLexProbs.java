@@ -66,6 +66,7 @@ public class SampledLexProbs implements LexicalProbabilities {
 	
 	private final int sampleSize;
 	
+
 	public SampledLexProbs(int sampleSize, SuffixArray sourceSuffixArray, SuffixArray targetSuffixArray, Alignments alignments, boolean precalculate) {
 		
 		this.sampleSize = sampleSize;
@@ -90,6 +91,39 @@ public class SampledLexProbs implements LexicalProbabilities {
 			}
 		}
 		
+	}
+	
+	public String sizeInfo() {
+		StringBuilder s = new StringBuilder();
+		
+		s.append("SampledLexProbs size information:");
+		s.append('\n');
+		
+		s.append(sourceGivenTarget.size() + " target sides in " + sourceGivenTarget);
+		s.append('\n');
+		
+		int count = 0;
+		for (Map<Integer, Float> entry : sourceGivenTarget.values()) {
+			count += entry.size();
+		}
+		
+		s.append(count + " source-target pairs in " + sourceGivenTarget);
+		s.append('\n');
+		
+		
+		s.append(targetGivenSource.size() + " source sides in " + targetGivenSource);
+		s.append('\n');
+		
+		count = 0;
+		for (Map<Integer, Float> entry : targetGivenSource.values()) {
+			count += entry.size();
+		}
+		
+		s.append(count + " target-source pairs in " + targetGivenSource);
+		s.append('\n');		
+		
+		
+		return s.toString();
 	}
 	
 	/**

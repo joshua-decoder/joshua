@@ -225,6 +225,8 @@ public class ExtractRules {
 					}
 				}
 				
+				if (logger.isLoggable(Level.FINE)) logger.fine(lexProbs.sizeInfo());
+				
 				if (commandLine.getValue(confirm)) {
 					if (logger.isLoggable(Level.INFO)) logger.info("Please press a key to continue");
 					System.in.read();
