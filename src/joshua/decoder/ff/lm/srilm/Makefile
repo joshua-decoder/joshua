@@ -1,7 +1,13 @@
 
 # Initialization
 # Machine type as used by SRILM
+# Sometimes, machine-type is wrong, so if there's only one library, use it
+SRILM_LIBS = $(shell ls $(SRILM)/lib)
+ifeq (1 , $(words $(shell ls $(SRILM)/lib)))
+MTYPE := $(SRILM_LIBS)
+else
 MTYPE := $(shell $(SRILM)/sbin/machine-type)
+endif
 
 SRI_LFLAG = -shared
 SRI_LIB = libsrilm.so
