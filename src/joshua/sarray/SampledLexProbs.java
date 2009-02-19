@@ -99,7 +99,7 @@ public class SampledLexProbs implements LexicalProbabilities {
 		s.append("SampledLexProbs size information:");
 		s.append('\n');
 		
-		s.append(sourceGivenTarget.size() + " target sides in " + sourceGivenTarget);
+		s.append(sourceGivenTarget.size() + " target sides in sourceGivenTarget");
 		s.append('\n');
 		
 		int count = 0;
@@ -107,11 +107,11 @@ public class SampledLexProbs implements LexicalProbabilities {
 			count += entry.size();
 		}
 		
-		s.append(count + " source-target pairs in " + sourceGivenTarget);
+		s.append(count + " source-target pairs in sourceGivenTarget");
 		s.append('\n');
 		
 		
-		s.append(targetGivenSource.size() + " source sides in " + targetGivenSource);
+		s.append(targetGivenSource.size() + " source sides in targetGivenSource");
 		s.append('\n');
 		
 		count = 0;
@@ -119,7 +119,7 @@ public class SampledLexProbs implements LexicalProbabilities {
 			count += entry.size();
 		}
 		
-		s.append(count + " target-source pairs in " + targetGivenSource);
+		s.append(count + " target-source pairs in targetGivenSource");
 		s.append('\n');		
 		
 		
