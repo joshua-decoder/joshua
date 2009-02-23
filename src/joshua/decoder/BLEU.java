@@ -59,8 +59,8 @@ public class BLEU {
 		double res_bleu = 0;
 		
 		int[] num_ngram_match = new int[bleu_order];
-		for(Iterator it = hyp_ngram_tbl.keySet().iterator(); it.hasNext();){
-			String ngram = (String) it.next();
+		for(Iterator<String> it = hyp_ngram_tbl.keySet().iterator(); it.hasNext();){
+			String ngram = it.next();
 			int effective_num_match = 0;
 			for(HashMap<String, Integer> ref_ngram_tbl : list_ref_ngram_tbl){
 				if(ref_ngram_tbl.containsKey(ngram)){
@@ -101,8 +101,8 @@ public class BLEU {
 		double res_bleu = 0;
 		
 		int[] num_ngram_match = new int[bleu_order];
-		for(Iterator it = hyp_ngram_tbl.keySet().iterator(); it.hasNext();){
-			String ngram = (String) it.next();
+		for(Iterator<String> it = hyp_ngram_tbl.keySet().iterator(); it.hasNext();){
+			String ngram = it.next();
 			if(ref_ngram_tbl.containsKey(ngram)){
 				if(do_ngram_clip)
 					num_ngram_match[ngram.split("\\s+").length-1] += Support.find_min(ref_ngram_tbl.get(ngram), hyp_ngram_tbl.get(ngram)); //ngram clip

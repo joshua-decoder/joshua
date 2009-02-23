@@ -22,7 +22,6 @@ import joshua.decoder.ff.FeatureFunction;
 import joshua.util.sentence.Phrase;
 
 import java.util.ArrayList;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 
@@ -57,6 +56,7 @@ public abstract class BatchGrammar implements GrammarFactory, Grammar {
 	
 	protected int spanLimit = 10;
 	
+	@SuppressWarnings("unused")
 	private static final Logger logger = Logger.getLogger(BatchGrammar.class.getName());
 	
 	Symbol p_symbol = null;

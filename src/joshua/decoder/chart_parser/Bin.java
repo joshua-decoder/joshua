@@ -63,7 +63,7 @@ public class Bin
 	//NOTE: MIN-HEAP, we put the worst-cost item at the top of the heap by manipulating the compare function
 	//heap_items: the only purpose is to help deecide which items should be removed from tbl_items during pruning 
 	private PriorityQueue<HGNode> heap_items =  new PriorityQueue<HGNode>(1, HGNode.NegtiveCostComparator);//TODO: initial capacity?
-	private HashMap  tbl_items=new HashMap (); //to maintain uniqueness of items		
+	private HashMap<String,HGNode>  tbl_items=new HashMap<String,HGNode> (); //to maintain uniqueness of items		
 	private Map<Integer,SuperItem>  tbl_super_items=new HashMap<Integer,SuperItem>();//signature by lhs
 	private ArrayList<HGNode> l_sorted_items=null;//sort values in tbl_item_signature, we need this list whenever necessary
 	
@@ -260,7 +260,7 @@ public class Bin
 	//TODO: the implementation is little bit different from the description in Liang'2007 ACL paper 
 	public void complete_cell_cube_prune(int i,	int j,	ArrayList<SuperItem> l_super_items,	RuleCollection rb, float lattice_cost) { //combinations: rules, antecent items
 		PriorityQueue<CubePruneState> heap_cands=new PriorityQueue<CubePruneState>();// in the paper, it is called cand[v]		
-		HashMap  cube_state_tbl = new HashMap ();//rememeber which state has been explored
+		HashMap<String,Integer>  cube_state_tbl = new HashMap<String,Integer>();//rememeber which state has been explored
 		
 		List<Rule> l_rules = rb.getSortedRules();
 		if(l_rules==null || l_rules.size()<=0)
@@ -419,7 +419,7 @@ public class Bin
 	 * need to check whether the item is already exist, if yes, just add the deductions*/
 	private boolean add_deduction( HGNode new_item){
 		boolean res=false;
-		HGNode old_item = (HGNode)tbl_items.get(new_item.get_signature());		
+		HGNode old_item = tbl_items.get(new_item.get_signature());		
 		if(old_item!=null){//have an item with same states, combine items
 			p_chart.n_merged++;
 			if(new_item.est_total_cost<old_item.est_total_cost){
@@ -528,8 +528,8 @@ public class Bin
             
             ArrayList<Integer> to_remove = new ArrayList<Integer> ();
             //note: some SuperItem may not contain any items any more due to pruning
-            for (Iterator e = tbl_super_items.keySet().iterator(); e.hasNext();) {
-            	Integer k = (Integer)e.next();                	
+            for (Iterator<Integer> e = tbl_super_items.keySet().iterator(); e.hasNext();) {
+            	Integer k = e.next();                	
                 if(((SuperItem)tbl_super_items.get(k)).l_items.size()<=0){
                 	to_remove.add(k);//note that: we cannot directly do the remove, because it will throw ConcurrentModificationException
                     //System.out.println("have zero items in superitem " + k);

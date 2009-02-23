@@ -28,7 +28,6 @@ package joshua.util.sentence;
 
 import java.lang.StringBuffer;
 import java.util.ArrayList;
-import java.util.List;
 
 
 /**

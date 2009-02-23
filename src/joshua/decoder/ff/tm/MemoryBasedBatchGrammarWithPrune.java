@@ -158,7 +158,7 @@ public class MemoryBasedBatchGrammarWithPrune extends BatchGrammar {
 			} else {
 				MemoryBasedTrieGrammar tem = new MemoryBasedTrieGrammar();//next layer node
 				if (null == pos.tbl_children) {
-					pos.tbl_children = new HashMap ();
+					pos.tbl_children = new HashMap<Integer,MemoryBasedTrieGrammar> ();
 				}
 				pos.tbl_children.put(cur_sym_id, tem);
 				pos = tem;
@@ -202,7 +202,7 @@ public class MemoryBasedBatchGrammarWithPrune extends BatchGrammar {
 	
 	public class MemoryBasedTrieGrammar implements TrieGrammar {
 		private MemoryBasedRuleBin rule_bin     = null;
-		private HashMap        tbl_children = null;
+		private HashMap<Integer,MemoryBasedTrieGrammar> tbl_children = null;
 		
 		
 		public MemoryBasedTrieGrammar matchOne(int sym_id) {
@@ -212,7 +212,7 @@ public class MemoryBasedBatchGrammarWithPrune extends BatchGrammar {
 			if (null == tbl_children) {
 				return null;
 			} else {
-				return (MemoryBasedTrieGrammar) tbl_children.get(sym_id);
+				return tbl_children.get(sym_id);
 			}
 		}
 		

@@ -24,7 +24,6 @@ import joshua.decoder.chart_parser.Bin.ComputeItemResult;
 import joshua.decoder.chart_parser.DotChart.DotItem;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.tm.Grammar;
-import joshua.decoder.ff.tm.MemoryBasedRule;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.RuleCollection;
 import joshua.decoder.ff.tm.BatchGrammar;
@@ -158,10 +157,10 @@ public class Chart {
 	/** construct the hypergraph with the help from DotChart */
 	public HyperGraph expand() {
 		//long start = System.currentTimeMillis();
-		long time_step1 = 0;
-		long time_step2 = 0;
-		long time_step3 = 0;
-		long time_step4 = 0;
+//		long time_step1 = 0;
+//		long time_step2 = 0;
+//		long time_step3 = 0;
+//		long time_step4 = 0;
 		
 		for (int width = 1; width <= sent_len; width++) {
 			for (int i = 0; i <= sent_len-width; i++) {
@@ -229,6 +228,8 @@ public class Chart {
 				//Support.write_log_line(String.format("After Process span (%d, %d), called:= %d",i,j,n_called_compute_item), Support.INFO);
 				if (null != this.bins[i][j]) {
 					//this.bins[i][j].print_info(Support.INFO);
+					
+					@SuppressWarnings("unused")
 					ArrayList<HGNode> l_s_its = this.bins[i][j].get_sorted_items();//this is required
 					
 					/*sanity check with this cell
