@@ -201,7 +201,7 @@ public class LMFeatureFunction extends DefaultStatefulFF {
 		//System.out.println("##tran cost: " + transition_cost +" lm_l_cost[0]: " + lm_l_cost[0]);
 		double estimated_future_cost=0.0;
 		if(this.ngramOrder>1){//no estiamtion for unigram lm
-			if (JoshuaConfiguration.use_left_euqivalent_state) {
+			if (JoshuaConfiguration.use_left_equivalent_state) {
 				estimated_future_cost = lm_l_cost[1];
 			} else {
 				estimated_future_cost = estimate_state_prob(model_states,false,false);//bonus function

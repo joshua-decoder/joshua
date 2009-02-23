@@ -30,12 +30,24 @@ import joshua.decoder.ff.lm.distributed_lm.LMGrammarRemote;
 import joshua.decoder.ff.lm.srilm.LMGrammarSRILM;
 import joshua.decoder.ff.tm.GrammarFactory;
 import joshua.decoder.ff.tm.MemoryBasedBatchGrammarWithPrune;
+import joshua.sarray.CorpusArray;
+import joshua.sarray.SAGrammarFactory;
+import joshua.sarray.SampledLexProbs;
+import joshua.sarray.SuffixArray;
+import joshua.sarray.SuffixArrayFactory;
 import joshua.util.FileUtility;
+import joshua.util.lexprob.LexicalProbabilities;
+import joshua.util.sentence.Vocabulary;
+import joshua.util.sentence.alignment.AlignmentGrids;
+import joshua.util.sentence.alignment.Alignments;
 
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -146,7 +158,23 @@ public class JoshuaDecoder {
 		System.out.println("have lm model: " + have_lm_model);
 		//##### load TM grammar
 		if (! JoshuaConfiguration.use_sent_specific_tm) {
-			initializeTranslationGrammars(JoshuaConfiguration.tm_file);
+			if (JoshuaConfiguration.tm_file != null) {
+				initializeTranslationGrammars(JoshuaConfiguration.tm_file);
+			} else if (JoshuaConfiguration.sa_source!=null && 
+					JoshuaConfiguration.sa_target!=null && 
+					JoshuaConfiguration.sa_alignment!=null) {
+				
+				try {
+					initializeSuffixArrayGrammar();
+				} catch (IOException e) {
+					logger.severe("Error reading suffix array grammar - exiting decoder.");
+					e.printStackTrace();
+					System.exit(-1);
+				}
+				
+			} else {
+				throw new RuntimeException("No translation grammar or suffix array grammar was specified.");
+			}
 		}
 		
 		//create factory
@@ -252,14 +280,14 @@ public class JoshuaDecoder {
 	private static LMGrammar initializeLanguageModel(Symbol psymbol) {
 		LMGrammar lm_grammar;
 		if (JoshuaConfiguration.use_remote_lm_server) {
-			if (JoshuaConfiguration.use_left_euqivalent_state || JoshuaConfiguration.use_right_euqivalent_state){
+			if (JoshuaConfiguration.use_left_equivalent_state || JoshuaConfiguration.use_right_equivalent_state){
 				if (logger.isLoggable(Level.SEVERE)) 
 					logger.severe("use remote LM, we cannot use suffix/prefix stuff");
 				System.exit(1);
 			}
 			lm_grammar = new LMGrammarRemote(psymbol, JoshuaConfiguration.g_lm_order, JoshuaConfiguration.f_remote_server_list, JoshuaConfiguration.num_remote_lm_servers);			
 		} else if (JoshuaConfiguration.use_srilm) {
-			if (JoshuaConfiguration.use_left_euqivalent_state || JoshuaConfiguration.use_right_euqivalent_state){
+			if (JoshuaConfiguration.use_left_equivalent_state || JoshuaConfiguration.use_right_equivalent_state){
 				if (logger.isLoggable(Level.SEVERE)) 
 					logger.severe("use SRILM, we cannot use suffix/prefix stuff");
 				System.exit(1);
@@ -268,7 +296,7 @@ public class JoshuaDecoder {
 			lm_grammar = new LMGrammarSRILM( (SrilmSymbol)psymbol, JoshuaConfiguration.g_lm_order, JoshuaConfiguration.lm_file);
 			//lm_grammar = new LMGrammarSRILM((SrilmSymbol)psymbol, JoshuaConfiguration.g_lm_order, JoshuaConfiguration.lm_file);			
 		} else {//using the built-in JAVA implementatoin of LM, may not be as scalable as SRILM
-			lm_grammar = new LMGrammarJAVA( (BuildinSymbol)psymbol, JoshuaConfiguration.g_lm_order, JoshuaConfiguration.lm_file, JoshuaConfiguration.use_left_euqivalent_state, JoshuaConfiguration.use_right_euqivalent_state);
+			lm_grammar = new LMGrammarJAVA( (BuildinSymbol)psymbol, JoshuaConfiguration.g_lm_order, JoshuaConfiguration.lm_file, JoshuaConfiguration.use_left_equivalent_state, JoshuaConfiguration.use_right_equivalent_state);
 		}
 		
 		return lm_grammar;
@@ -288,6 +316,50 @@ public class JoshuaDecoder {
 		p_tm_grammars[1] = regularGrammar;
 		
 		//TODO if suffix-array: call SAGrammarFactory(SuffixArray sourceSuffixArray, CorpusArray targetCorpus, AlignmentArray alignments, LexicalProbabilities lexProbs, int maxPhraseSpan, int maxPhraseLength, int maxNonterminals, int spanLimit) {
+	}
+	
+	private void initializeSuffixArrayGrammar() throws IOException {
+		p_tm_grammars = new GrammarFactory[2];
+		
+		// Glue Grammar
+		GrammarFactory glueGrammar = new MemoryBasedBatchGrammarWithPrune(p_symbol, null, true, p_l_feat_functions, JoshuaConfiguration.phrase_owner, -1, "^\\[[A-Z]+\\,[0-9]*\\]$", "[\\[\\]\\,0-9]+");	
+		p_tm_grammars[0] = glueGrammar;
+		
+		int sampleSize = JoshuaConfiguration.sa_rule_sample_size;
+		int maxPhraseSpan = JoshuaConfiguration.sa_max_phrase_span;
+		int maxPhraseLength = JoshuaConfiguration.sa_max_phrase_length;
+		int maxNonterminals = JoshuaConfiguration.sa_max_nonterminals;
+		int minNonterminalSpan = JoshuaConfiguration.sa_min_nonterminal_span;
+		
+		SuffixArray.CACHE_CAPACITY = JoshuaConfiguration.sa_rule_cache_size;
+		
+		String sourceFileName = JoshuaConfiguration.sa_source;
+		Vocabulary sourceVocab = new Vocabulary();
+		int[] sourceWordsSentences = SuffixArrayFactory.createVocabulary(sourceFileName, sourceVocab);
+		CorpusArray sourceCorpusArray = SuffixArrayFactory.createCorpusArray(sourceFileName, sourceVocab, sourceWordsSentences[0], sourceWordsSentences[1]);
+		SuffixArray sourceSuffixArray = SuffixArrayFactory.createSuffixArray(sourceCorpusArray);
+		
+		String targetFileName = JoshuaConfiguration.sa_target;
+		Vocabulary targetVocab = new Vocabulary();
+		int[] targetWordsSentences = SuffixArrayFactory.createVocabulary(targetFileName, targetVocab);
+		CorpusArray targetCorpusArray = SuffixArrayFactory.createCorpusArray(targetFileName, targetVocab, targetWordsSentences[0], targetWordsSentences[1]);
+		SuffixArray targetSuffixArray = SuffixArrayFactory.createSuffixArray(targetCorpusArray);
+		
+		String alignmentFileName = JoshuaConfiguration.sa_alignment;
+		int trainingSize = sourceCorpusArray.getNumSentences();
+		Alignments alignments = new AlignmentGrids(new Scanner(new File(alignmentFileName)), sourceCorpusArray, targetCorpusArray, trainingSize);
+		
+		int lexSampleSize = JoshuaConfiguration.sa_lex_sample_size;
+		int lexCacheSize = JoshuaConfiguration.sa_lex_cache_size;
+		boolean precalculateLexprobs = JoshuaConfiguration.sa_precalculate_lexprobs;
+		LexicalProbabilities lexProbs = new SampledLexProbs(lexSampleSize, sourceSuffixArray, targetSuffixArray, alignments, lexCacheSize, precalculateLexprobs);
+		
+		GrammarFactory suffixArrayGrammar = new SAGrammarFactory(
+				sourceSuffixArray, targetCorpusArray, alignments, 
+				lexProbs, sampleSize, maxPhraseSpan, maxPhraseLength, 
+				maxNonterminals, minNonterminalSpan);
+		
+		p_tm_grammars[1] = suffixArrayGrammar;
 	}
 	
 	static public FeatureFunction haveLMFeature(ArrayList<FeatureFunction> l_models){

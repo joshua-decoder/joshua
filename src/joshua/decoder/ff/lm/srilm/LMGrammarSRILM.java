@@ -68,7 +68,7 @@ public class LMGrammarSRILM  extends LMGrammar {
        double res=0.0;
        SWIGTYPE_p_unsigned_int hist;
        //TODO in principle, there should not have bad left-side state symbols, though need to check
-       if(check_bad_stuff ==true && JoshuaConfiguration.use_right_euqivalent_state==true){
+       if(check_bad_stuff ==true && JoshuaConfiguration.use_right_equivalent_state==true){
 	       //make sure the state input does not have null words, as otherwise the srilm will replace it with unk    
 		   ArrayList<Integer> clean_ngram = ignore_null_right_words(ngram_wrds);	
 		   hist_size = clean_ngram.size()-1;
@@ -104,7 +104,7 @@ public class LMGrammarSRILM  extends LMGrammar {
    
 	public int[] get_left_equi_state(int[] original_state_wrds, int order, double[] cost){
 		//int[] original_state_wrds = replace_with_unk(original_state_wrds_in);//???
-		if(JoshuaConfiguration.use_left_euqivalent_state==false){
+		if(JoshuaConfiguration.use_left_equivalent_state==false){
 			return original_state_wrds;
 		}
 			
@@ -147,7 +147,7 @@ public class LMGrammarSRILM  extends LMGrammar {
 	 //the only change to the original_state is: replace with more non-null state words to null state
 	  public int[] get_right_equi_state(int[] original_state, int order, boolean check_bad_stuff){
 		    //int[] original_state=replace_with_unk(original_state_in);
-			if(JoshuaConfiguration.use_right_euqivalent_state==false || original_state.length!=g_order-1)
+			if(JoshuaConfiguration.use_right_equivalent_state==false || original_state.length!=g_order-1)
 				return original_state;
 			
 			//## non-overlaping state		

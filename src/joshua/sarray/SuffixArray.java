@@ -358,15 +358,6 @@ public class SuffixArray implements Corpus {
 	 *<p>
 	 * The construction of more complex hierarchical phrases is handled
 	 * within the prefix tree. 
-	 * <p>
-	 * This method performs deterministic sampling, as described in Lopez (2008) p59:
-	 * <blockquote>
-	 * To resolve this issue, we used deterministic sampling. Whenever a source phrase occurs 
-more frequently than the maximum sample size, we take our samples at uniform intervals over 
-the set of locations returned by the sufﬁx array. With this strategy in place, hypotheses receive the 
-same feature weights between different runs of the decoder, the results are deterministic, and the 
-MERT algorithm converges at the same rate as it does without sampling.
-	 * </blockquote>
 	 * 
 	 * @param startPositions an unsorted list of the positions
 	 *                in the corpus where the matched phrases begin
@@ -379,19 +370,11 @@ MERT algorithm converges at the same rate as it does without sampling.
 		} else if (hierarchicalPhraseCache.containsKey(pattern)) {
 			return hierarchicalPhraseCache.get(pattern);
 		} else {
+			// In the case of contiguous phrases, the hpCache is essentially acting as Adam's Inverted Index, because it stores 
+			// the corpus-sorted indexes of each of the phrases.  It differs because it creates HierarhicalPhrase objects rather 
+			// than just int[].
 			Arrays.sort(startPositions);
-//			int length = pattern.size();
-			HierarchicalPhrases hierarchicalPhrases = new HierarchicalPhrases(pattern, startPositions, prefixTree);
-//			ArrayList<HierarchicalPhrase> hierarchicalPhrases = new ArrayList<HierarchicalPhrase>(startPositions.length);
-//			 
-//			int step = //(startPositions.length<sampleSize) ? 1 : startPositions.length / sampleSize;
-//				1;
-//			for(int i = 0; i < startPositions.length; i+=step) { 
-//				int[] position = {startPositions[i]};
-//				int[] endPosition = {startPositions[i] + length};
-//				HierarchicalPhrase hierarchicalPhrase = new HierarchicalPhrase(pattern, position, endPosition, corpus, length);
-//				hierarchicalPhrases.add(hierarchicalPhrase);
-//			}	
+			HierarchicalPhrases hierarchicalPhrases = new HierarchicalPhrases(pattern, startPositions, prefixTree);	
 			hierarchicalPhraseCache.put(pattern, hierarchicalPhrases);
 			return hierarchicalPhrases;
 		}

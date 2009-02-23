@@ -178,6 +178,15 @@ public class CorpusArray {
 	
 	
 	/**
+	 * Gets the number of sentences in this corpus.
+	 * 
+	 * @return the number of sentences in this corpus
+	 */
+	public int getSentenceCount() {
+		return sentences.length;
+	}
+	
+	/**
 	 * @return the number of words in the corpus.
 	 */
 	public int size() {

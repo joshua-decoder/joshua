@@ -467,7 +467,7 @@ public class PrefixTree {
 				result = suffixArray.createHierarchicalPhrases(startingPositions, pattern, this);
 			}
 			
-		} else {
+		} else { // 3: else --- alpha is a discontiguous pattern
 
 			// 8: If M_a_alpha_b has been precomputed (then result will be non-null)
 			// 9: Retrieve M_a_alpha_b from cache of precomputations

@@ -7,18 +7,10 @@ import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-
-
-import joshua.decoder.chart_parser.Chart;
 import joshua.decoder.ff.FeatureFunction;
-import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.GrammarFactory;
 import joshua.decoder.hypergraph.DiskHyperGraph;
-import joshua.decoder.hypergraph.HyperGraph;
-import joshua.decoder.hypergraph.KbestExtraction;
-import joshua.lattice.Lattice;
 import joshua.util.FileUtility;
-import joshua.util.sentence.Phrase;
 
 /**
  * this class implements: 
@@ -183,6 +175,7 @@ public class DecoderFactory {
 		
 		//merge the grammar rules for disk hyper-graphs
 		if (JoshuaConfiguration.save_disk_hg) {
+			@SuppressWarnings("unchecked")
 			HashMap tbl_done = new HashMap();
 			BufferedWriter t_writer_dhg_rules = FileUtility.getWriteFileStream(nbest_file + ".hg.rules");
 			for (DecoderThread p_decoder : parallel_threads) {

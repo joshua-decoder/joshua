@@ -224,7 +224,7 @@ public class LMGrammarJAVA extends LMGrammar {
     //the only change to the original_state is: replace with more non-null state words to null state
 	//O(n^2)
 	 public int[] get_right_equi_state(int[] original_state_in, int order, boolean check_bad_stuff){		 	
-			if(JoshuaConfiguration.use_right_euqivalent_state==false || original_state_in.length!=g_order-1)
+			if(JoshuaConfiguration.use_right_equivalent_state==false || original_state_in.length!=g_order-1)
 				return original_state_in;
 			int[] res;
 			//cache
@@ -288,7 +288,7 @@ public class LMGrammarJAVA extends LMGrammar {
 	//return: (1) the equivlant state vector; (2) the finalized cost; (3) the estimated cost
 //	O(n^2)
 	 public int[] get_left_equi_state(int[] original_state_wrds_in, int order, double[] cost){		    		    
-			if(JoshuaConfiguration.use_left_euqivalent_state==false){
+			if(JoshuaConfiguration.use_left_equivalent_state==false){
 				return original_state_wrds_in;
 			}		
 			

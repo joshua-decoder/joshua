@@ -21,12 +21,13 @@ import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.GrammarFactory;
 import joshua.util.lexprob.LexicalProbabilities;
 import joshua.util.sentence.Phrase;
+import joshua.util.sentence.alignment.Alignments;
 
 public class SAGrammarFactory implements GrammarFactory {
 
 	private final SuffixArray sourceSuffixArray;
 	private final CorpusArray targetCorpus;
-	private final AlignmentArray alignments;
+	private final Alignments alignments;
 	private final LexicalProbabilities lexProbs;
 	
 	private final int maxPhraseSpan;
@@ -36,9 +37,9 @@ public class SAGrammarFactory implements GrammarFactory {
 	
 	private final RuleExtractor ruleExtractor;
 	
-	/** TODO This variable is never read - perhaps it should be removed? */
-	@SuppressWarnings("unused")
-	private final int spanLimit;
+//	/** TODO This variable is never read - perhaps it should be removed? */
+//	@SuppressWarnings("unused")
+//	private final int spanLimit;
 	
 	/**
 	 * Constructs a factory capable of getting a grammar backed by a suffix array.
@@ -50,7 +51,7 @@ public class SAGrammarFactory implements GrammarFactory {
 	 * @param maxPhraseLength
 	 * @param maxNonterminals
 	 */
-	public SAGrammarFactory(SuffixArray sourceSuffixArray, CorpusArray targetCorpus, AlignmentArray alignments, LexicalProbabilities lexProbs, int sampleSize, int maxPhraseSpan, int maxPhraseLength, int maxNonterminals, int minNonterminalSpan, int spanLimit) {
+	public SAGrammarFactory(SuffixArray sourceSuffixArray, CorpusArray targetCorpus, Alignments alignments, LexicalProbabilities lexProbs, int sampleSize, int maxPhraseSpan, int maxPhraseLength, int maxNonterminals, int minNonterminalSpan) {
 		this.sourceSuffixArray = sourceSuffixArray;
 		this.targetCorpus      = targetCorpus;
 		this.alignments        = alignments;
@@ -59,7 +60,7 @@ public class SAGrammarFactory implements GrammarFactory {
 		this.maxPhraseLength   = maxPhraseLength;
 		this.maxNonterminals   = maxNonterminals;
 		this.minNonterminalSpan = minNonterminalSpan;
-		this.spanLimit         = spanLimit;
+//		this.spanLimit         = spanLimit;
 		this.ruleExtractor = new HierarchicalRuleExtractor(sourceSuffixArray, targetCorpus, alignments, lexProbs, sampleSize, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan);
 		
 	}

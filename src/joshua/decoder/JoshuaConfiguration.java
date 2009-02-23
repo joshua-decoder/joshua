@@ -1,22 +1,41 @@
+/* This file is part of the Joshua Machine Translation System.
+ * 
+ * Joshua is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1
+ * of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free
+ * Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
+ */
 package joshua.decoder;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import joshua.util.Cache;
 import joshua.util.FileUtility;
 
-
-/* anything that is configurable should go here
- * */
-
+/**
+ * Configuration file for Joshua decoder.
+ * <p>
+ * When adding new features to Joshua,
+ * any new configurable parameters should be added to this class.
+ */
 public class JoshuaConfiguration {
 	//lm config
 	public static boolean use_srilm                  = false;
 	public static double  lm_ceiling_cost            = 100;
-	public static boolean use_left_euqivalent_state  = false;
-	public static boolean use_right_euqivalent_state = true;
+	public static boolean use_left_equivalent_state  = false;
+	public static boolean use_right_equivalent_state = true;
 	public static int     g_lm_order                 = 3;
 	public static boolean use_sent_specific_lm       = false;
 	public static String  g_sent_lm_file_name_prefix = "lm.";
@@ -34,6 +53,28 @@ public class JoshuaConfiguration {
 	public static boolean use_sent_specific_tm       = false;
 	public static String  g_sent_tm_file_name_prefix = "tm.";
 	public static String tm_file = null;//TODO
+	
+	// Parameters for suffix array grammar
+	/** File name of source language training corpus. */
+	public static String sa_source = null;
+	
+	/** File name of target language training corpus. */
+	public static String sa_target = null;
+	
+	/** File name of source-target training corpus alignments. */
+	public static String sa_alignment = null;
+	
+	public static int sa_max_phrase_span = 10;
+	public static int sa_max_phrase_length = 10;
+	public static int sa_max_nonterminals = 2;
+	public static int sa_min_nonterminal_span = 2;
+	public static int sa_lex_sample_size = 1000;
+	public static int sa_lex_cache_size = Cache.DEFAULT_CAPACITY;
+	public static boolean sa_precalculate_lexprobs = false;
+	public static int sa_rule_sample_size = 300;
+	public static int sa_rule_cache_size = 1000;
+	public static boolean sa_sentence_initial_X = true;
+	public static boolean sa_sentence_final_X = true;
 	
 	//pruning config
 	public static boolean use_cube_prune          = true;
@@ -102,6 +143,62 @@ public class JoshuaConfiguration {
 					tm_file = fds[1].trim();
 					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("tm file: %s", tm_file));
 					
+				} else if (0 == fds[0].compareTo("sa_source")) {
+					sa_source = fds[1].trim();
+					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("suffix array source file: %s", sa_source));
+					
+				} else if (0 == fds[0].compareTo("sa_target")) {
+					sa_target = fds[1].trim();
+					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("suffix array target file: %s", sa_target));
+					
+				} else if (0 == fds[0].compareTo("sa_alignment")) {
+					sa_alignment = fds[1].trim();
+					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("suffix array alignment file: %s", sa_alignment));
+
+				} else if (0 == fds[0].compareTo("sa_max_phrase_span")) {
+					sa_max_phrase_span = new Integer(fds[1].trim());
+					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("suffix array maximum phrase span: %s", sa_max_phrase_span));
+					
+				} else if (0 == fds[0].compareTo("sa_max_phrase_length")) {
+					sa_max_phrase_length = new Integer(fds[1].trim());
+					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("suffix array maximum phrase length: %s", sa_max_phrase_length));
+					
+				} else if (0 == fds[0].compareTo("sa_max_phrase_length")) {
+					sa_max_phrase_length = new Integer(fds[1].trim());
+					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("suffix array maximum phrase length: %s", sa_max_phrase_length));
+					
+				} else if (0 == fds[0].compareTo("sa_max_nonterminals")) {
+					sa_max_nonterminals = new Integer(fds[1].trim());
+					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("suffix array maximum number of nonterminals: %s", sa_max_nonterminals));
+					
+				} else if (0 == fds[0].compareTo("sa_min_nonterminal_span")) {
+					sa_min_nonterminal_span = new Integer(fds[1].trim());
+					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("suffix array minimun nonterminal span: %s", sa_min_nonterminal_span));
+					
+				} else if (0 == fds[0].compareTo("sa_lex_sample_size")) {
+					sa_lex_sample_size = new Integer(fds[1].trim());
+					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("suffix array sample size for lexical probability calculation: %s", sa_lex_sample_size));
+					
+				} else if (0 == fds[0].compareTo("sa_precalculate_lexprobs")) {
+					sa_precalculate_lexprobs = new Boolean(fds[1].trim());
+					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("should lexical probabilities be precalculated: %s", sa_precalculate_lexprobs));
+					
+				} else if (0 == fds[0].compareTo("sa_rule_sample_size")) {
+					sa_rule_sample_size = new Integer(fds[1].trim());
+					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("suffix array sample size for rules: %s", sa_rule_sample_size));
+					
+				} else if (0 == fds[0].compareTo("sa_rule_cache_size")) {
+					sa_rule_cache_size = new Integer(fds[1].trim());
+					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("suffix array cache size for rules: %s", sa_rule_cache_size));
+					
+				} else if (0 == fds[0].compareTo("sa_sentence_initial_X")) {
+					sa_sentence_initial_X = new Boolean(fds[1].trim());
+					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("should suffix array rule extraction allow rules from sentence-initial X: %s", sa_sentence_initial_X));
+					
+				} else if (0 == fds[0].compareTo("sa_sentence_final_X")) {
+					sa_sentence_final_X = new Boolean(fds[1].trim());
+					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("should suffix array rule extraction allow rules from sentence-final X: %s", sa_sentence_final_X));
+					
 				} else if (0 == fds[0].compareTo("use_srilm")) {
 					use_srilm = new Boolean(fds[1]);
 					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("use_srilm: %s", use_srilm));
@@ -110,13 +207,13 @@ public class JoshuaConfiguration {
 					lm_ceiling_cost = new Double(fds[1]);
 					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("lm_ceiling_cost: %s", lm_ceiling_cost));
 					
-				} else if (0 == fds[0].compareTo("use_left_euqivalent_state")) {
-					use_left_euqivalent_state = new Boolean(fds[1]);
-					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("use_left_euqivalent_state: %s", use_left_euqivalent_state));
+				} else if (0 == fds[0].compareTo("use_left_euqivalent_state") || 0 == fds[0].compareTo("use_left_equivalent_state")) {
+					use_left_equivalent_state = new Boolean(fds[1]);
+					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("use_left_equivalent_state: %s", use_left_equivalent_state));
 					
-				} else if (0 == fds[0].compareTo("use_right_euqivalent_state")) {
-					use_right_euqivalent_state = new Boolean(fds[1]);
-					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("use_right_euqivalent_state: %s", use_right_euqivalent_state));
+				} else if (0 == fds[0].compareTo("use_right_euqivalent_state") || 0 == fds[0].compareTo("use_right_equivalent_state")) {
+					use_right_equivalent_state = new Boolean(fds[1]);
+					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("use_right_equivalent_state: %s", use_right_equivalent_state));
 					
 				} else if (0 == fds[0].compareTo("order")) {
 					g_lm_order = new Integer(fds[1]);
