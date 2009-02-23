@@ -2,7 +2,8 @@
 % * List the feature functions that we use in our decoder.
 
 \documentclass[11pt]{article}
-\usepackage{acl08}
+%\usepackage{acl08}
+\usepackage{eacl2009}
 \usepackage{times}
 \usepackage{latexsym}
 \usepackage{multirow}
@@ -75,15 +76,15 @@ To combat these issues, the Joshua toolkit integrates most critical components o
 
 Below we give a short description about the main functions implemented in our Joshua toolkit.
 
-\subsection{Training Corpus Sub-sampling}\label{subsampling} 
+\subsection{Training Corpus Sub-sampling}\label{subsampling}
 
-Rather than inducing a grammar from the full parallel training data, we made use of a method proposed by Kishore Papineni (personal communication) to select the subset of the training data consisting of  sentences useful for inducing a grammar to translate a particular test set.  This method works as follows: for the development and test sets that will be translated, every $n$-gram (up to length 10) is gathered into a map $\mathcal{W}$ and associated with an initial count of zero.  Proceeding in order through the training data, for each sentence pair whose source-to-target length ratio is within one standard deviation of the average, if any $n$-gram found in the \emph{source sentence} is also found in $\mathcal{W}$ with a count of less than $k$, the sentence is selected.  When a sentence is selected, the count of every $n$-gram in $\mathcal{W}$ that is found in the source sentence is incremented by the number of its occurrences in the source sentence. \ignore{Thus, there are two conditions in which a sentence will not be selected: 1) it only contains $n$-grams that are not found in $\mathcal{W}$ (making it useless for learning in the highly lexicalized models we use) or 2) it only contains $n$-grams that have already been attested in the selected set $k$ or more times.} For our submission, we used $k=20$, which resulted in 1.5 million (out of 23 million) sentence pairs being selected for use as training data.  There were 30,037,600 English words and 30,083,927 French words in the subsampled training corpus. 
+Rather than inducing a grammar from the full parallel training data, we made use of a method proposed by Kishore Papineni (personal communication) to select the subset of the training data consisting of  sentences useful for inducing a grammar to translate a particular test set.  This method works as follows: for the development and test sets that will be translated, every $n$-gram (up to length 10) is gathered into a map $\mathcal{W}$ and associated with an initial count of zero.  Proceeding in order through the training data, for each sentence pair whose source-to-target length ratio is within one standard deviation of the average, if any $n$-gram found in the \emph{source sentence} is also found in $\mathcal{W}$ with a count of less than $k$, the sentence is selected.  When a sentence is selected, the count of every $n$-gram in $\mathcal{W}$ that is found in the source sentence is incremented by the number of its occurrences in the source sentence. \ignore{Thus, there are two conditions in which a sentence will not be selected: 1) it only contains $n$-grams that are not found in $\mathcal{W}$ (making it useless for learning in the highly lexicalized models we use) or 2) it only contains $n$-grams that have already been attested in the selected set $k$ or more times.} For our submission, we used $k=20$, which resulted in 1.5 million (out of 23 million) sentence pairs being selected for use as training data.  There were 30,037,600 English words and 30,083,927 French words in the subsampled training corpus.
 
 \subsection{Suffix-array Grammar Extraction}
 
 Hierarchical phrase-based translation requires a translation grammar extracted from a parallel corpus, where grammar rules include associated feature values. In real translation tasks, the grammars extracted from large training corpora are often far too large to fit into available memory.
 
-% Features such as the translation probability $p(f|e)$ and reverse translation probability $p(e|f)$ are typically calculated using relative frequency estimation . 
+% Features such as the translation probability $p(f|e)$ and reverse translation probability $p(e|f)$ are typically calculated using relative frequency estimation .
 In such tasks, feature calculation is also very expensive in terms of time required; huge sets of extracted rules must be sorted in two directions for relative frequency calculation of such features as the translation probability $p(f|e)$ and reverse translation probability $p(e|f)$ \cite{Koehn2003}. Since the extraction steps must be re-run if any change is made to the input training data, the time required can be a major hindrance to researchers, especially those investigating the effects of tokenization or word segmentation.
 
 %Worse, the grammars extracted from large training corpora are often far too large to fit into available memory.
@@ -97,13 +98,13 @@ The current code requires suffix array rule extraction to be run as a pre-proces
 %
 %Worse, the extracted grammars
 
-% to extract all allowed rules from a large parallel corpus, and to 
+% to extract all allowed rules from a large parallel corpus, and to
 
-%When rule extraction is performed over an entire large parallel corpus, 
+%When rule extraction is performed over an entire large parallel corpus,
 
 %With large training corpora, a substantial amount of processing time is required to extract all rules and to per
 
-%Traditional phrase-based and hierarchical translation approaches require a translation grammar extracted from a parallel corpus, where grammar rules include associated feature values. Features such as the translation probability $p(f|e)$ and reverse translation probability $p(e|f)$ are typically calculated using relative frequency estimation \cite{Koehn2003}. 
+%Traditional phrase-based and hierarchical translation approaches require a translation grammar extracted from a parallel corpus, where grammar rules include associated feature values. Features such as the translation probability $p(f|e)$ and reverse translation probability $p(e|f)$ are typically calculated using relative frequency estimation \cite{Koehn2003}.
 
 %Lane: please extend this paragraph
 
@@ -139,9 +140,9 @@ Johsua's MERT module optimizes parameter weights so as to maximize performance o
 %In this section, we report results on the WMT-09 French-English translation task.
 \subsection{Training and Development Data}
 
-We assembled a very large French-English training corpus  \cite{billion-word-parallel-corpus} by conducting a web crawl that targted bilingual web sites from the Canadian government, the European Union, and various international organizations like the Amnesty International and the Olympic Committee.  The crawl gathered approximately 40 million files, consisting of over 1TB of data.  We converted pdf, doc, html, asp, php, etc. files into text, and preserved the directory structure of the web crawl.  We wrote set of simple heuristics to transform French URLs onto English URLs, and considered matching documents to be translations of each other.  This yielded 2 million French documents paired with their English equivalents.  We split the sentences and paragraphs in these documents, performed sentence-aligned them using software that IBM Model 1 probabilities into account \cite{Moore2002}.   We filtered and de-duplcated the resulting parallel corpus.  After discarding 630 thousand sentence pairs which had more than 100 words, our final corpus had 21.9 million sentence pairs with 587,867,024 English words and 714,137,609 French words.  
+We assembled a very large French-English training corpus  \cite{billion-word-parallel-corpus} by conducting a web crawl that targted bilingual web sites from the Canadian government, the European Union, and various international organizations like the Amnesty International and the Olympic Committee.  The crawl gathered approximately 40 million files, consisting of over 1TB of data.  We converted pdf, doc, html, asp, php, etc. files into text, and preserved the directory structure of the web crawl.  We wrote set of simple heuristics to transform French URLs onto English URLs, and considered matching documents to be translations of each other.  This yielded 2 million French documents paired with their English equivalents.  We split the sentences and paragraphs in these documents, performed sentence-aligned them using software that IBM Model 1 probabilities into account \cite{Moore2002}.   We filtered and de-duplcated the resulting parallel corpus.  After discarding 630 thousand sentence pairs which had more than 100 words, our final corpus had 21.9 million sentence pairs with 587,867,024 English words and 714,137,609 French words.
 
-We distributed the corpus to the other WMT09 participants to use in addition to the Europarl v4 French-English parallel corpus \cite{Koehn-europarl}, which consists of approximately 1.4 million sentence pairs with 39 million English words and 44 million French words.  Our translation model was trained on these corpora using the subsampling descried in Section \ref{subsampling}.  
+We distributed the corpus to the other WMT09 participants to use in addition to the Europarl v4 French-English parallel corpus \cite{Koehn-europarl}, which consists of approximately 1.4 million sentence pairs with 39 million English words and 44 million French words.  Our translation model was trained on these corpora using the subsampling descried in Section \ref{subsampling}.
 
 For language model training, we used the monolingual news and blog data that was assembled by the University of Edinburgh and distributed as part of WMT09.  This data consisted of 21.2 million English sentences with half a billion words.  We used SRILM to train a 5-gram language model using a vocabulary containing the 500,000 most frequent words in this corpus.  Note that we did not use the English side of the parallel corpus as language model training data.
 
@@ -158,7 +159,8 @@ The translation scores for four different systems are reported in Table \ref{res
 
 \textbf{Deterministic Annealing: } In this system, instead of using the regular MERT \cite{Och2003c} whose training objective is to minimize the one-best error, we use the deterministic annealing training procedure described in \newcite{Smith2006}, whose objective is to minimize the \emph{expected} error (together with the entropy regularization technique).
 
-\textbf{Variational Decoding: }  Statistical models in machine translation exhibit \emph{spurious ambiguity}, a situation where many distinct derivations (e.g., trees or segmentations) yield the same translation string. Ideally, the goodness of a string should be measured by summing up the probabilities of all the derivations yielding that string. However, finding the best string (e.g., during decoding) is then computationally intractable. Therefore, most systems use a simple Viterbi approximation that measures the goodness of a translation string using its most-probable derivation. Instead, we develop an approximation algorithm, based on a variational principle, to approximate the intractable sum. More details will be provided in \newcite{Li2009}. In this system, we have used both deterministic annealing (for training) and variational decoding (for decoding).
+\textbf{Variational Decoding: }
+Statistical models in machine translation exhibit \emph{spurious ambiguity}.  That is, the probability of an output string is split among many distinct derivations (e.g., trees or segmentations).  In principle, the goodness of a string is measured by the total probability of its many derivations.  However, finding the best string (e.g., during decoding) is then computationally intractable. Therefore, most systems use a simple Viterbi approximation that measures the goodness of a string using only its most probable derivation.  Instead, we develop a variational approximation, which considers all the derivations but still allows tractable decoding.  More details will be provided in \newcite{Li2009}. In this system, we have used both deterministic annealing (for training) and variational decoding (for decoding).
 
 
 
@@ -194,4 +196,4 @@ This research was supported in part by the Defense Advanced Research Projects Ag
 
 \bibliographystyle{acl}
 \bibliography{../bibliography}
-\end{document} 
+\end{document}
