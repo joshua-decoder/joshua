@@ -34,7 +34,6 @@ import java.util.Map;
  * @since  14 April 2005
  *
  */
-// ccb - todo - figure out how to type the keys and values here...
 public class Cache<K,V> extends LinkedHashMap<K,V> {
 
 //===============================================================
@@ -139,9 +138,5 @@ public class Cache<K,V> extends LinkedHashMap<K,V> {
 // Main 
 //===============================================================
 
-	public static void main(String[] args)
-	{
-
-	}
 }
 

@@ -26,7 +26,6 @@ import joshua.util.sentence.Phrase;
 import joshua.util.sentence.Vocabulary;
 import joshua.util.sentence.alignment.Alignments;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
@@ -38,7 +37,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
-import java.util.Scanner;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -159,50 +157,6 @@ public class PrefixTree {
 	 * This node's parent is the root node of the tree. 
 	 */
 	private final Node xnode;
-	
-	public static PrefixTree getPrefixTree(String sourceFileName, String targetFileName, String alignmentFileName, String testFileName, int maxPhraseSpan, int maxPhraseLength, int maxNonterminals, int ruleSampleSize, int lexSampleSize, int cacheSize, int minNonterminalSpan) throws IOException {
-		
-		SuffixArray.CACHE_CAPACITY = cacheSize;
-		if (logger.isLoggable(Level.FINE)) logger.fine("Suffix array will cache hierarchical phrases for at most " + SuffixArray.CACHE_CAPACITY + " patterns.");
-		
-		if (logger.isLoggable(Level.FINE)) logger.fine("Constructing source language vocabulary.");
-		Vocabulary sourceVocab = new Vocabulary();
-		int[] sourceWordsSentences = SuffixArrayFactory.createVocabulary(sourceFileName, sourceVocab);
-		if (logger.isLoggable(Level.FINE)) logger.fine("Constructing source language corpus array.");
-		CorpusArray sourceCorpusArray = SuffixArrayFactory.createCorpusArray(sourceFileName, sourceVocab, sourceWordsSentences[0], sourceWordsSentences[1]);
-		if (logger.isLoggable(Level.FINE)) logger.fine("Constructing source language suffix array.");
-		SuffixArray sourceSuffixArray = SuffixArrayFactory.createSuffixArray(sourceCorpusArray);
-
-		if (logger.isLoggable(Level.FINE)) logger.fine("Constructing target language vocabulary.");		
-		Vocabulary targetVocab = new Vocabulary();
-		int[] targetWordsSentences = SuffixArrayFactory.createVocabulary(targetFileName, targetVocab);
-		if (logger.isLoggable(Level.FINE)) logger.fine("Constructing target language corpus array.");
-		CorpusArray targetCorpusArray = SuffixArrayFactory.createCorpusArray(targetFileName, targetVocab, targetWordsSentences[0], targetWordsSentences[1]);
-		if (logger.isLoggable(Level.FINE)) logger.fine("Constructing target language suffix array.");
-		SuffixArray targetSuffixArray = SuffixArrayFactory.createSuffixArray(targetCorpusArray);
-
-		if (logger.isLoggable(Level.FINE)) logger.fine("Reading alignment data.");
-		Alignments alignments = SuffixArrayFactory.createAlignmentArray(alignmentFileName, sourceSuffixArray, targetSuffixArray);
-
-		if (logger.isLoggable(Level.FINE)) logger.fine("Constructing lexical probabilities table");
-
-		SampledLexProbs lexProbs = 
-			new SampledLexProbs(lexSampleSize, sourceSuffixArray, targetSuffixArray, alignments, false);
-		//new LexProbs(source_given_target, target_given_source, sourceVocab, targetVocab);
-
-		if (logger.isLoggable(Level.FINE)) logger.fine("Done constructing lexical probabilities table");
-
-		if (logger.isLoggable(Level.FINE)) logger.fine("Should store a max of " + ruleSampleSize + " rules at each node in a prefix tree.");
-
-		Scanner testFileScanner = new Scanner(new File(testFileName));
-		String line = testFileScanner.nextLine();
-		
-		int[] sentence = sourceVocab.getIDs(line);
-		
-		RuleExtractor ruleExtractor = new HierarchicalRuleExtractor(sourceSuffixArray, targetCorpusArray, alignments, lexProbs, ruleSampleSize, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan);
-		
-		return new PrefixTree(sourceSuffixArray, targetCorpusArray, alignments, lexProbs, ruleExtractor, sentence, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan);
-	}
 	
 	/**
 	 * Constructs a new prefix tree with suffix links

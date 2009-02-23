@@ -18,8 +18,6 @@
 
 package joshua.util;
 import joshua.ZMERT.*;
-import java.math.*;
-import java.util.*;
 import java.io.*;
 import java.text.DecimalFormat;
 
@@ -357,7 +355,7 @@ line format:
     // read in reference sentences
     refSentences = new String[numSentences][refsPerSen];
     BufferedReader inFile_refs = new BufferedReader(new FileReader(refFileName));
-    String line;
+//    String line;
 
     for (i = 0; i < numSentences; ++i) {
       for (int r = 0; r < refsPerSen; ++r) {
