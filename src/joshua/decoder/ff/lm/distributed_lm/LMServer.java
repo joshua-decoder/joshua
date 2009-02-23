@@ -27,10 +27,10 @@ import joshua.decoder.ff.lm.srilm.LMGrammarSRILM;
 import joshua.util.FileUtility;
 
 import java.io.IOException;
-import java.net.InetAddress;
+//import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.UnknownHostException;
+//import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -63,7 +63,7 @@ public class LMServer {
 	
 	//pointer
 	static LMGrammar p_lm;
-	static HashMap   request_cache    = new HashMap();//cmd with result
+	static HashMap<String,String>   request_cache    = new HashMap<String,String>();//cmd with result
 	static int       cache_size_limit = 3000000;
 	
 	//	stat
@@ -202,36 +202,37 @@ public class LMServer {
 	}
 	
 	
+//TODO This method is never used. Perhaps it should be deleted.
+//	private static String read_host_name(String fhostname) {
+//		BufferedReader t_reader_config = FileUtility.getReadFileStream(fhostname);
+//		String res = null;
+//		String line;
+//		while((line = FileUtility.read_line_lzf(t_reader_config)) != null) {
+//			//line = line.trim().toLowerCase();
+//			line = line.trim();
+//			if (line.matches("^\\s*\\#.*$")
+//			|| line.matches("^\\s*$")) {
+//				continue;
+//			}
+//			res = line;
+//			break;
+//		}
+//		FileUtility.close_read_file(t_reader_config);
+//		return res;
+//	}
 	
-	private static String read_host_name(String fhostname) {
-		BufferedReader t_reader_config = FileUtility.getReadFileStream(fhostname);
-		String res = null;
-		String line;
-		while((line = FileUtility.read_line_lzf(t_reader_config)) != null) {
-			//line = line.trim().toLowerCase();
-			line = line.trim();
-			if (line.matches("^\\s*\\#.*$")
-			|| line.matches("^\\s*$")) {
-				continue;
-			}
-			res = line;
-			break;
-		}
-		FileUtility.close_read_file(t_reader_config);
-		return res;
-	}
 	
-	
-	static private String findHostName() {
-		try {
-			//return InetAddress.getLocalHost().getHostName();
-			return InetAddress.getLocalHost().getHostAddress();
-		} catch (UnknownHostException e) {
-			System.out.println("Unknown host address");
-			System.exit(1);
-			return null;
-		}
-	}
+//TODO This method is never used. Perhaps it should be deleted.
+//	static private String findHostName() {
+//		try {
+//			//return InetAddress.getLocalHost().getHostName();
+//			return InetAddress.getLocalHost().getHostAddress();
+//		} catch (UnknownHostException e) {
+//			System.out.println("Unknown host address");
+//			System.exit(1);
+//			return null;
+//		}
+//	}
 	
 	
 	// used by server to process diffent Client
@@ -294,32 +295,32 @@ public class LMServer {
 			return cmd_res;
 		}
 		
-		
-		private String process_request(String packet) {
-			//search cache
-			String cmd_res = (String)request_cache.get(packet);
-			g_n_request++;
-			
-			if (null == cmd_res) { //cache fail
-				cmd_res = process_request_helper(packet);
-				//update cache
-				if (request_cache.size() > cache_size_limit) {
-					request_cache.clear();
-				}
-				request_cache.put(packet, cmd_res);
-			} else {
-				g_n_cache_hit++;
-			}
-			
-			if (g_n_request % 50000 == 0) {
-				System.out.println(
-					  "n_requests: "     + g_n_request
-					+ "; n_cache_hits: " + g_n_cache_hit
-					+ "; cache size= "   + request_cache.size()
-					+ "; hit rate= "     + g_n_cache_hit * 1.0 / g_n_request);
-			}
-			return cmd_res;
-		}
+//TODO This method is never used. Perhaps it should be deleted.		
+//		private String process_request(String packet) {
+//			//search cache
+//			String cmd_res = (String)request_cache.get(packet);
+//			g_n_request++;
+//			
+//			if (null == cmd_res) { //cache fail
+//				cmd_res = process_request_helper(packet);
+//				//update cache
+//				if (request_cache.size() > cache_size_limit) {
+//					request_cache.clear();
+//				}
+//				request_cache.put(packet, cmd_res);
+//			} else {
+//				g_n_cache_hit++;
+//			}
+//			
+//			if (g_n_request % 50000 == 0) {
+//				System.out.println(
+//					  "n_requests: "     + g_n_request
+//					+ "; n_cache_hits: " + g_n_cache_hit
+//					+ "; cache size= "   + request_cache.size()
+//					+ "; hit rate= "     + g_n_cache_hit * 1.0 / g_n_request);
+//			}
+//			return cmd_res;
+//		}
 		
 		
 		//This is the funciton that application specific

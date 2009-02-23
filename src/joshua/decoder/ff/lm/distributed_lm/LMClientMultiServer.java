@@ -45,7 +45,7 @@ extends LMClient {
 	
 	public static long delayMillis = 5000; //5 seconds
 	
-	HashMap request_cache = new HashMap(); //cmd with result
+	HashMap<String,Double> request_cache = new HashMap<String,Double>(); //cmd with result
 	int cache_size_limit  = 3000000;
 
 	/* Performance considerations: we do not want to initiate new threads for each specific n-gram request. Instead,
@@ -69,24 +69,24 @@ extends LMClient {
 		double[] weights_,
 		int      n_servers
 	) {
-		this.p_main_thread = Thread.currentThread();
+		LMClientMultiServer.p_main_thread = Thread.currentThread();
 		
-		this.num_lm_servers    = n_servers;
-		this.l_clients         = new SocketUtility.ClientConnection[n_servers];
-		this.probs             = new double[n_servers];
-		this.weights           = new double[n_servers];
-		this.l_thread_handlers = new LMThread[n_servers];
-		this.response_ready    = new boolean[n_servers];
-		this.request_ready     = false;
+		LMClientMultiServer.num_lm_servers    = n_servers;
+		LMClientMultiServer.l_clients         = new SocketUtility.ClientConnection[n_servers];
+		LMClientMultiServer.probs             = new double[n_servers];
+		LMClientMultiServer.weights           = new double[n_servers];
+		LMClientMultiServer.l_thread_handlers = new LMThread[n_servers];
+		LMClientMultiServer.response_ready    = new boolean[n_servers];
+		LMClientMultiServer.request_ready     = false;
 		
 		for(int i = 0; i < n_servers; i++) {
 			l_clients[i] = SocketUtility.open_connection_client(hostnames[i], ports[i]);
-			this.weights[i] = weights_[i];
+			LMClientMultiServer.weights[i] = weights_[i];
 			
 			//thread
-			this.response_ready[i]    = false;
-			this.l_thread_handlers[i] = new LMThread(i);
-			this.l_thread_handlers[i].start();
+			LMClientMultiServer.response_ready[i]    = false;
+			LMClientMultiServer.l_thread_handlers[i] = new LMThread(i);
+			LMClientMultiServer.l_thread_handlers[i].start();
 		}
 	}
 	

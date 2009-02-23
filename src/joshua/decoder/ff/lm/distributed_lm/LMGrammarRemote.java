@@ -81,7 +81,7 @@ public class LMGrammarRemote  extends LMGrammar {
 		int count=0;
 		while((line=FileUtility.read_line_lzf(t_reader))!=null){
 			String fname = line.trim();
-			Hashtable res_conf = read_config_file(fname);
+			Hashtable<String,?> res_conf = read_config_file(fname);
 			
 			String lm_file=(String) res_conf.get("lm_file");
 			String host = (String) res_conf.get("hostname");
@@ -101,8 +101,10 @@ public class LMGrammarRemote  extends LMGrammar {
 		FileUtility.close_read_file(t_reader);
 	}
 	
-	private static Hashtable  read_config_file(String config_file){
-		Hashtable res =new Hashtable();
+	@SuppressWarnings("unchecked")
+	private static Hashtable<String,?>  read_config_file(String config_file){
+		
+		Hashtable res = new Hashtable();
 		BufferedReader t_reader_config = FileUtility.getReadFileStream(config_file);
 		String line;
 		while((line=FileUtility.read_line_lzf(t_reader_config))!=null){
@@ -145,34 +147,34 @@ public class LMGrammarRemote  extends LMGrammar {
 	}
 	
 	
-	
-	//format: lm_file host port weight
-	private void read_lm_server_lists_old(String f_server_lists, int num_servers, String[] l_lm_server_hosts, int[] l_lm_server_ports, double[] l_lm_server_weights ){			
-		BufferedReader t_reader = FileUtility.getReadFileStream(f_server_lists);
-		String line;
-		int count=0;
-		while((line=FileUtility.read_line_lzf(t_reader))!=null){
-			String[] fds = line.split("\\s+");
-			if(fds.length!=4){
-			    System.out.println("read index, bad line: " + line);
-			    System.exit(1);
-			}
-			String lm_file=fds[0];
-			String host = fds[1];
-			int port = (new Integer(fds[2])).intValue();
-			double weight = (new Double(fds[3])).doubleValue();
-			l_lm_server_hosts[count]=host;
-			l_lm_server_ports[count]=port;
-			l_lm_server_weights[count]=weight;
-			count++;
-			System.out.println("lm server: " + "lm_file: " + lm_file +"; host: " + host + "; port: " + port + "; weight: " + weight);
-		}
-		if(count!=num_servers){
-		    System.out.println("num of lm servers does not match");
-		    System.exit(1);
-		}
-		FileUtility.close_read_file(t_reader);
-	}
+//TODO This method is never used. Perhaps it should be deleted.
+//	//format: lm_file host port weight
+//	private void read_lm_server_lists_old(String f_server_lists, int num_servers, String[] l_lm_server_hosts, int[] l_lm_server_ports, double[] l_lm_server_weights ){			
+//		BufferedReader t_reader = FileUtility.getReadFileStream(f_server_lists);
+//		String line;
+//		int count=0;
+//		while((line=FileUtility.read_line_lzf(t_reader))!=null){
+//			String[] fds = line.split("\\s+");
+//			if(fds.length!=4){
+//			    System.out.println("read index, bad line: " + line);
+//			    System.exit(1);
+//			}
+//			String lm_file=fds[0];
+//			String host = fds[1];
+//			int port = (new Integer(fds[2])).intValue();
+//			double weight = (new Double(fds[3])).doubleValue();
+//			l_lm_server_hosts[count]=host;
+//			l_lm_server_ports[count]=port;
+//			l_lm_server_weights[count]=weight;
+//			count++;
+//			System.out.println("lm server: " + "lm_file: " + lm_file +"; host: " + host + "; port: " + port + "; weight: " + weight);
+//		}
+//		if(count!=num_servers){
+//		    System.out.println("num of lm servers does not match");
+//		    System.exit(1);
+//		}
+//		FileUtility.close_read_file(t_reader);
+//	}
 	
 //	read grammar locally by the Java implementation
 	public void read_lm_grammar_from_file(String grammar_file){

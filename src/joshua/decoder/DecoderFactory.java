@@ -175,8 +175,7 @@ public class DecoderFactory {
 		
 		//merge the grammar rules for disk hyper-graphs
 		if (JoshuaConfiguration.save_disk_hg) {
-			@SuppressWarnings("unchecked")
-			HashMap tbl_done = new HashMap();
+			HashMap<Integer,Integer> tbl_done = new HashMap<Integer,Integer>();
 			BufferedWriter t_writer_dhg_rules = FileUtility.getWriteFileStream(nbest_file + ".hg.rules");
 			for (DecoderThread p_decoder : parallel_threads) {
 			    DiskHyperGraph dhg2 = p_decoder.p_disk_hg;

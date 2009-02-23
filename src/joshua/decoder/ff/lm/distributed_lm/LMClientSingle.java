@@ -34,7 +34,7 @@ import java.util.HashMap;
 public class LMClientSingle
 extends LMClient {
 	SocketUtility.ClientConnection  p_client;
-	HashMap    request_cache    = new HashMap();
+	HashMap<String,String>    request_cache    = new HashMap<String,String>();
 	int        cache_size_limit = 3000000;
 	static int BYTES_PER_CHAR   = 2;//TODO big bug
 	

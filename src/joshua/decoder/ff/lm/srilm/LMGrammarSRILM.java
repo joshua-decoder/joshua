@@ -19,7 +19,6 @@ package joshua.decoder.ff.lm.srilm;
 
 import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.SrilmSymbol;
-import joshua.decoder.Symbol;
 import joshua.decoder.ff.lm.LMGrammar;
 
 import java.util.ArrayList;
