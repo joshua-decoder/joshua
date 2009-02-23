@@ -43,10 +43,6 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-
-
-//TODO Ask Adam if he has an efficient way of calculating lexical translation probabilities
-
 /**
  * 
  * @author Lane Schwartz
@@ -531,8 +527,6 @@ public class PrefixTree {
 				// Special handling of case when prefixNode is the X off of root (hierarchicalPhrases for that node is empty)
 				if (arity==1 && prefixNode.sourcePattern.startsWithNonterminal() && prefixNode.sourcePattern.endsWithNonterminal()) {
 			
-//					result = new ArrayList<HierarchicalPhrase>(suffixNode.sourceHierarchicalPhrases.size());
-					
 					Vocabulary vocab = (suffixArray==null) ? null : suffixArray.getVocabulary();
 					
 					int[] xwords = new int[suffixNode.sourcePattern.words.length+1];
@@ -542,13 +536,7 @@ public class PrefixTree {
 					}
 					Pattern xpattern = new Pattern(vocab, xwords);
 					result = new HierarchicalPhrases(xpattern, suffixNode.sourceHierarchicalPhrases);
-					
-//					
-//					
-//					for (HierarchicalPhrase phrase : suffixNode.sourceHierarchicalPhrases) {
-//						result.add(new HierarchicalPhrase(xpattern, phrase.terminalSequenceStartIndices, phrase.terminalSequenceEndIndices, phrase.corpusArray, phrase.length));
-//					}
-					
+
 				} else { 
 					
 					// Normal query intersection case (when prefixNode != X off of root)
@@ -614,7 +602,6 @@ public class PrefixTree {
 					xNode.linkToSuffix( suffixLink );
 
 				} else {
-					// TODO Should this method simply return (or throw an exception) in this case?
 					xNode = node.children.get(X);
 					if (logger.isLoggable(Level.FINEST)) logger.finest("X Node is already " + xNode + " for prefixNode " + node);
 				}
@@ -624,17 +611,11 @@ public class PrefixTree {
 				
 				// 6: Q_alphaX <-- Q_alpha
 				{
-//					List<HierarchicalPhrase> phrasesWithFinalX = new ArrayList<HierarchicalPhrase>(node.sourceHierarchicalPhrases.size());
-
 					Vocabulary vocab = (suffixArray==null) ? null : suffixArray.getVocabulary();
 					Pattern xpattern = new Pattern(vocab, pattern(pattern.words, X));
 					
 					HierarchicalPhrases phrasesWithFinalX = new HierarchicalPhrases(xpattern, node.sourceHierarchicalPhrases); 
 					
-//					for (HierarchicalPhrase phrase : node.sourceHierarchicalPhrases) {
-//						phrasesWithFinalX.add(new HierarchicalPhrase(phrase, X));
-//					}
-					//xNode.storeResults(prefixNode.sourceHierarchicalPhrases, pattern(alphaPattern.words, X));
 					xNode.storeResults(phrasesWithFinalX, xpattern.words);
 				}
 			
@@ -709,9 +690,7 @@ public class PrefixTree {
 		Vocabulary targetVocab = (targetCorpus==null) ? null : targetCorpus.vocab;
 		
 		for (Node node : root.children.values()) {
-			//String sourcePhrase = (vocab==null) ? ""+node.incomingArcValue : ""+node.incomingArcValue;
 			node.print(out, sourceVocab, targetVocab);
-			//out.write(node.toRuleString(vocab).getBytes("UTF-8"));
 		}
 	}
 
@@ -720,11 +699,6 @@ public class PrefixTree {
 	static void resetNodeCounter() {
 		nodeIDCounter = 0;
 	}
-
-
-
-
-
 
 
 	
@@ -754,7 +728,6 @@ public class PrefixTree {
 		
 		/** Source side hierarchical phrases for this node. */
 		HierarchicalPhrases sourceHierarchicalPhrases;
-//		List<HierarchicalPhrase> sourceHierarchicalPhrases;
 
 		/** Representation of the source side tokens corresponding to the hierarchical phrases for this node. */
 		Pattern sourcePattern;
@@ -843,7 +816,7 @@ public class PrefixTree {
 			if (children.containsKey(symbol)) {
 				return children.get(symbol);
 			} else {
-				//TOOD Is this the right thing to do here?
+				//XXX Is this the right thing to do here?
 				return null;
 			}
 		}
@@ -856,7 +829,7 @@ public class PrefixTree {
 				if (node.children.containsKey(symbol)) {
 					node = node.children.get(symbol);
 				} else {
-					//TOOD Is this the right thing to do here?
+					//XXX Is this the right thing to do here?
 					return null;
 				}
 			}
@@ -906,11 +879,6 @@ public class PrefixTree {
 			
 			if (logger.isLoggable(Level.FINER)) {
 				logger.finer("Storing " + hierarchicalPhrases.size() + " source phrases at node " + objectID + ":");
-//				if (logger.isLoggable(Level.FINEST)) {
-//					for (HierarchicalPhrase phrase : hierarchicalPhrases) {
-//						logger.finest("\t" + phrase);
-//					}
-//				}
 			}
 
 			Vocabulary vocab = (suffixArray==null) ? null : suffixArray.getVocabulary();
@@ -920,8 +888,6 @@ public class PrefixTree {
 			this.sourceHierarchicalPhrases = hierarchicalPhrases;
 
 			if (ruleExtractor!=null) {
-//				SampledList<HierarchicalPhrase> sampledHierarchicalPhrases = new SampledList<HierarchicalPhrase>(hierarchicalPhrases, sampleSize);
-//				this.results = ruleExtractor.extractRules(sourcePattern, sampledHierarchicalPhrases);
 				this.results = ruleExtractor.extractRules(sourcePattern, hierarchicalPhrases);
 			}
 			
@@ -976,7 +942,6 @@ public class PrefixTree {
 
 			return s.toString();
 
-			//return ""+id;
 		}
 		
 		public String toString() {
@@ -1093,7 +1058,6 @@ public class PrefixTree {
 
 			return s.toString();
 
-			//return ""+id;
 		}
 
 		public int compareTo(Node o) {
@@ -1117,6 +1081,14 @@ public class PrefixTree {
 
 	}
 
+	/**
+	 * Constructs an new integer array by concatenating
+	 * two existing integer arrays together.
+	 *  
+	 * @param oldPattern
+	 * @param newPattern
+	 * @return
+	 */
 	protected static int[] pattern(int[] oldPattern, int... newPattern) {
 		int[] pattern = new int[oldPattern.length + newPattern.length];
 
@@ -1152,7 +1124,6 @@ public class PrefixTree {
 		this.maxPhraseLength = maxPhraseLength;
 		this.maxNonterminals = maxNonterminals;
 		this.minNonterminalSpan = minNonterminalSpan;
-//		this.sampleSize = sampleSize;
 	}
 
 	/**

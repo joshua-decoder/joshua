@@ -123,37 +123,6 @@ public class HierarchicalPhrase extends AbstractPhrase {
 	
 	
 	/**
-	 * Constructs a trivially hierarchical phrase with no
-	 * nonterminals.
-	 * 
-	 * @param span
-	 * @param corpus
-	 */
-//	public HierarchicalPhrase(Span span, CorpusArray corpusArray) {
-//		
-//		this.corpusArray = corpusArray;
-//		
-//		int[] words = new int[span.size()];
-//		
-//		for (int i = span.start; i < span.end; i++) {
-//			words[i-span.start] = corpusArray.corpus[i];
-//		}
-//		
-//		this.pattern = new Pattern(corpusArray.vocab, words);
-//		
-//		this.terminalSequenceStartIndices = new int[1];
-//		this.terminalSequenceStartIndices[0] = span.start;
-//		
-//		this.terminalSequenceEndIndices = new int[1];
-//		this.terminalSequenceEndIndices[0] = span.end;
-//		
-//		this.length = span.size();
-//		
-//		this.sentenceNumber = corpusArray.getSentenceIndex(terminalSequenceStartIndices[0]);
-//	}
-	
-	
-	/**
 	 * Constructs a hierarchical phrase appending a final
 	 * nonterminal symbol to an existing hierarchical phrase.
 	 * <p>
@@ -243,114 +212,6 @@ public class HierarchicalPhrase extends AbstractPhrase {
 		
 	}
 	
-	/**
-	 * Constructs a hierarchical phrase by merging two existing
-	 * hierarchical phrases.
-	 * 
-	 * @param pattern
-	 * @param prefix
-	 * @param suffix
-	 */ /*
-	protected HierarchicalPhrase(
-			Pattern            pattern,
-			HierarchicalPhrase prefix,
-			HierarchicalPhrase suffix) {
-		
-		//TODO This constructor is almost certainly not
-		// correct. It currently merges the prefix and
-		// suffix as if they are adjacent. I think that
-		// they actually are supposed to overlap on all but
-		// the first symbol of the prefix and last symbol
-		// of the suffix
-		
-		if (true) {
-			throw new RuntimeException("Buggy HierarchicalPhrase called with pattern " + pattern);
-		}
-		
-		
-		//this.startIndex = prefix.startIndex;
-		
-		//int endPosition = suffix.corpusIndicesOfTerminalSequences[0] + suffix.corpusIndicesOfTerminalSequences.length;
-		//int endPosition = suffix.startIndex + suffix.length;
-		//this.length = endPosition - startIndex;//prefix.corpusIndicesOfTerminalSequences[0];
-		
-		// Use the pattern that was provided
-		this.pattern = pattern;
-		
-		// Use the sentence number and corpus array from
-		// the prefix. This should be the same as that from
-		// the suffix, but we don't check.
-		this.sentenceNumber = prefix.sentenceNumber;
-		this.corpusArray = prefix.corpusArray;
-		
-		
-		// Length is from the first terminal in the prefix
-		// to the last terminal in the suffix
-		this.length = suffix.terminalSequenceEndIndices[suffix.terminalSequenceEndIndices.length-1] - prefix.terminalSequenceStartIndices[0];
-		
-		int prefixLength = prefix.terminalSequenceStartIndices.length;
-		int suffixLength = suffix.terminalSequenceStartIndices.length;
-		
-		
-		// If a nonterminal is at the boundary between prefix and suffix,
-		//    then the first terminal sequence of the suffix is really a new terminal sequence.
-		// Else the first terminal sequence of the suffix 
-		//    is part of the last terminal sequence of the prefix.
-		
-		if (prefix.endsWithNonterminal() || suffix.startsWithNonterminal()) {
-			
-			this.terminalSequenceStartIndices = new int[prefixLength + suffixLength - 1];
-			this.terminalSequenceEndIndices = new int[prefixLength + suffixLength - 1];
-			
-			for (int i = 0; i < prefixLength; i++) {
-				terminalSequenceStartIndices[i] = prefix.terminalSequenceStartIndices[i];
-				terminalSequenceEndIndices[i] = prefix.terminalSequenceEndIndices[i];
-			}
-			
-			for (int i = 0; i < suffixLength; i++) {
-				terminalSequenceStartIndices[i+prefixLength] = suffix.terminalSequenceStartIndices[i];
-				terminalSequenceEndIndices[i+prefixLength] = suffix.terminalSequenceEndIndices[i];
-			}
-			
-		} else {
-			
-			this.terminalSequenceStartIndices = new int[prefixLength + suffixLength - 2];
-			this.terminalSequenceEndIndices = new int[prefixLength + suffixLength - 2];
-			
-			for (int i = 0; i < prefixLength; i++) {
-				terminalSequenceStartIndices[i] = prefix.terminalSequenceStartIndices[i];
-			}
-			
-			for (int i = 0; i < suffixLength; i++) {
-				terminalSequenceStartIndices[i+prefixLength-1] = suffix.terminalSequenceStartIndices[i];
-			}
-			
-			
-			for (int i = 0; i < prefixLength-1; i++) {
-				terminalSequenceEndIndices[i] = prefix.terminalSequenceEndIndices[i];
-			}
-		
-			for (int i = 0; i < suffixLength; i++) {
-				terminalSequenceEndIndices[i+prefixLength] = suffix.terminalSequenceEndIndices[i];
-			}
-		
-		}
-		
-		//this.terminalSequenceEndIndices = null;
-		
-		
-		//this.terminalSequenceStartIndices = new int[prefixLength + suffixLength - 1];
-		for (int i = 0; i < prefixLength; i++) {
-			terminalSequenceStartIndices[i] = prefix.terminalSequenceStartIndices[i];
-			terminalSequenceEndIndices[i] = prefix.terminalSequenceEndIndices[i];
-		}
-		
-		
-		for (int i = 0; i < suffixLength; i++) {
-			terminalSequenceStartIndices[i+prefixLength] = suffix.terminalSequenceStartIndices[i];
-		}
-	}
-	*/
 	
 	/**
 	 * Returns the index in the corpus of the first terminal
@@ -481,8 +342,7 @@ public class HierarchicalPhrase extends AbstractPhrase {
 			if (wordIDs[i]<0) s.append('X');
 			else s.append(corpusArray.vocab.getWord(wordIDs[i]));
 			
-			//if (i != wordIDs.length - 1) {
-				s.append(' ');
+			s.append(' ');
 			
 		}
 		

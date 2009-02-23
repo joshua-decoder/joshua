@@ -36,10 +36,7 @@ public class Pattern extends BasicPhrase {
 // Member variables
 //===============================================================
 
-
 	final int arity;
-//	final SuffixCase suffixCase;
-//	final PrefixCase prefixCase;
 
 
 //===============================================================
@@ -58,9 +55,6 @@ public class Pattern extends BasicPhrase {
 		super(words, vocab);
 		
 		this.arity = calculateArity(this.words);
-		
-//		this.suffixCase = suffixCase(words);
-//		this.prefixCase = prefixCase(words);
 	}
 	
 	
@@ -77,19 +71,19 @@ public class Pattern extends BasicPhrase {
 			words[i] = phrase.getWordID(i);
 		}
 		this.arity = calculateArity(this.words);
-		
-//		this.suffixCase = suffixCase(words);
-//		this.prefixCase = prefixCase(words);
 	}
 	
 	
-	//TODO What does this constructor do?
+	/**
+	 * Constructs a pattern by copying an existing pattern,
+	 * and then appending additional words to the new pattern.
+	 * 
+	 * @param pattern Existing pattern to copy.
+	 * @param word Words to append to the new pattern.
+	 */
 	public Pattern(Pattern pattern, int... word) {
 		super(PrefixTree.pattern(pattern.words, word),pattern.vocab);
 		this.arity = calculateArity(this.words);
-		
-//		this.suffixCase = suffixCase(words);
-//		this.prefixCase = prefixCase(words);
 	}
 	
 

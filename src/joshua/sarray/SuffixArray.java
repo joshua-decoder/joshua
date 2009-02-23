@@ -646,108 +646,7 @@ MERT algorithm converges at the same rate as it does without sampling.
 		return collocations;
 	 }
 	 
-	 
-	 /*
-	 public List<int[]> queryIntersect(List<int[]> prefixMatches, List<int[]> suffixMatches) {
-		 
-		 List<int[]> result = new ArrayList<int[]>();
-		 
-		 int I = prefixMatches.size();
-		 int J = suffixMatches.size();
-		 
-		 int j = 0;
-		 int m1 = -1;
-		 
-		 for (int i=0; i<I; i++) {
-			 
-			 int[] prefixMatch = prefixMatches.get(i);
-			 int[] suffixMatch = suffixMatches.get(j);
-			 
-			 if (prefixMatch[0] != m1) {
-				 
-			 }
-			 
-		 }
-		 
-		 return result;
-	 }
-	 */
-	 
-	 
-	 /*
-	 public boolean matchPrecedes(int[] matchA, int[] matchB) {
-		 int sentenceIndexA = corpus.getSentenceIndex(matchA[0]);
-		 int sentenceIndexB = corpus.getSentenceIndex(matchB[0]);
-		 
-		 if (matchA[matchA.length-1] != matchB[0]) {
-			 
-			 if (sentenceIndexA > sentenceIndexB) {
-				 return true;
-			 } else if (sentenceIndexA == sentenceIndexB) {
-				 if (matchA[0] > matchB[0]-1) {
-					 return true;
-				 } else {
-					 return false;
-				 }
-			 } else {
-				 return false;
-			 }
-			 
-		 } else {
-			 
-			 
-		 }
-	 }
-	 */
-	 
-	 
-	 /**
-	  * Scratch method for Lane to work on Fast Intersection
-	  */
-	 public static void fastIntersection() {
-		
-		SortedSet<Integer> setA = new TreeSet<Integer>();
-		SortedSet<Integer> setB = new TreeSet<Integer>();
-		
-		Random rand = new Random();
-		
-		
-		for (int i = 0; i < 100000; i++) {
-			setA.add(rand.nextInt());
-		}
-		
-		List<Integer> dataSet = new ArrayList<Integer>(setA);
-		
-		for (int i = 0; i < 50; i++) {
-			setB.add(rand.nextInt());
-			setB.add(dataSet.get(rand.nextInt(setA.size())));
-		}
-		
-		List<Integer> querySet = new ArrayList<Integer>(setB);
-		
-		//for (int i=0, n=dataSet.size(); i < n; i++, n++) dataSet.get(i);
-		
-		// Calculate intersection
-		
-		//List<Integer> intersection = new ArrayList<Integer>();
-		/*
-		for (int query : querySet) {
-			//System.out.println("Querying for " + query);
-			if (Collections.binarySearch(dataSet, query) >= 0) {
-				intersection.add(query);
-			}
-		}
-		*/
-		
-		SortedSet<Integer> intersection = new TreeSet<Integer>();
-		
-		fastIntersect(dataSet, querySet, intersection);
-		
-		System.out.println(intersection.size());
-		//int medianQuery = querySet.get(querySet.size()/2);
-	 }
-	 
-	 
+	 	 
 	 /**
 	  * Private helper method for performing fast intersection.
 	  * 
@@ -778,33 +677,6 @@ MERT algorithm converges at the same rate as it does without sampling.
 		 }
 	 }
 	 
-	 
-	 //TODO This comparator appears to not be used. What is it,
-	 // and why isn't it used if it's still here? Should it be
-	 // deleted?
-	 /*
-	 private final Comparator<int[]> matchXComparator = new Comparator<int[]>() {
-		 public int compare(int[] m1, int[] m2) {
-			 
-			 if (m1==null || m2==null || m1.length<1 || m2.length<1) throw new NullPointerException("Null and empty matches are not defined for this comparator");
-			 
-			 int sentence1 = getSentenceIndex(m1[0]);
-			 int sentence2 = getSentenceIndex(m2[0]);
-			 
-			 if (sentence1 > sentence2) return 1;
-			 else if (sentence1 < sentence2) return -1;
-			 else {
-				 if (m1[0] >= m2[0]-1) return 1;
-				 
-				 throw new RuntimeException("Unimplemented section: need to check for MAX_PHRASE_SPAN");
-				//TODO UNCOMMENT THE FOLLOWING 2 LINES
-				 //else if (m1[0] <= m2[0]-MAX_PHRASE_SPAN) return -1;
-				 //else return 0;
-			 }
-		 } 
-	 };
-	 */
-	
 	
 	/**
 	 * Builds a HashMap of all the occurrences of the phrase,
@@ -982,42 +854,6 @@ MERT algorithm converges at the same rate as it does without sampling.
 	}
 	
 	
-	
-// ccb - debugging -- writing a method to find all subphrases within
-// a sentence, using the "bounds" trick that recognizes that all
-// phrases starting with the same sequence will be found within a
-// particular bounds.
-	/*
-	public HashMap findAllSubphrases(Phrase sentence) {
-		HashMap phraseToBoundsMap = new HashMap();
-		int[] wordIDs = sentence.getWordIDs();
-		for(int phraseStart = 0; phraseStart < wordIDs.length; phraseStart++) {
-			// the one word case...
-			int phraseEnd = phraseStart+1;
-			Phrase subphrase = sentence.subPhrase(phraseStart, phraseEnd);
-			// note that the bounds may be null if the word doesn't occur in the corpus
-			int[] bounds = findPhrase(wordIDs, phraseStart, phraseEnd, 0, suffixes.length-1);
-			phraseToBoundsMap.put(subphrase, bounds);
-
-			// multi-word phrases...
-			for(phraseEnd = phraseStart+2; phraseEnd <= wordIDs.length && bounds != null; phraseEnd++) {
-				// incrementally longer subphrases occur in the suffix array within
-				//  the bounds of the previous subphrase, giving improved efficiency 
-				int lowerBound = bounds[0];
-				int upperBound = bounds[1];
-				bounds = findPhrase(wordIDs, phraseStart, phraseEnd, lowerBound, upperBound);
-				if(bounds != null) {
-					subphrase = sentence.subPhrase(phraseStart, phraseEnd);
-					phraseToBoundsMap.put(subphrase, bounds);
-				}
-			} 
-		}
-		return phraseToBoundsMap;
-	}
-*/
-
-	
-	
 	/** 
 	 * Sorts the initalized, unsorted suffixes. Uses quick sort
 	 * and the compareSuffixes method defined in CorpusArray.
@@ -1047,65 +883,15 @@ MERT algorithm converges at the same rate as it does without sampling.
 	//===============================================================
 	// Methods
 	//===============================================================
-
-
-	/** part of the quick sort implementation. */
-    /*
-	private void swap(int[] array, int i, int j) {
-        int tmp = array[i];
-        array[i] = array[j];
-        array[j] = tmp;
-    }
-    */
-	
-	
-	/** part of the quick sort implementation. */	
-    /*
-	private int partition(int[] array, int begin, int end) {
-        int index = begin + RAND.nextInt(end - begin + 1);
-        int pivot = array[index];
-        
-        // swap(array, index, end);
-        {
-        	int tmp = array[index];
-        	array[index] = array[end];
-        	array[end] = tmp;
-        }
-        
-        for (int i = index = begin; i < end; ++ i) {
-            if (corpus.compareSuffixes(array[i], pivot, MAX_COMPARISON_LENGTH) <= 0) {
-                
-            	//swap(array, index++, i);
-                {
-                	int tmp = array[index];
-                	array[index] = array[i];
-                	array[i] = tmp;
-                	index++;
-                }
-            }
-        }
-        // swap(array, index, end);
-        {
-        	int tmp = array[index];
-        	array[index] = array[end];
-        	array[end] = tmp;
-        }
-        
-        
-        return (index);
-    }
-	*/
 	
 	/** Quick sort */	
     private void qsort(int[] array, int begin, int end) {
         if (end > begin) {
         	
             int index; 
-            // partition(array, begin, end);
             {	index = begin + RAND.nextInt(end - begin + 1);
                 int pivot = array[index];
                 
-                // swap(array, index, end);
                 {
                 	int tmp = array[index];
                 	array[index] = array[end];
@@ -1115,7 +901,6 @@ MERT algorithm converges at the same rate as it does without sampling.
                 for (int i = index = begin; i < end; ++ i) {
                     if (corpus.compareSuffixes(array[i], pivot, MAX_COMPARISON_LENGTH) <= 0) {
                         
-                    	//swap(array, index++, i);
                         {
                         	int tmp = array[index];
                         	array[index] = array[i];
@@ -1124,7 +909,7 @@ MERT algorithm converges at the same rate as it does without sampling.
                         }
                     }
                 }
-                // swap(array, index, end);
+                
                 {
                 	int tmp = array[index];
                 	array[index] = array[end];
@@ -1306,116 +1091,6 @@ MERT algorithm converges at the same rate as it does without sampling.
 //===============================================================
 // Main 
 //===============================================================
-
-/*
-	public static void main2(String[] args) throws IOException {
-		if (args.length != 6) {
-			System.out.println("Usage: java SuffixArray lang corpusName dir minFrequency maxPhrasesToRetain maxPhraseLength");
-			System.exit(0);
-		}
-		String lang = args[0];
-		String corpusName = args[1];
-		String directory = args[2];
-		int minFrequency = Integer.parseInt(args[3]);
-		int maxPhrasesToRetain = Integer.parseInt(args[4]);
-		int maxPhraseLength = Integer.parseInt(args[5]);
-
-		
-		SuffixArray suffixArray = SuffixArrayFactory.loadSuffixArray(lang, corpusName, directory);
-		//ArrayList<Phrase> phrases = new ArrayList<Phrase>();
-		ArrayList<Integer> frequencies = new ArrayList<Integer>();
-		List<Phrase> phrases = suffixArray.getMostFrequentPhrases(frequencies, minFrequency, maxPhrasesToRetain, maxPhraseLength);
-			
-		System.out.println("NUM PHRASES: " + phrases.size());
-		System.out.println("FREQ\tPHRASE");
-		for(int i = 0; i < phrases.size(); i++) {
-			System.out.println(frequencies.get(i) + "\t" + phrases.get(i));
-		}
-		
-		Collocations collocations = suffixArray.getCollocations(new HashSet<Phrase>(phrases), maxPhraseLength, 10);
-		System.out.println(collocations);
-	}
-	*/
-	
-	/**
-	 * This method tests out the suffix array using the example
-	 * sentence given in the Yamamoto and Church CL article.
-	 */
-	/*
-	public static void mainChris(String[] args) throws IOException {
-		// this method creates a sample corpus ...
-		//String corpusString = "t o _ b e _ o r _ n o t _ t o _ b e";
-		//String corpusString = "to be or not to be";
-		
-		// Adam Lopez's example...
-		String corpusString = "it makes him and it mars him , it sets him on and it takes him off .";
-		
-		Vocabulary vocab = new Vocabulary();
-		Phrase exampleSentence = new BasicPhrase(corpusString, vocab);
-		vocab.alphabetize();
-		vocab.fixVocabulary();
-		
-		int[] sentences = new int[1];
-		sentences[0] = 0;
-		int[] corpus = new int[exampleSentence.size()];
-		for(int i = 0; i < exampleSentence.size(); i++) {
-			corpus[i] = exampleSentence.getWordID(i);
-		}
-		
-		CorpusArray corpusArray = new CorpusArray(corpus, sentences, vocab);
-		SuffixArray suffixArray = new SuffixArray(corpusArray);
-		int[] lcpArray = suffixArray.calculateLongestCommonPrefixes();
-		
-		System.out.println("I\tS[I]\tLCP\tSUFFIX");
-		for(int i = 0; i < suffixArray.size(); i++) {
-			Phrase phrase = new ContiguousPhrase(suffixArray.suffixes[i], suffixArray.size(), suffixArray.corpus);
-			System.out.println(i + "\t" + suffixArray.suffixes[i] + "\t" + lcpArray[i] + "\t"+ phrase);
-		}
-		System.out.println();
-		
-		//ArrayList<Phrase> phrases = new ArrayList<Phrase>();
-		ArrayList<Integer> frequencies = new ArrayList<Integer>();
-		int minFrequency = 1;
-		int maxPhrasesToRetain = 100;
-		int maxPhraseLength = 100;
-		List<Phrase> phrases = suffixArray.getMostFrequentPhrases(frequencies, minFrequency, maxPhrasesToRetain, maxPhraseLength);
-		
-		System.out.println("Frequency\tphrase");
-		for(int i = 0; i < phrases.size(); i++) {
-			System.out.println(frequencies.get(i) + "\t" + phrases.get(i));
-		}
-		System.out.println();
-		
-		
-		System.out.println("Collocations");
-		Collocations collocations = suffixArray.getCollocations(new HashSet<Phrase>(phrases), maxPhraseLength, 100);
-		System.out.println(collocations);	
-		
-		Phrase phrase1 = new BasicPhrase("him", vocab);
-		Phrase phrase2 = new BasicPhrase("it", vocab);
-		
-		int[] positions1 = suffixArray.getAllPositions(suffixArray.findPhrase(phrase1));
-		int[] positions2 = suffixArray.getAllPositions(suffixArray.findPhrase(phrase2));
-		
-		System.out.print(phrase1 + " occurred at positions: ");
-		for(int i = 0; i < positions1.length; i++) {
-			System.out.print(positions1[i] + " ");
-		}
-		System.out.println();
-		
-		System.out.print(phrase2 + " occurred at positions: ");
-		for(int i = 0; i < positions2.length; i++) {
-			System.out.print(positions2[i] + " ");
-		}
-		System.out.println();
-	}
-	*/
-	
-	public static void main(String[] args) {
-		fastIntersection();
-		
-		
-	}
 
 }
 

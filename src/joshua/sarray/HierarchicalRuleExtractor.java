@@ -193,8 +193,6 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 			if (Float.isInfinite(lex_p_e_given_f)) lex_p_e_given_f = PrefixTree.VERY_UNLIKELY;
 			if (logger.isLoggable(Level.FINE)) logger.fine("lexprob( " + translation.toString() + " | " + sourcePattern.toString() + " ) =  -log10(" + cumulativeSourceGivenTargetLexProbs.get(translation) + " / " + counterLexProbs.get(translation) + ") = " + lex_p_e_given_f);
 			
-			
-			//float lex_p_f_given_e = (float) (-1.0f * Math.log10(((double)cumulativeTargetGivenSourceLexProbs.get(translation)) / ((double)counterTargetGivenSourceLexProbs.get(translation))));
 			float lex_p_f_given_e = (float) (-1.0f * Math.log10(((double)cumulativeTargetGivenSourceLexProbs.get(translation)) / ((double)counterLexProbs.get(translation))));
 			if (Float.isInfinite(lex_p_f_given_e)) lex_p_f_given_e = PrefixTree.VERY_UNLIKELY;
 			if (logger.isLoggable(Level.FINE)) logger.fine("lexprob( " + sourcePattern.toString() + " | " + translation.toString() + " ) =  -log10(" + cumulativeTargetGivenSourceLexProbs.get(translation) + " / " + counterLexProbs.get(translation) + ") = " + lex_p_f_given_e);

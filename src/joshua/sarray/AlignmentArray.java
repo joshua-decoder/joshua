@@ -46,40 +46,11 @@ public class AlignmentArray extends AbstractAlignments {
 // Member variables
 //===============================================================
 
-	//TODO Probably can drop lowestAlignedTargetIndex and related variables...
-	
-	/**
-	 * Stores the lowest index of aligned target words for each
-	 * word in the source corpus.
-	 */
-	//protected final int[] lowestAlignedTargetIndex;
-	
-	
-	/**
-	 * Stores the highest index of aligned target words for
-	 * each word in the source corpus.
-	 */
-	//protected final int[] highestAlignedTargetIndex;
-	
 	/**
 	 * Stores the indices of all aligned target words for
 	 * each word in the source corpus.
 	 */
 	protected final int[][] alignedTargetIndices;
-	
-	
-	/**
-	 * Stores the lowest index of aligned source words for each
-	 * word in the target corpus.
-	 */
-	//protected final int[] lowestAlignedSourceIndex;
-	
-	
-	/**
-	 * Stores the highest index of aligned source words for
-	 * each word in the target corpus.
-	 */
-	//protected final int[] highestAlignedSourceIndex;
 	
 	/**
 	 * Stores the indices of all aligned source words for
@@ -105,22 +76,6 @@ public class AlignmentArray extends AbstractAlignments {
 		this.alignedSourceIndices = alignedSourceIndices;
 	}
 	
-	/**
-	 * This protected constructor is used by the
-	 * SuffixArrayFactory.loadAlignmentArray and
-	 * SuffixArrayFactory.createAlignmentArray methods.
-	 */
-//	protected AlignmentArray(int[] lowestAlignedTargetIndex, int[] highestAlignedTargetIndex,
-//							 int[] lowestAlignedSourceIndex, int[] highestAlignedSourceIndex,
-//							 int[][] alignedTargetIndices,   int[][] alignedSourceIndices) {
-//		this.lowestAlignedTargetIndex = lowestAlignedTargetIndex;
-//		this.highestAlignedTargetIndex = highestAlignedTargetIndex;
-//		this.lowestAlignedSourceIndex = lowestAlignedSourceIndex;
-//		this.highestAlignedSourceIndex = highestAlignedSourceIndex;
-//		this.alignedTargetIndices = alignedTargetIndices;
-//		this.alignedSourceIndices = alignedSourceIndices;
-//	}
-	
 
 //===============================================================
 // Public
@@ -143,13 +98,11 @@ public class AlignmentArray extends AbstractAlignments {
 	 *         value will be <UNALIGNED, undefined>
 	 */
 	public Span getAlignedTargetSpan(int startSourceIndex, int endSourceIndex) {
-		//return getAlignedSpan(startSourceIndex, endSourceIndex, lowestAlignedTargetIndex, highestAlignedTargetIndex);
 		return getAlignedSpan(startSourceIndex, endSourceIndex, alignedTargetIndices);
 	}
 	
 
 	public Span getAlignedTargetSpan(Span sourceSpan) {
-		//return getAlignedSpan(sourceSpan.start, sourceSpan.end, lowestAlignedTargetIndex, highestAlignedTargetIndex);
 		return getAlignedSpan(sourceSpan.start, sourceSpan.end, alignedTargetIndices);
 	}
 	
@@ -190,7 +143,6 @@ public class AlignmentArray extends AbstractAlignments {
 	 be <UNALIGNED, undefined>
 	 */
 	public Span getAlignedSourceSpan(int startTargetIndex, int endTargetIndex) {
-		//return getAlignedSpan(startTargetIndex, endTargetIndex, lowestAlignedSourceIndex, highestAlignedSourceIndex);
 		return getAlignedSpan(startTargetIndex, endTargetIndex, alignedSourceIndices);
 	}
 	
@@ -202,15 +154,12 @@ public class AlignmentArray extends AbstractAlignments {
 	 */
 	public boolean hasConsistentAlignment(int startSourceIndex, int endSourceIndex) {
 		Span targetSpan = getAlignedTargetSpan(startSourceIndex, endSourceIndex);
-		//if(targetSpan[0] == UNALIGNED) return false;
 		if (targetSpan.start == UNALIGNED) return false;
 		// check back to see what sourceSpan the targetSpan
 		// aligns back to, so that we can check that it's
 		// within bounds
 		Span sourceSpan = getAlignedSourceSpan(targetSpan.start, targetSpan.end);
-		//int[] sourceSpan = getAlignedSourceSpan(targetSpan[0], targetSpan[1]);
 		
-		//if(sourceSpan[0] < startSourceIndex || sourceSpan[1] > endSourceIndex) {
 		if (sourceSpan.start < startSourceIndex
 		|| sourceSpan.end > endSourceIndex) {
 			return false;
@@ -257,15 +206,11 @@ public class AlignmentArray extends AbstractAlignments {
 		
 		if (alignedSourceIndices[targetIndex]!=null) {
 			for (int alignedSourceIndex : alignedSourceIndices[targetIndex]) {
-//				for (int i=0; i<sourcePhrase.terminalSequenceStartIndices.length; i++) {
 				for (int i=0; i<phraseLength; i++) {
 					int sourceStart = sourcePhrases.getStartPosition(sourcePhraseIndex, i);
 					int sourceEnd = sourcePhrases.getEndPosition(sourcePhraseIndex, i);
-//					if (alignedSourceIndex >= sourcePhrase.terminalSequenceStartIndices[i] &&
 					if (alignedSourceIndex >= sourceStart &&
-//							alignedSourceIndex < sourcePhrase.terminalSequenceEndIndices[i]) {
 							alignedSourceIndex < sourceEnd) {
-//						if (logger.isLoggable(Level.FINEST)) logger.finest("Target index " + targetIndex + ", source index " + alignedSourceIndex + " is in source phrase at range ["+sourcePhrase.terminalSequenceStartIndices[i] + "-" + sourcePhrase.terminalSequenceEndIndices[i] + ")");
 						if (logger.isLoggable(Level.FINEST)) logger.finest("Target index " + targetIndex + ", source index " + alignedSourceIndex + " is in source phrase at range ["+sourceStart + "-" + sourceEnd + ")");
 						return true;
 					}
@@ -301,38 +246,6 @@ public class AlignmentArray extends AbstractAlignments {
 	//===============================================================
 	// Methods
 	//===============================================================
-
-	
-	
-
-	/*
-	private Span getAlignedSpan(int startIndex, int endIndex, int[] lowestAlignedIndex, int[] highestAlignedIndex) {
-		int lowestHighestMin = UNALIGNED;
-		int lowestHighestMax = -1;
-		
-		//int[] lowestHighest = new int[2];
-		//lowestHighest[0] = UNALIGNED;
-		//lowestHighest[1] = -1;
-		
-		for(int i = startIndex; i < endIndex; i++) {
-			if(lowestAlignedIndex[i] != UNALIGNED) {
-				lowestHighestMin = ( lowestAlignedIndex[i] < lowestHighestMin) ?  lowestAlignedIndex[i] : lowestHighestMin; //Math.min(lowestAlignedIndex[i], lowestHighestMin);
-				lowestHighestMax = (highestAlignedIndex[i] > lowestHighestMax) ? highestAlignedIndex[i] : lowestHighestMax; //Math.max(highestAlignedIndex[i], lowestHighestMax);
-				//lowestHighest[0] = Math.min(lowestAlignedIndex[i], lowestHighest[0]);
-				//lowestHighest[1] = Math.max(highestAlignedIndex[i], lowestHighest[1]);
-			} else if (requireTightSpans && (i==startIndex || i==endIndex-1)) { //XXX Is this the correct way to ensure tight spans?
-				// If requiring tight spans
-				return new Span(UNALIGNED, UNALIGNED);
-			}
-		}
-		
-		//lowestHighest[1]++;
-		lowestHighestMax++;
-		
-		//return lowestHighest;
-		return new Span(lowestHighestMin,lowestHighestMax);
-	}
-	*/
 	
 	/**
 	 * This method looks up the minimum and maximum aligned
@@ -362,26 +275,6 @@ public class AlignmentArray extends AbstractAlignments {
 		return new Span(lowestHighestMin,lowestHighestMax);	
 	}
 	
-/*
-	private Span getAlignedSpan(int startIndex, int endIndex, int[][] alignedIndices) {
-		int lowestHighestMin = UNALIGNED;
-		int lowestHighestMax = -1;
-
-		for(int i = startIndex; i < endIndex; i++) {
-			if (alignedIndices[i].length > 0) {
-				lowestHighestMin = (alignedIndices[i][0] < lowestHighestMin) ?  alignedIndices[i][0] : lowestHighestMin;
-				lowestHighestMax = (alignedIndices[i][alignedIndices[i].length-1] > lowestHighestMax) ? alignedIndices[i][alignedIndices[i].length-1] : lowestHighestMax;
-			} else if (requireTightSpans) {
-				return new Span(UNALIGNED, UNALIGNED);
-			}
-		}
-		
-		lowestHighestMax++;
-		
-		return new Span(lowestHighestMin,lowestHighestMax);
-	}
-*/	
-	
 //===============================================================
 // Static
 //===============================================================
@@ -390,39 +283,6 @@ public class AlignmentArray extends AbstractAlignments {
 //===============================================================
 // Main 
 //===============================================================
-/*
-	public static void main(String[] args) throws IOException {
-		
-		
-		if (args.length != 5) {
-			System.out.println("Usage: java AlignmentArray sourceLang targetLang corpusName dir alignmentsFilename");
-			System.exit(0);
-		}
-		
-		String sourceLang = args[0];
-		String targetLang = args[1];
-		String corpusName = args[2];
-		String directory = args[3];
-		//String alignmentsFilename = args[4];
-		
-		SuffixArray sourceCorpus = SuffixArrayFactory.loadSuffixArray(sourceLang, corpusName, directory);
-		SuffixArray targetCorpus = SuffixArrayFactory.loadSuffixArray(targetLang, corpusName, directory);
-		AlignmentArray alignmentArray = SuffixArrayFactory.loadAlignmentArray(sourceLang, targetLang, corpusName, directory);
-		
-		// ccb - debugging
-		for (int i = 0; i < sourceCorpus.getNumWords(); i++) {
-			for (int j = i+1; j <= sourceCorpus.getNumWords(); j++) {
-				//int[] alignedTargetWords = alignmentArray.getAlignedTargetSpan(i, j);
-				Span alignedTargetWords = alignmentArray.getAlignedTargetSpan(i, j);
-				if (alignmentArray.hasConsistentAlignment(i, j)) {
-					//System.out.println(sourceCorpus.getPhrase(i, j) + " [" + i + "," + j + "]\t" + targetCorpus.getPhrase(alignedTargetWords[0], alignedTargetWords[1])  + " [" + alignedTargetWords[0] + "," + (alignedTargetWords[1]) + "]");
-					System.out.println(sourceCorpus.getPhrase(i, j) + " [" + i + "," + j + "]\t" + targetCorpus.getPhrase(alignedTargetWords.start, alignedTargetWords.end)  + " [" + alignedTargetWords.start + "," + (alignedTargetWords.end) + "]");
-				} else {
-//					System.out.println(sourceCorpus.getPhrase(i, j) + ": NO CONSISTENT ALIGNMENT");
-				}
-			}
-		}
-	}
-	*/
+
 }
 

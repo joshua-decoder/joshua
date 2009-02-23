@@ -30,7 +30,7 @@ import java.nio.channels.FileChannel;
  * 
  * @author Lane Schwartz
  */
-public class MemoryMappedCorpusArray { // implements Corpus {
+public class MemoryMappedCorpusArray { 
 
 	private final Vocabulary vocabulary;
 	
@@ -122,29 +122,4 @@ public class MemoryMappedCorpusArray { // implements Corpus {
 		return binarySentenceBuffer.getInt(sentenceID*4);
 	}
 	
-	
-	/*
-	public int[] findSentencesContaining(Phrase phrase) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-	
-	
-	public int[] findSentencesContaining(Phrase phrase, int maxSentences) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-	
-	
-	public int getNumOccurrences(Phrase phrase) {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-	
-	
-	public Phrase getSentence(int sentenceIndex) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-	*/
 }
