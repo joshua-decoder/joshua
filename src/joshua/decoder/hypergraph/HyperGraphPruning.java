@@ -31,7 +31,7 @@ import java.util.HashMap;
  * @version $LastChangedDate$
  */
 public class HyperGraphPruning extends TrivialInsideOutside {
-	HashMap tbl_processed_items = new HashMap();
+	HashMap<HGNode,Boolean> tbl_processed_items = new HashMap<HGNode,Boolean>();
 	double best_log_prob;//viterbi unnormalized log prob in the hypergraph
 	
 	
@@ -103,7 +103,7 @@ public class HyperGraphPruning extends TrivialInsideOutside {
 		boolean should_survive=false;
 		//### recursive call on each deduction
 		for(int i=0; i < it.l_deductions.size(); i++){
-			HyperEdge dt = (HyperEdge) it.l_deductions.get(i);
+			HyperEdge dt = it.l_deductions.get(i);
 			boolean survived = pruning_deduction(dt, it);//deduction-specifc operation
 			if(survived) 
 				should_survive=true;//at least one deduction survive

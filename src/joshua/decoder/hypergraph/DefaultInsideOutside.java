@@ -45,17 +45,17 @@ public abstract class DefaultInsideOutside {
 	double ONE_IN_SEMIRING = 0;//log-domain
 	double scaling_factor ; //try to scale the original distribution: smooth or winner-take-all
 	
-	private HashMap tbl_inside_prob =  new HashMap();//remember inside prob of each item: 
-	private HashMap tbl_outside_prob =  new HashMap();//remember outside prob of each item
+	private HashMap<HGNode,Double> tbl_inside_prob =  new HashMap<HGNode,Double>();//remember inside prob of each item: 
+	private HashMap<HGNode,Double> tbl_outside_prob =  new HashMap<HGNode,Double>();//remember outside prob of each item
 	double normalization_constant = ONE_IN_SEMIRING;
 	
 	/* for each item, remember how many deductions pointering to me, this is needed for outside estimation
 	 * during outside estimation, an item will recursive call its deductions to do outside-estimation only after it itself is done with outside estimation, this is necessary because
 	 * the outside estimation of the items under its deductions require the item's outside value
 	 */
-	private HashMap tbl_num_parent_deductions = new HashMap();
+	private HashMap<HGNode,Integer> tbl_num_parent_deductions = new HashMap<HGNode,Integer>();
 	
-	private HashMap tbl_for_sanity_check = null;
+	private HashMap<HGNode,Integer> tbl_for_sanity_check = null;
 	
 	//get feature-set specific **log probability** for each hyperedge
 	protected abstract double get_deduction_prob(HyperEdge dt, HGNode parent_it);
@@ -156,7 +156,7 @@ public abstract class DefaultInsideOutside {
 	 * However, this won't work! The sum should be greater than 1.
 	 * */
 	public void sanity_check_hg(HyperGraph hg){	
-		tbl_for_sanity_check = new HashMap();
+		tbl_for_sanity_check = new HashMap<HGNode,Integer>();
 		//System.out.println("num_dts: " + hg.goal_item.l_deductions.size());
 		sanity_check_item(hg.goal_item);
 		System.out.println("survied sanity check!!!!");
@@ -336,14 +336,14 @@ public abstract class DefaultInsideOutside {
 		}
 	} 	
 	
-	
-	private double divide_in_semiring(double x, double y){// x/y
-		if(SEMIRING==LOG_SEMIRING){
-			return x-y;
-		}else{
-			System.out.println("un-supported semiring"); System.exit(0); return -1;
-		}
-	} 	
+//TODO Method is never used - perhaps it should be deleted
+//	private double divide_in_semiring(double x, double y){// x/y
+//		if(SEMIRING==LOG_SEMIRING){
+//			return x-y;
+//		}else{
+//			System.out.println("un-supported semiring"); System.exit(0); return -1;
+//		}
+//	} 	
 	
 	private double add_in_semiring(double x, double y){
 		if(SEMIRING==LOG_SEMIRING){

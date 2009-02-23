@@ -44,9 +44,11 @@ import java.util.logging.Logger;
  * @version $LastChangedDate$
  */
 public class KbestExtraction {
+	
+	@SuppressWarnings("unused")
 	private static final Logger logger = Logger.getLogger(KbestExtraction.class.getName());
 	
-	HashMap tbl_virtual_items = new HashMap();
+	HashMap<HGNode,VirtualItem> tbl_virtual_items = new HashMap<HGNode,VirtualItem>();
 	Symbol p_symbol = null;
 	
 	static String root_sym = "ROOT";
@@ -226,7 +228,7 @@ public class KbestExtraction {
 	
 //add the virtualitem is necessary
 	private VirtualItem add_virtual_item(HGNode it){
-		VirtualItem res = (VirtualItem)tbl_virtual_items.get(it);
+		VirtualItem res = tbl_virtual_items.get(it);
 		if(res == null){
 			res = new VirtualItem(it);
 			tbl_virtual_items.put(it, res);
@@ -240,10 +242,10 @@ public class KbestExtraction {
 	  *instead, the priority queue heap_cands will do internal sorting*/
 
 	private static class VirtualItem {
-		public ArrayList l_nbest = new ArrayList();//sorted ArrayList of DerivationState, in the paper is: D(^) [v]
+		public ArrayList<DerivationState> l_nbest = new ArrayList<DerivationState>();//sorted ArrayList of DerivationState, in the paper is: D(^) [v]
 		private PriorityQueue<DerivationState> heap_cands = null; // remember frontier states, best-first;  in the paper, it is called cand[v]
 		private HashMap<String, Integer>  derivation_tbl = null; // rememeber which DerivationState has been explored; why duplicate, e.g., 1 2 + 1 0 == 2 1 + 0 1 
-		private HashMap nbest_str_tbl = null;
+		private HashMap<String,Integer> nbest_str_tbl = null;
 		HGNode p_item = null;
 		
 		public VirtualItem(HGNode it) {
@@ -258,7 +260,7 @@ public class KbestExtraction {
 			boolean         extract_nbest_tree
 		) {
 			if (l_nbest.size() >= k) { // no need to continue
-				return (DerivationState)l_nbest.get(k-1);
+				return l_nbest.get(k-1);
 			}
 			
 			//### we need to fill in the l_nest in order to get k-th hyp
@@ -337,7 +339,7 @@ public class KbestExtraction {
 			heap_cands=new PriorityQueue<DerivationState>();
 			derivation_tbl = new HashMap<String, Integer> ();
 			if(extract_unique_nbest==true)
-				nbest_str_tbl=new HashMap ();
+				nbest_str_tbl=new HashMap<String,Integer> ();
 			//sanity check
 			if (null == p_item.l_deductions) {
 				System.out.println("Error, l_deductions is null in get_candidates, must be wrong");
@@ -433,7 +435,7 @@ public class KbestExtraction {
 			
 		//get the numeric sequence of the particular hypothesis
 		//if want to get model cost, then have to set model_cost and l_models
-		private String get_hyp(Symbol p_symbol, KbestExtraction kbest_extator, boolean tree_format, double[] model_cost, ArrayList l_models){
+		private String get_hyp(Symbol p_symbol, KbestExtraction kbest_extator, boolean tree_format, double[] model_cost, ArrayList<FeatureFunction> l_models){
 			//### accumulate cost of p_edge into model_cost if necessary
 			if(model_cost!=null) compute_cost(p_parent_node, p_edge, model_cost, l_models);
 			
@@ -509,7 +511,7 @@ public class KbestExtraction {
 		*/
 		
 		
-		private void compute_cost(HGNode parent_item, HyperEdge dt, double[] model_cost, ArrayList l_models){
+		private void compute_cost(HGNode parent_item, HyperEdge dt, double[] model_cost, ArrayList<FeatureFunction> l_models){
 			if(model_cost==null) return;
 			//System.out.println("Rule is: " + dt.rule.toString());
 			

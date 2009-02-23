@@ -61,7 +61,7 @@ public class DiskHyperGraph {
 	public int UNTRANS_OWNER_SYM_ID=0;//untranslated word id
 	   
 //	shared by many hypergraphs
-	public HashMap tbl_associated_grammar = new HashMap();
+	public HashMap<Integer,Rule> tbl_associated_grammar = new HashMap<Integer,Rule>();
 	//static int cur_rule_id=1;
 	BufferedWriter writer_out =null;//write items
 	BufferedReader reader_in =null;//read items
@@ -69,11 +69,11 @@ public class DiskHyperGraph {
 	HyperGraphPruning forest_pruner=null;
 	
 	String start_line=null; //this will be set if the previous sentence is skipped
-	HashMap tbl_selected_sents = null;
+	HashMap<Integer,?> tbl_selected_sents = null;
 	
 //	shared by a single hypergraph
-	HashMap tbl_item_2_id =new HashMap();//map item to id, used for saving hypergraph
-	HashMap tbl_id_2_item =new HashMap();//map id to item, used for reading hypergraph 
+	HashMap<HGNode,Integer> tbl_item_2_id =new HashMap<HGNode,Integer>();//map item to id, used for saving hypergraph
+	HashMap<Integer,HGNode> tbl_id_2_item =new HashMap<Integer,HGNode>();//map id to item, used for reading hypergraph 
 	int cur_item_id=1;
 	int total_num_deducts = 0;//number of deductions in the hypergraph
 	
@@ -164,7 +164,7 @@ public class DiskHyperGraph {
 	}
 	
  
-    public void init_read(String f_hypergraphs, String f_rule_tbl, HashMap tbl_sent_sel_tbl){
+    public void init_read(String f_hypergraphs, String f_rule_tbl, HashMap<Integer,?> tbl_sent_sel_tbl){
     	reader_in = FileUtility.getReadFileStream(f_hypergraphs);
     	tbl_selected_sents = tbl_sent_sel_tbl;
     	reload_rule_tbl(f_rule_tbl);
@@ -275,15 +275,15 @@ public class DiskHyperGraph {
 	} 
 	
 	
-	public HashMap get_used_grammar_tbl(){
+	public HashMap<Integer,Rule> get_used_grammar_tbl(){
 	   	return tbl_associated_grammar;
 	}
 	    
     public void write_rules_non_parallel(String f_rule_tbl){
     	BufferedWriter out_rules =  FileUtility.handle_null_file(f_rule_tbl);
     	System.out.println("writing rules");
-    	for(Iterator it = tbl_associated_grammar.keySet().iterator(); it.hasNext(); ){
-    		int rule_id = (Integer) it.next();
+    	for(Iterator<Integer> it = tbl_associated_grammar.keySet().iterator(); it.hasNext(); ){
+    		int rule_id = it.next();
     		Rule rl = (Rule)tbl_associated_grammar.get(rule_id);
     		save_rule(out_rules, rl, rule_id);
     	}
@@ -293,9 +293,9 @@ public class DiskHyperGraph {
 
     
     //tbl_done: remmber what kind of rules have already been saved
-    public void write_rules_parallel(BufferedWriter out_rules, HashMap tbl_done){
+    public void write_rules_parallel(BufferedWriter out_rules, HashMap<Integer,Integer> tbl_done){
     	System.out.println("writing rules in a partition");
-    	for(Iterator it = tbl_associated_grammar.keySet().iterator(); it.hasNext(); ){
+    	for(Iterator<Integer> it = tbl_associated_grammar.keySet().iterator(); it.hasNext(); ){
     		int rule_id = (Integer) it.next();
     		if(tbl_done.containsKey(rule_id)==false){
     			tbl_done.put(rule_id, 1);
@@ -413,7 +413,7 @@ public class DiskHyperGraph {
 		
 	//the state_str does not have lhs, it contain the original words (not symbol id)
 	public static HashMap<Integer, FFDPState> get_state_tbl_from_string(Symbol p_symbol, ArrayList<FeatureFunction> p_l_models, String state_str){
-		HashMap res =new HashMap<Integer, FFDPState>();
+		HashMap<Integer, FFDPState> res =new HashMap<Integer, FFDPState>();
 		String[] states = state_str.split(HGNode.FF_SIG_SEP);
 		int i=0;
 		for (FeatureFunction ff : p_l_models){//for each model
@@ -440,7 +440,7 @@ public class DiskHyperGraph {
 	}
 
 	public static HashMap<Integer, FFDPState> get_state_tbl_from_string(Symbol p_symbol, int lm_feat_id, String state_str){
-		HashMap res =new HashMap<Integer, FFDPState>();
+		HashMap<Integer, FFDPState> res =new HashMap<Integer, FFDPState>();
 		FFDPState ffdps = new LMFFDPState(p_symbol, state_str);//assume the only stateful feature is lm feature
 		res.put(lm_feat_id, ffdps);			
 		return res;

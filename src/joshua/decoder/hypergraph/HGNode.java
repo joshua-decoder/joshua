@@ -128,8 +128,8 @@ public class HGNode implements Comparable<HGNode> {
 			signature_.append(lhs);
 			
 			if(tbl_ff_dpstates!=null && tbl_ff_dpstates.size()>0){
-				for (Iterator iter = tbl_ff_dpstates.entrySet().iterator(); iter.hasNext();){//for each model
-	                Map.Entry entry = (Map.Entry)iter.next();
+				for (Iterator<Map.Entry<Integer,FFDPState>> iter = tbl_ff_dpstates.entrySet().iterator(); iter.hasNext();){//for each model
+					Map.Entry<Integer,FFDPState> entry = iter.next();
 	                FFDPState dpstate = (FFDPState)entry.getValue();
 	                signature_.append(dpstate.getSignature(false));
 	                if(iter.hasNext()) signature_.append(FF_SIG_SEP);
