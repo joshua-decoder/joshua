@@ -13,6 +13,7 @@ import joshua.sarray.PrefixTree;
 import joshua.sarray.SampledLexProbs;
 import joshua.sarray.SuffixArray;
 import joshua.sarray.SuffixArrayFactory;
+import joshua.util.Cache;
 import joshua.util.Pair;
 import joshua.util.sentence.Vocabulary;
 import joshua.util.sentence.alignment.Alignments;
@@ -100,7 +101,7 @@ public class SampledLexProbsTest {
 		alignmentArray = SuffixArrayFactory.createAlignmentArray(alignmentFileName, sourceSuffixArray, targetSuffixArray);
 
 		lexProbs = 
-			new SampledLexProbs(Integer.MAX_VALUE, sourceSuffixArray, targetSuffixArray, alignmentArray, false);
+			new SampledLexProbs(Integer.MAX_VALUE, sourceSuffixArray, targetSuffixArray, alignmentArray, Cache.DEFAULT_CAPACITY, false);
 		
 	}
 	

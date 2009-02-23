@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import joshua.util.Cache;
 import joshua.util.Pair;
 import joshua.util.lexprob.LexicalProbabilities;
 import joshua.util.sentence.Vocabulary;
@@ -47,9 +48,8 @@ public class SampledLexProbs implements LexicalProbabilities {
 	/** Logger for this class. */
 	private static final Logger logger = Logger.getLogger(SampledLexProbs.class.getName());
 	
-	//TODO Make these Cache<Integer,Map<Integer,Float>>
-	private final Map<Integer,Map<Integer,Float>> sourceGivenTarget;
-	private final Map<Integer,Map<Integer,Float>> targetGivenSource;
+	private final Cache<Integer,Map<Integer,Float>> sourceGivenTarget;
+	private final Cache<Integer,Map<Integer,Float>> targetGivenSource;
 	
 	private final SuffixArray sourceSuffixArray;
 	private final SuffixArray targetSuffixArray;
@@ -68,7 +68,7 @@ public class SampledLexProbs implements LexicalProbabilities {
 	private final int sampleSize;
 	
 
-	public SampledLexProbs(int sampleSize, SuffixArray sourceSuffixArray, SuffixArray targetSuffixArray, Alignments alignments, boolean precalculate) {
+	public SampledLexProbs(int sampleSize, SuffixArray sourceSuffixArray, SuffixArray targetSuffixArray, Alignments alignments, int cacheCapacity, boolean precalculate) {
 		
 		this.sampleSize = sampleSize;
 		this.sourceSuffixArray = sourceSuffixArray;
@@ -78,8 +78,8 @@ public class SampledLexProbs implements LexicalProbabilities {
 		this.sourceVocab = sourceSuffixArray.getVocabulary();
 		this.targetVocab = targetSuffixArray.getVocabulary();
 		this.floorProbability = 1.0f/(sampleSize*100);
-		this.sourceGivenTarget = new HashMap<Integer,Map<Integer,Float>>();
-		this.targetGivenSource = new HashMap<Integer,Map<Integer,Float>>();
+		this.sourceGivenTarget = new Cache<Integer,Map<Integer,Float>>(cacheCapacity);
+		this.targetGivenSource = new Cache<Integer,Map<Integer,Float>>(cacheCapacity);
 		
 		if (precalculate) {
 		
@@ -177,7 +177,7 @@ public class SampledLexProbs implements LexicalProbabilities {
 
 		Alignments alignmentArray = SuffixArrayFactory.createAlignmentArray(alignmentFileName, sourceSuffixArray, targetSuffixArray);
 
-		return new SampledLexProbs(Integer.MAX_VALUE, sourceSuffixArray, targetSuffixArray, alignmentArray, false);
+		return new SampledLexProbs(Integer.MAX_VALUE, sourceSuffixArray, targetSuffixArray, alignmentArray, Cache.DEFAULT_CAPACITY, false);
 		
 	}
 	

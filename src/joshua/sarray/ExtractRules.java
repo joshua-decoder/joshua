@@ -29,6 +29,7 @@ import java.util.logging.Logger;
 import java.util.zip.GZIPOutputStream;
 
 import joshua.decoder.ff.tm.Rule;
+import joshua.util.Cache;
 import joshua.util.CommandLineParser;
 import joshua.util.CommandLineParser.Option;
 import joshua.util.sentence.Vocabulary;
@@ -178,7 +179,7 @@ public class ExtractRules {
 			if (logger.isLoggable(Level.INFO)) logger.info("Constructing lexical probabilities table");
 
 			SampledLexProbs lexProbs = 
-				new SampledLexProbs(commandLine.getValue(lexSampleSize), sourceSuffixArray, targetSuffixArray, alignments, false);
+				new SampledLexProbs(commandLine.getValue(lexSampleSize), sourceSuffixArray, targetSuffixArray, alignments, Cache.DEFAULT_CAPACITY, false);
 			//new LexProbs(source_given_target, target_given_source, sourceVocab, targetVocab);
 
 			if (logger.isLoggable(Level.INFO)) logger.info("Done constructing lexical probabilities table");
