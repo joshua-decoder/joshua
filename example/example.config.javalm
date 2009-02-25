@@ -45,7 +45,7 @@ num_parallel_decoders=1
 parallel_files_prefix=.
 
 #disk hg
-save_disk_hg=true
+save_disk_hg=false
 
 ###### model weights
 #lm order weight
