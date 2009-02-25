@@ -18,9 +18,9 @@
 package joshua.decoder.ff.tm;
 
 
+import joshua.corpus.SymbolTable;
 import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.Support;
-import joshua.decoder.Symbol;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.util.FileUtility;
 
@@ -68,7 +68,7 @@ public class MemoryBasedBatchGrammarWithPrune extends BatchGrammar {
 	*/
 	
 	public MemoryBasedBatchGrammarWithPrune(
-		Symbol psymbol,
+		SymbolTable psymbolTable,
 		String grammar_file,
 		boolean is_glue_grammar,
 		ArrayList<FeatureFunction> l_models,
@@ -77,7 +77,7 @@ public class MemoryBasedBatchGrammarWithPrune extends BatchGrammar {
 		String                     nonterminal_regexp,
 		String                     nonterminal_replace_regexp
 	) {		
-		super(psymbol, grammar_file, l_models, default_owner, span_limit, nonterminal_regexp, nonterminal_replace_regexp);
+		super(psymbolTable, grammar_file, l_models, default_owner, span_limit, nonterminal_regexp, nonterminal_replace_regexp);
 		
 		//read the grammar from file
 		if(is_glue_grammar==true){
@@ -119,10 +119,10 @@ public class MemoryBasedBatchGrammarWithPrune extends BatchGrammar {
 		final double alpha = Math.log10(Math.E); //Cost
 		this.root = new MemoryBasedTrieGrammar(); //root should not have valid ruleBin entries
 		
-		this.add_rule("S ||| ["	+ JoshuaConfiguration.default_non_terminal + ",1] ||| [" + JoshuaConfiguration.default_non_terminal	+ ",1] ||| 0",	this.p_symbol.addTerminalSymbol(JoshuaConfiguration.begin_mono_owner));//this does not have any cost	
+		this.add_rule("S ||| ["	+ JoshuaConfiguration.default_non_terminal + ",1] ||| [" + JoshuaConfiguration.default_non_terminal	+ ",1] ||| 0",	this.p_symbolTable.addTerminal(JoshuaConfiguration.begin_mono_owner));//this does not have any cost	
 		//TODO: search consider_start_sym (Decoder.java, LMModel.java, and Chart.java)
 		//glue_gr.add_rule("S ||| [PHRASE,1] ||| "+Symbol.START_SYM+" [PHRASE,1] ||| 0", begin_mono_owner);//this does not have any cost
-		this.add_rule("S ||| [S,1] [" + JoshuaConfiguration.default_non_terminal + ",2] ||| [S,1] [" + JoshuaConfiguration.default_non_terminal + ",2] ||| " + alpha,this.p_symbol.addTerminalSymbol(JoshuaConfiguration.begin_mono_owner));
+		this.add_rule("S ||| [S,1] [" + JoshuaConfiguration.default_non_terminal + ",2] ||| [S,1] [" + JoshuaConfiguration.default_non_terminal + ",2] ||| " + alpha,this.p_symbolTable.addTerminal(JoshuaConfiguration.begin_mono_owner));
 		//glue_gr.add_rule("S ||| [S,1] [PHRASE,2] [PHRASE,3] ||| [S,1] [PHRASE,2] [PHRASE,3] ||| "+alpha, MONO_OWNER);
 		print_grammar();
 		ensure_grammar_sorted();
@@ -141,15 +141,15 @@ public class MemoryBasedBatchGrammarWithPrune extends BatchGrammar {
 		//######1: parse the line
 		//######2: create a rule
 		//MemoryBasedRule p_rule = new MemoryBasedRule(this,rule_id_count, line, owner);	
-		MemoryBasedRule p_rule = new  MemoryBasedRule(p_symbol, p_l_models, nonterminalRegexp, nonterminalReplaceRegexp,rule_id_count, line, owner);
+		MemoryBasedRule p_rule = new  MemoryBasedRule(p_symbolTable, p_l_models, nonterminalRegexp, nonterminalReplaceRegexp,rule_id_count, line, owner);
 		tem_estcost += p_rule.getEstCost();
 		
 		//######### identify the position, and insert the trinodes if necessary
 		MemoryBasedTrieGrammar pos = root;
 		for (int k = 0; k < p_rule.french.length; k++) {
 			int cur_sym_id = p_rule.french[k];
-			if (this.p_symbol.isNonterminal(p_rule.french[k])) { //TODO: p_rule.french store the original format like "[X,1]"
-				cur_sym_id = this.p_symbol.addNonTerminalSymbol(replace_french_non_terminal(nonterminalReplaceRegexp, this.p_symbol.getWord(p_rule.french[k])));
+			if (this.p_symbolTable.isNonterminal(p_rule.french[k])) { //TODO: p_rule.french store the original format like "[X,1]"
+				cur_sym_id = this.p_symbolTable.addNonterminal(replace_french_non_terminal(nonterminalReplaceRegexp, this.p_symbolTable.getWord(p_rule.french[k])));
 			}
 			
 			MemoryBasedTrieGrammar next_layer = pos.matchOne(cur_sym_id);

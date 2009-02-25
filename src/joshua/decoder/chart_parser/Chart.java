@@ -18,8 +18,8 @@
 package joshua.decoder.chart_parser;
 
 
+import joshua.corpus.SymbolTable;
 import joshua.decoder.JoshuaConfiguration;
-import joshua.decoder.Symbol;
 import joshua.decoder.chart_parser.Bin.ComputeItemResult;
 import joshua.decoder.chart_parser.DotChart.DotItem;
 import joshua.decoder.ff.FeatureFunction;
@@ -76,7 +76,7 @@ public class Chart {
 	//decoder-wide variables
 	ArrayList<FeatureFunction> p_l_models;
 	
-	Symbol p_symbol;
+	SymbolTable p_symbolTable;
 	
 	//statistics
 	int gtem                  = 0;
@@ -108,7 +108,7 @@ public class Chart {
 		Lattice<Integer>           sentence_,
 		//int[] sentence,
 		ArrayList<FeatureFunction> models_,
-		Symbol symbol_,
+		SymbolTable symbolTable,
 		int                        sent_id_,
 		Grammar[]                  grammars_,
 		ArrayList<Integer>         default_nonterminals,
@@ -120,11 +120,11 @@ public class Chart {
 		//this.sent_len = sentence.length;
 		this.sent_len = sentence.size() - 1;
 		this.p_l_models   = models_;
-		this.p_symbol = symbol_;
+		this.p_symbolTable = symbolTable;
 		this.bins     = new Bin[sent_len][sent_len+1];		
 		this.sent_id  = sent_id_;
 		this.goal_bin = new Bin(this);
-		this.UNTRANS_OWNER_SYM_ID = this.p_symbol.addTerminalSymbol(untranslated_owner_);
+		this.UNTRANS_OWNER_SYM_ID = this.p_symbolTable.addTerminal(untranslated_owner_);
 		
 		/** add un-translated words into the chart as item (with large cost) */
 		//TODO: grammar specific?

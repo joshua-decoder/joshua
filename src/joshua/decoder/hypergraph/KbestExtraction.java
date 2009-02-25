@@ -17,8 +17,8 @@
  */
 package joshua.decoder.hypergraph;
 
+import joshua.corpus.SymbolTable;
 import joshua.decoder.Support;
-import joshua.decoder.Symbol;
 import joshua.decoder.ff.FFTransitionResult;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.tm.Rule;
@@ -49,14 +49,15 @@ public class KbestExtraction {
 	private static final Logger logger = Logger.getLogger(KbestExtraction.class.getName());
 	
 	HashMap<HGNode,VirtualItem> tbl_virtual_items = new HashMap<HGNode,VirtualItem>();
-	Symbol p_symbol = null;
+	//Symbol p_symbol = null;
+	SymbolTable p_symbolTable = null;
 	
 	static String root_sym = "ROOT";
 	static int root_id;//TODO: bug
 	
-	public KbestExtraction(Symbol symbol_){
-		p_symbol = symbol_;
-		root_id = p_symbol.addNonTerminalSymbol(root_sym);
+	public KbestExtraction(SymbolTable symbolTable){
+		p_symbolTable = symbolTable;
+		root_id = p_symbolTable.addNonterminal(root_sym);
 	}
 	
 	
@@ -146,7 +147,7 @@ public class KbestExtraction {
 	//***************** you may need to reset_state() before you call this function for the first time
 	public String get_kth_hyp(HGNode it, int k,  int sent_id, ArrayList<FeatureFunction> l_models, boolean extract_unique_nbest, boolean extract_nbest_tree, boolean add_combined_score){
 		VirtualItem virtual_item = add_virtual_item(it);
-		DerivationState cur = virtual_item.lazy_k_best_extract_item(p_symbol, this,k,extract_unique_nbest,extract_nbest_tree);
+		DerivationState cur = virtual_item.lazy_k_best_extract_item(p_symbolTable, this,k,extract_unique_nbest,extract_nbest_tree);
 		if( cur==null) return null;
 		return get_kth_hyp(cur, sent_id, l_models, extract_nbest_tree, add_combined_score);
 	}
@@ -154,7 +155,7 @@ public class KbestExtraction {
 	private String get_kth_hyp(DerivationState cur, int sent_id, ArrayList<FeatureFunction> l_models, boolean extract_nbest_tree, boolean add_combined_score){
 		double[] model_cost = null;
 		if(l_models!=null) model_cost = new double[l_models.size()];		
-		String str_hyp_numeric = cur.get_hyp(p_symbol, this, extract_nbest_tree, model_cost,l_models);	
+		String str_hyp_numeric = cur.get_hyp(p_symbolTable, this, extract_nbest_tree, model_cost,l_models);	
 		//for(int k=0; k<model_cost.length; k++) System.out.println(model_cost[k]);
 		String str_hyp_str = convert_hyp_2_string(sent_id, cur, l_models, str_hyp_numeric, extract_nbest_tree, add_combined_score, model_cost);
 		return str_hyp_str;
@@ -183,18 +184,18 @@ public class KbestExtraction {
 			tem[t] = tem[t].trim();
 			if(extract_nbest_tree==true && ( tem[t].startsWith("(") || tem[t].endsWith(")"))){//tree tag
 				if(tem[t].startsWith("(")==true){
-					String tag = this.p_symbol.getWord(new Integer(tem[t].substring(1)));
+					String tag = this.p_symbolTable.getWord(new Integer(tem[t].substring(1)));
 					str_hyp.append("(");
 					str_hyp.append(tag);
 				}else{
 					//note: it may have more than two ")", e.g., "3499))"
 					int first_bracket_pos = tem[t].indexOf(")");//TODO: assume the tag/terminal does not have ")"
-					String tag = this.p_symbol.getWord(new Integer(tem[t].substring(0,first_bracket_pos)));
+					String tag = this.p_symbolTable.getWord(new Integer(tem[t].substring(0,first_bracket_pos)));
 					str_hyp.append(tag);
 					str_hyp.append(tem[t].substring(first_bracket_pos));
 				}
 			}else{//terminal symbol
-				str_hyp.append(this.p_symbol.getWord(new Integer(tem[t])));
+				str_hyp.append(this.p_symbolTable.getWord(new Integer(tem[t])));
 			}
 			if(t<tem.length-1)
 				str_hyp.append(" ");
@@ -253,7 +254,7 @@ public class KbestExtraction {
 		}
 		
 		//return: the k-th hyp or null; k is started from one
-		private DerivationState lazy_k_best_extract_item(Symbol p_symbol,
+		private DerivationState lazy_k_best_extract_item(SymbolTable p_symbol,
 			KbestExtraction kbest_extator,
 			int             k,
 			boolean         extract_unique_nbest,
@@ -305,7 +306,7 @@ public class KbestExtraction {
 		
 		//last: the last item that has been selected, we need to extend it
 		//get the next hyp at the "last" deduction
-		private void lazy_next(Symbol p_symbol, KbestExtraction kbest_extator, DerivationState last, boolean extract_unique_nbest, boolean extract_nbest_tree){
+		private void lazy_next(SymbolTable p_symbol, KbestExtraction kbest_extator, DerivationState last, boolean extract_unique_nbest, boolean extract_nbest_tree){
 			if(last.p_edge.get_ant_items()==null)
 				return;
 			for(int i=0; i < last.p_edge.get_ant_items().size();i++){//slide the ant item
@@ -335,7 +336,7 @@ public class KbestExtraction {
 
 		//this is the seeding function, for example, it will get down to the leaf, and sort the terminals
 		//get a 1best from each deduction, and add them into the heap_cands
-		private void get_candidates(Symbol p_symbol, KbestExtraction kbest_extator, boolean extract_unique_nbest,boolean extract_nbest_tree){
+		private void get_candidates(SymbolTable p_symbol, KbestExtraction kbest_extator, boolean extract_unique_nbest,boolean extract_nbest_tree){
 			heap_cands=new PriorityQueue<DerivationState>();
 			derivation_tbl = new HashMap<String, Integer> ();
 			if(extract_unique_nbest==true)
@@ -372,7 +373,7 @@ public class KbestExtraction {
 		}
 		
 		//get my best derivation, and recursively add 1best for all my children, used by get_candidates only
-		private DerivationState get_best_derivation(Symbol p_symbol, KbestExtraction kbest_extator, HGNode parent_item, HyperEdge hyper_edge, int deduct_pos,  boolean extract_unique_nbest,boolean extract_nbest_tree){
+		private DerivationState get_best_derivation(SymbolTable p_symbol, KbestExtraction kbest_extator, HGNode parent_item, HyperEdge hyper_edge, int deduct_pos,  boolean extract_unique_nbest,boolean extract_nbest_tree){
 			int[] ranks;
 			double cost=0;
 			if(hyper_edge.get_ant_items()==null){//axiom
@@ -435,7 +436,7 @@ public class KbestExtraction {
 			
 		//get the numeric sequence of the particular hypothesis
 		//if want to get model cost, then have to set model_cost and l_models
-		private String get_hyp(Symbol p_symbol, KbestExtraction kbest_extator, boolean tree_format, double[] model_cost, ArrayList<FeatureFunction> l_models){
+		private String get_hyp(SymbolTable p_symbol, KbestExtraction kbest_extator, boolean tree_format, double[] model_cost, ArrayList<FeatureFunction> l_models){
 			//### accumulate cost of p_edge into model_cost if necessary
 			if(model_cost!=null) compute_cost(p_parent_node, p_edge, model_cost, l_models);
 			
@@ -462,7 +463,7 @@ public class KbestExtraction {
 				}
 				for(int c=0; c<rl.english.length; c++){
 		    		if(p_symbol.isNonterminal(rl.english[c])==true){
-		    			int id=p_symbol.getEngNonTerminalIndex(rl.english[c]);
+		    			int id=p_symbol.getTargetNonterminalIndex(rl.english[c]);
 		    			HGNode child = (HGNode)p_edge.get_ant_items().get(id);
 		    			VirtualItem virtual_child =kbest_extator.add_virtual_item(child);
 		    			res.append(((DerivationState)virtual_child.l_nbest.get(ranks[id]-1)).get_hyp(p_symbol,kbest_extator, tree_format, model_cost, l_models));

@@ -1,9 +1,12 @@
 package joshua.decoder;
 
 import java.io.BufferedReader;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import joshua.corpus.AbstractSymbolTable;
+import joshua.corpus.SymbolTable;
 import joshua.util.FileUtility;
 
 /**
@@ -35,7 +38,7 @@ import joshua.util.FileUtility;
  * */
 
 
-public abstract class DefaultSymbol implements Symbol {
+public abstract class DefaultSymbol extends AbstractSymbolTable implements SymbolTable { // implements Symbol {
 	//terminal symbol may get from a tbl file, srilm, or a lm file
 	//**non-terminal symbol is always from myself, and the integer should always be negative	
 	private HashMap<String,Integer> nonterminal_str_2_num_tbl = new HashMap<String,Integer>();
@@ -47,7 +50,7 @@ public abstract class DefaultSymbol implements Symbol {
 	
 	public boolean is_reading_from_file = false;
 	 
-	protected abstract String  getTerminalWord(int id);
+	//protected abstract String getTerminalWord(int id);
 
 	
 	public DefaultSymbol(){
@@ -57,21 +60,21 @@ public abstract class DefaultSymbol implements Symbol {
 	
 	final public  String getWord(int id) {
 		if ( isNonterminal(id)) {
-			return getNonTerminalWord(id);
+			return getNonterminal(id);
 		}else{
-			return getTerminalWord(id);
+			return getTerminal(id);
 		}
 	}
 	
-	final public int getLMStartID(){
+	final public int getLowestID(){
 		return lm_start_sym_id;
 	}
 	
-	final public int getLMEndID(){
+	final public int getHighestID(){
 		return lm_end_sym_id;
 	}
 	
-	final public String  getNonTerminalWord(int id){
+	final public String  getNonterminal(int id){
 		String res =  (String)nonterminal_num_2_str_tbl.get(id);
 		if(res == null){
 			System.out.println("try to query the string for non exist id, must exit");
@@ -114,23 +117,14 @@ public abstract class DefaultSymbol implements Symbol {
 	}
 	
 	
-	final public int[] addTerminalSymbols(String sentence){
+	final public int[] addTerminals(String sentence){
 		String[] sent_wrds = sentence.split("\\s+");		
-		return addTerminalSymbols(sent_wrds);
+		return addTerminals(sent_wrds);
 	}	
 	
-	
-    final public int[] addTerminalSymbols(String[] strings){
-		int[] res =new int[strings.length];
-		for(int t=0; t<strings.length; t++)
-			res[t]=addTerminalSymbol(strings[t]);
-		return res;
-	}	
-	
-	
-	
+		
 //	####### following functions used for TM only
-	final public int addNonTerminalSymbol(String str){
+	final public int addNonterminal(String str){
 		Integer res_id = (Integer)nonterminal_str_2_num_tbl.get(str);
 		if (null != res_id) { // already have this symbol
 			if (! isNonterminal(res_id)) {
@@ -150,26 +144,6 @@ public abstract class DefaultSymbol implements Symbol {
 	
 	final public boolean isNonterminal(int id) {
 		return (id < 0);
-	}
-	
-	
-	final public int getEngNonTerminalIndex(int id) {
-		if (! isNonterminal(id)) {
-			return -1;
-		} else {
-			// TODO: get rid of this expensive interim object
-			String symbol = getWord(id);
-			
-			return getEngNonTerminalIndex(symbol);
-		}
-	}
-	
-	final public int getEngNonTerminalIndex(String wrd) {
-		// Assumes the last character is a digit
-		// and extracts it, starting from one.
-		// Assumes the whole prefix is the
-		// nonterminal-ID portion of the string
-		return Integer.parseInt( wrd.substring(wrd.length() - 2,	wrd.length() - 1) ) - 1;
 	}
 	
 	protected void initializeSymTblFromFile(String fname){	
@@ -236,11 +210,11 @@ public abstract class DefaultSymbol implements Symbol {
                 String str = (String) tbl_id_2_str.get(i);//it is guranteed that the strings in tbl_id_2_str are different
                 int res_id;
                 if(str!=null){
-                        res_id = addTerminalSymbol(str);
+                        res_id = addTerminal(str);
                         n_added++;
                 }else{//non-continous index
                         System.out.println("Warning: add fake symbol, be alert");
-                        res_id = addTerminalSymbol("lzf"+i);
+                        res_id = addTerminal("lzf"+i);
                 }
                 if(res_id!=i){
                         System.out.println("id supposed: " + i +" != assinged " + res_id + " symbol:" + str);
@@ -252,6 +226,26 @@ public abstract class DefaultSymbol implements Symbol {
 
 		
 	}
+	
 
+
+
+	public int[] getIDs(String sentence) {
+		return addTerminals(sentence);
+	}
+
+	public String getTerminals(int[] wordIDs) {
+		return getWords(wordIDs);
+	}
+
+	public List<String> getWords() {
+		return new ArrayList<String>(nonterminal_num_2_str_tbl.values());
+	}
+
+	public int size() {
+		return nonterminal_num_2_str_tbl.size();
+	}
+
+	
 }
 

@@ -80,9 +80,9 @@ public class LMGrammarJAVA extends LMGrammar {
 		if (logger.isLoggable(Level.INFO)) 
 			logger.info("use java lm");
 		
-		this.BACKOFF_WGHT_SYM_ID = psymbol.addTerminalSymbol(BACKOFF_WGHT_SYM);
-		this.LM_HAVE_PREFIX_SYM_ID = psymbol.addTerminalSymbol(LM_HAVE_PREFIX_SYM);
-		this.UNK_SYM_ID = psymbol.addTerminalSymbol(UNK_SYM);
+		this.BACKOFF_WGHT_SYM_ID = psymbol.addTerminal(BACKOFF_WGHT_SYM);
+		this.LM_HAVE_PREFIX_SYM_ID = psymbol.addTerminal(LM_HAVE_PREFIX_SYM);
+		this.UNK_SYM_ID = psymbol.addTerminal(UNK_SYM);
 		
 		g_is_add_prefix_infor = is_add_prefix_infor;
 		g_is_add_suffix_infor = is_add_suffix_infor;
@@ -167,7 +167,7 @@ public class LMGrammarJAVA extends LMGrammar {
 			Double prob=get_valid_prob(pos,last_word_id);
 			double bow_sum=0;
 			for(int i=ngram_wrds.length-2; i>=0; i--){//reverse search, start from the second-last word			
-				LMHash  next_layer=(LMHash) pos.get(ngram_wrds[i]+p_symbol.getLMEndID());
+				LMHash  next_layer=(LMHash) pos.get(ngram_wrds[i]+p_symbolTable.getHighestID());
 				if(next_layer!=null){//have context/bow node
 					pos=next_layer;
 					//Double prob2=(Double)pos.get(last_word_id);
@@ -261,7 +261,7 @@ public class LMGrammarJAVA extends LMGrammar {
 		 LMHash pos=root;
 		 int i=words.length-1;
 		 for( ; i>=0; i--){//reverse search
-				LMHash  next_layer=(LMHash) pos.get(words[i]+p_symbol.getLMEndID());
+				LMHash  next_layer=(LMHash) pos.get(words[i]+p_symbolTable.getHighestID());
 				if(next_layer!=null){
 					pos=next_layer;					
 				}else{
@@ -350,7 +350,7 @@ public class LMGrammarJAVA extends LMGrammar {
 	 private boolean have_suffix(int[] words){
 		 LMHash pos=root;
 		 for(int i=words.length-2; i>=0; i--){//reverse search, start from the second-last word			
-				LMHash  next_layer=(LMHash) pos.get(words[i]+p_symbol.getLMEndID());
+				LMHash  next_layer=(LMHash) pos.get(words[i]+p_symbolTable.getHighestID());
 				if(next_layer!=null){
 					pos=next_layer;
 				}else{
@@ -387,7 +387,7 @@ public class LMGrammarJAVA extends LMGrammar {
 		Double bow=null;
 		int i=backoff_words.length-1;
 		for(; i>=0; i--){
-			LMHash next_layer=(LMHash) pos.get(backoff_words[i]+p_symbol.getLMEndID());
+			LMHash next_layer=(LMHash) pos.get(backoff_words[i]+p_symbolTable.getHighestID());
 			if(next_layer!=null){				
 				bow = (Double)next_layer.get( BACKOFF_WGHT_SYM_ID);
 				if(bow!=null && i<=start_use_i)
@@ -474,7 +474,7 @@ public class LMGrammarJAVA extends LMGrammar {
 			//Support.write_log_line("wrong line: "+ line, Support.ERROR);
 			return;			
 		}	
-		int last_word_id = p_symbol.addTerminalSymbol(wrds[order]);
+		int last_word_id = p_symbolTable.addTerminal(wrds[order]);
 		
 		//##### identify the BOW position, insert the backoff node if necessary, and add suffix information
 		LMHash  pos =root;
@@ -490,13 +490,13 @@ public class LMGrammarJAVA extends LMGrammar {
 					pos.put(last_word_id, SUFFIX_ONLY);
 				}				
 			}			
-			int cur_sym_id = p_symbol.addTerminalSymbol(wrds[i]);
-			LMHash  next_layer=(LMHash) pos.get(cur_sym_id+p_symbol.getLMEndID());
+			int cur_sym_id = p_symbolTable.addTerminal(wrds[i]);
+			LMHash  next_layer=(LMHash) pos.get(cur_sym_id+p_symbolTable.getHighestID());
 			if(next_layer!=null){
 				pos=next_layer;
 			}else{
 				LMHash  new_tnode = new LMHash();//create new bow node													
-				pos.put(cur_sym_id+p_symbol.getLMEndID(), new_tnode);
+				pos.put(cur_sym_id+p_symbolTable.getHighestID(), new_tnode);
 				pos = new_tnode;
 				
 				g_n_bow_nodes++;				
@@ -523,13 +523,13 @@ public class LMGrammarJAVA extends LMGrammar {
 			for(int i=1; i<order-1; i++){//ignore the last prefix
 				pos=root;//reset pos
 				for(int j=i; j>=1; j--){//reverse search: [1,i]
-					int cur_sym_id = p_symbol.addTerminalSymbol(wrds[j]);	
-					LMHash  next_layer=(LMHash) pos.get(cur_sym_id+p_symbol.getLMEndID());
+					int cur_sym_id = p_symbolTable.addTerminal(wrds[j]);	
+					LMHash  next_layer=(LMHash) pos.get(cur_sym_id+p_symbolTable.getHighestID());
 					if(next_layer!=null){
 						pos=next_layer;
 					}else{
 						LMHash  new_tnode = new LMHash();//create new prefix node						
-						pos.put(cur_sym_id+p_symbol.getLMEndID(), new_tnode);
+						pos.put(cur_sym_id+p_symbolTable.getHighestID(), new_tnode);
 						pos = new_tnode;
 						
 						g_n_bow_nodes++;				
@@ -549,13 +549,13 @@ public class LMGrammarJAVA extends LMGrammar {
 		if( wrds.length==order+2){ //have bow weight to add
 			pos=root;
 			for(int i=order; i>=1; i--){//reverse search, start from the last word
-				int cur_sym_id = p_symbol.addTerminalSymbol(wrds[i]);			
-				LMHash  next_layer=(LMHash) pos.get(cur_sym_id+p_symbol.getLMEndID());
+				int cur_sym_id = p_symbolTable.addTerminal(wrds[i]);			
+				LMHash  next_layer=(LMHash) pos.get(cur_sym_id+p_symbolTable.getHighestID());
 				if(next_layer!=null){
 					pos=next_layer;					
 				}else{
 					LMHash  new_tnode = new LMHash();//create new bow node					
-					pos.put(cur_sym_id+p_symbol.getLMEndID(), new_tnode);
+					pos.put(cur_sym_id+p_symbolTable.getHighestID(), new_tnode);
 					pos = new_tnode;
 					
 					g_n_bow_nodes++;				

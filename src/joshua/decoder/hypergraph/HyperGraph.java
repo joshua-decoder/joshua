@@ -17,7 +17,7 @@
  */
 package joshua.decoder.hypergraph;
 
-import joshua.decoder.Symbol;
+import joshua.corpus.SymbolTable;
 import joshua.decoder.ff.FFDPState;
 import joshua.decoder.ff.FFTransitionResult;
 import joshua.decoder.ff.FeatureFunction;
@@ -42,7 +42,7 @@ public class HyperGraph {
 	public int sent_id = -1;
 	public int sent_len = -1;
 	
-	Symbol p_symbol = null;
+	SymbolTable p_symbolTable = null;
 	
 	static final Logger logger = Logger.getLogger(HyperGraph.class.getName());
 	
@@ -55,7 +55,7 @@ public class HyperGraph {
 	}
 	
 	//get one-best string under item
-	public static String extract_best_string(Symbol p_symbol, HGNode item){
+	public static String extract_best_string(SymbolTable p_symbolTable, HGNode item){
 		StringBuffer res = new StringBuffer();
 
 		HyperEdge p_edge = item.best_deduction;
@@ -66,16 +66,16 @@ public class HyperGraph {
 				System.out.println("error deduction under goal item have not equal one item");
 				System.exit(1);
 			}
-			return extract_best_string(p_symbol, (HGNode)p_edge.get_ant_items().get(0));
+			return extract_best_string(p_symbolTable, (HGNode)p_edge.get_ant_items().get(0));
 		}	
 		
 		for(int c=0; c<rl.english.length; c++){
-    		if(p_symbol.isNonterminal(rl.english[c])==true){
-    			int id=p_symbol.getEngNonTerminalIndex(rl.english[c]);
+    		if(p_symbolTable.isNonterminal(rl.english[c])==true){
+    			int id=p_symbolTable.getTargetNonterminalIndex(rl.english[c]);
     			HGNode child = (HGNode)p_edge.get_ant_items().get(id);
-    			res.append(extract_best_string(p_symbol, child));
+    			res.append(extract_best_string(p_symbolTable, child));
     		}else{
-    			res.append(p_symbol.getWord(rl.english[c]));
+    			res.append(p_symbolTable.getWord(rl.english[c]));
     		}
     		if(c<rl.english.length-1) res.append(" ");
 		}

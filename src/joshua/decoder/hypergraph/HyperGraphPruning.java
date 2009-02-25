@@ -17,8 +17,8 @@
  */
 package joshua.decoder.hypergraph;
 
+import joshua.corpus.SymbolTable;
 import joshua.decoder.JoshuaConfiguration;
-import joshua.decoder.Symbol;
 import joshua.decoder.hypergraph.HyperGraph;
 
 import java.util.HashMap;
@@ -50,7 +50,7 @@ public class HyperGraphPruning extends TrivialInsideOutside {
 
 //####	
 	
-	public HyperGraphPruning(Symbol p_symbol, boolean fix_threshold, double threshold_general, double threshold_glue, double step_general, double step_glue){
+	public HyperGraphPruning(SymbolTable p_symbolTable, boolean fix_threshold, double threshold_general, double threshold_glue, double step_general, double step_glue){
 		fix_threshold_pruning = fix_threshold;
 		THRESHOLD_GENERAL = threshold_general;
 		THRESHOLD_GLUE = threshold_glue;
@@ -58,7 +58,7 @@ public class HyperGraphPruning extends TrivialInsideOutside {
 		CUR_THRESHOLD_GLUE = THRESHOLD_GLUE;
 		THRESHOLD_STEP_GENERAL = step_general;
 		THRESHOLD_STEP_GLUE = step_glue;
-		glue_grammar_owner = p_symbol.addTerminalSymbol(JoshuaConfiguration.begin_mono_owner);//TODO
+		glue_grammar_owner = p_symbolTable.addTerminal(JoshuaConfiguration.begin_mono_owner);//TODO
 	}
 	
 	

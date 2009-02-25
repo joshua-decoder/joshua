@@ -77,7 +77,7 @@ public class Bin
 	
 	public Bin(Chart chart) {
 		this.p_chart = chart;
-		this.GOAL_SYM_ID = this.p_chart.p_symbol.addNonTerminalSymbol(GOAL_SYM);
+		this.GOAL_SYM_ID = this.p_chart.p_symbolTable.addNonterminal(GOAL_SYM);
 	}
 	
 	

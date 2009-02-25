@@ -21,6 +21,8 @@ package joshua.util.sentence;
 import java.io.IOException;
 import java.util.*;
 
+import joshua.corpus.AbstractSymbolTable;
+import joshua.corpus.SymbolTable;
 import joshua.sarray.BasicPhrase;
 import joshua.sarray.SuffixArrayFactory;
 
@@ -36,7 +38,7 @@ import joshua.sarray.SuffixArrayFactory;
  * @author Lane Schwartz
  * @version $LastChangedDate:2008-07-30 17:15:52 -0400 (Wed, 30 Jul 2008) $
  */
-public class Vocabulary implements Iterable<String> {
+public class Vocabulary extends AbstractSymbolTable implements Iterable<String>, SymbolTable {
 
 //===============================================================
 // Constants
@@ -347,6 +349,29 @@ public class Vocabulary implements Iterable<String> {
 		UNKNOWN_WORD = getID(UNKNOWN_WORD_STRING);
 	}
 	
+	public String getUnknownWord() {
+		return UNKNOWN_WORD_STRING;
+	}
+
+	public int getUnknownWordID() {
+		return UNKNOWN_WORD;
+	}
+
+	public boolean isNonterminal(int id) {
+		if (id < 0) 
+			return true;
+		else
+			return false;
+	}
+
+	public int getHighestID() {
+		return 0;
+	}
+
+	public int getLowestID() {
+		return vocabList.size() - 1;
+	}
+	
 //===============================================================
 // Protected 
 //===============================================================
@@ -390,5 +415,26 @@ public class Vocabulary implements Iterable<String> {
 		SuffixArrayFactory.saveVocabulary(vocab, lang, corpusName, outputDirectory);
 	}
 
+	public int addNonterminal(String nonterminal) {
+		//TODO Implement this method
+		throw new RuntimeException("Method not yet implemented");
+	}
+
+	public int addTerminal(String terminal) {
+		return addWord(terminal);
+	}
+
+	public String getTerminal(int wordId) {
+		return getWord(wordId);
+	}
+
+	public String getTerminals(int[] wordIDs) {
+		return getWords(wordIDs, false);
+	}
+
+	public String getWords(int[] ids) {
+		return getWords(ids, false);
+	}
+	
 }
 

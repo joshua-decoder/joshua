@@ -17,7 +17,7 @@
  */
 package joshua.decoder.ff.tm;
 
-import joshua.decoder.Symbol;
+import joshua.corpus.SymbolTable;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.util.sentence.Phrase;
 
@@ -59,12 +59,12 @@ public abstract class BatchGrammar implements GrammarFactory, Grammar {
 	@SuppressWarnings("unused")
 	private static final Logger logger = Logger.getLogger(BatchGrammar.class.getName());
 	
-	Symbol p_symbol = null;
+	SymbolTable p_symbolTable = null;
 	
-	public BatchGrammar(Symbol psymbol, String grammar_file, ArrayList<FeatureFunction> l_models, final String default_owner,	final int span_limit, final String nonterminal_regexp,	final String nonterminal_replace_regexp) {	
-		this.p_symbol = psymbol;
+	public BatchGrammar(SymbolTable psymbolTable, String grammar_file, ArrayList<FeatureFunction> l_models, final String default_owner,	final int span_limit, final String nonterminal_regexp,	final String nonterminal_replace_regexp) {	
+		this.p_symbolTable = psymbolTable;
 		this.p_l_models               = l_models;
-		this.defaultOwner             = p_symbol.addTerminalSymbol(default_owner);
+		this.defaultOwner             = p_symbolTable.addTerminal(default_owner);
 		this.nonterminalRegexp        = nonterminal_regexp;
 		this.nonterminalReplaceRegexp = nonterminal_replace_regexp;		
 		this.spanLimit = span_limit;

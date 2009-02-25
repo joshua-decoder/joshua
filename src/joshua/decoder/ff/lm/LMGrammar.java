@@ -19,9 +19,9 @@ package joshua.decoder.ff.lm;
 
 import java.util.ArrayList;
 
+import joshua.corpus.SymbolTable;
 import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.Support;
-import joshua.decoder.Symbol;
 
 /**
  * this class implement 
@@ -42,17 +42,17 @@ public abstract class LMGrammar {
 	public int NULL_RIGHT_LM_STATE_SYM_ID;//used for equivelant state
 	 
 	
-	protected  final Symbol p_symbol;
+	protected  final SymbolTable p_symbolTable;
 	
 	protected final int  g_order;
 	
 	protected long start_loading_time;
 	
-	public LMGrammar(Symbol symbol_, int order_){
-		p_symbol = symbol_;
+	public LMGrammar(SymbolTable symbolTable, int order_){
+		p_symbolTable = symbolTable;
 		g_order = order_;
-		this.BACKOFF_LEFT_LM_STATE_SYM_ID = p_symbol.addTerminalSymbol(BACKOFF_LEFT_LM_STATE_SYM);
-		this.NULL_RIGHT_LM_STATE_SYM_ID = p_symbol.addTerminalSymbol(NULL_RIGHT_LM_STATE_SYM);
+		this.BACKOFF_LEFT_LM_STATE_SYM_ID = p_symbolTable.addTerminal(BACKOFF_LEFT_LM_STATE_SYM);
+		this.NULL_RIGHT_LM_STATE_SYM_ID = p_symbolTable.addTerminal(NULL_RIGHT_LM_STATE_SYM);
 	}
 	
 	

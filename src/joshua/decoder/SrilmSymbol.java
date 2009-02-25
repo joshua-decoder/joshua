@@ -1,5 +1,7 @@
 package joshua.decoder;
 
+import java.util.Collection;
+
 import joshua.decoder.ff.lm.srilm.SWIGTYPE_p_Ngram;
 import joshua.decoder.ff.lm.srilm.srilm;
 
@@ -29,12 +31,12 @@ public class SrilmSymbol extends DefaultSymbol {
 	
 	 /* This will automatically add str into srilm table if it is not there
 	  * */
-	 public int addTerminalSymbol(String str){	
+	 public int addTerminal(String str){	
 		return (int)srilm.getIndexForWord(str);
 	 }
 
 	 
-	 protected  String  getTerminalWord(int id){
+	 public  String  getTerminal(int id){
 		 String res = (String) srilm.getWordForIndex(id);
 		 if(res == null){
 				System.out.println("try to query the string for non exist id, must exit");
@@ -43,5 +45,24 @@ public class SrilmSymbol extends DefaultSymbol {
 		
 		 return  res;
 	 }
+
+	public Collection<Integer> getAllIDs() {
+		//TODO Implement this method
+		throw new RuntimeException("Method not yet implemented");
+	}
+
+	public int getID(String wordString) {
+		return addTerminal(wordString);
+	}
+
+	public String getUnknownWord() {
+		//TODO Implement this method
+		throw new RuntimeException("Method not yet implemented");
+	}
+
+	public int getUnknownWordID() {
+		//TODO Implement this method
+		throw new RuntimeException("Method not yet implemented");
+	}
 	 
 }

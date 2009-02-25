@@ -18,7 +18,7 @@
 
 package joshua.decoder.ff;
 
-import joshua.decoder.Symbol;
+import joshua.corpus.SymbolTable;
 
 
 /**
@@ -29,6 +29,6 @@ import joshua.decoder.Symbol;
 
 public interface FFDPState {
 	public String getSignature(boolean force_recompute);
-	public String getSignature(Symbol p_symbol, boolean force_recompute);
+	public String getSignature(SymbolTable p_symbolTable, boolean force_recompute);
 	
 }

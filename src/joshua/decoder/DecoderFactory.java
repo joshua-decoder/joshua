@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import joshua.corpus.SymbolTable;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.tm.GrammarFactory;
 import joshua.decoder.hypergraph.DiskHyperGraph;
@@ -26,24 +27,25 @@ public class DecoderFactory {
 	private boolean have_lm_model = false;
 	private ArrayList<FeatureFunction> p_l_feat_functions  = null;
 	private ArrayList<Integer> l_default_nonterminals = null;
-	private Symbol p_symbol = null;
-
+	//private Symbol p_symbol = null;
+	private SymbolTable p_symbolTable = null;
+	
 	private DecoderThread[]          parallel_threads;
 	
 	private static final Logger logger = Logger.getLogger(DecoderFactory.class.getName());
 
-	public  DecoderFactory(GrammarFactory[] grammar_facories,  boolean have_lm_model_, ArrayList<FeatureFunction> l_feat_functions , ArrayList<Integer> l_default_nonterminals_ , Symbol symbol){
+	public  DecoderFactory(GrammarFactory[] grammar_facories,  boolean have_lm_model_, ArrayList<FeatureFunction> l_feat_functions , ArrayList<Integer> l_default_nonterminals_ , SymbolTable symbolTable){
 		this.p_grammar_factories = 	grammar_facories;
 		this.have_lm_model =  have_lm_model_;
 		this.p_l_feat_functions = l_feat_functions;
 		this.l_default_nonterminals = l_default_nonterminals_;
-		this.p_symbol = symbol;
+		this.p_symbolTable = symbolTable;
 	}
 	
 	public void decodingTestSet(String test_file, String nbest_file){
 //		###### decode the sentences, maybe in parallel
 		if (JoshuaConfiguration.num_parallel_decoders == 1) {
-			DecoderThread pdecoder = new DecoderThread(this.p_grammar_factories, this.have_lm_model, this.p_l_feat_functions, this.l_default_nonterminals, this.p_symbol, 
+			DecoderThread pdecoder = new DecoderThread(this.p_grammar_factories, this.have_lm_model, this.p_l_feat_functions, this.l_default_nonterminals, this.p_symbolTable, 
 					test_file, nbest_file,	0);
 			
 			pdecoder.decode_a_file();//do not run *start*; so that we stay in the current main thread
@@ -89,7 +91,7 @@ public class DecoderFactory {
 			//make the Symbol table finalized before running multiple threads, this is to avoid synchronization among threads
 			{
 				String words[] = cn_sent.split("\\s+");				
-				this.p_symbol.addTerminalSymbols(words); // TODO				
+				this.p_symbolTable.addTerminals(words); // TODO				
 			}			
 			
 			// we will include all additional lines into last file
@@ -98,7 +100,7 @@ public class DecoderFactory {
 				FileUtility.flush_lzf(t_writer_test);
 				FileUtility.close_write_file(t_writer_test);				 
 				
-				DecoderThread pdecoder = new DecoderThread(this.p_grammar_factories, this.have_lm_model, this.p_l_feat_functions, this.l_default_nonterminals, this.p_symbol, 
+				DecoderThread pdecoder = new DecoderThread(this.p_grammar_factories, this.have_lm_model, this.p_l_feat_functions, this.l_default_nonterminals, this.p_symbolTable, 
 						cur_test_file, cur_nbest_file,	start_sent_id);
 				parallel_threads[decoder_i-1] = pdecoder;
 				
@@ -115,7 +117,7 @@ public class DecoderFactory {
 		FileUtility.flush_lzf(t_writer_test);
 		FileUtility.close_write_file(t_writer_test);
 	
-		DecoderThread pdecoder =new DecoderThread(this.p_grammar_factories, this.have_lm_model, this.p_l_feat_functions, this.l_default_nonterminals, this.p_symbol, 
+		DecoderThread pdecoder =new DecoderThread(this.p_grammar_factories, this.have_lm_model, this.p_l_feat_functions, this.l_default_nonterminals, this.p_symbolTable, 
 				cur_test_file, cur_nbest_file,	start_sent_id);
 		parallel_threads[        decoder_i-1] = pdecoder;
 		

@@ -17,8 +17,8 @@
  */
 package joshua.decoder.ff.lm.distributed_lm;
 
+import joshua.corpus.SymbolTable;
 import joshua.decoder.Support;
-import joshua.decoder.Symbol;
 import joshua.decoder.ff.lm.LMGrammar;
 import joshua.util.FileUtility;
 
@@ -42,8 +42,8 @@ public class LMGrammarRemote  extends LMGrammar {
 	//LMClient p_suffix_client=null;
 	
 	//!!! we assume both suffix and lm are remoted, if one is remoted
-	public LMGrammarRemote(Symbol psymbol, int order, String f_server_lists, int num_servers){
-		super(psymbol, order);
+	public LMGrammarRemote(SymbolTable psymbolTable, int order, String f_server_lists, int num_servers){
+		super(psymbolTable, order);
 	
 		System.out.println("use remote suffix and lm server");
 		String[] hosts =new String[num_servers];

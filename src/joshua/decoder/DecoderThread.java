@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import joshua.corpus.SymbolTable;
 import joshua.decoder.chart_parser.Chart;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.tm.Grammar;
@@ -34,7 +35,8 @@ public class DecoderThread  extends Thread {
 	private boolean have_lm_model = false;
 	private ArrayList<FeatureFunction> p_l_feat_functions  = null;
 	private ArrayList<Integer> l_default_nonterminals = null;
-	private Symbol p_symbol = null;
+	//private Symbol p_symbol = null;
+	private SymbolTable p_symbolTable = null;
 	
 	//more test set specific
 	String          test_file;
@@ -46,23 +48,23 @@ public class DecoderThread  extends Thread {
 	
 	private static final Logger logger = Logger.getLogger(DecoderThread.class.getName());
 	
-	public DecoderThread(GrammarFactory[] grammar_facories,  boolean have_lm_model_, ArrayList<FeatureFunction> l_feat_functions , ArrayList<Integer> l_default_nonterminals_ , Symbol symbol,
+	public DecoderThread(GrammarFactory[] grammar_facories,  boolean have_lm_model_, ArrayList<FeatureFunction> l_feat_functions , ArrayList<Integer> l_default_nonterminals_ , SymbolTable symbolTable,
 			String test_file_in, String nbest_file_in,	int start_sent_id_in) {
 		this.p_grammar_factories = 	grammar_facories;
 		this.have_lm_model =  have_lm_model_;
 		this.p_l_feat_functions = l_feat_functions;
 		this.l_default_nonterminals = l_default_nonterminals_;
-		this.p_symbol = symbol;
+		this.p_symbolTable = symbolTable;
 		
 		this.test_file       = test_file_in;
 		this.nbest_file      = nbest_file_in;
 		this.start_sent_id   = start_sent_id_in;
 		
-		this.kbest_extractor = new KbestExtraction(this.p_symbol);
+		this.kbest_extractor = new KbestExtraction(this.p_symbolTable);
 		
 		if (JoshuaConfiguration.save_disk_hg) {
 			//this.p_disk_hg = new DiskHyperGraph(this.p_symbol, JoshuaDecoder.haveLMFeature(this.p_l_feat_functions).getFeatureID());
-			this.p_disk_hg = new DiskHyperGraph(this.p_symbol, JoshuaDecoder.haveLMFeature(this.p_l_feat_functions).getFeatureID(), true, p_l_feat_functions);//always store model cost
+			this.p_disk_hg = new DiskHyperGraph(this.p_symbolTable, JoshuaDecoder.haveLMFeature(this.p_l_feat_functions).getFeatureID(), true, p_l_feat_functions);//always store model cost
 			this.p_disk_hg.init_write(	this.nbest_file + ".hg.items",  JoshuaConfiguration.forest_pruning,  JoshuaConfiguration.forest_pruning_threshold);
 		}
 	}
@@ -125,7 +127,7 @@ public class DecoderThread  extends Thread {
 	private void translate(GrammarFactory[]  grammarFactories, ArrayList<FeatureFunction> models, String sentence, ArrayList<Integer>   defaultNonterminals,
 		BufferedWriter out, int  sentenceID, int   topN, DiskHyperGraph diskHyperGraph, KbestExtraction kbestExtractor) {
 		long  start = System.currentTimeMillis();
-		int[] sentence_numeric = this.p_symbol.addTerminalSymbols(sentence);
+		int[] sentence_numeric = this.p_symbolTable.getIDs(sentence);
 		
 		Integer[] input = new Integer[sentence_numeric.length];
 		for (int i = 0; i < sentence_numeric.length; i++) {
@@ -142,7 +144,7 @@ public class DecoderThread  extends Thread {
 		}
 		
 		//seeding: the chart only sees the grammars, not the grammarFactories
-		Chart chart  = new Chart(inputLattice, models,	this.p_symbol, sentenceID,	grammars, defaultNonterminals, JoshuaConfiguration.untranslated_owner, this.have_lm_model);//TODO: owner		
+		Chart chart  = new Chart(inputLattice, models,	this.p_symbolTable, sentenceID,	grammars, defaultNonterminals, JoshuaConfiguration.untranslated_owner, this.have_lm_model);//TODO: owner		
 		if (logger.isLoggable(Level.FINER)) 
 			logger.finer("after seed, time: " + (System.currentTimeMillis() - start) / 1000);
 		

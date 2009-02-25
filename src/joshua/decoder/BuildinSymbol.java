@@ -1,5 +1,6 @@
 package joshua.decoder;
 
+import java.util.Collection;
 import java.util.HashMap;
 
 
@@ -18,8 +19,13 @@ public class BuildinSymbol extends DefaultSymbol {
 		}
 	}
 
+	public int addTerminal(String terminal) {
+		return getID(terminal);
+	}
+	
 	/** Get int for string (initial, or recover) */
-	public int addTerminalSymbol(String str){
+	public int getID(String str) {
+	//public int addTerminalSymbol(String str){
 		Integer res_id = (Integer)str_2_num_tbl.get(str);
 		if (null != res_id) { // already have this symbol
 			if (isNonterminal(res_id)) {
@@ -41,7 +47,8 @@ public class BuildinSymbol extends DefaultSymbol {
 	}
 
 
-	protected String getTerminalWord(int id){
+	public String getTerminal(int id) {
+	//protected String getTerminalWord(int id){
 		 String res = (String)num_2_str_tbl.get(id);
 		 if(res == null){
 				System.out.println("try to query the string for non exist id, must exit, id is " + id);
@@ -50,6 +57,19 @@ public class BuildinSymbol extends DefaultSymbol {
 		
 		 return  res;
 	 }
+
+	public Collection<Integer> getAllIDs() {
+		return num_2_str_tbl.keySet();
+	}
 	
+	public String getUnknownWord() {
+		//TODO Implement this method
+		throw new RuntimeException("Method not yet implemented");
+	}
+
+	public int getUnknownWordID() {
+		//TODO Implement this method
+		throw new RuntimeException("Method not yet implemented");	
+	}
 	
 }

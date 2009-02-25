@@ -3,8 +3,8 @@ package joshua.decoder.ff.tm;
 import java.util.ArrayList;
 import java.util.Comparator;
 
+import joshua.corpus.SymbolTable;
 import joshua.decoder.Support;
-import joshua.decoder.Symbol;
 import joshua.decoder.ff.FeatureFunction;
 
 
@@ -23,7 +23,7 @@ public class MemoryBasedRule extends Rule {
 	private float est_cost = 0;
 	
 	//TODO: this contructor should be moved to highest level of the Grammar hiearchy
-	public MemoryBasedRule(Symbol p_symbol, ArrayList<FeatureFunction> p_l_models, String nonterminalRegexp_, String nonterminalReplaceRegexp_, int r_id, String line, int owner_in) {
+	public MemoryBasedRule(SymbolTable p_symbolTable, ArrayList<FeatureFunction> p_l_models, String nonterminalRegexp_, String nonterminalReplaceRegexp_, int r_id, String line, int owner_in) {
 		this.rule_id = r_id;
 		this.owner   = owner_in;
 		this.statelesscost = 0;
@@ -32,7 +32,7 @@ public class MemoryBasedRule extends Rule {
 		if (fds.length != 4) {
 			Support.write_log_line("rule line does not have four fds; " + line, Support.ERROR);
 		}			
-		this.lhs = p_symbol.addNonTerminalSymbol(BatchGrammar.replace_french_non_terminal(nonterminalReplaceRegexp_, fds[0]));
+		this.lhs = p_symbolTable.addNonterminal(BatchGrammar.replace_french_non_terminal(nonterminalReplaceRegexp_, fds[0]));
 		
 		int arity = 0;
 		String[] french_tem = fds[1].split("\\s+");
@@ -41,9 +41,9 @@ public class MemoryBasedRule extends Rule {
 			if (BatchGrammar.is_non_terminal(nonterminalRegexp_, french_tem[i])) {
 				arity++;
 				//french[i]= Symbol.add_non_terminal_symbol(TMGrammar_Memory.replace_french_non_terminal(french_tem[i]));
-				this.french[i] = p_symbol.addNonTerminalSymbol(french_tem[i]);//when storing hyper-graph, we need this
+				this.french[i] = p_symbolTable.addNonterminal(french_tem[i]);//when storing hyper-graph, we need this
 			} else {
-				this.french[i] = p_symbol.addTerminalSymbol(french_tem[i]);
+				this.french[i] = p_symbolTable.addTerminal(french_tem[i]);
 			}
 		}
 		this.arity = arity;
@@ -53,9 +53,9 @@ public class MemoryBasedRule extends Rule {
 		this.english = new int[english_tem.length];
 		for (int i = 0; i < english_tem.length; i++) {
 			if (BatchGrammar.is_non_terminal(nonterminalRegexp_, english_tem[i])) {
-				this.english[i] = p_symbol.addNonTerminalSymbol(english_tem[i]);
+				this.english[i] = p_symbolTable.addNonterminal(english_tem[i]);
 			} else {
-				this.english[i] = p_symbol.addTerminalSymbol(english_tem[i]);
+				this.english[i] = p_symbolTable.addTerminal(english_tem[i]);
 			}
 		}
 		

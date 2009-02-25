@@ -17,10 +17,10 @@
  */
 package joshua.decoder.hypergraph;
 
+import joshua.corpus.SymbolTable;
 import joshua.decoder.BuildinSymbol;
 import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.JoshuaDecoder;
-import joshua.decoder.Symbol;
 import joshua.decoder.ff.FFDPState;
 import joshua.decoder.ff.FFTransitionResult;
 import joshua.decoder.ff.FeatureFunction;
@@ -90,7 +90,7 @@ public class DiskHyperGraph {
     
     static String RULE_TBL_SEP =" -LZF- ";
     
-    Symbol p_symbol = null;
+    SymbolTable p_symbolTable = null;
    
 	//ArrayList<FeatureFunction> p_l_models;
     //ArrayList<Integer> p_l_statefull_feat_ids;
@@ -106,7 +106,7 @@ public class DiskHyperGraph {
 	protected String nonterminalReplaceRegexp = "[\\[\\]\\,0-9]+";
 	
     public static void main(String[] args) {
-    	Symbol psymbol = new BuildinSymbol(null);
+    	SymbolTable psymbol = new BuildinSymbol(null);
     
     	
 		String f_hypergraphs="C:\\Users\\zli\\Documents\\mt03.src.txt.ss.nbest.hg.items";
@@ -138,19 +138,19 @@ public class DiskHyperGraph {
 		System.out.println("perceptron: " + (System.currentTimeMillis()-start_time)/1000);	
 	}
 	
-    public DiskHyperGraph(Symbol symbol_, int lm_feat_id_){
-    	this.p_symbol = symbol_;
+    public DiskHyperGraph(SymbolTable symbolTable, int lm_feat_id_){
+    	this.p_symbolTable = symbolTable;
     	this.lm_feat_id = lm_feat_id_;
-    	this.UNTRANS_OWNER_SYM_ID = this.p_symbol.addTerminalSymbol(JoshuaConfiguration.untranslated_owner);
+    	this.UNTRANS_OWNER_SYM_ID = this.p_symbolTable.addTerminal(JoshuaConfiguration.untranslated_owner);
     	this.store_model_costs =false;
     }
     
     
     //for saving purpose, one need to specify the l_feature_funcitons, for reading purpose, one do not need to provide the list
-    public DiskHyperGraph(Symbol symbol_, int lm_feat_id_, boolean store_model_costs_, ArrayList<FeatureFunction> l_feature_funcitons_){
-    	this.p_symbol = symbol_;
+    public DiskHyperGraph(SymbolTable symbolTable, int lm_feat_id_, boolean store_model_costs_, ArrayList<FeatureFunction> l_feature_funcitons_){
+    	this.p_symbolTable = symbolTable;
     	this.lm_feat_id = lm_feat_id_;
-    	this.UNTRANS_OWNER_SYM_ID = this.p_symbol.addTerminalSymbol(JoshuaConfiguration.untranslated_owner);
+    	this.UNTRANS_OWNER_SYM_ID = this.p_symbolTable.addTerminal(JoshuaConfiguration.untranslated_owner);
 		this.store_model_costs = store_model_costs_;
 		this.l_feature_funcitons = l_feature_funcitons_;
     }
@@ -159,7 +159,7 @@ public class DiskHyperGraph {
 	public void init_write(String  f_items, boolean use_forest_pruning, double  threshold) {
 		this.writer_out = FileUtility.handle_null_file(f_items);
 		if (use_forest_pruning) {
-			this.forest_pruner = new HyperGraphPruning(p_symbol, true, threshold, threshold, 1, 1);//TODO
+			this.forest_pruner = new HyperGraphPruning(p_symbolTable, true, threshold, threshold, 1, 1);//TODO
 		}
 	}
 	
@@ -185,11 +185,11 @@ public class DiskHyperGraph {
 			}
     		String[] wrds = line.split("\\s+");
     		int rule_id = new Integer(wrds[0]);
-    		int default_owner = this.p_symbol.addTerminalSymbol(wrds[1]);
+    		int default_owner = this.p_symbolTable.addTerminal(wrds[1]);
     		//Rule rule = new MemoryBasedTMGrammar.Rule_Memory(rule_id, fds[1], default_owner);//TODO: the stateless cost if not correct due to estimate_rule
     		
     		//stateless cost is not properly set, so cannot extract individual features during kbest extraction
-    		Rule rule = new MemoryBasedRule(p_symbol, null, nonterminalRegexp, nonterminalReplaceRegexp, rule_id, fds[1], default_owner);
+    		Rule rule = new MemoryBasedRule(p_symbolTable, null, nonterminalRegexp, nonterminalReplaceRegexp, rule_id, fds[1], default_owner);
 //    		Rule rule = new MemoryBasedRule(p_symbol, p_l_models, nonterminalRegexp, nonterminalReplaceRegexp, rule_id, fds[1], default_owner);
     		tbl_associated_grammar.put(rule_id, rule);
     	}
@@ -307,8 +307,8 @@ public class DiskHyperGraph {
     }
 	
     private void save_rule(BufferedWriter out_rules, Rule rl, int rule_id){
-    	String str_rule = rl.toString(this.p_symbol);
-		String owner = this.p_symbol.getWord(rl.owner);
+    	String str_rule = rl.toString(this.p_symbolTable);
+		String owner = this.p_symbolTable.getWord(rl.owner);
 		//rule_id owner RULE_TBL_SEP rule
 		FileUtility.write_lzf(out_rules, rule_id +" " + owner  + RULE_TBL_SEP  +str_rule  +"\n");//note (inverse): rule-id RULE_TBL_SEP rule
 	}
@@ -325,7 +325,7 @@ public class DiskHyperGraph {
 		//line: ITEM_TAG, item id, i, j, lhs, num_deductions, ITEM_STATE_TAG, tbl_state;
 		res.append(ITEM_TAG); res.append(" "); res.append((Integer)tbl_item_2_id.get(item)); res.append(" ");
 		res.append(item.i);	res.append(" "); res.append(item.j);//i,j
-		res.append(" "); res.append(this.p_symbol.getWord(item.lhs)); res.append(" ");//lhs
+		res.append(" "); res.append(this.p_symbolTable.getWord(item.lhs)); res.append(" ");//lhs
 		
 		if(item.l_deductions==null)//TODO
 			res.append(0);
@@ -337,7 +337,7 @@ public class DiskHyperGraph {
 		if(item.getTblFeatDPStates()!=null)
 			//res.append(get_string_from_state_tbl(p_symbol, p_l_statefull_feat_ids, item.getTblFeatDPStates()));
 			//res.append(get_string_from_state_tbl(p_symbol, p_l_models, item.getTblFeatDPStates()));
-			res.append(get_string_from_state_tbl(p_symbol, this.lm_feat_id, item.getTblFeatDPStates()));
+			res.append(get_string_from_state_tbl(p_symbolTable, this.lm_feat_id, item.getTblFeatDPStates()));
 		else
 			res.append(NULL_ITEM_STATE);
 		res.append("\n");		
@@ -365,14 +365,14 @@ public class DiskHyperGraph {
 		int item_id = new Integer(wrds1[1]);
 		int i = new Integer(wrds1[2]);
 		int j = new Integer(wrds1[3]);
-		int lhs = this.p_symbol.addNonTerminalSymbol(wrds1[4]);
+		int lhs = this.p_symbolTable.addNonterminal(wrds1[4]);
 		int num_deductions = new Integer(wrds1[5]);
 		
 		HashMap<Integer, FFDPState> tbl_dpstates = null;//item state: signature (created from HashMap tbl_states)
 		if(fds[1].compareTo(NULL_ITEM_STATE)!=0){
 			//tbl_dpstates = get_state_tbl_from_string(p_symbol, p_l_models, fds[1]);
 			//tbl_dpstates = get_state_tbl_from_string(p_symbol, p_l_statefull_feat_ids, fds[1]);
-			tbl_dpstates = get_state_tbl_from_string(p_symbol, this.lm_feat_id, fds[1]);
+			tbl_dpstates = get_state_tbl_from_string(p_symbolTable, this.lm_feat_id, fds[1]);
 		}	
 		
 		ArrayList<HyperEdge> l_deductions = null;
@@ -394,7 +394,7 @@ public class DiskHyperGraph {
 	
 	
 	
-	public static String get_string_from_state_tbl(Symbol p_symbol, ArrayList<FeatureFunction> p_l_models, HashMap<Integer, FFDPState> tbl){
+	public static String get_string_from_state_tbl(SymbolTable p_symbolTable, ArrayList<FeatureFunction> p_l_models, HashMap<Integer, FFDPState> tbl){
 		StringBuffer res = new StringBuffer();
 		boolean first=true;
 		for (FeatureFunction ff : p_l_models){//for each model
@@ -404,7 +404,7 @@ public class DiskHyperGraph {
 				else
 					res.append(HGNode.FF_SIG_SEP);
                 FFDPState dpstate = (FFDPState)tbl.get(ff.getFeatureID());
-                res.append(dpstate.getSignature(p_symbol, false));
+                res.append(dpstate.getSignature(p_symbolTable, false));
             }
 		}
 		return res.toString();	
@@ -412,14 +412,14 @@ public class DiskHyperGraph {
 	
 		
 	//the state_str does not have lhs, it contain the original words (not symbol id)
-	public static HashMap<Integer, FFDPState> get_state_tbl_from_string(Symbol p_symbol, ArrayList<FeatureFunction> p_l_models, String state_str){
+	public static HashMap<Integer, FFDPState> get_state_tbl_from_string(SymbolTable p_symbolTable, ArrayList<FeatureFunction> p_l_models, String state_str){
 		HashMap<Integer, FFDPState> res =new HashMap<Integer, FFDPState>();
 		String[] states = state_str.split(HGNode.FF_SIG_SEP);
 		int i=0;
 		for (FeatureFunction ff : p_l_models){//for each model
 			if(ff.isStateful()){
 				if(ff instanceof LMFeatureFunction){
-					FFDPState ffdps = new LMFFDPState(p_symbol, states[i++]);
+					FFDPState ffdps = new LMFFDPState(p_symbolTable, states[i++]);
 					res.put(ff.getFeatureID(), ffdps);
 				}else{
 					System.out.println("unimplemented FFDPState deserialization method");
@@ -432,16 +432,16 @@ public class DiskHyperGraph {
 	
 	
 //######	assume the only stateful feature is lm feature
-	public static String get_string_from_state_tbl(Symbol p_symbol, int  lm_feat_id, HashMap<Integer, FFDPState> tbl){
+	public static String get_string_from_state_tbl(SymbolTable p_symbolTable, int  lm_feat_id, HashMap<Integer, FFDPState> tbl){
 		StringBuffer res = new StringBuffer();		 
 	    FFDPState dpstate = (FFDPState)tbl.get(lm_feat_id);
-	    res.append(dpstate.getSignature(p_symbol,true));
+	    res.append(dpstate.getSignature(p_symbolTable,true));
 		return res.toString();	
 	}
 
-	public static HashMap<Integer, FFDPState> get_state_tbl_from_string(Symbol p_symbol, int lm_feat_id, String state_str){
+	public static HashMap<Integer, FFDPState> get_state_tbl_from_string(SymbolTable p_symbolTable, int lm_feat_id, String state_str){
 		HashMap<Integer, FFDPState> res =new HashMap<Integer, FFDPState>();
-		FFDPState ffdps = new LMFFDPState(p_symbol, state_str);//assume the only stateful feature is lm feature
+		FFDPState ffdps = new LMFFDPState(p_symbolTable, state_str);//assume the only stateful feature is lm feature
 		res.put(lm_feat_id, ffdps);			
 		return res;
 	}
@@ -486,8 +486,8 @@ public class DiskHyperGraph {
 		res.append(" ");
 		res.append(rule_id);
 		if (rule_id == BatchGrammar.OOV_RULE_ID) {
-			res.append(" "); res.append(this.p_symbol.getWord(deduction_rule.lhs));
-			res.append(" "); res.append(this.p_symbol.getWords(deduction_rule.english));
+			res.append(" "); res.append(this.p_symbolTable.getWord(deduction_rule.lhs));
+			res.append(" "); res.append(this.p_symbolTable.getWords(deduction_rule.english));
 		}
 		res.append("\n");
 		
@@ -556,8 +556,8 @@ public class DiskHyperGraph {
 				}
 				//System.out.println("nonoov rule str: " + str_rule + "; arity: " + rule.arity);
 			}else{
-				int lhs = this.p_symbol.addNonTerminalSymbol(fds[3+num_ant_items]);
-				int french_symbol = this.p_symbol.addTerminalSymbol(fds[4+num_ant_items]);
+				int lhs = this.p_symbolTable.addNonterminal(fds[3+num_ant_items]);
+				int french_symbol = this.p_symbolTable.addTerminal(fds[4+num_ant_items]);
 				//rule = new MemoryBasedTMGrammar.Rule_Memory(lhs, french_symbol, Chart.UNTRANS_SYM_ID);//TODO: change owner
 				
 				//stateless cost is not properly set, so cannot extract individual features during kbest extraction

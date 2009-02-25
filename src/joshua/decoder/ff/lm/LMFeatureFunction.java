@@ -17,9 +17,9 @@
  */
 package joshua.decoder.ff.lm;
 
+import joshua.corpus.SymbolTable;
 import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.Support;
-import joshua.decoder.Symbol;
 import joshua.decoder.ff.DefaultStatefulFF;
 import joshua.decoder.ff.FFDPState;
 import joshua.decoder.ff.StatefulFFTransitionResult;
@@ -65,15 +65,15 @@ public class LMFeatureFunction extends DefaultStatefulFF {
 	private int       ngramOrder = 3;//we always use this order of ngram, though the LMGrammar may provide higher order probability
 	//boolean add_boundary=false; //this is needed unless the text already has <s> and </s>
 	
-	private Symbol p_symbol = null;
+	private SymbolTable p_symbolTable = null;
 	
-	public LMFeatureFunction(int feat_id_, int ngram_order, Symbol psymbol, LMGrammar lm_grammar, double weight_) {
+	public LMFeatureFunction(int feat_id_, int ngram_order, SymbolTable psymbol, LMGrammar lm_grammar, double weight_) {
 		super(weight_, feat_id_);
 		this.ngramOrder = ngram_order;
 		this.lmGrammar  = lm_grammar;
-		this.p_symbol = psymbol;
-		this.START_SYM_ID = psymbol.addTerminalSymbol(START_SYM);
-		this.STOP_SYM_ID = psymbol.addTerminalSymbol(STOP_SYM);		
+		this.p_symbolTable = psymbol;
+		this.START_SYM_ID = psymbol.addTerminal(START_SYM);
+		this.STOP_SYM_ID = psymbol.addTerminal(STOP_SYM);		
 	}
 	
 	/*the transition cost for LM: sum of the costs of the new ngrams created
@@ -117,13 +117,13 @@ public class LMFeatureFunction extends DefaultStatefulFF {
 		
 		for (int c = 0; c < en_words.length; c++) {
 			int c_id = en_words[c];
-			if (p_symbol.isNonterminal(c_id)) {
+			if (p_symbolTable.isNonterminal(c_id)) {
 				if (null == previous_states) {
 					System.out.println("LMModel>>lookup_words1_equv_state: null previous_states");
 					System.exit(1);
 				}
 				
-				int     index     = p_symbol.getEngNonTerminalIndex(c_id);
+				int     index     = p_symbolTable.getTargetNonterminalIndex(c_id);
 				LMFFDPState state     = (LMFFDPState) previous_states.get(index);
 				int[]   l_context = state.getLeftLMStateWords();
 				int[]   r_context = state.getRightLMStateWords();
@@ -254,7 +254,7 @@ public class LMFeatureFunction extends DefaultStatefulFF {
 				consider_incomplete_ngrams = false;//for the LM bonus function: this simply means the right state will not be considered at all because all the ngrams in right-context will be incomplete
 				words.clear();
 				skip_start = false;
-			} else*/ if (p_symbol.isNonterminal(c_wrd)) {
+			} else*/ if (p_symbolTable.isNonterminal(c_wrd)) {
 				estimate += score_chunk(
 					words, consider_incomplete_ngrams, skip_start);
 				consider_incomplete_ngrams = true;

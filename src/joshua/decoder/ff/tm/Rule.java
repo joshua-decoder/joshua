@@ -20,9 +20,9 @@ package joshua.decoder.ff.tm;
 import java.util.ArrayList;
 import java.util.Map;
 
+import joshua.corpus.SymbolTable;
 import joshua.decoder.ff.FeatureFunction;
 
-import joshua.decoder.Symbol;
 import joshua.util.sentence.Vocabulary;
 
 
@@ -229,14 +229,14 @@ public class Rule {
 		return this.cachedToString;
 	}
 	
-	public String toString(Symbol p_symbol) {
+	public String toString(SymbolTable p_symbolTable) {
 		if (null == this.cachedToString) {
 			StringBuffer sb = new StringBuffer("[");
-			sb.append(p_symbol.getWord(this.lhs));
+			sb.append(p_symbolTable.getWord(this.lhs));
 			sb.append("] ||| ");
-			sb.append(p_symbol.getWords(this.french));
+			sb.append(p_symbolTable.getWords(this.french));
 			sb.append(" ||| ");
-			sb.append(p_symbol.getWords(this.english));
+			sb.append(p_symbolTable.getWords(this.english));
 			sb.append(" |||");
 			for (int i = 0; i < this.feat_scores.length; i++) {
 				sb.append(String.format(" %.4f", this.feat_scores[i]));
@@ -265,11 +265,11 @@ public class Rule {
 	}
 	
 	
-    public String toStringWithoutFeatScores(Symbol p_symbol){
+    public String toStringWithoutFeatScores(SymbolTable p_symbolTable){
             StringBuffer res = new StringBuffer();
-            res.append("["); res.append(p_symbol.getWord(lhs)); res.append("] ||| ");
-            res.append(p_symbol.getWords(french)); res.append(" ||| ");
-            res.append(p_symbol.getWords(english));
+            res.append("["); res.append(p_symbolTable.getWord(lhs)); res.append("] ||| ");
+            res.append(p_symbolTable.getWords(french)); res.append(" ||| ");
+            res.append(p_symbolTable.getWords(english));
             return res.toString();
     }
 }

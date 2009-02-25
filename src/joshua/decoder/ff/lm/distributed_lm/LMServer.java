@@ -17,10 +17,10 @@
  */
 package joshua.decoder.ff.lm.distributed_lm;
 
+import joshua.corpus.SymbolTable;
 import joshua.decoder.BuildinSymbol;
 import joshua.decoder.SrilmSymbol;
 import joshua.decoder.Support;
-import joshua.decoder.Symbol;
 import joshua.decoder.ff.lm.LMGrammar;
 import joshua.decoder.ff.lm.buildin_lm.LMGrammarJAVA;
 import joshua.decoder.ff.lm.srilm.LMGrammarSRILM;
@@ -70,7 +70,7 @@ public class LMServer {
 	static int g_n_request   = 0;
 	static int g_n_cache_hit = 0;
 	
-	static Symbol p_symbol;
+	static SymbolTable p_symbolTable;
 	
 	public static void main(String[] args) {
 		if (args.length != 1) {
@@ -132,14 +132,14 @@ public class LMServer {
 				System.out.println("use local srilm, we cannot use suffix stuff");
 				System.exit(0);
 			}
-			p_symbol = new SrilmSymbol(remote_symbol_tbl, g_lm_order);
-			p_lm = new LMGrammarSRILM((SrilmSymbol)p_symbol, g_lm_order, lm_file);
+			p_symbolTable = new SrilmSymbol(remote_symbol_tbl, g_lm_order);
+			p_lm = new LMGrammarSRILM((SrilmSymbol)p_symbolTable, g_lm_order, lm_file);
 			
 		} else {
 			//p_lm = new LMGrammar_JAVA(g_lm_order, lm_file, use_left_euqivalent_state);
 			//big bug: should load the consistent symbol files
-			p_symbol = new BuildinSymbol(remote_symbol_tbl);
-			p_lm = new LMGrammarJAVA((BuildinSymbol)p_symbol, g_lm_order, lm_file, use_left_euqivalent_state, use_right_euqivalent_state);
+			p_symbolTable = new BuildinSymbol(remote_symbol_tbl);
+			p_lm = new LMGrammarJAVA((BuildinSymbol)p_symbolTable, g_lm_order, lm_file, use_left_euqivalent_state, use_right_euqivalent_state);
 		}
 	}
 	
