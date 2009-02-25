@@ -41,12 +41,12 @@ public final class ArityPhrasePenaltyFF extends DefaultStatelessFF {
 	
 	
 	public double estimate(final Rule rule) {
-		if (this.owner == rule.owner && this.min_arity <= rule.arity && this.max_arity >= rule.arity) {
+		if (this.owner == rule.owner
+		&& this.min_arity <= rule.arity
+		&& this.max_arity >= rule.arity) {
 			return ALPHA;
 		} else {
 			return 0.0;
 		}
 	}
-
-
 }

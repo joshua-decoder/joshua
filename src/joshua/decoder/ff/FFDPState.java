@@ -27,7 +27,7 @@ import joshua.decoder.Symbol;
  * @version $LastChangedDate: 2008-07-28 18:44:45 -0400 (Mon, 28 Jul 2008) $
  */
 
-public interface  FFDPState {
+public interface FFDPState {
 	public String getSignature(boolean force_recompute);
 	public String getSignature(Symbol p_symbol, boolean force_recompute);
 	

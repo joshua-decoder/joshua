@@ -27,16 +27,16 @@ package joshua.decoder.ff;
  * @version $LastChangedDate: 2008-07-28 18:44:45 -0400 (Mon, 28 Jul 2008) $
  */
 public interface FFTransitionResult {
-	public double getTransitionCost();
 	
-	public void putTransitionCost(double transition_cost_);
+//===============================================================
+// Attributes
+//===============================================================
+	public double getTransitionCost();
+	public void   putTransitionCost(double transition_cost);
 	
 	public FFDPState getStateForItem();
-	
-	public void putStateForItem(FFDPState map);
+	public void      putStateForItem(FFDPState map);
 	
 	public double getFutureCostEstimation();
-	
-	public void putFutureCostEstimation(double cost);
-
+	public void   putFutureCostEstimation(double cost);
 }

@@ -27,23 +27,23 @@ package joshua.decoder.ff;
 
 
 public abstract class DefaultFFTransitionResult implements FFTransitionResult {
-	private double transition_cost = 0.0;;
-	private double future_cost_estimation = 0.0;
+	private double transitionCost       = 0.0;
+	private double futureCostEstimation = 0.0;
 
 	public double getTransitionCost() {
-		return this.transition_cost;
+		return this.transitionCost;
 	}
-		
-	public void putTransitionCost(final double transition_cost_) {
-		this.transition_cost = transition_cost_;
+	
+	public void putTransitionCost(final double transition_cost) {
+		this.transitionCost = transition_cost;
 	}
 	
 	public double getFutureCostEstimation() {
-		return this.future_cost_estimation;
+		return this.futureCostEstimation;
 	}
 	
-	public void putFutureCostEstimation(double cost) {
-		this.future_cost_estimation = cost;
+	public void putFutureCostEstimation(final double cost) {
+		this.futureCostEstimation = cost;
 	}
 
 }
