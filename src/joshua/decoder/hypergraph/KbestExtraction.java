@@ -48,15 +48,20 @@ public class KbestExtraction {
 	@SuppressWarnings("unused")
 	private static final Logger logger = Logger.getLogger(KbestExtraction.class.getName());
 	
-	HashMap<HGNode,VirtualItem> tbl_virtual_items = new HashMap<HGNode,VirtualItem>();
-	//Symbol p_symbol = null;
-	SymbolTable p_symbolTable = null;
+	private final HashMap<HGNode,VirtualItem> tbl_virtual_items = new HashMap<HGNode,VirtualItem>();
+	private final SymbolTable p_symbolTable;// = null;
+	private final boolean performSanityCheck;
 	
 	static String root_sym = "ROOT";
 	static int root_id;//TODO: bug
 	
-	public KbestExtraction(SymbolTable symbolTable){
-		p_symbolTable = symbolTable;
+	public KbestExtraction(SymbolTable symbolTable) {
+		this(symbolTable, true);
+	}
+	
+	public KbestExtraction(SymbolTable symbolTable, boolean performSanityCheck){
+		this.p_symbolTable = symbolTable;
+		this.performSanityCheck = performSanityCheck;
 		root_id = p_symbolTable.addNonterminal(root_sym);
 	}
 	
@@ -210,19 +215,21 @@ public class KbestExtraction {
 				tem_sum += model_cost[k]*l_models.get(k).getWeight();
 			}
 			//sanity check
-			if (Math.abs(cur.cost - tem_sum) > 1e-2) {
-				System.out.println("In nbest extraction, Cost does not match; cur.cost: " + cur.cost + "; temsum: " +tem_sum);
-				for (int k = 0; k < model_cost.length; k++) {
-					System.out.println("model weight: " + l_models.get(k).getWeight() + "; cost: " +model_cost[k]);
+			if (performSanityCheck) {
+				if (Math.abs(cur.cost - tem_sum) > 1e-2) {
+					System.out.println("In nbest extraction, Cost does not match; cur.cost: " + cur.cost + "; temsum: " +tem_sum);
+					for (int k = 0; k < model_cost.length; k++) {
+						System.out.println("model weight: " + l_models.get(k).getWeight() + "; cost: " +model_cost[k]);
+					}
+					System.exit(1);
 				}
-				System.exit(1);
 			}
 		}
 		
 		//####combined model cost
 		if(add_combined_score==true)			
 			str_hyp.append(String.format(" ||| %.3f",-cur.cost));
-		
+		System.err.println(str_hyp.toString());
 		return str_hyp.toString();
 	}
 		

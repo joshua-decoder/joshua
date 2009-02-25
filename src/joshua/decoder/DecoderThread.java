@@ -15,6 +15,7 @@ import joshua.decoder.hypergraph.DiskHyperGraph;
 import joshua.decoder.hypergraph.HyperGraph;
 import joshua.decoder.hypergraph.KbestExtraction;
 import joshua.lattice.Lattice;
+import joshua.oracle.OracleExtractor;
 import joshua.util.FileUtility;
 
 
@@ -31,26 +32,26 @@ import joshua.util.FileUtility;
 
 public class DecoderThread  extends Thread {
 	//these variables may be the same across all threads (e.g., just copy from DecoderFactory), or differ from thread to thread 
-	private GrammarFactory[] p_grammar_factories = null;
-	private boolean have_lm_model = false;
-	private ArrayList<FeatureFunction> p_l_feat_functions  = null;
-	private ArrayList<Integer> l_default_nonterminals = null;
-	//private Symbol p_symbol = null;
-	private SymbolTable p_symbolTable = null;
+	private final GrammarFactory[] p_grammar_factories;// = null;
+	private final boolean have_lm_model;// = false;
+	private final ArrayList<FeatureFunction> p_l_feat_functions;//  = null;
+	private final ArrayList<Integer> l_default_nonterminals;// = null;
+	private final SymbolTable p_symbolTable;// = null;
 	
 	//more test set specific
-	String          test_file;
-	String          nbest_file;
-	int             start_sent_id; //start sent id
-	KbestExtraction kbest_extractor;
-	DiskHyperGraph  p_disk_hg;
+	private final String          test_file;
+	private final String          oracle_file;
+	        final String          nbest_file;
+	private final int             start_sent_id; //start sent id
+	private final KbestExtraction kbest_extractor;
+	              DiskHyperGraph  p_disk_hg;
 	
 	
 	private static final Logger logger = Logger.getLogger(DecoderThread.class.getName());
 	
-	public DecoderThread(GrammarFactory[] grammar_facories,  boolean have_lm_model_, ArrayList<FeatureFunction> l_feat_functions , ArrayList<Integer> l_default_nonterminals_ , SymbolTable symbolTable,
-			String test_file_in, String nbest_file_in,	int start_sent_id_in) {
-		this.p_grammar_factories = 	grammar_facories;
+	public DecoderThread(GrammarFactory[] grammar_factories,  boolean have_lm_model_, ArrayList<FeatureFunction> l_feat_functions , ArrayList<Integer> l_default_nonterminals_ , SymbolTable symbolTable,
+			String test_file_in, String nbest_file_in, String oracle_file_in, int start_sent_id_in) {
+		this.p_grammar_factories = 	grammar_factories;
 		this.have_lm_model =  have_lm_model_;
 		this.p_l_feat_functions = l_feat_functions;
 		this.l_default_nonterminals = l_default_nonterminals_;
@@ -58,9 +59,11 @@ public class DecoderThread  extends Thread {
 		
 		this.test_file       = test_file_in;
 		this.nbest_file      = nbest_file_in;
+		this.oracle_file     = oracle_file_in;
 		this.start_sent_id   = start_sent_id_in;
 		
-		this.kbest_extractor = new KbestExtraction(this.p_symbolTable);
+		boolean performKBestSanityCheck = (nbest_file_in==null) ? true : false;
+		this.kbest_extractor = new KbestExtraction(this.p_symbolTable, performKBestSanityCheck);
 		
 		if (JoshuaConfiguration.save_disk_hg) {
 			//this.p_disk_hg = new DiskHyperGraph(this.p_symbol, JoshuaDecoder.haveLMFeature(this.p_l_feat_functions).getFeatureID());
@@ -79,8 +82,9 @@ public class DecoderThread  extends Thread {
 	public void decode_a_file() {
 		BufferedReader t_reader_test = FileUtility.getReadFileStream(test_file);
 		BufferedWriter t_writer_nbest =	FileUtility.getWriteFileStream(nbest_file);
+		BufferedReader t_oracle_reader = (oracle_file==null) ? null : FileUtility.getReadFileStream(oracle_file);
 		
-		String cn_sent;
+		String cn_sent, oracle_sent;
 		int sent_id = start_sent_id; // if no sent tag, then this will be used
 		while ((cn_sent = FileUtility.read_line_lzf(t_reader_test)) != null) {
 			if (logger.isLoggable(Level.FINE)) 
@@ -90,6 +94,8 @@ public class DecoderThread  extends Thread {
 			if (tem_id[0] > 0) {
 				sent_id = tem_id[0];
 			}
+			oracle_sent = (t_oracle_reader==null) ? null : FileUtility.read_line_lzf(t_oracle_reader);
+			
 			/*if (JoshuaConfiguration.use_sent_specific_lm) {
 				load_lm_grammar_file(JoshuaConfiguration.g_sent_lm_file_name_prefix + sent_id + ".gz");
 			}
@@ -97,7 +103,7 @@ public class DecoderThread  extends Thread {
 				initializeTranslationGrammars(JoshuaConfiguration.g_sent_tm_file_name_prefix + sent_id + ".gz");
 			}*/
 			
-			translate(this.p_grammar_factories, this.p_l_feat_functions, cn_sent, this.l_default_nonterminals, t_writer_nbest, sent_id, JoshuaConfiguration.topN, p_disk_hg, kbest_extractor);
+			translate(this.p_grammar_factories, this.p_l_feat_functions, cn_sent, oracle_sent, this.l_default_nonterminals, t_writer_nbest, sent_id, JoshuaConfiguration.topN, p_disk_hg, kbest_extractor);
 			sent_id++;
 			//if (sent_id > 10) break;//debug
 		}
@@ -124,7 +130,7 @@ public class DecoderThread  extends Thread {
 	 * @param diskHyperGraph
 	 * @param kbestExtractor
 	 */
-	private void translate(GrammarFactory[]  grammarFactories, ArrayList<FeatureFunction> models, String sentence, ArrayList<Integer>   defaultNonterminals,
+	private void translate(GrammarFactory[]  grammarFactories, ArrayList<FeatureFunction> models, String sentence, String oracleSentence, ArrayList<Integer>   defaultNonterminals,
 		BufferedWriter out, int  sentenceID, int   topN, DiskHyperGraph diskHyperGraph, KbestExtraction kbestExtractor) {
 		long  start = System.currentTimeMillis();
 		int[] sentence_numeric = this.p_symbolTable.getIDs(sentence);
@@ -153,10 +159,26 @@ public class DecoderThread  extends Thread {
 		if (logger.isLoggable(Level.FINER)) 
 			logger.finer("after expand, time: " + (System.currentTimeMillis() - start)/1000);
 		
-		//kbest extraction
-		kbestExtractor.lazy_k_best_extract_hg(p_hyper_graph, models, topN, JoshuaConfiguration.use_unique_nbest, sentenceID, out, JoshuaConfiguration.use_tree_nbest, JoshuaConfiguration.add_combined_cost);
-		if (logger.isLoggable(Level.FINER)) logger.finer(
-			"after kbest, time: " + (System.currentTimeMillis() - start)/1000);
+		if (oracleSentence != null) {
+			logger.info("Creating extractor");
+			OracleExtractor extractor = new OracleExtractor(this.p_symbolTable);
+			logger.info("Extracting...");
+			HyperGraph oracle = extractor.getOracle(p_hyper_graph, 3, oracleSentence);
+			//HyperGraph oracle = extractor.getOracle(p_hyper_graph, 3, "scientists for the related early");
+			logger.info("... Done Extracting...getting n-best...");
+			kbestExtractor.lazy_k_best_extract_hg(oracle, models, topN, JoshuaConfiguration.use_unique_nbest, sentenceID, out, JoshuaConfiguration.use_tree_nbest, JoshuaConfiguration.add_combined_cost);
+			logger.info("... Done getting n-best");
+			//FileUtility.flush_lzf(out);
+			//FileUtility.close_write_file(out);
+			//System.exit(-1);
+		} else {
+
+			//kbest extraction
+			kbestExtractor.lazy_k_best_extract_hg(p_hyper_graph, models, topN, JoshuaConfiguration.use_unique_nbest, sentenceID, out, JoshuaConfiguration.use_tree_nbest, JoshuaConfiguration.add_combined_cost);
+			if (logger.isLoggable(Level.FINER)) logger.finer(
+					"after kbest, time: " + (System.currentTimeMillis() - start)/1000);
+			
+		}
 		
 		if (null != diskHyperGraph) {
 			diskHyperGraph.save_hyper_graph(p_hyper_graph);

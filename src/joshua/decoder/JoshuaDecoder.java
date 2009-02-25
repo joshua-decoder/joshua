@@ -82,8 +82,8 @@ public class JoshuaDecoder {
 			logger.finest("Starting decoder");
 		
 		long start = System.currentTimeMillis();
-		if (args.length != 3) {
-			System.out.println("Usage: java joshua.decoder.Decoder config_file test_file outfile");
+		if (args.length != 3 && args.length != 4) {
+			System.out.println("Usage: java joshua.decoder.Decoder config_file test_file outfile (oracle_file)");
 			System.out.println("num of args is "+ args.length);
 			for (int i = 0; i < args.length; i++) {
 				System.out.println("arg is: " + args[i]);
@@ -93,6 +93,7 @@ public class JoshuaDecoder {
 		String config_file = args[0].trim();
 		String test_file   = args[1].trim();
 		String nbest_file  = args[2].trim();
+		String oracle_file = (args.length==4) ? args[3].trim() : null;
 		
 		JoshuaDecoder p_decoder = new JoshuaDecoder();
 		
@@ -111,7 +112,7 @@ public class JoshuaDecoder {
 			logger.info("before translation, loaddingtime is " + t_sec);
 
 		//############ Step-2: Decoding ########
-		p_decoder.decodingTestSet(test_file, nbest_file);
+		p_decoder.decodingTestSet(test_file, nbest_file, oracle_file);
 		
 		//############ Step-3: clean up ########
 		p_decoder.cleanUp();
@@ -186,8 +187,12 @@ public class JoshuaDecoder {
 	/*Decoding a whole test set
 	 * This may be parallel
 	 * */
-	public void decodingTestSet(String test_file, String nbest_file){		
-		p_decoder_factory.decodingTestSet(test_file, nbest_file);
+	public void decodingTestSet(String test_file, String nbest_file, String oracle_file){		
+		p_decoder_factory.decodingTestSet(test_file, nbest_file, oracle_file);
+	}
+	
+	public void decodingTestSet(String test_file, String nbest_file) {
+		p_decoder_factory.decodingTestSet(test_file, nbest_file, null);
 	}
 	
 	/*Decoding a sentence

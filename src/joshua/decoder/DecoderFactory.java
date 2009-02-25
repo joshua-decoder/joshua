@@ -42,11 +42,11 @@ public class DecoderFactory {
 		this.p_symbolTable = symbolTable;
 	}
 	
-	public void decodingTestSet(String test_file, String nbest_file){
+	public void decodingTestSet(String test_file, String nbest_file, String oracle_file){
 //		###### decode the sentences, maybe in parallel
 		if (JoshuaConfiguration.num_parallel_decoders == 1) {
 			DecoderThread pdecoder = new DecoderThread(this.p_grammar_factories, this.have_lm_model, this.p_l_feat_functions, this.l_default_nonterminals, this.p_symbolTable, 
-					test_file, nbest_file,	0);
+					test_file, nbest_file,	oracle_file, 0);
 			
 			pdecoder.decode_a_file();//do not run *start*; so that we stay in the current main thread
 			if (JoshuaConfiguration.save_disk_hg) {
@@ -101,7 +101,7 @@ public class DecoderFactory {
 				FileUtility.close_write_file(t_writer_test);				 
 				
 				DecoderThread pdecoder = new DecoderThread(this.p_grammar_factories, this.have_lm_model, this.p_l_feat_functions, this.l_default_nonterminals, this.p_symbolTable, 
-						cur_test_file, cur_nbest_file,	start_sent_id);
+						cur_test_file, cur_nbest_file,	null, start_sent_id);
 				parallel_threads[decoder_i-1] = pdecoder;
 				
 				// prepare next job
@@ -118,7 +118,7 @@ public class DecoderFactory {
 		FileUtility.close_write_file(t_writer_test);
 	
 		DecoderThread pdecoder =new DecoderThread(this.p_grammar_factories, this.have_lm_model, this.p_l_feat_functions, this.l_default_nonterminals, this.p_symbolTable, 
-				cur_test_file, cur_nbest_file,	start_sent_id);
+				cur_test_file, cur_nbest_file, null,	start_sent_id);
 		parallel_threads[        decoder_i-1] = pdecoder;
 		
 		FileUtility.close_read_file(t_reader_test);
