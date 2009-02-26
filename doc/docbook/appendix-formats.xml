@@ -1,0 +1,10 @@
+<appendix id="file-formats">
+  <title>File Formats</title>
+  
+  <!-- Include section on grammar format -->
+  &grammar-format;
+  
+  <!-- Include section on hypergraph format -->
+  &hypergraph-format;
+  
+</appendix>

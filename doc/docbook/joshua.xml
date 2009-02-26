@@ -1,0 +1,30 @@
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd" [
+<!ENTITY front-matter SYSTEM "front-matter.xml">
+<!ENTITY introduction SYSTEM "intro.xml">
+<!ENTITY extract-grammar SYSTEM "extract-grammar.xml">
+<!ENTITY language-models SYSTEM "language-models.xml">
+<!ENTITY basic-language-model SYSTEM "basic-language-model.xml">
+<!ENTITY srilm-language-model SYSTEM "srilm-language-model.xml">
+<!ENTITY bloom-filter-language-model SYSTEM "bloom-filter-language-model.xml">
+<!ENTITY decoding SYSTEM "decoder.xml">
+<!ENTITY mert SYSTEM "mert.xml">
+<!ENTITY evaluation SYSTEM "evaluation.xml">
+<!ENTITY file-formats SYSTEM "appendix-formats.xml">
+<!ENTITY grammar-format SYSTEM "grammar-format.xml">
+<!ENTITY hypergraph-format SYSTEM "hypergraph-format.xml">
+]>
+
+<book lang="en">
+
+  &front-matter;
+  &introduction; 
+  &extract-grammar;
+  &language-models;
+  &mert;
+  &decoding;
+  &evaluation;
+  &file-formats;
+  
+</book>
