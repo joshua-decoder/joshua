@@ -1,6 +1,9 @@
 <appendix id="file-formats">
   <title>File Formats</title>
   
+  <!-- Include section on configuration file format -->
+  &config-format;  
+  
   <!-- Include section on grammar format -->
   &grammar-format;
   

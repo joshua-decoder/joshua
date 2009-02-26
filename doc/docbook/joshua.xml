@@ -3,6 +3,7 @@
 "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd" [
 <!ENTITY front-matter SYSTEM "front-matter.xml">
 <!ENTITY introduction SYSTEM "intro.xml">
+<!ENTITY quick-start SYSTEM "quick-start.xml">
 <!ENTITY extract-grammar SYSTEM "extract-grammar.xml">
 <!ENTITY language-models SYSTEM "language-models.xml">
 <!ENTITY basic-language-model SYSTEM "basic-language-model.xml">
@@ -12,19 +13,25 @@
 <!ENTITY mert SYSTEM "mert.xml">
 <!ENTITY evaluation SYSTEM "evaluation.xml">
 <!ENTITY file-formats SYSTEM "appendix-formats.xml">
+<!ENTITY config-format SYSTEM "config-format.xml">
 <!ENTITY grammar-format SYSTEM "grammar-format.xml">
 <!ENTITY hypergraph-format SYSTEM "hypergraph-format.xml">
+<!ENTITY dev-guide SYSTEM "appendix-devguide.xml">
+<!ENTITY coding-guide SYSTEM "coding-guide.xml">
+<!ENTITY unit-testing SYSTEM "unit-testing.xml">
 ]>
 
 <book lang="en">
 
   &front-matter;
   &introduction; 
+  &quick-start;
   &extract-grammar;
   &language-models;
   &mert;
   &decoding;
   &evaluation;
   &file-formats;
+  &dev-guide;
   
 </book>
