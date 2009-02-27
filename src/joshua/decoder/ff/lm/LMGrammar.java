@@ -148,7 +148,7 @@ public abstract class LMGrammar {
 			System.out.println("ngram length is greather than the max order");
 			System.exit(1);
 		}
-		if (ngram_words[ngram_words.length-1] != LMFeatureFunction.BACKOFF_LEFT_LM_STATE_SYM_ID) {
+		if (ngram_words[ngram_words.length-1] != LanguageModelFF.BACKOFF_LEFT_LM_STATE_SYM_ID) {
 			System.out.println("last wrd is not <bow>");
 			System.exit(1);
 		}
