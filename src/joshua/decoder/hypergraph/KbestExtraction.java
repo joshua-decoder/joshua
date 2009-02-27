@@ -229,7 +229,6 @@ public class KbestExtraction {
 		//####combined model cost
 		if(add_combined_score==true)			
 			str_hyp.append(String.format(" ||| %.3f",-cur.cost));
-		System.err.println(str_hyp.toString());
 		return str_hyp.toString();
 	}
 		
