@@ -164,9 +164,27 @@ public class HierarchicalPhrases {
 		int[] terminalSequenceStartIndices = new int[n];
 		int[] terminalSequenceEndIndices = new int[n];
 		
+		//terminalSequenceStartIndices[phraseIndex*(terminalSequenceLengths.length)+positionNumber];
+		
+//		public int getStartPosition(int phraseIndex, int index) {
+//
+//			return terminalSequenceStartIndices[phraseIndex*(terminalSequenceLengths.length)+index];	
+//			
+//		}
+		
+//		terminalSequenceStartIndices[phraseIndex*(terminalSequenceLengths.length)+positionNumber] + terminalSequenceLengths[positionNumber]
+		
+		int nthPhraseIndex = phraseIndex*n;
 		for (int index=0; index<n; index++) {
-			terminalSequenceStartIndices[index] = getStartPosition(phraseIndex, index);
-			terminalSequenceEndIndices[index] = getEndPosition(phraseIndex, index);
+//			System.err.println("index == " + index);
+//			System.err.println("phraseIndex == " + phraseIndex);
+//			System.err.println("n == " + n);
+//			terminalSequenceStartIndices[index] = getStartPosition(phraseIndex, index); 
+			terminalSequenceStartIndices[index] = this.terminalSequenceStartIndices[nthPhraseIndex+index];
+			//terminalSequenceStartIndices[index] = terminalSequenceStartIndices[phraseIndex*(terminalSequenceLengths.length)+index];
+			//terminalSequenceStartIndices[phraseIndex*(terminalSequenceLengths.length)+index]; //getStartPosition(phraseIndex, index);
+//			terminalSequenceEndIndices[index] = getEndPosition(phraseIndex, index);
+			terminalSequenceEndIndices[index] = this.terminalSequenceStartIndices[nthPhraseIndex+index] + this.terminalSequenceLengths[index];
 		}
 		
 		int length = terminalSequenceEndIndices[n-1] - terminalSequenceStartIndices[0];
@@ -189,7 +207,8 @@ public class HierarchicalPhrases {
 	 */
 	protected static void partiallyConstruct(Pattern pattern, HierarchicalPhrases M_a_alpha, int i, HierarchicalPhrases M_alpha_b, int j, List<Integer> list) {
 		
-		boolean prefixEndsWithNonterminal = M_a_alpha.pattern.endsWithNonterminal();
+		//boolean prefixEndsWithNonterminal = M_a_alpha.pattern.endsWithNonterminal();
+		boolean prefixEndsWithNonterminal = M_a_alpha.pattern.words[M_a_alpha.pattern.words.length-1] < 0;
 		
 		// Get all start positions for the prefix phrase, and append them to the running list
 //		M_a_alpha.extractStartPositions(i, list);
@@ -226,7 +245,7 @@ public class HierarchicalPhrases {
 	static HierarchicalPhrases queryIntersect(Pattern pattern, HierarchicalPhrases M_a_alpha, HierarchicalPhrases M_alpha_b) {
 
 		if (logger.isLoggable(Level.FINER)) {
-			logger.finer("queryIntersect("+pattern+" M_a_alpha.size=="+M_a_alpha.size() + ", M_alpha_b.size=="+M_alpha_b.size());			
+			logger.finer("queryIntersect("+pattern+" M_a_alpha.size=="+M_a_alpha.size + ", M_alpha_b.size=="+M_alpha_b.size);			
 		}
 		
 		// results is M_{a_alpha_b} in the paper
@@ -234,8 +253,8 @@ public class HierarchicalPhrases {
 		ArrayList<Integer> data = new ArrayList<Integer>();
 		ArrayList<Integer> sentenceNumbers = new ArrayList<Integer>();
 		
-		int I = M_a_alpha.size();
-		int J = M_alpha_b.size();
+		int I = M_a_alpha.size;
+		int J = M_alpha_b.size;
 
 		int i = 0;
 		int j = 0;
@@ -256,9 +275,19 @@ public class HierarchicalPhrases {
 			//int k = i;
 			int l = j;
 			
+			//int M_alpha_b_StartPosition = M_alpha_b.terminalSequenceStartIndices[j*(M_alpha_b.terminalSequenceLengths.length)];
+			int M_alpha_b_length = M_alpha_b.terminalSequenceLengths.length;
 			// Process all matchings in M_alpha_b with same first element
 			ProcessMatchings:
-			while (M_alpha_b.getStartPosition(j, 0) == M_alpha_b.getStartPosition(l, 0)) {
+			for (int jth_StartPosition = M_alpha_b.terminalSequenceStartIndices[j*M_alpha_b_length],
+					 lth_StartPosition = M_alpha_b.terminalSequenceStartIndices[l*M_alpha_b_length]; 
+					
+					jth_StartPosition == lth_StartPosition;
+					
+					jth_StartPosition = M_alpha_b.terminalSequenceStartIndices[j*M_alpha_b_length],
+					lth_StartPosition = M_alpha_b.terminalSequenceStartIndices[l*M_alpha_b_length]) {
+				
+//			while (M_alpha_b.getStartPosition(j, 0) == M_alpha_b.getStartPosition(l, 0)) {
 				
 				int compare_i_l = compare(M_a_alpha, i, M_alpha_b, l);
 				while (compare_i_l >= 0) {
@@ -314,156 +343,149 @@ public class HierarchicalPhrases {
 	 * <li> 1 if m_a_alpha and m_alpha_b cannot be paired, and m_a_alpha follows m_alpha_b in the corpus.</li>
 	 * </ul>
 	 */	
-	static int compare(HierarchicalPhrases m_a_alpha, int i, HierarchicalPhrases m_alpha_b, int j) {
-//		if (true) 
-//			throw new RuntimeException();
+	static int compare(HierarchicalPhrases m_a_alpha, final int i, HierarchicalPhrases m_alpha_b, final int j) {
+	
+		int m_a_alphaTerminalSequenceLengths = m_a_alpha.terminalSequenceLengths.length;
+		int m_alpha_bTerminalSequenceLengths = m_alpha_b.terminalSequenceLengths.length;
 		
 		// Does the prefix (m_a_alpha) overlap with
 		//      the suffix (m_alpha_b) on any words?
 		boolean matchesOverlap;
-		if (m_a_alpha.pattern.endsWithNonterminal() && 
-				m_alpha_b.pattern.startsWithNonterminal() &&
-				//m_a_alpha.terminalSequenceStartIndices.length==1 &&
+		//if (m_a_alpha.pattern.endsWithNonterminal() && 
+		// we assume that the nonterminal symbols will be denoted with negative numbers
+		if (m_a_alpha.pattern.words[m_a_alpha.pattern.words.length-1] < 0 &&
+				m_alpha_b.pattern.words[0] < 0 &&
+				//m_alpha_b.pattern.startsWithNonterminal() &&
 				m_a_alpha.pattern.arity==1 &&
-				//m_alpha_b.terminalSequenceStartIndices.length==1 &&
 				m_alpha_b.pattern.arity==1 &&
-				//m_a_alpha.terminalSequenceEndIndices[0]-m_a_alpha.terminalSequenceStartIndices[0]==1 &&
-				//m_a_alpha.getEndPosition(i, 0) - m_a_alpha.getStartPosition(i, 0) == 1 &&
 				m_a_alpha.terminalSequenceLengths[0] == 1 &&
-				//m_alpha_b.terminalSequenceEndIndices[0]-m_alpha_b.terminalSequenceStartIndices[0]==1) 
-				//m_alpha_b.getEndPosition(j, 0) - m_alpha_b.getStartPosition(j, 0) == 1)
 				m_alpha_b.terminalSequenceLengths[0] == 1 )
 			matchesOverlap = false;
 		else
 			matchesOverlap = true;
+
+		//terminalSequenceStartIndices[phraseIndex*(terminalSequenceLengths.length)+positionNumber]
+		int prefixStartPosition = m_a_alpha.terminalSequenceStartIndices[i*(m_a_alphaTerminalSequenceLengths)]; //m_a_alpha.getStartPosition(i, 0);
+		int suffixStartPosition = m_alpha_b.terminalSequenceStartIndices[j*(m_alpha_bTerminalSequenceLengths)]; ///m_alpha_b.getStartPosition(j, 0);
+		
 		
 		if (matchesOverlap) {
-			//return overlapping.compare(m_a_alpha, m_alpha_b);
-//			int[] m_alpha_b_prefix;
-			
-			int m_alpha_b_prefix_start = j*m_alpha_b.terminalSequenceLengths.length;//(1+m_alpha_b.pattern.arity);
+
+			int m_alpha_b_prefix_start = j*m_alpha_bTerminalSequenceLengths;
 			int m_alpha_b_prefix_end;
 
 			// If the m_alpha_b pattern ends with a nonterminal
-			if (m_alpha_b.pattern.endsWithNonterminal() ||
+			if (m_alpha_b.pattern.words[m_alpha_b.pattern.words.length-1] < 0 ||
+			//if (m_alpha_b.pattern.endsWithNonterminal() ||
 					// ...or if the m_alpha_b pattern ends with two terminals
 					m_alpha_b.pattern.words[m_alpha_b.pattern.words.length-2] >= 0) {
-				
-//				m_alpha_b_prefix = m_alpha_b.terminalSequenceStartIndices;
-				m_alpha_b_prefix_end = m_alpha_b_prefix_start + m_alpha_b.terminalSequenceLengths.length;//m_alpha_b.pattern.arity;
-				
+
+				m_alpha_b_prefix_end = m_alpha_b_prefix_start + m_alpha_bTerminalSequenceLengths;
+
 			} else { // Then the m_alpha_b pattern ends with a nonterminal followed by a terminal
-				
-				m_alpha_b_prefix_end = m_alpha_b_prefix_start + m_alpha_b.terminalSequenceLengths.length - 1;//m_alpha_b.pattern.arity - 1;
-				
-//				int size = m_alpha_b.terminalSequenceStartIndices.length-1;
-//				m_alpha_b_prefix = new int[size];
-//				for (int index=0; index<size; index++) {
-//					m_alpha_b_prefix[index] = m_alpha_b.terminalSequenceStartIndices[index];
-//				}
+
+				m_alpha_b_prefix_end = m_alpha_b_prefix_start + m_alpha_bTerminalSequenceLengths - 1;
+
 			}
-			
-//			int[] m_a_alpha_suffix;
-			int m_a_alpha_suffix_start;// = i*(1+m_a_alpha.pattern.arity);
+
+			int m_a_alpha_suffix_start;
 			int m_a_alpha_suffix_end;
 			boolean increment_m_a_alpha_suffix_start;
-			
+
 			// If the m_a_alpha pattern starts with a nonterminal
-			if (m_a_alpha.pattern.startsWithNonterminal()) {
-//				m_a_alpha_suffix = m_a_alpha.terminalSequenceStartIndices;	
-				m_a_alpha_suffix_start = i*m_a_alpha.terminalSequenceLengths.length;//(1+m_a_alpha.pattern.arity);
-				m_a_alpha_suffix_end = m_a_alpha_suffix_start + m_a_alpha.terminalSequenceLengths.length;//m_a_alpha.pattern.arity;
+			//if (m_a_alpha.pattern.startsWithNonterminal()) {
+			if (m_a_alpha.pattern.words[0] < 0) {
+				m_a_alpha_suffix_start = i*m_a_alphaTerminalSequenceLengths;
+				m_a_alpha_suffix_end = m_a_alpha_suffix_start + m_a_alphaTerminalSequenceLengths;
 				increment_m_a_alpha_suffix_start = false;
 			} else if (m_a_alpha.pattern.words[1] >= 0) { 
 				// Then the m_a_alpha pattern starts with two terminals
-				
-				m_a_alpha_suffix_start = i*m_a_alpha.terminalSequenceLengths.length;//(1+m_a_alpha.pattern.arity);
-				m_a_alpha_suffix_end = m_a_alpha_suffix_start + m_a_alpha.terminalSequenceLengths.length;//m_a_alpha.pattern.arity;
-				
-//				int size = m_a_alpha.terminalSequenceStartIndices.length;
-//				m_a_alpha_suffix = new int[size];
-//				for (int index=0; index<size; index++) {
-//					m_a_alpha_suffix[index] = m_a_alpha.terminalSequenceStartIndices[index];
-//				}
-//				m_a_alpha_suffix[0]++;
+
+				m_a_alpha_suffix_start = i*m_a_alphaTerminalSequenceLengths;
+				m_a_alpha_suffix_end = m_a_alpha_suffix_start + m_a_alphaTerminalSequenceLengths;
+
 				increment_m_a_alpha_suffix_start = true;
 			} else {
 				// Then the m_a_alpha pattern starts with a terminal followed by a nonterminal
-				
-				m_a_alpha_suffix_start = i*m_a_alpha.terminalSequenceLengths.length + 1;
-				//m_a_alpha_suffix_end = m_a_alpha_suffix_start + m_a_alpha.pattern.arity - 1;
-				m_a_alpha_suffix_end = i*m_a_alpha.terminalSequenceLengths.length + m_a_alpha.terminalSequenceLengths.length;
-//				
-//				int size = m_a_alpha.terminalSequenceStartIndices.length-1;
-//				m_a_alpha_suffix = new int[size];
-//				for (int index=0; index<size; index++) {
-//					m_a_alpha_suffix[index] = m_a_alpha.terminalSequenceStartIndices[index+1];
-//				}
+
+				m_a_alpha_suffix_start = i*m_a_alphaTerminalSequenceLengths + 1;
+				m_a_alpha_suffix_end = i*m_a_alphaTerminalSequenceLengths + m_a_alphaTerminalSequenceLengths;
+
 				increment_m_a_alpha_suffix_start = false;
 			}
-			
+
 			int m_a_alpha_suffix_length = m_a_alpha_suffix_end - m_a_alpha_suffix_start;
 			int m_alpha_b_prefix_length = m_alpha_b_prefix_end - m_alpha_b_prefix_start;
-			
+
 			if (m_alpha_b_prefix_length != m_a_alpha_suffix_length) {
-//			if (m_alpha_b_prefix.length != m_a_alpha_suffix.length) {
 				throw new RuntimeException("Length of s(m_a_alpha) and p(m_alpha_b) do not match");
 			} else {
-				
+
 				int result = 0;
-				
+
 				for (int index=0; index<m_a_alpha_suffix_length; index++) {
-//				for (int index=0; index<m_a_alpha_suffix.length; index++) {
-					
+
 					int a = m_a_alpha.terminalSequenceStartIndices[m_a_alpha_suffix_start+index];
 					if (increment_m_a_alpha_suffix_start && index==0) {
 						a++;
 					}
 					int b = 0;
 					try {
-					b = m_alpha_b.terminalSequenceStartIndices[m_alpha_b_prefix_start+index];
+						b = m_alpha_b.terminalSequenceStartIndices[m_alpha_b_prefix_start+index];
 					} catch (ArrayIndexOutOfBoundsException e) { 
 						throw e;
 					}					
 					if (a > b) {
-//					if (m_a_alpha_suffix[index] > m_alpha_b_prefix[index]) {
 						result = 1;
 						break;
 					} else if (a < b) {
-//					} else if (m_a_alpha_suffix[index] < m_alpha_b_prefix[index]) {
 						result = -1;
 						break;
 					}
 				}
 				
+//				public int getEndPosition(int phraseIndex, int positionNumber) {
+//					
+//	terminalSequenceStartIndices[phraseIndex*(terminalSequenceLengths.length)+positionNumber] + terminalSequenceLengths[positionNumber];
+//	int positionNumber = m_alpha_b.terminalSequenceLengths.length-1;						
+//	m_alpha_b.getEndPosition(j, m_alpha_b.terminalSequenceLengths.length-1)
+//				
+//	terminalSequenceStartIndices[j*(m_alpha_b.terminalSequenceLengths.length)+positionNumber] + terminalSequenceLengths[positionNumber];			
+//				}
+
 				if (result==0) {
-//					int length = m_alpha_b.terminalSequenceEndIndices[m_alpha_b.terminalSequenceEndIndices.length-1] - m_a_alpha.getStartPosition(i, 0);
-					int length = m_alpha_b.getEndPosition(j, m_alpha_b.terminalSequenceLengths.length-1) - m_a_alpha.getStartPosition(i, 0);
-					if (m_alpha_b.pattern.endsWithNonterminal())
-						length += m_a_alpha.prefixTree.minNonterminalSpan;
-					if (m_a_alpha.pattern.startsWithNonterminal())
-						length += m_a_alpha.prefixTree.minNonterminalSpan;
+					//int length = m_alpha_b.getEndPosition(j, m_alpha_b.terminalSequenceLengths.length-1) - m_a_alpha.getStartPosition(i, 0);
+					int positionNumber = m_alpha_bTerminalSequenceLengths-1;
+					//int length = m_alpha_b.getEndPosition(j, m_alpha_b.terminalSequenceLengths.length-1) - prefixStartPosition; //m_a_alpha.getStartPosition(i, 0);
+					int length = m_alpha_b.terminalSequenceStartIndices[j*(m_alpha_bTerminalSequenceLengths)+positionNumber] + m_alpha_b.terminalSequenceLengths[positionNumber] - prefixStartPosition; //m_a_alpha.getStartPosition(i, 0);
 					
+					//int length = terminalSequenceStartIndices[j*(m_alpha_b.terminalSequenceLengths.length)+m_alpha_b.terminalSequenceLengths.length-1] + terminalSequenceLengths[positionNumber];
+					if (m_alpha_b.pattern.words[m_alpha_b.pattern.words.length-1] < 0)
+					//if (m_alpha_b.pattern.endsWithNonterminal())
+						length += m_a_alpha.prefixTree.minNonterminalSpan;
+					if (m_a_alpha.pattern.words[0] < 0)
+					//if (m_a_alpha.pattern.startsWithNonterminal())
+						length += m_a_alpha.prefixTree.minNonterminalSpan;
+
 					if (length > m_a_alpha.prefixTree.maxPhraseSpan) {
 						result = -1;
 					}
 				}
-				
+
 				return result;
 			}
-			
+
 		}
 		else {
-//			return nonOverlapping.compare(m_a_alpha, m_alpha_b);
 
-			if (m_a_alpha.getSentenceNumber(i) < m_alpha_b.getSentenceNumber(j))
+			if (m_a_alpha.sentenceNumber[i] < m_alpha_b.sentenceNumber[j])
 				return -1;
-			else if (m_a_alpha.getSentenceNumber(i) > m_alpha_b.getSentenceNumber(j))
+			else if (m_a_alpha.sentenceNumber[i] > m_alpha_b.sentenceNumber[j])
 				return 1;
 			else {
-				int prefixStartPosition = m_a_alpha.getStartPosition(i, 0);
-				int suffixStartPosition = m_alpha_b.getStartPosition(j, 0);
-				
+//				int prefixStartPosition = m_a_alpha.getStartPosition(i, 0);
+//				int suffixStartPosition = m_alpha_b.getStartPosition(j, 0);
+
 				if (prefixStartPosition >= suffixStartPosition-1)
 					return 1;
 				else if (prefixStartPosition <= suffixStartPosition-m_a_alpha.prefixTree.maxPhraseSpan)
@@ -474,7 +496,7 @@ public class HierarchicalPhrases {
 
 		}
 	}
-	
+
 	
 	/**
 	 * 
@@ -499,17 +521,7 @@ public class HierarchicalPhrases {
 		return terminalSequenceStartIndices[phraseIndex*(terminalSequenceLengths.length)+positionNumber] + terminalSequenceLengths[positionNumber];
 				
 	}
-	
-	/**
-	 * Returns the index of the sentence in the corpus that the
-	 * phrase is a part of.
-	 * 
-	 * @return the index of the sentence in the corpus that the
-	 *         phrase is a part of.
-	 */
-	public int getSentenceNumber(int phraseIndex) {
-		return sentenceNumber[phraseIndex];
-	}
+
 	
 	/**
 	 * Gets the number of locations in the corpus 

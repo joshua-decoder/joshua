@@ -479,8 +479,11 @@ public class PrefixTree {
 				// 16: M_a_alpha_b <-- QUERY_INTERSECT(M_a_alpha, M_alpha_b)
 				
 				// Special handling of case when prefixNode is the X off of root (hierarchicalPhrases for that node is empty)
-				if (arity==1 && prefixNode.sourcePattern.startsWithNonterminal() && prefixNode.sourcePattern.endsWithNonterminal()) {
-			
+				//if (arity==1 && prefixNode.sourcePattern.startsWithNonterminal() && prefixNode.sourcePattern.endsWithNonterminal())
+				if (arity==1 && prefixNode.sourcePattern.words[0] < 0 && prefixNode.sourcePattern.words[prefixNode.sourcePattern.words.length-1] < 0){
+				//prefixNode.sourcePattern.words[prefixNode.sourcePattern.words.length-1] < 0
+					
+					
 					Vocabulary vocab = (suffixArray==null) ? null : suffixArray.getVocabulary();
 					
 					int[] xwords = new int[suffixNode.sourcePattern.words.length+1];

@@ -208,6 +208,7 @@ public class AlignmentArray extends AbstractAlignments {
 			for (int alignedSourceIndex : alignedSourceIndices[targetIndex]) {
 				for (int i=0; i<phraseLength; i++) {
 					int sourceStart = sourcePhrases.getStartPosition(sourcePhraseIndex, i);
+					//int sourceStart = sourcePhrases.terminalSequenceStartIndices[sourcePhraseIndex*(sourcePhrases.terminalSequenceLengths.length)+i];
 					int sourceEnd = sourcePhrases.getEndPosition(sourcePhraseIndex, i);
 					if (alignedSourceIndex >= sourceStart &&
 							alignedSourceIndex < sourceEnd) {
