@@ -282,7 +282,10 @@ public class KbestExtraction {
 					res = heap_cands.poll();
 					//derivation_tbl.remove(res.get_signature());//TODO: should remove? note that two state may be tied because the cost is the same
 					if (extract_unique_nbest) {
-						String res_str = res.get_hyp(p_symbol,kbest_extator, extract_nbest_tree,null,null);
+						String res_str = res.get_hyp(p_symbol,kbest_extator, false,null,null);
+						// We pass false for extract_nbest_tree because we want
+						// to check that the hypothesis *strings* are unique,
+						// not the trees.
 						if (! nbest_str_tbl.containsKey(res_str)) {
 							l_nbest.add(res);
 							nbest_str_tbl.put(res_str,1);
