@@ -40,11 +40,11 @@ import java.util.ArrayList;
 
 
 
-/*Note: the LMGrammar returns LogP; while the LMFeatureFunction needs to return cost (i.e., -LogP)
+/*Note: the LMGrammar returns LogP; while the LanguageModelFF needs to return cost (i.e., -LogP)
  * */
 
 
-public class LMFeatureFunction extends DefaultStatefulFF {
+public class LanguageModelFF extends DefaultStatefulFF {
 	static String START_SYM="<s>";
 	public  int START_SYM_ID;
 	static String STOP_SYM="</s>";
@@ -75,7 +75,7 @@ public class LMFeatureFunction extends DefaultStatefulFF {
 	
 	private SymbolTable p_symbolTable = null;
 	
-	public LMFeatureFunction(int feat_id_, int ngram_order, SymbolTable psymbol, LMGrammar lm_grammar, double weight_) {
+	public LanguageModelFF(int feat_id_, int ngram_order, SymbolTable psymbol, LMGrammar lm_grammar, double weight_) {
 		super(weight_, feat_id_);
 		this.ngramOrder = ngram_order;
 		this.lmGrammar  = lm_grammar;

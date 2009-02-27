@@ -26,7 +26,7 @@ import joshua.decoder.BuildinSymbol;
 import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.Support;
 import joshua.decoder.ff.lm.LMGrammar;
-import joshua.decoder.ff.lm.LMFeatureFunction;
+import joshua.decoder.ff.lm.LanguageModelFF;
 import joshua.util.FileUtility;
 
 /**
@@ -241,7 +241,7 @@ public class LMGrammarJAVA extends LMGrammar {
 			for(int i=1; i<=original_state.length; i++){//forward search				
 				int[] cur_wrds = Support.sub_int_array(original_state, i-1, original_state.length);
 				if(have_prefix(cur_wrds)==false){
-					res[i-1] = LMFeatureFunction.NULL_RIGHT_LM_STATE_SYM_ID;
+					res[i-1] = LanguageModelFF.NULL_RIGHT_LM_STATE_SYM_ID;
 				}else{
 					for(int j=i; j<=original_state.length; j++)
 						res[j-1] = original_state[j-1];
@@ -316,10 +316,10 @@ public class LMGrammarJAVA extends LMGrammar {
 						 res_equi_state[i-1] = last_wrd;
 						 res_est_cost += -get_prob(cur_wrds, cur_wrds.length, false);//est cost						 
 					 }else{
-						 if(last_wrd!= LMFeatureFunction.BACKOFF_LEFT_LM_STATE_SYM_ID )
+						 if(last_wrd!= LanguageModelFF.BACKOFF_LEFT_LM_STATE_SYM_ID )
 							 res_final_cost += -get_prob(cur_wrds, cur_wrds.length, false);
 						 
-						 res_equi_state[i-1]= LMFeatureFunction.BACKOFF_LEFT_LM_STATE_SYM_ID;
+						 res_equi_state[i-1]= LanguageModelFF.BACKOFF_LEFT_LM_STATE_SYM_ID;
 						 /*//TODO: for simplicity, we may just need BACKOFF_LEFT_LM_STATE_SYM_ID??
 						 int[] backoff_history = Support.sub_int_array(cur_wrds, 0, cur_wrds.length-1);//ignore last wrd
 						 double[] bow = new double[1];
@@ -410,8 +410,8 @@ public class LMGrammarJAVA extends LMGrammar {
 //	######################################## general helper function ###########################################
 	protected int replace_with_unk(int in){ 	
        if(root.containsKey(in)==true || 
-    	   in == LMFeatureFunction.NULL_RIGHT_LM_STATE_SYM_ID ||       
-    	   in == LMFeatureFunction.BACKOFF_LEFT_LM_STATE_SYM_ID)
+    	   in == LanguageModelFF.NULL_RIGHT_LM_STATE_SYM_ID ||       
+    	   in == LanguageModelFF.BACKOFF_LEFT_LM_STATE_SYM_ID)
 		 return in;
 	   else
 		 return UNK_SYM_ID;

@@ -25,7 +25,6 @@ import joshua.decoder.ff.FFDPState;
 import joshua.decoder.ff.FFTransitionResult;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.lm.LMFFDPState;
-import joshua.decoder.ff.lm.LMFeatureFunction;
 import joshua.decoder.ff.tm.MemoryBasedRule;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.BatchGrammar;

@@ -24,7 +24,7 @@ import joshua.decoder.ff.ArityPhrasePenaltyFF;
 import joshua.decoder.ff.PhraseModelFF;
 import joshua.decoder.ff.WordPenaltyFF;
 import joshua.decoder.ff.SourceLatticeArcCostFF;
-import joshua.decoder.ff.lm.LMFeatureFunction;
+import joshua.decoder.ff.lm.LanguageModelFF;
 import joshua.decoder.ff.lm.LMGrammar;
 import joshua.decoder.ff.lm.buildin_lm.LMGrammarJAVA;
 import joshua.decoder.ff.lm.distributed_lm.LMGrammarRemote;
@@ -224,7 +224,7 @@ public class JoshuaDecoder {
 				if (fds[0].compareTo("lm") == 0 && fds.length == 2) { // lm order weight
 					double weight = (new Double(fds[1].trim())).doubleValue();					
 					LMGrammar lm_grammar = initializeLanguageModel(psymbolTable);					
-					l_models.add(new LMFeatureFunction(l_models.size(), JoshuaConfiguration.g_lm_order, psymbolTable, lm_grammar, weight));
+					l_models.add(new LanguageModelFF(l_models.size(), JoshuaConfiguration.g_lm_order, psymbolTable, lm_grammar, weight));
 					if (logger.isLoggable(Level.FINEST)) 
 						logger.finest( String.format("Line: %s\nAdd LM, order: %d; weight: %.3f;", line, JoshuaConfiguration.g_lm_order, weight));				
 				} else if (0 == fds[0].compareTo("latticecost")	&& fds.length == 2) {
@@ -370,7 +370,7 @@ public class JoshuaDecoder {
 	
 	static public FeatureFunction haveLMFeature(ArrayList<FeatureFunction> l_models){
 		for(FeatureFunction ff : l_models){
-			if(ff instanceof LMFeatureFunction){
+			if(ff instanceof LanguageModelFF){
 				return ff;
 			}
 		}
