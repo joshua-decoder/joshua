@@ -52,6 +52,14 @@ public class LMFeatureFunction extends DefaultStatefulFF {
 	
 	boolean add_start_and_end_symbol = true;
 	
+	
+	/* These must be static (for now) for LMGrammar, but they shouldn't be! in case of multiple LM features */
+	static String BACKOFF_LEFT_LM_STATE_SYM="<lzfbo>";
+	static public int BACKOFF_LEFT_LM_STATE_SYM_ID;//used for equivelant state
+	static String NULL_RIGHT_LM_STATE_SYM="<lzfrnull>";
+	static public int NULL_RIGHT_LM_STATE_SYM_ID;//used for equivelant state
+	
+	
 	/* we assume the LM is in ARPA format
 	 * for equivalent state: 
 	 * (1)we assume it is a backoff lm, and high-order ngram implies low-order ngram; absense of low-order ngram implies high-order ngram
@@ -73,7 +81,10 @@ public class LMFeatureFunction extends DefaultStatefulFF {
 		this.lmGrammar  = lm_grammar;
 		this.p_symbolTable = psymbol;
 		this.START_SYM_ID = psymbol.addTerminal(START_SYM);
-		this.STOP_SYM_ID = psymbol.addTerminal(STOP_SYM);		
+		this.STOP_SYM_ID = psymbol.addTerminal(STOP_SYM);
+		
+		this.BACKOFF_LEFT_LM_STATE_SYM_ID = p_symbolTable.addTerminal(BACKOFF_LEFT_LM_STATE_SYM);
+		this.NULL_RIGHT_LM_STATE_SYM_ID = p_symbolTable.addTerminal(NULL_RIGHT_LM_STATE_SYM);
 	}
 	
 	/*the transition cost for LM: sum of the costs of the new ngrams created
@@ -139,7 +150,7 @@ public class LMFeatureFunction extends DefaultStatefulFF {
 					current_ngram.add(t);
 					
 					//always calculate cost for <bo>: additional backoff weight
-					if (t == lmGrammar.BACKOFF_LEFT_LM_STATE_SYM_ID) {
+					if (t == BACKOFF_LEFT_LM_STATE_SYM_ID) {
 						int additional_backoff_weight = current_ngram.size() - (i+1);
 						
 						//compute additional backoff weight
@@ -333,7 +344,7 @@ public class LMFeatureFunction extends DefaultStatefulFF {
 			int t = l_context[i];
 			current_ngram.add(t);
 			
-			if (t == lmGrammar.BACKOFF_LEFT_LM_STATE_SYM_ID) {//calculate cost for <bo>: additional backoff weight
+			if (t == BACKOFF_LEFT_LM_STATE_SYM_ID) {//calculate cost for <bo>: additional backoff weight
 				int additional_backoff_weight = current_ngram.size() - (i+1);
 				//compute additional backoff weight
 				//TOTO: may not work with the case that add_start_and_end_symbol=false

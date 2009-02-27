@@ -36,13 +36,7 @@ import joshua.decoder.Support;
  * */
 public abstract class LMGrammar {
 	
-	static String BACKOFF_LEFT_LM_STATE_SYM="<lzfbo>";
-	public int BACKOFF_LEFT_LM_STATE_SYM_ID;//used for equivelant state
-	static String NULL_RIGHT_LM_STATE_SYM="<lzfrnull>";
-	public int NULL_RIGHT_LM_STATE_SYM_ID;//used for equivelant state
-	 
-	
-	protected  final SymbolTable p_symbolTable;
+	protected final SymbolTable p_symbolTable;
 	
 	protected final int  g_order;
 	
@@ -51,8 +45,6 @@ public abstract class LMGrammar {
 	public LMGrammar(SymbolTable symbolTable, int order_){
 		p_symbolTable = symbolTable;
 		g_order = order_;
-		this.BACKOFF_LEFT_LM_STATE_SYM_ID = p_symbolTable.addTerminal(BACKOFF_LEFT_LM_STATE_SYM);
-		this.NULL_RIGHT_LM_STATE_SYM_ID = p_symbolTable.addTerminal(NULL_RIGHT_LM_STATE_SYM);
 	}
 	
 	
@@ -156,7 +148,7 @@ public abstract class LMGrammar {
 			System.out.println("ngram length is greather than the max order");
 			System.exit(1);
 		}
-		if (ngram_words[ngram_words.length-1] != BACKOFF_LEFT_LM_STATE_SYM_ID) {
+		if (ngram_words[ngram_words.length-1] != LMFeatureFunction.BACKOFF_LEFT_LM_STATE_SYM_ID) {
 			System.out.println("last wrd is not <bow>");
 			System.exit(1);
 		}

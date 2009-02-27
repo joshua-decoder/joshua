@@ -20,6 +20,7 @@ package joshua.decoder.ff.lm.srilm;
 import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.SrilmSymbol;
 import joshua.decoder.ff.lm.LMGrammar;
+import joshua.decoder.ff.lm.LMFeatureFunction;
 
 import java.util.ArrayList;
 
@@ -194,7 +195,7 @@ public class LMGrammarSRILM  extends LMGrammar {
 	   private ArrayList<Integer> ignore_null_right_words(int[] ngram_wrds){
 		   ArrayList<Integer> t_ngram = new ArrayList<Integer>();
 		   for(int t=ngram_wrds.length-1; t>=0; t--){
-			   if(ngram_wrds[t]== NULL_RIGHT_LM_STATE_SYM_ID)//skip all the null words left
+			   if(ngram_wrds[t]== LMFeatureFunction.NULL_RIGHT_LM_STATE_SYM_ID)//skip all the null words left
 				   break;
 			   t_ngram.add(0,ngram_wrds[t]);	   
 		   }
