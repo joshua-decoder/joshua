@@ -27,11 +27,12 @@ import joshua.decoder.ff.tm.Rule;
 public final class SourceLatticeArcCostFF extends DefaultStatelessFF {
 	
 	public SourceLatticeArcCostFF(final int feat_id_, final double weight_) {
-		super(weight_, -1, feat_id_);//TODO: owner
+		super(weight_, -1, feat_id_); // TODO: owner
 	}
-
+	
+	
 	public double estimate(final Rule rule) {
-		//TODO: why not check the owner
+		// TODO: why not check the owner
 		/*if (this.owner == rule.owner) {
 			return rule.lattice_cost;
 		} else {
@@ -39,6 +40,4 @@ public final class SourceLatticeArcCostFF extends DefaultStatelessFF {
 		}*/
 		return rule.lattice_cost;
 	}
-	
-
 }

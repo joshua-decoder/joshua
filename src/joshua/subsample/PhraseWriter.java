@@ -33,10 +33,11 @@ final public class PhraseWriter {
 	private BufferedWriter we;
 	private BufferedWriter wa;
 	
-	public PhraseWriter(BufferedWriter wf, BufferedWriter we) {
-		this.wf = wf;
-		this.we = we;
-		this.wa = null;
+//===============================================================
+// Constructors
+//===============================================================
+	public PhraseWriter(BufferedWriter wf_, BufferedWriter we_) {
+		this(wf_, we_, null);
 	}
 	
 	public PhraseWriter(BufferedWriter wf, BufferedWriter we, BufferedWriter wa) {
@@ -46,6 +47,9 @@ final public class PhraseWriter {
 	}
 	
 	
+//===============================================================
+// Methods
+//===============================================================
 	public void write(PhrasePair pp) throws IOException {
 		this.wf.write(pp.getF().toString());
 		this.we.write(pp.getE().toString());

@@ -128,7 +128,7 @@ public class OracleExtractionHG extends SplitHg {
 		DiskHyperGraph dhg_write = null; 
 		int lm_feat_id = 0; //TODO
 		if(orc_extract_nbest==false){
-			dhg_write = new DiskHyperGraph(p_symbolTable, lm_feat_id); 
+			dhg_write = new DiskHyperGraph(p_symbolTable, lm_feat_id);
 			dhg_write.init_write(f_orc_out+".hg.items", false, -1);
 		}
 		
@@ -136,7 +136,7 @@ public class OracleExtractionHG extends SplitHg {
 		long time_on_reading = 0;
 		long time_on_orc_extract = 0;
 		BufferedReader t_reader_ref = FileUtility.getReadFileStream(f_ref_files,"UTF-8");
-		DiskHyperGraph dhg_read  = new DiskHyperGraph(p_symbolTable, lm_feat_id); 
+		DiskHyperGraph dhg_read  = new DiskHyperGraph(p_symbolTable, lm_feat_id);
 	
 		dhg_read.init_read(f_hypergraphs, f_rule_tbl, null);
 		

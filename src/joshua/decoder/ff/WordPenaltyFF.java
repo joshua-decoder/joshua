@@ -31,7 +31,7 @@ public final class WordPenaltyFF extends DefaultStatelessFF {
 	public WordPenaltyFF(int feat_id_, double weight_) {
 		super(weight_, -1, feat_id_);//TODO: owner
 	}
-
+	
 	public double estimate(final Rule rule) {
 		//we do not check for owner because we want this feature used for all the time, e.g., under oov_owner case
 		//TODO: why not check the owner

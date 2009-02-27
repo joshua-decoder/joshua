@@ -46,23 +46,27 @@ public class PhrasePair {
 	private Phrase    e;
 	private Alignment a;
 	
-	public PhrasePair(Phrase f, Phrase e) {
-		this.f = f;
-		this.e = e;
-		this.a = null;
-	}
-
+//===============================================================
+// Constructors
+//===============================================================
+	public PhrasePair(Phrase f_, Phrase e_) { this(f_, e_, null); }
+	
 	public PhrasePair(Phrase f, Phrase e, Alignment a) {
 		this.f = f;
 		this.e = e;
 		this.a = a;
 	}
 	
+//===============================================================
+// Attributes
+//===============================================================
 	public Phrase    getF()         { return f; }
 	public Phrase    getE()         { return e; }
 	public Alignment getAlignment() { return a; }
 	
-	
+//===============================================================
+// Methods
+//===============================================================
 	public float ratioFtoE() {
 		return ((float)this.f.size()) / ((float)this.e.size());
 	}

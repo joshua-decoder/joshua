@@ -26,9 +26,9 @@ package joshua.decoder.ff;
  */
 
 public class StatefulFFTransitionResult extends DefaultFFTransitionResult {
-	private FFDPState dp_state= null;
-
-	 
+	private FFDPState dp_state = null;
+	
+	
 	public FFDPState getStateForItem() {
 		return this.dp_state;
 	}
@@ -36,7 +36,4 @@ public class StatefulFFTransitionResult extends DefaultFFTransitionResult {
 	public void putStateForItem(FFDPState map) {
 		this.dp_state = map;
 	}
-	
-	 
-
 }

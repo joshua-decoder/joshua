@@ -63,21 +63,15 @@ implements Iterable<PhrasePair> {
 	protected Vocabulary foreignVocab;
 	protected Vocabulary englishVocab;
 	
-	
+//===============================================================
+// Constructors
+//===============================================================
 	/**
 	 * Constructor for unaligned BiCorpus.
 	 */
 	public BiCorpus(String ffn, String efn, Vocabulary vf, Vocabulary ve)
 	throws IOException {
-		this.foreignFileName   = ffn;
-		this.englishFileName   = efn;
-		this.alignmentFileName = null;
-		this.foreignVocab      = vf;
-		this.englishVocab      = ve;
-		
-		// Check for fileLengthMismatchException
-		// Of course, that will be checked for in each iteration
-		for (PhrasePair pp : this) continue;
+		this(ffn, efn, null, vf, ve);
 	}
 	
 	
@@ -97,6 +91,10 @@ implements Iterable<PhrasePair> {
 		for (PhrasePair pp : this) continue;
 	}
 	
+	
+//===============================================================
+// Methods
+//===============================================================
 	// We're not allowed to throw exceptions from Iterator/Iterable
 	// so we have evil boilerplate to crash the system
 	public Iterator<PhrasePair> iterator() {

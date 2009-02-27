@@ -26,7 +26,7 @@ package joshua.decoder.ff;
  */
 
 public class StatelessFFTransitionResult extends DefaultFFTransitionResult {
-
+	
 	public FFDPState getStateForItem() {
 		return null;
 	}
@@ -35,6 +35,4 @@ public class StatelessFFTransitionResult extends DefaultFFTransitionResult {
 		System.out.println("attempt to assign FFDPState to stateless feature");
 		System.exit(0);
 	}
-	
-
 }
