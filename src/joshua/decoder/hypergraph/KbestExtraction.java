@@ -17,14 +17,15 @@
  */
 package joshua.decoder.hypergraph;
 
-import joshua.corpus.SymbolTable;
-import joshua.decoder.Support;
 import joshua.decoder.ff.FFTransitionResult;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.tm.Rule;
+import joshua.decoder.Support;
+import joshua.corpus.SymbolTable;
 import joshua.util.FileUtility;
 
 import java.io.BufferedWriter;
+import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.PriorityQueue;
@@ -67,12 +68,23 @@ public class KbestExtraction {
 	
 	
 //	########################################## kbest extraction algorithm ##########################	
-	public  void lazy_k_best_extract_hg(HyperGraph hg, ArrayList<FeatureFunction> l_models, int global_n, boolean extract_unique_nbest, int sent_id, 
-			BufferedWriter out, boolean extract_nbest_tree, boolean add_combined_score){
+	public void lazy_k_best_extract_hg(
+		HyperGraph hg, ArrayList<FeatureFunction> l_models, int global_n,
+		boolean extract_unique_nbest, int sent_id, BufferedWriter out,
+		boolean extract_nbest_tree, boolean add_combined_score
+	) {
 		//long start = System.currentTimeMillis();
 		reset_state();
-		if(hg.goal_item==null)return;		
-		BufferedWriter out2= FileUtility.handle_null_writer(out);		
+		if (null == hg.goal_item) return;
+		
+		BufferedWriter out2 = null;
+		if (null == out) {
+			out2 = new BufferedWriter(new OutputStreamWriter(System.out));
+		} else {
+			out2 = out;
+		}
+		
+		
 		//VirtualItem virtual_goal_item = add_virtual_item( hg.goal_item);
 		int next_n=0;
 		while(true){
@@ -95,7 +107,7 @@ public class KbestExtraction {
 	}
 	
 	//the only difference from the above function is: we store the nbest into an arraylist, instead of a file
-	public  void lazy_k_best_extract_hg(HyperGraph hg, ArrayList<FeatureFunction> l_models, int global_n, boolean extract_unique_nbest, int sent_id, 
+	public void lazy_k_best_extract_hg(HyperGraph hg, ArrayList<FeatureFunction> l_models, int global_n, boolean extract_unique_nbest, int sent_id, 
 			ArrayList<String> out, boolean extract_nbest_tree, boolean add_combined_score){
 		//long start = System.currentTimeMillis();
 		reset_state();

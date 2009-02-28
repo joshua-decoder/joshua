@@ -17,6 +17,7 @@
  */
 package joshua.util;
 
+import java.nio.charset.Charset;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -39,43 +40,23 @@ import java.util.zip.GZIPInputStream;
  */
 public class FileUtility {
 	
+	/* Note: charset name is case-agnostic
+	 * "UTF-8" is the canonical name
+	 * "UTF8", "unicode-1-1-utf-8" are aliases
+	 * Java doesn't distinguish utf8 vs UTF-8 like Perl does
+	 */
+	private static final Charset UTF8 = Charset.forName("UTF-8");
+	
+	
 	public static BufferedReader getReadFileStream(String filename)
 	throws IOException {
-		/* Note: charset name is case-agnostic
-		 * "UTF-8" is the canonical name
-		 * "UTF8", "unicode-1-1-utf-8" are aliases
-		 * Java doesn't distinguish utf8 vs UTF-8 like Perl does
-		 */
-		 
 		FileInputStream fis = new FileInputStream(filename);
 		return new BufferedReader(
 					new InputStreamReader(
 						filename.endsWith(".gz")
 							? new GZIPInputStream(fis)
 							: fis
-						, "UTF-8"));
-	}
-	
-	
-	public static BufferedWriter handle_null_writer(BufferedWriter out) {
-		BufferedWriter out2 = null;
-		if (null == out) {
-			out2 = new BufferedWriter(new OutputStreamWriter(System.out));
-		} else {
-			out2 = out;
-		}
-		return out2;
-	}
-	
-	
-	public static BufferedWriter handle_null_file(String f_out) {
-		BufferedWriter out = null;
-		if (null == f_out) {
-			out = new BufferedWriter(new OutputStreamWriter(System.out));
-		} else {
-			out = FileUtility.getWriteFileStream(f_out);
-		}
-		return out;
+						, UTF8));
 	}
 	
 	
@@ -88,26 +69,29 @@ public class FileUtility {
 	}
 	
 	
-	public static BufferedWriter getWriteFileStream(String filename, String enc) {
+	/** Warning, will truncate/overwrite existing files */
+	public static BufferedWriter getWriteFileStream(String filename) {
 		BufferedWriter out = null;
 		try {
-			out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(filename), enc));
+			out = new BufferedWriter(
+					new OutputStreamWriter(
+						// TODO: add GZIP
+						new FileOutputStream(filename), UTF8));
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 		return out;
 	}
 	
-	public static BufferedWriter getWriteFileStream(String filename) {
-		return getWriteFileStream(filename, "UTF-8");
-	}
 	
-	
-	//do not overwrite, append
-	public static BufferedWriter getWriteFileStream_append(String filename, String enc) {
+	// Currently unused, but maybe desirable to keep on hand
+	public static BufferedWriter getAppendFileStream(String filename) {
 		BufferedWriter out = null;
 		try {
-			out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(filename,true), enc));
+			out = new BufferedWriter(
+					new OutputStreamWriter(
+						// TODO: add GZIP (Is that safe? or will it garble?)
+						new FileOutputStream(filename, true), UTF8));
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -126,42 +110,28 @@ public class FileUtility {
 	}
 	
 	
-	public static void write_lzf(BufferedWriter out, String str){
+	public static void write_lzf(BufferedWriter out, String str) {
 		try {
 			//if(out==null)System.out.println("out handler is null");
 			//if(str==null)System.out.println("str handler is null");
-			out.write(str);	
-		}
-		catch (IOException e) {
+			out.write(str);
+		} catch (IOException e) {
 			e.printStackTrace();
-		}		
+		}
 	}
 	
-	public static void flush_lzf(BufferedWriter out){
-		try {
-			out.flush();	
-		}
-		catch (IOException e) {
-			e.printStackTrace();
-		}		
+	public static void flush_lzf(BufferedWriter out) {
+		try { out.flush(); } catch (IOException e) { e.printStackTrace(); }
 	}
 	
-	public static void close_write_file(BufferedWriter out){
-		try {
-			out.close();	
-		}
-		catch (IOException e) {
-			e.printStackTrace();
-		}		
+	public static void close_write_file(BufferedWriter out) {
+		try { out.close(); } catch (IOException e) { e.printStackTrace(); }
 	}
-	public static void close_read_file(BufferedReader in){
-		try {
-			in.close();	
-		}
-		catch (IOException e) {
-			e.printStackTrace();
-		}		
+	
+	public static void close_read_file(BufferedReader in) {
+		try { in.close(); } catch (IOException e) { e.printStackTrace(); }
 	}
+	
 	
 	/**
 	 * Recursively delete the specified file or directory.
@@ -169,44 +139,38 @@ public class FileUtility {
 	 * @param f File or directory to delete
 	 * @return <code>true</code> if the specified file or directory was deleted, <code>false</code> otherwise
 	 */
-	public static boolean delete(File f) {
-		if (f!=null) {
-			if (f.isDirectory()) {
-				for (File child : f.listFiles()) {
-					delete(child);
-				}
-				return f.delete();
-			} else {
-				return f.delete();
-			}
+	public static boolean deleteRecursively(File f) {
+		if (null != f) {
+			if (f.isDirectory())
+				for (File child : f.listFiles())
+					deleteRecursively(child);
+			return f.delete();
 		} else {
 			return false;
 		}
 	}
 	
+	
 	/**
 	 * Writes data from the integer array to disk
 	 * as raw bytes.
 	 * 
-	 * @param data The integer array to write to disk.
+	 * @param data     The integer array to write to disk.
 	 * @param filename The filename where the data should be written.
 	 * @throws IOException
 	 */
-    public static void writeBytes(int[] data, String filename) throws IOException {
-    	
-    	FileOutputStream out = new FileOutputStream(filename);
-    	
-    	byte[] b = new byte[4];
-		 
-    	for (int word : data) {
-    		for (int i = 0; i < 4; i++) {
-    			int offset = (b.length - 1 - i) * 8;
-    			b[i] = (byte) ((word >>> offset) & 0xFF);
-    		}
-    		
-    		out.write(b);
-    	}
-    }
-	
+	public static void writeBytes(int[] data, String filename)
+	throws IOException {
+		FileOutputStream out = new FileOutputStream(filename);
+		byte[] b = new byte[4];
+		
+		for (int word : data) {
+			b[0] = (byte) ((word >>> 24) & 0xFF);
+			b[1] = (byte) ((word >>> 16) & 0xFF);
+			b[2] = (byte) ((word >>>  8) & 0xFF);
+			b[3] = (byte) ((word >>>  0) & 0xFF);
+			
+			out.write(b);
+		}
+	}
 }
-//end of utility for file options

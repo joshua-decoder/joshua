@@ -108,7 +108,7 @@ public class SmoothedNGramDB extends LanguageModel {
 		File dbDirectory = new File(dbDirectoryName);
 		if (dbDirectory.exists()) {
 			System.err.println("Warning - directory exists - deleting it now");
-			FileUtility.delete(dbDirectory);
+			FileUtility.deleteRecursively(dbDirectory);
 		} 
 		dbDirectory.mkdir();
 		

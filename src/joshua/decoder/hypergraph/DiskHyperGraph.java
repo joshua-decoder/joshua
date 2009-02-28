@@ -17,27 +17,28 @@
  */
 package joshua.decoder.hypergraph;
 
-import joshua.corpus.SymbolTable;
-import joshua.decoder.BuildinSymbol;
-import joshua.decoder.JoshuaConfiguration;
-import joshua.decoder.JoshuaDecoder;
-import joshua.decoder.ff.FFDPState;
-import joshua.decoder.ff.FFTransitionResult;
-import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.lm.LMFFDPState;
 import joshua.decoder.ff.tm.MemoryBasedRule;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.BatchGrammar;
+import joshua.decoder.ff.FFDPState;
+import joshua.decoder.ff.FFTransitionResult;
+import joshua.decoder.ff.FeatureFunction;
+import joshua.decoder.BuildinSymbol;
+import joshua.decoder.JoshuaConfiguration;
+import joshua.decoder.JoshuaDecoder;
+import joshua.corpus.SymbolTable;
 import joshua.util.FileUtility;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.OutputStreamWriter;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.HashMap;
+import java.util.Iterator;
 
 
 /**
@@ -156,8 +157,11 @@ public class DiskHyperGraph {
 	
 	//for writting hyper-graph: (1) saving each hyper-graph; (2) remember each regualar rule used; (3) dump the rule jointly (in case parallel decoding)
 	public void init_write(String itemsFile, boolean useForestPruning, double threshold) {
-		// Open a utf8 BufferedWriter, or use System.out if null==itemsFile
-		this.writer = FileUtility.handle_null_file(itemsFile);
+		this.writer =
+			(null == itemsFile)
+			? new BufferedWriter(new OutputStreamWriter(System.out))
+			: FileUtility.getWriteFileStream(itemsFile) ;
+		
 		
 		if (useForestPruning) {
 			this.pruner = new HyperGraphPruning(
@@ -540,7 +544,11 @@ public class DiskHyperGraph {
 	
 	
 	public void write_rules_non_parallel(String rulesFile) {
-		BufferedWriter out = FileUtility.handle_null_file(rulesFile);
+		BufferedWriter out = 
+			(null == rulesFile)
+			? new BufferedWriter(new OutputStreamWriter(System.out))
+			: FileUtility.getWriteFileStream(rulesFile) ;
+		
 		logger.info("writing rules");
 		for (int ruleID : this.associatedGrammar.keySet()) {
 			writeRule(out, this.associatedGrammar.get(ruleID), ruleID);
