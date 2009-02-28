@@ -17,21 +17,13 @@
  */
 package joshua.util.lexprob;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.UnsupportedEncodingException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Scanner;
-//import java.util.logging.Level;
-//import java.util.logging.Logger;
-
-//import joshua.util.CommandLineParser;
-//import joshua.util.CommandLineParser.Option;
 import joshua.sarray.FileUtil;
 import joshua.sarray.HierarchicalPhrase;
-import joshua.util.Pair;
 import joshua.util.sentence.Vocabulary;
+//import joshua.util.CommandLineParser;
+//import joshua.util.CommandLineParser.Option;
+import joshua.util.Pair;
+import joshua.util.FileUtility;
 
 import com.sleepycat.bind.EntryBinding;
 import com.sleepycat.bind.tuple.TupleBinding;
@@ -43,6 +35,15 @@ import com.sleepycat.je.Environment;
 import com.sleepycat.je.EnvironmentConfig;
 import com.sleepycat.je.LockMode;
 import com.sleepycat.je.OperationStatus;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.UnsupportedEncodingException;
+//import java.util.logging.Level;
+//import java.util.logging.Logger;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Scanner;
 
 
 /**
@@ -137,7 +138,7 @@ public class LexProbsDB implements LexicalProbabilities {
 		dbDirectory = new File(dbDirectoryName);
 		if (dbDirectory.exists()) {
 			System.err.println("Warning - directory exists - deleting it now");
-			FileUtil.delete(dbDirectory);
+			FileUtility.deleteRecursively(dbDirectory);
 		} 
 		dbDirectory.mkdir();
 		
@@ -355,7 +356,7 @@ public class LexProbsDB implements LexicalProbabilities {
 	 * @return <code>true</code> if the backing directory was deleted, <code>false</code> otherwise
 	 */
 	public boolean delete() {
-		return FileUtil.delete(dbDirectory);
+		return FileUtility.deleteRecursively(dbDirectory);
 	}
 
 	

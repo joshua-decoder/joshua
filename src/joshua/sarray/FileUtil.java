@@ -24,10 +24,15 @@ import java.util.regex.*;
 
 
 /**
- * FileUtil is the class that makes some common file operations easier.
+ * FileUtil is the class that makes some common file operations
+ * easier. Deprecated: will be merged into joshua.util.FileUtility,
+ * possibly breaking out JoshuaReader and JoshuaWriter in order to
+ * provide a better interface.
  *
  * @author Chris Callison-Burch
  * @since  6 March 2005
+ * @author wren ng thornton <wren@users.sourceforge.net>
+ * @since 28 February 2009
  * @version $LastChangedDate:2008-07-30 17:15:52 -0400 (Wed, 30 Jul 2008) $
  */
 
@@ -45,15 +50,18 @@ public class FileUtil {
 //===============================================================
 
 	/**
-	 * Checks whether a specified file exists in a specified directory.
+	 * Checks whether a specified file exists in a specified
+	 * directory.
 	 * 
-	 * @param directory The directory to look in for the specified file.
-	 * @param filename The name of the file to check for.
-	 * @return <code>true</code> if a file with the specified filename exists in the specified directory, <code>false</code> otherwise.
+	 * @param directory The directory to look in for the specified
+	 *                  file.
+	 * @param filename  The name of the file to check for.
+	 * @return <code>true</code> if a file with the specified
+	 *         filename exists in the specified directory,
+	 *         <code>false</code> otherwise.
 	 */
 	public static boolean exists(String directory, String filename) {
-		File file = new File(directory, filename);
-		return file.exists();
+		return new File(directory, filename).exists();
 	}
 	
 	
@@ -61,8 +69,7 @@ public class FileUtil {
 	 * Checks whether the file exists.
 	 */
 	public static boolean exists(String filename) {
-		File file = new File(filename);
-		return file.exists();
+		return new File(filename).exists();
 	}
 
 
@@ -71,8 +78,7 @@ public class FileUtil {
 	 * Deletes the specified file.
 	 */
 	public static boolean delete(String directory, String filename) {
-		File file = new File(directory, filename);
-		return file.delete();
+		return new File(directory, filename).delete();
 	}
 	
 	
@@ -80,59 +86,38 @@ public class FileUtil {
 	 * Deletes the specified file.
 	 */
 	public static boolean delete(String filename) {
-		File file = new File(filename);
-		return file.delete();
+		return new File(filename).delete();
 	}
 	
-	/**
-	 * Recursively delete the specified file or directory.
-	 * 
-	 * @param f File or directory to delete
-	 * @return <code>true</code> if the specified file or directory was deleted, <code>false</code> otherwise
-	 */
-	public static boolean delete(File f) {
-		if (f!=null) {
-			if (f.isDirectory()) {
-				for (File child : f.listFiles()) {
-					delete(child);
-				}
-				return f.delete();
-			} else {
-				return f.delete();
-			}
-		} else {
-			return false;
-		}
-	}
-
 	/** 
-	 * @return the full path filename of the filename in the directory.
+	 * @return the full path filename of the filename in the
+	 *         directory.
 	 */
 	public static String getPath(String directory, String filename) {
-		File file = new File(directory, filename);
-		return file.getAbsolutePath();
+		return new File(directory, filename).getAbsolutePath();
 	}
 	
 	/**
-	 * @return a list of the full-path filenames for files in the specified
-	 * directory, which meet the filter criterion.
+	 * @return a list of the full-path filenames for files in
+	 *         the specified directory, which meet the filter
+	 *         criterion.
 	 */
 	public static String[] getFileList(String directory, String filterRegexp) {
-		File rootDir = new File(directory);
-		String[] allFilenames = rootDir.list();
+		String[] allFilenames = new File(directory).list();
 		
-		java.util.regex.Pattern pattern = java.util.regex.Pattern.compile(filterRegexp);
+		java.util.regex.Pattern pattern =
+			java.util.regex.Pattern.compile(filterRegexp);
 		
 		List<String> filteredFilenames = new ArrayList<String>();
-		for(int i = 0; i < allFilenames.length; i++) {
+		for (int i = 0; i < allFilenames.length; i++) {
 			Matcher matcher = pattern.matcher(allFilenames[i]);
-			if(matcher.find()) {
+			if (matcher.find()) {
 				filteredFilenames.add(getPath(directory, allFilenames[i]));
 			}
 		}
 		
 		String[] filteredFilenamesArray = new String[filteredFilenames.size()];
-		for(int i = 0; i < filteredFilenames.size(); i++) {
+		for (int i = 0; i < filteredFilenames.size(); i++) {
 			filteredFilenamesArray[i] = (String) filteredFilenames.get(i);
 		}
 		return filteredFilenamesArray;
@@ -140,20 +125,21 @@ public class FileUtil {
 
 	
 	/**
-	 * Copies the contents of the source file to the target file. 
+	 * Copies the contents of the source file to the target
+	 * file.
 	 */
 	public static void copy(String sourceFilename, String targetFilename, boolean checkForExistingTargetFile) throws IOException {
-		if(sourceFilename.equals(targetFilename)) {
+		if (sourceFilename.equals(targetFilename)) {
 			throw new IOException("Error in copy operation: source file and target file are the same.");
 		}
 		
-		if(checkForExistingTargetFile && exists(targetFilename)) {
-			throw new IOException("Warning in copy operation: target file already exists.  Not overwritten.");			
+		if (checkForExistingTargetFile && exists(targetFilename)) {
+			throw new IOException("Warning in copy operation: target file already exists. Not overwritten.");			
 		}
 		
 		BufferedReader reader = getBufferedReader(sourceFilename);
 		BufferedWriter writer = getBufferedWriter(targetFilename, false);
-		while(reader.ready()) {
+		while (reader.ready()) {
 			String line = reader.readLine();
 			writeLine(line, writer);
 		}
@@ -166,14 +152,15 @@ public class FileUtil {
 	/**
 	 * Returns a BufferedReader. Handles gzipped files.
 	 * 
-	 * @param filename the name of the file to read from (can be .gz)
-	 * @param the directory that the file is in
+	 * @param directory that the file is in
+	 * @param filename  the name of the file to read from
+	 *                  (can be .gz)
 	 * @return BufferedReader to read from the given file name 
 	 * @exception IOException if a stream cannot be created
 	 */
 	public static BufferedReader getBufferedReader(String directory, String filename) throws IOException {
 		// look to see if an gzipped version of the file exists.
-		if(!exists(directory, filename) && exists(directory, filename + ".gz")) {
+		if (!exists(directory, filename) && exists(directory, filename + ".gz")) {
 			filename = filename + ".gz";
 		}
 		InputStream stream = new FileInputStream(new File(directory, filename));
@@ -184,17 +171,18 @@ public class FileUtil {
 	}
 
 	/**
-	 * Returns a BufferedReader. Handles gzipped files.  Also supports reading from 
-	 * STDIN if "-" is specified as the filename.
+	 * Returns a BufferedReader. Handles gzipped files. Also
+	 * supports reading from STDIN if "-" is specified as the
+	 * filename.
 	 * 
-	 * @param filename the name of the file to read from (can be .gz)
+	 * @param filename the name of the file to read from
+	 *                 (can be .gz)
 	 * @return BufferedReader to read from the given file name 
 	 * @exception IOException if a stream cannot be created
 	 */
 	public static BufferedReader getBufferedReader(String filename) throws IOException{
-		if(filename.equals("-")) {
-			BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
-			return in;
+		if (filename.equals("-")) {
+			return new BufferedReader(new InputStreamReader(System.in));
 		}
 		InputStream stream = new FileInputStream(new File(filename));
 		if (filename.endsWith(".gz")) {
@@ -203,65 +191,71 @@ public class FileUtil {
 		return new BufferedReader(new InputStreamReader(stream, FILE_ENCODING));
 	}
 	
-		
-				
+	
+	
 	
 	/**
-	 * Returns a BufferedWriter.  Overwrites the file if it exists.
+	 * Returns a BufferedWriter. Overwrites the file if it
+	 * exists.
 	 * 
-	 * @param filename the name of the file to write to
-	 * @param the directory to put the file is in
+	 * @param directory that the file is in
+	 * @param filename  the name of the file to write to
 	 * @return BufferedReader to read from the given file name 
 	 * @exception IOException if a stream cannot be created
 	 */
-	public static BufferedWriter getBufferedWriter(String directory, String filename) throws IOException{
+	public static BufferedWriter getBufferedWriter(String directory, String filename) throws IOException {
 		return getBufferedWriter(directory, filename, false);
 	}
 	
 	
 	/**
-	 * Returns a BufferedWriter. Overwrites the file if it exists.
+	 * Returns a BufferedWriter. Overwrites the file if it
+	 * exists.
 	 * 
 	 * @param filename the name of the file to write to
 	 * @return BufferedReader to read from the given file name 
 	 * @exception IOException if a stream cannot be created
 	 */
-	public static BufferedWriter getBufferedWriter(String filename) throws IOException{
+	public static BufferedWriter getBufferedWriter(String filename) throws IOException {
 		return getBufferedWriter(filename, false);
 	}
 
 	
 	/**
-	 * Returns a BufferedWriter.  Can optionally append ot the file if it exists.
+	 * Returns a BufferedWriter. Can optionally append ot the
+	 * file if it exists.
 	 * 
-	 * @param filename the name of the file to write to
-	 * @param the directory to put the file is in
-	 * @param append a flag to determine whether to append to an existing file or overwrite it
+	 * @param directory that the file is in
+	 * @param filename  the name of the file to write to
+	 * @param append a flag to determine whether to append to
+	 *               an existing file or overwrite it
 	 * @return BufferedReader to read from the given file name 
 	 * @exception IOException if a stream cannot be created
 	 */
-	public static BufferedWriter getBufferedWriter(String directory, String filename, boolean append) throws IOException{
-		File file = new File(directory, filename);
-		FileOutputStream outputStream = new FileOutputStream(file, append);
-		OutputStreamWriter outputStreamWriter = new OutputStreamWriter(outputStream, FILE_ENCODING);
-		return new BufferedWriter(outputStreamWriter);
+	public static BufferedWriter getBufferedWriter(String directory, String filename, boolean append) throws IOException {
+		return new BufferedWriter(
+			new OutputStreamWriter(
+				new FileOutputStream(
+					new File(directory, filename), append), FILE_ENCODING));
 	}
 	
 	
-
-
+	
+	
 	/**
-	 * Returns a BufferedWriter. Can optionally append ot the file if it exists.
+	 * Returns a BufferedWriter. Can optionally append ot the
+	 * file if it exists.
 	 * 
 	 * @param filename the name of the file to write to
-	 * @param append a flag to determine whether to append to an existing file or overwrite it
+	 * @param append a flag to determine whether to append to
+	 *               an existing file or overwrite it
 	 * @return BufferedReader to read from the given file name 
 	 * @exception IOException if a stream cannot be created
 	 */
 	public static BufferedWriter getBufferedWriter(String filename, boolean append) throws IOException {
-		FileOutputStream outputStream = new FileOutputStream(filename, append);
-		OutputStreamWriter outputStreamWriter = new OutputStreamWriter(outputStream, FILE_ENCODING);
-		return new BufferedWriter(outputStreamWriter);
+		return new BufferedWriter(
+			new OutputStreamWriter(
+				new FileOutputStream(filename, append), FILE_ENCODING));
 	}
 	
 	
@@ -278,7 +272,8 @@ public class FileUtil {
 	
 	
 	/**
-	 * Writes a line to a BufferedWriter without a terminating newline character.
+	 * Writes a line to a BufferedWriter without a terminating
+	 * newline character.
 	 */
 	public static void write(String line, BufferedWriter writer) throws IOException {
 		writer.write(line, 0, line.length());
@@ -293,7 +288,7 @@ public class FileUtil {
 	public static void appendToFile(String str, String filename, boolean appendNewLine) throws IOException {
 		BufferedWriter writer = getBufferedWriter(filename, true);
 		writer.write(str, 0, str.length());
-		if(appendNewLine) writer.newLine();
+		if (appendNewLine) writer.newLine();
 		writer.flush();
 		writer.close();
 	}
@@ -304,7 +299,8 @@ public class FileUtil {
 	 */
 	public static PrintStream getPrintStream(String filename, boolean append) throws IOException {
 		boolean autoFlush = true;
-		return new PrintStream(new FileOutputStream(filename, append),  autoFlush, FILE_ENCODING);
+		return new PrintStream(
+			new FileOutputStream(filename, append), autoFlush, FILE_ENCODING);
 	
 	}
 
@@ -314,15 +310,6 @@ public class FileUtil {
 	 */
 	public static PrintStream getPrintStream(String filename) throws IOException {
 		return getPrintStream(filename, false);
-	}
-
-//===============================================================
-// Main 
-//===============================================================
-
-	public static void main(String[] args) throws IOException
-	{
-
 	}
 }
 

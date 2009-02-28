@@ -36,6 +36,7 @@ import java.util.zip.GZIPInputStream;
  * 
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @author wren ng thornton <wren@users.sourceforge.net>
+ * @since 28 February 2009
  * @version $LastChangedDate$
  */
 public class FileUtility {
@@ -45,7 +46,7 @@ public class FileUtility {
 	 * "UTF8", "unicode-1-1-utf-8" are aliases
 	 * Java doesn't distinguish utf8 vs UTF-8 like Perl does
 	 */
-	private static final Charset UTF8 = Charset.forName("UTF-8");
+	private static final Charset FILE_ENCODING = Charset.forName("UTF-8");
 	
 	
 	public static BufferedReader getReadFileStream(String filename)
@@ -56,7 +57,7 @@ public class FileUtility {
 						filename.endsWith(".gz")
 							? new GZIPInputStream(fis)
 							: fis
-						, UTF8));
+						, FILE_ENCODING));
 	}
 	
 	
@@ -66,7 +67,7 @@ public class FileUtility {
 		return new BufferedWriter(
 					new OutputStreamWriter(
 						// TODO: add GZIP
-						new FileOutputStream(filename), UTF8));
+						new FileOutputStream(filename), FILE_ENCODING));
 	}
 	
 	
@@ -76,7 +77,7 @@ public class FileUtility {
 		return new BufferedWriter(
 					new OutputStreamWriter(
 						// TODO: add GZIP (Is that safe? or will it garble?)
-						new FileOutputStream(filename, true), UTF8));
+						new FileOutputStream(filename, true), FILE_ENCODING));
 	}
 	
 	
