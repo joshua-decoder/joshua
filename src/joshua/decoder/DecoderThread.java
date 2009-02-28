@@ -103,7 +103,7 @@ public class DecoderThread  extends Thread {
 				initializeTranslationGrammars(JoshuaConfiguration.g_sent_tm_file_name_prefix + sent_id + ".gz");
 			}*/
 			
-			translate(this.p_grammar_factories, this.p_l_feat_functions, cn_sent, oracle_sent, this.l_default_nonterminals, t_writer_nbest, sent_id, JoshuaConfiguration.topN, p_disk_hg, kbest_extractor);
+			translate(this.p_grammar_factories, this.p_l_feat_functions, cn_sent, oracle_sent, this.l_default_nonterminals, t_writer_nbest, sent_id, JoshuaConfiguration.topN, this.p_disk_hg, kbest_extractor);
 			sent_id++;
 			//if (sent_id > 10) break;//debug
 		}

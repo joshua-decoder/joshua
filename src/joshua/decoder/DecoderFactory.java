@@ -180,8 +180,7 @@ public class DecoderFactory {
 			HashMap<Integer,Integer> tbl_done = new HashMap<Integer,Integer>();
 			BufferedWriter t_writer_dhg_rules = FileUtility.getWriteFileStream(nbest_file + ".hg.rules");
 			for (DecoderThread p_decoder : parallel_threads) {
-			    DiskHyperGraph dhg2 = p_decoder.p_disk_hg;
-				dhg2.write_rules_parallel(t_writer_dhg_rules, tbl_done);
+				p_decoder.p_disk_hg.write_rules_parallel(t_writer_dhg_rules, tbl_done);
 			}
 			FileUtility.flush_lzf(t_writer_dhg_rules);
 			FileUtility.close_write_file(t_writer_dhg_rules);
