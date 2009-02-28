@@ -344,7 +344,7 @@ public class JoshuaConfiguration {
 				}
 			}
 		}
-		FileUtility.close_read_file(t_reader_config);
+		t_reader_config.close();
 	}
 	
 	

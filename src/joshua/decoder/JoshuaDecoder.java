@@ -265,7 +265,7 @@ public class JoshuaDecoder {
 				}
 			}
 		}
-		FileUtility.close_read_file(t_reader_config);
+		t_reader_config.close();
 		return l_models;
 	}
 	
@@ -397,7 +397,7 @@ public class JoshuaDecoder {
 		while ((line = FileUtility.read_line_lzf(t_reader_config)) != null) {
 			line = line.trim();
 			if (line.matches("^\\s*\\#.*$") || line.matches("^\\s*$") || line.indexOf("=") != -1) {//comment, empty line, or parameter lines: just copy
-				 FileUtility.write_lzf(t_writer_config, line + "\n");
+				t_writer_config.write(line + "\n");
 			}else{//models: replace the weight
 				String[] fds = line.split("\\s+");
 				StringBuffer new_line = new StringBuffer();
@@ -407,11 +407,11 @@ public class JoshuaDecoder {
 					new_line.append(" ");
 				}
 				new_line.append(new_weights[feat_id++]);	
-				FileUtility.write_lzf(t_writer_config, new_line.toString() + "\n");
-			}				
+				t_writer_config.write(new_line.toString() + "\n");
+			}
 		}
 		if(feat_id!=new_weights.length){System.out.println("number of models does not match number of weights, must be wrong"); System.exit(1);};
-		FileUtility.close_read_file(t_reader_config);
-		FileUtility.close_write_file(t_writer_config);		
+		t_reader_config.close();
+		t_writer_config.close();
 	}
 }

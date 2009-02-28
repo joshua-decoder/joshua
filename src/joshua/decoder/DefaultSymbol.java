@@ -182,7 +182,7 @@ public abstract class DefaultSymbol extends AbstractSymbolTable implements Symbo
 				tbl_id_2_str.put(id, uqniue_str);
 			}
 		}
-		FileUtility.close_read_file(t_reader_sym);
+		t_reader_sym.close();
 		/*if (tbl_id_2_str.size() >= lm_end_sym_id - lm_start_sym_id) {
 			System.out.println("Error: read symbol tbl, tlb is too big");
 			System.exit(1);

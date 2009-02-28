@@ -101,7 +101,7 @@ public class LMGrammarRemote  extends LMGrammar {
 		    System.out.println("num of lm servers does not match");
 		    System.exit(1);
 		}
-		FileUtility.close_read_file(t_reader);
+		t_reader.close();
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -146,7 +146,7 @@ public class LMGrammarRemote  extends LMGrammar {
 				}
 			}
 		}
-		FileUtility.close_read_file(t_reader_config);
+		t_reader_config.close();
 		return res;
 	}
 	
@@ -177,7 +177,7 @@ public class LMGrammarRemote  extends LMGrammar {
 //		    System.out.println("num of lm servers does not match");
 //		    System.exit(1);
 //		}
-//		FileUtility.close_read_file(t_reader);
+//		t_reader.close();
 //	}
 	
 //	read grammar locally by the Java implementation

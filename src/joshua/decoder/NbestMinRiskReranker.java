@@ -103,15 +103,20 @@ public class NbestMinRiskReranker  {
 		}
 		
 		//step-3: output the 1best or nbest
-		if(this.produce_reranked_nbest){
+		if (this.produce_reranked_nbest) {
 			//TOTO: sort the list and write the reranked nbest; Use Collections.sort(List list, Comparator c)
-		}else{
-			/*FileUtility.write_lzf(this.out,best_hyp);
-			FileUtility.write_lzf(this.out,"\n");
-			FileUtility.flush_lzf(out);*/
+		} else {
+			/*
+			this.out.write(best_hyp);
+			this.out.write("\n");
+			out.flush();
+			*/
 		}
 		System.out.println("best gain: " + best_gain);
-		if(best_hyp==null){System.out.println("mbr reranked one best is null, must be wrong"); System.exit(1);}
+		if (null == best_hyp) {
+			System.out.println("mbr reranked one best is null, must be wrong");
+			System.exit(1);
+		}
 		return best_hyp;
 	}
 
@@ -253,20 +258,23 @@ public class NbestMinRiskReranker  {
 			int new_sent_id = new Integer(fds[0]);
 			if(old_sent_id!=-1 && old_sent_id!=new_sent_id){						
 				String best_hyp = mbr_reranker.process_one_sent(nbest, old_sent_id);//nbest: list of unique strings
-				FileUtility.write_lzf(t_writer_out,best_hyp+"\n"); FileUtility.flush_lzf(t_writer_out);				
+				t_writer_out.write(best_hyp+"\n");
+				t_writer_out.flush();
 				nbest.clear();
 			}
 			old_sent_id = new_sent_id;
 			nbest.add(line);
 		}
 		//last nbest
-		String best_hyp = mbr_reranker.process_one_sent( nbest, old_sent_id);	
-		FileUtility.write_lzf(t_writer_out,best_hyp+"\n"); FileUtility.flush_lzf(t_writer_out);
+		String best_hyp = mbr_reranker.process_one_sent(nbest, old_sent_id);
+		t_writer_out.write(best_hyp + "\n");
+		t_writer_out.flush();
 		nbest.clear();
 		
-		FileUtility.close_read_file(t_reader_nbest);
-		FileUtility.close_write_file(t_writer_out);
-		System.out.println("Total running time (seconds) is " + (System.currentTimeMillis()-start_time)/1000.0);
+		t_reader_nbest.close();
+		t_writer_out.close();
+		System.out.println("Total running time (seconds) is "
+			+ (System.currentTimeMillis() - start_time) / 1000.0);
 	}
 	
 }

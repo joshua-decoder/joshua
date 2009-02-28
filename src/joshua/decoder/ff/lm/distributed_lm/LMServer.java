@@ -199,7 +199,7 @@ public class LMServer {
 				}
 			}
 		}
-		FileUtility.close_read_file(t_reader_config);
+		t_reader_config.close();
 	}
 	
 	
@@ -218,7 +218,7 @@ public class LMServer {
 //			res = line;
 //			break;
 //		}
-//		FileUtility.close_read_file(t_reader_config);
+//		t_reader_config.close();
 //		return res;
 //	}
 	

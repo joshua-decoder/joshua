@@ -156,7 +156,8 @@ public class DiskHyperGraph {
 //===============================================================
 	
 	//for writting hyper-graph: (1) saving each hyper-graph; (2) remember each regualar rule used; (3) dump the rule jointly (in case parallel decoding)
-	public void init_write(String itemsFile, boolean useForestPruning, double threshold) {
+	public void init_write(String itemsFile, boolean useForestPruning, double threshold)
+	throws IOException {
 		this.writer =
 			(null == itemsFile)
 			? new BufferedWriter(new OutputStreamWriter(System.out))
@@ -199,7 +200,7 @@ public class DiskHyperGraph {
 					this.symbolTable, null, nonterminalRegexp,
 					nonterminalReplaceRegexp, ruleID, fds[1], defaultOwner));
 		}
-		FileUtility.close_read_file(rulesReader);
+		rulesReader.close();
 	}
 	
 	
@@ -215,13 +216,13 @@ public class DiskHyperGraph {
 // Methods
 //===============================================================
 	
-	public void save_hyper_graph(HyperGraph hg) {
+	public void save_hyper_graph(HyperGraph hg) throws IOException {
 		resetStates();
 		if (null != this.pruner) this.pruner.pruning_hg(hg);
 		constructItemTables(hg);
 		if (logger.isLoggable(Level.INFO)) 
 			logger.info("Number of Items is: " + this.itemToID.size());
-		FileUtility.write_lzf(this.writer,
+		this.writer.write(
 			SENTENCE_TAG + hg.sent_id
 			+ " " + hg.sent_len
 			+ " " + this.itemToID.size()
@@ -274,8 +275,8 @@ public class DiskHyperGraph {
 		this.currentItemID++;
 	}
 	
-	private void writeItem(HGNode item) {
-		FileUtility.write_lzf(this.writer,
+	private void writeItem(HGNode item) throws IOException {
+		this.writer.write(
 			new StringBuffer()
 				.append(ITEM_TAG)
 				.append(" ")
@@ -308,10 +309,11 @@ public class DiskHyperGraph {
 				writeDeduction(item, hyperEdge);
 			}
 		}
-		FileUtility.flush_lzf(this.writer);
+		this.writer.flush();
 	}
 	
-	private void writeDeduction(HGNode item, HyperEdge deduction) {
+	private void writeDeduction(HGNode item, HyperEdge deduction)
+	throws IOException {
 		//get rule id
 		int ruleID = NULL_RULE_ID;
 		final Rule deduction_rule = deduction.get_rule();
@@ -370,7 +372,7 @@ public class DiskHyperGraph {
 			}
 		}
 		
-		FileUtility.write_lzf(this.writer, s.toString());
+		this.writer.write(s.toString());
 	}
 	
 // End save_hyper_graph()
@@ -543,7 +545,8 @@ public class DiskHyperGraph {
 //===============================================================
 	
 	
-	public void write_rules_non_parallel(String rulesFile) {
+	public void write_rules_non_parallel(String rulesFile)
+	throws IOException {
 		BufferedWriter out = 
 			(null == rulesFile)
 			? new BufferedWriter(new OutputStreamWriter(System.out))
@@ -553,14 +556,14 @@ public class DiskHyperGraph {
 		for (int ruleID : this.associatedGrammar.keySet()) {
 			writeRule(out, this.associatedGrammar.get(ruleID), ruleID);
 		}
-		FileUtility.flush_lzf(out);
-		FileUtility.close_write_file(out);
+		out.flush();
+		out.close();
 	}
 	
 	// writtenRules: remember what kind of rules have already been saved
-	public void write_rules_parallel(BufferedWriter out,
-		HashMap<Integer,Integer> writtenRules
-	) {
+	public void write_rules_parallel(
+		BufferedWriter out, HashMap<Integer,Integer> writtenRules
+	) throws IOException {
 		logger.info("writing rules in a partition");
 		for (int ruleID : this.associatedGrammar.keySet()) {
 			if (! writtenRules.containsKey(ruleID)) {
@@ -568,11 +571,12 @@ public class DiskHyperGraph {
 				writeRule(out, this.associatedGrammar.get(ruleID), ruleID);
 			}
 		}
-		FileUtility.flush_lzf(out);
+		out.flush();
 	}
 	
-	private void writeRule(BufferedWriter out, Rule rule, int ruleID) {
-		FileUtility.write_lzf(out,
+	private void writeRule(BufferedWriter out, Rule rule, int ruleID)
+	throws IOException {
+		out.write(
 			ruleID
 			+ " "
 			+ this.symbolTable.getWord(rule.owner)

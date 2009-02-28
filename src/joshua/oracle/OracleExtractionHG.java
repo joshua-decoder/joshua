@@ -170,19 +170,20 @@ public class OracleExtractionHG extends SplitHg {
 				if(dhg_write!=null) dhg_write.save_hyper_graph(hg_oracle);
 				///time_on_orc_extract += System.currentTimeMillis()-start_time;
 				System.out.println("num_virtual_items: " + orc_extractor.g_num_virtual_items + " num_virtual_dts: " + orc_extractor.g_num_virtual_deductions);
-				//System.out.println("oracle extract: " + (System.currentTimeMillis()-start_time));			
-			}			
+				//System.out.println("oracle extract: " + (System.currentTimeMillis()-start_time));
+			}
 			
-			FileUtility.write_lzf(orc_out, orc_sent+"\n");
-			System.out.println("orc bleu is " + orc_bleu);			
+			orc_out.write(orc_sent+"\n");
+			System.out.println("orc bleu is " + orc_bleu);
 		}
-		FileUtility.close_read_file(t_reader_ref);
-		FileUtility.close_write_file(orc_out);
+		t_reader_ref.close();
+		orc_out.close();
 		if(dhg_write!=null) dhg_write.write_rules_non_parallel(f_orc_out + ".hg.rules");
 		
 		System.out.println("time_on_reading: " + time_on_reading);
 		System.out.println("time_on_orc_extract: " + time_on_orc_extract);
-		System.out.println("total running time: " + (System.currentTimeMillis()-start_time));
+		System.out.println("total running time: "
+			+ (System.currentTimeMillis() - start_time));
 	}
 	
 	

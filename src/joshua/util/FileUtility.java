@@ -60,42 +60,23 @@ public class FileUtility {
 	}
 	
 	
-	public static int number_lines_in_file(String file)
-	throws IOException {
-		BufferedReader t_reader_test = FileUtility.getReadFileStream(file);
-		int i = 0; while ((read_line_lzf(t_reader_test)) != null) i++;
-		close_read_file(t_reader_test);
-		return i;
-	}
-	
-	
 	/** Warning, will truncate/overwrite existing files */
-	public static BufferedWriter getWriteFileStream(String filename) {
-		BufferedWriter out = null;
-		try {
-			out = new BufferedWriter(
+	public static BufferedWriter getWriteFileStream(String filename)
+	throws IOException {
+		return new BufferedWriter(
 					new OutputStreamWriter(
 						// TODO: add GZIP
 						new FileOutputStream(filename), UTF8));
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		return out;
 	}
 	
 	
 	// Currently unused, but maybe desirable to keep on hand
-	public static BufferedWriter getAppendFileStream(String filename) {
-		BufferedWriter out = null;
-		try {
-			out = new BufferedWriter(
+	public static BufferedWriter getAppendFileStream(String filename)
+	throws IOException {
+		return new BufferedWriter(
 					new OutputStreamWriter(
 						// TODO: add GZIP (Is that safe? or will it garble?)
 						new FileOutputStream(filename, true), UTF8));
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		return out;
 	}
 	
 	
@@ -107,29 +88,6 @@ public class FileUtility {
 			e.printStackTrace();
 		}
 		return str;
-	}
-	
-	
-	public static void write_lzf(BufferedWriter out, String str) {
-		try {
-			//if(out==null)System.out.println("out handler is null");
-			//if(str==null)System.out.println("str handler is null");
-			out.write(str);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-	
-	public static void flush_lzf(BufferedWriter out) {
-		try { out.flush(); } catch (IOException e) { e.printStackTrace(); }
-	}
-	
-	public static void close_write_file(BufferedWriter out) {
-		try { out.close(); } catch (IOException e) { e.printStackTrace(); }
-	}
-	
-	public static void close_read_file(BufferedReader in) {
-		try { in.close(); } catch (IOException e) { e.printStackTrace(); }
 	}
 	
 	

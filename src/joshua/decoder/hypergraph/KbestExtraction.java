@@ -26,6 +26,7 @@ import joshua.util.FileUtility;
 
 import java.io.BufferedWriter;
 import java.io.OutputStreamWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.PriorityQueue;
@@ -72,7 +73,7 @@ public class KbestExtraction {
 		HyperGraph hg, ArrayList<FeatureFunction> l_models, int global_n,
 		boolean extract_unique_nbest, int sent_id, BufferedWriter out,
 		boolean extract_nbest_tree, boolean add_combined_score
-	) {
+	) throws IOException {
 		//long start = System.currentTimeMillis();
 		reset_state();
 		if (null == hg.goal_item) return;
@@ -86,8 +87,8 @@ public class KbestExtraction {
 		
 		
 		//VirtualItem virtual_goal_item = add_virtual_item( hg.goal_item);
-		int next_n=0;
-		while(true){
+		int next_n = 0;
+		while (true) {
 			/*
 			DerivationState cur = virtual_goal_item.lazy_k_best_extract_item(this ,++next_n,extract_unique_nbest,extract_nbest_tree);//global_n is not used at all
 			if( cur==null || virtual_goal_item.l_nbest.size()<next_n //do not have more hypthesis
@@ -99,8 +100,8 @@ public class KbestExtraction {
 			if(hyp_str==null || next_n > global_n) break;
 
 			//write to files
-			FileUtility.write_lzf(out2,hyp_str);
-			FileUtility.write_lzf(out2,"\n");
+			out2.write(hyp_str);
+			out2.write("\n");
 		}
 		//g_time_kbest_extract += System.currentTimeMillis()-start;
 		//Support.write_log_line("time_kbest_extract: "+ Chart.g_time_kbest_extract, Support.INFO);
