@@ -17,12 +17,13 @@
  */
 package joshua.decoder;
 
-import java.io.BufferedReader;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 import joshua.util.Cache;
 import joshua.util.FileUtility;
+
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.io.BufferedReader;
+import java.io.IOException;
 
 /**
  * Configuration file for Joshua decoder.
@@ -117,7 +118,8 @@ public class JoshuaConfiguration {
 	
 	private static final Logger logger = Logger.getLogger(JoshuaConfiguration.class.getName());
 
-	public static void read_config_file(String config_file) {
+	public static void read_config_file(String config_file)
+	throws IOException {
 		BufferedReader t_reader_config = FileUtility.getReadFileStream(config_file);
 		String line;
 		while ((line = FileUtility.read_line_lzf(t_reader_config)) != null) {

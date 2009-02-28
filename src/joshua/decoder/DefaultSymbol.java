@@ -1,13 +1,14 @@
 package joshua.decoder;
 
-import java.io.BufferedReader;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-
 import joshua.corpus.AbstractSymbolTable;
 import joshua.corpus.SymbolTable;
 import joshua.util.FileUtility;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 
 /**
  * this class implement 
@@ -146,7 +147,8 @@ public abstract class DefaultSymbol extends AbstractSymbolTable implements Symbo
 		return (id < 0);
 	}
 	
-	protected void initializeSymTblFromFile(String fname){	
+	protected void initializeSymTblFromFile(String fname)
+	throws IOException {
 		is_reading_from_file =true;
 		//### read file into tbls
 		HashMap<String, Integer> tbl_str_2_id = new HashMap<String, Integer>();

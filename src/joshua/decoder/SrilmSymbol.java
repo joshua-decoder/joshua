@@ -1,15 +1,17 @@
 package joshua.decoder;
 
-import java.util.Collection;
-
 import joshua.decoder.ff.lm.srilm.SWIGTYPE_p_Ngram;
 import joshua.decoder.ff.lm.srilm.srilm;
+
+import java.io.IOException;
+import java.util.Collection;
+
 
 public class SrilmSymbol extends DefaultSymbol {
 	private SWIGTYPE_p_Ngram p_srilm=null;
 	
 	/*it is somewhat strange */
-	public SrilmSymbol(String fname, int lm_order){	
+	public SrilmSymbol(String fname, int lm_order) throws IOException {
 		/*we have to call the following two funcitons before we add any symbol into the SRILM table
 		 * This is unfortunate as we need to provide lm_order, which seems unrelated*/
 		

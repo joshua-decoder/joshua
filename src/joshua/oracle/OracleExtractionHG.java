@@ -17,22 +17,23 @@
  */
 package joshua.oracle;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-
-import joshua.corpus.SymbolTable;
-import joshua.decoder.BuildinSymbol;
-import joshua.decoder.Support;
 import joshua.decoder.ff.lm.LMFFDPState;
 import joshua.decoder.hypergraph.DiskHyperGraph;
 import joshua.decoder.hypergraph.HGNode;
 import joshua.decoder.hypergraph.HyperEdge;
 import joshua.decoder.hypergraph.HyperGraph;
 import joshua.decoder.hypergraph.KbestExtraction;
+import joshua.decoder.BuildinSymbol;
+import joshua.decoder.Support;
+import joshua.corpus.SymbolTable;
 import joshua.util.FileUtility;
+
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
 
 /**
  * approximated BLEU
@@ -90,7 +91,7 @@ public class OracleExtractionHG extends SplitHg {
 	
 	/*for 919 sent, time_on_reading: 148797
 	time_on_orc_extract: 580286*/
-	public static void main(String[] args) {	
+	public static void main(String[] args) throws IOException {
 	
 		/*String f_hypergraphs="C:\\Users\\zli\\Documents\\mt03.src.txt.ss.nbest.hg.items";
 		String f_rule_tbl="C:\\Users\\zli\\Documents\\mt03.src.txt.ss.nbest.hg.rules";
@@ -135,7 +136,7 @@ public class OracleExtractionHG extends SplitHg {
 		long start_time = System.currentTimeMillis();
 		long time_on_reading = 0;
 		long time_on_orc_extract = 0;
-		BufferedReader t_reader_ref = FileUtility.getReadFileStream(f_ref_files,"UTF-8");
+		BufferedReader t_reader_ref = FileUtility.getReadFileStream(f_ref_files);
 		DiskHyperGraph dhg_read  = new DiskHyperGraph(p_symbolTable, lm_feat_id);
 	
 		dhg_read.init_read(f_hypergraphs, f_rule_tbl, null);

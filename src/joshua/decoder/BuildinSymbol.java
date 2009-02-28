@@ -19,6 +19,7 @@ package joshua.decoder;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.io.IOException;
 
 
 public class BuildinSymbol extends DefaultSymbol {
@@ -27,19 +28,20 @@ public class BuildinSymbol extends DefaultSymbol {
 	
 	private int cur_terminal_id = lm_start_sym_id ;//must be positive
 	
-	public BuildinSymbol() {
+	public BuildinSymbol() throws IOException {
 		this(null);
 	}
 	
-	public BuildinSymbol(String fname){
-		if(fname !=null){
-			System.out.println("Construct the symbol table from a file " +fname);
+	public BuildinSymbol(String fname) throws IOException {
+		if (null != fname) {
+			System.out.println(
+				"Construct the symbol table from a file " + fname);
 			initializeSymTblFromFile(fname);
-		}else{
+		} else {
 			System.out.println("Construct the symbol table on the fly");
 		}
 	}
-
+	
 	public int addTerminal(String terminal) {
 		return getID(terminal);
 	}

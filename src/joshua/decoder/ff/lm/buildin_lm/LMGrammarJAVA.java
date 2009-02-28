@@ -17,17 +17,18 @@
  */
 package joshua.decoder.ff.lm.buildin_lm;
 
-import java.io.BufferedReader;
-import java.util.HashMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
+import joshua.decoder.ff.lm.LMGrammar;
+import joshua.decoder.ff.lm.LanguageModelFF;
 import joshua.decoder.BuildinSymbol;
 import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.Support;
-import joshua.decoder.ff.lm.LMGrammar;
-import joshua.decoder.ff.lm.LanguageModelFF;
 import joshua.util.FileUtility;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * this class implement 
@@ -76,7 +77,8 @@ public class LMGrammarJAVA extends LMGrammar {
 	
 	private static final Logger logger = Logger.getLogger(LMGrammarJAVA.class.getName());
 	
-	public LMGrammarJAVA(BuildinSymbol psymbol, int order, String lm_file, boolean is_add_suffix_infor, boolean is_add_prefix_infor){
+	public LMGrammarJAVA(BuildinSymbol psymbol, int order, String lm_file, boolean is_add_suffix_infor, boolean is_add_prefix_infor)
+	throws IOException {
 		super(psymbol, order);		
 		if (logger.isLoggable(Level.INFO)) 
 			logger.info("use java lm");
@@ -427,12 +429,13 @@ public class LMGrammarJAVA extends LMGrammar {
      */
 	
 	//read grammar locally by the Java implementation
-	public void read_lm_grammar_from_file(String grammar_file){
+	public void read_lm_grammar_from_file(String grammar_file)
+	throws IOException {
 		start_loading_time = System.currentTimeMillis();
 		root = new LMHash();
 		root.put( BACKOFF_WGHT_SYM_ID, NON_EXIST_WEIGHT);
 	
-		BufferedReader t_reader_tree = FileUtility.getReadFileStream(grammar_file,"utf8"); // BUG? shouldn't this be the implicit "UTF-8" instead?
+		BufferedReader t_reader_tree = FileUtility.getReadFileStream(grammar_file);
 		if (logger.isLoggable(Level.INFO)) logger.info("Reading grammar from file " + grammar_file);		
 		String line;
 		boolean start=false;

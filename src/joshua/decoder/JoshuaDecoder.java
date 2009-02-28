@@ -76,7 +76,8 @@ public class JoshuaDecoder {
 	
 //===============================================================
 //===============================================================
-	public static void main(String[] args) {
+	public static void main(String[] args)
+	throws IOException {
 	
 		if (logger.isLoggable(Level.FINEST)) 
 			logger.finest("Starting decoder");
@@ -141,9 +142,10 @@ public class JoshuaDecoder {
 	}
 	
 //	##### procedures: read config, init lm, init sym tbl, init models, read lm, read tm
-	public void initializeDecoder(String config_file){
+	public void initializeDecoder(String config_file)
+	throws IOException {
 //		##### read config file
-		JoshuaConfiguration.read_config_file(config_file);	
+		JoshuaConfiguration.read_config_file(config_file);
 		
 		//#### initialize symbol table
 		initSymbolTbl();
@@ -187,11 +189,13 @@ public class JoshuaDecoder {
 	/*Decoding a whole test set
 	 * This may be parallel
 	 * */
-	public void decodingTestSet(String test_file, String nbest_file, String oracle_file){		
+	public void decodingTestSet(String test_file, String nbest_file, String oracle_file)
+	throws IOException {
 		p_decoder_factory.decodingTestSet(test_file, nbest_file, oracle_file);
 	}
 	
-	public void decodingTestSet(String test_file, String nbest_file) {
+	public void decodingTestSet(String test_file, String nbest_file)
+	throws IOException {
 		p_decoder_factory.decodingTestSet(test_file, nbest_file, null);
 	}
 	
@@ -208,8 +212,11 @@ public class JoshuaDecoder {
 	}
 	
 	
-	public  static ArrayList<FeatureFunction>  initializeFeatureFunctions(SymbolTable psymbolTable, String config_file){
-		BufferedReader t_reader_config = FileUtility.getReadFileStream(config_file);
+	public static ArrayList<FeatureFunction>
+	initializeFeatureFunctions(SymbolTable psymbolTable, String config_file)
+	throws IOException {
+		BufferedReader t_reader_config =
+			FileUtility.getReadFileStream(config_file);
 		ArrayList<FeatureFunction> l_models = new ArrayList<FeatureFunction>();
 		
 		String line;
@@ -269,7 +276,7 @@ public class JoshuaDecoder {
 	}
 	
 	
-	private void initSymbolTbl(){
+	private void initSymbolTbl() throws IOException {
 		if (JoshuaConfiguration.use_remote_lm_server) {
 			this.p_symbolTable = new BuildinSymbol(JoshuaConfiguration.remote_symbol_tbl);//within decoder, we assume to use buildin table when remote lm is used
 		}else  if (JoshuaConfiguration.use_srilm) {
@@ -277,13 +284,14 @@ public class JoshuaDecoder {
 			if (logger.isLoggable(Level.FINEST)) 
 				logger.finest("Using SRILM symbol table");
 			
-		}else{//using the built-in JAVA implementatoin of LM
+		} else { // using the built-in JAVA implementatoin of LM
 			this.p_symbolTable = new BuildinSymbol(null);
 		}
 	}
 	
 	
-	private static LMGrammar initializeLanguageModel(SymbolTable psymbolTable) {
+	private static LMGrammar initializeLanguageModel(SymbolTable psymbolTable) 
+	throws IOException {
 		LMGrammar lm_grammar;
 		if (JoshuaConfiguration.use_remote_lm_server) {
 			if (JoshuaConfiguration.use_left_equivalent_state || JoshuaConfiguration.use_right_equivalent_state){
@@ -310,7 +318,8 @@ public class JoshuaDecoder {
 	
 	
 	// This depends (invisibly) on the language model in order to do pruning of the TM at load time.
-	private  void initializeTranslationGrammars(String tm_file) {	
+	private  void initializeTranslationGrammars(String tm_file)
+	throws IOException {
 		p_tm_grammars = new GrammarFactory[2];
 		
 		// Glue Grammar
@@ -377,9 +386,12 @@ public class JoshuaDecoder {
 		return null;
 	}
 	
-	public void writeConfigFile(double[] new_weights, String template, String file_to_write){
-		BufferedReader t_reader_config = FileUtility.getReadFileStream(template);
-		BufferedWriter t_writer_config =	FileUtility.getWriteFileStream(file_to_write);		
+	public void writeConfigFile(double[] new_weights, String template, String file_to_write)
+	throws IOException {
+		BufferedReader t_reader_config =
+			FileUtility.getReadFileStream(template);
+		BufferedWriter t_writer_config =
+			FileUtility.getWriteFileStream(file_to_write);
 		String line;
 		int feat_id = 0;
 		while ((line = FileUtility.read_line_lzf(t_reader_config)) != null) {

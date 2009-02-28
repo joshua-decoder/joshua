@@ -1,11 +1,5 @@
 package joshua.decoder;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.util.ArrayList;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 import joshua.corpus.SymbolTable;
 import joshua.decoder.chart_parser.Chart;
 import joshua.decoder.ff.FeatureFunction;
@@ -17,6 +11,14 @@ import joshua.decoder.hypergraph.KbestExtraction;
 import joshua.lattice.Lattice;
 import joshua.oracle.OracleExtractor;
 import joshua.util.FileUtility;
+
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 
 
 /**
@@ -73,16 +75,28 @@ public class DecoderThread  extends Thread {
 	}
 	
 	
+	// DecoderThread.run() cannot throw anything
 	public void run() {
-		decode_a_file();
+		try {
+			decode_a_file();
+		} catch (IOException e) {
+			e.printStackTrace();
+			System.exit(1);
+		}
 	}
 	
 
 //	TODO: log file is not properly handled for parallel decoding
-	public void decode_a_file() {
-		BufferedReader t_reader_test = FileUtility.getReadFileStream(test_file);
-		BufferedWriter t_writer_nbest =	FileUtility.getWriteFileStream(nbest_file);
-		BufferedReader t_oracle_reader = (oracle_file==null) ? null : FileUtility.getReadFileStream(oracle_file);
+	public void decode_a_file()
+	throws IOException {
+		BufferedReader t_reader_test =
+			FileUtility.getReadFileStream(test_file);
+		BufferedWriter t_writer_nbest =
+			FileUtility.getWriteFileStream(nbest_file);
+		BufferedReader t_oracle_reader =
+			oracle_file == null
+			? null
+			: FileUtility.getReadFileStream(oracle_file);
 		
 		String cn_sent, oracle_sent;
 		int sent_id = start_sent_id; // if no sent tag, then this will be used

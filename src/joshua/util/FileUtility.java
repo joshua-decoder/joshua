@@ -34,69 +34,26 @@ import java.util.zip.GZIPInputStream;
  * utility functions for file operations
  * 
  * @author Zhifei Li, <zhifei.work@gmail.com>
+ * @author wren ng thornton <wren@users.sourceforge.net>
  * @version $LastChangedDate$
  */
-public class FileUtility{
+public class FileUtility {
 	
-	public static void print_hash_tbl(Map<String,Double[]> tbl, String f_out, boolean key_only, boolean vector_value){
-		//	#### write hashtable
-			BufferedWriter out = FileUtility.getWriteFileStream(f_out);
-			System.out.println("########### write hash table to file " + f_out);
-			for (String key : tbl.keySet()) {
-				if(key_only)
-					FileUtility.write_lzf(out, key + "\n");
-				else{
-					if(vector_value){
-						FileUtility.write_lzf(out, key + " |||");
-						Double[] vals = tbl.get(key);
-						for(int i=0; i<vals.length; i++)
-							FileUtility.write_lzf(out, " " + vals[i]);
-						FileUtility.write_lzf(out, "\n");
-					}else
-						FileUtility.write_lzf(out, key + " ||| " + tbl.get(key) +"\n");
-				}
-			}
-			FileUtility.close_write_file(out);
-	}	
-	
-//	choose features with counts >= threshold
-	public static void print_hash_tbl_above_threshold(HashMap<String,Double> tbl, String f_out, boolean key_only, double threshold){
-		//	#### write hashtable
-			BufferedWriter out = FileUtility.getWriteFileStream(f_out);
-			System.out.println("########### write hash table to file " + f_out);
-			for (Map.Entry<String, Double> entry : tbl.entrySet()) {
-				String key = entry.getKey();
-				Double val = entry.getValue();
-//			for(Iterator it = tbl.keySet().iterator(); it.hasNext(); ){
-//				String key = (String) it.next();
-//				Double val = (Double)tbl.get(key);
-				if(val>=threshold){
-					if(key_only)
-						FileUtility.write_lzf(out, key + "\n");
-					else{
-						FileUtility.write_lzf(out, key + " ||| " + val +"\n");
-					}
-				}
-			}
-			FileUtility.close_write_file(out);
-	}	
-	
-	public static BufferedReader getReadFileStream(String filename, String enc) {
-		BufferedReader in = null;
-		try {
-			if (filename.endsWith(".gz")) {
-				in = new BufferedReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(filename)), enc));
-			} else {
-				in = new BufferedReader(new InputStreamReader(new FileInputStream(filename), enc));
-			}
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		return in;
-	}
-	
-	public static BufferedReader getReadFileStream(String filename) {
-		return getReadFileStream(filename, "UTF-8");
+	public static BufferedReader getReadFileStream(String filename)
+	throws IOException {
+		/* Note: charset name is case-agnostic
+		 * "UTF-8" is the canonical name
+		 * "UTF8", "unicode-1-1-utf-8" are aliases
+		 * Java doesn't distinguish utf8 vs UTF-8 like Perl does
+		 */
+		 
+		FileInputStream fis = new FileInputStream(filename);
+		return new BufferedReader(
+					new InputStreamReader(
+						filename.endsWith(".gz")
+							? new GZIPInputStream(fis)
+							: fis
+						, "UTF-8"));
 	}
 	
 	
@@ -122,12 +79,10 @@ public class FileUtility{
 	}
 	
 	
-	public static int number_lines_in_file(String file) {
+	public static int number_lines_in_file(String file)
+	throws IOException {
 		BufferedReader t_reader_test = FileUtility.getReadFileStream(file);
-		int i = 0;
-		while ((read_line_lzf(t_reader_test)) != null) {
-			i++;
-		}
+		int i = 0; while ((read_line_lzf(t_reader_test)) != null) i++;
 		close_read_file(t_reader_test);
 		return i;
 	}

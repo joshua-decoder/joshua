@@ -25,6 +25,7 @@ import joshua.decoder.ff.FeatureFunction;
 import joshua.util.FileUtility;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.util.HashMap ;
 import java.util.PriorityQueue;
 import java.util.ArrayList;
@@ -76,21 +77,19 @@ public class MemoryBasedBatchGrammarWithPrune extends BatchGrammar {
 		int                        span_limit,
 		String                     nonterminal_regexp,
 		String                     nonterminal_replace_regexp
-	) {		
+	) throws IOException {
 		super(psymbolTable, grammar_file, l_models, default_owner, span_limit, nonterminal_regexp, nonterminal_replace_regexp);
 		
 		//read the grammar from file
-		if(is_glue_grammar==true){
-			if(grammar_file!=null){
-				if (logger.isLoggable(Level.SEVERE)) 
-					logger.severe("You provide a grammar file, but you also indicate it is a glue grammar, there must be sth wrong");
+		if (is_glue_grammar) {
+			if (null != grammar_file) {
+				logger.severe("You provide a grammar file, but you also indicate it is a glue grammar, there must be sth wrong");
 				System.exit(1);
 			}
 			read_tm_grammar_glue_rules();
-		}else{
-			if(grammar_file==null){
-				if (logger.isLoggable(Level.SEVERE)) 
-					logger.severe("You must provide a grammar file for MemoryBasedTMGrammar");
+		} else {
+			if (null == grammar_file) {
+				logger.severe("You must provide a grammar file for MemoryBasedTMGrammar");
 				System.exit(1);
 			}
 			read_tm_grammar_from_file(grammar_file);
@@ -98,10 +97,11 @@ public class MemoryBasedBatchGrammarWithPrune extends BatchGrammar {
 	}
 	
 	
-	protected void read_tm_grammar_from_file(String grammar_file) {
+	protected void read_tm_grammar_from_file(String grammar_file)
+	throws IOException {
 		this.root = new MemoryBasedTrieGrammar(); //root should not have valid ruleBin entries
 		BufferedReader t_reader_tree = 
-			FileUtility.getReadFileStream(grammar_file,"utf8");  // BUG? shouldn't this be the implicit "UTF-8" instead?
+			FileUtility.getReadFileStream(grammar_file);
 		if (logger.isLoggable(Level.INFO)) logger.info(
 			"Reading grammar from file " + grammar_file);
 		

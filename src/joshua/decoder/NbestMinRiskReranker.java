@@ -1,12 +1,14 @@
 package joshua.decoder;
+
+import joshua.util.FileUtility;
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
-
-import joshua.util.FileUtility;
 
 
 /**
@@ -223,8 +225,8 @@ public class NbestMinRiskReranker  {
 	}
 	
 	
-	public static void main(String[] args) {		
-		if(args.length!=4){
+	public static void main(String[] args) throws IOException {
+		if (4 != args.length) {
 			System.out.println("wrong command, correct command should be: java NbestMinRiskReranker f_nbest_in f_out produce_reranked_nbest scaling_factor");
 			System.out.println("num of args is "+ args.length);
 			for(int i=0; i <args.length; i++) System.out.println("arg is: " + args[i]);
@@ -237,7 +239,8 @@ public class NbestMinRiskReranker  {
 		double scaling_factor  =  new Double(args[3].trim());	
 	
 		
-		BufferedReader t_reader_nbest = FileUtility.getReadFileStream(f_nbest_in,"UTF-8");
+		BufferedReader t_reader_nbest =
+			FileUtility.getReadFileStream(f_nbest_in);
 		BufferedWriter t_writer_out =	FileUtility.getWriteFileStream(f_out);
 		NbestMinRiskReranker mbr_reranker = new NbestMinRiskReranker(produce_reranked_nbest, scaling_factor);
 		

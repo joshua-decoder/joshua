@@ -72,7 +72,7 @@ public class LMServer {
 	
 	static SymbolTable p_symbolTable;
 	
-	public static void main(String[] args) {
+	public static void main(String[] args) throws IOException {
 		if (args.length != 1) {
 			System.out.println("wrong command, correct command should be: java LMServer config_file");
 			System.out.println("num of args is "+ args.length);
@@ -126,7 +126,7 @@ public class LMServer {
 	
 	 
 	
-	public static void init_lm_grammar() {
+	public static void init_lm_grammar() throws IOException {
 		if (use_srilm) {
 			if (use_left_euqivalent_state || use_right_euqivalent_state) {
 				System.out.println("use local srilm, we cannot use suffix stuff");
@@ -145,7 +145,8 @@ public class LMServer {
 	
 	
 	
-	public static void read_config_file(String config_file) {
+	public static void read_config_file(String config_file)
+	throws IOException {
 		BufferedReader t_reader_config = FileUtility.getReadFileStream(config_file);
 		String line;
 		while((line = FileUtility.read_line_lzf(t_reader_config)) != null) {

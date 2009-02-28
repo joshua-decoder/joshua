@@ -17,12 +17,13 @@
  */
 package joshua.decoder.ff.lm.distributed_lm;
 
-import joshua.corpus.SymbolTable;
-import joshua.decoder.Support;
 import joshua.decoder.ff.lm.LMGrammar;
+import joshua.decoder.Support;
+import joshua.corpus.SymbolTable;
 import joshua.util.FileUtility;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.util.Hashtable;
 
 /**
@@ -42,7 +43,8 @@ public class LMGrammarRemote  extends LMGrammar {
 	//LMClient p_suffix_client=null;
 	
 	//!!! we assume both suffix and lm are remoted, if one is remoted
-	public LMGrammarRemote(SymbolTable psymbolTable, int order, String f_server_lists, int num_servers){
+	public LMGrammarRemote(SymbolTable psymbolTable, int order, String f_server_lists, int num_servers)
+	throws IOException {
 		super(psymbolTable, order);
 	
 		System.out.println("use remote suffix and lm server");
@@ -75,7 +77,8 @@ public class LMGrammarRemote  extends LMGrammar {
 	
 	
 //	format: lm_file host port weight
-	private void read_lm_server_lists(String f_server_lists, int num_servers, String[] l_lm_server_hosts, int[] l_lm_server_ports, double[] l_lm_server_weights ){			
+	private void read_lm_server_lists(String f_server_lists, int num_servers, String[] l_lm_server_hosts, int[] l_lm_server_ports, double[] l_lm_server_weights)
+	throws IOException {
 		BufferedReader t_reader = FileUtility.getReadFileStream(f_server_lists);
 		String line;
 		int count=0;
@@ -102,7 +105,8 @@ public class LMGrammarRemote  extends LMGrammar {
 	}
 	
 	@SuppressWarnings("unchecked")
-	private static Hashtable<String,?>  read_config_file(String config_file){
+	private static Hashtable<String,?> read_config_file(String config_file)
+	throws IOException {
 		
 		Hashtable res = new Hashtable();
 		BufferedReader t_reader_config = FileUtility.getReadFileStream(config_file);

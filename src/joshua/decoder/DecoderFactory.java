@@ -1,17 +1,18 @@
 package joshua.decoder;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 import joshua.corpus.SymbolTable;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.tm.GrammarFactory;
 import joshua.decoder.hypergraph.DiskHyperGraph;
 import joshua.util.FileUtility;
+
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * this class implements: 
@@ -42,7 +43,8 @@ public class DecoderFactory {
 		this.p_symbolTable = symbolTable;
 	}
 	
-	public void decodingTestSet(String test_file, String nbest_file, String oracle_file){
+	public void decodingTestSet(String test_file, String nbest_file, String oracle_file)
+	throws IOException {
 //		###### decode the sentences, maybe in parallel
 		if (JoshuaConfiguration.num_parallel_decoders == 1) {
 			DecoderThread pdecoder = new DecoderThread(this.p_grammar_factories, this.have_lm_model, this.p_l_feat_functions, this.l_default_nonterminals, this.p_symbolTable, 
@@ -63,7 +65,8 @@ public class DecoderFactory {
 	}
 	
 	
-	private void run_parallel_decoder(String test_file, String nbest_file) {
+	private void run_parallel_decoder(String test_file, String nbest_file)
+	throws IOException {
 		parallel_threads         = new DecoderThread[JoshuaConfiguration.num_parallel_decoders];
 		BufferedReader t_reader_test = FileUtility.getReadFileStream(test_file);
 		
@@ -160,7 +163,8 @@ public class DecoderFactory {
 			
 			//merge hypergrpah items
 			if (JoshuaConfiguration.save_disk_hg) {
-				BufferedReader t_reader_dhg_items = FileUtility.getReadFileStream(p_decoder.nbest_file + ".hg.items");
+				BufferedReader t_reader_dhg_items =
+					FileUtility.getReadFileStream(p_decoder.nbest_file + ".hg.items");
 				while ((sent = FileUtility.read_line_lzf(t_reader_dhg_items)) != null) {
 					FileUtility.write_lzf(t_writer_dhg_items, sent + "\n");
 				}

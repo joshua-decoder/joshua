@@ -17,11 +17,12 @@
  */
 package joshua.decoder.ff.lm;
 
-import java.util.ArrayList;
-
 import joshua.corpus.SymbolTable;
 import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.Support;
+
+import java.io.IOException;
+import java.util.ArrayList;
 
 /**
  * this class implement 
@@ -53,7 +54,8 @@ public abstract class LMGrammar {
 	}
 	
 	
-	public abstract void read_lm_grammar_from_file(String grammar_file);
+	public abstract void read_lm_grammar_from_file(String grammar_file)
+	throws IOException;
 	
 	
 	public abstract void write_vocab_map_srilm(String fname);
