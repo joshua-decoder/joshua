@@ -142,48 +142,51 @@ public class JoshuaDecoder {
 	}
 	
 //	##### procedures: read config, init lm, init sym tbl, init models, read lm, read tm
-	public void initializeDecoder(String config_file)
-	throws IOException {
-//		##### read config file
-		JoshuaConfiguration.read_config_file(config_file);
+	public void initializeDecoder(String config_file){
+		try {
+	//		##### read config file
+			JoshuaConfiguration.read_config_file(config_file);
+			
+			//#### initialize symbol table
+			initSymbolTbl();
+			
+			
+			//TODO ##### add default non-terminals
+			setDefaultNonTerminals(JoshuaConfiguration.default_non_terminal);
 		
-		//#### initialize symbol table
-		initSymbolTbl();
-		
-		
-		//TODO ##### add default non-terminals
-		setDefaultNonTerminals(JoshuaConfiguration.default_non_terminal);
-	
-				
-		//##### initialize the models(need to read config file again)
-		p_l_feat_functions = initializeFeatureFunctions(p_symbolTable, config_file);
-		
-		have_lm_model = (haveLMFeature(p_l_feat_functions) !=null) ? true : false;//check to see if there is a LM feature
-		System.out.println("have lm model: " + have_lm_model);
-		//##### load TM grammar
-		if (! JoshuaConfiguration.use_sent_specific_tm) {
-			if (JoshuaConfiguration.tm_file != null) {
-				initializeTranslationGrammars(JoshuaConfiguration.tm_file);
-			} else if (JoshuaConfiguration.sa_source!=null && 
-					JoshuaConfiguration.sa_target!=null && 
-					JoshuaConfiguration.sa_alignment!=null) {
-				
-				try {
-					initializeSuffixArrayGrammar();
-				} catch (IOException e) {
-					logger.severe("Error reading suffix array grammar - exiting decoder.");
-					e.printStackTrace();
-					System.exit(-1);
+					
+			//##### initialize the models(need to read config file again)
+			p_l_feat_functions = initializeFeatureFunctions(p_symbolTable, config_file);
+			
+			have_lm_model = (haveLMFeature(p_l_feat_functions) !=null) ? true : false;//check to see if there is a LM feature
+			System.out.println("have lm model: " + have_lm_model);
+			
+			//##### load TM grammar
+			if (! JoshuaConfiguration.use_sent_specific_tm) {
+				if (JoshuaConfiguration.tm_file != null) {
+					initializeTranslationGrammars(JoshuaConfiguration.tm_file);
+				} else if (JoshuaConfiguration.sa_source!=null && 
+						JoshuaConfiguration.sa_target!=null && 
+						JoshuaConfiguration.sa_alignment!=null) {
+					
+					try {
+						initializeSuffixArrayGrammar();
+					} catch (IOException e) {
+						logger.severe("Error reading suffix array grammar - exiting decoder.");
+						e.printStackTrace();
+						System.exit(-1);
+					}
+					
+				} else {
+					throw new RuntimeException("No translation grammar or suffix array grammar was specified.");
 				}
-				
-			} else {
-				throw new RuntimeException("No translation grammar or suffix array grammar was specified.");
 			}
+			
+			//create factory
+			p_decoder_factory = new DecoderFactory(this.p_tm_grammars, this.have_lm_model, this.p_l_feat_functions, this.l_default_nonterminals, this.p_symbolTable);
+		} catch (IOException e) {
+		e.printStackTrace();
 		}
-		
-		//create factory
-		p_decoder_factory = new DecoderFactory(this.p_tm_grammars, this.have_lm_model, this.p_l_feat_functions, this.l_default_nonterminals, this.p_symbolTable);
-		
 	}
 	
 	/*Decoding a whole test set
@@ -194,8 +197,7 @@ public class JoshuaDecoder {
 		p_decoder_factory.decodingTestSet(test_file, nbest_file, oracle_file);
 	}
 	
-	public void decodingTestSet(String test_file, String nbest_file)
-	throws IOException {
+	public void decodingTestSet(String test_file, String nbest_file){
 		p_decoder_factory.decodingTestSet(test_file, nbest_file, null);
 	}
 	
@@ -386,32 +388,33 @@ public class JoshuaDecoder {
 		return null;
 	}
 	
-	public void writeConfigFile(double[] new_weights, String template, String file_to_write)
-	throws IOException {
-		BufferedReader t_reader_config =
-			FileUtility.getReadFileStream(template);
-		BufferedWriter t_writer_config =
-			FileUtility.getWriteFileStream(file_to_write);
-		String line;
-		int feat_id = 0;
-		while ((line = FileUtility.read_line_lzf(t_reader_config)) != null) {
-			line = line.trim();
-			if (line.matches("^\\s*\\#.*$") || line.matches("^\\s*$") || line.indexOf("=") != -1) {//comment, empty line, or parameter lines: just copy
-				t_writer_config.write(line + "\n");
-			}else{//models: replace the weight
-				String[] fds = line.split("\\s+");
-				StringBuffer new_line = new StringBuffer();
-				if(fds[fds.length-1].matches("^[\\d\\.\\-\\+]+")==false){System.out.println("last field is not a number, must be wrong; the field is: " + fds[fds.length-1]); System.exit(1);};
-				for(int i=0; i<fds.length-1; i++){
-					new_line.append(fds[i]);
-					new_line.append(" ");
+	public void writeConfigFile(double[] new_weights, String template, String file_to_write) {
+		try{
+			BufferedReader t_reader_config = FileUtility.getReadFileStream(template);
+			BufferedWriter t_writer_config = FileUtility.getWriteFileStream(file_to_write);
+			String line;
+			int feat_id = 0;
+			while ((line = FileUtility.read_line_lzf(t_reader_config)) != null) {
+				line = line.trim();
+				if (line.matches("^\\s*\\#.*$") || line.matches("^\\s*$") || line.indexOf("=") != -1) {//comment, empty line, or parameter lines: just copy
+					t_writer_config.write(line + "\n");
+				}else{//models: replace the weight
+					String[] fds = line.split("\\s+");
+					StringBuffer new_line = new StringBuffer();
+					if(fds[fds.length-1].matches("^[\\d\\.\\-\\+]+")==false){System.out.println("last field is not a number, must be wrong; the field is: " + fds[fds.length-1]); System.exit(1);};
+					for(int i=0; i<fds.length-1; i++){
+						new_line.append(fds[i]);
+						new_line.append(" ");
+					}
+					new_line.append(new_weights[feat_id++]);	
+					t_writer_config.write(new_line.toString() + "\n");
 				}
-				new_line.append(new_weights[feat_id++]);	
-				t_writer_config.write(new_line.toString() + "\n");
 			}
+			if(feat_id!=new_weights.length){System.out.println("number of models does not match number of weights, must be wrong"); System.exit(1);};
+			t_reader_config.close();
+			t_writer_config.close();
+		}catch (IOException e) {
+			e.printStackTrace();
 		}
-		if(feat_id!=new_weights.length){System.out.println("number of models does not match number of weights, must be wrong"); System.exit(1);};
-		t_reader_config.close();
-		t_writer_config.close();
 	}
 }

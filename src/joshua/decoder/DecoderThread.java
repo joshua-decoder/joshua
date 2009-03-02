@@ -49,8 +49,7 @@ public class DecoderThread extends Thread {
 	              DiskHyperGraph  p_disk_hg;
 	
 	
-	private static final Logger logger =
-		Logger.getLogger(DecoderThread.class.getName());
+	private static final Logger logger = Logger.getLogger(DecoderThread.class.getName());
 	
 	public DecoderThread(GrammarFactory[] grammar_factories,
 		boolean have_lm_model_, ArrayList<FeatureFunction> l_feat_functions,

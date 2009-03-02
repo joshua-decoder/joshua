@@ -43,24 +43,27 @@ public class DecoderFactory {
 		this.p_symbolTable = symbolTable;
 	}
 	
-	public void decodingTestSet(String test_file, String nbest_file, String oracle_file)
-	throws IOException {
-//		###### decode the sentences, maybe in parallel
-		if (JoshuaConfiguration.num_parallel_decoders == 1) {
-			DecoderThread pdecoder = new DecoderThread(this.p_grammar_factories, this.have_lm_model, this.p_l_feat_functions, this.l_default_nonterminals, this.p_symbolTable, 
-					test_file, nbest_file,	oracle_file, 0);
-			
-			pdecoder.decode_a_file();//do not run *start*; so that we stay in the current main thread
-			if (JoshuaConfiguration.save_disk_hg) {
-				pdecoder.p_disk_hg.write_rules_non_parallel(nbest_file + ".hg.rules");
+	public void decodingTestSet(String test_file, String nbest_file, String oracle_file){
+		try{
+	//		###### decode the sentences, maybe in parallel
+			if (JoshuaConfiguration.num_parallel_decoders == 1) {
+				DecoderThread pdecoder = new DecoderThread(this.p_grammar_factories, this.have_lm_model, this.p_l_feat_functions, this.l_default_nonterminals, this.p_symbolTable, 
+						test_file, nbest_file,	oracle_file, 0);
+				
+				pdecoder.decode_a_file();//do not run *start*; so that we stay in the current main thread
+				if (JoshuaConfiguration.save_disk_hg) {
+					pdecoder.p_disk_hg.write_rules_non_parallel(nbest_file + ".hg.rules");
+				}
+			} else {
+				if (JoshuaConfiguration.use_remote_lm_server) { // TODO
+					if (logger.isLoggable(Level.SEVERE)) 
+						logger.severe("You cannot run parallel decoder and remote lm server together");
+					System.exit(1);
+				}
+				run_parallel_decoder(test_file, nbest_file);
 			}
-		} else {
-			if (JoshuaConfiguration.use_remote_lm_server) { // TODO
-				if (logger.isLoggable(Level.SEVERE)) 
-					logger.severe("You cannot run parallel decoder and remote lm server together");
-				System.exit(1);
-			}
-			run_parallel_decoder(test_file, nbest_file);
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 	}
 	

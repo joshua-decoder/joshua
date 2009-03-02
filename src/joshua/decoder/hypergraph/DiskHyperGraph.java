@@ -88,8 +88,7 @@ public class DiskHyperGraph {
 	
 	
 //	Shared by many hypergraphs, via the initialization functions
-	private HashMap<Integer,Rule> associatedGrammar
-		= new HashMap<Integer,Rule>();
+	private HashMap<Integer,Rule> associatedGrammar	= new HashMap<Integer,Rule>();
 	
 	private BufferedWriter    writer;
 	private BufferedReader    reader;
@@ -171,8 +170,8 @@ public class DiskHyperGraph {
 	}
 	
 	
-	public void init_read(String hypergraphsFile, String rulesFile, HashMap<Integer,?> selectedSentences)
-	throws IOException {
+	public void init_read(String hypergraphsFile, String rulesFile, HashMap<Integer,?> selectedSentences) {
+		try { 
 		this.reader = FileUtility.getReadFileStream(hypergraphsFile);
 		this.selectedSentences = selectedSentences;
 		
@@ -201,8 +200,15 @@ public class DiskHyperGraph {
 					nonterminalReplaceRegexp, ruleID, fds[1], defaultOwner));
 		}
 		rulesReader.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 	
+	
+	public HashMap<Integer,Rule> getAssocatedGrammar(){
+		return associatedGrammar;
+	}
 	
 	private void resetStates() {
 		this.itemToID.clear();
