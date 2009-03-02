@@ -118,11 +118,6 @@ public abstract class DefaultSymbol extends AbstractSymbolTable implements Symbo
 	}
 	
 	
-	final public int[] addTerminals(String sentence){
-		String[] sent_wrds = sentence.split("\\s+");		
-		return addTerminals(sent_wrds);
-	}	
-	
 		
 //	####### following functions used for TM only
 	final public int addNonterminal(String str){

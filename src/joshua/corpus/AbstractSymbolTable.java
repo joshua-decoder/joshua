@@ -45,11 +45,11 @@ public abstract class AbstractSymbolTable implements SymbolTable {
 			// TODO: get rid of this expensive interim object
 			String symbol = getWord(id);
 			
-			return getEngNonTerminalIndex(symbol);
+			return getTargetNonterminalIndex(symbol);
 		}
 	}
 	
-	final protected int getEngNonTerminalIndex(String wrd) {
+	final public int getTargetNonterminalIndex(String wrd) {
 		// Assumes the last character is a digit
 		// and extracts it, starting from one.
 		// Assumes the whole prefix is the
