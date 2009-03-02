@@ -25,6 +25,7 @@ import java.util.List;
  * of mapping between strings and symbols.
  * 
  * @author Lane Schwartz
+ * @author Zhifei
  * @version $LastChangedDate$
  */
 public interface SymbolTable {
@@ -32,6 +33,7 @@ public interface SymbolTable {
 	public int addNonterminal(String nonterminal);
 	public int addTerminal(String terminal);
 	public int[] addTerminals(String[] words);
+	public int[] addTerminals(String sentence);
 	
 	/**
 	 * Gets an integer identifier for the word.

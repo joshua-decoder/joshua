@@ -32,11 +32,16 @@ public class BuildinSymbol extends DefaultSymbol {
 		this(null);
 	}
 	
-	public BuildinSymbol(String fname) throws IOException {
+	public BuildinSymbol(String fname)  {
 		if (null != fname) {
-			System.out.println(
-				"Construct the symbol table from a file " + fname);
-			initializeSymTblFromFile(fname);
+			System.out.println("Construct the symbol table from a file " + fname);
+			try {
+				initializeSymTblFromFile(fname);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		
 		} else {
 			System.out.println("Construct the symbol table on the fly");
 		}

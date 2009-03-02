@@ -26,10 +26,15 @@ package joshua.corpus;
  */
 public abstract class AbstractSymbolTable implements SymbolTable {
 
-    final public int[] addTerminals(String[] strings){
-		int[] res =new int[strings.length];
-		for(int t=0; t<strings.length; t++)
-			res[t]=addTerminal(strings[t]);
+	
+	final public int[] addTerminals(String sentence){
+		return addTerminals(sentence.split("\\s+"));
+	}	
+	
+    final public int[] addTerminals(String[] words){
+		int[] res =new int[words.length];
+		for(int t=0; t<words.length; t++)
+			res[t]=addTerminal(words[t]);
 		return res;
 	}	
     
