@@ -201,6 +201,7 @@ public class KBestExtractor {
 			if(extract_nbest_tree==true && ( tem[t].startsWith("(") || tem[t].endsWith(")"))){//tree tag
 				if(tem[t].startsWith("(")==true){
 					String tag = this.p_symbolTable.getWord(new Integer(tem[t].substring(1)));
+					//TODO: omar, extract the symbol id of the non-terminal by removing _i_j
 					str_hyp.append("(");
 					str_hyp.append(tag);
 				}else{
@@ -466,7 +467,9 @@ public class KBestExtractor {
 			if(rl==null){//hyperedges under "goal item" does not have rule
 				if(tree_format==true){
 					//res.append("(ROOT ");
-					res.append("("); res.append(root_id); res.append(" ");
+					res.append("("); res.append(root_id); 
+					res.append("_"); res.append(p_parent_node.i); res.append("_"); res.append(p_parent_node.i); //TODO: omar, check configuration here
+					res.append(" ");
 				}
 				for(int id=0; id < p_edge.get_ant_items().size();id++){
 					HGNode child = (HGNode)p_edge.get_ant_items().get(id);
@@ -479,6 +482,7 @@ public class KBestExtractor {
 				if(tree_format==true){
 					res.append("(");
 					res.append(rl.lhs);
+					res.append("_"); res.append(p_parent_node.i); res.append("_"); res.append(p_parent_node.i); //TODO: omar, check configuration here
 					res.append(" ");
 				}
 				for(int c=0; c<rl.english.length; c++){
