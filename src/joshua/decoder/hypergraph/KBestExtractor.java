@@ -45,10 +45,10 @@ import java.util.logging.Logger;
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate$
  */
-public class KbestExtraction {
+public class KBestExtractor {
 	
 	@SuppressWarnings("unused")
-	private static final Logger logger = Logger.getLogger(KbestExtraction.class.getName());
+	private static final Logger logger = Logger.getLogger(KBestExtractor.class.getName());
 	
 	private final HashMap<HGNode,VirtualItem> tbl_virtual_items = new HashMap<HGNode,VirtualItem>();
 	private final SymbolTable p_symbolTable;// = null;
@@ -57,11 +57,11 @@ public class KbestExtraction {
 	static String root_sym = "ROOT";
 	static int root_id;//TODO: bug
 	
-	public KbestExtraction(SymbolTable symbolTable) {
+	public KBestExtractor(SymbolTable symbolTable) {
 		this(symbolTable, true);
 	}
 	
-	public KbestExtraction(SymbolTable symbolTable, boolean performSanityCheck){
+	public KBestExtractor(SymbolTable symbolTable, boolean performSanityCheck){
 		this.p_symbolTable = symbolTable;
 		this.performSanityCheck = performSanityCheck;
 		root_id = p_symbolTable.addNonterminal(root_sym);
@@ -274,7 +274,7 @@ public class KbestExtraction {
 		
 		//return: the k-th hyp or null; k is started from one
 		private DerivationState lazy_k_best_extract_item(SymbolTable p_symbol,
-			KbestExtraction kbest_extator,
+			KBestExtractor kbest_extator,
 			int             k,
 			boolean         extract_unique_nbest,
 			boolean         extract_nbest_tree
@@ -328,7 +328,7 @@ public class KbestExtraction {
 		
 		//last: the last item that has been selected, we need to extend it
 		//get the next hyp at the "last" deduction
-		private void lazy_next(SymbolTable p_symbol, KbestExtraction kbest_extator, DerivationState last, boolean extract_unique_nbest, boolean extract_nbest_tree){
+		private void lazy_next(SymbolTable p_symbol, KBestExtractor kbest_extator, DerivationState last, boolean extract_unique_nbest, boolean extract_nbest_tree){
 			if(last.p_edge.get_ant_items()==null)
 				return;
 			for(int i=0; i < last.p_edge.get_ant_items().size();i++){//slide the ant item
@@ -358,7 +358,7 @@ public class KbestExtraction {
 
 		//this is the seeding function, for example, it will get down to the leaf, and sort the terminals
 		//get a 1best from each deduction, and add them into the heap_cands
-		private void get_candidates(SymbolTable p_symbol, KbestExtraction kbest_extator, boolean extract_unique_nbest,boolean extract_nbest_tree){
+		private void get_candidates(SymbolTable p_symbol, KBestExtractor kbest_extator, boolean extract_unique_nbest,boolean extract_nbest_tree){
 			heap_cands=new PriorityQueue<DerivationState>();
 			derivation_tbl = new HashMap<String, Integer> ();
 			if(extract_unique_nbest==true)
@@ -395,7 +395,7 @@ public class KbestExtraction {
 		}
 		
 		//get my best derivation, and recursively add 1best for all my children, used by get_candidates only
-		private DerivationState get_best_derivation(SymbolTable p_symbol, KbestExtraction kbest_extator, HGNode parent_item, HyperEdge hyper_edge, int deduct_pos,  boolean extract_unique_nbest,boolean extract_nbest_tree){
+		private DerivationState get_best_derivation(SymbolTable p_symbol, KBestExtractor kbest_extator, HGNode parent_item, HyperEdge hyper_edge, int deduct_pos,  boolean extract_unique_nbest,boolean extract_nbest_tree){
 			int[] ranks;
 			double cost=0;
 			if(hyper_edge.get_ant_items()==null){//axiom
@@ -458,7 +458,7 @@ public class KbestExtraction {
 			
 		//get the numeric sequence of the particular hypothesis
 		//if want to get model cost, then have to set model_cost and l_models
-		private String get_hyp(SymbolTable p_symbol, KbestExtraction kbest_extator, boolean tree_format, double[] model_cost, ArrayList<FeatureFunction> l_models){
+		private String get_hyp(SymbolTable p_symbol, KBestExtractor kbest_extator, boolean tree_format, double[] model_cost, ArrayList<FeatureFunction> l_models){
 			//### accumulate cost of p_edge into model_cost if necessary
 			if(model_cost!=null) compute_cost(p_parent_node, p_edge, model_cost, l_models);
 			

@@ -7,7 +7,7 @@ import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.GrammarFactory;
 import joshua.decoder.hypergraph.DiskHyperGraph;
 import joshua.decoder.hypergraph.HyperGraph;
-import joshua.decoder.hypergraph.KbestExtraction;
+import joshua.decoder.hypergraph.KBestExtractor;
 import joshua.lattice.Lattice;
 import joshua.oracle.OracleExtractor;
 import joshua.util.FileUtility;
@@ -45,7 +45,7 @@ public class DecoderThread extends Thread {
 	private final String          oracle_file;
 	        final String          nbest_file;
 	private final int             start_sent_id; //start sent id
-	private final KbestExtraction kbest_extractor;
+	private final KBestExtractor kbest_extractor;
 	              DiskHyperGraph  p_disk_hg;
 	
 	
@@ -68,7 +68,7 @@ public class DecoderThread extends Thread {
 		this.oracle_file     = oracle_file_in;
 		this.start_sent_id   = start_sent_id_in;
 		
-		this.kbest_extractor = new KbestExtraction(
+		this.kbest_extractor = new KBestExtractor(
 										this.p_symbolTable,
 										(null == nbest_file_in) );
 		
@@ -174,7 +174,7 @@ public class DecoderThread extends Thread {
 		ArrayList<FeatureFunction> models, String sentence,
 		String oracleSentence, ArrayList<Integer> defaultNonterminals,
 		BufferedWriter out, int sentenceID, int topN,
-		DiskHyperGraph diskHyperGraph, KbestExtraction kbestExtractor
+		DiskHyperGraph diskHyperGraph, KBestExtractor kbestExtractor
 	) throws IOException {
 		long  start            = System.currentTimeMillis();
 		int[] sentence_numeric = this.p_symbolTable.getIDs(sentence);

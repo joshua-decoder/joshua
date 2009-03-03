@@ -180,11 +180,7 @@ public class LMGrammarRemote  extends DefaultNGramLanguageModel {
 //		t_reader.close();
 //	}
 	
-//	read grammar locally by the Java implementation
-	public void read_lm_grammar_from_file(String grammar_file){
-	    System.out.println("read remoate lm, do nothing");
-	}
-	
+
 	
     //this should be called by decoder only
    protected double getNgramProbabilityHelper(int[] ngram_wrds, int order){

@@ -22,7 +22,7 @@ import joshua.decoder.hypergraph.DiskHyperGraph;
 import joshua.decoder.hypergraph.HGNode;
 import joshua.decoder.hypergraph.HyperEdge;
 import joshua.decoder.hypergraph.HyperGraph;
-import joshua.decoder.hypergraph.KbestExtraction;
+import joshua.decoder.hypergraph.KBestExtractor;
 import joshua.decoder.BuildinSymbol;
 import joshua.decoder.Support;
 import joshua.corpus.SymbolTable;
@@ -116,13 +116,13 @@ public class OracleExtractionHG extends SplitHg {
 		
 		SymbolTable p_symbolTable = new BuildinSymbol(null);
 		
-		KbestExtraction kbest_extractor =null;
+		KBestExtractor kbest_extractor =null;
 		int topN=300;//TODO
 		boolean extract_unique_nbest = true;//TODO
 		boolean do_ngram_clip_nbest = true; //TODO
 		if(orc_extract_nbest==true){
 			System.out.println("oracle extraction from nbest list");
-			kbest_extractor = new KbestExtraction(p_symbolTable);
+			kbest_extractor = new KBestExtractor(p_symbolTable);
 		}
 		
 		BufferedWriter orc_out = FileUtility.getWriteFileStream(f_orc_out);
@@ -189,7 +189,7 @@ public class OracleExtractionHG extends SplitHg {
 	
 	
 	//find the oracle hypothesis in the nbest list
-	public Object[] oracle_extract_nbest(KbestExtraction kbest_extractor, HyperGraph hg, int n,   boolean extract_unique_nbest, boolean do_ngram_clip, String ref_sent){
+	public Object[] oracle_extract_nbest(KBestExtractor kbest_extractor, HyperGraph hg, int n,   boolean extract_unique_nbest, boolean do_ngram_clip, String ref_sent){
 		if(hg.goal_item==null) return null;
 		kbest_extractor.reset_state();				
 		int next_n=0;
