@@ -168,7 +168,7 @@ public class Rule {
 	
 	
 	/*compute and set stateless cost*/
-	public float computeStatelessCost(ArrayList<FeatureFunction> p_l_models) {
+	private float computeStatelessCost(ArrayList<FeatureFunction> p_l_models) {
 		if (null == p_l_models) {
 			return 0;
 		}		

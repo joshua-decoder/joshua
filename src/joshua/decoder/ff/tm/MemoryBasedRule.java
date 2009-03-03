@@ -22,7 +22,7 @@ public class MemoryBasedRule extends Rule {
 	 */
 	private float est_cost = 0;
 	
-	//TODO: this contructor should be moved to highest level of the Grammar hiearchy
+	//TODO: this constructor should be moved to highest level of the Grammar hiearchy
 	public MemoryBasedRule(SymbolTable p_symbolTable, ArrayList<FeatureFunction> p_l_models, String nonterminalRegexp_, String nonterminalReplaceRegexp_, int r_id, String line, int owner_in) {
 		this.rule_id = r_id;
 		this.owner   = owner_in;
@@ -74,7 +74,7 @@ public class MemoryBasedRule extends Rule {
 	
 
 	
-	public double getEstCost(){
+	protected double getEstCost(){
 		if(est_cost <= Double.NEGATIVE_INFINITY){
 			System.out.println("The est cost is neg infinity; must be bad rule; rule is:\n" +this.toString());
 		}
