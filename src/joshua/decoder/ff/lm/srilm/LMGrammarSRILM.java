@@ -26,26 +26,28 @@ import joshua.decoder.ff.lm.DefaultNGramLanguageModel;
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate$
  */
-public class LMGrammarSRILM  extends DefaultNGramLanguageModel {
-	SWIGTYPE_p_Ngram p_srilm=null;
+public class LMGrammarSRILM extends DefaultNGramLanguageModel {
+	SWIGTYPE_p_Ngram p_srilm;
 	
-	public LMGrammarSRILM(SrilmSymbol psymbol, int order_, String lm_file){
-		super(psymbol, order_);
+	public LMGrammarSRILM(SrilmSymbol symbol, int order, String lm_file) {
+		super(symbol, order);
 	 
 		System.out.println("use local srilm");
 		//p_srilm = srilm.initLM(order_, p_symbol.getLMStartID(), p_symbol.getLMEndID() );//TODO
-		p_srilm = psymbol.getSrilmPointer();
+		p_srilm = symbol.getSrilmPointer();
 		read_lm_grammar_from_file(lm_file);//TODO: what about sentence-specific?
 	}
 	
-//	read grammar locally by the Java implementation
-	private void read_lm_grammar_from_file(String grammar_file){
-		start_loading_time = System.currentTimeMillis();
+	
+	// read grammar locally by the Java implementation
+	private void read_lm_grammar_from_file(String grammar_file) {
+		long start_loading_time = System.currentTimeMillis();
 		System.out.println("read lm by srilm tool");
-        srilm.readLM(p_srilm, grammar_file);
-        System.out.println("read lm finished");	
+		srilm.readLM(p_srilm, grammar_file);
+		System.out.println("read lm finished");
 		//System.out.println("##### mem used (kb): " + Support.getMemoryUse());
-		System.out.println("##### time used (seconds): " + (System.currentTimeMillis()-start_loading_time)/1000);
+		System.out.println("##### time used (seconds): "
+			+ (System.currentTimeMillis() - start_loading_time) / 1000);
 	}
 	
 	
@@ -54,136 +56,31 @@ public class LMGrammarSRILM  extends DefaultNGramLanguageModel {
 	//since we have trouble to run the replace_with_unk (because we do not know the vocabulary), we will let srilm return a zero-prob, and then replace with the ceiling cost
 	/*note: the mismatch between srilm and our java implemtation is in: when unk words used as context, in java it will be replaced with "<unk>", but srilm will not, therefore the 
 	*lm cost by srilm may be smaller than by java, this happens only when the LM file have "<unk>" in backoff state*/
-   protected double getNgramProbabilityHelper(int[] ngram_wrds, int order){
-	   /*int[] ngram_wrds=replace_with_unk(ngram_wrds_in);
-	   if(ngram_wrds[ngram_wrds.length-1]==Symbol.UNK_SYM_ID)//TODO: wrong implementation in hiero
-			return -Decoder.lm_ceiling_cost;
-	   //TODO: untranslated words*/
-	   
-       int hist_size =  ngram_wrds.length-1;
-       double res=0.0;
-       SWIGTYPE_p_unsigned_int hist;
-       //TODO in principle, there should not have bad left-side state symbols, though need to check
-       
-	   hist = srilm.new_unsigned_array(hist_size);
-       for(int i=0; i< hist_size; i++){
-           srilm.unsigned_array_setitem(hist,i, ngram_wrds[i]);
-       }
-       res  = srilm.getProb_lzf(p_srilm, hist, hist_size, ngram_wrds[hist_size]);
-   		
-       srilm.delete_unsigned_array(hist);
-       return res;
-   }
-  
-/*  TODO Possibly remove - this method is never called.	   
-   //TODO: big bug, assume left-equiv state is not used by srilm
-   //TODO: now,we assume this function is called by get_prob_backoff_state, which have only left_context as input, so only the last wrd is <bo>, all backoff_wrds are good
-	private double get_backoff_weight_sum(int[] backoff_wrds, int req_num_backoff){
-	    System.out.println("Error: call get_backoff_weight_sum in srilm, must exit");
-		System.exit(0);
-		return -1;	
-	}
-*/
-   
-
-   /*  TODO Possibly remove - this method is never called.	
-	public void write_vocab_map_srilm(String fname){
-		srilm.write_default_vocab_map(fname);
-	}
-	*/
-	
-	
-/*  TODO Possibly remove - this method is never called.		
-    //	if exist backoff weight for backoff_words, then return the accumated backoff weight
-	private boolean check_backoff_weight(int[] backoff_words, double[] sum_bow, int num_backoff){
-		System.out.println("Error: call check_backoff_weight in srilm, must exit");
-		System.exit(0);
-		return true;	
-	}
-*/
-
-/*  TODO Possibly remove - this method is never called.		
-	private long getBOW_depth(int[] hist, int order){
-		  SWIGTYPE_p_unsigned_int srilm_hist = srilm.new_unsigned_array(hist.length);
-		  for(int i=0; i<hist.length; i++){
-		          srilm.unsigned_array_setitem(srilm_hist, i, hist[i]);
-		  }	
-		  return srilm.getBOW_depth(p_srilm, srilm_hist, hist.length);  
-	  }
-*/
-	
-	
-	/*  TODO Possibly remove - this method is never called.
-	 //the returned array lenght must be the same the len of original_state
-	 //the only change to the original_state is: replace with more non-null state words to null state
-	  public int[] getRightEquivalentState(int[] original_state, int order, boolean check_bad_stuff){
-		    //int[] original_state=replace_with_unk(original_state_in);
-			if(JoshuaConfiguration.use_right_equivalent_state==false || original_state.length!=g_order-1)
-				return original_state;
-			
-			//## non-overlaping state		
-			System.out.println("Error: call get_right_equi_state in srilm, must exit");
-			System.exit(0);
-			return null;
-			
-			
-			//not used code here to do prefix lookup in srilm
-			int[] res = new int[original_state.length];
-			long depth=0;
-			if(check_bad_stuff==true){//must make sure the state input does not have null words
-				ArrayList clean_state = ignore_null_right_words(original_state);				
-				if(clean_state.size()>0){				
-					SWIGTYPE_p_unsigned_int hist = srilm.new_unsigned_array(clean_state.size());
-					for(int i=0; i< clean_state.size(); i++){
-				           srilm.unsigned_array_setitem(hist,i, (Integer)clean_state.get(i));
-				    }		
-					depth = srilm.getBOW_depth(p_srilm, hist, clean_state.size());//return the depth that words has backoff state
-				}
-				if(depth==clean_state.size())//no change required
-					return original_state;
-			}else{					
-				SWIGTYPE_p_unsigned_int hist = srilm.new_unsigned_array(original_state.length);
-				for(int i=0; i< original_state.length; i++){
-			           srilm.unsigned_array_setitem(hist,i, original_state[i]);
-			    }		
-				depth = srilm.getBOW_depth(p_srilm, hist, original_state.length);//return the depth that words has backoff state		
-				if(depth==original_state.length)//no change required
-					return original_state;
-			}
-			
-			for(int i=res.length-1; i>=0; i--){//reverse search
-				int cur_wrd = original_state[i];
-				if(res.length-i<=depth){
-					res[i] = cur_wrd;
-				}else{//do not have a backoff weight
-					for(int k=i; k>=0; k--)
-						res[k] = Symbol.NULL_RIGHT_LM_STATE_SYM_ID;
-					break;
-				}
-			}
-			System.out.println("right origianl state: " + Symbol.get_string(original_state) +"; equiv state: " + Symbol.get_string(res));
-			return res;
-	  }*/
-	  
-	
-	/*  TODO Possibly remove - this method is never called.
-	  //both left and right must be clean
-	   private ArrayList<Integer> ignore_null_right_words(int[] ngram_wrds){
-		   ArrayList<Integer> t_ngram = new ArrayList<Integer>();
-		   for(int t=ngram_wrds.length-1; t>=0; t--){
-			   if(ngram_wrds[t]== LanguageModelFF.NULL_RIGHT_LM_STATE_SYM_ID)//skip all the null words left
-				   break;
-			   t_ngram.add(0,ngram_wrds[t]);	   
-		   }
-		   return t_ngram;
-	   }
-	 */			      
+	protected double ngramLogProbability_helper(int[] ngram_wrds, int order) {
+		/*int[] ngram_wrds=replace_with_unk(ngram_wrds_in);
+		if(ngram_wrds[ngram_wrds.length-1]==Symbol.UNK_SYM_ID)//TODO: wrong implementation in hiero
+		return -Decoder.lm_ceiling_cost;
+		//TODO: untranslated words*/
 		
-/*  TODO Possibly remove - this method is never called.			
-		private  int[] backoff_ngram_with_suffix(int[] suffix){
-			System.out.println("Error: call backoff_ngram_with_suffix in srilm, must exit");
-			System.exit(0);
-			return null;
+		int hist_size = ngram_wrds.length-1;
+		double res = 0.0;
+		SWIGTYPE_p_unsigned_int hist;
+		//TODO in principle, there should not have bad left-side state symbols, though need to check
+		
+		hist = srilm.new_unsigned_array(hist_size);
+		for (int i = 0; i < hist_size; i++) {
+			srilm.unsigned_array_setitem(hist, i, ngram_wrds[i]);
 		}
-*/
+		res = srilm.getProb_lzf(p_srilm, hist, hist_size, ngram_wrds[hist_size]);
+		
+		srilm.delete_unsigned_array(hist);
+		return res;
+	}
+	
+	
+	protected double probabilityOfBackoffState_helper(
+		int[] ngram, int order, int qtyAdditionalBackoffWeight
+	) {
+		throw new UnsupportedOperationException("probabilityOfBackoffState_helper undefined for srilm");
+	}
 }

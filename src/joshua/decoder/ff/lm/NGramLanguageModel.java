@@ -18,39 +18,61 @@
 
 package joshua.decoder.ff.lm;
 
+// BUG: At best we should use List, but we use int[] everywhere to
+// represent phrases therefore these additional methods are excessive.
 import java.util.ArrayList;
 
 /**
- * 
+ * An interface for new language models to implement. An object of
+ * this type is passed to LanguageModelFF, which will handle all
+ * the dynamic programming and state maintinence.
+ *
+ * All the function here should return LogP, not the cost.
+ *
  * @author wren ng thornton <wren@users.sourceforge.net>
  * @version $LastChangedDate: 2008-07-28 18:44:45 -0400 (Mon, 28 Jul 2008) $
  */
-
-
-/*All the function here should return LogP, not the cost
- * */
 public interface NGramLanguageModel {
 	
+//===============================================================
+// Attributes
+//===============================================================
 	int getOrder();
 	
-	//return LogP of the whole sentence for a given order n-gram LM
-	//start_index: the index of first event-word we want to get its probability; if we want to get the prob for the whole sentence, then start_index should be 1
-	double getSentenceProbability(ArrayList<Integer> words, int order, int  start_index);
+//===============================================================
+// Methods
+//===============================================================
+
+	// BUG: why do we pass the order? Does this method reduce the order as well?
+	/**
+	 * @param sentence   the sentence to be scored
+	 * @param order      the order of N-grams for the LM
+	 * @param startIndex the index of first event-word we want
+	 *                   to get its probability; if we want to
+	 *                   get the prob for the whole sentence,
+	 *                   then startIndex should be 1
+	 * @return the LogP of the whole sentence
+	 */
+	double sentenceLogProbability(ArrayList<Integer> sentence, int order, int startIndex);
 	
 	
-	//The ngram_order specified here is used to temporarily
-	//reduce the order used by the model.
-	double getNgramProbability(ArrayList<Integer> ngram_words, int order);
-	double getNgramProbability(int[]   ngram_words,	int     order);
+	/**
+	 * @param order used to temporarily reduce the order used by the model.
+	 */
+	double ngramLogProbability(ArrayList<Integer> ngram, int order);
+	double ngramLogProbability(int[] ngram, int order);
+	double ngramLogProbability(int[] ngram);
 	
 	
 //===============================================================
-// Equivalent LM State (use DefaultLM if you don't care)
+// Equivalent LM State (use DefaultNGramLanguageModel if you don't care)
 //===============================================================
-	double getProbabilityOfBackoffState(ArrayList<Integer> ngram_words,	int order,	int  n_additional_back_off_weight);
-	double getProbabilityOfBackoffState(int[] ngram_words,	int   order, int   n_additional_back_off_weight); 
+	double probabilityOfBackoffState(
+		ArrayList<Integer> ngram, int order, int qtyAdditionalBackoffWeight);
+	double probabilityOfBackoffState(
+		int[] ngram, int order, int qtyAdditionalBackoffWeight);
 	
-	int[] getLeftEquivalentState(int[] original_state_wrds, int order, double[] cost);
-	int[] getRightEquivalentState(int[] original_state, int order);
+	int[] leftEquivalentState(int[] originalState, int order, double[] cost);
+	int[] rightEquivalentState(int[] originalState, int order);
 	
 }

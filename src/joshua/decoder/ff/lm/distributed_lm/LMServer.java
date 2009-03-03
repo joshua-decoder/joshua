@@ -49,13 +49,13 @@ import java.io.PrintWriter;
  */
 public class LMServer {
 	//common options
-	public static int     port            = 9800;
-	static boolean use_srilm       = true;
-	public static boolean use_left_euqivalent_state  = false;
+	public static int port = 9800;
+	static boolean use_srilm = true;
+	public static boolean use_left_euqivalent_state = false;
 	public static boolean use_right_euqivalent_state = false;
-	static int     g_lm_order      = 3;
-	static double  lm_ceiling_cost = 100;//TODO: make sure LMGrammar is using this number
-	static String remote_symbol_tbl    = null;
+	static int g_lm_order = 3;
+	static double lm_ceiling_cost = 100;//TODO: make sure LMGrammar is using this number
+	static String remote_symbol_tbl = null;
 	
 	//lm specific
 	static String lm_file              = null;
@@ -64,14 +64,15 @@ public class LMServer {
 	
 	//pointer
 	static NGramLanguageModel p_lm;
-	static HashMap<String,String>   request_cache    = new HashMap<String,String>();//cmd with result
-	static int       cache_size_limit = 3000000;
+	static HashMap<String,String> request_cache = new HashMap<String,String>();//cmd with result
+	static int cache_size_limit = 3000000;
 	
 	//	stat
 	static int g_n_request   = 0;
 	static int g_n_cache_hit = 0;
 	
 	static SymbolTable p_symbolTable;
+	
 	
 	public static void main(String[] args) throws IOException {
 		if (args.length != 1) {
@@ -105,8 +106,8 @@ public class LMServer {
 			
 			System.out.println("finished lm reading, wait for connection");
 			
-			//   serverSocket = new ServerSocket(0);//0 means any free port
-			//   port = serverSocket.getLocalPort();
+			// serverSocket = new ServerSocket(0);//0 means any free port
+			// port = serverSocket.getLocalPort();
 			while (true) {
 				Socket socket = serverSocket.accept();
 				System.out.println("accept a connection from client");
@@ -125,7 +126,7 @@ public class LMServer {
 		}
 	}
 	
-	 
+	
 	
 	public static void init_lm_grammar() throws IOException {
 		if (use_srilm) {
@@ -153,11 +154,8 @@ public class LMServer {
 		while((line = FileUtility.read_line_lzf(t_reader_config)) != null) {
 			//line = line.trim().toLowerCase();
 			line = line.trim();
-			if (line.matches("^\\s*\\#.*$")
-			|| line.matches("^\\s*$")) {
-				continue;
-			}
-				
+			if (line.matches("^\\s*(?:\\#.*)?$")) continue;
+			
 			if (line.indexOf("=") != -1) { //parameters
 				String[] fds = line.split("\\s*=\\s*");
 				if (fds.length != 2) {
@@ -167,33 +165,43 @@ public class LMServer {
 				if (0 == fds[0].compareTo("lm_file")) {
 					lm_file = fds[1].trim();
 					System.out.println(String.format("lm file: %s", lm_file));
+					
 				} else if (0 == fds[0].compareTo("use_srilm")) {
 					use_srilm = new Boolean(fds[1]);
 					System.out.println(String.format("use_srilm: %s", use_srilm));
+					
 				} else if (0 == fds[0].compareTo("lm_ceiling_cost")) {
 					lm_ceiling_cost = new Double(fds[1]);
 					System.out.println(String.format("lm_ceiling_cost: %s", lm_ceiling_cost));
+					
 				} else if (0 == fds[0].compareTo("use_left_euqivalent_state")) {
 					use_left_euqivalent_state = new Boolean(fds[1]);
 					System.out.println(String.format("use_left_euqivalent_state: %s", use_left_euqivalent_state));
+					
 				} else if (0 == fds[0].compareTo("use_right_euqivalent_state")) {
 					use_right_euqivalent_state = new Boolean(fds[1]);
 					System.out.println(String.format("use_right_euqivalent_state: %s", use_right_euqivalent_state));
+					
 				} else if (0 == fds[0].compareTo("order")) {
 					g_lm_order = new Integer(fds[1]);
 					System.out.println(String.format("g_lm_order: %s", g_lm_order));
+					
 				} else if (0 == fds[0].compareTo("remote_lm_server_port")) {
 					port = new Integer(fds[1]);
 					System.out.println(String.format("remote_lm_server_port: %s", port));
+					
 				} else if (0 == fds[0].compareTo("remote_symbol_tbl")) {
 					remote_symbol_tbl = new String(fds[1]);
 					System.out.println(String.format("remote_symbol_tbl: %s", remote_symbol_tbl));
+					
 				} else if (0 == fds[0].compareTo("hostname")) {
 					g_host_name = fds[1].trim();
 					System.out.println(String.format("host name is: %s", g_host_name));
+					
 				} else if (0 == fds[0].compareTo("interpolation_weight")) {
 					interpolation_weight = new Double(fds[1]);
 					System.out.println(String.format("interpolation_weightt: %s", interpolation_weight));
+					
 				} else {
 					Support.write_log_line("Warning: not used config line: " + line, Support.ERROR);
 					//System.exit(0);
@@ -204,42 +212,8 @@ public class LMServer {
 	}
 	
 	
-//TODO This method is never used. Perhaps it should be deleted.
-//	private static String read_host_name(String fhostname) {
-//		BufferedReader t_reader_config = FileUtility.getReadFileStream(fhostname);
-//		String res = null;
-//		String line;
-//		while((line = FileUtility.read_line_lzf(t_reader_config)) != null) {
-//			//line = line.trim().toLowerCase();
-//			line = line.trim();
-//			if (line.matches("^\\s*\\#.*$")
-//			|| line.matches("^\\s*$")) {
-//				continue;
-//			}
-//			res = line;
-//			break;
-//		}
-//		t_reader_config.close();
-//		return res;
-//	}
-	
-	
-//TODO This method is never used. Perhaps it should be deleted.
-//	static private String findHostName() {
-//		try {
-//			//return InetAddress.getLocalHost().getHostName();
-//			return InetAddress.getLocalHost().getHostAddress();
-//		} catch (UnknownHostException e) {
-//			System.out.println("Unknown host address");
-//			System.exit(1);
-//			return null;
-//		}
-//	}
-	
-	
 	// used by server to process diffent Client
-	public static class ClientHandler
-	extends Thread {
+	public static class ClientHandler extends Thread {
 		public class DecodedStructure {
 			String cmd;
 			int    num;
@@ -255,8 +229,10 @@ public class LMServer {
 		public ClientHandler(Socket sock, LMServer pa) throws IOException {
 			parent = pa;
 			socket = sock;
-			in = new BufferedReader( new InputStreamReader(socket.getInputStream()));
-			out = new PrintWriter( new OutputStreamWriter(socket.getOutputStream()));
+			in = new BufferedReader(
+				new InputStreamReader(socket.getInputStream()));
+			out = new PrintWriter(
+				new OutputStreamWriter(socket.getOutputStream()));
 		}
 		
 		
@@ -264,7 +240,7 @@ public class LMServer {
 			String line_in;
 			String line_out;
 			try {
-				while((line_in = in.readLine()) != null) {
+				while ((line_in = in.readLine()) != null) {
 					//TODO block read
 					//System.out.println("coming in: " + line);
 					//line_out = process_request(line_in);
@@ -297,32 +273,6 @@ public class LMServer {
 			return cmd_res;
 		}
 		
-//TODO This method is never used. Perhaps it should be deleted.		
-//		private String process_request(String packet) {
-//			//search cache
-//			String cmd_res = (String)request_cache.get(packet);
-//			g_n_request++;
-//			
-//			if (null == cmd_res) { //cache fail
-//				cmd_res = process_request_helper(packet);
-//				//update cache
-//				if (request_cache.size() > cache_size_limit) {
-//					request_cache.clear();
-//				}
-//				request_cache.put(packet, cmd_res);
-//			} else {
-//				g_n_cache_hit++;
-//			}
-//			
-//			if (g_n_request % 50000 == 0) {
-//				System.out.println(
-//					  "n_requests: "     + g_n_request
-//					+ "; n_cache_hits: " + g_n_cache_hit
-//					+ "; cache size= "   + request_cache.size()
-//					+ "; hit rate= "     + g_n_cache_hit * 1.0 / g_n_request);
-//			}
-//			return cmd_res;
-//		}
 		
 		
 		//This is the funciton that application specific
@@ -347,8 +297,7 @@ public class LMServer {
 		
 		// format: prob order wrds
 		private String get_prob(DecodedStructure ds) {
-			Double res = p_lm.getNgramProbability(ds.wrds, ds.num);
-			return res.toString();
+			return Double.toString(p_lm.ngramLogProbability(ds.wrds, ds.num));
 		}
 		
 		
@@ -357,7 +306,7 @@ public class LMServer {
 			System.out.println("Error: call get_prob_backoff_state in lmserver, must exit");
 			System.exit(1);
 			return null;
-			/*Double res =  p_lm.get_prob_backoff_state(ds.wrds, ds.num, ds.num);
+			/*Double res = p_lm.get_prob_backoff_state(ds.wrds, ds.num, ds.num);
 			return res.toString();*/
 		}
 		
