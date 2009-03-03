@@ -17,7 +17,7 @@
  */
 package joshua.decoder.ff.lm.buildin_lm;
 
-import joshua.decoder.ff.lm.LMGrammar;
+import joshua.decoder.ff.lm.DefaultNGramLanguageModel;
 import joshua.decoder.ff.lm.LanguageModelFF;
 import joshua.decoder.BuildinSymbol;
 import joshua.decoder.JoshuaConfiguration;
@@ -39,7 +39,7 @@ import java.util.logging.Logger;
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate:2008-07-28 18:44:45 -0400 (Mon, 28 Jul 2008) $
  */
-public class LMGrammarJAVA extends LMGrammar {
+public class LMGrammarJAVA extends DefaultNGramLanguageModel {
 
 	static String BACKOFF_WGHT_SYM="<bow>";
 	public  int BACKOFF_WGHT_SYM_ID;//used by LMModel
@@ -146,8 +146,7 @@ public class LMGrammarJAVA extends LMGrammar {
 	
 	/*note: the mismatch between srilm and our java implemtation is in: when unk words used as context, in java it will be replaced with "<unk>", but srilm will not, therefore the 
 	*lm cost by srilm may be smaller than by java, this happens only when the LM file have "<unk>" in backoff state*/
-	//note: we never use check_bad_stuff here
-	protected double get_prob_specific(int[] ngram_wrds_in, int order, boolean check_bad_stuff){
+	protected double getNgramProbabilityHelper(int[] ngram_wrds_in, int order){
 		Double res;
 		//cache
 		//String sig = get_signature(ngram_wrds_in);
@@ -226,7 +225,7 @@ public class LMGrammarJAVA extends LMGrammar {
 	  //the returned array lenght must be the same the len of original_state
     //the only change to the original_state is: replace with more non-null state words to null state
 	//O(n^2)
-	 public int[] get_right_equi_state(int[] original_state_in, int order, boolean check_bad_stuff){		 	
+	 public int[] getRightEquivalentState(int[] original_state_in, int order){		 	
 			if(JoshuaConfiguration.use_right_equivalent_state==false || original_state_in.length!=g_order-1)
 				return original_state_in;
 			int[] res;
@@ -290,7 +289,7 @@ public class LMGrammarJAVA extends LMGrammar {
 	*/		
 	//return: (1) the equivlant state vector; (2) the finalized cost; (3) the estimated cost
 //	O(n^2)
-	 public int[] get_left_equi_state(int[] original_state_wrds_in, int order, double[] cost){		    		    
+	 public int[] getLeftEquivalentState(int[] original_state_wrds_in, int order, double[] cost){		    		    
 			if(JoshuaConfiguration.use_left_equivalent_state==false){
 				return original_state_wrds_in;
 			}		
@@ -301,7 +300,7 @@ public class LMGrammarJAVA extends LMGrammar {
 			if(original_state_wrds.length<g_order-1){
 				for(int i=0; i<original_state_wrds.length; i++){
 					int[] cur_wrds = Support.sub_int_array(original_state_wrds, 0, i+1);
-					cost[1] += -get_prob(cur_wrds, cur_wrds.length, false);//est cost;
+					cost[1] += -getNgramProbability(cur_wrds, cur_wrds.length);//est cost;
 				}
 				return original_state_wrds;
 		    }		
@@ -316,10 +315,10 @@ public class LMGrammarJAVA extends LMGrammar {
 					int last_wrd = cur_wrds[i-1];
 					if(last_wrd==UNK_SYM_ID){
 						 res_equi_state[i-1] = last_wrd;
-						 res_est_cost += -get_prob(cur_wrds, cur_wrds.length, false);//est cost						 
+						 res_est_cost += -getNgramProbability(cur_wrds, cur_wrds.length);//est cost						 
 					 }else{
 						 if(last_wrd!= LanguageModelFF.BACKOFF_LEFT_LM_STATE_SYM_ID )
-							 res_final_cost += -get_prob(cur_wrds, cur_wrds.length, false);
+							 res_final_cost += -getNgramProbability(cur_wrds, cur_wrds.length);
 						 
 						 res_equi_state[i-1]= LanguageModelFF.BACKOFF_LEFT_LM_STATE_SYM_ID;
 						 /*//TODO: for simplicity, we may just need BACKOFF_LEFT_LM_STATE_SYM_ID??
@@ -336,7 +335,7 @@ public class LMGrammarJAVA extends LMGrammar {
 					for(int j=i; j>0; j--){
 						res_equi_state[j-1] = original_state_wrds[j-1];
 						cur_wrds = Support.sub_int_array(original_state_wrds, 0, j);
-						res_est_cost += -get_prob(cur_wrds, cur_wrds.length, false);//est cost;
+						res_est_cost += -getNgramProbability(cur_wrds, cur_wrds.length);//est cost;
 					}
 					break;
 				}
@@ -369,7 +368,7 @@ public class LMGrammarJAVA extends LMGrammar {
 	 }
 	 	 
 	
-    protected double get_prob_backoff_state_specific(int[] ngram_wrds, int order, int n_additional_bow){
+    protected double getProbabilityOfBackoffStateHelper(int[] ngram_wrds, int order, int n_additional_bow){
 		int[] backoff_wrds = Support.sub_int_array(ngram_wrds, 0, ngram_wrds.length-1);
 		double[] sum_bow =new double[1];
 		check_backoff_weight(backoff_wrds, sum_bow, n_additional_bow);
@@ -410,6 +409,14 @@ public class LMGrammarJAVA extends LMGrammar {
 	
 
 //	######################################## general helper function ###########################################
+	protected final int[] replace_with_unk(int[] in) {
+		int[] res = new int[in.length];
+		for (int i = 0; i < in.length; i++) {
+			res[i] = replace_with_unk(in[i]);
+		}
+		return res;
+	}
+	
 	protected int replace_with_unk(int in){ 	
        if(root.containsKey(in)==true || 
     	   in == LanguageModelFF.NULL_RIGHT_LM_STATE_SYM_ID ||       

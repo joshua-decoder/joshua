@@ -266,7 +266,7 @@ public class MemoryBasedBatchGrammarWithPrune extends BatchGrammar {
 	
 	/** contain all rules with the same french side (and thus same arity) */
 	public class MemoryBasedRuleBin	extends RuleBin {
-		private PriorityQueue<MemoryBasedRule> heapRules   = null;
+		private PriorityQueue<MemoryBasedRule> heapRules   = null;//sort the rules based on the stateless cost
 		private double                     cutoff      = IMPOSSIBLE_COST;
 		private boolean                    sorted      = false;
 		private ArrayList<Rule>            sortedRules = new ArrayList<Rule>();
@@ -274,11 +274,12 @@ public class MemoryBasedBatchGrammarWithPrune extends BatchGrammar {
 		
 		/**
 		 * TODO: now, we assume this function will be called
-		 * only after all the rules have been read this
+		 * only after all the rules have been read; this
 		 * method need to be synchronized as we will call
-		 * this function only after the decoding begins to
+		 * this function only after the decoding begins to;
 		 * avoid the synchronized method, we should call
 		 * this once the grammar is finished
+		 * what about the weights changed as in MERT??
 		 */
 		//public synchronized ArrayList<Rule> get_sorted_rules() {
 		public ArrayList<Rule> getSortedRules() {

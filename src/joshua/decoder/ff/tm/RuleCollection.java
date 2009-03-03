@@ -39,9 +39,9 @@ public interface RuleCollection {
 	// the decoding begins to avoid the synchronized method,
 	// we should call this once the grammar is finished
 	// // public synchronized ArrayList<Rule> get_sorted_rules(){
-	public abstract List<Rule> getSortedRules();  //only CubePruning requires that rules are sorted based on est_cost?
+	public abstract List<Rule> getSortedRules();  //only CubePruning requires that rules are sorted based on est_cost (confirmed by zhifei)
 	
-	public abstract int[] getSourceSide();
+	public abstract int[] getSourceSide();//note that the source side is the same for all the rules in the RuleCollection
 	
 	public abstract int getArity();
 	

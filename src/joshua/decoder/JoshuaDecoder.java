@@ -25,7 +25,8 @@ import joshua.decoder.ff.PhraseModelFF;
 import joshua.decoder.ff.WordPenaltyFF;
 import joshua.decoder.ff.SourceLatticeArcCostFF;
 import joshua.decoder.ff.lm.LanguageModelFF;
-import joshua.decoder.ff.lm.LMGrammar;
+import joshua.decoder.ff.lm.DefaultNGramLanguageModel;
+import joshua.decoder.ff.lm.NGramLanguageModel;
 import joshua.decoder.ff.lm.buildin_lm.LMGrammarJAVA;
 import joshua.decoder.ff.lm.distributed_lm.LMGrammarRemote;
 import joshua.decoder.ff.lm.srilm.LMGrammarSRILM;
@@ -214,8 +215,7 @@ public class JoshuaDecoder {
 	}
 	
 	
-	public static ArrayList<FeatureFunction>
-	initializeFeatureFunctions(SymbolTable psymbolTable, String config_file)
+	public static ArrayList<FeatureFunction>	initializeFeatureFunctions(SymbolTable psymbolTable, String config_file)
 	throws IOException {
 		BufferedReader t_reader_config =
 			FileUtility.getReadFileStream(config_file);
@@ -232,7 +232,7 @@ public class JoshuaDecoder {
 				String[] fds = line.split("\\s+");
 				if (fds[0].compareTo("lm") == 0 && fds.length == 2) { // lm order weight
 					double weight = (new Double(fds[1].trim())).doubleValue();					
-					LMGrammar lm_grammar = initializeLanguageModel(psymbolTable);					
+					NGramLanguageModel lm_grammar = initializeLanguageModel(psymbolTable);					
 					l_models.add(new LanguageModelFF(l_models.size(), JoshuaConfiguration.g_lm_order, psymbolTable, lm_grammar, weight));
 					if (logger.isLoggable(Level.FINEST)) 
 						logger.finest( String.format("Line: %s\nAdd LM, order: %d; weight: %.3f;", line, JoshuaConfiguration.g_lm_order, weight));				
@@ -292,9 +292,9 @@ public class JoshuaDecoder {
 	}
 	
 	
-	private static LMGrammar initializeLanguageModel(SymbolTable psymbolTable) 
+	private static NGramLanguageModel initializeLanguageModel(SymbolTable psymbolTable) 
 	throws IOException {
-		LMGrammar lm_grammar;
+		NGramLanguageModel lm_grammar;
 		if (JoshuaConfiguration.use_remote_lm_server) {
 			if (JoshuaConfiguration.use_left_equivalent_state || JoshuaConfiguration.use_right_equivalent_state){
 				if (logger.isLoggable(Level.SEVERE)) 

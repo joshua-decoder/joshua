@@ -17,7 +17,7 @@
  */
 package joshua.decoder.ff.lm.distributed_lm;
 
-import joshua.decoder.ff.lm.LMGrammar;
+import joshua.decoder.ff.lm.DefaultNGramLanguageModel;
 import joshua.decoder.Support;
 import joshua.corpus.SymbolTable;
 import joshua.util.FileUtility;
@@ -36,7 +36,7 @@ import java.util.Hashtable;
  * @version $LastChangedDate: 2008-10-02 02:02:16 -0400 (星期四, 02 十月 2008) $
  */
 //PATH: this => LMClient => network => LMServer => LMGrammar => LMGrammar_JAVA/SRILM; and then reverse the path
-public class LMGrammarRemote  extends LMGrammar {
+public class LMGrammarRemote  extends DefaultNGramLanguageModel {
 	
 //	if remote method is used	
 	private LMClient p_lm_client=null;
@@ -187,7 +187,7 @@ public class LMGrammarRemote  extends LMGrammar {
 	
 	
     //this should be called by decoder only
-   protected double get_prob_specific(int[] ngram_wrds, int order, boolean check_bad_stuff){
+   protected double getNgramProbabilityHelper(int[] ngram_wrds, int order){
        return p_lm_client.get_prob(ngram_wrds, ngram_wrds.length);
    }
 		
@@ -195,32 +195,5 @@ public class LMGrammarRemote  extends LMGrammar {
 		System.out.println("Error: call write_vocab_map_srilm in remote, must exit");
 		System.exit(1);
 	}
-	
-   protected double get_prob_backoff_state_specific(int[] ngram_wrds, int order, int n_additional_bow){
-	    System.out.println("Error: call get_prob_backoff_state_specific in LMGrammar_REMOTE, must exit");
-		System.exit(1);
-		return -1;
-	   //return p_lm_client.get_prob_backoff_state(ngram_wrds, n_additional_bow);
-	}
-
-   public int[] get_left_equi_state(int[] original_state, int order, double[] cost){
-	   return original_state;
-	   /*if(Decoder.use_left_euqivalent_state==false)
-			return original_state;
-	   return p_lm_client.get_left_euqi_state(original_state, order, cost);*/
-   }
-   
-   public int[] get_right_equi_state(int[] original_state, int order, boolean check_bad_stuff){
-	   return original_state;
-	   /*if(Decoder.use_right_euqivalent_state==false)
-			return original_state;
-	   return p_lm_client.get_right_euqi_state(original_state,  order);*/
-   }
-   
-   public int replace_with_unk(int in){
-	   System.out.println("Error: call replace_with_unk in LMGrammar_REMOTE, must exit");
-	   System.exit(1);
-	   return 0;
-   }
-	   
+	      
 }

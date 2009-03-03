@@ -21,7 +21,8 @@ import joshua.corpus.SymbolTable;
 import joshua.decoder.BuildinSymbol;
 import joshua.decoder.SrilmSymbol;
 import joshua.decoder.Support;
-import joshua.decoder.ff.lm.LMGrammar;
+import joshua.decoder.ff.lm.DefaultNGramLanguageModel;
+import joshua.decoder.ff.lm.NGramLanguageModel;
 import joshua.decoder.ff.lm.buildin_lm.LMGrammarJAVA;
 import joshua.decoder.ff.lm.srilm.LMGrammarSRILM;
 import joshua.util.FileUtility;
@@ -62,7 +63,7 @@ public class LMServer {
 	static String g_host_name          = null;
 	
 	//pointer
-	static LMGrammar p_lm;
+	static NGramLanguageModel p_lm;
 	static HashMap<String,String>   request_cache    = new HashMap<String,String>();//cmd with result
 	static int       cache_size_limit = 3000000;
 	
@@ -346,7 +347,7 @@ public class LMServer {
 		
 		// format: prob order wrds
 		private String get_prob(DecodedStructure ds) {
-			Double res = p_lm.get_prob(ds.wrds, ds.num, false);
+			Double res = p_lm.getNgramProbability(ds.wrds, ds.num);
 			return res.toString();
 		}
 		

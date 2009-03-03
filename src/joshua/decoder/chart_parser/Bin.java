@@ -221,6 +221,7 @@ public class Bin
 	public void complete_cell(int i, int j, ArrayList<SuperItem> l_super_items,	RuleCollection rb, float lattice_cost) {
 		List<Rule> l_rules = rb.getSortedRules();
 		//System.out.println(String.format("Complet_cell is called, n_rules: %d ", l_rules.size()));
+		//consider all the possbile combinations (while in Cube-pruning, we do not consider all the possible combinations)
 		for(Rule rl : l_rules){
 			if(rb.getArity()==1){				
 				SuperItem super_ant1 = (SuperItem)l_super_items.get(0);
