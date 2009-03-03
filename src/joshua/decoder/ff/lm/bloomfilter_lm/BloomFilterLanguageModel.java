@@ -107,7 +107,7 @@ public class BloomFilterLanguageModel extends DefaultNGramLanguageModel {
 	 * quantization.
 	 * after this construction, LM is ready to be queried.
 	 */
-	public BloomFilterLanguageModel(SymbolTable translationModelSymbols, String filename, int order, int size, double base)
+	public BloomFilterLanguageModel(SymbolTable translationModelSymbols, String filename, int order, int size, double base) throws IOException
 	{
 		super(translationModelSymbols, order);
 		/*
