@@ -74,14 +74,14 @@ public abstract class AbstractLM extends DefaultNGramLanguageModel {
 	/**
 	 * @deprecated this function is much slower than the int[] version
 	 */
-	public final double probabilityOfBackoffState(ArrayList<Integer> ngram, int order, int qtyAdditionalBackoffWeight) {
-		return probabilityOfBackoffState(
+	public final double logProbabilityOfBackoffState(ArrayList<Integer> ngram, int order, int qtyAdditionalBackoffWeight) {
+		return logProbabilityOfBackoffState(
 			Support.sub_int_array(ngram, 0, ngram.size()),
 			order, qtyAdditionalBackoffWeight);
 	}
 	
 	
-	public final double probabilityOfBackoffState(int[] ngram, int order, int qtyAdditionalBackoffWeight) {
+	public final double logProbabilityOfBackoffState(int[] ngram, int order, int qtyAdditionalBackoffWeight) {
 		if (ngram.length > order) {
 			throw new RuntimeException("ngram length is greather than the max order");
 		}
@@ -89,7 +89,7 @@ public abstract class AbstractLM extends DefaultNGramLanguageModel {
 			throw new RuntimeException("last wrd is not <bow>");
 		}
 		if (qtyAdditionalBackoffWeight > 0) {
-			return probabilityOfBackoffState_helper(
+			return logProbabilityOfBackoffState_helper(
 				ngram, order, qtyAdditionalBackoffWeight);
 		} else {
 			return 0.0;
@@ -97,7 +97,7 @@ public abstract class AbstractLM extends DefaultNGramLanguageModel {
 	}
 	
 	
-	protected abstract double probabilityOfBackoffState_helper(
+	protected abstract double logProbabilityOfBackoffState_helper(
 		int[] ngram, int order, int qtyAdditionalBackoffWeight);
 	
 	

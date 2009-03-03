@@ -67,9 +67,9 @@ public interface NGramLanguageModel {
 //===============================================================
 // Equivalent LM State (use DefaultNGramLanguageModel if you don't care)
 //===============================================================
-	double probabilityOfBackoffState(
+	double logProbabilityOfBackoffState(
 		ArrayList<Integer> ngram, int order, int qtyAdditionalBackoffWeight);
-	double probabilityOfBackoffState(
+	double logProbabilityOfBackoffState(
 		int[] ngram, int order, int qtyAdditionalBackoffWeight);
 	
 	int[] leftEquivalentState(int[] originalState, int order, double[] cost);

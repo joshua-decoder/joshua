@@ -104,16 +104,13 @@ public abstract class DefaultNGramLanguageModel implements NGramLanguageModel {
 	 * called by LMModel to calculate additional bow for  BACKOFF_LEFT_LM_STATE_SYM_ID.
 	 * @deprecated this function is much slower than the int[] version
 	 */
-	public double probabilityOfBackoffState(ArrayList<Integer> ngram, int order, int qtyAdditionalBackoffWeight) {
-		// BUG: once we figure out how the other one is implemented, we can probably just inline that here.
-		return probabilityOfBackoffState(
-			Support.sub_int_array(ngram, 0, ngram.size()),
-			order, qtyAdditionalBackoffWeight);
+	public double logProbabilityOfBackoffState(ArrayList<Integer> ngram, int order, int qtyAdditionalBackoffWeight) {
+		return 0; // log(1) == 0;
 	}
 	
 	
-	public double probabilityOfBackoffState(int[] ngram, int order, int qtyAdditionalBackoffWeight) {
-		throw new RuntimeException("BUG: This needs implementing");
+	public double logProbabilityOfBackoffState(int[] ngram, int order, int qtyAdditionalBackoffWeight) {
+		return 0; // log(1) == 0;
 	}
 	
 	

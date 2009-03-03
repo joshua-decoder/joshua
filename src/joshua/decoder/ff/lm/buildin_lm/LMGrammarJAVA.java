@@ -386,7 +386,7 @@ public class LMGrammarJAVA extends AbstractLM {
 	}
 	
 	
-	protected double probabilityOfBackoffState_helper(int[] ngram_wrds, int order, int n_additional_bow) {
+	protected double logProbabilityOfBackoffState_helper(int[] ngram_wrds, int order, int n_additional_bow) {
 		int[] backoff_wrds =
 			Support.sub_int_array(ngram_wrds, 0, ngram_wrds.length - 1);
 		double[] sum_bow = new double[1];

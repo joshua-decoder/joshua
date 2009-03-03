@@ -154,7 +154,7 @@ public class LanguageModelFF extends DefaultStatefulFF {
 						int additional_backoff_weight = current_ngram.size() - (i+1);
 						
 						//compute additional backoff weight
-						transition_cost	-= this.lmGrammar.probabilityOfBackoffState(current_ngram, current_ngram.size(), additional_backoff_weight);
+						transition_cost	-= this.lmGrammar.logProbabilityOfBackoffState(current_ngram, current_ngram.size(), additional_backoff_weight);
 						
 						if (current_ngram.size() == this.ngramOrder) {
 							current_ngram.remove(0);
@@ -351,7 +351,7 @@ public class LanguageModelFF extends DefaultStatefulFF {
 				int additional_backoff_weight = current_ngram.size() - (i+1);
 				//compute additional backoff weight
 				//TOTO: may not work with the case that add_start_and_end_symbol=false
-				res -= this.lmGrammar.probabilityOfBackoffState(current_ngram, current_ngram.size(), additional_backoff_weight);
+				res -= this.lmGrammar.logProbabilityOfBackoffState(current_ngram, current_ngram.size(), additional_backoff_weight);
 			} else {//partial ngram
 				//compute the current word probablity
 				if(current_ngram.size()>=2)//start from bigram

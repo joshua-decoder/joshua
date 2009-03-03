@@ -167,7 +167,7 @@ public class LMGrammarRemote extends AbstractLM {
 	}
 	
 	
-	protected double probabilityOfBackoffState_helper(
+	protected double logProbabilityOfBackoffState_helper(
 		int[] ngram, int order, int qtyAdditionalBackoffWeight
 	) {
 		throw new UnsupportedOperationException("probabilityOfBackoffState_helper undefined for distributed_lm");
