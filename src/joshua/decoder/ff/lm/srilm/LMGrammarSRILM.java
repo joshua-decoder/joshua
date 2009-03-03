@@ -17,8 +17,8 @@
  */
 package joshua.decoder.ff.lm.srilm;
 
+import joshua.decoder.ff.lm.AbstractLM;
 import joshua.decoder.SrilmSymbol;
-import joshua.decoder.ff.lm.DefaultNGramLanguageModel;
 
 
 /**
@@ -26,7 +26,7 @@ import joshua.decoder.ff.lm.DefaultNGramLanguageModel;
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate$
  */
-public class LMGrammarSRILM extends DefaultNGramLanguageModel {
+public class LMGrammarSRILM extends AbstractLM {
 	SWIGTYPE_p_Ngram p_srilm;
 	
 	public LMGrammarSRILM(SrilmSymbol symbol, int order, String lm_file) {

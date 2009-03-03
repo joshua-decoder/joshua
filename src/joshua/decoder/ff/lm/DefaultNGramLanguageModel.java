@@ -24,12 +24,16 @@ import joshua.corpus.SymbolTable;
 import java.util.ArrayList;
 
 /**
- * this class implements 
- * (1) LMGrammar interface 
- *
- * All the functions here returns LogP, not the cost.
+ * This class provides a default implementation for the Equivalent
+ * LM State optimization (namely, don't back off anywhere). It also
+ * provides some default implementations for more general functions
+ * on the interface to fall back to more specific ones (e.g. from
+ * ArrayList<Integer> to int[]) and a default implementation for
+ * sentenceLogProbability which enumerates the n-grams and calls
+ * calls ngramLogProbability for each of them.
  * 
  * @author Zhifei Li, <zhifei.work@gmail.com>
+ * @author wren ng thornton <wren@users.sourceforge.net>
  * @version $LastChangedDate: 2008-10-17 01:41:03 -0400 (星期五, 17 十月 2008) $
  */
 public abstract class DefaultNGramLanguageModel implements NGramLanguageModel {
@@ -37,36 +41,34 @@ public abstract class DefaultNGramLanguageModel implements NGramLanguageModel {
 	protected final SymbolTable symbolTable;
 	protected final int         ngramOrder;
 	
-	
+//===============================================================
+// Constructors
+//===============================================================
 	public DefaultNGramLanguageModel(SymbolTable symbolTable, int order) {
 		this.symbolTable = symbolTable;
 		this.ngramOrder  = order;
 	}
 	
 	
+//===============================================================
+// Attributes
+//===============================================================
 	public final int getOrder() {
 		return this.ngramOrder;
 	}
 	
 	
-	/**
-	 * @param sentence   the sentence to be scored
-	 * @param order      the order of N-grams for the LM
-	 * @param startIndex the index of first event-word we want
-	 *                   to get its probability; if we want to
-	 *                   get the prob for the whole sentence,
-	 *                   then startIndex should be 1
-	 * @return the LogP of the whole sentence
-	 */
-	public final double sentenceLogProbability(ArrayList<Integer> sentence,
-		int order, int startIndex
+//===============================================================
+// NGramLanguageModel Methods
+//===============================================================
+
+	public double sentenceLogProbability(
+		ArrayList<Integer> sentence, int order, int startIndex
 	) {
-		double probability = 0.0;
 		int sentenceLength = sentence.size();
-		if (null == sentence || sentenceLength <= 0) {
-			return probability;
-		}
+		if (null == sentence || sentenceLength <= 0) return 0.0;
 		
+		double probability = 0.0;
 		// partial ngrams at the begining
 		for (int j = startIndex; j < order && j <= sentenceLength; j++) {
 			//TODO: startIndex dependents on the order, e.g., this.ngramOrder-1 (in srilm, for 3-gram lm, start_index=2. othercase, need to check)
@@ -85,84 +87,42 @@ public abstract class DefaultNGramLanguageModel implements NGramLanguageModel {
 	
 	
 	/** @deprecated this function is much slower than the int[] version */
-	public final double ngramLogProbability(ArrayList<Integer> ngram, int order) {
+	public double ngramLogProbability(ArrayList<Integer> ngram, int order) {
 		return ngramLogProbability(
 			Support.sub_int_array(ngram, 0, ngram.size()), order);
 	}
 	
 	
-	public final double ngramLogProbability(int[] ngram) {
+	public double ngramLogProbability(int[] ngram) {
 		return this.ngramLogProbability(ngram, this.ngramOrder);
 	}
 	
-	public final double ngramLogProbability(int[] ngram, int order) {
-		if (ngram.length > order) {
-			throw new RuntimeException("ngram length is greather than the max order");
-		}
-		int historySize = ngram.length - 1;
-		if (historySize >= order || historySize < 0) {
-			// BUG: use logger or exception. Don't zero default
-			System.out.println("Error: history size is " + historySize);
-			return 0;
-		}
-		double probability = ngramLogProbability_helper(ngram, order);
-		if (probability < -JoshuaConfiguration.lm_ceiling_cost) {
-			probability = -JoshuaConfiguration.lm_ceiling_cost;
-		}
-		return probability;
-	}
-	
-	protected abstract double ngramLogProbability_helper(int[] ngram, int order);
+	public abstract double ngramLogProbability(int[] ngram, int order);
 	
 	
 	/**
 	 * called by LMModel to calculate additional bow for  BACKOFF_LEFT_LM_STATE_SYM_ID.
 	 * @deprecated this function is much slower than the int[] version
 	 */
-	public final double probabilityOfBackoffState(ArrayList<Integer> ngram, int order, int qtyAdditionalBackoffWeight) {
+	public double probabilityOfBackoffState(ArrayList<Integer> ngram, int order, int qtyAdditionalBackoffWeight) {
+		// BUG: once we figure out how the other one is implemented, we can probably just inline that here.
 		return probabilityOfBackoffState(
 			Support.sub_int_array(ngram, 0, ngram.size()),
 			order, qtyAdditionalBackoffWeight);
 	}
 	
 	
-	public final double probabilityOfBackoffState(int[] ngram, int order, int qtyAdditionalBackoffWeight) {
-		if (ngram.length > order) {
-			throw new RuntimeException("ngram length is greather than the max order");
-		}
-		if (ngram[ngram.length-1] != LanguageModelFF.BACKOFF_LEFT_LM_STATE_SYM_ID) {
-			throw new RuntimeException("last wrd is not <bow>");
-		}
-		if (qtyAdditionalBackoffWeight > 0) {
-			return probabilityOfBackoffState_helper(
-				ngram, order, qtyAdditionalBackoffWeight);
-		} else {
-			return 0.0;
-		}
+	public double probabilityOfBackoffState(int[] ngram, int order, int qtyAdditionalBackoffWeight) {
+		throw new RuntimeException("BUG: This needs implementing");
 	}
 	
 	
-	protected abstract double probabilityOfBackoffState_helper(
-		int[] ngram, int order, int qtyAdditionalBackoffWeight);
-	
-	
-	// BUG: We should have different classes based on the configuration in use
-	public int[] leftEquivalentState(int[] originalState, int order,
-		double[] cost
-	) {
-		if (JoshuaConfiguration.use_left_equivalent_state)
-			throw new UnsupportedOperationException("getLeftEquivalentState is not overwritten by a concrete class");
-		
+	public int[] leftEquivalentState(int[] originalState, int order, double[] cost) {
 		return originalState;
 	}
 	
-	// BUG: We should have different classes based on the configuration in use
+	
 	public int[] rightEquivalentState(int[] originalState, int order) {
-		if ( !JoshuaConfiguration.use_right_equivalent_state
-		|| originalState.length != this.ngramOrder-1) {
-			return originalState;
-		} else {
-			throw new UnsupportedOperationException("getRightEquivalentState is not overwritten by a concrete class");
-		}
+		return originalState;
 	}
 }

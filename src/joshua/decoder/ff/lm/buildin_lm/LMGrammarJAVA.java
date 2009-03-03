@@ -17,7 +17,7 @@
  */
 package joshua.decoder.ff.lm.buildin_lm;
 
-import joshua.decoder.ff.lm.DefaultNGramLanguageModel;
+import joshua.decoder.ff.lm.AbstractLM;
 import joshua.decoder.ff.lm.LanguageModelFF;
 import joshua.decoder.BuildinSymbol;
 import joshua.decoder.JoshuaConfiguration;
@@ -42,7 +42,7 @@ import java.util.logging.Logger;
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate:2008-07-28 18:44:45 -0400 (Mon, 28 Jul 2008) $
  */
-public class LMGrammarJAVA extends DefaultNGramLanguageModel {
+public class LMGrammarJAVA extends AbstractLM {
 
 	// BUG: Why are the IDs not static? Why are the strings not final?
 	static String BACKOFF_WGHT_SYM = "<bow>";

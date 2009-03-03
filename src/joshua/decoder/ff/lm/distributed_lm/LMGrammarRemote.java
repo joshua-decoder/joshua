@@ -17,7 +17,7 @@
  */
 package joshua.decoder.ff.lm.distributed_lm;
 
-import joshua.decoder.ff.lm.DefaultNGramLanguageModel;
+import joshua.decoder.ff.lm.AbstractLM;
 import joshua.decoder.Support;
 import joshua.corpus.SymbolTable;
 import joshua.util.FileUtility;
@@ -36,7 +36,7 @@ import java.util.Hashtable;
  * @version $LastChangedDate: 2008-10-02 02:02:16 -0400 (星期四, 02 十月 2008) $
  */
 //PATH: this => LMClient => network => LMServer => LMGrammar => LMGrammar_JAVA/SRILM; and then reverse the path
-public class LMGrammarRemote extends DefaultNGramLanguageModel {
+public class LMGrammarRemote extends AbstractLM {
 	
 	// if remote method is used
 	private LMClient p_lm_client = null;
