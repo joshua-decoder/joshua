@@ -36,26 +36,24 @@ import java.util.logging.Logger;
  * @version $LastChangedDate$
  */
 public class HyperGraph {
-	public HGNode goal_item=null;
+	public HGNode goal_item=null;//pointer to goal HGNode
 	public int num_items = -1;
-	public int num_deduction = -1;
+	public int num_hyperedges = -1;
 	public int sent_id = -1;
 	public int sent_len = -1;
-	
-	SymbolTable p_symbolTable = null;
 	
 	static final Logger logger = Logger.getLogger(HyperGraph.class.getName());
 	
 	public HyperGraph(HGNode g_item, int n_items, int n_deducts, int s_id, int s_len){
 		goal_item = g_item;
 		num_items = n_items;
-		num_deduction = n_deducts;
+		num_hyperedges = n_deducts;
 		sent_id = s_id;
 		sent_len = s_len;
 	}
 	
 	//get one-best string under item
-	public static String extract_best_string(SymbolTable p_symbolTable, HGNode item){
+	public static String extractViterbiString(SymbolTable p_symbolTable, HGNode item){
 		StringBuffer res = new StringBuffer();
 
 		HyperEdge p_edge = item.best_hyperedge;
@@ -66,14 +64,14 @@ public class HyperGraph {
 				System.out.println("error deduction under goal item have not equal one item");
 				System.exit(1);
 			}
-			return extract_best_string(p_symbolTable, (HGNode)p_edge.get_ant_items().get(0));
+			return extractViterbiString(p_symbolTable, (HGNode)p_edge.get_ant_items().get(0));
 		}	
 		
 		for(int c=0; c<rl.english.length; c++){
     		if(p_symbolTable.isNonterminal(rl.english[c])==true){
     			int id=p_symbolTable.getTargetNonterminalIndex(rl.english[c]);
     			HGNode child = (HGNode)p_edge.get_ant_items().get(id);
-    			res.append(extract_best_string(p_symbolTable, child));
+    			res.append(extractViterbiString(p_symbolTable, child));
     		}else{
     			res.append(p_symbolTable.getWord(rl.english[c]));
     		}
@@ -83,7 +81,7 @@ public class HyperGraph {
 	}
 	
 //	######## find 1best hypergraph#############	
-	public HyperGraph get_1best_tree_hg(){		
+	public HyperGraph getViterbiTreeHG(){		
 		HyperGraph res = new HyperGraph(clone_item_with_best_deduction(goal_item), -1, -1, sent_id, sent_len);//TODO: number of items/deductions
 		get_1best_tree_item(res.goal_item);
 		return res;
@@ -101,7 +99,7 @@ public class HyperGraph {
 	}	
 	
 	//TODO: tbl_states
-	public static HGNode clone_item_with_best_deduction(HGNode it_in){
+	private static HGNode clone_item_with_best_deduction(HGNode it_in){
 		ArrayList<HyperEdge> l_deductions = new ArrayList<HyperEdge>(1);
 		HyperEdge clone_dt = clone_deduction(it_in.best_hyperedge);
 		l_deductions.add(clone_dt);
@@ -120,7 +118,7 @@ public class HyperGraph {
 		return new HGNode(it_in.i, it_in.j, it_in.lhs,  l_deductions, best_dt, it_in.tbl_ff_dpstates);	
 	}
 	
-	public static HyperEdge clone_deduction(HyperEdge dt_in){
+	private static HyperEdge clone_deduction(HyperEdge dt_in){
 		ArrayList<HGNode> l_ant_items = null;
 		if (null != dt_in.get_ant_items()) {
 			l_ant_items = new ArrayList<HGNode>(dt_in.get_ant_items());//l_ant_items will be changed in get_1best_tree_item

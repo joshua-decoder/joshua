@@ -22,14 +22,10 @@ import joshua.decoder.ff.tm.MemoryBasedRule;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.BatchGrammar;
 import joshua.decoder.ff.FFDPState;
-import joshua.decoder.ff.FFTransitionResult;
 import joshua.decoder.ff.FeatureFunction;
-import joshua.decoder.BuildinSymbol;
 import joshua.decoder.JoshuaConfiguration;
-import joshua.decoder.JoshuaDecoder;
 import joshua.corpus.SymbolTable;
 import joshua.util.FileUtility;
-
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.OutputStreamWriter;
@@ -38,7 +34,6 @@ import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.HashMap;
-import java.util.Iterator;
 
 
 /**

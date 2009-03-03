@@ -103,7 +103,8 @@ public class HGNode implements Comparable<HGNode> {
 	
 	
 	public void add_hyperedges_in_item(ArrayList<HyperEdge> hyperedges) {
-		for(HyperEdge hyperEdge : hyperedges) add_hyperedge_in_item(hyperEdge);
+		for(HyperEdge hyperEdge : hyperedges) 
+			add_hyperedge_in_item(hyperEdge);
 	}
 	
 	
@@ -174,9 +175,7 @@ public class HGNode implements Comparable<HGNode> {
 	}
 	
 	
-	public static Comparator<HGNode> NegtiveCostComparator
-		= new Comparator<HGNode>() {
-			
+	public static Comparator<HGNode> NegtiveCostComparator	= new Comparator<HGNode>() {			
 			public int compare(HGNode item1, HGNode item2) {
 				double cost1 = item1.est_total_cost;
 				double cost2 = item2.est_total_cost;

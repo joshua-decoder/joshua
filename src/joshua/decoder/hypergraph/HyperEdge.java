@@ -35,8 +35,9 @@ public class HyperEdge {
 	public double best_cost= Double.POSITIVE_INFINITY;//the 1-best cost of all possible derivation: best costs of ant hgnodes + non_stateless_transition_cost + r.statelesscost
 	private Double transition_cost=null;//this remember the stateless + non_stateless cost assocated with the rule (excluding the best-cost from ant items)
 	private Rule rule;
-	//if(l_ant_items==null), then this shoud be the terminal rule
-	private ArrayList<HGNode> l_ant_hgnodes=null; //ant items. the items appear in the list as per the index of the Chinese side non-terminal
+
+	//if l_ant_items is null, then this shoud be the terminal rule
+	private ArrayList<HGNode> l_ant_hgnodes=null; //the items appear in the list as per the index of the Foreign side non-terminal
 	
 	public HyperEdge(Rule rl, double total_cost, Double trans_cost, ArrayList<HGNode> ant_items){
 		best_cost=total_cost;
@@ -45,8 +46,14 @@ public class HyperEdge {
 		l_ant_hgnodes=ant_items;
 	}
 	
-	public Rule get_rule(){return rule;}
-	public ArrayList<HGNode> get_ant_items(){return l_ant_hgnodes;}
+	public Rule get_rule(){
+		return rule;
+	}
+	
+	public ArrayList<HGNode> get_ant_items(){
+		return l_ant_hgnodes;
+	}
+	
 	//public double get_best_cost(){return best_cost;}
 	
 	public double get_transition_cost(boolean force_compute){//note: transition_cost is already linearly interpolated

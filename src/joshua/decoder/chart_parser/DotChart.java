@@ -40,7 +40,6 @@ import java.util.logging.Logger;
  * on the fly; (3) remember the partial application of rules
  * 
  * @author Zhifei Li, <zhifei.work@gmail.com>
- * @author Lane Schwartz, <dowobeha@gmail.com>
  * @version $LastChangedDate$
  */
 public class DotChart {
@@ -231,14 +230,7 @@ public class DotChart {
 	 * @param ant_s_items_in
 	 * @param cur_s_item
 	 */
-	private void add_dot_item(
-		TrieGrammar tnode,
-		int i,
-		int j,
-		ArrayList<SuperItem> ant_s_items_in,
-		SuperItem cur_s_item,
-		float lattice_cost
-	) {
+	private void add_dot_item(TrieGrammar tnode, int i,	int j,	ArrayList<SuperItem> ant_s_items_in, SuperItem cur_s_item, float lattice_cost) {
 		ArrayList<SuperItem> ant_s_items= new ArrayList<SuperItem>();
 		if (ant_s_items_in != null) {
 			ant_s_items.addAll(ant_s_items_in);
@@ -273,8 +265,8 @@ public class DotChart {
 	
 	
 	/**
-	 * remember the dot position in which a rule has been applied
-	 * so far, and remember the old complete items
+	 * remember the dot position in which a rule has been applied so far, 
+	 * and remember the old complete items
 	 */
 	public class DotItem {
 		

@@ -93,7 +93,7 @@ public class HyperGraphPruning extends TrivialInsideOutside {
 		tbl_processed_items.clear();
 		
 		System.out.println("Item suvived ratio: "+ num_survived_item*1.0/hg.num_items + " =  " + num_survived_item + "/" + hg.num_items);
-		System.out.println("Deduct suvived ratio: "+ num_survived_deduction*1.0/hg.num_deduction + " =  " + num_survived_deduction + "/" + hg.num_deduction);
+		System.out.println("Deduct suvived ratio: "+ num_survived_deduction*1.0/hg.num_hyperedges + " =  " + num_survived_deduction + "/" + hg.num_hyperedges);
 	}
 		
 	

@@ -50,8 +50,8 @@ import java.util.logging.Logger;
  * Signatures of class:
  * Bin: i, j
  * SuperItem (used for CKY check): i,j, lhs
- * Item (or node): i,j, lhs, edge ngrams
- * Deduction (and node)
+ * Item ("or" node): i,j, lhs, edge ngrams
+ * Deduction ("and" node)
  * 
  * index of sentences: start from zero
  * index of cell: cell (i,j) represent span of words indexed [i,j-1] where i is in [0,n-1] and j is in [1,n]
@@ -121,7 +121,7 @@ public class Chart {
 		this.sent_len = sentence.size() - 1;
 		this.p_l_models   = models_;
 		this.p_symbolTable = symbolTable;
-		this.bins     = new Bin[sent_len][sent_len+1];		
+		this.bins     = new Bin[sent_len][sent_len+1];//TODO: this is very expensive		
 		this.sent_id  = sent_id_;
 		this.goal_bin = new Bin(this);
 		this.UNTRANS_OWNER_SYM_ID = this.p_symbolTable.addTerminal(untranslated_owner_);
@@ -136,11 +136,6 @@ public class Chart {
 		}
 		//add OOV rules
 		//TODO: the transition cost for phrase model, arity penalty, word penalty are all zero, except the LM cost
-//		if (sentence_str.length+1 != this.sent_len) {
-//			if (logger.isLoggable(Level.SEVERE)) logger.severe(
-//				"In Chart constructor, length of (?)integerized string(?) does not match length of integerized lattice");
-//			System.exit(1);
-//		}
 		for (Node<Integer> node : sentence) {
 			for (Arc<Integer> arc : node.getOutgoingArcs()) {
 				for (int lhs : default_nonterminals) {//create a rule, but do not add into the grammar trie     
@@ -342,13 +337,7 @@ public class Chart {
 	}
 	
 	
-	private void complete_cell_cube_prune(
-		int i,
-		int j,
-		DotItem dt,
-		RuleCollection rb,
-		float lattice_cost
-	) {
+	private void complete_cell_cube_prune(int i, int j, DotItem dt,	RuleCollection rb,	float lattice_cost) {
 		if (null == this.bins[i][j]) {
 			this.bins[i][j] = new Bin(this);
 		}

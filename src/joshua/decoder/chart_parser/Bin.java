@@ -57,6 +57,10 @@ public class Bin
 	static String GOAL_SYM="S";
 	private int GOAL_SYM_ID;
 	
+	Chart p_chart = null;
+	
+	private static final Logger logger = Logger.getLogger(Bin.class.getName());
+	
 	/*we need always maintain the priority queue (worst first), so that we can do prunning effieciently
 	 *On the other hand, we need the l_sorted_items only when necessary*/
 	
@@ -71,9 +75,7 @@ public class Bin
 	public double best_item_cost =  IMPOSSIBLE_COST;//remember the cost of the best item in the bin
 	public double cut_off_cost =  IMPOSSIBLE_COST; //cutoff=best_item_cost+relative_threshold	
 	int dead_items=0;//num of corrupted items in heap_items, note that the item in tbl_items is always good
-	Chart p_chart = null;
 	
-	private static final Logger logger = Logger.getLogger(Bin.class.getName());
 	
 	public Bin(Chart chart) {
 		this.p_chart = chart;
@@ -471,7 +473,6 @@ public class Bin
 	}
 	
 	private boolean should_prune(double total_cost){
-		//Support.write_log_line("cut_off_cost: "+cut_off_cost +" real: "+ total_cost, Support.INFO);
 		return(total_cost>=cut_off_cost);			
 	}
 	
@@ -552,10 +553,6 @@ public class Bin
         return tbl_super_items;
 	}
 	
-	public HGNode getitem(int pos){//not used 
-		ensure_sorted();
-		return l_sorted_items.get(pos);
-	}
 	
 	/*list of items that have the same lhs but may have different LM states*/
 	public class SuperItem{
