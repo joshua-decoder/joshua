@@ -107,7 +107,7 @@ public class BloomFilterLanguageModel extends DefaultNGramLanguageModel {
 	 * quantization.
 	 * after this construction, LM is ready to be queried.
 	 */
-	public BloomFilterLanguageModel(SymbolTable translationModelSymbols, String filename, int order, int size, double base) throws IOException
+	public BloomFilterLanguageModel(SymbolTable translationModelSymbols,int order, String filename) throws IOException
 	{
 		super(translationModelSymbols, order);
 		/*
@@ -118,13 +118,13 @@ public class BloomFilterLanguageModel extends DefaultNGramLanguageModel {
 		*/
 		//System.err.println("bf created");
 		//this.order = order;
-		bloomFilterSize = size;
-		quantizationBase = base;
-		vocabulary = new BuildinSymbol();
+		//bloomFilterSize = size;
+		//quantizationBase = base;
+		//vocabulary = new BuildinSymbol();
 		//this.translationModelSymbols = translationModelSymbols;
 		TMtoLMMapping = new int[symbolTable.size()];
-		numTokens = 0;
-		populateBloomFilter(filename);
+		//numTokens = 0;
+		//populateBloomFilter(filename);
 		//System.err.println("bf populated");
 	}
 
