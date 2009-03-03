@@ -67,6 +67,16 @@ public interface NGramLanguageModel {
 //===============================================================
 // Equivalent LM State (use DefaultNGramLanguageModel if you don't care)
 //===============================================================
+	
+	/**
+	 * This returns the log probability of the special backoff
+	 * symbol used to fill out contexts which have been backed-off.
+	 * The LanguageModelFF implementation is to call this
+	 * unigram probability for each such token, and then call
+	 * ngramLogProbability for the remaining actual N-gram.
+	 *
+	 * @todo Is this really the best interface?
+	 */
 	double logProbabilityOfBackoffState(
 		ArrayList<Integer> ngram, int order, int qtyAdditionalBackoffWeight);
 	double logProbabilityOfBackoffState(
