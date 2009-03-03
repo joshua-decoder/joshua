@@ -40,11 +40,10 @@ import joshua.util.sentence.Phrase;
  * @author wren ng thornton
  */
 public class PhrasePair {
-	// Can't make these final because Java only believes in
-	// assign-at-declaration, not assign-once
-	private Phrase    f;
-	private Phrase    e;
-	private Alignment a;
+	// Making these final requires Java6, not Java5
+	private final Phrase    f;
+	private final Phrase    e;
+	private final Alignment a;
 	
 //===============================================================
 // Constructors

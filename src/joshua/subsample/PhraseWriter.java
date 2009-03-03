@@ -27,11 +27,10 @@ import java.io.BufferedWriter;
  * @author wren ng thornton
  */
 final public class PhraseWriter {
-	// Can't make these final because Java only believes in
-	// assign-at-declaration, not assign-once
-	private BufferedWriter wf;
-	private BufferedWriter we;
-	private BufferedWriter wa;
+	// Making these final requires Java6, not Java5
+	private final BufferedWriter wf;
+	private final BufferedWriter we;
+	private final BufferedWriter wa;
 	
 //===============================================================
 // Constructors

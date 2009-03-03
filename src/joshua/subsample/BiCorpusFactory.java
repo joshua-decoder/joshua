@@ -29,16 +29,15 @@ import joshua.util.sentence.Vocabulary;
  * @author wren ng thornton
  */
 public class BiCorpusFactory {
-	// Can't make these final because Java only believes in
-	// assign-at-declaration, not assign-once
-	protected String fpath;
-	protected String epath;
-	protected String apath;
-	protected String extf;
-	protected String exte;
-	protected String exta;
-	protected Vocabulary vf;
-	protected Vocabulary ve;
+	// Making these final requires Java6, not Java5
+	protected final String fpath;
+	protected final String epath;
+	protected final String apath;
+	protected final String extf;
+	protected final String exte;
+	protected final String exta;
+	protected final Vocabulary vf;
+	protected final Vocabulary ve;
 	
 	public BiCorpusFactory(
 		String fpath, String epath, String apath,

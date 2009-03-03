@@ -55,13 +55,12 @@ import java.io.FileNotFoundException;
  */
 public class BiCorpus
 implements Iterable<PhrasePair> {
-	// Can't make these final because Java only believes in
-	// assign-at-declaration, not assign-once
-	protected String     foreignFileName;
-	protected String     englishFileName;
-	protected String     alignmentFileName;
-	protected Vocabulary foreignVocab;
-	protected Vocabulary englishVocab;
+	// Making these final requires Java6, not Java5
+	protected final String     foreignFileName;
+	protected final String     englishFileName;
+	protected final String     alignmentFileName;
+	protected final Vocabulary foreignVocab;
+	protected final Vocabulary englishVocab;
 	
 //===============================================================
 // Constructors
