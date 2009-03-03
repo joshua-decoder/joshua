@@ -24,13 +24,13 @@ public class ZMERT
 {
   public static void main(String[] args) throws Exception
   {
-    boolean external = false;
+    boolean external = false; // should each MERT iteration be launched externally?
 
     if (args.length == 1) {
-      if (args[0].equals("-h")) { MertCore.printZMERTUsage(args.length,true); System.exit(2); }
+      if (args[0].equals("-h")) { printZMERTUsage(args.length,true); System.exit(2); }
       else { external = false; }
     } else if (args.length == 3) { external = true; }
-    else { MertCore.printZMERTUsage(args.length,false); System.exit(1); }
+    else { printZMERTUsage(args.length,false); System.exit(1); }
 
     if (!external) {
       MertCore myMert = new MertCore(args[0]);
@@ -63,4 +63,67 @@ public class ZMERT
     System.exit(0);
 
   } // main(String[] args)
+
+  public static void printZMERTUsage(int argsLen, boolean detailed)
+  {
+    if (!detailed) {
+      println("Oops, you provided " + argsLen + " args!");
+      println("");
+      println("Usage:");
+      println("           ZMERT -maxMem maxMemoryInMB MERT_configFile");
+      println("");
+      println("Where -maxMem specifies the maximum amount of memory (in MB) Z-MERT is");
+      println("allowed to use when performing its calculations (no memroy is needed while");
+      println("the decoder is running),");
+      println("and the config file contains any subset of Z-MERT's 20-some parameters,");
+      println("one per line.  Run   ZMERT -h   for more details on those parameters.");
+    } else {
+      println("Usage:");
+      println("           ZMERT -maxMem maxMemoryInMB MERT_configFile");
+      println("");
+      println("Where -maxMem specifies the maximum amount of memory (in MB) Z-MERT is");
+      println("allowed to use when performing its calculations (no memroy is needed while");
+      println("the decoder is running),");
+      println("and the config file contains any subset of Z-MERT's 20-some parameters,");
+      println("one per line.  Those parameters, and their default values, are:");
+      println("");
+      println("Relevant files:");
+      println("  -dir dirPrefix: working directory\n    [[default: null string (i.e. they are in the current directory)]]");
+      println("  -s sourceFile: source sentences (foreign sentences) of the MERT dataset\n    [[default: null string (i.e. file name is not needed by MERT)]]");
+      println("  -r refFile: target sentences (reference translations) of the MERT dataset\n    [[default: reference.txt]]");
+      println("  -rps refsPerSen: number of reference translations per sentence\n    [[default: 1]]");
+      println("  -p paramsFile: file containing parameter names, initial values, and ranges\n    [[default: params.txt]]");
+      println("  -fin finalLambda: file name for final lambda[] values\n    [[default: null string (i.e. no such file will be created)]]");
+      println("");
+      println("MERT specs:");
+      println("  -m metricName metric options: name of evaluation metric and its options\n    [[default: BLEU 4 closest]]");
+      println("  -maxIt maxMERTIts: maximum number of MERT iterations\n    [[default: 20]]");
+      println("  -prevIt prevMERTIts: maximum number of previous MERT iterations to\n    construct candidate sets from\n    [[default: 20]]");
+      println("  -minIt minMERTIts: number of iterations before considering an early exit\n    [[default: 5]]");
+      println("  -stopIt stopMinIts: some early stopping criterion must be satisfied in\n    stopMinIts *consecutive* iterations before an early exit\n    [[default: 3]]");
+      println("  -stopSig sigValue: early MERT exit if no weight changes by more than sigValue\n    [[default: -1 (i.e. this criterion is never investigated)]]");
+      println("  -save saveInter: save intermediate cfg files (1) or decoder outputs (2)\n    or both (3) or neither (0)\n    [[default: 3]]");
+      println("  -ipi initsPerIt: number of intermediate initial points per iteration\n    [[default: 20]]");
+      println("  -opi oncePerIt: modify a parameter only once per iteration (1) or not (0)\n    [[default: 0]]");
+      println("  -rand randInit: choose initial point randomly (1) or from paramsFile (0)\n    [[default: 0]]");
+      println("  -seed seed: seed used to initialize random number generator\n    [[default: time (i.e. value returned by System.currentTimeMillis()]]");
+      println("  -ud useDisk: reliance on disk (0-2; higher value => more reliance)\n    [[default: 2]]");
+      println("");
+      println("Decoder specs:");
+      println("  -cmd commandFile: name of file containing commands to run the decoder\n    [[default: null string (i.e. decoder is a JoshuaDecoder object)]]");
+      println("  -decOut decoderOutFile: name of the output file produced by the decoder\n    [[default: output.nbest]]");
+      println("  -decExit validExit: value returned by decoder to indicate success\n    [[default: 0]]");
+      println("  -dcfg decConfigFile: name of decoder config file\n    [[default: dec_cfg.txt]]");
+      println("  -N N: size of N-best list (per sentence) generated in each MERT iteration\n    [[default: 100]]");
+      println("");
+      println("Output specs:");
+      println("  -v verbosity: Z-MERT verbosity level (0-2; higher value => more verbose)\n    [[default: 1]]");
+      println("  -decV decVerbosity: should decoder output be printed (1) or ignored (0)\n    [[default: 0]]");
+      println("");
+    }
+  }
+
+  private static void println(Object obj) { System.out.println(obj); }
+  private static void print(Object obj) { System.out.print(obj); }
+
 }
