@@ -71,7 +71,7 @@ public class LMGrammarRemote  extends DefaultNGramLanguageModel {
 			p_lm_client = new LMClientMultiServer(hosts, ports, weights, num_servers);
 	}	
 	
-	public void end_lm_grammar(){
+	private void end_lm_grammar(){
 		p_lm_client.close_client();
 	}
 	
@@ -186,10 +186,5 @@ public class LMGrammarRemote  extends DefaultNGramLanguageModel {
    protected double getNgramProbabilityHelper(int[] ngram_wrds, int order){
        return p_lm_client.get_prob(ngram_wrds, ngram_wrds.length);
    }
-		
-   public void write_vocab_map_srilm(String fname){
-		System.out.println("Error: call write_vocab_map_srilm in remote, must exit");
-		System.exit(1);
-	}
-	      
+	     
 }

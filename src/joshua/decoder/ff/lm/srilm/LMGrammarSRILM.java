@@ -39,7 +39,7 @@ public class LMGrammarSRILM  extends DefaultNGramLanguageModel {
 	}
 	
 //	read grammar locally by the Java implementation
-	public void read_lm_grammar_from_file(String grammar_file){
+	private void read_lm_grammar_from_file(String grammar_file){
 		start_loading_time = System.currentTimeMillis();
 		System.out.println("read lm by srilm tool");
         srilm.readLM(p_srilm, grammar_file);

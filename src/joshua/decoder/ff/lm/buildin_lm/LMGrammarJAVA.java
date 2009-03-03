@@ -42,13 +42,13 @@ import java.util.logging.Logger;
 public class LMGrammarJAVA extends DefaultNGramLanguageModel {
 
 	static String BACKOFF_WGHT_SYM="<bow>";
-	public  int BACKOFF_WGHT_SYM_ID;//used by LMModel
+	int BACKOFF_WGHT_SYM_ID;//used by LMModel
 	
 	static String LM_HAVE_PREFIX_SYM="<havelzfprefix>"; //to indicate that lm trie node has children
-	public  int LM_HAVE_PREFIX_SYM_ID; 
+	int LM_HAVE_PREFIX_SYM_ID; 
 	
 	static String UNK_SYM="<unk>";//unknown lm word
-	public int UNK_SYM_ID;
+	int UNK_SYM_ID;
 	
 	
 	/*a backoff node is a hashtable, it may include:
@@ -125,12 +125,6 @@ public class LMGrammarJAVA extends DefaultNGramLanguageModel {
 		System.exit(0);*/
 	}
 	
-	public void write_vocab_map_srilm(String fname){
-		if (logger.isLoggable(Level.SEVERE)) logger.severe(
-			"Error: call write_vocab_map_srilm in java, must exit");
-		System.exit(1);
-	}
-
 	
 	//	signature of this item: i, j, lhs, states (in fact, we do not need i, j)
 	private String get_signature(int[] words){		
@@ -436,7 +430,7 @@ public class LMGrammarJAVA extends DefaultNGramLanguageModel {
      */
 	
 	//read grammar locally by the Java implementation
-	public void read_lm_grammar_from_file(String grammar_file)
+	private void read_lm_grammar_from_file(String grammar_file)
 	throws IOException {
 		start_loading_time = System.currentTimeMillis();
 		root = new LMHash();
