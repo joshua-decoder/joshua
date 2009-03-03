@@ -75,7 +75,7 @@ public abstract class SplitHg {
 			for(int i=0; i< virtual_dt.l_ant_virtual_items.size(); i++){
 				VirtualItem ant_it = (VirtualItem) virtual_dt.l_ant_virtual_items.get(i);
 				HGNode new_it = clone_item_with_best_deduction(ant_it);
-				onebest_item.best_deduction.get_ant_items().set(i, new_it);
+				onebest_item.best_hyperedge.get_ant_items().set(i, new_it);
 				get_1best_tree_item(ant_it,new_it);	
 			}		
 	}	
@@ -126,7 +126,7 @@ public abstract class SplitHg {
 			HashMap virtual_item_sigs = new HashMap();
 			//### recursive call on each deduction
 			if( speed_up_item(it) ){
-				for(HyperEdge dt : it.l_deductions){					
+				for(HyperEdge dt : it.l_hyperedges){					
 					split_deduction(dt, virtual_item_sigs, it);
 				}
 			}

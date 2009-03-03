@@ -58,7 +58,7 @@ public class HyperGraph {
 	public static String extract_best_string(SymbolTable p_symbolTable, HGNode item){
 		StringBuffer res = new StringBuffer();
 
-		HyperEdge p_edge = item.best_deduction;
+		HyperEdge p_edge = item.best_hyperedge;
 		Rule rl = p_edge.get_rule();
 		
 		if (null == rl) { // deductions under "goal item" does not have rule
@@ -90,7 +90,7 @@ public class HyperGraph {
 	}
 	
 	private void get_1best_tree_item(HGNode it){	
-		HyperEdge dt = it.best_deduction;
+		HyperEdge dt = it.best_hyperedge;
 		if(dt.get_ant_items()!=null)
 			for(int i=0; i< dt.get_ant_items().size(); i++){
 				HGNode ant_it = (HGNode) dt.get_ant_items().get(i);
@@ -103,7 +103,7 @@ public class HyperGraph {
 	//TODO: tbl_states
 	public static HGNode clone_item_with_best_deduction(HGNode it_in){
 		ArrayList<HyperEdge> l_deductions = new ArrayList<HyperEdge>(1);
-		HyperEdge clone_dt = clone_deduction(it_in.best_deduction);
+		HyperEdge clone_dt = clone_deduction(it_in.best_hyperedge);
 		l_deductions.add(clone_dt);
 		return new HGNode(it_in.i, it_in.j, it_in.lhs,  l_deductions, clone_dt, it_in.tbl_ff_dpstates);	
 	}
@@ -112,8 +112,8 @@ public class HyperGraph {
 	public static HGNode clone_item(HGNode it_in){
 		ArrayList<HyperEdge> l_deductions = new ArrayList<HyperEdge>();
 		HyperEdge best_dt=null;
-		for(HyperEdge dt : it_in.l_deductions){	
-			if(dt==it_in.best_deduction) best_dt = dt; 				
+		for(HyperEdge dt : it_in.l_hyperedges){	
+			if(dt==it_in.best_hyperedge) best_dt = dt; 				
 			HyperEdge clone_dt = clone_deduction(dt); 
 			l_deductions.add(clone_dt);
 		}

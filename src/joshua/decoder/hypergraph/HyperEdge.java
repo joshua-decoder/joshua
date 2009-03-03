@@ -32,29 +32,29 @@ import joshua.decoder.ff.tm.Rule;
  */
 
 public class HyperEdge {
-	public double best_cost= Double.POSITIVE_INFINITY;//the 1-best cost of all possible derivation: best costs of ant items + non_stateless_transition_cost + r.statelesscost
+	public double best_cost= Double.POSITIVE_INFINITY;//the 1-best cost of all possible derivation: best costs of ant hgnodes + non_stateless_transition_cost + r.statelesscost
 	private Double transition_cost=null;//this remember the stateless + non_stateless cost assocated with the rule (excluding the best-cost from ant items)
 	private Rule rule;
 	//if(l_ant_items==null), then this shoud be the terminal rule
-	private ArrayList<HGNode> l_ant_items=null; //ant items. the items appear in the list as per the index of the Chinese side non-terminal
+	private ArrayList<HGNode> l_ant_hgnodes=null; //ant items. the items appear in the list as per the index of the Chinese side non-terminal
 	
 	public HyperEdge(Rule rl, double total_cost, Double trans_cost, ArrayList<HGNode> ant_items){
 		best_cost=total_cost;
 		transition_cost=trans_cost;
 		rule=rl;
-		l_ant_items=ant_items;
+		l_ant_hgnodes=ant_items;
 	}
 	
 	public Rule get_rule(){return rule;}
-	public ArrayList<HGNode> get_ant_items(){return l_ant_items;}
+	public ArrayList<HGNode> get_ant_items(){return l_ant_hgnodes;}
 	//public double get_best_cost(){return best_cost;}
 	
 	public double get_transition_cost(boolean force_compute){//note: transition_cost is already linearly interpolated
 		if(force_compute || transition_cost==null){
 			double res = best_cost;
-			if(l_ant_items!=null)	
-				for(HGNode ant_it : l_ant_items)
-					res -= ant_it.best_deduction.best_cost;
+			if(l_ant_hgnodes!=null)	
+				for(HGNode ant_it : l_ant_hgnodes)
+					res -= ant_it.best_hyperedge.best_cost;
 			transition_cost = res;				
 		}
 		return transition_cost;

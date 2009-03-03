@@ -22,8 +22,6 @@ import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.Support;
 import joshua.corpus.SymbolTable;
-import joshua.util.FileUtility;
-
 import java.io.BufferedWriter;
 import java.io.OutputStreamWriter;
 import java.io.IOException;
@@ -34,13 +32,13 @@ import java.util.logging.Logger;
 
 /**
  * this class implement:  lazy k-best extraction on a hyper-graph
- *to seed the kbest extraction, it only needs that each deduction should have the best_cost properly set, and it does not require any list being sorted
+ *to seed the kbest extraction, it only needs that each hyperedge should have the best_cost properly set, and it does not require any list being sorted
  *instead, the priority queue heap_cands will do internal sorting
- *In fact, the real crucial cost is the transition-cost at each deduction. We store the best-cost instead of the transition cost since it is easy to do pruning and
+ *In fact, the real crucial cost is the transition-cost at each hyperedge. We store the best-cost instead of the transition cost since it is easy to do pruning and
  *find one-best. Moreover, the transition cost can be recovered by get_transition_cost(), though somewhat expensive
  *
- * to recover the model cost for each individual model, we should either have access to the model, or store the model cost in the deduction 
- * (for example, in the case of disk-hypergraph, we need to store all these model cost at each deduction)
+ * to recover the model cost for each individual model, we should either have access to the model, or store the model cost in the hyperedge 
+ * (for example, in the case of disk-hypergraph, we need to store all these model cost at each hyperedge)
  *
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate$
@@ -173,7 +171,7 @@ public class KBestExtractor {
 	private String get_kth_hyp(DerivationState cur, int sent_id, ArrayList<FeatureFunction> l_models, boolean extract_nbest_tree, boolean add_combined_score){
 		double[] model_cost = null;
 		if(l_models!=null) model_cost = new double[l_models.size()];		
-		String str_hyp_numeric = cur.get_hyp(p_symbolTable, this, extract_nbest_tree, model_cost,l_models);	
+		String str_hyp_numeric = cur.get_hypothesis(p_symbolTable, this, extract_nbest_tree, model_cost,l_models);	
 		//for(int k=0; k<model_cost.length; k++) System.out.println(model_cost[k]);
 		String str_hyp_str = convert_hyp_2_string(sent_id, cur, l_models, str_hyp_numeric, extract_nbest_tree, add_combined_score, model_cost);
 		return str_hyp_str;
@@ -223,7 +221,7 @@ public class KBestExtractor {
 		if(model_cost!=null){
 			str_hyp.append(" |||");
 			double tem_sum=0.0;
-			for(int k=0; k<model_cost.length; k++){/*note that all the transition cost (including finaltransition cost) is already stored in the deduction*/				
+			for(int k=0; k<model_cost.length; k++){/*note that all the transition cost (including finaltransition cost) is already stored in the hyperedge*/				
 				str_hyp.append(String.format(" %.3f", -model_cost[k]));
 				tem_sum += model_cost[k]*l_models.get(k).getWeight();
 			}
@@ -258,7 +256,7 @@ public class KBestExtractor {
 
 	
 //################# class VirtualItem #######################
-	/*to seed the kbest extraction, it only needs that each deduction should have the best_cost properly set, and it does not require any list being sorted
+	/*to seed the kbest extraction, it only needs that each hyperedge should have the best_cost properly set, and it does not require any list being sorted
 	  *instead, the priority queue heap_cands will do internal sorting*/
 
 	private static class VirtualItem {
@@ -294,7 +292,7 @@ public class KBestExtractor {
 					res = heap_cands.poll();
 					//derivation_tbl.remove(res.get_signature());//TODO: should remove? note that two state may be tied because the cost is the same
 					if (extract_unique_nbest) {
-						String res_str = res.get_hyp(p_symbol,kbest_extator, false,null,null);
+						String res_str = res.get_hypothesis(p_symbol,kbest_extator, false,null,null);
 						// We pass false for extract_nbest_tree because we want
 						// to check that the hypothesis *strings* are unique,
 						// not the trees.
@@ -327,7 +325,7 @@ public class KBestExtractor {
 		}
 		
 		//last: the last item that has been selected, we need to extend it
-		//get the next hyp at the "last" deduction
+		//get the next hyp at the "last" hyperedge
 		private void lazy_next(SymbolTable p_symbol, KBestExtractor kbest_extator, DerivationState last, boolean extract_unique_nbest, boolean extract_nbest_tree){
 			if(last.p_edge.get_ant_items()==null)
 				return;
@@ -339,7 +337,7 @@ public class KBestExtractor {
 					new_ranks[c]=last.ranks[c];				
 				
 				new_ranks[i]=last.ranks[i]+1;
-				String new_sig = DerivationState.get_signature(last.p_edge, new_ranks, last.deduction_pos);
+				String new_sig = DerivationState.get_signature(last.p_edge, new_ranks, last.hyperedge_pos);
 				
 				//why duplicate, e.g., 1 2 + 1 0 == 2 1 + 0 1 
 				if(derivation_tbl.containsKey(new_sig)==true){
@@ -349,7 +347,7 @@ public class KBestExtractor {
 				if(new_ranks[i]<=virtual_it.l_nbest.size()//exist the new_ranks[i] derivation
 				  /*&& "t" is not in heap_cands*/ ){//already checked before, check this condition
 					double cost= last.cost - ((DerivationState)virtual_it.l_nbest.get(last.ranks[i]-1)).cost + ((DerivationState)virtual_it.l_nbest.get(new_ranks[i]-1)).cost;
-					DerivationState t = new DerivationState(last.p_parent_node, last.p_edge, new_ranks, cost, last.deduction_pos);
+					DerivationState t = new DerivationState(last.p_parent_node, last.p_edge, new_ranks, cost, last.hyperedge_pos);
 					heap_cands.add(t);
 					derivation_tbl.put(new_sig,1);
 				}				
@@ -357,19 +355,19 @@ public class KBestExtractor {
 		}
 
 		//this is the seeding function, for example, it will get down to the leaf, and sort the terminals
-		//get a 1best from each deduction, and add them into the heap_cands
+		//get a 1best from each hyperedge, and add them into the heap_cands
 		private void get_candidates(SymbolTable p_symbol, KBestExtractor kbest_extator, boolean extract_unique_nbest,boolean extract_nbest_tree){
 			heap_cands=new PriorityQueue<DerivationState>();
 			derivation_tbl = new HashMap<String, Integer> ();
 			if(extract_unique_nbest==true)
 				nbest_str_tbl=new HashMap<String,Integer> ();
 			//sanity check
-			if (null == p_item.l_deductions) {
-				System.out.println("Error, l_deductions is null in get_candidates, must be wrong");
+			if (null == p_item.l_hyperedges) {
+				System.out.println("Error, l_hyperedges is null in get_candidates, must be wrong");
 				System.exit(1);
 			}
 			int pos=0;
-			for(HyperEdge hyper_edge : p_item.l_deductions){				
+			for(HyperEdge hyper_edge : p_item.l_hyperedges){				
 				DerivationState t = get_best_derivation(p_symbol,kbest_extator, p_item, hyper_edge,pos, extract_unique_nbest, extract_nbest_tree);
 //				why duplicate, e.g., 1 2 + 1 0 == 2 1 + 0 1 , but here we should not get duplicate				
 				if(derivation_tbl.containsKey(t.get_signature())==false){
@@ -378,7 +376,7 @@ public class KBestExtractor {
 				}else{//sanity check
 					System.out.println("Error: get duplicate derivation in get_candidates, this should not happen");
 					System.out.println("signature is " + t.get_signature());
-					System.out.println("l_deduction size is " + p_item.l_deductions.size());
+					System.out.println("l_hyperedge size is " + p_item.l_hyperedges.size());
 					System.exit(1);
 				}
 				pos++;
@@ -400,7 +398,7 @@ public class KBestExtractor {
 			double cost=0;
 			if(hyper_edge.get_ant_items()==null){//axiom
 				ranks=null;
-				cost=hyper_edge.best_cost;//seeding: this Deduction only have one single translation for the terminal symbol
+				cost=hyper_edge.best_cost;//seeding: this hyperedge only have one single translation for the terminal symbol
 			}else{//best combination					
 				ranks = new int[hyper_edge.get_ant_items().size()];					
 				for(int i=0; i < hyper_edge.get_ant_items().size();i++){//make sure the 1best at my children is ready
@@ -418,8 +416,8 @@ public class KBestExtractor {
 	
 
 //	################# class DerivationState #######################
-	/*each Item will maintain a list of this, each of which corresponds to a deduction and its children's ranks
-	 * remember the ranks of a deduction node
+	/*each Item will maintain a list of this, each of which corresponds to a hyperedge and its children's ranks
+	 * remember the ranks of a hyperedge node
 	 * used for kbest extraction*/
 	
 	//each DerivationState rougly correponds a hypothesis 
@@ -428,7 +426,7 @@ public class KBestExtractor {
 		HGNode p_parent_node;
 		HyperEdge p_edge;//in the paper, it is "e"		
 		//**lesson: once we define this as a static variable, which cause big trouble
-		int deduction_pos; //this is my position in my parent's Item.l_deductions, used for signature calculation
+		int hyperedge_pos; //this is my position in my parent's Item.l_hyperedges, used for signature calculation
 		int[] ranks;//in the paper, it is "j", which is a ArrayList of size |e|
 		double cost;//the cost of this hypthesis
 		
@@ -437,16 +435,16 @@ public class KBestExtractor {
 			p_edge =e ;
 			ranks = r;
 			cost=c;
-			deduction_pos=pos;
+			hyperedge_pos=pos;
 		}
 		
 		private String get_signature(){
-			return get_signature(p_edge, ranks,deduction_pos);
+			return get_signature(p_edge, ranks,hyperedge_pos);
 		}
 		
 		private static String get_signature(HyperEdge p_edge2, int[] ranks2, int pos){
 			StringBuffer res = new StringBuffer();
-			//res.apend(p_edge2.toString());//Wrong: this may not be unique to identify a Deduction (as it represent the class name and hashcode which my be equal for different objects)
+			//res.apend(p_edge2.toString());//Wrong: this may not be unique to identify a hyperedge (as it represent the class name and hashcode which my be equal for different objects)
 			res.append(pos);
 			if(ranks2!=null)
 				for(int i=0; i<ranks2.length;i++){
@@ -458,14 +456,14 @@ public class KBestExtractor {
 			
 		//get the numeric sequence of the particular hypothesis
 		//if want to get model cost, then have to set model_cost and l_models
-		private String get_hyp(SymbolTable p_symbol, KBestExtractor kbest_extator, boolean tree_format, double[] model_cost, ArrayList<FeatureFunction> l_models){
+		private String get_hypothesis(SymbolTable p_symbol, KBestExtractor kbest_extator, boolean tree_format, double[] model_cost, ArrayList<FeatureFunction> l_models){
 			//### accumulate cost of p_edge into model_cost if necessary
 			if(model_cost!=null) compute_cost(p_parent_node, p_edge, model_cost, l_models);
 			
 			//### get hyp string recursively
 			StringBuffer res = new StringBuffer();			
 			Rule rl = p_edge.get_rule();
-			if(rl==null){//deductions under "goal item" does not have rule
+			if(rl==null){//hyperedges under "goal item" does not have rule
 				if(tree_format==true){
 					//res.append("(ROOT ");
 					res.append("("); res.append(root_id); res.append(" ");
@@ -473,7 +471,7 @@ public class KBestExtractor {
 				for(int id=0; id < p_edge.get_ant_items().size();id++){
 					HGNode child = (HGNode)p_edge.get_ant_items().get(id);
 					VirtualItem virtual_child = kbest_extator.add_virtual_item(child);
-					res.append(((DerivationState)virtual_child.l_nbest.get(ranks[id]-1)).get_hyp(p_symbol,kbest_extator, tree_format, model_cost,l_models));
+					res.append(((DerivationState)virtual_child.l_nbest.get(ranks[id]-1)).get_hypothesis(p_symbol,kbest_extator, tree_format, model_cost,l_models));
 	    			if(id<p_edge.get_ant_items().size()-1) res.append(" ");		
     			}
 				if(tree_format==true) res.append(")");		
@@ -488,7 +486,7 @@ public class KBestExtractor {
 		    			int id=p_symbol.getTargetNonterminalIndex(rl.english[c]);
 		    			HGNode child = (HGNode)p_edge.get_ant_items().get(id);
 		    			VirtualItem virtual_child =kbest_extator.add_virtual_item(child);
-		    			res.append(((DerivationState)virtual_child.l_nbest.get(ranks[id]-1)).get_hyp(p_symbol,kbest_extator, tree_format, model_cost, l_models));
+		    			res.append(((DerivationState)virtual_child.l_nbest.get(ranks[id]-1)).get_hypothesis(p_symbol,kbest_extator, tree_format, model_cost, l_models));
 		    		}else{
 		    			res.append(rl.english[c]);
 		    		}
@@ -503,7 +501,7 @@ public class KBestExtractor {
 		/*
 		//TODO: we assume at most one lm, and the LM is the only non-stateles model
 		//another potential difficulty in handling multiple LMs: symbol synchronization among the LMs
-		//accumulate deduction cost into model_cost[], used by get_hyp()
+		//accumulate hyperedge cost into model_cost[], used by get_hyp()
 		private void compute_cost_not_used(HyperEdge dt, double[] model_cost, ArrayList l_models){
 			if(model_cost==null) return;
 			
@@ -515,7 +513,7 @@ public class KBestExtractor {
 				FeatureFunction m = (FeatureFunction) l_models.get(k);	
 				double t_res =0;
 				if(m.isStateful() == false){//stateless feature
-					if(dt.get_rule()!=null){//deductions under goal item do not have rules
+					if(dt.get_rule()!=null){//hyperedges under goal item do not have rules
 						FFTransitionResult tem_tbl =  m.transition(dt.get_rule(), null, -1, -1);
 						t_res = tem_tbl.getTransitionCost();
 					}else{//final transtion
@@ -542,7 +540,7 @@ public class KBestExtractor {
 				FeatureFunction m = (FeatureFunction) l_models.get(k);	
 				double t_res =0;
 							
-				if(dt.get_rule()!=null){//deductions under goal item do not have rules
+				if(dt.get_rule()!=null){//hyperedges under goal item do not have rules
 					FFTransitionResult tem_tbl =  HyperGraph.computeTransition(dt, m, parent_item.i, parent_item.j);
 					t_res = tem_tbl.getTransitionCost();
 				}else{//final transtion

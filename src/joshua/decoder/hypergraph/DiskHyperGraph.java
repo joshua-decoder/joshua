@@ -266,7 +266,7 @@ public class DiskHyperGraph {
 		if (this.itemToID.containsKey(item)) return;
 		
 		// first: assign IDs to all my antecedents
-		for (HyperEdge hyperEdge : item.l_deductions) {
+		for (HyperEdge hyperEdge : item.l_hyperedges) {
 			this.qtyDeductions++;
 			if (null != hyperEdge.get_ant_items()) {
 				for (HGNode antecedentItem : hyperEdge.get_ant_items()) {
@@ -295,9 +295,9 @@ public class DiskHyperGraph {
 				.append(this.symbolTable.getWord(item.lhs))
 				.append(" ")
 				.append(
-					null == item.l_deductions
+					null == item.l_hyperedges
 					? 0
-					: item.l_deductions.size() )
+					: item.l_hyperedges.size() )
 				.append(ITEM_STATE_TAG)
 				.append(
 					// Assume LM is the only stateful feature
@@ -310,8 +310,8 @@ public class DiskHyperGraph {
 				.toString()
 			);
 		
-		if (null != item.l_deductions) {
-			for (HyperEdge hyperEdge : item.l_deductions) {
+		if (null != item.l_hyperedges) {
+			for (HyperEdge hyperEdge : item.l_hyperedges) {
 				writeDeduction(item, hyperEdge);
 			}
 		}

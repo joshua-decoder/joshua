@@ -167,7 +167,7 @@ public abstract class DefaultInsideOutside {
 		tbl_for_sanity_check.put(it,1);
 		double prob_sum=0;
 		//### recursive call on each deduction
-		for(HyperEdge dt : it.l_deductions){
+		for(HyperEdge dt : it.l_hyperedges){
 			prob_sum += get_deduction_posterior_prob(dt,it);
 			//System.out.println("tran_cost: " + dt.get_transition_cost(true) + "; prob: " +  get_deduction_posterior_prob(dt,it));
 			sanity_check_deduction(dt);//deduction-specifc operation
@@ -213,7 +213,7 @@ public abstract class DefaultInsideOutside {
 		double inside_prob = ZERO_IN_SEMIRING;
 		
 		//### recursive call on each deduction
-		for(HyperEdge dt : it.l_deductions){
+		for(HyperEdge dt : it.l_hyperedges){
 			double v_dt = inside_estimation_deduction(dt, it);//deduction-specifc operation
 			inside_prob = add_in_semiring(inside_prob, v_dt);
 		}		
@@ -244,7 +244,7 @@ public abstract class DefaultInsideOutside {
 	private void outside_estimation_hg(HyperGraph hg){	
 		tbl_outside_prob.clear(); 
 		tbl_outside_prob.put(hg.goal_item, ONE_IN_SEMIRING);//initialize
-		for(HyperEdge dt : hg.goal_item.l_deductions)
+		for(HyperEdge dt : hg.goal_item.l_hyperedges)
 			outside_estimation_deduction(dt, hg.goal_item);	
 	}
 	
@@ -282,7 +282,7 @@ public abstract class DefaultInsideOutside {
 		
 		//### recursive call on each deduction
 		if( num_called-1<=0){//i am done
-			for(HyperEdge dt : cur_it.l_deductions){
+			for(HyperEdge dt : cur_it.l_hyperedges){
 				//TODO: potentially, we can collect the feature expection in each hyperedge here, to avoid another pass of the hypergraph to get the counts
 				outside_estimation_deduction(dt, cur_it);
 			}

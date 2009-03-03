@@ -38,11 +38,11 @@ import java.util.logging.Level;
 public class HGNode implements Comparable<HGNode> {
 	public int i, j;
 	
-	// each deduction is a "and" node
-	public ArrayList<HyperEdge> l_deductions = null;
+	// each hyperedge is a "and" node
+	public ArrayList<HyperEdge> l_hyperedges = null;
 	
 	// used in pruning, compute_item, and transit_to_goal
-	public HyperEdge best_deduction = null;
+	public HyperEdge best_hyperedge = null;
 	
 	// this is the symbol like: NP, VP, and so on
 	public int lhs;
@@ -65,23 +65,23 @@ public class HGNode implements Comparable<HGNode> {
 // Constructors
 //===============================================================
 
-	public HGNode(int i, int j, int lhs, HashMap<Integer,FFDPState> states, HyperEdge init_deduction, double est_total_cost) {
+	public HGNode(int i, int j, int lhs, HashMap<Integer,FFDPState> states, HyperEdge init_hyperedge, double est_total_cost) {
 		this.i   = i;
 		this.j   = j;
 		this.lhs = lhs;
 		this.tbl_ff_dpstates = states;
 		this.est_total_cost  = est_total_cost;
-		add_deduction_in_item(init_deduction);
+		add_hyperedge_in_item(init_hyperedge);
 	}
 	
 	
 	//used by disk hg
-	public HGNode(int i, int j, int lhs, ArrayList<HyperEdge> l_deductions, HyperEdge best_deduction, HashMap<Integer,FFDPState> states) {
+	public HGNode(int i, int j, int lhs, ArrayList<HyperEdge> l_hyperedges, HyperEdge best_hyperedge, HashMap<Integer,FFDPState> states) {
 		this.i   = i;
 		this.j   = j;
 		this.lhs = lhs;
-		this.l_deductions    = l_deductions;
-		this.best_deduction  = best_deduction;
+		this.l_hyperedges    = l_hyperedges;
+		this.best_hyperedge  = best_hyperedge;
 		this.tbl_ff_dpstates = states;
 	}
 	
@@ -90,20 +90,20 @@ public class HGNode implements Comparable<HGNode> {
 // Methods
 //===============================================================
 	
-	public void add_deduction_in_item(HyperEdge dt) {
-		if (null == l_deductions) {
-			l_deductions = new ArrayList<HyperEdge>();
+	public void add_hyperedge_in_item(HyperEdge dt) {
+		if (null == l_hyperedges) {
+			l_hyperedges = new ArrayList<HyperEdge>();
 		}
-		l_deductions.add(dt);
-		if (null == best_deduction
-		|| best_deduction.best_cost > dt.best_cost) {
-			best_deduction = dt; //no change when tied
+		l_hyperedges.add(dt);
+		if (null == best_hyperedge
+		|| best_hyperedge.best_cost > dt.best_cost) {
+			best_hyperedge = dt; //no change when tied
 		}
 	}
 	
 	
-	public void add_deductions_in_item(ArrayList<HyperEdge> deductions) {
-		for(HyperEdge hyperEdge : deductions) add_deduction_in_item(hyperEdge);
+	public void add_hyperedges_in_item(ArrayList<HyperEdge> hyperedges) {
+		for(HyperEdge hyperEdge : hyperedges) add_hyperedge_in_item(hyperEdge);
 	}
 	
 	
@@ -130,7 +130,7 @@ public class HGNode implements Comparable<HGNode> {
 		if (HyperGraph.logger.isLoggable(level))
 			HyperGraph.logger.log(level,
 				String.format("lhs: %s; cost: %.3f",
-					lhs, best_deduction.best_cost));
+					lhs, best_hyperedge.best_cost));
 	}
 	
 	

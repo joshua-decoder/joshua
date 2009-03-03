@@ -102,13 +102,13 @@ public class HyperGraphPruning extends TrivialInsideOutside {
 		tbl_processed_items.put(it,true);
 		boolean should_survive=false;
 		//### recursive call on each deduction
-		for(int i=0; i < it.l_deductions.size(); i++){
-			HyperEdge dt = it.l_deductions.get(i);
+		for(int i=0; i < it.l_hyperedges.size(); i++){
+			HyperEdge dt = it.l_hyperedges.get(i);
 			boolean survived = pruning_deduction(dt, it);//deduction-specifc operation
 			if(survived) 
 				should_survive=true;//at least one deduction survive
 			else{
-				it.l_deductions.remove(i);
+				it.l_hyperedges.remove(i);
 				i--;
 			}			
 		}
@@ -128,7 +128,7 @@ public class HyperGraphPruning extends TrivialInsideOutside {
 	//best-deduction is always kept
 	private boolean pruning_deduction(HyperEdge dt, HGNode parent){
 		//TODO: theoretically, if an item is get called, then its best deduction should always be kept even just by the threshold-checling. In reality, due to precision of Double, the threshold-checking may not be perfect
-		if(dt != parent.best_deduction){//best deduction should always survive if the Item is get called
+		if(dt != parent.best_hyperedge){//best deduction should always survive if the Item is get called
 			//### prune?
 			if(should_prune_deduction(dt, parent)){
 				return false;//early stop

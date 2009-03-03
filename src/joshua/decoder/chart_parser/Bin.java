@@ -95,7 +95,7 @@ public class Bin
 		
 		if (null != previous_items) {
 			for (HGNode item : previous_items) {
-				finalized_total_cost += item.best_deduction.best_cost;
+				finalized_total_cost += item.best_hyperedge.best_cost;
 			}
 		}
 		
@@ -167,7 +167,7 @@ public class Bin
 		
 		for (HGNode item : bin.get_sorted_items()) {
 			if (item.lhs == GOAL_SYM_ID) {
-				double cost                  = item.best_deduction.best_cost;
+				double cost                  = item.best_hyperedge.best_cost;
 				double final_transition_cost = 0.0;
 				
 				for (FeatureFunction ff : this.p_chart.p_l_models) {
@@ -187,9 +187,9 @@ public class Bin
 					goal_item = new HGNode(0,	this.p_chart.sent_len + 1,	GOAL_SYM_ID,	null, dt, cost + final_transition_cost);					
 					this.l_sorted_items.add(goal_item);
 				} else {
-					goal_item.add_deduction_in_item(dt);
-					if (goal_item.best_deduction.best_cost > dt.best_cost) {
-						goal_item.best_deduction = dt;
+					goal_item.add_hyperedge_in_item(dt);
+					if (goal_item.best_hyperedge.best_cost > dt.best_cost) {
+						goal_item.best_hyperedge = dt;
 					}
 				}
 			} // End if item.lhs == GOAL_SYM_ID
@@ -197,7 +197,7 @@ public class Bin
 		
 		
 		if (logger.isLoggable(Level.INFO)) {
-			logger.info(String.format("Goal item, best cost is %.3f", goal_item.best_deduction.best_cost));
+			logger.info(String.format("Goal item, best cost is %.3f", goal_item.best_hyperedge.best_cost));
 		}
 		ensure_sorted();
 
@@ -427,11 +427,11 @@ public class Bin
 				//the position of old_item in the heap_items may change, basically, we should remove the old_item, and re-insert it (linear time, this is too expense)
 				old_item.is_dead=true;//heap_items.remove(old_item);
 				dead_items++;
-				new_item.add_deductions_in_item(old_item.l_deductions);
+				new_item.add_hyperedges_in_item(old_item.l_hyperedges);
 				add_new_item(new_item);	//this will update the HashMap , so that the old_item is destroyed				
 				res=true;
 			}else{
-				old_item.add_deductions_in_item(new_item.l_deductions);
+				old_item.add_hyperedges_in_item(new_item.l_hyperedges);
 			}
 		}else{//first time item
 			p_chart.n_added++;//however, this item may not be used in the future due to pruning in the hyper-graph
