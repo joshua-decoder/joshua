@@ -27,6 +27,7 @@ import joshua.decoder.ff.SourceLatticeArcCostFF;
 import joshua.decoder.ff.lm.LanguageModelFF;
 import joshua.decoder.ff.lm.DefaultNGramLanguageModel;
 import joshua.decoder.ff.lm.NGramLanguageModel;
+import joshua.decoder.ff.lm.bloomfilter_lm.BloomFilterLanguageModel;
 import joshua.decoder.ff.lm.buildin_lm.LMGrammarJAVA;
 import joshua.decoder.ff.lm.distributed_lm.LMGrammarRemote;
 import joshua.decoder.ff.lm.srilm.LMGrammarSRILM;
@@ -324,10 +325,19 @@ public class JoshuaDecoder {
 			lm_grammar = new LMGrammarSRILM(
 				(SrilmSymbol)psymbolTable,
 				JoshuaConfiguration.g_lm_order,
-				JoshuaConfiguration.lm_file);
-			//lm_grammar = new LMGrammarSRILM((SrilmSymbol)psymbol, JoshuaConfiguration.g_lm_order, JoshuaConfiguration.lm_file);
-			
-		} else {
+				JoshuaConfiguration.lm_file);			
+		}  else if (JoshuaConfiguration.use_bloomfilter_lm) {
+			if (JoshuaConfiguration.use_left_equivalent_state
+					|| JoshuaConfiguration.use_right_equivalent_state) {
+						logger.severe("use Bloomfilter LM, we cannot use suffix/prefix stuff");
+						System.exit(1);
+					}
+					
+			lm_grammar = new BloomFilterLanguageModel(
+					psymbolTable,
+					JoshuaConfiguration.g_lm_order,
+					JoshuaConfiguration.lm_file);
+		}else {
 			//using the built-in JAVA implementatoin of LM, may not be as scalable as SRILM
 			lm_grammar = new LMGrammarJAVA(
 				(BuildinSymbol)psymbolTable,

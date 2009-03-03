@@ -88,6 +88,8 @@ public abstract class BatchGrammar implements GrammarFactory, Grammar {
 		}
 	}
 	
+	
+	
 	public static final String replace_french_non_terminal(String nonterminalReplaceRegexp_, String symbol) {
 		return symbol.replaceAll(nonterminalReplaceRegexp_, "");//remove [, ], and numbers
 	}
