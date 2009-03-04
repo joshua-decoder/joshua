@@ -86,9 +86,9 @@ public class BLEUTest {
 			// score expexts a 1-D array because the test corpus
 			// could consist of multiple sentences
 		double expected = 0.2513;
-		//double acceptableDelta = 0.0f;
+		double acceptableDelta = 0.00001f;
 		
-		Assert.assertEquals(actual, expected);
+		Assert.assertEquals(actual, expected, acceptableDelta);
 		
 	}
 	
