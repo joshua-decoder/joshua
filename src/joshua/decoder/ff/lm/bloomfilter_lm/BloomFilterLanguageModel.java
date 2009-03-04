@@ -373,7 +373,7 @@ public class BloomFilterLanguageModel extends DefaultNGramLanguageModel implemen
 						new_prefix[i] = ngram[i];
 				}
 				*/
-				String [] toks = scanner.nextLine().split("\s+");
+				String [] toks = scanner.nextLine().split(" ");
 				int currOrder = toks.length - 1;
 				int currCount = Integer.parseInt(toks[currOrder]);
 				if (currOrder == 1) {
