@@ -68,10 +68,16 @@ public class BloomFilterLanguageModel extends DefaultNGramLanguageModel implemen
 	/*
 	 * constructor.
 	 */
-	public BloomFilterLanguageModel(SymbolTable translationModelSymbols, int order, String filename) throws IOException, ClassNotFoundException
+	public BloomFilterLanguageModel(SymbolTable translationModelSymbols, int order, String filename) throws IOException
 	{
 		super(translationModelSymbols, order);
-		readExternal(new ObjectInputStream(new GZIPInputStream(new FileInputStream(filename))));
+		try {
+			readExternal(new ObjectInputStream(new GZIPInputStream(new FileInputStream(filename))));
+		}
+		catch (ClassNotFoundException e) {
+			if (logger.isLoggable(Level.SEVERE)) logger.severe("Could not rebuild bloom filter LM from file " + filename);
+			System.exit(1);
+		}
 		TMtoLMMapping = createTMtoLMMapping();
 		int vocabSize = vocabulary.size();
 		p0 = -Math.log(vocabSize + 1);
