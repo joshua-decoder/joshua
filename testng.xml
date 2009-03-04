@@ -86,7 +86,7 @@
   
   <test name="ZMERT" >
     <classes>
-      <class name="joshua.ZMERT.BLEUTest" >
+      <class name="joshua.zmert.BLEUTest" >
         <parameter name="referenceFile" value="example2/example2.ref.0" />
         <parameter name="testFile" value="example2/example2.ref.1" />
       </class>

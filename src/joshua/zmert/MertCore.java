@@ -16,7 +16,7 @@
  * MA 02111-1307 USA
  */
 
-package joshua.oldzmert;
+package joshua.zmert;
 import joshua.decoder.*;
 import java.math.*;
 import java.util.*;
