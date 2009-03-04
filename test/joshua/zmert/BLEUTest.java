@@ -37,24 +37,35 @@ public class BLEUTest {
 
 	@Test
 	public void metricName() {
+
+		// Setup the EvaluationMetric class
+		EvaluationMetric.set_numSentences(0);
+		EvaluationMetric.set_refsPerSen(1);
+		EvaluationMetric.set_refSentences(null);
+
 		BLEU bleu = new BLEU();
 		
 		Assert.assertEquals(bleu.get_metricName(), "BLEU");
+
 	}
 	
 	@Test
 	public void defaultConstructor() {
-		
+
+		// Setup the EvaluationMetric class
+		EvaluationMetric.set_numSentences(0);
+		EvaluationMetric.set_refsPerSen(1);
+		EvaluationMetric.set_refSentences(null);
+
 		BLEU bleu = new BLEU();
 		
 		// Default constructor should use a maximum n-gram length of 4
 		Assert.assertEquals(bleu.maxGramLength, 4);
 		
 		// Default constructor should use the closest reference
-		Assert.assertEquals(bleu.effLengthMethod, 1);
+		Assert.assertEquals(bleu.effLengthMethod, BLEU.EffectiveLengthMethod.CLOSEST);
 
 	}
-	
 	
 	@Test
 	public void simpleTest() {
@@ -62,37 +73,39 @@ public class BLEUTest {
 		String ref = "this is the fourth chromosome whose sequence has been completed to date . it comprises more than 87 million pairs of dna .";
 		String test = "this is the fourth chromosome to be fully sequenced up till now and it comprises of over 87 million pairs of deoxyribonucleic acid ( dna ) .";
 		
-/*		// OZ
-		String[] refWords = ref.split("\\s+");
-		String[][] refSentences = {refWords};
-*/		
 		// refSentences[i][r] stores the r'th reference of the i'th sentence
-		String[][] refSentences = new String[1][1]; // OZ
-		refSentences[0][0] = ref; // OZ
+		String[][] refSentences = new String[1][1];
+		refSentences[0][0] = ref;
 		
-		EvaluationMetric.set_numSentences(1); // OZ
-		EvaluationMetric.set_refsPerSen(1); // OZ
+		EvaluationMetric.set_numSentences(1);
+		EvaluationMetric.set_refsPerSen(1);
 		EvaluationMetric.set_refSentences(refSentences);
-			// set_refSentences expects a 2-D array because there could be
-			// multiple references per sentence
 		
 		BLEU bleu = new BLEU();
 		
-/*		// OZ
-		String[] testWords = test.split("\\s+");
-*/		
 		// testSentences[i] stores the candidate translation for the i'th sentence
-		String[] testSentences = new String[1]; // OZ
-		testSentences[0] = test; // OZ
+		String[] testSentences = new String[1];
+		testSentences[0] = test;
 		
-		double actual = bleu.score(testSentences);
-			// score expexts a 1-D array because the test corpus
-			// could consist of multiple sentences
-		double expected = 0.2513;
-		double acceptableDelta = 0.00001f;
+		// Check BLEU score matches
+		double actualScore = bleu.score(testSentences);
+		double expectedScore = 0.2513;
+		double acceptableScoreDelta = 0.00001f;
 		
-		Assert.assertEquals(actual, expected, acceptableDelta);
-		
+		Assert.assertEquals(actualScore, expectedScore, acceptableScoreDelta);
+
+		// Check sufficient statistics match
+		int[] actualSS = bleu.suffStats(testSentences);
+		int[] expectedSS = {1,14,8,5,3,27,23};
+
+		Assert.assertEquals(actualSS[0], expectedSS[0], 0); // # sentences
+		Assert.assertEquals(actualSS[1], expectedSS[1], 0); // 1-gram matches
+		Assert.assertEquals(actualSS[2], expectedSS[2], 0); // 2-gram matches
+		Assert.assertEquals(actualSS[3], expectedSS[3], 0); // 3-gram matches
+		Assert.assertEquals(actualSS[4], expectedSS[4], 0); // 4-gram matches
+		Assert.assertEquals(actualSS[5], expectedSS[5], 0); // candidate length
+		Assert.assertEquals(actualSS[6], expectedSS[6], 0); // reference length
+
 	}
 	
 	@Parameters({"referenceFile","testFile"})
@@ -109,6 +122,7 @@ public class BLEUTest {
 		
 		System.out.println(referenceFile);
 		System.out.println(testFile);
+
 	}
 	
 }
