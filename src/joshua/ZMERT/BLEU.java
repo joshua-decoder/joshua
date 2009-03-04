@@ -17,14 +17,12 @@
  */
 
 package joshua.ZMERT;
-import java.math.*;
 import java.util.*;
-import java.io.*;
 
 public class BLEU extends EvaluationMetric
 {
   protected int maxGramLength;
-  protected int effLengthMethod;
+  protected EffectiveLengthMethod effLengthMethod;
     // 1: closest, 2: shortest, 3: average
 //  protected HashMap[][] maxNgramCounts;
   protected HashMap<String,Integer>[] maxNgramCounts;
@@ -51,9 +49,9 @@ public class BLEU extends EvaluationMetric
     }
 
     if (methodStr.equals("closest")) {
-      effLengthMethod = 1;
+      effLengthMethod = EffectiveLengthMethod.CLOSEST;
     } else if (methodStr.equals("shortest")) {
-      effLengthMethod = 2;
+      effLengthMethod = EffectiveLengthMethod.SHORTEST;
 //    } else if (methodStr.equals("average")) {
 //      effLengthMethod = 3;
     } else {
@@ -90,7 +88,8 @@ public class BLEU extends EvaluationMetric
     }
   }
 
-  protected void set_maxNgramCounts()
+  @SuppressWarnings("unchecked")
+protected void set_maxNgramCounts()
   {
     maxNgramCounts = new HashMap[numSentences];
     String gram = "";
@@ -162,7 +161,7 @@ for (int j = 0; j < wordCount; ++j) { words[j] = words[j].intern(); }
 
   public void set_prec_suffStats(int[] stats, String[] words, int i)
   {
-    HashMap[] candCountsArray = getNgramCountsArray(words);
+    HashMap<String,Integer>[] candCountsArray = getNgramCountsArray(words);
 
     for (int n = 1; n <= maxGramLength; ++n) {
 
@@ -170,7 +169,7 @@ for (int j = 0; j < wordCount; ++j) { words[j] = words[j].intern(); }
       String gram = "";
       int candGramCount = 0, maxRefGramCount = 0, clippedCount = 0;
 
-      Iterator it = (candCountsArray[n].keySet()).iterator();
+      Iterator<String> it = (candCountsArray[n].keySet()).iterator();
 
       while (it.hasNext()) {
       // for each gram type in the candidate
@@ -197,7 +196,7 @@ for (int j = 0; j < wordCount; ++j) { words[j] = words[j].intern(); }
 
   public int effLength(int candLength, int i)
   {
-    if (effLengthMethod == 1) { // closest
+    if (effLengthMethod == EffectiveLengthMethod.CLOSEST) { // closest
 
       int closestRefLength = refWordCount[i][0];
       int minDiff = Math.abs(candLength-closestRefLength);
@@ -217,7 +216,7 @@ for (int j = 0; j < wordCount; ++j) { words[j] = words[j].intern(); }
 
       return closestRefLength;
 
-    } else if (effLengthMethod == 2) { // shortest
+    } else if (effLengthMethod == EffectiveLengthMethod.SHORTEST) { // shortest
 
       int shortestRefLength = refWordCount[i][0];
 
@@ -382,7 +381,8 @@ else { // average
     return getNgramCountsArray(cand_str.split("\\s+"));
   }
 
-  public HashMap<String,Integer>[] getNgramCountsArray(String[] words)
+  @SuppressWarnings("unchecked")
+public HashMap<String,Integer>[] getNgramCountsArray(String[] words)
   {
     HashMap<String,Integer>[] ngramCountsArray = new HashMap[1+maxGramLength];
     ngramCountsArray[0] = null;
@@ -516,6 +516,12 @@ else { // average
 
   }
 
+  enum EffectiveLengthMethod {
+	  CLOSEST,
+	  SHORTEST,
+	  AVERAGE
+  }
+  
 /*
   // The following two functions are nice to have, I suppose, but they're never
   // used, so they're commented out at the moment for clarity's sake
