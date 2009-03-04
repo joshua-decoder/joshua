@@ -17,44 +17,40 @@
  */
 package joshua.decoder.ff.lm.bloomfilter_lm;
 
+import java.util.logging.Logger;
+import java.util.logging.Level;
 import java.util.Arrays;
 import java.util.Scanner;
 import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
+
 import java.io.File;
-import java.io.BufferedInputStream;
 import java.io.InputStream;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.Externalizable;
+import java.io.ObjectInput;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutput;
+import java.io.ObjectOutputStream;
 
+import joshua.decoder.ff.lm.DefaultNGramLanguageModel;
 import joshua.decoder.ff.lm.bloomfilter_lm.BloomFilter;
 import joshua.corpus.SymbolTable;
-import joshua.decoder.ff.lm.DefaultNGramLanguageModel;
-import joshua.decoder.DefaultSymbol;
-import joshua.decoder.BuildinSymbol;
+import joshua.util.sentence.Vocabulary;
 
-public class BloomFilterLanguageModel extends DefaultNGramLanguageModel {
+public class BloomFilterLanguageModel extends DefaultNGramLanguageModel implements Externalizable {
 	public static final int HASH_SEED = 17;
 	public static final int HASH_OFFSET = 37;
 
-	private DefaultSymbol vocabulary;
-//	private SymbolTable translationModelSymbols;
+	public static final Logger logger = Logger.getLogger(BloomFilterLanguageModel.class.getName());
 
+	private Vocabulary vocabulary;
 	private BloomFilter bf;
 	private double quantizationBase;
-	private int bloomFilterSize;
-//	private int order;
-
-	private int [] prefix; // for recording types after
-	private int prefix_types_after;
-
-	private double p0; // probability of the empty ngram
-	private double lambda0; // interpolation constant between models of
-				// order 0 and order 1
-	
-	private long numTokens;	// number of tokens seen in training corpus
-	private double logNT;	// log(numTokens);
-	private int maxQ;	// max quantized count
+	private double numTokens;	// log number of tokens seen in training corpus
 
 	// hash functions for storing or retreiving ngram counts in the
 	// bloom filter
@@ -64,275 +60,39 @@ public class BloomFilterLanguageModel extends DefaultNGramLanguageModel {
 	private long [][] typesFuncs;
 
 	// translation model to language model mapping
-	private int [] TMtoLMMapping;
-
-	/*
-	 * a short testing function. it reads in a given file (for format,
-	 * see README) and then allows the user to query for the WB probability
-	 * of different ngrams.
-	 */
-	/* MODIFYING:
-	 * for integrating this LM into a decoder, this main function can be
-	 * removed.
-	 */
-	/*
-	public static void main(String [] argv)
-	{
-		if (argv.length < 4) {
-			System.err.println("usage: java LM_TalbotOsborne_WB <file> <order> <filter size> <quantization base> [google]");
-			System.exit(1);
-		}
-
-		String filename = argv[0];
-		int order = Integer.parseInt(argv[1]);
-		int size = Integer.parseInt(argv[2]);
-		double base = Double.parseDouble(argv[3]);
-
-		Scanner scanner = new Scanner(new BufferedInputStream(System.in));
-		System.out.print("query> ");
-		while (scanner.hasNextLine()) {
-			String line = scanner.nextLine();
-			System.out.println(lm.getProbability(lm.vocab.getIDs(line)));
-			System.out.print("query> ");
-		}
-		scanner.close();
-		return;
-	}
-	*/
+	transient private int [] TMtoLMMapping;
+	transient private double p0; // probability of the empty ngram
+	transient private double lambda0; // interpolation constant between models of order 1 and 0
+	transient private int maxQ;	// max quantized count
 
 	/*
 	 * constructor.
-	 * takes the path to a file holding statistics, the size in bytes
-	 * of the bloom filter, and the base to be used for logarithmic
-	 * quantization.
-	 * after this construction, LM is ready to be queried.
 	 */
-	public BloomFilterLanguageModel(SymbolTable translationModelSymbols,int order, String filename) throws IOException
+	public BloomFilterLanguageModel(SymbolTable translationModelSymbols, int order, String filename) throws IOException, ClassNotFoundException
 	{
 		super(translationModelSymbols, order);
-		/*
-		int numObjects = 2 * numLines(filename);
-		bf = new BloomFilter(size, numObjects);
-		countFuncs = bf.initializeHashFunctions();
-		typesFuncs = bf.initializeHashFunctions();
-		*/
-		//System.err.println("bf created");
-		//this.order = order;
-		//bloomFilterSize = size;
-		//quantizationBase = base;
-		//vocabulary = new BuildinSymbol();
-		//this.translationModelSymbols = translationModelSymbols;
-		TMtoLMMapping = new int[symbolTable.size()];
-		//numTokens = 0;
-		//populateBloomFilter(filename);
-		//System.err.println("bf populated");
-	}
-
-	/*
-	private void populateBloomFilterGoogle(String root)
-	{
-		System.err.println("populating google-style ngram data");
-		System.err.println(root);
-		GoogleNgramManager g = new GoogleNgramManager(root, order);
-		int numObjects = 2 * g.numNgrams();
-		bf = new BloomFilter(filterSize, numObjects);
-		countFuncs = bf.initializeHashFunctions();
-		typesFuncs = bf.initializeHashFunctions();
-		GZIPInputStream gz;
-		while ((gz = g.nextFile()) != null) {
-			populateFromInputStream(gz, g.currentOrder());
-			try {
-			gz.close();
-			} catch (IOException e) {
-				// I hate try/catch blocks. HATE.
-			}
-		}
-		return;
-	}
-	*/
-
-	private int numLines(String filename)
-	{
-		try {
-			Scanner s = new Scanner(new File(filename));
-			int ret = 0;
-			while (s.hasNextLine()) {
-				ret++;
-				String trash = s.nextLine();
-			}
-			s.close();
-			return ret;
-		} catch (FileNotFoundException e) {
-		}
-		return 0;
-	}
-
-	private void populateBloomFilter(String filename)
-	{
-		System.err.println("populating bloom filter from file.");
-		System.err.println(filename);
-		int numObjects = 2 * numLines(filename);
-		bf = new BloomFilter(bloomFilterSize, numObjects);
-		countFuncs = bf.initializeHashFunctions();
-		typesFuncs = bf.initializeHashFunctions();
-		try {
-			FileInputStream in = new FileInputStream(filename);
-			populateFromInputStream(in, 1);
-			in.close();
-		}
-		catch (FileNotFoundException e) {
-			// oh well
-		}
-		catch (IOException e) {
-			// ... ...
-		}
-		return;
-		/*
-
-		numTokens = 0;
-		// get scanner for file
-		try {
-			Scanner scanner = new Scanner(new File(filename), "UTF-8");
-			while (scanner.hasNextLine()) {
-				String line = scanner.nextLine();
-				System.err.println(line);
-				String [] tokens = line.split("\\s+");
-
-				/*
-				 * MODIFYING:
-				 * from here until END MODIFYING is the code
-				 * that actually parses each line. This can
-				 * be modified to handle other file formats,
-				 * but eventually ngram, count, and typesAfter
-				 * should hold the associated values for each
-				 * line.
-				 * Also note that if ngram is no longer of
-				 * type String, other functions must also
-				 * be modified. See the file MODIFYING for
-				 * more details.
-				 *
-				int last = tokens.length - 1;
-				int typesAfter = Integer.parseInt(tokens[last]);
-				int count = Integer.parseInt(tokens[last-1]);
-
-				if (last == 2) // unigram
-					numTokens += count;
-
-				int [] ngram = new int[last-1];
-				for (int i = 0; i < last - 1; i++)
-					ngram[i] = vocab.addWord(tokens[i]);
-
-				// END MODIFYING
-
-				add(ngram, count, countFuncs);
-				if (typesAfter > 1)
-					add(ngram, typesAfter-1, typesFuncs);
-			}
-			scanner.close();
-		} catch (NoSuchElementException e) {
-			System.err.println("nsee");
-			System.exit(1);
-		} catch (FileNotFoundException e) {
-			System.err.println("fnfe");
-			System.exit(1);
-		}
-		//System.err.println("p0: " + p0);
-		//System.err.println("lambda0: " + lambda0);
-		//System.err.println("T(): " + vocabSize);
-		//System.err.println("c(): " + numTokens);
-		*/
-	}
-
-	private void populateFromInputStream(InputStream source, int init_order)
-	{
-		int curr_order = init_order;
-		int num_lines = 0;
-		int [] new_prefix = null;
-		int [] ngram = new int[curr_order];
-		int [] old_ngram = new int[curr_order];
-		String [] remainder;
-		try {
-			Scanner scanner = new Scanner(source, "UTF-8");
-			while (scanner.hasNextLine()) {
-				for (int n : ngram) {
-					String curr = scanner.next();
-					int currInt = vocabulary.addTerminal(curr);
-					n = currInt;
-					TMtoLMMapping[symbolTable.getID(curr)] = currInt;
-				}
-				old_ngram = ngram; // just in case
-				remainder = scanner.nextLine().split("\t");
-				if (!(remainder[0].equals(""))) {
-					curr_order++;
-					// if longer than order, we're done
-					if (curr_order > ngramOrder)
-						break;
-					ngram = new int[curr_order];
-					int currInt = vocabulary.addTerminal(remainder[0]);
-					ngram[curr_order-1] = currInt;
-					TMtoLMMapping[symbolTable.getID(remainder[0])] = currInt;
-					System.arraycopy(old_ngram, 0, ngram, 0, curr_order-1);
-					old_ngram = new int[curr_order];
-					new_prefix = new int[curr_order-1];
-				}
-				long count = Long.parseLong(remainder[1]);
-				if (curr_order == 1) { // unigram
-					numTokens += count;
-				}
-				else {
-					System.arraycopy(ngram, 0, new_prefix, 0, curr_order-1);
-					if (Arrays.equals(prefix, new_prefix))
-						prefix_types_after++;
-					else {
-						add(prefix, prefix_types_after, typesFuncs);
-						prefix = new_prefix;
-						prefix_types_after = 1;
-					}
-				}
-				/*
-				for (int i = 0; i < last; i++) {
-					ngram[i] = vocab.addWord(tokens[i]);
-					if ((last > 1) && (i < last - 1))
-						new_prefix[i] = ngram[i];
-				}
-				*/
-				add(ngram, count, countFuncs);
-				num_lines++;
-				if (num_lines > 1000000) {
-					num_lines = 0;
-					System.err.print(".");
-				}
-			}
-		}
-		catch (IllegalArgumentException e) {
-			// whoops
-		}
-		System.err.println("finished with file");
+		readExternal(new ObjectInputStream(new GZIPInputStream(new FileInputStream(filename))));
+		TMtoLMMapping = createTMtoLMMapping();
 		int vocabSize = vocabulary.size();
-		p0 = 1.0 / (vocabSize + 1); // OOV
-		lambda0 = (double) vocabSize / (vocabSize + numTokens);
-		System.err.println("p0: " + p0);
-		System.err.println("lambda0: " + lambda0);
-		System.err.println("T(): " + vocabSize);
-		System.err.println("c(): " + numTokens);
-		//System.err.println("log(c()): " + logNT);
-		maxQ = quantize(numTokens);
+		p0 = -Math.log(vocabSize + 1);
+		lambda0 = Math.log(vocabSize) - logAdd(Math.log(vocabSize), numTokens);
+		maxQ = quantize((long) Math.exp(numTokens));
 	}
 
-	/*
-	 * this corresponds to Talbot and Osborne's "Tera-scale LMs on the
-	 * cheap", algorithm 1.
-	 */
-	private void add(int [] ngram, long value, long [][] funcs)
+	private BloomFilterLanguageModel(String filename, int order, int size, double base)
 	{
-		if (ngram == null)
-			return;
-		int qValue = quantize(value);
-		for (int i = 1; i <= qValue; i++) {
-			int hash = hashNgram(ngram, 0, ngram.length, i);
-			bf.add(hash, funcs);
-		}
-		return;
+		super(null, order);
+		quantizationBase = base;
+		vocabulary = new Vocabulary();
+		populateBloomFilter(size, filename);
+	}
+
+	private int [] createTMtoLMMapping()
+	{
+		int [] map = new int[symbolTable.size()];
+		for (int i = 0; i < map.length; i++)
+			map[i] = vocabulary.getID(symbolTable.getWord(i));
+		return map;
 	}
 
 	/*
@@ -344,7 +104,7 @@ public class BloomFilterLanguageModel extends DefaultNGramLanguageModel {
 		int [] lm_ngram = new int[ngram.length];
 		for (int i = 0; i < ngram.length; i++)
 			lm_ngram[i] = TMtoLMMapping[ngram[i]];
-		return Math.log(wittenBell(lm_ngram, order));
+		return wittenBell(lm_ngram, order);
 	}
 
 	/*
@@ -373,7 +133,8 @@ public class BloomFilterLanguageModel extends DefaultNGramLanguageModel {
 		double p = p0; // current calculated probability
 		// note that p0 and lambda0 are independent of the given
 		// ngram so they are calculated ahead of time.
-		p *= (1 - lambda0);
+		//p *= (1 - lambda0);
+		p += logAdd(0, -lambda0);
 		/*
 		int [] word = new int[1];
 		word[0] = ngram[ngram.length-1];
@@ -381,9 +142,10 @@ public class BloomFilterLanguageModel extends DefaultNGramLanguageModel {
 		*/
 		int MAX_QCOUNT = getCount(ngram, ngram.length-1, ngram.length, maxQ);
 		System.err.println("word: " + unQuantize(MAX_QCOUNT));
-		double pML = unQuantize(MAX_QCOUNT) / numTokens;
+		double pML = Math.log(unQuantize(MAX_QCOUNT)) - numTokens;
 		System.err.println("pML: " + pML);
-		p += lambda0 * pML;
+		//p += lambda0 * pML;
+		p = logAdd(p, (lambda0 + pML));
 		if (ngram.length == 1) // if it's a unigram, we're done
 			return p;
 		// otherwise we calculate the linear interpolation
@@ -414,15 +176,16 @@ public class BloomFilterLanguageModel extends DefaultNGramLanguageModel {
 			double HC = unQuantize(historyCnt);
 			double HTA = 1 + unQuantize(historyTypesAfter);
 			// interpolation constant
-			double lambda = HTA / (HTA + HC);
-			p *= (1 - lambda);
+			double lambda = Math.log(HTA) - Math.log(HTA + HC);
+			p += logAdd(0, -lambda);
 			int wordCount = getCount(ngram, i+1, end, historyTypesAfter);
 			double WC = unQuantize(wordCount);
 			System.err.println("HTA: " + HTA);
 			System.err.println("HC: " + HC);
 			System.err.println("WC: " + WC);
 			System.err.println("pML(word) " + (WC/HC));
-			p += (lambda * (WC / HC)); // p_ML(w|h)
+			//p += (lambda * (WC / HC)); // p_ML(w|h)
+			p = logAdd(p, lambda + Math.log(WC) - Math.log(HC));
 			MAX_QCOUNT = wordCount;
 		}
 		return p;
@@ -495,8 +258,216 @@ public class BloomFilterLanguageModel extends DefaultNGramLanguageModel {
 	private double logAdd(double x, double y)
 	{
 		if (y <= x)
-			return x + Math.log(1 + Math.exp(y - x));
+			return x + Math.log1p(Math.exp(y - x));
 		else
-			return y + Math.log(1 + Math.exp(x - y));
+			return y + Math.log1p(Math.exp(x - y));
+	}
+
+	public static void main(String [] argv)
+	{
+		if (argv.length < 5) {
+			System.err.println("usage: BloomFilterLanguageModel <statistics file> <order> <size> <quantization base> <output file>");
+			return;
+		}
+		int order = Integer.parseInt(argv[1]);
+		int size = (int) (Integer.parseInt(argv[2]) * Math.pow(2, 20));
+		double base = Double.parseDouble(argv[3]);
+
+		try {
+			(new BloomFilterLanguageModel(argv[0], order, size, base)).writeExternal(new ObjectOutputStream(new GZIPOutputStream(new FileOutputStream(argv[4]))));
+		}
+		catch (FileNotFoundException e) {
+			System.err.println(e.getMessage());
+		}
+		catch (IOException e) {
+			System.err.println(e.getMessage());
+		}
+	}
+
+	private int numLines(String filename)
+	{
+		try {
+			Scanner s = new Scanner(new File(filename));
+			int ret = 0;
+			while (s.hasNextLine()) {
+				ret++;
+				String trash = s.nextLine();
+			}
+			s.close();
+			return ret;
+		} catch (FileNotFoundException e) {
+			// yeah ...
+		}
+		return 0;
+	}
+
+	private void populateBloomFilter(int bloomFilterSize, String filename)
+	{
+		int numObjects = 2 * numLines(filename);
+		bf = new BloomFilter(bloomFilterSize, numObjects);
+		countFuncs = bf.initializeHashFunctions();
+		typesFuncs = bf.initializeHashFunctions();
+		try {
+			FileInputStream in = new FileInputStream(filename);
+			if (filename.endsWith(".gz"))
+				populateFromInputStream(new GZIPInputStream(in));
+			else
+				populateFromInputStream(in);
+			in.close();
+		}
+		catch (FileNotFoundException e) {
+			// oh well
+		}
+		catch (IOException e) {
+			// ... ...
+		}
+		return;
+	}
+
+	private void populateFromInputStream(InputStream source)
+	{
+		numTokens = 0;
+		int num_lines = 0;
+		try {
+			Scanner scanner = new Scanner(source, "UTF-8");
+			while (scanner.hasNextLine()) {
+				/*
+				for (int n : ngram) {
+					String curr = scanner.next();
+					int currInt = vocabulary.addTerminal(curr);
+					n = currInt;
+				}
+				old_ngram = ngram; // just in case
+				remainder = scanner.nextLine().split("\t");
+				if (!(remainder[0].equals(""))) {
+					curr_order++;
+					// if longer than order, we're done
+					if (curr_order > ngramOrder)
+						break;
+					ngram = new int[curr_order];
+					int currInt = vocabulary.addTerminal(remainder[0]);
+					ngram[curr_order-1] = currInt;
+					System.arraycopy(old_ngram, 0, ngram, 0, curr_order-1);
+					old_ngram = new int[curr_order];
+					new_prefix = new int[curr_order-1];
+				}
+				long count = Long.parseLong(remainder[1]);
+				if (curr_order == 1) { // unigram
+					numTokens = logAdd(numTokens, count);
+				}
+				else {
+					System.arraycopy(ngram, 0, new_prefix, 0, curr_order-1);
+					if (Arrays.equals(prefix, new_prefix))
+						prefix_types_after++;
+					else {
+						add(prefix, prefix_types_after, typesFuncs);
+						prefix = new_prefix;
+						prefix_types_after = 1;
+					}
+				}
+				*/
+				/*
+				for (int i = 0; i < last; i++) {
+					ngram[i] = vocab.addWord(tokens[i]);
+					if ((last > 1) && (i < last - 1))
+						new_prefix[i] = ngram[i];
+				}
+				*/
+				String [] toks = scanner.nextLine().split("\s+");
+				int currOrder = toks.length - 1;
+				int currCount = Integer.parseInt(toks[currOrder]);
+				if (currOrder == 1) {
+					if (numTokens == 0)
+						numTokens = Math.log(currCount);
+					else
+						numTokens = logAdd(numTokens, Math.log(currCount));
+				}
+				int [] ngram = new int[currOrder];
+				for (int i = 0; i < currOrder; i++)
+					ngram[i] = vocabulary.addWord(toks[i]);
+
+				add(ngram, currCount, countFuncs);
+				num_lines++;
+				if (num_lines > 1000000) {
+					num_lines = 0;
+					System.err.print(".");
+				}
+			}
+		}
+		catch (IllegalArgumentException e) {
+			// whoops
+		}
+		/*
+		System.err.println("finished with file");
+		//int vocabSize = vocabulary.size();
+		//p0 = 1.0 / (vocabSize + 1); // OOV
+		//p0 = -Math.log(vocabSize + 1);
+		//lambda0 = (double) vocabSize / (vocabSize + Math.exp(numTokens));
+		//lambda0 = Math.log(vocabSize) - logAdd(Math.log(vocabSize), numTokens);
+		System.err.println("p0: " + p0);
+		System.err.println("lambda0: " + lambda0);
+		System.err.println("T(): " + vocabSize);
+		System.err.println("c(): " + numTokens);
+		//System.err.println("log(c()): " + logNT);
+		maxQ = quantize((long) Math.exp(numTokens));
+		*/
+	}
+
+	/*
+	 * this corresponds to Talbot and Osborne's "Tera-scale LMs on the
+	 * cheap", algorithm 1.
+	 */
+	private void add(int [] ngram, long value, long [][] funcs)
+	{
+		if (ngram == null)
+			return;
+		int qValue = quantize(value);
+		for (int i = 1; i <= qValue; i++) {
+			int hash = hashNgram(ngram, 0, ngram.length, i);
+			bf.add(hash, funcs);
+		}
+		return;
+	}
+
+	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException
+	{
+		vocabulary = new Vocabulary();
+		for (int i = 0; i < in.readInt(); i++)
+			vocabulary.addWord(in.readLine());
+		numTokens = in.readDouble();
+		countFuncs = new long[in.readInt()][2];
+		for (int i = 0; i < countFuncs.length; i++) {
+			countFuncs[i][0] = in.readLong();
+			countFuncs[i][1] = in.readLong();
+		}
+		typesFuncs = new long[in.readInt()][2];
+		for (int i = 0; i < typesFuncs.length; i++) {
+			typesFuncs[i][0] = in.readLong();
+			typesFuncs[i][1] = in.readLong();
+		}
+		quantizationBase = in.readDouble();
+		bf.readExternal(in);
+	}
+
+	public void writeExternal(ObjectOutput out) throws IOException
+	{
+		out.writeInt(vocabulary.size());
+		for (int i = 0; i < vocabulary.size(); i++) {
+			out.writeBytes(vocabulary.getWord(i));
+			out.writeChar(0xa); // newline
+		}
+		out.writeDouble(numTokens);
+		out.writeInt(countFuncs.length);
+		for (int i = 0; i < countFuncs.length; i++) {
+			out.writeLong(countFuncs[i][0]);
+			out.writeLong(countFuncs[i][1]);
+		}
+		out.writeInt(typesFuncs.length);
+		for (int i = 0; i < typesFuncs.length; i++) {
+			out.writeLong(typesFuncs[i][0]);
+			out.writeLong(typesFuncs[i][1]);
+		}
+		out.writeDouble(quantizationBase);
+		bf.writeExternal(out);
 	}
 }

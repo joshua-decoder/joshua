@@ -19,15 +19,20 @@ package joshua.decoder.ff.lm.bloomfilter_lm;
 import java.util.Random;
 import java.util.BitSet;
 import java.math.BigInteger;
+import java.io.Externalizable;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.io.IOException;
 
-public class BloomFilter {
+public class BloomFilter implements Externalizable {
 	private BitSet bitSet;
 	private int expectedNumberOfObjects;
 	//private BigInteger bigPrime;
 	//private BigInteger filterSize;
 	private long bigPrime;
 	private int filterSize;
-	private Random RANDOM = new Random();
+	transient private Random RANDOM = new Random();
+
 
 	public BloomFilter(int filterSize, int expectedNumberOfObjects) {
 		bitSet = new BitSet(filterSize);
@@ -127,5 +132,25 @@ public class BloomFilter {
 	private BigInteger convertIntToBigInteger(int n)
 	{
 		return new BigInteger(new Integer(n).toString());
+	}
+
+	/*
+	 * functions for interface externalizable
+	 */
+
+	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException
+	{
+		expectedNumberOfObjects = in.readInt();
+		filterSize = in.readInt();
+		bigPrime = in.readLong();
+		bitSet = (BitSet) in.readObject();
+	}
+
+	public void writeExternal(ObjectOutput out) throws IOException
+	{
+		out.writeInt(expectedNumberOfObjects);
+		out.writeInt(filterSize);
+		out.writeLong(bigPrime);
+		out.writeObject(bitSet);
 	}
 }
