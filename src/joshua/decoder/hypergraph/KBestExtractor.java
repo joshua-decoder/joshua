@@ -201,10 +201,18 @@ public class KBestExtractor {
 			tem[t] = tem[t].trim();
 			if(extract_nbest_tree==true && ( tem[t].startsWith("(") || tem[t].endsWith(")"))){//tree tag
 				if(tem[t].startsWith("(")==true){
-					String tag = this.p_symbolTable.getWord(new Integer(tem[t].substring(1)));
-					//TODO: omar, extract the symbol id of the non-terminal by removing _i_j
-					str_hyp.append("(");
-					str_hyp.append(tag);
+					if (include_align == true) {
+						// we must account for the {i-j} substring
+						int ijStrIndex = tem[t].indexOf('{');
+						String tag = this.p_symbolTable.getWord(new Integer(tem[t].substring(1,ijStrIndex)));
+						str_hyp.append("(");
+						str_hyp.append(tag);
+						str_hyp.append(tem[t].substring(ijStrIndex)); // append {i-j}
+					} else {
+						String tag = this.p_symbolTable.getWord(new Integer(tem[t].substring(1)));
+						str_hyp.append("(");
+						str_hyp.append(tag);
+					}
 				}else{
 					//note: it may have more than two ")", e.g., "3499))"
 					int first_bracket_pos = tem[t].indexOf(")");//TODO: assume the tag/terminal does not have ")"
@@ -472,8 +480,8 @@ public class KBestExtractor {
 					res.append("(");
 					res.append(root_id);
 					if (include_align == true) {
-						res.append(" ["); res.append(p_parent_node.i); res.append("-"); res.append(p_parent_node.i); res.append("]");
-						//TODO: omar, check configuration here
+						// append "{i-j}"
+						res.append("{"); res.append(p_parent_node.i); res.append("-"); res.append(p_parent_node.j); res.append("}");
 					}
 					res.append(" ");
 				}
@@ -489,8 +497,8 @@ public class KBestExtractor {
 					res.append("(");
 					res.append(rl.lhs);
 					if (include_align == true) {
-						res.append(" ["); res.append(p_parent_node.i); res.append("-"); res.append(p_parent_node.i); res.append("]");
-						//TODO: omar, check configuration here
+						// append "{i-j}"
+						res.append("{"); res.append(p_parent_node.i); res.append("-"); res.append(p_parent_node.j); res.append("}");
 					}
 					res.append(" ");
 				}
