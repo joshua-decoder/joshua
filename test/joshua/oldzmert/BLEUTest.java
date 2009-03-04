@@ -14,11 +14,14 @@
  * along with this library; if not, write to the Free Software Foundation,
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package joshua.ZMERT;
+package joshua.oldzmert;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.Scanner;
+
+import joshua.oldzmert.BLEU;
+import joshua.oldzmert.EvaluationMetric;
 
 import org.testng.Assert;
 import org.testng.annotations.Parameters;

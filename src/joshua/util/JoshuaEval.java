@@ -17,7 +17,8 @@
  */
 
 package joshua.util;
-import joshua.ZMERT.*;
+import joshua.oldzmert.*;
+
 import java.io.*;
 import java.text.DecimalFormat;
 
