@@ -63,6 +63,12 @@ public class Rule {
 	 */
 	protected float statelesscost = 0; //TODO: this is set in estimate_rule(); we should use an abstract class to enforce this behavior
 
+	/** 
+	 * estimate_cost depends on rule itself: statelesscost + transition_cost(non-stateless/non-contexual* models), 
+	 * it is only used in TMGrammar pruning and chart.prepare_rulebin, shownup in
+	 * chart.expand_unary but not really used
+	 */
+	float est_cost = 0;//TODO: get rid of this
 		
 //	TODO Ideally, we shouldn't have to have dummy rule IDs and dummy owners. How can this need be eliminated?
 	private static final int DUMMY_RULE_ID = 1;
@@ -229,22 +235,6 @@ public class Rule {
 		return this.cachedToString;
 	}
 	
-	public String toString(SymbolTable p_symbolTable) {
-		if (null == this.cachedToString) {
-			StringBuffer sb = new StringBuffer("[");
-			sb.append(p_symbolTable.getWord(this.lhs));
-			sb.append("] ||| ");
-			sb.append(p_symbolTable.getWords(this.french));
-			sb.append(" ||| ");
-			sb.append(p_symbolTable.getWords(this.english));
-			sb.append(" |||");
-			for (int i = 0; i < this.feat_scores.length; i++) {
-				sb.append(String.format(" %.4f", this.feat_scores[i]));
-			}
-			this.cachedToString = sb.toString();
-		}
-		return this.cachedToString;
-	}
 	
 	//print the rule in terms of Ingeters
 	public String toString() {
@@ -264,6 +254,22 @@ public class Rule {
 		return this.cachedToString;
 	}
 	
+	public String toString(SymbolTable p_symbolTable) {
+		if (null == this.cachedToString) {
+			StringBuffer sb = new StringBuffer("[");
+			sb.append(p_symbolTable.getWord(this.lhs));
+			sb.append("] ||| ");
+			sb.append(p_symbolTable.getWords(this.french));
+			sb.append(" ||| ");
+			sb.append(p_symbolTable.getWords(this.english));
+			sb.append(" |||");
+			for (int i = 0; i < this.feat_scores.length; i++) {
+				sb.append(String.format(" %.4f", this.feat_scores[i]));
+			}
+			this.cachedToString = sb.toString();
+		}
+		return this.cachedToString;
+	}
 	
     public String toStringWithoutFeatScores(SymbolTable p_symbolTable){
             StringBuffer res = new StringBuffer();

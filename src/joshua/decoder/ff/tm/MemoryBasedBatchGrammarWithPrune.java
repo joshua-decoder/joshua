@@ -26,6 +26,7 @@ import joshua.util.FileUtility;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.util.Comparator;
 import java.util.HashMap ;
 import java.util.PriorityQueue;
 import java.util.ArrayList;
@@ -134,15 +135,103 @@ public class MemoryBasedBatchGrammarWithPrune extends BatchGrammar {
 	}
 	
 	
+	
+//	TODO: this constructor should be moved to highest level of the Grammar hiearchy
+	public static Rule createRule(SymbolTable p_symbolTable, ArrayList<FeatureFunction> p_l_models, String nonterminalRegexp_, String nonterminalReplaceRegexp_, int r_id, String line, int owner_in) {
+		Rule res = new Rule(); 
+		res.rule_id = r_id;
+		res.owner   = owner_in;
+		res.statelesscost = 0;
+		
+		//rule format: X ||| Foreign side ||| English side ||| feature scores
+		String[] fds = line.split("\\s+\\|{3}\\s+");
+		if (fds.length != 4) {
+			Support.write_log_line("rule line does not have four fds; " + line, Support.ERROR);
+		}
+		
+		//=== lhs
+		res.lhs = p_symbolTable.addNonterminal(BatchGrammar.replace_french_non_terminal(nonterminalReplaceRegexp_, fds[0]));
+		
+		int arity = 0;
+		String[] french_tem = fds[1].split("\\s+");
+		res.french = new int[french_tem.length];
+		for (int i = 0; i < french_tem.length; i++) {
+			if (BatchGrammar.is_non_terminal(nonterminalRegexp_, french_tem[i])) {
+				arity++;
+				res.french[i] = p_symbolTable.addNonterminal(french_tem[i]);//when storing hyper-graph, we need this
+			} else {
+				res.french[i] = p_symbolTable.addTerminal(french_tem[i]);
+			}
+		}
+		res.arity = arity;
+		
+		//english side
+		String[] english_tem = fds[2].split("\\s+");
+		res.english = new int[english_tem.length];
+		for (int i = 0; i < english_tem.length; i++) {
+			if (BatchGrammar.is_non_terminal(nonterminalRegexp_, english_tem[i])) {
+				res.english[i] = p_symbolTable.addNonterminal(english_tem[i]);
+			} else {
+				res.english[i] = p_symbolTable.addTerminal(english_tem[i]);
+			}
+		}
+		
+		String[] t_scores = fds[3].split("\\s+");
+		res.feat_scores = new float[t_scores.length];
+		int i = 0;
+		for (String score : t_scores) {
+			res.feat_scores[i++] = Float.parseFloat(score);
+		}
+		res.lattice_cost = 0;
+		//tem_estcost += estimate_rule();//estimate lower-bound, and set statelesscost, this must be called
+		
+		estimateRuleCost(res, p_l_models);//estimate lower-bound, and set statelesscost, this must be called
+		return res;
+
+	}
+
+	
+	protected double getEstRuleCost(Rule rl){
+		if(rl.est_cost <= Double.NEGATIVE_INFINITY){
+			System.out.println("The est cost is neg infinity; must be bad rule; rule is:\n" +rl.toString());
+		}
+		return rl.est_cost;
+	}
+	
+		
+	/** 
+	 * set the stateless cost, and set a lower-bound
+	 * estimate inside the rule returns full estimate.
+	 */
+	protected static float estimateRuleCost(Rule rl, ArrayList<FeatureFunction> p_l_models) {
+		if (null == p_l_models) {
+			return 0;
+		}
+		
+		float estcost      = 0.0f;
+		rl.statelesscost = 0.0f;
+		
+		for (FeatureFunction ff : p_l_models) {
+			double mdcost = ff.estimate(rl) * ff.getWeight();
+			estcost += mdcost;
+			if (! ff.isStateful()) {
+				rl.statelesscost += mdcost;
+			}
+		}
+		rl.est_cost = estcost;
+		return estcost;
+	}
+
+	
 	private Rule add_rule(String line, int owner) {
 		this.num_rule_read++;
 		num_rule_read++;
 		rule_id_count++;
 		//######1: parse the line
 		//######2: create a rule
-		//MemoryBasedRule p_rule = new MemoryBasedRule(this,rule_id_count, line, owner);	
-		MemoryBasedRule p_rule = new  MemoryBasedRule(p_symbolTable, p_l_models, nonterminalRegexp, nonterminalReplaceRegexp,rule_id_count, line, owner);
-		tem_estcost += p_rule.getEstCost();
+		//Rule p_rule = new Rule(this,rule_id_count, line, owner);	
+		Rule p_rule = createRule(p_symbolTable, p_l_models, nonterminalRegexp, nonterminalReplaceRegexp,rule_id_count, line, owner);
+		tem_estcost += getEstRuleCost(p_rule);
 		
 		//######### identify the position, and insert the trinodes if necessary
 		MemoryBasedTrieGrammar pos = root;
@@ -172,7 +261,7 @@ public class MemoryBasedBatchGrammarWithPrune extends BatchGrammar {
 			pos.rule_bin.arity  = p_rule.arity;
 			num_rule_bin++;
 		}
-		if (p_rule.getEstCost() > pos.rule_bin.cutoff) {
+		if (getEstRuleCost(p_rule) > pos.rule_bin.cutoff) {
 			num_rule_pruned++;
 		} else {
 			pos.rule_bin.add_rule(p_rule);
@@ -263,13 +352,27 @@ public class MemoryBasedBatchGrammarWithPrune extends BatchGrammar {
 */
 	}
 	
+	protected static Comparator<Rule> NegtiveCostComparator	= new Comparator<Rule>() {
+		public int compare(Rule rule1, Rule rule2) {
+			float cost1 = rule1.est_cost;
+			float cost2 = rule2.est_cost;
+			if (cost1 > cost2) {
+				return -1;
+			} else if (cost1 == cost2) {
+				return 0;
+			} else {
+				return 1;
+			}
+		}
+	};
 	
 	/** contain all rules with the same french side (and thus same arity) */
 	public class MemoryBasedRuleBin	extends RuleBin {
-		private PriorityQueue<MemoryBasedRule> heapRules   = null;//sort the rules based on the stateless cost
+		private PriorityQueue<Rule> heapRules   = null;//sort the rules based on the stateless cost
 		private double                     cutoff      = IMPOSSIBLE_COST;
 		private boolean                    sorted      = false;
 		private ArrayList<Rule>            sortedRules = new ArrayList<Rule>();
+	
 		
 		
 		/**
@@ -306,9 +409,9 @@ public class MemoryBasedBatchGrammarWithPrune extends BatchGrammar {
 		}
 		
 		
-		private void add_rule(MemoryBasedRule rule) {
+		private void add_rule(Rule rule) {
 			if (null == this.heapRules) {
-				this.heapRules = new PriorityQueue<MemoryBasedRule>(1, MemoryBasedRule.NegtiveCostComparator);//TODO: initial capacity?
+				this.heapRules = new PriorityQueue<Rule>(1, MemoryBasedBatchGrammarWithPrune.NegtiveCostComparator);//TODO: initial capacity?
 				this.arity = rule.arity;
 			}
 			if (rule.arity != this.arity) {
@@ -317,8 +420,8 @@ public class MemoryBasedBatchGrammarWithPrune extends BatchGrammar {
 				return;
 			}
 			this.heapRules.add(rule);	//TODO: what is offer()
-			if (rule.getEstCost() + JoshuaConfiguration.rule_relative_threshold < this.cutoff) {
-				this.cutoff = rule.getEstCost() + JoshuaConfiguration.rule_relative_threshold;
+			if (getEstRuleCost(rule) + JoshuaConfiguration.rule_relative_threshold < this.cutoff) {
+				this.cutoff = getEstRuleCost(rule) + JoshuaConfiguration.rule_relative_threshold;
 			}
 			rule.french = this.french; //TODO: this will release the memory in each rule, but still have a pointer
 		}
@@ -327,19 +430,20 @@ public class MemoryBasedBatchGrammarWithPrune extends BatchGrammar {
 		private int run_pruning() {
 			int n_pruned = 0;
 			
-			while (this.heapRules.size() > JoshuaConfiguration.max_n_rules || this.heapRules.peek().getEstCost() >= this.cutoff) {
+			while (this.heapRules.size() > JoshuaConfiguration.max_n_rules || getEstRuleCost(this.heapRules.peek()) >= this.cutoff) {
 				n_pruned++;
 				this.heapRules.poll();
 				if(this.heapRules.peek()==null){System.out.println("the stack is empty, which is strange; cutoff:" + this.cutoff);}
 			}
 			if (this.heapRules.size() == JoshuaConfiguration.max_n_rules) {
 				this.cutoff =
-					(this.cutoff < this.heapRules.peek().getEstCost())
+					(this.cutoff < getEstRuleCost(this.heapRules.peek()))
 					? this.cutoff
-					: this.heapRules.peek().getEstCost() + EPSILON;//TODO
+					: getEstRuleCost(this.heapRules.peek()) + EPSILON;//TODO
 			}
 			return n_pruned++;
 		}
+		
 		
 /* TODO Possibly remove - this method is never called.		
 		private void print_info(int level) {
