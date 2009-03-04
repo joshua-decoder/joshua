@@ -79,7 +79,7 @@ public class ExtractRules {
 			
 			Option<Integer> cacheSize = commandLine.addIntegerOption("cache","CACHE",1000, "Max number of patterns for which to cache hierarchical phrases");
 
-			Option<Integer> trainingSize = commandLine.addIntegerOption("trainingSize","NUMBER_OF_TRAINING_SENTENCES",1000, "Expected number of training sentences");
+			//Option<Integer> trainingSize = commandLine.addIntegerOption("trainingSize","NUMBER_OF_TRAINING_SENTENCES", "Number of training sentences");
 
 			
 //			Option<String> target_given_source_counts = commandLine.addStringOption("target-given-source-counts","FILENAME","file containing co-occurence counts of source and target word pairs, sorted by source words");
@@ -138,6 +138,11 @@ public class ExtractRules {
 			if (logger.isLoggable(Level.INFO)) logger.info("Constructing target language suffix array.");
 			SuffixArray targetSuffixArray = SuffixArrayFactory.createSuffixArray(targetCorpusArray);
 
+			int trainingSize = sourceCorpusArray.getNumSentences();
+			if (trainingSize != targetCorpusArray.getNumSentences()) {
+				throw new RuntimeException("Source and target corpora have different number of sentences. This is bad.");
+			}
+			
 			if (logger.isLoggable(Level.INFO)) logger.info("Reading alignment data.");
 			String alignmentFileName = commandLine.getValue(alignment);
 			Alignments alignments;
@@ -146,7 +151,7 @@ public class ExtractRules {
 				alignments = SuffixArrayFactory.createAlignmentArray(alignmentFileName, sourceSuffixArray, targetSuffixArray);
 			} else {
 				if (logger.isLoggable(Level.INFO)) logger.info("Using AlignmentGrids");
-				alignments = new AlignmentGrids(new Scanner(new File(alignmentFileName)), sourceCorpusArray, targetCorpusArray, commandLine.getValue(trainingSize));
+				alignments = new AlignmentGrids(new Scanner(new File(alignmentFileName)), sourceCorpusArray, targetCorpusArray, trainingSize);
 			}
 			
 			// Set up the source text for reading
