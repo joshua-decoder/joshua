@@ -1,4 +1,4 @@
-package joshua.ZMERT;
+package joshua.zmert;
 import java.math.*;
 import java.util.*;
 import java.io.*;

@@ -16,7 +16,7 @@
  * MA 02111-1307 USA
  */
 
-package joshua.zmert;
+package joshua.ZMERT;
 import java.util.*;
 
 public class BLEU extends EvaluationMetric
@@ -53,7 +53,7 @@ public class BLEU extends EvaluationMetric
     } else if (methodStr.equals("shortest")) {
       effLengthMethod = EffectiveLengthMethod.SHORTEST;
 //    } else if (methodStr.equals("average")) {
-//      effLengthMethod = 3;
+//      effLengthMethod = EffectiveLengthMethod.AVERAGE;
     } else {
       System.out.println("Unknown effective length method string " + methodStr + ".");
 //      System.out.println("Should be one of closest, shortest, or average.");
@@ -89,7 +89,7 @@ public class BLEU extends EvaluationMetric
   }
 
   @SuppressWarnings("unchecked")
-protected void set_maxNgramCounts()
+  protected void set_maxNgramCounts()
   {
     maxNgramCounts = new HashMap[numSentences];
     String gram = "";
@@ -382,7 +382,7 @@ else { // average
   }
 
   @SuppressWarnings("unchecked")
-public HashMap<String,Integer>[] getNgramCountsArray(String[] words)
+  public HashMap<String,Integer>[] getNgramCountsArray(String[] words)
   {
     HashMap<String,Integer>[] ngramCountsArray = new HashMap[1+maxGramLength];
     ngramCountsArray[0] = null;
@@ -517,11 +517,11 @@ public HashMap<String,Integer>[] getNgramCountsArray(String[] words)
   }
 
   enum EffectiveLengthMethod {
-	  CLOSEST,
-	  SHORTEST,
-	  AVERAGE
+    CLOSEST,
+    SHORTEST,
+    AVERAGE
   }
-  
+
 /*
   // The following two functions are nice to have, I suppose, but they're never
   // used, so they're commented out at the moment for clarity's sake
