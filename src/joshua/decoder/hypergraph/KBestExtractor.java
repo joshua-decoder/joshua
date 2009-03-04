@@ -106,6 +106,13 @@ public class KBestExtractor {
 		//Support.write_log_line("time_kbest_extract: "+ Chart.g_time_kbest_extract, Support.INFO);
 	}
 	
+//	the only difference from the above function is: we store the nbest into an arraylist, instead of a file
+	public void lazy_k_best_extract_hg(HyperGraph hg, ArrayList<FeatureFunction> l_models, int global_n, boolean extract_unique_nbest, int sent_id, 
+			ArrayList<String> out, boolean extract_nbest_tree,  boolean add_combined_score){
+		lazy_k_best_extract_hg( hg, l_models,  global_n,  extract_unique_nbest,  sent_id, out, extract_nbest_tree, false,  add_combined_score);//include_align=false
+	}
+	
+	
 	//the only difference from the above function is: we store the nbest into an arraylist, instead of a file
 	public void lazy_k_best_extract_hg(HyperGraph hg, ArrayList<FeatureFunction> l_models, int global_n, boolean extract_unique_nbest, int sent_id, 
 			ArrayList<String> out, boolean extract_nbest_tree, boolean include_align, boolean add_combined_score){
