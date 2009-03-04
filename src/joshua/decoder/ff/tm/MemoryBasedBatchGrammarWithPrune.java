@@ -135,8 +135,6 @@ public class MemoryBasedBatchGrammarWithPrune extends BatchGrammar {
 	}
 	
 	
-	
-//	TODO: this constructor should be moved to highest level of the Grammar hiearchy
 	public static Rule createRule(SymbolTable p_symbolTable, ArrayList<FeatureFunction> p_l_models, String nonterminalRegexp_, String nonterminalReplaceRegexp_, int r_id, String line, int owner_in) {
 		Rule res = new Rule(); 
 		res.rule_id = r_id;
@@ -288,7 +286,7 @@ public class MemoryBasedBatchGrammarWithPrune extends BatchGrammar {
 			root.print_info(Support.DEBUG);*/
 	}
 	
-	
+//=================================	MemoryBasedTrieGrammar inner class ===============================
 	public class MemoryBasedTrieGrammar implements TrieGrammar {
 		private MemoryBasedRuleBin rule_bin     = null;
 		private HashMap<Integer,MemoryBasedTrieGrammar> tbl_children = null;
@@ -351,21 +349,13 @@ public class MemoryBasedBatchGrammarWithPrune extends BatchGrammar {
 		}
 */
 	}
+//	=================================	end of MemoryBasedTrieGrammar inner class ===============================
 	
-	protected static Comparator<Rule> NegtiveCostComparator	= new Comparator<Rule>() {
-		public int compare(Rule rule1, Rule rule2) {
-			float cost1 = rule1.est_cost;
-			float cost2 = rule2.est_cost;
-			if (cost1 > cost2) {
-				return -1;
-			} else if (cost1 == cost2) {
-				return 0;
-			} else {
-				return 1;
-			}
-		}
-	};
 	
+	
+	
+	
+//	=================================	MemoryBasedRuleBin inner class ===============================
 	/** contain all rules with the same french side (and thus same arity) */
 	public class MemoryBasedRuleBin	extends RuleBin {
 		private PriorityQueue<Rule> heapRules   = null;//sort the rules based on the stateless cost
@@ -457,5 +447,23 @@ public class MemoryBasedBatchGrammarWithPrune extends BatchGrammar {
 		}
 */		
 	}
+	//=================================	end of MemoryBasedRuleBin inner class ===============================
+		
+		
+		
+	protected static Comparator<Rule> NegtiveCostComparator	= new Comparator<Rule>() {
+		public int compare(Rule rule1, Rule rule2) {
+			float cost1 = rule1.est_cost;
+			float cost2 = rule2.est_cost;
+			if (cost1 > cost2) {
+				return -1;
+			} else if (cost1 == cost2) {
+				return 0;
+			} else {
+				return 1;
+			}
+		}
+	};
+	
 	
 }

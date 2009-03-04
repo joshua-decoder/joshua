@@ -55,13 +55,13 @@ public abstract class BatchGrammar implements GrammarFactory, Grammar {
 	protected String nonterminalReplaceRegexp = "[\\[\\]\\,0-9]+";
 	
 	protected int spanLimit = 10;
-	
+	SymbolTable p_symbolTable = null;
+
 	@SuppressWarnings("unused")
 	private static final Logger logger = Logger.getLogger(BatchGrammar.class.getName());
 	
-	SymbolTable p_symbolTable = null;
-	
-	public BatchGrammar(SymbolTable psymbolTable, String grammar_file, ArrayList<FeatureFunction> l_models, final String default_owner,	final int span_limit, final String nonterminal_regexp,	final String nonterminal_replace_regexp) {	
+	public BatchGrammar(SymbolTable psymbolTable, String grammar_file, ArrayList<FeatureFunction> l_models, String default_owner,	
+			int span_limit, String nonterminal_regexp,	String nonterminal_replace_regexp) {	
 		this.p_symbolTable = psymbolTable;
 		this.p_l_models               = l_models;
 		this.defaultOwner             = p_symbolTable.addTerminal(default_owner);
@@ -71,16 +71,14 @@ public abstract class BatchGrammar implements GrammarFactory, Grammar {
 	}
 	
 	
-	public abstract TrieGrammar getTrieRoot();
-	
+	public abstract TrieGrammar getTrieRoot();	
 	
 	public Grammar getGrammarForSentence(Phrase sentence) {
 		return this;
 	}
 	
-	
 	/** if the span covered by the chart bin is greater than the limit, then return false */
-	public boolean hasRuleForSpan(final int startIndex,	final int endIndex,	final int pathLength) {
+	public boolean hasRuleForSpan(int startIndex,	int endIndex,	int pathLength) {
 		if (this.spanLimit == -1) { // mono-glue grammar
 			return (startIndex == 0);
 		} else {
@@ -89,20 +87,24 @@ public abstract class BatchGrammar implements GrammarFactory, Grammar {
 	}
 	
 	
-	
-	public static final String replace_french_non_terminal(String nonterminalReplaceRegexp_, String symbol) {
+	protected static final String replace_french_non_terminal(String nonterminalReplaceRegexp_, String symbol) {
 		return symbol.replaceAll(nonterminalReplaceRegexp_, "");//remove [, ], and numbers
 	}
 	
+	
 	//TODO: we assume all the Chinese training text is lowercased, and all the non-terminal symbols are in [A-Z]+
-	public  static final boolean is_non_terminal(String nonterminalRegexp_, final String symbol) {
+	protected  static final boolean is_non_terminal(String nonterminalRegexp_, String symbol) {
 		return symbol.matches(nonterminalRegexp_);
 	}
 	
 	
+	
+	
+	//======================================== RuleBin class ============
 	//contain all rules with the same french side (and thus same arity)
 	public abstract class RuleBin implements RuleCollection {
 		protected int arity = 0;//number of non-terminals
 		protected int[] french;
 	}
+	//======================================== end of RuleBin class ============
 }
