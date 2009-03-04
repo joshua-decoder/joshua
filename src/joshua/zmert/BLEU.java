@@ -16,7 +16,7 @@
  * MA 02111-1307 USA
  */
 
-package joshua.ZMERT;
+package joshua.zmert;
 import java.util.*;
 
 public class BLEU extends EvaluationMetric
