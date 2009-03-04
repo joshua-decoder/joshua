@@ -88,10 +88,10 @@ public class JoshuaConfiguration {
 	public static double  rule_relative_threshold = 10.0;
 	
 	//nbest config
-	public static boolean use_unique_nbest  = false;
-	public static boolean use_tree_nbest    = false;
-	public static boolean include_align_index    = false;
-	public static boolean add_combined_cost = true; //in the nbest file, compute the final socre
+	public static boolean use_unique_nbest    = false;
+	public static boolean use_tree_nbest      = false;
+	public static boolean include_align_index = false;
+	public static boolean add_combined_cost   = true; //in the nbest file, compute the final socre
 	public static int topN = 500;
 	
 	//remote lm server
@@ -303,7 +303,7 @@ public class JoshuaConfiguration {
 					include_align_index = new Boolean(fds[1]);
 					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("include_align_index: %s", include_align_index));
 					
-				}else if (0 == fds[0].compareTo("top_n")) {
+				} else if (0 == fds[0].compareTo("top_n")) {
 					topN = new Integer(fds[1]);
 					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("topN: %s", topN));
 					

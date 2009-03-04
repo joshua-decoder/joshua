@@ -223,7 +223,7 @@ public class DecoderThread extends Thread {
 			//HyperGraph oracle = extractor.getOracle(p_hyper_graph, 3, "scientists for the related early");
 			logger.info("... Done Extracting...getting n-best...");
 			kbestExtractor.lazy_k_best_extract_hg(
-				oracle, models, topN, JoshuaConfiguration.use_unique_nbest, sentenceID, out, JoshuaConfiguration.use_tree_nbest, JoshuaConfiguration.add_combined_cost);
+				oracle, models, topN, JoshuaConfiguration.use_unique_nbest, sentenceID, out, JoshuaConfiguration.use_tree_nbest, JoshuaConfiguration.include_align_index, JoshuaConfiguration.add_combined_cost);
 			logger.info("... Done getting n-best");
 			//out.flush();
 			//out.close();
@@ -232,7 +232,7 @@ public class DecoderThread extends Thread {
 			
 			//kbest extraction
 			kbestExtractor.lazy_k_best_extract_hg(
-				p_hyper_graph, models, topN, JoshuaConfiguration.use_unique_nbest, sentenceID, out, JoshuaConfiguration.use_tree_nbest, JoshuaConfiguration.add_combined_cost);
+				p_hyper_graph, models, topN, JoshuaConfiguration.use_unique_nbest, sentenceID, out, JoshuaConfiguration.use_tree_nbest, JoshuaConfiguration.include_align_index, JoshuaConfiguration.add_combined_cost);
 			if (logger.isLoggable(Level.FINER))
 				logger.finer("after kbest, time: "
 					+ (System.currentTimeMillis() - start) / 1000);
