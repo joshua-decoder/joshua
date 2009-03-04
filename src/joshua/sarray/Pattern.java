@@ -17,8 +17,8 @@
  */
 package joshua.sarray;
 
+import joshua.corpus.SymbolTable;
 import joshua.util.sentence.Phrase;
-import joshua.util.sentence.Vocabulary;
 
 
 /**
@@ -51,7 +51,7 @@ public class Pattern extends BasicPhrase {
 	 * 
 	 * @param vocab Vocabulary capable of mapping between symbols and integers.
 	 */
-	public Pattern(Vocabulary vocab, int... words) {
+	public Pattern(SymbolTable vocab, int... words) {
 		super(words, vocab);
 		
 		this.arity = calculateArity(this.words);

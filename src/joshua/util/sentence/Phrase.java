@@ -20,6 +20,7 @@ package joshua.util.sentence;
 import java.util.ArrayList;
 import java.util.List;
 
+import joshua.corpus.SymbolTable;
 import joshua.util.sentence.Vocabulary;
 
 
@@ -36,7 +37,7 @@ public interface Phrase extends Comparable<Phrase> {
 	 * 
 	 * @return the vocabulary that the words in this phrase are drawn from.
 	 */
-	public Vocabulary getVocab();
+	public SymbolTable getVocab();
 	
 	
 	/**

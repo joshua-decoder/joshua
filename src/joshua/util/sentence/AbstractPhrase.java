@@ -19,6 +19,8 @@ package joshua.util.sentence;
 
 import java.lang.StringBuffer;
 
+import joshua.corpus.SymbolTable;
+
 public abstract class AbstractPhrase implements Phrase {
 
 	//===============================================================
@@ -101,7 +103,7 @@ public abstract class AbstractPhrase implements Phrase {
 	 * @return a space-delimited string of the words in the phrase.
 	 */
 	public String toString() {
-		Vocabulary vocab = getVocab();
+		SymbolTable vocab = getVocab();
 		StringBuffer buf = new StringBuffer();
         for (int i=0; i<size(); i++) {
 			String word = vocab.getWord(getWordID(i));

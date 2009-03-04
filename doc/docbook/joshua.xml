@@ -23,6 +23,8 @@
 
 <book lang="en">
 
+  <!-- Include files for each chapter and appendix. -->
+  
   &front-matter;
   &introduction; 
   &quick-start;

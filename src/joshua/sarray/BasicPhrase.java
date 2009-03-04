@@ -17,6 +17,7 @@
  */
 package joshua.sarray;
 
+import joshua.corpus.SymbolTable;
 import joshua.util.sentence.AbstractPhrase;
 import joshua.util.sentence.Phrase;
 import joshua.util.sentence.Vocabulary;
@@ -43,7 +44,7 @@ public class BasicPhrase extends AbstractPhrase {
 // Member variables
 //===============================================================
 
-	protected Vocabulary vocab;
+	protected SymbolTable vocab;
 	protected int[] words;
  
  
@@ -54,12 +55,12 @@ public class BasicPhrase extends AbstractPhrase {
 	/**
 	 * Constructor takes in an int[] representing the words. 
   	 */
-	public BasicPhrase(int[] words, Vocabulary vocab) {
+	public BasicPhrase(int[] words, SymbolTable vocab) {
 		this.vocab = vocab;
 		this.words = words;
 	}
 
-	public BasicPhrase(Vocabulary vocab, int...words) {
+	public BasicPhrase(SymbolTable vocab, int...words) {
 		this.vocab = vocab;
 		this.words = words;
 	}
@@ -100,7 +101,7 @@ public class BasicPhrase extends AbstractPhrase {
 	 * @return the vocabulary that the words in this phrase are
 	 *         drawn from.
 	 */
-	public Vocabulary getVocab() {
+	public SymbolTable getVocab() {
 		return vocab;
 	}
 	

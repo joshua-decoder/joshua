@@ -10,7 +10,10 @@ import joshua.decoder.hypergraph.HyperGraph;
 import joshua.decoder.hypergraph.KBestExtractor;
 import joshua.lattice.Lattice;
 import joshua.oracle.OracleExtractor;
+import joshua.sarray.ContiguousPhrase;
+import joshua.sarray.Pattern;
 import joshua.util.FileUtility;
+import joshua.util.sentence.Phrase;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -188,7 +191,7 @@ public class DecoderThread extends Thread {
 		Grammar[] grammars = new Grammar[grammarFactories.length];
 		for (int i = 0; i < grammarFactories.length; i++) {
 			// TODO: if using suffix-array, then we need provide a non-null Phrase object (i.e., the input sentence)
-			grammars[i] = grammarFactories[i].getGrammarForSentence(null);
+			grammars[i] = grammarFactories[i].getGrammarForSentence(new Pattern(this.p_symbolTable,sentence_numeric));
 			if (null == grammars[i].getTrieRoot()) {
 				logger.severe("grammars getTrieRoot is null; i is " + i);
 				System.exit(0);

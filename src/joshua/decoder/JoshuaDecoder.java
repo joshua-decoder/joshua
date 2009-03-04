@@ -25,7 +25,6 @@ import joshua.decoder.ff.PhraseModelFF;
 import joshua.decoder.ff.WordPenaltyFF;
 import joshua.decoder.ff.SourceLatticeArcCostFF;
 import joshua.decoder.ff.lm.LanguageModelFF;
-import joshua.decoder.ff.lm.DefaultNGramLanguageModel;
 import joshua.decoder.ff.lm.NGramLanguageModel;
 import joshua.decoder.ff.lm.bloomfilter_lm.BloomFilterLanguageModel;
 import joshua.decoder.ff.lm.buildin_lm.LMGrammarJAVA;
