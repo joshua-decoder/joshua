@@ -55,19 +55,36 @@ public class BLEUTest {
 	
 	@Test
 	public void simpleTest() {
-		
-		BLEU bleu = new BLEU();
-		
+
 		String ref = "this is the fourth chromosome whose sequence has been completed to date . it comprises more than 87 million pairs of dna .";
 		String test = "this is the fourth chromosome to be fully sequenced up till now and it comprises of over 87 million pairs of deoxyribonucleic acid ( dna ) .";
 		
+/*		// OZ
 		String[] refWords = ref.split("\\s+");
 		String[][] refSentences = {refWords};
+*/		
+		// refSentences[i][r] stores the r'th reference of the i'th sentence
+		String[][] refSentences = new String[1][1]; // OZ
+		refSentences[0][0] = ref; // OZ
+		
+		EvaluationMetric.set_numSentences(1); // OZ
+		EvaluationMetric.set_refsPerSen(1); // OZ
 		EvaluationMetric.set_refSentences(refSentences);
+			// set_refSentences expects a 2-D array because there could be
+			// multiple references per sentence
 		
+		BLEU bleu = new BLEU();
+		
+/*		// OZ
 		String[] testWords = test.split("\\s+");
+*/		
+		// testSentences[i] stores the candidate translation for the i'th sentence
+		String[] testSentences = new String[1]; // OZ
+		testSentences[0] = test; // OZ
 		
-		double actual = bleu.score(testWords);
+		double actual = bleu.score(testSentences);
+			// score expexts a 1-D array because the test corpus
+			// could consist of multiple sentences
 		double expected = 0.2513;
 		//double acceptableDelta = 0.0f;
 		
