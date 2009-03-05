@@ -286,7 +286,7 @@ public class ExtractRules {
 							psize++;
 							hpsize += entry.getValue().size();
 							if (hpsize>maxHPsize) {
-								maxHPsize = hpsize;
+								maxHPsize = entry.getValue().size();
 								maxPattern = entry.getKey();
 							}
 						}
