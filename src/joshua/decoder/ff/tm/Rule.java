@@ -18,10 +18,12 @@
 package joshua.decoder.ff.tm;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Map;
 
 import joshua.corpus.SymbolTable;
 import joshua.decoder.ff.FeatureFunction;
+import joshua.decoder.ff.tm.HieroGrammar.MemoryBasedBatchGrammar;
 
 import joshua.util.sentence.Vocabulary;
 
@@ -43,8 +45,8 @@ public class Rule {
 	 *     [Phrase] ||| french ||| english ||| feature scores
 	 */
 	public  int     rule_id;//TODO
-	public  int     lhs; // tag of this rule, state to upper layer
-	public  int[]   french; // only need to maintain at RuleCollection as all the rules under it share the same Source side
+	public  int     lhs; // tag of this rule
+	public  int[]   p_french; //pointer to the RuleCollection, as all the rules under it share the same Source side
 	public  int[]   english;
 	public  int     arity;
 	
@@ -54,7 +56,7 @@ public class Rule {
 	public  int     owner;
 	
 	public  float[] feat_scores; // the feature scores for this rule
-	public	float lattice_cost; //TODO: consider remove this in the general class, and create a new specific Rule class
+	public	float lattice_cost; //TODO: consider remove this from the general class, and create a new specific Rule class
 	
 		
 	/** 
@@ -62,9 +64,10 @@ public class Rule {
 	 * it is only used in TMGrammar pruning and chart.prepare_rulebin, shownup in
 	 * chart.expand_unary but not really used
 	 */
-	float est_cost = 0;
+	protected float est_cost = 0;
 		
-//	TODO Ideally, we shouldn't have to have dummy rule IDs and dummy owners. How can this need be eliminated?
+	
+	//TODO Ideally, we shouldn't have to have dummy rule IDs and dummy owners. How can this need be eliminated?
 	private static final int DUMMY_RULE_ID = 1;
 	private static final int DUMMY_OWNER = 1;
 	
@@ -72,31 +75,6 @@ public class Rule {
 	public Rule(){
 		//do nothing
 	}
-	
-	
-	/**
-	 * For use in reading rules from disk.
-	 * 
-	 * @param rule_id
-	 * @param lhs Left-hand side of the rule.
-	 * @param fr_in Source language right-hand side of the rule.
-	 * @param eng_in Target language right-hand side of the rule.
-	 * @param owner
-	 * @param feat_scores_in Feature value scores for the rule.
-	 * @param arity_in Number of nonterminals in the source language right-hand side.
-	 */
-	public Rule(int rule_id, int lhs, int[] fr_in, int[] eng_in, int owner, float[] feat_scores_in, int arity_in) {
-		this.rule_id     = rule_id;
-		this.lhs         = lhs;
-		this.french      = fr_in;
-		this.english     = eng_in;
-		this.owner       = owner;
-		this.feat_scores = feat_scores_in;
-		this.arity       = arity_in;
-		this.lattice_cost= 0;
-	}
-	
-	
 	
 	/**
 	 * Constructs a new rule using the provided parameters.
@@ -108,10 +86,17 @@ public class Rule {
 	 * @param feature_scores Feature value scores for the rule.
 	 * @param arity Number of nonterminals in the source language right-hand side.
 	 */
-	
-	/*TODO: this may not be correct, you need to set the stateless cost*/
-	public Rule(int lhs, int[] source_rhs, int[] target_rhs, float[] feature_scores, int arity) {
-		this(DUMMY_RULE_ID, lhs, source_rhs, target_rhs, DUMMY_OWNER, feature_scores, arity);
+	public Rule(int lhs_, int[] source_rhs, int[] target_rhs, float[] feature_scores, int arity_) {
+		this.lhs         = lhs_;
+		this.p_french      = source_rhs;
+		this.english     = target_rhs;
+		this.feat_scores = feature_scores;
+		this.arity       = arity_;
+		
+		//==== dummy values
+		this.lattice_cost= 0;
+		this.rule_id     = DUMMY_RULE_ID;
+		this.owner       = DUMMY_OWNER;
 	}
 
 	
@@ -128,8 +113,8 @@ public class Rule {
 		r.lhs        = lhs_in;
 		r.owner      = owner_in;
 		r.arity      = 0;
-		r.french     = new int[1];
-	   	r.french[0]  = fr_in;
+		r.p_french     = new int[1];
+	   	r.p_french[0]  = fr_in;
 	   	r.english    = new int[1];
 	   	r.english[0] = fr_in;
 	   	r.feat_scores     = new float[num_feats];
@@ -158,7 +143,7 @@ public class Rule {
 			Rule r = new Rule();
 			r.rule_id     = this.rule_id;
 			r.lhs         = this.lhs;
-			r.french      = this.french;
+			r.p_french      = this.p_french;
 			r.english     = this.english;
 			r.owner       = this.owner;
 			r.feat_scores = this.feat_scores;
@@ -171,13 +156,51 @@ public class Rule {
 	
 	/* ~~~~~ Attributes (only used in DiskHyperGraph) */
 	public final boolean isOutOfVocabularyRule() {
-		return (this.rule_id == BatchGrammar.OOV_RULE_ID);
+		return (this.rule_id == MemoryBasedBatchGrammar.OOV_RULE_ID);
 	}
 	
 	
 	public final int getRuleID() {
 		return this.rule_id;
 	}
+	
+	public double getEstRuleCost(){
+		if(est_cost <= Double.NEGATIVE_INFINITY){
+			System.out.println("The est cost is neg infinity; must be bad rule; rule is:\n" +toString());
+		}
+		return est_cost;
+	}
+
+	/** 
+	 * set a lower-bound estimate inside the rule returns full estimate.
+	 */
+	public static float estimateRuleCost(Rule rl, ArrayList<FeatureFunction> p_l_models) {
+		if (null == p_l_models) {
+			return 0;
+		}else{		
+			float estcost      = 0.0f;
+			for (FeatureFunction ff : p_l_models) {
+				double mdcost = ff.estimate(rl) * ff.getWeight();
+				estcost += mdcost;
+			}
+			rl.est_cost = estcost;
+			return estcost;
+		}
+	}
+	
+	public static Comparator<Rule> NegtiveCostComparator	= new Comparator<Rule>() {
+		public int compare(Rule rule1, Rule rule2) {
+			float cost1 = rule1.est_cost;
+			float cost2 = rule2.est_cost;
+			if (cost1 > cost2) {
+				return -1;
+			} else if (cost1 == cost2) {
+				return 0;
+			} else {
+				return 1;
+			}
+		}
+	};
 	
 	
 	//===================================================== serialization method=====================================
@@ -190,7 +213,7 @@ public class Rule {
 			StringBuffer sb = new StringBuffer("[");
 			sb.append(ntVocab.get(this.lhs));
 			sb.append("] ||| ");
-			sb.append(sourceVocab.getWords(this.french,true));
+			sb.append(sourceVocab.getWords(this.p_french,true));
 			sb.append(" ||| ");
 			sb.append(targetVocab.getWords(this.english,false));
 			//sb.append(java.util.Arrays.toString(this.english));
@@ -212,7 +235,7 @@ public class Rule {
 			StringBuffer sb = new StringBuffer("[");
 			sb.append(this.lhs);
 			sb.append("] ||| ");
-			sb.append(this.french);
+			sb.append(this.p_french);
 			sb.append(" ||| ");
 			sb.append(this.english);
 			sb.append(" |||");
@@ -229,7 +252,7 @@ public class Rule {
 			StringBuffer sb = new StringBuffer("[");
 			sb.append(p_symbolTable.getWord(this.lhs));
 			sb.append("] ||| ");
-			sb.append(p_symbolTable.getWords(this.french));
+			sb.append(p_symbolTable.getWords(this.p_french));
 			sb.append(" ||| ");
 			sb.append(p_symbolTable.getWords(this.english));
 			sb.append(" |||");
@@ -244,8 +267,10 @@ public class Rule {
     public String toStringWithoutFeatScores(SymbolTable p_symbolTable){
             StringBuffer res = new StringBuffer();
             res.append("["); res.append(p_symbolTable.getWord(lhs)); res.append("] ||| ");
-            res.append(p_symbolTable.getWords(french)); res.append(" ||| ");
+            res.append(p_symbolTable.getWords(p_french)); res.append(" ||| ");
             res.append(p_symbolTable.getWords(english));
             return res.toString();
     }
+
+	
 }

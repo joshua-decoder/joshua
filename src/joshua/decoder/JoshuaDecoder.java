@@ -31,7 +31,8 @@ import joshua.decoder.ff.lm.buildin_lm.LMGrammarJAVA;
 import joshua.decoder.ff.lm.distributed_lm.LMGrammarRemote;
 import joshua.decoder.ff.lm.srilm.LMGrammarSRILM;
 import joshua.decoder.ff.tm.GrammarFactory;
-import joshua.decoder.ff.tm.MemoryBasedBatchGrammarWithPrune;
+import joshua.decoder.ff.tm.HieroGrammar.MemoryBasedBatchGrammar;
+import joshua.decoder.ff.tm.HieroGrammar.MemoryBasedBatchGrammarWithPrune;
 import joshua.sarray.CorpusArray;
 import joshua.sarray.SAGrammarFactory;
 import joshua.sarray.SampledLexProbs;
@@ -358,6 +359,7 @@ public class JoshuaDecoder {
 		// Glue Grammar
 		GrammarFactory glueGrammar =
 			new MemoryBasedBatchGrammarWithPrune(
+			//new MemoryBasedBatchGrammar(
 				p_symbolTable, null, true, p_l_feat_functions,
 				JoshuaConfiguration.phrase_owner,
 				-1,
@@ -369,6 +371,7 @@ public class JoshuaDecoder {
 		// Regular TM Grammar
 		GrammarFactory regularGrammar =
 			new MemoryBasedBatchGrammarWithPrune(
+			//new MemoryBasedBatchGrammar(		
 				p_symbolTable, tm_file, false, p_l_feat_functions,
 				JoshuaConfiguration.phrase_owner,
 				JoshuaConfiguration.span_limit,
@@ -387,6 +390,7 @@ public class JoshuaDecoder {
 		// Glue Grammar
 		GrammarFactory glueGrammar =
 			new MemoryBasedBatchGrammarWithPrune(
+			//new MemoryBasedBatchGrammar(
 				p_symbolTable, null, true, p_l_feat_functions,
 				JoshuaConfiguration.phrase_owner,
 				-1,

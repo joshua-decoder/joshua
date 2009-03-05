@@ -18,9 +18,10 @@
 package joshua.decoder.hypergraph;
 
 import joshua.decoder.ff.lm.LMFFDPState;
-import joshua.decoder.ff.tm.MemoryBasedBatchGrammarWithPrune;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.BatchGrammar;
+import joshua.decoder.ff.tm.HieroGrammar.MemoryBasedBatchGrammar;
+import joshua.decoder.ff.tm.HieroGrammar.MemoryBasedBatchGrammarWithPrune;
 import joshua.decoder.ff.FFDPState;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.JoshuaConfiguration;
@@ -345,7 +346,7 @@ public class DiskHyperGraph {
 		}
 		s.append(" ")
 			.append(ruleID);
-		if (ruleID == BatchGrammar.OOV_RULE_ID) {
+		if (ruleID == MemoryBasedBatchGrammar.OOV_RULE_ID) {
 			s.append(" ")
 				.append(this.symbolTable.getWord(deduction_rule.lhs))
 				.append(" ")
@@ -503,7 +504,7 @@ public class DiskHyperGraph {
 		Rule rule = null;
 		final int ruleID = new Integer(fds[2+qtyAntecedents]);
 		if (ruleID != NULL_RULE_ID) {
-			if (ruleID != BatchGrammar.OOV_RULE_ID) {
+			if (ruleID != MemoryBasedBatchGrammar.OOV_RULE_ID) {
 				rule = this.associatedGrammar.get(ruleID);
 				if (null == rule) {
 					logger.severe("rule is null but id is " + ruleID);
@@ -514,7 +515,7 @@ public class DiskHyperGraph {
 				rule = Rule.constructOOVRule(
 					null,
 					1,
-					BatchGrammar.OOV_RULE_ID,
+					MemoryBasedBatchGrammar.OOV_RULE_ID,
 					this.symbolTable.addNonterminal(fds[3+qtyAntecedents]),
 					this.symbolTable.addTerminal(fds[4+qtyAntecedents]),
 					this.UNTRANSLATED_WORD_ID,

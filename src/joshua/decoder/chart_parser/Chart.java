@@ -28,6 +28,7 @@ import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.RuleCollection;
 import joshua.decoder.ff.tm.BatchGrammar;
 import joshua.decoder.ff.tm.TrieGrammar;
+import joshua.decoder.ff.tm.HieroGrammar.MemoryBasedBatchGrammar;
 import joshua.decoder.hypergraph.HGNode;
 import joshua.decoder.hypergraph.HyperGraph;
 import joshua.lattice.Lattice;
@@ -139,7 +140,7 @@ public class Chart {
 		for (Node<Integer> node : sentence) {
 			for (Arc<Integer> arc : node.getOutgoingArcs()) {
 				for (int lhs : default_nonterminals) {//create a rule, but do not add into the grammar trie     
-					Rule rule = Rule.constructOOVRule(p_l_models, p_l_models.size(), BatchGrammar.OOV_RULE_ID, lhs, arc.getLabel(), this.UNTRANS_OWNER_SYM_ID, have_lm_model);
+					Rule rule = Rule.constructOOVRule(p_l_models, p_l_models.size(), MemoryBasedBatchGrammar.OOV_RULE_ID, lhs, arc.getLabel(), this.UNTRANS_OWNER_SYM_ID, have_lm_model);
 					// Tail and head are switched - FIX names:
 					add_axiom(node.getNumber(), arc.getTail().getNumber(), rule, (float)arc.getCost());
 				}
