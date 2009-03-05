@@ -11,7 +11,7 @@ specify any subset of Z-MERT's 20-some parameters.  For a full list of those
 parameters, and their default values, run ZMERT with a single -h argument as
 follows (assuming you're in the trunk folder):
 
-  java -cp bin joshua.ZMERT.ZMERT -h
+  java -cp bin joshua.zmert.ZMERT -h
 
 So what does a Z-MERT config file look like?
 
@@ -39,7 +39,7 @@ specifies the following "main" MERT parameters:
 To test Z-MERT on the 100-sentence test set of example2, provide this config
 file to Z-MERT as follows (assuming you're in the trunk folder):
 
-  java -cp bin joshua.ZMERT.ZMERT ZMERT_example/ZMERT_config_ex2.txt > ZMERT_example/ZMERT.out
+  java -cp bin joshua.zmert.ZMERT ZMERT_example/ZMERT_config_ex2.txt > ZMERT_example/ZMERT.out
 
 This will run Z-MERT for a couple of iterations on the data from the example2
 folder.  (Notice that we have made copies of the source and reference files
@@ -62,7 +62,7 @@ probably have more than enough memory to support Z-MERT's needs, but you must
 ensure that Z-MERT is not taking up any memory *while* the decoder is producing
 translations.  To do so, you should run ZMERT as follows:
 
-  java -cp bin joshua.ZMERT.ZMERT -maxMem 500 ZMERT_example/ZMERT_config_ex2.txt > ZMERT_example/ZMERT.out
+  java -cp bin joshua.zmert.ZMERT -maxMem 500 ZMERT_example/ZMERT_config_ex2.txt > ZMERT_example/ZMERT.out
 
 Notice the additional -maxMem argument.  It tells Z-MERT that it should not
 persist to use up memory while the decoder is running (during which time Z-MERT
@@ -161,7 +161,7 @@ is already hogging up quite a bit of memory that it refuses to return.
 
 Indeed, if you rerun this command from section (1):
 
-  java -cp bin joshua.ZMERT.ZMERT ZMERT_example/ZMERT_config_ex2.txt > ZMERT_example/ZMERT.out
+  java -cp bin joshua.zmert.ZMERT ZMERT_example/ZMERT_config_ex2.txt > ZMERT_example/ZMERT.out
 
 and monitor the memory consumption of Z-MERT, you will notice that the memory
 allocated to it never decreases, even when it is idle while the decoder is
@@ -177,7 +177,7 @@ before the decoder is launched by the Z-MERT driver.
 
 To instruct Z-MERT to function this way, you should use the -maxMem argument:
 
-  java -cp bin joshua.ZMERT.ZMERT -maxMem 500 ZMERT_example/ZMERT_config_ex2.txt > ZMERT_example/ZMERT.out
+  java -cp bin joshua.zmert.ZMERT -maxMem 500 ZMERT_example/ZMERT_config_ex2.txt > ZMERT_example/ZMERT.out
 
 The -maxMem argument tells Z-MERT to function as explained above, and the value
 tells it the maximum amount of memory (in MB) it is allowed during any single

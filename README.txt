@@ -42,7 +42,7 @@ config file can be used to specify any subset of Z-MERT's 20-some parameters.
 For a full list of those parameters, and their default values, run ZMERT with
 a single -h argument as follows (assuming you're in the trunk folder):
 
-  java -cp bin joshua.ZMERT.ZMERT -h
+  java -cp bin joshua.zmert.ZMERT -h
 
 So what does a Z-MERT config file look like?
 
@@ -70,7 +70,7 @@ specifies the following "main" MERT parameters:
 To test Z-MERT on the 100-sentence test set of example2, provide this config
 file to Z-MERT as follows (assuming you're in the trunk folder):
 
-  java -cp bin joshua.ZMERT.ZMERT -maxMem 500 ZMERT_example/ZMERT_config_ex2.txt > ZMERT_example/ZMERT.out
+  java -cp bin joshua.zmert.ZMERT -maxMem 500 ZMERT_example/ZMERT_config_ex2.txt > ZMERT_example/ZMERT.out
 
 This will run Z-MERT for a couple of iterations on the data from the example2
 folder.  (Notice that we have made copies of the source and reference files

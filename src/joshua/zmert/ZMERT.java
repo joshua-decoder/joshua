@@ -46,7 +46,7 @@ public class ZMERT
       while (!done) {
         ++iteration;
         Runtime rt = Runtime.getRuntime();
-        Process p = rt.exec("java -Xmx" + maxMem + "m -cp " + cp + " joshua.ZMERT.MertCore " + configFileName + " " + stateFileName + " " + iteration);
+        Process p = rt.exec("java -Xmx" + maxMem + "m -cp " + cp + " joshua.zmert.MertCore " + configFileName + " " + stateFileName + " " + iteration);
         BufferedReader br_i = new BufferedReader(new InputStreamReader(p.getInputStream()));
         BufferedReader br_e = new BufferedReader(new InputStreamReader(p.getErrorStream()));
         String dummy_line = null;
