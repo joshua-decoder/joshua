@@ -42,10 +42,11 @@ public class Rule {
 	/* The string format of Rule is:
 	 *     [Phrase] ||| french ||| english ||| feature scores
 	 */
-	public  int     rule_id;
-	public  int     lhs;         // tag of this rule, state to upper layer
-	public  int[]   french;      // only need to maintain at RuleCollection as all the rules under it share the same Source side
+	public  int     rule_id;//TODO
+	public  int     lhs; // tag of this rule, state to upper layer
+	public  int[]   french; // only need to maintain at RuleCollection as all the rules under it share the same Source side
 	public  int[]   english;
+	public  int     arity;
 	
 	/* a feature function will be applied  for this rule 
 	 * only if the owner of the rule matches the owner of the feature function
@@ -53,20 +54,20 @@ public class Rule {
 	public  int     owner;
 	
 	public  float[] feat_scores; // the feature scores for this rule
-	public	float lattice_cost;
-	public  int     arity;// = 0;   // TODO: disk-grammar does not have this information, so, arity-penalty feature is not supported in disk-grammar
+	public	float lattice_cost; //TODO: consider remove this in the general class, and create a new specific Rule class
 	
-	
+		
 	/** 
 	 * estimate_cost depends on rule itself: statelesscost + transition_cost(non-stateless/non-contexual* models), 
 	 * it is only used in TMGrammar pruning and chart.prepare_rulebin, shownup in
 	 * chart.expand_unary but not really used
 	 */
-	float est_cost = 0;//TODO: get rid of this
+	float est_cost = 0;
 		
 //	TODO Ideally, we shouldn't have to have dummy rule IDs and dummy owners. How can this need be eliminated?
 	private static final int DUMMY_RULE_ID = 1;
 	private static final int DUMMY_OWNER = 1;
+	
 	
 	public Rule(){
 		//do nothing
@@ -93,18 +94,6 @@ public class Rule {
 		this.feat_scores = feat_scores_in;
 		this.arity       = arity_in;
 		this.lattice_cost= 0;
-	}
-	
-	// just used by cloneAndAddLatticeCost:
-	private Rule(int rule_id, int lhs, int[] fr_in, int[] eng_in, int owner, float[] feat_scores_in, int arity_in, float src_cost) {
-		this.rule_id     = rule_id;
-		this.lhs         = lhs;
-		this.french      = fr_in;
-		this.english     = eng_in;
-		this.owner       = owner;
-		this.feat_scores = feat_scores_in;
-		this.arity       = arity_in;
-		this.lattice_cost = src_cost;
 	}
 	
 	
@@ -163,9 +152,21 @@ public class Rule {
 	
 //	 create a copy of the rule and set the lattice cost field
 	public Rule cloneAndAddLatticeCostIfNonZero(float cost) {
-		if (cost == 0.0f) return this;
-		Rule r = new Rule(rule_id, lhs, french, english, owner, feat_scores, arity, cost);
-		return r;
+		if (cost == 0.0f) 
+			return this;
+		else{
+			Rule r = new Rule();
+			r.rule_id     = this.rule_id;
+			r.lhs         = this.lhs;
+			r.french      = this.french;
+			r.english     = this.english;
+			r.owner       = this.owner;
+			r.feat_scores = this.feat_scores;
+			r.arity       = this.arity;
+			
+			r.lattice_cost = cost;//the only thing that is from the caller of this function
+			return r;
+		}
 	}
 	
 	/* ~~~~~ Attributes (only used in DiskHyperGraph) */
@@ -179,7 +180,7 @@ public class Rule {
 	}
 	
 	
-	/* ~~~~~ Serialization methods */
+	//===================================================== serialization method=====================================
 	// Caching this method significantly improves performance
 	// We mark it transient because it is, though cf java.io.Serializable
 	private transient String cachedToString = null;
