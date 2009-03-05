@@ -56,13 +56,7 @@ public class Rule {
 	public	float lattice_cost;
 	public  int     arity;// = 0;   // TODO: disk-grammar does not have this information, so, arity-penalty feature is not supported in disk-grammar
 	
-	/* this remember all the stateless cost: sum of cost of all
-	 * stateless models (e..g, phrase model, word-penalty,
-	 * phrase-penalty). The LM model cost is not included here.
-	 * this will be set by Grmmar.estimate_rule
-	 */
-	protected float statelesscost = 0; //TODO: this is set in estimate_rule(); we should use an abstract class to enforce this behavior
-
+	
 	/** 
 	 * estimate_cost depends on rule itself: statelesscost + transition_cost(non-stateless/non-contexual* models), 
 	 * it is only used in TMGrammar pruning and chart.prepare_rulebin, shownup in
@@ -102,7 +96,7 @@ public class Rule {
 	}
 	
 	// just used by cloneAndAddLatticeCost:
-	private Rule(int rule_id, int lhs, int[] fr_in, int[] eng_in, int owner, float[] feat_scores_in, int arity_in, float statelesscost, float src_cost) {
+	private Rule(int rule_id, int lhs, int[] fr_in, int[] eng_in, int owner, float[] feat_scores_in, int arity_in, float src_cost) {
 		this.rule_id     = rule_id;
 		this.lhs         = lhs;
 		this.french      = fr_in;
@@ -110,7 +104,6 @@ public class Rule {
 		this.owner       = owner;
 		this.feat_scores = feat_scores_in;
 		this.arity       = arity_in;
-		this.statelesscost = statelesscost;
 		this.lattice_cost = src_cost;
 	}
 	
@@ -162,40 +155,16 @@ public class Rule {
 	   		r.feat_scores[0]=100;//TODO
 	   	}
 	   	
-	   	r.computeStatelessCost(p_l_models);//set statelesscost
 		return r;
 	}
 	
 	
-	
-	public float getStatelessCost(){
-		return this.statelesscost;
-	}
-	
-	
-	/*compute and set stateless cost*/
-	private float computeStatelessCost(ArrayList<FeatureFunction> p_l_models) {
-		if (null == p_l_models) {
-			return 0;
-		}		
-		this.statelesscost = 0.0f;
 		
-		for (FeatureFunction ff : p_l_models) {
-			double mdcost = ff.estimate(this) * ff.getWeight();//TODO: should use transition()?
-			if (! ff.isStateful()) {
-				this.statelesscost += mdcost;
-			}
-		}
-		return this.statelesscost;
-	}
-	
-
-	
 	
 //	 create a copy of the rule and set the lattice cost field
 	public Rule cloneAndAddLatticeCostIfNonZero(float cost) {
 		if (cost == 0.0f) return this;
-		Rule r = new Rule(rule_id, lhs, french, english, owner, feat_scores, arity, statelesscost, cost);
+		Rule r = new Rule(rule_id, lhs, french, english, owner, feat_scores, arity, cost);
 		return r;
 	}
 	

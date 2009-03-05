@@ -139,7 +139,6 @@ public class MemoryBasedBatchGrammarWithPrune extends BatchGrammar {
 		Rule res = new Rule(); 
 		res.rule_id = r_id;
 		res.owner   = owner_in;
-		res.statelesscost = 0;
 		
 		//rule format: X ||| Foreign side ||| English side ||| feature scores
 		String[] fds = line.split("\\s+\\|{3}\\s+");
@@ -198,26 +197,20 @@ public class MemoryBasedBatchGrammarWithPrune extends BatchGrammar {
 	
 		
 	/** 
-	 * set the stateless cost, and set a lower-bound
-	 * estimate inside the rule returns full estimate.
+	 * set a lower-bound estimate inside the rule returns full estimate.
 	 */
 	protected static float estimateRuleCost(Rule rl, ArrayList<FeatureFunction> p_l_models) {
 		if (null == p_l_models) {
 			return 0;
-		}
-		
-		float estcost      = 0.0f;
-		rl.statelesscost = 0.0f;
-		
-		for (FeatureFunction ff : p_l_models) {
-			double mdcost = ff.estimate(rl) * ff.getWeight();
-			estcost += mdcost;
-			if (! ff.isStateful()) {
-				rl.statelesscost += mdcost;
+		}else{		
+			float estcost      = 0.0f;
+			for (FeatureFunction ff : p_l_models) {
+				double mdcost = ff.estimate(rl) * ff.getWeight();
+				estcost += mdcost;
 			}
+			rl.est_cost = estcost;
+			return estcost;
 		}
-		rl.est_cost = estcost;
-		return estcost;
 	}
 
 	
