@@ -83,8 +83,8 @@ public class LanguageModelFF extends DefaultStatefulFF {
 		this.START_SYM_ID = psymbol.addTerminal(START_SYM);
 		this.STOP_SYM_ID = psymbol.addTerminal(STOP_SYM);
 		
-		this.BACKOFF_LEFT_LM_STATE_SYM_ID = p_symbolTable.addTerminal(BACKOFF_LEFT_LM_STATE_SYM);
-		this.NULL_RIGHT_LM_STATE_SYM_ID = p_symbolTable.addTerminal(NULL_RIGHT_LM_STATE_SYM);
+		LanguageModelFF.BACKOFF_LEFT_LM_STATE_SYM_ID = p_symbolTable.addTerminal(BACKOFF_LEFT_LM_STATE_SYM);
+		LanguageModelFF.NULL_RIGHT_LM_STATE_SYM_ID = p_symbolTable.addTerminal(NULL_RIGHT_LM_STATE_SYM);
 	}
 	
 	/*the transition cost for LM: sum of the costs of the new ngrams created

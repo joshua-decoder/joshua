@@ -53,6 +53,7 @@ import org.apache.commons.cli.HelpFormatter;
  * @author wren ng thornton
  */
 public class SubsamplerCLI {
+	//TODO hasArg is a static method. It should be accessed as OptionBuilder.hasArg()
 	final Option ot = OptionBuilder
 		.withArgName("filelist")
 		.hasArg()
@@ -60,6 +61,7 @@ public class SubsamplerCLI {
 		.isRequired()
 		.create("training");
 	
+	//TODO hasArg is a static method. It should be accessed as OptionBuilder.hasArg()
 	final Option otest = OptionBuilder
 		.withArgName("file")
 		.hasArgs()
@@ -67,6 +69,7 @@ public class SubsamplerCLI {
 		.isRequired()
 		.create("test");
 	
+	//TODO hasArg is a static method. It should be accessed as OptionBuilder.hasArg()
 	final Option ooutput = OptionBuilder
 		.withArgName("prefix")
 		.hasArgs()
@@ -74,6 +77,7 @@ public class SubsamplerCLI {
 		.isRequired()
 		.create("output");
 	
+	//TODO hasArg is a static method. It should be accessed as OptionBuilder.hasArg()
 	final Option of = OptionBuilder
 		.withArgName("lang")
 		.hasArg()
@@ -81,6 +85,7 @@ public class SubsamplerCLI {
 		.isRequired()
 		.create("f");
 	
+	//TODO hasArg is a static method. It should be accessed as OptionBuilder.hasArg()
 	final Option oe = OptionBuilder
 		.withArgName("lang")
 		.hasArg()
@@ -88,18 +93,21 @@ public class SubsamplerCLI {
 		.isRequired()
 		.create("e");
 	
+	//TODO hasArg is a static method. It should be accessed as OptionBuilder.hasArg()
 	final Option ofpath = OptionBuilder
 		.withArgName("path")
 		.hasArg()
 		.withDescription("Directory containing source language files")
 		.create("fpath");
 	
+	//TODO hasArg is a static method. It should be accessed as OptionBuilder.hasArg()
 	final Option oepath = OptionBuilder
 		.withArgName("path")
 		.hasArg()
 		.withDescription("Directory containing target language files")
 		.create("epath");
 	
+	//TODO hasArg is a static method. It should be accessed as OptionBuilder.hasArg()
 	final Option oratio = OptionBuilder
 		.withArgName("ratio")
 		.hasArg()

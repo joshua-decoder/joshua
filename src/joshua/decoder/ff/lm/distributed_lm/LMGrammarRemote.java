@@ -71,6 +71,7 @@ public class LMGrammarRemote extends AbstractLM {
 		}
 	}
 	
+	//TODO This method is never used. Perhaps it should be removed.
 	private void end_lm_grammar() {
 		p_lm_client.close_client();
 	}

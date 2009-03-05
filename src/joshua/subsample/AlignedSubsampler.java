@@ -92,6 +92,8 @@ public class AlignedSubsampler extends Subsampler {
 	
 	public static void main(String[] args) {
 		new SubsamplerCLI() { /* Local class definition */
+			
+			//TODO hasArg is a static method. It should be accessed as OptionBuilder.hasArg()
 			final Option oa = OptionBuilder
 				.withArgName("lang")
 				.hasArg()
@@ -99,6 +101,7 @@ public class AlignedSubsampler extends Subsampler {
 				.isRequired()
 				.create("a");
 				
+			//TODO hasArg is a static method. It should be accessed as OptionBuilder.hasArg()
 			final Option oapath = OptionBuilder
 				.withArgName("path")
 				.hasArg()

@@ -66,6 +66,8 @@ public class OracleExtractionHG extends SplitHg {
 	
 	static boolean using_left_equiv_state = false;
 	static boolean using_right_equiv_state = false;
+	
+	//TODO Add generics to hash tables in this class
 	HashMap tbl_suffix = new HashMap();
 	HashMap tbl_prefix = new HashMap();
 	static PrefixGrammar grammar_prefix = new PrefixGrammar();//TODO

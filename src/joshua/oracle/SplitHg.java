@@ -34,6 +34,8 @@ import joshua.decoder.hypergraph.HyperGraph;
  * @version $LastChangedDate$
  */
 public abstract class SplitHg {
+	
+	//TODO Add generics to hash tables in this class
 	HashMap g_tbl_split_virtual_items =  new HashMap();//Key: item; Value: a list of split virtual items
 	
 	//number of items or deductions after splitting the hypergraph

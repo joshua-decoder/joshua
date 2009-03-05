@@ -10,10 +10,8 @@ import joshua.decoder.hypergraph.HyperGraph;
 import joshua.decoder.hypergraph.KBestExtractor;
 import joshua.lattice.Lattice;
 import joshua.oracle.OracleExtractor;
-import joshua.sarray.ContiguousPhrase;
 import joshua.sarray.Pattern;
 import joshua.util.FileUtility;
-import joshua.util.sentence.Phrase;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -60,6 +58,7 @@ public class DecoderThread extends Thread {
 		String test_file_in, String nbest_file_in, String oracle_file_in,
 		int start_sent_id_in)
 	throws IOException {
+		
 		this.p_grammar_factories    = grammar_factories;
 		this.have_lm_model          = have_lm_model_;
 		this.p_l_feat_functions     = l_feat_functions;
@@ -129,14 +128,7 @@ public class DecoderThread extends Thread {
 				null == t_oracle_reader
 				? null
 				: FileUtility.read_line_lzf(t_oracle_reader);
-			
-			/*if (JoshuaConfiguration.use_sent_specific_lm) {
-				load_lm_grammar_file(JoshuaConfiguration.g_sent_lm_file_name_prefix + sent_id + ".gz");
-			}
-			if (JoshuaConfiguration.use_sent_specific_tm) {
-				initializeTranslationGrammars(JoshuaConfiguration.g_sent_tm_file_name_prefix + sent_id + ".gz");
-			}*/
-			
+						
 			translate(
 				this.p_grammar_factories,
 				this.p_l_feat_functions,
@@ -148,14 +140,11 @@ public class DecoderThread extends Thread {
 				JoshuaConfiguration.topN,
 				this.p_disk_hg, kbest_extractor);
 			sent_id++;
-			//if (sent_id > 10) break;//debug
 		}
 		t_reader_test.close();
 		t_writer_nbest.flush();
 		t_writer_nbest.close();
 		
-		//debug
-		//g_con.print_confusion_tbl(f_confusion_grammar);
 	}
 	
 	
@@ -190,7 +179,6 @@ public class DecoderThread extends Thread {
 		
 		Grammar[] grammars = new Grammar[grammarFactories.length];
 		for (int i = 0; i < grammarFactories.length; i++) {
-			// TODO: if using suffix-array, then we need provide a non-null Phrase object (i.e., the input sentence)
 			grammars[i] = grammarFactories[i].getGrammarForSentence(new Pattern(this.p_symbolTable,sentence_numeric));
 //			grammars[i].sortGrammar(models);//TODO: for batch grammar, we do not want to sort it every time
 		}
@@ -216,18 +204,16 @@ public class DecoderThread extends Thread {
 				+ (System.currentTimeMillis() - start) / 1000);
 		
 		if (oracleSentence != null) {
-			logger.info("Creating extractor");
+			
+			logger.fine("Creating oracle extractor");
 			OracleExtractor extractor = new OracleExtractor(this.p_symbolTable);
-			logger.info("Extracting...");
+			logger.finer("Extracting oracle hypergraph...");
 			HyperGraph oracle = extractor.getOracle(p_hyper_graph, 3, oracleSentence);
-			//HyperGraph oracle = extractor.getOracle(p_hyper_graph, 3, "scientists for the related early");
-			logger.info("... Done Extracting...getting n-best...");
+			logger.finer("... Done Extracting...getting n-best...");
 			kbestExtractor.lazy_k_best_extract_hg(
 				oracle, models, topN, JoshuaConfiguration.use_unique_nbest, sentenceID, out, JoshuaConfiguration.use_tree_nbest, JoshuaConfiguration.include_align_index, JoshuaConfiguration.add_combined_cost);
-			logger.info("... Done getting n-best");
-			//out.flush();
-			//out.close();
-			//System.exit(-1);
+			logger.finer("... Done getting n-best");
+	
 		} else {
 			
 			//kbest extraction

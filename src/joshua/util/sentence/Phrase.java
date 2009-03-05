@@ -21,10 +21,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import joshua.corpus.SymbolTable;
-import joshua.util.sentence.Vocabulary;
-
-
-
 
 /**
  * 

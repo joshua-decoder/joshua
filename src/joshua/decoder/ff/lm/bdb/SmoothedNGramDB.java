@@ -334,7 +334,6 @@ file sample.txt: 1 sentences, 3 words, 0 OOVs
 		    if (ngramsdb.get(null, theKey, theData, LockMode.DEFAULT) == OperationStatus.SUCCESS) {
 
 		        // Recreate the data
-		    	@SuppressWarnings("unchecked")
 		    	SmoothedNGram ngram = (SmoothedNGram)binding.entryToObject(theData);
 		        return ngram;
 

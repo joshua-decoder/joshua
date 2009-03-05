@@ -26,7 +26,6 @@ import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.RuleCollection;
-import joshua.decoder.ff.tm.BatchGrammar;
 import joshua.decoder.ff.tm.TrieGrammar;
 import joshua.decoder.ff.tm.HieroGrammar.MemoryBasedBatchGrammar;
 import joshua.decoder.hypergraph.HGNode;

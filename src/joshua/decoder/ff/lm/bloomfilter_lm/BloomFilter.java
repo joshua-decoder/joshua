@@ -129,6 +129,7 @@ public class BloomFilter implements Externalizable {
 		return ret.longValue();
 	}
 
+	//TODO This method is never used - perhaps it should be removed
 	private BigInteger convertIntToBigInteger(int n)
 	{
 		return new BigInteger(new Integer(n).toString());

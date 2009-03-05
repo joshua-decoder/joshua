@@ -19,7 +19,6 @@ package joshua.decoder.hypergraph;
 
 import joshua.decoder.ff.lm.LMFFDPState;
 import joshua.decoder.ff.tm.Rule;
-import joshua.decoder.ff.tm.BatchGrammar;
 import joshua.decoder.ff.tm.HieroGrammar.MemoryBasedBatchGrammar;
 import joshua.decoder.ff.tm.HieroGrammar.MemoryBasedBatchGrammarWithPrune;
 import joshua.decoder.ff.FFDPState;

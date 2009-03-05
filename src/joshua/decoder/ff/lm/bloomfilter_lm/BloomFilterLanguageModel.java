@@ -19,7 +19,6 @@ package joshua.decoder.ff.lm.bloomfilter_lm;
 
 import java.util.logging.Logger;
 import java.util.logging.Level;
-import java.util.Arrays;
 import java.util.Scanner;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
@@ -297,7 +296,8 @@ public class BloomFilterLanguageModel extends DefaultNGramLanguageModel implemen
 			int ret = 0;
 			while (s.hasNextLine()) {
 				ret++;
-				String trash = s.nextLine();
+				//String trash = 
+					s.nextLine();
 			}
 			s.close();
 			return ret;

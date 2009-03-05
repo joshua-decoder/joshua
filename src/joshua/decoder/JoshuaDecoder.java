@@ -32,7 +32,6 @@ import joshua.decoder.ff.lm.distributed_lm.LMGrammarRemote;
 import joshua.decoder.ff.lm.srilm.LMGrammarSRILM;
 import joshua.decoder.ff.tm.GrammarFactory;
 import joshua.decoder.ff.tm.HieroGrammar.MemoryBasedBatchGrammar;
-import joshua.decoder.ff.tm.HieroGrammar.MemoryBasedBatchGrammarWithPrune;
 import joshua.sarray.CorpusArray;
 import joshua.sarray.SAGrammarFactory;
 import joshua.sarray.SampledLexProbs;

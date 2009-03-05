@@ -17,7 +17,6 @@
  */
 package joshua.util.lexprob;
 
-import joshua.sarray.FileUtil;
 import joshua.sarray.HierarchicalPhrase;
 import joshua.util.sentence.Vocabulary;
 //import joshua.util.CommandLineParser;

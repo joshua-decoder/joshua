@@ -17,7 +17,6 @@
  */
 
 package joshua.zmert;
-import java.util.*;
 import java.io.*;
 
 public class ZMERT
@@ -124,6 +123,8 @@ public class ZMERT
   }
 
   private static void println(Object obj) { System.out.println(obj); }
+
+  //TODO This method is never used. Perhaps it should be removed.
   private static void print(Object obj) { System.out.print(obj); }
 
 }

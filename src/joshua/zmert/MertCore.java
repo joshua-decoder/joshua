@@ -18,19 +18,20 @@
 
 package joshua.zmert;
 import joshua.decoder.*;
-import java.math.*;
 import java.util.*;
 import java.io.*;
 import java.text.DecimalFormat;
 
 public class MertCore
 {
+  //TODO This member variable is never used. Perhaps it should be removed.
   private static DecimalFormat f0 = new DecimalFormat("###0");
   private static DecimalFormat f4 = new DecimalFormat("###0.0000");
   private final Runtime myRuntime = Runtime.getRuntime();
 
   private final double NegInf = (-1.0 / 0.0);
   private final double PosInf = (+1.0 / 0.0);
+  //TODO This member variable is never used. Perhaps it should be removed.
   private final double epsilon = 1.0 / 1000000;
 
   private int progress;
@@ -339,7 +340,8 @@ public class MertCore
       println("",1);
     } else {
       for (int i = 1; i <= randsToSkip; ++i) {
-        double dummy = randGen.nextDouble();
+        //double dummy = 
+        	randGen.nextDouble();
         ++generatedRands;
       }
     }
@@ -383,7 +385,7 @@ public class MertCore
     // read in reference sentences
 
     BufferedReader inFile_refs = new BufferedReader(new FileReader(refFileName));
-    String line;
+    //String line;
 
     for (int i = 0; i < numSentences; ++i) {
       for (int r = 0; r < refsPerSen; ++r) {
@@ -585,7 +587,8 @@ public class MertCore
   } // void run_MERT(int maxIts)
 
 
-  public double[] run_single_iteration(int iteration, int minIts, int maxIts, int prevIts, int earlyStop, int[]maxIndex) throws Exception
+  @SuppressWarnings("unchecked")
+public double[] run_single_iteration(int iteration, int minIts, int maxIts, int prevIts, int earlyStop, int[]maxIndex) throws Exception
   {
     double FINAL_score = 0;
 

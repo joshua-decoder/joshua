@@ -17,9 +17,6 @@
  */
 
 package joshua.zmert;
-import java.math.*;
-import java.util.*;
-import java.io.*;
 
 public class ZeroOneLoss extends EvaluationMetric
 {

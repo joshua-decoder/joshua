@@ -28,12 +28,10 @@
 package joshua.subsample;
 
 import joshua.util.sentence.Vocabulary;
-import joshua.util.sentence.BasicPhrase;
 import joshua.util.sentence.Phrase;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;

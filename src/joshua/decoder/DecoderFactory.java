@@ -3,7 +3,6 @@ package joshua.decoder;
 import joshua.corpus.SymbolTable;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.tm.GrammarFactory;
-import joshua.decoder.hypergraph.DiskHyperGraph;
 import joshua.util.FileUtility;
 
 import java.io.BufferedReader;
