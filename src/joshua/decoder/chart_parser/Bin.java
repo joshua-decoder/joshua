@@ -221,7 +221,7 @@ public class Bin
 	/*add complete Items in Chart
 	 * pruning inside this function*/
 	public void complete_cell(int i, int j, ArrayList<SuperItem> l_super_items,	RuleCollection rb, float lattice_cost) {
-		List<Rule> l_rules = rb.getSortedRules();
+		List<Rule> l_rules = rb.getSortedRules(null);
 		//System.out.println(String.format("Complet_cell is called, n_rules: %d ", l_rules.size()));
 		//consider all the possbile combinations (while in Cube-pruning, we do not consider all the possible combinations)
 		for(Rule rl : l_rules){
@@ -265,7 +265,7 @@ public class Bin
 		PriorityQueue<CubePruneState> heap_cands=new PriorityQueue<CubePruneState>();// in the paper, it is called cand[v]		
 		HashMap<String,Integer>  cube_state_tbl = new HashMap<String,Integer>();//rememeber which state has been explored
 		
-		List<Rule> l_rules = rb.getSortedRules();
+		List<Rule> l_rules = rb.getSortedRules(null);
 		if(l_rules==null || l_rules.size()<=0)
 			return;
 			

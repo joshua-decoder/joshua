@@ -43,6 +43,8 @@ import java.util.logging.Logger;
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate$
  */
+
+//TODO: bug in sortGrammar: even the l_models is new, we do not update the est cost for the rule, which is wrong
 public class MemoryBasedBatchGrammarWithPrune extends MemoryBasedBatchGrammar {
 	private int num_rule_pruned  = 0;
 

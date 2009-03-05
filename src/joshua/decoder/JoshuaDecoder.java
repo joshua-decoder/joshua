@@ -64,7 +64,7 @@ import java.util.logging.Logger;
  */
 public class JoshuaDecoder {
 	private DecoderFactory p_decoder_factory; // pointer to the main thread of decoding
-	private GrammarFactory[] p_tm_grammars;
+	private GrammarFactory[] p_tm_grammar_factories;
 	private boolean have_lm_model = false;
 	private ArrayList<FeatureFunction> p_l_feat_functions;
 	private ArrayList<Integer> l_default_nonterminals;
@@ -140,6 +140,11 @@ public class JoshuaDecoder {
 			ff.putWeight(weight_vector[i]);
 			System.out.println("Feature function : " + ff.getClass().getSimpleName() + "; weight changed from " + old_weight + " to " + ff.getWeight());
 		}
+		
+		//TODO: this works for Batch grammar only; not for sentence-specifi grammar
+		for(GrammarFactory grammar_factory : p_tm_grammar_factories){
+			grammar_factory.getGrammarForSentence(null).sortGrammar(p_l_feat_functions);
+		}
 	}
 	
 	//##### procedures: read config, init lm, init sym tbl, init models, read lm, read tm
@@ -183,7 +188,7 @@ public class JoshuaDecoder {
 			
 			//create factory
 			p_decoder_factory = new DecoderFactory(
-				this.p_tm_grammars,
+				this.p_tm_grammar_factories,
 				this.have_lm_model,
 				this.p_l_feat_functions,
 				this.l_default_nonterminals,
@@ -354,50 +359,50 @@ public class JoshuaDecoder {
 	// This depends (invisibly) on the language model in order to do pruning of the TM at load time.
 	private void initializeTranslationGrammars(String tm_file)
 	throws IOException {
-		p_tm_grammars = new GrammarFactory[2];
+		p_tm_grammar_factories = new GrammarFactory[2];
 		
 		// Glue Grammar
 		GrammarFactory glueGrammar =
-			new MemoryBasedBatchGrammarWithPrune(
-			//new MemoryBasedBatchGrammar(
+			//new MemoryBasedBatchGrammarWithPrune(
+			new MemoryBasedBatchGrammar(
 				p_symbolTable, null, true, p_l_feat_functions,
 				JoshuaConfiguration.phrase_owner,
 				-1,
 				"^\\[[A-Z]+\\,[0-9]*\\]$",
 				"[\\[\\]\\,0-9]+");
 		
-		p_tm_grammars[0] = glueGrammar;
+		p_tm_grammar_factories[0] = glueGrammar;
 		
 		// Regular TM Grammar
 		GrammarFactory regularGrammar =
-			new MemoryBasedBatchGrammarWithPrune(
-			//new MemoryBasedBatchGrammar(		
+			//new MemoryBasedBatchGrammarWithPrune(
+			new MemoryBasedBatchGrammar(		
 				p_symbolTable, tm_file, false, p_l_feat_functions,
 				JoshuaConfiguration.phrase_owner,
 				JoshuaConfiguration.span_limit,
 				"^\\[[A-Z]+\\,[0-9]*\\]$",
 				"[\\[\\]\\,0-9]+");
 		
-		p_tm_grammars[1] = regularGrammar;
+		p_tm_grammar_factories[1] = regularGrammar;
 		
 		//TODO if suffix-array: call SAGrammarFactory(SuffixArray sourceSuffixArray, CorpusArray targetCorpus, AlignmentArray alignments, LexicalProbabilities lexProbs, int maxPhraseSpan, int maxPhraseLength, int maxNonterminals, int spanLimit) {
 	}
 	
 	
 	private void initializeSuffixArrayGrammar() throws IOException {
-		p_tm_grammars = new GrammarFactory[2];
+		p_tm_grammar_factories = new GrammarFactory[2];
 		
 		// Glue Grammar
 		GrammarFactory glueGrammar =
-			new MemoryBasedBatchGrammarWithPrune(
-			//new MemoryBasedBatchGrammar(
+			//new MemoryBasedBatchGrammarWithPrune(
+			new MemoryBasedBatchGrammar(
 				p_symbolTable, null, true, p_l_feat_functions,
 				JoshuaConfiguration.phrase_owner,
 				-1,
 				"^\\[[A-Z]+\\,[0-9]*\\]$",
 				"[\\[\\]\\,0-9]+");
 		
-		p_tm_grammars[0] = glueGrammar;
+		p_tm_grammar_factories[0] = glueGrammar;
 		
 		int sampleSize = JoshuaConfiguration.sa_rule_sample_size;
 		int maxPhraseSpan = JoshuaConfiguration.sa_max_phrase_span;
@@ -446,7 +451,7 @@ public class JoshuaDecoder {
 				lexProbs, sampleSize, maxPhraseSpan, maxPhraseLength, 
 				maxNonterminals, minNonterminalSpan);
 		
-		p_tm_grammars[1] = suffixArrayGrammar;
+		p_tm_grammar_factories[1] = suffixArrayGrammar;
 	}
 	
 	

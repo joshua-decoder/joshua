@@ -17,7 +17,10 @@
  */
 package joshua.decoder.ff.tm;
 
+import java.util.ArrayList;
 import java.util.List;
+
+import joshua.decoder.ff.FeatureFunction;
 
 /**
  * 
@@ -34,12 +37,13 @@ import java.util.List;
 public interface RuleCollection {
 
 	// TODO: now, we assume this function will be called only
-	// after all the rules have been read this method need to
+	// after all the rules have been read; this method need to
 	// be synchronized as we will call this function only after
 	// the decoding begins to avoid the synchronized method,
 	// we should call this once the grammar is finished
 	// // public synchronized ArrayList<Rule> get_sorted_rules(){
-	public abstract List<Rule> getSortedRules();  //only CubePruning requires that rules are sorted based on est_cost (confirmed by zhifei)
+	//l_models: if it is non-null, then the rules will be sorted using the new feature functions (or new weight), otherwise, just return a sorted list based on the last time of feature functions
+	public abstract List<Rule> getSortedRules(ArrayList<FeatureFunction> l_models);  //only CubePruning requires that rules are sorted based on est_cost (confirmed by zhifei)
 	
 	public abstract int[] getSourceSide();//note that the source side is the same for all the rules in the RuleCollection
 	

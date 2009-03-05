@@ -17,6 +17,9 @@
  */
 package joshua.decoder.ff.tm;
 
+import java.util.ArrayList;
+
+import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.tm.TrieGrammar;
 
 
@@ -45,4 +48,9 @@ public interface Grammar {
 	 * systems, may have different behaviors.
 	 */
 	public boolean hasRuleForSpan(int startIndex, int endIndex,	int pathLength);
+	
+	
+	/*to do cube-pruning, we need to make the grammar sorted based on the latest feature functions*/
+	public void sortGrammar(ArrayList<FeatureFunction> l_models);
+	
 }

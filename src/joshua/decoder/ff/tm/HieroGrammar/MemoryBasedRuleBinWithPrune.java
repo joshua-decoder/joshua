@@ -5,8 +5,12 @@ import java.util.PriorityQueue;
 
 import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.Support;
+import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.tm.Rule;
 
+
+
+//TODO: bug in getSortedRules: even the l_models is new, we do not update the est cost for the rule, which is wrong
 
 /** contain all rules with the same french side (and thus same arity) */
 	public class MemoryBasedRuleBinWithPrune	extends MemoryBasedRuleBin {
@@ -28,8 +32,9 @@ import joshua.decoder.ff.tm.Rule;
 		 * what about the weights changed as in MERT??
 		 */
 		//public synchronized ArrayList<Rule> get_sorted_rules() {
-		public ArrayList<Rule> getSortedRules() {
-			if (! this.sorted) {
+		public ArrayList<Rule> getSortedRules(ArrayList<FeatureFunction> l_models) {
+			if (l_models!=null  || !this.sorted) {
+				//TODO: even the l_models is new, we do not update the est cost for the rule, which is wrong
 				this.sortedRules.clear();
 				while (this.heapRules.size() > 0) {
 					Rule t_r = (Rule) this.heapRules.poll();

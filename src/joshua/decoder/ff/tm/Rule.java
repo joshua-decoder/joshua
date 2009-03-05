@@ -174,16 +174,16 @@ public class Rule {
 	/** 
 	 * set a lower-bound estimate inside the rule returns full estimate.
 	 */
-	public static float estimateRuleCost(Rule rl, ArrayList<FeatureFunction> p_l_models) {
+	public float estimateRuleCost(ArrayList<FeatureFunction> p_l_models) {
 		if (null == p_l_models) {
 			return 0;
 		}else{		
 			float estcost      = 0.0f;
 			for (FeatureFunction ff : p_l_models) {
-				double mdcost = ff.estimate(rl) * ff.getWeight();
+				double mdcost = ff.estimate(this) * ff.getWeight();
 				estcost += mdcost;
 			}
-			rl.est_cost = estcost;
+			this.est_cost = estcost;
 			return estcost;
 		}
 	}

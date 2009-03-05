@@ -3,6 +3,7 @@ package joshua.decoder.ff.tm.HieroGrammar;
 import java.util.ArrayList;
 import java.util.PriorityQueue;
 import joshua.decoder.Support;
+import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.RuleCollection;
 
@@ -25,11 +26,13 @@ import joshua.decoder.ff.tm.RuleCollection;
 		 * what about the weights changed as in MERT??
 		 */
 		//public synchronized ArrayList<Rule> get_sorted_rules() {
-		public ArrayList<Rule> getSortedRules() {
-			if (! this.sorted) {
+		public ArrayList<Rule> getSortedRules(ArrayList<FeatureFunction> l_models) {
+			if (l_models!=null || !this.sorted) {
 				//==use a priority queue to help sort
 				PriorityQueue<Rule> t_heapRules = new PriorityQueue<Rule>(1, Rule.NegtiveCostComparator);
-				for(Rule rule : sortedRules ){					
+				for(Rule rule : sortedRules ){	
+					if(l_models!=null)
+						rule.estimateRuleCost(l_models);
 					t_heapRules.add(rule);
 				}
 				

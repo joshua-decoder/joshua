@@ -192,10 +192,7 @@ public class DecoderThread extends Thread {
 		for (int i = 0; i < grammarFactories.length; i++) {
 			// TODO: if using suffix-array, then we need provide a non-null Phrase object (i.e., the input sentence)
 			grammars[i] = grammarFactories[i].getGrammarForSentence(new Pattern(this.p_symbolTable,sentence_numeric));
-			if (null == grammars[i].getTrieRoot()) {
-				logger.severe("grammars getTrieRoot is null; i is " + i);
-				System.exit(0);
-			}
+//			grammars[i].sortGrammar(models);//TODO: for batch grammar, we do not want to sort it every time
 		}
 		
 		//seeding: the chart only sees the grammars, not the grammarFactories

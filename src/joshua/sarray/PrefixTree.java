@@ -17,6 +17,7 @@
  */
 package joshua.sarray;
 
+import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.RuleCollection;
@@ -722,12 +723,13 @@ public class PrefixTree {
 					return arity;
 				}
 
-				public List<Rule> getSortedRules() {
-					return sortedResults;
-				}
-
+				
 				public int[] getSourceSide() {
 					return sourceSide;
+				}
+
+				public List<Rule> getSortedRules(ArrayList<FeatureFunction> l_models) {
+					return sortedResults;
 				}
 				
 			};
@@ -741,7 +743,7 @@ public class PrefixTree {
 		 */
 		public List<Rule> getAllRules() {
 			
-			List<Rule> result = new ArrayList<Rule>(getRules().getSortedRules());
+			List<Rule> result = new ArrayList<Rule>(getRules().getSortedRules(null));
 			
 			for (Node child : children.values()) {
 				result.addAll(child.getAllRules());
@@ -1034,6 +1036,11 @@ public class PrefixTree {
 			} else {
 				return (endIndex - startIndex <= PrefixTree.this.maxPhraseSpan);
 			}
+		}
+
+		public void sortGrammar(ArrayList<FeatureFunction> l_models) {
+			// TODO Auto-generated method stub
+			
 		}
 
 	}

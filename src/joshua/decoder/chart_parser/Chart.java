@@ -183,7 +183,7 @@ public class Chart {
 							RuleCollection rules = dt.tnode.getRules();
 							if (null != rules) {//have rules under this trienode
 								if (rules.getArity() == 0) {//rules without any non-terminal
-									List<Rule> l_rules = rules.getSortedRules();
+									List<Rule> l_rules = rules.getSortedRules(null);
 									for (Rule rule : l_rules) {
 										add_axiom(i, j, rule, lattice_cost);
 									}
@@ -305,7 +305,7 @@ public class Chart {
 			&& child_tnode.getRules().getArity() == 1) {//have unary rules under this trienode					
 				ArrayList<HGNode> l_ants = new ArrayList<HGNode>();
 				l_ants.add(item);
-				List<Rule> l_rules = child_tnode.getRules().getSortedRules();
+				List<Rule> l_rules = child_tnode.getRules().getSortedRules(null);
 				
 				for (Rule rule : l_rules){//for each unary rules								
 					ComputeItemResult tbl_states = chart_bin.compute_item(rule, l_ants, i, j);				

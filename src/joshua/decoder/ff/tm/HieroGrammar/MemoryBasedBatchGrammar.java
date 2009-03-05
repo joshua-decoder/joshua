@@ -93,7 +93,7 @@ public class MemoryBasedBatchGrammar  extends BatchGrammar {
 			this.add_rule(line,  defaultOwner);
 		}
 		this.print_grammar();
-		this.ensure_grammar_sorted();
+		this.sortGrammar(null);//the rule cost has been estimated using the latest feature function
 	}
 	
 
@@ -108,7 +108,7 @@ public class MemoryBasedBatchGrammar  extends BatchGrammar {
 		this.add_rule("S ||| [S,1] [" + JoshuaConfiguration.default_non_terminal + ",2] ||| [S,1] [" + JoshuaConfiguration.default_non_terminal + ",2] ||| " + alpha,this.p_symbolTable.addTerminal(JoshuaConfiguration.begin_mono_owner));
 		//glue_gr.add_rule("S ||| [S,1] [PHRASE,2] [PHRASE,3] ||| [S,1] [PHRASE,2] [PHRASE,3] ||| "+alpha, MONO_OWNER);
 		print_grammar();
-		ensure_grammar_sorted();
+		sortGrammar(null);//the rule cost has been estimated using the latest feature function
 	}
 	
 	
@@ -188,7 +188,7 @@ public class MemoryBasedBatchGrammar  extends BatchGrammar {
 		res.lattice_cost = 0;
 		//tem_estcost += estimate_rule();//estimate lower-bound, and set statelesscost, this must be called
 		
-		Rule.estimateRuleCost(res, p_l_models);//estimate lower-bound, and set statelesscost, this must be called
+		res.estimateRuleCost(p_l_models);//estimate lower-bound, and set statelesscost, this must be called
 		return res;
 
 	}
@@ -240,9 +240,9 @@ public class MemoryBasedBatchGrammar  extends BatchGrammar {
 	
 	
 	//this method should be called such that all the rules in rulebin are sorted, this will avoid synchronization for get_sorted_rules function
-	protected void ensure_grammar_sorted() {
+	public void sortGrammar(ArrayList<FeatureFunction> l_models) {
 		if (null != this.root) {
-			this.root.ensure_sorted();
+			this.root.ensure_sorted(l_models);
 		}
 	}
 	

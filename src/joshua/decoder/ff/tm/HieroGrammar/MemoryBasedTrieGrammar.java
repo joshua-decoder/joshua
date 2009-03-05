@@ -3,8 +3,10 @@
  */
 package joshua.decoder.ff.tm.HieroGrammar;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
+import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.tm.RuleCollection;
 import joshua.decoder.ff.tm.TrieGrammar;
 
@@ -40,14 +42,14 @@ public class MemoryBasedTrieGrammar implements TrieGrammar {
 		
 		
 		//recursive call, to make sure all rules are sorted
-		void ensure_sorted() {
+		void ensure_sorted(ArrayList<FeatureFunction> l_models) {
 			if (null != this.rule_bin) {
-				this.rule_bin.getSortedRules();
+				this.rule_bin.getSortedRules(l_models);
 			}
 			if (null != this.tbl_children) {
 				Object[] tem = this.tbl_children.values().toArray();
 				for (int i = 0; i < tem.length; i++) {
-					((MemoryBasedTrieGrammar)tem[i]).ensure_sorted();
+					((MemoryBasedTrieGrammar)tem[i]).ensure_sorted(l_models);
 				}
 			}
 		}
