@@ -123,7 +123,7 @@ public class Pattern extends BasicPhrase {
 	 * 
 	 * @return
 	 */
-	public int[] getTerminalSequenceLengths() {
+	public byte[] getTerminalSequenceLengths() {
 		
 		int size = 0;
 		boolean readyToStartSequence = true;
@@ -139,12 +139,12 @@ public class Pattern extends BasicPhrase {
 			}
 		}
 		
-		int[] result = new int[size];
+		byte[] result = new byte[size];
 		
 		if (size > 0) {
 
 			int index=0;
-			int count=0;
+			byte count=0;
 
 			for (int word : words) {
 				if (word < 0) {

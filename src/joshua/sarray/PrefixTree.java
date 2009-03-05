@@ -680,8 +680,6 @@ public class PrefixTree {
 		boolean active;
 		Node suffixLink;
 
-		List<Matching> matchings;
-
 		Map<Integer,Node> children;
 		
 		/** Source side hierarchical phrases for this node. */

@@ -47,8 +47,15 @@ public class HierarchicalPhrases {
 	/** 
 	 * Represents the length of each 
 	 * contiguous sequence of terminals in the pattern. 
+	 * <p>
+	 * To save memory, this information is stored as 
+	 * bytes instead of integers. 
+	 * 
+	 * This means that the maximum value that can be
+	 * stored here is 127. This should not be a problem
+	 * unless a very large value is used for maximum phrase length.
 	 */
-	private final int[] terminalSequenceLengths;
+	private final byte[] terminalSequenceLengths;
 	
 	
 	/** Number of hierarchical phrases represented by this object. */

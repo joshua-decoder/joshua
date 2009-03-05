@@ -275,7 +275,30 @@ public class ExtractRules {
 				if (commandLine.getValue(confirm)) {
 					if (logger.isLoggable(Level.INFO)) logger.info("Please press a key to continue");
 					System.in.read();
-					if (logger.isLoggable(Level.FINER)) logger.finer("Prefix tree had " + prefixTree.size() + " nodes.");
+					if (logger.isLoggable(Level.FINER)) {
+						logger.finer("Prefix tree had " + prefixTree.size() + " nodes.");
+						
+						Pattern maxPattern = null;
+						int maxHPsize = 0;
+						int hpsize = 0;
+						int psize = 0;
+						for (Map.Entry<Pattern,HierarchicalPhrases> entry : sourceSuffixArray.hierarchicalPhraseCache.entrySet()) {
+							psize++;
+							hpsize += entry.getValue().size();
+							if (hpsize>maxHPsize) {
+								maxHPsize = hpsize;
+								maxPattern = entry.getKey();
+							}
+						}
+			
+						logger.finer(
+								psize + " source side entries in the SA cache." + "\n" +
+								hpsize+ " target side HierarchicalPhrases represented in the cache." + "\n" +
+								maxHPsize + " is the most HierarchicalPhrases stored for one source side entry ( " +
+								maxPattern + ")\n"
+							);		
+					}
+					
 				}
 			}
 			

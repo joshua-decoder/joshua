@@ -90,7 +90,7 @@ public class PatternTest {
 		{
 			int[] flatWords = {1, 2, 3, 4, 5};
 			Pattern flat = new Pattern(vocab, flatWords);
-			int[] flatSeqs = flat.getTerminalSequenceLengths();
+			byte[] flatSeqs = flat.getTerminalSequenceLengths();
 
 			Assert.assertNotNull(flatSeqs);
 			Assert.assertEquals(flatSeqs.length, 1);
@@ -100,7 +100,7 @@ public class PatternTest {
 		{
 			int[] hierWords = {1, PrefixTree.X, 6, 7};
 			Pattern hier = new Pattern(vocab, hierWords);
-			int[] hierSeqs = hier.getTerminalSequenceLengths();
+			byte[] hierSeqs = hier.getTerminalSequenceLengths();
 			
 			Assert.assertNotNull(hierSeqs);
 			Assert.assertEquals(hierSeqs.length, 2);
@@ -111,7 +111,7 @@ public class PatternTest {
 		{
 			int[] hierWords = {PrefixTree.X, 6, 7};
 			Pattern hier = new Pattern(vocab, hierWords);
-			int[] hierSeqs = hier.getTerminalSequenceLengths();
+			byte[] hierSeqs = hier.getTerminalSequenceLengths();
 			
 			Assert.assertNotNull(hierSeqs);
 			Assert.assertEquals(hierSeqs.length, 1);
@@ -121,7 +121,7 @@ public class PatternTest {
 		{
 			int[] hierWords = {1, 2, 3, PrefixTree.X};
 			Pattern hier = new Pattern(vocab, hierWords);
-			int[] hierSeqs = hier.getTerminalSequenceLengths();
+			byte[] hierSeqs = hier.getTerminalSequenceLengths();
 			
 			Assert.assertNotNull(hierSeqs);
 			Assert.assertEquals(hierSeqs.length, 1);
@@ -131,7 +131,7 @@ public class PatternTest {
 		{
 			int[] hierWords = {1, PrefixTree.X, 6, 7, PrefixTree.X};
 			Pattern hier = new Pattern(vocab, hierWords);
-			int[] hierSeqs = hier.getTerminalSequenceLengths();
+			byte[] hierSeqs = hier.getTerminalSequenceLengths();
 			
 			Assert.assertNotNull(hierSeqs);
 			Assert.assertEquals(hierSeqs.length, 2);
@@ -142,7 +142,7 @@ public class PatternTest {
 		{
 			int[] hierWords = {PrefixTree.X, 6, 7, PrefixTree.X, 10};
 			Pattern hier = new Pattern(vocab, hierWords);
-			int[] hierSeqs = hier.getTerminalSequenceLengths();
+			byte[] hierSeqs = hier.getTerminalSequenceLengths();
 			
 			Assert.assertNotNull(hierSeqs);
 			Assert.assertEquals(hierSeqs.length, 2);
@@ -153,7 +153,7 @@ public class PatternTest {
 		{
 			int[] hierWords = {1, 2, 3, PrefixTree.X, 6, 7, PrefixTree.X};
 			Pattern hier = new Pattern(vocab, hierWords);
-			int[] hierSeqs = hier.getTerminalSequenceLengths();
+			byte[] hierSeqs = hier.getTerminalSequenceLengths();
 			
 			Assert.assertNotNull(hierSeqs);
 			Assert.assertEquals(hierSeqs.length, 2);
@@ -164,7 +164,7 @@ public class PatternTest {
 		{
 			int[] hierWords = {1, PrefixTree.X, 6, PrefixTree.X, 9};
 			Pattern hier = new Pattern(vocab, hierWords);
-			int[] hierSeqs = hier.getTerminalSequenceLengths();
+			byte[] hierSeqs = hier.getTerminalSequenceLengths();
 			
 			Assert.assertNotNull(hierSeqs);
 			Assert.assertEquals(hierSeqs.length, 3);
@@ -176,7 +176,7 @@ public class PatternTest {
 		{
 			int[] hierWords = {1, 2, 3, PrefixTree.X, 6, 7, PrefixTree.X, 9, 10, 11, 12};
 			Pattern hier = new Pattern(vocab, hierWords);
-			int[] hierSeqs = hier.getTerminalSequenceLengths();
+			byte[] hierSeqs = hier.getTerminalSequenceLengths();
 			
 			Assert.assertNotNull(hierSeqs);
 			Assert.assertEquals(hierSeqs.length, 3);

@@ -25,7 +25,9 @@ import java.util.regex.*;
 
 /**
  * FileUtil is the class that makes some common file operations
- * easier. Deprecated: will be merged into joshua.util.FileUtility,
+ * easier. 
+ *
+ * TODO merged into joshua.util.FileUtility,
  * possibly breaking out JoshuaReader and JoshuaWriter in order to
  * provide a better interface.
  *
@@ -34,6 +36,7 @@ import java.util.regex.*;
  * @author wren ng thornton <wren@users.sourceforge.net>
  * @since 28 February 2009
  * @version $LastChangedDate:2008-07-30 17:15:52 -0400 (Wed, 30 Jul 2008) $
+ * @deprecated
  */
 
 public class FileUtil {
