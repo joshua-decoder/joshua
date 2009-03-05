@@ -124,19 +124,48 @@ public class ExtractRules {
 			String sourceFileName = commandLine.getValue(source);
 			Vocabulary sourceVocab = new Vocabulary();
 			int[] sourceWordsSentences = SuffixArrayFactory.createVocabulary(sourceFileName, sourceVocab);
+			if (commandLine.getValue(confirm)) {
+			    if (logger.isLoggable(Level.INFO)) logger.info("Please press a key to continue");
+			    System.in.read();
+			}
+
 			if (logger.isLoggable(Level.INFO)) logger.info("Constructing source language corpus array.");
 			CorpusArray sourceCorpusArray = SuffixArrayFactory.createCorpusArray(sourceFileName, sourceVocab, sourceWordsSentences[0], sourceWordsSentences[1]);
-			if (logger.isLoggable(Level.FINE)) logger.info("Constructing source language suffix array.");
+
+			if (commandLine.getValue(confirm)) {
+			    if (logger.isLoggable(Level.INFO)) logger.info("Please press a key to continue");
+			    System.in.read();
+			}
+
+			if (logger.isLoggable(Level.INFO)) logger.info("Constructing source language suffix array.");
 			SuffixArray sourceSuffixArray = SuffixArrayFactory.createSuffixArray(sourceCorpusArray);
+			if (commandLine.getValue(confirm)) {
+			    if (logger.isLoggable(Level.INFO)) logger.info("Please press a key to continue");
+			    System.in.read();
+			}
 
 			if (logger.isLoggable(Level.INFO)) logger.info("Constructing target language vocabulary.");		
 			String targetFileName = commandLine.getValue(target);
 			Vocabulary targetVocab = new Vocabulary();
 			int[] targetWordsSentences = SuffixArrayFactory.createVocabulary(commandLine.getValue(target), targetVocab);
+			if (commandLine.getValue(confirm)) {
+			    if (logger.isLoggable(Level.INFO)) logger.info("Please press a key to continue");
+			    System.in.read();
+			}
+
 			if (logger.isLoggable(Level.INFO)) logger.info("Constructing target language corpus array.");
 			CorpusArray targetCorpusArray = SuffixArrayFactory.createCorpusArray(targetFileName, targetVocab, targetWordsSentences[0], targetWordsSentences[1]);
+			if (commandLine.getValue(confirm)) {
+			    if (logger.isLoggable(Level.INFO)) logger.info("Please press a key to continue");
+			    System.in.read();
+			}
+
 			if (logger.isLoggable(Level.INFO)) logger.info("Constructing target language suffix array.");
 			SuffixArray targetSuffixArray = SuffixArrayFactory.createSuffixArray(targetCorpusArray);
+			if (commandLine.getValue(confirm)) {
+			    if (logger.isLoggable(Level.INFO)) logger.info("Please press a key to continue");
+			    System.in.read();
+			}
 
 			int trainingSize = sourceCorpusArray.getNumSentences();
 			if (trainingSize != targetCorpusArray.getNumSentences()) {
@@ -153,7 +182,12 @@ public class ExtractRules {
 				if (logger.isLoggable(Level.INFO)) logger.info("Using AlignmentGrids");
 				alignments = new AlignmentGrids(new Scanner(new File(alignmentFileName)), sourceCorpusArray, targetCorpusArray, trainingSize);
 			}
+			if (commandLine.getValue(confirm)) {
+			    if (logger.isLoggable(Level.INFO)) logger.info("Please press a key to continue");
+			    System.in.read();
+			}
 			
+
 			// Set up the source text for reading
 //			Scanner target_given_source;
 //			if (commandLine.getValue(target_given_source_counts).endsWith(".gz") || commandLine.getValue(target_given_source_gz))
@@ -188,6 +222,11 @@ public class ExtractRules {
 			//new LexProbs(source_given_target, target_given_source, sourceVocab, targetVocab);
 
 			if (logger.isLoggable(Level.INFO)) logger.info("Done constructing lexical probabilities table");
+
+			if (commandLine.getValue(confirm)) {
+			    if (logger.isLoggable(Level.INFO)) logger.info("Please press a key to continue");
+			    System.in.read();
+			}
 
 			if (logger.isLoggable(Level.INFO)) logger.info("Should store a max of " + commandLine.getValue(ruleSampleSize) + " rules at each node in a prefix tree.");
 
