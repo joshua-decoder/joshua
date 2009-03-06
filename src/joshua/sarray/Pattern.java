@@ -36,6 +36,7 @@ public class Pattern extends BasicPhrase {
 // Member variables
 //===============================================================
 
+	/** The number of nonterminals in this pattern. */
 	final int arity;
 
 
@@ -241,20 +242,6 @@ public class Pattern extends BasicPhrase {
 		return words;
 	}
 	
-//	enum PrefixCase {
-//		EMPTY_PREFIX,
-//		ENDS_WITH_NONTERMINAL,
-//		ENDS_WITH_TWO_TERMINALS,
-//		ENDS_WITH_NONTERMINAL_TERMINAL
-//	}
-//	
-//	enum SuffixCase {
-//		EMPTY_SUFFIX,
-//		STARTS_WITH_NONTERMINAL,
-//		STARTS_WITH_TWO_TERMINALS,
-//		STARTS_WITH_TERMINAL_NONTERMINAL
-//	}
-	
 //===============================================================
 // Private 
 //===============================================================
@@ -264,12 +251,16 @@ public class Pattern extends BasicPhrase {
 	//===============================================================
 	
 	
+	/**
+	 * Gets the number of nonterminals in this pattern.
+	 * 
+	 * @return the number of nonterminals in this pattern.
+	 */
 	private int calculateArity(int[] words) {
 		
 		int arity = 0;
 		
 		for (int element : words) {
-//			if (element==PrefixTree.X) arity++;
 			if (element < 0) arity++;
 		}
 		
@@ -277,72 +268,5 @@ public class Pattern extends BasicPhrase {
 	}
 	
 	
-//	private PrefixCase prefixCase(int[] words) {
-//		
-//		if (words==null || words.length==0)
-//			return PrefixCase.EMPTY_PREFIX;
-//		
-//		if (words[words.length-1] == PrefixTree.X) {
-//			
-//			return PrefixCase.ENDS_WITH_NONTERMINAL;
-//			
-//		} else {
-//			
-//			if (words.length > 1) {
-//				
-//				if (words[words.length-2] == PrefixTree.X) {
-//					
-//					return PrefixCase.ENDS_WITH_NONTERMINAL_TERMINAL;
-//					
-//				} else {
-//					
-//					return PrefixCase.ENDS_WITH_TWO_TERMINALS;
-//					
-//				}
-//				
-//			} else {
-//				
-//				return PrefixCase.EMPTY_PREFIX;
-//				
-//			}
-//			
-//		}
-//		
-//	}
-	
-	
-//	private SuffixCase suffixCase(int[] words) {
-//		
-//		if (words==null || words.length==0)
-//			return SuffixCase.EMPTY_SUFFIX;;
-//		
-//		if (words[0] == PrefixTree.X) {
-//		
-//			return SuffixCase.STARTS_WITH_NONTERMINAL;
-//		
-//		} else {
-//			
-//			if (words.length > 1) {
-//				
-//				if (words[1] == PrefixTree.X) {
-//					
-//					return SuffixCase.STARTS_WITH_TERMINAL_NONTERMINAL;
-//					
-//				} else {
-//					
-//					return SuffixCase.STARTS_WITH_TWO_TERMINALS;
-//					
-//				}
-//				
-//				
-//			} else {
-//				
-//				return SuffixCase.EMPTY_SUFFIX;
-//				
-//			}
-//			
-//		}
-//		
-//	}
 	
 }

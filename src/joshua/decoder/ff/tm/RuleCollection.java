@@ -23,30 +23,50 @@ import java.util.List;
 import joshua.decoder.ff.FeatureFunction;
 
 /**
+ * Represents a set of rules under a particular TrieGrammar node. 
+ * Therefore, all the rules under a RuleCollection will share:
+ * 
+ * <ul>
+ *   <li>arity</li>
+ *   <li>source side</li>
+ * </ul>
  * 
  * @author Zhifei Li
  * @author Lane Schwartz
  * @version $LastChangedDate$
  */
-
-/* RuleColleciton is a set of rules that under a particular TriGrammar node. Therefore, all the rules under a RuleCollection will share:
- * (1) arity
- * (2) the source side
- * */
-
 public interface RuleCollection {
 
-	// TODO: now, we assume this function will be called only
-	// after all the rules have been read; this method need to
-	// be synchronized as we will call this function only after
-	// the decoding begins to avoid the synchronized method,
-	// we should call this once the grammar is finished
-	// // public synchronized ArrayList<Rule> get_sorted_rules(){
-	//l_models: if it is non-null, then the rules will be sorted using the new feature functions (or new weight), otherwise, just return a sorted list based on the last time of feature functions
-	public abstract List<Rule> getSortedRules(ArrayList<FeatureFunction> l_models);  //only CubePruning requires that rules are sorted based on est_cost (confirmed by zhifei)
+	/**
+	 * TODO: now, we assume this function will be called only
+	 * after all the rules have been read; this method need to
+	 * be synchronized as we will call this function only after
+	 * the decoding begins to avoid the synchronized method,
+	 * we should call this once the grammar is finished
+	 * <p>
+	 * public synchronized ArrayList<Rule> get_sorted_rules(){
+	 * l_models: if it is non-null, then the rules will be sorted using the new feature functions (or new weight), otherwise, just return a sorted list based on the last time of feature functions
+     * <p>
+     * Only CubePruning requires that rules are sorted based on est_cost (confirmed by zhifei)
+	 */
+	public abstract List<Rule> getSortedRules(ArrayList<FeatureFunction> l_models);
 	
-	public abstract int[] getSourceSide();//note that the source side is the same for all the rules in the RuleCollection
+	/**
+	 * Gets the source side for all rules in this RuleCollection.
+	 * This source side is the same for all the rules in the RuleCollection.
+	 * 
+	 * @return the (common) source side for all rules in this RuleCollection
+	 */
+	public abstract int[] getSourceSide();
 	
+	/**
+	 * Gets the number of nonterminals in the source side of the rules in this RuleCollection.
+	 * The source side is the same for all the rules in the RuleCollection,
+	 * so the arity will also be the same for all of these rules.
+	 * 
+	 * @return the (common) number of nonterminals in 
+	 *         the source side of the rules in this RuleCollection
+	 */
 	public abstract int getArity();
 	
 }
