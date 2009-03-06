@@ -91,6 +91,7 @@ public class ExtractRules {
 			Option<String> alignmentType = commandLine.addStringOption("alignmentsType","ALIGNMENT_TYPE","AlignmentGrids","Type of alignment data structure");
 			Option<Boolean> confirm = commandLine.addBooleanOption("confirm",false,"should program pause for user input before constructing prefix trees?");
 			Option<Boolean> keepTree = commandLine.addBooleanOption("keepTree",false,"should a single prefix tree be used (instead of one per sentence)?");
+			Option<Boolean> requireTightSpans = commandLine.addBooleanOption("tightSpans",true,"Require tightly aligned spans");
 			
 			
 			commandLine.parse(args);
@@ -175,7 +176,7 @@ public class ExtractRules {
 				alignments = SuffixArrayFactory.createAlignmentArray(alignmentFileName, sourceSuffixArray, targetSuffixArray);
 			} else {
 				if (logger.isLoggable(Level.INFO)) logger.info("Using AlignmentGrids");
-				alignments = new AlignmentGrids(new Scanner(new File(alignmentFileName)), sourceCorpusArray, targetCorpusArray, trainingSize);
+				alignments = new AlignmentGrids(new Scanner(new File(alignmentFileName)), sourceCorpusArray, targetCorpusArray, trainingSize, commandLine.getValue(requireTightSpans));
 			}
 			if (commandLine.getValue(confirm)) {
 			    if (logger.isLoggable(Level.INFO)) logger.info("Please press a key to continue");

@@ -47,6 +47,23 @@ public class AlignmentGrids extends AbstractAlignments {
 	 * @param expectedSize Expected number of training sentences. 
 	 */
 	public AlignmentGrids(Scanner alignmentScanner, CorpusArray sourceCorpus, CorpusArray targetCorpus, int expectedSize) {
+		this(alignmentScanner, sourceCorpus, targetCorpus, expectedSize, true);
+	}
+	
+	/**
+	 * Constructs a list of AlignmentGrid objects.
+	 * <p>
+	 * The size parameter is used to allocate the initial capacity of the backing list.
+	 * If this number is off, things will still work, but memory usage may be less optimal.
+	 * 
+	 * @param alignmentsFile
+	 * @param sourceCorpus
+	 * @param targetCorpus
+	 * @param expectedSize Expected number of training sentences.
+	 * @param requireTightSpans 
+	 */
+	public AlignmentGrids(Scanner alignmentScanner, CorpusArray sourceCorpus, CorpusArray targetCorpus, int expectedSize, boolean requireTightSpans) {
+		super(requireTightSpans);
 		
 		this.alignments = new ArrayList<AlignmentGrid>(expectedSize);
 		this.sourceCorpus = sourceCorpus;
