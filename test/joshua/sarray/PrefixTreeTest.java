@@ -66,7 +66,9 @@ public class PrefixTreeTest {
 		
 		PrefixTree.idsToStrings = idToString;
 		
-		tree = new PrefixTree(sentence, maxPhraseSpan, maxPhraseLength, maxNonterminals);
+		//tree = new PrefixTree(sentence, maxPhraseSpan, maxPhraseLength, maxNonterminals);
+		tree = new PrefixTree(maxPhraseSpan, maxPhraseLength, maxNonterminals);
+		tree.add(sentence);
 		
 	}
 
@@ -99,22 +101,22 @@ public class PrefixTreeTest {
 		Node root_him = root.addChild(him);
 		Node root_him_x = root_him.addChild(PrefixTree.X);
 		
-		Node root_him_suffixLink = PrefixTree.calculateSuffixLink(root, him);
+		Node root_him_suffixLink = root.calculateSuffixLink(him);
 		Assert.assertEquals(root_him_suffixLink, root);
 		root_him.linkToSuffix(root_him_suffixLink);
 		Assert.assertEquals(root_him.suffixLink, root_him_suffixLink);
 		
-		Node root_x_suffixLink = PrefixTree.calculateSuffixLink(root, PrefixTree.X);
+		Node root_x_suffixLink = root.calculateSuffixLink(PrefixTree.X);
 		Assert.assertEquals(root_x_suffixLink, root);
 		root_x.linkToSuffix(root_x_suffixLink);
 		Assert.assertEquals(root_x.suffixLink, root_x_suffixLink);
 		
-		Node root_x_him_suffixLink = PrefixTree.calculateSuffixLink(root_x, him);
+		Node root_x_him_suffixLink = root_x.calculateSuffixLink(him);
 		Assert.assertEquals(root_x_him_suffixLink, root_him);
 		root_x_him.linkToSuffix(root_x_him_suffixLink);
 		Assert.assertEquals(root_x_him.suffixLink, root_x_him_suffixLink);
 		
-		Node root_x_him_x_suffixLink = PrefixTree.calculateSuffixLink(root_x_him, PrefixTree.X);
+		Node root_x_him_x_suffixLink = root_x_him.calculateSuffixLink(PrefixTree.X);
 		Assert.assertEquals(root_x_him_x_suffixLink, root_him_x);
 		root_x_him_x.linkToSuffix(root_x_him_x_suffixLink);
 		Assert.assertEquals(root_x_him_x.suffixLink, root_x_him_x_suffixLink);

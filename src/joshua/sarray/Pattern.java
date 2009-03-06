@@ -82,10 +82,35 @@ public class Pattern extends BasicPhrase {
 	 * @param word Words to append to the new pattern.
 	 */
 	public Pattern(Pattern pattern, int... word) {
-		super(PrefixTree.pattern(pattern.words, word),pattern.vocab);
+		super(pattern(pattern.words, word),pattern.vocab);
 		this.arity = calculateArity(this.words);
 	}
 	
+	public Pattern(SymbolTable vocab, int[] patternStart, int... patternEnd) {
+		super(pattern(patternStart,patternEnd), vocab);
+		this.arity = calculateArity(this.words);
+	}
+	
+	/**
+	 * Constructs an new integer array by concatenating
+	 * two existing integer arrays together.
+	 *  
+	 * @param oldPattern
+	 * @param newPattern
+	 * @return
+	 */
+	protected static int[] pattern(int[] oldPattern, int... newPattern) {
+		int[] pattern = new int[oldPattern.length + newPattern.length];
+
+		for (int index=0; index<oldPattern.length; index++) {
+			pattern[index] = oldPattern[index];
+		}
+		for (int index=oldPattern.length; index<oldPattern.length+newPattern.length; index++) {
+			pattern[index] = newPattern[index - oldPattern.length];
+		}
+
+		return pattern;
+	}
 
 //===============================================================
 // Public

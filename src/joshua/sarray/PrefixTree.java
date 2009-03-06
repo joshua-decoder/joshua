@@ -17,13 +17,13 @@
  */
 package joshua.sarray;
 
+import joshua.corpus.SymbolTable;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.RuleCollection;
 import joshua.decoder.ff.tm.TrieGrammar;
 import joshua.util.lexprob.LexicalProbabilities;
-import joshua.util.sentence.Phrase;
 import joshua.util.sentence.Vocabulary;
 import joshua.util.sentence.alignment.Alignments;
 
@@ -43,6 +43,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
+ * Represents a prefix tree with suffix links, for use in extracting 
+ * hierarchical phrase-based statistical translation rules.
  * 
  * @author Lane Schwartz
  * @version $LastChangedDate:2008-11-13 13:13:31 -0600 (Thu, 13 Nov 2008) $
@@ -68,12 +70,9 @@ public class PrefixTree {
 	
 	/** Root node of this tree. */
 	final Node root;
-	
-	/** Source language sentence which this tree represents. */
-	final Phrase sentence;
 
+	/** Responsible for performing sampling and creating translation rules. */
 	private final RuleExtractor ruleExtractor;
-	
 	
 	/** Max span in the source corpus of any extracted hierarchical phrase */
 	final int maxPhraseSpan;   
@@ -83,29 +82,36 @@ public class PrefixTree {
 	
 	/** Maximum number of nonterminals allowed in any extracted hierarchical phrase. */
 	final int maxNonterminals;
-	
-	/** Maximum span in the source corpus of any nonterminal in an extracted hierarchical phrase. */
-//	private final int maxNonterminalSpan;
 
 	/** Minimum span in the source corpus of any nonterminal in an extracted hierarchical phrase. */
 	final int minNonterminalSpan;
 	
-	/** 
-	 * Maximum number of instances of a source phrase 
-	 * from the source corpus to use when translating a source phrase. 
-	 * <p>
-	 * Note: This is <em>not</em> the maximum number of hierarchical phrases
-	 * to store at each node in the prefix tree.
-	 */
-//	private final int sampleSize;
 	
 	/** Represents a very high cost, corresponding to a very unlikely probability. */
 	static final float VERY_UNLIKELY = -1.0f * (float) Math.log(1.0e-9);
 	
-	/** */
+	/** 
+	 * Indicates whether rules with an initial source-side nonterminal 
+	 * should be extracted from phrases at the start of a sentence, 
+	 * even though such rules do not have supporting corporal evidence.
+	 * <p>
+	 * This is included for compatibility with Adam Lopez's Hiero rule extractor,
+	 * in which this setting is set to <code>true</code>.
+	 * <p>
+	 * The default value is <code>false</code>.
+	 */
 	static boolean SENTENCE_INITIAL_X = false;
 	
-	/** */
+	/** 
+	 * Indicates whether rules with a final source-side nonterminal 
+	 * should be extracted from phrases at the end of a sentence, 
+	 * even though such rules do not have supporting corporal evidence.
+	 * <p>
+	 * This is included for compatibility with Adam Lopez's Hiero rule extractor,
+	 * in which this setting is set to <code>true</code>.
+	 * <p>
+	 * The default value is <code>false</code>.
+	 */
 	static boolean SENTENCE_FINAL_X = false;
 	
 	/** Unique integer identifier for the root node. */
@@ -152,13 +158,19 @@ public class PrefixTree {
 	
 	/** Lexical translation probabilities. */
 	final LexicalProbabilities lexProbs;
-		
+	
+	/** Source side symbol table */
+	final SymbolTable vocab;
+	
+	/** Empty pattern */
+	final Pattern epsilon;
+	
 	/** 
 	 * Node representing phrases that start with the nonterminal X. 
 	 * This node's parent is the root node of the tree. 
 	 */
 	private final Node xnode;
-	
+
 	/**
 	 * Constructs a new prefix tree with suffix links
 	 * using the GENERATE_PREFIX_TREE algorithm 
@@ -172,7 +184,7 @@ public class PrefixTree {
 	 * @param minNonterminalSpan Minimum number of source language tokens 
 	 *                           a nonterminal is allowed to encompass.
 	 */
-	public PrefixTree(SuffixArray suffixArray, CorpusArray targetCorpus, Alignments alignments, LexicalProbabilities lexProbs, RuleExtractor ruleExtractor, int[] sentence, int maxPhraseSpan, int maxPhraseLength, int maxNonterminals, int minNonterminalSpan) {
+	public PrefixTree(SuffixArray suffixArray, CorpusArray targetCorpus, Alignments alignments, LexicalProbabilities lexProbs, RuleExtractor ruleExtractor, int maxPhraseSpan, int maxPhraseLength, int maxNonterminals, int minNonterminalSpan) {
 
 		if (logger.isLoggable(Level.FINE)) logger.fine("\n\n\nConstructing new PrefixTree\n\n");
 
@@ -182,14 +194,10 @@ public class PrefixTree {
 		this.lexProbs = lexProbs;
 		this.ruleExtractor = ruleExtractor;
 		this.maxPhraseSpan = maxPhraseSpan;
-//		this.maxNonterminalSpan = maxPhraseSpan;
 		this.maxPhraseLength = maxPhraseLength;
 		this.maxNonterminals = maxNonterminals;
 		this.minNonterminalSpan = minNonterminalSpan;
-//		this.sampleSize = sampleSize;
 
-		int START_OF_SENTENCE = 0;
-		int END_OF_SENTENCE = sentence.length - 1;
 
 		Node bot = new Node(BOT_NODE_ID);
 		bot.sourceHierarchicalPhrases = HierarchicalPhrases.emptyList(this);
@@ -198,23 +206,19 @@ public class PrefixTree {
 		bot.children = botMap(root);
 		this.root.linkToSuffix(bot);
 
-		Vocabulary vocab;
-
 		if (suffixArray==null) {
-			this.sentence = null;
 			vocab = null;
 		} else {
-			this.sentence = new BasicPhrase(sentence, suffixArray.getVocabulary());
 			vocab = suffixArray.getVocabulary();
 			int[] bounds = {0, suffixArray.size()-1};
 			root.setBounds(bounds);
 		}
 		root.sourceHierarchicalPhrases = HierarchicalPhrases.emptyList(this);
 
-		Pattern epsilon = new Pattern(vocab);
+		// Define epsilon to be an empty pattern
+		epsilon = new Pattern(vocab);
 
-
-
+		
 		// 1: children(p_eps) <-- children(p_eps) U p_x
 
 		if (maxNonterminals > 0) {	// Create and set up the X node that comes off of ROOT
@@ -236,7 +240,7 @@ public class PrefixTree {
 			}
 
 			// Add a suffix link from X back to root
-			Node suffixLink = calculateSuffixLink(root, X);
+			Node suffixLink = root.calculateSuffixLink(X);
 
 			if (logger.isLoggable(Level.FINEST)) {
 				String oldSuffixLink = (xnode.suffixLink==null) ? "null" : "id"+xnode.suffixLink.objectID;
@@ -251,8 +255,40 @@ public class PrefixTree {
 
 		if (logger.isLoggable(Level.FINEST)) logger.finest("CURRENT TREE:  " + root);
 
-		//int I = END_OF_SENTENCE; //sentence.length-1;
+	}
 
+	/**
+	 * Constructs a new prefix tree with suffix links
+	 * using the GENERATE_PREFIX_TREE algorithm 
+	 * from Lopez (2008) PhD Thesis, Algorithm 2, p 76. 
+	 * <p>
+	 * This constructor does not take a suffix array parameter.
+	 * Instead any prefix tree constructed by this constructor
+	 * will assume that all possible phrases of this sentence
+	 * are valid phrases.
+	 * <p>
+	 * This constructor is meant to be used primarily for testing purposes.
+	 * 
+	 * @param sentence
+	 * @param maxPhraseSpan
+	 * @param maxPhraseLength
+	 * @param maxNonterminals
+	 */
+	PrefixTree(int maxPhraseSpan, int maxPhraseLength, int maxNonterminals) {
+		this(null, null, null, null, null, maxPhraseSpan, maxPhraseLength, maxNonterminals, 2);
+	}
+
+
+	/**
+	 * Modify this prefix tree by adding phrases for this sentence.
+	 * 
+	 * @param sentence
+	 */
+	public void add(int[] sentence) {
+		
+		int START_OF_SENTENCE = 0;
+		int END_OF_SENTENCE = sentence.length - 1;
+		
 		Queue<Tuple> queue = new LinkedList<Tuple>();
 
 		if (logger.isLoggable(Level.FINE)) logger.fine("Last sentence index == I == " + END_OF_SENTENCE);
@@ -349,7 +385,7 @@ public class PrefixTree {
 
 					// 15: p_beta <-- suffix_link(p_alpha_beta)
 					//     suffixNode in this code is p_beta_f_j, not p_beta
-					Node suffixNode = calculateSuffixLink(prefixNode, sentence[j]);
+					Node suffixNode = prefixNode.calculateSuffixLink(sentence[j]);
 
 					if (logger.isLoggable(Level.FINEST)) {
 						String oldSuffixLink = (newNode.suffixLink==null) ? "null" : "id"+newNode.suffixLink.objectID;
@@ -407,35 +443,8 @@ public class PrefixTree {
 			logger.finer("\n");
 			if (logger.isLoggable(Level.FINEST)) logger.finest("FINAL TREE:  " + root);
 		}
-
 	}
-
-	/**
-	 * Constructs a new prefix tree with suffix links
-	 * using the GENERATE_PREFIX_TREE algorithm 
-	 * from Lopez (2008) PhD Thesis, Algorithm 2, p 76. 
-	 * <p>
-	 * This constructor does not take a suffix array parameter.
-	 * Instead any prefix tree constructed by this constructor
-	 * will assume that all possible phrases of this sentence
-	 * are valid phrases.
-	 * <p>
-	 * This constructor is meant to be used primarily for testing purposes.
-	 * 
-	 * @param sentence
-	 * @param maxPhraseSpan
-	 * @param maxPhraseLength
-	 * @param maxNonterminals
-	 */
-	PrefixTree(int[] sentence, int maxPhraseSpan, int maxPhraseLength, int maxNonterminals) {
-		this(null, null, null, null, null, sentence, maxPhraseSpan, maxPhraseLength, maxNonterminals, 2);
-	}
-
-	public Grammar getRoot() {
-		return root;
-	}
-
-
+	
 
 	/**
 	 * Implements the root QUERY algorithm (Algorithm 4) of Adam Lopez's (2008) doctoral thesis.
@@ -551,7 +560,7 @@ public class PrefixTree {
 					xNode = node.addChild(X);
 					if (logger.isLoggable(Level.FINEST)) logger.finest("Adding node for \"" + X + "\" from " + node + " to new node " + xNode + " with alphaPattern " + pattern + "  (in extendQueue)");
 
-					Node suffixLink = calculateSuffixLink(node, X);
+					Node suffixLink = node.calculateSuffixLink(X);
 
 					if (logger.isLoggable(Level.FINEST)) {
 						String oldSuffixLink = (xNode.suffixLink==null) ? "null" : "id"+xNode.suffixLink.objectID;
@@ -572,7 +581,7 @@ public class PrefixTree {
 				// 6: Q_alphaX <-- Q_alpha
 				{
 					Vocabulary vocab = (suffixArray==null) ? null : suffixArray.getVocabulary();
-					Pattern xpattern = new Pattern(vocab, pattern(pattern.words, X));
+					Pattern xpattern = new Pattern(vocab, pattern.words, X);
 					
 					HierarchicalPhrases phrasesWithFinalX = new HierarchicalPhrases(xpattern, node.sourceHierarchicalPhrases); 
 					
@@ -607,17 +616,16 @@ public class PrefixTree {
 
 	}
 
-	static Node calculateSuffixLink(Node parent, int endOfPattern) {
 
-		Node suffixLink = parent.suffixLink.getChild(endOfPattern);
-
-		if (suffixLink==null)
-			throw new RuntimeException("No child " + endOfPattern + " for node " + parent.suffixLink + " (Parent was " + parent + ")");
-
-		return suffixLink;
-
+	/**
+	 * Gets the root node of this tree.
+	 * 
+	 * @return the root node of this tree
+	 */
+	public Grammar getRoot() {
+		return root;
 	}
-
+	
 	public List<Rule> getAllRules() {
 		
 		return root.getAllRules();
@@ -654,6 +662,18 @@ public class PrefixTree {
 		}
 	}
 
+
+//	static Node calculateSuffixLink(Node parent, int endOfPattern) {
+//
+//		Node suffixLink = parent.suffixLink.getChild(endOfPattern);
+//
+//		if (suffixLink==null)
+//			throw new RuntimeException("No child " + endOfPattern + " for node " + parent.suffixLink + " (Parent was " + parent + ")");
+//
+//		return suffixLink;
+//
+//	}
+	
 	static int nodeIDCounter = 0;
 	
 	static void resetNodeCounter() {
@@ -708,6 +728,16 @@ public class PrefixTree {
 			this.results = Collections.emptyList();
 		}
 		
+		Node calculateSuffixLink(int endOfPattern) {
+
+			Node suffixLink = this.suffixLink.getChild(endOfPattern);
+
+			if (suffixLink==null)
+				throw new RuntimeException("No child " + endOfPattern + " for node " + this.suffixLink + " (Parent was " + this + ")");
+
+			return suffixLink;
+
+		}
 		
 		public RuleCollection getRules() {
 			
@@ -1038,32 +1068,14 @@ public class PrefixTree {
 			}
 		}
 
+		/**
+		 * Cube-pruning requires that the grammar be sorted based on the latest feature functions.
+		 */		
 		public void sortGrammar(ArrayList<FeatureFunction> l_models) {
-			// TODO Auto-generated method stub
-			
+			//TODO Implement this!
+			throw new UnsupportedOperationException("This functionality is not yet implemented.");
 		}
 
-	}
-
-	/**
-	 * Constructs an new integer array by concatenating
-	 * two existing integer arrays together.
-	 *  
-	 * @param oldPattern
-	 * @param newPattern
-	 * @return
-	 */
-	protected static int[] pattern(int[] oldPattern, int... newPattern) {
-		int[] pattern = new int[oldPattern.length + newPattern.length];
-
-		for (int index=0; index<oldPattern.length; index++) {
-			pattern[index] = oldPattern[index];
-		}
-		for (int index=oldPattern.length; index<oldPattern.length+newPattern.length; index++) {
-			pattern[index] = newPattern[index - oldPattern.length];
-		}
-
-		return pattern;
 	}
 
 	/**
@@ -1075,15 +1087,22 @@ public class PrefixTree {
 		this(Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MAX_VALUE);
 	}
 	
+	/**
+	 * Gets an invalid, dummy prefix tree.
+	 * <p>
+	 * For testing purposes only.
+	 * 
+	 */
 	private PrefixTree(int maxPhraseSpan, int maxPhraseLength, int maxNonterminals, int minNonterminalSpan) {
 		root = null;
-		sentence = null;
 		suffixArray = null;
 		targetCorpus = null;
 		alignments = null;
 		lexProbs = null;
 		xnode = null;
 		ruleExtractor = null;
+		this.epsilon = null;
+		this.vocab = null;
 		this.maxPhraseSpan = maxPhraseSpan;
 		this.maxPhraseLength = maxPhraseLength;
 		this.maxNonterminals = maxNonterminals;

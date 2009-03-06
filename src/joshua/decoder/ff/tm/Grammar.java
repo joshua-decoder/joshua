@@ -50,7 +50,9 @@ public interface Grammar {
 	public boolean hasRuleForSpan(int startIndex, int endIndex,	int pathLength);
 	
 	
-	/*to do cube-pruning, we need to make the grammar sorted based on the latest feature functions*/
+	/**
+	 * Cube-pruning requires that the grammar be sorted based on the latest feature functions.
+	 */
 	public void sortGrammar(ArrayList<FeatureFunction> l_models);
 	
 }
