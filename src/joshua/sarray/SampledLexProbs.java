@@ -65,6 +65,13 @@ public class SampledLexProbs implements LexicalProbabilities {
 	
 	private final float floorProbability;
 	
+	/** 
+	 * When calculating probabilities, 
+	 * if a probability is less than this value,
+	 * do not explicitly store it.
+	 */
+	private final float thresholdProbability;
+	
 	private final int sampleSize;
 	
 
@@ -77,6 +84,7 @@ public class SampledLexProbs implements LexicalProbabilities {
 		this.alignments = alignments;
 		this.sourceVocab = sourceSuffixArray.getVocabulary();
 		this.targetVocab = targetSuffixArray.getVocabulary();
+		this.thresholdProbability = 1.0f/(sampleSize*100); //TODO come up with a good value for this
 		this.floorProbability = 1.0f/(sampleSize*100);
 		this.sourceGivenTarget = new Cache<Integer,Map<Integer,Float>>(cacheCapacity);
 		this.targetGivenSource = new Cache<Integer,Map<Integer,Float>>(cacheCapacity);
@@ -168,12 +176,12 @@ public class SampledLexProbs implements LexicalProbabilities {
 		Vocabulary sourceVocab = new Vocabulary();
 		int[] sourceWordsSentences = SuffixArrayFactory.createVocabulary(sourceFileName, sourceVocab);
 		CorpusArray sourceCorpusArray = SuffixArrayFactory.createCorpusArray(sourceFileName, sourceVocab, sourceWordsSentences[0], sourceWordsSentences[1]);
-		SuffixArray sourceSuffixArray = SuffixArrayFactory.createSuffixArray(sourceCorpusArray);
+		SuffixArray sourceSuffixArray = SuffixArrayFactory.createSuffixArray(sourceCorpusArray, SuffixArray.DEFAULT_CACHE_CAPACITY);
 
 		Vocabulary targetVocab = new Vocabulary();
 		int[] targetWordsSentences = SuffixArrayFactory.createVocabulary(targetFileName, targetVocab);
 		CorpusArray targetCorpusArray = SuffixArrayFactory.createCorpusArray(targetFileName, targetVocab, targetWordsSentences[0], targetWordsSentences[1]);
-		SuffixArray targetSuffixArray = SuffixArrayFactory.createSuffixArray(targetCorpusArray);
+		SuffixArray targetSuffixArray = SuffixArrayFactory.createSuffixArray(targetCorpusArray, SuffixArray.DEFAULT_CACHE_CAPACITY);
 
 		Alignments alignmentArray = SuffixArrayFactory.createAlignmentArray(alignmentFileName, sourceSuffixArray, targetSuffixArray);
 
@@ -229,7 +237,6 @@ public class SampledLexProbs implements LexicalProbabilities {
 		} else {
 			if (logger.isLoggable(Level.FINE)) logger.fine("No target given source lexprob found for p(" + targetVocab.getWord(targetWord) + " | " + sourceVocab.getWord(sourceWord) + "); returning FLOOR_PROBABILITY " + floorProbability + "; sourceWord ID == " + sourceWord + "; targetWord ID == " + targetWord);
 			return floorProbability;
-			//throw new RuntimeException("No target given source lexprob found for p(" + targetVocab.getWord(targetWord) + " | " + sourceVocab.getWord(sourceWord) + "); returning FLOOR_PROBABILITY " + floorProbability + "; sourceWord ID == " + sourceWord + "; targetWord ID == " + targetWord);
 		}
 		
 	}
@@ -300,8 +307,6 @@ public class SampledLexProbs implements LexicalProbabilities {
 	 */
 	public Pair<Float,Float> calculateLexProbs(HierarchicalPhrase sourcePhrase) {
 		
-		//XXX We are not handling NULL aligned points according to Koehn et al (2003)
-	
 		float sourceGivenTarget = 1.0f;
 		
 		Map<Integer,List<Integer>> reverseAlignmentPoints = new HashMap<Integer,List<Integer>>(); 
@@ -321,6 +326,8 @@ public class SampledLexProbs implements LexicalProbabilities {
 				
 				if (targetIndices==null) {
 					
+					//XXX We are not handling NULL aligned points according to Koehn et al (2003)
+				
 					//float sourceGivenNullAlignment = sourceGivenTarget(sourceWord, null);
 					//sourceGivenTarget *= sourceGivenNullAlignment;
 					
@@ -365,19 +372,6 @@ public class SampledLexProbs implements LexicalProbabilities {
 			float average = sum / ((float) alignedSourceWords.size());
 			targetGivenSource *= average;
 		}
-		
-//		if (sourceGivenTarget <= floorProbability) {
-//			sourceGivenTarget =  floorProbability;
-//		}
-//		
-//		if (targetGivenSource <= floorProbability) {
-//			targetGivenSource =  floorProbability;
-//		}
-		
-//		if (sourceGivenTarget==0.0f || targetGivenSource==0.0f) {
-//			int x = 1;
-//			x++;
-//		}
 
 		return new Pair<Float,Float>(sourceGivenTarget,targetGivenSource);
 	}
@@ -401,7 +395,6 @@ public class SampledLexProbs implements LexicalProbabilities {
 			int targetCorpusIndex = targetSuffixArray.suffixes[targetSuffixArrayIndex];
 			int[] alignedSourceIndices = alignments.getAlignedSourceIndices(targetCorpusIndex);
 			if (alignedSourceIndices==null) {
-				// TODO: might be better to have an int placeholder for null, so that we don't have to check whether the maps has a null key.
 				if (!counts.containsKey(null)) {
 					counts.put(null,1);
 				} else {
@@ -428,9 +421,13 @@ public class SampledLexProbs implements LexicalProbabilities {
 			// entry.getKey() corresponds to the source word
 			// entry.getValue() corresponds to the number of times we have seen this source/target word pair
 			// total is the number of times we saw this target with any source word
-			// TODO: check to see if the probability is beneith a certain threshold.
-			//       If so, then don't explicitly store a value.  When querying for a pair just return a floor value. (1/sampleSize) or something.
-			sourceProbs.put(entry.getKey(), entry.getValue()/total);
+			float prob = entry.getValue()/total;
+			if (prob > thresholdProbability) {
+				sourceProbs.put(entry.getKey(), prob);
+			} else {
+				// Don't explicitly store a probability for this source-target pair
+				// Instead, when querying for this pair return the floor value.
+			}
 		}
 		sourceGivenTarget.put(targetWord, sourceProbs);
 	}
@@ -454,14 +451,11 @@ public class SampledLexProbs implements LexicalProbabilities {
 					if (logger.isLoggable(Level.FINEST)) logger.finest("Setting count(null | " + sourceVocab.getWord(sourceWord) + ") = 1");
 					counts.put(null,1);
 				} else {
-//					int incrementedCount = counts.get(null) + 1;
-//					if (logger.isLoggable(Level.FINEST)) logger.finest("Setting count(null | " + sourceVocab.getWord(sourceWord) + ") = " + incrementedCount);
-//					counts.put(null,incrementedCount);
 					counts.put(null,
 							counts.get(null) + 1);
 				}
 				total++;
-				//total += 1.0f;
+
 			} else {
 				for (int targetIndex : alignedTargetIndices) {
 					int targetWord = targetSuffixArray.corpus.getWordID(targetIndex);
@@ -474,20 +468,29 @@ public class SampledLexProbs implements LexicalProbabilities {
 						counts.put(targetWord,incrementedCount);
 					}
 					total++;
-					//total += 1.0f;
+
 				}
 			}
 		}
 		
 		Map<Integer,Float> targetProbs = new HashMap<Integer,Float>();
 		for (Map.Entry<Integer,Integer> entry : counts.entrySet()) {
+			// entry.getKey() corresponds to the target word
+			// entry.getValue() corresponds to the number of times we have seen this target/source word pair
+			// total is the number of times we saw this source with any target word
 			Integer targetWord = entry.getKey();
 			float prob = ((float) entry.getValue())/total;
-			if (logger.isLoggable(Level.FINEST)) logger.finest("Setting p(" +targetVocab.getWord(entry.getKey()) + " | " + sourceVocab.getWord(sourceWord) + ") = " + prob + "; sourceWord ID == " + sourceWord + "; targetWord ID == " + targetWord);
-			targetProbs.put(targetWord, prob);
+			if (prob > thresholdProbability) {
+				if (logger.isLoggable(Level.FINEST)) logger.finest("Setting p(" +targetVocab.getWord(entry.getKey()) + " | " + sourceVocab.getWord(sourceWord) + ") = " + prob + "; sourceWord ID == " + sourceWord + "; targetWord ID == " + targetWord);
+				targetProbs.put(targetWord, prob);
+			} else {
+				// Don't explicitly store a probability for this source-target pair
+				// Instead, when querying for this pair return the floor value.
+			}
 		}
 		if (logger.isLoggable(Level.FINER)) logger.finer("Storing " + targetProbs.size() + " probabilities for lexprob distribution P( TARGET | " + sourceVocab.getWord(sourceWord) + ")");
 		targetGivenSource.put(sourceWord, targetProbs);
 		
 	}
 }
+

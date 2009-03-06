@@ -409,7 +409,7 @@ public class JoshuaDecoder {
 		int maxNonterminals = JoshuaConfiguration.sa_max_nonterminals;
 		int minNonterminalSpan = JoshuaConfiguration.sa_min_nonterminal_span;
 		
-		SuffixArray.CACHE_CAPACITY = JoshuaConfiguration.sa_rule_cache_size;
+		int maxCacheSize = JoshuaConfiguration.sa_rule_cache_size;
 		
 		String sourceFileName = JoshuaConfiguration.sa_source;
 		Vocabulary sourceVocab = new Vocabulary();
@@ -419,7 +419,7 @@ public class JoshuaDecoder {
 			SuffixArrayFactory.createCorpusArray(sourceFileName, sourceVocab,
 				sourceWordsSentences[0], sourceWordsSentences[1]);
 		SuffixArray sourceSuffixArray =
-			SuffixArrayFactory.createSuffixArray(sourceCorpusArray);
+			SuffixArrayFactory.createSuffixArray(sourceCorpusArray, maxCacheSize);
 		
 		String targetFileName = JoshuaConfiguration.sa_target;
 		Vocabulary targetVocab = new Vocabulary();
@@ -429,7 +429,7 @@ public class JoshuaDecoder {
 			SuffixArrayFactory.createCorpusArray(targetFileName, targetVocab,
 				targetWordsSentences[0], targetWordsSentences[1]);
 		SuffixArray targetSuffixArray =
-			SuffixArrayFactory.createSuffixArray(targetCorpusArray);
+			SuffixArrayFactory.createSuffixArray(targetCorpusArray, maxCacheSize);
 		
 		String alignmentFileName = JoshuaConfiguration.sa_alignment;
 		int trainingSize = sourceCorpusArray.getNumSentences();

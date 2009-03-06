@@ -19,7 +19,7 @@ public class Benchmark {
 		CorpusArray sourceCorpusArray = SuffixArrayFactory.createCorpusArray(sourceFileName, sourceVocab, sourceWordsSentences[0], sourceWordsSentences[1]);
 		System.err.println(new Date() + " Constructing source language suffix array.");
 		//SuffixArray sourceSuffixArray = 
-			SuffixArrayFactory.createSuffixArray(sourceCorpusArray);
+			SuffixArrayFactory.createSuffixArray(sourceCorpusArray, SuffixArray.DEFAULT_CACHE_CAPACITY);
 		System.err.println(new Date() + " Done");
 	}
 

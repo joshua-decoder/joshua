@@ -62,7 +62,7 @@ public class SuffixArray implements Corpus {
 	 * Maximum number of items that can be stored 
 	 * in the cache of patterns and hierarchical phrases. 
 	 */
-	public static int CACHE_CAPACITY = 100000;
+	public static final int DEFAULT_CACHE_CAPACITY = 100000;
 	
 	/**
 	 * Maps from patterns to lists of hierarchical phrases
@@ -100,11 +100,15 @@ public class SuffixArray implements Corpus {
 // Constructor(s)
 //===============================================================
 
+	public SuffixArray(CorpusArray corpusArray) {
+		this(corpusArray, DEFAULT_CACHE_CAPACITY);
+	}
+	
 	/** 
 	 * Constructor takes a CorpusArray and creates a sorted
 	 * suffix array from it.
 	 */
-	public SuffixArray(CorpusArray corpusArray) {
+	public SuffixArray(CorpusArray corpusArray, int maxCacheSize) {
 		this.corpus = corpusArray;
 		suffixes = new int[corpusArray.size()];
 
@@ -115,7 +119,11 @@ public class SuffixArray implements Corpus {
 		// Sort the array of suffixes
 		sort(suffixes);
 	
-		this.hierarchicalPhraseCache = new Cache<Pattern,HierarchicalPhrases>(CACHE_CAPACITY);
+		if (maxCacheSize > 0) {
+			this.hierarchicalPhraseCache = new Cache<Pattern,HierarchicalPhrases>(maxCacheSize);
+		} else {
+			this.hierarchicalPhraseCache = null;
+		}
 	}
 	
 	
@@ -125,11 +133,26 @@ public class SuffixArray implements Corpus {
 	 *
 	 * @see SuffixArrayFactor.createSuffixArray(CorpusArray)
 	 * @see SuffixArrayFactor.loadSuffixArray(String,String,String,CorpusArray)
-	 */
+	 */	
 	protected SuffixArray(int[] suffixes, CorpusArray corpusArray) {
+		this(suffixes, corpusArray, DEFAULT_CACHE_CAPACITY);
+	}
+	
+	/**
+	 * Protected constructor takes in the already prepared
+	 * member variables.
+	 *
+	 * @see SuffixArrayFactor.createSuffixArray(CorpusArray)
+	 * @see SuffixArrayFactor.loadSuffixArray(String,String,String,CorpusArray)
+	 */
+	protected SuffixArray(int[] suffixes, CorpusArray corpusArray, int maxCacheSize) {
 		this.suffixes = suffixes;
 		this.corpus = corpusArray;
-		this.hierarchicalPhraseCache = new Cache<Pattern,HierarchicalPhrases>(CACHE_CAPACITY);
+		if (maxCacheSize > 0) {
+			this.hierarchicalPhraseCache = new Cache<Pattern,HierarchicalPhrases>(maxCacheSize);
+		} else {
+			this.hierarchicalPhraseCache = null;
+		}
 	}
 	
 	
@@ -367,16 +390,22 @@ public class SuffixArray implements Corpus {
 	protected HierarchicalPhrases createHierarchicalPhrases(int[] startPositions, Pattern pattern, PrefixTree prefixTree) {
 		if (startPositions == null) {
 			return HierarchicalPhrases.emptyList(prefixTree);
-		} else if (hierarchicalPhraseCache.containsKey(pattern)) {
-			return hierarchicalPhraseCache.get(pattern);
-		} else {
-			// In the case of contiguous phrases, the hpCache is essentially acting as Adam's Inverted Index, because it stores 
-			// the corpus-sorted indexes of each of the phrases.  It differs because it creates HierarhicalPhrase objects rather 
-			// than just int[].
+		} else if (hierarchicalPhraseCache==null) {
 			Arrays.sort(startPositions);
 			HierarchicalPhrases hierarchicalPhrases = new HierarchicalPhrases(pattern, startPositions, prefixTree);	
-			hierarchicalPhraseCache.put(pattern, hierarchicalPhrases);
 			return hierarchicalPhrases;
+		} else {
+			if (hierarchicalPhraseCache.containsKey(pattern)) {
+				return hierarchicalPhraseCache.get(pattern);
+			} else {
+				// In the case of contiguous phrases, the hpCache is essentially acting as Adam's Inverted Index, because it stores 
+				// the corpus-sorted indexes of each of the phrases.  It differs because it creates a HierarhicalPhrases object rather 
+				// than just int[].
+				Arrays.sort(startPositions);
+				HierarchicalPhrases hierarchicalPhrases = new HierarchicalPhrases(pattern, startPositions, prefixTree);	
+				hierarchicalPhraseCache.put(pattern, hierarchicalPhrases);
+				return hierarchicalPhrases;
+			}
 		}
 	}
 	
@@ -385,14 +414,22 @@ public class SuffixArray implements Corpus {
 	 *         or null if the pattern is not in the cache.
 	 */
 	public HierarchicalPhrases getMatchingPhrases(Pattern pattern) {
-		return hierarchicalPhraseCache.get(pattern);
+		if (hierarchicalPhraseCache==null) {
+			return null;
+		} else {
+			return hierarchicalPhraseCache.get(pattern);
+		}
 	}
 	
 	/** 
 	 * Caches the matching hierarchical phrases for the pattern. 
 	 */
 	public void setMatchingPhrases(Pattern pattern, HierarchicalPhrases matchings) {
-		hierarchicalPhraseCache.put(pattern, matchings);
+		if (hierarchicalPhraseCache==null) {
+			return;
+		} else {
+			hierarchicalPhraseCache.put(pattern, matchings);
+		}
 	}
 	
 	

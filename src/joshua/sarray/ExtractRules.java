@@ -29,7 +29,6 @@ import java.util.logging.Logger;
 import java.util.zip.GZIPOutputStream;
 
 import joshua.decoder.ff.tm.Rule;
-import joshua.util.Cache;
 import joshua.util.CommandLineParser;
 import joshua.util.CommandLineParser.Option;
 import joshua.util.sentence.Vocabulary;
@@ -38,9 +37,12 @@ import joshua.util.sentence.alignment.Alignments;
 
 
 /**
+ * Main program to extract hierarchical phrase-based statistical translation rules
+ * from an aligned parallel corpus using the suffix array techniques of Lopez (2008).
  * 
  * @author Lane Schwartz
  * @version $LastChangedDate:2008-11-13 13:13:31 -0600 (Thu, 13 Nov 2008) $
+ * @see Lopez (2008)
  */
 public class ExtractRules {
 
@@ -66,7 +68,6 @@ public class ExtractRules {
 
 			Option<String> output = commandLine.addStringOption('o',"output","OUTPUT_FILE","-","Output file");
 
-
 			Option<String> encoding = commandLine.addStringOption("encoding","ENCODING","UTF-8","File encoding format");
 
 			Option<Integer> lexSampleSize = commandLine.addIntegerOption("lexSampleSize","LEX_SAMPLE_SIZE",1000, "Size to use when sampling for lexical probability calculations");
@@ -79,15 +80,7 @@ public class ExtractRules {
 			
 			Option<Integer> cacheSize = commandLine.addIntegerOption("cache","CACHE",1000, "Max number of patterns for which to cache hierarchical phrases");
 
-			//Option<Integer> trainingSize = commandLine.addIntegerOption("trainingSize","NUMBER_OF_TRAINING_SENTENCES", "Number of training sentences");
-
-			
-//			Option<String> target_given_source_counts = commandLine.addStringOption("target-given-source-counts","FILENAME","file containing co-occurence counts of source and target word pairs, sorted by source words");
-//			Option<String> source_given_target_counts = commandLine.addStringOption("source-given-target-counts","FILENAME","file containing co-occurence counts of target and source word pairs, sorted by target words");
-
 			Option<Boolean> output_gz = commandLine.addBooleanOption("output-gzipped",false,"should the output file be gzipped");
-//			Option<Boolean> target_given_source_gz = commandLine.addBooleanOption("target-given-source-gzipped",false,"is the target given source word pair counts file gzipped");
-//			Option<Boolean> source_given_target_gz = commandLine.addBooleanOption("source-given-target-gzipped",false,"is the source given target word pair counts file gzipped");
 
 			Option<Boolean> sentence_initial_X = commandLine.addBooleanOption("sentence-initial-X",false,"should rules with initial X be extracted from sentence-initial phrases");
 			Option<Boolean> sentence_final_X = commandLine.addBooleanOption("sentence-final-X",false,"should rules with final X be extracted from sentence-final phrases");
@@ -97,6 +90,8 @@ public class ExtractRules {
 			
 			Option<String> alignmentType = commandLine.addStringOption("alignmentsType","ALIGNMENT_TYPE","AlignmentGrids","Type of alignment data structure");
 			Option<Boolean> confirm = commandLine.addBooleanOption("confirm",false,"should program pause for user input before constructing prefix trees?");
+			Option<Boolean> keepTree = commandLine.addBooleanOption("keepTree",false,"should a single prefix tree be used (instead of one per sentence)?");
+			
 			
 			commandLine.parse(args);
 
@@ -117,8 +112,8 @@ public class ExtractRules {
 			// Lane - TODO -
 			//SuffixArray.INVERTED_INDEX_PRECOMPUTATION_MIN_FREQ = commandLine.getValue("CACHE_PRECOMPUTATION_FREQUENCY_THRESHOLD");
 
-			SuffixArray.CACHE_CAPACITY = commandLine.getValue(cacheSize);
-			if (logger.isLoggable(Level.INFO)) logger.info("Suffix array will cache hierarchical phrases for at most " + SuffixArray.CACHE_CAPACITY + " patterns.");
+			int maxCacheSize = commandLine.getValue(cacheSize);
+			if (logger.isLoggable(Level.INFO)) logger.info("Suffix array will cache hierarchical phrases for at most " + maxCacheSize + " patterns.");
 			
 			if (logger.isLoggable(Level.INFO)) logger.info("Constructing source language vocabulary.");
 			String sourceFileName = commandLine.getValue(source);
@@ -138,7 +133,7 @@ public class ExtractRules {
 			}
 
 			if (logger.isLoggable(Level.INFO)) logger.info("Constructing source language suffix array.");
-			SuffixArray sourceSuffixArray = SuffixArrayFactory.createSuffixArray(sourceCorpusArray);
+			SuffixArray sourceSuffixArray = SuffixArrayFactory.createSuffixArray(sourceCorpusArray, maxCacheSize);
 			if (commandLine.getValue(confirm)) {
 			    if (logger.isLoggable(Level.INFO)) logger.info("Please press a key to continue");
 			    System.in.read();
@@ -161,7 +156,7 @@ public class ExtractRules {
 			}
 
 			if (logger.isLoggable(Level.INFO)) logger.info("Constructing target language suffix array.");
-			SuffixArray targetSuffixArray = SuffixArrayFactory.createSuffixArray(targetCorpusArray);
+			SuffixArray targetSuffixArray = SuffixArrayFactory.createSuffixArray(targetCorpusArray, maxCacheSize);
 			if (commandLine.getValue(confirm)) {
 			    if (logger.isLoggable(Level.INFO)) logger.info("Please press a key to continue");
 			    System.in.read();
@@ -186,22 +181,6 @@ public class ExtractRules {
 			    if (logger.isLoggable(Level.INFO)) logger.info("Please press a key to continue");
 			    System.in.read();
 			}
-			
-
-			// Set up the source text for reading
-//			Scanner target_given_source;
-//			if (commandLine.getValue(target_given_source_counts).endsWith(".gz") || commandLine.getValue(target_given_source_gz))
-//			target_given_source = new Scanner(new BufferedReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(commandLine.getValue(target_given_source_counts))),commandLine.getValue(encoding))));
-//			else
-//			target_given_source = new Scanner( new File(commandLine.getValue(target_given_source_counts)), commandLine.getValue(encoding));
-
-
-//			// Set up the target text for reading
-//			Scanner source_given_target;
-//			if (commandLine.getValue(source_given_target_counts).endsWith(".gz") || commandLine.getValue(source_given_target_gz))
-//			source_given_target = new Scanner(new BufferedReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(commandLine.getValue(source_given_target_counts))),commandLine.getValue(encoding))));
-//			else
-//			source_given_target = new Scanner( new File(commandLine.getValue(source_given_target_counts)), commandLine.getValue(encoding));
 
 			PrintStream out;
 			if ("-".equals(commandLine.getValue(output))) {
@@ -218,9 +197,8 @@ public class ExtractRules {
 			if (logger.isLoggable(Level.INFO)) logger.info("Constructing lexical probabilities table");
 
 			SampledLexProbs lexProbs = 
-				new SampledLexProbs(commandLine.getValue(lexSampleSize), sourceSuffixArray, targetSuffixArray, alignments, Cache.DEFAULT_CAPACITY, false);
-			//new LexProbs(source_given_target, target_given_source, sourceVocab, targetVocab);
-
+				new SampledLexProbs(commandLine.getValue(lexSampleSize), sourceSuffixArray, targetSuffixArray, alignments, SuffixArray.DEFAULT_CACHE_CAPACITY, false);
+			
 			if (logger.isLoggable(Level.INFO)) logger.info("Done constructing lexical probabilities table");
 
 			if (commandLine.getValue(confirm)) {
@@ -247,6 +225,9 @@ public class ExtractRules {
 
 			RuleExtractor ruleExtractor = new HierarchicalRuleExtractor(sourceSuffixArray, targetCorpusArray, alignments, lexProbs, commandLine.getValue(ruleSampleSize), commandLine.getValue(maxPhraseSpan), commandLine.getValue(maxPhraseLength), commandLine.getValue(minNonterminalSpan), commandLine.getValue(maxPhraseSpan));
 			
+			boolean oneTreePerSentence = ! commandLine.getValue(keepTree);
+			
+			PrefixTree prefixTree = null;
 			while (testFileScanner.hasNextLine()) {
 				String line = testFileScanner.nextLine();
 				lineNumber++;
@@ -254,7 +235,9 @@ public class ExtractRules {
 
 				if (logger.isLoggable(Level.INFO)) logger.info("Constructing prefix tree for source line " + lineNumber + ": " + line);
 
-				PrefixTree prefixTree = new PrefixTree(sourceSuffixArray, targetCorpusArray, alignments, lexProbs, ruleExtractor, commandLine.getValue(maxPhraseSpan), commandLine.getValue(maxPhraseLength), commandLine.getValue(maxNonterminals), commandLine.getValue(minNonterminalSpan));
+				if (oneTreePerSentence || null==prefixTree) {
+					prefixTree = new PrefixTree(sourceSuffixArray, targetCorpusArray, alignments, lexProbs, ruleExtractor, commandLine.getValue(maxPhraseSpan), commandLine.getValue(maxPhraseLength), commandLine.getValue(maxNonterminals), commandLine.getValue(minNonterminalSpan));
+				}
 				prefixTree.add(words);
 				
 				if (commandLine.getValue(print_prefixTree)==true) {
@@ -279,25 +262,27 @@ public class ExtractRules {
 					if (logger.isLoggable(Level.FINER)) {
 						logger.finer("Prefix tree had " + prefixTree.size() + " nodes.");
 						
-						Pattern maxPattern = null;
-						int maxHPsize = 0;
-						int hpsize = 0;
-						int psize = 0;
-						for (Map.Entry<Pattern,HierarchicalPhrases> entry : sourceSuffixArray.hierarchicalPhraseCache.entrySet()) {
-							psize++;
-							hpsize += entry.getValue().size();
-							if (hpsize>maxHPsize) {
-								maxHPsize = entry.getValue().size();
-								maxPattern = entry.getKey();
+						if (sourceSuffixArray.hierarchicalPhraseCache != null) {
+							Pattern maxPattern = null;
+							int maxHPsize = 0;
+							int hpsize = 0;
+							int psize = 0;
+							for (Map.Entry<Pattern,HierarchicalPhrases> entry : sourceSuffixArray.hierarchicalPhraseCache.entrySet()) {
+								psize++;
+								hpsize += entry.getValue().size();
+								if (hpsize>maxHPsize) {
+									maxHPsize = entry.getValue().size();
+									maxPattern = entry.getKey();
+								}
 							}
+
+							logger.finer(
+									psize + " source side entries in the SA cache." + "\n" +
+									hpsize+ " target side HierarchicalPhrases represented in the cache." + "\n" +
+									maxHPsize + " is the most HierarchicalPhrases stored for one source side entry ( " +
+									maxPattern + ")\n"
+							);	
 						}
-			
-						logger.finer(
-								psize + " source side entries in the SA cache." + "\n" +
-								hpsize+ " target side HierarchicalPhrases represented in the cache." + "\n" +
-								maxHPsize + " is the most HierarchicalPhrases stored for one source side entry ( " +
-								maxPattern + ")\n"
-							);		
 					}
 					
 				}

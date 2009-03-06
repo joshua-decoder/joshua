@@ -142,8 +142,8 @@ public class SuffixArrayFactory {
 	 * Creates a new SuffixArray from a CorpusArray created
 	 * from the same file.
 	 */
-	public static SuffixArray createSuffixArray(CorpusArray corpusArray) throws IOException {
-		return new SuffixArray(corpusArray);
+	public static SuffixArray createSuffixArray(CorpusArray corpusArray, int maxCacheSize) throws IOException {
+		return new SuffixArray(corpusArray, maxCacheSize);
 	}
 	
 	
