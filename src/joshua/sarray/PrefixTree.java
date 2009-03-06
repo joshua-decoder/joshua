@@ -217,7 +217,7 @@ public class PrefixTree {
 
 		// 1: children(p_eps) <-- children(p_eps) U p_x
 
-		{	// Create and set up the X node that comes off of ROOT
+		if (maxNonterminals > 0) {	// Create and set up the X node that comes off of ROOT
 			
 			// Add a link from root node to X
 			xnode = root.addChild(X);
@@ -245,6 +245,8 @@ public class PrefixTree {
 			}
 
 			xnode.linkToSuffix(suffixLink);
+		} else {
+			this.xnode = null;
 		}
 
 		if (logger.isLoggable(Level.FINEST)) logger.finest("CURRENT TREE:  " + root);
@@ -264,7 +266,7 @@ public class PrefixTree {
 			queue.add(new Tuple(epsilon, i, i, root));
 		}
 
-		{	Pattern xpattern = new Pattern(vocab,X);
+		if (this.maxNonterminals > 0) {	Pattern xpattern = new Pattern(vocab,X);
 			
 			int start = START_OF_SENTENCE;
 			if (!SENTENCE_INITIAL_X) start += 1;
