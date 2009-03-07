@@ -17,8 +17,6 @@
  */
 
 package joshua.zmert;
-import java.math.*;
-import java.util.*;
 import java.io.*;
 
 public class TER extends EvaluationMetric

@@ -339,8 +339,7 @@ public class MertCore
       println("",1);
     } else {
       for (int i = 1; i <= randsToSkip; ++i) {
-        //double dummy = 
-        	randGen.nextDouble();
+        randGen.nextDouble();
         ++generatedRands;
       }
     }

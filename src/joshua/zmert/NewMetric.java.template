@@ -68,7 +68,7 @@ public class __new_metric_CLASS_name__ extends EvaluationMetric
   /* here you define any methods that set the data members */
 
   ***(8)***
-  public int[] suffStats(String cand_str, int i)
+  public int[] suffStats(String cand_str, int i) throws Exception
   {
     int[] stats = new int[suffStatsCount];
 
