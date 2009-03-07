@@ -49,6 +49,8 @@ public abstract class EvaluationMetric
       // the "BLEU_SBP" metric expects an options array of length 2
     metricOptionCount.put("01LOSS",0);
       // the "01LOSS" metric expects an options array of length 0
+    metricOptionCount.put("TER",4);
+      // the "TER" metric expects an options array of length 4
   }
 
   public static EvaluationMetric getMetric(String metricName, String[] metricOptions)
@@ -61,6 +63,8 @@ public abstract class EvaluationMetric
       retMetric = new BLEU_SBP(metricOptions);    // the "BLEU_SBP" metric corresponds to the BLEU_SBP class
     } else if (metricName.equals("01LOSS")) {
       retMetric = new ZeroOneLoss(metricOptions); // the "01LOSS" metric corresponds to the ZeroOneLoss class
+    } else if (metricName.equals("TER")) {
+      retMetric = new TER(metricOptions);         // the "TER" metric corresponds to the TER class
     }
 
     return retMetric;
@@ -102,19 +106,19 @@ public abstract class EvaluationMetric
     }
   }
 
-  public double score(String cand_str, int i)
+  public double score(String cand_str, int i) throws Exception
   {
     int[] stats = suffStats(cand_str,i);
     return score(stats);
   }
 
-  public double score(String[] topCand_str)
+  public double score(String[] topCand_str) throws Exception
   {
     int[] stats = suffStats(topCand_str);
     return score(stats);
   }
 
-  public int[] suffStats(String[] topCand_str)
+  public int[] suffStats(String[] topCand_str) throws Exception
   {
     int[] totStats = new int[suffStatsCount];
     for (int s = 0; s < suffStatsCount; ++s) { totStats[s] = 0; }
@@ -128,13 +132,13 @@ public abstract class EvaluationMetric
     return totStats;
   }
 
-  public void printDetailedScore(String[] topCand_str, boolean oneLiner)
+  public void printDetailedScore(String[] topCand_str, boolean oneLiner) throws Exception
   {
     int[] stats = suffStats(topCand_str);
     printDetailedScore_fromStats(stats,oneLiner);
   }
 
-  public void printDetailedScore(String cand_str, int i, boolean oneLiner)
+  public void printDetailedScore(String cand_str, int i, boolean oneLiner) throws Exception
   {
     int[] stats = suffStats(cand_str,i);
     printDetailedScore_fromStats(stats,oneLiner);
@@ -144,7 +148,7 @@ public abstract class EvaluationMetric
   protected abstract void initialize();
   public abstract double bestPossibleScore();
   public abstract double worstPossibleScore();
-  public abstract int[] suffStats(String cand_str, int i);
+  public abstract int[] suffStats(String cand_str, int i) throws Exception;
   public abstract double score(int[] stats);
   public abstract void printDetailedScore_fromStats(int[] stats, boolean oneLiner);
 }

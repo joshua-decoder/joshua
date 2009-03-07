@@ -18,20 +18,19 @@
 
 package joshua.zmert;
 import joshua.decoder.*;
+import java.math.*;
 import java.util.*;
 import java.io.*;
 import java.text.DecimalFormat;
 
 public class MertCore
 {
-  //TODO This member variable is never used. Perhaps it should be removed.
   private static DecimalFormat f0 = new DecimalFormat("###0");
   private static DecimalFormat f4 = new DecimalFormat("###0.0000");
   private final Runtime myRuntime = Runtime.getRuntime();
 
   private final double NegInf = (-1.0 / 0.0);
   private final double PosInf = (+1.0 / 0.0);
-  //TODO This member variable is never used. Perhaps it should be removed.
   private final double epsilon = 1.0 / 1000000;
 
   private int progress;
@@ -385,7 +384,6 @@ public class MertCore
     // read in reference sentences
 
     BufferedReader inFile_refs = new BufferedReader(new FileReader(refFileName));
-    //String line;
 
     for (int i = 0; i < numSentences; ++i) {
       for (int r = 0; r < refsPerSen; ++r) {
@@ -493,7 +491,6 @@ public class MertCore
 
   } // void initialize(...)
 
-
   public void run_MERT() throws Exception
   {
     run_MERT(minMERTIterations,maxMERTIterations,prevMERTIterations);
@@ -586,9 +583,8 @@ public class MertCore
 
   } // void run_MERT(int maxIts)
 
-
   @SuppressWarnings("unchecked")
-public double[] run_single_iteration(int iteration, int minIts, int maxIts, int prevIts, int earlyStop, int[]maxIndex) throws Exception
+  public double[] run_single_iteration(int iteration, int minIts, int maxIts, int prevIts, int earlyStop, int[]maxIndex) throws Exception
   {
     double FINAL_score = 0;
 
@@ -973,12 +969,6 @@ public double[] run_single_iteration(int iteration, int minIts, int maxIts, int 
 
   } // run_single_iteration
 
-
-
-
-
-
-
   private double[] bestParamToChange(int j, TreeMap<Double,TreeMap>[] thresholdsAll, int lastChanged_c, double[] currLambda, int[] candCount, double[][][] featVal_array, HashMap<Integer,int[]>[] suffStats_array, int minIt, int maxIt) throws Exception
   {
     int c_best = 0; // which parameter to change?
@@ -1109,7 +1099,6 @@ public double[] run_single_iteration(int iteration, int minIts, int maxIts, int 
 
   } // double[] bestParamToChange(int j, double[] currLambda)
 
-
   private String lambdaToString(double[] lambdaA)
   {
     String retStr = "{";
@@ -1146,18 +1135,7 @@ public double[] run_single_iteration(int iteration, int minIts, int maxIts, int 
 
       Runtime rt = Runtime.getRuntime();
       Process p = rt.exec(decoderCommandFileName);
-/*
-      BufferedReader br_i = new BufferedReader(new InputStreamReader(p.getInputStream()));
-      BufferedReader br_e = new BufferedReader(new InputStreamReader(p.getErrorStream()));
-      String dummy_line = null;
 
-      while ((dummy_line = br_e.readLine()) != null) { }
-	  while ((dummy_line = br_i.readLine()) != null) {
-        if (decVerbosity == 1) {
-          println(dummy_line);
-        }
-      }
-*/
       StreamGobbler errorGobbler = new StreamGobbler(p.getErrorStream(), decVerbosity);
       StreamGobbler outputGobbler = new StreamGobbler(p.getInputStream(), decVerbosity);
 
@@ -1302,7 +1280,6 @@ public double[] run_single_iteration(int iteration, int minIts, int maxIts, int 
 
   } // double[] line_opt(int c)
 
-
 //  private TreeMap<Double,TreeMap> thresholdsForParam(int c, int[] candCount, double[][][] featVal_array, double[] currLambda, TreeSet<Integer>[] indicesOfInterest)
   private void set_thresholdsForParam(TreeMap<Double,TreeMap> thresholdsAll, int c, int[] candCount, double[][][] featVal_array, double[] currLambda, TreeSet<Integer>[] indicesOfInterest)
   {
@@ -1429,7 +1406,7 @@ public double[] run_single_iteration(int iteration, int minIts, int maxIts, int 
         // And similarly, the "right-most" winner is not necessarily the one with
         // the steepest ascent (though it will be if minThValue[c] is +Inf).  The
         // point of doing this is to avoid extracting thresholds that will end up
-        // being discarded anyway due to range constraints, this saving us a little
+        // being discarded anyway due to range constraints, thus saving us a little
         // bit of time.
 
       int last_new_k = -1;
@@ -1576,6 +1553,7 @@ public double[] run_single_iteration(int iteration, int minIts, int maxIts, int 
     if (thresholdsAll.size() != 0) {
       double smallest_th = thresholdsAll.firstKey();
       double largest_th = thresholdsAll.lastKey();
+      println("# extracted thresholds: " + thresholdsAll.size(),2);
       println("Smallest extracted threshold: " + smallest_th,2);
       println("Largest extracted threshold: " + largest_th,2);
 
@@ -1589,7 +1567,6 @@ public double[] run_single_iteration(int iteration, int minIts, int maxIts, int 
 //    return thresholdsAll;
 
   } // TreeMap<Double,TreeMap> thresholdsForParam (int c)
-
 
   private int[] initial_indexOfCurrBest(int c, int[] candCount, double[][][] featVal_array, double[] temp_lambda, TreeSet<Integer>[] indicesOfInterest)
   {
@@ -1626,8 +1603,6 @@ public double[] run_single_iteration(int iteration, int minIts, int maxIts, int 
     return indexOfCurrBest;
 
   } // int[] initial_indexOfCurrBest (int c)
-
-
 
   private void produceTempFiles(int iteration) throws Exception
   {
@@ -1946,7 +1921,6 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
       fd.delete();
     }
   }
-
 
   private void writeLine(String line, BufferedWriter writer) throws IOException
   {
@@ -2475,8 +2449,6 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
     if (progress % 100000 == 0) print(".",2);
   }
 
-
-
   private double[] randomLambda()
   {
     double[] retVal = new double[1+numParams];
@@ -2596,7 +2568,6 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
     }
     lastUsedIndex[i] += 1;
   }
-
 
   private HashSet<Integer> indicesToDiscard(double[] slope, double[] offset)
   {

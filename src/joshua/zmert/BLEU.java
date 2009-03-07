@@ -173,8 +173,8 @@ for (int j = 0; j < wordCount; ++j) { words[j] = words[j].intern(); }
 
       while (it.hasNext()) {
       // for each gram type in the candidate
-        gram = (String)it.next();
-        candGramCount = (Integer)candCountsArray[n].get(gram);
+        gram = it.next();
+        candGramCount = candCountsArray[n].get(gram);
 //        if (maxNgramCounts[i][n].containsKey(gram)) {
 //          maxRefGramCount = maxNgramCounts[i][n].get(gram);
         if (maxNgramCounts[i].containsKey(gram)) {
