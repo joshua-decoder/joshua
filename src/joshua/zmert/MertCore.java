@@ -25,6 +25,9 @@ import java.text.DecimalFormat;
 
 public class MertCore
 {
+  private TreeSet<Integer>[] indicesOfInterest_all;
+
+
   private static DecimalFormat f0 = new DecimalFormat("###0");
   private static DecimalFormat f4 = new DecimalFormat("###0.0000");
   private final Runtime myRuntime = Runtime.getRuntime();
@@ -409,20 +412,6 @@ public class MertCore
     EvaluationMetric.set_refsPerSen(refsPerSen);
     EvaluationMetric.set_refSentences(refSentences);
 
-    // do necessary initialization for the evaluation metric
-/*
-    if (metricName.equals("BLEU")) {
-      evalMetric = new BLEU(4,"closest");
-    } else if (metricName.equals("BLEU_SBP")) {
-      evalMetric = new BLEU_SBP(4,"closest");
-    } else if (metricName.equals("01LOSS")) {
-      evalMetric = new ZeroOneLoss();
-    } else if (metricName.equals("UserMetric1")) {
-      evalMetric = new UserMetric1();
-    } else if (metricName.equals("UserMetric2")) {
-      evalMetric = new UserMetric2();
-    }
-*/
     evalMetric = EvaluationMetric.getMetric(metricName,metricOptions);
 
     suffStatsCount = evalMetric.get_suffStatsCount();
@@ -487,6 +476,16 @@ public class MertCore
     } else {
       myDecoder = null;
     }
+
+
+
+
+    indicesOfInterest_all = new TreeSet[numSentences];
+
+    for (int i = 0; i < numSentences; ++i) {
+      indicesOfInterest_all[i] = new TreeSet<Integer>();
+    }
+
 
   } // void initialize(...)
 
@@ -681,7 +680,6 @@ public class MertCore
       println("Reading candidate translations from iterations " + firstIt + "-" + iteration,2);
       progress = 0;
 
-//      boolean newCandidatesAdded = false;
       int[] newCandidatesAdded = new int[1+iteration];
       for (int it = 1; it <= iteration; ++it) { newCandidatesAdded[it] = 0; }
 
@@ -692,15 +690,27 @@ public class MertCore
       for (int it = firstIt; it <= iteration; ++it) {
         inFile_sents[it] = new BufferedReader(new FileReader(decoderOutFileName+".temp.sents.it"+it));
         inFile_feats[it] = new BufferedReader(new FileReader(decoderOutFileName+".temp.feats.it"+it));
-        inFile_stats[it] = new BufferedReader(new FileReader(decoderOutFileName+".temp.stats.it"+it));
+        if (it != iteration)
+          inFile_stats[it] = new BufferedReader(new FileReader(decoderOutFileName+".temp.stats.it"+it));
+          // the stats file for the current iteration is created in this method,
+          // not in produceTempFiles.
       }
 
-      // to be used to write sufficient statistics from all the sentences from the output files into a single one
-      PrintWriter outFile_stats = new PrintWriter(decoderOutFileName+".temp.stats.merged");
+      PrintWriter outFile_statsMerged = new PrintWriter(decoderOutFileName+".temp.stats.merged");
+        // write sufficient statistics from all the sentences from the output files into a single file
+      PrintWriter outFile_statsCurrIt = new PrintWriter(decoderOutFileName+".temp.stats.it"+iteration);
+        // aka "inFile_stats[iteration]"
 
       String sents_str, feats_str, stats_str;
 
-      HashSet<String> existingCandidates = new HashSet<String>();
+      HashMap<String,String> existingCandStats = new HashMap<String,String>();
+        // Stores precalculated sufficient statistics for candidates, in case
+        // the same candidate is seen again. (SS stored as a String.)
+        // Q: Why do we care?  If we see the same candidate again, aren't we just
+        //    ignoring them?  In that case, why do we care about the SS?
+        // A: A "repeat" candidate may not be a repeat candidate in later
+        //    iterations if the user specifies a value for prevMERTIterations
+        //    that causes MERT to skip candidates from early iterations.
       double[] currFeatVal = new double[1+numParams];
       String[] featVal_str;
 
@@ -714,9 +724,16 @@ public class MertCore
           best1Score[j][i] = NegInf;
         }
 
-        for (int it = firstIt; it <= iteration; ++it) {
+        for (int it = firstIt; it < iteration; ++it) {
+        // Why up to but *excluding* iteration?
+        // Because the last iteration is handled a little differently, since
+        // the SS must be claculated (and the corresponding file created),
+        // which is not true for previous iterations.
 
-          for (int n = 0; n < sizeOfNBest; ++n) {
+          for (int n = 0; n <= sizeOfNBest; ++n) {
+          // Why up to and *including* sizeOfNBest?
+          // So that it would read the "||||||" separator even if there is
+          // a complete list of sizeOfNBest candidates.
 
             // for the nth candidate for the ith sentence, read the sentence, feature values,
             // and sufficient statistics from the various temp files
@@ -725,9 +742,11 @@ public class MertCore
             feats_str = inFile_feats[it].readLine();
             stats_str = inFile_stats[it].readLine();
 
-            if (!existingCandidates.contains(sents_str)) {
+            if (feats_str.equals("||||||")) {
+              n = sizeOfNBest+1;
+            } else if (!existingCandStats.containsKey(sents_str)) {
 
-              outFile_stats.println(stats_str);
+              outFile_statsMerged.println(stats_str);
 
               featVal_str = feats_str.split("\\s+");
 
@@ -749,16 +768,12 @@ public class MertCore
                 }
               }
 
-              existingCandidates.add(sents_str);
+              existingCandStats.put(sents_str,stats_str);
 
               setFeats(featVal_array,i,lastUsedIndex,maxIndex,currFeatVal);
               candCount[i] += 1;
-//              ++totalCandidateCount;
 
               newCandidatesAdded[it] += 1;
-//              if (it == iteration) {
-//                newCandidatesAdded = true;
-//              }
 
             }
 
@@ -768,18 +783,89 @@ public class MertCore
 
         } // for (it)
 
-        existingCandidates.clear();
+
+        // now process the candidates of the current iteration
+
+        int[] stats = new int[suffStatsCount];
+
+        for (int n = 0; n <= sizeOfNBest; ++n) {
+        // Why up to and *including* sizeOfNBest?
+        // So that it would read the "||||||" separator even if there is
+        // a complete list of sizeOfNBest candidates.
+
+          // for the nth candidate for the ith sentence, read the sentence, feature values,
+          // and sufficient statistics from the various temp files
+
+          sents_str = inFile_sents[iteration].readLine();
+          feats_str = inFile_feats[iteration].readLine();
+
+          if (feats_str.equals("||||||")) {
+            n = sizeOfNBest+1;
+          } else if (!existingCandStats.containsKey(sents_str)) {
+
+            stats = evalMetric.suffStats(sents_str,i);
+
+            stats_str = "";
+            for (int s = 0; s < suffStatsCount-1; ++s) { stats_str += (stats[s] + " "); }
+            stats_str += stats[suffStatsCount-1];
+            outFile_statsCurrIt.println(stats_str);
+            outFile_statsMerged.println(stats_str);
+
+            featVal_str = feats_str.split("\\s+");
+
+            for (int c = 1; c <= numParams; ++c) {
+              currFeatVal[c] = Double.parseDouble(featVal_str[c-1]);
+//              print("fV[" + c + "]=" + featVal[c] + " ",3);
+            }
+//            println("",3);
+
+
+            for (int j = 1; j <= initsPerIt; ++j) {
+              double score = 0;
+              for (int c = 1; c <= numParams; ++c) {
+                score += initialLambda[j][c] * currFeatVal[c];
+              }
+              if (score > best1Score[j][i]) {
+                best1Score[j][i] = score;
+                best1Cand_sen[j][i] = sents_str;
+              }
+            }
+
+            existingCandStats.put(sents_str,stats_str);
+
+            setFeats(featVal_array,i,lastUsedIndex,maxIndex,currFeatVal);
+            candCount[i] += 1;
+
+            newCandidatesAdded[iteration] += 1;
+
+          } else {
+            // write SS to outFile_statsCurrIt
+            stats_str = existingCandStats.get(sents_str);
+            outFile_statsCurrIt.println(stats_str);
+          }
+
+          showProgress();
+
+        } // for (n)
+
+        outFile_statsCurrIt.println("||||||");
+
+        existingCandStats.clear();
         totalCandidateCount += candCount[i];
 
       } // for (i)
 
-      for (int it = 1; it <= iteration; ++it) {
+      for (int it = firstIt; it <= iteration; ++it) {
         inFile_sents[it].close();
         inFile_feats[it].close();
-        inFile_stats[it].close();
+        if (it != iteration)
+          inFile_stats[it].close();
+          // the stats file for the current iteration was created in this method,
+          // not in produceTempFiles.
       }
 
-      outFile_stats.close();
+      outFile_statsCurrIt.close(); // aka "inFile_stats[iteration]"
+      outFile_statsMerged.close();
 
       println("",2); // to finish off progress dot line
 
@@ -1445,6 +1531,7 @@ public class MertCore
           last_new_k = nearestIntersectingLineIndex;
 
           indicesOfInterest[i].add(currIndex); // old_k
+          indicesOfInterest_all[i].add(currIndex); // old_k
 
           if (!thresholdsAll.containsKey(nearestIntersectionPoint)) {
             TreeMap<Integer,int[]> A = new TreeMap<Integer,int[]>();
@@ -1492,6 +1579,7 @@ public class MertCore
 
       if (last_new_k != -1) {
         indicesOfInterest[i].add(last_new_k); // last new_k
+        indicesOfInterest_all[i].add(last_new_k); // last new_k
       }
 
 //      println("cI=" + currIndex + "(=? " + maxSlopeIndex + " = mxSI)",3);
@@ -1595,6 +1683,7 @@ public class MertCore
 //      if (useDisk == 2) {
         // add indexOfCurrBest[i] to indicesOfInterest
         indicesOfInterest[i].add(indexOfMax);
+        indicesOfInterest_all[i].add(indexOfMax);
 //      }
 
     }
@@ -1607,14 +1696,12 @@ public class MertCore
   {
     String sentsFileName = decoderOutFileName+".temp.sents.it"+iteration;
     String featsFileName = decoderOutFileName+".temp.feats.it"+iteration;
-    String statsFileName = decoderOutFileName+".temp.stats.it"+iteration;
 
     FileOutputStream outStream_sents = new FileOutputStream(sentsFileName, false); // false: don't append
     OutputStreamWriter outStreamWriter_sents = new OutputStreamWriter(outStream_sents, "utf8");
     BufferedWriter outFile_sents = new BufferedWriter(outStreamWriter_sents);
 
     PrintWriter outFile_feats = new PrintWriter(featsFileName);
-    PrintWriter outFile_stats = new PrintWriter(statsFileName);
 
 
     InputStream inStream = new FileInputStream(new File(decoderOutFileName));
@@ -1623,7 +1710,6 @@ public class MertCore
     String line; //, prevLine;
     String candidate_str = "";
     String feats_str = "";
-    int[] stats = new int[suffStatsCount];
 
     int i = 0; int n = 0;
     line = inFile.readLine();
@@ -1641,14 +1727,9 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
 
       int read_i = Integer.parseInt((line.substring(0,line.indexOf("|||"))).trim());
 
-      if (read_i != i) { // bad; add dummy copies of last seen candidate
-        while (n < sizeOfNBest) {
-          writeLine(candidate_str, outFile_sents);
-          outFile_feats.println(feats_str);
-          for (int s = 0; s < suffStatsCount-1; ++s) { outFile_stats.print(stats[s] + " "); }
-          outFile_stats.println(stats[suffStatsCount-1]);
-          ++n;
-        }
+      if (read_i != i) {
+        writeLine("||||||",outFile_sents);
+        outFile_feats.println("||||||");
         n = 0; ++i;
       }
 
@@ -1662,33 +1743,27 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
         feats_str = (feats_str.substring(0,junk_i)).trim();
       }
 
-      stats = evalMetric.suffStats(candidate_str,i);
-
       writeLine(candidate_str, outFile_sents);
       outFile_feats.println(feats_str);
-      for (int s = 0; s < suffStatsCount-1; ++s) { outFile_stats.print(stats[s] + " "); }
-      outFile_stats.println(stats[suffStatsCount-1]);
 
       ++n;
-      if (n == sizeOfNBest) { n = 0; ++i; }
+      if (n == sizeOfNBest) {
+        writeLine("||||||",outFile_sents);
+        outFile_feats.println("||||||");
+        n = 0; ++i;
+      }
 
       line = inFile.readLine();
     }
 
     if (i != numSentences) { // last sentence had too few candidates
-      while (n < sizeOfNBest) {
-        writeLine(candidate_str, outFile_sents);
-        outFile_feats.println(feats_str);
-        for (int s = 0; s < suffStatsCount-1; ++s) { outFile_stats.print(stats[s] + " "); }
-        outFile_stats.println(stats[suffStatsCount-1]);
-        ++n;
-      }
+      writeLine("||||||",outFile_sents);
+      outFile_feats.println("||||||");
     }
 
     inFile.close();
     outFile_sents.close();
     outFile_feats.close();
-    outFile_stats.close();
 
   }
 
@@ -2620,6 +2695,15 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
 
   private void set_suffStats_array(HashMap<Integer,int[]>[] suffStats_array, TreeSet<Integer>[] indicesOfInterest, int[] candCount) throws Exception
   {
+    int candsOfInterestCount = 0;
+    int candsOfInterestCount_all = 0;
+    for (int i = 0; i < numSentences; ++i) {
+      candsOfInterestCount += indicesOfInterest[i].size();
+      candsOfInterestCount_all += indicesOfInterest_all[i].size();
+    }
+    println("Processing merged stats file; extracting SS for " + candsOfInterestCount + " candidates of interest.",2);
+    println("(*_all: " + candsOfInterestCount_all + ")",2);
+
     // process the merged sufficient statistics file, and read (and store) the
     // stats for candidates of interest
     BufferedReader inFile = new BufferedReader(new FileReader(decoderOutFileName+".temp.stats.merged"));
