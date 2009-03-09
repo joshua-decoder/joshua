@@ -86,26 +86,28 @@ public class BLEUTest {
 		// testSentences[i] stores the candidate translation for the i'th sentence
 		String[] testSentences = new String[1];
 		testSentences[0] = test;
-		
-		// Check BLEU score matches
-		double actualScore = bleu.score(testSentences);
-		double expectedScore = 0.2513;
-		double acceptableScoreDelta = 0.00001f;
-		
-		Assert.assertEquals(actualScore, expectedScore, acceptableScoreDelta);
+		try {
+			// Check BLEU score matches
+			double actualScore = bleu.score(testSentences);
+			double expectedScore = 0.2513;
+			double acceptableScoreDelta = 0.00001f;
 
-		// Check sufficient statistics match
-		int[] actualSS = bleu.suffStats(testSentences);
-		int[] expectedSS = {1,14,8,5,3,27,23};
+			Assert.assertEquals(actualScore, expectedScore, acceptableScoreDelta);
 
-		Assert.assertEquals(actualSS[0], expectedSS[0], 0); // # sentences
-		Assert.assertEquals(actualSS[1], expectedSS[1], 0); // 1-gram matches
-		Assert.assertEquals(actualSS[2], expectedSS[2], 0); // 2-gram matches
-		Assert.assertEquals(actualSS[3], expectedSS[3], 0); // 3-gram matches
-		Assert.assertEquals(actualSS[4], expectedSS[4], 0); // 4-gram matches
-		Assert.assertEquals(actualSS[5], expectedSS[5], 0); // candidate length
-		Assert.assertEquals(actualSS[6], expectedSS[6], 0); // reference length
+			// Check sufficient statistics match
+			int[] actualSS = bleu.suffStats(testSentences);
+			int[] expectedSS = {1,14,8,5,3,27,23};
 
+			Assert.assertEquals(actualSS[0], expectedSS[0], 0); // # sentences
+			Assert.assertEquals(actualSS[1], expectedSS[1], 0); // 1-gram matches
+			Assert.assertEquals(actualSS[2], expectedSS[2], 0); // 2-gram matches
+			Assert.assertEquals(actualSS[3], expectedSS[3], 0); // 3-gram matches
+			Assert.assertEquals(actualSS[4], expectedSS[4], 0); // 4-gram matches
+			Assert.assertEquals(actualSS[5], expectedSS[5], 0); // candidate length
+			Assert.assertEquals(actualSS[6], expectedSS[6], 0); // reference length
+		} catch (Exception e) {
+			Assert.fail();
+		}
 	}
 	
 	@Parameters({"referenceFile","testFile"})
