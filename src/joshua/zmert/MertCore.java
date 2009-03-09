@@ -300,6 +300,9 @@ public class MertCore
       // delete .temp.stats.merged file
       DMC.deleteFile(DMC.decoderOutFileName+".temp.stats.merged");
 
+      // delete .temp.sents.currIt.IP file
+      DMC.deleteFile(DMC.decoderOutFileName+".temp.sents.currIt.IP");
+
 
       DMC.finish();
 
@@ -385,7 +388,8 @@ public class MertCore
 
     // read in reference sentences
 
-    BufferedReader inFile_refs = new BufferedReader(new FileReader(refFileName));
+    InputStream inStream_refs = new FileInputStream(new File(refFileName));
+    BufferedReader inFile_refs = new BufferedReader(new InputStreamReader(inStream_refs, "utf8"));
 
     for (int i = 0; i < numSentences; ++i) {
       for (int r = 0; r < refsPerSen; ++r) {
@@ -579,6 +583,9 @@ public class MertCore
     // delete .temp.stats.merged file
     deleteFile(decoderOutFileName+".temp.stats.merged");
 
+    // delete .temp.sents.currIt.IP file
+    deleteFile(decoderOutFileName+".temp.sents.currIt.IP");
+
   } // void run_MERT(int maxIts)
 
   @SuppressWarnings("unchecked")
@@ -686,22 +693,25 @@ public class MertCore
       for (int it = 1; it <= iteration; ++it) { newCandidatesAdded[it] = 0; }
 
       // each inFile corresponds to the output of an iteration
-      BufferedReader[] inFile_sents = new BufferedReader[1+iteration];
-      BufferedReader[] inFile_feats = new BufferedReader[1+iteration];
-      BufferedReader[] inFile_stats = new BufferedReader[1+iteration];
-      for (int it = firstIt; it <= iteration; ++it) {
-        inFile_sents[it] = new BufferedReader(new FileReader(decoderOutFileName+".temp.sents.it"+it));
+      // (index 0 is not used; no corresponding index for the current iteration)
+      BufferedReader[] inFile_sents = new BufferedReader[iteration];
+      BufferedReader[] inFile_feats = new BufferedReader[iteration];
+      BufferedReader[] inFile_stats = new BufferedReader[iteration];
+      for (int it = firstIt; it < iteration; ++it) {
+        InputStream inStream_sents = new FileInputStream(new File(decoderOutFileName+".temp.sents.it"+it));
+        inFile_sents[it] = new BufferedReader(new InputStreamReader(inStream_sents, "utf8"));
+//        inFile_sents[it] = new BufferedReader(new FileReader(decoderOutFileName+".temp.sents.it"+it));
         inFile_feats[it] = new BufferedReader(new FileReader(decoderOutFileName+".temp.feats.it"+it));
-        if (it != iteration)
-          inFile_stats[it] = new BufferedReader(new FileReader(decoderOutFileName+".temp.stats.it"+it));
-          // the stats file for the current iteration is created in this method,
-          // not in produceTempFiles.
+        inFile_stats[it] = new BufferedReader(new FileReader(decoderOutFileName+".temp.stats.it"+it));
       }
+
+      InputStream inStream_sents = new FileInputStream(new File(decoderOutFileName+".temp.sents.it"+iteration));
+      BufferedReader inFile_sentsCurrIt = new BufferedReader(new InputStreamReader(inStream_sents, "utf8"));
+      BufferedReader inFile_featsCurrIt = new BufferedReader(new FileReader(decoderOutFileName+".temp.feats.it"+iteration));
+      PrintWriter outFile_statsCurrIt = new PrintWriter(decoderOutFileName+".temp.stats.it"+iteration);
 
       PrintWriter outFile_statsMerged = new PrintWriter(decoderOutFileName+".temp.stats.merged");
         // write sufficient statistics from all the sentences from the output files into a single file
-      PrintWriter outFile_statsCurrIt = new PrintWriter(decoderOutFileName+".temp.stats.it"+iteration);
-        // aka "inFile_stats[iteration]"
 
       String sents_str, feats_str, stats_str;
 
@@ -742,7 +752,7 @@ public class MertCore
             feats_str = inFile_feats[it].readLine();
             stats_str = inFile_stats[it].readLine();
 
-            if (feats_str.equals("||||||")) {
+            if (sents_str.equals("||||||")) {
               n = sizeOfNBest+1;
             } else if (!existingCandStats.containsKey(sents_str)) {
 
@@ -788,6 +798,61 @@ public class MertCore
 
         // now process the candidates of the current iteration
 
+        /* remember:
+             BufferedReader inFile_sentsCurrIt
+             BufferedReader inFile_featsCurrIt
+             PrintWriter outFile_statsCurrIt
+        */
+
+        FileOutputStream outStream = new FileOutputStream(decoderOutFileName+".temp.sents.currIt.IP", false); // false: don't append
+        OutputStreamWriter outStreamWriter = new OutputStreamWriter(outStream, "utf8");
+        BufferedWriter outFile_sentsCurrIt_IP = new BufferedWriter(outStreamWriter);
+
+        Vector<String> unknownCands_V = new Vector<String>();
+
+        for (int n = 0; n <= sizeOfNBest; ++n) {
+        // Why up to and *including* sizeOfNBest?
+        // So that it would read the "||||||" separator even if there is
+        // a complete list of sizeOfNBest candidates.
+
+          // for the nth candidate for the ith sentence, read the sentence,
+          // and rewrite it to the IP file
+
+          sents_str = inFile_sentsCurrIt.readLine();
+          writeLine(sents_str,outFile_sentsCurrIt_IP); // Note: possibly "||||||"
+
+          if (sents_str.equals("||||||")) {
+            n = sizeOfNBest+1;
+          } else if (!existingCandStats.containsKey(sents_str)) {
+            unknownCands_V.add(sents_str);
+            existingCandStats.put(sents_str,"U"); // i.e. unknown
+          }
+
+          showProgress();
+
+        } // for (n)
+
+        outFile_sentsCurrIt_IP.close();
+
+        // now unknown_V has the candidates for which we need to calculate
+        // sufficient statistics
+        int sizeUnknown = unknownCands_V.size();
+        String[] unknownCands = new String[sizeUnknown];
+        unknownCands_V.toArray(unknownCands);
+        int[] indices = new int[sizeUnknown];
+        for (int d = 0; d < sizeUnknown; ++d) {
+          existingCandStats.remove(unknownCands[d]);
+          indices[d] = i;
+        }
+
+        int[][] newSuffStats = evalMetric.suffStats(unknownCands, indices);
+
+        int d = -1;
+
+
+        InputStream inStream_sentsCurrIt_IP = new FileInputStream(new File(decoderOutFileName+".temp.sents.currIt.IP"));
+        BufferedReader inFile_sentsCurrIt_IP = new BufferedReader(new InputStreamReader(inStream_sentsCurrIt_IP, "utf8"));
+
         int[] stats = new int[suffStatsCount];
 
         for (int n = 0; n <= sizeOfNBest; ++n) {
@@ -798,18 +863,23 @@ public class MertCore
           // for the nth candidate for the ith sentence, read the sentence, feature values,
           // and sufficient statistics from the various temp files
 
-          sents_str = inFile_sents[iteration].readLine();
-          feats_str = inFile_feats[iteration].readLine();
+          sents_str = inFile_sentsCurrIt_IP.readLine();
+          feats_str = inFile_featsCurrIt.readLine();
 
-          if (feats_str.equals("||||||")) {
+          if (sents_str.equals("||||||")) {
             n = sizeOfNBest+1;
           } else if (!existingCandStats.containsKey(sents_str)) {
 
-            stats = evalMetric.suffStats(sents_str,i);
+            ++d;
 
             stats_str = "";
-            for (int s = 0; s < suffStatsCount-1; ++s) { stats_str += (stats[s] + " "); }
+            for (int s = 0; s < suffStatsCount-1; ++s) {
+              stats[s] = newSuffStats[d][s];
+              stats_str += (stats[s] + " ");
+            }
+            stats[suffStatsCount-1] = newSuffStats[d][suffStatsCount-1];
             stats_str += stats[suffStatsCount-1];
+
             outFile_statsCurrIt.println(stats_str);
             outFile_statsMerged.println(stats_str);
 
@@ -829,9 +899,8 @@ public class MertCore
               }
               if (score > best1Score[j][i]) {
                 best1Score[j][i] = score;
-                String[] tempStats = stats_str.split("\\s+");
                 for (int s = 0; s < suffStatsCount; ++s)
-                  best1Cand_suffStats[j][i][s] = Integer.parseInt(tempStats[s]);
+                  best1Cand_suffStats[j][i][s] = stats[s];
               }
             }
 
@@ -852,6 +921,10 @@ public class MertCore
 
         } // for (n)
 
+        // now d = sizeUnknown
+
+        inFile_sentsCurrIt_IP.close();
+
         outFile_statsCurrIt.println("||||||");
 
         existingCandStats.clear();
@@ -859,16 +932,16 @@ public class MertCore
 
       } // for (i)
 
-      for (int it = firstIt; it <= iteration; ++it) {
+      for (int it = firstIt; it < iteration; ++it) {
         inFile_sents[it].close();
         inFile_feats[it].close();
-        if (it != iteration)
-          inFile_stats[it].close();
-          // the stats file for the current iteration was created in this method,
-          // not in produceTempFiles.
+        inFile_stats[it].close();
       }
 
-      outFile_statsCurrIt.close(); // aka "inFile_stats[iteration]"
+      inFile_sentsCurrIt.close();
+      inFile_featsCurrIt.close();
+      outFile_statsCurrIt.close();
+
       outFile_statsMerged.close();
 
       println("",2); // to finish off progress dot line

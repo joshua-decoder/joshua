@@ -144,11 +144,11 @@ public abstract class EvaluationMetric
 
     int[][] stats = new int[candCount][suffStatsCount];
 
-    for (int j = 0; j < candCount; ++j) {
-      int[] currStats = suffStats(cand_strings[j],cand_indices[j]);
+    for (int d = 0; d < candCount; ++d) {
+      int[] currStats = suffStats(cand_strings[d],cand_indices[d]);
 
-      for (int s = 0; s < suffStatsCount; ++s) { stats[j][s] = currStats[s]; }
-    } // for (j)
+      for (int s = 0; s < suffStatsCount; ++s) { stats[d][s] = currStats[s]; }
+    } // for (d)
 
     return stats;
   }
