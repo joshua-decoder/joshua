@@ -25,7 +25,7 @@ import java.util.List;
  * of mapping between strings and symbols.
  * 
  * @author Lane Schwartz
- * @author Zhifei
+ * @author Zhifei Li
  * @version $LastChangedDate$
  */
 public interface SymbolTable {
