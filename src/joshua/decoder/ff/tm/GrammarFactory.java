@@ -22,22 +22,17 @@ import joshua.util.sentence.Phrase;
 
 
 /**
- * 
- * @author Lane Schwartz
- * @version $LastChangedDate$
- */
-
-
-/* To implement a new grammar, one must
+ * To implement a new grammar, one must
  * (1) implement GrammarFactory
  * (2) implement Grammar
  * (3) implement TrieGrammar
  * (4) implement RuleCollection
  * 
  * Also, one needs to pay attention to Rule class
- * */
-
-
+ *
+ * @author Lane Schwartz
+ * @version $LastChangedDate$
+ */
 public interface GrammarFactory {
 
 	/** 

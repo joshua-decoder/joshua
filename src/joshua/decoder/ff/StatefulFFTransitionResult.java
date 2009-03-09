@@ -26,14 +26,14 @@ package joshua.decoder.ff;
  */
 
 public class StatefulFFTransitionResult extends DefaultFFTransitionResult {
-	private FFDPState dp_state = null;
+	private FFDPState dynamicProgrammingState = null;
 	
 	
 	public FFDPState getStateForItem() {
-		return this.dp_state;
+		return this.dynamicProgrammingState;
 	}
 	
-	public void putStateForItem(FFDPState map) {
-		this.dp_state = map;
+	public void setStateForItem(FFDPState map) {
+		this.dynamicProgrammingState = map;
 	}
 }

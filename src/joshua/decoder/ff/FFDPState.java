@@ -28,7 +28,7 @@ import joshua.corpus.SymbolTable;
  */
 
 public interface FFDPState {
-	public String getSignature(boolean force_recompute);
-	public String getSignature(SymbolTable p_symbolTable, boolean force_recompute);
+	public String getSignature(boolean forceRecompute);
+	public String getSignature(SymbolTable symbolTable, boolean forceRecompute);
 	
 }

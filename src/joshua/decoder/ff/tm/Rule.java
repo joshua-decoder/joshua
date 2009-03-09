@@ -29,17 +29,12 @@ import joshua.util.sentence.Vocabulary;
 
 
 /**
- * 
+ * Normally, the feature score in the rule should be *cost* (i.e., -LogP), 
+ * so that the feature weight should be positive
+ *
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate: 2008-08-03 04:12:57 -0400 (Sun, 03 Aug 2008) $
  */
-
-
-/* Normally, the feature score in the rule should be *cost* (i.e., -LogP), 
- * so that the feature weight should be positive
- * */
-
-
 public class Rule {
 	/* The string format of Rule is:
 	 *     [Phrase] ||| french ||| english ||| feature scores

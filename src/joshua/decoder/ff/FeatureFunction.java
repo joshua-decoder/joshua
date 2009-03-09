@@ -41,10 +41,10 @@ public interface FeatureFunction {
 	
 	/* It is essential to make sure the feature ID is unique
 	 * for each feature. */
-	void    putFeatureID(int id);
+	void    setFeatureID(int id);
 	int     getFeatureID();
 	
-	void    putWeight(double weight);
+	void    setWeight(double weight);
 	double  getWeight();
 	
 	boolean isStateful();

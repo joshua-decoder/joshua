@@ -32,11 +32,11 @@ import joshua.decoder.hypergraph.HyperEdge;
 
 public abstract class DefaultStatefulFF implements FeatureFunction {
 	private double weight = 0.0;
-	private int    feat_id; //the unique integer that identifies a feature
+	private int    featureID; //the unique integer that identifies a feature
 	
-	public DefaultStatefulFF(double weight_, int id_) {
-		this.weight = weight_;
-		this.feat_id = id_;
+	public DefaultStatefulFF(double weight, int id) {
+		this.weight    = weight;
+		this.featureID = id;
 	}
 	
 	public boolean isStateful() {
@@ -47,25 +47,27 @@ public abstract class DefaultStatefulFF implements FeatureFunction {
 		return this.weight;
 	}
 	
-	public final void putWeight(final double weight_) {
-		this.weight = weight_;
+	public final void setWeight(final double weight) {
+		this.weight = weight;
 	}
 	
 	public final int getFeatureID() {
-		return this.feat_id;
+		return this.featureID;
 	}
 	
-	public final void putFeatureID(final int id_) {
-		this.feat_id = id_;
+	public final void setFeatureID(final int id) {
+		this.featureID = id;
 	}
 	
-	/*default behavior: ignore "edge"*/
-	public FFTransitionResult transition(HyperEdge edge, Rule rule, ArrayList<FFDPState> previous_states, int span_start, int span_end){
+	/** default behavior: ignore "edge" */
+	public FFTransitionResult transition(HyperEdge edge, Rule rule,
+	ArrayList<FFDPState> previous_states, int span_start, int span_end
+	) {
 		return transition(rule, previous_states, span_start,span_end);
 	}
 	
-	/*default behavior: ignore "edge"*/
-	public double finalTransition(HyperEdge edge, FFDPState state){
+	/** default behavior: ignore "edge" */
+	public double finalTransition(HyperEdge edge, FFDPState state) {
 		return finalTransition(state);
 	}
 }

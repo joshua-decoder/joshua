@@ -179,7 +179,8 @@ public class DecoderThread extends Thread {
 		
 		Grammar[] grammars = new Grammar[grammarFactories.length];
 		for (int i = 0; i < grammarFactories.length; i++) {
-			grammars[i] = grammarFactories[i].getGrammarForSentence(new Pattern(this.p_symbolTable,sentence_numeric));
+			grammars[i] = grammarFactories[i].getGrammarForSentence(
+					new Pattern(this.p_symbolTable, sentence_numeric));
 //			grammars[i].sortGrammar(models);//TODO: for batch grammar, we do not want to sort it every time
 		}
 		

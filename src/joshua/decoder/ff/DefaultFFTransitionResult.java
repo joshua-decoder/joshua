@@ -34,15 +34,15 @@ public abstract class DefaultFFTransitionResult implements FFTransitionResult {
 		return this.transitionCost;
 	}
 	
-	public void putTransitionCost(final double transition_cost) {
-		this.transitionCost = transition_cost;
+	public void setTransitionCost(final double transitionCost) {
+		this.transitionCost = transitionCost;
 	}
 	
 	public double getFutureCostEstimation() {
 		return this.futureCostEstimation;
 	}
 	
-	public void putFutureCostEstimation(final double cost) {
+	public void setFutureCostEstimation(final double cost) {
 		this.futureCostEstimation = cost;
 	}
 

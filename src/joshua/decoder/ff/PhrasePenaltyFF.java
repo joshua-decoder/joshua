@@ -21,6 +21,7 @@ import joshua.decoder.ff.tm.Rule;
 
 
 /**
+ * @todo Is this being used anywhere? If so, for what?
  * 
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate: 2008-07-28 18:44:45 -0400 (Mon, 28 Jul 2008) $
@@ -29,8 +30,8 @@ public final class PhrasePenaltyFF extends DefaultStatelessFF {
 	private static final double ALPHA = Math.log10(Math.E);
 	
 	
-	public PhrasePenaltyFF(final int feat_id_, final double weight_, final int owner_) {
-		super(weight_, owner_, feat_id_);
+	public PhrasePenaltyFF(final int featureID, final double weight, final int owner) {
+		super(weight, owner, featureID);
 	}
 	
 	

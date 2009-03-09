@@ -49,7 +49,7 @@ public abstract class DefaultStatelessFF implements FeatureFunction {
 		return this.weight;
 	}
 	
-	public final void putWeight(final double weight) {
+	public final void setWeight(final double weight) {
 		this.weight = weight;
 	}
 	
@@ -58,7 +58,7 @@ public abstract class DefaultStatelessFF implements FeatureFunction {
 		return this.featureID;
 	}
 	
-	public final void putFeatureID(final int id) {
+	public final void setFeatureID(final int id) {
 		this.featureID = id;
 	}
 	
@@ -84,7 +84,7 @@ public abstract class DefaultStatelessFF implements FeatureFunction {
 			System.exit(0);
 		}
 		StatelessFFTransitionResult result = new StatelessFFTransitionResult();
-		result.putTransitionCost(this.estimate(rule));
+		result.setTransitionCost(this.estimate(rule));
 		return result;
 	}
 	

@@ -33,9 +33,9 @@ public final class PhraseModelFF extends DefaultStatelessFF {
 	private final int columnIndex; // = -1;//zero-indexed
 	
 	
-	public PhraseModelFF(final int feat_id_, final double weight_, final int owner_, final int column_index) {
-		super(weight_, owner_, feat_id_);
-		this.columnIndex = column_index;
+	public PhraseModelFF(final int featureID, final double weight, final int owner, final int columnIndex) {
+		super(weight, owner, featureID);
+		this.columnIndex = columnIndex;
 	}
 	
 	

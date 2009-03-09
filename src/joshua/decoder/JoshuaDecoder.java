@@ -136,18 +136,20 @@ public class JoshuaDecoder {
 		for (int i = 0; i < p_l_feat_functions.size(); i++) {
 			FeatureFunction ff = p_l_feat_functions.get(i);
 			double old_weight = ff.getWeight();
-			ff.putWeight(weight_vector[i]);
+			ff.setWeight(weight_vector[i]);
 			System.out.println("Feature function : " + ff.getClass().getSimpleName() + "; weight changed from " + old_weight + " to " + ff.getWeight());
 		}
 		
 		//TODO: this works for Batch grammar only; not for sentence-specifi grammar
-		for(GrammarFactory grammar_factory : p_tm_grammar_factories){
-			grammar_factory.getGrammarForSentence(null).sortGrammar(p_l_feat_functions);
+		for (GrammarFactory grammarFactory : p_tm_grammar_factories) {
+			grammarFactory
+				.getGrammarForSentence(null)
+				.sortGrammar(p_l_feat_functions);
 		}
 	}
 	
 	//##### procedures: read config, init lm, init sym tbl, init models, read lm, read tm
-	public void initializeDecoder(String config_file){
+	public void initializeDecoder(String config_file) {
 		try {
 			//##### read config file
 			JoshuaConfiguration.read_config_file(config_file);

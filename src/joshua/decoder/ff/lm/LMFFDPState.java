@@ -66,24 +66,24 @@ public class LMFFDPState implements FFDPState {
 		return this.right_lm_state_words;
 	}
 
-	public String getSignature(boolean force_recompute) {
-		return getSignature(null, force_recompute);
+	public String getSignature(boolean forceRecompute) {
+		return getSignature(null, forceRecompute);
 	}
 	
-	/*Bug: now, the getSignature is also got called by diskgraph; this may change the this.sig from integers to strings
+	/* BUG: now, the getSignature is also got called by diskgraph; this may change the this.sig from integers to strings
 	 * */
-	public String getSignature(SymbolTable p_symbolTable, boolean force_recompute) {
-		if(force_recompute || sig == null){
+	public String getSignature(SymbolTable symbolTable, boolean forceRecompute) {
+		if (forceRecompute || sig == null) {
 			StringBuffer sb = new StringBuffer();
 			//sb.append(SIG_PREAMBLE);//TODO: do we really need this
 			
 			/*we can not simply use sb.append(left_lm_state_words), as it will just add the address of left_lm_state_words
 			 */
-			compute_state_sig(p_symbolTable, left_lm_state_words, sb); 
+			compute_state_sig(symbolTable, left_lm_state_words, sb); 
 			
 			sb.append(SIG_SEP);//TODO: do we really need this
 			
-			compute_state_sig(p_symbolTable, right_lm_state_words, sb);
+			compute_state_sig(symbolTable, right_lm_state_words, sb);
 			
 			this.sig = sb.toString();
 		}
@@ -93,7 +93,7 @@ public class LMFFDPState implements FFDPState {
 
 	
 
-	private void compute_state_sig(SymbolTable p_symbolTable, int[] state, StringBuffer sb){
+	private void compute_state_sig(SymbolTable symbolTable, int[] state, StringBuffer sb) {
 		if (null != state) {
 			for (int i = 0; i < state.length; i++) {
 				if (true
@@ -102,10 +102,11 @@ public class LMFFDPState implements FFDPState {
 					 * && states[i]!=Symbol.NULL_LEFT_LM_STATE_SYM_ID
 					 * && states[i]!=Symbol.LM_STATE_OVERLAP_SYM_ID*/
 				) {
-					if(p_symbolTable!=null)
-						sb.append(p_symbolTable.getWord(state[i]));
-					else
+					if (null != symbolTable) {
+						sb.append(symbolTable.getWord(state[i]));
+					} else {
 						sb.append(state[i]);
+					}
 					if (i < state.length - 1) {
 						sb.append(" ");
 					}
@@ -118,5 +119,4 @@ public class LMFFDPState implements FFDPState {
 		}
 	}
 
-	
 }

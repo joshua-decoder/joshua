@@ -28,8 +28,8 @@ import joshua.decoder.ff.tm.Rule;
 public final class WordPenaltyFF extends DefaultStatelessFF {
 	private static final double OMEGA = Math.log10(Math.E);
 	
-	public WordPenaltyFF(int feat_id_, double weight_) {
-		super(weight_, -1, feat_id_);//TODO: owner
+	public WordPenaltyFF(int featureID, double weight) {
+		super(weight, -1, featureID); //TODO: owner
 	}
 	
 	public double estimate(final Rule rule) {

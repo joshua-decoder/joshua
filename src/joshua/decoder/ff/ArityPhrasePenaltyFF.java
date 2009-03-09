@@ -29,21 +29,21 @@ public final class ArityPhrasePenaltyFF extends DefaultStatelessFF {
 	private static final double ALPHA = Math.log10(Math.E);
 	
 	// when the rule.arity is in the range, then this feature is activated
-	private final int min_arity;
-	private final int max_arity;
+	private final int minArity;
+	private final int maxArity;
 	
 	
-	public ArityPhrasePenaltyFF(final int feat_id_, final double weight_, final int owner_,	final int min, final int max) {
-		super(weight_, owner_, feat_id_);
-		this.min_arity = min;
-		this.max_arity = max;
+	public ArityPhrasePenaltyFF(final int featureID, final double weight, final int owner,	final int min, final int max) {
+		super(weight, owner, featureID);
+		this.minArity = min;
+		this.maxArity = max;
 	}
 	
 	
 	public double estimate(final Rule rule) {
 		if (this.owner == rule.owner
-		&& this.min_arity <= rule.arity
-		&& this.max_arity >= rule.arity) {
+		&& this.minArity <= rule.arity
+		&& this.maxArity >= rule.arity) {
 			return ALPHA;
 		} else {
 			return 0.0;

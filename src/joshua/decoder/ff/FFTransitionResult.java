@@ -32,11 +32,11 @@ public interface FFTransitionResult {
 // Attributes
 //===============================================================
 	public double getTransitionCost();
-	public void   putTransitionCost(double transition_cost);
+	public void   setTransitionCost(double transitionCost);
 	
 	public FFDPState getStateForItem();
-	public void      putStateForItem(FFDPState map);
+	public void      setStateForItem(FFDPState map);
 	
 	public double getFutureCostEstimation();
-	public void   putFutureCostEstimation(double cost);
+	public void   setFutureCostEstimation(double cost);
 }

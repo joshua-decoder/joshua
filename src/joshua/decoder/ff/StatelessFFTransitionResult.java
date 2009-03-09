@@ -31,7 +31,7 @@ public class StatelessFFTransitionResult extends DefaultFFTransitionResult {
 		return null;
 	}
 	
-	public void putStateForItem(FFDPState map) {
+	public void setStateForItem(FFDPState map) {
 		System.out.println("attempt to assign FFDPState to stateless feature");
 		System.exit(0);
 	}

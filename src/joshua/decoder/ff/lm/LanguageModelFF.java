@@ -198,7 +198,7 @@ public class LanguageModelFF extends DefaultStatefulFF {
 		//### create tabl
 		StatefulFFTransitionResult res_tbl = new StatefulFFTransitionResult();
 		LMFFDPState  model_states = new LMFFDPState();
-		res_tbl.putStateForItem(model_states);
+		res_tbl.setStateForItem(model_states);
 		
 		//##### get left euquiv state 
 		double[] lm_l_cost = new double[2];
@@ -208,7 +208,7 @@ public class LanguageModelFF extends DefaultStatefulFF {
 		
 		//##### trabsition and estimate cost
 		transition_cost += lm_l_cost[0];//add finalized cost for the left state words
-		res_tbl.putTransitionCost(transition_cost);
+		res_tbl.setTransitionCost(transition_cost);
 		//System.out.println("##tran cost: " + transition_cost +" lm_l_cost[0]: " + lm_l_cost[0]);
 		double estimated_future_cost=0.0;
 		if(this.ngramOrder>1){//no estiamtion for unigram lm
@@ -218,7 +218,7 @@ public class LanguageModelFF extends DefaultStatefulFF {
 				estimated_future_cost = estimate_state_prob(model_states,false,false);//bonus function
 			}
 		}
-		res_tbl.putFutureCostEstimation(estimated_future_cost);
+		res_tbl.setFutureCostEstimation(estimated_future_cost);
 		//##### get right equiv state
 		//if(current_ngram.size()>this.ngramOrder-1 || equiv_l_state.length>this.ngramOrder-1)	System.exit(1);
 		int[] equiv_r_state = this.lmGrammar.rightEquivalentState(Support.sub_int_array(current_ngram, 0, current_ngram.size()), this.ngramOrder);
@@ -341,8 +341,8 @@ public class LanguageModelFF extends DefaultStatefulFF {
 		}
 		
 		//##################left context
-		if(add_start_and_end_symbol)
-			current_ngram.add(START_SYM_ID);
+		if (add_start_and_end_symbol) current_ngram.add(START_SYM_ID);
+		
 		for (int i = 0; i < l_context.length; i++) {
 			int t = l_context[i];
 			current_ngram.add(t);
@@ -351,11 +351,15 @@ public class LanguageModelFF extends DefaultStatefulFF {
 				int additional_backoff_weight = current_ngram.size() - (i+1);
 				//compute additional backoff weight
 				//TOTO: may not work with the case that add_start_and_end_symbol=false
-				res -= this.lmGrammar.logProbabilityOfBackoffState(current_ngram, current_ngram.size(), additional_backoff_weight);
-			} else {//partial ngram
+				res -= this.lmGrammar.logProbabilityOfBackoffState(
+					current_ngram, current_ngram.size(), additional_backoff_weight);
+				
+			} else { // partial ngram
 				//compute the current word probablity
-				if(current_ngram.size()>=2)//start from bigram
-					res -= this.lmGrammar.ngramLogProbability(current_ngram, current_ngram.size());
+				if (current_ngram.size() >= 2) { // start from bigram
+					res -= this.lmGrammar.ngramLogProbability(
+						current_ngram, current_ngram.size());
+				}
 			}
 			if (current_ngram.size() == this.ngramOrder) {
 				current_ngram.remove(0);

@@ -26,8 +26,8 @@ import joshua.decoder.ff.tm.Rule;
  */
 public final class SourceLatticeArcCostFF extends DefaultStatelessFF {
 	
-	public SourceLatticeArcCostFF(final int feat_id_, final double weight_) {
-		super(weight_, -1, feat_id_); // TODO: owner
+	public SourceLatticeArcCostFF(final int featureID, final double weight) {
+		super(weight, -1, featureID); // TODO: owner
 	}
 	
 	
