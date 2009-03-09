@@ -148,8 +148,8 @@ public class BLEU extends EvaluationMetric
 
     String[] words = cand_str.split("\\s+");
 
-int wordCount = words.length;
-for (int j = 0; j < wordCount; ++j) { words[j] = words[j].intern(); }
+//int wordCount = words.length;
+//for (int j = 0; j < wordCount; ++j) { words[j] = words[j].intern(); }
 
     set_prec_suffStats(stats,words,i);
 

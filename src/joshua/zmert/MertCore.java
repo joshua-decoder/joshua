@@ -669,15 +669,17 @@ public class MertCore
       double[] initialScore = new double[1+initsPerIt];
       double[] finalScore = new double[1+initsPerIt];
 
-      String[][] best1Cand_sen = new String[1+initsPerIt][numSentences];
+      int[][][] best1Cand_suffStats = new int[1+initsPerIt][numSentences][suffStatsCount];
       double[][] best1Score = new double[1+initsPerIt][numSentences];
-        // used to calculate initialScore[]
-
+        // Those two arrays are used to calculate initialScore[]
+        // (the "score" in best1Score refers to that assigned by the
+        //  decoder; the "score" in initialScore refers to that
+        //  assigned by the evaluation metric)
 
       int firstIt = Math.max(1,iteration-prevIts);
         // i.e. only process candidates from the current iteration and candidates
         // from up to prevIts previous iterations.
-      println("Reading candidate translations from iterations " + firstIt + "-" + iteration,2);
+      println("Reading candidate translations from iterations " + firstIt + "-" + iteration,1);
       progress = 0;
 
       int[] newCandidatesAdded = new int[1+iteration];
@@ -719,8 +721,6 @@ public class MertCore
       for (int i = 0; i < numSentences; ++i) {
 
         for (int j = 1; j <= initsPerIt; ++j) {
-//          best1Cand[j][i] = null;
-          best1Cand_sen[j][i] = null;
           best1Score[j][i] = NegInf;
         }
 
@@ -764,7 +764,9 @@ public class MertCore
                 }
                 if (score > best1Score[j][i]) {
                   best1Score[j][i] = score;
-                  best1Cand_sen[j][i] = sents_str;
+                  String[] tempStats = stats_str.split("\\s+");
+                  for (int s = 0; s < suffStatsCount; ++s)
+                    best1Cand_suffStats[j][i][s] = Integer.parseInt(tempStats[s]);
                 }
               }
 
@@ -827,7 +829,9 @@ public class MertCore
               }
               if (score > best1Score[j][i]) {
                 best1Score[j][i] = score;
-                best1Cand_sen[j][i] = sents_str;
+                String[] tempStats = stats_str.split("\\s+");
+                for (int s = 0; s < suffStatsCount; ++s)
+                  best1Cand_suffStats[j][i][s] = Integer.parseInt(tempStats[s]);
               }
             }
 
@@ -908,7 +912,18 @@ public class MertCore
 
         double[] currLambda = new double[1+numParams];
         System.arraycopy(initialLambda[j],1,currLambda,1,numParams);
-        initialScore[j] = evalMetric.score(best1Cand_sen[j]);
+
+        int[] best1Cand_suffStats_tot = new int[suffStatsCount];
+        for (int s = 0; s < suffStatsCount; ++s) best1Cand_suffStats_tot[s] = 0;
+
+        for (int i = 0; i < numSentences; ++i) {
+          for (int s = 0; s < suffStatsCount; ++s) {
+            best1Cand_suffStats_tot[s] += best1Cand_suffStats[j][i][s];
+          }
+        }
+
+        initialScore[j] = evalMetric.score(best1Cand_suffStats_tot);
+
         println("Initial lambda[j=" + j + "]: " + lambdaToString(initialLambda[j]),1);
         println("(Initial " + metricName + "[j=" + j + "]: " + initialScore[j] + ")",1);
         println("",1);
@@ -2747,7 +2762,7 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
         ++currCand;
       }
 
-    }
+    } // for (i)
 
     inFile.close();
 
