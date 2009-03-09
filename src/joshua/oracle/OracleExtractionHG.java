@@ -23,6 +23,7 @@ import joshua.decoder.hypergraph.HGNode;
 import joshua.decoder.hypergraph.HyperEdge;
 import joshua.decoder.hypergraph.HyperGraph;
 import joshua.decoder.hypergraph.KBestExtractor;
+import joshua.decoder.hypergraph.ViterbiExtractor;
 import joshua.decoder.BuildinSymbol;
 import joshua.decoder.Support;
 import joshua.corpus.SymbolTable;
@@ -167,7 +168,7 @@ public class OracleExtractionHG extends SplitHg {
 				orc_bleu = (Double) res[1];
 			}else{				
 				HyperGraph hg_oracle = orc_extractor.oracle_extract_hg(hg, hg.sent_len, lm_order, ref_sent);
-				orc_sent =  HyperGraph.extractViterbiString(p_symbolTable, hg_oracle.goal_item);
+				orc_sent =  ViterbiExtractor.extractViterbiString(p_symbolTable, hg_oracle.goal_item);
 				orc_bleu = orc_extractor.get_best_goal_cost(hg, orc_extractor.g_tbl_split_virtual_items);
 				if(dhg_write!=null) dhg_write.save_hyper_graph(hg_oracle);
 				///time_on_orc_extract += System.currentTimeMillis()-start_time;

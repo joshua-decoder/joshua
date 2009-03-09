@@ -512,7 +512,6 @@ public class DiskHyperGraph {
 			} else {
 				//stateless cost is not properly set, so cannot extract individual features during kbest extraction
 				rule = Rule.constructOOVRule(
-					null,
 					1,
 					MemoryBasedBatchGrammar.OOV_RULE_ID,
 					this.symbolTable.addNonterminal(fds[3+qtyAntecedents]),

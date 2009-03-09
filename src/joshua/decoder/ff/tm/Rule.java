@@ -104,7 +104,7 @@ public class Rule {
 	 * transition cost for phrase model, arity penalty,
 	 * word penalty are all zero, except the LM cost or the first feature if no LM feature is used
 	 */
-	public static Rule constructOOVRule(ArrayList<FeatureFunction> p_l_models, int num_feats, int oov_rule_id, int lhs_in, int fr_in, int owner_in, boolean have_lm_model) {
+	public static Rule constructOOVRule(int num_feats, int oov_rule_id, int lhs_in, int fr_in, int owner_in, boolean have_lm_model) {
 		Rule r = new Rule();
 		r.rule_id    = oov_rule_id;
 		r.lhs        = lhs_in;
