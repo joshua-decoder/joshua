@@ -153,7 +153,7 @@ public class HyperGraphPruning extends TrivialInsideOutside {
 		//sanity check
 		//if(merit>worst_cost || merit < best_cost){System.out.println("merit is not between best and worst, best: " + best_cost +"; worset:" + worst_cost + "; merit: " + merit); System.exit(0);}
 		 
-		if(dt.get_rule()!=null && dt.get_rule().owner == glue_grammar_owner && dt.get_rule().arity==2){//specicial rule: S->S X
+		if(dt.get_rule()!=null && dt.get_rule().getOwner() == glue_grammar_owner && dt.get_rule().getArity()==2){//specicial rule: S->S X
 			//TODO
 			return (post_log_prob-this.best_log_prob<CUR_THRESHOLD_GLUE) ? true:false;
 		}else{		

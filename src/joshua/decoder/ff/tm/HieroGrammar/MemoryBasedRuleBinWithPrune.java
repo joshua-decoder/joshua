@@ -50,18 +50,18 @@ import joshua.decoder.ff.tm.Rule;
 		protected void add_rule(Rule rule) {
 			if (null == this.heapRules) {//firt time
 				this.heapRules = new PriorityQueue<Rule>(1, Rule.NegtiveCostComparator);//TODO: initial capacity?
-				this.arity = rule.arity;
-				this.french = rule.p_french; 
+				this.arity = rule.getArity();
+				this.french = rule.getFrench(); 
 			}
-			if (rule.arity != this.arity) {
-				Support.write_log_line(String.format("RuleBin: arity is not matching, old: %d; new: %d", this.arity, rule.arity),	Support.ERROR);
+			if (rule.getArity() != this.arity) {
+				Support.write_log_line(String.format("RuleBin: arity is not matching, old: %d; new: %d", this.arity, rule.getArity()),	Support.ERROR);
 				return;
 			}
 			this.heapRules.add(rule);
 			if (rule.getEstRuleCost() + JoshuaConfiguration.rule_relative_threshold < this.cutoff) {
 				this.cutoff = rule.getEstRuleCost() + JoshuaConfiguration.rule_relative_threshold;
 			}
-			rule.p_french = this.french; //TODO: this will release the memory in each rule, but still have a pointer
+			rule.setFrench(this.french); //TODO: this will release the memory in each rule, but still have a pointer
 		}
 		
 		

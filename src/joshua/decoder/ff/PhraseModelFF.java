@@ -41,11 +41,12 @@ public final class PhraseModelFF extends DefaultStatelessFF {
 	
 	public double estimate(final Rule rule) {
 		//Support.write_log_line("model owner: " + owner + "; rule owner: "+r.owner, Support.INFO);
-		if (this.owner == rule.owner) {
-			if (this.columnIndex < rule.feat_scores.length) {
-				return rule.feat_scores[this.columnIndex];
+		if (this.owner == rule.getOwner()) {
+			float[] feat_scores = rule.getFeatureScores();
+			if (this.columnIndex < feat_scores.length) {
+				return feat_scores[this.columnIndex];
 			} else {
-				System.out.println("In PhraseModelFF: columnIndex is not right, model columnIndex: " + columnIndex + "; num of features in rul is :" + rule.feat_scores.length);
+				System.out.println("In PhraseModelFF: columnIndex is not right, model columnIndex: " + columnIndex + "; num of features in rul is :" + feat_scores.length);
 				/*for (int i = 0; i < rule.feat_scores.length; i++) {
 					System.out.println(String.format(" %.4f", rule.feat_scores[i]));
 				}

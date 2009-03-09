@@ -403,7 +403,7 @@ public class Bin
 		//double bonus = ((Double)tbl_states.get(BONUS)).doubleValue();//not used
 		if(should_prune(expected_total_cost)==false){
 			HyperEdge dt = new HyperEdge(rl,finalized_total_cost,transition_cost,ants);
-			HGNode item = new HGNode(i,j,rl.lhs,item_state_tbl,dt, expected_total_cost);
+			HGNode item = new HGNode(i,j,rl.getLHS(),item_state_tbl,dt, expected_total_cost);
 			add_deduction(item);
 			//Support.write_log_line(String.format("add an deduction with arity %d", rl.arity),Support.DEBUG);
 			//rl.print_info(Support.DEBUG);

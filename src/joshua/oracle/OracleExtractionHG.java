@@ -331,7 +331,7 @@ public class OracleExtractionHG extends SplitHg {
 		HashMap old_ngram_counts = new HashMap();//the ngram that has already been computed
 		int total_hyp_len =0;
 		int[] num_ngram_match = new int[g_bleu_order];
-		int[] en_words = dt.get_rule().english;
+		int[] en_words = dt.get_rule().getEnglish();
 		
 		//####calulate new and old ngram counts, and len
     	ArrayList words= new ArrayList();

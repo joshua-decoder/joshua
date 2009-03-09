@@ -66,16 +66,16 @@ public class HyperGraph {
 			}
 			return extractViterbiString(p_symbolTable, (HGNode)p_edge.get_ant_items().get(0));
 		}	
-		
-		for(int c=0; c<rl.english.length; c++){
-    		if(p_symbolTable.isNonterminal(rl.english[c])==true){
-    			int id=p_symbolTable.getTargetNonterminalIndex(rl.english[c]);
+		int[] english = rl.getEnglish();
+		for(int c=0; c< english.length; c++){
+    		if(p_symbolTable.isNonterminal(english[c])==true){
+    			int id=p_symbolTable.getTargetNonterminalIndex(english[c]);
     			HGNode child = (HGNode)p_edge.get_ant_items().get(id);
     			res.append(extractViterbiString(p_symbolTable, child));
     		}else{
-    			res.append(p_symbolTable.getWord(rl.english[c]));
+    			res.append(p_symbolTable.getWord(english[c]));
     		}
-    		if(c<rl.english.length-1) res.append(" ");
+    		if(c<english.length-1) res.append(" ");
 		}
 		return res.toString();
 	}

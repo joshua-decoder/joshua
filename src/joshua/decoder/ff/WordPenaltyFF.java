@@ -40,6 +40,6 @@ public final class WordPenaltyFF extends DefaultStatelessFF {
 		} else {
 			return 0.0;
 		}*/
-		return OMEGA * (rule.english.length - rule.arity);
+		return OMEGA * (rule.getEnglish().length - rule.getArity());
 	}
 }

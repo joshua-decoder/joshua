@@ -76,10 +76,11 @@ public class MemoryBasedBatchGrammarWithPrune extends MemoryBasedBatchGrammar {
 		
 		//######### identify the position, and insert the trinodes if necessary
 		MemoryBasedTrieGrammar pos = root;
-		for (int k = 0; k < p_rule.p_french.length; k++) {
-			int cur_sym_id = p_rule.p_french[k];
-			if (this.p_symbolTable.isNonterminal(p_rule.p_french[k])) { //TODO: p_rule.french store the original format like "[X,1]"
-				cur_sym_id = this.p_symbolTable.addNonterminal(replace_french_non_terminal(nonterminalReplaceRegexp, this.p_symbolTable.getWord(p_rule.p_french[k])));
+		int[] p_french = p_rule.getFrench();
+		for (int k = 0; k < p_french.length; k++) {
+			int cur_sym_id = p_french[k];
+			if (this.p_symbolTable.isNonterminal(p_french[k])) { //TODO: p_rule.french store the original format like "[X,1]"
+				cur_sym_id = this.p_symbolTable.addNonterminal(replace_french_non_terminal(nonterminalReplaceRegexp, this.p_symbolTable.getWord(p_french[k])));
 			}
 			
 			MemoryBasedTrieGrammar next_layer = pos.matchOne(cur_sym_id);
@@ -98,8 +99,8 @@ public class MemoryBasedBatchGrammarWithPrune extends MemoryBasedBatchGrammar {
 		//#########3: now add the rule into the trinode
 		if (null == pos.rule_bin) {
 			pos.rule_bin        = new MemoryBasedRuleBinWithPrune();
-			pos.rule_bin.french = p_rule.p_french;
-			pos.rule_bin.arity  = p_rule.arity;
+			pos.rule_bin.french = p_french;
+			pos.rule_bin.arity  = p_rule.getArity();
 			num_rule_bin++;
 		}
 		

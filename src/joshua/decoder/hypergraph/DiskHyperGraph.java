@@ -347,9 +347,9 @@ public class DiskHyperGraph {
 			.append(ruleID);
 		if (ruleID == MemoryBasedBatchGrammar.OOV_RULE_ID) {
 			s.append(" ")
-				.append(this.symbolTable.getWord(deduction_rule.lhs))
+				.append(this.symbolTable.getWord(deduction_rule.getLHS()))
 				.append(" ")
-				.append(this.symbolTable.getWords(deduction_rule.english));
+				.append(this.symbolTable.getWords(deduction_rule.getEnglish()));
 		}
 		s.append("\n");
 		
@@ -579,7 +579,7 @@ public class DiskHyperGraph {
 		out.write(
 			ruleID
 			+ " "
-			+ this.symbolTable.getWord(rule.owner)
+			+ this.symbolTable.getWord(rule.getOwner())
 			+ RULE_TBL_SEP
 			+ rule.toString(this.symbolTable)
 			+ "\n");

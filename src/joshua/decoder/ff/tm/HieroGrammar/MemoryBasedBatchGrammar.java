@@ -143,8 +143,8 @@ public class MemoryBasedBatchGrammar  extends BatchGrammar {
 	
 	public static Rule createRule(SymbolTable p_symbolTable, ArrayList<FeatureFunction> p_l_models, String nonterminalRegexp_, String nonterminalReplaceRegexp_, int r_id, String line, int owner_in) {
 		Rule res = new Rule(); 
-		res.rule_id = r_id;
-		res.owner   = owner_in;
+		res.setRuleID(r_id);
+		res.setOwner(owner_in);
 		
 		//rule format: X ||| Foreign side ||| English side ||| feature scores
 		String[] fds = line.split("\\s+\\|{3}\\s+");
@@ -153,39 +153,42 @@ public class MemoryBasedBatchGrammar  extends BatchGrammar {
 		}
 		
 		//=== lhs
-		res.lhs = p_symbolTable.addNonterminal(replace_french_non_terminal(nonterminalReplaceRegexp_, fds[0]));
+		res.setLHS( p_symbolTable.addNonterminal(replace_french_non_terminal(nonterminalReplaceRegexp_, fds[0])) );
 		
 		int arity = 0;
 		String[] french_tem = fds[1].split("\\s+");
-		res.p_french = new int[french_tem.length];
+		int[] french_ints = new int[french_tem.length];
 		for (int i = 0; i < french_tem.length; i++) {
 			if (is_non_terminal(nonterminalRegexp_, french_tem[i])) {
 				arity++;
-				res.p_french[i] = p_symbolTable.addNonterminal(french_tem[i]);//when storing hyper-graph, we need this
+				french_ints[i] = p_symbolTable.addNonterminal(french_tem[i]);//when storing hyper-graph, we need this
 			} else {
-				res.p_french[i] = p_symbolTable.addTerminal(french_tem[i]);
+				french_ints[i] = p_symbolTable.addTerminal(french_tem[i]);
 			}
 		}
-		res.arity = arity;
+		res.setFrench(french_ints);
+		res.setArity(arity);
 		
 		//english side
 		String[] english_tem = fds[2].split("\\s+");
-		res.english = new int[english_tem.length];
+		int[] english = new int[english_tem.length];
 		for (int i = 0; i < english_tem.length; i++) {
 			if (is_non_terminal(nonterminalRegexp_, english_tem[i])) {
-				res.english[i] = p_symbolTable.addNonterminal(english_tem[i]);
+				english[i] = p_symbolTable.addNonterminal(english_tem[i]);
 			} else {
-				res.english[i] = p_symbolTable.addTerminal(english_tem[i]);
+				english[i] = p_symbolTable.addTerminal(english_tem[i]);
 			}
 		}
+		res.setEnglish(english);
 		
 		String[] t_scores = fds[3].split("\\s+");
-		res.feat_scores = new float[t_scores.length];
+		float[] scores = new float[t_scores.length];
 		int i = 0;
 		for (String score : t_scores) {
-			res.feat_scores[i++] = Float.parseFloat(score);
+			scores[i++] = Float.parseFloat(score);
 		}
-		res.lattice_cost = 0;
+		res.setFeatureScores(scores);
+		res.setLatticeCost(0);
 		//tem_estcost += estimate_rule();//estimate lower-bound, and set statelesscost, this must be called
 		
 		res.estimateRuleCost(p_l_models);//estimate lower-bound, and set statelesscost, this must be called
@@ -206,10 +209,11 @@ public class MemoryBasedBatchGrammar  extends BatchGrammar {
 		
 		//######### identify the position, and insert the trinodes if necessary
 		MemoryBasedTrieGrammar pos = root;
-		for (int k = 0; k < p_rule.p_french.length; k++) {
-			int cur_sym_id = p_rule.p_french[k];
-			if (this.p_symbolTable.isNonterminal(p_rule.p_french[k])) { //TODO: p_rule.french store the original format like "[X,1]"
-				cur_sym_id = this.p_symbolTable.addNonterminal(replace_french_non_terminal(nonterminalReplaceRegexp, this.p_symbolTable.getWord(p_rule.p_french[k])));
+		int[] p_french = p_rule.getFrench();
+		for (int k = 0; k < p_french.length; k++) {
+			int cur_sym_id = p_french[k];
+			if (this.p_symbolTable.isNonterminal(p_french[k])) { //TODO: p_rule.french store the original format like "[X,1]"
+				cur_sym_id = this.p_symbolTable.addNonterminal(replace_french_non_terminal(nonterminalReplaceRegexp, this.p_symbolTable.getWord(p_french[k])));
 			}
 			
 			MemoryBasedTrieGrammar next_layer = pos.matchOne(cur_sym_id);
@@ -228,8 +232,8 @@ public class MemoryBasedBatchGrammar  extends BatchGrammar {
 		//#########3: now add the rule into the trinode
 		if (null == pos.rule_bin) {
 			pos.rule_bin        = new MemoryBasedRuleBin();
-			pos.rule_bin.french = p_rule.p_french;
-			pos.rule_bin.arity  = p_rule.arity;
+			pos.rule_bin.french = p_french;
+			pos.rule_bin.arity  = p_rule.getArity();
 			num_rule_bin++;
 		}
 		

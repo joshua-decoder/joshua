@@ -92,7 +92,7 @@ public class LanguageModelFF extends DefaultStatefulFF {
 	//antstates: ArrayList of states of this model in ant items
 	public StatefulFFTransitionResult transition(Rule rule, ArrayList<FFDPState> previous_states, int span_start, int span_end) {
 		//long start = Support.current_time();		
-		StatefulFFTransitionResult res = this.lookup_words1_equv_state(rule.english, previous_states);	
+		StatefulFFTransitionResult res = this.lookup_words1_equv_state(rule.getEnglish(), previous_states);	
 		//	Chart.g_time_lm += Support.current_time()-start;
 		return res;
 	}
@@ -102,7 +102,7 @@ public class LanguageModelFF extends DefaultStatefulFF {
 	/*depends on the rule only*/
 	/*will consider all the complete ngrams, and all the incomplete-ngrams that will have sth fit into its left side*/
 	public double estimate(Rule rule) {
-		return estimate_rule_prob(rule.english);
+		return estimate_rule_prob(rule.getEnglish());
 	}
 	
 	//only called after a complete hyp for the whole input sentence is obtaned

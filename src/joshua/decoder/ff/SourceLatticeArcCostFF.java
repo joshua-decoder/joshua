@@ -38,6 +38,6 @@ public final class SourceLatticeArcCostFF extends DefaultStatelessFF {
 		} else {
 			return 0.0;
 		}*/
-		return rule.lattice_cost;
+		return rule.getLatticeCost();
 	}
 }

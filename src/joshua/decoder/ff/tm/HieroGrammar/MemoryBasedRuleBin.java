@@ -23,7 +23,6 @@ import joshua.decoder.ff.tm.RuleCollection;
 		 * this function only after the decoding begins;
 		 * to avoid the synchronized method, we should call
 		 * this once the grammar is finished
-		 * what about the weights changed as in MERT??
 		 */
 		//public synchronized ArrayList<Rule> get_sorted_rules() {
 		public ArrayList<Rule> getSortedRules(ArrayList<FeatureFunction> l_models) {
@@ -59,15 +58,15 @@ import joshua.decoder.ff.tm.RuleCollection;
 		
 		protected void add_rule(Rule rule) {
 			if (sortedRules.size()<=0) {//first time
-				this.arity = rule.arity;
-				this.french = rule.p_french; 
+				this.arity = rule.getArity();
+				this.french = rule.getFrench(); 
 			}
-			if (rule.arity != this.arity) {
-				Support.write_log_line(	String.format("RuleBin: arity is not matching, old: %d; new: %d", this.arity, rule.arity),	Support.ERROR);
+			if (rule.getArity() != this.arity) {
+				Support.write_log_line(	String.format("RuleBin: arity is not matching, old: %d; new: %d", this.arity, rule.getArity()),	Support.ERROR);
 				return;
 			}
 			sortedRules.add(rule);
 			sorted      = false;
-			rule.p_french = this.french; //TODO: this will release the memory in each rule, but each rule still have a pointer to it
+			rule.setFrench(this.french); //TODO: this will release the memory in each rule, but each rule still have a pointer to it
 		}
 	}

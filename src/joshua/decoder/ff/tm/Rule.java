@@ -39,27 +39,29 @@ public class Rule {
 	/* The string format of Rule is:
 	 *     [Phrase] ||| french ||| english ||| feature scores
 	 */
-	public  int     rule_id;//TODO
-	public  int     lhs; // tag of this rule
-	public  int[]   p_french; //pointer to the RuleCollection, as all the rules under it share the same Source side
-	public  int[]   english;
-	public  int     arity;
+	private  int     rule_id;
+	private  int     lhs; // tag of this rule
+	private  int[]   p_french; //pointer to the RuleCollection, as all the rules under it share the same Source side
+	private  int[]   english;
+	private  int     arity;
+	private  float[] feat_scores; // the feature scores for this rule
 	
-	/* a feature function will be applied  for this rule 
+	//==================
+	/* a feature function will be fired  for this rule 
 	 * only if the owner of the rule matches the owner of the feature function
 	 * */
-	public  int     owner;
+	private  int     owner;
 	
-	public  float[] feat_scores; // the feature scores for this rule
-	public	float lattice_cost; //TODO: consider remove this from the general class, and create a new specific Rule class
+
+	//TODO: consider remove this from the general class, and create a new specific Rule class
+	private	float lattice_cost; 
 	
 		
 	/** 
 	 * estimate_cost depends on rule itself: statelesscost + transition_cost(non-stateless/non-contexual* models), 
-	 * it is only used in TMGrammar pruning and chart.prepare_rulebin, shownup in
-	 * chart.expand_unary but not really used
+	 * we need this variable in order to provide sorting for cube-pruning
 	 */
-	protected float est_cost = 0;
+	private float est_cost = 0;
 		
 	
 	//TODO Ideally, we shouldn't have to have dummy rule IDs and dummy owners. How can this need be eliminated?
@@ -154,9 +156,69 @@ public class Rule {
 		return (this.rule_id == MemoryBasedBatchGrammar.OOV_RULE_ID);
 	}
 	
+	public final void setRuleID(int id) {
+		this.rule_id = id;;
+	}
 	
 	public final int getRuleID() {
 		return this.rule_id;
+	}
+	
+	public final void setArity(int arity_) {
+		this.arity = arity_;;
+	}
+	
+	public final int getArity() {
+		return this.arity;
+	}
+	
+	public final void setOwner(int ow) {
+		this.owner = ow;;
+	}
+	
+	public final int getOwner() {
+		return this.owner;
+	}
+	
+	public final void setLHS(int lhs_) {
+		this.lhs = lhs_;
+	}
+	
+	public final int getLHS() {
+		return this.lhs;
+	}
+	
+	
+	public final void setEnglish(int[] eng_) {
+		this.english = eng_;
+	}
+	
+	public final int[] getEnglish() {
+		return this.english;
+	}
+	
+	public final void setFrench(int[] french_) {
+		this.p_french = french_;
+	}
+	
+	public final int[] getFrench() {
+		return this.p_french;
+	}
+	
+	public final void setFeatureScores(float[] scores) {
+		this.feat_scores = scores;
+	}
+	
+	public final float[] getFeatureScores() {
+		return this.feat_scores;
+	}
+	
+	public final void setLatticeCost(float cost) {
+		this.lattice_cost = cost;
+	}
+	
+	public final float getLatticeCost() {
+		return this.lattice_cost;
 	}
 	
 	public double getEstRuleCost(){

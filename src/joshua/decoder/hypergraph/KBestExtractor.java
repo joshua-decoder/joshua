@@ -502,23 +502,24 @@ public class KBestExtractor {
 			}else{			
 				if(tree_format==true){
 					res.append("(");
-					res.append(rl.lhs);
+					res.append(rl.getLHS());
 					if (include_align == true) {
 						// append "{i-j}"
 						res.append("{"); res.append(p_parent_node.i); res.append("-"); res.append(p_parent_node.j); res.append("}");
 					}
 					res.append(" ");
 				}
-				for(int c=0; c<rl.english.length; c++){
-		    		if(p_symbol.isNonterminal(rl.english[c])==true){
-		    			int id=p_symbol.getTargetNonterminalIndex(rl.english[c]);
+				int[] english = rl.getEnglish();
+				for(int c=0; c<english.length; c++){
+		    		if(p_symbol.isNonterminal(english[c])==true){
+		    			int id=p_symbol.getTargetNonterminalIndex(english[c]);
 		    			HGNode child = (HGNode)p_edge.get_ant_items().get(id);
 		    			VirtualItem virtual_child =kbest_extator.add_virtual_item(child);
 		    			res.append(((DerivationState)virtual_child.l_nbest.get(ranks[id]-1)).get_hypothesis(p_symbol,kbest_extator, tree_format, include_align, model_cost, l_models));
 		    		}else{
-		    			res.append(rl.english[c]);
+		    			res.append(english[c]);
 		    		}
-		    		if(c<rl.english.length-1) res.append(" ");
+		    		if(c<english.length-1) res.append(" ");
 				}
 				if(tree_format==true) res.append(")");
 			}

@@ -37,7 +37,7 @@ public final class PhrasePenaltyFF extends DefaultStatelessFF {
 	
 	public double estimate(final Rule rule) {
 		//Support.write_log_line("model owner: " + owner + "; rule owner: "+r.owner, Support.DEBUG);
-		if (this.owner == rule.owner) {
+		if (this.owner == rule.getOwner()) {
 			return ALPHA;
 		} else {
 			return 0.0;
