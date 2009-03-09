@@ -72,7 +72,7 @@ public class MemoryBasedBatchGrammarWithPrune extends MemoryBasedBatchGrammar {
 		//######2: create a rule
 		//Rule p_rule = new Rule(this,rule_id_count, line, owner);	
 		Rule p_rule = createRule(p_symbolTable, p_l_models, nonterminalRegexp, nonterminalReplaceRegexp,rule_id_count, line, owner);
-		tem_estcost += p_rule.getEstRuleCost();
+		tem_estcost += p_rule.getEstCost();
 		
 		//######### identify the position, and insert the trinodes if necessary
 		MemoryBasedTrieGrammar pos = root;
@@ -106,7 +106,7 @@ public class MemoryBasedBatchGrammarWithPrune extends MemoryBasedBatchGrammar {
 		
 		
 		//==== prune related part===================
-		if (p_rule.getEstRuleCost() > ((MemoryBasedRuleBinWithPrune)pos.rule_bin).cutoff) {
+		if (p_rule.getEstCost() > ((MemoryBasedRuleBinWithPrune)pos.rule_bin).cutoff) {
 			num_rule_pruned++;
 		} else {
 			pos.rule_bin.add_rule(p_rule);

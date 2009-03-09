@@ -156,6 +156,8 @@ public class Rule {
 		return (this.rule_id == MemoryBasedBatchGrammar.OOV_RULE_ID);
 	}
 	
+	
+	//========================== set and get methods for the field
 	public final void setRuleID(int id) {
 		this.rule_id = id;;
 	}
@@ -221,7 +223,7 @@ public class Rule {
 		return this.lattice_cost;
 	}
 	
-	public double getEstRuleCost(){
+	public double getEstCost(){
 		if(est_cost <= Double.NEGATIVE_INFINITY){
 			System.out.println("The est cost is neg infinity; must be bad rule; rule is:\n" +toString());
 		}
@@ -328,6 +330,5 @@ public class Rule {
             res.append(p_symbolTable.getWords(english));
             return res.toString();
     }
-
 	
 }

@@ -58,8 +58,8 @@ import joshua.decoder.ff.tm.Rule;
 				return;
 			}
 			this.heapRules.add(rule);
-			if (rule.getEstRuleCost() + JoshuaConfiguration.rule_relative_threshold < this.cutoff) {
-				this.cutoff = rule.getEstRuleCost() + JoshuaConfiguration.rule_relative_threshold;
+			if (rule.getEstCost() + JoshuaConfiguration.rule_relative_threshold < this.cutoff) {
+				this.cutoff = rule.getEstCost() + JoshuaConfiguration.rule_relative_threshold;
 			}
 			rule.setFrench(this.french); //TODO: this will release the memory in each rule, but still have a pointer
 		}
@@ -67,16 +67,16 @@ import joshua.decoder.ff.tm.Rule;
 		
 		protected int run_pruning() {
 			int n_pruned = 0;			
-			while (this.heapRules.size() > JoshuaConfiguration.max_n_rules || this.heapRules.peek().getEstRuleCost() >= this.cutoff) {
+			while (this.heapRules.size() > JoshuaConfiguration.max_n_rules || this.heapRules.peek().getEstCost() >= this.cutoff) {
 				n_pruned++;
 				this.heapRules.poll();
 				if(this.heapRules.peek()==null){System.out.println("the stack is empty, which might be wrong; cutoff:" + this.cutoff);}
 			}
 			if (this.heapRules.size() == JoshuaConfiguration.max_n_rules) {
 				this.cutoff =
-					(this.cutoff < this.heapRules.peek().getEstRuleCost())
+					(this.cutoff < this.heapRules.peek().getEstCost())
 					? this.cutoff
-					: this.heapRules.peek().getEstRuleCost() + EPSILON;//TODO
+					: this.heapRules.peek().getEstCost() + EPSILON;//TODO
 			}
 			return n_pruned++;
 		}

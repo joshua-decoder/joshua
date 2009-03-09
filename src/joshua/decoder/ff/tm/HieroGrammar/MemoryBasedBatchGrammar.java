@@ -155,6 +155,7 @@ public class MemoryBasedBatchGrammar  extends BatchGrammar {
 		//=== lhs
 		res.setLHS( p_symbolTable.addNonterminal(replace_french_non_terminal(nonterminalReplaceRegexp_, fds[0])) );
 		
+		//=== arity and french
 		int arity = 0;
 		String[] french_tem = fds[1].split("\\s+");
 		int[] french_ints = new int[french_tem.length];
@@ -169,7 +170,7 @@ public class MemoryBasedBatchGrammar  extends BatchGrammar {
 		res.setFrench(french_ints);
 		res.setArity(arity);
 		
-		//english side
+		//=== english side
 		String[] english_tem = fds[2].split("\\s+");
 		int[] english = new int[english_tem.length];
 		for (int i = 0; i < english_tem.length; i++) {
@@ -181,6 +182,7 @@ public class MemoryBasedBatchGrammar  extends BatchGrammar {
 		}
 		res.setEnglish(english);
 		
+		//=== feature costs
 		String[] t_scores = fds[3].split("\\s+");
 		float[] scores = new float[t_scores.length];
 		int i = 0;
@@ -190,7 +192,6 @@ public class MemoryBasedBatchGrammar  extends BatchGrammar {
 		res.setFeatureScores(scores);
 		res.setLatticeCost(0);
 		//tem_estcost += estimate_rule();//estimate lower-bound, and set statelesscost, this must be called
-		
 		res.estimateRuleCost(p_l_models);//estimate lower-bound, and set statelesscost, this must be called
 		return res;
 
@@ -205,7 +206,7 @@ public class MemoryBasedBatchGrammar  extends BatchGrammar {
 		//######2: create a rule
 		//Rule p_rule = new Rule(this,rule_id_count, line, owner);	
 		Rule p_rule = createRule(p_symbolTable, p_l_models, nonterminalRegexp, nonterminalReplaceRegexp,rule_id_count, line, owner);
-		tem_estcost += p_rule.getEstRuleCost();
+		tem_estcost += p_rule.getEstCost();
 		
 		//######### identify the position, and insert the trinodes if necessary
 		MemoryBasedTrieGrammar pos = root;
