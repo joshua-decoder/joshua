@@ -100,14 +100,19 @@ public abstract class DefaultNGramLanguageModel implements NGramLanguageModel {
 	
 	
 	/**
-	 * called by LMModel to calculate additional bow for  BACKOFF_LEFT_LM_STATE_SYM_ID.
-	 * @deprecated this function is much slower than the int[] version
+	 * Will never be called, because BACKOFF_LEFT_LM_STATE_SYM_ID
+	 * token will never exist. However, were it to be called,
+	 * it should return a probability of 1 (logprob of 0).
 	 */
 	public double logProbabilityOfBackoffState(ArrayList<Integer> ngram, int order, int qtyAdditionalBackoffWeight) {
 		return 0; // log(1) == 0;
 	}
 	
-	
+	/**
+	 * Will never be called, because BACKOFF_LEFT_LM_STATE_SYM_ID
+	 * token will never exist. However, were it to be called,
+	 * it should return a probability of 1 (logprob of 0).
+	 */
 	public double logProbabilityOfBackoffState(int[] ngram, int order, int qtyAdditionalBackoffWeight) {
 		return 0; // log(1) == 0;
 	}
