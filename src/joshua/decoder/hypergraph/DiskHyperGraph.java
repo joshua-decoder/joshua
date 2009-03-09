@@ -312,6 +312,11 @@ public class DiskHyperGraph {
 		this.writer.flush();
 	}
 	
+	
+	private final boolean isOutOfVocabularyRule(Rule rl) {
+		return (rl.getRuleID() == MemoryBasedBatchGrammar.OOV_RULE_ID);
+	}
+	
 	private void writeDeduction(HGNode item, HyperEdge deduction)
 	throws IOException {
 		//get rule id
@@ -319,7 +324,7 @@ public class DiskHyperGraph {
 		final Rule deduction_rule = deduction.get_rule();
 		if (null != deduction_rule) {
 			ruleID = deduction_rule.getRuleID();
-			if	(! deduction_rule.isOutOfVocabularyRule()) {
+			if	(! isOutOfVocabularyRule(deduction_rule)) {
 				this.associatedGrammar.put(ruleID, deduction_rule); //remember used regular rule
 			}
 		}
@@ -511,7 +516,7 @@ public class DiskHyperGraph {
 				}
 			} else {
 				//stateless cost is not properly set, so cannot extract individual features during kbest extraction
-				rule = Rule.constructOOVRule(
+				rule = constructOOVRule(
 					1,
 					MemoryBasedBatchGrammar.OOV_RULE_ID,
 					this.symbolTable.addNonterminal(fds[3+qtyAntecedents]),
@@ -538,6 +543,31 @@ public class DiskHyperGraph {
 		}
 		hyperEdge.get_transition_cost(true); // to set the transition cost
 		return hyperEdge;
+	}
+	
+
+	/** 
+	 * only called when creating oov rule in Chart or DiskHypergraph, all
+	 * others should call the other contructors; the
+	 * transition cost for phrase model, arity penalty,
+	 * word penalty are all zero, except the LM cost or the first feature if no LM feature is used
+	 */
+	private static Rule constructOOVRule(int num_feats, int oov_rule_id, int lhs_in, int fr_in, int owner_in, boolean have_lm_model) {		
+		int[] p_french     = new int[1];
+	   	p_french[0]  = fr_in;
+	   	int[] english    = new int[1];
+	   	english[0] = fr_in;
+	   	float[] feat_scores     = new float[num_feats];
+	   	
+	   	/**TODO
+	   	 * This is a hack to make the decoding without a LM works
+	   	 * */
+	   	if(have_lm_model==false){//no LM is used for decoding, so we should set the stateless cost
+	   		//this.feat_scores[0]=100.0/((FeatureFunction)p_l_models.get(0)).getWeight();//TODO
+	   		feat_scores[0]=100;//TODO
+	   	}
+	   	
+		return new Rule(lhs_in, p_french, english, feat_scores,  0, owner_in, 0, oov_rule_id);
 	}
 	
 // End read_hyper_graph()

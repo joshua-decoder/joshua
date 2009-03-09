@@ -23,7 +23,6 @@ import java.util.Map;
 
 import joshua.corpus.SymbolTable;
 import joshua.decoder.ff.FeatureFunction;
-import joshua.decoder.ff.tm.HieroGrammar.MemoryBasedBatchGrammar;
 
 import joshua.util.sentence.Vocabulary;
 
@@ -69,10 +68,6 @@ public class Rule {
 	private static final int DUMMY_OWNER = 1;
 	
 	
-	public Rule(){
-		//do nothing
-	}
-	
 	/**
 	 * Constructs a new rule using the provided parameters.
 	 * The owner and rule id for this rule are undefined.
@@ -83,6 +78,19 @@ public class Rule {
 	 * @param feature_scores Feature value scores for the rule.
 	 * @param arity Number of nonterminals in the source language right-hand side.
 	 */
+	public Rule(int lhs_, int[] source_rhs, int[] target_rhs, float[] feature_scores,  int arity_, int owner_, float lattice_cost_, int rule_id_) {
+		this.lhs         = lhs_;
+		this.p_french      = source_rhs;
+		this.english     = target_rhs;
+		this.feat_scores = feature_scores;
+		this.arity       = arity_;
+		this.lattice_cost= lattice_cost_;
+		this.rule_id     = rule_id_;
+		this.owner       = owner_;
+	}
+
+	
+	//called by class who does not care about lattice_cost, rule_id, and owner
 	public Rule(int lhs_, int[] source_rhs, int[] target_rhs, float[] feature_scores, int arity_) {
 		this.lhs         = lhs_;
 		this.p_french      = source_rhs;
@@ -95,67 +103,7 @@ public class Rule {
 		this.rule_id     = DUMMY_RULE_ID;
 		this.owner       = DUMMY_OWNER;
 	}
-
-	
-
-	/** 
-	 * only called when creating oov rule in Chart or DiskHypergraph, all
-	 * others should call the other contructors; the
-	 * transition cost for phrase model, arity penalty,
-	 * word penalty are all zero, except the LM cost or the first feature if no LM feature is used
-	 */
-	public static Rule constructOOVRule(int num_feats, int oov_rule_id, int lhs_in, int fr_in, int owner_in, boolean have_lm_model) {
-		Rule r = new Rule();
-		r.rule_id    = oov_rule_id;
-		r.lhs        = lhs_in;
-		r.owner      = owner_in;
-		r.arity      = 0;
-		r.p_french     = new int[1];
-	   	r.p_french[0]  = fr_in;
-	   	r.english    = new int[1];
-	   	r.english[0] = fr_in;
-	   	r.feat_scores     = new float[num_feats];
-	   	r.lattice_cost	= 0;
 		
-
-	   	/**TODO
-	   	 * This is a hack to make the decoding without a LM works
-	   	 * */
-	   	if(have_lm_model==false){//no LM is used for decoding, so we should set the stateless cost
-	   		//this.feat_scores[0]=100.0/((FeatureFunction)p_l_models.get(0)).getWeight();//TODO
-	   		r.feat_scores[0]=100;//TODO
-	   	}
-	   	
-		return r;
-	}
-	
-	
-		
-	
-//	 create a copy of the rule and set the lattice cost field
-	public Rule cloneAndAddLatticeCostIfNonZero(float cost) {
-		if (cost == 0.0f) 
-			return this;
-		else{
-			Rule r = new Rule();
-			r.rule_id     = this.rule_id;
-			r.lhs         = this.lhs;
-			r.p_french      = this.p_french;
-			r.english     = this.english;
-			r.owner       = this.owner;
-			r.feat_scores = this.feat_scores;
-			r.arity       = this.arity;
-			
-			r.lattice_cost = cost;//the only thing that is from the caller of this function
-			return r;
-		}
-	}
-	
-	/* ~~~~~ Attributes (only used in DiskHyperGraph) */
-	public final boolean isOutOfVocabularyRule() {
-		return (this.rule_id == MemoryBasedBatchGrammar.OOV_RULE_ID);
-	}
-	
 	
 	//========================== set and get methods for the field
 	public final void setRuleID(int id) {
@@ -189,8 +137,7 @@ public class Rule {
 	public final int getLHS() {
 		return this.lhs;
 	}
-	
-	
+		
 	public final void setEnglish(int[] eng_) {
 		this.english = eng_;
 	}

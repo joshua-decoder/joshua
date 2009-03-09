@@ -394,7 +394,7 @@ public class Bin
 		long start = Support.current_time();
 		HGNode res=null;
 		if (lattice_cost != 0.0f)
-			rl = rl.cloneAndAddLatticeCostIfNonZero(lattice_cost);
+			rl = cloneAndAddLatticeCostIfNonZero(rl, lattice_cost);
 		HashMap<Integer, FFDPState>  item_state_tbl = compute_item_res.getFeatDPStates();
 		double expected_total_cost = compute_item_res.getExpectedTotalCost();//including outside estimation
 		double transition_cost = compute_item_res.getTransitionTotalCost();
@@ -417,6 +417,18 @@ public class Bin
 		p_chart.g_time_add_deduction += Support.current_time()-start;
 		return res;
 	}
+	
+	
+//	 create a copy of the rule and set the lattice cost field
+	//TODO:change this bad behavior
+	private Rule cloneAndAddLatticeCostIfNonZero(Rule r, float lattice_cost) {
+		if (lattice_cost == 0.0f) 
+			return r;
+		else{
+			return new Rule(r.getLHS(), r.getFrench(), r.getEnglish(),r.getFeatureScores(), r.getArity(), r.getOwner(), lattice_cost, r.getRuleID()); 
+		}
+	}
+	
 	
 	/* each item has a list of deductions
 	 * need to check whether the item is already exist, if yes, just add the deductions*/

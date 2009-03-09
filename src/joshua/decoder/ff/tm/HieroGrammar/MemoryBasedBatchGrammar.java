@@ -141,11 +141,7 @@ public class MemoryBasedBatchGrammar  extends BatchGrammar {
 	}
 	
 	
-	public static Rule createRule(SymbolTable p_symbolTable, ArrayList<FeatureFunction> p_l_models, String nonterminalRegexp_, String nonterminalReplaceRegexp_, int r_id, String line, int owner_in) {
-		Rule res = new Rule(); 
-		res.setRuleID(r_id);
-		res.setOwner(owner_in);
-		
+	public static Rule createRule(SymbolTable p_symbolTable, ArrayList<FeatureFunction> p_l_models, String nonterminalRegexp_, String nonterminalReplaceRegexp_, int r_id, String line, int owner_in) {		
 		//rule format: X ||| Foreign side ||| English side ||| feature scores
 		String[] fds = line.split("\\s+\\|{3}\\s+");
 		if (fds.length != 4) {
@@ -153,7 +149,7 @@ public class MemoryBasedBatchGrammar  extends BatchGrammar {
 		}
 		
 		//=== lhs
-		res.setLHS( p_symbolTable.addNonterminal(replace_french_non_terminal(nonterminalReplaceRegexp_, fds[0])) );
+		int lhs = p_symbolTable.addNonterminal(replace_french_non_terminal(nonterminalReplaceRegexp_, fds[0]));
 		
 		//=== arity and french
 		int arity = 0;
@@ -167,8 +163,6 @@ public class MemoryBasedBatchGrammar  extends BatchGrammar {
 				french_ints[i] = p_symbolTable.addTerminal(french_tem[i]);
 			}
 		}
-		res.setFrench(french_ints);
-		res.setArity(arity);
 		
 		//=== english side
 		String[] english_tem = fds[2].split("\\s+");
@@ -180,7 +174,6 @@ public class MemoryBasedBatchGrammar  extends BatchGrammar {
 				english[i] = p_symbolTable.addTerminal(english_tem[i]);
 			}
 		}
-		res.setEnglish(english);
 		
 		//=== feature costs
 		String[] t_scores = fds[3].split("\\s+");
@@ -189,8 +182,10 @@ public class MemoryBasedBatchGrammar  extends BatchGrammar {
 		for (String score : t_scores) {
 			scores[i++] = Float.parseFloat(score);
 		}
-		res.setFeatureScores(scores);
-		res.setLatticeCost(0);
+		
+		
+		Rule res = new Rule(lhs, french_ints, english, scores,  arity, owner_in, 0, r_id);
+		
 		//tem_estcost += estimate_rule();//estimate lower-bound, and set statelesscost, this must be called
 		res.estimateRuleCost(p_l_models);//estimate lower-bound, and set statelesscost, this must be called
 		return res;
