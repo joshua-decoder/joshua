@@ -132,6 +132,27 @@ public abstract class EvaluationMetric
     return totStats;
   }
 
+  public int[][] suffStats(String[] cand_strings, int[] cand_indices) throws Exception
+  {
+    // calculate sufficient statistics for each sentence in an arbitrary set of candidates
+
+    int candCount = cand_strings.length;
+    if (cand_indices.length != candCount) {
+      System.out.println("Array lengths mismatch in suffStats(String[],int[]); returning null.");
+      return null;
+    }
+
+    int[][] stats = new int[candCount][suffStatsCount];
+
+    for (int j = 0; j < candCount; ++j) {
+      int[] currStats = suffStats(cand_strings[j],cand_indices[j]);
+
+      for (int s = 0; s < suffStatsCount; ++s) { stats[j][s] = currStats[s]; }
+    } // for (j)
+
+    return stats;
+  }
+
   public void printDetailedScore(String[] topCand_str, boolean oneLiner) throws Exception
   {
     int[] stats = suffStats(topCand_str);
