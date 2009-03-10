@@ -32,7 +32,7 @@ public class MemoryBasedBatchGrammar  extends BatchGrammar {
 	static int rule_id_count =1; //three kinds of rule: regular rule (id>0); oov rule (id=0), and null rule (id=-1)
 
 	
-	private static final Logger logger = Logger.getLogger(MemoryBasedBatchGrammarWithPrune.class.getName());
+	private static final Logger logger = Logger.getLogger(MemoryBasedBatchGrammar.class.getName());
 	
 
 	//moved from batch grammar

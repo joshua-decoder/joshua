@@ -20,7 +20,6 @@ package joshua.decoder.hypergraph;
 import joshua.decoder.ff.lm.LMFFDPState;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.HieroGrammar.MemoryBasedBatchGrammar;
-import joshua.decoder.ff.tm.HieroGrammar.MemoryBasedBatchGrammarWithPrune;
 import joshua.decoder.ff.FFDPState;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.JoshuaConfiguration;
@@ -190,7 +189,7 @@ public class DiskHyperGraph {
 			
 			// stateless cost is not properly set, so cannot extract individual features during kbest extraction
 			this.associatedGrammar.put(ruleID,
-					MemoryBasedBatchGrammarWithPrune.createRule(this.symbolTable, null, nonterminalRegexp,
+					MemoryBasedBatchGrammar.createRule(this.symbolTable, null, nonterminalRegexp,
 					nonterminalReplaceRegexp, ruleID, fds[1], defaultOwner));
 		}
 		rulesReader.close();
