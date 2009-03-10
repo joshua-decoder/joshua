@@ -82,7 +82,24 @@ public class TER extends EvaluationMetric
 
   public int[] suffStats(String cand_str, int i) throws Exception
   {
-    int[] stats = new int[suffStatsCount];
+    // this method should never be used when the metric is TER,
+    // because TER.java overrides suffStats(String[],int[]) below,
+    // which is the only method that calls suffStats(Sting,int).
+    return null;
+  }
+
+  public int[][] suffStats(String[] cand_strings, int[] cand_indices) throws Exception
+  {
+    // calculate sufficient statistics for each sentence in an arbitrary set of candidates
+
+    int candCount = cand_strings.length;
+    if (cand_indices.length != candCount) {
+      System.out.println("Array lengths mismatch in suffStats(String[],int[]); returning null.");
+      return null;
+    }
+
+    int[][] stats = new int[candCount][suffStatsCount];
+
 
     // 1) Create input files for tercom.7.25.jar
 
@@ -91,7 +108,9 @@ public class TER extends EvaluationMetric
     OutputStreamWriter outStreamWriter = new OutputStreamWriter(outStream, "utf8");
     BufferedWriter outFile = new BufferedWriter(outStreamWriter);
 
-    writeLine(cand_str + " (ID)",outFile);
+    for (int d = 0; d < candCount; ++d) {
+      writeLine(cand_strings[d] + " (ID" + d + ")",outFile);
+    }
 
     outFile.close();
 
@@ -100,12 +119,13 @@ public class TER extends EvaluationMetric
     outStreamWriter = new OutputStreamWriter(outStream, "utf8");
     outFile = new BufferedWriter(outStreamWriter);
 
-    for (int r = 0; r < refsPerSen; ++r) {
-      writeLine(refSentences[i][r] + " (ID)",outFile);
+    for (int d = 0; d < candCount; ++d) {
+      for (int r = 0; r < refsPerSen; ++r) {
+        writeLine(refSentences[cand_indices[d]][r] + " (ID" + d + ")",outFile);
+      }
     }
 
     outFile.close();
-
 
     // 2) Launch tercom.7.25.jar as an external process
 
@@ -135,11 +155,13 @@ public class TER extends EvaluationMetric
     line = inFile.readLine(); // skip hyp line
     line = inFile.readLine(); // skip ref line
 
-    line = inFile.readLine(); // read info
-    String[] strA = line.split("\\s+");
+    for (int d = 0; d < candCount; ++d) {
+      line = inFile.readLine(); // read info
+      String[] strA = line.split("\\s+");
 
-    stats[0] = (int)Double.parseDouble(strA[1]);
-    stats[1] = (int)Double.parseDouble(strA[2]);
+      stats[d][0] = (int)Double.parseDouble(strA[1]);
+      stats[d][1] = (int)Double.parseDouble(strA[2]);
+    }
 
     return stats;
   }

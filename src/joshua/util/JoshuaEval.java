@@ -227,9 +227,19 @@ line format:
     if (verbose) {
       println("");
       println("Printing detailed scores for individual sentences...");
+
+      int[] IA = new int[numSentences];
+      for (int i = 0; i < numSentences; ++i) { IA[i] = i; }
+
+      int[][] SS = evalMetric.suffStats(topCand_str,IA);
+
+      int suffStatsCount = evalMetric.get_suffStatsCount();
+
       for (int i = 0; i < numSentences; ++i) {
         print("Sentence #" + i + ": ");
-        evalMetric.printDetailedScore(topCand_str[i],i,true);
+        int[] stats = new int[suffStatsCount];
+        for (int s = 0; s < suffStatsCount; ++s) { stats[s] = SS[i][s]; }
+        evalMetric.printDetailedScore_fromStats(stats,true);
           // already prints a \n
       }
     }

@@ -108,7 +108,14 @@ public abstract class EvaluationMetric
 
   public double score(String cand_str, int i) throws Exception
   {
-    int[] stats = suffStats(cand_str,i);
+    String[] SA = new String[1]; SA[0] = cand_str;
+    int[] IA = new int[1]; IA[0] = i;
+
+    int[][] SS = suffStats(SA,IA);
+
+    int[] stats = new int[suffStatsCount];
+    for (int s = 0; s < suffStatsCount; ++s) { stats[s] = SS[0][s]; }
+
     return score(stats);
   }
 
@@ -120,14 +127,18 @@ public abstract class EvaluationMetric
 
   public int[] suffStats(String[] topCand_str) throws Exception
   {
+    int[] IA = new int[numSentences];
+    for (int i = 0; i < numSentences; ++i) { IA[i] = i; }
+
+    int[][] SS = suffStats(topCand_str,IA);
+
     int[] totStats = new int[suffStatsCount];
-    for (int s = 0; s < suffStatsCount; ++s) { totStats[s] = 0; }
-
-    for (int i = 0; i < numSentences; ++i) {
-      int[] stats = suffStats(topCand_str[i],i);
-
-      for (int s = 0; s < suffStatsCount; ++s) { totStats[s] += stats[s]; }
-    } // for (i)
+    for (int s = 0; s < suffStatsCount; ++s) {
+      totStats[s] = 0;
+      for (int i = 0; i < numSentences; ++i) {
+        totStats[s] += SS[i][s];
+      }
+    }
 
     return totStats;
   }
@@ -156,12 +167,6 @@ public abstract class EvaluationMetric
   public void printDetailedScore(String[] topCand_str, boolean oneLiner) throws Exception
   {
     int[] stats = suffStats(topCand_str);
-    printDetailedScore_fromStats(stats,oneLiner);
-  }
-
-  public void printDetailedScore(String cand_str, int i, boolean oneLiner) throws Exception
-  {
-    int[] stats = suffStats(cand_str,i);
     printDetailedScore_fromStats(stats,oneLiner);
   }
 
