@@ -127,16 +127,16 @@ public class MertCore
   private int maxMERTIterations, minMERTIterations, prevMERTIterations;
     // max: maximum number of MERT iterations
     // min: minimum number of MERT iterations before an early MERT exit
-    // prev: number of previous MERT iterations from which to consider candidates (in addition to the
-    //       candidates from the current iteration)
+    // prev: number of previous MERT iterations from which to consider candidates (in addition to
+    //       the candidates from the current iteration)
 
   private double stopSigValue;
     // early MERT exit if no weight changes by more than stopSigValue
     // (but see minMERTIterations above and stopMinIts below)
 
   private int stopMinIts;
-    // some early stopping criterion must be satisfied in stopMinIts *consecutive* iterations before an early exit
-    // (but see minMERTIterations above)
+    // some early stopping criterion must be satisfied in stopMinIts *consecutive* iterations
+    // before an early exit (but see minMERTIterations above)
 
   private boolean oneModificationPerIteration;
     // if true, each MERT iteration performs at most one parameter modification.
@@ -161,176 +161,6 @@ public class MertCore
   private String decoderConfigFileName, decoderCommandFileName;
   private String fakeFileNamePrefix;
 //  private int useDisk;
-
-  public static void main(String[] args)
-  {
-
-	MertCore DMC = new MertCore(); // dummy MertCore object
-
-    // if bad args[], System.exit(80)
-
-    String configFileName = args[0];
-    String stateFileName = args[1];
-    int currIteration = Integer.parseInt(args[2]);
-
-
-    int randsToSkip = 0;
-    int earlyStop = 0;
-    double FINAL_score = 0.0;
-    int[] maxIndex = null;
-
-    if (currIteration == 1) {
-      EvaluationMetric.set_knownMetrics();
-      DMC.processArgsArray(DMC.cfgFileToArgsArray(configFileName),true);
-
-      randsToSkip = 0;
-      DMC.initialize(randsToSkip);
-
-      DMC.println("----------------------------------------------------",1);
-      DMC.println("Z-MERT run started @ " + (new Date()),1);
-//      DMC.printMemoryUsage();
-      DMC.println("----------------------------------------------------",1);
-      DMC.println("",1);
-
-      if (DMC.randInit) {
-        DMC.println("Initializing lambda[] randomly.",1);
-
-        // initialize optimizable parameters randomly (sampling uniformly from that parameter's random value range)
-        DMC.lambda = DMC.randomLambda();
-      }
-
-      DMC.println("Initial lambda[]: " + DMC.lambdaToString(DMC.lambda),1);
-      DMC.println("",1);
-
-      FINAL_score = DMC.evalMetric.worstPossibleScore();
-      maxIndex = new int[DMC.numSentences];
-      for (int i = 0; i < DMC.numSentences; ++i) { maxIndex[i] = DMC.sizeOfNBest - 1; }
-      earlyStop = 0;
-    } else {
-
-      EvaluationMetric.set_knownMetrics();
-      DMC.processArgsArray(DMC.cfgFileToArgsArray(configFileName),false);
-
-      double[] serA = null;
-      try {
-        ObjectInputStream in = new ObjectInputStream(new FileInputStream(stateFileName));
-        serA = (double[])in.readObject();
-        in.close();
-        // contents of serA[]: last iteration, number of random numbers generated already, earlyStop, FINAL_lambda, lambda[], maxIndex[]
-        // => length should be 4+numParams+numSentences
-      } catch (FileNotFoundException e) {
-        System.err.println("FileNotFoundException in MertCore.main(String[]): " + e.getMessage());
-        System.exit(99901);
-      } catch (IOException e) {
-        System.err.println("IOException in MertCore.main(String[]): " + e.getMessage());
-        System.exit(99902);
-      } catch (ClassNotFoundException e) {
-        System.err.println("ClassNotFoundException in MertCore.main(String[]): " + e.getMessage());
-        System.exit(99904);
-      }
-
-      if (serA.length < 2) {
-        DMC.println("State file contains an array of length " + serA.length + "; was expecting at least 2");
-        System.exit(81);
-      }
-
-      if ((int)serA[0] != currIteration-1) {
-        DMC.println("Iteration in state file is " + (int)serA[0] + "; was expecting " + (currIteration-1));
-        System.exit(82);
-      }
-
-      randsToSkip = (int)serA[1];
-      DMC.initialize(randsToSkip); // declares lambda[], sets numParams and numSentences
-
-      if (serA.length != 4+DMC.numParams+DMC.numSentences) {
-        DMC.println("State file contains an array of length " + serA.length + "; was expecting " + (4+DMC.numParams+DMC.numSentences));
-        System.exit(83);
-      }
-
-      earlyStop = (int)serA[2];
-      FINAL_score = serA[3];
-
-      for (int c = 1; c <= DMC.numParams; ++c) { DMC.lambda[c] = serA[3+c]; }
-
-      maxIndex = new int[DMC.numSentences];
-      for (int i = 0; i < DMC.numSentences; ++i) { maxIndex[i] = (int)serA[3+DMC.numParams+1+i]; }
-    }
-
-
-    double[] A = DMC.run_single_iteration(currIteration, DMC.minMERTIterations, DMC.maxMERTIterations, DMC.prevMERTIterations, earlyStop, maxIndex);
-
-    if (A != null) {
-      FINAL_score = A[0];
-      earlyStop = (int)A[1];
-      randsToSkip = DMC.generatedRands;
-    }
-
-
-    if (A != null && A[2] != 1) {
-
-      double[] serA = new double[4+DMC.numParams+DMC.numSentences];
-      serA[0] = currIteration;
-      serA[1] = randsToSkip;
-      serA[2] = earlyStop;
-      serA[3] = FINAL_score;
-      for (int c = 1; c <= DMC.numParams; ++c) { serA[3+c] = DMC.lambda[c]; }
-      for (int i = 0; i < DMC.numSentences; ++i) { serA[3+DMC.numParams+1+i] = maxIndex[i]; }
-
-      try {
-        ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(stateFileName));
-        out.writeObject(serA);
-        out.flush();
-        out.close();
-      } catch (FileNotFoundException e) {
-        System.err.println("FileNotFoundException in MertCore.main(String[]): " + e.getMessage());
-        System.exit(99901);
-      } catch (IOException e) {
-        System.err.println("IOException in MertCore.main(String[]): " + e.getMessage());
-        System.exit(99902);
-      }
-
-      System.exit(91);
-
-    } else {
-      // done
-
-      DMC.println("",1);
-
-      DMC.println("----------------------------------------------------",1);
-      DMC.println("Z-MERT run ended @ " + (new Date()),1);
-//      DMC.printMemoryUsage();
-      DMC.println("----------------------------------------------------",1);
-      DMC.println("",1);
-      DMC.println("FINAL lambda: " + DMC.lambdaToString(DMC.lambda) + " (" + DMC.metricName + ": " + FINAL_score + ")",1);
-      // check if a lambda is outside its threshold range
-      for (int c = 1; c <= DMC.numParams; ++c) {
-        if (DMC.lambda[c] < DMC.minThValue[c] || DMC.lambda[c] > DMC.maxThValue[c]) {
-          DMC.println("Warning: after normalization, lambda[" + c + "]=" + f4.format(DMC.lambda[c]) + " is outside its critical value range.",1);
-        }
-      }
-      DMC.println("",1);
-
-      // delete intermediate .temp.*.it* decoder output files
-      for (int iteration = 1; iteration <= DMC.maxMERTIterations; ++iteration) {
-        DMC.deleteFile(DMC.decoderOutFileName+".temp.sents.it"+iteration);
-        DMC.deleteFile(DMC.decoderOutFileName+".temp.feats.it"+iteration);
-        DMC.deleteFile(DMC.decoderOutFileName+".temp.stats.it"+iteration);
-      }
-
-      // delete .temp.stats.merged file
-      DMC.deleteFile(DMC.decoderOutFileName+".temp.stats.merged");
-
-      // delete .temp.sents.currIt.IP file
-      DMC.deleteFile(DMC.decoderOutFileName+".temp.sents.currIt.IP");
-
-
-      DMC.finish();
-
-      DMC.deleteFile(stateFileName);
-      System.exit(90);
-    }
-
-  }
 
   public MertCore()
   {
@@ -372,8 +202,8 @@ public class MertCore
 
     numSentences = countLines(refFileName) / refsPerSen;
     numParams = countNonEmptyLines(paramsFileName) - 1;
-      // the parameter file contains one line per parameter and one line for the normalization method
-
+      // the parameter file contains one line per parameter
+      // and one line for the normalization method
 
 
     paramNames = new String[1+numParams];
@@ -489,13 +319,17 @@ public class MertCore
       if (normalizationOptions[0] == 0) {
         println("none.",1);
       } else if (normalizationOptions[0] == 1) {
-        println("weights will be scaled so that the \"" + paramNames[(int)normalizationOptions[1]] + "\" weight has an absolute value of " + normalizationOptions[2] + ".",1);
+        println("weights will be scaled so that the \"" + paramNames[(int)normalizationOptions[1]]
+             + "\" weight has an absolute value of " + normalizationOptions[2] + ".",1);
       } else if (normalizationOptions[0] == 2) {
-        println("weights will be scaled so that the maximum absolute value is " + normalizationOptions[1] + ".",1);
+        println("weights will be scaled so that the maximum absolute value is "
+              + normalizationOptions[1] + ".",1);
       } else if (normalizationOptions[0] == 3) {
-        println("weights will be scaled so that the minimum absolute value is " + normalizationOptions[1] + ".",1);
+        println("weights will be scaled so that the minimum absolute value is "
+              + normalizationOptions[1] + ".",1);
       } else if (normalizationOptions[0] == 4) {
-        println("weights will be scaled so that the L-" + normalizationOptions[1] + " norm is " + normalizationOptions[2] + ".",1);
+        println("weights will be scaled so that the L-" + normalizationOptions[1]
+              + " norm is " + normalizationOptions[2] + ".",1);
       }
 
       println("",1);
@@ -503,7 +337,8 @@ public class MertCore
       println("----------------------------------------------------",1);
       println("",1);
 
-      // rename original config file so it doesn't get overwritten (original name will be restored in finish())
+      // rename original config file so it doesn't get overwritten
+      // (original name will be restored in finish())
       renameFile(decoderConfigFileName,decoderConfigFileName+".ZMERT.orig");
 
     } // if (randsToSkip == 0)
@@ -546,7 +381,8 @@ public class MertCore
     if (randInit) {
       println("Initializing lambda[] randomly.",1);
 
-      // initialize optimizable parameters randomly (sampling uniformly from that parameter's random value range)
+      // initialize optimizable parameters randomly (sampling uniformly from
+      // that parameter's random value range)
       lambda = randomLambda();
     }
 
@@ -568,7 +404,8 @@ public class MertCore
 //      suffStats_array[i] = new HashMap<Integer,int[]>();
     }
 /*
-    double[][][] featVal_array = new double[1+numParams][][]; // indexed by [param][sentence][candidate]
+    double[][][] featVal_array = new double[1+numParams][][];
+      // indexed by [param][sentence][candidate]
     featVal_array[0] = null; // param indexing starts at 1
     for (int c = 1; c <= numParams; ++c) {
       featVal_array[c] = new double[numSentences][];
@@ -601,11 +438,13 @@ public class MertCore
 //    printMemoryUsage();
     println("----------------------------------------------------",1);
     println("",1);
-    println("FINAL lambda: " + lambdaToString(lambda) + " (" + metricName + ": " + FINAL_score + ")",1);
+    println("FINAL lambda: " + lambdaToString(lambda)
+          + " (" + metricName + ": " + FINAL_score + ")",1);
     // check if a lambda is outside its threshold range
     for (int c = 1; c <= numParams; ++c) {
       if (lambda[c] < minThValue[c] || lambda[c] > maxThValue[c]) {
-        println("Warning: after normalization, lambda[" + c + "]=" + f4.format(lambda[c]) + " is outside its critical value range.",1);
+        println("Warning: after normalization, lambda[" + c + "]=" + f4.format(lambda[c])
+              + " is outside its critical value range.",1);
       }
     }
     println("",1);
@@ -626,7 +465,8 @@ public class MertCore
   } // void run_MERT(int maxIts)
 
   @SuppressWarnings("unchecked")
-  public double[] run_single_iteration(int iteration, int minIts, int maxIts, int prevIts, int earlyStop, int[]maxIndex)
+  public double[] run_single_iteration(
+    int iteration, int minIts, int maxIts, int prevIts, int earlyStop, int[]maxIndex)
   {
     double FINAL_score = 0;
 
@@ -639,7 +479,8 @@ public class MertCore
     retA[2] = 1; // will only made 0 if we don't break from the following loop
 
 
-    double[][][] featVal_array = new double[1+numParams][][]; // indexed by [param][sentence][candidate]
+    double[][][] featVal_array = new double[1+numParams][][];
+      // indexed by [param][sentence][candidate]
     featVal_array[0] = null; // param indexing starts at 1
     for (int c = 1; c <= numParams; ++c) {
       featVal_array[c] = new double[numSentences][];
@@ -703,8 +544,10 @@ public class MertCore
         suffStats_array[i] = new HashMap<Integer,int[]>();
       }
 
-      double[][] initialLambda = new double[1+initsPerIt][1+numParams]; // the intermediate "initial" lambdas
-      double[][] finalLambda = new double[1+initsPerIt][1+numParams]; // the intermediate "final" lambdas
+      double[][] initialLambda = new double[1+initsPerIt][1+numParams];
+        // the intermediate "initial" lambdas
+      double[][] finalLambda = new double[1+initsPerIt][1+numParams];
+        // the intermediate "final" lambdas
 
       // set initialLambda[][]
       System.arraycopy(lambda,1,initialLambda[1],1,numParams);
@@ -759,7 +602,8 @@ public class MertCore
         PrintWriter outFile_statsCurrIt = new PrintWriter(decoderOutFileName+".temp.stats.it"+iteration);
 
         PrintWriter outFile_statsMerged = new PrintWriter(decoderOutFileName+".temp.stats.merged");
-          // write sufficient statistics from all the sentences from the output files into a single file
+          // write sufficient statistics from all the sentences
+          // from the output files into a single file
 
 
         String sents_str, feats_str, stats_str;
@@ -853,7 +697,7 @@ public class MertCore
                PrintWriter outFile_statsCurrIt
           */
 
-          FileOutputStream outStream = new FileOutputStream(decoderOutFileName+".temp.sents.currIt.IP", false); // false: don't append
+          FileOutputStream outStream = new FileOutputStream(decoderOutFileName+".temp.sents.currIt.IP", false);
           OutputStreamWriter outStreamWriter = new OutputStreamWriter(outStream, "utf8");
           BufferedWriter outFile_sentsCurrIt_IP = new BufferedWriter(outStreamWriter);
 
@@ -997,9 +841,11 @@ public class MertCore
 
 //        cleanupMemory();
 
-        println("Processed " + totalCandidateCount + " distinct candidates (about " + totalCandidateCount/numSentences + " per sentence):",1);
+        println("Processed " + totalCandidateCount + " distinct candidates "
+              + "(about " + totalCandidateCount/numSentences + " per sentence):",1);
         for (int it = firstIt; it <= iteration; ++it) {
-          println("newCandidatesAdded[it=" + it + "] = " + newCandidatesAdded[it] + " (about " + newCandidatesAdded[it]/numSentences + " per sentence)",1);
+          println("newCandidatesAdded[it=" + it + "] = " + newCandidatesAdded[it]
+                + " (about " + newCandidatesAdded[it]/numSentences + " per sentence)",1);
         }
 
         println("",1);
@@ -1066,8 +912,10 @@ public class MertCore
 
         while (true) {
 
-          double[] c_best_info = bestParamToChange(j,thresholdsAll,c_best,currLambda,candCount,featVal_array,suffStats_array,1,iteration);
-                                                     // we pass in c_best because we don't need to recalculate thresholds for it
+          double[] c_best_info = bestParamToChange(
+            j,thresholdsAll,c_best,currLambda,candCount,featVal_array,suffStats_array,1,iteration);
+              // we pass in c_best because we don't need
+              // to recalculate thresholds for it
           c_best = (int)c_best_info[0]; // which param to change?
           bestLambdaVal = c_best_info[1]; // what value to change to?
           bestScore = c_best_info[2]; // what score would be achieved?
@@ -1075,7 +923,11 @@ public class MertCore
           // now c_best is the parameter giving the most gain
 
           if (evalMetric.isBetter(bestScore,finalScore[j])) {
-            println("*** Changing lambda[j=" + j + "][" + c_best + "] from " + f4.format(currLambda[c_best]) + " (" + metricName + ": " + f4.format(finalScore[j]) + ") to " + f4.format(bestLambdaVal) + " (" + metricName + ": " + f4.format(bestScore) + ") ***",2);
+            println("*** Changing lambda[j=" + j + "][" + c_best + "] from "
+                  + f4.format(currLambda[c_best])
+                  + " (" + metricName + ": " + f4.format(finalScore[j]) + ") to "
+                  + f4.format(bestLambdaVal)
+                  + " (" + metricName + ": " + f4.format(bestScore) + ") ***",2);
             println("*** Old lambda[j=" + j + "]: " + lambdaToString(currLambda) + " ***",2);
             currLambda[c_best] = bestLambdaVal;
             finalScore[j] = bestScore;
@@ -1092,14 +944,16 @@ public class MertCore
 
         } // while (true)
 
-        // now currLambda is the optimized weight vector on the current candidate list (corresponding to initialLambda[j])
+        // now currLambda is the optimized weight vector on the current candidate list
+        // (corresponding to initialLambda[j])
 
         System.arraycopy(currLambda,1,finalLambda[j],1,numParams);
         normalizeLambda(finalLambda[j]);
         // check if a lambda is outside its threshold range
         for (int c = 1; c <= numParams; ++c) {
           if (finalLambda[j][c] < minThValue[c] || finalLambda[j][c] > maxThValue[c]) {
-            println("Warning: after normalization, final lambda[j=" + j + "][" + c + "]=" + f4.format(finalLambda[j][c]) + " is outside its critical value range.",1);
+            println("Warning: after normalization, final lambda[j=" + j + "][" + c + "]="
+                  + f4.format(finalLambda[j][c]) + " is outside its critical value range.",1);
           }
         }
         println("Final lambda[j=" + j + "]: " + lambdaToString(finalLambda[j]),1);
@@ -1119,7 +973,8 @@ public class MertCore
       }
 
       if (initsPerIt > 1) {
-        println("Best final lambda is lambda[j=" + best_j + "] (" + metricName + ": " + f4.format(bestFinalScore) + ").",1);
+        println("Best final lambda is lambda[j=" + best_j + "] "
+              + "(" + metricName + ": " + f4.format(bestFinalScore) + ").",1);
         println("",1);
       }
 
@@ -1150,14 +1005,16 @@ public class MertCore
       // check if a lambda is outside its threshold range
       for (int c = 1; c <= numParams; ++c) {
         if (lambda[c] < minThValue[c] || lambda[c] > maxThValue[c]) {
-          println("Warning: after normalization, lambda[" + c + "]=" + f4.format(lambda[c]) + " is outside its critical value range.",1);
+          println("Warning: after normalization, lambda[" + c + "]="
+                + f4.format(lambda[c]) + " is outside its critical value range.",1);
         }
       }
 
       // was an early stopping criterion satisfied?
       boolean critSatisfied = false;
       if (!anyParamChangedSignificantly && stopSigValue >= 0) {
-        println("Note: No parameter value changed significantly (i.e. by more than " + stopSigValue + ") in this iteration.",1);
+        println("Note: No parameter value changed significantly "
+              + "(i.e. by more than " + stopSigValue + ") in this iteration.",1);
         critSatisfied = true;
       }
 
@@ -1166,7 +1023,8 @@ public class MertCore
 
       // if min number of iterations executed, investigate if early exit should happen
       if (iteration >= minIts && earlyStop >= stopMinIts) {
-        println("Some early stopping criteria has been ovserved in " + stopMinIts + " consecutive iterations; exiting Z-MERT.",1);
+        println("Some early stopping criteria has been ovserved "
+              + "in " + stopMinIts + " consecutive iterations; exiting Z-MERT.",1);
         println("",1);
         break; // exit for (iteration) loop preemptively
       }
@@ -1200,7 +1058,10 @@ public class MertCore
 
   } // run_single_iteration
 
-  private double[] bestParamToChange(int j, TreeMap<Double,TreeMap>[] thresholdsAll, int lastChanged_c, double[] currLambda, int[] candCount, double[][][] featVal_array, HashMap<Integer,int[]>[] suffStats_array, int minIt, int maxIt)
+  private double[] bestParamToChange(
+    int j, TreeMap<Double,TreeMap>[] thresholdsAll, int lastChanged_c,
+    double[] currLambda, int[] candCount, double[][][] featVal_array,
+    HashMap<Integer,int[]>[] suffStats_array, int minIt, int maxIt)
   {
     int c_best = 0; // which parameter to change?
     double bestLambdaVal = 0.0;
@@ -1236,7 +1097,8 @@ public class MertCore
         if (c != lastChanged_c) {
           println("Investigating lambda[j=" + j + "][" + c + "]...",2);
 //          thresholdsAll[c] = thresholdsForParam(c,candCount,featVal_array,currLambda,indicesOfInterest);
-          set_thresholdsForParam(thresholdsAll[c],c,candCount,featVal_array,currLambda,indicesOfInterest);
+          set_thresholdsForParam(
+            thresholdsAll[c],c,candCount,featVal_array,currLambda,indicesOfInterest);
         } else {
           println("Keeping thresholds for lambda[j=" + j + "][" + c + "] from previous step.",2);
         }
@@ -1259,7 +1121,8 @@ public class MertCore
             temp_lambda[c] = smallest_th - 0.05;
           }
 
-          indexOfCurrBest[c] = initial_indexOfCurrBest(c,candCount,featVal_array,temp_lambda,indicesOfInterest);
+          indexOfCurrBest[c] =
+            initial_indexOfCurrBest(c,candCount,featVal_array,temp_lambda,indicesOfInterest);
         }
       }
 
@@ -1281,7 +1144,9 @@ public class MertCore
     // investigate currLambda[j][c]
 
       if (isOptimizable[c]) {
-        double[] bestScoreInfo_c = line_opt(thresholdsAll[c],indexOfCurrBest[c],c,candCount,featVal_array,suffStats_array,currLambda,minIt,maxIt);
+        double[] bestScoreInfo_c =
+          line_opt(thresholdsAll[c],indexOfCurrBest[c],c,candCount,featVal_array,
+                   suffStats_array,currLambda,minIt,maxIt);
           // get best score and its lambda value
 
         double bestLambdaVal_c = bestScoreInfo_c[0];
@@ -1376,7 +1241,8 @@ public class MertCore
 
         int decStatus = p.waitFor();
         if (decStatus != validDecoderExitValue) {
-          println("Call to decoder returned " + decStatus + "; was expecting " + validDecoderExitValue + ".");
+          println("Call to decoder returned " + decStatus
+                + "; was expecting " + validDecoderExitValue + ".");
           System.exit(30);
         }
       } catch (IOException e) {
@@ -1390,7 +1256,10 @@ public class MertCore
     }
   }
 
-  private double[] line_opt(TreeMap<Double,TreeMap> thresholdsAll, int[] indexOfCurrBest, int c, int[] candCount, double[][][] featVal_array, HashMap<Integer,int[]>[] suffStats_array, double[] lambda, int minIt, int maxIt)
+  private double[] line_opt(
+    TreeMap<Double,TreeMap> thresholdsAll, int[] indexOfCurrBest,
+    int c, int[] candCount, double[][][] featVal_array,
+    HashMap<Integer,int[]>[] suffStats_array, double[] lambda, int minIt, int maxIt)
   {
 //    println("Line-optimizing lambda[" + c + "]...",3);
 
@@ -1453,7 +1322,8 @@ public class MertCore
     double bestScore = evalMetric.score(suffStats_tot);
     double bestLambdaVal = temp_lambda[c];
     double nextLambdaVal = bestLambdaVal;
-//    println("At lambda[" + c + "] = " + bestLambdaVal + ",\t" + metricName + " = " + bestScore + " (*)",3);
+//    println("At lambda[" + c + "] = " + bestLambdaVal + ","
+//          + "\t" + metricName + " = " + bestScore + " (*)",3);
 
     Iterator<Double> It = (thresholdsAll.keySet()).iterator();
     if (It.hasNext()) { ip_curr = It.next(); }
@@ -1485,7 +1355,8 @@ public class MertCore
       }
 
       double nextTestScore = evalMetric.score(suffStats_tot);
-//      print("At lambda[" + c + "] = " + nextLambdaVal + ",\t" + metricName + " = " + nextTestScore,3);
+//      print("At lambda[" + c + "] = " + nextLambdaVal + ","
+//          + "\t" + metricName + " = " + nextTestScore,3);
 
       if (evalMetric.isBetter(nextTestScore,bestScore)) {
         bestScore = nextTestScore;
@@ -1520,7 +1391,10 @@ public class MertCore
   } // double[] line_opt(int c)
 
 //  private TreeMap<Double,TreeMap> thresholdsForParam(int c, int[] candCount, double[][][] featVal_array, double[] currLambda, TreeSet<Integer>[] indicesOfInterest)
-  private void set_thresholdsForParam(TreeMap<Double,TreeMap> thresholdsAll, int c, int[] candCount, double[][][] featVal_array, double[] currLambda, TreeSet<Integer>[] indicesOfInterest)
+  private void set_thresholdsForParam(
+    TreeMap<Double,TreeMap> thresholdsAll, int c, int[] candCount,
+    double[][][] featVal_array, double[] currLambda,
+    TreeSet<Integer>[] indicesOfInterest)
   {
 /*
     TreeMap[] thresholds = new TreeMap[numSentences];
@@ -1610,8 +1484,10 @@ public class MertCore
       }
 
       // debugging
-//      println("minSlope is @ k = " + minSlopeIndex + ": slope " + minSlope + " (offset " + offset_minSlope + ")",3);
-//      println("maxSlope is @ k = " + maxSlopeIndex + ": slope " + maxSlope + " (offset " + offset_maxSlope + ")",3);
+//      println("minSlope is @ k = " + minSlopeIndex + ": slope " + minSlope
+//            + " (offset " + offset_minSlope + ")",3);
+//      println("maxSlope is @ k = " + maxSlopeIndex + ": slope " + maxSlope
+//            + " (offset " + offset_maxSlope + ")",3);
 
 
       // some lines can be eliminated: the ones that have a lower offset
@@ -1754,7 +1630,9 @@ public class MertCore
             TreeMap A = new TreeMap();
             A.put(i,th_info);
             thresholdsAll.put(ip,A);
-          } else { // not frequent, but does happen (when same intersection point corresponds to a candidate switch for more than one i)
+          } else {
+            // not frequent, but does happen (when same intersection point
+            // corresponds to a candidate switch for more than one i)
             TreeMap A = thresholdsAll.get(ip);
             A.put(i,th_info);
             thresholdsAll.put(ip,A);
@@ -1809,7 +1687,9 @@ public class MertCore
 
   } // TreeMap<Double,TreeMap> thresholdsForParam (int c)
 
-  private int[] initial_indexOfCurrBest(int c, int[] candCount, double[][][] featVal_array, double[] temp_lambda, TreeSet<Integer>[] indicesOfInterest)
+  private int[] initial_indexOfCurrBest(
+    int c, int[] candCount, double[][][] featVal_array, double[] temp_lambda,
+    TreeSet<Integer>[] indicesOfInterest)
   {
     int[] indexOfCurrBest = new int[numSentences];
       // As we traverse lambda_c, indexOfCurrBest indicates which is the
@@ -1852,7 +1732,7 @@ public class MertCore
       String sentsFileName = decoderOutFileName+".temp.sents.it"+iteration;
       String featsFileName = decoderOutFileName+".temp.feats.it"+iteration;
 
-      FileOutputStream outStream_sents = new FileOutputStream(sentsFileName, false); // false: don't append
+      FileOutputStream outStream_sents = new FileOutputStream(sentsFileName, false);
       OutputStreamWriter outStreamWriter_sents = new OutputStreamWriter(outStream_sents, "utf8");
       BufferedWriter outFile_sents = new BufferedWriter(outStreamWriter_sents);
 
@@ -1891,7 +1771,8 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
         line = (line.substring(line.indexOf("|||")+3)).trim(); // get rid of initial text
 
         candidate_str = (line.substring(0,line.indexOf("|||"))).trim();
-        feats_str = (line.substring(line.indexOf("|||")+3)).trim(); // get rid of candidate string
+        feats_str = (line.substring(line.indexOf("|||")+3)).trim();
+          // get rid of candidate string
 
         int junk_i = feats_str.indexOf("|||");
         if (junk_i >= 0) {
@@ -1989,7 +1870,10 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
       dummy = inFile_init.next();
       if (dummy.equals("Opt")) { isOptimizable[c] = true; }
       else if (dummy.equals("Fix")) { isOptimizable[c] = false; }
-      else { println("Unknown isOptimizable string " + dummy + " (must be either Opt or Fix)"); System.exit(21); }
+      else {
+        println("Unknown isOptimizable string " + dummy + " (must be either Opt or Fix)");
+        System.exit(21);
+      }
 
       if (!isOptimizable[c]) { // skip next four values
         dummy = inFile_init.next();
@@ -2000,49 +1884,63 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
         // set minThValue[c] and maxThValue[c] (range for thresholds to investigate)
         dummy = inFile_init.next();
         if (dummy.equals("-Inf")) { minThValue[c] = NegInf; }
-        else if (dummy.equals("+Inf")) { println("minThValue[" + c + "] cannot be +Inf!"); System.exit(21); }
-        else { minThValue[c] = Double.parseDouble(dummy); }
+        else if (dummy.equals("+Inf")) {
+          println("minThValue[" + c + "] cannot be +Inf!");
+          System.exit(21);
+        } else { minThValue[c] = Double.parseDouble(dummy); }
 
         dummy = inFile_init.next();
-        if (dummy.equals("-Inf")) { println("maxThValue[" + c + "] cannot be -Inf!"); System.exit(21); }
-        else if (dummy.equals("+Inf")) { maxThValue[c] = PosInf; }
+        if (dummy.equals("-Inf")) {
+          println("maxThValue[" + c + "] cannot be -Inf!");
+          System.exit(21);
+        } else if (dummy.equals("+Inf")) { maxThValue[c] = PosInf; }
         else { maxThValue[c] = Double.parseDouble(dummy); }
 
         // set minRandValue[c] and maxRandValue[c] (range for random values)
         dummy = inFile_init.next();
-        if (dummy.equals("-Inf") || dummy.equals("+Inf")) { println("minRandValue[" + c + "] cannot be -Inf or +Inf!"); System.exit(21); }
-        else { minRandValue[c] = Double.parseDouble(dummy); }
+        if (dummy.equals("-Inf") || dummy.equals("+Inf")) {
+          println("minRandValue[" + c + "] cannot be -Inf or +Inf!");
+          System.exit(21);
+        } else { minRandValue[c] = Double.parseDouble(dummy); }
 
         dummy = inFile_init.next();
-        if (dummy.equals("-Inf") || dummy.equals("+Inf")) { println("maxRandValue[" + c + "] cannot be -Inf or +Inf!"); System.exit(21); }
-        else { maxRandValue[c] = Double.parseDouble(dummy); }
+        if (dummy.equals("-Inf") || dummy.equals("+Inf")) {
+          println("maxRandValue[" + c + "] cannot be -Inf or +Inf!");
+          System.exit(21);
+        } else { maxRandValue[c] = Double.parseDouble(dummy); }
 
   
         // check for illogical values
         if (minThValue[c] > maxThValue[c]) {
-          println("minThValue[" + c + "]=" + minThValue[c] + " > " + maxThValue[c] + "=maxThValue[" + c + "]!");
+          println("minThValue[" + c + "]=" + minThValue[c]
+                + " > " + maxThValue[c] + "=maxThValue[" + c + "]!");
           System.exit(21);
         }
         if (minRandValue[c] > maxRandValue[c]) {
-          println("minRandValue[" + c + "]=" + minRandValue[c] + " > " + maxRandValue[c] + "=maxRandValue[" + c + "]!");
+          println("minRandValue[" + c + "]=" + minRandValue[c]
+                + " > " + maxRandValue[c] + "=maxRandValue[" + c + "]!");
           System.exit(21);
         }
 
         // check for odd values
         if (!(minThValue[c] <= lambda[c] && lambda[c] <= maxThValue[c])) {
           println("Warning: lambda[" + c + "] has initial value (" + lambda[c] + ")",1);
-          println("         that is outside its critical value range [" + minThValue[c] + "," + maxThValue[c] + "]",1);
+          println("         that is outside its critical value range "
+                + "[" + minThValue[c] + "," + maxThValue[c] + "]",1);
         }
 
         if (minThValue[c] == maxThValue[c]) {
-          println("Warning: lambda[" + c + "] has minThValue = maxThValue = " + minThValue[c] + ".",1);
+          println("Warning: lambda[" + c + "] has "
+                + "minThValue = maxThValue = " + minThValue[c] + ".",1);
         }
 
         if (minRandValue[c] == maxRandValue[c]) {
-          println("Warning: lambda[" + c + "] has minRandValue = maxRandValue = " + minRandValue[c] + ".",1);
+          println("Warning: lambda[" + c + "] has "
+                + "minRandValue = maxRandValue = " + minRandValue[c] + ".",1);
         }
 
-        if (minRandValue[c] < minThValue[c] || minRandValue[c] > maxThValue[c] || maxRandValue[c] < minThValue[c] || maxRandValue[c] > maxThValue[c]) {
+        if (minRandValue[c] < minThValue[c] || minRandValue[c] > maxThValue[c]
+         || maxRandValue[c] < minThValue[c] || maxRandValue[c] > maxThValue[c]) {
           println("Warning: The random value range for lambda[" + c + "] is not contained",1);
           println("         within its critical value range.",1);
         }
@@ -2096,7 +1994,8 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
         System.exit(21);
       }
       if (normalizationOptions[2] == 0) {
-        println("Unrecognized feature name " + normalizationOptions[2] + " for absval normalization method.",1);
+        println("Unrecognized feature name " + normalizationOptions[2]
+              + " for absval normalization method.",1);
         System.exit(21);
       }
     } else if (dummyA[0].equals("maxabsval")) {
@@ -2122,7 +2021,8 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
         System.exit(21);
       }
     } else {
-      println("Unrecognized normalization method " + dummyA[0] + "; must be one of none, absval, maxabsval, and LNorm.",1);
+      println("Unrecognized normalization method " + dummyA[0] + "; "
+            + "must be one of none, absval, maxabsval, and LNorm.",1);
       System.exit(21);
     } // if (dummyA[0])
 
@@ -2135,7 +2035,7 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
       InputStream inStream = new FileInputStream(new File(origFileName));
       BufferedReader inFile = new BufferedReader(new InputStreamReader(inStream, "utf8"));
 
-      FileOutputStream outStream = new FileOutputStream(newFileName, false); // false: don't append
+      FileOutputStream outStream = new FileOutputStream(newFileName, false);
       OutputStreamWriter outStreamWriter = new OutputStreamWriter(outStream, "utf8");
       BufferedWriter outFile = new BufferedWriter(outStreamWriter);
 
@@ -2205,7 +2105,8 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
       deleteFile(decoderConfigFileName);
       deleteFile(decoderOutFileName);
 
-      // restore original name for config file (name was changed in initialize() so it doesn't get overwritten)
+      // restore original name for config file (name was changed
+      // in initialize() so it doesn't get overwritten)
       renameFile(decoderConfigFileName+".ZMERT.orig",decoderConfigFileName);
     } catch (IOException e) {
       System.err.println("IOException in MertCore.finish(): " + e.getMessage());
@@ -2398,7 +2299,10 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
 /*
       else if (option.equals("-ud")) {
         useDisk = Integer.parseInt(args[i+1]);
-        if (useDisk < 0 || useDisk > 2) { println("useDisk should be between 0 and 2"); System.exit(10); }
+        if (useDisk < 0 || useDisk > 2) {
+          println("useDisk should be between 0 and 2");
+          System.exit(10);
+        }
       }
 */
       // Decoder specs
@@ -2433,7 +2337,9 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
     if (maxMERTIterations < minMERTIterations) {
 
       if (firstTime)
-        println("Warning: maxMERTIts is smaller than minMERTIts; decreasing minMERTIts from " + minMERTIterations + " to maxMERTIts (i.e. " + maxMERTIterations + ").",1);
+        println("Warning: maxMERTIts is smaller than minMERTIts; "
+              + "decreasing minMERTIts from " + minMERTIterations + " to maxMERTIts "
+              + "(i.e. " + maxMERTIterations + ").",1);
 
       minMERTIterations = maxMERTIterations;
     }
@@ -2457,13 +2363,15 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
     if (decoderCommandFileName != null && !canRunCommand) {
       // i.e. a decoder command file was specified, but it was not found
       if (firstTime)
-        println("Warning: specified decoder command file " + decoderCommandFileName + " was not found.",1);
+        println("Warning: specified decoder command file "
+              + decoderCommandFileName + " was not found.",1);
     }
     boolean canRunJoshua = fileExists(sourceFileName);
     if (sourceFileName != null && !canRunJoshua) {
       // i.e. a source file was specified, but it was not found
       if (firstTime)
-        println("Warning: specified source file " + sourceFileName + " was not found.",1);
+        println("Warning: specified source file "
+              + sourceFileName + " was not found.",1);
     }
     boolean canRunFake = (fakeFileNamePrefix != null);
 
@@ -2490,7 +2398,8 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
         System.exit(13);
       } else if (lastGoodIt < maxMERTIterations) {
         if (firstTime)
-          println("Warning: can only run fake decoder; existing output files are only available for the first " + lastGoodIt + " iteration(s).",1);
+          println("Warning: can only run fake decoder; existing output files "
+                + "are only available for the first " + lastGoodIt + " iteration(s).",1);
       }
 
     }
@@ -2538,7 +2447,8 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
   private String createUnifiedRefFile(String prefix, int numFiles)
   {
     if (numFiles < 2) {
-      println("Warning: createUnifiedRefFile called with numFiles = " + numFiles + "; doing nothing.",1);
+      println("Warning: createUnifiedRefFile called with numFiles = " + numFiles + "; "
+            + "doing nothing.",1);
       return prefix;
     } else {
       File checker;
@@ -2717,7 +2627,8 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
       long freeMemAfter = myRuntime.freeMemory();
       long usedMemAfter = totalMemAfter - freeMemAfter;
 
-      println("GC: d_used = " + ((usedMemAfter - usedMemBefore) / bytesPerMB) + " MB (d_tot = " + ((totalMemAfter - totalMemBefore) / bytesPerMB) + " MB).",2);
+      println("GC: d_used = " + ((usedMemAfter - usedMemBefore) / bytesPerMB) + " MB "
+            + "(d_tot = " + ((totalMemAfter - totalMemBefore) / bytesPerMB) + " MB).",2);
     }
   }
 
@@ -2728,7 +2639,8 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
     long freeMem = myRuntime.freeMemory();
     long usedMem = totalMem - freeMem;
 
-    println("Allocated memory: " + (totalMem / bytesPerMB) + " MB (of which " + (usedMem / bytesPerMB) + " MB is being used).",2);
+    println("Allocated memory: " + (totalMem / bytesPerMB) + " MB "
+          + "(of which " + (usedMem / bytesPerMB) + " MB is being used).",2);
   }
 
   private void println(Object obj, int priority) { if (priority <= verbosity) println(obj); }
@@ -2840,7 +2752,9 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
     return Math.pow(sum,1/pow);
   }
 
-  private void setFeats(double[][][] featVal_array, int i, int[] lastUsedIndex, int[] maxIndex, double[] featVal)
+  private void setFeats(
+    double[][][] featVal_array, int i, int[] lastUsedIndex,
+    int[] maxIndex, double[] featVal)
   {
     int k = lastUsedIndex[i] + 1;
 
@@ -2913,7 +2827,9 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
     return discardedIndices;
   } // indicesToDiscard(double[] slope, double[] offset)
 
-  private void set_suffStats_array(HashMap<Integer,int[]>[] suffStats_array, TreeSet<Integer>[] indicesOfInterest, int[] candCount)
+  private void set_suffStats_array(
+    HashMap<Integer,int[]>[] suffStats_array,
+    TreeSet<Integer>[] indicesOfInterest, int[] candCount)
   {
     int candsOfInterestCount = 0;
     int candsOfInterestCount_all = 0;
@@ -2921,7 +2837,8 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
       candsOfInterestCount += indicesOfInterest[i].size();
       candsOfInterestCount_all += indicesOfInterest_all[i].size();
     }
-    println("Processing merged stats file; extracting SS for " + candsOfInterestCount + " candidates of interest.",2);
+    println("Processing merged stats file; extracting SS "
+          + "for " + candsOfInterestCount + " candidates of interest.",2);
     println("(*_all: " + candsOfInterestCount_all + ")",2);
 
 
@@ -2947,7 +2864,8 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
             ++currCand;
           }
 
-          // now currCand == nextIndex, and the next line in inFile contains the sufficient statistics we want
+          // now currCand == nextIndex, and the next line in inFile
+          // contains the sufficient statistics we want
 
           candidate_suffStats = inFile.readLine();
           ++currCand;
@@ -2984,6 +2902,188 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
 
   } // set_suffStats_array(HashMap[] suffStats_array, TreeSet[] indicesOfInterest, Vector[] candidates)
 
+  public static void main(String[] args)
+  {
+
+	MertCore DMC = new MertCore(); // dummy MertCore object
+
+    // if bad args[], System.exit(80)
+
+    String configFileName = args[0];
+    String stateFileName = args[1];
+    int currIteration = Integer.parseInt(args[2]);
+
+
+    int randsToSkip = 0;
+    int earlyStop = 0;
+    double FINAL_score = 0.0;
+    int[] maxIndex = null;
+
+    if (currIteration == 1) {
+      EvaluationMetric.set_knownMetrics();
+      DMC.processArgsArray(DMC.cfgFileToArgsArray(configFileName),true);
+
+      randsToSkip = 0;
+      DMC.initialize(randsToSkip);
+
+      DMC.println("----------------------------------------------------",1);
+      DMC.println("Z-MERT run started @ " + (new Date()),1);
+//      DMC.printMemoryUsage();
+      DMC.println("----------------------------------------------------",1);
+      DMC.println("",1);
+
+      if (DMC.randInit) {
+        DMC.println("Initializing lambda[] randomly.",1);
+
+        // initialize optimizable parameters randomly (sampling uniformly from
+        // that parameter's random value range)
+        DMC.lambda = DMC.randomLambda();
+      }
+
+      DMC.println("Initial lambda[]: " + DMC.lambdaToString(DMC.lambda),1);
+      DMC.println("",1);
+
+      FINAL_score = DMC.evalMetric.worstPossibleScore();
+      maxIndex = new int[DMC.numSentences];
+      for (int i = 0; i < DMC.numSentences; ++i) { maxIndex[i] = DMC.sizeOfNBest - 1; }
+      earlyStop = 0;
+    } else {
+
+      EvaluationMetric.set_knownMetrics();
+      DMC.processArgsArray(DMC.cfgFileToArgsArray(configFileName),false);
+
+      double[] serA = null;
+      try {
+        ObjectInputStream in = new ObjectInputStream(new FileInputStream(stateFileName));
+        serA = (double[])in.readObject();
+        in.close();
+        // contents of serA[]:
+        //   (*) last iteration
+        //   (*) number of random numbers generated already
+        //   (*) earlyStop
+        //   (*) FINAL_lambda
+        //   (*) lambda[]
+        //   (*) maxIndex[]
+        // => length should be 4+numParams+numSentences
+      } catch (FileNotFoundException e) {
+        System.err.println("FileNotFoundException in MertCore.main(String[]): " + e.getMessage());
+        System.exit(99901);
+      } catch (IOException e) {
+        System.err.println("IOException in MertCore.main(String[]): " + e.getMessage());
+        System.exit(99902);
+      } catch (ClassNotFoundException e) {
+        System.err.println("ClassNotFoundException in MertCore.main(String[]): " + e.getMessage());
+        System.exit(99904);
+      }
+
+      if (serA.length < 2) {
+        DMC.println("State file contains an array of length " + serA.length + "; "
+                  + "was expecting at least 2");
+        System.exit(81);
+      }
+
+      if ((int)serA[0] != currIteration-1) {
+        DMC.println("Iteration in state file is " + (int)serA[0] + "; "
+                  + "was expecting " + (currIteration-1));
+        System.exit(82);
+      }
+
+      randsToSkip = (int)serA[1];
+      DMC.initialize(randsToSkip); // declares lambda[], sets numParams and numSentences
+
+      if (serA.length != 4+DMC.numParams+DMC.numSentences) {
+        DMC.println("State file contains an array of length " + serA.length + "; "
+                  + "was expecting " + (4+DMC.numParams+DMC.numSentences));
+        System.exit(83);
+      }
+
+      earlyStop = (int)serA[2];
+      FINAL_score = serA[3];
+
+      for (int c = 1; c <= DMC.numParams; ++c) { DMC.lambda[c] = serA[3+c]; }
+
+      maxIndex = new int[DMC.numSentences];
+      for (int i = 0; i < DMC.numSentences; ++i) { maxIndex[i] = (int)serA[3+DMC.numParams+1+i]; }
+    }
+
+
+    double[] A = DMC.run_single_iteration(currIteration, DMC.minMERTIterations,
+                   DMC.maxMERTIterations, DMC.prevMERTIterations, earlyStop, maxIndex);
+
+    if (A != null) {
+      FINAL_score = A[0];
+      earlyStop = (int)A[1];
+      randsToSkip = DMC.generatedRands;
+    }
+
+
+    if (A != null && A[2] != 1) {
+
+      double[] serA = new double[4+DMC.numParams+DMC.numSentences];
+      serA[0] = currIteration;
+      serA[1] = randsToSkip;
+      serA[2] = earlyStop;
+      serA[3] = FINAL_score;
+      for (int c = 1; c <= DMC.numParams; ++c) { serA[3+c] = DMC.lambda[c]; }
+      for (int i = 0; i < DMC.numSentences; ++i) { serA[3+DMC.numParams+1+i] = maxIndex[i]; }
+
+      try {
+        ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(stateFileName));
+        out.writeObject(serA);
+        out.flush();
+        out.close();
+      } catch (FileNotFoundException e) {
+        System.err.println("FileNotFoundException in MertCore.main(String[]): " + e.getMessage());
+        System.exit(99901);
+      } catch (IOException e) {
+        System.err.println("IOException in MertCore.main(String[]): " + e.getMessage());
+        System.exit(99902);
+      }
+
+      System.exit(91);
+
+    } else {
+      // done
+
+      DMC.println("",1);
+
+      DMC.println("----------------------------------------------------",1);
+      DMC.println("Z-MERT run ended @ " + (new Date()),1);
+//      DMC.printMemoryUsage();
+      DMC.println("----------------------------------------------------",1);
+      DMC.println("",1);
+      DMC.println("FINAL lambda: " + DMC.lambdaToString(DMC.lambda)
+                + " (" + DMC.metricName + ": " + FINAL_score + ")",1);
+      // check if a lambda is outside its threshold range
+      for (int c = 1; c <= DMC.numParams; ++c) {
+        if (DMC.lambda[c] < DMC.minThValue[c] || DMC.lambda[c] > DMC.maxThValue[c]) {
+          DMC.println("Warning: after normalization, lambda[" + c + "]=" + f4.format(DMC.lambda[c])
+                    + " is outside its critical value range.",1);
+        }
+      }
+      DMC.println("",1);
+
+      // delete intermediate .temp.*.it* decoder output files
+      for (int iteration = 1; iteration <= DMC.maxMERTIterations; ++iteration) {
+        DMC.deleteFile(DMC.decoderOutFileName+".temp.sents.it"+iteration);
+        DMC.deleteFile(DMC.decoderOutFileName+".temp.feats.it"+iteration);
+        DMC.deleteFile(DMC.decoderOutFileName+".temp.stats.it"+iteration);
+      }
+
+      // delete .temp.stats.merged file
+      DMC.deleteFile(DMC.decoderOutFileName+".temp.stats.merged");
+
+      // delete .temp.sents.currIt.IP file
+      DMC.deleteFile(DMC.decoderOutFileName+".temp.sents.currIt.IP");
+
+
+      DMC.finish();
+
+      DMC.deleteFile(stateFileName);
+      System.exit(90);
+    }
+
+  }
 
 }
 
