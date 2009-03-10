@@ -42,7 +42,7 @@
 	<!-- Compile the Javadocs into web pages -->
 	<target name="javadoc">
 		<mkdir dir="${doc}"/>
-		<javadoc packagenames="edu.*"
+		<javadoc packagenames="joshua.*"
         	sourcepath="${src}"
 			destdir="${doc}"
 			author="true"
