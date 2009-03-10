@@ -30,6 +30,8 @@ import java.io.IOException;
  * <p>
  * When adding new features to Joshua,
  * any new configurable parameters should be added to this class.
+ * 
+ * @author Zhifei Li, <zhifei.work@gmail.com>
  */
 public class JoshuaConfiguration {
 	//lm config

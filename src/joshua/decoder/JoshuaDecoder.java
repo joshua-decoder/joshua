@@ -69,7 +69,6 @@ public class JoshuaDecoder {
 	private ArrayList<Integer> l_default_nonterminals;
 	private SymbolTable p_symbolTable;
 	
-	// TODO: deal with cases of multiple LMs or no LM at all
 	//LMGrammar p_lm_grammar; // the lm grammar itself (not lm model)
 	
 	
@@ -102,11 +101,6 @@ public class JoshuaDecoder {
 		//############ Step-1: initialize the decoder ########
 		p_decoder.initializeDecoder(config_file);
 		
-		/* debug
-		double[] weights = new double[5];
-		weights[0]=1;weights[1]=1;weights[2]=1;weights[3]=1;weights[4]=1;
-		p_decoder.changeFeatureWeightVector(weights);
-		*/
 		
 		//###### statistics
 		double t_sec = (System.currentTimeMillis() - start) / 1000;
@@ -125,6 +119,7 @@ public class JoshuaDecoder {
 		
 	}
 // end main()
+	
 //===============================================================
 	
 	/* this assumes that the weight_vector is ordered according to the decoder config file */

@@ -24,7 +24,7 @@ import java.util.logging.Logger;
 
 /**
  * this class implements: 
- * (1) interact with the chart-parsing functions 
+ * (1) interact with the chart-parsing functions to do the true decoding
  * 
  * 
  * @author Zhifei Li, <zhifei.work@gmail.com>
@@ -184,7 +184,7 @@ public class DecoderThread extends Thread {
 //			grammars[i].sortGrammar(models);//TODO: for batch grammar, we do not want to sort it every time
 		}
 		
-		//seeding: the chart only sees the grammars, not the grammarFactories
+		//==========================seeding: the chart only sees the grammars, not the grammarFactories
 		Chart chart = new Chart(
 			inputLattice,
 			models,
@@ -198,7 +198,7 @@ public class DecoderThread extends Thread {
 			logger.finer("after seed, time: "
 				+ (System.currentTimeMillis() - start) / 1000);
 		
-		//parsing
+		//=========================parsing
 		HyperGraph p_hyper_graph = chart.expand();
 		if (logger.isLoggable(Level.FINER)) 
 			logger.finer("after expand, time: "
@@ -217,7 +217,7 @@ public class DecoderThread extends Thread {
 	
 		} else {
 			
-			//kbest extraction
+			//============kbest extraction
 			kbestExtractor.lazy_k_best_extract_hg(
 				p_hyper_graph, models, topN, JoshuaConfiguration.use_unique_nbest, sentenceID, out, JoshuaConfiguration.use_tree_nbest, JoshuaConfiguration.include_align_index, JoshuaConfiguration.add_combined_cost);
 			if (logger.isLoggable(Level.FINER))
