@@ -25,6 +25,7 @@ import joshua.decoder.ff.FeatureFunction;
 
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.RuleCollection;
+
 import joshua.decoder.hypergraph.HGNode;
 import joshua.decoder.hypergraph.HyperEdge;
 import joshua.decoder.hypergraph.HyperGraph;
@@ -290,6 +291,8 @@ public class Bin
 		HGNode old_item=null;
 		int tem_c=0;
 		while(heap_cands.size()>0){
+			
+			//========== decide if the top in the heap should be pruned
 			tem_c++;
 			CubePruneState cur_state = heap_cands.poll();
 			cur_rl = cur_state.rule;
@@ -304,7 +307,8 @@ public class Bin
 				/*if(heap_cands.size()>1){gtem++;System.out.println("gtem is " +gtem + "; size:" + heap_cands.size());}*/
 				break;
 			}
-			//extend the cur_state
+			
+			//========== extend the cur_state, and add the candidates into the heap
 			for(int k=0; k<cur_state.ranks.length; k++){
 				//GET new_ranks
 				int[] new_ranks = new int[cur_state.ranks.length];
@@ -314,9 +318,9 @@ public class Bin
 				
 				String new_sig = CubePruneState.get_signature(new_ranks);
 				//check condtion
-				if( (cube_state_tbl.containsKey(new_sig)==true) 
-				  || (k==0 && new_ranks[k] > l_rules.size())
-				  || (k!=0 && new_ranks[k] > l_super_items.get(k-1).l_items.size())
+				if( (cube_state_tbl.containsKey(new_sig)==true) //explored before
+				  || (k==0 && new_ranks[k] > l_rules.size()) //greater than size of l_rules
+				  || (k!=0 && new_ranks[k] > l_super_items.get(k-1).l_items.size()) // greater than size of l_items
 				  ){					
 					continue;
 				}
