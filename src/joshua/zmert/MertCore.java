@@ -414,10 +414,9 @@ public class MertCore
 
     String[][] refSentences = new String[numSentences][refsPerSen];
 
-    // read in reference sentences
-
-
     try {
+
+      // read in reference sentences
       InputStream inStream_refs = new FileInputStream(new File(refFileName));
       BufferedReader inFile_refs = new BufferedReader(new InputStreamReader(inStream_refs, "utf8"));
 
@@ -2575,7 +2574,8 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
             println("Line count mismatch in " + (prefix+nextIndex) + ".");
             System.exit(60);
           }
-          inFile[r] = new BufferedReader(new FileReader(prefix+nextIndex));
+          InputStream inStream = new FileInputStream(new File(prefix+nextIndex));
+          inFile[r] = new BufferedReader(new InputStreamReader(inStream, "utf8"));
           ++nextIndex;
         }
 

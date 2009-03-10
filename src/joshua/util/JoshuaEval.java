@@ -62,7 +62,7 @@ public class JoshuaEval
   static int candRank;
     // if format is nbest, evaluate the r'th candidate of each sentence
 
-  public static void main(String[] args) throws Exception
+  public static void main(String[] args)
   {
     if (args.length == 0) {
       printUsage(args.length);
@@ -105,22 +105,22 @@ public class JoshuaEval
 
   } // main(String[] args)
 
-  private static void evaluateCands_plain(String inFileName) throws Exception
+  private static void evaluateCands_plain(String inFileName)
   {
     evaluate(candFileName, "plain", 1, 1);
   }
 
-  private static void evaluateCands_nbest(String inFileName, int testIndex) throws Exception
+  private static void evaluateCands_nbest(String inFileName, int testIndex)
   {
     evaluate(candFileName, "nbest", -1, testIndex);
   }
 
-  private static void evaluateRefSet(int r) throws Exception
+  private static void evaluateRefSet(int r)
   {
     evaluate(refFileName, "plain", refsPerSen, r);
   }
 
-  private static void evaluate(String inFileName, String inFileFormat, int candPerSen, int testIndex) throws Exception
+  private static void evaluate(String inFileName, String inFileFormat, int candPerSen, int testIndex)
   {
     // candPerSen: how many candidates are provided per sentence?
     //             (if inFileFormat is nbest, then candPerSen is ignored, since it is variable)
@@ -138,39 +138,44 @@ public class JoshuaEval
       System.exit(31);
     }
 
-    // read the candidates
+
     String[] topCand_str = new String[numSentences];
 
-    BufferedReader inFile = new BufferedReader(new FileReader(inFileName));
-    String line, candidate_str;
+    try {
 
-    if (inFileFormat.equals("plain")) {
+      // read the candidates
 
-      for (int i = 0; i < numSentences; ++i) {
+      InputStream inStream = new FileInputStream(new File(inFileName));
+      BufferedReader inFile = new BufferedReader(new InputStreamReader(inStream, "utf8"));
+      String line, candidate_str;
 
-        // skip candidates 1 through testIndex-1
-        for (int n = 1; n < testIndex; ++n){
-          line = inFile.readLine();
-        }
+      if (inFileFormat.equals("plain")) {
 
-        // read testIndex'th candidate
-        candidate_str = inFile.readLine();
+        for (int i = 0; i < numSentences; ++i) {
 
-        topCand_str[i] = candidate_str;
+          // skip candidates 1 through testIndex-1
+          for (int n = 1; n < testIndex; ++n){
+            line = inFile.readLine();
+          }
 
-        for (int n = testIndex+1; n <= candPerSen; ++n){
-        // skip candidates testIndex+1 through candPerSen-1
-          line = inFile.readLine();
-        }
+          // read testIndex'th candidate
+          candidate_str = inFile.readLine();
 
-      } // for (i)
+          topCand_str[i] = candidate_str;
 
-    } else { // nbest format
+          for (int n = testIndex+1; n <= candPerSen; ++n){
+          // skip candidates testIndex+1 through candPerSen-1
+            line = inFile.readLine();
+          }
 
-      int i = 0; int n = 1;
-      line = inFile.readLine();
+        } // for (i)
 
-      while (line != null && i < numSentences) {
+      } else { // nbest format
+
+        int i = 0; int n = 1;
+        line = inFile.readLine();
+
+        while (line != null && i < numSentences) {
 
 /*
 line format:
@@ -179,62 +184,77 @@ line format:
 
 */
 
-        while (n < candRank) {
-          line = inFile.readLine();
-          ++n;
-        }
-
-        // at the moment, line stores the candRank'th candidate (1-indexed) of the i'th sentence (0-indexed)
-
-        if (line == null) {
-          println("Not enough candidates in " + inFileName + " to extract the " + candRank + "'th candidate for each sentence.");
-          println("(Failed to extract one for the " + i + "'th sentence (0-indexed).)");
-          System.exit(32);
-        }
-
-        int read_i = Integer.parseInt(line.substring(0,line.indexOf(" |||")));
-        if (read_i == i) {
-          line = line.substring(line.indexOf("||| ")+4); // get rid of initial text
-          candidate_str = line.substring(0,line.indexOf(" |||"));
-          topCand_str[i] = candidate_str;
-          if (i < numSentences-1) {
-            while (read_i == i) {
-              line = inFile.readLine();
-              read_i = Integer.parseInt(line.substring(0,line.indexOf(" |||")));
-            }
+          while (n < candRank) {
+            line = inFile.readLine();
+            ++n;
           }
-          n = 1;
-          i += 1;
-        } else {
-          println("Not enough candidates in " + inFileName + " to extract the " + candRank + "'th candidate for each sentence.");
-          println("(Failed to extract one for the " + i + "'th sentence (0-indexed).)");
-          System.exit(32);
+
+          // at the moment, line stores the candRank'th candidate (1-indexed) of the i'th sentence (0-indexed)
+
+          if (line == null) {
+            println("Not enough candidates in " + inFileName + " to extract the " + candRank + "'th candidate for each sentence.");
+            println("(Failed to extract one for the " + i + "'th sentence (0-indexed).)");
+            System.exit(32);
+          }
+
+          int read_i = Integer.parseInt(line.substring(0,line.indexOf(" |||")));
+          if (read_i == i) {
+            line = line.substring(line.indexOf("||| ")+4); // get rid of initial text
+            candidate_str = line.substring(0,line.indexOf(" |||"));
+            topCand_str[i] = candidate_str;
+            if (i < numSentences-1) {
+              while (read_i == i) {
+                line = inFile.readLine();
+                read_i = Integer.parseInt(line.substring(0,line.indexOf(" |||")));
+              }
+            }
+            n = 1;
+            i += 1;
+          } else {
+            println("Not enough candidates in " + inFileName + " to extract the " + candRank + "'th candidate for each sentence.");
+            println("(Failed to extract one for the " + i + "'th sentence (0-indexed).)");
+            System.exit(32);
+          }
+
+        } // while (line != null)
+
+        if (i != numSentences) {
+          println("Not enough candidates were found (i = " + i + "; was expecting " + numSentences + ")");
+          System.exit(33);
         }
 
-      } // while (line != null)
-
-      if (i != numSentences) {
-        println("Not enough candidates were found (i = " + i + "; was expecting " + numSentences + ")");
-        System.exit(33);
       }
 
+      inFile.close();
+
+    } catch (FileNotFoundException e) {
+      System.err.println("FileNotFoundException in MertCore.initialize(int): " + e.getMessage());
+      System.exit(99901);
+    } catch (IOException e) {
+      System.err.println("IOException in MertCore.initialize(int): " + e.getMessage());
+      System.exit(99902);
     }
 
-    inFile.close();
 
-    evalMetric.printDetailedScore(topCand_str,false);
+    int[] IA = new int[numSentences];
+    for (int i = 0; i < numSentences; ++i) { IA[i] = i; }
+    int[][] SS = evalMetric.suffStats(topCand_str,IA);
+
+    int suffStatsCount = evalMetric.get_suffStatsCount();
+
+    int[] totStats = new int[suffStatsCount];
+    for (int s = 0; s < suffStatsCount; ++s) {
+      totStats[s] = 0;
+      for (int i = 0; i < numSentences; ++i) {
+        totStats[s] += SS[i][s];
+      }
+    }
+
+    evalMetric.printDetailedScore_fromStats(totStats,false);
 
     if (verbose) {
       println("");
       println("Printing detailed scores for individual sentences...");
-
-      int[] IA = new int[numSentences];
-      for (int i = 0; i < numSentences; ++i) { IA[i] = i; }
-
-      int[][] SS = evalMetric.suffStats(topCand_str,IA);
-
-      int suffStatsCount = evalMetric.get_suffStatsCount();
-
       for (int i = 0; i < numSentences; ++i) {
         print("Sentence #" + i + ": ");
         int[] stats = new int[suffStatsCount];
@@ -268,7 +288,7 @@ line format:
   }
 
 
-  private static void processArgsAndInitialize(String[] args) throws Exception
+  private static void processArgsAndInitialize(String[] args)
   {
     EvaluationMetric.set_knownMetrics();
 
@@ -364,17 +384,28 @@ line format:
 
     // read in reference sentences
     refSentences = new String[numSentences][refsPerSen];
-    BufferedReader inFile_refs = new BufferedReader(new FileReader(refFileName));
 
-    for (i = 0; i < numSentences; ++i) {
-      for (int r = 0; r < refsPerSen; ++r) {
-        // read the rth reference translation for the ith sentence
-        refSentences[i][r] = inFile_refs.readLine();
+    try {
+
+      InputStream inStream_refs = new FileInputStream(new File(refFileName));
+      BufferedReader inFile_refs = new BufferedReader(new InputStreamReader(inStream_refs, "utf8"));
+
+      for (i = 0; i < numSentences; ++i) {
+        for (int r = 0; r < refsPerSen; ++r) {
+          // read the rth reference translation for the ith sentence
+          refSentences[i][r] = inFile_refs.readLine();
+        }
       }
+
+      inFile_refs.close();
+
+    } catch (FileNotFoundException e) {
+      System.err.println("FileNotFoundException in MertCore.initialize(int): " + e.getMessage());
+      System.exit(99901);
+    } catch (IOException e) {
+      System.err.println("IOException in MertCore.initialize(int): " + e.getMessage());
+      System.exit(99902);
     }
-
-    inFile_refs.close();
-
 
     // set static data members for the EvaluationMetric class
     EvaluationMetric.set_numSentences(numSentences);
@@ -402,7 +433,7 @@ line format:
     return checker.exists();
   }
 
-  private static String createUnifiedRefFile(String prefix, int numFiles) throws Exception
+  private static String createUnifiedRefFile(String prefix, int numFiles)
   {
     if (numFiles < 2) {
       println("Warning: createUnifiedRefFile called with numFiles = " + numFiles + "; doing nothing.");
@@ -425,37 +456,46 @@ line format:
       if (prefix.endsWith(".")) { outFileName = prefix+"all"; }
       else { outFileName = prefix+".all"; }
 
-      PrintWriter outFile = new PrintWriter(outFileName);
+      try {
+        PrintWriter outFile = new PrintWriter(outFileName);
 
-      BufferedReader[] inFile = new BufferedReader[numFiles];
+        BufferedReader[] inFile = new BufferedReader[numFiles];
 
-      int nextIndex;
-      checker = new File(prefix+"0");
-      if (checker.exists()) { nextIndex = 0; }
-      else { nextIndex = 1; }
-      int lineCount = countLines(prefix+nextIndex);
+        int nextIndex;
+        checker = new File(prefix+"0");
+        if (checker.exists()) { nextIndex = 0; }
+        else { nextIndex = 1; }
+        int lineCount = countLines(prefix+nextIndex);
 
-      for (int r = 0; r < numFiles; ++r) {
-        if (countLines(prefix+nextIndex) != lineCount) {
-          println("Line count mismatch in " + (prefix+nextIndex) + ".");
-          System.exit(60);
-        }
-        inFile[r] = new BufferedReader(new FileReader(prefix+nextIndex));
-        ++nextIndex;
-      }
-
-      String line;
-
-      for (int i = 0; i < lineCount; ++i) {
         for (int r = 0; r < numFiles; ++r) {
-          line = inFile[r].readLine();
-          outFile.println(line);
+          if (countLines(prefix+nextIndex) != lineCount) {
+            println("Line count mismatch in " + (prefix+nextIndex) + ".");
+            System.exit(60);
+          }
+          InputStream inStream = new FileInputStream(new File(prefix+nextIndex));
+          inFile[r] = new BufferedReader(new InputStreamReader(inStream, "utf8"));
+          ++nextIndex;
         }
+
+        String line;
+
+        for (int i = 0; i < lineCount; ++i) {
+          for (int r = 0; r < numFiles; ++r) {
+            line = inFile[r].readLine();
+            outFile.println(line);
+          }
+        }
+
+        outFile.close();
+
+        for (int r = 0; r < numFiles; ++r) { inFile[r].close(); }
+      } catch (FileNotFoundException e) {
+        System.err.println("FileNotFoundException in MertCore.createUnifiedRefFile(String,int): " + e.getMessage());
+        System.exit(99901);
+      } catch (IOException e) {
+        System.err.println("IOException in MertCore.createUnifiedRefFile(String,int): " + e.getMessage());
+        System.exit(99902);
       }
-
-      outFile.close();
-
-      for (int r = 0; r < numFiles; ++r) { inFile[r].close(); }
 
       return outFileName;
 
@@ -463,18 +503,24 @@ line format:
 
   } // createUnifiedRefFile(String prefix, int numFiles)
 
-  private static int countLines(String fileName) throws Exception
+  private static int countLines(String fileName)
   {
-    BufferedReader inFile = new BufferedReader(new FileReader(fileName));
-
-    String line;
     int count = 0;
-    do {
-      line = inFile.readLine();
-      if (line != null) ++count;
-    }  while (line != null);
 
-    inFile.close();
+    try {
+      BufferedReader inFile = new BufferedReader(new FileReader(fileName));
+
+      String line;
+      do {
+        line = inFile.readLine();
+        if (line != null) ++count;
+      }  while (line != null);
+
+      inFile.close();
+    } catch (IOException e) {
+      System.err.println("IOException in MertCore.countLines(String): " + e.getMessage());
+      System.exit(99902);
+    }
 
     return count;
   }
