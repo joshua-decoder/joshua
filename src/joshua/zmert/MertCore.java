@@ -162,7 +162,7 @@ public class MertCore
   private String fakeFileNamePrefix;
 //  private int useDisk;
 
-  public static void main(String[] args) throws Exception
+  public static void main(String[] args)
   {
 
 	MertCore DMC = new MertCore(); // dummy MertCore object
@@ -211,11 +211,23 @@ public class MertCore
       EvaluationMetric.set_knownMetrics();
       DMC.processArgsArray(DMC.cfgFileToArgsArray(configFileName),false);
 
-      ObjectInputStream in = new ObjectInputStream(new FileInputStream(stateFileName));
-      double[] serA = (double[]) in.readObject();
-      in.close();
-      // contents of serA[]: last iteration, number of random numbers generated already, earlyStop, FINAL_lambda, lambda[], maxIndex[]
-      // => length should be 4+numParams+numSentences
+      double[] serA = null;
+      try {
+        ObjectInputStream in = new ObjectInputStream(new FileInputStream(stateFileName));
+        serA = (double[])in.readObject();
+        in.close();
+        // contents of serA[]: last iteration, number of random numbers generated already, earlyStop, FINAL_lambda, lambda[], maxIndex[]
+        // => length should be 4+numParams+numSentences
+      } catch (FileNotFoundException e) {
+        System.err.println("FileNotFoundException in MertCore.main(String[]): " + e.getMessage());
+        System.exit(99901);
+      } catch (IOException e) {
+        System.err.println("IOException in MertCore.main(String[]): " + e.getMessage());
+        System.exit(99902);
+      } catch (ClassNotFoundException e) {
+        System.err.println("ClassNotFoundException in MertCore.main(String[]): " + e.getMessage());
+        System.exit(99904);
+      }
 
       if (serA.length < 2) {
         DMC.println("State file contains an array of length " + serA.length + "; was expecting at least 2");
@@ -264,10 +276,18 @@ public class MertCore
       for (int c = 1; c <= DMC.numParams; ++c) { serA[3+c] = DMC.lambda[c]; }
       for (int i = 0; i < DMC.numSentences; ++i) { serA[3+DMC.numParams+1+i] = maxIndex[i]; }
 
-      ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(stateFileName));
-      out.writeObject(serA);
-      out.flush();
-      out.close();
+      try {
+        ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(stateFileName));
+        out.writeObject(serA);
+        out.flush();
+        out.close();
+      } catch (FileNotFoundException e) {
+        System.err.println("FileNotFoundException in MertCore.main(String[]): " + e.getMessage());
+        System.exit(99901);
+      } catch (IOException e) {
+        System.err.println("IOException in MertCore.main(String[]): " + e.getMessage());
+        System.exit(99902);
+      }
 
       System.exit(91);
 
@@ -312,25 +332,25 @@ public class MertCore
 
   }
 
-  public MertCore() throws Exception
+  public MertCore()
   {
   }
 
-  public MertCore(String[] args) throws Exception
+  public MertCore(String[] args)
   {
     EvaluationMetric.set_knownMetrics();
     processArgsArray(args);
     initialize(0);
   }
 
-  public MertCore(String configFileName) throws Exception
+  public MertCore(String configFileName)
   {
     EvaluationMetric.set_knownMetrics();
     processArgsArray(cfgFileToArgsArray(configFileName));
     initialize(0);
   }
 
-  private void initialize(int randsToSkip) throws Exception
+  private void initialize(int randsToSkip)
   {
     randGen = new Random(seed);
     generatedRands = randsToSkip;
@@ -367,16 +387,24 @@ public class MertCore
     defaultLambda = new double[1+numParams];
     normalizationOptions = new double[3];
 
-    // read paramter names
-    BufferedReader inFile_names = new BufferedReader(new FileReader(paramsFileName));
+    try {
+      // read paramter names
+      BufferedReader inFile_names = new BufferedReader(new FileReader(paramsFileName));
 
-    for (int c = 1; c <= numParams; ++c) {
-      String line = "";
-      while (line != null && line.length() == 0) { line = inFile_names.readLine(); }
-      paramNames[c] = (line.substring(0,line.indexOf("|||"))).trim();
+      for (int c = 1; c <= numParams; ++c) {
+        String line = "";
+        while (line != null && line.length() == 0) { line = inFile_names.readLine(); }
+        paramNames[c] = (line.substring(0,line.indexOf("|||"))).trim();
+      }
+
+      inFile_names.close();
+    } catch (FileNotFoundException e) {
+      System.err.println("FileNotFoundException in MertCore.initialize(int): " + e.getMessage());
+      System.exit(99901);
+    } catch (IOException e) {
+      System.err.println("IOException in MertCore.initialize(int): " + e.getMessage());
+      System.exit(99902);
     }
-
-    inFile_names.close();
 
     processParamFile();
       // sets the arrays declared just above
@@ -388,28 +416,38 @@ public class MertCore
 
     // read in reference sentences
 
-    InputStream inStream_refs = new FileInputStream(new File(refFileName));
-    BufferedReader inFile_refs = new BufferedReader(new InputStreamReader(inStream_refs, "utf8"));
 
-    for (int i = 0; i < numSentences; ++i) {
-      for (int r = 0; r < refsPerSen; ++r) {
-        // read the rth reference translation for the ith sentence
-        refSentences[i][r] = inFile_refs.readLine();
+    try {
+      InputStream inStream_refs = new FileInputStream(new File(refFileName));
+      BufferedReader inFile_refs = new BufferedReader(new InputStreamReader(inStream_refs, "utf8"));
+
+      for (int i = 0; i < numSentences; ++i) {
+        for (int r = 0; r < refsPerSen; ++r) {
+          // read the rth reference translation for the ith sentence
+          refSentences[i][r] = inFile_refs.readLine();
+        }
       }
+
+      inFile_refs.close();
+
+
+      // read in decoder command, if any
+      decoderCommand = null;
+      if (decoderCommandFileName != null) {
+        if (fileExists(decoderCommandFileName)) {
+          BufferedReader inFile_comm = new BufferedReader(new FileReader(decoderCommandFileName));
+          decoderCommand = inFile_comm.readLine();
+          inFile_comm.close();
+        }
+      }
+    } catch (FileNotFoundException e) {
+      System.err.println("FileNotFoundException in MertCore.initialize(int): " + e.getMessage());
+      System.exit(99901);
+    } catch (IOException e) {
+      System.err.println("IOException in MertCore.initialize(int): " + e.getMessage());
+      System.exit(99902);
     }
 
-    inFile_refs.close();
-
-
-    // read in decoder command, if any
-    decoderCommand = null;
-    if (decoderCommandFileName != null) {
-      if (fileExists(decoderCommandFileName)) {
-        BufferedReader inFile_comm = new BufferedReader(new FileReader(decoderCommandFileName));
-        decoderCommand = inFile_comm.readLine();
-        inFile_comm.close();
-      }
-    }
 
     // set static data members for the EvaluationMetric class
     EvaluationMetric.set_numSentences(numSentences);
@@ -493,12 +531,12 @@ public class MertCore
 
   } // void initialize(...)
 
-  public void run_MERT() throws Exception
+  public void run_MERT()
   {
     run_MERT(minMERTIterations,maxMERTIterations,prevMERTIterations);
   }
 
-  public void run_MERT(int minIts, int maxIts, int prevIts) throws Exception
+  public void run_MERT(int minIts, int maxIts, int prevIts)
   {
     println("----------------------------------------------------",1);
     println("Z-MERT run started @ " + (new Date()),1);
@@ -589,7 +627,7 @@ public class MertCore
   } // void run_MERT(int maxIts)
 
   @SuppressWarnings("unchecked")
-  public double[] run_single_iteration(int iteration, int minIts, int maxIts, int prevIts, int earlyStop, int[]maxIndex) throws Exception
+  public double[] run_single_iteration(int iteration, int minIts, int maxIts, int prevIts, int earlyStop, int[]maxIndex)
   {
     double FINAL_score = 0;
 
@@ -692,53 +730,180 @@ public class MertCore
       int[] newCandidatesAdded = new int[1+iteration];
       for (int it = 1; it <= iteration; ++it) { newCandidatesAdded[it] = 0; }
 
-      // each inFile corresponds to the output of an iteration
-      // (index 0 is not used; no corresponding index for the current iteration)
-      BufferedReader[] inFile_sents = new BufferedReader[iteration];
-      BufferedReader[] inFile_feats = new BufferedReader[iteration];
-      BufferedReader[] inFile_stats = new BufferedReader[iteration];
-      for (int it = firstIt; it < iteration; ++it) {
-        InputStream inStream_sents = new FileInputStream(new File(decoderOutFileName+".temp.sents.it"+it));
-        inFile_sents[it] = new BufferedReader(new InputStreamReader(inStream_sents, "utf8"));
-//        inFile_sents[it] = new BufferedReader(new FileReader(decoderOutFileName+".temp.sents.it"+it));
-        inFile_feats[it] = new BufferedReader(new FileReader(decoderOutFileName+".temp.feats.it"+it));
-        inFile_stats[it] = new BufferedReader(new FileReader(decoderOutFileName+".temp.stats.it"+it));
-      }
 
-      InputStream inStream_sents = new FileInputStream(new File(decoderOutFileName+".temp.sents.it"+iteration));
-      BufferedReader inFile_sentsCurrIt = new BufferedReader(new InputStreamReader(inStream_sents, "utf8"));
-      BufferedReader inFile_featsCurrIt = new BufferedReader(new FileReader(decoderOutFileName+".temp.feats.it"+iteration));
-      PrintWriter outFile_statsCurrIt = new PrintWriter(decoderOutFileName+".temp.stats.it"+iteration);
 
-      PrintWriter outFile_statsMerged = new PrintWriter(decoderOutFileName+".temp.stats.merged");
-        // write sufficient statistics from all the sentences from the output files into a single file
 
-      String sents_str, feats_str, stats_str;
 
-      HashMap<String,String> existingCandStats = new HashMap<String,String>();
-        // Stores precalculated sufficient statistics for candidates, in case
-        // the same candidate is seen again. (SS stored as a String.)
-        // Q: Why do we care?  If we see the same candidate again, aren't we just
-        //    ignoring them?  In that case, why do we care about the SS?
-        // A: A "repeat" candidate may not be a repeat candidate in later
-        //    iterations if the user specifies a value for prevMERTIterations
-        //    that causes MERT to skip candidates from early iterations.
-      double[] currFeatVal = new double[1+numParams];
-      String[] featVal_str;
 
-      int totalCandidateCount = 0;
 
-      for (int i = 0; i < numSentences; ++i) {
+      try {
 
-        for (int j = 1; j <= initsPerIt; ++j) {
-          best1Score[j][i] = NegInf;
-        }
+
+        // each inFile corresponds to the output of an iteration
+        // (index 0 is not used; no corresponding index for the current iteration)
+        BufferedReader[] inFile_sents = new BufferedReader[iteration];
+        BufferedReader[] inFile_feats = new BufferedReader[iteration];
+        BufferedReader[] inFile_stats = new BufferedReader[iteration];
 
         for (int it = firstIt; it < iteration; ++it) {
-        // Why up to but *excluding* iteration?
-        // Because the last iteration is handled a little differently, since
-        // the SS must be claculated (and the corresponding file created),
-        // which is not true for previous iterations.
+          InputStream inStream_sents = new FileInputStream(new File(decoderOutFileName+".temp.sents.it"+it));
+          inFile_sents[it] = new BufferedReader(new InputStreamReader(inStream_sents, "utf8"));
+//          inFile_sents[it] = new BufferedReader(new FileReader(decoderOutFileName+".temp.sents.it"+it));
+          inFile_feats[it] = new BufferedReader(new FileReader(decoderOutFileName+".temp.feats.it"+it));
+          inFile_stats[it] = new BufferedReader(new FileReader(decoderOutFileName+".temp.stats.it"+it));
+        }
+
+
+        InputStream inStream_sents = new FileInputStream(new File(decoderOutFileName+".temp.sents.it"+iteration));
+        BufferedReader inFile_sentsCurrIt = new BufferedReader(new InputStreamReader(inStream_sents, "utf8"));
+        BufferedReader inFile_featsCurrIt = new BufferedReader(new FileReader(decoderOutFileName+".temp.feats.it"+iteration));
+        PrintWriter outFile_statsCurrIt = new PrintWriter(decoderOutFileName+".temp.stats.it"+iteration);
+
+        PrintWriter outFile_statsMerged = new PrintWriter(decoderOutFileName+".temp.stats.merged");
+          // write sufficient statistics from all the sentences from the output files into a single file
+
+
+        String sents_str, feats_str, stats_str;
+
+        HashMap<String,String> existingCandStats = new HashMap<String,String>();
+          // Stores precalculated sufficient statistics for candidates, in case
+          // the same candidate is seen again. (SS stored as a String.)
+          // Q: Why do we care?  If we see the same candidate again, aren't we just
+          //    ignoring them?  In that case, why do we care about the SS?
+          // A: A "repeat" candidate may not be a repeat candidate in later
+          //    iterations if the user specifies a value for prevMERTIterations
+          //    that causes MERT to skip candidates from early iterations.
+        double[] currFeatVal = new double[1+numParams];
+        String[] featVal_str;
+
+        int totalCandidateCount = 0;
+
+        for (int i = 0; i < numSentences; ++i) {
+
+          for (int j = 1; j <= initsPerIt; ++j) {
+            best1Score[j][i] = NegInf;
+          }
+
+          for (int it = firstIt; it < iteration; ++it) {
+          // Why up to but *excluding* iteration?
+          // Because the last iteration is handled a little differently, since
+          // the SS must be claculated (and the corresponding file created),
+          // which is not true for previous iterations.
+
+            for (int n = 0; n <= sizeOfNBest; ++n) {
+            // Why up to and *including* sizeOfNBest?
+            // So that it would read the "||||||" separator even if there is
+            // a complete list of sizeOfNBest candidates.
+
+              // for the nth candidate for the ith sentence, read the sentence, feature values,
+              // and sufficient statistics from the various temp files
+
+              sents_str = inFile_sents[it].readLine();
+              feats_str = inFile_feats[it].readLine();
+              stats_str = inFile_stats[it].readLine();
+
+              if (sents_str.equals("||||||")) {
+                n = sizeOfNBest+1;
+              } else if (!existingCandStats.containsKey(sents_str)) {
+
+                outFile_statsMerged.println(stats_str);
+
+                featVal_str = feats_str.split("\\s+");
+
+                for (int c = 1; c <= numParams; ++c) {
+                  currFeatVal[c] = Double.parseDouble(featVal_str[c-1]);
+//                  print("fV[" + c + "]=" + featVal[c] + " ",3);
+                }
+//                println("",3);
+
+
+                for (int j = 1; j <= initsPerIt; ++j) {
+                  double score = 0;
+                  for (int c = 1; c <= numParams; ++c) {
+                    score += initialLambda[j][c] * currFeatVal[c];
+                  }
+                  if (score > best1Score[j][i]) {
+                    best1Score[j][i] = score;
+                    String[] tempStats = stats_str.split("\\s+");
+                    for (int s = 0; s < suffStatsCount; ++s)
+                      best1Cand_suffStats[j][i][s] = Integer.parseInt(tempStats[s]);
+                  }
+                }
+
+                existingCandStats.put(sents_str,stats_str);
+
+                setFeats(featVal_array,i,lastUsedIndex,maxIndex,currFeatVal);
+                candCount[i] += 1;
+
+                newCandidatesAdded[it] += 1;
+
+              }
+
+              showProgress();
+
+            } // for (n)
+
+          } // for (it)
+
+
+          // now process the candidates of the current iteration
+
+          /* remember:
+               BufferedReader inFile_sentsCurrIt
+               BufferedReader inFile_featsCurrIt
+               PrintWriter outFile_statsCurrIt
+          */
+
+          FileOutputStream outStream = new FileOutputStream(decoderOutFileName+".temp.sents.currIt.IP", false); // false: don't append
+          OutputStreamWriter outStreamWriter = new OutputStreamWriter(outStream, "utf8");
+          BufferedWriter outFile_sentsCurrIt_IP = new BufferedWriter(outStreamWriter);
+
+          Vector<String> unknownCands_V = new Vector<String>();
+
+          for (int n = 0; n <= sizeOfNBest; ++n) {
+          // Why up to and *including* sizeOfNBest?
+          // So that it would read the "||||||" separator even if there is
+          // a complete list of sizeOfNBest candidates.
+
+            // for the nth candidate for the ith sentence, read the sentence,
+            // and rewrite it to the IP file
+
+            sents_str = inFile_sentsCurrIt.readLine();
+            writeLine(sents_str,outFile_sentsCurrIt_IP); // Note: possibly "||||||"
+
+            if (sents_str.equals("||||||")) {
+              n = sizeOfNBest+1;
+            } else if (!existingCandStats.containsKey(sents_str)) {
+              unknownCands_V.add(sents_str);
+              existingCandStats.put(sents_str,"U"); // i.e. unknown
+            }
+
+            showProgress();
+
+          } // for (n)
+
+          outFile_sentsCurrIt_IP.close();
+
+          // now unknown_V has the candidates for which we need to calculate
+          // sufficient statistics
+          int sizeUnknown = unknownCands_V.size();
+          String[] unknownCands = new String[sizeUnknown];
+          unknownCands_V.toArray(unknownCands);
+          int[] indices = new int[sizeUnknown];
+          for (int d = 0; d < sizeUnknown; ++d) {
+            existingCandStats.remove(unknownCands[d]);
+            indices[d] = i;
+          }
+
+          int[][] newSuffStats = evalMetric.suffStats(unknownCands, indices);
+
+          int d = -1;
+
+
+          InputStream inStream_sentsCurrIt_IP = new FileInputStream(new File(decoderOutFileName+".temp.sents.currIt.IP"));
+          BufferedReader inFile_sentsCurrIt_IP = new BufferedReader(new InputStreamReader(inStream_sentsCurrIt_IP, "utf8"));
+
+          int[] stats = new int[suffStatsCount];
 
           for (int n = 0; n <= sizeOfNBest; ++n) {
           // Why up to and *including* sizeOfNBest?
@@ -748,14 +913,24 @@ public class MertCore
             // for the nth candidate for the ith sentence, read the sentence, feature values,
             // and sufficient statistics from the various temp files
 
-            sents_str = inFile_sents[it].readLine();
-            feats_str = inFile_feats[it].readLine();
-            stats_str = inFile_stats[it].readLine();
+            sents_str = inFile_sentsCurrIt_IP.readLine();
+            feats_str = inFile_featsCurrIt.readLine();
 
             if (sents_str.equals("||||||")) {
               n = sizeOfNBest+1;
             } else if (!existingCandStats.containsKey(sents_str)) {
 
+              ++d;
+
+              stats_str = "";
+              for (int s = 0; s < suffStatsCount-1; ++s) {
+                stats[s] = newSuffStats[d][s];
+                stats_str += (stats[s] + " ");
+              }
+              stats[suffStatsCount-1] = newSuffStats[d][suffStatsCount-1];
+              stats_str += stats[suffStatsCount-1];
+
+              outFile_statsCurrIt.println(stats_str);
               outFile_statsMerged.println(stats_str);
 
               featVal_str = feats_str.split("\\s+");
@@ -774,9 +949,8 @@ public class MertCore
                 }
                 if (score > best1Score[j][i]) {
                   best1Score[j][i] = score;
-                  String[] tempStats = stats_str.split("\\s+");
                   for (int s = 0; s < suffStatsCount; ++s)
-                    best1Cand_suffStats[j][i][s] = Integer.parseInt(tempStats[s]);
+                    best1Cand_suffStats[j][i][s] = stats[s];
                 }
               }
 
@@ -785,175 +959,60 @@ public class MertCore
               setFeats(featVal_array,i,lastUsedIndex,maxIndex,currFeatVal);
               candCount[i] += 1;
 
-              newCandidatesAdded[it] += 1;
+              newCandidatesAdded[iteration] += 1;
 
+            } else {
+              // write SS to outFile_statsCurrIt
+              stats_str = existingCandStats.get(sents_str);
+              outFile_statsCurrIt.println(stats_str);
             }
 
             showProgress();
 
           } // for (n)
 
-        } // for (it)
+          // now d = sizeUnknown
 
+          inFile_sentsCurrIt_IP.close();
 
-        // now process the candidates of the current iteration
+          outFile_statsCurrIt.println("||||||");
 
-        /* remember:
-             BufferedReader inFile_sentsCurrIt
-             BufferedReader inFile_featsCurrIt
-             PrintWriter outFile_statsCurrIt
-        */
+          existingCandStats.clear();
+          totalCandidateCount += candCount[i];
 
-        FileOutputStream outStream = new FileOutputStream(decoderOutFileName+".temp.sents.currIt.IP", false); // false: don't append
-        OutputStreamWriter outStreamWriter = new OutputStreamWriter(outStream, "utf8");
-        BufferedWriter outFile_sentsCurrIt_IP = new BufferedWriter(outStreamWriter);
+        } // for (i)
 
-        Vector<String> unknownCands_V = new Vector<String>();
-
-        for (int n = 0; n <= sizeOfNBest; ++n) {
-        // Why up to and *including* sizeOfNBest?
-        // So that it would read the "||||||" separator even if there is
-        // a complete list of sizeOfNBest candidates.
-
-          // for the nth candidate for the ith sentence, read the sentence,
-          // and rewrite it to the IP file
-
-          sents_str = inFile_sentsCurrIt.readLine();
-          writeLine(sents_str,outFile_sentsCurrIt_IP); // Note: possibly "||||||"
-
-          if (sents_str.equals("||||||")) {
-            n = sizeOfNBest+1;
-          } else if (!existingCandStats.containsKey(sents_str)) {
-            unknownCands_V.add(sents_str);
-            existingCandStats.put(sents_str,"U"); // i.e. unknown
-          }
-
-          showProgress();
-
-        } // for (n)
-
-        outFile_sentsCurrIt_IP.close();
-
-        // now unknown_V has the candidates for which we need to calculate
-        // sufficient statistics
-        int sizeUnknown = unknownCands_V.size();
-        String[] unknownCands = new String[sizeUnknown];
-        unknownCands_V.toArray(unknownCands);
-        int[] indices = new int[sizeUnknown];
-        for (int d = 0; d < sizeUnknown; ++d) {
-          existingCandStats.remove(unknownCands[d]);
-          indices[d] = i;
+        for (int it = firstIt; it < iteration; ++it) {
+          inFile_sents[it].close();
+          inFile_feats[it].close();
+          inFile_stats[it].close();
         }
 
-        int[][] newSuffStats = evalMetric.suffStats(unknownCands, indices);
+        inFile_sentsCurrIt.close();
+        inFile_featsCurrIt.close();
+        outFile_statsCurrIt.close();
 
-        int d = -1;
+        outFile_statsMerged.close();
 
+        println("",2); // to finish off progress dot line
 
-        InputStream inStream_sentsCurrIt_IP = new FileInputStream(new File(decoderOutFileName+".temp.sents.currIt.IP"));
-        BufferedReader inFile_sentsCurrIt_IP = new BufferedReader(new InputStreamReader(inStream_sentsCurrIt_IP, "utf8"));
+//        cleanupMemory();
 
-        int[] stats = new int[suffStatsCount];
+        println("Processed " + totalCandidateCount + " distinct candidates (about " + totalCandidateCount/numSentences + " per sentence):",1);
+        for (int it = firstIt; it <= iteration; ++it) {
+          println("newCandidatesAdded[it=" + it + "] = " + newCandidatesAdded[it] + " (about " + newCandidatesAdded[it]/numSentences + " per sentence)",1);
+        }
 
-        for (int n = 0; n <= sizeOfNBest; ++n) {
-        // Why up to and *including* sizeOfNBest?
-        // So that it would read the "||||||" separator even if there is
-        // a complete list of sizeOfNBest candidates.
+        println("",1);
 
-          // for the nth candidate for the ith sentence, read the sentence, feature values,
-          // and sufficient statistics from the various temp files
-
-          sents_str = inFile_sentsCurrIt_IP.readLine();
-          feats_str = inFile_featsCurrIt.readLine();
-
-          if (sents_str.equals("||||||")) {
-            n = sizeOfNBest+1;
-          } else if (!existingCandStats.containsKey(sents_str)) {
-
-            ++d;
-
-            stats_str = "";
-            for (int s = 0; s < suffStatsCount-1; ++s) {
-              stats[s] = newSuffStats[d][s];
-              stats_str += (stats[s] + " ");
-            }
-            stats[suffStatsCount-1] = newSuffStats[d][suffStatsCount-1];
-            stats_str += stats[suffStatsCount-1];
-
-            outFile_statsCurrIt.println(stats_str);
-            outFile_statsMerged.println(stats_str);
-
-            featVal_str = feats_str.split("\\s+");
-
-            for (int c = 1; c <= numParams; ++c) {
-              currFeatVal[c] = Double.parseDouble(featVal_str[c-1]);
-//              print("fV[" + c + "]=" + featVal[c] + " ",3);
-            }
-//            println("",3);
-
-
-            for (int j = 1; j <= initsPerIt; ++j) {
-              double score = 0;
-              for (int c = 1; c <= numParams; ++c) {
-                score += initialLambda[j][c] * currFeatVal[c];
-              }
-              if (score > best1Score[j][i]) {
-                best1Score[j][i] = score;
-                for (int s = 0; s < suffStatsCount; ++s)
-                  best1Cand_suffStats[j][i][s] = stats[s];
-              }
-            }
-
-            existingCandStats.put(sents_str,stats_str);
-
-            setFeats(featVal_array,i,lastUsedIndex,maxIndex,currFeatVal);
-            candCount[i] += 1;
-
-            newCandidatesAdded[iteration] += 1;
-
-          } else {
-            // write SS to outFile_statsCurrIt
-            stats_str = existingCandStats.get(sents_str);
-            outFile_statsCurrIt.println(stats_str);
-          }
-
-          showProgress();
-
-        } // for (n)
-
-        // now d = sizeUnknown
-
-        inFile_sentsCurrIt_IP.close();
-
-        outFile_statsCurrIt.println("||||||");
-
-        existingCandStats.clear();
-        totalCandidateCount += candCount[i];
-
-      } // for (i)
-
-      for (int it = firstIt; it < iteration; ++it) {
-        inFile_sents[it].close();
-        inFile_feats[it].close();
-        inFile_stats[it].close();
+      } catch (FileNotFoundException e) {
+        System.err.println("FileNotFoundException in MertCore.run_single_iteration(6): " + e.getMessage());
+        System.exit(99901);
+      } catch (IOException e) {
+        System.err.println("IOException in MertCore.run_single_iteration(6): " + e.getMessage());
+        System.exit(99902);
       }
 
-      inFile_sentsCurrIt.close();
-      inFile_featsCurrIt.close();
-      outFile_statsCurrIt.close();
-
-      outFile_statsMerged.close();
-
-      println("",2); // to finish off progress dot line
-
-//      cleanupMemory();
-
-      println("Processed " + totalCandidateCount + " distinct candidates (about " + totalCandidateCount/numSentences + " per sentence):",1);
-      for (int it = firstIt; it <= iteration; ++it) {
-        println("newCandidatesAdded[it=" + it + "] = " + newCandidatesAdded[it] + " (about " + newCandidatesAdded[it]/numSentences + " per sentence)",1);
-      }
-
-      println("",1);
 
       if (newCandidatesAdded[iteration] == 0) {
         if (!oneModificationPerIteration) {
@@ -1142,7 +1201,7 @@ public class MertCore
 
   } // run_single_iteration
 
-  private double[] bestParamToChange(int j, TreeMap<Double,TreeMap>[] thresholdsAll, int lastChanged_c, double[] currLambda, int[] candCount, double[][][] featVal_array, HashMap<Integer,int[]>[] suffStats_array, int minIt, int maxIt) throws Exception
+  private double[] bestParamToChange(int j, TreeMap<Double,TreeMap>[] thresholdsAll, int lastChanged_c, double[] currLambda, int[] candCount, double[][][] featVal_array, HashMap<Integer,int[]>[] suffStats_array, int minIt, int maxIt)
   {
     int c_best = 0; // which parameter to change?
     double bestLambdaVal = 0.0;
@@ -1283,7 +1342,7 @@ public class MertCore
     return retStr;
   }
 
-  private void run_decoder(int iteration) throws Exception
+  private void run_decoder(int iteration)
   {
     if (fakeFileNamePrefix != null && fileExists(fakeFileNamePrefix+iteration)) {
       println("Running fake decoder (making copy of " + fakeFileNamePrefix+iteration + ")...",1);
@@ -1306,25 +1365,33 @@ public class MertCore
     } else {
       println("Running external decoder...",1);
 
-      Runtime rt = Runtime.getRuntime();
-      Process p = rt.exec(decoderCommandFileName);
+      try {
+        Runtime rt = Runtime.getRuntime();
+        Process p = rt.exec(decoderCommandFileName);
 
-      StreamGobbler errorGobbler = new StreamGobbler(p.getErrorStream(), decVerbosity);
-      StreamGobbler outputGobbler = new StreamGobbler(p.getInputStream(), decVerbosity);
+        StreamGobbler errorGobbler = new StreamGobbler(p.getErrorStream(), decVerbosity);
+        StreamGobbler outputGobbler = new StreamGobbler(p.getInputStream(), decVerbosity);
 
-      errorGobbler.start();
-      outputGobbler.start();
+        errorGobbler.start();
+        outputGobbler.start();
 
-      int decStatus = p.waitFor();
-
-      if (decStatus != validDecoderExitValue) {
-        println("Call to decoder returned " + decStatus + "; was expecting " + validDecoderExitValue + ".");
-        System.exit(30);
+        int decStatus = p.waitFor();
+        if (decStatus != validDecoderExitValue) {
+          println("Call to decoder returned " + decStatus + "; was expecting " + validDecoderExitValue + ".");
+          System.exit(30);
+        }
+      } catch (IOException e) {
+        System.err.println("IOException in MertCore.run_decoder(int): " + e.getMessage());
+        System.exit(99902);
+      } catch (InterruptedException e) {
+        System.err.println("InterruptedException in MertCore.run_decoder(int): " + e.getMessage());
+        System.exit(99903);
       }
+
     }
   }
 
-  private double[] line_opt(TreeMap<Double,TreeMap> thresholdsAll, int[] indexOfCurrBest, int c, int[] candCount, double[][][] featVal_array, HashMap<Integer,int[]>[] suffStats_array, double[] lambda, int minIt, int maxIt) throws Exception
+  private double[] line_opt(TreeMap<Double,TreeMap> thresholdsAll, int[] indexOfCurrBest, int c, int[] candCount, double[][][] featVal_array, HashMap<Integer,int[]>[] suffStats_array, double[] lambda, int minIt, int maxIt)
   {
 //    println("Line-optimizing lambda[" + c + "]...",3);
 
@@ -1780,29 +1847,30 @@ public class MertCore
 
   } // int[] initial_indexOfCurrBest (int c)
 
-  private void produceTempFiles(int iteration) throws Exception
+  private void produceTempFiles(int iteration)
   {
-    String sentsFileName = decoderOutFileName+".temp.sents.it"+iteration;
-    String featsFileName = decoderOutFileName+".temp.feats.it"+iteration;
+    try {
+      String sentsFileName = decoderOutFileName+".temp.sents.it"+iteration;
+      String featsFileName = decoderOutFileName+".temp.feats.it"+iteration;
 
-    FileOutputStream outStream_sents = new FileOutputStream(sentsFileName, false); // false: don't append
-    OutputStreamWriter outStreamWriter_sents = new OutputStreamWriter(outStream_sents, "utf8");
-    BufferedWriter outFile_sents = new BufferedWriter(outStreamWriter_sents);
+      FileOutputStream outStream_sents = new FileOutputStream(sentsFileName, false); // false: don't append
+      OutputStreamWriter outStreamWriter_sents = new OutputStreamWriter(outStream_sents, "utf8");
+      BufferedWriter outFile_sents = new BufferedWriter(outStreamWriter_sents);
 
-    PrintWriter outFile_feats = new PrintWriter(featsFileName);
+      PrintWriter outFile_feats = new PrintWriter(featsFileName);
 
 
-    InputStream inStream = new FileInputStream(new File(decoderOutFileName));
-    BufferedReader inFile = new BufferedReader(new InputStreamReader(inStream, "utf8"));
+      InputStream inStream = new FileInputStream(new File(decoderOutFileName));
+      BufferedReader inFile = new BufferedReader(new InputStreamReader(inStream, "utf8"));
 
-    String line; //, prevLine;
-    String candidate_str = "";
-    String feats_str = "";
+      String line; //, prevLine;
+      String candidate_str = "";
+      String feats_str = "";
 
-    int i = 0; int n = 0;
-    line = inFile.readLine();
+      int i = 0; int n = 0;
+      line = inFile.readLine();
 
-    while (line != null) {
+      while (line != null) {
 
 /*
 line format:
@@ -1811,84 +1879,101 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
 
 */
 
-      // in a well formed file, we'd find the nth candidate for the ith sentence
+        // in a well formed file, we'd find the nth candidate for the ith sentence
 
-      int read_i = Integer.parseInt((line.substring(0,line.indexOf("|||"))).trim());
+        int read_i = Integer.parseInt((line.substring(0,line.indexOf("|||"))).trim());
 
-      if (read_i != i) {
+        if (read_i != i) {
+          writeLine("||||||",outFile_sents);
+          outFile_feats.println("||||||");
+          n = 0; ++i;
+        }
+
+        line = (line.substring(line.indexOf("|||")+3)).trim(); // get rid of initial text
+
+        candidate_str = (line.substring(0,line.indexOf("|||"))).trim();
+        feats_str = (line.substring(line.indexOf("|||")+3)).trim(); // get rid of candidate string
+
+        int junk_i = feats_str.indexOf("|||");
+        if (junk_i >= 0) {
+          feats_str = (feats_str.substring(0,junk_i)).trim();
+        }
+
+        writeLine(candidate_str, outFile_sents);
+        outFile_feats.println(feats_str);
+
+        ++n;
+        if (n == sizeOfNBest) {
+          writeLine("||||||",outFile_sents);
+          outFile_feats.println("||||||");
+          n = 0; ++i;
+        }
+
+        line = inFile.readLine();
+      }
+
+      if (i != numSentences) { // last sentence had too few candidates
         writeLine("||||||",outFile_sents);
         outFile_feats.println("||||||");
-        n = 0; ++i;
       }
 
-      line = (line.substring(line.indexOf("|||")+3)).trim(); // get rid of initial text
-
-      candidate_str = (line.substring(0,line.indexOf("|||"))).trim();
-      feats_str = (line.substring(line.indexOf("|||")+3)).trim(); // get rid of candidate string
-
-      int junk_i = feats_str.indexOf("|||");
-      if (junk_i >= 0) {
-        feats_str = (feats_str.substring(0,junk_i)).trim();
-      }
-
-      writeLine(candidate_str, outFile_sents);
-      outFile_feats.println(feats_str);
-
-      ++n;
-      if (n == sizeOfNBest) {
-        writeLine("||||||",outFile_sents);
-        outFile_feats.println("||||||");
-        n = 0; ++i;
-      }
-
-      line = inFile.readLine();
+      inFile.close();
+      outFile_sents.close();
+      outFile_feats.close();
+    } catch (FileNotFoundException e) {
+      System.err.println("FileNotFoundException in MertCore.produceTempFiles(int): " + e.getMessage());
+      System.exit(99901);
+    } catch (IOException e) {
+      System.err.println("IOException in MertCore.produceTempFiles(int): " + e.getMessage());
+      System.exit(99902);
     }
-
-    if (i != numSentences) { // last sentence had too few candidates
-      writeLine("||||||",outFile_sents);
-      outFile_feats.println("||||||");
-    }
-
-    inFile.close();
-    outFile_sents.close();
-    outFile_feats.close();
 
   }
 
-  private void createConfigFile(double[] params, String cfgFileName, String templateFileName) throws Exception
+  private void createConfigFile(double[] params, String cfgFileName, String templateFileName)
   {
-    // i.e. create cfgFileName, which is similar to templateFileName, but with
-    // params[] as parameter values
+    try {
+      // i.e. create cfgFileName, which is similar to templateFileName, but with
+      // params[] as parameter values
 
-    BufferedReader inFile = new BufferedReader(new FileReader(templateFileName));
-    PrintWriter outFile = new PrintWriter(cfgFileName);
+      BufferedReader inFile = new BufferedReader(new FileReader(templateFileName));
+      PrintWriter outFile = new PrintWriter(cfgFileName);
 
-    String line = inFile.readLine();
+      String line = inFile.readLine();
 
-    while (line != null) {
-      int c_match = -1;
-      for (int c = 1; c <= numParams; ++c) {
-        if (line.startsWith(paramNames[c] + " ")) { c_match = c; break; }
+      while (line != null) {
+        int c_match = -1;
+        for (int c = 1; c <= numParams; ++c) {
+          if (line.startsWith(paramNames[c] + " ")) { c_match = c; break; }
+        }
+
+        if (c_match == -1) {
+          outFile.println(line);
+        } else {
+          outFile.println(paramNames[c_match] + " " + params[c_match]);
+        }
+
+        line = inFile.readLine();
       }
 
-      if (c_match == -1) {
-        outFile.println(line);
-      } else {
-        outFile.println(paramNames[c_match] + " " + params[c_match]);
-      }
-
-      line = inFile.readLine();
+      inFile.close();
+      outFile.close();
+    } catch (IOException e) {
+      System.err.println("IOException in MertCore.createConfigFile(double[],String,String): " + e.getMessage());
+      System.exit(99902);
     }
-
-    inFile.close();
-    outFile.close();
-
   }
 
-  private void processParamFile() throws Exception
+  private void processParamFile()
   {
     // process parameter file
-    Scanner inFile_init = new Scanner(new FileReader(paramsFileName));
+    Scanner inFile_init = null;
+    try {
+      inFile_init = new Scanner(new FileReader(paramsFileName));
+    } catch (FileNotFoundException e) {
+      System.err.println("FileNotFoundException in MertCore.processParamFile(): " + e.getMessage());
+      System.exit(99901);
+    }
 
     String dummy = "";
 
@@ -2045,23 +2130,31 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
     inFile_init.close();
   }
 
-  private void copyFile(String origFileName, String newFileName) throws Exception
+  private void copyFile(String origFileName, String newFileName)
   {
-    InputStream inStream = new FileInputStream(new File(origFileName));
-    BufferedReader inFile = new BufferedReader(new InputStreamReader(inStream, "utf8"));
+    try {
+      InputStream inStream = new FileInputStream(new File(origFileName));
+      BufferedReader inFile = new BufferedReader(new InputStreamReader(inStream, "utf8"));
 
-    FileOutputStream outStream = new FileOutputStream(newFileName, false); // false: don't append
-    OutputStreamWriter outStreamWriter = new OutputStreamWriter(outStream, "utf8");
-    BufferedWriter outFile = new BufferedWriter(outStreamWriter);
+      FileOutputStream outStream = new FileOutputStream(newFileName, false); // false: don't append
+      OutputStreamWriter outStreamWriter = new OutputStreamWriter(outStream, "utf8");
+      BufferedWriter outFile = new BufferedWriter(outStreamWriter);
 
-    String line;
-    while(inFile.ready()) {
-      line = inFile.readLine();
-      writeLine(line, outFile);
+      String line;
+      while(inFile.ready()) {
+        line = inFile.readLine();
+        writeLine(line, outFile);
+      }
+
+      inFile.close();
+      outFile.close();
+    } catch (FileNotFoundException e) {
+      System.err.println("FileNotFoundException in MertCore.initialize(int): " + e.getMessage());
+      System.exit(99901);
+    } catch (IOException e) {
+      System.err.println("IOException in MertCore.initialize(int): " + e.getMessage());
+      System.exit(99902);
     }
-
-    inFile.close();
-    outFile.close();
   }
 
   private void renameFile(String origFileName, String newFileName)
@@ -2091,75 +2184,88 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
     writer.flush();
   }
 
-  public void finish() throws Exception
+  public void finish()
   {
-    if (myDecoder != null) {
-      myDecoder.cleanUp();
-    }
-
-    if (finalLambdaFileName != null) {
-      PrintWriter outFile_lambdas = new PrintWriter(finalLambdaFileName);
-      for (int c = 1; c <= numParams; ++c) {
-        outFile_lambdas.println(paramNames[c] + " ||| " + lambda[c]);
+    try {
+      if (myDecoder != null) {
+        myDecoder.cleanUp();
       }
-      outFile_lambdas.close();
+
+      if (finalLambdaFileName != null) {
+        PrintWriter outFile_lambdas = new PrintWriter(finalLambdaFileName);
+        for (int c = 1; c <= numParams; ++c) {
+          outFile_lambdas.println(paramNames[c] + " ||| " + lambda[c]);
+        }
+        outFile_lambdas.close();
+      }
+
+      // create config file with final values
+      createConfigFile(lambda, decoderConfigFileName+".ZMERT.final",decoderConfigFileName+".ZMERT.orig");
+
+      // delete current decoder config file and decoder output
+      deleteFile(decoderConfigFileName);
+      deleteFile(decoderOutFileName);
+
+      // restore original name for config file (name was changed in initialize() so it doesn't get overwritten)
+      renameFile(decoderConfigFileName+".ZMERT.orig",decoderConfigFileName);
+    } catch (IOException e) {
+      System.err.println("IOException in MertCore.finish(): " + e.getMessage());
+      System.exit(99902);
     }
-
-    // create config file with final values
-    createConfigFile(lambda, decoderConfigFileName+".ZMERT.final",decoderConfigFileName+".ZMERT.orig");
-
-    // delete current decoder config file and decoder output
-    deleteFile(decoderConfigFileName);
-    deleteFile(decoderOutFileName);
-
-    // restore original name for config file (name was changed in initialize() so it doesn't get overwritten)
-    renameFile(decoderConfigFileName+".ZMERT.orig",decoderConfigFileName);
-
   }
 
-  private String[] cfgFileToArgsArray(String fileName) throws Exception
+  private String[] cfgFileToArgsArray(String fileName)
   {
     checkFile(fileName);
 
     Vector<String> argsVector = new Vector<String>();
 
+    BufferedReader inFile = null;
+    try {
+      inFile = new BufferedReader(new FileReader(fileName));
+    } catch (FileNotFoundException e) {
+      System.err.println("FileNotFoundException in MertCore.cfgFileToArgsArray(String): " + e.getMessage());
+      System.exit(99901);
+    }
 
-    BufferedReader inFile = new BufferedReader(new FileReader(fileName));
+    try {
+      String line, origLine;
+      do {
+        line = inFile.readLine();
+        origLine = line; // for error reporting purposes
 
-    String line, origLine;
-    do {
-      line = inFile.readLine();
-      origLine = line; // for error reporting purposes
+        if (line != null && line.length() > 0 && line.charAt(0) != '#') {
 
-      if (line != null && line.length() > 0 && line.charAt(0) != '#') {
+          if (line.indexOf("#") != -1) { // discard comment
+            line = line.substring(0,line.indexOf("#"));
+          }
 
-        if (line.indexOf("#") != -1) { // discard comment
-          line = line.substring(0,line.indexOf("#"));
+          line = line.trim();
+
+          // now line should look like "-xxx XXX"
+
+          String[] paramA = line.split("\\s+");
+
+          if (paramA.length == 2 && paramA[0].charAt(0) == '-') {
+            argsVector.add(paramA[0]);
+            argsVector.add(paramA[1]);
+          } else if (paramA.length > 2 && paramA[0].equals("-m")) {
+            // -m (metricName) is allowed to have extra optinos
+            for (int opt = 0; opt < paramA.length; ++opt) { argsVector.add(paramA[opt]); }
+          } else {
+            println("Malformed line in config file:");
+            println(origLine);
+            System.exit(70);
+          }
+
         }
+      }  while (line != null);
 
-        line = line.trim();
-
-        // now line should look like "-xxx XXX"
-
-        String[] paramA = line.split("\\s+");
-
-        if (paramA.length == 2 && paramA[0].charAt(0) == '-') {
-          argsVector.add(paramA[0]);
-          argsVector.add(paramA[1]);
-        } else if (paramA.length > 2 && paramA[0].equals("-m")) {
-          // -m (metricName) is allowed to have extra optinos
-          for (int opt = 0; opt < paramA.length; ++opt) { argsVector.add(paramA[opt]); }
-        } else {
-          println("Malformed line in config file:");
-          println(origLine);
-          System.exit(70);
-        }
-
-      }
-    }  while (line != null);
-
-    inFile.close();
-
+      inFile.close();
+    } catch (IOException e) {
+      System.err.println("IOException in MertCore.cfgFileToArgsArray(String): " + e.getMessage());
+      System.exit(99902);
+    }
 
     String[] argsArray = new String[argsVector.size()];
 
@@ -2170,12 +2276,12 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
     return argsArray;
   }
 
-  private void processArgsArray(String[] args) throws Exception
+  private void processArgsArray(String[] args)
   {
     processArgsArray(args,true);
   }
 
-  private void processArgsArray(String[] args, boolean firstTime) throws Exception
+  private void processArgsArray(String[] args, boolean firstTime)
   {
     /* set default values */
     // Relevant files
@@ -2430,7 +2536,7 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
     return checker.exists();
   }
 
-  private String createUnifiedRefFile(String prefix, int numFiles) throws Exception
+  private String createUnifiedRefFile(String prefix, int numFiles)
   {
     if (numFiles < 2) {
       println("Warning: createUnifiedRefFile called with numFiles = " + numFiles + "; doing nothing.",1);
@@ -2453,37 +2559,45 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
       if (prefix.endsWith(".")) { outFileName = prefix+"all"; }
       else { outFileName = prefix+".all"; }
 
-      PrintWriter outFile = new PrintWriter(outFileName);
+      try {
+        PrintWriter outFile = new PrintWriter(outFileName);
 
-      BufferedReader[] inFile = new BufferedReader[numFiles];
+        BufferedReader[] inFile = new BufferedReader[numFiles];
 
-      int nextIndex;
-      checker = new File(prefix+"0");
-      if (checker.exists()) { nextIndex = 0; }
-      else { nextIndex = 1; }
-      int lineCount = countLines(prefix+nextIndex);
+        int nextIndex;
+        checker = new File(prefix+"0");
+        if (checker.exists()) { nextIndex = 0; }
+        else { nextIndex = 1; }
+        int lineCount = countLines(prefix+nextIndex);
 
-      for (int r = 0; r < numFiles; ++r) {
-        if (countLines(prefix+nextIndex) != lineCount) {
-          println("Line count mismatch in " + (prefix+nextIndex) + ".");
-          System.exit(60);
-        }
-        inFile[r] = new BufferedReader(new FileReader(prefix+nextIndex));
-        ++nextIndex;
-      }
-
-      String line;
-
-      for (int i = 0; i < lineCount; ++i) {
         for (int r = 0; r < numFiles; ++r) {
-          line = inFile[r].readLine();
-          outFile.println(line);
+          if (countLines(prefix+nextIndex) != lineCount) {
+            println("Line count mismatch in " + (prefix+nextIndex) + ".");
+            System.exit(60);
+          }
+          inFile[r] = new BufferedReader(new FileReader(prefix+nextIndex));
+          ++nextIndex;
         }
+
+        String line;
+
+        for (int i = 0; i < lineCount; ++i) {
+          for (int r = 0; r < numFiles; ++r) {
+            line = inFile[r].readLine();
+            outFile.println(line);
+          }
+        }
+
+        outFile.close();
+
+        for (int r = 0; r < numFiles; ++r) { inFile[r].close(); }
+      } catch (FileNotFoundException e) {
+        System.err.println("FileNotFoundException in MertCore.createUnifiedRefFile(String,int): " + e.getMessage());
+        System.exit(99901);
+      } catch (IOException e) {
+        System.err.println("IOException in MertCore.createUnifiedRefFile(String,int): " + e.getMessage());
+        System.exit(99902);
       }
-
-      outFile.close();
-
-      for (int r = 0; r < numFiles; ++r) { inFile[r].close(); }
 
       return outFileName;
 
@@ -2491,50 +2605,68 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
 
   } // createUnifiedRefFile(String prefix, int numFiles)
 
-  private int countLines(String fileName) throws Exception
+  private int countLines(String fileName)
   {
-    BufferedReader inFile = new BufferedReader(new FileReader(fileName));
-
-    String line;
     int count = 0;
-    do {
-      line = inFile.readLine();
-      if (line != null) ++count;
-    }  while (line != null);
 
-    inFile.close();
+    try {
+      BufferedReader inFile = new BufferedReader(new FileReader(fileName));
 
-    return count;
-  }
+      String line;
+      do {
+        line = inFile.readLine();
+        if (line != null) ++count;
+      }  while (line != null);
 
-  private int countNonEmptyLines(String fileName) throws Exception
-  {
-    BufferedReader inFile = new BufferedReader(new FileReader(fileName));
-
-    String line;
-    int count = 0;
-    do {
-      line = inFile.readLine();
-      if (line != null && line.length() > 0) ++count;
-    }  while (line != null);
-
-    inFile.close();
-
-    return count;
-  }
-
-  private int countWords(String fileName) throws Exception
-  {
-    Scanner inFile = new Scanner(new FileReader(fileName));
-
-    String word;
-    int count = 0;
-    while (inFile.hasNext()) {
-      word = inFile.next();
-      ++count;
+      inFile.close();
+    } catch (IOException e) {
+      System.err.println("IOException in MertCore.countLines(String): " + e.getMessage());
+      System.exit(99902);
     }
 
-    inFile.close();
+    return count;
+  }
+
+  private int countNonEmptyLines(String fileName)
+  {
+    int count = 0;
+
+    try {
+      BufferedReader inFile = new BufferedReader(new FileReader(fileName));
+
+      String line;
+      do {
+        line = inFile.readLine();
+        if (line != null && line.length() > 0) ++count;
+      }  while (line != null);
+
+      inFile.close();
+    } catch (IOException e) {
+      System.err.println("IOException in MertCore.countNonEmptyLines(String): " + e.getMessage());
+      System.exit(99902);
+    }
+
+    return count;
+  }
+
+  private int countWords(String fileName)
+  {
+    int count = 0;
+
+    try {
+      Scanner inFile = new Scanner(new FileReader(fileName));
+
+      String word;
+      while (inFile.hasNext()) {
+        word = inFile.next();
+        ++count;
+      }
+
+      inFile.close();
+    } catch (IOException e) {
+      System.err.println("IOException in MertCore.countWords(String): " + e.getMessage());
+      System.exit(99902);
+    }
 
     return count;
   }
@@ -2781,7 +2913,7 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
     return discardedIndices;
   } // indicesToDiscard(double[] slope, double[] offset)
 
-  private void set_suffStats_array(HashMap<Integer,int[]>[] suffStats_array, TreeSet<Integer>[] indicesOfInterest, int[] candCount) throws Exception
+  private void set_suffStats_array(HashMap<Integer,int[]>[] suffStats_array, TreeSet<Integer>[] indicesOfInterest, int[] candCount)
   {
     int candsOfInterestCount = 0;
     int candsOfInterestCount_all = 0;
@@ -2792,52 +2924,63 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
     println("Processing merged stats file; extracting SS for " + candsOfInterestCount + " candidates of interest.",2);
     println("(*_all: " + candsOfInterestCount_all + ")",2);
 
-    // process the merged sufficient statistics file, and read (and store) the
-    // stats for candidates of interest
-    BufferedReader inFile = new BufferedReader(new FileReader(decoderOutFileName+".temp.stats.merged"));
-    String line, candidate_suffStats;
 
-    for (int i = 0; i < numSentences; ++i) {
-      int numCandidates = candCount[i];
+    try {
 
-      int currCand = 0;
-      Iterator<Integer> It = indicesOfInterest[i].iterator();
+      // process the merged sufficient statistics file, and read (and store) the
+      // stats for candidates of interest
+      BufferedReader inFile = new BufferedReader(new FileReader(decoderOutFileName+".temp.stats.merged"));
+      String line, candidate_suffStats;
 
-      while (It.hasNext()) {
-        int nextIndex = It.next();
+      for (int i = 0; i < numSentences; ++i) {
+        int numCandidates = candCount[i];
 
-        // skip candidates until you get to the nextIndex'th candidate
-        while (currCand < nextIndex) {
+        int currCand = 0;
+        Iterator<Integer> It = indicesOfInterest[i].iterator();
+
+        while (It.hasNext()) {
+          int nextIndex = It.next();
+
+          // skip candidates until you get to the nextIndex'th candidate
+          while (currCand < nextIndex) {
+            line = inFile.readLine();
+            ++currCand;
+          }
+
+          // now currCand == nextIndex, and the next line in inFile contains the sufficient statistics we want
+
+          candidate_suffStats = inFile.readLine();
+          ++currCand;
+
+          String[] suffStats_str = candidate_suffStats.split("\\s+");
+
+          int[] suffStats = new int[suffStatsCount];
+
+          for (int s = 0; s < suffStatsCount; ++s) {
+            suffStats[s] = Integer.parseInt(suffStats_str[s]);
+          }
+
+          suffStats_array[i].put(nextIndex,suffStats);
+
+        }
+
+        // skip the rest of ith sentence's candidates
+        while (currCand < numCandidates) {
           line = inFile.readLine();
           ++currCand;
         }
 
-        // now currCand == nextIndex, and the next line in inFile contains the sufficient statistics we want
+      } // for (i)
 
-        candidate_suffStats = inFile.readLine();
-        ++currCand;
+      inFile.close();
 
-        String[] suffStats_str = candidate_suffStats.split("\\s+");
-
-        int[] suffStats = new int[suffStatsCount];
-
-        for (int s = 0; s < suffStatsCount; ++s) {
-          suffStats[s] = Integer.parseInt(suffStats_str[s]);
-        }
-
-        suffStats_array[i].put(nextIndex,suffStats);
-
-      }
-
-      // skip the rest of ith sentence's candidates
-      while (currCand < numCandidates) {
-        line = inFile.readLine();
-        ++currCand;
-      }
-
-    } // for (i)
-
-    inFile.close();
+    } catch (FileNotFoundException e) {
+      System.err.println("FileNotFoundException in MertCore.initialize(int): " + e.getMessage());
+      System.exit(99901);
+    } catch (IOException e) {
+      System.err.println("IOException in MertCore.initialize(int): " + e.getMessage());
+      System.exit(99902);
+    }
 
   } // set_suffStats_array(HashMap[] suffStats_array, TreeSet[] indicesOfInterest, Vector[] candidates)
 

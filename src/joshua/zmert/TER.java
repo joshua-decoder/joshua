@@ -80,7 +80,7 @@ public class TER extends EvaluationMetric
   public double bestPossibleScore() { return 0.0; }
   public double worstPossibleScore() { return (+1.0 / 0.0); }
 
-  public int[] suffStats(String cand_str, int i) throws Exception
+  public int[] suffStats(String cand_str, int i)
   {
     // this method should never be used when the metric is TER,
     // because TER.java overrides suffStats(String[],int[]) below,
@@ -88,7 +88,7 @@ public class TER extends EvaluationMetric
     return null;
   }
 
-  public int[][] suffStats(String[] cand_strings, int[] cand_indices) throws Exception
+  public int[][] suffStats(String[] cand_strings, int[] cand_indices)
   {
     // calculate sufficient statistics for each sentence in an arbitrary set of candidates
 
@@ -100,67 +100,75 @@ public class TER extends EvaluationMetric
 
     int[][] stats = new int[candCount][suffStatsCount];
 
+    try {
 
-    // 1) Create input files for tercom.7.25.jar
+      // 1) Create input files for tercom.7.25.jar
 
-    // 1a) Create hypothesis file
-    FileOutputStream outStream = new FileOutputStream("hyp.txt.TER", false); // false: don't append
-    OutputStreamWriter outStreamWriter = new OutputStreamWriter(outStream, "utf8");
-    BufferedWriter outFile = new BufferedWriter(outStreamWriter);
+      // 1a) Create hypothesis file
+      FileOutputStream outStream = new FileOutputStream("hyp.txt.TER", false); // false: don't append
+      OutputStreamWriter outStreamWriter = new OutputStreamWriter(outStream, "utf8");
+      BufferedWriter outFile = new BufferedWriter(outStreamWriter);
 
-    for (int d = 0; d < candCount; ++d) {
-      writeLine(cand_strings[d] + " (ID" + d + ")",outFile);
-    }
-
-    outFile.close();
-
-    // 1b) Create reference file
-    outStream = new FileOutputStream("ref.txt.TER", false); // false: don't append
-    outStreamWriter = new OutputStreamWriter(outStream, "utf8");
-    outFile = new BufferedWriter(outStreamWriter);
-
-    for (int d = 0; d < candCount; ++d) {
-      for (int r = 0; r < refsPerSen; ++r) {
-        writeLine(refSentences[cand_indices[d]][r] + " (ID" + d + ")",outFile);
+      for (int d = 0; d < candCount; ++d) {
+        writeLine(cand_strings[d] + " (ID" + d + ")",outFile);
       }
-    }
 
-    outFile.close();
+      outFile.close();
 
-    // 2) Launch tercom.7.25.jar as an external process
+      // 1b) Create reference file
+      outStream = new FileOutputStream("ref.txt.TER", false); // false: don't append
+      outStreamWriter = new OutputStreamWriter(outStream, "utf8");
+      outFile = new BufferedWriter(outStreamWriter);
 
-    String cmd_str = "java -jar tercom.7.25.jar -r ref.txt.TER -h hyp.txt.TER -o ter -n TER_out";
-    cmd_str += " -b " + beamWidth;
-    cmd_str += " -d " + maxShiftDist;
-    if (caseSensitive) { cmd_str += " -S"; }
-    if (withPunctuation) { cmd_str += " -P"; }
+      for (int d = 0; d < candCount; ++d) {
+        for (int r = 0; r < refsPerSen; ++r) {
+          writeLine(refSentences[cand_indices[d]][r] + " (ID" + d + ")",outFile);
+        }
+      }
 
-    Runtime rt = Runtime.getRuntime();
-    Process p = rt.exec(cmd_str);
+      outFile.close();
 
-    StreamGobbler errorGobbler = new StreamGobbler(p.getErrorStream(), 0);
-    StreamGobbler outputGobbler = new StreamGobbler(p.getInputStream(), 0);
+      // 2) Launch tercom.7.25.jar as an external process
 
-    errorGobbler.start();
-    outputGobbler.start();
+      String cmd_str = "java -jar tercom.7.25.jar -r ref.txt.TER -h hyp.txt.TER -o ter -n TER_out";
+      cmd_str += " -b " + beamWidth;
+      cmd_str += " -d " + maxShiftDist;
+      if (caseSensitive) { cmd_str += " -S"; }
+      if (withPunctuation) { cmd_str += " -P"; }
 
-    int exitValue = p.waitFor();
+      Runtime rt = Runtime.getRuntime();
+      Process p = rt.exec(cmd_str);
+
+      StreamGobbler errorGobbler = new StreamGobbler(p.getErrorStream(), 0);
+      StreamGobbler outputGobbler = new StreamGobbler(p.getInputStream(), 0);
+
+      errorGobbler.start();
+      outputGobbler.start();
+
+      int exitValue = p.waitFor();
 
 
-    // 3) Read SS from output file produced by tercom.7.25.jar
+      // 3) Read SS from output file produced by tercom.7.25.jar
 
-    BufferedReader inFile = new BufferedReader(new FileReader("TER_out.ter"));
-    String line = "";
+      BufferedReader inFile = new BufferedReader(new FileReader("TER_out.ter"));
+      String line = "";
 
-    line = inFile.readLine(); // skip hyp line
-    line = inFile.readLine(); // skip ref line
+      line = inFile.readLine(); // skip hyp line
+      line = inFile.readLine(); // skip ref line
 
-    for (int d = 0; d < candCount; ++d) {
-      line = inFile.readLine(); // read info
-      String[] strA = line.split("\\s+");
+      for (int d = 0; d < candCount; ++d) {
+        line = inFile.readLine(); // read info
+        String[] strA = line.split("\\s+");
 
-      stats[d][0] = (int)Double.parseDouble(strA[1]);
-      stats[d][1] = (int)Double.parseDouble(strA[2]);
+        stats[d][0] = (int)Double.parseDouble(strA[1]);
+        stats[d][1] = (int)Double.parseDouble(strA[2]);
+      }
+    } catch (IOException e) {
+      System.err.println("IOException in TER.suffStats(String[],int[]): " + e.getMessage());
+      System.exit(99902);
+    } catch (InterruptedException e) {
+      System.err.println("InterruptedException in TER.suffStats(String[],int[]): " + e.getMessage());
+      System.exit(99903);
     }
 
     return stats;

@@ -106,7 +106,7 @@ public abstract class EvaluationMetric
     }
   }
 
-  public double score(String cand_str, int i) throws Exception
+  public double score(String cand_str, int i)
   {
     String[] SA = new String[1]; SA[0] = cand_str;
     int[] IA = new int[1]; IA[0] = i;
@@ -119,13 +119,13 @@ public abstract class EvaluationMetric
     return score(stats);
   }
 
-  public double score(String[] topCand_str) throws Exception
+  public double score(String[] topCand_str)
   {
     int[] stats = suffStats(topCand_str);
     return score(stats);
   }
 
-  public int[] suffStats(String[] topCand_str) throws Exception
+  public int[] suffStats(String[] topCand_str)
   {
     int[] IA = new int[numSentences];
     for (int i = 0; i < numSentences; ++i) { IA[i] = i; }
@@ -143,7 +143,7 @@ public abstract class EvaluationMetric
     return totStats;
   }
 
-  public int[][] suffStats(String[] cand_strings, int[] cand_indices) throws Exception
+  public int[][] suffStats(String[] cand_strings, int[] cand_indices)
   {
     // calculate sufficient statistics for each sentence in an arbitrary set of candidates
 
@@ -164,7 +164,7 @@ public abstract class EvaluationMetric
     return stats;
   }
 
-  public void printDetailedScore(String[] topCand_str, boolean oneLiner) throws Exception
+  public void printDetailedScore(String[] topCand_str, boolean oneLiner)
   {
     int[] stats = suffStats(topCand_str);
     printDetailedScore_fromStats(stats,oneLiner);
@@ -174,7 +174,7 @@ public abstract class EvaluationMetric
   protected abstract void initialize();
   public abstract double bestPossibleScore();
   public abstract double worstPossibleScore();
-  public abstract int[] suffStats(String cand_str, int i) throws Exception;
+  public abstract int[] suffStats(String cand_str, int i);
   public abstract double score(int[] stats);
   public abstract void printDetailedScore_fromStats(int[] stats, boolean oneLiner);
 }
