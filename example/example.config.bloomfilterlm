@@ -1,4 +1,4 @@
-lm_file=example/example.trigram.lm.gz
+lm_file=example/example.bloomfilter.lm.gz
 tm_file=example/example.hiero.tm.gz
 #tm_file=C:\Users\zli\Documents\corpus.ar-en.unique.fixed.rules
 

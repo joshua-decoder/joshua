@@ -154,4 +154,9 @@ public class BloomFilter implements Externalizable {
 		out.writeLong(bigPrime);
 		out.writeObject(bitSet);
 	}
+
+	// only used for reconstruction via Externalizable
+	public BloomFilter()
+	{
+	}
 }

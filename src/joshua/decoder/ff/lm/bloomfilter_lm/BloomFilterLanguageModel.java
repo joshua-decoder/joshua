@@ -146,9 +146,9 @@ public class BloomFilterLanguageModel extends DefaultNGramLanguageModel implemen
 		int [] history;
 		*/
 		int MAX_QCOUNT = getCount(ngram, ngram.length-1, ngram.length, maxQ);
-		System.err.println("word: " + unQuantize(MAX_QCOUNT));
+//		System.err.println("word: " + unQuantize(MAX_QCOUNT));
 		double pML = Math.log(unQuantize(MAX_QCOUNT)) - numTokens;
-		System.err.println("pML: " + pML);
+//		System.err.println("pML: " + pML);
 		//p += lambda0 * pML;
 		p = logAdd(p, (lambda0 + pML));
 		if (ngram.length == 1) // if it's a unigram, we're done
@@ -170,7 +170,7 @@ public class BloomFilterLanguageModel extends DefaultNGramLanguageModel implemen
 			//System.err.println("word: " + word);
 			//System.err.println("history: " + history);
 			int historyCnt = getCount(ngram, i, end, MAX_QCOUNT);
-			System.err.println("history count: " + unQuantize(historyCnt));
+//			System.err.println("history count: " + unQuantize(historyCnt));
 			// if the count for the history is zero, all higher
 			// terms in the interpolation must be zero, so we
 			// are done here.
@@ -185,10 +185,10 @@ public class BloomFilterLanguageModel extends DefaultNGramLanguageModel implemen
 			p += logAdd(0, -lambda);
 			int wordCount = getCount(ngram, i+1, end, historyTypesAfter);
 			double WC = unQuantize(wordCount);
-			System.err.println("HTA: " + HTA);
-			System.err.println("HC: " + HC);
-			System.err.println("WC: " + WC);
-			System.err.println("pML(word) " + (WC/HC));
+//			System.err.println("HTA: " + HTA);
+//			System.err.println("HC: " + HC);
+//			System.err.println("WC: " + WC);
+//			System.err.println("pML(word) " + (WC/HC));
 			//p += (lambda * (WC / HC)); // p_ML(w|h)
 			p = logAdd(p, lambda + Math.log(WC) - Math.log(HC));
 			MAX_QCOUNT = wordCount;
@@ -279,7 +279,12 @@ public class BloomFilterLanguageModel extends DefaultNGramLanguageModel implemen
 		double base = Double.parseDouble(argv[3]);
 
 		try {
-			(new BloomFilterLanguageModel(argv[0], order, size, base)).writeExternal(new ObjectOutputStream(new GZIPOutputStream(new FileOutputStream(argv[4]))));
+			BloomFilterLanguageModel lm = new BloomFilterLanguageModel(argv[0], order, size, base);
+
+			ObjectOutputStream out = new ObjectOutputStream(new GZIPOutputStream(new FileOutputStream(argv[4])));
+
+			lm.writeExternal(out);
+			out.close();
 		}
 		catch (FileNotFoundException e) {
 			System.err.println(e.getMessage());
@@ -315,108 +320,82 @@ public class BloomFilterLanguageModel extends DefaultNGramLanguageModel implemen
 		typesFuncs = bf.initializeHashFunctions();
 		try {
 			FileInputStream in = new FileInputStream(filename);
-			if (filename.endsWith(".gz"))
+			if (filename.endsWith(".gz")) 
 				populateFromInputStream(new GZIPInputStream(in));
 			else
 				populateFromInputStream(in);
 			in.close();
 		}
 		catch (FileNotFoundException e) {
-			// oh well
+			System.err.println(e.getMessage());
 		}
 		catch (IOException e) {
-			// ... ...
+			System.err.println(e.getMessage());
 		}
 		return;
 	}
 
 	private void populateFromInputStream(InputStream source)
 	{
-		numTokens = 0;
+		numTokens = -1;
 		int num_lines = 0;
+		int [] prefix = null;
+		int prefixTypesAfter = 0;
 		try {
 			Scanner scanner = new Scanner(source, "UTF-8");
 			while (scanner.hasNextLine()) {
-				/*
-				for (int n : ngram) {
-					String curr = scanner.next();
-					int currInt = vocabulary.addTerminal(curr);
-					n = currInt;
-				}
-				old_ngram = ngram; // just in case
-				remainder = scanner.nextLine().split("\t");
-				if (!(remainder[0].equals(""))) {
-					curr_order++;
-					// if longer than order, we're done
-					if (curr_order > ngramOrder)
-						break;
-					ngram = new int[curr_order];
-					int currInt = vocabulary.addTerminal(remainder[0]);
-					ngram[curr_order-1] = currInt;
-					System.arraycopy(old_ngram, 0, ngram, 0, curr_order-1);
-					old_ngram = new int[curr_order];
-					new_prefix = new int[curr_order-1];
-				}
-				long count = Long.parseLong(remainder[1]);
-				if (curr_order == 1) { // unigram
-					numTokens = logAdd(numTokens, count);
-				}
-				else {
-					System.arraycopy(ngram, 0, new_prefix, 0, curr_order-1);
-					if (Arrays.equals(prefix, new_prefix))
-						prefix_types_after++;
-					else {
-						add(prefix, prefix_types_after, typesFuncs);
-						prefix = new_prefix;
-						prefix_types_after = 1;
-					}
-				}
-				*/
-				/*
-				for (int i = 0; i < last; i++) {
-					ngram[i] = vocab.addWord(tokens[i]);
-					if ((last > 1) && (i < last - 1))
-						new_prefix[i] = ngram[i];
-				}
-				*/
-				String [] toks = scanner.nextLine().split(" ");
+				String [] toks = scanner.nextLine().split("\\s+");
 				int currOrder = toks.length - 1;
+				// only go up to specified order
+				/*
+				if (currOrder > this.ngramOrder) {
+					if (prefix != null)
+						add(prefix, prefixTypesAfter, typesFuncs);
+					return;
+				}
+				*/
 				int currCount = Integer.parseInt(toks[currOrder]);
+				int [] ngram = new int[currOrder];
+				int [] currPrefix = null;
+				// convert the ngram to integers
+				for (int i = 0; i < currOrder; i++)
+					ngram[i] = vocabulary.addWord(toks[i]);
+				// we need to update the training token count if we're on unigrams
 				if (currOrder == 1) {
-					if (numTokens == 0)
+					if (numTokens == -1)
 						numTokens = Math.log(currCount);
 					else
 						numTokens = logAdd(numTokens, Math.log(currCount));
 				}
-				int [] ngram = new int[currOrder];
-				for (int i = 0; i < currOrder; i++)
-					ngram[i] = vocabulary.addWord(toks[i]);
+				// and we need to keep the suffix counts if we're on higher orders
+				else {
+					currPrefix = new int[currOrder-1];
+					System.arraycopy(ngram, 0, currPrefix, 0, currOrder-1);
+				}
+				if ((currPrefix != null) && (currPrefix == prefix))
+					prefixTypesAfter++;
+				else {
+					if (prefix != null)
+						add(prefix, prefixTypesAfter, typesFuncs);
+					prefix = currPrefix;
+					prefixTypesAfter = 1;
+				}
 
 				add(ngram, currCount, countFuncs);
+				
+				/*
 				num_lines++;
 				if (num_lines > 1000000) {
 					num_lines = 0;
+				
 					System.err.print(".");
 				}
+				*/
 			}
 		}
 		catch (IllegalArgumentException e) {
-			// whoops
+			System.err.println(e.getMessage());
 		}
-		/*
-		System.err.println("finished with file");
-		//int vocabSize = vocabulary.size();
-		//p0 = 1.0 / (vocabSize + 1); // OOV
-		//p0 = -Math.log(vocabSize + 1);
-		//lambda0 = (double) vocabSize / (vocabSize + Math.exp(numTokens));
-		//lambda0 = Math.log(vocabSize) - logAdd(Math.log(vocabSize), numTokens);
-		System.err.println("p0: " + p0);
-		System.err.println("lambda0: " + lambda0);
-		System.err.println("T(): " + vocabSize);
-		System.err.println("c(): " + numTokens);
-		//System.err.println("log(c()): " + logNT);
-		maxQ = quantize((long) Math.exp(numTokens));
-		*/
 	}
 
 	/*
@@ -438,8 +417,12 @@ public class BloomFilterLanguageModel extends DefaultNGramLanguageModel implemen
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException
 	{
 		vocabulary = new Vocabulary();
-		for (int i = 0; i < in.readInt(); i++)
-			vocabulary.addWord(in.readLine());
+		int vocabSize = in.readInt();
+		for (int i = 0; i < vocabSize; i++) {
+			String line = in.readUTF();
+		//	System.err.println(line);
+			vocabulary.addWord(line);
+		}
 		numTokens = in.readDouble();
 		countFuncs = new long[in.readInt()][2];
 		for (int i = 0; i < countFuncs.length; i++) {
@@ -452,6 +435,7 @@ public class BloomFilterLanguageModel extends DefaultNGramLanguageModel implemen
 			typesFuncs[i][1] = in.readLong();
 		}
 		quantizationBase = in.readDouble();
+		bf = new BloomFilter();
 		bf.readExternal(in);
 	}
 
@@ -459,8 +443,9 @@ public class BloomFilterLanguageModel extends DefaultNGramLanguageModel implemen
 	{
 		out.writeInt(vocabulary.size());
 		for (int i = 0; i < vocabulary.size(); i++) {
-			out.writeBytes(vocabulary.getWord(i));
-			out.writeChar(0xa); // newline
+		//	out.writeBytes(vocabulary.getWord(i));
+		//	out.writeChar('\n'); // newline
+			out.writeUTF(vocabulary.getWord(i));
 		}
 		out.writeDouble(numTokens);
 		out.writeInt(countFuncs.length);
