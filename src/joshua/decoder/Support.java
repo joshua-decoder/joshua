@@ -23,7 +23,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 
 /**
- * 
+ * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate$
  */
 public class Support {

@@ -238,8 +238,7 @@ public class JoshuaDecoder {
 				String[] fds = line.split("\\s+");
 				if (fds[0].compareTo("lm") == 0 && fds.length == 2) { // lm order weight
 					double weight = Double.parseDouble(fds[1].trim());
-					NGramLanguageModel lm_grammar =
-						initializeLanguageModel(psymbolTable);
+					NGramLanguageModel lm_grammar =	initializeLanguageModel(psymbolTable);
 					l_models.add(new LanguageModelFF(l_models.size(), JoshuaConfiguration.g_lm_order, psymbolTable, lm_grammar, weight));
 					if (logger.isLoggable(Level.FINEST)) 
 						logger.finest( String.format("Line: %s\nAdd LM, order: %d; weight: %.3f;", line, JoshuaConfiguration.g_lm_order, weight));

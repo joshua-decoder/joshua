@@ -20,7 +20,7 @@ package joshua.decoder.ff.lm.distributed_lm;
 import java.util.ArrayList;
 
 /**
- * 
+ * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate$
  */
 public abstract class LMClient {

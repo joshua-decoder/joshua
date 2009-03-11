@@ -21,6 +21,10 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.io.IOException;
 
+/**
+* @author Zhifei Li, <zhifei.work@gmail.com>
+* @version $LastChangedDate: 2009-03-09 12:52:29 -0400 (星期一, 09 三月 2009) $
+*/
 
 public class BuildinSymbol extends DefaultSymbol {
 	private HashMap<String,Integer> str_2_num_tbl = new HashMap<String,Integer>();
