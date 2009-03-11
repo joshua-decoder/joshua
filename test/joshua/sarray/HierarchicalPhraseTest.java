@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.util.Date;
 
+import joshua.corpus.SymbolTable;
 import joshua.util.sentence.Vocabulary;
 
 import org.testng.Assert;
@@ -68,7 +69,7 @@ public class HierarchicalPhraseTest {
 	public void testHasAlignedTerminal() {
 		{
 
-			Vocabulary vocab = sourceCorpusArray.getVocabulary();
+			SymbolTable vocab = sourceCorpusArray.getVocabulary();
 			
 			{
 				Pattern     pattern = new Pattern(vocab, vocab.getIDs("de sesiones del parlamento europeo"));

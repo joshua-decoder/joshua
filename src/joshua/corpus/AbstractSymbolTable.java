@@ -25,7 +25,6 @@ package joshua.corpus;
  * @version $LastChangedDate$
  */
 public abstract class AbstractSymbolTable implements SymbolTable {
-
 	
 	final public int[] addTerminals(String sentence){
 		return addTerminals(sentence.split("\\s+"));
@@ -57,4 +56,34 @@ public abstract class AbstractSymbolTable implements SymbolTable {
 		return Integer.parseInt( wrd.substring(wrd.length() - 2,	wrd.length() - 1) ) - 1;
 	}
 
+	public String getWords(int[] wordIDs, boolean ntIndexIncrements) {
+		StringBuilder s = new StringBuilder();
+		
+		int nextNTIndex = 1;
+		for(int t=0; t<wordIDs.length; t++){
+			if(t>0) {
+				s.append(' ');
+			}
+			
+			int wordID = wordIDs[t];
+			
+//			if (wordID >= vocabList.size()) { 
+//				s.append(UNKNOWN_WORD_STRING);
+//			} else 
+			if (wordID < 0) {
+				s.append("[X,"); //XXX This should NOT be hardcoded here!
+				if (ntIndexIncrements) {
+					s.append(nextNTIndex++);
+				} else {
+					s.append(-1*wordID);
+				}
+				s.append(']');
+			} else {
+				s.append(getWord(wordID));
+			}
+
+		}
+		
+		return s.toString();
+	}
 }

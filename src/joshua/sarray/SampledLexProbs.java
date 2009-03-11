@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import joshua.corpus.SymbolTable;
 import joshua.util.Cache;
 import joshua.util.Pair;
 import joshua.util.lexprob.LexicalProbabilities;
@@ -60,8 +61,8 @@ public class SampledLexProbs implements LexicalProbabilities {
 	/** Represents alignments between words in the source corpus and the target corpus. */
 	private final Alignments alignments;
 	
-	private final Vocabulary sourceVocab;
-	private final Vocabulary targetVocab;
+	private final SymbolTable sourceVocab;
+	private final SymbolTable targetVocab;
 	
 	private final float floorProbability;
 	

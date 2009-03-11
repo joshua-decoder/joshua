@@ -496,7 +496,7 @@ public class PrefixTree {
 				//prefixNode.sourcePattern.words[prefixNode.sourcePattern.words.length-1] < 0
 					
 					
-					Vocabulary vocab = (suffixArray==null) ? null : suffixArray.getVocabulary();
+					SymbolTable vocab = (suffixArray==null) ? null : suffixArray.getVocabulary();
 					
 					int[] xwords = new int[suffixNode.sourcePattern.words.length+1];
 					xwords[0] = X;
@@ -580,7 +580,7 @@ public class PrefixTree {
 				
 				// 6: Q_alphaX <-- Q_alpha
 				{
-					Vocabulary vocab = (suffixArray==null) ? null : suffixArray.getVocabulary();
+					SymbolTable vocab = (suffixArray==null) ? null : suffixArray.getVocabulary();
 					Pattern xpattern = new Pattern(vocab, pattern.words, X);
 					
 					HierarchicalPhrases phrasesWithFinalX = new HierarchicalPhrases(xpattern, node.sourceHierarchicalPhrases); 
@@ -654,8 +654,8 @@ public class PrefixTree {
 
 	public void print(OutputStream out) throws UnsupportedEncodingException, IOException {
 		
-		Vocabulary sourceVocab = (suffixArray==null) ? null : suffixArray.getVocabulary();
-		Vocabulary targetVocab = (targetCorpus==null) ? null : targetCorpus.vocab;
+		SymbolTable sourceVocab = (suffixArray==null) ? null : suffixArray.getVocabulary();
+		SymbolTable targetVocab = (targetCorpus==null) ? null : targetCorpus.vocab;
 		
 		for (Node node : root.children.values()) {
 			node.print(out, sourceVocab, targetVocab);
@@ -870,7 +870,7 @@ public class PrefixTree {
 				logger.finer("Storing " + hierarchicalPhrases.size() + " source phrases at node " + objectID + ":");
 			}
 
-			Vocabulary vocab = (suffixArray==null) ? null : suffixArray.getVocabulary();
+			SymbolTable vocab = (suffixArray==null) ? null : suffixArray.getVocabulary();
 			this.sourcePattern = new Pattern(vocab, sourceTokens);
 			this.results = new ArrayList<Rule>(hierarchicalPhrases.size());
 			
@@ -893,7 +893,7 @@ public class PrefixTree {
 			return size;
 		}
 
-		public String toString(Vocabulary vocab) {
+		public String toString(SymbolTable vocab) {
 
 			StringBuilder s = new StringBuilder();
 
@@ -947,7 +947,7 @@ public class PrefixTree {
 				return toShortString(suffixArray.getVocabulary());
 		}
 		
-		public String toShortString(Vocabulary vocab) {
+		public String toShortString(SymbolTable vocab) {
 
 			StringBuilder s = new StringBuilder();
 
@@ -982,7 +982,7 @@ public class PrefixTree {
 			return s.toString();
 		}
 		
-		private void print(OutputStream out, Vocabulary sourceVocab, Vocabulary targetVocab) throws UnsupportedEncodingException, IOException {
+		private void print(OutputStream out, SymbolTable sourceVocab, SymbolTable targetVocab) throws UnsupportedEncodingException, IOException {
 			
 			out.write(("// Node " + objectID + ":\n").getBytes());
 			
@@ -1001,7 +1001,7 @@ public class PrefixTree {
 			
 		}
 		
-		String toTreeString(String tabs, Vocabulary vocab) {
+		String toTreeString(String tabs, SymbolTable vocab) {
 
 			StringBuilder s = new StringBuilder();
 

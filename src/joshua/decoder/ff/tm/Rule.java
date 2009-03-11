@@ -23,7 +23,6 @@ import java.util.Map;
 
 import joshua.corpus.SymbolTable;
 import joshua.decoder.ff.FeatureFunction;
-import joshua.util.sentence.Vocabulary;
 
 
 /**
@@ -96,7 +95,7 @@ public interface Rule {
 	
 	/**@todo: should the Vocabulary change to SymbolTable?
 	 * */
-	public String toString(Map<Integer,String> ntVocab, Vocabulary sourceVocab, Vocabulary targetVocab);
+	public String toString(Map<Integer,String> ntVocab, SymbolTable sourceVocab, SymbolTable targetVocab);
 	
 	/**print the rule in terms of Ingeters
 	 * */

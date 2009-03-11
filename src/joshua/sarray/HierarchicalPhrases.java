@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import joshua.util.sentence.Vocabulary;
+import joshua.corpus.SymbolTable;
 
 /**
  * HierarchicalPhrases represents a list of matched hierarchical phrases.
@@ -550,7 +550,7 @@ public class HierarchicalPhrases {
 	}
 	
 	public static HierarchicalPhrases emptyList(PrefixTree prefixTree) {
-		Vocabulary vocab = (prefixTree.suffixArray==null) ? null : prefixTree.suffixArray.getVocabulary();
+		SymbolTable vocab = (prefixTree.suffixArray==null) ? null : prefixTree.suffixArray.getVocabulary();
 		
 		return new HierarchicalPhrases(new Pattern(vocab), Collections.<Integer>emptyList(), Collections.<Integer>emptyList(), prefixTree);
 	}

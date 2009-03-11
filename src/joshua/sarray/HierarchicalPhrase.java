@@ -17,9 +17,9 @@
  */
 package joshua.sarray;
 
+import joshua.corpus.SymbolTable;
 import joshua.util.sentence.AbstractPhrase;
 import joshua.util.sentence.Phrase;
-import joshua.util.sentence.Vocabulary;
 
 import java.util.Arrays;
 import java.util.List;
@@ -324,7 +324,7 @@ public class HierarchicalPhrase extends AbstractPhrase {
 	 * @return the vocabulary from which the words in this
 	 *         phrase are drawn.
 	 */
-	public Vocabulary getVocab() {
+	public SymbolTable getVocab() {
 		return corpusArray.vocab;
 	}
 	

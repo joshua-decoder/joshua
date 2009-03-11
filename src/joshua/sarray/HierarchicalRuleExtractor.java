@@ -201,7 +201,7 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 			float[] featureScores = { p_e_given_f, lex_p_e_given_f, lex_p_f_given_e };
 
 			Rule rule = new BilingualRule(PrefixTree.X, sourcePattern.words, translation.words, featureScores, translation.arity);
-			if (logger.isLoggable(Level.FINER)) logger.finer(rule.toString(PrefixTree.ntVocab, suffixArray.corpus.vocab, targetCorpus.vocab));
+//			if (logger.isLoggable(Level.FINER)) logger.finer(rule.toString(PrefixTree.ntVocab, suffixArray.corpus.vocab, targetCorpus.vocab));
 			results.add(rule);
 		}
 

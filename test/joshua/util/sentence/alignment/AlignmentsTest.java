@@ -24,6 +24,7 @@ import java.io.PrintWriter;
 import java.util.Date;
 import java.util.Scanner;
 
+import joshua.corpus.SymbolTable;
 import joshua.sarray.CorpusArray;
 import joshua.sarray.HierarchicalPhrase;
 import joshua.sarray.Pattern;
@@ -119,7 +120,7 @@ public class AlignmentsTest {
 	@Test(dependsOnMethods={"setup"})
 	public void testHasAlignedTerminal() {
 
-		Vocabulary vocab = sourceCorpusArray.getVocabulary();
+		SymbolTable vocab = sourceCorpusArray.getVocabulary();
 		
 		{
 			Pattern     pattern = new Pattern(vocab, vocab.getIDs("de sesiones del parlamento europeo"));
@@ -176,7 +177,7 @@ public class AlignmentsTest {
 	@Test(dependsOnMethods={"setup"})
 	public void testHasAlignedTerminalHierarchical() {
 	
-		Vocabulary vocab = sourceCorpusArray.getVocabulary();
+		SymbolTable vocab = sourceCorpusArray.getVocabulary();
 		
 		{
 			Pattern     pattern = new Pattern(new Pattern(new Pattern(vocab, vocab.getIDs("de sesiones")), PrefixTree.X), vocab.getIDs("europo"));// del parlamento europeo"));

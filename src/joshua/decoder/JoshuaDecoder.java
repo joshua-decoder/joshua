@@ -160,10 +160,21 @@ public class JoshuaDecoder {
 			//==== init and load TM
 			if (! JoshuaConfiguration.use_sent_specific_tm) {
 				if (JoshuaConfiguration.tm_file != null) {
+					
+					if (logger.isLoggable(Level.INFO))
+						logger.info("Using grammar read from file " + JoshuaConfiguration.tm_file);
+					
 					initializeTranslationGrammars(JoshuaConfiguration.tm_file);
+					
 				} else if (null != JoshuaConfiguration.sa_source
 					&& null != JoshuaConfiguration.sa_target
 					&& null != JoshuaConfiguration.sa_alignment) {
+					
+					if (logger.isLoggable(Level.INFO))
+						logger.info("Using SuffixArray grammar constructed from " +
+								"source " + JoshuaConfiguration.sa_source + ", " +
+								"target " + JoshuaConfiguration.sa_target + ", " +
+								"alignment " + JoshuaConfiguration.sa_alignment);
 					
 					try {
 						initializeSuffixArrayGrammar();
@@ -399,6 +410,7 @@ public class JoshuaDecoder {
 	private void initializeSuffixArrayGrammar() throws IOException {
 		p_tm_grammar_factories = new GrammarFactory[2];
 		
+		logger.info("Constructing glue grammar...");
 		// Glue Grammar
 		GrammarFactory glueGrammar =
 			//new MemoryBasedBatchGrammarWithPrune(
@@ -420,9 +432,10 @@ public class JoshuaDecoder {
 		int maxCacheSize = JoshuaConfiguration.sa_rule_cache_size;
 		
 		String sourceFileName = JoshuaConfiguration.sa_source;
-		Vocabulary sourceVocab = new Vocabulary();
+		SymbolTable sourceVocab = p_symbolTable;//new Vocabulary();
 		int[] sourceWordsSentences =
-			SuffixArrayFactory.createVocabulary(sourceFileName, sourceVocab);
+			SuffixArrayFactory.count(sourceFileName);
+//			SuffixArrayFactory.createVocabulary(sourceFileName, sourceVocab);
 		CorpusArray sourceCorpusArray =
 			SuffixArrayFactory.createCorpusArray(sourceFileName, sourceVocab,
 				sourceWordsSentences[0], sourceWordsSentences[1]);

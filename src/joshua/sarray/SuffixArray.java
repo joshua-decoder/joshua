@@ -17,9 +17,9 @@
  */
 package joshua.sarray;
 
+import joshua.corpus.SymbolTable;
 import joshua.util.ReverseOrder;
 import joshua.util.sentence.Phrase;
-import joshua.util.sentence.Vocabulary;
 import joshua.util.Cache;
 
 import java.util.*;
@@ -169,7 +169,7 @@ public class SuffixArray implements Corpus {
 	 *
 	 * @return the vocabulary that compriseds this corpus
 	 */
-	public Vocabulary getVocabulary() {
+	public SymbolTable getVocabulary() {
 		return corpus.vocab;
 	}
 	
@@ -322,55 +322,6 @@ public class SuffixArray implements Corpus {
 		return findPhrase(phrase, 0, phrase.size());	
 	}
 	
-	
-
-	
-//	/**
-//	 * This method creates a list of trivially HierarchicalPhrases
-//	 * (i.e. they're really just contiguous phrases, but we
-//	 * will want to perform some of the HierarchialPhrase
-//	 * operations on them). Sorts the positions. Adds the results
-//	 * to the cache.  
-//	 *<p>
-//	 * The construction of more complex hierarchical phrases is handled
-//	 * within the prefix tree. 
-//	 * <p>
-//	 * This method performs deterministic sampling, as described in Lopez (2008) p59:
-//	 * <blockquote>
-//	 * To resolve this issue, we used deterministic sampling. Whenever a source phrase occurs 
-//more frequently than the maximum sample size, we take our samples at uniform intervals over 
-//the set of locations returned by the sufﬁx array. With this strategy in place, hypotheses receive the 
-//same feature weights between different runs of the decoder, the results are deterministic, and the 
-//MERT algorithm converges at the same rate as it does without sampling.
-//	 * </blockquote>
-//	 * 
-//	 * @param startPositions an unsorted list of the positions
-//	 *                in the corpus where the matched phrases begin
-//	 * @param pattern a contiguous phrase
-//	 * @return a list of trivially hierarchical phrases
-//	 */ 
-//	protected List<HierarchicalPhrase> createHierarchicalPhrases(int[] startPositions, Pattern pattern) {
-//		if (startPositions == null) {
-//			return Collections.emptyList();
-//		} else if (hierarchicalPhraseCache.containsKey(pattern)) {
-//			return hierarchicalPhraseCache.get(pattern);
-//		} else {
-//			Arrays.sort(startPositions);
-//			int length = pattern.size();
-//			ArrayList<HierarchicalPhrase> hierarchicalPhrases = new ArrayList<HierarchicalPhrase>(startPositions.length);
-//			//XXX Should we do sampling here or not?
-//			int step = //(startPositions.length<sampleSize) ? 1 : startPositions.length / sampleSize;
-//				1;
-//			for(int i = 0; i < startPositions.length; i+=step) { 
-//				int[] position = {startPositions[i]};
-//				int[] endPosition = {startPositions[i] + length};
-//				HierarchicalPhrase hierarchicalPhrase = new HierarchicalPhrase(pattern, position, endPosition, corpus, length);
-//				hierarchicalPhrases.add(hierarchicalPhrase);
-//			}	
-//			hierarchicalPhraseCache.put(pattern, hierarchicalPhrases);
-//			return hierarchicalPhrases;
-//		}
-//	}
 	
 	/**
 	 * This method creates a list of trivially HierarchicalPhrases

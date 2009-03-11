@@ -17,9 +17,9 @@
  */
 package joshua.sarray;
 
+import joshua.corpus.SymbolTable;
 import joshua.util.sentence.AbstractPhrase;
 import joshua.util.sentence.Phrase;
-import joshua.util.sentence.Vocabulary;
 
 import java.util.*;
 
@@ -70,7 +70,7 @@ public class ContiguousPhrase extends AbstractPhrase {
 	 * @return the vocabulary that the words in this phrase are
 	 *         drawn from.
 	 */
-	public Vocabulary getVocab() {
+	public SymbolTable getVocab() {
 		return corpusArray.vocab;
 	}
 	

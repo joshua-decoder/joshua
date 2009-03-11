@@ -26,7 +26,8 @@ import joshua.decoder.ff.tm.Rule;
  * @version $LastChangedDate: 2008-07-28 18:44:45 -0400 (Mon, 28 Jul 2008) $
  */
 public final class ArityPhrasePenaltyFF extends DefaultStatelessFF {
-	private static final double ALPHA = Math.log10(Math.E);
+	
+	static final double ALPHA = Math.log10(Math.E);
 	
 	// when the rule.arity is in the range, then this feature is activated
 	private final int minArity;

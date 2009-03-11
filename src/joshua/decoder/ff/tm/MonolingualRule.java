@@ -22,7 +22,6 @@ import java.util.Map;
 
 import joshua.corpus.SymbolTable;
 import joshua.decoder.ff.FeatureFunction;
-import joshua.util.sentence.Vocabulary;
 
 /**
  * this class implements MonolingualRule
@@ -197,7 +196,7 @@ public class MonolingualRule implements Rule {
 	// We mark it transient because it is, though cf java.io.Serializable
 	private transient String cachedToString = null;
 	
-	public String toString(Map<Integer,String> ntVocab, Vocabulary sourceVocab, Vocabulary targetVocab) {
+	public String toString(Map<Integer,String> ntVocab, SymbolTable sourceVocab, SymbolTable targetVocab) {
 		if (null == this.cachedToString) {
 			StringBuffer sb = new StringBuffer("[");
 			sb.append(ntVocab.get(this.lhs));

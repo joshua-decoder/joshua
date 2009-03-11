@@ -17,9 +17,9 @@
  */
 package joshua.sarray;
 
+import joshua.corpus.SymbolTable;
 import joshua.util.FileUtility;
 import joshua.util.sentence.Phrase;
-import joshua.util.sentence.Vocabulary;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -68,7 +68,7 @@ public class CorpusArray {
 	 * The alphabetized vocabulary which maps between the String
 	 * and int representation of words in the corpus.
 	 */
-	protected Vocabulary vocab;
+	protected SymbolTable vocab;
 	
 	
 //===============================================================
@@ -82,10 +82,10 @@ public class CorpusArray {
 	 * @see SuffixArrayFactor.createCorpusArray(String,String,Vocabulary)
 	 * @see SuffixArrayFactor.loadCorpusArray(String,String,String,Vocabulary)
 	 */
-	protected CorpusArray (int[] corpus, int[] sentences, Vocabulary vocab) {
+	protected CorpusArray (int[] corpus, int[] sentences, SymbolTable vocab2) {
 		this.corpus = corpus;
 		this.sentences = sentences;
-		this.vocab = vocab;
+		this.vocab = vocab2;
 	}
 	
 //===============================================================
@@ -246,7 +246,7 @@ public class CorpusArray {
 		return comparePhrase(corpusStart, phrase, 0, phrase.size());
 	}
 	
-	public Vocabulary getVocabulary() {
+	public SymbolTable getVocabulary() {
 		return vocab;
 	}
 	

@@ -47,43 +47,49 @@ public class VocabularyTest {
 		Assert.assertEquals(vocab1, vocab2);
 		
 
-		Assert.assertTrue(vocab1.vocabList.isEmpty());
-		Assert.assertTrue(vocab1.getWords().isEmpty());
+		Assert.assertFalse(vocab1.vocabList.isEmpty());
+		Assert.assertTrue(vocab1.vocabList.get(0)==Vocabulary.UNKNOWN_WORD_STRING);
+		Assert.assertFalse(vocab1.getWords().isEmpty());
+		Assert.assertTrue(vocab1.getWords().get(0)==Vocabulary.UNKNOWN_WORD_STRING);
 		Assert.assertEquals(vocab1.getWords(), vocab1.vocabList);
 
-		Assert.assertEquals(vocab1.size(), 0);
-		Assert.assertEquals(vocab1.getWord(vocab1.UNKNOWN_WORD), Vocabulary.UNKNOWN_WORD_STRING);
+		Assert.assertEquals(vocab1.size(), 1);
+		Assert.assertEquals(vocab1.getWord(Vocabulary.UNKNOWN_WORD), Vocabulary.UNKNOWN_WORD_STRING);
 
-		Assert.assertEquals(vocab1.getID("sample"), vocab1.UNKNOWN_WORD);
+		Assert.assertEquals(vocab1.getID("sample"), Vocabulary.UNKNOWN_WORD);
 
 		try {
 			vocab1.getID(null);
 			Assert.fail("Expected to encountered NullPointerException, but did not");
 		} catch (NullPointerException e) {}
 
-		Assert.assertTrue(vocab1.wordToIDMap.isEmpty());
+		Assert.assertFalse(vocab1.wordToIDMap.isEmpty());
+		Assert.assertEquals(vocab1.wordToIDMap.size(), 1);
 		Assert.assertFalse(vocab1.isFixed);
-
+		
 		vocab1.fixVocabulary();
 		Assert.assertTrue(vocab1.isFixed);
 		
 		
 		
-		Assert.assertTrue(vocab2.vocabList.isEmpty());
-		Assert.assertTrue(vocab2.getWords().isEmpty());
+		Assert.assertFalse(vocab2.vocabList.isEmpty());
+		Assert.assertTrue(vocab2.vocabList.get(0)==Vocabulary.UNKNOWN_WORD_STRING);
+		Assert.assertFalse(vocab2.getWords().isEmpty());
+		Assert.assertTrue(vocab2.getWords().get(0)==Vocabulary.UNKNOWN_WORD_STRING);
 		Assert.assertEquals(vocab2.getWords(), vocab2.vocabList);
 
-		Assert.assertEquals(vocab2.size(), 0);
-		Assert.assertEquals(vocab2.getWord(vocab2.UNKNOWN_WORD), Vocabulary.UNKNOWN_WORD_STRING);
+		Assert.assertEquals(vocab2.size(), 1);
+		Assert.assertEquals(vocab2.getWord(Vocabulary.UNKNOWN_WORD), Vocabulary.UNKNOWN_WORD_STRING);
 
-		Assert.assertEquals(vocab2.getID("sample"), vocab2.UNKNOWN_WORD);
+		Assert.assertEquals(vocab2.getID("sample"), Vocabulary.UNKNOWN_WORD);
 
 		try {
 			vocab2.getID(null);
 			Assert.fail("Expected to encountered NullPointerException, but did not");
 		} catch (NullPointerException e) {}
 
-		Assert.assertTrue(vocab2.wordToIDMap.isEmpty());
+		Assert.assertFalse(vocab2.wordToIDMap.isEmpty());
+		Assert.assertEquals(vocab2.wordToIDMap.size(), 1);
 		Assert.assertTrue(vocab2.isFixed);
 
 	}
@@ -143,7 +149,7 @@ public class VocabularyTest {
 			Assert.assertEquals(result[1], numSentences);  
 			
 			Assert.assertTrue(vocab.isFixed);
-			Assert.assertEquals(vocab.size(), numUniqWords);
+			Assert.assertEquals(vocab.size(), numUniqWords+1);
 			
 		} catch (IOException e) {
 			Assert.fail("Could not load file " + filename);
@@ -159,7 +165,7 @@ public class VocabularyTest {
 			Assert.assertEquals(result[1], numSentences);  
 			
 			Assert.assertTrue(vocab2.isFixed);
-			Assert.assertEquals(vocab2.size(), numUniqWords);
+			Assert.assertEquals(vocab2.size(), numUniqWords+1);
 			
 		} catch (IOException e) {
 			Assert.fail("Could not load file " + filename);

@@ -44,26 +44,6 @@ public class Vocabulary extends AbstractSymbolTable implements Iterable<String>,
 // Constants
 //===============================================================
 
-	/**
-	 * The unknown word's ID will be the size of the vocabulary,
-	 * ensuring that it is outside of the vocabulary. Note that
-	 * for vocabularies which have not been fixed yet, this
-	 * means the actual value is volatile and therefore a word
-	 * ID can only be compared against UNKNOWN_WORD at the time
-	 * the word ID is generated (otherwise unknown words can
-	 * become "known" if new words are added to the vocabulary
-	 * before testing).
-	 *
-	 * Negative IDs are reserved for non-terminals and therefore
-	 * cannot be used to signify the UNKNOWN_WORD. @todo Perhaps
-	 * we could use 0 as the UNKNOWN_WORD (leaving negatives
-	 * for non-terminals, and positives for terminals), to
-	 * enable us to get away from all the book-keeping.
-	 */
-	int UNKNOWN_WORD;
-
-	/** String representation for out-of-vocabulary words. */
-	public static final String UNKNOWN_WORD_STRING = "UNK";
 
 //===============================================================
 // Member variables
@@ -87,7 +67,9 @@ public class Vocabulary extends AbstractSymbolTable implements Iterable<String>,
 		wordToIDMap = new Hashtable<String,Integer>();  
 		vocabList = new Vector<String>();
 		isFixed = false;
-		UNKNOWN_WORD = 0; // Initially, the vocab size is zero
+		wordToIDMap.put(UNKNOWN_WORD_STRING, UNKNOWN_WORD);
+		vocabList.add(UNKNOWN_WORD_STRING);
+//		UNKNOWN_WORD = 0; // Initially, the vocab size is zero
 	}
 
 	/** 
@@ -97,10 +79,12 @@ public class Vocabulary extends AbstractSymbolTable implements Iterable<String>,
 		//XXX Is wordToIdMap accessed by multiple threads? If not, should use HashMap instead of Hashtable.
 		wordToIDMap = new Hashtable<String,Integer>();
 		vocabList = new Vector<String>();
+		wordToIDMap.put(UNKNOWN_WORD_STRING, UNKNOWN_WORD);
+		vocabList.add(UNKNOWN_WORD_STRING);
 		vocabList.addAll(words);
 		alphabetize();
 		isFixed = true;
-		UNKNOWN_WORD = vocabList.size();
+//		UNKNOWN_WORD = vocabList.size();
 	}
 	
 	/**
@@ -112,7 +96,7 @@ public class Vocabulary extends AbstractSymbolTable implements Iterable<String>,
 	public Vocabulary(String fileName) throws IOException {
 		this();
 		SuffixArrayFactory.createVocabulary(fileName, this);
-		UNKNOWN_WORD = vocabList.size();
+//		UNKNOWN_WORD = vocabList.size();
 	}
 	
 //===============================================================
@@ -178,41 +162,41 @@ public class Vocabulary extends AbstractSymbolTable implements Iterable<String>,
 	 *         does not correspond to a word in the vocabulary
 	 */
 	public String getWord(int wordID) {
-		if (wordID >= vocabList.size() || wordID < 0) {
+		if (wordID==UNKNOWN_WORD || wordID >= vocabList.size() || wordID < 0) {
 			return UNKNOWN_WORD_STRING;
 		}
 		return vocabList.get(wordID);
 	}
 	
-	public String getWords(int[] wordIDs, boolean ntIndexIncrements) {
-		StringBuilder s = new StringBuilder();
-		
-		int nextNTIndex = 1;
-		for(int t=0; t<wordIDs.length; t++){
-			if(t>0) {
-				s.append(' ');
-			}
-			
-			int wordID = wordIDs[t];
-			
-			if (wordID >= vocabList.size()) { 
-				s.append(UNKNOWN_WORD_STRING);
-			} else if (wordID < 0) {
-				s.append("[X,"); //XXX This should NOT be hardcoded here!
-				if (ntIndexIncrements) {
-					s.append(nextNTIndex++);
-				} else {
-					s.append(-1*wordID);
-				}
-				s.append(']');
-			} else {
-				s.append(vocabList.get(wordID));
-			}
-
-		}
-		
-		return s.toString();
-	}
+//	public String getWords(int[] wordIDs, boolean ntIndexIncrements) {
+//		StringBuilder s = new StringBuilder();
+//		
+//		int nextNTIndex = 1;
+//		for(int t=0; t<wordIDs.length; t++){
+//			if(t>0) {
+//				s.append(' ');
+//			}
+//			
+//			int wordID = wordIDs[t];
+//			
+//			if (wordID >= vocabList.size()) { 
+//				s.append(UNKNOWN_WORD_STRING);
+//			} else if (wordID < 0) {
+//				s.append("[X,"); //XXX This should NOT be hardcoded here!
+//				if (ntIndexIncrements) {
+//					s.append(nextNTIndex++);
+//				} else {
+//					s.append(-1*wordID);
+//				}
+//				s.append(']');
+//			} else {
+//				s.append(vocabList.get(wordID));
+//			}
+//
+//		}
+//		
+//		return s.toString();
+//	}
 	
 	
 	/**
@@ -250,7 +234,7 @@ public class Vocabulary extends AbstractSymbolTable implements Iterable<String>,
 			ID = new Integer(vocabList.size());
 			vocabList.add(wordString);
 			wordToIDMap.put(wordString, ID);
-			UNKNOWN_WORD = vocabList.size();
+//			UNKNOWN_WORD = vocabList.size();
 			return ID.intValue();
 		}  else {
 			return UNKNOWN_WORD;
@@ -338,7 +322,22 @@ public class Vocabulary extends AbstractSymbolTable implements Iterable<String>,
 	 */
 	public void alphabetize() {
 		// alphabetize 
-		Collections.sort(vocabList);
+		Collections.sort(vocabList, new Comparator<String>(){
+			public int compare(String o1, String o2) {
+				if (UNKNOWN_WORD_STRING.equals(o1) || null==o1) {
+					if (UNKNOWN_WORD_STRING.equals(o2) || null==o2) {
+						return 0;
+					} else {
+						return -1;
+					}
+				} else if (UNKNOWN_WORD_STRING.equals(o2) || null==o2) {
+					return 1;
+				} else {
+					return o1.compareTo(o2);
+				}
+			}	
+		});
+		
 		// re-assign IDs
 		//XXX Is wordToIdMap accessed by multiple threads? If not, should use HashMap instead of Hashtable.
 		wordToIDMap = new Hashtable<String,Integer>();
@@ -346,7 +345,7 @@ public class Vocabulary extends AbstractSymbolTable implements Iterable<String>,
 			String wordString = vocabList.get(i);
 			wordToIDMap.put(wordString, new Integer(i));
 		}
-		UNKNOWN_WORD = getID(UNKNOWN_WORD_STRING);
+//		UNKNOWN_WORD = getID(UNKNOWN_WORD_STRING);
 	}
 	
 	public String getUnknownWord() {
@@ -365,11 +364,11 @@ public class Vocabulary extends AbstractSymbolTable implements Iterable<String>,
 	}
 
 	public int getHighestID() {
-		return 0;
+		return vocabList.size() - 1;
 	}
 
 	public int getLowestID() {
-		return vocabList.size() - 1;
+		return 1;
 	}
 	
 //===============================================================

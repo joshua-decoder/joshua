@@ -17,8 +17,8 @@
  */
 package joshua.sarray;
 
+import joshua.corpus.SymbolTable;
 import joshua.util.sentence.Phrase;
-import joshua.util.sentence.Vocabulary;
 
 
 /**
@@ -39,7 +39,7 @@ public interface Corpus {
 	/**
 	 * @return the vocabulary that this corpus is comprised of.
 	 */
-	public Vocabulary getVocabulary();
+	public SymbolTable getVocabulary();
 	
 	
 	/**

@@ -17,6 +17,8 @@
  */
 package joshua.sarray;
 
+import joshua.corpus.SymbolTable;
+import joshua.util.FileUtility;
 import joshua.util.sentence.Vocabulary;
 import joshua.util.sentence.alignment.Alignments;
 
@@ -103,6 +105,28 @@ public class SuffixArrayFactory {
 		return numberOfWordsSentences;
 	}
 	
+	/**
+	 * Counts the words and sentences in a plain text file.
+	 *
+	 * @param inputFilename the plain text file
+	 * @return a tuple containing the number of words in the corpus and number of sentences in the corpus
+	 */
+	public static int[] count(String inputFilename) throws IOException {
+		BufferedReader reader = FileUtility.getReadFileStream(inputFilename);
+		
+		int numSentences = 0;
+		int numWords = 0;
+		while (reader.ready()) {
+			String[] sentence = reader.readLine().trim().split("\\s+");
+			numWords += sentence.length;
+			numSentences++;
+			if(SHOW_PROGRESS && numSentences % 10000==0) System.out.println(numWords);
+		}
+		reader.close();
+		
+		int[] numberOfWordsSentences = { numWords, numSentences };
+		return numberOfWordsSentences;
+	}
 	
 	/**
 	 * Creates a new CorpusArray from a plain text file, given
@@ -113,7 +137,7 @@ public class SuffixArrayFactory {
 	 * @param numSentences the number of lines in the file
 	 *                     (returned by createVocabulary)
 	 */
-	public static CorpusArray createCorpusArray(String inputFilename, Vocabulary vocab, int numWords, int numSentences) throws IOException {
+	public static CorpusArray createCorpusArray(String inputFilename, SymbolTable vocab, int numWords, int numSentences) throws IOException {
 		BufferedReader reader = FileUtil.getBufferedReader(inputFilename);
 		// initialize the arrays.
 		int[] corpus = new int[numWords];
@@ -123,7 +147,14 @@ public class SuffixArrayFactory {
 		int wordCounter = 0;
 		int sentenceCounter = 0;
 		while (reader.ready()) {
-			BasicPhrase sentence = new BasicPhrase(reader.readLine(), vocab);
+			String phraseString = reader.readLine();
+			String[] wordStrings = phraseString.split("\\s+");
+			int[] words = new int[wordStrings.length];
+			for (int i = 0; i < wordStrings.length; i++) {
+				words[i] = vocab.getID(wordStrings[i]);
+			}
+			
+			BasicPhrase sentence = new BasicPhrase(words, vocab);
 			sentenceIndexes[sentenceCounter] = wordCounter;
 			sentenceCounter++;
 			
