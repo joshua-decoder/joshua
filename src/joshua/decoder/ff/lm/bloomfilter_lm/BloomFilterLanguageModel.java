@@ -94,9 +94,9 @@ public class BloomFilterLanguageModel extends DefaultNGramLanguageModel implemen
 
 	private int [] createTMtoLMMapping()
 	{
-		int [] map = new int[symbolTable.size()];
-		for (int i = 0; i < map.length; i++)
-			map[i] = vocabulary.getID(symbolTable.getWord(i));
+		int [] map = new int[symbolTable.getHighestID()];
+		for (String word : symbolTable.getWords())
+			map[symbolTable.getID(word)] = vocabulary.getID(word);
 		return map;
 	}
 
