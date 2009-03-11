@@ -17,6 +17,7 @@
  */
 package joshua.decoder;
 
+import joshua.decoder.ff.lm.LanguageModelFF;
 import joshua.util.Cache;
 import joshua.util.FileUtility;
 
@@ -120,6 +121,9 @@ public class JoshuaConfiguration {
 	//debug end
 		
 	
+	//do we use a LM feature?
+	public static boolean have_lm_model = false; 
+	
 	private static final Logger logger = Logger.getLogger(JoshuaConfiguration.class.getName());
 
 	public static void read_config_file(String config_file)
@@ -131,9 +135,9 @@ public class JoshuaConfiguration {
 			line = line.trim();
 			if (line.matches("^\\s*\\#.*$") || line.matches("^\\s*$")) {
 				continue;
-			}
+			}			
 			
-			if (line.indexOf("=") != -1) { // parameters
+			if (line.indexOf("=") != -1) { // parameters; (not feature function)
 				String[] fds = line.split("\\s*=\\s*");
 				if (fds.length != 2) {
 					if (logger.isLoggable(Level.SEVERE)) logger.severe(
@@ -354,6 +358,12 @@ public class JoshuaConfiguration {
 						"Wrong config line: " + line);
 					System.exit(1);
 				}
+			}else{//feature function
+				String[] fds = line.split("\\s+");
+				if (fds[0].compareTo("lm") == 0 && fds.length == 2) { // lm order weight
+					have_lm_model = true;
+					logger.info("you use a LM feature function, so make sure you have a LM grammar");
+				} 
 			}
 		}
 		t_reader_config.close();

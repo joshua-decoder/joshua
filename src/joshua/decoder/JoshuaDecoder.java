@@ -65,7 +65,6 @@ import java.util.logging.Logger;
 public class JoshuaDecoder {
 	private DecoderFactory p_decoder_factory; // pointer to the main thread of decoding
 	private GrammarFactory[] p_tm_grammar_factories;
-	private boolean have_lm_model = false;
 	private ArrayList<FeatureFunction> p_l_feat_functions;
 	private ArrayList<Integer> l_default_nonterminals;
 	private SymbolTable p_symbolTable;
@@ -123,7 +122,7 @@ public class JoshuaDecoder {
 	
 //===============================================================
 	
-	/* this assumes that the weight_vector is ordered according to the decoder config file */
+	/* this assumes that the weight_vector is ordered according to the decoder's config file */
 	public void changeFeatureWeightVector(double[] weight_vector) {
 		if (p_l_feat_functions.size() != weight_vector.length) {
 			System.out.println("In updateFeatureWeightVector: number of weights does not match number of feature functions");
@@ -155,7 +154,8 @@ public class JoshuaDecoder {
 			setDefaultNonTerminals(JoshuaConfiguration.default_non_terminal);
 			
 			//==== init LM
-			p_lm_grammar =	initializeLanguageModel(p_symbolTable);
+			if(JoshuaConfiguration.have_lm_model)
+				p_lm_grammar =	initializeLanguageModel(p_symbolTable);
 			
 			//==== init and load TM
 			if (! JoshuaConfiguration.use_sent_specific_tm) {
@@ -191,11 +191,8 @@ public class JoshuaDecoder {
 			
 			
 			//==== initialize the features: requires that LM model has been initialied, if a LM feature is used 	
-			//==== initialize the features (need to read config file again)
+			//need to read config file again
 			p_l_feat_functions = initializeFeatureFunctions(p_symbolTable, config_file, p_lm_grammar);
-			
-			have_lm_model = (null != haveLMFeature(p_l_feat_functions));
-			System.out.println("have lm model: " + have_lm_model);
 			
 			
 			//==== sort TM grammar: require features, and TM grammar initialize
@@ -208,7 +205,7 @@ public class JoshuaDecoder {
 			//==== create factory
 			p_decoder_factory = new DecoderFactory(
 				this.p_tm_grammar_factories,
-				this.have_lm_model,
+				JoshuaConfiguration.have_lm_model,
 				this.p_l_feat_functions,
 				this.l_default_nonterminals,
 				this.p_symbolTable);
@@ -242,8 +239,7 @@ public class JoshuaDecoder {
 	}
 	
 	
-	public static ArrayList<FeatureFunction>
-	initializeFeatureFunctions(SymbolTable psymbolTable, String config_file, NGramLanguageModel lm_grammar)
+	public static ArrayList<FeatureFunction> initializeFeatureFunctions(SymbolTable psymbolTable, String config_file, NGramLanguageModel lm_grammar)
 	throws IOException {
 		BufferedReader t_reader_config =
 			FileUtility.getReadFileStream(config_file);
@@ -328,6 +324,7 @@ public class JoshuaDecoder {
 	}
 	
 	
+	//TODO: check we actually have a feature that requires a langage model
 	private static NGramLanguageModel initializeLanguageModel(SymbolTable psymbolTable) throws IOException {
 		NGramLanguageModel lm_grammar;
 		if (JoshuaConfiguration.use_remote_lm_server) {
