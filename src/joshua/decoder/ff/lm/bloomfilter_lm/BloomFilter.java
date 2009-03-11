@@ -26,11 +26,11 @@ import java.io.IOException;
 
 public class BloomFilter implements Externalizable {
 	private BitSet bitSet;
-	private int expectedNumberOfObjects;
+	int expectedNumberOfObjects;
 	//private BigInteger bigPrime;
 	//private BigInteger filterSize;
-	private long bigPrime;
-	private int filterSize;
+	long bigPrime;
+	int filterSize;
 	transient private Random RANDOM = new Random();
 
 

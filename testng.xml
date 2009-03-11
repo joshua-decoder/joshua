@@ -92,5 +92,10 @@
       </class>
     </classes>
   </test>
-  
+
+  <test name="BloomFilter">
+    <classes>
+      <class name="joshua.decoder.ff.lm.bloomfilter_lm.BloomFilterTest" />
+    </classes>
+  </test>
 </suite>
