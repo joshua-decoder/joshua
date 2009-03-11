@@ -65,7 +65,7 @@ public class MemoryBasedBatchGrammarWithPrune extends MemoryBasedBatchGrammar {
 		String                     nonterminal_regexp,
 		String                     nonterminal_replace_regexp
 	) throws IOException {
-		super(psymbolTable, grammar_file, is_glue_grammar, l_models, default_owner, span_limit, nonterminal_regexp, nonterminal_replace_regexp);
+		super(psymbolTable, grammar_file, is_glue_grammar, default_owner, span_limit, nonterminal_regexp, nonterminal_replace_regexp);
 	}
 	
 	protected Rule add_rule(String line, int owner) {
@@ -75,7 +75,7 @@ public class MemoryBasedBatchGrammarWithPrune extends MemoryBasedBatchGrammar {
 		//######1: parse the line
 		//######2: create a rule
 		//Rule p_rule = new Rule(this,rule_id_count, line, owner);	
-		Rule p_rule = createRule(p_symbolTable, p_l_models, nonterminalRegexp, nonterminalReplaceRegexp,rule_id_count, line, owner);
+		Rule p_rule = createRule(p_symbolTable, nonterminalRegexp, nonterminalReplaceRegexp,rule_id_count, line, owner);
 		tem_estcost += p_rule.getEstCost();
 		
 		//######### identify the position, and insert the trinodes if necessary

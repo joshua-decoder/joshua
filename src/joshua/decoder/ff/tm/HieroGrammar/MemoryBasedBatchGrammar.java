@@ -63,7 +63,7 @@ public class MemoryBasedBatchGrammar  extends BatchGrammar {
 
 	//moved from batch grammar
 	public    static int OOV_RULE_ID          = 0;
-	protected  ArrayList<FeatureFunction> p_l_models = null;
+	//protected  ArrayList<FeatureFunction> p_l_models = null;
 	protected int defaultOwner  ;
 	protected  String nonterminalRegexp = "^\\[[A-Z]+\\,[0-9]*\\]$";//e.g., [X,1]
 	protected String nonterminalReplaceRegexp = "[\\[\\]\\,0-9]+";
@@ -79,7 +79,7 @@ public class MemoryBasedBatchGrammar  extends BatchGrammar {
 		SymbolTable psymbolTable,
 		String grammar_file,
 		boolean is_glue_grammar,
-		ArrayList<FeatureFunction> l_models,
+		//ArrayList<FeatureFunction> l_models,
 		String                     default_owner,
 		int                        span_limit,
 		String                     nonterminal_regexp,
@@ -87,7 +87,7 @@ public class MemoryBasedBatchGrammar  extends BatchGrammar {
 	) throws IOException {
 		
 		this.p_symbolTable = psymbolTable;
-		this.p_l_models               = l_models;
+		//this.p_l_models               = l_models;
 		this.defaultOwner             = p_symbolTable.addTerminal(default_owner);
 		this.nonterminalRegexp        = nonterminal_regexp;
 		this.nonterminalReplaceRegexp = nonterminal_replace_regexp;		
@@ -170,7 +170,7 @@ public class MemoryBasedBatchGrammar  extends BatchGrammar {
 	}
 	
 	
-	public static Rule createRule(SymbolTable p_symbolTable, ArrayList<FeatureFunction> p_l_models, String nonterminalRegexp_, String nonterminalReplaceRegexp_, int r_id, String line, int owner_in) {		
+	public static Rule createRule(SymbolTable p_symbolTable, String nonterminalRegexp_, String nonterminalReplaceRegexp_, int r_id, String line, int owner_in) {		
 		//rule format: X ||| Foreign side ||| English side ||| feature scores
 		String[] fds = line.split("\\s+\\|{3}\\s+");
 		if (fds.length != 4) {
@@ -216,7 +216,7 @@ public class MemoryBasedBatchGrammar  extends BatchGrammar {
 		Rule res = new BilingualRule(lhs, french_ints, english, scores,  arity, owner_in, 0, r_id);
 		
 		//tem_estcost += estimate_rule();//estimate lower-bound, and set statelesscost, this must be called
-		res.estimateRuleCost(p_l_models);//estimate lower-bound, and set statelesscost, this must be called
+		//res.estimateRuleCost(p_l_models);//estimate lower-bound, and set statelesscost, this must be called
 		return res;
 
 	}
@@ -229,7 +229,7 @@ public class MemoryBasedBatchGrammar  extends BatchGrammar {
 		//######1: parse the line
 		//######2: create a rule
 		//Rule p_rule = new Rule(this,rule_id_count, line, owner);	
-		Rule p_rule = createRule(p_symbolTable, p_l_models, nonterminalRegexp, nonterminalReplaceRegexp,rule_id_count, line, owner);
+		Rule p_rule = createRule(p_symbolTable, nonterminalRegexp, nonterminalReplaceRegexp,rule_id_count, line, owner);
 		tem_estcost += p_rule.getEstCost();
 		
 		//######### identify the position, and insert the trinodes if necessary

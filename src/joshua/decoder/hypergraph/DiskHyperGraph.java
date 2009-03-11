@@ -193,7 +193,7 @@ public class DiskHyperGraph {
 			
 			// stateless cost is not properly set, so cannot extract individual features during kbest extraction
 			this.associatedGrammar.put(ruleID,
-					MemoryBasedBatchGrammar.createRule(this.symbolTable, null, nonterminalRegexp,
+					MemoryBasedBatchGrammar.createRule(this.symbolTable, nonterminalRegexp,
 					nonterminalReplaceRegexp, ruleID, fds[1], defaultOwner));
 		}
 		rulesReader.close();

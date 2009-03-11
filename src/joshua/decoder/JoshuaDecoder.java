@@ -61,6 +61,7 @@ import java.util.logging.Logger;
  * @author wren ng thornton <wren@users.sourceforge.net>
  * @version $LastChangedDate$
  */
+
 public class JoshuaDecoder {
 	private DecoderFactory p_decoder_factory; // pointer to the main thread of decoding
 	private GrammarFactory[] p_tm_grammar_factories;
@@ -69,7 +70,7 @@ public class JoshuaDecoder {
 	private ArrayList<Integer> l_default_nonterminals;
 	private SymbolTable p_symbolTable;
 	
-	//LMGrammar p_lm_grammar; // the lm grammar itself (not lm model)
+	NGramLanguageModel p_lm_grammar=null; // the lm model, not the feature function
 	
 	
 	private static final Logger logger =
@@ -137,31 +138,26 @@ public class JoshuaDecoder {
 		
 		//TODO: this works for Batch grammar only; not for sentence-specifi grammar
 		for (GrammarFactory grammarFactory : p_tm_grammar_factories) {
-			grammarFactory
-				.getGrammarForSentence(null)
-				.sortGrammar(p_l_feat_functions);
+			grammarFactory.getGrammarForSentence(null).sortGrammar(p_l_feat_functions);
 		}
 	}
 	
 	//##### procedures: read config, init lm, init sym tbl, init models, read lm, read tm
 	public void initializeDecoder(String config_file) {
 		try {
-			//##### read config file
+			//==== read config file
 			JoshuaConfiguration.read_config_file(config_file);
 			
-			//#### initialize symbol table
+			//==== initialize symbol table
 			initSymbolTbl();
 			
-			//TODO ##### add default non-terminals
+			//TODO ==== add default non-terminals
 			setDefaultNonTerminals(JoshuaConfiguration.default_non_terminal);
 			
-			//##### initialize the models(need to read config file again)
-			p_l_feat_functions = initializeFeatureFunctions(p_symbolTable, config_file);
+			//==== init LM
+			p_lm_grammar =	initializeLanguageModel(p_symbolTable);
 			
-			have_lm_model = (null != haveLMFeature(p_l_feat_functions));
-			System.out.println("have lm model: " + have_lm_model);
-			
-			//##### load TM grammar
+			//==== init and load TM
 			if (! JoshuaConfiguration.use_sent_specific_tm) {
 				if (JoshuaConfiguration.tm_file != null) {
 					initializeTranslationGrammars(JoshuaConfiguration.tm_file);
@@ -182,7 +178,23 @@ public class JoshuaDecoder {
 				}
 			}
 			
-			//create factory
+			
+			//==== initialize the features: requires that LM model has been initialied, if a LM feature is used 	
+			//==== initialize the features (need to read config file again)
+			p_l_feat_functions = initializeFeatureFunctions(p_symbolTable, config_file, p_lm_grammar);
+			
+			have_lm_model = (null != haveLMFeature(p_l_feat_functions));
+			System.out.println("have lm model: " + have_lm_model);
+			
+			
+			//==== sort TM grammar: require features, and TM grammar initialize
+			//TODO: this works for Batch grammar only; not for sentence-specifi grammar
+			for (GrammarFactory grammarFactory : p_tm_grammar_factories) {
+				grammarFactory.getGrammarForSentence(null).sortGrammar(p_l_feat_functions);
+			}
+			
+			
+			//==== create factory
 			p_decoder_factory = new DecoderFactory(
 				this.p_tm_grammar_factories,
 				this.have_lm_model,
@@ -220,7 +232,7 @@ public class JoshuaDecoder {
 	
 	
 	public static ArrayList<FeatureFunction>
-	initializeFeatureFunctions(SymbolTable psymbolTable, String config_file)
+	initializeFeatureFunctions(SymbolTable psymbolTable, String config_file, NGramLanguageModel lm_grammar)
 	throws IOException {
 		BufferedReader t_reader_config =
 			FileUtility.getReadFileStream(config_file);
@@ -237,8 +249,11 @@ public class JoshuaDecoder {
 			if (line.indexOf("=") == -1) { //ignore lines with "="
 				String[] fds = line.split("\\s+");
 				if (fds[0].compareTo("lm") == 0 && fds.length == 2) { // lm order weight
+					if(lm_grammar==null){
+						System.out.println("LM model has not been properly initialized, must be wrong");
+						System.exit(1);
+					}
 					double weight = Double.parseDouble(fds[1].trim());
-					NGramLanguageModel lm_grammar =	initializeLanguageModel(psymbolTable);
 					l_models.add(new LanguageModelFF(l_models.size(), JoshuaConfiguration.g_lm_order, psymbolTable, lm_grammar, weight));
 					if (logger.isLoggable(Level.FINEST)) 
 						logger.finest( String.format("Line: %s\nAdd LM, order: %d; weight: %.3f;", line, JoshuaConfiguration.g_lm_order, weight));
@@ -320,8 +335,7 @@ public class JoshuaDecoder {
 			|| JoshuaConfiguration.use_right_equivalent_state) {
 				logger.severe("use SRILM, we cannot use suffix/prefix stuff");
 				System.exit(1);
-			}
-			
+			}			
 			lm_grammar = new LMGrammarSRILM(
 				(SrilmSymbol)psymbolTable,
 				JoshuaConfiguration.g_lm_order,
@@ -331,8 +345,7 @@ public class JoshuaDecoder {
 					|| JoshuaConfiguration.use_right_equivalent_state) {
 						logger.severe("use Bloomfilter LM, we cannot use suffix/prefix stuff");
 						System.exit(1);
-					}
-					
+					}					
 			lm_grammar = new BloomFilterLanguageModel(
 					psymbolTable,
 					JoshuaConfiguration.g_lm_order,
@@ -351,16 +364,15 @@ public class JoshuaDecoder {
 	}
 	
 	
-	// This depends (invisibly) on the language model in order to do pruning of the TM at load time.
 	private void initializeTranslationGrammars(String tm_file)
 	throws IOException {
 		p_tm_grammar_factories = new GrammarFactory[2];
 		
 		// Glue Grammar
 		GrammarFactory glueGrammar =
-			//new MemoryBasedBatchGrammarWithPrune(
+			//new MemoryBasedBatchGrammarWithPrune( //if this is used, then it depends on the LMModel to do pruning
 			new MemoryBasedBatchGrammar(
-				p_symbolTable, null, true, p_l_feat_functions,
+				p_symbolTable, null, true,
 				JoshuaConfiguration.phrase_owner,
 				-1,
 				"^\\[[A-Z]+\\,[0-9]*\\]$",
@@ -372,7 +384,7 @@ public class JoshuaDecoder {
 		GrammarFactory regularGrammar =
 			//new MemoryBasedBatchGrammarWithPrune(
 			new MemoryBasedBatchGrammar(		
-				p_symbolTable, tm_file, false, p_l_feat_functions,
+				p_symbolTable, tm_file, false,
 				JoshuaConfiguration.phrase_owner,
 				JoshuaConfiguration.span_limit,
 				"^\\[[A-Z]+\\,[0-9]*\\]$",
@@ -391,7 +403,7 @@ public class JoshuaDecoder {
 		GrammarFactory glueGrammar =
 			//new MemoryBasedBatchGrammarWithPrune(
 			new MemoryBasedBatchGrammar(
-				p_symbolTable, null, true, p_l_feat_functions,
+				p_symbolTable, null, true,
 				JoshuaConfiguration.phrase_owner,
 				-1,
 				"^\\[[A-Z]+\\,[0-9]*\\]$",
