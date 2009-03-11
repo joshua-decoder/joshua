@@ -13,6 +13,7 @@ import joshua.decoder.Support;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.tm.BatchGrammar;
 import joshua.decoder.ff.tm.Rule;
+import joshua.decoder.ff.tm.BilingualRule;
 import joshua.decoder.ff.tm.Trie;
 import joshua.util.FileUtility;
 
@@ -187,7 +188,7 @@ public class MemoryBasedBatchGrammar  extends BatchGrammar {
 		}
 		
 		
-		Rule res = new Rule(lhs, french_ints, english, scores,  arity, owner_in, 0, r_id);
+		Rule res = new BilingualRule(lhs, french_ints, english, scores,  arity, owner_in, 0, r_id);
 		
 		//tem_estcost += estimate_rule();//estimate lower-bound, and set statelesscost, this must be called
 		res.estimateRuleCost(p_l_models);//estimate lower-bound, and set statelesscost, this must be called
@@ -275,7 +276,7 @@ public class MemoryBasedBatchGrammar  extends BatchGrammar {
 	   		feat_scores[0]=100;//TODO
 	   	}
 	   	
-		return new Rule(lhs, p_french, english, feat_scores,  0, owner, 0, getOOVRuleID());
+		return new BilingualRule(lhs, p_french, english, feat_scores,  0, owner, 0, getOOVRuleID());
 	}
 
 	public int getOOVRuleID() {

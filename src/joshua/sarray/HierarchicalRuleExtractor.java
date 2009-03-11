@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import joshua.decoder.ff.tm.BilingualRule;
 import joshua.decoder.ff.tm.Rule;
 import joshua.util.Pair;
 import joshua.util.lexprob.LexicalProbabilities;
@@ -199,7 +200,7 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 			
 			float[] featureScores = { p_e_given_f, lex_p_e_given_f, lex_p_f_given_e };
 
-			Rule rule = new Rule(PrefixTree.X, sourcePattern.words, translation.words, featureScores, translation.arity);
+			Rule rule = new BilingualRule(PrefixTree.X, sourcePattern.words, translation.words, featureScores, translation.arity);
 			if (logger.isLoggable(Level.FINER)) logger.finer(rule.toString(PrefixTree.ntVocab, suffixArray.corpus.vocab, targetCorpus.vocab));
 			results.add(rule);
 		}

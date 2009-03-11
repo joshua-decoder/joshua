@@ -426,11 +426,14 @@ public class Bin
 //	 create a copy of the rule and set the lattice cost field
 	//TODO:change this bad behavior
 	private Rule cloneAndAddLatticeCostIfNonZero(Rule r, float lattice_cost) {
-		if (lattice_cost == 0.0f) 
+		//!!!!!!!!!!!!!!!!!!!!!!!!!!! this is wrong, we need to fix this when one seriously incorporates lattice
+		return r;
+		/*if (lattice_cost == 0.0f) 
 			return r;
+		
 		else{
 			return new Rule(r.getLHS(), r.getFrench(), r.getEnglish(),r.getFeatureScores(), r.getArity(), r.getOwner(), lattice_cost, r.getRuleID()); 
-		}
+		}*/
 	}
 	
 	
