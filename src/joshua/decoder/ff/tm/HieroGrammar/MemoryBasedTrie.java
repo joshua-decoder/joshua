@@ -11,13 +11,13 @@ import joshua.decoder.ff.tm.RuleCollection;
 import joshua.decoder.ff.tm.Trie;
 
 
-public class MemoryBasedTrieGrammar implements Trie {
+public class MemoryBasedTrie implements Trie {
 		MemoryBasedRuleBin rule_bin     = null;
-		HashMap<Integer,MemoryBasedTrieGrammar> tbl_children = null;
+		HashMap<Integer,MemoryBasedTrie> tbl_children = null;
 		
 		
 		//looking for the next layer trinode corresponding to this symbol
-		public MemoryBasedTrieGrammar matchOne(int sym_id) {
+		public MemoryBasedTrie matchOne(int sym_id) {
 			if (null == tbl_children) {
 				return null;
 			} else {
@@ -30,11 +30,22 @@ public class MemoryBasedTrieGrammar implements Trie {
 			return (null != this.tbl_children);
 		}
 		
+		public HashMap<Integer,MemoryBasedTrie>  getExtensions() {
+			return this.tbl_children;
+		}
+		
+		public void setExtensions(HashMap<Integer,MemoryBasedTrie> tbl_children_) {
+			this.tbl_children = tbl_children_;
+		}
 		
 		public boolean hasRules() {
 			return (null != this.rule_bin);
 		}
 		
+		
+		public void setRuleBin(MemoryBasedRuleBin rb) {
+			rule_bin = rb;
+		}
 		
 		public RuleCollection getRules() {
 			return this.rule_bin;
@@ -42,14 +53,14 @@ public class MemoryBasedTrieGrammar implements Trie {
 		
 		
 		//recursive call, to make sure all rules are sorted
-		void ensure_sorted(ArrayList<FeatureFunction> l_models) {
+		public void ensure_sorted(ArrayList<FeatureFunction> l_models) {
 			if (null != this.rule_bin) {
 				this.rule_bin.getSortedRules(l_models);
 			}
 			if (null != this.tbl_children) {
 				Object[] tem = this.tbl_children.values().toArray();
 				for (int i = 0; i < tem.length; i++) {
-					((MemoryBasedTrieGrammar)tem[i]).ensure_sorted(l_models);
+					((MemoryBasedTrie)tem[i]).ensure_sorted(l_models);
 				}
 			}
 		}

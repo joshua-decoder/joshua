@@ -70,7 +70,7 @@ import joshua.decoder.ff.tm.Rule;
 		}
 		
 		
-		protected void add_rule(Rule rule) {
+		public void addRule(Rule rule) {
 			if (null == this.heapRules) {//firt time
 				this.heapRules = new PriorityQueue<Rule>(1, Rule.NegtiveCostComparator);//TODO: initial capacity?
 				this.arity = rule.getArity();

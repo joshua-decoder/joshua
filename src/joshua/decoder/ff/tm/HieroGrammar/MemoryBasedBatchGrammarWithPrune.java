@@ -79,7 +79,7 @@ public class MemoryBasedBatchGrammarWithPrune extends MemoryBasedBatchGrammar {
 		tem_estcost += p_rule.getEstCost();
 		
 		//######### identify the position, and insert the trinodes if necessary
-		MemoryBasedTrieGrammar pos = root;
+		MemoryBasedTrie pos = root;
 		int[] p_french = p_rule.getFrench();
 		for (int k = 0; k < p_french.length; k++) {
 			int cur_sym_id = p_french[k];
@@ -87,13 +87,13 @@ public class MemoryBasedBatchGrammarWithPrune extends MemoryBasedBatchGrammar {
 				cur_sym_id = this.p_symbolTable.addNonterminal(replace_french_non_terminal(nonterminalReplaceRegexp, this.p_symbolTable.getWord(p_french[k])));
 			}
 			
-			MemoryBasedTrieGrammar next_layer = pos.matchOne(cur_sym_id);
+			MemoryBasedTrie next_layer = pos.matchOne(cur_sym_id);
 			if (null != next_layer) {
 				pos = next_layer;
 			} else {
-				MemoryBasedTrieGrammar tem = new MemoryBasedTrieGrammar();//next layer node
+				MemoryBasedTrie tem = new MemoryBasedTrie();//next layer node
 				if (null == pos.tbl_children) {
-					pos.tbl_children = new HashMap<Integer,MemoryBasedTrieGrammar> ();
+					pos.tbl_children = new HashMap<Integer,MemoryBasedTrie> ();
 				}
 				pos.tbl_children.put(cur_sym_id, tem);
 				pos = tem;
@@ -113,7 +113,7 @@ public class MemoryBasedBatchGrammarWithPrune extends MemoryBasedBatchGrammar {
 		if (p_rule.getEstCost() > ((MemoryBasedRuleBinWithPrune)pos.rule_bin).cutoff) {
 			num_rule_pruned++;
 		} else {
-			pos.rule_bin.add_rule(p_rule);
+			pos.rule_bin.addRule(p_rule);
 			num_rule_pruned += ((MemoryBasedRuleBinWithPrune)pos.rule_bin).run_pruning();
 		}
 		

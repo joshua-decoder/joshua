@@ -51,7 +51,7 @@ public class MemoryBasedBatchGrammar  extends BatchGrammar {
 	
 	protected int num_rule_read    = 0;
 	protected int num_rule_bin     = 0;
-	protected MemoryBasedTrieGrammar root = null;
+	protected MemoryBasedTrie root = null;
 	
 	static protected double tem_estcost = 0.0;//debug
 	
@@ -112,7 +112,7 @@ public class MemoryBasedBatchGrammar  extends BatchGrammar {
 	
 	protected void read_tm_grammar_from_file(String grammar_file)
 	throws IOException {
-		this.root = new MemoryBasedTrieGrammar(); //root should not have valid ruleBin entries
+		this.root = new MemoryBasedTrie(); //root should not have valid ruleBin entries
 		BufferedReader t_reader_tree = FileUtility.getReadFileStream(grammar_file);
 		if (logger.isLoggable(Level.INFO)) logger.info(
 			"Reading grammar from file " + grammar_file);
@@ -129,7 +129,7 @@ public class MemoryBasedBatchGrammar  extends BatchGrammar {
 	//	TODO: this should read from file
 	protected void read_tm_grammar_glue_rules() {
 		final double alpha = Math.log10(Math.E); //Cost
-		this.root = new MemoryBasedTrieGrammar(); //root should not have valid ruleBin entries
+		this.root = new MemoryBasedTrie(); //root should not have valid ruleBin entries
 		
 		this.add_rule("S ||| ["	+ JoshuaConfiguration.default_non_terminal + ",1] ||| [" + JoshuaConfiguration.default_non_terminal	+ ",1] ||| 0",	this.p_symbolTable.addTerminal(JoshuaConfiguration.begin_mono_owner));//this does not have any cost	
 		//TODO: search consider_start_sym (Decoder.java, LMModel.java, and Chart.java)
@@ -233,7 +233,7 @@ public class MemoryBasedBatchGrammar  extends BatchGrammar {
 		tem_estcost += p_rule.getEstCost();
 		
 		//######### identify the position, and insert the trinodes if necessary
-		MemoryBasedTrieGrammar pos = root;
+		MemoryBasedTrie pos = root;
 		int[] p_french = p_rule.getFrench();
 		for (int k = 0; k < p_french.length; k++) {
 			int cur_sym_id = p_french[k];
@@ -241,13 +241,13 @@ public class MemoryBasedBatchGrammar  extends BatchGrammar {
 				cur_sym_id = this.p_symbolTable.addNonterminal(replace_french_non_terminal(nonterminalReplaceRegexp, this.p_symbolTable.getWord(p_french[k])));
 			}
 			
-			MemoryBasedTrieGrammar next_layer = pos.matchOne(cur_sym_id);
+			MemoryBasedTrie next_layer = pos.matchOne(cur_sym_id);
 			if (null != next_layer) {
 				pos = next_layer;
 			} else {
-				MemoryBasedTrieGrammar tem = new MemoryBasedTrieGrammar();//next layer node
-				if (null == pos.tbl_children) {
-					pos.tbl_children = new HashMap<Integer,MemoryBasedTrieGrammar> ();
+				MemoryBasedTrie tem = new MemoryBasedTrie();//next layer node
+				if ( pos.hasExtensions()==false) {
+					pos.tbl_children = new HashMap<Integer,MemoryBasedTrie> ();
 				}
 				pos.tbl_children.put(cur_sym_id, tem);
 				pos = tem;
@@ -255,14 +255,14 @@ public class MemoryBasedBatchGrammar  extends BatchGrammar {
 		}
 		
 		//#########3: now add the rule into the trinode
-		if (null == pos.rule_bin) {
+		if ( pos.hasRules() == false) {
 			pos.rule_bin        = new MemoryBasedRuleBin();
 			pos.rule_bin.french = p_french;
 			pos.rule_bin.arity  = p_rule.getArity();
 			num_rule_bin++;
 		}
 		
-		pos.rule_bin.add_rule(p_rule);
+		pos.rule_bin.addRule(p_rule);
 		
 		return p_rule;
 	}

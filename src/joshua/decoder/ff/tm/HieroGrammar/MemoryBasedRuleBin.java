@@ -50,13 +50,20 @@ import joshua.decoder.ff.tm.RuleCollection;
 			return this.french;
 		}
 		
+		public void setSourceSide(int[] french_) {
+			this.french = french_;
+		}
 		
 		public int getArity() {
 			return this.arity;
 		}
 		
+		public void setArity(int arity_) {
+			this.arity = arity_;
+		}
 		
-		protected void add_rule(Rule rule) {
+		
+		public void addRule(Rule rule) {
 			if (sortedRules.size()<=0) {//first time
 				this.arity = rule.getArity();
 				this.french = rule.getFrench(); 
