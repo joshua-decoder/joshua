@@ -26,8 +26,7 @@ import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.RuleCollection;
-import joshua.decoder.ff.tm.TrieGrammar;
-import joshua.decoder.ff.tm.HieroGrammar.MemoryBasedBatchGrammar;
+import joshua.decoder.ff.tm.Trie;
 import joshua.decoder.hypergraph.HGNode;
 import joshua.decoder.hypergraph.HyperGraph;
 import joshua.lattice.Lattice;
@@ -139,7 +138,9 @@ public class Chart {
 		for (Node<Integer> node : sentence) {
 			for (Arc<Integer> arc : node.getOutgoingArcs()) {
 				for (int lhs : default_nonterminals) {//create a rule, but do not add into the grammar trie     
-					Rule rule = constructOOVRule(p_l_models.size(), MemoryBasedBatchGrammar.OOV_RULE_ID, lhs, arc.getLabel(), this.UNTRANS_OWNER_SYM_ID, have_lm_model);
+					//TODO: which grammar should we use to create an OOV rule?
+					Rule rule = this.grammars[0].constructOOVRule(p_l_models.size(), lhs, arc.getLabel(), this.UNTRANS_OWNER_SYM_ID, have_lm_model);
+					
 					// Tail and head are switched - FIX names:
 					add_axiom(node.getNumber(), arc.getTail().getNumber(), rule, (float)arc.getCost());
 				}
@@ -149,29 +150,6 @@ public class Chart {
 	}
 	
 	
-	/** 
-	 * only called when creating oov rule in Chart or DiskHypergraph, all
-	 * others should call the other contructors; the
-	 * transition cost for phrase model, arity penalty,
-	 * word penalty are all zero, except the LM cost or the first feature if no LM feature is used
-	 */
-	private static Rule constructOOVRule(int num_feats, int oov_rule_id, int lhs_in, int fr_in, int owner_in, boolean have_lm_model) {		
-		int[] p_french     = new int[1];
-	   	p_french[0]  = fr_in;
-	   	int[] english    = new int[1];
-	   	english[0] = fr_in;
-	   	float[] feat_scores     = new float[num_feats];
-	   	
-	   	/**TODO
-	   	 * This is a hack to make the decoding without a LM works
-	   	 * */
-	   	if(have_lm_model==false){//no LM is used for decoding, so we should set the stateless cost
-	   		//this.feat_scores[0]=100.0/((FeatureFunction)p_l_models.get(0)).getWeight();//TODO
-	   		feat_scores[0]=100;//TODO
-	   	}
-	   	
-		return new Rule(lhs_in, p_french, english, feat_scores,  0, owner_in, 0, oov_rule_id);
-	}
 	
 	
 	
@@ -324,7 +302,7 @@ public class Chart {
 		
 		while (t_queue.size() > 0) {
 			HGNode item = (HGNode)t_queue.remove(0);
-			TrieGrammar child_tnode = gr.getTrieRoot().matchOne(item.lhs);//match rule and complete part
+			Trie child_tnode = gr.getTrieRoot().matchOne(item.lhs);//match rule and complete part
 			if (child_tnode != null
 			&& child_tnode.getRules() != null
 			&& child_tnode.getRules().getArity() == 1) {//have unary rules under this trienode					

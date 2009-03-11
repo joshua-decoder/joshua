@@ -18,6 +18,7 @@
 package joshua.decoder.hypergraph;
 
 import joshua.decoder.ff.lm.LMFFDPState;
+import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.HieroGrammar.MemoryBasedBatchGrammar;
 import joshua.decoder.ff.FFDPState;
@@ -113,6 +114,9 @@ public class DiskHyperGraph {
 	 *     (-1) null rule
 	 */
 	private static int NULL_RULE_ID = -1;
+	
+	//TODO: this is a hack for us to create OOVRule, and OOVRuleID
+	private static Grammar pGrammar = new MemoryBasedBatchGrammar(); 
 	
 	private static final Logger logger =
 		Logger.getLogger(DiskHyperGraph.class.getName());
@@ -313,7 +317,7 @@ public class DiskHyperGraph {
 	
 	
 	private final boolean isOutOfVocabularyRule(Rule rl) {
-		return (rl.getRuleID() == MemoryBasedBatchGrammar.OOV_RULE_ID);
+		return (rl.getRuleID() == pGrammar.getOOVRuleID());
 	}
 	
 	private void writeDeduction(HGNode item, HyperEdge deduction)
@@ -349,7 +353,7 @@ public class DiskHyperGraph {
 		}
 		s.append(" ")
 			.append(ruleID);
-		if (ruleID == MemoryBasedBatchGrammar.OOV_RULE_ID) {
+		if (ruleID == pGrammar.getOOVRuleID()) {
 			s.append(" ")
 				.append(this.symbolTable.getWord(deduction_rule.getLHS()))
 				.append(" ")
@@ -507,7 +511,7 @@ public class DiskHyperGraph {
 		Rule rule = null;
 		final int ruleID = new Integer(fds[2+qtyAntecedents]);
 		if (ruleID != NULL_RULE_ID) {
-			if (ruleID != MemoryBasedBatchGrammar.OOV_RULE_ID) {
+			if (ruleID != pGrammar.getOOVRuleID()) {
 				rule = this.associatedGrammar.get(ruleID);
 				if (null == rule) {
 					logger.severe("rule is null but id is " + ruleID);
@@ -515,9 +519,8 @@ public class DiskHyperGraph {
 				}
 			} else {
 				//stateless cost is not properly set, so cannot extract individual features during kbest extraction
-				rule = constructOOVRule(
+				rule = pGrammar.constructOOVRule(
 					1,
-					MemoryBasedBatchGrammar.OOV_RULE_ID,
 					this.symbolTable.addNonterminal(fds[3+qtyAntecedents]),
 					this.symbolTable.addTerminal(fds[4+qtyAntecedents]),
 					this.UNTRANSLATED_WORD_ID,
@@ -545,29 +548,7 @@ public class DiskHyperGraph {
 	}
 	
 
-	/** 
-	 * only called when creating oov rule in Chart or DiskHypergraph, all
-	 * others should call the other contructors; the
-	 * transition cost for phrase model, arity penalty,
-	 * word penalty are all zero, except the LM cost or the first feature if no LM feature is used
-	 */
-	private static Rule constructOOVRule(int num_feats, int oov_rule_id, int lhs_in, int fr_in, int owner_in, boolean have_lm_model) {		
-		int[] p_french     = new int[1];
-	   	p_french[0]  = fr_in;
-	   	int[] english    = new int[1];
-	   	english[0] = fr_in;
-	   	float[] feat_scores     = new float[num_feats];
-	   	
-	   	/**TODO
-	   	 * This is a hack to make the decoding without a LM works
-	   	 * */
-	   	if(have_lm_model==false){//no LM is used for decoding, so we should set the stateless cost
-	   		//this.feat_scores[0]=100.0/((FeatureFunction)p_l_models.get(0)).getWeight();//TODO
-	   		feat_scores[0]=100;//TODO
-	   	}
-	   	
-		return new Rule(lhs_in, p_french, english, feat_scores,  0, owner_in, 0, oov_rule_id);
-	}
+	
 	
 // End read_hyper_graph()
 //===============================================================

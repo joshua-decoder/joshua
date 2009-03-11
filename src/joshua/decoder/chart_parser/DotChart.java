@@ -19,7 +19,7 @@ package joshua.decoder.chart_parser;
 
 import joshua.decoder.chart_parser.Bin.SuperItem;
 import joshua.decoder.ff.tm.Grammar;
-import joshua.decoder.ff.tm.TrieGrammar;
+import joshua.decoder.ff.tm.Trie;
 import joshua.lattice.Arc;
 import joshua.lattice.Lattice;
 import joshua.lattice.Node;
@@ -166,7 +166,7 @@ public class DotChart {
 					if(dt.tnode==null){
 						System.out.println("dt is null");
 					}
-					TrieGrammar child_tnode = dt.tnode.matchOne(last_word);//match the terminal
+					Trie child_tnode = dt.tnode.matchOne(last_word);//match the terminal
 					if (child_tnode != null) {
 						add_dot_item(child_tnode, i, j - 1 + arc_len, dt.l_ant_super_items, null, dt.lattice_cost + cost);//we do not have an ant for the terminal
 					}
@@ -206,7 +206,7 @@ public class DotChart {
 			List<SuperItem> t_ArrayList = new ArrayList<SuperItem>(this.p_chart.bins[k][j].get_sorted_super_items().values());//complete super-items
 			//Support.write_log_line(String.format("Add a dotitem with"), Support.DEBUG);
 			for (SuperItem s_t : t_ArrayList) { //see if it matches what the dotitem is looking for
-				TrieGrammar child_tnode = dt.tnode.matchOne(s_t.lhs);
+				Trie child_tnode = dt.tnode.matchOne(s_t.lhs);
 				if (null != child_tnode) {
 					if (true == start_dotitems
 					&& ! child_tnode.hasExtensions()) {
@@ -230,7 +230,7 @@ public class DotChart {
 	 * @param ant_s_items_in
 	 * @param cur_s_item
 	 */
-	private void add_dot_item(TrieGrammar tnode, int i,	int j,	ArrayList<SuperItem> ant_s_items_in, SuperItem cur_s_item, float lattice_cost) {
+	private void add_dot_item(Trie tnode, int i,	int j,	ArrayList<SuperItem> ant_s_items_in, SuperItem cur_s_item, float lattice_cost) {
 		ArrayList<SuperItem> ant_s_items= new ArrayList<SuperItem>();
 		if (ant_s_items_in != null) {
 			ant_s_items.addAll(ant_s_items_in);
@@ -271,11 +271,11 @@ public class DotChart {
 	public class DotItem {
 		
 		//int i, j; //start and end position in the chart
-		TrieGrammar tnode = null; // dot_position, point to grammar trie node, this is the only place that the DotChart points to the grammar
+		Trie tnode = null; // dot_position, point to grammar trie node, this is the only place that the DotChart points to the grammar
 		ArrayList<SuperItem> l_ant_super_items = null; //pointer to SuperItem in Chart
 		float lattice_cost;
 
-		public DotItem(int i_in, int j_in, TrieGrammar tnode_in, ArrayList<SuperItem> ant_super_items_in, float lattice_cost) {
+		public DotItem(int i_in, int j_in, Trie tnode_in, ArrayList<SuperItem> ant_super_items_in, float lattice_cost) {
 			//i = i_in;
 			//j = j_in;
 			this.tnode = tnode_in;

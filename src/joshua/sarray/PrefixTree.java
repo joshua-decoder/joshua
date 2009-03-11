@@ -22,7 +22,7 @@ import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.RuleCollection;
-import joshua.decoder.ff.tm.TrieGrammar;
+import joshua.decoder.ff.tm.Trie;
 import joshua.util.lexprob.LexicalProbabilities;
 import joshua.util.sentence.Vocabulary;
 import joshua.util.sentence.alignment.Alignments;
@@ -688,7 +688,7 @@ public class PrefixTree {
 	 * @author Lane Schwartz
 	 * @see Lopez (2008) PhD Thesis, Sec 4.3.1,2, p 71-74.
 	 */
-	class Node implements Comparable<Node>, Grammar, TrieGrammar {
+	class Node implements Comparable<Node>, Grammar, Trie {
 
 		static final boolean   ACTIVE = true;
 		static final boolean INACTIVE = false;
@@ -801,7 +801,7 @@ public class PrefixTree {
 		}
 		
 		
-		public TrieGrammar matchOne(int symbol) {
+		public Trie matchOne(int symbol) {
 			if (children.containsKey(symbol)) {
 				return children.get(symbol);
 			} else {
@@ -810,7 +810,7 @@ public class PrefixTree {
 			}
 		}
 
-		public TrieGrammar matchPrefix(List<Integer> symbols) {
+		public Trie matchPrefix(List<Integer> symbols) {
 			
 			Node node = this;
 			
@@ -1056,7 +1056,7 @@ public class PrefixTree {
 			return i.compareTo(j);
 		}
 
-		public TrieGrammar getTrieRoot() {
+		public Trie getTrieRoot() {
 			return this;
 		}
 
@@ -1074,6 +1074,16 @@ public class PrefixTree {
 		public void sortGrammar(ArrayList<FeatureFunction> l_models) {
 			//TODO Implement this!
 			throw new UnsupportedOperationException("This functionality is not yet implemented.");
+		}
+
+		public Rule constructOOVRule(int num_feats, int lhs, int sourceWord, int owner, boolean have_lm_model) {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		public int getOOVRuleID() {
+			// TODO Auto-generated method stub
+			return 0;
 		}
 
 	}

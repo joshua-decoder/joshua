@@ -30,13 +30,13 @@ import joshua.decoder.ff.tm.RuleCollection;
  * @author wren ng thornton <wren@users.sourceforge.net>
  * @version $LastChangedDate: 2008-08-03 04:12:57 -0400 (Sun, 03 Aug 2008) $
  */
-public interface TrieGrammar {
+public interface Trie {
 	
 	/**
 	 * Traverse one ply further down the trie. If there is no
 	 * match, the result is null
 	 */
-	TrieGrammar matchOne(int wordID);
+	Trie matchOne(int wordID);
 	
 	
 	/**

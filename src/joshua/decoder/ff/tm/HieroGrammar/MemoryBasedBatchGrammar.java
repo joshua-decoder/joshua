@@ -13,7 +13,7 @@ import joshua.decoder.Support;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.tm.BatchGrammar;
 import joshua.decoder.ff.tm.Rule;
-import joshua.decoder.ff.tm.TrieGrammar;
+import joshua.decoder.ff.tm.Trie;
 import joshua.util.FileUtility;
 
 public class MemoryBasedBatchGrammar  extends BatchGrammar {
@@ -45,7 +45,10 @@ public class MemoryBasedBatchGrammar  extends BatchGrammar {
 	protected int spanLimit = 10;
 	SymbolTable p_symbolTable = null;
 
-		
+	public MemoryBasedBatchGrammar(){
+		//do nothing
+	}
+	
 	public MemoryBasedBatchGrammar(
 		SymbolTable psymbolTable,
 		String grammar_file,
@@ -136,7 +139,7 @@ public class MemoryBasedBatchGrammar  extends BatchGrammar {
 	}
 	
 	
-	public TrieGrammar getTrieRoot() {
+	public Trie getTrieRoot() {
 		return this.root;
 	}
 	
@@ -254,6 +257,29 @@ public class MemoryBasedBatchGrammar  extends BatchGrammar {
 		}
 		/*if(root!=null)
 			root.print_info(Support.DEBUG);*/
+	}
+
+
+	public Rule constructOOVRule(int num_feats, int lhs, int sourceWord, int owner, boolean have_lm_model) {
+		int[] p_french     = new int[1];
+	   	p_french[0]  = sourceWord;
+	   	int[] english    = new int[1];
+	   	english[0] = sourceWord;
+	   	float[] feat_scores     = new float[num_feats];
+	   	
+	   	/**TODO
+	   	 * This is a hack to make the decoding without a LM works
+	   	 * */
+	   	if(have_lm_model==false){//no LM is used for decoding, so we should set the stateless cost
+	   		//this.feat_scores[0]=100.0/((FeatureFunction)p_l_models.get(0)).getWeight();//TODO
+	   		feat_scores[0]=100;//TODO
+	   	}
+	   	
+		return new Rule(lhs, p_french, english, feat_scores,  0, owner, 0, getOOVRuleID());
+	}
+
+	public int getOOVRuleID() {
+		return OOV_RULE_ID;
 	}
 	
 	

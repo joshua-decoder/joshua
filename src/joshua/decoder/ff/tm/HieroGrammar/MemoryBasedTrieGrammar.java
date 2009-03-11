@@ -8,10 +8,10 @@ import java.util.HashMap;
 
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.tm.RuleCollection;
-import joshua.decoder.ff.tm.TrieGrammar;
+import joshua.decoder.ff.tm.Trie;
 
 
-public class MemoryBasedTrieGrammar implements TrieGrammar {
+public class MemoryBasedTrieGrammar implements Trie {
 		MemoryBasedRuleBin rule_bin     = null;
 		HashMap<Integer,MemoryBasedTrieGrammar> tbl_children = null;
 		

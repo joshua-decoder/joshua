@@ -20,7 +20,7 @@ package joshua.decoder.ff.tm;
 import java.util.ArrayList;
 
 import joshua.decoder.ff.FeatureFunction;
-import joshua.decoder.ff.tm.TrieGrammar;
+import joshua.decoder.ff.tm.Trie;
 
 
 /**
@@ -35,7 +35,7 @@ public interface Grammar {
 	/**
 	 * Returns the root of the trie (as a small constant-time function).
 	 */
-	public TrieGrammar getTrieRoot();
+	public Trie getTrieRoot();
 	
 	
 	/**
@@ -55,4 +55,17 @@ public interface Grammar {
 	 */
 	public void sortGrammar(ArrayList<FeatureFunction> models);
 	
+	
+	/** construct an oov rule for the word source 
+	 * only called when creating oov rule in Chart or DiskHypergraph, all
+	 * the transition cost for phrase model, arity penalty,
+	 * word penalty are all zero, except the LM cost or the first feature if no LM feature is used
+	 *TODO: will try to get rid of owner, have_lm_model, and num_feats
+	 */
+	public Rule constructOOVRule(int num_feats, int lhs, int sourceWord, int owner, boolean have_lm_model);
+	
+	
+	/** return the OOV rule ID
+	 * */
+	public int getOOVRuleID();
 }
