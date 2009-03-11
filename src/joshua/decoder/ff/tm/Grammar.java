@@ -28,6 +28,7 @@ import joshua.decoder.ff.tm.Trie;
  * to store holistic metadata.
  * 
  * @author wren ng thornton
+ * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate: 2008-09-23 12:52:23 -0400 (Tue, 23 Sep 2008) $
  */
 public interface Grammar {

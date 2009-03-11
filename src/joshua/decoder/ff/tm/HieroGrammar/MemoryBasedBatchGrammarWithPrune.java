@@ -44,6 +44,10 @@ import java.util.logging.Logger;
  * @version $LastChangedDate$
  */
 
+/** We should keep this code alive, even though currently nobody uses it; as we may want to do offline pruning of grammar
+ * */
+
+
 //TODO: bug in sortGrammar: even the l_models is new, we do not update the est cost for the rule, which is wrong
 public class MemoryBasedBatchGrammarWithPrune extends MemoryBasedBatchGrammar {
 	private int num_rule_pruned  = 0;

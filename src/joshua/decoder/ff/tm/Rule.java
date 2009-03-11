@@ -78,6 +78,8 @@ public interface Rule {
 	public float estimateRuleCost(ArrayList<FeatureFunction> p_l_models);
 	
 
+	/** in order to provide sorting for cube-pruning, we need to provide this Comparator
+	 * */
 	public static Comparator<Rule> NegtiveCostComparator	= new Comparator<Rule>() {
 		public int compare(Rule rule1, Rule rule2) {
 			float cost1 = rule1.getEstCost();
@@ -92,9 +94,12 @@ public interface Rule {
 		}
 	};
 	
+	/**@todo: should the Vocabulary change to SymbolTable?
+	 * */
 	public String toString(Map<Integer,String> ntVocab, Vocabulary sourceVocab, Vocabulary targetVocab);
 	
-	//print the rule in terms of Ingeters
+	/**print the rule in terms of Ingeters
+	 * */
 	public String toString(); 
 	
 	public String toString(SymbolTable p_symbolTable);
