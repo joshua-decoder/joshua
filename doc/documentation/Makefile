@@ -9,7 +9,7 @@ LATEX=pdflatex
 RERUN = "(There were undefined references|Rerun to get (cross-references|the bars) right)"
 RERUNBIB = "No file.*\.bbl|Citation.*undefined"
 
-.PHONY: all clean
+.PHONY: all clean html
 
 
 
@@ -28,6 +28,8 @@ all: $(PAPER).pdf $(PAPER).bbl
 	fi
 	$(BIBTEX) $(patsubst %.tex,%,$<)
 
+html: joshua.tex
+	latex2html --local_icons joshua.tex
 
 clean:
 	+rm -fv *.{dvi,ps,aux,log,bbl,blg} $(PAPER).pdf
