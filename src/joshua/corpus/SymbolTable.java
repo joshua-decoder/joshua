@@ -177,7 +177,7 @@ public interface SymbolTable {
 	 */	
 	public int getHighestID();
 	
-	public int getTargetNonterminalIndex(int id);//first convert id to its String maping, then call the below function
+	public int getTargetNonterminalIndex(int id);//first convert id to its String maping, then call the function below
 	
 	public int getTargetNonterminalIndex(String word);
 	

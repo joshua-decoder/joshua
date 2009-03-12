@@ -88,9 +88,8 @@ public class DecoderThread extends Thread {
 		this.oracle_file     = oracle_file_in;
 		this.start_sent_id   = start_sent_id_in;
 		
-		this.kbest_extractor = new KBestExtractor(
-										this.p_symbolTable,
-										(null == nbest_file_in) );
+		this.kbest_extractor =  new KBestExtractor(this.p_symbolTable, JoshuaConfiguration.use_unique_nbest, JoshuaConfiguration.use_tree_nbest, 
+				JoshuaConfiguration.include_align_index, JoshuaConfiguration.add_combined_cost,  false, true);
 		
 		if (JoshuaConfiguration.save_disk_hg) {
 			this.p_disk_hg = new DiskHyperGraph(
@@ -123,10 +122,8 @@ public class DecoderThread extends Thread {
 //	TODO: log file is not properly handled for parallel decoding
 	public void decode_a_file()
 	throws IOException {
-		BufferedReader t_reader_test =
-			FileUtility.getReadFileStream(test_file);
-		BufferedWriter t_writer_nbest =
-			FileUtility.getWriteFileStream(nbest_file);
+		BufferedReader t_reader_test =	FileUtility.getReadFileStream(test_file);
+		BufferedWriter t_writer_nbest =	FileUtility.getWriteFileStream(nbest_file);
 		BufferedReader t_oracle_reader =
 			null == oracle_file
 			? null
@@ -229,15 +226,13 @@ public class DecoderThread extends Thread {
 			logger.finer("Extracting oracle hypergraph...");
 			HyperGraph oracle = extractor.getOracle(p_hyper_graph, 3, oracleSentence);
 			logger.finer("... Done Extracting...getting n-best...");
-			kbestExtractor.lazy_k_best_extract_hg(
-				oracle, models, topN, JoshuaConfiguration.use_unique_nbest, sentenceID, out, JoshuaConfiguration.use_tree_nbest, JoshuaConfiguration.include_align_index, JoshuaConfiguration.add_combined_cost);
+			kbestExtractor.lazy_k_best_extract_hg(oracle, models, topN, sentenceID, out);
 			logger.finer("... Done getting n-best");
 	
 		} else {
 			
 			//============kbest extraction
-			kbestExtractor.lazy_k_best_extract_hg(
-				p_hyper_graph, models, topN, JoshuaConfiguration.use_unique_nbest, sentenceID, out, JoshuaConfiguration.use_tree_nbest, JoshuaConfiguration.include_align_index, JoshuaConfiguration.add_combined_cost);
+			kbestExtractor.lazy_k_best_extract_hg(p_hyper_graph, models, topN, sentenceID, out);
 			if (logger.isLoggable(Level.FINER))
 				logger.finer("after kbest, time: "
 					+ (System.currentTimeMillis() - start) / 1000);

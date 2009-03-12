@@ -17,7 +17,7 @@
  */
 package joshua.decoder;
 
-import joshua.decoder.ff.lm.LanguageModelFF;
+
 import joshua.util.Cache;
 import joshua.util.FileUtility;
 

@@ -91,7 +91,7 @@ public class DecoderFactory {
 		BufferedReader t_reader_test =
 			FileUtility.getReadFileStream(test_file);
 		
-		//#### compute number of lines for each decoder
+		//==== compute number of lines for each decoder
 		int n_lines = 0; {
 			BufferedReader test_file_reader =
 				FileUtility.getReadFileStream(test_file);
@@ -156,7 +156,7 @@ public class DecoderFactory {
 			}
 		}
 		
-		// prepare the the last job
+		//==== prepare the the last job
 		t_writer_test.flush();
 		t_writer_test.close();
 	
@@ -176,14 +176,14 @@ public class DecoderFactory {
 		// End initializing threads and their files
 			
 		
-		// run all the jobs
+		//==== run all the jobs
 		for (int i = 0; i < parallel_threads.length; i++) {
 			if (logger.isLoggable(Level.INFO))
 				logger.info("##############start thread " + i);
 			parallel_threads[i].start();
 		}
 		
-		// wait for the threads finish
+		//==== wait for the threads finish
 		for (int i = 0; i < parallel_threads.length; i++) {
 			try {
 				parallel_threads[i].join();
@@ -193,9 +193,8 @@ public class DecoderFactory {
 			}
 		}
 		
-		//#### merge the nbest files, and remove tmp files
-		BufferedWriter t_writer_nbest =
-			FileUtility.getWriteFileStream(nbest_file);
+		//==== merge the nbest files, and remove tmp files
+		BufferedWriter t_writer_nbest =	FileUtility.getWriteFileStream(nbest_file);
 		BufferedWriter t_writer_dhg_items = null;
 		if (JoshuaConfiguration.save_disk_hg) {
 			t_writer_dhg_items =
