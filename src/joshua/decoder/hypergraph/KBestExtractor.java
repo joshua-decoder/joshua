@@ -294,9 +294,10 @@ public class KBestExtractor {
 					//derivation_tbl.remove(res.get_signature());//TODO: should remove? note that two state may be tied because the cost is the same
 					if (extract_unique_nbest) {
 						String res_str = res.get_hypothesis(p_symbol,kbest_extator, null,null);
-						// We pass false for extract_nbest_tree because we want; @todo zhifei: this causes trouble to monolingual grammar as there is only *string*, need to fix it
+						// We pass false for extract_nbest_tree because we want; 
 						// to check that the hypothesis *strings* are unique,
 						// not the trees.
+						//@todo zhifei: this causes trouble to monolingual grammar as there is only one *string*, need to fix it
 						if (! nbest_str_tbl.containsKey(res_str)) {
 							l_nbest.add(res);
 							nbest_str_tbl.put(res_str,1);
