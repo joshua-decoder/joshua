@@ -1,0 +1,78 @@
+<html> <head>
+<title></title>
+</head>
+
+<body>
+<h1>Cambridge University LaTeX poster style file</h1>
+
+This page gives a brief summary of a latex style file, cuposter.cls,
+for creating conference posters in latex.  It is based on a style file
+from the University of Edinburgh, with a simple change of logo.  This
+style file allows you to create an A0 (or smaller) poster in
+encapsulated PostScript format.  I include a sample poster here; you
+should be able to regenerate the A4 poster by simply typing
+<p>
+% make
+<p>
+
+If there are no mistakes in the latex, an <a href="a4poster.eps">A4
+poster</a> should be created.  This version can be printed out on A4
+paper.
+<p>
+Once happy with your final version of the poster, you can then create
+an <a href="a0poster.eps">A0 poster</a> using the command:
+<p>
+% make scalea0
+<p>
+
+Read the <a href="Makefile">Makefile</a> for ways to change filenames,
+and create other sizes of poster (it currently can make A0, A1, A2,
+A3, A4).  Note that I have hardcoded the use of Times font in the
+header.  (That should probably be changed to something like
+Helvetica...)
+
+
+<p>
+The default orientation for posters is landscape; passing the option
+"portrait" to the documentclass (see the example file) will create
+portrait posters.
+
+<h2>Download</h2>
+All of the files in this directory (including figures) are available
+in the compressed tar file: <a href="cuposter.tgz">cuposter.tgz</a>
+
+
+<h2>Where to print your document?</h2>
+
+The A1 version prints successfully on the
+<a href="http://www.dpmms.cam.ac.uk/Computing/poster_printer.html">DPMMS
+A1 printer</a>, although the paper size is not recognised by
+Ghostscript, so you need to type in the size of the paper (details to
+follow).
+
+<p>
+There is no A0 printer within the CMS.  Graduate students within DAMTP
+should be able to get a purchase order for their A0 poster to be
+printed in somewhere like Pandis or Anatomy.  Engineering also have
+an <a
+href="http://www-h.eng.cam.ac.uk/help/oper/help/printing.html">A0
+printer</a> but I've yet to be able to test it.  If someone is willing
+to test it, let me (sje30 at cam) know.
+
+<h2>Acknowledgements</h2>
+<p>
+Thanks to Dr Martin Reddy for writing the original version of this
+style file when he was at 
+the <a href="http://www.inf.ed.ac.uk">School of Informatics,
+University of Edinburgh</a>.  Version 2 was released by Mary Ellen Foster.
+<a href="http://www.informatics.ed.ac.uk/systems/tex/infposter/">
+Further documentation</a> is available from Edinburgh.
+
+<hr>
+<address></address>
+<!-- hhmts start -->
+<!-- hhmts end -->
+</body> </html>
+
+
+
