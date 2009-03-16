@@ -2,6 +2,8 @@
 <!-- Build file for Joshua. Last changed: $LastChangedDate$ -->
 <project name="JHU Decoder" default="compile" basedir=".">
 	
+	<property environment="env" />
+	
 	<property name="src" value="./src" />
 	<property name="test" value="./test" />
 	<property name="build" value="./bin" />
@@ -22,9 +24,18 @@
 		<mkdir dir="${lib}"/>
 	</target>
 	
+	<!-- Check for environment variables -->
+	<target name="set-srilm" unless="env.SRILM">
+	  <fail message="It seems you did not set the $SRILM environmant variable." />
+	</target>
+	
+	<!-- Check for environment variables -->
+	<target name="set-java-home" unless="env.JAVA_HOME">
+	  <fail message="It seems you did not set the $JAVA_HOME environmant variable." />
+	</target>
 	
 	<!-- Compile and install SRILM wrapper -->
-	<target name="srilm" depends="init">
+	<target name="srilm" depends="init, set-srilm, set-java-home">
 		<exec executable="make">
 			<arg value="-C" />
 			<arg value="${src}/joshua/decoder/ff/lm/srilm" />
