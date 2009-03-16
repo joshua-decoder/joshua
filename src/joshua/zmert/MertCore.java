@@ -347,7 +347,7 @@ public class MertCore
     if (decoderCommand == null && fakeFileNamePrefix == null) {
       myDecoder = new JoshuaDecoder();
       println("Loading Joshua decoder...",1);
-      myDecoder.initializeDecoder(decoderConfigFileName+".ZMERT.orig");
+      myDecoder.initialize(decoderConfigFileName+".ZMERT.orig");
       println("...finished loading @ " + (new Date()),1);
     } else {
       myDecoder = null;
@@ -1216,16 +1216,16 @@ public class MertCore
       if (myDecoder == null) {
         myDecoder = new JoshuaDecoder();
         println("Loading Joshua decoder...",1);
-        myDecoder.initializeDecoder(decoderConfigFileName+".ZMERT.orig");
+        myDecoder.initialize(decoderConfigFileName+".ZMERT.orig");
         println("...finished loading @ " + (new Date()),1);
       }
 
       println("Running Joshua decoder on source file " + sourceFileName + "...",1);
-//      myDecoder.initializeDecoder(decoderConfigFileName);
+//      myDecoder.initialize(decoderConfigFileName);
       double[] zeroBased_lambda = new double[numParams];
       System.arraycopy(lambda,1,zeroBased_lambda,0,numParams);
       myDecoder.changeFeatureWeightVector(zeroBased_lambda);
-      myDecoder.decodingTestSet(sourceFileName, decoderOutFileName);
+      myDecoder.decodeTestSet(sourceFileName, decoderOutFileName);
     } else {
       println("Running external decoder...",1);
 

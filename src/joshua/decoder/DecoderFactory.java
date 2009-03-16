@@ -59,7 +59,7 @@ public class DecoderFactory {
 		this.p_symbolTable = symbolTable;
 	}
 	
-	public void decodingTestSet(String test_file, String nbest_file, String oracle_file){
+	public void decodeTestSet(String test_file, String nbest_file, String oracle_file){
 		try{
 	//		###### decode the sentences, maybe in parallel
 			if (JoshuaConfiguration.num_parallel_decoders == 1) {
