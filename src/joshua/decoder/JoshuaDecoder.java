@@ -77,9 +77,7 @@ public class JoshuaDecoder {
 	private ArrayList<FeatureFunction> featureFunctions;
 	private ArrayList<Integer>         defaultNonterminals;
 	private SymbolTable                symbolTable;
-	
-	NGramLanguageModel languageModel = null;
-	
+	private NGramLanguageModel         languageModel;
 	
 	private static final Logger logger =
 		Logger.getLogger(JoshuaDecoder.class.getName());
@@ -115,10 +113,10 @@ public class JoshuaDecoder {
 		
 		/* Step-1: initialize the decoder */
 		JoshuaDecoder decoder = new JoshuaDecoder().initialize(configFile);
-		
 		if (logger.isLoggable(Level.INFO)) {
-			logger.info("before translation, loaddingtime is " +
-				(System.currentTimeMillis() - startTime) / 1000 );
+			logger.info("Before translation, loading time is "
+				+ (double)((System.currentTimeMillis() - startTime) / 1000)
+				+ " seconds");
 		}
 		
 		
@@ -128,10 +126,10 @@ public class JoshuaDecoder {
 		
 		/* Step-3: clean up */
 		decoder.cleanUp();
-		
 		if (logger.isLoggable(Level.INFO)) {
-			logger.info("Total running time is " + 
-				(System.currentTimeMillis() - startTime) / 1000 );
+			logger.info("Total running time is "
+				+ (double)((System.currentTimeMillis() - startTime) / 1000)
+				+ " seconds");
 		}
 	}
 // end main()
@@ -141,34 +139,20 @@ public class JoshuaDecoder {
 	/** Initialize all parts of the JoshuaDecoder. */
 	public JoshuaDecoder initialize(String configFile) {
 		try {
-			JoshuaConfiguration.read_config_file(configFile);
+			JoshuaConfiguration.readConfigFile(configFile);
+			
 			this.initializeSymbolTable();
 			
-			// TODO: add default non-terminals
-			this.setDefaultNonTerminals(JoshuaConfiguration.default_non_terminal);
-			
-			if (JoshuaConfiguration.have_lm_model) {
-				this.languageModel =	initializeLanguageModel(this.symbolTable);
-			}
+			if (JoshuaConfiguration.have_lm_model) initializeLanguageModel();
 			
 			// initialize and load grammar
 			if (! JoshuaConfiguration.use_sent_specific_tm) {
 				if (null != JoshuaConfiguration.tm_file) {
-					if (logger.isLoggable(Level.INFO))
-						logger.info("Using grammar read from file " + JoshuaConfiguration.tm_file);
-					
 					initializeTranslationGrammars(JoshuaConfiguration.tm_file);
 					
 				} else if (null != JoshuaConfiguration.sa_source
 					&& null != JoshuaConfiguration.sa_target
 					&& null != JoshuaConfiguration.sa_alignment) {
-					
-					if (logger.isLoggable(Level.INFO))
-						logger.info(
-							"Using SuffixArray grammar constructed from " +
-							"source " + JoshuaConfiguration.sa_source + ", " +
-							"target " + JoshuaConfiguration.sa_target + ", " +
-							"alignment " + JoshuaConfiguration.sa_alignment);
 					
 					try {
 						initializeSuffixArrayGrammar();
@@ -181,15 +165,14 @@ public class JoshuaDecoder {
 				} else {
 					throw new RuntimeException("No translation grammar or suffix array grammar was specified.");
 				}
-			} // end loading grammar
+			}
 			
 			
 			// Initialize the features: requires that
 			// LM model has been initialied. If an LM
 			// feature is used, need to read config file
 			// again
-			this.featureFunctions = initializeFeatureFunctions(
-				this.symbolTable, configFile, this.languageModel);
+			this.initializeFeatureFunctions(configFile);
 			
 			
 			// Sort the TM grammars
@@ -251,7 +234,7 @@ public class JoshuaDecoder {
 	
 	
 	/* Decoding a sentence This must be non-parallel */
-	public void decodingSentence(String test_sentence, String[] nbests) {
+	public void decodeSentence(String testSentence, String[] nbests) {
 		//TODO
 	}
 	
@@ -262,14 +245,14 @@ public class JoshuaDecoder {
 	}
 	
 	
-	public static ArrayList<FeatureFunction> initializeFeatureFunctions(SymbolTable psymbolTable, String configFile, NGramLanguageModel lm_grammar)
+	private void initializeFeatureFunctions(String configFile)
 	throws IOException {
-		BufferedReader t_reader_config =
+		BufferedReader reader =
 			FileUtility.getReadFileStream(configFile);
-		ArrayList<FeatureFunction> l_models = new ArrayList<FeatureFunction>();
+		this.featureFunctions = new ArrayList<FeatureFunction>();
 		
 		String line;
-		while ((line = FileUtility.read_line_lzf(t_reader_config)) != null) {
+		while ((line = FileUtility.read_line_lzf(reader)) != null) {
 			line = line.trim();
 			if (line.matches("^\\s*(?:\\#.*)?$")) {
 				// ignore empty lines or lines commented out
@@ -279,37 +262,37 @@ public class JoshuaDecoder {
 			if (line.indexOf("=") == -1) { //ignore lines with "="
 				String[] fds = line.split("\\s+");
 				if (fds[0].compareTo("lm") == 0 && fds.length == 2) { // lm order weight
-					if (null == lm_grammar) {
+					if (null == this.languageModel) {
 						logger.severe("LM model has not been properly initialized, must be wrong");
 						System.exit(1);
 					}
 					double weight = Double.parseDouble(fds[1].trim());
-					l_models.add(new LanguageModelFF(l_models.size(), JoshuaConfiguration.g_lm_order, psymbolTable, lm_grammar, weight));
+					this.featureFunctions.add(new LanguageModelFF(this.featureFunctions.size(), JoshuaConfiguration.g_lm_order, this.symbolTable, this.languageModel, weight));
 					if (logger.isLoggable(Level.FINEST)) 
 						logger.finest( String.format("Line: %s\nAdd LM, order: %d; weight: %.3f;", line, JoshuaConfiguration.g_lm_order, weight));
 				} else if (0 == fds[0].compareTo("latticecost") && fds.length == 2) {
 					double weight = Double.parseDouble(fds[1].trim());
-					l_models.add(new SourceLatticeArcCostFF(l_models.size(), weight));
+					this.featureFunctions.add(new SourceLatticeArcCostFF(this.featureFunctions.size(), weight));
 					if (logger.isLoggable(Level.FINEST)) logger.finest(
 						String.format("Line: %s\nAdd Source lattice cost, weight: %.3f", weight));
 				} else if (0 == fds[0].compareTo("phrasemodel") && fds.length == 4) { // phrasemodel owner column(0-indexed) weight
-					int owner = psymbolTable.addTerminal(fds[1]);
+					int owner = this.symbolTable.addTerminal(fds[1]);
 					int column = (new Integer(fds[2].trim())).intValue();
 					double weight = (new Double(fds[3].trim())).doubleValue();
-					l_models.add(new PhraseModelFF(l_models.size(), weight, owner, column));
+					this.featureFunctions.add(new PhraseModelFF(this.featureFunctions.size(), weight, owner, column));
 					if (logger.isLoggable(Level.FINEST)) 
 						logger.finest(String.format("Process Line: %s\nAdd PhraseModel, owner: %s; column: %d; weight: %.3f", line, owner, column, weight));
 				} else if (0 == fds[0].compareTo("arityphrasepenalty") && fds.length == 5){//arityphrasepenalty owner start_arity end_arity weight
-					int owner = psymbolTable.addTerminal(fds[1]);
+					int owner = this.symbolTable.addTerminal(fds[1]);
 					int start_arity = (new Integer(fds[2].trim())).intValue();
 					int end_arity = (new Integer(fds[3].trim())).intValue();
 					double weight = (new Double(fds[4].trim())).doubleValue();
-					l_models.add(new ArityPhrasePenaltyFF(l_models.size(), weight, owner, start_arity, end_arity));
+					this.featureFunctions.add(new ArityPhrasePenaltyFF(this.featureFunctions.size(), weight, owner, start_arity, end_arity));
 					if (logger.isLoggable(Level.FINEST)) 
 						logger.finest(String.format("Process Line: %s\nAdd ArityPhrasePenalty, owner: %s; start_arity: %d; end_arity: %d; weight: %.3f",line, owner, start_arity, end_arity, weight));
 				} else if (0 == fds[0].compareTo("wordpenalty") && fds.length == 2) { // wordpenalty weight
 					double weight = (new Double(fds[1].trim())).doubleValue();
-					l_models.add(new WordPenaltyFF(l_models.size(), weight));
+					this.featureFunctions.add(new WordPenaltyFF(this.featureFunctions.size(), weight));
 					if (logger.isLoggable(Level.FINEST)) 
 						logger.finest(String.format("Process Line: %s\nAdd WordPenalty, weight: %.3f", line, weight));
 				} else {
@@ -318,21 +301,13 @@ public class JoshuaDecoder {
 				}
 			}
 		}
-		t_reader_config.close();
-		return l_models;
-	}
-	
-	
-	private void setDefaultNonTerminals(String default_non_terminal) {
-		//TODO ##### add default non-terminals
-		this.defaultNonterminals = new ArrayList<Integer>();
-		this.defaultNonterminals.add(this.symbolTable.addNonterminal(default_non_terminal));
+		reader.close();
 	}
 	
 	
 	private void initializeSymbolTable() throws IOException {
 		if (JoshuaConfiguration.use_remote_lm_server) {
-			//within decoder, we assume to use buildin table when remote lm is used
+			// Within the decoder, we assume BuildinSymbol when using the remote LM
 			this.symbolTable =
 				new BuildinSymbol(JoshuaConfiguration.remote_symbol_tbl);
 			
@@ -341,22 +316,28 @@ public class JoshuaDecoder {
 				new SrilmSymbol(null, JoshuaConfiguration.g_lm_order);
 			logger.finest("Using SRILM symbol table");
 			
-		} else { // using the built-in JAVA implementatoin of LM
+		} else {
 			this.symbolTable = new BuildinSymbol(null);
 		}
+		
+		// Add the default nonterminal
+		this.defaultNonterminals = new ArrayList<Integer>();
+		this.defaultNonterminals.add(
+			this.symbolTable.addNonterminal(
+				JoshuaConfiguration.default_non_terminal));
 	}
 	
 	
 	//TODO: check we actually have a feature that requires a langage model
-	private static NGramLanguageModel initializeLanguageModel(SymbolTable psymbolTable) throws IOException {
-		NGramLanguageModel lm_grammar;
+	private void initializeLanguageModel() throws IOException {
 		if (JoshuaConfiguration.use_remote_lm_server) {
-			if (JoshuaConfiguration.use_left_equivalent_state || JoshuaConfiguration.use_right_equivalent_state){
+			if (JoshuaConfiguration.use_left_equivalent_state
+			|| JoshuaConfiguration.use_right_equivalent_state) {
 				logger.severe("use remote LM, we cannot use suffix/prefix stuff");
 				System.exit(1);
 			}
-			lm_grammar = new LMGrammarRemote(
-				psymbolTable,
+			this.languageModel = new LMGrammarRemote(
+				this.symbolTable,
 				JoshuaConfiguration.g_lm_order,
 				JoshuaConfiguration.f_remote_server_list,
 				JoshuaConfiguration.num_remote_lm_servers);
@@ -366,41 +347,43 @@ public class JoshuaDecoder {
 			|| JoshuaConfiguration.use_right_equivalent_state) {
 				logger.severe("use SRILM, we cannot use suffix/prefix stuff");
 				System.exit(1);
-			}			
-			lm_grammar = new LMGrammarSRILM(
-				(SrilmSymbol)psymbolTable,
+			}
+			this.languageModel = new LMGrammarSRILM(
+				(SrilmSymbol)this.symbolTable,
 				JoshuaConfiguration.g_lm_order,
-				JoshuaConfiguration.lm_file);			
-		}  else if (JoshuaConfiguration.use_bloomfilter_lm) {
+				JoshuaConfiguration.lm_file);
+			
+		} else if (JoshuaConfiguration.use_bloomfilter_lm) {
 			if (JoshuaConfiguration.use_left_equivalent_state
-					|| JoshuaConfiguration.use_right_equivalent_state) {
-						logger.severe("use Bloomfilter LM, we cannot use suffix/prefix stuff");
-						System.exit(1);
-					}					
-			lm_grammar = new BloomFilterLanguageModel(
-					psymbolTable,
+			|| JoshuaConfiguration.use_right_equivalent_state) {
+				logger.severe("use Bloomfilter LM, we cannot use suffix/prefix stuff");
+				System.exit(1);
+			}
+			this.languageModel = new BloomFilterLanguageModel(
+					this.symbolTable,
 					JoshuaConfiguration.g_lm_order,
 					JoshuaConfiguration.lm_file);
-		}else {
+		} else {
 			//using the built-in JAVA implementatoin of LM, may not be as scalable as SRILM
-			lm_grammar = new LMGrammarJAVA(
-				(BuildinSymbol)psymbolTable,
+			this.languageModel = new LMGrammarJAVA(
+				(BuildinSymbol)this.symbolTable,
 				JoshuaConfiguration.g_lm_order,
 				JoshuaConfiguration.lm_file,
 				JoshuaConfiguration.use_left_equivalent_state,
 				JoshuaConfiguration.use_right_equivalent_state);
 		}
-		
-		return lm_grammar;
 	}
 	
 	
 	private void initializeTranslationGrammars(String tmFile)
 	throws IOException {
+		if (logger.isLoggable(Level.INFO))
+			logger.info("Using grammar read from file " + tmFile);
+		
 		this.grammarFactories = new GrammarFactory[2];
 		
-		// Glue Grammar
-		GrammarFactory glueGrammar =
+		// Add the glue grammar
+		this.grammarFactories[0] =
 			//new MemoryBasedBatchGrammarWithPrune( //if this is used, then it depends on the LMModel to do pruning
 			new MemoryBasedBatchGrammar(
 				this.symbolTable, null, true,
@@ -409,10 +392,9 @@ public class JoshuaDecoder {
 				"^\\[[A-Z]+\\,[0-9]*\\]$",
 				"[\\[\\]\\,0-9]+");
 		
-		this.grammarFactories[0] = glueGrammar;
 		
-		// Regular TM Grammar
-		GrammarFactory regularGrammar =
+		// Add the regular grammar
+		this.grammarFactories[1] =
 			//new MemoryBasedBatchGrammarWithPrune(
 			new MemoryBasedBatchGrammar(		
 				this.symbolTable, tmFile, false,
@@ -421,18 +403,23 @@ public class JoshuaDecoder {
 				"^\\[[A-Z]+\\,[0-9]*\\]$",
 				"[\\[\\]\\,0-9]+");
 		
-		this.grammarFactories[1] = regularGrammar;
-		
 		//TODO if suffix-array: call SAGrammarFactory(SuffixArray sourceSuffixArray, CorpusArray targetCorpus, AlignmentArray alignments, LexicalProbabilities lexProbs, int maxPhraseSpan, int maxPhraseLength, int maxNonterminals, int spanLimit) {
 	}
 	
 	
 	private void initializeSuffixArrayGrammar() throws IOException {
+		if (logger.isLoggable(Level.INFO))
+			logger.info(
+				"Using SuffixArray grammar constructed from " +
+				"source "    + JoshuaConfiguration.sa_source + ", " +
+				"target "    + JoshuaConfiguration.sa_target + ", " +
+				"alignment " + JoshuaConfiguration.sa_alignment);
+		
 		this.grammarFactories = new GrammarFactory[2];
 		
 		logger.info("Constructing glue grammar...");
-		// Glue Grammar
-		GrammarFactory glueGrammar =
+		// Add the glue grammar
+		this.grammarFactories[0] =
 			//new MemoryBasedBatchGrammarWithPrune(
 			new MemoryBasedBatchGrammar(
 				this.symbolTable, null, true,
@@ -441,17 +428,9 @@ public class JoshuaDecoder {
 				"^\\[[A-Z]+\\,[0-9]*\\]$",
 				"[\\[\\]\\,0-9]+");
 		
-		this.grammarFactories[0] = glueGrammar;
-		
-		int sampleSize = JoshuaConfiguration.sa_rule_sample_size;
-		int maxPhraseSpan = JoshuaConfiguration.sa_max_phrase_span;
-		int maxPhraseLength = JoshuaConfiguration.sa_max_phrase_length;
-		int maxNonterminals = JoshuaConfiguration.sa_max_nonterminals;
-		int minNonterminalSpan = JoshuaConfiguration.sa_min_nonterminal_span;
-		
-		int maxCacheSize = JoshuaConfiguration.sa_rule_cache_size;
 		
 		String sourceFileName = JoshuaConfiguration.sa_source;
+		
 		SymbolTable sourceVocab = this.symbolTable;//new Vocabulary();
 		int[] sourceWordsSentences =
 			SuffixArrayFactory.count(sourceFileName);
@@ -459,18 +438,25 @@ public class JoshuaDecoder {
 		CorpusArray sourceCorpusArray =
 			SuffixArrayFactory.createCorpusArray(sourceFileName, sourceVocab,
 				sourceWordsSentences[0], sourceWordsSentences[1]);
+		
 		SuffixArray sourceSuffixArray =
-			SuffixArrayFactory.createSuffixArray(sourceCorpusArray, maxCacheSize);
+			SuffixArrayFactory.createSuffixArray(
+				sourceCorpusArray, JoshuaConfiguration.sa_rule_cache_size);
+		
 		
 		String targetFileName = JoshuaConfiguration.sa_target;
+		
 		Vocabulary targetVocab = new Vocabulary();
 		int[] targetWordsSentences =
 			SuffixArrayFactory.createVocabulary(targetFileName, targetVocab);
 		CorpusArray targetCorpusArray =
 			SuffixArrayFactory.createCorpusArray(targetFileName, targetVocab,
 				targetWordsSentences[0], targetWordsSentences[1]);
+		
 		SuffixArray targetSuffixArray =
-			SuffixArrayFactory.createSuffixArray(targetCorpusArray, maxCacheSize);
+			SuffixArrayFactory.createSuffixArray(
+				targetCorpusArray, JoshuaConfiguration.sa_rule_cache_size);
+		
 		
 		String alignmentFileName = JoshuaConfiguration.sa_alignment;
 		int trainingSize = sourceCorpusArray.getNumSentences();
@@ -478,47 +464,40 @@ public class JoshuaDecoder {
 				new Scanner(new File(alignmentFileName)),
 				sourceCorpusArray, targetCorpusArray, trainingSize);
 		
-		int lexSampleSize = JoshuaConfiguration.sa_lex_sample_size;
-		int lexCacheSize  = JoshuaConfiguration.sa_lex_cache_size;
-		boolean precalculateLexprobs =
-			JoshuaConfiguration.sa_precalculate_lexprobs;
 		LexicalProbabilities lexProbs = new SampledLexProbs(
-			lexSampleSize, sourceSuffixArray, targetSuffixArray,
-			alignments, lexCacheSize, precalculateLexprobs);
+			JoshuaConfiguration.sa_lex_sample_size,
+			sourceSuffixArray,
+			targetSuffixArray,
+			alignments,
+			JoshuaConfiguration.sa_lex_cache_size,
+			JoshuaConfiguration.sa_precalculate_lexprobs);
 		
-		GrammarFactory suffixArrayGrammar = new SAGrammarFactory(
-				sourceSuffixArray, targetCorpusArray, alignments, 
-				lexProbs, sampleSize, maxPhraseSpan, maxPhraseLength, 
-				maxNonterminals, minNonterminalSpan);
-		
-		this.grammarFactories[1] = suffixArrayGrammar;
+		// Finally, add the Suffix Array Grammar
+		this.grammarFactories[1] = new SAGrammarFactory(
+			sourceSuffixArray,
+			targetCorpusArray,
+			alignments,
+			lexProbs,
+			JoshuaConfiguration.sa_rule_sample_size,
+			JoshuaConfiguration.sa_max_phrase_span,
+			JoshuaConfiguration.sa_max_phrase_length,
+			JoshuaConfiguration.sa_max_nonterminals,
+			JoshuaConfiguration.sa_min_nonterminal_span);
 	}
 	
 	
-	static public FeatureFunction haveLMFeature(ArrayList<FeatureFunction> l_models) {
-		for (FeatureFunction ff : l_models) {
-			if (ff instanceof LanguageModelFF) {
-				return ff;
-			}
-		}
-		return null;
-	}
-	
-	
-	public void writeConfigFile(double[] new_weights, String template, String file_to_write) {
+	public void writeConfigFile(double[] new_weights, String template, String outputFile) {
 		try {
-			BufferedReader t_reader_config = 
-				FileUtility.getReadFileStream(template);
-			BufferedWriter t_writer_config = 
-				FileUtility.getWriteFileStream(file_to_write);
+			BufferedReader reader = FileUtility.getReadFileStream(template);
+			BufferedWriter writer = FileUtility.getWriteFileStream(outputFile);
 			String line;
-			int feat_id = 0;
-			while ((line = FileUtility.read_line_lzf(t_reader_config)) != null) {
+			int featureID = 0;
+			while ((line = FileUtility.read_line_lzf(reader)) != null) {
 				line = line.trim();
 				if (line.matches("^\\s*(?:\\#.*)?$")
 				|| line.indexOf("=") != -1) {
 					//comment, empty line, or parameter lines: just copy
-					t_writer_config.write(line + "\n");
+					writer.write(line + "\n");
 					
 				} else { //models: replace the weight
 					String[] fds = line.split("\\s+");
@@ -530,16 +509,16 @@ public class JoshuaDecoder {
 						new_line.append(fds[i]);
 						new_line.append(" ");
 					}
-					new_line.append(new_weights[feat_id++]);
-					t_writer_config.write(new_line.toString() + "\n");
+					new_line.append(new_weights[featureID++]);
+					writer.write(new_line.toString() + "\n");
 				}
 			}
-			if (feat_id != new_weights.length) {
+			if (featureID != new_weights.length) {
 				logger.severe("number of models does not match number of weights, must be wrong");
 				System.exit(1);
 			}
-			t_reader_config.close();
-			t_writer_config.close();
+			reader.close();
+			writer.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

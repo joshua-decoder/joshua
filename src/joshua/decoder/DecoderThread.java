@@ -21,6 +21,7 @@ package joshua.decoder;
 import joshua.corpus.SymbolTable;
 import joshua.decoder.chart_parser.Chart;
 import joshua.decoder.ff.FeatureFunction;
+import joshua.decoder.ff.lm.LanguageModelFF;
 import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.GrammarFactory;
 import joshua.decoder.hypergraph.DiskHyperGraph;
@@ -92,11 +93,20 @@ public class DecoderThread extends Thread {
 				JoshuaConfiguration.include_align_index, JoshuaConfiguration.add_combined_cost,  false, true);
 		
 		if (JoshuaConfiguration.save_disk_hg) {
+			FeatureFunction languageModel = null;
+			for (FeatureFunction ff : this.p_l_feat_functions) {
+				if (ff instanceof LanguageModelFF) {
+					languageModel =  ff;
+					break;
+				}
+			}
+			if (null == languageModel) {
+				throw new RuntimeException("No language model feature function found");
+			}
+			
 			this.p_disk_hg = new DiskHyperGraph(
 				this.p_symbolTable,
-				JoshuaDecoder
-					.haveLMFeature(this.p_l_feat_functions)
-					.getFeatureID(),
+				languageModel.getFeatureID(),
 				true, // always store model cost
 				p_l_feat_functions);
 			
