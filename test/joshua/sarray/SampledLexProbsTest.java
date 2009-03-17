@@ -88,19 +88,22 @@ public class SampledLexProbsTest {
 			alignmentFileName = alignmentFile.getAbsolutePath();
 		}
 		
-		sourceVocab = new Vocabulary();
-		int[] sourceWordsSentences = SuffixArrayFactory.createVocabulary(sourceFileName, sourceVocab);
-		sourceCorpusArray = SuffixArrayFactory.createCorpusArray(sourceFileName, sourceVocab, sourceWordsSentences[0], sourceWordsSentences[1]);
-		SuffixArray sourceSuffixArray = SuffixArrayFactory.createSuffixArray(sourceCorpusArray, SuffixArray.DEFAULT_CACHE_CAPACITY);
+		this.sourceCorpusArray =
+			SuffixArrayFactory.createCorpusArray(sourceFileName);
+		this.sourceVocab = (Vocabulary) sourceCorpusArray.getVocabulary();
+		SuffixArray sourceSuffixArray =
+			SuffixArrayFactory.createSuffixArray(sourceCorpusArray, SuffixArray.DEFAULT_CACHE_CAPACITY);
 
-		targetVocab = new Vocabulary();
-		int[] targetWordsSentences = SuffixArrayFactory.createVocabulary(targetFileName, targetVocab);
-		CorpusArray targetCorpusArray = SuffixArrayFactory.createCorpusArray(targetFileName, targetVocab, targetWordsSentences[0], targetWordsSentences[1]);
-		SuffixArray targetSuffixArray = SuffixArrayFactory.createSuffixArray(targetCorpusArray, SuffixArray.DEFAULT_CACHE_CAPACITY);
+		CorpusArray targetCorpusArray =
+			SuffixArrayFactory.createCorpusArray(targetFileName);
+		this.targetVocab = (Vocabulary) targetCorpusArray.getVocabulary();
+		SuffixArray targetSuffixArray = 
+			SuffixArrayFactory.createSuffixArray(targetCorpusArray, SuffixArray.DEFAULT_CACHE_CAPACITY);
 
-		alignmentArray = SuffixArrayFactory.createAlignmentArray(alignmentFileName, sourceSuffixArray, targetSuffixArray);
+		this.alignmentArray =
+			SuffixArrayFactory.createAlignmentArray(alignmentFileName, sourceSuffixArray, targetSuffixArray);
 
-		lexProbs = 
+		this.lexProbs = 
 			new SampledLexProbs(Integer.MAX_VALUE, sourceSuffixArray, targetSuffixArray, alignmentArray, Cache.DEFAULT_CAPACITY, false);
 		
 	}

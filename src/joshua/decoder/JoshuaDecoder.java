@@ -428,31 +428,19 @@ public class JoshuaDecoder {
 				"^\\[[A-Z]+\\,[0-9]*\\]$",
 				"[\\[\\]\\,0-9]+");
 		
+		// TODO: SA creation is a constant thing which should be done earlier in the pipeline. Here we should only load the already-created SA
 		
 		String sourceFileName = JoshuaConfiguration.sa_source;
-		
-		SymbolTable sourceVocab = this.symbolTable;//new Vocabulary();
-		int[] sourceWordsSentences =
-			SuffixArrayFactory.count(sourceFileName);
-//			SuffixArrayFactory.createVocabulary(sourceFileName, sourceVocab);
 		CorpusArray sourceCorpusArray =
-			SuffixArrayFactory.createCorpusArray(sourceFileName, sourceVocab,
-				sourceWordsSentences[0], sourceWordsSentences[1]);
-		
+			SuffixArrayFactory.createCorpusArray(sourceFileName, this.symbolTable);
 		SuffixArray sourceSuffixArray =
 			SuffixArrayFactory.createSuffixArray(
 				sourceCorpusArray, JoshuaConfiguration.sa_rule_cache_size);
 		
 		
 		String targetFileName = JoshuaConfiguration.sa_target;
-		
-		Vocabulary targetVocab = new Vocabulary();
-		int[] targetWordsSentences =
-			SuffixArrayFactory.createVocabulary(targetFileName, targetVocab);
 		CorpusArray targetCorpusArray =
-			SuffixArrayFactory.createCorpusArray(targetFileName, targetVocab,
-				targetWordsSentences[0], targetWordsSentences[1]);
-		
+			SuffixArrayFactory.createCorpusArray(targetFileName);
 		SuffixArray targetSuffixArray =
 			SuffixArrayFactory.createSuffixArray(
 				targetCorpusArray, JoshuaConfiguration.sa_rule_cache_size);

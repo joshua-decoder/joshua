@@ -23,16 +23,18 @@ public class CorpusArrayTest {
 		int numSentences = 5;  // Should be 5 sentences in tiny.en
 		int numWords = 89;     // Should be 89 words in tiny.en
 		
-		Vocabulary vocab = new Vocabulary();
 		
 		try {
 			
+			// FIX: can't use createVocabulary(String) because we set numWords and numSentences
+			Vocabulary vocab = new Vocabulary();
 			SuffixArrayFactory.createVocabulary(filename, vocab);
 			CorpusArray corpus = SuffixArrayFactory.createCorpusArray(filename, vocab, numWords, numSentences);
+			
 			corpus.writeVocabToFile(filename+".bin");
 			corpus.writeSentencesToFile(filename+".sbin");
 			
-			MemoryMappedCorpusArray mmCorpus = new MemoryMappedCorpusArray(vocab, filename+".bin", numWords*4, filename+".sbin", numSentences*4);
+			MemoryMappedCorpusArray mmCorpus = new MemoryMappedCorpusArray((Vocabulary)corpus.getVocabulary(), filename+".bin", numWords*4, filename+".sbin", numSentences*4);
 			
 			for (int i=0; i<corpus.size(); i++) {
 				Assert.assertEquals(mmCorpus.getWordID(i), corpus.getWordID(i));

@@ -50,15 +50,15 @@ public class AlignmentArrayTest {
 		String targetFilename = "data/tiny.en";
 		String alignmentsFilename = "data/tiny.fr-en.alignment";
 		
-		Vocabulary sourceVocab = new Vocabulary();
-		int[] numberOfSourceWordsAndSentences = SuffixArrayFactory.createVocabulary(sourceFilename, sourceVocab);
-		CorpusArray sourceArray = SuffixArrayFactory.createCorpusArray(sourceFilename, sourceVocab, numberOfSourceWordsAndSentences[0], numberOfSourceWordsAndSentences[1]);
-		sourceCorpus = SuffixArrayFactory.createSuffixArray(sourceArray, SuffixArray.DEFAULT_CACHE_CAPACITY);//SuffixArrayFactory.loadSuffixArray(sourceLang, corpusName, directory);
+		CorpusArray sourceArray =
+			SuffixArrayFactory.createCorpusArray(sourceFilename);
+		sourceCorpus =
+			SuffixArrayFactory.createSuffixArray(sourceArray, SuffixArray.DEFAULT_CACHE_CAPACITY);//SuffixArrayFactory.loadSuffixArray(sourceLang, corpusName, directory);
 		
-		Vocabulary targetVocab = new Vocabulary();
-		int[] numberOfTargetWordsAndSentences = SuffixArrayFactory.createVocabulary(targetFilename, targetVocab);
-		CorpusArray targetArray = SuffixArrayFactory.createCorpusArray(targetFilename, targetVocab, numberOfTargetWordsAndSentences[0], numberOfTargetWordsAndSentences[1]);
-		targetCorpus = SuffixArrayFactory.createSuffixArray(targetArray, SuffixArray.DEFAULT_CACHE_CAPACITY);//SuffixArrayFactory.loadSuffixArray(targetLang, corpusName, directory);
+		CorpusArray targetArray =
+			SuffixArrayFactory.createCorpusArray(targetFilename);
+		targetCorpus =
+			SuffixArrayFactory.createSuffixArray(targetArray, SuffixArray.DEFAULT_CACHE_CAPACITY);//SuffixArrayFactory.loadSuffixArray(targetLang, corpusName, directory);
 		
 		alignmentArray = (AlignmentArray) SuffixArrayFactory.createAlignmentArray(alignmentsFilename, sourceCorpus, targetCorpus); //SuffixArrayFactory.loadAlignmentArray(sourceLang, targetLang, corpusName, directory);
 		

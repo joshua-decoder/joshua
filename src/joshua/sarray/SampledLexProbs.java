@@ -174,15 +174,15 @@ public class SampledLexProbs implements LexicalProbabilities {
 			alignmentFileName = alignmentFile.getAbsolutePath();
 		}
 		
-		Vocabulary sourceVocab = new Vocabulary();
-		int[] sourceWordsSentences = SuffixArrayFactory.createVocabulary(sourceFileName, sourceVocab);
-		CorpusArray sourceCorpusArray = SuffixArrayFactory.createCorpusArray(sourceFileName, sourceVocab, sourceWordsSentences[0], sourceWordsSentences[1]);
-		SuffixArray sourceSuffixArray = SuffixArrayFactory.createSuffixArray(sourceCorpusArray, SuffixArray.DEFAULT_CACHE_CAPACITY);
-
-		Vocabulary targetVocab = new Vocabulary();
-		int[] targetWordsSentences = SuffixArrayFactory.createVocabulary(targetFileName, targetVocab);
-		CorpusArray targetCorpusArray = SuffixArrayFactory.createCorpusArray(targetFileName, targetVocab, targetWordsSentences[0], targetWordsSentences[1]);
-		SuffixArray targetSuffixArray = SuffixArrayFactory.createSuffixArray(targetCorpusArray, SuffixArray.DEFAULT_CACHE_CAPACITY);
+		CorpusArray sourceCorpusArray =
+			SuffixArrayFactory.createCorpusArray(sourceFileName);
+		SuffixArray sourceSuffixArray = 
+			SuffixArrayFactory.createSuffixArray(sourceCorpusArray, SuffixArray.DEFAULT_CACHE_CAPACITY);
+		
+		CorpusArray targetCorpusArray =
+			SuffixArrayFactory.createCorpusArray(targetFileName);
+		SuffixArray targetSuffixArray = 
+			SuffixArrayFactory.createSuffixArray(targetCorpusArray, SuffixArray.DEFAULT_CACHE_CAPACITY);
 
 		Alignments alignmentArray = SuffixArrayFactory.createAlignmentArray(alignmentFileName, sourceSuffixArray, targetSuffixArray);
 

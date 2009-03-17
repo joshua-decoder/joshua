@@ -57,10 +57,9 @@ public class HierarchicalPhraseTest {
 			sourcePrintStream.close();
 			sourceFileName = sourceFile.getAbsolutePath();
 		}
-
-		Vocabulary sourceVocab = new Vocabulary();
-		int[] sourceWordsSentences = SuffixArrayFactory.createVocabulary(sourceFileName, sourceVocab);
-		sourceCorpusArray = SuffixArrayFactory.createCorpusArray(sourceFileName, sourceVocab, sourceWordsSentences[0], sourceWordsSentences[1]);
+		
+		sourceCorpusArray = 
+			SuffixArrayFactory.createCorpusArray(sourceFileName);
 		
 	}
 	

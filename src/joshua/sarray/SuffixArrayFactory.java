@@ -79,6 +79,23 @@ public class SuffixArrayFactory {
 	}
 	
 	
+	// TODO: fuse createVocabulary and createCorpusArray together to avoid allocating the trivial array.
+	public static CorpusArray createCorpusArray(String inputFilename)
+	throws IOException {
+		Vocabulary vocabulary = new Vocabulary();
+		int[] ws = createVocabulary(inputFilename, vocabulary);
+		return createCorpusArray(inputFilename, vocabulary, ws[0], ws[1]);
+	}
+	
+	
+	// TODO: fuse count and createCorpusArray together to avoid allocating the trivial array.
+	public static CorpusArray createCorpusArray(String inputFilename, SymbolTable vocabulary) throws IOException {
+		int[] ws = count(inputFilename);
+		return createCorpusArray(inputFilename, vocabulary, ws[0], ws[1]);
+	}
+	
+	
+	// BUG: Vocabulary is incestuous and requires this method. It should be moved there.
 	/**
 	 * Creates a new Vocabulary from a plain text file.
 	 *
@@ -111,7 +128,7 @@ public class SuffixArrayFactory {
 	 * @param inputFilename the plain text file
 	 * @return a tuple containing the number of words in the corpus and number of sentences in the corpus
 	 */
-	public static int[] count(String inputFilename) throws IOException {
+	private static int[] count(String inputFilename) throws IOException {
 		BufferedReader reader = FileUtility.getReadFileStream(inputFilename);
 		
 		int numSentences = 0;
@@ -128,6 +145,8 @@ public class SuffixArrayFactory {
 		return numberOfWordsSentences;
 	}
 	
+	
+	// HACK: This is package-private for ExtractRules and CorpusArrayTest to use
 	/**
 	 * Creates a new CorpusArray from a plain text file, given
 	 * a Vocabulary created from the same file.
@@ -137,7 +156,7 @@ public class SuffixArrayFactory {
 	 * @param numSentences the number of lines in the file
 	 *                     (returned by createVocabulary)
 	 */
-	public static CorpusArray createCorpusArray(String inputFilename, SymbolTable vocab, int numWords, int numSentences) throws IOException {
+	static CorpusArray createCorpusArray(String inputFilename, SymbolTable vocab, int numWords, int numSentences) throws IOException {
 		BufferedReader reader = FileUtil.getBufferedReader(inputFilename);
 		// initialize the arrays.
 		int[] corpus = new int[numWords];

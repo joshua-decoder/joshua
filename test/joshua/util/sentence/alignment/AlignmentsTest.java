@@ -95,20 +95,21 @@ public class AlignmentsTest {
 			alignmentPrintStream.close();
 			alignmentFileName = alignmentFile.getAbsolutePath();
 		}
-
-
-		Vocabulary sourceVocab = new Vocabulary();
-		int[] sourceWordsSentences = SuffixArrayFactory.createVocabulary(sourceFileName, sourceVocab);
-		sourceCorpusArray = SuffixArrayFactory.createCorpusArray(sourceFileName, sourceVocab, sourceWordsSentences[0], sourceWordsSentences[1]);
-
-		Vocabulary targetVocab = new Vocabulary();
-		int[] targetWordsSentences = SuffixArrayFactory.createVocabulary(targetFileName, targetVocab);
-		targetCorpusArray = SuffixArrayFactory.createCorpusArray(targetFileName, targetVocab, targetWordsSentences[0], targetWordsSentences[1]);
+		
+		
+		sourceCorpusArray =
+			SuffixArrayFactory.createCorpusArray(sourceFileName);
+		
+		targetCorpusArray =
+			SuffixArrayFactory.createCorpusArray(targetFileName);
 
 		if (alignmentsType.equals("AlignmentArray")) {
-			SuffixArray targetSuffixArray = SuffixArrayFactory.createSuffixArray(targetCorpusArray, SuffixArray.DEFAULT_CACHE_CAPACITY);
-			SuffixArray sourceSuffixArray = SuffixArrayFactory.createSuffixArray(sourceCorpusArray, SuffixArray.DEFAULT_CACHE_CAPACITY);
-			alignments = SuffixArrayFactory.createAlignmentArray(alignmentFileName, sourceSuffixArray, targetSuffixArray);
+			SuffixArray targetSuffixArray = 
+				SuffixArrayFactory.createSuffixArray(targetCorpusArray, SuffixArray.DEFAULT_CACHE_CAPACITY);
+			SuffixArray sourceSuffixArray = 
+				SuffixArrayFactory.createSuffixArray(sourceCorpusArray, SuffixArray.DEFAULT_CACHE_CAPACITY);
+			alignments = 
+				SuffixArrayFactory.createAlignmentArray(alignmentFileName, sourceSuffixArray, targetSuffixArray);
 		} else {
 			alignments = new AlignmentGrids(new Scanner(new File(alignmentFileName)), sourceCorpusArray, targetCorpusArray, 3);			
 		}
