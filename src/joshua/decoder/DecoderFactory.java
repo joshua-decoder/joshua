@@ -68,7 +68,7 @@ public class DecoderFactory {
 				
 				pdecoder.decode_a_file();//do not run *start*; so that we stay in the current main thread
 				if (JoshuaConfiguration.save_disk_hg) {
-					pdecoder.p_disk_hg.write_rules_non_parallel(nbest_file + ".hg.rules");
+					pdecoder.hypergraphSerializer.write_rules_non_parallel(nbest_file + ".hg.rules");
 				}
 			} else {
 				if (JoshuaConfiguration.use_remote_lm_server) { // TODO
@@ -204,7 +204,7 @@ public class DecoderFactory {
 			String sent;
 			//merge nbest
 			BufferedReader t_reader =
-				FileUtility.getReadFileStream(p_decoder.nbest_file);
+				FileUtility.getReadFileStream(p_decoder.nbestFile);
 			while ((sent = FileUtility.read_line_lzf(t_reader)) != null) {
 				t_writer_nbest.write(sent + "\n");
 			}
@@ -214,7 +214,7 @@ public class DecoderFactory {
 			//merge hypergrpah items
 			if (JoshuaConfiguration.save_disk_hg) {
 				BufferedReader t_reader_dhg_items =
-					FileUtility.getReadFileStream(p_decoder.nbest_file + ".hg.items");
+					FileUtility.getReadFileStream(p_decoder.nbestFile + ".hg.items");
 				while ((sent = FileUtility.read_line_lzf(t_reader_dhg_items)) != null) {
 					t_writer_dhg_items.write(sent + "\n");
 				}
@@ -235,7 +235,7 @@ public class DecoderFactory {
 			BufferedWriter t_writer_dhg_rules =
 				FileUtility.getWriteFileStream(nbest_file + ".hg.rules");
 			for (DecoderThread p_decoder : parallel_threads) {
-				p_decoder.p_disk_hg.write_rules_parallel(t_writer_dhg_rules, tbl_done);
+				p_decoder.hypergraphSerializer.write_rules_parallel(t_writer_dhg_rules, tbl_done);
 			}
 			t_writer_dhg_rules.flush();
 			t_writer_dhg_rules.close();

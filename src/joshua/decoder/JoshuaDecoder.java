@@ -84,57 +84,95 @@ public class JoshuaDecoder {
 	
 	
 //===============================================================
-// Main
-//===============================================================
-	public static void main(String[] args) throws IOException {
-		logger.finest("Starting decoder");
-		
-		long startTime = 0;
-		if (logger.isLoggable(Level.INFO)) {
-			startTime = System.currentTimeMillis();
-		}
-		
-		if (args.length != 3 && args.length != 4) {
-			System.out.println("Usage: java " +
-				JoshuaDecoder.class.getName() +
-				" configFile testFile outputFile (oracleFile)");
-			
-			System.out.println("num of args is " + args.length);
-			for (int i = 0; i < args.length; i++) {
-				System.out.println("arg is: " + args[i]);
-			}
-			System.exit(1);
-		}
-		String configFile = args[0].trim();
-		String testFile   = args[1].trim();
-		String nbestFile  = args[2].trim();
-		String oracleFile = (4 == args.length ? args[3].trim() : null);
-		
-		
-		/* Step-1: initialize the decoder */
-		JoshuaDecoder decoder = new JoshuaDecoder().initialize(configFile);
-		if (logger.isLoggable(Level.INFO)) {
-			logger.info("Before translation, loading time is "
-				+ (double)((System.currentTimeMillis() - startTime) / 1000)
-				+ " seconds");
-		}
-		
-		
-		/* Step-2: Decoding */
-		decoder.decodeTestSet(testFile, nbestFile, oracleFile);
-		
-		
-		/* Step-3: clean up */
-		decoder.cleanUp();
-		if (logger.isLoggable(Level.INFO)) {
-			logger.info("Total running time is "
-				+ (double)((System.currentTimeMillis() - startTime) / 1000)
-				+ " seconds");
-		}
-	}
-// end main()
+// Public Methods
 //===============================================================
 	
+	/* this assumes that the weights are ordered according to the decoder's config file */
+	public void changeFeatureWeightVector(double[] weights) {
+		if (this.featureFunctions.size() != weights.length) {
+			logger.severe("JoshuaDecoder.changeFeatureWeightVector: number of weights does not match number of feature functions");
+			System.exit(0);
+		}
+		{ int i = 0; for (FeatureFunction ff : this.featureFunctions) {
+			double oldWeight = ff.getWeight();
+			ff.setWeight(weights[i]);
+			System.out.println("Feature function : " +
+				ff.getClass().getSimpleName() +
+				"; weight changed from " + oldWeight + " to " + ff.getWeight());
+		i++; }}
+		
+		// BUG: this works for Batch grammar only; not for sentence-specific grammars
+		for (GrammarFactory grammarFactory : this.grammarFactories) {
+			grammarFactory.getGrammarForSentence(null)
+				.sortGrammar(this.featureFunctions);
+		}
+	}
+	
+	
+	/** Decode a whole test set. This may be parallel. */
+	public void decodeTestSet(String testFile, String nbestFile, String oracleFile) throws IOException {
+		this.decoderFactory.decodeTestSet(testFile, nbestFile, oracleFile);
+	}
+	
+	public void decodeTestSet(String testFile, String nbestFile) {
+		this.decoderFactory.decodeTestSet(testFile, nbestFile, null);
+	}
+	
+	
+	/** Decode a sentence. This must be non-parallel. */
+	public void decodeSentence(String testSentence, String[] nbests) {
+		//TODO
+	}
+	
+	
+	public void cleanUp() {
+		//TODO
+		//this.languageModel.end_lm_grammar(); //end the threads
+	}
+	
+	
+	public void writeConfigFile(double[] newWeights, String template, String outputFile) {
+		try {
+			BufferedReader reader = FileUtility.getReadFileStream(template);
+			BufferedWriter writer = FileUtility.getWriteFileStream(outputFile);
+			String line;
+			int featureID = 0;
+			while ((line = FileUtility.read_line_lzf(reader)) != null) {
+				line = line.trim();
+				if (line.matches("^\\s*(?:\\#.*)?$")
+				|| line.indexOf("=") != -1) {
+					//comment, empty line, or parameter lines: just copy
+					writer.write(line + "\n");
+					
+				} else { //models: replace the weight
+					String[] fds = line.split("\\s+");
+					StringBuffer newLine = new StringBuffer();
+					if (! fds[fds.length-1].matches("^[\\d\\.\\-\\+]+")) {
+						logger.severe("last field is not a number; the field is: " + fds[fds.length-1]);
+						System.exit(1);
+					}
+					for (int i = 0; i < fds.length-1; i++) {
+						newLine.append(fds[i]).append(" ");
+					}
+					newLine.append(newWeights[featureID++]).append("\n");
+					writer.write(newLine.toString());
+				}
+			}
+			if (featureID != newWeights.length) {
+				logger.severe("number of models does not match number of weights");
+				System.exit(1);
+			}
+			reader.close();
+			writer.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	
+//===============================================================
+// Initialization Methods
+//===============================================================
 	
 	/** Initialize all parts of the JoshuaDecoder. */
 	public JoshuaDecoder initialize(String configFile) {
@@ -196,59 +234,11 @@ public class JoshuaDecoder {
 		
 		return this;
 	}
-// end initialize()
-//===============================================================
-	
-	
-	/* this assumes that the weights are ordered according to the decoder's config file */
-	public void changeFeatureWeightVector(double[] weights) {
-		if (this.featureFunctions.size() != weights.length) {
-			logger.severe("JoshuaDecoder.changeFeatureWeightVector: number of weights does not match number of feature functions");
-			System.exit(0);
-		}
-		{ int i = 0; for (FeatureFunction ff : this.featureFunctions) {
-			double oldWeight = ff.getWeight();
-			ff.setWeight(weights[i]);
-			System.out.println("Feature function : " +
-				ff.getClass().getSimpleName() +
-				"; weight changed from " + oldWeight + " to " + ff.getWeight());
-		i++; }}
-		
-		// BUG: this works for Batch grammar only; not for sentence-specific grammars
-		for (GrammarFactory grammarFactory : this.grammarFactories) {
-			grammarFactory.getGrammarForSentence(null)
-				.sortGrammar(this.featureFunctions);
-		}
-	}
-	
-	
-	/** Decode a whole test set. This may be parallel */
-	public void decodeTestSet(String testFile, String nbestFile, String oracleFile) throws IOException {
-		this.decoderFactory.decodeTestSet(testFile, nbestFile, oracleFile);
-	}
-	
-	
-	public void decodeTestSet(String testFile, String nbestFile) {
-		this.decoderFactory.decodeTestSet(testFile, nbestFile, null);
-	}
-	
-	
-	/* Decoding a sentence This must be non-parallel */
-	public void decodeSentence(String testSentence, String[] nbests) {
-		//TODO
-	}
-	
-	
-	public void cleanUp() {
-		//TODO
-		//this.languageModel.end_lm_grammar(); //end the threads
-	}
 	
 	
 	private void initializeFeatureFunctions(String configFile)
 	throws IOException {
-		BufferedReader reader =
-			FileUtility.getReadFileStream(configFile);
+		BufferedReader reader = FileUtility.getReadFileStream(configFile);
 		this.featureFunctions = new ArrayList<FeatureFunction>();
 		
 		String line;
@@ -261,40 +251,69 @@ public class JoshuaDecoder {
 			
 			if (line.indexOf("=") == -1) { //ignore lines with "="
 				String[] fds = line.split("\\s+");
-				if (fds[0].compareTo("lm") == 0 && fds.length == 2) { // lm order weight
+				if ("lm".equals(fds[0]) && fds.length == 2) { // lm order weight
 					if (null == this.languageModel) {
-						logger.severe("LM model has not been properly initialized, must be wrong");
+						logger.severe("LM model has not been properly initialized before setting order and weight");
 						System.exit(1);
 					}
 					double weight = Double.parseDouble(fds[1].trim());
-					this.featureFunctions.add(new LanguageModelFF(this.featureFunctions.size(), JoshuaConfiguration.g_lm_order, this.symbolTable, this.languageModel, weight));
+					this.featureFunctions.add(
+						new LanguageModelFF(
+							this.featureFunctions.size(),
+							JoshuaConfiguration.g_lm_order,
+							this.symbolTable, this.languageModel, weight));
 					if (logger.isLoggable(Level.FINEST)) 
-						logger.finest( String.format("Line: %s\nAdd LM, order: %d; weight: %.3f;", line, JoshuaConfiguration.g_lm_order, weight));
-				} else if (0 == fds[0].compareTo("latticecost") && fds.length == 2) {
+						logger.finest(String.format(
+							"Line: %s\nAdd LM, order: %d; weight: %.3f;",
+							line, JoshuaConfiguration.g_lm_order, weight));
+					
+				} else if ("latticecost".equals(fds[0]) && fds.length == 2) {
 					double weight = Double.parseDouble(fds[1].trim());
-					this.featureFunctions.add(new SourceLatticeArcCostFF(this.featureFunctions.size(), weight));
-					if (logger.isLoggable(Level.FINEST)) logger.finest(
-						String.format("Line: %s\nAdd Source lattice cost, weight: %.3f", weight));
-				} else if (0 == fds[0].compareTo("phrasemodel") && fds.length == 4) { // phrasemodel owner column(0-indexed) weight
-					int owner = this.symbolTable.addTerminal(fds[1]);
-					int column = (new Integer(fds[2].trim())).intValue();
-					double weight = (new Double(fds[3].trim())).doubleValue();
-					this.featureFunctions.add(new PhraseModelFF(this.featureFunctions.size(), weight, owner, column));
+					this.featureFunctions.add(
+						new SourceLatticeArcCostFF(
+							this.featureFunctions.size(), weight));
+					if (logger.isLoggable(Level.FINEST))
+						logger.finest(String.format(
+							"Line: %s\nAdd Source lattice cost, weight: %.3f",
+							weight));
+					
+				} else if ("phrasemodel".equals(fds[0]) && fds.length == 4) { // phrasemodel owner column(0-indexed) weight
+					int    owner  = this.symbolTable.addTerminal(fds[1]);
+					int    column = Integer.parseInt(fds[2].trim());
+					double weight = Double.parseDouble(fds[3].trim());
+					this.featureFunctions.add(
+						new PhraseModelFF(
+							this.featureFunctions.size(),
+							weight, owner, column));
 					if (logger.isLoggable(Level.FINEST)) 
-						logger.finest(String.format("Process Line: %s\nAdd PhraseModel, owner: %s; column: %d; weight: %.3f", line, owner, column, weight));
-				} else if (0 == fds[0].compareTo("arityphrasepenalty") && fds.length == 5){//arityphrasepenalty owner start_arity end_arity weight
-					int owner = this.symbolTable.addTerminal(fds[1]);
-					int start_arity = (new Integer(fds[2].trim())).intValue();
-					int end_arity = (new Integer(fds[3].trim())).intValue();
-					double weight = (new Double(fds[4].trim())).doubleValue();
-					this.featureFunctions.add(new ArityPhrasePenaltyFF(this.featureFunctions.size(), weight, owner, start_arity, end_arity));
+						logger.finest(String.format(
+							"Process Line: %s\nAdd PhraseModel, owner: %s; column: %d; weight: %.3f",
+							line, owner, column, weight));
+					
+				} else if ("arityphrasepenalty".equals(fds[0]) && fds.length == 5){//arityphrasepenalty owner start_arity end_arity weight
+					int owner      = this.symbolTable.addTerminal(fds[1]);
+					int startArity = Integer.parseInt(fds[2].trim());
+					int endArity   = Integer.parseInt(fds[3].trim());
+					double weight  = Double.parseDouble(fds[4].trim());
+					this.featureFunctions.add(
+						new ArityPhrasePenaltyFF(
+							this.featureFunctions.size(),
+							weight, owner, startArity, endArity));
 					if (logger.isLoggable(Level.FINEST)) 
-						logger.finest(String.format("Process Line: %s\nAdd ArityPhrasePenalty, owner: %s; start_arity: %d; end_arity: %d; weight: %.3f",line, owner, start_arity, end_arity, weight));
-				} else if (0 == fds[0].compareTo("wordpenalty") && fds.length == 2) { // wordpenalty weight
-					double weight = (new Double(fds[1].trim())).doubleValue();
-					this.featureFunctions.add(new WordPenaltyFF(this.featureFunctions.size(), weight));
+						logger.finest(String.format(
+							"Process Line: %s\nAdd ArityPhrasePenalty, owner: %s; startArity: %d; endArity: %d; weight: %.3f",
+							line, owner, startArity, endArity, weight));
+					
+				} else if ("wordpenalty".equals(fds[0]) && fds.length == 2) { // wordpenalty weight
+					double weight = Double.parseDouble(fds[1].trim());
+					this.featureFunctions.add(
+						new WordPenaltyFF(
+							this.featureFunctions.size(), weight));
 					if (logger.isLoggable(Level.FINEST)) 
-						logger.finest(String.format("Process Line: %s\nAdd WordPenalty, weight: %.3f", line, weight));
+						logger.finest(String.format(
+							"Process Line: %s\nAdd WordPenalty, weight: %.3f",
+							line, weight));
+					
 				} else {
 					logger.severe("Wrong config line: " + line);
 					System.exit(1);
@@ -375,28 +394,31 @@ public class JoshuaDecoder {
 	}
 	
 	
-	private void initializeTranslationGrammars(String tmFile)
-	throws IOException {
-		if (logger.isLoggable(Level.INFO))
-			logger.info("Using grammar read from file " + tmFile);
-		
+	private void initializeGlueGrammar() throws IOException {
 		this.grammarFactories = new GrammarFactory[2];
 		
-		// Add the glue grammar
+		logger.info("Constructing glue grammar...");
 		this.grammarFactories[0] =
-			//new MemoryBasedBatchGrammarWithPrune( //if this is used, then it depends on the LMModel to do pruning
+			// if this is used, then it depends on the LMModel to do pruning
+			//new MemoryBasedBatchGrammarWithPrune(
 			new MemoryBasedBatchGrammar(
 				this.symbolTable, null, true,
 				JoshuaConfiguration.phrase_owner,
 				-1,
 				"^\\[[A-Z]+\\,[0-9]*\\]$",
 				"[\\[\\]\\,0-9]+");
+	}
+	
+	
+	private void initializeTranslationGrammars(String tmFile)
+	throws IOException {
+		initializeGlueGrammar();
 		
-		
-		// Add the regular grammar
+		if (logger.isLoggable(Level.INFO))
+			logger.info("Using grammar read from file " + tmFile);
 		this.grammarFactories[1] =
 			//new MemoryBasedBatchGrammarWithPrune(
-			new MemoryBasedBatchGrammar(		
+			new MemoryBasedBatchGrammar(
 				this.symbolTable, tmFile, false,
 				JoshuaConfiguration.phrase_owner,
 				JoshuaConfiguration.span_limit,
@@ -408,43 +430,30 @@ public class JoshuaDecoder {
 	
 	
 	private void initializeSuffixArrayGrammar() throws IOException {
+		initializeGlueGrammar();
+		
+		
 		if (logger.isLoggable(Level.INFO))
 			logger.info(
 				"Using SuffixArray grammar constructed from " +
 				"source "    + JoshuaConfiguration.sa_source + ", " +
 				"target "    + JoshuaConfiguration.sa_target + ", " +
 				"alignment " + JoshuaConfiguration.sa_alignment);
-		
-		this.grammarFactories = new GrammarFactory[2];
-		
-		logger.info("Constructing glue grammar...");
-		// Add the glue grammar
-		this.grammarFactories[0] =
-			//new MemoryBasedBatchGrammarWithPrune(
-			new MemoryBasedBatchGrammar(
-				this.symbolTable, null, true,
-				JoshuaConfiguration.phrase_owner,
-				-1,
-				"^\\[[A-Z]+\\,[0-9]*\\]$",
-				"[\\[\\]\\,0-9]+");
-		
 		// TODO: SA creation is a constant thing which should be done earlier in the pipeline. Here we should only load the already-created SA
 		
-		String sourceFileName = JoshuaConfiguration.sa_source;
 		CorpusArray sourceCorpusArray =
-			SuffixArrayFactory.createCorpusArray(sourceFileName, this.symbolTable);
+			SuffixArrayFactory.createCorpusArray(
+				JoshuaConfiguration.sa_source, this.symbolTable);
 		SuffixArray sourceSuffixArray =
 			SuffixArrayFactory.createSuffixArray(
 				sourceCorpusArray, JoshuaConfiguration.sa_rule_cache_size);
 		
-		
-		String targetFileName = JoshuaConfiguration.sa_target;
 		CorpusArray targetCorpusArray =
-			SuffixArrayFactory.createCorpusArray(targetFileName);
+			SuffixArrayFactory.createCorpusArray(
+				JoshuaConfiguration.sa_target);
 		SuffixArray targetSuffixArray =
 			SuffixArrayFactory.createSuffixArray(
 				targetCorpusArray, JoshuaConfiguration.sa_rule_cache_size);
-		
 		
 		String alignmentFileName = JoshuaConfiguration.sa_alignment;
 		int trainingSize = sourceCorpusArray.getNumSentences();
@@ -474,41 +483,53 @@ public class JoshuaDecoder {
 	}
 	
 	
-	public void writeConfigFile(double[] new_weights, String template, String outputFile) {
-		try {
-			BufferedReader reader = FileUtility.getReadFileStream(template);
-			BufferedWriter writer = FileUtility.getWriteFileStream(outputFile);
-			String line;
-			int featureID = 0;
-			while ((line = FileUtility.read_line_lzf(reader)) != null) {
-				line = line.trim();
-				if (line.matches("^\\s*(?:\\#.*)?$")
-				|| line.indexOf("=") != -1) {
-					//comment, empty line, or parameter lines: just copy
-					writer.write(line + "\n");
-					
-				} else { //models: replace the weight
-					String[] fds = line.split("\\s+");
-					StringBuffer new_line = new StringBuffer();
-					if (! fds[fds.length-1].matches("^[\\d\\.\\-\\+]+")) {
-						logger.severe("last field is not a number, must be wrong; the field is: " + fds[fds.length-1]); System.exit(1);
-					}
-					for (int i = 0; i < fds.length-1; i++) {
-						new_line.append(fds[i]);
-						new_line.append(" ");
-					}
-					new_line.append(new_weights[featureID++]);
-					writer.write(new_line.toString() + "\n");
-				}
+//===============================================================
+// Main
+//===============================================================
+	public static void main(String[] args) throws IOException {
+		logger.finest("Starting decoder");
+		
+		long startTime = 0;
+		if (logger.isLoggable(Level.INFO)) {
+			startTime = System.currentTimeMillis();
+		}
+		
+		if (args.length != 3 && args.length != 4) {
+			System.out.println("Usage: java " +
+				JoshuaDecoder.class.getName() +
+				" configFile testFile outputFile (oracleFile)");
+			
+			System.out.println("num of args is " + args.length);
+			for (int i = 0; i < args.length; i++) {
+				System.out.println("arg is: " + args[i]);
 			}
-			if (featureID != new_weights.length) {
-				logger.severe("number of models does not match number of weights, must be wrong");
-				System.exit(1);
-			}
-			reader.close();
-			writer.close();
-		} catch (IOException e) {
-			e.printStackTrace();
+			System.exit(1);
+		}
+		String configFile = args[0].trim();
+		String testFile   = args[1].trim();
+		String nbestFile  = args[2].trim();
+		String oracleFile = (4 == args.length ? args[3].trim() : null);
+		
+		
+		/* Step-1: initialize the decoder */
+		JoshuaDecoder decoder = new JoshuaDecoder().initialize(configFile);
+		if (logger.isLoggable(Level.INFO)) {
+			logger.info("Before translation, loading time is "
+				+ ((double)(System.currentTimeMillis() - startTime) / 1000.0)
+				+ " seconds");
+		}
+		
+		
+		/* Step-2: Decoding */
+		decoder.decodeTestSet(testFile, nbestFile, oracleFile);
+		
+		
+		/* Step-3: clean up */
+		decoder.cleanUp();
+		if (logger.isLoggable(Level.INFO)) {
+			logger.info("Total running time is "
+				+ ((double)(System.currentTimeMillis() - startTime) / 1000.0)
+				+ " seconds");
 		}
 	}
 }

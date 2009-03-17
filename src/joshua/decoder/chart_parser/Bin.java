@@ -301,7 +301,7 @@ public class Bin
 			add_deduction_in_bin(cur_state.tbl_item_states, cur_state.rule, i, j,cur_state.l_ants, lattice_cost);//pre-pruning inside this function
 			
 			//if the best state is pruned, then all the remaining states should be pruned away
-			if(((Double)cur_state.tbl_item_states.getExpectedTotalCost()).doubleValue()>cut_off_cost+JoshuaConfiguration.fuzz1){
+			if (cur_state.tbl_item_states.getExpectedTotalCost() > cut_off_cost + JoshuaConfiguration.fuzz1) {
 				//n_prepruned += heap_cands.size();
 				p_chart.n_prepruned_fuzz1 += heap_cands.size();
 				/*if(heap_cands.size()>1){gtem++;System.out.println("gtem is " +gtem + "; size:" + heap_cands.size());}*/
@@ -404,7 +404,7 @@ public class Bin
 		double transition_cost = compute_item_res.getTransitionTotalCost();
 		double finalized_total_cost = compute_item_res.getFinalizedTotalCost();
 		  
-		//double bonus = ((Double)tbl_states.get(BONUS)).doubleValue();//not used
+		//double bonus = tbl_states.get(BONUS);//not used
 		if(should_prune(expected_total_cost)==false){
 			HyperEdge dt = new HyperEdge(rl,finalized_total_cost,transition_cost,ants);
 			HGNode item = new HGNode(i,j,rl.getLHS(),item_state_tbl,dt, expected_total_cost);
@@ -592,7 +592,7 @@ public class Bin
 			this.expected_total_cost = cost_;
 		} 
 		
-		public double getExpectedTotalCost( ){
+		public double getExpectedTotalCost() {
 			return this.expected_total_cost;
 		} 
 		

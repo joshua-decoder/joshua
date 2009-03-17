@@ -15,10 +15,8 @@
  * Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  * MA 02111-1307 USA
  */
-
 package joshua.decoder;
 
-import joshua.corpus.SymbolTable;
 import joshua.decoder.chart_parser.Chart;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.lm.LanguageModelFF;
@@ -30,6 +28,7 @@ import joshua.decoder.hypergraph.KBestExtractor;
 import joshua.lattice.Lattice;
 import joshua.oracle.OracleExtractor;
 import joshua.sarray.Pattern;
+import joshua.corpus.SymbolTable;
 import joshua.util.FileUtility;
 
 import java.io.BufferedReader;
@@ -38,8 +37,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-
 
 /**
  * this class implements: 
@@ -50,53 +47,65 @@ import java.util.logging.Logger;
  * @version $LastChangedDate: 2008-10-20 00:12:30 -0400 (星期一, 20 十月 2008) $
  */
 
-//TODO: known synchronization problem: LM cache; srilm call;
+// BUG: known synchronization problem: LM cache; srilm call;
 
 public class DecoderThread extends Thread {
-	//these variables may be the same across all threads (e.g., just copy from DecoderFactory), or differ from thread to thread 
-	private final GrammarFactory[] p_grammar_factories;// = null;
-	private final boolean have_lm_model;// = false;
-	private final ArrayList<FeatureFunction> p_l_feat_functions;// = null;
-	private final ArrayList<Integer> l_default_nonterminals;// = null;
-	private final SymbolTable p_symbolTable;// = null;
+	//these variables may be the same across all threads (e.g., just copy from DecoderFactory), or differ from thread to thread
+	private final GrammarFactory[]           grammarFactories;
+	private final boolean                    hasLanguageModel;
+	private final ArrayList<FeatureFunction> featureFunctions;
+	private final ArrayList<Integer>         defaultNonterminals;
+	private final SymbolTable                symbolTable;
 	
 	//more test set specific
-	private final String          test_file;
-	private final String          oracle_file;
-	        final String          nbest_file;
-	private final int             start_sent_id; //start sent id
-	private final KBestExtractor kbest_extractor;
-	              DiskHyperGraph  p_disk_hg;
+	private final String         testFile;
+	private final String         oracleFile;
+	        final String         nbestFile; // package-private for DecoderFactory
+	private final int            startSentenceID;
+	private final KBestExtractor kbestExtractor;
+	              DiskHyperGraph hypergraphSerializer; // package-private for DecoderFactory
+	
+	private static final Logger logger =
+		Logger.getLogger(DecoderThread.class.getName());
 	
 	
-	private static final Logger logger = Logger.getLogger(DecoderThread.class.getName());
-	
-	public DecoderThread(GrammarFactory[] grammar_factories,
-		boolean have_lm_model_, ArrayList<FeatureFunction> l_feat_functions,
-		ArrayList<Integer> l_default_nonterminals_, SymbolTable symbolTable,
-		String test_file_in, String nbest_file_in, String oracle_file_in,
-		int start_sent_id_in)
-	throws IOException {
+//===============================================================
+// Constructor
+//===============================================================
+	public DecoderThread(
+		GrammarFactory[]           grammarFactories,
+		boolean                    hasLanguageModel,
+		ArrayList<FeatureFunction> featureFunctions,
+		ArrayList<Integer>         defaultNonterminals,
+		SymbolTable                symbolTable,
+		String testFile, String nbestFile, String oracleFile,
+		int startSentenceID
+	) throws IOException {
 		
-		this.p_grammar_factories    = grammar_factories;
-		this.have_lm_model          = have_lm_model_;
-		this.p_l_feat_functions     = l_feat_functions;
-		this.l_default_nonterminals = l_default_nonterminals_;
-		this.p_symbolTable          = symbolTable;
+		this.grammarFactories    = grammarFactories;
+		this.hasLanguageModel    = hasLanguageModel;
+		this.featureFunctions    = featureFunctions;
+		this.defaultNonterminals = defaultNonterminals;
+		this.symbolTable         = symbolTable;
 		
-		this.test_file       = test_file_in;
-		this.nbest_file      = nbest_file_in;
-		this.oracle_file     = oracle_file_in;
-		this.start_sent_id   = start_sent_id_in;
+		this.testFile        = testFile;
+		this.nbestFile       = nbestFile;
+		this.oracleFile      = oracleFile;
+		this.startSentenceID = startSentenceID;
 		
-		this.kbest_extractor =  new KBestExtractor(this.p_symbolTable, JoshuaConfiguration.use_unique_nbest, JoshuaConfiguration.use_tree_nbest, 
-				JoshuaConfiguration.include_align_index, JoshuaConfiguration.add_combined_cost,  false, true);
+		this.kbestExtractor = new KBestExtractor(
+			this.symbolTable,
+			JoshuaConfiguration.use_unique_nbest,
+			JoshuaConfiguration.use_tree_nbest,
+			JoshuaConfiguration.include_align_index,
+			JoshuaConfiguration.add_combined_cost,
+			false, true);
 		
 		if (JoshuaConfiguration.save_disk_hg) {
 			FeatureFunction languageModel = null;
-			for (FeatureFunction ff : this.p_l_feat_functions) {
+			for (FeatureFunction ff : this.featureFunctions) {
 				if (ff instanceof LanguageModelFF) {
-					languageModel =  ff;
+					languageModel = ff;
 					break;
 				}
 			}
@@ -104,21 +113,24 @@ public class DecoderThread extends Thread {
 				throw new RuntimeException("No language model feature function found");
 			}
 			
-			this.p_disk_hg = new DiskHyperGraph(
-				this.p_symbolTable,
+			this.hypergraphSerializer = new DiskHyperGraph(
+				this.symbolTable,
 				languageModel.getFeatureID(),
 				true, // always store model cost
-				p_l_feat_functions);
+				this.featureFunctions);
 			
-			this.p_disk_hg.init_write(
-				this.nbest_file + ".hg.items",
+			this.hypergraphSerializer.init_write(
+				this.nbestFile + ".hg.items",
 				JoshuaConfiguration.forest_pruning,
 				JoshuaConfiguration.forest_pruning_threshold);
 		}
 	}
 	
 	
-	// DecoderThread.run() cannot throw anything
+//===============================================================
+// Methods
+//===============================================================
+	// Overriding of Thread.run() cannot throw anything
 	public void run() {
 		try {
 			decode_a_file();
@@ -128,167 +140,165 @@ public class DecoderThread extends Thread {
 		}
 	}
 	
-
-//	TODO: log file is not properly handled for parallel decoding
+	
+	// BUG: log file is not properly handled for parallel decoding
 	public void decode_a_file()
 	throws IOException {
-		BufferedReader t_reader_test =	FileUtility.getReadFileStream(test_file);
-		BufferedWriter t_writer_nbest =	FileUtility.getWriteFileStream(nbest_file);
-		BufferedReader t_oracle_reader =
-			null == oracle_file
+		BufferedReader testReader =
+			FileUtility.getReadFileStream(this.testFile);
+		BufferedWriter nbestWriter =
+			FileUtility.getWriteFileStream(this.nbestFile);
+		BufferedReader oracleReader =
+			null == this.oracleFile
 			? null
-			: FileUtility.getReadFileStream(oracle_file);
+			: FileUtility.getReadFileStream(this.oracleFile);
 		
-		String cn_sent, oracle_sent;
-		int sent_id = start_sent_id; // if no sent tag, then this will be used
-		while ((cn_sent = FileUtility.read_line_lzf(t_reader_test)) != null) {
-			if (logger.isLoggable(Level.FINE)) 
-				logger.fine("now translate\n" + cn_sent);
-			int[] tem_id = new int[1];
-			cn_sent = get_sent_id(cn_sent, tem_id);
-			if (tem_id[0] > 0) {
-				sent_id = tem_id[0];
+		int sentenceID = this.startSentenceID; // if no sent tag, then this will be used
+		String cnSentence;
+		while ((cnSentence = FileUtility.read_line_lzf(testReader)) != null) {
+			if (logger.isLoggable(Level.FINE))
+				logger.fine("now translating\n" + cnSentence);
+			
+			/* Remove SGML tags around the sentence, and set sentenceID */
+			// BUG: this is too fragile and doesn't give good error messages
+			if (cnSentence.matches("^<seg\\s+id=\"\\d+\"[^>]*>.*?</seg\\s*>\\s*$")) {
+				cnSentence = cnSentence.replaceFirst("^<seg\\s+id=\"", "");
+				
+				StringBuffer id = new StringBuffer();
+				for (int i = 0; i < cnSentence.length(); i++) {
+					char cur = cnSentence.charAt(i);
+					if (cur == '"') {
+						// Drop the ID and the closing quotes
+						cnSentence = cnSentence.substring(i+1);
+						break;
+					} else {
+						id.append(cur);
+					}
+				}
+				sentenceID = Integer.parseInt(id.toString());
+				cnSentence = cnSentence.replaceFirst("^\\s*>", "");
+				cnSentence = cnSentence.replaceAll("</seg\\*>\\s*$", "");
+			} else {
+				// don't set sentenceID, and don't alter cnSentence
 			}
-			oracle_sent =
-				null == t_oracle_reader
+			
+			
+			// FIX: Should have null-reader so we don't need to test every time
+			String oracleSentence =
+				null == oracleReader
 				? null
-				: FileUtility.read_line_lzf(t_oracle_reader);
-						
-			translate(
-				this.p_grammar_factories,
-				this.p_l_feat_functions,
-				cn_sent,
-				oracle_sent,
-				this.l_default_nonterminals,
-				t_writer_nbest,
-				sent_id,
-				JoshuaConfiguration.topN,
-				this.p_disk_hg, kbest_extractor);
-			sent_id++;
+				: FileUtility.read_line_lzf(oracleReader);
+			
+			translate(cnSentence, oracleSentence, nbestWriter, sentenceID);
+			sentenceID++;
 		}
-		t_reader_test.close();
-		t_writer_nbest.flush();
-		t_writer_nbest.close();
-		
+		testReader.close();
+		nbestWriter.flush();
+		nbestWriter.close();
 	}
-	
 	
 	
 	/**
 	 * Translate a sentence.
 	 * 
-	 * @param grammars Translation grammars to be used during translation.
-	 * @param models   Models to be used when scoring rules.
 	 * @param sentence The sentence to be translated.
-	 * @param defaultNonterminals
+	 * @param oracleSentence
 	 * @param out
 	 * @param sentenceID
-	 * @param topN
-	 * @param diskHyperGraph
-	 * @param kbestExtractor
 	 */
-	private void translate(GrammarFactory[] grammarFactories,
-		ArrayList<FeatureFunction> models, String sentence,
-		String oracleSentence, ArrayList<Integer> defaultNonterminals,
-		BufferedWriter out, int sentenceID, int topN,
-		DiskHyperGraph diskHyperGraph, KBestExtractor kbestExtractor
+	private void translate(
+		String sentence, String oracleSentence,
+		BufferedWriter out, int sentenceID
 	) throws IOException {
-		long  start            = System.currentTimeMillis();
-		int[] sentence_numeric = this.p_symbolTable.getIDs(sentence);
-		
-		Integer[] input = new Integer[sentence_numeric.length];
-		for (int i = 0; i < sentence_numeric.length; i++) {
-			input[i] = sentence_numeric[i];
-		}
-		Lattice<Integer> inputLattice = new Lattice<Integer>(input);
-		
-		Grammar[] grammars = new Grammar[grammarFactories.length];
-		for (int i = 0; i < grammarFactories.length; i++) {
-			grammars[i] = grammarFactories[i].getGrammarForSentence(
-					new Pattern(this.p_symbolTable, sentence_numeric));
-//			grammars[i].sortGrammar(models);//TODO: for batch grammar, we do not want to sort it every time
+		long startTime = 0;
+		if (logger.isLoggable(Level.FINER)) {
+			startTime = System.currentTimeMillis();
 		}
 		
-		//==========================seeding: the chart only sees the grammars, not the grammarFactories
-		Chart chart = new Chart(
-			inputLattice,
-			models,
-			this.p_symbolTable,
-			sentenceID,
-			grammars,
-			defaultNonterminals,
-			JoshuaConfiguration.untranslated_owner, // TODO: owner
-			this.have_lm_model);
-		if (logger.isLoggable(Level.FINER)) 
-			logger.finer("after seed, time: "
-				+ (System.currentTimeMillis() - start) / 1000);
+		Chart chart; {
+			
+			// BUG: java generics won't do the autoboxing/-unboxing for us
+			int[] intSentence = this.symbolTable.getIDs(sentence);
+			Integer[] integerSentence = new Integer[intSentence.length];
+			for (int i = 0; i < intSentence.length; i++) {
+				integerSentence[i] = intSentence[i];
+			}
+			Lattice<Integer> inputLattice =
+				new Lattice<Integer>(integerSentence);
+			
+			
+			Grammar[] grammars = new Grammar[this.grammarFactories.length];
+			for (int i = 0; i < this.grammarFactories.length; i++) {
+				grammars[i] = this.grammarFactories[i].getGrammarForSentence(
+						new Pattern(this.symbolTable, intSentence));
+				
+				// FIX: for batch grammar, we do not want to sort it every time
+				// grammars[i].sortGrammar(this.featureFunctions);
+			}
+			
+			
+			/* Seeding: the chart only sees the grammars, not the factories */
+			chart = new Chart(
+				inputLattice,
+				this.featureFunctions,
+				this.symbolTable,
+				sentenceID,
+				grammars,
+				this.defaultNonterminals,
+				JoshuaConfiguration.untranslated_owner, // TODO: owner
+				this.hasLanguageModel);
+			
+			if (logger.isLoggable(Level.FINER)) 
+				logger.finer("after seed, time: "
+					+ ((double)(System.currentTimeMillis() - startTime) / 1000.0)
+					+ " seconds");
+		}
 		
-		//=========================parsing
-		HyperGraph p_hyper_graph = chart.expand();
+		
+		
+		/* Parsing */
+		HyperGraph hypergraph = chart.expand();
 		if (logger.isLoggable(Level.FINER)) 
 			logger.finer("after expand, time: "
-				+ (System.currentTimeMillis() - start) / 1000);
+				+ ((double)(System.currentTimeMillis() - startTime) / 1000.0)
+				+ " seconds");
 		
 		if (oracleSentence != null) {
-			
 			logger.fine("Creating oracle extractor");
-			OracleExtractor extractor = new OracleExtractor(this.p_symbolTable);
-			logger.finer("Extracting oracle hypergraph...");
-			HyperGraph oracle = extractor.getOracle(p_hyper_graph, 3, oracleSentence);
-			logger.finer("... Done Extracting...getting n-best...");
-			kbestExtractor.lazy_k_best_extract_hg(oracle, models, topN, sentenceID, out);
-			logger.finer("... Done getting n-best");
-	
-		} else {
+			OracleExtractor extractor = new OracleExtractor(this.symbolTable);
 			
-			//============kbest extraction
-			kbestExtractor.lazy_k_best_extract_hg(p_hyper_graph, models, topN, sentenceID, out);
+			logger.finer("Extracting oracle hypergraph...");
+			HyperGraph oracle = extractor.getOracle(hypergraph, 3, oracleSentence);
+			
+			logger.finer("... Done Extracting. Getting k-best...");
+			this.kbestExtractor.lazy_k_best_extract_hg(
+				oracle, this.featureFunctions, JoshuaConfiguration.topN, sentenceID, out);
+			logger.finer("... Done getting k-best");
+			
+		} else {
+			/* k-best extraction */
+			this.kbestExtractor.lazy_k_best_extract_hg(
+				hypergraph, this.featureFunctions, JoshuaConfiguration.topN, sentenceID, out);
 			if (logger.isLoggable(Level.FINER))
-				logger.finer("after kbest, time: "
-					+ (System.currentTimeMillis() - start) / 1000);
+				logger.finer("after k-best, time: "
+				+ ((double)(System.currentTimeMillis() - startTime) / 1000.0)
+				+ " seconds");
 		}
 		
-		if (null != diskHyperGraph) {
-			diskHyperGraph.save_hyper_graph(p_hyper_graph);
+		if (null != this.hypergraphSerializer) {
+			this.hypergraphSerializer.save_hyper_graph(hypergraph);
 		}
 		
 		/* //debug
 		if (JoshuaConfiguration.use_variational_decoding) {
 			ConstituentVariationalDecoder vd = new ConstituentVariationalDecoder();
-			vd.decoding(p_hyper_graph);
-			System.out.println("#### new 1best is #####\n" + HyperGraph.extract_best_string(p_main_controller.p_symbol,p_hyper_graph.goal_item));
+			vd.decoding(hypergraph);
+			System.out.println("#### new 1best is #####\n" + HyperGraph.extract_best_string(p_main_controller.p_symbol, hypergraph.goal_item));
 		}
 		// end */
 		
 		
 		//debug
-		//g_con.get_confusion_in_hyper_graph_cell_specific(p_hyper_graph,p_hyper_graph.sent_len);
-	}
-	
-	
-	
-	//return sent without the tag
-	//if no sent id, then return -1 in sent_id[]
-	private static String get_sent_id(String sent, int[] sent_id) {
-		if (sent.matches("^<seg\\s+id=.*$")) { // havd sent id
-			String res_sent = sent.replaceAll("^<seg\\s+id=\"", "");
-			String str_id   = "";
-			for (int i = 0; i < res_sent.length(); i++) {
-				char cur = res_sent.charAt(i);
-				if (cur != '"') {
-					str_id += cur;
-				} else {
-					break;
-				}
-			}
-			int res_id = Integer.parseInt(str_id);
-			res_sent   = res_sent.replaceFirst(str_id + "\">", "");
-			res_sent   = res_sent.replaceAll("</seg>", "");
-			sent_id[0] = res_id;
-			return res_sent;
-		} else {
-			sent_id[0] = -1;
-			return sent;
-		}
+		//g_con.get_confusion_in_hyper_graph_cell_specific(hypergraph, hypergraph.sent_len);
 	}
 }

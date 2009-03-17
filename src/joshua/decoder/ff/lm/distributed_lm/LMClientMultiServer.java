@@ -272,8 +272,8 @@ extends LMClient {
 							System.out.println("cmd_res is null, must exit");
 							System.exit(1);
 						} else {
-							probs[pos] = new Double(cmd_res).doubleValue();
-							response_ready[pos]=true;
+							probs[pos] = Double.parseDouble(cmd_res);
+							response_ready[pos] = true;
 							p_main_thread.interrupt();
 						}
 					}
