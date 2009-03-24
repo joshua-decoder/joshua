@@ -65,6 +65,15 @@ public interface Rule {
 	
 	public float[] getFeatureScores();
 	
+	
+	/** the following methods will be useful when we store a non-standard score in the last field of a rule's feat_scores, 
+	 * for example, during EM training, we can store the soft-count in it
+	 *column: start from zero
+	 **/
+	public void setFeatureScore(int column, float score);
+	public float getFeatureScore(int column);	
+	public float incrementFeatureScore(int column, double score);
+	
 	public void setLatticeCost(float cost);
 	
 	public float getLatticeCost();

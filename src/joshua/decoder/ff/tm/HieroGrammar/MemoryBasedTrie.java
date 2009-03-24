@@ -47,7 +47,7 @@ public class MemoryBasedTrie implements Trie {
 			return (null != this.tbl_children);
 		}
 		
-		public HashMap<Integer,MemoryBasedTrie>  getExtensions() {
+		public HashMap<Integer,MemoryBasedTrie>  getExtensionsTable() {
 			return this.tbl_children;
 		}
 		
@@ -80,6 +80,21 @@ public class MemoryBasedTrie implements Trie {
 					((MemoryBasedTrie)tem[i]).ensure_sorted(l_models);
 				}
 			}
+		}
+
+
+		public Trie[] getExtensions() {
+			Object[] tem = this.tbl_children.values().toArray();
+			Trie[] res = new Trie[tem.length];
+			for(int i=0; i<tem.length; i++){
+				res[i] = (Trie) tem[i];
+			}
+			return res;
+		}
+		
+		public Trie[] getExtensionsWrong() {
+			Trie[] tem = (Trie[]) this.tbl_children.values().toArray();
+			return tem;
 		}
 		
 /* TODO Possibly remove - this method is never called.		

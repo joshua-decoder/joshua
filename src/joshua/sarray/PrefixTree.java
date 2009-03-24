@@ -1086,6 +1086,11 @@ public class PrefixTree {
 			return 0;
 		}
 
+		public Trie[] getExtensions() {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
 	}
 
 	/**

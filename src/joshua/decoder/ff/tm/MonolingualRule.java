@@ -253,4 +253,23 @@ public class MonolingualRule implements Rule {
             res.append(p_symbolTable.getWords(p_french));
             return res.toString();
     }
+
+	public float incrementFeatureScore(int column, double score) {
+		synchronized(this){
+			feat_scores[column] += score;
+			return feat_scores[column];
+		}
+	}
+
+	public void setFeatureScore(int column, float score) {
+		synchronized(this){
+			feat_scores[column] = score;
+		}
+	}
+
+	public float getFeatureScore(int column) {
+		synchronized(this){
+			return feat_scores[column];
+		}
+	}
 }

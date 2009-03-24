@@ -45,6 +45,11 @@ public interface Trie {
 	 */
 	boolean hasExtensions();
 	
+	/**
+	 *if the trie node has extensions, then return a list of extended trie nodes, otherwise return null 
+	 * */
+	Trie[] getExtensions();
+	
 	
 	/**
 	 * Returns whether the current node/state is a "final state"
@@ -66,4 +71,7 @@ public interface Trie {
 	 *     TMGrammar)
 	 */
 	RuleCollection getRules();
+	
+	
+	
 }

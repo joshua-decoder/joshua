@@ -38,7 +38,6 @@ import joshua.sarray.SuffixArrayFactory;
 import joshua.corpus.SymbolTable;
 import joshua.util.FileUtility;
 import joshua.util.lexprob.LexicalProbabilities;
-import joshua.util.sentence.Vocabulary;
 import joshua.util.sentence.alignment.AlignmentGrids;
 import joshua.util.sentence.alignment.Alignments;
 
