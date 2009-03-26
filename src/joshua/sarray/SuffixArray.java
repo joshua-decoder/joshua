@@ -20,6 +20,7 @@ package joshua.sarray;
 import joshua.util.FileUtility;
 import joshua.util.Cache;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.*;
 import java.util.logging.Logger;
@@ -166,8 +167,8 @@ public class SuffixArray extends AbstractSuffixArray {
     
 
     public void writeWordIDsToFile(String filename) throws IOException {
-    	FileUtility.writeBytes(new int[]{size()}, filename, false);
-    	FileUtility.writeBytes(suffixes, filename, true);
+    	FileOutputStream out = FileUtility.writeBytes(new int[]{size()}, filename);
+    	FileUtility.writeBytes(suffixes, out);
     }
     
   //===============================================================

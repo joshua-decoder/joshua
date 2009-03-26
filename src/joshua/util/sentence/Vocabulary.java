@@ -18,6 +18,7 @@
 package joshua.util.sentence;
 
 
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.*;
 
@@ -25,6 +26,7 @@ import joshua.corpus.AbstractSymbolTable;
 import joshua.corpus.SymbolTable;
 import joshua.sarray.BasicPhrase;
 import joshua.sarray.SuffixArrayFactory;
+import joshua.util.FileUtility;
 
 
 /**
@@ -434,6 +436,46 @@ public class Vocabulary extends AbstractSymbolTable implements Iterable<String>,
 	public String getWords(int[] ids) {
 		return getWords(ids, false);
 	}
-	
-}
 
+	public void write(String filename) throws IOException {
+		write(new FileOutputStream(filename), "UTF-8");
+	}
+	
+	/**
+	 * Writes a binary form of the vocabulary to disk.
+	 * 
+	 * @param out
+	 * @param charsetName
+	 * @return
+	 * @throws IOException
+	 */
+	public void write(FileOutputStream out, String charsetName) throws IOException {
+		
+		// First, calculate the number of bytes required to store the vocabulary data
+		int totalBytes = 0;
+		for (String word : vocabList) {
+			byte[] wordBytes = word.getBytes(charsetName);
+			totalBytes += 2 + wordBytes.length;
+		}
+		
+		// Now, write the total number of bytes used to store the vocabulary data
+		FileUtility.writeBytes(new int[]{totalBytes}, out);
+		
+		
+		// Next, write the actual vocabulary data
+		int i = 0;
+		for (String word : vocabList) {
+		
+			byte[] wordBytes = word.getBytes(charsetName);
+			
+			// Write the word ID and the number of bytes to store the word
+			FileUtility.writeBytes(new int[]{i, wordBytes.length}, out);
+			
+			// Write the byte data for the string
+	    	out.write(wordBytes);
+	    	
+			i++;
+		}
+		
+	}
+}

@@ -17,6 +17,8 @@
  */
 package joshua.corpus;
 
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 
@@ -183,5 +185,6 @@ public interface SymbolTable {
 	
 	public String getWords(int[] wordIDs, boolean ntIndexIncrements);
 	
+	public void write(FileOutputStream out, String charsetName) throws IOException;
 }
 

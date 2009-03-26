@@ -108,6 +108,24 @@ public class FileUtility {
 	}
 	
 	
+	
+	/**
+	 * Writes data from the integer array to disk
+	 * as raw bytes.
+	 * 
+	 * @param data     The integer array to write to disk.
+	 * @param filename The filename where the data should be written.
+	 * @throws IOException
+	 * @return the FileOutputStream on which the bytes were written
+	 */
+	public static FileOutputStream writeBytes(int[] data, String filename)
+	throws IOException {
+		FileOutputStream out = new FileOutputStream(filename,false);
+		writeBytes(data, out);
+		return out;
+	}
+	
+	
 	/**
 	 * Writes data from the integer array to disk
 	 * as raw bytes.
@@ -116,9 +134,9 @@ public class FileUtility {
 	 * @param filename The filename where the data should be written.
 	 * @throws IOException
 	 */
-	public static void writeBytes(int[] data, String filename, boolean append)
+	public static void writeBytes(int[] data, FileOutputStream out)
 	throws IOException {
-		FileOutputStream out = new FileOutputStream(filename,append);
+		
 		byte[] b = new byte[4];
 		
 		for (int word : data) {
@@ -130,4 +148,5 @@ public class FileUtility {
 			out.write(b);
 		}
 	}
+
 }

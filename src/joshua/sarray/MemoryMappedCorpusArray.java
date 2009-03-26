@@ -17,6 +17,7 @@
  */
 package joshua.sarray;
 
+import joshua.corpus.MemoryMappedSymbolTable;
 import joshua.corpus.SymbolTable;
 
 import java.io.IOException;
@@ -38,38 +39,38 @@ public class MemoryMappedCorpusArray extends AbstractCorpus {
 	private final int numberOfWords;
 	private final int numberOfSentences;
 	
-	/**
-	 * Constructs a memory mapped corpus array
-	 * from existing binary files.
-	 * 
-	 * @param vocabulary
-	 * @param binaryCorpusFileName
-	 * @param binaryCorpusFileSize
-	 * @param binarySentenceFileName
-	 * @param binarySentenceFileSize
-	 * @throws IOException
-	 */
-	public MemoryMappedCorpusArray(
-		SymbolTable symbolTable,
-		String     binaryCorpusFileName,
-		int        binaryCorpusFileSize,
-		String     binarySentenceFileName,
-		int        binarySentenceFileSize
-	) throws IOException {
-		
-		super(symbolTable);
-		
-		RandomAccessFile binarySentenceFile = new RandomAccessFile( binarySentenceFileName, "r" );
-	    FileChannel binarySentenceFileChannel = binarySentenceFile.getChannel();
-	    this.binarySentenceBuffer = binarySentenceFileChannel.map( FileChannel.MapMode.READ_ONLY, 0, binarySentenceFileSize ).asIntBuffer();
-
-		RandomAccessFile binaryCorpusFile = new RandomAccessFile( binaryCorpusFileName, "r" );
-	    FileChannel binaryCorpusFileChannel = binaryCorpusFile.getChannel();
-	    this.binaryCorpusBuffer = binaryCorpusFileChannel.map( FileChannel.MapMode.READ_ONLY, 0, binaryCorpusFileSize ).asIntBuffer();
-
-	    this.numberOfWords = binaryCorpusFileSize;
-	    this.numberOfSentences = binarySentenceFileSize;
-	}
+//	/**
+//	 * Constructs a memory mapped corpus array
+//	 * from existing binary files.
+//	 * 
+//	 * @param vocabulary
+//	 * @param binaryCorpusFileName
+//	 * @param binaryCorpusFileSize
+//	 * @param binarySentenceFileName
+//	 * @param binarySentenceFileSize
+//	 * @throws IOException
+//	 */
+//	public MemoryMappedCorpusArray(
+//		SymbolTable symbolTable,
+//		String     binaryCorpusFileName,
+//		int        binaryCorpusFileSize,
+//		String     binarySentenceFileName,
+//		int        binarySentenceFileSize
+//	) throws IOException {
+//		
+//		super(symbolTable);
+//		
+//		RandomAccessFile binarySentenceFile = new RandomAccessFile( binarySentenceFileName, "r" );
+//	    FileChannel binarySentenceFileChannel = binarySentenceFile.getChannel();
+//	    this.binarySentenceBuffer = binarySentenceFileChannel.map( FileChannel.MapMode.READ_ONLY, 0, binarySentenceFileSize ).asIntBuffer();
+//
+//		RandomAccessFile binaryCorpusFile = new RandomAccessFile( binaryCorpusFileName, "r" );
+//	    FileChannel binaryCorpusFileChannel = binaryCorpusFile.getChannel();
+//	    this.binaryCorpusBuffer = binaryCorpusFileChannel.map( FileChannel.MapMode.READ_ONLY, 0, binaryCorpusFileSize ).asIntBuffer();
+//
+//	    this.numberOfWords = binaryCorpusFileSize;
+//	    this.numberOfSentences = binarySentenceFileSize;
+//	}
 	
 	public MemoryMappedCorpusArray(
 			SymbolTable symbolTable,
@@ -92,6 +93,23 @@ public class MemoryMappedCorpusArray extends AbstractCorpus {
 
 		}
 
+//	public MemoryMappedCorpusArray(String binaryFileName) throws IOException {
+//		super(new MemoryMappedSymbolTable(binaryFileName));
+//
+//		IntBuffer tmp;
+//
+//		RandomAccessFile binaryFile = new RandomAccessFile( binaryFileName, "r" );
+//		FileChannel binaryChannel = binaryFile.getChannel();
+//		tmp = binaryChannel.map( FileChannel.MapMode.READ_ONLY, 0, 4).asIntBuffer().asReadOnlyBuffer();
+//		this.numberOfSentences = tmp.get();
+//		this.binarySentenceBuffer = binaryChannel.map( FileChannel.MapMode.READ_ONLY, 4, 4*numberOfSentences ).asIntBuffer().asReadOnlyBuffer();
+//
+//		tmp = binaryChannel.map( FileChannel.MapMode.READ_ONLY, (4 + 4*numberOfSentences), 4).asIntBuffer().asReadOnlyBuffer();
+//		this.numberOfWords = tmp.get();
+//		this.binaryCorpusBuffer = binaryChannel.map( FileChannel.MapMode.READ_ONLY, (4 + 4*numberOfSentences + 4), 4*numberOfWords ).asIntBuffer().asReadOnlyBuffer();
+//
+//	}
+	
 
 	@Override
 	public int getNumSentences() {

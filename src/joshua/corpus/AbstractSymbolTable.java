@@ -17,6 +17,9 @@
  */
 package joshua.corpus;
 
+import java.io.FileOutputStream;
+import java.io.IOException;
+
 /**
  * Partial basic implementation of a symbol table.
  * 
@@ -85,5 +88,9 @@ public abstract class AbstractSymbolTable implements SymbolTable {
 		}
 		
 		return s.toString();
+	}
+	
+	public void write(FileOutputStream out, String charsetName) throws IOException  {
+		throw new RuntimeException("Method not yet implemented");
 	}
 }

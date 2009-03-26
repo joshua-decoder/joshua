@@ -73,7 +73,7 @@ public class CorpusArrayTest {
 			SuffixArrayFactory.createVocabulary(filename, vocab);
 			CorpusArray corpus = SuffixArrayFactory.createCorpusArray(filename, vocab, numWords, numSentences);
 			
-			corpus.write(filename+".corpus");
+			corpus.write(filename+".corpus", "UTF-8");
 			
 			MemoryMappedCorpusArray mmCorpus = new MemoryMappedCorpusArray(corpus.getVocabulary(), filename+".corpus");
 			

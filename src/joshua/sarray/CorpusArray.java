@@ -20,7 +20,9 @@ package joshua.sarray;
 import joshua.corpus.SymbolTable;
 import joshua.util.FileUtility;
 import joshua.util.sentence.Phrase;
+import joshua.util.sentence.Vocabulary;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
 
@@ -82,10 +84,10 @@ public class CorpusArray implements Corpus {
 	 * @see SuffixArrayFactor.createCorpusArray(String,String,Vocabulary)
 	 * @see SuffixArrayFactor.loadCorpusArray(String,String,String,Vocabulary)
 	 */
-	protected CorpusArray (int[] corpus, int[] sentences, SymbolTable vocab2) {
+	protected CorpusArray (int[] corpus, int[] sentences, SymbolTable vocab) {
 		this.corpus = corpus;
 		this.sentences = sentences;
-		this.vocab = vocab2;
+		this.vocab = vocab;
 	}
 	
 //===============================================================
@@ -284,13 +286,17 @@ public class CorpusArray implements Corpus {
 //    	FileUtility.writeBytes(sentences, filename, false);
 //    }
     
-    public void write(String filename) throws IOException {
+    public void write(String filename, String charset) throws IOException {
     	
-    	FileUtility.writeBytes(new int[]{sentences.length}, filename, false);
-    	FileUtility.writeBytes(sentences, filename, true);
+    	FileOutputStream out = new FileOutputStream(filename);
     	
-    	FileUtility.writeBytes(new int[]{corpus.length}, filename, true);
-    	FileUtility.writeBytes(corpus, filename, true);
+    	vocab.write(out, charset);
+    	
+    	FileUtility.writeBytes(new int[]{sentences.length}, out);
+    	FileUtility.writeBytes(sentences, out);
+    	
+    	FileUtility.writeBytes(new int[]{corpus.length}, out);
+    	FileUtility.writeBytes(corpus, out);
     	
     }
 	
@@ -319,6 +325,22 @@ public class CorpusArray implements Corpus {
 
 
 	public static void main(String[] args) throws Exception {
+		
+		if (args.length < 2) {
+			System.err.println("Usage: java " + CorpusArray.class.getName() + " corpus corpus.binary");
+		}
+		
+		String corpusFileName = args[0];
+		String binaryFileName = args[1];
+		
+		String charset = (args.length > 2) ? args[2] : "UTF-8";
+		
+		Vocabulary symbolTable = new Vocabulary();
+		int[] lengths = SuffixArrayFactory.createVocabulary(corpusFileName, symbolTable);
+		
+		CorpusArray corpusArray = SuffixArrayFactory.createCorpusArray(corpusFileName, symbolTable, lengths[0], lengths[1]);
+		
+		corpusArray.write(binaryFileName, charset);
 		
 	}
 
