@@ -232,19 +232,17 @@ public class MonolingualRule implements Rule {
 		return this.cachedToString;
 	}
 	
+	//do not use cachedToString
 	public String toString(SymbolTable p_symbolTable) {
-		if (null == this.cachedToString) {
-			StringBuffer sb = new StringBuffer("[");
-			sb.append(p_symbolTable.getWord(this.lhs));
-			sb.append("] ||| ");
-			sb.append(p_symbolTable.getWords(this.p_french));
-			sb.append(" |||");
-			for (int i = 0; i < this.feat_scores.length; i++) {
-				sb.append(String.format(" %.4f", this.feat_scores[i]));
-			}
-			this.cachedToString = sb.toString();
-		}
-		return this.cachedToString;
+		StringBuffer sb = new StringBuffer("[");
+		sb.append(p_symbolTable.getWord(this.lhs));
+		sb.append("] ||| ");
+		sb.append(p_symbolTable.getWords(this.p_french));
+		sb.append(" |||");
+		for (int i = 0; i < this.feat_scores.length; i++) {
+			sb.append(String.format(" %.4f", this.feat_scores[i]));
+		}	
+		return  sb.toString();
 	}
 	
     public String toStringWithoutFeatScores(SymbolTable p_symbolTable){
