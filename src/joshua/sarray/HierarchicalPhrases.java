@@ -114,7 +114,7 @@ public class HierarchicalPhrases {
 		this.terminalSequenceStartIndices = startPositions;
 		this.sentenceNumber = new int[size];
 		for (int i=0; i<size; i++) {
-			this.sentenceNumber[i] = prefixTree.suffixArray.corpus.getSentenceIndex(startPositions[i]);
+			this.sentenceNumber[i] = prefixTree.suffixArray.getCorpus().getSentenceIndex(startPositions[i]);
 		}
 		this.terminalSequenceLengths = pattern.getTerminalSequenceLengths();
 		this.prefixTree = prefixTree;
@@ -196,7 +196,7 @@ public class HierarchicalPhrases {
 		
 		int length = terminalSequenceEndIndices[n-1] - terminalSequenceStartIndices[0];
 		
-		return new HierarchicalPhrase(pattern, terminalSequenceStartIndices, terminalSequenceEndIndices, prefixTree.suffixArray.corpus, length);
+		return new HierarchicalPhrase(pattern, terminalSequenceStartIndices, terminalSequenceEndIndices, prefixTree.suffixArray.getCorpus(), length);
 	}
 	
 	/**

@@ -17,11 +17,11 @@
  */
 package joshua.sarray;
 
-import joshua.util.sentence.Vocabulary;
+import joshua.corpus.SymbolTable;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.nio.MappedByteBuffer;
+import java.nio.IntBuffer;
 import java.nio.channels.FileChannel;
 
 
@@ -30,12 +30,10 @@ import java.nio.channels.FileChannel;
  * 
  * @author Lane Schwartz
  */
-public class MemoryMappedCorpusArray { 
+public class MemoryMappedCorpusArray extends AbstractCorpus { 
 
-	private final Vocabulary vocabulary;
-	
-	private final MappedByteBuffer binaryCorpusBuffer;
-	private final MappedByteBuffer binarySentenceBuffer;
+	private final IntBuffer binaryCorpusBuffer;
+	private final IntBuffer binarySentenceBuffer;
 	
 	private final int numberOfWords;
 	private final int numberOfSentences;
@@ -52,74 +50,117 @@ public class MemoryMappedCorpusArray {
 	 * @throws IOException
 	 */
 	public MemoryMappedCorpusArray(
-		Vocabulary vocabulary,
+		SymbolTable symbolTable,
 		String     binaryCorpusFileName,
 		int        binaryCorpusFileSize,
 		String     binarySentenceFileName,
 		int        binarySentenceFileSize
 	) throws IOException {
 		
-		this.vocabulary = vocabulary;
+		super(symbolTable);
 		
 		RandomAccessFile binarySentenceFile = new RandomAccessFile( binarySentenceFileName, "r" );
 	    FileChannel binarySentenceFileChannel = binarySentenceFile.getChannel();
-	    this.binarySentenceBuffer = binarySentenceFileChannel.map( FileChannel.MapMode.READ_ONLY, 0, binarySentenceFileSize );
+	    this.binarySentenceBuffer = binarySentenceFileChannel.map( FileChannel.MapMode.READ_ONLY, 0, binarySentenceFileSize ).asIntBuffer();
 
 		RandomAccessFile binaryCorpusFile = new RandomAccessFile( binaryCorpusFileName, "r" );
 	    FileChannel binaryCorpusFileChannel = binaryCorpusFile.getChannel();
-	    this.binaryCorpusBuffer = binaryCorpusFileChannel.map( FileChannel.MapMode.READ_ONLY, 0, binaryCorpusFileSize );
+	    this.binaryCorpusBuffer = binaryCorpusFileChannel.map( FileChannel.MapMode.READ_ONLY, 0, binaryCorpusFileSize ).asIntBuffer();
 
 	    this.numberOfWords = binaryCorpusFileSize;
 	    this.numberOfSentences = binarySentenceFileSize;
 	}
 	
+	public MemoryMappedCorpusArray(
+			SymbolTable symbolTable,
+			String     binaryFileName
+		) throws IOException {
+			
+			super(symbolTable);
+			
+			IntBuffer tmp;
+			
+			RandomAccessFile binaryFile = new RandomAccessFile( binaryFileName, "r" );
+		    FileChannel binaryChannel = binaryFile.getChannel();
+		    tmp = binaryChannel.map( FileChannel.MapMode.READ_ONLY, 0, 4).asIntBuffer().asReadOnlyBuffer();
+		    this.numberOfSentences = tmp.get();
+		    this.binarySentenceBuffer = binaryChannel.map( FileChannel.MapMode.READ_ONLY, 4, 4*numberOfSentences ).asIntBuffer().asReadOnlyBuffer();
+		    
+		    tmp = binaryChannel.map( FileChannel.MapMode.READ_ONLY, (4 + 4*numberOfSentences), 4).asIntBuffer().asReadOnlyBuffer();
+		    this.numberOfWords = tmp.get();
+		    this.binaryCorpusBuffer = binaryChannel.map( FileChannel.MapMode.READ_ONLY, (4 + 4*numberOfSentences + 4), 4*numberOfWords ).asIntBuffer().asReadOnlyBuffer();
+
+		}
+
+
+	@Override
+	public int getNumSentences() {
+		return numberOfSentences; 
+	}
+
+	@Override
+	public int getSentenceIndex(int position) {
+		
+		int index = binarySearch(position);
+		// if index is positive, then the position searched
+		// for is the first word of a sentence. we return
+		// the exact value.
+		if (index >= 0) {
+				return index;
+		} else {
+		// otherwise, we are given an negative version of
+		// the first number higher than our position. that
+		// is the position of where this would be inserted
+		// if it was its own sentence, so we make the number
+		// positive and subtract 2 (one since since it is
+		// by ith element instead of position, one to get
+		// the previous index)
+			return (index*(-1))-2;
+		}
+	}
+
+	private int binarySearch(int value) {
+
+		int low = 0;
+		int high = size() - 1;
+		
+		while (low <= high) {
+			int mid = (low + high) >>> 1;
+			int midValue = binarySentenceBuffer.get(mid);
+			
+			if (midValue < value) {
+				low = mid + 1;
+			} else if (midValue > value) {
+				high = mid -1;
+			} else {
+				return mid;
+			}
+		}
+		
+		return -(low+1);
+		
+	}
 	
-	/**
-	 * @return the number of words in the corpus. 
-	 */
+	@Override
+	public int getSentencePosition(int sentenceID) {
+		if (sentenceID >= numberOfSentences) {
+			return numberOfWords-1;
+		}
+		return binarySentenceBuffer.get(sentenceID);
+		//return binarySentenceBuffer.getInt(sentenceID*4);
+	}
+
+	@Override
+	public int getWordID(int position) {
+		return binaryCorpusBuffer.get(position);
+		//return binaryCorpusBuffer.getInt(position*4);	
+	}
+
+	@Override
 	public int size() {
 		return numberOfWords;
 	}
 	
 	
-	/**
-	 * @return the number of sentences in the corpus.
-	 */
-	public int getNumSentences() {
-		return numberOfSentences;
-	}
-	
-	
-	public int getNumWords() {
-		return numberOfWords;
-	}
-	
-	
-	public Vocabulary getVocabulary() {
-		return vocabulary;
-	}
-	
-	
-	/**
-	 * @return the integer representation of the Word at the
-	 *         specified position in the corpus.
-	 */
-	public int getWordID(int position) {
-		return binaryCorpusBuffer.getInt(position*4);	
-	}
-	
-	
-	/**
-	 * @return the position in the corpus of the first word of
-	 *         the specified sentence. If the sentenceID is
-	 *         outside of the bounds of the sentences, then it
-	 *         returns the last position in the corpus.
-	 */
-	public int getSentencePosition(int sentenceID) {
-		if (sentenceID >= numberOfSentences) {
-			return numberOfWords-1;
-		}
-		return binarySentenceBuffer.getInt(sentenceID*4);
-	}
-	
+
 }

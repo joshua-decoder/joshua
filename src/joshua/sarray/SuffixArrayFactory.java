@@ -104,7 +104,7 @@ public class SuffixArrayFactory {
 	 * @return a tuple containing the number of words in the corpus and number of sentences in the corpus
 	 */
 	public static int[] createVocabulary(String inputFilename, Vocabulary vocab) throws IOException {
-		BufferedReader reader = FileUtil.getBufferedReader(inputFilename);
+		BufferedReader reader = FileUtility.getReadFileStream(inputFilename);
 		//HashSet words = new HashSet();
 		int numSentences = 0;
 		int numWords = 0;
@@ -156,8 +156,8 @@ public class SuffixArrayFactory {
 	 * @param numSentences the number of lines in the file
 	 *                     (returned by createVocabulary)
 	 */
-	static CorpusArray createCorpusArray(String inputFilename, SymbolTable vocab, int numWords, int numSentences) throws IOException {
-		BufferedReader reader = FileUtil.getBufferedReader(inputFilename);
+	public static CorpusArray createCorpusArray(String inputFilename, SymbolTable vocab, int numWords, int numSentences) throws IOException {
+		BufferedReader reader = FileUtility.getReadFileStream(inputFilename);
 		// initialize the arrays.
 		int[] corpus = new int[numWords];
 		int[] sentenceIndexes = new int[numSentences];
@@ -192,7 +192,7 @@ public class SuffixArrayFactory {
 	 * Creates a new SuffixArray from a CorpusArray created
 	 * from the same file.
 	 */
-	public static SuffixArray createSuffixArray(CorpusArray corpusArray, int maxCacheSize) throws IOException {
+	public static SuffixArray createSuffixArray(Corpus corpusArray, int maxCacheSize) throws IOException {
 		return new SuffixArray(corpusArray, maxCacheSize);
 	}
 	
@@ -227,7 +227,7 @@ public class SuffixArrayFactory {
 		
 		// set the values of the arrays based on the alignments file...
 		int sentenceCounter = 0;
-		BufferedReader reader = FileUtil.getBufferedReader(alignmentsFilename);
+		BufferedReader reader = FileUtility.getReadFileStream(alignmentsFilename);
 		while (reader.ready()) {
 			
 			// Start index of current source sentence

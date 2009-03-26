@@ -62,7 +62,7 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 	protected final int maxNonterminalSpan;
 	
 	/** Suffix array representing the source language corpus. */
-	protected final SuffixArray suffixArray;
+	protected final Suffixes suffixArray;
 	
 	/** Corpus array representing the target language corpus. */
 	protected final CorpusArray targetCorpus;
@@ -72,7 +72,7 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 	
 	protected final int sampleSize;
 	
-	public HierarchicalRuleExtractor(SuffixArray suffixArray, CorpusArray targetCorpus, Alignments alignments, LexicalProbabilities lexProbs, int sampleSize, int maxPhraseSpan, int maxPhraseLength, int minNonterminalSpan, int maxNonterminalSpan) {
+	public HierarchicalRuleExtractor(Suffixes suffixArray, CorpusArray targetCorpus, Alignments alignments, LexicalProbabilities lexProbs, int sampleSize, int maxPhraseSpan, int maxPhraseLength, int minNonterminalSpan, int maxNonterminalSpan) {
 		this.lexProbs = lexProbs;
 		this.maxPhraseSpan = maxPhraseSpan;
 		this.maxPhraseLength = maxPhraseLength;
@@ -466,7 +466,7 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 			
 			if (logger.isLoggable(Level.FINER)) logger.finer("Case 2: Source phrase startsWithNT && !endsWithNT");
 			
-			int startOfSentence = suffixArray.corpus.getSentencePosition(sourcePhrase.sentenceNumber);
+			int startOfSentence = suffixArray.getCorpus().getSentencePosition(sourcePhrase.sentenceNumber);
 			int startOfTerminalSequence = sourcePhrase.terminalSequenceStartIndices[0];
 			int endOfTerminalSequence = sourcePhrase.terminalSequenceEndIndices[sourcePhrase.terminalSequenceEndIndices.length-1];
 			
@@ -510,7 +510,7 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 			
 			if (logger.isLoggable(Level.FINER)) logger.finer("Case 3: Source phrase !startsWithNT && endsWithNT");
 			
-			int endOfSentence = suffixArray.corpus.getSentenceEndPosition(sourcePhrase.sentenceNumber);
+			int endOfSentence = suffixArray.getCorpus().getSentenceEndPosition(sourcePhrase.sentenceNumber);
 			//int startOfTerminalSequence = sourcePhrase.terminalSequenceStartIndices[0];
 			int endOfTerminalSequence = sourcePhrase.terminalSequenceEndIndices[sourcePhrase.terminalSequenceEndIndices.length-1];
 			//int startOfNT = endOfTerminalSequence + 1;
@@ -557,8 +557,8 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 			
 			if (logger.isLoggable(Level.FINER)) logger.finer("Case 4: Source phrase startsWithNT && endsWithNT");
 			
-			int startOfSentence = suffixArray.corpus.getSentencePosition(sourcePhrase.sentenceNumber);
-			int endOfSentence = suffixArray.corpus.getSentenceEndPosition(sourcePhrase.sentenceNumber);
+			int startOfSentence = suffixArray.getCorpus().getSentencePosition(sourcePhrase.sentenceNumber);
+			int endOfSentence = suffixArray.getCorpus().getSentenceEndPosition(sourcePhrase.sentenceNumber);
 			int startOfTerminalSequence = sourcePhrase.terminalSequenceStartIndices[0];
 			int endOfTerminalSequence = sourcePhrase.terminalSequenceEndIndices[sourcePhrase.terminalSequenceEndIndices.length-1];
 			

@@ -25,7 +25,7 @@ import joshua.util.sentence.alignment.Alignments;
 
 public class SAGrammarFactory implements GrammarFactory {
 
-	private final SuffixArray sourceSuffixArray;
+	private final Suffixes sourceSuffixArray;
 	private final CorpusArray targetCorpus;
 	private final Alignments alignments;
 	private final LexicalProbabilities lexProbs;
@@ -51,7 +51,7 @@ public class SAGrammarFactory implements GrammarFactory {
 	 * @param maxPhraseLength
 	 * @param maxNonterminals
 	 */
-	public SAGrammarFactory(SuffixArray sourceSuffixArray, CorpusArray targetCorpus, Alignments alignments, LexicalProbabilities lexProbs, int sampleSize, int maxPhraseSpan, int maxPhraseLength, int maxNonterminals, int minNonterminalSpan) {
+	public SAGrammarFactory(Suffixes sourceSuffixArray, CorpusArray targetCorpus, Alignments alignments, LexicalProbabilities lexProbs, int sampleSize, int maxPhraseSpan, int maxPhraseLength, int maxNonterminals, int minNonterminalSpan) {
 		this.sourceSuffixArray = sourceSuffixArray;
 		this.targetCorpus      = targetCorpus;
 		this.alignments        = alignments;

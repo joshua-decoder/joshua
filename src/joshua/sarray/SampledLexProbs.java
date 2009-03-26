@@ -32,7 +32,6 @@ import joshua.corpus.SymbolTable;
 import joshua.util.Cache;
 import joshua.util.Pair;
 import joshua.util.lexprob.LexicalProbabilities;
-import joshua.util.sentence.Vocabulary;
 import joshua.util.sentence.alignment.Alignments;
 
 
@@ -52,11 +51,11 @@ public class SampledLexProbs implements LexicalProbabilities {
 	private final Cache<Integer,Map<Integer,Float>> sourceGivenTarget;
 	private final Cache<Integer,Map<Integer,Float>> targetGivenSource;
 	
-	private final SuffixArray sourceSuffixArray;
-	private final SuffixArray targetSuffixArray;
+	private final Suffixes sourceSuffixArray;
+	private final Suffixes targetSuffixArray;
 	
 	/** Corpus array representing the target language corpus. */
-	final CorpusArray targetCorpus; 
+	final Corpus targetCorpus; 
 	
 	/** Represents alignments between words in the source corpus and the target corpus. */
 	private final Alignments alignments;
@@ -76,12 +75,12 @@ public class SampledLexProbs implements LexicalProbabilities {
 	private final int sampleSize;
 	
 
-	public SampledLexProbs(int sampleSize, SuffixArray sourceSuffixArray, SuffixArray targetSuffixArray, Alignments alignments, int cacheCapacity, boolean precalculate) {
+	public SampledLexProbs(int sampleSize, Suffixes sourceSuffixArray, Suffixes targetSuffixArray, Alignments alignments, int cacheCapacity, boolean precalculate) {
 		
 		this.sampleSize = sampleSize;
 		this.sourceSuffixArray = sourceSuffixArray;
 		this.targetSuffixArray = targetSuffixArray;
-		this.targetCorpus = targetSuffixArray.corpus;
+		this.targetCorpus = targetSuffixArray.getCorpus();
 		this.alignments = alignments;
 		this.sourceVocab = sourceSuffixArray.getVocabulary();
 		this.targetVocab = targetSuffixArray.getVocabulary();
@@ -322,7 +321,8 @@ public class SampledLexProbs implements LexicalProbabilities {
 				
 				float sum = 0.0f;
 				
-				int sourceWord = sourceSuffixArray.corpus.corpus[sourceWordIndex];
+//				int sourceWord = sourceSuffixArray.corpus.corpus[sourceWordIndex];
+				int sourceWord = sourceSuffixArray.getCorpus().getWordID(sourceWordIndex);
 				int[] targetIndices = alignments.getAlignedTargetIndices(sourceWordIndex);
 				
 				if (targetIndices==null) {
@@ -338,7 +338,8 @@ public class SampledLexProbs implements LexicalProbabilities {
 					// Iterate over each target index aligned to the current source word
 					for (int targetIndex : targetIndices) {
 
-						int targetWord = targetCorpus.corpus[targetIndex];
+//						int targetWord = targetCorpus.corpus[targetIndex];
+						int targetWord = targetCorpus.getWordID(targetIndex);
 						sum += sourceGivenTarget(sourceWord, targetWord);
 
 						// Keeping track of the reverse alignment points 
@@ -362,7 +363,8 @@ public class SampledLexProbs implements LexicalProbabilities {
 		// Actually calculate the reverse lexical translation probabilities
 		for (Map.Entry<Integer, List<Integer>> entry : reverseAlignmentPoints.entrySet()) {
 			
-			int targetWord = targetCorpus.corpus[entry.getKey()];
+//			int targetWord = targetCorpus.corpus[entry.getKey()];
+			int targetWord = targetCorpus.getWordID(entry.getKey());
 			float sum = 0.0f;
 			
 			List<Integer> alignedSourceWords = entry.getValue();
@@ -393,7 +395,7 @@ public class SampledLexProbs implements LexicalProbabilities {
 		float total = 0;
 		
 		for (int targetSuffixArrayIndex=targetSuffixArrayBounds[0],samples=0; targetSuffixArrayIndex<=targetSuffixArrayBounds[1] && samples<sampleSize; targetSuffixArrayIndex+=step, samples++) {
-			int targetCorpusIndex = targetSuffixArray.suffixes[targetSuffixArrayIndex];
+			int targetCorpusIndex = targetSuffixArray.getCorpusIndex(targetSuffixArrayIndex);
 			int[] alignedSourceIndices = alignments.getAlignedSourceIndices(targetCorpusIndex);
 			if (alignedSourceIndices==null) {
 				if (!counts.containsKey(null)) {
@@ -405,7 +407,7 @@ public class SampledLexProbs implements LexicalProbabilities {
 				total++;
 			} else {
 				for (int sourceIndex : alignedSourceIndices) {
-					int sourceWord = sourceSuffixArray.corpus.getWordID(sourceIndex);
+					int sourceWord = sourceSuffixArray.getCorpus().getWordID(sourceIndex);
 					if (!counts.containsKey(sourceWord)) {
 						counts.put(sourceWord,1);
 					} else {
@@ -445,7 +447,7 @@ public class SampledLexProbs implements LexicalProbabilities {
 		float total = 0;
 		
 		for (int sourceSuffixArrayIndex=sourceSuffixArrayBounds[0],samples=0; sourceSuffixArrayIndex<=sourceSuffixArrayBounds[1] && samples<sampleSize; sourceSuffixArrayIndex+=step, samples++) {
-			int sourceCorpusIndex = sourceSuffixArray.suffixes[sourceSuffixArrayIndex];
+			int sourceCorpusIndex = sourceSuffixArray.getCorpusIndex(sourceSuffixArrayIndex);
 			int[] alignedTargetIndices = alignments.getAlignedTargetIndices(sourceCorpusIndex);
 			if (alignedTargetIndices==null) {
 				if (!counts.containsKey(null)) {
@@ -459,7 +461,7 @@ public class SampledLexProbs implements LexicalProbabilities {
 
 			} else {
 				for (int targetIndex : alignedTargetIndices) {
-					int targetWord = targetSuffixArray.corpus.getWordID(targetIndex);
+					int targetWord = targetSuffixArray.getCorpus().getWordID(targetIndex);
 					if (!counts.containsKey(targetWord)) {
 						if (logger.isLoggable(Level.FINEST)) logger.finest("Setting count(" +targetVocab.getWord(targetWord) + " | " + sourceVocab.getWord(sourceWord) + ") = 1" + "; sourceWord ID == " + sourceWord + "; targetWord ID == " + targetWord);
 						counts.put(targetWord,1);

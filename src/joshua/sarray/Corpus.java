@@ -17,6 +17,7 @@
  */
 package joshua.sarray;
 
+
 import joshua.corpus.SymbolTable;
 import joshua.util.sentence.Phrase;
 
@@ -37,9 +38,51 @@ public interface Corpus {
 //===============================================================
 	
 	/**
-	 * @return the vocabulary that this corpus is comprised of.
+	 * @return the integer representation of the Word at the
+	 *         specified position in the corpus.
 	 */
-	public SymbolTable getVocabulary();
+	public int getWordID(int position);
+	
+	
+	/**
+	 * @return the sentence index associated with the specified
+	 *         position in the corpus.
+	 */
+	public int getSentenceIndex(int position);
+	
+	
+	/**
+	 * @return the position in the corpus of the first word of
+	 *         the specified sentence.  If the sentenceID is
+	 *         outside of the bounds of the sentences, then it
+	 *         returns the last position in the corpus + 1.
+	 */
+	public int getSentencePosition(int sentenceID);
+	
+	/**
+	 * Gets the exclusive end position of a sentence in the corpus.
+	 * 
+	 * @return the position in the corpus one past the last word of
+	 *         the specified sentence.  If the sentenceID is
+	 *         outside of the bounds of the sentences, then it
+	 *         returns one past the last position in the corpus.
+	 */
+	public int getSentenceEndPosition(int sentenceID);
+	
+	/** 
+	 * Gets the sentence at the specified index (starting from
+	 * zero).
+	 *
+	 * @return the sentence, or null if the specified sentence
+	 *         number doesn't exist
+	 */
+	public Phrase getSentence(int sentenceIndex);
+	
+
+	/**
+	 * @return the number of words in the corpus.
+	 */
+	public int size();
 	
 	
 	/**
@@ -48,44 +91,56 @@ public interface Corpus {
 	public int getNumSentences();
 	
 	
-	/**
-	 * @return the number of words in the corpus.
-	 */
-	public int getNumWords();
+	//===========================================================
+	// Methods
+	//===========================================================
 	
 	
 	/**
-	 * @return the sentence at the specified index
+	 * Compares the phrase that starts at position start with
+	 * the subphrase indicated by the start and end points of
+	 * the phrase.
+	 *
+	 * @param corpusStart the point in the corpus where the
+	 *                    comparison begins
+	 * @param phrase      the superphrase that the comparsion
+	 *                    phrase is drawn from
+	 * @param phraseStart the point in the phrase where the
+	 *                    comparison begins (inclusive)
+	 * @param phraseEnd   the point in the phrase where the
+	 *                    comparison ends (exclusive)
+	 * @return an int that follows the conventions of
+	 *         java.util.Comparator.compareTo()
 	 */
-	public Phrase getSentence(int sentenceIndex);
+	public int comparePhrase(int corpusStart, Phrase phrase, int phraseStart, int phraseEnd);
 	
 	
 	/**
-	 * @return the number of time that the specified phrase
-	 *         occurs in the corpus.
+	 * compares the phrase that starts at position start with
+	 * the phrase passed in. Compares the entire phrase.
 	 */
-	public int getNumOccurrences(Phrase phrase);
+	public int comparePhrase(int corpusStart, Phrase phrase);
+	
+	public SymbolTable getVocabulary();
+	
+	
+	/** 
+	 * Compares the suffixes starting a positions index1 and
+	 * index2.
+	 *
+	 * @param position1 the position in the corpus where the
+	 *                  first suffix begins
+	 * @param position2 the position in the corpus where the
+	 *                  second suffix begins
+	 * @param maxComparisonLength a cutoff point to stop the
+	 *                            comparison
+	 * @return an int that follows the conventions of
+	 *         java.util.Comparator.compareTo()
+	 */
+    public int compareSuffixes(int position1, int position2, int maxComparisonLength);
 	
 
-	/**
-	 * Returns a list of the sentence numbers which contain the
-	 * specified phrase.
-	 *
-	 * @param the phrase to look for
-	 * @return a list of the sentence numbers
-	 */
-	public int[] findSentencesContaining(Phrase phrase);
-	
-	
-	/**
-	 * Returns a list of the sentence numbers which contain the
-	 * specified phrase.
-	 *
-	 * @param the phrase to look for
-	 * @param the maximum number of sentences to return
-	 * @return a list of the sentence numbers
-	 */
-	public int[] findSentencesContaining(Phrase phrase, int maxSentences);
+	public ContiguousPhrase getPhrase(int startPosition, int endPosition);
 	
 }
 

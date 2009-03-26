@@ -38,7 +38,7 @@ import java.util.Arrays;
  * @since  29 Dec 2004
  * @version $LastChangedDate:2008-07-30 17:15:52 -0400 (Wed, 30 Jul 2008) $
  */
-public class CorpusArray {
+public class CorpusArray implements Corpus {
 
 //===============================================================
 // Constants
@@ -175,16 +175,7 @@ public class CorpusArray {
 			return getPhrase(sentences[sentenceIndex], sentences[sentenceIndex+1]);
 		} 
 	}
-	
-	
-	/**
-	 * Gets the number of sentences in this corpus.
-	 * 
-	 * @return the number of sentences in this corpus
-	 */
-	public int getSentenceCount() {
-		return sentences.length;
-	}
+
 	
 	/**
 	 * @return the number of words in the corpus.
@@ -284,27 +275,26 @@ public class CorpusArray {
     }
 	
 	
-    public void writeVocabToFile(String filename) throws IOException {
-    	FileUtility.writeBytes(corpus, filename);
+//    public void writeWordIDsToFile(String filename) throws IOException {
+//    	FileUtility.writeBytes(corpus, filename, false);
+//    }
+//    
+//	
+//    public void writeSentenceLengthsToFile(String filename) throws IOException {
+//    	FileUtility.writeBytes(sentences, filename, false);
+//    }
+    
+    public void write(String filename) throws IOException {
+    	
+    	FileUtility.writeBytes(new int[]{sentences.length}, filename, false);
+    	FileUtility.writeBytes(sentences, filename, true);
+    	
+    	FileUtility.writeBytes(new int[]{corpus.length}, filename, true);
+    	FileUtility.writeBytes(corpus, filename, true);
+    	
     }
-    
 	
-    public void writeSentencesToFile(String filename) throws IOException {
-    	FileUtility.writeBytes(sentences, filename);
-    }
-    
-	
-
-    
-//===============================================================
-// Protected 
-//===============================================================
-	
-	//===============================================================
-	// Methods
-	//===============================================================
-	
-	protected ContiguousPhrase getPhrase(int startPosition, int endPosition) {
+	public ContiguousPhrase getPhrase(int startPosition, int endPosition) {
 		return new ContiguousPhrase(startPosition, endPosition, this);
 	}
 	

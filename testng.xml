@@ -58,6 +58,7 @@
 
 
   <test name="SuffixArray" >
+    <parameter name="binaryFileName" value="" />
     <classes>
        <class name="joshua.sarray.HierarchicalPhraseTest" />
        <class name="joshua.sarray.SuffixArrayTest" />  
@@ -82,6 +83,22 @@
     <classes>
        <class name="joshua.util.CacheTest" /> 
     </classes>
+  </test>
+<!--
+  <test name="Decoder" >
+  	<classes>
+  		<class name="joshua.decoder.JoshuaDecoderTest" >
+     	   <parameter name="configFile" value="example/example.config.javalm" />
+     	   <parameter name="sourceInput" value="example/example.test.in" />
+     	   <parameter name="referenceOutput" value="example/example.nbest.out.javalm.valid" />
+      </class>
+  	</classes>
+  </test>
+  -->
+  <test name="Feature Functions" >
+  	<classes>
+  		<class name="joshua.decoder.ff.ArityPhrasePenaltyFFTest" />
+  	</classes>
   </test>
   
   <test name="ZMERT" >

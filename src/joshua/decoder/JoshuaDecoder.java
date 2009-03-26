@@ -30,11 +30,12 @@ import joshua.decoder.ff.lm.distributed_lm.LMGrammarRemote;
 import joshua.decoder.ff.lm.srilm.LMGrammarSRILM;
 import joshua.decoder.ff.tm.GrammarFactory;
 import joshua.decoder.ff.tm.HieroGrammar.MemoryBasedBatchGrammar;
+import joshua.sarray.Corpus;
 import joshua.sarray.CorpusArray;
 import joshua.sarray.SAGrammarFactory;
 import joshua.sarray.SampledLexProbs;
-import joshua.sarray.SuffixArray;
 import joshua.sarray.SuffixArrayFactory;
+import joshua.sarray.Suffixes;
 import joshua.corpus.SymbolTable;
 import joshua.util.FileUtility;
 import joshua.util.lexprob.LexicalProbabilities;
@@ -184,12 +185,13 @@ public class JoshuaDecoder {
 			
 			// initialize and load grammar
 			if (! JoshuaConfiguration.use_sent_specific_tm) {
-				if (null != JoshuaConfiguration.tm_file) {
+				if (JoshuaConfiguration.tm_file != null) {
+					
 					initializeTranslationGrammars(JoshuaConfiguration.tm_file);
 					
-				} else if (null != JoshuaConfiguration.sa_source
-					&& null != JoshuaConfiguration.sa_target
-					&& null != JoshuaConfiguration.sa_alignment) {
+				} else if (JoshuaConfiguration.sa_source != null
+					&& JoshuaConfiguration.sa_target != null
+					&& JoshuaConfiguration.sa_alignment != null) {
 					
 					try {
 						initializeSuffixArrayGrammar();
@@ -440,17 +442,17 @@ public class JoshuaDecoder {
 				"alignment " + JoshuaConfiguration.sa_alignment);
 		// TODO: SA creation is a constant thing which should be done earlier in the pipeline. Here we should only load the already-created SA
 		
-		CorpusArray sourceCorpusArray =
+		Corpus sourceCorpusArray =
 			SuffixArrayFactory.createCorpusArray(
 				JoshuaConfiguration.sa_source, this.symbolTable);
-		SuffixArray sourceSuffixArray =
+		Suffixes sourceSuffixArray =
 			SuffixArrayFactory.createSuffixArray(
 				sourceCorpusArray, JoshuaConfiguration.sa_rule_cache_size);
 		
 		CorpusArray targetCorpusArray =
 			SuffixArrayFactory.createCorpusArray(
 				JoshuaConfiguration.sa_target);
-		SuffixArray targetSuffixArray =
+		Suffixes targetSuffixArray =
 			SuffixArrayFactory.createSuffixArray(
 				targetCorpusArray, JoshuaConfiguration.sa_rule_cache_size);
 		

@@ -17,30 +17,28 @@
 
 package joshua.sarray;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
+import java.io.IOException;
 
 import joshua.sarray.BasicPhrase;
-import joshua.sarray.ContiguousPhrase;
 import joshua.sarray.CorpusArray;
 import joshua.sarray.SuffixArray;
-import joshua.sarray.SuffixArray.Collocations;
 import joshua.util.sentence.Phrase;
 import joshua.util.sentence.Vocabulary;
 
 
 import org.testng.Assert;
+import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
 
 
 public class SuffixArrayTest {
 
-	private final SuffixArray suffixArray;
+	private final Suffixes suffixArray;
 	private final Vocabulary vocab;
 	
-	public SuffixArrayTest() {
+	@Parameters({"binaryFileName"})
+	public SuffixArrayTest(String binaryFileName) throws IOException {
 		// Adam Lopez's example...
 		String corpusString = "it makes him and it mars him , it sets him on and it takes him off .";
 
@@ -58,7 +56,11 @@ public class SuffixArrayTest {
 		}
 		
 		CorpusArray corpusArray = new CorpusArray(corpus, sentences, vocab);
-		suffixArray = new SuffixArray(corpusArray);
+		
+		if (binaryFileName==null || binaryFileName.trim().length()==0)
+			suffixArray = new SuffixArray(corpusArray);
+		else
+			suffixArray = new MemoryMappedSuffixArray(binaryFileName, corpusArray, MemoryMappedSuffixArray.DEFAULT_CACHE_CAPACITY);
 		
 	}
 	
@@ -91,53 +93,53 @@ public class SuffixArrayTest {
 		Assert.assertEquals(bounds[1], expectedSuffixArrayEndIndex);
 	}
 	
-	//@Test
-	public void print() {
-		
-		int[] lcpArray = suffixArray.calculateLongestCommonPrefixes();
-		
-		System.out.println("I\tS[I]\tLCP\tSUFFIX");
-		for(int i = 0; i < suffixArray.size(); i++) {
-			Phrase phrase = new ContiguousPhrase(suffixArray.suffixes[i], suffixArray.size(), suffixArray.corpus);
-			System.out.println(i + "\t" + suffixArray.suffixes[i] + "\t" + lcpArray[i] + "\t"+ phrase);
-		}
-		System.out.println();
-		
-		//ArrayList<Phrase> phrases = new ArrayList<Phrase>();
-		ArrayList<Integer> frequencies = new ArrayList<Integer>();
-		int minFrequency = 1;
-		int maxPhrasesToRetain = 100;
-		int maxPhraseLength = 100;
-		List<Phrase> phrases = suffixArray.getMostFrequentPhrases(frequencies, minFrequency, maxPhrasesToRetain, maxPhraseLength);
-		
-		System.out.println("Frequency\tphrase");
-		for(int i = 0; i < phrases.size(); i++) {
-			System.out.println(frequencies.get(i) + "\t" + phrases.get(i));
-		}
-		System.out.println();
-		
-		
-		System.out.println("Collocations");
-		Collocations collocations = suffixArray.getCollocations(new HashSet<Phrase>(phrases), maxPhraseLength, 100);
-		System.out.println(collocations);	
-		
-		Phrase phrase1 = new BasicPhrase("him", vocab);
-		Phrase phrase2 = new BasicPhrase("it", vocab);
-		
-		int[] positions1 = suffixArray.getAllPositions(suffixArray.findPhrase(phrase1));
-		int[] positions2 = suffixArray.getAllPositions(suffixArray.findPhrase(phrase2));
-		
-		System.out.print(phrase1 + " occurred at positions: ");
-		for(int i = 0; i < positions1.length; i++) {
-			System.out.print(positions1[i] + " ");
-		}
-		System.out.println();
-		
-		System.out.print(phrase2 + " occurred at positions: ");
-		for(int i = 0; i < positions2.length; i++) {
-			System.out.print(positions2[i] + " ");
-		}
-		System.out.println();
-
-	}
+//	//@Test
+//	public void print() {
+//		
+//		int[] lcpArray = suffixArray.calculateLongestCommonPrefixes();
+//		
+//		System.out.println("I\tS[I]\tLCP\tSUFFIX");
+//		for(int i = 0; i < suffixArray.size(); i++) {
+//			Phrase phrase = new ContiguousPhrase(suffixArray.suffixes[i], suffixArray.size(), suffixArray.corpus);
+//			System.out.println(i + "\t" + suffixArray.suffixes[i] + "\t" + lcpArray[i] + "\t"+ phrase);
+//		}
+//		System.out.println();
+//		
+//		//ArrayList<Phrase> phrases = new ArrayList<Phrase>();
+//		ArrayList<Integer> frequencies = new ArrayList<Integer>();
+//		int minFrequency = 1;
+//		int maxPhrasesToRetain = 100;
+//		int maxPhraseLength = 100;
+//		List<Phrase> phrases = suffixArray.getMostFrequentPhrases(frequencies, minFrequency, maxPhrasesToRetain, maxPhraseLength);
+//		
+//		System.out.println("Frequency\tphrase");
+//		for(int i = 0; i < phrases.size(); i++) {
+//			System.out.println(frequencies.get(i) + "\t" + phrases.get(i));
+//		}
+//		System.out.println();
+//		
+//		
+//		System.out.println("Collocations");
+//		Collocations collocations = suffixArray.getCollocations(new HashSet<Phrase>(phrases), maxPhraseLength, 100);
+//		System.out.println(collocations);	
+//		
+//		Phrase phrase1 = new BasicPhrase("him", vocab);
+//		Phrase phrase2 = new BasicPhrase("it", vocab);
+//		
+//		int[] positions1 = suffixArray.getAllPositions(suffixArray.findPhrase(phrase1));
+//		int[] positions2 = suffixArray.getAllPositions(suffixArray.findPhrase(phrase2));
+//		
+//		System.out.print(phrase1 + " occurred at positions: ");
+//		for(int i = 0; i < positions1.length; i++) {
+//			System.out.print(positions1[i] + " ");
+//		}
+//		System.out.println();
+//		
+//		System.out.print(phrase2 + " occurred at positions: ");
+//		for(int i = 0; i < positions2.length; i++) {
+//			System.out.print(positions2[i] + " ");
+//		}
+//		System.out.println();
+//
+//	}
 }

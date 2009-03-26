@@ -18,7 +18,6 @@ package joshua.sarray;
 
 import java.io.IOException;
 
-import joshua.sarray.AlignmentArray;
 import joshua.sarray.CorpusArray;
 import joshua.sarray.SuffixArray;
 import joshua.sarray.SuffixArrayFactory;

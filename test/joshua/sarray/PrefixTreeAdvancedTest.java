@@ -7,7 +7,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import joshua.sarray.AlignmentArray;
 import joshua.sarray.BasicPhrase;
 import joshua.sarray.CorpusArray;
 import joshua.sarray.PrefixTree;

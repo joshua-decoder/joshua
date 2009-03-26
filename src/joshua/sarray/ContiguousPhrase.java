@@ -45,13 +45,13 @@ public class ContiguousPhrase extends AbstractPhrase {
 
 	protected int startIndex;
 	protected int endIndex;
-	protected CorpusArray corpusArray;
+	protected Corpus corpusArray;
  
 //===============================================================
 // Constructor(s)
 //===============================================================
 	
-	public ContiguousPhrase(int startIndex, int endIndex, CorpusArray corpusArray) {
+	public ContiguousPhrase(int startIndex, int endIndex, Corpus corpusArray) {
 		this.startIndex  = startIndex;
 		this.endIndex    = endIndex;
 		this.corpusArray = corpusArray;
@@ -71,7 +71,7 @@ public class ContiguousPhrase extends AbstractPhrase {
 	 *         drawn from.
 	 */
 	public SymbolTable getVocab() {
-		return corpusArray.vocab;
+		return corpusArray.getVocabulary();
 	}
 	
 	
@@ -85,14 +85,15 @@ public class ContiguousPhrase extends AbstractPhrase {
 	public int[] getWordIDs() {
 		int[] words = new int[endIndex-startIndex];
 		for (int i = startIndex; i < endIndex; i++) {
-			words[i-startIndex] = corpusArray.corpus[i];
+			words[i-startIndex] = corpusArray.getWordID(i); //corpusArray.corpus[i];
 		}
 		return words;
 	}
 	
 	
 	public int getWordID(int position) {
-		return corpusArray.corpus[startIndex+position];
+		return corpusArray.getWordID(startIndex+position);
+//		return corpusArray.corpus[startIndex+position];
 	}
 	
 	

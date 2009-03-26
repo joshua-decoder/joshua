@@ -116,9 +116,9 @@ public class FileUtility {
 	 * @param filename The filename where the data should be written.
 	 * @throws IOException
 	 */
-	public static void writeBytes(int[] data, String filename)
+	public static void writeBytes(int[] data, String filename, boolean append)
 	throws IOException {
-		FileOutputStream out = new FileOutputStream(filename);
+		FileOutputStream out = new FileOutputStream(filename,append);
 		byte[] b = new byte[4];
 		
 		for (int word : data) {

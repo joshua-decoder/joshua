@@ -23,7 +23,6 @@ import java.io.PrintStream;
 import java.util.Date;
 
 import joshua.corpus.SymbolTable;
-import joshua.util.sentence.Vocabulary;
 
 import org.testng.Assert;
 import org.testng.annotations.Test;

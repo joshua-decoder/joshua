@@ -61,7 +61,7 @@ public class HierarchicalPhrase extends AbstractPhrase {
 	
 	
 	/** */
-	protected final CorpusArray corpusArray;
+	protected final Corpus corpusArray;
 	
 	
 	/**
@@ -109,7 +109,7 @@ public class HierarchicalPhrase extends AbstractPhrase {
 			Pattern     pattern,
 			int[]       terminalSequenceStartIndices,
 			int[]       terminalSequenceEndIndices,
-			CorpusArray corpusArray,
+			Corpus corpusArray,
 			int         length) {
 		
 		this.pattern = pattern;
@@ -325,7 +325,7 @@ public class HierarchicalPhrase extends AbstractPhrase {
 	 *         phrase are drawn.
 	 */
 	public SymbolTable getVocab() {
-		return corpusArray.vocab;
+		return corpusArray.getVocabulary();
 	}
 	
 	
@@ -341,7 +341,7 @@ public class HierarchicalPhrase extends AbstractPhrase {
 		int[] wordIDs = pattern.getWords();
 		for (int i = 0; i < wordIDs.length; i++) {
 			if (wordIDs[i]<0) s.append('X');
-			else s.append(corpusArray.vocab.getWord(wordIDs[i]));
+			else s.append(corpusArray.getVocabulary().getWord(wordIDs[i]));
 			
 			s.append(' ');
 			
@@ -399,7 +399,8 @@ public class HierarchicalPhrase extends AbstractPhrase {
 			
 		} else {
 			
-			return corpusArray.corpus[terminalSequenceStartIndices[0]+position];
+//			return corpusArray.corpus[terminalSequenceStartIndices[0]+position];
+			return corpusArray.getWordID(terminalSequenceStartIndices[0]+position);
 			
 		}
 	}
