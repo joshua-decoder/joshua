@@ -17,8 +17,6 @@
  */
 package joshua.sarray;
 
-import joshua.sarray.PrefixTree.Node;
-
 /**
  * Represents a tuple used during prefix tree construction.
  * 

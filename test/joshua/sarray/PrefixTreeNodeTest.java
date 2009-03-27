@@ -16,8 +16,6 @@
  */
 package joshua.sarray;
 
-import joshua.sarray.PrefixTree.Node;
-
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -34,14 +32,14 @@ public class PrefixTreeNodeTest {
 	@Test
 	public void toStringTest() {
 		
-		PrefixTree.resetNodeCounter();
+		Node.resetNodeCounter();
 		
 		PrefixTree tree = PrefixTree.getDummyPrefixTree();
 		
 		@SuppressWarnings("unused")
-		Node bot = tree.new Node(PrefixTree.BOT_NODE_ID);
+		Node bot = new Node(tree,PrefixTree.BOT_NODE_ID);
 		
-		Node root = tree.new Node(PrefixTree.ROOT_NODE_ID);
+		Node root = new Node(tree,PrefixTree.ROOT_NODE_ID);
 		Assert.assertEquals(root.toString(), "[id1 ROOT (null) ]");
 		
 		root.addChild(PrefixTree.X);

@@ -12,7 +12,6 @@ import joshua.sarray.CorpusArray;
 import joshua.sarray.PrefixTree;
 import joshua.sarray.SampledLexProbs;
 import joshua.sarray.SuffixArray;
-import joshua.sarray.PrefixTree.Node;
 import joshua.util.lexprob.LexicalProbabilities;
 import joshua.util.sentence.Vocabulary;
 
@@ -540,13 +539,13 @@ public class PrefixTreeAdvancedTest {
 	}
 	
 	
-	//@Test(dependsOnMethods={"verifyNodesShort"})
-	//@Test
-	public void testPrint() throws UnsupportedEncodingException, IOException {
-		//System.err.println(prefixTree.size());
-		//System.err.println(prefixTree);
-		simplePrefixTree.print(System.out);
-	}
+//	//@Test(dependsOnMethods={"verifyNodesShort"})
+//	//@Test
+//	public void testPrint() throws UnsupportedEncodingException, IOException {
+//		//System.err.println(prefixTree.size());
+//		//System.err.println(prefixTree);
+//		simplePrefixTree.print(System.out);
+//	}
 	
 	//@Test(dependsOnMethods={"setup"})
 	public void test() throws UnsupportedEncodingException, IOException {
