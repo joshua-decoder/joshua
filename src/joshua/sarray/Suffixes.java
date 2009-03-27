@@ -18,6 +18,7 @@
 package joshua.sarray;
 
 import joshua.corpus.SymbolTable;
+import joshua.util.Cache;
 import joshua.util.sentence.Phrase;
 
 public interface Suffixes {
@@ -132,6 +133,11 @@ public interface Suffixes {
 	 */
 	public int[] getAllPositions(int[] bounds);
 
-	
+	/**
+	 * Gets the hierarchical phrase objects cached by this suffix array.
+	 * 
+	 * @return the hierarchical phrase objects cached by this suffix array
+	 */
+	public Cache<Pattern,HierarchicalPhrases> getCachedHierarchicalPhrases();
 	
 }

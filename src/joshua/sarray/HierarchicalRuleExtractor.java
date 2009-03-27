@@ -65,14 +65,14 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 	protected final Suffixes suffixArray;
 	
 	/** Corpus array representing the target language corpus. */
-	protected final CorpusArray targetCorpus;
+	protected final Corpus targetCorpus;
 	
 	/** Represents alignments between words in the source corpus and the target corpus. */
 	protected final Alignments alignments;
 	
 	protected final int sampleSize;
 	
-	public HierarchicalRuleExtractor(Suffixes suffixArray, CorpusArray targetCorpus, Alignments alignments, LexicalProbabilities lexProbs, int sampleSize, int maxPhraseSpan, int maxPhraseLength, int minNonterminalSpan, int maxNonterminalSpan) {
+	public HierarchicalRuleExtractor(Suffixes suffixArray, Corpus targetCorpus, Alignments alignments, LexicalProbabilities lexProbs, int sampleSize, int maxPhraseSpan, int maxPhraseLength, int minNonterminalSpan, int maxNonterminalSpan) {
 		this.lexProbs = lexProbs;
 		this.maxPhraseSpan = maxPhraseSpan;
 		this.maxPhraseLength = maxPhraseLength;
@@ -243,10 +243,10 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 				int[] words = new int[targetSpan.size()];
 
 				for (int i=targetSpan.start; i<targetSpan.end; i++) {
-					words[i-targetSpan.start] = targetCorpus.corpus[i];
+					words[i-targetSpan.start] = targetCorpus.getWordID(i);
 				}
 
-				return new Pattern(targetCorpus.vocab, words);
+				return new Pattern(targetCorpus.getVocabulary(), words);
 			}
 		}
 
@@ -392,7 +392,7 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 		}
 		
 		if (foundAlignedTerminal) {
-			return new Pattern(targetCorpus.vocab, words);
+			return new Pattern(targetCorpus.getVocabulary(), words);
 		} else {
 			if (logger.isLoggable(Level.FINEST)) logger.finest("Potential translation contained no aligned terminals");
 			return null;

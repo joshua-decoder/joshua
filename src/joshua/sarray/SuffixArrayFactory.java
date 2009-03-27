@@ -201,7 +201,7 @@ public class SuffixArrayFactory {
 	 * Creates an AlignmentArray from a file containing Moses-style
 	 * alignments, and a source and target corpus.
 	 */
-	public static Alignments createAlignmentArray(String alignmentsFilename, SuffixArray sourceCorpus, SuffixArray targetCorpus) throws IOException {
+	public static Alignments createAlignmentArray(String alignmentsFilename, Suffixes sourceCorpus, Suffixes targetCorpus) throws IOException {
 //		int [] lowestAlignedTargetIndex = initalizeArray(sourceCorpus.size(), AlignmentArray.UNALIGNED);
 //		int [] highestAlignedTargetIndex = initalizeArray(sourceCorpus.size(), -1);
 //		int [] lowestAlignedSourceIndex = initalizeArray(targetCorpus.size(), AlignmentArray.UNALIGNED);

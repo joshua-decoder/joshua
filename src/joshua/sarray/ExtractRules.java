@@ -29,6 +29,7 @@ import java.util.logging.Logger;
 import java.util.zip.GZIPOutputStream;
 
 import joshua.decoder.ff.tm.Rule;
+import joshua.util.Cache;
 import joshua.util.CommandLineParser;
 import joshua.util.CommandLineParser.Option;
 import joshua.util.sentence.Vocabulary;
@@ -126,7 +127,7 @@ public class ExtractRules {
 			}
 
 			if (logger.isLoggable(Level.INFO)) logger.info("Constructing source language corpus array.");
-			CorpusArray sourceCorpusArray = SuffixArrayFactory.createCorpusArray(sourceFileName, sourceVocab, sourceWordsSentences[0], sourceWordsSentences[1]);
+			Corpus sourceCorpusArray = SuffixArrayFactory.createCorpusArray(sourceFileName, sourceVocab, sourceWordsSentences[0], sourceWordsSentences[1]);
 
 			if (commandLine.getValue(confirm)) {
 			    if (logger.isLoggable(Level.INFO)) logger.info("Please press a key to continue");
@@ -134,7 +135,7 @@ public class ExtractRules {
 			}
 
 			if (logger.isLoggable(Level.INFO)) logger.info("Constructing source language suffix array.");
-			SuffixArray sourceSuffixArray = SuffixArrayFactory.createSuffixArray(sourceCorpusArray, maxCacheSize);
+			Suffixes sourceSuffixArray = SuffixArrayFactory.createSuffixArray(sourceCorpusArray, maxCacheSize);
 			if (commandLine.getValue(confirm)) {
 			    if (logger.isLoggable(Level.INFO)) logger.info("Please press a key to continue");
 			    System.in.read();
@@ -150,14 +151,14 @@ public class ExtractRules {
 			}
 
 			if (logger.isLoggable(Level.INFO)) logger.info("Constructing target language corpus array.");
-			CorpusArray targetCorpusArray = SuffixArrayFactory.createCorpusArray(targetFileName, targetVocab, targetWordsSentences[0], targetWordsSentences[1]);
+			Corpus targetCorpusArray = SuffixArrayFactory.createCorpusArray(targetFileName, targetVocab, targetWordsSentences[0], targetWordsSentences[1]);
 			if (commandLine.getValue(confirm)) {
 			    if (logger.isLoggable(Level.INFO)) logger.info("Please press a key to continue");
 			    System.in.read();
 			}
 
 			if (logger.isLoggable(Level.INFO)) logger.info("Constructing target language suffix array.");
-			SuffixArray targetSuffixArray = SuffixArrayFactory.createSuffixArray(targetCorpusArray, maxCacheSize);
+			Suffixes targetSuffixArray = SuffixArrayFactory.createSuffixArray(targetCorpusArray, maxCacheSize);
 			if (commandLine.getValue(confirm)) {
 			    if (logger.isLoggable(Level.INFO)) logger.info("Please press a key to continue");
 			    System.in.read();
@@ -263,12 +264,14 @@ public class ExtractRules {
 					if (logger.isLoggable(Level.FINER)) {
 						logger.finer("Prefix tree had " + prefixTree.size() + " nodes.");
 						
-						if (sourceSuffixArray.hierarchicalPhraseCache != null) {
+						Cache<Pattern,HierarchicalPhrases> cache = sourceSuffixArray.getCachedHierarchicalPhrases();
+						
+						if (cache != null) {
 							Pattern maxPattern = null;
 							int maxHPsize = 0;
 							int hpsize = 0;
 							int psize = 0;
-							for (Map.Entry<Pattern,HierarchicalPhrases> entry : sourceSuffixArray.hierarchicalPhraseCache.entrySet()) {
+							for (Map.Entry<Pattern,HierarchicalPhrases> entry : cache.entrySet()) {
 								psize++;
 								hpsize += entry.getValue().size();
 								if (hpsize>maxHPsize) {

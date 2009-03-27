@@ -143,7 +143,7 @@ public class PrefixTree {
 	final Suffixes suffixArray;
 	
 	/** Corpus array representing the target language corpus. */
-	final CorpusArray targetCorpus;
+	final Corpus targetCorpus;
 	
 	/** Represents alignments between words in the source corpus and the target corpus. */
 	final Alignments alignments;
@@ -176,7 +176,7 @@ public class PrefixTree {
 	 * @param minNonterminalSpan Minimum number of source language tokens 
 	 *                           a nonterminal is allowed to encompass.
 	 */
-	public PrefixTree(Suffixes suffixArray, CorpusArray targetCorpus, Alignments alignments, SymbolTable vocab, LexicalProbabilities lexProbs, RuleExtractor ruleExtractor, int maxPhraseSpan, int maxPhraseLength, int maxNonterminals, int minNonterminalSpan) {
+	public PrefixTree(Suffixes suffixArray, Corpus targetCorpus, Alignments alignments, SymbolTable vocab, LexicalProbabilities lexProbs, RuleExtractor ruleExtractor, int maxPhraseSpan, int maxPhraseLength, int maxNonterminals, int minNonterminalSpan) {
 
 		if (logger.isLoggable(Level.FINE)) logger.fine("\n\n\nConstructing new PrefixTree\n\n");
 

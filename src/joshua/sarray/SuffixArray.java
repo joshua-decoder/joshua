@@ -135,7 +135,6 @@ public class SuffixArray extends AbstractSuffixArray {
 	//===========================================================
 	// Accessor methods (set/get)
 	//===========================================================
-
 	
 	/** 
 	 * @return the position in the corpus corresponding to the

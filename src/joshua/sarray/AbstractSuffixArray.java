@@ -60,6 +60,9 @@ public abstract class AbstractSuffixArray implements Suffixes {
 		this.corpus = corpus;
 	}
 	
+	public Cache<Pattern,HierarchicalPhrases> getCachedHierarchicalPhrases() {
+		return hierarchicalPhraseCache;
+	}
 	
 	public HierarchicalPhrases createHierarchicalPhrases(int[] startPositions,
 			Pattern pattern, PrefixTree prefixTree) {
