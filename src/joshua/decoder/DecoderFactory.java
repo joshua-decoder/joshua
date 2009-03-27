@@ -37,7 +37,7 @@ import java.util.logging.Logger;
  * (2) non-parallel decoding is a special case of parallel decoding
  * 
  * @author Zhifei Li, <zhifei.work@gmail.com>
- * @version $LastChangedDate: 2008-10-20 00:12:30 -0400 (星期一, 20 十月 2008) $
+ * @version $LastChangedDate$
  */
 
 public class DecoderFactory {

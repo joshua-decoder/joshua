@@ -26,7 +26,7 @@ import java.util.HashMap;
  * to use the functions here, one need to extend the class  to provide a way to calculate the deduction cost based on feature set
  *
  * @author Zhifei Li, <zhifei.work@gmail.com>
- * @version $LastChangedDate: 2008-11-05 11:40:13 -0500 (星期三, 05 十一月 2008) $
+ * @version $LastChangedDate$
  */
 
 //TODO: currently assume log semiring, need to generalize to other semiring

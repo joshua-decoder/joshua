@@ -27,7 +27,7 @@ import joshua.decoder.ff.tm.Rule;
 
 /**
 * @author Zhifei Li, <zhifei.work@gmail.com>
-* @version $LastChangedDate: 2009-03-09 14:05:28 -0400 (星期一, 09 三月 2009) $
+* @version $LastChangedDate$
 */
 
 /** We should keep this code alive, even though currently nobody uses it; as we may want to do offline pruning of grammar

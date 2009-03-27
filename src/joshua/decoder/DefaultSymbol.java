@@ -40,7 +40,7 @@ import java.util.List;
  *DistributedLM (from LMServer): call init_sym_tbl_from_file(true/false)
  *
  * @author Zhifei Li, <zhifei.work@gmail.com>
- * @version $LastChangedDate: 2008-10-31 08:56:14 -0400 (Fri, 31 Oct 2008) $
+ * @version $LastChangedDate$
  */
 
 

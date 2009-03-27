@@ -33,7 +33,7 @@ import java.util.Hashtable;
  * (3) get lm probablity for n-gram remotely 
  * 
  * @author Zhifei Li, <zhifei.work@gmail.com>
- * @version $LastChangedDate: 2008-10-02 02:02:16 -0400 (星期四, 02 十月 2008) $
+ * @version $LastChangedDate$
  */
 //PATH: this => LMClient => network => LMServer => LMGrammar => LMGrammar_JAVA/SRILM; and then reverse the path
 public class LMGrammarRemote extends AbstractLM {

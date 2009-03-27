@@ -32,7 +32,7 @@ import java.util.ArrayList; // BUG: should be List but that causes bugs
  * 
  * @author wren ng thornton <wren@users.sourceforge.net>
  * @author Zhifei Li, <zhifei.work@gmail.com>
- * @version $LastChangedDate: 2008-07-28 18:44:45 -0400 (Mon, 28 Jul 2008) $
+ * @version $LastChangedDate$
  */
 public interface FeatureFunction {
 

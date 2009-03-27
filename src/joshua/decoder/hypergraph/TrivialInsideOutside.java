@@ -19,7 +19,7 @@ package joshua.decoder.hypergraph;
 
 /**
 * @author Zhifei Li, <zhifei.work@gmail.com>
-* @version $LastChangedDate: 2009-03-09 12:52:29 -0400 (星期一, 09 三月 2009) $
+* @version $LastChangedDate$
 */
 
 public class TrivialInsideOutside extends DefaultInsideOutside {

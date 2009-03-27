@@ -30,7 +30,7 @@ import java.util.ArrayList;
  * may be defined.
  * 
  * @author Zhifei Li, <zhifei.work@gmail.com>
- * @version $LastChangedDate: 2008-10-17 01:41:03 -0400 (星期五, 17 十月 2008) $
+ * @version $LastChangedDate$
  */
 public abstract class AbstractLM extends DefaultNGramLanguageModel {
 	

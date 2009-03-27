@@ -23,7 +23,7 @@ import joshua.decoder.ff.tm.Rule;
 /**
  * 
  * @author Zhifei Li, <zhifei.work@gmail.com>
- * @version $LastChangedDate: 2008-07-28 18:44:45 -0400 (Mon, 28 Jul 2008) $
+ * @version $LastChangedDate$
  */
 public final class WordPenaltyFF extends DefaultStatelessFF {
 	private static final double OMEGA = Math.log10(Math.E);

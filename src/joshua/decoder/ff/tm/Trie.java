@@ -29,7 +29,7 @@ import joshua.decoder.ff.tm.RuleCollection;
  *
  * @author wren ng thornton <wren@users.sourceforge.net>
  * @author Zhifei Li, <zhifei.work@gmail.com>
- * @version $LastChangedDate: 2008-08-03 04:12:57 -0400 (Sun, 03 Aug 2008) $
+ * @version $LastChangedDate$
  */
 public interface Trie {
 	

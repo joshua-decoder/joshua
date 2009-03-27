@@ -32,7 +32,7 @@ import java.util.logging.Level;
  * as Item in parsing.
  *
  * @author Zhifei Li, <zhifei.work@gmail.com>
- * @version $LastChangedDate: 2008-11-03 16:59:05 -0500 (星期一, 03 十一月 2008) $
+ * @version $LastChangedDate$
  */
 
 public class HGNode implements Comparable<HGNode> {

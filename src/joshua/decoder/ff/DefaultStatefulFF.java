@@ -27,7 +27,7 @@ import joshua.decoder.hypergraph.HyperEdge;
 /**
  * 
  * @author Zhifei Li, <zhifei.work@gmail.com>
- * @version $LastChangedDate: 2008-07-28 18:44:45 -0400 (Mon, 28 Jul 2008) $
+ * @version $LastChangedDate$
  */
 
 public abstract class DefaultStatefulFF implements FeatureFunction {

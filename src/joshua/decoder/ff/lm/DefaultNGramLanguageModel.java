@@ -33,7 +33,7 @@ import java.util.ArrayList;
  * 
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @author wren ng thornton <wren@users.sourceforge.net>
- * @version $LastChangedDate: 2008-10-17 01:41:03 -0400 (星期五, 17 十月 2008) $
+ * @version $LastChangedDate$
  */
 public abstract class DefaultNGramLanguageModel implements NGramLanguageModel {
 	
