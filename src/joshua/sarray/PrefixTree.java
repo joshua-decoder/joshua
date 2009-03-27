@@ -515,7 +515,8 @@ public class PrefixTree {
 		}
 
 		// 17: Return M_a_alpha_b
-		node.storeResults(result, pattern.words);
+		node.storeResults(result, pattern);
+//		node.storeResults(result, pattern.words);
 		return result;
 
 	}
@@ -580,7 +581,8 @@ public class PrefixTree {
 					
 					HierarchicalPhrases phrasesWithFinalX = new HierarchicalPhrases(xpattern, node.sourceHierarchicalPhrases); 
 					
-					xNode.storeResults(phrasesWithFinalX, xpattern.words);
+					xNode.storeResults(phrasesWithFinalX, xpattern);
+//					xNode.storeResults(phrasesWithFinalX, xpattern.words);
 				}
 			
 				if (logger.isLoggable(Level.FINEST)) logger.finest("Alpha pattern is " + pattern);

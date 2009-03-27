@@ -48,11 +48,14 @@ public class Node implements Comparable<Node>, Grammar, Trie {
 	boolean active;
 	Node suffixLink;
 
+	//TODO It may be better to have a single map in PrefixTree that maps (Node,Integer) --> Node
+	/** Maps from integer representations of words to nodes. */
 	Map<Integer,Node> children;
 	
 	/** Source side hierarchical phrases for this node. */
 	HierarchicalPhrases sourceHierarchicalPhrases;
 
+	//TODO It may be that this could be deleted, since it's also stored in sourceHierarchicalPhrases
 	/** Representation of the source side tokens corresponding to the hierarchical phrases for this node. */
 	Pattern sourcePattern;
 	
@@ -212,14 +215,15 @@ public class Node implements Comparable<Node>, Grammar, Trie {
 	 * @param hierarchicalPhrases Source language hierarchical phrases.
 	 * @param sourceTokens Source language pattern that should correspond to the hierarchical phrases.
 	 */
-	public void storeResults(HierarchicalPhrases hierarchicalPhrases, int[] sourceTokens) {
+	public void storeResults(HierarchicalPhrases hierarchicalPhrases, Pattern sourcePattern) {
 		
 		if (logger.isLoggable(Level.FINER)) {
 			logger.finer("Storing " + hierarchicalPhrases.size() + " source phrases at node " + objectID + ":");
 		}
 
-		SymbolTable vocab = (tree.suffixArray==null) ? null : tree.suffixArray.getVocabulary();
-		this.sourcePattern = new Pattern(vocab, sourceTokens);
+//		SymbolTable vocab = (tree.suffixArray==null) ? null : tree.suffixArray.getVocabulary();
+		this.sourcePattern = sourcePattern;
+//		this.sourcePattern = new Pattern(vocab, sourceTokens);
 		this.results = new ArrayList<Rule>(hierarchicalPhrases.size());
 		
 		this.sourceHierarchicalPhrases = hierarchicalPhrases;
