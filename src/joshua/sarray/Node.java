@@ -1,8 +1,22 @@
+/* This file is part of the Joshua Machine Translation System.
+ * 
+ * Joshua is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1
+ * of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free
+ * Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
+ */
 package joshua.sarray;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -227,8 +241,10 @@ public class Node implements Comparable<Node>, Grammar, Trie {
 		return size;
 	}
 
-	public String toString(SymbolTable vocab) {
+	public String toString() {
 
+		SymbolTable vocab = tree.vocab;
+		
 		StringBuilder s = new StringBuilder();
 
 		s.append("[id");
@@ -241,15 +257,11 @@ public class Node implements Comparable<Node>, Grammar, Trie {
 			s.append("ROOT");
 		} else if (vocab!=null) {
 			s.append(vocab.getWord(incomingArcValue));
-		} else 
-//			if (PrefixTree.idsToStrings==null || !PrefixTree.idsToStrings.containsKey(incomingArcValue)) 
-		{
+		} else {
 			s.append('v');
 			s.append(incomingArcValue);
 		} 
-//		else {
-//			s.append(PrefixTree.idsToStrings.get(incomingArcValue));
-//		}
+
 		s.append(" (");
 		if (suffixLink!=null) s.append(suffixLink.objectID); else s.append("null");
 		s.append(')');
@@ -259,7 +271,7 @@ public class Node implements Comparable<Node>, Grammar, Trie {
 		Collections.sort(kids);
 
 		for (Node kid : kids) {
-			s.append(kid.toString(vocab));
+			s.append(kid.toString());
 			s.append(' ');
 		}
 
@@ -269,23 +281,11 @@ public class Node implements Comparable<Node>, Grammar, Trie {
 		return s.toString();
 
 	}
-	
-	public String toString() {
-		if (tree.suffixArray==null || tree.suffixArray.getVocabulary()==null)
-			return toString(null);
-		else
-			return toString(tree.suffixArray.getVocabulary());
-	}
 
-	public String toShortString() {
-		if (tree.suffixArray==null || tree.suffixArray.getVocabulary()==null)
-			return toShortString(null);
-		else
-			return toShortString(tree.suffixArray.getVocabulary());
-	}
-	
-	public String toShortString(SymbolTable vocab) {
+	String toShortString() {
 
+		SymbolTable vocab = tree.vocab;
+		
 		StringBuilder s = new StringBuilder();
 
 		s.append("[id");
@@ -322,25 +322,6 @@ public class Node implements Comparable<Node>, Grammar, Trie {
 		return s.toString();
 	}
 	
-	void print(OutputStream out, SymbolTable sourceVocab, SymbolTable targetVocab) throws UnsupportedEncodingException, IOException {
-		
-		out.write(("// Node " + objectID + ":\n").getBytes());
-		
-		if (results.isEmpty()) {
-			out.write(("\t EMPTY\n").getBytes());
-		}
-		
-		for (Rule rule : results) {
-			out.write(rule.toString(PrefixTree.ntVocab, sourceVocab, targetVocab).getBytes("UTF-8"));
-			out.write(PrefixTree.newline);
-		}
-		
-		for (Node node : children.values()) {
-			node.print(out, sourceVocab, targetVocab);
-		}
-		
-	}
-	
 	String toTreeString(String tabs, SymbolTable vocab) {
 
 		StringBuilder s = new StringBuilder();
@@ -356,15 +337,11 @@ public class Node implements Comparable<Node>, Grammar, Trie {
 			s.append("ROOT");
 		} else if (vocab!=null) {
 			s.append(vocab.getWord(incomingArcValue));
-		} else 
-//			if (PrefixTree.idsToStrings==null || !PrefixTree.idsToStrings.containsKey(incomingArcValue)) 
-		{
+		} else {
 			s.append('v');
 			s.append(incomingArcValue);
 		} 
-//		else {
-//			s.append(PrefixTree.idsToStrings.get(incomingArcValue));
-//		}
+
 		s.append(" (");
 		if (suffixLink!=null) s.append(suffixLink.objectID); else s.append("null");
 		s.append(')');

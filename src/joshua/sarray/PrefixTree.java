@@ -176,7 +176,7 @@ public class PrefixTree {
 	 * @param minNonterminalSpan Minimum number of source language tokens 
 	 *                           a nonterminal is allowed to encompass.
 	 */
-	public PrefixTree(Suffixes suffixArray, CorpusArray targetCorpus, Alignments alignments, LexicalProbabilities lexProbs, RuleExtractor ruleExtractor, int maxPhraseSpan, int maxPhraseLength, int maxNonterminals, int minNonterminalSpan) {
+	public PrefixTree(Suffixes suffixArray, CorpusArray targetCorpus, Alignments alignments, SymbolTable vocab, LexicalProbabilities lexProbs, RuleExtractor ruleExtractor, int maxPhraseSpan, int maxPhraseLength, int maxNonterminals, int minNonterminalSpan) {
 
 		if (logger.isLoggable(Level.FINE)) logger.fine("\n\n\nConstructing new PrefixTree\n\n");
 
@@ -198,10 +198,13 @@ public class PrefixTree {
 		bot.children = botMap(root);
 		this.root.linkToSuffix(bot);
 
-		if (suffixArray==null) {
-			vocab = null;
-		} else {
-			vocab = suffixArray.getVocabulary();
+		this.vocab = vocab;
+		
+//		if (suffixArray==null) {
+////			vocab = null;
+//		} else {
+		if (suffixArray != null) {
+//			vocab = suffixArray.getVocabulary();
 			int[] bounds = {0, suffixArray.size()-1};
 			root.setBounds(bounds);
 		}
@@ -266,8 +269,8 @@ public class PrefixTree {
 	 * @param maxPhraseLength
 	 * @param maxNonterminals
 	 */
-	PrefixTree(int maxPhraseSpan, int maxPhraseLength, int maxNonterminals) {
-		this(null, null, null, null, null, maxPhraseSpan, maxPhraseLength, maxNonterminals, 2);
+	PrefixTree(SymbolTable vocab, int maxPhraseSpan, int maxPhraseLength, int maxNonterminals) {
+		this(null, null, null, vocab, null, null, maxPhraseSpan, maxPhraseLength, maxNonterminals, 2);
 	}
 
 
@@ -627,10 +630,7 @@ public class PrefixTree {
 
 
 	public String toString() {
-		if (suffixArray==null)
-			return root.toTreeString("", null);
-		else
-			return root.toTreeString("", suffixArray.getVocabulary());
+		return root.toTreeString("", vocab);
 	}
 
 	public int size() {
