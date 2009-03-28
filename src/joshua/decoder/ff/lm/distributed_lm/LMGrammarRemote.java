@@ -20,6 +20,7 @@ package joshua.decoder.ff.lm.distributed_lm;
 import joshua.decoder.ff.lm.AbstractLM;
 import joshua.decoder.Support;
 import joshua.corpus.SymbolTable;
+import joshua.util.io.LineReader;
 import joshua.util.FileUtility;
 
 import java.io.BufferedReader;
@@ -80,11 +81,9 @@ public class LMGrammarRemote extends AbstractLM {
 	// format: lm_file host port weight
 	private void read_lm_server_lists(String f_server_lists, int num_servers, String[] l_lm_server_hosts, int[] l_lm_server_ports, double[] l_lm_server_weights) throws IOException {
 		
-		BufferedReader t_reader = 
-			FileUtility.getReadFileStream(f_server_lists);
-		String line;
 		int count = 0;
-		while ((line = FileUtility.read_line_lzf(t_reader)) != null) {
+		LineReader reader = new LineReader(f_server_lists);
+		try { for (String line : reader) {
 			String fname = line.trim();
 			Hashtable<String,?> res_conf = read_config_file(fname);
 			
@@ -102,12 +101,12 @@ public class LMGrammarRemote extends AbstractLM {
 				+ "; host: " + host
 				+ "; port: " + port
 				+ "; weight: " + weight);
-		}
+		} } finally { reader.close(); }
+			
 		if (count != num_servers) {
 			System.out.println("num of lm servers does not match");
 			System.exit(1);
 		}
-		t_reader.close();
 	}
 	
 	
@@ -116,10 +115,9 @@ public class LMGrammarRemote extends AbstractLM {
 	throws IOException {
 		
 		Hashtable res = new Hashtable();
-		BufferedReader t_reader_config = 
-			FileUtility.getReadFileStream(config_file);
-		String line;
-		while ((line = FileUtility.read_line_lzf(t_reader_config)) != null) {
+		
+		LineReader configReader = new LineReader(config_file);
+		try { for (String line : configReader) {
 			//line = line.trim().toLowerCase();
 			line = line.trim();
 			if (line.matches("^\\s*(?:\\#.*)?$")) continue;
@@ -155,8 +153,8 @@ public class LMGrammarRemote extends AbstractLM {
 					//System.exit(1);
 				}
 			}
-		}
-		t_reader_config.close();
+		} } finally { configReader.close(); }
+		
 		return res;
 	}
 	

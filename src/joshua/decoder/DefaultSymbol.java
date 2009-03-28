@@ -19,7 +19,7 @@ package joshua.decoder;
 
 import joshua.corpus.AbstractSymbolTable;
 import joshua.corpus.SymbolTable;
-import joshua.util.FileUtility;
+import joshua.util.io.LineReader;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -165,9 +165,9 @@ public abstract class DefaultSymbol extends AbstractSymbolTable implements Symbo
 		//### read file into tbls
 		HashMap<String, Integer> tbl_str_2_id = new HashMap<String, Integer>();
 		HashMap<Integer, String> tbl_id_2_str = new HashMap<Integer, String>();
-		BufferedReader t_reader_sym = FileUtility.getReadFileStream(fname);
-		String line;		
-		while((line=FileUtility.read_line_lzf(t_reader_sym))!=null){
+		
+		LineReader symboltableReader = new LineReader(fname);
+		try { for (String line : symboltableReader) {
 			String[] fds = line.split("\\s+");
 			if(fds.length!=2){
 			    System.out.println("Warning: read index, bad line: " + line);
@@ -193,8 +193,8 @@ public abstract class DefaultSymbol extends AbstractSymbolTable implements Symbo
 			} else {
 				tbl_id_2_str.put(id, uqniue_str);
 			}
-		}
-		t_reader_sym.close();
+		} } finally { symboltableReader.close(); }
+		
 		/*if (tbl_id_2_str.size() >= lm_end_sym_id - lm_start_sym_id) {
 			System.out.println("Error: read symbol tbl, tlb is too big");
 			System.exit(1);

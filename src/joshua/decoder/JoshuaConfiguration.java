@@ -18,7 +18,7 @@
 package joshua.decoder;
 
 import joshua.util.Cache;
-import joshua.util.FileUtility;
+import joshua.util.io.LineReader;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -127,10 +127,9 @@ public class JoshuaConfiguration {
 		Logger.getLogger(JoshuaConfiguration.class.getName());
 	
 	public static void readConfigFile(String configFile) throws IOException {
-		BufferedReader reader =
-			FileUtility.getReadFileStream(configFile);
-		String line;
-		while ((line = FileUtility.read_line_lzf(reader)) != null) {
+		
+		LineReader configReader = new LineReader(configFile);
+		try { for (String line : configReader) {
 			//line = line.trim().toLowerCase();
 			line = line.trim();
 			if (line.matches("^\\s*\\#.*$") || line.matches("^\\s*$")) {
@@ -415,7 +414,6 @@ public class JoshuaConfiguration {
 					logger.info("you use a LM feature function, so make sure you have a LM grammar");
 				} 
 			}
-		}
-		reader.close();
+		} } finally { configReader.close(); }
 	}
 }

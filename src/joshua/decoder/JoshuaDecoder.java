@@ -37,6 +37,7 @@ import joshua.sarray.SampledLexProbs;
 import joshua.sarray.SuffixArrayFactory;
 import joshua.sarray.Suffixes;
 import joshua.corpus.SymbolTable;
+import joshua.util.io.LineReader;
 import joshua.util.FileUtility;
 import joshua.util.lexprob.LexicalProbabilities;
 import joshua.util.sentence.alignment.AlignmentGrids;
@@ -133,11 +134,10 @@ public class JoshuaDecoder {
 	
 	public void writeConfigFile(double[] newWeights, String template, String outputFile) {
 		try {
-			BufferedReader reader = FileUtility.getReadFileStream(template);
-			BufferedWriter writer = FileUtility.getWriteFileStream(outputFile);
-			String line;
 			int featureID = 0;
-			while ((line = FileUtility.read_line_lzf(reader)) != null) {
+			BufferedWriter writer = FileUtility.getWriteFileStream(outputFile);
+			LineReader reader = new LineReader(template);
+			try { for (String line : reader) {
 				line = line.trim();
 				if (line.matches("^\\s*(?:\\#.*)?$")
 				|| line.indexOf("=") != -1) {
@@ -157,13 +157,16 @@ public class JoshuaDecoder {
 					newLine.append(newWeights[featureID++]).append("\n");
 					writer.write(newLine.toString());
 				}
+			} } finally {
+				reader.close();
+				writer.close();
 			}
+			
 			if (featureID != newWeights.length) {
 				logger.severe("number of models does not match number of weights");
 				System.exit(1);
 			}
-			reader.close();
-			writer.close();
+			
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -185,13 +188,13 @@ public class JoshuaDecoder {
 			
 			// initialize and load grammar
 			if (! JoshuaConfiguration.use_sent_specific_tm) {
-				if (JoshuaConfiguration.tm_file != null) {
+				if (null != JoshuaConfiguration.tm_file) {
 					
 					initializeTranslationGrammars(JoshuaConfiguration.tm_file);
 					
-				} else if (JoshuaConfiguration.sa_source != null
-					&& JoshuaConfiguration.sa_target != null
-					&& JoshuaConfiguration.sa_alignment != null) {
+				} else if (null != JoshuaConfiguration.sa_source
+					&& null != JoshuaConfiguration.sa_target
+					&& null != JoshuaConfiguration.sa_alignment) {
 					
 					try {
 						initializeSuffixArrayGrammar();
@@ -239,11 +242,10 @@ public class JoshuaDecoder {
 	
 	private void initializeFeatureFunctions(String configFile)
 	throws IOException {
-		BufferedReader reader = FileUtility.getReadFileStream(configFile);
 		this.featureFunctions = new ArrayList<FeatureFunction>();
 		
-		String line;
-		while ((line = FileUtility.read_line_lzf(reader)) != null) {
+		LineReader reader = new LineReader(configFile);
+		try { for (String line : reader) {
 			line = line.trim();
 			if (line.matches("^\\s*(?:\\#.*)?$")) {
 				// ignore empty lines or lines commented out
@@ -320,8 +322,7 @@ public class JoshuaDecoder {
 					System.exit(1);
 				}
 			}
-		}
-		reader.close();
+		} } finally { reader.close(); }
 	}
 	
 	

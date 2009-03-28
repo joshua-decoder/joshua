@@ -18,6 +18,7 @@
 
 package joshua.decoder;
 
+import joshua.util.io.LineReader;
 import joshua.util.FileUtility;
 
 import java.io.BufferedReader;
@@ -262,16 +263,16 @@ public class NbestMinRiskReranker  {
 		double scaling_factor  =  new Double(args[3].trim());	
 	
 		
-		BufferedReader t_reader_nbest =
-			FileUtility.getReadFileStream(f_nbest_in);
 		BufferedWriter t_writer_out =	FileUtility.getWriteFileStream(f_out);
-		NbestMinRiskReranker mbr_reranker = new NbestMinRiskReranker(produce_reranked_nbest, scaling_factor);
+		NbestMinRiskReranker mbr_reranker =
+			new NbestMinRiskReranker(produce_reranked_nbest, scaling_factor);
 		
 		System.out.println("##############running mbr reranking");
-		String line=null;
 		int old_sent_id=-1;
 		ArrayList<String> nbest = new ArrayList<String>();
-		while((line=FileUtility.read_line_lzf(t_reader_nbest))!=null){
+		
+		LineReader nbestReader = new LineReader(f_nbest_in);
+		try { for (String line : nbestReader) {
 			String[] fds = line.split("\\s+\\|{3}\\s+");
 			int new_sent_id = new Integer(fds[0]);
 			if(old_sent_id!=-1 && old_sent_id!=new_sent_id){						
@@ -282,14 +283,14 @@ public class NbestMinRiskReranker  {
 			}
 			old_sent_id = new_sent_id;
 			nbest.add(line);
-		}
+		} } finally { nbestReader.close(); }
+		
 		//last nbest
 		String best_hyp = mbr_reranker.process_one_sent(nbest, old_sent_id);
 		t_writer_out.write(best_hyp + "\n");
 		t_writer_out.flush();
 		nbest.clear();
 		
-		t_reader_nbest.close();
 		t_writer_out.close();
 		System.out.println("Total running time (seconds) is "
 			+ (System.currentTimeMillis() - start_time) / 1000.0);

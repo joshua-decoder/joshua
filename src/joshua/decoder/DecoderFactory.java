@@ -20,6 +20,7 @@ package joshua.decoder;
 import joshua.corpus.SymbolTable;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.tm.GrammarFactory;
+import joshua.util.io.LineReader;
 import joshua.util.FileUtility;
 
 import java.io.BufferedReader;
@@ -88,16 +89,13 @@ public class DecoderFactory {
 	throws IOException {
 		parallel_threads =
 			new DecoderThread[JoshuaConfiguration.num_parallel_decoders];
-		BufferedReader t_reader_test =
-			FileUtility.getReadFileStream(test_file);
 		
 		//==== compute number of lines for each decoder
 		int n_lines = 0; {
-			BufferedReader test_file_reader =
-				FileUtility.getReadFileStream(test_file);
-			while ((FileUtility.read_line_lzf(test_file_reader)) != null)
+			LineReader testReader = new LineReader(test_file);
+			try { for (String cn_sent : testReader) {
 				n_lines++;
-			test_file_reader.close();
+			} } finally { testReader.close(); }
 		}
 		
 		double num_per_thread_double = n_lines * 1.0 / JoshuaConfiguration.num_parallel_decoders;
@@ -112,11 +110,13 @@ public class DecoderFactory {
 		int decoder_i = 1;
 		String cur_test_file  = JoshuaConfiguration.parallel_files_prefix + ".test." + decoder_i;
 		String cur_nbest_file = JoshuaConfiguration.parallel_files_prefix + ".nbest." + decoder_i;
-		BufferedWriter t_writer_test =	FileUtility.getWriteFileStream(cur_test_file);
+		BufferedWriter t_writer_test =	
+			FileUtility.getWriteFileStream(cur_test_file);
 		int sent_id       = 0;
 		int start_sent_id = sent_id;
-		String cn_sent;
-		while ((cn_sent = FileUtility.read_line_lzf(t_reader_test)) != null) {
+		
+		LineReader testReader = new LineReader(test_file);
+		try { for (String cn_sent : testReader) {
 			sent_id++;
 			t_writer_test.write(cn_sent + "\n");
 			
@@ -154,7 +154,7 @@ public class DecoderFactory {
 				cur_nbest_file = JoshuaConfiguration.parallel_files_prefix + ".nbest." + decoder_i;
 				t_writer_test  = FileUtility.getWriteFileStream(cur_test_file);
 			}
-		}
+		} } finally { testReader.close(); }
 		
 		//==== prepare the the last job
 		t_writer_test.flush();
@@ -172,7 +172,6 @@ public class DecoderFactory {
 			start_sent_id);
 		parallel_threads[decoder_i-1] = pdecoder;
 		
-		t_reader_test.close();
 		// End initializing threads and their files
 			
 		
@@ -201,24 +200,22 @@ public class DecoderFactory {
 				FileUtility.getWriteFileStream(nbest_file + ".hg.items");
 		}
 		for (DecoderThread p_decoder : parallel_threads) {
-			String sent;
 			//merge nbest
-			BufferedReader t_reader =
-				FileUtility.getReadFileStream(p_decoder.nbestFile);
-			while ((sent = FileUtility.read_line_lzf(t_reader)) != null) {
+			LineReader reader = new LineReader(p_decoder.nbestFile);
+			try { for (String sent : reader) {
 				t_writer_nbest.write(sent + "\n");
-			}
-			t_reader.close();
+			} } finally { reader.close(); }
 			//TODO: remove the tem nbest file
 			
 			//merge hypergrpah items
 			if (JoshuaConfiguration.save_disk_hg) {
-				BufferedReader t_reader_dhg_items =
-					FileUtility.getReadFileStream(p_decoder.nbestFile + ".hg.items");
-				while ((sent = FileUtility.read_line_lzf(t_reader_dhg_items)) != null) {
+				LineReader dhgItemReader =
+					new LineReader(p_decoder.nbestFile + ".hg.items");
+				try { for (String sent : dhgItemReader) {
+					
 					t_writer_dhg_items.write(sent + "\n");
-				}
-				t_reader_dhg_items.close();
+					
+				} } finally { dhgItemReader.close(); }
 				//TODO: remove the tem nbest file
 			}
 		}

@@ -24,7 +24,7 @@ import joshua.decoder.Support;
 import joshua.decoder.ff.lm.NGramLanguageModel;
 import joshua.decoder.ff.lm.buildin_lm.LMGrammarJAVA;
 import joshua.decoder.ff.lm.srilm.LMGrammarSRILM;
-import joshua.util.FileUtility;
+import joshua.util.io.LineReader;
 
 import java.io.IOException;
 //import java.net.InetAddress;
@@ -148,9 +148,9 @@ public class LMServer {
 	
 	public static void read_config_file(String config_file)
 	throws IOException {
-		BufferedReader t_reader_config = FileUtility.getReadFileStream(config_file);
-		String line;
-		while((line = FileUtility.read_line_lzf(t_reader_config)) != null) {
+		
+		LineReader configReader = new LineReader(config_file);
+		try { for (String line : configReader) {
 			//line = line.trim().toLowerCase();
 			line = line.trim();
 			if (line.matches("^\\s*(?:\\#.*)?$")) continue;
@@ -206,8 +206,7 @@ public class LMServer {
 					//System.exit(0);
 				}
 			}
-		}
-		t_reader_config.close();
+		} } finally { configReader.close(); }
 	}
 	
 	

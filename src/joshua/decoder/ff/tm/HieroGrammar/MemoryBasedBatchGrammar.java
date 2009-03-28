@@ -32,7 +32,7 @@ import joshua.decoder.ff.tm.BatchGrammar;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.BilingualRule;
 import joshua.decoder.ff.tm.Trie;
-import joshua.util.FileUtility;
+import joshua.util.io.LineReader;
 
 
 /**
@@ -113,14 +113,14 @@ public class MemoryBasedBatchGrammar  extends BatchGrammar {
 	protected void read_tm_grammar_from_file(String grammar_file)
 	throws IOException {
 		this.root = new MemoryBasedTrie(); //root should not have valid ruleBin entries
-		BufferedReader t_reader_tree = FileUtility.getReadFileStream(grammar_file);
 		if (logger.isLoggable(Level.INFO)) logger.info(
 			"Reading grammar from file " + grammar_file);
 		
-		String line;
-		while ((line = FileUtility.read_line_lzf(t_reader_tree)) != null) {
-			this.add_rule(line,  defaultOwner);
-		}
+		LineReader treeReader = new LineReader(grammar_file);
+		try { for (String line : treeReader) {
+			this.add_rule(line, defaultOwner);
+		} } finally { treeReader.close(); }
+		
 		this.print_grammar();
 		this.sortGrammar(null);//the rule cost has been estimated using the latest feature function
 	}

@@ -22,7 +22,7 @@ import joshua.decoder.ff.lm.LanguageModelFF;
 import joshua.decoder.BuildinSymbol;
 import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.Support;
-import joshua.util.FileUtility;
+import joshua.util.io.LineReader;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -468,17 +468,14 @@ public class LMGrammarJAVA extends AbstractLM {
 		root = new LMHash();
 		root.put(BACKOFF_WGHT_SYM_ID, NON_EXIST_WEIGHT);
 		
-		BufferedReader t_reader_tree = 
-			FileUtility.getReadFileStream(grammar_file);
-		
 		if (logger.isLoggable(Level.INFO))
 			logger.info("Reading grammar from file " + grammar_file);
 		
-		String line;
 		boolean start = false;
 		int order = 0;
 		
-		while ((line = FileUtility.read_line_lzf(t_reader_tree)) != null) {
+		LineReader grammarReader = new LineReader(grammar_file);
+		try { for (String line : grammarReader) {
 			line = line.trim();
 			if (line.matches("^\\s*$")) {
 				continue;
@@ -497,7 +494,7 @@ public class LMGrammarJAVA extends AbstractLM {
 			if (start) {
 				add_rule(line,order, g_is_add_suffix_infor, g_is_add_prefix_infor);
 			}
-		}
+		} } finally { grammarReader.close(); }
 		
 		if (logger.isLoggable(Level.FINE)) {
 			logger.fine("# of bow nodes: " + g_n_bow_nodes + " ; # of suffix nodes: " + g_n_suffix_nodes);

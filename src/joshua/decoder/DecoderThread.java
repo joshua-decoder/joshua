@@ -29,6 +29,9 @@ import joshua.lattice.Lattice;
 import joshua.oracle.OracleExtractor;
 import joshua.sarray.Pattern;
 import joshua.corpus.SymbolTable;
+import joshua.util.io.LineReader;
+import joshua.util.io.NullReader;
+import joshua.util.io.Reader;
 import joshua.util.FileUtility;
 
 import java.io.BufferedReader;
@@ -142,20 +145,18 @@ public class DecoderThread extends Thread {
 	
 	
 	// BUG: log file is not properly handled for parallel decoding
-	public void decode_a_file()
-	throws IOException {
-		BufferedReader testReader =
-			FileUtility.getReadFileStream(this.testFile);
+	public void decode_a_file() throws IOException {
+		int sentenceID = this.startSentenceID; // if no sent tag, then this will be used
+		
 		BufferedWriter nbestWriter =
 			FileUtility.getWriteFileStream(this.nbestFile);
-		BufferedReader oracleReader =
+		Reader<String> oracleReader =
 			null == this.oracleFile
-			? null
-			: FileUtility.getReadFileStream(this.oracleFile);
+			? new NullReader<String>()
+			: new LineReader(this.oracleFile);
 		
-		int sentenceID = this.startSentenceID; // if no sent tag, then this will be used
-		String cnSentence;
-		while ((cnSentence = FileUtility.read_line_lzf(testReader)) != null) {
+		LineReader testReader = new LineReader(this.testFile);
+		try { for (String cnSentence : testReader) {
 			if (logger.isLoggable(Level.FINE))
 				logger.fine("now translating\n" + cnSentence);
 			
@@ -183,18 +184,18 @@ public class DecoderThread extends Thread {
 			}
 			
 			
-			// FIX: Should have null-reader so we don't need to test every time
-			String oracleSentence =
-				null == oracleReader
-				? null
-				: FileUtility.read_line_lzf(oracleReader);
+			String oracleSentence = oracleReader.readLine();
 			
 			translate(cnSentence, oracleSentence, nbestWriter, sentenceID);
 			sentenceID++;
+			
+		} } finally {
+			testReader.close();
+			oracleReader.close();
+			
+			nbestWriter.flush();
+			nbestWriter.close();
 		}
-		testReader.close();
-		nbestWriter.flush();
-		nbestWriter.close();
 	}
 	
 	

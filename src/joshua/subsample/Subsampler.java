@@ -80,10 +80,14 @@ public class Subsampler {
 					new FileReader(fn), this.vf, (byte)1);
 			Phrase phrase;
 			int lineCount = 0;
-			while((phrase = reader.readPhrase()) != null) {
-				lineCount++;
-				List<Phrase> ngrams = phrase.getSubPhrases(this.maxN);
-				for (Phrase ngram : ngrams) map.put(ngram, 0);
+			try {
+				while((phrase = reader.readPhrase()) != null) {
+					lineCount++;
+					List<Phrase> ngrams = phrase.getSubPhrases(this.maxN);
+					for (Phrase ngram : ngrams) map.put(ngram, 0);
+				}
+			} finally {
+				reader.close();
 			}
 			System.err.println("Processed " +lineCount+ " lines in " +fn);
 		}
@@ -130,68 +134,71 @@ public class Subsampler {
 			);
 	}
 	
-	/** The main wrapper for the subsample worker. */
+	/** The main wrapper for the subsample worker. Closes the PhraseWriter before exiting. */
 	protected void subsample(
 		String filelist, float targetFtoERatio,
 		PhraseWriter out, BiCorpusFactory bcFactory
 	) throws IOException {
-		// Read filenames into a list
-		List<String> files = new ArrayList<String>();
-		{ BufferedReader r = new BufferedReader(new FileReader(filelist));
-		String x; while((x = r.readLine()) != null) files.add(x); }
-		
-		int totalSubsampled = 0;
-		// Iterating on files in order biases towards files
-		// earlier in the list
-		for (String f : files) {
-			System.err.println("Loading training data: " + f);
+		try {
+			// Read filenames into a list
+			List<String> files = new ArrayList<String>();
+			{ BufferedReader r = new BufferedReader(new FileReader(filelist));
+			String x; while((x = r.readLine()) != null) files.add(x); }
 			
-			BiCorpus bc = bcFactory.fromFiles(f);
-			
-			Set<PhrasePair> set = new HashSet<PhrasePair>();
-			
-			int binsize = 10; // BUG: Magic-Number
-			int max_k   = MAX_SENTENCE_LENGTH / binsize;
-			System.err.print("Looking in length range");
-			// Iterating bins from small to large biases
-			// towards short sentences
-			for (int k = 0; k < max_k; k++) {
-				System.err.print(
-					" [" +(k * binsize + 1)+ "," +((k + 1) * binsize)+ "]");
+			int totalSubsampled = 0;
+			// Iterating on files in order biases towards files
+			// earlier in the list
+			for (String f : files) {
+				System.err.println("Loading training data: " + f);
+				
+				BiCorpus bc = bcFactory.fromFiles(f);
+				
+				Set<PhrasePair> set = new HashSet<PhrasePair>();
+				
+				int binsize = 10; // BUG: Magic-Number
+				int max_k   = MAX_SENTENCE_LENGTH / binsize;
+				System.err.print("Looking in length range");
+				// Iterating bins from small to large biases
+				// towards short sentences
+				for (int k = 0; k < max_k; k++) {
+					System.err.print(
+						" [" +(k * binsize + 1)+ "," +((k + 1) * binsize)+ "]");
+					System.err.flush();
+					
+					this.subsample(
+						set,
+						bc,
+						k * binsize + 1,
+						(k + 1) * binsize,
+						targetFtoERatio);
+					
+					if (set.size() + totalSubsampled > maxSubsample) break;
+				}
+				
+				float ff = 0.0f;
+				float ef = 0.0f;
+				for (PhrasePair pp : set) {
+					// Get pp.ratioFtoE() for all pp
+					ff += pp.getF().size();
+					ef += pp.getE().size();
+					
+					out.write(pp);
+					out.newLine();
+				}
+				out.flush();
+				
+				totalSubsampled += set.size();
+				System.err.println(
+					"\n  current="       +set.size()+
+					" [total="           +totalSubsampled+
+					"]    currentRatio=" +(ff/ef) );
 				System.err.flush();
 				
-				this.subsample(
-					set,
-					bc,
-					k * binsize + 1,
-					(k + 1) * binsize,
-					targetFtoERatio);
-				
-				if (set.size() + totalSubsampled > maxSubsample) break;
+				set = null; bc = null; System.gc();
 			}
-			
-			float ff = 0.0f;
-			float ef = 0.0f;
-			for (PhrasePair pp : set) {
-				// Get pp.ratioFtoE() for all pp
-				ff += pp.getF().size();
-				ef += pp.getE().size();
-				
-				out.write(pp);
-				out.newLine();
-			}
-			out.flush();
-			
-			totalSubsampled += set.size();
-			System.err.println(
-				"\n  current="       +set.size()+
-				" [total="           +totalSubsampled+
-				"]    currentRatio=" +(ff/ef) );
-			System.err.flush();
-			
-			set = null; bc = null; System.gc();
+		} finally {
+			out.close();
 		}
-		out.close();
 	}
 	
 	/**
