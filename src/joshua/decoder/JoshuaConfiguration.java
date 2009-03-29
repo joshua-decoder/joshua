@@ -134,7 +134,6 @@ public class JoshuaConfiguration {
 	
 	// This is static instead of a constructor because all the fields are static. Yuck.
 	public static void readConfigFile(String configFile) throws IOException {
-		final Regex equalsSeparator = new Regex("\\s*=\\s*");
 		
 		LineReader configReader = new LineReader(configFile);
 		try { for (String line : configReader) {
@@ -143,7 +142,7 @@ public class JoshuaConfiguration {
 			
 			
 			if (line.indexOf("=") != -1) { // parameters; (not feature function)
-				String[] fds = equalsSeparator.split(line);
+				String[] fds = Regex.equalsWithSpaces.split(line);
 				if (fds.length != 2) {
 					logger.severe("Wrong config line: " + line);
 					System.exit(1);

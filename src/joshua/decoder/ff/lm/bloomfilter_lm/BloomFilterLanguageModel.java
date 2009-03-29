@@ -39,6 +39,7 @@ import joshua.decoder.ff.lm.DefaultNGramLanguageModel;
 import joshua.decoder.ff.lm.bloomfilter_lm.BloomFilter;
 import joshua.corpus.SymbolTable;
 import joshua.util.sentence.Vocabulary;
+import joshua.util.Regex;
 
 public class BloomFilterLanguageModel extends DefaultNGramLanguageModel implements Externalizable {
 	public static final int HASH_SEED = 17;
@@ -344,7 +345,7 @@ public class BloomFilterLanguageModel extends DefaultNGramLanguageModel implemen
 		try {
 			Scanner scanner = new Scanner(source, "UTF-8");
 			while (scanner.hasNextLine()) {
-				String [] toks = scanner.nextLine().split("\\s+");
+				String [] toks = Regex.spaces.split(scanner.nextLine());
 				int currOrder = toks.length - 1;
 				// only go up to specified order
 				/*

@@ -45,7 +45,7 @@ public class LMFFDPState implements FFDPState {
 	//construct an instance from the signature string
 	public  LMFFDPState(SymbolTable p_symbolTable, String sig_) {
 		this.sig = sig_;
-		String[] states = sig.split(SIG_SEP);
+		String[] states = sig.split(SIG_SEP); // TODO: use joshua.util.Regex
 		this.left_lm_state_words = p_symbolTable.getIDs(states[0]);
 		this.right_lm_state_words = p_symbolTable.getIDs(states[1]);
 	}

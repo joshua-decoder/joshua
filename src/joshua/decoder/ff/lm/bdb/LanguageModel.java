@@ -16,6 +16,8 @@
  */
 package joshua.decoder.ff.lm.bdb;
 
+import joshua.util.Regex;
+
 /**
  * Language model interface
  * 
@@ -37,21 +39,20 @@ public abstract class LanguageModel {
 		
 		double result = 0;
 		
-		String[] words = phrase.split("\\s+");
-
-		for (int i=ngramOrder-1; i<words.length; i++) {
+		String[] words = Regex.spaces.split(phrase);
+		
+		for (int i = ngramOrder-1; i < words.length; i++) {
 			
 			String substring = "";
 			
-			for (int j=i-(ngramOrder-1); j<i; j++) {
+			for (int j = i-(ngramOrder-1); j < i; j++) {
 				substring += words[j] + " ";
 			}
 			
 			substring += words[i];
 			result += get(substring);
 		}
-
-		return result;
 		
+		return result;
 	}
 }

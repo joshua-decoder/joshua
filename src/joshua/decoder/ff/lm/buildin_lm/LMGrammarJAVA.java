@@ -23,6 +23,7 @@ import joshua.decoder.BuildinSymbol;
 import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.Support;
 import joshua.util.io.LineReader;
+import joshua.util.Regex;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -474,13 +475,16 @@ public class LMGrammarJAVA extends AbstractLM {
 		boolean start = false;
 		int order = 0;
 		
+		Regex blankLine  = new Regex("^\\s*$");
+		Regex ngramsLine = new Regex("^\\\\\\d-grams:\\s*$");
+		
 		LineReader grammarReader = new LineReader(grammar_file);
 		try { for (String line : grammarReader) {
 			line = line.trim();
-			if (line.matches("^\\s*$")) {
+			if (blankLine.matches(line)) {
 				continue;
 			}
-			if (line.matches("^\\\\\\d-grams:\\s*$")) { // \1-grams:
+			if (ngramsLine.matches(line)) { // \1-grams:
 				start = true;
 				order = Integer.parseInt(line.substring(1, 2));
 				if (order > ngramOrder) {
@@ -518,7 +522,7 @@ public class LMGrammarJAVA extends AbstractLM {
 				logger.fine("##### time used (seconds): "
 					+ (System.currentTimeMillis() - start_loading_time) / 1000);
 		}
-		String[] wrds = line.trim().split("\\s+");
+		String[] wrds = Regex.spaces.split(line.trim());
 		
 		if (wrds.length < order + 1 || wrds.length > order + 2) { // TODO: error
 			//Support.write_log_line("wrong line: "+ line, Support.ERROR);

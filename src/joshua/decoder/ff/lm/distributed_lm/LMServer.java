@@ -25,6 +25,7 @@ import joshua.decoder.ff.lm.NGramLanguageModel;
 import joshua.decoder.ff.lm.buildin_lm.LMGrammarJAVA;
 import joshua.decoder.ff.lm.srilm.LMGrammarSRILM;
 import joshua.util.io.LineReader;
+import joshua.util.Regex;
 
 import java.io.IOException;
 //import java.net.InetAddress;
@@ -126,7 +127,7 @@ public class LMServer {
 	}
 	
 	
-	
+	// BUG: duplicates initializeLanguageModel and initializeSymbolTable in JoshuaDecoder, needs unifying
 	public static void init_lm_grammar() throws IOException {
 		if (use_srilm) {
 			if (use_left_euqivalent_state || use_right_euqivalent_state) {
@@ -146,6 +147,7 @@ public class LMServer {
 	
 	
 	
+	// BUG: this is duplicating code in JoshuaConfiguration, needs unifying
 	public static void read_config_file(String config_file)
 	throws IOException {
 		
@@ -153,52 +155,52 @@ public class LMServer {
 		try { for (String line : configReader) {
 			//line = line.trim().toLowerCase();
 			line = line.trim();
-			if (line.matches("^\\s*(?:\\#.*)?$")) continue;
+			if (Regex.commentOrEmptyLine.matches(line)) continue;
 			
 			if (line.indexOf("=") != -1) { //parameters
-				String[] fds = line.split("\\s*=\\s*");
+				String[] fds = Regex.equalsWithSpaces.split(line);
 				if (fds.length != 2) {
 					Support.write_log_line("Wrong config line: " + line, Support.ERROR);
 					System.exit(0);
 				}
-				if (0 == fds[0].compareTo("lm_file")) {
+				if ("lm_file".equals(fds[0])) {
 					lm_file = fds[1].trim();
 					System.out.println(String.format("lm file: %s", lm_file));
 					
-				} else if (0 == fds[0].compareTo("use_srilm")) {
+				} else if ("use_srilm".equals(fds[0])) {
 					use_srilm = new Boolean(fds[1]);
 					System.out.println(String.format("use_srilm: %s", use_srilm));
 					
-				} else if (0 == fds[0].compareTo("lm_ceiling_cost")) {
-					lm_ceiling_cost = new Double(fds[1]);
+				} else if ("lm_ceiling_cost".equals(fds[0])) {
+					lm_ceiling_cost = Double.parseDouble(fds[1]);
 					System.out.println(String.format("lm_ceiling_cost: %s", lm_ceiling_cost));
 					
-				} else if (0 == fds[0].compareTo("use_left_euqivalent_state")) {
+				} else if ("use_left_euqivalent_state".equals(fds[0])) {
 					use_left_euqivalent_state = new Boolean(fds[1]);
 					System.out.println(String.format("use_left_euqivalent_state: %s", use_left_euqivalent_state));
 					
-				} else if (0 == fds[0].compareTo("use_right_euqivalent_state")) {
+				} else if ("use_right_euqivalent_state".equals(fds[0])) {
 					use_right_euqivalent_state = new Boolean(fds[1]);
 					System.out.println(String.format("use_right_euqivalent_state: %s", use_right_euqivalent_state));
 					
-				} else if (0 == fds[0].compareTo("order")) {
-					g_lm_order = new Integer(fds[1]);
+				} else if ("order".equals(fds[0])) {
+					g_lm_order = Integer.parseInt(fds[1]);
 					System.out.println(String.format("g_lm_order: %s", g_lm_order));
 					
-				} else if (0 == fds[0].compareTo("remote_lm_server_port")) {
-					port = new Integer(fds[1]);
+				} else if ("remote_lm_server_port".equals(fds[0])) {
+					port = Integer.parseInt(fds[1]);
 					System.out.println(String.format("remote_lm_server_port: %s", port));
 					
-				} else if (0 == fds[0].compareTo("remote_symbol_tbl")) {
+				} else if ("remote_symbol_tbl".equals(fds[0])) {
 					remote_symbol_tbl = new String(fds[1]);
 					System.out.println(String.format("remote_symbol_tbl: %s", remote_symbol_tbl));
 					
-				} else if (0 == fds[0].compareTo("hostname")) {
+				} else if ("hostname".equals(fds[0])) {
 					g_host_name = fds[1].trim();
 					System.out.println(String.format("host name is: %s", g_host_name));
 					
-				} else if (0 == fds[0].compareTo("interpolation_weight")) {
-					interpolation_weight = new Double(fds[1]);
+				} else if ("interpolation_weight".equals(fds[0])) {
+					interpolation_weight = Double.parseDouble(fds[1]);
 					System.out.println(String.format("interpolation_weightt: %s", interpolation_weight));
 					
 				} else {
@@ -277,13 +279,13 @@ public class LMServer {
 		private String process_request_helper(String line) {
 			DecodedStructure ds = decode_packet(line);
 			
-			if (0 == ds.cmd.compareTo("prob")) {
+			if ("prob".equals(ds.cmd)) {
 				return get_prob(ds);
-			} else if (0 == ds.cmd.compareTo("prob_bow")) {
+			} else if ("prob_bow".equals(ds.cmd)) {
 				return get_prob_backoff_state(ds);
-			} else if (0 == ds.cmd.compareTo("equiv_left")) {
+			} else if ("equiv_left".equals(ds.cmd)) {
 				return get_left_equiv_state(ds);
-			} else if (0 == ds.cmd.compareTo("equiv_right")) {
+			} else if ("equiv_right".equals(ds.cmd)) {
 				return get_right_equiv_state(ds);
 			} else {
 				System.out.println("error : Wrong request line: " + line);
@@ -326,14 +328,14 @@ public class LMServer {
 		
 		
 		private DecodedStructure decode_packet(String packet) {
-			String[] fds         = packet.split("\\s+");
+			String[] fds         = Regex.spaces.split(packet);
 			DecodedStructure res = new DecodedStructure();
 			res.cmd              = fds[0].trim();
-			res.num              = new Integer(fds[1]);
+			res.num              = Integer.parseInt(fds[1]);
 			int[] wrds           = new int[fds.length-2];
 			
 			for (int i = 2; i < fds.length; i++) {
-				wrds[i-2] = new Integer(fds[i]);
+				wrds[i-2] = Integer.parseInt(fds[i]);
 			}
 			res.wrds = wrds;
 			return res;

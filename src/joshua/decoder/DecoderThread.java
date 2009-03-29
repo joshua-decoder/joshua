@@ -163,7 +163,7 @@ public class DecoderThread extends Thread {
 			/* Remove SGML tags around the sentence, and set sentenceID */
 			// BUG: this is too fragile and doesn't give good error messages
 			if (cnSentence.matches("^<seg\\s+id=\"\\d+\"[^>]*>.*?</seg\\s*>\\s*$")) {
-				cnSentence = cnSentence.replaceFirst("^<seg\\s+id=\"", "");
+				cnSentence = cnSentence.replaceFirst("^<seg\\s+id=\"", ""); // TODO: use joshua.util.Regex
 				
 				StringBuffer id = new StringBuffer();
 				for (int i = 0; i < cnSentence.length(); i++) {
@@ -177,8 +177,8 @@ public class DecoderThread extends Thread {
 					}
 				}
 				sentenceID = Integer.parseInt(id.toString());
-				cnSentence = cnSentence.replaceFirst("^\\s*>", "");
-				cnSentence = cnSentence.replaceAll("</seg\\*>\\s*$", "");
+				cnSentence = cnSentence.replaceFirst("^\\s*>", ""); // TODO: use joshua.util.Regex
+				cnSentence = cnSentence.replaceAll("</seg\\*>\\s*$", ""); // TODO: use joshua.util.Regex
 			} else {
 				// don't set sentenceID, and don't alter cnSentence
 			}

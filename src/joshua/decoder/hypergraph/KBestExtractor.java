@@ -22,6 +22,8 @@ import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.Support;
 import joshua.corpus.SymbolTable;
+import joshua.util.Regex;
+
 import java.io.BufferedWriter;
 import java.io.OutputStreamWriter;
 import java.io.IOException;
@@ -179,22 +181,22 @@ public class KBestExtractor {
 	 * add_combined_score==f: do not add combined model cost
 	 * */
 	private String convert_hyp_2_string(int sent_id, DerivationState cur, ArrayList<FeatureFunction> l_models, String str_hyp_numeric, double[] model_cost){
-		String[] tem = str_hyp_numeric.split("\\s+");
-		StringBuffer str_hyp =new StringBuffer();
+		String[] tem = Regex.spaces.split(str_hyp_numeric);
+		StringBuffer str_hyp = new StringBuffer();
 		
 		//####sent id
-		if(sent_id>=0){//valid sent id must be >=0
+		if (sent_id >= 0) { // valid sent id must be >=0
 			str_hyp.append(sent_id);
 			str_hyp.append(" ||| ");
 		}
 		
-		//TODO: consider_start_sym		
+		//TODO: consider_start_sym
 		//####hyp words
-		for(int t=0; t<tem.length; t++){
+		for (int t = 0; t < tem.length; t++) {
 			tem[t] = tem[t].trim();
-			if(extract_nbest_tree==true && ( tem[t].startsWith("(") || tem[t].endsWith(")"))){//tree tag
-				if(tem[t].startsWith("(")==true){
-					if (include_align == true) {
+			if (extract_nbest_tree && ( tem[t].startsWith("(") || tem[t].endsWith(")"))) { // tree tag
+				if (tem[t].startsWith("(")) {
+					if (include_align) {
 						// we must account for the {i-j} substring
 						int ijStrIndex = tem[t].indexOf('{');
 						String tag = this.p_symbolTable.getWord(new Integer(tem[t].substring(1,ijStrIndex)));
@@ -206,25 +208,26 @@ public class KBestExtractor {
 						str_hyp.append("(");
 						str_hyp.append(tag);
 					}
-				}else{
+				} else {
 					//note: it may have more than two ")", e.g., "3499))"
 					int first_bracket_pos = tem[t].indexOf(")");//TODO: assume the tag/terminal does not have ")"
 					String tag = this.p_symbolTable.getWord(new Integer(tem[t].substring(0,first_bracket_pos)));
 					str_hyp.append(tag);
 					str_hyp.append(tem[t].substring(first_bracket_pos));
 				}
-			}else{//terminal symbol
+			} else { // terminal symbol
 				str_hyp.append(this.p_symbolTable.getWord(new Integer(tem[t])));
 			}
-			if(t<tem.length-1)
+			if (t < tem.length-1) {
 				str_hyp.append(" ");
+			}
 		}
 		
 		//####individual model cost, and final transition cost
-		if(model_cost!=null){
+		if (null != model_cost) {
 			str_hyp.append(" |||");
-			double tem_sum=0.0;
-			for(int k=0; k<model_cost.length; k++){/*note that all the transition cost (including finaltransition cost) is already stored in the hyperedge*/				
+			double tem_sum = 0.0;
+			for (int k = 0; k < model_cost.length; k++) { /* note that all the transition cost (including finaltransition cost) is already stored in the hyperedge */
 				str_hyp.append(String.format(" %.3f", -model_cost[k]));
 				tem_sum += model_cost[k]*l_models.get(k).getWeight();
 			}
@@ -241,16 +244,17 @@ public class KBestExtractor {
 		}
 		
 		//####combined model cost
-		if(add_combined_score==true)			
+		if (add_combined_score) {
 			str_hyp.append(String.format(" ||| %.3f",-cur.cost));
+		}
 		return str_hyp.toString();
 	}
 		
 	
 //add the virtualitem is necessary
-	private VirtualItem add_virtual_item(HGNode it){
+	private VirtualItem add_virtual_item(HGNode it) {
 		VirtualItem res = tbl_virtual_items.get(it);
-		if(res == null){
+		if (null == res) {
 			res = new VirtualItem(it);
 			tbl_virtual_items.put(it, res);
 		}

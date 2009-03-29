@@ -22,6 +22,7 @@ import joshua.decoder.Support;
 import joshua.corpus.SymbolTable;
 import joshua.util.io.LineReader;
 import joshua.util.FileUtility;
+import joshua.util.Regex;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -110,6 +111,7 @@ public class LMGrammarRemote extends AbstractLM {
 	}
 	
 	
+	// BUG: this is duplicating code in JoshuaConfiguration, needs unifying
 	@SuppressWarnings("unchecked")
 	private static Hashtable<String,?> read_config_file(String config_file)
 	throws IOException {
@@ -120,31 +122,31 @@ public class LMGrammarRemote extends AbstractLM {
 		try { for (String line : configReader) {
 			//line = line.trim().toLowerCase();
 			line = line.trim();
-			if (line.matches("^\\s*(?:\\#.*)?$")) continue;
+			if (Regex.commentOrEmptyLine.matches(line)) continue;
 			
 			if (-1 != line.indexOf("=")) { // parameters
-				String[] fds = line.split("\\s*=\\s*");
+				String[] fds = Regex.equalsWithSpaces.split(line);
 				if (fds.length != 2) {
 					Support.write_log_line("Wrong config line: " + line, Support.ERROR);
 					System.exit(1);
 				}
-				if (0 == fds[0].compareTo("lm_file")) {
+				if ("lm_file".equals(fds[0])) {
 					String lm_file = fds[1].trim();
 					res.put("lm_file", lm_file);
 					System.out.println(String.format("lm file: %s", lm_file));
 					
-				} else if (0 == fds[0].compareTo("remote_lm_server_port")) {
-					int port = new Integer(fds[1]);
+				} else if ("remote_lm_server_port".equals(fds[0])) {
+					int port = Integer.parseInt(fds[1]);
 					res.put("port", port);
 					System.out.println(String.format("remote_lm_server_port: %s", port));
 					
-				} else if (0 == fds[0].compareTo("hostname")) {
+				} else if ("hostname".equals(fds[0])) {
 					String host_name = fds[1].trim();
 					res.put("hostname", host_name);
 					System.out.println(String.format("host name is: %s", host_name));
 					
-				} else if (0 == fds[0].compareTo("interpolation_weight")) {
-					double interpolation_weight = new Double(fds[1]);
+				} else if ("interpolation_weight".equals(fds[0])) {
+					double interpolation_weight = Double.parseDouble(fds[1]);
 					res.put("weight", interpolation_weight);
 					System.out.println(String.format("interpolation_weightt: %s", interpolation_weight));
 					

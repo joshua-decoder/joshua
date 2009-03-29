@@ -22,6 +22,7 @@ import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.tm.GrammarFactory;
 import joshua.util.io.LineReader;
 import joshua.util.FileUtility;
+import joshua.util.Regex;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -118,11 +119,12 @@ public class DecoderFactory {
 		LineReader testReader = new LineReader(test_file);
 		try { for (String cn_sent : testReader) {
 			sent_id++;
-			t_writer_test.write(cn_sent + "\n");
+			t_writer_test.write(cn_sent);
+			t_writer_test.newLine();
 			
 			//make the Symbol table finalized before running multiple threads, this is to avoid synchronization among threads
 			{
-				String words[] = cn_sent.split("\\s+");
+				String words[] = Regex.spaces.split(cn_sent);
 				this.p_symbolTable.addTerminals(words); // TODO
 			}			
 			

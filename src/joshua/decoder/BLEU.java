@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 
 import joshua.decoder.Support;
+import joshua.util.Regex;
 
 
 /**
@@ -41,7 +42,7 @@ public class BLEU {
 		int[] ref_lens = new int[ref_sents.length];
 		ArrayList<HashMap<String, Integer>> list_ref_ngram_tbl = new ArrayList<HashMap<String, Integer>>();
 		for(int i =0; i<ref_sents.length; i++){
-			String[] ref_wrds = ref_sents[i].split("\\s+");
+			String[] ref_wrds = Regex.spaces.split(ref_sents[i]);
 			ref_lens[i] = ref_wrds.length;
 			HashMap<String, Integer> ref_ngram_tbl = new HashMap<String, Integer>();
 			get_ngrams(ref_ngram_tbl, bleu_order, ref_wrds);	
@@ -50,7 +51,7 @@ public class BLEU {
 		double effective_ref_len=computeEffectiveLen(ref_lens, use_shortest_ref);
 		
 				
-		String[] hyp_wrds = hyp_sent.split("\\s+");
+		String[] hyp_wrds = Regex.spaces.split(hyp_sent);
 		HashMap<String, Integer> hyp_ngram_tbl = new HashMap<String, Integer>();
 		get_ngrams(hyp_ngram_tbl, bleu_order, hyp_wrds);
 		
@@ -91,7 +92,7 @@ public class BLEU {
 					}    			
 	    		}
 			}
-			num_ngram_match[ngram.split("\\s+").length-1] += effective_num_match;
+			num_ngram_match[Regex.spaces.split(ngram).length-1] += effective_num_match;
 		}
 		res_bleu = compute_bleu(hyp_len, effective_ref_len, num_ngram_match, bleu_order);
 		//System.out.println("hyp_len: " + hyp_sent.length + "; ref_len:" + ref_sent.length + "; bleu: " + res_bleu +" num_ngram_matches: " + num_ngram_match[0] + " " +num_ngram_match[1]+
@@ -104,8 +105,8 @@ public class BLEU {
 	
 	
 	public  static double compute_sentence_bleu(String ref_sent, String hyp_sent, boolean do_ngram_clip, int bleu_order){
-		String[] ref_wrds = ref_sent.split("\\s+");
-		String[] hyp_wrds = hyp_sent.split("\\s+");
+		String[] ref_wrds = Regex.spaces.split(ref_sent);
+		String[] hyp_wrds = Regex.spaces.split(hyp_sent);
 		HashMap<String, Integer> ref_ngram_tbl = new HashMap<String, Integer>();
 		get_ngrams(ref_ngram_tbl, bleu_order, ref_wrds);
 		HashMap<String, Integer> hyp_ngram_tbl = new HashMap<String, Integer>();
@@ -122,9 +123,9 @@ public class BLEU {
 			String ngram = it.next();
 			if(ref_ngram_tbl.containsKey(ngram)){
 				if(do_ngram_clip)
-					num_ngram_match[ngram.split("\\s+").length-1] += Support.find_min(ref_ngram_tbl.get(ngram), hyp_ngram_tbl.get(ngram)); //ngram clip
+					num_ngram_match[Regex.spaces.split(ngram).length-1] += Support.find_min(ref_ngram_tbl.get(ngram), hyp_ngram_tbl.get(ngram)); //ngram clip
 				else
-					num_ngram_match[ngram.split("\\s+").length-1] += hyp_ngram_tbl.get(ngram);//without ngram count clipping    			
+					num_ngram_match[Regex.spaces.split(ngram).length-1] += hyp_ngram_tbl.get(ngram);//without ngram count clipping    			
     		}
 		}
 		res_bleu = compute_bleu(hyp_len, ref_len, num_ngram_match, bleu_order);

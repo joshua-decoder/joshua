@@ -68,7 +68,7 @@ extends LMClient {
 	//TODO
 	public double get_prob_msrlm(String ngram, int order) {
 		double res = 0.0;/*
-		 	String[] wrds = ngram.split("\\s+");
+		 	String[] wrds = Regex.spaces.split(ngram);
 		        try {
 				p_client.data_out.writeInt(wrds.length);     
 			        for(int i=0; i<wrds.length; i++){

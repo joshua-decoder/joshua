@@ -33,6 +33,7 @@ import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.BilingualRule;
 import joshua.decoder.ff.tm.Trie;
 import joshua.util.io.LineReader;
+import joshua.util.Regex;
 
 
 /**
@@ -55,7 +56,7 @@ public class MemoryBasedBatchGrammar  extends BatchGrammar {
 	
 	static protected double tem_estcost = 0.0;//debug
 	
-	static int rule_id_count =1; //three kinds of rule: regular rule (id>0); oov rule (id=0), and null rule (id=-1)
+	static int rule_id_count = 1; //three kinds of rule: regular rule (id>0); oov rule (id=0), and null rule (id=-1)
 
 	
 	private static final Logger logger = Logger.getLogger(MemoryBasedBatchGrammar.class.getName());
@@ -64,7 +65,9 @@ public class MemoryBasedBatchGrammar  extends BatchGrammar {
 	//moved from batch grammar
 	public    static int OOV_RULE_ID          = 0;
 	//protected  ArrayList<FeatureFunction> p_l_models = null;
-	protected int defaultOwner  ;
+	protected int defaultOwner;
+	
+	// TODO: replace with joshua.util.Regex so we only compile once
 	protected  String nonterminalRegexp = "^\\[[A-Z]+\\,[0-9]*\\]$";//e.g., [X,1]
 	protected String nonterminalReplaceRegexp = "[\\[\\]\\,0-9]+";
 	
@@ -113,8 +116,8 @@ public class MemoryBasedBatchGrammar  extends BatchGrammar {
 	protected void read_tm_grammar_from_file(String grammar_file)
 	throws IOException {
 		this.root = new MemoryBasedTrie(); //root should not have valid ruleBin entries
-		if (logger.isLoggable(Level.INFO)) logger.info(
-			"Reading grammar from file " + grammar_file);
+		if (logger.isLoggable(Level.INFO))
+			logger.info("Reading grammar from file " + grammar_file);
 		
 		LineReader treeReader = new LineReader(grammar_file);
 		try { for (String line : treeReader) {
@@ -131,7 +134,7 @@ public class MemoryBasedBatchGrammar  extends BatchGrammar {
 		final double alpha = Math.log10(Math.E); //Cost
 		this.root = new MemoryBasedTrie(); //root should not have valid ruleBin entries
 		
-		this.add_rule("S ||| ["	+ JoshuaConfiguration.default_non_terminal + ",1] ||| [" + JoshuaConfiguration.default_non_terminal	+ ",1] ||| 0",	this.p_symbolTable.addTerminal(JoshuaConfiguration.begin_mono_owner));//this does not have any cost	
+		this.add_rule("S ||| [" + JoshuaConfiguration.default_non_terminal + ",1] ||| [" + JoshuaConfiguration.default_non_terminal + ",1] ||| 0",	this.p_symbolTable.addTerminal(JoshuaConfiguration.begin_mono_owner));//this does not have any cost	
 		//TODO: search consider_start_sym (Decoder.java, LMModel.java, and Chart.java)
 		//glue_gr.add_rule("S ||| [PHRASE,1] ||| "+Symbol.START_SYM+" [PHRASE,1] ||| 0", begin_mono_owner);//this does not have any cost
 		this.add_rule("S ||| [S,1] [" + JoshuaConfiguration.default_non_terminal + ",2] ||| [S,1] [" + JoshuaConfiguration.default_non_terminal + ",2] ||| " + alpha,this.p_symbolTable.addTerminal(JoshuaConfiguration.begin_mono_owner));
@@ -160,11 +163,13 @@ public class MemoryBasedBatchGrammar  extends BatchGrammar {
 	}
 	
 	
+	// TODO: reorganize to pass in a joshua.util.Regex instead of String
 	protected static final String replace_french_non_terminal(String nonterminalReplaceRegexp_, String symbol) {
 		return symbol.replaceAll(nonterminalReplaceRegexp_, "");//remove [, ], and numbers
 	}
 	
 	
+	// TODO: reorganize to pass in a joshua.util.Regex instead of String
 	//TODO: we assume all the Chinese training text is lowercased, and all the non-terminal symbols are in [A-Z]+
 	protected  static final boolean is_non_terminal(String nonterminalRegexp_, String symbol) {
 		return symbol.matches(nonterminalRegexp_);
@@ -176,9 +181,11 @@ public class MemoryBasedBatchGrammar  extends BatchGrammar {
 	}
 	
 	
-	public static Rule createRule(SymbolTable p_symbolTable, String nonterminalRegexp_, String nonterminalReplaceRegexp_, int r_id, String line, int owner_in) {		
+	
+	public static Rule createRule(SymbolTable p_symbolTable, String nonterminalRegexp_, String nonterminalReplaceRegexp_, int r_id, String line, int owner_in) {
+		
 		//rule format: X ||| Foreign side ||| English side ||| feature scores
-		String[] fds = line.split("\\s+\\|{3}\\s+");
+		String[] fds = Regex.threeBarsWithSpace.split(line);
 		if (fds.length != 4) {
 			Support.write_log_line("rule line does not have four fds; " + line, Support.ERROR);
 		}
@@ -188,7 +195,7 @@ public class MemoryBasedBatchGrammar  extends BatchGrammar {
 		
 		//=== arity and french
 		int arity = 0;
-		String[] french_tem = fds[1].split("\\s+");
+		String[] french_tem = Regex.spaces.split(fds[1]);
 		int[] french_ints = new int[french_tem.length];
 		for (int i = 0; i < french_tem.length; i++) {
 			if (is_non_terminal(nonterminalRegexp_, french_tem[i])) {
@@ -200,7 +207,7 @@ public class MemoryBasedBatchGrammar  extends BatchGrammar {
 		}
 		
 		//=== english side
-		String[] english_tem = fds[2].split("\\s+");
+		String[] english_tem = Regex.spaces.split(fds[2]);
 		int[] english = new int[english_tem.length];
 		for (int i = 0; i < english_tem.length; i++) {
 			if (is_non_terminal(nonterminalRegexp_, english_tem[i])) {
@@ -211,7 +218,7 @@ public class MemoryBasedBatchGrammar  extends BatchGrammar {
 		}
 		
 		//=== feature costs
-		String[] t_scores = fds[3].split("\\s+");
+		String[] t_scores = Regex.spaces.split(fds[3]);
 		float[] scores = new float[t_scores.length];
 		int i = 0;
 		for (String score : t_scores) {
@@ -252,8 +259,8 @@ public class MemoryBasedBatchGrammar  extends BatchGrammar {
 				pos = next_layer;
 			} else {
 				MemoryBasedTrie tem = new MemoryBasedTrie();//next layer node
-				if ( pos.hasExtensions()==false) {
-					pos.tbl_children = new HashMap<Integer,MemoryBasedTrie> ();
+				if (! pos.hasExtensions()) {
+					pos.tbl_children = new HashMap<Integer,MemoryBasedTrie>();
 				}
 				pos.tbl_children.put(cur_sym_id, tem);
 				pos = tem;
@@ -261,7 +268,7 @@ public class MemoryBasedBatchGrammar  extends BatchGrammar {
 		}
 		
 		//#########3: now add the rule into the trinode
-		if ( pos.hasRules() == false) {
+		if (! pos.hasRules()) {
 			pos.rule_bin        = new MemoryBasedRuleBin();
 			pos.rule_bin.french = p_french;
 			pos.rule_bin.arity  = p_rule.getArity();
@@ -293,16 +300,16 @@ public class MemoryBasedBatchGrammar  extends BatchGrammar {
 
 
 	public Rule constructOOVRule(int num_feats, int lhs, int sourceWord, int owner, boolean have_lm_model) {
-		int[] p_french     = new int[1];
-	   	p_french[0]  = sourceWord;
-	   	int[] english    = new int[1];
-	   	english[0] = sourceWord;
-	   	float[] feat_scores     = new float[num_feats];
+		int[] p_french      = new int[1];
+	   	p_french[0]         = sourceWord;
+	   	int[] english       = new int[1];
+	   	english[0]          = sourceWord;
+	   	float[] feat_scores = new float[num_feats];
 	   	
 	   	/**TODO
 	   	 * This is a hack to make the decoding without a LM works
 	   	 * */
-	   	if(have_lm_model==false){//no LM is used for decoding, so we should set the stateless cost
+	   	if (! have_lm_model) {//no LM is used for decoding, so we should set the stateless cost
 	   		//this.feat_scores[0]=100.0/((FeatureFunction)p_l_models.get(0)).getWeight();//TODO
 	   		feat_scores[0]=100;//TODO
 	   	}

@@ -44,11 +44,12 @@ public class Regex {
 	// BUG: this should be replaced by a real regex for numbers.
 	// Perhaps "^[\\+\\-]?\\d+(?:\\.\\d+)?$" is enough.
 	// This is only used by JoshuaDecoder.writeConfigFile so far.
-	public static final Regex floatingNumber =
-		new Regex("^[\\d\\.\\-\\+]+");
-		
-	public static final Regex spaces =
-		new Regex("\\s+");
+	public static final Regex floatingNumber = new Regex("^[\\d\\.\\-\\+]+");
+	
+	// Common patterns for splitting
+	public static final Regex spaces             = new Regex("\\s+");
+	public static final Regex equalsWithSpaces   = new Regex("\\s*=\\s*");
+	public static final Regex threeBarsWithSpace = new Regex("\\s+\\|{3}\\s+");
 	
 	
 //===============================================================

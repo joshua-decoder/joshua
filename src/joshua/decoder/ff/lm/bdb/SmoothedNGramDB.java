@@ -26,6 +26,7 @@ import java.util.Scanner;
 
 import joshua.util.FileUtility;
 import joshua.util.FormatUtil;
+import joshua.util.Regex;
 
 import com.sleepycat.bind.tuple.TupleBinding;
 import com.sleepycat.bind.tuple.TupleInput;
@@ -150,7 +151,7 @@ public class SmoothedNGramDB extends LanguageModel {
 
 				for (String line=scanner.nextLine().trim(); line.trim().length() > 0; line=scanner.nextLine().trim()) {
 
-					String[] elements = line.split("\\s+");
+					String[] elements = Regex.spaces.split(line);
 
 					String ngram = elements[1];
 					for (int i=2; i<=order; i++) {
@@ -270,7 +271,7 @@ file sample.txt: 1 sentences, 3 words, 0 OOVs
 
 */
 		
-		String[] completePhrase = key.split("\\s+");
+		String[] completePhrase = Regex.spaces.split(key);
 		
 		int contextLength = completePhrase.length - 1;
 		

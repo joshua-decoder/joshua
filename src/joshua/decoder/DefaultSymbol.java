@@ -20,6 +20,7 @@ package joshua.decoder;
 import joshua.corpus.AbstractSymbolTable;
 import joshua.corpus.SymbolTable;
 import joshua.util.io.LineReader;
+import joshua.util.Regex;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -168,7 +169,7 @@ public abstract class DefaultSymbol extends AbstractSymbolTable implements Symbo
 		
 		LineReader symboltableReader = new LineReader(fname);
 		try { for (String line : symboltableReader) {
-			String[] fds = line.split("\\s+");
+			String[] fds = Regex.spaces.split(line);
 			if(fds.length!=2){
 			    System.out.println("Warning: read index, bad line: " + line);
 			    continue;

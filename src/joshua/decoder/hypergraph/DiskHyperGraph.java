@@ -26,6 +26,8 @@ import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.JoshuaConfiguration;
 import joshua.corpus.SymbolTable;
 import joshua.util.FileUtility;
+import joshua.util.Regex;
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.OutputStreamWriter;
@@ -83,7 +85,7 @@ public class DiskHyperGraph {
 	
 	
 //	Shared by many hypergraphs, via the initialization functions
-	private HashMap<Integer,Rule> associatedGrammar	= new HashMap<Integer,Rule>();
+	private HashMap<Integer,Rule> associatedGrammar = new HashMap<Integer,Rule>();
 	
 	private BufferedWriter    writer;
 	private BufferedReader    reader;
@@ -103,6 +105,7 @@ public class DiskHyperGraph {
 	private static final String RULE_TBL_SEP    = " -LZF- ";
 	
 	// TODO: this should be changed
+	// TODO: use joshua.util.Regex to avoid recompiling all the time
 	private static final String nonterminalRegexp
 		= "^\\[[A-Z]+\\,[0-9]*\\]$";
 	private static final String nonterminalReplaceRegexp
@@ -182,12 +185,12 @@ public class DiskHyperGraph {
 		String line;
 		while ((line = FileUtility.read_line_lzf(rulesReader)) != null) {
 			// line format: ruleID owner RULE_TBL_SEP rule
-			String[] fds = line.split(RULE_TBL_SEP);
+			String[] fds = line.split(RULE_TBL_SEP); // TODO: use joshua.util.Regex
 			if (fds.length != 2) {
 				logger.severe("wrong RULE line");
 				System.exit(1);
 			}
-			String[] words   = fds[0].split("\\s+");
+			String[] words   = Regex.spaces.split(fds[0]);
 			int ruleID       = Integer.parseInt(words[0]);
 			int defaultOwner = this.symbolTable.addTerminal(words[1]);
 			
@@ -406,7 +409,7 @@ public class DiskHyperGraph {
 		// Test if we should skip this sentence
 		if (null != this.selectedSentences
 		&& (! this.selectedSentences.containsKey(
-				Integer.parseInt(line.split("\\s+")[1]) ))
+				Integer.parseInt(Regex.spaces.split(line)[1]) ))
 		) {
 			while ((line = FileUtility.read_line_lzf(this.reader)) != null) {
 				if (line.startsWith(SENTENCE_TAG)) break;
@@ -416,7 +419,7 @@ public class DiskHyperGraph {
 			return null;
 			
 		} else {
-			String[] fds       = line.split("\\s+");
+			String[] fds       = Regex.spaces.split(line);
 			int sentenceID     = Integer.parseInt(fds[1]);
 			int sentenceLength = Integer.parseInt(fds[2]);
 			int qtyItems       = Integer.parseInt(fds[3]);
@@ -442,12 +445,12 @@ public class DiskHyperGraph {
 	private HGNode readItem() {
 		//line: ITEM_TAG itemID i j lhs qtyDeductions ITEM_STATE_TAG item_state
 		String  line = FileUtility.read_line_lzf(this.reader);
-		String[] fds = line.split(ITEM_STATE_TAG);
+		String[] fds = line.split(ITEM_STATE_TAG); // TODO: use joshua.util.Regex
 		if (fds.length != 2) {
 			logger.severe("wrong item line");
 			System.exit(1);
 		}
-		String[] words    = fds[0].split("\\s+");
+		String[] words    = Regex.spaces.split(fds[0]);
 		int itemID        = Integer.parseInt(words[1]);
 		int i             = Integer.parseInt(words[2]);
 		int j             = Integer.parseInt(words[3]);
@@ -488,7 +491,7 @@ public class DiskHyperGraph {
 	private HyperEdge readDeduction() {
 		//line: flag, best_cost, num_items, item_ids, rule id, OOV-Non-Terminal (optional), OOV (optional)
 		String  line = FileUtility.read_line_lzf(this.reader);
-		String[] fds = line.split("\\s+");
+		String[] fds = Regex.spaces.split(line);
 		
 		//best_cost transition_cost num_items item_ids
 		double bestCost = Double.parseDouble(fds[0]);
@@ -534,7 +537,7 @@ public class DiskHyperGraph {
 		//read model costs
 		if (this.storeModelCosts) {
 			String[] costs_s =
-				FileUtility.read_line_lzf(this.reader).split("\\s+");
+				Regex.spaces.split(FileUtility.read_line_lzf(this.reader));
 			double[] costs = new double[costs_s.length];
 			for (int i = 0; i < costs_s.length; i++) {
 				costs[i] = Double.parseDouble(costs_s[i]);
