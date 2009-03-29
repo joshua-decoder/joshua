@@ -23,7 +23,7 @@ import java.util.List;
 import joshua.decoder.ff.FeatureFunction;
 
 /**
- * Represents a set of rules under a particular TrieGrammar node. 
+ * Represents a set of rules under a particular TrieGrammar node.
  * Therefore, all the rules under a RuleCollection will share:
  * 
  * <ul>
@@ -45,24 +45,31 @@ public interface RuleCollection {
 	 * we should call this once the grammar is finished
 	 * <p>
 	 * public synchronized ArrayList<Rule> get_sorted_rules(){
-	 * l_models: if it is non-null, then the rules will be sorted using the new feature functions (or new weight), otherwise, just return a sorted list based on the last time of feature functions
+	 * l_models: if it is non-null, then the rules will be
+	 * sorted using the new feature functions (or new weight),
+	 * otherwise, just return a sorted list based on the last
+	 * time of feature functions
      * <p>
-     * Only CubePruning requires that rules are sorted based on est_cost (confirmed by zhifei)
+     * Only CubePruning requires that rules are sorted based on
+     * est_cost (confirmed by zhifei)
 	 */
 	public abstract List<Rule> getSortedRules(ArrayList<FeatureFunction> l_models);
 	
 	/**
 	 * Gets the source side for all rules in this RuleCollection.
-	 * This source side is the same for all the rules in the RuleCollection.
+	 * This source side is the same for all the rules in the
+	 * RuleCollection.
 	 * 
-	 * @return the (common) source side for all rules in this RuleCollection
+	 * @return the (common) source side for all rules in this
+	 *         RuleCollection
 	 */
 	public abstract int[] getSourceSide();
 	
 	/**
-	 * Gets the number of nonterminals in the source side of the rules in this RuleCollection.
-	 * The source side is the same for all the rules in the RuleCollection,
-	 * so the arity will also be the same for all of these rules.
+	 * Gets the number of nonterminals in the source side of
+	 * the rules in this RuleCollection. The source side is the
+	 * same for all the rules in the RuleCollection, so the
+	 * arity will also be the same for all of these rules.
 	 * 
 	 * @return the (common) number of nonterminals in 
 	 *         the source side of the rules in this RuleCollection

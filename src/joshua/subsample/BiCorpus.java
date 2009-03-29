@@ -94,6 +94,8 @@ implements Iterable<PhrasePair> {
 //===============================================================
 // Methods
 //===============================================================
+	// BUG: We don't close file handles. The other reader classes apparently have finalizers to handle this well enough for our purposes, but we should migrate to using joshua.util.io.LineReader and be sure to close it in the end.
+	
 	// We're not allowed to throw exceptions from Iterator/Iterable
 	// so we have evil boilerplate to crash the system
 	public Iterator<PhrasePair> iterator() {

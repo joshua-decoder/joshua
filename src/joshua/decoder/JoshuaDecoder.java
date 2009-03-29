@@ -246,7 +246,7 @@ public class JoshuaDecoder {
 		return this;
 	}
 	
-	// BUG: this could be moved to JoshuaConfiguration (Sets: symbolTable, defaultNonterminals)
+	// TODO: maybe move to JoshuaConfiguration to enable moving the featureFunction parsing there (Sets: symbolTable, defaultNonterminals)
 	private void initializeSymbolTable() throws IOException {
 		if (JoshuaConfiguration.use_remote_lm_server) {
 			// Within the decoder, we assume BuildinSymbol when using the remote LM
@@ -270,7 +270,7 @@ public class JoshuaDecoder {
 	}
 	
 	
-	// BUG: why is this here? JoshuaConfiguration should generate the model and return it to us. (Needs: symbolTable; Sets: languageModel)
+	// TODO: maybe move to JoshuaConfiguration to enable moving the featureFunction parsing there (Needs: symbolTable; Sets: languageModel)
 	//TODO: check we actually have a feature that requires a langage model
 	private void initializeLanguageModel() throws IOException {
 		if (JoshuaConfiguration.use_remote_lm_server) {

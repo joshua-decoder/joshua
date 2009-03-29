@@ -26,68 +26,75 @@ import joshua.decoder.ff.FeatureFunction;
 
 
 /**
- * this class define the interface for Rule
- * Normally, the feature score in the rule should be *cost* (i.e., -LogP), 
- * so that the feature weight should be positive
+ * This class define the interface for Rule. Normally, the feature
+ * score in the rule should be *cost* (i.e., -LogP), so that the
+ * feature weight should be positive
  * 
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate$
  */
-
-
 public interface Rule {
 	
-	public void setRuleID(int id);
+//===============================================================
+// Attributes
+//===============================================================
 	
-	public int getRuleID();
+	public void setRuleID(int id);
+	public int  getRuleID();
 	
 	public void setArity(int arity);
-	
-	public int getArity();
+	public int  getArity();
 	
 	public void setOwner(int ow);
-	
-	public int getOwner();
+	public int  getOwner();
 	
 	public void setLHS(int lhs);
+	public int  getLHS();
 	
-	public int getLHS();
-		
-	public void setEnglish(int[] eng_);
-	
+	public void  setEnglish(int[] eng);
 	public int[] getEnglish();
 	
-	public void setFrench(int[] french_);
-	
+	public void  setFrench(int[] french);
 	public int[] getFrench();
 	
-	public void setFeatureScores(float[] scores);
-	
+	public void    setFeatureScores(float[] scores);
 	public float[] getFeatureScores();
 	
 	
-	/** the following methods will be useful when we store a non-standard score in the last field of a rule's feat_scores, 
-	 * for example, during EM training, we can store the soft-count in it
-	 *column: start from zero
-	 **/
-	public void setFeatureScore(int column, float score);
+	/**
+	 * the following methods will be useful when we store a
+	 * non-standard score in the last field of a rule's
+	 * feat_scores, for example, during EM training, we can
+	 * store the soft-count in it.
+	 *
+	 * column: start from zero
+	 */
+	public void  setFeatureScore(int column, float score);
 	public float getFeatureScore(int column);	
 	public float incrementFeatureScore(int column, double score);
 	
-	public void setLatticeCost(float cost);
-	
+	public void  setLatticeCost(float cost);
 	public float getLatticeCost();
 	
+	// How does this differ from estimateRuleCost ?
 	public float getEstCost();
 	
-	/** 
-	 * set a lower-bound estimate inside the rule returns full estimate.
-	 */
-	public float estimateRuleCost(ArrayList<FeatureFunction> p_l_models);
 	
-
-	/** in order to provide sorting for cube-pruning, we need to provide this Comparator
-	 * */
+//===============================================================
+// Methods
+//===============================================================
+	
+	/**
+	 * Set a lower-bound estimate inside the rule returns full
+	 * estimate.
+	 */
+	public float estimateRuleCost(ArrayList<FeatureFunction> featureFunctions);
+	
+	
+	/**
+	 * In order to provide sorting for cube-pruning, we need
+	 * to provide this Comparator.
+	 */
 	public static Comparator<Rule> NegtiveCostComparator	= new Comparator<Rule>() {
 		public int compare(Rule rule1, Rule rule2) {
 			float cost1 = rule1.getEstCost();
@@ -102,15 +109,13 @@ public interface Rule {
 		}
 	};
 	
-	/**@todo: should the Vocabulary change to SymbolTable?
-	 * */
+	/** @todo should the Vocabulary change to SymbolTable? */
 	public String toString(Map<Integer,String> ntVocab, SymbolTable sourceVocab, SymbolTable targetVocab);
 	
-	/**print the rule in terms of Ingeters
-	 * */
+	/** Print the rule in terms of Ingeters. */
 	public String toString(); 
 	
-	public String toString(SymbolTable p_symbolTable);
+	public String toString(SymbolTable symbolTable);
 	
-	 public String toStringWithoutFeatScores(SymbolTable p_symbolTable);
+	public String toStringWithoutFeatScores(SymbolTable symbolTable);
 }

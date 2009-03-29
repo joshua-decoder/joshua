@@ -41,13 +41,16 @@ public interface Trie {
 	
 	
 	/**
-	 * Returns whether matchOne(Symbol) could succeed for any symbol.
+	 * Returns whether matchOne(Symbol) could succeed for any
+	 * symbol.
 	 */
 	boolean hasExtensions();
 	
+	
 	/**
-	 *if the trie node has extensions, then return a list of extended trie nodes, otherwise return null 
-	 * */
+	 * If the trie node has extensions, then return a list of
+	 * extended trie nodes, otherwise return null.
+	 */
 	Trie[] getExtensions();
 	
 	
@@ -71,7 +74,5 @@ public interface Trie {
 	 *     TMGrammar)
 	 */
 	RuleCollection getRules();
-	
-	
 	
 }

@@ -17,12 +17,14 @@
  */
 package joshua.decoder.ff.tm;
 
-
 import joshua.util.sentence.Phrase;
 
 
-
 /**
+ * This class provides an abstract way to implement BatchGrammar.
+ * (meaning the grammar is for the whole test set, not sentence
+ * specific)
+ *
  * public interfaces
  * TMGrammar: init and load the grammar
  * TrieGrammar: match symbol for next layer
@@ -32,12 +34,6 @@ import joshua.util.sentence.Phrase;
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate$
  */
-
-
-/*This class provides an abstract way to implement BatchGrammar 
- * (meaning the grammar is for the whole test set, not sentence specific)
- * */
-
 public abstract class BatchGrammar implements GrammarFactory, Grammar {
 	
 	public Grammar getGrammarForSentence(Phrase sentence) {

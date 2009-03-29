@@ -48,25 +48,30 @@ public interface Grammar {
 	 * than the span limit. Other grammars, e.g. for rule-based
 	 * systems, may have different behaviors.
 	 */
-	public boolean hasRuleForSpan(int startIndex, int endIndex,	int pathLength);
+	public boolean hasRuleForSpan(int startIndex, int endIndex, int pathLength);
 	
 	
 	/**
-	 * Cube-pruning requires that the grammar be sorted based on the latest feature functions.
+	 * Cube-pruning requires that the grammar be sorted based
+	 * on the latest feature functions.
 	 */
 	public void sortGrammar(ArrayList<FeatureFunction> models);
 	
 	
-	/** construct an oov rule for the word source 
-	 * only called when creating oov rule in Chart or DiskHypergraph, all
+	/**
+	 * Construct an OOV rule for the word source. Only called
+	 * when creating oov rule in Chart or DiskHypergraph, all
 	 * the transition cost for phrase model, arity penalty,
-	 * word penalty are all zero, except the LM cost or the first feature if no LM feature is used
-	 *TODO: will try to get rid of owner, have_lm_model, and num_feats
+	 * word penalty are all zero, except the LM cost or the
+	 * first feature if no LM feature is used
+	 *
+	 * TODO: will try to get rid of owner, have_lm_model, and num_feats
 	 */
 	public Rule constructOOVRule(int num_feats, int lhs, int sourceWord, int owner, boolean have_lm_model);
 	
 	
-	/** return the OOV rule ID
-	 * */
+	/**
+	 * return the OOV rule ID
+	 */
 	public int getOOVRuleID();
 }

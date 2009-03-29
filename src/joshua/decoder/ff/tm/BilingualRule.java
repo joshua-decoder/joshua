@@ -17,11 +17,9 @@
  */
 package joshua.decoder.ff.tm;
 
-
 import java.util.Map;
 
 import joshua.corpus.SymbolTable;
-
 
 
 /**
@@ -33,8 +31,12 @@ import joshua.corpus.SymbolTable;
  */
 public class BilingualRule extends MonolingualRule {
 	
-	private  int[]   english;
-				
+	private int[] english;
+	
+//===============================================================
+// Constructors
+//===============================================================
+
 	/**
 	 * Constructs a new rule using the provided parameters.
 	 * The owner and rule id for this rule are undefined.
@@ -45,33 +47,37 @@ public class BilingualRule extends MonolingualRule {
 	 * @param feature_scores Feature value scores for the rule.
 	 * @param arity Number of nonterminals in the source language right-hand side.
 	 */
-	public BilingualRule(int lhs_, int[] source_rhs, int[] target_rhs, float[] feature_scores,  int arity_, int owner_, float lattice_cost_, int rule_id_) {
-	    super(lhs_, source_rhs, feature_scores,  arity_, owner_, lattice_cost_, rule_id_);
-		this.english     = target_rhs;
-	
-	
+	public BilingualRule(int lhs, int[] sourceRhs, int[] targetRhs, float[] featureScores, int arity, int owner, float latticeCost, int ruleID) {
+		super(lhs, sourceRhs, featureScores, arity, owner, latticeCost, ruleID);
+		this.english = targetRhs;
 	}
-
+	
 	
 	//called by class who does not care about lattice_cost, rule_id, and owner
-	public BilingualRule(int lhs_, int[] source_rhs, int[] target_rhs, float[] feature_scores, int arity_) {
-		super(lhs_, source_rhs, feature_scores, arity_);
-		this.english     = target_rhs;
+	public BilingualRule(int lhs, int[] sourceRhs, int[] targetRhs, float[] featureScores, int arity) {
+		super(lhs, sourceRhs, featureScores, arity);
+		this.english = targetRhs;
 	}
-		
 	
-		
-	public final void setEnglish(int[] eng_) {
-		this.english = eng_;
+	
+//===============================================================
+// Attributes
+//===============================================================
+	
+	public final void setEnglish(int[] eng) {
+		this.english = eng;
 	}
 	
 	public final int[] getEnglish() {
 		return this.english;
 	}
 	
+
+//===============================================================
+// Serialization Methods
+//===============================================================
+	// BUG: These are all far too redundant. Should be refactored to share.
 	
-	
-	//===================================================== serialization method=====================================
 	// Caching this method significantly improves performance
 	// We mark it transient because it is, though cf java.io.Serializable
 	private transient String cachedToString = null;
@@ -115,14 +121,15 @@ public class BilingualRule extends MonolingualRule {
 		return this.cachedToString;
 	}
 	
-	public String toString(SymbolTable p_symbolTable) {
+	
+	public String toString(SymbolTable symbolTable) {
 		if (null == this.cachedToString) {
 			StringBuffer sb = new StringBuffer("[");
-			sb.append(p_symbolTable.getWord(this.getLHS()));
+			sb.append(symbolTable.getWord(this.getLHS()));
 			sb.append("] ||| ");
-			sb.append(p_symbolTable.getWords(this.getFrench()));
+			sb.append(symbolTable.getWords(this.getFrench()));
 			sb.append(" ||| ");
-			sb.append(p_symbolTable.getWords(this.english));
+			sb.append(symbolTable.getWords(this.english));
 			sb.append(" |||");
 			for (int i = 0; i < this.getFeatureScores().length; i++) {
 				sb.append(String.format(" %.4f", this.getFeatureScores()[i]));
@@ -132,12 +139,14 @@ public class BilingualRule extends MonolingualRule {
 		return this.cachedToString;
 	}
 	
-    public String toStringWithoutFeatScores(SymbolTable p_symbolTable){
-            StringBuffer res = new StringBuffer();
-            res.append("["); res.append(p_symbolTable.getWord(this.getLHS())); res.append("] ||| ");
-            res.append(p_symbolTable.getWords(this.getFrench())); res.append(" ||| ");
-            res.append(p_symbolTable.getWords(english));
-            return res.toString();
-    }
 	
+	public String toStringWithoutFeatScores(SymbolTable symbolTable) {
+		return new StringBuffer("[")
+			.append(symbolTable.getWord(this.getLHS()))
+			.append("] ||| ")
+			.append(symbolTable.getWords(this.getFrench()))
+			.append(" ||| ")
+			.append(symbolTable.getWords(english))
+			.toString();
+	}
 }

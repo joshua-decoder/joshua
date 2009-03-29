@@ -24,7 +24,7 @@ import joshua.util.sentence.Vocabulary;
 
 
 /**
- * Another callback closure, this time for Subsampler>>subsample.
+ * Another callback closure, this time for Subsampler.subsample.
  *
  * @author wren ng thornton
  */
