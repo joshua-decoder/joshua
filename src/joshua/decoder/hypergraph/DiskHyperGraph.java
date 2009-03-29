@@ -119,7 +119,7 @@ public class DiskHyperGraph {
 	private static int NULL_RULE_ID = -1;
 	
 	//TODO: this is a hack for us to create OOVRule, and OOVRuleID
-	private static Grammar pGrammar = new MemoryBasedBatchGrammar(); 
+	private static Grammar pGrammar = new MemoryBasedBatchGrammar();
 	
 	private static final Logger logger =
 		Logger.getLogger(DiskHyperGraph.class.getName());
@@ -512,7 +512,7 @@ public class DiskHyperGraph {
 		
 		//rule_id
 		Rule rule = null;
-		final int ruleID = new Integer(fds[2+qtyAntecedents]);
+		final int ruleID = Integer.parseInt(fds[2+qtyAntecedents]);
 		if (ruleID != NULL_RULE_ID) {
 			if (ruleID != pGrammar.getOOVRuleID()) {
 				rule = this.associatedGrammar.get(ruleID);

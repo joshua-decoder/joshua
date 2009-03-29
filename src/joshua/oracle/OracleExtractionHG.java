@@ -110,8 +110,8 @@ public class OracleExtractionHG extends SplitHg {
 		String f_rule_tbl = args[1].trim();
 		String f_ref_files = args[2].trim();
 		String f_orc_out =  args[3].trim();
-		int lm_order = new Integer(args[4].trim());	
-		boolean orc_extract_nbest=new Boolean(args[5].trim());	; //oracle extraction from nbest or hg
+		int lm_order = Integer.parseInt(args[4].trim());
+		boolean orc_extract_nbest = new Boolean(args[5].trim()); // oracle extraction from nbest or hg
 		
 //		????????????????????????????????????????????????????
 		int baseline_lm_feat_id = 0; 

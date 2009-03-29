@@ -199,24 +199,24 @@ public class KBestExtractor {
 					if (include_align) {
 						// we must account for the {i-j} substring
 						int ijStrIndex = tem[t].indexOf('{');
-						String tag = this.p_symbolTable.getWord(new Integer(tem[t].substring(1,ijStrIndex)));
+						String tag = this.p_symbolTable.getWord(Integer.parseInt(tem[t].substring(1,ijStrIndex)));
 						str_hyp.append("(");
 						str_hyp.append(tag);
 						str_hyp.append(tem[t].substring(ijStrIndex)); // append {i-j}
 					} else {
-						String tag = this.p_symbolTable.getWord(new Integer(tem[t].substring(1)));
+						String tag = this.p_symbolTable.getWord(Integer.parseInt(tem[t].substring(1)));
 						str_hyp.append("(");
 						str_hyp.append(tag);
 					}
 				} else {
 					//note: it may have more than two ")", e.g., "3499))"
 					int first_bracket_pos = tem[t].indexOf(")");//TODO: assume the tag/terminal does not have ")"
-					String tag = this.p_symbolTable.getWord(new Integer(tem[t].substring(0,first_bracket_pos)));
+					String tag = this.p_symbolTable.getWord(Integer.parseInt(tem[t].substring(0,first_bracket_pos)));
 					str_hyp.append(tag);
 					str_hyp.append(tem[t].substring(first_bracket_pos));
 				}
 			} else { // terminal symbol
-				str_hyp.append(this.p_symbolTable.getWord(new Integer(tem[t])));
+				str_hyp.append(this.p_symbolTable.getWord(Integer.parseInt(tem[t])));
 			}
 			if (t < tem.length-1) {
 				str_hyp.append(" ");

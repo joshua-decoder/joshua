@@ -272,7 +272,7 @@ public class NbestMinRiskReranker {
 		String f_nbest_in = args[0].trim();
 		String f_out = args[1].trim();
 		boolean produce_reranked_nbest = new Boolean(args[2].trim());
-		double scaling_factor = new Double(args[3].trim());
+		double scaling_factor = Double.parseDouble(args[3].trim());
 	
 		
 		BufferedWriter t_writer_out =	FileUtility.getWriteFileStream(f_out);
@@ -286,7 +286,7 @@ public class NbestMinRiskReranker {
 		LineReader nbestReader = new LineReader(f_nbest_in);
 		try { for (String line : nbestReader) {
 			String[] fds = Regex.threeBarsWithSpace.split(line);
-			int new_sent_id = new Integer(fds[0]);
+			int new_sent_id = Integer.parseInt(fds[0]);
 			if (old_sent_id != -1 && old_sent_id != new_sent_id) {
 				String best_hyp = mbr_reranker.process_one_sent(nbest, old_sent_id);//nbest: list of unique strings
 				t_writer_out.write(best_hyp);

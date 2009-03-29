@@ -175,7 +175,7 @@ public abstract class DefaultSymbol extends AbstractSymbolTable implements Symbo
 			    continue;
 			}
 			String str = fds[0].trim();
-			int id = new Integer(fds[1]);
+			int id = Integer.parseInt(fds[1]);
 
 			String uqniue_str;
 			if (null != tbl_str_2_id.get(str)) { // it is quite possible that java will treat two stings as the same when other language (e.g., C or perl) treat them differently, due to unprintable symbols

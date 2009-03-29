@@ -47,7 +47,11 @@ public class NullReader<E> implements Reader<E> {
 // Reader
 //===============================================================
 	
-	/** Always returns true. Is this correct? What are the semantics of ready()? We're always capable of delivering nothing, but we're never capable of delivering anything... */
+	/**
+	 * Always returns true. Is this correct? What are the
+	 * semantics of ready()? We're always capable of delivering
+	 * nothing, but we're never capable of delivering anything...
+	 */
 	public boolean ready() { return true; }
 	
 	/** Always returns null. */

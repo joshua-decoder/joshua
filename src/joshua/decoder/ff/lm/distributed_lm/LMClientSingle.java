@@ -61,7 +61,7 @@ extends LMClient {
 		//double res     = 0.0;
 		String packet  = encode_packet("prob", order, ngram);
 		String cmd_res = exe_request(packet);
-		return new Double(cmd_res);
+		return Double.parseDouble(cmd_res);
 	}
 	
 	
@@ -92,8 +92,8 @@ extends LMClient {
 		return -1;
 		/*double res=0.0;
 		String packet= encode_packet("problbo", n_additional_bow, ngram);    	
-		String cmd_res = exe_request(packet);    	
-		res = new Double(cmd_res);
+		String cmd_res = exe_request(packet);
+		res = Double.parseDouble(cmd_res);
 		return res;*/
 	}
 	
@@ -105,8 +105,8 @@ extends LMClient {
 		/*
 		double res=0.0;    	
 		String packet= encode_packet("leftstate", order, original_state_wrds);    	
-		String cmd_res = exe_request(packet);   
-		res = new Double(cmd_res);		
+		String cmd_res = exe_request(packet);
+		res = Double.parseDouble(cmd_res);
 		return null;//big bug*/
 	}
 	
@@ -118,8 +118,8 @@ extends LMClient {
 		/*
 		double res=0.0;
 		String packet= encode_packet("rightstate", order, original_state);    	
-		String cmd_res = exe_request(packet);    	
-		res = new Double(cmd_res);
+		String cmd_res = exe_request(packet);
+		res = Double.parseDouble(cmd_res);
 		return null;//big bug*/
 	}
 	
