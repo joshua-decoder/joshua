@@ -120,10 +120,19 @@ public class LineReader implements Reader<String> {
 	 * rely on this method to release the resources. Also, the
 	 * garbage collector will discard any exceptions that have
 	 * queued up, without notifying the application in any way.
+	 *
+	 * Having a finalizer means the JVM can't do "fast allocation"
+	 * of LineReader objects (or subclasses). This isn't too
+	 * important due to disk latency, but may be worth noting.
+	 * See: {@link http://java2go.blogspot.com/2007/09/javaone-2007-performance-tips-2-finish.html},
+	 * {@link http://www.javaworld.com/javaworld/jw-06-1998/jw-06-techniques.html?page=1}
 	 */
 	protected void finalize() throws Throwable {
 		try {
 			this.close();
+		} catch (IOException e) {
+			// Do nothing. The GC will discard the exception
+			// anyways, but it may cause us to linger on the heap.
 		} finally {
 			super.finalize();
 		}

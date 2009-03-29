@@ -39,6 +39,7 @@ import joshua.sarray.Suffixes;
 import joshua.corpus.SymbolTable;
 import joshua.util.io.LineReader;
 import joshua.util.FileUtility;
+import joshua.util.Regex;
 import joshua.util.lexprob.LexicalProbabilities;
 import joshua.util.sentence.alignment.AlignmentGrids;
 import joshua.util.sentence.alignment.Alignments;
@@ -49,6 +50,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Scanner;
+import java.util.regex.Pattern;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -135,27 +137,30 @@ public class JoshuaDecoder {
 	public void writeConfigFile(double[] newWeights, String template, String outputFile) {
 		try {
 			int featureID = 0;
+			
 			BufferedWriter writer = FileUtility.getWriteFileStream(outputFile);
-			LineReader reader = new LineReader(template);
+			LineReader     reader = new LineReader(template);
 			try { for (String line : reader) {
 				line = line.trim();
-				if (line.matches("^\\s*(?:\\#.*)?$")
+				if (Regex.commentOrEmptyLine.matches(line)
 				|| line.indexOf("=") != -1) {
 					//comment, empty line, or parameter lines: just copy
-					writer.write(line + "\n");
+					writer.write(line);
+					writer.newLine();
 					
 				} else { //models: replace the weight
-					String[] fds = line.split("\\s+");
+					String[] fds = Regex.spaces.split(line);
 					StringBuffer newLine = new StringBuffer();
-					if (! fds[fds.length-1].matches("^[\\d\\.\\-\\+]+")) {
+					if (! Regex.floatingNumber.matches(fds[fds.length-1])) {
 						logger.severe("last field is not a number; the field is: " + fds[fds.length-1]);
 						System.exit(1);
 					}
 					for (int i = 0; i < fds.length-1; i++) {
 						newLine.append(fds[i]).append(" ");
 					}
-					newLine.append(newWeights[featureID++]).append("\n");
+					newLine.append(newWeights[featureID++]);
 					writer.write(newLine.toString());
+					writer.newLine();
 				}
 			} } finally {
 				reader.close();
@@ -182,8 +187,10 @@ public class JoshuaDecoder {
 		try {
 			JoshuaConfiguration.readConfigFile(configFile);
 			
+			// Sets: symbolTable, defaultNonterminals
 			this.initializeSymbolTable();
 			
+			// Needs: symbolTable; Sets: languageModel
 			if (JoshuaConfiguration.have_lm_model) initializeLanguageModel();
 			
 			// initialize and load grammar
@@ -239,7 +246,169 @@ public class JoshuaDecoder {
 		return this;
 	}
 	
+	// BUG: this could be moved to JoshuaConfiguration (Sets: symbolTable, defaultNonterminals)
+	private void initializeSymbolTable() throws IOException {
+		if (JoshuaConfiguration.use_remote_lm_server) {
+			// Within the decoder, we assume BuildinSymbol when using the remote LM
+			this.symbolTable =
+				new BuildinSymbol(JoshuaConfiguration.remote_symbol_tbl);
+			
+		} else if (JoshuaConfiguration.use_srilm) {
+			this.symbolTable =
+				new SrilmSymbol(null, JoshuaConfiguration.g_lm_order);
+			logger.finest("Using SRILM symbol table");
+			
+		} else {
+			this.symbolTable = new BuildinSymbol(null);
+		}
+		
+		// Add the default nonterminal
+		this.defaultNonterminals = new ArrayList<Integer>();
+		this.defaultNonterminals.add(
+			this.symbolTable.addNonterminal(
+				JoshuaConfiguration.default_non_terminal));
+	}
 	
+	
+	// BUG: why is this here? JoshuaConfiguration should generate the model and return it to us. (Needs: symbolTable; Sets: languageModel)
+	//TODO: check we actually have a feature that requires a langage model
+	private void initializeLanguageModel() throws IOException {
+		if (JoshuaConfiguration.use_remote_lm_server) {
+			if (JoshuaConfiguration.use_left_equivalent_state
+			|| JoshuaConfiguration.use_right_equivalent_state) {
+				logger.severe("use remote LM, we cannot use suffix/prefix stuff");
+				System.exit(1);
+			}
+			this.languageModel = new LMGrammarRemote(
+				this.symbolTable,
+				JoshuaConfiguration.g_lm_order,
+				JoshuaConfiguration.f_remote_server_list,
+				JoshuaConfiguration.num_remote_lm_servers);
+			
+		} else if (JoshuaConfiguration.use_srilm) {
+			if (JoshuaConfiguration.use_left_equivalent_state
+			|| JoshuaConfiguration.use_right_equivalent_state) {
+				logger.severe("use SRILM, we cannot use suffix/prefix stuff");
+				System.exit(1);
+			}
+			this.languageModel = new LMGrammarSRILM(
+				(SrilmSymbol)this.symbolTable,
+				JoshuaConfiguration.g_lm_order,
+				JoshuaConfiguration.lm_file);
+			
+		} else if (JoshuaConfiguration.use_bloomfilter_lm) {
+			if (JoshuaConfiguration.use_left_equivalent_state
+			|| JoshuaConfiguration.use_right_equivalent_state) {
+				logger.severe("use Bloomfilter LM, we cannot use suffix/prefix stuff");
+				System.exit(1);
+			}
+			this.languageModel = new BloomFilterLanguageModel(
+					this.symbolTable,
+					JoshuaConfiguration.g_lm_order,
+					JoshuaConfiguration.lm_file);
+		} else {
+			//using the built-in JAVA implementatoin of LM, may not be as scalable as SRILM
+			this.languageModel = new LMGrammarJAVA(
+				(BuildinSymbol)this.symbolTable,
+				JoshuaConfiguration.g_lm_order,
+				JoshuaConfiguration.lm_file,
+				JoshuaConfiguration.use_left_equivalent_state,
+				JoshuaConfiguration.use_right_equivalent_state);
+		}
+	}
+	
+	
+	// TODO: these Patterns should probably be extracted out and compiled only once (either by us or by MemoryBasedBatchGrammar)
+	private void initializeGlueGrammar() throws IOException {
+		this.grammarFactories = new GrammarFactory[2];
+		
+		logger.info("Constructing glue grammar...");
+		this.grammarFactories[0] =
+			// if this is used, then it depends on the LMModel to do pruning
+			//new MemoryBasedBatchGrammarWithPrune(
+			new MemoryBasedBatchGrammar(
+				this.symbolTable, null, true,
+				JoshuaConfiguration.phrase_owner,
+				-1,
+				"^\\[[A-Z]+\\,[0-9]*\\]$",
+				"[\\[\\]\\,0-9]+");
+	}
+	
+	
+	// TODO: these Patterns should probably be extracted out and compiled only once (either by us or by MemoryBasedBatchGrammar)
+	private void initializeTranslationGrammars(String tmFile)
+	throws IOException {
+		initializeGlueGrammar();
+		
+		if (logger.isLoggable(Level.INFO))
+			logger.info("Using grammar read from file " + tmFile);
+		this.grammarFactories[1] =
+			//new MemoryBasedBatchGrammarWithPrune(
+			new MemoryBasedBatchGrammar(
+				this.symbolTable, tmFile, false,
+				JoshuaConfiguration.phrase_owner,
+				JoshuaConfiguration.span_limit,
+				"^\\[[A-Z]+\\,[0-9]*\\]$",
+				"[\\[\\]\\,0-9]+");
+		
+		//TODO if suffix-array: call SAGrammarFactory(SuffixArray sourceSuffixArray, CorpusArray targetCorpus, AlignmentArray alignments, LexicalProbabilities lexProbs, int maxPhraseSpan, int maxPhraseLength, int maxNonterminals, int spanLimit) {
+	}
+	
+	
+	private void initializeSuffixArrayGrammar() throws IOException {
+		initializeGlueGrammar();
+		
+		if (logger.isLoggable(Level.INFO))
+			logger.info(
+				"Using SuffixArray grammar constructed from " +
+				"source "    + JoshuaConfiguration.sa_source + ", " +
+				"target "    + JoshuaConfiguration.sa_target + ", " +
+				"alignment " + JoshuaConfiguration.sa_alignment);
+		// TODO: SA creation is a constant thing which should be done earlier in the pipeline. Here we should only load the already-created SA
+		
+		Corpus sourceCorpusArray =
+			SuffixArrayFactory.createCorpusArray(
+				JoshuaConfiguration.sa_source, this.symbolTable);
+		Suffixes sourceSuffixArray =
+			SuffixArrayFactory.createSuffixArray(
+				sourceCorpusArray, JoshuaConfiguration.sa_rule_cache_size);
+		
+		CorpusArray targetCorpusArray =
+			SuffixArrayFactory.createCorpusArray(
+				JoshuaConfiguration.sa_target);
+		Suffixes targetSuffixArray =
+			SuffixArrayFactory.createSuffixArray(
+				targetCorpusArray, JoshuaConfiguration.sa_rule_cache_size);
+		
+		String alignmentFileName = JoshuaConfiguration.sa_alignment;
+		int trainingSize = sourceCorpusArray.getNumSentences();
+		Alignments alignments = new AlignmentGrids(
+				new Scanner(new File(alignmentFileName)),
+				sourceCorpusArray, targetCorpusArray, trainingSize);
+		
+		LexicalProbabilities lexProbs = new SampledLexProbs(
+			JoshuaConfiguration.sa_lex_sample_size,
+			sourceSuffixArray,
+			targetSuffixArray,
+			alignments,
+			JoshuaConfiguration.sa_lex_cache_size,
+			JoshuaConfiguration.sa_precalculate_lexprobs);
+		
+		// Finally, add the Suffix Array Grammar
+		this.grammarFactories[1] = new SAGrammarFactory(
+			sourceSuffixArray,
+			targetCorpusArray,
+			alignments,
+			lexProbs,
+			JoshuaConfiguration.sa_rule_sample_size,
+			JoshuaConfiguration.sa_max_phrase_span,
+			JoshuaConfiguration.sa_max_phrase_length,
+			JoshuaConfiguration.sa_max_nonterminals,
+			JoshuaConfiguration.sa_min_nonterminal_span);
+	}
+	
+	
+	// BUG: why are we re-reading the configFile? JoshuaConfiguration should do this. (Needs: languageModel, symbolTable, (logger?); Sets: featureFunctions)
 	private void initializeFeatureFunctions(String configFile)
 	throws IOException {
 		this.featureFunctions = new ArrayList<FeatureFunction>();
@@ -247,13 +416,11 @@ public class JoshuaDecoder {
 		LineReader reader = new LineReader(configFile);
 		try { for (String line : reader) {
 			line = line.trim();
-			if (line.matches("^\\s*(?:\\#.*)?$")) {
-				// ignore empty lines or lines commented out
-				continue;
-			}
+			if (Regex.commentOrEmptyLine.matches(line)) continue;
 			
 			if (line.indexOf("=") == -1) { //ignore lines with "="
-				String[] fds = line.split("\\s+");
+				String[] fds = Regex.spaces.split(line);
+				
 				if ("lm".equals(fds[0]) && fds.length == 2) { // lm order weight
 					if (null == this.languageModel) {
 						logger.severe("LM model has not been properly initialized before setting order and weight");
@@ -323,165 +490,6 @@ public class JoshuaDecoder {
 				}
 			}
 		} } finally { reader.close(); }
-	}
-	
-	
-	private void initializeSymbolTable() throws IOException {
-		if (JoshuaConfiguration.use_remote_lm_server) {
-			// Within the decoder, we assume BuildinSymbol when using the remote LM
-			this.symbolTable =
-				new BuildinSymbol(JoshuaConfiguration.remote_symbol_tbl);
-			
-		} else if (JoshuaConfiguration.use_srilm) {
-			this.symbolTable =
-				new SrilmSymbol(null, JoshuaConfiguration.g_lm_order);
-			logger.finest("Using SRILM symbol table");
-			
-		} else {
-			this.symbolTable = new BuildinSymbol(null);
-		}
-		
-		// Add the default nonterminal
-		this.defaultNonterminals = new ArrayList<Integer>();
-		this.defaultNonterminals.add(
-			this.symbolTable.addNonterminal(
-				JoshuaConfiguration.default_non_terminal));
-	}
-	
-	
-	//TODO: check we actually have a feature that requires a langage model
-	private void initializeLanguageModel() throws IOException {
-		if (JoshuaConfiguration.use_remote_lm_server) {
-			if (JoshuaConfiguration.use_left_equivalent_state
-			|| JoshuaConfiguration.use_right_equivalent_state) {
-				logger.severe("use remote LM, we cannot use suffix/prefix stuff");
-				System.exit(1);
-			}
-			this.languageModel = new LMGrammarRemote(
-				this.symbolTable,
-				JoshuaConfiguration.g_lm_order,
-				JoshuaConfiguration.f_remote_server_list,
-				JoshuaConfiguration.num_remote_lm_servers);
-			
-		} else if (JoshuaConfiguration.use_srilm) {
-			if (JoshuaConfiguration.use_left_equivalent_state
-			|| JoshuaConfiguration.use_right_equivalent_state) {
-				logger.severe("use SRILM, we cannot use suffix/prefix stuff");
-				System.exit(1);
-			}
-			this.languageModel = new LMGrammarSRILM(
-				(SrilmSymbol)this.symbolTable,
-				JoshuaConfiguration.g_lm_order,
-				JoshuaConfiguration.lm_file);
-			
-		} else if (JoshuaConfiguration.use_bloomfilter_lm) {
-			if (JoshuaConfiguration.use_left_equivalent_state
-			|| JoshuaConfiguration.use_right_equivalent_state) {
-				logger.severe("use Bloomfilter LM, we cannot use suffix/prefix stuff");
-				System.exit(1);
-			}
-			this.languageModel = new BloomFilterLanguageModel(
-					this.symbolTable,
-					JoshuaConfiguration.g_lm_order,
-					JoshuaConfiguration.lm_file);
-		} else {
-			//using the built-in JAVA implementatoin of LM, may not be as scalable as SRILM
-			this.languageModel = new LMGrammarJAVA(
-				(BuildinSymbol)this.symbolTable,
-				JoshuaConfiguration.g_lm_order,
-				JoshuaConfiguration.lm_file,
-				JoshuaConfiguration.use_left_equivalent_state,
-				JoshuaConfiguration.use_right_equivalent_state);
-		}
-	}
-	
-	
-	private void initializeGlueGrammar() throws IOException {
-		this.grammarFactories = new GrammarFactory[2];
-		
-		logger.info("Constructing glue grammar...");
-		this.grammarFactories[0] =
-			// if this is used, then it depends on the LMModel to do pruning
-			//new MemoryBasedBatchGrammarWithPrune(
-			new MemoryBasedBatchGrammar(
-				this.symbolTable, null, true,
-				JoshuaConfiguration.phrase_owner,
-				-1,
-				"^\\[[A-Z]+\\,[0-9]*\\]$",
-				"[\\[\\]\\,0-9]+");
-	}
-	
-	
-	private void initializeTranslationGrammars(String tmFile)
-	throws IOException {
-		initializeGlueGrammar();
-		
-		if (logger.isLoggable(Level.INFO))
-			logger.info("Using grammar read from file " + tmFile);
-		this.grammarFactories[1] =
-			//new MemoryBasedBatchGrammarWithPrune(
-			new MemoryBasedBatchGrammar(
-				this.symbolTable, tmFile, false,
-				JoshuaConfiguration.phrase_owner,
-				JoshuaConfiguration.span_limit,
-				"^\\[[A-Z]+\\,[0-9]*\\]$",
-				"[\\[\\]\\,0-9]+");
-		
-		//TODO if suffix-array: call SAGrammarFactory(SuffixArray sourceSuffixArray, CorpusArray targetCorpus, AlignmentArray alignments, LexicalProbabilities lexProbs, int maxPhraseSpan, int maxPhraseLength, int maxNonterminals, int spanLimit) {
-	}
-	
-	
-	private void initializeSuffixArrayGrammar() throws IOException {
-		initializeGlueGrammar();
-		
-		
-		if (logger.isLoggable(Level.INFO))
-			logger.info(
-				"Using SuffixArray grammar constructed from " +
-				"source "    + JoshuaConfiguration.sa_source + ", " +
-				"target "    + JoshuaConfiguration.sa_target + ", " +
-				"alignment " + JoshuaConfiguration.sa_alignment);
-		// TODO: SA creation is a constant thing which should be done earlier in the pipeline. Here we should only load the already-created SA
-		
-		Corpus sourceCorpusArray =
-			SuffixArrayFactory.createCorpusArray(
-				JoshuaConfiguration.sa_source, this.symbolTable);
-		Suffixes sourceSuffixArray =
-			SuffixArrayFactory.createSuffixArray(
-				sourceCorpusArray, JoshuaConfiguration.sa_rule_cache_size);
-		
-		CorpusArray targetCorpusArray =
-			SuffixArrayFactory.createCorpusArray(
-				JoshuaConfiguration.sa_target);
-		Suffixes targetSuffixArray =
-			SuffixArrayFactory.createSuffixArray(
-				targetCorpusArray, JoshuaConfiguration.sa_rule_cache_size);
-		
-		String alignmentFileName = JoshuaConfiguration.sa_alignment;
-		int trainingSize = sourceCorpusArray.getNumSentences();
-		Alignments alignments = new AlignmentGrids(
-				new Scanner(new File(alignmentFileName)),
-				sourceCorpusArray, targetCorpusArray, trainingSize);
-		
-		LexicalProbabilities lexProbs = new SampledLexProbs(
-			JoshuaConfiguration.sa_lex_sample_size,
-			sourceSuffixArray,
-			targetSuffixArray,
-			alignments,
-			JoshuaConfiguration.sa_lex_cache_size,
-			JoshuaConfiguration.sa_precalculate_lexprobs);
-		
-		// Finally, add the Suffix Array Grammar
-		this.grammarFactories[1] = new SAGrammarFactory(
-			sourceSuffixArray,
-			targetCorpusArray,
-			alignments,
-			lexProbs,
-			JoshuaConfiguration.sa_rule_sample_size,
-			JoshuaConfiguration.sa_max_phrase_span,
-			JoshuaConfiguration.sa_max_phrase_length,
-			JoshuaConfiguration.sa_max_nonterminals,
-			JoshuaConfiguration.sa_min_nonterminal_span);
 	}
 	
 	

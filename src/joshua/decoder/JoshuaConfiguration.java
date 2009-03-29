@@ -18,6 +18,7 @@
 package joshua.decoder;
 
 import joshua.util.Cache;
+import joshua.util.Regex;
 import joshua.util.io.LineReader;
 
 import java.util.logging.Level;
@@ -126,280 +127,289 @@ public class JoshuaConfiguration {
 	private static final Logger logger =
 		Logger.getLogger(JoshuaConfiguration.class.getName());
 	
+	
+//===============================================================
+// Methods
+//===============================================================
+	
+	// This is static instead of a constructor because all the fields are static. Yuck.
 	public static void readConfigFile(String configFile) throws IOException {
+		final Regex equalsSeparator = new Regex("\\s*=\\s*");
 		
 		LineReader configReader = new LineReader(configFile);
 		try { for (String line : configReader) {
-			//line = line.trim().toLowerCase();
-			line = line.trim();
-			if (line.matches("^\\s*\\#.*$") || line.matches("^\\s*$")) {
-				continue;
-			}
+			line = line.trim(); // .toLowerCase();
+			if (Regex.commentOrEmptyLine.matches(line)) continue;
+			
 			
 			if (line.indexOf("=") != -1) { // parameters; (not feature function)
-				String[] fds = line.split("\\s*=\\s*");
+				String[] fds = equalsSeparator.split(line);
 				if (fds.length != 2) {
 					logger.severe("Wrong config line: " + line);
 					System.exit(1);
 				}
 				
-				if (0 == fds[0].compareTo("lm_file")) {
+				if ("lm_file".equals(fds[0])) {
 					lm_file = fds[1].trim();
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("lm file: %s", lm_file));
 					
-				} else if (0 == fds[0].compareTo("tm_file")) {
+				} else if ("tm_file".equals(fds[0])) {
 					tm_file = fds[1].trim();
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("tm file: %s", tm_file));
 					
-				} else if (0 == fds[0].compareTo("sa_source")) {
+				} else if ("sa_source".equals(fds[0])) {
 					sa_source = fds[1].trim();
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("suffix array source file: %s", sa_source));
 					
-				} else if (0 == fds[0].compareTo("sa_target")) {
+				} else if ("sa_target".equals(fds[0])) {
 					sa_target = fds[1].trim();
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("suffix array target file: %s", sa_target));
 					
-				} else if (0 == fds[0].compareTo("sa_alignment")) {
+				} else if ("sa_alignment".equals(fds[0])) {
 					sa_alignment = fds[1].trim();
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("suffix array alignment file: %s", sa_alignment));
 					
-				} else if (0 == fds[0].compareTo("sa_max_phrase_span")) {
-					sa_max_phrase_span = new Integer(fds[1].trim());
+				} else if ("sa_max_phrase_span".equals(fds[0])) {
+					sa_max_phrase_span = Integer.parseInt(fds[1].trim());
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("suffix array maximum phrase span: %s", sa_max_phrase_span));
 					
-				} else if (0 == fds[0].compareTo("sa_max_phrase_length")) {
-					sa_max_phrase_length = new Integer(fds[1].trim());
+				} else if ("sa_max_phrase_length".equals(fds[0])) {
+					sa_max_phrase_length = Integer.parseInt(fds[1].trim());
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("suffix array maximum phrase length: %s", sa_max_phrase_length));
 					
-				} else if (0 == fds[0].compareTo("sa_max_phrase_length")) {
-					sa_max_phrase_length = new Integer(fds[1].trim());
+				} else if ("sa_max_phrase_length".equals(fds[0])) {
+					sa_max_phrase_length = Integer.parseInt(fds[1].trim());
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("suffix array maximum phrase length: %s", sa_max_phrase_length));
 					
-				} else if (0 == fds[0].compareTo("sa_max_nonterminals")) {
-					sa_max_nonterminals = new Integer(fds[1].trim());
+				} else if ("sa_max_nonterminals".equals(fds[0])) {
+					sa_max_nonterminals = Integer.parseInt(fds[1].trim());
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("suffix array maximum number of nonterminals: %s", sa_max_nonterminals));
 					
-				} else if (0 == fds[0].compareTo("sa_min_nonterminal_span")) {
-					sa_min_nonterminal_span = new Integer(fds[1].trim());
+				} else if ("sa_min_nonterminal_span".equals(fds[0])) {
+					sa_min_nonterminal_span = Integer.parseInt(fds[1].trim());
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("suffix array minimun nonterminal span: %s", sa_min_nonterminal_span));
 					
-				} else if (0 == fds[0].compareTo("sa_lex_sample_size")) {
-					sa_lex_sample_size = new Integer(fds[1].trim());
+				} else if ("sa_lex_sample_size".equals(fds[0])) {
+					sa_lex_sample_size = Integer.parseInt(fds[1].trim());
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("suffix array sample size for lexical probability calculation: %s", sa_lex_sample_size));
 					
-				} else if (0 == fds[0].compareTo("sa_precalculate_lexprobs")) {
+				} else if ("sa_precalculate_lexprobs".equals(fds[0])) {
 					sa_precalculate_lexprobs = new Boolean(fds[1].trim());
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("should lexical probabilities be precalculated: %s", sa_precalculate_lexprobs));
 					
-				} else if (0 == fds[0].compareTo("sa_rule_sample_size")) {
-					sa_rule_sample_size = new Integer(fds[1].trim());
+				} else if ("sa_rule_sample_size".equals(fds[0])) {
+					sa_rule_sample_size = Integer.parseInt(fds[1].trim());
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("suffix array sample size for rules: %s", sa_rule_sample_size));
 					
-				} else if (0 == fds[0].compareTo("sa_rule_cache_size")) {
-					sa_rule_cache_size = new Integer(fds[1].trim());
+				} else if ("sa_rule_cache_size".equals(fds[0])) {
+					sa_rule_cache_size = Integer.parseInt(fds[1].trim());
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("suffix array cache size for rules: %s", sa_rule_cache_size));
 					
-				} else if (0 == fds[0].compareTo("sa_sentence_initial_X")) {
+				} else if ("sa_sentence_initial_X".equals(fds[0])) {
 					sa_sentence_initial_X = new Boolean(fds[1].trim());
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("should suffix array rule extraction allow rules from sentence-initial X: %s", sa_sentence_initial_X));
 					
-				} else if (0 == fds[0].compareTo("sa_sentence_final_X")) {
+				} else if ("sa_sentence_final_X".equals(fds[0])) {
 					sa_sentence_final_X = new Boolean(fds[1].trim());
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("should suffix array rule extraction allow rules from sentence-final X: %s", sa_sentence_final_X));
 					
-				} else if (0 == fds[0].compareTo("use_srilm")) {
+				} else if ("use_srilm".equals(fds[0])) {
 					use_srilm = new Boolean(fds[1]);
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("use_srilm: %s", use_srilm));
 					
-				} else if (0 == fds[0].compareTo("use_bloomfilter_lm")) {
+				} else if ("use_bloomfilter_lm".equals(fds[0])) {
 					use_bloomfilter_lm = new Boolean(fds[1]);
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("use_bloomfilter_lm: %s", use_bloomfilter_lm));
 					
-				} else if (0 == fds[0].compareTo("lm_ceiling_cost")) {
-					lm_ceiling_cost = new Double(fds[1]);
+				} else if ("lm_ceiling_cost".equals(fds[0])) {
+					lm_ceiling_cost = Double.parseDouble(fds[1]);
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("lm_ceiling_cost: %s", lm_ceiling_cost));
 					
-				} else if (0 == fds[0].compareTo("use_left_euqivalent_state") || 0 == fds[0].compareTo("use_left_equivalent_state")) {
+				// BUG: accepting typos in config file is not acceptable
+				} else if ("use_left_euqivalent_state".equals(fds[0])
+				|| "use_left_equivalent_state".equals(fds[0])) {
 					use_left_equivalent_state = new Boolean(fds[1]);
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("use_left_equivalent_state: %s", use_left_equivalent_state));
-					
-				} else if (0 == fds[0].compareTo("use_right_euqivalent_state") || 0 == fds[0].compareTo("use_right_equivalent_state")) {
+				
+				// BUG: accepting typos in config file is not acceptable
+				} else if ("use_right_euqivalent_state".equals(fds[0])
+				|| "use_right_equivalent_state".equals(fds[0])) {
 					use_right_equivalent_state = new Boolean(fds[1]);
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("use_right_equivalent_state: %s", use_right_equivalent_state));
 					
-				} else if (0 == fds[0].compareTo("order")) {
-					g_lm_order = new Integer(fds[1]);
+				} else if ("order".equals(fds[0])) {
+					g_lm_order = Integer.parseInt(fds[1]);
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("g_lm_order: %s", g_lm_order));
 					
-				} else if (0 == fds[0].compareTo("use_sent_specific_lm")) {
+				} else if ("use_sent_specific_lm".equals(fds[0])) {
 					use_sent_specific_lm = new Boolean(fds[1]);
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("use_sent_specific_lm: %s", use_sent_specific_lm));
 					
-				} else if (0 == fds[0].compareTo("sent_lm_file_name_prefix")) {
+				} else if ("sent_lm_file_name_prefix".equals(fds[0])) {
 					g_sent_lm_file_name_prefix = fds[1].trim();
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("sent_lm_file_name_prefix: %s", g_sent_lm_file_name_prefix));
 					
-				} else if (0 == fds[0].compareTo("use_sent_specific_tm")) {
+				} else if ("use_sent_specific_tm".equals(fds[0])) {
 					use_sent_specific_tm = new Boolean(fds[1]);
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("use_sent_specific_tm: %s", use_sent_specific_tm));
 					
-				} else if (0 == fds[0].compareTo("sent_tm_file_name_prefix")) {
+				} else if ("sent_tm_file_name_prefix".equals(fds[0])) {
 					g_sent_tm_file_name_prefix = fds[1].trim();
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("sent_tm_file_name_prefix: %s", g_sent_tm_file_name_prefix));
 					
-				} else if (0 == fds[0].compareTo("span_limit")) {
-					span_limit = new Integer(fds[1]);
+				} else if ("span_limit".equals(fds[0])) {
+					span_limit = Integer.parseInt(fds[1]);
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("span_limit: %s", span_limit));
 					
-				} else if (0 == fds[0].compareTo("phrase_owner")) {
+				} else if ("phrase_owner".equals(fds[0])) {
 					phrase_owner = fds[1].trim();
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("phrase_owner: %s", phrase_owner));
 					
-				} else if (0 == fds[0].compareTo("mono_owner")) {
+				} else if ("mono_owner".equals(fds[0])) {
 					mono_owner = fds[1].trim();
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("mono_owner: %s", mono_owner));
 					
-				} else if (0 == fds[0].compareTo("begin_mono_owner")) {
+				} else if ("begin_mono_owner".equals(fds[0])) {
 					begin_mono_owner = fds[1].trim();
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("begin_mono_owner: %s", begin_mono_owner));
 					
-				} else if (0 == fds[0].compareTo("default_non_terminal")) {
+				} else if ("default_non_terminal".equals(fds[0])) {
 					default_non_terminal = fds[1].trim();
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("default_non_terminal: %s", default_non_terminal));
 					
-				} else if (0 == fds[0].compareTo("fuzz1")) {
-					fuzz1 = new Double(fds[1]);
+				} else if ("fuzz1".equals(fds[0])) {
+					fuzz1 = Double.parseDouble(fds[1]);
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("fuzz1: %s", fuzz1));
 					
-				} else if (0 == fds[0].compareTo("fuzz2")) {
-					fuzz2 = new Double(fds[1]);
+				} else if ("fuzz2".equals(fds[0])) {
+					fuzz2 = Double.parseDouble(fds[1]);
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("fuzz2: %s", fuzz2));
 					
-				} else if (0 == fds[0].compareTo("max_n_items")) {
-					max_n_items = new Integer(fds[1]);
+				} else if ("max_n_items".equals(fds[0])) {
+					max_n_items = Integer.parseInt(fds[1]);
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("max_n_items: %s", max_n_items));
 					
-				} else if (0 == fds[0].compareTo("relative_threshold")) {
-					relative_threshold = new Double(fds[1]);
+				} else if ("relative_threshold".equals(fds[0])) {
+					relative_threshold = Double.parseDouble(fds[1]);
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("relative_threshold: %s", relative_threshold));
 					
-				} else if (0 == fds[0].compareTo("max_n_rules")) {
-					max_n_rules = new Integer(fds[1]);
+				} else if ("max_n_rules".equals(fds[0])) {
+					max_n_rules = Integer.parseInt(fds[1]);
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("max_n_rules: %s", max_n_rules));
 					
-				} else if (0 == fds[0].compareTo("rule_relative_threshold")) {
-					rule_relative_threshold = new Double(fds[1]);
+				} else if ("rule_relative_threshold".equals(fds[0])) {
+					rule_relative_threshold = Double.parseDouble(fds[1]);
 					if (logger.isLoggable(Level.FINEST)) 
 						logger.finest(String.format("rule_relative_threshold: %s", rule_relative_threshold));
 					
-				} else if (0 == fds[0].compareTo("use_unique_nbest")) {
+				} else if ("use_unique_nbest".equals(fds[0])) {
 					use_unique_nbest = new Boolean(fds[1]);
 					if (logger.isLoggable(Level.FINEST)) 
 						logger.finest(String.format("use_unique_nbest: %s", use_unique_nbest));
 					
-				} else if (0 == fds[0].compareTo("add_combined_cost")) {
+				} else if ("add_combined_cost".equals(fds[0])) {
 					add_combined_cost = new Boolean(fds[1]);
 					if (logger.isLoggable(Level.FINEST)) 
 						logger.finest(String.format("add_combined_cost: %s", add_combined_cost));
 					
-				} else if (0 == fds[0].compareTo("use_tree_nbest")) {
+				} else if ("use_tree_nbest".equals(fds[0])) {
 					use_tree_nbest = new Boolean(fds[1]);
 					if (logger.isLoggable(Level.FINEST)) 
 						logger.finest(String.format("use_tree_nbest: %s", use_tree_nbest));
 					
-				} else if (0 == fds[0].compareTo("include_align_index")) {
+				} else if ("include_align_index".equals(fds[0])) {
 					include_align_index = new Boolean(fds[1]);
 					if (logger.isLoggable(Level.FINEST)) 
 						logger.finest(String.format("include_align_index: %s", include_align_index));
 					
-				} else if (0 == fds[0].compareTo("top_n")) {
-					topN = new Integer(fds[1]);
+				} else if ("top_n".equals(fds[0])) {
+					topN = Integer.parseInt(fds[1]);
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("topN: %s", topN));
 					
-				} else if (0 == fds[0].compareTo("use_remote_lm_server")) {
+				} else if ("use_remote_lm_server".equals(fds[0])) {
 					use_remote_lm_server = new Boolean(fds[1]);
 					if (logger.isLoggable(Level.FINEST)) 
 						logger.finest(String.format("use_remote_lm_server: %s", use_remote_lm_server));
 					
-				} else if (0 == fds[0].compareTo("f_remote_server_list")) {
-					f_remote_server_list = new String(fds[1]);
+				} else if ("f_remote_server_list".equals(fds[0])) {
+					f_remote_server_list = new String(fds[1]); // BUG: why copy string?
 					if (logger.isLoggable(Level.FINEST)) 
 						logger.finest(String.format("f_remote_server_list: %s", f_remote_server_list));
 					
-				} else if (0 == fds[0].compareTo("num_remote_lm_servers")) {
-					num_remote_lm_servers = new Integer(fds[1]);
+				} else if ("num_remote_lm_servers".equals(fds[0])) {
+					num_remote_lm_servers = Integer.parseInt(fds[1]);
 					if (logger.isLoggable(Level.FINEST)) 
 						logger.finest(String.format("num_remote_lm_servers: %s", num_remote_lm_servers));
 					
-				} else if (0 == fds[0].compareTo("remote_symbol_tbl")) {
-					remote_symbol_tbl = new String(fds[1]);
+				} else if ("remote_symbol_tbl".equals(fds[0])) {
+					remote_symbol_tbl = new String(fds[1]); // BUG: why copy string?
 					if (logger.isLoggable(Level.FINEST)) 
 						logger.finest(String.format("remote_symbol_tbl: %s", remote_symbol_tbl));
 					
-				} else if (0 == fds[0].compareTo("remote_lm_server_port")) {
-					//port = new Integer(fds[1]);
+				} else if ("remote_lm_server_port".equals(fds[0])) {
+					//port = Integer.parseInt(fds[1]);
 					if (logger.isLoggable(Level.FINEST)) 
 						logger.finest(String.format("remote_lm_server_port: not used"));
 					
-				} else if (0 == fds[0].compareTo("parallel_files_prefix")) {
-					parallel_files_prefix = new String(fds[1]);
+				} else if ("parallel_files_prefix".equals(fds[0])) {
+					parallel_files_prefix = new String(fds[1]); // BUG: why copy string?
 					if (logger.isLoggable(Level.FINEST)) 
 						logger.finest(String.format("parallel_files_prefix: %s", parallel_files_prefix));
 					
-				} else if (0 == fds[0].compareTo("num_parallel_decoders")) {
-					num_parallel_decoders = new Integer(fds[1]);
+				} else if ("num_parallel_decoders".equals(fds[0])) {
+					num_parallel_decoders = Integer.parseInt(fds[1]);
 					if (logger.isLoggable(Level.FINEST)) 
 						logger.finest(String.format("num_parallel_decoders: %s", num_parallel_decoders));
 					
-				} else if (0 == fds[0].compareTo("save_disk_hg")) {
+				} else if ("save_disk_hg".equals(fds[0])) {
 					save_disk_hg = new Boolean(fds[1]);
 					if (logger.isLoggable(Level.FINEST)) 
 						logger.finest(String.format("save_disk_hg: %s", save_disk_hg));
 					
-				} else if (0 == fds[0].compareTo("forest_pruning")) {
+				} else if ("forest_pruning".equals(fds[0])) {
 					forest_pruning = new Boolean(fds[1]);
 					if (logger.isLoggable(Level.FINEST)) 
 						logger.finest(String.format("forest_pruning: %s", forest_pruning));
 					
-				} else if (0 == fds[0].compareTo("forest_pruning_threshold")) {
-					forest_pruning_threshold = new Double(fds[1]);
+				} else if ("forest_pruning_threshold".equals(fds[0])) {
+					forest_pruning_threshold = Double.parseDouble(fds[1]);
 					if (logger.isLoggable(Level.FINEST)) 
 						logger.finest(String.format("forest_pruning_threshold: %s", forest_pruning_threshold));
 					
@@ -408,8 +418,8 @@ public class JoshuaConfiguration {
 					System.exit(1);
 				}
 			} else { // feature function
-				String[] fds = line.split("\\s+");
-				if (fds[0].compareTo("lm") == 0 && fds.length == 2) { // lm order weight
+				String[] fds = Regex.spaces.split(line);
+				if ("lm".equals(fds[0]) && fds.length == 2) { // lm order weight
 					have_lm_model = true;
 					logger.info("you use a LM feature function, so make sure you have a LM grammar");
 				} 

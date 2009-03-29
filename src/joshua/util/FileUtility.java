@@ -47,6 +47,9 @@ public class FileUtility {
 	private static final Charset FILE_ENCODING = Charset.forName("UTF-8");
 	
 	
+	/**
+	 * @deprecated As of r610, use {@link joshua.util.io.LineReader} instead. 
+	 */
 	public static BufferedReader getReadFileStream(String filename)
 	throws IOException {
 		FileInputStream fis = new FileInputStream(filename);
