@@ -57,7 +57,7 @@ We describe \textbf{Joshua}, an open source toolkit for statistical machine tran
 
 Large scale parsing-based statistical machine translation (e.g., \newcite{Chiang2007}, \newcite{Quirk2005}, \newcite{Galley2006}, and \newcite{Liu2006}) has made remarkable progress in the last few years.
 However, most of the systems mentioned above employ tailor-made, dedicated software that is not open source.  This results in a high barrier to entry for other researchers, and makes experiments difficult to duplicate and compare.
-In this paper, we describe \textbf{Joshua}, a general-purpose open source toolkit for parsing-based machine translation, serving the same role as Moses \cite{Moses} does for regular phrase-based machine translation.
+In this paper, we describe \textbf{Joshua}, a Java-based general-purpose open source toolkit for parsing-based machine translation, serving the same role as Moses \cite{Moses} does for regular phrase-based machine translation.
 
 %Our toolkit is written in Java and implements all the essential algorithms described in \newcite{Chiang2007}: chart-parsing, $n$-gram language model integration, beam- and cube-pruning, and $k$-best extraction.  The toolkit also implements suffix-array grammar extraction \cite{Lopez2007} and minimum error rate training \cite{Och2003c}. Additionally, parallel and distributed computing techniques are exploited to make it scalable \cite{Li2008b}. We have also made great effort to ensure that our toolkit is easy to use and to extend.
 
@@ -66,8 +66,6 @@ In this paper, we describe \textbf{Joshua}, a general-purpose open source toolki
 %The toolkit has been used to translate roughly a million sentences in a parallel corpus for large-scale discriminative training experiments \cite{Li2008}.
 %The decoder has also been successfully used by other researchers. For example, \newcite{sg-boxing} have demonstrated that our decoder achieves performance competitive with Moses \cite{Moses}.
 %We hope the release of the toolkit will greatly contribute the progress of the syntax-based machine translation research.\footnote{The toolkit can be downloaded at \url{http://www.sourceforge.net/projects/joshua}, and the instructions in using the toolkit are at \url{http://cs.jhu.edu/~ccb/joshua}.}
-
-
 
 \section{Joshua Toolkit}
 When designing our toolkit, we applied general principles of software engineering to achieve three major goals: \emph{Extensibility}, \emph{end-to-end coherence}, and \emph{scalability}.
@@ -79,34 +77,61 @@ To combat these issues, the Joshua toolkit integrates most critical components o
 
 \textbf{Scalability}: Our third design goal was to ensure that the decoder is scalable to large models and data sets. The parsing and pruning algorithms are carefully implemented with dynamic programming strategies, and efficient data structures are used to minimize overhead. Other techniques contributing to scalability includes suffix-array grammar extraction, parallel and distributed decoding, and bloom filter language models.
 
+
+\newpage
+
+\begin{table}[t]
+\begin{center}
+\begin{tabular}{c c}\hline
+  System & BLEU-4 \\ \hline
+  google & 31.14 \\
+  lium & 26.89 \\
+  dcu & 26.86 \\
+  {\bf joshua} & {\bf 26.52} \\ 
+  uka & 25.96 \\
+  limsi & 25.51 \\
+  uedin & 25.44 \\
+  rwth & 24.89 \\
+  cmu-statxfer & 23.65 \\
+  khust & 23.36 \\ \hline
+\end{tabular}
+\end{center}
+\caption{Uncased BLEU scores for the top-10 primary systems on the WMT-09 French-English Task.}
+\label{results-wmt09}
+\end{table}
+
+The Joshua system offers state-of-the-art translation quality, having been ranked fourth in the French-English task of the 2009 WMT evaluation (see Table~\ref{results-wmt09}).
+
 \subsection{Joshua Toolkit Features}
 
-\textbf{TODO: polish, shorten, style}
-
-Below we give a short description about the main functions implemented in our Joshua toolkit.
+Below we give a short description about the features implemented in our Joshua toolkit.
 
 \begin{itemize}
-\item \textbf{Training Corpus Sub-sampling}
-Rather than inducing a grammar from the full parallel training data, we made use of a method proposed by Kishore Papineni (personal communication) to select the subset of the training data consisting of sentences useful for inducing a grammar to translate a particular test set. This method works as follows: for the development and test sets that will be translated, every $n$-gram (up to length 10) is gathered into a map $\mathcal{W}$ and associated with an initial count of zero.  Proceeding in order through the training data, for each sentence pair whose source-to-target length ratio is within one standard deviation of the average, if any $n$-gram found in the \emph{source sentence} is also found in $\mathcal{W}$ with a count of less than $k$, the sentence is selected.  When a sentence is selected, the count of every $n$-gram in $\mathcal{W}$ that is found in the source sentence is incremented by the number of its occurrences in the source sentence. \ignore{Thus, there are two conditions in which a sentence will not be selected: 1) it only contains $n$-grams that are not found in $\mathcal{W}$ (making it useless for learning in the highly lexicalized models we use) or 2) it only contains $n$-grams that have already been attested in the selected set $k$ or more times.} For our submission, we used $k=20$, which resulted in 1.5 million (out of 23 million) sentence pairs being selected for use as training data.  There were 30,037,600 English words and 30,083,927 French words in the subsampled training corpus.
+\item \textbf{Training Corpus Sub-sampling:} Rather than inducing a grammar from the full parallel training data, we select a subset of the training data consisting of sentences useful for inducing a grammar to translate a particular test set. To accomplish this, we make use of the method proposed by Kishore Papineni (personal communication), outlined in further detail in \cite{Joshua-WMT}. For the 2009 WMT evaluation, the method achieved a 90\% reduction in training corpus size while maintaining state-of-the-art performance.
 
-\item \textbf{Suffix-array Grammar Extraction}
-Hierarchical phrase-based translation requires a translation grammar extracted from a parallel corpus, where grammar rules include associated feature values. In real translation tasks, the grammars extracted from large training corpora are often far too large to fit into available memory.
+% to. This method works as follows: for the development and test sets that will be translated, every $n$-gram (up to length 10) is gathered into a map $\mathcal{W}$ and associated with an initial count of zero.  Proceeding in order through the training data, for each sentence pair whose source-to-target length ratio is within one standard deviation of the average, if any $n$-gram found in the \emph{source sentence} is also found in $\mathcal{W}$ with a count of less than $k$, the sentence is selected.  When a sentence is selected, the count of every $n$-gram in $\mathcal{W}$ that is found in the source sentence is incremented by the number of its occurrences in the source sentence. \ignore{Thus, there are two conditions in which a sentence will not be selected: 1) it only contains $n$-grams that are not found in $\mathcal{W}$ (making it useless for learning in the highly lexicalized models we use) or 2) it only contains $n$-grams that have already been attested in the selected set $k$ or more times.} For our submission, we used $k=20$, which resulted in 1.5 million (out of 23 million) sentence pairs being selected for use as training data.  There were 30,037,600 English words and 30,083,927 French words in the subsampled training corpus.
+
+\item \textbf{Suffix-array Grammar Extraction:} Hierarchical phrase-based translation requires a translation grammar extracted from a parallel corpus, where grammar rules include associated feature values. In real translation tasks, the grammars extracted from large training corpora are often far too large to fit into available memory. Similarly, the grammars' size makes feature extraction very expensive in terms of time required, which can be a major hindrance to researchers, especially those investigating the effects of tokenization or word segmentation.
 
 % Features such as the translation probability $p(f|e)$ and reverse translation probability $p(e|f)$ are typically calculated using relative frequency estimation .
-In such tasks, feature calculation is also very expensive in terms of time required; huge sets of extracted rules must be sorted in two directions for relative frequency calculation of such features as the translation probability $p(f|e)$ and reverse translation probability $p(e|f)$ \cite{Koehn2003}. Since the extraction steps must be re-run if any change is made to the input training data, the time required can be a major hindrance to researchers, especially those investigating the effects of tokenization or word segmentation.
+
+%In such tasks, feature calculation is also very expensive in terms of time required; huge sets of extracted rules must be sorted in two directions for relative frequency calculation of such features as the translation probability $p(f|e)$ and reverse translation probability $p(e|f)$ \cite{Koehn2003}. Since the extraction steps must be re-run if any change is made to the input training data, the time required can be a major hindrance to researchers, especially those investigating the effects of tokenization or word segmentation.
 
 %Worse, the grammars extracted from large training corpora are often far too large to fit into available memory.
 
 To alleviate these issues, we extract only a subset of all available rules. Specifically, we follow \newcite{Callison-Burch2005b,Lopez2007} and use a source language suffix array to extract only those rules which will actually be used in translating a particular set of test sentences. This results in a vastly smaller rule set than techniques which extract all rules from the training set.
 
-\textbf{TODO: implementation is operational, adapt paragraph}
+Joshua incorporates direct access to the suffix array into the decoder, allowing for rule extraction to be performed for each input sentence individually. Running rule extraction as a stand-alone pre-processing step is also supported.
 
-The current code requires suffix array rule extraction to be run as a pre-processing step to extract the rules needed to translate a particular test set. However, we are currently extending the decoder to directly access the suffix array. This will allow the decoder at runtime to efficiently extract exactly those rules needed to translate a particular sentence, without the need for a rule extraction pre-processing step.
+%be run as a pre-processing step to extract the rules needed to translate a particular test set, as well as 
+
+% to directly access the suffix array. This will allow the decoder at runtime to efficiently extract exactly those rules needed to translate a particular sentence, without the need for a rule extraction pre-processing step.
 
 \item \textbf{Grammar formalism:} Our decoder assumes a probabilistic synchronous context-free grammar (SCFG). Currently, it only handles SCFGs of the kind extracted by Heiro \cite{Chiang2007}, but is easily extensible to more general SCFGs (e.g., \cite{Galley2006}) and closely related formalisms like synchronous tree substitution grammars \cite{Eisner2003}.
 
-\item \textbf{Chart parsing:} Given a source sentence to decode, the decoder generates a one-best or $k$-best translations using a CKY algorithm. Specifically,
-the decoding algorithm  maintains a \emph{chart}, which contains an array of \emph{cells}. Each cell in turn maintains a list of proven \emph{items}. The parsing process starts with the axioms, and proceeds by applying the inference rules repeatedly to prove new items until proving a goal item. Whenever the parser proves a new item, it adds the item to the appropriate chart cell. The item also maintains backpointers to antecedent items, which are used for $k$-best extraction.
+\item \textbf{Chart parsing:} Given a source sentence to decode, the decoder generates a one-best or $k$-best translations using the CKY algorithm. 
+%Specifically, the decoding algorithm  maintains a \emph{chart}, which contains an array of \emph{cells}. Each cell in turn maintains a list of proven \emph{items}. The parsing process starts with the axioms, and proceeds by applying the inference rules repeatedly to prove new items until proving a goal item. Whenever the parser proves a new item, it adds the item to the appropriate chart cell. %The item 
+In addition to standard CKY, the system also maintains backpointers, which are used for $k$-best extraction.
 
 \item \textbf{Pruning:} Severe pruning is needed in order to make the decoding computationally feasible for SCFGs with large target-language vocabularies. In our decoder, we incorporate two pruning techniques: beam and cube pruning \cite{Chiang2007}.
 
@@ -116,16 +141,13 @@ For each source-language sentence, the chart-parsing algorithm produces a \emph{
 \item \textbf{Parallel and distributed decoding:}
 We also implement \emph{parallel decoding} and a \emph{distributed language model} by exploiting multi-core and multi-processor architectures and distributed computing techniques. More details on these two features are provided by \newcite{Li2008b}.
 
-\item \textbf{Language Models}
-In addition to the distributed LM mentioned above, we implement three local $n$-gram language models. Specifically, we first provide a straightforward implementation of the $n$-gram scoring function in Java. This Java implementation is able to read the standard ARPA backoff $n$-gram models, and thus the decoder can be used independently from the SRILM toolkit.\footnote{This feature allows users to easily try the Joshua toolkit without installing the SRILM toolkit and compiling the native bridge code. However, users should note that the basic Java LM implementation is not as scalable as the native bridge code.} We also provide a native code bridge that allows the decoder to use the SRILM toolkit to read and score $n$-grams. This native implementation is more scalable than the basic Java LM implementation. We have also implemented a Bloom Filter LM in Joshua, following \newcite{Talbot2007a}.
+\item \textbf{Language Models:} In addition to the distributed LM mentioned above, we implement three local $n$-gram language models. Specifically, we first provide a straightforward implementation of the $n$-gram scoring function in Java. This Java implementation is able to read the standard ARPA backoff $n$-gram models, and thus the decoder can be used independently from the SRILM toolkit.\footnote{This feature allows users to easily try the Joshua toolkit without installing the SRILM toolkit and compiling the native bridge code. However, users should note that the basic Java LM implementation is not as scalable as the native bridge code.} We also provide a native code bridge that allows the decoder to use the SRILM toolkit to read and score $n$-grams. This native implementation is more scalable than the basic Java LM implementation. We have also implemented a Bloom Filter LM in Joshua, following \newcite{Talbot2007a}.
 
-\item \textbf{Minimum Error Rate Training}
-Joshua's MERT module optimizes parameter weights so as to maximize performance on a development set as measured by an automatic evaluation metric, such as Bleu. The optimization consists of a series of line-optimizations along the dimensions corresponding to the parameters. The search across a dimension uses the efficient method of \newcite{Och2003c}. Each iteration of our MERT implementation consists of multiple weight updates, each reflecting a greedy selection of the dimension giving the most gain. Each iteration also optimizes several random ``intermediate initial'' points in addition to the one surviving from the previous iteration, as an approximation to performing multiple random restarts. More details on the MERT method and the implementation can be found in \newcite{Zaidan2009forwmt}.\footnote{The module is also available as a standalone application, {\em Z-MERT}, that can be used with other MT systems. (Software and documentation at: \url{http://cs.jhu.edu/~ozaidan/zmert}.)}
+\item \textbf{Minimum Error Rate Training:} Joshua's MERT module optimizes parameter weights so as to maximize performance on a development set as measured by an automatic evaluation metric, such as Bleu. The optimization consists of a series of line-optimizations along the dimensions corresponding to the parameters. The search across a dimension uses the efficient method of \newcite{Och2003c}. Each iteration of our MERT implementation consists of multiple weight updates, each reflecting a greedy selection of the dimension giving the most gain. Each iteration also optimizes several random ``intermediate initial'' points in addition to the one surviving from the previous iteration, as an approximation to performing multiple random restarts. More details on the MERT method and the implementation can be found in \newcite{Zaidan2009forwmt}.\footnote{The module is also available as a standalone application, {\em Z-MERT}, that can be used with other MT systems. (Software and documentation at: \url{http://cs.jhu.edu/~ozaidan/zmert}.)}
 
 
 
-\item \textbf{Variational Decoding: }
-Statistical models in machine translation exhibit \emph{spurious ambiguity}.  That is, the probability of an output string is split among many distinct derivations (e.g., trees or segmentations).  In principle, the goodness of a string is measured by the total probability of its many derivations.  However, finding the best string (e.g., during decoding) is then computationally intractable. Therefore, most systems use a simple Viterbi approximation that measures the goodness of a string using only its most probable derivation.  Instead, we develop a variational approximation, which considers all the derivations but still allows tractable decoding.  More details will be provided in \newcite{Li2009}. In this system, we have used both deterministic annealing (for training) and variational decoding (for decoding).
+\item \textbf{Variational Decoding:} Statistical models in machine translation exhibit \emph{spurious ambiguity}. That is, the probability of an output string is split among many distinct derivations (e.g., trees or segmentations).  In principle, the goodness of a string is measured by the total probability of its many derivations.  However, finding the best string (e.g., during decoding) is then computationally intractable. Therefore, most systems use a simple Viterbi approximation that measures the goodness of a string using only its most probable derivation.  Instead, we develop a variational approximation, which considers all the derivations but still allows tractable decoding.  More details will be provided in \newcite{Li2009}.
 \end{itemize}
 
 \section{Demonstration Outline}
