@@ -119,11 +119,11 @@ public class BLEUTest {
 		Scanner refScanner = new Scanner(new File(referenceFile));
 		
 		while (refScanner.hasNextLine()) {
-			System.out.println(refScanner.nextLine());
+			
+			String refLine = refScanner.nextLine();
+			
 		}
-		
-		System.out.println(referenceFile);
-		System.out.println(testFile);
+	
 
 	}
 	

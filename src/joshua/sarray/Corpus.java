@@ -18,6 +18,9 @@
 package joshua.sarray;
 
 
+import java.io.Externalizable;
+import java.io.IOException;
+
 import joshua.corpus.SymbolTable;
 import joshua.util.sentence.Phrase;
 
@@ -31,7 +34,7 @@ import joshua.util.sentence.Phrase;
  * @version $LastChangedDate:2008-07-30 17:15:52 -0400 (Wed, 30 Jul 2008) $
  */
 
-public interface Corpus {
+public interface Corpus extends Externalizable {
 
 //===============================================================
 // Method definitions
@@ -142,5 +145,6 @@ public interface Corpus {
 
 	public ContiguousPhrase getPhrase(int startPosition, int endPosition);
 	
+	public void write(String corpusFilename, String vocabFilename, String charset) throws IOException;
 }
 

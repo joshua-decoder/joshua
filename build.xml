@@ -108,7 +108,7 @@
 	<target name="test" depends="compile,compile-tests">
 		<testng classpath="${build}" sourcedir="${test}">
 			<jvmarg value="-Dfile.encoding=UTF8"/>
-			<jvmarg value="-Djava.util.logging.config.file=logging.properties"/>
+			<jvmarg value="-Djava.util.logging.config.file=logging.tests.properties"/>
 			<xmlfileset dir="." includes="testng.xml"/>
 		</testng>
 	</target>

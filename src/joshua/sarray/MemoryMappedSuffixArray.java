@@ -29,19 +29,22 @@ public class MemoryMappedSuffixArray extends AbstractSuffixArray {
 	private final IntBuffer binarySuffixBuffer;
 	private final int size;
 	
+
+	public MemoryMappedSuffixArray(String suffixesFileName, String corpusFileName, String vocabFileName, int maxCacheSize) throws IOException, ClassNotFoundException {
+		this(suffixesFileName, new MemoryMappedCorpusArray(corpusFileName, vocabFileName), maxCacheSize);
+	}
+
 	/** 
 	 * Constructor takes a CorpusArray and creates a sorted
 	 * suffix array from it.
 	 * 
 	 * @throws IOException 
+	 * @throws ClassNotFoundException 
 	 */
-	public MemoryMappedSuffixArray(String binaryFileName, Corpus corpusArray, int maxCacheSize) throws IOException {
-		super(corpusArray, 
-				(maxCacheSize > 0) ? 
-						new Cache<Pattern,HierarchicalPhrases>(maxCacheSize) :
-						null);
+	public MemoryMappedSuffixArray(String suffixesFileName, Corpus corpus, int maxCacheSize) throws IOException, ClassNotFoundException {
+		super(corpus, new Cache<Pattern,HierarchicalPhrases>(maxCacheSize));
 		
-		RandomAccessFile binaryFile = new RandomAccessFile( binaryFileName, "r" );
+		RandomAccessFile binaryFile = new RandomAccessFile( suffixesFileName, "r" );
 	    FileChannel binaryChannel = binaryFile.getChannel();
 	    
 	    // The first line specifies the number of entries in the suffix array

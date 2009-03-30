@@ -185,12 +185,6 @@ public class PrefixTreeAdvancedTest {
 		simplePrefixTree = new PrefixTree(suffixArray, targetCorpusArray, alignments, suffixArray.getVocabulary(), lexProbs, ruleExtractor, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan);
 		simplePrefixTree.add(query.getWordIDs());
 		
-		//System.out.println(simplePrefixTree.toString());
-	
-		//int[] sentence = {sourceVocab.getID("it"), sourceVocab.getID("makes"), sourceVocab.getID("him"), sourceVocab.getID("and"), sourceVocab.getID("it"), sourceVocab.getID("mars"), sourceVocab.getID("him"), sourceVocab.getID(","), sourceVocab.getID("it"), sourceVocab.getID("sets"), sourceVocab.getID("him"), sourceVocab.getID("on"), sourceVocab.getID("and"), sourceVocab.getID("it"), sourceVocab.getID("takes"), sourceVocab.getID("him"), sourceVocab.getID("off"), sourceVocab.getID(".")};
-		//PrefixTree dumbTree = new PrefixTree(sentence, maxPhraseSpan, maxPhraseLength, maxNonterminals, spanLimit);
-		//System.err.println(dumbTree.toString(sourceVocab));
-		
 		Assert.assertNotNull(simplePrefixTree.root);
 		Assert.assertNotNull(simplePrefixTree.root.children);
 		
@@ -334,13 +328,7 @@ public class PrefixTreeAdvancedTest {
 		BasicPhrase query = new BasicPhrase("it makes him and it mars him , it sets him on and it takes him off .", sourceVocab);
 		PrefixTree prefixTree = new PrefixTree(suffixArray, targetCorpusArray, alignments, suffixArray.getVocabulary(), lexProbs, ruleExtractor, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan);
 		prefixTree.add(query.getWordIDs());
-		
-		//System.out.println(prefixTree.toString());
-	
-		//int[] sentence = {sourceVocab.getID("it"), sourceVocab.getID("makes"), sourceVocab.getID("him"), sourceVocab.getID("and"), sourceVocab.getID("it"), sourceVocab.getID("mars"), sourceVocab.getID("him"), sourceVocab.getID(","), sourceVocab.getID("it"), sourceVocab.getID("sets"), sourceVocab.getID("him"), sourceVocab.getID("on"), sourceVocab.getID("and"), sourceVocab.getID("it"), sourceVocab.getID("takes"), sourceVocab.getID("him"), sourceVocab.getID("off"), sourceVocab.getID(".")};
-		//PrefixTree dumbTree = new PrefixTree(sentence, maxPhraseSpan, maxPhraseLength, maxNonterminals, spanLimit);
-		//System.err.println(dumbTree.toString(sourceVocab));
-		
+			
 		Assert.assertNotNull(prefixTree.root);
 		Assert.assertNotNull(prefixTree.root.children);
 		
@@ -527,25 +515,9 @@ public class PrefixTreeAdvancedTest {
 		 
 		 */
 
-		/*
-		java.util.Collection<joshua.decoder.ff.tm.Rule> allRules = prefixTree.getAllRules();
-		
-		for (joshua.decoder.ff.tm.Rule rule : allRules) {
-			System.out.println(rule.toString(ntVocab, sourceVocab, targetVocab));
-		}
-		
-		System.out.println(allRules.size() + " total rules");
-		*/
 	}
 	
-	
-//	//@Test(dependsOnMethods={"verifyNodesShort"})
-//	//@Test
-//	public void testPrint() throws UnsupportedEncodingException, IOException {
-//		//System.err.println(prefixTree.size());
-//		//System.err.println(prefixTree);
-//		simplePrefixTree.print(System.out);
-//	}
+
 	
 	//@Test(dependsOnMethods={"setup"})
 	public void test() throws UnsupportedEncodingException, IOException {
@@ -568,10 +540,6 @@ public class PrefixTreeAdvancedTest {
 		PrefixTree prefixTree = new PrefixTree(suffixArray, targetCorpusArray, alignments, suffixArray.getVocabulary(), lexProbs, ruleExtractor, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan);
 		prefixTree.add(querySentence.getWordIDs());
 
-		
-		//System.out.println(prefixTree.toString());
-		//System.out.println();
-		//System.out.println(prefixTree.size());
 		
 		
 		Assert.assertTrue(prefixTree.root.children.containsKey(PrefixTree.X));
@@ -598,38 +566,17 @@ public class PrefixTreeAdvancedTest {
 			
 			Assert.assertNotNull(node.sourceHierarchicalPhrases);
 			Assert.assertNotNull(node.results);
-			//System.out.println(node.hierarchicalPhrases.size());
-			
-			/*
-			for (Rule r : node.results) {
-				
-				System.out.println(r.toString(ntVocab, sourceVocab, targetVocab));
-			}
-			*/
 			
 		}
 		
-		//System.out.println("Children of 'him' (" + vocab.getID("him") + ") :\n\n");
-		//System.out.println(prefixTree.root.getChild(vocab.getID("him")).toString(vocab));
-		//System.out.println(prefixTree.root.getChild(vocab.getID("him")).children.size() + " children");
 		
 		for (Node node : prefixTree.root.getChild(sourceVocab.getID("him")).children.values()) {
 			
 			Assert.assertNotNull(node.sourceHierarchicalPhrases);
 			Assert.assertNotNull(node.results);
 			
-			//System.out.println("Current node: " + node.toString(vocab));
-
-			/*
-			for (Rule r : node.results) {
-
-				System.out.println(r.toString(ntVocab, sourceVocab, targetVocab));
-			}
-			*/
-			
 		}
 		
-		//prefixTree.print(System.out);
 	}
 	
 }

@@ -25,6 +25,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.util.zip.GZIPInputStream;
 
@@ -137,7 +138,7 @@ public class FileUtility {
 	 * @param filename The filename where the data should be written.
 	 * @throws IOException
 	 */
-	public static void writeBytes(int[] data, FileOutputStream out)
+	public static void writeBytes(int[] data, OutputStream out)
 	throws IOException {
 		
 		byte[] b = new byte[4];
@@ -152,4 +153,5 @@ public class FileUtility {
 		}
 	}
 
+	
 }

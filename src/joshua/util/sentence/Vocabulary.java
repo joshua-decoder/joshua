@@ -18,15 +18,18 @@
 package joshua.util.sentence;
 
 
-import java.io.FileOutputStream;
+import java.io.Externalizable;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.*;
 
 import joshua.corpus.AbstractSymbolTable;
 import joshua.corpus.SymbolTable;
 import joshua.sarray.BasicPhrase;
 import joshua.sarray.SuffixArrayFactory;
-import joshua.util.FileUtility;
+import joshua.util.io.BinaryIn;
 
 
 /**
@@ -40,7 +43,7 @@ import joshua.util.FileUtility;
  * @author Lane Schwartz
  * @version $LastChangedDate:2008-07-30 17:15:52 -0400 (Wed, 30 Jul 2008) $
  */
-public class Vocabulary extends AbstractSymbolTable implements Iterable<String>, SymbolTable {
+public class Vocabulary extends AbstractSymbolTable implements Iterable<String>, SymbolTable, Externalizable {
 
 //===============================================================
 // Constants
@@ -51,8 +54,9 @@ public class Vocabulary extends AbstractSymbolTable implements Iterable<String>,
 // Member variables
 //===============================================================
 
-	protected Map<String,Integer> wordToIDMap;
-	protected List<String>        vocabList;
+	protected final Map<String,Integer> nonterminalToInt;
+	protected final Map<String,Integer> terminalToInt;
+	protected final Map<Integer,String> intToString;
 	
 	/** Determines whether new words may be added to the vocabulary. */
 	protected boolean isFixed;
@@ -65,41 +69,40 @@ public class Vocabulary extends AbstractSymbolTable implements Iterable<String>,
 	 * Constructor creates an empty vocabulary.
 	 */
 	public Vocabulary() {
-		//XXX Is wordToIdMap accessed by multiple threads? If not, should use HashMap instead of Hashtable.
-		wordToIDMap = new Hashtable<String,Integer>();  
-		vocabList = new Vector<String>();
+		nonterminalToInt = new HashMap<String,Integer>();
+		terminalToInt = new HashMap<String,Integer>();  
+		intToString = new HashMap<Integer,String>();
 		isFixed = false;
-		wordToIDMap.put(UNKNOWN_WORD_STRING, UNKNOWN_WORD);
-		vocabList.add(UNKNOWN_WORD_STRING);
-//		UNKNOWN_WORD = 0; // Initially, the vocab size is zero
+		terminalToInt.put(UNKNOWN_WORD_STRING, UNKNOWN_WORD);
+		intToString.put(UNKNOWN_WORD, UNKNOWN_WORD_STRING);
 	}
 
 	/** 
 	 * Constructor creates a fixed vocabulary from the given set of words.
 	 */
 	public Vocabulary(Set<String> words) {
-		//XXX Is wordToIdMap accessed by multiple threads? If not, should use HashMap instead of Hashtable.
-		wordToIDMap = new Hashtable<String,Integer>();
-		vocabList = new Vector<String>();
-		wordToIDMap.put(UNKNOWN_WORD_STRING, UNKNOWN_WORD);
-		vocabList.add(UNKNOWN_WORD_STRING);
-		vocabList.addAll(words);
+		this();
+
+		for (String word : words) {
+			this.addTerminal(word);
+		}
+
 		alphabetize();
 		isFixed = true;
-//		UNKNOWN_WORD = vocabList.size();
+
 	}
 	
-	/**
-	 * Constructs a vocabulary from a text file.
-	 * 
-	 * @param fileName Filename of a text file.
-	 * @throws IOException
-	 */
-	public Vocabulary(String fileName) throws IOException {
-		this();
-		SuffixArrayFactory.createVocabulary(fileName, this);
-//		UNKNOWN_WORD = vocabList.size();
-	}
+//	/**
+//	 * Constructs a vocabulary from a text file.
+//	 * 
+//	 * @param fileName Filename of a text file.
+//	 * @throws IOException
+//	 */
+//	public Vocabulary(String fileName) throws IOException {
+//		this();
+//		SuffixArrayFactory.createVocabulary(fileName, this);
+////		UNKNOWN_WORD = vocabList.size();
+//	}
 	
 //===============================================================
 // Public
@@ -123,7 +126,7 @@ public class Vocabulary extends AbstractSymbolTable implements Iterable<String>,
 	 *         or UNKNOWN_WORD if wordString is not in the vocabulary
 	 */
 	public int getID(String wordString) {
-		Integer ID = wordToIDMap.get(wordString);
+		Integer ID = terminalToInt.get(wordString);
 		if (ID == null) {
 			return UNKNOWN_WORD;
 		} else {
@@ -164,52 +167,22 @@ public class Vocabulary extends AbstractSymbolTable implements Iterable<String>,
 	 *         does not correspond to a word in the vocabulary
 	 */
 	public String getWord(int wordID) {
-		if (wordID==UNKNOWN_WORD || wordID >= vocabList.size() || wordID < 0) {
+		if (wordID==UNKNOWN_WORD || wordID >= intToString.size() || wordID < 0) {
 			return UNKNOWN_WORD_STRING;
 		}
-		return vocabList.get(wordID);
+		return intToString.get(wordID);
 	}
-	
-//	public String getWords(int[] wordIDs, boolean ntIndexIncrements) {
-//		StringBuilder s = new StringBuilder();
-//		
-//		int nextNTIndex = 1;
-//		for(int t=0; t<wordIDs.length; t++){
-//			if(t>0) {
-//				s.append(' ');
-//			}
-//			
-//			int wordID = wordIDs[t];
-//			
-//			if (wordID >= vocabList.size()) { 
-//				s.append(UNKNOWN_WORD_STRING);
-//			} else if (wordID < 0) {
-//				s.append("[X,"); //XXX This should NOT be hardcoded here!
-//				if (ntIndexIncrements) {
-//					s.append(nextNTIndex++);
-//				} else {
-//					s.append(-1*wordID);
-//				}
-//				s.append(']');
-//			} else {
-//				s.append(vocabList.get(wordID));
-//			}
-//
-//		}
-//		
-//		return s.toString();
-//	}
 	
 	
 	/**
-	 * @return an Interator over all words in the Vocabulary.
+	 * @return an Iterator over all words in the Vocabulary.
 	 */
 	public Iterator<String> iterator() {
-		return vocabList.iterator();
+		return intToString.values().iterator();
 	}
 	
 	public Collection<Integer> getAllIDs() {
-		return wordToIDMap.values(); 
+		return terminalToInt.values(); 
 	}
 	
 	/**
@@ -217,8 +190,8 @@ public class Vocabulary extends AbstractSymbolTable implements Iterable<String>,
 	 * 
 	 * @return the list of all words represented by this vocabulary
 	 */
-	public List<String> getWords() {
-		return vocabList;
+	public Collection<String> getWords() {
+		return intToString.values();
 	}
 	
 	
@@ -229,18 +202,7 @@ public class Vocabulary extends AbstractSymbolTable implements Iterable<String>,
 	 *         the word is new and the vocabulary is fixed.
 	 */
 	public int addWord(String wordString) {
-		Integer ID = wordToIDMap.get(wordString);
-		if (ID != null) {
-			return ID.intValue();
-		} else if(!isFixed) {
-			ID = new Integer(vocabList.size());
-			vocabList.add(wordString);
-			wordToIDMap.put(wordString, ID);
-//			UNKNOWN_WORD = vocabList.size();
-			return ID.intValue();
-		}  else {
-			return UNKNOWN_WORD;
-		}
+		return addTerminal(wordString);
 	}
 		
 	/**
@@ -249,7 +211,7 @@ public class Vocabulary extends AbstractSymbolTable implements Iterable<String>,
 	 * @return the number of unique words in the vocabulary.
 	 */
 	public int size() {
-		return vocabList.size();
+		return intToString.size();
 	}
 	
 	/** 
@@ -294,11 +256,11 @@ public class Vocabulary extends AbstractSymbolTable implements Iterable<String>,
             Vocabulary other = (Vocabulary) o;
 			if(other.size() != this.size()) return false;
 			for(int i = 0; i < this.size(); i++) {
-				String thisWord = (String) this.vocabList.get(i);
-				String otherWord = (String) other.vocabList.get(i);
+				String thisWord = (String) this.intToString.get(i);
+				String otherWord = (String) other.intToString.get(i);
 				if(!(thisWord.equals(otherWord))) return false;
-				Integer thisID = this.wordToIDMap.get(thisWord);
-				Integer otherID = other.wordToIDMap.get(otherWord);
+				Integer thisID = this.terminalToInt.get(thisWord);
+				Integer otherID = other.terminalToInt.get(otherWord);
 				if(thisID != null && otherID != null) {
 					if(!(thisID.equals(otherID))) return false;
 				}
@@ -313,7 +275,7 @@ public class Vocabulary extends AbstractSymbolTable implements Iterable<String>,
 	
 	
 	public String toString() {
-		return vocabList.toString();
+		return intToString.toString();
 	}
 	
 	
@@ -323,8 +285,11 @@ public class Vocabulary extends AbstractSymbolTable implements Iterable<String>,
 	 * in ascending order.
 	 */
 	public void alphabetize() {
+		
+		ArrayList<String> wordList = new ArrayList<String>(intToString.values());
+		
 		// alphabetize 
-		Collections.sort(vocabList, new Comparator<String>(){
+		Collections.sort(wordList, new Comparator<String>(){
 			public int compare(String o1, String o2) {
 				if (UNKNOWN_WORD_STRING.equals(o1) || null==o1) {
 					if (UNKNOWN_WORD_STRING.equals(o2) || null==o2) {
@@ -340,14 +305,17 @@ public class Vocabulary extends AbstractSymbolTable implements Iterable<String>,
 			}	
 		});
 		
-		// re-assign IDs
-		//XXX Is wordToIdMap accessed by multiple threads? If not, should use HashMap instead of Hashtable.
-		wordToIDMap = new Hashtable<String,Integer>();
-		for(int i = 0; i < vocabList.size(); i++) {
-			String wordString = vocabList.get(i);
-			wordToIDMap.put(wordString, new Integer(i));
+		// Clear current mappings
+		terminalToInt.clear();
+		intToString.clear();
+		
+		// Reassign mappings
+		for(int i = 0; i < wordList.size(); i++) {
+			String wordString = wordList.get(i);
+			terminalToInt.put(wordString, i);
+			intToString.put(i, wordString);
 		}
-//		UNKNOWN_WORD = getID(UNKNOWN_WORD_STRING);
+
 	}
 	
 	public String getUnknownWord() {
@@ -366,7 +334,7 @@ public class Vocabulary extends AbstractSymbolTable implements Iterable<String>,
 	}
 
 	public int getHighestID() {
-		return vocabList.size() - 1;
+		return terminalToInt.size() - 1;
 	}
 
 	public int getLowestID() {
@@ -417,12 +385,34 @@ public class Vocabulary extends AbstractSymbolTable implements Iterable<String>,
 	}
 
 	public int addNonterminal(String nonterminal) {
-		//TODO Implement this method
-		throw new RuntimeException("Method not yet implemented");
+		
+		Integer id = nonterminalToInt.get(nonterminal);
+		
+		if (id != null) {
+			return id.intValue();
+		} else if (! isFixed) {
+			id = -(nonterminalToInt.size());
+			nonterminalToInt.put(nonterminal, id);
+			intToString.put(id, nonterminal);
+			return id;
+		} else {
+			return UNKNOWN_WORD;
+		}
+		
 	}
 
 	public int addTerminal(String terminal) {
-		return addWord(terminal);
+		Integer id = terminalToInt.get(terminal);
+		if (id != null) {
+			return id.intValue();
+		} else if(!isFixed) {
+			id = new Integer(terminalToInt.size());
+			intToString.put(id, terminal);
+			terminalToInt.put(terminal, id);
+			return id.intValue();
+		}  else {
+			return UNKNOWN_WORD;
+		}
 	}
 
 	public String getTerminal(int wordId) {
@@ -436,46 +426,90 @@ public class Vocabulary extends AbstractSymbolTable implements Iterable<String>,
 	public String getWords(int[] ids) {
 		return getWords(ids, false);
 	}
-
-	public void write(String filename) throws IOException {
-		write(new FileOutputStream(filename), "UTF-8");
+	
+	public static Vocabulary readExternal(String binaryFileName) throws FileNotFoundException, IOException, ClassNotFoundException {
+		Vocabulary vocab = new Vocabulary();
+		ObjectInput in = BinaryIn.vocabulary(binaryFileName); 
+		vocab.readExternal(in);
+		return vocab;
 	}
 	
-	/**
-	 * Writes a binary form of the vocabulary to disk.
-	 * 
-	 * @param out
-	 * @param charsetName
-	 * @return
-	 * @throws IOException
-	 */
-	public void write(FileOutputStream out, String charsetName) throws IOException {
+	public void readExternal(ObjectInput in) throws IOException,
+			ClassNotFoundException {
+		
+		// First read the number of bytes required to store the vocabulary data
+		int totalBytes = in.readInt();
+		
+		// Start by reading whether or not the vocabulary is fixed
+		boolean isFixed = in.readBoolean();
+		
+		// Next, read the actual vocabulary data
+		int bytesRemaining = totalBytes - 5;
+				
+		while (bytesRemaining > 0) {
+			
+			// Read the integer id of the word
+			int id = in.readInt();
+			
+			// Read the number of bytes used to store the word string
+			int wordLength = in.readInt();
+			
+			// We have now read eight more bytes (4 bytes per int)
+			bytesRemaining -= 8;
+			
+			// Read the bytes used to store the word string
+			byte[] wordBytes = new byte[wordLength];
+			in.readFully(wordBytes);
+			String word = new String(wordBytes, CHARACTER_ENCODING);
+			
+			// We have now read more bytes
+			bytesRemaining -= wordBytes.length;
+					
+			// Store the word in the vocabulary
+			intToString.put(id, word);
+			terminalToInt.put(word, id);
+			
+		}
+		
+		// Now mark whether this vocabulary is fixed
+		this.isFixed = isFixed;
+	}
+
+	public void writeExternal(ObjectOutput out) throws IOException {
 		
 		// First, calculate the number of bytes required to store the vocabulary data
 		int totalBytes = 0;
-		for (String word : vocabList) {
-			byte[] wordBytes = word.getBytes(charsetName);
-			totalBytes += 2 + wordBytes.length;
+		for (String word : intToString.values()) {
+			byte[] wordBytes = word.getBytes(CHARACTER_ENCODING);
+			totalBytes += 8 + wordBytes.length;
 		}
 		
 		// Now, write the total number of bytes used to store the vocabulary data
-		FileUtility.writeBytes(new int[]{totalBytes}, out);
+		totalBytes += 4 + 1; // 4 bytes for this int plus 1 byte for the following boolean
+		out.writeInt(totalBytes);
 		
+		// Start by marking whether or not the vocabulary is fixed
+		out.writeBoolean(isFixed);
 		
 		// Next, write the actual vocabulary data
-		int i = 0;
-		for (String word : vocabList) {
-		
-			byte[] wordBytes = word.getBytes(charsetName);
+		for (Map.Entry<Integer, String> entry : intToString.entrySet()) {
 			
-			// Write the word ID and the number of bytes to store the word
-			FileUtility.writeBytes(new int[]{i, wordBytes.length}, out);
+			int id = entry.getKey();
+			String word = entry.getValue();
+			
+			byte[] wordBytes = word.getBytes(CHARACTER_ENCODING);
+				
+			// Write the integer id of the word
+			out.writeInt(id);
+			
+			// Write the number of bytes to store the word
+			out.writeInt(wordBytes.length);
 			
 			// Write the byte data for the string
 	    	out.write(wordBytes);
 	    	
-			i++;
 		}
-		
 	}
+	
+	static final long serialVersionUID = 1L;
 }

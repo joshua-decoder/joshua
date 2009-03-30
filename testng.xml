@@ -115,4 +115,11 @@
       <class name="joshua.decoder.ff.lm.bloomfilter_lm.BloomFilterTest" />
     </classes>
   </test>
+  
+  <test name="BinaryFiles">
+    <classes>
+      <class name="joshua.util.io.BinaryTest" />
+    </classes>
+  </test>
+  
 </suite>

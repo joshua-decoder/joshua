@@ -38,7 +38,7 @@ public class SuffixArrayTest {
 	private final Vocabulary vocab;
 	
 	@Parameters({"binaryFileName"})
-	public SuffixArrayTest(String binaryFileName) throws IOException {
+	public SuffixArrayTest(String binaryFileName) throws IOException, ClassNotFoundException {
 		// Adam Lopez's example...
 		String corpusString = "it makes him and it mars him , it sets him on and it takes him off .";
 

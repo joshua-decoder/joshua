@@ -19,6 +19,7 @@ package joshua.corpus;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
 
 /**
  * Partial basic implementation of a symbol table.
@@ -90,7 +91,29 @@ public abstract class AbstractSymbolTable implements SymbolTable {
 		return s.toString();
 	}
 	
-	public void write(FileOutputStream out, String charsetName) throws IOException  {
-		throw new RuntimeException("Method not yet implemented");
+	/** 
+	 * Character set encoding used when 
+	 * exporting and importing binary files to and from disk. 
+	 */
+	public static String CHARACTER_ENCODING = "UTF-8";
+	
+	public void setExternalizableEncoding(String charsetName) {
+		CHARACTER_ENCODING = charsetName;
+	}
+	
+	/**
+	 * Writes a binary form of the vocabulary to disk.
+	 * 
+	 * @param out
+	 * @param charsetName
+	 * @return
+	 * @throws IOException
+	 */
+	public void write(FileOutputStream out, String charsetName) 
+			throws IOException {
+		
+		setExternalizableEncoding(charsetName);
+		
+		writeExternal(new ObjectOutputStream(out));
 	}
 }

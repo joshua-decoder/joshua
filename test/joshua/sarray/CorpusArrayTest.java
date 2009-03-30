@@ -59,7 +59,7 @@ public class CorpusArrayTest {
 	
 	
 	@Test
-	public void writeAllToDisk() {
+	public void writeAllToDisk() throws ClassNotFoundException {
 		
 		String filename = "data/tiny.en";
 		int numSentences = 5;  // Should be 5 sentences in tiny.en
@@ -73,9 +73,9 @@ public class CorpusArrayTest {
 			SuffixArrayFactory.createVocabulary(filename, vocab);
 			CorpusArray corpus = SuffixArrayFactory.createCorpusArray(filename, vocab, numWords, numSentences);
 			
-			corpus.write(filename+".corpus", "UTF-8");
+			corpus.write(filename+".corpus", filename+".vocab", "UTF-8");
 			
-			MemoryMappedCorpusArray mmCorpus = new MemoryMappedCorpusArray(corpus.getVocabulary(), filename+".corpus");
+			MemoryMappedCorpusArray mmCorpus = new MemoryMappedCorpusArray(filename+".corpus", filename+".vocab");
 			
 			// For each word in the corpus,
 			for (int i=0; i<corpus.size(); i++) {

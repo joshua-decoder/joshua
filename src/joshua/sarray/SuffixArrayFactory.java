@@ -18,11 +18,12 @@
 package joshua.sarray;
 
 import joshua.corpus.SymbolTable;
-import joshua.util.FileUtility;
+import joshua.util.io.LineReader;
 import joshua.util.sentence.Vocabulary;
 import joshua.util.sentence.alignment.Alignments;
 
 import java.util.*;
+import java.util.logging.Logger;
 import java.io.*;
 
 
@@ -42,6 +43,7 @@ public class SuffixArrayFactory {
 //===============================================================
 	
 	public static boolean SHOW_PROGRESS = false;
+	private static final Logger logger = Logger.getLogger(SuffixArrayFactory.class.getName());
 	
 //===============================================================
 // Static
@@ -104,17 +106,18 @@ public class SuffixArrayFactory {
 	 * @return a tuple containing the number of words in the corpus and number of sentences in the corpus
 	 */
 	public static int[] createVocabulary(String inputFilename, Vocabulary vocab) throws IOException {
-		BufferedReader reader = FileUtility.getReadFileStream(inputFilename);
-		//HashSet words = new HashSet();
 		int numSentences = 0;
 		int numWords = 0;
-		while (reader.ready()) {
-			BasicPhrase sentence = new BasicPhrase(reader.readLine(), vocab);
+		
+		LineReader lineReader = new LineReader(inputFilename);
+		
+		for (String line : lineReader) {
+			BasicPhrase sentence = new BasicPhrase(line, vocab);
 			numWords += sentence.size();
 			numSentences++;
-			if(SHOW_PROGRESS && numSentences % 10000==0) System.out.println(numWords);
+			if(SHOW_PROGRESS && numSentences % 10000==0) logger.info(""+numWords);
 		}
-		reader.close();
+		
 		
 		vocab.fixVocabulary();
 		vocab.alphabetize();
@@ -129,17 +132,18 @@ public class SuffixArrayFactory {
 	 * @return a tuple containing the number of words in the corpus and number of sentences in the corpus
 	 */
 	private static int[] count(String inputFilename) throws IOException {
-		BufferedReader reader = FileUtility.getReadFileStream(inputFilename);
 		
 		int numSentences = 0;
 		int numWords = 0;
-		while (reader.ready()) {
-			String[] sentence = reader.readLine().trim().split("\\s+");
+		
+		LineReader lineReader = new LineReader(inputFilename);
+		
+		for (String line : lineReader) {
+			String[] sentence = line.trim().split("\\s+");
 			numWords += sentence.length;
 			numSentences++;
-			if(SHOW_PROGRESS && numSentences % 10000==0) System.out.println(numWords);
+			if(SHOW_PROGRESS && numSentences % 10000==0) logger.info(""+numWords);
 		}
-		reader.close();
 		
 		int[] numberOfWordsSentences = { numWords, numSentences };
 		return numberOfWordsSentences;
@@ -157,7 +161,6 @@ public class SuffixArrayFactory {
 	 *                     (returned by createVocabulary)
 	 */
 	public static CorpusArray createCorpusArray(String inputFilename, SymbolTable vocab, int numWords, int numSentences) throws IOException {
-		BufferedReader reader = FileUtility.getReadFileStream(inputFilename);
 		// initialize the arrays.
 		int[] corpus = new int[numWords];
 		int[] sentenceIndexes = new int[numSentences];
@@ -165,8 +168,10 @@ public class SuffixArrayFactory {
 		// instantiate them.
 		int wordCounter = 0;
 		int sentenceCounter = 0;
-		while (reader.ready()) {
-			String phraseString = reader.readLine();
+		
+		LineReader lineReader = new LineReader(inputFilename);
+		
+		for (String phraseString : lineReader) {
 			String[] wordStrings = phraseString.split("\\s+");
 			int[] words = new int[wordStrings.length];
 			for (int i = 0; i < wordStrings.length; i++) {
@@ -181,9 +186,9 @@ public class SuffixArrayFactory {
 				corpus[wordCounter] = sentence.getWordID(i);
 				wordCounter++;
 			}
-			if(SHOW_PROGRESS && sentenceCounter % 10000==0) System.out.println(numWords);
+			if(SHOW_PROGRESS && sentenceCounter % 10000==0) logger.info(""+numWords);
 		}
-		reader.close();
+		
 		return new CorpusArray(corpus, sentenceIndexes, vocab);
 	}
 	
@@ -227,9 +232,14 @@ public class SuffixArrayFactory {
 		
 		// set the values of the arrays based on the alignments file...
 		int sentenceCounter = 0;
-		BufferedReader reader = FileUtility.getReadFileStream(alignmentsFilename);
-		while (reader.ready()) {
-			
+		
+		LineReader lineReader = new LineReader(alignmentsFilename);
+		
+		for (String line : lineReader) {
+		
+//		BufferedReader reader = FileUtility.getReadFileStream(alignmentsFilename);
+//		while (reader.ready()) {
+//			
 			// Start index of current source sentence
 			int sourceOffset = sourceCorpus.getSentencePosition(sentenceCounter);
 			
@@ -241,7 +251,7 @@ public class SuffixArrayFactory {
 			alignedTargetList.clear();
 			
 			// parse the alignment points
-			String[] alignments = reader.readLine().split("\\s+");
+			String[] alignments = line.split("\\s+");
 			for(int i = 0; i < alignments.length; i++) {
 				String[] points = alignments[i].split("-");
 				int sourceIndex = sourceOffset + Integer.parseInt(points[0]);
@@ -304,7 +314,7 @@ public class SuffixArrayFactory {
 			
 			sentenceCounter++;
 		}
-		reader.close();
+//		reader.close();
 		
 //		for (int i=0; i<targetCorpus.size(); i++) {
 //			Collections.sort(alignedSourceList.get(i));

@@ -18,12 +18,15 @@
 package joshua.sarray;
 
 import joshua.corpus.SymbolTable;
-import joshua.util.FileUtility;
+import joshua.util.io.BinaryOut;
 import joshua.util.sentence.Phrase;
 import joshua.util.sentence.Vocabulary;
 
+import java.io.Externalizable;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.Arrays;
 
 
@@ -40,7 +43,7 @@ import java.util.Arrays;
  * @since  29 Dec 2004
  * @version $LastChangedDate:2008-07-30 17:15:52 -0400 (Wed, 30 Jul 2008) $
  */
-public class CorpusArray implements Corpus {
+public class CorpusArray implements Corpus, Externalizable {
 
 //===============================================================
 // Constants
@@ -77,6 +80,18 @@ public class CorpusArray implements Corpus {
 // Constructor(s)
 //===============================================================
 
+	/** 
+	 * Constructs an empty corpus.
+	 * <p>
+	 * NOTE: Primarily needed for Externalizable interface.
+	 */
+	public CorpusArray() {
+		this.vocab = new Vocabulary();
+		this.sentences = new int[]{};
+		this.corpus = new int[]{};
+	}
+	
+	
 	/** 
 	 * Protected constructor takes in the already prepared
 	 * member variables.
@@ -275,28 +290,19 @@ public class CorpusArray implements Corpus {
 		}
 		return 0;
     }
-	
-	
-//    public void writeWordIDsToFile(String filename) throws IOException {
-//    	FileUtility.writeBytes(corpus, filename, false);
-//    }
-//    
-//	
-//    public void writeSentenceLengthsToFile(String filename) throws IOException {
-//    	FileUtility.writeBytes(sentences, filename, false);
-//    }
+
+    public void write(String corpusFilename, String vocabFilename, String charset) throws IOException {
     
-    public void write(String filename, String charset) throws IOException {
+    	ObjectOutput vocabOut =
+    		new BinaryOut(new FileOutputStream(vocabFilename), true);
+//    		new ObjectOutputStream(new FileOutputStream(vocabFilename));
+    	vocab.setExternalizableEncoding(charset);
+    	vocab.writeExternal(vocabOut);
+    	vocabOut.flush();
     	
-    	FileOutputStream out = new FileOutputStream(filename);
-    	
-    	vocab.write(out, charset);
-    	
-    	FileUtility.writeBytes(new int[]{sentences.length}, out);
-    	FileUtility.writeBytes(sentences, out);
-    	
-    	FileUtility.writeBytes(new int[]{corpus.length}, out);
-    	FileUtility.writeBytes(corpus, out);
+    	BinaryOut corpusOut = new BinaryOut(new FileOutputStream(corpusFilename), false);
+    	this.writeExternal(corpusOut);	
+    	corpusOut.flush();
     	
     }
 	
@@ -326,22 +332,61 @@ public class CorpusArray implements Corpus {
 
 	public static void main(String[] args) throws Exception {
 		
-		if (args.length < 2) {
-			System.err.println("Usage: java " + CorpusArray.class.getName() + " corpus corpus.binary");
+		if (args.length < 4) {
+			System.err.println("Usage: java " + SuffixArray.class.getName() + " corpus vocab.jbin corpus.bin");
+			System.exit(0);
 		}
 		
 		String corpusFileName = args[0];
-		String binaryFileName = args[1];
-		
-		String charset = (args.length > 2) ? args[2] : "UTF-8";
+		String binaryVocabFilename = args[1];
+		String binaryCorpusFilename = args[2];
+		String charset = (args.length > 3) ? args[3] : "UTF-8";
 		
 		Vocabulary symbolTable = new Vocabulary();
 		int[] lengths = SuffixArrayFactory.createVocabulary(corpusFileName, symbolTable);
 		
 		CorpusArray corpusArray = SuffixArrayFactory.createCorpusArray(corpusFileName, symbolTable, lengths[0], lengths[1]);
 		
-		corpusArray.write(binaryFileName, charset);
+		corpusArray.write(binaryCorpusFilename, binaryVocabFilename, charset);
 		
 	}
 
+	public void readExternal(ObjectInput in) throws IOException,
+			ClassNotFoundException {
+		
+		// Read the vocabulary
+		vocab.readExternal(in);
+		
+		int numSentences = in.readInt();
+		this.sentences = new int[numSentences];
+		for (int i=0; i<numSentences; i++) {
+			this.sentences[i] = in.readInt();
+		}
+		
+		int numWords = in.readInt();
+		this.corpus = new int[numWords];
+		for (int i=0; i<numWords; i++) {
+			this.corpus[i] = in.readInt();
+		}
+		
+	}
+
+	public void writeExternal(ObjectOutput out) throws IOException {
+		
+		// Write the vocabulary
+		out.writeObject(vocab);
+		
+		out.writeInt(sentences.length);
+		for (int sentencePosition : sentences) {
+			out.writeInt(sentencePosition);
+		}
+		
+		out.writeInt(corpus.length);
+		for (int word : corpus) {
+			out.writeInt(word);
+		}
+		
+	}
+
+//	static final long serialVersionUID = 1L;
 }

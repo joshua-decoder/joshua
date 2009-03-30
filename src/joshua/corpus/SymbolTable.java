@@ -17,10 +17,10 @@
  */
 package joshua.corpus;
 
+import java.io.Externalizable;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Collection;
-import java.util.List;
 
 /**
  * Represents a symbol table capable
@@ -30,7 +30,7 @@ import java.util.List;
  * @author Zhifei Li
  * @version $LastChangedDate$
  */
-public interface SymbolTable {
+public interface SymbolTable extends Externalizable {
 
 	/**
 	 * The unknown word's ID will be the size of the vocabulary,
@@ -131,7 +131,7 @@ public interface SymbolTable {
 	 * 
 	 * @return the list of all words represented by this vocabulary
 	 */
-	public List<String> getWords();
+	public Collection<String> getWords();
 	
 	/**
 	 * Gets the number of unique words in the vocabulary.
@@ -179,12 +179,14 @@ public interface SymbolTable {
 	 */	
 	public int getHighestID();
 	
-	public int getTargetNonterminalIndex(int id);//first convert id to its String maping, then call the function below
+	public int getTargetNonterminalIndex(int id);//first convert id to its String mapping, then call the function below
 	
 	public int getTargetNonterminalIndex(String word);
 	
 	public String getWords(int[] wordIDs, boolean ntIndexIncrements);
 	
 	public void write(FileOutputStream out, String charsetName) throws IOException;
+	
+	public void setExternalizableEncoding(String charsetName);
 }
 

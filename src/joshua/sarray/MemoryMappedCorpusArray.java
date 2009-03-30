@@ -17,10 +17,12 @@
  */
 package joshua.sarray;
 
-import joshua.corpus.MemoryMappedSymbolTable;
 import joshua.corpus.SymbolTable;
+import joshua.util.sentence.Vocabulary;
 
 import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.io.RandomAccessFile;
 import java.nio.IntBuffer;
 import java.nio.channels.FileChannel;
@@ -39,77 +41,69 @@ public class MemoryMappedCorpusArray extends AbstractCorpus {
 	private final int numberOfWords;
 	private final int numberOfSentences;
 	
-//	/**
-//	 * Constructs a memory mapped corpus array
-//	 * from existing binary files.
-//	 * 
-//	 * @param vocabulary
-//	 * @param binaryCorpusFileName
-//	 * @param binaryCorpusFileSize
-//	 * @param binarySentenceFileName
-//	 * @param binarySentenceFileSize
-//	 * @throws IOException
-//	 */
-//	public MemoryMappedCorpusArray(
-//		SymbolTable symbolTable,
-//		String     binaryCorpusFileName,
-//		int        binaryCorpusFileSize,
-//		String     binarySentenceFileName,
-//		int        binarySentenceFileSize
-//	) throws IOException {
-//		
-//		super(symbolTable);
-//		
-//		RandomAccessFile binarySentenceFile = new RandomAccessFile( binarySentenceFileName, "r" );
-//	    FileChannel binarySentenceFileChannel = binarySentenceFile.getChannel();
-//	    this.binarySentenceBuffer = binarySentenceFileChannel.map( FileChannel.MapMode.READ_ONLY, 0, binarySentenceFileSize ).asIntBuffer();
-//
-//		RandomAccessFile binaryCorpusFile = new RandomAccessFile( binaryCorpusFileName, "r" );
-//	    FileChannel binaryCorpusFileChannel = binaryCorpusFile.getChannel();
-//	    this.binaryCorpusBuffer = binaryCorpusFileChannel.map( FileChannel.MapMode.READ_ONLY, 0, binaryCorpusFileSize ).asIntBuffer();
-//
-//	    this.numberOfWords = binaryCorpusFileSize;
-//	    this.numberOfSentences = binarySentenceFileSize;
-//	}
+	@SuppressWarnings("unused")
+	private final String corpusFilename;
+	@SuppressWarnings("unused")
+	private String vocabFilename;
 	
+	/**
+	 * Constructs a corpus array from a binary file.
+	 * <p>
+	 * The binary file contains both the vocabulary,
+	 * which is read in first, and the corpus array data.
+	 *  
+	 * @param binaryFileName
+	 * @throws IOException
+	 * @throws ClassNotFoundException
+	 */
+	public MemoryMappedCorpusArray(String binaryFileName, String vocabFileName) throws IOException, ClassNotFoundException {
+		this(Vocabulary.readExternal(vocabFileName), binaryFileName);
+		this.vocabFilename = vocabFileName;
+	}
+	
+	/**
+	 * Constructs a corpus array from a binary file.
+	 * <p>
+	 * The binary file may or may not contain a vocabulary.
+	 * The first integer in the file specifies a header length.
+	 * If no vocabulary is contained, this value should be zero.
+	 * <p>
+	 * Even if the binary file contains a vocabulary, it is ignored,
+	 * and the symbol table provided to the constructor is used instead.
+	 * 
+	 * @param symbolTable
+	 * @param binaryFileName
+	 * @throws IOException
+	 */
 	public MemoryMappedCorpusArray(
 			SymbolTable symbolTable,
 			String     binaryFileName
 		) throws IOException {
 			
 			super(symbolTable);
+			this.corpusFilename = binaryFileName;
+			this.vocabFilename = null;
 			
 			IntBuffer tmp;
 			
 			RandomAccessFile binaryFile = new RandomAccessFile( binaryFileName, "r" );
 		    FileChannel binaryChannel = binaryFile.getChannel();
-		    tmp = binaryChannel.map( FileChannel.MapMode.READ_ONLY, 0, 4).asIntBuffer().asReadOnlyBuffer();
-		    this.numberOfSentences = tmp.get();
-		    this.binarySentenceBuffer = binaryChannel.map( FileChannel.MapMode.READ_ONLY, 4, 4*numberOfSentences ).asIntBuffer().asReadOnlyBuffer();
 		    
-		    tmp = binaryChannel.map( FileChannel.MapMode.READ_ONLY, (4 + 4*numberOfSentences), 4).asIntBuffer().asReadOnlyBuffer();
+//		    tmp = binaryChannel.map( FileChannel.MapMode.READ_ONLY, 0, 4).asIntBuffer().asReadOnlyBuffer();
+//		    int headerSize = tmp.get() + 4;
+		    int headerSize = 0;
+//		    System.err.println(headerSize);
+		    
+		    tmp = binaryChannel.map( FileChannel.MapMode.READ_ONLY, headerSize, 4).asIntBuffer().asReadOnlyBuffer();
+		    this.numberOfSentences = tmp.get();
+		    this.binarySentenceBuffer = binaryChannel.map( FileChannel.MapMode.READ_ONLY, (headerSize+4), 4*numberOfSentences ).asIntBuffer().asReadOnlyBuffer();
+		    
+		    tmp = binaryChannel.map( FileChannel.MapMode.READ_ONLY, (headerSize + 4 + 4*numberOfSentences), 4).asIntBuffer().asReadOnlyBuffer();
 		    this.numberOfWords = tmp.get();
-		    this.binaryCorpusBuffer = binaryChannel.map( FileChannel.MapMode.READ_ONLY, (4 + 4*numberOfSentences + 4), 4*numberOfWords ).asIntBuffer().asReadOnlyBuffer();
+		    this.binaryCorpusBuffer = binaryChannel.map( FileChannel.MapMode.READ_ONLY, (headerSize + 4 + 4*numberOfSentences + 4), 4*numberOfWords ).asIntBuffer().asReadOnlyBuffer();
 
 		}
 
-//	public MemoryMappedCorpusArray(String binaryFileName) throws IOException {
-//		super(new MemoryMappedSymbolTable(binaryFileName));
-//
-//		IntBuffer tmp;
-//
-//		RandomAccessFile binaryFile = new RandomAccessFile( binaryFileName, "r" );
-//		FileChannel binaryChannel = binaryFile.getChannel();
-//		tmp = binaryChannel.map( FileChannel.MapMode.READ_ONLY, 0, 4).asIntBuffer().asReadOnlyBuffer();
-//		this.numberOfSentences = tmp.get();
-//		this.binarySentenceBuffer = binaryChannel.map( FileChannel.MapMode.READ_ONLY, 4, 4*numberOfSentences ).asIntBuffer().asReadOnlyBuffer();
-//
-//		tmp = binaryChannel.map( FileChannel.MapMode.READ_ONLY, (4 + 4*numberOfSentences), 4).asIntBuffer().asReadOnlyBuffer();
-//		this.numberOfWords = tmp.get();
-//		this.binaryCorpusBuffer = binaryChannel.map( FileChannel.MapMode.READ_ONLY, (4 + 4*numberOfSentences + 4), 4*numberOfWords ).asIntBuffer().asReadOnlyBuffer();
-//
-//	}
-	
 
 	@Override
 	public int getNumSentences() {
@@ -165,18 +159,35 @@ public class MemoryMappedCorpusArray extends AbstractCorpus {
 			return numberOfWords-1;
 		}
 		return binarySentenceBuffer.get(sentenceID);
-		//return binarySentenceBuffer.getInt(sentenceID*4);
 	}
 
 	@Override
 	public int getWordID(int position) {
 		return binaryCorpusBuffer.get(position);
-		//return binaryCorpusBuffer.getInt(position*4);	
 	}
 
 	@Override
 	public int size() {
 		return numberOfWords;
+	}
+
+	public void write(String corpusFilename, String vocabFilename,
+			String charset) throws IOException {
+
+		//TODO Copy original files to new locations
+		throw new RuntimeException("Not yet implemented");
+		
+	}
+
+	public void readExternal(ObjectInput in) throws IOException,
+			ClassNotFoundException {
+		// TODO Auto-generated method stub
+		throw new RuntimeException("Not yet implemented");
+	}
+
+	public void writeExternal(ObjectOutput out) throws IOException {
+		// TODO Auto-generated method stub
+		throw new RuntimeException("Not yet implemented");
 	}
 	
 	

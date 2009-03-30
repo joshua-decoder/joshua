@@ -19,7 +19,10 @@ package joshua.decoder;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.logging.Logger;
 import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 
 /**
 * @author Zhifei Li, <zhifei.work@gmail.com>
@@ -27,6 +30,9 @@ import java.io.IOException;
 */
 
 public class BuildinSymbol extends DefaultSymbol {
+	
+	private static final Logger logger = Logger.getLogger(BuildinSymbol.class.getName());
+	
 	private HashMap<String,Integer> str_2_num_tbl = new HashMap<String,Integer>();
 	private HashMap<Integer,String> num_2_str_tbl = new HashMap<Integer,String>();
 	
@@ -38,16 +44,17 @@ public class BuildinSymbol extends DefaultSymbol {
 	
 	public BuildinSymbol(String fname)  {
 		if (null != fname) {
-			System.out.println("Construct the symbol table from a file " + fname);
+			logger.info("Construct the symbol table from a file " + fname);
 			try {
 				initializeSymTblFromFile(fname);
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
+				logger.severe("Error encountered while constructing symbol table from file " + fname);
 				e.printStackTrace();
+				System.exit(-1);
 			}
 		
 		} else {
-			System.out.println("Construct the symbol table on the fly");
+			logger.info("Construct the symbol table on the fly");
 		}
 	}
 	
@@ -61,7 +68,7 @@ public class BuildinSymbol extends DefaultSymbol {
 		Integer res_id = (Integer)str_2_num_tbl.get(str);
 		if (null != res_id) { // already have this symbol
 			if (isNonterminal(res_id)) {
-				System.out.println("Error, terminal symbol mix with non-terminal, Sym: " + str + "; id: " + res_id);
+				logger.severe("Error, terminal symbol mix with non-terminal, Sym: " + str + "; id: " + res_id);
 				System.exit(1);
 			}
 			return res_id;
@@ -70,7 +77,7 @@ public class BuildinSymbol extends DefaultSymbol {
 			num_2_str_tbl.put(cur_terminal_id, str);
 			cur_terminal_id++;
 			if(cur_terminal_id>lm_end_sym_id){
-				System.out.println("cur_terminal_id is greater than lm_end_sym_id");
+				logger.severe("cur_terminal_id is greater than lm_end_sym_id");
 				System.exit(0);
 			}
 			//System.out.println("Sym: " + str + "; id: " + positive_id);
@@ -83,7 +90,7 @@ public class BuildinSymbol extends DefaultSymbol {
 	//protected String getTerminalWord(int id){
 		 String res = (String)num_2_str_tbl.get(id);
 		 if(res == null){
-				System.out.println("try to query the string for non exist id, must exit, id is " + id);
+				logger.severe("try to query the string for non exist id, must exit, id is " + id);
 				System.exit(0);
 			}
 		
@@ -102,6 +109,17 @@ public class BuildinSymbol extends DefaultSymbol {
 	public int getUnknownWordID() {
 		//TODO Implement this method
 		throw new RuntimeException("Method not yet implemented");	
+	}
+
+	public void readExternal(ObjectInput in) throws IOException,
+			ClassNotFoundException {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public void writeExternal(ObjectOutput out) throws IOException {
+		// TODO Auto-generated method stub
+		
 	}
 	
 }
