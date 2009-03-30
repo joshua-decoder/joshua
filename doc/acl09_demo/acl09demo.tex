@@ -46,9 +46,8 @@ $\star$ Natural Language Processing Lab, University of Minnesota, Minneapolis, M
 
 
 \begin{abstract}
-\textbf{TODO: Add a demo-related sentence, maybe shorten}
 
-We describe \textbf{Joshua}, an open source toolkit for statistical machine translation. Joshua implements all of the algorithms required for synchronous context free grammars (SCFGs): chart-parsing, $n$-gram language model integration, beam- and cube-pruning, and $k$-best extraction. The toolkit also implements suffix-array grammar extraction and minimum error rate training. It uses parallel and distributed computing techniques for scalability. We demonstrate that the toolkit achieves state of the art translation performance on the WMT09 French-English translation task.
+We describe \textbf{Joshua}, an open source toolkit for statistical machine translation. Joshua implements all of the algorithms required for synchronous context free grammars (SCFGs): chart-parsing, $n$-gram language model integration, beam- and cube-pruning, and $k$-best extraction. The toolkit also implements suffix-array grammar extraction and minimum error rate training. It uses parallel and distributed computing techniques for scalability. We also provide a demonstration outline for illustrating the toolkit's features to potential users, whether they be newcomers to the field or power users interested in extending the toolkit.
 
 \end{abstract}
 
@@ -152,19 +151,50 @@ We also implement \emph{parallel decoding} and a \emph{distributed language mode
 
 \section{Demonstration Outline}
 
-The purpose of the demonstration is 4-fold: 1) to give an idea of the state-of-the-art in statistical machine translation, for newcomers to the field; 2) to show an actual, live, end-to-end operation of the system, highlighting its main components, targeting potential users; 3) to illustrate, through visual aids, the underlying algorithms, for those interested in the technical details; and 4) to explain how those components can be extended, for potential \emph{power} users who want to be familiar with the code itself.
+The purpose of the demonstration is 4-fold: 1) to give an idea of the
+state-of-the-art in statistical machine translation, for newcomers to the
+field; 2) to show an actual, live, end-to-end operation of the system,
+highlighting its main components, targeting potential users; 3) to illustrate,
+through visual aids, the underlying algorithms, for those interested in the
+technical details; and 4) to explain how those components can be extended, for
+potential \emph{power} users who want to be familiar with the code itself.
 
-The first component of the demonstration will be an interactive user interface, where arbitrary user input in a source language is entered into a web form and then translated into output in a target language by the system. This component specifically targets newcomers to SMT, and demonstrates the current state of the art in the field. We will have trained multiple systems (for multiple language pairs), hosted on a remote server, that will be queried with the sample source sentences.
+The first component of the demonstration will be an interactive user interface,
+where arbitrary user input in a source language is entered into a web form and
+then translated into a target language by the system.  This component
+specifically targets newcomers to SMT, and demonstrates the current state of
+the art in the field.  We will have trained multiple systems (for multiple
+language pairs), hosted on a remote server, which will be queried with the
+sample source sentences.
 
-Potential users of the system would be interested in seeing an actual operation of the system, in a similar fashion to what they would observe on their own machines when using the toolkit. For this purpose, we will demonstrate three main modules of the toolkit: the rule extraction module, the MERT module, and the decoding module. For each module, we will have a separate terminal window executing that module, hence demonstrating both the module's expected output as well as its speed of operation.
+Potential users of the system would be interested in seeing an actual operation
+of the system, in a similar fashion to what they would observe on their own
+machines when using the toolkit.  For this purpose, we will demonstrate three
+main modules of the toolkit: the rule extraction module, the MERT module, and
+the decoding module.  For each module, we will have a separate terminal window
+executing that module, hence demonstrating both the module's expected output as
+well as its speed of operation.
 
-In addition to demonstrating the functionality of each module, we will also provide accompanying visual aids that illustrate the underlying algorithms and the technical operational details. We will provide visualization of the search graph and the 1-best derivation, which would illustrate the functionality of the decoder, as well as alternative translations for phrases of the source sentence, and where they were learned in the parallel corpus, illustrating the functionality of the grammar rule extraction. For the MERT module, we will provide figures that illustrate Och's method for line-searches.
+In addition to demonstrating the functionality of each module, we will also
+provide accompanying visual aids that illustrate the underlying algorithms and
+the technical operational details.  We will provide visualization of the search
+graph and the 1-best derivation, which would illustrate the functionality of
+the decoder, as well as alternative translations for phrases of the source
+sentence, and where they were learned in the parallel corpus, illustrating the
+functionality of the grammar rule extraction.  For the MERT module, we will
+provide figures that illustrate Och's efficient line search method.
 
-Finally, power users of the system would be interested in extending the toolkit to accommodate new functionality. To that end, we will specifically illustrate several potential extensions to the toolkit by highlighting portions of the code that the user would be expected to modify and/or augment when implementing such extensions. For instance, we will point out how a new feature function can be added to the decoder, or how a new metric can be added to the MERT module.
+Finally, power users of the system would be interested in extending the toolkit
+to accommodate new functionality.  To that end, we will specifically illustrate
+several potential extensions to the toolkit by highlighting portions of the
+code that the user would be expected to modify and/or augment when implementing
+such extensions.  For instance, we will point out how a new feature function
+can be added to the decoder, or how a new metric can be added to the MERT
+module.
 
 \section{Requirements}
 
-The different components of the demonstration will be distributed across at most 3 machines, one for the live ``instant translation'' user interface, one for demonstrating the different components of the system and algorithmic visualizations, and one designated for the technical discussion of the code. We will provide the machines ourselves and ensure the proper software is installed and configured. We will require Internet connectivity for the live demonstration, in order to gain access to remote servers where trained models will be housed.
+The different components of the demonstration will be distributed across at most 3 machines, one for the live ``instant translation'' user interface, one for demonstrating the different components of the system and algorithmic visualizations, and one designated for technical discussion of the code.  We will provide the machines ourselves and ensure the proper software is installed and configured.  We will require Internet connectivity for the live demonstration, in order to gain access to remote servers where trained models will be hosted.
 
 %%%lzf add this section
 
