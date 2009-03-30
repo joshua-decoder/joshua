@@ -20,7 +20,8 @@
 
 
 
-\title{Joshua: An Open Source Toolkit for Parsing-based Machine Translation}
+\title{Joshua: An Open Source Toolkit for Parsing-based Machine Translation\thanks{This research was supported in part by the Defense Advanced Research Projects Agency's GALE program under Contract No.\,HR0011-06-2-0001 and the National Science Foundation under grants No.\,0713448 and 0840112. The views and findings are the authors' alone.
+}}
 
 \author{
 Zhifei Li,\,\,\,
@@ -76,9 +77,6 @@ To combat these issues, the Joshua toolkit integrates most critical components o
 
 \textbf{Scalability}: Our third design goal was to ensure that the decoder is scalable to large models and data sets. The parsing and pruning algorithms are carefully implemented with dynamic programming strategies, and efficient data structures are used to minimize overhead. Other techniques contributing to scalability includes suffix-array grammar extraction, parallel and distributed decoding, and bloom filter language models.
 
-
-\newpage
-
 \begin{table}[t]
 \begin{center}
 \begin{tabular}{c c}\hline
@@ -91,15 +89,14 @@ To combat these issues, the Joshua toolkit integrates most critical components o
   limsi & 25.51 \\
   uedin & 25.44 \\
   rwth & 24.89 \\
-  cmu-statxfer & 23.65 \\
-  khust & 23.36 \\ \hline
+  cmu-statxfer & 23.65 \\ \hline
 \end{tabular}
 \end{center}
-\caption{Uncased BLEU scores for the top-10 primary systems on the WMT-09 French-English Task.}
+\caption{Uncased BLEU scores for the top primary systems on the WMT-09 French-English Task.}
 \label{results-wmt09}
 \end{table}
 
-The Joshua system offers state-of-the-art translation quality, having been ranked fourth in the French-English task of the 2009 WMT evaluation (see Table~\ref{results-wmt09}).
+The Joshua system offers state-of-the-art translation quality, having been ranked 4th out of 16 systems in the French-English task of the 2009 WMT evaluation in both, automated (see Table~\ref{results-wmt09}) and human evaluations \cite{WMT09-Findings}.
 
 \subsection{Joshua Toolkit Features}
 
@@ -200,8 +197,8 @@ The different components of the demonstration will be distributed across at most
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\section*{Acknowledgments}
-This research was supported in part by the Defense Advanced Research Projects Agency's GALE program under Contract No.\,HR0011-06-2-0001 and the National Science Foundation under grants No.\,0713448 and 0840112. The views and findings are the authors' alone.
+%\section*{Acknowledgments}
+%This research was supported in part by the Defense Advanced Research Projects Agency's GALE program under Contract No.\,HR0011-06-2-0001 and the National Science Foundation under grants No.\,0713448 and 0840112. The views and findings are the authors' alone.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
