@@ -86,6 +86,8 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 
 	public List<Rule> extractRules(Pattern sourcePattern, HierarchicalPhrases sourceHierarchicalPhrases) {
 
+		if (logger.isLoggable(Level.FINE)) logger.fine("Extracting rules for source pattern: " + sourcePattern);
+		
 		int listSize = sourceHierarchicalPhrases.size();
 		int stepSize; {
 			if (listSize <= sampleSize) {
@@ -188,15 +190,15 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 			
 			float p_e_given_f = -1.0f * (float) Math.log10(counts.get(translation) / p_e_given_f_denominator);
 			if (Float.isInfinite(p_e_given_f)) p_e_given_f = PrefixTree.VERY_UNLIKELY;
-			if (logger.isLoggable(Level.FINE)) logger.fine("   prob( "+ translation.toString() + " | " + sourcePattern.toString() + " ) =  -log10(" + counts.get(translation) + " / " + p_e_given_f_denominator + ") = " + p_e_given_f);
+			if (logger.isLoggable(Level.FINER)) logger.finer("   prob( "+ translation.toString() + " | " + sourcePattern.toString() + " ) =  -log10(" + counts.get(translation) + " / " + p_e_given_f_denominator + ") = " + p_e_given_f);
 			
 			float lex_p_e_given_f = (float) (-1.0f * Math.log10((double)cumulativeSourceGivenTargetLexProbs.get(translation) / (double)counterLexProbs.get(translation)));
 			if (Float.isInfinite(lex_p_e_given_f)) lex_p_e_given_f = PrefixTree.VERY_UNLIKELY;
-			if (logger.isLoggable(Level.FINE)) logger.fine("lexprob( " + translation.toString() + " | " + sourcePattern.toString() + " ) =  -log10(" + cumulativeSourceGivenTargetLexProbs.get(translation) + " / " + counterLexProbs.get(translation) + ") = " + lex_p_e_given_f);
+			if (logger.isLoggable(Level.FINER)) logger.finer("lexprob( " + translation.toString() + " | " + sourcePattern.toString() + " ) =  -log10(" + cumulativeSourceGivenTargetLexProbs.get(translation) + " / " + counterLexProbs.get(translation) + ") = " + lex_p_e_given_f);
 			
 			float lex_p_f_given_e = (float) (-1.0f * Math.log10(((double)cumulativeTargetGivenSourceLexProbs.get(translation)) / ((double)counterLexProbs.get(translation))));
 			if (Float.isInfinite(lex_p_f_given_e)) lex_p_f_given_e = PrefixTree.VERY_UNLIKELY;
-			if (logger.isLoggable(Level.FINE)) logger.fine("lexprob( " + sourcePattern.toString() + " | " + translation.toString() + " ) =  -log10(" + cumulativeTargetGivenSourceLexProbs.get(translation) + " / " + counterLexProbs.get(translation) + ") = " + lex_p_f_given_e);
+			if (logger.isLoggable(Level.FINER)) logger.finer("lexprob( " + sourcePattern.toString() + " | " + translation.toString() + " ) =  -log10(" + cumulativeTargetGivenSourceLexProbs.get(translation) + " / " + counterLexProbs.get(translation) + ") = " + lex_p_f_given_e);
 			
 			float[] featureScores = { p_e_given_f, lex_p_e_given_f, lex_p_f_given_e };
 
@@ -226,7 +228,11 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 	 */
 	protected Pattern constructTranslation(HierarchicalPhrase sourcePhrase, Span sourceSpan, Span targetSpan, boolean sourceStartsWithNT, boolean sourceEndsWithNT) {
 		
-		if (logger.isLoggable(Level.FINER)) logger.finer("Constructing translation for source span " + sourceSpan + ", target span " + targetSpan);
+		if (logger.isLoggable(Level.FINE)) logger.fine("Constructing translation for source span " + sourceSpan + ", target span " + targetSpan);
+		
+		if (sourceSpan.start==678417 && sourceSpan.end==678424) {
+			int x=1; x++;
+		}
 		
 		if (sourceSpan.size() > this.maxPhraseSpan)
 			return null;

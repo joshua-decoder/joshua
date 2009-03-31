@@ -25,6 +25,8 @@ import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import joshua.sarray.Corpus;
 import joshua.util.io.BinaryOut;
@@ -36,6 +38,8 @@ import joshua.util.io.BinaryOut;
  */
 public class AlignmentGrids extends AbstractAlignmentGrids implements Externalizable {
 
+	private static final Logger logger = Logger.getLogger(AlignmentGrids.class.getName()); 
+	
 	private final List<AlignmentGrid> alignments;
 	
 	/**
@@ -70,11 +74,18 @@ public class AlignmentGrids extends AbstractAlignmentGrids implements Externaliz
 		
 		this.alignments = new ArrayList<AlignmentGrid>(expectedSize);
 		
+		boolean finest = logger.isLoggable(Level.FINEST);
+		int tenthSize = expectedSize / 10;
+		
+		int lineNumber = 0;
 		while (alignmentScanner.hasNextLine()) {
 			
 			String line = alignmentScanner.nextLine();
 			
 			alignments.add(new AlignmentGrid(line));
+			
+			lineNumber++;
+			if (finest && (lineNumber%tenthSize==0)) logger.finest("AlignmentGrids construction " + (lineNumber/tenthSize)+"0% complete");
 			
 		}
 	}
@@ -101,28 +112,35 @@ public class AlignmentGrids extends AbstractAlignmentGrids implements Externaliz
 	public void writeExternal(ObjectOutput out) throws IOException {
 		
 		// Start by writing the number of alignments
-		out.writeInt(alignments.size());
+		int size = alignments.size();
+		logger.fine("Exporting size = " + size + ": 1 integer (4 bytes)");
+		out.writeInt(size);
 		
 		// Write the widths of each grid
+		logger.fine("Exporting widths: " + size + " integers (" + size*4 + ") bytes");
 		for (AlignmentGrid grid : alignments) {
 			out.writeInt(grid.width);
 		}
 		
 		// Write the widths of each grid
+		logger.fine("Exporting widths: " + size + " integers (" + size*4 + ") bytes");
 		for (AlignmentGrid grid : alignments) {
 			out.writeInt(grid.height);
 		}
 		
 		// Write the number of alignment points in each grid
+		logger.fine("Exporting pointCounters: " + (size+1) + " integers (" + (size+1)*4 + ") bytes");
 		int pointCounter = 0;
 		out.writeInt(pointCounter);
 		for (AlignmentGrid grid : alignments) {
 			pointCounter += grid.coordinates.length; 
 			out.writeInt(pointCounter);
 		}
+		logger.finer("\tfinal pointCounter value was: " + pointCounter);
 
-
+		
 		// Write the alignment points
+		logger.fine("Exporting grid coordinates: " + pointCounter + " shorts (" + pointCounter*2 + ") bytes");
 		for (AlignmentGrid grid : alignments) {
 			for (short point : grid.coordinates) {
 				out.writeShort(point);
@@ -130,6 +148,7 @@ public class AlignmentGrids extends AbstractAlignmentGrids implements Externaliz
 		}
 		
 		// Write the reverse alignment points
+		logger.fine("Exporting reverse grid coordinates: " + pointCounter + " shorts (" + pointCounter*2 + ") bytes");
 		for (AlignmentGrid grid : alignments) {
 			for (short point : grid.transposedCoordinates) {
 				out.writeShort(point);
@@ -140,7 +159,7 @@ public class AlignmentGrids extends AbstractAlignmentGrids implements Externaliz
 	
 	public static void main(String[] args) throws IOException {
 		
-		if (args.length < 4) {
+		if (args.length != 2) {
 			System.err.println("Usage: java " + AlignmentGrids.class.getName() + " alignments alignments.bin");
 			System.exit(0);
 		}
@@ -155,7 +174,8 @@ public class AlignmentGrids extends AbstractAlignmentGrids implements Externaliz
 		
 		BinaryOut out = new BinaryOut(binaryAlignmentsFileName);
 		grids.writeExternal(out);
-		
+		out.flush();
+		out.close();
 	}
 	
 }

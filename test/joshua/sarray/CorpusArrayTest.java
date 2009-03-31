@@ -5,6 +5,7 @@ import java.io.IOException;
 import joshua.sarray.CorpusArray;
 import joshua.sarray.MemoryMappedCorpusArray;
 import joshua.sarray.SuffixArrayFactory;
+import joshua.util.sentence.Phrase;
 import joshua.util.sentence.Vocabulary;
 
 
@@ -77,6 +78,9 @@ public class CorpusArrayTest {
 			
 			MemoryMappedCorpusArray mmCorpus = new MemoryMappedCorpusArray(filename+".corpus", filename+".vocab");
 			
+			Assert.assertEquals(mmCorpus.size(), corpus.size());
+			Assert.assertEquals(mmCorpus.getNumSentences(), corpus.getNumSentences());
+			
 			// For each word in the corpus,
 			for (int i=0; i<corpus.size(); i++) {
 				
@@ -88,8 +92,18 @@ public class CorpusArrayTest {
 			// For each sentence in the corpus
 			for (int i=0; i<corpus.sentences.length; i++) {
 				
-				// Verify that the sentence position in the memory-mapped corpus and the in-memory corpus have the same value
-				Assert.assertEquals(corpus.getSentencePosition(i), mmCorpus.getSentencePosition(i));
+				// Verify that the sentence start position in the memory-mapped corpus and the in-memory corpus have the same value
+				Assert.assertEquals(mmCorpus.getSentencePosition(i), corpus.getSentencePosition(i));
+				
+				// Verify that the sentence end position in the memory-mapped corpus and the in-memory corpus have the same value
+				Assert.assertEquals(mmCorpus.getSentenceEndPosition(i), corpus.getSentenceEndPosition(i));
+				
+				// Verify that the phrase corresponding to this sentence is the same
+				Phrase sentence = corpus.getSentence(i);
+				Phrase mmSentence = mmCorpus.getSentence(i);
+				Assert.assertNotNull(sentence);
+				Assert.assertNotNull(mmSentence);
+				Assert.assertEquals(mmSentence, sentence);
 			}
 			
 		} catch (IOException e) {

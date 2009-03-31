@@ -49,11 +49,11 @@ public class AlignmentsTest {
 	
 	CorpusArray sourceCorpusArray;
 	CorpusArray targetCorpusArray;
-	
+	String type;
 	@Parameters({"alignmentsType"})
 	@Test
 	public void setup(String alignmentsType) throws IOException {
-
+		type = alignmentsType;
 		String alignmentString = 
 			"0-0 0-1 1-1 2-1 3-1 0-2 0-3 5-4 4-5 6-5 8-6 8-7 7-8 10-9 12-10 11-11 12-11 13-12 14-13 15-13 16-13 16-14 17-15 18-16 19-17 19-18 19-19 19-20 19-21 20-22 21-24 22-24 25-29 24-31 26-32 27-33 28-34 30-35 31-36 29-37 30-37 31-37 31-38 32-39" + "\n" +
 			"0-0 0-1 0-2 1-3 2-5 3-6 4-6 5-7 6-8 7-9 8-10 10-11 12-11 9-12 11-12 12-12 13-13 14-14 18-16 21-17 22-19 22-20 23-20 24-21 25-22 25-23 26-24 27-25 28-25 29-26 30-26 31-26 31-28 32-29 34-30 33-31 35-33 36-34 36-35 37-36" + "\n" +
@@ -119,13 +119,24 @@ public class AlignmentsTest {
 			File mmAlignmentFile = File.createTempFile("memoryMappedAlignment", new Date().toString());
 			ObjectOutput out = new BinaryOut(mmAlignmentFile);
 			grids.writeExternal(out);
+			out.flush();
+			out.close();
 			
 			alignments = new MemoryMappedAlignmentGrids(mmAlignmentFile.getAbsolutePath(), sourceCorpusArray, targetCorpusArray);
+		} else {
+			Assert.fail(alignmentsType + " is not a known alignment type.");
 		}
 		
 		
 	}
 
+//	@Test
+//	public void compare() {
+//		Assert.assertEquals(type, "MemoryMappedAlignmentGrids");
+////		Assert.assertTrue(alignments instanceof AlignmentGrids);
+////		Assert.assertTrue(alignments instanceof MemoryMappedAlignmentGrids);		
+//	}
+	
 
 	@Test(dependsOnMethods={"setup"})
 	public void testHasAlignedTerminal() {
@@ -352,7 +363,6 @@ public class AlignmentsTest {
 			targetSpan = alignments.getAlignedTargetSpan(sourceIndex, sourceIndex+1);
 			Assert.assertNotNull(targetSpan);
 			Assert.assertEquals(targetSpan.start, Alignments.UNALIGNED);
-//			Assert.assertEquals(targetSpan.start, Alignments.UNALIGNED);
 		
 			sourceIndex = sourceOffset+10;
 			targetSpan = alignments.getAlignedTargetSpan(sourceIndex, sourceIndex+1);
@@ -360,7 +370,157 @@ public class AlignmentsTest {
 			Assert.assertEquals(targetSpan.start, targetOffset+9);
 			Assert.assertEquals(targetSpan.end, targetOffset+10);
 			
-			//TODO Test the rest of the points for this sentence here
+			sourceIndex = sourceOffset+11;
+			targetSpan = alignments.getAlignedTargetSpan(sourceIndex, sourceIndex+1);
+			Assert.assertNotNull(targetSpan);
+			Assert.assertEquals(targetSpan.start, targetOffset+11);
+			Assert.assertEquals(targetSpan.end, targetOffset+12);
+			
+			sourceIndex = sourceOffset+12;
+			targetSpan = alignments.getAlignedTargetSpan(sourceIndex, sourceIndex+1);
+			Assert.assertNotNull(targetSpan);
+			Assert.assertEquals(targetSpan.start, targetOffset+10);
+			Assert.assertEquals(targetSpan.end, targetOffset+12);
+			
+			sourceIndex = sourceOffset+13;
+			targetSpan = alignments.getAlignedTargetSpan(sourceIndex, sourceIndex+1);
+			Assert.assertNotNull(targetSpan);
+			Assert.assertEquals(targetSpan.start, targetOffset+12);
+			Assert.assertEquals(targetSpan.end, targetOffset+13);
+			
+			sourceIndex = sourceOffset+14;
+			targetSpan = alignments.getAlignedTargetSpan(sourceIndex, sourceIndex+1);
+			Assert.assertNotNull(targetSpan);
+			Assert.assertEquals(targetSpan.start, targetOffset+13);
+			Assert.assertEquals(targetSpan.end, targetOffset+14);
+			
+			sourceIndex = sourceOffset+15;
+			targetSpan = alignments.getAlignedTargetSpan(sourceIndex, sourceIndex+1);
+			Assert.assertNotNull(targetSpan);
+			Assert.assertEquals(targetSpan.start, targetOffset+13);
+			Assert.assertEquals(targetSpan.end, targetOffset+14);
+			
+			sourceIndex = sourceOffset+16;
+			targetSpan = alignments.getAlignedTargetSpan(sourceIndex, sourceIndex+1);
+			Assert.assertNotNull(targetSpan);
+			Assert.assertEquals(targetSpan.start, targetOffset+13);
+			Assert.assertEquals(targetSpan.end, targetOffset+15);
+			
+			sourceIndex = sourceOffset+17;
+			targetSpan = alignments.getAlignedTargetSpan(sourceIndex, sourceIndex+1);
+			Assert.assertNotNull(targetSpan);
+			Assert.assertEquals(targetSpan.start, targetOffset+15);
+			Assert.assertEquals(targetSpan.end, targetOffset+16);
+			
+			sourceIndex = sourceOffset+18;
+			targetSpan = alignments.getAlignedTargetSpan(sourceIndex, sourceIndex+1);
+			Assert.assertNotNull(targetSpan);
+			Assert.assertEquals(targetSpan.start, targetOffset+16);
+			Assert.assertEquals(targetSpan.end, targetOffset+17);
+			
+			sourceIndex = sourceOffset+19;
+			targetSpan = alignments.getAlignedTargetSpan(sourceIndex, sourceIndex+1);
+			Assert.assertNotNull(targetSpan);
+			Assert.assertEquals(targetSpan.start, targetOffset+17);
+			Assert.assertEquals(targetSpan.end, targetOffset+22);
+			
+			sourceIndex = sourceOffset+20;
+			targetSpan = alignments.getAlignedTargetSpan(sourceIndex, sourceIndex+1);
+			Assert.assertNotNull(targetSpan);
+			Assert.assertEquals(targetSpan.start, targetOffset+22);
+			Assert.assertEquals(targetSpan.end, targetOffset+23);
+			
+			sourceIndex = sourceOffset+21;
+			targetSpan = alignments.getAlignedTargetSpan(sourceIndex, sourceIndex+1);
+			Assert.assertNotNull(targetSpan);
+			Assert.assertEquals(targetSpan.start, targetOffset+24);
+			Assert.assertEquals(targetSpan.end, targetOffset+25);
+			
+			sourceIndex = sourceOffset+22;
+			targetSpan = alignments.getAlignedTargetSpan(sourceIndex, sourceIndex+1);
+			Assert.assertNotNull(targetSpan);
+			Assert.assertEquals(targetSpan.start, targetOffset+24);
+			Assert.assertEquals(targetSpan.end, targetOffset+25);
+			
+			sourceIndex = sourceOffset+23;
+			targetSpan = alignments.getAlignedTargetSpan(sourceIndex, sourceIndex+1);
+			Assert.assertNotNull(targetSpan);
+			Assert.assertEquals(targetSpan.start, Alignments.UNALIGNED);
+
+			sourceIndex = sourceOffset+24;
+			targetSpan = alignments.getAlignedTargetSpan(sourceIndex, sourceIndex+1);
+			Assert.assertNotNull(targetSpan);
+			Assert.assertEquals(targetSpan.start, targetOffset+31);
+			Assert.assertEquals(targetSpan.end, targetOffset+32);
+			
+			sourceIndex = sourceOffset+25;
+			targetSpan = alignments.getAlignedTargetSpan(sourceIndex, sourceIndex+1);
+			Assert.assertNotNull(targetSpan);
+			Assert.assertEquals(targetSpan.start, targetOffset+29);
+			Assert.assertEquals(targetSpan.end, targetOffset+30);
+			
+			sourceIndex = sourceOffset+26;
+			targetSpan = alignments.getAlignedTargetSpan(sourceIndex, sourceIndex+1);
+			Assert.assertNotNull(targetSpan);
+			Assert.assertEquals(targetSpan.start, targetOffset+32);
+			Assert.assertEquals(targetSpan.end, targetOffset+33);
+			
+			sourceIndex = sourceOffset+27;
+			targetSpan = alignments.getAlignedTargetSpan(sourceIndex, sourceIndex+1);
+			Assert.assertNotNull(targetSpan);
+			Assert.assertEquals(targetSpan.start, targetOffset+33);
+			Assert.assertEquals(targetSpan.end, targetOffset+34);
+			
+			sourceIndex = sourceOffset+28;
+			targetSpan = alignments.getAlignedTargetSpan(sourceIndex, sourceIndex+1);
+			Assert.assertNotNull(targetSpan);
+			Assert.assertEquals(targetSpan.start, targetOffset+34);
+			Assert.assertEquals(targetSpan.end, targetOffset+35);
+			
+			sourceIndex = sourceOffset+29;
+			targetSpan = alignments.getAlignedTargetSpan(sourceIndex, sourceIndex+1);
+			Assert.assertNotNull(targetSpan);
+			Assert.assertEquals(targetSpan.start, targetOffset+37);
+			Assert.assertEquals(targetSpan.end, targetOffset+38);
+
+			sourceIndex = sourceOffset+30;
+			targetSpan = alignments.getAlignedTargetSpan(sourceIndex, sourceIndex+1);
+			Assert.assertNotNull(targetSpan);
+			Assert.assertEquals(targetSpan.start, targetOffset+35);
+			Assert.assertEquals(targetSpan.end, targetOffset+38);
+
+			sourceIndex = sourceOffset+31;
+			targetSpan = alignments.getAlignedTargetSpan(sourceIndex, sourceIndex+1);
+			Assert.assertNotNull(targetSpan);
+			Assert.assertEquals(targetSpan.start, targetOffset+36);
+			Assert.assertEquals(targetSpan.end, targetOffset+39);	
+
+			sourceIndex = sourceOffset+32;
+			targetSpan = alignments.getAlignedTargetSpan(sourceIndex, sourceIndex+1);
+			Assert.assertNotNull(targetSpan);
+			Assert.assertEquals(targetSpan.start, targetOffset+39);
+			Assert.assertEquals(targetSpan.end, targetOffset+40);
+			
+			//TODO Test the rest of the spans for this sentence here
+			
+			sourceIndex = sourceOffset+0;
+			targetSpan = alignments.getAlignedTargetSpan(sourceIndex, sourceIndex+5);
+			Assert.assertNotNull(targetSpan);
+			Assert.assertEquals(targetSpan.start, targetOffset+0);
+			Assert.assertEquals(targetSpan.end, targetOffset+6);
+			
+			sourceIndex = sourceOffset+1;
+			targetSpan = alignments.getAlignedTargetSpan(sourceIndex, sourceIndex+5);
+			Assert.assertNotNull(targetSpan);
+			Assert.assertEquals(targetSpan.start, targetOffset+1);
+			Assert.assertEquals(targetSpan.end, targetOffset+6);
+			
+			
+			sourceIndex = sourceOffset+0;
+			targetSpan = alignments.getAlignedTargetSpan(sourceIndex, sourceIndex+33);
+			Assert.assertNotNull(targetSpan);
+			Assert.assertEquals(targetSpan.start, targetOffset+0);
+			Assert.assertEquals(targetSpan.end, targetOffset+40);
 			
 		}
 		

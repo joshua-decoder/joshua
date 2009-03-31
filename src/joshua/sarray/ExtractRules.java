@@ -19,6 +19,7 @@ package joshua.sarray;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectInput;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
@@ -32,9 +33,11 @@ import joshua.decoder.ff.tm.Rule;
 import joshua.util.Cache;
 import joshua.util.CommandLineParser;
 import joshua.util.CommandLineParser.Option;
+import joshua.util.io.BinaryIn;
 import joshua.util.sentence.Vocabulary;
 import joshua.util.sentence.alignment.AlignmentGrids;
 import joshua.util.sentence.alignment.Alignments;
+import joshua.util.sentence.alignment.MemoryMappedAlignmentGrids;
 
 
 /**
@@ -64,12 +67,20 @@ public class ExtractRules {
 
 			Option<String> source = commandLine.addStringOption('f',"source","SOURCE_FILE","Source language training file");
 			Option<Boolean> binarySource = commandLine.addBooleanOption("binary-source",false,"Is source corpus file in binary memory-mappable format");
+			Option<String> sourceSuffixes = commandLine.addStringOption("source-suffixes","SUFFIXES_FILE","","Binary memory-mappable source language training file suffix array");
+			Option<String> sourceSymbols = commandLine.addStringOption("source-vocab","VOCAB_FILE","","Binary memory-mappable source language training file vocabulary");
+			
 			
 			Option<String> target = commandLine.addStringOption('e',"target","TARGET_FILE","Target language training file");		
 			Option<Boolean> binaryTarget = commandLine.addBooleanOption("binary-target",false,"Is target corpus file in binary memory-mappable format");
+			Option<String> targetSuffixes = commandLine.addStringOption("target-suffixes","SUFFIXES_FILE","","Binary memory-mappable target language training file suffix array");
+			Option<String> targetSymbols = commandLine.addStringOption("target-vocab","VOCAB_FILE","","Binary memory-mappable target language training file vocabulary");
 			
 			
 			Option<String> alignment = commandLine.addStringOption('a',"alignments","ALIGNMENTS_FILE","Source-target alignments training file");	
+			Option<String> alignmentType = commandLine.addStringOption("alignmentsType","ALIGNMENT_TYPE","AlignmentGrids","Type of alignment data structure");
+						
+			
 			Option<String> test = commandLine.addStringOption('t',"test","TEST_FILE","Source language test file");
 
 			Option<String> output = commandLine.addStringOption('o',"output","OUTPUT_FILE","-","Output file");
@@ -94,7 +105,6 @@ public class ExtractRules {
 			Option<Boolean> print_prefixTree = commandLine.addBooleanOption("print-prefix-tree",false,"should prefix tree be printed to standard out (for debugging)");
 			Option<Boolean> print_rules = commandLine.addBooleanOption("print-rules",true,"should extracted rules be printed to standard out");
 			
-			Option<String> alignmentType = commandLine.addStringOption("alignmentsType","ALIGNMENT_TYPE","AlignmentGrids","Type of alignment data structure");
 			Option<Boolean> confirm = commandLine.addBooleanOption("confirm",false,"should program pause for user input before constructing prefix trees?");
 			Option<Boolean> keepTree = commandLine.addBooleanOption("keepTree",false,"should a single prefix tree be used (instead of one per sentence)?");
 			Option<Boolean> requireTightSpans = commandLine.addBooleanOption("tightSpans",true,"Require tightly aligned spans");
@@ -122,22 +132,92 @@ public class ExtractRules {
 			int maxCacheSize = commandLine.getValue(cacheSize);
 			if (logger.isLoggable(Level.INFO)) logger.info("Suffix array will cache hierarchical phrases for at most " + maxCacheSize + " patterns.");
 			
-			if (logger.isLoggable(Level.INFO)) logger.info("Constructing source language vocabulary.");
-			String sourceFileName = commandLine.getValue(source);
+			
+			////////////////////////////////
+			// Source language vocabulary //
+			////////////////////////////////
+			int numSourceWords, numSourceSentences;
 			Vocabulary sourceVocab = new Vocabulary();
-			int[] sourceWordsSentences = SuffixArrayFactory.createVocabulary(sourceFileName, sourceVocab);
+			String sourceFileName = commandLine.getValue(source);
+			String binarySourceVocabFileName = commandLine.getValue(sourceSymbols);
+			if ( binarySourceVocabFileName.equals("")) {
+				if (logger.isLoggable(Level.INFO)) logger.info("Constructing source language vocabulary from source corpus " + sourceFileName);
+				int[] sourceWordsSentences = SuffixArrayFactory.createVocabulary(sourceFileName, sourceVocab);
+				numSourceWords = sourceWordsSentences[0];
+				numSourceSentences = sourceWordsSentences[1];
+			} else {
+				if (logger.isLoggable(Level.INFO)) logger.info("Constructing source language vocabulary from binary file " + binarySourceVocabFileName);
+				ObjectInput in = BinaryIn.vocabulary(binarySourceVocabFileName);
+				sourceVocab.readExternal(in);
+				numSourceWords = Integer.MIN_VALUE;
+				numSourceSentences = Integer.MIN_VALUE;
+			}
+			
 			if (commandLine.getValue(confirm)) {
 			    if (logger.isLoggable(Level.INFO)) logger.info("Please press a key to continue");
 			    System.in.read();
 			}
 
+			
+			
+			//////////////////////////////////
+			// Source language corpus array //
+			//////////////////////////////////
 			Corpus sourceCorpusArray;
 			if (commandLine.getValue(binarySource)) {
 				if (logger.isLoggable(Level.INFO)) logger.info("Constructing memory mapped source language corpus array.");
 				sourceCorpusArray = new MemoryMappedCorpusArray(sourceVocab, sourceFileName);
+			} else if (numSourceSentences==Integer.MIN_VALUE || numSourceWords==Integer.MIN_VALUE) {
+				sourceCorpusArray = null;
+				logger.severe("If a binary source vocab file is specified, the corresponding source corpus must also be a binary file.");
+				System.exit(-1);
 			} else {
 				if (logger.isLoggable(Level.INFO)) logger.info("Constructing source language corpus array.");
-				sourceCorpusArray = SuffixArrayFactory.createCorpusArray(sourceFileName, sourceVocab, sourceWordsSentences[0], sourceWordsSentences[1]);
+				sourceCorpusArray = SuffixArrayFactory.createCorpusArray(sourceFileName, sourceVocab, numSourceWords, numSourceSentences);
+			}
+			if (commandLine.getValue(confirm)) {
+			    if (logger.isLoggable(Level.INFO)) logger.info("Please press a key to continue");
+			    System.in.read();
+			}
+
+			//////////////////////////////////
+			// Source language suffix array //
+			//////////////////////////////////
+			Suffixes sourceSuffixArray;
+			String binarySourceSuffixArrayFileName = commandLine.getValue(sourceSuffixes);
+			if (binarySourceSuffixArrayFileName.equals("")) {
+				if (logger.isLoggable(Level.INFO)) logger.info("Constructing source language suffix array from source corpus.");
+				sourceSuffixArray = SuffixArrayFactory.createSuffixArray(sourceCorpusArray, maxCacheSize);
+			} else {
+				if (logger.isLoggable(Level.INFO)) logger.info("Constructing source language suffix array from binary file " + binarySourceSuffixArrayFileName);
+				sourceSuffixArray = new MemoryMappedSuffixArray(binarySourceSuffixArrayFileName, sourceCorpusArray, maxCacheSize);
+			}
+			if (commandLine.getValue(confirm)) {
+			    if (logger.isLoggable(Level.INFO)) logger.info("Please press a key to continue");
+			    System.in.read();
+			}
+
+			
+			
+			////////////////////////////////
+			// Target language vocabulary //
+			////////////////////////////////
+			int numTargetWords, numTargetSentences;
+			Vocabulary targetVocab = new Vocabulary();
+			String targetFileName = commandLine.getValue(target);
+			String binaryTargetVocabFileName = commandLine.getValue(targetSymbols);
+			if ( binaryTargetVocabFileName.equals("")) {
+				if (logger.isLoggable(Level.INFO)) logger.info("Constructing target language vocabulary from target corpus " + targetFileName);		
+				targetFileName = commandLine.getValue(target);
+				int[] targetWordsSentences = SuffixArrayFactory.createVocabulary(commandLine.getValue(target), targetVocab);
+				numTargetWords = targetWordsSentences[0];
+				numTargetSentences = targetWordsSentences[1];
+			} else {
+				if (logger.isLoggable(Level.INFO)) logger.info("Constructing target language vocabulary from binary file " + binaryTargetVocabFileName);
+				ObjectInput in = BinaryIn.vocabulary(binaryTargetVocabFileName);
+				targetVocab.readExternal(in);
+				numTargetWords = Integer.MIN_VALUE;
+				numTargetSentences = Integer.MIN_VALUE;
 			}
 			
 			if (commandLine.getValue(confirm)) {
@@ -145,44 +225,41 @@ public class ExtractRules {
 			    System.in.read();
 			}
 
-			if (logger.isLoggable(Level.INFO)) logger.info("Constructing source language suffix array.");
-			Suffixes sourceSuffixArray = SuffixArrayFactory.createSuffixArray(sourceCorpusArray, maxCacheSize);
-			if (commandLine.getValue(confirm)) {
-			    if (logger.isLoggable(Level.INFO)) logger.info("Please press a key to continue");
-			    System.in.read();
-			}
-
-			if (logger.isLoggable(Level.INFO)) logger.info("Constructing target language vocabulary.");		
-			String targetFileName = commandLine.getValue(target);
-			Vocabulary targetVocab = new Vocabulary();
-			int[] targetWordsSentences = SuffixArrayFactory.createVocabulary(commandLine.getValue(target), targetVocab);
-			if (commandLine.getValue(confirm)) {
-			    if (logger.isLoggable(Level.INFO)) logger.info("Please press a key to continue");
-			    System.in.read();
-			}
-
+			
+			
+			//////////////////////////////////
+			// Target language corpus array //
+			//////////////////////////////////
 			Corpus targetCorpusArray;
 			if (commandLine.getValue(binaryTarget)) {
 				if (logger.isLoggable(Level.INFO)) logger.info("Constructing memory mapped target language corpus array.");
 				targetCorpusArray = new MemoryMappedCorpusArray(targetVocab, targetFileName);
+			} else if (numTargetSentences==Integer.MIN_VALUE || numTargetWords==Integer.MIN_VALUE) {
+				targetCorpusArray = null;
+				logger.severe("If a binary target vocab file is specified, the corresponding target corpus must also be a binary file.");
+				System.exit(-1);
 			} else {
 				if (logger.isLoggable(Level.INFO)) logger.info("Constructing target language corpus array.");
-				targetCorpusArray = SuffixArrayFactory.createCorpusArray(targetFileName, targetVocab, targetWordsSentences[0], targetWordsSentences[1]);
+				targetCorpusArray = SuffixArrayFactory.createCorpusArray(targetFileName, targetVocab, numTargetWords, numTargetSentences);
 			}
 			if (commandLine.getValue(confirm)) {
 			    if (logger.isLoggable(Level.INFO)) logger.info("Please press a key to continue");
 			    System.in.read();
 			}
 			
-//			Corpus sourceCorpusArray;
-//			if (commandLine.getValue(binarySource)) {
-//				sourceCorpusArray = new MemoryMappedCorpusArray(sourceVocab, sourceFileName);
-//			} else {
-//				sourceCorpusArray = SuffixArrayFactory.createCorpusArray(sourceFileName, sourceVocab, sourceWordsSentences[0], sourceWordsSentences[1]);
-//			}
 
-			if (logger.isLoggable(Level.INFO)) logger.info("Constructing target language suffix array.");
-			Suffixes targetSuffixArray = SuffixArrayFactory.createSuffixArray(targetCorpusArray, maxCacheSize);
+			//////////////////////////////////
+			// Target language suffix array //
+			//////////////////////////////////
+			Suffixes targetSuffixArray;
+			String binaryTargetSuffixArrayFileName = commandLine.getValue(targetSuffixes);
+			if (binaryTargetSuffixArrayFileName.equals("")) {
+				if (logger.isLoggable(Level.INFO)) logger.info("Constructing target language suffix array from target corpus.");
+				targetSuffixArray = SuffixArrayFactory.createSuffixArray(targetCorpusArray, maxCacheSize);
+			} else {
+				if (logger.isLoggable(Level.INFO)) logger.info("Constructing target language suffix array from binary file " + binaryTargetSuffixArrayFileName);
+				targetSuffixArray = new MemoryMappedSuffixArray(binaryTargetSuffixArrayFileName, targetCorpusArray, maxCacheSize);
+			}
 			if (commandLine.getValue(confirm)) {
 			    if (logger.isLoggable(Level.INFO)) logger.info("Please press a key to continue");
 			    System.in.read();
@@ -193,15 +270,27 @@ public class ExtractRules {
 				throw new RuntimeException("Source and target corpora have different number of sentences. This is bad.");
 			}
 			
+			
+			/////////////////////
+			// Alignment data  //
+			/////////////////////
 			if (logger.isLoggable(Level.INFO)) logger.info("Reading alignment data.");
 			String alignmentFileName = commandLine.getValue(alignment);
 			Alignments alignments;
-			if ("AlignmentArray".equals(commandLine.getValue(alignmentType))) {
+			String alignmentsType = commandLine.getValue(alignmentType);
+			if ("AlignmentArray".equals(alignmentsType)) {
 				if (logger.isLoggable(Level.INFO)) logger.info("Using AlignmentArray");
 				alignments = SuffixArrayFactory.createAlignmentArray(alignmentFileName, sourceSuffixArray, targetSuffixArray);
-			} else {
+			} else if ("AlignmentGrids".equals(alignmentsType) || "AlignmentsGrid".equals(alignmentsType)) {
 				if (logger.isLoggable(Level.INFO)) logger.info("Using AlignmentGrids");
 				alignments = new AlignmentGrids(new Scanner(new File(alignmentFileName)), sourceCorpusArray, targetCorpusArray, trainingSize, commandLine.getValue(requireTightSpans));
+			} else if ("MemoryMappedAlignmentGrids".equals(alignmentsType)) {
+				if (logger.isLoggable(Level.INFO)) logger.info("Using MemoryMappedAlignmentGrids");
+				alignments = new MemoryMappedAlignmentGrids(alignmentFileName, sourceCorpusArray, targetCorpusArray);
+			} else {
+				alignments = null;
+				logger.severe("Invalid alignment type: " + commandLine.getValue(alignmentType));
+				System.exit(-1);
 			}
 			if (commandLine.getValue(confirm)) {
 			    if (logger.isLoggable(Level.INFO)) logger.info("Please press a key to continue");

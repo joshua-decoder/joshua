@@ -40,7 +40,7 @@
   </test>
 
   <test name="MemoryMappedAlignmentGrids" >
-    <parameter name="alignmentsType" value="AlignmentGrids" />
+    <parameter name="alignmentsType" value="MemoryMappedAlignmentGrids" />
     <classes>
        <class name="joshua.util.sentence.alignment.AlignmentsTest" />   
        <class name="joshua.util.sentence.alignment.MemoryMappedAlignmentGridsTest" />

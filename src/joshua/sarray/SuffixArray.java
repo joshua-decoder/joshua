@@ -53,7 +53,6 @@ import java.util.logging.Logger;
  */
 public class SuffixArray extends AbstractSuffixArray implements Externalizable {
 	
-	
 	/**
 	 * A random number generator used in the quick sort
 	 * implementation.
@@ -62,7 +61,6 @@ public class SuffixArray extends AbstractSuffixArray implements Externalizable {
 	
 	
 	/** Logger for this class. */
-	@SuppressWarnings("unused")
 	private static final Logger logger = 
 		Logger.getLogger(SuffixArray.class.getName());
 	
@@ -274,12 +272,17 @@ public class SuffixArray extends AbstractSuffixArray implements Externalizable {
 		String binarySuffixesFilename = args[3];
 		String charset = (args.length > 4) ? args[4] : "UTF-8";
 		
+		logger.info("Constructing vocabulary from file " + corpusFileName);
 		Vocabulary symbolTable = new Vocabulary();
 		int[] lengths = SuffixArrayFactory.createVocabulary(corpusFileName, symbolTable);
 		
+		logger.info("Constructing corpus array from file " + corpusFileName);
 		CorpusArray corpusArray = SuffixArrayFactory.createCorpusArray(corpusFileName, symbolTable, lengths[0], lengths[1]);
+		
+		logger.info("Constructing suffix array from file " + corpusFileName);
 		SuffixArray suffixArray = SuffixArrayFactory.createSuffixArray(corpusArray, Cache.DEFAULT_CAPACITY);
 		
+		logger.info("Writing binary files to disk at " + binarySuffixesFilename + ", " + binaryCorpusFilename + ", and " + binaryVocabFilename + " using character encoding " + charset);
 		suffixArray.write(binarySuffixesFilename, binaryCorpusFilename, binaryVocabFilename, charset);
     }
     

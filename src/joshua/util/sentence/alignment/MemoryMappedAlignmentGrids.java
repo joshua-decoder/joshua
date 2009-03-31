@@ -30,34 +30,49 @@ public class MemoryMappedAlignmentGrids extends AbstractAlignmentGrids {
 		RandomAccessFile binaryFile = new RandomAccessFile( binaryAlignmentsFilename, "r" );
 	    FileChannel binaryChannel = binaryFile.getChannel();
 		
-	    int headerSize = 0;
 	    IntBuffer tmp;
 	    
 	    // Read the number of alignment grids
-	    tmp = binaryChannel.map( FileChannel.MapMode.READ_ONLY, headerSize, 4).asIntBuffer().asReadOnlyBuffer();
+	    int start = 0;
+	    int length = 4;
+	    tmp = binaryChannel.map( FileChannel.MapMode.READ_ONLY, start, length).asIntBuffer().asReadOnlyBuffer();
 	    this.size = tmp.get();
 	    
 	    // Memory map the widths of all grids
-	    this.widths = binaryChannel.map( FileChannel.MapMode.READ_ONLY, (headerSize+4), 4*size ).asIntBuffer().asReadOnlyBuffer();
+	    start += length;
+	    length = 4*size;
+	    this.widths = binaryChannel.map( FileChannel.MapMode.READ_ONLY, start, length).asIntBuffer().asReadOnlyBuffer();
 	  
 	    // Memory map the heights of all grids
-	    this.heights = binaryChannel.map( FileChannel.MapMode.READ_ONLY, (headerSize + 4 + 4*size), 4*size ).asIntBuffer().asReadOnlyBuffer();
+	    start += length;
+	    length = 4*size;
+	    this.heights = binaryChannel.map( FileChannel.MapMode.READ_ONLY, start, length ).asIntBuffer().asReadOnlyBuffer();
 	    
 	    // Memory map the cumulative counts for alignment points
-	    this.pointCounts = binaryChannel.map( FileChannel.MapMode.READ_ONLY, (headerSize + 4 + 4*size + 4*size), 4*size ).asIntBuffer().asReadOnlyBuffer();
+	    start += length;
+	    length = 4*(size+1);
+	    this.pointCounts = binaryChannel.map( FileChannel.MapMode.READ_ONLY, start, length ).asIntBuffer().asReadOnlyBuffer();
 	
-	    int totalPoints = pointCounts.get(size+1);
+	    int totalPoints = pointCounts.get(size);
 	    
-	    this.alignmentPoints = binaryChannel.map( FileChannel.MapMode.READ_ONLY, (headerSize + 4 + 4*size + 4*size + 4*size), 2*totalPoints ).asShortBuffer().asReadOnlyBuffer();
-	    this.reverseAlignmentPoints = binaryChannel.map( FileChannel.MapMode.READ_ONLY, (headerSize + 4 + 4*size + 4*size + 4*size + 2*totalPoints), 2*totalPoints ).asShortBuffer().asReadOnlyBuffer();
+	    start += length;
+	    length = 2*totalPoints;
+	    this.alignmentPoints = binaryChannel.map( FileChannel.MapMode.READ_ONLY, start, length ).asShortBuffer().asReadOnlyBuffer();
+	    
+	    start += length;
+	    length = 2*totalPoints;
+	    this.reverseAlignmentPoints = binaryChannel.map( FileChannel.MapMode.READ_ONLY, start, length ).asShortBuffer().asReadOnlyBuffer();
 	}
 	
 	@Override
 	protected int[] getSourcePoints(int sentenceId, int targetSpanStart,
 			int targetSpanEnd) {
 
-		int numPoints = pointCounts.get(sentenceId+1) - pointCounts.get(sentenceId);
+		int start = pointCounts.get(sentenceId);
+		int end = pointCounts.get(sentenceId+1);
+		int numPoints = end - start;
 		short[] reversePoints = new short[numPoints];
+		reverseAlignmentPoints.position(start);
 		reverseAlignmentPoints.get(reversePoints);
 		
 		return AlignmentGrid.getPoints(targetSpanStart, targetSpanEnd, widths.get(sentenceId), reversePoints);
@@ -68,8 +83,11 @@ public class MemoryMappedAlignmentGrids extends AbstractAlignmentGrids {
 	protected int[] getTargetPoints(int sentenceId, int sourceSpanStart,
 			int sourceSpanEnd) {
 		
-		int numPoints = pointCounts.get(sentenceId+1) - pointCounts.get(sentenceId);
+		int start = pointCounts.get(sentenceId);
+		int end = pointCounts.get(sentenceId+1);
+		int numPoints = end - start;
 		short[] points = new short[numPoints];
+		alignmentPoints.position(start);
 		alignmentPoints.get(points);
 		
 		return AlignmentGrid.getPoints(sourceSpanStart, sourceSpanEnd, heights.get(sentenceId), points);

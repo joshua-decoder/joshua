@@ -134,7 +134,8 @@ public class MemoryMappedCorpusArray extends AbstractCorpus {
 	private int binarySearch(int value) {
 
 		int low = 0;
-		int high = size() - 1;
+		//int high = size() - 1;
+		int high = numberOfSentences - 1;
 		
 		while (low <= high) {
 			int mid = (low + high) >>> 1;
@@ -156,7 +157,7 @@ public class MemoryMappedCorpusArray extends AbstractCorpus {
 	@Override
 	public int getSentencePosition(int sentenceID) {
 		if (sentenceID >= numberOfSentences) {
-			return numberOfWords-1;
+			return numberOfWords;
 		}
 		return binarySentenceBuffer.get(sentenceID);
 	}
