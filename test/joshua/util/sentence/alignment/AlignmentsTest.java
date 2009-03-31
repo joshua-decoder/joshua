@@ -19,6 +19,7 @@ package joshua.util.sentence.alignment;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.ObjectOutput;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.util.Date;
@@ -31,8 +32,8 @@ import joshua.sarray.Pattern;
 import joshua.sarray.PrefixTree;
 import joshua.sarray.SuffixArray;
 import joshua.sarray.SuffixArrayFactory;
+import joshua.util.io.BinaryOut;
 import joshua.util.sentence.Span;
-import joshua.util.sentence.Vocabulary;
 
 import org.testng.Assert;
 import org.testng.annotations.Parameters;
@@ -110,8 +111,16 @@ public class AlignmentsTest {
 				SuffixArrayFactory.createSuffixArray(sourceCorpusArray, SuffixArray.DEFAULT_CACHE_CAPACITY);
 			alignments = 
 				SuffixArrayFactory.createAlignmentArray(alignmentFileName, sourceSuffixArray, targetSuffixArray);
-		} else {
+		} else if (alignmentsType.equals("AlignmentGrids")) {
 			alignments = new AlignmentGrids(new Scanner(new File(alignmentFileName)), sourceCorpusArray, targetCorpusArray, 3);			
+		} else if (alignmentsType.equals("MemoryMappedAlignmentGrids")) {
+			AlignmentGrids grids = new AlignmentGrids(new Scanner(new File(alignmentFileName)), sourceCorpusArray, targetCorpusArray, 3);
+			
+			File mmAlignmentFile = File.createTempFile("memoryMappedAlignment", new Date().toString());
+			ObjectOutput out = new BinaryOut(mmAlignmentFile);
+			grids.writeExternal(out);
+			
+			alignments = new MemoryMappedAlignmentGrids(mmAlignmentFile.getAbsolutePath(), sourceCorpusArray, targetCorpusArray);
 		}
 		
 		

@@ -17,6 +17,10 @@
  */
 package joshua.util.sentence.alignment;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
@@ -36,7 +40,7 @@ import java.util.Iterator;
  * @author Lane Schwartz
  * @since  15 Dec 2008
  */
-public class AlignmentGrid {
+public class AlignmentGrid implements Externalizable {
 
 	//===============================================================
 	// Constants
@@ -61,7 +65,6 @@ public class AlignmentGrid {
 	protected int height;
 	protected short[] coordinates;
 	protected short[] transposedCoordinates;
-	protected boolean transposed = false;
 
 	/**
 	 * Constructor takes the small string representation of alignment points.
@@ -89,35 +92,20 @@ public class AlignmentGrid {
 	// Accessor methods (set/get)
 	//===========================================================
 
-	/**
-	 * @return the number of points in this grid
-	 * TODO Possibly delete this method, since it's not currently used.
-	 */
-//	public int cardinality() {
-//		return coordinates.length;
-//	}
 
 	/**
 	 * @return the width (X size) of the Grid
 	 */
 	public int getWidth() {
-		if (transposed) return height;
-		else return width;
+		return width;
 	}
 
 	/**
 	 * @return the height (Y size) of the Grid
 	 */
 	public int getHeight() {
-		if (transposed) return width;
-		else return height;
+		return height;
 	}
-
-	// TODO Possibly delete this method, since it's not currently used.
-	public boolean isTransposed() {
-		return transposed;
-	}
-
 
 	/**
 	 * Checks if a coordinate's values fall within the bounds of the Grid.
@@ -158,16 +146,6 @@ public class AlignmentGrid {
 				Arrays.equals(this.getCoordinates(),other.getCoordinates()));
 	}
 
-	/**
-	 * Checks if the given location is occupied in this grid.
-	 * @param location the coordinate location to check for.
-	 * @return true if the coordinate is within the bounds of the Grid and exists (is set to true)
-	 * 
-	 * TODO Possibly delete this method, since it's not currently used.
-	 */
-	public boolean contains(Coordinate location) {
-		return contains(location.x,location.y);
-	}
 
 	/**
 	 * Checks if a given location is present in the grid.
@@ -205,31 +183,6 @@ public class AlignmentGrid {
 		return array;	
 	}
 
-	/**
-	 * Exports the contents of this grid to a collection of Coordinates.
-	 * 
-	 * TODO Possibly delete this method, since it's not currently used.
-	 */
-	public Collection<Coordinate> generateCoordinates() {
-		HashSet<Coordinate> coordinates = new HashSet<Coordinate>();
-		short[] points = getCoordinates();
-		for(int i = 0; i < points.length; i++) {
-			short[] coordTuple = getLocation(points[i]);
-			Coordinate coord = new Coordinate((int) coordTuple[0], (int) coordTuple[1]);
-			coordinates.add(coord);
-		}
-		return coordinates;
-	}
-
-	/**
-	 * Grid's transpose just sets a boolean flag. Due to dual arrays, neither
-	 * direction is faster than the other.
-	 * 
-	 * TODO Possibly delete this method, since it's not currently used.
-	 */
-	public void transpose() {
-		transposed = !transposed;
-	}
 
 	/**
 	 * Returns a sorted list (includes any duplicates) of the target language indices that align with the given source language span.
@@ -252,7 +205,7 @@ public class AlignmentGrid {
 	}
 
 
-	public int[] getPoints(int start, int end, int maxKey, short[] points) {
+	public static int[] getPoints(int start, int end, int maxKey, short[] points) {
 		short startKey = getKey(start,0);
 		short endKey = getKey(end-1,maxKey);
 		int startIndex = Arrays.binarySearch(points, startKey);
@@ -350,7 +303,7 @@ public class AlignmentGrid {
 	/**
 	 * generates the short value stored for a given x,y pair
 	 */
-	protected short getKey(int x, int y) {
+	protected static short getKey(int x, int y) {
 		int key = x*X_SHIFT+y;
 		return (short)key;
 	}
@@ -368,12 +321,53 @@ public class AlignmentGrid {
 	}	
 
 	protected short[] getCoordinates() {
-		if (transposed) return transposedCoordinates;
-		else return coordinates;
+		return coordinates;
 	}
 	
 	protected short[] getTransposedCoordinates() {
-		if (transposed) return coordinates;
-		else return transposedCoordinates;
+		return transposedCoordinates;
+	}
+
+	public void readExternal(ObjectInput in) throws IOException,
+			ClassNotFoundException {
+
+		// Read the width and height of the grid
+		this.width = in.readInt();
+		this.height = in.readInt();
+		
+		// Read the number of alignment points
+		int numPoints = in.readInt();
+		
+		// Read the alignment points
+		this.coordinates = new short[numPoints];
+		for (int i=0; i<numPoints; i++) {
+			coordinates[i] = in.readShort();
+		}
+		
+		// Read the reverse alignment points
+		this.transposedCoordinates = new short[numPoints];
+		for (int i=0; i<numPoints; i++) {
+			transposedCoordinates[i] = in.readShort();
+		}
+	}
+
+	public void writeExternal(ObjectOutput out) throws IOException {
+		
+		// Write the width and height of the grid
+		out.writeInt(width);
+		out.writeInt(height);
+		
+		// Write the number of alignment points
+		out.writeInt(coordinates.length);
+		
+		// Write the alignment points
+		for (short point : coordinates) {
+			out.writeShort(point);
+		}
+		
+		// Write the reverse alignment points
+		for (short point : transposedCoordinates) {
+			out.writeShort(point);
+		}
 	}
 }

@@ -20,6 +20,9 @@ package joshua.util.io;
 import java.io.Closeable;
 import java.io.DataOutput;
 import java.io.Externalizable;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.Flushable;
 import java.io.IOException;
 import java.io.ObjectOutput;
@@ -64,6 +67,14 @@ public class BinaryOut implements DataOutput, ObjectOutput, Flushable, Closeable
 	private final utf8CharRange[] charSizeBuffer;
 	private final boolean writeObjects;
 
+	public BinaryOut(File file) throws FileNotFoundException, IOException {
+		this(new FileOutputStream(file), true);
+	}
+	
+	public BinaryOut(String filename) throws FileNotFoundException, IOException {
+		this(new File(filename));
+	}
+	
 	public BinaryOut(OutputStream out, boolean writeObjects) throws IOException {
 		this.out = out;
 		this.buffer = new byte[BUFFER_SIZE];

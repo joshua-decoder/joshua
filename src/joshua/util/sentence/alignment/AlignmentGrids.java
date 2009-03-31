@@ -17,18 +17,24 @@
  */
 package joshua.util.sentence.alignment;
 
+import java.io.Externalizable;
+import java.io.File;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
 import joshua.sarray.Corpus;
+import joshua.util.io.BinaryOut;
 
 /**
  * 
  * 
  * @author Lane Schwartz
  */
-public class AlignmentGrids extends AbstractAlignmentGrids {
+public class AlignmentGrids extends AbstractAlignmentGrids implements Externalizable {
 
 	private final List<AlignmentGrid> alignments;
 	
@@ -41,7 +47,7 @@ public class AlignmentGrids extends AbstractAlignmentGrids {
 	 * @param alignmentsFile
 	 * @param sourceCorpus
 	 * @param targetCorpus
-	 * @param expectedSize Expected number of training sentences. 
+	 * @param expectedSize Expected number of training sentences. This parameter merely specifies the initial capacity of an array list.
 	 */
 	public AlignmentGrids(Scanner alignmentScanner, Corpus sourceCorpus, Corpus targetCorpus, int expectedSize) {
 		this(alignmentScanner, sourceCorpus, targetCorpus, expectedSize, true);
@@ -56,7 +62,7 @@ public class AlignmentGrids extends AbstractAlignmentGrids {
 	 * @param alignmentsFile
 	 * @param sourceCorpus
 	 * @param targetCorpus
-	 * @param expectedSize Expected number of training sentences.
+	 * @param expectedSize Expected number of training sentences. This parameter merely specifies the initial capacity of an array list.
 	 * @param requireTightSpans 
 	 */
 	public AlignmentGrids(Scanner alignmentScanner, Corpus sourceCorpus, Corpus targetCorpus, int expectedSize, boolean requireTightSpans) {
@@ -84,5 +90,73 @@ public class AlignmentGrids extends AbstractAlignmentGrids {
 		
 		return grid.getTargetPoints(sourceSpanStart, sourceSpanEnd);
 	}
+
+	public void readExternal(ObjectInput in) throws IOException,
+			ClassNotFoundException {
+
+		throw new RuntimeException("Not supported");
+		
+	}
+
+	public void writeExternal(ObjectOutput out) throws IOException {
+		
+		// Start by writing the number of alignments
+		out.writeInt(alignments.size());
+		
+		// Write the widths of each grid
+		for (AlignmentGrid grid : alignments) {
+			out.writeInt(grid.width);
+		}
+		
+		// Write the widths of each grid
+		for (AlignmentGrid grid : alignments) {
+			out.writeInt(grid.height);
+		}
+		
+		// Write the number of alignment points in each grid
+		int pointCounter = 0;
+		out.writeInt(pointCounter);
+		for (AlignmentGrid grid : alignments) {
+			pointCounter += grid.coordinates.length; 
+			out.writeInt(pointCounter);
+		}
+
+
+		// Write the alignment points
+		for (AlignmentGrid grid : alignments) {
+			for (short point : grid.coordinates) {
+				out.writeShort(point);
+			}
+		}
+		
+		// Write the reverse alignment points
+		for (AlignmentGrid grid : alignments) {
+			for (short point : grid.transposedCoordinates) {
+				out.writeShort(point);
+			}
+		}
+		
+	}
+	
+	public static void main(String[] args) throws IOException {
+		
+		if (args.length < 4) {
+			System.err.println("Usage: java " + AlignmentGrids.class.getName() + " alignments alignments.bin");
+			System.exit(0);
+		}
+		
+		String alignmentsFileName = args[0];
+		String binaryAlignmentsFileName = args[1];
+
+		File alignmentsFile = new File(alignmentsFileName);
+		Scanner scanner = new Scanner(alignmentsFile);
+		
+		AlignmentGrids grids = new AlignmentGrids(scanner, null, null, 10);
+		
+		BinaryOut out = new BinaryOut(binaryAlignmentsFileName);
+		grids.writeExternal(out);
+		
+	}
 	
 }
+

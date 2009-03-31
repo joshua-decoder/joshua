@@ -41,10 +41,10 @@ public class MemoryMappedCorpusArray extends AbstractCorpus {
 	private final int numberOfWords;
 	private final int numberOfSentences;
 	
-	@SuppressWarnings("unused")
-	private final String corpusFilename;
-	@SuppressWarnings("unused")
-	private String vocabFilename;
+//	@SuppressWarnings("unused")
+//	private final String corpusFilename;
+//	@SuppressWarnings("unused")
+//	private String vocabFilename;
 	
 	/**
 	 * Constructs a corpus array from a binary file.
@@ -58,7 +58,7 @@ public class MemoryMappedCorpusArray extends AbstractCorpus {
 	 */
 	public MemoryMappedCorpusArray(String binaryFileName, String vocabFileName) throws IOException, ClassNotFoundException {
 		this(Vocabulary.readExternal(vocabFileName), binaryFileName);
-		this.vocabFilename = vocabFileName;
+//		this.vocabFilename = vocabFileName;
 	}
 	
 	/**
@@ -81,8 +81,8 @@ public class MemoryMappedCorpusArray extends AbstractCorpus {
 		) throws IOException {
 			
 			super(symbolTable);
-			this.corpusFilename = binaryFileName;
-			this.vocabFilename = null;
+//			this.corpusFilename = binaryFileName;
+//			this.vocabFilename = null;
 			
 			IntBuffer tmp;
 			

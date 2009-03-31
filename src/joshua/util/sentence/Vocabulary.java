@@ -467,8 +467,12 @@ public class Vocabulary extends AbstractSymbolTable implements Iterable<String>,
 					
 			// Store the word in the vocabulary
 			intToString.put(id, word);
-			terminalToInt.put(word, id);
 			
+			if (isNonterminal(id)) {
+				nonterminalToInt.put(word, id);
+			} else {
+				terminalToInt.put(word, id);
+			}
 		}
 		
 		// Now mark whether this vocabulary is fixed
