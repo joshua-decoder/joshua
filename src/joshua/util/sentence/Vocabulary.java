@@ -28,7 +28,6 @@ import java.util.*;
 import joshua.corpus.AbstractSymbolTable;
 import joshua.corpus.SymbolTable;
 import joshua.sarray.BasicPhrase;
-import joshua.sarray.SuffixArrayFactory;
 import joshua.util.io.BinaryIn;
 
 

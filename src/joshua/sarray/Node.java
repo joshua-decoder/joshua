@@ -53,7 +53,7 @@ public class Node implements Comparable<Node>, Grammar, Trie {
 	Map<Integer,Node> children;
 	
 	/** Source side hierarchical phrases for this node. */
-	HierarchicalPhrases sourceHierarchicalPhrases;
+	MatchedHierarchicalPhrases sourceHierarchicalPhrases;
 
 	//TODO It may be that this could be deleted, since it's also stored in sourceHierarchicalPhrases
 	/** Representation of the source side tokens corresponding to the hierarchical phrases for this node. */
@@ -215,7 +215,7 @@ public class Node implements Comparable<Node>, Grammar, Trie {
 	 * @param hierarchicalPhrases Source language hierarchical phrases.
 	 * @param sourceTokens Source language pattern that should correspond to the hierarchical phrases.
 	 */
-	public void storeResults(HierarchicalPhrases hierarchicalPhrases, Pattern sourcePattern) {
+	public void storeResults(MatchedHierarchicalPhrases hierarchicalPhrases, Pattern sourcePattern) {
 		
 		if (logger.isLoggable(Level.FINER)) {
 			logger.finer("Storing " + hierarchicalPhrases.size() + " source phrases at node " + objectID + ":");

@@ -391,14 +391,14 @@ public class ExtractRules {
 					if (logger.isLoggable(Level.FINER)) {
 						logger.finer("Prefix tree had " + prefixTree.size() + " nodes.");
 						
-						Cache<Pattern,HierarchicalPhrases> cache = sourceSuffixArray.getCachedHierarchicalPhrases();
+						Cache<Pattern,MatchedHierarchicalPhrases> cache = sourceSuffixArray.getCachedHierarchicalPhrases();
 						
 						if (cache != null) {
 							Pattern maxPattern = null;
 							int maxHPsize = 0;
 							int hpsize = 0;
 							int psize = 0;
-							for (Map.Entry<Pattern,HierarchicalPhrases> entry : cache.entrySet()) {
+							for (Map.Entry<Pattern,MatchedHierarchicalPhrases> entry : cache.entrySet()) {
 								psize++;
 								hpsize += entry.getValue().size();
 								if (hpsize>maxHPsize) {

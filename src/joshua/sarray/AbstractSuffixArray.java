@@ -49,22 +49,22 @@ public abstract class AbstractSuffixArray implements Suffixes {
 	 * so commonly accessed patterns will remain in the cache,
 	 * while rare patterns will eventually drop out of the cache.
 	 */
-	protected final Cache<Pattern,HierarchicalPhrases> hierarchicalPhraseCache;
+	protected final Cache<Pattern,MatchedHierarchicalPhrases> hierarchicalPhraseCache;
 	
 	
 	/** Integer array representation of the corpus for this suffix array. */
 	protected final Corpus corpus;
 	
-	public AbstractSuffixArray(Corpus corpus, Cache<Pattern,HierarchicalPhrases> hierarchicalPhraseCache) {
+	public AbstractSuffixArray(Corpus corpus, Cache<Pattern,MatchedHierarchicalPhrases> hierarchicalPhraseCache) {
 		this.hierarchicalPhraseCache = hierarchicalPhraseCache;
 		this.corpus = corpus;
 	}
 	
-	public Cache<Pattern,HierarchicalPhrases> getCachedHierarchicalPhrases() {
+	public Cache<Pattern,MatchedHierarchicalPhrases> getCachedHierarchicalPhrases() {
 		return hierarchicalPhraseCache;
 	}
 	
-	public HierarchicalPhrases createHierarchicalPhrases(int[] startPositions,
+	public MatchedHierarchicalPhrases createHierarchicalPhrases(int[] startPositions,
 			Pattern pattern, PrefixTree prefixTree) {
 
 		if (startPositions == null) {
@@ -218,7 +218,7 @@ public abstract class AbstractSuffixArray implements Suffixes {
 
 	public abstract int getCorpusIndex(int suffixIndex);
 
-	public HierarchicalPhrases getMatchingPhrases(Pattern pattern) {
+	public MatchedHierarchicalPhrases getMatchingPhrases(Pattern pattern) {
 		if (hierarchicalPhraseCache==null) {
 			return null;
 		} else {
@@ -239,7 +239,7 @@ public abstract class AbstractSuffixArray implements Suffixes {
 	}
 
 	public void setMatchingPhrases(Pattern pattern,
-			HierarchicalPhrases matchings) {
+			MatchedHierarchicalPhrases matchings) {
 		
 		if (hierarchicalPhraseCache==null) {
 			return;

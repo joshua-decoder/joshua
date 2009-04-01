@@ -39,6 +39,6 @@ public interface RuleExtractor {
 	 * @param sourceHierarchicalPhrases
 	 * @return
 	 */
-	public List<Rule> extractRules(Pattern sourcePattern, HierarchicalPhrases sourceHierarchicalPhrases);
+	public List<Rule> extractRules(Pattern sourcePattern, MatchedHierarchicalPhrases sourceHierarchicalPhrases);
 	
 }

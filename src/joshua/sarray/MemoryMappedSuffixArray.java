@@ -42,7 +42,7 @@ public class MemoryMappedSuffixArray extends AbstractSuffixArray {
 	 * @throws ClassNotFoundException 
 	 */
 	public MemoryMappedSuffixArray(String suffixesFileName, Corpus corpus, int maxCacheSize) throws IOException, ClassNotFoundException {
-		super(corpus, new Cache<Pattern,HierarchicalPhrases>(maxCacheSize));
+		super(corpus, new Cache<Pattern,MatchedHierarchicalPhrases>(maxCacheSize));
 		
 		RandomAccessFile binaryFile = new RandomAccessFile( suffixesFileName, "r" );
 	    FileChannel binaryChannel = binaryFile.getChannel();

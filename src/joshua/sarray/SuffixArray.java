@@ -87,7 +87,7 @@ public class SuffixArray extends AbstractSuffixArray implements Externalizable {
 	public SuffixArray(Corpus corpusArray, int maxCacheSize) {
 		super(corpusArray, 
 				(maxCacheSize > 0) ? 
-						new Cache<Pattern,HierarchicalPhrases>(maxCacheSize) :
+						new Cache<Pattern,MatchedHierarchicalPhrases>(maxCacheSize) :
 						null);
 		
 		suffixes = new int[corpusArray.size()];
@@ -123,7 +123,7 @@ public class SuffixArray extends AbstractSuffixArray implements Externalizable {
 	protected SuffixArray(int[] suffixes, Corpus corpusArray, int maxCacheSize) {
 		super(corpusArray, 
 				(maxCacheSize > 0) ? 
-						new Cache<Pattern,HierarchicalPhrases>(maxCacheSize) :
+						new Cache<Pattern,MatchedHierarchicalPhrases>(maxCacheSize) :
 						null);
 		
 		this.suffixes = suffixes;

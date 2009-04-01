@@ -35,7 +35,7 @@ import joshua.corpus.SymbolTable;
  * @since Jan 9 2009
  * @version $LastChangedDate$
  */
-public class HierarchicalPhrases {
+public class HierarchicalPhrases implements MatchedHierarchicalPhrases {
 
 	/** 
 	 * Represents a sequence of terminal and nonterminals as
@@ -128,13 +128,17 @@ public class HierarchicalPhrases {
 	 * @param pattern
 	 * @param phrases
 	 */
-	public HierarchicalPhrases(Pattern pattern, HierarchicalPhrases phrases) {
+	private HierarchicalPhrases(Pattern pattern, HierarchicalPhrases phrases) {
 		this.pattern = pattern;
 		this.size = phrases.size;
 		this.terminalSequenceStartIndices = phrases.terminalSequenceStartIndices;
 		this.terminalSequenceLengths = phrases.terminalSequenceLengths;
 		this.sentenceNumber = phrases.sentenceNumber;
 		this.prefixTree = phrases.prefixTree;
+	}
+	
+	public MatchedHierarchicalPhrases copyWith(Pattern pattern) {
+		return new HierarchicalPhrases(pattern, this);
 	}
 	
 	protected HierarchicalPhrases(Pattern pattern, List<Integer> data, List<Integer> sentenceNumbers, PrefixTree prefixTree) {
@@ -171,26 +175,9 @@ public class HierarchicalPhrases {
 		int[] terminalSequenceStartIndices = new int[n];
 		int[] terminalSequenceEndIndices = new int[n];
 		
-		//terminalSequenceStartIndices[phraseIndex*(terminalSequenceLengths.length)+positionNumber];
-		
-//		public int getStartPosition(int phraseIndex, int index) {
-//
-//			return terminalSequenceStartIndices[phraseIndex*(terminalSequenceLengths.length)+index];	
-//			
-//		}
-		
-//		terminalSequenceStartIndices[phraseIndex*(terminalSequenceLengths.length)+positionNumber] + terminalSequenceLengths[positionNumber]
-		
 		int nthPhraseIndex = phraseIndex*n;
 		for (int index=0; index<n; index++) {
-//			System.err.println("index == " + index);
-//			System.err.println("phraseIndex == " + phraseIndex);
-//			System.err.println("n == " + n);
-//			terminalSequenceStartIndices[index] = getStartPosition(phraseIndex, index); 
 			terminalSequenceStartIndices[index] = this.terminalSequenceStartIndices[nthPhraseIndex+index];
-			//terminalSequenceStartIndices[index] = terminalSequenceStartIndices[phraseIndex*(terminalSequenceLengths.length)+index];
-			//terminalSequenceStartIndices[phraseIndex*(terminalSequenceLengths.length)+index]; //getStartPosition(phraseIndex, index);
-//			terminalSequenceEndIndices[index] = getEndPosition(phraseIndex, index);
 			terminalSequenceEndIndices[index] = this.terminalSequenceStartIndices[nthPhraseIndex+index] + this.terminalSequenceLengths[index];
 		}
 		
@@ -212,33 +199,43 @@ public class HierarchicalPhrases {
 	 * @param j Index into M_alpha_b
 	 * @param list List where new data will be added
 	 */
-	protected static void partiallyConstruct(Pattern pattern, HierarchicalPhrases M_a_alpha, int i, HierarchicalPhrases M_alpha_b, int j, List<Integer> list) {
+	protected static void partiallyConstruct(Pattern pattern, MatchedHierarchicalPhrases M_a_alpha, int i, MatchedHierarchicalPhrases M_alpha_b, int j, List<Integer> list) {
 		
-		//boolean prefixEndsWithNonterminal = M_a_alpha.pattern.endsWithNonterminal();
-		boolean prefixEndsWithNonterminal = M_a_alpha.pattern.words[M_a_alpha.pattern.words.length-1] < 0;
+//		boolean prefixEndsWithNonterminal = M_a_alpha.pattern().words[M_a_alpha.pattern.words.length-1] < 0;
+		boolean prefixEndsWithNonterminal = M_a_alpha.getPattern().endsWithNonterminal();
+		
 		
 		// Get all start positions for the prefix phrase, and append them to the running list
-//		M_a_alpha.extractStartPositions(i, list);
 		{
-			int inclusiveStart = i*M_a_alpha.terminalSequenceLengths.length;//(1+M_a_alpha.pattern.arity);
-			int exclusiveEnd = inclusiveStart + M_a_alpha.terminalSequenceLengths.length;//(1+M_a_alpha.pattern.arity);
+			int numTerminalSequences = M_a_alpha.getNumberOfTerminalSequences();
+//			int inclusiveStart = i*M_a_alpha.terminalSequenceLengths.length;//(1+M_a_alpha.pattern.arity);
+//			int inclusiveStart = i*numTerminalSequences;
+//			int exclusiveEnd = inclusiveStart + M_a_alpha.terminalSequenceLengths.length;//(1+M_a_alpha.pattern.arity);
+//			int exclusiveEnd = inclusiveStart + numTerminalSequences;
 			
-			for (int index=inclusiveStart; index<exclusiveEnd; index++) {
-				list.add(M_a_alpha.terminalSequenceStartIndices[index]);
+			for (int index=0; index<numTerminalSequences; index++) {
+				list.add(M_a_alpha.getStartPosition(i, index));
 			}
+			
+//			for (int index=inclusiveStart; index<exclusiveEnd; index++) {
+//				list.add(M_a_alpha.terminalSequenceStartIndices[index]);
+//			}
 		}
 		
 		
 		if (prefixEndsWithNonterminal) {
-//			M_alpha_b.extractFinalStartPosition(j, list);		
 			// Get the final start positions for the suffix phrase, and append it to the running list
-//			int index = j*(1+M_alpha_b.pattern.arity) + M_alpha_b.pattern.arity;
-			int index = j*M_alpha_b.terminalSequenceLengths.length + (M_alpha_b.terminalSequenceLengths.length - 1);
-			list.add(M_alpha_b.terminalSequenceStartIndices[index]);	
+//			int index = j*M_alpha_b.terminalSequenceLengths.length + (M_alpha_b.terminalSequenceLengths.length - 1);
+//			list.add(M_alpha_b.terminalSequenceStartIndices[index]);	
+			int index = M_alpha_b.getNumberOfTerminalSequences() - 1;
+			list.add(M_alpha_b.getStartPosition(j, index));
 		} 
 		
 	}
 
+	public PrefixTree getPrefixTree() {
+		return this.prefixTree;
+	}
 	
 	/**
 	 * Implements the QUERY_INTERSECT algorithm from Adam Lopez's thesis (Lopez 2008).
@@ -249,52 +246,47 @@ public class HierarchicalPhrases {
 	 * @param M_alpha_b
 	 * @return
 	 */
-	static HierarchicalPhrases queryIntersect(Pattern pattern, HierarchicalPhrases M_a_alpha, HierarchicalPhrases M_alpha_b) {
+	static HierarchicalPhrases queryIntersect(Pattern pattern, MatchedHierarchicalPhrases M_a_alpha, MatchedHierarchicalPhrases M_alpha_b) {
 
 		if (logger.isLoggable(Level.FINER)) {
-			logger.finer("queryIntersect("+pattern+" M_a_alpha.size=="+M_a_alpha.size + ", M_alpha_b.size=="+M_alpha_b.size);			
+			logger.finer("queryIntersect("+pattern+" M_a_alpha.size=="+M_a_alpha.size() + ", M_alpha_b.size=="+M_alpha_b.size());			
 		}
 		
 		// results is M_{a_alpha_b} in the paper
-//		ArrayList<HierarchicalPhrase> results = new ArrayList<HierarchicalPhrase>();
 		ArrayList<Integer> data = new ArrayList<Integer>();
 		ArrayList<Integer> sentenceNumbers = new ArrayList<Integer>();
 		
-		int I = M_a_alpha.size;
-		int J = M_alpha_b.size;
+		int I = M_a_alpha.size();
+		int J = M_alpha_b.size();
 
 		int i = 0;
 		int j = 0;
 
 		while (i<I && j<J) {
-
-//			HierarchicalPhrase m_a_alpha, m_alpha_b;
-//			m_a_alpha = M_a_alpha.get(i);
-//			m_alpha_b = M_alpha_b.get(j);
 			
 			while (j<J && compare(M_a_alpha, i, M_alpha_b, j) > 0) {
 				j++; // advance j past no longer needed item in M_alpha_b
-				//m_alpha_b = M_alpha_b.get(j);
 			}
 
 			if (j>=J) break;
 			
-			//int k = i;
 			int l = j;
 			
-			//int M_alpha_b_StartPosition = M_alpha_b.terminalSequenceStartIndices[j*(M_alpha_b.terminalSequenceLengths.length)];
-			int M_alpha_b_length = M_alpha_b.terminalSequenceLengths.length;
+//			int M_alpha_b_length = M_alpha_b.getNumberOfTerminalSequences();//.terminalSequenceLengths.length;
+			
+//public int getStartPosition(int phraseIndex, int positionNumber) {
+//return terminalSequenceStartIndices[phraseIndex*(terminalSequenceLengths.length)+positionNumber];	
+					
+			
 			// Process all matchings in M_alpha_b with same first element
 			ProcessMatchings:
-			for (int jth_StartPosition = M_alpha_b.terminalSequenceStartIndices[j*M_alpha_b_length],
-					 lth_StartPosition = M_alpha_b.terminalSequenceStartIndices[l*M_alpha_b_length]; 
+			for (int jth_StartPosition = M_alpha_b.getStartPosition(j, 0), //.terminalSequenceStartIndices[j*M_alpha_b_length],
+					 lth_StartPosition = M_alpha_b.getStartPosition(l, 0);//.terminalSequenceStartIndices[l*M_alpha_b_length]; 
 					
 					jth_StartPosition == lth_StartPosition;
 					
-					jth_StartPosition = M_alpha_b.terminalSequenceStartIndices[j*M_alpha_b_length],
-					lth_StartPosition = M_alpha_b.terminalSequenceStartIndices[l*M_alpha_b_length]) {
-				
-//			while (M_alpha_b.getStartPosition(j, 0) == M_alpha_b.getStartPosition(l, 0)) {
+					jth_StartPosition = M_alpha_b.getStartPosition(j, 0),//.terminalSequenceStartIndices[j*M_alpha_b_length],
+					lth_StartPosition = M_alpha_b.getStartPosition(l, 0)) {//.terminalSequenceStartIndices[l*M_alpha_b_length]) {
 				
 				int compare_i_l = compare(M_a_alpha, i, M_alpha_b, l);
 				while (compare_i_l >= 0) {
@@ -302,9 +294,8 @@ public class HierarchicalPhrases {
 					if (compare_i_l == 0) {
 						
 						// append M_a_alpha[i] |><| M_alpha_b[l] to M_a_alpha_b
-//						results.add(new HierarchicalPhrase(pattern, M_a_alpha.get(i), M_alpha_b.get(l)));
 						HierarchicalPhrases.partiallyConstruct(pattern, M_a_alpha, i, M_alpha_b, l, data);
-						sentenceNumbers.add(M_a_alpha.sentenceNumber[i]);
+						sentenceNumbers.add(M_a_alpha.getSentenceNumber(i));//.sentenceNumber[i]);
 						
 					} // end if
 					
@@ -327,7 +318,7 @@ public class HierarchicalPhrases {
 			
 		} // end while
 		
-		return new HierarchicalPhrases(pattern, data, sentenceNumbers, M_a_alpha.prefixTree);
+		return new HierarchicalPhrases(pattern, data, sentenceNumbers, M_a_alpha.getPrefixTree());
 		
 	}
 	
@@ -350,30 +341,29 @@ public class HierarchicalPhrases {
 	 * <li> 1 if m_a_alpha and m_alpha_b cannot be paired, and m_a_alpha follows m_alpha_b in the corpus.</li>
 	 * </ul>
 	 */	
-	static int compare(HierarchicalPhrases m_a_alpha, final int i, HierarchicalPhrases m_alpha_b, final int j) {
+	static int compare(MatchedHierarchicalPhrases m_a_alpha, final int i, MatchedHierarchicalPhrases m_alpha_b, final int j) {
 	
-		int m_a_alphaTerminalSequenceLengths = m_a_alpha.terminalSequenceLengths.length;
-		int m_alpha_bTerminalSequenceLengths = m_alpha_b.terminalSequenceLengths.length;
+		int m_a_alphaTerminalSequenceLengths = m_a_alpha.getNumberOfTerminalSequences();//.terminalSequenceLengths.length;
+		int m_alpha_bTerminalSequenceLengths = m_alpha_b.getNumberOfTerminalSequences();//.terminalSequenceLengths.length;
 		
 		// Does the prefix (m_a_alpha) overlap with
 		//      the suffix (m_alpha_b) on any words?
 		boolean matchesOverlap;
 		//if (m_a_alpha.pattern.endsWithNonterminal() && 
 		// we assume that the nonterminal symbols will be denoted with negative numbers
-		if (m_a_alpha.pattern.words[m_a_alpha.pattern.words.length-1] < 0 &&
-				m_alpha_b.pattern.words[0] < 0 &&
+		if (m_a_alpha.getPattern().endsWithNonterminal() && //.words[m_a_alpha.getPattern().words.length-1] < 0 &&
+				m_alpha_b.getPattern().startsWithNonterminal() && //.words[0] < 0 &&
 				//m_alpha_b.pattern.startsWithNonterminal() &&
-				m_a_alpha.pattern.arity==1 &&
-				m_alpha_b.pattern.arity==1 &&
-				m_a_alpha.terminalSequenceLengths[0] == 1 &&
-				m_alpha_b.terminalSequenceLengths[0] == 1 )
+				m_a_alpha.getPattern().arity==1 &&
+				m_alpha_b.getPattern().arity==1 &&
+				m_a_alpha.getTerminalSequenceLength(0)==1 && //.terminalSequenceLengths[0] == 1 &&
+				m_alpha_b.getTerminalSequenceLength(0)==1)//.terminalSequenceLengths[0] == 1 )
 			matchesOverlap = false;
 		else
 			matchesOverlap = true;
 
-		//terminalSequenceStartIndices[phraseIndex*(terminalSequenceLengths.length)+positionNumber]
-		int prefixStartPosition = m_a_alpha.terminalSequenceStartIndices[i*(m_a_alphaTerminalSequenceLengths)]; //m_a_alpha.getStartPosition(i, 0);
-		int suffixStartPosition = m_alpha_b.terminalSequenceStartIndices[j*(m_alpha_bTerminalSequenceLengths)]; ///m_alpha_b.getStartPosition(j, 0);
+		int prefixStartPosition = m_a_alpha.getStartPosition(i, 0);//.terminalSequenceStartIndices[i*(m_a_alphaTerminalSequenceLengths)]; 
+		int suffixStartPosition = m_alpha_b.getStartPosition(j, 0);//.terminalSequenceStartIndices[j*(m_alpha_bTerminalSequenceLengths)]; 
 		
 		
 		if (matchesOverlap) {
@@ -382,10 +372,10 @@ public class HierarchicalPhrases {
 			int m_alpha_b_prefix_end;
 
 			// If the m_alpha_b pattern ends with a nonterminal
-			if (m_alpha_b.pattern.words[m_alpha_b.pattern.words.length-1] < 0 ||
+			if (m_alpha_b.getPattern().endsWithNonterminal() || //.words[m_alpha_b.pattern.words.length-1] < 0 ||
 			//if (m_alpha_b.pattern.endsWithNonterminal() ||
 					// ...or if the m_alpha_b pattern ends with two terminals
-					m_alpha_b.pattern.words[m_alpha_b.pattern.words.length-2] >= 0) {
+					m_alpha_b.getPattern().endsWithTwoTerminals()) { //.pattern.words[m_alpha_b.pattern.words.length-2] >= 0) {
 
 				m_alpha_b_prefix_end = m_alpha_b_prefix_start + m_alpha_bTerminalSequenceLengths;
 
@@ -399,22 +389,25 @@ public class HierarchicalPhrases {
 			int m_a_alpha_suffix_end;
 			boolean increment_m_a_alpha_suffix_start;
 
+			int m_a_alphaExtra;
+			
 			// If the m_a_alpha pattern starts with a nonterminal
 			//if (m_a_alpha.pattern.startsWithNonterminal()) {
-			if (m_a_alpha.pattern.words[0] < 0) {
+			if (m_a_alpha.getPattern().startsWithNonterminal()) { //.pattern.words[0] < 0) {
+				m_a_alphaExtra = 0;
 				m_a_alpha_suffix_start = i*m_a_alphaTerminalSequenceLengths;
 				m_a_alpha_suffix_end = m_a_alpha_suffix_start + m_a_alphaTerminalSequenceLengths;
 				increment_m_a_alpha_suffix_start = false;
-			} else if (m_a_alpha.pattern.words[1] >= 0) { 
+			} else if (m_a_alpha.getPattern().words[1] >= 0) { 
 				// Then the m_a_alpha pattern starts with two terminals
-
+				m_a_alphaExtra = 0;
 				m_a_alpha_suffix_start = i*m_a_alphaTerminalSequenceLengths;
 				m_a_alpha_suffix_end = m_a_alpha_suffix_start + m_a_alphaTerminalSequenceLengths;
 
 				increment_m_a_alpha_suffix_start = true;
 			} else {
 				// Then the m_a_alpha pattern starts with a terminal followed by a nonterminal
-
+				m_a_alphaExtra = 1;
 				m_a_alpha_suffix_start = i*m_a_alphaTerminalSequenceLengths + 1;
 				m_a_alpha_suffix_end = i*m_a_alphaTerminalSequenceLengths + m_a_alphaTerminalSequenceLengths;
 
@@ -432,16 +425,19 @@ public class HierarchicalPhrases {
 
 				for (int index=0; index<m_a_alpha_suffix_length; index++) {
 
-					int a = m_a_alpha.terminalSequenceStartIndices[m_a_alpha_suffix_start+index];
+//					int a = m_a_alpha.terminalSequenceStartIndices[m_a_alpha_suffix_start+index];
+					int a = m_a_alpha.getStartPosition(i, index+m_a_alphaExtra);
 					if (increment_m_a_alpha_suffix_start && index==0) {
 						a++;
 					}
-					int b = 0;
-					try {
-						b = m_alpha_b.terminalSequenceStartIndices[m_alpha_b_prefix_start+index];
-					} catch (ArrayIndexOutOfBoundsException e) { 
-						throw e;
-					}					
+					int b = m_alpha_b.getStartPosition(j, index);
+//					int b = m_alpha_b.terminalSequenceStartIndices[m_alpha_b_prefix_start+index];
+//					int b = 0;
+//					try {
+//						b = m_alpha_b.terminalSequenceStartIndices[m_alpha_b_prefix_start+index];
+//					} catch (ArrayIndexOutOfBoundsException e) { 
+//						throw e;
+//					}					
 					if (a > b) {
 						result = 1;
 						break;
@@ -450,31 +446,21 @@ public class HierarchicalPhrases {
 						break;
 					}
 				}
-				
-//				public int getEndPosition(int phraseIndex, int positionNumber) {
-//					
-//	terminalSequenceStartIndices[phraseIndex*(terminalSequenceLengths.length)+positionNumber] + terminalSequenceLengths[positionNumber];
-//	int positionNumber = m_alpha_b.terminalSequenceLengths.length-1;						
-//	m_alpha_b.getEndPosition(j, m_alpha_b.terminalSequenceLengths.length-1)
-//				
-//	terminalSequenceStartIndices[j*(m_alpha_b.terminalSequenceLengths.length)+positionNumber] + terminalSequenceLengths[positionNumber];			
-//				}
+				//return terminalSequenceStartIndices[phraseIndex*(terminalSequenceLengths.length)+positionNumber];	
 
 				if (result==0) {
-					//int length = m_alpha_b.getEndPosition(j, m_alpha_b.terminalSequenceLengths.length-1) - m_a_alpha.getStartPosition(i, 0);
 					int positionNumber = m_alpha_bTerminalSequenceLengths-1;
-					//int length = m_alpha_b.getEndPosition(j, m_alpha_b.terminalSequenceLengths.length-1) - prefixStartPosition; //m_a_alpha.getStartPosition(i, 0);
-					int length = m_alpha_b.terminalSequenceStartIndices[j*(m_alpha_bTerminalSequenceLengths)+positionNumber] + m_alpha_b.terminalSequenceLengths[positionNumber] - prefixStartPosition; //m_a_alpha.getStartPosition(i, 0);
+//					int length = m_alpha_b.terminalSequenceStartIndices[j*(m_alpha_bTerminalSequenceLengths)+positionNumber] + m_alpha_b.terminalSequenceLengths[positionNumber] - prefixStartPosition; //m_a_alpha.getStartPosition(i, 0);
+					int length = m_alpha_b.getStartPosition(j, positionNumber) + m_alpha_b.getTerminalSequenceLength(positionNumber) - prefixStartPosition;
 					
-					//int length = terminalSequenceStartIndices[j*(m_alpha_b.terminalSequenceLengths.length)+m_alpha_b.terminalSequenceLengths.length-1] + terminalSequenceLengths[positionNumber];
-					if (m_alpha_b.pattern.words[m_alpha_b.pattern.words.length-1] < 0)
-					//if (m_alpha_b.pattern.endsWithNonterminal())
-						length += m_a_alpha.prefixTree.minNonterminalSpan;
-					if (m_a_alpha.pattern.words[0] < 0)
-					//if (m_a_alpha.pattern.startsWithNonterminal())
-						length += m_a_alpha.prefixTree.minNonterminalSpan;
+					if (m_alpha_b.getPattern().endsWithNonterminal())
+//					if (m_alpha_b.getPattern().words[m_alpha_b.getPattern().words.length-1] < 0)
+						length += m_a_alpha.getPrefixTree().minNonterminalSpan;
+					if (m_a_alpha.getPattern().startsWithNonterminal())
+//					if (m_a_alpha.pattern.words[0] < 0)
+						length += m_a_alpha.getPrefixTree().minNonterminalSpan;
 
-					if (length > m_a_alpha.prefixTree.maxPhraseSpan) {
+					if (length > m_a_alpha.getPrefixTree().maxPhraseSpan) {
 						result = -1;
 					}
 				}
@@ -485,17 +471,17 @@ public class HierarchicalPhrases {
 		}
 		else {
 
-			if (m_a_alpha.sentenceNumber[i] < m_alpha_b.sentenceNumber[j])
+			if (m_a_alpha.getSentenceNumber(i) < m_alpha_b.getSentenceNumber(j))
+//			if (m_a_alpha.sentenceNumber[i] < m_alpha_b.sentenceNumber[j])
 				return -1;
-			else if (m_a_alpha.sentenceNumber[i] > m_alpha_b.sentenceNumber[j])
+			else if (m_a_alpha.getSentenceNumber(i) > m_alpha_b.getSentenceNumber(j))
+//			else if (m_a_alpha.sentenceNumber[i] > m_alpha_b.sentenceNumber[j])
 				return 1;
 			else {
-//				int prefixStartPosition = m_a_alpha.getStartPosition(i, 0);
-//				int suffixStartPosition = m_alpha_b.getStartPosition(j, 0);
 
 				if (prefixStartPosition >= suffixStartPosition-1)
 					return 1;
-				else if (prefixStartPosition <= suffixStartPosition-m_a_alpha.prefixTree.maxPhraseSpan)
+				else if (prefixStartPosition <= suffixStartPosition-m_a_alpha.getPrefixTree().maxPhraseSpan)
 					return -1;
 				else
 					return 0;
@@ -553,6 +539,18 @@ public class HierarchicalPhrases {
 		SymbolTable vocab = (prefixTree.suffixArray==null) ? null : prefixTree.suffixArray.getVocabulary();
 		
 		return new HierarchicalPhrases(new Pattern(vocab), Collections.<Integer>emptyList(), Collections.<Integer>emptyList(), prefixTree);
+	}
+
+	public int getSentenceNumber(int phraseIndex) {
+		return this.sentenceNumber[phraseIndex];
+	}
+
+	public Pattern getPattern() {
+		return this.pattern;
+	}
+
+	public int getTerminalSequenceLength(int i) {
+		return this.terminalSequenceLengths[i];
 	}
 	
 }

@@ -84,7 +84,7 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 		this.sampleSize = sampleSize;
 	}
 
-	public List<Rule> extractRules(Pattern sourcePattern, HierarchicalPhrases sourceHierarchicalPhrases) {
+	public List<Rule> extractRules(Pattern sourcePattern, MatchedHierarchicalPhrases sourceHierarchicalPhrases) {
 
 		if (logger.isLoggable(Level.FINE)) logger.fine("Extracting rules for source pattern: " + sourcePattern);
 		

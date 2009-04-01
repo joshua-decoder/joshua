@@ -52,7 +52,7 @@ public interface Suffixes {
 	 * @param pattern a contiguous phrase
 	 * @return a list of trivially hierarchical phrases
 	 */ 
-	public HierarchicalPhrases createHierarchicalPhrases(int[] startPositions, Pattern pattern, PrefixTree prefixTree);
+	public MatchedHierarchicalPhrases createHierarchicalPhrases(int[] startPositions, Pattern pattern, PrefixTree prefixTree);
 	
 	/**
 	 * Returns the number of suffixes in the suffix array, which
@@ -116,13 +116,13 @@ public interface Suffixes {
 	 * @return a list of hierarchical phrases that match the pattern if they are already cached
 	 *         or null if the pattern is not in the cache.
 	 */
-	public HierarchicalPhrases getMatchingPhrases(Pattern pattern);
+	public MatchedHierarchicalPhrases getMatchingPhrases(Pattern pattern);
 	
 	
 	/** 
 	 * Caches the matching hierarchical phrases for the pattern. 
 	 */
-	public void setMatchingPhrases(Pattern pattern, HierarchicalPhrases matchings);
+	public void setMatchingPhrases(Pattern pattern, MatchedHierarchicalPhrases matchings);
 	
 	/**
 	 * Gets all of the positions in the corpus for the bounds
@@ -138,6 +138,6 @@ public interface Suffixes {
 	 * 
 	 * @return the hierarchical phrase objects cached by this suffix array
 	 */
-	public Cache<Pattern,HierarchicalPhrases> getCachedHierarchicalPhrases();
+	public Cache<Pattern,MatchedHierarchicalPhrases> getCachedHierarchicalPhrases();
 	
 }
