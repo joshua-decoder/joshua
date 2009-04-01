@@ -64,25 +64,25 @@ public class HyperGraphPruning extends TrivialInsideOutside {
 	
 	
 	
-	public void clear_state(){
+	public void clearState(){
 		tbl_processed_items.clear();
-		super.clear_state();
+		super.clearState();
 	}
 	
 
 //	######################### pruning here ##############
 	public void pruning_hg(HyperGraph hg){
-		run_inside_outside(hg, 1, 2, 1.0);//viterbi-max, log-semiring
+		runInsideOutside(hg, 1, 2, 1.0);//viterbi-max, log-semiring
 		if(fix_threshold_pruning){
 			pruning_hg_real(hg);
-			super.clear_state();
+			super.clearState();
 		}else{
 			System.out.println("wrong call"); System.exit(0);
 		}			
 	}
 	
 	private void  pruning_hg_real(HyperGraph hg){
-		this.best_log_prob = get_normalization_constant();//set the best_log_prob
+		this.best_log_prob = getLogNormalizationConstant();//set the best_log_prob
 		
 		num_survived_deduction = 0;
 		num_survived_item = 0;

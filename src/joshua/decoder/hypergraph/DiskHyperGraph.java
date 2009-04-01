@@ -244,7 +244,7 @@ public class DiskHyperGraph {
 		for (int i = 1; i <= this.idToItem.size(); i++) {
 			writeItem(this.idToItem.get(i));
 		}
-		if (null != this.pruner) this.pruner.clear_state();
+		if (null != this.pruner) this.pruner.clearState();
 	}
 	
 	/**

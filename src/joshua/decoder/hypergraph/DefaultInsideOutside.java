@@ -34,7 +34,7 @@ import java.util.HashMap;
 //Note: this class requires the correctness of transition prob of each hyperedge, which itself may require the correctness of best_cost at each item
 
 public abstract class DefaultInsideOutside {
-	/*Two operations: add and multi
+	/**Two operations: add and multi
 	 * add: different hyperedges lead to a specific item
 	 * multi: prob of a derivation is a multi of all constituents
 	 **/
@@ -49,7 +49,7 @@ public abstract class DefaultInsideOutside {
 	private HashMap<HGNode,Double> tbl_outside_prob =  new HashMap<HGNode,Double>();//remember outside prob of each item
 	double normalization_constant = ONE_IN_SEMIRING;
 	
-	/* for each item, remember how many deductions pointering to me, this is needed for outside estimation
+	/** for each item, remember how many deductions pointering to me, this is needed for outside estimation
 	 * during outside estimation, an item will recursive call its deductions to do outside-estimation only after it itself is done with outside estimation, this is necessary because
 	 * the outside estimation of the items under its deductions require the item's outside value
 	 */
@@ -58,14 +58,14 @@ public abstract class DefaultInsideOutside {
 	private HashMap<HGNode,Integer> tbl_for_sanity_check = null;
 	
 	//get feature-set specific **log probability** for each hyperedge
-	protected abstract double get_deduction_prob(HyperEdge dt, HGNode parent_it);
+	protected abstract double getHyperedgeLogProb(HyperEdge dt, HGNode parent_it);
 	
-	protected  double get_deduction_prob(HyperEdge dt, HGNode parent_it, double scaling_factor){
-		return get_deduction_prob(dt, parent_it)*scaling_factor;
+	protected  double getHyperedgeLogProb(HyperEdge dt, HGNode parent_it, double scaling_factor){
+		return getHyperedgeLogProb(dt, parent_it)*scaling_factor;
 	}
 	
 	//the results are stored in tbl_inside_prob and tbl_outside_prob
-	public void run_inside_outside(HyperGraph hg, int add_mode, int semiring, double scaling_factor_){//add_mode||| 0: sum; 1: viterbi-min, 2: viterbi-max
+	public void runInsideOutside(HyperGraph hg, int add_mode, int semiring, double scaling_factor_){//add_mode||| 0: sum; 1: viterbi-min, 2: viterbi-max
 		setup_semiring(semiring, add_mode);
 		scaling_factor = scaling_factor_;
 		
@@ -80,7 +80,7 @@ public abstract class DefaultInsideOutside {
 	}
 	
 	//to save memory, external class should call this method
-	public  void clear_state(){
+	public  void clearState(){
 		tbl_num_parent_deductions.clear();
 		tbl_inside_prob.clear();
 		tbl_outside_prob.clear();
@@ -88,7 +88,7 @@ public abstract class DefaultInsideOutside {
 
 	//######### use of inside-outside probs ##########################
 	//this is the logZ where Z is the sum[ exp( log prob ) ]
-    public double get_normalization_constant(){
+    public double getLogNormalizationConstant(){
     	return normalization_constant;
     }
 	
@@ -106,7 +106,7 @@ public abstract class DefaultInsideOutside {
 		
 		//### add deduction/rule specific prob
 		double merit = multi_in_semiring(inside, outside);
-		merit = multi_in_semiring(merit, get_deduction_prob(dt, parent, this.scaling_factor));
+		merit = multi_in_semiring(merit, getHyperedgeLogProb(dt, parent, this.scaling_factor));
 		
 		return merit;
 	}	
@@ -114,7 +114,7 @@ public abstract class DefaultInsideOutside {
 	//normalized probabily in [0,1]
 	public double get_deduction_posterior_prob(HyperEdge dt, HGNode parent ){
 		if(SEMIRING==LOG_SEMIRING){
-			double res = Math.exp((get_deduction_unnormalized_posterior_log_prob(dt, parent)-get_normalization_constant()));
+			double res = Math.exp((get_deduction_unnormalized_posterior_log_prob(dt, parent)-getLogNormalizationConstant()));
 			//System.out.println("dt cost: " + dt.get_transition_cost(false)+" ;merit: " + get_deduction_unnormalized_posterior_log_prob(dt, parent) + "; prob: " + res);
 			if(res<0.0-1e-2 || res >1.0+1e-2){
 				System.out.println("res is not within [0,1], must be wrong value: " + res);
@@ -139,7 +139,7 @@ public abstract class DefaultInsideOutside {
 //	normalized probabily in [0,1]
 	public double get_hgnode_posterior_prob(HGNode node ){
 		if(SEMIRING==LOG_SEMIRING){
-			double res = Math.exp((get_hgnode_unnormalized_posterior_log_prob(node)-get_normalization_constant()));
+			double res = Math.exp((get_hgnode_unnormalized_posterior_log_prob(node)-getLogNormalizationConstant()));
 			//System.out.println("dt cost: " + dt.get_transition_cost(false)+" ;merit: " + get_deduction_unnormalized_posterior_log_prob(dt, parent) + "; prob: " + res);
 			if(res<0.0-1e-2 || res >1.0+1e-2){
 				System.out.println("res is not within [0,1], must be wrong value: " + res);
@@ -233,7 +233,7 @@ public abstract class DefaultInsideOutside {
 			}
 				
 		//### deduction operation
-		double deduct_prob = get_deduction_prob(dt, parent_item, this.scaling_factor);//feature-set specific	
+		double deduct_prob = getHyperedgeLogProb(dt, parent_item, this.scaling_factor);//feature-set specific	
 		inside_prob =  multi_in_semiring(inside_prob, deduct_prob);	
 		return inside_prob;
 	}
@@ -294,7 +294,7 @@ public abstract class DefaultInsideOutside {
 		//we do not need to outside prob if no ant items
 		if(dt.get_ant_items()!=null){
 			//### deduction specific prob
-			double deduction_prob = get_deduction_prob(dt, parent_item, this.scaling_factor);//feature-set specific
+			double deduction_prob = getHyperedgeLogProb(dt, parent_item, this.scaling_factor);//feature-set specific
 			
 			//### recursive call on each ant item
 			for(HGNode ant_it : dt.get_ant_items()){
