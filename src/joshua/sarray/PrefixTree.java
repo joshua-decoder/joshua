@@ -25,7 +25,6 @@ import joshua.util.sentence.alignment.Alignments;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -48,14 +47,6 @@ public class PrefixTree {
 
 	/** Integer representation of the nonterminal X. All nonterminals are guaranteed to be represented by negative integers. */
 	public static final int X = -1;
-	
-	/** 
-	 * Vocabulary of nonterminal symbols. 
-	 * Maps from the integer representation of a nonterminal 
-	 * to the string representation of the nonterminal.
-	 */
-	static final Map<Integer,String> ntVocab = new HashMap<Integer,String>();
-	static { ntVocab.put(X, "X"); }
 	
 	/** Operating system-specific end of line character(s). */
 	static final byte[] newline = System.getProperty("line.separator").getBytes();

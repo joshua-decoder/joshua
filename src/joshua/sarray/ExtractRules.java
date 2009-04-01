@@ -344,6 +344,9 @@ public class ExtractRules {
 			
 			PrefixTree prefixTree = null;
 			while (testFileScanner.hasNextLine()) {
+				
+				Node.resetNodeCounter();
+				
 				String line = testFileScanner.nextLine();
 				lineNumber++;
 				int[] words = sourceVocab.getIDs(line);
@@ -353,7 +356,18 @@ public class ExtractRules {
 				if (oneTreePerSentence || null==prefixTree) {
 					prefixTree = new PrefixTree(sourceSuffixArray, targetCorpusArray, alignments, sourceSuffixArray.getVocabulary(), lexProbs, ruleExtractor, commandLine.getValue(maxPhraseSpan), commandLine.getValue(maxPhraseLength), commandLine.getValue(maxNonterminals), commandLine.getValue(minNonterminalSpan));
 				}
-				prefixTree.add(words);
+				try {
+					prefixTree.add(words);
+				} catch (OutOfMemoryError e) {
+					logger.warning("Out of memory - attempting to clear cache to free space");
+					sourceSuffixArray.getCachedHierarchicalPhrases().clear();
+					targetSuffixArray.getCachedHierarchicalPhrases().clear();
+					prefixTree = null;
+					System.gc();
+					logger.info("Cleared cache and collected garbage. Now attempting to re-construct prefix tree...");
+					prefixTree = new PrefixTree(sourceSuffixArray, targetCorpusArray, alignments, sourceSuffixArray.getVocabulary(), lexProbs, ruleExtractor, commandLine.getValue(maxPhraseSpan), commandLine.getValue(maxPhraseLength), commandLine.getValue(maxNonterminals), commandLine.getValue(minNonterminalSpan));
+					prefixTree.add(words);
+				}
 				
 				if (commandLine.getValue(print_prefixTree)==true) {
 					System.out.println(prefixTree.toString());
@@ -405,6 +419,9 @@ public class ExtractRules {
 				}
 			}
 			
+		} catch (OutOfMemoryError e) {
+			System.out.println("Node ID counter is at " + Node.nodeIDCounter);
+			e.printStackTrace();
 		} catch (Throwable e) {
 			e.printStackTrace();
 		} finally {

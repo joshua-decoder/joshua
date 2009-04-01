@@ -422,7 +422,6 @@ public class Node implements Comparable<Node>, Grammar, Trie {
 	}
 
 	public int getNumRules() {
-		// TODO Auto-generated method stub
-		return 0;
+		throw new RuntimeException("Not yet implemented");
 	}
 }
