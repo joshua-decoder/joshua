@@ -420,4 +420,9 @@ public class Node implements Comparable<Node>, Grammar, Trie {
 	static void resetNodeCounter() {
 		nodeIDCounter = 0;
 	}
+
+	public int getNumRules() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
 }

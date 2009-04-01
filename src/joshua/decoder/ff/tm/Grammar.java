@@ -59,6 +59,13 @@ public interface Grammar {
 	
 	
 	/**
+	 * return number of rules stored in the grammar
+	 */
+	public int getNumRules();
+	
+	
+	
+	/**
 	 * Construct an OOV rule for the word source. Only called
 	 * when creating oov rule in Chart or DiskHypergraph, all
 	 * the transition cost for phrase model, arity penalty,

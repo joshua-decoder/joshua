@@ -334,4 +334,9 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
 	public int getOOVRuleID() {
 		return OOV_RULE_ID;
 	}
+
+	public int getNumRules() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
 }

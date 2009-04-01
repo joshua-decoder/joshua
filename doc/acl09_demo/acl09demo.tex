@@ -7,7 +7,7 @@
 \usepackage{times}
 \usepackage{latexsym}
 \usepackage{multirow}
-\usepackage{clrscode}
+%\usepackage{clrscode}
 \usepackage{amscd}
 \usepackage{amsmath}
 \usepackage{amssymb}
@@ -84,7 +84,7 @@ To combat these issues, the Joshua toolkit integrates most critical components o
   google & 31.14 \\
   lium & 26.89 \\
   dcu & 26.86 \\
-  {\bf joshua} & {\bf 26.52} \\ 
+  {\bf joshua} & {\bf 26.52} \\
   uka & 25.96 \\
   limsi & 25.51 \\
   uedin & 25.44 \\
@@ -119,14 +119,14 @@ To alleviate these issues, we extract only a subset of all available rules. Spec
 
 Joshua incorporates direct access to the suffix array into the decoder, allowing for rule extraction to be performed for each input sentence individually. Running rule extraction as a stand-alone pre-processing step is also supported.
 
-%be run as a pre-processing step to extract the rules needed to translate a particular test set, as well as 
+%be run as a pre-processing step to extract the rules needed to translate a particular test set, as well as
 
 % to directly access the suffix array. This will allow the decoder at runtime to efficiently extract exactly those rules needed to translate a particular sentence, without the need for a rule extraction pre-processing step.
 
 \item \textbf{Grammar formalism:} Our decoder assumes a probabilistic synchronous context-free grammar (SCFG). Currently, it only handles SCFGs of the kind extracted by Heiro \cite{Chiang2007}, but is easily extensible to more general SCFGs (as in \newcite{Galley2006}) and closely related formalisms like synchronous tree substitution grammars \cite{Eisner2003}.
 
-\item \textbf{Chart parsing:} Given a source sentence to decode, the decoder generates a one-best or $k$-best translations using the CKY algorithm. 
-%Specifically, the decoding algorithm  maintains a \emph{chart}, which contains an array of \emph{cells}. Each cell in turn maintains a list of proven \emph{items}. The parsing process starts with the axioms, and proceeds by applying the inference rules repeatedly to prove new items until proving a goal item. Whenever the parser proves a new item, it adds the item to the appropriate chart cell. %The item 
+\item \textbf{Chart parsing:} Given a source sentence to decode, the decoder generates a one-best or $k$-best translations using the CKY algorithm.
+%Specifically, the decoding algorithm  maintains a \emph{chart}, which contains an array of \emph{cells}. Each cell in turn maintains a list of proven \emph{items}. The parsing process starts with the axioms, and proceeds by applying the inference rules repeatedly to prove new items until proving a goal item. Whenever the parser proves a new item, it adds the item to the appropriate chart cell. %The item
 In addition to standard CKY, the system also maintains backpointers, which are used for $k$-best extraction.
 
 \item \textbf{Pruning:} Severe pruning is needed in order to make the decoding computationally feasible for SCFGs with large target-language vocabularies. In our decoder, we incorporate two pruning techniques: beam- and cube-pruning \cite{Chiang2007}.
