@@ -339,7 +339,7 @@ public class BloomFilterLanguageModel extends DefaultNGramLanguageModel implemen
 	private void populateFromInputStream(InputStream source)
 	{
 		numTokens = -1;
-		int num_lines = 0;
+//		int num_lines = 0;
 		int [] prefix = null;
 		int prefixTypesAfter = 0;
 		try {

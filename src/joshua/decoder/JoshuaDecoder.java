@@ -31,24 +31,25 @@ import joshua.decoder.ff.lm.srilm.LMGrammarSRILM;
 import joshua.decoder.ff.tm.GrammarFactory;
 import joshua.decoder.ff.tm.HieroGrammar.MemoryBasedBatchGrammar;
 import joshua.sarray.Corpus;
-import joshua.sarray.CorpusArray;
+import joshua.sarray.MemoryMappedCorpusArray;
+import joshua.sarray.MemoryMappedSuffixArray;
 import joshua.sarray.SAGrammarFactory;
 import joshua.sarray.SampledLexProbs;
-import joshua.sarray.SuffixArrayFactory;
 import joshua.sarray.Suffixes;
 import joshua.corpus.SymbolTable;
+import joshua.util.io.BinaryIn;
 import joshua.util.io.LineReader;
 import joshua.util.FileUtility;
 import joshua.util.Regex;
 import joshua.util.lexprob.LexicalProbabilities;
-import joshua.util.sentence.alignment.AlignmentGrids;
+import joshua.util.sentence.Vocabulary;
 import joshua.util.sentence.alignment.Alignments;
+import joshua.util.sentence.alignment.MemoryMappedAlignmentGrids;
 
 import java.io.BufferedWriter;
-import java.io.File;
 import java.io.IOException;
+import java.io.ObjectInput;
 import java.util.ArrayList;
-import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -203,7 +204,7 @@ public class JoshuaDecoder {
 					
 					try {
 						initializeSuffixArrayGrammar();
-					} catch (IOException e) {
+					} catch (Exception e) {
 						logger.severe("Error reading suffix array grammar - exiting decoder.");
 						e.printStackTrace();
 						System.exit(-1);
@@ -222,7 +223,7 @@ public class JoshuaDecoder {
 			this.initializeFeatureFunctions(configFile);
 			
 			
-			// Sort the TM grammars
+			// Sort the TM grammars (needed to do cube pruning)
 			// BUG: this works for Batch grammar only; not for sentence-specific grammars
 			for (GrammarFactory grammarFactory : this.grammarFactories) {
 				grammarFactory.getGrammarForSentence(null)
@@ -353,36 +354,104 @@ public class JoshuaDecoder {
 	}
 	
 	
-	private void initializeSuffixArrayGrammar() throws IOException {
+	private void initializeSuffixArrayGrammar() throws IOException, ClassNotFoundException {
 		initializeGlueGrammar();
 		
-		if (logger.isLoggable(Level.INFO))
+		
+		int maxCacheSize = JoshuaConfiguration.sa_rule_cache_size;
+		
+		String binarySourceVocabFileName = 
+			JoshuaConfiguration.sa_source + "." + JoshuaConfiguration.sa_vocab_suffix;
+		
+		String binarySourceCorpusFileName =
+			JoshuaConfiguration.sa_source + "." + JoshuaConfiguration.sa_corpus_suffix;
+		
+		String binarySourceSuffixesFileName =
+			JoshuaConfiguration.sa_target + "." + JoshuaConfiguration.sa_suffixes_suffix;
+		
+		
+		String binaryTargetVocabFileName = 
+			JoshuaConfiguration.sa_target + "." + JoshuaConfiguration.sa_vocab_suffix;
+		
+		String binaryTargetCorpusFileName =
+			JoshuaConfiguration.sa_target + "." + JoshuaConfiguration.sa_corpus_suffix;
+		
+		String binaryTargetSuffixesFileName =
+			JoshuaConfiguration.sa_target + "." + JoshuaConfiguration.sa_suffixes_suffix;
+		
+		
+		
+		if (logger.isLoggable(Level.INFO)) 
 			logger.info(
-				"Using SuffixArray grammar constructed from " +
-				"source "    + JoshuaConfiguration.sa_source + ", " +
-				"target "    + JoshuaConfiguration.sa_target + ", " +
-				"alignment " + JoshuaConfiguration.sa_alignment);
-		// TODO: SA creation is a constant thing which should be done earlier in the pipeline. Here we should only load the already-created SA
+					"Reading source language vocabulary from " + 
+					binarySourceVocabFileName);
+		Vocabulary sourceVocab = new Vocabulary(); {
+			ObjectInput in = BinaryIn.vocabulary(binarySourceVocabFileName);
+			sourceVocab.readExternal(in);
+		}
 		
-		Corpus sourceCorpusArray =
-			SuffixArrayFactory.createCorpusArray(
-				JoshuaConfiguration.sa_source, this.symbolTable);
-		Suffixes sourceSuffixArray =
-			SuffixArrayFactory.createSuffixArray(
-				sourceCorpusArray, JoshuaConfiguration.sa_rule_cache_size);
 		
-		CorpusArray targetCorpusArray =
-			SuffixArrayFactory.createCorpusArray(
-				JoshuaConfiguration.sa_target);
-		Suffixes targetSuffixArray =
-			SuffixArrayFactory.createSuffixArray(
-				targetCorpusArray, JoshuaConfiguration.sa_rule_cache_size);
+		if (logger.isLoggable(Level.INFO)) 
+			logger.info(
+					"Reading source language corpus from " + 
+					binarySourceCorpusFileName);
+		Corpus sourceCorpusArray = 
+			new MemoryMappedCorpusArray(sourceVocab, binarySourceCorpusFileName);
 		
-		String alignmentFileName = JoshuaConfiguration.sa_alignment;
-		int trainingSize = sourceCorpusArray.getNumSentences();
-		Alignments alignments = new AlignmentGrids(
-				new Scanner(new File(alignmentFileName)),
-				sourceCorpusArray, targetCorpusArray, trainingSize);
+		
+		if (logger.isLoggable(Level.INFO)) 
+			logger.info(
+					"Reading source language suffix array from " + 
+					binarySourceSuffixesFileName);
+		Suffixes sourceSuffixArray = 
+			new MemoryMappedSuffixArray(
+					binarySourceSuffixesFileName, 
+					sourceCorpusArray, 
+					maxCacheSize);
+		
+		
+		
+		
+		if (logger.isLoggable(Level.INFO)) 
+			logger.info(
+					"Reading target language vocabulary from " + 
+					binarySourceVocabFileName);
+		Vocabulary targetVocab = new Vocabulary(); {
+			ObjectInput in = BinaryIn.vocabulary(binaryTargetVocabFileName);
+			sourceVocab.readExternal(in);
+		}
+		
+		
+		if (logger.isLoggable(Level.INFO)) 
+			logger.info(
+					"Reading target language corpus from " + 
+					binaryTargetCorpusFileName);
+		Corpus targetCorpusArray = 
+			new MemoryMappedCorpusArray(targetVocab, binaryTargetCorpusFileName);
+
+		
+		if (logger.isLoggable(Level.INFO)) 
+			logger.info(
+					"Reading target language suffix array from " + 
+					binaryTargetSuffixesFileName);
+		Suffixes targetSuffixArray = 
+			new MemoryMappedSuffixArray(
+					binaryTargetSuffixesFileName, 
+					targetCorpusArray, 
+					maxCacheSize);
+		
+		
+		String binaryAlignmentFileName = JoshuaConfiguration.sa_alignment;
+		if (logger.isLoggable(Level.INFO)) 
+			logger.info(
+					"Reading alignment grid data from " + 
+					binaryAlignmentFileName);
+		Alignments alignments = 
+			new MemoryMappedAlignmentGrids(
+					binaryAlignmentFileName, 
+					sourceCorpusArray, 
+					targetCorpusArray);
+
 		
 		LexicalProbabilities lexProbs = new SampledLexProbs(
 			JoshuaConfiguration.sa_lex_sample_size,

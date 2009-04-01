@@ -106,7 +106,7 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 
 		// For each sample HierarchicalPhrase
 		for (int i=0; i<totalPossibleTranslations; i+=stepSize) { 
-			HierarchicalPhrase sourcePhrase = sourceHierarchicalPhrases.get(i);
+			HierarchicalPhrase sourcePhrase = sourceHierarchicalPhrases.get(i, suffixArray.getCorpus());
 			//for (HierarchicalPhrase sourcePhrase : samples) {
 			// We may want to extract the alignment points at this point, rather than deeper on because we're doing this somewhat redundantly in getTranslation and calculateLexProbs
 			Pattern translation = getTranslation(sourcePhrase);

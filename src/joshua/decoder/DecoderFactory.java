@@ -93,9 +93,12 @@ public class DecoderFactory {
 		//==== compute number of lines for each decoder
 		int n_lines = 0; {
 			LineReader testReader = new LineReader(test_file);
-			try { for (String cn_sent : testReader) {
-				n_lines++;
-			} } finally { testReader.close(); }
+			try { 
+				n_lines = testReader.countLines();
+				//				for (String cn_sent : testReader) {
+				//				n_lines++;
+				//			} 
+			} finally { testReader.close(); }
 		}
 		
 		double num_per_thread_double = n_lines * 1.0 / JoshuaConfiguration.num_parallel_decoders;

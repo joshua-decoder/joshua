@@ -180,16 +180,16 @@ public class PrefixTree {
 		this.maxPhraseLength = maxPhraseLength;
 		this.maxNonterminals = maxNonterminals;
 		this.minNonterminalSpan = minNonterminalSpan;
-
+		this.vocab = vocab;
 
 		Node bot = new Node(this,BOT_NODE_ID);
-		bot.sourceHierarchicalPhrases = HierarchicalPhrases.emptyList(this);
+		bot.sourceHierarchicalPhrases = HierarchicalPhrases.emptyList(vocab);
 		
 		this.root = new Node(this,ROOT_NODE_ID);
 		bot.children = botMap(root);
 		this.root.linkToSuffix(bot);
 
-		this.vocab = vocab;
+
 		
 //		if (suffixArray==null) {
 ////			vocab = null;
@@ -199,7 +199,7 @@ public class PrefixTree {
 			int[] bounds = {0, suffixArray.size()-1};
 			root.setBounds(bounds);
 		}
-		root.sourceHierarchicalPhrases = HierarchicalPhrases.emptyList(this);
+		root.sourceHierarchicalPhrases = HierarchicalPhrases.emptyList(vocab);
 
 		// Define epsilon to be an empty pattern
 		epsilon = new Pattern(vocab);
@@ -214,7 +214,7 @@ public class PrefixTree {
 			
 			{ 	// Set the list of hierarchical phrases be for the X node that comes off of ROOT to an empty list.
 				// Alternatively, one could consider every phrase in the corpus to match here.
-				xnode.sourceHierarchicalPhrases = HierarchicalPhrases.emptyList(this);
+				xnode.sourceHierarchicalPhrases = HierarchicalPhrases.emptyList(vocab);
 				if (suffixArray != null)
 					xnode.sourcePattern = new Pattern(suffixArray.getVocabulary(), X);
 				
@@ -457,12 +457,12 @@ public class PrefixTree {
 			// Get the first and last index in the suffix array for the specified pattern
 			int[] bounds = suffixArray.findPhrase(pattern, 0, pattern.size(), prefixNode.lowBoundIndex, prefixNode.highBoundIndex);
 			if (bounds==null) {
-				result = HierarchicalPhrases.emptyList(this);
+				result = HierarchicalPhrases.emptyList(vocab);
 				//TOOD Should node.setBounds(bounds) be called here?
 			} else {
 				node.setBounds(bounds);
 				int[] startingPositions = suffixArray.getAllPositions(bounds);
-				result = suffixArray.createHierarchicalPhrases(startingPositions, pattern, this);
+				result = suffixArray.createHierarchicalPhrases(startingPositions, pattern, vocab);
 			}
 			
 		} else { // 3: else --- alpha is a discontiguous pattern
@@ -499,7 +499,7 @@ public class PrefixTree {
 					
 					if (logger.isLoggable(Level.FINEST)) logger.finest("Calling queryIntersect("+pattern+" M_a_alpha.pattern=="+prefixNode.sourcePattern + ", M_alpha_b.pattern=="+suffixNode.sourcePattern+")");
 					
-					result = HierarchicalPhrases.queryIntersect(pattern, prefixNode.sourceHierarchicalPhrases, suffixNode.sourceHierarchicalPhrases);
+					result = HierarchicalPhrases.queryIntersect(pattern, prefixNode.sourceHierarchicalPhrases, suffixNode.sourceHierarchicalPhrases, minNonterminalSpan, maxPhraseSpan);
 				}
 				
 				suffixArray.setMatchingPhrases(pattern, result);

@@ -59,10 +59,10 @@ public class JoshuaConfiguration {
 	public static String  tm_file                    = null; // TODO
 	
 	// Parameters for suffix array grammar
-	/** File name of source language training corpus. */
+	/** File name prefix for source language binary training files. */
 	public static String sa_source = null;
 	
-	/** File name of target language training corpus. */
+	/** File name prefix for source language binary training files. */
 	public static String sa_target = null;
 	
 	/** File name of source-target training corpus alignments. */
@@ -79,6 +79,11 @@ public class JoshuaConfiguration {
 	public static int     sa_rule_cache_size       = 1000;
 	public static boolean sa_sentence_initial_X    = true;
 	public static boolean sa_sentence_final_X      = true;
+	
+	public static String sa_vocab_suffix = "vocab";
+	public static String sa_corpus_suffix = "corpus";
+	public static String sa_suffixes_suffix = "suffixes";
+	
 	
 	//pruning config
 	public static boolean use_cube_prune          = true;

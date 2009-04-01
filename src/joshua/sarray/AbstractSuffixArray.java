@@ -65,13 +65,13 @@ public abstract class AbstractSuffixArray implements Suffixes {
 	}
 	
 	public MatchedHierarchicalPhrases createHierarchicalPhrases(int[] startPositions,
-			Pattern pattern, PrefixTree prefixTree) {
+			Pattern pattern, SymbolTable vocab) {
 
 		if (startPositions == null) {
-			return HierarchicalPhrases.emptyList(prefixTree);
+			return HierarchicalPhrases.emptyList(vocab);
 		} else if (hierarchicalPhraseCache==null) {
 			Arrays.sort(startPositions);
-			HierarchicalPhrases hierarchicalPhrases = new HierarchicalPhrases(pattern, startPositions, prefixTree);	
+			HierarchicalPhrases hierarchicalPhrases = new HierarchicalPhrases(pattern, startPositions, getCorpus());	
 			return hierarchicalPhrases;
 		} else {
 			if (hierarchicalPhraseCache.containsKey(pattern)) {
@@ -81,7 +81,7 @@ public abstract class AbstractSuffixArray implements Suffixes {
 				// the corpus-sorted indexes of each of the phrases.  It differs because it creates a HierarhicalPhrases object rather 
 				// than just int[].
 				Arrays.sort(startPositions);
-				HierarchicalPhrases hierarchicalPhrases = new HierarchicalPhrases(pattern, startPositions, prefixTree);	
+				HierarchicalPhrases hierarchicalPhrases = new HierarchicalPhrases(pattern, startPositions, getCorpus());	
 				hierarchicalPhraseCache.put(pattern, hierarchicalPhrases);
 				return hierarchicalPhrases;
 			}

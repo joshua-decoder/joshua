@@ -17,6 +17,11 @@
  */
 package joshua.sarray;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+
 import joshua.corpus.SymbolTable;
 import joshua.util.sentence.Phrase;
 
@@ -30,7 +35,7 @@ import joshua.util.sentence.Phrase;
  * @author Lane Schwartz
  * @version $LastChangedDate:2008-09-18 12:47:23 -0500 (Thu, 18 Sep 2008) $
  */
-public class Pattern extends BasicPhrase {
+public class Pattern extends BasicPhrase implements Externalizable {
 
 //===============================================================
 // Member variables
@@ -265,6 +270,22 @@ public class Pattern extends BasicPhrase {
 		}
 		
 		return arity;
+	}
+
+
+	public void readExternal(ObjectInput in) throws IOException,
+			ClassNotFoundException {
+		
+		throw new RuntimeException("Not implemented");
+	}
+
+
+	public void writeExternal(ObjectOutput out) throws IOException {
+		out.writeInt(arity);
+		
+		for (int word : words) {
+			out.writeInt(word);
+		}
 	}
 	
 	

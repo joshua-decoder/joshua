@@ -75,7 +75,7 @@ public class Node implements Comparable<Node>, Grammar, Trie {
 		this.children = new HashMap<Integer,Node>();
 		this.incomingArcValue = incomingArcValue;
 		this.objectID = nodeIDCounter++;
-		this.sourceHierarchicalPhrases = HierarchicalPhrases.emptyList(tree);
+		this.sourceHierarchicalPhrases = HierarchicalPhrases.emptyList(tree.vocab);
 		this.results = Collections.emptyList();
 	}
 	

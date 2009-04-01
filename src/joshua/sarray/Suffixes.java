@@ -52,7 +52,7 @@ public interface Suffixes {
 	 * @param pattern a contiguous phrase
 	 * @return a list of trivially hierarchical phrases
 	 */ 
-	public MatchedHierarchicalPhrases createHierarchicalPhrases(int[] startPositions, Pattern pattern, PrefixTree prefixTree);
+	public MatchedHierarchicalPhrases createHierarchicalPhrases(int[] startPositions, Pattern pattern, SymbolTable vocab);
 	
 	/**
 	 * Returns the number of suffixes in the suffix array, which

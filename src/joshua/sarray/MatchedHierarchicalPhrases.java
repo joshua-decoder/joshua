@@ -3,11 +3,9 @@ package joshua.sarray;
 
 public interface MatchedHierarchicalPhrases {
 
-	public PrefixTree getPrefixTree();
-	
 	public int getNumberOfTerminalSequences();
 	
-	public HierarchicalPhrase get(int phraseIndex);
+	public HierarchicalPhrase get(int phraseIndex, Corpus corpus);
 		
 	/**
 	 * 

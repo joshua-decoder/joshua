@@ -17,6 +17,10 @@
  */
 package joshua.sarray;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -35,7 +39,7 @@ import joshua.corpus.SymbolTable;
  * @since Jan 9 2009
  * @version $LastChangedDate$
  */
-public class HierarchicalPhrases implements MatchedHierarchicalPhrases {
+public class HierarchicalPhrases implements MatchedHierarchicalPhrases, Externalizable {
 
 	/** 
 	 * Represents a sequence of terminal and nonterminals as
@@ -84,19 +88,12 @@ public class HierarchicalPhrases implements MatchedHierarchicalPhrases {
 	 */
 	private final int[] sentenceNumber;
 	
-	/**
-	 * Prefix tree for which this object was created.
-	 * <p>
-	 * This reference is needed primarily to get access to 
-	 * <code>minNonterminalSpan</code> and <code>maxPhraseSpan</code>. 
-	 */
-	private final PrefixTree prefixTree;
-	
 	// der aoeu X mann snth nth ouad
 	// 7 8 13 16 78 79 81 84 
 	
 	/** Logger for this class. */
 	private static final Logger logger = Logger.getLogger(HierarchicalPhrases.class.getName());
+	
 	
 	/**
 	 * Constructs a list of hierarchical phrases.
@@ -108,16 +105,15 @@ public class HierarchicalPhrases implements MatchedHierarchicalPhrases {
 	 * of the first word in each terminal sequence is stored.
 	 * @param prefixTree Prefix tree with which this object is associated
 	 */
-	public HierarchicalPhrases(Pattern pattern, int[] startPositions, PrefixTree prefixTree) {
+	public HierarchicalPhrases(Pattern pattern, int[] startPositions, Corpus corpus) {
 		this.pattern = pattern;
 		this.size = startPositions.length;
 		this.terminalSequenceStartIndices = startPositions;
 		this.sentenceNumber = new int[size];
 		for (int i=0; i<size; i++) {
-			this.sentenceNumber[i] = prefixTree.suffixArray.getCorpus().getSentenceIndex(startPositions[i]);
+			this.sentenceNumber[i] = corpus.getSentenceIndex(startPositions[i]);
 		}
 		this.terminalSequenceLengths = pattern.getTerminalSequenceLengths();
-		this.prefixTree = prefixTree;
 	}
 	
 	/**
@@ -134,14 +130,13 @@ public class HierarchicalPhrases implements MatchedHierarchicalPhrases {
 		this.terminalSequenceStartIndices = phrases.terminalSequenceStartIndices;
 		this.terminalSequenceLengths = phrases.terminalSequenceLengths;
 		this.sentenceNumber = phrases.sentenceNumber;
-		this.prefixTree = phrases.prefixTree;
 	}
 	
 	public MatchedHierarchicalPhrases copyWith(Pattern pattern) {
 		return new HierarchicalPhrases(pattern, this);
 	}
 	
-	protected HierarchicalPhrases(Pattern pattern, List<Integer> data, List<Integer> sentenceNumbers, PrefixTree prefixTree) {
+	protected HierarchicalPhrases(Pattern pattern, List<Integer> data, List<Integer> sentenceNumbers) {
 		this.pattern = pattern;
 		this.terminalSequenceLengths = pattern.getTerminalSequenceLengths();
 		
@@ -159,7 +154,6 @@ public class HierarchicalPhrases implements MatchedHierarchicalPhrases {
 			this.sentenceNumber[i] = sentenceNumbers.get(i);
 		}
 		
-		this.prefixTree = prefixTree;
 		this.size = numberOfPhrases;
 	}
 
@@ -168,7 +162,7 @@ public class HierarchicalPhrases implements MatchedHierarchicalPhrases {
 		return terminalSequenceLengths.length;
 	}
 	
-	public HierarchicalPhrase get(int phraseIndex) {
+	public HierarchicalPhrase get(int phraseIndex, Corpus corpus) {
 		
 		int n = terminalSequenceLengths.length;
 		
@@ -183,7 +177,7 @@ public class HierarchicalPhrases implements MatchedHierarchicalPhrases {
 		
 		int length = terminalSequenceEndIndices[n-1] - terminalSequenceStartIndices[0];
 		
-		return new HierarchicalPhrase(pattern, terminalSequenceStartIndices, terminalSequenceEndIndices, prefixTree.suffixArray.getCorpus(), length);
+		return new HierarchicalPhrase(pattern, terminalSequenceStartIndices, terminalSequenceEndIndices, corpus, length);
 	}
 	
 	/**
@@ -233,10 +227,6 @@ public class HierarchicalPhrases implements MatchedHierarchicalPhrases {
 		
 	}
 
-	public PrefixTree getPrefixTree() {
-		return this.prefixTree;
-	}
-	
 	/**
 	 * Implements the QUERY_INTERSECT algorithm from Adam Lopez's thesis (Lopez 2008).
 	 * This implementation follows a corrected algorithm (Lopez, personal communication).
@@ -246,7 +236,7 @@ public class HierarchicalPhrases implements MatchedHierarchicalPhrases {
 	 * @param M_alpha_b
 	 * @return
 	 */
-	static HierarchicalPhrases queryIntersect(Pattern pattern, MatchedHierarchicalPhrases M_a_alpha, MatchedHierarchicalPhrases M_alpha_b) {
+	static HierarchicalPhrases queryIntersect(Pattern pattern, MatchedHierarchicalPhrases M_a_alpha, MatchedHierarchicalPhrases M_alpha_b, int minNonterminalSpan, int maxPhraseSpan) {
 
 		if (logger.isLoggable(Level.FINER)) {
 			logger.finer("queryIntersect("+pattern+" M_a_alpha.size=="+M_a_alpha.size() + ", M_alpha_b.size=="+M_alpha_b.size());			
@@ -264,7 +254,7 @@ public class HierarchicalPhrases implements MatchedHierarchicalPhrases {
 
 		while (i<I && j<J) {
 			
-			while (j<J && compare(M_a_alpha, i, M_alpha_b, j) > 0) {
+			while (j<J && compare(M_a_alpha, i, M_alpha_b, j, minNonterminalSpan, maxPhraseSpan) > 0) {
 				j++; // advance j past no longer needed item in M_alpha_b
 			}
 
@@ -288,7 +278,7 @@ public class HierarchicalPhrases implements MatchedHierarchicalPhrases {
 					jth_StartPosition = M_alpha_b.getStartPosition(j, 0),//.terminalSequenceStartIndices[j*M_alpha_b_length],
 					lth_StartPosition = M_alpha_b.getStartPosition(l, 0)) {//.terminalSequenceStartIndices[l*M_alpha_b_length]) {
 				
-				int compare_i_l = compare(M_a_alpha, i, M_alpha_b, l);
+				int compare_i_l = compare(M_a_alpha, i, M_alpha_b, l,  minNonterminalSpan, maxPhraseSpan);
 				while (compare_i_l >= 0) {
 					
 					if (compare_i_l == 0) {
@@ -302,7 +292,7 @@ public class HierarchicalPhrases implements MatchedHierarchicalPhrases {
 					l++; // we can visit m_alpha_b[l] again, but only next time through outermost loop
 					
 					if (l < J) {
-						compare_i_l = compare(M_a_alpha, i, M_alpha_b, l);
+						compare_i_l = compare(M_a_alpha, i, M_alpha_b, l,  minNonterminalSpan, maxPhraseSpan);
 					} else {
 						i++;
 						break ProcessMatchings;
@@ -318,7 +308,7 @@ public class HierarchicalPhrases implements MatchedHierarchicalPhrases {
 			
 		} // end while
 		
-		return new HierarchicalPhrases(pattern, data, sentenceNumbers, M_a_alpha.getPrefixTree());
+		return new HierarchicalPhrases(pattern, data, sentenceNumbers);
 		
 	}
 	
@@ -341,7 +331,7 @@ public class HierarchicalPhrases implements MatchedHierarchicalPhrases {
 	 * <li> 1 if m_a_alpha and m_alpha_b cannot be paired, and m_a_alpha follows m_alpha_b in the corpus.</li>
 	 * </ul>
 	 */	
-	static int compare(MatchedHierarchicalPhrases m_a_alpha, final int i, MatchedHierarchicalPhrases m_alpha_b, final int j) {
+	static int compare(MatchedHierarchicalPhrases m_a_alpha, final int i, MatchedHierarchicalPhrases m_alpha_b, final int j, int minNonterminalSpan, int maxPhraseSpan) {
 	
 		int m_a_alphaTerminalSequenceLengths = m_a_alpha.getNumberOfTerminalSequences();//.terminalSequenceLengths.length;
 		int m_alpha_bTerminalSequenceLengths = m_alpha_b.getNumberOfTerminalSequences();//.terminalSequenceLengths.length;
@@ -455,12 +445,12 @@ public class HierarchicalPhrases implements MatchedHierarchicalPhrases {
 					
 					if (m_alpha_b.getPattern().endsWithNonterminal())
 //					if (m_alpha_b.getPattern().words[m_alpha_b.getPattern().words.length-1] < 0)
-						length += m_a_alpha.getPrefixTree().minNonterminalSpan;
+						length += minNonterminalSpan;
 					if (m_a_alpha.getPattern().startsWithNonterminal())
 //					if (m_a_alpha.pattern.words[0] < 0)
-						length += m_a_alpha.getPrefixTree().minNonterminalSpan;
+						length += minNonterminalSpan;
 
-					if (length > m_a_alpha.getPrefixTree().maxPhraseSpan) {
+					if (length > maxPhraseSpan) {
 						result = -1;
 					}
 				}
@@ -481,7 +471,7 @@ public class HierarchicalPhrases implements MatchedHierarchicalPhrases {
 
 				if (prefixStartPosition >= suffixStartPosition-1)
 					return 1;
-				else if (prefixStartPosition <= suffixStartPosition-m_a_alpha.getPrefixTree().maxPhraseSpan)
+				else if (prefixStartPosition <= suffixStartPosition-maxPhraseSpan)
 					return -1;
 				else
 					return 0;
@@ -535,10 +525,10 @@ public class HierarchicalPhrases implements MatchedHierarchicalPhrases {
 			return true;
 	}
 	
-	public static HierarchicalPhrases emptyList(PrefixTree prefixTree) {
-		SymbolTable vocab = (prefixTree.suffixArray==null) ? null : prefixTree.suffixArray.getVocabulary();
+	public static HierarchicalPhrases emptyList(SymbolTable vocab) {
+//		SymbolTable vocab = (prefixTree.suffixArray==null) ? null : prefixTree.suffixArray.getVocabulary();
 		
-		return new HierarchicalPhrases(new Pattern(vocab), Collections.<Integer>emptyList(), Collections.<Integer>emptyList(), prefixTree);
+		return new HierarchicalPhrases(new Pattern(vocab), Collections.<Integer>emptyList(), Collections.<Integer>emptyList());
 	}
 
 	public int getSentenceNumber(int phraseIndex) {
@@ -551,6 +541,48 @@ public class HierarchicalPhrases implements MatchedHierarchicalPhrases {
 
 	public int getTerminalSequenceLength(int i) {
 		return this.terminalSequenceLengths[i];
+	}
+
+	public void readExternal(ObjectInput in) throws IOException,
+			ClassNotFoundException {
+
+		throw new RuntimeException("Not implemented");
+		
+	}
+
+	public void writeExternal(ObjectOutput out) throws IOException {
+		//TODO Finish and test this method
+		
+		
+		// Write the pattern
+		int[] words = pattern.getWords();
+		out.writeInt(words.length);
+		for (int token : pattern.getWords()) {
+			out.writeInt(token);
+		}
+		out.writeInt(pattern.arity());
+		
+		out.writeInt(terminalSequenceLengths.length);
+		for (int l : terminalSequenceLengths) {
+			out.writeInt(l);
+		}
+		
+		// Write the number of corpus matches
+		out.writeInt(size);
+		
+		// Next, write the sentence numbers
+		// There should be size of these
+		for (int n : sentenceNumber) {
+			out.writeInt(n);
+		}
+		
+		// Next, write the start index of each corpus match
+		// There should be size of these
+		for (int startIndex : terminalSequenceStartIndices) {
+			out.writeInt(startIndex);
+		}
+		
+		
 	}
 	
 }

@@ -227,6 +227,22 @@ public class LineReader implements Reader<String> {
 		throw new UnsupportedOperationException();
 	}
 	
+	/**
+	 * Iterates over and counts all lines,
+	 * ignoring their contents.
+	 * 
+	 * @return the number of lines read
+	 */
+	public int countLines() {
+		int lines = 0;
+		
+		while (hasNext()) {
+			next();
+			lines++;
+		}
+		
+		return lines;
+	}
 	
 //===============================================================
 // Main
