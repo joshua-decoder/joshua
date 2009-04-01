@@ -365,25 +365,6 @@ public class Vocabulary extends AbstractSymbolTable implements Iterable<String>,
 // Static
 //===============================================================
 
-
-	public static void main(String[] args) throws Exception {
-		if (args.length != 4) {
-			System.out.println("Usage: java Vocabulary file corpusName lang outputDir");
-			System.exit(0);
-		}
-		
-		String inputFilename = args[0];
-		String corpusName = args[1];
-		String lang = args[2];
-		String outputDirectory = args[3];
-		
-		// Create a suffix array-style vocabulary file
-		Vocabulary vocab = new Vocabulary();
-		//int[] numberOfWordsSentences = 
-			SuffixArrayFactory.createVocabulary(inputFilename, vocab);
-		SuffixArrayFactory.saveVocabulary(vocab, lang, corpusName, outputDirectory);
-	}
-
 	public int addNonterminal(String nonterminal) {
 		
 		Integer id = nonterminalToInt.get(nonterminal);

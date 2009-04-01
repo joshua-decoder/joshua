@@ -28,7 +28,6 @@ import joshua.corpus.SymbolTable;
 import joshua.util.io.LineReader;
 import joshua.util.Regex;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;

@@ -97,7 +97,6 @@ public class SuffixArrayFactory {
 	}
 	
 	
-	// BUG: Vocabulary is incestuous and requires this method. It should be moved there.
 	/**
 	 * Creates a new Vocabulary from a plain text file.
 	 *
@@ -150,7 +149,6 @@ public class SuffixArrayFactory {
 	}
 	
 	
-	// HACK: This is package-private for ExtractRules and CorpusArrayTest to use
 	/**
 	 * Creates a new CorpusArray from a plain text file, given
 	 * a Vocabulary created from the same file.
@@ -207,17 +205,7 @@ public class SuffixArrayFactory {
 	 * alignments, and a source and target corpus.
 	 */
 	public static Alignments createAlignmentArray(String alignmentsFilename, Suffixes sourceCorpus, Suffixes targetCorpus) throws IOException {
-//		int [] lowestAlignedTargetIndex = initalizeArray(sourceCorpus.size(), AlignmentArray.UNALIGNED);
-//		int [] highestAlignedTargetIndex = initalizeArray(sourceCorpus.size(), -1);
-//		int [] lowestAlignedSourceIndex = initalizeArray(targetCorpus.size(), AlignmentArray.UNALIGNED);
-//		int [] highestAlignedSourceIndex = initalizeArray(targetCorpus.size(), -1);
 
-//		List<List<Integer>> alignedSourceList = new ArrayList<List<Integer>>(targetCorpus.size());
-//		for (int i=0; i<targetCorpus.size(); i++) alignedSourceList.add(new ArrayList<Integer>());
-//		
-//		List<List<Integer>> alignedTargetList = new ArrayList<List<Integer>>(sourceCorpus.size());
-//		for (int i=0; i<sourceCorpus.size(); i++) alignedTargetList.add(new ArrayList<Integer>());
-		
 		// Maps indices from the target corpus to a list of their aligned source points
 		Map<Integer,List<Integer>> alignedSourceList = new HashMap<Integer,List<Integer>>();
 		
@@ -237,9 +225,6 @@ public class SuffixArrayFactory {
 		
 		for (String line : lineReader) {
 		
-//		BufferedReader reader = FileUtility.getReadFileStream(alignmentsFilename);
-//		while (reader.ready()) {
-//			
 			// Start index of current source sentence
 			int sourceOffset = sourceCorpus.getSentencePosition(sentenceCounter);
 			
@@ -273,11 +258,6 @@ public class SuffixArrayFactory {
 					alignedTargetList.get(sourceIndex).add(targetIndex);
 				}
 				
-				// set the loweset aligned and highest aligned points
-//				lowestAlignedTargetIndex[sourceIndex]  = Math.min(lowestAlignedTargetIndex[sourceIndex], targetIndex);
-//				highestAlignedTargetIndex[sourceIndex] = Math.max(highestAlignedTargetIndex[sourceIndex], targetIndex);
-//				lowestAlignedSourceIndex[targetIndex]  = Math.min(lowestAlignedSourceIndex[targetIndex], sourceIndex);
-//				highestAlignedSourceIndex[targetIndex] = Math.max(highestAlignedSourceIndex[targetIndex], sourceIndex);
 			}
 			
 			int nextSourceOffset = sourceCorpus.getSentencePosition(sentenceCounter+1);
@@ -314,240 +294,12 @@ public class SuffixArrayFactory {
 			
 			sentenceCounter++;
 		}
-//		reader.close();
-		
-//		for (int i=0; i<targetCorpus.size(); i++) {
-//			Collections.sort(alignedSourceList.get(i));
-//			List<Integer> sourceList = alignedSourceList.get(i);
-//			int size=sourceList.size();
-//			alignedSourceIndices[i] = new int[size];
-//			for (int j=0; j<size; j++) alignedSourceIndices[i][j] = sourceList.get(j);
-//		}
-//		
-//		for (int i=0; i<sourceCorpus.size(); i++) {
-//			Collections.sort(alignedTargetList.get(i));
-//			List<Integer> targetList = alignedTargetList.get(i);
-//			int size=targetList.size();
-//			alignedTargetIndices[i] = new int[size];
-//			for (int j=0; j<size; j++) alignedTargetIndices[i][j] = targetList.get(j);
-//		}
-		
-		//return new AlignmentArray(lowestAlignedTargetIndex, highestAlignedTargetIndex, lowestAlignedSourceIndex, highestAlignedSourceIndex, alignedTargetIndices, alignedSourceIndices);
+
 		return new AlignmentArray(alignedTargetIndices, alignedSourceIndices);
 	}
 	
 	
-	/**
-	 * Writes the Vocabulary to a file. The file starts with a
-	 * line which indicates the number of words, and then
-	 * contains an alphabetically sorted list of words, one per
-	 * line.
-	 */
-	public static void saveVocabulary(Vocabulary vocab, String lang, String corpus, String directory) throws IOException {
-		BufferedWriter writer = FileUtil.getBufferedWriter(directory, getVocabularyFileName(lang, corpus));
 
-		int vocabSize = vocab.size();
-		writer.write(Integer.toString(vocabSize));
-		writer.newLine();
-		for(int i = 0; i < vocabSize; i++) {
-			writer.write(vocab.getWord(i));
-			writer.newLine();
-		}
-		writer.close();
-		if(SHOW_PROGRESS) System.out.println("Vocabulary saved!");
-	}
-	
-	
-	/**
-	 * Writes out the corpus in integer representation. The
-	 * first line of the file indicates the number of words and
-	 * the number of sentences.
-	 */
-	public static void saveCorpusArray(CorpusArray corpusArray, String lang, String corpus, String directory) throws IOException {
-		BufferedWriter writer = FileUtil.getBufferedWriter(directory, getCorpusArrayFileName(lang, corpus));
-		
-		//write out size data on first line
-		writer.write(Integer.toString(corpusArray.size()));
-		writer.write(" ");
-		writer.write(Integer.toString(corpusArray.getNumSentences()));
-		int sentenceNum = 0;
-		for(int i = 0; i<corpusArray.size(); i++) {
-			if (sentenceNum<corpusArray.getNumSentences() && corpusArray.sentences[sentenceNum]==i) {
-				sentenceNum++;
-				writer.newLine();
-			} else {
-				writer.write(" ");
-			}
-			writer.write(Integer.toString(corpusArray.corpus[i]));
-		}
-		writer.newLine();
-		writer.close();
-	}
-	
-	
-	/**
-	 * Writes the suffix array to file. The first line of the
-	 * file indicates the number of words and the number of
-	 * sentences.
-	 */
-	public static void saveSuffixArray(SuffixArray suffixArray, String lang, String corpus, String directory) throws IOException {
-		BufferedWriter writer = FileUtil.getBufferedWriter(directory, getSuffixArrayFileName(lang, corpus));
-		
-		//write out size data on first line
-		int numSuffixes = suffixArray.size();
-		writer.write(Integer.toString(numSuffixes));
-		writer.newLine();
-		//int suffixNum = 0;
-		for(int i = 0; i < numSuffixes; i++) {
-			writer.write(Integer.toString(suffixArray.suffixes[i]));
-			writer.newLine();
-		}
-		writer.close();
-	}
-	
-	
-	/**
-	 * Writes an alignment array to file. The first line of the
-	 * file contains two numbers: The number of lines in the
-	 * alignedTargetIndex arrays and the alignedSourceIndex
-	 * arrays (which correspond to the number of words in the
-	 * source and the target corpus, respectively).
-	 */
-	//TODO Either update this method or delete it
-//	public static void saveAlignmentArray(AlignmentArray alignmentArray, String sourceLang, String targetLang, String corpus, String directory) throws IOException {
-//		BufferedWriter writer = FileUtil.getBufferedWriter(directory, getAlignmentArrayFileName(sourceLang, targetLang, corpus));
-//
-//		// write the header line
-//		int sourceCorpusLength = alignmentArray.lowestAlignedTargetIndex.length;
-//		int targetCorpusLength = alignmentArray.lowestAlignedSourceIndex.length;
-//		writer.write(Integer.toString(sourceCorpusLength) + " " + Integer.toString(targetCorpusLength));
-//		writer.newLine();
-//		
-//		// write the source corpus arrays
-//		for(int i = 0; i < sourceCorpusLength; i++) {
-//			writer.write(Integer.toString(alignmentArray.lowestAlignedTargetIndex[i]) + " " + Integer.toString(alignmentArray.highestAlignedTargetIndex[i]));
-//			writer.newLine();
-//		}
-//		// write the target corpus arrays
-//		for(int i = 0; i < targetCorpusLength; i++) {
-//			writer.write(Integer.toString(alignmentArray.lowestAlignedSourceIndex[i]) + " " + Integer.toString(alignmentArray.highestAlignedSourceIndex[i]));
-//			writer.newLine();
-//		}
-//		writer.close();
-//	}
-	
-
-
-	/**
-	 * Loads a Vocabulary from a file containing an alphabetized
-	 * list of words, one on each line. The first of the file
-	 * line contains the number of words.
-	 */
-	public static Vocabulary loadVocabulary(String lang, String corpus, String directory) throws IOException {
-		BufferedReader reader = FileUtil.getBufferedReader(directory, getVocabularyFileName(lang, corpus));
-		//int vocabSize = 
-			Integer.parseInt(reader.readLine());
-		Vocabulary vocab = new Vocabulary();
-		
-		int i = 0;
-		while(reader.ready()) {
-			vocab.addWord(reader.readLine());
-			if(SHOW_PROGRESS && i % 10000==0) System.out.println(i);
-			i++;
-		}
-		reader.close();
-		vocab.fixVocabulary();
-		return vocab;
-	}
-	
-	
-	 /**
-	  * Reads in a corpus that is already in integer representation.
-	  * Assumes that the first line indicates the number of words
-	  * and the number of sentences, as ouput by saveCorpusArray.
-	  */
-	public static CorpusArray loadCorpusArray(String lang, String corpusName, String directory) throws IOException {
-		Vocabulary vocab = loadVocabulary(lang, corpusName, directory);
-		BufferedReader reader = FileUtil.getBufferedReader(directory, getCorpusArrayFileName(lang, corpusName));
-		 
-		//read words and sentences from first line
-		StringTokenizer st = new StringTokenizer(reader.readLine());
-		int numWords = Integer.parseInt(st.nextToken());
-		int numSentences = Integer.parseInt(st.nextToken());
-		 
-		//initialize
-		int[] corpus = new int[numWords];
-		int[] sentences = new int[numSentences];
-		int wordCounter = 0;
-		int sentenceCounter = 0;
-		 
-		//loop through file
-		while(reader.ready()) {
-			sentences[sentenceCounter++] = wordCounter;
-			String[] wordInts = reader.readLine().split("\\s+");
-			for(int i = 0; i < wordInts.length; i++) {
-				corpus[wordCounter++] = Integer.parseInt(wordInts[i]);
-			}
-		}
-		reader.close();
-		return new CorpusArray(corpus, sentences, vocab);
-	}
-
-
-	 /**
-	  * Reads a sorted suffix array from a file. The first line
-	  * of the file indicates the number of suffixes.
-	  */
-	 public static SuffixArray loadSuffixArray(String lang, String corpusName, String directory) throws IOException {
-		CorpusArray corpusArray = loadCorpusArray(lang, corpusName, directory);
-		BufferedReader reader = FileUtil.getBufferedReader(directory, getSuffixArrayFileName(lang, corpusName));
-
-		//read in size data from the first line
-		int numSuffixes = Integer.parseInt(reader.readLine());
-		int[] suffixes = new int[numSuffixes];
-		for(int i = 0; i < numSuffixes; i++) {
-			suffixes[i] = Integer.parseInt(reader.readLine());
-		}
-		reader.close();
-		
-		return new SuffixArray(suffixes, corpusArray);
-	 }
-
-
-	/**
-	 * Reads an allignment array from a file.  The first line
-	 * of the file indicates the number of elements in the
-	 * alignedTargetIndex arrays and the alignedSourceIndex arrays.
-	 */
-/*	public static AlignmentArray loadAlignmentArray(String sourceLang, String targetLang, String corpus, String directory) throws IOException {
-		BufferedReader reader = FileUtil.getBufferedReader(directory, getAlignmentArrayFileName(sourceLang, targetLang, corpus));
-		// read the header line...
-		String[] fields = reader.readLine().split("\\s+");
-		int sourceCorpusLength = Integer.parseInt(fields[0]);
-		int targetCorpusLength = Integer.parseInt(fields[1]);
-		
-		int[] lowestAlignedTargetIndex = new int[sourceCorpusLength];
-		int[] highestAlignedTargetIndex = new int[sourceCorpusLength];
-		int[] lowestAlignedSourceIndex = new int[targetCorpusLength];
-		int[] highestAlignedSourceIndex = new int[targetCorpusLength];
-
-		for(int i = 0; i < sourceCorpusLength; i++) {
-			fields = reader.readLine().split("\\s+");
-			lowestAlignedTargetIndex[i] = Integer.parseInt(fields[0]);
-			highestAlignedTargetIndex[i] = Integer.parseInt(fields[1]);
-		}
-		
-		for(int i = 0; i < targetCorpusLength; i++) {
-			fields = reader.readLine().split("\\s+");
-			lowestAlignedSourceIndex[i] = Integer.parseInt(fields[0]);
-			highestAlignedSourceIndex[i] = Integer.parseInt(fields[1]);
-		}
-	
-		reader.close();
-		return new AlignmentArray(lowestAlignedTargetIndex, highestAlignedTargetIndex, lowestAlignedSourceIndex, highestAlignedSourceIndex);
-	}
-*/	
-	
 
 //===============================================================
 // Private 

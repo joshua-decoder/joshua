@@ -2,9 +2,17 @@ package joshua.sarray;
 
 import java.util.BitSet;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import joshua.corpus.SymbolTable;
+import joshua.util.lexprob.LexicalProbabilities;
+import joshua.util.sentence.alignment.Alignments;
 
 public class CompactPrefixTree {
 
+	private static final Logger logger = Logger.getLogger(CompactPrefixTree.class.getName());
+	
 	static final boolean   ACTIVE = true;
 	static final boolean INACTIVE = false;
 	
@@ -75,11 +83,55 @@ public class CompactPrefixTree {
 	
 	private int size;
 	
-	public CompactPrefixTree() {
-		this(DEFAULT_CAPACITY, DEFAULT_CAPACITY_INCREMENT);
+	/** Suffix array representing the source language corpus. */
+	final Suffixes suffixArray;
+	
+	/** Corpus array representing the target language corpus. */
+	final Corpus targetCorpus;
+	
+	/** Represents alignments between words in the source corpus and the target corpus. */
+	final Alignments alignments;
+	
+	/** Lexical translation probabilities. */
+	final LexicalProbabilities lexProbs;
+	
+	/** Source side symbol table */
+	final SymbolTable vocab;
+	
+	/** Responsible for performing sampling and creating translation rules. */
+	final RuleExtractor ruleExtractor;
+	
+	/** Max span in the source corpus of any extracted hierarchical phrase */
+	final int maxPhraseSpan;   
+	
+	/** Maximum number of terminals plus nonterminals allowed in any extracted hierarchical phrase. */
+	final int maxPhraseLength;
+	
+	/** Maximum number of nonterminals allowed in any extracted hierarchical phrase. */
+	final int maxNonterminals;
+
+	/** Minimum span in the source corpus of any nonterminal in an extracted hierarchical phrase. */
+	final int minNonterminalSpan;
+	
+	public CompactPrefixTree(Suffixes suffixArray, Corpus targetCorpus, Alignments alignments, SymbolTable vocab, LexicalProbabilities lexProbs, RuleExtractor ruleExtractor, int maxPhraseSpan, int maxPhraseLength, int maxNonterminals, int minNonterminalSpan) {
+		this(DEFAULT_CAPACITY, DEFAULT_CAPACITY_INCREMENT, suffixArray, targetCorpus, alignments, vocab, lexProbs, ruleExtractor, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan);
 	}
 	
-	public CompactPrefixTree(int capacity, int capacityIncrement) {
+	public CompactPrefixTree(int capacity, int capacityIncrement, Suffixes suffixArray, Corpus targetCorpus, Alignments alignments, SymbolTable vocab, LexicalProbabilities lexProbs, RuleExtractor ruleExtractor, int maxPhraseSpan, int maxPhraseLength, int maxNonterminals, int minNonterminalSpan) {
+		
+		if (logger.isLoggable(Level.FINE)) logger.fine("\n\n\nConstructing new CompactPrefixTree\n\n");
+
+		this.suffixArray = suffixArray;
+		this.targetCorpus = targetCorpus;
+		this.alignments = alignments;
+		this.vocab = vocab;
+		this.lexProbs = lexProbs;
+		this.ruleExtractor = ruleExtractor;
+		this.maxPhraseSpan = maxPhraseSpan;
+		this.maxPhraseLength = maxPhraseLength;
+		this.maxNonterminals = maxNonterminals;
+		this.minNonterminalSpan = minNonterminalSpan;
+		
 		this.capacity = capacity;
 		this.capacityIncrement = capacityIncrement;
 		this.active = new BitSet(capacity);
@@ -89,6 +141,15 @@ public class CompactPrefixTree {
 		// Insert root node
 		this.data[ROOT_NODE_ID + INCOMING_ARC_OFFSET] = ROOT_NODE_INCOMING_ARC;
 		this.size = 1;
+		
+		//TODO Deal with bot and botMap
+		
+		//TODO Deal with HierarchicalPhrases
+		
+		if (suffixArray != null) {
+			int[] bounds = {0, suffixArray.size()-1};
+			setBounds(ROOT_NODE_ID, bounds);
+		}
 	}
 	
 	public int size() {
@@ -176,8 +237,10 @@ public class CompactPrefixTree {
 	
 	private static long getKey(int parentNode, int outgoingArc) {
 		
+		// Store the parentNode id in the highest 32 bits of the long
 		long key = (parentNode << BITS_PER_INT);
 		
+		// Store the outgoingArc value in the lowest 32 bits of the long
 		key |= outgoingArc;
 		
 		return key;

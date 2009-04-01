@@ -21,10 +21,8 @@ import joshua.decoder.ff.lm.AbstractLM;
 import joshua.decoder.Support;
 import joshua.corpus.SymbolTable;
 import joshua.util.io.LineReader;
-import joshua.util.FileUtility;
 import joshua.util.Regex;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.Hashtable;
 
