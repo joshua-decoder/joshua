@@ -34,7 +34,6 @@ import joshua.util.io.NullReader;
 import joshua.util.io.Reader;
 import joshua.util.FileUtility;
 
-import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.util.ArrayList;

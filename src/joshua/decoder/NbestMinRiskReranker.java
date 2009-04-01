@@ -22,7 +22,6 @@ import joshua.util.io.LineReader;
 import joshua.util.FileUtility;
 import joshua.util.Regex;
 
-import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.util.ArrayList;

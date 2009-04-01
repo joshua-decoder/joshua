@@ -24,7 +24,6 @@ import joshua.util.io.LineReader;
 import joshua.util.FileUtility;
 import joshua.util.Regex;
 
-import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -94,7 +93,7 @@ public class DecoderFactory {
 		//==== compute number of lines for each decoder
 		int n_lines = 0; {
 			LineReader testReader = new LineReader(test_file);
-			try { for (String cn_sent : testReader) {
+			try { for (@SuppressWarnings("unused") String cn_sent : testReader) {
 				n_lines++;
 			} } finally { testReader.close(); }
 		}

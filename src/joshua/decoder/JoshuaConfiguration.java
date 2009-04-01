@@ -23,7 +23,6 @@ import joshua.util.io.LineReader;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.io.BufferedReader;
 import java.io.IOException;
 
 /**
