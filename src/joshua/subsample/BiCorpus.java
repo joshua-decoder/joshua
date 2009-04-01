@@ -87,7 +87,7 @@ implements Iterable<PhrasePair> {
 		
 		// Check for fileLengthMismatchException
 		// Of course, that will be checked for in each iteration
-		for (@SuppressWarnings("unused") PhrasePair pp : this) continue;
+		for (PhrasePair pp : this) continue;
 	}
 	
 	

@@ -93,7 +93,7 @@ public class DecoderFactory {
 		//==== compute number of lines for each decoder
 		int n_lines = 0; {
 			LineReader testReader = new LineReader(test_file);
-			try { for (@SuppressWarnings("unused") String cn_sent : testReader) {
+			try { for (String cn_sent : testReader) {
 				n_lines++;
 			} } finally { testReader.close(); }
 		}
