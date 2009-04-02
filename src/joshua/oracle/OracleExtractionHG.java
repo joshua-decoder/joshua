@@ -80,10 +80,24 @@ public class OracleExtractionHG extends SplitHg {
 
 	static boolean always_maintain_seperate_lm_state = true; //if true: the virtual item maintain its own lm state regardless whether lm_order>=g_bleu_order
 	
+	/**
+	 * 
+	 */
 	SymbolTable p_symbolTable;
 	
 	int lm_feat_id=0; //the baseline LM feature id
 	
+	/**
+	 * Constructs a new object capable of extracting
+	 * a tree from a hypergraph that most closely matches
+	 * a provided oracle sentence.
+	 * <p>
+	 * It seems that the symbol table here should only need
+	 * to represent monolingual terminals, plus nonterminals.
+	 * 
+	 * @param symbolTable 
+	 * @param lm_feat_id_
+	 */
 	public OracleExtractionHG(SymbolTable symbolTable, int lm_feat_id_){
 		this.p_symbolTable = symbolTable;
 		this.lm_feat_id = lm_feat_id_;

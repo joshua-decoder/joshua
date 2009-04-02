@@ -46,6 +46,14 @@ public class DecoderFactory {
 	private boolean have_lm_model = false;
 	private ArrayList<FeatureFunction> p_l_feat_functions = null;
 	private ArrayList<Integer> l_default_nonterminals = null;
+	
+	/**
+	 * Shared symbol table for source language terminals,
+	 * target language terminals, and shared nonterminals.
+	 * <p>
+	 * It may be that separate tables should be maintained
+	 * for the source and target languages.
+	 */
 	private SymbolTable p_symbolTable = null;
 	
 	private DecoderThread[] parallel_threads;

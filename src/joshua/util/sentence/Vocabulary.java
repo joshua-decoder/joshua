@@ -24,6 +24,8 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import joshua.corpus.AbstractSymbolTable;
 import joshua.corpus.SymbolTable;
@@ -48,6 +50,7 @@ public class Vocabulary extends AbstractSymbolTable implements Iterable<String>,
 // Constants
 //===============================================================
 
+	private static final Logger logger = Logger.getLogger(Vocabulary.class.getName());
 
 //===============================================================
 // Member variables
@@ -102,6 +105,52 @@ public class Vocabulary extends AbstractSymbolTable implements Iterable<String>,
 //		SuffixArrayFactory.createVocabulary(fileName, this);
 ////		UNKNOWN_WORD = vocabList.size();
 //	}
+	
+	public static Vocabulary getVocabFromSRILM(Scanner scanner) {
+		
+		Vocabulary vocab = new Vocabulary();
+		
+		int counter = 0;
+		int ignored = 0;
+		
+		while (scanner.hasNextLine()) {
+			
+			String line = scanner.nextLine();
+			
+			String[] parts = line.split("\\s+");
+			
+			if (parts.length==2) {
+				
+				Integer id = Integer.valueOf(parts[0]);
+				String word = parts[1];
+				
+				vocab.intToString.put(id, word);
+				
+				if (vocab.isNonterminal(id)) {
+					vocab.nonterminalToInt.put(word, id);
+				} else {
+					vocab.terminalToInt.put(word, id);
+				}
+				
+				counter += 1;
+				
+			} else {
+				
+				ignored += 1;
+				logger.warning("Line is improperly formatted: " + line);
+				
+			}
+			
+			
+		}
+		
+		if (logger.isLoggable(Level.FINE)) {
+			int total = counter + ignored;
+			logger.fine(total + " lines read, of which " + counter + " were included and " + ignored + " were ignored");
+		}
+		
+		return vocab;
+	}
 	
 //===============================================================
 // Public

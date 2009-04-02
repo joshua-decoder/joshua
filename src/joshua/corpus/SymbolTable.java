@@ -41,12 +41,10 @@ public interface SymbolTable extends Externalizable {
 	 * the word ID is generated (otherwise unknown words can
 	 * become "known" if new words are added to the vocabulary
 	 * before testing).
-	 *
-	 * Negative IDs are reserved for non-terminals and therefore
-	 * cannot be used to signify the UNKNOWN_WORD. @todo Perhaps
-	 * we could use 0 as the UNKNOWN_WORD (leaving negatives
-	 * for non-terminals, and positives for terminals), to
-	 * enable us to get away from all the book-keeping.
+	 *<p>
+	 * Negative IDs are reserved for non-terminals. 
+	 * 
+	 * Zero is reserved as the UNKNOWN_WORD.
 	 */
 	final int UNKNOWN_WORD = 0;
 

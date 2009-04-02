@@ -209,6 +209,27 @@ public class CorpusArray implements Corpus, Externalizable {
 		return sentences.length;
 	}
 	
+	/**
+	 * Sets the symbol table to the provided object,
+	 * and changes migrates all internal data 
+	 * to use the new mappings provided by that object.
+	 */
+	public void setSymbolTable(SymbolTable vocab) {
+		SymbolTable oldVocab = this.vocab;
+		
+		for (int i=0; i<corpus.length; i++) {
+			
+			int oldID = corpus[i];
+			String word = oldVocab.getWord(oldID);
+			int newID = vocab.getID(word);
+			
+			corpus[i] = newID;
+		}
+		
+		this.vocab = vocab;
+		oldVocab = null;
+	}
+	
 	
 	//===========================================================
 	// Methods

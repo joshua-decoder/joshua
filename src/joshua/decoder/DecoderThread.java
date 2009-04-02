@@ -57,6 +57,17 @@ public class DecoderThread extends Thread {
 	private final boolean                    hasLanguageModel;
 	private final ArrayList<FeatureFunction> featureFunctions;
 	private final ArrayList<Integer>         defaultNonterminals;
+	
+	/**
+	 * Shared symbol table for source language terminals,
+	 * target language terminals, and shared nonterminals.
+	 * <p>
+	 * It may be that separate tables should be maintained
+	 * for the source and target languages.
+	 * <p>
+	 * This class explicitly uses the symbol table to get
+	 * integer IDs for the source language sentence.
+	 */
 	private final SymbolTable                symbolTable;
 	
 	//more test set specific
@@ -216,15 +227,10 @@ public class DecoderThread extends Thread {
 		}
 		
 		Chart chart; {
-			
-			// BUG: java generics won't do the autoboxing/-unboxing for us
-			int[] intSentence = this.symbolTable.getIDs(sentence);
-			Integer[] integerSentence = new Integer[intSentence.length];
-			for (int i = 0; i < intSentence.length; i++) {
-				integerSentence[i] = intSentence[i];
-			}
+
+			int[] intSentence = this.symbolTable.getIDs(sentence);			
 			Lattice<Integer> inputLattice =
-				new Lattice<Integer>(integerSentence);
+				Lattice.getLattice(intSentence);
 			
 			
 			Grammar[] grammars = new Grammar[this.grammarFactories.length];

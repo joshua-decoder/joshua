@@ -96,6 +96,23 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
 		this.costs = calculateAllPairsShortestPath(nodes);
 	}
 	
+	/** 
+	 * Convenience method to get a lattice from ant int[]. 
+	 * 
+	 * This method is useful because Java's generics won't
+	 * allow a primitive array to be passed as a generic array.
+	 * 
+	 * @param linearChain 
+	 * @return  Lattice representation of the linear chain.
+	 */
+	public static Lattice<Integer> getLattice(int[] linearChain) {
+		Integer[] integerSentence = new Integer[linearChain.length];
+		for (int i = 0; i < linearChain.length; i++) {
+			integerSentence[i] = linearChain[i];
+		}
+		
+		return new Lattice<Integer>(integerSentence);
+	}
 	
 	/**
 	 * Constructs a lattice from a given string representation.

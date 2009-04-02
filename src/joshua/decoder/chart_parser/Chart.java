@@ -60,7 +60,12 @@ import java.util.logging.Logger;
  */
 public class Chart {
 
-    public int UNTRANS_OWNER_SYM_ID = 0;//untranslated word id
+	/** 
+	 * Untranslated word id
+	 * 
+	 * TODO Probably should merge this with the UNKNOWN_WORD_ID 
+	 */
+    public int UNTRANS_OWNER_SYM_ID = 0;//
 	
 	public  Grammar[]        grammars;
 	public  DotChart[]       dotcharts;//each grammar should have a dotchart associated with it
@@ -75,6 +80,19 @@ public class Chart {
 	//decoder-wide variables
 	ArrayList<FeatureFunction> p_l_models;
 	
+	/**
+	 * Shared symbol table for source language terminals,
+	 * target language terminals, and shared nonterminals.
+	 * <p>
+	 * It may be that separate tables should be maintained
+	 * for the source and target languages.
+	 * <p>
+	 * This class adds an untranslated word ID to the symbol table.
+	 * The Bin class adds a goal symbol nonterminal to the symbol table.
+	 * <p>
+	 * TODO It is likely that this object could be removed from this class
+	 *      with relatively little impact.
+	 */
 	SymbolTable p_symbolTable;
 	
 	//statistics

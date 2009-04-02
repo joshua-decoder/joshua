@@ -130,7 +130,7 @@ public class SuffixArrayFactory {
 	 * @param inputFilename the plain text file
 	 * @return a tuple containing the number of words in the corpus and number of sentences in the corpus
 	 */
-	private static int[] count(String inputFilename) throws IOException {
+	static int[] count(String inputFilename) throws IOException {
 		
 		int numSentences = 0;
 		int numWords = 0;

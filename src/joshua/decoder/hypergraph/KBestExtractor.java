@@ -51,7 +51,18 @@ public class KBestExtractor {
 	private static final Logger logger = Logger.getLogger(KBestExtractor.class.getName());
 	
 	private final HashMap<HGNode,VirtualItem> tbl_virtual_items = new HashMap<HGNode,VirtualItem>();
-	private final SymbolTable p_symbolTable;// = null;
+	
+	/**
+	 * Shared symbol table for source language terminals,
+	 * target language terminals, and shared nonterminals.
+	 * <p>
+	 * It may be that separate tables should be maintained
+	 * for the source and target languages.
+	 * <p>
+	 * TODO It seems likely that only a target side symbol table is required
+	 *      for this class.
+	 */
+	private final SymbolTable p_symbolTable;
 	
 	
 	static String root_sym = "ROOT";

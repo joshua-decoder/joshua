@@ -1,35 +1,51 @@
 package joshua.decoder.ff.lm.srilm;
 
+import java.io.File;
 import java.io.IOException;
+import java.io.ObjectOutput;
+import java.util.Scanner;
 
 import joshua.corpus.SymbolTable;
 import joshua.decoder.SrilmSymbol;
+import joshua.util.io.BinaryOut;
+import joshua.util.sentence.Vocabulary;
 
 
 
 public class VocabularyWriter {
 	
 	public static void main(String[] args) throws IOException {
-		//=== command options
-		if (args.length != 3) {
-			System.out.println("wrong command, correct command should be: java VocabularyWriter lmFile lmOrder outVocabFile");
+		
+		// Read command line options
+		if (args.length != 2) {
+			System.err.println("Usage: java " + VocabularyWriter.class.getSimpleName() + " lmFile outBinaryVocabFile");
 			System.exit(1);
 		}		
-		String lmFile = args[0].trim();
-		int lmOrder = new Integer(args[1].trim());
-		String outVocabFile = args[2].trim();
+		String lmFile = args[0].trim(); 
+		String outVocabFile = args[1].trim();
+		 
 		
-		
-		//=== load the lm file so that the SRI toolkit will set up the map
-		/**Lane: the loading of a hugh LM might be slow, to speed up, you may just try to set lmOrder=1, regardless of the true order of the lmFile; 
-		 * But, you should verify if the table is exactly the same as if you have load the full-order LM
-		 **/  
+		// Load the lm file so that the SRI toolkit will set up the map
+		int lmOrder = 1;
 		SymbolTable symbolTable = new SrilmSymbol(null, lmOrder);
-		LMGrammarSRILM lmGrammar  = new LMGrammarSRILM((SrilmSymbol)symbolTable, lmOrder, lmFile);
+		new LMGrammarSRILM((SrilmSymbol)symbolTable, lmOrder, lmFile);
 		
 		
-		//=== write the map
-		srilm.write_default_vocab_map(outVocabFile);
+		// Write the map to a temporary file
+		File tmpFile = File.createTempFile("srilm", "out");
+		srilm.write_default_vocab_map(tmpFile.getAbsolutePath());
+		
+		
+		// Create a vocabulary object from using the SRILM integer mappings
+		Scanner scanner = new Scanner(tmpFile);
+		Vocabulary vocab = Vocabulary.getVocabFromSRILM(scanner);
+		vocab.fixVocabulary();
+		
+		
+		// Write the vocabulary to disk in binary format
+		ObjectOutput out = new BinaryOut(outVocabFile);
+		vocab.writeExternal(out);
+		
 	}
 	
 }

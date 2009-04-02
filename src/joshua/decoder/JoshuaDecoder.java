@@ -78,8 +78,16 @@ public class JoshuaDecoder {
 	private GrammarFactory[]           grammarFactories;
 	private ArrayList<FeatureFunction> featureFunctions;
 	private ArrayList<Integer>         defaultNonterminals;
-	private SymbolTable                symbolTable;
 	private NGramLanguageModel         languageModel;
+	
+	/**
+	 * Shared symbol table for source language terminals,
+	 * target language terminals, and shared nonterminals.
+	 * <p>
+	 * It may be that separate tables should be maintained
+	 * for the source and target languages.
+	 */
+	private SymbolTable                symbolTable;
 	
 	private static final Logger logger =
 		Logger.getLogger(JoshuaDecoder.class.getName());
