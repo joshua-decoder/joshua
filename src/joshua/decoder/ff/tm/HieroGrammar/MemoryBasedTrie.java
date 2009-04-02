@@ -18,6 +18,7 @@
 package joshua.decoder.ff.tm.HieroGrammar;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 
 import joshua.decoder.ff.FeatureFunction;
@@ -72,7 +73,8 @@ public class MemoryBasedTrie implements Trie {
 	//recursive call, to make sure all rules are sorted
 	public void ensure_sorted(ArrayList<FeatureFunction> l_models) {
 		if (null != this.rule_bin) {
-			this.rule_bin.getSortedRules(l_models);
+//			this.rule_bin.getSortedRules(l_models);
+			this.rule_bin.sortRules(l_models);
 		}
 		if (null != this.tbl_children) {
 			Object[] tem = this.tbl_children.values().toArray();
@@ -83,13 +85,14 @@ public class MemoryBasedTrie implements Trie {
 	}
 	
 	
-	public Trie[] getExtensions() {
-		Object[] tem = this.tbl_children.values().toArray();
-		Trie[] res = new Trie[tem.length];
-		for(int i = 0; i < tem.length; i++) {
-			res[i] = (Trie) tem[i];
-		}
-		return res;
+	public Collection<MemoryBasedTrie> getExtensions() {
+		return this.tbl_children.values();
+//		Object[] tem = this.tbl_children.values().toArray();
+//		Trie[] res = new Trie[tem.length];
+//		for(int i = 0; i < tem.length; i++) {
+//			res[i] = (Trie) tem[i];
+//		}
+//		return res;
 	}
 	
 	

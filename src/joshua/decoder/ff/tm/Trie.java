@@ -17,6 +17,8 @@
  */
 package joshua.decoder.ff.tm;
 
+import java.util.Collection;
+
 import joshua.decoder.ff.tm.RuleCollection;
 
 
@@ -51,7 +53,7 @@ public interface Trie {
 	 * If the trie node has extensions, then return a list of
 	 * extended trie nodes, otherwise return null.
 	 */
-	Trie[] getExtensions();
+	Collection<? extends Trie> getExtensions();
 	
 	
 	/**

@@ -99,9 +99,9 @@ public class MemoryBasedBatchGrammarWithPrune extends MemoryBasedBatchGrammar {
 		
 		//#########3: now add the rule into the trinode
 		if (null == pos.rule_bin) {
-			pos.rule_bin        = new MemoryBasedRuleBinWithPrune();
-			pos.rule_bin.french = p_french;
-			pos.rule_bin.arity  = p_rule.getArity();
+			pos.rule_bin        = new MemoryBasedRuleBinWithPrune(p_rule.getArity(), p_french);
+//			pos.rule_bin.french = p_french;
+//			pos.rule_bin.arity  = p_rule.getArity();
 			this.qtyRuleBins++;
 		}
 		

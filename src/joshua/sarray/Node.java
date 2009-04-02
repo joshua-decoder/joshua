@@ -18,6 +18,7 @@
 package joshua.sarray;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -26,13 +27,14 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import joshua.corpus.SymbolTable;
-import joshua.decoder.ff.FeatureFunction;
+import joshua.decoder.ff.tm.AbstractGrammar;
+import joshua.decoder.ff.tm.BasicRuleCollection;
 import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.RuleCollection;
 import joshua.decoder.ff.tm.Trie;
 
-public class Node implements Comparable<Node>, Grammar, Trie {
+public class Node extends AbstractGrammar implements Comparable<Node>, Grammar, Trie {
 
 	private static final Logger logger = Logger.getLogger(Node.class.getName());
 	
@@ -96,24 +98,9 @@ public class Node implements Comparable<Node>, Grammar, Trie {
 		
 		final int[] sourceSide = (sourcePattern==null) ? empty : sourcePattern.words;
 		final int arity = (sourcePattern==null) ? 0 : sourcePattern.arity;
-		final List<Rule> sortedResults = (results==null) ? Collections.<Rule>emptyList() : results;
+//		final List<Rule> sortedResults = (results==null) ? Collections.<Rule>emptyList() : results;
 		
-		return new RuleCollection() {
-
-			public int getArity() {
-				return arity;
-			}
-
-			
-			public int[] getSourceSide() {
-				return sourceSide;
-			}
-
-			public List<Rule> getSortedRules(ArrayList<FeatureFunction> l_models) {
-				return sortedResults;
-			}
-			
-		};
+		return new BasicRuleCollection(arity, sourceSide, results);
 		
 	}
 	
@@ -124,8 +111,9 @@ public class Node implements Comparable<Node>, Grammar, Trie {
 	 */
 	public List<Rule> getAllRules() {
 		
-		List<Rule> result = new ArrayList<Rule>(getRules().getSortedRules(null));
-		
+		List<Rule> result = new ArrayList<Rule>(
+				(results==null) ? Collections.<Rule>emptyList() : results);
+			
 		for (Node child : children.values()) {
 			result.addAll(child.getAllRules());
 		}
@@ -392,27 +380,9 @@ public class Node implements Comparable<Node>, Grammar, Trie {
 		}
 	}
 
-	/**
-	 * Cube-pruning requires that the grammar be sorted based on the latest feature functions.
-	 */		
-	public void sortGrammar(ArrayList<FeatureFunction> l_models) {
-		//TODO Implement this!
-		throw new UnsupportedOperationException("This functionality is not yet implemented.");
-	}
 
-	public Rule constructOOVRule(int num_feats, int lhs, int sourceWord, int owner, boolean have_lm_model) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	public int getOOVRuleID() {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-
-	public Trie[] getExtensions() {
-		// TODO Auto-generated method stub
-		return null;
+	public Collection<Node> getExtensions() {
+		return this.children.values();
 	}
 
 	static int nodeIDCounter = 0;
@@ -422,6 +392,16 @@ public class Node implements Comparable<Node>, Grammar, Trie {
 	}
 
 	public int getNumRules() {
-		throw new RuntimeException("Not yet implemented");
+		
+		int numRules = 
+			(results==null) ? 0 : results.size();
+
+		if (children != null) {
+			for (Node child : children.values()) {
+				numRules += child.getNumRules();
+			}
+		}
+		
+		return numRules;
 	}
 }

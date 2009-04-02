@@ -72,7 +72,7 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
 // Static Fields
 //===============================================================
 	
-	public static int OOV_RULE_ID = 0;
+	
 	
 	static int rule_id_count = 1; //three kinds of rule: regular rule (id>0); oov rule (id=0), and null rule (id=-1)
 	
@@ -283,9 +283,9 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
 		
 		//#########3: now add the rule into the trinode
 		if (! pos.hasRules()) {
-			pos.rule_bin        = new MemoryBasedRuleBin();
-			pos.rule_bin.french = p_french;
-			pos.rule_bin.arity  = p_rule.getArity();
+			pos.rule_bin        = new MemoryBasedRuleBin(p_rule.getArity(), p_french);
+//			pos.rule_bin.french = p_french;
+//			pos.rule_bin.arity  = p_rule.getArity();
 			this.qtyRuleBins++;
 		}
 		
@@ -313,26 +313,26 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
 	}
 	
 	
-	public Rule constructOOVRule(int qtyFeatures, int lhs, int sourceWord, int owner, boolean hasLM) {
-		int[] p_french      = new int[1];
-		p_french[0]         = sourceWord;
-		int[] english       = new int[1];
-		english[0]          = sourceWord;
-		float[] feat_scores = new float[qtyFeatures];
-		
-		// TODO: This is a hack to make the decoding without a LM works
-		if (! hasLM) { // no LM is used for decoding, so we should set the stateless cost
-			//this.feat_scores[0]=100.0/(this.featureFunctions.get(0)).getWeight();//TODO
-			feat_scores[0] = 100; // TODO
-		}
-		
-		return new BilingualRule(lhs, p_french, english, feat_scores, 0, owner, 0, getOOVRuleID());
-	}
+//	public Rule constructOOVRule(int qtyFeatures, int lhs, int sourceWord, int owner, boolean hasLM) {
+//		int[] p_french      = new int[1];
+//		p_french[0]         = sourceWord;
+//		int[] english       = new int[1];
+//		english[0]          = sourceWord;
+//		float[] feat_scores = new float[qtyFeatures];
+//		
+//		// TODO: This is a hack to make the decoding without a LM works
+//		if (! hasLM) { // no LM is used for decoding, so we should set the stateless cost
+//			//this.feat_scores[0]=100.0/(this.featureFunctions.get(0)).getWeight();//TODO
+//			feat_scores[0] = 100; // TODO
+//		}
+//		
+//		return new BilingualRule(lhs, p_french, english, feat_scores, 0, owner, 0, getOOVRuleID());
+//	}
 	
 	
-	public int getOOVRuleID() {
-		return OOV_RULE_ID;
-	}
+//	public int getOOVRuleID() {
+//		return OOV_RULE_ID;
+//	}
 
 	public int getNumRules() {
 		// TODO Auto-generated method stub

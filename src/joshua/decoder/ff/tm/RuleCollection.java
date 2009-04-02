@@ -22,6 +22,7 @@ import java.util.List;
 
 import joshua.decoder.ff.FeatureFunction;
 
+
 /**
  * Represents a set of rules under a particular TrieGrammar node.
  * Therefore, all the rules under a RuleCollection will share:
@@ -37,6 +38,8 @@ import joshua.decoder.ff.FeatureFunction;
  */
 public interface RuleCollection {
 
+	public void sortRules(ArrayList<FeatureFunction> l_models);
+	
 	/**
 	 * TODO: now, we assume this function will be called only
 	 * after all the rules have been read; this method need to
@@ -53,7 +56,7 @@ public interface RuleCollection {
      * Only CubePruning requires that rules are sorted based on
      * est_cost (confirmed by zhifei)
 	 */
-	public abstract List<Rule> getSortedRules(ArrayList<FeatureFunction> l_models);
+	public abstract List<Rule> getSortedRules();
 	
 	/**
 	 * Gets the source side for all rules in this RuleCollection.

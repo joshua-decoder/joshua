@@ -34,7 +34,7 @@ import joshua.util.sentence.Phrase;
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate$
  */
-public abstract class BatchGrammar implements GrammarFactory, Grammar {
+public abstract class BatchGrammar extends AbstractGrammar implements GrammarFactory, Grammar {
 	
 	public Grammar getGrammarForSentence(Phrase sentence) {
 		return this;

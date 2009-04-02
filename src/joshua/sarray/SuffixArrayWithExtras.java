@@ -17,6 +17,7 @@
  */
 package joshua.sarray;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -29,8 +30,11 @@ import java.util.Stack;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import joshua.util.Cache;
+import joshua.util.Pair;
 import joshua.util.ReverseOrder;
 import joshua.util.sentence.Phrase;
+import joshua.util.sentence.Vocabulary;
 
 /**
  * Extra methods related to suffix array grammar extraction.
@@ -51,23 +55,27 @@ public class SuffixArrayWithExtras extends SuffixArray {
 	/**
 	 * Calculates the most frequent phrases in the corpus.
 	 * Populates the phrases list with them, and the frequencies
-	 * list with their frequenies.  Allows a threshold to be
+	 * list with their frequencies.  Allows a threshold to be
 	 * set for the minimum frequency to remember, as well as
 	 * the maximum number of phrases.
+	 * 
+	 * TODO Write unit tests for this method
 	 *
-	 * @param frequencies  a list of the phrases frequencies
+	 * @param frequencies  a list to return of the phrases frequencies
 	 * @param minFrequency the minimum frequency required to
 	 *                     retain phrases
 	 * @param maxPhrases   the maximum number of phrases to return
 	 * @return the most frequent phrases
 	 */
-	public List<Phrase> getMostFrequentPhrases(
-		List<Integer> frequencies,
+	public Pair<List<Phrase>,List<Integer>> getMostFrequentPhrases(
 		int minFrequency,
 		int maxPhrases,
 		int maxPhraseLength
 	) {
-		return getMostFrequentPhrases(new ArrayList<Phrase>(), frequencies, minFrequency, maxPhrases, maxPhraseLength);
+
+		List<Integer> frequencies = new ArrayList<Integer>();
+		List<Phrase> phrases = getMostFrequentPhrases(new ArrayList<Phrase>(), frequencies, minFrequency, maxPhrases, maxPhraseLength);
+		return new Pair<List<Phrase>,List<Integer>>(phrases, frequencies);
 	}
 	
 	/**
@@ -526,4 +534,52 @@ public class SuffixArrayWithExtras extends SuffixArray {
 			return str;
 		}
 	}
+	
+	public static class FrequentPhrase {
+		public final Phrase phrase;
+		public final int frequency;
+		
+		public FrequentPhrase(Phrase phrase, int frequency) {
+			this.phrase = phrase;
+			this.frequency = frequency;
+		}
+		
+	}
+	
+	public static void main(String[] args) throws IOException {
+		
+		if (args.length < 1) {
+			System.err.println("Usage: java " + SuffixArray.class.getName() + " source.vocab source.corpus source.suffixes");
+			System.exit(0);
+		}
+		
+		String corpusFileName = args[0];
+		
+		logger.info("Constructing vocabulary from file " + corpusFileName);
+		Vocabulary symbolTable = new Vocabulary();
+		int[] lengths = SuffixArrayFactory.createVocabulary(corpusFileName, symbolTable);
+		
+		logger.info("Constructing corpus array from file " + corpusFileName);
+		CorpusArray corpusArray = SuffixArrayFactory.createCorpusArray(corpusFileName, symbolTable, lengths[0], lengths[1]);
+		
+		logger.info("Constructing suffix array from file " + corpusFileName);
+		SuffixArrayWithExtras suffixArray = new SuffixArrayWithExtras(corpusArray, Cache.DEFAULT_CAPACITY);
+
+		int minFrequency = 0;
+		int maxPhrases = 100;
+		int maxPhraseLength = 10;
+		
+		Pair<List<Phrase>,List<Integer>> list = 
+			suffixArray.getMostFrequentPhrases(minFrequency, maxPhrases, maxPhraseLength);
+		
+		List<Phrase> phrases = list.first;
+//		List<>
+//		
+//		for (Pair<List<Phrase>,List<Integer>> pair : list) {
+//			
+//			System.out.println(phrase);
+//		}
+		
+	}
+	
 }

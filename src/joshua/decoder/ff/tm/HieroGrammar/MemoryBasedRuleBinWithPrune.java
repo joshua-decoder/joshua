@@ -18,6 +18,7 @@
 package joshua.decoder.ff.tm.HieroGrammar;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.PriorityQueue;
 
 import joshua.decoder.JoshuaConfiguration;
@@ -38,6 +39,9 @@ public class MemoryBasedRuleBinWithPrune	extends MemoryBasedRuleBin {
 	protected double cutoff = IMPOSSIBLE_COST;//initial cost
 	protected PriorityQueue<Rule> heapRules = null;//sort the rules based on the stateless cost
 	
+	public MemoryBasedRuleBinWithPrune(int arity, int[] sourceTokens) {
+		super(arity, sourceTokens);
+	}
 	
 	//TODO: bug in getSortedRules: even the l_models is new, we do not update the est cost for the rule, which is wrong
 	/**
@@ -50,18 +54,18 @@ public class MemoryBasedRuleBinWithPrune	extends MemoryBasedRuleBin {
 	 * what about the weights changed as in MERT??
 	 */
 	//public synchronized ArrayList<Rule> get_sorted_rules() {
-	public ArrayList<Rule> getSortedRules(ArrayList<FeatureFunction> l_models) {
+	public List<Rule> getSortedRules(ArrayList<FeatureFunction> l_models) {
 		if (null != l_models || ! this.sorted) {
 			//TODO: even the l_models is new, we do not update the est cost for the rule, which is wrong
-			this.sortedRules.clear();
+			this.rules.clear();
 			while (this.heapRules.size() > 0) {
 				Rule t_r = (Rule) this.heapRules.poll();
-				this.sortedRules.add(0, t_r);
+				this.rules.add(0, t_r);
 			}
 			this.sorted    = true;
 			this.heapRules = null;
 		}
-		return this.sortedRules;
+		return this.rules;
 	}
 	
 	
@@ -69,7 +73,7 @@ public class MemoryBasedRuleBinWithPrune	extends MemoryBasedRuleBin {
 		if (null == this.heapRules) { // first time
 			this.heapRules = new PriorityQueue<Rule>(1, Rule.NegtiveCostComparator); // TODO: initial capacity?
 			this.arity = rule.getArity();
-			this.french = rule.getFrench();
+			this.sourceTokens = rule.getFrench();
 		}
 		if (rule.getArity() != this.arity) {
 			Support.write_log_line(String.format("RuleBin: arity is not matching, old: %d; new: %d", this.arity, rule.getArity()),	Support.ERROR);
@@ -79,7 +83,7 @@ public class MemoryBasedRuleBinWithPrune	extends MemoryBasedRuleBin {
 		if (rule.getEstCost() + JoshuaConfiguration.rule_relative_threshold < this.cutoff) {
 			this.cutoff = rule.getEstCost() + JoshuaConfiguration.rule_relative_threshold;
 		}
-		rule.setFrench(this.french); //TODO: this will release the memory in each rule, but still have a pointer
+		rule.setFrench(this.sourceTokens); //TODO: this will release the memory in each rule, but still have a pointer
 	}
 	
 	
