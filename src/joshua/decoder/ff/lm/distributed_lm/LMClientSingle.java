@@ -22,6 +22,7 @@ import joshua.util.SocketUtility;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.logging.Logger;
 
 
 /**
@@ -33,6 +34,9 @@ import java.util.HashMap;
  */
 public class LMClientSingle
 extends LMClient {
+	
+	private static final Logger logger = Logger.getLogger(LMClientSingle.class.getName());
+	
 	SocketUtility.ClientConnection  p_client;
 	HashMap<String,String>    request_cache    = new HashMap<String,String>();
 	int        cache_size_limit = 3000000;
@@ -87,7 +91,7 @@ extends LMClient {
 	
 	//cmd: prob order wrd1 wrd2 ...
 	public double get_prob_backoff_state(int[] ngram, int n_additional_bow) {
-		System.out.println("Error: call get_prob_backoff_state in lmclient, must exit");
+		logger.severe("Error: call get_prob_backoff_state in lmclient, must exit");
 		System.exit(1);
 		return -1;
 		/*double res=0.0;
@@ -99,7 +103,7 @@ extends LMClient {
 	
 	
 	public int[] get_left_euqi_state(int[] original_state_wrds, int order, double[] cost) {
-		System.out.println("Error: call get_left_euqi_state in lmclient, must exit");
+		logger.severe("Error: call get_left_euqi_state in lmclient, must exit");
 		System.exit(1);
 		return null;
 		/*
@@ -112,7 +116,7 @@ extends LMClient {
 	
 	
 	public int[] get_right_euqi_state(int[] original_state, int order) {
-		System.out.println("Error: call get_right_euqi_state in lmclient, must exit");
+		logger.severe("Error: call get_right_euqi_state in lmclient, must exit");
 		System.exit(1);
 		return null;
 		/*

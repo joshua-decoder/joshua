@@ -17,6 +17,8 @@
  */
 package joshua.decoder.ff;
 
+import java.util.logging.Logger;
+
 import joshua.decoder.ff.tm.Rule;
 
 /**
@@ -25,6 +27,8 @@ import joshua.decoder.ff.tm.Rule;
  * @version $LastChangedDate$
  */
 public final class PhraseModelFF extends DefaultStatelessFF {
+	
+	private static final Logger logger = Logger.getLogger(PhraseModelFF.class.getName());
 	
 	/* the feature will be activated only when the owner is the
 	 * same as the rule, we need an owner to distinguish different
@@ -46,7 +50,7 @@ public final class PhraseModelFF extends DefaultStatelessFF {
 			if (this.columnIndex < feat_scores.length) {
 				return feat_scores[this.columnIndex];
 			} else {
-				System.out.println("In PhraseModelFF: columnIndex is not right, model columnIndex: " + columnIndex + "; num of features in rul is :" + feat_scores.length);
+				logger.warning("In PhraseModelFF: columnIndex is not right, model columnIndex: " + columnIndex + "; num of features in rul is :" + feat_scores.length);
 				/*for (int i = 0; i < rule.feat_scores.length; i++) {
 					System.out.println(String.format(" %.4f", rule.feat_scores[i]));
 				}

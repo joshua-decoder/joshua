@@ -252,7 +252,7 @@ public class Bin
 					}					
 				}
 			}else{
-				System.out.println("Sorry, we can only deal with rules with at most TWO non-terminals");
+				logger.severe("Sorry, we can only deal with rules with at most TWO non-terminals");
 				System.exit(1);
 			}
 		}		

@@ -126,7 +126,7 @@ public class DotChart {
 		for (int j = 0; j <= sent_len - 1; j++) {
 			if (p_grammar.hasRuleForSpan(j, j, sent_len)) {
 				if(p_grammar.getTrieRoot()==null){
-					System.out.println("trie root is null"); System.exit(0);
+					logger.severe("trie root is null"); System.exit(0);
 				}
 				add_dot_item(p_grammar.getTrieRoot(), j, j, null, null, 0.0f);
 			}
@@ -163,8 +163,8 @@ public class DotChart {
 			
 			if (l_dot_bins[i][j-1] != null) {
 				for (DotItem dt: l_dot_bins[i][j-1].l_dot_items) { //dotitem in dot_bins[i][k]: looking for an item in the right to the dot
-					if(dt.tnode==null){
-						System.out.println("dt is null");
+					if(dt.tnode==null && logger.isLoggable(Level.FINE)){
+						logger.fine("dt is null");
 					}
 					Trie child_tnode = dt.tnode.matchOne(last_word);//match the terminal
 					if (child_tnode != null) {

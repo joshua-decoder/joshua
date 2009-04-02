@@ -33,6 +33,8 @@ import java.net.ServerSocket;
 import java.net.Socket;
 //import java.net.UnknownHostException;
 import java.util.HashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
@@ -48,6 +50,9 @@ import java.io.PrintWriter;
  * @version $LastChangedDate$
  */
 public class LMServer {
+	
+	private static final Logger logger = Logger.getLogger(LMServer.class.getName());
+	
 	//common options
 	public static int port = 9800;
 	static boolean use_srilm = true;
@@ -76,11 +81,15 @@ public class LMServer {
 	
 	public static void main(String[] args) throws IOException {
 		if (args.length != 1) {
-			System.out.println("wrong command, correct command should be: java LMServer config_file");
-			System.out.println("num of args is "+ args.length);
-			for (int i = 0; i < args.length; i++) {
-				System.out.println("arg is: " + args[i]);
+			System.err.println("wrong command, correct command should be: java LMServer config_file");
+			
+			if (logger.isLoggable(Level.FINE)) {
+				logger.fine("num of args is "+ args.length);
+				for (int i = 0; i < args.length; i++) {
+					logger.fine("arg is: " + args[i]);
+				}
 			}
+			
 			System.exit(1);
 		}
 		String config_file = args[0].trim();
@@ -99,23 +108,23 @@ public class LMServer {
 		try {
 			serverSocket = new ServerSocket(port);
 			if (null == serverSocket) {
-				System.out.println("Error: server socket is null");
+				logger.severe("Error: server socket is null");
 				System.exit(0);
 			}
 			init_lm_grammar();
 			
-			System.out.println("finished lm reading, wait for connection");
+			logger.info("finished lm reading, wait for connection");
 			
 			// serverSocket = new ServerSocket(0);//0 means any free port
 			// port = serverSocket.getLocalPort();
 			while (true) {
 				Socket socket = serverSocket.accept();
-				System.out.println("accept a connection from client");
+				logger.info("accept a connection from client");
 				ClientHandler handler = new ClientHandler(socket,server);
 				handler.start();
 			}
 		} catch(IOException ioe) {
-			System.out.println("cannot create serversocket at port or connection fail");
+			logger.severe("cannot create serversocket at port or connection fail");
 			ioe.printStackTrace();
 		} finally {
 			try {
@@ -131,7 +140,7 @@ public class LMServer {
 	public static void init_lm_grammar() throws IOException {
 		if (use_srilm) {
 			if (use_left_euqivalent_state || use_right_euqivalent_state) {
-				System.out.println("use local srilm, we cannot use suffix stuff");
+				logger.severe("use local srilm, we cannot use suffix stuff");
 				System.exit(0);
 			}
 			p_symbolTable = new SrilmSymbol(remote_symbol_tbl, g_lm_order);
@@ -165,46 +174,56 @@ public class LMServer {
 				}
 				if ("lm_file".equals(fds[0])) {
 					lm_file = fds[1].trim();
-					System.out.println(String.format("lm file: %s", lm_file));
+					if (logger.isLoggable(Level.FINE))
+						logger.fine(String.format("lm file: %s", lm_file));
 					
 				} else if ("use_srilm".equals(fds[0])) {
 					use_srilm = new Boolean(fds[1]);
-					System.out.println(String.format("use_srilm: %s", use_srilm));
+					if (logger.isLoggable(Level.FINE))
+						logger.fine(String.format("use_srilm: %s", use_srilm));
 					
 				} else if ("lm_ceiling_cost".equals(fds[0])) {
 					lm_ceiling_cost = Double.parseDouble(fds[1]);
-					System.out.println(String.format("lm_ceiling_cost: %s", lm_ceiling_cost));
+					if (logger.isLoggable(Level.FINE))
+						logger.fine(String.format("lm_ceiling_cost: %s", lm_ceiling_cost));
 					
 				} else if ("use_left_euqivalent_state".equals(fds[0])) {
 					use_left_euqivalent_state = new Boolean(fds[1]);
-					System.out.println(String.format("use_left_euqivalent_state: %s", use_left_euqivalent_state));
+					if (logger.isLoggable(Level.FINE))
+						logger.fine(String.format("use_left_euqivalent_state: %s", use_left_euqivalent_state));
 					
 				} else if ("use_right_euqivalent_state".equals(fds[0])) {
 					use_right_euqivalent_state = new Boolean(fds[1]);
-					System.out.println(String.format("use_right_euqivalent_state: %s", use_right_euqivalent_state));
+					if (logger.isLoggable(Level.FINE))
+						logger.fine(String.format("use_right_euqivalent_state: %s", use_right_euqivalent_state));
 					
 				} else if ("order".equals(fds[0])) {
 					g_lm_order = Integer.parseInt(fds[1]);
-					System.out.println(String.format("g_lm_order: %s", g_lm_order));
+					if (logger.isLoggable(Level.FINE))
+						logger.fine(String.format("g_lm_order: %s", g_lm_order));
 					
 				} else if ("remote_lm_server_port".equals(fds[0])) {
 					port = Integer.parseInt(fds[1]);
-					System.out.println(String.format("remote_lm_server_port: %s", port));
+					if (logger.isLoggable(Level.FINE))
+						logger.fine(String.format("remote_lm_server_port: %s", port));
 					
 				} else if ("remote_symbol_tbl".equals(fds[0])) {
 					remote_symbol_tbl = new String(fds[1]);
-					System.out.println(String.format("remote_symbol_tbl: %s", remote_symbol_tbl));
+					if (logger.isLoggable(Level.FINE))
+						logger.fine(String.format("remote_symbol_tbl: %s", remote_symbol_tbl));
 					
 				} else if ("hostname".equals(fds[0])) {
 					g_host_name = fds[1].trim();
-					System.out.println(String.format("host name is: %s", g_host_name));
+					if (logger.isLoggable(Level.FINE))
+						logger.fine(String.format("host name is: %s", g_host_name));
 					
 				} else if ("interpolation_weight".equals(fds[0])) {
 					interpolation_weight = Double.parseDouble(fds[1]);
-					System.out.println(String.format("interpolation_weightt: %s", interpolation_weight));
+					if (logger.isLoggable(Level.FINE))
+						logger.fine(String.format("interpolation_weightt: %s", interpolation_weight));
 					
 				} else {
-					Support.write_log_line("Warning: not used config line: " + line, Support.ERROR);
+					logger.warning("Warning: not used config line: " + line);
 					//System.exit(0);
 				}
 			}
@@ -267,8 +286,8 @@ public class LMServer {
 			//search cache
 			g_n_request++;
 			String cmd_res = process_request_helper(packet);
-			if (g_n_request % 50000 == 0) {
-				System.out.println("n_requests: " + g_n_request);
+			if (logger.isLoggable(Level.FINE) && g_n_request % 50000 == 0) {
+				logger.fine("n_requests: " + g_n_request);
 			}
 			return cmd_res;
 		}
@@ -288,7 +307,7 @@ public class LMServer {
 			} else if ("equiv_right".equals(ds.cmd)) {
 				return get_right_equiv_state(ds);
 			} else {
-				System.out.println("error : Wrong request line: " + line);
+				logger.severe("error : Wrong request line: " + line);
 				//System.exit(1);
 				return "";
 			}
@@ -303,7 +322,7 @@ public class LMServer {
 		
 		// format: prob order wrds
 		private String get_prob_backoff_state(DecodedStructure ds) {
-			System.out.println("Error: call get_prob_backoff_state in lmserver, must exit");
+			logger.severe("Error: call get_prob_backoff_state in lmserver, must exit");
 			System.exit(1);
 			return null;
 			/*Double res = p_lm.get_prob_backoff_state(ds.wrds, ds.num, ds.num);
@@ -313,7 +332,7 @@ public class LMServer {
 		
 		// format: prob order wrds
 		private String get_left_equiv_state(DecodedStructure ds) {
-			System.out.println("Error: call get_left_equiv_state in lmserver, must exit");
+			logger.severe("Error: call get_left_equiv_state in lmserver, must exit");
 			System.exit(1);
 			return null;
 		}
@@ -321,7 +340,7 @@ public class LMServer {
 		
 		// format: prob order wrds
 		private String get_right_equiv_state(DecodedStructure ds) {
-			System.out.println("Error: call get_right_equiv_state in lmserver, must exit");
+			logger.severe("Error: call get_right_equiv_state in lmserver, must exit");
 			System.exit(1);
 			return null;
 		}

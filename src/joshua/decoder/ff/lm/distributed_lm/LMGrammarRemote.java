@@ -25,6 +25,8 @@ import joshua.util.Regex;
 
 import java.io.IOException;
 import java.util.Hashtable;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * this class implement 
@@ -38,6 +40,8 @@ import java.util.Hashtable;
 //PATH: this => LMClient => network => LMServer => LMGrammar => LMGrammar_JAVA/SRILM; and then reverse the path
 public class LMGrammarRemote extends AbstractLM {
 	
+	private static final Logger logger = Logger.getLogger(LMGrammarRemote.class.getName());
+	
 	// if remote method is used
 	private LMClient p_lm_client = null;
 	
@@ -46,7 +50,7 @@ public class LMGrammarRemote extends AbstractLM {
 	throws IOException {
 		super(psymbolTable, order);
 		
-		System.out.println("use remote suffix and lm server");
+		logger.info("use remote suffix and lm server");
 		String[] hosts   = new String[num_servers];
 		int[]    ports   = new int[num_servers];
 		double[] weights = new double[num_servers];
@@ -55,23 +59,13 @@ public class LMGrammarRemote extends AbstractLM {
 		if (1 == num_servers) {
 			p_lm_client = new LMClientSingle(hosts[0], ports[0]);
 			
-			/*
-			//debug begin
-			System.out.println("begin to call msrlm");
-			System.out.println("prob is " + ((LMClient_Single)p_lm_client).get_prob_msrlm("i am ok", 3));
-			System.out.println("prob is " + ((LMClient_Single)p_lm_client).get_prob_msrlm("china is with", 3));
-			System.out.println("prob is " + ((LMClient_Single)p_lm_client).get_prob_msrlm("china is a", 3));
-			System.out.println("prob is " + ((LMClient_Single)p_lm_client).get_prob_msrlm("the chinese government", 3));
-			
-			System.exit(0);
-			//end
-			*/
 		} else {
 			p_lm_client = new LMClientMultiServer(hosts, ports, weights, num_servers);
 		}
 	}
 	
 	//TODO This method is never used. Perhaps it should be removed.
+	@SuppressWarnings("unused")
 	private void end_lm_grammar() {
 		p_lm_client.close_client();
 	}
@@ -95,7 +89,7 @@ public class LMGrammarRemote extends AbstractLM {
 			l_lm_server_ports[count]   = port;
 			l_lm_server_weights[count] = weight;
 			count++;
-			System.out.println("lm server: "
+			logger.fine("lm server: "
 				+ "lm_file: " + lm_file
 				+ "; host: " + host
 				+ "; port: " + port
@@ -103,7 +97,7 @@ public class LMGrammarRemote extends AbstractLM {
 		} } finally { reader.close(); }
 			
 		if (count != num_servers) {
-			System.out.println("num of lm servers does not match");
+			logger.severe("num of lm servers does not match");
 			System.exit(1);
 		}
 	}
@@ -131,25 +125,29 @@ public class LMGrammarRemote extends AbstractLM {
 				if ("lm_file".equals(fds[0])) {
 					String lm_file = fds[1].trim();
 					res.put("lm_file", lm_file);
-					System.out.println(String.format("lm file: %s", lm_file));
+					if (logger.isLoggable(Level.FINE))
+							logger.fine(String.format("lm file: %s", lm_file));
 					
 				} else if ("remote_lm_server_port".equals(fds[0])) {
 					int port = Integer.parseInt(fds[1]);
 					res.put("port", port);
-					System.out.println(String.format("remote_lm_server_port: %s", port));
+					if (logger.isLoggable(Level.FINE))
+						logger.fine(String.format("remote_lm_server_port: %s", port));
 					
 				} else if ("hostname".equals(fds[0])) {
 					String host_name = fds[1].trim();
 					res.put("hostname", host_name);
-					System.out.println(String.format("host name is: %s", host_name));
+					if (logger.isLoggable(Level.FINE))
+						logger.fine(String.format("host name is: %s", host_name));
 					
 				} else if ("interpolation_weight".equals(fds[0])) {
 					double interpolation_weight = Double.parseDouble(fds[1]);
 					res.put("weight", interpolation_weight);
-					System.out.println(String.format("interpolation_weightt: %s", interpolation_weight));
+					if (logger.isLoggable(Level.FINE))
+						logger.fine(String.format("interpolation_weightt: %s", interpolation_weight));
 					
 				} else {
-					Support.write_log_line("Warning: not used config line: " + line, Support.ERROR);
+					logger.warning("Warning: not used config line: " + line);
 					//System.exit(1);
 				}
 			}
@@ -174,7 +172,7 @@ public class LMGrammarRemote extends AbstractLM {
 	
 	
 	public void write_vocab_map_srilm(String fname) {
-		System.out.println("Error: call write_vocab_map_srilm in remote, must exit");
+		logger.severe("Error: call write_vocab_map_srilm in remote, must exit");
 		System.exit(1);
 	}
 }

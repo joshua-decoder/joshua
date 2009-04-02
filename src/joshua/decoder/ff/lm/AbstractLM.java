@@ -58,8 +58,8 @@ public abstract class AbstractLM extends DefaultNGramLanguageModel {
 		int historySize = ngram.length - 1;
 		if (historySize >= order || historySize < 0) {
 			// BUG: use logger or exception. Don't zero default
-			System.out.println("Error: history size is " + historySize);
-			return 0;
+			throw new RuntimeException("Error: history size is " + historySize);
+//			return 0;
 		}
 		double probability = ngramLogProbability_helper(ngram, order);
 		if (probability < -JoshuaConfiguration.lm_ceiling_cost) {

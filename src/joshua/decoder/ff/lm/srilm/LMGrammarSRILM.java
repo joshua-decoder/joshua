@@ -17,6 +17,8 @@
  */
 package joshua.decoder.ff.lm.srilm;
 
+import java.util.logging.Logger;
+
 import joshua.decoder.ff.lm.AbstractLM;
 import joshua.decoder.SrilmSymbol;
 
@@ -29,10 +31,13 @@ import joshua.decoder.SrilmSymbol;
 public class LMGrammarSRILM extends AbstractLM {
 	SWIGTYPE_p_Ngram p_srilm;
 	
+	private static final Logger logger =
+		Logger.getLogger(LMGrammarSRILM.class.getName());
+	
 	public LMGrammarSRILM(SrilmSymbol symbol, int order, String lm_file) {
 		super(symbol, order);
 	 
-		System.out.println("use local srilm");
+		logger.info("use local srilm");
 		//p_srilm = srilm.initLM(order_, p_symbol.getLMStartID(), p_symbol.getLMEndID() );//TODO
 		p_srilm = symbol.getSrilmPointer();
 		read_lm_grammar_from_file(lm_file);//TODO: what about sentence-specific?
@@ -42,11 +47,11 @@ public class LMGrammarSRILM extends AbstractLM {
 	// read grammar locally by the Java implementation
 	private void read_lm_grammar_from_file(String grammar_file) {
 		long start_loading_time = System.currentTimeMillis();
-		System.out.println("read lm by srilm tool");
+		logger.info("read lm by srilm tool");
 		srilm.readLM(p_srilm, grammar_file);
-		System.out.println("read lm finished");
-		//System.out.println("##### mem used (kb): " + Support.getMemoryUse());
-		System.out.println("##### time used (seconds): "
+		logger.info("read lm finished");
+		//logger.info("##### mem used (kb): " + Support.getMemoryUse());
+		logger.info("##### time used (seconds): "
 			+ (System.currentTimeMillis() - start_loading_time) / 1000);
 	}
 	

@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * this class implement 
@@ -57,6 +58,9 @@ import java.util.List;
 
 
 public abstract class DefaultSymbol extends AbstractSymbolTable implements SymbolTable { // implements Symbol {
+	
+	private static final Logger logger = Logger.getLogger(DefaultSymbol.class.getName());
+	
 	//terminal symbol may get from a tbl file, srilm, or a lm file
 	//**non-terminal symbol is always from myself, and the integer should always be negative	
 	private HashMap<String,Integer> nonterminal_str_2_num_tbl = new HashMap<String,Integer>();
@@ -95,7 +99,7 @@ public abstract class DefaultSymbol extends AbstractSymbolTable implements Symbo
 	final public String  getNonterminal(int id){
 		String res =  (String)nonterminal_num_2_str_tbl.get(id);
 		if(res == null){
-			System.out.println("try to query the string for non exist id, must exit");
+			logger.severe("try to query the string for non exist id, must exit");
 			System.exit(0);
 		}
 		return res;
@@ -141,7 +145,7 @@ public abstract class DefaultSymbol extends AbstractSymbolTable implements Symbo
 		Integer res_id = (Integer)nonterminal_str_2_num_tbl.get(str);
 		if (null != res_id) { // already have this symbol
 			if (! isNonterminal(res_id)) {
-				System.out.println("Error, NONTSym: " + str + "; id: " + res_id);
+				logger.severe("Error, NONTSym: " + str + "; id: " + res_id);
 				System.exit(1);
 			}
 			return res_id;
@@ -149,7 +153,6 @@ public abstract class DefaultSymbol extends AbstractSymbolTable implements Symbo
 			nonterminal_str_2_num_tbl.put(str, nonterminal_cur_id);
 			nonterminal_num_2_str_tbl.put(nonterminal_cur_id, str);
 			nonterminal_cur_id--;
-			//System.out.println("Sym: " + str + "; id: " + negative_id);
 			return (nonterminal_cur_id+1);
 		}
 	}
@@ -170,7 +173,7 @@ public abstract class DefaultSymbol extends AbstractSymbolTable implements Symbo
 		try { for (String line : symboltableReader) {
 			String[] fds = Regex.spaces.split(line);
 			if(fds.length!=2){
-			    System.out.println("Warning: read index, bad line: " + line);
+			    logger.warning("Warning: read index, bad line: " + line);
 			    continue;
 			}
 			String str = fds[0].trim();
@@ -178,7 +181,7 @@ public abstract class DefaultSymbol extends AbstractSymbolTable implements Symbo
 
 			String uqniue_str;
 			if (null != tbl_str_2_id.get(str)) { // it is quite possible that java will treat two stings as the same when other language (e.g., C or perl) treat them differently, due to unprintable symbols
-				 System.out.println("Warning: duplicate string (add fake): " + line);
+				 logger.warning("Warning: duplicate string (add fake): " + line);
 				 uqniue_str = str + id;//fake string
 				 //System.exit(1);//TODO
 			} else {
@@ -188,7 +191,7 @@ public abstract class DefaultSymbol extends AbstractSymbolTable implements Symbo
 			
 			//it is guranteed that the strings in tbl_id_2_str are different
 			if (null != tbl_id_2_str.get(id)) {
-				 System.out.println("Error: duplicate id, have to exit; " + line);
+				 logger.severe("Error: duplicate id, have to exit; " + line);
 				 System.exit(1);
 			} else {
 				tbl_id_2_str.put(id, uqniue_str);
@@ -227,11 +230,11 @@ public abstract class DefaultSymbol extends AbstractSymbolTable implements Symbo
                         res_id = addTerminal(str);
                         n_added++;
                 }else{//non-continous index
-                        System.out.println("Warning: add fake symbol, be alert");
+                        logger.warning("Warning: add fake symbol, be alert");
                         res_id = addTerminal("lzf"+i);
                 }
                 if(res_id!=i){
-                        System.out.println("id supposed: " + i +" != assinged " + res_id + " symbol:" + str);
+                        logger.severe("id supposed: " + i +" != assinged " + res_id + " symbol:" + str);
                         System.exit(0);
                 }
                 if(n_added>=tbl_id_2_str.size())

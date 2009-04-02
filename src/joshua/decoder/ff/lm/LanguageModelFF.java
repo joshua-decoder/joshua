@@ -26,6 +26,7 @@ import joshua.decoder.ff.StatefulFFTransitionResult;
 import joshua.decoder.ff.tm.Rule;
 
 import java.util.ArrayList;
+import java.util.logging.Logger;
 
 
 /**
@@ -45,6 +46,9 @@ import java.util.ArrayList;
 
 
 public class LanguageModelFF extends DefaultStatefulFF {
+	
+	private static final Logger logger = Logger.getLogger(LanguageModelFF.class.getName());
+	
 	static String START_SYM="<s>";
 	public  int START_SYM_ID;
 	static String STOP_SYM="</s>";
@@ -130,7 +134,7 @@ public class LanguageModelFF extends DefaultStatefulFF {
 			int c_id = en_words[c];
 			if (p_symbolTable.isNonterminal(c_id)) {
 				if (null == previous_states) {
-					System.out.println("LMModel>>lookup_words1_equv_state: null previous_states");
+					logger.severe("LMModel>>lookup_words1_equv_state: null previous_states");
 					System.exit(1);
 				}
 				
@@ -139,7 +143,7 @@ public class LanguageModelFF extends DefaultStatefulFF {
 				int[]   l_context = state.getLeftLMStateWords();
 				int[]   r_context = state.getRightLMStateWords();
 				if (l_context.length != r_context.length) {
-					System.out.println("LMModel>>lookup_words1_equv_state: left and right contexts have unequal lengths");
+					logger.severe("LMModel>>lookup_words1_equv_state: left and right contexts have unequal lengths");
 					System.exit(1);
 				}
 				
@@ -336,7 +340,7 @@ public class LanguageModelFF extends DefaultStatefulFF {
 		int[]   l_context = state.getLeftLMStateWords();		
 		int[]   r_context = state.getRightLMStateWords();
 		if (l_context.length != r_context.length) {
-			System.out.println("LMModel>>compute_equiv_state_final_transition: left and right contexts have unequal lengths");
+			logger.severe("LMModel>>compute_equiv_state_final_transition: left and right contexts have unequal lengths");
 			System.exit(1);
 		}
 		

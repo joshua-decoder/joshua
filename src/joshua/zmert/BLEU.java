@@ -18,9 +18,12 @@
 
 package joshua.zmert;
 import java.util.*;
+import java.util.logging.Logger;
 
 public class BLEU extends EvaluationMetric
 {
+	private static final Logger logger = Logger.getLogger(BLEU.class.getName());
+	
   protected int maxGramLength;
   protected EffectiveLengthMethod effLengthMethod;
     // 1: closest, 2: shortest, 3: average
@@ -44,7 +47,7 @@ public class BLEU extends EvaluationMetric
     if (mxGrmLn >= 1) {
       maxGramLength = mxGrmLn;
     } else {
-      System.out.println("Maximum gram length must be positive");
+      logger.severe("Maximum gram length must be positive");
       System.exit(2);
     }
 
@@ -55,9 +58,9 @@ public class BLEU extends EvaluationMetric
 //    } else if (methodStr.equals("average")) {
 //      effLengthMethod = EffectiveLengthMethod.AVERAGE;
     } else {
-      System.out.println("Unknown effective length method string " + methodStr + ".");
+    	logger.severe("Unknown effective length method string " + methodStr + ".");
 //      System.out.println("Should be one of closest, shortest, or average.");
-      System.out.println("Should be one of closest or shortest.");
+    	logger.severe("Should be one of closest or shortest.");
       System.exit(1);
     }
 
@@ -250,7 +253,7 @@ else { // average
   public double score(int[] stats)
   {
     if (stats.length != suffStatsCount) {
-      System.out.println("Mismatch between stats.length and suffStatsCount (" + stats.length + " vs. " + suffStatsCount + ")");
+    	logger.severe("Mismatch between stats.length and suffStatsCount (" + stats.length + " vs. " + suffStatsCount + ")");
       System.exit(2);
     }
 

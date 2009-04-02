@@ -19,6 +19,7 @@
 package joshua.decoder.ff;
 
 import java.util.ArrayList;
+import java.util.logging.Logger;
 
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.hypergraph.HyperEdge;
@@ -31,6 +32,9 @@ import joshua.decoder.hypergraph.HyperEdge;
  */
 
 public abstract class DefaultStatelessFF implements FeatureFunction {
+	
+	private static final Logger logger = Logger.getLogger(DefaultStatelessFF.class.getName());
+	
 	private      double weight = 0.0;
 	private         int featureID;
 	protected final int owner;
@@ -80,7 +84,7 @@ public abstract class DefaultStatelessFF implements FeatureFunction {
 	 */
 	public StatelessFFTransitionResult transition(Rule rule, ArrayList<FFDPState> previous_states, int span_start, int span_end) {
 		if (null != previous_states) {
-			System.out.println("transition: previous states for a stateless feature is NOT null");
+			logger.severe("transition: previous states for a stateless feature is NOT null");
 			System.exit(0);
 		}
 		StatelessFFTransitionResult result = new StatelessFFTransitionResult();
@@ -92,7 +96,7 @@ public abstract class DefaultStatelessFF implements FeatureFunction {
 	/** Default implementation of finalTransition **/
 	public double finalTransition(FFDPState state) {
 		if (null != state) {
-			System.out.println("finalTransition: state for a stateless feature is NOT null");
+			logger.severe("finalTransition: state for a stateless feature is NOT null");
 			System.exit(0);
 		}
 		return 0.0;

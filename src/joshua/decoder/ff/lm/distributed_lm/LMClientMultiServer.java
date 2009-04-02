@@ -22,6 +22,8 @@ import joshua.util.SocketUtility;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 
 /**
@@ -36,6 +38,9 @@ import java.util.HashMap;
 
 public class LMClientMultiServer
 extends LMClient {
+	
+	private static final Logger logger = Logger.getLogger(LMClientMultiServer.class.getName());
+	
 	public static SocketUtility.ClientConnection[] l_clients = null;
 	public static double[]   probs             = null;
 	public static double[]   weights           = null;
@@ -118,7 +123,7 @@ extends LMClient {
 	
 	//cmd: prob order wrd1 wrd2 ...
 	public double get_prob_backoff_state(int[] ngram, int n_additional_bow) {
-		System.out.println("Error: call get_prob_backoff_state in lmclient, must exit");
+		logger.severe("Error: call get_prob_backoff_state in lmclient, must exit");
 		System.exit(1);
 		return -1;
 		//double res=0.0;
@@ -130,7 +135,7 @@ extends LMClient {
 	
 	
 	public int[] get_left_euqi_state(int[] original_state_wrds, int order, double[] cost) {
-		System.out.println("Error: call get_left_euqi_state in lmclient, must exit");
+		logger.severe("Error: call get_left_euqi_state in lmclient, must exit");
 		System.exit(1);
 		return null;
 		
@@ -143,7 +148,7 @@ extends LMClient {
 	
 	
 	public int[] get_right_euqi_state(int[] original_state, int order) {
-		System.out.println("Error: call get_right_euqi_state in lmclient, must exit");
+		logger.severe("Error: call get_right_euqi_state in lmclient, must exit");
 		System.exit(1);
 		return null;
 		
@@ -199,8 +204,8 @@ extends LMClient {
 		} else {
 			g_n_cache_hit++;
 		}
-		if (g_n_request % 50000 == 0) {
-			System.out.println(
+		if (logger.isLoggable(Level.FINE) && g_n_request % 50000 == 0) {
+			logger.fine(
 				  "n_requests: "     + g_n_request
 				+ "; n_cache_hits: " + g_n_cache_hit
 				+ "; cache size= "   + request_cache.size()
@@ -269,7 +274,7 @@ extends LMClient {
 					if (request_ready) {
 						String cmd_res = l_clients[pos].exe_request(g_packet);
 						if (null == cmd_res) {
-							System.out.println("cmd_res is null, must exit");
+							logger.severe("cmd_res is null, must exit");
 							System.exit(1);
 						} else {
 							probs[pos] = Double.parseDouble(cmd_res);
