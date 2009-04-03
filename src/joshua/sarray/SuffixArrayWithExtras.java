@@ -19,6 +19,7 @@ package joshua.sarray;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -171,7 +172,7 @@ public class SuffixArrayWithExtras extends SuffixArray {
 	 *                        considered collocated
 	 */
 	public Collocations getCollocations(
-		HashSet<Phrase> phrases,
+		Collection<Phrase> phrases,
 		int maxPhraseLength,
 		int windowSize
 	) {
@@ -501,7 +502,7 @@ public class SuffixArrayWithExtras extends SuffixArray {
 		/**
 		 * Gets the list of positions for a pair of phrases
 		 */
-		protected ArrayList<int[]> getColocations(Phrase phrase1, Phrase phrase2) {
+		protected ArrayList<int[]> getCollocations(Phrase phrase1, Phrase phrase2) {
 			// use the first phrase as a key
 			HashMap<Phrase,ArrayList<int[]>> phrase2ToPositionsMap = this.get(phrase1);
 
@@ -535,16 +536,16 @@ public class SuffixArrayWithExtras extends SuffixArray {
 		}
 	}
 	
-	public static class FrequentPhrase {
-		public final Phrase phrase;
-		public final int frequency;
-		
-		public FrequentPhrase(Phrase phrase, int frequency) {
-			this.phrase = phrase;
-			this.frequency = frequency;
-		}
-		
-	}
+//	public static class FrequentPhrase {
+//		public final Phrase phrase;
+//		public final int frequency;
+//		
+//		public FrequentPhrase(Phrase phrase, int frequency) {
+//			this.phrase = phrase;
+//			this.frequency = frequency;
+//		}
+//		
+//	}
 	
 	public static void main(String[] args) throws IOException {
 		
@@ -568,16 +569,23 @@ public class SuffixArrayWithExtras extends SuffixArray {
 		int minFrequency = 0;
 		int maxPhrases = 100;
 		int maxPhraseLength = 10;
+		int windowSize = 10;
 		
+		logger.info("Calculating " + maxPhrases + " most frequent phrases");
 		Pair<List<Phrase>,List<Integer>> list = 
 			suffixArray.getMostFrequentPhrases(minFrequency, maxPhrases, maxPhraseLength);
 		
 		List<Phrase> phrases = list.first;
-//		List<>
-//		
-//		for (Pair<List<Phrase>,List<Integer>> pair : list) {
-//			
-//			System.out.println(phrase);
+//		List<Integer> frequencies = list.second;
+
+		logger.info("Calculating collocations for most frequent phrases");
+		Collocations collocations = suffixArray.getCollocations(phrases, maxPhraseLength, windowSize);
+		
+		logger.info("Printing collocations for most frequent phrases");		
+		System.out.println(collocations.toString());
+		
+//		for (int i=0; i<phrases.size(); i++) {
+//			System.out.println(phrases.get(i) + " " + frequencies.get(i));
 //		}
 		
 	}

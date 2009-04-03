@@ -13,6 +13,11 @@ public class MemoryMappedHierarchicalPhrases implements
 		return null;
 	}
 
+	public int getArity() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
 	public int getEndPosition(int phraseIndex, int positionNumber) {
 		// TODO Auto-generated method stub
 		return 0;
@@ -21,11 +26,6 @@ public class MemoryMappedHierarchicalPhrases implements
 	public int getNumberOfTerminalSequences() {
 		// TODO Auto-generated method stub
 		return 0;
-	}
-
-	public Pattern getPattern() {
-		// TODO Auto-generated method stub
-		return null;
 	}
 
 	public int getSentenceNumber(int phraseIndex) {
@@ -48,10 +48,31 @@ public class MemoryMappedHierarchicalPhrases implements
 		return false;
 	}
 
+	public boolean patternEndsWithNonterminal() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	public boolean patternEndsWithTwoTerminals() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	public boolean patternSecondTokenIsTerminal() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	public boolean patternStartsWithNonterminal() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
 	public int size() {
 		// TODO Auto-generated method stub
 		return 0;
 	}
+
 
 
 }

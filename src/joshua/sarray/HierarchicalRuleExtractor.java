@@ -230,10 +230,6 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 		
 		if (logger.isLoggable(Level.FINE)) logger.fine("Constructing translation for source span " + sourceSpan + ", target span " + targetSpan);
 		
-		if (sourceSpan.start==678417 && sourceSpan.end==678424) {
-			int x=1; x++;
-		}
-		
 		if (sourceSpan.size() > this.maxPhraseSpan)
 			return null;
 		

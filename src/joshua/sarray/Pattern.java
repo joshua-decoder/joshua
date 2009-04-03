@@ -127,14 +127,22 @@ public class Pattern extends BasicPhrase implements Externalizable {
 	//===========================================================
 	
 	public boolean startsWithNonterminal() {
-		// we assume that the nonterminal symbols will be denoted with negative numbers
-		return words[0] < 0;
+		if (words.length > 0) {
+			// we assume that the nonterminal symbols will be denoted with negative numbers
+			return words[0] < 0;
+		} else {
+			return false;
+		}
 	}
 	
 	
 	public boolean endsWithNonterminal() {
-		// we assume that the nonterminal symbols will be denoted with negative numbers
-		return words[words.length-1] < 0;
+		if (words.length > 0) {
+			// we assume that the nonterminal symbols will be denoted with negative numbers
+			return words[words.length-1] < 0;
+		} else {
+			return false;
+		}
 	}
 	
 	public boolean endsWithTwoTerminals() {
@@ -142,6 +150,14 @@ public class Pattern extends BasicPhrase implements Externalizable {
 			return true;
 		else
 			return false;
+	}
+	
+	public boolean secondTokenIsTerminal() {
+		if (words.length > 1 && words[1]>=0) {
+			return true;
+		} else {
+			return false;
+		}
 	}
 	
 	/**

@@ -32,10 +32,15 @@ import java.util.ArrayList;
  * phrase, and provides the methods necessary for returning the
  * Pattern that it matches and for computing the intersection used
  * in the suffix array lookups of discontinuous phrases.
+ * <p>
+ * For efficiency and space savings, this class is being deprecated.
+ * Its methods will be replaced 
+ * by equivalent methods in MatchedHierarchicalPhrases.
  * 
  * @author Chris Callison-Burch and Lane Schwartz 
  * @since July 31 2008
  * @version $LastChangedDate:2008-09-18 12:47:23 -0500 (Thu, 18 Sep 2008) $
+ * @deprecated
  */
 public class HierarchicalPhrase extends AbstractPhrase {
 
@@ -122,96 +127,96 @@ public class HierarchicalPhrase extends AbstractPhrase {
 	}
 	
 	
-	/**
-	 * Constructs a hierarchical phrase appending a final
-	 * nonterminal symbol to an existing hierarchical phrase.
-	 * <p>
-	 * This constructor is used during the query intersection
-	 * algorithm in prefix tree construction.
-	 * 
-	 * @param pattern
-	 * @param prefix
-	 */
-	protected HierarchicalPhrase(HierarchicalPhrase prefix, int nonterminal) {
-		
-		// Use the pattern that was provided
-		this.pattern = new Pattern(prefix.pattern, nonterminal);
-		
-		// Use the sentence number and corpus array from the prefix.
-		this.sentenceNumber = prefix.sentenceNumber;
-		this.corpusArray = prefix.corpusArray;
-		
-		this.terminalSequenceEndIndices = new int[prefix.terminalSequenceEndIndices.length];
-		this.terminalSequenceStartIndices = new int[prefix.terminalSequenceStartIndices.length];
-		
-		for (int i = 0; i < prefix.terminalSequenceStartIndices.length; i++) {
-			terminalSequenceStartIndices[i] = prefix.terminalSequenceStartIndices[i];	
-		}
-		
-		for (int i = 0; i < prefix.terminalSequenceEndIndices.length; i++) {
-			terminalSequenceEndIndices[i] = prefix.terminalSequenceEndIndices[i];
-		}
-		
-		this.length = prefix.length;
-		
-	}
+//	/**
+//	 * Constructs a hierarchical phrase appending a final
+//	 * nonterminal symbol to an existing hierarchical phrase.
+//	 * <p>
+//	 * This constructor is used during the query intersection
+//	 * algorithm in prefix tree construction.
+//	 * 
+//	 * @param pattern
+//	 * @param prefix
+//	 */
+//	protected HierarchicalPhrase(HierarchicalPhrase prefix, int nonterminal) {
+//		
+//		// Use the pattern that was provided
+//		this.pattern = new Pattern(prefix.pattern, nonterminal);
+//		
+//		// Use the sentence number and corpus array from the prefix.
+//		this.sentenceNumber = prefix.sentenceNumber;
+//		this.corpusArray = prefix.corpusArray;
+//		
+//		this.terminalSequenceEndIndices = new int[prefix.terminalSequenceEndIndices.length];
+//		this.terminalSequenceStartIndices = new int[prefix.terminalSequenceStartIndices.length];
+//		
+//		for (int i = 0; i < prefix.terminalSequenceStartIndices.length; i++) {
+//			terminalSequenceStartIndices[i] = prefix.terminalSequenceStartIndices[i];	
+//		}
+//		
+//		for (int i = 0; i < prefix.terminalSequenceEndIndices.length; i++) {
+//			terminalSequenceEndIndices[i] = prefix.terminalSequenceEndIndices[i];
+//		}
+//		
+//		this.length = prefix.length;
+//		
+//	}
 	
 	
-	protected HierarchicalPhrase(Pattern pattern, HierarchicalPhrase prefix, HierarchicalPhrase suffix) {
-		
-		// Use the pattern that was provided
-		this.pattern = pattern;
-		
-		// Use the sentence number and corpus array from the prefix.
-		this.sentenceNumber = prefix.sentenceNumber;
-		this.corpusArray = prefix.corpusArray;
-		
-		boolean prefixEndsWithNonterminal = prefix.endsWithNonterminal();
-		
-		if (prefixEndsWithNonterminal) {
-			this.terminalSequenceEndIndices = new int[prefix.terminalSequenceEndIndices.length+1];
-			this.terminalSequenceStartIndices = new int[prefix.terminalSequenceStartIndices.length+1];
-		} else {
-			this.terminalSequenceEndIndices = new int[prefix.terminalSequenceEndIndices.length];
-			this.terminalSequenceStartIndices = new int[prefix.terminalSequenceStartIndices.length];
-		}
-
-		for (int i = 0; i < prefix.terminalSequenceStartIndices.length; i++) {
-			terminalSequenceStartIndices[i] = prefix.terminalSequenceStartIndices[i];	
-		}
-
-		for (int i = 0; i < prefix.terminalSequenceEndIndices.length; i++) {
-			terminalSequenceEndIndices[i] = prefix.terminalSequenceEndIndices[i];
-		}
-			
-		//boolean patternEndsWithNonterminal = pattern.endsWithNonterminal();
-		boolean patternEndsWithNonterminal = pattern.words[pattern.words.length-1] < 0;
-		
-		if (prefixEndsWithNonterminal) {
-			int lastStartIndex = suffix.terminalSequenceStartIndices[suffix.terminalSequenceStartIndices.length-1];
-			terminalSequenceStartIndices[prefix.terminalSequenceStartIndices.length] = lastStartIndex;
-			terminalSequenceEndIndices[prefix.terminalSequenceStartIndices.length] = lastStartIndex+1;
-			
-			if (patternEndsWithNonterminal) {
-				// This means that the pattern ends with two adjacent nonterminals. 
-				// This is not well defined.
-				this.length = prefix.length;
-			} else {
-				this.length = (lastStartIndex+1) - terminalSequenceStartIndices[0];
-			}
-		} else {
-			if (patternEndsWithNonterminal) {
-				this.length = prefix.length;
-			} else {
-				this.length = prefix.length + 1;
-				terminalSequenceEndIndices[terminalSequenceEndIndices.length-1] += 1;
-			}
-		}
-		
-		
-		
-		
-	}
+//	protected HierarchicalPhrase(Pattern pattern, HierarchicalPhrase prefix, HierarchicalPhrase suffix) {
+//		
+//		// Use the pattern that was provided
+//		this.pattern = pattern;
+//		
+//		// Use the sentence number and corpus array from the prefix.
+//		this.sentenceNumber = prefix.sentenceNumber;
+//		this.corpusArray = prefix.corpusArray;
+//		
+//		boolean prefixEndsWithNonterminal = prefix.endsWithNonterminal();
+//		
+//		if (prefixEndsWithNonterminal) {
+//			this.terminalSequenceEndIndices = new int[prefix.terminalSequenceEndIndices.length+1];
+//			this.terminalSequenceStartIndices = new int[prefix.terminalSequenceStartIndices.length+1];
+//		} else {
+//			this.terminalSequenceEndIndices = new int[prefix.terminalSequenceEndIndices.length];
+//			this.terminalSequenceStartIndices = new int[prefix.terminalSequenceStartIndices.length];
+//		}
+//
+//		for (int i = 0; i < prefix.terminalSequenceStartIndices.length; i++) {
+//			terminalSequenceStartIndices[i] = prefix.terminalSequenceStartIndices[i];	
+//		}
+//
+//		for (int i = 0; i < prefix.terminalSequenceEndIndices.length; i++) {
+//			terminalSequenceEndIndices[i] = prefix.terminalSequenceEndIndices[i];
+//		}
+//			
+//		//boolean patternEndsWithNonterminal = pattern.endsWithNonterminal();
+//		boolean patternEndsWithNonterminal = pattern.words[pattern.words.length-1] < 0;
+//		
+//		if (prefixEndsWithNonterminal) {
+//			int lastStartIndex = suffix.terminalSequenceStartIndices[suffix.terminalSequenceStartIndices.length-1];
+//			terminalSequenceStartIndices[prefix.terminalSequenceStartIndices.length] = lastStartIndex;
+//			terminalSequenceEndIndices[prefix.terminalSequenceStartIndices.length] = lastStartIndex+1;
+//			
+//			if (patternEndsWithNonterminal) {
+//				// This means that the pattern ends with two adjacent nonterminals. 
+//				// This is not well defined.
+//				this.length = prefix.length;
+//			} else {
+//				this.length = (lastStartIndex+1) - terminalSequenceStartIndices[0];
+//			}
+//		} else {
+//			if (patternEndsWithNonterminal) {
+//				this.length = prefix.length;
+//			} else {
+//				this.length = prefix.length + 1;
+//				terminalSequenceEndIndices[terminalSequenceEndIndices.length-1] += 1;
+//			}
+//		}
+//		
+//		
+//		
+//		
+//	}
 	
 	
 	/**

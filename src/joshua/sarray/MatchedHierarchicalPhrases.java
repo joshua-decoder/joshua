@@ -44,10 +44,21 @@ public interface MatchedHierarchicalPhrases {
 	 */
 	public int getSentenceNumber(int phraseIndex);
 	
-	public Pattern getPattern();
+//	public Pattern getPattern();
 	
 	public int getTerminalSequenceLength(int i);
 	
 	public MatchedHierarchicalPhrases copyWith(Pattern pattern);
+	
+	
+	
+	////////////
+	
+	
+	public boolean patternEndsWithNonterminal();
+	public boolean patternStartsWithNonterminal();
+	public boolean patternEndsWithTwoTerminals();
+	public boolean patternSecondTokenIsTerminal();
+	public int getArity();
 	
 }
