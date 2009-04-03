@@ -20,7 +20,6 @@ package joshua.sarray;
 import joshua.corpus.SymbolTable;
 import joshua.util.sentence.AbstractPhrase;
 import joshua.util.sentence.Phrase;
-import joshua.util.sentence.Vocabulary;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -72,12 +71,12 @@ public class BasicPhrase extends AbstractPhrase {
 	 * 
 	 * @param phraseString a String of the format "Hello , world ."
   	 */
-	public BasicPhrase(String phraseString, Vocabulary vocab) {
+	public BasicPhrase(String phraseString, SymbolTable vocab) {
 		this.vocab = vocab;
 		String[] wordStrings = phraseString.split("\\s+");
 		words = new int[wordStrings.length];
 		for (int i = 0; i < wordStrings.length; i++) {
-			words[i] = vocab.addWord(wordStrings[i]);
+			words[i] = vocab.addTerminal(wordStrings[i]);
 		}
 	}
 	

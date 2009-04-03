@@ -29,6 +29,8 @@ package joshua.util.sentence;
 import java.lang.StringBuffer;
 import java.util.ArrayList;
 
+import joshua.corpus.SymbolTable;
+
 
 /**
  * The simplest concrete implementation of Phrase.
@@ -37,7 +39,7 @@ import java.util.ArrayList;
  */
 public class BasicPhrase extends AbstractPhrase {
 	private byte       language;
-	private Vocabulary vocabulary;
+	private SymbolTable vocabulary;
 	private int[]      words;
 	
 	
@@ -58,7 +60,7 @@ public class BasicPhrase extends AbstractPhrase {
 		String[] w      = sentence.split("\\s+");
 		this.words      = new int[w.length];
 		for (int i = 0; i < w.length; i++)
-			this.words[i] = this.vocabulary.addWord(w[i]);
+			this.words[i] = this.vocabulary.addTerminal(w[i]);
 	}
 	
 	
@@ -91,7 +93,7 @@ public class BasicPhrase extends AbstractPhrase {
 	
 	public int getWordID(int position) { return words[position]; }
 	
-	public Vocabulary getVocab()       { return vocabulary; }
+	public SymbolTable getVocab()       { return vocabulary; }
 	
 	// Slightly more efficient then the inherited one
 	public String toString() {

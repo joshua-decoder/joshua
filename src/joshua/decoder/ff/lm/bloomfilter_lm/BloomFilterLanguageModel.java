@@ -47,7 +47,7 @@ public class BloomFilterLanguageModel extends DefaultNGramLanguageModel implemen
 
 	public static final Logger logger = Logger.getLogger(BloomFilterLanguageModel.class.getName());
 
-	private Vocabulary vocabulary;
+	private SymbolTable vocabulary;
 	private BloomFilter bf;
 	private double quantizationBase;
 	private double numTokens;	// log number of tokens seen in training corpus
@@ -360,7 +360,7 @@ public class BloomFilterLanguageModel extends DefaultNGramLanguageModel implemen
 				int [] currPrefix = null;
 				// convert the ngram to integers
 				for (int i = 0; i < currOrder; i++)
-					ngram[i] = vocabulary.addWord(toks[i]);
+					ngram[i] = vocabulary.addTerminal(toks[i]);
 				// we need to update the training token count if we're on unigrams
 				if (currOrder == 1) {
 					if (numTokens == -1)
@@ -422,7 +422,7 @@ public class BloomFilterLanguageModel extends DefaultNGramLanguageModel implemen
 		for (int i = 0; i < vocabSize; i++) {
 			String line = in.readUTF();
 		//	System.err.println(line);
-			vocabulary.addWord(line);
+			vocabulary.addTerminal(line);
 		}
 		numTokens = in.readDouble();
 		countFuncs = new long[in.readInt()][2];

@@ -242,17 +242,6 @@ public class Vocabulary extends AbstractSymbolTable implements Iterable<String>,
 		return intToString.values();
 	}
 	
-	
-	/** 
-	 * Adds a word to the vocabulary.
-	 * 
-	 * @return the ID of the word, or UNKNOWN_WORD if 
-	 *         the word is new and the vocabulary is fixed.
-	 */
-	public int addWord(String wordString) {
-		return addTerminal(wordString);
-	}
-		
 	/**
 	 * Gets the number of unique words in the vocabulary.
 	 * 
@@ -364,21 +353,6 @@ public class Vocabulary extends AbstractSymbolTable implements Iterable<String>,
 			intToString.put(i, wordString);
 		}
 
-	}
-	
-	public String getUnknownWord() {
-		return UNKNOWN_WORD_STRING;
-	}
-
-	public int getUnknownWordID() {
-		return UNKNOWN_WORD;
-	}
-
-	public boolean isNonterminal(int id) {
-		if (id < 0) 
-			return true;
-		else
-			return false;
 	}
 
 	public int getHighestID() {

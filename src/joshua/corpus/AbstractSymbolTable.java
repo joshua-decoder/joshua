@@ -19,6 +19,8 @@ package joshua.corpus;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
 
 /**
@@ -60,6 +62,15 @@ public abstract class AbstractSymbolTable implements SymbolTable {
 		return Integer.parseInt( wrd.substring(wrd.length() - 2,	wrd.length() - 1) ) - 1;
 	}
 
+	public String getUnknownWord() {
+		return SymbolTable.UNKNOWN_WORD_STRING;
+	}
+
+
+	public int getUnknownWordID() {
+		return SymbolTable.UNKNOWN_WORD;
+	}
+	
 	public String getWords(int[] wordIDs, boolean ntIndexIncrements) {
 		StringBuilder s = new StringBuilder();
 		
@@ -91,6 +102,14 @@ public abstract class AbstractSymbolTable implements SymbolTable {
 		return s.toString();
 	}
 	
+
+	public boolean isNonterminal(int id) {
+		if (id < 0) 
+			return true;
+		else
+			return false;
+	}
+	
 	/** 
 	 * Character set encoding used when 
 	 * exporting and importing binary files to and from disk. 
@@ -116,4 +135,15 @@ public abstract class AbstractSymbolTable implements SymbolTable {
 		
 		writeExternal(new ObjectOutputStream(out));
 	}
+	
+	public void readExternal(ObjectInput in) throws IOException,
+	ClassNotFoundException {
+		throw new UnsupportedOperationException();
+	}
+
+
+	public void writeExternal(ObjectOutput out) throws IOException {
+		throw new UnsupportedOperationException();
+	}
+	
 }
