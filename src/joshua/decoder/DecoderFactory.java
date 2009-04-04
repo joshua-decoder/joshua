@@ -45,7 +45,6 @@ public class DecoderFactory {
 	private GrammarFactory[] p_grammar_factories = null;
 	private boolean have_lm_model = false;
 	private ArrayList<FeatureFunction> p_l_feat_functions = null;
-	private ArrayList<Integer> l_default_nonterminals = null;
 	
 	/**
 	 * Shared symbol table for source language terminals,
@@ -60,11 +59,10 @@ public class DecoderFactory {
 	
 	private static final Logger logger = Logger.getLogger(DecoderFactory.class.getName());
 
-	public DecoderFactory(GrammarFactory[] grammar_facories, boolean have_lm_model_, ArrayList<FeatureFunction> l_feat_functions , ArrayList<Integer> l_default_nonterminals_ , SymbolTable symbolTable){
+	public DecoderFactory(GrammarFactory[] grammar_facories, boolean have_lm_model_, ArrayList<FeatureFunction> l_feat_functions, SymbolTable symbolTable){
 		this.p_grammar_factories = 	grammar_facories;
 		this.have_lm_model = have_lm_model_;
 		this.p_l_feat_functions = l_feat_functions;
-		this.l_default_nonterminals = l_default_nonterminals_;
 		this.p_symbolTable = symbolTable;
 	}
 	
@@ -72,7 +70,7 @@ public class DecoderFactory {
 		try{
 	//		###### decode the sentences, maybe in parallel
 			if (JoshuaConfiguration.num_parallel_decoders == 1) {
-				DecoderThread pdecoder = new DecoderThread(this.p_grammar_factories, this.have_lm_model, this.p_l_feat_functions, this.l_default_nonterminals, this.p_symbolTable, 
+				DecoderThread pdecoder = new DecoderThread(this.p_grammar_factories, this.have_lm_model, this.p_l_feat_functions, this.p_symbolTable, 
 						test_file, nbest_file,	oracle_file, 0);
 				
 				pdecoder.decode_a_file();//do not run *start*; so that we stay in the current main thread
@@ -151,7 +149,6 @@ public class DecoderFactory {
 					this.p_grammar_factories,
 					this.have_lm_model,
 					this.p_l_feat_functions,
-					this.l_default_nonterminals,
 					this.p_symbolTable,
 					cur_test_file,
 					cur_nbest_file,
@@ -176,7 +173,6 @@ public class DecoderFactory {
 			this.p_grammar_factories,
 			this.have_lm_model,
 			this.p_l_feat_functions,
-			this.l_default_nonterminals,
 			this.p_symbolTable,
 			cur_test_file,
 			cur_nbest_file,

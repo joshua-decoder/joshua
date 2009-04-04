@@ -54,11 +54,11 @@ public class MemoryBasedBatchGrammarWithPrune extends MemoryBasedBatchGrammar {
 	
 	public MemoryBasedBatchGrammarWithPrune(
 		SymbolTable symbolTable, String grammarFile, boolean isGlueGrammar,
-		ArrayList<FeatureFunction> featureFunctions, String defaultOwner,
+		ArrayList<FeatureFunction> featureFunctions, String defaultOwner, String defaultLHSSymbol, String goalSymbol, 
 		int spanLimit,
 		String nonterminalRegexp, String nonterminalReplaceRegexp
 	) throws IOException {
-		super(symbolTable, grammarFile, isGlueGrammar, defaultOwner, spanLimit, nonterminalRegexp, nonterminalReplaceRegexp);
+		super(symbolTable, grammarFile, isGlueGrammar, defaultOwner, defaultLHSSymbol, goalSymbol, spanLimit, nonterminalRegexp, nonterminalReplaceRegexp);
 	}
 	
 	

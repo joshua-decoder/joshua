@@ -55,7 +55,6 @@ public class Bin
 	private static double EPSILON = 0.000001;	
 	private static int IMPOSSIBLE_COST = 99999;//max cost
 
-	static String GOAL_SYM="S";
 	private int GOAL_SYM_ID;
 	
 	Chart p_chart = null;
@@ -78,9 +77,9 @@ public class Bin
 	int dead_items=0;//num of corrupted items in heap_items, note that the item in tbl_items is always good
 	
 	
-	public Bin(Chart chart) {
+	public Bin(Chart chart, int goalSymID) {
 		this.p_chart = chart;
-		this.GOAL_SYM_ID = this.p_chart.p_symbolTable.addNonterminal(GOAL_SYM);
+		this.GOAL_SYM_ID = goalSymID;
 	}
 	
 	

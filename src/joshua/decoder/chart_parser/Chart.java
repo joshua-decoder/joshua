@@ -59,13 +59,6 @@ import java.util.logging.Logger;
  * @version $LastChangedDate$
  */
 public class Chart {
-
-	/** 
-	 * Untranslated word id
-	 * 
-	 * TODO Probably should merge this with the UNKNOWN_WORD_ID 
-	 */
-    public int UNTRANS_OWNER_SYM_ID = 0;//
 	
 	public  Grammar[]        grammars;
 	public  DotChart[]       dotcharts;//each grammar should have a dotchart associated with it
@@ -116,7 +109,7 @@ public class Chart {
 	
 	private static final Logger logger = Logger.getLogger(Chart.class.getName());
 	
-	
+	int goalSymbolID = -1;
 	
 	
 	//public Chart(int[] sentence_in, ArrayList<Model> models, int sent_id1) {
@@ -128,9 +121,8 @@ public class Chart {
 		SymbolTable symbolTable,
 		int                        sent_id_,
 		Grammar[]                  grammars_,
-		ArrayList<Integer>         default_nonterminals,
-		String untranslated_owner_,
-		boolean have_lm_model
+		boolean have_lm_model,
+		String goalSymbol
 	) {	
 //		public Chart(int[] sentence_in, ArrayList<FeatureFunction> models, int sent_id1) {   
 		this.sentence = sentence_;
@@ -140,8 +132,8 @@ public class Chart {
 		this.p_symbolTable = symbolTable;
 		this.bins     = new Bin[sent_len][sent_len+1];//TODO: this is very expensive		
 		this.sent_id  = sent_id_;
-		this.goal_bin = new Bin(this);
-		this.UNTRANS_OWNER_SYM_ID = this.p_symbolTable.addTerminal(untranslated_owner_);
+		this.goalSymbolID = this.p_symbolTable.addNonterminal(goalSymbol);
+		this.goal_bin = new Bin(this, this.goalSymbolID);
 		
 		/** add un-translated words into the chart as item (with large cost) */
 		//TODO: grammar specific?
@@ -155,13 +147,13 @@ public class Chart {
 		//TODO: the transition cost for phrase model, arity penalty, word penalty are all zero, except the LM cost
 		for (Node<Integer> node : sentence) {
 			for (Arc<Integer> arc : node.getOutgoingArcs()) {
-				for (int lhs : default_nonterminals) {//create a rule, but do not add into the grammar trie     
-					//TODO: which grammar should we use to create an OOV rule?
-					Rule rule = this.grammars[0].constructOOVRule(p_l_models.size(), lhs, arc.getLabel(), this.UNTRANS_OWNER_SYM_ID, have_lm_model);
-					
-					// Tail and head are switched - FIX names:
-					add_axiom(node.getNumber(), arc.getTail().getNumber(), rule, (float)arc.getCost());
-				}
+				//create a rule, but do not add into the grammar trie     
+				//TODO: which grammar should we use to create an OOV rule?
+				Rule rule = this.grammars[0].constructOOVRule(p_l_models.size(), arc.getLabel(), have_lm_model);
+				
+				// Tail and head are switched - FIX names:
+				add_axiom(node.getNumber(), arc.getTail().getNumber(), rule, (float)arc.getCost());
+				
 			}
 		}
 		if (logger.isLoggable(Level.FINE)) logger.fine("####finished seeding");
@@ -345,7 +337,7 @@ public class Chart {
 	/** axiom is for rules with zero-arity */
 	private void add_axiom(int i, int j, Rule rule, float lattice_cost) {
 		if (null == this.bins[i][j]) {
-			this.bins[i][j] = new Bin(this);
+			this.bins[i][j] = new Bin(this, this.goalSymbolID);
 		}
 		this.bins[i][j].add_axiom(i, j, rule, lattice_cost);
 	}
@@ -353,7 +345,7 @@ public class Chart {
 	
 	private void complete_cell(int i, int j, DotItem dt, RuleCollection rb, float lattice_cost) {
 		if (null == this.bins[i][j]) {
-			this.bins[i][j] = new Bin(this);
+			this.bins[i][j] = new Bin(this, this.goalSymbolID);
 		}
 		this.bins[i][j].complete_cell(i, j, dt.l_ant_super_items, rb, lattice_cost);//combinations: rules, antecent items
 	}
@@ -361,7 +353,7 @@ public class Chart {
 	
 	private void complete_cell_cube_prune(int i, int j, DotItem dt,	RuleCollection rb,	float lattice_cost) {
 		if (null == this.bins[i][j]) {
-			this.bins[i][j] = new Bin(this);
+			this.bins[i][j] = new Bin(this, this.goalSymbolID);
 		}
 		this.bins[i][j].complete_cell_cube_prune(i, j, dt.l_ant_super_items, rb, lattice_cost);//combinations: rules, antecent items
 	}

@@ -51,9 +51,8 @@ public class JoshuaConfiguration {
 	public static String  phrase_owner               = "pt";
 	public static String  mono_owner                 = "mono";
 	public static String  begin_mono_owner           = "begin_mono";//if such a rule is get applied, then no reordering is possible
-	//public static String untranslated_owner        = "<unt>";
-	public static String  untranslated_owner         = phrase_owner;
 	public static String  default_non_terminal       = "PHRASE";
+	public static String  goalSymbol       = "S";
 	public static boolean use_sent_specific_tm       = false;
 	public static String  g_sent_tm_file_name_prefix = "tm.";
 	public static String  tm_file                    = null; // TODO
@@ -310,6 +309,11 @@ public class JoshuaConfiguration {
 					default_non_terminal = fds[1].trim();
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("default_non_terminal: %s", default_non_terminal));
+					
+				} else if ("goalSymbol".equals(fds[0])) {
+					goalSymbol = fds[1].trim();
+					if (logger.isLoggable(Level.FINEST))
+						logger.finest(String.format("goalSymbol: %s", goalSymbol));
 					
 				} else if ("fuzz1".equals(fds[0])) {
 					fuzz1 = Double.parseDouble(fds[1]);

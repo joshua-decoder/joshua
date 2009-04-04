@@ -56,7 +56,7 @@ public class DecoderThread extends Thread {
 	private final GrammarFactory[]           grammarFactories;
 	private final boolean                    hasLanguageModel;
 	private final ArrayList<FeatureFunction> featureFunctions;
-	private final ArrayList<Integer>         defaultNonterminals;
+	
 	
 	/**
 	 * Shared symbol table for source language terminals,
@@ -89,7 +89,6 @@ public class DecoderThread extends Thread {
 		GrammarFactory[]           grammarFactories,
 		boolean                    hasLanguageModel,
 		ArrayList<FeatureFunction> featureFunctions,
-		ArrayList<Integer>         defaultNonterminals,
 		SymbolTable                symbolTable,
 		String testFile, String nbestFile, String oracleFile,
 		int startSentenceID
@@ -98,7 +97,6 @@ public class DecoderThread extends Thread {
 		this.grammarFactories    = grammarFactories;
 		this.hasLanguageModel    = hasLanguageModel;
 		this.featureFunctions    = featureFunctions;
-		this.defaultNonterminals = defaultNonterminals;
 		this.symbolTable         = symbolTable;
 		
 		this.testFile        = testFile;
@@ -250,9 +248,8 @@ public class DecoderThread extends Thread {
 				this.symbolTable,
 				sentenceID,
 				grammars,
-				this.defaultNonterminals,
-				JoshuaConfiguration.untranslated_owner, // TODO: owner
-				this.hasLanguageModel);
+				this.hasLanguageModel,
+				JoshuaConfiguration.goalSymbol);
 			
 			if (logger.isLoggable(Level.FINER)) 
 				logger.finer("after seed, time: "

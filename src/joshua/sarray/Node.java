@@ -404,4 +404,14 @@ public class Node extends AbstractGrammar implements Comparable<Node>, Grammar, 
 		
 		return numRules;
 	}
+
+	public Rule constructOOVRule(int num_feats, int sourceWord, boolean have_lm_model) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public int getOOVRuleID() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
 }

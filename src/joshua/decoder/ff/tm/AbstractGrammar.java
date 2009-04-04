@@ -1,4 +1,30 @@
+/* This file is part of the Joshua Machine Translation System.
+ * 
+ * Joshua is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1
+ * of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free
+ * Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
+ */
 package joshua.decoder.ff.tm;
+
+/**
+ * Grammar is a class for wrapping a trie of TrieGrammar in order
+ * to store holistic metadata.
+ * 
+ * @author Zhifei Li, <zhifei.work@gmail.com>
+ * 
+ * @version $LastChangedDate$
+ */
 
 import java.util.ArrayList;
 
@@ -7,29 +33,6 @@ import joshua.decoder.ff.FeatureFunction;
 
 public abstract class AbstractGrammar implements Grammar {
  
-	public static int OOV_RULE_ID = 0;
-	
-	public Rule constructOOVRule(int qtyFeatures, int lhs, int sourceWord, int owner, boolean hasLM) {
-		int[] p_french      = new int[1];
-		p_french[0]         = sourceWord;
-		int[] english       = new int[1];
-		english[0]          = sourceWord;
-		float[] feat_scores = new float[qtyFeatures];
-		
-		// TODO: This is a hack to make the decoding without a LM works
-		if (! hasLM) { // no LM is used for decoding, so we should set the stateless cost
-			//this.feat_scores[0]=100.0/(this.featureFunctions.get(0)).getWeight();//TODO
-			feat_scores[0] = 100; // TODO
-		}
-		
-		return new BilingualRule(lhs, p_french, english, feat_scores, 0, owner, 0, getOOVRuleID());
-	}
-
-	public int getOOVRuleID() {
-		return OOV_RULE_ID;
-	}
-
-
 	/**
 	 * Cube-pruning requires that the grammar be sorted based on the latest feature functions.
 	 */

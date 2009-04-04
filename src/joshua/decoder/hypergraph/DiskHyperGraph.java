@@ -60,7 +60,6 @@ public class DiskHyperGraph {
 //===============================================================
 // Fields
 //===============================================================
-	private int         UNTRANSLATED_WORD_ID = 0;
 	private int         LMFeatureID          = 0;
 	private SymbolTable symbolTable;
 	
@@ -132,8 +131,6 @@ public class DiskHyperGraph {
 	public DiskHyperGraph(SymbolTable symbolTable, int LMFeatureID) {
 		this.symbolTable          = symbolTable;
 		this.LMFeatureID          = LMFeatureID;
-		this.UNTRANSLATED_WORD_ID =
-			this.symbolTable.addTerminal(JoshuaConfiguration.untranslated_owner);
 		this.storeModelCosts      = false;
 	}
 	
@@ -524,9 +521,7 @@ public class DiskHyperGraph {
 				//stateless cost is not properly set, so cannot extract individual features during kbest extraction
 				rule = pGrammar.constructOOVRule(
 					1,
-					this.symbolTable.addNonterminal(fds[3+qtyAntecedents]),
 					this.symbolTable.addTerminal(fds[4+qtyAntecedents]),
-					this.UNTRANSLATED_WORD_ID,
 					false);
 			}
 		} else {

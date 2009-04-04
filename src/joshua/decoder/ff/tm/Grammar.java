@@ -74,7 +74,7 @@ public interface Grammar {
 	 *
 	 * TODO: will try to get rid of owner, have_lm_model, and num_feats
 	 */
-	public Rule constructOOVRule(int num_feats, int lhs, int sourceWord, int owner, boolean have_lm_model);
+	public Rule constructOOVRule(int num_feats, int sourceWord, boolean have_lm_model);
 	
 	
 	/**

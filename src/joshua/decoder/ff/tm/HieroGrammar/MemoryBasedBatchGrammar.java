@@ -61,6 +61,16 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
 	//protected ArrayList<FeatureFunction> featureFunctions = null;
 	protected int defaultOwner;
 	
+	/**the OOV rule should have this lhs, this should be grammar specific as only the grammar knows 
+	 * what LHS symbol can be combined with other rules
+	 * */ 
+	protected int defaultLHS; 
+	
+	protected int goalSymbol;
+	
+	
+	public static int OOV_RULE_ID = 0;
+	
 	// TODO: replace with joshua.util.Regex so we only compile once
 	protected String nonterminalRegexp = "^\\[[A-Z]+\\,[0-9]*\\]$";//e.g., [X,1]
 	protected String nonterminalReplaceRegexp = "[\\[\\]\\,0-9]+";
@@ -93,13 +103,18 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
 	public MemoryBasedBatchGrammar(
 		SymbolTable symbolTable, String grammarFile, boolean isGlueGrammar,
 		//ArrayList<FeatureFunction> featureFunctions,
-		String defaultOwner, int spanLimit,
+		String defaultOwner,
+		String defaultLHSSymbol,
+		String goalSymbol,
+		int spanLimit,
 		String nonterminalRegexp, String nonterminalReplaceRegexp
 	) throws IOException {
 		
 		this.symbolTable = symbolTable;
 		//this.featureFunctions = featureFunctions;
 		this.defaultOwner = this.symbolTable.addTerminal(defaultOwner);
+		this.defaultLHS = this.symbolTable.addNonterminal(defaultLHSSymbol);
+		this.goalSymbol = this.symbolTable.addNonterminal(goalSymbol);
 		this.nonterminalRegexp = nonterminalRegexp;
 		this.nonterminalReplaceRegexp = nonterminalReplaceRegexp;
 		this.spanLimit = spanLimit;
@@ -141,12 +156,15 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
 	protected void read_tm_grammar_glue_rules() {
 		final double alpha = Math.log10(Math.E); //Cost
 		this.root = new MemoryBasedTrie(); //root should not have valid ruleBin entries
+		String defaultLHSSymbol = symbolTable.getWord(this.defaultLHS);
+		String goalSymbol = symbolTable.getWord(this.goalSymbol);
 		
-		this.add_rule("S ||| [" + JoshuaConfiguration.default_non_terminal + ",1] ||| [" + JoshuaConfiguration.default_non_terminal + ",1] ||| 0",	this.symbolTable.addTerminal(JoshuaConfiguration.begin_mono_owner));//this does not have any cost	
-		//TODO: search consider_start_sym (Decoder.java, LMModel.java, and Chart.java)
-		//glue_gr.add_rule("S ||| [PHRASE,1] ||| "+Symbol.START_SYM+" [PHRASE,1] ||| 0", begin_mono_owner);//this does not have any cost
-		this.add_rule("S ||| [S,1] [" + JoshuaConfiguration.default_non_terminal + ",2] ||| [S,1] [" + JoshuaConfiguration.default_non_terminal + ",2] ||| " + alpha, this.symbolTable.addTerminal(JoshuaConfiguration.begin_mono_owner));
-		//glue_gr.add_rule("S ||| [S,1] [PHRASE,2] [PHRASE,3] ||| [S,1] [PHRASE,2] [PHRASE,3] ||| "+alpha, MONO_OWNER);
+		//this does not have any cost	
+		this.add_rule(goalSymbol + " ||| [" + defaultLHSSymbol + ",1] ||| [" + defaultLHSSymbol + ",1] ||| 0",	
+				this.symbolTable.addTerminal(JoshuaConfiguration.begin_mono_owner));
+		this.add_rule(goalSymbol + " ||| ["+goalSymbol+",1] [" + defaultLHSSymbol + ",2] ||| ["+goalSymbol + ",1] [" + defaultLHSSymbol + ",2] ||| " + alpha, 
+				this.symbolTable.addTerminal(JoshuaConfiguration.begin_mono_owner));
+		
 		
 		//ITG rules
 		//this.add_rule("X ||| [X,1] [" + JoshuaConfiguration.default_non_terminal + ",2] ||| [X,1] [" + JoshuaConfiguration.default_non_terminal + ",2] ||| " + alpha, this.symbolTable.addTerminal(JoshuaConfiguration.begin_mono_owner));		
@@ -160,6 +178,34 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
 //===============================================================
 // Methods
 //===============================================================
+
+	public int getNumRules() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+
+	public Rule constructOOVRule(int qtyFeatures, int sourceWord,  boolean hasLM) {
+		int[] p_french      = new int[1];
+		p_french[0]         = sourceWord;
+		int[] english       = new int[1];
+		english[0]          = sourceWord;
+		float[] feat_scores = new float[qtyFeatures];
+		
+		// TODO: This is a hack to make the decoding without a LM works
+		if (! hasLM) { // no LM is used for decoding, so we should set the stateless cost
+			//this.feat_scores[0]=100.0/(this.featureFunctions.get(0)).getWeight();//TODO
+			feat_scores[0] = 100; // TODO
+		}
+		
+		return new BilingualRule(this.defaultLHS, p_french, english, feat_scores, 0, this.defaultOwner, 0, getOOVRuleID());
+	}
+
+	public int getOOVRuleID() {
+		return OOV_RULE_ID;
+	}
+	
+	
 	
 	/** if the span covered by the chart bin is greater than the limit, then return false */
 	public boolean hasRuleForSpan(int startIndex,	int endIndex, int pathLength) {
@@ -313,29 +359,6 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
 	}
 	
 	
-//	public Rule constructOOVRule(int qtyFeatures, int lhs, int sourceWord, int owner, boolean hasLM) {
-//		int[] p_french      = new int[1];
-//		p_french[0]         = sourceWord;
-//		int[] english       = new int[1];
-//		english[0]          = sourceWord;
-//		float[] feat_scores = new float[qtyFeatures];
-//		
-//		// TODO: This is a hack to make the decoding without a LM works
-//		if (! hasLM) { // no LM is used for decoding, so we should set the stateless cost
-//			//this.feat_scores[0]=100.0/(this.featureFunctions.get(0)).getWeight();//TODO
-//			feat_scores[0] = 100; // TODO
-//		}
-//		
-//		return new BilingualRule(lhs, p_french, english, feat_scores, 0, owner, 0, getOOVRuleID());
-//	}
-	
-	
-//	public int getOOVRuleID() {
-//		return OOV_RULE_ID;
-//	}
 
-	public int getNumRules() {
-		// TODO Auto-generated method stub
-		return 0;
-	}
+
 }

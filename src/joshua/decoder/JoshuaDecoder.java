@@ -77,7 +77,6 @@ public class JoshuaDecoder {
 	private DecoderFactory             decoderFactory;
 	private GrammarFactory[]           grammarFactories;
 	private ArrayList<FeatureFunction> featureFunctions;
-	private ArrayList<Integer>         defaultNonterminals;
 	private NGramLanguageModel         languageModel;
 	
 	/**
@@ -243,7 +242,6 @@ public class JoshuaDecoder {
 				this.grammarFactories,
 				JoshuaConfiguration.have_lm_model,
 				this.featureFunctions,
-				this.defaultNonterminals,
 				this.symbolTable);
 			
 		} catch (IOException e) {
@@ -270,10 +268,7 @@ public class JoshuaDecoder {
 		}
 		
 		// Add the default nonterminal
-		this.defaultNonterminals = new ArrayList<Integer>();
-		this.defaultNonterminals.add(
-			this.symbolTable.addNonterminal(
-				JoshuaConfiguration.default_non_terminal));
+		this.symbolTable.addNonterminal(JoshuaConfiguration.default_non_terminal);
 	}
 	
 	
@@ -336,6 +331,8 @@ public class JoshuaDecoder {
 			new MemoryBasedBatchGrammar(
 				this.symbolTable, null, true,
 				JoshuaConfiguration.phrase_owner,
+				JoshuaConfiguration.default_non_terminal,
+				JoshuaConfiguration.goalSymbol,
 				-1,
 				"^\\[[A-Z]+\\,[0-9]*\\]$",
 				"[\\[\\]\\,0-9]+");
@@ -354,6 +351,8 @@ public class JoshuaDecoder {
 			new MemoryBasedBatchGrammar(
 				this.symbolTable, tmFile, false,
 				JoshuaConfiguration.phrase_owner,
+				JoshuaConfiguration.default_non_terminal,
+				JoshuaConfiguration.goalSymbol,
 				JoshuaConfiguration.span_limit,
 				"^\\[[A-Z]+\\,[0-9]*\\]$",
 				"[\\[\\]\\,0-9]+");
