@@ -179,7 +179,7 @@ public class KBestExtractor {
 	private String get_kth_hyp(DerivationState cur, int sent_id, ArrayList<FeatureFunction> l_models){
 		double[] model_cost = null;
 		if(l_models!=null) model_cost = new double[l_models.size()];		
-		String str_hyp_numeric = cur.get_hypothesis(p_symbolTable, this, model_cost,l_models);	
+		String str_hyp_numeric = cur.get_hypothesis(p_symbolTable, this, extract_nbest_tree, model_cost,l_models);	
 		//for(int k=0; k<model_cost.length; k++) System.out.println(model_cost[k]);
 		String str_hyp_str = convert_hyp_2_string(sent_id, cur, l_models, str_hyp_numeric, model_cost);
 		return str_hyp_str;
@@ -308,7 +308,8 @@ public class KBestExtractor {
 					res = heap_cands.poll();
 					//derivation_tbl.remove(res.get_signature());//TODO: should remove? note that two state may be tied because the cost is the same
 					if (extract_unique_nbest) {
-						String res_str = res.get_hypothesis(p_symbol,kbest_extator, null,null);
+						boolean useTreeFormat=false;
+						String res_str = res.get_hypothesis(p_symbol,kbest_extator,useTreeFormat, null,null);
 						// We pass false for extract_nbest_tree because we want; 
 						// to check that the hypothesis *strings* are unique,
 						// not the trees.
@@ -467,10 +468,11 @@ public class KBestExtractor {
 			return res.toString();
 		}
 		
-			
+		
+		
 		//get the numeric sequence of the particular hypothesis
 		//if want to get model cost, then have to set model_cost and l_models
-		private String get_hypothesis(SymbolTable p_symbol, KBestExtractor kbest_extator, double[] model_cost, ArrayList<FeatureFunction> l_models){
+		private String get_hypothesis(SymbolTable p_symbol, KBestExtractor kbest_extator, boolean useTreeFormat, double[] model_cost, ArrayList<FeatureFunction> l_models){
 			//### accumulate cost of p_edge into model_cost if necessary
 			if(model_cost!=null) compute_cost(p_parent_node, p_edge, model_cost, l_models);
 			
@@ -478,7 +480,7 @@ public class KBestExtractor {
 			StringBuffer res = new StringBuffer();			
 			Rule rl = p_edge.get_rule();
 			if(rl==null){//hyperedges under "goal item" does not have rule
-				if(extract_nbest_tree==true){
+				if(useTreeFormat==true){
 					//res.append("(ROOT ");
 					res.append("(");
 					res.append(root_id);
@@ -491,12 +493,12 @@ public class KBestExtractor {
 				for(int id=0; id < p_edge.get_ant_items().size();id++){
 					HGNode child = (HGNode)p_edge.get_ant_items().get(id);
 					VirtualItem virtual_child = kbest_extator.add_virtual_item(child);
-					res.append(((DerivationState)virtual_child.l_nbest.get(ranks[id]-1)).get_hypothesis(p_symbol,kbest_extator, model_cost,l_models));
+					res.append(((DerivationState)virtual_child.l_nbest.get(ranks[id]-1)).get_hypothesis(p_symbol,kbest_extator, useTreeFormat, model_cost,l_models));
 	    			if(id<p_edge.get_ant_items().size()-1) res.append(" ");		
     			}
-				if(extract_nbest_tree==true) res.append(")");		
+				if(useTreeFormat==true) res.append(")");		
 			}else{			
-				if(extract_nbest_tree==true){
+				if(useTreeFormat==true){
 					res.append("(");
 					res.append(rl.getLHS());
 					if (include_align == true) {
@@ -512,7 +514,7 @@ public class KBestExtractor {
 			    			int id=p_symbol.getTargetNonterminalIndex(english[c]);
 			    			HGNode child = (HGNode)p_edge.get_ant_items().get(id);
 			    			VirtualItem virtual_child =kbest_extator.add_virtual_item(child);
-			    			res.append(((DerivationState)virtual_child.l_nbest.get(ranks[id]-1)).get_hypothesis(p_symbol,kbest_extator,  model_cost, l_models));
+			    			res.append(((DerivationState)virtual_child.l_nbest.get(ranks[id]-1)).get_hypothesis(p_symbol,kbest_extator, useTreeFormat, model_cost, l_models));
 			    		}else{
 			    			res.append(english[c]);
 			    		}
@@ -525,7 +527,7 @@ public class KBestExtractor {
 			    		if(p_symbol.isNonterminal(french[c])==true){
 			    			HGNode child = (HGNode)p_edge.get_ant_items().get(nonTerminalID);
 			    			VirtualItem virtual_child =kbest_extator.add_virtual_item(child);
-			    			res.append(((DerivationState)virtual_child.l_nbest.get(ranks[nonTerminalID]-1)).get_hypothesis(p_symbol,kbest_extator, model_cost, l_models));
+			    			res.append(((DerivationState)virtual_child.l_nbest.get(ranks[nonTerminalID]-1)).get_hypothesis(p_symbol,kbest_extator, useTreeFormat, model_cost, l_models));
 			    			nonTerminalID++;
 			    		}else{
 			    			res.append(french[c]);
@@ -533,7 +535,7 @@ public class KBestExtractor {
 			    		if(c<french.length-1) res.append(" ");
 					}
 				}
-				if(extract_nbest_tree==true) res.append(")");
+				if(useTreeFormat==true) res.append(")");
 			}
 			
 			return res.toString();
