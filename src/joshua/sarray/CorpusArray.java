@@ -43,7 +43,7 @@ import java.util.Arrays;
  * @since  29 Dec 2004
  * @version $LastChangedDate:2008-07-30 17:15:52 -0400 (Wed, 30 Jul 2008) $
  */
-public class CorpusArray implements Corpus, Externalizable {
+public class CorpusArray extends AbstractCorpus implements Corpus, Externalizable {
 
 //===============================================================
 // Constants
@@ -73,7 +73,7 @@ public class CorpusArray implements Corpus, Externalizable {
 	 * The alphabetized vocabulary which maps between the String
 	 * and int representation of words in the corpus.
 	 */
-	protected SymbolTable vocab;
+//	protected SymbolTable symbolTable;
 	
 	
 //===============================================================
@@ -86,7 +86,8 @@ public class CorpusArray implements Corpus, Externalizable {
 	 * NOTE: Primarily needed for Externalizable interface.
 	 */
 	public CorpusArray() {
-		this.vocab = new Vocabulary();
+		super(new Vocabulary());
+//		this.symbolTable = new Vocabulary();
 		this.sentences = new int[]{};
 		this.corpus = new int[]{};
 	}
@@ -100,9 +101,10 @@ public class CorpusArray implements Corpus, Externalizable {
 	 * @see SuffixArrayFactor.loadCorpusArray(String,String,String,Vocabulary)
 	 */
 	protected CorpusArray (int[] corpus, int[] sentences, SymbolTable vocab) {
+		super(vocab);
 		this.corpus = corpus;
 		this.sentences = sentences;
-		this.vocab = vocab;
+//		this.symbolTable = vocab;
 	}
 	
 //===============================================================
@@ -215,7 +217,7 @@ public class CorpusArray implements Corpus, Externalizable {
 	 * to use the new mappings provided by that object.
 	 */
 	public void setSymbolTable(SymbolTable vocab) {
-		SymbolTable oldVocab = this.vocab;
+		SymbolTable oldVocab = this.symbolTable;
 		
 		for (int i=0; i<corpus.length; i++) {
 			
@@ -226,7 +228,7 @@ public class CorpusArray implements Corpus, Externalizable {
 			corpus[i] = newID;
 		}
 		
-		this.vocab = vocab;
+		this.symbolTable = vocab;
 		oldVocab = null;
 	}
 	
@@ -276,7 +278,7 @@ public class CorpusArray implements Corpus, Externalizable {
 	}
 	
 	public SymbolTable getVocabulary() {
-		return vocab;
+		return symbolTable;
 	}
 	
 	
@@ -317,8 +319,8 @@ public class CorpusArray implements Corpus, Externalizable {
     	ObjectOutput vocabOut =
     		new BinaryOut(new FileOutputStream(vocabFilename), true);
 //    		new ObjectOutputStream(new FileOutputStream(vocabFilename));
-    	vocab.setExternalizableEncoding(charset);
-    	vocab.writeExternal(vocabOut);
+    	symbolTable.setExternalizableEncoding(charset);
+    	symbolTable.writeExternal(vocabOut);
     	vocabOut.flush();
     	
     	BinaryOut corpusOut = new BinaryOut(new FileOutputStream(corpusFilename), false);
@@ -376,7 +378,7 @@ public class CorpusArray implements Corpus, Externalizable {
 			ClassNotFoundException {
 		
 		// Read the vocabulary
-		vocab.readExternal(in);
+		symbolTable.readExternal(in);
 		
 		int numSentences = in.readInt();
 		this.sentences = new int[numSentences];
@@ -395,7 +397,7 @@ public class CorpusArray implements Corpus, Externalizable {
 	public void writeExternal(ObjectOutput out) throws IOException {
 		
 		// Write the vocabulary
-		out.writeObject(vocab);
+		out.writeObject(symbolTable);
 		
 		out.writeInt(sentences.length);
 		for (int sentencePosition : sentences) {

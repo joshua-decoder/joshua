@@ -305,19 +305,37 @@ public class SampledLexProbs implements LexicalProbabilities {
 	 * @param sourcePhrase
 	 * @return the lexical probability and reverse lexical probability
 	 */
-	public Pair<Float,Float> calculateLexProbs(HierarchicalPhrase sourcePhrase) {
+	public Pair<Float,Float> calculateLexProbs(MatchedHierarchicalPhrases sourcePhrases, int sourcePhraseIndex) {
+		
+//		HierarchicalPhrase sourcePhrase = sourcePhrases.get(sourcePhraseIndex, sourceSuffixArray.getCorpus());
 		
 		float sourceGivenTarget = 1.0f;
 		
 		Map<Integer,List<Integer>> reverseAlignmentPoints = new HashMap<Integer,List<Integer>>(); 
 		
 		// Iterate over each terminal sequence in the source phrase
-		for (int seq=0; seq<sourcePhrase.terminalSequenceStartIndices.length; seq++) {
+//		for (int seq=0; seq<sourcePhrases.size(); seq++) {
+//		int a = sourcePhrase.terminalSequenceStartIndices.length;
+//		int b = sourcePhrases.size();
+//		if (a!=b) {
+//			int x=0; x++;
+//
+//			int z = sourcePhrases.getNumberOfTerminalSequences();
+//			Corpus corpus = sourceSuffixArray.getCorpus();
+//			sourcePhrases.get(sourcePhraseIndex, corpus);
+//		}
+		for (int seq=0; seq<sourcePhrases.getNumberOfTerminalSequences(); seq++) {
+//		for (int seq=0; seq<sourcePhrase.terminalSequenceStartIndices.length; seq++) {
 			
 			// Iterate over each source index in the current terminal sequence
-			for (int sourceWordIndex=sourcePhrase.terminalSequenceStartIndices[seq]; 
-					sourceWordIndex<sourcePhrase.terminalSequenceEndIndices[seq]; 
-					sourceWordIndex++) {
+			for (int sourceWordIndex=sourcePhrases.getTerminalSequenceStartIndex(sourcePhraseIndex, seq),
+//					end=sourcePhrase.terminalSequenceEndIndices[seq]; 
+					end=sourcePhrases.getTerminalSequenceEndIndex(sourcePhraseIndex, seq);
+			sourceWordIndex<end; 
+			sourceWordIndex++) {
+//			for (int sourceWordIndex=sourcePhrase.terminalSequenceStartIndices[seq]; 
+//					sourceWordIndex<sourcePhrase.terminalSequenceEndIndices[seq]; 
+//					sourceWordIndex++) {
 				
 				float sum = 0.0f;
 				

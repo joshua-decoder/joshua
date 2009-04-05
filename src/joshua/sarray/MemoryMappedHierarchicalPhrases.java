@@ -1,14 +1,16 @@
 package joshua.sarray;
 
+import joshua.util.sentence.Span;
+
 public class MemoryMappedHierarchicalPhrases implements
 		MatchedHierarchicalPhrases {
 
-	public MatchedHierarchicalPhrases copyWith(Pattern pattern) {
+	public boolean containsTerminalAt(int phraseIndex, int alignmentPointIndex) {
 		// TODO Auto-generated method stub
-		return null;
+		return false;
 	}
 
-	public HierarchicalPhrase get(int phraseIndex, Corpus corpus) {
+	public MatchedHierarchicalPhrases copyWithX(boolean initial) {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -23,6 +25,16 @@ public class MemoryMappedHierarchicalPhrases implements
 		return 0;
 	}
 
+	public int getFirstTerminalIndex(int phraseIndex) {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	public int getLastTerminalIndex(int phraseIndex) {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
 	public int getNumberOfTerminalSequences() {
 		// TODO Auto-generated method stub
 		return 0;
@@ -33,12 +45,27 @@ public class MemoryMappedHierarchicalPhrases implements
 		return 0;
 	}
 
+	public Span getSpan(int phraseIndex) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 	public int getStartPosition(int phraseIndex, int positionNumber) {
 		// TODO Auto-generated method stub
 		return 0;
 	}
 
+	public int getTerminalSequenceEndIndex(int phraseIndex, int sequenceIndex) {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
 	public int getTerminalSequenceLength(int i) {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	public int getTerminalSequenceStartIndex(int phraseIndex, int sequenceIndex) {
 		// TODO Auto-generated method stub
 		return 0;
 	}
@@ -72,7 +99,6 @@ public class MemoryMappedHierarchicalPhrases implements
 		// TODO Auto-generated method stub
 		return 0;
 	}
-
 
 
 }

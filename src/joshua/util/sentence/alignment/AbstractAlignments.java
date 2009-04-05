@@ -17,7 +17,7 @@
  */
 package joshua.util.sentence.alignment;
 
-import joshua.sarray.HierarchicalPhrase;
+import joshua.sarray.MatchedHierarchicalPhrases;
 import joshua.util.sentence.Span;
 
 /**
@@ -55,7 +55,7 @@ public abstract class AbstractAlignments implements Alignments {
 	}
 
 
-	public boolean hasAlignedTerminal(int targetIndex, HierarchicalPhrase sourcePhrase) {
+	public boolean hasAlignedTerminal(int targetIndex, MatchedHierarchicalPhrases sourcePhrases, int sourcePhraseIndex) {
 		
 		int[] sourceIndices = getAlignedSourceIndices(targetIndex);
 		
@@ -66,7 +66,7 @@ public abstract class AbstractAlignments implements Alignments {
 		} else {
 			
 			for (int alignedSourceIndex : sourceIndices) {
-				if (sourcePhrase.containsTerminalAt(alignedSourceIndex)) {
+				if (sourcePhrases.containsTerminalAt(sourcePhraseIndex, alignedSourceIndex)) {
 					return true;
 				}
 			}

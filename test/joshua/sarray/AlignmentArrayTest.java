@@ -22,7 +22,6 @@ import joshua.sarray.CorpusArray;
 import joshua.sarray.SuffixArray;
 import joshua.sarray.SuffixArrayFactory;
 import joshua.util.sentence.Span;
-import joshua.util.sentence.Vocabulary;
 
 
 import org.testng.Assert;

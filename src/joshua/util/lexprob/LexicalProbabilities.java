@@ -1,6 +1,6 @@
 package joshua.util.lexprob;
 
-import joshua.sarray.HierarchicalPhrase;
+import joshua.sarray.MatchedHierarchicalPhrases;
 import joshua.util.Pair;
 
 /**
@@ -43,6 +43,6 @@ public interface LexicalProbabilities {
 	 */
 	public float targetGivenSource(String targetWord, String sourceWord);
 
-	public Pair<Float, Float> calculateLexProbs(HierarchicalPhrase sourcePhrase);
+	public Pair<Float, Float> calculateLexProbs(MatchedHierarchicalPhrases sourcePhrase, int sourcePhraseIndex);
 	
 }

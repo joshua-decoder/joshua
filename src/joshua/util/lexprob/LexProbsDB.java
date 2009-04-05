@@ -17,7 +17,7 @@
  */
 package joshua.util.lexprob;
 
-import joshua.sarray.HierarchicalPhrase;
+import joshua.sarray.MatchedHierarchicalPhrases;
 import joshua.util.sentence.Vocabulary;
 //import joshua.util.CommandLineParser;
 //import joshua.util.CommandLineParser.Option;
@@ -421,7 +421,7 @@ public class LexProbsDB implements LexicalProbabilities {
 	}
 	*/
 	
-	public Pair<Float, Float> calculateLexProbs(HierarchicalPhrase sourcePhrase) {
+	public Pair<Float, Float> calculateLexProbs(MatchedHierarchicalPhrases sourcePhrase, int sourcePhraseIndex) {
 		throw new UnsupportedOperationException("Not yet implemented");
 	}
 	

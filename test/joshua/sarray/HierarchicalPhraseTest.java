@@ -62,8 +62,28 @@ public class HierarchicalPhraseTest {
 		
 	}
 	
+	@Test(dependsOnMethods={"setup"})
+	public void arity() {
+		SymbolTable vocab = sourceCorpusArray.getVocabulary();
+		
+		Pattern     pattern = new Pattern(vocab, vocab.getIDs("de sesiones del parlamento europeo"));
+		int[]       terminalSequenceStartIndices = {4};
+		int[]       sentenceNumbers = {0};
+		
+		HierarchicalPhrases phrases =
+			new HierarchicalPhrases(pattern, terminalSequenceStartIndices, sentenceNumbers);
+		
+		int arity = phrases.getArity();
+		int n = phrases.getNumberOfTerminalSequences();
+		
+		Assert.assertEquals(arity, 0);
+		Assert.assertEquals(n, 1);
+		
+	}
 	
-	@Test
+	
+	@SuppressWarnings("deprecation")
+	@Test(dependsOnMethods={"setup"})
 	public void testHasAlignedTerminal() {
 		{
 

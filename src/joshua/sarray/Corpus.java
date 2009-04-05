@@ -53,6 +53,7 @@ public interface Corpus extends Externalizable {
 	 */
 	public int getSentenceIndex(int position);
 	
+	public int[] getSentenceIndices(int[] positions);
 	
 	/**
 	 * @return the position in the corpus of the first word of

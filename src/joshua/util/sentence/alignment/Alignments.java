@@ -1,6 +1,6 @@
 package joshua.util.sentence.alignment;
 
-import joshua.sarray.HierarchicalPhrase;
+import joshua.sarray.MatchedHierarchicalPhrases;
 import joshua.util.sentence.Span;
 
 public interface Alignments {
@@ -64,7 +64,7 @@ public interface Alignments {
 	 * @param sourcePhrase
 	 * @return
 	 */
-	public boolean hasAlignedTerminal(int targetIndex, HierarchicalPhrase sourcePhrase);
+	public boolean hasAlignedTerminal(int targetIndex, MatchedHierarchicalPhrases sourcePhrase, int sourcePhraseIndex);
 
 	/**
 	 * Gets a target span that is consistent with the provided

@@ -24,7 +24,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 
-import joshua.sarray.HierarchicalPhrase;
+import joshua.sarray.MatchedHierarchicalPhrases;
 import joshua.util.Pair;
 import joshua.util.sentence.Vocabulary;
 
@@ -210,7 +210,7 @@ public class LexProbs implements LexicalProbabilities {
 		return map;
 	}
 
-	public Pair<Float, Float> calculateLexProbs(HierarchicalPhrase sourcePhrase) {
+	public Pair<Float, Float> calculateLexProbs(MatchedHierarchicalPhrases sourcePhrase, int sourcePhraseIndex) {
 		throw new UnsupportedOperationException("Not yet implemented");
 	}
 }

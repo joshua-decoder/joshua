@@ -22,7 +22,7 @@ import joshua.util.sentence.Phrase;
 
 public abstract class AbstractCorpus implements Corpus {
 
-	protected final SymbolTable symbolTable;
+	protected SymbolTable symbolTable;
 	
 	public AbstractCorpus(SymbolTable symbolTable) {
 		this.symbolTable = symbolTable;
@@ -117,6 +117,15 @@ public abstract class AbstractCorpus implements Corpus {
 
 	public abstract int getSentencePosition(int sentenceId);
 
+	public int[] getSentenceIndices(int[] positions) {
+		int size = positions.length;
+		int[] sentenceNumber = new int[size];
+		for (int i=0; i<size; i++) {
+			sentenceNumber[i] = getSentenceIndex(positions[i]);
+		}
+		return sentenceNumber;
+	}
+	
 	public SymbolTable getVocabulary() {
 		return symbolTable;
 	}

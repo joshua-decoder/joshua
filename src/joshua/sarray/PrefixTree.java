@@ -482,15 +482,16 @@ public class PrefixTree {
 				//prefixNode.sourcePattern.words[prefixNode.sourcePattern.words.length-1] < 0
 					
 					
-					SymbolTable vocab = (suffixArray==null) ? null : suffixArray.getVocabulary();
+//					SymbolTable vocab = (suffixArray==null) ? null : suffixArray.getVocabulary();
 					
 					int[] xwords = new int[suffixNode.sourcePattern.words.length+1];
 					xwords[0] = X;
 					for (int i=0; i<suffixNode.sourcePattern.words.length; i++) {
 						xwords[i+1] = suffixNode.sourcePattern.words[i];
 					}
-					Pattern xpattern = new Pattern(vocab, xwords);
-					result = suffixNode.sourceHierarchicalPhrases.copyWith(xpattern);
+//					Pattern xpattern = new Pattern(vocab, xwords);
+//					result = suffixNode.sourceHierarchicalPhrases.copyWith(xpattern);
+					result = suffixNode.sourceHierarchicalPhrases.copyWithX(true);
 //					result = new HierarchicalPhrases(xpattern, suffixNode.sourceHierarchicalPhrases);
 
 				} else { 
@@ -573,7 +574,8 @@ public class PrefixTree {
 					
 //					HierarchicalPhrases phrasesWithFinalX = new HierarchicalPhrases(xpattern, node.sourceHierarchicalPhrases); 
 					MatchedHierarchicalPhrases phrasesWithFinalX = 
-						node.sourceHierarchicalPhrases.copyWith(xpattern);
+//						node.sourceHierarchicalPhrases.copyWith(xpattern);
+						node.sourceHierarchicalPhrases.copyWithX(false);
 //						new HierarchicalPhrases(xpattern, node.sourceHierarchicalPhrases); 
 					
 					xNode.storeResults(phrasesWithFinalX, xpattern);

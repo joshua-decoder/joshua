@@ -27,7 +27,7 @@ import java.util.Scanner;
 
 import joshua.corpus.SymbolTable;
 import joshua.sarray.CorpusArray;
-import joshua.sarray.HierarchicalPhrase;
+import joshua.sarray.HierarchicalPhrases;
 import joshua.sarray.Pattern;
 import joshua.sarray.PrefixTree;
 import joshua.sarray.SuffixArray;
@@ -140,56 +140,60 @@ public class AlignmentsTest {
 
 	@Test(dependsOnMethods={"setup"})
 	public void testHasAlignedTerminal() {
-
+		
 		SymbolTable vocab = sourceCorpusArray.getVocabulary();
 		
 		{
 			Pattern     pattern = new Pattern(vocab, vocab.getIDs("de sesiones del parlamento europeo"));
 			int[]       terminalSequenceStartIndices = {4};
-			int[]       terminalSequenceEndIndices = {9};
-			int         length = 5;
+			int[]       sentenceNumbers = {0};
+			int phraseIndex = 0;
+			
+			HierarchicalPhrases phrases =
+				new HierarchicalPhrases(pattern, terminalSequenceStartIndices, sentenceNumbers);
+			
+			
+			
+			Assert.assertFalse(alignments.hasAlignedTerminal(0 , phrases, phraseIndex));
+			Assert.assertFalse(alignments.hasAlignedTerminal(1 , phrases, phraseIndex));
+			Assert.assertFalse(alignments.hasAlignedTerminal(2 , phrases, phraseIndex));
+			Assert.assertFalse(alignments.hasAlignedTerminal(3 , phrases, phraseIndex));
 
-			HierarchicalPhrase phrase = new HierarchicalPhrase(pattern, terminalSequenceStartIndices, terminalSequenceEndIndices, sourceCorpusArray, length);
+			Assert.assertTrue(alignments.hasAlignedTerminal(4 , phrases, phraseIndex));
+			Assert.assertTrue(alignments.hasAlignedTerminal(5 , phrases, phraseIndex));
+			Assert.assertTrue(alignments.hasAlignedTerminal(6 , phrases, phraseIndex));
+			Assert.assertTrue(alignments.hasAlignedTerminal(7 , phrases, phraseIndex));
+			Assert.assertTrue(alignments.hasAlignedTerminal(8 , phrases, phraseIndex));
 
-			Assert.assertFalse(alignments.hasAlignedTerminal(0 , phrase));
-			Assert.assertFalse(alignments.hasAlignedTerminal(1 , phrase));
-			Assert.assertFalse(alignments.hasAlignedTerminal(2 , phrase));
-			Assert.assertFalse(alignments.hasAlignedTerminal(3 , phrase));
-
-			Assert.assertTrue(alignments.hasAlignedTerminal(4 , phrase));
-			Assert.assertTrue(alignments.hasAlignedTerminal(5 , phrase));
-			Assert.assertTrue(alignments.hasAlignedTerminal(6 , phrase));
-			Assert.assertTrue(alignments.hasAlignedTerminal(7 , phrase));
-			Assert.assertTrue(alignments.hasAlignedTerminal(8 , phrase));
-
-			Assert.assertFalse(alignments.hasAlignedTerminal(9 , phrase));
-			Assert.assertFalse(alignments.hasAlignedTerminal(10 , phrase));
-			Assert.assertFalse(alignments.hasAlignedTerminal(11 , phrase));
-
+			Assert.assertFalse(alignments.hasAlignedTerminal(9 , phrases, phraseIndex));
+			Assert.assertFalse(alignments.hasAlignedTerminal(10 , phrases, phraseIndex));
+			Assert.assertFalse(alignments.hasAlignedTerminal(11 , phrases, phraseIndex));
 		}
+	
 		
 		{
 			Pattern     pattern = new Pattern(vocab, vocab.getIDs(","));
 			int[]       terminalSequenceStartIndices = {9};
-			int[]       terminalSequenceEndIndices = {10};
-			int         length = 1;
+			int[]       sentenceNumbers = {0};
+			int phraseIndex = 0;
 
-			HierarchicalPhrase phrase = new HierarchicalPhrase(pattern, terminalSequenceStartIndices, terminalSequenceEndIndices, sourceCorpusArray, length);
+			HierarchicalPhrases phrases =
+				new HierarchicalPhrases(pattern, terminalSequenceStartIndices, sentenceNumbers);
+			
+			Assert.assertFalse(alignments.hasAlignedTerminal(0 , phrases, phraseIndex));
+			Assert.assertFalse(alignments.hasAlignedTerminal(1 , phrases, phraseIndex));
+			Assert.assertFalse(alignments.hasAlignedTerminal(2 , phrases, phraseIndex));
+			Assert.assertFalse(alignments.hasAlignedTerminal(3 , phrases, phraseIndex));
 
-			Assert.assertFalse(alignments.hasAlignedTerminal(0 , phrase));
-			Assert.assertFalse(alignments.hasAlignedTerminal(1 , phrase));
-			Assert.assertFalse(alignments.hasAlignedTerminal(2 , phrase));
-			Assert.assertFalse(alignments.hasAlignedTerminal(3 , phrase));
+			Assert.assertFalse(alignments.hasAlignedTerminal(4 , phrases, phraseIndex));
+			Assert.assertFalse(alignments.hasAlignedTerminal(5 , phrases, phraseIndex));
+			Assert.assertFalse(alignments.hasAlignedTerminal(6 , phrases, phraseIndex));
+			Assert.assertFalse(alignments.hasAlignedTerminal(7 , phrases, phraseIndex));
+			Assert.assertFalse(alignments.hasAlignedTerminal(9 , phrases, phraseIndex));
 
-			Assert.assertFalse(alignments.hasAlignedTerminal(4 , phrase));
-			Assert.assertFalse(alignments.hasAlignedTerminal(5 , phrase));
-			Assert.assertFalse(alignments.hasAlignedTerminal(6 , phrase));
-			Assert.assertFalse(alignments.hasAlignedTerminal(7 , phrase));
-			Assert.assertFalse(alignments.hasAlignedTerminal(9 , phrase));
-
-			Assert.assertFalse(alignments.hasAlignedTerminal(9 , phrase));
-			Assert.assertFalse(alignments.hasAlignedTerminal(10 , phrase));
-			Assert.assertFalse(alignments.hasAlignedTerminal(11 , phrase));
+			Assert.assertFalse(alignments.hasAlignedTerminal(9 , phrases, phraseIndex));
+			Assert.assertFalse(alignments.hasAlignedTerminal(10 , phrases, phraseIndex));
+			Assert.assertFalse(alignments.hasAlignedTerminal(11 , phrases, phraseIndex));
 
 		}
 		
@@ -197,62 +201,67 @@ public class AlignmentsTest {
 	
 	@Test(dependsOnMethods={"setup"})
 	public void testHasAlignedTerminalHierarchical() {
+		
+		
 	
 		SymbolTable vocab = sourceCorpusArray.getVocabulary();
 		
 		{
 			Pattern     pattern = new Pattern(new Pattern(new Pattern(vocab, vocab.getIDs("de sesiones")), PrefixTree.X), vocab.getIDs("europo"));// del parlamento europeo"));
 			int[]       terminalSequenceStartIndices = {4,8};
-			int[]       terminalSequenceEndIndices = {6,9};
-			int         length = 5;
+			int[]       sentenceNumbers = {0};
+			int phraseIndex = 0;
+			
+			HierarchicalPhrases phrases =
+				new HierarchicalPhrases(pattern, terminalSequenceStartIndices, sentenceNumbers);
+//			HierarchicalPhrase phrase = new HierarchicalPhrase(pattern, terminalSequenceStartIndices, terminalSequenceEndIndices, sourceCorpusArray, length);
 
-			HierarchicalPhrase phrase = new HierarchicalPhrase(pattern, terminalSequenceStartIndices, terminalSequenceEndIndices, sourceCorpusArray, length);
+			Assert.assertFalse(alignments.hasAlignedTerminal(0 , phrases, phraseIndex));
+			Assert.assertFalse(alignments.hasAlignedTerminal(1 , phrases, phraseIndex));
+			Assert.assertFalse(alignments.hasAlignedTerminal(2 , phrases, phraseIndex));
+			Assert.assertFalse(alignments.hasAlignedTerminal(3 , phrases, phraseIndex));
 
-			Assert.assertFalse(alignments.hasAlignedTerminal(0 , phrase));
-			Assert.assertFalse(alignments.hasAlignedTerminal(1 , phrase));
-			Assert.assertFalse(alignments.hasAlignedTerminal(2 , phrase));
-			Assert.assertFalse(alignments.hasAlignedTerminal(3 , phrase));
+			Assert.assertTrue(alignments.hasAlignedTerminal(4 , phrases, phraseIndex));
+			Assert.assertTrue(alignments.hasAlignedTerminal(5 , phrases, phraseIndex));
+			Assert.assertTrue(alignments.hasAlignedTerminal(6 , phrases, phraseIndex));
+			Assert.assertTrue(alignments.hasAlignedTerminal(7 , phrases, phraseIndex));
+			Assert.assertFalse(alignments.hasAlignedTerminal(8 , phrases, phraseIndex));
 
-			Assert.assertTrue(alignments.hasAlignedTerminal(4 , phrase));
-			Assert.assertTrue(alignments.hasAlignedTerminal(5 , phrase));
-			Assert.assertTrue(alignments.hasAlignedTerminal(6 , phrase));
-			Assert.assertTrue(alignments.hasAlignedTerminal(7 , phrase));
-			Assert.assertFalse(alignments.hasAlignedTerminal(8 , phrase));
-
-			Assert.assertFalse(alignments.hasAlignedTerminal(9 , phrase));
-			Assert.assertFalse(alignments.hasAlignedTerminal(10 , phrase));
-			Assert.assertFalse(alignments.hasAlignedTerminal(11 , phrase));
+			Assert.assertFalse(alignments.hasAlignedTerminal(9 , phrases, phraseIndex));
+			Assert.assertFalse(alignments.hasAlignedTerminal(10 , phrases, phraseIndex));
+			Assert.assertFalse(alignments.hasAlignedTerminal(11 , phrases, phraseIndex));
 
 		}
 		
 		{
 			Pattern     pattern = new Pattern(new Pattern(new Pattern(vocab, vocab.getIDs(", y")), PrefixTree.X), vocab.getIDs("sus"));// del parlamento europeo"));
 			int[]       terminalSequenceStartIndices = {17,21};
-			int[]       terminalSequenceEndIndices = {19,22};
-			int         length = 5;
-
-			HierarchicalPhrase phrase = new HierarchicalPhrase(pattern, terminalSequenceStartIndices, terminalSequenceEndIndices, sourceCorpusArray, length);
-
-			Assert.assertFalse(alignments.hasAlignedTerminal(12 , phrase));
-			Assert.assertFalse(alignments.hasAlignedTerminal(13 , phrase));
-			Assert.assertFalse(alignments.hasAlignedTerminal(14 , phrase));
-
-			Assert.assertTrue(alignments.hasAlignedTerminal(15, phrase));
-			Assert.assertTrue(alignments.hasAlignedTerminal(16, phrase));
+			int[]       sentenceNumbers = {0};
+			int phraseIndex = 0;
 			
-			Assert.assertFalse(alignments.hasAlignedTerminal(17, phrase));
-			Assert.assertFalse(alignments.hasAlignedTerminal(18, phrase));
-			Assert.assertFalse(alignments.hasAlignedTerminal(19, phrase));
-			Assert.assertFalse(alignments.hasAlignedTerminal(20, phrase));
-			Assert.assertFalse(alignments.hasAlignedTerminal(21, phrase));
-			Assert.assertFalse(alignments.hasAlignedTerminal(22, phrase));
-			Assert.assertFalse(alignments.hasAlignedTerminal(23, phrase));
+			HierarchicalPhrases phrases =
+				new HierarchicalPhrases(pattern, terminalSequenceStartIndices, sentenceNumbers);
 			
-			Assert.assertTrue(alignments.hasAlignedTerminal(24, phrase));
+			Assert.assertFalse(alignments.hasAlignedTerminal(12 , phrases, phraseIndex));
+			Assert.assertFalse(alignments.hasAlignedTerminal(13 , phrases, phraseIndex));
+			Assert.assertFalse(alignments.hasAlignedTerminal(14 , phrases, phraseIndex));
 
-			Assert.assertFalse(alignments.hasAlignedTerminal(25, phrase));
-			Assert.assertFalse(alignments.hasAlignedTerminal(26, phrase));
-			Assert.assertFalse(alignments.hasAlignedTerminal(27, phrase));
+			Assert.assertTrue(alignments.hasAlignedTerminal(15, phrases, phraseIndex));
+			Assert.assertTrue(alignments.hasAlignedTerminal(16, phrases, phraseIndex));
+			
+			Assert.assertFalse(alignments.hasAlignedTerminal(17, phrases, phraseIndex));
+			Assert.assertFalse(alignments.hasAlignedTerminal(18, phrases, phraseIndex));
+			Assert.assertFalse(alignments.hasAlignedTerminal(19, phrases, phraseIndex));
+			Assert.assertFalse(alignments.hasAlignedTerminal(20, phrases, phraseIndex));
+			Assert.assertFalse(alignments.hasAlignedTerminal(21, phrases, phraseIndex));
+			Assert.assertFalse(alignments.hasAlignedTerminal(22, phrases, phraseIndex));
+			Assert.assertFalse(alignments.hasAlignedTerminal(23, phrases, phraseIndex));
+			
+			Assert.assertTrue(alignments.hasAlignedTerminal(24, phrases, phraseIndex));
+
+			Assert.assertFalse(alignments.hasAlignedTerminal(25, phrases, phraseIndex));
+			Assert.assertFalse(alignments.hasAlignedTerminal(26, phrases, phraseIndex));
+			Assert.assertFalse(alignments.hasAlignedTerminal(27, phrases, phraseIndex));
 			
 		}
 		
@@ -260,37 +269,39 @@ public class AlignmentsTest {
 
 			Pattern     pattern = new Pattern(new Pattern(new Pattern(vocab, vocab.getIDs(",")), PrefixTree.X), vocab.getIDs(", y"));// del parlamento europeo"));
 			int[]       terminalSequenceStartIndices = {9,17};
-			int[]       terminalSequenceEndIndices = {10,19};
-			int         length = 10;
-
-			HierarchicalPhrase phrase = new HierarchicalPhrase(pattern, terminalSequenceStartIndices, terminalSequenceEndIndices, sourceCorpusArray, length);
-
-			Assert.assertFalse(alignments.hasAlignedTerminal(9, phrase));
+			int[]       sentenceNumbers = {0};
+			int phraseIndex = 0;
 			
-			Assert.assertFalse(alignments.hasAlignedTerminal(10 , phrase));
-			Assert.assertFalse(alignments.hasAlignedTerminal(11 , phrase));			
-			Assert.assertFalse(alignments.hasAlignedTerminal(12 , phrase));
-			Assert.assertFalse(alignments.hasAlignedTerminal(13 , phrase));
-			Assert.assertFalse(alignments.hasAlignedTerminal(14 , phrase));
-
-			Assert.assertTrue(alignments.hasAlignedTerminal(15, phrase));
-			Assert.assertTrue(alignments.hasAlignedTerminal(16, phrase));
+			HierarchicalPhrases phrases =
+				new HierarchicalPhrases(pattern, terminalSequenceStartIndices, sentenceNumbers);
 			
-			Assert.assertFalse(alignments.hasAlignedTerminal(17, phrase));
-			Assert.assertFalse(alignments.hasAlignedTerminal(18, phrase));
-			Assert.assertFalse(alignments.hasAlignedTerminal(19, phrase));
-			Assert.assertFalse(alignments.hasAlignedTerminal(20, phrase));
-			Assert.assertFalse(alignments.hasAlignedTerminal(21, phrase));
-			Assert.assertFalse(alignments.hasAlignedTerminal(22, phrase));
-			Assert.assertFalse(alignments.hasAlignedTerminal(23, phrase));
+			Assert.assertFalse(alignments.hasAlignedTerminal(9, phrases, phraseIndex));
 			
-			Assert.assertFalse(alignments.hasAlignedTerminal(24, phrase));
+			Assert.assertFalse(alignments.hasAlignedTerminal(10 , phrases, phraseIndex));
+			Assert.assertFalse(alignments.hasAlignedTerminal(11 , phrases, phraseIndex));			
+			Assert.assertFalse(alignments.hasAlignedTerminal(12 , phrases, phraseIndex));
+			Assert.assertFalse(alignments.hasAlignedTerminal(13 , phrases, phraseIndex));
+			Assert.assertFalse(alignments.hasAlignedTerminal(14 , phrases, phraseIndex));
 
-			Assert.assertFalse(alignments.hasAlignedTerminal(25, phrase));
-			Assert.assertFalse(alignments.hasAlignedTerminal(26, phrase));
-			Assert.assertFalse(alignments.hasAlignedTerminal(27, phrase));			
+			Assert.assertTrue(alignments.hasAlignedTerminal(15, phrases, phraseIndex));
+			Assert.assertTrue(alignments.hasAlignedTerminal(16, phrases, phraseIndex));
+			
+			Assert.assertFalse(alignments.hasAlignedTerminal(17, phrases, phraseIndex));
+			Assert.assertFalse(alignments.hasAlignedTerminal(18, phrases, phraseIndex));
+			Assert.assertFalse(alignments.hasAlignedTerminal(19, phrases, phraseIndex));
+			Assert.assertFalse(alignments.hasAlignedTerminal(20, phrases, phraseIndex));
+			Assert.assertFalse(alignments.hasAlignedTerminal(21, phrases, phraseIndex));
+			Assert.assertFalse(alignments.hasAlignedTerminal(22, phrases, phraseIndex));
+			Assert.assertFalse(alignments.hasAlignedTerminal(23, phrases, phraseIndex));
+			
+			Assert.assertFalse(alignments.hasAlignedTerminal(24, phrases, phraseIndex));
+
+			Assert.assertFalse(alignments.hasAlignedTerminal(25, phrases, phraseIndex));
+			Assert.assertFalse(alignments.hasAlignedTerminal(26, phrases, phraseIndex));
+			Assert.assertFalse(alignments.hasAlignedTerminal(27, phrases, phraseIndex));			
 		
 		}
+		
 	}
 	
 	

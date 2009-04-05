@@ -106,10 +106,10 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 
 		// For each sample HierarchicalPhrase
 		for (int i=0; i<totalPossibleTranslations; i+=stepSize) { 
-			HierarchicalPhrase sourcePhrase = sourceHierarchicalPhrases.get(i, suffixArray.getCorpus());
+//			HierarchicalPhrase sourcePhrase = sourceHierarchicalPhrases.get(i, suffixArray.getCorpus());
 			//for (HierarchicalPhrase sourcePhrase : samples) {
 			// We may want to extract the alignment points at this point, rather than deeper on because we're doing this somewhat redundantly in getTranslation and calculateLexProbs
-			Pattern translation = getTranslation(sourcePhrase);
+			Pattern translation = getTranslation(sourceHierarchicalPhrases, i);
 			if (translation != null) {
 				translations.add(translation);
 				// We look up the lexprobs for this particular sourcePhrase (which corresponds to exactly one location in the source corpus)
@@ -118,7 +118,8 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 				// TODO: store a Grid that shows the alignment between source words and target words.  Defer the calculation of the
 				//       lexical probs until we have the unique <source pattern, target pattern, alignment> tuples.  I think that
 				//        this will be more efficient, because most of the time the alignments will be identical. 
-				lexProbsList.add(lexProbs.calculateLexProbs(sourcePhrase));
+//				lexProbsList.add(lexProbs.calculateLexProbs(sourcePhrase));
+				lexProbsList.add(lexProbs.calculateLexProbs(sourceHierarchicalPhrases, i));
 			}
 		}
 
@@ -226,15 +227,16 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 	 * 
 	 * @return null if no translation can be constructed
 	 */
-	protected Pattern constructTranslation(HierarchicalPhrase sourcePhrase, Span sourceSpan, Span targetSpan, boolean sourceStartsWithNT, boolean sourceEndsWithNT) {
-		
+//	protected Pattern constructTranslation(HierarchicalPhrase sourcePhrase, Span sourceSpan, Span targetSpan, boolean sourceStartsWithNT, boolean sourceEndsWithNT) {
+	protected Pattern constructTranslation(MatchedHierarchicalPhrases sourcePhrases, int sourcePhraseIndex, Span sourceSpan, Span targetSpan, boolean sourceStartsWithNT, boolean sourceEndsWithNT) {		
 		if (logger.isLoggable(Level.FINE)) logger.fine("Constructing translation for source span " + sourceSpan + ", target span " + targetSpan);
-		
+				
 		if (sourceSpan.size() > this.maxPhraseSpan)
 			return null;
 		
 		// Construct a pattern for the trivial case where there are no nonterminals
-		if (sourcePhrase.pattern.arity == 0) {
+//		if (sourcePhrases.pattern.arity == 0) {
+		if (sourcePhrases.getArity() == 0) {
 
 			if (sourceSpan.size() > this.maxPhraseLength) {
 				
@@ -264,13 +266,17 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 		// If the source phrase starts with a nonterminal, we have to handle that NT as a special case
 		if (sourceStartsWithNT) {
 			
-			if (sourcePhrase.terminalSequenceStartIndices[0] - sourceSpan.start < minNonterminalSpan) {
+			int firstTerminalIndex = sourcePhrases.getFirstTerminalIndex(sourcePhraseIndex);
+			
+//			if (sourcePhrase.terminalSequenceStartIndices[0] - sourceSpan.start < minNonterminalSpan) {
+			if (firstTerminalIndex - sourceSpan.start < minNonterminalSpan) {
 				
 				return null;
 				
 			} else {
 				// If the source phrase starts with NT, then we need to calculate the span of the first NT
-				Span nonterminalSourceSpan = new Span(sourceSpan.start, sourcePhrase.terminalSequenceStartIndices[0]);
+//				Span nonterminalSourceSpan = new Span(sourceSpan.start, sourcePhrase.terminalSequenceStartIndices[0]);
+				Span nonterminalSourceSpan = new Span(sourceSpan.start, firstTerminalIndex);
 				Span nonterminalTargetSpan = alignments.getConsistentTargetSpan(nonterminalSourceSpan);
 
 				if (nonterminalTargetSpan==null || nonterminalTargetSpan.equals(targetSpan)) return null;
@@ -283,15 +289,23 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 		}
 		
 		// Process all internal nonterminals
-		for (int i=0; i<sourcePhrase.terminalSequenceStartIndices.length-1; i++) {
+//		for (int i=0; i<sourcePhrase.terminalSequenceStartIndices.length-1; i++) {
+		for (int i=0, n=sourcePhrases.getNumberOfTerminalSequences()-1; i<n; i++) {
 			
-			if (sourcePhrase.terminalSequenceStartIndices[i+1] - sourcePhrase.terminalSequenceEndIndices[i] < minNonterminalSpan) {
+			int nextStartIndex = 
+				sourcePhrases.getTerminalSequenceStartIndex(sourcePhraseIndex, i+1);
+			
+			int currentEndIndex =
+				sourcePhrases.getTerminalSequenceEndIndex(sourcePhraseIndex, i);
+			
+//			if (sourcePhrase.terminalSequenceStartIndices[i+1] - sourcePhrase.terminalSequenceEndIndices[i] < minNonterminalSpan) {
+			if (nextStartIndex - currentEndIndex < minNonterminalSpan) {
 				
 				return null;
 				
 			} else {
 				
-				Span nonterminalSourceSpan = new Span(sourcePhrase.terminalSequenceEndIndices[i], sourcePhrase.terminalSequenceStartIndices[i+1]);
+				Span nonterminalSourceSpan = new Span(currentEndIndex, nextStartIndex);
 
 				Span nonterminalTargetSpan = alignments.getConsistentTargetSpan(nonterminalSourceSpan);
 
@@ -307,14 +321,17 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 		// If the source phrase starts with a nonterminal, we have to handle that NT as a special case
 		if (sourceEndsWithNT) {
 			
-			if (sourceSpan.end - sourcePhrase.terminalSequenceEndIndices[sourcePhrase.terminalSequenceEndIndices.length-1] < minNonterminalSpan) {
+			int lastTerminalIndex = sourcePhrases.getLastTerminalIndex(sourcePhraseIndex);
+			
+//			if (sourceSpan.end - sourcePhrase.terminalSequenceEndIndices[sourcePhrase.terminalSequenceEndIndices.length-1] < minNonterminalSpan) {
+			if (sourceSpan.end - lastTerminalIndex < minNonterminalSpan) {
 				
 				return null;
 				
 			} else {
 
 				// If the source phrase ends with NT, then we need to calculate the span of the last NT
-				Span nonterminalSourceSpan = new Span(sourcePhrase.terminalSequenceEndIndices[sourcePhrase.terminalSequenceEndIndices.length-1],sourceSpan.end);
+				Span nonterminalSourceSpan = new Span(lastTerminalIndex, sourceSpan.end);
 
 				Span nonterminalTargetSpan = alignments.getConsistentTargetSpan(nonterminalSourceSpan);
 				if (logger.isLoggable(Level.FINEST)) logger.finest("Consistent target span " + nonterminalTargetSpan + " for NT source span " + nonterminalSourceSpan);
@@ -354,7 +371,7 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 			// until we get to the first non-terminal
 			for (int i = targetSpan.start; i < targetNTSpans.get(0).getSpan().start; i++) {
 				if (!foundAlignedTerminal) {
-					foundAlignedTerminal = alignments.hasAlignedTerminal(i, sourcePhrase);
+					foundAlignedTerminal = alignments.hasAlignedTerminal(i, sourcePhrases, sourcePhraseIndex);
 				}
 				words[patterCounter] = targetCorpus.getWordID(i);
 				patterCounter++;
@@ -372,7 +389,7 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 			
 			for(int j = NT1.getSpan().end; j < NT2.getSpan().start; j++) {
 				if (!foundAlignedTerminal) {
-					foundAlignedTerminal = alignments.hasAlignedTerminal(j, sourcePhrase);
+					foundAlignedTerminal = alignments.hasAlignedTerminal(j, sourcePhrases, sourcePhraseIndex);
 				}
 				words[patterCounter] = targetCorpus.getWordID(j);
 				patterCounter++;
@@ -386,7 +403,7 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 			// the target pattern starts with a non-terminal
 			for(int i = targetNTSpans.get(targetNTSpans.size()-1).getSpan().end; i < targetSpan.end; i++) {
 				if (!foundAlignedTerminal) {
-					foundAlignedTerminal = alignments.hasAlignedTerminal(i, sourcePhrase);
+					foundAlignedTerminal = alignments.hasAlignedTerminal(i, sourcePhrases, sourcePhraseIndex);
 				}
 				words[patterCounter] = targetCorpus.getWordID(i);
 				patterCounter++;
@@ -423,7 +440,7 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 	 * @param sourcePhrase
 	 * @return the target side translation pattern for a particular source phrase.
 	 */
-	protected Pattern getTranslation(HierarchicalPhrase sourcePhrase) {
+	protected Pattern getTranslation(MatchedHierarchicalPhrases sourcePhrase, int sourcePhraseIndex) {
 
 		//TODO It may be that this method should be moved to the AlignmentArray class.
 		//     Doing so would require that the maxPhraseSpan and similar variables be accessible from AlignmentArray.
@@ -433,21 +450,22 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 		
 		
 		// Case 1:  If sample !startsWithNT && !endsWithNT
-		if (!sourcePhrase.startsWithNonterminal() && !sourcePhrase.endsWithNonterminal()) {
+//		if (!sourcePhrase.startsWithNonterminal() && !sourcePhrase.endsWithNonterminal()) {
+		if (!sourcePhrase.patternStartsWithNonterminal() && !sourcePhrase.patternEndsWithNonterminal()) {
 			
 			if (logger.isLoggable(Level.FINER)) logger.finer("Case 1: Source phrase !startsWithNT && !endsWithNT");
 			
 			// Get target span
-			Span sourceSpan = new Span(sourcePhrase.terminalSequenceStartIndices[0], sourcePhrase.terminalSequenceEndIndices[sourcePhrase.terminalSequenceEndIndices.length-1]);//+sample.length); 
+			Span sourceSpan = sourcePhrase.getSpan(sourcePhraseIndex);//new Span(sourcePhrase.terminalSequenceStartIndices[0], sourcePhrase.terminalSequenceEndIndices[sourcePhrase.terminalSequenceEndIndices.length-1]);//+sample.length); 
 
 			Span targetSpan = alignments.getConsistentTargetSpan(sourceSpan);
 			
 			// If target span and source span are consistent
 			//if (targetSpan!=null) {
-			if (targetSpan!=null && targetSpan.size()>=sourcePhrase.pattern.arity+1 && targetSpan.size()<=maxPhraseSpan) {
+			if (targetSpan!=null && targetSpan.size()>=sourcePhrase.getArity()+1 && targetSpan.size()<=maxPhraseSpan) {
 				
 				// Construct a translation
-				Pattern translation = constructTranslation(sourcePhrase, sourceSpan, targetSpan, false, false);
+				Pattern translation = constructTranslation(sourcePhrase, sourcePhraseIndex, sourceSpan, targetSpan, false, false);
 				
 				
 				
@@ -464,16 +482,17 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 		}
 		
 		// Case 2: If sourcePhrase startsWithNT && !endsWithNT
-		else if (sourcePhrase.startsWithNonterminal() && !sourcePhrase.endsWithNonterminal()) {
+		else if (sourcePhrase.patternStartsWithNonterminal() && !sourcePhrase.patternEndsWithNonterminal()) {
 			
 			if (logger.isLoggable(Level.FINER)) logger.finer("Case 2: Source phrase startsWithNT && !endsWithNT");
 			
-			int startOfSentence = suffixArray.getCorpus().getSentencePosition(sourcePhrase.sentenceNumber);
-			int startOfTerminalSequence = sourcePhrase.terminalSequenceStartIndices[0];
-			int endOfTerminalSequence = sourcePhrase.terminalSequenceEndIndices[sourcePhrase.terminalSequenceEndIndices.length-1];
+			int startOfSentence = suffixArray.getCorpus().getSentencePosition(sourcePhrase.getSentenceNumber(sourcePhraseIndex));
+			int startOfTerminalSequence = sourcePhrase.getFirstTerminalIndex(sourcePhraseIndex);//sourcePhrase.terminalSequenceStartIndices[0];
+			int endOfTerminalSequence = sourcePhrase.getLastTerminalIndex(sourcePhraseIndex);//sourcePhrase.terminalSequenceEndIndices[sourcePhrase.terminalSequenceEndIndices.length-1];
 			
 			// Start by assuming the initial source nonterminal starts one word before the first source terminal 
-			Span possibleSourceSpan = new Span(sourcePhrase.terminalSequenceStartIndices[0]-1, sourcePhrase.terminalSequenceEndIndices[sourcePhrase.terminalSequenceEndIndices.length-1]);//+sample.length); 
+//			Span possibleSourceSpan = new Span(sourcePhrase.terminalSequenceStartIndices[0]-1, sourcePhrase.terminalSequenceEndIndices[sourcePhrase.terminalSequenceEndIndices.length-1]);//+sample.length); 
+			Span possibleSourceSpan = new Span(startOfTerminalSequence-1, endOfTerminalSequence);//+sample.length); 
 			
 			// Loop over all legal source spans 
 			//      (this is variable because we don't know the length of the NT span)
@@ -487,10 +506,10 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 
 				// If target span and source span are consistent
 				//if (targetSpan!=null) {
-				if (targetSpan!=null && targetSpan.size()>=sourcePhrase.pattern.arity+1 && targetSpan.size()<=maxPhraseSpan) {
+				if (targetSpan!=null && targetSpan.size()>=sourcePhrase.getArity()+1 && targetSpan.size()<=maxPhraseSpan) {
 
 					// Construct a translation
-					Pattern translation = constructTranslation(sourcePhrase, possibleSourceSpan, targetSpan, true, false);
+					Pattern translation = constructTranslation(sourcePhrase, sourcePhraseIndex, possibleSourceSpan, targetSpan, true, false);
 
 					if (translation != null) {
 						if (logger.isLoggable(Level.FINEST)) logger.finest("\tCase 2: Adding translation: '" + translation + "' for target span " + targetSpan + " from source span " + possibleSourceSpan);
@@ -508,18 +527,20 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 		}
 		
 		// Case 3: If sourcePhrase !startsWithNT && endsWithNT
-		else if (!sourcePhrase.startsWithNonterminal() && sourcePhrase.endsWithNonterminal()) {
+		else if (!sourcePhrase.patternStartsWithNonterminal() && sourcePhrase.patternEndsWithNonterminal()) {
 			
 			if (logger.isLoggable(Level.FINER)) logger.finer("Case 3: Source phrase !startsWithNT && endsWithNT");
 			
-			int endOfSentence = suffixArray.getCorpus().getSentenceEndPosition(sourcePhrase.sentenceNumber);
+			int endOfSentence = suffixArray.getCorpus().getSentenceEndPosition(sourcePhrase.getSentenceNumber(sourcePhraseIndex));
 			//int startOfTerminalSequence = sourcePhrase.terminalSequenceStartIndices[0];
-			int endOfTerminalSequence = sourcePhrase.terminalSequenceEndIndices[sourcePhrase.terminalSequenceEndIndices.length-1];
+			int startOfTerminalSequence = sourcePhrase.getFirstTerminalIndex(sourcePhraseIndex);
+			int endOfTerminalSequence = sourcePhrase.getLastTerminalIndex(sourcePhraseIndex);//sourcePhrase.terminalSequenceEndIndices[sourcePhrase.terminalSequenceEndIndices.length-1];
 			//int startOfNT = endOfTerminalSequence + 1;
 			
 			// Start by assuming the initial source nonterminal starts one word after the last source terminal 
-			Span possibleSourceSpan = new Span(sourcePhrase.terminalSequenceStartIndices[0], sourcePhrase.terminalSequenceEndIndices[sourcePhrase.terminalSequenceEndIndices.length-1]+1); 
-			
+			Span possibleSourceSpan = //new Span(sourcePhrase.terminalSequenceStartIndices[0], sourcePhrase.terminalSequenceEndIndices[sourcePhrase.terminalSequenceEndIndices.length-1]+1); 
+				new Span(startOfTerminalSequence, endOfTerminalSequence+1);
+				
 			// Loop over all legal source spans 
 			//      (this is variable because we don't know the length of the NT span)
 			//      looking for a source span with a consistent translation
@@ -534,10 +555,10 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 
 				// If target span and source span are consistent
 				//if (targetSpan!=null) {
-				if (targetSpan!=null && targetSpan.size()>=sourcePhrase.pattern.arity+1 && targetSpan.size()<=maxPhraseSpan) {
+				if (targetSpan!=null && targetSpan.size()>=sourcePhrase.getArity()+1 && targetSpan.size()<=maxPhraseSpan) {
 
 					// Construct a translation
-					Pattern translation = constructTranslation(sourcePhrase, possibleSourceSpan, targetSpan, false, true);
+					Pattern translation = constructTranslation(sourcePhrase, sourcePhraseIndex, possibleSourceSpan, targetSpan, false, true);
 
 					if (translation != null) {
 						if (logger.isLoggable(Level.FINEST)) logger.finest("\tCase 3: Adding translation: '" + translation + "' for target span " + targetSpan + " from source span " + possibleSourceSpan);
@@ -555,20 +576,22 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 		}
 		
 		// Case 4: If sourcePhrase startsWithNT && endsWithNT
-		else if (sourcePhrase.startsWithNonterminal() && sourcePhrase.endsWithNonterminal()) {
+		else if (sourcePhrase.patternStartsWithNonterminal() && sourcePhrase.patternEndsWithNonterminal()) {
 			
 			if (logger.isLoggable(Level.FINER)) logger.finer("Case 4: Source phrase startsWithNT && endsWithNT");
 			
-			int startOfSentence = suffixArray.getCorpus().getSentencePosition(sourcePhrase.sentenceNumber);
-			int endOfSentence = suffixArray.getCorpus().getSentenceEndPosition(sourcePhrase.sentenceNumber);
-			int startOfTerminalSequence = sourcePhrase.terminalSequenceStartIndices[0];
-			int endOfTerminalSequence = sourcePhrase.terminalSequenceEndIndices[sourcePhrase.terminalSequenceEndIndices.length-1];
+			int sentenceNumber = sourcePhrase.getSentenceNumber(sourcePhraseIndex);
+			int startOfSentence = suffixArray.getCorpus().getSentencePosition(sentenceNumber);
+			int endOfSentence = suffixArray.getCorpus().getSentenceEndPosition(sentenceNumber);
+			int startOfTerminalSequence = sourcePhrase.getFirstTerminalIndex(sourcePhraseIndex);//sourcePhrase.terminalSequenceStartIndices[0];
+			int endOfTerminalSequence = sourcePhrase.getLastTerminalIndex(sourcePhraseIndex);//sourcePhrase.terminalSequenceEndIndices[sourcePhrase.terminalSequenceEndIndices.length-1];
 			
 			// Start by assuming the initial source nonterminal 
 			//   starts one word before the first source terminal and
 			//   ends one word after the last source terminal 
-			Span possibleSourceSpan = new Span(sourcePhrase.terminalSequenceStartIndices[0]-1, sourcePhrase.terminalSequenceEndIndices[sourcePhrase.terminalSequenceEndIndices.length-1]+1); 
-			
+			Span possibleSourceSpan = //new Span(sourcePhrase.terminalSequenceStartIndices[0]-1, sourcePhrase.terminalSequenceEndIndices[sourcePhrase.terminalSequenceEndIndices.length-1]+1); 
+				new Span(startOfTerminalSequence-1, endOfTerminalSequence+1);
+				
 			// Loop over all legal source spans 
 			//      (this is variable because we don't know the length of the NT span)
 			//      looking for a source span with a consistent translation
@@ -577,21 +600,16 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 					startOfTerminalSequence-possibleSourceSpan.start<=maxNonterminalSpan && 
 					possibleSourceSpan.end-endOfTerminalSequence<=maxNonterminalSpan &&
 					possibleSourceSpan.size()<=maxPhraseSpan) {
-					//endOfTerminalSequence-possibleSourceSpan.start<=maxPhraseSpan) {
-				
-//				if (sourcePattern.toString().equals("[X pour X]") && possibleSourceSpan.start<=1 && possibleSourceSpan.end>=8) {
-//					int x = 1; x++;
-//				}
-				
+		
 				// Get target span
 				Span targetSpan = alignments.getConsistentTargetSpan(possibleSourceSpan);
 
 				// If target span and source span are consistent
 				//if (targetSpan!=null) {
-				if (targetSpan!=null && targetSpan.size()>=sourcePhrase.pattern.arity+1 && targetSpan.size()<=maxPhraseSpan) {
+				if (targetSpan!=null && targetSpan.size()>=sourcePhrase.getArity()+1 && targetSpan.size()<=maxPhraseSpan) {
 
 					// Construct a translation
-					Pattern translation = constructTranslation(sourcePhrase, possibleSourceSpan, targetSpan, true, true);
+					Pattern translation = constructTranslation(sourcePhrase, sourcePhraseIndex, possibleSourceSpan, targetSpan, true, true);
 
 					if (translation != null) {
 						if (logger.isLoggable(Level.FINEST)) logger.finest("\tCase 4: Adding translation: '" + translation + "' for target span " + targetSpan + " from source span " + possibleSourceSpan);
