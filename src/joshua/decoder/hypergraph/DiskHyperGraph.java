@@ -126,14 +126,6 @@ public class DiskHyperGraph {
 //===============================================================
 // Constructors
 //===============================================================
-	
-	public DiskHyperGraph(SymbolTable symbolTable, int LMFeatureID) {
-		this.symbolTable          = symbolTable;
-		this.LMFeatureID          = LMFeatureID;
-		this.storeModelCosts      = false;
-	}
-	
-	
 	/**
 	 * For saving purpose, one needs to specify the featureFunctions.
 	 * For reading purpose, one does not need to provide the list.
@@ -141,7 +133,8 @@ public class DiskHyperGraph {
 	public DiskHyperGraph(SymbolTable symbolTable, int LMFeatureID,
 		boolean storeModelCosts, ArrayList<FeatureFunction> featureFunctions
 	) {
-		this(symbolTable, LMFeatureID);
+		this.symbolTable      = symbolTable;
+		this.LMFeatureID      = LMFeatureID;
 		this.storeModelCosts  = storeModelCosts;
 		this.featureFunctions = featureFunctions;
 	}
