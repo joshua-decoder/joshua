@@ -23,7 +23,6 @@ import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.HieroGrammar.MemoryBasedBatchGrammar;
 import joshua.decoder.ff.FFDPState;
 import joshua.decoder.ff.FeatureFunction;
-import joshua.decoder.JoshuaConfiguration;
 import joshua.corpus.SymbolTable;
 import joshua.util.FileUtility;
 import joshua.util.Regex;

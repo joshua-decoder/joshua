@@ -189,7 +189,7 @@ public class Bin
 					goal_item = new HGNode(0,	this.p_chart.sent_len + 1,	GOAL_SYM_ID,	null, dt, cost + final_transition_cost);					
 					this.l_sorted_items.add(goal_item);
 				} else {
-					goal_item.add_hyperedge_in_item(dt);
+					goal_item.addHyperedgeInItem(dt);
 					if (goal_item.best_hyperedge.best_cost > dt.best_cost) {
 						goal_item.best_hyperedge = dt;
 					}
@@ -440,18 +440,18 @@ public class Bin
 	 * need to check whether the item is already exist, if yes, just add the deductions*/
 	private boolean add_deduction( HGNode new_item){
 		boolean res=false;
-		HGNode old_item = tbl_items.get(new_item.get_signature());		
+		HGNode old_item = tbl_items.get(new_item.getSignature());		
 		if(old_item!=null){//have an item with same states, combine items
 			p_chart.n_merged++;
 			if(new_item.est_total_cost<old_item.est_total_cost){
 				//the position of old_item in the heap_items may change, basically, we should remove the old_item, and re-insert it (linear time, this is too expense)
 				old_item.is_dead=true;//heap_items.remove(old_item);
 				dead_items++;
-				new_item.add_hyperedges_in_item(old_item.l_hyperedges);
+				new_item.addHyperedgesInItem(old_item.l_hyperedges);
 				add_new_item(new_item);	//this will update the HashMap , so that the old_item is destroyed				
 				res=true;
 			}else{
-				old_item.add_hyperedges_in_item(new_item.l_hyperedges);
+				old_item.addHyperedgesInItem(new_item.l_hyperedges);
 			}
 		}else{//first time item
 			p_chart.n_added++;//however, this item may not be used in the future due to pruning in the hyper-graph
@@ -465,7 +465,7 @@ public class Bin
 	
 //	this function is called only there is no such item in the tbl
 	private void add_new_item(HGNode item){
-		tbl_items.put(item.get_signature(), item);//add/replace the item	
+		tbl_items.put(item.getSignature(), item);//add/replace the item	
 		l_sorted_items=null; //reset the list
 		heap_items.add(item);
 		
@@ -509,7 +509,7 @@ public class Bin
 			if(worst_item.is_dead==true)//clear the corrupted item
 				dead_items--;
 			else{
-				tbl_items.remove(worst_item.get_signature());//always make tbl_items current					
+				tbl_items.remove(worst_item.getSignature());//always make tbl_items current					
 				p_chart.n_pruned++;					
 				//Support.write_log_line(String.format("Run_pruning: %d; cutoff=%.3f, realcost: %.3f",p_chart.n_pruned,cut_off_cost,worst_item.est_total_cost), Support.INFO);
 			}					

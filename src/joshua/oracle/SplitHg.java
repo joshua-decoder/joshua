@@ -241,8 +241,8 @@ public abstract class SplitHg {
 					l_virtual_deductions.add(fdt);
 				}
 				if( best_virtual_deduction==null || fdt.best_cost < best_virtual_deduction.best_cost ) {
-					best_virtual_deduction = fdt;
 					dp_state = dstate;
+					best_virtual_deduction = fdt;					
 				}
 			}
 			

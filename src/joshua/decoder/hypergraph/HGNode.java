@@ -35,8 +35,13 @@ import java.util.logging.Level;
  * @version $LastChangedDate$
  */
 
+
+//@todo: handle the case that the Hypergraph only maintains the one-best tree 
 public class HGNode implements Comparable<HGNode> {
 	public int i, j;
+	
+	// this is the symbol like: NP, VP, and so on
+	public int lhs;
 	
 	// each hyperedge is a "and" node
 	public ArrayList<HyperEdge> l_hyperedges = null;
@@ -44,8 +49,7 @@ public class HGNode implements Comparable<HGNode> {
 	// used in pruning, compute_item, and transit_to_goal
 	public HyperEdge best_hyperedge = null;
 	
-	// this is the symbol like: NP, VP, and so on
-	public int lhs;
+
 	
 	// the key is the feature id; remember the state required by each model, for example, edge-ngrams for LM model
 	HashMap<Integer,FFDPState> tbl_ff_dpstates;
@@ -71,7 +75,7 @@ public class HGNode implements Comparable<HGNode> {
 		this.lhs = lhs;
 		this.tbl_ff_dpstates = states;
 		this.est_total_cost  = est_total_cost;
-		add_hyperedge_in_item(init_hyperedge);
+		addHyperedgeInItem(init_hyperedge);
 	}
 	
 	
@@ -90,7 +94,7 @@ public class HGNode implements Comparable<HGNode> {
 // Methods
 //===============================================================
 	
-	public void add_hyperedge_in_item(HyperEdge dt) {
+	public void addHyperedgeInItem(HyperEdge dt) {
 		if (null == l_hyperedges) {
 			l_hyperedges = new ArrayList<HyperEdge>();
 		}
@@ -102,9 +106,9 @@ public class HGNode implements Comparable<HGNode> {
 	}
 	
 	
-	public void add_hyperedges_in_item(ArrayList<HyperEdge> hyperedges) {
+	public void addHyperedgesInItem(ArrayList<HyperEdge> hyperedges) {
 		for(HyperEdge hyperEdge : hyperedges) 
-			add_hyperedge_in_item(hyperEdge);
+			addHyperedgeInItem(hyperEdge);
 	}
 	
 	
@@ -136,7 +140,7 @@ public class HGNode implements Comparable<HGNode> {
 	
 	
 	//signature of this item: lhs, states (we do not need i, j)
-	public String get_signature() {
+	public String getSignature() {
 		if (null == this.signature) {
 			StringBuffer s = new StringBuffer();
 			s.append(lhs);

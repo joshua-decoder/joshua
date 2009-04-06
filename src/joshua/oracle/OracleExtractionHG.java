@@ -65,8 +65,8 @@ public class OracleExtractionHG extends SplitHg {
 	static protected boolean maitain_length_state = false;
 	static protected  int g_bleu_order=4;
 	
-	static boolean using_left_equiv_state = false;
-	static boolean using_right_equiv_state = false;
+	static boolean using_left_equiv_state = true;
+	static boolean using_right_equiv_state = true;
 	
 	//TODO Add generics to hash tables in this class
 	HashMap tbl_suffix = new HashMap();
@@ -143,27 +143,22 @@ public class OracleExtractionHG extends SplitHg {
 		}
 		
 		BufferedWriter orc_out = FileUtility.getWriteFileStream(f_orc_out);
-		DiskHyperGraph dhg_write = null; 
-		int lm_feat_id = 0; //TODO
-		if(orc_extract_nbest==false){
-			dhg_write = new DiskHyperGraph(p_symbolTable, lm_feat_id);
-			dhg_write.init_write(f_orc_out+".hg.items", false, -1);
-		}
 		
-		long start_time = System.currentTimeMillis();
+		long start_time0 = System.currentTimeMillis();
 		long time_on_reading = 0;
 		long time_on_orc_extract = 0;
 		BufferedReader t_reader_ref = FileUtility.getReadFileStream(f_ref_files);
-		DiskHyperGraph dhg_read  = new DiskHyperGraph(p_symbolTable, lm_feat_id);
+		DiskHyperGraph dhg_read  = new DiskHyperGraph(p_symbolTable, baseline_lm_feat_id, true, null);
 	
 		dhg_read.init_read(f_hypergraphs, f_rule_tbl, null);
 		
 		OracleExtractionHG orc_extractor = new OracleExtractionHG(p_symbolTable, baseline_lm_feat_id);
 		String ref_sent= null;
+		long start_time = System.currentTimeMillis();
 		int sent_id=0;
 		while( (ref_sent=FileUtility.read_line_lzf(t_reader_ref))!= null ){
 			System.out.println("############Process sentence " + sent_id);
-			//start_time = System.currentTimeMillis();
+			start_time = System.currentTimeMillis();
 			sent_id++;
 			//if(sent_id>10)break;
 			
@@ -173,8 +168,8 @@ public class OracleExtractionHG extends SplitHg {
 			double orc_bleu=0;
 			
 			//System.out.println("read disk hyp: " + (System.currentTimeMillis()-start_time));
-			//time_on_reading += System.currentTimeMillis()-start_time;
-			//start_time = System.currentTimeMillis();
+			time_on_reading += System.currentTimeMillis()-start_time;
+			start_time = System.currentTimeMillis();
 			
 			if(orc_extract_nbest){
 				Object[] res = orc_extractor.oracle_extract_nbest(kbest_extractor, hg, topN, do_ngram_clip_nbest, ref_sent);
@@ -184,8 +179,8 @@ public class OracleExtractionHG extends SplitHg {
 				HyperGraph hg_oracle = orc_extractor.oracle_extract_hg(hg, hg.sent_len, lm_order, ref_sent);
 				orc_sent =  ViterbiExtractor.extractViterbiString(p_symbolTable, hg_oracle.goal_item);
 				orc_bleu = orc_extractor.get_best_goal_cost(hg, orc_extractor.g_tbl_split_virtual_items);
-				if(dhg_write!=null) dhg_write.save_hyper_graph(hg_oracle);
-				///time_on_orc_extract += System.currentTimeMillis()-start_time;
+			
+				time_on_orc_extract += System.currentTimeMillis()-start_time;
 				System.out.println("num_virtual_items: " + orc_extractor.g_num_virtual_items + " num_virtual_dts: " + orc_extractor.g_num_virtual_deductions);
 				//System.out.println("oracle extract: " + (System.currentTimeMillis()-start_time));
 			}
@@ -195,12 +190,12 @@ public class OracleExtractionHG extends SplitHg {
 		}
 		t_reader_ref.close();
 		orc_out.close();
-		if(dhg_write!=null) dhg_write.write_rules_non_parallel(f_orc_out + ".hg.rules");
+		
 		
 		System.out.println("time_on_reading: " + time_on_reading);
 		System.out.println("time_on_orc_extract: " + time_on_orc_extract);
 		System.out.println("total running time: "
-			+ (System.currentTimeMillis() - start_time));
+			+ (System.currentTimeMillis() - start_time0));
 	}
 	
 	
@@ -433,6 +428,7 @@ public class OracleExtractionHG extends SplitHg {
 			//end						
 		}
 		bleu_score[0] = compute_bleu(total_hyp_len, ref_len, num_ngram_match, g_bleu_order);
+		//System.out.println("blue score is " + bleu_score[0]);
 		return  new DPStateOracle(total_hyp_len, num_ngram_match, left_lm_state, right_lm_state);
 	}
 	
