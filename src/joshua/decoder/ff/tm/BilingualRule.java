@@ -76,7 +76,7 @@ public class BilingualRule extends MonolingualRule {
 //===============================================================
 // Serialization Methods
 //===============================================================
-	// BUG: These are all far too redundant. Should be refactored to share.
+	// TODO: remove these methods
 	
 	// Caching this method significantly improves performance
 	// We mark it transient because it is, though cf java.io.Serializable

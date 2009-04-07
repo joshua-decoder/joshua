@@ -42,7 +42,7 @@ import java.util.logging.Logger;
  */
 
 public class DecoderFactory {
-	private GrammarFactory[] p_grammar_factories = null;
+	private ArrayList<GrammarFactory> grammarFactories = null;
 	private boolean have_lm_model = false;
 	private ArrayList<FeatureFunction> p_l_feat_functions = null;
 	
@@ -59,8 +59,8 @@ public class DecoderFactory {
 	
 	private static final Logger logger = Logger.getLogger(DecoderFactory.class.getName());
 
-	public DecoderFactory(GrammarFactory[] grammar_facories, boolean have_lm_model_, ArrayList<FeatureFunction> l_feat_functions, SymbolTable symbolTable){
-		this.p_grammar_factories = 	grammar_facories;
+	public DecoderFactory(ArrayList<GrammarFactory> grammarFactories, boolean have_lm_model_, ArrayList<FeatureFunction> l_feat_functions, SymbolTable symbolTable){
+		this.grammarFactories = grammarFactories;
 		this.have_lm_model = have_lm_model_;
 		this.p_l_feat_functions = l_feat_functions;
 		this.p_symbolTable = symbolTable;
@@ -70,12 +70,12 @@ public class DecoderFactory {
 		try{
 	//		###### decode the sentences, maybe in parallel
 			if (JoshuaConfiguration.num_parallel_decoders == 1) {
-				DecoderThread pdecoder = new DecoderThread(this.p_grammar_factories, this.have_lm_model, this.p_l_feat_functions, this.p_symbolTable, 
+				DecoderThread pdecoder = new DecoderThread(this.grammarFactories, this.have_lm_model, this.p_l_feat_functions, this.p_symbolTable, 
 						test_file, nbest_file,	oracle_file, 0);
 				
 				pdecoder.decode_a_file();//do not run *start*; so that we stay in the current main thread
 				if (JoshuaConfiguration.save_disk_hg) {
-					pdecoder.hypergraphSerializer.write_rules_non_parallel(nbest_file + ".hg.rules");
+					pdecoder.hypergraphSerializer.writeRulesNonParallel(nbest_file + ".hg.rules");
 				}
 			} else {
 				if (JoshuaConfiguration.use_remote_lm_server) { // TODO
@@ -146,7 +146,7 @@ public class DecoderFactory {
 				t_writer_test.close();
 				
 				DecoderThread pdecoder = new DecoderThread(
-					this.p_grammar_factories,
+					this.grammarFactories,
 					this.have_lm_model,
 					this.p_l_feat_functions,
 					this.p_symbolTable,
@@ -170,7 +170,7 @@ public class DecoderFactory {
 		t_writer_test.close();
 	
 		DecoderThread pdecoder = new DecoderThread(
-			this.p_grammar_factories,
+			this.grammarFactories,
 			this.have_lm_model,
 			this.p_l_feat_functions,
 			this.p_symbolTable,
@@ -240,7 +240,7 @@ public class DecoderFactory {
 			BufferedWriter t_writer_dhg_rules =
 				FileUtility.getWriteFileStream(nbest_file + ".hg.rules");
 			for (DecoderThread p_decoder : parallel_threads) {
-				p_decoder.hypergraphSerializer.write_rules_parallel(t_writer_dhg_rules, tbl_done);
+				p_decoder.hypergraphSerializer.writeRulesParallel(t_writer_dhg_rules, tbl_done);
 			}
 			t_writer_dhg_rules.flush();
 			t_writer_dhg_rules.close();

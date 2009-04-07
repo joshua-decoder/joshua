@@ -17,6 +17,7 @@
  */
 package joshua.decoder;
 
+import joshua.decoder.ff.tm.GrammarFormat;
 import joshua.util.Cache;
 import joshua.util.Regex;
 import joshua.util.io.LineReader;
@@ -52,10 +53,17 @@ public class JoshuaConfiguration {
 	public static String  mono_owner                 = "mono";
 	public static String  begin_mono_owner           = "begin_mono";//if such a rule is get applied, then no reordering is possible
 	public static String  default_non_terminal       = "PHRASE";
-	public static String  goalSymbol       = "S";
+	public static String  goal_symbol       = "S";
 	public static boolean use_sent_specific_tm       = false;
 	public static String  g_sent_tm_file_name_prefix = "tm.";
-	public static String  tm_file                    = null; // TODO
+	
+	public static String  tm_file                    = null;
+	
+	// TODO: default to glue grammar provided with Joshua
+	// TODO: support multiple glue grammars
+	public static String  glue_file                  = null;
+	
+	public static GrammarFormat tm_format            = null;
 	
 	// Parameters for suffix array grammar
 	/** File name prefix for source language binary training files. */
@@ -79,6 +87,7 @@ public class JoshuaConfiguration {
 	public static boolean sa_sentence_initial_X    = true;
 	public static boolean sa_sentence_final_X      = true;
 	
+	// TODO: introduce the various corpus/tm file package formats
 	public static String sa_vocab_suffix = "vocab";
 	public static String sa_corpus_suffix = "corpus";
 	public static String sa_suffixes_suffix = "suffixes";
@@ -160,6 +169,17 @@ public class JoshuaConfiguration {
 					tm_file = fds[1].trim();
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("tm file: %s", tm_file));
+				
+				} else if ("glue_file".equals(fds[0])) {
+					glue_file = fds[1].trim();
+					if (logger.isLoggable(Level.FINEST))
+						logger.finest(String.format("glue file: %s", glue_file));
+				
+				} else if ("tm_format".equals(fds[0])) {
+					tm_format = GrammarFormat.parse(fds[1].trim());
+						
+					if (logger.isLoggable(Level.FINEST))
+						logger.finest(String.format("tm format: %s", tm_format));
 					
 				} else if ("sa_source".equals(fds[0])) {
 					sa_source = fds[1].trim();
@@ -311,9 +331,9 @@ public class JoshuaConfiguration {
 						logger.finest(String.format("default_non_terminal: %s", default_non_terminal));
 					
 				} else if ("goalSymbol".equals(fds[0])) {
-					goalSymbol = fds[1].trim();
+					goal_symbol = fds[1].trim();
 					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format("goalSymbol: %s", goalSymbol));
+						logger.finest(String.format("goalSymbol: %s", goal_symbol));
 					
 				} else if ("fuzz1".equals(fds[0])) {
 					fuzz1 = Double.parseDouble(fds[1]);

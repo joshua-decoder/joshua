@@ -150,7 +150,7 @@ public class OracleExtractionHG extends SplitHg {
 		BufferedReader t_reader_ref = FileUtility.getReadFileStream(f_ref_files);
 		DiskHyperGraph dhg_read  = new DiskHyperGraph(p_symbolTable, baseline_lm_feat_id, true, null);
 	
-		dhg_read.init_read(f_hypergraphs, f_rule_tbl, null);
+		dhg_read.initRead(f_hypergraphs, f_rule_tbl, null);
 		
 		OracleExtractionHG orc_extractor = new OracleExtractionHG(p_symbolTable, baseline_lm_feat_id);
 		String ref_sent= null;
@@ -162,7 +162,7 @@ public class OracleExtractionHG extends SplitHg {
 			sent_id++;
 			//if(sent_id>10)break;
 			
-			HyperGraph hg = dhg_read.read_hyper_graph();
+			HyperGraph hg = dhg_read.readHyperGraph();
 			if(hg==null)continue;
 			String orc_sent=null;
 			double orc_bleu=0;
@@ -179,7 +179,7 @@ public class OracleExtractionHG extends SplitHg {
 				HyperGraph hg_oracle = orc_extractor.oracle_extract_hg(hg, hg.sent_len, lm_order, ref_sent);
 				orc_sent =  ViterbiExtractor.extractViterbiString(p_symbolTable, hg_oracle.goal_item);
 				orc_bleu = orc_extractor.get_best_goal_cost(hg, orc_extractor.g_tbl_split_virtual_items);
-			
+				
 				time_on_orc_extract += System.currentTimeMillis()-start_time;
 				System.out.println("num_virtual_items: " + orc_extractor.g_num_virtual_items + " num_virtual_dts: " + orc_extractor.g_num_virtual_deductions);
 				//System.out.println("oracle extract: " + (System.currentTimeMillis()-start_time));
@@ -190,7 +190,6 @@ public class OracleExtractionHG extends SplitHg {
 		}
 		t_reader_ref.close();
 		orc_out.close();
-		
 		
 		System.out.println("time_on_reading: " + time_on_reading);
 		System.out.println("time_on_orc_extract: " + time_on_orc_extract);
@@ -337,8 +336,8 @@ public class OracleExtractionHG extends SplitHg {
 		}
 		
 		//################## deductions *not* under "goal item"		
-		HashMap new_ngram_counts = new HashMap();//new ngrams created due to the combination
-		HashMap old_ngram_counts = new HashMap();//the ngram that has already been computed
+		HashMap<String, Integer> new_ngram_counts = new HashMap<String, Integer>();//new ngrams created due to the combination
+		HashMap<String, Integer> old_ngram_counts = new HashMap<String, Integer>();//the ngram that has already been computed
 		int total_hyp_len =0;
 		int[] num_ngram_match = new int[g_bleu_order];
 		int[] en_words = dt.get_rule().getEnglish();
@@ -545,7 +544,7 @@ public class OracleExtractionHG extends SplitHg {
 	}
 	
 	//accumulate ngram counts into tbl
-	public void get_ngrams(HashMap tbl, int order, int[] wrds, boolean ignore_null_equiv_symbol){
+	public void get_ngrams(HashMap<String, Integer> tbl, int order, int[] wrds, boolean ignore_null_equiv_symbol){
 		for(int i=0; i<wrds.length; i++)
 			for(int j=0; j<order && j+i<wrds.length; j++){//ngram: [i,i+j]
 				boolean contain_null=false;

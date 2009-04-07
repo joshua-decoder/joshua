@@ -152,7 +152,6 @@ public class ExtractRules {
 				numSourceWords = Integer.MIN_VALUE;
 				numSourceSentences = Integer.MIN_VALUE;
 			}
-			
 			if (commandLine.getValue(confirm)) {
 			    if (logger.isLoggable(Level.INFO)) logger.info("Please press a key to continue");
 			    System.in.read();
@@ -205,6 +204,7 @@ public class ExtractRules {
 			int numTargetWords, numTargetSentences;
 			Vocabulary targetVocab = new Vocabulary();
 			String targetFileName = commandLine.getValue(target);
+
 			String binaryTargetVocabFileName = commandLine.getValue(targetSymbols);
 			if ( binaryTargetVocabFileName.equals("")) {
 				if (logger.isLoggable(Level.INFO)) logger.info("Constructing target language vocabulary from target corpus " + targetFileName);		
@@ -349,8 +349,9 @@ public class ExtractRules {
 				
 				String line = testFileScanner.nextLine();
 				lineNumber++;
+				
 				int[] words = sourceVocab.getIDs(line);
-
+				
 				if (logger.isLoggable(Level.INFO)) logger.info("Constructing prefix tree for source line " + lineNumber + ": " + line);
 
 				if (oneTreePerSentence || null==prefixTree) {

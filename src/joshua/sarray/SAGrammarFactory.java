@@ -66,6 +66,10 @@ public class SAGrammarFactory implements GrammarFactory {
 	}
 	
 	
+	public void initialize() {
+	}
+	
+	
 	/** 
 	 * Extracts a grammar which contains only those rules
 	 * relevant for translating the specified sentence.

@@ -97,6 +97,7 @@ public class SuffixArrayFactory {
 	}
 	
 	
+	// BUG: Vocabulary is incestuous and requires this method. It should be moved there.
 	/**
 	 * Creates a new Vocabulary from a plain text file.
 	 *
@@ -104,6 +105,7 @@ public class SuffixArrayFactory {
 	 * @param vocab the Vocabulary to instantiate 
 	 * @return a tuple containing the number of words in the corpus and number of sentences in the corpus
 	 */
+	@Deprecated
 	public static int[] createVocabulary(String inputFilename, Vocabulary vocab) throws IOException {
 		int numSentences = 0;
 		int numWords = 0;
@@ -149,6 +151,7 @@ public class SuffixArrayFactory {
 	}
 	
 	
+	// HACK: This is package-private for ExtractRules and CorpusArrayTest to use
 	/**
 	 * Creates a new CorpusArray from a plain text file, given
 	 * a Vocabulary created from the same file.

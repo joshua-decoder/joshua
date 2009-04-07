@@ -53,7 +53,7 @@ import java.util.logging.Logger;
 
 public class DecoderThread extends Thread {
 	//these variables may be the same across all threads (e.g., just copy from DecoderFactory), or differ from thread to thread
-	private final GrammarFactory[]           grammarFactories;
+	private final ArrayList<GrammarFactory>  grammarFactories;
 	private final boolean                    hasLanguageModel;
 	private final ArrayList<FeatureFunction> featureFunctions;
 	
@@ -86,7 +86,7 @@ public class DecoderThread extends Thread {
 // Constructor
 //===============================================================
 	public DecoderThread(
-		GrammarFactory[]           grammarFactories,
+		ArrayList<GrammarFactory>  grammarFactories,
 		boolean                    hasLanguageModel,
 		ArrayList<FeatureFunction> featureFunctions,
 		SymbolTable                symbolTable,
@@ -130,7 +130,7 @@ public class DecoderThread extends Thread {
 				true, // always store model cost
 				this.featureFunctions);
 			
-			this.hypergraphSerializer.init_write(
+			this.hypergraphSerializer.initWrite(
 				this.nbestFile + ".hg.items",
 				JoshuaConfiguration.forest_pruning,
 				JoshuaConfiguration.forest_pruning_threshold);
@@ -163,6 +163,10 @@ public class DecoderThread extends Thread {
 			? new NullReader<String>()
 			: new LineReader(this.oracleFile);
 		
+		for (GrammarFactory factory : this.grammarFactories) {
+			factory.initialize();
+		}
+			
 		LineReader testReader = new LineReader(this.testFile);
 		try { for (String cnSentence : testReader) {
 			if (logger.isLoggable(Level.FINE))
@@ -231,13 +235,14 @@ public class DecoderThread extends Thread {
 				Lattice.getLattice(intSentence);
 			
 			
-			Grammar[] grammars = new Grammar[this.grammarFactories.length];
-			for (int i = 0; i < this.grammarFactories.length; i++) {
-				grammars[i] = this.grammarFactories[i].getGrammarForSentence(
+			Grammar[] grammars = new Grammar[grammarFactories.size()];
+			int i = 0;
+			for (GrammarFactory factory : this.grammarFactories) {
+				grammars[i] = factory.getGrammarForSentence(
 						new Pattern(this.symbolTable, intSentence));
-				
 				// FIX: for batch grammar, we do not want to sort it every time
 				// grammars[i].sortGrammar(this.featureFunctions);
+				i++;
 			}
 			
 			
@@ -249,7 +254,7 @@ public class DecoderThread extends Thread {
 				sentenceID,
 				grammars,
 				this.hasLanguageModel,
-				JoshuaConfiguration.goalSymbol);
+				JoshuaConfiguration.goal_symbol);
 			
 			if (logger.isLoggable(Level.FINER)) 
 				logger.finer("after seed, time: "
@@ -289,7 +294,7 @@ public class DecoderThread extends Thread {
 		}
 		
 		if (null != this.hypergraphSerializer) {
-			this.hypergraphSerializer.save_hyper_graph(hypergraph);
+			this.hypergraphSerializer.saveHyperGraph(hypergraph);
 		}
 		
 		/* //debug

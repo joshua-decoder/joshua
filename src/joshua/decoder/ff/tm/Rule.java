@@ -95,7 +95,7 @@ public interface Rule {
 	 * In order to provide sorting for cube-pruning, we need
 	 * to provide this Comparator.
 	 */
-	public static Comparator<Rule> NegtiveCostComparator	= new Comparator<Rule>() {
+	public static Comparator<Rule> NegtiveCostComparator = new Comparator<Rule>() {
 		public int compare(Rule rule1, Rule rule2) {
 			float cost1 = rule1.getEstCost();
 			float cost2 = rule2.getEstCost();
@@ -110,12 +110,16 @@ public interface Rule {
 	};
 	
 	/** @todo should the Vocabulary change to SymbolTable? */
+	@Deprecated
 	public String toString(Map<Integer,String> ntVocab, SymbolTable sourceVocab, SymbolTable targetVocab);
 	
 	/** Print the rule in terms of Ingeters. */
+	@Deprecated
 	public String toString(); 
 	
+	@Deprecated
 	public String toString(SymbolTable symbolTable);
 	
+	@Deprecated
 	public String toStringWithoutFeatScores(SymbolTable symbolTable);
 }

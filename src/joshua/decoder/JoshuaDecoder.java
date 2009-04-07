@@ -19,6 +19,7 @@ package joshua.decoder;
 
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.ArityPhrasePenaltyFF;
+import joshua.decoder.ff.FeatureFunctionList;
 import joshua.decoder.ff.PhraseModelFF;
 import joshua.decoder.ff.WordPenaltyFF;
 import joshua.decoder.ff.SourceLatticeArcCostFF;
@@ -28,7 +29,9 @@ import joshua.decoder.ff.lm.bloomfilter_lm.BloomFilterLanguageModel;
 import joshua.decoder.ff.lm.buildin_lm.LMGrammarJAVA;
 import joshua.decoder.ff.lm.distributed_lm.LMGrammarRemote;
 import joshua.decoder.ff.lm.srilm.LMGrammarSRILM;
+import joshua.decoder.ff.tm.BilingualRule;
 import joshua.decoder.ff.tm.GrammarFactory;
+import joshua.decoder.ff.tm.GrammarReader;
 import joshua.decoder.ff.tm.HieroGrammar.MemoryBasedBatchGrammar;
 import joshua.sarray.Corpus;
 import joshua.sarray.MemoryMappedCorpusArray;
@@ -75,8 +78,8 @@ public class JoshuaDecoder {
 	 */
 	// The DecoderFactory is the main thread of decoding
 	private DecoderFactory             decoderFactory;
-	private GrammarFactory[]           grammarFactories;
-	private ArrayList<FeatureFunction> featureFunctions;
+	private ArrayList<GrammarFactory>  grammarFactories;
+	private FeatureFunctionList        featureFunctions;
 	private NGramLanguageModel         languageModel;
 	
 	/**
@@ -90,6 +93,14 @@ public class JoshuaDecoder {
 	
 	private static final Logger logger =
 		Logger.getLogger(JoshuaDecoder.class.getName());
+	
+//===============================================================
+// Constructors
+//===============================================================
+
+	public JoshuaDecoder() {
+		this.grammarFactories = new ArrayList<GrammarFactory>();
+	}
 	
 	
 //===============================================================
@@ -199,6 +210,13 @@ public class JoshuaDecoder {
 			// Needs: symbolTable; Sets: languageModel
 			if (JoshuaConfiguration.have_lm_model) initializeLanguageModel();
 			
+			// Initialize the features: requires that
+			// LM model has been initialied. If an LM
+			// feature is used, need to read config file
+			// again
+			this.initializeFeatureFunctions(configFile);
+			
+			
 			// initialize and load grammar
 			if (! JoshuaConfiguration.use_sent_specific_tm) {
 				if (null != JoshuaConfiguration.tm_file) {
@@ -221,15 +239,7 @@ public class JoshuaDecoder {
 					throw new RuntimeException("No translation grammar or suffix array grammar was specified.");
 				}
 			}
-			
-			
-			// Initialize the features: requires that
-			// LM model has been initialied. If an LM
-			// feature is used, need to read config file
-			// again
-			this.initializeFeatureFunctions(configFile);
-			
-			
+						
 			// Sort the TM grammars (needed to do cube pruning)
 			// BUG: this works for Batch grammar only; not for sentence-specific grammars
 			for (GrammarFactory grammarFactory : this.grammarFactories) {
@@ -322,20 +332,21 @@ public class JoshuaDecoder {
 	
 	// TODO: these Patterns should probably be extracted out and compiled only once (either by us or by MemoryBasedBatchGrammar)
 	private void initializeGlueGrammar() throws IOException {
-		this.grammarFactories = new GrammarFactory[2];
-		
 		logger.info("Constructing glue grammar...");
-		this.grammarFactories[0] =
+			
+		GrammarReader<BilingualRule> glueReader = JoshuaConfiguration.tm_format.
+				createReader(JoshuaConfiguration.glue_file, 
+						this.symbolTable, this.featureFunctions);
+		
+		this.grammarFactories.add(
 			// if this is used, then it depends on the LMModel to do pruning
-			//new MemoryBasedBatchGrammarWithPrune(
+//			new MemoryBasedBatchGrammarWithPrune(
 			new MemoryBasedBatchGrammar(
-				this.symbolTable, null, true,
-				JoshuaConfiguration.phrase_owner,
+				glueReader, this.symbolTable,
+				JoshuaConfiguration.begin_mono_owner,
 				JoshuaConfiguration.default_non_terminal,
-				JoshuaConfiguration.goalSymbol,
-				-1,
-				"^\\[[A-Z]+\\,[0-9]*\\]$",
-				"[\\[\\]\\,0-9]+");
+				JoshuaConfiguration.goal_symbol,
+				-1));
 	}
 	
 	
@@ -344,18 +355,21 @@ public class JoshuaDecoder {
 	throws IOException {
 		initializeGlueGrammar();
 		
+		GrammarReader<BilingualRule> tmReader = JoshuaConfiguration.tm_format.
+				createReader(JoshuaConfiguration.tm_file, 
+						this.symbolTable, this.featureFunctions);
+		
 		if (logger.isLoggable(Level.INFO))
 			logger.info("Using grammar read from file " + tmFile);
-		this.grammarFactories[1] =
+		this.grammarFactories.add(
 			//new MemoryBasedBatchGrammarWithPrune(
 			new MemoryBasedBatchGrammar(
-				this.symbolTable, tmFile, false,
+				tmReader,
+				this.symbolTable,
 				JoshuaConfiguration.phrase_owner,
 				JoshuaConfiguration.default_non_terminal,
-				JoshuaConfiguration.goalSymbol,
-				JoshuaConfiguration.span_limit,
-				"^\\[[A-Z]+\\,[0-9]*\\]$",
-				"[\\[\\]\\,0-9]+");
+				JoshuaConfiguration.goal_symbol,
+				JoshuaConfiguration.span_limit));
 		
 		//TODO if suffix-array: call SAGrammarFactory(SuffixArray sourceSuffixArray, CorpusArray targetCorpus, AlignmentArray alignments, LexicalProbabilities lexProbs, int maxPhraseSpan, int maxPhraseLength, int maxNonterminals, int spanLimit) {
 	}
@@ -469,7 +483,7 @@ public class JoshuaDecoder {
 			JoshuaConfiguration.sa_precalculate_lexprobs);
 		
 		// Finally, add the Suffix Array Grammar
-		this.grammarFactories[1] = new SAGrammarFactory(
+		grammarFactories.add(new SAGrammarFactory(
 			sourceSuffixArray,
 			targetCorpusArray,
 			alignments,
@@ -478,14 +492,14 @@ public class JoshuaDecoder {
 			JoshuaConfiguration.sa_max_phrase_span,
 			JoshuaConfiguration.sa_max_phrase_length,
 			JoshuaConfiguration.sa_max_nonterminals,
-			JoshuaConfiguration.sa_min_nonterminal_span);
+			JoshuaConfiguration.sa_min_nonterminal_span));
 	}
 	
 	
 	// BUG: why are we re-reading the configFile? JoshuaConfiguration should do this. (Needs: languageModel, symbolTable, (logger?); Sets: featureFunctions)
 	private void initializeFeatureFunctions(String configFile)
 	throws IOException {
-		this.featureFunctions = new ArrayList<FeatureFunction>();
+		this.featureFunctions = new FeatureFunctionList();
 		
 		LineReader reader = new LineReader(configFile);
 		try { for (String line : reader) {
@@ -525,7 +539,7 @@ public class JoshuaDecoder {
 					int    owner  = this.symbolTable.addTerminal(fds[1]);
 					int    column = Integer.parseInt(fds[2].trim());
 					double weight = Double.parseDouble(fds[3].trim());
-					this.featureFunctions.add(
+					this.featureFunctions.cachePhraseModelFF(
 						new PhraseModelFF(
 							this.featureFunctions.size(),
 							weight, owner, column));
@@ -563,7 +577,10 @@ public class JoshuaDecoder {
 					System.exit(1);
 				}
 			}
-		} } finally { reader.close(); }
+		} } finally { 
+			featureFunctions.collapseColumnIndices();			
+			reader.close(); 
+		}
 	}
 	
 	

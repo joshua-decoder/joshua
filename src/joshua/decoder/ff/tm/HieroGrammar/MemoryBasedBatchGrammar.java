@@ -23,6 +23,7 @@ import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.tm.BatchGrammar;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.BilingualRule;
+import joshua.decoder.ff.tm.GrammarReader;
 import joshua.decoder.ff.tm.Trie;
 import joshua.corpus.SymbolTable;
 import joshua.util.io.LineReader;
@@ -34,25 +35,25 @@ import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-
 /**
- * this class implements MemoryBasedBatchGrammar
+ * This class implements a memory-based bilingual BatchGrammar
+ * The rules are stored in a trie.
+ * Each trie node has: 
+ *   (1) RuleBin: a list of rules matching the french sides so far
+ *   (2) A HashMap  of next-layer trie nodes, the next french word 
+ *       used as the key in HashMap  
  * 
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate$
  */
-public class MemoryBasedBatchGrammar extends BatchGrammar {
-	/*TMGrammar is composed by Trie nodes
-	Each trie node has:
-	(1) RuleBin: a list of rules matching the french sides so far
-	(2) a HashMap of next-layer trie nodes, the next french word used as the key in HashMap
-	*/
+
+public class MemoryBasedBatchGrammar extends BatchGrammar<BilingualRule> {
 	
 //===============================================================
 // Instance Fields
 //===============================================================
 	
-	protected SymbolTable symbolTable = null;
+	static protected double tem_estcost = 0.0;
 	
 	protected int qtyRulesRead = 0;
 	protected int qtyRuleBins  = 0;
@@ -68,112 +69,60 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
 	
 	protected int goalSymbol;
 	
-	
-	public static int OOV_RULE_ID = 0;
-	
-	// TODO: replace with joshua.util.Regex so we only compile once
-	protected String nonterminalRegexp = "^\\[[A-Z]+\\,[0-9]*\\]$";//e.g., [X,1]
-	protected String nonterminalReplaceRegexp = "[\\[\\]\\,0-9]+";
-	
 	protected int spanLimit = 10;
-	
-	
+	SymbolTable symbolTable = null;
+
 //===============================================================
 // Static Fields
 //===============================================================
+
+	public static int OOV_RULE_ID = 0;
+
+	/* Three kinds of rules: 
+	 * 		regular rule (id>0)
+	 * 		oov rule (id=0)
+	 * 		null rule (id=-1)
+	 */
 	
-	
-	
-	static int rule_id_count = 1; //three kinds of rule: regular rule (id>0); oov rule (id=0), and null rule (id=-1)
-	
-	protected static double tem_estcost = 0.0; // debug
-	
+	static int rule_id_count = 1;
+		
 	private static final Logger logger = 
 		Logger.getLogger(MemoryBasedBatchGrammar.class.getName());
-	
-	
+
 //===============================================================
 // Constructors
 //===============================================================
-	
+
 	public MemoryBasedBatchGrammar() {
-		//do nothing
+		super(null);
 	}
 	
 	public MemoryBasedBatchGrammar(
-		SymbolTable symbolTable, String grammarFile, boolean isGlueGrammar,
-		//ArrayList<FeatureFunction> featureFunctions,
-		String defaultOwner,
-		String defaultLHSSymbol,
-		String goalSymbol,
-		int spanLimit,
-		String nonterminalRegexp, String nonterminalReplaceRegexp
-	) throws IOException {
+			GrammarReader<BilingualRule> modelReader,
+			SymbolTable symbolTable,
+			String defaultOwner,
+			String defaultLHSSymbol,
+			String goalSymbol,
+			int span_limit) throws IOException 
+	{
+		super(modelReader);
 		
 		this.symbolTable = symbolTable;
-		//this.featureFunctions = featureFunctions;
-		this.defaultOwner = this.symbolTable.addTerminal(defaultOwner);
+		this.defaultOwner  = this.symbolTable.addTerminal(defaultOwner);
 		this.defaultLHS = this.symbolTable.addNonterminal(defaultLHSSymbol);
 		this.goalSymbol = this.symbolTable.addNonterminal(goalSymbol);
-		this.nonterminalRegexp = nonterminalRegexp;
-		this.nonterminalReplaceRegexp = nonterminalReplaceRegexp;
-		this.spanLimit = spanLimit;
-		
-		//read the grammar from file
-		if (isGlueGrammar) {
-			if (null != grammarFile) {
-				logger.severe("You provide a grammar file, but you also indicate it is a glue grammar, there must be sth wrong");
-				System.exit(1);
-			}
-			read_tm_grammar_glue_rules();
-		} else {
-			if (null == grammarFile) {
-				logger.severe("You must provide a grammar file for MemoryBasedTMGrammar");
-				System.exit(1);
-			}
-			read_tm_grammar_from_file(grammarFile);
-		}
+		this.spanLimit     = span_limit;
 	}
-	
-	
-	protected void read_tm_grammar_from_file(String grammarFile)
-	throws IOException {
-		this.root = new MemoryBasedTrie(); //root should not have valid ruleBin entries
-		if (logger.isLoggable(Level.INFO))
-			logger.info("Reading grammar from file " + grammarFile);
 		
-		LineReader treeReader = new LineReader(grammarFile);
-		try { for (String line : treeReader) {
-			this.add_rule(line, defaultOwner);
-		} } finally { treeReader.close(); }
+	public void initialize() {
+		this.root = new MemoryBasedTrie();
+		
+		super.initialize();
 		
 		this.print_grammar();
-		this.sortGrammar(null);//the rule cost has been estimated using the latest feature function
+		// the rule cost has been estimated using the latest feature function
+		this.sortGrammar(null);
 	}
-	
-
-	//	TODO: this should read from file
-	protected void read_tm_grammar_glue_rules() {
-		final double alpha = Math.log10(Math.E); //Cost
-		this.root = new MemoryBasedTrie(); //root should not have valid ruleBin entries
-		String defaultLHSSymbol = symbolTable.getWord(this.defaultLHS);
-		String goalSymbol = symbolTable.getWord(this.goalSymbol);
-		
-		//this does not have any cost	
-		this.add_rule(goalSymbol + " ||| [" + defaultLHSSymbol + ",1] ||| [" + defaultLHSSymbol + ",1] ||| 0",	
-				this.symbolTable.addTerminal(JoshuaConfiguration.begin_mono_owner));
-		this.add_rule(goalSymbol + " ||| ["+goalSymbol+",1] [" + defaultLHSSymbol + ",2] ||| ["+goalSymbol + ",1] [" + defaultLHSSymbol + ",2] ||| " + alpha, 
-				this.symbolTable.addTerminal(JoshuaConfiguration.begin_mono_owner));
-		
-		
-		//ITG rules
-		//this.add_rule("X ||| [X,1] [" + JoshuaConfiguration.default_non_terminal + ",2] ||| [X,1] [" + JoshuaConfiguration.default_non_terminal + ",2] ||| " + alpha, this.symbolTable.addTerminal(JoshuaConfiguration.begin_mono_owner));		
-		//this.add_rule("X ||| [X,1] [" + JoshuaConfiguration.default_non_terminal + ",2] ||| [X,2] [" + JoshuaConfiguration.default_non_terminal + ",1] ||| " + alpha, this.symbolTable.addTerminal(JoshuaConfiguration.begin_mono_owner));
-		
-		print_grammar();
-		sortGrammar(null);//the rule cost has been estimated using the latest feature function
-	}
-	
 	
 //===============================================================
 // Methods
@@ -193,9 +142,10 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
 		float[] feat_scores = new float[qtyFeatures];
 		
 		// TODO: This is a hack to make the decoding without a LM works
-		if (! hasLM) { // no LM is used for decoding, so we should set the stateless cost
-			//this.feat_scores[0]=100.0/(this.featureFunctions.get(0)).getWeight();//TODO
-			feat_scores[0] = 100; // TODO
+		// no LM is used for decoding, so we should set the stateless cost
+		if (! hasLM) { 
+			//this.feat_scores[0]=100.0/(this.featureFunctions.get(0)).getWeight();
+			feat_scores[0] = 100;
 		}
 		
 		return new BilingualRule(this.defaultLHS, p_french, english, feat_scores, 0, this.defaultOwner, 0, getOOVRuleID());
@@ -207,8 +157,13 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
 	
 	
 	
-	/** if the span covered by the chart bin is greater than the limit, then return false */
-	public boolean hasRuleForSpan(int startIndex,	int endIndex, int pathLength) {
+	
+	/** 
+	 * if the span covered by the chart bin is greater than the limit, 
+	 * then return false 
+	 **/
+	// TODO: catch glue grammar case in glue grammar class?
+	public boolean hasRuleForSpan(int startIndex,	int endIndex,	int pathLength) {
 		if (this.spanLimit == -1) { // mono-glue grammar
 			return (startIndex == 0);
 		} else {
@@ -216,132 +171,59 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
 		}
 	}
 	
-	
-	// TODO: reorganize to pass in a joshua.util.Regex instead of String
-	// TODO: this should be removed entirely, just call replaceAll (or keep the method and don't pass the regex in!)
-	protected static final String replace_french_non_terminal(String nonterminalReplaceRegexp_, String symbol) {
-		return symbol.replaceAll(nonterminalReplaceRegexp_, "");//remove [, ], and numbers
-	}
-	
-	
-	// TODO: reorganize to pass in a joshua.util.Regex instead of String
-	// TODO: this should be removed entirely, just call matches (or keep the method and don't pass the regex in!)
-	//TODO: we assume all the Chinese training text is lowercased, and all the non-terminal symbols are in [A-Z]+
-	protected static final boolean is_non_terminal(String nonterminalRegexp_, String symbol) {
-		return symbol.matches(nonterminalRegexp_);
-	}
-	
-	
 	public Trie getTrieRoot() {
 		return this.root;
 	}
-	
-	
-	// TODO: refactor to use joshua.util.Regex instead of passing Strings in
-	public static Rule createRule(SymbolTable p_symbolTable, String nonterminalRegexp_, String nonterminalReplaceRegexp_, int r_id, String line, int owner_in) {
-		
-		//rule format: X ||| Foreign side ||| English side ||| feature scores
-		String[] fds = Regex.threeBarsWithSpace.split(line);
-		if (fds.length != 4) {
-			Support.write_log_line("rule line does not have four fds; " + line, Support.ERROR);
-		}
-		
-		//=== lhs
-		int lhs = p_symbolTable.addNonterminal(
-			replace_french_non_terminal(nonterminalReplaceRegexp_, fds[0]));
-		
-		//=== arity and french
-		int arity = 0;
-		String[] french_tem = Regex.spaces.split(fds[1]);
-		int[] french_ints = new int[french_tem.length];
-		for (int i = 0; i < french_tem.length; i++) {
-			if (is_non_terminal(nonterminalRegexp_, french_tem[i])) {
-				arity++;
-				french_ints[i] = p_symbolTable.addNonterminal(french_tem[i]);//when storing hyper-graph, we need this
-			} else {
-				french_ints[i] = p_symbolTable.addTerminal(french_tem[i]);
-			}
-		}
-		
-		//=== english side
-		String[] english_tem = Regex.spaces.split(fds[2]);
-		int[] english = new int[english_tem.length];
-		for (int i = 0; i < english_tem.length; i++) {
-			if (is_non_terminal(nonterminalRegexp_, english_tem[i])) {
-				english[i] = p_symbolTable.addNonterminal(english_tem[i]);
-			} else {
-				english[i] = p_symbolTable.addTerminal(english_tem[i]);
-			}
-		}
-		
-		//=== feature costs
-		String[] t_scores = Regex.spaces.split(fds[3]);
-		float[] scores = new float[t_scores.length];
-		int i = 0;
-		for (String score : t_scores) {
-			scores[i++] = Float.parseFloat(score);
-		}
-		
-		
-		Rule res = new BilingualRule(lhs, french_ints, english, scores, arity, owner_in, 0, r_id);
-		
-		//tem_estcost += estimate_rule();//estimate lower-bound, and set statelesscost, this must be called
-		//res.estimateRuleCost(this.featureFunctions);//estimate lower-bound, and set statelesscost, this must be called
-		return res;
 
-	}
-
-	
-	protected Rule add_rule(String line, int owner) {
+	protected void addRule(BilingualRule rule) {
+		
+		// TODO: Why two increments? 
 		this.qtyRulesRead++;
-		this.qtyRulesRead++;
+		qtyRulesRead++;
 		rule_id_count++;
-		//######1: parse the line
-		//######2: create a rule
-		//Rule p_rule = new Rule(this,rule_id_count, line, owner);
-		Rule p_rule = createRule(this.symbolTable, this.nonterminalRegexp, this.nonterminalReplaceRegexp, rule_id_count, line, owner);
-		tem_estcost += p_rule.getEstCost();
+
+		rule.setRuleID(rule_id_count);
+		rule.setOwner(defaultOwner);
 		
-		//######### identify the position, and insert the trinodes if necessary
+		// TODO: make sure costs are calculated here or in reader
+		tem_estcost += rule.getEstCost();
+		
+		// identify the position, and insert the trie nodes as necessary
 		MemoryBasedTrie pos = root;
-		int[] p_french = p_rule.getFrench();
+		int[] p_french = rule.getFrench();
 		for (int k = 0; k < p_french.length; k++) {
 			int cur_sym_id = p_french[k];
-			if (this.symbolTable.isNonterminal(p_french[k])) { //TODO: p_rule.french store the original format like "[X,1]"
-				cur_sym_id = this.symbolTable.addNonterminal(
-					replace_french_non_terminal(
-						this.nonterminalReplaceRegexp,
-						this.symbolTable.getWord(p_french[k])));
+			if (this.symbolTable.isNonterminal(p_french[k])) { 
+				cur_sym_id = modelReader.cleanNonTerminal(p_french[k]);
 			}
 			
 			MemoryBasedTrie next_layer = pos.matchOne(cur_sym_id);
-			if (null != next_layer) {
-				pos = next_layer;
-			} else {
-				MemoryBasedTrie tem = new MemoryBasedTrie();//next layer node
-				if (! pos.hasExtensions()) {
-					pos.tbl_children = new HashMap<Integer,MemoryBasedTrie>();
+			if (null == next_layer) {
+				next_layer = new MemoryBasedTrie();
+				if (pos.hasExtensions() == false) {
+					pos.tbl_children = new HashMap<Integer, MemoryBasedTrie>();
 				}
-				pos.tbl_children.put(cur_sym_id, tem);
-				pos = tem;
+				pos.tbl_children.put(cur_sym_id, next_layer);
 			}
+			pos = next_layer;
 		}
 		
-		//#########3: now add the rule into the trinode
+		this.insertRule(pos, rule);
+	}
+	
+	protected void insertRule(MemoryBasedTrie pos, BilingualRule rule) {
+		// add the rule into the trie node
 		if (! pos.hasRules()) {
-			pos.rule_bin        = new MemoryBasedRuleBin(p_rule.getArity(), p_french);
-//			pos.rule_bin.french = p_french;
-//			pos.rule_bin.arity  = p_rule.getArity();
+			pos.rule_bin = new MemoryBasedRuleBin(rule.getArity(), rule.getFrench());
 			this.qtyRuleBins++;
 		}
 		
-		pos.rule_bin.addRule(p_rule);
-		
-		return p_rule;
+		pos.rule_bin.addRule(rule);
 	}
 	
-	
-	//this method should be called such that all the rules in rulebin are sorted, this will avoid synchronization for get_sorted_rules function
+	// This method should be called such that all the rules in 
+	// rulebin are sorted, this will avoid synchronization for 
+	// get_sorted_rules function
 	public void sortGrammar(ArrayList<FeatureFunction> featureFunctions) {
 		if (null != this.root) {
 			this.root.ensure_sorted(featureFunctions);

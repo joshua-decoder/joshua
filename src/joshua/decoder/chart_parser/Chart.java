@@ -138,6 +138,7 @@ public class Chart {
 		/** add un-translated words into the chart as item (with large cost) */
 		//TODO: grammar specific?
 		this.grammars  = grammars_;
+		
 		this.dotcharts = new DotChart[this.grammars.length];//each grammar will have a dot chart
 		for (int i = 0; i < this.grammars.length; i++) {
 			this.dotcharts[i] = new DotChart(this.sentence,	this.grammars[i], this);

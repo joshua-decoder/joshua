@@ -34,7 +34,7 @@ public final class PhraseModelFF extends DefaultStatelessFF {
 	 * same as the rule, we need an owner to distinguish different
 	 * feature in different phrase table/source
 	 */
-	private final int columnIndex; // = -1;//zero-indexed
+	private int columnIndex; // = -1;//zero-indexed
 	
 	
 	public PhraseModelFF(final int featureID, final double weight, final int owner, final int columnIndex) {
@@ -60,5 +60,15 @@ public final class PhraseModelFF extends DefaultStatelessFF {
 		} else {
 			return 0.0;
 		}
+	}
+
+
+	public int getColumnIndex() {
+		return columnIndex;
+	}
+
+
+	public void setColumnIndex(int columnIndex) {
+		this.columnIndex = columnIndex;
 	}
 }

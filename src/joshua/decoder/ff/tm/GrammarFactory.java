@@ -20,29 +20,33 @@ package joshua.decoder.ff.tm;
 import joshua.decoder.ff.tm.Grammar;
 import joshua.util.sentence.Phrase;
 
-
 /**
- * To implement a new grammar, one must
- * (1) implement GrammarFactory
- * (2) implement Grammar
- * (3) implement TrieGrammar
- * (4) implement RuleCollection
+ * To implement a new grammar, one must (1) implement GrammarFactory (2)
+ * implement Grammar (3) implement TrieGrammar (4) implement RuleCollection
  * 
  * Also, one needs to pay attention to Rule class
- *
+ * 
  * @author Lane Schwartz
  * @version $LastChangedDate$
  */
 public interface GrammarFactory {
 
-	/** 
-	 * Extracts a grammar which contains only those rules
-	 * relevant for translating the specified sentence.
+	/**
+	 * This method is called during the initialization of the decoder. Any
+	 * loading, parsing or setup computations should take place here.
+	 */
+	public void initialize();
+
+	/**
+	 * Returns a grammar which is adapted to the specified sentence. Depending
+	 * on the implementation this grammar may be generated online, partially
+	 * loaded from disk, remain unchanged etc.
 	 * 
-	 * @param sentence A sentence to be translated
-	 * @return a grammar, structured as a trie, that represents
-	 *         a set of translation rules
+	 * @param sentence
+	 *            the next sentence to be translated
+	 * 
+	 * @return a grammar that represents a set of translation rules
 	 */
 	public Grammar getGrammarForSentence(Phrase sentence);
-	
+
 }

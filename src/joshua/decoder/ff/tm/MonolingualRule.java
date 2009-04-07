@@ -193,74 +193,6 @@ public class MonolingualRule implements Rule {
 		}
 	}
 	
-	
-//===============================================================
-// Serialization Methods
-//===============================================================
-	// BUG: These are all far too redundant. Should be refactored to share.
-	
-	// Caching this method significantly improves performance
-	// We mark it transient because it is, though cf
-	// java.io.Serializable
-	private transient String cachedToString = null;
-	
-	public String toString(Map<Integer,String> ntVocab, SymbolTable sourceVocab, SymbolTable targetVocab) {
-		if (null == this.cachedToString) {
-			StringBuffer sb = new StringBuffer("[");
-			sb.append(ntVocab.get(this.lhs));
-			sb.append("] ||| ");
-			sb.append(sourceVocab.getWords(this.p_french,true));
-			sb.append(" |||");
-			for (int i = 0; i < this.feat_scores.length; i++) {
-				//sb.append(String.format(" %.4f", this.feat_scores[i]));
-				sb.append(' ').append(Float.toString(this.feat_scores[i]));
-			}
-			this.cachedToString = sb.toString();
-		}
-		return this.cachedToString;
-	}
-	
-	
-	//print the rule in terms of Ingeters
-	public String toString() {
-		if (null == this.cachedToString) {
-			StringBuffer sb = new StringBuffer("[");
-			sb.append(this.lhs);
-			sb.append("] ||| ");
-			sb.append(this.p_french);
-			sb.append(" |||");
-			for (int i = 0; i < this.feat_scores.length; i++) {
-				sb.append(String.format(" %.4f", this.feat_scores[i]));
-			}
-			this.cachedToString = sb.toString();
-		}
-		return this.cachedToString;
-	}
-	
-	
-	//do not use cachedToString
-	public String toString(SymbolTable symbolTable) {
-		StringBuffer sb = new StringBuffer("[");
-		sb.append(symbolTable.getWord(this.lhs));
-		sb.append("] ||| ");
-		sb.append(symbolTable.getWords(this.p_french));
-		sb.append(" |||");
-		for (int i = 0; i < this.feat_scores.length; i++) {
-			sb.append(String.format(" %.4f", this.feat_scores[i]));
-		}
-		return sb.toString();
-	}
-	
-	
-	public String toStringWithoutFeatScores(SymbolTable symbolTable) {
-		return new StringBuffer("[")
-			.append(symbolTable.getWord(lhs))
-			.append("] ||| ")
-			.append(symbolTable.getWords(p_french))
-			.toString();
-	}
-	
-	
 //===============================================================
 // Methods
 //===============================================================
@@ -285,4 +217,73 @@ public class MonolingualRule implements Rule {
 			return feat_scores[column];
 		}
 	}
+	
+	//===============================================================
+	// Serialization Methods
+	//===============================================================
+		// BUG: These are all far too redundant. Should be refactored to share.
+		
+		// Caching this method significantly improves performance
+		// We mark it transient because it is, though cf
+		// java.io.Serializable
+		private transient String cachedToString = null;
+		
+		@Deprecated
+		public String toString(Map<Integer,String> ntVocab, SymbolTable sourceVocab, SymbolTable targetVocab) {
+			if (null == this.cachedToString) {
+				StringBuffer sb = new StringBuffer("[");
+				sb.append(ntVocab.get(this.lhs));
+				sb.append("] ||| ");
+				sb.append(sourceVocab.getWords(this.p_french,true));
+				sb.append(" |||");
+				for (int i = 0; i < this.feat_scores.length; i++) {
+					//sb.append(String.format(" %.4f", this.feat_scores[i]));
+					sb.append(' ').append(Float.toString(this.feat_scores[i]));
+				}
+				this.cachedToString = sb.toString();
+			}
+			return this.cachedToString;
+		}
+		
+		
+		//print the rule in terms of Ingeters
+		@Deprecated
+		public String toString() {
+			if (null == this.cachedToString) {
+				StringBuffer sb = new StringBuffer("[");
+				sb.append(this.lhs);
+				sb.append("] ||| ");
+				sb.append(this.p_french);
+				sb.append(" |||");
+				for (int i = 0; i < this.feat_scores.length; i++) {
+					sb.append(String.format(" %.4f", this.feat_scores[i]));
+				}
+				this.cachedToString = sb.toString();
+			}
+			return this.cachedToString;
+		}
+		
+		
+		//do not use cachedToString
+		@Deprecated
+		public String toString(SymbolTable symbolTable) {
+			StringBuffer sb = new StringBuffer("[");
+			sb.append(symbolTable.getWord(this.lhs));
+			sb.append("] ||| ");
+			sb.append(symbolTable.getWords(this.p_french));
+			sb.append(" |||");
+			for (int i = 0; i < this.feat_scores.length; i++) {
+				sb.append(String.format(" %.4f", this.feat_scores[i]));
+			}
+			return sb.toString();
+		}
+		
+		@Deprecated
+		public String toStringWithoutFeatScores(SymbolTable symbolTable) {
+			return new StringBuffer("[")
+				.append(symbolTable.getWord(lhs))
+				.append("] ||| ")
+				.append(symbolTable.getWords(p_french))
+				.toString();
+		}
 }

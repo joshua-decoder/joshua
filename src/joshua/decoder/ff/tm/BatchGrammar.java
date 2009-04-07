@@ -21,22 +21,40 @@ import joshua.util.sentence.Phrase;
 
 
 /**
- * This class provides an abstract way to implement BatchGrammar.
- * (meaning the grammar is for the whole test set, not sentence
- * specific)
- *
+ * This class provides an abstract way to implement a batch grammar, 
+ * meaning the grammar is for the whole test set, not sentence specific.
+ * 
  * public interfaces
- * TMGrammar: init and load the grammar
- * TrieGrammar: match symbol for next layer
- * RuleBin: get sorted rules
- * Rule: rule information
+ *   TMGrammar: init and load the grammar
+ *   TrieGrammar: match symbol for next layer
+ *   RuleBin: get sorted rules
+ *   Rule: rule information
  * 
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate$
  */
-public abstract class BatchGrammar extends AbstractGrammar implements GrammarFactory, Grammar {
+
+
+/* 
+ * */
+
+public abstract class BatchGrammar<R extends Rule> extends AbstractGrammar implements GrammarFactory, Grammar {
 	
+	protected GrammarReader<R> modelReader;
+	
+	public BatchGrammar(GrammarReader<R> modelReader) {
+		this.modelReader = modelReader;
+	}
+	
+	public void initialize() {
+		modelReader.initialize();
+		for (R rule : modelReader)
+			addRule(rule);
+	}
+
 	public Grammar getGrammarForSentence(Phrase sentence) {
 		return this;
 	}
+	
+	protected abstract void addRule(R rule);
 }

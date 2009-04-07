@@ -21,6 +21,7 @@ import joshua.corpus.SymbolTable;
 import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.Rule;
 import joshua.util.lexprob.LexicalProbabilities;
+import joshua.util.sentence.Vocabulary;
 import joshua.util.sentence.alignment.Alignments;
 
 import java.util.Collection;
@@ -142,7 +143,7 @@ public class PrefixTree {
 	/** Lexical translation probabilities. */
 	final LexicalProbabilities lexProbs;
 	
-	/** Source side symbol table */
+	/** Symbol table */
 	final SymbolTable vocab;
 	
 	/** Empty pattern */

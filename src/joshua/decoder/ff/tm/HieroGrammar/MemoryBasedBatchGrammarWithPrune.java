@@ -19,7 +19,9 @@ package joshua.decoder.ff.tm.HieroGrammar;
 
 import joshua.corpus.SymbolTable;
 import joshua.decoder.ff.FeatureFunction;
+import joshua.decoder.ff.tm.BilingualRule;
 import joshua.decoder.ff.tm.Rule;
+import joshua.decoder.ff.tm.GrammarReader;
 
 import java.io.IOException;
 import java.util.HashMap ;
@@ -29,7 +31,7 @@ import java.util.logging.Logger;
 
 
 /** 
- * this class implement
+ * this class implement 
  * (1) load the translation grammar
  * (2) provide a DOT interface
  * (3) Rule information
@@ -39,12 +41,17 @@ import java.util.logging.Logger;
  * TrieGrammar: match symbol for next layer
  * RuleBin: get sorted rules
  * Rule: rule information
- *
- * We should keep this code alive, even though currently nobody uses it; as we may want to do offline pruning of grammar
  * 
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate$
  */
+
+/* We should keep this code alive, even though currently nobody uses it; 
+ * as we may want to do offline pruning of grammar
+ */
+
+
+//TODO: bug in sortGrammar: even the l_models is new, we do not update the est cost for the rule, which is wrong
 public class MemoryBasedBatchGrammarWithPrune extends MemoryBasedBatchGrammar {
 	private int num_rule_pruned = 0;
 	
@@ -52,69 +59,32 @@ public class MemoryBasedBatchGrammarWithPrune extends MemoryBasedBatchGrammar {
 		Logger.getLogger(MemoryBasedBatchGrammarWithPrune.class.getName());
 	
 	
-	public MemoryBasedBatchGrammarWithPrune(
-		SymbolTable symbolTable, String grammarFile, boolean isGlueGrammar,
-		ArrayList<FeatureFunction> featureFunctions, String defaultOwner, String defaultLHSSymbol, String goalSymbol, 
-		int spanLimit,
-		String nonterminalRegexp, String nonterminalReplaceRegexp
-	) throws IOException {
-		super(symbolTable, grammarFile, isGlueGrammar, defaultOwner, defaultLHSSymbol, goalSymbol, spanLimit, nonterminalRegexp, nonterminalReplaceRegexp);
+	// TODO: usese l_models?
+	
+	public MemoryBasedBatchGrammarWithPrune(GrammarReader<BilingualRule> modelReader, 
+			SymbolTable symbolTable, 
+			ArrayList<FeatureFunction> l_models,
+			String defaultOwner, String defaultLHSSymbol, String goalSymbol, 
+			int spanLimit) throws IOException 
+	{
+		super(modelReader, symbolTable, defaultOwner, defaultLHSSymbol, goalSymbol, spanLimit);
 	}
 	
-	
-	protected Rule add_rule(String line, int owner) {
-		this.qtyRulesRead++;
-		this.qtyRulesRead++;
-		rule_id_count++;
-		//######1: parse the line
-		//######2: create a rule
-		//Rule p_rule = new Rule(this,rule_id_count, line, owner);
-		Rule p_rule = createRule(this.symbolTable, nonterminalRegexp, nonterminalReplaceRegexp,rule_id_count, line, owner);
-		tem_estcost += p_rule.getEstCost();
-		
-		//######### identify the position, and insert the trinodes if necessary
-		MemoryBasedTrie pos = root;
-		int[] p_french = p_rule.getFrench();
-		for (int k = 0; k < p_french.length; k++) {
-			int cur_sym_id = p_french[k];
-			if (this.symbolTable.isNonterminal(p_french[k])) { //TODO: p_rule.french store the original format like "[X,1]"
-				cur_sym_id = this.symbolTable.addNonterminal(
-					replace_french_non_terminal(
-						this.nonterminalReplaceRegexp,
-						this.symbolTable.getWord(p_french[k])));
-			}
-			
-			MemoryBasedTrie next_layer = pos.matchOne(cur_sym_id);
-			if (null != next_layer) {
-				pos = next_layer;
-			} else {
-				MemoryBasedTrie tem = new MemoryBasedTrie();//next layer node
-				if (null == pos.tbl_children) {
-					pos.tbl_children = new HashMap<Integer,MemoryBasedTrie>();
-				}
-				pos.tbl_children.put(cur_sym_id, tem);
-				pos = tem;
-			}
-		}
-		
-		//#########3: now add the rule into the trinode
+	@Override
+	protected void insertRule(MemoryBasedTrie pos, BilingualRule rule) {
 		if (null == pos.rule_bin) {
-			pos.rule_bin        = new MemoryBasedRuleBinWithPrune(p_rule.getArity(), p_french);
-//			pos.rule_bin.french = p_french;
-//			pos.rule_bin.arity  = p_rule.getArity();
+			pos.rule_bin        = new MemoryBasedRuleBinWithPrune(rule.getArity(), rule.getFrench());
 			this.qtyRuleBins++;
 		}
 		
-		
-		//==== prune related part===================
-		if (p_rule.getEstCost() > ((MemoryBasedRuleBinWithPrune)pos.rule_bin).cutoff) {
+		// TODO: the downcasting part isn't too pretty.
+		// pruning
+		if (rule.getEstCost() > ((MemoryBasedRuleBinWithPrune) pos.rule_bin).cutoff) {
 			num_rule_pruned++;
 		} else {
-			pos.rule_bin.addRule(p_rule);
-			num_rule_pruned += ((MemoryBasedRuleBinWithPrune)pos.rule_bin).run_pruning();
+			pos.rule_bin.addRule(rule);
+			num_rule_pruned += ((MemoryBasedRuleBinWithPrune) pos.rule_bin).run_pruning();
 		}
-		
-		return p_rule;
 	}
 	
 	

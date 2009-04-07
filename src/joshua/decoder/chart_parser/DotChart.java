@@ -20,6 +20,7 @@ package joshua.decoder.chart_parser;
 import joshua.decoder.chart_parser.Bin.SuperItem;
 import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.Trie;
+import joshua.decoder.ff.tm.HieroGrammar.MemoryBasedTrie;
 import joshua.lattice.Arc;
 import joshua.lattice.Lattice;
 import joshua.lattice.Node;
@@ -142,14 +143,16 @@ public class DotChart {
 	public void expand_cell(int i, int j) {
 		//if (logger.isLoggable(Level.FINE)) logger.fine("Expanding dot cell ("+i+","+j+")");
 		
-		//(1) if the dot is just to the left of a non-terminal variable, looking for theorems or axioms in the Chart that may apply and extend the dot pos
+		// (1) if the dot is just to the left of a non-terminal variable, 
+		//     looking for theorems or axioms in the Chart that may apply and 
+		//     extend the dot pos
 		for (int k = i + 1; k < j; k++) { //varying middle point k
 			extend_dotitems_with_proved_items(i,k,j,false);
 		}
 		
-		//(2)the dot-item is looking for a CN-side terminal symbol: so we just need a CN-side terminal symbol to advance the dot
-		//in seeding case: j=i+1, therefore, it will look for l_dot_bins[i][i]
-		
+		// (2) the dot-item is looking for a CN-side terminal symbol: 
+		//     so we just need a CN-side terminal symbol to advance the dot in
+		//     seeding case: j=i+1, therefore, it will look for l_dot_bins[i][i]
 		Node<Integer> node = input.getNode(j-1);
 		for (Arc<Integer> arc : node.getOutgoingArcs()) {
 			
@@ -166,9 +169,11 @@ public class DotChart {
 					if(dt.tnode==null && logger.isLoggable(Level.FINE)){
 						logger.fine("dt is null");
 					}
-					Trie child_tnode = dt.tnode.matchOne(last_word);//match the terminal
+					// match the terminal
+					Trie child_tnode = dt.tnode.matchOne(last_word);
 					if (child_tnode != null) {
-						add_dot_item(child_tnode, i, j - 1 + arc_len, dt.l_ant_super_items, null, dt.lattice_cost + cost);//we do not have an ant for the terminal
+						// we do not have an ant for the terminal
+						add_dot_item(child_tnode, i, j - 1 + arc_len, dt.l_ant_super_items, null, dt.lattice_cost + cost);
 					}
 				}
 			}

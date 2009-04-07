@@ -18,7 +18,10 @@
 package joshua.decoder.hypergraph;
 
 import joshua.decoder.ff.lm.LMFFDPState;
+import joshua.decoder.ff.tm.BilingualRule;
 import joshua.decoder.ff.tm.Grammar;
+import joshua.decoder.ff.tm.GrammarFormat;
+import joshua.decoder.ff.tm.GrammarReader;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.HieroGrammar.MemoryBasedBatchGrammar;
 import joshua.decoder.ff.FFDPState;
@@ -83,11 +86,14 @@ public class DiskHyperGraph {
 	
 	
 //	Shared by many hypergraphs, via the initialization functions
-	private HashMap<Integer,Rule> associatedGrammar = new HashMap<Integer,Rule>();
+	private HashMap<Integer,Rule> associatedGrammar = new HashMap<Integer, Rule>();
 	
 	private BufferedWriter    writer;
 	private BufferedReader    reader;
 	private HyperGraphPruning pruner;
+	
+	// TODO: this is not pretty, but avoids re-allocation in writeRule()
+	private GrammarReader<BilingualRule> ruleReader;
 	
 	// Set in init_read(...), used in read_hyper_graph()
 	private HashMap<Integer,?> selectedSentences;
@@ -100,14 +106,6 @@ public class DiskHyperGraph {
 	private static final String ITEM_TAG        = "#I";
 	private static final String ITEM_STATE_TAG  = " ST ";
 	private static final String NULL_ITEM_STATE = "nullstate";
-	private static final String RULE_TBL_SEP    = " -LZF- ";
-	
-	// TODO: this should be changed
-	// TODO: use joshua.util.Regex to avoid recompiling all the time
-	private static final String nonterminalRegexp
-		= "^\\[[A-Z]+\\,[0-9]*\\]$";
-	private static final String nonterminalReplaceRegexp
-		= "[\\[\\]\\,0-9]+";
 	
 	/* three kinds of rule:
 	 *     (>0) regular rule
@@ -131,8 +129,8 @@ public class DiskHyperGraph {
 	 * For reading purpose, one does not need to provide the list.
 	 */
 	public DiskHyperGraph(SymbolTable symbolTable, int LMFeatureID,
-		boolean storeModelCosts, ArrayList<FeatureFunction> featureFunctions
-	) {
+		boolean storeModelCosts, ArrayList<FeatureFunction> featureFunctions) 
+	{
 		this.symbolTable      = symbolTable;
 		this.LMFeatureID      = LMFeatureID;
 		this.storeModelCosts  = storeModelCosts;
@@ -144,15 +142,24 @@ public class DiskHyperGraph {
 // Initialization Methods
 //===============================================================
 	
-	//for writting hyper-graph: (1) saving each hyper-graph; (2) remember each regualar rule used; (3) dump the rule jointly (in case parallel decoding)
-	public void init_write(String itemsFile, boolean useForestPruning, double threshold)
-	throws IOException {
+	/*
+	 * for writting hyper-graph: 
+	 * 		(1) saving each hyper-graph;  
+	 * 		(2) remember each regualar rule used; 
+	 * 		(3) dump the rule jointly (in case parallel decoding)
+	 */
+	public void initWrite(String itemsFile, boolean useForestPruning, 
+			double threshold) throws IOException 
+	{
 		this.writer =
 			(null == itemsFile)
 			? new BufferedWriter(new OutputStreamWriter(System.out))
-			: FileUtility.getWriteFileStream(itemsFile) ;
+			: FileUtility.getWriteFileStream(itemsFile);
 		
-		
+		if (ruleReader == null)
+			ruleReader = GrammarFormat.JOSHUA_HYPERGRAPH.createReader(null, 
+					symbolTable, null);
+			
 		if (useForestPruning) {
 			this.pruner = new HyperGraphPruning(
 					this.symbolTable, true, threshold, threshold, 1, 1);
@@ -160,37 +167,26 @@ public class DiskHyperGraph {
 	}
 	
 	
-	public void init_read(String hypergraphsFile, String rulesFile, HashMap<Integer,?> selectedSentences) {
-		try { 
-		this.reader = FileUtility.getReadFileStream(hypergraphsFile);
+	public void initRead(String hypergraphsFile, String rulesFile, HashMap<Integer,?> selectedSentences) {
+		try {
+			this.reader = FileUtility.getReadFileStream(hypergraphsFile);
+		} catch (IOException e) {
+			logger.severe("Error opening hypergraph file: " + hypergraphsFile);
+		}
+		
 		this.selectedSentences = selectedSentences;
 		
 		/* Reload the rule table */
 		if (logger.isLoggable(Level.INFO)) 
 			logger.info("Reading rules from file " + rulesFile);
+		
 		this.associatedGrammar.clear();
-		BufferedReader rulesReader =
-			FileUtility.getReadFileStream(rulesFile);
-		String line;
-		while ((line = FileUtility.read_line_lzf(rulesReader)) != null) {
-			// line format: ruleID owner RULE_TBL_SEP rule
-			String[] fds = line.split(RULE_TBL_SEP); // TODO: use joshua.util.Regex
-			if (fds.length != 2) {
-				logger.severe("wrong RULE line");
-				System.exit(1);
-			}
-			String[] words   = Regex.spaces.split(fds[0]);
-			int ruleID       = Integer.parseInt(words[0]);
-			int defaultOwner = this.symbolTable.addTerminal(words[1]);
-			
-			// stateless cost is not properly set, so cannot extract individual features during kbest extraction
-			this.associatedGrammar.put(ruleID,
-					MemoryBasedBatchGrammar.createRule(this.symbolTable, nonterminalRegexp,
-					nonterminalReplaceRegexp, ruleID, fds[1], defaultOwner));
-		}
-		rulesReader.close();
-		} catch (IOException e) {
-			e.printStackTrace();
+		
+		GrammarReader<BilingualRule> rulesReader = 
+			GrammarFormat.JOSHUA_HYPERGRAPH.createReader(rulesFile, symbolTable, null);
+		
+		for (Rule rule : rulesReader) {
+			this.associatedGrammar.put(rule.getRuleID(), rule);
 		}
 	}
 	
@@ -211,7 +207,7 @@ public class DiskHyperGraph {
 // Methods
 //===============================================================
 	
-	public void save_hyper_graph(HyperGraph hg) throws IOException {
+	public void saveHyperGraph(HyperGraph hg) throws IOException {
 		resetStates();
 		if (null != this.pruner) this.pruner.pruning_hg(hg);
 		constructItemTables(hg);
@@ -379,7 +375,7 @@ public class DiskHyperGraph {
 //===============================================================
 	
 	
-	public HyperGraph read_hyper_graph() {
+	public HyperGraph readHyperGraph() {
 		resetStates();
 		//read first line: SENTENCE_TAG, sent_id, sent_len, num_items, num_deduct
 		String line = null;
@@ -537,14 +533,10 @@ public class DiskHyperGraph {
 		return hyperEdge;
 	}
 	
-
-	
-	
-// End read_hyper_graph()
+// end readHyperGraph()
 //===============================================================
 	
-	
-	public void write_rules_non_parallel(String rulesFile)
+	public void writeRulesNonParallel(String rulesFile)
 	throws IOException {
 		BufferedWriter out = 
 			(null == rulesFile)
@@ -560,9 +552,9 @@ public class DiskHyperGraph {
 	}
 	
 	// writtenRules: remember what kind of rules have already been saved
-	public void write_rules_parallel(
-		BufferedWriter out, HashMap<Integer,Integer> writtenRules
-	) throws IOException {
+	public void writeRulesParallel(BufferedWriter out, 
+			HashMap<Integer,Integer> writtenRules) throws IOException 
+	{
 		logger.info("writing rules in a partition");
 		for (int ruleID : this.associatedGrammar.keySet()) {
 			if (! writtenRules.containsKey(ruleID)) {
@@ -573,14 +565,11 @@ public class DiskHyperGraph {
 		out.flush();
 	}
 	
-	private void writeRule(BufferedWriter out, Rule rule, int ruleID)
-	throws IOException {
-		out.write(
-			ruleID
-			+ " "
-			+ this.symbolTable.getWord(rule.getOwner())
-			+ RULE_TBL_SEP
-			+ rule.toString(this.symbolTable)
-			+ "\n");
+	private void writeRule(BufferedWriter out, Rule rule, 
+			int ruleID) throws IOException 
+	{
+		// HACK: this is VERY wrong, but avoiding it seems to require major architectural changes
+		out.write(this.ruleReader.toWords((BilingualRule) rule));
+		out.write("\n");
 	}
 }
