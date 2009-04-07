@@ -5,9 +5,7 @@ import java.util.logging.Logger;
 import joshua.corpus.SymbolTable;
 import joshua.decoder.ff.FeatureFunctionList;
 import joshua.decoder.ff.tm.BilingualRule;
-import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.GrammarReader;
-import joshua.util.Regex;
 
 public class DiskHyperGraphFormatReader extends GrammarReader<BilingualRule> {
 

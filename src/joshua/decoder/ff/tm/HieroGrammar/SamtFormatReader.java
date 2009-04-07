@@ -3,7 +3,6 @@ package joshua.decoder.ff.tm.HieroGrammar;
 import joshua.corpus.SymbolTable;
 import joshua.decoder.ff.FeatureFunctionList;
 import joshua.decoder.ff.tm.BilingualRule;
-import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.GrammarReader;
 
 public class SamtFormatReader extends GrammarReader<BilingualRule> {

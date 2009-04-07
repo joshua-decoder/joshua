@@ -17,8 +17,7 @@
  */
 package joshua.decoder.ff.tm.HieroGrammar;
 
-import joshua.decoder.JoshuaConfiguration;
-import joshua.decoder.Support;
+
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.tm.BatchGrammar;
 import joshua.decoder.ff.tm.Rule;
@@ -26,8 +25,6 @@ import joshua.decoder.ff.tm.BilingualRule;
 import joshua.decoder.ff.tm.GrammarReader;
 import joshua.decoder.ff.tm.Trie;
 import joshua.corpus.SymbolTable;
-import joshua.util.io.LineReader;
-import joshua.util.Regex;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -179,7 +176,6 @@ public class MemoryBasedBatchGrammar extends BatchGrammar<BilingualRule> {
 		
 		// TODO: Why two increments? 
 		this.qtyRulesRead++;
-		qtyRulesRead++;
 		rule_id_count++;
 
 		rule.setRuleID(rule_id_count);

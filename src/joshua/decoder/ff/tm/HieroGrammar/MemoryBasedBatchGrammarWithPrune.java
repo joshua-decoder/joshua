@@ -20,11 +20,9 @@ package joshua.decoder.ff.tm.HieroGrammar;
 import joshua.corpus.SymbolTable;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.tm.BilingualRule;
-import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.GrammarReader;
 
 import java.io.IOException;
-import java.util.HashMap ;
 import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
