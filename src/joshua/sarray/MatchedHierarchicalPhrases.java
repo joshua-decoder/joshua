@@ -93,15 +93,20 @@ public interface MatchedHierarchicalPhrases {
 	/**
 	 * Constructs a new object exactly the same as this object
 	 * (specifically, it contains the exact same list of corpus matches),
-	 * but appends or prepends the nonterminal X to the pattern.
+	 * but prepends the nonterminal X to the pattern of the returned object.
 	 * 
-	 * @param initial If <code>true</code> X is prepended to the pattern;
-	 *                else X is appended to the pattern.
 	 * @return list of matched phrases identical with updated pattern
 	 */
-	public MatchedHierarchicalPhrases copyWithX(boolean initial);
+	public MatchedHierarchicalPhrases copyWithInitialX();
 	
-	
+	/**
+	 * Constructs a new object exactly the same as this object
+	 * (specifically, it contains the exact same list of corpus matches),
+	 * but appends the nonterminal X to the pattern.
+	 * 
+	 * @return list of matched phrases identical with updated pattern
+	 */
+	public MatchedHierarchicalPhrases copyWithFinalX();
 	
 	
 	////////////

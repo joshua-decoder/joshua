@@ -31,6 +31,7 @@ import joshua.corpus.AbstractSymbolTable;
 import joshua.corpus.SymbolTable;
 import joshua.sarray.BasicPhrase;
 import joshua.util.io.BinaryIn;
+import joshua.util.io.LineReader;
 
 
 /**
@@ -150,6 +151,34 @@ public class Vocabulary extends AbstractSymbolTable implements Iterable<String>,
 		}
 		
 		return vocab;
+	}
+	
+	
+	/**
+	 * Creates a new Vocabulary from a plain text file.
+	 *
+	 * @param inputFilename the plain text file
+	 * @param vocab the Vocabulary to instantiate 
+	 * @return a tuple containing the number of words in the corpus and number of sentences in the corpus
+	 */
+	public static int[] createVocabulary(String inputFilename, Vocabulary vocab) throws IOException {
+		int numSentences = 0;
+		int numWords = 0;
+		
+		LineReader lineReader = new LineReader(inputFilename);
+		
+		for (String line : lineReader) {
+			BasicPhrase sentence = new BasicPhrase(line, vocab);
+			numWords += sentence.size();
+			numSentences++;
+			if(logger.isLoggable(Level.INFO) && numSentences % 10000==0) logger.info(""+numWords);
+		}
+		
+		
+		vocab.fixVocabulary();
+		vocab.alphabetize();
+		int[] numberOfWordsSentences = { numWords, numSentences };
+		return numberOfWordsSentences;
 	}
 	
 //===============================================================

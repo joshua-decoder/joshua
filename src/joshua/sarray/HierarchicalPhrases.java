@@ -45,7 +45,7 @@ public class HierarchicalPhrases extends AbstractHierarchicalPhrases implements 
 	 * integer IDs. The pattern is <em>not</em> rooted to a
 	 * location in a corpus.
 	 */
-	private final Pattern pattern;
+	final Pattern pattern;
 
 	/** 
 	 * Represents the length of each 
@@ -137,24 +137,20 @@ public class HierarchicalPhrases extends AbstractHierarchicalPhrases implements 
 		this.sentenceNumber = phrases.sentenceNumber;
 	}
 	
-	public MatchedHierarchicalPhrases copyWithX(boolean initial) {
-		if (initial) {
-			int[] xwords = new int[pattern.words.length+1];
-			xwords[0] = PrefixTree.X;
-			for (int i=0; i<pattern.words.length; i++) {
-				xwords[i+1] = pattern.words[i];
-			}
-			Pattern xpattern = new Pattern(pattern.vocab, xwords);
-			return new HierarchicalPhrases(xpattern, this);
-		} else {
-			return new HierarchicalPhrases(new Pattern(pattern.vocab, pattern.words, PrefixTree.X), this);
+	public MatchedHierarchicalPhrases copyWithInitialX() {
+		int[] xwords = new int[pattern.words.length+1];
+		xwords[0] = PrefixTree.X;
+		for (int i=0; i<pattern.words.length; i++) {
+			xwords[i+1] = pattern.words[i];
 		}
+		Pattern xpattern = new Pattern(pattern.vocab, xwords);
+		return new HierarchicalPhrases(xpattern, this);
 	}
 	
-//	public MatchedHierarchicalPhrases copyWith(Pattern pattern) {
-//		return new HierarchicalPhrases(pattern, this);
-//	}
-	
+	public MatchedHierarchicalPhrases copyWithFinalX() {
+		return new HierarchicalPhrases(new Pattern(pattern.vocab, pattern.words, PrefixTree.X), this);
+	}
+		
 	protected HierarchicalPhrases(Pattern pattern, List<Integer> data, List<Integer> sentenceNumbers) {
 		this.pattern = pattern;
 		this.terminalSequenceLengths = pattern.getTerminalSequenceLengths();

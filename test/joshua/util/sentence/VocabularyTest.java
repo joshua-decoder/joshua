@@ -22,7 +22,6 @@ import java.io.PrintStream;
 import java.util.Date;
 import java.util.HashSet;
 
-import joshua.sarray.SuffixArrayFactory;
 import joshua.util.sentence.Vocabulary;
 
 
@@ -103,7 +102,7 @@ public class VocabularyTest {
 		}
 		
 		Vocabulary vocab = new Vocabulary();
-		SuffixArrayFactory.createVocabulary(sourceFileName, vocab);
+		Vocabulary.createVocabulary(sourceFileName, vocab);
 		
 		Assert.assertEquals(vocab.getWord(vocab.getID("it")), "it");
 		Assert.assertEquals(vocab.getWord(vocab.getID("makes")), "makes");
@@ -134,7 +133,7 @@ public class VocabularyTest {
 		Assert.assertEquals(vocab, vocab2);
 		
 		try {
-			int[] result = SuffixArrayFactory.createVocabulary(filename, vocab);
+			int[] result = Vocabulary.createVocabulary(filename, vocab);
 			Assert.assertNotNull(result);
 			Assert.assertEquals(result.length, 2);
 			Assert.assertEquals(result[0], numWords); 
@@ -150,7 +149,7 @@ public class VocabularyTest {
 		Assert.assertFalse(vocab.equals(vocab2));
 		
 		try {
-			int[] result = SuffixArrayFactory.createVocabulary(filename, vocab2);
+			int[] result = Vocabulary.createVocabulary(filename, vocab2);
 			Assert.assertNotNull(result);
 			Assert.assertEquals(result.length, 2);
 			Assert.assertEquals(result[0], numWords); 

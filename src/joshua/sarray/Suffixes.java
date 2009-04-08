@@ -22,7 +22,23 @@ import joshua.util.Cache;
 import joshua.util.sentence.Phrase;
 
 public interface Suffixes {
+ 
 
+	//===============================================================
+	// Constants
+	//===============================================================
+
+		/**
+		 * The maximum length suffix to consider during sorting.
+		 */
+		public static int MAX_COMPARISON_LENGTH = 20;
+		
+		/** 
+		 * Maximum number of items that can be stored 
+		 * in the cache of patterns and hierarchical phrases. 
+		 */
+		public static final int DEFAULT_CACHE_CAPACITY = 100000;
+	
 	/**
 	 * Gets the symbol table for this object.
 	 * 

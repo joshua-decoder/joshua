@@ -366,7 +366,7 @@ public class CorpusArray extends AbstractCorpus implements Corpus, Externalizabl
 		String charset = (args.length > 3) ? args[3] : "UTF-8";
 		
 		Vocabulary symbolTable = new Vocabulary();
-		int[] lengths = SuffixArrayFactory.createVocabulary(corpusFileName, symbolTable);
+		int[] lengths = Vocabulary.createVocabulary(corpusFileName, symbolTable);
 		
 		CorpusArray corpusArray = SuffixArrayFactory.createCorpusArray(corpusFileName, symbolTable, lengths[0], lengths[1]);
 		

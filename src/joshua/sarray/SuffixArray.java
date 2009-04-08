@@ -274,7 +274,7 @@ public class SuffixArray extends AbstractSuffixArray implements Externalizable {
 		
 		logger.info("Constructing vocabulary from file " + corpusFileName);
 		Vocabulary symbolTable = new Vocabulary();
-		int[] lengths = SuffixArrayFactory.createVocabulary(corpusFileName, symbolTable);
+		int[] lengths = Vocabulary.createVocabulary(corpusFileName, symbolTable);
 		
 		logger.info("Constructing corpus array from file " + corpusFileName);
 		CorpusArray corpusArray = SuffixArrayFactory.createCorpusArray(corpusFileName, symbolTable, lengths[0], lengths[1]);

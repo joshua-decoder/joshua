@@ -85,7 +85,7 @@ public class SuffixArrayFactory {
 	public static CorpusArray createCorpusArray(String inputFilename)
 	throws IOException {
 		Vocabulary vocabulary = new Vocabulary();
-		int[] ws = createVocabulary(inputFilename, vocabulary);
+		int[] ws = Vocabulary.createVocabulary(inputFilename, vocabulary);
 		return createCorpusArray(inputFilename, vocabulary, ws[0], ws[1]);
 	}
 	
@@ -95,36 +95,7 @@ public class SuffixArrayFactory {
 		int[] ws = count(inputFilename);
 		return createCorpusArray(inputFilename, vocabulary, ws[0], ws[1]);
 	}
-	
-	
-	// BUG: Vocabulary is incestuous and requires this method. It should be moved there.
-	/**
-	 * Creates a new Vocabulary from a plain text file.
-	 *
-	 * @param inputFilename the plain text file
-	 * @param vocab the Vocabulary to instantiate 
-	 * @return a tuple containing the number of words in the corpus and number of sentences in the corpus
-	 */
-	@Deprecated
-	public static int[] createVocabulary(String inputFilename, Vocabulary vocab) throws IOException {
-		int numSentences = 0;
-		int numWords = 0;
-		
-		LineReader lineReader = new LineReader(inputFilename);
-		
-		for (String line : lineReader) {
-			BasicPhrase sentence = new BasicPhrase(line, vocab);
-			numWords += sentence.size();
-			numSentences++;
-			if(SHOW_PROGRESS && numSentences % 10000==0) logger.info(""+numWords);
-		}
-		
-		
-		vocab.fixVocabulary();
-		vocab.alphabetize();
-		int[] numberOfWordsSentences = { numWords, numSentences };
-		return numberOfWordsSentences;
-	}
+
 	
 	/**
 	 * Counts the words and sentences in a plain text file.

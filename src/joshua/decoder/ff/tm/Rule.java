@@ -109,7 +109,6 @@ public interface Rule {
 		}
 	};
 	
-	/** @todo should the Vocabulary change to SymbolTable? */
 	@Deprecated
 	public String toString(Map<Integer,String> ntVocab, SymbolTable sourceVocab, SymbolTable targetVocab);
 	

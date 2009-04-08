@@ -10,11 +10,6 @@ public class MemoryMappedHierarchicalPhrases implements
 		return false;
 	}
 
-	public MatchedHierarchicalPhrases copyWithX(boolean initial) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
 	public int getArity() {
 		// TODO Auto-generated method stub
 		return 0;
@@ -98,6 +93,16 @@ public class MemoryMappedHierarchicalPhrases implements
 	public int size() {
 		// TODO Auto-generated method stub
 		return 0;
+	}
+
+	public MatchedHierarchicalPhrases copyWithFinalX() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public MatchedHierarchicalPhrases copyWithInitialX() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 

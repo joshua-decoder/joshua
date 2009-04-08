@@ -66,7 +66,7 @@ public class ConvertCorpus {
 		// Read the provided corpus
 		logger.info("Reading provided corpus");
 		Vocabulary oldSymbolTable = new Vocabulary();
-		int[] lengths = SuffixArrayFactory.createVocabulary(corpusFileName, oldSymbolTable);
+		int[] lengths = Vocabulary.createVocabulary(corpusFileName, oldSymbolTable);
 		CorpusArray corpusArray = SuffixArrayFactory.createCorpusArray(corpusFileName, oldSymbolTable, lengths[0], lengths[1]);
 		
 		// Change the internal integer-string mappings

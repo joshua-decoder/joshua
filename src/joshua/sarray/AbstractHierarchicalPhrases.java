@@ -204,8 +204,8 @@ public abstract class AbstractHierarchicalPhrases implements
 	 * @param j Index into M_alpha_b
 	 * @param list List where new data will be added
 	 */
-	protected static void partiallyConstruct(Pattern pattern, MatchedHierarchicalPhrases M_a_alpha, int i, MatchedHierarchicalPhrases M_alpha_b, int j, List<Integer> list) {
-		
+//	protected static void partiallyConstruct(Pattern pattern, MatchedHierarchicalPhrases M_a_alpha, int i, MatchedHierarchicalPhrases M_alpha_b, int j, List<Integer> list) {
+	protected static void partiallyConstruct(MatchedHierarchicalPhrases M_a_alpha, int i, MatchedHierarchicalPhrases M_alpha_b, int j, List<Integer> list) {
 		boolean prefixEndsWithNonterminal = M_a_alpha.patternEndsWithNonterminal();
 		
 		// Get all start positions for the prefix phrase, and append them to the running list
@@ -278,7 +278,7 @@ public abstract class AbstractHierarchicalPhrases implements
 					if (compare_i_l == 0) {
 						
 						// append M_a_alpha[i] |><| M_alpha_b[l] to M_a_alpha_b
-						partiallyConstruct(pattern, M_a_alpha, i, M_alpha_b, l, data);
+						partiallyConstruct(M_a_alpha, i, M_alpha_b, l, data);
 						sentenceNumbers.add(M_a_alpha.getSentenceNumber(i));
 						
 					} // end if

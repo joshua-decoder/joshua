@@ -21,7 +21,6 @@ import joshua.corpus.SymbolTable;
 import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.Rule;
 import joshua.util.lexprob.LexicalProbabilities;
-import joshua.util.sentence.Vocabulary;
 import joshua.util.sentence.alignment.Alignments;
 
 import java.util.Collection;
@@ -485,14 +484,14 @@ public class PrefixTree {
 					
 //					SymbolTable vocab = (suffixArray==null) ? null : suffixArray.getVocabulary();
 					
-					int[] xwords = new int[suffixNode.sourcePattern.words.length+1];
-					xwords[0] = X;
-					for (int i=0; i<suffixNode.sourcePattern.words.length; i++) {
-						xwords[i+1] = suffixNode.sourcePattern.words[i];
-					}
+//					int[] xwords = new int[suffixNode.sourcePattern.words.length+1];
+//					xwords[0] = X;
+//					for (int i=0; i<suffixNode.sourcePattern.words.length; i++) {
+//						xwords[i+1] = suffixNode.sourcePattern.words[i];
+//					}
 //					Pattern xpattern = new Pattern(vocab, xwords);
 //					result = suffixNode.sourceHierarchicalPhrases.copyWith(xpattern);
-					result = suffixNode.sourceHierarchicalPhrases.copyWithX(true);
+					result = suffixNode.sourceHierarchicalPhrases.copyWithInitialX();
 //					result = new HierarchicalPhrases(xpattern, suffixNode.sourceHierarchicalPhrases);
 
 				} else { 
@@ -576,7 +575,7 @@ public class PrefixTree {
 //					HierarchicalPhrases phrasesWithFinalX = new HierarchicalPhrases(xpattern, node.sourceHierarchicalPhrases); 
 					MatchedHierarchicalPhrases phrasesWithFinalX = 
 //						node.sourceHierarchicalPhrases.copyWith(xpattern);
-						node.sourceHierarchicalPhrases.copyWithX(false);
+						node.sourceHierarchicalPhrases.copyWithFinalX();
 //						new HierarchicalPhrases(xpattern, node.sourceHierarchicalPhrases); 
 					
 					xNode.storeResults(phrasesWithFinalX, xpattern);
