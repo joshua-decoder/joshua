@@ -20,7 +20,7 @@ package joshua.decoder.chart_parser;
 import joshua.decoder.chart_parser.Bin.SuperItem;
 import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.Trie;
-import joshua.decoder.ff.tm.HieroGrammar.MemoryBasedTrie;
+import joshua.decoder.ff.tm.hiero.MemoryBasedTrie;
 import joshua.lattice.Arc;
 import joshua.lattice.Lattice;
 import joshua.lattice.Node;

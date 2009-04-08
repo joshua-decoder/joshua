@@ -20,10 +20,10 @@ package joshua.decoder.hypergraph;
 import joshua.decoder.ff.lm.LMFFDPState;
 import joshua.decoder.ff.tm.BilingualRule;
 import joshua.decoder.ff.tm.Grammar;
-import joshua.decoder.ff.tm.GrammarFormat;
 import joshua.decoder.ff.tm.GrammarReader;
 import joshua.decoder.ff.tm.Rule;
-import joshua.decoder.ff.tm.HieroGrammar.MemoryBasedBatchGrammar;
+import joshua.decoder.ff.tm.hiero.DiskHyperGraphFormatReader;
+import joshua.decoder.ff.tm.hiero.MemoryBasedBatchGrammar;
 import joshua.decoder.ff.FFDPState;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.corpus.SymbolTable;
@@ -157,8 +157,7 @@ public class DiskHyperGraph {
 			: FileUtility.getWriteFileStream(itemsFile);
 		
 		if (ruleReader == null)
-			ruleReader = GrammarFormat.JOSHUA_HYPERGRAPH.createReader(null, 
-					symbolTable, null);
+			ruleReader = new DiskHyperGraphFormatReader(null, this.symbolTable, null);
 			
 		if (useForestPruning) {
 			this.pruner = new HyperGraphPruning(
@@ -182,10 +181,11 @@ public class DiskHyperGraph {
 		
 		this.associatedGrammar.clear();
 		
-		GrammarReader<BilingualRule> rulesReader = 
-			GrammarFormat.JOSHUA_HYPERGRAPH.createReader(rulesFile, symbolTable, null);
+		this.ruleReader = 
+			new DiskHyperGraphFormatReader(rulesFile, this.symbolTable, null);
+			
 		
-		for (Rule rule : rulesReader) {
+		for (Rule rule : ruleReader) {
 			this.associatedGrammar.put(rule.getRuleID(), rule);
 		}
 	}

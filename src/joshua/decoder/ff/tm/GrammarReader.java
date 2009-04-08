@@ -47,7 +47,8 @@ public abstract class GrammarReader<R extends Rule> implements
 	{
 		this.fileName = fileName;
 		this.symbolTable = symbolTable;
-		if(featureList!=null)//add by zhifei
+
+		if (featureList != null)
 			this.features = featureList.getColumns();
 	}
 

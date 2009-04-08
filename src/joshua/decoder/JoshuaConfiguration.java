@@ -17,7 +17,6 @@
  */
 package joshua.decoder;
 
-import joshua.decoder.ff.tm.GrammarFormat;
 import joshua.util.Cache;
 import joshua.util.Regex;
 import joshua.util.io.LineReader;
@@ -63,7 +62,7 @@ public class JoshuaConfiguration {
 	// TODO: support multiple glue grammars
 	public static String  glue_file                  = null;
 	
-	public static GrammarFormat tm_format            = null;
+	public static String tm_format                   = null;
 	
 	// Parameters for suffix array grammar
 	/** File name prefix for source language binary training files. */
@@ -176,7 +175,7 @@ public class JoshuaConfiguration {
 						logger.finest(String.format("glue file: %s", glue_file));
 				
 				} else if ("tm_format".equals(fds[0])) {
-					tm_format = GrammarFormat.parse(fds[1].trim());
+					tm_format = fds[1].trim();
 						
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("tm format: %s", tm_format));

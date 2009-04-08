@@ -32,7 +32,7 @@ import joshua.decoder.ff.lm.srilm.LMGrammarSRILM;
 import joshua.decoder.ff.tm.BilingualRule;
 import joshua.decoder.ff.tm.GrammarFactory;
 import joshua.decoder.ff.tm.GrammarReader;
-import joshua.decoder.ff.tm.HieroGrammar.MemoryBasedBatchGrammar;
+import joshua.decoder.ff.tm.hiero.MemoryBasedBatchGrammar;
 import joshua.sarray.Corpus;
 import joshua.sarray.MemoryMappedCorpusArray;
 import joshua.sarray.MemoryMappedSuffixArray;
@@ -333,20 +333,19 @@ public class JoshuaDecoder {
 	// TODO: these Patterns should probably be extracted out and compiled only once (either by us or by MemoryBasedBatchGrammar)
 	private void initializeGlueGrammar() throws IOException {
 		logger.info("Constructing glue grammar...");
-			
-		GrammarReader<BilingualRule> glueReader = JoshuaConfiguration.tm_format.
-				createReader(JoshuaConfiguration.glue_file, 
-						this.symbolTable, this.featureFunctions);
 		
 		this.grammarFactories.add(
 			// if this is used, then it depends on the LMModel to do pruning
 //			new MemoryBasedBatchGrammarWithPrune(
 			new MemoryBasedBatchGrammar(
-				glueReader, this.symbolTable,
-				JoshuaConfiguration.begin_mono_owner,
-				JoshuaConfiguration.default_non_terminal,
-				JoshuaConfiguration.goal_symbol,
-				-1));
+					JoshuaConfiguration.tm_format,
+					JoshuaConfiguration.glue_file,
+					this.symbolTable,
+					this.featureFunctions,
+					JoshuaConfiguration.begin_mono_owner,
+					JoshuaConfiguration.default_non_terminal,
+					JoshuaConfiguration.goal_symbol,
+					-1));
 	}
 	
 	
@@ -355,21 +354,20 @@ public class JoshuaDecoder {
 	throws IOException {
 		initializeGlueGrammar();
 		
-		GrammarReader<BilingualRule> tmReader = JoshuaConfiguration.tm_format.
-				createReader(JoshuaConfiguration.tm_file, 
-						this.symbolTable, this.featureFunctions);
-		
 		if (logger.isLoggable(Level.INFO))
 			logger.info("Using grammar read from file " + tmFile);
+		
 		this.grammarFactories.add(
 			//new MemoryBasedBatchGrammarWithPrune(
 			new MemoryBasedBatchGrammar(
-				tmReader,
-				this.symbolTable,
-				JoshuaConfiguration.phrase_owner,
-				JoshuaConfiguration.default_non_terminal,
-				JoshuaConfiguration.goal_symbol,
-				JoshuaConfiguration.span_limit));
+					JoshuaConfiguration.tm_format,
+					JoshuaConfiguration.tm_file,
+					this.symbolTable,
+					this.featureFunctions,
+					JoshuaConfiguration.phrase_owner,
+					JoshuaConfiguration.default_non_terminal,
+					JoshuaConfiguration.goal_symbol,
+					JoshuaConfiguration.span_limit));
 		
 		//TODO if suffix-array: call SAGrammarFactory(SuffixArray sourceSuffixArray, CorpusArray targetCorpus, AlignmentArray alignments, LexicalProbabilities lexProbs, int maxPhraseSpan, int maxPhraseLength, int maxNonterminals, int spanLimit) {
 	}
