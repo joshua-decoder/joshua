@@ -45,7 +45,7 @@ import java.util.logging.Logger;
  * @version $LastChangedDate$
  */
 
-public class MemoryBasedBatchGrammar extends BatchGrammar<BilingualRule> {
+public class MemoryBasedBatchGrammar extends BatchGrammar {
 	
 //===============================================================
 // Instance Fields
@@ -70,6 +70,8 @@ public class MemoryBasedBatchGrammar extends BatchGrammar<BilingualRule> {
 	protected int spanLimit = 10;
 	SymbolTable symbolTable = null;
 
+	protected GrammarReader<BilingualRule> modelReader;
+	
 //===============================================================
 // Static Fields
 //===============================================================
@@ -104,13 +106,26 @@ public class MemoryBasedBatchGrammar extends BatchGrammar<BilingualRule> {
 			String goalSymbol,
 			int span_limit) throws IOException 
 	{
-		super(formatKeyword, grammarFile, symbolTable, features);
+		this.modelReader = createReader(formatKeyword, grammarFile, symbolTable, features);
 		
 		this.symbolTable = symbolTable;
 		this.defaultOwner  = this.symbolTable.addTerminal(defaultOwner);
 		this.defaultLHS = this.symbolTable.addNonterminal(defaultLHSSymbol);
 		this.goalSymbol = this.symbolTable.addNonterminal(goalSymbol);
 		this.spanLimit     = span_limit;
+		
+		this.root = new MemoryBasedTrie();
+		createReader(formatKeyword, grammarFile, symbolTable, features);
+		
+		//==== loading grammar
+		if (modelReader != null) {
+			modelReader.initialize();
+			for (BilingualRule rule : modelReader)
+				addRule(rule);
+		}
+
+		this.sortGrammar(features);		
+		this.print_grammar();
 	}
 	
 	protected GrammarReader<BilingualRule> createReader(String formatKeyword,
@@ -127,23 +142,13 @@ public class MemoryBasedBatchGrammar extends BatchGrammar<BilingualRule> {
 		}
 	}
 	
-	public void initialize() {
-		this.root = new MemoryBasedTrie();
-		
-		super.initialize();
-		
-		this.print_grammar();
-		// the rule cost has been estimated using the latest feature function
-		this.sortGrammar(null);
-	}
 	
 //===============================================================
 // Methods
 //===============================================================
 
 	public int getNumRules() {
-		// TODO Auto-generated method stub
-		return 0;
+		return qtyRulesRead;
 	}
 
 
@@ -252,7 +257,4 @@ public class MemoryBasedBatchGrammar extends BatchGrammar<BilingualRule> {
 			root.print_info(Support.DEBUG);*/
 	}
 	
-	
-
-
 }

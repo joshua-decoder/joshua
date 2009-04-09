@@ -31,11 +31,6 @@ import joshua.util.sentence.Phrase;
  */
 public interface GrammarFactory {
 
-	/**
-	 * This method is called during the initialization of the decoder. Any
-	 * loading, parsing or setup computations should take place here.
-	 */
-	public void initialize();
 
 	/**
 	 * Returns a grammar which is adapted to the specified sentence. Depending

@@ -162,10 +162,6 @@ public class DecoderThread extends Thread {
 			null == this.oracleFile
 			? new NullReader<String>()
 			: new LineReader(this.oracleFile);
-		
-		for (GrammarFactory factory : this.grammarFactories) {
-			factory.initialize();
-		}
 			
 		LineReader testReader = new LineReader(this.testFile);
 		try { for (String cnSentence : testReader) {

@@ -17,8 +17,6 @@
  */
 package joshua.decoder.ff.tm;
 
-import joshua.corpus.SymbolTable;
-import joshua.decoder.ff.FeatureFunctionList;
 import joshua.util.sentence.Phrase;
 
 
@@ -40,37 +38,10 @@ import joshua.util.sentence.Phrase;
 /* 
  * */
 
-public abstract class BatchGrammar<R extends Rule> extends AbstractGrammar implements GrammarFactory, Grammar {
+public abstract class BatchGrammar extends AbstractGrammar implements GrammarFactory, Grammar {
 	
-	protected GrammarReader<R> modelReader;
-	
-	public BatchGrammar() {
-		modelReader = null;
-	}
-	
-	public BatchGrammar(String formatKeyword, String grammarFile, 
-			SymbolTable symbolTable, FeatureFunctionList features) 
-	{
-		this.modelReader = createReader(formatKeyword, grammarFile, symbolTable, 
-				features);
-	}
-	
-	protected abstract GrammarReader<R> createReader(String formatKeyword,
-			String grammarFile, SymbolTable symbolTable, 
-			FeatureFunctionList features);
-	
-	public void initialize() {
-		if (modelReader != null) {
-			modelReader.initialize();
-			for (R rule : modelReader)
-				addRule(rule);
-		}
-		// TODO: throw more stuff
-	}
-
 	public Grammar getGrammarForSentence(Phrase sentence) {
 		return this;
 	}
 	
-	protected abstract void addRule(R rule);
 }
