@@ -26,14 +26,11 @@ import joshua.util.sentence.Span;
  * @since Apr 4 2009
  * @version $LastChangedDate$
  */
-public interface MatchedHierarchicalPhrases {
+public interface MatchedHierarchicalPhrases extends PatternFormat {
 
 	/**
 	 * Gets the number of contiguous sequences of terminals
 	 * in the pattern represented by this object.
-	 * <p>
-	 * The result returned by this method should always 
-	 * equals <code>getArity()+1</code>.
 	 * 
 	 * @return The number of contiguous sequences of terminals
 	 * in the pattern represented by this object.
@@ -109,15 +106,25 @@ public interface MatchedHierarchicalPhrases {
 	public MatchedHierarchicalPhrases copyWithFinalX();
 	
 	
-	////////////
+	
+	///////////////////////////////////////////////////////////////////////////
+	// The methods below ideally would go into a HierarchicalPhrase class.
+	//
+	// However, for efficiency, they are instead incorporated into this class.
+	///////////////////////////////////////////////////////////////////////////
 	
 	
-	public boolean patternEndsWithNonterminal();
-	public boolean patternStartsWithNonterminal();
-	public boolean patternEndsWithTwoTerminals();
-	public boolean patternSecondTokenIsTerminal();
-	public int getArity();
+	/**
+	 * Gets the span in the backing corpus 
+	 * of the phrase at the specified index.
+	 * 
+	 * @param Index of a matched phrase
+	 * @return the span in the backing corpus 
+	 *         of the phrase at the specified index
+	 */
 	public Span getSpan(int phraseIndex);
+	
+	
 	public boolean containsTerminalAt(int phraseIndex, int alignmentPointIndex);
 	public int getFirstTerminalIndex(int phraseIndex);
 	public int getLastTerminalIndex(int phraseIndex);

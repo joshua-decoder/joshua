@@ -171,9 +171,6 @@ public class HierarchicalPhrases extends AbstractHierarchicalPhrases implements 
 		
 		this.size = numberOfPhrases;
 		
-		//
-//		this.startsWithNonterminal = pattern.startsWithNonterminal();
-//		this.endsWithNonterminal = pattern.endsWithNonterminal();
 	}
 
 	
@@ -181,28 +178,6 @@ public class HierarchicalPhrases extends AbstractHierarchicalPhrases implements 
 		return terminalSequenceLengths.length;
 	}
 	
-//	/**
-//	 * Gets the indicated hierarchical phrase from this collection.
-//	 * 
-//	 * @deprecated
-//	 */
-//	public HierarchicalPhrase get(int phraseIndex, Corpus corpus) {
-//		
-//		int n = terminalSequenceLengths.length;
-//		
-//		int[] terminalSequenceStartIndices = new int[n];
-//		int[] terminalSequenceEndIndices = new int[n];
-//		
-//		int nthPhraseIndex = phraseIndex*n;
-//		for (int index=0; index<n; index++) {
-//			terminalSequenceStartIndices[index] = this.terminalSequenceStartIndices[nthPhraseIndex+index];
-//			terminalSequenceEndIndices[index] = this.terminalSequenceStartIndices[nthPhraseIndex+index] + this.terminalSequenceLengths[index];
-//		}
-//		
-//		int length = terminalSequenceEndIndices[n-1] - terminalSequenceStartIndices[0];
-//		
-//		return new HierarchicalPhrase(pattern, terminalSequenceStartIndices, terminalSequenceEndIndices, corpus, length);
-//	}
 	
 	public int getTerminalSequenceStartIndex(int phraseIndex, int sequenceIndex) {
 		int n = terminalSequenceLengths.length;
@@ -217,7 +192,6 @@ public class HierarchicalPhrases extends AbstractHierarchicalPhrases implements 
 		int nthPhraseIndex = phraseIndex*n;
 		
 		int start = this.terminalSequenceStartIndices[nthPhraseIndex+sequenceIndex];
-//		int end = start + this.terminalSequenceLengths[n-1];
 		int end = start + this.terminalSequenceLengths[sequenceIndex];
 		
 		return end;
@@ -334,9 +308,6 @@ public class HierarchicalPhrases extends AbstractHierarchicalPhrases implements 
 		return this.sentenceNumber[phraseIndex];
 	}
 
-//	public Pattern getPattern() {
-//		return this.pattern;
-//	}
 
 	/** 
 	 * Gets the number of terminals in the specified
@@ -351,24 +322,19 @@ public class HierarchicalPhrases extends AbstractHierarchicalPhrases implements 
 
 	//////
 	
-//	private final boolean endsWithNonterminal;
-//	private final boolean startsWithNonterminal;
-	
-	public boolean patternEndsWithNonterminal() {
+	public boolean endsWithNonterminal() {
 		return pattern.endsWithNonterminal();
-//		return endsWithNonterminal;
 	}
 	
-	public boolean patternStartsWithNonterminal() {
+	public boolean startsWithNonterminal() {
 		return pattern.startsWithNonterminal();
-//		return startsWithNonterminal;
 	}
 	
-	public boolean patternEndsWithTwoTerminals() {
+	public boolean endsWithTwoTerminals() {
 		return pattern.endsWithTwoTerminals();
 	}
 	
-	public boolean patternSecondTokenIsTerminal() {
+	public boolean secondTokenIsTerminal() {
 		return pattern.secondTokenIsTerminal();
 	}
 	
@@ -378,7 +344,7 @@ public class HierarchicalPhrases extends AbstractHierarchicalPhrases implements 
 	 * 
 	 * @return the number of nonterminals
 	 */
-	public int getArity() {
+	public int arity() {
 		return pattern.arity;
 	}
 	

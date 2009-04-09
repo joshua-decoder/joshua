@@ -19,10 +19,8 @@ package joshua.sarray;
 
 import java.io.IOException;
 import java.io.ObjectInput;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -40,7 +38,7 @@ import joshua.util.sentence.Phrase;
 import joshua.util.sentence.Vocabulary;
 
 /**
- * Extra methods related to suffix array grammar extraction.
+ * Represents the most frequent phrases in a corpus.
  * 
  * @author Chris Callison-Burch
  * @author Lane Schwartz
@@ -51,46 +49,47 @@ public class FrequentPhrases {
 	private static final Logger logger = 
 		Logger.getLogger(FrequentPhrases.class.getName());
 
+	/** Suffix array in which frequent phrases are located. */
 	private final Suffixes suffixes;
+	
+	/** 
+	 * Stores the number of times a phrase occurred in the corpus.
+	 * <p>
+	 * The iteration order of this map should 
+	 * start with the most frequent phrase and end
+	 * with the least frequent phrase stored in the map.
+	 * <p>
+	 * The key set for this map should be identical to
+	 * the key set in the <code>ranks</code> map. 
+	 */
 	private final LinkedHashMap<Phrase,Integer> frequentPhrases;	
 
-	private final Map<Phrase,Short> ranks;
-//	private final List<Phrase> phraseList;
-
+	/** Maximum number of phrases of which this object is aware. */
 	private final short maxPhrases;
 	
+	
+	/**
+	 * Constructs data regarding the frequencies 
+	 * of the <em>n</em> most frequent phrases found in the corpus
+	 * backed by the provided suffix array.
+	 * 
+	 * @param suffixes Suffix array corresponding to a corpus.
+	 * @param minFrequency The minimum frequency required to 
+	 *                     for a phrase to be considered frequent.
+	 * @param maxPhrases The number of phrases to consider.
+	 * @param maxPhraseLength Maximum phrase length to consider.
+	 */
 	public FrequentPhrases(
 			Suffixes suffixes,		
 			int minFrequency,
 			short maxPhrases,
 			int maxPhraseLength) {
-
 		
 		this.maxPhrases = maxPhrases;
 		
 		this.suffixes = suffixes;
 		this.frequentPhrases = getMostFrequentPhrases(suffixes, minFrequency, maxPhrases, maxPhraseLength);
-
-		this.ranks = getRanks(frequentPhrases);
-//		this.phraseList = new ArrayList<Phrase>(frequentPhrases.keySet());
-
 		
-	}
-
-	public static Map<Phrase,Short> getRanks(Map<Phrase,Integer> frequentPhrases) {
-		
-		logger.fine("Calculating ranks of frequent phrases");
-		
-		Map<Phrase,Short> ranks = new HashMap<Phrase,Short>(frequentPhrases.size());
-
-		short i=0;
-		for (Phrase phrase : frequentPhrases.keySet()) {
-			ranks.put(phrase, i++);
-		}
-		
-		logger.fine("Done calculating ranks");
-		
-		return ranks;
 	}
 
 
@@ -110,7 +109,7 @@ public class FrequentPhrases {
 	 *                        phrases for them to still be
 	 *                        considered collocated
 	 */
-	public Collocations getCollocations(
+	public FrequentMatches getCollocations(
 			int maxPhraseLength,
 			int windowSize
 	) {
@@ -120,39 +119,38 @@ public class FrequentPhrases {
 		logger.fine("Total collocations: " + totalCollocations);
 
 
-		
-		Collocations collocations = new Collocations(totalCollocations);
-		logger.fine("Done allocating memory");
+		// Get an initially empty collocations object
+		FrequentMatches collocations = 
+			new FrequentMatches(
+					getRanks(frequentPhrases), 
+					maxPhrases, 
+					totalCollocations);
 
 		LinkedList<Phrase> phrasesInWindow = new LinkedList<Phrase>();
 		LinkedList<Integer> positions = new LinkedList<Integer>();
+		
 		int sentenceNumber = 1;
 		int endOfSentence = suffixes.getSentencePosition(sentenceNumber);
 
-		// ccb - debugging
-		if (logger.isLoggable(Level.FINEST)) logger.finest("END OF SENT: " + endOfSentence);
-
-		// collocations maps Phrase->Phrase->a list of
-		// positions in corpus
-		//		Collocations collocations = new Collocations();
+		if (logger.isLoggable(Level.FINER)) logger.finer("END OF SENT: " + sentenceNumber + " at position " + endOfSentence);
 
 		Corpus corpus = suffixes.getCorpus();
 
 		// Start at the beginning of the corpus...
 		for (int currentPosition = 0, endOfCorpus=suffixes.size(); 
-		// ...and iterate through the end of the corpus
-		currentPosition < endOfCorpus; currentPosition++) {
+				// ...and iterate through the end of the corpus
+				currentPosition < endOfCorpus; currentPosition++) {
 
 			// Start with a phrase length of 1, at the current position...
 			for (int i = 1, endOfPhrase = currentPosition + i; 
-			// ...ensure the phrase length isn't too long...
-			i < maxPhraseLength  &&  
-			// ...and that the phrase doesn't extend past the end of the sentence...
-			endOfPhrase <= endOfSentence  &&  
-			// ...or past the end of the corpus
-			endOfPhrase <= endOfCorpus; 
-			// ...then increment the phrase length and end of phrase marker.
-			i++, endOfPhrase = currentPosition + i) {
+					// ...ensure the phrase length isn't too long...
+					i < maxPhraseLength  &&  
+					// ...and that the phrase doesn't extend past the end of the sentence...
+					endOfPhrase <= endOfSentence  &&  
+					// ...or past the end of the corpus
+					endOfPhrase <= endOfCorpus; 
+					// ...then increment the phrase length and end of phrase marker.
+					i++, endOfPhrase = currentPosition + i) {
 
 				// Get the current phrase
 				Phrase phrase = new ContiguousPhrase(currentPosition, endOfPhrase, corpus);
@@ -186,11 +184,8 @@ public class FrequentPhrases {
 				// empty the whole queue...
 				for (int i = 0, n=phrasesInWindow.size(); i < n; i++) {
 
-					//					Phrase phrase1 = phrasesInWindow.get(i);
-					//					int position1 = positions.get(i);
-
-					Phrase phrase1 = phrasesInWindow.removeFirst();
-					int position1 = positions.removeFirst();
+					Phrase phrase1 = phrasesInWindow.remove();
+					int position1 = positions.remove();
 
 					Iterator<Phrase> phraseIterator = phrasesInWindow.iterator();
 					Iterator<Integer> positionIterator = positions.iterator();
@@ -216,39 +211,37 @@ public class FrequentPhrases {
 
 				if (logger.isLoggable(Level.FINER)) logger.finer("END OF SENT: " + sentenceNumber + " at position " + endOfSentence);
 
-				//				break;
 			} // Done processing end of sentence.
 
 
 			// check whether the initial elements are
 			// outside the window size...
 			if (phrasesInWindow.size() > 0) {
-				int position1 = positions.get(0);
+				int position1 = positions.peek();//.get(0);
 				// deque the first element and
 				// calculate its collocations...
 				while ((position1+windowSize < currentPosition)
 						&& phrasesInWindow.size() > 0) {
 
 					if (logger.isLoggable(Level.FINEST)) logger.finest("OUTSIDE OF WINDOW: " + position1 + " " +  currentPosition + " " + windowSize);
-					//					LinkedList l = new LinkedList(); l.remove(0);
-					Phrase phrase1 = phrasesInWindow.removeFirst(); //phrasesInWindow.remove(0);
-					positions.removeFirst();
-					//					positions.remove(0);
+					
+					Phrase phrase1 = phrasesInWindow.remove();
+					positions.remove();
 
 					Iterator<Phrase> phraseIterator = phrasesInWindow.iterator();
 					Iterator<Integer> positionIterator = positions.iterator();
 
 					for (int j = 0, n=phrasesInWindow.size(); j < n; j++) {
 
-						Phrase phrase2 = phraseIterator.next();//phrasesInWindow.get(j);
-						int position2 = positionIterator.next();//positions.get(j);
+						Phrase phrase2 = phraseIterator.next();
+						int position2 = positionIterator.next();
 
 						collocations.add(phrase1, phrase2, position1, position2);
-						// ccb - debugging
+						
 						if (logger.isLoggable(Level.FINEST)) logger.finest("CASE2: " + phrase1 + "\t" + phrase2 + "\t" + position1 + "\t" + position2);
 					}
 					if (phrasesInWindow.size() > 0) {
-						position1 = positions.getFirst();//.get(0);
+						position1 = positions.peek();
 					} else {
 						position1 = currentPosition;
 					}
@@ -257,6 +250,9 @@ public class FrequentPhrases {
 
 		} // end iterating over positions in the corpus
 
+		if (logger.isLoggable(Level.FINE)) logger.fine("Sorting collocations");
+		collocations.histogramSort();
+		
 		return collocations;
 	}
 
@@ -277,7 +273,7 @@ public class FrequentPhrases {
 	 *                        phrases for them to still be
 	 *                        considered collocated
 	 */
-	private int countCollocations(
+	protected int countCollocations(
 			int maxPhraseLength,
 			int windowSize
 	) {
@@ -290,10 +286,6 @@ public class FrequentPhrases {
 
 		// ccb - debugging
 		if (logger.isLoggable(Level.FINEST)) logger.finest("END OF SENT: " + endOfSentence);
-
-		// collocations maps Phrase->Phrase->a list of
-		// positions in corpus
-		//		Collocations collocations = new Collocations();
 
 		Corpus corpus = suffixes.getCorpus();
 
@@ -345,9 +337,6 @@ public class FrequentPhrases {
 				// empty the whole queue...
 				for (int i = 0, n=phrasesInWindow.size(); i < n; i++) {
 
-					//					Phrase phrase1 = phrasesInWindow.get(i);
-					//					int position1 = positions.get(i);
-
 					Phrase phrase1 = phrasesInWindow.removeFirst();
 					int position1 = positions.removeFirst();
 
@@ -356,8 +345,8 @@ public class FrequentPhrases {
 
 					for (int j = i+1; j < n; j++) {
 
-						Phrase phrase2 = phraseIterator.next();//phrasesInWindow.get(j);
-						int position2 = positionIterator.next();//positions.get(j);
+						Phrase phrase2 = phraseIterator.next();
+						int position2 = positionIterator.next();
 
 						if (logger.isLoggable(Level.FINEST)) logger.finest("CASE1: " + phrase1 + "\t" + phrase2 + "\t" + position1 + "\t" + position2);
 						count++;
@@ -375,7 +364,6 @@ public class FrequentPhrases {
 
 				if (logger.isLoggable(Level.FINER)) logger.finer("END OF SENT: " + sentenceNumber + " at position " + endOfSentence);
 
-				//				break;
 			} // Done processing end of sentence.
 
 
@@ -389,26 +377,24 @@ public class FrequentPhrases {
 						&& phrasesInWindow.size() > 0) {
 
 					if (logger.isLoggable(Level.FINEST)) logger.finest("OUTSIDE OF WINDOW: " + position1 + " " +  currentPosition + " " + windowSize);
-					//					LinkedList l = new LinkedList(); l.remove(0);
-					Phrase phrase1 = phrasesInWindow.removeFirst(); //phrasesInWindow.remove(0);
+					
+					Phrase phrase1 = phrasesInWindow.removeFirst();
 					positions.removeFirst();
-					//					positions.remove(0);
 
 					Iterator<Phrase> phraseIterator = phrasesInWindow.iterator();
 					Iterator<Integer> positionIterator = positions.iterator();
 
 					for (int j = 0, n=phrasesInWindow.size(); j < n; j++) {
 
-						Phrase phrase2 = phraseIterator.next();//phrasesInWindow.get(j);
-						int position2 = positionIterator.next();//positions.get(j);
+						Phrase phrase2 = phraseIterator.next();
+						int position2 = positionIterator.next();
 
 						count++;
-						//						collocations.add(phrase1, phrase2, position1, position2);
-						// ccb - debugging
+
 						if (logger.isLoggable(Level.FINEST)) logger.finest("CASE2: " + phrase1 + "\t" + phrase2 + "\t" + position1 + "\t" + position2);
 					}
 					if (phrasesInWindow.size() > 0) {
-						position1 = positions.getFirst();//.get(0);
+						position1 = positions.getFirst();
 					} else {
 						position1 = currentPosition;
 					}
@@ -459,20 +445,51 @@ public class FrequentPhrases {
 	//===============================================================
 
 	/**
+	 * Calculates the frequency ranks of the provided phrases.
+	 * <p>
+	 * The iteration order of the <code>frequentPhrases</code> parameter
+	 * is be used by this method to determine the rank of each phrase.
+	 * Specifically, the first phrase returned by the map's iterator is 
+	 * taken to be the most frequent phrase; the last phrase returned by the
+	 * map's iterator is taken to be the least frequent phrase.
+	 * 
+	 * @param frequentPhrases Map from phrase to 
+	 *                        frequency of that phrase in a corpus.
+	 * @return the frequency ranks of the provided phrases
+	 */
+	protected LinkedHashMap<Phrase,Short> getRanks(LinkedHashMap<Phrase,Integer> frequentPhrases) {
+		
+		logger.fine("Calculating ranks of frequent phrases");
+		
+		LinkedHashMap<Phrase,Short> ranks = new LinkedHashMap<Phrase,Short>(frequentPhrases.size());
+
+		short i=0;
+		for (Phrase phrase : frequentPhrases.keySet()) {
+			ranks.put(phrase, i++);
+		}
+		
+		logger.fine("Done calculating ranks");
+		
+		return ranks;
+	}
+	
+	/**
 	 * Calculates the most frequent phrases in the corpus.
-	 * Populates the phrases list with them, and the frequencies
-	 * list with their frequencies.  Allows a threshold to be
-	 * set for the minimum frequency to remember, as well as
-	 * the maximum number of phrases.
+	 * <p>
+	 * Allows a threshold to be set for the minimum frequency to remember, 
+	 * as well as the maximum number of phrases.
 	 *
-	 * @param phrases      a list to store the most frequent phrases; this object will be returned
-	 * @param frequencies  a list of the phrases frequencies
+	 * @param suffixes a suffix array for the corpus
 	 * @param minFrequency the minimum frequency required to
 	 *                     retain phrases
 	 * @param maxPhrases   the maximum number of phrases to return
-	 * @return the most frequent phrases (same object as the <code>phrases</code> parameter
+	 * @param maxPhraseLength the maximum phrase length to consider
+	 * 
+	 * @return A map from phrase to the number of times that phrase occurred in the corpus.
+	 *         The iteration order of the map will start with the most frequent phrase,
+	 *         and end with the least frequent calculated phrase.
 	 */
-	protected static LinkedHashMap<Phrase,Integer> getMostFrequentPhrases(
+	protected LinkedHashMap<Phrase,Integer> getMostFrequentPhrases(
 			Suffixes suffixes,
 			int minFrequency,
 			int maxPhrases,
@@ -730,319 +747,167 @@ public class FrequentPhrases {
 	 * which maps Phrase->Phrase->a list of tuples containing
 	 * the starting positions of the two phrases in the corpus.
 	 */
-	//	protected class Collocations extends HashMap<Phrase,HashMap<Phrase,ArrayList<int[]>>> {
-	protected class Collocations { //extends ArrayList<Integer> { //extends HashMap<Integer,ArrayList<int[]>>{
-
-		//		 ArrayList<Integer> list = new ArrayList<Integer>(); 
-		final int[] keys;
-		final int[] position1;
-		final int[] position2;
-		
-//		final Map<Phrase,Short> ranks;
-//		final short maxPhrases;
-		
-		public Collocations(int totalCollocations) {
-//				, Map<Phrase,Short> ranks, short maxPhrases) {
-			
-			logger.fine("Allocating " + ((int)(totalCollocations*4 / 1024.0 / 1024.0)) + "MB for collocation keys");
-			keys = new int[totalCollocations];
-			logger.fine("Allocating " + ((int)(totalCollocations*4 / 1024.0 / 1024.0)) + "MB for collocation position1");
-			position1 = new int[totalCollocations];
-			logger.fine("Allocating " + ((int)(totalCollocations*4 / 1024.0 / 1024.0)) + "MB for collocation position2");
-			position2 = new int[totalCollocations];
-			logger.fine("Done allocating memory for collocations data");
-//			this.ranks = ranks;
-//			this.maxPhrases = maxPhrases;
-		}
-
-		int counter = 0;
-
-		protected int getKey(Phrase phrase1, Phrase phrase2) {
-
-			short rank1 = ranks.get(phrase1);
-			short rank2 = ranks.get(phrase2);
-
-			int rank = rank1*maxPhrases + rank2;
-//			int rank  = (rank1 << 8);
-//			rank |=  rank2;
-
-			return rank;
-		}
-		
-		/**
-		 * Adds a collocated pair of phrases to this
-		 * container, along with their respective positions
-		 * in the corpus.
-		 */
-		protected void add(Phrase phrase1, Phrase phrase2, int position1, int position2) {
-
-
-			// check to make sure that the phrase2 isn't simply a subphrase of phrase1
-			if(position2-position1 >= phrase1.size()) {
-
-				int key = getKey(phrase1, phrase2);
-
-				this.keys[counter] = key;
-				this.position1[counter] = position1;
-				this.position2[counter] = position2;
-
-				counter++;
-			}
-		}
-
-		protected void histogramSort(int maxPhrases) {
-			int maxBuckets = maxPhrases*maxPhrases;
-		
-			logger.fine("Calculating histograms");
-//			Map<Integer,Integer> histogram = calculateHistogram(keys, maxBuckets);
-			int[] histogram = calculateHistogram(keys, maxBuckets);
-//			Map<Integer,Integer> offsets = new HashMap<Integer,Integer>(maxBuckets);
-			int[] offsets = new int[maxBuckets];
-//			Arrays.fill(offsets, 0);
-			
-			logger.fine("Calculating offsets");
-//			int counter = 0;
-			for (int key=0, counter=0; key<maxBuckets; key++) {
-				
-				offsets[key] = 0;
-				
-				int value = histogram[key];
-				histogram[key] = counter;
-				counter += value;
-				
-			}
-			
-//			for (int key : histogram.keySet()) {
+//	protected class FrequentMatchedPhrases implements Externalizable {
+//
+//		final int[] keys;
+//		final int[] position1;
+//		final int[] position2;
+//		
+//		int counter = 0;
+//		
+//		public FrequentMatchedPhrases(int totalCollocations) {
+//			
+//			logger.fine("Allocating " + ((int)(totalCollocations*4 / 1024.0 / 1024.0)) + "MB for collocation keys");
+//			keys = new int[totalCollocations];
+//			logger.fine("Allocating " + ((int)(totalCollocations*4 / 1024.0 / 1024.0)) + "MB for collocation position1");
+//			position1 = new int[totalCollocations];
+//			logger.fine("Allocating " + ((int)(totalCollocations*4 / 1024.0 / 1024.0)) + "MB for collocation position2");
+//			position2 = new int[totalCollocations];
+//			logger.fine("Done allocating memory for collocations data");
+//		}
+//
+//
+//		/**
+//		 * 
+//		 * @param phrase1
+//		 * @param phrase2
+//		 * @return
+//		 */
+//		protected int getKey(Phrase phrase1, Phrase phrase2) {
+//
+//			short rank1 = ranks.get(phrase1);
+//			short rank2 = ranks.get(phrase2);
+//
+//			int rank = rank1*maxPhrases + rank2;
+//
+//			return rank;
+//		}
+//		
+//		/**
+//		 * Adds a collocated pair of phrases to this
+//		 * container, along with their respective positions
+//		 * in the corpus.
+//		 */
+//		protected void add(Phrase phrase1, Phrase phrase2, int position1, int position2) {
+//
+//
+//			// check to make sure that the phrase2 isn't simply a subphrase of phrase1
+//			if(position2-position1 >= phrase1.size()) {
+//
+//				int key = getKey(phrase1, phrase2);
+//
+//				this.keys[counter] = key;
+//				this.position1[counter] = position1;
+//				this.position2[counter] = position2;
+//
+//				counter++;
+//			}
+//		}
+//
+//		protected void histogramSort(int maxPhrases) {
+//			int maxBuckets = maxPhrases*maxPhrases;
+//		
+//			logger.fine("Calculating histograms");
+//			int[] histogram = calculateHistogram(keys, maxBuckets);
+//
+//			if (logger.isLoggable(Level.FINEST)) logger.finest("Allocating memory for " + maxBuckets + " integers");
+//			int[] offsets = new int[maxBuckets];
+//			
+//			logger.fine("Calculating offsets");
+//			for (int key=0, counter=0; key<maxBuckets; key++) {
 //				
-//				int value = histogram.get(key);
-//				histogram.put(key, counter);
+//				offsets[key] = 0;
+//				
+//				int value = histogram[key];
+//				histogram[key] = counter;
 //				counter += value;
 //				
-//				offsets.put(key, 0);
 //			}
-			
-			logger.fine("Allocating temporary memory for keys: " + ((keys.length)*4/1024/1024) + "MB");
-			int[] tmpKeys = new int[keys.length];
-			logger.fine("Allocating temporary memory for position1: " + ((keys.length)*4/1024/1024) + "MB");
-			int[] tmpPosition1 = new int[keys.length];
-			logger.fine("Allocating temporary memory for position2: " + ((keys.length)*4/1024/1024) + "MB");
-			int[] tmpPosition2 = new int[keys.length];
-			
-			logger.fine("Placing data into buckets");
-			for (int i=0, n=keys.length; i < n; i++) {
-				
-				int key = keys[i];
-//				int offset = offsets.get(key);
-//				int location = histogram.get(key) + offset;
-				int offset = offsets[key]++;
-				int location = histogram[key] + offset;
-				
-				tmpKeys[location] = key;
-				tmpPosition1[location] = position1[i];
-				tmpPosition2[location] = position2[i];
-				
-//				offsets.put(key, offset+1);
-//				offsets[key] += 1;
-			}
-			
-			logger.fine("Copying sorted keys to final location");
-			System.arraycopy(tmpKeys, 0, keys, 0, keys.length);
-			
-			logger.fine("Copying sorted position1 data to final location");
-			System.arraycopy(tmpPosition1, 0, position1, 0, keys.length);
-			
-			logger.fine("Copying sorted position1 data to final location");
-			System.arraycopy(tmpPosition2, 0, position2, 0, keys.length);
-			
-			// Try and help the garbage collector know we're done with these
-			histogram = null;
-			offsets = null;
-			tmpKeys = null;
-			tmpPosition1 = null;
-			tmpPosition2 = null;			
-			
-		}
-
-		protected int[] calculateHistogram(int[] keys, int maxBuckets) {
-//		protected Map<Integer,Integer> calculateHistogram(int[] keys, int maxBuckets) {
-//			Map<Integer,Integer> histogram = new HashMap<Integer,Integer>(maxBuckets);
-			int[] histogram = new int[maxBuckets];
-			Arrays.fill(histogram, 0);
-			
-			for (int key : keys) {
-				
-//				int count = (histogram.containsKey(keys)) ? histogram.get(key) : 0;
-				
-//				histogram.put(key, ++count);
-				histogram[key] += 1;
-			}
-			
-			return histogram;
-		}
-		
-//		protected void quickSort() {
-//			quickSort(0, keys.length-1);
+//			
+//			
+//			if (logger.isLoggable(Level.FINE)) logger.fine("Allocating temporary memory for keys: " + ((keys.length)*4/1024/1024) + "MB");
+//			int[] tmpKeys = new int[keys.length];
+//			if (logger.isLoggable(Level.FINE)) logger.fine("Allocating temporary memory for position1: " + ((keys.length)*4/1024/1024) + "MB");
+//			int[] tmpPosition1 = new int[keys.length];
+//			if (logger.isLoggable(Level.FINE)) logger.fine("Allocating temporary memory for position2: " + ((keys.length)*4/1024/1024) + "MB");
+//			int[] tmpPosition2 = new int[keys.length];
+//			
+//			if (logger.isLoggable(Level.FINE)) logger.fine("Placing data into buckets");
+//			for (int i=0, n=keys.length; i < n; i++) {
+//				
+//				int key = keys[i];
+//				int offset = offsets[key]++;
+//				int location = histogram[key] + offset;
+//				
+//				tmpKeys[location] = key;
+//				tmpPosition1[location] = position1[i];
+//				tmpPosition2[location] = position2[i];
+//				
+//			}
+//			
+//			logger.fine("Copying sorted keys to final location");
+//			System.arraycopy(tmpKeys, 0, keys, 0, keys.length);
+//			
+//			logger.fine("Copying sorted position1 data to final location");
+//			System.arraycopy(tmpPosition1, 0, position1, 0, keys.length);
+//			
+//			logger.fine("Copying sorted position1 data to final location");
+//			System.arraycopy(tmpPosition2, 0, position2, 0, keys.length);
+//			
+//			// Try and help the garbage collector know we're done with these
+//			histogram = null;
+//			offsets = null;
+//			tmpKeys = null;
+//			tmpPosition1 = null;
+//			tmpPosition2 = null;			
+//			
 //		}
 //
-//		private void quickSort(int left, int right) {
+//		
+//		/**
+//		 * Calculate how many times each key occurred.
+//		 * 
+//		 * @param keys
+//		 * @param maxBuckets
+//		 * @return
+//		 */
+//		int[] calculateHistogram(int[] keys, int maxBuckets) {
 //
-//			int pivot = keys[left];
-//			int pivotPosition1 = position1[left];
-//			int pivotPosition2 = position2[left];
+//			int[] histogram = new int[maxBuckets];
+//			Arrays.fill(histogram, 0);
 //			
-//			int oldLeft = left;
-//			int oldRight = right;
-//
-//			while (left < right) {
-//
-//				while ((keys[right] >= pivot) && (left < right)) {
-//					right--;
-//				}
-//
-//				if (left != right) {
-//					keys[left] = keys[right];
-//					position1[left] = position1[right];
-//					position2[left] = position2[right];
-//					left++;
-//				}
+//			for (int key : keys) {
 //				
-//				while ((keys[left] <= pivot) && (left < right)) {
-//					left++;
-//				}
-//				
-//				if (left != right) {
-//					keys[right] = keys[left];
-//					position1[right] = position1[left];
-//					position2[right] = position2[left];
-//					right--;
-//				}
-//			}
-//			
-//			keys[left] = pivot;
-//			position1[left] = pivotPosition1;
-//			position2[left] = pivotPosition2;
-//			
-//			pivot = left;
-//			left = oldLeft;
-//			right = oldRight;
-//			
-//			if (left < pivot) {
-//				quickSort(left, pivot-1);
-//			}
-//			
-//			if (right > pivot) {
-//				quickSort(pivot+1, right);
-//			}
+//				histogram[key] += 1;
 //
-//
+//			}
+//			
+//			return histogram;
 //		}
-
-
-
-		//			/**
-		//			 * Adds a collocated pair of phrases to this
-		//			 * container, along with their respective positions
-		//			 * in the corpus.
-		//			 */
-		//			protected void add(Phrase phrase1, Phrase phrase2, int position1, int position2) {
-		//				// check to make sure that the phrase2 isn't simply a subphrase of phrase1
-		//				if(position2-position1 >= phrase1.size()) {
-		//					int[] position = new int[2];
-		//					position[0] = position1;
-		//					position[1] = position2;
-		//					
-		//					int key = getKey(phrase1, phrase2);
-		//					
-		//					// use the second phrase as a key
-		//					ArrayList<int[]> positions = get(key);
-		//					// if we don't have any instances of the second phrase collocating with first phrase,
-		//					// then initialize a new list of positions for it...
-		//					if(positions == null) {
-		//						positions = new ArrayList<int[]>();
-		//						this.put(key, positions);
-		//					}
-		//					
-		//					// add everything to their respective containers
-		//					positions.add(position);
-		//
-		//				}
-		//			}
-
-
-		//		/**
-		//		 * Adds a collocated pair of phrases to this
-		//		 * container, along with their respective positions
-		//		 * in the corpus.
-		//		 */
-		//		protected void add(Phrase phrase1, Phrase phrase2, int position1, int position2) {
-		//			// check to make sure that the phrase2 isn't simply a subphrase of phrase1
-		//			if(position2-position1 >= phrase1.size()) {
-		//				int[] position = new int[2];
-		//				position[0] = position1;
-		//				position[1] = position2;
-		//				
-		//				// use the first phrase as a key
-		//				HashMap<Phrase,ArrayList<int[]>> phrase2ToPositionsMap = this.get(phrase1);
-		//				// if we don't have any previous instances of the first phrase, 
-		//				// then initialize a new map for it...
-		//				if(phrase2ToPositionsMap == null) {
-		//					phrase2ToPositionsMap = new HashMap<Phrase,ArrayList<int[]>>();
-		//				}
-		//				
-		//				// use the second phrase as a key
-		//				ArrayList<int[]> positions = phrase2ToPositionsMap.get(phrase2);
-		//				// if we don't have any instances of the second phrase collocating with first phrase,
-		//				// then initialize a new list of positions for it...
-		//				if(positions == null) {
-		//					positions = new ArrayList<int[]>();
-		//				}
-		//				
-		//				// add everything to their respective containers
-		//				positions.add(position);
-		//				phrase2ToPositionsMap.put(phrase2, positions);
-		//				this.put(phrase1, phrase2ToPositionsMap);
-		//			}
-		//		}
-
-
-		//		/**
-		//		 * Gets the list of positions for a pair of phrases
-		//		 */
-		//		protected ArrayList<int[]> getCollocations(Phrase phrase1, Phrase phrase2) {
-		//			// use the first phrase as a key
-		//			HashMap<Phrase,ArrayList<int[]>> phrase2ToPositionsMap = this.get(phrase1);
-		//
-		//			// if we don't have any instances of the first phrase, return an empty list...
-		//			if(phrase2ToPositionsMap == null) return new ArrayList<int[]>();
-		//			
-		//			// use the second phrase as a key
-		//			ArrayList<int[]> positions = phrase2ToPositionsMap.get(phrase2);
-		//			if(positions == null) {
-		//				// if we don't have any collocations for the pair of phrases, return an empty list...
-		//				return new ArrayList<int[]>();
-		//			} else {
-		//				return positions;
-		//			}
-		//		}
-		//		
-		//		public String toString() {
-		//			
-		//			String str = "";
-		//			Iterator<Phrase> it = keySet().iterator();
-		//			while(it.hasNext()) {
-		//				Phrase phrase1 = it.next();
-		//				HashMap<Phrase,ArrayList<int[]>> phrase2ToPositionsMap = this.get(phrase1);
-		//				Iterator<Phrase> jt = phrase2ToPositionsMap.keySet().iterator();
-		//				while(jt.hasNext()) {
-		//					Phrase phrase2 = jt.next();
-		//					ArrayList<int[]> positions = phrase2ToPositionsMap.get(phrase2);
-		//					str += phrase1 + "\t" + phrase2 + "\t(" + positions.size() + ")\n";
-		//				}
-		//			}
-		//			return str;
-		//			
-		//		}
-	}
+//
+//		/**
+//		 * Not supported; throws an UnsupportedOperationException.
+//		 * 
+//		 * @throws UnsupportedOperationException
+//		 */
+//		public void readExternal(ObjectInput in) throws IOException,
+//				ClassNotFoundException {
+//			
+//			throw new UnsupportedOperationException();
+//			
+//		}
+//
+//		/**
+//		 * Write the contents of this class as binary data to an output stream.
+//		 * 
+//		 * @param out
+//		 */
+//		public void writeExternal(ObjectOutput out) throws IOException {
+//			// TODO Auto-generated method stub
+//			
+//		}
+//		
+//	}
 
 	public static void main(String[] args) throws IOException, ClassNotFoundException {
 
@@ -1109,20 +974,14 @@ public class FrequentPhrases {
 
 
 		logger.info("Calculating collocations for most frequent phrases");
-		Collocations collocations = frequentPhrases.getCollocations(maxPhraseLength, windowSize);
+		FrequentMatches matches = frequentPhrases.getCollocations(maxPhraseLength, windowSize);
 
-//		logger.info("Clearing memory");
-//		symbolTable = null;
-//		corpusArray = null;
-//		suffixArray = null;
-//		frequentPhrases = null;
-//		System.gc();
 		
-		logger.info("Sorting collocations");
-		collocations.histogramSort(maxPhrases);
+
+//		matches.histogramSort(maxPhrases);
 		
 		logger.info("Printing collocations for most frequent phrases");		
-		logger.info("Total collocations: " + collocations.counter);
+		logger.info("Total collocations: " + matches.counter);
 		//		for (int i=0, n=collocations.size(); i<n; i+=3) {
 		//			
 		//			int key = collocations.get(i);

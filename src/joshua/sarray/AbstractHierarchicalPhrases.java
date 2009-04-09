@@ -59,10 +59,10 @@ public abstract class AbstractHierarchicalPhrases implements
 		int m_a_alphaTerminalSequenceLengths = m_a_alpha.getNumberOfTerminalSequences();//.terminalSequenceLengths.length;
 		int m_alpha_bTerminalSequenceLengths = m_alpha_b.getNumberOfTerminalSequences();//.terminalSequenceLengths.length;
 		
-		boolean m_a_alpha_startsWithNonterminal = m_a_alpha.patternStartsWithNonterminal();
-		boolean m_a_alpha_endsWithNonterminal = m_a_alpha.patternEndsWithNonterminal();
-		boolean m_alpha_b_startsWithNonterminal = m_alpha_b.patternStartsWithNonterminal();
-		boolean m_alpha_b_endsWithNonterminal = m_alpha_b.patternEndsWithNonterminal();		
+		boolean m_a_alpha_startsWithNonterminal = m_a_alpha.startsWithNonterminal();
+		boolean m_a_alpha_endsWithNonterminal = m_a_alpha.endsWithNonterminal();
+		boolean m_alpha_b_startsWithNonterminal = m_alpha_b.startsWithNonterminal();
+		boolean m_alpha_b_endsWithNonterminal = m_alpha_b.endsWithNonterminal();		
 		
 		// Does the prefix (m_a_alpha) overlap with
 		//      the suffix (m_alpha_b) on any words?
@@ -70,8 +70,8 @@ public abstract class AbstractHierarchicalPhrases implements
 		// we assume that the nonterminal symbols will be denoted with negative numbers
 		if (m_a_alpha_endsWithNonterminal && 
 				m_alpha_b_startsWithNonterminal && 
-				m_a_alpha.getArity()==1 &&
-				m_alpha_b.getArity()==1 &&
+				m_a_alpha.arity()==1 &&
+				m_alpha_b.arity()==1 &&
 				m_a_alpha.getTerminalSequenceLength(0)==1 &&
 				m_alpha_b.getTerminalSequenceLength(0)==1)
 			matchesOverlap = false;
@@ -90,7 +90,7 @@ public abstract class AbstractHierarchicalPhrases implements
 			// If the m_alpha_b pattern ends with a nonterminal
 			if (m_alpha_b_endsWithNonterminal || 
 					// ...or if the m_alpha_b pattern ends with two terminals
-					m_alpha_b.patternEndsWithTwoTerminals()) {
+					m_alpha_b.endsWithTwoTerminals()) {
 
 				m_alpha_b_prefix_end = m_alpha_b_prefix_start + m_alpha_bTerminalSequenceLengths;
 
@@ -112,7 +112,7 @@ public abstract class AbstractHierarchicalPhrases implements
 				m_a_alpha_suffix_start = i*m_a_alphaTerminalSequenceLengths;
 				m_a_alpha_suffix_end = m_a_alpha_suffix_start + m_a_alphaTerminalSequenceLengths;
 				increment_m_a_alpha_suffix_start = false;
-			} else if (m_a_alpha.patternSecondTokenIsTerminal()) {
+			} else if (m_a_alpha.secondTokenIsTerminal()) {
 				// Then the m_a_alpha pattern starts with two terminals
 				m_a_alphaExtra = 0;
 				m_a_alpha_suffix_start = i*m_a_alphaTerminalSequenceLengths;
@@ -206,7 +206,7 @@ public abstract class AbstractHierarchicalPhrases implements
 	 */
 //	protected static void partiallyConstruct(Pattern pattern, MatchedHierarchicalPhrases M_a_alpha, int i, MatchedHierarchicalPhrases M_alpha_b, int j, List<Integer> list) {
 	protected static void partiallyConstruct(MatchedHierarchicalPhrases M_a_alpha, int i, MatchedHierarchicalPhrases M_alpha_b, int j, List<Integer> list) {
-		boolean prefixEndsWithNonterminal = M_a_alpha.patternEndsWithNonterminal();
+		boolean prefixEndsWithNonterminal = M_a_alpha.endsWithNonterminal();
 		
 		// Get all start positions for the prefix phrase, and append them to the running list
 		{

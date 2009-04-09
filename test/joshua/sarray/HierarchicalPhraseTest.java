@@ -73,7 +73,7 @@ public class HierarchicalPhraseTest {
 		HierarchicalPhrases phrases =
 			new HierarchicalPhrases(pattern, terminalSequenceStartIndices, sentenceNumbers);
 		
-		int arity = phrases.getArity();
+		int arity = phrases.arity();
 		int n = phrases.getNumberOfTerminalSequences();
 		
 		Assert.assertEquals(arity, 0);

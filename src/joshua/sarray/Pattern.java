@@ -35,7 +35,7 @@ import joshua.util.sentence.Phrase;
  * @author Lane Schwartz
  * @version $LastChangedDate:2008-09-18 12:47:23 -0500 (Thu, 18 Sep 2008) $
  */
-public class Pattern extends BasicPhrase implements Externalizable {
+public class Pattern extends BasicPhrase implements PatternFormat, Externalizable {
 
 //===============================================================
 // Member variables

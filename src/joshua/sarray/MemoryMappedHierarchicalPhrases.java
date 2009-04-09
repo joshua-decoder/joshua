@@ -10,7 +10,7 @@ public class MemoryMappedHierarchicalPhrases implements
 		return false;
 	}
 
-	public int getArity() {
+	public int arity() {
 		// TODO Auto-generated method stub
 		return 0;
 	}
@@ -70,22 +70,22 @@ public class MemoryMappedHierarchicalPhrases implements
 		return false;
 	}
 
-	public boolean patternEndsWithNonterminal() {
+	public boolean endsWithNonterminal() {
 		// TODO Auto-generated method stub
 		return false;
 	}
 
-	public boolean patternEndsWithTwoTerminals() {
+	public boolean endsWithTwoTerminals() {
 		// TODO Auto-generated method stub
 		return false;
 	}
 
-	public boolean patternSecondTokenIsTerminal() {
+	public boolean secondTokenIsTerminal() {
 		// TODO Auto-generated method stub
 		return false;
 	}
 
-	public boolean patternStartsWithNonterminal() {
+	public boolean startsWithNonterminal() {
 		// TODO Auto-generated method stub
 		return false;
 	}

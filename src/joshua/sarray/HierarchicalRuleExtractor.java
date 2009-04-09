@@ -236,7 +236,7 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 		
 		// Construct a pattern for the trivial case where there are no nonterminals
 //		if (sourcePhrases.pattern.arity == 0) {
-		if (sourcePhrases.getArity() == 0) {
+		if (sourcePhrases.arity() == 0) {
 
 			if (sourceSpan.size() > this.maxPhraseLength) {
 				
@@ -451,7 +451,7 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 		
 		// Case 1:  If sample !startsWithNT && !endsWithNT
 //		if (!sourcePhrase.startsWithNonterminal() && !sourcePhrase.endsWithNonterminal()) {
-		if (!sourcePhrase.patternStartsWithNonterminal() && !sourcePhrase.patternEndsWithNonterminal()) {
+		if (!sourcePhrase.startsWithNonterminal() && !sourcePhrase.endsWithNonterminal()) {
 			
 			if (logger.isLoggable(Level.FINER)) logger.finer("Case 1: Source phrase !startsWithNT && !endsWithNT");
 			
@@ -462,7 +462,7 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 			
 			// If target span and source span are consistent
 			//if (targetSpan!=null) {
-			if (targetSpan!=null && targetSpan.size()>=sourcePhrase.getArity()+1 && targetSpan.size()<=maxPhraseSpan) {
+			if (targetSpan!=null && targetSpan.size()>=sourcePhrase.arity()+1 && targetSpan.size()<=maxPhraseSpan) {
 				
 				// Construct a translation
 				Pattern translation = constructTranslation(sourcePhrase, sourcePhraseIndex, sourceSpan, targetSpan, false, false);
@@ -482,7 +482,7 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 		}
 		
 		// Case 2: If sourcePhrase startsWithNT && !endsWithNT
-		else if (sourcePhrase.patternStartsWithNonterminal() && !sourcePhrase.patternEndsWithNonterminal()) {
+		else if (sourcePhrase.startsWithNonterminal() && !sourcePhrase.endsWithNonterminal()) {
 			
 			if (logger.isLoggable(Level.FINER)) logger.finer("Case 2: Source phrase startsWithNT && !endsWithNT");
 			
@@ -506,7 +506,7 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 
 				// If target span and source span are consistent
 				//if (targetSpan!=null) {
-				if (targetSpan!=null && targetSpan.size()>=sourcePhrase.getArity()+1 && targetSpan.size()<=maxPhraseSpan) {
+				if (targetSpan!=null && targetSpan.size()>=sourcePhrase.arity()+1 && targetSpan.size()<=maxPhraseSpan) {
 
 					// Construct a translation
 					Pattern translation = constructTranslation(sourcePhrase, sourcePhraseIndex, possibleSourceSpan, targetSpan, true, false);
@@ -527,7 +527,7 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 		}
 		
 		// Case 3: If sourcePhrase !startsWithNT && endsWithNT
-		else if (!sourcePhrase.patternStartsWithNonterminal() && sourcePhrase.patternEndsWithNonterminal()) {
+		else if (!sourcePhrase.startsWithNonterminal() && sourcePhrase.endsWithNonterminal()) {
 			
 			if (logger.isLoggable(Level.FINER)) logger.finer("Case 3: Source phrase !startsWithNT && endsWithNT");
 			
@@ -555,7 +555,7 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 
 				// If target span and source span are consistent
 				//if (targetSpan!=null) {
-				if (targetSpan!=null && targetSpan.size()>=sourcePhrase.getArity()+1 && targetSpan.size()<=maxPhraseSpan) {
+				if (targetSpan!=null && targetSpan.size()>=sourcePhrase.arity()+1 && targetSpan.size()<=maxPhraseSpan) {
 
 					// Construct a translation
 					Pattern translation = constructTranslation(sourcePhrase, sourcePhraseIndex, possibleSourceSpan, targetSpan, false, true);
@@ -576,7 +576,7 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 		}
 		
 		// Case 4: If sourcePhrase startsWithNT && endsWithNT
-		else if (sourcePhrase.patternStartsWithNonterminal() && sourcePhrase.patternEndsWithNonterminal()) {
+		else if (sourcePhrase.startsWithNonterminal() && sourcePhrase.endsWithNonterminal()) {
 			
 			if (logger.isLoggable(Level.FINER)) logger.finer("Case 4: Source phrase startsWithNT && endsWithNT");
 			
@@ -606,7 +606,7 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 
 				// If target span and source span are consistent
 				//if (targetSpan!=null) {
-				if (targetSpan!=null && targetSpan.size()>=sourcePhrase.getArity()+1 && targetSpan.size()<=maxPhraseSpan) {
+				if (targetSpan!=null && targetSpan.size()>=sourcePhrase.arity()+1 && targetSpan.size()<=maxPhraseSpan) {
 
 					// Construct a translation
 					Pattern translation = constructTranslation(sourcePhrase, sourcePhraseIndex, possibleSourceSpan, targetSpan, true, true);
