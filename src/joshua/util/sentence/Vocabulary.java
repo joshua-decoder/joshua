@@ -171,7 +171,7 @@ public class Vocabulary extends AbstractSymbolTable implements Iterable<String>,
 			BasicPhrase sentence = new BasicPhrase(line, vocab);
 			numWords += sentence.size();
 			numSentences++;
-			if(logger.isLoggable(Level.INFO) && numSentences % 10000==0) logger.info(""+numWords);
+			if(logger.isLoggable(Level.FINE) && numSentences % 10000==0) logger.fine(""+numWords);
 		}
 		
 		
