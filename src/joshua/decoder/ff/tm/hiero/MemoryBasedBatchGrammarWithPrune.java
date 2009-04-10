@@ -18,7 +18,6 @@
 package joshua.decoder.ff.tm.hiero;
 
 import joshua.corpus.SymbolTable;
-import joshua.decoder.ff.FeatureFunctionList;
 import joshua.decoder.ff.tm.BilingualRule;
 
 import java.io.IOException;
@@ -59,11 +58,10 @@ public class MemoryBasedBatchGrammarWithPrune extends MemoryBasedBatchGrammar {
 			String formatKeyword,
 			String grammarFile,
 			SymbolTable symbolTable, 
-			FeatureFunctionList features,
 			String defaultOwner, String defaultLHSSymbol, String goalSymbol, 
 			int spanLimit) throws IOException 
 	{
-		super(formatKeyword, grammarFile, symbolTable, features, 
+		super(formatKeyword, grammarFile, symbolTable, 
 				defaultOwner, defaultLHSSymbol, goalSymbol, spanLimit);
 	}
 	

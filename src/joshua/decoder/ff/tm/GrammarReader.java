@@ -6,7 +6,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import joshua.corpus.SymbolTable;
-import joshua.decoder.ff.FeatureFunctionList;
 import joshua.util.io.LineReader;
 
 /**
@@ -26,7 +25,6 @@ public abstract class GrammarReader<R extends Rule> implements
 	protected static String description;
 
 	protected SymbolTable symbolTable;
-	protected int[] features;
 
 	protected String fileName;
 	protected LineReader reader;
@@ -39,17 +37,12 @@ public abstract class GrammarReader<R extends Rule> implements
 	public GrammarReader() {
 		this.symbolTable = null;
 		this.fileName = null;
-		this.features = new int[0];
 	}
 	
-	public GrammarReader(String fileName, SymbolTable symbolTable,
-			FeatureFunctionList featureList) 
+	public GrammarReader(String fileName, SymbolTable symbolTable) 
 	{
 		this.fileName = fileName;
 		this.symbolTable = symbolTable;
-
-		if (featureList != null)
-			this.features = featureList.getColumns();
 	}
 
 	public void initialize() {

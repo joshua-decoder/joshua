@@ -19,7 +19,6 @@ package joshua.decoder;
 
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.ArityPhrasePenaltyFF;
-import joshua.decoder.ff.FeatureFunctionList;
 import joshua.decoder.ff.PhraseModelFF;
 import joshua.decoder.ff.WordPenaltyFF;
 import joshua.decoder.ff.SourceLatticeArcCostFF;
@@ -77,7 +76,7 @@ public class JoshuaDecoder {
 	// The DecoderFactory is the main thread of decoding
 	private DecoderFactory             decoderFactory;
 	private ArrayList<GrammarFactory>  grammarFactories;
-	private FeatureFunctionList        featureFunctions;
+	private ArrayList<FeatureFunction>        featureFunctions;
 	private NGramLanguageModel         languageModel;
 	
 	/**
@@ -339,7 +338,6 @@ public class JoshuaDecoder {
 					JoshuaConfiguration.tm_format,
 					JoshuaConfiguration.glue_file,
 					this.symbolTable,
-					this.featureFunctions,
 					JoshuaConfiguration.begin_mono_owner,
 					JoshuaConfiguration.default_non_terminal,
 					JoshuaConfiguration.goal_symbol,
@@ -361,7 +359,6 @@ public class JoshuaDecoder {
 					JoshuaConfiguration.tm_format,
 					JoshuaConfiguration.tm_file,
 					this.symbolTable,
-					this.featureFunctions,
 					JoshuaConfiguration.phrase_owner,
 					JoshuaConfiguration.default_non_terminal,
 					JoshuaConfiguration.goal_symbol,
@@ -495,7 +492,7 @@ public class JoshuaDecoder {
 	// BUG: why are we re-reading the configFile? JoshuaConfiguration should do this. (Needs: languageModel, symbolTable, (logger?); Sets: featureFunctions)
 	private void initializeFeatureFunctions(String configFile)
 	throws IOException {
-		this.featureFunctions = new FeatureFunctionList();
+		this.featureFunctions = new ArrayList<FeatureFunction>();
 		
 		LineReader reader = new LineReader(configFile);
 		try { for (String line : reader) {
@@ -535,7 +532,7 @@ public class JoshuaDecoder {
 					int    owner  = this.symbolTable.addTerminal(fds[1]);
 					int    column = Integer.parseInt(fds[2].trim());
 					double weight = Double.parseDouble(fds[3].trim());
-					this.featureFunctions.cachePhraseModelFF(
+					this.featureFunctions.add(
 						new PhraseModelFF(
 							this.featureFunctions.size(),
 							weight, owner, column));
@@ -573,8 +570,7 @@ public class JoshuaDecoder {
 					System.exit(1);
 				}
 			}
-		} } finally { 
-			featureFunctions.collapseColumnIndices();			
+		} } finally { 			
 			reader.close(); 
 		}
 	}

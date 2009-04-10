@@ -157,7 +157,7 @@ public class DiskHyperGraph {
 			: FileUtility.getWriteFileStream(itemsFile);
 		
 		if (ruleReader == null)
-			ruleReader = new DiskHyperGraphFormatReader(null, this.symbolTable, null);
+			ruleReader = new DiskHyperGraphFormatReader(null, this.symbolTable);
 			
 		if (useForestPruning) {
 			this.pruner = new HyperGraphPruning(
@@ -182,7 +182,7 @@ public class DiskHyperGraph {
 		this.associatedGrammar.clear();
 		
 		this.ruleReader = 
-			new DiskHyperGraphFormatReader(rulesFile, this.symbolTable, null);
+			new DiskHyperGraphFormatReader(rulesFile, this.symbolTable);
 			
 		
 		for (Rule rule : ruleReader) {

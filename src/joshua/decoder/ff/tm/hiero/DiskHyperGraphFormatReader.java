@@ -3,7 +3,6 @@ package joshua.decoder.ff.tm.hiero;
 import java.util.logging.Logger;
 
 import joshua.corpus.SymbolTable;
-import joshua.decoder.ff.FeatureFunctionList;
 import joshua.decoder.ff.tm.BilingualRule;
 import joshua.decoder.ff.tm.GrammarReader;
 
@@ -22,9 +21,8 @@ public class DiskHyperGraphFormatReader extends GrammarReader<BilingualRule> {
 		description = "Joshua hypergraph rule file format";
 	}
 	
-	public DiskHyperGraphFormatReader(String grammarFile, SymbolTable symbolTable,
-			FeatureFunctionList features) {
-		super(grammarFile, symbolTable, null);
+	public DiskHyperGraphFormatReader(String grammarFile, SymbolTable symbolTable) {
+		super(grammarFile, symbolTable);
 	}
 
 	@Override

@@ -3,7 +3,6 @@ package joshua.decoder.ff.tm.hiero;
 import java.util.logging.Logger;
 
 import joshua.corpus.SymbolTable;
-import joshua.decoder.ff.FeatureFunctionList;
 import joshua.decoder.ff.tm.BilingualRule;
 import joshua.decoder.ff.tm.GrammarReader;
 
@@ -19,9 +18,8 @@ public class HieroFormatReader extends GrammarReader<BilingualRule> {
 		description = "Original Hiero format";
 	}
 	
-	public HieroFormatReader(String grammarFile, SymbolTable vocabulary,
-			FeatureFunctionList features) {
-		super(grammarFile, vocabulary, features);
+	public HieroFormatReader(String grammarFile, SymbolTable vocabulary) {
+		super(grammarFile, vocabulary);
 	}
 
 	@Override
@@ -59,10 +57,11 @@ public class HieroFormatReader extends GrammarReader<BilingualRule> {
 
 		// feature scores
 		String[] scores = fields[3].split("\\s+");
-		float[] feature_scores = new float[this.features.length];
+		float[] feature_scores = new float[scores.length];
+		
 		int i = 0;
-		for (int column : this.features) {
-			feature_scores[i++] = Float.parseFloat(scores[column]);
+		for (String score : scores) {
+			feature_scores[i++] = Float.parseFloat(score);
 		}
 
 		return new BilingualRule(lhs, french, english, feature_scores, arity);

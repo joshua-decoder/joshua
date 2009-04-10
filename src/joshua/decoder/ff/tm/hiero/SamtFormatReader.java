@@ -1,7 +1,6 @@
 package joshua.decoder.ff.tm.hiero;
 
 import joshua.corpus.SymbolTable;
-import joshua.decoder.ff.FeatureFunctionList;
 import joshua.decoder.ff.tm.BilingualRule;
 import joshua.decoder.ff.tm.GrammarReader;
 
@@ -14,9 +13,8 @@ public class SamtFormatReader extends GrammarReader<BilingualRule> {
 		description = "Original SAMT format";
 	}
 	
-	public SamtFormatReader(String grammarFile, SymbolTable vocabulary,
-			FeatureFunctionList features) {
-		super(grammarFile, vocabulary, features);
+	public SamtFormatReader(String grammarFile, SymbolTable vocabulary) {
+		super(grammarFile, vocabulary);
 	}
 
 	@Override

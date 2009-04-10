@@ -19,7 +19,6 @@ package joshua.decoder.ff.tm.hiero;
 
 
 import joshua.decoder.ff.FeatureFunction;
-import joshua.decoder.ff.FeatureFunctionList;
 import joshua.decoder.ff.tm.BatchGrammar;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.BilingualRule;
@@ -100,13 +99,12 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
 			String formatKeyword,
 			String grammarFile, 
 			SymbolTable symbolTable, 
-			FeatureFunctionList features,
 			String defaultOwner,
 			String defaultLHSSymbol,
 			String goalSymbol,
 			int span_limit) throws IOException 
 	{
-		this.modelReader = createReader(formatKeyword, grammarFile, symbolTable, features);
+		this.modelReader = createReader(formatKeyword, grammarFile, symbolTable);
 		
 		this.symbolTable = symbolTable;
 		this.defaultOwner  = this.symbolTable.addTerminal(defaultOwner);
@@ -115,7 +113,7 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
 		this.spanLimit     = span_limit;
 		
 		this.root = new MemoryBasedTrie();
-		createReader(formatKeyword, grammarFile, symbolTable, features);
+		
 		
 		//==== loading grammar
 		if (modelReader != null) {
@@ -124,18 +122,16 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
 				addRule(rule);
 		}
 
-		this.sortGrammar(features);		
 		this.print_grammar();
 	}
 	
 	protected GrammarReader<BilingualRule> createReader(String formatKeyword,
-			String grammarFile, SymbolTable symbolTable, 
-			FeatureFunctionList features) 
+			String grammarFile, SymbolTable symbolTable) 
 	{
 		if ("hiero".equals(formatKeyword)) {
-			return new HieroFormatReader(grammarFile, symbolTable, features);
+			return new HieroFormatReader(grammarFile, symbolTable);
 		} else if ("samt".equals(formatKeyword)) {
-			return new SamtFormatReader(grammarFile, symbolTable, features);
+			return new SamtFormatReader(grammarFile, symbolTable);
 		} else {
 			// TODO: throw something?
 			return null;
