@@ -104,7 +104,6 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
 			String goalSymbol,
 			int span_limit) throws IOException 
 	{
-		this.modelReader = createReader(formatKeyword, grammarFile, symbolTable);
 		
 		this.symbolTable = symbolTable;
 		this.defaultOwner  = this.symbolTable.addTerminal(defaultOwner);
@@ -114,8 +113,8 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
 		
 		this.root = new MemoryBasedTrie();
 		
-		
 		//==== loading grammar
+		this.modelReader = createReader(formatKeyword, grammarFile, symbolTable);
 		if (modelReader != null) {
 			modelReader.initialize();
 			for (BilingualRule rule : modelReader)

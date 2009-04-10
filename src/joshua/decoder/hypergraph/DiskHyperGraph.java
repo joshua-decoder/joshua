@@ -184,9 +184,11 @@ public class DiskHyperGraph {
 		this.ruleReader = 
 			new DiskHyperGraphFormatReader(rulesFile, this.symbolTable);
 			
-		
-		for (Rule rule : ruleReader) {
-			this.associatedGrammar.put(rule.getRuleID(), rule);
+		if (ruleReader != null) {
+			ruleReader.initialize();
+			for (Rule rule : ruleReader) {				
+				this.associatedGrammar.put(rule.getRuleID(), rule);
+			}
 		}
 	}
 	

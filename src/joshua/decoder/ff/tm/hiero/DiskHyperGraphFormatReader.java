@@ -15,7 +15,7 @@ public class DiskHyperGraphFormatReader extends GrammarReader<BilingualRule> {
 
 	static {
 		blockDelimiter = " -LZF- ";
-		fieldDelimiter = " ||| ";
+		fieldDelimiter = "\\s+\\|{3}\\s+";
 		nonTerminalRegEx = "^\\[[A-Z]+\\,[0-9]*\\]$";
 		nonTerminalCleanRegEx = "[\\[\\]\\,0-9]+";
 		description = "Joshua hypergraph rule file format";
@@ -28,10 +28,12 @@ public class DiskHyperGraphFormatReader extends GrammarReader<BilingualRule> {
 	@Override
 	protected BilingualRule parseLine(String line) {
 		// line format: ruleID owner RULE_TBL_SEP rule
+		//13137 pt -LZF- [X] ||| [X,1] a ||| [X,1] the ||| 1.6320 2.5629 0.7996
+
 		
 		String[] blocks = line.split(blockDelimiter);
 		if (blocks.length != 2) {
-			logger.severe("Rule line does not have four fields: " + line);
+			logger.severe("Rule line does not have two fields: " + line);
 		}
 		
 		String[] header = blocks[0].split("\\s+");
@@ -40,8 +42,9 @@ public class DiskHyperGraphFormatReader extends GrammarReader<BilingualRule> {
 		int owner = symbolTable.addTerminal(header[1]);
 		
 		
+		
 		String[] fields = blocks[1].split(fieldDelimiter);
-		if (fields.length < 3) {
+		if (fields.length < 4) {
 			logger.severe("Rule line does not have four fields: " + line);
 		}
 
@@ -73,6 +76,7 @@ public class DiskHyperGraphFormatReader extends GrammarReader<BilingualRule> {
 
 		// feature scores
 		String[] scores = fields[3].split("\\s+");
+		
 		float[] feature_scores = new float[scores.length];
 		for (int i = 0; i < scores.length; i++) {
 			feature_scores[i] = Float.parseFloat(scores[i]);
@@ -143,7 +147,6 @@ public class DiskHyperGraphFormatReader extends GrammarReader<BilingualRule> {
 		sb.append(symbolTable.getWords(rule.getFrench()));
 		sb.append(" ||| ");
 		sb.append(symbolTable.getWords(rule.getEnglish()));
-		sb.append(" |||");
 	
 		return sb.toString();
 	}
