@@ -97,7 +97,7 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
 	}
 	
 	/** 
-	 * Convenience method to get a lattice from ant int[]. 
+	 * Convenience method to get a lattice from an int[]. 
 	 * 
 	 * This method is useful because Java's generics won't
 	 * allow a primitive array to be passed as a generic array.

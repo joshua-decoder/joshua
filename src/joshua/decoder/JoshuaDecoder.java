@@ -1,5 +1,5 @@
 /* This file is part of the Joshua Machine Translation System.
- * 
+ *
  * Joshua is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as
  * published by the Free Software Foundation; either version 2.1
@@ -57,7 +57,7 @@ import java.util.logging.Logger;
  * this class implements:
  * (1) mainly initialize, and control the interaction with
  * JoshuaConfiguration and DecoderThread
- * 
+ *
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @author wren ng thornton <wren@users.sourceforge.net>
  * @version $LastChangedDate$
@@ -76,7 +76,7 @@ public class JoshuaDecoder {
 	// The DecoderFactory is the main thread of decoding
 	private DecoderFactory             decoderFactory;
 	private ArrayList<GrammarFactory>  grammarFactories;
-	private ArrayList<FeatureFunction>        featureFunctions;
+	private ArrayList<FeatureFunction> featureFunctions;
 	private NGramLanguageModel         languageModel;
 	
 	/**
@@ -345,7 +345,6 @@ public class JoshuaDecoder {
 	}
 	
 	
-	// TODO: these Patterns should probably be extracted out and compiled only once (either by us or by MemoryBasedBatchGrammar)
 	private void initializeTranslationGrammars(String tmFile)
 	throws IOException {
 		initializeGlueGrammar();
@@ -368,104 +367,100 @@ public class JoshuaDecoder {
 	}
 	
 	
-	private void initializeSuffixArrayGrammar() throws IOException, ClassNotFoundException {
+	private void initializeSuffixArrayGrammar()
+	throws IOException, ClassNotFoundException {
 		initializeGlueGrammar();
-		
 		
 		int maxCacheSize = JoshuaConfiguration.sa_rule_cache_size;
 		
-		String binarySourceVocabFileName = 
-			JoshuaConfiguration.sa_source + "." + JoshuaConfiguration.sa_vocab_suffix;
+		String binarySourceVocabFileName =
+			JoshuaConfiguration.sa_source + "." +
+			JoshuaConfiguration.sa_vocab_suffix;
 		
 		String binarySourceCorpusFileName =
-			JoshuaConfiguration.sa_source + "." + JoshuaConfiguration.sa_corpus_suffix;
+			JoshuaConfiguration.sa_source + "." +
+			JoshuaConfiguration.sa_corpus_suffix;
 		
 		String binarySourceSuffixesFileName =
-			JoshuaConfiguration.sa_target + "." + JoshuaConfiguration.sa_suffixes_suffix;
+			JoshuaConfiguration.sa_target + "." +
+			JoshuaConfiguration.sa_suffixes_suffix;
 		
 		
-		String binaryTargetVocabFileName = 
-			JoshuaConfiguration.sa_target + "." + JoshuaConfiguration.sa_vocab_suffix;
+		String binaryTargetVocabFileName =
+			JoshuaConfiguration.sa_target + "." +
+			JoshuaConfiguration.sa_vocab_suffix;
 		
 		String binaryTargetCorpusFileName =
-			JoshuaConfiguration.sa_target + "." + JoshuaConfiguration.sa_corpus_suffix;
+			JoshuaConfiguration.sa_target + "." +
+			JoshuaConfiguration.sa_corpus_suffix;
 		
 		String binaryTargetSuffixesFileName =
-			JoshuaConfiguration.sa_target + "." + JoshuaConfiguration.sa_suffixes_suffix;
+			JoshuaConfiguration.sa_target + "." +
+			JoshuaConfiguration.sa_suffixes_suffix;
 		
 		
-		
-		if (logger.isLoggable(Level.INFO)) 
-			logger.info(
-					"Reading source language vocabulary from " + 
-					binarySourceVocabFileName);
-		Vocabulary sourceVocab = new Vocabulary(); {
-			ObjectInput in = BinaryIn.vocabulary(binarySourceVocabFileName);
-			sourceVocab.readExternal(in);
-		}
+		if (logger.isLoggable(Level.INFO))
+			logger.info("Reading source language vocabulary from " +
+				binarySourceVocabFileName);
+		Vocabulary sourceVocab = new Vocabulary();
+		sourceVocab.readExternal(
+			BinaryIn.vocabulary(binarySourceVocabFileName));
 		
 		
-		if (logger.isLoggable(Level.INFO)) 
-			logger.info(
-					"Reading source language corpus from " + 
-					binarySourceCorpusFileName);
-		Corpus sourceCorpusArray = 
-			new MemoryMappedCorpusArray(sourceVocab, binarySourceCorpusFileName);
+		if (logger.isLoggable(Level.INFO))
+			logger.info("Reading source language corpus from " +
+				binarySourceCorpusFileName);
+		Corpus sourceCorpusArray =
+			new MemoryMappedCorpusArray(
+				sourceVocab, binarySourceCorpusFileName);
 		
 		
-		if (logger.isLoggable(Level.INFO)) 
-			logger.info(
-					"Reading source language suffix array from " + 
-					binarySourceSuffixesFileName);
-		Suffixes sourceSuffixArray = 
+		if (logger.isLoggable(Level.INFO))
+			logger.info("Reading source language suffix array from " +
+				binarySourceSuffixesFileName);
+		Suffixes sourceSuffixArray =
 			new MemoryMappedSuffixArray(
-					binarySourceSuffixesFileName, 
-					sourceCorpusArray, 
+					binarySourceSuffixesFileName,
+					sourceCorpusArray,
 					maxCacheSize);
 		
 		
+		if (logger.isLoggable(Level.INFO))
+			logger.info("Reading target language vocabulary from " +
+				binarySourceVocabFileName);
+		Vocabulary targetVocab = new Vocabulary();
+		sourceVocab.readExternal(
+			BinaryIn.vocabulary(binaryTargetVocabFileName));
 		
 		
-		if (logger.isLoggable(Level.INFO)) 
-			logger.info(
-					"Reading target language vocabulary from " + 
-					binarySourceVocabFileName);
-		Vocabulary targetVocab = new Vocabulary(); {
-			ObjectInput in = BinaryIn.vocabulary(binaryTargetVocabFileName);
-			sourceVocab.readExternal(in);
-		}
+		if (logger.isLoggable(Level.INFO))
+			logger.info("Reading target language corpus from " +
+				binaryTargetCorpusFileName);
+		Corpus targetCorpusArray =
+			new MemoryMappedCorpusArray(
+				targetVocab, binaryTargetCorpusFileName);
 		
 		
-		if (logger.isLoggable(Level.INFO)) 
-			logger.info(
-					"Reading target language corpus from " + 
-					binaryTargetCorpusFileName);
-		Corpus targetCorpusArray = 
-			new MemoryMappedCorpusArray(targetVocab, binaryTargetCorpusFileName);
-
-		
-		if (logger.isLoggable(Level.INFO)) 
-			logger.info(
-					"Reading target language suffix array from " + 
-					binaryTargetSuffixesFileName);
-		Suffixes targetSuffixArray = 
+		if (logger.isLoggable(Level.INFO))
+			logger.info("Reading target language suffix array from " +
+				binaryTargetSuffixesFileName);
+		Suffixes targetSuffixArray =
 			new MemoryMappedSuffixArray(
-					binaryTargetSuffixesFileName, 
-					targetCorpusArray, 
+					binaryTargetSuffixesFileName,
+					targetCorpusArray,
 					maxCacheSize);
 		
 		
 		String binaryAlignmentFileName = JoshuaConfiguration.sa_alignment;
-		if (logger.isLoggable(Level.INFO)) 
-			logger.info(
-					"Reading alignment grid data from " + 
-					binaryAlignmentFileName);
-		Alignments alignments = 
+		if (logger.isLoggable(Level.INFO))
+			logger.info("Reading alignment grid data from " +
+				binaryAlignmentFileName);
+		Alignments alignments =
 			new MemoryMappedAlignmentGrids(
-					binaryAlignmentFileName, 
-					sourceCorpusArray, 
+					binaryAlignmentFileName,
+					sourceCorpusArray,
 					targetCorpusArray);
-
+		
 		
 		LexicalProbabilities lexProbs = new SampledLexProbs(
 			JoshuaConfiguration.sa_lex_sample_size,
@@ -513,7 +508,7 @@ public class JoshuaDecoder {
 							this.featureFunctions.size(),
 							JoshuaConfiguration.g_lm_order,
 							this.symbolTable, this.languageModel, weight));
-					if (logger.isLoggable(Level.FINEST)) 
+					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format(
 							"Line: %s\nAdd LM, order: %d; weight: %.3f;",
 							line, JoshuaConfiguration.g_lm_order, weight));
@@ -536,7 +531,7 @@ public class JoshuaDecoder {
 						new PhraseModelFF(
 							this.featureFunctions.size(),
 							weight, owner, column));
-					if (logger.isLoggable(Level.FINEST)) 
+					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format(
 							"Process Line: %s\nAdd PhraseModel, owner: %s; column: %d; weight: %.3f",
 							line, owner, column, weight));
@@ -550,7 +545,7 @@ public class JoshuaDecoder {
 						new ArityPhrasePenaltyFF(
 							this.featureFunctions.size(),
 							weight, owner, startArity, endArity));
-					if (logger.isLoggable(Level.FINEST)) 
+					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format(
 							"Process Line: %s\nAdd ArityPhrasePenalty, owner: %s; startArity: %d; endArity: %d; weight: %.3f",
 							line, owner, startArity, endArity, weight));
@@ -560,7 +555,7 @@ public class JoshuaDecoder {
 					this.featureFunctions.add(
 						new WordPenaltyFF(
 							this.featureFunctions.size(), weight));
-					if (logger.isLoggable(Level.FINEST)) 
+					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format(
 							"Process Line: %s\nAdd WordPenalty, weight: %.3f",
 							line, weight));
@@ -570,8 +565,8 @@ public class JoshuaDecoder {
 					System.exit(1);
 				}
 			}
-		} } finally { 			
-			reader.close(); 
+		} } finally {
+			reader.close();
 		}
 	}
 	

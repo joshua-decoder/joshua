@@ -1,5 +1,5 @@
 /* This file is part of the Joshua Machine Translation System.
- * 
+ *
  * Joshua is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as
  * published by the Free Software Foundation; either version 2.1
@@ -32,19 +32,19 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * this class implements: 
+ * this class implements:
  *
  * (1) parallel decoding: split the test file, initiate DecoderThread, wait and merge the decoding results
  * (2) non-parallel decoding is a special case of parallel decoding
- * 
+ *
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate$
  */
 
 public class DecoderFactory {
 	private ArrayList<GrammarFactory> grammarFactories = null;
-	private boolean have_lm_model = false;
-	private ArrayList<FeatureFunction> p_l_feat_functions = null;
+	private boolean hasLanguageModel = false;
+	private ArrayList<FeatureFunction> featureFunctions = null;
 	
 	/**
 	 * Shared symbol table for source language terminals,
@@ -53,25 +53,30 @@ public class DecoderFactory {
 	 * It may be that separate tables should be maintained
 	 * for the source and target languages.
 	 */
-	private SymbolTable p_symbolTable = null;
+	private SymbolTable symbolTable = null;
 	
-	private DecoderThread[] parallel_threads;
+	private DecoderThread[] parallelThreads;
 	
-	private static final Logger logger = Logger.getLogger(DecoderFactory.class.getName());
-
-	public DecoderFactory(ArrayList<GrammarFactory> grammarFactories, boolean have_lm_model_, ArrayList<FeatureFunction> l_feat_functions, SymbolTable symbolTable){
+	private static final Logger logger =
+		Logger.getLogger(DecoderFactory.class.getName());
+	
+	
+	public DecoderFactory(ArrayList<GrammarFactory> grammarFactories, boolean hasLanguageModel, ArrayList<FeatureFunction> featureFunctions, SymbolTable symbolTable) {
 		this.grammarFactories = grammarFactories;
-		this.have_lm_model = have_lm_model_;
-		this.p_l_feat_functions = l_feat_functions;
-		this.p_symbolTable = symbolTable;
+		this.hasLanguageModel = hasLanguageModel;
+		this.featureFunctions = featureFunctions;
+		this.symbolTable      = symbolTable;
 	}
 	
-	public void decodeTestSet(String test_file, String nbest_file, String oracle_file){
-		try{
+	
+	public void decodeTestSet(String test_file, String nbest_file, String oracle_file) {
+		try {
 	//		###### decode the sentences, maybe in parallel
 			if (JoshuaConfiguration.num_parallel_decoders == 1) {
-				DecoderThread pdecoder = new DecoderThread(this.grammarFactories, this.have_lm_model, this.p_l_feat_functions, this.p_symbolTable, 
-						test_file, nbest_file,	oracle_file, 0);
+				DecoderThread pdecoder = new DecoderThread(
+					this.grammarFactories, this.hasLanguageModel,
+					this.featureFunctions, this.symbolTable,
+					test_file, nbest_file,	oracle_file, 0);
 				
 				pdecoder.decode_a_file();//do not run *start*; so that we stay in the current main thread
 				if (JoshuaConfiguration.save_disk_hg) {
@@ -79,8 +84,7 @@ public class DecoderFactory {
 				}
 			} else {
 				if (JoshuaConfiguration.use_remote_lm_server) { // TODO
-					if (logger.isLoggable(Level.SEVERE)) 
-						logger.severe("You cannot run parallel decoder and remote lm server together");
+					logger.severe("You cannot run parallel decoder and remote lm server together");
 					System.exit(1);
 				}
 				run_parallel_decoder(test_file, nbest_file);
@@ -93,24 +97,21 @@ public class DecoderFactory {
 	
 	private void run_parallel_decoder(String test_file, String nbest_file)
 	throws IOException {
-		parallel_threads =
+		this.parallelThreads =
 			new DecoderThread[JoshuaConfiguration.num_parallel_decoders];
 		
 		//==== compute number of lines for each decoder
 		int n_lines = 0; {
 			LineReader testReader = new LineReader(test_file);
-			try { 
+			try {
 				n_lines = testReader.countLines();
-				//				for (String cn_sent : testReader) {
-				//				n_lines++;
-				//			} 
 			} finally { testReader.close(); }
 		}
 		
 		double num_per_thread_double = n_lines * 1.0 / JoshuaConfiguration.num_parallel_decoders;
 		int    num_per_thread_int    = (int) num_per_thread_double;
 		
-		if (logger.isLoggable(Level.INFO)) 
+		if (logger.isLoggable(Level.INFO))
 			logger.info("num_per_file_double: " + num_per_thread_double
 				+ "num_per_file_int: " + num_per_thread_int);
 		
@@ -133,8 +134,8 @@ public class DecoderFactory {
 			//make the Symbol table finalized before running multiple threads, this is to avoid synchronization among threads
 			{
 				String words[] = Regex.spaces.split(cn_sent);
-				this.p_symbolTable.addTerminals(words); // TODO
-			}			
+				this.symbolTable.addTerminals(words); // TODO
+			}
 			
 			// we will include all additional lines into last file
 			if (0 != sent_id
@@ -147,14 +148,14 @@ public class DecoderFactory {
 				
 				DecoderThread pdecoder = new DecoderThread(
 					this.grammarFactories,
-					this.have_lm_model,
-					this.p_l_feat_functions,
-					this.p_symbolTable,
+					this.hasLanguageModel,
+					this.featureFunctions,
+					this.symbolTable,
 					cur_test_file,
 					cur_nbest_file,
 					null,
 					start_sent_id);
-				parallel_threads[decoder_i-1] = pdecoder;
+				this.parallelThreads[decoder_i-1] = pdecoder;
 				
 				// prepare next job
 				start_sent_id  = sent_id;
@@ -163,37 +164,39 @@ public class DecoderFactory {
 				cur_nbest_file = JoshuaConfiguration.parallel_files_prefix + ".nbest." + decoder_i;
 				t_writer_test  = FileUtility.getWriteFileStream(cur_test_file);
 			}
-		} } finally { testReader.close(); }
+		} } finally {
+			testReader.close();
+			
+			//==== prepare the the last job
+			t_writer_test.flush();
+			t_writer_test.close();
+		}
 		
-		//==== prepare the the last job
-		t_writer_test.flush();
-		t_writer_test.close();
-	
 		DecoderThread pdecoder = new DecoderThread(
 			this.grammarFactories,
-			this.have_lm_model,
-			this.p_l_feat_functions,
-			this.p_symbolTable,
+			this.hasLanguageModel,
+			this.featureFunctions,
+			this.symbolTable,
 			cur_test_file,
 			cur_nbest_file,
 			null,
 			start_sent_id);
-		parallel_threads[decoder_i-1] = pdecoder;
+		this.parallelThreads[decoder_i-1] = pdecoder;
 		
 		// End initializing threads and their files
 			
 		
 		//==== run all the jobs
-		for (int i = 0; i < parallel_threads.length; i++) {
+		for (int i = 0; i < this.parallelThreads.length; i++) {
 			if (logger.isLoggable(Level.INFO))
 				logger.info("##############start thread " + i);
-			parallel_threads[i].start();
+			this.parallelThreads[i].start();
 		}
 		
 		//==== wait for the threads finish
-		for (int i = 0; i < parallel_threads.length; i++) {
+		for (int i = 0; i < this.parallelThreads.length; i++) {
 			try {
-				parallel_threads[i].join();
+				this.parallelThreads[i].join();
 			} catch (InterruptedException e) {
 				if (logger.isLoggable(Level.WARNING))
 					logger.warning("thread is interupted for server " + i);
@@ -207,11 +210,12 @@ public class DecoderFactory {
 			t_writer_dhg_items =
 				FileUtility.getWriteFileStream(nbest_file + ".hg.items");
 		}
-		for (DecoderThread p_decoder : parallel_threads) {
+		for (DecoderThread p_decoder : this.parallelThreads) {
 			//merge nbest
 			LineReader reader = new LineReader(p_decoder.nbestFile);
 			try { for (String sent : reader) {
-				t_writer_nbest.write(sent + "\n");
+				t_writer_nbest.write(sent);
+				t_writer_nbest.newLine();
 			} } finally { reader.close(); }
 			//TODO: remove the tem nbest file
 			
@@ -221,7 +225,8 @@ public class DecoderFactory {
 					new LineReader(p_decoder.nbestFile + ".hg.items");
 				try { for (String sent : dhgItemReader) {
 					
-					t_writer_dhg_items.write(sent + "\n");
+					t_writer_dhg_items.write(sent);
+					t_writer_dhg_items.newLine();
 					
 				} } finally { dhgItemReader.close(); }
 				//TODO: remove the tem nbest file
@@ -239,7 +244,7 @@ public class DecoderFactory {
 			HashMap<Integer,Integer> tbl_done = new HashMap<Integer,Integer>();
 			BufferedWriter t_writer_dhg_rules =
 				FileUtility.getWriteFileStream(nbest_file + ".hg.rules");
-			for (DecoderThread p_decoder : parallel_threads) {
+			for (DecoderThread p_decoder : this.parallelThreads) {
 				p_decoder.hypergraphSerializer.writeRulesParallel(t_writer_dhg_rules, tbl_done);
 			}
 			t_writer_dhg_rules.flush();

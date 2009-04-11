@@ -1,5 +1,5 @@
 /* This file is part of the Joshua Machine Translation System.
- * 
+ *
  * Joshua is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as
  * published by the Free Software Foundation; either version 2.1
@@ -41,10 +41,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * this class implements: 
+ * this class implements:
  * (1) interact with the chart-parsing functions to do the true decoding
- * 
- * 
+ *
+ *
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate$
  */
@@ -209,7 +209,7 @@ public class DecoderThread extends Thread {
 	
 	/**
 	 * Translate a sentence.
-	 * 
+	 *
 	 * @param sentence The sentence to be translated.
 	 * @param oracleSentence
 	 * @param out
@@ -252,7 +252,7 @@ public class DecoderThread extends Thread {
 				this.hasLanguageModel,
 				JoshuaConfiguration.goal_symbol);
 			
-			if (logger.isLoggable(Level.FINER)) 
+			if (logger.isLoggable(Level.FINER))
 				logger.finer("after seed, time: "
 					+ ((double)(System.currentTimeMillis() - startTime) / 1000.0)
 					+ " seconds");
@@ -262,7 +262,7 @@ public class DecoderThread extends Thread {
 		
 		/* Parsing */
 		HyperGraph hypergraph = chart.expand();
-		if (logger.isLoggable(Level.FINER)) 
+		if (logger.isLoggable(Level.FINER))
 			logger.finer("after expand, time: "
 				+ ((double)(System.currentTimeMillis() - startTime) / 1000.0)
 				+ " seconds");

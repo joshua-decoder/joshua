@@ -1,5 +1,5 @@
 /* This file is part of the Joshua Machine Translation System.
- * 
+ *
  * Joshua is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as
  * published by the Free Software Foundation; either version 2.1
@@ -34,21 +34,23 @@ public class Support {
 	public static       int log_level = INFO;
 	
 	
-	public static Iterator<String> get_sorted_keys_iterator(HashMap<String,Object> tbl) {
-		ArrayList<String> v = new ArrayList<String>(tbl.keySet());
-	    Collections.sort(v);
-	    return v.iterator();
-	}
+// Unused anywhere in this code base
+//	public static Iterator<String> get_sorted_keys_iterator(HashMap<String,Object> tbl) {
+//		ArrayList<String> v = new ArrayList<String>(tbl.keySet());
+//		Collections.sort(v);
+//		return v.iterator();
+//	}
 	
 	
-	public static void print_hash_tbl(HashMap<String,?> tbl) {
-		System.out.println("########### Hash table is #####");
-		for(Iterator<String> it = tbl.keySet().iterator(); it.hasNext(); ) {
-			String key = (String) it.next();
-			System.out.println(key + " -|||- " + tbl.get(key));
-			//System.out.println(key + " -|||- " + ((Double[])tbl.get(key))[0]);
-		}
-	}
+// Unused anywhere in this code base
+//	public static void print_hash_tbl(HashMap<String,?> tbl) {
+//		System.out.println("########### Hash table is #####");
+//		for(Iterator<String> it = tbl.keySet().iterator(); it.hasNext(); ) {
+//			String key = (String) it.next();
+//			System.out.println(key + " -|||- " + tbl.get(key));
+//			//System.out.println(key + " -|||- " + ((Double[])tbl.get(key))[0]);
+//		}
+//	}
 	
 	
 	public static double find_min(double a, double b) {
@@ -74,18 +76,21 @@ public class Support {
 	}
 	
 	
-	public static void  write_log_line(String mesg, int level) {
+	/** @deprecated The logger framework should be used instead. */
+	@Deprecated
+	public static void write_log_line(String mesg, int level) {
 		if (level >= Support.log_level) {
 			System.out.println(mesg);
 		}
 	}
 	
 	
-	public static void  write_log(String mesg, int level) {
-		if (level >= Support.log_level) {
-			System.out.print(mesg);
-		}
-	}
+// Unused in this code base
+//	public static void write_log(String mesg, int level) {
+//		if (level >= Support.log_level) {
+//			System.out.print(mesg);
+//		}
+//	}
 	
 	
 	public static long current_time() {
@@ -95,6 +100,7 @@ public class Support {
 	}
 	
 	
+	// Only used in LMGrammarJAVA
 	public static long getMemoryUse() {
 		putOutTheGarbage();
 		long totalMemory = Runtime.getRuntime().totalMemory();//all the memory I get from the system
@@ -103,12 +109,10 @@ public class Support {
 		return (totalMemory - freeMemory)/1024;//in terms of kb
 	}
 	
-	
 	private static void putOutTheGarbage() {
 		collectGarbage();
 		collectGarbage();
 	}
-	
 	
 	private static void collectGarbage() {
 		long fSLEEP_INTERVAL = 100;
@@ -128,29 +132,31 @@ public class Support {
 //	 Convert an array of strings to one string.
 //	 Put the 'separator' string between each element.
 
-	public static String arrayToString(String[] a, String separator) {
-		StringBuffer result = new StringBuffer();
-		if (a.length > 0) {
-			result.append(a[0]);
-			for (int i = 1; i < a.length; i++) {
-				result.append(separator);
-				result.append(a[i]);
-			}
-		}
-		return result.toString();
-	}
+// Unused in this code base
+//	public static String arrayToString(String[] a, String separator) {
+//		StringBuffer result = new StringBuffer();
+//		if (a.length > 0) {
+//			result.append(a[0]);
+//			for (int i = 1; i < a.length; i++) {
+//				result.append(separator);
+//				result.append(a[i]);
+//			}
+//		}
+//		return result.toString();
+//	}
 	
 	
-	public static String arrayToString(int[] a, String separator) {
-		StringBuffer result = new StringBuffer();
-		if (a.length > 0) {
-			result.append(a[0]);
-			for (int i = 1; i < a.length; i++) {
-				result.append(separator);
-				result.append(a[i]);
-			}
-		}
-		return result.toString();
-	}
+// Unused in this code base
+//	public static String arrayToString(int[] a, String separator) {
+//		StringBuffer result = new StringBuffer();
+//		if (a.length > 0) {
+//			result.append(a[0]);
+//			for (int i = 1; i < a.length; i++) {
+//				result.append(separator);
+//				result.append(a[i]);
+//			}
+//		}
+//		return result.toString();
+//	}
 	
 }

@@ -261,8 +261,7 @@ public class Chart {
 		if (null != this.bins[0][sent_len]) {
 			goal_bin.transit_to_goal(this.bins[0][sent_len]);//update goal_bin				
 		} else {
-			if (logger.isLoggable(Level.SEVERE)) logger.severe(
-				"No complete item in the cell(0,n)");
+			logger.severe("No complete item in the cell(0,n)");
 			System.exit(1);
 		}
 		
