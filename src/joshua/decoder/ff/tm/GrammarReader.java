@@ -50,6 +50,15 @@ public abstract class GrammarReader<R extends Rule> implements
 			this.reader = new LineReader(fileName);
 		} catch (IOException e) {
 			logger.severe("Error opening translation model file: " + fileName);
+			
+			if (null != e.getMessage()) {
+				logger.severe(e.getMessage());
+			} else {
+				logger.severe("No details available. Sorry.");
+			}
+			
+			// Otherwise we'll just get a NullPointerException in advanceReader
+			System.exit(1);
 		}
 
 		advanceReader();
