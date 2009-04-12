@@ -1,5 +1,6 @@
 package joshua.decoder.ff.tm;
 
+import java.lang.UnsupportedOperationException;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.logging.Level;
@@ -69,8 +70,9 @@ public abstract class GrammarReader<R extends Rule> implements
 		return this;
 	}
 
-	public void remove() {
-		// iterator method, do nothing
+	/** Unsupported Iterator method. */
+	public void remove() throws UnsupportedOperationException {
+		throw new UnsupportedOperationException();
 	}
 
 	public void finalize() {
@@ -95,7 +97,7 @@ public abstract class GrammarReader<R extends Rule> implements
 			lookAhead = reader.readLine();
 		} catch (IOException e) {
 			if (logger.isLoggable(Level.SEVERE))
-				logger.info("Error reading grammar from file: " + fileName);
+				logger.severe("Error reading grammar from file: " + fileName);
 		}
 		if (lookAhead == null && reader != null)
 			finalize();

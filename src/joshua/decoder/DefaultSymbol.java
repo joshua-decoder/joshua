@@ -173,7 +173,7 @@ public abstract class DefaultSymbol extends AbstractSymbolTable implements Symbo
 		try { for (String line : symboltableReader) {
 			String[] fds = Regex.spaces.split(line);
 			if(fds.length!=2){
-			    logger.warning("Warning: read index, bad line: " + line);
+			    logger.warning("read index, bad line: " + line);
 			    continue;
 			}
 			String str = fds[0].trim();
@@ -181,7 +181,7 @@ public abstract class DefaultSymbol extends AbstractSymbolTable implements Symbo
 
 			String uqniue_str;
 			if (null != tbl_str_2_id.get(str)) { // it is quite possible that java will treat two stings as the same when other language (e.g., C or perl) treat them differently, due to unprintable symbols
-				 logger.warning("Warning: duplicate string (add fake): " + line);
+				 logger.warning("duplicate string (add fake): " + line);
 				 uqniue_str = str + id;//fake string
 				 //System.exit(1);//TODO
 			} else {
@@ -213,7 +213,7 @@ public abstract class DefaultSymbol extends AbstractSymbolTable implements Symbo
 				res_id = addTerminalSymbol(str);
 				n_added++;
 			} else { // non-continuous index
-				System.out.println("Warning: add fake symbol, be alert");
+				logger.warning("add fake symbol, be alert");
 				res_id = addTerminalSymbol("lzf"+i);
 			}	
 			if (res_id != i) {
@@ -230,7 +230,7 @@ public abstract class DefaultSymbol extends AbstractSymbolTable implements Symbo
                         res_id = addTerminal(str);
                         n_added++;
                 }else{//non-continous index
-                        logger.warning("Warning: add fake symbol, be alert");
+                        logger.warning("add fake symbol, be alert");
                         res_id = addTerminal("lzf"+i);
                 }
                 if(res_id!=i){

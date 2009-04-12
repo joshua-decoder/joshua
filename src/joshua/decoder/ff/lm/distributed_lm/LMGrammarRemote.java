@@ -147,7 +147,7 @@ public class LMGrammarRemote extends AbstractLM {
 						logger.fine(String.format("interpolation_weightt: %s", interpolation_weight));
 					
 				} else {
-					logger.warning("Warning: not used config line: " + line);
+					logger.warning("LMGrammarRemote doesn't use config line: " + line);
 					//System.exit(1);
 				}
 			}

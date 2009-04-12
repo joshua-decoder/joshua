@@ -105,11 +105,11 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
 			int span_limit) throws IOException 
 	{
 		
-		this.symbolTable = symbolTable;
-		this.defaultOwner  = this.symbolTable.addTerminal(defaultOwner);
-		this.defaultLHS = this.symbolTable.addNonterminal(defaultLHSSymbol);
-		this.goalSymbol = this.symbolTable.addNonterminal(goalSymbol);
-		this.spanLimit     = span_limit;
+		this.symbolTable  = symbolTable;
+		this.defaultOwner = this.symbolTable.addTerminal(defaultOwner);
+		this.defaultLHS   = this.symbolTable.addNonterminal(defaultLHSSymbol);
+		this.goalSymbol   = this.symbolTable.addNonterminal(goalSymbol);
+		this.spanLimit    = span_limit;
 		
 		this.root = new MemoryBasedTrie();
 		
@@ -119,6 +119,9 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
 			modelReader.initialize();
 			for (BilingualRule rule : modelReader)
 				addRule(rule);
+		} else {
+			if (logger.isLoggable(Level.WARNING))
+				logger.warning("Couldn't create a GrammarReader for file " + grammarFile + " with format " + formatKeyword);
 		}
 
 		this.print_grammar();
@@ -133,6 +136,11 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
 			return new SamtFormatReader(grammarFile, symbolTable);
 		} else {
 			// TODO: throw something?
+			// TODO: add special warning if "heiro" mispelling is used
+			
+			if (logger.isLoggable(Level.WARNING))
+				logger.warning("Unknown GrammarReader format " + formatKeyword);
+			
 			return null;
 		}
 	}
@@ -143,7 +151,7 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
 //===============================================================
 
 	public int getNumRules() {
-		return qtyRulesRead;
+		return this.qtyRulesRead;
 	}
 
 
@@ -243,10 +251,13 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
 	}
 	
 	
+	// BUG: This always prints 0 for all fields
 	protected void print_grammar() {
 		if (logger.isLoggable(Level.INFO)) {
 			logger.info("###########Grammar###########");
-			logger.info(String.format("####num_rules: %d; num_bins: %d; num_pruned: %d; sumest_cost: %.5f", this.qtyRulesRead, this.qtyRuleBins, 0, tem_estcost));
+			logger.info(String.format(
+				"####num_rules: %d; num_bins: %d; num_pruned: %d; sumest_cost: %.5f",
+				this.qtyRulesRead, this.qtyRuleBins, 0, tem_estcost));
 		}
 		/*if(root!=null)
 			root.print_info(Support.DEBUG);*/
