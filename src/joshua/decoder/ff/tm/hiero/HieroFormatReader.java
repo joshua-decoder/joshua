@@ -14,7 +14,7 @@ public class HieroFormatReader extends GrammarReader<BilingualRule> {
 	static {
 		fieldDelimiter = "\\s+\\|{3}\\s+";
 		nonTerminalRegEx = "^\\[[A-Z]+\\,[0-9]*\\]$";
-		nonTerminalCleanRegEx = "[\\[\\]\\,0-9]+";
+		nonTerminalCleanRegEx = "[\\,0-9\\s+]+";
 		description = "Original Hiero format";
 	}
 	
@@ -28,7 +28,7 @@ public class HieroFormatReader extends GrammarReader<BilingualRule> {
 		if (fields.length != 4) {
 			logger.severe("Rule line does not have four fields: " + line);
 		}
-
+		
 		int lhs = symbolTable.addNonterminal(cleanNonTerminal(fields[0]));
 
 		int arity = 0;
@@ -63,7 +63,7 @@ public class HieroFormatReader extends GrammarReader<BilingualRule> {
 		for (String score : scores) {
 			feature_scores[i++] = Float.parseFloat(score);
 		}
-
+		
 		return new BilingualRule(lhs, french, english, feature_scores, arity);
 	}
 
@@ -98,9 +98,9 @@ public class HieroFormatReader extends GrammarReader<BilingualRule> {
 
 	@Override
 	public String toWords(BilingualRule rule) {
-		StringBuffer sb = new StringBuffer("[");
-		sb.append(rule.getLHS());
-		sb.append("] ||| ");
+		StringBuffer sb = new StringBuffer("");
+		sb.append(symbolTable.getWord(rule.getLHS()));
+		sb.append(" ||| ");
 		sb.append(symbolTable.getWords(rule.getFrench()));
 		sb.append(" ||| ");
 		sb.append(symbolTable.getWords(rule.getEnglish()));

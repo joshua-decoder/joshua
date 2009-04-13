@@ -19,7 +19,7 @@ package joshua.oracle;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
+import java.util.logging.Logger;
 
 import joshua.decoder.hypergraph.HGNode;
 import joshua.decoder.hypergraph.HyperEdge;
@@ -35,19 +35,22 @@ import joshua.decoder.hypergraph.HyperGraph;
  */
 public abstract class SplitHg {
 	
-	//TODO Add generics to hash tables in this class
-	HashMap g_tbl_split_virtual_items =  new HashMap();//Key: item; Value: a list of split virtual items
+	private static final Logger logger = 
+		Logger.getLogger(SplitHg.class.getName());
+	
+	HashMap<HGNode, ArrayList<VirtualItem>> g_tbl_split_virtual_items = 
+		new HashMap<HGNode, ArrayList<VirtualItem>>();
 	
 	//number of items or deductions after splitting the hypergraph
 	public int g_num_virtual_items = 0;
 	public int g_num_virtual_deductions = 0;
 	
 	//Note: the implementaion of the folowing two functions should call add_deduction
-	protected abstract void process_one_combination_axiom(HGNode parent_item, HashMap virtual_item_sigs, HyperEdge cur_dt);
-	protected abstract void process_one_combination_nonaxiom(HGNode parent_item, HashMap virtual_item_sigs, HyperEdge cur_dt, ArrayList<VirtualItem> l_ant_virtual_item);
+	protected abstract void process_one_combination_axiom(HGNode parent_item, HashMap<String, VirtualItem> virtual_item_sigs, HyperEdge cur_dt);
+	protected abstract void process_one_combination_nonaxiom(HGNode parent_item, HashMap<String, VirtualItem> virtual_item_sigs, HyperEdge cur_dt, ArrayList<VirtualItem> l_ant_virtual_item);
 	
 	//#### all the functions should be called after running split_hg(), before clearing g_tbl_split_virtual_items
-	public double get_best_goal_cost(HyperGraph hg, HashMap g_tbl_split_virtual_items){
+	public double get_best_goal_cost(HyperGraph hg, HashMap<HGNode, ArrayList<VirtualItem>> g_tbl_split_virtual_items){
 		double res = get_virtual_goal_item(hg, g_tbl_split_virtual_items).best_virtual_deduction.best_cost;
 		//System.out.println("best bleu is " +res);
 		return res;
@@ -55,15 +58,20 @@ public abstract class SplitHg {
 
 	
 	
-	public VirtualItem get_virtual_goal_item(HyperGraph original_hg, HashMap g_tbl_split_virtual_items){
-		ArrayList l_virtual_items = (ArrayList) g_tbl_split_virtual_items.get(original_hg.goal_item);
-		if(l_virtual_items.size()!=1){System.out.println("number of virtual goal items is not equal to one"); System.exit(0);}
-		return (VirtualItem)l_virtual_items.get(0);
+	public VirtualItem get_virtual_goal_item(HyperGraph original_hg, HashMap<HGNode, ArrayList<VirtualItem>> g_tbl_split_virtual_items){
+		ArrayList<VirtualItem> l_virtual_items = g_tbl_split_virtual_items.get(original_hg.goal_item);
+
+		if (l_virtual_items.size()!=1) {
+			// TODO: log this properly, fail properly
+			System.out.println("number of virtual goal items is not equal to one"); 
+			System.exit(0);
+		}
+		return l_virtual_items.get(0);
 	}
 	
 	
 	//get the 1best tree hg, the 1-best is ranked by the split hypergraph, but the return hypergraph is in the form of the original hg	
-	public HyperGraph get_1best_tree_hg(HyperGraph original_hg, HashMap g_tbl_split_virtual_items){
+	public HyperGraph get_1best_tree_hg(HyperGraph original_hg, HashMap<HGNode, ArrayList<VirtualItem>> g_tbl_split_virtual_items){
 		VirtualItem virutal_goal_item =  get_virtual_goal_item(original_hg, g_tbl_split_virtual_items);
 		HGNode onebest_goal_item = clone_item_with_best_deduction(virutal_goal_item);		
 		HyperGraph res = new HyperGraph(onebest_goal_item, -1, -1, original_hg.sent_id, original_hg.sent_len);//TODO: number of items/deductions
@@ -94,15 +102,17 @@ public abstract class SplitHg {
 
 	private static HyperEdge clone_deduction(VirtualDeduction virtual_dt){
 		HyperEdge original_dt = virtual_dt.p_dt;
-		ArrayList l_ant_items = null;
-		if(original_dt.get_ant_items()!=null) l_ant_items = new ArrayList(original_dt.get_ant_items());//l_ant_items will be changed in get_1best_tree_item
+		ArrayList<HGNode> l_ant_items = null;
+		// l_ant_items will be changed in get_1best_tree_item
+		if(original_dt.get_ant_items() != null) l_ant_items = new ArrayList<HGNode>(original_dt.get_ant_items());
 		HyperEdge res = new HyperEdge(original_dt.get_rule(), original_dt.best_cost, original_dt.get_transition_cost(false), l_ant_items);
 		return res;
 	}
 	
-	//return the best cost in the list of split virtual items corresponding to the original item
+	// TODO: is never called. remove?
+	// return the best cost in the list of split virtual items corresponding to the original item
 	private double get_best_virtual_score(HGNode it){
-		ArrayList l_virtual_items = (ArrayList)g_tbl_split_virtual_items.get(it);
+		ArrayList<VirtualItem> l_virtual_items = g_tbl_split_virtual_items.get(it);
 		Double  best = null;
 		for(int i=0; i<l_virtual_items.size(); i++){
 			VirtualItem vit = (VirtualItem)l_virtual_items.get(i);
@@ -125,7 +135,8 @@ public abstract class SplitHg {
 		//for each original Item, get a list of VirtualItem
 		private void split_item(HGNode it){
 			if(g_tbl_split_virtual_items.containsKey(it))return;//already processed
-			HashMap virtual_item_sigs = new HashMap();
+			HashMap<String, VirtualItem> virtual_item_sigs = 
+					new HashMap<String, VirtualItem>();
 			//### recursive call on each deduction
 			if( speed_up_item(it) ){
 				for(HyperEdge dt : it.l_hyperedges){					
@@ -133,16 +144,17 @@ public abstract class SplitHg {
 				}
 			}
 			//### item-specific operation
-			ArrayList l_virtual_items = new ArrayList();//a list of items result by splitting me
-			for(Iterator iter = virtual_item_sigs.keySet().iterator(); iter.hasNext();)
-				l_virtual_items.add(virtual_item_sigs.get(iter.next()));
+			// a list of items result by splitting me
+			ArrayList<VirtualItem> l_virtual_items = new ArrayList<VirtualItem>();
+			for (String signature : virtual_item_sigs.keySet())
+				l_virtual_items.add(virtual_item_sigs.get(signature));
 			g_tbl_split_virtual_items.put(it,l_virtual_items);
 			g_num_virtual_items += l_virtual_items.size();
 			//if(virtual_item_sigs.size()!=1)System.out.println("num of split items is " + virtual_item_sigs.size());
 			//get_best_virtual_score(it);//debug
 		}	
 		
-		private void split_deduction(HyperEdge cur_dt, HashMap virtual_item_sigs, HGNode parent_item){
+		private void split_deduction(HyperEdge cur_dt, HashMap<String, VirtualItem> virtual_item_sigs, HGNode parent_item){
 			if(speed_up_deduction(cur_dt)==false) return;//no need to continue
 			
 			//### recursively split all my ant items, get a l_split_items for each original item
@@ -154,42 +166,49 @@ public abstract class SplitHg {
 			redo_combine(cur_dt, virtual_item_sigs, parent_item);
 		}	
 			
-		private void redo_combine(HyperEdge cur_dt, HashMap virtual_item_sigs, HGNode parent_item){
-			ArrayList l_ant_items = cur_dt.get_ant_items();
-			if(l_ant_items!=null){			
-				if(l_ant_items.size()==1){//arity: one
-					HGNode it = (HGNode)l_ant_items.get(0);
-					ArrayList<VirtualItem> l_virtual_items = (ArrayList<VirtualItem>)g_tbl_split_virtual_items.get(it);				
-					for(VirtualItem ant_virtual_item: l_virtual_items){
-						ArrayList l_ant_virtual_item = new ArrayList();//used in combination
+		private void redo_combine(HyperEdge cur_dt, HashMap<String, VirtualItem> virtual_item_sigs, HGNode parent_item){
+			ArrayList<HGNode> l_ant_items = cur_dt.get_ant_items();
+			if(l_ant_items!=null){
+				// arity: one
+				if(l_ant_items.size() == 1){
+					HGNode it = l_ant_items.get(0);
+					ArrayList<VirtualItem> l_virtual_items = g_tbl_split_virtual_items.get(it);				
+					for(VirtualItem ant_virtual_item : l_virtual_items) {
+						//used in combination
+						ArrayList<VirtualItem> l_ant_virtual_item = 
+							new ArrayList<VirtualItem>();
 						l_ant_virtual_item.add(ant_virtual_item);
-						process_one_combination_nonaxiom(parent_item, virtual_item_sigs, cur_dt,  l_ant_virtual_item);
+						process_one_combination_nonaxiom(parent_item, virtual_item_sigs, 
+								cur_dt,  l_ant_virtual_item);
 					}
-				}else if(l_ant_items.size()==2){//arity: two
-					HGNode it1 = (HGNode)l_ant_items.get(0);
-					HGNode it2 = (HGNode)l_ant_items.get(1);
-					ArrayList<VirtualItem> l_virtual_items1 = (ArrayList<VirtualItem>)g_tbl_split_virtual_items.get(it1);
-					ArrayList<VirtualItem> l_virtual_items2 = (ArrayList<VirtualItem>)g_tbl_split_virtual_items.get(it2);
-					for(VirtualItem virtual_it1: l_virtual_items1){
-						for(VirtualItem virtual_it2: l_virtual_items2){
-							ArrayList l_ant_virtual_item = new ArrayList();//used in combination
+				// arity: two
+				} else if (l_ant_items.size() == 2) {
+					HGNode it1 = l_ant_items.get(0);
+					HGNode it2 = l_ant_items.get(1);
+					ArrayList<VirtualItem> l_virtual_items1 = g_tbl_split_virtual_items.get(it1);
+					ArrayList<VirtualItem> l_virtual_items2 = g_tbl_split_virtual_items.get(it2);
+					for (VirtualItem virtual_it1 : l_virtual_items1) {
+						for (VirtualItem virtual_it2 : l_virtual_items2) {
+							// used in combination
+							ArrayList<VirtualItem> l_ant_virtual_item = new ArrayList<VirtualItem>();
 							l_ant_virtual_item.add(virtual_it1);
 							l_ant_virtual_item.add(virtual_it2);
-							process_one_combination_nonaxiom(parent_item, virtual_item_sigs, cur_dt,  l_ant_virtual_item);
+							process_one_combination_nonaxiom(parent_item, virtual_item_sigs, 
+									cur_dt,  l_ant_virtual_item);
 						}					
 					}
-				}else{
-					System.out.println("Sorry, we can only deal with rules with at most TWO non-terminals");System.exit(0);
-				}			
-			}else{//axiom case: no nonterminal
-				//System.out.println("no ant!!! " + Symbol.get_string(cur_dt.get_rule().english));
+				} else {
+					logger.severe("Sorry, we can only deal with rules with at most TWO non-terminals");System.exit(0);
+				}
+			// axiom case: no nonterminal
+			} else {
 				process_one_combination_axiom(parent_item, virtual_item_sigs, cur_dt);
 			}		
 		}
 		
 		//this function should be called by process_one_combination_axiom/process_one_combination_nonaxiom
 		//virtual_item_sigs is specific to parent_item
-		protected  void add_deduction(HGNode parent_item, HashMap virtual_item_sigs, VirtualDeduction t_ded, DPState dpstate, boolean maintain_onebest_only){
+		protected  void add_deduction(HGNode parent_item, HashMap<String, VirtualItem> virtual_item_sigs, VirtualDeduction t_ded, DPState dpstate, boolean maintain_onebest_only){
 			if(t_ded==null) {System.out.println("deduction is null"); System.exit(0);}
 			String sig = VirtualItem.get_signature(parent_item, dpstate);
 			VirtualItem t_virtual_item = (VirtualItem)virtual_item_sigs.get(sig);

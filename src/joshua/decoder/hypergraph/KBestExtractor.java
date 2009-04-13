@@ -20,7 +20,6 @@ package joshua.decoder.hypergraph;
 import joshua.decoder.ff.FFTransitionResult;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.tm.Rule;
-import joshua.decoder.Support;
 import joshua.corpus.SymbolTable;
 import joshua.util.Regex;
 
@@ -30,6 +29,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.PriorityQueue;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -47,7 +47,6 @@ import java.util.logging.Logger;
  */
 public class KBestExtractor {
 	
-	@SuppressWarnings("unused")
 	private static final Logger logger = Logger.getLogger(KBestExtractor.class.getName());
 	
 	private final HashMap<HGNode,VirtualItem> tbl_virtual_items = new HashMap<HGNode,VirtualItem>();
@@ -129,7 +128,6 @@ public class KBestExtractor {
 			out2.write("\n");
 		}
 		//g_time_kbest_extract += System.currentTimeMillis()-start;
-		//Support.write_log_line("time_kbest_extract: "+ Chart.g_time_kbest_extract, Support.INFO);
 	}
 		
 	//the only difference from the above function is: we store the nbest into an arraylist, instead of a file
@@ -154,7 +152,6 @@ public class KBestExtractor {
 			out.add(hyp_str);			
 		}
 		//g_time_kbest_extract += System.currentTimeMillis()-start;
-		//Support.write_log_line("time_kbest_extract: "+ Chart.g_time_kbest_extract, Support.INFO);
 	}
 	
 	
@@ -326,7 +323,7 @@ public class KBestExtractor {
 					//debug: sanity check
 					t_added++;
 					if ( ! extract_unique_nbest && t_added > 1){//this is possible only when extracting unique nbest
-						Support.write_log_line("In lazy_k_best_extract, add more than one time, k is " + k, Support.ERROR);
+						if (logger.isLoggable(Level.SEVERE)) logger.finest("In lazy_k_best_extract, add more than one time, k is " + k);
 						System.exit(1);
 					}
 				} else {

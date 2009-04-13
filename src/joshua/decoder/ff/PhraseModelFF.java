@@ -17,6 +17,7 @@
  */
 package joshua.decoder.ff;
 
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import joshua.decoder.ff.tm.Rule;
@@ -44,7 +45,7 @@ public final class PhraseModelFF extends DefaultStatelessFF {
 	
 	
 	public double estimate(final Rule rule) {
-		//Support.write_log_line("model owner: " + owner + "; rule owner: "+r.owner, Support.INFO);
+//		if (logger.isLoggable(Level.FINEST)) logger.finest("model owner: " + owner + "; rule owner: " + rule.getOwner());
 		if (this.owner == rule.getOwner()) {
 			float[] feat_scores = rule.getFeatureScores();
 			if (this.columnIndex < feat_scores.length) {

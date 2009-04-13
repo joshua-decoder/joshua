@@ -48,7 +48,6 @@ import joshua.util.sentence.alignment.MemoryMappedAlignmentGrids;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -285,7 +284,7 @@ public class JoshuaDecoder {
 		if (JoshuaConfiguration.use_remote_lm_server) {
 			if (JoshuaConfiguration.use_left_equivalent_state
 			|| JoshuaConfiguration.use_right_equivalent_state) {
-				logger.severe("use remote LM, we cannot use suffix/prefix stuff");
+				logger.severe("using remote LM, we cannot use suffix/prefix stuff");
 				System.exit(1);
 			}
 			this.languageModel = new LMGrammarRemote(
@@ -297,7 +296,7 @@ public class JoshuaDecoder {
 		} else if (JoshuaConfiguration.use_srilm) {
 			if (JoshuaConfiguration.use_left_equivalent_state
 			|| JoshuaConfiguration.use_right_equivalent_state) {
-				logger.severe("use SRILM, we cannot use suffix/prefix stuff");
+				logger.severe("using SRILM, we cannot use suffix/prefix stuff");
 				System.exit(1);
 			}
 			this.languageModel = new LMGrammarSRILM(
@@ -308,7 +307,7 @@ public class JoshuaDecoder {
 		} else if (JoshuaConfiguration.use_bloomfilter_lm) {
 			if (JoshuaConfiguration.use_left_equivalent_state
 			|| JoshuaConfiguration.use_right_equivalent_state) {
-				logger.severe("use Bloomfilter LM, we cannot use suffix/prefix stuff");
+				logger.severe("using Bloomfilter LM, we cannot use suffix/prefix stuff");
 				System.exit(1);
 			}
 			this.languageModel = new BloomFilterLanguageModel(
@@ -316,7 +315,7 @@ public class JoshuaDecoder {
 					JoshuaConfiguration.g_lm_order,
 					JoshuaConfiguration.lm_file);
 		} else {
-			//using the built-in JAVA implementatoin of LM, may not be as scalable as SRILM
+			// using the built-in JAVA implementatoin of LM, may not be as scalable as SRILM
 			this.languageModel = new LMGrammarJAVA(
 				(BuildinSymbol)this.symbolTable,
 				JoshuaConfiguration.g_lm_order,
@@ -335,7 +334,7 @@ public class JoshuaDecoder {
 			// if this is used, then it depends on the LMModel to do pruning
 //			new MemoryBasedBatchGrammarWithPrune(
 			new MemoryBasedBatchGrammar(
-					JoshuaConfiguration.tm_format,
+					JoshuaConfiguration.glue_format,
 					JoshuaConfiguration.glue_file,
 					this.symbolTable,
 					JoshuaConfiguration.begin_mono_owner,

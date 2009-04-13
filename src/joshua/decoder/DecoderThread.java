@@ -215,10 +215,9 @@ public class DecoderThread extends Thread {
 	 * @param out
 	 * @param sentenceID
 	 */
-	private void translate(
-		String sentence, String oracleSentence,
-		BufferedWriter out, int sentenceID
-	) throws IOException {
+	private void translate(String sentence, String oracleSentence,
+		BufferedWriter out, int sentenceID) throws IOException 
+	{
 		long startTime = 0;
 		if (logger.isLoggable(Level.FINER)) {
 			startTime = System.currentTimeMillis();
@@ -228,8 +227,7 @@ public class DecoderThread extends Thread {
 
 			int[] intSentence = this.symbolTable.getIDs(sentence);			
 			Lattice<Integer> inputLattice =
-				Lattice.getLattice(intSentence);
-			
+				Lattice.createLattice(intSentence);
 			
 			Grammar[] grammars = new Grammar[grammarFactories.size()];
 			int i = 0;

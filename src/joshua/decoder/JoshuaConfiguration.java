@@ -51,18 +51,18 @@ public class JoshuaConfiguration {
 	public static String  phrase_owner               = "pt";
 	public static String  mono_owner                 = "mono";
 	public static String  begin_mono_owner           = "begin_mono";//if such a rule is get applied, then no reordering is possible
-	public static String  default_non_terminal       = "PHRASE";
-	public static String  goal_symbol       = "S";
+	public static String  default_non_terminal       = "[PHRASE]";
+	public static String  goal_symbol                = "[S]";
 	public static boolean use_sent_specific_tm       = false;
 	public static String  g_sent_tm_file_name_prefix = "tm.";
 	
 	public static String  tm_file                    = null;
-	
 	// TODO: default to glue grammar provided with Joshua
 	// TODO: support multiple glue grammars
 	public static String  glue_file                  = null;
 	
 	public static String tm_format                   = null;
+	public static String glue_format                 = null;
 	
 	// Parameters for suffix array grammar
 	/** File name prefix for source language binary training files. */
@@ -105,7 +105,7 @@ public class JoshuaConfiguration {
 	public static boolean use_unique_nbest    = false;
 	public static boolean use_tree_nbest      = false;
 	public static boolean include_align_index = false;
-	public static boolean add_combined_cost   = true; //in the nbest file, compute the final socre
+	public static boolean add_combined_cost   = true; //in the nbest file, compute the final score
 	public static int topN = 500;
 	
 	//remote lm server
@@ -179,6 +179,12 @@ public class JoshuaConfiguration {
 						
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("tm format: %s", tm_format));
+
+				} else if ("glue_format".equals(fds[0])) {
+					glue_format = fds[1].trim();
+						
+					if (logger.isLoggable(Level.FINEST))
+						logger.finest(String.format("glue format: %s", glue_format));
 					
 				} else if ("sa_source".equals(fds[0])) {
 					sa_source = fds[1].trim();
@@ -325,12 +331,12 @@ public class JoshuaConfiguration {
 						logger.finest(String.format("begin_mono_owner: %s", begin_mono_owner));
 					
 				} else if ("default_non_terminal".equals(fds[0])) {
-					default_non_terminal = fds[1].trim();
+					default_non_terminal = "[" + fds[1].trim() + "]";
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("default_non_terminal: %s", default_non_terminal));
 					
 				} else if ("goalSymbol".equals(fds[0])) {
-					goal_symbol = fds[1].trim();
+					goal_symbol = "[" + fds[1].trim() + "]";
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("goalSymbol: %s", goal_symbol));
 					

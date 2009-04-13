@@ -111,62 +111,59 @@ public class Chart {
 	
 	int goalSymbolID = -1;
 	
-	
-	//public Chart(int[] sentence_in, ArrayList<Model> models, int sent_id1) {
-//	public Chart(Lattice<Integer> sentence_in, ArrayList<Model> models, int sent_id1) {
 	public Chart(
 		Lattice<Integer>           sentence_,
-		//int[] sentence,
 		ArrayList<FeatureFunction> models_,
-		SymbolTable symbolTable,
+		SymbolTable                symbolTable,
 		int                        sent_id_,
 		Grammar[]                  grammars_,
-		boolean have_lm_model,
-		String goalSymbol
-	) {	
-//		public Chart(int[] sentence_in, ArrayList<FeatureFunction> models, int sent_id1) {   
+		boolean                    have_lm_model,
+		String                     goalSymbol) 
+	{	
 		this.sentence = sentence_;
-		//this.sent_len = sentence.length;
 		this.sent_len = sentence.size() - 1;
 		this.p_l_models   = models_;
 		this.p_symbolTable = symbolTable;
-		this.bins     = new Bin[sent_len][sent_len+1];//TODO: this is very expensive		
+		
+		// TODO: this is very expensive
+		this.bins     = new Bin[sent_len][sent_len+1];		
 		this.sent_id  = sent_id_;
 		this.goalSymbolID = this.p_symbolTable.addNonterminal(goalSymbol);
 		this.goal_bin = new Bin(this, this.goalSymbolID);
 		
-		/** add un-translated words into the chart as item (with large cost) */
-		//TODO: grammar specific?
+		// add un-translated words into the chart as item (with large cost)
+		// TODO: grammar specific?
 		this.grammars  = grammars_;
 		
-		this.dotcharts = new DotChart[this.grammars.length];//each grammar will have a dot chart
+		// each grammar will have a dot chart
+		this.dotcharts = new DotChart[this.grammars.length];
 		for (int i = 0; i < this.grammars.length; i++) {
 			this.dotcharts[i] = new DotChart(this.sentence,	this.grammars[i], this);
 			this.dotcharts[i].seed(); // TODO: should fold into the constructor
 		}
-		//add OOV rules
-		//TODO: the transition cost for phrase model, arity penalty, word penalty are all zero, except the LM cost
+		
+		// add OOV rules
+		// TODO: the transition cost for phrase model, arity penalty, word penalty are all zero, except the LM cost
 		for (Node<Integer> node : sentence) {
 			for (Arc<Integer> arc : node.getOutgoingArcs()) {
-				//create a rule, but do not add into the grammar trie     
-				//TODO: which grammar should we use to create an OOV rule?
-				Rule rule = this.grammars[0].constructOOVRule(p_l_models.size(), arc.getLabel(), have_lm_model);
+				// create a rule, but do not add into the grammar trie     
+				// TODO: which grammar should we use to create an OOV rule?
+				Rule rule = this.grammars[0].constructOOVRule(p_l_models.size(), 
+						arc.getLabel(), have_lm_model);
 				
-				// Tail and head are switched - FIX names:
-				add_axiom(node.getNumber(), arc.getTail().getNumber(), rule, (float)arc.getCost());
+				// tail and head are switched - FIX names:
+				add_axiom(node.getNumber(), arc.getTail().getNumber(), rule, 
+						(float)arc.getCost());
 				
 			}
 		}
-		if (logger.isLoggable(Level.FINE)) logger.fine("####finished seeding");
+		if (logger.isLoggable(Level.FINE)) logger.fine("Finished seeding chart.");
 	}
-	
-	
-	
 	
 	
 	/** construct the hypergraph with the help from DotChart */
 	public HyperGraph expand() {
-		//long start = System.currentTimeMillis();
+//		long start = System.currentTimeMillis();
 //		long time_step1 = 0;
 //		long time_step2 = 0;
 //		long time_step3 = 0;
@@ -175,33 +172,34 @@ public class Chart {
 		for (int width = 1; width <= sent_len; width++) {
 			for (int i = 0; i <= sent_len-width; i++) {
 				int j = i + width;
-				//Support.write_log_line(String.format("Process span (%d, %d)",i,j), Support.DEBUG);
+				if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("Process span (%d, %d)",i,j));
 				
 				//(1)### expand the cell in dotchart
 				//long start_step1= Support.current_time();
-				//Support.write_log_line("Step 1: expance cell", Support.DEBUG);
+				if (logger.isLoggable(Level.FINEST)) logger.finest("Expanding cell");
 				for (int k = 0; k < this.grammars.length; k++) {
 					this.dotcharts[k].expand_cell(i,j);
 				}			
-				//Support.write_log_line(String.format("n_dotitem= %d",n_dotitem_added), Support.INFO);
+				if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("n_dotitem= %d",n_dotitem_added));
 				//time_step1 += Support.current_time()-start_step1;
 				
 				//(2)### populate COMPLETE rules into Chart: the regular CKY part
 				//long start_step2= Support.current_time();
-				//Support.write_log_line("Step 2: add complte items into Chart", Support.DEBUG);
+				if (logger.isLoggable(Level.FINEST)) logger.finest("Adding complete items into chart");
 				for (int k = 0; k < this.grammars.length; k++) {
 					if (this.grammars[k].hasRuleForSpan(i, j, sent_len)
-					&& null != this.dotcharts[k].l_dot_bins[i][j]) {
+							&& null != this.dotcharts[k].l_dot_bins[i][j]) 
+					{
 						for (DotItem dt: this.dotcharts[k].l_dot_bins[i][j].l_dot_items) {
 							float lattice_cost = dt.lattice_cost;
 							RuleCollection rules = dt.tnode.getRules();
-							if (null != rules) {//have rules under this trienode
-								if (rules.getArity() == 0) {//rules without any non-terminal
+							if (null != rules) { // have rules under this trienode
+								if (rules.getArity() == 0) { // rules without any non-terminal
 									List<Rule> l_rules = rules.getSortedRules();
 									for (Rule rule : l_rules) {
 										add_axiom(i, j, rule, lattice_cost);
 									}
-								} else {//rules with non-terminal
+								} else { // rules with non-terminal
 									if (JoshuaConfiguration.use_cube_prune) {
 										complete_cell_cube_prune(i, j, dt, rules, lattice_cost);
 									} else {
@@ -216,7 +214,7 @@ public class Chart {
 				
 				//(3)### process unary rules (e.g., S->X, NP->NN), just add these items in chart, assume acyclic
 				//long start_step3= Support.current_time();
-				//Support.write_log_line("Step 3: add unary items into Chart", Support.DEBUG);
+				if (logger.isLoggable(Level.FINEST)) logger.finest("Adding unary items into chart");
 				for (int k = 0; k < this.grammars.length; k++) {
 					if(this.grammars[k].hasRuleForSpan(i, j, sent_len)) {
 						add_unary_items(this.grammars[k],i,j);//single-branch path
@@ -226,7 +224,7 @@ public class Chart {
 				
 				//(4)### in dot_cell(i,j), add dot-items that start from the /complete/ superIterms in chart_cell(i,j)
 				//long start_step4= Support.current_time();
-				//Support.write_log_line("Step 4: init new dot-items that starts from complete items in this cell", Support.DEBUG);
+				if (logger.isLoggable(Level.FINEST)) logger.finest("Initializing new dot-items that starting from complete items in this cell");
 				for (int k = 0; k < this.grammars.length; k++) {
 					if (this.grammars[k].hasRuleForSpan(i, j, sent_len)) {
 						this.dotcharts[k].start_dotitems(i,j);
@@ -235,14 +233,16 @@ public class Chart {
 				//time_step4 += Support.current_time()-start_step4;
 				
 				//(5)### sort the items in the cell: for pruning purpose
-				//Support.write_log_line(String.format("After Process span (%d, %d), called:= %d",i,j,n_called_compute_item), Support.INFO);
+				if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("After Process span (%d, %d), called:= %d", i, j, n_called_compute_item));
 				if (null != this.bins[i][j]) {
-					//this.bins[i][j].print_info(Support.INFO);
-					
+					// this.bins[i][j].print_info(Support.INFO);
+
+					// this is required
 					@SuppressWarnings("unused")
-					ArrayList<HGNode> l_s_its = this.bins[i][j].get_sorted_items();//this is required
+					ArrayList<HGNode> l_s_its = this.bins[i][j].get_sorted_items();
 					
-					/*sanity check with this cell
+					/*
+					// sanity check with this cell
 					int sum_d=0; double sum_c =0.0;	double sum_total=0.0;
 					for(Item t_item : l_s_its){
 						if(t_item.l_deductions!=null)
@@ -250,13 +250,12 @@ public class Chart {
 						sum_c += t_item.best_deduction.best_cost;
 						sum_total += t_item.est_total_cost;
 					}
-					//System.out.println(String.format("n_items =%d; n_deductions: %d; s_cost: %.3f; c_total: %.3f", this.bins[i][j].tbl_items.size(),sum_d,sum_c,sum_total));*/
+					*/
 				}
-				//print_info(Support.INFO);
 			}
 		}
 		print_info(Level.FINE);
-		System.err.println("sent_len = " + sent_len);
+		logger.info("Sentence length: " + sent_len);
 		//transition_final: setup a goal item, which may have many deductions
 		if (null != this.bins[0][sent_len]) {
 			goal_bin.transit_to_goal(this.bins[0][sent_len]);//update goal_bin				
@@ -286,7 +285,7 @@ public class Chart {
 	public void print_info(Level level) {
 		if (logger.isLoggable(level)) 
 			logger.log(level,
-				String.format("ADD: %d; MERGED: %d; pruned: %d; pre-pruned: %d ,fuzz1: %d, fuzz2: %d; n_dotitem_added: %d",
+				String.format("ADDED: %d; MERGED: %d; PRUNED: %d; PRE-PRUNED: %d, FUZZ1: %d, FUZZ2: %d; DOT-ITEMS ADDED: %d",
 					this.n_added,
 					this.n_merged,
 					this.n_pruned,

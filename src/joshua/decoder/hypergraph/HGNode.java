@@ -159,8 +159,8 @@ public class HGNode implements Comparable<HGNode> {
 			
 			this.signature = s.toString();
 		}
-		//System.out.println("sig is: " +signature);
-		//Support.write_log_line(String.format("Signature is %s", res), Support.INFO);
+		// TODO: class needs logger
+//		if (logger.isLoggable(Level.INFO)) logger.finest(String.format("Signature is %s", res));
 		return this.signature;
 	}
 	

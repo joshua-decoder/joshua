@@ -17,9 +17,9 @@
  */
 package joshua.decoder.ff.tm.hiero;
 
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import joshua.decoder.Support;
 import joshua.decoder.ff.tm.BasicRuleCollection;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.RuleCollection;
@@ -32,10 +32,9 @@ import joshua.decoder.ff.tm.RuleCollection;
  */
 public class MemoryBasedRuleBin extends BasicRuleCollection implements RuleCollection {
 	
-	@SuppressWarnings("unused")
 	private static final Logger logger = 
 		Logger.getLogger(MemoryBasedRuleBin.class.getName());
-//	
+
 //	protected int arity = 0; // number of non-terminals
 //	protected int[] french;
 	
@@ -98,7 +97,7 @@ public class MemoryBasedRuleBin extends BasicRuleCollection implements RuleColle
 			this.sourceTokens = rule.getFrench();
 		}
 		if (rule.getArity() != this.arity) {
-			Support.write_log_line(String.format("RuleBin: arity is not matching, old: %d; new: %d", this.arity, rule.getArity()),	Support.ERROR);
+			if (logger.isLoggable(Level.SEVERE)) logger.finest(String.format("RuleBin: arity is not matching, old: %d; new: %d", this.arity, rule.getArity()));
 			return;
 		}
 		rules.add(rule);

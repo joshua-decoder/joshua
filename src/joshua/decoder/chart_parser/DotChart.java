@@ -159,7 +159,7 @@ public class DotChart {
 			// Tail and Head are backward! FIX names!
 			int arc_len = arc.getTail().getNumber() - arc.getHead().getNumber();
 			float cost = (float)arc.getCost();
-			if (logger.isLoggable(Level.FINEST)) logger.finest("last_word=="+last_word+ " for node " +node.getNumber());
+			if (logger.isLoggable(Level.FINEST)) logger.finest("last_word="+last_word+ " for node " +node.getNumber());
 			
 			//int last_word=foreign_sent[j-1]; // input.getNode(j-1).getNumber(); //	
 			
@@ -208,7 +208,6 @@ public class DotChart {
 		
 		for (DotItem dt : l_dot_bins[i][k].l_dot_items) { // dotitem in dot_bins[i][k]: looking for an item in the right to the dot
 			List<SuperItem> t_ArrayList = new ArrayList<SuperItem>(this.p_chart.bins[k][j].get_sorted_super_items().values());//complete super-items
-			//Support.write_log_line(String.format("Add a dotitem with"), Support.DEBUG);
 			for (SuperItem s_t : t_ArrayList) { //see if it matches what the dotitem is looking for
 				Trie child_tnode = dt.tnode.matchOne(s_t.lhs);
 				if (null != child_tnode) {
@@ -216,7 +215,7 @@ public class DotChart {
 					&& ! child_tnode.hasExtensions()) {
 						continue; //TODO
 					}
-					//Support.write_log_line(String.format("Add a dotitem with superitem.lhs= %s",s_t.lhs), Support.DEBUG);
+					if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("Add a dotitem with superitem.lhs: %s", s_t.lhs));
 					add_dot_item(child_tnode, i, j, dt.l_ant_super_items, s_t, dt.lattice_cost);
 				}
 			}
@@ -234,7 +233,10 @@ public class DotChart {
 	 * @param ant_s_items_in
 	 * @param cur_s_item
 	 */
-	private void add_dot_item(Trie tnode, int i,	int j,	ArrayList<SuperItem> ant_s_items_in, SuperItem cur_s_item, float lattice_cost) {
+	private void add_dot_item(Trie tnode, int i, int j, 
+			ArrayList<SuperItem> ant_s_items_in, SuperItem cur_s_item, 
+			float lattice_cost) 
+	{
 		ArrayList<SuperItem> ant_s_items= new ArrayList<SuperItem>();
 		if (ant_s_items_in != null) {
 			ant_s_items.addAll(ant_s_items_in);
@@ -249,7 +251,7 @@ public class DotChart {
 		}
 		l_dot_bins[i][j].add_dot_item(tem);
 		p_chart.n_dotitem_added++;
-		//Support.write_log_line(String.format("Add a dotitem in cell (%d, %d), n_dotitem=%d",i,j,p_chart.n_dotitem_added), Support.DEBUG);
+		if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("Add a dotitem in cell (%d, %d), n_dotitem=%d", i, j, p_chart.n_dotitem_added));
 	}
 	
 	

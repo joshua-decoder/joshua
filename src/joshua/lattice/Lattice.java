@@ -105,7 +105,7 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
 	 * @param linearChain 
 	 * @return  Lattice representation of the linear chain.
 	 */
-	public static Lattice<Integer> getLattice(int[] linearChain) {
+	public static Lattice<Integer> createLattice(int[] linearChain) {
 		Integer[] integerSentence = new Integer[linearChain.length];
 		for (int i = 0; i < linearChain.length; i++) {
 			integerSentence[i] = linearChain[i];

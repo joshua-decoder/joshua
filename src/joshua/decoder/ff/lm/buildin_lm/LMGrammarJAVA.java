@@ -75,10 +75,10 @@ public class LMGrammarJAVA extends AbstractLM {
 	boolean g_is_add_prefix_infor   = false;
 	boolean g_is_add_suffix_infor   = false;
 	
-	HashMap request_cache_prob        = new HashMap();//cmd with result
-	HashMap request_cache_backoff     = new HashMap();//cmd with result
-	HashMap request_cache_left_equiv  = new HashMap();//cmd with result
-	HashMap request_cache_right_equiv = new HashMap();//cmd with result
+	HashMap<String, int[]> request_cache_prob        = new HashMap<String, int[]>();//cmd with result
+	HashMap<String, int[]> request_cache_backoff     = new HashMap<String, int[]>();//cmd with result
+	HashMap<String, int[]> request_cache_left_equiv  = new HashMap<String, int[]>();//cmd with result
+	HashMap<String, int[]> request_cache_right_equiv = new HashMap<String, int[]>();//cmd with result
 	int cache_size_limit= 250000;
 	
 	

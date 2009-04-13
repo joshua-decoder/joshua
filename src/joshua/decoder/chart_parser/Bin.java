@@ -34,7 +34,6 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.logging.Level;
@@ -506,13 +505,13 @@ public class Bin {
 			HGNode item = new HGNode(
 				i, j, rule.getLHS(), item_state_tbl, dt, expectedTotalCost);
 			add_deduction(item);
-			//Support.write_log_line(String.format("add an deduction with arity %d", rule.arity),Support.DEBUG);
-			//rule.print_info(Support.DEBUG);
+			
+			if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("add an deduction with arity %d", rule.getArity()));
+			
 			res = item;
 		} else {
 			p_chart.n_prepruned++;
-			//Support.write_log_line(String.format("Prepruned an deduction with arity %d", rule.arity),Support.INFO);
-			//rule.print_info(Support.INFO);
+//			if (logger.isLoggable(Level.INFO)) logger.finest(String.format("Prepruned an deduction with arity %d", rule.getArity()));
 			res = null;
 		}
 		p_chart.g_time_add_deduction += Support.current_time() - start;
@@ -605,7 +604,7 @@ public class Bin {
 	
 	
 	private void run_pruning() {
-		//Support.write_log_line(String.format("Pruning: heap size: %d; n_dead_items: %d", this.heapItems.size(),this.dead_items), Support.DEBUG);
+		if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("Pruning: heap size: %d; n_dead_items: %d", this.heapItems.size(),this.dead_items));
 		if (this.heapItems.size() == this.dead_items) { // TODO:clear the heap, and reset this.dead_items??
 			this.heapItems.clear();
 			this.dead_items = 0;
@@ -619,7 +618,7 @@ public class Bin {
 			} else {
 				this.tableItems.remove(worstItem.getSignature()); // always make this.tableItems current
 				this.p_chart.n_pruned++;
-				//Support.write_log_line(String.format("Run_pruning: %d; cutoff=%.3f, realcost: %.3f",p_chart.n_pruned,this.cut_off_cost,worstItem.est_total_cost), Support.INFO);
+//				if (logger.isLoggable(Level.INFO)) logger.info(String.format("Run_pruning: %d; cutoff=%.3f, realcost: %.3f",p_chart.n_pruned,this.cut_off_cost,worstItem.est_total_cost));
 			}
 		}
 		if (this.heapItems.size() - this.dead_items == JoshuaConfiguration.max_n_items) { // TODO:??

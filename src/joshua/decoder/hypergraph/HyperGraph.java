@@ -35,7 +35,10 @@ import java.util.logging.Logger;
  * @version $LastChangedDate$
  */
 public class HyperGraph {
-	public HGNode goal_item=null;//pointer to goal HGNode
+
+	// pointer to goal HGNode
+	public HGNode goal_item = null;
+	
 	public int num_items = -1;
 	public int num_hyperedges = -1;
 	public int sent_id = -1;

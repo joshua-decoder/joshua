@@ -118,13 +118,13 @@ public abstract class GrammarReader<R extends Rule> implements
 	public abstract String toTokenIds(R rule);
 	public abstract String toTokenIdsWithoutFeatureScores(R rule);
 	
-	public final int cleanNonTerminal(int tokenID) {
+	public int cleanNonTerminal(int tokenID) {
 		// cleans NT of any markup
-		return symbolTable.addNonterminal(symbolTable.getWord(tokenID)
-				.replaceAll(nonTerminalCleanRegEx, ""));
+		return symbolTable.addNonterminal(
+				cleanNonTerminal(symbolTable.getWord(tokenID)));
 	}
 
-	public final String cleanNonTerminal(String word) {
+	public String cleanNonTerminal(String word) {
 		// cleans NT of any markup
 		return word.replaceAll(nonTerminalCleanRegEx, "");
 	}

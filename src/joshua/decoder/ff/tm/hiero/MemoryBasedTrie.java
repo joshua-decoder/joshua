@@ -100,22 +100,4 @@ public class MemoryBasedTrie implements Trie {
 		Trie[] tem = (Trie[]) this.tbl_children.values().toArray();
 		return tem;
 	}
-	
-	
-/* TODO Possibly remove - this method is never called.		
-	private void print_info(int level) {
-		Support.write_log_line("###########TrieGrammar###########",level);
-		if (null != rule_bin) {
-			Support.write_log_line("##### RuleBin(in TrieGrammar) is",level);
-			rule_bin.print_info(level);
-		}
-		if (null != tbl_children) {
-			Object[] tem = tbl_children.values().toArray();
-			for (int i = 0; i < tem.length; i++) {
-				Support.write_log_line("##### ChildTrieGrammar(in TrieGrammar) is",level);
-				((TrieNode_Memory)tem[i]).print_info(level);
-			}
-		}
-	}
-*/
 }

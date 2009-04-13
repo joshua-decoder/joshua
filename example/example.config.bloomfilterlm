@@ -1,9 +1,10 @@
 lm_file=example/example.bloomfilter.lm.gz
-tm_file=example/example.hiero.tm.gz
-#tm_file=C:\Users\zli\Documents\corpus.ar-en.unique.fixed.rules
-glue_file=grammars/hiero.glue
 
+tm_file=example/example.hiero.tm.gz
 tm_format=hiero
+
+glue_file=grammars/hiero.glue
+glue_format=hiero
 
 #lm config
 use_srilm=false

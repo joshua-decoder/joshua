@@ -34,7 +34,6 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 
 /**
  * approximated BLEU
@@ -69,13 +68,13 @@ public class OracleExtractionHG extends SplitHg {
 	static boolean using_right_equiv_state = true;
 	
 	//TODO Add generics to hash tables in this class
-	HashMap tbl_suffix = new HashMap();
-	HashMap tbl_prefix = new HashMap();
+	HashMap<String, Boolean> tbl_suffix = new HashMap<String, Boolean>();
+	HashMap<String, Boolean> tbl_prefix = new HashMap<String, Boolean>();
 	static PrefixGrammar grammar_prefix = new PrefixGrammar();//TODO
 	static PrefixGrammar grammar_suffix = new PrefixGrammar();//TODO
 	
 //	key: item; value: best_deduction, best_bleu, best_len, # of n-gram match where n is in [1,4]
-	protected HashMap tbl_ref_ngrams = new HashMap();
+	protected HashMap<String, Integer> tbl_ref_ngrams = new HashMap<String, Integer>();
 	
 
 	static boolean always_maintain_seperate_lm_state = true; //if true: the virtual item maintain its own lm state regardless whether lm_order>=g_bleu_order
@@ -127,7 +126,7 @@ public class OracleExtractionHG extends SplitHg {
 		int lm_order = Integer.parseInt(args[4].trim());
 		boolean orc_extract_nbest = new Boolean(args[5].trim()); // oracle extraction from nbest or hg
 		
-//		????????????????????????????????????????????????????
+		//??????????????????????????????????????
 		int baseline_lm_feat_id = 0; 
 		//??????????????????????????????????????
 		
@@ -224,18 +223,20 @@ public class OracleExtractionHG extends SplitHg {
 	}
 
 	
-	public HyperGraph oracle_extract_hg(HyperGraph hg, int src_sent_len_in, int lm_order,  String ref_sent_str){
+	public HyperGraph oracle_extract_hg(HyperGraph hg, int src_sent_len_in, int lm_order,
+				String ref_sent_str)
+	{
 		int[] ref_sent = this.p_symbolTable.addTerminals(ref_sent_str.split("\\s+"));
 		g_lm_order=lm_order;		
 		src_sent_len = src_sent_len_in;
 		ref_sent_len = ref_sent.length;		
 		
 		tbl_ref_ngrams.clear();
-		get_ngrams(tbl_ref_ngrams,g_bleu_order,ref_sent, false);	
+		get_ngrams(tbl_ref_ngrams, g_bleu_order, ref_sent, false);	
 		if(using_left_equiv_state || using_right_equiv_state){
 			tbl_prefix.clear();	tbl_suffix.clear();
-			setup_prefix_suffix_tbl(ref_sent,  g_bleu_order, tbl_prefix, tbl_suffix);
-			setup_prefix_suffix_grammar(ref_sent,  g_bleu_order, grammar_prefix, grammar_suffix);//TODO
+			setup_prefix_suffix_tbl(ref_sent, g_bleu_order, tbl_prefix, tbl_suffix);
+			setup_prefix_suffix_grammar(ref_sent, g_bleu_order, grammar_prefix, grammar_suffix);//TODO
 		}
 		split_hg(hg);
 		
@@ -248,7 +249,7 @@ public class OracleExtractionHG extends SplitHg {
 	/*This procedure does
 	 * (1) identify all possible match
 	 * (2) add a new deduction for each matches*/
-	protected  void process_one_combination_axiom(HGNode parent_item, HashMap virtual_item_sigs, HyperEdge cur_dt){
+	protected  void process_one_combination_axiom(HGNode parent_item, HashMap<String, VirtualItem> virtual_item_sigs, HyperEdge cur_dt){
 		if(cur_dt.get_rule()==null){System.out.println("error null rule in axiom"); System.exit(0);}
 		double avg_ref_len = (parent_item.j-parent_item.i>=src_sent_len) ? ref_sent_len :  (parent_item.j-parent_item.i)*ref_sent_len*1.0/src_sent_len;//avg len?
 		double bleu_score[] = new double[1];
@@ -266,7 +267,7 @@ public class OracleExtractionHG extends SplitHg {
 	 *  	(2.2.1) create a new item
 	 *		(2.2.2) and add the item into virtual_item_sigs
 	 **/
-	protected  void process_one_combination_nonaxiom(HGNode parent_item, HashMap virtual_item_sigs, HyperEdge cur_dt, ArrayList<VirtualItem> l_ant_virtual_item){
+	protected  void process_one_combination_nonaxiom(HGNode parent_item, HashMap<String, VirtualItem> virtual_item_sigs, HyperEdge cur_dt, ArrayList<VirtualItem> l_ant_virtual_item){
 		if(l_ant_virtual_item==null){System.out.println("wrong call in process_one_combination_nonaxiom"); System.exit(0);}	
 		double avg_ref_len = (parent_item.j-parent_item.i>=src_sent_len) ? ref_sent_len :  (parent_item.j-parent_item.i)*ref_sent_len*1.0/src_sent_len;//avg len?
 		double bleu_score[] = new double[1];
@@ -326,8 +327,8 @@ public class OracleExtractionHG extends SplitHg {
 //	########################## commmon funcions #####################
 	//based on tbl_oracle_states, tbl_ref_ngrams, and dt, get the state
 	//get the new state: STATE_BEST_DEDUCT STATE_BEST_BLEU STATE_BEST_LEN NGRAM_MATCH_COUNTS
-	protected  DPStateOracle compute_state(HGNode parent_item, HyperEdge dt, ArrayList<VirtualItem> l_ant_virtual_item,  HashMap tbl_ref_ngrams, 
-			boolean do_local_ngram_clip, int lm_order, double ref_len, double[] bleu_score, HashMap tbl_suffix, HashMap tbl_prefix){	
+	protected  DPStateOracle compute_state(HGNode parent_item, HyperEdge dt, ArrayList<VirtualItem> l_ant_virtual_item,  HashMap<String, Integer> tbl_ref_ngrams, 
+			boolean do_local_ngram_clip, int lm_order, double ref_len, double[] bleu_score, HashMap<String, Boolean> tbl_suffix, HashMap<String, Boolean> tbl_prefix){	
 		//##### deductions under "goal item" does not have rule
 		if(dt.get_rule()==null){
 			if(l_ant_virtual_item.size()!=1){System.out.println("error deduction under goal item have more than one item"); System.exit(0);}
@@ -343,13 +344,18 @@ public class OracleExtractionHG extends SplitHg {
 		int[] en_words = dt.get_rule().getEnglish();
 		
 		//####calulate new and old ngram counts, and len
-    	ArrayList words= new ArrayList();
-    	ArrayList left_state_sequence = null; //used for compute left- and right- lm state
-    	ArrayList right_state_sequence = null; //used for compute left- and right- lm state
+
+		ArrayList<Integer> words= new ArrayList<Integer>();
+    	
+		// used for compute left- and right- lm state
+    	ArrayList<Integer> left_state_sequence = null;
+    	// used for compute left- and right- lm state
+    	ArrayList<Integer> right_state_sequence = null;
+    	
     	int correct_lm_order = lm_order;
     	if(always_maintain_seperate_lm_state==true || lm_order<g_bleu_order) {
-    		left_state_sequence = new ArrayList();
-    		right_state_sequence = new ArrayList();
+    		left_state_sequence = new ArrayList<Integer>();
+    		right_state_sequence = new ArrayList<Integer>();
     		correct_lm_order = g_bleu_order;//if lm_order is smaller than g_bleu_order, we will get the lm state by ourself
     	}
     	
@@ -391,13 +397,12 @@ public class OracleExtractionHG extends SplitHg {
     	get_ngrams(new_ngram_counts, g_bleu_order, words, true);
     
     	//####now deduct ngram counts
-    	Iterator iter = new_ngram_counts.keySet().iterator();
-    	while(iter.hasNext()){
-    		String ngram = (String)iter.next();
+    	for (String ngram : new_ngram_counts.keySet()) { 
     		if(tbl_ref_ngrams.containsKey(ngram)){
 	    		int final_count = (Integer)new_ngram_counts.get(ngram);
 	    		if(old_ngram_counts.containsKey(ngram)){
 	    			final_count -= (Integer)old_ngram_counts.get(ngram);
+	    			// TODO: Whoa, is that an actual hard-coded ID in there? :) 
 	    			if(final_count<0){System.out.println("error: negative count for ngram: "+ this.p_symbolTable.getWord(11844) + "; new: " + new_ngram_counts.get(ngram) +"; old: " +old_ngram_counts.get(ngram) ); System.exit(0);}
 	    		}
 	    		if(final_count>0){//TODO: not correct/global ngram clip
@@ -432,18 +437,20 @@ public class OracleExtractionHG extends SplitHg {
 	}
 	
 	
-	private int[] get_left_equiv_state(ArrayList left_state_sequence, HashMap tbl_suffix){
+	private int[] get_left_equiv_state(ArrayList<Integer> left_state_sequence, 
+			HashMap<String, Boolean> tbl_suffix)
+	{
 		int l_size = (left_state_sequence.size()<g_bleu_order-1)? left_state_sequence.size() : (g_bleu_order-1);
 		int[] left_lm_state = new int[l_size];
 		if(using_left_equiv_state==false || l_size<g_bleu_order-1){//regular
 			for(int i=0; i<l_size; i++)
-				left_lm_state[i] = (Integer)left_state_sequence.get(i);
+				left_lm_state[i] = left_state_sequence.get(i);
 		}else{			
 			for(int i=l_size-1; i>=0; i--){//right to left
 				if(is_a_suffix_in_tbl(left_state_sequence, 0, i, tbl_suffix)){
 				//if(is_a_suffix_in_grammar(left_state_sequence, 0, i, grammar_suffix)){
 					for(int j=i; j>=0; j--)
-						left_lm_state[j] = (Integer)left_state_sequence.get(j);
+						left_lm_state[j] = left_state_sequence.get(j);
 					break;
 				}else{
 					left_lm_state[i] = this.NULL_LEFT_LM_STATE_SYM_ID;
@@ -454,7 +461,9 @@ public class OracleExtractionHG extends SplitHg {
 		return left_lm_state;
 	}
 	
-	private boolean is_a_suffix_in_tbl(ArrayList left_state_sequence, int start_pos, int end_pos, HashMap tbl_suffix){
+	private boolean is_a_suffix_in_tbl(ArrayList<Integer> left_state_sequence, 
+			int start_pos, int end_pos, HashMap<String, Boolean> tbl_suffix)
+	{
 		if((Integer)left_state_sequence.get(end_pos)==this.NULL_LEFT_LM_STATE_SYM_ID)
 			return false;
 		StringBuffer suffix = new StringBuffer();
@@ -465,10 +474,13 @@ public class OracleExtractionHG extends SplitHg {
 		return (Boolean) tbl_suffix.containsKey(suffix.toString());
 	}
 	
-	private boolean is_a_suffix_in_grammar(ArrayList left_state_sequence, int start_pos, int end_pos, PrefixGrammar grammar_suffix){
+	// TODO: never called. remove?
+	private boolean is_a_suffix_in_grammar(ArrayList<Integer> left_state_sequence, 
+			int start_pos, int end_pos, PrefixGrammar grammar_suffix)
+	{
 		if((Integer)left_state_sequence.get(end_pos)==this.NULL_LEFT_LM_STATE_SYM_ID)
 			return false;
-		ArrayList suffix = new ArrayList();
+		ArrayList<Integer> suffix = new ArrayList<Integer>();
 		for(int i=end_pos; i>=start_pos; i--){//right-most first
 			suffix.add(left_state_sequence.get(i));
 		}		
@@ -476,7 +488,9 @@ public class OracleExtractionHG extends SplitHg {
 	}
 	
 	
-	private  int[] get_right_equiv_state(ArrayList right_state_sequence, HashMap tbl_prefix){
+	private  int[] get_right_equiv_state(ArrayList<Integer> right_state_sequence, 
+			HashMap<String, Boolean> tbl_prefix)
+	{
 		int r_size = (right_state_sequence.size()<g_bleu_order-1)? right_state_sequence.size() : (g_bleu_order-1);
 		int[] right_lm_state = new int[r_size];
 		if(using_right_equiv_state==false || r_size<g_bleu_order-1){//regular
@@ -499,8 +513,10 @@ public class OracleExtractionHG extends SplitHg {
 		return right_lm_state;
 	}
 	
-	private boolean is_a_prefix_in_tbl(ArrayList right_state_sequence, int start_pos, int end_pos, HashMap tbl_prefix){
-		if((Integer)right_state_sequence.get(start_pos)==this.NULL_RIGHT_LM_STATE_SYM_ID)
+	private boolean is_a_prefix_in_tbl(ArrayList<Integer> right_state_sequence, 
+			int start_pos, int end_pos, HashMap<String, Boolean> tbl_prefix)
+	{
+		if(right_state_sequence.get(start_pos) == this.NULL_RIGHT_LM_STATE_SYM_ID)
 			return false;
 		StringBuffer prefix = new StringBuffer();
 		for(int i=start_pos; i<=end_pos; i++){
@@ -509,9 +525,12 @@ public class OracleExtractionHG extends SplitHg {
 		}		
 		return (Boolean) tbl_prefix.containsKey(prefix.toString());
 	}
-	
-	private boolean is_a_prefix_in_grammar(ArrayList right_state_sequence, int start_pos, int end_pos, PrefixGrammar gr_prefix){
-		if((Integer)right_state_sequence.get(start_pos)==this.NULL_RIGHT_LM_STATE_SYM_ID)
+
+	// TODO: never called. remove?
+	private boolean is_a_prefix_in_grammar(ArrayList<Integer> right_state_sequence, 
+			int start_pos, int end_pos, PrefixGrammar gr_prefix)
+	{
+		if(right_state_sequence.get(start_pos) == this.NULL_RIGHT_LM_STATE_SYM_ID)
 			return false;
 		return gr_prefix.contain_ngram(right_state_sequence,  start_pos,  end_pos);
 	}
@@ -567,9 +586,12 @@ public class OracleExtractionHG extends SplitHg {
 	}
 	
 //	accumulate ngram counts into tbl
-	public void get_ngrams(HashMap tbl, int order, ArrayList wrds, boolean ignore_null_equiv_symbol){
+	public void get_ngrams(HashMap<String, Integer> tbl, int order, ArrayList<Integer> wrds, 
+			boolean ignore_null_equiv_symbol)
+	{
 		for(int i=0; i<wrds.size(); i++)
-			for(int j=0; j<order && j+i<wrds.size(); j++){//ngram: [i,i+j]
+			// ngram: [i,i+j]
+			for(int j=0; j<order && j+i<wrds.size(); j++) {
 				boolean contain_null=false;
 				StringBuffer ngram = new StringBuffer();
 				for(int k=i; k<=i+j; k++){
@@ -581,7 +603,9 @@ public class OracleExtractionHG extends SplitHg {
 					ngram.append(t_wrd);
 					if(k<i+j) ngram.append(" ");
 				}
-				if(ignore_null_equiv_symbol && contain_null) continue;//skip this ngram
+				// skip this ngram
+				if (ignore_null_equiv_symbol && contain_null) continue;
+				
 				String ngram_str = ngram.toString();
 				if(tbl.containsKey(ngram_str))
 					tbl.put(ngram_str, (Integer)tbl.get(ngram_str)+1);
@@ -600,15 +624,14 @@ public class OracleExtractionHG extends SplitHg {
 	
 	public  double compute_sentence_bleu( int[] ref_sent, int[] hyp_sent, boolean do_ngram_clip, int bleu_order){
 		double res_bleu = 0;
-		int order =4;
-		HashMap ref_ngram_tbl = new HashMap();
-		get_ngrams(ref_ngram_tbl, order, ref_sent,false);
-		HashMap hyp_ngram_tbl = new HashMap();
-		get_ngrams(hyp_ngram_tbl, order, hyp_sent,false);
+		int order = 4;
+		HashMap<String, Integer> ref_ngram_tbl = new HashMap<String, Integer>();
+		get_ngrams(ref_ngram_tbl, order, ref_sent, false);
+		HashMap<String, Integer> hyp_ngram_tbl = new HashMap<String, Integer>();
+		get_ngrams(hyp_ngram_tbl, order, hyp_sent, false);
 		
 		int[] num_ngram_match = new int[order];
-		for(Iterator it = hyp_ngram_tbl.keySet().iterator(); it.hasNext();){
-			String ngram = (String) it.next();
+		for(String ngram : hyp_ngram_tbl.keySet()){
 			if(ref_ngram_tbl.containsKey(ngram)){
 				if(do_ngram_clip)
 					num_ngram_match[ngram.split("\\s+").length-1] += Support.find_min((Integer)ref_ngram_tbl.get(ngram),(Integer)hyp_ngram_tbl.get(ngram)); //ngram clip
@@ -622,7 +645,8 @@ public class OracleExtractionHG extends SplitHg {
 
 		return res_bleu;
 	}
-			
+	
+	// TODO: never called, remove?
 	private static void print_state(Object[] state){
 		System.out.println("State is");
 		for(int i=0; i< state.length; i++)
@@ -632,21 +656,23 @@ public class OracleExtractionHG extends SplitHg {
 	
 	
 	//#### equivalent lm stuff ############
-	public static void setup_prefix_suffix_tbl(int[] wrds,  int order, HashMap prefix_tbl, HashMap suffix_tbl){
+	public static void setup_prefix_suffix_tbl(int[] wrds, int order, 
+			HashMap<String, Boolean> prefix_tbl, HashMap<String, Boolean> suffix_tbl)
+	{
 		for(int i=0; i<wrds.length; i++)
 			for(int j=0; j<order && j+i<wrds.length; j++){//ngram: [i,i+j]
 				StringBuffer ngram = new StringBuffer();	
 				//### prefix
 				for(int k=i; k<i+j; k++){//all ngrams [i,i+j-1]
 					ngram.append(wrds[k]);
-					prefix_tbl.put(ngram.toString(),true);
+					prefix_tbl.put(ngram.toString(), true);
 					ngram.append(" ");
 				}				
 				//### suffix: right-most wrd first
 				ngram = new StringBuffer();
 				for(int k=i+j; k>i; k--){//all ngrams [i+1,i+j]: reverse order
 					ngram.append(wrds[k]);
-					suffix_tbl.put(ngram.toString(),true);//stored in reverse order
+					suffix_tbl.put(ngram.toString(), true);//stored in reverse order
 					ngram.append(" ");
 				}				
 			}
@@ -654,7 +680,9 @@ public class OracleExtractionHG extends SplitHg {
 	
 	
 //	#### equivalent lm stuff ############
-	public static void setup_prefix_suffix_grammar(int[] wrds,  int order, PrefixGrammar prefix_gr, PrefixGrammar suffix_gr){
+	public static void setup_prefix_suffix_grammar(int[] wrds,  int order, 
+			PrefixGrammar prefix_gr, PrefixGrammar suffix_gr)
+	{
 		for(int i=0; i<wrds.length; i++)
 			for(int j=0; j<order && j+i<wrds.length; j++){//ngram: [i,i+j]
 				//### prefix
@@ -677,34 +705,41 @@ public class OracleExtractionHG extends SplitHg {
 	 * (4) suffix/prefix flag to indicate that there is ngrams start from this suffix
      */
 	private static class PrefixGrammar {
-		HashMap root = new HashMap();
+		
+		private static class PrefixGrammarNode extends HashMap<Integer, PrefixGrammarNode> {
+			private static final long serialVersionUID = 1L;
+		};
+		
+		PrefixGrammarNode root = new PrefixGrammarNode();
 		
 		//add prefix information
 		public void add_ngram(int[] wrds, int start_pos, int end_pos){			
 			//######### identify the position, and insert the trinodes if necessary
-			HashMap pos = root;
+			PrefixGrammarNode pos = root;
 			for(int k=start_pos; k <=end_pos; k++){
 				int cur_sym_id=wrds[k];
-				HashMap next_layer = (HashMap)pos.get(cur_sym_id);
-				if(next_layer!=null){
-					pos=next_layer;
-				}else{		
-					HashMap tem = new HashMap();//next layer node
-					pos.put(cur_sym_id, tem); 
-					pos = tem;
+				PrefixGrammarNode next_layer = pos.get(cur_sym_id);
+				
+				if (next_layer != null) {
+					pos = next_layer;
+				} else {
+					// next layer node
+					PrefixGrammarNode tmp =	new PrefixGrammarNode();
+					pos.put(cur_sym_id, tmp); 
+					pos = tmp;
 				}
 			}
 		}
 		
-		public boolean contain_ngram(ArrayList wrds, int start_pos, int end_pos){
-			if(end_pos<start_pos)return false;
-			HashMap pos = root;
-			for(int k=start_pos; k <=end_pos; k++){
-				int cur_sym_id= (Integer)wrds.get(k);
-				HashMap next_layer = (HashMap)pos.get(cur_sym_id);
-				if(next_layer!=null){
+		public boolean contain_ngram(ArrayList<Integer> wrds, int start_pos, int end_pos){
+			if (end_pos < start_pos) return false;
+			PrefixGrammarNode pos = root;
+			for (int k = start_pos; k <= end_pos; k++) {
+				int cur_sym_id = wrds.get(k);
+				PrefixGrammarNode next_layer = pos.get(cur_sym_id);
+				if (next_layer != null) {
 					pos=next_layer;
-				}else{
+				} else {
 					return false;
 				}
 			}
