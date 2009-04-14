@@ -42,6 +42,7 @@ import java.util.ArrayList;
  * @version $LastChangedDate:2008-09-18 12:47:23 -0500 (Thu, 18 Sep 2008) $
  * @deprecated
  */
+@Deprecated
 public class HierarchicalPhrase extends AbstractPhrase {
 
 	/** 

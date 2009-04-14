@@ -169,7 +169,7 @@ public class LMServer {
 			if (line.indexOf("=") != -1) { //parameters
 				String[] fds = Regex.equalsWithSpaces.split(line);
 				if (fds.length != 2) {
-					Support.write_log_line("Wrong config line: " + line, Support.ERROR);
+					logger.severe("Wrong config line: " + line);
 					System.exit(0);
 				}
 				if ("lm_file".equals(fds[0])) {

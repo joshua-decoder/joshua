@@ -74,6 +74,7 @@ public abstract class AbstractLM extends DefaultNGramLanguageModel {
 	/**
 	 * @deprecated this function is much slower than the int[] version
 	 */
+	@Deprecated
 	public final double logProbabilityOfBackoffState(ArrayList<Integer> ngram, int order, int qtyAdditionalBackoffWeight) {
 		return logProbabilityOfBackoffState(
 			Support.sub_int_array(ngram, 0, ngram.size()),

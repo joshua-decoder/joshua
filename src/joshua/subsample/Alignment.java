@@ -50,8 +50,10 @@ public class Alignment {
 		this.fLength  = fLength;
 		this.aligned  = new M2(fLength, eLength);
 		
-		if (alignments == null || alignments.length() == 0) return;
-		String[] als = alignments.split("\\s+");
+		if (alignments == null || alignments.length() == 0) {
+			return;
+		}
+		String[] als = alignments.split("\\s+"); // TODO: joshua.util.Regex
 		for (String al : als) {
 			String[] pair = al.split("-");
 			if (pair.length != 2)

@@ -87,9 +87,11 @@ implements Iterable<PhrasePair> {
 		
 		// Check for fileLengthMismatchException
 		// Of course, that will be checked for in each iteration
-		Iterator<PhrasePair> i = iterator();
-		while (i.hasNext()) { 
-			i.next(); 
+		//
+		// We write it this way to avoid warnings from the foreach style loop
+		Iterator<PhrasePair> it = iterator();
+		while (it.hasNext()) {
+			it.next();
 		}
 	}
 	

@@ -86,6 +86,7 @@ public abstract class DefaultNGramLanguageModel implements NGramLanguageModel {
 	
 	
 	/** @deprecated this function is much slower than the int[] version */
+	@Deprecated
 	public double ngramLogProbability(ArrayList<Integer> ngram, int order) {
 		return ngramLogProbability(
 			Support.sub_int_array(ngram, 0, ngram.size()), order);

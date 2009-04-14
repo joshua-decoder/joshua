@@ -119,7 +119,7 @@ public class LMGrammarRemote extends AbstractLM {
 			if (-1 != line.indexOf("=")) { // parameters
 				String[] fds = Regex.equalsWithSpaces.split(line);
 				if (fds.length != 2) {
-					Support.write_log_line("Wrong config line: " + line, Support.ERROR);
+					logger.severe("Wrong config line: " + line);
 					System.exit(1);
 				}
 				if ("lm_file".equals(fds[0])) {

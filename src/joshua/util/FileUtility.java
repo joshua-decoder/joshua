@@ -51,6 +51,7 @@ public class FileUtility {
 	/**
 	 * @deprecated As of r610, use {@link joshua.util.io.LineReader} instead. 
 	 */
+	@Deprecated
 	public static BufferedReader getReadFileStream(String filename)
 	throws IOException {
 		FileInputStream fis = new FileInputStream(filename);
