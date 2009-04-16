@@ -349,6 +349,7 @@ public class MertCore
       println("Loading Joshua decoder...",1);
       myDecoder.initialize(decoderConfigFileName+".ZMERT.orig");
       println("...finished loading @ " + (new Date()),1);
+      println("");
     } else {
       myDecoder = null;
     }
@@ -471,12 +472,12 @@ public class MertCore
     double FINAL_score = 0;
 
     double[] retA = new double[3];
-      // retA[0]: FINAL_lambda
+      // retA[0]: FINAL_score
       // retA[1]: earlyStop
       // retA[2]: should this be the last iteration?
 
     boolean done = false;
-    retA[2] = 1; // will only made 0 if we don't break from the following loop
+    retA[2] = 1; // will only be made 0 if we don't break from the following loop
 
 
     double[][][] featVal_array = new double[1+numParams][][];
@@ -599,6 +600,15 @@ public class MertCore
         InputStream inStream_sents = new FileInputStream(new File(decoderOutFileName+".temp.sents.it"+iteration));
         BufferedReader inFile_sentsCurrIt = new BufferedReader(new InputStreamReader(inStream_sents, "utf8"));
         BufferedReader inFile_featsCurrIt = new BufferedReader(new FileReader(decoderOutFileName+".temp.feats.it"+iteration));
+
+        BufferedReader inFile_statsCurrIt = null;
+        boolean statsCurrIt_exists = false;
+        if (fileExists(decoderOutFileName+".temp.stats.it"+iteration)) {
+          statsCurrIt_exists = true;
+          copyFile(decoderOutFileName+".temp.stats.it"+iteration,decoderOutFileName+".temp.stats.it"+iteration+".orig");
+          inFile_statsCurrIt = new BufferedReader(new FileReader(decoderOutFileName+".temp.stats.it"+iteration+".orig"));
+        }
+
         PrintWriter outFile_statsCurrIt = new PrintWriter(decoderOutFileName+".temp.stats.it"+iteration);
 
         PrintWriter outFile_statsMerged = new PrintWriter(decoderOutFileName+".temp.stats.merged");
@@ -611,8 +621,8 @@ public class MertCore
         HashMap<String,String> existingCandStats = new HashMap<String,String>();
           // Stores precalculated sufficient statistics for candidates, in case
           // the same candidate is seen again. (SS stored as a String.)
-          // Q: Why do we care?  If we see the same candidate again, aren't we just
-          //    ignoring them?  In that case, why do we care about the SS?
+          // Q: Why do we care?  If we see the same candidate again, aren't we going
+          //    to ignore it?  So, why do we care about the SS of this repeat candidate?
           // A: A "repeat" candidate may not be a repeat candidate in later
           //    iterations if the user specifies a value for prevMERTIterations
           //    that causes MERT to skip candidates from early iterations.
@@ -738,7 +748,10 @@ public class MertCore
             indices[d] = i;
           }
 
-          int[][] newSuffStats = evalMetric.suffStats(unknownCands, indices);
+          int[][] newSuffStats = null;
+          if (!statsCurrIt_exists) {
+            newSuffStats = evalMetric.suffStats(unknownCands, indices);
+          }
 
           int d = -1;
 
@@ -765,13 +778,21 @@ public class MertCore
 
               ++d;
 
-              stats_str = "";
-              for (int s = 0; s < suffStatsCount-1; ++s) {
-                stats[s] = newSuffStats[d][s];
-                stats_str += (stats[s] + " ");
+              if (!statsCurrIt_exists) {
+                stats_str = "";
+                for (int s = 0; s < suffStatsCount-1; ++s) {
+                  stats[s] = newSuffStats[d][s];
+                  stats_str += (stats[s] + " ");
+                }
+                stats[suffStatsCount-1] = newSuffStats[d][suffStatsCount-1];
+                stats_str += stats[suffStatsCount-1];
+              } else {
+                stats_str = inFile_statsCurrIt.readLine();
+                String[] temp_stats = stats_str.split("\\s+");
+                for (int s = 0; s < suffStatsCount; ++s) {
+                  stats[s] = Integer.parseInt(temp_stats[s]);
+                }
               }
-              stats[suffStatsCount-1] = newSuffStats[d][suffStatsCount-1];
-              stats_str += stats[suffStatsCount-1];
 
               outFile_statsCurrIt.println(stats_str);
               outFile_statsMerged.println(stats_str);
@@ -808,6 +829,8 @@ public class MertCore
               // write SS to outFile_statsCurrIt
               stats_str = existingCandStats.get(sents_str);
               outFile_statsCurrIt.println(stats_str);
+              if (statsCurrIt_exists)
+                inFile_statsCurrIt.readLine();
             }
 
             showProgress();
@@ -819,6 +842,8 @@ public class MertCore
           inFile_sentsCurrIt_IP.close();
 
           outFile_statsCurrIt.println("||||||");
+          if (statsCurrIt_exists)
+            inFile_statsCurrIt.readLine();
 
           existingCandStats.clear();
           totalCandidateCount += candCount[i];
@@ -833,6 +858,7 @@ public class MertCore
 
         inFile_sentsCurrIt.close();
         inFile_featsCurrIt.close();
+        if (statsCurrIt_exists) inFile_statsCurrIt.close();
         outFile_statsCurrIt.close();
 
         outFile_statsMerged.close();
@@ -953,7 +979,7 @@ public class MertCore
         for (int c = 1; c <= numParams; ++c) {
           if (finalLambda[j][c] < minThValue[c] || finalLambda[j][c] > maxThValue[c]) {
             println("Warning: after normalization, final lambda[j=" + j + "][" + c + "]="
-                  + f4.format(finalLambda[j][c]) + " is outside its critical value range.",1);
+                  + f4.format(finalLambda[j][c]) + " is outside its critical value range.",2);
           }
         }
         println("Final lambda[j=" + j + "]: " + lambdaToString(finalLambda[j]),1);
@@ -1218,6 +1244,7 @@ public class MertCore
         println("Loading Joshua decoder...",1);
         myDecoder.initialize(decoderConfigFileName+".ZMERT.orig");
         println("...finished loading @ " + (new Date()),1);
+        println("");
       }
 
       println("Running Joshua decoder on source file " + sourceFileName + "...",1);
@@ -1261,7 +1288,7 @@ public class MertCore
     int c, int[] candCount, double[][][] featVal_array,
     HashMap<Integer,int[]>[] suffStats_array, double[] lambda, int minIt, int maxIt)
   {
-//    println("Line-optimizing lambda[" + c + "]...",3);
+    println("Line-optimizing lambda[" + c + "]...",3);
 
     double[] bestScoreInfo = new double[2];
       // to be returned: [0] will store the best lambda, and [1] will store its score
@@ -1279,8 +1306,8 @@ public class MertCore
 
     double smallest_th = thresholdsAll.firstKey();
     double largest_th = thresholdsAll.lastKey();
-//    println("Minimum threshold: " + smallest_th,3);
-//    println("Maximum threshold: " + largest_th,3);
+    println("Minimum threshold: " + smallest_th,3);
+    println("Maximum threshold: " + largest_th,3);
 
     double[] temp_lambda = new double[1+numParams];
     System.arraycopy(lambda,1,temp_lambda,1,numParams);
@@ -1322,8 +1349,8 @@ public class MertCore
     double bestScore = evalMetric.score(suffStats_tot);
     double bestLambdaVal = temp_lambda[c];
     double nextLambdaVal = bestLambdaVal;
-//    println("At lambda[" + c + "] = " + bestLambdaVal + ","
-//          + "\t" + metricName + " = " + bestScore + " (*)",3);
+    println("At lambda[" + c + "] = " + bestLambdaVal + ","
+          + "\t" + metricName + " = " + bestScore + " (*)",3);
 
     Iterator<Double> It = (thresholdsAll.keySet()).iterator();
     if (It.hasNext()) { ip_curr = It.next(); }
@@ -1355,16 +1382,16 @@ public class MertCore
       }
 
       double nextTestScore = evalMetric.score(suffStats_tot);
-//      print("At lambda[" + c + "] = " + nextLambdaVal + ","
-//          + "\t" + metricName + " = " + nextTestScore,3);
+      print("At lambda[" + c + "] = " + nextLambdaVal + ","
+          + "\t" + metricName + " = " + nextTestScore,3);
 
       if (evalMetric.isBetter(nextTestScore,bestScore)) {
         bestScore = nextTestScore;
         bestLambdaVal = nextLambdaVal;
-//        print(" (*)",3);
+        print(" (*)",3);
       }
 
-//      println("",3);
+      println("",3);
 
     } // while (It.hasNext())
 
@@ -1705,7 +1732,9 @@ public class MertCore
       for (int k = 0; k < numCandidates; ++k) {
         double score = 0;
 
-        for (int c2 = 1; c2 <= numParams; ++c2) { score += temp_lambda[c2] * featVal_array[c2][i][k]; }
+        for (int c2 = 1; c2 <= numParams; ++c2) {
+          score += temp_lambda[c2] * featVal_array[c2][i][k];
+        }
         if (score > max) {
           max = score;
           indexOfMax = k;
@@ -1990,7 +2019,7 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
       normalizationOptions[2] = c_fromParamName(pName);;
 
       if (normalizationOptions[1] <= 0) {
-        println("Value for the absval normalization method must be positive.",1);
+        println("Value for the absval normalization method must be positive.");
         System.exit(21);
       }
       if (normalizationOptions[2] == 0) {
@@ -2002,14 +2031,14 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
       normalizationOptions[0] = 2;
       normalizationOptions[1] = Double.parseDouble(dummyA[1]);
       if (normalizationOptions[1] <= 0) {
-        println("Value for the maxabsval normalization method must be positive.",1);
+        println("Value for the maxabsval normalization method must be positive.");
         System.exit(21);
       }
     } else if (dummyA[0].equals("minabsval")) {
       normalizationOptions[0] = 3;
       normalizationOptions[1] = Double.parseDouble(dummyA[1]);
       if (normalizationOptions[1] <= 0) {
-        println("Value for the minabsval normalization method must be positive.",1);
+        println("Value for the minabsval normalization method must be positive.");
         System.exit(21);
       }
     } else if (dummyA[0].equals("LNorm")) {
@@ -2017,12 +2046,12 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
       normalizationOptions[1] = Double.parseDouble(dummyA[1]);
       normalizationOptions[2] = Double.parseDouble(dummyA[2]);
       if (normalizationOptions[1] <= 0 || normalizationOptions[2] <= 0) {
-        println("Both values for the LNorm normalization method must be positive.",1);
+        println("Both values for the LNorm normalization method must be positive.");
         System.exit(21);
       }
     } else {
       println("Unrecognized normalization method " + dummyA[0] + "; "
-            + "must be one of none, absval, maxabsval, and LNorm.",1);
+            + "must be one of none, absval, maxabsval, and LNorm.");
       System.exit(21);
     } // if (dummyA[0])
 
@@ -2961,7 +2990,7 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
         //   (*) last iteration
         //   (*) number of random numbers generated already
         //   (*) earlyStop
-        //   (*) FINAL_lambda
+        //   (*) FINAL_score
         //   (*) lambda[]
         //   (*) maxIndex[]
         // => length should be 4+numParams+numSentences
