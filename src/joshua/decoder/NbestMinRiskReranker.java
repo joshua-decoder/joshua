@@ -83,7 +83,7 @@ public class NbestMinRiskReranker {
 			l_sent_lens.add(t_wrds.length);
 			
 			HashMap<String,Integer> tbl_ngram = new HashMap<String,Integer>();
-			BLEU.get_ngrams(tbl_ngram, 4, t_wrds);
+			BLEU.accumulateNgramCounts(tbl_ngram, 4, t_wrds);
 			l_ngram_tbls.add(tbl_ngram);
 			
 			//l_feat_scores.add(fds[2]);

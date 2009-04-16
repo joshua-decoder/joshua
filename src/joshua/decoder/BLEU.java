@@ -45,7 +45,7 @@ public class BLEU {
 			String[] ref_wrds = Regex.spaces.split(ref_sents[i]);
 			ref_lens[i] = ref_wrds.length;
 			HashMap<String, Integer> ref_ngram_tbl = new HashMap<String, Integer>();
-			get_ngrams(ref_ngram_tbl, bleu_order, ref_wrds);	
+			accumulateNgramCounts(ref_ngram_tbl, bleu_order, ref_wrds);	
 			list_ref_ngram_tbl.add(ref_ngram_tbl);			
 		}
 		double effective_ref_len=computeEffectiveLen(ref_lens, use_shortest_ref);
@@ -53,7 +53,7 @@ public class BLEU {
 				
 		String[] hyp_wrds = Regex.spaces.split(hyp_sent);
 		HashMap<String, Integer> hyp_ngram_tbl = new HashMap<String, Integer>();
-		get_ngrams(hyp_ngram_tbl, bleu_order, hyp_wrds);
+		accumulateNgramCounts(hyp_ngram_tbl, bleu_order, hyp_wrds);
 		
 		return compute_sentence_bleu(effective_ref_len, list_ref_ngram_tbl, hyp_wrds.length, hyp_ngram_tbl, do_ngram_clip, bleu_order);
 	}
@@ -108,9 +108,9 @@ public class BLEU {
 		String[] ref_wrds = Regex.spaces.split(ref_sent);
 		String[] hyp_wrds = Regex.spaces.split(hyp_sent);
 		HashMap<String, Integer> ref_ngram_tbl = new HashMap<String, Integer>();
-		get_ngrams(ref_ngram_tbl, bleu_order, ref_wrds);
+		accumulateNgramCounts(ref_ngram_tbl, bleu_order, ref_wrds);
 		HashMap<String, Integer> hyp_ngram_tbl = new HashMap<String, Integer>();
-		get_ngrams(hyp_ngram_tbl, bleu_order, hyp_wrds);
+		accumulateNgramCounts(hyp_ngram_tbl, bleu_order, hyp_wrds);
 		
 		return compute_sentence_bleu(ref_wrds.length, ref_ngram_tbl, hyp_wrds.length, hyp_ngram_tbl, do_ngram_clip, bleu_order);
 	}
@@ -156,11 +156,21 @@ public class BLEU {
 		return res;
 	}
 	
-	//accumulate ngram counts into tbl
-
 	
-//	accumulate ngram counts into tbl
-	public static void get_ngrams(HashMap<String, Integer> tbl, int order, String[] wrds){
+	/** construct a ngram table containing ngrams that appear in the ref_sents for a given source sentence
+	 */
+	public  static HashMap<String, Integer> constructReferenceTable(String[] ref_sents, int bleu_order){		
+		HashMap<String, Integer> referenceNgramTable = new HashMap<String, Integer>();
+		for(String refSentence: ref_sents){
+			String[] ref_wrds = Regex.spaces.split(refSentence);			
+			accumulateNgramCounts(referenceNgramTable, bleu_order, ref_wrds);				
+		}
+		return referenceNgramTable;
+	}
+	
+	
+//	accumulate ngram counts into tbl; ngrams with an order in [1,order]
+	public static void accumulateNgramCounts(HashMap<String, Integer> tbl, int order, String[] wrds){
 		for(int i=0; i<wrds.length; i++)
 			for(int j=0; j<order && j+i<wrds.length; j++){//ngram: [i,i+j]
 				StringBuffer ngram = new StringBuffer();
