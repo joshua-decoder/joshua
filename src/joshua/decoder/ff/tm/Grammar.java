@@ -57,6 +57,9 @@ public interface Grammar {
 	 */
 	public void sortGrammar(ArrayList<FeatureFunction> models);
 	
+	public boolean isSorted();
+	
+	public void setSorted(boolean sorted);
 	
 	/**
 	 * return number of rules stored in the grammar

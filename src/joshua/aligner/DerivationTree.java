@@ -1,7 +1,6 @@
 package joshua.aligner;
 
 import java.util.*;
-import java.io.*;
 
 
 public class DerivationTree
@@ -202,7 +201,9 @@ public class DerivationTree
   }
 
   static private void println(Object obj) { System.out.println(obj); }
-  static private void print(Object obj) { System.out.print(obj); }
+  
+  @SuppressWarnings("unused")
+static private void print(Object obj) { System.out.print(obj); }
 
 }
 

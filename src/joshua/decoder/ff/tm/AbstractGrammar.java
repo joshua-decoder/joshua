@@ -33,11 +33,22 @@ import joshua.decoder.ff.FeatureFunction;
 
 public abstract class AbstractGrammar implements Grammar {
  
+	protected boolean sorted;
+	
+	public AbstractGrammar() {
+		this.sorted = false;
+	}
+	
 	/**
 	 * Cube-pruning requires that the grammar be sorted based on the latest feature functions.
 	 */
 	public void sortGrammar(ArrayList<FeatureFunction> models) {
 		sort(getTrieRoot(), models);
+		setSorted(true);
+	}
+	
+	public void setSorted(boolean sorted) {
+		this.sorted = sorted;
 	}
 	
 	private void sort(Trie node, ArrayList<FeatureFunction> models) {
@@ -50,4 +61,8 @@ public abstract class AbstractGrammar implements Grammar {
 		}
 	}
 
+	public boolean isSorted() {
+		return sorted;
+	}
+	
 }

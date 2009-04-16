@@ -85,7 +85,7 @@ public class SuffixArrayFactory {
 	public static CorpusArray createCorpusArray(String inputFilename)
 	throws IOException {
 		Vocabulary vocabulary = new Vocabulary();
-		int[] ws = Vocabulary.createVocabulary(inputFilename, vocabulary);
+		int[] ws = Vocabulary.initializeVocabulary(inputFilename, vocabulary, true);
 		return createCorpusArray(inputFilename, vocabulary, ws[0], ws[1]);
 	}
 	

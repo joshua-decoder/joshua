@@ -1,7 +1,6 @@
 package joshua.aligner;
 
 import java.util.*;
-import java.io.*;
 
 
 public class ParseTree
@@ -224,7 +223,9 @@ if (t.equals(RS)) println("t is good"); else println("t is BAD");
   }
 
   static private void println(Object obj) { System.out.println(obj); }
-  static private void print(Object obj) { System.out.print(obj); }
+  
+  @SuppressWarnings("unused")
+static private void print(Object obj) { System.out.print(obj); }
 
 }
 

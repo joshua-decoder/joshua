@@ -28,6 +28,7 @@ import joshua.decoder.ff.lm.bloomfilter_lm.BloomFilterLanguageModel;
 import joshua.decoder.ff.lm.buildin_lm.LMGrammarJAVA;
 import joshua.decoder.ff.lm.distributed_lm.LMGrammarRemote;
 import joshua.decoder.ff.lm.srilm.LMGrammarSRILM;
+import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.GrammarFactory;
 import joshua.decoder.ff.tm.hiero.MemoryBasedBatchGrammar;
 import joshua.sarray.Corpus;
@@ -47,6 +48,7 @@ import joshua.util.sentence.alignment.Alignments;
 import joshua.util.sentence.alignment.MemoryMappedAlignmentGrids;
 
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.logging.Level;
@@ -119,8 +121,10 @@ public class JoshuaDecoder {
 		
 		// BUG: this works for Batch grammar only; not for sentence-specific grammars
 		for (GrammarFactory grammarFactory : this.grammarFactories) {
+//			if (grammarFactory instanceof Grammar) {
 			grammarFactory.getGrammarForSentence(null)
-				.sortGrammar(this.featureFunctions);
+			.sortGrammar(this.featureFunctions);
+//			}
 		}
 	}
 	
@@ -207,7 +211,7 @@ public class JoshuaDecoder {
 			if (JoshuaConfiguration.have_lm_model) initializeLanguageModel();
 			
 			// Initialize the features: requires that
-			// LM model has been initialied. If an LM
+			// LM model has been initialized. If an LM
 			// feature is used, need to read config file
 			// again
 			this.initializeFeatureFunctions(configFile);
@@ -215,32 +219,50 @@ public class JoshuaDecoder {
 			
 			// initialize and load grammar
 			if (! JoshuaConfiguration.use_sent_specific_tm) {
-				if (null != JoshuaConfiguration.tm_file) {
+				
+				if (JoshuaConfiguration.tm_file != null) {
 					
-					initializeTranslationGrammars(JoshuaConfiguration.tm_file);
+					if (JoshuaConfiguration.tm_file.endsWith(".josh")) {
+						
+						try {
+							SymbolTable vocab = initializeSuffixArrayGrammar();
+							
+							//TODO Initialize symbol table using suffix array's vocab
+							
+						} catch (Exception e) {
+							logger.severe("Error reading suffix array grammar - exiting decoder.");
+							e.printStackTrace();
+							System.exit(-1);
+						}
+						
+					} else {
+						
+						//TODO Move symbol table initialization to right here
+						
+						initializeTranslationGrammars(JoshuaConfiguration.tm_file);
 					
-				} else if (null != JoshuaConfiguration.sa_source
-					&& null != JoshuaConfiguration.sa_target
-					&& null != JoshuaConfiguration.sa_alignment) {
-					
-					try {
-						initializeSuffixArrayGrammar();
-					} catch (Exception e) {
-						logger.severe("Error reading suffix array grammar - exiting decoder.");
-						e.printStackTrace();
-						System.exit(-1);
 					}
+					
+					
 					
 				} else {
 					throw new RuntimeException("No translation grammar or suffix array grammar was specified.");
 				}
 			}
+			
+			
+			
+			//TODO Move language model initialization and feature function initialization to here
+			
+			
 						
 			// Sort the TM grammars (needed to do cube pruning)
 			// BUG: this works for Batch grammar only; not for sentence-specific grammars
 			for (GrammarFactory grammarFactory : this.grammarFactories) {
-				grammarFactory.getGrammarForSentence(null)
-					.sortGrammar(this.featureFunctions);
+				if (grammarFactory instanceof Grammar) {
+					Grammar batchGrammar = (Grammar) grammarFactory;
+					batchGrammar.sortGrammar(this.featureFunctions);
+				}
 			}
 			
 			
@@ -366,44 +388,54 @@ public class JoshuaDecoder {
 	}
 	
 	
-	private void initializeSuffixArrayGrammar()
+	private SymbolTable initializeSuffixArrayGrammar()
 	throws IOException, ClassNotFoundException {
 		initializeGlueGrammar();
 		
 		int maxCacheSize = JoshuaConfiguration.sa_rule_cache_size;
 		
-		String binarySourceVocabFileName =
-			JoshuaConfiguration.sa_source + "." +
-			JoshuaConfiguration.sa_vocab_suffix;
+		String binaryVocabFileName =
+			JoshuaConfiguration.tm_file + 
+			File.separator + "common.vocab";
+//			JoshuaConfiguration.sa_source + "." +
+//			JoshuaConfiguration.sa_vocab_suffix;
 		
 		String binarySourceCorpusFileName =
-			JoshuaConfiguration.sa_source + "." +
-			JoshuaConfiguration.sa_corpus_suffix;
+			JoshuaConfiguration.tm_file + 
+			File.separator + "source.corpus";
+//			JoshuaConfiguration.sa_source + "." +
+//			JoshuaConfiguration.sa_corpus_suffix;
 		
 		String binarySourceSuffixesFileName =
-			JoshuaConfiguration.sa_target + "." +
-			JoshuaConfiguration.sa_suffixes_suffix;
+			JoshuaConfiguration.tm_file + 
+			File.separator + "source.suffixes";
+			//			JoshuaConfiguration.sa_target + "." +
+//			JoshuaConfiguration.sa_suffixes_suffix;
 		
 		
-		String binaryTargetVocabFileName =
-			JoshuaConfiguration.sa_target + "." +
-			JoshuaConfiguration.sa_vocab_suffix;
+//		String binaryTargetVocabFileName =
+//			JoshuaConfiguration.sa_target + "." +
+//			JoshuaConfiguration.sa_vocab_suffix;
 		
 		String binaryTargetCorpusFileName =
-			JoshuaConfiguration.sa_target + "." +
-			JoshuaConfiguration.sa_corpus_suffix;
+			JoshuaConfiguration.tm_file + 
+			File.separator + "target.corpus";
+			//			JoshuaConfiguration.sa_target + "." +
+//			JoshuaConfiguration.sa_corpus_suffix;
 		
 		String binaryTargetSuffixesFileName =
-			JoshuaConfiguration.sa_target + "." +
-			JoshuaConfiguration.sa_suffixes_suffix;
+			JoshuaConfiguration.tm_file + 
+			File.separator + "target.suffixes";
+			//			JoshuaConfiguration.sa_target + "." +
+//			JoshuaConfiguration.sa_suffixes_suffix;
 		
 		
 		if (logger.isLoggable(Level.INFO))
-			logger.info("Reading source language vocabulary from " +
-				binarySourceVocabFileName);
-		Vocabulary sourceVocab = new Vocabulary();
-		sourceVocab.readExternal(
-			BinaryIn.vocabulary(binarySourceVocabFileName));
+			logger.info("Reading common vocabulary from " + 
+					binaryVocabFileName);
+		Vocabulary commonVocab = new Vocabulary();
+		commonVocab.readExternal(
+			BinaryIn.vocabulary(binaryVocabFileName));
 		
 		
 		if (logger.isLoggable(Level.INFO))
@@ -411,7 +443,7 @@ public class JoshuaDecoder {
 				binarySourceCorpusFileName);
 		Corpus sourceCorpusArray =
 			new MemoryMappedCorpusArray(
-				sourceVocab, binarySourceCorpusFileName);
+				commonVocab, binarySourceCorpusFileName);
 		
 		
 		if (logger.isLoggable(Level.INFO))
@@ -424,20 +456,20 @@ public class JoshuaDecoder {
 					maxCacheSize);
 		
 		
-		if (logger.isLoggable(Level.INFO))
-			logger.info("Reading target language vocabulary from " +
-				binarySourceVocabFileName);
-		Vocabulary targetVocab = new Vocabulary();
-		sourceVocab.readExternal(
-			BinaryIn.vocabulary(binaryTargetVocabFileName));
-		
+//		if (logger.isLoggable(Level.INFO))
+//			logger.info("Reading target language vocabulary from " +
+//				binarySourceVocabFileName);
+//		Vocabulary targetVocab = new Vocabulary();
+//		sourceVocab.readExternal(
+//			BinaryIn.vocabulary(binaryTargetVocabFileName));
+//		
 		
 		if (logger.isLoggable(Level.INFO))
 			logger.info("Reading target language corpus from " +
 				binaryTargetCorpusFileName);
 		Corpus targetCorpusArray =
 			new MemoryMappedCorpusArray(
-				targetVocab, binaryTargetCorpusFileName);
+				commonVocab, binaryTargetCorpusFileName);
 		
 		
 		if (logger.isLoggable(Level.INFO))
@@ -450,7 +482,10 @@ public class JoshuaDecoder {
 					maxCacheSize);
 		
 		
-		String binaryAlignmentFileName = JoshuaConfiguration.sa_alignment;
+		String binaryAlignmentFileName = 
+			JoshuaConfiguration.tm_file + 
+			File.separator + "alignment.grids";
+//			JoshuaConfiguration.sa_alignment;
 		if (logger.isLoggable(Level.INFO))
 			logger.info("Reading alignment grid data from " +
 				binaryAlignmentFileName);
@@ -480,6 +515,8 @@ public class JoshuaDecoder {
 			JoshuaConfiguration.sa_max_phrase_length,
 			JoshuaConfiguration.sa_max_nonterminals,
 			JoshuaConfiguration.sa_min_nonterminal_span));
+		
+		return commonVocab;
 	}
 	
 	

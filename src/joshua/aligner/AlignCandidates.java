@@ -30,7 +30,8 @@ public class AlignCandidates {
   private static Suffixes srcSA, tgtSA;
   private static Alignments alignments;
 
-  public static void main(String[] args) throws IOException {
+  
+public static void main(String[] args) throws IOException {
 
 /*
     testDerivationTree("(S{0-12} (S{0-11} (S{0-8} (X{0-8} (X{0-3} official (X{1-2} forecasts) are) based on (X{4-7} (X{4-5} only) 3 per cent))) (X{8-11} reported (X{8-9} ,) (X{10-11} bloomberg))) (X{11-12} .))");
@@ -85,6 +86,8 @@ public class AlignCandidates {
 
     String[] ASR = new String[numSentences];
     ParseTree[] PT = new ParseTree[numSentences];
+    
+    @SuppressWarnings("unchecked")
     Vector<TreeSet<Integer>>[] ranges = new Vector[numSentences];
 
     for (int i = 0; i < numSentences; ++i) {
@@ -119,7 +122,7 @@ println("  # ranges (via ranges[]): " + ranges[i].size());
 
     // Source language vocabulary
     srcVocab = new Vocabulary();
-    int[] sourceWordsSentences = Vocabulary.createVocabulary(trainSrc_fileName, srcVocab);
+    int[] sourceWordsSentences = Vocabulary.initializeVocabulary(trainSrc_fileName, srcVocab, true);
 
     int numSourceWords = sourceWordsSentences[0];
     int numSourceSentences = sourceWordsSentences[1];
@@ -133,7 +136,7 @@ println("  # ranges (via ranges[]): " + ranges[i].size());
 
     // Target language vocabulary
     tgtVocab = new Vocabulary();
-    int[] targetWordsSentences = Vocabulary.createVocabulary(trainTgt_fileName, tgtVocab);
+    int[] targetWordsSentences = Vocabulary.initializeVocabulary(trainTgt_fileName, tgtVocab, true);
 
     int numTargetWords = targetWordsSentences[0];
     int numTargetSentences = targetWordsSentences[1];
@@ -428,7 +431,8 @@ println("  # ranges (via ranges[]): " + ranges[i].size());
     println("");
   }
 
-  static private String resolve(String link, String[] srcWords, String[] tgtWords)
+  
+static private String resolve(String link, String[] srcWords, String[] tgtWords)
   {
     String SrcSide = link.substring(0,link.indexOf("--"));
     String TgtSide = link.substring(link.indexOf("--")+2);
@@ -450,8 +454,8 @@ println("  # ranges (via ranges[]): " + ranges[i].size());
     TreeMap<Integer,Vector<Integer>>[] tgtPhPos = getPosMaps(tgtPhrases,tgtSA);
 
     TreeSet<Integer> senIndices = new TreeSet<Integer>(srcPhPos[0].keySet());
-    for (int i = 1; i < srcPhCount; ++i) { senIndices = setIntersect(senIndices,new TreeSet(srcPhPos[i].keySet())); }
-    for (int i = 0; i < tgtPhCount; ++i) { senIndices = setIntersect(senIndices,new TreeSet(tgtPhPos[i].keySet())); }
+    for (int i = 1; i < srcPhCount; ++i) { senIndices = setIntersect(senIndices,new TreeSet<Integer>(srcPhPos[i].keySet())); }
+    for (int i = 0; i < tgtPhCount; ++i) { senIndices = setIntersect(senIndices,new TreeSet<Integer>(tgtPhPos[i].keySet())); }
     // now, if sen_i is in senIndices, this means that the sen_i'th sentence pair
     // contains all the relevant phrases, on both sides
 
@@ -459,8 +463,10 @@ println("  # ranges (via ranges[]): " + ranges[i].size());
 
     for (Integer sen_i : senIndices) {
 
+      @SuppressWarnings("unchecked")
       Vector<Integer>[] srcVecs = new Vector[srcPhCount];
       for (int ph = 0; ph < srcPhCount; ++ph) { srcVecs[ph] = srcPhPos[ph].get(sen_i); }
+      @SuppressWarnings("unchecked")
       Vector<Integer>[] tgtVecs = new Vector[tgtPhCount];
       for (int ph = 0; ph < tgtPhCount; ++ph) { tgtVecs[ph] = tgtPhPos[ph].get(sen_i); }
 
@@ -675,10 +681,12 @@ println("  # ranges (via ranges[]): " + ranges[i].size());
     return retSet;
   }
 
-  static private TreeMap<Integer,Vector<Integer>>[] getPosMaps(BasicPhrase[] phrases, Suffixes SA)
+  
+static private TreeMap<Integer,Vector<Integer>>[] getPosMaps(BasicPhrase[] phrases, Suffixes SA)
   {
     int phCount = phrases.length;
 
+    @SuppressWarnings("unchecked")
     TreeMap<Integer,Vector<Integer>>[] retA = new TreeMap[phCount];
 
     for (int ph_i = 0; ph_i < phCount; ++ph_i) {

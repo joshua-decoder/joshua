@@ -65,14 +65,14 @@ public class JoshuaConfiguration {
 	public static String glue_format                 = null;
 	
 	// Parameters for suffix array grammar
-	/** File name prefix for source language binary training files. */
-	public static String sa_source = null;
-	
-	/** File name prefix for source language binary training files. */
-	public static String sa_target = null;
-	
-	/** File name of source-target training corpus alignments. */
-	public static String sa_alignment = null;
+//	/** File name prefix for source language binary training files. */
+//	public static String sa_source = null;
+//	
+//	/** File name prefix for source language binary training files. */
+//	public static String sa_target = null;
+//	
+//	/** File name of source-target training corpus alignments. */
+//	public static String sa_alignment = null;
 	
 	public static int     sa_max_phrase_span       = 10;
 	public static int     sa_max_phrase_length     = 10;
@@ -87,9 +87,9 @@ public class JoshuaConfiguration {
 	public static boolean sa_sentence_final_X      = true;
 	
 	// TODO: introduce the various corpus/tm file package formats
-	public static String sa_vocab_suffix = "vocab";
-	public static String sa_corpus_suffix = "corpus";
-	public static String sa_suffixes_suffix = "suffixes";
+//	public static String sa_vocab_suffix = "vocab";
+//	public static String sa_corpus_suffix = "corpus";
+//	public static String sa_suffixes_suffix = "suffixes";
 	
 	
 	//pruning config
@@ -186,21 +186,21 @@ public class JoshuaConfiguration {
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("glue format: %s", glue_format));
 					
-				} else if ("sa_source".equals(fds[0])) {
-					sa_source = fds[1].trim();
-					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format("suffix array source file: %s", sa_source));
-					
-				} else if ("sa_target".equals(fds[0])) {
-					sa_target = fds[1].trim();
-					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format("suffix array target file: %s", sa_target));
-					
-				} else if ("sa_alignment".equals(fds[0])) {
-					sa_alignment = fds[1].trim();
-					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format("suffix array alignment file: %s", sa_alignment));
-					
+//				} else if ("sa_source".equals(fds[0])) {
+//					sa_source = fds[1].trim();
+//					if (logger.isLoggable(Level.FINEST))
+//						logger.finest(String.format("suffix array source file: %s", sa_source));
+//					
+//				} else if ("sa_target".equals(fds[0])) {
+//					sa_target = fds[1].trim();
+//					if (logger.isLoggable(Level.FINEST))
+//						logger.finest(String.format("suffix array target file: %s", sa_target));
+//					
+//				} else if ("sa_alignment".equals(fds[0])) {
+//					sa_alignment = fds[1].trim();
+//					if (logger.isLoggable(Level.FINEST))
+//						logger.finest(String.format("suffix array alignment file: %s", sa_alignment));
+//					
 				} else if ("sa_max_phrase_span".equals(fds[0])) {
 					sa_max_phrase_span = Integer.parseInt(fds[1].trim());
 					if (logger.isLoggable(Level.FINEST))

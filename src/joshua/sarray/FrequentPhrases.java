@@ -111,7 +111,8 @@ public class FrequentPhrases {
 	 */
 	public FrequentMatches getCollocations(
 			int maxPhraseLength,
-			int windowSize
+			int windowSize,
+			short minNonterminalSpan
 	) {
 
 		logger.fine("Calculating number of frequent collocations");
@@ -124,7 +125,8 @@ public class FrequentPhrases {
 			new FrequentMatches(
 					getRanks(frequentPhrases), 
 					maxPhrases, 
-					totalCollocations);
+					totalCollocations,
+					minNonterminalSpan);
 
 		LinkedList<Phrase> phrasesInWindow = new LinkedList<Phrase>();
 		LinkedList<Integer> positions = new LinkedList<Integer>();
@@ -742,173 +744,12 @@ public class FrequentPhrases {
 	// Inner classes
 	//===============================================================
 
-	/**
-	 * This inner-class is a wrapper for a complex data type,
-	 * which maps Phrase->Phrase->a list of tuples containing
-	 * the starting positions of the two phrases in the corpus.
-	 */
-//	protected class FrequentMatchedPhrases implements Externalizable {
-//
-//		final int[] keys;
-//		final int[] position1;
-//		final int[] position2;
-//		
-//		int counter = 0;
-//		
-//		public FrequentMatchedPhrases(int totalCollocations) {
-//			
-//			logger.fine("Allocating " + ((int)(totalCollocations*4 / 1024.0 / 1024.0)) + "MB for collocation keys");
-//			keys = new int[totalCollocations];
-//			logger.fine("Allocating " + ((int)(totalCollocations*4 / 1024.0 / 1024.0)) + "MB for collocation position1");
-//			position1 = new int[totalCollocations];
-//			logger.fine("Allocating " + ((int)(totalCollocations*4 / 1024.0 / 1024.0)) + "MB for collocation position2");
-//			position2 = new int[totalCollocations];
-//			logger.fine("Done allocating memory for collocations data");
-//		}
-//
-//
-//		/**
-//		 * 
-//		 * @param phrase1
-//		 * @param phrase2
-//		 * @return
-//		 */
-//		protected int getKey(Phrase phrase1, Phrase phrase2) {
-//
-//			short rank1 = ranks.get(phrase1);
-//			short rank2 = ranks.get(phrase2);
-//
-//			int rank = rank1*maxPhrases + rank2;
-//
-//			return rank;
-//		}
-//		
-//		/**
-//		 * Adds a collocated pair of phrases to this
-//		 * container, along with their respective positions
-//		 * in the corpus.
-//		 */
-//		protected void add(Phrase phrase1, Phrase phrase2, int position1, int position2) {
-//
-//
-//			// check to make sure that the phrase2 isn't simply a subphrase of phrase1
-//			if(position2-position1 >= phrase1.size()) {
-//
-//				int key = getKey(phrase1, phrase2);
-//
-//				this.keys[counter] = key;
-//				this.position1[counter] = position1;
-//				this.position2[counter] = position2;
-//
-//				counter++;
-//			}
-//		}
-//
-//		protected void histogramSort(int maxPhrases) {
-//			int maxBuckets = maxPhrases*maxPhrases;
-//		
-//			logger.fine("Calculating histograms");
-//			int[] histogram = calculateHistogram(keys, maxBuckets);
-//
-//			if (logger.isLoggable(Level.FINEST)) logger.finest("Allocating memory for " + maxBuckets + " integers");
-//			int[] offsets = new int[maxBuckets];
-//			
-//			logger.fine("Calculating offsets");
-//			for (int key=0, counter=0; key<maxBuckets; key++) {
-//				
-//				offsets[key] = 0;
-//				
-//				int value = histogram[key];
-//				histogram[key] = counter;
-//				counter += value;
-//				
-//			}
-//			
-//			
-//			if (logger.isLoggable(Level.FINE)) logger.fine("Allocating temporary memory for keys: " + ((keys.length)*4/1024/1024) + "MB");
-//			int[] tmpKeys = new int[keys.length];
-//			if (logger.isLoggable(Level.FINE)) logger.fine("Allocating temporary memory for position1: " + ((keys.length)*4/1024/1024) + "MB");
-//			int[] tmpPosition1 = new int[keys.length];
-//			if (logger.isLoggable(Level.FINE)) logger.fine("Allocating temporary memory for position2: " + ((keys.length)*4/1024/1024) + "MB");
-//			int[] tmpPosition2 = new int[keys.length];
-//			
-//			if (logger.isLoggable(Level.FINE)) logger.fine("Placing data into buckets");
-//			for (int i=0, n=keys.length; i < n; i++) {
-//				
-//				int key = keys[i];
-//				int offset = offsets[key]++;
-//				int location = histogram[key] + offset;
-//				
-//				tmpKeys[location] = key;
-//				tmpPosition1[location] = position1[i];
-//				tmpPosition2[location] = position2[i];
-//				
-//			}
-//			
-//			logger.fine("Copying sorted keys to final location");
-//			System.arraycopy(tmpKeys, 0, keys, 0, keys.length);
-//			
-//			logger.fine("Copying sorted position1 data to final location");
-//			System.arraycopy(tmpPosition1, 0, position1, 0, keys.length);
-//			
-//			logger.fine("Copying sorted position1 data to final location");
-//			System.arraycopy(tmpPosition2, 0, position2, 0, keys.length);
-//			
-//			// Try and help the garbage collector know we're done with these
-//			histogram = null;
-//			offsets = null;
-//			tmpKeys = null;
-//			tmpPosition1 = null;
-//			tmpPosition2 = null;			
-//			
-//		}
-//
-//		
-//		/**
-//		 * Calculate how many times each key occurred.
-//		 * 
-//		 * @param keys
-//		 * @param maxBuckets
-//		 * @return
-//		 */
-//		int[] calculateHistogram(int[] keys, int maxBuckets) {
-//
-//			int[] histogram = new int[maxBuckets];
-//			Arrays.fill(histogram, 0);
-//			
-//			for (int key : keys) {
-//				
-//				histogram[key] += 1;
-//
-//			}
-//			
-//			return histogram;
-//		}
-//
-//		/**
-//		 * Not supported; throws an UnsupportedOperationException.
-//		 * 
-//		 * @throws UnsupportedOperationException
-//		 */
-//		public void readExternal(ObjectInput in) throws IOException,
-//				ClassNotFoundException {
-//			
-//			throw new UnsupportedOperationException();
-//			
-//		}
-//
-//		/**
-//		 * Write the contents of this class as binary data to an output stream.
-//		 * 
-//		 * @param out
-//		 */
-//		public void writeExternal(ObjectOutput out) throws IOException {
-//			// TODO Auto-generated method stub
-//			
-//		}
-//		
-//	}
+	
 
+	//===============================================================
+	// Main method
+	//===============================================================
+	
 	public static void main(String[] args) throws IOException, ClassNotFoundException {
 
 
@@ -923,7 +764,7 @@ public class FrequentPhrases {
 
 			logger.info("Constructing vocabulary from file " + corpusFileName);
 			symbolTable = new Vocabulary();
-			int[] lengths = Vocabulary.createVocabulary(corpusFileName, symbolTable);
+			int[] lengths = Vocabulary.initializeVocabulary(corpusFileName, symbolTable, true);
 
 			logger.info("Constructing corpus array from file " + corpusFileName);
 			corpusArray = SuffixArrayFactory.createCorpusArray(corpusFileName, symbolTable, lengths[0], lengths[1]);
@@ -965,7 +806,7 @@ public class FrequentPhrases {
 		short maxPhrases = 100;
 		int maxPhraseLength = 10;
 		int windowSize = 10;
-
+		short minNonterminalSpan = 2;
 
 		logger.info("Calculating " + maxPhrases + " most frequent phrases");
 		frequentPhrases = new FrequentPhrases(suffixArray, minFrequency, maxPhrases, maxPhraseLength);
@@ -974,7 +815,7 @@ public class FrequentPhrases {
 
 
 		logger.info("Calculating collocations for most frequent phrases");
-		FrequentMatches matches = frequentPhrases.getCollocations(maxPhraseLength, windowSize);
+		FrequentMatches matches = frequentPhrases.getCollocations(maxPhraseLength, windowSize, minNonterminalSpan);
 
 		
 

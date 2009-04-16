@@ -155,13 +155,15 @@ public class Vocabulary extends AbstractSymbolTable implements Iterable<String>,
 	
 	
 	/**
-	 * Creates a new Vocabulary from a plain text file.
+	 * Initializes a Vocabulary by adding all words 
+	 * from a specified plain text file.
 	 *
 	 * @param inputFilename the plain text file
-	 * @param vocab the Vocabulary to instantiate 
+	 * @param vocab the Vocabulary to which words should be added 
+	 * @param fixVocabulary Should the vocabulary be fixed and alphabetized at the end of initialization
 	 * @return a tuple containing the number of words in the corpus and number of sentences in the corpus
 	 */
-	public static int[] createVocabulary(String inputFilename, Vocabulary vocab) throws IOException {
+	public static int[] initializeVocabulary(String inputFilename, Vocabulary vocab, boolean fixVocabulary) throws IOException {
 		int numSentences = 0;
 		int numWords = 0;
 		
@@ -174,9 +176,11 @@ public class Vocabulary extends AbstractSymbolTable implements Iterable<String>,
 			if(logger.isLoggable(Level.FINE) && numSentences % 10000==0) logger.fine(""+numWords);
 		}
 		
+		if (fixVocabulary) {
+			vocab.fixVocabulary();
+			vocab.alphabetize();
+		}
 		
-		vocab.fixVocabulary();
-		vocab.alphabetize();
 		int[] numberOfWordsSentences = { numWords, numSentences };
 		return numberOfWordsSentences;
 	}

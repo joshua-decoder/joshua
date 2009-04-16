@@ -102,7 +102,7 @@ public class VocabularyTest {
 		}
 		
 		Vocabulary vocab = new Vocabulary();
-		Vocabulary.createVocabulary(sourceFileName, vocab);
+		Vocabulary.initializeVocabulary(sourceFileName, vocab, true);
 		
 		Assert.assertEquals(vocab.getWord(vocab.getID("it")), "it");
 		Assert.assertEquals(vocab.getWord(vocab.getID("makes")), "makes");
@@ -133,7 +133,7 @@ public class VocabularyTest {
 		Assert.assertEquals(vocab, vocab2);
 		
 		try {
-			int[] result = Vocabulary.createVocabulary(filename, vocab);
+			int[] result = Vocabulary.initializeVocabulary(filename, vocab, true);
 			Assert.assertNotNull(result);
 			Assert.assertEquals(result.length, 2);
 			Assert.assertEquals(result[0], numWords); 
@@ -149,7 +149,7 @@ public class VocabularyTest {
 		Assert.assertFalse(vocab.equals(vocab2));
 		
 		try {
-			int[] result = Vocabulary.createVocabulary(filename, vocab2);
+			int[] result = Vocabulary.initializeVocabulary(filename, vocab2, true);
 			Assert.assertNotNull(result);
 			Assert.assertEquals(result.length, 2);
 			Assert.assertEquals(result[0], numWords); 

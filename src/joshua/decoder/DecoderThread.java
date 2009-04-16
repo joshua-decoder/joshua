@@ -234,8 +234,12 @@ public class DecoderThread extends Thread {
 			for (GrammarFactory factory : this.grammarFactories) {
 				grammars[i] = factory.getGrammarForSentence(
 						new Pattern(this.symbolTable, intSentence));
-				// FIX: for batch grammar, we do not want to sort it every time
-				// grammars[i].sortGrammar(this.featureFunctions);
+				
+				// For batch grammar, we do not want to sort it every time
+				if (! grammars[i].isSorted()) {
+					grammars[i].sortGrammar(this.featureFunctions);
+				}
+				
 				i++;
 			}
 			

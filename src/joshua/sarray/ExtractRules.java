@@ -142,7 +142,7 @@ public class ExtractRules {
 			String binarySourceVocabFileName = commandLine.getValue(sourceSymbols);
 			if ( binarySourceVocabFileName.equals("")) {
 				if (logger.isLoggable(Level.INFO)) logger.info("Constructing source language vocabulary from source corpus " + sourceFileName);
-				int[] sourceWordsSentences = Vocabulary.createVocabulary(sourceFileName, sourceVocab);
+				int[] sourceWordsSentences = Vocabulary.initializeVocabulary(sourceFileName, sourceVocab, true);
 				numSourceWords = sourceWordsSentences[0];
 				numSourceSentences = sourceWordsSentences[1];
 			} else {
@@ -209,7 +209,7 @@ public class ExtractRules {
 			if ( binaryTargetVocabFileName.equals("")) {
 				if (logger.isLoggable(Level.INFO)) logger.info("Constructing target language vocabulary from target corpus " + targetFileName);		
 				targetFileName = commandLine.getValue(target);
-				int[] targetWordsSentences = Vocabulary.createVocabulary(commandLine.getValue(target), targetVocab);
+				int[] targetWordsSentences = Vocabulary.initializeVocabulary(commandLine.getValue(target), targetVocab, true);
 				numTargetWords = targetWordsSentences[0];
 				numTargetSentences = targetWordsSentences[1];
 			} else {

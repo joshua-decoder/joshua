@@ -71,7 +71,7 @@ public class CorpusArrayTest {
 			
 			// FIX: can't use createVocabulary(String) because we set numWords and numSentences
 			Vocabulary vocab = new Vocabulary();
-			Vocabulary.createVocabulary(filename, vocab);
+			Vocabulary.initializeVocabulary(filename, vocab, true);
 			CorpusArray corpus = SuffixArrayFactory.createCorpusArray(filename, vocab, numWords, numSentences);
 			
 			corpus.write(filename+".corpus", filename+".vocab", "UTF-8");

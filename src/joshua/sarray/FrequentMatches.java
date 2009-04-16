@@ -85,6 +85,11 @@ public class FrequentMatches {
 	 */
 	int counter = 0;
 	
+	/**
+	 * The minimum allowed span for a nonterminal gap.
+	 */
+	final short minNonterminalSpan;
+	
 	
 	/**
 	 * Constructs an empty list of locations where 
@@ -94,10 +99,11 @@ public class FrequentMatches {
 	 * @param maxPhrases The maximum number of frequent phrases.
 	 * @param capacity The total number of matches expected.
 	 */
-	public FrequentMatches(LinkedHashMap<Phrase,Short> ranks, short maxPhrases, int capacity) {
+	public FrequentMatches(LinkedHashMap<Phrase,Short> ranks, short maxPhrases, int capacity, short minNonterminalSpan) {
 		
 		this.ranks = ranks;
 		this.maxPhrases = maxPhrases;
+		this.minNonterminalSpan = minNonterminalSpan;
 		
 		if (logger.isLoggable(Level.FINE)) logger.fine("Allocating " + ((int)(capacity*4 / 1024.0 / 1024.0)) + "MB for collocation keys");
 		keys = new int[capacity];
@@ -117,9 +123,10 @@ public class FrequentMatches {
 	 */
 	protected void add(Phrase phrase1, Phrase phrase2, int position1, int position2) {
 
-		// check to make sure that the phrase2 isn't simply a subphrase of phrase1
-		//TODO Add check to verify minimum NT span has been met
-		if(position2-position1 >= phrase1.size()) {
+		// The second phrase must start after the first phrase ends,
+		//     and there must be a minimum gap 
+		//     (minNonterminalSpan) between the phrases
+		if (position2 >= position1 + phrase1.size() + minNonterminalSpan) {
 
 			int key = getKey(phrase1, phrase2);
 
@@ -128,6 +135,7 @@ public class FrequentMatches {
 			this.position2[counter] = position2;
 
 			counter++;
+			
 		}
 	}
 
@@ -276,6 +284,7 @@ public class FrequentMatches {
 	/**
 	 * Not supported; throws an UnsupportedOperationException.
 	 * 
+	 * @param in
 	 * @throws UnsupportedOperationException
 	 */
 	public void readExternal(ObjectInput in) throws IOException,
