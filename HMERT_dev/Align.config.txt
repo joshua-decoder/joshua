@@ -1,0 +1,14 @@
+nbest.out.sm.trees # file name for candidates (Joshua output format, using trees and align indices)
+de-en.newstest2008.10sen.reference.tok.alignments # file name for src-ref alignment
+newstest2008.10sen.de.tok.parsed # file name for src parses
+out_SrcCand.align # output file for src-cand alignment (will be many-to-many, and a many could have a gap)
+out_CandRef.viaSent.align # output file for cand-ref alignment (through src sentence)
+out_CandRef.viaParse.align # output file for cand-ref alignment (through src parse tree)
+newstest2008.10sen.de.tok.lc # source file name
+newstest2008.10sen.en.tok.lc # ref file name
+newstest2008.10sen.de.tok.lc # TEMP
+newstest2008.10sen.en.tok.lc # TEMP
+de-en.newstest2008.10sen.reference.tok.alignments # TEMP
+europarl.de # source file name - training corpus
+europarl.en # target file name - training corpus
+de_en_europarl_alignments.txt # src-tgt alignments file name - training corpus
