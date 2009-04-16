@@ -110,7 +110,7 @@ public class DecoderThread extends Thread {
 			JoshuaConfiguration.use_tree_nbest,
 			JoshuaConfiguration.include_align_index,
 			JoshuaConfiguration.add_combined_cost,
-			false, true);
+			false, (oracleFile==null));//true);
 		
 		if (JoshuaConfiguration.save_disk_hg) {
 			FeatureFunction languageModel = null;
