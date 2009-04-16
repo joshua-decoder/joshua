@@ -1,5 +1,10 @@
 lm_file=example2/example2.4gram.lm.gz
-tm_file=example2/example2.heiro.tm.gz
+
+tm_file=example2/example2.hiero.tm.gz
+tm_format=hiero
+
+glue_file=grammars/hiero.glue
+glue_format=hiero
 
 #lm config
 use_srilm=false

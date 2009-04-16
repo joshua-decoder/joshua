@@ -72,7 +72,7 @@ For more details on this issue, see section (4).
 A quick note about Z-MERT's interaction with the decoder.  If you examine the
 file decoder_command_ex2, which is provided as the commandFile (-cmd) argument
 in Z-MERT's config file, you'll find it contains the command one would use to
-run the decoder.  Z-MERT launches the commandFile as an external pricess, and
+run the decoder.  Z-MERT launches the commandFile as an external process, and
 assumes that it will launch the decoder to produce translations.  (Make sure
 decoder_command_ex2 is executable.)  After launching this external process,
 Z-MERT waits for it to finish, then uses the resulting output file for
