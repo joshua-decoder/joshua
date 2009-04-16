@@ -75,9 +75,9 @@ public class KBestExtractor {
 	private boolean isMonolingual = false;
 	private boolean performSanityCheck = true;
 	
-	public KBestExtractor(SymbolTable symbolTable) {
-		this.p_symbolTable = symbolTable;
-	}
+//	public KBestExtractor(SymbolTable symbolTable) {
+//		this.p_symbolTable = symbolTable;
+//	}
 	
 	public KBestExtractor(SymbolTable symbolTable, boolean extract_unique_nbest_, boolean 	extract_nbest_tree_,  boolean include_align_,
 			boolean add_combined_score_,  boolean isMonolingual_,  boolean performSanityCheck_){
@@ -242,11 +242,16 @@ public class KBestExtractor {
 			//sanity check
 			if (performSanityCheck) {
 				if (Math.abs(cur.cost - tem_sum) > 1e-2) {
-					System.out.println("In nbest extraction, Cost does not match; cur.cost: " + cur.cost + "; temsum: " +tem_sum);
+					StringBuilder error = new StringBuilder();
+					error.append("\nIn nbest extraction, Cost does not match; cur.cost: " + cur.cost + "; temsum: " +tem_sum + "\n");
+//					System.out.println("In nbest extraction, Cost does not match; cur.cost: " + cur.cost + "; temsum: " +tem_sum);
 					for (int k = 0; k < model_cost.length; k++) {
-						System.out.println("model weight: " + l_models.get(k).getWeight() + "; cost: " +model_cost[k]);
+						error.append("model weight: " + l_models.get(k).getWeight() + "; cost: " +model_cost[k]+ "\n");
+//						System.out.println("model weight: " + l_models.get(k).getWeight() + "; cost: " +model_cost[k]);
 					}
-					System.exit(1);
+//					logger.severe(s.toString());
+//					System.exit(1);
+					throw new RuntimeException(error.toString());
 				}
 			}
 		}
