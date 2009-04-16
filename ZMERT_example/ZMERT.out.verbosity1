@@ -13,125 +13,125 @@ Number of features: 5
 Feature names: {"lm","phrasemodel pt 0","phrasemodel pt 1","phrasemodel pt 2","wordpenalty"}
 
 c    Default value	Optimizable?	Crit. val. range	Rand. val. range
-1     1.0000		 Yes		 [-Infinity,Infinity]		 [0.5,1.5]
+1     1.0000		 Yes		 [0.1,Infinity]		 [0.5,1.5]
 2     1.0669		 Yes		 [-Infinity,Infinity]		 [-1.0,1.0]
 3     0.7522		 Yes		 [-Infinity,Infinity]		 [-1.0,1.0]
 4     0.5898		 Yes		 [-Infinity,Infinity]		 [-1.0,1.0]
 5     -2.8448		 Yes		 [-Infinity,Infinity]		 [-5.0,0.0]
 
-Normalization method: none.
+Normalization method: weights will be scaled so that the "lm" weight has an absolute value of 1.0.
 
 ----------------------------------------------------
 
 ----------------------------------------------------
-Z-MERT run started @ Thu Apr 16 09:24:44 EDT 2009
+Z-MERT run started @ Thu Apr 16 10:49:29 EDT 2009
 ----------------------------------------------------
 
 Initial lambda[]: {1.0, 1.066893, 0.752247, 0.589793, -2.844814}
 
---- Starting Z-MERT iteration #1 @ Thu Apr 16 09:24:44 EDT 2009 ---
+--- Starting Z-MERT iteration #1 @ Thu Apr 16 10:49:29 EDT 2009 ---
 Decoding using initial weight vector {1.0, 1.066893, 0.752247, 0.589793, -2.844814}
 Running external decoder...
-...finished decoding @ Thu Apr 16 09:27:29 EDT 2009
+...finished decoding @ Thu Apr 16 10:52:25 EDT 2009
 Reading candidate translations from iterations 1-1
 Processed 28100 distinct candidates (about 281 per sentence):
 newCandidatesAdded[it=1] = 28100 (about 281 per sentence)
 
-+++ Optimization of lambda[j=1] starting @ Thu Apr 16 09:27:33 EDT 2009 +++
++++ Optimization of lambda[j=1] starting @ Thu Apr 16 10:52:30 EDT 2009 +++
 Initial lambda[j=1]: {1.0, 1.066893, 0.752247, 0.589793, -2.844814}
 (Initial BLEU[j=1]: 0.5315878325038089)
 
-Final lambda[j=1]: {1.472881669956492, 0.845880073019682, 0.8973064679748799, -0.20775136845796222, -2.844814}
+Final lambda[j=1]: {1.0, 0.5743028040023533, 0.609218300612965, -0.14105095656740646, -1.9314613373415355}
 (Final BLEU[j=1]: 0.5630933280051209)
 
-+++ Optimization of lambda[j=2] starting @ Thu Apr 16 09:27:34 EDT 2009 +++
++++ Optimization of lambda[j=2] starting @ Thu Apr 16 10:52:30 EDT 2009 +++
 Initial lambda[j=2]: {0.9913845907274932, -0.6577977590753961, 0.46016061237234096, -0.5203200954373215, -2.262048059500863}
 (Initial BLEU[j=2]: 0.5507235012718978)
 
-Final lambda[j=2]: {1.064862597065697, 0.4283377575186086, 0.5767242181075545, -0.46488329839005016, -1.5057547803312556}
+Final lambda[j=2]: {1.0, 0.40224697411564936, 0.541594962295378, -0.4365664637588628, -1.414036688376949}
 (Final BLEU[j=2]: 0.5635167026947302)
 
-+++ Optimization of lambda[j=3] starting @ Thu Apr 16 09:27:34 EDT 2009 +++
++++ Optimization of lambda[j=3] starting @ Thu Apr 16 10:52:31 EDT 2009 +++
 Initial lambda[j=3]: {0.9702632542004074, -0.6919952429797738, -0.8743327758402839, -0.6393613928095458, -0.5655106188328114}
 (Initial BLEU[j=3]: 0.5379260462835213)
 
-Final lambda[j=3]: {0.9426089077313671, -0.15479784202473462, 0.764282091288035, -0.6393613928095458, -0.6382373430216332}
+Final lambda[j=3]: {1.0, -0.1642227659372494, 0.8108156893270595, -0.67828914788036, -0.6770966599050257}
 (Final BLEU[j=3]: 0.561861083593104)
 
-+++ Optimization of lambda[j=4] starting @ Thu Apr 16 09:27:34 EDT 2009 +++
++++ Optimization of lambda[j=4] starting @ Thu Apr 16 10:52:31 EDT 2009 +++
 Initial lambda[j=4]: {1.3246918939072398, -0.5778133794884044, 0.2815800420089276, 0.15636862697411513, -0.8651160558376816}
 (Initial BLEU[j=4]: 0.5463222206187416)
 
-Final lambda[j=4]: {1.3246918939072398, -0.48862590108157744, 0.2815800420089276, -1.8671789489192607, -0.8651160558376816}
+Final lambda[j=4]: {1.0, -0.3688600370614127, 0.21256266706546703, -1.409519419200136, -0.6530696381676964}
 (Final BLEU[j=4]: 0.5588658980411587)
 
-+++ Optimization of lambda[j=5] starting @ Thu Apr 16 09:27:35 EDT 2009 +++
++++ Optimization of lambda[j=5] starting @ Thu Apr 16 10:52:32 EDT 2009 +++
 Initial lambda[j=5]: {1.1633493083131994, 0.009245077311689887, -0.9330111163449395, 0.6515944996339995, -2.279895055260242}
 (Initial BLEU[j=5]: 0.5241401509002395)
 
-Final lambda[j=5]: {1.1633493083131994, 0.6681050117564826, 0.692044032528141, -0.13960569451586213, -2.487189154692746}
+Final lambda[j=5]: {1.0, 0.5742944161158292, 0.5948720883597478, -0.12000324710579292, -2.1379555881621237}
 (Final BLEU[j=5]: 0.563372716932264)
 
 Best final lambda is lambda[j=2] (BLEU: 0.5635).
 
----  Z-MERT iteration #1 ending @ Thu Apr 16 09:27:35 EDT 2009  ---
+---  Z-MERT iteration #1 ending @ Thu Apr 16 10:52:32 EDT 2009  ---
 
-Next iteration will decode with lambda: {1.064862597065697, 0.4283377575186086, 0.5767242181075545, -0.46488329839005016, -1.5057547803312556}
+Next iteration will decode with lambda: {1.0, 0.40224697411564936, 0.541594962295378, -0.4365664637588628, -1.414036688376949}
 
---- Starting Z-MERT iteration #2 @ Thu Apr 16 09:27:35 EDT 2009 ---
-Redecoding using weight vector {1.064862597065697, 0.4283377575186086, 0.5767242181075545, -0.46488329839005016, -1.5057547803312556}
+--- Starting Z-MERT iteration #2 @ Thu Apr 16 10:52:32 EDT 2009 ---
+Redecoding using weight vector {1.0, 0.40224697411564936, 0.541594962295378, -0.4365664637588628, -1.414036688376949}
 Running external decoder...
-...finished decoding @ Thu Apr 16 09:30:10 EDT 2009
+...finished decoding @ Thu Apr 16 10:55:19 EDT 2009
 Reading candidate translations from iterations 1-2
-Processed 56069 distinct candidates (about 560 per sentence):
+Processed 56066 distinct candidates (about 560 per sentence):
 newCandidatesAdded[it=1] = 28100 (about 281 per sentence)
-newCandidatesAdded[it=2] = 27969 (about 279 per sentence)
+newCandidatesAdded[it=2] = 27966 (about 279 per sentence)
 
-+++ Optimization of lambda[j=1] starting @ Thu Apr 16 09:30:14 EDT 2009 +++
-Initial lambda[j=1]: {1.064862597065697, 0.4283377575186086, 0.5767242181075545, -0.46488329839005016, -1.5057547803312556}
-(Initial BLEU[j=1]: 0.49094656345199245)
++++ Optimization of lambda[j=1] starting @ Thu Apr 16 10:55:24 EDT 2009 +++
+Initial lambda[j=1]: {1.0, 0.40224697411564936, 0.541594962295378, -0.4365664637588628, -1.414036688376949}
+(Initial BLEU[j=1]: 0.49069319912694526)
 
-Final lambda[j=1]: {1.064862597065697, 0.41925111166432205, 0.5984315727161615, -0.16445783646342022, -1.5057547803312556}
+Final lambda[j=1]: {1.0, 0.3937138113588181, 0.5619800849097228, -0.1544404291376138, -1.414036688376949}
 (Final BLEU[j=1]: 0.5680549978662968)
 
-+++ Optimization of lambda[j=2] starting @ Thu Apr 16 09:30:15 EDT 2009 +++
++++ Optimization of lambda[j=2] starting @ Thu Apr 16 10:55:25 EDT 2009 +++
 Initial lambda[j=2]: {1.4897502865040284, -0.004553671263154424, 0.8593774528720801, -0.01427276865927607, -1.236557087720195}
 (Initial BLEU[j=2]: 0.5617700298115142)
 
-Final lambda[j=2]: {1.5038466770351047, -0.004553671263154424, 1.1484294713357572, -0.007186155459433035, -1.236557087720195}
+Final lambda[j=2]: {1.0, -0.0030280156432783254, 0.7636612753634786, -0.004778516034361186, -0.8222627390167979}
 (Final BLEU[j=2]: 0.570867406150827)
 
-+++ Optimization of lambda[j=3] starting @ Thu Apr 16 09:30:15 EDT 2009 +++
++++ Optimization of lambda[j=3] starting @ Thu Apr 16 10:55:25 EDT 2009 +++
 Initial lambda[j=3]: {0.7143221888272017, -0.8739358729264859, 0.7980226618452084, -0.399205792984231, -3.8694784413312346}
-(Initial BLEU[j=3]: 0.4177640838721326)
+(Initial BLEU[j=3]: 0.41757478237128254)
 
-Final lambda[j=3]: {9.866791781217113, -0.8739358729264859, 10.793298043281524, -1.0765863941174987, -3.8694784413312346}
+Final lambda[j=3]: {0.9999999999999999, -0.08857345855723348, 1.0939014709754138, -0.10911210229113569, -0.3921718961068333}
 (Final BLEU[j=3]: 0.5705811948113758)
 
-+++ Optimization of lambda[j=4] starting @ Thu Apr 16 09:30:16 EDT 2009 +++
++++ Optimization of lambda[j=4] starting @ Thu Apr 16 10:55:26 EDT 2009 +++
 Initial lambda[j=4]: {1.2972965063840105, -0.2974935383022126, 0.3275255626321376, -0.21052430917292875, -0.0454218308093175}
-(Initial BLEU[j=4]: 0.526428997453946)
+(Initial BLEU[j=4]: 0.5265562118816122)
 
-Final lambda[j=4]: {1.6642751199228858, -0.2974935383022126, 2.0849994167048598, -0.21052430917292875, -0.0454218308093175}
-(Final BLEU[j=4]: 0.5691792696897726)
+Final lambda[j=4]: {1.0, -0.12430504175381692, 1.1547323240951524, -0.16227925392301318, -0.10039335791383615}
+(Final BLEU[j=4]: 0.5696264502861639)
 
-+++ Optimization of lambda[j=5] starting @ Thu Apr 16 09:30:16 EDT 2009 +++
++++ Optimization of lambda[j=5] starting @ Thu Apr 16 10:55:26 EDT 2009 +++
 Initial lambda[j=5]: {0.5948565625062981, 0.03753776574773382, 0.00790321507749736, 0.03620028521108054, -2.47511438964637}
-(Initial BLEU[j=5]: 0.4478601771649867)
+(Initial BLEU[j=5]: 0.44656034517816)
 
-Final lambda[j=5]: {0.6084359392501362, 0.016512452694389574, 0.14289841823620075, 0.5002022290160296, -2.390061628160896}
-(Final BLEU[j=5]: 0.5578930650341198)
+Final lambda[j=5]: {1.0, 0.06276228544429309, 0.2651837993845231, 0.6987219352859102, -3.7808861289229005}
+(Final BLEU[j=5]: 0.5590024334580942)
 
 Best final lambda is lambda[j=2] (BLEU: 0.5709).
 
----  Z-MERT iteration #2 ending @ Thu Apr 16 09:30:17 EDT 2009  ---
+---  Z-MERT iteration #2 ending @ Thu Apr 16 10:55:27 EDT 2009  ---
 
 Maximum number of MERT iterations reached; exiting Z-MERT.
 
 
 ----------------------------------------------------
-Z-MERT run ended @ Thu Apr 16 09:30:17 EDT 2009
+Z-MERT run ended @ Thu Apr 16 10:55:27 EDT 2009
 ----------------------------------------------------
 
-FINAL lambda: {1.5038466770351047, -0.004553671263154424, 1.1484294713357572, -0.007186155459433035, -1.236557087720195} (BLEU: 0.570867406150827)
+FINAL lambda: {1.0, -0.0030280156432783254, 0.7636612753634786, -0.004778516034361186, -0.8222627390167979} (BLEU: 0.570867406150827)
 

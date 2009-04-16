@@ -13,38 +13,38 @@ Number of features: 5
 Feature names: {"lm","phrasemodel pt 0","phrasemodel pt 1","phrasemodel pt 2","wordpenalty"}
 
 c    Default value	Optimizable?	Crit. val. range	Rand. val. range
-1     1.0000		 Yes		 [-Infinity,Infinity]		 [0.5,1.5]
+1     1.0000		 Yes		 [0.1,Infinity]		 [0.5,1.5]
 2     1.0669		 Yes		 [-Infinity,Infinity]		 [-1.0,1.0]
 3     0.7522		 Yes		 [-Infinity,Infinity]		 [-1.0,1.0]
 4     0.5898		 Yes		 [-Infinity,Infinity]		 [-1.0,1.0]
 5     -2.8448		 Yes		 [-Infinity,Infinity]		 [-5.0,0.0]
 
-Normalization method: none.
+Normalization method: weights will be scaled so that the "lm" weight has an absolute value of 1.0.
 
 ----------------------------------------------------
 
 ----------------------------------------------------
-Z-MERT run started @ Thu Apr 16 09:49:29 EDT 2009
+Z-MERT run started @ Thu Apr 16 10:56:41 EDT 2009
 ----------------------------------------------------
 
 Initial lambda[]: {1.0, 1.066893, 0.752247, 0.589793, -2.844814}
 
---- Starting Z-MERT iteration #1 @ Thu Apr 16 09:49:29 EDT 2009 ---
+--- Starting Z-MERT iteration #1 @ Thu Apr 16 10:56:41 EDT 2009 ---
 Decoding using initial weight vector {1.0, 1.066893, 0.752247, 0.589793, -2.844814}
 Running external decoder...
-...finished decoding @ Thu Apr 16 09:52:13 EDT 2009
+...finished decoding @ Thu Apr 16 10:59:38 EDT 2009
 Reading candidate translations from iterations 1-1
 
 Processed 28100 distinct candidates (about 281 per sentence):
 newCandidatesAdded[it=1] = 28100 (about 281 per sentence)
 
-+++ Optimization of lambda[j=1] starting @ Thu Apr 16 09:52:17 EDT 2009 +++
++++ Optimization of lambda[j=1] starting @ Thu Apr 16 10:59:42 EDT 2009 +++
 Initial lambda[j=1]: {1.0, 1.066893, 0.752247, 0.589793, -2.844814}
 (Initial BLEU[j=1]: 0.5315878325038089)
 
 Investigating lambda[j=1][1]...
-# extracted thresholds: 587
-Smallest extracted threshold: -205.02971414291864
+# extracted thresholds: 533
+Smallest extracted threshold: 0.13010182236248918
 Largest extracted threshold: 380.4327523333174
 
 Investigating lambda[j=1][2]...
@@ -67,15 +67,15 @@ Investigating lambda[j=1][5]...
 Smallest extracted threshold: -13.254166990783412
 Largest extracted threshold: 13.56862783908048
 
-Processing merged stats file; extracting SS for 1968 candidates of interest.
-(*_all: 1968)
+Processing merged stats file; extracting SS for 1925 candidates of interest.
+(*_all: 1925)
 *** Changing lambda[j=1][2] from 1.0669 (BLEU: 0.5316) to -0.1022 (BLEU: 0.5523) ***
 *** Old lambda[j=1]: {1.0, 1.066893, 0.752247, 0.589793, -2.844814} ***
 *** New lambda[j=1]: {1.0, -0.10217744736099951, 0.752247, 0.589793, -2.844814} ***
 
 Investigating lambda[j=1][1]...
-# extracted thresholds: 601
-Smallest extracted threshold: -96.94824452528437
+# extracted thresholds: 439
+Smallest extracted threshold: 0.10039744563161022
 Largest extracted threshold: 140.383620475203
 
 Keeping thresholds for lambda[j=1][2] from previous step.
@@ -95,8 +95,8 @@ Investigating lambda[j=1][5]...
 Smallest extracted threshold: -18.73900528228056
 Largest extracted threshold: 14.591359488186216
 
-Processing merged stats file; extracting SS for 1592 candidates of interest.
-(*_all: 2673)
+Processing merged stats file; extracting SS for 1447 candidates of interest.
+(*_all: 2576)
 *** Changing lambda[j=1][1] from 1.0000 (BLEU: 0.5523) to 1.1748 (BLEU: 0.5553) ***
 *** Old lambda[j=1]: {1.0, -0.10217744736099951, 0.752247, 0.589793, -2.844814} ***
 *** New lambda[j=1]: {1.1747603445247834, -0.10217744736099951, 0.752247, 0.589793, -2.844814} ***
@@ -123,15 +123,15 @@ Investigating lambda[j=1][5]...
 Smallest extracted threshold: -23.45229982758606
 Largest extracted threshold: 16.80057129173054
 
-Processing merged stats file; extracting SS for 1822 candidates of interest.
-(*_all: 2792)
+Processing merged stats file; extracting SS for 1800 candidates of interest.
+(*_all: 2695)
 *** Changing lambda[j=1][4] from 0.5898 (BLEU: 0.5553) to 0.0740 (BLEU: 0.5582) ***
 *** Old lambda[j=1]: {1.1747603445247834, -0.10217744736099951, 0.752247, 0.589793, -2.844814} ***
 *** New lambda[j=1]: {1.1747603445247834, -0.10217744736099951, 0.752247, 0.07395313662317823, -2.844814} ***
 
 Investigating lambda[j=1][1]...
-# extracted thresholds: 606
-Smallest extracted threshold: -196.69877810565535
+# extracted thresholds: 426
+Smallest extracted threshold: 0.10083129057831616
 Largest extracted threshold: 78.72179027757063
 
 Investigating lambda[j=1][2]...
@@ -151,8 +151,8 @@ Investigating lambda[j=1][5]...
 Smallest extracted threshold: -25.616697806574816
 Largest extracted threshold: 17.809720081922904
 
-Processing merged stats file; extracting SS for 1747 candidates of interest.
-(*_all: 3051)
+Processing merged stats file; extracting SS for 1598 candidates of interest.
+(*_all: 2936)
 *** Changing lambda[j=1][1] from 1.1748 (BLEU: 0.5582) to 1.4919 (BLEU: 0.5590) ***
 *** Old lambda[j=1]: {1.1747603445247834, -0.10217744736099951, 0.752247, 0.07395313662317823, -2.844814} ***
 *** New lambda[j=1]: {1.4918867004253105, -0.10217744736099951, 0.752247, 0.07395313662317823, -2.844814} ***
@@ -179,15 +179,15 @@ Investigating lambda[j=1][5]...
 Smallest extracted threshold: -34.47723741867104
 Largest extracted threshold: 23.74571751833396
 
-Processing merged stats file; extracting SS for 1816 candidates of interest.
-(*_all: 3195)
+Processing merged stats file; extracting SS for 1783 candidates of interest.
+(*_all: 3080)
 *** Changing lambda[j=1][4] from 0.0740 (BLEU: 0.5590) to -0.0684 (BLEU: 0.5595) ***
 *** Old lambda[j=1]: {1.4918867004253105, -0.10217744736099951, 0.752247, 0.07395313662317823, -2.844814} ***
 *** New lambda[j=1]: {1.4918867004253105, -0.10217744736099951, 0.752247, -0.06837524645914957, -2.844814} ***
 
 Investigating lambda[j=1][1]...
-# extracted thresholds: 596
-Smallest extracted threshold: -224.22152918416714
+# extracted thresholds: 414
+Smallest extracted threshold: 0.10233794154064993
 Largest extracted threshold: 93.10712328195997
 
 Investigating lambda[j=1][2]...
@@ -207,15 +207,15 @@ Investigating lambda[j=1][5]...
 Smallest extracted threshold: -35.206588395572176
 Largest extracted threshold: 24.45797115194736
 
-Processing merged stats file; extracting SS for 1732 candidates of interest.
-(*_all: 3240)
+Processing merged stats file; extracting SS for 1581 candidates of interest.
+(*_all: 3116)
 *** Changing lambda[j=1][3] from 0.7522 (BLEU: 0.5595) to 0.8417 (BLEU: 0.5601) ***
 *** Old lambda[j=1]: {1.4918867004253105, -0.10217744736099951, 0.752247, -0.06837524645914957, -2.844814} ***
 *** New lambda[j=1]: {1.4918867004253105, -0.10217744736099951, 0.8416580102768815, -0.06837524645914957, -2.844814} ***
 
 Investigating lambda[j=1][1]...
-# extracted thresholds: 599
-Smallest extracted threshold: -229.46324966164266
+# extracted thresholds: 421
+Smallest extracted threshold: 0.10158060641329872
 Largest extracted threshold: 92.5770437210326
 
 Investigating lambda[j=1][2]...
@@ -235,15 +235,15 @@ Investigating lambda[j=1][5]...
 Smallest extracted threshold: -34.24078467165971
 Largest extracted threshold: 23.61948541041071
 
-Processing merged stats file; extracting SS for 1723 candidates of interest.
-(*_all: 3252)
+Processing merged stats file; extracting SS for 1559 candidates of interest.
+(*_all: 3127)
 *** Changing lambda[j=1][2] from -0.1022 (BLEU: 0.5601) to 0.4233 (BLEU: 0.5609) ***
 *** Old lambda[j=1]: {1.4918867004253105, -0.10217744736099951, 0.8416580102768815, -0.06837524645914957, -2.844814} ***
 *** New lambda[j=1]: {1.4918867004253105, 0.42325368382011175, 0.8416580102768815, -0.06837524645914957, -2.844814} ***
 
 Investigating lambda[j=1][1]...
-# extracted thresholds: 630
-Smallest extracted threshold: -181.87992893550953
+# extracted thresholds: 498
+Smallest extracted threshold: 0.10743178818202824
 Largest extracted threshold: 126.4099856574875
 
 Keeping thresholds for lambda[j=1][2] from previous step.
@@ -263,15 +263,15 @@ Investigating lambda[j=1][5]...
 Smallest extracted threshold: -27.56393515907027
 Largest extracted threshold: 21.230182196792565
 
-Processing merged stats file; extracting SS for 1633 candidates of interest.
-(*_all: 3355)
+Processing merged stats file; extracting SS for 1509 candidates of interest.
+(*_all: 3236)
 *** Changing lambda[j=1][4] from -0.0684 (BLEU: 0.5609) to -0.2078 (BLEU: 0.5612) ***
 *** Old lambda[j=1]: {1.4918867004253105, 0.42325368382011175, 0.8416580102768815, -0.06837524645914957, -2.844814} ***
 *** New lambda[j=1]: {1.4918867004253105, 0.42325368382011175, 0.8416580102768815, -0.20775136845796222, -2.844814} ***
 
 Investigating lambda[j=1][1]...
-# extracted thresholds: 617
-Smallest extracted threshold: -194.34413641712126
+# extracted thresholds: 474
+Smallest extracted threshold: 0.10679550033964479
 Largest extracted threshold: 99.41747669705215
 
 Investigating lambda[j=1][2]...
@@ -291,15 +291,15 @@ Investigating lambda[j=1][5]...
 Smallest extracted threshold: -28.27815749852961
 Largest extracted threshold: 21.50284674810518
 
-Processing merged stats file; extracting SS for 1745 candidates of interest.
-(*_all: 3384)
+Processing merged stats file; extracting SS for 1623 candidates of interest.
+(*_all: 3266)
 *** Changing lambda[j=1][2] from 0.4233 (BLEU: 0.5612) to 0.8459 (BLEU: 0.5624) ***
 *** Old lambda[j=1]: {1.4918867004253105, 0.42325368382011175, 0.8416580102768815, -0.20775136845796222, -2.844814} ***
 *** New lambda[j=1]: {1.4918867004253105, 0.845880073019682, 0.8416580102768815, -0.20775136845796222, -2.844814} ***
 
 Investigating lambda[j=1][1]...
-# extracted thresholds: 616
-Smallest extracted threshold: -244.63667673188476
+# extracted thresholds: 502
+Smallest extracted threshold: 0.10301052429923037
 Largest extracted threshold: 186.1967619460276
 
 Keeping thresholds for lambda[j=1][2] from previous step.
@@ -319,8 +319,8 @@ Investigating lambda[j=1][5]...
 Smallest extracted threshold: -22.907686216419844
 Largest extracted threshold: 20.531291830405017
 
-Processing merged stats file; extracting SS for 1657 candidates of interest.
-(*_all: 3472)
+Processing merged stats file; extracting SS for 1552 candidates of interest.
+(*_all: 3358)
 *** Changing lambda[j=1][1] from 1.4919 (BLEU: 0.5624) to 1.4729 (BLEU: 0.5626) ***
 *** Old lambda[j=1]: {1.4918867004253105, 0.845880073019682, 0.8416580102768815, -0.20775136845796222, -2.844814} ***
 *** New lambda[j=1]: {1.472881669956492, 0.845880073019682, 0.8416580102768815, -0.20775136845796222, -2.844814} ***
@@ -347,15 +347,15 @@ Investigating lambda[j=1][5]...
 Smallest extracted threshold: -22.376683913505403
 Largest extracted threshold: 20.291042031444018
 
-Processing merged stats file; extracting SS for 1839 candidates of interest.
-(*_all: 3484)
+Processing merged stats file; extracting SS for 1819 candidates of interest.
+(*_all: 3370)
 *** Changing lambda[j=1][3] from 0.8417 (BLEU: 0.5626) to 0.8973 (BLEU: 0.5631) ***
 *** Old lambda[j=1]: {1.472881669956492, 0.845880073019682, 0.8416580102768815, -0.20775136845796222, -2.844814} ***
 *** New lambda[j=1]: {1.472881669956492, 0.845880073019682, 0.8973064679748799, -0.20775136845796222, -2.844814} ***
 
 Investigating lambda[j=1][1]...
-# extracted thresholds: 614
-Smallest extracted threshold: -241.26597015131924
+# extracted thresholds: 500
+Smallest extracted threshold: 0.10425228159708112
 Largest extracted threshold: 189.6840652951029
 
 Investigating lambda[j=1][2]...
@@ -375,21 +375,21 @@ Investigating lambda[j=1][5]...
 Smallest extracted threshold: -21.775577992564774
 Largest extracted threshold: 20.503273735630177
 
-Processing merged stats file; extracting SS for 1751 candidates of interest.
-(*_all: 3500)
+Processing merged stats file; extracting SS for 1648 candidates of interest.
+(*_all: 3386)
 *** Not changing any weight in lambda[j=1] ***
 *** lambda[j=1]: {1.472881669956492, 0.845880073019682, 0.8973064679748799, -0.20775136845796222, -2.844814} ***
 
-Final lambda[j=1]: {1.472881669956492, 0.845880073019682, 0.8973064679748799, -0.20775136845796222, -2.844814}
+Final lambda[j=1]: {1.0, 0.5743028040023533, 0.609218300612965, -0.14105095656740646, -1.9314613373415355}
 (Final BLEU[j=1]: 0.5630933280051209)
 
-+++ Optimization of lambda[j=2] starting @ Thu Apr 16 09:52:18 EDT 2009 +++
++++ Optimization of lambda[j=2] starting @ Thu Apr 16 10:59:43 EDT 2009 +++
 Initial lambda[j=2]: {0.9913845907274932, -0.6577977590753961, 0.46016061237234096, -0.5203200954373215, -2.262048059500863}
 (Initial BLEU[j=2]: 0.5507235012718978)
 
 Investigating lambda[j=2][1]...
-# extracted thresholds: 573
-Smallest extracted threshold: -331.2190459493112
+# extracted thresholds: 343
+Smallest extracted threshold: 0.10548191628613106
 Largest extracted threshold: 135.86600747195456
 
 Investigating lambda[j=2][2]...
@@ -412,15 +412,15 @@ Investigating lambda[j=2][5]...
 Smallest extracted threshold: -33.75401642837194
 Largest extracted threshold: 26.077284965111115
 
-Processing merged stats file; extracting SS for 1877 candidates of interest.
-(*_all: 3632)
+Processing merged stats file; extracting SS for 1718 candidates of interest.
+(*_all: 3510)
 *** Changing lambda[j=2][5] from -2.2620 (BLEU: 0.5507) to -1.5058 (BLEU: 0.5556) ***
 *** Old lambda[j=2]: {0.9913845907274932, -0.6577977590753961, 0.46016061237234096, -0.5203200954373215, -2.262048059500863} ***
 *** New lambda[j=2]: {0.9913845907274932, -0.6577977590753961, 0.46016061237234096, -0.5203200954373215, -1.5057547803312556} ***
 
 Investigating lambda[j=2][1]...
-# extracted thresholds: 586
-Smallest extracted threshold: -290.19013555441006
+# extracted thresholds: 350
+Smallest extracted threshold: 0.10040754186850638
 Largest extracted threshold: 112.4209158177018
 
 Investigating lambda[j=2][2]...
@@ -440,15 +440,15 @@ Largest extracted threshold: 443.11710445951536
 
 Keeping thresholds for lambda[j=2][5] from previous step.
 
-Processing merged stats file; extracting SS for 1825 candidates of interest.
-(*_all: 3666)
+Processing merged stats file; extracting SS for 1659 candidates of interest.
+(*_all: 3544)
 *** Changing lambda[j=2][2] from -0.6578 (BLEU: 0.5556) to 0.4283 (BLEU: 0.5598) ***
 *** Old lambda[j=2]: {0.9913845907274932, -0.6577977590753961, 0.46016061237234096, -0.5203200954373215, -1.5057547803312556} ***
 *** New lambda[j=2]: {0.9913845907274932, 0.4283377575186086, 0.46016061237234096, -0.5203200954373215, -1.5057547803312556} ***
 
 Investigating lambda[j=2][1]...
-# extracted thresholds: 607
-Smallest extracted threshold: -162.9878866821429
+# extracted thresholds: 446
+Smallest extracted threshold: 0.10659849903987874
 Largest extracted threshold: 134.21823794439993
 
 Keeping thresholds for lambda[j=2][2] from previous step.
@@ -468,8 +468,8 @@ Investigating lambda[j=2][5]...
 Smallest extracted threshold: -19.952086995155536
 Largest extracted threshold: 14.320655089735071
 
-Processing merged stats file; extracting SS for 1588 candidates of interest.
-(*_all: 3722)
+Processing merged stats file; extracting SS for 1442 candidates of interest.
+(*_all: 3592)
 *** Changing lambda[j=2][1] from 0.9914 (BLEU: 0.5598) to 1.0704 (BLEU: 0.5608) ***
 *** Old lambda[j=2]: {0.9913845907274932, 0.4283377575186086, 0.46016061237234096, -0.5203200954373215, -1.5057547803312556} ***
 *** New lambda[j=2]: {1.0703577259081807, 0.4283377575186086, 0.46016061237234096, -0.5203200954373215, -1.5057547803312556} ***
@@ -496,15 +496,15 @@ Investigating lambda[j=2][5]...
 Smallest extracted threshold: -22.15860367073389
 Largest extracted threshold: 15.318984446881267
 
-Processing merged stats file; extracting SS for 1801 candidates of interest.
-(*_all: 3738)
+Processing merged stats file; extracting SS for 1760 candidates of interest.
+(*_all: 3608)
 *** Changing lambda[j=2][3] from 0.4602 (BLEU: 0.5608) to 0.5947 (BLEU: 0.5624) ***
 *** Old lambda[j=2]: {1.0703577259081807, 0.4283377575186086, 0.46016061237234096, -0.5203200954373215, -1.5057547803312556} ***
 *** New lambda[j=2]: {1.0703577259081807, 0.4283377575186086, 0.5946813590401907, -0.5203200954373215, -1.5057547803312556} ***
 
 Investigating lambda[j=2][1]...
-# extracted thresholds: 612
-Smallest extracted threshold: -164.4817457869036
+# extracted thresholds: 451
+Smallest extracted threshold: 0.10117076600518375
 Largest extracted threshold: 124.01387844717485
 
 Investigating lambda[j=2][2]...
@@ -524,8 +524,8 @@ Investigating lambda[j=2][5]...
 Smallest extracted threshold: -20.70553164221113
 Largest extracted threshold: 15.83201874279383
 
-Processing merged stats file; extracting SS for 1695 candidates of interest.
-(*_all: 3750)
+Processing merged stats file; extracting SS for 1548 candidates of interest.
+(*_all: 3620)
 *** Changing lambda[j=2][1] from 1.0704 (BLEU: 0.5624) to 1.0649 (BLEU: 0.5624) ***
 *** Old lambda[j=2]: {1.0703577259081807, 0.4283377575186086, 0.5946813590401907, -0.5203200954373215, -1.5057547803312556} ***
 *** New lambda[j=2]: {1.064862597065697, 0.4283377575186086, 0.5946813590401907, -0.5203200954373215, -1.5057547803312556} ***
@@ -552,15 +552,15 @@ Investigating lambda[j=2][5]...
 Smallest extracted threshold: -20.551997235888702
 Largest extracted threshold: 15.762552734736785
 
-Processing merged stats file; extracting SS for 1807 candidates of interest.
-(*_all: 3751)
+Processing merged stats file; extracting SS for 1766 candidates of interest.
+(*_all: 3621)
 *** Changing lambda[j=2][4] from -0.5203 (BLEU: 0.5624) to -0.4649 (BLEU: 0.5628) ***
 *** Old lambda[j=2]: {1.064862597065697, 0.4283377575186086, 0.5946813590401907, -0.5203200954373215, -1.5057547803312556} ***
 *** New lambda[j=2]: {1.064862597065697, 0.4283377575186086, 0.5946813590401907, -0.46488329839005016, -1.5057547803312556} ***
 
 Investigating lambda[j=2][1]...
-# extracted thresholds: 615
-Smallest extracted threshold: -153.76165515790058
+# extracted thresholds: 459
+Smallest extracted threshold: 0.10079800144639585
 Largest extracted threshold: 116.2368877756919
 
 Investigating lambda[j=2][2]...
@@ -580,15 +580,15 @@ Investigating lambda[j=2][5]...
 Smallest extracted threshold: -20.267915584660276
 Largest extracted threshold: 15.654100517984542
 
-Processing merged stats file; extracting SS for 1726 candidates of interest.
-(*_all: 3754)
+Processing merged stats file; extracting SS for 1592 candidates of interest.
+(*_all: 3625)
 *** Changing lambda[j=2][3] from 0.5947 (BLEU: 0.5628) to 0.5767 (BLEU: 0.5635) ***
 *** Old lambda[j=2]: {1.064862597065697, 0.4283377575186086, 0.5946813590401907, -0.46488329839005016, -1.5057547803312556} ***
 *** New lambda[j=2]: {1.064862597065697, 0.4283377575186086, 0.5767242181075545, -0.46488329839005016, -1.5057547803312556} ***
 
 Investigating lambda[j=2][1]...
-# extracted thresholds: 617
-Smallest extracted threshold: -152.70891777072615
+# extracted thresholds: 461
+Smallest extracted threshold: 0.10481994400751536
 Largest extracted threshold: 117.59906518072336
 
 Investigating lambda[j=2][2]...
@@ -608,21 +608,21 @@ Investigating lambda[j=2][5]...
 Smallest extracted threshold: -20.46188580745336
 Largest extracted threshold: 15.585615697738008
 
-Processing merged stats file; extracting SS for 1694 candidates of interest.
-(*_all: 3755)
+Processing merged stats file; extracting SS for 1551 candidates of interest.
+(*_all: 3626)
 *** Not changing any weight in lambda[j=2] ***
 *** lambda[j=2]: {1.064862597065697, 0.4283377575186086, 0.5767242181075545, -0.46488329839005016, -1.5057547803312556} ***
 
-Final lambda[j=2]: {1.064862597065697, 0.4283377575186086, 0.5767242181075545, -0.46488329839005016, -1.5057547803312556}
+Final lambda[j=2]: {1.0, 0.40224697411564936, 0.541594962295378, -0.4365664637588628, -1.414036688376949}
 (Final BLEU[j=2]: 0.5635167026947302)
 
-+++ Optimization of lambda[j=3] starting @ Thu Apr 16 09:52:18 EDT 2009 +++
++++ Optimization of lambda[j=3] starting @ Thu Apr 16 10:59:43 EDT 2009 +++
 Initial lambda[j=3]: {0.9702632542004074, -0.6919952429797738, -0.8743327758402839, -0.6393613928095458, -0.5655106188328114}
 (Initial BLEU[j=3]: 0.5379260462835213)
 
 Investigating lambda[j=3][1]...
-# extracted thresholds: 549
-Smallest extracted threshold: -188.17311630887096
+# extracted thresholds: 143
+Smallest extracted threshold: 0.10138116979504219
 Largest extracted threshold: 284.365473699181
 
 Investigating lambda[j=3][2]...
@@ -645,15 +645,15 @@ Investigating lambda[j=3][5]...
 Smallest extracted threshold: -48.6234510972701
 Largest extracted threshold: 33.8816936569259
 
-Processing merged stats file; extracting SS for 1839 candidates of interest.
-(*_all: 4013)
+Processing merged stats file; extracting SS for 1600 candidates of interest.
+(*_all: 3790)
 *** Changing lambda[j=3][3] from -0.8743 (BLEU: 0.5379) to 0.7643 (BLEU: 0.5567) ***
 *** Old lambda[j=3]: {0.9702632542004074, -0.6919952429797738, -0.8743327758402839, -0.6393613928095458, -0.5655106188328114} ***
 *** New lambda[j=3]: {0.9702632542004074, -0.6919952429797738, 0.764282091288035, -0.6393613928095458, -0.5655106188328114} ***
 
 Investigating lambda[j=3][1]...
-# extracted thresholds: 601
-Smallest extracted threshold: -284.23691289415166
+# extracted thresholds: 347
+Smallest extracted threshold: 0.10568702228549398
 Largest extracted threshold: 94.3276398534951
 
 Investigating lambda[j=3][2]...
@@ -673,15 +673,15 @@ Investigating lambda[j=3][5]...
 Smallest extracted threshold: -30.923390044049913
 Largest extracted threshold: 23.804524263262138
 
-Processing merged stats file; extracting SS for 1706 candidates of interest.
-(*_all: 4114)
+Processing merged stats file; extracting SS for 1493 candidates of interest.
+(*_all: 3880)
 *** Changing lambda[j=3][2] from -0.6920 (BLEU: 0.5567) to -0.1548 (BLEU: 0.5618) ***
 *** Old lambda[j=3]: {0.9702632542004074, -0.6919952429797738, 0.764282091288035, -0.6393613928095458, -0.5655106188328114} ***
 *** New lambda[j=3]: {0.9702632542004074, -0.15479784202473462, 0.764282091288035, -0.6393613928095458, -0.5655106188328114} ***
 
 Investigating lambda[j=3][1]...
-# extracted thresholds: 618
-Smallest extracted threshold: -218.16163257676274
+# extracted thresholds: 398
+Smallest extracted threshold: 0.10790256337976084
 Largest extracted threshold: 81.35815974472618
 
 Keeping thresholds for lambda[j=3][2] from previous step.
@@ -701,15 +701,15 @@ Investigating lambda[j=3][5]...
 Smallest extracted threshold: -24.097022149425445
 Largest extracted threshold: 17.348253195562833
 
-Processing merged stats file; extracting SS for 1593 candidates of interest.
-(*_all: 4147)
+Processing merged stats file; extracting SS for 1414 candidates of interest.
+(*_all: 3909)
 *** Changing lambda[j=3][5] from -0.5655 (BLEU: 0.5618) to -0.6382 (BLEU: 0.5618) ***
 *** Old lambda[j=3]: {0.9702632542004074, -0.15479784202473462, 0.764282091288035, -0.6393613928095458, -0.5655106188328114} ***
 *** New lambda[j=3]: {0.9702632542004074, -0.15479784202473462, 0.764282091288035, -0.6393613928095458, -0.6382373430216332} ***
 
 Investigating lambda[j=3][1]...
-# extracted thresholds: 622
-Smallest extracted threshold: -222.1070573640015
+# extracted thresholds: 400
+Smallest extracted threshold: 0.10630253255194093
 Largest extracted threshold: 83.61268819457919
 
 Investigating lambda[j=3][2]...
@@ -729,8 +729,8 @@ Largest extracted threshold: 316.80953953914207
 
 Keeping thresholds for lambda[j=3][5] from previous step.
 
-Processing merged stats file; extracting SS for 1894 candidates of interest.
-(*_all: 4149)
+Processing merged stats file; extracting SS for 1723 candidates of interest.
+(*_all: 3911)
 *** Changing lambda[j=3][1] from 0.9703 (BLEU: 0.5618) to 0.9426 (BLEU: 0.5619) ***
 *** Old lambda[j=3]: {0.9702632542004074, -0.15479784202473462, 0.764282091288035, -0.6393613928095458, -0.6382373430216332} ***
 *** New lambda[j=3]: {0.9426089077313671, -0.15479784202473462, 0.764282091288035, -0.6393613928095458, -0.6382373430216332} ***
@@ -757,21 +757,21 @@ Investigating lambda[j=3][5]...
 Smallest extracted threshold: -23.324357160292756
 Largest extracted threshold: 16.793190955719957
 
-Processing merged stats file; extracting SS for 1821 candidates of interest.
-(*_all: 4164)
+Processing merged stats file; extracting SS for 1773 candidates of interest.
+(*_all: 3926)
 *** Not changing any weight in lambda[j=3] ***
 *** lambda[j=3]: {0.9426089077313671, -0.15479784202473462, 0.764282091288035, -0.6393613928095458, -0.6382373430216332} ***
 
-Final lambda[j=3]: {0.9426089077313671, -0.15479784202473462, 0.764282091288035, -0.6393613928095458, -0.6382373430216332}
+Final lambda[j=3]: {1.0, -0.1642227659372494, 0.8108156893270595, -0.67828914788036, -0.6770966599050257}
 (Final BLEU[j=3]: 0.561861083593104)
 
-+++ Optimization of lambda[j=4] starting @ Thu Apr 16 09:52:18 EDT 2009 +++
++++ Optimization of lambda[j=4] starting @ Thu Apr 16 10:59:43 EDT 2009 +++
 Initial lambda[j=4]: {1.3246918939072398, -0.5778133794884044, 0.2815800420089276, 0.15636862697411513, -0.8651160558376816}
 (Initial BLEU[j=4]: 0.5463222206187416)
 
 Investigating lambda[j=4][1]...
-# extracted thresholds: 585
-Smallest extracted threshold: -104.27343842779437
+# extracted thresholds: 269
+Smallest extracted threshold: 0.10283508312837299
 Largest extracted threshold: 23.349132171236462
 
 Investigating lambda[j=4][2]...
@@ -794,15 +794,15 @@ Investigating lambda[j=4][5]...
 Smallest extracted threshold: -40.51162126744108
 Largest extracted threshold: 27.50669523167202
 
-Processing merged stats file; extracting SS for 1908 candidates of interest.
-(*_all: 4276)
+Processing merged stats file; extracting SS for 1666 candidates of interest.
+(*_all: 4017)
 *** Changing lambda[j=4][4] from 0.1564 (BLEU: 0.5463) to -1.8672 (BLEU: 0.5575) ***
 *** Old lambda[j=4]: {1.3246918939072398, -0.5778133794884044, 0.2815800420089276, 0.15636862697411513, -0.8651160558376816} ***
 *** New lambda[j=4]: {1.3246918939072398, -0.5778133794884044, 0.2815800420089276, -1.8671789489192607, -0.8651160558376816} ***
 
 Investigating lambda[j=4][1]...
-# extracted thresholds: 571
-Smallest extracted threshold: -495.5769509156972
+# extracted thresholds: 337
+Smallest extracted threshold: 0.10525111681839439
 Largest extracted threshold: 299.7224838543121
 
 Investigating lambda[j=4][2]...
@@ -822,15 +822,15 @@ Investigating lambda[j=4][5]...
 Smallest extracted threshold: -50.88113695589005
 Largest extracted threshold: 40.180816255709345
 
-Processing merged stats file; extracting SS for 1633 candidates of interest.
-(*_all: 4328)
+Processing merged stats file; extracting SS for 1468 candidates of interest.
+(*_all: 4066)
 *** Changing lambda[j=4][2] from -0.5778 (BLEU: 0.5575) to -0.4886 (BLEU: 0.5589) ***
 *** Old lambda[j=4]: {1.3246918939072398, -0.5778133794884044, 0.2815800420089276, -1.8671789489192607, -0.8651160558376816} ***
 *** New lambda[j=4]: {1.3246918939072398, -0.48862590108157744, 0.2815800420089276, -1.8671789489192607, -0.8651160558376816} ***
 
 Investigating lambda[j=4][1]...
-# extracted thresholds: 569
-Smallest extracted threshold: -484.60689107167116
+# extracted thresholds: 335
+Smallest extracted threshold: 0.1358090220628009
 Largest extracted threshold: 287.7713617477982
 
 Keeping thresholds for lambda[j=4][2] from previous step.
@@ -850,21 +850,21 @@ Investigating lambda[j=4][5]...
 Smallest extracted threshold: -49.74779837659593
 Largest extracted threshold: 39.10892250600885
 
-Processing merged stats file; extracting SS for 1477 candidates of interest.
-(*_all: 4331)
+Processing merged stats file; extracting SS for 1299 candidates of interest.
+(*_all: 4069)
 *** Not changing any weight in lambda[j=4] ***
 *** lambda[j=4]: {1.3246918939072398, -0.48862590108157744, 0.2815800420089276, -1.8671789489192607, -0.8651160558376816} ***
 
-Final lambda[j=4]: {1.3246918939072398, -0.48862590108157744, 0.2815800420089276, -1.8671789489192607, -0.8651160558376816}
+Final lambda[j=4]: {1.0, -0.3688600370614127, 0.21256266706546703, -1.409519419200136, -0.6530696381676964}
 (Final BLEU[j=4]: 0.5588658980411587)
 
-+++ Optimization of lambda[j=5] starting @ Thu Apr 16 09:52:18 EDT 2009 +++
++++ Optimization of lambda[j=5] starting @ Thu Apr 16 10:59:44 EDT 2009 +++
 Initial lambda[j=5]: {1.1633493083131994, 0.009245077311689887, -0.9330111163449395, 0.6515944996339995, -2.279895055260242}
 (Initial BLEU[j=5]: 0.5241401509002395)
 
 Investigating lambda[j=5][1]...
-# extracted thresholds: 530
-Smallest extracted threshold: -140.69630856332122
+# extracted thresholds: 167
+Smallest extracted threshold: 0.10143379770995212
 Largest extracted threshold: 204.88639621052945
 
 Investigating lambda[j=5][2]...
@@ -887,15 +887,15 @@ Investigating lambda[j=5][5]...
 Smallest extracted threshold: -39.12579967159199
 Largest extracted threshold: 21.01469376195658
 
-Processing merged stats file; extracting SS for 1950 candidates of interest.
-(*_all: 4618)
+Processing merged stats file; extracting SS for 1655 candidates of interest.
+(*_all: 4208)
 *** Changing lambda[j=5][3] from -0.9330 (BLEU: 0.5241) to 1.1370 (BLEU: 0.5523) ***
 *** Old lambda[j=5]: {1.1633493083131994, 0.009245077311689887, -0.9330111163449395, 0.6515944996339995, -2.279895055260242} ***
 *** New lambda[j=5]: {1.1633493083131994, 0.009245077311689887, 1.136969198198622, 0.6515944996339995, -2.279895055260242} ***
 
 Investigating lambda[j=5][1]...
-# extracted thresholds: 628
-Smallest extracted threshold: -121.24871054603358
+# extracted thresholds: 468
+Smallest extracted threshold: 0.10359617536182927
 Largest extracted threshold: 199.34052705755744
 
 Investigating lambda[j=5][2]...
@@ -915,15 +915,15 @@ Investigating lambda[j=5][5]...
 Smallest extracted threshold: -19.88179800469443
 Largest extracted threshold: 17.746523562587544
 
-Processing merged stats file; extracting SS for 1855 candidates of interest.
-(*_all: 4742)
+Processing merged stats file; extracting SS for 1712 candidates of interest.
+(*_all: 4322)
 *** Changing lambda[j=5][4] from 0.6516 (BLEU: 0.5523) to 0.4317 (BLEU: 0.5557) ***
 *** Old lambda[j=5]: {1.1633493083131994, 0.009245077311689887, 1.136969198198622, 0.6515944996339995, -2.279895055260242} ***
 *** New lambda[j=5]: {1.1633493083131994, 0.009245077311689887, 1.136969198198622, 0.43167353482232107, -2.279895055260242} ***
 
 Investigating lambda[j=5][1]...
-# extracted thresholds: 632
-Smallest extracted threshold: -113.0069105790382
+# extracted thresholds: 482
+Smallest extracted threshold: 0.10147252856590622
 Largest extracted threshold: 156.7491668723638
 
 Investigating lambda[j=5][2]...
@@ -943,15 +943,15 @@ Investigating lambda[j=5][5]...
 Smallest extracted threshold: -20.398662945035216
 Largest extracted threshold: 18.17675974892027
 
-Processing merged stats file; extracting SS for 1762 candidates of interest.
-(*_all: 4764)
+Processing merged stats file; extracting SS for 1634 candidates of interest.
+(*_all: 4343)
 *** Changing lambda[j=5][3] from 1.1370 (BLEU: 0.5557) to 0.8143 (BLEU: 0.5571) ***
 *** Old lambda[j=5]: {1.1633493083131994, 0.009245077311689887, 1.136969198198622, 0.43167353482232107, -2.279895055260242} ***
 *** New lambda[j=5]: {1.1633493083131994, 0.009245077311689887, 0.8142964522437366, 0.43167353482232107, -2.279895055260242} ***
 
 Investigating lambda[j=5][1]...
-# extracted thresholds: 610
-Smallest extracted threshold: -86.81042195494686
+# extracted thresholds: 461
+Smallest extracted threshold: 0.10511697985276783
 Largest extracted threshold: 136.52834145919255
 
 Investigating lambda[j=5][2]...
@@ -971,15 +971,15 @@ Investigating lambda[j=5][5]...
 Smallest extracted threshold: -21.62261505885315
 Largest extracted threshold: 16.946152655726813
 
-Processing merged stats file; extracting SS for 1832 candidates of interest.
-(*_all: 4779)
+Processing merged stats file; extracting SS for 1697 candidates of interest.
+(*_all: 4359)
 *** Changing lambda[j=5][4] from 0.4317 (BLEU: 0.5571) to -0.1396 (BLEU: 0.5591) ***
 *** Old lambda[j=5]: {1.1633493083131994, 0.009245077311689887, 0.8142964522437366, 0.43167353482232107, -2.279895055260242} ***
 *** New lambda[j=5]: {1.1633493083131994, 0.009245077311689887, 0.8142964522437366, -0.13960569451586213, -2.279895055260242} ***
 
 Investigating lambda[j=5][1]...
-# extracted thresholds: 623
-Smallest extracted threshold: -197.281542928083
+# extracted thresholds: 443
+Smallest extracted threshold: 0.10066676460501517
 Largest extracted threshold: 79.73607643250548
 
 Investigating lambda[j=5][2]...
@@ -999,15 +999,15 @@ Investigating lambda[j=5][5]...
 Smallest extracted threshold: -24.306102321927437
 Largest extracted threshold: 18.063758688294165
 
-Processing merged stats file; extracting SS for 1750 candidates of interest.
-(*_all: 4783)
+Processing merged stats file; extracting SS for 1597 candidates of interest.
+(*_all: 4364)
 *** Changing lambda[j=5][3] from 0.8143 (BLEU: 0.5591) to 0.6756 (BLEU: 0.5609) ***
 *** Old lambda[j=5]: {1.1633493083131994, 0.009245077311689887, 0.8142964522437366, -0.13960569451586213, -2.279895055260242} ***
 *** New lambda[j=5]: {1.1633493083131994, 0.009245077311689887, 0.6756066084808695, -0.13960569451586213, -2.279895055260242} ***
 
 Investigating lambda[j=5][1]...
-# extracted thresholds: 607
-Smallest extracted threshold: -189.1508508374948
+# extracted thresholds: 429
+Smallest extracted threshold: 0.10105101839142917
 Largest extracted threshold: 80.55830907767086
 
 Investigating lambda[j=5][2]...
@@ -1027,15 +1027,15 @@ Investigating lambda[j=5][5]...
 Smallest extracted threshold: -25.804208284048002
 Largest extracted threshold: 17.597703454841273
 
-Processing merged stats file; extracting SS for 1731 candidates of interest.
-(*_all: 4785)
+Processing merged stats file; extracting SS for 1566 candidates of interest.
+(*_all: 4366)
 *** Changing lambda[j=5][2] from 0.0092 (BLEU: 0.5609) to 0.7138 (BLEU: 0.5621) ***
 *** Old lambda[j=5]: {1.1633493083131994, 0.009245077311689887, 0.6756066084808695, -0.13960569451586213, -2.279895055260242} ***
 *** New lambda[j=5]: {1.1633493083131994, 0.7138278990132798, 0.6756066084808695, -0.13960569451586213, -2.279895055260242} ***
 
 Investigating lambda[j=5][1]...
-# extracted thresholds: 620
-Smallest extracted threshold: -197.86129380463797
+# extracted thresholds: 511
+Smallest extracted threshold: 0.10072174219974557
 Largest extracted threshold: 161.8737065576157
 
 Keeping thresholds for lambda[j=5][2] from previous step.
@@ -1055,15 +1055,15 @@ Investigating lambda[j=5][5]...
 Smallest extracted threshold: -16.85081136772481
 Largest extracted threshold: 15.915093694031672
 
-Processing merged stats file; extracting SS for 1665 candidates of interest.
-(*_all: 4791)
+Processing merged stats file; extracting SS for 1564 candidates of interest.
+(*_all: 4373)
 *** Changing lambda[j=5][5] from -2.2799 (BLEU: 0.5621) to -2.4872 (BLEU: 0.5622) ***
 *** Old lambda[j=5]: {1.1633493083131994, 0.7138278990132798, 0.6756066084808695, -0.13960569451586213, -2.279895055260242} ***
 *** New lambda[j=5]: {1.1633493083131994, 0.7138278990132798, 0.6756066084808695, -0.13960569451586213, -2.487189154692746} ***
 
 Investigating lambda[j=5][1]...
-# extracted thresholds: 619
-Smallest extracted threshold: -210.713527969457
+# extracted thresholds: 504
+Smallest extracted threshold: 0.10072174219974557
 Largest extracted threshold: 161.8737065576157
 
 Investigating lambda[j=5][2]...
@@ -1083,15 +1083,15 @@ Largest extracted threshold: 324.8057694820552
 
 Keeping thresholds for lambda[j=5][5] from previous step.
 
-Processing merged stats file; extracting SS for 1907 candidates of interest.
-(*_all: 4792)
+Processing merged stats file; extracting SS for 1810 candidates of interest.
+(*_all: 4374)
 *** Changing lambda[j=5][2] from 0.7138 (BLEU: 0.5622) to 0.6732 (BLEU: 0.5629) ***
 *** Old lambda[j=5]: {1.1633493083131994, 0.7138278990132798, 0.6756066084808695, -0.13960569451586213, -2.487189154692746} ***
 *** New lambda[j=5]: {1.1633493083131994, 0.6732038283575943, 0.6756066084808695, -0.13960569451586213, -2.487189154692746} ***
 
 Investigating lambda[j=5][1]...
-# extracted thresholds: 617
-Smallest extracted threshold: -205.87926356142898
+# extracted thresholds: 495
+Smallest extracted threshold: 0.10528098496295601
 Largest extracted threshold: 153.53223071631572
 
 Keeping thresholds for lambda[j=5][2] from previous step.
@@ -1111,15 +1111,15 @@ Investigating lambda[j=5][5]...
 Smallest extracted threshold: -17.3670365973702
 Largest extracted threshold: 16.008482362205644
 
-Processing merged stats file; extracting SS for 1649 candidates of interest.
-(*_all: 4793)
+Processing merged stats file; extracting SS for 1537 candidates of interest.
+(*_all: 4375)
 *** Changing lambda[j=5][3] from 0.6756 (BLEU: 0.5629) to 0.6920 (BLEU: 0.5630) ***
 *** Old lambda[j=5]: {1.1633493083131994, 0.6732038283575943, 0.6756066084808695, -0.13960569451586213, -2.487189154692746} ***
 *** New lambda[j=5]: {1.1633493083131994, 0.6732038283575943, 0.692044032528141, -0.13960569451586213, -2.487189154692746} ***
 
 Investigating lambda[j=5][1]...
-# extracted thresholds: 619
-Smallest extracted threshold: -204.8836253048513
+# extracted thresholds: 498
+Smallest extracted threshold: 0.10104302457258388
 Largest extracted threshold: 154.56230928994515
 
 Investigating lambda[j=5][2]...
@@ -1139,15 +1139,15 @@ Investigating lambda[j=5][5]...
 Smallest extracted threshold: -17.18948211826053
 Largest extracted threshold: 16.071171296675594
 
-Processing merged stats file; extracting SS for 1734 candidates of interest.
-(*_all: 4793)
+Processing merged stats file; extracting SS for 1625 candidates of interest.
+(*_all: 4375)
 *** Changing lambda[j=5][2] from 0.6732 (BLEU: 0.5630) to 0.6681 (BLEU: 0.5634) ***
 *** Old lambda[j=5]: {1.1633493083131994, 0.6732038283575943, 0.692044032528141, -0.13960569451586213, -2.487189154692746} ***
 *** New lambda[j=5]: {1.1633493083131994, 0.6681050117564826, 0.692044032528141, -0.13960569451586213, -2.487189154692746} ***
 
 Investigating lambda[j=5][1]...
-# extracted thresholds: 617
-Smallest extracted threshold: -204.2768661293186
+# extracted thresholds: 495
+Smallest extracted threshold: 0.10226717183679966
 Largest extracted threshold: 153.5153522811838
 
 Keeping thresholds for lambda[j=5][2] from previous step.
@@ -1167,158 +1167,158 @@ Investigating lambda[j=5][5]...
 Smallest extracted threshold: -17.25427468405577
 Largest extracted threshold: 16.082892714149416
 
-Processing merged stats file; extracting SS for 1645 candidates of interest.
-(*_all: 4794)
+Processing merged stats file; extracting SS for 1532 candidates of interest.
+(*_all: 4376)
 *** Not changing any weight in lambda[j=5] ***
 *** lambda[j=5]: {1.1633493083131994, 0.6681050117564826, 0.692044032528141, -0.13960569451586213, -2.487189154692746} ***
 
-Final lambda[j=5]: {1.1633493083131994, 0.6681050117564826, 0.692044032528141, -0.13960569451586213, -2.487189154692746}
+Final lambda[j=5]: {1.0, 0.5742944161158292, 0.5948720883597478, -0.12000324710579292, -2.1379555881621237}
 (Final BLEU[j=5]: 0.563372716932264)
 
 Best final lambda is lambda[j=2] (BLEU: 0.5635).
 
----  Z-MERT iteration #1 ending @ Thu Apr 16 09:52:19 EDT 2009  ---
+---  Z-MERT iteration #1 ending @ Thu Apr 16 10:59:44 EDT 2009  ---
 
-Next iteration will decode with lambda: {1.064862597065697, 0.4283377575186086, 0.5767242181075545, -0.46488329839005016, -1.5057547803312556}
+Next iteration will decode with lambda: {1.0, 0.40224697411564936, 0.541594962295378, -0.4365664637588628, -1.414036688376949}
 
---- Starting Z-MERT iteration #2 @ Thu Apr 16 09:52:19 EDT 2009 ---
-Redecoding using weight vector {1.064862597065697, 0.4283377575186086, 0.5767242181075545, -0.46488329839005016, -1.5057547803312556}
+--- Starting Z-MERT iteration #2 @ Thu Apr 16 10:59:45 EDT 2009 ---
+Redecoding using weight vector {1.0, 0.40224697411564936, 0.541594962295378, -0.4365664637588628, -1.414036688376949}
 Running external decoder...
-...finished decoding @ Thu Apr 16 09:54:54 EDT 2009
+...finished decoding @ Thu Apr 16 11:02:31 EDT 2009
 Reading candidate translations from iterations 1-2
 
-Processed 56069 distinct candidates (about 560 per sentence):
+Processed 56066 distinct candidates (about 560 per sentence):
 newCandidatesAdded[it=1] = 28100 (about 281 per sentence)
-newCandidatesAdded[it=2] = 27969 (about 279 per sentence)
+newCandidatesAdded[it=2] = 27966 (about 279 per sentence)
 
-+++ Optimization of lambda[j=1] starting @ Thu Apr 16 09:54:58 EDT 2009 +++
-Initial lambda[j=1]: {1.064862597065697, 0.4283377575186086, 0.5767242181075545, -0.46488329839005016, -1.5057547803312556}
-(Initial BLEU[j=1]: 0.49094656345199245)
++++ Optimization of lambda[j=1] starting @ Thu Apr 16 11:02:36 EDT 2009 +++
+Initial lambda[j=1]: {1.0, 0.40224697411564936, 0.541594962295378, -0.4365664637588628, -1.414036688376949}
+(Initial BLEU[j=1]: 0.49069319912694526)
 
 Investigating lambda[j=1][1]...
-# extracted thresholds: 638
-Smallest extracted threshold: -94.35537581656189
-Largest extracted threshold: 142.4754324870577
+# extracted thresholds: 575
+Smallest extracted threshold: 0.11534521959932327
+Largest extracted threshold: 133.7970108816464
 
 Investigating lambda[j=1][2]...
-# extracted thresholds: 831
-Smallest extracted threshold: -31.87051006850791
-Largest extracted threshold: 277.8475629743757
+# extracted thresholds: 841
+Smallest extracted threshold: -29.929222940433284
+Largest extracted threshold: 260.9233940040757
 
 Investigating lambda[j=1][3]...
-# extracted thresholds: 642
-Smallest extracted threshold: -75.18590713017468
-Largest extracted threshold: 260.96455188533855
+# extracted thresholds: 645
+Smallest extracted threshold: -70.60620528634827
+Largest extracted threshold: 245.0687559169079
 
 Investigating lambda[j=1][4]...
-# extracted thresholds: 862
-Smallest extracted threshold: -13.466687082748813
-Largest extracted threshold: 398.3704442962438
+# extracted thresholds: 865
+Smallest extracted threshold: -12.646408203140203
+Largest extracted threshold: 374.1050210552798
 
 Investigating lambda[j=1][5]...
-# extracted thresholds: 595
-Smallest extracted threshold: -14.659200180859772
-Largest extracted threshold: 15.585615697738008
+# extracted thresholds: 596
+Smallest extracted threshold: -13.766283294440267
+Largest extracted threshold: 14.636269262048698
 
-Processing merged stats file; extracting SS for 2612 candidates of interest.
-(*_all: 6253)
-*** Changing lambda[j=1][4] from -0.4649 (BLEU: 0.4909) to -0.1645 (BLEU: 0.5673) ***
-*** Old lambda[j=1]: {1.064862597065697, 0.4283377575186086, 0.5767242181075545, -0.46488329839005016, -1.5057547803312556} ***
-*** New lambda[j=1]: {1.064862597065697, 0.4283377575186086, 0.5767242181075545, -0.16445783646342022, -1.5057547803312556} ***
+Processing merged stats file; extracting SS for 2573 candidates of interest.
+(*_all: 5836)
+*** Changing lambda[j=1][4] from -0.4366 (BLEU: 0.4907) to -0.1544 (BLEU: 0.5673) ***
+*** Old lambda[j=1]: {1.0, 0.40224697411564936, 0.541594962295378, -0.4365664637588628, -1.414036688376949} ***
+*** New lambda[j=1]: {1.0, 0.40224697411564936, 0.541594962295378, -0.1544404291376138, -1.414036688376949} ***
 
 Investigating lambda[j=1][1]...
-# extracted thresholds: 718
-Smallest extracted threshold: -35.434302953080135
-Largest extracted threshold: 92.24340288347523
+# extracted thresholds: 605
+Smallest extracted threshold: 0.10097655061290176
+Largest extracted threshold: 86.62469987926877
 
 Investigating lambda[j=1][2]...
-# extracted thresholds: 851
-Smallest extracted threshold: -47.86557604142917
-Largest extracted threshold: 218.56986401797786
+# extracted thresholds: 854
+Smallest extracted threshold: -44.950002163026745
+Largest extracted threshold: 205.25640079787047
 
 Investigating lambda[j=1][3]...
-# extracted thresholds: 652
-Smallest extracted threshold: -389.26591116711427
-Largest extracted threshold: 266.20834176624004
+# extracted thresholds: 657
+Smallest extracted threshold: -365.5550605681699
+Largest extracted threshold: 249.9931376121157
 
 Keeping thresholds for lambda[j=1][4] from previous step.
 
 Investigating lambda[j=1][5]...
-# extracted thresholds: 604
-Smallest extracted threshold: -14.44391834063124
-Largest extracted threshold: 14.99788680555511
+# extracted thresholds: 608
+Smallest extracted threshold: -13.564114638294628
+Largest extracted threshold: 14.084339939145973
 
-Processing merged stats file; extracting SS for 2456 candidates of interest.
-(*_all: 6806)
-*** Changing lambda[j=1][2] from 0.4283 (BLEU: 0.5673) to 0.4193 (BLEU: 0.5674) ***
-*** Old lambda[j=1]: {1.064862597065697, 0.4283377575186086, 0.5767242181075545, -0.16445783646342022, -1.5057547803312556} ***
-*** New lambda[j=1]: {1.064862597065697, 0.41925111166432205, 0.5767242181075545, -0.16445783646342022, -1.5057547803312556} ***
+Processing merged stats file; extracting SS for 2382 candidates of interest.
+(*_all: 6383)
+*** Changing lambda[j=1][2] from 0.4022 (BLEU: 0.5673) to 0.3937 (BLEU: 0.5674) ***
+*** Old lambda[j=1]: {1.0, 0.40224697411564936, 0.541594962295378, -0.1544404291376138, -1.414036688376949} ***
+*** New lambda[j=1]: {1.0, 0.3937138113588181, 0.541594962295378, -0.1544404291376138, -1.414036688376949} ***
 
 Investigating lambda[j=1][1]...
-# extracted thresholds: 728
-Smallest extracted threshold: -35.32829208478016
-Largest extracted threshold: 90.37761160139559
+# extracted thresholds: 610
+Smallest extracted threshold: 0.10376231005601502
+Largest extracted threshold: 84.87255712653322
 
 Keeping thresholds for lambda[j=1][2] from previous step.
 
 Investigating lambda[j=1][3]...
-# extracted thresholds: 657
-Smallest extracted threshold: -379.7573853267372
-Largest extracted threshold: 265.2947208285268
+# extracted thresholds: 661
+Smallest extracted threshold: -356.6257152547686
+Largest extracted threshold: 249.1351668840199
 
 Investigating lambda[j=1][4]...
-# extracted thresholds: 860
-Smallest extracted threshold: -13.39244253735407
-Largest extracted threshold: 398.6303223676761
+# extracted thresholds: 864
+Smallest extracted threshold: -12.576686019639295
+Largest extracted threshold: 374.3490695101257
 
 Investigating lambda[j=1][5]...
-# extracted thresholds: 605
-Smallest extracted threshold: -14.509116071484362
-Largest extracted threshold: 15.018775646599446
+# extracted thresholds: 608
+Smallest extracted threshold: -13.625341064158157
+Largest extracted threshold: 14.10395640525362
 
-Processing merged stats file; extracting SS for 2355 candidates of interest.
-(*_all: 6819)
-*** Changing lambda[j=1][3] from 0.5767 (BLEU: 0.5674) to 0.5984 (BLEU: 0.5681) ***
-*** Old lambda[j=1]: {1.064862597065697, 0.41925111166432205, 0.5767242181075545, -0.16445783646342022, -1.5057547803312556} ***
-*** New lambda[j=1]: {1.064862597065697, 0.41925111166432205, 0.5984315727161615, -0.16445783646342022, -1.5057547803312556} ***
+Processing merged stats file; extracting SS for 2277 candidates of interest.
+(*_all: 6396)
+*** Changing lambda[j=1][3] from 0.5416 (BLEU: 0.5674) to 0.5620 (BLEU: 0.5681) ***
+*** Old lambda[j=1]: {1.0, 0.3937138113588181, 0.541594962295378, -0.1544404291376138, -1.414036688376949} ***
+*** New lambda[j=1]: {1.0, 0.3937138113588181, 0.5619800849097228, -0.1544404291376138, -1.414036688376949} ***
 
 Investigating lambda[j=1][1]...
-# extracted thresholds: 726
-Smallest extracted threshold: -36.49506239499277
-Largest extracted threshold: 91.7379391568675
+# extracted thresholds: 610
+Smallest extracted threshold: 0.11177202797438748
+Largest extracted threshold: 86.15002481036555
 
 Investigating lambda[j=1][2]...
 # extracted thresholds: 837
-Smallest extracted threshold: -46.76785757475602
-Largest extracted threshold: 219.6213140068322
+Smallest extracted threshold: -43.91914760047726
+Largest extracted threshold: 206.24380517450297
 
 Keeping thresholds for lambda[j=1][3] from previous step.
 
 Investigating lambda[j=1][4]...
-# extracted thresholds: 860
-Smallest extracted threshold: -15.074568040702157
-Largest extracted threshold: 384.1992730238712
+# extracted thresholds: 862
+Smallest extracted threshold: -14.156350389516996
+Largest extracted threshold: 360.79703999610757
 
 Investigating lambda[j=1][5]...
-# extracted thresholds: 607
-Smallest extracted threshold: -14.526421934835916
-Largest extracted threshold: 15.10156300589985
+# extracted thresholds: 611
+Smallest extracted threshold: -13.641592797855305
+Largest extracted threshold: 14.181701045293162
 
-Processing merged stats file; extracting SS for 2547 candidates of interest.
-(*_all: 6842)
+Processing merged stats file; extracting SS for 2468 candidates of interest.
+(*_all: 6418)
 *** Not changing any weight in lambda[j=1] ***
-*** lambda[j=1]: {1.064862597065697, 0.41925111166432205, 0.5984315727161615, -0.16445783646342022, -1.5057547803312556} ***
+*** lambda[j=1]: {1.0, 0.3937138113588181, 0.5619800849097228, -0.1544404291376138, -1.414036688376949} ***
 
-Final lambda[j=1]: {1.064862597065697, 0.41925111166432205, 0.5984315727161615, -0.16445783646342022, -1.5057547803312556}
+Final lambda[j=1]: {1.0, 0.3937138113588181, 0.5619800849097228, -0.1544404291376138, -1.414036688376949}
 (Final BLEU[j=1]: 0.5680549978662968)
 
-+++ Optimization of lambda[j=2] starting @ Thu Apr 16 09:54:59 EDT 2009 +++
++++ Optimization of lambda[j=2] starting @ Thu Apr 16 11:02:37 EDT 2009 +++
 Initial lambda[j=2]: {1.4897502865040284, -0.004553671263154424, 0.8593774528720801, -0.01427276865927607, -1.236557087720195}
 (Initial BLEU[j=2]: 0.5617700298115142)
 
 Investigating lambda[j=2][1]...
-# extracted thresholds: 715
-Smallest extracted threshold: -52.35676991475769
+# extracted thresholds: 547
+Smallest extracted threshold: 0.1004427279328348
 Largest extracted threshold: 62.485060387649774
 
 Investigating lambda[j=2][2]...
@@ -1327,78 +1327,78 @@ Smallest extracted threshold: -95.34242848932222
 Largest extracted threshold: 275.51880635831867
 
 Investigating lambda[j=2][3]...
-# extracted thresholds: 626
+# extracted thresholds: 635
 Smallest extracted threshold: -572.8234128410722
 Largest extracted threshold: 357.10173935359376
 
 Investigating lambda[j=2][4]...
-# extracted thresholds: 825
+# extracted thresholds: 822
 Smallest extracted threshold: -164.05590722695578
 Largest extracted threshold: 615.1820979148769
 
 Investigating lambda[j=2][5]...
-# extracted thresholds: 586
+# extracted thresholds: 585
 Smallest extracted threshold: -27.246979492560026
 Largest extracted threshold: 22.14837659124744
 
-Processing merged stats file; extracting SS for 2715 candidates of interest.
-(*_all: 7308)
+Processing merged stats file; extracting SS for 2584 candidates of interest.
+(*_all: 6863)
 *** Changing lambda[j=2][3] from 0.8594 (BLEU: 0.5618) to 1.1484 (BLEU: 0.5697) ***
 *** Old lambda[j=2]: {1.4897502865040284, -0.004553671263154424, 0.8593774528720801, -0.01427276865927607, -1.236557087720195} ***
 *** New lambda[j=2]: {1.4897502865040284, -0.004553671263154424, 1.1484294713357572, -0.01427276865927607, -1.236557087720195} ***
 
 Investigating lambda[j=2][1]...
-# extracted thresholds: 737
-Smallest extracted threshold: -80.091311086343
+# extracted thresholds: 554
+Smallest extracted threshold: 0.11816084728526169
 Largest extracted threshold: 75.14435899220196
 
 Investigating lambda[j=2][2]...
-# extracted thresholds: 844
+# extracted thresholds: 847
 Smallest extracted threshold: -80.72536693494361
 Largest extracted threshold: 232.4933380673755
 
 Keeping thresholds for lambda[j=2][3] from previous step.
 
 Investigating lambda[j=2][4]...
-# extracted thresholds: 849
+# extracted thresholds: 847
 Smallest extracted threshold: -255.87809842557832
 Largest extracted threshold: 423.0203160401846
 
 Investigating lambda[j=2][5]...
-# extracted thresholds: 588
+# extracted thresholds: 589
 Smallest extracted threshold: -30.09154440237192
 Largest extracted threshold: 23.250761185802027
 
-Processing merged stats file; extracting SS for 2483 candidates of interest.
-(*_all: 7449)
+Processing merged stats file; extracting SS for 2346 candidates of interest.
+(*_all: 7007)
 *** Changing lambda[j=2][4] from -0.0143 (BLEU: 0.5697) to -0.0072 (BLEU: 0.5700) ***
 *** Old lambda[j=2]: {1.4897502865040284, -0.004553671263154424, 1.1484294713357572, -0.01427276865927607, -1.236557087720195} ***
 *** New lambda[j=2]: {1.4897502865040284, -0.004553671263154424, 1.1484294713357572, -0.007186155459433035, -1.236557087720195} ***
 
 Investigating lambda[j=2][1]...
-# extracted thresholds: 738
-Smallest extracted threshold: -81.48595656407198
+# extracted thresholds: 554
+Smallest extracted threshold: 0.10419845285158469
 Largest extracted threshold: 73.97101832097074
 
 Investigating lambda[j=2][2]...
-# extracted thresholds: 841
+# extracted thresholds: 843
 Smallest extracted threshold: -81.10266799634218
 Largest extracted threshold: 231.09506070038123
 
 Investigating lambda[j=2][3]...
-# extracted thresholds: 633
+# extracted thresholds: 642
 Smallest extracted threshold: -582.0916905331577
 Largest extracted threshold: 357.1068932541027
 
 Keeping thresholds for lambda[j=2][4] from previous step.
 
 Investigating lambda[j=2][5]...
-# extracted thresholds: 590
+# extracted thresholds: 591
 Smallest extracted threshold: -30.24702534912065
 Largest extracted threshold: 23.23689748963405
 
-Processing merged stats file; extracting SS for 2330 candidates of interest.
-(*_all: 7452)
+Processing merged stats file; extracting SS for 2199 candidates of interest.
+(*_all: 7010)
 *** Changing lambda[j=2][1] from 1.4898 (BLEU: 0.5700) to 1.5038 (BLEU: 0.5709) ***
 *** Old lambda[j=2]: {1.4897502865040284, -0.004553671263154424, 1.1484294713357572, -0.007186155459433035, -1.236557087720195} ***
 *** New lambda[j=2]: {1.5038466770351047, -0.004553671263154424, 1.1484294713357572, -0.007186155459433035, -1.236557087720195} ***
@@ -1406,54 +1406,54 @@ Processing merged stats file; extracting SS for 2330 candidates of interest.
 Keeping thresholds for lambda[j=2][1] from previous step.
 
 Investigating lambda[j=2][2]...
-# extracted thresholds: 838
+# extracted thresholds: 841
 Smallest extracted threshold: -82.68608151892772
 Largest extracted threshold: 232.10647672098685
 
 Investigating lambda[j=2][3]...
-# extracted thresholds: 635
+# extracted thresholds: 644
 Smallest extracted threshold: -592.8150161871594
 Largest extracted threshold: 360.48361953131996
 
 Investigating lambda[j=2][4]...
-# extracted thresholds: 849
+# extracted thresholds: 848
 Smallest extracted threshold: -253.9844832975763
 Largest extracted threshold: 435.2616215773749
 
 Investigating lambda[j=2][5]...
-# extracted thresholds: 592
+# extracted thresholds: 594
 Smallest extracted threshold: -30.42696544944815
 Largest extracted threshold: 23.41509530924412
 
-Processing merged stats file; extracting SS for 2462 candidates of interest.
-(*_all: 7455)
+Processing merged stats file; extracting SS for 2471 candidates of interest.
+(*_all: 7012)
 *** Not changing any weight in lambda[j=2] ***
 *** lambda[j=2]: {1.5038466770351047, -0.004553671263154424, 1.1484294713357572, -0.007186155459433035, -1.236557087720195} ***
 
-Final lambda[j=2]: {1.5038466770351047, -0.004553671263154424, 1.1484294713357572, -0.007186155459433035, -1.236557087720195}
+Final lambda[j=2]: {1.0, -0.0030280156432783254, 0.7636612753634786, -0.004778516034361186, -0.8222627390167979}
 (Final BLEU[j=2]: 0.570867406150827)
 
-+++ Optimization of lambda[j=3] starting @ Thu Apr 16 09:54:59 EDT 2009 +++
++++ Optimization of lambda[j=3] starting @ Thu Apr 16 11:02:37 EDT 2009 +++
 Initial lambda[j=3]: {0.7143221888272017, -0.8739358729264859, 0.7980226618452084, -0.399205792984231, -3.8694784413312346}
-(Initial BLEU[j=3]: 0.4177640838721326)
+(Initial BLEU[j=3]: 0.41757478237128254)
 
 Investigating lambda[j=3][1]...
-# extracted thresholds: 652
-Smallest extracted threshold: -404.8720491167004
+# extracted thresholds: 511
+Smallest extracted threshold: 0.10401239225820699
 Largest extracted threshold: 891.009798373375
 
 Investigating lambda[j=3][2]...
-# extracted thresholds: 669
+# extracted thresholds: 675
 Smallest extracted threshold: -341.93684673723135
 Largest extracted threshold: 378.8361806044823
 
 Investigating lambda[j=3][3]...
-# extracted thresholds: 627
-Smallest extracted threshold: -543.4474099080713
+# extracted thresholds: 624
+Smallest extracted threshold: -599.5063808325947
 Largest extracted threshold: 333.8352595093494
 
 Investigating lambda[j=3][4]...
-# extracted thresholds: 738
+# extracted thresholds: 739
 Smallest extracted threshold: -732.310182428772
 Largest extracted threshold: 528.5395685557316
 
@@ -1462,80 +1462,80 @@ Investigating lambda[j=3][5]...
 Smallest extracted threshold: -24.78560918947624
 Largest extracted threshold: 32.76488790661559
 
-Processing merged stats file; extracting SS for 2518 candidates of interest.
-(*_all: 7998)
-*** Changing lambda[j=3][1] from 0.7143 (BLEU: 0.4178) to 10.6643 (BLEU: 0.5424) ***
+Processing merged stats file; extracting SS for 2453 candidates of interest.
+(*_all: 7567)
+*** Changing lambda[j=3][1] from 0.7143 (BLEU: 0.4176) to 10.6643 (BLEU: 0.5437) ***
 *** Old lambda[j=3]: {0.7143221888272017, -0.8739358729264859, 0.7980226618452084, -0.399205792984231, -3.8694784413312346} ***
 *** New lambda[j=3]: {10.664264997893394, -0.8739358729264859, 0.7980226618452084, -0.399205792984231, -3.8694784413312346} ***
 
 Keeping thresholds for lambda[j=3][1] from previous step.
 
 Investigating lambda[j=3][2]...
-# extracted thresholds: 787
+# extracted thresholds: 794
 Smallest extracted threshold: -1049.351863729202
 Largest extracted threshold: 3553.6911116872952
 
 Investigating lambda[j=3][3]...
-# extracted thresholds: 623
+# extracted thresholds: 631
 Smallest extracted threshold: -5014.310218832581
 Largest extracted threshold: 2623.70680901195
 
 Investigating lambda[j=3][4]...
-# extracted thresholds: 757
+# extracted thresholds: 756
 Smallest extracted threshold: -340.3900971227016
 Largest extracted threshold: 8419.44609583575
 
 Investigating lambda[j=3][5]...
-# extracted thresholds: 545
+# extracted thresholds: 551
 Smallest extracted threshold: -176.83822741098058
 Largest extracted threshold: 248.80326587443727
 
-Processing merged stats file; extracting SS for 2213 candidates of interest.
-(*_all: 8184)
-*** Changing lambda[j=3][3] from 0.7980 (BLEU: 0.5424) to 10.7933 (BLEU: 0.5662) ***
+Processing merged stats file; extracting SS for 2189 candidates of interest.
+(*_all: 7757)
+*** Changing lambda[j=3][3] from 0.7980 (BLEU: 0.5437) to 10.7933 (BLEU: 0.5662) ***
 *** Old lambda[j=3]: {10.664264997893394, -0.8739358729264859, 0.7980226618452084, -0.399205792984231, -3.8694784413312346} ***
 *** New lambda[j=3]: {10.664264997893394, -0.8739358729264859, 10.793298043281524, -0.399205792984231, -3.8694784413312346} ***
 
 Investigating lambda[j=3][1]...
-# extracted thresholds: 730
-Smallest extracted threshold: -785.1239194065054
+# extracted thresholds: 531
+Smallest extracted threshold: 0.10039994362601987
 Largest extracted threshold: 713.8831467424208
 
 Investigating lambda[j=3][2]...
-# extracted thresholds: 826
+# extracted thresholds: 831
 Smallest extracted threshold: -543.9011276300158
 Largest extracted threshold: 1576.8907284433012
 
 Keeping thresholds for lambda[j=3][3] from previous step.
 
 Investigating lambda[j=3][4]...
-# extracted thresholds: 824
+# extracted thresholds: 828
 Smallest extracted threshold: -2570.8670112470763
 Largest extracted threshold: 4060.2442988560615
 
 Investigating lambda[j=3][5]...
-# extracted thresholds: 564
+# extracted thresholds: 569
 Smallest extracted threshold: -250.16004309809645
 Largest extracted threshold: 178.76444754017461
 
-Processing merged stats file; extracting SS for 2448 candidates of interest.
-(*_all: 8317)
+Processing merged stats file; extracting SS for 2302 candidates of interest.
+(*_all: 7879)
 *** Changing lambda[j=3][4] from -0.3992 (BLEU: 0.5662) to -1.0766 (BLEU: 0.5695) ***
 *** Old lambda[j=3]: {10.664264997893394, -0.8739358729264859, 10.793298043281524, -0.399205792984231, -3.8694784413312346} ***
 *** New lambda[j=3]: {10.664264997893394, -0.8739358729264859, 10.793298043281524, -1.0765863941174987, -3.8694784413312346} ***
 
 Investigating lambda[j=3][1]...
-# extracted thresholds: 695
-Smallest extracted threshold: -651.8154171034984
+# extracted thresholds: 534
+Smallest extracted threshold: 0.10039994362601987
 Largest extracted threshold: 826.0380205586301
 
 Investigating lambda[j=3][2]...
-# extracted thresholds: 810
+# extracted thresholds: 814
 Smallest extracted threshold: -507.8364501076097
 Largest extracted threshold: 1710.5463883044101
 
 Investigating lambda[j=3][3]...
-# extracted thresholds: 623
+# extracted thresholds: 628
 Smallest extracted threshold: -4128.3931612073175
 Largest extracted threshold: 2601.6213612545357
 
@@ -1546,8 +1546,8 @@ Investigating lambda[j=3][5]...
 Smallest extracted threshold: -235.29825027784037
 Largest extracted threshold: 180.089622003541
 
-Processing merged stats file; extracting SS for 2230 candidates of interest.
-(*_all: 8343)
+Processing merged stats file; extracting SS for 2116 candidates of interest.
+(*_all: 7909)
 *** Changing lambda[j=3][1] from 10.6643 (BLEU: 0.5695) to 9.8668 (BLEU: 0.5706) ***
 *** Old lambda[j=3]: {10.664264997893394, -0.8739358729264859, 10.793298043281524, -1.0765863941174987, -3.8694784413312346} ***
 *** New lambda[j=3]: {9.866791781217113, -0.8739358729264859, 10.793298043281524, -1.0765863941174987, -3.8694784413312346} ***
@@ -1555,397 +1555,425 @@ Processing merged stats file; extracting SS for 2230 candidates of interest.
 Keeping thresholds for lambda[j=3][1] from previous step.
 
 Investigating lambda[j=3][2]...
-# extracted thresholds: 837
+# extracted thresholds: 840
 Smallest extracted threshold: -418.2582086137136
 Largest extracted threshold: 1653.3276850078862
 
 Investigating lambda[j=3][3]...
-# extracted thresholds: 618
+# extracted thresholds: 625
 Smallest extracted threshold: -3521.9717422974286
 Largest extracted threshold: 2410.5902770779776
 
 Investigating lambda[j=3][4]...
-# extracted thresholds: 817
+# extracted thresholds: 825
 Smallest extracted threshold: -2677.994246687237
 Largest extracted threshold: 4049.2391684659347
 
 Investigating lambda[j=3][5]...
-# extracted thresholds: 563
+# extracted thresholds: 566
 Smallest extracted threshold: -225.1185230419261
 Largest extracted threshold: 170.00846058169543
 
 Processing merged stats file; extracting SS for 2375 candidates of interest.
-(*_all: 8373)
+(*_all: 7942)
 *** Not changing any weight in lambda[j=3] ***
 *** lambda[j=3]: {9.866791781217113, -0.8739358729264859, 10.793298043281524, -1.0765863941174987, -3.8694784413312346} ***
 
-Final lambda[j=3]: {9.866791781217113, -0.8739358729264859, 10.793298043281524, -1.0765863941174987, -3.8694784413312346}
+Final lambda[j=3]: {0.9999999999999999, -0.08857345855723348, 1.0939014709754138, -0.10911210229113569, -0.3921718961068333}
 (Final BLEU[j=3]: 0.5705811948113758)
 
-+++ Optimization of lambda[j=4] starting @ Thu Apr 16 09:55:00 EDT 2009 +++
++++ Optimization of lambda[j=4] starting @ Thu Apr 16 11:02:38 EDT 2009 +++
 Initial lambda[j=4]: {1.2972965063840105, -0.2974935383022126, 0.3275255626321376, -0.21052430917292875, -0.0454218308093175}
-(Initial BLEU[j=4]: 0.526428997453946)
+(Initial BLEU[j=4]: 0.5265562118816122)
 
 Investigating lambda[j=4][1]...
-# extracted thresholds: 645
-Smallest extracted threshold: -102.9185416967193
+# extracted thresholds: 458
+Smallest extracted threshold: 0.10087012284144545
 Largest extracted threshold: 245.2623373306096
 
 Investigating lambda[j=4][2]...
-# extracted thresholds: 794
+# extracted thresholds: 797
 Smallest extracted threshold: -116.93052675209042
 Largest extracted threshold: 387.89141063090005
 
 Investigating lambda[j=4][3]...
-# extracted thresholds: 613
+# extracted thresholds: 616
 Smallest extracted threshold: -387.61365457457407
 Largest extracted threshold: 326.8893827187881
 
 Investigating lambda[j=4][4]...
-# extracted thresholds: 755
+# extracted thresholds: 751
 Smallest extracted threshold: -40.93082361654326
 Largest extracted threshold: 913.3989923874052
 
 Investigating lambda[j=4][5]...
-# extracted thresholds: 538
+# extracted thresholds: 540
 Smallest extracted threshold: -23.183702449704597
 Largest extracted threshold: 31.24577211046169
 
-Processing merged stats file; extracting SS for 2336 candidates of interest.
-(*_all: 8425)
-*** Changing lambda[j=4][3] from 0.3275 (BLEU: 0.5264) to 1.9478 (BLEU: 0.5600) ***
+Processing merged stats file; extracting SS for 2198 candidates of interest.
+(*_all: 7988)
+*** Changing lambda[j=4][3] from 0.3275 (BLEU: 0.5266) to 1.4980 (BLEU: 0.5590) ***
 *** Old lambda[j=4]: {1.2972965063840105, -0.2974935383022126, 0.3275255626321376, -0.21052430917292875, -0.0454218308093175} ***
-*** New lambda[j=4]: {1.2972965063840105, -0.2974935383022126, 1.9477917098166095, -0.21052430917292875, -0.0454218308093175} ***
+*** New lambda[j=4]: {1.2972965063840105, -0.2974935383022126, 1.4980302098573302, -0.21052430917292875, -0.0454218308093175} ***
 
 Investigating lambda[j=4][1]...
-# extracted thresholds: 701
-Smallest extracted threshold: -114.53105215297374
-Largest extracted threshold: 157.20724960583064
-
-Investigating lambda[j=4][2]...
-# extracted thresholds: 782
-Smallest extracted threshold: -46.695854728815604
-Largest extracted threshold: 231.43323621680858
-
-Keeping thresholds for lambda[j=4][3] from previous step.
-
-Investigating lambda[j=4][4]...
-# extracted thresholds: 795
-Smallest extracted threshold: -547.9275764228912
-Largest extracted threshold: 763.6824251965493
-
-Investigating lambda[j=4][5]...
-# extracted thresholds: 563
-Smallest extracted threshold: -36.75069213427803
-Largest extracted threshold: 24.92383830022946
-
-Processing merged stats file; extracting SS for 2281 candidates of interest.
-(*_all: 8561)
-*** Changing lambda[j=4][1] from 1.2973 (BLEU: 0.5600) to 1.6643 (BLEU: 0.5691) ***
-*** Old lambda[j=4]: {1.2972965063840105, -0.2974935383022126, 1.9477917098166095, -0.21052430917292875, -0.0454218308093175} ***
-*** New lambda[j=4]: {1.6642751199228858, -0.2974935383022126, 1.9477917098166095, -0.21052430917292875, -0.0454218308093175} ***
-
-Keeping thresholds for lambda[j=4][1] from previous step.
+# extracted thresholds: 515
+Smallest extracted threshold: 0.1014754225354181
+Largest extracted threshold: 137.5095316688382
 
 Investigating lambda[j=4][2]...
 # extracted thresholds: 816
-Smallest extracted threshold: -76.21716567474049
-Largest extracted threshold: 257.76395173822283
-
-Investigating lambda[j=4][3]...
-# extracted thresholds: 608
-Smallest extracted threshold: -666.6746774128542
-Largest extracted threshold: 420.3117777139149
-
-Investigating lambda[j=4][4]...
-# extracted thresholds: 805
-Smallest extracted threshold: -498.6301160041649
-Largest extracted threshold: 768.7467300633833
-
-Investigating lambda[j=4][5]...
-# extracted thresholds: 561
-Smallest extracted threshold: -41.43516568037329
-Largest extracted threshold: 29.562954152758834
-
-Processing merged stats file; extracting SS for 2336 candidates of interest.
-(*_all: 8576)
-*** Changing lambda[j=4][3] from 1.9478 (BLEU: 0.5691) to 2.0850 (BLEU: 0.5692) ***
-*** Old lambda[j=4]: {1.6642751199228858, -0.2974935383022126, 1.9477917098166095, -0.21052430917292875, -0.0454218308093175} ***
-*** New lambda[j=4]: {1.6642751199228858, -0.2974935383022126, 2.0849994167048598, -0.21052430917292875, -0.0454218308093175} ***
-
-Investigating lambda[j=4][1]...
-# extracted thresholds: 707
-Smallest extracted threshold: -127.69613162889925
-Largest extracted threshold: 163.21638713607925
-
-Investigating lambda[j=4][2]...
-# extracted thresholds: 809
-Smallest extracted threshold: -69.27871387640867
-Largest extracted threshold: 264.4099500406225
+Smallest extracted threshold: -57.73931760878873
+Largest extracted threshold: 209.64791356253113
 
 Keeping thresholds for lambda[j=4][3] from previous step.
 
 Investigating lambda[j=4][4]...
-# extracted thresholds: 817
-Smallest extracted threshold: -542.2164308923321
-Largest extracted threshold: 815.3424673226231
+# extracted thresholds: 801
+Smallest extracted threshold: -405.0533399358318
+Largest extracted threshold: 610.9434198103994
 
 Investigating lambda[j=4][5]...
-# extracted thresholds: 553
-Smallest extracted threshold: -42.785428620741285
-Largest extracted threshold: 30.086235959029207
+# extracted thresholds: 559
+Smallest extracted threshold: -32.32458299527788
+Largest extracted threshold: 23.208540993488203
 
-Processing merged stats file; extracting SS for 2334 candidates of interest.
-(*_all: 8585)
+Processing merged stats file; extracting SS for 2135 candidates of interest.
+(*_all: 8037)
+*** Changing lambda[j=4][2] from -0.2975 (BLEU: 0.5590) to -0.1613 (BLEU: 0.5694) ***
+*** Old lambda[j=4]: {1.2972965063840105, -0.2974935383022126, 1.4980302098573302, -0.21052430917292875, -0.0454218308093175} ***
+*** New lambda[j=4]: {1.2972965063840105, -0.16126049639314524, 1.4980302098573302, -0.21052430917292875, -0.0454218308093175} ***
+
+Investigating lambda[j=4][1]...
+# extracted thresholds: 505
+Smallest extracted threshold: 0.10140442716651349
+Largest extracted threshold: 120.91412295138453
+
+Keeping thresholds for lambda[j=4][2] from previous step.
+
+Investigating lambda[j=4][3]...
+# extracted thresholds: 620
+Smallest extracted threshold: -526.7465140900355
+Largest extracted threshold: 319.4337198797641
+
+Investigating lambda[j=4][4]...
+# extracted thresholds: 836
+Smallest extracted threshold: -359.1882158264408
+Largest extracted threshold: 572.3349757333751
+
+Investigating lambda[j=4][5]...
+# extracted thresholds: 560
+Smallest extracted threshold: -29.74117761529716
+Largest extracted threshold: 22.895361586800696
+
+Processing merged stats file; extracting SS for 1973 candidates of interest.
+(*_all: 8061)
+*** Changing lambda[j=4][5] from -0.0454 (BLEU: 0.5694) to -0.1302 (BLEU: 0.5696) ***
+*** Old lambda[j=4]: {1.2972965063840105, -0.16126049639314524, 1.4980302098573302, -0.21052430917292875, -0.0454218308093175} ***
+*** New lambda[j=4]: {1.2972965063840105, -0.16126049639314524, 1.4980302098573302, -0.21052430917292875, -0.1302399524857792} ***
+
+Investigating lambda[j=4][1]...
+# extracted thresholds: 511
+Smallest extracted threshold: 0.10108143098052702
+Largest extracted threshold: 122.41834637458545
+
+Investigating lambda[j=4][2]...
+# extracted thresholds: 815
+Smallest extracted threshold: -55.83383463388473
+Largest extracted threshold: 214.25459779608394
+
+Investigating lambda[j=4][3]...
+# extracted thresholds: 618
+Smallest extracted threshold: -489.91121553338553
+Largest extracted threshold: 319.4337198797641
+
+Investigating lambda[j=4][4]...
+# extracted thresholds: 828
+Smallest extracted threshold: -365.33752964798356
+Largest extracted threshold: 572.3349757333751
+
+Keeping thresholds for lambda[j=4][5] from previous step.
+
+Processing merged stats file; extracting SS for 2289 candidates of interest.
+(*_all: 8062)
 *** Not changing any weight in lambda[j=4] ***
-*** lambda[j=4]: {1.6642751199228858, -0.2974935383022126, 2.0849994167048598, -0.21052430917292875, -0.0454218308093175} ***
+*** lambda[j=4]: {1.2972965063840105, -0.16126049639314524, 1.4980302098573302, -0.21052430917292875, -0.1302399524857792} ***
 
-Final lambda[j=4]: {1.6642751199228858, -0.2974935383022126, 2.0849994167048598, -0.21052430917292875, -0.0454218308093175}
-(Final BLEU[j=4]: 0.5691792696897726)
+Final lambda[j=4]: {1.0, -0.12430504175381692, 1.1547323240951524, -0.16227925392301318, -0.10039335791383615}
+(Final BLEU[j=4]: 0.5696264502861639)
 
-+++ Optimization of lambda[j=5] starting @ Thu Apr 16 09:55:00 EDT 2009 +++
++++ Optimization of lambda[j=5] starting @ Thu Apr 16 11:02:38 EDT 2009 +++
 Initial lambda[j=5]: {0.5948565625062981, 0.03753776574773382, 0.00790321507749736, 0.03620028521108054, -2.47511438964637}
-(Initial BLEU[j=5]: 0.4478601771649867)
+(Initial BLEU[j=5]: 0.44656034517816)
 
 Investigating lambda[j=5][1]...
-# extracted thresholds: 652
-Smallest extracted threshold: -89.22620898658829
+# extracted thresholds: 476
+Smallest extracted threshold: 0.10338666220200711
 Largest extracted threshold: 151.79782206613166
 
 Investigating lambda[j=5][2]...
-# extracted thresholds: 802
+# extracted thresholds: 803
 Smallest extracted threshold: -53.17134385575666
 Largest extracted threshold: 170.35065185209993
 
 Investigating lambda[j=5][3]...
-# extracted thresholds: 655
-Smallest extracted threshold: -69.6562858971337
+# extracted thresholds: 658
+Smallest extracted threshold: -80.49910047416633
 Largest extracted threshold: 195.1286375325032
 
 Investigating lambda[j=5][4]...
-# extracted thresholds: 786
+# extracted thresholds: 792
 Smallest extracted threshold: -89.40960187388704
 Largest extracted threshold: 295.4058723753183
 
 Investigating lambda[j=5][5]...
-# extracted thresholds: 550
+# extracted thresholds: 555
 Smallest extracted threshold: -9.173901679081121
 Largest extracted threshold: 12.13661917880545
 
-Processing merged stats file; extracting SS for 2500 candidates of interest.
-(*_all: 8913)
-*** Changing lambda[j=5][4] from 0.0362 (BLEU: 0.4479) to 0.4610 (BLEU: 0.5498) ***
+Processing merged stats file; extracting SS for 2378 candidates of interest.
+(*_all: 8390)
+*** Changing lambda[j=5][4] from 0.0362 (BLEU: 0.4466) to 0.4610 (BLEU: 0.5510) ***
 *** Old lambda[j=5]: {0.5948565625062981, 0.03753776574773382, 0.00790321507749736, 0.03620028521108054, -2.47511438964637} ***
 *** New lambda[j=5]: {0.5948565625062981, 0.03753776574773382, 0.00790321507749736, 0.46103406954148074, -2.47511438964637} ***
 
 Investigating lambda[j=5][1]...
-# extracted thresholds: 669
-Smallest extracted threshold: -53.56508751401471
+# extracted thresholds: 398
+Smallest extracted threshold: 0.10222693348090997
 Largest extracted threshold: 97.48995417958773
 
 Investigating lambda[j=5][2]...
-# extracted thresholds: 789
+# extracted thresholds: 795
 Smallest extracted threshold: -35.36050917139853
 Largest extracted threshold: 111.27053597963987
 
 Investigating lambda[j=5][3]...
-# extracted thresholds: 639
+# extracted thresholds: 643
 Smallest extracted threshold: -85.9091169756968
 Largest extracted threshold: 202.54391813172512
 
 Keeping thresholds for lambda[j=5][4] from previous step.
 
 Investigating lambda[j=5][5]...
-# extracted thresholds: 550
+# extracted thresholds: 549
 Smallest extracted threshold: -17.267224544758
 Largest extracted threshold: 8.258297857337611
 
-Processing merged stats file; extracting SS for 2319 candidates of interest.
-(*_all: 9133)
-*** Changing lambda[j=5][3] from 0.0079 (BLEU: 0.5498) to 0.0486 (BLEU: 0.5517) ***
+Processing merged stats file; extracting SS for 2116 candidates of interest.
+(*_all: 8587)
+*** Changing lambda[j=5][3] from 0.0079 (BLEU: 0.5510) to 0.0486 (BLEU: 0.5528) ***
 *** Old lambda[j=5]: {0.5948565625062981, 0.03753776574773382, 0.00790321507749736, 0.46103406954148074, -2.47511438964637} ***
 *** New lambda[j=5]: {0.5948565625062981, 0.03753776574773382, 0.04864808383604592, 0.46103406954148074, -2.47511438964637} ***
 
 Investigating lambda[j=5][1]...
-# extracted thresholds: 664
-Smallest extracted threshold: -54.051762335297234
+# extracted thresholds: 401
+Smallest extracted threshold: 0.10494663397561997
 Largest extracted threshold: 100.04329928845632
 
 Investigating lambda[j=5][2]...
-# extracted thresholds: 805
+# extracted thresholds: 809
 Smallest extracted threshold: -33.30008330814289
 Largest extracted threshold: 101.3811742623873
 
 Keeping thresholds for lambda[j=5][3] from previous step.
 
 Investigating lambda[j=5][4]...
-# extracted thresholds: 785
+# extracted thresholds: 786
 Smallest extracted threshold: -102.35288851618867
 Largest extracted threshold: 268.3186836246294
 
 Investigating lambda[j=5][5]...
-# extracted thresholds: 555
+# extracted thresholds: 554
 Smallest extracted threshold: -17.47537308852247
 Largest extracted threshold: 7.391765279822836
 
-Processing merged stats file; extracting SS for 2259 candidates of interest.
-(*_all: 9158)
-*** Changing lambda[j=5][4] from 0.4610 (BLEU: 0.5517) to 0.5002 (BLEU: 0.5533) ***
+Processing merged stats file; extracting SS for 2061 candidates of interest.
+(*_all: 8614)
+*** Changing lambda[j=5][5] from -2.4751 (BLEU: 0.5528) to -2.3994 (BLEU: 0.5542) ***
 *** Old lambda[j=5]: {0.5948565625062981, 0.03753776574773382, 0.04864808383604592, 0.46103406954148074, -2.47511438964637} ***
-*** New lambda[j=5]: {0.5948565625062981, 0.03753776574773382, 0.04864808383604592, 0.5002022290160296, -2.47511438964637} ***
+*** New lambda[j=5]: {0.5948565625062981, 0.03753776574773382, 0.04864808383604592, 0.46103406954148074, -2.3994268260739546} ***
 
 Investigating lambda[j=5][1]...
-# extracted thresholds: 669
-Smallest extracted threshold: -58.36025987749748
-Largest extracted threshold: 107.62886617336072
+# extracted thresholds: 399
+Smallest extracted threshold: 0.10494663397561997
+Largest extracted threshold: 100.04329928845632
 
 Investigating lambda[j=5][2]...
-# extracted thresholds: 796
-Smallest extracted threshold: -35.38545014361551
-Largest extracted threshold: 104.97904948269183
+# extracted thresholds: 799
+Smallest extracted threshold: -35.00044357253692
+Largest extracted threshold: 106.0792094584176
 
 Investigating lambda[j=5][3]...
-# extracted thresholds: 650
-Smallest extracted threshold: -98.44852345890274
-Largest extracted threshold: 203.22758055164476
+# extracted thresholds: 659
+Smallest extracted threshold: -90.60174591718504
+Largest extracted threshold: 199.55769971441325
 
-Keeping thresholds for lambda[j=5][4] from previous step.
+Investigating lambda[j=5][4]...
+# extracted thresholds: 793
+Smallest extracted threshold: -96.86554015718929
+Largest extracted threshold: 274.8883641427156
 
-Investigating lambda[j=5][5]...
-# extracted thresholds: 553
-Smallest extracted threshold: -18.33472611736272
-Largest extracted threshold: 7.234348039444757
+Keeping thresholds for lambda[j=5][5] from previous step.
 
-Processing merged stats file; extracting SS for 2324 candidates of interest.
-(*_all: 9185)
-*** Changing lambda[j=5][3] from 0.0486 (BLEU: 0.5533) to 0.1429 (BLEU: 0.5540) ***
-*** Old lambda[j=5]: {0.5948565625062981, 0.03753776574773382, 0.04864808383604592, 0.5002022290160296, -2.47511438964637} ***
-*** New lambda[j=5]: {0.5948565625062981, 0.03753776574773382, 0.14289841823620075, 0.5002022290160296, -2.47511438964637} ***
+Processing merged stats file; extracting SS for 2307 candidates of interest.
+(*_all: 8622)
+*** Changing lambda[j=5][3] from 0.0486 (BLEU: 0.5542) to 0.1586 (BLEU: 0.5551) ***
+*** Old lambda[j=5]: {0.5948565625062981, 0.03753776574773382, 0.04864808383604592, 0.46103406954148074, -2.3994268260739546} ***
+*** New lambda[j=5]: {0.5948565625062981, 0.03753776574773382, 0.15860492126638148, 0.46103406954148074, -2.3994268260739546} ***
 
 Investigating lambda[j=5][1]...
-# extracted thresholds: 698
-Smallest extracted threshold: -62.219095767291364
-Largest extracted threshold: 113.53522046243691
+# extracted thresholds: 435
+Smallest extracted threshold: 0.10254840642027259
+Largest extracted threshold: 106.93392776742418
 
 Investigating lambda[j=5][2]...
-# extracted thresholds: 823
-Smallest extracted threshold: -37.79556417056982
-Largest extracted threshold: 85.3360984680857
+# extracted thresholds: 824
+Smallest extracted threshold: -36.238889911195784
+Largest extracted threshold: 89.71446887840543
 
 Keeping thresholds for lambda[j=5][3] from previous step.
 
 Investigating lambda[j=5][4]...
-# extracted thresholds: 800
-Smallest extracted threshold: -132.29307807730441
-Largest extracted threshold: 205.6610613153947
+# extracted thresholds: 816
+Smallest extracted threshold: -131.79516218088924
+Largest extracted threshold: 201.7890586190152
 
 Investigating lambda[j=5][5]...
-# extracted thresholds: 572
-Smallest extracted threshold: -19.262244961194607
-Largest extracted threshold: 6.999942184909471
+# extracted thresholds: 574
+Smallest extracted threshold: -18.557459845815
+Largest extracted threshold: 7.136469063621904
 
-Processing merged stats file; extracting SS for 2347 candidates of interest.
-(*_all: 9239)
-*** Changing lambda[j=5][5] from -2.4751 (BLEU: 0.5540) to -2.3901 (BLEU: 0.5560) ***
-*** Old lambda[j=5]: {0.5948565625062981, 0.03753776574773382, 0.14289841823620075, 0.5002022290160296, -2.47511438964637} ***
-*** New lambda[j=5]: {0.5948565625062981, 0.03753776574773382, 0.14289841823620075, 0.5002022290160296, -2.390061628160896} ***
+Processing merged stats file; extracting SS for 2151 candidates of interest.
+(*_all: 8690)
+*** Changing lambda[j=5][5] from -2.3994 (BLEU: 0.5551) to -2.2613 (BLEU: 0.5572) ***
+*** Old lambda[j=5]: {0.5948565625062981, 0.03753776574773382, 0.15860492126638148, 0.46103406954148074, -2.3994268260739546} ***
+*** New lambda[j=5]: {0.5948565625062981, 0.03753776574773382, 0.15860492126638148, 0.46103406954148074, -2.2613264769068278} ***
 
 Investigating lambda[j=5][1]...
-# extracted thresholds: 700
-Smallest extracted threshold: -64.06474069152594
-Largest extracted threshold: 113.53522046243691
+# extracted thresholds: 440
+Smallest extracted threshold: 0.10254840642027259
+Largest extracted threshold: 106.93392776742418
 
 Investigating lambda[j=5][2]...
-# extracted thresholds: 829
-Smallest extracted threshold: -36.31904823118213
-Largest extracted threshold: 87.38249329977506
+# extracted thresholds: 831
+Smallest extracted threshold: -33.84146784965446
+Largest extracted threshold: 87.96320016113012
 
 Investigating lambda[j=5][3]...
-# extracted thresholds: 652
-Smallest extracted threshold: -108.01991235443403
-Largest extracted threshold: 199.87186250758128
+# extracted thresholds: 657
+Smallest extracted threshold: -112.70139232913209
+Largest extracted threshold: 194.10901321090984
 
 Investigating lambda[j=5][4]...
-# extracted thresholds: 815
-Smallest extracted threshold: -126.12675286960828
-Largest extracted threshold: 213.0436410123342
+# extracted thresholds: 820
+Smallest extracted threshold: -121.78288686627319
+Largest extracted threshold: 213.77616892672353
 
 Keeping thresholds for lambda[j=5][5] from previous step.
 
-Processing merged stats file; extracting SS for 2573 candidates of interest.
-(*_all: 9250)
-*** Changing lambda[j=5][1] from 0.5949 (BLEU: 0.5560) to 0.6084 (BLEU: 0.5564) ***
-*** Old lambda[j=5]: {0.5948565625062981, 0.03753776574773382, 0.14289841823620075, 0.5002022290160296, -2.390061628160896} ***
-*** New lambda[j=5]: {0.6084359392501362, 0.03753776574773382, 0.14289841823620075, 0.5002022290160296, -2.390061628160896} ***
+Processing merged stats file; extracting SS for 2378 candidates of interest.
+(*_all: 8704)
+*** Changing lambda[j=5][4] from 0.4610 (BLEU: 0.5572) to 0.4194 (BLEU: 0.5587) ***
+*** Old lambda[j=5]: {0.5948565625062981, 0.03753776574773382, 0.15860492126638148, 0.46103406954148074, -2.2613264769068278} ***
+*** New lambda[j=5]: {0.5948565625062981, 0.03753776574773382, 0.15860492126638148, 0.41937310675786715, -2.2613264769068278} ***
+
+Investigating lambda[j=5][1]...
+# extracted thresholds: 431
+Smallest extracted threshold: 0.10093407183036407
+Largest extracted threshold: 98.86558797499796
+
+Investigating lambda[j=5][2]...
+# extracted thresholds: 823
+Smallest extracted threshold: -32.6049704742367
+Largest extracted threshold: 90.43412238350749
+
+Investigating lambda[j=5][3]...
+# extracted thresholds: 652
+Smallest extracted threshold: -85.82650790868027
+Largest extracted threshold: 193.38184004232346
+
+Keeping thresholds for lambda[j=5][4] from previous step.
+
+Investigating lambda[j=5][5]...
+# extracted thresholds: 571
+Smallest extracted threshold: -17.64341448262242
+Largest extracted threshold: 7.217971314952608
+
+Processing merged stats file; extracting SS for 2184 candidates of interest.
+(*_all: 8709)
+*** Changing lambda[j=5][1] from 0.5949 (BLEU: 0.5587) to 0.5981 (BLEU: 0.5587) ***
+*** Old lambda[j=5]: {0.5948565625062981, 0.03753776574773382, 0.15860492126638148, 0.41937310675786715, -2.2613264769068278} ***
+*** New lambda[j=5]: {0.5980943090584521, 0.03753776574773382, 0.15860492126638148, 0.41937310675786715, -2.2613264769068278} ***
 
 Keeping thresholds for lambda[j=5][1] from previous step.
 
 Investigating lambda[j=5][2]...
-# extracted thresholds: 828
-Smallest extracted threshold: -35.67104037296634
-Largest extracted threshold: 92.50676810961009
+# extracted thresholds: 825
+Smallest extracted threshold: -32.45046520876784
+Largest extracted threshold: 90.66643069862471
 
 Investigating lambda[j=5][3]...
-# extracted thresholds: 655
-Smallest extracted threshold: -118.34993823457401
-Largest extracted threshold: 201.99641772359462
+# extracted thresholds: 653
+Smallest extracted threshold: -86.28094876403723
+Largest extracted threshold: 193.88840020743746
 
 Investigating lambda[j=5][4]...
-# extracted thresholds: 809
-Smallest extracted threshold: -124.30258992702058
-Largest extracted threshold: 224.83597177668597
-
-Investigating lambda[j=5][5]...
-# extracted thresholds: 573
-Smallest extracted threshold: -19.43558539244083
-Largest extracted threshold: 7.171604237126407
-
-Processing merged stats file; extracting SS for 2406 candidates of interest.
-(*_all: 9256)
-*** Changing lambda[j=5][2] from 0.0375 (BLEU: 0.5564) to 0.0165 (BLEU: 0.5579) ***
-*** Old lambda[j=5]: {0.6084359392501362, 0.03753776574773382, 0.14289841823620075, 0.5002022290160296, -2.390061628160896} ***
-*** New lambda[j=5]: {0.6084359392501362, 0.016512452694389574, 0.14289841823620075, 0.5002022290160296, -2.390061628160896} ***
-
-Investigating lambda[j=5][1]...
-# extracted thresholds: 695
-Smallest extracted threshold: -61.94854293270717
-Largest extracted threshold: 109.21802284881703
-
-Keeping thresholds for lambda[j=5][2] from previous step.
-
-Investigating lambda[j=5][3]...
-# extracted thresholds: 656
-Smallest extracted threshold: -100.99167566428682
-Largest extracted threshold: 199.88241806568547
-
-Investigating lambda[j=5][4]...
-# extracted thresholds: 797
-Smallest extracted threshold: -131.3811119883122
-Largest extracted threshold: 225.4372957300121
+# extracted thresholds: 816
+Smallest extracted threshold: -121.34794957943517
+Largest extracted threshold: 216.58782803261306
 
 Investigating lambda[j=5][5]...
 # extracted thresholds: 570
-Smallest extracted threshold: -19.834291213705892
-Largest extracted threshold: 7.219938290122598
+Smallest extracted threshold: -17.68474424275824
+Largest extracted threshold: 7.258900897229147
 
-Processing merged stats file; extracting SS for 2200 candidates of interest.
-(*_all: 9258)
+Processing merged stats file; extracting SS for 2406 candidates of interest.
+(*_all: 8709)
+*** Changing lambda[j=5][4] from 0.4194 (BLEU: 0.5587) to 0.4179 (BLEU: 0.5590) ***
+*** Old lambda[j=5]: {0.5980943090584521, 0.03753776574773382, 0.15860492126638148, 0.41937310675786715, -2.2613264769068278} ***
+*** New lambda[j=5]: {0.5980943090584521, 0.03753776574773382, 0.15860492126638148, 0.4179016131088109, -2.2613264769068278} ***
+
+Investigating lambda[j=5][1]...
+# extracted thresholds: 429
+Smallest extracted threshold: 0.10071927377394944
+Largest extracted threshold: 98.5806087049637
+
+Investigating lambda[j=5][2]...
+# extracted thresholds: 824
+Smallest extracted threshold: -32.406791277264084
+Largest extracted threshold: 90.95677478925415
+
+Investigating lambda[j=5][3]...
+# extracted thresholds: 652
+Smallest extracted threshold: -85.80986058295993
+Largest extracted threshold: 193.8627159546542
+
+Keeping thresholds for lambda[j=5][4] from previous step.
+
+Investigating lambda[j=5][5]...
+# extracted thresholds: 572
+Smallest extracted threshold: -17.652459536476393
+Largest extracted threshold: 7.2617796123908604
+
+Processing merged stats file; extracting SS for 2182 candidates of interest.
+(*_all: 8709)
 *** Not changing any weight in lambda[j=5] ***
-*** lambda[j=5]: {0.6084359392501362, 0.016512452694389574, 0.14289841823620075, 0.5002022290160296, -2.390061628160896} ***
+*** lambda[j=5]: {0.5980943090584521, 0.03753776574773382, 0.15860492126638148, 0.4179016131088109, -2.2613264769068278} ***
 
-Final lambda[j=5]: {0.6084359392501362, 0.016512452694389574, 0.14289841823620075, 0.5002022290160296, -2.390061628160896}
-(Final BLEU[j=5]: 0.5578930650341198)
+Final lambda[j=5]: {1.0, 0.06276228544429309, 0.2651837993845231, 0.6987219352859102, -3.7808861289229005}
+(Final BLEU[j=5]: 0.5590024334580942)
 
 Best final lambda is lambda[j=2] (BLEU: 0.5709).
 
----  Z-MERT iteration #2 ending @ Thu Apr 16 09:55:01 EDT 2009  ---
+---  Z-MERT iteration #2 ending @ Thu Apr 16 11:02:39 EDT 2009  ---
 
 Maximum number of MERT iterations reached; exiting Z-MERT.
 
 
 ----------------------------------------------------
-Z-MERT run ended @ Thu Apr 16 09:55:01 EDT 2009
+Z-MERT run ended @ Thu Apr 16 11:02:39 EDT 2009
 ----------------------------------------------------
 
-FINAL lambda: {1.5038466770351047, -0.004553671263154424, 1.1484294713357572, -0.007186155459433035, -1.236557087720195} (BLEU: 0.570867406150827)
+FINAL lambda: {1.0, -0.0030280156432783254, 0.7636612753634786, -0.004778516034361186, -0.8222627390167979} (BLEU: 0.570867406150827)
 
