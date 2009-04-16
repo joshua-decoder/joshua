@@ -73,7 +73,6 @@ public class MemoryBasedTrie implements Trie {
 	//recursive call, to make sure all rules are sorted
 	public void ensure_sorted(ArrayList<FeatureFunction> l_models) {
 		if (null != this.rule_bin) {
-//			this.rule_bin.getSortedRules(l_models);
 			this.rule_bin.sortRules(l_models);
 		}
 		if (null != this.tbl_children) {

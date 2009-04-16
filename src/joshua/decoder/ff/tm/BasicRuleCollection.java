@@ -75,34 +75,28 @@ public class BasicRuleCollection implements RuleCollection {
 		return this.arity;
 	}
 	
-	public void sortRules(ArrayList<FeatureFunction> l_models) {
-		if (!sorted && l_models!=null) {
-
-			// use a priority queue to help sort
-			PriorityQueue<Rule> t_heapRules = new PriorityQueue<Rule>(1, Rule.NegtiveCostComparator);
-			for (Rule rule : rules) {
-				if (null != l_models) {
-					rule.estimateRuleCost(l_models);
-				}
-				t_heapRules.add(rule);
+	public void sortRules(ArrayList<FeatureFunction> l_models) {	
+		// use a priority queue to help sort
+		PriorityQueue<Rule> t_heapRules = new PriorityQueue<Rule>(1, Rule.NegtiveCostComparator);
+		for (Rule rule : rules) {
+			if (null != l_models) {
+				rule.estimateRuleCost(l_models);
 			}
-			
-			// rearange the sortedRules based on t_heapRules
-			rules.clear();
-			while (t_heapRules.size() > 0) {
-				Rule t_r = (Rule) t_heapRules.poll();
-				rules.add(0, t_r);
-			}
+			t_heapRules.add(rule);
 		}
 		
+		// rearange the sortedRules based on t_heapRules
+		rules.clear();
+		while (t_heapRules.size() > 0) {
+			Rule t_r = (Rule) t_heapRules.poll();
+			rules.add(0, t_r);
+		}		
 		this.sorted = true;
 	}
 	
-	public List<Rule> getSortedRules() {
-		
+	public List<Rule> getSortedRules() {		
 		if (!this.sorted) {
-			logger.warning("Sorting rules without using feature function values.");
-			sortRules(null);
+			logger.severe("Grammar has not been sorted which is reqired by Cube pruning, make sure you call sortGrammar after loading the grammar");			
 		}
 		
 		return this.rules;
