@@ -30,8 +30,11 @@ public class AlignCandidates {
   private static Suffixes srcSA, tgtSA;
   private static Alignments alignments;
 
+  private static HashMap<String,TreeSet<Integer>> alreadyResolved_srcSet;
+  private static HashMap<String,TreeSet<Integer>> alreadyResolved_tgtSet;
+
   
-public static void main(String[] args) throws IOException {
+  public static void main(String[] args) throws IOException {
 
 /*
     testDerivationTree("(S{0-12} (S{0-11} (S{0-8} (X{0-8} (X{0-3} official (X{1-2} forecasts) are) based on (X{4-7} (X{4-5} only) 3 per cent))) (X{8-11} reported (X{8-9} ,) (X{10-11} bloomberg))) (X{11-12} .))");
@@ -53,6 +56,7 @@ public static void main(String[] args) throws IOException {
     String trainSrc_fileName = (inFile_params.readLine().split("\\s+"))[0]; // src side of training corpus
     String trainTgt_fileName = (inFile_params.readLine().split("\\s+"))[0]; // tgt side of training corpus
     String trainAlign_fileName = (inFile_params.readLine().split("\\s+"))[0]; // src-tgt of training corpus
+    String alignCache_fileName = (inFile_params.readLine().split("\\s+"))[0];
 
     String alignmentsType = "AlignmentGrids"; // if (args.length >= 4) alignmentsType = args[3];
     int maxCacheSize = 1000; // if (args.length >= 5) maxCacheSize = Integer.parseInt(args[4]);
@@ -86,7 +90,7 @@ public static void main(String[] args) throws IOException {
 
     String[] ASR = new String[numSentences];
     ParseTree[] PT = new ParseTree[numSentences];
-    
+
     @SuppressWarnings("unchecked")
     Vector<TreeSet<Integer>>[] ranges = new Vector[numSentences];
 
@@ -105,8 +109,8 @@ public static void main(String[] args) throws IOException {
         println("  toVTree: " + PT[i].toVerboseTree());
         println("  toSen: " + PT[i].toSentence());
         println("  # words: " + PT[i].numWords);
-        println("  # nodes: " + PT[i].numNodes());
-        println("  # ranges: " + PT[i].numRanges());
+        println("  # nodes (i.e. non-terminals): " + PT[i].numNodes());
+        println("  # distinct ranges: " + PT[i].numDistinctRanges());
         println("  ranges_str: " + PT[i].ranges_str());
         ranges[i] = PT[i].ranges();
 println("  # ranges (via ranges[]): " + ranges[i].size());
@@ -121,6 +125,7 @@ println("  # ranges (via ranges[]): " + ranges[i].size());
 
 
     // Source language vocabulary
+    println("Creating src vocabulary @ " + (new Date()));
     srcVocab = new Vocabulary();
     int[] sourceWordsSentences = Vocabulary.initializeVocabulary(trainSrc_fileName, srcVocab, true);
 
@@ -128,13 +133,16 @@ println("  # ranges (via ranges[]): " + ranges[i].size());
     int numSourceSentences = sourceWordsSentences[1];
 
     // Source language corpus array
+    println("Reading src corpus @ " + (new Date()));
     srcCorpusArray = SuffixArrayFactory.createCorpusArray(trainSrc_fileName, srcVocab, numSourceWords, numSourceSentences);
 
     // Source language suffix array
+    println("Creating src SA @ " + (new Date()));
     srcSA = SuffixArrayFactory.createSuffixArray(srcCorpusArray, maxCacheSize);
 
 
     // Target language vocabulary
+    println("Creating tgt vocabulary @ " + (new Date()));
     tgtVocab = new Vocabulary();
     int[] targetWordsSentences = Vocabulary.initializeVocabulary(trainTgt_fileName, tgtVocab, true);
 
@@ -142,9 +150,11 @@ println("  # ranges (via ranges[]): " + ranges[i].size());
     int numTargetSentences = targetWordsSentences[1];
 
     // Target language corpus array
+    println("Reading tgt corpus @ " + (new Date()));
     tgtCorpusArray = SuffixArrayFactory.createCorpusArray(trainTgt_fileName, tgtVocab, numTargetWords, numTargetSentences);
 
     // Target language suffix array
+    println("Creating tgt SA @ " + (new Date()));
     tgtSA = SuffixArrayFactory.createSuffixArray(tgtCorpusArray, maxCacheSize);
 
 
@@ -155,6 +165,7 @@ println("  # ranges (via ranges[]): " + ranges[i].size());
 
 
     // Alignment data
+    println("Reading alignment data @ " + (new Date()));
     alignments = null;
     if ("AlignmentArray".equals(alignmentsType)) {
       alignments = SuffixArrayFactory.createAlignmentArray(trainAlign_fileName, srcSA, tgtSA);
@@ -166,6 +177,31 @@ println("  # ranges (via ranges[]): " + ranges[i].size());
 
 
 
+    if (!fileExists(alignCache_fileName)) {
+      alreadyResolved_srcSet = new HashMap<String,TreeSet<Integer>>();
+      alreadyResolved_tgtSet = new HashMap<String,TreeSet<Integer>>();
+    } else {
+      try {
+        ObjectInputStream in = new ObjectInputStream(new FileInputStream(alignCache_fileName));
+        alreadyResolved_srcSet = (HashMap<String,TreeSet<Integer>>)in.readObject();
+        alreadyResolved_tgtSet = (HashMap<String,TreeSet<Integer>>)in.readObject();
+        in.close();
+      } catch (FileNotFoundException e) {
+        System.err.println("FileNotFoundException in AlignCandidates.main(String[]): " + e.getMessage());
+        System.exit(99901);
+      } catch (IOException e) {
+        System.err.println("IOException in AlignCandidates.main(String[]): " + e.getMessage());
+        System.exit(99902);
+      } catch (ClassNotFoundException e) {
+        System.err.println("ClassNotFoundException in AlignCandidates.main(String[]): " + e.getMessage());
+        System.exit(99904);
+      }
+    }
+
+
+
+
+    println("Processing candidates @ " + (new Date()));
 
     PrintWriter outFile_alignSrcCand = new PrintWriter(alignSrcCand_fileName);
     PrintWriter outFile_alignCandRef_sen = new PrintWriter(alignCandRef_sen_fileName);
@@ -185,16 +221,21 @@ println("  # ranges (via ranges[]): " + ranges[i].size());
     int prev_i = -1;
     String srcSent = "";
     String[] srcWords = null;
+    int candsRead = 0;
+    int C50count = 0;
 
     while (line != null) {
-
+      ++candsRead;
+      println("Read candidate on line #" + candsRead);
       int i = toInt((line.substring(0,line.indexOf("|||"))).trim());
 
       if (i != prev_i) {
         srcSent = srcSentences[i];
         srcWords = srcSent.split("\\s+");
         prev_i = i;
-      }
+        println("New value for i: " + i + " seen @ " + (new Date()));
+        C50count = 0;
+      } else { ++C50count; }
 
       line = (line.substring(line.indexOf("|||")+3)).trim(); // get rid of initial text
 
@@ -220,13 +261,14 @@ println("  # ranges (via ranges[]): " + ranges[i].size());
       // allow many-to-many
       outFile_alignSrcCand.println(alignSrcCand);
 
-//println("*** i = " + i + " " + alignSrcCand);
+println("  i = " + i + ", alignSrcCand: " + alignSrcCand);
 
       // resolve many-to-many
 
       String alignSrcCand_res = "";
 
       String[] linksSrcCand = alignSrcCand.split("\\s+");
+
       for (int k = 0; k < linksSrcCand.length; ++k) {
         String link = linksSrcCand[k];
         if (link.indexOf(',') == -1) { // already one-to-one
@@ -237,9 +279,11 @@ println("  # ranges (via ranges[]): " + ranges[i].size());
       }
 
       alignSrcCand_res = alignSrcCand_res.trim();
+println("  i = " + i + ", alignSrcCand_res: " + alignSrcCand_res);
 
+      outFile_alignSrcCand.println(alignSrcCand_res);
 
-
+/*
       //////////////////////////////////
       // align candidate to reference //
       //////////////////////////////////
@@ -292,7 +336,7 @@ println("  # ranges (via ranges[]): " + ranges[i].size());
         if (R_orig.size() == 1) sizeOne = true;
 
         TreeSet<Integer> R = new TreeSet<Integer>(R_orig);
-        print("  R(" + R.first() + "_" + R.last() + ")");
+//        print("  R(" + R.first() + "_" + R.last() + ")");
 
         boolean satisfied = false;
         for (int k = 0; k < linksSrcCand.length; ++k) {
@@ -319,11 +363,11 @@ println("  # ranges (via ranges[]): " + ranges[i].size());
         }
 
         if (satisfied) {
-          println(" satisfied");
+//          println(" satisfied");
           ++countSatisfied;
           if (sizeOne) ++countSatisfied_sizeOne;
         } else {
-          println(" NOT satisfied");
+//          println(" NOT satisfied");
         }
 
         ++countAll;
@@ -335,22 +379,40 @@ println("  # ranges (via ranges[]): " + ranges[i].size());
 
 
 
+*/
+
+      if (C50count == 50) { println("50C @ " + (new Date())); C50count = 0; }
 
       line = candsFile.readLine();
-
     }
 
     outFile_alignSrcCand.close();
     outFile_alignCandRef_sen.close();
     candsFile.close();
 
+    println("Finished processing candidates @ " + (new Date()));
+/*
     println("Satisfied: " + countSatisfied + "/" + countAll);
     println("Satisfied_sizeOne: " + countSatisfied_sizeOne + "/" + countAll_sizeOne);
+*/
+
+
+
+    try {
+      ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(alignCache_fileName));
+      out.writeObject(alreadyResolved_srcSet);
+      out.writeObject(alreadyResolved_tgtSet);
+      out.flush();
+      out.close();
+    } catch (IOException e) {
+      System.err.println("IOException in AlignCandidates.main(String[]): " + e.getMessage());
+      System.exit(99902);
+    }
 
 
 
 
-    String ph_str = "in der";
+    String ph_str = "schuld an";
     BasicPhrase ph = new BasicPhrase(ph_str,srcVocab);
     int ph_size = ph.size();
 
@@ -359,7 +421,7 @@ println("  # ranges (via ranges[]): " + ranges[i].size());
 
     println("bounds: " + bounds[0] + " " + bounds[1]);
     println("ph_str \"" + ph_str + "\" found in " + pos.length + " positions:");
-
+/*
     for (int p = 1; p <= pos.length; ++p) {
       int start_i = pos[p-1];
       int final_i = start_i + ph_size - 1;
@@ -381,7 +443,7 @@ println("  # ranges (via ranges[]): " + ranges[i].size());
         }
       }
     }
-
+*/
 
 
   } // main
@@ -431,15 +493,28 @@ println("  # ranges (via ranges[]): " + ranges[i].size());
     println("");
   }
 
-  
-static private String resolve(String link, String[] srcWords, String[] tgtWords)
+  static private String resolve(String link, String[] srcWords, String[] tgtWords)
   {
+    println("    Resolving " + link);
     String SrcSide = link.substring(0,link.indexOf("--"));
-    String TgtSide = link.substring(link.indexOf("--")+2);
+    String CandSide = link.substring(link.indexOf("--")+2);
 
     String[] srcPhrases_str = indicesToPhrases(SrcSide, srcWords);
+    String[] tgtPhrases_str = indicesToPhrases(CandSide, tgtWords);
+
+    int[] origSrcIndices = toInt(SrcSide.split(","));
+    int[] origCandIndices = toInt(CandSide.split(","));
+
+    String cacheKey = "";
+//    for (int w = 0; w < origSrcIndices.length; ++w) cacheKey += " " + srcWords[origSrcIndices[w]];
+    for (int w = 0; w < srcPhrases_str.length; ++w) cacheKey += " " + srcPhrases_str[w];
+    cacheKey += "__";
+//    for (int w = 0; w < origCandIndices.length; ++w) cacheKey += tgtWords[origCandIndices[w]] + " ";
+    for (int w = 0; w < tgtPhrases_str.length; ++w) cacheKey += tgtPhrases_str[w] + " ";
+    cacheKey = cacheKey.trim();
+
+
     BasicPhrase[] srcPhrases = strToPhrase(srcPhrases_str,srcVocab);
-    String[] tgtPhrases_str = indicesToPhrases(TgtSide, tgtWords);
     BasicPhrase[] tgtPhrases = strToPhrase(tgtPhrases_str,tgtVocab);
 
     int[] srcPhrases_len = phraseLenghts(srcPhrases);
@@ -448,16 +523,33 @@ static private String resolve(String link, String[] srcWords, String[] tgtWords)
     int srcPhCount = srcPhrases.length;
     int tgtPhCount = tgtPhrases.length;
 
+    println("      srcPhCount: " + srcPhCount + ", tgtPhCount: " + tgtPhCount);
+
+    TreeSet<Integer> senIndices = null;
+    if (alreadyResolved_srcSet.containsKey(cacheKey)) {
+      println("      Using cached result (for " + cacheKey + ")");
+
+      TreeSet<Integer> srcIndices_allowed = alreadyResolved_srcSet.get(cacheKey);
+      TreeSet<Integer> tgtIndices_allowed = alreadyResolved_tgtSet.get(cacheKey);
+
+      return finalResolve(srcIndices_allowed,tgtIndices_allowed,origSrcIndices,origCandIndices);
+    }
+
+    print("      Extracting xxxPhPos...");
     // the keySet of srcPhPos[p] are sentence indices, with key_i mapped to a Vector of the positions
     // of matches of srcPhrases's p'th phrase in the key_i'th sentence
     TreeMap<Integer,Vector<Integer>>[] srcPhPos = getPosMaps(srcPhrases,srcSA);
     TreeMap<Integer,Vector<Integer>>[] tgtPhPos = getPosMaps(tgtPhrases,tgtSA);
+    println("done");
 
-    TreeSet<Integer> senIndices = new TreeSet<Integer>(srcPhPos[0].keySet());
+    print("      Intersecting sentence indices...");
+    senIndices = new TreeSet<Integer>(srcPhPos[0].keySet());
     for (int i = 1; i < srcPhCount; ++i) { senIndices = setIntersect(senIndices,new TreeSet<Integer>(srcPhPos[i].keySet())); }
     for (int i = 0; i < tgtPhCount; ++i) { senIndices = setIntersect(senIndices,new TreeSet<Integer>(tgtPhPos[i].keySet())); }
     // now, if sen_i is in senIndices, this means that the sen_i'th sentence pair
     // contains all the relevant phrases, on both sides
+    println("done; intersection has " + senIndices.size() + " indices.");
+
 
     boolean found = false;
 
@@ -507,7 +599,7 @@ static private String resolve(String link, String[] srcWords, String[] tgtWords)
             }
           }
 
-          if (ordered) { // still ordered; now, finally, check alignments
+          if (ordered) { // still ordered; now, finally, check if alignment is consistent
 
             // what do we have here? we know that the sen_i'th training sentence has all the
             // phrases we we want (on both source and target side) and we also know the
@@ -529,14 +621,14 @@ static private String resolve(String link, String[] srcWords, String[] tgtWords)
             TreeSet<Integer> tgtIndices_allowed = new TreeSet<Integer>();
 
 
-            // set srcIndices
+            // set srcIndices_allowed
             for (int ph = 0; ph < srcPhCount; ++ph) {
               int start_i = srcVecs[ph].elementAt(srcVecs_i[ph]);
               int final_i = start_i + srcPhrases_len[ph] - 1;
               for (int i = start_i; i <= final_i; ++i) srcIndices_allowed.add(i);
             } // for (ph:0..srcPhCount)
 
-            // set tgtIndices
+            // set tgtIndices_allowed
             for (int ph = 0; ph < tgtPhCount; ++ph) {
               int start_i = tgtVecs[ph].elementAt(tgtVecs_i[ph]);
               int final_i = start_i + tgtPhrases_len[ph] - 1;
@@ -575,7 +667,7 @@ static private String resolve(String link, String[] srcWords, String[] tgtWords)
                     }
                   }
                 }
-  
+
                 if (misalign) break; // from for (i)
               }
 
@@ -583,21 +675,10 @@ static private String resolve(String link, String[] srcWords, String[] tgtWords)
 
                 // remember: src->cand
 
-                String resolvedStr = "";
+                alreadyResolved_srcSet.put(cacheKey,srcIndices_allowed);
+                alreadyResolved_tgtSet.put(cacheKey,tgtIndices_allowed);
 
-                int srcOffset = srcSA.getSentencePosition(sen_i);
-                int tgtOffset = tgtSA.getSentencePosition(sen_i);
-
-                for (Integer i : srcIndices_allowed) {
-                  int[] tgtIndices = alignments.getAlignedTargetIndices(i);
-                  if (tgtIndices != null) {
-                    for (int j = 0; j < tgtIndices.length; ++j) {
-                      resolvedStr += " " + (i-srcOffset) + "-" + (tgtIndices[j]-tgtOffset);
-                    }
-                  }
-                }
-
-                return resolvedStr;
+                return finalResolve(srcIndices_allowed,tgtIndices_allowed,origSrcIndices,origCandIndices);
               }
 
             }
@@ -617,7 +698,34 @@ static private String resolve(String link, String[] srcWords, String[] tgtWords)
 
     } // for (sen_i)
 
+
     return link;
+  }
+
+  static private String finalResolve(TreeSet<Integer> srcIndices_allowed, TreeSet<Integer> tgtIndices_allowed, int[] origSrcIndices, int[] origCandIndices)
+  {
+println("In finalResolve.  Sizes: sI_a: " + srcIndices_allowed.size() + ", tI_a: " + tgtIndices_allowed.size() + ", oSI: " + origSrcIndices.length + ", oCI: " + origCandIndices.length);
+    String resolvedStr = "";
+
+    TreeMap<Integer,Integer> toOrigTgt = new TreeMap<Integer,Integer>();
+    int oci = 0;
+    for (Integer i : tgtIndices_allowed) {
+      toOrigTgt.put(i,origCandIndices[oci]);
+      ++oci;
+    }
+
+    int osi = 0;
+    for (Integer i : srcIndices_allowed) {
+      int[] tgtIndices = alignments.getAlignedTargetIndices(i);
+      if (tgtIndices != null) {
+        for (int j = 0; j < tgtIndices.length; ++j) {
+          resolvedStr += " " + origSrcIndices[osi] + "-" + toOrigTgt.get(tgtIndices[j]);
+        }
+      }
+      ++osi;
+    }
+    return resolvedStr.trim();
+
   }
 
   static private int[] phraseLenghts(BasicPhrase[] phrases)
@@ -681,8 +789,7 @@ static private String resolve(String link, String[] srcWords, String[] tgtWords)
     return retSet;
   }
 
-  
-static private TreeMap<Integer,Vector<Integer>>[] getPosMaps(BasicPhrase[] phrases, Suffixes SA)
+  static private TreeMap<Integer,Vector<Integer>>[] getPosMaps(BasicPhrase[] phrases, Suffixes SA)
   {
     int phCount = phrases.length;
 
@@ -777,6 +884,13 @@ static private TreeMap<Integer,Vector<Integer>>[] getPosMaps(BasicPhrase[] phras
     int[] intA = new int[strA.length];
     for (int i = 0; i < intA.length; ++i) intA[i] = toInt(strA[i]);
     return intA;
+  }
+
+  static private boolean fileExists(String fileName)
+  {
+    if (fileName == null) return false;
+    File checker = new File(fileName);
+    return checker.exists();
   }
 
 }

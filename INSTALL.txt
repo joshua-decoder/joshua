@@ -159,7 +159,7 @@ $ java -cp bin joshua.sarray.ExtractRules \
     --test=data/europarl.es.small.1 \
     --output=es-en.grammar.small.unsorted \
     --maxPhraseLength=5 \
-    --print_rules=false
+    --print-rules=false
 
 (TODO: Lane, are the two --sentence-initial/final-X flags important? I've been using them in experiments but their default value is false.)
 
@@ -221,7 +221,7 @@ $ java -cp bin joshua.sarray.ExtractRules \
     --test=data/europarl.es.small.1 \
     --output=es-en.grammar.small.unsorted \
     --maxPhraseLength=5 \
-    --print_rules=false
+    --print-rules=false
 
 And follow that by "sort -u" and gzipping, as in the previous section.
 

@@ -163,7 +163,7 @@ public class ParseTree
     }
   }
 
-  public int numRanges()
+  public int numDistinctRanges()
   {
     // similar to numNodes, but excludes nodes that are not preterminals yet have exactly one child
     if (isLeaf) {
@@ -171,7 +171,7 @@ public class ParseTree
     } else {
       int retVal = 1;
       if (numBranches == 1 && !isPre) { retVal = 0; }
-      for (ParseTree b : branches) { retVal += b.numRanges(); }
+      for (ParseTree b : branches) { retVal += b.numDistinctRanges(); }
       return retVal;
     }
   }
@@ -191,6 +191,9 @@ public class ParseTree
 
   public Vector<TreeSet<Integer>> ranges()
   {
+    // returns a Vector of ranges, where each range is a TreeSet of the
+    // word indices in the range (e.g. 1-3 becomes {1,2,3}, 1-1 becomes {1}).
+
     String RS = ranges_str() + " ";
 
     Vector<TreeSet<Integer>> retRanges = new Vector<TreeSet<Integer>>();

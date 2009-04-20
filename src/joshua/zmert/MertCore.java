@@ -1076,7 +1076,7 @@ public class MertCore
       retA[2] = 0; // i.e. this should NOT be the last iteration
       done = true;
 
-    } // while (true) // NOTE: this "loop" will only be carried out once
+    } // while (!done) // NOTE: this "loop" will only be carried out once
 
     retA[0] = FINAL_score;
     retA[1] = earlyStop;

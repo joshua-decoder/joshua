@@ -1,0 +1,339 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML><HEAD>
+<META http-equiv=Content-Type content="text/html; charset=windows-1252">
+<META content="MSHTML 6.00.2900.5764" name=GENERATOR></HEAD>
+<BODY>
+<H1>Judge machine translation output</H1>
+<P><u>Instructions:</u>
+For a given <B>German sentence</B>, you will be shown several
+<FONT color=#000080><B>English sentences</B></FONT> produced by
+a translation system.  One segment of the German sentence will be
+<FONT style="BACKGROUND-COLOR: yellow"><b>highlighted</b></FONT>.
+Each of the "candidate translations" will also have a corresponding
+<FONT style="BACKGROUND-COLOR: yellow" color=#000080><b>highlighted</b></FONT> segment.
+You must decide, for each candidate translations, whether or not its
+highlighted segment is an acceptable translation of the corresponding
+segment in the German sentence.<br>
+<br>
+To aid you in this task, you are given a <FONT color=#008000><b>"reference"
+English translation</b></FONT>, which was produced by a human. Those English
+translations are grammatical and also preserve the meaning of the original
+German, but <u>some of them involve liberal use of rewording and
+paraphrasing</u>, and so must only be used as a rough guide...<br>
+<br>
+<I>Please note that segments 
+are selected automatically, and they should be taken as an approximate guide. 
+They might include extra words, or miss words on either end that are not in the 
+actual alignment. If that is the case, you can mark "not sure".</I></P>
+<HR>
+
+<P></P>
+<P><B>
+<P>Source:
+  ${source_part1}
+  <FONT style="BACKGROUND-COLOR: yellow">${source_part2}</FONT>
+  ${source_part3}
+</P>
+<P>Reference:
+  <FONT color=#008000>
+  ${reference_part1}
+<!--  <FONT style="BACKGROUND-COLOR: yellow">${reference_part2}</FONT> -->
+  ${reference_part2}
+  ${reference_part3}
+  </FONT>
+</P></B>
+<TABLE border=1>
+  <TBODY>
+
+  <TR>
+    <TD><B>Candidate Translation</B></TD>
+    <TD><SPAN class=Apple-style-span style="FONT-WEIGHT: bold">Acceptable?</SPAN></TD></TR>
+
+  <!-- Translation #1 -->
+  <TR bgColor=#f0f0ff>
+    <TD>
+      <FONT color=#000080><B>
+        ${translation1_part0}
+        <FONT style="BACKGROUND-COLOR: yellow">${translation1_part1}</FONT>
+        ${translation1_part2}
+        <FONT style="BACKGROUND-COLOR: yellow">${translation1_part3}</FONT>
+        ${translation1_part4}
+      </B></FONT>
+    </TD>
+    <TD noWrap>
+      <TABLE cellSpacing=0 cellPadding=0 border=0>
+        <TBODY>
+        <TR>
+          <TD align=middle width=75><INPUT type=radio value=YES name=RANK_1></TD>
+          <TD align=middle width=75><INPUT type=radio value=NO name=RANK_1></TD>
+          <TD align=middle width=75><INPUT type=radio value=NOTSURE name=RANK_1></TD></TR>
+        <TR>
+          <TD vAlign=top align=middle width=75>Yes</TD>
+          <TD vAlign=top align=middle width=75>No</TD>
+          <TD vAlign=top align=middle width=75><I>Not Sure</I></TD>
+        </TR>
+        </TBODY>
+      </TABLE>
+    </TD>
+  </TR>
+
+  <!-- Translation #2 -->
+  <TR bgColor=#f0f0ff>
+    <TD>
+      <FONT color=#000080><B>
+        ${translation2_part0}
+        <FONT style="BACKGROUND-COLOR: yellow">${translation2_part1}</FONT>
+        ${translation2_part2}
+        <FONT style="BACKGROUND-COLOR: yellow">${translation2_part3}</FONT>
+        ${translation2_part4}
+      </B></FONT>
+    </TD>
+    <TD noWrap>
+      <TABLE cellSpacing=0 cellPadding=0 border=0>
+        <TBODY>
+        <TR>
+          <TD align=middle width=75><INPUT type=radio value=YES name=RANK_2></TD>
+          <TD align=middle width=75><INPUT type=radio value=NO name=RANK_2></TD>
+          <TD align=middle width=75><INPUT type=radio value=NOTSURE name=RANK_2></TD></TR>
+        <TR>
+          <TD vAlign=top align=middle width=75>Yes</TD>
+          <TD vAlign=top align=middle width=75>No</TD>
+          <TD vAlign=top align=middle width=75><I>Not Sure</I></TD>
+        </TR>
+        </TBODY>
+      </TABLE>
+    </TD>
+  </TR>
+
+  <!-- Translation #3 -->
+  <TR bgColor=#f0f0ff>
+    <TD>
+      <FONT color=#000080><B>
+        ${translation3_part0}
+        <FONT style="BACKGROUND-COLOR: yellow">${translation3_part1}</FONT>
+        ${translation3_part2}
+        <FONT style="BACKGROUND-COLOR: yellow">${translation3_part3}</FONT>
+        ${translation3_part4}
+      </B></FONT>
+    </TD>
+    <TD noWrap>
+      <TABLE cellSpacing=0 cellPadding=0 border=0>
+        <TBODY>
+        <TR>
+          <TD align=middle width=75><INPUT type=radio value=YES name=RANK_3></TD>
+          <TD align=middle width=75><INPUT type=radio value=NO name=RANK_3></TD>
+          <TD align=middle width=75><INPUT type=radio value=NOTSURE name=RANK_3></TD></TR>
+        <TR>
+          <TD vAlign=top align=middle width=75>Yes</TD>
+          <TD vAlign=top align=middle width=75>No</TD>
+          <TD vAlign=top align=middle width=75><I>Not Sure</I></TD>
+        </TR>
+        </TBODY>
+      </TABLE>
+    </TD>
+  </TR>
+
+  <!-- Translation #4 -->
+  <TR bgColor=#f0f0ff>
+    <TD>
+      <FONT color=#000080><B>
+        ${translation4_part0}
+        <FONT style="BACKGROUND-COLOR: yellow">${translation4_part1}</FONT>
+        ${translation4_part2}
+        <FONT style="BACKGROUND-COLOR: yellow">${translation4_part3}</FONT>
+        ${translation4_part4}
+      </B></FONT>
+    </TD>
+    <TD noWrap>
+      <TABLE cellSpacing=0 cellPadding=0 border=0>
+        <TBODY>
+        <TR>
+          <TD align=middle width=75><INPUT type=radio value=YES name=RANK_4></TD>
+          <TD align=middle width=75><INPUT type=radio value=NO name=RANK_4></TD>
+          <TD align=middle width=75><INPUT type=radio value=NOTSURE name=RANK_4></TD></TR>
+        <TR>
+          <TD vAlign=top align=middle width=75>Yes</TD>
+          <TD vAlign=top align=middle width=75>No</TD>
+          <TD vAlign=top align=middle width=75><I>Not Sure</I></TD>
+        </TR>
+        </TBODY>
+      </TABLE>
+    </TD>
+  </TR>
+
+  <!-- Translation #5 -->
+  <TR bgColor=#f0f0ff>
+    <TD>
+      <FONT color=#000080><B>
+        ${translation5_part0}
+        <FONT style="BACKGROUND-COLOR: yellow">${translation5_part1}</FONT>
+        ${translation5_part2}
+        <FONT style="BACKGROUND-COLOR: yellow">${translation5_part3}</FONT>
+        ${translation5_part4}
+      </B></FONT>
+    </TD>
+    <TD noWrap>
+      <TABLE cellSpacing=0 cellPadding=0 border=0>
+        <TBODY>
+        <TR>
+          <TD align=middle width=75><INPUT type=radio value=YES name=RANK_5></TD>
+          <TD align=middle width=75><INPUT type=radio value=NO name=RANK_5></TD>
+          <TD align=middle width=75><INPUT type=radio value=NOTSURE name=RANK_5></TD></TR>
+        <TR>
+          <TD vAlign=top align=middle width=75>Yes</TD>
+          <TD vAlign=top align=middle width=75>No</TD>
+          <TD vAlign=top align=middle width=75><I>Not Sure</I></TD>
+        </TR>
+        </TBODY>
+      </TABLE>
+    </TD>
+  </TR>
+
+  <!-- Translation #6 -->
+  <TR bgColor=#f0f0ff>
+    <TD>
+      <FONT color=#000080><B>
+        ${translation6_part0}
+        <FONT style="BACKGROUND-COLOR: yellow">${translation6_part1}</FONT>
+        ${translation6_part2}
+        <FONT style="BACKGROUND-COLOR: yellow">${translation6_part3}</FONT>
+        ${translation6_part4}
+      </B></FONT>
+    </TD>
+    <TD noWrap>
+      <TABLE cellSpacing=0 cellPadding=0 border=0>
+        <TBODY>
+        <TR>
+          <TD align=middle width=75><INPUT type=radio value=YES name=RANK_6></TD>
+          <TD align=middle width=75><INPUT type=radio value=NO name=RANK_6></TD>
+          <TD align=middle width=75><INPUT type=radio value=NOTSURE name=RANK_6></TD></TR>
+        <TR>
+          <TD vAlign=top align=middle width=75>Yes</TD>
+          <TD vAlign=top align=middle width=75>No</TD>
+          <TD vAlign=top align=middle width=75><I>Not Sure</I></TD>
+        </TR>
+        </TBODY>
+      </TABLE>
+    </TD>
+  </TR>
+
+  <!-- Translation #7 -->
+  <TR bgColor=#f0f0ff>
+    <TD>
+      <FONT color=#000080><B>
+        ${translation7_part0}
+        <FONT style="BACKGROUND-COLOR: yellow">${translation7_part1}</FONT>
+        ${translation7_part2}
+        <FONT style="BACKGROUND-COLOR: yellow">${translation7_part3}</FONT>
+        ${translation7_part4}
+      </B></FONT>
+    </TD>
+    <TD noWrap>
+      <TABLE cellSpacing=0 cellPadding=0 border=0>
+        <TBODY>
+        <TR>
+          <TD align=middle width=75><INPUT type=radio value=YES name=RANK_7></TD>
+          <TD align=middle width=75><INPUT type=radio value=NO name=RANK_7></TD>
+          <TD align=middle width=75><INPUT type=radio value=NOTSURE name=RANK_7></TD></TR>
+        <TR>
+          <TD vAlign=top align=middle width=75>Yes</TD>
+          <TD vAlign=top align=middle width=75>No</TD>
+          <TD vAlign=top align=middle width=75><I>Not Sure</I></TD>
+        </TR>
+        </TBODY>
+      </TABLE>
+    </TD>
+  </TR>
+
+  <!-- Translation #8 -->
+  <TR bgColor=#f0f0ff>
+    <TD>
+      <FONT color=#000080><B>
+        ${translation8_part0}
+        <FONT style="BACKGROUND-COLOR: yellow">${translation8_part1}</FONT>
+        ${translation8_part2}
+        <FONT style="BACKGROUND-COLOR: yellow">${translation8_part3}</FONT>
+        ${translation8_part4}
+      </B></FONT>
+    </TD>
+    <TD noWrap>
+      <TABLE cellSpacing=0 cellPadding=0 border=0>
+        <TBODY>
+        <TR>
+          <TD align=middle width=75><INPUT type=radio value=YES name=RANK_8></TD>
+          <TD align=middle width=75><INPUT type=radio value=NO name=RANK_8></TD>
+          <TD align=middle width=75><INPUT type=radio value=NOTSURE name=RANK_8></TD></TR>
+        <TR>
+          <TD vAlign=top align=middle width=75>Yes</TD>
+          <TD vAlign=top align=middle width=75>No</TD>
+          <TD vAlign=top align=middle width=75><I>Not Sure</I></TD>
+        </TR>
+        </TBODY>
+      </TABLE>
+    </TD>
+  </TR>
+
+  <!-- Translation #9 -->
+  <TR bgColor=#f0f0ff>
+    <TD>
+      <FONT color=#000080><B>
+        ${translation9_part0}
+        <FONT style="BACKGROUND-COLOR: yellow">${translation9_part1}</FONT>
+        ${translation9_part2}
+        <FONT style="BACKGROUND-COLOR: yellow">${translation9_part3}</FONT>
+        ${translation9_part4}
+      </B></FONT>
+    </TD>
+    <TD noWrap>
+      <TABLE cellSpacing=0 cellPadding=0 border=0>
+        <TBODY>
+        <TR>
+          <TD align=middle width=75><INPUT type=radio value=YES name=RANK_9></TD>
+          <TD align=middle width=75><INPUT type=radio value=NO name=RANK_9></TD>
+          <TD align=middle width=75><INPUT type=radio value=NOTSURE name=RANK_9></TD></TR>
+        <TR>
+          <TD vAlign=top align=middle width=75>Yes</TD>
+          <TD vAlign=top align=middle width=75>No</TD>
+          <TD vAlign=top align=middle width=75><I>Not Sure</I></TD>
+        </TR>
+        </TBODY>
+      </TABLE>
+    </TD>
+  </TR>
+
+  <!-- Translation #10 -->
+  <TR bgColor=#f0f0ff>
+    <TD>
+      <FONT color=#000080><B>
+        ${translation10_part0}
+        <FONT style="BACKGROUND-COLOR: yellow">${translation10_part1}</FONT>
+        ${translation10_part2}
+        <FONT style="BACKGROUND-COLOR: yellow">${translation10_part3}</FONT>
+        ${translation10_part4}
+      </B></FONT>
+    </TD>
+    <TD noWrap>
+      <TABLE cellSpacing=0 cellPadding=0 border=0>
+        <TBODY>
+        <TR>
+          <TD align=middle width=75><INPUT type=radio value=YES name=RANK_10></TD>
+          <TD align=middle width=75><INPUT type=radio value=NO name=RANK_10></TD>
+          <TD align=middle width=75><INPUT type=radio value=NOTSURE name=RANK_10></TD></TR>
+        <TR>
+          <TD vAlign=top align=middle width=75>Yes</TD>
+          <TD vAlign=top align=middle width=75>No</TD>
+          <TD vAlign=top align=middle width=75><I>Not Sure</I></TD>
+        </TR>
+        </TBODY>
+      </TABLE>
+    </TD>
+  </TR>
+
+  </TBODY>
+</TABLE>
+<P></P>
+<P></P>
+<P></P>
+<P></P>
+<P></P>
+<P></P></BODY></HTML>

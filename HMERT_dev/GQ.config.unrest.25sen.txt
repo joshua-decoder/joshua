@@ -1,0 +1,11 @@
+nbest.out.ZMERT.it6.25sen.trees # file name for candidates (Joshua output format, using trees and align indices)
+newstest2008.de.tok.parsed # file name for src parses
+out_SrcCand.align.25sen # output file for src-cand alignment (will be many-to-many, and a many could have a gap)
+newstest2008.de.tok.lc # source file name
+newQueries.txt # new queries output file
+100 # max_rangeSize_src
+100 # max_rangeLength_src
+100 # max_rangeSize_cand
+100 # max_rangeLength_cand
+100 # max_skipSequences
+100 # max_skipWords
