@@ -167,7 +167,13 @@ public class BLEU {
 		}
 		return referenceNgramTable;
 	}
+	public  static HashMap<String, Integer> constructReferenceTable(String refSentence, int bleu_order){		
+		HashMap<String, Integer> referenceNgramTable = new HashMap<String, Integer>();	
+		String[] ref_wrds = Regex.spaces.split(refSentence);			
+		accumulateNgramCounts(referenceNgramTable, bleu_order, ref_wrds);				
 	
+		return referenceNgramTable;
+	}
 	
 //	accumulate ngram counts into tbl; ngrams with an order in [1,order]
 	public static void accumulateNgramCounts(HashMap<String, Integer> tbl, int order, String[] wrds){

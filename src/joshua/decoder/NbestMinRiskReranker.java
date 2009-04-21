@@ -257,6 +257,7 @@ public class NbestMinRiskReranker {
 		}
 	}
 	
+
 	
 	public static void main(String[] args) throws IOException {
 		if (4 != args.length) {

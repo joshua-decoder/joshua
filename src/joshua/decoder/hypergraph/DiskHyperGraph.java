@@ -89,7 +89,7 @@ public class DiskHyperGraph {
 	private HashMap<Integer,Rule> associatedGrammar = new HashMap<Integer, Rule>();
 	
 	private BufferedWriter    writer;
-	private BufferedReader    reader;
+	private BufferedReader    itemsReader;
 	private HyperGraphPruning pruner;
 	
 	// TODO: this is not pretty, but avoids re-allocation in writeRule()
@@ -115,6 +115,7 @@ public class DiskHyperGraph {
 	private static int NULL_RULE_ID = -1;
 	
 	//TODO: this is a hack for us to create OOVRule, and OOVRuleID
+	/**This is wrong as the default LHS and owner are not properly set. For this reason, the creation of OOV rule may cause bugs*/
 	private static Grammar pGrammar = new MemoryBasedBatchGrammar();
 	
 	private static final Logger logger =
@@ -168,7 +169,7 @@ public class DiskHyperGraph {
 	
 	public void initRead(String hypergraphsFile, String rulesFile, HashMap<Integer,?> selectedSentences) {
 		try {
-			this.reader = FileUtility.getReadFileStream(hypergraphsFile);
+			this.itemsReader = FileUtility.getReadFileStream(hypergraphsFile);
 		} catch (IOException e) {
 			logger.severe("Error opening hypergraph file: " + hypergraphsFile);
 		}
@@ -202,6 +203,14 @@ public class DiskHyperGraph {
 		this.idToItem.clear();
 		this.currentItemID = 1;
 		this.qtyDeductions = 0;
+	}
+	
+	public void closeItemsReader(){
+		try {
+			this.itemsReader.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 	
 	
@@ -344,6 +353,8 @@ public class DiskHyperGraph {
 		s.append(" ")
 			.append(ruleID);
 		if (ruleID == pGrammar.getOOVRuleID()) {
+			//System.out.println("lhs id: " + deduction_rule.getLHS());
+			//System.out.println("rule words: " + deduction_rule.getEnglish());
 			s.append(" ")
 				.append(this.symbolTable.getWord(deduction_rule.getLHS()))
 				.append(" ")
@@ -353,24 +364,32 @@ public class DiskHyperGraph {
 		
 		// save model cost as a seprate line; optional
 		if (this.storeModelCosts) {
-			for (int k = 0; k < this.featureFunctions.size(); k++) {
-				FeatureFunction m = this.featureFunctions.get(k);
-				s.append(String.format("%.4f ",
-					null != deduction.get_rule()
-					? // deductions under goal item do not have rules
-						HyperGraph
-							.computeTransition(deduction, m, item.i, item.j)
-							.getTransitionCost()
-					: HyperGraph.computeFinalTransition(deduction, m)
-					))
-					.append(
-						k < this.featureFunctions.size() - 1
-						? " "
-						: "\n");
-			}
+			s.append( createModelCostLine(item, deduction) );
 		}
 		
 		this.writer.write(s.toString());
+	}
+	
+	/** Do not remove this function as it gives freedom for an extended class to override it
+	 * */
+	public String createModelCostLine(HGNode item, HyperEdge deduction){
+		StringBuffer line = new StringBuffer();		
+		for (int k = 0; k < this.featureFunctions.size(); k++) {
+			FeatureFunction m = this.featureFunctions.get(k);
+			line.append(String.format("%.4f",
+				null != deduction.get_rule()
+				? // deductions under goal item do not have rules
+					HyperGraph
+						.computeTransition(deduction, m, item.i, item.j)
+						.getTransitionCost()
+				: HyperGraph.computeFinalTransition(deduction, m)
+				))
+				.append(
+					k < this.featureFunctions.size() - 1
+					? " "
+					: "\n");
+		}
+		return line.toString();
 	}
 	
 // End save_hyper_graph()
@@ -385,7 +404,7 @@ public class DiskHyperGraph {
 			line = this.startLine;
 			this.startLine = null;
 		} else {
-			line = FileUtility.read_line_lzf(this.reader);
+			line = FileUtility.read_line_lzf(this.itemsReader);
 		}
 		
 		if (! line.startsWith(SENTENCE_TAG)) {
@@ -398,7 +417,7 @@ public class DiskHyperGraph {
 		&& (! this.selectedSentences.containsKey(
 				Integer.parseInt(Regex.spaces.split(line)[1]) ))
 		) {
-			while ((line = FileUtility.read_line_lzf(this.reader)) != null) {
+			while ((line = FileUtility.read_line_lzf(this.itemsReader)) != null) {
 				if (line.startsWith(SENTENCE_TAG)) break;
 			}
 			this.startLine = line;
@@ -431,7 +450,7 @@ public class DiskHyperGraph {
 	
 	private HGNode readItem() {
 		//line: ITEM_TAG itemID i j lhs qtyDeductions ITEM_STATE_TAG item_state
-		String  line = FileUtility.read_line_lzf(this.reader);
+		String  line = FileUtility.read_line_lzf(this.itemsReader);
 		String[] fds = line.split(ITEM_STATE_TAG); // TODO: use joshua.util.Regex
 		if (fds.length != 2) {
 			logger.severe("wrong item line");
@@ -477,7 +496,7 @@ public class DiskHyperGraph {
 	// Assumption: has this.associatedGrammar and this.idToItem
 	private HyperEdge readDeduction() {
 		//line: flag, best_cost, num_items, item_ids, rule id, OOV-Non-Terminal (optional), OOV (optional)
-		String  line = FileUtility.read_line_lzf(this.reader);
+		String  line = FileUtility.read_line_lzf(this.itemsReader);
 		String[] fds = Regex.spaces.split(line);
 		
 		//best_cost transition_cost num_items item_ids
@@ -508,11 +527,11 @@ public class DiskHyperGraph {
 					System.exit(1);
 				}
 			} else {
-				//stateless cost is not properly set, so cannot extract individual features during kbest extraction
-				rule = pGrammar.constructOOVRule(
-					1,
-					this.symbolTable.addTerminal(fds[4+qtyAntecedents]),
-					false);
+				rule = pGrammar.constructOOVRule(1,	this.symbolTable.addTerminal(fds[4+qtyAntecedents]), false);
+				
+				/**This is a hack. as the pGrammar does not set defaultLHS properly*/
+				int lhs = this.symbolTable.addNonterminal(fds[3+qtyAntecedents]);
+				rule.setLHS(lhs);
 			}
 		} else {
 			// Do nothing: goal item has null rule
@@ -522,7 +541,7 @@ public class DiskHyperGraph {
 		//read model costs
 		if (this.storeModelCosts) {
 			String[] costs_s =
-				Regex.spaces.split(FileUtility.read_line_lzf(this.reader));
+				Regex.spaces.split(FileUtility.read_line_lzf(this.itemsReader));
 			double[] costs = new double[costs_s.length];
 			for (int i = 0; i < costs_s.length; i++) {
 				costs[i] = Double.parseDouble(costs_s[i]);

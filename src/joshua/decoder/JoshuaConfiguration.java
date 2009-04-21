@@ -446,8 +446,7 @@ public class JoshuaConfiguration {
 						logger.finest(String.format("forest_pruning_threshold: %s", forest_pruning_threshold));
 					
 				} else {
-					logger.severe("Wrong config line: " + line);
-					System.exit(1);
+					logger.warning("Maybe Wrong config line: " + line);
 				}
 			} else { // feature function
 				String[] fds = Regex.spaces.split(line);
