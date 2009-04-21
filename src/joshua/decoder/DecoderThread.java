@@ -186,7 +186,7 @@ public class DecoderThread extends Thread {
 				}
 				sentenceID = Integer.parseInt(id.toString());
 				cnSentence = cnSentence.replaceFirst("^\\s*>", ""); // TODO: use joshua.util.Regex
-				cnSentence = cnSentence.replaceAll("</seg\\*>\\s*$", ""); // TODO: use joshua.util.Regex
+				cnSentence = cnSentence.replaceAll("</seg\\s*>\\s*$", ""); // TODO: use joshua.util.Regex
 			} else {
 				// don't set sentenceID, and don't alter cnSentence
 			}
