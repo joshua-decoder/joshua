@@ -41,10 +41,14 @@ public abstract class AbstractGrammar implements Grammar {
 	
 	/**
 	 * Cube-pruning requires that the grammar be sorted based on the latest feature functions.
+	 * To  avoid synchronization, this method should be called before multiple threads are intialized for parallel decoding
 	 */
 	public void sortGrammar(ArrayList<FeatureFunction> models) {
-		sort(getTrieRoot(), models);
-		setSorted(true);
+		Trie root = getTrieRoot();
+		if(root!=null){
+			sort(getTrieRoot(), models);
+			setSorted(true);
+		}
 	}
 	
 	public void setSorted(boolean sorted) {
@@ -53,10 +57,12 @@ public abstract class AbstractGrammar implements Grammar {
 	
 	private void sort(Trie node, ArrayList<FeatureFunction> models) {
 		if (node != null) {
-			node.getRules().sortRules(models);
-			
-			for (Trie child : node.getExtensions()) {
-				sort(child, models);
+			if(node.hasRules())
+				node.getRules().sortRules(models);
+			if(node.hasExtensions()){
+				for (Trie child : node.getExtensions()) {
+					sort(child, models);
+				}
 			}
 		}
 	}

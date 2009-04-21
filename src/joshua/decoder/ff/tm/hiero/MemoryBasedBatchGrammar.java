@@ -240,16 +240,7 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
 		
 		pos.rule_bin.addRule(rule);
 	}
-	
-	// This method should be called such that all the rules in 
-	// rulebin are sorted, this will avoid synchronization for 
-	// get_sorted_rules function
-	public void sortGrammar(ArrayList<FeatureFunction> featureFunctions) {
-		if (null != this.root) {
-			this.root.ensure_sorted(featureFunctions);
-		}
-	}
-	
+
 	
 	// BUG: This always prints 0 for all fields
 	protected void print_grammar() {

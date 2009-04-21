@@ -262,6 +262,7 @@ public class JoshuaDecoder {
 				if (grammarFactory instanceof Grammar) {
 					Grammar batchGrammar = (Grammar) grammarFactory;
 					batchGrammar.sortGrammar(this.featureFunctions);
+					//System.out.println("Grammar is sortred " + batchGrammar.isSorted());
 				}
 			}
 			
