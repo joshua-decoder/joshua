@@ -140,7 +140,7 @@ public class LMServer {
 	public static void init_lm_grammar() throws IOException {
 		if (use_srilm) {
 			if (use_left_euqivalent_state || use_right_euqivalent_state) {
-				logger.severe("use local srilm, we cannot use suffix stuff");
+				logger.severe("when using local srilm, we cannot use suffix stuff");
 				System.exit(0);
 			}
 			p_symbolTable = new SrilmSymbol(remote_symbol_tbl, g_lm_order);

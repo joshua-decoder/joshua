@@ -37,7 +37,7 @@ public class LMGrammarSRILM extends AbstractLM {
 	public LMGrammarSRILM(SrilmSymbol symbol, int order, String lm_file) {
 		super(symbol, order);
 	 
-		logger.info("use local srilm");
+		logger.info("using local SRILM for the language model");
 		//p_srilm = srilm.initLM(order_, p_symbol.getLMStartID(), p_symbol.getLMEndID() );//TODO
 		p_srilm = symbol.getSrilmPointer();
 		read_lm_grammar_from_file(lm_file);//TODO: what about sentence-specific?
@@ -47,9 +47,9 @@ public class LMGrammarSRILM extends AbstractLM {
 	// read grammar locally by the Java implementation
 	private void read_lm_grammar_from_file(String grammar_file) {
 		long start_loading_time = System.currentTimeMillis();
-		logger.info("read lm by srilm tool");
+		logger.info("reading language model with SRILM tool");
 		srilm.readLM(p_srilm, grammar_file);
-		logger.info("read lm finished");
+		logger.info("finished reading language model");
 		//logger.info("##### mem used (kb): " + Support.getMemoryUse());
 		logger.info("##### time used (seconds): "
 			+ (System.currentTimeMillis() - start_loading_time) / 1000);
