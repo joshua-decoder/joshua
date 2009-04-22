@@ -12,11 +12,11 @@ GQ.config.rest.25sen.txt
 newQueries.rest.25sen.txt
 
 3) Generating .csv input for Mechanical Turk:
-mturk.rest.25sen.input.csv
 mturk.rest.25sen.input.lng.csv
 mturk.rest.25sen.input.shr.csv
 template_hmert.htm
 template_hmert_refhighlighted.htm
+
 
 Here's a basic outline of what the process of creating queries looks like:
 

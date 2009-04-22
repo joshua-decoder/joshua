@@ -1,47 +1,53 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
-<HTML><HEAD>
+<HTML>
+<HEAD>
 <META http-equiv=Content-Type content="text/html; charset=windows-1252">
-<META content="MSHTML 6.00.2900.5764" name=GENERATOR></HEAD>
+<META content="MSHTML 6.00.2900.5764" name=GENERATOR>
+</HEAD>
 <BODY>
 <H1>Judge machine translation output</H1>
-<P><u>Instructions:</u>
-For a given <B>German sentence</B>, you will be shown several
-<FONT color=#000080><B>English sentences</B></FONT> produced by
-a translation system.  One segment of the German sentence will be
-<FONT style="BACKGROUND-COLOR: yellow"><b>highlighted</b></FONT>.
-Each of the "candidate translations" will also have a corresponding
-<FONT style="BACKGROUND-COLOR: yellow" color=#000080><b>highlighted</b></FONT> segment.
-You must decide, for each candidate translations, whether or not its
-highlighted segment is an acceptable translation of the corresponding
-segment in the German sentence.<br>
+<P>
+<b>Instructions:</b>
+<ul>
+<li>You are shown a <FONT color=crimson><B>"source" German sentence</B></FONT> with a
+<FONT style="BACKGROUND-COLOR: yellow" color=crimson><b>highlighted</b></FONT>
+segment,<br> followed by several
+<FONT style="BACKGROUND-COLOR: #f0f0ff" color=#000080><B>candidate translations</B></FONT>
+with corresponding
+<FONT style="BACKGROUND-COLOR: yellow" color=#000080><b>highlighted</b></FONT> segments.
+<br><br>
+<li>Your task: <u>decide if each English segment is an acceptable translation of the
+German segment</u>.
+<br><br>
+<li>To help you, we provide a <FONT color=#008000><b>correct "reference"
+translation</b></FONT>, which preserves the meaning of the original German.<br>
+<li>The reference has a
+<FONT style="BACKGROUND-COLOR: PeachPuff" color=#008000><b>highlighted</b></FONT></FONT>
+portion that <u>could be near the true meaning</u>.<br> It is <i>not always precise</i>,
+especially when the reference involves paraphrasing, but sometimes it could be helpful.<br>
 <br>
-To aid you in this task, you are given a <FONT color=#008000><b>"reference"
-English translation</b></FONT>, which was produced by a human. Those English
-translations are grammatical and also preserve the meaning of the original
-German, but <u>some of them involve liberal use of rewording and
-paraphrasing</u>, and so must only be used as a rough guide...<br>
-<br>
-<I>Please note that segments 
-are selected automatically, and they should be taken as an approximate guide. 
-They might include extra words, or miss words on either end that are not in the 
-actual alignment. If that is the case, you can mark "not sure".</I></P>
+</ul>
+
 <HR>
 
 <P></P>
 <P><B>
 <P>Source:
+  <FONT color=crimson>
   ${source_part1}
   <FONT style="BACKGROUND-COLOR: yellow">${source_part2}</FONT>
   ${source_part3}
+  </FONT>
 </P>
 <P>Reference:
   <FONT color=#008000>
   ${reference_part1}
-<!--  <FONT style="BACKGROUND-COLOR: yellow">${reference_part2}</FONT> -->
-  ${reference_part2}
+  <FONT style="BACKGROUND-COLOR: PeachPuff">${reference_part2}</FONT>
   ${reference_part3}
   </FONT>
 </P></B>
+((Remember to judge only the segments highlighted in yellow.))<br>
+<br>
 <TABLE border=1>
   <TBODY>
 
@@ -332,6 +338,13 @@ actual alignment. If that is the case, you can mark "not sure".</I></P>
   </TBODY>
 </TABLE>
 <P></P>
+<HR>
+The collected data is post-reviewed by a human. <b>It is easy for us to identify random answers</b>, which will be rejected.
+<br>
+So please provide <b>consistent answers</b>. If we like your work, you could be invited to future tasks that pay a higher rate!
+<br>
+In short, please don't waste our time, and we won't waste yours. :-)
+<HR>
 <P></P>
 <P></P>
 <P></P>

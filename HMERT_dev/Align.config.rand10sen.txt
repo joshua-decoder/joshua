@@ -1,0 +1,12 @@
+nbest.out.ZMERT.it6.rand10sen.trees # file name for candidates (Joshua output format, using trees and align indices)
+de-en.newstest2008.reference.tok.alignments # file name for src-ref alignment
+newstest2008.de.tok.parsed # file name for src parses
+out_SrcCand.align # output file for src-cand alignment (will be many-to-many, and a many could have a gap)
+out_CandRef.viaSent.align # output file for cand-ref alignment (through src sentence)
+out_CandRef.viaParse.align # output file for cand-ref alignment (through src parse tree)
+newstest2008.de.tok.lc # source file name
+newstest2008.en.tok.lc # ref file name
+/Volumes/Backup/ozaidan/HMERT/data/europarl/de-en/europarl.de # source file name - training corpus
+/Volumes/Backup/ozaidan/HMERT/data/europarl/de-en/europarl.en # target file name - training corpus
+/Volumes/Backup/ozaidan/HMERT/data/europarl/de-en/de_en_europarl_alignments.txt # src-tgt alignments file name - training corpus
+alignCache.bin # file to read/write cached alignment elements
