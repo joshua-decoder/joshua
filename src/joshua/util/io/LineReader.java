@@ -227,24 +227,20 @@ public class LineReader implements Reader<String> {
 		throw new UnsupportedOperationException();
 	}
 	
+	
 	/**
-	 * Iterates over and counts all lines,
-	 * ignoring their contents.
+	 * Iterates over all lines, ignoring their contents, and returns the count of lines. If some lines have already been read, this will return the count of remaining lines. Because no lines will remain after calling this method, we implicitly call close.
 	 * 
 	 * @return the number of lines read
 	 */
 	public int countLines() throws IOException {
 		int lines = 0;
 		
-		while (hasNext()) {
-			next();
+		while (this.hasNext()) {
+			this.next();
 			lines++;
 		}
-		if (null != this.error) {
-			IOException e = this.error;
-			this.error = null;
-			throw e;
-		}
+		this.close();
 		
 		return lines;
 	}

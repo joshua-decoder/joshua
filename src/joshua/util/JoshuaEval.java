@@ -17,6 +17,10 @@
  */
 
 package joshua.util;
+
+import joshua.util.io.LineReader;
+
+
 import joshua.zmert.*;
 import java.io.*;
 import java.text.DecimalFormat;
@@ -525,19 +529,13 @@ line format:
 	} // createUnifiedRefFile(String prefix, int numFiles)
 	
 	
+	// TODO: we should handle errors properly for the three use sites of this function, and should remove the function.
 	private static int countLines(String fileName) {
 		int count = 0;
 		
 		try {
-			BufferedReader inFile = new BufferedReader(new FileReader(fileName));
+			count = new LineReader(fileName).countLines();
 			
-			String line;
-			do {
-				line = inFile.readLine();
-				if (line != null) ++count;
-			}  while (line != null);
-			
-			inFile.close();
 		} catch (IOException e) {
 			System.err.println("IOException in MertCore.countLines(String): " + e.getMessage());
 			System.exit(99902);
@@ -545,6 +543,7 @@ line format:
 		
 		return count;
 	}
+	
 	
 	private static void println(Object obj) { System.out.println(obj); }
 	private static void print(Object obj) { System.out.print(obj); }
