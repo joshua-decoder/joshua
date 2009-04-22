@@ -233,12 +233,17 @@ public class LineReader implements Reader<String> {
 	 * 
 	 * @return the number of lines read
 	 */
-	public int countLines() {
+	public int countLines() throws IOException {
 		int lines = 0;
 		
 		while (hasNext()) {
 			next();
 			lines++;
+		}
+		if (null != this.error) {
+			IOException e = this.error;
+			this.error = null;
+			throw e;
 		}
 		
 		return lines;
