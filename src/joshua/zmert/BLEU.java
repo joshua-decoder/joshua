@@ -74,8 +74,8 @@ public class BLEU extends EvaluationMetric
   {
     metricName = "BLEU";
     toBeMinimized = false;
-    suffStatsCount = 1 + maxGramLength + 2;
-      // 1 for number of segments, 1 per gram length for its precision, and 2 for length info
+    suffStatsCount = 2*maxGramLength + 2;
+      // 2 per gram length for its precision, and 2 for length info
     set_weightsArray();
     set_maxNgramCounts();
   }
@@ -126,20 +126,14 @@ public class BLEU extends EvaluationMetric
 
       } // for (i)
 
-    // Reference sentences are not needed anymore, since the gram counts are stored.
-    // The only thing we need are their lenghts, to be used in effLength, so store
-    // the lengths before discarding the reference sentences...
+    // For efficiency, calculate the reference lenghts, which will be used in effLength...
 
     refWordCount = new int[numSentences][refsPerSen];
     for (int i = 0; i < numSentences; ++i) {
       for (int r = 0; r < refsPerSen; ++r) {
         refWordCount[i][r] = wordCount(refSentences[i][r]);
-        refSentences[i][r] = null;
       }
-      refSentences[i] = null;
     }
-
-    refSentences = null;
 
   }
 
@@ -147,17 +141,21 @@ public class BLEU extends EvaluationMetric
   public int[] suffStats(String cand_str, int i)
   {
     int[] stats = new int[suffStatsCount];
-    stats[0] = 1;
-
-    String[] words = cand_str.split("\\s+");
 
 //int wordCount = words.length;
 //for (int j = 0; j < wordCount; ++j) { words[j] = words[j].intern(); }
 
-    set_prec_suffStats(stats,words,i);
-
-    stats[maxGramLength+1] = words.length;
-    stats[maxGramLength+2] = effLength(words.length,i);
+    if (!cand_str.equals("")) {
+      String[] words = cand_str.split("\\s+");
+      set_prec_suffStats(stats,words,i);
+      stats[suffStatsCount-2] = words.length;
+      stats[suffStatsCount-1] = effLength(words.length,i);
+    } else {
+      String[] words = new String[0];
+      set_prec_suffStats(stats,words,i);
+      stats[suffStatsCount-2] = 0;
+      stats[suffStatsCount-1] = effLength(0,i);
+    }
 
     return stats;
   }
@@ -175,7 +173,7 @@ public class BLEU extends EvaluationMetric
       Iterator<String> it = (candCountsArray[n].keySet()).iterator();
 
       while (it.hasNext()) {
-      // for each gram type in the candidate
+      // for each n-gram type in the candidate
         gram = it.next();
         candGramCount = candCountsArray[n].get(gram);
 //        if (maxNgramCounts[i][n].containsKey(gram)) {
@@ -192,9 +190,11 @@ public class BLEU extends EvaluationMetric
 
       }
 
-      stats[n] = correctGramCount;
+      stats[2*(n-1)] = correctGramCount;
+      stats[2*(n-1)+1] = Math.max(words.length-(n-1),0); // total gram count
 
-    }
+    } // for (n)
+
   }
 
   public int effLength(int candLength, int i)
@@ -261,13 +261,12 @@ else { // average
     double smooth_addition = 1.0; // following bleu-1.04.pl
     double c_len = stats[suffStatsCount-2];
     double r_len = stats[suffStatsCount-1];
-    double numSegments = stats[0];
 
     double correctGramCount, totalGramCount;
 
     for (int n = 1; n <= maxGramLength; ++n) {
-      correctGramCount = stats[n];
-      totalGramCount = c_len-((n-1)*numSegments);
+      correctGramCount = stats[2*(n-1)];
+      totalGramCount = stats[2*(n-1)+1];
 
       double prec_n;
       if (totalGramCount > 0) {
@@ -300,7 +299,6 @@ else { // average
     double smooth_addition = 1.0; // following bleu-1.04.pl
     double c_len = stats[suffStatsCount-2];
     double r_len = stats[suffStatsCount-1];
-    double numSegments = stats[0];
 
     double correctGramCount, totalGramCount;
 
@@ -309,8 +307,8 @@ else { // average
     }
 
     for (int n = 1; n <= maxGramLength; ++n) {
-      correctGramCount = stats[n];
-      totalGramCount = c_len-((n-1)*numSegments);
+      correctGramCount = stats[2*(n-1)];
+      totalGramCount = stats[2*(n-1)+1];
 
       double prec_n;
       if (totalGramCount > 0) {
@@ -375,13 +373,21 @@ else { // average
 
   protected int wordCount(String cand_str)
   {
-    return cand_str.split("\\s+").length;
+    if (!cand_str.equals("")) {
+      return cand_str.split("\\s+").length;
+    } else {
+      return 0;
+    }
   }
 
 
   public HashMap<String,Integer>[] getNgramCountsArray(String cand_str)
   {
-    return getNgramCountsArray(cand_str.split("\\s+"));
+    if (!cand_str.equals("")) {
+      return getNgramCountsArray(cand_str.split("\\s+"));
+    } else {
+      return getNgramCountsArray(new String[0]);
+    }
   }
 
   @SuppressWarnings("unchecked")
@@ -454,7 +460,11 @@ else { // average
 
   public HashMap<String,Integer> getNgramCountsAll(String cand_str)
   {
-    return getNgramCountsAll(cand_str.split("\\s+"));
+    if (!cand_str.equals("")) {
+      return getNgramCountsAll(cand_str.split("\\s+"));
+    } else {
+      return getNgramCountsAll(new String[0]);
+    }
   }
 
   public HashMap<String,Integer> getNgramCountsAll(String[] words)
@@ -524,33 +534,5 @@ else { // average
     SHORTEST,
     AVERAGE
   }
-
-/*
-  // The following two functions are nice to have, I suppose, but they're never
-  // used, so they're commented out at the moment for clarity's sake
-  public int prec_suffStats(int gramLength, String[] topCand_str)
-  {
-    int totCount = 0;
-
-    for (int i = 0; i < numSentences; ++i) {
-      String[] words = topCand_str[i].split("\\s+");
-      totCount += prec_suffStats(gramLength,words,i);
-    } // for (i)
-
-    return totCount;
-  }
-
-  public int effLength(String[] topCand_str)
-  {
-    int totLength = 0;
-
-    for (int i = 0; i < numSentences; ++i) {
-      String[] words = topCand_str[i].split("\\s+");
-      totLength += effLength(words.length,i);
-    } // for (i)
-
-    return totLength;
-  }
-*/
 
 }
