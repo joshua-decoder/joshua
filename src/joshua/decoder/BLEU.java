@@ -20,6 +20,7 @@ package joshua.decoder;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map.Entry;
 
 import joshua.decoder.Support;
 import joshua.util.Regex;
@@ -192,6 +193,48 @@ public class BLEU {
 			}
 	}
 	
+	
+
+	/** speed consideration: assume hypNgramTable has a smaller size than referenceNgramTable does
+	 * */
+	public static double computeLinearCorpusGain(double[] linearCorpusGainThetas, int hypLength, HashMap<String,Double> hypNgramTable,  HashMap<String,Integer> referenceNgramTable) {
+		double res = 0;
+		int[] numMatches = new int[5];
+		res += linearCorpusGainThetas[0] * hypLength;
+		numMatches[0] = hypLength;
+		for (Entry<String,Double> entry : hypNgramTable.entrySet()) {
+			String   key = entry.getKey();
+			Integer refNgramCount = referenceNgramTable.get(key);
+			//System.out.println("key is " + key); System.exit(1);
+			if(refNgramCount!=null){//delta function
+				int ngramOrder = Regex.spaces.split(key).length;
+				res += entry.getValue() * linearCorpusGainThetas[ngramOrder];
+				numMatches[ngramOrder] += entry.getValue();
+			}
+		}
+		/*
+		System.out.print("Google BLEU stats are: ");
+		for(int i=0; i<5; i++)
+			System.out.print(numMatches[i]+ " ");
+		System.out.print(" ; BLUE is " + res);
+		System.out.println();
+		*/
+		return res;
+	}
+	
+	
+	
+	static public  double[] computeLinearCorpusThetas(int numUnigramTokens, double unigramPrecision, double decayRatio){
+		double[] res =new double[5];
+		res[0] = -1.0/numUnigramTokens;
+		for(int i=1; i<5; i++)
+			res[i] = 1.0/(4.0*numUnigramTokens*unigramPrecision*Math.pow(decayRatio, i-1));
+		System.out.print("Thetas are: ");
+		for(int i=0; i<5; i++)
+			System.out.print(res[i] + " ");
+		System.out.print("\n");
+		return res;
+	}		
 	
 	
 }

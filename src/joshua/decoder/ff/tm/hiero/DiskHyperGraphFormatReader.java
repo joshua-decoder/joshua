@@ -49,7 +49,8 @@ public class DiskHyperGraphFormatReader extends GrammarReader<BilingualRule> {
 		}
 
 		int lhs = symbolTable.addNonterminal(cleanNonTerminal(fields[0]));
-
+		//System.out.println("original="+ fields[0] +"; lhs=" + cleanNonTerminal(fields[0]) + "; id=" +lhs);System.exit(1);
+		
 		int arity = 0;
 		// foreign side
 		String[] foreignWords = fields[1].split("\\s+");
@@ -125,7 +126,8 @@ public class DiskHyperGraphFormatReader extends GrammarReader<BilingualRule> {
 		sb.append(blockDelimiter);
 		
 		sb.append("[");
-		sb.append(rule.getLHS());
+		sb.append(symbolTable.getWord(rule.getLHS()));
+		
 		sb.append("] ||| ");
 		sb.append(symbolTable.getWords(rule.getFrench()));
 		sb.append(" ||| ");
@@ -142,7 +144,7 @@ public class DiskHyperGraphFormatReader extends GrammarReader<BilingualRule> {
 	@Override
 	public String toWordsWithoutFeatureScores(BilingualRule rule) {
 		StringBuffer sb = new StringBuffer("[");
-		sb.append(rule.getLHS());
+		sb.append(symbolTable.getWord(rule.getLHS()));
 		sb.append("] ||| ");
 		sb.append(symbolTable.getWords(rule.getFrench()));
 		sb.append(" ||| ");
