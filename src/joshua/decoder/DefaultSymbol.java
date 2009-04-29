@@ -189,7 +189,7 @@ public abstract class DefaultSymbol extends AbstractSymbolTable implements Symbo
 			}
 			tbl_str_2_id.put(uqniue_str,id);
 			
-			//it is guranteed that the strings in tbl_id_2_str are different
+			//it is guaranteed that the strings in tbl_id_2_str are different
 			if (null != tbl_id_2_str.get(id)) {
 				 logger.severe("Error: duplicate id, have to exit; " + line);
 				 System.exit(1);

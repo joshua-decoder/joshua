@@ -100,6 +100,8 @@ public class Node extends AbstractGrammar implements Comparable<Node>, Grammar, 
 		final int arity = (sourcePattern==null) ? 0 : sourcePattern.arity;
 //		final List<Rule> sortedResults = (results==null) ? Collections.<Rule>emptyList() : results;
 		
+		//XXX Is results sorted at this point? It needs to be, but I'm not sure it is.
+		
 		return new BasicRuleCollection(arity, sourceSide, results);
 		
 	}

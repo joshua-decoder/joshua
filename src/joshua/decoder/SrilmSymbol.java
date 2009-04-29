@@ -17,13 +17,16 @@
  */
 package joshua.decoder;
 
+import joshua.corpus.SymbolTable;
 import joshua.decoder.ff.lm.srilm.SWIGTYPE_p_Ngram;
+import joshua.decoder.ff.lm.srilm.UnknownSrilmSymbolException;
 import joshua.decoder.ff.lm.srilm.srilm;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Collection;
+import java.util.logging.Logger;
 
 /**
 * @author Zhifei Li, <zhifei.work@gmail.com>
@@ -31,23 +34,81 @@ import java.util.Collection;
 */
 
 public class SrilmSymbol extends DefaultSymbol {
-	private SWIGTYPE_p_Ngram p_srilm=null;
+	private final SWIGTYPE_p_Ngram p_srilm;
 	
-	/*it is somewhat strange */
+	/** Logger for this class. */
+	private static Logger logger =
+		Logger.getLogger(SrilmSymbol.class.getName());
+	
+
+	/**
+	 * Construct an empty SRILM symbol table.
+	 * 
+	 * @param lm_order Language model n-gram order
+	 */
+	public SrilmSymbol(int lm_order) {
+		System.loadLibrary("srilm"); //load once		
+		this.p_srilm = srilm.initLM(lm_order, lm_start_sym_id, lm_end_sym_id );
+		logger.info("Construct the symbol table on the fly");
+	}
+	
+	
+	/**
+	 * Construct an SRILM symbol table using the provided file.
+	 * 
+	 * @param fname File name
+	 * @param lm_order Language model n-gram order
+	 * @throws IOException
+	 */
 	public SrilmSymbol(String fname, int lm_order) throws IOException {
-		/*we have to call the following two funcitons before we add any symbol into the SRILM table
-		 * This is unfortunate as we need to provide lm_order, which seems unrelated*/
 		
+		// We have to call the following two functions before we add any symbol into the SRILM table
+		// This is unfortunate as we need to provide lm_order, which seems unrelated
 		System.loadLibrary("srilm"); //load once		
 		this.p_srilm = srilm.initLM(lm_order, lm_start_sym_id, lm_end_sym_id );
 		
 		//now we can begin to add symbols
 		if(fname !=null){
-			System.out.println("Construct the symbol table from a file " +fname);
+			logger.info("Construct the symbol table from a file " +fname);
 			initializeSymTblFromFile(fname);
 		}else{
-			System.out.println("Construct the symbol table on the fly");
+			logger.info("Construct the symbol table on the fly");
 		}
+	}
+	
+	/**
+	 * Construct an SRILM symbol table using 
+	 * the symbol mapping from the provided symbol table.
+	 * 
+	 * @param vocab Existing symbol table
+	 * @param lm_order Language model n-gram order
+	 */
+	public SrilmSymbol(SymbolTable vocab, int lm_order) {
+		
+		int vocabLow = vocab.getLowestID();
+		int vocabHigh = vocab.getHighestID();
+		
+		int start = vocabLow - 1;
+		int end = lm_end_sym_id - lm_start_sym_id;
+		
+		System.loadLibrary("srilm"); //load once		
+		this.p_srilm = srilm.initLM(lm_order, start, end);
+		
+		// Add all symbols from the supplied symbol table, in order
+		for (int i=vocabLow; i<=vocabHigh; i++) {
+			
+			String symbol = vocab.getWord(i);
+			
+			if (symbol != null) {
+				if (vocab.isNonterminal(i)) {
+					this.addNonterminal(symbol);
+				} else {
+					this.addTerminal(symbol);
+				}
+			}
+			
+		}
+		
 	}
 	
 	public SWIGTYPE_p_Ngram getSrilmPointer(){
@@ -63,10 +124,10 @@ public class SrilmSymbol extends DefaultSymbol {
 	 
 	 public  String  getTerminal(int id){
 		 String res = (String) srilm.getWordForIndex(id);
+		 
 		 if(res == null){
-				System.out.println("try to query the string for non exist id, must exit");
-				System.exit(0);
-			}
+			 throw new UnknownSrilmSymbolException(id);			
+		 }
 		
 		 return  res;
 	 }
@@ -78,16 +139,6 @@ public class SrilmSymbol extends DefaultSymbol {
 
 	public int getID(String wordString) {
 		return addTerminal(wordString);
-	}
-
-	public String getUnknownWord() {
-		//TODO Implement this method
-		throw new RuntimeException("Method not yet implemented");
-	}
-
-	public int getUnknownWordID() {
-		//TODO Implement this method
-		throw new RuntimeException("Method not yet implemented");
 	}
 
 	public void readExternal(ObjectInput in) throws IOException,

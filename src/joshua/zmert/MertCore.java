@@ -18,7 +18,6 @@
 
 package joshua.zmert;
 import joshua.decoder.*;
-import java.math.*;
 import java.util.*;
 import java.io.*;
 import java.text.DecimalFormat;
@@ -345,9 +344,8 @@ public class MertCore
 
 
     if (decoderCommand == null && fakeFileNamePrefix == null) {
-      myDecoder = new JoshuaDecoder();
       println("Loading Joshua decoder...",1);
-      myDecoder.initialize(decoderConfigFileName+".ZMERT.orig");
+      myDecoder = new JoshuaDecoder(decoderConfigFileName+".ZMERT.orig");
       println("...finished loading @ " + (new Date()),1);
       println("");
     } else {
@@ -1240,9 +1238,8 @@ public class MertCore
     } else if (decoderCommand == null) {
 
       if (myDecoder == null) {
-        myDecoder = new JoshuaDecoder();
         println("Loading Joshua decoder...",1);
-        myDecoder.initialize(decoderConfigFileName+".ZMERT.orig");
+        myDecoder = new JoshuaDecoder(decoderConfigFileName+".ZMERT.orig");
         println("...finished loading @ " + (new Date()),1);
         println("");
       }

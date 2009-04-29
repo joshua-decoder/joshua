@@ -38,7 +38,19 @@ import joshua.util.Regex;
 public class BLEU {
 	//do_ngram_clip: consider global n-gram clip
 	
+	public  static double compute_sentence_bleu(String[] ref_sents, String hyp_sent) {
+		return compute_sentence_bleu(ref_sents, hyp_sent, true, 4, false);
+	}
+	
 	//########################multiple references
+	/**
+	 * 
+	 * @param ref_sents 
+	 * @param hyp_sent
+	 * @param do_ngram_clip Should usually be true
+	 * @param bleu_order Should usually be 4
+	 * @param use_shortest_ref Probably use false
+	 */
 	public  static double compute_sentence_bleu(String[] ref_sents, String hyp_sent, boolean do_ngram_clip, int bleu_order, boolean use_shortest_ref){
 		int[] ref_lens = new int[ref_sents.length];
 		ArrayList<HashMap<String, Integer>> list_ref_ngram_tbl = new ArrayList<HashMap<String, Integer>>();

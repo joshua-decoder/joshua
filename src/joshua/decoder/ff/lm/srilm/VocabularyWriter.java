@@ -27,7 +27,7 @@ public class VocabularyWriter {
 		
 		// Load the lm file so that the SRI toolkit will set up the map
 		int lmOrder = 1;
-		SymbolTable symbolTable = new SrilmSymbol(null, lmOrder);
+		SymbolTable symbolTable = new SrilmSymbol(lmOrder);
 		new LMGrammarSRILM((SrilmSymbol)symbolTable, lmOrder, lmFile);
 		
 		

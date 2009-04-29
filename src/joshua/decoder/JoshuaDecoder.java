@@ -74,7 +74,7 @@ public class JoshuaDecoder {
 	 * SymbolTable shared by language model, translation grammar,
 	 * etc).
 	 */
-	// The DecoderFactory is the main thread of decoding
+	/** The DecoderFactory is the main thread of decoding */
 	private DecoderFactory             decoderFactory;
 	private ArrayList<GrammarFactory>  grammarFactories;
 	private ArrayList<FeatureFunction> featureFunctions;
@@ -83,12 +83,10 @@ public class JoshuaDecoder {
 	/**
 	 * Shared symbol table for source language terminals,
 	 * target language terminals, and shared nonterminals.
-	 * <p>
-	 * It may be that separate tables should be maintained
-	 * for the source and target languages.
 	 */
 	private SymbolTable                symbolTable;
 	
+	/** Logger for this class. */
 	private static final Logger logger =
 		Logger.getLogger(JoshuaDecoder.class.getName());
 	
@@ -96,16 +94,33 @@ public class JoshuaDecoder {
 // Constructors
 //===============================================================
 
-	public JoshuaDecoder() {
+	/**
+	 * Constructs a new decoder using the specified configuration file.
+	 * 
+	 * @param Name of configuration file.
+	 */
+	public JoshuaDecoder(String configFile) {
+		this.grammarFactories = new ArrayList<GrammarFactory>();
+		this.initialize(configFile);
+	}
+	
+	private JoshuaDecoder() {
 		this.grammarFactories = new ArrayList<GrammarFactory>();
 	}
 	
+	/**
+	 * Constructs an uninitialized decoder
+	 * for use in testing.
+	 */
+	static JoshuaDecoder getUninitalizedDecoder(String configFile) {
+		return new JoshuaDecoder();
+	}
 	
 //===============================================================
 // Public Methods
 //===============================================================
 	
-	/* this assumes that the weights are ordered according to the decoder's config file */
+	/** this assumes that the weights are ordered according to the decoder's config file */
 	public void changeFeatureWeightVector(double[] weights) {
 		if (this.featureFunctions.size() != weights.length) {
 			logger.severe("JoshuaDecoder.changeFeatureWeightVector: number of weights does not match number of feature functions");
@@ -200,64 +215,74 @@ public class JoshuaDecoder {
 //===============================================================
 	
 	/** Initialize all parts of the JoshuaDecoder. */
-	public JoshuaDecoder initialize(String configFile) {
+	private JoshuaDecoder initialize(String configFile) {
 		try {
 			JoshuaConfiguration.readConfigFile(configFile);
-			
-			// Sets: symbolTable, defaultNonterminals
-			this.initializeSymbolTable();
-			
-			// Needs: symbolTable; Sets: languageModel
-			if (JoshuaConfiguration.have_lm_model) initializeLanguageModel();
-			
-			// Initialize the features: requires that
-			// LM model has been initialized. If an LM
-			// feature is used, need to read config file
-			// again
-			this.initializeFeatureFunctions(configFile);
-			
-			
-			// initialize and load grammar
-			if (! JoshuaConfiguration.use_sent_specific_tm) {
-				
-				if (JoshuaConfiguration.tm_file != null) {
-					
-					if (JoshuaConfiguration.tm_file.endsWith(".josh")) {
-						
+
+			if (JoshuaConfiguration.tm_file != null) {
+
+				if (JoshuaConfiguration.tm_file.endsWith(".josh")) {
+
+//					if (JoshuaConfiguration.use_sent_specific_tm) {
 						try {
-							SymbolTable vocab = initializeSuffixArrayGrammar();
 							
-							//TODO Initialize symbol table using suffix array's vocab
-							
+							// Use suffix array grammar
+							initializeSuffixArrayGrammar();							
+
+							// Needs: symbolTable; Sets: languageModel
+							if (JoshuaConfiguration.have_lm_model) initializeLanguageModel();
+
+							// Initialize the features: requires that
+							// LM model has been initialized. If an LM
+							// feature is used, need to read config file
+							// again
+							this.initializeFeatureFunctions(configFile);
+
 						} catch (Exception e) {
 							logger.severe("Error reading suffix array grammar - exiting decoder.");
 							e.printStackTrace();
 							System.exit(-1);
 						}
-						
-					} else {
-						
-						//TODO Move symbol table initialization to right here
-						
-						initializeTranslationGrammars(JoshuaConfiguration.tm_file);
-					
-					}
-					
-					
-					
+//					} else {
+//						logger.severe(
+//								"A suffix array grammar was provided, " +
+//								"but the decoder was configured to " +
+//								"not use sentence specific grammars. " +
+//								"These two options are incompatible.");
+//						System.exit(-1);
+//					}
+
 				} else {
-					throw new RuntimeException("No translation grammar or suffix array grammar was specified.");
+
+					// Sets: symbolTable, defaultNonterminals
+					this.initializeSymbolTable(null);
+
+					// Needs: symbolTable; Sets: languageModel
+					if (JoshuaConfiguration.have_lm_model) initializeLanguageModel();
+
+					// Initialize the features: requires that
+					// LM model has been initialized. If an LM
+					// feature is used, need to read config file
+					// again
+					this.initializeFeatureFunctions(configFile);
+
+					// initialize and load grammar
+					initializeTranslationGrammars(JoshuaConfiguration.tm_file);
+
 				}
+
+
+
+			} else {
+				throw new RuntimeException("No translation grammar or suffix array grammar was specified.");
 			}
-			
-			
-			
-			//TODO Move language model initialization and feature function initialization to here
 			
 			
 						
 			// Sort the TM grammars (needed to do cube pruning)
-			// BUG: this works for Batch grammar only; not for sentence-specific grammars
+			//
+			// NOTE: this only sorts Batch grammars - 
+			//       sentence-specific grammars will be sorted later
 			for (GrammarFactory grammarFactory : this.grammarFactories) {
 				if (grammarFactory instanceof Grammar) {
 					Grammar batchGrammar = (Grammar) grammarFactory;
@@ -281,19 +306,35 @@ public class JoshuaDecoder {
 	}
 	
 	// TODO: maybe move to JoshuaConfiguration to enable moving the featureFunction parsing there (Sets: symbolTable, defaultNonterminals)
-	private void initializeSymbolTable() throws IOException {
+	private void initializeSymbolTable(SymbolTable existingSymbols) {
 		if (JoshuaConfiguration.use_remote_lm_server) {
-			// Within the decoder, we assume BuildinSymbol when using the remote LM
-			this.symbolTable =
-				new BuildinSymbol(JoshuaConfiguration.remote_symbol_tbl);
-			
+			if (existingSymbols==null) {
+				// Within the decoder, we assume BuildinSymbol when using the remote LM
+				this.symbolTable =
+					new BuildinSymbol(JoshuaConfiguration.remote_symbol_tbl);
+			} else {
+				this.symbolTable = existingSymbols;
+			}
 		} else if (JoshuaConfiguration.use_srilm) {
-			this.symbolTable =
-				new SrilmSymbol(null, JoshuaConfiguration.g_lm_order);
 			logger.finest("Using SRILM symbol table");
+			if (existingSymbols==null) {
+				this.symbolTable =
+					new SrilmSymbol(JoshuaConfiguration.g_lm_order);
+			} else {
+				logger.finest("Populating SRILM symbol table with symbols from existing symbol table");
+				this.symbolTable =
+					new SrilmSymbol(
+							existingSymbols, 
+							JoshuaConfiguration.g_lm_order);
+			}
+			
 			
 		} else {
-			this.symbolTable = new BuildinSymbol(null);
+			if (existingSymbols==null) {
+				this.symbolTable = new BuildinSymbol(null);
+			} else {
+				this.symbolTable = existingSymbols;
+			}
 		}
 		
 		// Add the default nonterminal
@@ -302,7 +343,7 @@ public class JoshuaDecoder {
 	
 	
 	// TODO: maybe move to JoshuaConfiguration to enable moving the featureFunction parsing there (Needs: symbolTable; Sets: languageModel)
-	//TODO: check we actually have a feature that requires a langage model
+	//TODO: check we actually have a feature that requires a language model
 	private void initializeLanguageModel() throws IOException {
 		if (JoshuaConfiguration.use_remote_lm_server) {
 			if (JoshuaConfiguration.use_left_equivalent_state
@@ -350,6 +391,7 @@ public class JoshuaDecoder {
 	
 	
 	// TODO: these Patterns should probably be extracted out and compiled only once (either by us or by MemoryBasedBatchGrammar)
+	// XXX: Huh? What patterns? Can the above todo be deleted? --Lane
 	private void initializeGlueGrammar() throws IOException {
 		logger.info("Constructing glue grammar...");
 		
@@ -375,7 +417,6 @@ public class JoshuaDecoder {
 			logger.info("Using grammar read from file " + tmFile);
 		
 		this.grammarFactories.add(
-			//new MemoryBasedBatchGrammarWithPrune(
 			new MemoryBasedBatchGrammar(
 					JoshuaConfiguration.tm_format,
 					JoshuaConfiguration.tm_file,
@@ -385,13 +426,11 @@ public class JoshuaDecoder {
 					JoshuaConfiguration.goal_symbol,
 					JoshuaConfiguration.span_limit));
 		
-		//TODO if suffix-array: call SAGrammarFactory(SuffixArray sourceSuffixArray, CorpusArray targetCorpus, AlignmentArray alignments, LexicalProbabilities lexProbs, int maxPhraseSpan, int maxPhraseLength, int maxNonterminals, int spanLimit) {
 	}
 	
 	
-	private SymbolTable initializeSuffixArrayGrammar()
+	private SAGrammarFactory initializeSuffixArrayGrammar()
 	throws IOException, ClassNotFoundException {
-		initializeGlueGrammar();
 		
 		int maxCacheSize = JoshuaConfiguration.sa_rule_cache_size;
 		
@@ -438,6 +477,10 @@ public class JoshuaDecoder {
 		commonVocab.readExternal(
 			BinaryIn.vocabulary(binaryVocabFileName));
 		
+		// Initialize symbol table using suffix array's vocab
+		this.initializeSymbolTable(commonVocab);
+		
+		initializeGlueGrammar();
 		
 		if (logger.isLoggable(Level.INFO))
 			logger.info("Reading source language corpus from " +
@@ -506,18 +549,19 @@ public class JoshuaDecoder {
 			JoshuaConfiguration.sa_precalculate_lexprobs);
 		
 		// Finally, add the Suffix Array Grammar
-		grammarFactories.add(new SAGrammarFactory(
-			sourceSuffixArray,
-			targetCorpusArray,
-			alignments,
-			lexProbs,
-			JoshuaConfiguration.sa_rule_sample_size,
-			JoshuaConfiguration.sa_max_phrase_span,
-			JoshuaConfiguration.sa_max_phrase_length,
-			JoshuaConfiguration.sa_max_nonterminals,
-			JoshuaConfiguration.sa_min_nonterminal_span));
+		SAGrammarFactory saGrammarFactory = new SAGrammarFactory(
+				sourceSuffixArray,
+				targetCorpusArray,
+				alignments,
+				lexProbs,
+				JoshuaConfiguration.sa_rule_sample_size,
+				JoshuaConfiguration.sa_max_phrase_span,
+				JoshuaConfiguration.sa_max_phrase_length,
+				JoshuaConfiguration.sa_max_nonterminals,
+				JoshuaConfiguration.sa_min_nonterminal_span);
+		grammarFactories.add(saGrammarFactory);
 		
-		return commonVocab;
+		return saGrammarFactory;
 	}
 	
 	
@@ -637,7 +681,7 @@ public class JoshuaDecoder {
 		
 		
 		/* Step-1: initialize the decoder */
-		JoshuaDecoder decoder = new JoshuaDecoder().initialize(configFile);
+		JoshuaDecoder decoder = new JoshuaDecoder(configFile);
 		if (logger.isLoggable(Level.INFO)) {
 			logger.info("Before translation, loading time is "
 				+ ((double)(System.currentTimeMillis() - startTime) / 1000.0)

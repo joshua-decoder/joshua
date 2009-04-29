@@ -94,17 +94,21 @@
        <class name="joshua.util.CacheTest" /> 
     </classes>
   </test>
-<!--
+
   <test name="Decoder" >
   	<classes>
+ <!--
   		<class name="joshua.decoder.JoshuaDecoderTest" >
      	   <parameter name="configFile" value="example/example.config.javalm" />
      	   <parameter name="sourceInput" value="example/example.test.in" />
      	   <parameter name="referenceOutput" value="example/example.nbest.out.javalm.valid" />
       </class>
+ -->
+ 
+ 		<class name="joshua.decoder.DecoderThreadTest" />
   	</classes>
   </test>
-  -->
+  
   <test name="Feature Functions" >
   	<classes>
   		<class name="joshua.decoder.ff.ArityPhrasePenaltyFFTest" />

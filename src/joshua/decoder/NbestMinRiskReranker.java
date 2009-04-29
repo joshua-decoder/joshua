@@ -260,6 +260,9 @@ public class NbestMinRiskReranker {
 
 	
 	public static void main(String[] args) throws IOException {
+		
+		// If you don't know what to use for scaling factor, try using 1
+		
 		if (4 != args.length) {
 			System.out.println("wrong command, correct command should be: java NbestMinRiskReranker f_nbest_in f_out produce_reranked_nbest scaling_factor");
 			System.out.println("num of args is "+ args.length);
