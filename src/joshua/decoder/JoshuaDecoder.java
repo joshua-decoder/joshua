@@ -104,7 +104,7 @@ public class JoshuaDecoder {
 		this.initialize(configFile);
 	}
 	
-	private JoshuaDecoder() {
+	public JoshuaDecoder() {
 		this.grammarFactories = new ArrayList<GrammarFactory>();
 	}
 	
@@ -215,7 +215,7 @@ public class JoshuaDecoder {
 //===============================================================
 	
 	/** Initialize all parts of the JoshuaDecoder. */
-	private JoshuaDecoder initialize(String configFile) {
+	public JoshuaDecoder initialize(String configFile) {
 		try {
 			JoshuaConfiguration.readConfigFile(configFile);
 
