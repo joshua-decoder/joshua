@@ -97,6 +97,10 @@ public class PrefixTree {
 	 */
 	static boolean SENTENCE_FINAL_X = false;
 	
+	
+	static boolean EDGE_X_MAY_VIOLATE_PHRASE_SPAN = false;
+	
+	
 	/** Unique integer identifier for the root node. */
 	static final int ROOT_NODE_ID = -999;
 	
@@ -299,7 +303,11 @@ public class PrefixTree {
 				if (logger.isLoggable(Level.FINEST)) logger.finest("Adding tuple (X," + (i-1) + ","+ i +","+xnode.toShortString() +")");
 				
 				// 5: Add <X f_i, i-1, i+1, p_x> to queue
-				queue.add(new Tuple(xpattern, i-1, i, xnode));
+				if (EDGE_X_MAY_VIOLATE_PHRASE_SPAN) {
+					queue.add(new Tuple(xpattern, i, i, xnode));	
+				} else {
+					queue.add(new Tuple(xpattern, i-1, i, xnode));
+				}
 			}
 		}
 
@@ -514,6 +522,7 @@ public class PrefixTree {
 
 	}
 
+	static boolean BUGGY = false;
 	
 	/**
 	 * Implements Function EXTEND_QUEUE from Lopez (2008) PhD Thesis, Algorithm 2, p 76
@@ -530,8 +539,14 @@ public class PrefixTree {
 		int J = j;
 		if (!SENTENCE_FINAL_X) J += 1;
 		
+		int endOfPhraseSpan = (j+1)-i+1;
+//			(EDGE_X_MAY_VIOLATE_PHRASE_SPAN) ? 
+//					(j)-i+1 :
+//						(j+1)-i+1;
+		if (EDGE_X_MAY_VIOLATE_PHRASE_SPAN) endOfPhraseSpan -= 1;
+		
 		// 1: if |alpha| < MaxPhraseLength  and  j-i+1<=MaxPhraseSpan then 		
-		if (pattern.size() < maxPhraseLength  &&  (j+1)-i+1 <= maxPhraseSpan  && J<sentence.length) {
+		if (pattern.size() < maxPhraseLength  &&  endOfPhraseSpan <= maxPhraseSpan  && J<sentence.length) {
 
 			// 2: Add <alpha f_j, i, j+1, p_alpha> to queue
 			//    (add new tuple to the queue)

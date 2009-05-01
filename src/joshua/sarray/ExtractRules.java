@@ -90,8 +90,8 @@ public class ExtractRules {
 			Option<Integer> lexSampleSize = commandLine.addIntegerOption("lexSampleSize","LEX_SAMPLE_SIZE",1000, "Size to use when sampling for lexical probability calculations");
 			Option<Integer> ruleSampleSize = commandLine.addIntegerOption("ruleSampleSize","RULE_SAMPLE_SIZE",300, "Maximum number of rules to store at each node in the prefix tree");
 
-			Option<Integer> maxPhraseSpan = commandLine.addIntegerOption("maxPhraseSpan","MAX_PHRASE_SPAN",10, "Max phrase span");
-			Option<Integer> maxPhraseLength = commandLine.addIntegerOption("maxPhraseLength","MAX_PHRASE_LENGTH",10, "Max phrase length");
+			Option<Integer> maxPhraseSpan = commandLine.addIntegerOption("maxPhraseSpan","MAX_PHRASE_SPAN",10, "Maximum span in the training corpus of any extracted source phrase");
+			Option<Integer> maxPhraseLength = commandLine.addIntegerOption("maxPhraseLength","MAX_PHRASE_LENGTH",5, "Maximum number of terminals plus nonterminals allowed in the source side of a phrase");
 			Option<Integer> maxNonterminals = commandLine.addIntegerOption("maxNonterminals","MAX_NONTERMINALS",2, "Max nonterminals");
 			Option<Integer> minNonterminalSpan = commandLine.addIntegerOption("minNonterminalSpan","MIN_NONTERMINAL_SPAN", 2, "Minimum nonterminal span");
 			
@@ -99,8 +99,10 @@ public class ExtractRules {
 
 			Option<Boolean> output_gz = commandLine.addBooleanOption("output-gzipped",false,"should the output file be gzipped");
 
-			Option<Boolean> sentence_initial_X = commandLine.addBooleanOption("sentence-initial-X",false,"should rules with initial X be extracted from sentence-initial phrases");
-			Option<Boolean> sentence_final_X = commandLine.addBooleanOption("sentence-final-X",false,"should rules with final X be extracted from sentence-final phrases");
+			Option<Boolean> sentence_initial_X = commandLine.addBooleanOption("sentence-initial-X",true,"should rules with initial X be extracted from sentence-initial phrases");
+			Option<Boolean> sentence_final_X = commandLine.addBooleanOption("sentence-final-X",true,"should rules with final X be extracted from sentence-final phrases");
+
+			Option<Boolean> edge_X_violates = commandLine.addBooleanOption("violating-X",true,"should rules with initial X or final X be extracted in cases where doing so would violate the maximum phrase span constraint");
 			
 			Option<Boolean> print_prefixTree = commandLine.addBooleanOption("print-prefix-tree",false,"should prefix tree be printed to standard out (for debugging)");
 			Option<Boolean> print_rules = commandLine.addBooleanOption("print-rules",true,"should extracted rules be printed to standard out");
@@ -335,6 +337,8 @@ public class ExtractRules {
 			
 			PrefixTree.SENTENCE_INITIAL_X = commandLine.getValue(sentence_initial_X);
 			PrefixTree.SENTENCE_FINAL_X   = commandLine.getValue(sentence_final_X);
+			
+			PrefixTree.EDGE_X_MAY_VIOLATE_PHRASE_SPAN = commandLine.getValue(edge_X_violates);
 			
 			int lineNumber = 0;
 

@@ -5,3 +5,87 @@ Start with a file - we'll call it source.txt.
 \begin{verbatim}
 java -cp bin joshua.sarray.SuffixArray source.txt vocab.bin corpus.bin suffixes.bin
 \end{verbatim}
+
+
+\section{Compatibility with Hiero}
+
+In many cases it may be desirable to extract a grammar using Joshua that matches as closely as possible the grammars extracted by Hiero's grammar extraction code. The examples used in this section are taken directly from the unit tests for the ExtractRules class; for more information see the following files:
+
+\begin{verbatim}
+test/joshua/sarray/ExtractRulesTest.java
+src/joshua/sarray/ExtractRules.java
+src/joshua/sarray/PrefixTree.java
+\end{verbatim}
+
+
+\subsection{Sentence-initial and sentence-final X}
+
+One of the main points where Joshua's rule extraction code differs from Hiero's can be seen in two parameters of ExtractRules {\tt --sentence-initial-X} and {\tt --sentence-final-X}. Joshua currently defaults both of these parameters to true; to get a grammar that most closely matches Hiero's extracted grammars, these parameters should be set to true.
+
+To see what happens here, consider the following parallel training corpus, with English as the source and German as the target:
+
+\begin{alltt}
+it makes him and it mars him , it sets him on yet it takes him off .
+das macht ihn und es besch\"adigt ihn , es setzt ihn auf und es f\"uhrt ihn aus .
+0-0 1-1 2-2 3-3 4-4 5-5 6-6 7-7 8-8 9-9 10-10 11-11 12-12 13-13 14-14 15-15 16-16 17-17
+\end{alltt}
+
+Now, what happens if we use Joshua's ExtractRules to extract a grammar for the following test sentence, with {\tt --sentence-initial-X=false} and {\tt --sentence-final-X=false}?
+
+\begin{verbatim}
+Test sentence:		it
+
+Extracted rules:
+
+"[X]", "it", "das"
+"[X]", "it", "es"
+\end{verbatim}
+
+OK. Not too surprising. This is what you would probably expect given the training data. But, what happens if we use {\tt --sentence-initial-X=true} and {\tt --sentence-final-X=true}?
+
+\begin{verbatim}
+Test sentence:		it
+
+Extracted rules:
+
+"[X]", "[X,1] it [X,2]", "[X,1] es [X,2]"
+"[X]", "[X,1] it", "[X,1] es"
+"[X]", "it [X,1]", "das [X,1]"
+"[X]", "it [X,1]", "es [X,1]"
+"[X]", "it", "das"
+"[X]", "it", "es"
+\end{verbatim}
+
+Now this is odd. We're now extracting rules with X at the beginning and end of rules, even when those nonterminals entirely precede or entirely follow all of the words in the test sentence. But, that's how Hiero's rule extraction behaves, so this option enables compatibility with that behavior.
+
+
+\subsection{Violating phrase span limits}
+
+The parameter {\tt --maxPhraseSpan}, which ExtractRules defaults to {\tt 10}, specifies the maximum span in the training corpus of any extracted source phrase. Consider the following sentence:
+
+\begin{tt}
+\ \\
+declaro reanudado el per\'iodo de sesiones del parlamento europeo , interrumpido el viernes 17 de diciembre pasado , y reitero a sus se\~nor\'ias mi deseo de que hayan tenido unas buenas vacaciones .
+\ \\
+\end{tt}
+
+During the prefix tree construction algrorithm of \newcite{lopez08phd}, phrases are built incrementally as continually larger phrases are examined.  A special case arises during rule extraction when considering phrases that start or end with a nonterminal, and the phrase span runs against the maximum phrase span constraint.  Given the preceding sentence and a phrase span limit of 10, the following phrase should certainly be allowed:
+
+\begin{verbatim}
+, X , y
+\end{verbatim}
+
+The above phrase spans exactly 10 words in the source sentence. But, should the phrase below be allowed:
+
+\begin{verbatim}
+, X , y X
+\end{verbatim}
+
+The phrase above, which has a span of (at minimum) 11, apparently violates the maximum phrase span constraint (at least under the most straightforward definition of maximum phrase span). A similar situation can occur with phrases with an initial nonterminal:
+
+\begin{verbatim}
+X , X que
+\end{verbatim}
+
+Joshua can be configured to allow or prohibit violation of the phrase span limit in these circumstances using the {\tt --violating-X} option in ExtractRules. Hiero's grammar extraction code allows these violations. For maximum compatibility with Hiero, ExtractRules defaults to {\tt --violating-X=true}. To change this behavior, set {\tt --violating-X=false} in ExtractRules.
+

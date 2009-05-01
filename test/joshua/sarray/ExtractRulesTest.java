@@ -108,14 +108,15 @@ public class ExtractRulesTest {
 	 * @param testCorpusString
 	 * @param sentenceInitialX TODO
 	 * @param sentenceFinalX TODO
+	 * @param violatingX TODO
 	 * @return
 	 * @throws IOException 
 	 */
-	private List<String> extractRules(String testCorpusString, boolean sentenceInitialX, boolean sentenceFinalX) throws IOException {
-		return extractRules(sourceFileName, targetFileName, alignmentFileName, testCorpusString, sentenceInitialX, sentenceFinalX, false, 2);
+	private List<String> extractRules(String testCorpusString, boolean sentenceInitialX, boolean sentenceFinalX, boolean violatingX) throws IOException {
+		return extractRules(sourceFileName, targetFileName, alignmentFileName, testCorpusString, sentenceInitialX, sentenceFinalX, violatingX, false, 2);
 	}
 	
-	private List<String> extractRules(String sourceFileName, String targetFileName, String alignmentFileName, String testCorpusString, boolean sentenceInitialX, boolean sentenceFinalX, boolean printPrefixTree, int minNonterminalSpan) throws IOException {
+	private List<String> extractRules(String sourceFileName, String targetFileName, String alignmentFileName, String testCorpusString, boolean sentenceInitialX, boolean sentenceFinalX, boolean violatingX, boolean printPrefixTree, int minNonterminalSpan) throws IOException {
 		
 		String testFileName;
 		{
@@ -136,6 +137,7 @@ public class ExtractRulesTest {
 		String[] args = {
 				"--sentence-initial-X="+sentenceInitialX,
 				"--sentence-final-X="+sentenceFinalX,
+				"--violating-X="+violatingX,
 				"--maxPhraseLength=5",
 				"--minNonterminalSpan="+minNonterminalSpan,
 				"--print-prefix-tree="+printPrefixTree,
@@ -176,6 +178,15 @@ public class ExtractRulesTest {
 	
 	@Test
 	public void europarlSmall100() throws IOException {
+		extractEuroparlSmall100(false);
+	}
+	
+	@Test
+	public void europarlSmall100ViolatingX() throws IOException {
+		extractEuroparlSmall100(true);
+	}
+	
+	public void extractEuroparlSmall100(boolean violatingX) throws IOException {
 		
 		String sourceFileName = "data/europarl.es.small.100";
 		String targetFileName = "data/europarl.en.small.100";
@@ -187,16 +198,19 @@ public class ExtractRulesTest {
 		
 		int minNonterminalSpan = 2;
 		
-		List<String> lines = extractRules(sourceFileName, targetFileName, alignmentFileName, testSentence, true, true, printPrefixTree, minNonterminalSpan);
+		List<String> lines = extractRules(sourceFileName, targetFileName, alignmentFileName, testSentence, true, true, violatingX, printPrefixTree, minNonterminalSpan);
 
-		Assert.assertEquals(lines.size(), 525);
+		int expectedLines = 525;
+		if (violatingX) expectedLines += 14;
+		
+		Assert.assertEquals(lines.size(), expectedLines);
 		
 		int n = 0;
 		verifyLine(lines.get(n++), "[X]", ", [X,1] , [X,2]", ", [X,1] , [X,2]");
 		verifyLine(lines.get(n++), "[X]", ", [X,1] , [X,2]", ", [X,1] [X,2]");
 		verifyLine(lines.get(n++), "[X]", ", [X,1] , [X,2]", ", [X,2] [X,1]");
 		verifyLine(lines.get(n++), "[X]", ", [X,1] , [X,2]", ", you [X,1] [X,2]");
-//		verifyLine(lines.get(n++), "[X]", ", [X,1] , y [X,2]", ", [X,1] , and [X,2]");
+		if (violatingX) verifyLine(lines.get(n++), "[X]", ", [X,1] , y [X,2]", ", [X,1] , and [X,2]"); // Added in buggy
 		verifyLine(lines.get(n++), "[X]", ", [X,1] , y", ", [X,1] , and");
 		verifyLine(lines.get(n++), "[X]", ", [X,1] , y", ", you [X,1] and");
 		verifyLine(lines.get(n++), "[X]", ", [X,1] ,", ", [X,1] ,");
@@ -211,7 +225,7 @@ public class ExtractRulesTest {
 		verifyLine(lines.get(n++), "[X]", ", [X,1] de [X,2]", ", [X,1] shall do [X,2]");
 		verifyLine(lines.get(n++), "[X]", ", [X,1] de [X,2]", ", still [X,1] in [X,2]");
 		verifyLine(lines.get(n++), "[X]", ", [X,1] de [X,2]", ", still [X,1] of [X,2]");
-//		verifyLine(lines.get(n++), "[X]", ", [X,1] de que [X,2]", ", [X,1] that [X,2]");
+		if (violatingX) verifyLine(lines.get(n++), "[X]", ", [X,1] de que [X,2]", ", [X,1] that [X,2]"); // Added in buggy
 		verifyLine(lines.get(n++), "[X]", ", [X,1] de que", ", [X,1] that");
 		verifyLine(lines.get(n++), "[X]", ", [X,1] de que", ", [X,1] to the start of");
 		verifyLine(lines.get(n++), "[X]", ", [X,1] de", ", [X,1] attention to");
@@ -228,11 +242,11 @@ public class ExtractRulesTest {
 		verifyLine(lines.get(n++), "[X]", ", [X,1] el [X,2]", ", [X,1] the [X,2]");
 		verifyLine(lines.get(n++), "[X]", ", [X,1] el", ", [X,1] the");
 		verifyLine(lines.get(n++), "[X]", ", [X,1] el", ", [X,1] there");
-//		verifyLine(lines.get(n++), "[X]", ", [X,1] que [X,2]", ", [X,1] that [X,2]");
+		if (violatingX) verifyLine(lines.get(n++), "[X]", ", [X,1] que [X,2]", ", [X,1] that [X,2]"); // Added in buggy
 		verifyLine(lines.get(n++), "[X]", ", [X,1] que", ", [X,1] that");
 		verifyLine(lines.get(n++), "[X]", ", [X,1] que", ", [X,1] which");
 		verifyLine(lines.get(n++), "[X]", ", [X,1] sus se\u00F1or\u00EDas", ", [X,1] wish you");
-//		verifyLine(lines.get(n++), "[X]", ", [X,1] y [X,2]", ", [X,1] and [X,2]");
+		if (violatingX) verifyLine(lines.get(n++), "[X]", ", [X,1] y [X,2]", ", [X,1] and [X,2]"); // Added in buggy
 		verifyLine(lines.get(n++), "[X]", ", [X,1] y", ", [X,1] and");
 		verifyLine(lines.get(n++), "[X]", ", [X,1]", ", [X,1]");
 		verifyLine(lines.get(n++), "[X]", ", [X,1]", ", and [X,1]");
@@ -271,14 +285,14 @@ public class ExtractRulesTest {
 		verifyLine(lines.get(n++), "[X]", "17 de diciembre pasado [X,1]", "17 december 1999 [X,1]");
 		verifyLine(lines.get(n++), "[X]", "17 de diciembre pasado", "17 december 1999");
 		verifyLine(lines.get(n++), "[X]", "17", "17");
-//		verifyLine(lines.get(n++), "[X]", "[X,1] , [X,2] , y", "[X,1] , [X,2] , and");
+		if (violatingX) verifyLine(lines.get(n++), "[X]", "[X,1] , [X,2] , y", "[X,1] , [X,2] , and"); // Added in buggy
 		verifyLine(lines.get(n++), "[X]", "[X,1] , [X,2] ,", ", [X,2] [X,1] ,");
 		verifyLine(lines.get(n++), "[X]", "[X,1] , [X,2] ,", "[X,1] , [X,2] ,");
 		verifyLine(lines.get(n++), "[X]", "[X,1] , [X,2] ,", "[X,1] [X,2] ,");
 		verifyLine(lines.get(n++), "[X]", "[X,1] , [X,2] 17", "[X,1] [X,2] 17");
 		verifyLine(lines.get(n++), "[X]", "[X,1] , [X,2] a", "[X,1] , [X,2] to");
-//		verifyLine(lines.get(n++), "[X]", "[X,1] , [X,2] de que", "[X,1] , [X,2] that");
-//		verifyLine(lines.get(n++), "[X]", "[X,1] , [X,2] de que", "[X,1] [X,2] to the start of");
+		if (violatingX) verifyLine(lines.get(n++), "[X]", "[X,1] , [X,2] de que", "[X,1] , [X,2] that"); // Added in buggy
+		if (violatingX) verifyLine(lines.get(n++), "[X]", "[X,1] , [X,2] de que", "[X,1] [X,2] to the start of"); // Added in buggy
 		verifyLine(lines.get(n++), "[X]", "[X,1] , [X,2] de", "[X,1] , [X,2] in");
 		verifyLine(lines.get(n++), "[X]", "[X,1] , [X,2] de", "[X,1] , [X,2] of");
 		verifyLine(lines.get(n++), "[X]", "[X,1] , [X,2] de", "[X,1] [X,2] of");
@@ -286,9 +300,9 @@ public class ExtractRulesTest {
 		verifyLine(lines.get(n++), "[X]", "[X,1] , [X,2] deseo", "[X,1] , [X,2] wish");
 		verifyLine(lines.get(n++), "[X]", "[X,1] , [X,2] el", "[X,1] , [X,2] the");
 		verifyLine(lines.get(n++), "[X]", "[X,1] , [X,2] el", "[X,1] , [X,2] there");
-//		verifyLine(lines.get(n++), "[X]", "[X,1] , [X,2] que", "[X,1] , [X,2] that");
-//		verifyLine(lines.get(n++), "[X]", "[X,1] , [X,2] que", "[X,1] [X,2] that");
-//		verifyLine(lines.get(n++), "[X]", "[X,1] , [X,2] y", "[X,1] , [X,2] and");
+		if (violatingX) verifyLine(lines.get(n++), "[X]", "[X,1] , [X,2] que", "[X,1] , [X,2] that"); // Added in buggy start
+		if (violatingX) verifyLine(lines.get(n++), "[X]", "[X,1] , [X,2] que", "[X,1] [X,2] that"); // Added in buggy start
+		if (violatingX) verifyLine(lines.get(n++), "[X]", "[X,1] , [X,2] y", "[X,1] , [X,2] and"); // Added in buggy start
 		verifyLine(lines.get(n++), "[X]", "[X,1] , [X,2]", ", [X,2] [X,1]");
 		verifyLine(lines.get(n++), "[X]", "[X,1] , [X,2]", "[X,1] , [X,2]");
 		verifyLine(lines.get(n++), "[X]", "[X,1] , [X,2]", "[X,1] , you [X,2]");
@@ -399,9 +413,9 @@ public class ExtractRulesTest {
 		verifyLine(lines.get(n++), "[X]", "[X,1] deseo", "[X,1] wish");
 		verifyLine(lines.get(n++), "[X]", "[X,1] el [X,2] ,", "[X,1] [X,2] ,");
 		verifyLine(lines.get(n++), "[X]", "[X,1] el [X,2] ,", "[X,1] the [X,2] ,");
-//		verifyLine(lines.get(n++), "[X]", "[X,1] el [X,2] a", "[X,1] the [X,2] on");
+		if (violatingX) verifyLine(lines.get(n++), "[X]", "[X,1] el [X,2] a", "[X,1] the [X,2] on"); // Added in buggy start
 		verifyLine(lines.get(n++), "[X]", "[X,1] el [X,2] de", "[X,1] [X,2] in");
-//		verifyLine(lines.get(n++), "[X]", "[X,1] el [X,2] el", "[X,1] [X,2] the");
+		if (violatingX) verifyLine(lines.get(n++), "[X]", "[X,1] el [X,2] el", "[X,1] [X,2] the"); // Added in buggy start
 		verifyLine(lines.get(n++), "[X]", "[X,1] el [X,2] y", "[X,1] the [X,2] and");
 		verifyLine(lines.get(n++), "[X]", "[X,1] el [X,2]", "[X,1] the [X,2]");
 		verifyLine(lines.get(n++), "[X]", "[X,1] el [X,2]", "[X,1] this [X,2]");
@@ -594,12 +608,12 @@ public class ExtractRulesTest {
 		verifyLine(lines.get(n++), "[X]", "el [X,1] , [X,2]", "the [X,1] , [X,2]");
 		verifyLine(lines.get(n++), "[X]", "el [X,1] ,", "the [X,1] ,");
 		verifyLine(lines.get(n++), "[X]", "el [X,1] ,", "this [X,1] ,");
-//		verifyLine(lines.get(n++), "[X]", "el [X,1] a [X,2]", "the [X,1] on [X,2]");
+		if (violatingX) verifyLine(lines.get(n++), "[X]", "el [X,1] a [X,2]", "the [X,1] on [X,2]"); // Added in buggy
 		verifyLine(lines.get(n++), "[X]", "el [X,1] a", "the [X,1] on");
 		verifyLine(lines.get(n++), "[X]", "el [X,1] de [X,2] ,", "the [X,1] [X,2] ,");
 		verifyLine(lines.get(n++), "[X]", "el [X,1] de [X,2]", "the [X,1] [X,2]");
 		verifyLine(lines.get(n++), "[X]", "el [X,1] de", "the [X,1] 's");
-//		verifyLine(lines.get(n++), "[X]", "el [X,1] el [X,2]", "the [X,1] [X,2]");
+		if (violatingX) verifyLine(lines.get(n++), "[X]", "el [X,1] el [X,2]", "the [X,1] [X,2]"); // Added in buggy
 		verifyLine(lines.get(n++), "[X]", "el [X,1] y [X,2]", "the [X,1] and [X,2]");
 		verifyLine(lines.get(n++), "[X]", "el [X,1] y", "the [X,1] and");
 		verifyLine(lines.get(n++), "[X]", "el [X,1]", "the [X,1]");
@@ -731,7 +745,9 @@ public class ExtractRulesTest {
 		verifyLine(lines.get(n++), "[X]", "y reitero", "and i would like once again");
 		verifyLine(lines.get(n++), "[X]", "y", ",");
 		verifyLine(lines.get(n++), "[X]", "y", "and");
-
+	
+		Assert.assertEquals(n, expectedLines);
+		
 	}
 	
 	@Test
@@ -743,7 +759,7 @@ public class ExtractRulesTest {
 		
 		boolean printPrefixTree = false;
 				
-		List<String> lines = extractRules(sourceFileName, targetFileName, alignmentFileName, "declaro reanudado el per\u00EDodo de sesiones del parlamento europeo , interrumpido el viernes 17 de diciembre pasado , y reitero a sus se\u00F1or\u00EDas mi deseo de que hayan tenido unas buenas vacaciones .", true, true, printPrefixTree, 2);
+		List<String> lines = extractRules(sourceFileName, targetFileName, alignmentFileName, "declaro reanudado el per\u00EDodo de sesiones del parlamento europeo , interrumpido el viernes 17 de diciembre pasado , y reitero a sus se\u00F1or\u00EDas mi deseo de que hayan tenido unas buenas vacaciones .", true, true, false, printPrefixTree, 2);
 
 		Assert.assertEquals(lines.size(), 197);
 		
@@ -951,7 +967,7 @@ public class ExtractRulesTest {
 	@Test(dependsOnMethods={"setup"})
 	public void testRuleSet1() throws IOException {
 		
-		List<String> lines = extractRules("it", false, false);
+		List<String> lines = extractRules("it", false, false, false);
 		
 		Assert.assertEquals(lines.size(), 2);
 		
@@ -972,7 +988,7 @@ public class ExtractRulesTest {
 	@Test(dependsOnMethods={"setup"})
 	public void testRuleSet1Expanded() throws IOException {
 		
-		List<String> lines = extractRules("it", true, true);
+		List<String> lines = extractRules("it", true, true, false);
 		
 		Assert.assertEquals(lines.size(), 6);
 		
@@ -997,7 +1013,7 @@ public class ExtractRulesTest {
 	@Test(dependsOnMethods={"setup"})
 	public void testRuleSet2() throws IOException {
 		
-		List<String> lines = extractRules("it makes", false, false);
+		List<String> lines = extractRules("it makes", false, false, false);
 		
 		Assert.assertEquals(lines.size(), 6);
 		
@@ -1026,7 +1042,7 @@ public class ExtractRulesTest {
 	@Test(dependsOnMethods={"setup"})
 	public void testRuleSet2Expanded() throws IOException {
 		
-		List<String> lines = extractRules("it makes", true, true);
+		List<String> lines = extractRules("it makes", true, true, false);
 		
 		Assert.assertEquals(lines.size(), 10);
 		
@@ -1059,7 +1075,7 @@ public class ExtractRulesTest {
 	@Test(dependsOnMethods={"setup"})
 	public void testRuleSet3() throws IOException {
 		
-		List<String> lines = extractRules("it makes him", false, false);
+		List<String> lines = extractRules("it makes him", false, false, false);
 		
 		Assert.assertEquals(lines.size(), 23-9);
 		
@@ -1110,7 +1126,7 @@ public class ExtractRulesTest {
 	@Test(dependsOnMethods={"setup"})
 	public void testRuleSet3Expanded() throws IOException {
 		
-		List<String> lines = extractRules("it makes him", true, true);
+		List<String> lines = extractRules("it makes him", true, true, false);
 		
 		final int expectedLines = 23;
 		Assert.assertEquals(lines.size(), expectedLines);
@@ -1170,18 +1186,18 @@ public class ExtractRulesTest {
 	
 	@Test(dependsOnMethods={"setup"})
 	public void testRuleSet18() throws IOException {
-		extractFull(false, false);
+		extractFull(false, false, false, false);
 	}
 	
 	@Test(dependsOnMethods={"setup"})
 	public void testRuleSet18Expanded() throws IOException {
-		extractFull(true, true);
+		extractFull(true, true, true, true);
 	}
 	
 	
-	private void extractFull(boolean sentenceInitialX, boolean sentenceFinalX) throws IOException {
+	private void extractFull(boolean sentenceInitialX, boolean sentenceFinalX, boolean initialXViolates, boolean finalXViolates) throws IOException {
 		
-		List<String> lines = extractRules("it makes him and it mars him , it sets him on yet it takes him off .", sentenceInitialX, sentenceFinalX);
+		List<String> lines = extractRules("it makes him and it mars him , it sets him on yet it takes him off .", sentenceInitialX, sentenceFinalX, initialXViolates);
 		
 		Assert.assertEquals(lines.size(), 922);
 		
