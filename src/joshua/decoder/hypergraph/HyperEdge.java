@@ -66,4 +66,8 @@ public class HyperEdge {
 		}
 		return transition_cost;
 	}
+	
+	public void setTransitionCost(double transCost){
+		transition_cost = transCost;
+	}
 }
