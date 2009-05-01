@@ -1024,6 +1024,39 @@ public class ExtractRulesTest {
 	}
 	
 	@Test(dependsOnMethods={"setup"})
+	public void testRuleSet2Expanded() throws IOException {
+		
+		List<String> lines = extractRules("it makes", true, true);
+		
+		Assert.assertEquals(lines.size(), 10);
+		
+		int n = 0;
+		verifyLine(lines.get(n++), "[X]", "[X,1] it [X,2]", "[X,1] es [X,2]");
+		verifyLine(lines.get(n++), "[X]", "[X,1] it", "[X,1] es");
+		verifyLine(lines.get(n++), "[X]", "it [X,1]", "das [X,1]");
+		verifyLine(lines.get(n++), "[X]", "it [X,1]", "es [X,1]");
+		verifyLine(lines.get(n++), "[X]", "it makes [X,1]", "das macht [X,1]");
+		verifyLine(lines.get(n++), "[X]", "it makes", "das macht");
+		verifyLine(lines.get(n++), "[X]", "it", "das");
+		verifyLine(lines.get(n++), "[X]", "it", "es");
+		verifyLine(lines.get(n++), "[X]", "makes [X,1]", "macht [X,1]");
+		verifyLine(lines.get(n++), "[X]", "makes", "macht");
+	
+		//From Hiero:
+//		[X] ||| [X,1] it ||| [X,1] es ||| 0.124938733876 -0.0 0.124938733876
+//		[X] ||| it [X,1] ||| es [X,1] ||| 0.124938733876 -0.0 0.124938733876
+//		[X] ||| it [X,1] ||| das [X,1] ||| 0.60206001997 -0.0 0.60206001997
+//		[X] ||| [X,1] it [X,2] ||| [X,1] es [X,2] ||| 0.124938733876 -0.0 0.124938733876
+//		[X] ||| it ||| das ||| 0.60206001997 -0.0 0.60206001997
+//		[X] ||| it ||| es ||| 0.124938733876 -0.0 0.124938733876
+//		[X] ||| makes ||| macht ||| -0.0 -0.0 -0.0
+//		[X] ||| makes [X,1] ||| macht [X,1] ||| -0.0 -0.0 -0.0
+//		[X] ||| it makes [X,1] ||| das macht [X,1] ||| -0.0 -0.0 0.60206001997
+//		[X] ||| it makes ||| das macht ||| -0.0 -0.0 0.60206001997
+		
+	}
+	
+	@Test(dependsOnMethods={"setup"})
 	public void testRuleSet3() throws IOException {
 		
 		List<String> lines = extractRules("it makes him", false, false);
@@ -1073,11 +1106,82 @@ public class ExtractRulesTest {
 
 	}
 	
+	
+	@Test(dependsOnMethods={"setup"})
+	public void testRuleSet3Expanded() throws IOException {
+		
+		List<String> lines = extractRules("it makes him", true, true);
+		
+		final int expectedLines = 23;
+		Assert.assertEquals(lines.size(), expectedLines);
+		
+		int n = 0;
+		verifyLine(lines.get(n++), "[X]", "[X,1] him [X,2]", "[X,1] ihn [X,2]");
+		verifyLine(lines.get(n++), "[X]", "[X,1] him", "[X,1] ihn");
+		verifyLine(lines.get(n++), "[X]", "[X,1] it [X,2] him", "[X,1] es [X,2] ihn");
+		verifyLine(lines.get(n++), "[X]", "[X,1] it [X,2]", "[X,1] es [X,2]");
+		verifyLine(lines.get(n++), "[X]", "[X,1] it", "[X,1] es");
+		verifyLine(lines.get(n++), "[X]", "him [X,1]", "ihn [X,1]");
+		verifyLine(lines.get(n++), "[X]", "him", "ihn");
+		verifyLine(lines.get(n++), "[X]", "it [X,1] him [X,2]", "das [X,1] ihn [X,2]");
+		verifyLine(lines.get(n++), "[X]", "it [X,1] him [X,2]", "es [X,1] ihn [X,2]");
+		verifyLine(lines.get(n++), "[X]", "it [X,1] him", "das [X,1] ihn");
+		verifyLine(lines.get(n++), "[X]", "it [X,1] him", "es [X,1] ihn");
+		verifyLine(lines.get(n++), "[X]", "it [X,1]", "das [X,1]");
+		verifyLine(lines.get(n++), "[X]", "it [X,1]", "es [X,1]");
+		verifyLine(lines.get(n++), "[X]", "it makes [X,1]", "das macht [X,1]");
+		verifyLine(lines.get(n++), "[X]", "it makes him [X,1]", "das macht ihn [X,1]");
+		verifyLine(lines.get(n++), "[X]", "it makes him", "das macht ihn");
+		verifyLine(lines.get(n++), "[X]", "it makes", "das macht");
+		verifyLine(lines.get(n++), "[X]", "it", "das");
+		verifyLine(lines.get(n++), "[X]", "it", "es");
+		verifyLine(lines.get(n++), "[X]", "makes [X,1]", "macht [X,1]");
+		verifyLine(lines.get(n++), "[X]", "makes him [X,1]", "macht ihn [X,1]");
+		verifyLine(lines.get(n++), "[X]", "makes him", "macht ihn");
+		verifyLine(lines.get(n++), "[X]", "makes", "macht");
+		
+		Assert.assertEquals(n, expectedLines);
+//		From Hiero:
+//		[X] ||| [X,1] him [X,2] ||| [X,1] ihn [X,2] ||| -0.0 -0.0 -0.0
+//		[X] ||| [X,1] him ||| [X,1] ihn ||| -0.0 -0.0 -0.0
+//		[X] ||| [X,1] it [X,2] him ||| [X,1] es [X,2] ihn ||| 0.176091253757 -0.0 0.124938733876
+//		[X] ||| [X,1] it [X,2] ||| [X,1] es [X,2] ||| 0.124938733876 -0.0 0.124938733876
+//		[X] ||| [X,1] it ||| [X,1] es ||| 0.124938733876 -0.0 0.124938733876
+//		[X] ||| him [X,1] ||| ihn [X,1] ||| -0.0 -0.0 -0.0
+//		[X] ||| him ||| ihn ||| -0.0 -0.0 -0.0
+//		[X] ||| it [X,1] him [X,2] ||| das [X,1] ihn [X,2] ||| 0.477121263742 -0.0 0.60206001997
+//		[X] ||| it [X,1] him [X,2] ||| es [X,1] ihn [X,2] ||| 0.176091253757 -0.0 0.124938733876
+//		[X] ||| it [X,1] him ||| das [X,1] ihn ||| 0.477121263742 -0.0 0.60206001997
+//		[X] ||| it [X,1] him ||| es [X,1] ihn ||| 0.176091253757 -0.0 0.124938733876
+//		[X] ||| it [X,1] ||| das [X,1] ||| 0.60206001997 -0.0 0.60206001997
+//		[X] ||| it [X,1] ||| es [X,1] ||| 0.124938733876 -0.0 0.124938733876
+//		[X] ||| it makes [X,1] ||| das macht [X,1] ||| -0.0 -0.0 0.60206001997
+//		[X] ||| it makes him [X,1] ||| das macht ihn [X,1] ||| -0.0 -0.0 0.60206001997
+//		[X] ||| it makes him ||| das macht ihn ||| -0.0 -0.0 0.60206001997
+//		[X] ||| it makes ||| das macht ||| -0.0 -0.0 0.60206001997
+//		[X] ||| it ||| das ||| 0.60206001997 -0.0 0.60206001997
+//		[X] ||| it ||| es ||| 0.124938733876 -0.0 0.124938733876
+//		[X] ||| makes [X,1] ||| macht [X,1] ||| -0.0 -0.0 -0.0
+//		[X] ||| makes him [X,1] ||| macht ihn [X,1] ||| -0.0 -0.0 -0.0
+//		[X] ||| makes him ||| macht ihn ||| -0.0 -0.0 -0.0
+//		[X] ||| makes ||| macht ||| -0.0 -0.0 -0.0
+
+	}
+	
 	@Test(dependsOnMethods={"setup"})
 	public void testRuleSet18() throws IOException {
+		extractFull(false, false);
+	}
+	
+	@Test(dependsOnMethods={"setup"})
+	public void testRuleSet18Expanded() throws IOException {
+		extractFull(true, true);
+	}
+	
+	
+	private void extractFull(boolean sentenceInitialX, boolean sentenceFinalX) throws IOException {
 		
-		List<String> lines = extractRules("it makes him and it mars him , it sets him on yet it takes him off .", false, false);
-		
+		List<String> lines = extractRules("it makes him and it mars him , it sets him on yet it takes him off .", sentenceInitialX, sentenceFinalX);
 		
 		Assert.assertEquals(lines.size(), 922);
 		
@@ -2006,4 +2110,5 @@ public class ExtractRulesTest {
 		verifyLine(lines.get(n++), "[X]", "yet", "und");
 
 	}
+
 }
