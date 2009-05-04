@@ -1363,7 +1363,6 @@ public class MertCore
       ip_curr = It.next();
       nextLambdaVal = (ip_prev + ip_curr)/2.0;
 
-      @SuppressWarnings("unchecked")
       TreeMap<Integer,int[]> th_info_M = thresholdsAll.get(ip_prev);
       Iterator<Integer> It2 = (th_info_M.keySet()).iterator();
       while (It2.hasNext()) {
@@ -1600,7 +1599,6 @@ public class MertCore
             A.put(i,th_info);
             thresholdsAll.put(nearestIntersectionPoint,A);
           } else {
-            @SuppressWarnings("unchecked")
             TreeMap<Integer,int[]> A = thresholdsAll.get(nearestIntersectionPoint);
             if (!A.containsKey(i)) {
               A.put(i,th_info);
@@ -2599,12 +2597,14 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
     File dummyFile = new File(dir,fileName);
     return dummyFile.getAbsolutePath();
   }
-/*
+
+  @SuppressWarnings("unused")
   private void cleanupMemory()
   {
     cleanupMemory(100,false);
   }
 
+  @SuppressWarnings("unused")
   private void cleanupMemorySilently()
   {
     cleanupMemory(100,true);
@@ -2645,6 +2645,7 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
     }
   }
 
+  @SuppressWarnings("unused")
   private void printMemoryUsage()
   {
     int bytesPerMB = 1024 * 1024;
@@ -2655,7 +2656,7 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
     println("Allocated memory: " + (totalMem / bytesPerMB) + " MB "
           + "(of which " + (usedMem / bytesPerMB) + " MB is being used).",2);
   }
-*/
+
   private void println(Object obj, int priority) { if (priority <= verbosity) println(obj); }
   private void print(Object obj, int priority) { if (priority <= verbosity) print(obj); }
 
