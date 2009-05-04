@@ -91,10 +91,13 @@ public class BLEU extends EvaluationMetric
     }
   }
 
-  @SuppressWarnings("unchecked")
+
   protected void set_maxNgramCounts()
   {
-    maxNgramCounts = new HashMap[numSentences];
+    @SuppressWarnings("unchecked")
+    HashMap<String,Integer>[] temp_HMA = new HashMap[numSentences];
+    maxNgramCounts = temp_HMA;
+
     String gram = "";
     int oldCount = 0, nextCount = 0;
 
@@ -390,9 +393,10 @@ else { // average
     }
   }
 
-  @SuppressWarnings("unchecked")
+
   public HashMap<String,Integer>[] getNgramCountsArray(String[] words)
   {
+    @SuppressWarnings("unchecked")
     HashMap<String,Integer>[] ngramCountsArray = new HashMap[1+maxGramLength];
     ngramCountsArray[0] = null;
     for (int n = 1; n <= maxGramLength; ++n) {

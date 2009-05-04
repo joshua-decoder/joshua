@@ -354,8 +354,9 @@ public class MertCore
 
 
 
-
-    indicesOfInterest_all = new TreeSet[numSentences];
+    @SuppressWarnings("unchecked")
+    TreeSet<Integer>[] temp_TSA = new TreeSet[numSentences];
+    indicesOfInterest_all = temp_TSA;
 
     for (int i = 0; i < numSentences; ++i) {
       indicesOfInterest_all[i] = new TreeSet<Integer>();
@@ -1106,7 +1107,9 @@ public class MertCore
     // to be read from the merged decoder output file.
 
 //    if (useDisk == 2) {
-      indicesOfInterest = new TreeSet[numSentences];
+      @SuppressWarnings("unchecked")
+      TreeSet<Integer>[] temp_TSA = new TreeSet[numSentences];
+      indicesOfInterest = temp_TSA;
       for (int i = 0; i < numSentences; ++i) {
         indicesOfInterest[i] = new TreeSet<Integer>();
       }
@@ -1357,6 +1360,7 @@ public class MertCore
       ip_curr = It.next();
       nextLambdaVal = (ip_prev + ip_curr)/2.0;
 
+      @SuppressWarnings("unchecked")
       TreeMap<Integer,int[]> th_info_M = thresholdsAll.get(ip_prev);
       Iterator<Integer> It2 = (th_info_M.keySet()).iterator();
       while (It2.hasNext()) {
@@ -1592,6 +1596,7 @@ public class MertCore
             A.put(i,th_info);
             thresholdsAll.put(nearestIntersectionPoint,A);
           } else {
+            @SuppressWarnings("unchecked")
             TreeMap<Integer,int[]> A = thresholdsAll.get(nearestIntersectionPoint);
             if (!A.containsKey(i)) {
               A.put(i,th_info);
