@@ -115,7 +115,7 @@
   	</classes>
   </test>
   
-  <test name="ZMERT" >
+  <test name="zmert" >
     <classes>
       <class name="joshua.zmert.BLEUTest" >
         <parameter name="referenceFile" value="example2/example2.ref.0" />

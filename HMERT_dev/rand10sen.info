@@ -1,5 +1,3 @@
-(line numbers, NOT 0-indexed)
-
 256
 372
 460
@@ -10,3 +8,4 @@
 1052
 1377
 1627
+(line numbers, NOT 0-indexed)

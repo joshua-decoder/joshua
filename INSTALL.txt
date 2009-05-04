@@ -187,7 +187,7 @@ ExtractRules could easily require several gigabytes of RAM. There is
 a somewhat different usage of ExtractRules that would allow you to get
 by with much less memory.
 
-To do so, you would need to create binary files for the corpus, siffixes,
+To do so, you would need to create binary files for the corpus, suffixes,
 and vocabulary (for each of the two sides of the training corpus), as well
 as for the alignment data itself. And you would do so by running the main
 methods of SuffixArray and AlignmentGrids, before running ExtractRules...
