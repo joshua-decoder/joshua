@@ -96,15 +96,18 @@ public class BLEUTest {
 
 			// Check sufficient statistics match
 			int[] actualSS = bleu.suffStats(testSentences);
-			int[] expectedSS = {1,14,8,5,3,27,23};
+			int[] expectedSS = {14,27,8,26,5,25,3,24,27,23};
 
-			Assert.assertEquals(actualSS[0], expectedSS[0], 0); // # sentences
-			Assert.assertEquals(actualSS[1], expectedSS[1], 0); // 1-gram matches
+			Assert.assertEquals(actualSS[0], expectedSS[0], 0); // 1-gram matches
+			Assert.assertEquals(actualSS[1], expectedSS[1], 0); // 1-gram total
 			Assert.assertEquals(actualSS[2], expectedSS[2], 0); // 2-gram matches
-			Assert.assertEquals(actualSS[3], expectedSS[3], 0); // 3-gram matches
-			Assert.assertEquals(actualSS[4], expectedSS[4], 0); // 4-gram matches
-			Assert.assertEquals(actualSS[5], expectedSS[5], 0); // candidate length
-			Assert.assertEquals(actualSS[6], expectedSS[6], 0); // reference length
+			Assert.assertEquals(actualSS[3], expectedSS[3], 0); // 2-gram total
+			Assert.assertEquals(actualSS[4], expectedSS[4], 0); // 3-gram matches
+			Assert.assertEquals(actualSS[5], expectedSS[5], 0); // 3-gram total
+			Assert.assertEquals(actualSS[6], expectedSS[6], 0); // 4-gram matches
+			Assert.assertEquals(actualSS[7], expectedSS[7], 0); // 4-gram total
+			Assert.assertEquals(actualSS[8], expectedSS[8], 0); // candidate length
+			Assert.assertEquals(actualSS[9], expectedSS[9], 0); // reference length
 		} catch (Exception e) {
 			Assert.fail();
 		}
