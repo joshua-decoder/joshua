@@ -145,6 +145,7 @@ public class TER extends EvaluationMetric
       errorGobbler.start();
       outputGobbler.start();
 
+      @SuppressWarnings("unused")
       int exitValue = p.waitFor();
 
 

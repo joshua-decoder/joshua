@@ -27,7 +27,6 @@ public class MertCore
   private TreeSet<Integer>[] indicesOfInterest_all;
 
 
-  private static DecimalFormat f0 = new DecimalFormat("###0");
   private static DecimalFormat f4 = new DecimalFormat("###0.0000");
   private final Runtime myRuntime = Runtime.getRuntime();
 
@@ -181,6 +180,8 @@ public class MertCore
 
   private void initialize(int randsToSkip)
   {
+    println("NegInf: " + NegInf + ", PosInf: " + PosInf + ", epsilon: " + epsilon,4);
+
     randGen = new Random(seed);
     generatedRands = randsToSkip;
 
@@ -464,7 +465,7 @@ public class MertCore
 
   } // void run_MERT(int maxIts)
 
-  @SuppressWarnings("unchecked")
+
   public double[] run_single_iteration(
     int iteration, int minIts, int maxIts, int prevIts, int earlyStop, int[]maxIndex)
   {
@@ -536,6 +537,7 @@ public class MertCore
 
       int[] candCount = new int[numSentences];
       int[] lastUsedIndex = new int[numSentences];
+      @SuppressWarnings("unchecked")
       HashMap<Integer,int[]>[] suffStats_array = new HashMap[numSentences];
       for (int i = 0; i < numSentences; ++i) {
         candCount[i] = 0;
@@ -896,11 +898,12 @@ public class MertCore
         }
       }
 
-      TreeMap<Double,TreeMap>[] thresholdsAll = new TreeMap[1+numParams];
+      @SuppressWarnings("unchecked")
+      TreeMap<Double,TreeMap<Integer,int[]>>[] thresholdsAll = new TreeMap[1+numParams];
       thresholdsAll[0] = null;
       for (int c = 1; c <= numParams; ++c) {
         if (isOptimizable[c]) {
-          thresholdsAll[c] = new TreeMap<Double,TreeMap>();
+          thresholdsAll[c] = new TreeMap<Double,TreeMap<Integer,int[]>>();
         } else {
           thresholdsAll[c] = null;
         }
@@ -1084,7 +1087,7 @@ public class MertCore
   } // run_single_iteration
 
   private double[] bestParamToChange(
-    int j, TreeMap<Double,TreeMap>[] thresholdsAll, int lastChanged_c,
+    int j, TreeMap<Double,TreeMap<Integer,int[]>>[] thresholdsAll, int lastChanged_c,
     double[] currLambda, int[] candCount, double[][][] featVal_array,
     HashMap<Integer,int[]>[] suffStats_array, int minIt, int maxIt)
   {
@@ -1284,7 +1287,7 @@ public class MertCore
   }
 
   private double[] line_opt(
-    TreeMap<Double,TreeMap> thresholdsAll, int[] indexOfCurrBest,
+    TreeMap<Double,TreeMap<Integer,int[]>> thresholdsAll, int[] indexOfCurrBest,
     int c, int[] candCount, double[][][] featVal_array,
     HashMap<Integer,int[]>[] suffStats_array, double[] lambda, int minIt, int maxIt)
   {
@@ -1366,6 +1369,7 @@ public class MertCore
       while (It2.hasNext()) {
         int i = It2.next();
         int[] th_info = th_info_M.get(i);
+        @SuppressWarnings("unused")
         int old_k = th_info[0]; // should be equal to indexOfCurrBest[i]
         int new_k = th_info[1];
 
@@ -1420,7 +1424,7 @@ public class MertCore
 
 //  private TreeMap<Double,TreeMap> thresholdsForParam(int c, int[] candCount, double[][][] featVal_array, double[] currLambda, TreeSet<Integer>[] indicesOfInterest)
   private void set_thresholdsForParam(
-    TreeMap<Double,TreeMap> thresholdsAll, int c, int[] candCount,
+    TreeMap<Double,TreeMap<Integer,int[]>> thresholdsAll, int c, int[] candCount,
     double[][][] featVal_array, double[] currLambda,
     TreeSet<Integer>[] indicesOfInterest)
   {
@@ -2590,34 +2594,12 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
     return count;
   }
 
-  private int countWords(String fileName)
-  {
-    int count = 0;
-
-    try {
-      Scanner inFile = new Scanner(new FileReader(fileName));
-
-      String word;
-      while (inFile.hasNext()) {
-        word = inFile.next();
-        ++count;
-      }
-
-      inFile.close();
-    } catch (IOException e) {
-      System.err.println("IOException in MertCore.countWords(String): " + e.getMessage());
-      System.exit(99902);
-    }
-
-    return count;
-  }
-
   private String fullPath(String dir, String fileName)
   {
     File dummyFile = new File(dir,fileName);
     return dummyFile.getAbsolutePath();
   }
-
+/*
   private void cleanupMemory()
   {
     cleanupMemory(100,false);
@@ -2673,7 +2655,7 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
     println("Allocated memory: " + (totalMem / bytesPerMB) + " MB "
           + "(of which " + (usedMem / bytesPerMB) + " MB is being used).",2);
   }
-
+*/
   private void println(Object obj, int priority) { if (priority <= verbosity) println(obj); }
   private void print(Object obj, int priority) { if (priority <= verbosity) print(obj); }
 
@@ -2808,6 +2790,7 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
     lastUsedIndex[i] += 1;
   }
 
+  @SuppressWarnings("unused")
   private HashSet<Integer> indicesToDiscard(double[] slope, double[] offset)
   {
     // some lines can be eliminated: the ones that have a lower offset
@@ -2878,7 +2861,7 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
       // process the merged sufficient statistics file, and read (and store) the
       // stats for candidates of interest
       BufferedReader inFile = new BufferedReader(new FileReader(decoderOutFileName+".temp.stats.merged"));
-      String line, candidate_suffStats;
+      String candidate_suffStats;
 
       for (int i = 0; i < numSentences; ++i) {
         int numCandidates = candCount[i];
@@ -2891,7 +2874,7 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
 
           // skip candidates until you get to the nextIndex'th candidate
           while (currCand < nextIndex) {
-            line = inFile.readLine();
+            inFile.readLine();
             ++currCand;
           }
 
@@ -2915,7 +2898,7 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
 
         // skip the rest of ith sentence's candidates
         while (currCand < numCandidates) {
-          line = inFile.readLine();
+          inFile.readLine();
           ++currCand;
         }
 
@@ -2936,7 +2919,7 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
   public static void main(String[] args)
   {
 
-	MertCore DMC = new MertCore(); // dummy MertCore object
+    MertCore DMC = new MertCore(); // dummy MertCore object
 
     // if bad args[], System.exit(80)
 
