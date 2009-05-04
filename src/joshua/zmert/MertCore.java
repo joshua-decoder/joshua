@@ -663,9 +663,9 @@ public class MertCore
 
                 for (int c = 1; c <= numParams; ++c) {
                   currFeatVal[c] = Double.parseDouble(featVal_str[c-1]);
-//                  print("fV[" + c + "]=" + featVal[c] + " ",3);
+//                  print("fV[" + c + "]=" + featVal[c] + " ",4);
                 }
-//                println("",3);
+//                println("",4);
 
 
                 for (int j = 1; j <= initsPerIt; ++j) {
@@ -747,7 +747,7 @@ public class MertCore
           }
 
           int[][] newSuffStats = null;
-          if (!statsCurrIt_exists) {
+          if (!statsCurrIt_exists && sizeUnknown > 0) {
             newSuffStats = evalMetric.suffStats(unknownCands, indices);
           }
 
@@ -799,9 +799,9 @@ public class MertCore
 
               for (int c = 1; c <= numParams; ++c) {
                 currFeatVal[c] = Double.parseDouble(featVal_str[c-1]);
-//                print("fV[" + c + "]=" + featVal[c] + " ",3);
+//                print("fV[" + c + "]=" + featVal[c] + " ",4);
               }
-//              println("",3);
+//              println("",4);
 
 
               for (int j = 1; j <= initsPerIt; ++j) {
@@ -1442,7 +1442,7 @@ public class MertCore
     for (int i = 0; i < numSentences; ++i) {
     // find threshold points contributed by ith sentence
 
-//      println("Processing sentence #" + i,3);
+//      println("Processing sentence #" + i,4);
 
       int numCandidates = candCount[i];
         // aka simply K
@@ -1474,7 +1474,7 @@ public class MertCore
 
         // debugging
 //        println("@ (i,k)=(" + i + "," + k + "), "
-//               + "slope = " + slope[k] + "; offset = " + offset[k],3);
+//               + "slope = " + slope[k] + "; offset = " + offset[k],4);
 
         if (minThValue[c] == NegInf) {
           if (slope[k] < minSlope || (slope[k] == minSlope && offset[k] > offset_minSlope)) {
@@ -1509,9 +1509,9 @@ public class MertCore
 
       // debugging
 //      println("minSlope is @ k = " + minSlopeIndex + ": slope " + minSlope
-//            + " (offset " + offset_minSlope + ")",3);
+//            + " (offset " + offset_minSlope + ")",4);
 //      println("maxSlope is @ k = " + maxSlopeIndex + ": slope " + maxSlope
-//            + " (offset " + offset_maxSlope + ")",3);
+//            + " (offset " + offset_maxSlope + ")",4);
 
 
       // some lines can be eliminated: the ones that have a lower offset
@@ -1523,7 +1523,7 @@ public class MertCore
 //      HashSet<Integer> discardedIndices = indicesToDiscard(slope,offset);
 
 
-//      println("Extracting thresholds[(i,c)=(" + i + "," + c + ")]",3);
+//      println("Extracting thresholds[(i,c)=(" + i + "," + c + ")]",4);
 
       int currIndex = minSlopeIndex;
         // As we traverse the currLambda_c dimension, the "winner" candidate will
@@ -1552,7 +1552,7 @@ public class MertCore
 
       while (currIndex != maxSlopeIndex) {
 
-//        print("cI=" + currIndex + " ",3);
+//        print("cI=" + currIndex + " ",4);
 
         // find the candidate whose line is the first to intersect the current
         // line.  ("first" meaning with an intersection point that has the
@@ -1576,7 +1576,7 @@ public class MertCore
           }
         }
 
-//        print("ip=" + f4.format(nearestIntersectionPoint) + " ",3);
+//        print("ip=" + f4.format(nearestIntersectionPoint) + " ",4);
         ++ipCount;
 
         if (nearestIntersectionPoint > minThValue[c] && nearestIntersectionPoint < maxThValue[c]) {
@@ -1636,12 +1636,12 @@ public class MertCore
         indicesOfInterest_all[i].add(last_new_k); // last new_k
       }
 
-//      println("cI=" + currIndex + "(=? " + maxSlopeIndex + " = mxSI)",3);
+//      println("cI=" + currIndex + "(=? " + maxSlopeIndex + " = mxSI)",4);
 
       // now thresholds has the values for lambda_c at which score changes
       // based on the candidates for the ith sentence
 
-//      println("",3);
+//      println("",4);
 
 /*
       Iterator<Double> It = (thresholds.keySet()).iterator();
@@ -2811,7 +2811,7 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
     //   if slope[k1] = slope[k2] and offset[k1] > offset[k2],
     //   then k2 can be eliminated.
     // (This is actually important to do as it eliminates a bug.)
-//    print("discarding: ",3);
+//    print("discarding: ",4);
 
     int numCandidates = slope.length;
     HashSet<Integer> discardedIndices = new HashSet<Integer>();
@@ -2827,11 +2827,11 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
         int existingIndex = indicesOfSlopes.get(currSlope);
         if (offset[existingIndex] > offset[k1]) {
           discardedIndices.add(k1);
-//          print(k1 + " ",3);
+//          print(k1 + " ",4);
         } else if (offset[k1] > offset[existingIndex]) {
           indicesOfSlopes.put(currSlope,k1);
           discardedIndices.add(existingIndex);
-//          print(existingIndex + " ",3);
+//          print(existingIndex + " ",4);
         }
       }
     }
@@ -2843,13 +2843,13 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
       for (int k2 = 0; k2 < numCandidates; ++k2) {
         if (k1 != k2 && slope[k1] == slope[k2] && offset[k1] > offset[k2]) {
           discardedIndices.add(k2);
-//          print(k2 + " ",3);
+//          print(k2 + " ",4);
         }
       }
     }
 */
 
-//    println("",3);
+//    println("",4);
     return discardedIndices;
   } // indicesToDiscard(double[] slope, double[] offset)
 
