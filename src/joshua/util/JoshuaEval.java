@@ -18,9 +18,6 @@
 
 package joshua.util;
 
-import joshua.util.io.LineReader;
-
-
 import joshua.zmert.*;
 import java.io.*;
 import java.text.DecimalFormat;
@@ -49,6 +46,7 @@ public class JoshuaEval {
 	// options for the evaluation metric (e.g. for BLEU, maxGramLength and effLengthMethod)
 	static String[] metricOptions;
 	
+	// the scorer
 	static EvaluationMetric evalMetric;
 	
 	// if true, the reference set(s) is (are) evaluated
@@ -64,54 +62,8 @@ public class JoshuaEval {
 	
 	// if format is nbest, evaluate the r'th candidate of each sentence
 	static int candRank;
+
 	
-	
-	public static void main(String[] args) {
-		if (args.length == 0) {
-			printUsage(args.length);
-			System.exit(0);
-		} else {
-			processArgsAndInitialize(args);
-		}
-		// non-specified args will be set to default values in processArgsAndInitialize
-		
-		if (candFileFormat.equals("plain")) {
-			println("Evaluating candidate translations in plain file " + candFileName + "...");
-			evaluateCands_plain(candFileName);
-		} else if (candFileFormat.equals("nbest")) {
-			println("Evaluating set of " + candRank + "'th candidate translations from " + candFileName + "...");
-			evaluateCands_nbest(candFileName,candRank);
-		}
-		println("");
-		
-		if (evaluateRefs) {
-			// evaluate the references themselves; useful if developing a new evaluation metric
-			
-			println("");
-			println("PERFORMING SANITY CHECK:");
-			println("------------------------");
-			println("");
-			println("This metric's scores range from "
-				+ evalMetric.worstPossibleScore() + " (worst) to "
-				+ evalMetric.bestPossibleScore() + " (best).");
-			
-			for (int r = 1; r <= refsPerSen; ++r) {
-				println("");
-				println("(*) Evaluating reference set " + r + ":");
-				println("");
-				evaluateRefSet(r);
-				println("");
-			}
-		}
-		
-		System.exit(0);
-		
-	} // main(String[] args)
-
-
-
-
-
 	private static void evaluateCands_plain(String inFileName) {
 		evaluate(candFileName, "plain", 1, 1);
 	}
@@ -144,6 +96,7 @@ public class JoshuaEval {
 			System.exit(31);
 		}
 		
+
 		String[] topCand_str = new String[numSentences];
 		
 		try {
@@ -155,7 +108,9 @@ public class JoshuaEval {
 			String line, candidate_str;
 			
 			if (inFileFormat.equals("plain")) {
+
 				for (int i = 0; i < numSentences; ++i) {
+
 					// skip candidates 1 through testIndex-1
 					for (int n = 1; n < testIndex; ++n) {
 						line = inFile.readLine();
@@ -170,6 +125,7 @@ public class JoshuaEval {
 						// skip candidates testIndex+1 through candPerSen-1
 						line = inFile.readLine();
 					}
+
 				} // for (i)
 				
 			} else { // nbest format
@@ -225,7 +181,8 @@ line format:
 					println("Not enough candidates were found (i = " + i + "; was expecting " + numSentences + ")");
 					System.exit(33);
 				}
-			}
+
+			} // nbest format
 			
 			inFile.close();
 			
@@ -265,10 +222,10 @@ line format:
 				// already prints a \n
 			}
 		}
+
 	} // void evaluate(...)
 	
-	
-	
+		
 	private static void printUsage(int argsLen) {
 		println("Oops, you provided " + argsLen + " args!");
 		println("");
@@ -340,23 +297,9 @@ line format:
 					}
 					i += optionCount;
 				} else {
-					println("Unknown metric name " + metricName + "."); System.exit(10);
-				}
-/*
-			} else if (option.equals("-m")) {
-				metricName = args[i+1];
-				if (!EvaluationMetric.knownMetricName(metricName)) {
 					println("Unknown metric name " + metricName + ".");
 					System.exit(10);
 				}
-				if (metricName.equals("BLEU")) {
-					metricOptions = new String[2];
-					metricOptions[0] = args[i+2];
-					metricOptions[1] = args[i+3];
-					i += 2;
-				}
-			}
-*/
 			} else if (option.equals("-evr")) {
 				int evr = Integer.parseInt(args[i+1]);
 				if (evr == 1) {
@@ -514,6 +457,7 @@ line format:
 				for (int r = 0; r < numFiles; ++r) {
 					inFile[r].close();
 				}
+				
 			} catch (FileNotFoundException e) {
 				System.err.println("FileNotFoundException in MertCore.createUnifiedRefFile(String,int): " + e.getMessage());
 				System.exit(99901);
@@ -530,12 +474,20 @@ line format:
 	
 	
 	// TODO: we should handle errors properly for the three use sites of this function, and should remove the function.
+	//       OK, but we don't want it to use LineReader, so it can function within the standalone release of Z-MERT. -- O.Z.
 	private static int countLines(String fileName) {
 		int count = 0;
 		
 		try {
-			count = new LineReader(fileName).countLines();
+			BufferedReader inFile = new BufferedReader(new FileReader(fileName));
 			
+			String line;
+			do {
+				line = inFile.readLine();
+				if (line != null) ++count;
+			}  while (line != null);
+			
+			inFile.close();
 		} catch (IOException e) {
 			System.err.println("IOException in MertCore.countLines(String): " + e.getMessage());
 			System.exit(99902);
@@ -547,5 +499,47 @@ line format:
 	
 	private static void println(Object obj) { System.out.println(obj); }
 	private static void print(Object obj) { System.out.print(obj); }
+
+	public static void main(String[] args) {
+		if (args.length == 0) {
+			printUsage(args.length);
+			System.exit(0);
+		} else {
+			processArgsAndInitialize(args);
+		}
+		// non-specified args will be set to default values in processArgsAndInitialize
+		
+		if (candFileFormat.equals("plain")) {
+			println("Evaluating candidate translations in plain file " + candFileName + "...");
+			evaluateCands_plain(candFileName);
+		} else if (candFileFormat.equals("nbest")) {
+			println("Evaluating set of " + candRank + "'th candidate translations from " + candFileName + "...");
+			evaluateCands_nbest(candFileName,candRank);
+		}
+		println("");
+		
+		if (evaluateRefs) {
+			// evaluate the references themselves; useful if developing a new evaluation metric
+			
+			println("");
+			println("PERFORMING SANITY CHECK:");
+			println("------------------------");
+			println("");
+			println("This metric's scores range from "
+				+ evalMetric.worstPossibleScore() + " (worst) to "
+				+ evalMetric.bestPossibleScore() + " (best).");
+			
+			for (int r = 1; r <= refsPerSen; ++r) {
+				println("");
+				println("(*) Evaluating reference set " + r + ":");
+				println("");
+				evaluateRefSet(r);
+				println("");
+			}
+		}
+		
+		System.exit(0);
+		
+	} // main(String[] args)
 
 }
