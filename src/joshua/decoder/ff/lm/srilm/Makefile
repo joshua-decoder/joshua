@@ -13,10 +13,18 @@ SRI_LFLAG = -shared
 SRI_LIB = libsrilm.so
 
 # Change to OS X-specific values
+
 ifeq ($(MTYPE), macosx)
 	SRI_LFLAG = -dynamiclib
 	SRI_LIB = libsrilm.dylib
+else
+ifeq ($(MTYPE), macosx-m64)
+	SRI_LFLAG = -dynamiclib
+	SRI_LIB = libsrilm.dylib
+	64BIT_FLAG=-m64
 endif
+endif
+
 
 # SRILM includes and libraries
 
@@ -33,14 +41,17 @@ JAVA_INC_OS=$(JAVA_HOME)/include/linux
 
 # Input files: srilm.h, srilm.c, and srilm_java.i
 
-all: clean $(SRI_LIB) install
+all: dummy clean $(SRI_LIB) install
 
+dummy:
+	echo $(64BIT_FLAG)
 
 $(SRI_LIB): srilm.o srilm_java_wrap.o
-	g++ -fpic $(SRI_LFLAG) $^ -loolm -ldstruct -lmisc -L$(SRILM_LIBS) -o $@
+	echo hi there $(64BIT_FLAG)
+	g++ $(64BIT_FLAG) -fpic $(SRI_LFLAG) $^ -loolm -ldstruct -lmisc -L$(SRILM_LIBS) -o $@
 
 srilm_java_wrap.o: srilm_java_wrap.cxx
-	g++ -c -fpic $< -I/usr/local/include/ -I$(SRILM_INC) -I$(JAVA_INC) -I$(JAVA_INC_OS)
+	g++ $(64BIT_FLAG) -c -fpic $< -I/usr/local/include/ -I$(SRILM_INC) -I$(JAVA_INC) -I$(JAVA_INC_OS)
 
 srilm_java_wrap.cxx: srilm_java.i
 	swig -c++ -java -package joshua.decoder.ff.lm.srilm -outdir . $<
@@ -48,7 +59,7 @@ srilm_java_wrap.cxx: srilm_java.i
 
 # General
 srilm.o: srilm.c
-	g++ -c -fpic $< -I/usr/local/include/ -I$(SRILM_INC)
+	g++ $(64BIT_FLAG) -c -fpic $< -I/usr/local/include/ -I$(SRILM_INC)
 
 clean:
 	rm -rf srilm.o srilm*.java srilm_*_wrap.* SWIGTYPE*.java $(SRI_LIB)
