@@ -19,6 +19,7 @@
 package joshua.util;
 
 import joshua.zmert.*;
+import java.util.*;
 import java.io.*;
 import java.text.DecimalFormat;
 
@@ -36,6 +37,10 @@ public class JoshuaEval {
 	
 	// number of reference translations per sentence
 	static int refsPerSen;
+	
+	// if true, tokenize reference sentences (NIST-style) before storing them.
+	// If false, store references as read from reference file(s).
+	static boolean tokenizeRefs;
 	
 	// refSentences[i][r] is the rth reference translation of the ith sentence
 	static String[][] refSentences;
@@ -237,6 +242,7 @@ line format:
 		println(" (*) -rank r: if format=nbest, evaluate the set of r'th candidates.\n       [[default: 1]]");
 		println(" (*) -ref refFile: reference translations (or file name prefix)\n       [[default: references.txt]]");
 		println(" (*) -rps refsPerSen: number of reference translations per sentence\n       [[default: 1]]");
+        println(" (*) -tokref tokenizeRefs: tokenize (NIST-style) references (1) or not (0)\n    [[default: 1]]");
 		println(" (*) -m metricName metric options: name of evaluation metric and its options\n       [[default: BLEU 4 closest]]");
 		println(" (*) -evr evalRefs: evaluate references (1) or not (0) (sanity check)\n       [[default: 0]]");
 		println(" (*) -v verbose: evaluate individual sentences (1) or not (0)\n       [[default: 0]]");
@@ -254,6 +260,7 @@ line format:
 		candRank = 1;
 		refFileName = "references.txt";
 		refsPerSen = 1;
+		tokenizeRefs = true;
 		metricName = "BLEU";
 		metricOptions = new String[2];
 		metricOptions[0] = "4";
@@ -285,6 +292,16 @@ line format:
 				refsPerSen = Integer.parseInt(args[i+1]);
 				if (refsPerSen < 1) {
 					println("refsPerSen must be positive.");
+					System.exit(10);
+				}
+			} else if (option.equals("-tokref")) {
+				int tokref = Integer.parseInt(args[i+1]);
+				if (tokref == 1) {
+					tokenizeRefs = true;
+				} else if (tokref == 0) {
+					tokenizeRefs = false;
+				} else {
+					println("tokenizeRefs must be either 0 or 1.");
 					System.exit(10);
 				}
 			} else if (option.equals("-m")) {
@@ -358,6 +375,16 @@ line format:
 			}
 			
 			inFile_refs.close();
+			
+			// tokenize references, if requested
+			if (tokenizeRefs) {
+				for (i = 0; i < numSentences; ++i) {
+					for (int r = 0; r < refsPerSen; ++r) {
+						// tokenize the rth reference translation for the ith sentence
+						refSentences[i][r] = tokenize(refSentences[i][r]);
+					}
+				}
+			}
 			
 		} catch (FileNotFoundException e) {
 			System.err.println("FileNotFoundException in MertCore.initialize(int): " + e.getMessage());
@@ -472,6 +499,65 @@ line format:
 		
 	} // createUnifiedRefFile(String prefix, int numFiles)
 	
+	private static String tokenize(String str)
+	{
+		// split on these characters:
+		// ! " # $ % & ( ) * + / : ; < = > ? @ [ \ ] ^ _ ` { | } ~
+		// i.e. ASCII 33-126, except alphanumeric, and except "," "-" "." "'"
+
+		//                 ! "#  $%&  (  )  *  +/:;<=>  ?@  [   \  ]  ^_`  {  |  }~
+		String split_on = "!\"#\\$%&\\(\\)\\*\\+/:;<=>\\?@\\[\\\\\\]\\^_`\\{\\|\\}~";
+		
+//		println("split_on: " + split_on);
+		
+		for (int k = 0; k < split_on.length(); ++k) {
+			// for each split character, reprocess the string
+			String regex = "" + split_on.charAt(k);
+			if (regex.equals("\\")) {
+				++k;
+				regex += split_on.charAt(k);
+			}
+			str = str.replaceAll(regex," " + regex + " ");
+		}
+		
+		str = " " + str + " "; // to make things less complicated with prev_ch and next_ch
+		
+		TreeSet<Integer> splitIndices = new TreeSet<Integer>();
+		
+		for (int i = 0; i < str.length(); ++i) {
+			char ch = str.charAt(i);
+			if (ch == '.' || ch == ',') {
+				// split if either of the previous or next characters is a non-digit
+				char prev_ch = str.charAt(i-1);
+				char next_ch = str.charAt(i+1);
+				if (prev_ch < '0' || prev_ch > '9' || next_ch < '0' || next_ch > '9') {
+					splitIndices.add(i);
+				}
+			} else if (ch == '-') {
+				// split if preceded by a digit
+				char prev_ch = str.charAt(i-1);
+				if (prev_ch >= '0' && prev_ch <= '9') {
+					splitIndices.add(i);
+				}
+			}
+		}
+		
+		String str0 = str;
+		str = "";
+		
+		for (int i = 0; i < str0.length(); ++i) {
+			if (splitIndices.contains(i)) {
+				str += " " + str0.charAt(i) + " ";
+			} else {
+				str += str0.charAt(i);
+			}
+		}
+		
+		str = str.replaceAll("\\s+"," ");
+		str = str.trim();
+		
+		return str;
+	}
 	
 	// TODO: we should handle errors properly for the three use sites of this function, and should remove the function.
 	//       OK, but we don't want it to use LineReader, so it can function within the standalone release of Z-MERT. -- O.Z.

@@ -49,6 +49,10 @@ public class MertCore
   private int refsPerSen;
     // number of reference translations per sentence
 
+  private boolean tokenizeRefs;
+    // if true, tokenize reference sentences (NIST-style) before storing them.
+    // If false, store references as read from reference file(s).
+
   private int numParams;
     // number of features for the log-linear model
 
@@ -258,6 +262,16 @@ public class MertCore
       }
 
       inFile_refs.close();
+
+      // tokenize references, if requested
+      if (tokenizeRefs) {
+        for (int i = 0; i < numSentences; ++i) {
+          for (int r = 0; r < refsPerSen; ++r) {
+            // tokenize the rth reference translation for the ith sentence
+            refSentences[i][r] = tokenize(refSentences[i][r]);
+          }
+        }
+      }
 
 
       // read in decoder command, if any
@@ -2222,6 +2236,7 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
     sourceFileName = null;
     refFileName = "reference.txt";
     refsPerSen = 1;
+    tokenizeRefs = true;
     paramsFileName = "params.txt";
     finalLambdaFileName = null;
     // MERT specs
@@ -2265,6 +2280,12 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
       else if (option.equals("-rps")) {
         refsPerSen = Integer.parseInt(args[i+1]);
         if (refsPerSen < 1) { println("refsPerSen must be positive."); System.exit(10); }
+      }
+      else if (option.equals("-tokref")) {
+        int tokref = Integer.parseInt(args[i+1]);
+        if (tokref == 1) tokenizeRefs = true;
+        else if (tokref == 0) tokenizeRefs = false;
+        else { println("tokenizeRefs must be either 0 or 1."); System.exit(10); }
       }
       else if (option.equals("-p")) { paramsFileName = args[i+1]; }
       else if (option.equals("-fin")) { finalLambdaFileName = args[i+1]; }
@@ -2547,6 +2568,66 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
     }
 
   } // createUnifiedRefFile(String prefix, int numFiles)
+
+  private String tokenize(String str)
+  {
+    // split on these characters:
+    // ! " # $ % & ( ) * + / : ; < = > ? @ [ \ ] ^ _ ` { | } ~
+    // i.e. ASCII 33-126, except alphanumeric, and except "," "-" "." "'"
+
+    //                 ! "#  $%&  (  )  *  +/:;<=>  ?@  [   \  ]  ^_`  {  |  }~
+    String split_on = "!\"#\\$%&\\(\\)\\*\\+/:;<=>\\?@\\[\\\\\\]\\^_`\\{\\|\\}~";
+
+//    println("split_on: " + split_on);
+
+    for (int k = 0; k < split_on.length(); ++k) {
+      // for each split character, reprocess the string
+      String regex = "" + split_on.charAt(k);
+      if (regex.equals("\\")) {
+        ++k;
+        regex += split_on.charAt(k);
+      }
+      str = str.replaceAll(regex," " + regex + " ");
+    }
+
+    str = " " + str + " "; // to make things less complicated with prev_ch and next_ch
+
+    TreeSet<Integer> splitIndices = new TreeSet<Integer>();
+
+    for (int i = 0; i < str.length(); ++i) {
+      char ch = str.charAt(i);
+      if (ch == '.' || ch == ',') {
+        // split if either of the previous or next characters is a non-digit
+        char prev_ch = str.charAt(i-1);
+        char next_ch = str.charAt(i+1);
+        if (prev_ch < '0' || prev_ch > '9' || next_ch < '0' || next_ch > '9') {
+          splitIndices.add(i);
+        }
+      } else if (ch == '-') {
+        // split if preceded by a digit
+        char prev_ch = str.charAt(i-1);
+        if (prev_ch >= '0' && prev_ch <= '9') {
+          splitIndices.add(i);
+        }
+      }
+    }
+
+    String str0 = str;
+    str = "";
+
+    for (int i = 0; i < str0.length(); ++i) {
+      if (splitIndices.contains(i)) {
+        str += " " + str0.charAt(i) + " ";
+      } else {
+        str += str0.charAt(i);
+      }
+    }
+
+    str = str.replaceAll("\\s+"," ");
+    str = str.trim();
+
+    return str;
+  }
 
   private int countLines(String fileName)
   {

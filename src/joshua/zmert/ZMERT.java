@@ -91,6 +91,7 @@ public class ZMERT
       println("  -s sourceFile: source sentences (foreign sentences) of the MERT dataset\n    [[default: null string (i.e. file name is not needed by MERT)]]");
       println("  -r refFile: target sentences (reference translations) of the MERT dataset\n    [[default: reference.txt]]");
       println("  -rps refsPerSen: number of reference translations per sentence\n    [[default: 1]]");
+      println("  -tokref tokenizeRefs: tokenize (NIST-style) references (1) or not (0)\n    [[default: 1]]");
       println("  -p paramsFile: file containing parameter names, initial values, and ranges\n    [[default: params.txt]]");
       println("  -fin finalLambda: file name for final lambda[] values\n    [[default: null string (i.e. no such file will be created)]]");
       println("");
