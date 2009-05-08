@@ -19,8 +19,8 @@ package joshua.sarray;
 
 import java.util.List;
 
+import joshua.corpus.MatchedHierarchicalPhrases;
 import joshua.decoder.ff.tm.Rule;
-import joshua.sarray.mm.MatchedHierarchicalPhrases;
 
 /**
  * Provides an interface for extracting translation rules.

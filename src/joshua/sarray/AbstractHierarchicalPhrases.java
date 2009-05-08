@@ -22,13 +22,13 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import joshua.sarray.mm.MatchedHierarchicalPhrases;
+import joshua.corpus.MatchedHierarchicalPhrases;
 
 /**
  * Implements common algorithms used with hierarchical phrases.
  * 
  * @author Lane Schwartz
- * @version $LastChangedDate$
+ * @version $LastChangedDate: 2009-05-08 16:34:32 -0500 (Fri, 08 May 2009) $
  */
 public abstract class AbstractHierarchicalPhrases implements
 		MatchedHierarchicalPhrases {

@@ -25,7 +25,7 @@
   <test name="AlignmentArray" >
     <parameter name="alignmentsType" value="AlignmentArray" />
     <classes>
-       <class name="joshua.sarray.AlignmentArrayTest" /> 
+       <class name="joshua.corpus.alignment.AlignmentArrayTest" /> 
        <class name="joshua.corpus.alignment.AlignmentsTest" />   
     </classes>
   </test>
@@ -53,8 +53,8 @@
        <class name="joshua.sarray.PrefixTreeNodeTest" />       
        <class name="joshua.sarray.PrefixTreeTest" />
        <class name="joshua.sarray.PrefixTreeAdvancedTest" />
-       <class name="joshua.sarray.SampledLexProbsTest" />
-       <class name="joshua.util.lexprob.LexProbsTest" />    
+       <class name="joshua.corpus.lexprob.SampledLexProbsTest" />
+       <class name="joshua.corpus.lexprob.LexProbsTest" />    
     </classes>
   </test>
  

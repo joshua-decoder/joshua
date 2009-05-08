@@ -1,4 +1,4 @@
-package joshua.util.lexprob;
+package joshua.corpus.lexprob;
 
 import java.util.HashSet;
 import java.util.Scanner;

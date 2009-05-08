@@ -25,9 +25,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
 
+import joshua.corpus.MatchedHierarchicalPhrases;
 import joshua.corpus.Span;
 import joshua.corpus.SymbolTable;
-import joshua.sarray.mm.MatchedHierarchicalPhrases;
 
 /**
  * HierarchicalPhrases represents a list of matched hierarchical phrases.
@@ -37,7 +37,7 @@ import joshua.sarray.mm.MatchedHierarchicalPhrases;
  * 
  * @author Lane Schwartz 
  * @since Jan 9 2009
- * @version $LastChangedDate$
+ * @version $LastChangedDate: 2009-05-08 16:34:32 -0500 (Fri, 08 May 2009) $
  */
 public class HierarchicalPhrases extends AbstractHierarchicalPhrases implements MatchedHierarchicalPhrases, Externalizable {
 

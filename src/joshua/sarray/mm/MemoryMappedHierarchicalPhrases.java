@@ -1,5 +1,6 @@
 package joshua.sarray.mm;
 
+import joshua.corpus.MatchedHierarchicalPhrases;
 import joshua.corpus.Span;
 
 public class MemoryMappedHierarchicalPhrases implements

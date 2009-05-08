@@ -17,8 +17,8 @@
  */
 package joshua.corpus.alignment;
 
+import joshua.corpus.MatchedHierarchicalPhrases;
 import joshua.corpus.Span;
-import joshua.sarray.mm.MatchedHierarchicalPhrases;
 
 /**
  * @author Lane Schwartz

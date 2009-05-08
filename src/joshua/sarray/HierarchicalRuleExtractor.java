@@ -28,12 +28,12 @@ import java.util.logging.Logger;
 
 import joshua.corpus.Corpus;
 import joshua.corpus.LabeledSpan;
+import joshua.corpus.MatchedHierarchicalPhrases;
 import joshua.corpus.Span;
 import joshua.corpus.alignment.Alignments;
 import joshua.corpus.lexprob.LexicalProbabilities;
 import joshua.decoder.ff.tm.BilingualRule;
 import joshua.decoder.ff.tm.Rule;
-import joshua.sarray.mm.MatchedHierarchicalPhrases;
 import joshua.util.Pair;
 
 /**

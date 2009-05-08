@@ -30,13 +30,13 @@ import java.util.logging.Logger;
 
 import joshua.corpus.Corpus;
 import joshua.corpus.CorpusArray;
+import joshua.corpus.MatchedHierarchicalPhrases;
 import joshua.corpus.SymbolTable;
 import joshua.corpus.alignment.Alignments;
 import joshua.sarray.BasicPhrase;
 import joshua.sarray.SuffixArray;
 import joshua.sarray.SuffixArrayFactory;
 import joshua.sarray.Suffixes;
-import joshua.sarray.mm.MatchedHierarchicalPhrases;
 import joshua.util.Cache;
 import joshua.util.Pair;
 

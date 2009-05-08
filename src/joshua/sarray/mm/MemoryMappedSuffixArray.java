@@ -23,6 +23,7 @@ import java.nio.IntBuffer;
 import java.nio.channels.FileChannel;
 
 import joshua.corpus.Corpus;
+import joshua.corpus.MatchedHierarchicalPhrases;
 import joshua.sarray.AbstractSuffixArray;
 import joshua.sarray.Pattern;
 import joshua.util.Cache;

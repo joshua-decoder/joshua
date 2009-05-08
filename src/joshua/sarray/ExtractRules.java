@@ -30,13 +30,13 @@ import java.util.logging.Logger;
 import java.util.zip.GZIPOutputStream;
 
 import joshua.corpus.Corpus;
+import joshua.corpus.MatchedHierarchicalPhrases;
 import joshua.corpus.Vocabulary;
 import joshua.corpus.alignment.AlignmentGrids;
 import joshua.corpus.alignment.Alignments;
 import joshua.corpus.alignment.MemoryMappedAlignmentGrids;
 import joshua.corpus.lexprob.SampledLexProbs;
 import joshua.decoder.ff.tm.Rule;
-import joshua.sarray.mm.MatchedHierarchicalPhrases;
 import joshua.sarray.mm.MemoryMappedCorpusArray;
 import joshua.sarray.mm.MemoryMappedSuffixArray;
 import joshua.util.Cache;

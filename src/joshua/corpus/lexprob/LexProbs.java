@@ -24,8 +24,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 
+import joshua.corpus.MatchedHierarchicalPhrases;
 import joshua.corpus.Vocabulary;
-import joshua.sarray.mm.MatchedHierarchicalPhrases;
 import joshua.util.Pair;
 
 /**

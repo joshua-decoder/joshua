@@ -20,9 +20,9 @@ package joshua.sarray;
 import java.util.Arrays;
 
 import joshua.corpus.Corpus;
+import joshua.corpus.MatchedHierarchicalPhrases;
 import joshua.corpus.Phrase;
 import joshua.corpus.SymbolTable;
-import joshua.sarray.mm.MatchedHierarchicalPhrases;
 import joshua.util.Cache;
 
 /**

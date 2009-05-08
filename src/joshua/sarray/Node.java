@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import joshua.corpus.MatchedHierarchicalPhrases;
 import joshua.corpus.SymbolTable;
 import joshua.decoder.ff.tm.AbstractGrammar;
 import joshua.decoder.ff.tm.BasicRuleCollection;
@@ -33,7 +34,6 @@ import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.RuleCollection;
 import joshua.decoder.ff.tm.Trie;
-import joshua.sarray.mm.MatchedHierarchicalPhrases;
 
 public class Node extends AbstractGrammar implements Comparable<Node>, Grammar, Trie {
 
