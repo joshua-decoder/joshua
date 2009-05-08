@@ -49,9 +49,10 @@ public class MertCore
   private int refsPerSen;
     // number of reference translations per sentence
 
-  private boolean tokenizeRefs;
-    // if true, tokenize reference sentences (NIST-style) before storing them.
-    // If false, store references as read from reference file(s).
+  private int textNormMethod;
+    // 0: no normalization, 1: "NIST-style" tokenization, and also rejoin 'm, 're, *'s, 've, 'll, 'd, and n't,
+    // 2: apply 1 and also rejoin dashes between letters, 3: apply 1 and also drop non-ASCII characters
+    // 4: apply 1+2+3
 
   private int numParams;
     // number of features for the log-linear model
@@ -263,13 +264,11 @@ public class MertCore
 
       inFile_refs.close();
 
-      // tokenize references, if requested
-      if (tokenizeRefs) {
-        for (int i = 0; i < numSentences; ++i) {
-          for (int r = 0; r < refsPerSen; ++r) {
-            // tokenize the rth reference translation for the ith sentence
-            refSentences[i][r] = tokenize(refSentences[i][r]);
-          }
+      // normalize reference sentences
+      for (int i = 0; i < numSentences; ++i) {
+        for (int r = 0; r < refsPerSen; ++r) {
+          // normalize the rth reference translation for the ith sentence
+          refSentences[i][r] = normalize(refSentences[i][r], textNormMethod);
         }
       }
 
@@ -2236,7 +2235,7 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
     sourceFileName = null;
     refFileName = "reference.txt";
     refsPerSen = 1;
-    tokenizeRefs = true;
+    textNormMethod = 1;
     paramsFileName = "params.txt";
     finalLambdaFileName = null;
     // MERT specs
@@ -2281,11 +2280,9 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
         refsPerSen = Integer.parseInt(args[i+1]);
         if (refsPerSen < 1) { println("refsPerSen must be positive."); System.exit(10); }
       }
-      else if (option.equals("-tokref")) {
-        int tokref = Integer.parseInt(args[i+1]);
-        if (tokref == 1) tokenizeRefs = true;
-        else if (tokref == 0) tokenizeRefs = false;
-        else { println("tokenizeRefs must be either 0 or 1."); System.exit(10); }
+      else if (option.equals("-txtNrm")) {
+        textNormMethod = Integer.parseInt(args[i+1]);
+        if (textNormMethod < 0 || textNormMethod > 4) { println("textNormMethod should be between 0 and 4"); System.exit(10); }
       }
       else if (option.equals("-p")) { paramsFileName = args[i+1]; }
       else if (option.equals("-fin")) { finalLambdaFileName = args[i+1]; }
@@ -2324,7 +2321,7 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
 //  /* possibly other early stopping criteria here */
 //
       else if (option.equals("-save")) {
-        int saveInterFiles = Integer.parseInt(args[i+1]);
+        saveInterFiles = Integer.parseInt(args[i+1]);
         if (saveInterFiles < 0 || saveInterFiles > 3) { println("save should be between 0 and 3"); System.exit(10); }
       }
       else if (option.equals("-ipi")) {
@@ -2569,8 +2566,19 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
 
   } // createUnifiedRefFile(String prefix, int numFiles)
 
-  private String tokenize(String str)
+  private String normalize(String str, int normMethod)
   {
+    if (normMethod == 0) return str;
+
+    // replace HTML/SGML
+    str = str.replaceAll("&quot;","\"");
+    str = str.replaceAll("&amp;","&");
+    str = str.replaceAll("&lt;","<");
+    str = str.replaceAll("&gt;",">");
+    str = str.replaceAll("&apos;","'");
+
+
+
     // split on these characters:
     // ! " # $ % & ( ) * + / : ; < = > ? @ [ \ ] ^ _ ` { | } ~
     // i.e. ASCII 33-126, except alphanumeric, and except "," "-" "." "'"
@@ -2590,7 +2598,12 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
       str = str.replaceAll(regex," " + regex + " ");
     }
 
-    str = " " + str + " "; // to make things less complicated with prev_ch and next_ch
+
+
+    // split on "." and "," and "-", conditioned on proper context
+
+    str = " " + str + " ";
+    str = str.replaceAll("\\s+"," ");
 
     TreeSet<Integer> splitIndices = new TreeSet<Integer>();
 
@@ -2623,7 +2636,72 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
       }
     }
 
+
+
+    // rejoin i'm, we're, *'s, won't, don't, etc
+
+    str = " " + str + " ";
     str = str.replaceAll("\\s+"," ");
+
+    str = str.replaceAll(" i 'm "," i'm ");
+    str = str.replaceAll(" we 're "," we're ");
+    str = str.replaceAll(" 's ","'s ");
+    str = str.replaceAll(" 've ","'ve ");
+    str = str.replaceAll(" 'll ","'ll ");
+    str = str.replaceAll(" 'd ","'d ");
+    str = str.replaceAll(" n't ","n't ");
+
+
+
+    // remove spaces around dashes
+    if (normMethod == 2 || normMethod == 4) {
+
+      TreeSet<Integer> skipIndices = new TreeSet<Integer>();
+      str = " " + str + " ";
+
+      for (int i = 0; i < str.length(); ++i) {
+        char ch = str.charAt(i);
+        if (ch == '-') {
+          // rejoin if surrounded by spaces, and then letters
+          if (str.charAt(i-1) == ' ' && str.charAt(i+1) == ' ') {
+            if (Character.isLetter(str.charAt(i-2)) && Character.isLetter(str.charAt(i+2))) {
+              skipIndices.add(i-1);
+              skipIndices.add(i+1);
+            }
+          }
+        }
+      }
+
+      str0 = str;
+      str = "";
+
+      for (int i = 0; i < str0.length(); ++i) {
+        if (!skipIndices.contains(i)) {
+          str += str0.charAt(i);
+        }
+      }
+    }
+
+
+
+    // drop non-ASCII characters
+    if (normMethod == 3 || normMethod == 4) {
+
+      str0 = str;
+      str = "";
+
+      for (int i = 0; i < str0.length(); ++i) {
+        char ch = str0.charAt(i);
+        if (ch <= 127) { // i.e. if ASCII
+          str += ch;
+        }
+      }
+    }
+
+
+
+    str = str.replaceAll("\\s+"," ");
+
     str = str.trim();
 
     return str;

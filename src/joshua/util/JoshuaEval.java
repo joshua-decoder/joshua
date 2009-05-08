@@ -38,9 +38,10 @@ public class JoshuaEval {
 	// number of reference translations per sentence
 	static int refsPerSen;
 	
-	// if true, tokenize reference sentences (NIST-style) before storing them.
-	// If false, store references as read from reference file(s).
-	static boolean tokenizeRefs;
+	// 0: no normalization, 1: "NIST-style" tokenization, and also rejoin 'm, 're, *'s, 've, 'll, 'd, and n't,
+	// 2: apply 1 and also rejoin dashes between letters, 3: apply 1 and also drop non-ASCII characters
+	// 4: apply 1+2+3
+	static private int textNormMethod;
 	
 	// refSentences[i][r] is the rth reference translation of the ith sentence
 	static String[][] refSentences;
@@ -242,7 +243,7 @@ line format:
 		println(" (*) -rank r: if format=nbest, evaluate the set of r'th candidates.\n       [[default: 1]]");
 		println(" (*) -ref refFile: reference translations (or file name prefix)\n       [[default: references.txt]]");
 		println(" (*) -rps refsPerSen: number of reference translations per sentence\n       [[default: 1]]");
-        println(" (*) -tokref tokenizeRefs: tokenize (NIST-style) references (1) or not (0)\n    [[default: 1]]");
+        println(" (*) -txtNrm textNormMethod: how should text be normalized?\n          (0) None, or (1) \"NIST-style\", and also rejoin 're, *'s, n't, etc,\n       or (2) apply 1 and also rejoin dashes between letters,\n       or (3) apply 1 and also drop non-ASCII characters, or (4) apply 1+2+3\n       [[default: 1]]");
 		println(" (*) -m metricName metric options: name of evaluation metric and its options\n       [[default: BLEU 4 closest]]");
 		println(" (*) -evr evalRefs: evaluate references (1) or not (0) (sanity check)\n       [[default: 0]]");
 		println(" (*) -v verbose: evaluate individual sentences (1) or not (0)\n       [[default: 0]]");
@@ -260,7 +261,7 @@ line format:
 		candRank = 1;
 		refFileName = "references.txt";
 		refsPerSen = 1;
-		tokenizeRefs = true;
+		textNormMethod = 1;
 		metricName = "BLEU";
 		metricOptions = new String[2];
 		metricOptions[0] = "4";
@@ -294,14 +295,10 @@ line format:
 					println("refsPerSen must be positive.");
 					System.exit(10);
 				}
-			} else if (option.equals("-tokref")) {
-				int tokref = Integer.parseInt(args[i+1]);
-				if (tokref == 1) {
-					tokenizeRefs = true;
-				} else if (tokref == 0) {
-					tokenizeRefs = false;
-				} else {
-					println("tokenizeRefs must be either 0 or 1.");
+			} else if (option.equals("-txtNrm")) {
+				textNormMethod = Integer.parseInt(args[i+1]);
+				if (textNormMethod < 0 || textNormMethod > 4) {
+					println("textNormMethod should be between 0 and 4");
 					System.exit(10);
 				}
 			} else if (option.equals("-m")) {
@@ -376,13 +373,11 @@ line format:
 			
 			inFile_refs.close();
 			
-			// tokenize references, if requested
-			if (tokenizeRefs) {
-				for (i = 0; i < numSentences; ++i) {
-					for (int r = 0; r < refsPerSen; ++r) {
-						// tokenize the rth reference translation for the ith sentence
-						refSentences[i][r] = tokenize(refSentences[i][r]);
-					}
+			// normalize reference sentences
+			for (i = 0; i < numSentences; ++i) {
+				for (int r = 0; r < refsPerSen; ++r) {
+					// normalize the rth reference translation for the ith sentence
+					refSentences[i][r] = normalize(refSentences[i][r], textNormMethod);
 				}
 			}
 			
@@ -499,12 +494,23 @@ line format:
 		
 	} // createUnifiedRefFile(String prefix, int numFiles)
 	
-	private static String tokenize(String str)
+	private static String normalize(String str, int normMethod)
 	{
+		if (normMethod == 0) return str;
+		
+		// replace HTML/SGML
+		str = str.replaceAll("&quot;","\"");
+		str = str.replaceAll("&amp;","&");
+		str = str.replaceAll("&lt;","<");
+		str = str.replaceAll("&gt;",">");
+		str = str.replaceAll("&apos;","'");
+		
+		
+		
 		// split on these characters:
 		// ! " # $ % & ( ) * + / : ; < = > ? @ [ \ ] ^ _ ` { | } ~
 		// i.e. ASCII 33-126, except alphanumeric, and except "," "-" "." "'"
-
+		
 		//                 ! "#  $%&  (  )  *  +/:;<=>  ?@  [   \  ]  ^_`  {  |  }~
 		String split_on = "!\"#\\$%&\\(\\)\\*\\+/:;<=>\\?@\\[\\\\\\]\\^_`\\{\\|\\}~";
 		
@@ -520,7 +526,12 @@ line format:
 			str = str.replaceAll(regex," " + regex + " ");
 		}
 		
-		str = " " + str + " "; // to make things less complicated with prev_ch and next_ch
+		
+		
+		// split on "." and "," and "-", conditioned on proper context
+		
+		str = " " + str + " ";
+		str = str.replaceAll("\\s+"," ");
 		
 		TreeSet<Integer> splitIndices = new TreeSet<Integer>();
 		
@@ -553,7 +564,72 @@ line format:
 			}
 		}
 		
+		
+		
+		// rejoin i'm, we're, *'s, won't, don't, etc
+		
+		str = " " + str + " ";
 		str = str.replaceAll("\\s+"," ");
+		
+		str = str.replaceAll(" i 'm "," i'm ");
+		str = str.replaceAll(" we 're "," we're ");
+		str = str.replaceAll(" 's ","'s ");
+		str = str.replaceAll(" 've ","'ve ");
+		str = str.replaceAll(" 'll ","'ll ");
+		str = str.replaceAll(" 'd ","'d ");
+		str = str.replaceAll(" n't ","n't ");
+		
+		
+		
+		// remove spaces around dashes
+		if (normMethod == 2 || normMethod == 4) {
+			
+			TreeSet<Integer> skipIndices = new TreeSet<Integer>();
+			str = " " + str + " ";
+			
+			for (int i = 0; i < str.length(); ++i) {
+				char ch = str.charAt(i);
+				if (ch == '-') {
+					// rejoin if surrounded by spaces, and then letters
+					if (str.charAt(i-1) == ' ' && str.charAt(i+1) == ' ') {
+						if (Character.isLetter(str.charAt(i-2)) && Character.isLetter(str.charAt(i+2))) {
+							skipIndices.add(i-1);
+							skipIndices.add(i+1);
+						}
+					}
+				}
+			}
+			
+			str0 = str;
+			str = "";
+			
+			for (int i = 0; i < str0.length(); ++i) {
+				if (!skipIndices.contains(i)) {
+					str += str0.charAt(i);
+				}
+			}
+		}
+		
+		
+		
+		// drop non-ASCII characters
+		if (normMethod == 3 || normMethod == 4) {
+			
+			str0 = str;
+			str = "";
+			
+			for (int i = 0; i < str0.length(); ++i) {
+				char ch = str0.charAt(i);
+				if (ch <= 127) { // i.e. if ASCII
+					str += ch;
+				}
+			}
+		}
+		
+		
+		
+		str = str.replaceAll("\\s+"," ");
+		
 		str = str.trim();
 		
 		return str;
