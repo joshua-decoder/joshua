@@ -9,6 +9,7 @@ import java.util.Set;
 
 import joshua.corpus.CorpusArray;
 import joshua.corpus.Vocabulary;
+import joshua.corpus.alignment.AlignmentArray;
 import joshua.corpus.lexprob.LexicalProbabilities;
 import joshua.corpus.lexprob.SampledLexProbs;
 import joshua.sarray.BasicPhrase;

@@ -15,10 +15,10 @@
  * Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  * MA 02111-1307 USA
  */
-package joshua.sarray;
+package joshua.corpus.alignment;
 
 import joshua.corpus.Span;
-import joshua.corpus.alignment.AbstractAlignments;
+import joshua.sarray.HierarchicalPhrases;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -71,7 +71,7 @@ public class AlignmentArray extends AbstractAlignments {
 	 * SuffixArrayFactory.loadAlignmentArray and
 	 * SuffixArrayFactory.createAlignmentArray methods.
 	 */
-	protected AlignmentArray(int[][] alignedTargetIndices, int[][] alignedSourceIndices) {
+	public AlignmentArray(int[][] alignedTargetIndices, int[][] alignedSourceIndices) {
 		this.alignedTargetIndices = alignedTargetIndices;
 		this.alignedSourceIndices = alignedSourceIndices;
 	}

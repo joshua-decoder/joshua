@@ -21,6 +21,7 @@ import joshua.corpus.Corpus;
 import joshua.corpus.CorpusArray;
 import joshua.corpus.SymbolTable;
 import joshua.corpus.Vocabulary;
+import joshua.corpus.alignment.AlignmentArray;
 import joshua.corpus.alignment.Alignments;
 import joshua.util.io.LineReader;
 
