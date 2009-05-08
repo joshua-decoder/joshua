@@ -19,6 +19,7 @@ package joshua.sarray;
 
 import joshua.corpus.Corpus;
 import joshua.corpus.Phrase;
+import joshua.corpus.RuleExtractor;
 import joshua.corpus.alignment.Alignments;
 import joshua.corpus.lexprob.LexicalProbabilities;
 import joshua.decoder.ff.tm.Grammar;

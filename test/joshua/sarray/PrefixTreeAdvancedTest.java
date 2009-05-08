@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Set;
 
 import joshua.corpus.CorpusArray;
+import joshua.corpus.RuleExtractor;
 import joshua.corpus.Vocabulary;
 import joshua.corpus.alignment.AlignmentArray;
 import joshua.corpus.lexprob.LexicalProbabilities;

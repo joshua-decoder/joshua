@@ -31,6 +31,7 @@ import java.util.zip.GZIPOutputStream;
 
 import joshua.corpus.Corpus;
 import joshua.corpus.MatchedHierarchicalPhrases;
+import joshua.corpus.RuleExtractor;
 import joshua.corpus.Vocabulary;
 import joshua.corpus.alignment.AlignmentGrids;
 import joshua.corpus.alignment.Alignments;

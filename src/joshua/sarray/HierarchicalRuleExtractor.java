@@ -29,6 +29,7 @@ import java.util.logging.Logger;
 import joshua.corpus.Corpus;
 import joshua.corpus.LabeledSpan;
 import joshua.corpus.MatchedHierarchicalPhrases;
+import joshua.corpus.RuleExtractor;
 import joshua.corpus.Span;
 import joshua.corpus.alignment.Alignments;
 import joshua.corpus.lexprob.LexicalProbabilities;

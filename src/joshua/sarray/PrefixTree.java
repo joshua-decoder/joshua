@@ -19,6 +19,7 @@ package joshua.sarray;
 
 import joshua.corpus.Corpus;
 import joshua.corpus.MatchedHierarchicalPhrases;
+import joshua.corpus.RuleExtractor;
 import joshua.corpus.SymbolTable;
 import joshua.corpus.alignment.Alignments;
 import joshua.corpus.lexprob.LexicalProbabilities;

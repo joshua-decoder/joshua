@@ -6,6 +6,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import joshua.corpus.Corpus;
+import joshua.corpus.RuleExtractor;
 import joshua.corpus.SymbolTable;
 import joshua.corpus.alignment.Alignments;
 import joshua.corpus.lexprob.LexicalProbabilities;
