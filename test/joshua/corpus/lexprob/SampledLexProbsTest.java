@@ -1,4 +1,4 @@
-package joshua.sarray;
+package joshua.corpus.lexprob;
 
 import java.io.File;
 import java.io.IOException;
@@ -9,9 +9,10 @@ import java.util.Date;
 import joshua.corpus.CorpusArray;
 import joshua.corpus.Vocabulary;
 import joshua.corpus.alignment.Alignments;
+import joshua.corpus.lexprob.SampledLexProbs;
+import joshua.sarray.HierarchicalPhrases;
 import joshua.sarray.Pattern;
 import joshua.sarray.PrefixTree;
-import joshua.sarray.SampledLexProbs;
 import joshua.sarray.SuffixArray;
 import joshua.sarray.SuffixArrayFactory;
 import joshua.util.Cache;

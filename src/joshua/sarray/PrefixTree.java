@@ -20,10 +20,10 @@ package joshua.sarray;
 import joshua.corpus.Corpus;
 import joshua.corpus.SymbolTable;
 import joshua.corpus.alignment.Alignments;
+import joshua.corpus.lexprob.LexicalProbabilities;
 import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.Rule;
 import joshua.sarray.mm.MatchedHierarchicalPhrases;
-import joshua.util.lexprob.LexicalProbabilities;
 
 import java.util.Collection;
 import java.util.Collections;

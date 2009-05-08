@@ -5,6 +5,7 @@ import java.util.Scanner;
 import java.util.Set;
 
 import joshua.corpus.Vocabulary;
+import joshua.corpus.lexprob.LexProbs;
 
 import org.testng.Assert;
 import org.testng.annotations.Test;

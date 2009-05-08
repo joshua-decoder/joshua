@@ -1,4 +1,4 @@
-package joshua.util.lexprob;
+package joshua.corpus.lexprob;
 
 import joshua.sarray.mm.MatchedHierarchicalPhrases;
 import joshua.util.Pair;

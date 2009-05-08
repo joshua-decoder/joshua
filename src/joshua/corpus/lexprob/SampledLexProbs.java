@@ -15,7 +15,7 @@
  * Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  * MA 02111-1307 USA
  */
-package joshua.sarray;
+package joshua.corpus.lexprob;
 
 import java.io.File;
 import java.io.IOException;
@@ -32,10 +32,13 @@ import joshua.corpus.Corpus;
 import joshua.corpus.CorpusArray;
 import joshua.corpus.SymbolTable;
 import joshua.corpus.alignment.Alignments;
+import joshua.sarray.BasicPhrase;
+import joshua.sarray.SuffixArray;
+import joshua.sarray.SuffixArrayFactory;
+import joshua.sarray.Suffixes;
 import joshua.sarray.mm.MatchedHierarchicalPhrases;
 import joshua.util.Cache;
 import joshua.util.Pair;
-import joshua.util.lexprob.LexicalProbabilities;
 
 
 /**
@@ -147,7 +150,7 @@ public class SampledLexProbs implements LexicalProbabilities {
 	 * @return
 	 * @throws IOException
 	 */
-	static SampledLexProbs getSampledLexProbs(String sourceCorpusString, String targetCorpusString, String alignmentString) throws IOException {
+	public static SampledLexProbs getSampledLexProbs(String sourceCorpusString, String targetCorpusString, String alignmentString) throws IOException {
 
 		String sourceFileName;
 		{

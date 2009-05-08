@@ -20,9 +20,9 @@ package joshua.sarray;
 import joshua.corpus.Corpus;
 import joshua.corpus.Phrase;
 import joshua.corpus.alignment.Alignments;
+import joshua.corpus.lexprob.LexicalProbabilities;
 import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.GrammarFactory;
-import joshua.util.lexprob.LexicalProbabilities;
 
 public class SAGrammarFactory implements GrammarFactory {
 

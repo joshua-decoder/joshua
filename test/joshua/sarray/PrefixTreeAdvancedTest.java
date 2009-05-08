@@ -9,11 +9,11 @@ import java.util.Set;
 
 import joshua.corpus.CorpusArray;
 import joshua.corpus.Vocabulary;
+import joshua.corpus.lexprob.LexicalProbabilities;
+import joshua.corpus.lexprob.SampledLexProbs;
 import joshua.sarray.BasicPhrase;
 import joshua.sarray.PrefixTree;
-import joshua.sarray.SampledLexProbs;
 import joshua.sarray.SuffixArray;
-import joshua.util.lexprob.LexicalProbabilities;
 
 
 import org.testng.Assert;

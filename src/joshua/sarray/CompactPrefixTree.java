@@ -8,7 +8,7 @@ import java.util.logging.Logger;
 import joshua.corpus.Corpus;
 import joshua.corpus.SymbolTable;
 import joshua.corpus.alignment.Alignments;
-import joshua.util.lexprob.LexicalProbabilities;
+import joshua.corpus.lexprob.LexicalProbabilities;
 
 public class CompactPrefixTree {
 
