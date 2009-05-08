@@ -17,8 +17,8 @@
  */
 package joshua.sarray;
 
-import joshua.util.sentence.Span;
-import joshua.util.sentence.alignment.AbstractAlignments;
+import joshua.corpus.Span;
+import joshua.corpus.alignment.AbstractAlignments;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;

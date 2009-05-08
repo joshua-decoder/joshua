@@ -6,8 +6,9 @@ import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.util.Date;
 
-import joshua.corpus.Alignments;
-import joshua.sarray.CorpusArray;
+import joshua.corpus.CorpusArray;
+import joshua.corpus.Vocabulary;
+import joshua.corpus.alignment.Alignments;
 import joshua.sarray.Pattern;
 import joshua.sarray.PrefixTree;
 import joshua.sarray.SampledLexProbs;
@@ -15,7 +16,6 @@ import joshua.sarray.SuffixArray;
 import joshua.sarray.SuffixArrayFactory;
 import joshua.util.Cache;
 import joshua.util.Pair;
-import joshua.util.sentence.Vocabulary;
 
 import org.testng.Assert;
 import org.testng.annotations.Test;

@@ -15,12 +15,10 @@
  * Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  * MA 02111-1307 USA
  */
-package joshua.util.sentence;
+package joshua.corpus;
 
 import java.lang.StringBuffer;
 
-import joshua.corpus.Phrase;
-import joshua.corpus.SymbolTable;
 
 /**
  * This class provides a skeletal implementation

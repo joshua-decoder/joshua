@@ -18,10 +18,10 @@ package joshua.sarray;
 
 import java.io.IOException;
 
-import joshua.sarray.CorpusArray;
+import joshua.corpus.CorpusArray;
+import joshua.corpus.Span;
 import joshua.sarray.SuffixArray;
 import joshua.sarray.SuffixArrayFactory;
-import joshua.util.sentence.Span;
 
 
 import org.testng.Assert;

@@ -1,4 +1,4 @@
-package joshua.util.sentence.alignment;
+package joshua.corpus.alignment;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;

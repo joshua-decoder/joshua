@@ -33,10 +33,12 @@ import java.util.logging.Logger;
 
 import joshua.corpus.Corpus;
 import joshua.corpus.Phrase;
+import joshua.corpus.Vocabulary;
+import joshua.sarray.mm.MemoryMappedCorpusArray;
+import joshua.sarray.mm.MemoryMappedSuffixArray;
 import joshua.util.Cache;
 import joshua.util.ReverseOrder;
 import joshua.util.io.BinaryIn;
-import joshua.util.sentence.Vocabulary;
 
 /**
  * Represents the most frequent phrases in a corpus.

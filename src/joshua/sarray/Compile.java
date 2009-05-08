@@ -26,10 +26,11 @@ import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import joshua.corpus.CorpusArray;
+import joshua.corpus.Vocabulary;
+import joshua.corpus.alignment.AlignmentGrids;
 import joshua.util.Cache;
 import joshua.util.io.BinaryOut;
-import joshua.util.sentence.Vocabulary;
-import joshua.util.sentence.alignment.AlignmentGrids;
 
 /**
  * Compiles a parallel corpus into binary data files.

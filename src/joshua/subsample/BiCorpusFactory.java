@@ -20,7 +20,7 @@ package joshua.subsample;
 import java.io.File;
 import java.io.IOException;
 
-import joshua.util.sentence.Vocabulary;
+import joshua.corpus.Vocabulary;
 
 
 /**

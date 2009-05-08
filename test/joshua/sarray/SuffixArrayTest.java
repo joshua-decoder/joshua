@@ -19,11 +19,12 @@ package joshua.sarray;
 
 import java.io.IOException;
 
+import joshua.corpus.CorpusArray;
 import joshua.corpus.Phrase;
+import joshua.corpus.Vocabulary;
 import joshua.sarray.BasicPhrase;
-import joshua.sarray.CorpusArray;
 import joshua.sarray.SuffixArray;
-import joshua.util.sentence.Vocabulary;
+import joshua.sarray.mm.MemoryMappedSuffixArray;
 
 
 import org.testng.Assert;

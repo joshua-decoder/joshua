@@ -24,9 +24,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 
-import joshua.sarray.MatchedHierarchicalPhrases;
+import joshua.corpus.Vocabulary;
+import joshua.sarray.mm.MatchedHierarchicalPhrases;
 import joshua.util.Pair;
-import joshua.util.sentence.Vocabulary;
 
 /**
  * Represents lexical probability distributions in both directions.

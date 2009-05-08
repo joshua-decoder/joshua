@@ -15,7 +15,7 @@
  * Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  * MA 02111-1307 USA
  */
-package joshua.sarray;
+package joshua.sarray.mm;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -23,6 +23,8 @@ import java.nio.IntBuffer;
 import java.nio.channels.FileChannel;
 
 import joshua.corpus.Corpus;
+import joshua.sarray.AbstractSuffixArray;
+import joshua.sarray.Pattern;
 import joshua.util.Cache;
 
 public class MemoryMappedSuffixArray extends AbstractSuffixArray {

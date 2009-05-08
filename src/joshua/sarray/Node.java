@@ -33,6 +33,7 @@ import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.RuleCollection;
 import joshua.decoder.ff.tm.Trie;
+import joshua.sarray.mm.MatchedHierarchicalPhrases;
 
 public class Node extends AbstractGrammar implements Comparable<Node>, Grammar, Trie {
 

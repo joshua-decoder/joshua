@@ -25,8 +25,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
 
+import joshua.corpus.Span;
 import joshua.corpus.SymbolTable;
-import joshua.util.sentence.Span;
+import joshua.sarray.mm.MatchedHierarchicalPhrases;
 
 /**
  * HierarchicalPhrases represents a list of matched hierarchical phrases.

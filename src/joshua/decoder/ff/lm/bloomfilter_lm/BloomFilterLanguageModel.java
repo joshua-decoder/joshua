@@ -38,7 +38,7 @@ import java.io.ObjectOutputStream;
 import joshua.decoder.ff.lm.DefaultNGramLanguageModel;
 import joshua.decoder.ff.lm.bloomfilter_lm.BloomFilter;
 import joshua.corpus.SymbolTable;
-import joshua.util.sentence.Vocabulary;
+import joshua.corpus.Vocabulary;
 import joshua.util.Regex;
 
 public class BloomFilterLanguageModel extends DefaultNGramLanguageModel implements Externalizable {

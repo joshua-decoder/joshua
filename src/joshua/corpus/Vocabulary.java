@@ -15,7 +15,7 @@
  * Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  * MA 02111-1307 USA
  */
-package joshua.util.sentence;
+package joshua.corpus;
 
 
 import java.io.Externalizable;
@@ -27,8 +27,6 @@ import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import joshua.corpus.AbstractSymbolTable;
-import joshua.corpus.SymbolTable;
 import joshua.sarray.BasicPhrase;
 import joshua.util.io.BinaryIn;
 import joshua.util.io.LineReader;

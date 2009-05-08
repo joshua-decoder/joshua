@@ -15,7 +15,7 @@
  * Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  * MA 02111-1307 USA
  */
-package joshua.util.sentence.alignment;
+package joshua.corpus.alignment;
 
 import java.io.File;
 import java.io.IOException;
@@ -25,16 +25,17 @@ import java.io.PrintWriter;
 import java.util.Date;
 import java.util.Scanner;
 
-import joshua.corpus.Alignments;
+import joshua.corpus.CorpusArray;
+import joshua.corpus.Span;
 import joshua.corpus.SymbolTable;
-import joshua.sarray.CorpusArray;
+import joshua.corpus.alignment.AlignmentGrids;
+import joshua.corpus.alignment.MemoryMappedAlignmentGrids;
 import joshua.sarray.HierarchicalPhrases;
 import joshua.sarray.Pattern;
 import joshua.sarray.PrefixTree;
 import joshua.sarray.SuffixArray;
 import joshua.sarray.SuffixArrayFactory;
 import joshua.util.io.BinaryOut;
-import joshua.util.sentence.Span;
 
 import org.testng.Assert;
 import org.testng.annotations.Parameters;

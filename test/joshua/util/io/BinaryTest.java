@@ -8,7 +8,7 @@ import java.io.ObjectOutput;
 import java.util.HashSet;
 import java.util.Set;
 
-import joshua.util.sentence.Vocabulary;
+import joshua.corpus.Vocabulary;
 
 import org.testng.Assert;
 import org.testng.annotations.Test;

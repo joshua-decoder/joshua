@@ -28,9 +28,11 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import joshua.corpus.Alignments;
 import joshua.corpus.Corpus;
+import joshua.corpus.CorpusArray;
 import joshua.corpus.SymbolTable;
+import joshua.corpus.alignment.Alignments;
+import joshua.sarray.mm.MatchedHierarchicalPhrases;
 import joshua.util.Cache;
 import joshua.util.Pair;
 import joshua.util.lexprob.LexicalProbabilities;

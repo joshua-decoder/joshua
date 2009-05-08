@@ -15,9 +15,10 @@
  * Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  * MA 02111-1307 USA
  */
-package joshua.sarray;
+package joshua.sarray.mm;
 
-import joshua.util.sentence.Span;
+import joshua.corpus.Span;
+import joshua.sarray.PatternFormat;
 
 /**
  * Represents a list of matched hierarchical phrases.

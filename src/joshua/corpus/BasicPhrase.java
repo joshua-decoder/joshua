@@ -24,13 +24,11 @@
  * 3 requires no special permission since it is compatible with
  * Apache License 2.0
  */
-package joshua.util.sentence;
+package joshua.corpus;
 
 import java.lang.StringBuffer;
 import java.util.ArrayList;
 
-import joshua.corpus.Phrase;
-import joshua.corpus.SymbolTable;
 
 
 /**

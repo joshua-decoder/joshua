@@ -15,7 +15,7 @@
  * Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  * MA 02111-1307 USA
  */
-package joshua.util.sentence.alignment;
+package joshua.corpus.alignment;
 
 /**
  * Simple data object class containing and x and y coordinate.

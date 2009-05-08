@@ -17,8 +17,8 @@
  */
 package joshua.util.lexprob;
 
-import joshua.sarray.MatchedHierarchicalPhrases;
-import joshua.util.sentence.Vocabulary;
+import joshua.corpus.Vocabulary;
+import joshua.sarray.mm.MatchedHierarchicalPhrases;
 //import joshua.util.CommandLineParser;
 //import joshua.util.CommandLineParser.Option;
 import joshua.util.Pair;

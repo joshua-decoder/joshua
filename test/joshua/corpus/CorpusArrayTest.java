@@ -1,12 +1,11 @@
-package joshua.sarray;
+package joshua.corpus;
 
 import java.io.IOException;
 
+import joshua.corpus.CorpusArray;
 import joshua.corpus.Phrase;
-import joshua.sarray.CorpusArray;
-import joshua.sarray.MemoryMappedCorpusArray;
 import joshua.sarray.SuffixArrayFactory;
-import joshua.util.sentence.Vocabulary;
+import joshua.sarray.mm.MemoryMappedCorpusArray;
 
 
 import org.testng.Assert;

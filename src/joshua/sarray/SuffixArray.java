@@ -18,10 +18,12 @@
 package joshua.sarray;
 
 import joshua.corpus.Corpus;
+import joshua.corpus.CorpusArray;
+import joshua.corpus.Vocabulary;
+import joshua.sarray.mm.MatchedHierarchicalPhrases;
 import joshua.util.FileUtility;
 import joshua.util.Cache;
 import joshua.util.io.BinaryOut;
-import joshua.util.sentence.Vocabulary;
 
 import java.io.Externalizable;
 import java.io.FileOutputStream;

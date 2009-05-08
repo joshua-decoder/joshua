@@ -21,8 +21,9 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.util.logging.Logger;
 
+import joshua.corpus.CorpusArray;
+import joshua.corpus.Vocabulary;
 import joshua.util.io.BinaryIn;
-import joshua.util.sentence.Vocabulary;
 
 /**
  * Given a corpus and an existing symbol table,

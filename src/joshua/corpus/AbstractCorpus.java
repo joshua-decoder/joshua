@@ -15,11 +15,9 @@
  * Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  * MA 02111-1307 USA
  */
-package joshua.sarray;
+package joshua.corpus;
 
-import joshua.corpus.Corpus;
-import joshua.corpus.Phrase;
-import joshua.corpus.SymbolTable;
+import joshua.sarray.ContiguousPhrase;
 
 /**
  * This class provides a mostly-complete implementation 

@@ -17,9 +17,9 @@
  */
 package joshua.sarray;
 
+import joshua.corpus.AbstractPhrase;
 import joshua.corpus.Phrase;
 import joshua.corpus.SymbolTable;
-import joshua.util.sentence.AbstractPhrase;
 
 import java.util.ArrayList;
 import java.util.List;

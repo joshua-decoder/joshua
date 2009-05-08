@@ -16,8 +16,8 @@
  */
 package joshua.sarray;
 
+import joshua.corpus.Vocabulary;
 import joshua.sarray.PrefixTree;
-import joshua.util.sentence.Vocabulary;
 
 import org.testng.Assert;
 import org.testng.annotations.Test;

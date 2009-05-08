@@ -1,7 +1,7 @@
-package joshua.util.sentence.alignment;
+package joshua.corpus.alignment;
 
 import joshua.corpus.Corpus;
-import joshua.util.sentence.Span;
+import joshua.corpus.Span;
 
 public abstract class AbstractAlignmentGrids extends AbstractAlignments {
 

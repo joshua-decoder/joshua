@@ -15,13 +15,12 @@
  * Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  * MA 02111-1307 USA
  */
-package joshua.sarray;
+package joshua.corpus;
 
-import joshua.corpus.Corpus;
-import joshua.corpus.Phrase;
-import joshua.corpus.SymbolTable;
+import joshua.sarray.ContiguousPhrase;
+import joshua.sarray.SuffixArray;
+import joshua.sarray.SuffixArrayFactory;
 import joshua.util.io.BinaryOut;
-import joshua.util.sentence.Vocabulary;
 
 import java.io.Externalizable;
 import java.io.FileOutputStream;
@@ -101,7 +100,7 @@ public class CorpusArray extends AbstractCorpus implements Corpus, Externalizabl
 	 * @see SuffixArrayFactor.createCorpusArray(String,String,Vocabulary)
 	 * @see SuffixArrayFactor.loadCorpusArray(String,String,String,Vocabulary)
 	 */
-	protected CorpusArray (int[] corpus, int[] sentences, SymbolTable vocab) {
+	public CorpusArray (int[] corpus, int[] sentences, SymbolTable vocab) {
 		super(vocab);
 		this.corpus = corpus;
 		this.sentences = sentences;

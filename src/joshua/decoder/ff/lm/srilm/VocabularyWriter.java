@@ -6,9 +6,9 @@ import java.io.ObjectOutput;
 import java.util.Scanner;
 
 import joshua.corpus.SymbolTable;
+import joshua.corpus.Vocabulary;
 import joshua.decoder.SrilmSymbol;
 import joshua.util.io.BinaryOut;
-import joshua.util.sentence.Vocabulary;
 
 
 

@@ -1,7 +1,7 @@
-package joshua.corpus;
+package joshua.corpus.alignment;
 
-import joshua.sarray.MatchedHierarchicalPhrases;
-import joshua.util.sentence.Span;
+import joshua.corpus.Span;
+import joshua.sarray.mm.MatchedHierarchicalPhrases;
 
 public interface Alignments {
 

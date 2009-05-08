@@ -1,6 +1,6 @@
-package joshua.sarray;
+package joshua.sarray.mm;
 
-import joshua.util.sentence.Span;
+import joshua.corpus.Span;
 
 public class MemoryMappedHierarchicalPhrases implements
 		MatchedHierarchicalPhrases {

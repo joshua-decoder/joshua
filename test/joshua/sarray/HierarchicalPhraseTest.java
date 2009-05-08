@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.util.Date;
 
+import joshua.corpus.CorpusArray;
 import joshua.corpus.SymbolTable;
 
 import org.testng.Assert;

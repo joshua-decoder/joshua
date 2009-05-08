@@ -15,10 +15,11 @@
  * Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  * MA 02111-1307 USA
  */
-package joshua.sarray;
+package joshua.sarray.mm;
 
+import joshua.corpus.AbstractCorpus;
 import joshua.corpus.SymbolTable;
-import joshua.util.sentence.Vocabulary;
+import joshua.corpus.Vocabulary;
 
 import java.io.IOException;
 import java.io.ObjectInput;

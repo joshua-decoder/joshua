@@ -26,24 +26,24 @@
     <parameter name="alignmentsType" value="AlignmentArray" />
     <classes>
        <class name="joshua.sarray.AlignmentArrayTest" /> 
-       <class name="joshua.util.sentence.alignment.AlignmentsTest" />   
+       <class name="joshua.corpus.alignment.AlignmentsTest" />   
     </classes>
   </test>
 
   <test name="AlignmentGrids" >
     <parameter name="alignmentsType" value="AlignmentGrids" />
     <classes>
-       <class name="joshua.util.sentence.alignment.AlignmentGridTest" />
-       <class name="joshua.util.sentence.alignment.AlignmentsTest" />   
-       <class name="joshua.util.sentence.alignment.MemoryMappedAlignmentGridsTest" />
+       <class name="joshua.corpus.alignment.AlignmentGridTest" />
+       <class name="joshua.corpus.alignment.AlignmentsTest" />   
+       <class name="joshua.corpus.alignment.MemoryMappedAlignmentGridsTest" />
     </classes>
   </test>
 
   <test name="MemoryMappedAlignmentGrids" >
     <parameter name="alignmentsType" value="MemoryMappedAlignmentGrids" />
     <classes>
-       <class name="joshua.util.sentence.alignment.AlignmentsTest" />   
-       <class name="joshua.util.sentence.alignment.MemoryMappedAlignmentGridsTest" />
+       <class name="joshua.corpus.alignment.AlignmentsTest" />   
+       <class name="joshua.corpus.alignment.MemoryMappedAlignmentGridsTest" />
     </classes>
   </test>
 
@@ -61,8 +61,8 @@
   
     <test name="Vocab" >
     <classes>
-       <class name="joshua.util.sentence.VocabularyTest" />  
-       <class name="joshua.sarray.CorpusArrayTest" />  
+       <class name="joshua.corpus.VocabularyTest" />  
+       <class name="joshua.corpus.CorpusArrayTest" />  
     </classes>
   </test>
 

@@ -7,13 +7,13 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import joshua.corpus.CorpusArray;
+import joshua.corpus.Vocabulary;
 import joshua.sarray.BasicPhrase;
-import joshua.sarray.CorpusArray;
 import joshua.sarray.PrefixTree;
 import joshua.sarray.SampledLexProbs;
 import joshua.sarray.SuffixArray;
 import joshua.util.lexprob.LexicalProbabilities;
-import joshua.util.sentence.Vocabulary;
 
 
 import org.testng.Assert;

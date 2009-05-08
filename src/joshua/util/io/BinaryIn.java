@@ -8,7 +8,7 @@ import java.io.ObjectInput;
 import java.io.ObjectStreamConstants;
 import java.io.RandomAccessFile;
 
-import joshua.util.sentence.Vocabulary;
+import joshua.corpus.Vocabulary;
 
 public class BinaryIn<E extends Externalizable> extends RandomAccessFile implements DataInput, ObjectInput {
 

@@ -15,11 +15,10 @@
  * Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  * MA 02111-1307 USA
  */
-package joshua.util.sentence.alignment;
+package joshua.corpus.alignment;
 
-import joshua.corpus.Alignments;
-import joshua.sarray.MatchedHierarchicalPhrases;
-import joshua.util.sentence.Span;
+import joshua.corpus.Span;
+import joshua.sarray.mm.MatchedHierarchicalPhrases;
 
 /**
  * @author Lane Schwartz
