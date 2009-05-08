@@ -15,14 +15,14 @@
  * Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  * MA 02111-1307 USA
  */
-package joshua.util.sentence;
+package joshua.corpus;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import joshua.corpus.SymbolTable;
 
 /**
+ * Representation of a sequence of tokens.
  * 
  * @version $LastChangedDate:2008-09-18 10:31:54 -0500 (Thu, 18 Sep 2008) $
  */

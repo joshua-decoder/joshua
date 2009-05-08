@@ -29,6 +29,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.GZIPOutputStream;
 
+import joshua.corpus.Alignments;
+import joshua.corpus.Corpus;
 import joshua.decoder.ff.tm.Rule;
 import joshua.util.Cache;
 import joshua.util.CommandLineParser;
@@ -36,7 +38,6 @@ import joshua.util.CommandLineParser.Option;
 import joshua.util.io.BinaryIn;
 import joshua.util.sentence.Vocabulary;
 import joshua.util.sentence.alignment.AlignmentGrids;
-import joshua.util.sentence.alignment.Alignments;
 import joshua.util.sentence.alignment.MemoryMappedAlignmentGrids;
 
 

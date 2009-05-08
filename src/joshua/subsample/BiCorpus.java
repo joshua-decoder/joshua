@@ -27,8 +27,8 @@
  */
 package joshua.subsample;
 
+import joshua.corpus.Phrase;
 import joshua.util.sentence.Vocabulary;
-import joshua.util.sentence.Phrase;
 
 import java.io.FileReader;
 import java.io.BufferedReader;

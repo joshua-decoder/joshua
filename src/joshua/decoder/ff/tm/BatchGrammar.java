@@ -17,7 +17,7 @@
  */
 package joshua.decoder.ff.tm;
 
-import joshua.util.sentence.Phrase;
+import joshua.corpus.Phrase;
 
 
 /**

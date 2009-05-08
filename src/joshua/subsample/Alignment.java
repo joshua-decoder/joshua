@@ -35,7 +35,7 @@ import java.lang.StringBuffer;
  * our purposes we could just keep the original string around (which
  * would save lots of time parsing and reconstructing the string).
  *
- * @see joshua.util.sentence.alignment.Alignments
+ * @see joshua.corpus.Alignments
  *
  * @author UMD (Jimmy Lin, Chris Dyer, et al.)
  * @author wren ng thornton

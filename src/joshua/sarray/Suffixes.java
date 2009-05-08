@@ -17,10 +17,17 @@
  */
 package joshua.sarray;
 
+import joshua.corpus.Corpus;
+import joshua.corpus.Phrase;
 import joshua.corpus.SymbolTable;
 import joshua.util.Cache;
-import joshua.util.sentence.Phrase;
 
+/**
+ * A representation of the suffixes in a corpus.
+ * 
+ * @author Lane Schwartz
+ * @author Chris Callison-Burch
+ */
 public interface Suffixes {
  
 
@@ -28,16 +35,18 @@ public interface Suffixes {
 	// Constants
 	//===============================================================
 
-		/**
-		 * The maximum length suffix to consider during sorting.
-		 */
-		public static int MAX_COMPARISON_LENGTH = 20;
-		
-		/** 
-		 * Maximum number of items that can be stored 
-		 * in the cache of patterns and hierarchical phrases. 
-		 */
-		public static final int DEFAULT_CACHE_CAPACITY = 100000;
+	/**
+	 * The maximum length suffix to consider during sorting.
+	 */
+	public static int MAX_COMPARISON_LENGTH = 20;
+
+	/** 
+	 * Maximum number of items that can be stored 
+	 * in the cache of patterns and hierarchical phrases. 
+	 */
+	public static final int DEFAULT_CACHE_CAPACITY = 100000;
+	
+	
 	
 	/**
 	 * Gets the symbol table for this object.

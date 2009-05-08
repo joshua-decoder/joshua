@@ -5,9 +5,10 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import joshua.corpus.Alignments;
+import joshua.corpus.Corpus;
 import joshua.corpus.SymbolTable;
 import joshua.util.lexprob.LexicalProbabilities;
-import joshua.util.sentence.alignment.Alignments;
 
 public class CompactPrefixTree {
 

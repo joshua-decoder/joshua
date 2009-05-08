@@ -2,10 +2,10 @@ package joshua.sarray;
 
 import java.io.IOException;
 
+import joshua.corpus.Phrase;
 import joshua.sarray.CorpusArray;
 import joshua.sarray.MemoryMappedCorpusArray;
 import joshua.sarray.SuffixArrayFactory;
-import joshua.util.sentence.Phrase;
 import joshua.util.sentence.Vocabulary;
 
 

@@ -15,33 +15,34 @@
  * Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  * MA 02111-1307 USA
  */
-package joshua.decoder.ff.tm;
+package joshua.util.sentence;
+
+import java.util.ArrayList;
 
 import joshua.corpus.Phrase;
-import joshua.decoder.ff.tm.Grammar;
 
 /**
- * To implement a new grammar, one must (1) implement GrammarFactory (2)
- * implement Grammar (3) implement TrieGrammar (4) implement RuleCollection
- * 
- * Also, one needs to pay attention to Rule class
- * 
+ * This class provides finer-grained abstraction 
+ * of basic phrases, allowing for multiple implementations
+ * of abstract phrase to share as much code as possible.
+ *  
  * @author Lane Schwartz
- * @version $LastChangedDate$
  */
-public interface GrammarFactory {
+public abstract class AbstractBasicPhrase extends AbstractPhrase {
 
-
-	/**
-	 * Returns a grammar which is adapted to the specified sentence. Depending
-	 * on the implementation this grammar may be generated online, partially
-	 * loaded from disk, remain unchanged etc.
-	 * 
-	 * @param sentence
-	 *            the next sentence to be translated
-	 * 
-	 * @return a grammar that represents a set of translation rules
-	 */
-	public Grammar getGrammarForSentence(Phrase sentence);
+	/* See Javadoc for Phrase interface. */
+	public ArrayList<Phrase> getSubPhrases() {
+		return this.getSubPhrases(this.size());
+	}
+	
+	/* See Javadoc for Phrase interface. */
+	public ArrayList<Phrase> getSubPhrases(int maxLength) {
+		ArrayList<Phrase> phrases = new ArrayList<Phrase>();
+		int len = this.size();
+		for (int n = 1; n <= maxLength; n++)
+			for (int i = 0; i <= len-n; i++)
+				phrases.add(this.subPhrase(i, i + n - 1));
+		return phrases;
+	}
 
 }

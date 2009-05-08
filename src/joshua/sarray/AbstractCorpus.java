@@ -17,9 +17,19 @@
  */
 package joshua.sarray;
 
+import joshua.corpus.Corpus;
+import joshua.corpus.Phrase;
 import joshua.corpus.SymbolTable;
-import joshua.util.sentence.Phrase;
 
+/**
+ * This class provides a mostly-complete implementation 
+ * of the <code>Corpus</code> interface, 
+ * designed to minimize the effort required to build 
+ * a concrete implementation of a corpus array data structure.
+ * 
+ * @author Lane Schwartz
+ * @author Chris Callison-Burch
+ */
 public abstract class AbstractCorpus implements Corpus {
 
 	protected SymbolTable symbolTable;
@@ -29,22 +39,7 @@ public abstract class AbstractCorpus implements Corpus {
 	}
 	
 	
-	/**
-	 * Compares the phrase that starts at position start with
-	 * the subphrase indicated by the start and end points of
-	 * the phrase.
-	 *
-	 * @param corpusStart the point in the corpus where the
-	 *                    comparison begins
-	 * @param phrase      the superphrase that the comparsion
-	 *                    phrase is drawn from
-	 * @param phraseStart the point in the phrase where the
-	 *                    comparison begins (inclusive)
-	 * @param phraseEnd   the point in the phrase where the
-	 *                    comparison ends (exclusive)
-	 * @return an int that follows the conventions of
-	 *         java.util.Comparator.compareTo()
-	 */
+	/* See Javadoc for Corpus interface. */
 	public int comparePhrase(int corpusStart, Phrase phrase, int phraseStart, int phraseEnd) {
 		int diff = -1;
 		int size = size();
@@ -60,14 +55,12 @@ public abstract class AbstractCorpus implements Corpus {
 		return 0;
 	}
 	
-	/**
-	 * compares the phrase that starts at position start with
-	 * the phrase passed in. Compares the entire phrase.
-	 */
+	/* See Javadoc for Corpus interface. */
 	public int comparePhrase(int corpusStart, Phrase phrase) {
 		return comparePhrase(corpusStart, phrase, 0, phrase.size());
 	}
 
+	/* See Javadoc for Corpus interface. */
 	public int compareSuffixes(int position1, int position2,
 			int maxComparisonLength) {
 		
@@ -90,12 +83,15 @@ public abstract class AbstractCorpus implements Corpus {
 		return 0;
 	}
 
+	/* See Javadoc for Corpus interface. */
 	public abstract int getNumSentences();
 
+	/* See Javadoc for Corpus interface. */
 	public ContiguousPhrase getPhrase(int startPosition, int endPosition) {
 		return new ContiguousPhrase(startPosition, endPosition, this);
 	}
 
+	/* See Javadoc for Corpus interface. */
 	public Phrase getSentence(int sentenceIndex) {
 		int numSentences = getNumSentences();
 		int numWords = size();
@@ -108,15 +104,18 @@ public abstract class AbstractCorpus implements Corpus {
 		} 
 	}
 
-
+	/* See Javadoc for Corpus interface. */
 	public int getSentenceEndPosition(int sentenceId) {
 		return getSentencePosition(sentenceId+1);
 	}
 
+	/* See Javadoc for Corpus interface. */
 	public abstract int getSentenceIndex(int position);
 
+	/* See Javadoc for Corpus interface. */
 	public abstract int getSentencePosition(int sentenceId);
 
+	/* See Javadoc for Corpus interface. */
 	public int[] getSentenceIndices(int[] positions) {
 		int size = positions.length;
 		int[] sentenceNumber = new int[size];
@@ -126,12 +125,15 @@ public abstract class AbstractCorpus implements Corpus {
 		return sentenceNumber;
 	}
 	
+	/* See Javadoc for Corpus interface. */
 	public SymbolTable getVocabulary() {
 		return symbolTable;
 	}
 
+	/* See Javadoc for Corpus interface. */
 	public abstract int getWordID(int position);
 
+	/* See Javadoc for Corpus interface. */
 	public abstract int size();
 
 }

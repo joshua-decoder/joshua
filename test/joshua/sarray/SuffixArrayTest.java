@@ -19,10 +19,10 @@ package joshua.sarray;
 
 import java.io.IOException;
 
+import joshua.corpus.Phrase;
 import joshua.sarray.BasicPhrase;
 import joshua.sarray.CorpusArray;
 import joshua.sarray.SuffixArray;
-import joshua.util.sentence.Phrase;
 import joshua.util.sentence.Vocabulary;
 
 

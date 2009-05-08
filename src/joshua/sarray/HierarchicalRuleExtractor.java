@@ -26,13 +26,14 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import joshua.corpus.Alignments;
+import joshua.corpus.Corpus;
 import joshua.decoder.ff.tm.BilingualRule;
 import joshua.decoder.ff.tm.Rule;
 import joshua.util.Pair;
 import joshua.util.lexprob.LexicalProbabilities;
 import joshua.util.sentence.LabeledSpan;
 import joshua.util.sentence.Span;
-import joshua.util.sentence.alignment.Alignments;
 
 /**
  * Rule extractor for Hiero-style hierarchical phrase-based translation.

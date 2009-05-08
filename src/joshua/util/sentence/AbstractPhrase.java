@@ -19,8 +19,17 @@ package joshua.util.sentence;
 
 import java.lang.StringBuffer;
 
+import joshua.corpus.Phrase;
 import joshua.corpus.SymbolTable;
 
+/**
+ * This class provides a skeletal implementation
+ * of the base methods likely to be common to 
+ * most or all implementations of the <code>Phrase</code> interface.
+ * 
+ * @author Lane Schwartz
+ * @author Chris Callison-Burch
+ */
 public abstract class AbstractPhrase implements Phrase {
 
 	//===============================================================

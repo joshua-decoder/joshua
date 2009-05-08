@@ -6,7 +6,7 @@ import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
 import java.nio.channels.FileChannel;
 
-import joshua.sarray.Corpus;
+import joshua.corpus.Corpus;
 
 public class MemoryMappedAlignmentGrids extends AbstractAlignmentGrids {
 

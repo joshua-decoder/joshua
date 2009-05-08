@@ -17,11 +17,12 @@
  */
 package joshua.sarray;
 
+import joshua.corpus.Alignments;
+import joshua.corpus.Corpus;
+import joshua.corpus.Phrase;
 import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.GrammarFactory;
 import joshua.util.lexprob.LexicalProbabilities;
-import joshua.util.sentence.Phrase;
-import joshua.util.sentence.alignment.Alignments;
 
 public class SAGrammarFactory implements GrammarFactory {
 

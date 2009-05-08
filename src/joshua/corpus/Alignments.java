@@ -1,4 +1,4 @@
-package joshua.util.sentence.alignment;
+package joshua.corpus;
 
 import joshua.sarray.MatchedHierarchicalPhrases;
 import joshua.util.sentence.Span;

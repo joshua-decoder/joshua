@@ -28,7 +28,7 @@ package joshua.subsample;
 // TODO: if we generalize the Alignment class, we could move this
 //       to joshua.util.sentence.
 
-import joshua.util.sentence.Phrase;
+import joshua.corpus.Phrase;
 
 
 /**

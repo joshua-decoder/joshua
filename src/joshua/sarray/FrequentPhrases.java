@@ -31,10 +31,11 @@ import java.util.Stack;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import joshua.corpus.Corpus;
+import joshua.corpus.Phrase;
 import joshua.util.Cache;
 import joshua.util.ReverseOrder;
 import joshua.util.io.BinaryIn;
-import joshua.util.sentence.Phrase;
 import joshua.util.sentence.Vocabulary;
 
 /**

@@ -25,6 +25,7 @@ import java.io.PrintWriter;
 import java.util.Date;
 import java.util.Scanner;
 
+import joshua.corpus.Alignments;
 import joshua.corpus.SymbolTable;
 import joshua.sarray.CorpusArray;
 import joshua.sarray.HierarchicalPhrases;

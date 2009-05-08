@@ -17,10 +17,11 @@
  */
 package joshua.sarray;
 
+import joshua.corpus.Alignments;
+import joshua.corpus.Corpus;
 import joshua.corpus.SymbolTable;
 import joshua.util.io.LineReader;
 import joshua.util.sentence.Vocabulary;
-import joshua.util.sentence.alignment.Alignments;
 
 import java.util.*;
 import java.util.logging.Logger;

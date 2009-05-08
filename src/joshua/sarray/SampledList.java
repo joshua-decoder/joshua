@@ -21,6 +21,7 @@ import java.util.AbstractList;
 import java.util.List;
 
 /**
+ * List that performs sampling at specified intervals.
  * 
  * @author Lane Schwartz
  * @version $LastChangedDate$

@@ -22,6 +22,7 @@ import java.io.RandomAccessFile;
 import java.nio.IntBuffer;
 import java.nio.channels.FileChannel;
 
+import joshua.corpus.Corpus;
 import joshua.util.Cache;
 
 public class MemoryMappedSuffixArray extends AbstractSuffixArray {

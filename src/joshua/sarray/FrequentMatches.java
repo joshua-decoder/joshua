@@ -25,7 +25,7 @@ import java.util.LinkedHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import joshua.util.sentence.Phrase;
+import joshua.corpus.Phrase;
 
 /**
  * Represents all locations in a corpus 

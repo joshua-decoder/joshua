@@ -17,6 +17,7 @@
  */
 package joshua.sarray;
 
+import joshua.corpus.Corpus;
 import joshua.util.FileUtility;
 import joshua.util.Cache;
 import joshua.util.io.BinaryOut;

@@ -29,6 +29,7 @@ package joshua.util.sentence;
 import java.lang.StringBuffer;
 import java.util.ArrayList;
 
+import joshua.corpus.Phrase;
 import joshua.corpus.SymbolTable;
 
 

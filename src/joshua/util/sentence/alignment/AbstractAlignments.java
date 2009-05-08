@@ -17,6 +17,7 @@
  */
 package joshua.util.sentence.alignment;
 
+import joshua.corpus.Alignments;
 import joshua.sarray.MatchedHierarchicalPhrases;
 import joshua.util.sentence.Span;
 
