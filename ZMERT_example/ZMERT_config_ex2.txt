@@ -6,7 +6,7 @@
 -p	params.txt              # parameter file
 -m	BLEU 4 closest          # evaluation metric and its options
 -maxIt	2                       # maximum MERT iterations
--ipi	5                       # number of intermediate initial points per iteration
+-ipi	20                      # number of intermediate initial points per iteration
 -cmd	./decoder_command_ex2   # file containing commands to run decoder
 -decOut	nbest_ex2.out           # file prodcued by decoder
 -dcfg	config_ex2.txt          # decoder config file
@@ -17,7 +17,7 @@
 # Notice that comments are allowed
 
 ### Other parameters (run "ZMERT -h" for default values)
-#-tokref  # should the reference sentences be tokenized (NIST-style)?
+#-txtNrm  # text normalization method
 #-fin     # output file for final values
 #-prevIt  # previous MERT iterations from which to consider candidates (in addition to the current iteration)
 #-minIt   # minimum MERT iterations before considering an early exit

@@ -244,7 +244,7 @@ line format:
 		println(" (*) -rank r: if format=nbest, evaluate the set of r'th candidates.\n       [[default: 1]]");
 		println(" (*) -ref refFile: reference translations (or file name prefix)\n       [[default: references.txt]]");
 		println(" (*) -rps refsPerSen: number of reference translations per sentence\n       [[default: 1]]");
-        println(" (*) -txtNrm textNormMethod: how should text be normalized?\n          (0) None, or (1) \"NIST-style\", and also rejoin 're, *'s, n't, etc,\n       or (2) apply 1 and also rejoin dashes between letters,\n       or (3) apply 1 and also drop non-ASCII characters, or (4) apply 1+2+3\n       [[default: 1]]");
+        println(" (*) -txtNrm textNormMethod: how should text be normalized?\n          (0) don't normalize text,\n       or (1) \"NIST-style\", and also rejoin 're, *'s, n't, etc,\n       or (2) apply 1 and also rejoin dashes between letters,\n       or (3) apply 1 and also drop non-ASCII characters,\n       or (4) apply 1+2+3\n       [[default: 1]]");
 		println(" (*) -m metricName metric options: name of evaluation metric and its options\n       [[default: BLEU 4 closest]]");
 		println(" (*) -evr evalRefs: evaluate references (1) or not (0) (sanity check)\n       [[default: 0]]");
 		println(" (*) -v verbose: evaluate individual sentences (1) or not (0)\n       [[default: 0]]");
