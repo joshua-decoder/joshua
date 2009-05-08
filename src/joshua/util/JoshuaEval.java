@@ -125,10 +125,11 @@ public class JoshuaEval {
 					// read testIndex'th candidate
 					candidate_str = inFile.readLine();
 					
-					topCand_str[i] = candidate_str;
+					topCand_str[i] = normalize(candidate_str, textNormMethod);
 					
 					for (int n = testIndex+1; n <= candPerSen; ++n){
 						// skip candidates testIndex+1 through candPerSen-1
+						// (this probably only applies when evaluating a combined reference file)
 						line = inFile.readLine();
 					}
 
@@ -166,7 +167,7 @@ line format:
 					if (read_i == i) {
 						line = line.substring(line.indexOf("||| ")+4); // get rid of initial text
 						candidate_str = line.substring(0,line.indexOf(" |||"));
-						topCand_str[i] = candidate_str;
+						topCand_str[i] = normalize(candidate_str, textNormMethod);
 						if (i < numSentences-1) {
 							while (read_i == i) {
 								line = inFile.readLine();
@@ -367,19 +368,11 @@ line format:
 			for (i = 0; i < numSentences; ++i) {
 				for (int r = 0; r < refsPerSen; ++r) {
 					// read the rth reference translation for the ith sentence
-					refSentences[i][r] = inFile_refs.readLine();
+					refSentences[i][r] = normalize(inFile_refs.readLine(), textNormMethod);
 				}
 			}
 			
 			inFile_refs.close();
-			
-			// normalize reference sentences
-			for (i = 0; i < numSentences; ++i) {
-				for (int r = 0; r < refsPerSen; ++r) {
-					// normalize the rth reference translation for the ith sentence
-					refSentences[i][r] = normalize(refSentences[i][r], textNormMethod);
-				}
-			}
 			
 		} catch (FileNotFoundException e) {
 			System.err.println("FileNotFoundException in MertCore.initialize(int): " + e.getMessage());

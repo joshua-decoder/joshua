@@ -1825,7 +1825,7 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
           feats_str = (feats_str.substring(0,junk_i)).trim();
         }
 
-        writeLine(candidate_str, outFile_sents);
+        writeLine(normalize(candidate_str,textNormMethod), outFile_sents);
         outFile_feats.println(feats_str);
 
         ++n;
