@@ -122,7 +122,7 @@ public class PrefixTreeAdvancedTest {
 			
 			
 			//alignments = new AlignmentArray(lowestAlignedTargetIndex, highestAlignedTargetIndex, lowestAlignedSourceIndex, highestAlignedSourceIndex, alignedTargetIndices, alignedSourceIndices);
-			alignments = new AlignmentArray(alignedTargetIndices, alignedSourceIndices);
+			alignments = new AlignmentArray(alignedTargetIndices, alignedSourceIndices, 1);
 			
 			
 		}

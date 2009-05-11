@@ -18,6 +18,7 @@
 package joshua.corpus.suffix_array;
 
 import joshua.corpus.Corpus;
+import joshua.corpus.ParallelCorpus;
 import joshua.corpus.Phrase;
 import joshua.corpus.RuleExtractor;
 import joshua.corpus.alignment.Alignments;
@@ -27,7 +28,16 @@ import joshua.decoder.ff.tm.GrammarFactory;
 import joshua.prefix_tree.HierarchicalRuleExtractor;
 import joshua.prefix_tree.PrefixTree;
 
-public class SAGrammarFactory implements GrammarFactory {
+/**
+ * Aligned parallel corpus, 
+ * capable of extracting a sentence-specific translation grammar.
+ * <p>
+ * The source side of the aligned parallel corpus
+ * is backed by a suffix array.
+ * 
+ * @author Lane Schwartz
+ */
+public class AlignedParallelCorpus implements ParallelCorpus, GrammarFactory {
 
 	private final Suffixes sourceSuffixArray;
 	private final Corpus targetCorpus;
@@ -41,9 +51,6 @@ public class SAGrammarFactory implements GrammarFactory {
 	
 	private final RuleExtractor ruleExtractor;
 	
-//	/** TODO This variable is never read - perhaps it should be removed? */
-//	@SuppressWarnings("unused")
-//	private final int spanLimit;
 	
 	/**
 	 * Constructs a factory capable of getting a grammar backed by a suffix array.
@@ -55,7 +62,7 @@ public class SAGrammarFactory implements GrammarFactory {
 	 * @param maxPhraseLength
 	 * @param maxNonterminals
 	 */
-	public SAGrammarFactory(Suffixes sourceSuffixArray, Corpus targetCorpus, Alignments alignments, LexicalProbabilities lexProbs, int sampleSize, int maxPhraseSpan, int maxPhraseLength, int maxNonterminals, int minNonterminalSpan) {
+	public AlignedParallelCorpus(Suffixes sourceSuffixArray, Corpus targetCorpus, Alignments alignments, LexicalProbabilities lexProbs, int sampleSize, int maxPhraseSpan, int maxPhraseLength, int maxNonterminals, int minNonterminalSpan) {
 		this.sourceSuffixArray = sourceSuffixArray;
 		this.targetCorpus      = targetCorpus;
 		this.alignments        = alignments;
@@ -64,7 +71,6 @@ public class SAGrammarFactory implements GrammarFactory {
 		this.maxPhraseLength   = maxPhraseLength;
 		this.maxNonterminals   = maxNonterminals;
 		this.minNonterminalSpan = minNonterminalSpan;
-//		this.spanLimit         = spanLimit;
 		this.ruleExtractor = new HierarchicalRuleExtractor(sourceSuffixArray, targetCorpus, alignments, lexProbs, sampleSize, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan);
 		
 	}
@@ -89,6 +95,26 @@ public class SAGrammarFactory implements GrammarFactory {
 		prefixTree.add(words);
 		
 		return prefixTree.getRoot();
+	}
+
+
+	public Alignments getAlignments() {
+		return this.alignments;
+	}
+
+
+	public int getNumSentences() {
+		return this.alignments.size();
+	}
+
+
+	public Corpus getSourceCorpus() {
+		return this.sourceSuffixArray.getCorpus();
+	}
+
+
+	public Corpus getTargetCorpus() {
+		return this.targetCorpus;
 	}
 	
 }

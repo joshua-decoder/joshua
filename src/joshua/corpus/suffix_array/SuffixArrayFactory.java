@@ -272,7 +272,7 @@ public class SuffixArrayFactory {
 			sentenceCounter++;
 		}
 
-		return new AlignmentArray(alignedTargetIndices, alignedSourceIndices);
+		return new AlignmentArray(alignedTargetIndices, alignedSourceIndices, sentenceCounter);
 	}
 	
 	

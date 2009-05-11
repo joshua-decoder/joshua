@@ -39,7 +39,7 @@ import joshua.corpus.alignment.mm.MemoryMappedAlignmentGrids;
 import joshua.corpus.lexprob.LexicalProbabilities;
 import joshua.corpus.lexprob.SampledLexProbs;
 import joshua.corpus.mm.MemoryMappedCorpusArray;
-import joshua.corpus.suffix_array.SAGrammarFactory;
+import joshua.corpus.suffix_array.AlignedParallelCorpus;
 import joshua.corpus.suffix_array.Suffixes;
 import joshua.corpus.suffix_array.mm.MemoryMappedSuffixArray;
 import joshua.util.io.BinaryIn;
@@ -429,7 +429,7 @@ public class JoshuaDecoder {
 	}
 	
 	
-	private SAGrammarFactory initializeSuffixArrayGrammar()
+	private AlignedParallelCorpus initializeSuffixArrayGrammar()
 	throws IOException, ClassNotFoundException {
 		
 		int maxCacheSize = JoshuaConfiguration.sa_rule_cache_size;
@@ -549,7 +549,7 @@ public class JoshuaDecoder {
 			JoshuaConfiguration.sa_precalculate_lexprobs);
 		
 		// Finally, add the Suffix Array Grammar
-		SAGrammarFactory saGrammarFactory = new SAGrammarFactory(
+		AlignedParallelCorpus saGrammarFactory = new AlignedParallelCorpus(
 				sourceSuffixArray,
 				targetCorpusArray,
 				alignments,

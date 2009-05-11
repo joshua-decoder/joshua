@@ -78,4 +78,10 @@ public interface Alignments {
 	public Span getConsistentTargetSpan(Span sourceSpan);
 
 	
+	/**
+	 * Gets the number of aligned sentences.
+	 * 
+	 * @return the number of aligned sentences
+	 */
+	public int size();
 }

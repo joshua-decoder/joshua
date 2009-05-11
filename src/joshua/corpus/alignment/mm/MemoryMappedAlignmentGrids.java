@@ -96,4 +96,8 @@ public class MemoryMappedAlignmentGrids extends AbstractAlignmentGrids {
 		
 	}
 
+	public int size() {
+		return this.size;
+	}
+
 }

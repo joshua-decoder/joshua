@@ -177,6 +177,10 @@ public class AlignmentGrids extends AbstractAlignmentGrids implements Externaliz
 		out.flush();
 		out.close();
 	}
+
+	public int size() {
+		return this.alignments.size();
+	}
 	
 }
 

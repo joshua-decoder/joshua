@@ -61,6 +61,7 @@ public class AlignmentArray extends AbstractAlignments {
 	/** Logger for this class. */
 	private static final Logger logger = Logger.getLogger(AlignmentArray.class.getName());
 	
+	protected final int numSentences;
 
 //===============================================================
 // Constructor(s)
@@ -70,10 +71,12 @@ public class AlignmentArray extends AbstractAlignments {
 	 * This protected constructor is used by the
 	 * SuffixArrayFactory.loadAlignmentArray and
 	 * SuffixArrayFactory.createAlignmentArray methods.
+	 * @param numSentences TODO
 	 */
-	public AlignmentArray(int[][] alignedTargetIndices, int[][] alignedSourceIndices) {
+	public AlignmentArray(int[][] alignedTargetIndices, int[][] alignedSourceIndices, int numSentences) {
 		this.alignedTargetIndices = alignedTargetIndices;
 		this.alignedSourceIndices = alignedSourceIndices;
+		this.numSentences = numSentences;
 	}
 	
 
@@ -274,6 +277,11 @@ public class AlignmentArray extends AbstractAlignments {
 		
 		lowestHighestMax++;
 		return new Span(lowestHighestMin,lowestHighestMax);	
+	}
+
+
+	public int size() {
+		return this.numSentences;
 	}
 	
 //===============================================================
