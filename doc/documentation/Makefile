@@ -13,7 +13,7 @@ RERUNBIB = "No file.*\.bbl|Citation.*undefined"
 
 
 
-all: $(PAPER).pdf $(PAPER).bbl
+all: $(PAPER).pdf $(PAPER).bbl html
 
 %.pdf: %.tex $(wildcard *.tex) $(wildcard styles/*.sty) 
 	$(LATEX) $(LATEX_OPTS) $<
