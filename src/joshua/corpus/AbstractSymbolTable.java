@@ -32,10 +32,19 @@ import java.io.ObjectOutputStream;
  */
 public abstract class AbstractSymbolTable implements SymbolTable {
 	
+	/** 
+	 * Character set encoding used when 
+	 * exporting and importing binary files to and from disk. 
+	 */
+	public static String CHARACTER_ENCODING = "UTF-8";
+	
+	
+	/* See Javadoc for SymbolTable interface. */
 	final public int[] addTerminals(String sentence){
 		return addTerminals(sentence.split("\\s+"));
 	}	
 	
+	/* See Javadoc for SymbolTable interface. */
     final public int[] addTerminals(String[] words){
 		int[] res =new int[words.length];
 		for(int t=0; t<words.length; t++)
@@ -43,6 +52,7 @@ public abstract class AbstractSymbolTable implements SymbolTable {
 		return res;
 	}	
     
+    /* See Javadoc for SymbolTable interface. */
 	final public int getTargetNonterminalIndex(int id) {
 		if (! isNonterminal(id)) {
 			return -1;
@@ -54,6 +64,7 @@ public abstract class AbstractSymbolTable implements SymbolTable {
 		}
 	}
 	
+	/* See Javadoc for SymbolTable interface. */
 	final public int getTargetNonterminalIndex(String wrd) {
 		// Assumes the last character is a digit
 		// and extracts it, starting from one.
@@ -62,15 +73,17 @@ public abstract class AbstractSymbolTable implements SymbolTable {
 		return Integer.parseInt( wrd.substring(wrd.length() - 2,	wrd.length() - 1) ) - 1;
 	}
 
+	/* See Javadoc for SymbolTable interface. */
 	public String getUnknownWord() {
 		return SymbolTable.UNKNOWN_WORD_STRING;
 	}
 
-
+	/* See Javadoc for SymbolTable interface. */
 	public int getUnknownWordID() {
 		return SymbolTable.UNKNOWN_WORD;
 	}
 	
+	/* See Javadoc for SymbolTable interface. */
 	public String getWords(int[] wordIDs, boolean ntIndexIncrements) {
 		StringBuilder s = new StringBuilder();
 		
@@ -102,7 +115,7 @@ public abstract class AbstractSymbolTable implements SymbolTable {
 		return s.toString();
 	}
 	
-
+	/* See Javadoc for SymbolTable interface. */
 	public boolean isNonterminal(int id) {
 		if (id < 0) 
 			return true;
@@ -110,12 +123,7 @@ public abstract class AbstractSymbolTable implements SymbolTable {
 			return false;
 	}
 	
-	/** 
-	 * Character set encoding used when 
-	 * exporting and importing binary files to and from disk. 
-	 */
-	public static String CHARACTER_ENCODING = "UTF-8";
-	
+	/* See Javadoc for SymbolTable interface. */
 	public void setExternalizableEncoding(String charsetName) {
 		CHARACTER_ENCODING = charsetName;
 	}
@@ -136,12 +144,13 @@ public abstract class AbstractSymbolTable implements SymbolTable {
 		writeExternal(new ObjectOutputStream(out));
 	}
 	
+	/** This method throws an <code>UnsupportedOperationException</code>. */
 	public void readExternal(ObjectInput in) throws IOException,
 	ClassNotFoundException {
 		throw new UnsupportedOperationException();
 	}
 
-
+	/** This method throws an <code>UnsupportedOperationException</code>. */
 	public void writeExternal(ObjectOutput out) throws IOException {
 		throw new UnsupportedOperationException();
 	}

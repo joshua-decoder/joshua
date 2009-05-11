@@ -35,14 +35,16 @@ import joshua.util.io.BinaryIn;
  */
 public class ConvertCorpus {
 
-	private static final Logger logger = Logger.getLogger(ConvertCorpus.class.getName());
+	/** Logger for this class. */
+	private static final Logger logger = 
+		Logger.getLogger(ConvertCorpus.class.getName());
 	
 	/**
 	 * Given a corpus and an existing symbol table,
 	 * read the corpus, and create a binary representation
 	 * of the corpus using the provided symbol table.
 	 * 
-	 * @param args
+	 * @param args Command line arguments
 	 * @throws ClassNotFoundException 
 	 * @throws IOException 
 	 */
@@ -50,7 +52,9 @@ public class ConvertCorpus {
 
 		// Read the command line arguments
 		if (args.length < 3) {
-			System.err.println("Usage: java " + SuffixArray.class.getName() + " target_corpus tgt.lm.vocab tgt.corpus");
+			System.err.println(
+					"Usage: java " + SuffixArray.class.getName() + 
+					" target_corpus tgt.lm.vocab tgt.corpus");
 			System.exit(-1);
 		}
 		String corpusFileName = args[0];

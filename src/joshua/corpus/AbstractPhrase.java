@@ -40,6 +40,22 @@ public abstract class AbstractPhrase implements Phrase {
 	/** offset used in has code generation */
 	public static final int HASH_OFFSET = 37;
 	
+	/**
+	 * Splits a sentence (on white space),
+	 * then looks up the integer representations of each word
+	 * using the supplied symbol table. 
+	 * 
+	 * @param sentence White-space separated String of words.
+	 * @param vocabulary Symbol table for mapping tokens to integers.
+	 * @return Array of integers corresponding to the words in the sentence.
+	 */
+	protected int[] splitSentence(String sentence, SymbolTable vocabulary) {
+		String[] w      = sentence.split("\\s+");
+		int[] words      = new int[w.length];
+		for (int i = 0; i < w.length; i++)
+			words[i] = vocabulary.addTerminal(w[i]);
+		return words;
+	}
 	
 	/**
 	 * Uses the standard java approach of calculating hashCode.

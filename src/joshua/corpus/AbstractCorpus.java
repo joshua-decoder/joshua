@@ -30,8 +30,20 @@ import joshua.sarray.ContiguousPhrase;
  */
 public abstract class AbstractCorpus implements Corpus {
 
+	/** 
+	 * Symbol table for the corpus,
+	 * responsible for mapping between tokens in the corpus
+	 * and the integer representations of those tokens.
+	 */
 	protected SymbolTable symbolTable;
 	
+	/**
+	 * Constructs an abstract corpus with the specified symbol table.
+	 * 
+	 * @param symbolTable Symbol table for the corpus,
+	 * 		responsible for mapping between tokens in the corpus
+	 *		and the integer representations of those tokens
+	 */
 	public AbstractCorpus(SymbolTable symbolTable) {
 		this.symbolTable = symbolTable;
 	}

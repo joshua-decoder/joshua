@@ -45,25 +45,20 @@ public class BasicPhrase extends AbstractPhrase {
 	public BasicPhrase(byte language, String sentence) {
 		this.language   = language;
 		this.vocabulary = new Vocabulary();
-		this.setSentence(sentence);
+		this.words = splitSentence(sentence, vocabulary);
 	}
 	
 	/** Note that the Vocabulary is shared, not cloned. */
 	public BasicPhrase(byte language, String sentence, Vocabulary vocabulary) {
 		this.language   = language;
 		this.vocabulary = vocabulary;
-		this.setSentence(sentence);
-	}
-	
-	private void setSentence(String sentence) {
-		String[] w      = sentence.split("\\s+");
-		this.words      = new int[w.length];
-		for (int i = 0; i < w.length; i++)
-			this.words[i] = this.vocabulary.addTerminal(w[i]);
+		this.words = splitSentence(sentence, vocabulary);
 	}
 	
 	
 	private BasicPhrase() {}
+	
+	/* See Javadoc for Phrase interface. */
 	public BasicPhrase subPhrase(int start, int end) {
 		BasicPhrase that = new BasicPhrase();
 		that.language    = this.language;
@@ -73,11 +68,12 @@ public class BasicPhrase extends AbstractPhrase {
 		return that;
 	}
 	
-	
+	/* See Javadoc for Phrase interface. */
 	public ArrayList<Phrase> getSubPhrases() {
 		return this.getSubPhrases(this.size());
 	}
 	
+	/* See Javadoc for Phrase interface. */
 	public ArrayList<Phrase> getSubPhrases(int maxLength) {
 		ArrayList<Phrase> phrases = new ArrayList<Phrase>();
 		int len = this.size();
@@ -87,14 +83,23 @@ public class BasicPhrase extends AbstractPhrase {
 		return phrases;
 	}
 	
-	
+	/* See Javadoc for Phrase interface. */
 	public int size() { return (words == null ? 0 : words.length); }
 	
+	/* See Javadoc for Phrase interface. */
 	public int getWordID(int position) { return words[position]; }
 	
+	/* See Javadoc for Phrase interface. */
 	public SymbolTable getVocab()       { return vocabulary; }
 	
-	// Slightly more efficient then the inherited one
+	/**
+	 * Returns a human-readable String representation of the phrase.
+	 * <p>
+	 * The implementation of this method is slightly more efficient 
+	 * than that inherited from <code>AbstractPhrase</code>.
+	 * 
+	 * @return a human-readable String representation of the phrase.
+	 */
 	public String toString() {
 		StringBuffer sb = new StringBuffer();
 		if (words != null) {

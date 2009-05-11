@@ -110,4 +110,10 @@ public interface Phrase extends Comparable<Phrase> {
 	 */
 	public int compareTo(Phrase other);
 
+	/**
+	 * Returns a human-readable String representation of the phrase.
+	 * 
+	 * @return a human-readable String representation of the phrase.
+	 */
+	public String toString();
 }
