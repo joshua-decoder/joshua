@@ -18,7 +18,6 @@
 package joshua.decoder.ff.lm.distributed_lm;
 
 import joshua.decoder.ff.lm.AbstractLM;
-import joshua.decoder.Support;
 import joshua.corpus.SymbolTable;
 import joshua.util.io.LineReader;
 import joshua.util.Regex;

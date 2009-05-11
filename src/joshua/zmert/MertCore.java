@@ -2769,7 +2769,8 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
     cleanupMemory(100,true);
   }
 
-  private void cleanupMemory(int reps, boolean silent)
+  @SuppressWarnings("static-access")
+private void cleanupMemory(int reps, boolean silent)
   {
     int bytesPerMB = 1024 * 1024;
 

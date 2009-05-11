@@ -90,6 +90,7 @@ public class AlignedSubsampler extends Subsampler {
 	}
 	
 	
+	@SuppressWarnings("static-access")
 	public static void main(String[] args) {
 		new SubsamplerCLI() { /* Local class definition */
 			

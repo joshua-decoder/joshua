@@ -52,6 +52,7 @@ import org.apache.commons.cli.HelpFormatter;
  *
  * @author wren ng thornton
  */
+@SuppressWarnings("static-access")
 public class SubsamplerCLI {
 	//TODO hasArg is a static method. It should be accessed as OptionBuilder.hasArg()
 	final Option ot = OptionBuilder
