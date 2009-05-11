@@ -134,6 +134,13 @@ In addition to standard CKY, the system also maintains backpointers, which are u
 \item \textbf{Hypergraphs and $k$-best extraction:}
 For each source-language sentence, the chart-parsing algorithm produces a \emph{hypergraph}, which represents an exponential set of likely derivation hypotheses. Using the $k$-best extraction algorithm \cite{Huang2005}, it is possible to extract the $k$ most likely derivations from the hypergraph.
 
+\item \textbf{Oracle Extraction:} 
+While a hypergraph represents a very large set of translations, it is quite possible that some desired translations (e.g., the reference translations) are not contained in the hypergraph, due to pruning or inherent deficiency of the translation model.
+In this case, one may be interested in finding the so-called \emph{oracle translations}, which are most similar to the desired translations, with similarity measured by a metric such as BLEU.
+Clearly, such oracle translations cannot be found via brute-force, and efficient dynamic programming algorithms are required.
+Oracle extraction are very useful for discriminative training, system combination, multi-source translation, and so on. 
+More details are provided by \newcite{oracleExtraction2009}.
+
 \item \textbf{Parallel and distributed decoding:}
 We also implement \emph{parallel decoding} and a \emph{distributed language model} by exploiting multi-core and multi-processor architectures and distributed computing techniques. More details on these two features are provided by \newcite{Li2008b}.
 
