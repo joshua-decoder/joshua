@@ -1,4 +1,4 @@
-package joshua.corpus.alignment;
+package joshua.corpus.alignment.mm;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -7,6 +7,8 @@ import java.nio.ShortBuffer;
 import java.nio.channels.FileChannel;
 
 import joshua.corpus.Corpus;
+import joshua.corpus.alignment.AbstractAlignmentGrids;
+import joshua.corpus.alignment.AlignmentGrid;
 
 public class MemoryMappedAlignmentGrids extends AbstractAlignmentGrids {
 

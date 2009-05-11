@@ -4,8 +4,8 @@ import java.io.IOException;
 
 import joshua.corpus.CorpusArray;
 import joshua.corpus.Phrase;
+import joshua.corpus.mm.MemoryMappedCorpusArray;
 import joshua.sarray.SuffixArrayFactory;
-import joshua.sarray.mm.MemoryMappedCorpusArray;
 
 
 import org.testng.Assert;

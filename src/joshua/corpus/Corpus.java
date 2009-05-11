@@ -21,7 +21,6 @@ package joshua.corpus;
 import java.io.Externalizable;
 import java.io.IOException;
 
-import joshua.sarray.ContiguousPhrase;
 
 
 /**

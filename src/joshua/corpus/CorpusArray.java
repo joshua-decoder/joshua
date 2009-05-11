@@ -17,7 +17,6 @@
  */
 package joshua.corpus;
 
-import joshua.sarray.ContiguousPhrase;
 import joshua.sarray.SuffixArray;
 import joshua.sarray.SuffixArrayFactory;
 import joshua.util.io.BinaryOut;

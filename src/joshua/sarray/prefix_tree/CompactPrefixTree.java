@@ -1,4 +1,4 @@
-package joshua.sarray;
+package joshua.sarray.prefix_tree;
 
 import java.util.BitSet;
 import java.util.Map;
@@ -10,6 +10,7 @@ import joshua.corpus.RuleExtractor;
 import joshua.corpus.SymbolTable;
 import joshua.corpus.alignment.Alignments;
 import joshua.corpus.lexprob.LexicalProbabilities;
+import joshua.sarray.Suffixes;
 
 public class CompactPrefixTree {
 

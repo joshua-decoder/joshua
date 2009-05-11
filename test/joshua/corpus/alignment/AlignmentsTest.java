@@ -29,7 +29,7 @@ import joshua.corpus.CorpusArray;
 import joshua.corpus.Span;
 import joshua.corpus.SymbolTable;
 import joshua.corpus.alignment.AlignmentGrids;
-import joshua.corpus.alignment.MemoryMappedAlignmentGrids;
+import joshua.corpus.alignment.mm.MemoryMappedAlignmentGrids;
 import joshua.sarray.HierarchicalPhrases;
 import joshua.sarray.Pattern;
 import joshua.sarray.SuffixArray;

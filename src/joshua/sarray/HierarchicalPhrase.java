@@ -18,6 +18,7 @@
 package joshua.sarray;
 
 import joshua.corpus.AbstractPhrase;
+import joshua.corpus.ContiguousPhrase;
 import joshua.corpus.Corpus;
 import joshua.corpus.Phrase;
 import joshua.corpus.SymbolTable;

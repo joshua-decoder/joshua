@@ -17,7 +17,6 @@
  */
 package joshua.corpus;
 
-import joshua.sarray.ContiguousPhrase;
 
 /**
  * This class provides a mostly-complete implementation 

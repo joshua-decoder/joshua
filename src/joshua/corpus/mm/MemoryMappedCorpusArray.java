@@ -15,7 +15,7 @@
  * Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  * MA 02111-1307 USA
  */
-package joshua.sarray.mm;
+package joshua.corpus.mm;
 
 import joshua.corpus.AbstractCorpus;
 import joshua.corpus.SymbolTable;

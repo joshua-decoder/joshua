@@ -15,18 +15,14 @@
  * Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  * MA 02111-1307 USA
  */
-package joshua.sarray;
+package joshua.corpus;
 
-import joshua.corpus.AbstractPhrase;
-import joshua.corpus.Corpus;
-import joshua.corpus.Phrase;
-import joshua.corpus.SymbolTable;
 
 import java.util.*;
 
 
 /**
- * SuffixArrayPhrase implements the Phrase interface by linking
+ * ContiguousPhrase implements the Phrase interface by linking
  * into indices within a corpus. This is intended to be a very
  * low-memory implementation of the class.
  *
