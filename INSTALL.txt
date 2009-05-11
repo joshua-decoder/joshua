@@ -147,12 +147,12 @@ $ ant source-jar
 
 To extract a grammar, you need to provide a parallel training corpus,
 as well as alignment data (src-tgt) for the training sentences, to
-joshua.sarray.ExtractRules. ExtractRules has over 25 flags, but usually
+joshua.prefix_tree.ExtractRules. ExtractRules has over 25 flags, but usually
 you only need to account for a subset of those flags. Here is a command
 you would run to extract grammar rules from the small 100-sentence
 Spanish-English dataset in the data/ folder:
 
-$ java -cp bin joshua.sarray.ExtractRules \
+$ java -cp bin joshua.prefix_tree.ExtractRules \
     --source=data/europarl.es.small.100 \
     --target=data/europarl.en.small.100 \
     --alignments=data/es_en_europarl_alignments.txt.small.100 \
@@ -193,21 +193,21 @@ as for the alignment data itself. And you would do so by running the main
 methods of SuffixArray and AlignmentGrids, before running ExtractRules...
 
 1) Create binary files for source side of the training corpus:
-$ java -cp bin joshua.sarray.SuffixArray data/europarl.es.small.100 vocab.es.bin corpus.es.bin suffixes.es.bin
+$ java -cp bin joshua.corpus.suffix_array.SuffixArray data/europarl.es.small.100 vocab.es.bin corpus.es.bin suffixes.es.bin
   (this creates 3 .bin files)
 
 2) Create binary files for target side of the training corpus:
-$ java -cp bin joshua.sarray.SuffixArray data/europarl.en.small.100 vocab.en.bin corpus.en.bin suffixes.en.bin
+$ java -cp bin joshua.corpus.suffix_array.SuffixArray data/europarl.en.small.100 vocab.en.bin corpus.en.bin suffixes.en.bin
   (this creates 3 .bin files)
 
 3) Create binary file for alignments file:
-$ java -cp bin joshua.util.sentence.alignment.AlignmentGrids data/es_en_europarl_alignments.txt.small.100 alignments.bin
+$ java -cp bin joshua.corpus.alignment.AlignmentGrids data/es_en_europarl_alignments.txt.small.100 alignments.bin
   (this creates alignments.bin)
 
 And now, you can run ExtractRules as before, but using a different subset
 of its flags:
 
-$ java -cp bin joshua.sarray.ExtractRules \
+$ java -cp bin joshua.prefix_tree.ExtractRules \
     --binary-source=true \
     --binary-target=true \
     --source=corpus.es.bin \

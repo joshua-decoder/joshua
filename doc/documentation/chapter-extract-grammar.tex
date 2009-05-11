@@ -3,7 +3,7 @@
 Start with a file - we'll call it source.txt. 
 
 \begin{verbatim}
-java -cp bin joshua.sarray.SuffixArray source.txt vocab.bin corpus.bin suffixes.bin
+java -cp bin joshua.corpus.suffix_array.SuffixArray source.txt vocab.bin corpus.bin suffixes.bin
 \end{verbatim}
 
 
@@ -12,9 +12,9 @@ java -cp bin joshua.sarray.SuffixArray source.txt vocab.bin corpus.bin suffixes.
 In many cases it may be desirable to extract a grammar using Joshua that matches as closely as possible the grammars extracted by Hiero's grammar extraction code. The examples used in this section are taken directly from the unit tests for the ExtractRules class; for more information see the following files:
 
 \begin{verbatim}
-test/joshua/sarray/ExtractRulesTest.java
-src/joshua/sarray/ExtractRules.java
-src/joshua/sarray/PrefixTree.java
+test/joshua/prefix_tree/ExtractRulesTest.java
+src/joshua/prefix_tree/ExtractRules.java
+src/joshua/prefix_tree/PrefixTree.java
 \end{verbatim}
 
 

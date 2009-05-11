@@ -6,11 +6,11 @@ How to quickly get Joshua up and running:
 
  \begin{enumerate}
  \item Train a language model
- \item Use the joshua.sarray.ExtractRules class to extract a grammar for a dev set, given an aligned parallel training corpus (see INSTALL.txt)
+ \item Use the joshua.prefix_tree.ExtractRules class to extract a grammar for a dev set, given an aligned parallel training corpus (see INSTALL.txt)
  \item Create (or copy from an example) a basic Joshua config file (see the example folder)
  \item Using that grammar, run joshua.zmert.ZMERT to perform minimum error rate training on the dev set. (see INSTALL.txt and doc/zmert\_release). This will result in a set of lambda parameter values.
 \item Update your Joshua config file to use the new lambda parameter values.
-\item Use the joshua.sarray.ExtractRules class to extract a grammar for a test set, given an aligned parallel training corpus (see INSTALL.txt)
+\item Use the joshua.prefix_tree.ExtractRules class to extract a grammar for a test set, given an aligned parallel training corpus (see INSTALL.txt)
 \item Using the test set grammar and the updated config file, translate the test set using joshua.decoder.JoshuaDecoder (see INSTALL.txt and scripts in example/)
  \end{enumerate}
 
@@ -28,7 +28,7 @@ This means that you will need to extract a new grammar for each test set that yo
 
 \subsection{Can I do online rule extraction instead?}
 
-Right now, the only way to get a grammar is to extract a grammar for a test set before you translate (using joshua.sarray.ExtractRules), then list that grammar in the config file that you use when translating with joshua.decoder.JoshuaDecoder.
+Right now, the only way to get a grammar is to extract a grammar for a test set before you translate (using joshua.prefix_tree.ExtractRules), then list that grammar in the config file that you use when translating with joshua.decoder.JoshuaDecoder.
 
 However, the suffix array rule extraction code is capable of doing online rule extraction. However, that code has not yet been fully integrated into the JoshuaDecoder. That's something that we are actively working on, and that feature will definitely be implemented.
 
