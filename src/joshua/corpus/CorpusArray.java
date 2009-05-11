@@ -17,8 +17,8 @@
  */
 package joshua.corpus;
 
-import joshua.sarray.SuffixArray;
-import joshua.sarray.SuffixArrayFactory;
+import joshua.corpus.suffix_array.SuffixArray;
+import joshua.corpus.suffix_array.SuffixArrayFactory;
 import joshua.util.io.BinaryOut;
 
 import java.io.Externalizable;

@@ -5,7 +5,7 @@ import java.io.IOException;
 import joshua.corpus.CorpusArray;
 import joshua.corpus.Phrase;
 import joshua.corpus.mm.MemoryMappedCorpusArray;
-import joshua.sarray.SuffixArrayFactory;
+import joshua.corpus.suffix_array.SuffixArrayFactory;
 
 
 import org.testng.Assert;

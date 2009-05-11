@@ -21,8 +21,8 @@ import java.io.IOException;
 import joshua.corpus.CorpusArray;
 import joshua.corpus.Span;
 import joshua.corpus.alignment.AlignmentArray;
-import joshua.sarray.SuffixArray;
-import joshua.sarray.SuffixArrayFactory;
+import joshua.corpus.suffix_array.SuffixArray;
+import joshua.corpus.suffix_array.SuffixArrayFactory;
 
 
 import org.testng.Assert;

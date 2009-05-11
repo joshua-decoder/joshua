@@ -15,31 +15,14 @@
  * Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  * MA 02111-1307 USA
  */
-package joshua.corpus;
-
-import java.util.List;
-
-import joshua.corpus.suffix_array.Pattern;
-import joshua.decoder.ff.tm.Rule;
+package joshua.prefix_tree;
 
 /**
- * Provides an interface for extracting translation rules.
+ * Unit tests for HierarchicalRuleExtractor.
  * 
  * @author Lane Schwartz
  * @version $LastChangedDate$
  */
-public interface RuleExtractor {
+public class HierarchicalRuleExtractorTest {
 
-	/**
-	 * Extract translation rules for a source language pattern 
-	 * given a list of instances in the source corpus of that pattern.
-	 * <p>
-	 * This extractor is responsible for doing any sampling, if any is required.
-	 * 
-	 * @param sourcePattern
-	 * @param sourceHierarchicalPhrases
-	 * @return
-	 */
-	public List<Rule> extractRules(Pattern sourcePattern, MatchedHierarchicalPhrases sourceHierarchicalPhrases);
-	
 }

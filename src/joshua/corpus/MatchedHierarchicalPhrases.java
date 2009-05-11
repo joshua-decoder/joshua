@@ -17,7 +17,7 @@
  */
 package joshua.corpus;
 
-import joshua.sarray.PatternFormat;
+import joshua.corpus.suffix_array.PatternFormat;
 
 /**
  * Represents a list of matched hierarchical phrases.

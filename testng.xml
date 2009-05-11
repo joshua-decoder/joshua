@@ -18,7 +18,7 @@
 
   <test name="Pattern" >
     <classes>
-       <class name="joshua.sarray.PatternTest" />    
+       <class name="joshua.corpus.suffix_array.PatternTest" />    
     </classes>
   </test>
 
@@ -50,9 +50,9 @@
 
   <test name="PrefixTree" >
     <classes>
-       <class name="joshua.sarray.prefix_tree.PrefixTreeNodeTest" />       
-       <class name="joshua.sarray.prefix_tree.PrefixTreeTest" />
-       <class name="joshua.sarray.prefix_tree.PrefixTreeAdvancedTest" />
+       <class name="joshua.prefix_tree.PrefixTreeNodeTest" />       
+       <class name="joshua.prefix_tree.PrefixTreeTest" />
+       <class name="joshua.prefix_tree.PrefixTreeAdvancedTest" />
        <class name="joshua.corpus.lexprob.SampledLexProbsTest" />
        <class name="joshua.corpus.lexprob.LexProbsTest" />    
     </classes>
@@ -70,22 +70,22 @@
   <test name="SuffixArray" >
     <parameter name="binaryFileName" value="" />
     <classes>
-       <class name="joshua.sarray.HierarchicalPhraseTest" />
-       <class name="joshua.sarray.SuffixArrayTest" />  
+       <class name="joshua.corpus.suffix_array.HierarchicalPhraseTest" />
+       <class name="joshua.corpus.suffix_array.SuffixArrayTest" />  
     </classes>
   </test>
   
   <test name="AlignmentArray RuleExtraction">
      <parameter name="alignmentsType" value="AlignmentArray" />
      <classes>
-       <class name="joshua.sarray.prefix_tree.ExtractRulesTest" />  
+       <class name="joshua.prefix_tree.ExtractRulesTest" />  
      </classes> 
   </test>
   
   <test name="AlignmentsGrid RuleExtraction">
      <parameter name="alignmentsType" value="AlignmentsGrid" />
      <classes>
-       <class name="joshua.sarray.prefix_tree.ExtractRulesTest" />  
+       <class name="joshua.prefix_tree.ExtractRulesTest" />  
      </classes> 
   </test>  
 

@@ -10,11 +10,11 @@ import joshua.corpus.CorpusArray;
 import joshua.corpus.Vocabulary;
 import joshua.corpus.alignment.Alignments;
 import joshua.corpus.lexprob.SampledLexProbs;
-import joshua.sarray.HierarchicalPhrases;
-import joshua.sarray.Pattern;
-import joshua.sarray.SuffixArray;
-import joshua.sarray.SuffixArrayFactory;
-import joshua.sarray.prefix_tree.PrefixTree;
+import joshua.corpus.suffix_array.HierarchicalPhrases;
+import joshua.corpus.suffix_array.Pattern;
+import joshua.corpus.suffix_array.SuffixArray;
+import joshua.corpus.suffix_array.SuffixArrayFactory;
+import joshua.prefix_tree.PrefixTree;
 import joshua.util.Cache;
 import joshua.util.Pair;
 

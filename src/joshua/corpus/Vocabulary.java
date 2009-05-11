@@ -27,7 +27,7 @@ import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import joshua.sarray.BasicPhrase;
+import joshua.corpus.suffix_array.BasicPhrase;
 import joshua.util.io.BinaryIn;
 import joshua.util.io.LineReader;
 

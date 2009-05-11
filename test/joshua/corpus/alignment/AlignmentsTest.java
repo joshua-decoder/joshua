@@ -30,11 +30,11 @@ import joshua.corpus.Span;
 import joshua.corpus.SymbolTable;
 import joshua.corpus.alignment.AlignmentGrids;
 import joshua.corpus.alignment.mm.MemoryMappedAlignmentGrids;
-import joshua.sarray.HierarchicalPhrases;
-import joshua.sarray.Pattern;
-import joshua.sarray.SuffixArray;
-import joshua.sarray.SuffixArrayFactory;
-import joshua.sarray.prefix_tree.PrefixTree;
+import joshua.corpus.suffix_array.HierarchicalPhrases;
+import joshua.corpus.suffix_array.Pattern;
+import joshua.corpus.suffix_array.SuffixArray;
+import joshua.corpus.suffix_array.SuffixArrayFactory;
+import joshua.prefix_tree.PrefixTree;
 import joshua.util.io.BinaryOut;
 
 import org.testng.Assert;

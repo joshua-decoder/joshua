@@ -18,7 +18,7 @@
 package joshua.corpus.alignment;
 
 import joshua.corpus.Span;
-import joshua.sarray.HierarchicalPhrases;
+import joshua.corpus.suffix_array.HierarchicalPhrases;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
