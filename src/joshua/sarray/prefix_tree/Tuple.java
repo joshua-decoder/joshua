@@ -15,7 +15,9 @@
  * Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  * MA 02111-1307 USA
  */
-package joshua.sarray;
+package joshua.sarray.prefix_tree;
+
+import joshua.sarray.Pattern;
 
 /**
  * Represents a tuple used during prefix tree construction.

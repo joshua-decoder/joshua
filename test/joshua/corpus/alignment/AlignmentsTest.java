@@ -32,9 +32,9 @@ import joshua.corpus.alignment.AlignmentGrids;
 import joshua.corpus.alignment.MemoryMappedAlignmentGrids;
 import joshua.sarray.HierarchicalPhrases;
 import joshua.sarray.Pattern;
-import joshua.sarray.PrefixTree;
 import joshua.sarray.SuffixArray;
 import joshua.sarray.SuffixArrayFactory;
+import joshua.sarray.prefix_tree.PrefixTree;
 import joshua.util.io.BinaryOut;
 
 import org.testng.Assert;

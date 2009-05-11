@@ -15,7 +15,7 @@
  * Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  * MA 02111-1307 USA
  */
-package joshua.sarray;
+package joshua.sarray.prefix_tree;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -34,6 +34,8 @@ import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.RuleCollection;
 import joshua.decoder.ff.tm.Trie;
+import joshua.sarray.HierarchicalPhrases;
+import joshua.sarray.Pattern;
 
 public class Node extends AbstractGrammar implements Comparable<Node>, Grammar, Trie {
 
@@ -97,8 +99,8 @@ public class Node extends AbstractGrammar implements Comparable<Node>, Grammar, 
 		
 		int[] empty = {};
 		
-		final int[] sourceSide = (sourcePattern==null) ? empty : sourcePattern.words;
-		final int arity = (sourcePattern==null) ? 0 : sourcePattern.arity;
+		final int[] sourceSide = (sourcePattern==null) ? empty : sourcePattern.getWordIDs();
+		final int arity = (sourcePattern==null) ? 0 : sourcePattern.arity();
 //		final List<Rule> sortedResults = (results==null) ? Collections.<Rule>emptyList() : results;
 		
 		//XXX Is results sorted at this point? It needs to be, but I'm not sure it is.

@@ -345,7 +345,7 @@ public class HierarchicalPhrase extends AbstractPhrase {
 	public String toString() {
 		StringBuilder s = new StringBuilder();
 		
-		int[] wordIDs = pattern.getWords();
+		int[] wordIDs = pattern.getWordIDs();
 		for (int i = 0; i < wordIDs.length; i++) {
 			if (wordIDs[i]<0) s.append('X');
 			else s.append(corpusArray.getVocabulary().getWord(wordIDs[i]));

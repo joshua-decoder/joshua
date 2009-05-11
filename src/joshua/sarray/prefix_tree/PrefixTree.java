@@ -15,7 +15,7 @@
  * Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  * MA 02111-1307 USA
  */
-package joshua.sarray;
+package joshua.sarray.prefix_tree;
 
 import joshua.corpus.Corpus;
 import joshua.corpus.MatchedHierarchicalPhrases;
@@ -25,6 +25,9 @@ import joshua.corpus.alignment.Alignments;
 import joshua.corpus.lexprob.LexicalProbabilities;
 import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.Rule;
+import joshua.sarray.HierarchicalPhrases;
+import joshua.sarray.Pattern;
+import joshua.sarray.Suffixes;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -487,9 +490,11 @@ public class PrefixTree {
 				
 				// 16: M_a_alpha_b <-- QUERY_INTERSECT(M_a_alpha, M_alpha_b)
 				
+				int[] sourceWords = prefixNode.sourcePattern.getWordIDs();
+				
 				// Special handling of case when prefixNode is the X off of root (hierarchicalPhrases for that node is empty)
 				//if (arity==1 && prefixNode.sourcePattern.startsWithNonterminal() && prefixNode.sourcePattern.endsWithNonterminal())
-				if (arity==1 && prefixNode.sourcePattern.words[0] < 0 && prefixNode.sourcePattern.words[prefixNode.sourcePattern.words.length-1] < 0){
+				if (arity==1 && sourceWords[0] < 0 && sourceWords[sourceWords.length-1] < 0){
 				//prefixNode.sourcePattern.words[prefixNode.sourcePattern.words.length-1] < 0
 					
 					
@@ -585,10 +590,12 @@ public class PrefixTree {
 				// 5: Mark p_alphaX active
 				xNode.active = Node.ACTIVE;
 				
+				int[] patternWords = pattern.getWordIDs();
+				
 				// 6: Q_alphaX <-- Q_alpha
 				{
 					SymbolTable vocab = (suffixArray==null) ? null : suffixArray.getVocabulary();
-					Pattern xpattern = new Pattern(vocab, pattern.words, X);
+					Pattern xpattern = new Pattern(vocab, patternWords, X);
 					
 //					HierarchicalPhrases phrasesWithFinalX = new HierarchicalPhrases(xpattern, node.sourceHierarchicalPhrases); 
 					MatchedHierarchicalPhrases phrasesWithFinalX = 
@@ -603,7 +610,7 @@ public class PrefixTree {
 				if (logger.isLoggable(Level.FINEST)) logger.finest("Alpha pattern is " + pattern);
 
 				// For efficiency, don't add any tuples to the queue whose patterns would exceed the max allowed number of tokens
-				if (pattern.words.length+2 <= maxPhraseLength) {
+				if (patternWords.length+2 <= maxPhraseLength) {
 					
 					int I = sentence.length;
 					if (!SENTENCE_FINAL_X) I -= 1;

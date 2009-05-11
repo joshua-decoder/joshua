@@ -250,6 +250,10 @@ public class Pattern extends BasicPhrase implements PatternFormat, Externalizabl
 		
 	}
 
+//	public int[] getWords() {
+//		return words;
+//	}
+//	
 //===============================================================
 // Protected 
 //===============================================================
@@ -259,9 +263,6 @@ public class Pattern extends BasicPhrase implements PatternFormat, Externalizabl
 	//===============================================================
 
 
-	int[] getWords() {
-		return words;
-	}
 	
 //===============================================================
 // Private 

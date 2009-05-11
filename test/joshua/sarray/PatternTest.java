@@ -20,7 +20,7 @@ package joshua.sarray;
 import joshua.corpus.Phrase;
 import joshua.corpus.Vocabulary;
 import joshua.sarray.Pattern;
-import joshua.sarray.PrefixTree;
+import joshua.sarray.prefix_tree.PrefixTree;
 
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -46,7 +46,7 @@ public class PatternTest {
 		
 		pattern = new Pattern(vocab, words);
 		
-		Assert.assertEquals(pattern.getWords(), words);
+		Assert.assertEquals(pattern.getWordIDs(), words);
 		Assert.assertEquals(pattern.getVocab(), vocab);
 		Assert.assertEquals(pattern.arity(), 2);
 		
@@ -58,10 +58,10 @@ public class PatternTest {
 		
 		Pattern extendedPattern = new Pattern(pattern, extra);
 		
-		Assert.assertEquals(extendedPattern.getWords().length, extendedWords.length);
+		Assert.assertEquals(extendedPattern.getWordIDs().length, extendedWords.length);
 		
 		for (int i=0; i<extendedWords.length; i++) {
-			Assert.assertEquals(extendedPattern.getWords()[i], extendedWords[i]);
+			Assert.assertEquals(extendedPattern.getWordIDs()[i], extendedWords[i]);
 		}
 		
 		Assert.assertEquals(extendedPattern.getVocab(), vocab);
@@ -76,9 +76,9 @@ public class PatternTest {
 		
 		Pattern copiedPattern = new Pattern(phrase);
 		
-		Assert.assertEquals(copiedPattern.getWords().length, words.length);
+		Assert.assertEquals(copiedPattern.getWordIDs().length, words.length);
 		for (int i=0; i<words.length; i++) {
-			Assert.assertEquals(copiedPattern.getWords()[i], words[i]);
+			Assert.assertEquals(copiedPattern.getWordIDs()[i], words[i]);
 		}
 		Assert.assertEquals(copiedPattern.getVocab(), vocab);
 		Assert.assertEquals(copiedPattern.arity(), 2);	

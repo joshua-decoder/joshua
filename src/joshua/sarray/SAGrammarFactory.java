@@ -24,6 +24,8 @@ import joshua.corpus.alignment.Alignments;
 import joshua.corpus.lexprob.LexicalProbabilities;
 import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.GrammarFactory;
+import joshua.sarray.prefix_tree.HierarchicalRuleExtractor;
+import joshua.sarray.prefix_tree.PrefixTree;
 
 public class SAGrammarFactory implements GrammarFactory {
 

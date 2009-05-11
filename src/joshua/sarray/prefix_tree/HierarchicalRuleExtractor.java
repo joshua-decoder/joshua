@@ -15,7 +15,7 @@
  * Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  * MA 02111-1307 USA
  */
-package joshua.sarray;
+package joshua.sarray.prefix_tree;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -35,6 +35,8 @@ import joshua.corpus.alignment.Alignments;
 import joshua.corpus.lexprob.LexicalProbabilities;
 import joshua.decoder.ff.tm.BilingualRule;
 import joshua.decoder.ff.tm.Rule;
+import joshua.sarray.Pattern;
+import joshua.sarray.Suffixes;
 import joshua.util.Pair;
 
 /**
@@ -206,7 +208,7 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 			
 			float[] featureScores = { p_e_given_f, lex_p_e_given_f, lex_p_f_given_e };
 
-			Rule rule = new BilingualRule(PrefixTree.X, sourcePattern.words, translation.words, featureScores, translation.arity);
+			Rule rule = new BilingualRule(PrefixTree.X, sourcePattern.getWordIDs(), translation.getWordIDs(), featureScores, translation.arity());
 //			if (logger.isLoggable(Level.FINER)) logger.finer(rule.toString(PrefixTree.ntVocab, suffixArray.corpus.vocab, targetCorpus.vocab));
 			results.add(rule);
 		}

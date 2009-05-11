@@ -1,4 +1,4 @@
-package joshua.sarray;
+package joshua.sarray.prefix_tree;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -14,8 +14,10 @@ import joshua.corpus.alignment.AlignmentArray;
 import joshua.corpus.lexprob.LexicalProbabilities;
 import joshua.corpus.lexprob.SampledLexProbs;
 import joshua.sarray.BasicPhrase;
-import joshua.sarray.PrefixTree;
 import joshua.sarray.SuffixArray;
+import joshua.sarray.prefix_tree.HierarchicalRuleExtractor;
+import joshua.sarray.prefix_tree.Node;
+import joshua.sarray.prefix_tree.PrefixTree;
 
 
 import org.testng.Assert;

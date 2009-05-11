@@ -116,8 +116,10 @@ public class BasicPhrase extends AbstractPhrase {
 	
 	
 	/**
-	 * This method copies the phrase into an array of ints.
-	 * This method should be avoided if possible.
+	 * This method gets the integer IDs of the phrase as an array of ints.
+	 * <p>
+	 * This method does <emph>not</emph> copy the array,
+	 * and so may be called very cheaply.
 	 * 
 	 * @return an int[] corresponding to the ID of each word
 	 *         in the phrase

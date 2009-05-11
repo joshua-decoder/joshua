@@ -14,7 +14,7 @@
  * along with this library; if not, write to the Free Software Foundation,
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package joshua.sarray;
+package joshua.sarray.prefix_tree;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -38,6 +38,10 @@ import joshua.corpus.alignment.Alignments;
 import joshua.corpus.alignment.MemoryMappedAlignmentGrids;
 import joshua.corpus.lexprob.SampledLexProbs;
 import joshua.decoder.ff.tm.Rule;
+import joshua.sarray.Pattern;
+import joshua.sarray.SuffixArray;
+import joshua.sarray.SuffixArrayFactory;
+import joshua.sarray.Suffixes;
 import joshua.sarray.mm.MemoryMappedCorpusArray;
 import joshua.sarray.mm.MemoryMappedSuffixArray;
 import joshua.util.Cache;

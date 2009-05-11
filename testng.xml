@@ -50,9 +50,9 @@
 
   <test name="PrefixTree" >
     <classes>
-       <class name="joshua.sarray.PrefixTreeNodeTest" />       
-       <class name="joshua.sarray.PrefixTreeTest" />
-       <class name="joshua.sarray.PrefixTreeAdvancedTest" />
+       <class name="joshua.sarray.prefix_tree.PrefixTreeNodeTest" />       
+       <class name="joshua.sarray.prefix_tree.PrefixTreeTest" />
+       <class name="joshua.sarray.prefix_tree.PrefixTreeAdvancedTest" />
        <class name="joshua.corpus.lexprob.SampledLexProbsTest" />
        <class name="joshua.corpus.lexprob.LexProbsTest" />    
     </classes>
@@ -78,14 +78,14 @@
   <test name="AlignmentArray RuleExtraction">
      <parameter name="alignmentsType" value="AlignmentArray" />
      <classes>
-       <class name="joshua.sarray.ExtractRulesTest" />  
+       <class name="joshua.sarray.prefix_tree.ExtractRulesTest" />  
      </classes> 
   </test>
   
   <test name="AlignmentsGrid RuleExtraction">
      <parameter name="alignmentsType" value="AlignmentsGrid" />
      <classes>
-       <class name="joshua.sarray.ExtractRulesTest" />  
+       <class name="joshua.sarray.prefix_tree.ExtractRulesTest" />  
      </classes> 
   </test>  
 

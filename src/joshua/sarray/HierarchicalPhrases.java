@@ -28,6 +28,7 @@ import java.util.logging.Logger;
 import joshua.corpus.MatchedHierarchicalPhrases;
 import joshua.corpus.Span;
 import joshua.corpus.SymbolTable;
+import joshua.sarray.prefix_tree.PrefixTree;
 
 /**
  * HierarchicalPhrases represents a list of matched hierarchical phrases.
@@ -365,9 +366,9 @@ public class HierarchicalPhrases extends AbstractHierarchicalPhrases implements 
 		
 		
 		// Write the pattern
-		int[] words = pattern.getWords();
+		int[] words = pattern.getWordIDs();
 		out.writeInt(words.length);
-		for (int token : pattern.getWords()) {
+		for (int token : pattern.getWordIDs()) {
 			out.writeInt(token);
 		}
 		out.writeInt(pattern.arity());
