@@ -57,12 +57,15 @@
 	<!-- Compile the Javadocs into web pages -->
 	<target name="javadoc">
 		<mkdir dir="${doc}"/>
-		<javadoc packagenames="joshua.*"
+		<javadoc packagenames="joshua.*,org.apache.commons.cli.*"
         	sourcepath="${src}"
 			destdir="${doc}"
 			author="true"
 			version="true"
-		/>
+			overview="src/overview.html"
+		>
+			<link href="http://java.sun.com/j2se/1.5.0/docs/api" />
+		</javadoc>
 	</target>
 	
 	

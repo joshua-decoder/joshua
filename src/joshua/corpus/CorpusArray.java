@@ -96,8 +96,7 @@ public class CorpusArray extends AbstractCorpus implements Corpus, Externalizabl
 	 * Protected constructor takes in the already prepared
 	 * member variables.
 	 *
-	 * @see SuffixArrayFactor.createCorpusArray(String,String,Vocabulary)
-	 * @see SuffixArrayFactor.loadCorpusArray(String,String,String,Vocabulary)
+	 * @see SuffixArrayFactory#createCorpusArray(String,SymbolTable,int,int)
 	 */
 	public CorpusArray (int[] corpus, int[] sentences, SymbolTable vocab) {
 		super(vocab);

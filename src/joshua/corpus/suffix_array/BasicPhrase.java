@@ -52,13 +52,22 @@ public class BasicPhrase extends AbstractPhrase {
 //===============================================================
 	
 	/**
-	 * Constructor takes in an int[] representing the words. 
-  	 */
+	 * Constructs a basic phrase.
+	 * 
+	 * @param words Array of word symbols for this phrase.
+	 * @param vocab Symbol table to use for this phrase.
+	 */
 	public BasicPhrase(int[] words, SymbolTable vocab) {
 		this.vocab = vocab;
 		this.words = words;
 	}
 
+	/**
+	 * Constructs a basic phrase.
+	 * 
+	 * @param vocab Symbol table to use for this phrase.
+	 * @param words Array of word symbols for this phrase.
+	 */
 	public BasicPhrase(SymbolTable vocab, int...words) {
 		this.vocab = vocab;
 		this.words = words;
@@ -70,6 +79,7 @@ public class BasicPhrase extends AbstractPhrase {
 	 * Vocabulary.
 	 * 
 	 * @param phraseString a String of the format "Hello , world ."
+	 * @param vocab Symbol table to use for this phrase
   	 */
 	public BasicPhrase(String phraseString, SymbolTable vocab) {
 		this.vocab = vocab;
@@ -96,7 +106,9 @@ public class BasicPhrase extends AbstractPhrase {
 	// Accessor methods (set/get)
 	//===========================================================
 	
-	/**
+	/** 
+	 * Gets the symbol table associated with this phrase.
+	 * 
 	 * @return the vocabulary that the words in this phrase are
 	 *         drawn from.
 	 */
@@ -104,12 +116,21 @@ public class BasicPhrase extends AbstractPhrase {
 		return vocab;
 	}
 	
-	
+	/**
+	 * Gets the integer identifier for the word at the specified position.
+	 * 
+	 * @param position Index into the corpus
+	 * @return the integer identifier for the word at the specified position
+	 */
 	public int getWordID(int position) {
 		return words[position];
 	}
 	
-	
+	/**
+	 * Gets the number of tokens in this phrase.
+	 * 
+	 * @return the number of tokens in this phrase
+	 */
 	public int size() {
 		return words.length;
 	}
@@ -135,6 +156,9 @@ public class BasicPhrase extends AbstractPhrase {
 	
 	
 	/**
+	 * Gets a space-delimited string representing the words in this
+	 *         Phrase
+	 * 
 	 * @return a space-delimited string of the words in this
 	 *         Phrase
 	 */
@@ -201,14 +225,17 @@ public class BasicPhrase extends AbstractPhrase {
 	
 	
 	/**
-	 * creates a new phrase object from the indexes provided.
+	 * Creates a new phrase object from the indexes provided.
 	 * <P>
 	 * NOTE: subList merely creates a "view" of the existing
 	 * Phrase object. Memory taken up by other Words in the
 	 * Phrase is not  freed since the underlying subList object
 	 * still points to the complete Phrase List.
 	 *
-	 * @see ArrayList#subList(int, int)
+	 * @param start Inclusive starting index
+	 * @param end Exclusive ending index
+	 * @return Phrase object representing the specified range
+	 * @see java.util.ArrayList#subList(int, int)
 	 */
 	public BasicPhrase subPhrase(int start, int end) {
 		int subPhraseLength = end - start;
@@ -224,7 +251,7 @@ public class BasicPhrase extends AbstractPhrase {
 	 * Compares the two strings based on the lexicographic order
 	 * of words defined in the Vocabulary.
 	 *
-	 * @param obj the object to compare to
+	 * @param other the object to compare to
 	 * @return -1 if this object is less than the parameter, 0
 	 *         if equals, 1 if greater
 	 */

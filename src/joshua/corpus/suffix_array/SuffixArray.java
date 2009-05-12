@@ -109,8 +109,7 @@ public class SuffixArray extends AbstractSuffixArray implements Externalizable {
 	 * Protected constructor takes in the already prepared
 	 * member variables.
 	 *
-	 * @see SuffixArrayFactor.createSuffixArray(CorpusArray)
-	 * @see SuffixArrayFactor.loadSuffixArray(String,String,String,CorpusArray)
+	 * @see joshua.corpus.suffix_array.SuffixArrayFactory#createSuffixArray(Corpus,int)
 	 */	
 	protected SuffixArray(int[] suffixes, Corpus corpusArray) {
 		this(suffixes, corpusArray, DEFAULT_CACHE_CAPACITY);
@@ -120,8 +119,7 @@ public class SuffixArray extends AbstractSuffixArray implements Externalizable {
 	 * Protected constructor takes in the already prepared
 	 * member variables.
 	 *
-	 * @see SuffixArrayFactor.createSuffixArray(CorpusArray)
-	 * @see SuffixArrayFactor.loadSuffixArray(String,String,String,CorpusArray)
+	 * @see joshua.corpus.suffix_array.SuffixArrayFactory#createSuffixArray(Corpus,int)
 	 */
 	protected SuffixArray(int[] suffixes, Corpus corpusArray, int maxCacheSize) {
 		super(corpusArray, 

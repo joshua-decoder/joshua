@@ -55,7 +55,7 @@ public interface ParallelCorpus {
 		/**
 		 * Gets the number of aligned sentences in the parallel corpus.
 		 * 
-		 * @returns the number of sentences in the corpus.
+		 * @return the number of sentences in the corpus.
 		 */
 		public int getNumSentences();
 	

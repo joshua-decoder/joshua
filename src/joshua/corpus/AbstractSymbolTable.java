@@ -133,7 +133,6 @@ public abstract class AbstractSymbolTable implements SymbolTable {
 	 * 
 	 * @param out
 	 * @param charsetName
-	 * @return
 	 * @throws IOException
 	 */
 	public void write(FileOutputStream out, String charsetName) 

@@ -83,19 +83,27 @@ public interface Suffixes {
 	/**
 	 * Returns the number of suffixes in the suffix array, which
 	 * is identical to the length of the corpus.
+	 * 
+	 * @return the number of suffixes in the suffix array
 	 */
 	public int size();
 	
 	/** 
+	 * Gets the position in the corpus corresponding to the
+	 *         specified index in the suffix array.
+	 * 
 	 * @return the position in the corpus corresponding to the
 	 *         specified index in the suffix array.
 	 */
 	public int getCorpusIndex(int suffixIndex);
 	
 	/**
+	 * Gets the sentence number of the word
+	 * at the specified position in the corpus.
 	 * 
-	 * @param corpusIndex
-	 * @return
+	 * @param corpusIndex Position of a word in the corpus
+	 * @return the sentence number of the word
+	 *         at the specified position in the corpus
 	 */
 	public int getSentenceIndex(int corpusIndex);
 	
@@ -139,6 +147,9 @@ public interface Suffixes {
 	public int[] findPhrase(Phrase sentence, int phraseStart, int phraseEnd, int lowerBound, int upperBound);
 	
 	/**
+	 * Gets a list of hierarchical phrases that match the pattern if they are already cached
+	 *         or null if the pattern is not in the cache.
+	 * 
 	 * @return a list of hierarchical phrases that match the pattern if they are already cached
 	 *         or null if the pattern is not in the cache.
 	 */
@@ -155,7 +166,7 @@ public interface Suffixes {
 	 * in the suffix array, sorting the corpus position.
 	 * 
 	 * @param bounds Inclusive bounds in the suffix array
-	 * @return
+	 * @return all positions in the corpus for the specified bounds
 	 */
 	public int[] getAllPositions(int[] bounds);
 

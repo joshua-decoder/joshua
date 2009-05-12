@@ -52,7 +52,7 @@ public class FrequentMatches {
 	 * with the least frequent phrase stored in the map.
 	 * <p>
 	 * The key set for this map should be identical to
-	 * the key set in the <code>frequentPhrases</code> map. 
+	 * the key set in the <code>FrequentPhrases.frequentPhrases</code> map. 
 	 */
 	private final LinkedHashMap<Phrase,Short> ranks;
 
@@ -104,7 +104,7 @@ public class FrequentMatches {
 		this.ranks = ranks;
 		this.maxPhrases = maxPhrases;
 		this.minNonterminalSpan = minNonterminalSpan;
-		
+		logger.info("This is a test");
 		if (logger.isLoggable(Level.FINE)) logger.fine("Allocating " + ((int)(capacity*4 / 1024.0 / 1024.0)) + "MB for collocation keys");
 		keys = new int[capacity];
 		if (logger.isLoggable(Level.FINE)) logger.fine("Allocating " + ((int)(capacity*4 / 1024.0 / 1024.0)) + "MB for collocation position1");

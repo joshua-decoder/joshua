@@ -128,7 +128,7 @@ public class SuffixArrayFactory {
 	// HACK: This is package-private for ExtractRules and CorpusArrayTest to use
 	/**
 	 * Creates a new CorpusArray from a plain text file, given
-	 * a Vocabulary created from the same file.
+	 * a symbol table created from the same file.
 	 *
 	 * @param numWords     the number of words in the file
 	 *                     (returned by createVocabulary)

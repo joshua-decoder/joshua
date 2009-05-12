@@ -98,7 +98,7 @@ public abstract class AbstractPhrase implements Phrase {
 	 * Compares the two strings based on the lexicographic order of words
 	 * defined in the Vocabulary.  
 	 *
-	 * @param obj the object to compare to
+	 * @param other the object to compare to
 	 * @return -1 if this object is less than the parameter, 0 if equals, 1 if greater
 	 * @exception ClassCastException if the passed object is not of type Phrase
 	 */

@@ -69,7 +69,7 @@ public interface SymbolTable extends Externalizable {
 	 * add unknown words and assign them a symbol ID
 	 * instead of returning <code>getUnknownWordID</code>.
 	 * 
-	 * @see getUnknownWordID
+	 * @see #getUnknownWordID
 	 * @return the unique integer identifier for wordString, 
 	 *         or the result of <code>getUnknownWordID<code> 
 	 *         if wordString is not in the vocabulary
@@ -84,7 +84,7 @@ public interface SymbolTable extends Externalizable {
 	 * then the integer identifier for each word 
 	 * will be retrieved using <code>getID</code>.
 	 * 
-	 * @see getID(String)
+	 * @see #getID(String)
 	 * @param sentence String of words, separated by spaces.
 	 * @return Array of integer identifiers for each word in the sentence
 	 */
@@ -109,13 +109,24 @@ public interface SymbolTable extends Externalizable {
 	 * <p>
 	 * This method can be called for terminals or nonterminals.
 	 * 
-	 * @param tokenID
-	 * @return
+	 * @param tokenID Integer identifier
+	 * @return the String that corresponds to the specified integer identifier
 	 */
 	public String getWord(int tokenID);
 	
+	/**
+	 * Gets the String that corresponds to the sequence of specified integer identifiers.
+	 * 
+	 * @param ids Sequence of integer identifiers
+	 * @return the String that corresponds to the sequence of specified integer identifiers
+	 */
 	public String getWords(int[] ids);
 	
+	/**
+	 * 
+	 * @param wordIDs
+	 * @return
+	 */
 	public String getTerminals(int[] wordIDs);
 	
 	/**
@@ -140,12 +151,14 @@ public interface SymbolTable extends Externalizable {
 	
 	/**
 	 * Gets the integer symbol representation of the unknown word.
+	 * 
 	 * @return the integer symbol representation of the unknown word.
 	 */
 	public int getUnknownWordID();
 	
 	/**
 	 * Gets the string representation of the unknown word.
+	 * 
 	 * @return the string representation of the unknown word.
 	 */
 	public String getUnknownWord();
@@ -177,14 +190,45 @@ public interface SymbolTable extends Externalizable {
 	 */	
 	public int getHighestID();
 	
+	/**
+	 * 
+	 * 
+	 * @param id
+	 * @return
+	 */
 	public int getTargetNonterminalIndex(int id);//first convert id to its String mapping, then call the function below
 	
+	/**
+	 * 
+	 * 
+	 * @param word
+	 * @return
+	 */
 	public int getTargetNonterminalIndex(String word);
 	
+	/**
+	 * 
+	 * 
+	 * @param wordIDs
+	 * @param ntIndexIncrements
+	 * @return
+	 */
 	public String getWords(int[] wordIDs, boolean ntIndexIncrements);
 	
+	/**
+	 * 
+	 * 
+	 * @param out
+	 * @param charsetName
+	 * @throws IOException
+	 */
 	public void write(FileOutputStream out, String charsetName) throws IOException;
 	
+	/**
+	 * 
+	 * 
+	 * @param charsetName
+	 */
 	public void setExternalizableEncoding(String charsetName);
 }
 
