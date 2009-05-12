@@ -43,24 +43,25 @@ import java.io.FileNotFoundException;
  * Class for representing a sentence-aligned bi-corpus (with optional
  * word-alignments).
  *
- * In order to not have memory crashes we no longer extend an
- * ArrayList which tries to cache the entire file in memory at once.
- * This means we'll re-read through each file (1 +
- * Subsampler.MAX_SENTENCE_LENGTH / binsize) times where binsize
- * is determined by the subsample(String, float, PhraseWriter,
- * BiCorpusFactor) method.
+ * In order to avoid memory crashes we no longer extend an ArrayList,
+ * which tries to cache the entire file in memory at once. This
+ * means we'll re-read through each file (1 +
+ * {@link Subsampler#MAX_SENTENCE_LENGTH} / binsize) times where
+ * binsize is determined by the
+ * <code>subsample(String, float, PhraseWriter, BiCorpusFactory)</code>
+ * method.
  *
  * @author UMD (Jimmy Lin, Chris Dyer, et al.)
  * @author wren ng thornton
  */
 public class BiCorpus
 implements Iterable<PhrasePair> {
-	// Making these final requires Java6, not Java5
+	// Making these final requires Java6, doesn't work in Java5
 	protected final String     foreignFileName;
-	protected final String     englishFileName;
+	protected final String     nativeFileName;
 	protected final String     alignmentFileName;
 	protected final Vocabulary foreignVocab;
-	protected final Vocabulary englishVocab;
+	protected final Vocabulary nativeVocab;
 	
 //===============================================================
 // Constructors
@@ -68,22 +69,25 @@ implements Iterable<PhrasePair> {
 	/**
 	 * Constructor for unaligned BiCorpus.
 	 */
-	public BiCorpus(String ffn, String efn, Vocabulary vf, Vocabulary ve)
+	public BiCorpus(String foreignFileName, String nativeFileName,
+		Vocabulary foreignVocab, Vocabulary nativeVocab)
 	throws IOException {
-		this(ffn, efn, null, vf, ve);
+		this(foreignFileName, nativeFileName, null, foreignVocab, nativeVocab);
 	}
 	
 	
 	/**
 	 * Constructor for word-aligned BiCorpus.
 	 */
-	public BiCorpus(String ffn, String efn, String afn, Vocabulary vf, Vocabulary ve)
+	public BiCorpus(String foreignFileName, String nativeFileName,
+		String alignmentFileName,
+		Vocabulary foreignVocab, Vocabulary nativeVocab)
 	throws IOException, IllegalArgumentException, IndexOutOfBoundsException {
-		this.foreignFileName   = ffn;
-		this.englishFileName   = efn;
-		this.alignmentFileName = afn;
-		this.foreignVocab      = vf;
-		this.englishVocab      = ve;
+		this.foreignFileName   = foreignFileName;
+		this.nativeFileName    = nativeFileName;
+		this.alignmentFileName = alignmentFileName;
+		this.foreignVocab      = foreignVocab;
+		this.nativeVocab       = nativeVocab;
 		
 		// Check for fileLengthMismatchException
 		// Of course, that will be checked for in each iteration
@@ -103,31 +107,36 @@ implements Iterable<PhrasePair> {
 	
 	// We're not allowed to throw exceptions from Iterator/Iterable
 	// so we have evil boilerplate to crash the system
+	/**
+	 * Iterate through the files represented by this
+	 * <code>BiCorpus</code>, returning a {@link PhrasePair}
+	 * for each pair (or triple) of lines.
+	 */
 	public Iterator<PhrasePair> iterator() {
-		PhraseReader   javaSucksRF = null;
-		PhraseReader   javaSucksRE = null;
-		BufferedReader javaSucksRA = null;
+		PhraseReader   closureRF = null;
+		PhraseReader   closureRE = null;
+		BufferedReader closureRA = null;
 		try {
-			javaSucksRF = new PhraseReader(
+			closureRF = new PhraseReader(
 				new FileReader(this.foreignFileName),
 				this.foreignVocab,
 				(byte)1);
-			javaSucksRE = new PhraseReader(
-				new FileReader(this.englishFileName),
-				this.englishVocab,
+			closureRE = new PhraseReader(
+				new FileReader(this.nativeFileName),
+				this.nativeVocab,
 				(byte)0);
-			javaSucksRA = ( null == this.alignmentFileName
+			closureRA = ( null == this.alignmentFileName
 				? null
 				: new BufferedReader(new FileReader(this.alignmentFileName))
 				);
-		} catch (FileNotFoundException ex) {
-			ex.printStackTrace();
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
 			System.exit(1);
 		}
 		// Making final for closure capturing in the local class definition
-		final PhraseReader   rf = javaSucksRF;
-		final PhraseReader   re = javaSucksRE;
-		final BufferedReader ra = javaSucksRA;
+		final PhraseReader   rf = closureRF;
+		final PhraseReader   re = closureRE;
+		final BufferedReader ra = closureRA;
 		
 		
 		return new Iterator<PhrasePair>() { /* Local class definition */

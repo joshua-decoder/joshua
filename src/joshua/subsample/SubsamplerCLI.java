@@ -39,16 +39,17 @@ import org.apache.commons.cli.HelpFormatter;
 
 /**
  * This class defines a callback closure to allow "overriding" the
- * main function in subclasses of Subsampler, without duplicating
- * code. For all subclasses, CLI Options should be members of the
- * class (so they're visible to runSubsampler as well as getCliOptions),
- * the getCliOptions method should be overridden to add the additional
- * options (via super to keep the old options), and the runSubsampler
- * method should be overridden to do the primary work for main. The
- * runMain method ties everything together and should not need
- * modification. Due to the one-use nature of subclasses of
- * SubsampleCLI, they generally should be implemented as anonymous
- * local classes.
+ * main function in subclasses of {@link Subsampler}, without
+ * duplicating code. For all subclasses, CLI <code>Options</code>
+ * should be members of the class (so they're visible to
+ * <code>runSubsampler</code> as well as <code>getCliOptions</code>),
+ * the <code>getCliOptions</code> method should be overridden to
+ * add the additional options (via <code>super</code> to keep the
+ * old options), and the <code>runSubsampler</code> method should
+ * be overridden to do the primary work for main. The <code>runMain</code>
+ * method ties everything together and should not need modification.
+ * Due to the one-use nature of subclasses of <code>SubsampleCLI</code>,
+ * they generally should be implemented as anonymous local classes.
  *
  * @author wren ng thornton
  */
@@ -143,7 +144,7 @@ public class SubsamplerCLI {
 	
 	/**
 	 * Callback to run the subsampler. This function needs
-	 * access to the variables holding teach Option, thus all
+	 * access to the variables holding each Option, thus all
 	 * this closure nonsense.
 	 */
 	public void runSubsampler(String[] testFiles, int maxN, int targetCount, float ratio)

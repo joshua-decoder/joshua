@@ -25,8 +25,9 @@ import java.lang.UnsupportedOperationException;
 
 /**
  * This class provides a null-object Reader. This is primarily
- * useful for when you may or may not have a reader, and you don't
- * want to check for null all the time. All operations are no-ops.
+ * useful for when you may or may not have a {@link Reader}, and
+ * you don't want to check for null all the time. All operations
+ * are no-ops.
  *
  * @author wren ng thornton <wren@users.sourceforge.net>
  * @version $LastChangedDate: 2009-03-26 15:06:57 -0400 (Thu, 26 Mar 2009) $
@@ -40,6 +41,7 @@ public class NullReader<E> implements Reader<E> {
 	// TODO: use static factory method and singleton?
 	public NullReader() { }
 	
+	/** A no-op. */
 	public void close() throws IOException { }
 	
 	
@@ -62,6 +64,7 @@ public class NullReader<E> implements Reader<E> {
 // Iterable -- because sometimes Java can be very stupid
 //===============================================================
 	
+	/** Return this object. */
 	public Iterator<E> iterator() { return this; }
 	
 	
@@ -72,7 +75,7 @@ public class NullReader<E> implements Reader<E> {
 	/** Always returns false. */
 	public boolean hasNext() { return false; }
 	
-	/** Always throws NoSuchElementException. */
+	/** Always throws {@link NoSuchElementException}. */
 	public E next() throws NoSuchElementException {
 		throw new NoSuchElementException();
 	}

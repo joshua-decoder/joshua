@@ -24,12 +24,14 @@ import joshua.corpus.Vocabulary;
 
 
 /**
- * Another callback closure, this time for Subsampler.subsample.
+ * A callback closure for <code>Subsampler.subsample</code>. This
+ * class is used by {@link AlignedSubsampler} in order to "override"
+ * methods of {@link Subsampler}, minimizing code duplication.
  *
  * @author wren ng thornton
  */
 public class BiCorpusFactory {
-	// Making these final requires Java6, not Java5
+	// Making these final requires Java6, doesn't work in Java5
 	protected final String fpath;
 	protected final String epath;
 	protected final String apath;
@@ -57,11 +59,12 @@ public class BiCorpusFactory {
 	}
 	
 	
-	/** Generate unaligned BiCorpus by default */
+	/** Generate unaligned BiCorpus by default. */
 	public BiCorpus fromFiles(String f) throws IOException {
 		return this.unalignedFromFiles(f);
 	}
 	
+	/** Generate unaligned BiCorpus. */
 	public BiCorpus unalignedFromFiles(String f) throws IOException {
 		return new BiCorpus(
 			fpath + f + extf,
@@ -69,6 +72,7 @@ public class BiCorpusFactory {
 			vf, ve);
 	}
 	
+	/** Generate aligned BiCorpus. */
 	public BiCorpus alignedFromFiles(String f) throws IOException {
 		return new BiCorpus(
 			fpath + f + extf,
