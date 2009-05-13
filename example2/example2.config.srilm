@@ -3,7 +3,7 @@ lm_file=./example2.4gram.lm.gz
 tm_file=./example2.hiero.tm.gz
 tm_format=hiero
 
-glue_file=grammars/hiero.glue
+glue_file=../grammars/hiero.glue
 glue_format=hiero
 
 #lm config
