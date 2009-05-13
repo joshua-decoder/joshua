@@ -15,7 +15,7 @@
  * Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  * MA 02111-1307 USA
  */
-package joshua.ui;
+package joshua.ui.alignment;
 
 import java.awt.Color;
 import java.awt.Dimension;
@@ -29,17 +29,19 @@ import java.util.logging.Logger;
 
 import javax.swing.JComponent;
 
+import joshua.ui.Orientation;
+
 /**
  * User interface for displaying words
  * as a header of an AlignmentGridPanel.
  * 
  * @author Lane Schwartz
  */
-public class GridPanelHeader extends JComponent {
+public class GridScrollPanelHeader extends JComponent {
 	
 	/** Logger for this class. */
 	private static final Logger logger =
-		Logger.getLogger(GridPanelHeader.class.getName());
+		Logger.getLogger(GridScrollPanelHeader.class.getName());
 	
     /** Indicates whether the header is horizontal or vertical. */
     public Orientation orientation;
@@ -69,7 +71,7 @@ public class GridPanelHeader extends JComponent {
      * @param depth In a horizontal orientation, depth corresponds to cell width.
 	 *              In a vertical orientation, depth corresponds to cell height.
      */
-    public GridPanelHeader(String[] words, Orientation orientation, int breadth, int depth) {
+    public GridScrollPanelHeader(String[] words, Orientation orientation, int breadth, int depth) {
         this.orientation = orientation;
         this.breadth = breadth;
         this.depth = depth;

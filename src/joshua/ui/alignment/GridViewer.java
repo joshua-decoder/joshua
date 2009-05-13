@@ -1,4 +1,4 @@
-/*/* This file is part of the Joshua Machine Translation System.
+/* This file is part of the Joshua Machine Translation System.
  * 
  * Joshua is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as
@@ -15,19 +15,14 @@
  * Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  * MA 02111-1307 USA
  */
-package joshua.ui;
+package joshua.ui.alignment;
 
-import java.awt.Dimension;
 import java.io.File;
 import java.io.ObjectInput;
 import java.util.logging.Logger;
 
-import javax.swing.BorderFactory;
-import javax.swing.BoxLayout;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
 
 import joshua.corpus.Corpus;
 import joshua.corpus.SymbolTable;
@@ -35,53 +30,17 @@ import joshua.corpus.Vocabulary;
 import joshua.corpus.alignment.Alignments;
 import joshua.corpus.alignment.mm.MemoryMappedAlignmentGrids;
 import joshua.corpus.mm.MemoryMappedCorpusArray;
-import joshua.ui.AlignmentGridPanel;
 import joshua.util.io.BinaryIn;
 
 /**
  * 
  * @author Lane Schwartz
  */
-public class ScrollableGridPanel extends JPanel {
+public class GridViewer {
 
 	/** Logger for this class. */
 	private static final Logger logger =
-		Logger.getLogger(ScrollableGridPanel.class.getName());
-
-	/** Header containing target language words. */
-	private final GridPanelHeader columnHeader;
-
-	/** Header containing source language words. */
-	private final GridPanelHeader rowHeader;
-
-	/**
-	 * Constructs a scrollable panel wrapping an alignment grid.
-	 * 
-	 * @param gridPanel An alignment grid
-	 */
-	public ScrollableGridPanel(AlignmentGridPanel gridPanel) {
-		this.setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));
-
-		int headerCellBreadth = gridPanel.getScaleFactor();
-		int headerCellDepth = headerCellBreadth * 3;
-		
-		String[] sourceWords = gridPanel.getSourceWords();
-		String[] targetWords = gridPanel.getTargetWords();
-
-		this.columnHeader = new GridPanelHeader(targetWords, Orientation.HORIZONTAL, headerCellBreadth, headerCellDepth);
-		this.rowHeader = new GridPanelHeader(sourceWords, Orientation.VERTICAL, headerCellBreadth, headerCellDepth);
-		
-		
-		JScrollPane pictureScrollPane = new JScrollPane(gridPanel);
-		pictureScrollPane.setPreferredSize(new Dimension(300, 250));
-		
-		pictureScrollPane.setColumnHeaderView(columnHeader);
-		pictureScrollPane.setRowHeaderView(rowHeader);
-
-		this.add(pictureScrollPane);
-		this.setBorder(BorderFactory.createEmptyBorder(20,20,20,20));
-	}
-
+		Logger.getLogger(GridViewer.class.getName());
 
 	/**
 	 * Constructs a runnable capable of 
@@ -119,14 +78,14 @@ public class ScrollableGridPanel extends JPanel {
 					Alignments alignments = new MemoryMappedAlignmentGrids(binaryAlignmentFileName, sourceCorpus, targetCorpus);
 
 					logger.fine("Constructing panel...");
-					AlignmentGridPanel gridPanel = new AlignmentGridPanel(sourceCorpus, targetCorpus, alignments, sentenceNumber);
+					GridPanel gridPanel = new GridPanel(sourceCorpus, targetCorpus, alignments, sentenceNumber);
 
 					//Create and set up the window.
 					JFrame frame = new JFrame("Sentence Alignment");
 					frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
 					//Create and set up the content pane.
-					JComponent newContentPane = new ScrollableGridPanel(gridPanel);
+					JComponent newContentPane = new GridScrollPanel(gridPanel);
 					newContentPane.setOpaque(true); //content panes must be opaque
 					frame.setContentPane(newContentPane);
 
@@ -159,4 +118,5 @@ public class ScrollableGridPanel extends JPanel {
 
 
 	}
+	
 }

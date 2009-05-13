@@ -15,7 +15,7 @@
  * Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  * MA 02111-1307 USA
  */
-package joshua.ui;
+package joshua.ui.alignment;
 
 import java.awt.Color;
 import java.awt.Dimension;
@@ -35,11 +35,11 @@ import joshua.corpus.alignment.Alignments;
  * 
  * @author Lane Schwartz
  */
-public class AlignmentGridPanel extends JPanel {
+public class GridPanel extends JPanel {
 
 	/** Logger for this class. */
 	private static final Logger logger = 
-		Logger.getLogger(AlignmentGridPanel.class.getName());
+		Logger.getLogger(GridPanel.class.getName());
 	
 	private final Corpus sourceCorpus;
 	private final Corpus targetCorpus;
@@ -53,7 +53,7 @@ public class AlignmentGridPanel extends JPanel {
 	
 	private int scaleFactor = 25;
 	
-	public AlignmentGridPanel(Corpus sourceCorpus, Corpus targetCorpus, Alignments alignments, int sentenceNumber) {
+	public GridPanel(Corpus sourceCorpus, Corpus targetCorpus, Alignments alignments, int sentenceNumber) {
 		this.sourceCorpus = sourceCorpus;
 		this.targetCorpus = targetCorpus;
 		this.alignments = alignments;
