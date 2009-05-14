@@ -94,6 +94,10 @@ public class GridScrollPanelHeader extends JComponent {
         return breadth;
     }
 
+    protected void printComponent(Graphics graphics) {
+    	
+    }
+    
 	/* See Javadoc for javax.swing.JComponent#paintComponent(Graphics) */
     protected void paintComponent(Graphics graphics) {
     	Graphics2D g = (Graphics2D) graphics;

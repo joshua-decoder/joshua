@@ -17,11 +17,12 @@
  */
 package joshua.ui.alignment;
 
+import java.awt.print.PrinterException;
+import java.awt.print.PrinterJob;
 import java.io.File;
 import java.io.ObjectInput;
 import java.util.logging.Logger;
 
-import javax.swing.JComponent;
 import javax.swing.JFrame;
 
 import joshua.corpus.Corpus;
@@ -51,7 +52,7 @@ public class GridViewer {
 	 * @return a runnable capable of 
 	 *         initializing and displaying an alignment grid.
 	 */
-	public static Runnable displayGrid(final String joshDirName, final int sentenceNumber) {
+	public static Runnable displayGrid(final String joshDirName, final int sentenceNumber, final boolean printSentence) {
 
 		return new Runnable() {
 			public void run() {
@@ -85,14 +86,29 @@ public class GridViewer {
 					frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
 					//Create and set up the content pane.
-					JComponent newContentPane = new GridScrollPanel(gridPanel);
-					newContentPane.setOpaque(true); //content panes must be opaque
-					frame.setContentPane(newContentPane);
+					GridScrollPanel scrollPanel = new GridScrollPanel(gridPanel);
+					scrollPanel.setOpaque(true); //content panes must be opaque
+					frame.setContentPane(scrollPanel);
 
 					//Display the window.
 					frame.pack();
 					frame.setVisible(true);
 
+					
+					if (printSentence) {
+						PrinterJob job = PrinterJob.getPrinterJob();
+						job.setPrintable(scrollPanel);
+						boolean ok = job.printDialog();
+						if (ok) {
+							try {
+								job.print();
+							} catch (PrinterException ex) {
+								/* The job did not successfully complete */
+							}
+						}
+					}
+					
+					
 				} catch (Throwable e) {
 					logger.severe("Unable to start program: " + e.getLocalizedMessage());
 				}
@@ -111,9 +127,12 @@ public class GridViewer {
 		int sentenceNumber = 0;
 		if (args.length > 1) sentenceNumber = Integer.valueOf(args[1]);
 
+		boolean printSentence = false;
+		if (args.length > 2) printSentence = (args[2].equalsIgnoreCase("print"));
+		
 		// Ask Swing to start the user interface
 		javax.swing.SwingUtilities.invokeLater(
-				displayGrid(joshDirName, sentenceNumber)
+				displayGrid(joshDirName, sentenceNumber, printSentence)
 		);
 
 

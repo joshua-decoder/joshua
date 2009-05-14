@@ -51,7 +51,8 @@ public class GridPanel extends JPanel {
 	private int numSourceWords;
 	private int numTargetWords;
 	
-	private int scaleFactor = 25;
+	private int screenScaleFactor = 25;
+	private int printerScaleFactor = 10;
 	
 	public GridPanel(Corpus sourceCorpus, Corpus targetCorpus, Alignments alignments, int sentenceNumber) {
 		this.sourceCorpus = sourceCorpus;
@@ -73,58 +74,84 @@ public class GridPanel extends JPanel {
 			targetCorpus.getSentenceEndPosition(sentenceNumber) -
 			targetCorpus.getSentencePosition(sentenceNumber);
 		
-		int preferredWidth = numTargetWords*scaleFactor;
-		int preferredHeight = numSourceWords*scaleFactor;
+		int preferredWidth = numTargetWords*screenScaleFactor;
+		int preferredHeight = numSourceWords*screenScaleFactor;
 				
 		preferredSize = new Dimension(preferredWidth, preferredHeight);
 		
 	}
 		
+	@Override
 	public Dimension getPreferredSize() {
 		return preferredSize;
 	}
 	
+	@Override
 	public Dimension getMinimumSize() {
 		return preferredSize;
 	}
 
-	public int getScaleFactor() {
-		return this.scaleFactor;
+	public int getScreenScaleFactor() {
+		return this.screenScaleFactor;
 	}
 	
+	public int getPrinterScaleFactor() {
+		return this.printerScaleFactor;
+	}
+	
+	@Override
 	protected void paintComponent(Graphics graphics) {
+		paintSomething(graphics, screenScaleFactor);
+	}
+	
+	@Override
+	protected void printComponent(Graphics graphics) { 
+
+	    this.paintSomething(graphics, printerScaleFactor);
+
+	}
+	
+	protected void paintSomething(Graphics graphics, int scaleFactor) {
 		
-		Dimension d = preferredSize;
+//		Dimension d = preferredSize;
+		
+		int width = numTargetWords*scaleFactor;
+		int height = numSourceWords*scaleFactor;
 		
 		Graphics2D g = (Graphics2D) graphics;
 		
 		g.setBackground(Color.WHITE);
 		g.setColor(Color.WHITE);
 		
-		g.fillRect(0, 0, d.width, d.height);
+//		g.fillRect(0, 0, d.width, d.height);
+		g.fillRect(0, 0, width, height);
 		
 		if (sentenceNumber < numSentences) {
 			
 			g.setColor(Color.BLACK);
 			
-			int widthStep = d.width / numTargetWords;
-			int heightStep = d.height / numSourceWords;
+			int widthStep = scaleFactor; //d.width / numTargetWords;
+			int heightStep = scaleFactor; //d.height / numSourceWords;
 			
 			if (logger.isLoggable(Level.FINER)) {
-				logger.finer("widthStep = " + numTargetWords + "/" + d.width + " = "+ widthStep);
-				logger.finer("heightStep = " + numSourceWords + "/" + d.height + " = "+ heightStep);
+//				logger.finer("widthStep = " + numTargetWords + "/" + d.width + " = "+ widthStep);
+//				logger.finer("heightStep = " + numSourceWords + "/" + d.height + " = "+ heightStep);
+				logger.finer("widthStep = " + numTargetWords + "/" + width + " = "+ widthStep);
+				logger.finer("heightStep = " + numSourceWords + "/" + height + " = "+ heightStep);
 			}
 			
 			int minX = 0;
 			int minY = 0;
 			
 			// Draw vertical grid lines
-			for (int x=minX, maxX=d.width, maxY=d.height; x<=maxX; x+=widthStep) {	
+//			for (int x=minX, maxX=d.width, maxY=d.height; x<=maxX; x+=widthStep) {	
+			for (int x=minX, maxX=width, maxY=height; x<=maxX; x+=widthStep) {	
 				g.drawLine(x, minY, x, maxY);	
 			}
 			
 			// Draw horizontal grid lines
-			for (int y=minY, maxX=d.width, maxY=d.height; y<=maxY; y+=heightStep) {	
+//			for (int y=minY, maxX=d.width, maxY=d.height; y<=maxY; y+=heightStep) {	
+			for (int y=minY, maxX=width, maxY=height; y<=maxY; y+=heightStep) {	
 				g.drawLine(minX, y, maxX, y);	
 			}
 			
@@ -188,5 +215,5 @@ public class GridPanel extends JPanel {
 
 		return words;
 	}
-	
+
 }

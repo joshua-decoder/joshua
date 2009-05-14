@@ -18,6 +18,11 @@
 package joshua.ui.alignment;
 
 import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.print.PageFormat;
+import java.awt.print.Printable;
+import java.awt.print.PrinterException;
 
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
@@ -31,7 +36,10 @@ import joshua.ui.alignment.GridPanel;
  * 
  * @author Lane Schwartz
  */
-public class GridScrollPanel extends JPanel {
+public class GridScrollPanel extends JPanel implements Printable {
+	
+	/** Panel containing alignment grid. */
+	private final GridPanel gridPanel;
 	
 	/** Header containing target language words. */
 	private final GridScrollPanelHeader columnHeader;
@@ -47,7 +55,9 @@ public class GridScrollPanel extends JPanel {
 	public GridScrollPanel(GridPanel gridPanel) {
 		this.setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));
 
-		int headerCellBreadth = gridPanel.getScaleFactor();
+		this.gridPanel = gridPanel;
+		
+		int headerCellBreadth = gridPanel.getScreenScaleFactor();
 		int headerCellDepth = headerCellBreadth * 3;
 		
 		String[] sourceWords = gridPanel.getSourceWords();
@@ -65,6 +75,29 @@ public class GridScrollPanel extends JPanel {
 
 		this.add(pictureScrollPane);
 		this.setBorder(BorderFactory.createEmptyBorder(20,20,20,20));
+	}
+
+	protected void printChildren(Graphics g) {
+		gridPanel.printAll(g);
+	}
+	
+	public int print(Graphics graphics, PageFormat pageFormat, int page) throws PrinterException {
+
+		// We have only one page, and 'page' is zero-based
+		if (page > 0) { 
+	         return NO_SUCH_PAGE;
+	    } 
+	
+		// User (0,0) is typically outside the imageable area, so we must
+	    // translate by the X and Y values in the PageFormat to avoid clipping
+	    Graphics2D g = (Graphics2D) graphics;
+	    g.translate(pageFormat.getImageableX(), pageFormat.getImageableY());
+
+	    this.printAll(g);
+
+		// tell the caller that this page is part of the printed document
+	    return PAGE_EXISTS;
+		
 	}
 
 }
