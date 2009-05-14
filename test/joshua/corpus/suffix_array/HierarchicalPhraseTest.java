@@ -24,7 +24,6 @@ import java.util.Date;
 
 import joshua.corpus.CorpusArray;
 import joshua.corpus.SymbolTable;
-import joshua.corpus.suffix_array.HierarchicalPhrase;
 import joshua.corpus.suffix_array.HierarchicalPhrases;
 import joshua.corpus.suffix_array.Pattern;
 import joshua.corpus.suffix_array.SuffixArrayFactory;

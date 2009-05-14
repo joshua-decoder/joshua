@@ -109,6 +109,10 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 
 		int totalPossibleTranslations = sourceHierarchicalPhrases.size();
 
+		if (sourcePattern.toString().equals("[de X en X de]")) {
+			logger.severe("Gotcha!");
+		}
+		
 		// For each sample HierarchicalPhrase
 		for (int i=0; i<totalPossibleTranslations; i+=stepSize) { 
 //			HierarchicalPhrase sourcePhrase = sourceHierarchicalPhrases.get(i, suffixArray.getCorpus());

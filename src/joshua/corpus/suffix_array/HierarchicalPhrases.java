@@ -110,7 +110,7 @@ public class HierarchicalPhrases extends AbstractHierarchicalPhrases implements 
 //	public HierarchicalPhrases(Pattern pattern, int[] startPositions, Corpus corpus) {
 	public HierarchicalPhrases(Pattern pattern, int[] startPositions, int[] sentenceNumbers) {
 		this.pattern = pattern;
-		this.size = startPositions.length;
+		this.size = sentenceNumbers.length;//startPositions.length;
 		this.terminalSequenceStartIndices = startPositions;
 		this.sentenceNumber = sentenceNumbers;
 //		this.sentenceNumber = new int[size];
@@ -255,6 +255,7 @@ public class HierarchicalPhrases extends AbstractHierarchicalPhrases implements 
 	
 	
 	/**
+	 * Gets the position in the corpus of the first terminal in the i'th sequence of terminals in the j'th phrase known to this object.
 	 * 
 	 * @param phraseIndex
 	 * @param positionNumber

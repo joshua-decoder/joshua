@@ -213,6 +213,10 @@ public class Vocabulary extends AbstractSymbolTable implements Iterable<String>,
 		}
 	}
 
+	public int getNonterminalID(String nonterminalString) {
+		return nonterminalToInt.get(nonterminalString);
+	}
+	
 	/**
 	 * Gets the integer identifiers 
 	 * for all words in the provided sentence.
@@ -425,7 +429,8 @@ public class Vocabulary extends AbstractSymbolTable implements Iterable<String>,
 		if (id != null) {
 			return id.intValue();
 		} else if (! isFixed) {
-			id = -(nonterminalToInt.size());
+			int size = nonterminalToInt.size();
+			id = -(size+1);
 			nonterminalToInt.put(nonterminal, id);
 			intToString.put(id, nonterminal);
 			return id;

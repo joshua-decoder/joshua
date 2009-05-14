@@ -127,6 +127,13 @@ public interface MatchedHierarchicalPhrases extends PatternFormat {
 	
 	public boolean containsTerminalAt(int phraseIndex, int alignmentPointIndex);
 	public int getFirstTerminalIndex(int phraseIndex);
+	
+	/**
+	 * Gets the exclusive ending index of the last terminal sequence of the specified phrase.
+	 * 
+	 * @param phraseIndex
+	 * @return
+	 */
 	public int getLastTerminalIndex(int phraseIndex);
 	public int getTerminalSequenceStartIndex(int phraseIndex, int sequenceIndex);
 	public int getTerminalSequenceEndIndex(int phraseIndex, int sequenceIndex);

@@ -340,7 +340,7 @@ public class PrefixTree {
 //				x++;
 //			}
 			
-			if (logger.isLoggable(Level.FINER)) logger.finer("Have tuple (" +prefixPattern+","+ i + ","+j+","+prefixNode.toShortString()+")");
+			if (logger.isLoggable(Level.FINE)) logger.fine("Have tuple (" +prefixPattern+","+ i + ","+j+","+prefixNode.toShortString()+")");
 
 			if (j <= END_OF_SENTENCE) {
 
@@ -458,7 +458,11 @@ public class PrefixTree {
 	public MatchedHierarchicalPhrases query(Pattern pattern, Node node, Node prefixNode, Node suffixNode) {
 
 		if (logger.isLoggable(Level.FINE)) logger.fine("PrefixTree.query( " + pattern + ",\n\t   new node " + node + ",\n\tprefix node " + prefixNode + ",\n\tsuffix node " + suffixNode + ")");
-			
+		
+		if (pattern.toString().equals("[de X en X de]")) {
+			logger.severe("Gotcha!");
+		}
+		
 		MatchedHierarchicalPhrases result;
 
 		int arity = pattern.arity();
@@ -529,8 +533,6 @@ public class PrefixTree {
 		return result;
 
 	}
-
-	static boolean BUGGY = false;
 	
 	/**
 	 * Implements Function EXTEND_QUEUE from Lopez (2008) PhD Thesis, Algorithm 2, p 76

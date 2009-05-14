@@ -70,6 +70,7 @@
   <test name="SuffixArray" >
     <parameter name="binaryFileName" value="" />
     <classes>
+       <class name="joshua.corpus.suffix_array.AbstractHierarchicalPhrasesTest" />
        <class name="joshua.corpus.suffix_array.HierarchicalPhraseTest" />
        <class name="joshua.corpus.suffix_array.SuffixArrayTest" />  
     </classes>

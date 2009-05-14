@@ -51,9 +51,9 @@ public abstract class AbstractHierarchicalPhrases implements
 	 * @param m_alpha_b Suffix phrase
 	 * @return
 	 * <ul>
-	 * <li>0 if m_a_alpha and m_alpha_b can be paired.</li>
-	 * <li>-1 if m_a_alpha and m_alpha_b cannot be paired, and m_a_alpha precedes m_alpha_b in the corpus.</li>
-	 * <li> 1 if m_a_alpha and m_alpha_b cannot be paired, and m_a_alpha follows m_alpha_b in the corpus.</li>
+	 * <li>0 if m_a_alpha and m_alpha_b can be paired (=̈).</li>
+	 * <li>-1 if m_a_alpha and m_alpha_b cannot be paired, and m_a_alpha precedes m_alpha_b in the corpus (<̈).</li>
+	 * <li> 1 if m_a_alpha and m_alpha_b cannot be paired, and m_a_alpha follows m_alpha_b in the corpus. (>̈)</li>
 	 * </ul>
 	 */	
 	protected static int compare(MatchedHierarchicalPhrases m_a_alpha, final int i, MatchedHierarchicalPhrases m_alpha_b, final int j, int minNonterminalSpan, int maxPhraseSpan) {
@@ -243,7 +243,7 @@ public abstract class AbstractHierarchicalPhrases implements
 		if (logger.isLoggable(Level.FINER)) {
 			logger.finer("queryIntersect("+pattern+" M_a_alpha.size=="+M_a_alpha.size() + ", M_alpha_b.size=="+M_alpha_b.size());			
 		}
-		
+				
 		// results is M_{a_alpha_b} in the paper
 		ArrayList<Integer> data = new ArrayList<Integer>();
 		ArrayList<Integer> sentenceNumbers = new ArrayList<Integer>();
@@ -255,56 +255,92 @@ public abstract class AbstractHierarchicalPhrases implements
 		int j = 0;
 
 		while (i<I && j<J) {
-			
+
 			while (j<J && compare(M_a_alpha, i, M_alpha_b, j, minNonterminalSpan, maxPhraseSpan) > 0) {
 				j++; // advance j past no longer needed item in M_alpha_b
 			}
 
-			if (j>=J) break;
-			
-			int l = j;					
-			
-			// Process all matchings in M_alpha_b with same first element
-			ProcessMatchings:
-			for (int jth_StartPosition = M_alpha_b.getStartPosition(j, 0),
-					 lth_StartPosition = M_alpha_b.getStartPosition(l, 0);
-					
-					jth_StartPosition == lth_StartPosition;
-					
-					jth_StartPosition = M_alpha_b.getStartPosition(j, 0),
-					lth_StartPosition = M_alpha_b.getStartPosition(l, 0)) {
-				
-				int compare_i_l = compare(M_a_alpha, i, M_alpha_b, l,  minNonterminalSpan, maxPhraseSpan);
-				while (compare_i_l >= 0) {
-					
-					if (compare_i_l == 0) {
-						
-						// append M_a_alpha[i] |><| M_alpha_b[l] to M_a_alpha_b
-						partiallyConstruct(M_a_alpha, i, M_alpha_b, l, data);
-						sentenceNumbers.add(M_a_alpha.getSentenceNumber(i));
-						
-					} // end if
-					
-					l++; // we can visit m_alpha_b[l] again, but only next time through outermost loop
-					
-					if (l < J) {
-						compare_i_l = compare(M_a_alpha, i, M_alpha_b, l,  minNonterminalSpan, maxPhraseSpan);
-					} else {
-						i++;
-						break ProcessMatchings;
-					}
-					
-				} // end while
-				
-				i++; // advance i past no longer needed item in M_a_alpha
-				
-				if (i >= I) break;
+			int k = i;					
+
+			// Process all matchings in M_a_alpha with same first element
+			int kth_startPosition = M_a_alpha.getStartPosition(k, 0);
+			while (i<I && M_a_alpha.getStartPosition(i, 0) == kth_startPosition) {
+
+				int l = j;
+
+				// While not M_a_alpha[i] <̈ M_alpha_b[l]
+				if (l < J) {
+					int comparison = compare(M_a_alpha, i, M_alpha_b, l,  minNonterminalSpan, maxPhraseSpan);
+					while (l < J && !(comparison < 0)) {
+
+						// If M_a_alpha[i] =̈ M_alpha_b[l]
+						if (comparison == 0) {
+
+							// Append M_a_alpha[i] |><| M_alpha_b[l] to M_a_alpha_b
+							partiallyConstruct(M_a_alpha, i, M_alpha_b, l, data);
+							sentenceNumbers.add(M_a_alpha.getSentenceNumber(i));
+
+						} // end if
+
+						// We can visit m_alpha_b[l] again, but only next time through outermost loop
+						l = l + 1;
+						if (l < J) {
+							comparison = compare(M_a_alpha, i, M_alpha_b, l,  minNonterminalSpan, maxPhraseSpan);
+						}
+
+					} // end while
+				} // end if
+
+				// advance i past no longer needed item in M_a_alpha
+				i = i + 1;
 				
 			} // end while
-			
+
 		} // end while
 		
 		return new HierarchicalPhrases(pattern, data, sentenceNumbers);
+		
+			// Process all matchings in M_alpha_b with same first element
+//			ProcessMatchings:
+//			for (int jth_StartPosition = M_alpha_b.getStartPosition(j, 0),
+//					 lth_StartPosition = M_alpha_b.getStartPosition(l, 0);
+//					
+//					jth_StartPosition == lth_StartPosition;
+//					
+//					jth_StartPosition = M_alpha_b.getStartPosition(j, 0),
+//					lth_StartPosition = M_alpha_b.getStartPosition(l, 0)) {
+//				
+//				int compare_i_l = compare(M_a_alpha, i, M_alpha_b, l,  minNonterminalSpan, maxPhraseSpan);
+//				while (compare_i_l >= 0) {
+//					
+//					if (compare_i_l == 0) {
+//						
+//						// append M_a_alpha[i] |><| M_alpha_b[l] to M_a_alpha_b
+//						partiallyConstruct(M_a_alpha, i, M_alpha_b, l, data);
+//						sentenceNumbers.add(M_a_alpha.getSentenceNumber(i));
+//						
+//					} // end if
+//					
+//					l++; // we can visit m_alpha_b[l] again, but only next time through outermost loop
+//					
+//					if (l < J) {
+//						compare_i_l = compare(M_a_alpha, i, M_alpha_b, l,  minNonterminalSpan, maxPhraseSpan);
+//					} else {
+//						i++;
+//						break ProcessMatchings;
+//					}
+//					
+//				} // end while
+//				
+//				i++; // advance i past no longer needed item in M_a_alpha
+//				
+//				if (i >= I) break;
+//				
+//			} // end while
+			
+//		} // end while
+		
+//		return new HierarchicalPhrases(pattern, data, sentenceNumbers);
 		
 	}
 	
