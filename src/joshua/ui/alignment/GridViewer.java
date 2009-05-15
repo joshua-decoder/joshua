@@ -124,7 +124,7 @@ public class GridViewer {
 		String joshDirName = args[0];
 
 		int sentenceNumber = 0;
-		if (args.length > 1) sentenceNumber = Integer.valueOf(args[1]);
+		if (args.length > 1) sentenceNumber = Integer.valueOf(args[1]) - 1;
 
 		boolean printSentence = false;
 		if (args.length > 2) printSentence = (args[2].equalsIgnoreCase("print"));

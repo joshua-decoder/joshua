@@ -108,10 +108,6 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 		List<Pair<Float,Float>> lexProbsList = new ArrayList<Pair<Float,Float>>();
 
 		int totalPossibleTranslations = sourceHierarchicalPhrases.size();
-
-		if (sourcePattern.toString().equals("[de X en X de]")) {
-			logger.severe("Gotcha!");
-		}
 		
 		// For each sample HierarchicalPhrase
 		for (int i=0; i<totalPossibleTranslations; i+=stepSize) { 

@@ -459,9 +459,6 @@ public class PrefixTree {
 
 		if (logger.isLoggable(Level.FINE)) logger.fine("PrefixTree.query( " + pattern + ",\n\t   new node " + node + ",\n\tprefix node " + prefixNode + ",\n\tsuffix node " + suffixNode + ")");
 		
-		if (pattern.toString().equals("[de X en X de]")) {
-			logger.severe("Gotcha!");
-		}
 		
 		MatchedHierarchicalPhrases result;
 
@@ -548,23 +545,24 @@ public class PrefixTree {
 
 		int J = j;
 		if (!SENTENCE_FINAL_X) J += 1;
-		
+
 		int endOfPhraseSpan = (j+1)-i+1;
-//			(EDGE_X_MAY_VIOLATE_PHRASE_SPAN) ? 
-//					(j)-i+1 :
-//						(j+1)-i+1;
-		if (EDGE_X_MAY_VIOLATE_PHRASE_SPAN) endOfPhraseSpan -= 1;
+
 		
 		// 1: if |alpha| < MaxPhraseLength  and  j-i+1<=MaxPhraseSpan then 		
-		if (pattern.size() < maxPhraseLength  &&  endOfPhraseSpan <= maxPhraseSpan  && J<sentence.length) {
+		if (pattern.size() < maxPhraseLength  && J<sentence.length) {
 
-			// 2: Add <alpha f_j, i, j+1, p_alpha> to queue
-			//    (add new tuple to the queue)
-			if (logger.isLoggable(Level.FINEST)) logger.finest("\nextendQueue: Adding tuple (" +pattern+","+ i + ","+ (j+1) +","+node+")");//(new Pattern(alphaPattern,sentence[j+1]))+"})");
-			queue.add(new Tuple(pattern, i, j+1, node));//, sentence[j+1]));
+			if (endOfPhraseSpan <= maxPhraseSpan) {
+				// 2: Add <alpha f_j, i, j+1, p_alpha> to queue
+				//    (add new tuple to the queue)
+				if (logger.isLoggable(Level.FINEST)) logger.finest("\nextendQueue: Adding tuple (" +pattern+","+ i + ","+ (j+1) +","+node+")");//(new Pattern(alphaPattern,sentence[j+1]))+"})");
+				queue.add(new Tuple(pattern, i, j+1, node));//, sentence[j+1]));
+			}
 
+			if (EDGE_X_MAY_VIOLATE_PHRASE_SPAN) endOfPhraseSpan -= 1;
+			
 			// 3: if arity(alpha) < MaxNonterminals then
-			if (pattern.arity() < maxNonterminals) {
+			if (pattern.arity() < maxNonterminals && endOfPhraseSpan <= maxPhraseSpan) {
 				Node xNode;
 
 				if (! node.children.containsKey(X)) {

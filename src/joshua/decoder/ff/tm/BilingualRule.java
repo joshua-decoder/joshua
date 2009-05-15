@@ -94,7 +94,7 @@ public class BilingualRule extends MonolingualRule {
 			//sb.append(java.util.Arrays.toString(this.english));
 			sb.append(" |||");
 			for (int i = 0; i < this.getFeatureScores().length; i++) {
-				//sb.append(String.format(" %.4f", this.feat_scores[i]));
+//				sb.append(String.format(" %.12f", this.getFeatureScores()[i]));
 				sb.append(' ');
 				sb.append(Float.toString(this.getFeatureScores()[i]));
 			}
