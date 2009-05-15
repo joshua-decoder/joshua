@@ -51,11 +51,11 @@ public class AlignmentsTest {
 	
 	CorpusArray sourceCorpusArray;
 	CorpusArray targetCorpusArray;
-	String type;
+//	String type;
 	@Parameters({"alignmentsType"})
 	@Test
 	public void setup(String alignmentsType) throws IOException {
-		type = alignmentsType;
+//		type = alignmentsType;
 		String alignmentString = 
 			"0-0 0-1 1-1 2-1 3-1 0-2 0-3 5-4 4-5 6-5 8-6 8-7 7-8 10-9 12-10 11-11 12-11 13-12 14-13 15-13 16-13 16-14 17-15 18-16 19-17 19-18 19-19 19-20 19-21 20-22 21-24 22-24 25-29 24-31 26-32 27-33 28-34 30-35 31-36 29-37 30-37 31-37 31-38 32-39" + "\n" +
 			"0-0 0-1 0-2 1-3 2-5 3-6 4-6 5-7 6-8 7-9 8-10 10-11 12-11 9-12 11-12 12-12 13-13 14-14 18-16 21-17 22-19 22-20 23-20 24-21 25-22 25-23 26-24 27-25 28-25 29-26 30-26 31-26 31-28 32-29 34-30 33-31 35-33 36-34 36-35 37-36" + "\n" +

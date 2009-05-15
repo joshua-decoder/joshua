@@ -18,17 +18,12 @@
 package joshua.corpus.suffix_array;
 
 import joshua.corpus.Corpus;
-import joshua.corpus.CorpusArray;
 import joshua.corpus.MatchedHierarchicalPhrases;
-import joshua.corpus.Vocabulary;
 import joshua.util.FileUtility;
 import joshua.util.Cache;
-import joshua.util.io.BinaryOut;
 
-import java.io.Externalizable;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.*;
 import java.util.logging.Logger;
@@ -54,7 +49,7 @@ import java.util.logging.Logger;
  * @since   9 February 2005
  * @version $LastChangedDate:2008-07-30 17:15:52 -0400 (Wed, 30 Jul 2008) $
  */
-public class SuffixArray extends AbstractSuffixArray implements Externalizable {
+public class SuffixArray extends AbstractSuffixArray {
 	
 	/**
 	 * A random number generator used in the quick sort
@@ -220,19 +215,6 @@ public class SuffixArray extends AbstractSuffixArray implements Externalizable {
          }
      }
 
-	public void readExternal(ObjectInput in) throws IOException,
-			ClassNotFoundException {
-
-		// Read the corpus
-		corpus.readExternal(in);
-		
-		int numWords = in.readInt();
-		this.suffixes = new int[numWords];
-		for (int i=0; i<numWords; i++) {
-			this.suffixes[i] = in.readInt();
-		}
-		
-	}
 
 	public void writeExternal(ObjectOutput out) throws IOException {
 		
@@ -246,46 +228,11 @@ public class SuffixArray extends AbstractSuffixArray implements Externalizable {
 		
 	}
 
-    public void write(String suffixesFilename, String corpusFilename, String vocabFilename, String charset) throws IOException {
-        
-    	corpus.write(corpusFilename, vocabFilename, charset);
-    	
-    	BinaryOut suffixesOut = new BinaryOut(new FileOutputStream(suffixesFilename), false);
-    	this.writeExternal(suffixesOut);	
-    	suffixesOut.flush();
-    	
-    }
 
 //===============================================================
 // Main 
 //===============================================================
 
-    public static void main(String[] args) throws IOException {
-		
-		if (args.length < 4) {
-			System.err.println("Usage: java " + SuffixArray.class.getName() + " corpus vocab.bin corpus.bin suffixes.bin ");
-			System.exit(0);
-		}
-		
-		String corpusFileName = args[0];
-		String binaryVocabFilename = args[1];
-		String binaryCorpusFilename = args[2];
-		String binarySuffixesFilename = args[3];
-		String charset = (args.length > 4) ? args[4] : "UTF-8";
-		
-		logger.info("Constructing vocabulary from file " + corpusFileName);
-		Vocabulary symbolTable = new Vocabulary();
-		int[] lengths = Vocabulary.initializeVocabulary(corpusFileName, symbolTable, true);
-		
-		logger.info("Constructing corpus array from file " + corpusFileName);
-		CorpusArray corpusArray = SuffixArrayFactory.createCorpusArray(corpusFileName, symbolTable, lengths[0], lengths[1]);
-		
-		logger.info("Constructing suffix array from file " + corpusFileName);
-		SuffixArray suffixArray = SuffixArrayFactory.createSuffixArray(corpusArray, Cache.DEFAULT_CAPACITY);
-		
-		logger.info("Writing binary files to disk at " + binarySuffixesFilename + ", " + binaryCorpusFilename + ", and " + binaryVocabFilename + " using character encoding " + charset);
-		suffixArray.write(binarySuffixesFilename, binaryCorpusFilename, binaryVocabFilename, charset);
-    }
     
 }
 

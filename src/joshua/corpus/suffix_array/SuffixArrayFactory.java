@@ -19,6 +19,7 @@ package joshua.corpus.suffix_array;
 
 import joshua.corpus.Corpus;
 import joshua.corpus.CorpusArray;
+import joshua.corpus.ExternalizableSymbolTable;
 import joshua.corpus.SymbolTable;
 import joshua.corpus.Vocabulary;
 import joshua.corpus.alignment.AlignmentArray;
@@ -94,7 +95,7 @@ public class SuffixArrayFactory {
 	
 	
 	// TODO: fuse count and createCorpusArray together to avoid allocating the trivial array.
-	public static CorpusArray createCorpusArray(String inputFilename, SymbolTable vocabulary) throws IOException {
+	public static CorpusArray createCorpusArray(String inputFilename, ExternalizableSymbolTable vocabulary) throws IOException {
 		int[] ws = count(inputFilename);
 		return createCorpusArray(inputFilename, vocabulary, ws[0], ws[1]);
 	}
@@ -135,7 +136,7 @@ public class SuffixArrayFactory {
 	 * @param numSentences the number of lines in the file
 	 *                     (returned by createVocabulary)
 	 */
-	public static CorpusArray createCorpusArray(String inputFilename, SymbolTable vocab, int numWords, int numSentences) throws IOException {
+	public static CorpusArray createCorpusArray(String inputFilename, ExternalizableSymbolTable vocab, int numWords, int numSentences) throws IOException {
 		// initialize the arrays.
 		int[] corpus = new int[numWords];
 		int[] sentenceIndexes = new int[numSentences];

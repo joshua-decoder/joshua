@@ -22,8 +22,6 @@ import joshua.corpus.SymbolTable;
 import joshua.corpus.Vocabulary;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.io.RandomAccessFile;
 import java.nio.IntBuffer;
 import java.nio.channels.FileChannel;
@@ -34,18 +32,13 @@ import java.nio.channels.FileChannel;
  * 
  * @author Lane Schwartz
  */
-public class MemoryMappedCorpusArray extends AbstractCorpus { 
+public class MemoryMappedCorpusArray extends AbstractCorpus<SymbolTable> { 
 
 	private final IntBuffer binaryCorpusBuffer;
 	private final IntBuffer binarySentenceBuffer;
 	
 	private final int numberOfWords;
 	private final int numberOfSentences;
-	
-//	@SuppressWarnings("unused")
-//	private final String corpusFilename;
-//	@SuppressWarnings("unused")
-//	private String vocabFilename;
 	
 	/**
 	 * Constructs a corpus array from a binary file.
@@ -59,7 +52,6 @@ public class MemoryMappedCorpusArray extends AbstractCorpus {
 	 */
 	public MemoryMappedCorpusArray(String binaryFileName, String vocabFileName) throws IOException, ClassNotFoundException {
 		this(Vocabulary.readExternal(vocabFileName), binaryFileName);
-//		this.vocabFilename = vocabFileName;
 	}
 	
 	/**
@@ -82,18 +74,13 @@ public class MemoryMappedCorpusArray extends AbstractCorpus {
 		) throws IOException {
 			
 			super(symbolTable);
-//			this.corpusFilename = binaryFileName;
-//			this.vocabFilename = null;
 			
 			IntBuffer tmp;
 			
 			RandomAccessFile binaryFile = new RandomAccessFile( binaryFileName, "r" );
 		    FileChannel binaryChannel = binaryFile.getChannel();
 		    
-//		    tmp = binaryChannel.map( FileChannel.MapMode.READ_ONLY, 0, 4).asIntBuffer().asReadOnlyBuffer();
-//		    int headerSize = tmp.get() + 4;
 		    int headerSize = 0;
-//		    System.err.println(headerSize);
 		    
 		    tmp = binaryChannel.map( FileChannel.MapMode.READ_ONLY, headerSize, 4).asIntBuffer().asReadOnlyBuffer();
 		    this.numberOfSentences = tmp.get();
@@ -135,7 +122,6 @@ public class MemoryMappedCorpusArray extends AbstractCorpus {
 	private int binarySearch(int value) {
 
 		int low = 0;
-		//int high = size() - 1;
 		int high = numberOfSentences - 1;
 		
 		while (low <= high) {
@@ -173,25 +159,5 @@ public class MemoryMappedCorpusArray extends AbstractCorpus {
 		return numberOfWords;
 	}
 
-	public void write(String corpusFilename, String vocabFilename,
-			String charset) throws IOException {
-
-		//TODO Copy original files to new locations
-		throw new RuntimeException("Not yet implemented");
-		
-	}
-
-	public void readExternal(ObjectInput in) throws IOException,
-			ClassNotFoundException {
-		// TODO Auto-generated method stub
-		throw new RuntimeException("Not yet implemented");
-	}
-
-	public void writeExternal(ObjectOutput out) throws IOException {
-		// TODO Auto-generated method stub
-		throw new RuntimeException("Not yet implemented");
-	}
-	
-	
 
 }

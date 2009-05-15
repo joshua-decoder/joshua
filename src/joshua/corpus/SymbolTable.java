@@ -30,7 +30,7 @@ import java.util.Collection;
  * @author Zhifei Li
  * @version $LastChangedDate$
  */
-public interface SymbolTable extends Externalizable {
+public interface SymbolTable { //extends Externalizable {
 
 	/**
 	 * The unknown word's ID will be the size of the vocabulary,

@@ -166,10 +166,8 @@ public class HGNode implements Comparable<HGNode> {
 	
 	
 	//sort by est_total_cost: for prunning purpose
-	public int compareTo(HGNode anotherItem) throws ClassCastException {
-		if (!(anotherItem instanceof HGNode)) {
-			throw new ClassCastException("An HGNode object expected.");
-		} else if (this.est_total_cost < anotherItem.est_total_cost) {
+	public int compareTo(HGNode anotherItem) {
+		if (this.est_total_cost < anotherItem.est_total_cost) {
 			return -1;
 		} else if (this.est_total_cost == anotherItem.est_total_cost) {
 			return 0;
@@ -179,7 +177,7 @@ public class HGNode implements Comparable<HGNode> {
 	}
 	
 	
-	public static Comparator<HGNode> NegtiveCostComparator	= new Comparator<HGNode>() {			
+	public static Comparator<HGNode> negtiveCostComparator	= new Comparator<HGNode>() {			
 			public int compare(HGNode item1, HGNode item2) {
 				double cost1 = item1.est_total_cost;
 				double cost2 = item2.est_total_cost;

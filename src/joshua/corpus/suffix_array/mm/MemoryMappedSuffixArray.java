@@ -24,7 +24,6 @@ import java.nio.channels.FileChannel;
 
 import joshua.corpus.Corpus;
 import joshua.corpus.MatchedHierarchicalPhrases;
-import joshua.corpus.mm.MemoryMappedCorpusArray;
 import joshua.corpus.suffix_array.AbstractSuffixArray;
 import joshua.corpus.suffix_array.Pattern;
 import joshua.util.Cache;
@@ -33,15 +32,11 @@ public class MemoryMappedSuffixArray extends AbstractSuffixArray {
 
 	private final IntBuffer binarySuffixBuffer;
 	private final int size;
-	
-
-	public MemoryMappedSuffixArray(String suffixesFileName, String corpusFileName, String vocabFileName, int maxCacheSize) throws IOException, ClassNotFoundException {
-		this(suffixesFileName, new MemoryMappedCorpusArray(corpusFileName, vocabFileName), maxCacheSize);
-	}
 
 	/** 
-	 * Constructor takes a CorpusArray and creates a sorted
-	 * suffix array from it.
+	 * Constructs a suffix array from 
+	 * an on-disk memory-mapped representation
+	 * and an existing Corpus.
 	 * 
 	 * @throws IOException 
 	 * @throws ClassNotFoundException 

@@ -31,7 +31,7 @@ import java.util.List;
  *
  * @param <Label> Type of label associated with an arc.
  */
-public class Node<Label> implements Comparable<Node<Label>> {
+public class Node<Label> {
 
 	//===============================================================
 	//Member variables
@@ -147,10 +147,6 @@ public class Node<Label> implements Comparable<Node<Label>> {
 	public String toString() {
 		return "Node-"+id;
 	}
-	
-	
-	public int compareTo(Node<Label> o) {
-		return id.compareTo(o.id);
-	}
-	
+		
 }
+

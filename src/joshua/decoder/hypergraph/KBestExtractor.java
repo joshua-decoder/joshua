@@ -597,9 +597,7 @@ public class KBestExtractor {
 		
 		
 		//natual order by cost
-		public int compareTo(DerivationState another) throws ClassCastException {
-		    if (!(another instanceof DerivationState))
-		      throw new ClassCastException("An Derivation object expected.");
+		public int compareTo(DerivationState another) {
 		    if(this.cost < ((DerivationState)another).cost)
 		    	return -1;
 		    else if(this.cost == ((DerivationState)another).cost)

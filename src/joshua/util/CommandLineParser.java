@@ -502,13 +502,13 @@ public class CommandLineParser {
 		System.out.println(parser.getValue(n));
 	}
 	
-	public class CommandLineParserException extends RuntimeException {
+	public static class CommandLineParserException extends RuntimeException {
 		public CommandLineParserException(String message) {
 			super(message);
 		}
 	}
 	
-	public class DuplicateOptionException extends RuntimeException {
+	public static class DuplicateOptionException extends RuntimeException {
 		public DuplicateOptionException(String message) {
 			super(message);
 		}
@@ -672,7 +672,7 @@ public class CommandLineParser {
 		}
 	}
 	
-	class UniversalSet<E> implements Set<E> {
+	static class UniversalSet<E> implements Set<E> {
 		
 		public boolean add(Object o) { throw new UnsupportedOperationException(); }
 		public boolean addAll(Collection c)  { throw new UnsupportedOperationException(); }

@@ -32,7 +32,7 @@ import java.io.IOException;
  * @version $LastChangedDate:2008-07-30 17:15:52 -0400 (Wed, 30 Jul 2008) $
  */
 
-public interface Corpus extends Externalizable {
+public interface Corpus { //extends Externalizable {
 
 //===============================================================
 // Method definitions
@@ -144,6 +144,6 @@ public interface Corpus extends Externalizable {
 
 	public ContiguousPhrase getPhrase(int startPosition, int endPosition);
 	
-	public void write(String corpusFilename, String vocabFilename, String charset) throws IOException;
+//	public void write(String corpusFilename, String vocabFilename, String charset) throws IOException;
 }
 

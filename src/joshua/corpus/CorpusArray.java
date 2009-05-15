@@ -42,7 +42,7 @@ import java.util.Arrays;
  * @since  29 Dec 2004
  * @version $LastChangedDate:2008-07-30 17:15:52 -0400 (Wed, 30 Jul 2008) $
  */
-public class CorpusArray extends AbstractCorpus implements Corpus, Externalizable {
+public class CorpusArray extends AbstractCorpus<ExternalizableSymbolTable> implements Corpus, Externalizable {
 
 //===============================================================
 // Constants
@@ -98,7 +98,7 @@ public class CorpusArray extends AbstractCorpus implements Corpus, Externalizabl
 	 *
 	 * @see SuffixArrayFactory#createCorpusArray(String,SymbolTable,int,int)
 	 */
-	public CorpusArray (int[] corpus, int[] sentences, SymbolTable vocab) {
+	public CorpusArray (int[] corpus, int[] sentences, ExternalizableSymbolTable vocab) {
 		super(vocab);
 		this.corpus = corpus;
 		this.sentences = sentences;
@@ -214,7 +214,7 @@ public class CorpusArray extends AbstractCorpus implements Corpus, Externalizabl
 	 * and changes migrates all internal data 
 	 * to use the new mappings provided by that object.
 	 */
-	public void setSymbolTable(SymbolTable vocab) {
+	public void setSymbolTable(ExternalizableSymbolTable vocab) {
 		SymbolTable oldVocab = this.symbolTable;
 		
 		for (int i=0; i<corpus.length; i++) {

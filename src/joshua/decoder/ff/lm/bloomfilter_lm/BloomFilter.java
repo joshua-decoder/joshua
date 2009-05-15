@@ -133,7 +133,7 @@ public class BloomFilter implements Externalizable {
 	@SuppressWarnings("unused")
 	private BigInteger convertIntToBigInteger(int n)
 	{
-		return new BigInteger(new Integer(n).toString());
+		return new BigInteger(Integer.valueOf(n).toString());
 	}
 
 	/*

@@ -274,7 +274,7 @@ public class NbestMinRiskReranker {
 		long start_time = System.currentTimeMillis();
 		String f_nbest_in = args[0].trim();
 		String f_out = args[1].trim();
-		boolean produce_reranked_nbest = new Boolean(args[2].trim());
+		boolean produce_reranked_nbest = Boolean.valueOf(args[2].trim());
 		double scaling_factor = Double.parseDouble(args[3].trim());
 	
 		

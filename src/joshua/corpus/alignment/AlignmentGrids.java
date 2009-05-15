@@ -17,10 +17,8 @@
  */
 package joshua.corpus.alignment;
 
-import java.io.Externalizable;
 import java.io.File;
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.List;
@@ -36,7 +34,7 @@ import joshua.util.io.BinaryOut;
  * 
  * @author Lane Schwartz
  */
-public class AlignmentGrids extends AbstractAlignmentGrids implements Externalizable {
+public class AlignmentGrids extends AbstractAlignmentGrids {
 
 	private static final Logger logger = Logger.getLogger(AlignmentGrids.class.getName()); 
 	
@@ -102,12 +100,6 @@ public class AlignmentGrids extends AbstractAlignmentGrids implements Externaliz
 		return grid.getTargetPoints(sourceSpanStart, sourceSpanEnd);
 	}
 
-	public void readExternal(ObjectInput in) throws IOException,
-			ClassNotFoundException {
-
-		throw new RuntimeException("Not supported");
-		
-	}
 
 	public void writeExternal(ObjectOutput out) throws IOException {
 		

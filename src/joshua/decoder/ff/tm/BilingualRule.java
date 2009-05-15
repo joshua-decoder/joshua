@@ -17,6 +17,7 @@
  */
 package joshua.decoder.ff.tm;
 
+import java.util.Arrays;
 import java.util.Map;
 
 import joshua.corpus.SymbolTable;
@@ -109,9 +110,9 @@ public class BilingualRule extends MonolingualRule {
 			StringBuffer sb = new StringBuffer("[");
 			sb.append(this.getLHS());
 			sb.append("] ||| ");
-			sb.append(this.getFrench());
+			sb.append(Arrays.toString(this.getFrench()));
 			sb.append(" ||| ");
-			sb.append(this.english);
+			sb.append(Arrays.toString(this.english));
 			sb.append(" |||");
 			for (int i = 0; i < this.getFeatureScores().length; i++) {
 				sb.append(String.format(" %.4f", this.getFeatureScores()[i]));

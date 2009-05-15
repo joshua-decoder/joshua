@@ -177,7 +177,7 @@ public class LMServer {
 						logger.fine(String.format("lm file: %s", lm_file));
 					
 				} else if ("use_srilm".equals(fds[0])) {
-					use_srilm = new Boolean(fds[1]);
+					use_srilm = Boolean.valueOf(fds[1]);
 					if (logger.isLoggable(Level.FINE))
 						logger.fine(String.format("use_srilm: %s", use_srilm));
 					
@@ -187,12 +187,12 @@ public class LMServer {
 						logger.fine(String.format("lm_ceiling_cost: %s", lm_ceiling_cost));
 					
 				} else if ("use_left_euqivalent_state".equals(fds[0])) {
-					use_left_euqivalent_state = new Boolean(fds[1]);
+					use_left_euqivalent_state = Boolean.valueOf(fds[1]);
 					if (logger.isLoggable(Level.FINE))
 						logger.fine(String.format("use_left_euqivalent_state: %s", use_left_euqivalent_state));
 					
 				} else if ("use_right_euqivalent_state".equals(fds[0])) {
-					use_right_euqivalent_state = new Boolean(fds[1]);
+					use_right_euqivalent_state = Boolean.valueOf(fds[1]);
 					if (logger.isLoggable(Level.FINE))
 						logger.fine(String.format("use_right_euqivalent_state: %s", use_right_euqivalent_state));
 					
@@ -207,7 +207,7 @@ public class LMServer {
 						logger.fine(String.format("remote_lm_server_port: %s", port));
 					
 				} else if ("remote_symbol_tbl".equals(fds[0])) {
-					remote_symbol_tbl = new String(fds[1]);
+					remote_symbol_tbl = fds[1];
 					if (logger.isLoggable(Level.FINE))
 						logger.fine(String.format("remote_symbol_tbl: %s", remote_symbol_tbl));
 					

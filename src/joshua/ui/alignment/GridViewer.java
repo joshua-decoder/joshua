@@ -65,7 +65,7 @@ public class GridViewer {
 					String binaryAlignmentFileName = joshDirName + File.separator + "alignment.grids";
 
 					logger.fine("Loading vocabulary...");
-					SymbolTable commonVocab = new Vocabulary();
+					Vocabulary commonVocab = new Vocabulary();
 					ObjectInput in = BinaryIn.vocabulary(binaryVocabFileName);
 					commonVocab.readExternal(in);
 

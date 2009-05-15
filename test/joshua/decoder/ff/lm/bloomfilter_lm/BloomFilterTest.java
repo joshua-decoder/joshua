@@ -39,7 +39,7 @@ public class BloomFilterTest {
 	@Test(dependsOnMethods = { "constructor" })
 	public void bigPrime()
 	{
-		BigInteger prime = new BigInteger(new Long(bf.bigPrime).toString());
+		BigInteger prime = new BigInteger(Long.valueOf(bf.bigPrime).toString());
 		Assert.assertTrue(prime.isProbablePrime(100));
 		Assert.assertTrue(bf.bigPrime > bf.filterSize);
 	}

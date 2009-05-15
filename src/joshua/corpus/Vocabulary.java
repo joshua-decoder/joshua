@@ -43,7 +43,7 @@ import joshua.util.io.LineReader;
  * @author Lane Schwartz
  * @version $LastChangedDate:2008-07-30 17:15:52 -0400 (Wed, 30 Jul 2008) $
  */
-public class Vocabulary extends AbstractSymbolTable implements Iterable<String>, SymbolTable, Externalizable {
+public class Vocabulary extends AbstractSymbolTable implements Iterable<String>, ExternalizableSymbolTable {
 
 //===============================================================
 // Constants
@@ -467,7 +467,7 @@ public class Vocabulary extends AbstractSymbolTable implements Iterable<String>,
 		if (id != null) {
 			return id.intValue();
 		} else if(!isFixed) {
-			id = new Integer(terminalToInt.size());
+			id = Integer.valueOf(terminalToInt.size());
 			intToString.put(id, terminal);
 			terminalToInt.put(terminal, id);
 			return id.intValue();

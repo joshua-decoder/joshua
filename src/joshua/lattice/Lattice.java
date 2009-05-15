@@ -176,7 +176,7 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
 		}
 		
 		List<Node<String>> nodeList = new ArrayList<Node<String>>(nodes.values());
-		Collections.sort(nodeList);
+		Collections.sort(nodeList, new NodeIdentifierComparator());
 		
 		if (logger.isLoggable(Level.FINE)) logger.fine(nodeList.toString());
 		

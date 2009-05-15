@@ -86,17 +86,6 @@ public class MemoryBasedTrie implements Trie {
 	
 	public Collection<MemoryBasedTrie> getExtensions() {
 		return this.tbl_children.values();
-//		Object[] tem = this.tbl_children.values().toArray();
-//		Trie[] res = new Trie[tem.length];
-//		for(int i = 0; i < tem.length; i++) {
-//			res[i] = (Trie) tem[i];
-//		}
-//		return res;
 	}
 	
-	
-	public Trie[] getExtensionsWrong() {
-		Trie[] tem = (Trie[]) this.tbl_children.values().toArray();
-		return tem;
-	}
 }

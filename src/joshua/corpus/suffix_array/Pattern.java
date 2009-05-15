@@ -17,9 +17,7 @@
  */
 package joshua.corpus.suffix_array;
 
-import java.io.Externalizable;
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
 import joshua.corpus.Phrase;
@@ -35,7 +33,7 @@ import joshua.corpus.SymbolTable;
  * @author Lane Schwartz
  * @version $LastChangedDate:2008-09-18 12:47:23 -0500 (Thu, 18 Sep 2008) $
  */
-public class Pattern extends BasicPhrase implements PatternFormat, Externalizable {
+public class Pattern extends BasicPhrase implements PatternFormat {
 
 //===============================================================
 // Member variables
@@ -250,10 +248,6 @@ public class Pattern extends BasicPhrase implements PatternFormat, Externalizabl
 		
 	}
 
-//	public int[] getWords() {
-//		return words;
-//	}
-//	
 //===============================================================
 // Protected 
 //===============================================================
@@ -287,13 +281,6 @@ public class Pattern extends BasicPhrase implements PatternFormat, Externalizabl
 		}
 		
 		return arity;
-	}
-
-
-	public void readExternal(ObjectInput in) throws IOException,
-			ClassNotFoundException {
-		
-		throw new RuntimeException("Not implemented");
 	}
 
 

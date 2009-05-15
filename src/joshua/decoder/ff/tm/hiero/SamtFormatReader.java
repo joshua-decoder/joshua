@@ -1,5 +1,6 @@
 package joshua.decoder.ff.tm.hiero;
 
+import java.util.Arrays;
 import java.util.logging.Logger;
 
 import joshua.corpus.SymbolTable;
@@ -104,9 +105,9 @@ public class SamtFormatReader extends GrammarReader<BilingualRule> {
 		StringBuffer sb = new StringBuffer("[");
 		sb.append(rule.getLHS());
 		sb.append("] ||| ");
-		sb.append(rule.getFrench());
+		sb.append(Arrays.toString(rule.getFrench()));
 		sb.append(" ||| ");
-		sb.append(rule.getEnglish());
+		sb.append(Arrays.toString(rule.getEnglish()));
 		sb.append(" |||");
 
 		float[] feature_scores = rule.getFeatureScores();
@@ -121,9 +122,9 @@ public class SamtFormatReader extends GrammarReader<BilingualRule> {
 		StringBuffer sb = new StringBuffer("[");
 		sb.append(rule.getLHS());
 		sb.append("] ||| ");
-		sb.append(rule.getFrench());
+		sb.append(Arrays.toString(rule.getFrench()));
 		sb.append(" ||| ");
-		sb.append(rule.getEnglish());
+		sb.append(Arrays.toString(rule.getEnglish()));
 		return sb.toString();
 	}
 

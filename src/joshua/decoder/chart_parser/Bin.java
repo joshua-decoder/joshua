@@ -81,7 +81,7 @@ public class Bin {
 	 */
 	// TODO: initial capacity?
 	private PriorityQueue<HGNode> heapItems =
-		new PriorityQueue<HGNode>(1, HGNode.NegtiveCostComparator);
+		new PriorityQueue<HGNode>(1, HGNode.negtiveCostComparator);
 	
 	// to maintain uniqueness of items
 	private HashMap<String,HGNode> tableItems =
@@ -468,11 +468,7 @@ public class Bin {
 		}
 		
 		//natual order by cost
-		public int compareTo(CubePruneState that)
-		throws ClassCastException {
-			if (!(that instanceof CubePruneState)) {
-				throw new ClassCastException("An CubePruneState object expected.");
-			}
+		public int compareTo(CubePruneState that) {
 			if (this.tbl_item_states.getExpectedTotalCost() < that.tbl_item_states.getExpectedTotalCost()) {
 				return -1;
 			} else if (this.tbl_item_states.getExpectedTotalCost() == that.tbl_item_states.getExpectedTotalCost()) {

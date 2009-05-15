@@ -84,6 +84,17 @@ public class AlignmentGrid implements Externalizable {
 		initializeCoordinates(coordinates);
 	}
 
+	/**
+	 * Constructs a completely empty,
+	 * utterly uninitialized alignment grid,
+	 * containing <emph>absolutely nothing</emph>.
+	 * <p>
+	 * This constructor only exists to allow 
+	 * this class to be properly <code>Externalizable</code>.
+	 */
+	public AlignmentGrid() {
+	}
+	
 	//===============================================================
 	// Public
 	//===============================================================

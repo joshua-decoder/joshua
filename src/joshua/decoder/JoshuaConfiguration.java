@@ -232,7 +232,7 @@ public class JoshuaConfiguration {
 						logger.finest(String.format("suffix array sample size for lexical probability calculation: %s", sa_lex_sample_size));
 					
 				} else if ("sa_precalculate_lexprobs".equals(fds[0])) {
-					sa_precalculate_lexprobs = new Boolean(fds[1].trim());
+					sa_precalculate_lexprobs = Boolean.valueOf(fds[1].trim());
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("should lexical probabilities be precalculated: %s", sa_precalculate_lexprobs));
 					
@@ -247,22 +247,22 @@ public class JoshuaConfiguration {
 						logger.finest(String.format("suffix array cache size for rules: %s", sa_rule_cache_size));
 					
 				} else if ("sa_sentence_initial_X".equals(fds[0])) {
-					sa_sentence_initial_X = new Boolean(fds[1].trim());
+					sa_sentence_initial_X = Boolean.valueOf(fds[1].trim());
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("should suffix array rule extraction allow rules from sentence-initial X: %s", sa_sentence_initial_X));
 					
 				} else if ("sa_sentence_final_X".equals(fds[0])) {
-					sa_sentence_final_X = new Boolean(fds[1].trim());
+					sa_sentence_final_X = Boolean.valueOf(fds[1].trim());
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("should suffix array rule extraction allow rules from sentence-final X: %s", sa_sentence_final_X));
 					
 				} else if ("use_srilm".equals(fds[0])) {
-					use_srilm = new Boolean(fds[1]);
+					use_srilm = Boolean.valueOf(fds[1]);
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("use_srilm: %s", use_srilm));
 					
 				} else if ("use_bloomfilter_lm".equals(fds[0])) {
-					use_bloomfilter_lm = new Boolean(fds[1]);
+					use_bloomfilter_lm = Boolean.valueOf(fds[1]);
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("use_bloomfilter_lm: %s", use_bloomfilter_lm));
 					
@@ -274,14 +274,14 @@ public class JoshuaConfiguration {
 				// BUG: accepting typos in config file is not acceptable
 				} else if ("use_left_euqivalent_state".equals(fds[0])
 				|| "use_left_equivalent_state".equals(fds[0])) {
-					use_left_equivalent_state = new Boolean(fds[1]);
+					use_left_equivalent_state = Boolean.valueOf(fds[1]);
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("use_left_equivalent_state: %s", use_left_equivalent_state));
 				
 				// BUG: accepting typos in config file is not acceptable
 				} else if ("use_right_euqivalent_state".equals(fds[0])
 				|| "use_right_equivalent_state".equals(fds[0])) {
-					use_right_equivalent_state = new Boolean(fds[1]);
+					use_right_equivalent_state = Boolean.valueOf(fds[1]);
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("use_right_equivalent_state: %s", use_right_equivalent_state));
 					
@@ -291,7 +291,7 @@ public class JoshuaConfiguration {
 						logger.finest(String.format("g_lm_order: %s", g_lm_order));
 					
 				} else if ("use_sent_specific_lm".equals(fds[0])) {
-					use_sent_specific_lm = new Boolean(fds[1]);
+					use_sent_specific_lm = Boolean.valueOf(fds[1]);
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("use_sent_specific_lm: %s", use_sent_specific_lm));
 					
@@ -301,7 +301,7 @@ public class JoshuaConfiguration {
 						logger.finest(String.format("sent_lm_file_name_prefix: %s", g_sent_lm_file_name_prefix));
 					
 				} else if ("use_sent_specific_tm".equals(fds[0])) {
-					use_sent_specific_tm = new Boolean(fds[1]);
+					use_sent_specific_tm = Boolean.valueOf(fds[1]);
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("use_sent_specific_tm: %s", use_sent_specific_tm));
 					
@@ -373,22 +373,22 @@ public class JoshuaConfiguration {
 						logger.finest(String.format("rule_relative_threshold: %s", rule_relative_threshold));
 					
 				} else if ("use_unique_nbest".equals(fds[0])) {
-					use_unique_nbest = new Boolean(fds[1]);
+					use_unique_nbest = Boolean.valueOf(fds[1]);
 					if (logger.isLoggable(Level.FINEST)) 
 						logger.finest(String.format("use_unique_nbest: %s", use_unique_nbest));
 					
 				} else if ("add_combined_cost".equals(fds[0])) {
-					add_combined_cost = new Boolean(fds[1]);
+					add_combined_cost = Boolean.valueOf(fds[1]);
 					if (logger.isLoggable(Level.FINEST)) 
 						logger.finest(String.format("add_combined_cost: %s", add_combined_cost));
 					
 				} else if ("use_tree_nbest".equals(fds[0])) {
-					use_tree_nbest = new Boolean(fds[1]);
+					use_tree_nbest = Boolean.valueOf(fds[1]);
 					if (logger.isLoggable(Level.FINEST)) 
 						logger.finest(String.format("use_tree_nbest: %s", use_tree_nbest));
 					
 				} else if ("include_align_index".equals(fds[0])) {
-					include_align_index = new Boolean(fds[1]);
+					include_align_index = Boolean.valueOf(fds[1]);
 					if (logger.isLoggable(Level.FINEST)) 
 						logger.finest(String.format("include_align_index: %s", include_align_index));
 					
@@ -398,12 +398,12 @@ public class JoshuaConfiguration {
 						logger.finest(String.format("topN: %s", topN));
 					
 				} else if ("use_remote_lm_server".equals(fds[0])) {
-					use_remote_lm_server = new Boolean(fds[1]);
+					use_remote_lm_server = Boolean.valueOf(fds[1]);
 					if (logger.isLoggable(Level.FINEST)) 
 						logger.finest(String.format("use_remote_lm_server: %s", use_remote_lm_server));
 					
 				} else if ("f_remote_server_list".equals(fds[0])) {
-					f_remote_server_list = new String(fds[1]); // BUG: why copy string?
+					f_remote_server_list = fds[1];
 					if (logger.isLoggable(Level.FINEST)) 
 						logger.finest(String.format("f_remote_server_list: %s", f_remote_server_list));
 					
@@ -413,7 +413,7 @@ public class JoshuaConfiguration {
 						logger.finest(String.format("num_remote_lm_servers: %s", num_remote_lm_servers));
 					
 				} else if ("remote_symbol_tbl".equals(fds[0])) {
-					remote_symbol_tbl = new String(fds[1]); // BUG: why copy string?
+					remote_symbol_tbl = fds[1]; 
 					if (logger.isLoggable(Level.FINEST)) 
 						logger.finest(String.format("remote_symbol_tbl: %s", remote_symbol_tbl));
 					
@@ -423,7 +423,7 @@ public class JoshuaConfiguration {
 						logger.finest(String.format("remote_lm_server_port: not used"));
 					
 				} else if ("parallel_files_prefix".equals(fds[0])) {
-					parallel_files_prefix = new String(fds[1]); // BUG: why copy string?
+					parallel_files_prefix = fds[1];
 					if (logger.isLoggable(Level.FINEST)) 
 						logger.finest(String.format("parallel_files_prefix: %s", parallel_files_prefix));
 					
@@ -433,12 +433,12 @@ public class JoshuaConfiguration {
 						logger.finest(String.format("num_parallel_decoders: %s", num_parallel_decoders));
 					
 				} else if ("save_disk_hg".equals(fds[0])) {
-					save_disk_hg = new Boolean(fds[1]);
+					save_disk_hg = Boolean.valueOf(fds[1]);
 					if (logger.isLoggable(Level.FINEST)) 
 						logger.finest(String.format("save_disk_hg: %s", save_disk_hg));
 					
 				} else if ("forest_pruning".equals(fds[0])) {
-					forest_pruning = new Boolean(fds[1]);
+					forest_pruning = Boolean.valueOf(fds[1]);
 					if (logger.isLoggable(Level.FINEST)) 
 						logger.finest(String.format("forest_pruning: %s", forest_pruning));
 					
