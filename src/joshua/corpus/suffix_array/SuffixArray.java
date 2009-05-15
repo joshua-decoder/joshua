@@ -219,13 +219,18 @@ public class SuffixArray extends AbstractSuffixArray {
 	public void writeExternal(ObjectOutput out) throws IOException {
 		
 		// Write the corpus
+		logger.finer("Writing corpus to object output...");
 		out.writeObject(corpus);
 		
+		logger.finer("Writing suffix length to object output...");
 		out.writeInt(suffixes.length);
+		
+		logger.finer("Writing suffixes to object output...");
 		for (int word : suffixes) {
 			out.writeInt(word);
 		}
 		
+		logger.finer("Completed externalization");
 	}
 
 

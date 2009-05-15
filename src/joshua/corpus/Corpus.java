@@ -18,11 +18,6 @@
 package joshua.corpus;
 
 
-import java.io.Externalizable;
-import java.io.IOException;
-
-
-
 /**
  * Corpus is an interface that contains methods for accessing the
  * information within a monolingual corpus.

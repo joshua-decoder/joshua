@@ -17,7 +17,6 @@
  */
 package joshua.corpus;
 
-import java.io.Externalizable;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Collection;
@@ -30,7 +29,7 @@ import java.util.Collection;
  * @author Zhifei Li
  * @version $LastChangedDate$
  */
-public interface SymbolTable { //extends Externalizable {
+public interface SymbolTable {
 
 	/**
 	 * The unknown word's ID will be the size of the vocabulary,

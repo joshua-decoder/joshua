@@ -20,7 +20,6 @@ package joshua.corpus.suffix_array;
 import joshua.corpus.Corpus;
 import joshua.corpus.CorpusArray;
 import joshua.corpus.ExternalizableSymbolTable;
-import joshua.corpus.SymbolTable;
 import joshua.corpus.Vocabulary;
 import joshua.corpus.alignment.AlignmentArray;
 import joshua.corpus.alignment.Alignments;
