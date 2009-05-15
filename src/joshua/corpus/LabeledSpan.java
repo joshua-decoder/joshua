@@ -27,13 +27,12 @@ package joshua.corpus;
  * 
  * @since 2008-08-29
  */
-public class LabeledSpan implements Comparable<LabeledSpan> {// extends Span {
+public class LabeledSpan implements Comparable<LabeledSpan> {
 
 	protected final int label;
 	protected final Span span;
 	
 	public LabeledSpan(int label, Span span) {
-		//super(start, end);
 		this.span = span;
 		this.label = label;
 	}
@@ -50,21 +49,47 @@ public class LabeledSpan implements Comparable<LabeledSpan> {// extends Span {
 		return span.size();
 	}
 
+	public boolean equals(Object o) {
+		
+		if (this==o) {
+			return true;
+		} else if (o instanceof LabeledSpan) {
+			LabeledSpan other = (LabeledSpan) o;
+			
+			if (span.equals(other.span)) {
+				if (label==other.label) {
+					return true;
+				} else {
+					return false;
+				}
+			} else {
+				return false;
+			}
+			
+		} else {
+			return false;
+		}
+	}
+	
 	public int compareTo(LabeledSpan o) {
 		
-		if (span.start<o.span.start)
-			return -1;
-		else if (span.start>o.span.start)
-			return 1;
-		else {
-			if (span.end<o.span.end)
+		int spanComparison = span.compareTo(o.span);
+		
+		if (spanComparison==0) {
+			if (label < o.label) {
 				return -1;
-			else if (span.end>o.span.end)
+			} else if (label > o.label) {
 				return 1;
-			else
+			} else {
 				return 0;
+			}
+		} else {
+			return spanComparison;
 		}
 		
 	}
 	
+	public int hashCode() {
+		return span.hashCode() + label;
+	}
 }

@@ -64,8 +64,9 @@ public abstract class DefaultNGramLanguageModel implements NGramLanguageModel {
 	public double sentenceLogProbability(
 		ArrayList<Integer> sentence, int order, int startIndex
 	) {
+		if (sentence==null) return 0.0;
 		int sentenceLength = sentence.size();
-		if (null == sentence || sentenceLength <= 0) return 0.0;
+		if (sentenceLength <= 0) return 0.0;
 		
 		double probability = 0.0;
 		// partial ngrams at the begining

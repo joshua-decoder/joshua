@@ -138,15 +138,28 @@ public class AlignmentGrid implements Externalizable {
 	 * as this one
 	 */
 	public boolean equals(Object o) {
-		if (o==null) return false;
-		if (!o.getClass().isInstance(this)) return false;
-		AlignmentGrid other = (AlignmentGrid)o;
-		return (this.getWidth()==other.getWidth() &&
-				this.getHeight()==other.getHeight() &&
-				Arrays.equals(this.getCoordinates(),other.getCoordinates()));
+		if (this==o) {
+			return true;
+		} else if (o instanceof AlignmentGrid) {
+			AlignmentGrid other = (AlignmentGrid)o;
+			return (this.getWidth()==other.getWidth() &&
+					this.getHeight()==other.getHeight() &&
+					Arrays.equals(this.getCoordinates(),other.getCoordinates()));
+		} else {
+			return false;
+		}		
 	}
 
-
+	public int hashCode() {
+		
+		return 
+			Arrays.hashCode(this.getCoordinates()) +
+			this.getHeight()*31 +
+			this.getWidth()*317;
+		
+	}
+	
+	
 	/**
 	 * Checks if a given location is present in the grid.
 	 * @param x the x value of the coordinate to check for

@@ -88,24 +88,33 @@ public class Span implements Iterable<Integer>, Comparable<Span> {
 	
 	
 	public int compareTo(Span o) {
-		if (start < o.start) {
-			return -1;
-		} else if (start > o.start) {
-			return 1;
+		
+		if (o==null) {
+			throw new NullPointerException();
 		} else {
-			if (end < o.end) {
+
+			if (start < o.start) {
 				return -1;
-			} else if (end > o.end) {
+			} else if (start > o.start) {
 				return 1;
 			} else {
-				return 0;
+				if (end < o.end) {
+					return -1;
+				} else if (end > o.end) {
+					return 1;
+				} else {
+					return 0;
+				}
 			}
 		}
+		
 	}
 	
-	
+	@Override
 	public boolean equals(Object o) {
-		if (o instanceof Span) {
+		if (this==o) {
+			return true;
+		} else if (o instanceof Span) {
 			Span other = (Span) o;
 			if (start == other.start && end == other.end) {
 				return true;
@@ -117,5 +126,13 @@ public class Span implements Iterable<Integer>, Comparable<Span> {
 			return false;
 		}
 	}
+	
+	@Override
+	public int hashCode() { 
+
+		return start*31 + end*773;
+
+	}
+
 	
 }

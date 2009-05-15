@@ -36,7 +36,7 @@ public abstract class AbstractSymbolTable implements SymbolTable {
 	 * Character set encoding used when 
 	 * exporting and importing binary files to and from disk. 
 	 */
-	public static String CHARACTER_ENCODING = "UTF-8";
+	public String characterEncoding = "UTF-8";
 	
 	
 	/* See Javadoc for SymbolTable interface. */
@@ -125,7 +125,7 @@ public abstract class AbstractSymbolTable implements SymbolTable {
 	
 	/* See Javadoc for SymbolTable interface. */
 	public void setExternalizableEncoding(String charsetName) {
-		CHARACTER_ENCODING = charsetName;
+		characterEncoding = charsetName;
 	}
 	
 	/**

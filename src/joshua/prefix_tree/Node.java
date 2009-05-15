@@ -366,6 +366,25 @@ public class Node extends AbstractGrammar implements Comparable<Node>, Grammar, 
 
 	}
 
+	public int hashCode() {
+		return objectID*31;
+	}
+	
+	public boolean equals(Object o) {
+		if (this==o) {
+			return true;
+		} else if (o instanceof Node) {
+			Node other = (Node) o;
+			if (objectID==other.objectID) {
+				return true;
+			} else {
+				return false;
+			}
+		} else {
+			return false;
+		}
+	}
+	
 	public int compareTo(Node o) {
 		Integer i = objectID;
 		Integer j = o.objectID;

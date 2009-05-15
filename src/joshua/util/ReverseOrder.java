@@ -17,6 +17,7 @@
  */
 package joshua.util;
 
+import java.io.Serializable;
 import java.util.*;
 
 /**
@@ -27,7 +28,7 @@ import java.util.*;
  * @since  2 June 2008
  * @version $LastChangedDate:2008-09-18 12:47:23 -0500 (Thu, 18 Sep 2008) $
  */
-public class ReverseOrder<K extends Comparable<K>> implements Comparator<K> {
+public class ReverseOrder<K extends Comparable<K>> implements Comparator<K>, Serializable {
 
 //===============================================================
 // Public
@@ -57,9 +58,5 @@ public class ReverseOrder<K extends Comparable<K>> implements Comparator<K> {
 // Main 
 //===============================================================
 
-	public static void main(String[] args)
-	{
-
-	}
 }
 

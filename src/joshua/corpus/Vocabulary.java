@@ -62,6 +62,9 @@ public class Vocabulary extends AbstractSymbolTable implements Iterable<String>,
 	/** Determines whether new words may be added to the vocabulary. */
 	protected boolean isFixed;
 	
+	/** The value returned by this class's <code>hashCode</code> method. */
+	protected static final int HASH_CODE = 42;
+	
 //===============================================================
 // Constructor(s)
 //===============================================================
@@ -311,8 +314,10 @@ public class Vocabulary extends AbstractSymbolTable implements Iterable<String>,
 	
 	/**
 	 * Checks that the Vocabularies are the same, by first checking that they have
-	 * the same number of items, and then checking that each word corresponds
+	 * the same number of terminals, and then checking that each word corresponds
 	 * to the same ID.
+	 * <p>
+	 * XXX This method does NOT check to verify that the nonterminal vocabulary is the same.
 	 * 
 	 * @param o the object to check equivalence with
 	 * @return <code>true</code> if the other object is 
@@ -321,24 +326,41 @@ public class Vocabulary extends AbstractSymbolTable implements Iterable<String>,
 	 *         <code>false</code> otherwise
 	 */
 	public boolean equals(Object o) {
-		if (o==this) return true;
-		else if (o==null) return false;
-		else if (!o.getClass().isInstance(this)) return false;
-        else {
-            Vocabulary other = (Vocabulary) o;
-			if(other.size() != this.size()) return false;
-			for(int i = 0; i < this.size(); i++) {
-				String thisWord = (String) this.intToString.get(i);
-				String otherWord = (String) other.intToString.get(i);
-				if(!(thisWord.equals(otherWord))) return false;
-				Integer thisID = this.terminalToInt.get(thisWord);
-				Integer otherID = other.terminalToInt.get(otherWord);
-				if(thisID != null && otherID != null) {
-					if(!(thisID.equals(otherID))) return false;
-				}
-			}
+		if (o==this) {
 			return true;
-        }
+		} else if (o instanceof SymbolTable) {
+			SymbolTable other = (SymbolTable) o;
+			   if(other.size() != this.size()) return false;
+			     for(int i = 0; i < this.size(); i++) {
+			    	 String thisWord = this.intToString.get(i);
+			    	 String otherWord = other.getTerminal(i);
+			    	 if(!(thisWord.equals(otherWord))) return false;
+			    	 Integer thisID = this.terminalToInt.get(thisWord);
+			    	 Integer otherID = other.getID(otherWord);
+			    	 if(thisID != null && otherID != null) {
+			    		 if(!(thisID.equals(otherID))) return false;
+			    	 } 
+			     } 
+			     return true;
+	     
+			
+		} else {
+			return false;
+		}
+	}
+	
+	/**
+	 * It is expected that instances of this class 
+	 * will never be put into a hash table.
+	 * <p>
+	 * Therefore, this method always returns a constant value.
+	 * 
+	 * @return a constant value
+	 */
+	@Override
+	public int hashCode() {
+		assert false : "hashCode not designed";
+		return HASH_CODE; 
 	}
 	
 	//===========================================================
@@ -499,7 +521,7 @@ public class Vocabulary extends AbstractSymbolTable implements Iterable<String>,
 			// Read the bytes used to store the word string
 			byte[] wordBytes = new byte[wordLength];
 			in.readFully(wordBytes);
-			String word = new String(wordBytes, CHARACTER_ENCODING);
+			String word = new String(wordBytes, characterEncoding);
 			
 			// We have now read more bytes
 			bytesRemaining -= wordBytes.length;
@@ -523,7 +545,7 @@ public class Vocabulary extends AbstractSymbolTable implements Iterable<String>,
 		// First, calculate the number of bytes required to store the vocabulary data
 		int totalBytes = 0;
 		for (String word : intToString.values()) {
-			byte[] wordBytes = word.getBytes(CHARACTER_ENCODING);
+			byte[] wordBytes = word.getBytes(characterEncoding);
 			totalBytes += 8 + wordBytes.length;
 		}
 		
@@ -540,7 +562,7 @@ public class Vocabulary extends AbstractSymbolTable implements Iterable<String>,
 			int id = entry.getKey();
 			String word = entry.getValue();
 			
-			byte[] wordBytes = word.getBytes(CHARACTER_ENCODING);
+			byte[] wordBytes = word.getBytes(characterEncoding);
 				
 			// Write the integer id of the word
 			out.writeInt(id);
