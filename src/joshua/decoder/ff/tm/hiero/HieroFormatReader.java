@@ -127,4 +127,9 @@ public class HieroFormatReader extends GrammarReader<BilingualRule> {
 	
 		return sb.toString();
 	}
+	
+	
+	public static String getFieldDelimiter() {
+		return fieldDelimiter;
+	}
 }

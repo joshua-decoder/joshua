@@ -141,4 +141,5 @@ public abstract class GrammarReader<R extends Rule> implements
 	public String getNonTerminalCleanRegEx() {
 		return nonTerminalCleanRegEx;
 	}
+
 }
