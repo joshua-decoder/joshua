@@ -27,8 +27,8 @@ public abstract class EvaluationMetric
   protected static int numSentences; // number of sentences in the MERT set
   protected static int refsPerSen;
   protected static String[][] refSentences;
-  protected static DecimalFormat f0 = new DecimalFormat("###0");
-  protected static DecimalFormat f4 = new DecimalFormat("###0.0000");
+  protected final static DecimalFormat f0 = new DecimalFormat("###0");
+  protected final static DecimalFormat f4 = new DecimalFormat("###0.0000");
 
   /* non-static data members */
   protected int suffStatsCount; // number of sufficient statistics

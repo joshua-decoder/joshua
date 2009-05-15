@@ -27,12 +27,12 @@ public class MertCore
   private TreeSet<Integer>[] indicesOfInterest_all;
 
 
-  private static DecimalFormat f4 = new DecimalFormat("###0.0000");
+  private final static DecimalFormat f4 = new DecimalFormat("###0.0000");
   private final Runtime myRuntime = Runtime.getRuntime();
 
-  private final double NegInf = (-1.0 / 0.0);
-  private final double PosInf = (+1.0 / 0.0);
-  private final double epsilon = 1.0 / 1000000;
+  private final static double NegInf = (-1.0 / 0.0);
+  private final static double PosInf = (+1.0 / 0.0);
+  private final static double epsilon = 1.0 / 1000000;
 
   private int progress;
 
@@ -223,12 +223,14 @@ public class MertCore
     normalizationOptions = new double[3];
 
     try {
-      // read paramter names
+      // read parameter names
       BufferedReader inFile_names = new BufferedReader(new FileReader(paramsFileName));
 
       for (int c = 1; c <= numParams; ++c) {
         String line = "";
-        while (line != null && line.length() == 0) { line = inFile_names.readLine(); }
+        while (line != null && line.length() == 0) { // skip empty lines
+          line = inFile_names.readLine();
+        }
         paramNames[c] = (line.substring(0,line.indexOf("|||"))).trim();
       }
 
@@ -542,10 +544,14 @@ public class MertCore
       produceTempFiles(iteration);
 
       if (saveInterFiles == 1 || saveInterFiles == 3) {
-        copyFile(decoderConfigFileName,decoderConfigFileName+".ZMERT.it"+iteration);
+        if (!copyFile(decoderConfigFileName,decoderConfigFileName+".ZMERT.it"+iteration)) {
+          println("Warning: attempt to make copy of decoder config file (to create" + decoderConfigFileName+".ZMERT.it"+iteration + ") was unsuccessful!",1);
+        }
       }
       if (saveInterFiles == 2 || saveInterFiles == 3) {
-        copyFile(decoderOutFileName,decoderOutFileName+".ZMERT.it"+iteration);
+        if (!copyFile(decoderOutFileName,decoderOutFileName+".ZMERT.it"+iteration)) {
+          println("Warning: attempt to make copy of decoder output file (to create" + decoderOutFileName+".ZMERT.it"+iteration + ") was unsuccessful!",1);
+        }
       }
 
       int[] candCount = new int[numSentences];
@@ -2075,7 +2081,7 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
     inFile_init.close();
   }
 
-  private void copyFile(String origFileName, String newFileName)
+  private boolean copyFile(String origFileName, String newFileName)
   {
     try {
       InputStream inStream = new FileInputStream(new File(origFileName));
@@ -2093,12 +2099,13 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
 
       inFile.close();
       outFile.close();
+      return true;
     } catch (FileNotFoundException e) {
-      System.err.println("FileNotFoundException in MertCore.initialize(int): " + e.getMessage());
-      System.exit(99901);
+      System.err.println("FileNotFoundException in MertCore.copyFile(String,String): " + e.getMessage());
+      return false;
     } catch (IOException e) {
-      System.err.println("IOException in MertCore.initialize(int): " + e.getMessage());
-      System.exit(99902);
+      System.err.println("IOException in MertCore.copyFile(String,String): " + e.getMessage());
+      return false;
     }
   }
 
@@ -2108,9 +2115,11 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
       deleteFile(newFileName);
       File oldFile = new File(origFileName);
       File newFile = new File(newFileName);
-      oldFile.renameTo(newFile);
+      if (oldFile.renameTo(newFile)) {
+        println("Warning: attempt to rename " + origFileName + " to " + newFileName + " was unsuccessful!",1);
+      }
     } else {
-      println("Warning: file " + origFileName + " does not exist! (in renameFile)",1);
+      println("Warning: file " + origFileName + " does not exist! (in MertCore.renameFile)",1);
     }
   }
 
@@ -2118,7 +2127,9 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
   {
     if (fileExists(fileName)) {
       File fd = new File(fileName);
-      fd.delete();
+      if (!fd.delete()) {
+        println("Warning: attempt to delete " + fileName + " was unsuccessful!",1);
+      }
     }
   }
 
@@ -2131,33 +2142,35 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
 
   public void finish()
   {
-    try {
-      if (myDecoder != null) {
-        myDecoder.cleanUp();
-      }
+    if (myDecoder != null) {
+      myDecoder.cleanUp();
+    }
 
-      if (finalLambdaFileName != null) {
+    // create config file with final values
+    createConfigFile(lambda, decoderConfigFileName+".ZMERT.final",decoderConfigFileName+".ZMERT.orig");
+
+    // delete current decoder config file and decoder output
+    deleteFile(decoderConfigFileName);
+    deleteFile(decoderOutFileName);
+
+    // restore original name for config file (name was changed
+    // in initialize() so it doesn't get overwritten)
+    renameFile(decoderConfigFileName+".ZMERT.orig",decoderConfigFileName);
+
+    if (finalLambdaFileName != null) {
+      try {
         PrintWriter outFile_lambdas = new PrintWriter(finalLambdaFileName);
         for (int c = 1; c <= numParams; ++c) {
           outFile_lambdas.println(paramNames[c] + " ||| " + lambda[c]);
         }
         outFile_lambdas.close();
+
+      } catch (IOException e) {
+        System.err.println("IOException in MertCore.finish(): " + e.getMessage());
+        System.exit(99902);
       }
-
-      // create config file with final values
-      createConfigFile(lambda, decoderConfigFileName+".ZMERT.final",decoderConfigFileName+".ZMERT.orig");
-
-      // delete current decoder config file and decoder output
-      deleteFile(decoderConfigFileName);
-      deleteFile(decoderOutFileName);
-
-      // restore original name for config file (name was changed
-      // in initialize() so it doesn't get overwritten)
-      renameFile(decoderConfigFileName+".ZMERT.orig",decoderConfigFileName);
-    } catch (IOException e) {
-      System.err.println("IOException in MertCore.finish(): " + e.getMessage());
-      System.exit(99902);
     }
+
   }
 
   private String[] cfgFileToArgsArray(String fileName)
@@ -2169,12 +2182,6 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
     BufferedReader inFile = null;
     try {
       inFile = new BufferedReader(new FileReader(fileName));
-    } catch (FileNotFoundException e) {
-      System.err.println("FileNotFoundException in MertCore.cfgFileToArgsArray(String): " + e.getMessage());
-      System.exit(99901);
-    }
-
-    try {
       String line, origLine;
       do {
         line = inFile.readLine();
@@ -2208,6 +2215,10 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
       }  while (line != null);
 
       inFile.close();
+    } catch (FileNotFoundException e) {
+      println("Z-MERT configuration file " + fileName + " was not found!");
+      System.err.println("FileNotFoundException in MertCore.cfgFileToArgsArray(String): " + e.getMessage());
+      System.exit(99901);
     } catch (IOException e) {
       System.err.println("IOException in MertCore.cfgFileToArgsArray(String): " + e.getMessage());
       System.exit(99902);
@@ -2770,7 +2781,7 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
   }
 
   @SuppressWarnings("static-access")
-private void cleanupMemory(int reps, boolean silent)
+  private void cleanupMemory(int reps, boolean silent)
   {
     int bytesPerMB = 1024 * 1024;
 
