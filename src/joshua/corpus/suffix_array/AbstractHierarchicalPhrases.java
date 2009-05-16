@@ -35,7 +35,8 @@ public abstract class AbstractHierarchicalPhrases implements
 
 	
 	/** Logger for this class. */
-	private static final Logger logger = Logger.getLogger(AbstractHierarchicalPhrases.class.getName());
+	private static final Logger logger = 
+		Logger.getLogger(AbstractHierarchicalPhrases.class.getName());
 	
 	/**
 	 * Implements the dotted operators (<̈, =̈, >̈) from Lopez (2008), p78-79.
@@ -134,7 +135,7 @@ public abstract class AbstractHierarchicalPhrases implements
 			int m_alpha_b_prefix_length = m_alpha_b_prefix_end - m_alpha_b_prefix_start;
 
 			if (m_alpha_b_prefix_length != m_a_alpha_suffix_length) {
-				throw new RuntimeException("Length of s(m_a_alpha) and p(m_alpha_b) do not match");
+				throw new MismatchedHierarchicalPhrasesException();
 			} else {
 
 				int result = 0;
@@ -206,7 +207,6 @@ public abstract class AbstractHierarchicalPhrases implements
 	 * @param j Index into M_alpha_b
 	 * @param list List where new data will be added
 	 */
-//	protected static void partiallyConstruct(Pattern pattern, MatchedHierarchicalPhrases M_a_alpha, int i, MatchedHierarchicalPhrases M_alpha_b, int j, List<Integer> list) {
 	protected static void partiallyConstruct(MatchedHierarchicalPhrases M_a_alpha, int i, MatchedHierarchicalPhrases M_alpha_b, int j, List<Integer> list) {
 		boolean prefixEndsWithNonterminal = M_a_alpha.endsWithNonterminal();
 		

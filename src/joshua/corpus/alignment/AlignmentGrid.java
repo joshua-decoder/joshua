@@ -93,6 +93,7 @@ public class AlignmentGrid implements Externalizable {
 	 * this class to be properly <code>Externalizable</code>.
 	 */
 	public AlignmentGrid() {
+		// This method intentionally left blank.
 	}
 	
 	//===============================================================

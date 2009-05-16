@@ -25,6 +25,7 @@ import java.nio.channels.FileChannel;
 import joshua.corpus.Corpus;
 import joshua.corpus.MatchedHierarchicalPhrases;
 import joshua.corpus.suffix_array.AbstractSuffixArray;
+import joshua.corpus.suffix_array.MismatchedCorpusException;
 import joshua.corpus.suffix_array.Pattern;
 import joshua.util.Cache;
 
@@ -52,7 +53,7 @@ public class MemoryMappedSuffixArray extends AbstractSuffixArray {
 	    size = tmp.get();
 	    
 	    if (size != corpus.size()) {
-	    	throw new RuntimeException("Size of suffix array (" + size + ") size does not match size of corpus (" + corpus.size() + ")");
+	    	throw new MismatchedCorpusException(this);
 	    }
 	    
 	    this.binarySuffixBuffer = binaryChannel.map( FileChannel.MapMode.READ_ONLY, 4, 4*size ).asIntBuffer().asReadOnlyBuffer();
