@@ -88,9 +88,11 @@ public class Node extends AbstractGrammar implements Comparable<Node>, Grammar, 
 
 		Node suffixLink = this.suffixLink.getChild(endOfPattern);
 
-		if (suffixLink==null)
-			throw new RuntimeException("No child " + endOfPattern + " for node " + this.suffixLink + " (Parent was " + this + ")");
-
+		if (suffixLink==null) {
+			throw new NoSuchChildNodeException(this, endOfPattern);
+//			throw new RuntimeException("No child " + endOfPattern + " for node " + this.suffixLink + " (Parent was " + this + ")");
+		}
+		
 		return suffixLink;
 
 	}
@@ -163,7 +165,7 @@ public class Node extends AbstractGrammar implements Comparable<Node>, Grammar, 
 				node = node.children.get(symbol);
 			} else {
 				//XXX Is this the right thing to do here?
-				return null;
+				node = null;
 			}
 		}
 		
@@ -179,10 +181,13 @@ public class Node extends AbstractGrammar implements Comparable<Node>, Grammar, 
 	}
 
 	public Node addChild(int child) {
-		if (children.containsKey(child)) throw new RuntimeException("Child " + child + " already exists in node " + this);
-		Node node = new Node(tree,child);
-		children.put(child, node);
-		return node;
+		if (children.containsKey(child)) {
+			throw new ChildNodeAlreadyExistsException(this, child);
+		} else {
+			Node node = new Node(tree,child);
+			children.put(child, node);
+			return node;
+		}
 	}
 
 	public void linkToSuffix(Node suffix) {
