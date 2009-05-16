@@ -17,12 +17,6 @@
  */
 package joshua.corpus;
 
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.io.ObjectOutputStream;
-
 /**
  * Partial basic implementation of a symbol table.
  * 
@@ -30,14 +24,7 @@ import java.io.ObjectOutputStream;
  * @author Zhifei Li
  * @version $LastChangedDate$
  */
-public abstract class AbstractSymbolTable implements SymbolTable {
-	
-	/** 
-	 * Character set encoding used when 
-	 * exporting and importing binary files to and from disk. 
-	 */
-	public String characterEncoding = "UTF-8";
-	
+public abstract class AbstractSymbolTable implements SymbolTable {	
 	
 	/* See Javadoc for SymbolTable interface. */
 	final public int[] addTerminals(String sentence){
@@ -122,36 +109,5 @@ public abstract class AbstractSymbolTable implements SymbolTable {
 		else
 			return false;
 	}
-	
-	/* See Javadoc for SymbolTable interface. */
-	public void setExternalizableEncoding(String charsetName) {
-		characterEncoding = charsetName;
-	}
-	
-	/**
-	 * Writes a binary form of the vocabulary to disk.
-	 * 
-	 * @param out
-	 * @param charsetName
-	 * @throws IOException
-	 */
-	public void write(FileOutputStream out, String charsetName) 
-			throws IOException {
-		
-		setExternalizableEncoding(charsetName);
-		
-		writeExternal(new ObjectOutputStream(out));
-	}
-	
-	/** This method throws an <code>UnsupportedOperationException</code>. */
-	public void readExternal(ObjectInput in) throws IOException,
-	ClassNotFoundException {
-		throw new UnsupportedOperationException();
-	}
 
-	/** This method throws an <code>UnsupportedOperationException</code>. */
-	public void writeExternal(ObjectOutput out) throws IOException {
-		throw new UnsupportedOperationException();
-	}
-	
 }

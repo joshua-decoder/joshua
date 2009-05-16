@@ -41,7 +41,8 @@ import joshua.util.io.LineReader;
  * @author Lane Schwartz
  * @version $LastChangedDate:2008-07-30 17:15:52 -0400 (Wed, 30 Jul 2008) $
  */
-public class Vocabulary extends AbstractSymbolTable implements Iterable<String>, ExternalizableSymbolTable {
+public class Vocabulary extends AbstractExternalizableSymbolTable 
+		implements Iterable<String>, ExternalizableSymbolTable {
 
 //===============================================================
 // Constants
@@ -496,6 +497,8 @@ public class Vocabulary extends AbstractSymbolTable implements Iterable<String>,
 	public void readExternal(ObjectInput in) throws IOException,
 			ClassNotFoundException {
 		
+		String characterEncoding = getExternalizableEncoding();
+		
 		// First read the number of bytes required to store the vocabulary data
 		int totalBytes = in.readInt();
 		
@@ -539,6 +542,8 @@ public class Vocabulary extends AbstractSymbolTable implements Iterable<String>,
 	}
 
 	public void writeExternal(ObjectOutput out) throws IOException {
+		
+		String characterEncoding = getExternalizableEncoding();
 		
 		// First, calculate the number of bytes required to store the vocabulary data
 		int totalBytes = 0;
