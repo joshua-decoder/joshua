@@ -98,9 +98,10 @@ public abstract class GrammarReader<R extends Rule> implements
 	 *
 	 * @see joshua.util.io.LineReader
 	 */
-	protected void finalize() {
+	protected void finalize() throws Throwable {
 		logger.severe("Grammar file stream was not closed, this indicates a coding error: " + this.fileName);
 		this.close();
+		super.finalize();
 	}
 	
 	

@@ -209,6 +209,10 @@ public class Subsampler {
 					"]    currentRatio=" +(ff/ef) );
 				System.err.flush();
 				
+				// TODO: is this gc actually dubious? Or
+				// does profiling show it helps? We only
+				// do it once per file, so it's not a
+				// performance blackhole.
 				set = null; bc = null; System.gc();
 			}
 		} finally {
