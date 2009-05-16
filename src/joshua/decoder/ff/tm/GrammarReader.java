@@ -74,24 +74,41 @@ public abstract class GrammarReader<R extends Rule> implements
 	public void remove() throws UnsupportedOperationException {
 		throw new UnsupportedOperationException();
 	}
-
-	public void finalize() {
-		if (reader != null) {
+	
+	
+	private void close() {
+		if (null != this.reader) {
 			try {
-				reader.close();
+				this.reader.close();
 			} catch (IOException e) {
+				// FIXME: is this the right logging level?
 				if (logger.isLoggable(Level.WARNING))
 					logger.info("Error closing grammar file stream: "
-							+ fileName);
+							+ this.fileName);
 			}
-			reader = null;
+			this.reader = null;
 		}
 	}
-
+	
+	
+	/**
+	 * For correct behavior <code>close</code> must be called
+	 * on every GrammarReader, however this code attempts to
+	 * avoid resource leaks.
+	 *
+	 * @see joshua.util.io.LineReader
+	 */
+	protected void finalize() {
+		logger.severe("Grammar file stream was not closed, this indicates a coding error: " + this.fileName);
+		this.close();
+	}
+	
+	
 	public boolean hasNext() {
 		return lookAhead != null;
 	}
-
+	
+	
 	private void advanceReader() {
 		try {
 			lookAhead = reader.readLine();
@@ -99,8 +116,9 @@ public abstract class GrammarReader<R extends Rule> implements
 			if (logger.isLoggable(Level.SEVERE))
 				logger.severe("Error reading grammar from file: " + fileName);
 		}
-		if (lookAhead == null && reader != null)
-			finalize();
+		if (lookAhead == null && reader != null) {
+			this.close();
+		}
 	}
 
 	public R next() {

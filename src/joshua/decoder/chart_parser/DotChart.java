@@ -163,18 +163,25 @@ public class DotChart {
 			
 			//int last_word=foreign_sent[j-1]; // input.getNode(j-1).getNumber(); //	
 			
-			if (l_dot_bins[i][j-1] != null) {
-				for (DotItem dt: l_dot_bins[i][j-1].l_dot_items) { //dotitem in dot_bins[i][k]: looking for an item in the right to the dot
-					if(dt.tnode==null && logger.isLoggable(Level.FINE)){
-						logger.fine("dt is null");
+			if (null != l_dot_bins[i][j-1]) {
+				//dotitem in dot_bins[i][k]: looking for an item in the right to the dot
+				for (DotItem dt : l_dot_bins[i][j-1].l_dot_items) {
+					if (null == dt.tnode) {
+						// We'll get one anyways in the else branch
+						// TODO: better debugging.
+						throw new NullPointerException(
+							"DotChart.expand_cell(" + i + "," + j + "): "
+							+ "Null tnode for DotItem");
+						
+					} else {
+						// match the terminal
+						Trie child_tnode = dt.tnode.matchOne(last_word);
+						if (null != child_tnode) {
+							// we do not have an ant for the terminal
+							add_dot_item(child_tnode, i, j - 1 + arc_len, dt.l_ant_super_items, null, dt.lattice_cost + cost);
+						}
 					}
-					// match the terminal
-					Trie child_tnode = dt.tnode.matchOne(last_word);
-					if (child_tnode != null) {
-						// we do not have an ant for the terminal
-						add_dot_item(child_tnode, i, j - 1 + arc_len, dt.l_ant_super_items, null, dt.lattice_cost + cost);
-					}
-				}
+				} // end foreach DotItem
 			}
 		}
 	}

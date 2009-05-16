@@ -602,7 +602,7 @@ public class JoshuaDecoder {
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format(
 							"Line: %s\nAdd Source lattice cost, weight: %.3f",
-							weight));
+							line, weight));
 					
 				} else if ("phrasemodel".equals(fds[0]) && fds.length == 4) { // phrasemodel owner column(0-indexed) weight
 					int    owner  = this.symbolTable.addTerminal(fds[1]);

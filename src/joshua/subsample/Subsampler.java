@@ -142,8 +142,23 @@ public class Subsampler {
 		try {
 			// Read filenames into a list
 			List<String> files = new ArrayList<String>();
-			{ BufferedReader r = new BufferedReader(new FileReader(filelist));
-			String x; while((x = r.readLine()) != null) files.add(x); }
+			{
+				FileReader     fr = null;
+				BufferedReader br = null;
+				try {
+					fr = new FileReader(filelist);
+					br = new BufferedReader(fr);
+					String file;
+					while((file = br.readLine()) != null) {
+						files.add(file);
+					}
+				} finally {
+					// Maybe redundant, but UMD's FixBugs says to
+					// close br (and close is idempotent anyways)
+					if (null != fr) fr.close();
+					if (null != br) br.close();
+				}
+			}
 			
 			int totalSubsampled = 0;
 			// Iterating on files in order biases towards files

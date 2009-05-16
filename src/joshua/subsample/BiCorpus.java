@@ -167,33 +167,39 @@ implements Iterable<PhrasePair> {
 						ex.printStackTrace();
 						System.exit(1);
 					}
-					if (null == e) fileLengthMismatchException();
-					
-					if (e.size() != 0 && f.size() != 0) {
-						if (null != ra) {
-							String line = null;
-							try {
-								line = ra.readLine();
-							} catch (IOException ex) {
-								ex.printStackTrace();
-								System.exit(1);
-							}
-							
-							if (null == line) fileLengthMismatchException();
-							Alignment a = new Alignment(
-								(short)f.size(), (short)e.size(), line);
-							
-							
-							this.nextForeignPhrase = null;
-							return new PhrasePair(f, e, a);
-						} else {
-							this.nextForeignPhrase = null;
-							return new PhrasePair(f, e);
-						}
+					if (null == e) {
+						fileLengthMismatchException();
+						return null; // Needed to make javac happy
 					} else {
-						// Inverted while loop
-						this.nextForeignPhrase = null;
-						return this.next();
+						if (e.size() != 0 && f.size() != 0) {
+							if (null != ra) {
+								String line = null;
+								try {
+									line = ra.readLine();
+								} catch (IOException ex) {
+									ex.printStackTrace();
+									System.exit(1);
+								}
+								
+								if (null == line) {
+									fileLengthMismatchException();
+									return null; // Needed to make javac happy
+								} else {
+									Alignment a = new Alignment(
+										(short)f.size(), (short)e.size(), line);
+									
+									this.nextForeignPhrase = null;
+									return new PhrasePair(f, e, a);
+								}
+							} else {
+								this.nextForeignPhrase = null;
+								return new PhrasePair(f, e);
+							}
+						} else {
+							// Inverted while loop
+							this.nextForeignPhrase = null;
+							return this.next();
+						}
 					}
 				} else {
 					throw new NoSuchElementException();
