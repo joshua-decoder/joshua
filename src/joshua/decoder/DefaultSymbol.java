@@ -132,13 +132,13 @@ extends AbstractSymbolTable implements SymbolTable {
 		
 //	####### following functions used for TM only
 	final public int addNonterminal(String str) {
-		Integer res_id = this.string2id.get(str);
-		if (null != res_id) { // already have this symbol
-			if (! isNonterminal(res_id)) {
-				logger.severe("Error, NONTSym: " + str + "; id: " + res_id);
+		Integer id = this.string2id.get(str);
+		if (null != id) { // already have this symbol
+			if (! isNonterminal(id)) {
+				logger.severe("Error, NONTSym: " + str + "; id: " + id);
 				System.exit(1);
 			}
-			return res_id;
+			return id;
 		} else {
 			string2id.put(str, nonterminalCurrentId);
 			id2string.put(nonterminalCurrentId, str);
@@ -155,10 +155,10 @@ extends AbstractSymbolTable implements SymbolTable {
 	
 	protected void initializeSymTblFromFile(String fname)
 	throws IOException {
-		is_reading_from_file = true;
+		this.is_reading_from_file = true;
 		//### read file into tbls
-		HashMap<String,Integer> tbl_str_2_id = new HashMap<String,Integer>();
-		HashMap<Integer,String> tbl_id_2_str = new HashMap<Integer,String>();
+		HashMap<String,Integer> localStr2id = new HashMap<String,Integer>();
+		HashMap<Integer,String> localId2str = new HashMap<Integer,String>();
 		
 		LineReader symboltableReader = new LineReader(fname);
 		try { for (String line : symboltableReader) {
@@ -170,48 +170,48 @@ extends AbstractSymbolTable implements SymbolTable {
 			String str = fds[0].trim();
 			int id = Integer.parseInt(fds[1]);
 			
-			String uqniue_str;
-			if (null != tbl_str_2_id.get(str)) { // it is quite possible that java will treat two stings as the same when other language (e.g., C or perl) treat them differently, due to unprintable symbols
+			String uniqueStr;
+			if (null != localStr2id.get(str)) { // it is quite possible that java will treat two stings as the same when other language (e.g., C or perl) treat them differently, due to unprintable symbols
 				logger.warning("duplicate string (add fake): " + line);
-				uqniue_str = str + id;//fake string
+				uniqueStr = str + id;//fake string
 				//System.exit(1);//TODO
 			} else {
-				uqniue_str = str;
+				uniqueStr = str;
 			}
-			tbl_str_2_id.put(uqniue_str,id);
+			localStr2id.put(uniqueStr, id);
 			
-			//it is guaranteed that the strings in tbl_id_2_str are different
-			if (null != tbl_id_2_str.get(id)) {
+			//it is guaranteed that the strings in localId2str are different
+			if (null != localId2str.get(id)) {
 				logger.severe("Error: duplicate id, have to exit; " + line);
 				System.exit(1);
 			} else {
-				tbl_id_2_str.put(id, uqniue_str);
+				localId2str.put(id, uniqueStr);
 			}
 		} } finally { symboltableReader.close(); }
 		
-		/*if (tbl_id_2_str.size() >= lm_end_sym_id - lm_start_sym_id) {
+		/*if (localId2str.size() >= this.lm_end_sym_id - this.lm_start_sym_id) {
 			logger.severe("read symbol tbl, tlb is too big");
 			System.exit(1);
 		}*/
 		
 		//#### now add the tbl into srilm/java-tbl
 		int n_added = 0;
-		for (int i = lm_start_sym_id; i < lm_end_sym_id; i++) {
-			// it is guranteed that the strings in tbl_id_2_str are different
-			String str = tbl_id_2_str.get(i);
-			int res_id;
+		for (int i = this.lm_start_sym_id; i < this.lm_end_sym_id; i++) {
+			// it is guranteed that the strings in localId2str are different
+			String str = localId2str.get(i);
+			int id;
 			if (null != str) {
-				res_id = this.addTerminal(str);
+				id = this.addTerminal(str);
 				n_added++;
 			} else { // non-continous index
 				logger.warning("added fake symbol, be alert");
-				res_id = this.addTerminal("lzf" + i);
+				id = this.addTerminal("lzf" + i);
 			}
-			if (res_id != i) {
-				logger.severe("id supposed: " + i + " != assigned " + res_id + " symbol:" + str);
+			if (id != i) {
+				logger.severe("id supposed: " + i + " != assigned " + id + " symbol:" + str);
 				System.exit(1);
 			}
-			if (n_added >= tbl_id_2_str.size()) {
+			if (n_added >= localId2str.size()) {
 				break;
 			}
 		}
