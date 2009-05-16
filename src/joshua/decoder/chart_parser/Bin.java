@@ -686,7 +686,7 @@ public class Bin {
 	
 	
 	/* list of items that have the same lhs but may have different LM states */
-	public class SuperItem {
+	public static class SuperItem {
 		int lhs; // state
 		ArrayList<HGNode> l_items = new ArrayList<HGNode>();
 		
@@ -695,7 +695,7 @@ public class Bin {
 		}
 	}
 	
-	public class ComputeItemResult {
+	public static class ComputeItemResult {
 		private double expectedTotalCost;
 		private double finalizedTotalCost;
 		private double transitionTotalCost;

@@ -258,7 +258,7 @@ public class DotChart {
 	/**
 	 * Bin is a cell in parsing terminology
 	 */
-	public class DotBin {
+	public static class DotBin {
 		
 		public ArrayList<DotItem> l_dot_items = new ArrayList<DotItem>();
 		
@@ -274,7 +274,7 @@ public class DotChart {
 	 * remember the dot position in which a rule has been applied so far, 
 	 * and remember the old complete items
 	 */
-	public class DotItem {
+	public static class DotItem {
 		
 		//int i, j; //start and end position in the chart
 		Trie tnode = null; // dot_position, point to grammar trie node, this is the only place that the DotChart points to the grammar
