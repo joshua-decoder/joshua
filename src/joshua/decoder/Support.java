@@ -24,30 +24,6 @@ import java.util.ArrayList;
  * @version $LastChangedDate$
  */
 public class Support {
-	public static final int DEBUG     = 0;
-	public static final int INFO      = 1;
-	public static final int PANIC     = 2;
-	public static final int ERROR     = 3;
-	public static       int log_level = INFO;
-	
-	
-// Unused anywhere in this code base
-//	public static Iterator<String> get_sorted_keys_iterator(HashMap<String,Object> tbl) {
-//		ArrayList<String> v = new ArrayList<String>(tbl.keySet());
-//		Collections.sort(v);
-//		return v.iterator();
-//	}
-	
-	
-// Unused anywhere in this code base
-//	public static void print_hash_tbl(HashMap<String,?> tbl) {
-//		System.out.println("########### Hash table is #####");
-//		for(Iterator<String> it = tbl.keySet().iterator(); it.hasNext(); ) {
-//			String key = (String) it.next();
-//			System.out.println(key + " -|||- " + tbl.get(key));
-//			//System.out.println(key + " -|||- " + ((Double[])tbl.get(key))[0]);
-//		}
-//	}
 	
 	
 	public static double find_min(double a, double b) {
@@ -55,7 +31,11 @@ public class Support {
 	}
 	
 	
-	public static int[] sub_int_array(int[] in, int start, int end) {//start: inclusive; end: exclusive
+	/**
+	 * @param start inclusive
+	 * @param end   exclusive
+	 */
+	public static int[] sub_int_array(int[] in, int start, int end) {
 		int[] res = new int[end-start];
 		for (int i = start; i < end; i++) {
 			res[i-start] = in[i];
@@ -64,30 +44,17 @@ public class Support {
 	}
 	
 	
-	public static int[] sub_int_array(ArrayList<Integer> in, int start, int end) {//start: inclusive; end: exclusive
+	/**
+	 * @param start inclusive
+	 * @param end   exclusive
+	 */
+	public static int[] sub_int_array(ArrayList<Integer> in, int start, int end) {
 		int[] res = new int[end-start];
 		for(int i = start; i < end; i++) {
 			res[i-start] = in.get(i);
 		}
 		return res;
 	}
-	
-	
-	/** @deprecated The logger framework should be used instead. */
-	@Deprecated
-	public static void write_log_line(String mesg, int level) {
-		if (level >= Support.log_level) {
-			System.out.println(mesg);
-		}
-	}
-	
-	
-// Unused in this code base
-//	public static void write_log(String mesg, int level) {
-//		if (level >= Support.log_level) {
-//			System.out.print(mesg);
-//		}
-//	}
 	
 	
 	public static long current_time() {
@@ -123,37 +90,4 @@ public class Support {
 			ex.printStackTrace();
 		}
 	}
-	
-	
-//	-------------------------------------------------- arrayToString2()
-//	 Convert an array of strings to one string.
-//	 Put the 'separator' string between each element.
-
-// Unused in this code base
-//	public static String arrayToString(String[] a, String separator) {
-//		StringBuffer result = new StringBuffer();
-//		if (a.length > 0) {
-//			result.append(a[0]);
-//			for (int i = 1; i < a.length; i++) {
-//				result.append(separator);
-//				result.append(a[i]);
-//			}
-//		}
-//		return result.toString();
-//	}
-	
-	
-// Unused in this code base
-//	public static String arrayToString(int[] a, String separator) {
-//		StringBuffer result = new StringBuffer();
-//		if (a.length > 0) {
-//			result.append(a[0]);
-//			for (int i = 1; i < a.length; i++) {
-//				result.append(separator);
-//				result.append(a[i]);
-//			}
-//		}
-//		return result.toString();
-//	}
-	
 }

@@ -524,7 +524,7 @@ public class LMGrammarJAVA extends AbstractLM {
 		String[] wrds = Regex.spaces.split(line.trim());
 		
 		if (wrds.length < order + 1 || wrds.length > order + 2) { // TODO: error
-			//Support.write_log_line("wrong line: "+ line, Support.ERROR);
+			//logger.severe("wrong line: "+ line);
 			return;
 		}
 		int last_word_id = this.symbolTable.addTerminal(wrds[order]);

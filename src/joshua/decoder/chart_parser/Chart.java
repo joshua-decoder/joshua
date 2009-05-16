@@ -266,24 +266,24 @@ public class Chart {
 		
 		//debug purpose
 		//long sec_consumed = (System.currentTimeMillis() -start)/1000;
-		//Support.write_log_line("######Expand time consumption: "+ sec_consumed, Support.INFO);
-		//Support.write_log_line(String.format("Step1: %d; step2: %d; step3: %d; step4: %d", time_step1, time_step2, time_step3, time_step4), Support.INFO);
+		//logger.info("######Expand time consumption: "+ sec_consumed);
+		//logger.info(String.format("Step1: %d; step2: %d; step3: %d; step4: %d", time_step1, time_step2, time_step3, time_step4));
 		
-		/*Support.write_log_line(String.format("t_compute_item: %d; t_add_deduction: %d;", g_time_compute_item/1000,g_time_add_deduction/1000), Support.INFO);
-		for(FeatureFunction m: this.models){
-			Support.write_log_line("FeatureFunction cost: " + m.time_consumed/1000, Support.INFO);
+		/*logger.info(String.format("t_compute_item: %d; t_add_deduction: %d;", g_time_compute_item / 1000, g_time_add_deduction / 1000));
+		for (FeatureFunction m: this.models) {
+			logger.info("FeatureFunction cost: " + m.time_consumed/1000);
 		}*/
 
-		//Support.write_log_line(String.format("t_lm: %d; t_score_lm: %d; t_check_nonterminal: %d", g_time_lm, g_time_score_sent, g_time_check_nonterminal), Support.INFO);
+		//logger.info(String.format("t_lm: %d; t_score_lm: %d; t_check_nonterminal: %d", g_time_lm, g_time_score_sent, g_time_check_nonterminal));
 		//LMModel tm_lm = (LMModel)this.models.get(0);
-		//Support.write_log_line(String.format("LM lookupwords1, step1: %d; step2: %d; step3: %d",tm_lm.time_step1,tm_lm.time_step2,tm_lm.time_step3),Support.INFO);
+		//logger.info(String.format("LM lookupwords1, step1: %d; step2: %d; step3: %d", tm_lm.time_step1, tm_lm.time_step2, tm_lm.time_step3));
 		//debug end
 		
-		return new HyperGraph((HGNode)goal_bin.get_sorted_items().get(0),	-1,	-1,	sent_id, sent_len);//num_items/deductions : -1
+		return new HyperGraph((HGNode)goal_bin.get_sorted_items().get(0), -1,	-1,	sent_id, sent_len);//num_items/deductions : -1
 	}
 	
 	public void print_info(Level level) {
-		if (logger.isLoggable(level)) 
+		if (logger.isLoggable(level)) {
 			logger.log(level,
 				String.format("ADDED: %d; MERGED: %d; PRUNED: %d; PRE-PRUNED: %d, FUZZ1: %d, FUZZ2: %d; DOT-ITEMS ADDED: %d",
 					this.n_added,
@@ -293,6 +293,7 @@ public class Chart {
 					this.n_prepruned_fuzz1,
 					this.n_prepruned_fuzz2,
 					this.n_dotitem_added));
+		}
 	}
 	
 	/**

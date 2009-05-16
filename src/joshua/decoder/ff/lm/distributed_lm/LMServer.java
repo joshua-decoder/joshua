@@ -232,7 +232,7 @@ public class LMServer {
 	
 	// used by server to process diffent Client
 	public static class ClientHandler extends Thread {
-		public class DecodedStructure {
+		public static class DecodedStructure {
 			String cmd;
 			int    num;
 			int[]  wrds;
