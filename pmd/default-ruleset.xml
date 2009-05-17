@@ -64,6 +64,7 @@
 	
 	
 <!-- These are good for analytic bugs (with a little salt) -->
+	<!-- Compare ourselves to http://pmd.sourceforge.net/scoreboard.html -->
 	<rule ref="rulesets/codesize.xml"/>
 	<rule ref="rulesets/strings.xml"/>
 	<rule ref="rulesets/optimizations.xml">

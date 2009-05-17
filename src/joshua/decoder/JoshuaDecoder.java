@@ -123,8 +123,7 @@ public class JoshuaDecoder {
 	/** this assumes that the weights are ordered according to the decoder's config file */
 	public void changeFeatureWeightVector(double[] weights) {
 		if (this.featureFunctions.size() != weights.length) {
-			logger.severe("JoshuaDecoder.changeFeatureWeightVector: number of weights does not match number of feature functions");
-			System.exit(0);
+			throw new IllegalArgumentException("number of weights does not match number of feature functions");
 		}
 		{ int i = 0; for (FeatureFunction ff : this.featureFunctions) {
 			double oldWeight = ff.getWeight();
@@ -184,8 +183,7 @@ public class JoshuaDecoder {
 					String[] fds = Regex.spaces.split(line);
 					StringBuffer newLine = new StringBuffer();
 					if (! Regex.floatingNumber.matches(fds[fds.length-1])) {
-						logger.severe("last field is not a number; the field is: " + fds[fds.length-1]);
-						System.exit(1);
+						throw new IllegalArgumentException("last field is not a number; the field is: " + fds[fds.length-1]);
 					}
 					for (int i = 0; i < fds.length-1; i++) {
 						newLine.append(fds[i]).append(" ");
@@ -200,8 +198,7 @@ public class JoshuaDecoder {
 			}
 			
 			if (featureID != newWeights.length) {
-				logger.severe("number of models does not match number of weights");
-				System.exit(1);
+				throw new IllegalArgumentException("number of models does not match number of weights");
 			}
 			
 		} catch (IOException e) {
@@ -239,9 +236,9 @@ public class JoshuaDecoder {
 							this.initializeFeatureFunctions(configFile);
 
 						} catch (Exception e) {
-							logger.severe("Error reading suffix array grammar - exiting decoder.");
-							e.printStackTrace();
-							System.exit(-1);
+							IOException ioe = new IOException("Error reading suffix array grammar.");
+							ioe.initCause(e);
+							throw ioe;
 						}
 //					} else {
 //						logger.severe(
@@ -343,13 +340,16 @@ public class JoshuaDecoder {
 	
 	
 	// TODO: maybe move to JoshuaConfiguration to enable moving the featureFunction parsing there (Needs: symbolTable; Sets: languageModel)
-	//TODO: check we actually have a feature that requires a language model
+	// TODO: check we actually have a feature that requires a language model
 	private void initializeLanguageModel() throws IOException {
+		// BUG: All these different boolean LM fields should just be an enum.
+		// FIXME: And we should check only once for the default (which supports left/right equivalent state) vs everything else (which doesn't)
+		// TODO: maybe have a special exception type for BadConfigfileException instead of using IllegalArgumentException?
+		
 		if (JoshuaConfiguration.use_remote_lm_server) {
 			if (JoshuaConfiguration.use_left_equivalent_state
 			|| JoshuaConfiguration.use_right_equivalent_state) {
-				logger.severe("using remote LM, we cannot use suffix/prefix stuff");
-				System.exit(1);
+				throw new IllegalArgumentException("using remote LM, we cannot use suffix/prefix stuff");
 			}
 			this.languageModel = new LMGrammarRemote(
 				this.symbolTable,
@@ -360,8 +360,7 @@ public class JoshuaDecoder {
 		} else if (JoshuaConfiguration.use_srilm) {
 			if (JoshuaConfiguration.use_left_equivalent_state
 			|| JoshuaConfiguration.use_right_equivalent_state) {
-				logger.severe("using SRILM, we cannot use suffix/prefix stuff");
-				System.exit(1);
+				throw new IllegalArgumentException("using SRILM, we cannot use suffix/prefix stuff");
 			}
 			this.languageModel = new LMGrammarSRILM(
 				(SrilmSymbol)this.symbolTable,
@@ -371,8 +370,7 @@ public class JoshuaDecoder {
 		} else if (JoshuaConfiguration.use_bloomfilter_lm) {
 			if (JoshuaConfiguration.use_left_equivalent_state
 			|| JoshuaConfiguration.use_right_equivalent_state) {
-				logger.severe("using Bloomfilter LM, we cannot use suffix/prefix stuff");
-				System.exit(1);
+				throw new IllegalArgumentException("using Bloomfilter LM, we cannot use suffix/prefix stuff");
 			}
 			this.languageModel = new BloomFilterLanguageModel(
 					this.symbolTable,
@@ -580,8 +578,7 @@ public class JoshuaDecoder {
 				
 				if ("lm".equals(fds[0]) && fds.length == 2) { // lm order weight
 					if (null == this.languageModel) {
-						logger.severe("LM model has not been properly initialized before setting order and weight");
-						System.exit(1);
+						throw new IllegalArgumentException("LM model has not been properly initialized before setting order and weight");
 					}
 					double weight = Double.parseDouble(fds[1].trim());
 					this.featureFunctions.add(
@@ -642,8 +639,7 @@ public class JoshuaDecoder {
 							line, weight));
 					
 				} else {
-					logger.severe("Wrong config line: " + line);
-					System.exit(1);
+					throw new IllegalArgumentException("Wrong config line: " + line);
 				}
 			}
 		} } finally {
