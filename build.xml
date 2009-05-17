@@ -100,20 +100,28 @@
 		</delete>
 	</target>
 	
-	<!-- Delete all generated files -->
+	<!-- EXPERIMENTAL: Delete *all* generated files -->
 	<target name="distclean" depends="clean">
 		<!-- TODO: call the srilm Makefile's distclean (once it exists) -->
 		
-		<!-- BUG: Hopefully these do what I mean. Checking in before testing. -->
+		<!-- BUG: this doesn't delete empty folders (neither ${build} itself, nor the class dirs (the latter makes sense since we don't traverse them)) -->
 		<delete verbose="true" quiet="true" includeEmptyDirs="true">
 			<fileset dir="${build}">
 				<include name="joshua.jar"/>
 			</fileset>
 		</delete>
+		<!-- BUG: this doesn't delete ${pmdOUT} when it's empty. But I'm wary of doing what I do for ${test}-output and ${doc} in case someone resets ${pmdOUT} to somewhere else (e.g. the same as ${pmd}) -->
 		<delete verbose="true" quiet="true" includeEmptyDirs="true">
 			<fileset dir="${pmdOUT}">
 				<include name="report.html"/>
 			</fileset>
+		</delete>
+		<!-- HACK: these work perfectly, but maybe problematic if people reset ${test} or ${doc} -->
+		<delete verbose="true" quiet="true" includeEmptyDirs="true">
+			<fileset dir="${test}-output" />
+		</delete>
+		<delete verbose="true" quiet="true" includeEmptyDirs="true">
+			<fileset dir="${doc}" />
 		</delete>
 	</target>
 	
