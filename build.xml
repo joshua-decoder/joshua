@@ -4,14 +4,14 @@
 	
 	<property environment="env" />
 	
-	<property name="src" value="./src" />
-	<property name="test" value="./test" />
-	<property name="build" value="./bin" />
-	<property name="lib" value="./lib" />
-	<property name="doc" value="./javadoc" />
+	<property name="src"    value="./src" />
+	<property name="test"   value="./test" />
+	<property name="build"  value="./bin" />
+	<property name="lib"    value="./lib" />
+	<property name="doc"    value="./javadoc" />
 	<property name="testng" value="./lib/testng-5.8-jdk15.jar"/>
-	<property name="bdb" value="./lib/je-3.2.23.jar"/>
-	<property name="cli" value="./lib/commons-cli-2.0-SNAPSHOT.jar"/>
+	<!-- <property name="bdb"    value="./lib/je-3.2.23.jar"/> -->
+	<property name="cli"    value="./lib/commons-cli-2.0-SNAPSHOT.jar"/>
 
 	<!-- Define the unit testing task -->
 	<taskdef resource="testngtasks" classpath="${testng}"/>
@@ -36,6 +36,7 @@
 	
 	<!-- Compile and install SRILM wrapper -->
 	<target name="srilm" depends="init, set-srilm, set-java-home">
+		<!-- BUG: this is run twice for `ant clean compile test` -->
 		<exec executable="make">
 			<arg value="-C" />
 			<arg value="${src}/joshua/decoder/ff/lm/srilm" />
@@ -46,9 +47,10 @@
 	<!-- Compile the Java code -->
 	<target name="compile" depends="init,srilm">
 		<javac compiler="javac1.5" srcdir="${src}" destdir="${build}" 
-			classpath="${bdb}:${cli}" debug="on" encoding="utf8"> 
-			<!-- TODO: Make this setable from the commandline
-			<compilerarg value="-Xlint"/>
+			classpath="${cli}" debug="on" encoding="utf8"> 
+			<!-- This should be on, so people see it.
+			     But it can be quite verbose...
+			<compilerarg value="-deprecation"/>
 			-->
 		</javac>
 	</target>
