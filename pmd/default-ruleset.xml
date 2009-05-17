@@ -1,0 +1,104 @@
+<?xml version="1.0"?>
+<ruleset name="Joshua default ruleset"
+	xmlns="http://pmd.sf.net/ruleset/1.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://pmd.sf.net/ruleset/1.0.0 http://pmd.sf.net/ruleset_xml_schema.xsd"
+	xsi:noNamespaceSchemaLocation="http://pmd.sf.net/ruleset_xml_schema.xsd"
+	>
+	<!-- cf http://pmd.sourceforge.net/howtomakearuleset.html -->
+	
+	<description>This ruleset is for customizing the set of rules we want PMD to apply by default in our Ant task. This is a delicate balance between coverage and excessive verbosity.</description>
+	
+	<!-- TODO: we may want to define additional rulesets for being extra pedantic, or for rules that have many false positives but should be occasionally checked anyways (because false negatives are expensive). -->
+	
+	
+<!-- We'll use these entire rulesets because they're absolute musts. -->
+	<rule ref="rulesets/basic.xml"/>
+	<rule ref="rulesets/imports.xml"/>
+	<rule ref="rulesets/migrating.xml"/>
+	<rule ref="rulesets/clone.xml"/>
+	<rule ref="rulesets/finalizers.xml"/>
+	
+	
+<!-- These are also very good, though they can be a bit verbose. -->
+	<!-- Maybe exclude UnusedFormalParameter? It's not smart enough to avoid false positives for interface methods. -->
+	<rule ref="rulesets/unusedcode.xml"/>
+	<rule ref="rulesets/logging-java.xml"/>
+	<!-- Take this one with a little grain of salt, for performance reasons. ArrayIsStoredDirectly is quite verbose and we may wish to remove it from the defaults. -->
+	<rule ref="rulesets/sunsecure.xml"/>
+	
+	
+<!-- These are also good (with a little salt) -->
+	<!-- The IfStmtsMustUseBraces rule runs afoul of java-logger idioms. The others that this excludes could be added in for clean code. -->
+	<rule ref="rulesets/braces.xml/IfElseStmtsMustUseBraces"/>
+	
+	<rule ref="rulesets/naming.xml">
+		<!-- This captures names shorter than 3 characters. Probably a good idea for clean code, but too many false positives. -->
+		<exclude name="ShortVariable"/>
+		<!-- We need to tune this one, see below. -->
+		<exclude name="LongVariable"/>
+		<!-- A common idiom, but we use DefaultFoo instead. -->
+		<exclude name="AbstractNaming"/>
+		
+		<!-- This looks for variables beginning with "m_" which is apparently a convention for naming fields. Names like this are used in AbstractHierarchicalPhrases and it seems like an obscure convention (a C++ Hungarian notation?). Maybe we should remove the rule?
+		
+		<exclude name="MisleadingVariableName"/>
+		-->
+	</rule>
+	<rule ref="rulesets/naming.xml/LongVariable">
+		<properties>
+			<!-- Default is 17, which is a good idea, but can have too many false positives. Raising it to 20 halves the occurances. Would be nice to be able to set the priority as a function of length... -->
+			<property name="minimum" value="20" />
+		</properties>
+	</rule>
+	
+	<rule ref="rulesets/strictexception.xml"/>
+	
+	<rule ref="rulesets/typeresolution.xml">
+		<!-- This is provided by 'coupling' as well. So avoid duplicates. -->
+		<exclude name="LooseCoupling"/>
+	</rule>
+	
+	<!-- TODO: We may want to remove LooseCoupling for too many false positives. -->
+	<rule ref="rulesets/coupling.xml"/>
+	
+	
+<!-- These are good for analytic bugs (with a little salt) -->
+	<rule ref="rulesets/codesize.xml"/>
+	<rule ref="rulesets/strings.xml"/>
+	<rule ref="rulesets/optimizations.xml">
+		<!-- This rule is excessively verbose. I believe modern Java compilers will perform analysis to determine when vars can/should be final, so I don't know that there's any real performance gain anymore. (Is there?) However, marking them as final *makes intentions clear* to code maintainers, and so we should probably turn this on for that reason. -->
+		<exclude name="LocalVariableCouldBeFinal"/>
+		
+		<!-- This rule is excessively verbose. design.xml/AvoidReassigningParameters captures attempts to reassign parameters, and I don't think there's actually any performance improvement here. (I could be wrong though.) -->
+		<exclude name="MethodArgumentCouldBeFinal"/>
+	</rule>
+	
+	
+<!-- These may be controversial, but should also be considered (with some salt) -->
+	
+	<!-- We need to tweak what we want from this set to match our own style. Good rules include: SimplifyBooleanReturns, SimplifyBooleanExpressions, AvoidReassigningParameters, ConfusingTernary, UnnecessaryLocalBeforeReturn, PositionLiteralsFirstInComparisons, ReturnEmptyArrayRatherThanNull,...
+	-->
+	<rule ref="rulesets/design.xml"/>
+	
+	<!-- These shouldn't be controversial -->
+	<rule ref="rulesets/controversial.xml/UnusedModifier"/>
+	<rule ref="rulesets/controversial.xml/DontImportSun"/>
+	<rule ref="rulesets/controversial.xml/SuspiciousOctalEscape"/>
+	<rule ref="rulesets/controversial.xml/AvoidUsingVolatile"/>
+	
+	<!-- Controversial, but worth investigating. -->
+	<rule ref="rulesets/controversial.xml/AssignmentInOperand"/>
+	<rule ref="rulesets/controversial.xml/UnnecessaryParentheses"/>
+	
+	<!-- This one is really verbose, and rather controversial. Maybe we should move it to a ruleset for intermittant auditing of code? -->
+	<rule ref="rulesets/controversial.xml/DefaultPackage"/>
+	
+	<!-- Ugly, but apparently a great performance hack.
+		"b ^= true;" is 55% faster than "b = !b;"-->
+	<rule ref="rulesets/controversial.xml/BooleanInversion"/>
+	
+	<!-- Another performance hack. Apparently the JVM doesn't have native support for short and so it must convert to int for manipulaing things. Time for memory, worth it? -->
+	<rule ref="rulesets/controversial.xml/AvoidUsingShortType"/>
+	
+</ruleset>

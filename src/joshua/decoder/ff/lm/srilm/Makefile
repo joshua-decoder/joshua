@@ -83,6 +83,7 @@ srilm.o: srilm.c
 clean:
 	rm -rf srilm.o srilm*.java srilm_*_wrap.* SWIGTYPE*.java $(SRI_LIB)
 
+# TODO: we need a 'distclean' target that will remove this too
 install:
 	cp $(SRI_LIB) ../../../../../../lib/
 

@@ -9,6 +9,9 @@
 	<property name="build"  value="./bin" />
 	<property name="lib"    value="./lib" />
 	<property name="doc"    value="./javadoc" />
+	<property name="pmd"    value="./pmd" />
+	<property name="pmdOUT" value="${pmd}-output" />
+	
 	<property name="testng" value="./lib/testng-5.8-jdk15.jar"/>
 	<!-- <property name="bdb"    value="./lib/je-3.2.23.jar"/> -->
 	<property name="cli"    value="./lib/commons-cli-2.0-SNAPSHOT.jar"/>
@@ -95,7 +98,23 @@
 				<include name="**/*.class"/>
 			</fileset>
 		</delete>
-		<!-- TODO: shouldn't we delete the jar file too? Or maybe under a task called 'realclean' or 'distclean' -->
+	</target>
+	
+	<!-- Delete all generated files -->
+	<target name="distclean" depends="clean">
+		<!-- TODO: call the srilm Makefile's distclean (once it exists) -->
+		
+		<!-- BUG: Hopefully these do what I mean. Checking in before testing. -->
+		<delete verbose="true" quiet="true" includeEmptyDirs="true">
+			<fileset dir="${build}">
+				<include name="joshua.jar"/>
+			</fileset>
+		</delete>
+		<delete verbose="true" quiet="true" includeEmptyDirs="true">
+			<fileset dir="${pmdOUT}">
+				<include name="report.html"/>
+			</fileset>
+		</delete>
 	</target>
 	
 	
@@ -147,61 +166,17 @@
 			classpathref="pmd.classpath"
 			/>
 		
-		<!-- BUG: with all of this turned on it's very excessively verbose. We should create a rulesets/favorites.xml file to collect the rules we acually care about. Perhaps a few of them for differing levels of verbosity/pedantry. Of course, we could also define a collection of XSLT filters to grep through the result file (in XML format) and only pull out the ones we care about. -->
-		<!-- TODO: we should also make a directory for all this output to go to. And we should add it to the 'distclean' task. -->
+		
+		<mkdir dir="${pmdOUT}"/>
+		
+		<!-- TODO: define a set of XSLT filters for searching and grepping through the output (which can be verbose) in type=xml format. -->
 		<!-- N.B. PMD is run in the same process as Ant and therefore produces no visible output by default. -->
-		<pmd shortFilenames="true">
+		<pmd shortFilenames="true" rulesetfiles="${pmd}/default-ruleset.xml">
 			
-		<!-- These are the absolute musts -->
-			<ruleset>basic</ruleset>
-			<ruleset>imports</ruleset>
-			<ruleset>migrating</ruleset>
-			<ruleset>clone</ruleset>
-			<ruleset>finalizers</ruleset>
-			
-		<!-- These are also musts (but are verbose) -->
-			<ruleset>unusedcode</ruleset>
-			<ruleset>logging-java</ruleset>
-			<!-- Take this one with a little grain of salt, for performance reasons. ArrayIsStoredDirectly is quite verbose. -->
-			<ruleset>sunsecure</ruleset>
-			
-		<!-- These are also good (with a little salt) -->
-			<!-- We mainly care about IfElseStmtsMustUseBraces. The IfStmtsMustUseBraces rule runs afoul of java-logger idioms. -->
-			<ruleset>braces</ruleset>
-			<!-- This typically wants 3~17 char tokens, which is a bit too strict (albeit, it would be nice). There is a way to up the 17 limit, if I can figure it out. Most all the other rules are quite good though. -->
-			<ruleset>naming</ruleset>
-			<ruleset>strictexception</ruleset>
-			<!-- These two have LooseCoupling as a very verbose overlap. -->
-			<ruleset>typeresolution</ruleset>
-			<ruleset>coupling</ruleset>
-			
-		<!-- These should also be considered (with a fair bit of salt)
-			Good rules include: SimplifyBooleanReturns, SimplifyBooleanExpressions, AvoidReassigningParameters, ConfusingTernary, UnnecessaryLocalBeforeReturn,...
-			-->
-			<ruleset>design</ruleset>
-			
-		<!-- These are good for analytic bugs (with a little salt) -->
-			<ruleset>codesize</ruleset>
-			<ruleset>strings</ruleset>
-			<!-- The LocalVariableCouldBeFinal rule is excessively verbose. Don't modern java compilers do this analysis and make them final anyways? Of course, final is a very good thing for communicating intent to the maintainers.
-			
-			The MethodArgumentCouldBeFinal rule is a bit silly. Java copies values before calling methods, and other rules will say it's bad to reassign parameters. I don't know of any actual performance effect here.
-			
-			UseArrayListInsteadOfVector is very good, but probably caught elsewhere, like in migrating. AddEmptyString and AvoidArrayLoops are quite nice too.
-			-->
-			<ruleset>optimizations</ruleset>
-			
-			
-			<!-- BUG: the links to class files also goes to pmd.sourceforge.net -->
-			<!-- type = xml,html,text,csv,papari,summaryhtml
-			
-				summaryhtml lists the count of each violation type before the list itself. Also gives suppressed warnings summary at the end (also doable by setting 'showSuppressed').
-				
-				xml is the best, but it requires XSLT munging/browsing.
-			-->
+			<!-- BUG: the links to class files also go to pmd.sourceforge.net -->
 			<formatter
 				type="summaryhtml"
-				toFile="pmd_report.html"
+				toFile="${pmdOUT}/report.html"
 				toConsole="false"
 				linkPrefix="http://pmd.sourceforge.net/xref/"
 				/>
@@ -212,27 +187,15 @@
 		</pmd>
 		
 		<!-- Here's how to post-edit with XSLT
-		<xslt in="pmd_report.xml" style="pmd_report.xslt" out="pmd_report.html" />
+		<xslt
+			in="${pmdOUT}/report.xml"
+			style="${pmd}/report.xslt"
+			out="${pmdOUT}/report.html"
+			/>
 		-->
+		
 		<!-- TODO: this should use a property to avoid duplication -->
-		<echo>Report created at pmd_report.html</echo>
-		
-		
-		
-		<!--
-			Also run some tests on the JUnit test directory.
-			(Actually we use TestNG, so this probably doesn't apply).
-		
-		<pmd shortFilenames="true">
-			<ruleset>junit</ruleset>
-			
-			<formatter type="html" toFile="pmd/junit_report.html" linkPrefix="http://pmd.sourceforge.net/xref/"/>
-			
-			<fileset dir="${test}">
-				<include name="**/*.java"/>
-			</fileset>
-		</pmd>
-		-->
+		<echo>Report created at ${pmdOUT}/report.html</echo>
 	</target>
 	
 </project>
