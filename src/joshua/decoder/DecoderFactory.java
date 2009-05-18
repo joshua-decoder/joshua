@@ -17,7 +17,7 @@
  */
 package joshua.decoder;
 
-import joshua.corpus.SymbolTable;
+import joshua.corpus.vocab.SymbolTable;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.tm.GrammarFactory;
 import joshua.util.io.LineReader;

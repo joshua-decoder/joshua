@@ -21,11 +21,11 @@ import java.io.IOException;
 
 import joshua.corpus.CorpusArray;
 import joshua.corpus.Phrase;
-import joshua.corpus.Vocabulary;
 import joshua.corpus.suffix_array.BasicPhrase;
 import joshua.corpus.suffix_array.SuffixArray;
 import joshua.corpus.suffix_array.Suffixes;
 import joshua.corpus.suffix_array.mm.MemoryMappedSuffixArray;
+import joshua.corpus.vocab.Vocabulary;
 
 
 import org.testng.Assert;

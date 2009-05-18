@@ -18,8 +18,8 @@ package joshua.corpus.suffix_array;
 
 
 import joshua.corpus.Phrase;
-import joshua.corpus.Vocabulary;
 import joshua.corpus.suffix_array.Pattern;
+import joshua.corpus.vocab.Vocabulary;
 import joshua.prefix_tree.PrefixTree;
 
 import org.testng.Assert;

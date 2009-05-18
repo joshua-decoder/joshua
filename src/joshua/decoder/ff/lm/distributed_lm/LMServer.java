@@ -17,9 +17,9 @@
  */
 package joshua.decoder.ff.lm.distributed_lm;
 
-import joshua.corpus.SymbolTable;
-import joshua.decoder.BuildinSymbol;
-import joshua.decoder.SrilmSymbol;
+import joshua.corpus.vocab.BuildinSymbol;
+import joshua.corpus.vocab.SrilmSymbol;
+import joshua.corpus.vocab.SymbolTable;
 import joshua.decoder.ff.lm.NGramLanguageModel;
 import joshua.decoder.ff.lm.buildin_lm.LMGrammarJAVA;
 import joshua.decoder.ff.lm.srilm.LMGrammarSRILM;

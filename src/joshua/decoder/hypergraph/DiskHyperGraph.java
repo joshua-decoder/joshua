@@ -26,7 +26,7 @@ import joshua.decoder.ff.tm.hiero.DiskHyperGraphFormatReader;
 import joshua.decoder.ff.tm.hiero.MemoryBasedBatchGrammar;
 import joshua.decoder.ff.FFDPState;
 import joshua.decoder.ff.FeatureFunction;
-import joshua.corpus.SymbolTable;
+import joshua.corpus.vocab.SymbolTable;
 import joshua.util.FileUtility;
 import joshua.util.Regex;
 

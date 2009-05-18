@@ -22,7 +22,7 @@ import java.io.ObjectInput;
 import java.util.logging.Logger;
 
 import joshua.corpus.CorpusArray;
-import joshua.corpus.Vocabulary;
+import joshua.corpus.vocab.Vocabulary;
 import joshua.util.io.BinaryIn;
 
 /**

@@ -25,7 +25,7 @@ import java.util.logging.Logger;
 
 
 import joshua.corpus.MatchedHierarchicalPhrases;
-import joshua.corpus.Vocabulary;
+import joshua.corpus.vocab.Vocabulary;
 import joshua.util.Pair;
 
 /**

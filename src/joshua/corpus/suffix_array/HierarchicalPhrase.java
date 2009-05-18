@@ -21,7 +21,7 @@ import joshua.corpus.AbstractPhrase;
 import joshua.corpus.ContiguousPhrase;
 import joshua.corpus.Corpus;
 import joshua.corpus.Phrase;
-import joshua.corpus.SymbolTable;
+import joshua.corpus.vocab.SymbolTable;
 
 import java.util.Arrays;
 import java.util.List;

@@ -20,12 +20,12 @@ package joshua.prefix_tree;
 import joshua.corpus.Corpus;
 import joshua.corpus.MatchedHierarchicalPhrases;
 import joshua.corpus.RuleExtractor;
-import joshua.corpus.SymbolTable;
 import joshua.corpus.alignment.Alignments;
 import joshua.corpus.lexprob.LexicalProbabilities;
 import joshua.corpus.suffix_array.HierarchicalPhrases;
 import joshua.corpus.suffix_array.Pattern;
 import joshua.corpus.suffix_array.Suffixes;
+import joshua.corpus.vocab.SymbolTable;
 import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.Rule;
 

@@ -21,7 +21,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Map;
 
-import joshua.corpus.SymbolTable;
+import joshua.corpus.vocab.SymbolTable;
 import joshua.decoder.ff.FeatureFunction;
 
 /**

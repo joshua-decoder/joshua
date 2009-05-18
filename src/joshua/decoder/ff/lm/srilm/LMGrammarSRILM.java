@@ -19,8 +19,8 @@ package joshua.decoder.ff.lm.srilm;
 
 import java.util.logging.Logger;
 
+import joshua.corpus.vocab.SrilmSymbol;
 import joshua.decoder.ff.lm.AbstractLM;
-import joshua.decoder.SrilmSymbol;
 
 
 /**

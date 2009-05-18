@@ -15,10 +15,8 @@
  * Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  * MA 02111-1307 USA
  */
-package joshua.decoder;
+package joshua.corpus.vocab;
 
-import joshua.corpus.AbstractSymbolTable;
-import joshua.corpus.SymbolTable;
 import joshua.util.io.LineReader;
 import joshua.util.Regex;
 

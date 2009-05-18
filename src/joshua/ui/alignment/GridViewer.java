@@ -26,10 +26,10 @@ import java.util.logging.Logger;
 import javax.swing.JFrame;
 
 import joshua.corpus.Corpus;
-import joshua.corpus.Vocabulary;
 import joshua.corpus.alignment.Alignments;
 import joshua.corpus.alignment.mm.MemoryMappedAlignmentGrids;
 import joshua.corpus.mm.MemoryMappedCorpusArray;
+import joshua.corpus.vocab.Vocabulary;
 import joshua.util.io.BinaryIn;
 
 /**

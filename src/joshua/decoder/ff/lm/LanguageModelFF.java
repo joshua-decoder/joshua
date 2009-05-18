@@ -17,7 +17,7 @@
  */
 package joshua.decoder.ff.lm;
 
-import joshua.corpus.SymbolTable;
+import joshua.corpus.vocab.SymbolTable;
 import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.Support;
 import joshua.decoder.ff.DefaultStatefulFF;

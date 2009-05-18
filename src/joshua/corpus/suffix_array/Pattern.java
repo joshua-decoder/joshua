@@ -21,7 +21,7 @@ import java.io.IOException;
 import java.io.ObjectOutput;
 
 import joshua.corpus.Phrase;
-import joshua.corpus.SymbolTable;
+import joshua.corpus.vocab.SymbolTable;
 
 
 /**

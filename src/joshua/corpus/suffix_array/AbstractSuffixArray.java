@@ -22,7 +22,7 @@ import java.util.Arrays;
 import joshua.corpus.Corpus;
 import joshua.corpus.MatchedHierarchicalPhrases;
 import joshua.corpus.Phrase;
-import joshua.corpus.SymbolTable;
+import joshua.corpus.vocab.SymbolTable;
 import joshua.util.Cache;
 
 /**

@@ -3,7 +3,7 @@ package joshua.decoder.ff.tm.hiero;
 import java.util.Arrays;
 import java.util.logging.Logger;
 
-import joshua.corpus.SymbolTable;
+import joshua.corpus.vocab.SymbolTable;
 import joshua.decoder.ff.tm.BilingualRule;
 import joshua.decoder.ff.tm.GrammarReader;
 

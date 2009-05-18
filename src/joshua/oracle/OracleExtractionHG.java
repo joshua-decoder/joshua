@@ -24,9 +24,9 @@ import joshua.decoder.hypergraph.HyperEdge;
 import joshua.decoder.hypergraph.HyperGraph;
 import joshua.decoder.hypergraph.KBestExtractor;
 import joshua.decoder.hypergraph.ViterbiExtractor;
-import joshua.decoder.BuildinSymbol;
 import joshua.decoder.Support;
-import joshua.corpus.SymbolTable;
+import joshua.corpus.vocab.BuildinSymbol;
+import joshua.corpus.vocab.SymbolTable;
 import joshua.util.FileUtility;
 
 import java.io.BufferedReader;

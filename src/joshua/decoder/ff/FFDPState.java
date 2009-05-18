@@ -18,7 +18,7 @@
 
 package joshua.decoder.ff;
 
-import joshua.corpus.SymbolTable;
+import joshua.corpus.vocab.SymbolTable;
 
 
 /**

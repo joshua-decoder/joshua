@@ -19,7 +19,7 @@ package joshua.decoder.ff.lm;
 
 import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.Support;
-import joshua.corpus.SymbolTable;
+import joshua.corpus.vocab.SymbolTable;
 
 import java.util.ArrayList;
 

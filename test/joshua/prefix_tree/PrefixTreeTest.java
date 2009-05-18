@@ -16,7 +16,7 @@
  */
 package joshua.prefix_tree;
 
-import joshua.corpus.Vocabulary;
+import joshua.corpus.vocab.Vocabulary;
 import joshua.prefix_tree.Node;
 import joshua.prefix_tree.PrefixTree;
 

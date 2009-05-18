@@ -15,32 +15,28 @@
  * Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  * MA 02111-1307 USA
  */
-package joshua.corpus;
+package joshua.corpus.vocab;
 
+import java.io.Externalizable;
 
 /**
- * Abstract symbol table capable of being externalized.
+ * Symbol table capable of being externalized.
  * 
  * @author Lane Schwartz
  */
-public abstract class AbstractExternalizableSymbolTable extends AbstractSymbolTable
-		implements ExternalizableSymbolTable {
-	
-	/** 
-	 * Character set encoding used when 
-	 * exporting and importing binary files to and from disk. 
+public interface ExternalizableSymbolTable extends SymbolTable, Externalizable {
+
+	/**
+	 * Sets the character encoding used when exporting the symbol table.
+	 * 
+	 * @param charsetName Character encoding
 	 */
-	private String characterEncoding = "UTF-8";
+	public void setExternalizableEncoding(String charsetName);
 	
-	
-	/* See Javadoc for SymbolTable interface. */
-	public void setExternalizableEncoding(String charsetName) {
-		characterEncoding = charsetName;
-	}
-	
-	/* See Javadoc for SymbolTable interface. */
-	public String getExternalizableEncoding() {
-		return characterEncoding;
-	}
-	
+	/**
+	 * Gets the character encoding used when exporting the symbol table.
+	 * 
+	 * @return Character encoding
+	 */
+	public String getExternalizableEncoding();
 }

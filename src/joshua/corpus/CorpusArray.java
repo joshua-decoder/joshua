@@ -19,6 +19,9 @@ package joshua.corpus;
 
 import joshua.corpus.suffix_array.SuffixArray;
 import joshua.corpus.suffix_array.SuffixArrayFactory;
+import joshua.corpus.vocab.ExternalizableSymbolTable;
+import joshua.corpus.vocab.SymbolTable;
+import joshua.corpus.vocab.Vocabulary;
 import joshua.util.io.BinaryOut;
 
 import java.io.Externalizable;

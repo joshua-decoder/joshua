@@ -15,9 +15,8 @@
  * Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  * MA 02111-1307 USA
  */
-package joshua.decoder;
+package joshua.corpus.vocab;
 
-import joshua.corpus.SymbolTable;
 import joshua.decoder.ff.lm.srilm.SWIGTYPE_p_Ngram;
 import joshua.decoder.ff.lm.srilm.UnknownSrilmSymbolException;
 import joshua.decoder.ff.lm.srilm.srilm;

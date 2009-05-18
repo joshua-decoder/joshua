@@ -9,12 +9,12 @@ import java.util.Set;
 
 import joshua.corpus.CorpusArray;
 import joshua.corpus.RuleExtractor;
-import joshua.corpus.Vocabulary;
 import joshua.corpus.alignment.AlignmentArray;
 import joshua.corpus.lexprob.LexicalProbabilities;
 import joshua.corpus.lexprob.SampledLexProbs;
 import joshua.corpus.suffix_array.BasicPhrase;
 import joshua.corpus.suffix_array.SuffixArray;
+import joshua.corpus.vocab.Vocabulary;
 import joshua.prefix_tree.HierarchicalRuleExtractor;
 import joshua.prefix_tree.Node;
 import joshua.prefix_tree.PrefixTree;

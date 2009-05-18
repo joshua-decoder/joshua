@@ -7,13 +7,13 @@ import java.io.UnsupportedEncodingException;
 import java.util.Date;
 
 import joshua.corpus.CorpusArray;
-import joshua.corpus.Vocabulary;
 import joshua.corpus.alignment.Alignments;
 import joshua.corpus.lexprob.SampledLexProbs;
 import joshua.corpus.suffix_array.HierarchicalPhrases;
 import joshua.corpus.suffix_array.Pattern;
 import joshua.corpus.suffix_array.SuffixArray;
 import joshua.corpus.suffix_array.SuffixArrayFactory;
+import joshua.corpus.vocab.Vocabulary;
 import joshua.prefix_tree.PrefixTree;
 import joshua.util.Cache;
 import joshua.util.Pair;

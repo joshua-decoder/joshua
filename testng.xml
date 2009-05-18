@@ -61,7 +61,7 @@
   
     <test name="Vocab" >
     <classes>
-       <class name="joshua.corpus.VocabularyTest" />  
+       <class name="joshua.corpus.vocab.VocabularyTest" />  
        <class name="joshua.corpus.CorpusArrayTest" />  
     </classes>
   </test>

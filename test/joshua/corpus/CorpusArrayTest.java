@@ -6,6 +6,7 @@ import joshua.corpus.CorpusArray;
 import joshua.corpus.Phrase;
 import joshua.corpus.mm.MemoryMappedCorpusArray;
 import joshua.corpus.suffix_array.SuffixArrayFactory;
+import joshua.corpus.vocab.Vocabulary;
 
 
 import org.testng.Assert;

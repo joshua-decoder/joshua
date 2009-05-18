@@ -20,6 +20,8 @@ package joshua.corpus;
 import java.util.ArrayList;
 import java.util.List;
 
+import joshua.corpus.vocab.SymbolTable;
+
 
 /**
  * Representation of a sequence of tokens.

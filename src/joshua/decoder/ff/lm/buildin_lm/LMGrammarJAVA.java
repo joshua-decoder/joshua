@@ -17,9 +17,9 @@
  */
 package joshua.decoder.ff.lm.buildin_lm;
 
+import joshua.corpus.vocab.BuildinSymbol;
 import joshua.decoder.ff.lm.AbstractLM;
 import joshua.decoder.ff.lm.LanguageModelFF;
-import joshua.decoder.BuildinSymbol;
 import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.Support;
 import joshua.util.io.LineReader;

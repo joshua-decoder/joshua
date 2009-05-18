@@ -19,10 +19,10 @@ package joshua.corpus.suffix_array;
 
 import joshua.corpus.Corpus;
 import joshua.corpus.CorpusArray;
-import joshua.corpus.ExternalizableSymbolTable;
-import joshua.corpus.Vocabulary;
 import joshua.corpus.alignment.AlignmentArray;
 import joshua.corpus.alignment.Alignments;
+import joshua.corpus.vocab.ExternalizableSymbolTable;
+import joshua.corpus.vocab.Vocabulary;
 import joshua.util.io.LineReader;
 
 import java.util.*;

@@ -17,6 +17,8 @@
  */
 package joshua.corpus;
 
+import joshua.corpus.vocab.SymbolTable;
+
 
 /**
  * This class provides a mostly-complete implementation 

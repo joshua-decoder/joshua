@@ -27,9 +27,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import joshua.corpus.MatchedHierarchicalPhrases;
-import joshua.corpus.SymbolTable;
 import joshua.corpus.suffix_array.HierarchicalPhrases;
 import joshua.corpus.suffix_array.Pattern;
+import joshua.corpus.vocab.SymbolTable;
 import joshua.decoder.ff.tm.AbstractGrammar;
 import joshua.decoder.ff.tm.BasicRuleCollection;
 import joshua.decoder.ff.tm.Grammar;

@@ -17,6 +17,8 @@
  */
 package joshua.corpus;
 
+import joshua.corpus.vocab.SymbolTable;
+
 
 /**
  * Corpus is an interface that contains methods for accessing the

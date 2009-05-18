@@ -19,7 +19,7 @@ package joshua.corpus.suffix_array;
 
 
 import joshua.corpus.MatchedHierarchicalPhrases;
-import joshua.corpus.Vocabulary;
+import joshua.corpus.vocab.Vocabulary;
 
 import org.testng.Assert;
 import org.testng.annotations.Test;

@@ -18,7 +18,7 @@
 package joshua.decoder.chart_parser;
 
 
-import joshua.corpus.SymbolTable;
+import joshua.corpus.vocab.SymbolTable;
 import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.chart_parser.Bin.ComputeItemResult;
 import joshua.decoder.chart_parser.DotChart.DotItem;

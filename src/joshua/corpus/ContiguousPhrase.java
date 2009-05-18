@@ -20,6 +20,8 @@ package joshua.corpus;
 
 import java.util.*;
 
+import joshua.corpus.vocab.SymbolTable;
+
 
 /**
  * ContiguousPhrase implements the Phrase interface by linking

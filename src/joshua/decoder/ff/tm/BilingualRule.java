@@ -20,7 +20,7 @@ package joshua.decoder.ff.tm;
 import java.util.Arrays;
 import java.util.Map;
 
-import joshua.corpus.SymbolTable;
+import joshua.corpus.vocab.SymbolTable;
 
 
 /**

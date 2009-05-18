@@ -19,7 +19,7 @@ package joshua.corpus.suffix_array;
 
 import joshua.corpus.AbstractPhrase;
 import joshua.corpus.Phrase;
-import joshua.corpus.SymbolTable;
+import joshua.corpus.vocab.SymbolTable;
 
 import java.util.ArrayList;
 import java.util.List;

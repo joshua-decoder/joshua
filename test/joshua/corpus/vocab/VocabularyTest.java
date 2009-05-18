@@ -14,7 +14,7 @@
  * along with this library; if not, write to the Free Software Foundation,
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package joshua.corpus;
+package joshua.corpus.vocab;
 
 import java.io.File;
 import java.io.IOException;
@@ -22,7 +22,7 @@ import java.io.PrintStream;
 import java.util.Date;
 import java.util.HashSet;
 
-import joshua.corpus.Vocabulary;
+import joshua.corpus.vocab.Vocabulary;
 
 
 import org.testng.Assert;

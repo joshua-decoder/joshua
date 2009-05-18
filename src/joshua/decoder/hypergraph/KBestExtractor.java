@@ -20,7 +20,7 @@ package joshua.decoder.hypergraph;
 import joshua.decoder.ff.FFTransitionResult;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.tm.Rule;
-import joshua.corpus.SymbolTable;
+import joshua.corpus.vocab.SymbolTable;
 import joshua.util.Regex;
 
 import java.io.BufferedWriter;

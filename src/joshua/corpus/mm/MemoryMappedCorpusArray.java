@@ -18,8 +18,8 @@
 package joshua.corpus.mm;
 
 import joshua.corpus.AbstractCorpus;
-import joshua.corpus.SymbolTable;
-import joshua.corpus.Vocabulary;
+import joshua.corpus.vocab.SymbolTable;
+import joshua.corpus.vocab.Vocabulary;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;

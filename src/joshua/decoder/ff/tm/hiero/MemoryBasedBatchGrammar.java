@@ -22,7 +22,7 @@ import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.BilingualRule;
 import joshua.decoder.ff.tm.GrammarReader;
 import joshua.decoder.ff.tm.Trie;
-import joshua.corpus.SymbolTable;
+import joshua.corpus.vocab.SymbolTable;
 
 import java.io.IOException;
 import java.util.HashMap;

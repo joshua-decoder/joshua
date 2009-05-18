@@ -27,13 +27,13 @@ import java.util.Scanner;
 
 import joshua.corpus.CorpusArray;
 import joshua.corpus.Span;
-import joshua.corpus.SymbolTable;
 import joshua.corpus.alignment.AlignmentGrids;
 import joshua.corpus.alignment.mm.MemoryMappedAlignmentGrids;
 import joshua.corpus.suffix_array.HierarchicalPhrases;
 import joshua.corpus.suffix_array.Pattern;
 import joshua.corpus.suffix_array.SuffixArray;
 import joshua.corpus.suffix_array.SuffixArrayFactory;
+import joshua.corpus.vocab.SymbolTable;
 import joshua.prefix_tree.PrefixTree;
 import joshua.util.io.BinaryOut;
 

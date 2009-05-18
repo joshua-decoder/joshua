@@ -23,10 +23,10 @@ import java.io.PrintStream;
 import java.util.Date;
 
 import joshua.corpus.CorpusArray;
-import joshua.corpus.SymbolTable;
 import joshua.corpus.suffix_array.HierarchicalPhrases;
 import joshua.corpus.suffix_array.Pattern;
 import joshua.corpus.suffix_array.SuffixArrayFactory;
+import joshua.corpus.vocab.SymbolTable;
 
 import org.testng.Assert;
 import org.testng.annotations.Test;

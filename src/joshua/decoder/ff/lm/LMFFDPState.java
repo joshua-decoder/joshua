@@ -20,7 +20,7 @@ package joshua.decoder.ff.lm;
 
 import java.util.logging.Logger;
 
-import joshua.corpus.SymbolTable;
+import joshua.corpus.vocab.SymbolTable;
 import joshua.decoder.ff.FFDPState;
 
 

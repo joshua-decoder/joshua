@@ -19,7 +19,7 @@ package joshua.decoder.hypergraph;
 
 import java.util.ArrayList;
 
-import joshua.corpus.SymbolTable;
+import joshua.corpus.vocab.SymbolTable;
 import joshua.decoder.ff.tm.Rule;
 
 

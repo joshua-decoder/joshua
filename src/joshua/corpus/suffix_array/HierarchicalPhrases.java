@@ -26,7 +26,7 @@ import java.util.logging.Logger;
 
 import joshua.corpus.MatchedHierarchicalPhrases;
 import joshua.corpus.Span;
-import joshua.corpus.SymbolTable;
+import joshua.corpus.vocab.SymbolTable;
 import joshua.prefix_tree.PrefixTree;
 
 /**

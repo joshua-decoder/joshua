@@ -17,7 +17,7 @@
  */
 package joshua.decoder.hypergraph;
 
-import joshua.corpus.SymbolTable;
+import joshua.corpus.vocab.SymbolTable;
 import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.hypergraph.HyperGraph;
 

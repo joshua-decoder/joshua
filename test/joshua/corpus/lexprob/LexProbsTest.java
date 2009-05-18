@@ -4,8 +4,8 @@ import java.util.HashSet;
 import java.util.Scanner;
 import java.util.Set;
 
-import joshua.corpus.Vocabulary;
 import joshua.corpus.lexprob.LexProbs;
+import joshua.corpus.vocab.Vocabulary;
 
 import org.testng.Assert;
 import org.testng.annotations.Test;
