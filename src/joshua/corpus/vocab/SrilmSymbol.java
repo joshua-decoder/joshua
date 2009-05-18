@@ -18,12 +18,9 @@
 package joshua.corpus.vocab;
 
 import joshua.decoder.ff.lm.srilm.SWIGTYPE_p_Ngram;
-import joshua.decoder.ff.lm.srilm.UnknownSrilmSymbolException;
 import joshua.decoder.ff.lm.srilm.srilm;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Collection;
 import java.util.logging.Logger;
 
@@ -125,7 +122,7 @@ public class SrilmSymbol extends DefaultSymbol {
 		 String res = (String) srilm.getWordForIndex(id);
 		 
 		 if(res == null){
-			 throw new UnknownSrilmSymbolException(id);			
+			 throw new UnknownSymbolException(id);			
 		 }
 		
 		 return  res;
@@ -140,15 +137,4 @@ public class SrilmSymbol extends DefaultSymbol {
 		return addTerminal(wordString);
 	}
 
-	public void readExternal(ObjectInput in) throws IOException,
-			ClassNotFoundException {
-		//TODO Implement this method
-		throw new RuntimeException("Method not yet implemented");
-	}
-
-	public void writeExternal(ObjectOutput out) throws IOException {
-		//TODO Implement this method
-		throw new RuntimeException("Method not yet implemented");
-	}
-	 
 }

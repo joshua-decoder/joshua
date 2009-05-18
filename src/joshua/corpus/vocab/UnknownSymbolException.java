@@ -15,7 +15,7 @@
  * Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  * MA 02111-1307 USA
  */
-package joshua.decoder.ff.lm.srilm;
+package joshua.corpus.vocab;
 
 /**
  * Used to indicate that a query has been made for a symbol that is not known.
@@ -23,7 +23,7 @@ package joshua.decoder.ff.lm.srilm;
  * @author Lane Schwartz
  * @version $LastChangedDate$
  */
-public class UnknownSrilmSymbolException extends RuntimeException {
+public class UnknownSymbolException extends RuntimeException {
 
 	/**
 	 * Constructs an exception indicating that the specified identifier 
@@ -31,8 +31,8 @@ public class UnknownSrilmSymbolException extends RuntimeException {
 	 * 
 	 * @param id Integer identifier
 	 */
-	public UnknownSrilmSymbolException(int id) {
-		super("Identifier " + id + " cannot be found in the SRILM symbol table");
+	public UnknownSymbolException(int id) {
+		super("Identifier " + id + " cannot be found in the symbol table");
 	}
 	
 	/**
@@ -41,7 +41,7 @@ public class UnknownSrilmSymbolException extends RuntimeException {
 	 * 
 	 * @param symbol String symbol 
 	 */
-	public UnknownSrilmSymbolException(String symbol) {
-		super("Symbol " + symbol + " cannot be found in the SRILM symbol table");
+	public UnknownSymbolException(String symbol) {
+		super("Symbol " + symbol + " cannot be found in the symbol table");
 	}
 }

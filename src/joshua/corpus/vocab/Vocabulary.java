@@ -95,18 +95,12 @@ public class Vocabulary extends AbstractExternalizableSymbolTable
 
 	}
 	
-//	/**
-//	 * Constructs a vocabulary from a text file.
-//	 * 
-//	 * @param fileName Filename of a text file.
-//	 * @throws IOException
-//	 */
-//	public Vocabulary(String fileName) throws IOException {
-//		this();
-//		SuffixArrayFactory.createVocabulary(fileName, this);
-////		UNKNOWN_WORD = vocabList.size();
-//	}
-	
+	/**
+	 * Constructs a vocabulary using the words from an SRILM language model file.
+	 * 
+	 * @param scanner Scanner configured to read an SRILM language model file.
+	 * @return Vocabulary initialized with the words from the SRILM language model file.
+	 */
 	public static Vocabulary getVocabFromSRILM(Scanner scanner) {
 		
 		Vocabulary vocab = new Vocabulary();
