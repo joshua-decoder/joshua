@@ -157,6 +157,12 @@ public class Chart {
 				
 			}
 		}
+		
+		//TODO: add rule (only allow flat rules) into the chart as constraints
+		/*for(each constraint){
+			//add_axiom(i, j, rule, lattice_cost);
+		}*/
+		
 		if (logger.isLoggable(Level.FINE)) logger.fine("Finished seeding chart.");
 	}
 	
@@ -194,6 +200,7 @@ public class Chart {
 							float lattice_cost = dt.lattice_cost;
 							RuleCollection rules = dt.tnode.getRules();
 							if (null != rules) { // have rules under this trienode
+								//TODO: filter the rule according to LHS constraint
 								if (rules.getArity() == 0) { // rules without any non-terminal
 									List<Rule> l_rules = rules.getSortedRules();
 									for (Rule rule : l_rules) {
@@ -260,7 +267,9 @@ public class Chart {
 		if (null != this.bins[0][sent_len]) {
 			goal_bin.transit_to_goal(this.bins[0][sent_len]);//update goal_bin				
 		} else {
-			logger.severe("No complete item in the cell(0,n)");
+			logger.severe("No complete item in the cell(0,n); possible reasons: " +
+					"(1) your grammar does not have any valid derivation for the source sentence; " +
+					"(2) two aggressive pruning");
 			System.exit(1);
 		}
 		
