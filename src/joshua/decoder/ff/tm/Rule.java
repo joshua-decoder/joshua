@@ -39,26 +39,26 @@ public interface Rule {
 // Attributes
 //===============================================================
 	
-	public void setRuleID(int id);
-	public int  getRuleID();
+	void setRuleID(int id);
+	int  getRuleID();
 	
-	public void setArity(int arity);
-	public int  getArity();
+	void setArity(int arity);
+	int  getArity();
 	
-	public void setOwner(int ow);
-	public int  getOwner();
+	void setOwner(int ow);
+	int  getOwner();
 	
-	public void setLHS(int lhs);
-	public int  getLHS();
+	void setLHS(int lhs);
+	int  getLHS();
 	
-	public void  setEnglish(int[] eng);
-	public int[] getEnglish();
+	void  setEnglish(int[] eng);
+	int[] getEnglish();
 	
-	public void  setFrench(int[] french);
-	public int[] getFrench();
+	void  setFrench(int[] french);
+	int[] getFrench();
 	
-	public void    setFeatureScores(float[] scores);
-	public float[] getFeatureScores();
+	void    setFeatureScores(float[] scores);
+	float[] getFeatureScores();
 	
 	
 	/**
@@ -69,15 +69,15 @@ public interface Rule {
 	 *
 	 * column: start from zero
 	 */
-	public void  setFeatureScore(int column, float score);
-	public float getFeatureScore(int column);	
-	public float incrementFeatureScore(int column, double score);
+	void  setFeatureScore(int column, float score);
+	float getFeatureScore(int column);	
+	float incrementFeatureScore(int column, double score);
 	
-	public void  setLatticeCost(float cost);
-	public float getLatticeCost();
+	void  setLatticeCost(float cost);
+	float getLatticeCost();
 	
 	// How does this differ from estimateRuleCost ?
-	public float getEstCost();
+	float getEstCost();
 	
 	
 //===============================================================
@@ -88,14 +88,14 @@ public interface Rule {
 	 * Set a lower-bound estimate inside the rule returns full
 	 * estimate.
 	 */
-	public float estimateRuleCost(ArrayList<FeatureFunction> featureFunctions);
+	float estimateRuleCost(ArrayList<FeatureFunction> featureFunctions);
 	
 	
 	/**
 	 * In order to provide sorting for cube-pruning, we need
 	 * to provide this Comparator.
 	 */
-	public static Comparator<Rule> NegtiveCostComparator = new Comparator<Rule>() {
+	Comparator<Rule> NegtiveCostComparator = new Comparator<Rule>() {
 		public int compare(Rule rule1, Rule rule2) {
 			float cost1 = rule1.getEstCost();
 			float cost2 = rule2.getEstCost();
@@ -110,15 +110,15 @@ public interface Rule {
 	};
 	
 	@Deprecated
-	public String toString(Map<Integer,String> ntVocab, SymbolTable sourceVocab, SymbolTable targetVocab);
+	String toString(Map<Integer,String> ntVocab, SymbolTable sourceVocab, SymbolTable targetVocab);
 	
 	/** Print the rule in terms of Ingeters. */
 	@Deprecated
-	public String toString(); 
+	String toString(); 
 	
 	@Deprecated
-	public String toString(SymbolTable symbolTable);
+	String toString(SymbolTable symbolTable);
 	
 	@Deprecated
-	public String toStringWithoutFeatScores(SymbolTable symbolTable);
+	String toStringWithoutFeatScores(SymbolTable symbolTable);
 }

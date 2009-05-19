@@ -39,13 +39,13 @@ public interface Suffixes {
 	/**
 	 * The maximum length suffix to consider during sorting.
 	 */
-	public static int MAX_COMPARISON_LENGTH = 20;
+	int MAX_COMPARISON_LENGTH = 20;
 
 	/** 
 	 * Maximum number of items that can be stored 
 	 * in the cache of patterns and hierarchical phrases. 
 	 */
-	public static final int DEFAULT_CACHE_CAPACITY = 100000;
+	int DEFAULT_CACHE_CAPACITY = 100000;
 	
 	
 	
@@ -54,14 +54,14 @@ public interface Suffixes {
 	 * 
 	 * @return the symbol table for this object.
 	 */
-	public SymbolTable getVocabulary();
+	SymbolTable getVocabulary();
 	
 	/**
 	 * Gets the corpus for this object.
 	 * 
 	 * @return
 	 */
-	public Corpus getCorpus();
+	Corpus getCorpus();
 	
 	/**
 	 * This method creates a list of trivially HierarchicalPhrases
@@ -78,7 +78,7 @@ public interface Suffixes {
 	 * @param pattern a contiguous phrase
 	 * @return a list of trivially hierarchical phrases
 	 */ 
-	public MatchedHierarchicalPhrases createHierarchicalPhrases(int[] startPositions, Pattern pattern, SymbolTable vocab);
+	MatchedHierarchicalPhrases createHierarchicalPhrases(int[] startPositions, Pattern pattern, SymbolTable vocab);
 	
 	/**
 	 * Returns the number of suffixes in the suffix array, which
@@ -86,7 +86,7 @@ public interface Suffixes {
 	 * 
 	 * @return the number of suffixes in the suffix array
 	 */
-	public int size();
+	int size();
 	
 	/** 
 	 * Gets the position in the corpus corresponding to the
@@ -95,7 +95,7 @@ public interface Suffixes {
 	 * @return the position in the corpus corresponding to the
 	 *         specified index in the suffix array.
 	 */
-	public int getCorpusIndex(int suffixIndex);
+	int getCorpusIndex(int suffixIndex);
 	
 	/**
 	 * Gets the sentence number of the word
@@ -105,14 +105,14 @@ public interface Suffixes {
 	 * @return the sentence number of the word
 	 *         at the specified position in the corpus
 	 */
-	public int getSentenceIndex(int corpusIndex);
+	int getSentenceIndex(int corpusIndex);
 	
 	/**
 	 * 
 	 * @param sentenceIndex
 	 * @return
 	 */
-	public int getSentencePosition(int sentenceIndex);
+	int getSentencePosition(int sentenceIndex);
 	
 	/**
 	 * Finds a phrase in the suffix array.
@@ -121,7 +121,7 @@ public interface Suffixes {
 	 * @return a tuple containing the (inclusive) start and the (inclusive) end bounds
 	 *         in the suffix array for the phrase
 	 */
-	public int[] findPhrase(Phrase phrase);
+	int[] findPhrase(Phrase phrase);
 	
 	/**
 	 * Finds a phrase in the suffix array. The phrase is extracted
@@ -144,7 +144,7 @@ public interface Suffixes {
 	 *         in the suffix array for the phrase, or null if
 	 *         the phrase is not found.
 	 */
-	public int[] findPhrase(Phrase sentence, int phraseStart, int phraseEnd, int lowerBound, int upperBound);
+	int[] findPhrase(Phrase sentence, int phraseStart, int phraseEnd, int lowerBound, int upperBound);
 	
 	/**
 	 * Gets a list of hierarchical phrases that match the pattern if they are already cached
@@ -153,13 +153,13 @@ public interface Suffixes {
 	 * @return a list of hierarchical phrases that match the pattern if they are already cached
 	 *         or null if the pattern is not in the cache.
 	 */
-	public MatchedHierarchicalPhrases getMatchingPhrases(Pattern pattern);
+	MatchedHierarchicalPhrases getMatchingPhrases(Pattern pattern);
 	
 	
 	/** 
 	 * Caches the matching hierarchical phrases for the pattern. 
 	 */
-	public void setMatchingPhrases(Pattern pattern, MatchedHierarchicalPhrases matchings);
+	void setMatchingPhrases(Pattern pattern, MatchedHierarchicalPhrases matchings);
 	
 	/**
 	 * Gets all of the positions in the corpus for the bounds
@@ -168,13 +168,13 @@ public interface Suffixes {
 	 * @param bounds Inclusive bounds in the suffix array
 	 * @return all positions in the corpus for the specified bounds
 	 */
-	public int[] getAllPositions(int[] bounds);
+	int[] getAllPositions(int[] bounds);
 
 	/**
 	 * Gets the hierarchical phrase objects cached by this suffix array.
 	 * 
 	 * @return the hierarchical phrase objects cached by this suffix array
 	 */
-	public Cache<Pattern,MatchedHierarchicalPhrases> getCachedHierarchicalPhrases();
+	Cache<Pattern,MatchedHierarchicalPhrases> getCachedHierarchicalPhrases();
 	
 }

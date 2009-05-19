@@ -28,7 +28,6 @@ import joshua.corpus.vocab.SymbolTable;
  */
 
 public interface FFDPState {
-	public String getSignature(boolean forceRecompute);
-	public String getSignature(SymbolTable symbolTable, boolean forceRecompute);
-	
+	String getSignature(boolean forceRecompute);
+	String getSignature(SymbolTable symbolTable, boolean forceRecompute);
 }

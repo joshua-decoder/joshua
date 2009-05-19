@@ -30,8 +30,7 @@ import joshua.decoder.ff.tm.Grammar;
  * @version $LastChangedDate$
  */
 public interface GrammarFactory {
-
-
+	
 	/**
 	 * Returns a grammar which is adapted to the specified sentence. Depending
 	 * on the implementation this grammar may be generated online, partially
@@ -42,6 +41,6 @@ public interface GrammarFactory {
 	 * 
 	 * @return a grammar that represents a set of translation rules
 	 */
-	public Grammar getGrammarForSentence(Phrase sentence);
+	Grammar getGrammarForSentence(Phrase sentence);
 
 }

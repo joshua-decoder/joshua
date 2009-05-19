@@ -30,33 +30,33 @@ public interface ParallelCorpus {
 	//===============================================================
 	// Method definitions
 	//===============================================================
-		
-		/**
-		 * Gets the source side of the parallel corpus.
-		 * 
-		 * @return the source corpus 
-		 */
-		public Corpus getSourceCorpus();
-
-		/** 
-		 * Gets the target side of the parallel corpus.
-		 * 
-		 * @return the target corpus 
-		 */	
-		public Corpus getTargetCorpus();
-		
-		/**
-		 * Gets the sentence alignment data for the parallel corpus.
-		 * 
-		 * @return the sentence alignment data for the parallel corpus
-		 */
-		public Alignments getAlignments();
-		
-		/**
-		 * Gets the number of aligned sentences in the parallel corpus.
-		 * 
-		 * @return the number of sentences in the corpus.
-		 */
-		public int getNumSentences();
+	
+	/**
+	 * Gets the source side of the parallel corpus.
+	 * 
+	 * @return the source corpus 
+	 */
+	Corpus getSourceCorpus();
+	
+	/** 
+	 * Gets the target side of the parallel corpus.
+	 * 
+	 * @return the target corpus 
+	 */	
+	Corpus getTargetCorpus();
+	
+	/**
+	 * Gets the sentence alignment data for the parallel corpus.
+	 * 
+	 * @return the sentence alignment data for the parallel corpus
+	 */
+	Alignments getAlignments();
+	
+	/**
+	 * Gets the number of aligned sentences in the parallel corpus.
+	 * 
+	 * @return the number of sentences in the corpus.
+	 */
+	int getNumSentences();
 	
 }

@@ -31,12 +31,12 @@ public interface ExternalizableSymbolTable extends SymbolTable, Externalizable {
 	 * 
 	 * @param charsetName Character encoding
 	 */
-	public void setExternalizableEncoding(String charsetName);
+	void setExternalizableEncoding(String charsetName);
 	
 	/**
 	 * Gets the character encoding used when exporting the symbol table.
 	 * 
 	 * @return Character encoding
 	 */
-	public String getExternalizableEncoding();
+	String getExternalizableEncoding();
 }

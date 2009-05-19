@@ -35,7 +35,7 @@ public interface Phrase extends Comparable<Phrase> {
 	 * 
 	 * @return the vocabulary that the words in this phrase are drawn from.
 	 */
-	public SymbolTable getVocab();
+	SymbolTable getVocab();
 	
 	
 	/**
@@ -44,7 +44,7 @@ public interface Phrase extends Comparable<Phrase> {
 	 * @param position Index of a word in this phrase.
 	 * @return the integer word id of the word at the specified position.
 	 */
-	public int getWordID(int position);
+	int getWordID(int position);
 	
 	
 	/**
@@ -52,7 +52,7 @@ public interface Phrase extends Comparable<Phrase> {
 	 * 
 	 * @return the number of words in this phrase.
 	 */
-	public int size();
+	int size();
 
 
 
@@ -74,7 +74,7 @@ public interface Phrase extends Comparable<Phrase> {
 	 * </ul>
 	 * @return List of all possible subphrases.
 	 */
-	public List<Phrase> getSubPhrases();
+	List<Phrase> getSubPhrases();
 	
 	
 	/**
@@ -86,7 +86,7 @@ public interface Phrase extends Comparable<Phrase> {
 	 *         or less
 	 * @see #getSubPhrases()
 	 */
-	public List<Phrase> getSubPhrases(int maxLength);
+	List<Phrase> getSubPhrases(int maxLength);
 	
 	
 	/**
@@ -99,7 +99,7 @@ public interface Phrase extends Comparable<Phrase> {
 	 *
 	 * @see ArrayList#subList(int, int)
 	 */
-	public Phrase subPhrase(int start, int end);
+	Phrase subPhrase(int start, int end);
 	
 	
 	/**
@@ -110,12 +110,12 @@ public interface Phrase extends Comparable<Phrase> {
 	 * @return -1 if this object is less than the parameter, 0
 	 *         if equals, 1 if greater
 	 */
-	public int compareTo(Phrase other);
+	int compareTo(Phrase other);
 
 	/**
 	 * Returns a human-readable String representation of the phrase.
 	 * 
 	 * @return a human-readable String representation of the phrase.
 	 */
-	public String toString();
+	String toString();
 }

@@ -40,6 +40,6 @@ public interface RuleExtractor {
 	 * @param sourceHierarchicalPhrases
 	 * @return translation rules for the provided source language pattern
 	 */
-	public List<Rule> extractRules(Pattern sourcePattern, MatchedHierarchicalPhrases sourceHierarchicalPhrases);
+	List<Rule> extractRules(Pattern sourcePattern, MatchedHierarchicalPhrases sourceHierarchicalPhrases);
 	
 }

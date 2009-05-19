@@ -32,23 +32,23 @@ import joshua.corpus.vocab.SymbolTable;
 public interface Corpus { //extends Externalizable {
 
 //===============================================================
-// Method definitions
+// Attribute definitions
 //===============================================================
 	
 	/**
 	 * @return the integer representation of the Word at the
 	 *         specified position in the corpus.
 	 */
-	public int getWordID(int position);
+	int getWordID(int position);
 	
 	
 	/**
 	 * @return the sentence index associated with the specified
 	 *         position in the corpus.
 	 */
-	public int getSentenceIndex(int position);
+	int getSentenceIndex(int position);
 	
-	public int[] getSentenceIndices(int[] positions);
+	int[] getSentenceIndices(int[] positions);
 	
 	/**
 	 * @return the position in the corpus of the first word of
@@ -56,7 +56,7 @@ public interface Corpus { //extends Externalizable {
 	 *         outside of the bounds of the sentences, then it
 	 *         returns the last position in the corpus + 1.
 	 */
-	public int getSentencePosition(int sentenceID);
+	int getSentencePosition(int sentenceID);
 	
 	/**
 	 * Gets the exclusive end position of a sentence in the corpus.
@@ -66,7 +66,7 @@ public interface Corpus { //extends Externalizable {
 	 *         outside of the bounds of the sentences, then it
 	 *         returns one past the last position in the corpus.
 	 */
-	public int getSentenceEndPosition(int sentenceID);
+	int getSentenceEndPosition(int sentenceID);
 	
 	/** 
 	 * Gets the sentence at the specified index (starting from
@@ -75,19 +75,19 @@ public interface Corpus { //extends Externalizable {
 	 * @return the sentence, or null if the specified sentence
 	 *         number doesn't exist
 	 */
-	public Phrase getSentence(int sentenceIndex);
+	Phrase getSentence(int sentenceIndex);
 	
-
+	
 	/**
 	 * @return the number of words in the corpus.
 	 */
-	public int size();
+	int size();
 	
 	
 	/**
 	 * @return the number of sentences in the corpus.
 	 */
-	public int getNumSentences();
+	int getNumSentences();
 	
 	
 	//===========================================================
@@ -111,16 +111,16 @@ public interface Corpus { //extends Externalizable {
 	 * @return an int that follows the conventions of
 	 *         java.util.Comparator.compareTo()
 	 */
-	public int comparePhrase(int corpusStart, Phrase phrase, int phraseStart, int phraseEnd);
+	int comparePhrase(int corpusStart, Phrase phrase, int phraseStart, int phraseEnd);
 	
 	
 	/**
 	 * compares the phrase that starts at position start with
 	 * the phrase passed in. Compares the entire phrase.
 	 */
-	public int comparePhrase(int corpusStart, Phrase phrase);
+	int comparePhrase(int corpusStart, Phrase phrase);
 	
-	public SymbolTable getVocabulary();
+	SymbolTable getVocabulary();
 	
 	
 	/** 
@@ -136,11 +136,11 @@ public interface Corpus { //extends Externalizable {
 	 * @return an int that follows the conventions of
 	 *         java.util.Comparator.compareTo()
 	 */
-    public int compareSuffixes(int position1, int position2, int maxComparisonLength);
+    int compareSuffixes(int position1, int position2, int maxComparisonLength);
 	
-
-	public ContiguousPhrase getPhrase(int startPosition, int endPosition);
 	
-//	public void write(String corpusFilename, String vocabFilename, String charset) throws IOException;
+	ContiguousPhrase getPhrase(int startPosition, int endPosition);
+	
+//	void write(String corpusFilename, String vocabFilename, String charset) throws IOException;
 }
 

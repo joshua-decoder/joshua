@@ -29,11 +29,11 @@ import java.io.IOException;
 public interface Reader<E> extends Iterable<E>, Iterator<E> {
 	
 	/** Close the reader, freeing all resources. */
-	public void close() throws IOException;
+	void close() throws IOException;
 	
 	/** Determine if the reader is ready to read a line. */
-	public boolean ready() throws IOException;
+	boolean ready() throws IOException;
 	
 	/** Read a "line" and return an object representing it. */
-	public E readLine() throws IOException;
+	E readLine() throws IOException;
 }

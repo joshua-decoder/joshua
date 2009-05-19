@@ -17,7 +17,7 @@ public interface LexicalProbabilities {
 	 * @param targetWord
 	 * @return
 	 */
-	public float sourceGivenTarget(Integer sourceWord, Integer targetWord);
+	float sourceGivenTarget(Integer sourceWord, Integer targetWord);
 	
 	/**
 	 * 
@@ -25,7 +25,7 @@ public interface LexicalProbabilities {
 	 * @param sourceWord
 	 * @return
 	 */
-	public float targetGivenSource(Integer targetWord, Integer sourceWord);
+	float targetGivenSource(Integer targetWord, Integer sourceWord);
 	
 	/**
 	 * 
@@ -33,7 +33,7 @@ public interface LexicalProbabilities {
 	 * @param targetWord
 	 * @return
 	 */
-	public float sourceGivenTarget(String sourceWord, String targetWord);
+	float sourceGivenTarget(String sourceWord, String targetWord);
 	
 	/**
 	 * 
@@ -41,8 +41,8 @@ public interface LexicalProbabilities {
 	 * @param sourceWord
 	 * @return
 	 */
-	public float targetGivenSource(String targetWord, String sourceWord);
+	float targetGivenSource(String targetWord, String sourceWord);
 
-	public Pair<Float, Float> calculateLexProbs(MatchedHierarchicalPhrases sourcePhrase, int sourcePhraseIndex);
+	Pair<Float,Float> calculateLexProbs(MatchedHierarchicalPhrases sourcePhrase, int sourcePhraseIndex);
 	
 }

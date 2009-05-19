@@ -38,7 +38,7 @@ import joshua.decoder.ff.FeatureFunction;
  */
 public interface RuleCollection {
 
-	public void sortRules(ArrayList<FeatureFunction> l_models);
+	void sortRules(ArrayList<FeatureFunction> l_models);
 	
 	/**
 	 * TODO: now, we assume this function will be called only
@@ -56,7 +56,7 @@ public interface RuleCollection {
      * Only CubePruning requires that rules are sorted based on
      * est_cost (confirmed by zhifei)
 	 */
-	public abstract List<Rule> getSortedRules();
+	List<Rule> getSortedRules();
 	
 	/**
 	 * Gets the source side for all rules in this RuleCollection.
@@ -66,7 +66,7 @@ public interface RuleCollection {
 	 * @return the (common) source side for all rules in this
 	 *         RuleCollection
 	 */
-	public abstract int[] getSourceSide();
+	int[] getSourceSide();
 	
 	/**
 	 * Gets the number of nonterminals in the source side of
@@ -77,6 +77,6 @@ public interface RuleCollection {
 	 * @return the (common) number of nonterminals in 
 	 *         the source side of the rules in this RuleCollection
 	 */
-	public abstract int getArity();
+	int getArity();
 	
 }

@@ -4,8 +4,8 @@ import joshua.corpus.MatchedHierarchicalPhrases;
 import joshua.corpus.Span;
 
 public interface Alignments {
-
-	public static final int UNALIGNED = Integer.MAX_VALUE;
+	
+	int UNALIGNED = Integer.MAX_VALUE;
 	
 	/**
 	 * This method looks up target span for the given source
@@ -19,10 +19,10 @@ public interface Alignments {
 	 *         the target corpus, if the span is unaligned the
 	 *         value will be <UNALIGNED, undefined>
 	 */
-	public Span getAlignedTargetSpan(int startSourceIndex, int endSourceIndex);
+	Span getAlignedTargetSpan(int startSourceIndex, int endSourceIndex);
 	
 
-	public Span getAlignedTargetSpan(Span sourceSpan);
+	Span getAlignedTargetSpan(Span sourceSpan);
 	
 	/**
 	 * Gets the indices of all source words aligned with 
@@ -32,7 +32,7 @@ public interface Alignments {
 	 * @return The indices of all source words aligned with 
 	 *         the given location in the target corpus.
 	 */
-	public int[] getAlignedSourceIndices(int targetIndex);
+	int[] getAlignedSourceIndices(int targetIndex);
 
 	/**
 	 * Gets the indices of all target words aligned with 
@@ -42,7 +42,7 @@ public interface Alignments {
 	 * @return The indices of all target words aligned with 
 	 *         the given location in the source corpus.
 	 */
-	public int[] getAlignedTargetIndices(int sourceIndex);
+	int[] getAlignedTargetIndices(int sourceIndex);
 	
 	/**
 	 * This method looks up source span for the given target span
@@ -55,7 +55,7 @@ public interface Alignments {
 	 *         the source corpus, if the span is unaligned the
 	 *         value will be <UNALIGNED, undefined>
 	 */
-	public Span getAlignedSourceSpan(int startTargetIndex, int endTargetIndex);
+	Span getAlignedSourceSpan(int startTargetIndex, int endTargetIndex);
 	
 	/**
 	 * Determines if any terminal in the source phrase aligns with the provided index into the target corpus.
@@ -64,7 +64,7 @@ public interface Alignments {
 	 * @param sourcePhrase
 	 * @return
 	 */
-	public boolean hasAlignedTerminal(int targetIndex, MatchedHierarchicalPhrases sourcePhrase, int sourcePhraseIndex);
+	boolean hasAlignedTerminal(int targetIndex, MatchedHierarchicalPhrases sourcePhrase, int sourcePhraseIndex);
 
 	/**
 	 * Gets a target span that is consistent with the provided
@@ -75,7 +75,7 @@ public interface Alignments {
 	 * @return a target span that is consistent with the provided
 	 *         source span, if one exists, null otherwise
 	 */
-	public Span getConsistentTargetSpan(Span sourceSpan);
+	Span getConsistentTargetSpan(Span sourceSpan);
 
 	
 	/**
@@ -83,5 +83,5 @@ public interface Alignments {
 	 * 
 	 * @return the number of aligned sentences
 	 */
-	public int size();
+	int size();
 }

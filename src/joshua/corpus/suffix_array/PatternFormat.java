@@ -14,7 +14,7 @@ public interface PatternFormat {
 	 * @return <code>true</code> if the last element in the pattern is a nonterminal,
 	 *         <code>false</code> otherwise
 	 */
-	public boolean endsWithNonterminal();
+	boolean endsWithNonterminal();
 	
 	/** 
 	 * Returns <code>true</code> if the first element in the pattern is a nonterminal. 
@@ -22,7 +22,7 @@ public interface PatternFormat {
 	 * @return <code>true</code> if the first element in the pattern is a nonterminal,
 	 *         <code>false</code> otherwise
 	 */
-	public boolean startsWithNonterminal();
+	boolean startsWithNonterminal();
 	
 	/** 
 	 * Returns <code>true</code> if the last two elements in the pattern are terminals. 
@@ -30,7 +30,7 @@ public interface PatternFormat {
 	 * @return <code>true</code> if the last two elements in the pattern are terminals,
 	 *         <code>false</code> otherwise
 	 */
-	public boolean endsWithTwoTerminals();
+	boolean endsWithTwoTerminals();
 	
 	/** 
 	 * Returns <code>true</code> if the second element in the pattern is a terminal. 
@@ -38,7 +38,7 @@ public interface PatternFormat {
 	 * @return <code>true</code> if the second element in the pattern is a terminal,
 	 *         <code>false</code> otherwise
 	 */
-	public boolean secondTokenIsTerminal();
+	boolean secondTokenIsTerminal();
 	
 	
 	/**
@@ -46,5 +46,5 @@ public interface PatternFormat {
 	 * 
 	 * @return the number of nonterminals in the pattern
 	 */
-	public int arity();
+	int arity();
 }

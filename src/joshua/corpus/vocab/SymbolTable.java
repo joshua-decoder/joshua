@@ -43,15 +43,15 @@ public interface SymbolTable {
 	 * 
 	 * Zero is reserved as the UNKNOWN_WORD.
 	 */
-	final int UNKNOWN_WORD = 0;
-
-	/** String representation for out-of-vocabulary words. */
-	final String UNKNOWN_WORD_STRING = "UNK";
+	int UNKNOWN_WORD = 0;
 	
-	public int addNonterminal(String nonterminal);
-	public int addTerminal(String terminal);
-	public int[] addTerminals(String[] words);
-	public int[] addTerminals(String sentence);
+	/** String representation for out-of-vocabulary words. */
+	String UNKNOWN_WORD_STRING = "UNK";
+	
+	int addNonterminal(String nonterminal);
+	int addTerminal(String terminal);
+	int[] addTerminals(String[] words);
+	int[] addTerminals(String sentence);
 	
 	/**
 	 * Gets an integer identifier for the word.
@@ -71,7 +71,7 @@ public interface SymbolTable {
 	 *         or the result of <code>getUnknownWordID<code> 
 	 *         if wordString is not in the vocabulary
 	 */
-	public int getID(String wordString);
+	int getID(String wordString);
 	
 	/**
 	 * Gets the integer identifiers 
@@ -85,7 +85,7 @@ public interface SymbolTable {
 	 * @param sentence String of words, separated by spaces.
 	 * @return Array of integer identifiers for each word in the sentence
 	 */
-	public int[] getIDs(String sentence);
+	int[] getIDs(String sentence);
 	
 	/**
 	 * Gets the String that corresponds to the specified integer identifier.
@@ -99,7 +99,7 @@ public interface SymbolTable {
 	 *         or the result of <code>getUnknownWord</code> if the identifier 
 	 *         does not correspond to a word in the vocabulary
 	 */
-	public String getTerminal(int wordID);
+	String getTerminal(int wordID);
 	
 	/**
 	 * Gets the String that corresponds to the specified integer identifier.
@@ -109,7 +109,7 @@ public interface SymbolTable {
 	 * @param tokenID Integer identifier
 	 * @return the String that corresponds to the specified integer identifier
 	 */
-	public String getWord(int tokenID);
+	String getWord(int tokenID);
 	
 	/**
 	 * Gets the String that corresponds to the sequence of specified integer identifiers.
@@ -117,48 +117,48 @@ public interface SymbolTable {
 	 * @param ids Sequence of integer identifiers
 	 * @return the String that corresponds to the sequence of specified integer identifiers
 	 */
-	public String getWords(int[] ids);
+	String getWords(int[] ids);
 	
 	/**
 	 * 
 	 * @param wordIDs
 	 * @return
 	 */
-	public String getTerminals(int[] wordIDs);
+	String getTerminals(int[] wordIDs);
 	
 	/**
 	 * Gets a collection over all symbol identifiers for the vocabulary.
 	 * @return a collection over all symbol identifiers for the vocabulary
 	 */
-	public Collection<Integer> getAllIDs();
+	Collection<Integer> getAllIDs();
 	
 	/**
 	 * Gets the list of all words represented by this vocabulary.
 	 * 
 	 * @return the list of all words represented by this vocabulary
 	 */
-	public Collection<String> getWords();
+	Collection<String> getWords();
 	
 	/**
 	 * Gets the number of unique words in the vocabulary.
 	 * 
 	 * @return the number of unique words in the vocabulary.
 	 */
-	public int size();
+	int size();
 	
 	/**
 	 * Gets the integer symbol representation of the unknown word.
 	 * 
 	 * @return the integer symbol representation of the unknown word.
 	 */
-	public int getUnknownWordID();
+	int getUnknownWordID();
 	
 	/**
 	 * Gets the string representation of the unknown word.
 	 * 
 	 * @return the string representation of the unknown word.
 	 */
-	public String getUnknownWord();
+	String getUnknownWord();
 	
 	/**
 	 * Returns <code>true</code> if the symbol id 
@@ -168,14 +168,14 @@ public interface SymbolTable {
 	 * @return <code>true</code> if the symbol id 
 	 * represents a nonterminal, <code>false</code> otherwise.
 	 */
-	public boolean isNonterminal(int id);
+	boolean isNonterminal(int id);
 	
 	/**
 	 * Gets the lowest-valued allowable terminal symbol id in this table.
 	 * 
 	 * @return the lowest-valued allowable terminal symbol id in this table.
 	 */
-	public int getLowestID();
+	int getLowestID();
 
 	
 	/**
@@ -185,7 +185,7 @@ public interface SymbolTable {
 	 * 
 	 * @return the highest-valued allowable terminal symbol id in this table.
 	 */	
-	public int getHighestID();
+	int getHighestID();
 	
 	/**
 	 * 
@@ -193,7 +193,7 @@ public interface SymbolTable {
 	 * @param id
 	 * @return
 	 */
-	public int getTargetNonterminalIndex(int id);//first convert id to its String mapping, then call the function below
+	int getTargetNonterminalIndex(int id);//first convert id to its String mapping, then call the function below
 	
 	/**
 	 * 
@@ -201,7 +201,7 @@ public interface SymbolTable {
 	 * @param word
 	 * @return
 	 */
-	public int getTargetNonterminalIndex(String word);
+	int getTargetNonterminalIndex(String word);
 	
 	/**
 	 * 
@@ -210,7 +210,7 @@ public interface SymbolTable {
 	 * @param ntIndexIncrements
 	 * @return
 	 */
-	public String getWords(int[] wordIDs, boolean ntIndexIncrements);
+	String getWords(int[] wordIDs, boolean ntIndexIncrements);
 	
 }
 

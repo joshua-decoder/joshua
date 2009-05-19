@@ -36,7 +36,7 @@ public interface Grammar {
 	/**
 	 * Returns the root of the trie (as a small constant-time function).
 	 */
-	public Trie getTrieRoot();
+	Trie getTrieRoot();
 	
 	
 	/**
@@ -48,23 +48,23 @@ public interface Grammar {
 	 * than the span limit. Other grammars, e.g. for rule-based
 	 * systems, may have different behaviors.
 	 */
-	public boolean hasRuleForSpan(int startIndex, int endIndex, int pathLength);
+	boolean hasRuleForSpan(int startIndex, int endIndex, int pathLength);
 	
 	
 	/**
 	 * Cube-pruning requires that the grammar be sorted based
 	 * on the latest feature functions.
 	 */
-	public void sortGrammar(ArrayList<FeatureFunction> models);
+	void sortGrammar(ArrayList<FeatureFunction> models);
 	
-	public boolean isSorted();
+	boolean isSorted();
 	
-	public void setSorted(boolean sorted);
+	void setSorted(boolean sorted);
 	
 	/**
 	 * return number of rules stored in the grammar
 	 */
-	public int getNumRules();
+	int getNumRules();
 	
 	
 	
@@ -77,11 +77,11 @@ public interface Grammar {
 	 *
 	 * TODO: will try to get rid of owner, have_lm_model, and num_feats
 	 */
-	public Rule constructOOVRule(int num_feats, int sourceWord, boolean have_lm_model);
+	Rule constructOOVRule(int num_feats, int sourceWord, boolean have_lm_model);
 	
 	
 	/**
 	 * return the OOV rule ID
 	 */
-	public int getOOVRuleID();
+	int getOOVRuleID();
 }
