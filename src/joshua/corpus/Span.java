@@ -116,11 +116,7 @@ public class Span implements Iterable<Integer>, Comparable<Span> {
 			return true;
 		} else if (o instanceof Span) {
 			Span other = (Span) o;
-			if (start == other.start && end == other.end) {
-				return true;
-			} else {
-				return false;
-			}
+			return (start == other.start && end == other.end);
 			
 		} else {
 			return false;

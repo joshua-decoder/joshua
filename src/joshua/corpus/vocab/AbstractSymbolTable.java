@@ -104,10 +104,7 @@ public abstract class AbstractSymbolTable implements SymbolTable {
 	
 	/* See Javadoc for SymbolTable interface. */
 	public boolean isNonterminal(int id) {
-		if (id < 0) 
-			return true;
-		else
-			return false;
+		return (id < 0);
 	}
 
 }

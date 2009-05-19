@@ -78,10 +78,7 @@ public class FormatUtil {
 					"[fFdD]?))" +
 			"[\\x00-\\x20]*");// Optional trailing "whitespace"
 
-		if (Pattern.matches(fpRegex, string))
-			return true;
-		else
-			return false;
+		return Pattern.matches(fpRegex, string);
 	}
 	
 	/**

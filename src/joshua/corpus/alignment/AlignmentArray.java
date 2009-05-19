@@ -163,12 +163,8 @@ public class AlignmentArray extends AbstractAlignments {
 		// within bounds
 		Span sourceSpan = getAlignedSourceSpan(targetSpan.start, targetSpan.end);
 		
-		if (sourceSpan.start < startSourceIndex
-		|| sourceSpan.end > endSourceIndex) {
-			return false;
-		} else {
-			return true;
-		}
+		return ! (sourceSpan.start < startSourceIndex
+			|| sourceSpan.end > endSourceIndex);
 	}
 	
 //	/**

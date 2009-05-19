@@ -130,20 +130,12 @@ public class Node extends AbstractGrammar implements Comparable<Node>, Grammar, 
 	
 	
 	public boolean hasExtensions() {
-		if (children.isEmpty()) {
-			return false;
-		} else {
-			return true;
-		}
+		return ! children.isEmpty();
 	}
 	
 	
 	public boolean hasRules() {
-		if (sourceHierarchicalPhrases.isEmpty()) {
-			return false;
-		} else {
-			return true;
-		}
+		return ! sourceHierarchicalPhrases.isEmpty();
 	}
 	
 	
@@ -380,11 +372,7 @@ public class Node extends AbstractGrammar implements Comparable<Node>, Grammar, 
 			return true;
 		} else if (o instanceof Node) {
 			Node other = (Node) o;
-			if (objectID==other.objectID) {
-				return true;
-			} else {
-				return false;
-			}
+			return (objectID == other.objectID);
 		} else {
 			return false;
 		}

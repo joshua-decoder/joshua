@@ -57,11 +57,7 @@ public class LabeledSpan implements Comparable<LabeledSpan> {
 			LabeledSpan other = (LabeledSpan) o;
 			
 			if (span.equals(other.span)) {
-				if (label==other.label) {
-					return true;
-				} else {
-					return false;
-				}
+				return (label == other.label);
 			} else {
 				return false;
 			}

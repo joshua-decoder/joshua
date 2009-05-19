@@ -582,17 +582,11 @@ public class CommandLineParser {
 		}
 		
 		public boolean isOptional() {
-			if (defaultValue==null)
-				return false;
-			else
-				return true;
+			return (null != defaultValue);
 		}
 		
 		public boolean isRequired() {
-			if (defaultValue!=null)
-				return false;
-			else
-				return true;
+			return (null == defaultValue);
 		}
 		
 		public char getShortForm() {
@@ -621,11 +615,7 @@ public class CommandLineParser {
 		}
 		
 		boolean hasValue() {
-			if (optionValue==null && defaultValue==null) {
-				return false;
-			} else {
-				return true;
-			}
+			return ! (null == optionValue && null == defaultValue);
 		}
 		
 		public String toString() {

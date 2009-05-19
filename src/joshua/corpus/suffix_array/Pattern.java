@@ -144,18 +144,11 @@ public class Pattern extends BasicPhrase implements PatternFormat {
 	}
 	
 	public boolean endsWithTwoTerminals() {
-		if (words.length > 1 && words[words.length-1] >= 0 && words[words.length-2] >= 0)
-			return true;
-		else
-			return false;
+		return (words.length > 1 && words[words.length-1] >= 0 && words[words.length-2] >= 0);
 	}
 	
 	public boolean secondTokenIsTerminal() {
-		if (words.length > 1 && words[1]>=0) {
-			return true;
-		} else {
-			return false;
-		}
+		return (words.length > 1 && words[1] >= 0);
 	}
 	
 	/**

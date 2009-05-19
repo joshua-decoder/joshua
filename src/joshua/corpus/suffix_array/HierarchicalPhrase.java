@@ -441,10 +441,7 @@ public class HierarchicalPhrase extends AbstractPhrase {
 	 *         nonterminal, <code>false</code> otherwise.
 	 */
 	public boolean startsWithNonterminal() {
-		if (pattern.words[0] < 0)
-			return true;
-		else
-			return false;
+		return (pattern.words[0] < 0);
 	}
 	
 	
@@ -456,11 +453,7 @@ public class HierarchicalPhrase extends AbstractPhrase {
 	 *         nonterminal, <code>false</code> otherwise.
 	 */
 	public boolean endsWithNonterminal() {
-		if (pattern.words[pattern.words.length-1] < 0) {
-			return true;
-		} else {
-			return false;
-		}
+		return (pattern.words[pattern.words.length-1] < 0);
 	}
 	
 	

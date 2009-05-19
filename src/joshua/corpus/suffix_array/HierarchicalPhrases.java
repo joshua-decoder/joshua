@@ -37,7 +37,7 @@ import joshua.prefix_tree.PrefixTree;
  * 
  * @author Lane Schwartz 
  * @since Jan 9 2009
- * @version $LastChangedDate: 2009-05-08 16:34:32 -0500 (Fri, 08 May 2009) $
+ * @version $LastChangedDate$
  */
 public class HierarchicalPhrases extends AbstractHierarchicalPhrases implements MatchedHierarchicalPhrases { //, Externalizable {
 
@@ -292,10 +292,7 @@ public class HierarchicalPhrases extends AbstractHierarchicalPhrases implements 
 	
 	
 	public boolean isEmpty() {
-		if (size > 0)
-			return false;
-		else
-			return true;
+		return ! (size > 0);
 	}
 	
 	public static HierarchicalPhrases emptyList(SymbolTable vocab) {		
