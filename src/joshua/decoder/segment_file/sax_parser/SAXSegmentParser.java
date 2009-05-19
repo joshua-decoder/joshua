@@ -16,9 +16,8 @@
  * MA 02111-1307 USA
  */
 package joshua.decoder.segment_file.sax_parser;
-// TODO: maybe move this back up to the segment_file package? Would
-//       it really become cluttered enough to need this break out?
 
+import joshua.decoder.segment_file.SegmentFileParser;
 import joshua.decoder.segment_file.Segment;
 import joshua.decoder.segment_file.ConstraintSpan;
 import joshua.decoder.segment_file.ConstraintRule;
@@ -34,6 +33,8 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
+import java.io.InputStream;
+import java.io.FileInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.util.Iterator;
@@ -50,7 +51,8 @@ import java.util.logging.Logger;
  *
  * @author wren ng thornton
  */
-public class SAXSegmentParser extends DefaultHandler {
+public class SAXSegmentParser extends DefaultHandler
+implements SegmentFileParser {
 	
 	/** Co-iterator for consuming output. */
 	private CoIterator<Segment> coit;
@@ -65,18 +67,22 @@ public class SAXSegmentParser extends DefaultHandler {
 	private static final Logger logger =
 		Logger.getLogger(SAXSegmentParser.class.getName());
 	
-	
-	public SAXSegmentParser(CoIterator<Segment> coit) {
-		this.coit     = coit; // BUG: debug for null
+	public SAXSegmentParser() {
 		this.tempText = new Stack<StringBuffer>();
 	}
 	
-	
-	private void parse(File file) throws IOException {
+	public void parseSegmentFile(InputStream in, CoIterator<Segment> coit)
+	throws IOException {
+		if (null == coit) {
+			// Maybe just return immediately instead?
+			throw new IllegalArgumentException("null co-iterator");
+		}
+		this.coit = coit;
+		
 		SAXParserFactory spf = SAXParserFactory.newInstance();
 		try {
 			SAXParser sp = spf.newSAXParser();
-			sp.parse(file, this);
+			sp.parse(in, this);
 			
 		} catch (SAXException e) {
 			// TODO: something better
@@ -241,180 +247,6 @@ public class SAXSegmentParser extends DefaultHandler {
 	
 	
 //===============================================================
-// Local classes
-//===============================================================
-	private static class SAXSegment {
-		private String id; // Does anyone want this?
-		private List<SAXConstraintSpan> spans;
-		
-		public SAXSegment(String id) {
-			this.id    = id;
-			this.spans = new LinkedList<SAXConstraintSpan>();
-		}
-		
-		public void addSpan(SAXConstraintSpan span) {
-			this.spans.add(span);
-		}
-		
-		public Segment typeCheck(String text) throws SAXException {
-			
-			final String sentence =
-				Regex.spaces.replaceAll(text, " ").trim();
-			
-			final List<ConstraintSpan> spans =
-				new LinkedList<ConstraintSpan>();
-			for (SAXConstraintSpan span : this.spans) {
-				spans.add(span.typeCheck(sentence));
-			}
-			
-			return new Segment() {
-				public String sentence() { return sentence; }
-				public Iterator<ConstraintSpan> constraints() {
-					return spans.iterator();
-				}
-			};
-		}
-	}
-	
-	
-	private static class SAXConstraintSpan {
-		private int     start;
-		private int     end;
-		private boolean isHard;
-		private List<SAXConstraintRule> rules;
-		
-		public SAXConstraintSpan(int start, int end, boolean isHard)
-		throws SAXException {
-			// We catch too-large indices at typeCheck time
-			if (start < 0 || end < 0 || end <= start) {
-				throw this.illegalIndexesException();
-			}
-			
-			this.start  = start;
-			this.end    = end;
-			this.isHard = isHard;
-			this.rules  = new LinkedList<SAXConstraintRule>();
-		}
-		
-		private SAXException illegalIndexesException() {
-			return new SAXException(
-				"Illegal indexes in <span start=\""
-				+ start + "\" end=\"" + end + "\">");
-		}
-		
-		public void addRule(SAXConstraintRule rule) {
-			this.rules.add(rule);
-		}
-		
-		public ConstraintSpan typeCheck(String sentence) throws SAXException {
-			final int     start  = this.start;
-			final int     end    = this.end;
-			final boolean isHard = this.isHard;
-			
-			int startIndex = 0;
-			for (int i = 0; i < start; ++i) {
-				startIndex = sentence.indexOf(' ', startIndex+1);
-				if (startIndex < 0) {
-					throw this.illegalIndexesException();
-				}
-			}
-			int endIndex = startIndex;
-			for (int i = start; i < end; ++i) {
-				endIndex = sentence.indexOf(' ', endIndex+1);
-				if (endIndex < 0) {
-					if (end - 1 == i) {
-						endIndex = sentence.length();
-					} else {
-						throw this.illegalIndexesException();
-					}
-				}
-			}
-			String span = sentence.substring(startIndex, endIndex);
-			
-			final List<ConstraintRule> rules =
-				new LinkedList<ConstraintRule>();
-			for (SAXConstraintRule rule : this.rules) {
-				rules.add(rule.typeCheck(span));
-			}
-			
-			return new ConstraintSpan() {
-				public int start()      { return start;  }
-				public int end()        { return end;    }
-				public boolean isHard() { return isHard; }
-				public Iterator<ConstraintRule> rules() {
-					return rules.iterator();
-				}
-			};
-		}
-	}
-	
-	
-	private static class SAXConstraintRule {
-		private double[] features;
-		private String lhs;
-		private String rhs;
-		
-		public void setLhs(String lhs) { this.lhs = lhs; }
-		
-		public void setRhs(String rhs) { this.rhs = rhs; }
-		
-		
-		private static final Regex splitter = new Regex("\\s*;\\s*");
-		public void setFeatures(String features) {
-			if (null != features) {
-				String[] featureStrings = splitter.split(features);
-				
-				this.features = new double[featureStrings.length];
-				for (int i = 0; i < featureStrings.length; ++i) {
-					this.features[i] = Double.parseDouble(featureStrings[i]);
-				}
-			}
-		}
-		
-		
-		public ConstraintRule typeCheck(String span) throws SAXException {
-			
-			ConstraintRule.Type tempType = null;
-			if (null != this.lhs) {
-				if (null == this.rhs) {
-					tempType = ConstraintRule.Type.LHS;
-					// We only setFeatures if we see a
-					// <rhs>, so don't need to check
-					// for error here.
-				} else if (null != this.features) {
-					tempType = ConstraintRule.Type.RULE;
-				}
-			} else if (null != this.rhs) {
-				if (null == this.features) {
-					tempType = ConstraintRule.Type.RHS;
-				} else {
-					throw new SAXException(
-						"Invalid ConstraintRule: Can only specify features attribute on <rhs> if there is a <lhs>");
-				}
-			}
-			if (null == tempType) {
-				throw new SAXException("Invalid ConstraintRule");
-			}
-			
-			
-			final ConstraintRule.Type type = tempType;
-			final double[] features   = this.features;
-			final String   lhs        = this.lhs;
-			final String   nativeRhs  = this.rhs;
-			final String   foreignRhs = span;
-			
-			return new ConstraintRule() {
-				public ConstraintRule.Type type() { return type;       }
-				public String   lhs()             { return lhs;        }
-				public double[] features()        { return features;   }
-				public String   nativeRhs()       { return nativeRhs;  }
-				public String   foreignRhs()      { return foreignRhs; }
-			};
-		}
-	}
-	
-	
-//===============================================================
 // Main method (for debugging, should be moved to ./test/ somewhere)
 //===============================================================
 	public static void main(String[] args) throws IOException {
@@ -424,12 +256,12 @@ public class SAXSegmentParser extends DefaultHandler {
 		}
 		
 		final List<Segment> segments = new LinkedList<Segment>();
-		SAXSegmentParser    parser   = new SAXSegmentParser(
+		new SAXSegmentParser().parseSegmentFile(
+			new FileInputStream(new File(args[0])),
 			new CoIterator<Segment>() {
 				public void coNext(Segment segment) { segments.add(segment); }
 				public void finish() {}
 			});
-		parser.parse(new File(args[0]));
 		
 		int segs = 0;
 		for (Segment s : segments) {
