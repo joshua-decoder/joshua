@@ -26,7 +26,6 @@
  */
 package joshua.corpus;
 
-import java.lang.StringBuffer;
 import java.util.ArrayList;
 
 import joshua.corpus.vocab.SymbolTable;

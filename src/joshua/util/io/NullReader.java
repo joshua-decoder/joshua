@@ -20,7 +20,6 @@ package joshua.util.io;
 import java.util.Iterator;
 import java.io.IOException;
 import java.util.NoSuchElementException;
-import java.lang.UnsupportedOperationException;
 
 
 /**

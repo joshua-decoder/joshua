@@ -19,7 +19,6 @@ package joshua.util.io;
 
 import java.util.Iterator;
 import java.util.NoSuchElementException;
-import java.lang.UnsupportedOperationException;
 
 import java.nio.charset.Charset;
 import java.io.BufferedReader;

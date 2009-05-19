@@ -1,6 +1,5 @@
 package joshua.decoder.ff.tm;
 
-import java.lang.UnsupportedOperationException;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.logging.Level;

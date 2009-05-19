@@ -26,8 +26,6 @@
  */
 package joshua.subsample;
 
-import java.lang.StringBuffer;
-
 
 /**
  * A set of word alignments between an F phrase and an E phrase.

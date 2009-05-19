@@ -30,13 +30,12 @@ package joshua.subsample;
 import joshua.corpus.Phrase;
 import joshua.corpus.vocab.Vocabulary;
 
+import java.util.Iterator;
+import java.util.NoSuchElementException;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.util.Iterator;
-import java.lang.Iterable;
-import java.util.NoSuchElementException;
-import java.io.FileNotFoundException;
 
 
 /**
