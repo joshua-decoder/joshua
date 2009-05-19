@@ -16,9 +16,6 @@
  */
 package joshua.prefix_tree;
 
-import joshua.prefix_tree.Node;
-import joshua.prefix_tree.PrefixTree;
-
 import org.testng.Assert;
 import org.testng.annotations.Test;
 

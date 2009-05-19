@@ -17,8 +17,6 @@
 package joshua.prefix_tree;
 
 import joshua.corpus.vocab.Vocabulary;
-import joshua.prefix_tree.Node;
-import joshua.prefix_tree.PrefixTree;
 
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -32,12 +30,12 @@ import org.testng.annotations.Test;
  */
 public class PrefixTreeTest {
 
-	int it, persuades, him, and, disheartens;
-	int[] sentence;
+	private int it, persuades, him, and, disheartens;
+	private int[] sentence;
 
-	int maxPhraseSpan = 5;
-	int maxPhraseLength = 5;
-	int maxNonterminals = 2;
+	private int maxPhraseSpan = 5;
+	private int maxPhraseLength = 5;
+	private int maxNonterminals = 2;
 	
 	
 	Vocabulary vocab;
@@ -57,6 +55,8 @@ public class PrefixTreeTest {
 		sentence = new int[]{it, persuades, him, and, it, disheartens, him};
 		
 		tree = new PrefixTree(vocab, maxPhraseSpan, maxPhraseLength, maxNonterminals);
+		Assert.assertNotNull(tree);
+		
 		tree.add(sentence);
 		
 	}
@@ -77,44 +77,59 @@ public class PrefixTreeTest {
 		PrefixTree tree = PrefixTree.getDummyPrefixTree();
 		
 		Node bot = new Node(tree,-999);
+		Assert.assertNotNull(bot);
 		Node root = new Node(tree,-1);
+		Assert.assertNotNull(root);
 		bot.children = PrefixTree.botMap(root);
 		root.linkToSuffix(bot);
-		
+		Assert.assertNotNull(root.suffixLink);
 		Assert.assertEquals(root.suffixLink, bot);
 		
 		Node root_x = root.addChild(PrefixTree.X);
+		Assert.assertNotNull(root_x);
 		Node root_x_him = root_x.addChild(him);
+		Assert.assertNotNull(root_x_him);
 		Node root_x_him_x = root_x_him.addChild(PrefixTree.X);
+		Assert.assertNotNull(root_x_him_x);
 		
 		Node root_him = root.addChild(him);
+		Assert.assertNotNull(root_him);
 		Node root_him_x = root_him.addChild(PrefixTree.X);
+		Assert.assertNotNull(root_him_x);
 		
 		Node root_him_suffixLink = root.calculateSuffixLink(him);
+		Assert.assertNotNull(root_him_suffixLink);
 		Assert.assertEquals(root_him_suffixLink, root);
 		root_him.linkToSuffix(root_him_suffixLink);
+		Assert.assertNotNull(root_him.suffixLink);
 		Assert.assertEquals(root_him.suffixLink, root_him_suffixLink);
 		
 		Node root_x_suffixLink = root.calculateSuffixLink(PrefixTree.X);
+		Assert.assertNotNull(root_x_suffixLink);
 		Assert.assertEquals(root_x_suffixLink, root);
 		root_x.linkToSuffix(root_x_suffixLink);
+		Assert.assertNotNull(root_x.suffixLink);
 		Assert.assertEquals(root_x.suffixLink, root_x_suffixLink);
 		
 		Node root_x_him_suffixLink = root_x.calculateSuffixLink(him);
+		Assert.assertNotNull(root_x_him_suffixLink);
 		Assert.assertEquals(root_x_him_suffixLink, root_him);
 		root_x_him.linkToSuffix(root_x_him_suffixLink);
+		Assert.assertNotNull(root_x_him);
 		Assert.assertEquals(root_x_him.suffixLink, root_x_him_suffixLink);
 		
 		Node root_x_him_x_suffixLink = root_x_him.calculateSuffixLink(PrefixTree.X);
+		Assert.assertNotNull(root_x_him_x_suffixLink);
 		Assert.assertEquals(root_x_him_x_suffixLink, root_him_x);
 		root_x_him_x.linkToSuffix(root_x_him_x_suffixLink);
+		Assert.assertNotNull(root_x_him_x.suffixLink);
 		Assert.assertEquals(root_x_him_x.suffixLink, root_x_him_x_suffixLink);
 
 		Node.resetNodeCounter();
 	}	
 	
 	
-	Node root_X, root_it, root_persuades, root_him, root_and, root_disheartens;
+	private Node root_X, root_it, root_persuades, root_him, root_and, root_disheartens;
 	
 	@Test(dependsOnMethods = {"setup"})
 	public void rootChildren() {
@@ -202,14 +217,18 @@ public class PrefixTreeTest {
 		Assert.assertTrue(root_it_persuades.hasChild(him));
 		Assert.assertTrue(root_it_persuades.hasChild(PrefixTree.X));
 		root_it_persuades_him = root_it_persuades.getChild(him);
+		Assert.assertNotNull(root_it_persuades_him);
 		root_it_persuades_X = root_it_persuades.getChild(PrefixTree.X);
+		Assert.assertNotNull(root_it_persuades_X);
 		
 		// Node root_it_disheartens_him, root_it_disheartens_X;
 		Assert.assertEquals(root_it_disheartens.children.size(), 2);
 		Assert.assertTrue(root_it_disheartens.hasChild(him));
 		Assert.assertTrue(root_it_disheartens.hasChild(PrefixTree.X));
 		root_it_disheartens_him = root_it_disheartens.getChild(him);
+		Assert.assertNotNull(root_it_disheartens_him);
 		root_it_disheartens_X = root_it_disheartens.getChild(PrefixTree.X);
+		Assert.assertNotNull(root_it_disheartens_X);
 		
 		// Node root_it_X_him, root_it_X_and, root_it_X_it;
 		Assert.assertEquals(root_it_X.children.size(), 3);
@@ -217,16 +236,20 @@ public class PrefixTreeTest {
 		Assert.assertTrue(root_it_X.hasChild(and));
 		Assert.assertTrue(root_it_X.hasChild(it));
 		root_it_X_him = root_it_X.getChild(him);
+		Assert.assertNotNull(root_it_X_him);
 		root_it_X_and = root_it_X.getChild(and);
+		Assert.assertNotNull(root_it_X_and);
 		root_it_X_it = root_it_X.getChild(it);
-		
+		Assert.assertNotNull(root_it_X_it);
 		
 		// Node root_persuades_him_and, root_persuades_him_X;
 		Assert.assertEquals(root_persuades_him.children.size(), 2);
 		Assert.assertTrue(root_persuades_him.hasChild(and));
 		Assert.assertTrue(root_persuades_him.hasChild(PrefixTree.X));
 		root_persuades_him_and = root_persuades_him.getChild(and);
+		Assert.assertNotNull(root_persuades_him_and);
 		root_persuades_him_X = root_persuades_him.getChild(PrefixTree.X);
+		Assert.assertNotNull(root_persuades_him_X);
 		
 		// Node root_persuades_X_and, root_persuades_X_it, root_persuades_X_disheartens;
 		Assert.assertEquals(root_persuades_X.children.size(), 3);
@@ -234,8 +257,11 @@ public class PrefixTreeTest {
 		Assert.assertTrue(root_persuades_X.hasChild(it));
 		Assert.assertTrue(root_persuades_X.hasChild(disheartens));
 		root_persuades_X_and = root_persuades_X.getChild(and);
+		Assert.assertNotNull(root_persuades_X_and);
 		root_persuades_X_it = root_persuades_X.getChild(it);
+		Assert.assertNotNull(root_persuades_X_it);
 		root_persuades_X_disheartens = root_persuades_X.getChild(disheartens);
+		Assert.assertNotNull(root_persuades_X_disheartens);
 		
 		
 		// Node root_him_and_it, root_him_and_X;
@@ -243,7 +269,9 @@ public class PrefixTreeTest {
 		Assert.assertTrue(root_him_and.hasChild(it));
 		Assert.assertTrue(root_him_and.hasChild(PrefixTree.X));
 		root_him_and_it = root_him_and.getChild(it);
+		Assert.assertNotNull(root_him_and_it);
 		root_him_and_X = root_him_and.getChild(PrefixTree.X);
+		Assert.assertNotNull(root_him_and_X);
 		
 		
 		// Node root_him_X_it, root_him_X_disheartens, root_him_X_him;
@@ -252,8 +280,11 @@ public class PrefixTreeTest {
 		Assert.assertTrue(root_him_X.hasChild(disheartens));
 		Assert.assertTrue(root_him_X.hasChild(him));
 		root_him_X_it = root_him_X.getChild(it);
+		Assert.assertNotNull(root_him_X_it);
 		root_him_X_disheartens = root_him_X.getChild(disheartens);
+		Assert.assertNotNull(root_him_X_disheartens);
 		root_him_X_him = root_him_X.getChild(him);
+		Assert.assertNotNull(root_him_X_him);
 		
 		
 		// Node root_and_it_disheartens, root_and_it_X;
@@ -261,7 +292,9 @@ public class PrefixTreeTest {
 		Assert.assertTrue(root_and_it.hasChild(disheartens));
 		Assert.assertTrue(root_and_it.hasChild(PrefixTree.X));
 		root_and_it_disheartens = root_and_it.getChild(disheartens);
+		Assert.assertNotNull(root_and_it_disheartens);
 		root_and_it_X = root_and_it.getChild(PrefixTree.X);
+		Assert.assertNotNull(root_and_it_X);
 		
 		
 		// Node root_and_X_disheartens, root_and_X_him;
@@ -269,7 +302,9 @@ public class PrefixTreeTest {
 		Assert.assertTrue(root_and_X.hasChild(disheartens));
 		Assert.assertTrue(root_and_X.hasChild(him));
 		root_and_X_disheartens = root_and_X.getChild(disheartens);
+		Assert.assertNotNull(root_and_X_disheartens);
 		root_and_X_him = root_and_X.getChild(him);
+		Assert.assertNotNull(root_and_X_him);
 		
 	}
 	
@@ -601,34 +636,76 @@ public class PrefixTreeTest {
 	@Test(dependsOnMethods = {"rootOtherGreatGrandchildren"})
 	public void rootOtherGreatGrandchildrenSuffixLinks() {
 
+		Assert.assertNotNull(root_persuades_him);
+		Assert.assertNotNull(root_it_persuades_him.suffixLink);
 		Assert.assertEquals(root_it_persuades_him.suffixLink, root_persuades_him);
+		Assert.assertNotNull(root_persuades_X);
+		Assert.assertNotNull(root_it_persuades_X.suffixLink);
 		Assert.assertEquals(root_it_persuades_X.suffixLink, root_persuades_X);
 
+		Assert.assertNotNull(root_disheartens_him);
+		Assert.assertNotNull(root_it_disheartens_him.suffixLink);
 		Assert.assertEquals(root_it_disheartens_him.suffixLink, root_disheartens_him);
+		Assert.assertNotNull(root_disheartens_X);
+		Assert.assertNotNull(root_it_disheartens_X.suffixLink);
 		Assert.assertEquals(root_it_disheartens_X.suffixLink, root_disheartens_X);
 
+		Assert.assertNotNull(root_X_him);
+		Assert.assertNotNull(root_it_X_him.suffixLink);
 		Assert.assertEquals(root_it_X_him.suffixLink, root_X_him);
+		Assert.assertNotNull(root_X_and);
+		Assert.assertNotNull(root_it_X_and.suffixLink);
 		Assert.assertEquals(root_it_X_and.suffixLink, root_X_and);
+		Assert.assertNotNull(root_X_it);
+		Assert.assertNotNull(root_it_X_it.suffixLink);
 		Assert.assertEquals(root_it_X_it.suffixLink, root_X_it);
 
+		Assert.assertNotNull(root_him_and);
+		Assert.assertNotNull(root_persuades_him_and.suffixLink);
 		Assert.assertEquals(root_persuades_him_and.suffixLink, root_him_and);
+		Assert.assertNotNull(root_him_X);
+		Assert.assertNotNull(root_persuades_him_X.suffixLink);
 		Assert.assertEquals(root_persuades_him_X.suffixLink, root_him_X);
 
+		Assert.assertNotNull(root_X_and);
+		Assert.assertNotNull(root_persuades_X_and.suffixLink);
 		Assert.assertEquals(root_persuades_X_and.suffixLink, root_X_and);
+		Assert.assertNotNull(root_X_it);
+		Assert.assertNotNull(root_persuades_X_it.suffixLink);
 		Assert.assertEquals(root_persuades_X_it.suffixLink, root_X_it);
+		Assert.assertNotNull(root_X_disheartens);
+		Assert.assertNotNull(root_persuades_X_disheartens.suffixLink);
 		Assert.assertEquals(root_persuades_X_disheartens.suffixLink, root_X_disheartens);
 
+		Assert.assertNotNull(root_and_it);
+		Assert.assertNotNull(root_him_and_it.suffixLink);
 		Assert.assertEquals(root_him_and_it.suffixLink, root_and_it);
+		Assert.assertNotNull(root_and_X);
+		Assert.assertNotNull(root_him_and_X.suffixLink);
 		Assert.assertEquals(root_him_and_X.suffixLink, root_and_X);
 
+		Assert.assertNotNull(root_X_it);
+		Assert.assertNotNull(root_him_X_it.suffixLink);
 		Assert.assertEquals(root_him_X_it.suffixLink, root_X_it);
+		Assert.assertNotNull(root_X_disheartens);
+		Assert.assertNotNull(root_him_X_disheartens.suffixLink);
 		Assert.assertEquals(root_him_X_disheartens.suffixLink, root_X_disheartens);
+		Assert.assertNotNull(root_X_him);
+		Assert.assertNotNull(root_him_X_him.suffixLink);
 		Assert.assertEquals(root_him_X_him.suffixLink, root_X_him);
 
+		Assert.assertNotNull(root_it_disheartens);
+		Assert.assertNotNull(root_and_it_disheartens.suffixLink);
 		Assert.assertEquals(root_and_it_disheartens.suffixLink, root_it_disheartens);
+		Assert.assertNotNull(root_it_X);
+		Assert.assertNotNull(root_and_it_X.suffixLink);
 		Assert.assertEquals(root_and_it_X.suffixLink, root_it_X);
 
+		Assert.assertNotNull(root_X_disheartens);
+		Assert.assertNotNull(root_and_X_disheartens.suffixLink);
 		Assert.assertEquals(root_and_X_disheartens.suffixLink, root_X_disheartens);
+		Assert.assertNotNull(root_X_him);
+		Assert.assertNotNull(root_and_X_him.suffixLink);
 		Assert.assertEquals(root_and_X_him.suffixLink, root_X_him);
 
 	}
