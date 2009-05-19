@@ -139,7 +139,7 @@ public class JoshuaDecoder {
 		for (GrammarFactory grammarFactory : this.grammarFactories) {
 //			if (grammarFactory instanceof Grammar) {
 			grammarFactory.getGrammarForSentence(null)
-			.sortGrammar(this.featureFunctions);
+				.sortGrammar(this.featureFunctions);
 //			}
 		}
 	}
