@@ -16,6 +16,7 @@
  * MA 02111-1307 USA
  */
 package joshua.decoder.segment_file.sax_parser;
+// TODO: maybe move this back up to the segment_file package? Would it really become cluttered enough to need this break out?
 
 import joshua.decoder.segment_file.Segment;
 import joshua.decoder.segment_file.ConstraintSpan;
@@ -35,7 +36,7 @@ import javax.xml.parsers.SAXParserFactory;
 import java.io.File;
 import java.io.IOException;
 import java.util.Iterator;
-import java.util.LinkedList; // Don't resize arrays. Will replace by CoIterator
+import java.util.LinkedList;
 import java.util.List;
 import java.util.EmptyStackException;
 import java.util.Stack;
@@ -49,14 +50,15 @@ import java.util.logging.Logger;
  */
 public class SAXSegmentParser extends DefaultHandler {
 	
+	/** Co-iterator for consuming output. */
 	private CoIterator<Segment> coit;
 	
 	// For maintaining context
+	private boolean             seenRootTag = false;
 	private Stack<StringBuffer> tempText;
 	private SAXSegment          tempSeg;
 	private SAXConstraintSpan   tempSpan;
 	private SAXConstraintRule   tempRule;
-	
 	
 	private static final Logger logger =
 		Logger.getLogger(SAXSegmentParser.class.getName());
@@ -64,10 +66,7 @@ public class SAXSegmentParser extends DefaultHandler {
 	
 	public SAXSegmentParser(CoIterator<Segment> coit) {
 		this.coit     = coit; // BUG: debug for null
-		
 		this.tempText = new Stack<StringBuffer>();
-		this.tempText.push(new StringBuffer()); // For the top-level
-		// TODO: need to issue warning if we ever add text to this one.
 	}
 	
 	
@@ -99,27 +98,54 @@ public class SAXSegmentParser extends DefaultHandler {
 	public void startElement(
 		String uri, String localName, String qName, Attributes attributes) 
 	throws SAXException {
+		// BUG: need to give warnings if the first one is ever filled, because it will be ignored as extraneous. Can't subclass StringBuffer to override append() because it is final :(
 		this.tempText.push(new StringBuffer());
 		
-		// BUG: debug for missing attributes
-		if ("seg".equalsIgnoreCase(qName)) {
-			this.tempSeg = new SAXSegment(
-				attributes.getValue("id") );
+		if (! this.seenRootTag) {
+			// Flag for so we don't warn on seeing the root tag
+			// This is only because it's not specified in the DTD
+			this.seenRootTag = true;
+			
+		} else if ("seg".equalsIgnoreCase(qName)) {
+			String id = attributes.getValue("id");
+			if (null == id) {
+				throw new SAXException("Missing id attribute for tag <seg>");
+			} else {
+				this.tempSeg = new SAXSegment(id);
+			}
 			
 		} else if ("span".equalsIgnoreCase(qName)) {
+			String start = attributes.getValue("start");
+			String end   = attributes.getValue("end");
+			String hard  = attributes.getValue("hard");
+			if (null == start) {
+				throw new SAXException(
+					"Missing start attribute for tag <span>");
+			} else if (null == end) {
+				throw new SAXException(
+					"Missing end attribute for tag <span>");
+			} else if (null == hard) {
+				hard = "false";
+			}
+			
+			// BUG: debug for malformed attributes
 			this.tempSpan = new SAXConstraintSpan(
-				Integer.parseInt(attributes.getValue("start")),
-				Integer.parseInt(attributes.getValue("end")),
-				Boolean.parseBoolean(attributes.getValue("hard")) );
+				Integer.parseInt(start),
+				Integer.parseInt(end),
+				Boolean.parseBoolean(hard) );
 			
 		} else if ("constraint".equalsIgnoreCase(qName)) {
-			this.tempRule = new SAXConstraintRule(
-				attributes.getValue("features") );
+			String features = attributes.getValue("features");
+			if (null == features) {
+				throw new SAXException("Missing id attribute for tag <seg>");
+			} else {
+				this.tempRule = new SAXConstraintRule(features);
+			}
 			
 		} else if ("lhs".equalsIgnoreCase(qName)) {
-			// TODO: now what?
+			// TODO: anything?
 		} else if ("rhs".equalsIgnoreCase(qName)) {
-			// TODO: now what?
+			// TODO: anything?
 		} else {
 			logger.warning("skipping unknown tag: " + qName);
 		}
@@ -281,7 +307,6 @@ public class SAXSegmentParser extends DefaultHandler {
 		private String rhs;
 		
 		private static final Regex splitter = new Regex("\\s*;\\s*");
-		
 		public SAXConstraintRule(String features) {
 			String[] featureStrings = splitter.split(features);
 			this.features = new double[featureStrings.length];
@@ -318,7 +343,7 @@ public class SAXSegmentParser extends DefaultHandler {
 		}
 		
 		final List<Segment> segments = new LinkedList<Segment>();
-		SAXSegmentParser parser = new SAXSegmentParser(
+		SAXSegmentParser    parser   = new SAXSegmentParser(
 			new CoIterator<Segment>() {
 				public void coNext(Segment segment) { segments.add(segment); }
 				public void finish() {}
@@ -349,10 +374,11 @@ public class SAXSegmentParser extends DefaultHandler {
 					System.out.println(
 						"<lhs>" + rule.lhs() + "</lhs><rhs>" + rule.rhs() + "</rhs>");
 				}
-				System.out.println("</span>");
 				System.out.println("# Parsed " + rs + " rules for this span");
+				System.out.println("</span>");
 			}
 			System.out.println("# Parsed " + spans + " spans for this segment");
+			System.out.println("");
 		}
 		System.out.println("# Parsed " + segs + " segments");
 	}
