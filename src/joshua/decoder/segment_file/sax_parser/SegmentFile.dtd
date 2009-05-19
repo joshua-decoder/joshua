@@ -1,0 +1,24 @@
+<!-- This DTD expresses the structure expected by the SAXSegmentParser. This doesn't include any root tag so far. The parser will mostly ignore anything it doesn't understand. -->
+
+<!ELEMENT seg (#PCDATA | span)*>
+<!ATTLIST seg
+	id CDATA #REQUIRED
+	>
+
+<!ELEMENT span (constraint+)>
+<!ATTLIST span
+	start CDATA #REQUIRED
+	end   CDATA #REQUIRED
+	hard  (true | false) #DEFAULT "false"
+	>
+
+<!--
+	DTD can't say that at least one of lhs or rhs is required.
+-->
+<!ELEMENT constraint (lhs?,rhs?)>
+<!ATTLIST constraint
+	features CDATA #IMPLIED
+	> <!-- required? or some default? -->
+
+<!ELEMENT lhs (#PCDATA)>
+<!ELEMENT rhs (#PCDATA)>

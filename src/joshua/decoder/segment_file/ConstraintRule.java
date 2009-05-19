@@ -46,5 +46,5 @@ public interface ConstraintRule {
 	/**
 	 * Return the value for the i'th grammar feature.
 	 */
-	float feature(int i);
+	double feature(int i);
 }
