@@ -51,13 +51,14 @@ public interface ConstraintSpan {
 	/**
 	 * Return the ending index of the span covered by this
 	 * constraint. Clients may assume
-	 * <code>this.end() >= 1 + this.start()</code>.
+	 * <code>this.end() &gt;= 1 + this.start()</code>.
 	 */
 	int end();
 	
 	/**
 	 * Return whether this is a hard constraint which should
-	 * override the grammar.
+	 * override the grammar. This value only really matters for
+	 * sets of RULE type constraints.
 	 */
 	boolean isHard();
 	

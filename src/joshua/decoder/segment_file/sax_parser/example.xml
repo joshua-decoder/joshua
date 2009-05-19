@@ -1,26 +1,32 @@
 <?xml version="1.0"?>
 <srcset>
-	<seg id="42">blah blah blah .
-        <span start="0" end="1" hard="true">
-            <constraint features="0.5;0.25">
-                <lhs>A</lhs>
-				<rhs>a</rhs></constraint>
-            <constraint features="0.5;0.75">
-                <lhs>A</lhs><rhs>an</rhs></constraint>
-        </span>
-    </seg>
-	<seg id="42">blah blah blah .
-        <span start="1" end="2" hard="false">
-            <constraint features="0.5;0.25">
-                <lhs>B</lhs><rhs>b</rhs></constraint>
-            <constraint features="0.5;0.75">
-                <lhs>B</lhs><rhs>bn</rhs></constraint>
-        </span>
-        <span start="2" end="3">
-            <constraint features="0.5;0.25">
-                <lhs>C</lhs><rhs>c</rhs></constraint>
-            <constraint features="0.5;0.75">
-                <lhs>D</lhs><rhs>dn</rhs></constraint>
-        </span>
-    </seg>
+	<seg id="42">Blah blah halb .
+		<span start="0" end="1" hard="true">
+			<constraint>
+				<lhs>A</lhs><rhs features="0.5;0.25">a</rhs></constraint>
+			<constraint>
+				<lhs>A</lhs><rhs features="0.5;0.75">an</rhs></constraint>
+		</span>
+	</seg>
+	garbage
+	<seg id="42">Yada
+		<span start="0" end="2">
+			<constraint>
+				<lhs>A</lhs><rhs features="0.5;0.25">a</rhs></constraint>
+			<constraint>
+				<lhs>A</lhs><rhs features="0.5;0.75">an</rhs></constraint>
+		</span>
+		<span start="1" end="2" hard="false">
+			<constraint>
+				<lhs>A</lhs><rhs features="0.5;0.25">a</rhs></constraint>
+			<constraint><lhs>B</lhs></constraint>
+		</span>
+		yada
+		<span start="2" end="4">
+			<constraint>
+				<lhs>A</lhs><rhs features="0.5;0.25">a</rhs></constraint>
+			<constraint><rhs>dn</rhs></constraint>
+		</span>
+		daya .
+	</seg>
 </srcset>

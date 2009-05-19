@@ -13,12 +13,22 @@
 	>
 
 <!--
-	DTD can't say that at least one of lhs or rhs is required.
+	The actual constraints are very GADTish, but DTD cannot express these constraints. The three cases that are accepted are:
+	
+	(1) <constraint><lhs>...</lhs><rhs features="...">...</rhs></constraint>
+		This is, essentially, defining a new rule according to the same style as the original grammar.
+	
+	(2) <constraint><lhs>...</lhs></constraint>
+		This is always considered hard
+	
+	(3) <constraint><rhs>...</rhs></constraint>
+		This acts as a filter on the original grammar.
 -->
 <!ELEMENT constraint (lhs?,rhs?)>
-<!ATTLIST constraint
-	features CDATA #IMPLIED
-	> <!-- required? or some default? -->
 
 <!ELEMENT lhs (#PCDATA)>
+
 <!ELEMENT rhs (#PCDATA)>
+<!ATTLIST rhs
+	features CDATA #IMPLIED
+	>
