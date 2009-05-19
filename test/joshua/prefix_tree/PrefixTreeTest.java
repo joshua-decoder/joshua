@@ -633,7 +633,7 @@ public class PrefixTreeTest {
 		
 	}
 
-	@Test(dependsOnMethods = {"rootOtherGreatGrandchildren"})
+	@Test(dependsOnMethods = {"rootXChildren","rootOtherGreatGrandchildren"})
 	public void rootOtherGreatGrandchildrenSuffixLinks() {
 
 		Assert.assertNotNull(root_persuades_him);
@@ -710,7 +710,7 @@ public class PrefixTreeTest {
 
 	}
 	
-	@Test(dependsOnMethods = {"rootOtherGreatGreatGrandchildren"})
+	@Test(dependsOnMethods = {"rootXGrandchildren","rootOtherGreatGreatGrandchildren"})
 	public void rootOtherGreatGreatGrandchildrenSuffixLinks() {
 		
 		Assert.assertEquals(root_it_persuades_him_and.suffixLink, root_persuades_him_and);
@@ -821,10 +821,15 @@ public class PrefixTreeTest {
 		Assert.assertEquals(root_X.children.size(), 5);
 		
 		root_X_persuades = root_X.getChild(persuades);
+		Assert.assertNotNull(root_X_persuades);
 		root_X_him = root_X.getChild(him);
+		Assert.assertNotNull(root_X_him);
 		root_X_and = root_X.getChild(and);
+		Assert.assertNotNull(root_X_and);
 		root_X_it = root_X.getChild(it);
+		Assert.assertNotNull(root_X_it);
 		root_X_disheartens = root_X.getChild(disheartens);
+		Assert.assertNotNull(root_X_disheartens);
 
 	}
 	
