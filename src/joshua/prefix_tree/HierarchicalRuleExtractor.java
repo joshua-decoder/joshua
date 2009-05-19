@@ -176,15 +176,15 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 							1 + counterLexProbs.get(translation));
 				}
 			}
-
-
+			
+			
 			Integer count = counts.get(translation);
-
-			if (count==null) count = 1;
-			else count++;
-
+			if (null == count) {
+				count = 1;
+			} else {
+				count++;
+			}
 			counts.put(translation, count);
-
 		}
 
 		double p_e_given_f_denominator = translations.size();

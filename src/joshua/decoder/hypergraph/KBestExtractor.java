@@ -578,44 +578,46 @@ public class KBestExtractor {
 		
 		
 		private void compute_cost(HGNode parent_item, HyperEdge dt, double[] model_cost, ArrayList<FeatureFunction> l_models){
-			if(model_cost==null) return;
+			if (null == model_cost) return;
 			//System.out.println("Rule is: " + dt.rule.toString());
 			
-			for(int k=0; k< l_models.size(); k++){
-				FeatureFunction m = (FeatureFunction) l_models.get(k);	
-				double t_res =0;
-							
-				if(dt.get_rule()!=null){//hyperedges under goal item do not have rules
+			for (int k = 0; k < l_models.size(); k++) {
+				FeatureFunction m = (FeatureFunction) l_models.get(k);
+				double t_res = 0;
+				
+				if (null != dt.get_rule()) { // hyperedges under goal item do not have rules
 					FFTransitionResult tem_tbl =  HyperGraph.computeTransition(dt, m, parent_item.i, parent_item.j);
 					t_res = tem_tbl.getTransitionCost();
-				}else{//final transtion
+				} else { // final transtion
 					t_res = HyperGraph.computeFinalTransition(dt, m);
 				}
 				model_cost[k] += t_res;
-			}			
+			}
 		}
 		
 		
 		//natual order by cost
 		public int compareTo(DerivationState another) {
-		    if(this.cost < ((DerivationState)another).cost)
-		    	return -1;
-		    else if(this.cost == ((DerivationState)another).cost)
-		    	return 0;
-		    else
-		    	return 1; 
+			if (this.cost < ((DerivationState)another).cost) {
+				return -1;
+			} else if (this.cost == ((DerivationState)another).cost) {
+				return 0;
+			} else {
+				return 1;
+			}
 		}
 	}//end of Class DerivationState
-
-	private String getDerivationStateSignature(HyperEdge p_edge2, int[] ranks2, int pos){
+	
+	private String getDerivationStateSignature(HyperEdge p_edge2, int[] ranks2, int pos) {
 		StringBuffer res = new StringBuffer();
 		//res.apend(p_edge2.toString());//Wrong: this may not be unique to identify a hyperedge (as it represent the class name and hashcode which my be equal for different objects)
 		res.append(pos);
-		if(ranks2!=null)
-			for(int i=0; i<ranks2.length;i++){
+		if (null != ranks2) {
+			for (int i = 0; i < ranks2.length; i++) {
 				res.append(" ");
-				res.append(ranks2[i]);			
+				res.append(ranks2[i]);
 			}
+		}
 		return res.toString();
 	}
 }

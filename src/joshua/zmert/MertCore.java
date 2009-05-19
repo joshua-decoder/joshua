@@ -2238,166 +2238,201 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
     processArgsArray(args,true);
   }
 
-  private void processArgsArray(String[] args, boolean firstTime)
-  {
-    /* set default values */
-    // Relevant files
-    dirPrefix = null;
-    sourceFileName = null;
-    refFileName = "reference.txt";
-    refsPerSen = 1;
-    textNormMethod = 1;
-    paramsFileName = "params.txt";
-    finalLambdaFileName = null;
-    // MERT specs
-    metricName = "BLEU";
-    metricOptions = new String[2];
-    metricOptions[0] = "4";
-    metricOptions[1] = "closest";
-    maxMERTIterations = 20;
-    prevMERTIterations = 20;
-    minMERTIterations = 5;
-    stopMinIts = 3;
-    stopSigValue = -1;
+	private void processArgsArray(String[] args, boolean firstTime) {
+	/* set default values */
+	// Relevant files
+	dirPrefix = null;
+	sourceFileName = null;
+	refFileName = "reference.txt";
+	refsPerSen = 1;
+	textNormMethod = 1;
+	paramsFileName = "params.txt";
+	finalLambdaFileName = null;
+	// MERT specs
+	metricName = "BLEU";
+	metricOptions = new String[2];
+	metricOptions[0] = "4";
+	metricOptions[1] = "closest";
+	maxMERTIterations = 20;
+	prevMERTIterations = 20;
+	minMERTIterations = 5;
+	stopMinIts = 3;
+	stopSigValue = -1;
 //
 //  /* possibly other early stopping criteria here */
 //
-    saveInterFiles = 3;
-    initsPerIt = 20;
-    oneModificationPerIteration = false;
-    randInit = false;
-    seed = System.currentTimeMillis();
+	saveInterFiles = 3;
+	initsPerIt = 20;
+	oneModificationPerIteration = false;
+	randInit = false;
+	seed = System.currentTimeMillis();
 //    useDisk = 2;
-    // Decoder specs
-    decoderCommandFileName = null;
-    decoderOutFileName = "output.nbest";
-    validDecoderExitValue = 0;
-    decoderConfigFileName = "dec_cfg.txt";
-    sizeOfNBest = 100;
-    fakeFileNamePrefix = null;
-    // Output specs
-    verbosity = 1;
-    decVerbosity = 0;
-
-    int i = 0;
-
-    while (i < args.length) {
-      String option = args[i];
-      // Relevant files
-      if (option.equals("-dir")) { dirPrefix = args[i+1]; }
-      else if (option.equals("-s")) { sourceFileName = args[i+1]; }
-      else if (option.equals("-r")) { refFileName = args[i+1]; }
-      else if (option.equals("-rps")) {
-        refsPerSen = Integer.parseInt(args[i+1]);
-        if (refsPerSen < 1) { println("refsPerSen must be positive."); System.exit(10); }
-      }
-      else if (option.equals("-txtNrm")) {
-        textNormMethod = Integer.parseInt(args[i+1]);
-        if (textNormMethod < 0 || textNormMethod > 4) { println("textNormMethod should be between 0 and 4"); System.exit(10); }
-      }
-      else if (option.equals("-p")) { paramsFileName = args[i+1]; }
-      else if (option.equals("-fin")) { finalLambdaFileName = args[i+1]; }
-      // MERT specs
-      else if (option.equals("-m")) {
-        metricName = args[i+1];
-        if (EvaluationMetric.knownMetricName(metricName)) {
-          int optionCount = EvaluationMetric.metricOptionCount(metricName);
-          metricOptions = new String[optionCount];
-          for (int opt = 0; opt < optionCount; ++opt) { metricOptions[opt] = args[i+opt+2]; }
-          i += optionCount;
-        } else {
-          println("Unknown metric name " + metricName + "."); System.exit(10);
-        }
-      }
-      else if (option.equals("-maxIt")) {
-        maxMERTIterations = Integer.parseInt(args[i+1]);
-        if (maxMERTIterations < 1) { println("maxMERTIts must be positive."); System.exit(10); }
-      }
-      else if (option.equals("-minIt")) {
-        minMERTIterations = Integer.parseInt(args[i+1]);
-        if (minMERTIterations < 1) { println("minMERTIts must be positive."); System.exit(10); }
-      }
-      else if (option.equals("-prevIt")) {
-        prevMERTIterations = Integer.parseInt(args[i+1]);
-        if (prevMERTIterations < 0) { println("prevMERTIts must be non-negative."); System.exit(10); }
-      }
-      else if (option.equals("-stopIt")) {
-        stopMinIts = Integer.parseInt(args[i+1]);
-        if (stopMinIts < 1) { println("stopMinIts must be positive."); System.exit(10); }
-      }
-      else if (option.equals("-stopSig")) {
-        stopSigValue = Double.parseDouble(args[i+1]);
-      }
+	// Decoder specs
+	decoderCommandFileName = null;
+	decoderOutFileName = "output.nbest";
+	validDecoderExitValue = 0;
+	decoderConfigFileName = "dec_cfg.txt";
+	sizeOfNBest = 100;
+	fakeFileNamePrefix = null;
+	// Output specs
+	verbosity = 1;
+	decVerbosity = 0;
+	
+	int i = 0;
+	
+	while (i < args.length) {
+		String option = args[i];
+		// Relevant files
+		if (option.equals("-dir")) { dirPrefix = args[i+1];
+		} else if (option.equals("-s")) { sourceFileName = args[i+1];
+		} else if (option.equals("-r")) { refFileName = args[i+1];
+		} else if (option.equals("-rps")) {
+			refsPerSen = Integer.parseInt(args[i+1]);
+			if (refsPerSen < 1) {
+				println("refsPerSen must be positive.");
+				System.exit(10);
+			}
+		} else if (option.equals("-txtNrm")) {
+			textNormMethod = Integer.parseInt(args[i+1]);
+			if (textNormMethod < 0 || textNormMethod > 4) {
+				println("textNormMethod should be between 0 and 4");
+				System.exit(10);
+			}
+		} else if (option.equals("-p")) { paramsFileName = args[i+1];
+		} else if (option.equals("-fin")) { finalLambdaFileName = args[i+1];
+			// MERT specs
+		} else if (option.equals("-m")) {
+			metricName = args[i+1];
+			if (EvaluationMetric.knownMetricName(metricName)) {
+				int optionCount = EvaluationMetric.metricOptionCount(metricName);
+				metricOptions = new String[optionCount];
+				for (int opt = 0; opt < optionCount; ++opt) {
+					metricOptions[opt] = args[i+opt+2];
+				}
+				i += optionCount;
+			} else {
+				println("Unknown metric name " + metricName + ".");
+				System.exit(10);
+			}
+		} else if (option.equals("-maxIt")) {
+			maxMERTIterations = Integer.parseInt(args[i+1]);
+			if (maxMERTIterations < 1) {
+				println("maxMERTIts must be positive.");
+				System.exit(10);
+			}
+		} else if (option.equals("-minIt")) {
+			minMERTIterations = Integer.parseInt(args[i+1]);
+			if (minMERTIterations < 1) {
+				println("minMERTIts must be positive.");
+				System.exit(10);
+			}
+		} else if (option.equals("-prevIt")) {
+			prevMERTIterations = Integer.parseInt(args[i+1]);
+			if (prevMERTIterations < 0) {
+				println("prevMERTIts must be non-negative.");
+				System.exit(10);
+			}
+		} else if (option.equals("-stopIt")) {
+			stopMinIts = Integer.parseInt(args[i+1]);
+			if (stopMinIts < 1) {
+				println("stopMinIts must be positive.");
+				System.exit(10);
+			}
+		} else if (option.equals("-stopSig")) {
+			stopSigValue = Double.parseDouble(args[i+1]);
+		}
 //
 //  /* possibly other early stopping criteria here */
 //
-      else if (option.equals("-save")) {
-        saveInterFiles = Integer.parseInt(args[i+1]);
-        if (saveInterFiles < 0 || saveInterFiles > 3) { println("save should be between 0 and 3"); System.exit(10); }
-      }
-      else if (option.equals("-ipi")) {
-        initsPerIt = Integer.parseInt(args[i+1]);
-        if (initsPerIt < 1) { println("initsPerIt must be positive."); System.exit(10); }
-      }
-      else if (option.equals("-opi")) {
-        int opi = Integer.parseInt(args[i+1]);
-        if (opi == 1) oneModificationPerIteration = true;
-        else if (opi == 0) oneModificationPerIteration = false;
-        else { println("oncePerIt must be either 0 or 1."); System.exit(10); }
-      }
-      else if (option.equals("-rand")) {
-        int rand = Integer.parseInt(args[i+1]);
-        if (rand == 1) randInit = true;
-        else if (rand == 0) randInit = false;
-        else { println("randInit must be either 0 or 1."); System.exit(10); }
-      }
-      else if (option.equals("-seed")) {
-        if (args[i+1].equals("time")) {
-          seed = System.currentTimeMillis();
-        } else {
-          seed = Long.parseLong(args[i+1]);
-        }
-      }
+		else if (option.equals("-save")) {
+			saveInterFiles = Integer.parseInt(args[i+1]);
+			if (saveInterFiles < 0 || saveInterFiles > 3) {
+				println("save should be between 0 and 3");
+				System.exit(10);
+			}
+		} else if (option.equals("-ipi")) {
+			initsPerIt = Integer.parseInt(args[i+1]);
+			if (initsPerIt < 1) {
+				println("initsPerIt must be positive.");
+				System.exit(10);
+			}
+		} else if (option.equals("-opi")) {
+			int opi = Integer.parseInt(args[i+1]);
+			if (opi == 1) {
+				oneModificationPerIteration = true;
+			} else if (opi == 0) {
+				oneModificationPerIteration = false;
+			} else {
+				println("oncePerIt must be either 0 or 1.");
+				System.exit(10);
+			}
+		} else if (option.equals("-rand")) {
+			int rand = Integer.parseInt(args[i+1]);
+			if (rand == 1) {
+				randInit = true;
+			} else if (rand == 0) {
+				randInit = false;
+			} else {
+				println("randInit must be either 0 or 1.");
+				System.exit(10);
+			}
+		} else if (option.equals("-seed")) {
+			if (args[i+1].equals("time")) {
+				seed = System.currentTimeMillis();
+			} else {
+				seed = Long.parseLong(args[i+1]);
+			}
+		}
 /*
-      else if (option.equals("-ud")) {
-        useDisk = Integer.parseInt(args[i+1]);
-        if (useDisk < 0 || useDisk > 2) {
-          println("useDisk should be between 0 and 2");
-          System.exit(10);
-        }
-      }
+		else if (option.equals("-ud")) {
+			useDisk = Integer.parseInt(args[i+1]);
+			if (useDisk < 0 || useDisk > 2) {
+				println("useDisk should be between 0 and 2");
+				System.exit(10);
+			}
+		}
 */
-      // Decoder specs
-      else if (option.equals("-cmd")) { decoderCommandFileName = args[i+1]; }
-      else if (option.equals("-decOut")) { decoderOutFileName = args[i+1]; }
-      else if (option.equals("-decExit")) {
-        validDecoderExitValue = Integer.parseInt(args[i+1]);
-      }
-      else if (option.equals("-dcfg")) { decoderConfigFileName = args[i+1]; }
-      else if (option.equals("-N")) {
-        sizeOfNBest = Integer.parseInt(args[i+1]);
-        if (sizeOfNBest < 1) { println("N must be positive."); System.exit(10); }
-      }
-      // Output specs
-      else if (option.equals("-v")) {
-        verbosity = Integer.parseInt(args[i+1]);
-        if (verbosity < 0 || verbosity > 4) { println("verbosity should be between 0 and 4"); System.exit(10); }
-      }
-      else if (option.equals("-decV")) {
-        decVerbosity = Integer.parseInt(args[i+1]);
-        if (decVerbosity < 0 || decVerbosity > 1) { println("decVerbosity should be either 0 or 1"); System.exit(10); }
-      }
-      else if (option.equals("-fake")) { fakeFileNamePrefix = args[i+1]; }
-      else {
-        println("Unknown option " + option); System.exit(10);
-      }
-
-      i += 2;
-
-    } // while (i)
-
-    if (maxMERTIterations < minMERTIterations) {
-
+		// Decoder specs
+		else if (option.equals("-cmd")) {
+			decoderCommandFileName = args[i+1];
+		} else if (option.equals("-decOut")) {
+			decoderOutFileName = args[i+1];
+		} else if (option.equals("-decExit")) {
+			validDecoderExitValue = Integer.parseInt(args[i+1]);
+		} else if (option.equals("-dcfg")) {
+			decoderConfigFileName = args[i+1];
+		} else if (option.equals("-N")) {
+			sizeOfNBest = Integer.parseInt(args[i+1]);
+			if (sizeOfNBest < 1) {
+				println("N must be positive.");
+				System.exit(10);
+			}
+		}
+		// Output specs
+		else if (option.equals("-v")) {
+			verbosity = Integer.parseInt(args[i+1]);
+			if (verbosity < 0 || verbosity > 4) {
+				println("verbosity should be between 0 and 4");
+				System.exit(10);
+			}
+		} else if (option.equals("-decV")) {
+			decVerbosity = Integer.parseInt(args[i+1]);
+			if (decVerbosity < 0 || decVerbosity > 1) {
+				println("decVerbosity should be either 0 or 1"); 
+				System.exit(10);
+			}
+		} else if (option.equals("-fake")) { fakeFileNamePrefix = args[i+1];
+		} else {
+			println("Unknown option " + option);
+			System.exit(10);
+		}
+		
+		i += 2;
+		
+	} // while (i)
+	
+	if (maxMERTIterations < minMERTIterations) {
+		
       if (firstTime)
         println("Warning: maxMERTIts is smaller than minMERTIts; "
               + "decreasing minMERTIts from " + minMERTIterations + " to maxMERTIts "
@@ -3275,33 +3310,27 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
 
 // based on:
 // http://www.javaworld.com/javaworld/jw-12-2000/jw-1229-traps.html?page=4
-class StreamGobbler extends Thread
-{
-  InputStream istream;
-  boolean verbose;
-
-  StreamGobbler(InputStream is, int p)
-  {
-    istream = is;
-    if (p == 0) verbose = false;
-    else verbose = true;
-  }
-
-  public void run()
-  {
-    try
-    {
-      InputStreamReader isreader = new InputStreamReader(istream);
-      BufferedReader br = new BufferedReader(isreader);
-      String line = null;
-      while ((line = br.readLine()) != null) {
-        if (verbose) System.out.println(line);    
-      }
-    } catch (IOException ioe)
-      {
-        ioe.printStackTrace();  
-      }
-  }
+class StreamGobbler extends Thread {
+	InputStream istream;
+	boolean verbose;
+	
+	StreamGobbler(InputStream is, int p) {
+		istream = is;
+		verbose = (p != 0);
+	}
+	
+	public void run() {
+		try {
+			InputStreamReader isreader = new InputStreamReader(istream);
+			BufferedReader br = new BufferedReader(isreader);
+			String line = null;
+			while ((line = br.readLine()) != null) {
+				if (verbose) System.out.println(line);
+			}
+		} catch (IOException ioe) {
+			ioe.printStackTrace();
+		}
+	}
 }
 
 

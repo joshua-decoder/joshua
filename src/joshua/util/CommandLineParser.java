@@ -401,12 +401,13 @@ public class CommandLineParser {
 		} else if (booleanLongForms.containsKey(key)) {
 			Option<Boolean> o = booleanLongForms.get(key);
 			
-			if (localizedTrueStrings.contains(value.toLowerCase()))
+			if (localizedTrueStrings.contains(value.toLowerCase())) {
 				o.setValue(true);
-			else if (localizedFalseStrings.contains(value.toLowerCase()))
+			} else if (localizedFalseStrings.contains(value.toLowerCase())) {
 				o.setValue(false);
-			else
+			} else {
 				throw new CommandLineParserException("Invalid value \"" + value+ "\" for boolean option " + key);
+			}
 			
 			return o;
 		} else {
@@ -456,12 +457,13 @@ public class CommandLineParser {
 		} else if (booleanShortForms.containsKey(key)) {
 			Option<Boolean> o = booleanShortForms.get(key);
 			
-			if (localizedTrueStrings.contains(value.toLowerCase()))
+			if (localizedTrueStrings.contains(value.toLowerCase())) {
 				o.setValue(true);
-			else if (localizedFalseStrings.contains(value.toLowerCase()))
+			} else if (localizedFalseStrings.contains(value.toLowerCase())) {
 				o.setValue(false);
-			else
+			} else {
 				throw new CommandLineParserException("Invalid value \"" + value+ "\" for boolean option " + key);
+			}
 			
 			return o;
 		} else {
@@ -606,12 +608,13 @@ public class CommandLineParser {
 		}
 		
 		OptionType getValue() {
-			if (optionValue != null)
+			if (optionValue != null) {
 				return optionValue;	
-			else if (defaultValue != null)
+			} else if (defaultValue != null) {
 				return defaultValue;
-			else
-				throw new CommandLineParserException("Unable to get value because option has not been initialized and does not have a default value: " + this.toString());				
+			} else {
+				throw new CommandLineParserException("Unable to get value because option has not been initialized and does not have a default value: " + this.toString());
+			}
 		}
 		
 		boolean hasValue() {
@@ -621,30 +624,36 @@ public class CommandLineParser {
 		public String toString() {
 
 			String formattedShortForm;
-			if (shortForm==Option.MISSING_SHORT_FORM)
+			if (shortForm == Option.MISSING_SHORT_FORM) {
 				formattedShortForm = "";
-			else
+			} else {
 				formattedShortForm = "-" + shortForm;
+			}
 
 			String formattedLongForm;
-			if (longForm.equals(Option.MISSING_LONG_FORM))
+			if (longForm.equals(Option.MISSING_LONG_FORM)) {
 				formattedLongForm = "";
-			else
+			} else {
 				formattedLongForm = "--" + longForm;
+			}
 			
-			if (shortForm!=Option.MISSING_SHORT_FORM && !longForm.equals(Option.MISSING_LONG_FORM))
+			if (shortForm != Option.MISSING_SHORT_FORM && !longForm.equals(Option.MISSING_LONG_FORM)) {
 				formattedShortForm += ",";
+			}
 			
-			if (valueVariable!=null && valueVariable.length()>=1)
+			if (valueVariable!=null && valueVariable.length()>=1) {
 				formattedLongForm += "=" + valueVariable;
+			}
 			
 			String string = String.format(" %1$3s %2$-21s", formattedShortForm, formattedLongForm);
 			
-			if (comment!=null)
+			if (null != comment) {
 				string += " " + comment;
+			}
 			
-			if (! (legalValues instanceof UniversalSet) )
+			if (! (legalValues instanceof UniversalSet) ) {
 				string += " " + legalValues;
+			}
 			
 			return string;
 		}

@@ -182,9 +182,10 @@ public class AlignmentGrid implements Externalizable {
 		if (isValid(x,y)) {
 			int index = Arrays.binarySearch(getCoordinates(), getKey(x,y));
 			//the index returned by a binarySearch is positive if the number exists
-			return (index>=0);			
+			return (index >= 0);
+		} else {
+			throw new ArrayIndexOutOfBoundsException("("+x+","+y+")");
 		}
-		else throw new ArrayIndexOutOfBoundsException("("+x+","+y+")");
 	}
 
 	/**

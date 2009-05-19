@@ -348,11 +348,12 @@ public class HierarchicalPhrase extends AbstractPhrase {
 		
 		int[] wordIDs = pattern.getWordIDs();
 		for (int i = 0; i < wordIDs.length; i++) {
-			if (wordIDs[i]<0) s.append('X');
-			else s.append(corpusArray.getVocabulary().getWord(wordIDs[i]));
-			
+			if (wordIDs[i]<0) {
+				s.append('X');
+			} else {
+				s.append(corpusArray.getVocabulary().getWord(wordIDs[i]));
+			}
 			s.append(' ');
-			
 		}
 		
 		s.append(Arrays.toString(terminalSequenceStartIndices));

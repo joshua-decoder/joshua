@@ -327,16 +327,21 @@ public class OracleExtractionHG extends SplitHg {
 //	########################## commmon funcions #####################
 	//based on tbl_oracle_states, tbl_ref_ngrams, and dt, get the state
 	//get the new state: STATE_BEST_DEDUCT STATE_BEST_BLEU STATE_BEST_LEN NGRAM_MATCH_COUNTS
-	protected  DPStateOracle compute_state(HGNode parent_item, HyperEdge dt, ArrayList<VirtualItem> l_ant_virtual_item,  HashMap<String, Integer> tbl_ref_ngrams, 
-			boolean do_local_ngram_clip, int lm_order, double ref_len, double[] bleu_score, HashMap<String, Boolean> tbl_suffix, HashMap<String, Boolean> tbl_prefix){	
+	protected DPStateOracle compute_state(
+		HGNode parent_item, HyperEdge dt, ArrayList<VirtualItem> l_ant_virtual_item, HashMap<String,Integer> tbl_ref_ngrams,
+		boolean do_local_ngram_clip, int lm_order, double ref_len, double[] bleu_score, HashMap<String, Boolean> tbl_suffix, HashMap<String, Boolean> tbl_prefix
+	) {
 		//##### deductions under "goal item" does not have rule
-		if(dt.get_rule()==null){
-			if(l_ant_virtual_item.size()!=1){System.out.println("error deduction under goal item have more than one item"); System.exit(0);}
+		if (null == dt.get_rule()) {
+			if (l_ant_virtual_item.size() != 1) {
+				System.out.println("error deduction under goal item have more than one item");
+				System.exit(1);
+			}
 			bleu_score[0] = -l_ant_virtual_item.get(0).best_virtual_deduction.best_cost;
-			return  new DPStateOracle(0, null, null,null);//no DPState at all
+			return new DPStateOracle(0, null, null,null); // no DPState at all
 		}
 		
-		//################## deductions *not* under "goal item"		
+		//################## deductions *not* under "goal item"
 		HashMap<String, Integer> new_ngram_counts = new HashMap<String, Integer>();//new ngrams created due to the combination
 		HashMap<String, Integer> old_ngram_counts = new HashMap<String, Integer>();//the ngram that has already been computed
 		int total_hyp_len =0;
@@ -344,115 +349,140 @@ public class OracleExtractionHG extends SplitHg {
 		int[] en_words = dt.get_rule().getEnglish();
 		
 		//####calulate new and old ngram counts, and len
-
+		
 		ArrayList<Integer> words= new ArrayList<Integer>();
-    	
+		
 		// used for compute left- and right- lm state
-    	ArrayList<Integer> left_state_sequence = null;
-    	// used for compute left- and right- lm state
-    	ArrayList<Integer> right_state_sequence = null;
-    	
-    	int correct_lm_order = lm_order;
-    	if(always_maintain_seperate_lm_state==true || lm_order<g_bleu_order) {
-    		left_state_sequence = new ArrayList<Integer>();
+		ArrayList<Integer> left_state_sequence = null;
+		// used for compute left- and right- lm state
+		ArrayList<Integer> right_state_sequence = null;
+		
+		int correct_lm_order = lm_order;
+		if (always_maintain_seperate_lm_state || lm_order < g_bleu_order) {
+    		left_state_sequence  = new ArrayList<Integer>();
     		right_state_sequence = new ArrayList<Integer>();
-    		correct_lm_order = g_bleu_order;//if lm_order is smaller than g_bleu_order, we will get the lm state by ourself
-    	}
-    	
-    	//#### get left_state_sequence, right_state_sequence, total_hyp_len, num_ngram_match
-    	for(int c=0; c<en_words.length; c++){
-    		int c_id = en_words[c];
-    		if(this.p_symbolTable.isNonterminal(c_id)==true){
-    			int index=this.p_symbolTable.getTargetNonterminalIndex(c_id);
-    			DPStateOracle ant_state = (DPStateOracle) l_ant_virtual_item.get(index).dp_state;    			
-    			total_hyp_len += ant_state.best_len;
-    			for(int t=0; t<g_bleu_order; t++)
-    				num_ngram_match[t] += ant_state.ngram_matches[t];
-    	  			
-    			int[] l_context = ant_state.left_lm_state;
-    			int[] r_context = ant_state.right_lm_state;
-    			for(int t : l_context){//always have l_context
-    				words.add(t);
-    				if(left_state_sequence!=null && left_state_sequence.size()<g_bleu_order-1) left_state_sequence.add(t);
-    			}
-    			get_ngrams(old_ngram_counts, g_bleu_order, l_context, true);    			
-    			if(r_context.length>=correct_lm_order-1){//the right and left are NOT overlapping	    	
-    				get_ngrams(new_ngram_counts, g_bleu_order, words, true);
-    				get_ngrams(old_ngram_counts, g_bleu_order, r_context, true);
-	    			words.clear();//start a new chunk    
-	    			if(right_state_sequence!=null)right_state_sequence.clear();
-	    			for(int t : r_context)
-	    				words.add(t);	    			
-	    		}
-    			if(right_state_sequence!=null)
-    				for(int t : r_context)
-    					right_state_sequence.add(t);
-    		}else{
-    			words.add(c_id);
-    			total_hyp_len += 1;
-    			if(left_state_sequence!=null && left_state_sequence.size()<g_bleu_order-1)left_state_sequence.add(c_id);
-    			if(right_state_sequence!=null) right_state_sequence.add(c_id);
-    		}
-    	}
-    	get_ngrams(new_ngram_counts, g_bleu_order, words, true);
-    
-    	//####now deduct ngram counts
-    	for (String ngram : new_ngram_counts.keySet()) { 
-    		if(tbl_ref_ngrams.containsKey(ngram)){
-	    		int final_count = (Integer)new_ngram_counts.get(ngram);
-	    		if(old_ngram_counts.containsKey(ngram)){
-	    			final_count -= (Integer)old_ngram_counts.get(ngram);
-	    			// TODO: Whoa, is that an actual hard-coded ID in there? :) 
-	    			if(final_count<0){System.out.println("error: negative count for ngram: "+ this.p_symbolTable.getWord(11844) + "; new: " + new_ngram_counts.get(ngram) +"; old: " +old_ngram_counts.get(ngram) ); System.exit(0);}
-	    		}
-	    		if(final_count>0){//TODO: not correct/global ngram clip
-	    			if(do_local_ngram_clip)
-	    				num_ngram_match[ngram.split("\\s+").length-1] += Support.find_min(final_count,(Integer)tbl_ref_ngrams.get(ngram)) ;
-	    			else 
-	    				num_ngram_match[ngram.split("\\s+").length-1] += final_count; //do not do any cliping    			
-	    		}
-    		}
-    	}
-    	
-    	//####now calculate the BLEU score and state
-    	int[] left_lm_state = null;
-		int[] right_lm_state= null;
-		if(always_maintain_seperate_lm_state==false && lm_order>=g_bleu_order){	//do not need to change lm state, just use orignal lm state
-			LMFFDPState state     = (LMFFDPState) parent_item.getFeatDPState(this.lm_feat_id);
+    		correct_lm_order = g_bleu_order; // if lm_order is smaller than g_bleu_order, we will get the lm state by ourself
+		}
+		
+		//#### get left_state_sequence, right_state_sequence, total_hyp_len, num_ngram_match
+		for (int c = 0; c < en_words.length; c++) {
+			int c_id = en_words[c];
+			if (this.p_symbolTable.isNonterminal(c_id)) {
+				int index = this.p_symbolTable.getTargetNonterminalIndex(c_id);
+				DPStateOracle ant_state = (DPStateOracle) l_ant_virtual_item.get(index).dp_state;
+				total_hyp_len += ant_state.best_len;
+				for (int t = 0; t < g_bleu_order; t++) {
+					num_ngram_match[t] += ant_state.ngram_matches[t];
+				}
+				int[] l_context = ant_state.left_lm_state;
+				int[] r_context = ant_state.right_lm_state;
+				for (int t : l_context) { // always have l_context
+					words.add(t);
+					if (null != left_state_sequence
+					&& left_state_sequence.size() < g_bleu_order-1) {
+						left_state_sequence.add(t);
+					}
+				}
+				get_ngrams(old_ngram_counts, g_bleu_order, l_context, true);    			
+				if (r_context.length >= correct_lm_order-1) { // the right and left are NOT overlapping
+					get_ngrams(new_ngram_counts, g_bleu_order, words, true);
+					get_ngrams(old_ngram_counts, g_bleu_order, r_context, true);
+					words.clear();//start a new chunk
+					if (null != right_state_sequence) {
+						right_state_sequence.clear();
+					}
+					for (int t : r_context) {
+						words.add(t);
+					}
+				}
+				if (null != right_state_sequence) {
+					for(int t : r_context) {
+						right_state_sequence.add(t);
+					}
+				}
+			} else {
+				words.add(c_id);
+				total_hyp_len += 1;
+				if (null != left_state_sequence
+				&& left_state_sequence.size() < g_bleu_order-1) {
+					left_state_sequence.add(c_id);
+				}
+				if (null != right_state_sequence) {
+					right_state_sequence.add(c_id);
+				}
+			}
+		}
+		get_ngrams(new_ngram_counts, g_bleu_order, words, true);
+		
+		//####now deduct ngram counts
+		for (String ngram : new_ngram_counts.keySet()) {
+			if (tbl_ref_ngrams.containsKey(ngram)) {
+				int final_count = (Integer)new_ngram_counts.get(ngram);
+				if (old_ngram_counts.containsKey(ngram)) {
+					final_count -= (Integer)old_ngram_counts.get(ngram);
+					// BUG: Whoa, is that an actual hard-coded ID in there? :) 
+					if (final_count < 0) {
+						System.out.println("error: negative count for ngram: "
+							+ this.p_symbolTable.getWord(11844)
+							+ "; new: " + new_ngram_counts.get(ngram)
+							+ "; old: " + old_ngram_counts.get(ngram) );
+						System.exit(1);
+					}
+				}
+				if (final_count > 0) { // TODO: not correct/global ngram clip
+					if (do_local_ngram_clip) {
+						// BUG: use joshua.util.Regex.spaces.split(...)
+						num_ngram_match[ngram.split("\\s+").length-1] +=
+						Support.find_min(final_count, (Integer)tbl_ref_ngrams.get(ngram));
+					} else {
+						// BUG: use joshua.util.Regex.spaces.split(...)
+						num_ngram_match[ngram.split("\\s+").length-1] += final_count; //do not do any cliping
+					}
+				}
+			}
+		}
+		
+		//####now calculate the BLEU score and state
+		int[] left_lm_state  = null;
+		int[] right_lm_state = null;
+		if (!always_maintain_seperate_lm_state && lm_order >= g_bleu_order) {	//do not need to change lm state, just use orignal lm state
+			LMFFDPState state = (LMFFDPState) parent_item.getFeatDPState(this.lm_feat_id);
 			left_lm_state = state.getLeftLMStateWords();
 			right_lm_state = state.getRightLMStateWords();
-		}else{
+		} else {
 			left_lm_state = get_left_equiv_state(left_state_sequence, tbl_suffix);
-			right_lm_state = get_right_equiv_state(right_state_sequence, tbl_prefix); 
+			right_lm_state = get_right_equiv_state(right_state_sequence, tbl_prefix);
 			
 			//debug
 			//System.out.println("lm_order is " + lm_order);
 			//compare_two_int_arrays(left_lm_state, (int[])parent_item.tbl_states.get(Symbol.LM_L_STATE_SYM_ID));
 			//compare_two_int_arrays(right_lm_state, (int[])parent_item.tbl_states.get(Symbol.LM_R_STATE_SYM_ID));
-			//end						
+			//end
 		}
 		bleu_score[0] = compute_bleu(total_hyp_len, ref_len, num_ngram_match, g_bleu_order);
 		//System.out.println("blue score is " + bleu_score[0]);
-		return  new DPStateOracle(total_hyp_len, num_ngram_match, left_lm_state, right_lm_state);
+		return new DPStateOracle(total_hyp_len, num_ngram_match, left_lm_state, right_lm_state);
 	}
 	
 	
 	private int[] get_left_equiv_state(ArrayList<Integer> left_state_sequence, 
-			HashMap<String, Boolean> tbl_suffix)
+		HashMap<String, Boolean> tbl_suffix)
 	{
 		int l_size = (left_state_sequence.size()<g_bleu_order-1)? left_state_sequence.size() : (g_bleu_order-1);
 		int[] left_lm_state = new int[l_size];
-		if(using_left_equiv_state==false || l_size<g_bleu_order-1){//regular
-			for(int i=0; i<l_size; i++)
+		if (!using_left_equiv_state || l_size < g_bleu_order-1) { // regular
+			for (int i = 0; i < l_size; i++) {
 				left_lm_state[i] = left_state_sequence.get(i);
-		}else{			
-			for(int i=l_size-1; i>=0; i--){//right to left
-				if(is_a_suffix_in_tbl(left_state_sequence, 0, i, tbl_suffix)){
-				//if(is_a_suffix_in_grammar(left_state_sequence, 0, i, grammar_suffix)){
-					for(int j=i; j>=0; j--)
+			}
+		} else {
+			for (int i = l_size-1; i >= 0; i--) { // right to left
+				if (is_a_suffix_in_tbl(left_state_sequence, 0, i, tbl_suffix)) {
+					//if(is_a_suffix_in_grammar(left_state_sequence, 0, i, grammar_suffix)){
+					for (int j = i; j >= 0; j--) {
 						left_lm_state[j] = left_state_sequence.get(j);
+					}
 					break;
-				}else{
+				} else {
 					left_lm_state[i] = this.NULL_LEFT_LM_STATE_SYM_ID;
 				}
 			}
@@ -462,167 +492,191 @@ public class OracleExtractionHG extends SplitHg {
 	}
 	
 	private boolean is_a_suffix_in_tbl(ArrayList<Integer> left_state_sequence, 
-			int start_pos, int end_pos, HashMap<String, Boolean> tbl_suffix)
+		int start_pos, int end_pos, HashMap<String, Boolean> tbl_suffix)
 	{
-		if((Integer)left_state_sequence.get(end_pos)==this.NULL_LEFT_LM_STATE_SYM_ID)
+		if ((Integer)left_state_sequence.get(end_pos) == this.NULL_LEFT_LM_STATE_SYM_ID) {
 			return false;
+		}
 		StringBuffer suffix = new StringBuffer();
-		for(int i=end_pos; i>=start_pos; i--){//right-most first
+		for (int i = end_pos; i >= start_pos; i--) { // right-most first
 			suffix.append(left_state_sequence.get(i));
-			if(i>start_pos) suffix.append(" ");
-		}		
+			if (i > start_pos) suffix.append(" ");
+		}
 		return (Boolean) tbl_suffix.containsKey(suffix.toString());
 	}
 	
 	// TODO: never called. remove?
-	private boolean is_a_suffix_in_grammar(ArrayList<Integer> left_state_sequence, 
-			int start_pos, int end_pos, PrefixGrammar grammar_suffix)
+	private boolean is_a_suffix_in_grammar(
+		ArrayList<Integer> left_state_sequence, 
+		int start_pos, int end_pos, PrefixGrammar grammar_suffix)
 	{
-		if((Integer)left_state_sequence.get(end_pos)==this.NULL_LEFT_LM_STATE_SYM_ID)
+		if ((Integer)left_state_sequence.get(end_pos) == this.NULL_LEFT_LM_STATE_SYM_ID) {
 			return false;
+		}
 		ArrayList<Integer> suffix = new ArrayList<Integer>();
-		for(int i=end_pos; i>=start_pos; i--){//right-most first
+		for (int i = end_pos; i >= start_pos; i--) { // right-most first
 			suffix.add(left_state_sequence.get(i));
-		}		
-		return grammar_suffix.contain_ngram(suffix,  0,  suffix.size()-1);
+		}
+		return grammar_suffix.contain_ngram(suffix, 0, suffix.size()-1);
 	}
 	
 	
-	private  int[] get_right_equiv_state(ArrayList<Integer> right_state_sequence, 
-			HashMap<String, Boolean> tbl_prefix)
+	private int[] get_right_equiv_state(
+		ArrayList<Integer> right_state_sequence, 
+		HashMap<String, Boolean> tbl_prefix)
 	{
-		int r_size = (right_state_sequence.size()<g_bleu_order-1)? right_state_sequence.size() : (g_bleu_order-1);
+		int r_size = (right_state_sequence.size() < g_bleu_order-1)
+			? right_state_sequence.size()
+			: (g_bleu_order-1);
 		int[] right_lm_state = new int[r_size];
-		if(using_right_equiv_state==false || r_size<g_bleu_order-1){//regular
-			for(int i=0; i<r_size; i++)
+		if (!using_right_equiv_state || r_size < g_bleu_order-1) { // regular
+			for (int i = 0; i < r_size; i++) {
 				right_lm_state[i] = (Integer)right_state_sequence.get(right_state_sequence.size()-r_size+i);
-		}else{			
-			for(int i=0; i<r_size; i++){//left to right
-				if(is_a_prefix_in_tbl(right_state_sequence, right_state_sequence.size()-r_size+i, right_state_sequence.size()-1, tbl_prefix)){
+			}
+		} else {
+			for (int i = 0; i < r_size; i++) { // left to right
+				if (is_a_prefix_in_tbl(right_state_sequence, right_state_sequence.size()-r_size+i, right_state_sequence.size()-1, tbl_prefix)) {
 				//if(is_a_prefix_in_grammar(right_state_sequence, right_state_sequence.size()-r_size+i, right_state_sequence.size()-1, grammar_prefix)){
-					for(int j=i; j<r_size; j++)
+					for (int j = i; j < r_size; j++) {
 						right_lm_state[j] = (Integer)right_state_sequence.get(right_state_sequence.size()-r_size+j);
+					}
 					break;
-				}else{
+				} else {
 					right_lm_state[i] = this.NULL_RIGHT_LM_STATE_SYM_ID;
 				}
 			}
 			//System.out.println("origi right:" + Symbol.get_string(right_state_sequence)+ "; equiv right:" + Symbol.get_string(right_lm_state));
-			
 		}
 		return right_lm_state;
 	}
 	
 	private boolean is_a_prefix_in_tbl(ArrayList<Integer> right_state_sequence, 
-			int start_pos, int end_pos, HashMap<String, Boolean> tbl_prefix)
+		int start_pos, int end_pos, HashMap<String, Boolean> tbl_prefix)
 	{
-		if(right_state_sequence.get(start_pos) == this.NULL_RIGHT_LM_STATE_SYM_ID)
+		if (right_state_sequence.get(start_pos) == this.NULL_RIGHT_LM_STATE_SYM_ID) {
 			return false;
+		}
 		StringBuffer prefix = new StringBuffer();
-		for(int i=start_pos; i<=end_pos; i++){
+		for (int i = start_pos; i <= end_pos; i++) {
 			prefix.append(right_state_sequence.get(i));
-			if(i<end_pos) prefix.append(" ");
-		}		
+			if (i < end_pos) prefix.append(" ");
+		}
 		return (Boolean) tbl_prefix.containsKey(prefix.toString());
 	}
-
+	
 	// TODO: never called. remove?
-	private boolean is_a_prefix_in_grammar(ArrayList<Integer> right_state_sequence, 
-			int start_pos, int end_pos, PrefixGrammar gr_prefix)
+	private boolean is_a_prefix_in_grammar(
+		ArrayList<Integer> right_state_sequence, 
+		int start_pos, int end_pos, PrefixGrammar gr_prefix)
 	{
-		if(right_state_sequence.get(start_pos) == this.NULL_RIGHT_LM_STATE_SYM_ID)
+		if (right_state_sequence.get(start_pos) == this.NULL_RIGHT_LM_STATE_SYM_ID) {
 			return false;
-		return gr_prefix.contain_ngram(right_state_sequence,  start_pos,  end_pos);
+		}
+		return gr_prefix.contain_ngram(right_state_sequence, start_pos, end_pos);
 	}
-
-	public static void compare_two_int_arrays(int[] a, int[] b){
-		if(a.length!=b.length){System.out.println("error: two arrays do not have same size"); System.exit(0);}
-		for(int i=0; i<a.length; i++)
-			if(a[i]!=b[i]){System.out.println("error: elements in two arrays are not same"); System.exit(0);}
+	
+	public static void compare_two_int_arrays(int[] a, int[] b) {
+		if (a.length != b.length) {
+			throw new RuntimeException("two arrays do not have same size"); 
+		}
+		for (int i = 0; i<a.length; i++) {
+			if (a[i] != b[i]) {
+				throw new RuntimeException("elements in two arrays are not same");
+			}
+		}
 	}
 	
 	//sentence-bleu: BLEU= bp * prec; where prec = exp (sum 1/4 * log(prec[order]))
 	public static double compute_bleu(int hyp_len, double ref_len, int[] num_ngram_match, int bleu_order){
-		if(hyp_len<=0 || ref_len<=0){System.out.println("error: ref or hyp is zero len"); System.exit(0);}
-		double res=0;		
+		if (hyp_len <= 0 || ref_len <= 0){
+			throw new RuntimeException("ref or hyp is zero len");
+		}
+		double res = 0;
 		double wt = 1.0/bleu_order;
 		double prec = 0;
 		double smooth_factor=1.0;
-		for(int t=0; t<bleu_order && t<hyp_len; t++){
-			if(num_ngram_match[t]>0)
+		for (int t = 0; t < bleu_order && t < hyp_len; t++) {
+			if (num_ngram_match[t] > 0) {
 				prec += wt*Math.log(num_ngram_match[t]*1.0/(hyp_len-t));
-			else{
+			} else {
 				smooth_factor *= 0.5;//TODO
 				prec += wt*Math.log(smooth_factor/(hyp_len-t));
 			}
 		}
-		double bp = (hyp_len>=ref_len) ? 1.0 : Math.exp(1-ref_len/hyp_len);	
+		double bp = (hyp_len>=ref_len) ? 1.0 : Math.exp(1-ref_len/hyp_len);
 		res = bp*Math.exp(prec);
 		//System.out.println("hyp_len: " + hyp_len + "; ref_len:" + ref_len + "prec: " + Math.exp(prec) + "; bp: " + bp + "; bleu: " + res);
 		return res;
 	}
 	
 	//accumulate ngram counts into tbl
-	public void get_ngrams(HashMap<String, Integer> tbl, int order, int[] wrds, boolean ignore_null_equiv_symbol){
-		for(int i=0; i<wrds.length; i++)
-			for(int j=0; j<order && j+i<wrds.length; j++){//ngram: [i,i+j]
-				boolean contain_null=false;
+	public void get_ngrams(HashMap<String,Integer> tbl, int order, int[] wrds, boolean ignore_null_equiv_symbol) {
+		for (int i = 0; i < wrds.length; i++) {
+			for (int j = 0; j < order && j+i < wrds.length; j++) { // ngram: [i,i+j]
+				boolean contain_null = false;
 				StringBuffer ngram = new StringBuffer();
-				for(int k=i; k<=i+j; k++){
-					if(wrds[k]==this.NULL_LEFT_LM_STATE_SYM_ID || wrds[k]==this.NULL_RIGHT_LM_STATE_SYM_ID ){
-						contain_null=true;
-						if(ignore_null_equiv_symbol) break;
+				for (int k = i; k <= i+j; k++) {
+					if (wrds[k] == this.NULL_LEFT_LM_STATE_SYM_ID
+					|| wrds[k] == this.NULL_RIGHT_LM_STATE_SYM_ID) {
+						contain_null = true;
+						if (ignore_null_equiv_symbol) break;
 					}
 					ngram.append(wrds[k]);
-					if(k<i+j) ngram.append(" ");
+					if (k < i+j) ngram.append(" ");
 				}
-				if(ignore_null_equiv_symbol && contain_null) continue;//skip this ngram
+				if (ignore_null_equiv_symbol && contain_null) continue; // skip this ngram
 				String ngram_str = ngram.toString();
-				if(tbl.containsKey(ngram_str))
+				if (tbl.containsKey(ngram_str)) {
 					tbl.put(ngram_str, (Integer)tbl.get(ngram_str)+1);
-				else
+				} else {
 					tbl.put(ngram_str, 1);
+				}
 			}
+		}
 	}
 	
-//	accumulate ngram counts into tbl
-	public void get_ngrams(HashMap<String, Integer> tbl, int order, ArrayList<Integer> wrds, 
-			boolean ignore_null_equiv_symbol)
+	/** accumulate ngram counts into tbl. */
+	public void get_ngrams(HashMap<String, Integer> tbl, int order,
+		ArrayList<Integer> wrds, boolean ignore_null_equiv_symbol)
 	{
-		for(int i=0; i<wrds.size(); i++)
+		for (int i = 0; i < wrds.size(); i++) {
 			// ngram: [i,i+j]
-			for(int j=0; j<order && j+i<wrds.size(); j++) {
-				boolean contain_null=false;
+			for (int j = 0; j < order && j+i < wrds.size(); j++) {
+				boolean contain_null = false;
 				StringBuffer ngram = new StringBuffer();
-				for(int k=i; k<=i+j; k++){
+				for (int k = i; k <= i+j; k++) {
 					int t_wrd = (Integer) wrds.get(k);
-					if(t_wrd==this.NULL_LEFT_LM_STATE_SYM_ID || t_wrd==this.NULL_RIGHT_LM_STATE_SYM_ID ){
-						contain_null=true;
-						if(ignore_null_equiv_symbol) break;
+					if (t_wrd == this.NULL_LEFT_LM_STATE_SYM_ID
+					|| t_wrd == this.NULL_RIGHT_LM_STATE_SYM_ID) {
+						contain_null = true;
+						if (ignore_null_equiv_symbol) break;
 					}
 					ngram.append(t_wrd);
-					if(k<i+j) ngram.append(" ");
+					if (k < i+j) ngram.append(" ");
 				}
 				// skip this ngram
 				if (ignore_null_equiv_symbol && contain_null) continue;
 				
 				String ngram_str = ngram.toString();
-				if(tbl.containsKey(ngram_str))
+				if (tbl.containsKey(ngram_str)) {
 					tbl.put(ngram_str, (Integer)tbl.get(ngram_str)+1);
-				else
+				} else {
 					tbl.put(ngram_str, 1);
+				}
 			}
+		}
 	}
 	
 	
 	//do_ngram_clip: consider global n-gram clip
-	public  double compute_sentence_bleu(SymbolTable p_symbol, String ref_sent, String hyp_sent, boolean do_ngram_clip, int bleu_order){
+	public  double compute_sentence_bleu(SymbolTable p_symbol, String ref_sent, String hyp_sent, boolean do_ngram_clip, int bleu_order) {
+		// BUG: use joshua.util.Regex.spaces.split(...)
 		int[] numeric_ref_sent = p_symbol.addTerminals(ref_sent.split("\\s+"));
 		int[] numeric_hyp_sent = p_symbol.addTerminals(hyp_sent.split("\\s+"));
-		return compute_sentence_bleu(numeric_ref_sent, numeric_hyp_sent, do_ngram_clip, bleu_order);		
+		return compute_sentence_bleu(numeric_ref_sent, numeric_hyp_sent, do_ngram_clip, bleu_order);
 	}
 	
-	public  double compute_sentence_bleu( int[] ref_sent, int[] hyp_sent, boolean do_ngram_clip, int bleu_order){
+	public  double compute_sentence_bleu(int[] ref_sent, int[] hyp_sent, boolean do_ngram_clip, int bleu_order) {
 		double res_bleu = 0;
 		int order = 4;
 		HashMap<String, Integer> ref_ngram_tbl = new HashMap<String, Integer>();
@@ -631,79 +685,85 @@ public class OracleExtractionHG extends SplitHg {
 		get_ngrams(hyp_ngram_tbl, order, hyp_sent, false);
 		
 		int[] num_ngram_match = new int[order];
-		for(String ngram : hyp_ngram_tbl.keySet()){
-			if(ref_ngram_tbl.containsKey(ngram)){
-				if(do_ngram_clip)
+		for (String ngram : hyp_ngram_tbl.keySet()) {
+			if (ref_ngram_tbl.containsKey(ngram)) {
+				if (do_ngram_clip) {
+					// BUG: use joshua.util.Regex.spaces.split(...)
 					num_ngram_match[ngram.split("\\s+").length-1] += Support.find_min((Integer)ref_ngram_tbl.get(ngram),(Integer)hyp_ngram_tbl.get(ngram)); //ngram clip
-				else
-					num_ngram_match[ngram.split("\\s+").length-1] += (Integer)hyp_ngram_tbl.get(ngram);//without ngram count clipping    			
-    		}
+				} else {
+					// BUG: use joshua.util.Regex.spaces.split(...)
+					num_ngram_match[ngram.split("\\s+").length-1] += (Integer)hyp_ngram_tbl.get(ngram);//without ngram count clipping
+				}
+			}
 		}
 		res_bleu = compute_bleu(hyp_sent.length, ref_sent.length, num_ngram_match, bleu_order);
 		//System.out.println("hyp_len: " + hyp_sent.length + "; ref_len:" + ref_sent.length + "; bleu: " + res_bleu +" num_ngram_matches: " + num_ngram_match[0] + " " +num_ngram_match[1]+
 		//		" " + num_ngram_match[2] + " " +num_ngram_match[3]);
-
+		
 		return res_bleu;
 	}
 	
 	// TODO: never called, remove?
-	private static void print_state(Object[] state){
+	private static void print_state(Object[] state) {
 		System.out.println("State is");
-		for(int i=0; i< state.length; i++)
+		for (int i = 0; i < state.length; i++) {
 			System.out.print(state[i] + " ---- ");
+		}
 		System.out.println();
 	}
 	
 	
 	//#### equivalent lm stuff ############
 	public static void setup_prefix_suffix_tbl(int[] wrds, int order, 
-			HashMap<String, Boolean> prefix_tbl, HashMap<String, Boolean> suffix_tbl)
+		HashMap<String, Boolean> prefix_tbl, HashMap<String, Boolean> suffix_tbl)
 	{
-		for(int i=0; i<wrds.length; i++)
-			for(int j=0; j<order && j+i<wrds.length; j++){//ngram: [i,i+j]
-				StringBuffer ngram = new StringBuffer();	
+		for (int i = 0; i < wrds.length; i++) {
+			for (int j = 0; j < order && j+i < wrds.length; j++) { // ngram: [i,i+j]
+				StringBuffer ngram = new StringBuffer();
 				//### prefix
-				for(int k=i; k<i+j; k++){//all ngrams [i,i+j-1]
+				for (int k = i; k < i+j; k++) { // all ngrams [i,i+j-1]
 					ngram.append(wrds[k]);
 					prefix_tbl.put(ngram.toString(), true);
 					ngram.append(" ");
-				}				
+				}
 				//### suffix: right-most wrd first
 				ngram = new StringBuffer();
-				for(int k=i+j; k>i; k--){//all ngrams [i+1,i+j]: reverse order
+				for (int k = i+j; k > i; k--) { // all ngrams [i+1,i+j]: reverse order
 					ngram.append(wrds[k]);
 					suffix_tbl.put(ngram.toString(), true);//stored in reverse order
 					ngram.append(" ");
-				}				
+				}
 			}
+		}
 	}
 	
 	
-//	#### equivalent lm stuff ############
-	public static void setup_prefix_suffix_grammar(int[] wrds,  int order, 
-			PrefixGrammar prefix_gr, PrefixGrammar suffix_gr)
+	// #### equivalent lm stuff ############
+	public static void setup_prefix_suffix_grammar(int[] wrds, int order,
+		PrefixGrammar prefix_gr, PrefixGrammar suffix_gr)
 	{
-		for(int i=0; i<wrds.length; i++)
-			for(int j=0; j<order && j+i<wrds.length; j++){//ngram: [i,i+j]
+		for (int i = 0; i < wrds.length; i++) {
+			for (int j = 0; j < order && j+i < wrds.length; j++) { // ngram: [i,i+j]
 				//### prefix
 				prefix_gr.add_ngram(wrds, i, i+j-1);//ngram: [i,i+j-1]
-				 			
+				
 				//### suffix: right-most wrd first
 				int[] reverse_wrds = new int[j];
-				for(int k=i+j, t=0; k>i; k--){//all ngrams [i+1,i+j]: reverse order
+				for (int k = i+j, t = 0; k > i; k--) { // all ngrams [i+1,i+j]: reverse order
 					reverse_wrds[t++] = wrds[k];
 				}
 				suffix_gr.add_ngram(reverse_wrds, 0, j-1);
 			}
+		}
 	}
 	
 	
-	/*a backoff node is a hashtable, it may include:
+	/* a backoff node is a hashtable, it may include:
 	 * (1) probabilititis for next words
 	 * (2) pointers to a next-layer backoff node (hashtable)
 	 * (3) backoff weight for this node
 	 * (4) suffix/prefix flag to indicate that there is ngrams start from this suffix
-     */
+	 */
 	private static class PrefixGrammar {
 		
 		private static class PrefixGrammarNode extends HashMap<Integer, PrefixGrammarNode> {
@@ -713,37 +773,37 @@ public class OracleExtractionHG extends SplitHg {
 		PrefixGrammarNode root = new PrefixGrammarNode();
 		
 		//add prefix information
-		public void add_ngram(int[] wrds, int start_pos, int end_pos){			
+		public void add_ngram(int[] wrds, int start_pos, int end_pos) {
 			//######### identify the position, and insert the trinodes if necessary
 			PrefixGrammarNode pos = root;
-			for(int k=start_pos; k <=end_pos; k++){
-				int cur_sym_id=wrds[k];
+			for (int k = start_pos; k <= end_pos; k++) {
+				int cur_sym_id = wrds[k];
 				PrefixGrammarNode next_layer = pos.get(cur_sym_id);
 				
-				if (next_layer != null) {
+				if (null != next_layer) {
 					pos = next_layer;
 				} else {
 					// next layer node
-					PrefixGrammarNode tmp =	new PrefixGrammarNode();
-					pos.put(cur_sym_id, tmp); 
+					PrefixGrammarNode tmp = new PrefixGrammarNode();
+					pos.put(cur_sym_id, tmp);
 					pos = tmp;
 				}
 			}
 		}
 		
-		public boolean contain_ngram(ArrayList<Integer> wrds, int start_pos, int end_pos){
+		public boolean contain_ngram(ArrayList<Integer> wrds, int start_pos, int end_pos) {
 			if (end_pos < start_pos) return false;
 			PrefixGrammarNode pos = root;
 			for (int k = start_pos; k <= end_pos; k++) {
 				int cur_sym_id = wrds.get(k);
 				PrefixGrammarNode next_layer = pos.get(cur_sym_id);
 				if (next_layer != null) {
-					pos=next_layer;
+					pos = next_layer;
 				} else {
 					return false;
 				}
 			}
 			return true;
-		}			
-	} 	
+		}
+	}
 }

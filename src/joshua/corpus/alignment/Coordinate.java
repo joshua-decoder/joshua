@@ -76,9 +76,12 @@ public class Coordinate implements Comparable<Coordinate> {
      * @return true if the object is a coordinate with equal X and Y
      */
     public boolean equals(Object o) {
-        if (o==null) return false;
-        if (!o.getClass().isInstance(this)) return false;
-        else {
+        if (o==null) {
+			return false;
+		}
+        if (!o.getClass().isInstance(this)) {
+			return false;
+        } else {
             Coordinate other = (Coordinate)o;
             return (other.x==this.x && other.y==this.y);
         }
@@ -94,10 +97,11 @@ public class Coordinate implements Comparable<Coordinate> {
      * @return int a unique hashcode for this object
      */
     public int hashCode() {
-        if (x<=y)
+        if (x<=y) {
             return x*100+y;
-        else
+        } else {
             return y*100+x;
+		}
     }
     
     /**
@@ -115,11 +119,13 @@ public class Coordinate implements Comparable<Coordinate> {
      * +1 if this obejct is ranked higher; zero if they are the same.
      */
 	public int compareTo(Coordinate location) {
-		if (this.x < location.x) return -1;
-		else if (this.x > location.x) return 1;
-		else if (this.y < location.y) return -1;
-		else if (this.y > location.y) return 1;
-		else return 0;
+		if (this.x < location.x || this.y < location.y) {
+			return -1;
+		} else if (this.x > location.x || this.y > location.y) {
+			return 1;
+		} else {
+			return 0;
+		}
 	}
 	
 	/**
@@ -139,4 +145,3 @@ public class Coordinate implements Comparable<Coordinate> {
 	}
 	
 }
-        

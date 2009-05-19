@@ -257,7 +257,11 @@ public class Node extends AbstractGrammar implements Comparable<Node>, Grammar, 
 		} 
 
 		s.append(" (");
-		if (suffixLink!=null) s.append(suffixLink.objectID); else s.append("null");
+		if (null != suffixLink) {
+			s.append(suffixLink.objectID);
+		} else {
+			s.append("null");
+		}
 		s.append(')');
 		s.append(' ');
 
@@ -302,7 +306,11 @@ public class Node extends AbstractGrammar implements Comparable<Node>, Grammar, 
 //			s.append(PrefixTree.idsToStrings.get(incomingArcValue));
 //		}
 		s.append(" (");
-		if (suffixLink!=null) s.append(suffixLink.objectID); else s.append("null");
+		if (null != suffixLink) {
+			s.append(suffixLink.objectID);
+		} else {
+			s.append("null");
+		}
 		s.append(')');
 		s.append(' ');
 
@@ -337,7 +345,11 @@ public class Node extends AbstractGrammar implements Comparable<Node>, Grammar, 
 		} 
 
 		s.append(" (");
-		if (suffixLink!=null) s.append(suffixLink.objectID); else s.append("null");
+		if (null != suffixLink) {
+			s.append(suffixLink.objectID);
+		} else {
+			s.append("null");
+		}
 		s.append(')');
 
 		if (children.size() > 0) {

@@ -194,29 +194,31 @@ public abstract class DefaultInsideOutside {
 	
 	
 //############ bottomn-up insdide estimation ##########################	
-	private void inside_estimation_hg(HyperGraph hg){
+	private void inside_estimation_hg(HyperGraph hg) {
 		tbl_inside_prob.clear(); 
 		tbl_num_parent_deductions.clear();
 		inside_estimation_item(hg.goal_item);
 	}
 	
-	private double inside_estimation_item(HGNode it){
+	private double inside_estimation_item(HGNode it) {
 		//### get number of deductions that point to me
 		Integer num_called = (Integer)tbl_num_parent_deductions.get(it);
-		if(num_called!=null)
-			tbl_num_parent_deductions.put(it, num_called+1);
-		else
+		if (null == num_called) {
 			tbl_num_parent_deductions.put(it, 1);
+		} else {
+			tbl_num_parent_deductions.put(it, num_called+1);
+		}
 		
-		if(tbl_inside_prob.containsKey(it))
+		if (tbl_inside_prob.containsKey(it)) {
 			return (Double) tbl_inside_prob.get(it);
+		}
 		double inside_prob = ZERO_IN_SEMIRING;
 		
 		//### recursive call on each deduction
-		for(HyperEdge dt : it.l_hyperedges){
+		for (HyperEdge dt : it.l_hyperedges) {
 			double v_dt = inside_estimation_deduction(dt, it);//deduction-specifc operation
 			inside_prob = add_in_semiring(inside_prob, v_dt);
-		}		
+		}
 		//### item-specific operation, but all the prob should be factored into each deduction
 		
 		tbl_inside_prob.put(it,inside_prob);
@@ -359,25 +361,31 @@ public abstract class DefaultInsideOutside {
 	}
 	
 	//OR: return Math.log(Math.exp(x) + Math.exp(y));
-	private double add_in_log_semiring(double x, double y){//prevent over-flow 
-		if(ADD_MODE==0){//sum
-			if(x==Double.NEGATIVE_INFINITY)//if y is also n-infinity, then return n-infinity
+	// BUG: Replace ADD_MODE pseudo-enum with a real Java enum
+	private double add_in_log_semiring(double x, double y) { // prevent under-flow 
+		if (ADD_MODE == 0) { // sum
+			if (x == Double.NEGATIVE_INFINITY) { // if y is also n-infinity, then return n-infinity
 				return y;
-			if(y==Double.NEGATIVE_INFINITY)
+			}
+			if (y == Double.NEGATIVE_INFINITY) {
 				return x;
+			}
 			
-			if(y<=x)
+			if (y <= x) {
 				return x + Math.log(1+Math.exp(y-x));
-			else//x<y
+			} else {
 				return y + Math.log(1+Math.exp(x-y));
-		}else if (ADD_MODE==1){//viter-min
-			return (x<=y)?x:y;
-		}else if (ADD_MODE==2){//viter-max
-			return (x>=y)?x:y;
-		}else{
-			System.out.println("invalid add mode"); System.exit(0); return 0;
+			}
+		} else if (ADD_MODE == 1) { // viter-min
+			return (x <= y ? x : y);
+		} else if (ADD_MODE == 2) { // viter-max
+			return (x >= y ? x : y);
+		} else {
+			System.out.println("invalid add mode");
+			System.exit(1);
+			return 0;
 		}
 	}
-//############ end common #####################	
+//############ end common #####################
 	
 }

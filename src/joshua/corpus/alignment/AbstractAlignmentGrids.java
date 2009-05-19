@@ -29,10 +29,11 @@ public abstract class AbstractAlignmentGrids extends AbstractAlignments {
 			sourceIndices[i] += sourceOffset;
 		}
 		
-		if (sourceIndices.length==0)
+		if (sourceIndices.length==0) {
 			return null;
-		else
+		} else {
 			return sourceIndices;
+		}
 	}
 
 	public Span getAlignedSourceSpan(int startTargetIndex, int endTargetIndex) {
@@ -72,11 +73,11 @@ public abstract class AbstractAlignmentGrids extends AbstractAlignments {
 			targetIndices[i] += targetOffset;
 		}
 		
-		if (targetIndices.length==0) 
+		if (targetIndices.length==0) {
 			return null;
-		else
+		} else {
 			return targetIndices;
-		
+		}
 	}
 	
 	public Span getAlignedTargetSpan(int startSourceIndex, int endSourceIndex) {

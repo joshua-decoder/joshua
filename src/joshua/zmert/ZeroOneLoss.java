@@ -53,8 +53,11 @@ public class ZeroOneLoss extends EvaluationMetric
       }
     }
 
-    if (matchFound) stats[0] = 1;
-    else stats[0] = 0;
+    if (matchFound) {
+		stats[0] = 1;
+	} else {
+		stats[0] = 0;
+	}
 
     stats[1] = 1;
 

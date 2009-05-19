@@ -259,8 +259,11 @@ public abstract class AbstractSuffixArray implements Suffixes {
 					if (nextDiff == 0) {
 						// There's another equivalent phrase, so we need to specify 
 						// in which direction to continue searching
-						if (findFirst) diff = 1; //search lower
-						else diff = -1; //search higher
+						if (findFirst) {
+							diff = 1; //search lower
+						} else {
+							diff = -1; //search higher
+						}
 					}
 				}
 			}

@@ -197,32 +197,36 @@ public class ExtractWordPairs {
 
 			// Set up the source text for reading
 			Scanner source_text;
-			if (commandLine.getValue(source_file).endsWith(".gz") || commandLine.getValue(source_file_gz))
+			if (commandLine.getValue(source_file).endsWith(".gz") || commandLine.getValue(source_file_gz)) {
 				source_text = new Scanner(new BufferedReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(commandLine.getValue(source_file))),commandLine.getValue(source_file_encoding))));
-			else
+			} else {
 				source_text = new Scanner( new File(commandLine.getValue(source_file)), commandLine.getValue(source_file_encoding));
+			}
 			
 			// Set up the target text for reading
 			Scanner target_text;
-			if (commandLine.getValue(target_file).endsWith(".gz") || commandLine.getValue(target_file_gz))
+			if (commandLine.getValue(target_file).endsWith(".gz") || commandLine.getValue(target_file_gz)) {
 				target_text = new Scanner(new BufferedReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(commandLine.getValue(target_file))),commandLine.getValue(target_file_encoding))));
-			else
+			} else {
 				target_text = new Scanner( new File(commandLine.getValue(target_file)), commandLine.getValue(target_file_encoding));
-						
+			}
+			
 			// Set up the alignment file for reading
 			Scanner alignments;
-			if (commandLine.getValue(alignment_file).endsWith(".gz") || commandLine.getValue(alignment_file_gz))
+			if (commandLine.getValue(alignment_file).endsWith(".gz") || commandLine.getValue(alignment_file_gz)) {
 				alignments = new Scanner(new BufferedReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(commandLine.getValue(alignment_file))))));
-			else
+			} else {
 				alignments = new Scanner( new File(commandLine.getValue(alignment_file)));
+			}
 			
 			
 			// Set up the output file for writing
 			Writer outputFile;
-			if (commandLine.getValue(output_file).endsWith(".gz") || commandLine.getValue(output_file_gz))
+			if (commandLine.getValue(output_file).endsWith(".gz") || commandLine.getValue(output_file_gz)) {
 				outputFile = new OutputStreamWriter(new GZIPOutputStream(new FileOutputStream(commandLine.getValue(output_file))),commandLine.getValue(output_file_encoding));
-			else
+			} else {
 				outputFile = new OutputStreamWriter(new FileOutputStream(commandLine.getValue(output_file)),commandLine.getValue(output_file_encoding));
+			}
 			
 			try {
 				extract(number_of_lines, source_text, target_text, alignments, outputFile);

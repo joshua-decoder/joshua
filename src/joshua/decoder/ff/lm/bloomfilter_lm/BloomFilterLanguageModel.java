@@ -68,8 +68,7 @@ public class BloomFilterLanguageModel extends DefaultNGramLanguageModel implemen
 	/*
 	 * constructor.
 	 */
-	public BloomFilterLanguageModel(SymbolTable translationModelSymbols, int order, String filename) throws IOException
-	{
+	public BloomFilterLanguageModel(SymbolTable translationModelSymbols, int order, String filename) throws IOException {
 		super(translationModelSymbols, order);
 		try {
 			readExternal(new ObjectInputStream(new GZIPInputStream(new FileInputStream(filename))));
@@ -84,35 +83,34 @@ public class BloomFilterLanguageModel extends DefaultNGramLanguageModel implemen
 		lambda0 = Math.log(vocabSize) - logAdd(Math.log(vocabSize), numTokens);
 		maxQ = quantize((long) Math.exp(numTokens));
 	}
-
-	private BloomFilterLanguageModel(String filename, int order, int size, double base)
-	{
+	
+	private BloomFilterLanguageModel(String filename, int order, int size, double base) {
 		super(null, order);
 		quantizationBase = base;
 		vocabulary = new Vocabulary();
 		populateBloomFilter(size, filename);
 	}
 
-	private int [] createTMtoLMMapping()
-	{
+	private int [] createTMtoLMMapping() {
 		int [] map = new int[symbolTable.getHighestID()];
-		for (String word : symbolTable.getWords())
+		for (String word : symbolTable.getWords()) {
 			map[symbolTable.getID(word)] = vocabulary.getID(word);
+		}
 		return map;
 	}
-
+	
 	/*
 	 * this is an abstract method from DefaultNGramLanguageModel
 	 * it returns the probability of an ngram.
 	 */
-	public double ngramLogProbability(int [] ngram, int order)
-	{
+	public double ngramLogProbability(int [] ngram, int order) {
 		int [] lm_ngram = new int[ngram.length];
-		for (int i = 0; i < ngram.length; i++)
+		for (int i = 0; i < ngram.length; i++) {
 			lm_ngram[i] = TMtoLMMapping[ngram[i]];
+		}
 		return wittenBell(lm_ngram, order);
 	}
-
+	
 	/*
 	 * calculates the linearly-interpolated witten-bell probability
 	 * for a given ngram.
@@ -133,8 +131,7 @@ public class BloomFilterLanguageModel extends DefaultNGramLanguageModel implemen
 	 * sided error rate inherent in using a bloom filter data structure.
 	 *
 	 */
-	private double wittenBell(int [] ngram, int order)
-	{
+	private double wittenBell(int [] ngram, int order) {
 		int end = ngram.length;
 		double p = p0; // current calculated probability
 		// note that p0 and lambda0 are independent of the given
@@ -152,8 +149,9 @@ public class BloomFilterLanguageModel extends DefaultNGramLanguageModel implemen
 //		System.err.println("pML: " + pML);
 		//p += lambda0 * pML;
 		p = logAdd(p, (lambda0 + pML));
-		if (ngram.length == 1) // if it's a unigram, we're done
+		if (ngram.length == 1) { // if it's a unigram, we're done
 			return p;
+		}
 		// otherwise we calculate the linear interpolation
 		// with higher order models.
 		// this for loop is kind of ugly since ngram is of type String.
@@ -175,8 +173,9 @@ public class BloomFilterLanguageModel extends DefaultNGramLanguageModel implemen
 			// if the count for the history is zero, all higher
 			// terms in the interpolation must be zero, so we
 			// are done here.
-			if (historyCnt == 0)
+			if (historyCnt == 0) {
 				return p;
+			}
 			int historyTypesAfter = getTypesAfter(ngram, i, end, historyCnt);
 			// unQuantize the counts we got from the BF
 			double HC = unQuantize(historyCnt);
@@ -196,81 +195,80 @@ public class BloomFilterLanguageModel extends DefaultNGramLanguageModel implemen
 		}
 		return p;
 	}
-
+	
 	/*
 	 * this corresponds roughly to algorithm 2 in talbot+osborne.
 	 */
-	private int getCount(int [] ngram, int start, int end, int qcount)
-	{
+	private int getCount(int [] ngram, int start, int end, int qcount) {
 		for (int i = 1; i <= qcount; i++) {
 			int hash = hashNgram(ngram, start, end, i);
-			if (!bf.query(hash, countFuncs))
+			if (!bf.query(hash, countFuncs)) {
 				return i-1;
+			}
 		}
 		return qcount;
 	}
-
+	
 	/*
 	 * this is another version of algorithm 2. As noted in the paper,
 	 * we have different algorithms for getting ngram counts versus
 	 * suffix counts because c(x) = 1 is a proxy item for s(x) = 1
 	 *
 	 */
-	private int getTypesAfter(int [] ngram, int start, int end, int qcount)
-	{
+	private int getTypesAfter(int [] ngram, int start, int end, int qcount) {
 		// first we check c(x) >= 1
 		int hash = hashNgram(ngram, start, end, 1);
-		if (!bf.query(hash, countFuncs))
+		if (!bf.query(hash, countFuncs)) {
 			return 0;
+		}
 		// if c(x) >= 1, we check for the stored suffix count
 		for (int i = 1; i < qcount; i++) {
 			hash = hashNgram(ngram, start, end, i);
-			if (!bf.query(hash, typesFuncs))
+			if (!bf.query(hash, typesFuncs)) {
 				return i - 1;
+			}
 		}
 		return qcount;
 	}
-
+	
 	/*
 	 * logarithmic quantization
 	 */
-	private int quantize(long x)
-	{
+	private int quantize(long x) {
 		return 1 + (int) Math.floor(Math.log(x)/Math.log(quantizationBase));
 	}
-
+	
 	/*
 	 * returns the true expected value of a given quantized value
 	 */
-	private double unQuantize(int x)
-	{
-		if (x == 0)
+	private double unQuantize(int x) {
+		if (x == 0) {
 			return 0;
-		return ((quantizationBase + 1) *Math.pow(quantizationBase, x-1) - 1) / 2;
+		} else {
+			return ((quantizationBase + 1) * Math.pow(quantizationBase, x-1) - 1) / 2;
+		}
 	}
-
+	
 	/*
 	 * this is adapted directly from AbstractPhrase.hashCode() elsewhere
 	 * in the joshua code base.
 	 */
-	private int hashNgram(int [] ngram, int start, int end, int val)
-	{
+	private int hashNgram(int [] ngram, int start, int end, int val) {
 		int result = HASH_OFFSET*HASH_SEED + val;
 		for (int i = start; i < end; i++)
 			result = HASH_OFFSET*result + ngram[i];
 		return result;
 	}
-
-	private double logAdd(double x, double y)
-	{
-		if (y <= x)
+	
+	private double logAdd(double x, double y) {
+		if (y <= x) {
 			return x + Math.log1p(Math.exp(y - x));
-		else
+		} else {
 			return y + Math.log1p(Math.exp(x - y));
+		}
 	}
-
-	public static void main(String [] argv)
-	{
+	
+	public static void main(String [] argv) {
 		if (argv.length < 5) {
 			System.err.println("usage: BloomFilterLanguageModel <statistics file> <order> <size> <quantization base> <output file>");
 			return;
@@ -278,25 +276,22 @@ public class BloomFilterLanguageModel extends DefaultNGramLanguageModel implemen
 		int order = Integer.parseInt(argv[1]);
 		int size = (int) (Integer.parseInt(argv[2]) * Math.pow(2, 20));
 		double base = Double.parseDouble(argv[3]);
-
+		
 		try {
 			BloomFilterLanguageModel lm = new BloomFilterLanguageModel(argv[0], order, size, base);
-
+			
 			ObjectOutputStream out = new ObjectOutputStream(new GZIPOutputStream(new FileOutputStream(argv[4])));
-
+			
 			lm.writeExternal(out);
 			out.close();
-		}
-		catch (FileNotFoundException e) {
+		} catch (FileNotFoundException e) {
 			System.err.println(e.getMessage());
-		}
-		catch (IOException e) {
+		} catch (IOException e) {
 			System.err.println(e.getMessage());
 		}
 	}
-
-	private int numLines(String filename)
-	{
+	
+	private int numLines(String filename) {
 		try {
 			Scanner s = new Scanner(new File(filename));
 			int ret = 0;
@@ -308,36 +303,32 @@ public class BloomFilterLanguageModel extends DefaultNGramLanguageModel implemen
 			s.close();
 			return ret;
 		} catch (FileNotFoundException e) {
-			// yeah ...
+			// BUG: don't swallow errors
 		}
 		return 0;
 	}
-
-	private void populateBloomFilter(int bloomFilterSize, String filename)
-	{
+	
+	private void populateBloomFilter(int bloomFilterSize, String filename) {
 		int numObjects = 2 * numLines(filename);
 		bf = new BloomFilter(bloomFilterSize, numObjects);
 		countFuncs = bf.initializeHashFunctions();
 		typesFuncs = bf.initializeHashFunctions();
 		try {
 			FileInputStream in = new FileInputStream(filename);
-			if (filename.endsWith(".gz")) 
+			if (filename.endsWith(".gz")) {
 				populateFromInputStream(new GZIPInputStream(in));
-			else
+			} else {
 				populateFromInputStream(in);
+			}
 			in.close();
-		}
-		catch (FileNotFoundException e) {
+		} catch (FileNotFoundException e) {
+			System.err.println(e.getMessage());
+		} catch (IOException e) {
 			System.err.println(e.getMessage());
 		}
-		catch (IOException e) {
-			System.err.println(e.getMessage());
-		}
-		return;
 	}
-
-	private void populateFromInputStream(InputStream source)
-	{
+	
+	private void populateFromInputStream(InputStream source) {
 		numTokens = -1;
 //		int num_lines = 0;
 		int [] prefix = null;
@@ -359,29 +350,31 @@ public class BloomFilterLanguageModel extends DefaultNGramLanguageModel implemen
 				int [] ngram = new int[currOrder];
 				int [] currPrefix = null;
 				// convert the ngram to integers
-				for (int i = 0; i < currOrder; i++)
+				for (int i = 0; i < currOrder; i++) {
 					ngram[i] = vocabulary.addTerminal(toks[i]);
+				}
 				// we need to update the training token count if we're on unigrams
 				if (currOrder == 1) {
-					if (numTokens == -1)
+					if (numTokens == -1) {
 						numTokens = Math.log(currCount);
-					else
+					} else {
 						numTokens = logAdd(numTokens, Math.log(currCount));
-				}
-				// and we need to keep the suffix counts if we're on higher orders
-				else {
+					}
+				} else {
+					// and we need to keep the suffix counts if we're on higher orders
 					currPrefix = new int[currOrder-1];
 					System.arraycopy(ngram, 0, currPrefix, 0, currOrder-1);
 				}
-				if ((currPrefix != null) && (currPrefix == prefix))
+				if ((currPrefix != null) && (currPrefix == prefix)) {
 					prefixTypesAfter++;
-				else {
-					if (prefix != null)
+				} else {
+					if (prefix != null) {
 						add(prefix, prefixTypesAfter, typesFuncs);
+					}
 					prefix = currPrefix;
 					prefixTypesAfter = 1;
 				}
-
+				
 				add(ngram, currCount, countFuncs);
 				
 				/*
@@ -393,30 +386,26 @@ public class BloomFilterLanguageModel extends DefaultNGramLanguageModel implemen
 				}
 				*/
 			}
-		}
-		catch (IllegalArgumentException e) {
+		} catch (IllegalArgumentException e) {
 			System.err.println(e.getMessage());
 		}
 	}
-
+	
 	/*
 	 * this corresponds to Talbot and Osborne's "Tera-scale LMs on the
 	 * cheap", algorithm 1.
 	 */
-	private void add(int [] ngram, long value, long [][] funcs)
-	{
-		if (ngram == null)
-			return;
+	private void add(int [] ngram, long value, long [][] funcs) {
+		if (ngram == null) return;
 		int qValue = quantize(value);
 		for (int i = 1; i <= qValue; i++) {
 			int hash = hashNgram(ngram, 0, ngram.length, i);
 			bf.add(hash, funcs);
 		}
-		return;
 	}
-
-	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException
-	{
+	
+	public void readExternal(ObjectInput in)
+	throws IOException, ClassNotFoundException {
 		vocabulary = new Vocabulary();
 		int vocabSize = in.readInt();
 		for (int i = 0; i < vocabSize; i++) {
@@ -439,9 +428,8 @@ public class BloomFilterLanguageModel extends DefaultNGramLanguageModel implemen
 		bf = new BloomFilter();
 		bf.readExternal(in);
 	}
-
-	public void writeExternal(ObjectOutput out) throws IOException
-	{
+	
+	public void writeExternal(ObjectOutput out) throws IOException {
 		out.writeInt(vocabulary.size());
 		for (int i = 0; i < vocabulary.size(); i++) {
 		//	out.writeBytes(vocabulary.getWord(i));

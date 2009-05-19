@@ -28,7 +28,7 @@ import joshua.corpus.MatchedHierarchicalPhrases;
  * Implements common algorithms used with hierarchical phrases.
  * 
  * @author Lane Schwartz
- * @version $LastChangedDate: 2009-05-08 16:34:32 -0500 (Fri, 08 May 2009) $
+ * @version $LastChangedDate$
  */
 public abstract class AbstractHierarchicalPhrases implements
 		MatchedHierarchicalPhrases {
@@ -69,17 +69,14 @@ public abstract class AbstractHierarchicalPhrases implements
 		
 		// Does the prefix (m_a_alpha) overlap with
 		//      the suffix (m_alpha_b) on any words?
-		boolean matchesOverlap;
 		// we assume that the nonterminal symbols will be denoted with negative numbers
-		if (m_a_alpha_endsWithNonterminal && 
+		boolean matchesOverlap =
+			! ( m_a_alpha_endsWithNonterminal && 
 				m_alpha_b_startsWithNonterminal && 
 				m_a_alpha.arity()==1 &&
 				m_alpha_b.arity()==1 &&
 				m_a_alpha.getTerminalSequenceLength(0)==1 &&
-				m_alpha_b.getTerminalSequenceLength(0)==1)
-			matchesOverlap = false;
-		else
-			matchesOverlap = true;
+				m_alpha_b.getTerminalSequenceLength(0)==1);
 
 		int prefixStartPosition = m_a_alpha.getStartPosition(i, 0);
 		int suffixStartPosition = m_alpha_b.getStartPosition(j, 0);
@@ -174,23 +171,19 @@ public abstract class AbstractHierarchicalPhrases implements
 				return result;
 			}
 
-		}
-		else {
-
-			if (m_a_alpha.getSentenceNumber(i) < m_alpha_b.getSentenceNumber(j))
+		} else {
+			
+			if (m_a_alpha.getSentenceNumber(i) < m_alpha_b.getSentenceNumber(j)) {
 				return -1;
-			else if (m_a_alpha.getSentenceNumber(i) > m_alpha_b.getSentenceNumber(j))
+			} else if (m_a_alpha.getSentenceNumber(i) > m_alpha_b.getSentenceNumber(j)) {
 				return 1;
-			else {
-
-				if (prefixStartPosition >= suffixStartPosition-1)
-					return 1;
-				else if (prefixStartPosition <= suffixStartPosition-maxPhraseSpan)
-					return -1;
-				else
-					return 0;
+			} else if (prefixStartPosition >= suffixStartPosition-1) {
+				return 1;
+			} else if (prefixStartPosition <= suffixStartPosition-maxPhraseSpan) {
+				return -1;
+			} else {
+				return 0;
 			}
-
 		}
 	}
 	

@@ -216,7 +216,7 @@ public class Pattern extends BasicPhrase implements PatternFormat {
 	public String toString() {
 		
 		StringBuilder s = new StringBuilder();
-
+		
 		s.append('[');
 		
 		for (int i=0; i<words.length; i++) {
@@ -225,14 +225,15 @@ public class Pattern extends BasicPhrase implements PatternFormat {
 				s.append(' ');
 			}
 			
-			if (words[i] >= 0)
-				if (vocab==null)
+			if (words[i] >= 0) {
+				if (vocab==null) {
 					s.append(words[i]);
-				else
+				} else {
 					s.append(vocab.getWord(words[i]));
-			else
+				}
+			} else {
 				s.append('X');
-			
+			}
 		}
 
 		s.append(']');
@@ -275,8 +276,8 @@ public class Pattern extends BasicPhrase implements PatternFormat {
 		
 		return arity;
 	}
-
-
+	
+	
 	public void writeExternal(ObjectOutput out) throws IOException {
 		out.writeInt(arity);
 		
@@ -284,7 +285,4 @@ public class Pattern extends BasicPhrase implements PatternFormat {
 			out.writeInt(word);
 		}
 	}
-	
-	
-	
 }

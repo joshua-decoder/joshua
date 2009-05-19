@@ -114,8 +114,11 @@ public abstract class AbstractPhrase implements Phrase {
 				return 1;
 			}
 		}
-		if (length < otherLength) return -1;
-		else return 0;
+		if (length < otherLength) {
+			return -1;
+		} else {
+			return 0;
+		}
 	}
 	
 	
