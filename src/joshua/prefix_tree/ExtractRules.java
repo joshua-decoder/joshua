@@ -292,7 +292,7 @@ public class ExtractRules {
 			String alignmentsType = commandLine.getValue(alignmentType);
 			if ("AlignmentArray".equals(alignmentsType)) {
 				if (logger.isLoggable(Level.INFO)) logger.info("Using AlignmentArray");
-				alignments = SuffixArrayFactory.createAlignmentArray(alignmentFileName, sourceSuffixArray, targetSuffixArray);
+				alignments = SuffixArrayFactory.createAlignments(alignmentFileName, sourceSuffixArray, targetSuffixArray);
 			} else if ("AlignmentGrids".equals(alignmentsType) || "AlignmentsGrid".equals(alignmentsType)) {
 				if (logger.isLoggable(Level.INFO)) logger.info("Using AlignmentGrids");
 				alignments = new AlignmentGrids(new Scanner(new File(alignmentFileName)), sourceCorpusArray, targetCorpusArray, trainingSize, commandLine.getValue(requireTightSpans));

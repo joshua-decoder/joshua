@@ -41,8 +41,13 @@ public class GridPanel extends JPanel {
 	private static final Logger logger = 
 		Logger.getLogger(GridPanel.class.getName());
 	
+	/** Source side of an aligned parallel corpus. */
 	private final Corpus sourceCorpus;
+	
+	/** Target side of an aligned parallel corpus. */
 	private final Corpus targetCorpus;
+	
+	/** Alignment data for an aligned parallel corpus. */
 	private final Alignments alignments;
 	
 	private Dimension preferredSize;
@@ -51,9 +56,26 @@ public class GridPanel extends JPanel {
 	private int numSourceWords;
 	private int numTargetWords;
 	
+	/** 
+	 * Represents the breadth and height of a cell
+	 * when displayed on screen.
+	 */
 	private int screenScaleFactor = 25;
+	
+	/** 
+	 * Represents the breadth and height of a cell
+	 * when printed.
+	 */
 	private int printerScaleFactor = 10;
 	
+	/**
+	 * Constructs a panel to display an aligned sentence pair.
+	 * 
+	 * @param sourceCorpus Source corpus
+	 * @param targetCorpus Target corpus
+	 * @param alignments Sentence alignments for the parallel corpus
+	 * @param sentenceNumber Index of the sentence to display
+	 */
 	public GridPanel(Corpus sourceCorpus, Corpus targetCorpus, Alignments alignments, int sentenceNumber) {
 		this.sourceCorpus = sourceCorpus;
 		this.targetCorpus = targetCorpus;
@@ -63,6 +85,11 @@ public class GridPanel extends JPanel {
 		this.setSentenceNumber(sentenceNumber);
 	}
 		
+	/**
+	 * Sets the aligned sentence to be displayed by this component.
+	 * 
+	 * @param sentenceNumber Index of the sentence to display
+	 */
 	public void setSentenceNumber(int sentenceNumber) {
 		this.sentenceNumber = sentenceNumber;
 		
@@ -81,11 +108,13 @@ public class GridPanel extends JPanel {
 		
 	}
 		
+	/* See Javadoc for javax.swing.JComponent#getPreferredSize */
 	@Override
 	public Dimension getPreferredSize() {
 		return preferredSize;
 	}
 	
+	/* See Javadoc for javax.swing.JComponent#getMinimumSize */
 	@Override
 	public Dimension getMinimumSize() {
 		return preferredSize;
@@ -99,11 +128,13 @@ public class GridPanel extends JPanel {
 		return this.printerScaleFactor;
 	}
 	
+	/* See Javadoc for javax.swing.JComponent#paintComponent(Graphics) */
 	@Override
 	protected void paintComponent(Graphics graphics) {
 		paintSomething(graphics, screenScaleFactor);
 	}
 	
+	/* See Javadoc for javax.swing.JComponent#printComponent(Graphics) */
 	@Override
 	protected void printComponent(Graphics graphics) { 
 

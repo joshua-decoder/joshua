@@ -114,6 +114,10 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 //			HierarchicalPhrase sourcePhrase = sourceHierarchicalPhrases.get(i, suffixArray.getCorpus());
 			//for (HierarchicalPhrase sourcePhrase : samples) {
 			// We may want to extract the alignment points at this point, rather than deeper on because we're doing this somewhat redundantly in getTranslation and calculateLexProbs
+			
+			//TODO Make getTranslation return a HierarchicalPhrase object instead of a pattern
+			//     We need the extra information in calculateLexProbs
+			
 			Pattern translation = getTranslation(sourceHierarchicalPhrases, i);
 			if (translation != null) {
 				translations.add(translation);
@@ -232,7 +236,6 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 	 * 
 	 * @return null if no translation can be constructed
 	 */
-//	protected Pattern constructTranslation(HierarchicalPhrase sourcePhrase, Span sourceSpan, Span targetSpan, boolean sourceStartsWithNT, boolean sourceEndsWithNT) {
 	protected Pattern constructTranslation(MatchedHierarchicalPhrases sourcePhrases, int sourcePhraseIndex, Span sourceSpan, Span targetSpan, boolean sourceStartsWithNT, boolean sourceEndsWithNT) {		
 		if (logger.isLoggable(Level.FINE)) logger.fine("Constructing translation for source span " + sourceSpan + ", target span " + targetSpan);
 				
@@ -240,7 +243,6 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 			return null;
 		
 		// Construct a pattern for the trivial case where there are no nonterminals
-//		if (sourcePhrases.pattern.arity == 0) {
 		if (sourcePhrases.arity() == 0) {
 
 			if (sourceSpan.size() > this.maxPhraseLength) {
@@ -455,7 +457,6 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 		
 		
 		// Case 1:  If sample !startsWithNT && !endsWithNT
-//		if (!sourcePhrase.startsWithNonterminal() && !sourcePhrase.endsWithNonterminal()) {
 		if (!sourcePhrase.startsWithNonterminal() && !sourcePhrase.endsWithNonterminal()) {
 			
 			if (logger.isLoggable(Level.FINER)) logger.finer("Case 1: Source phrase !startsWithNT && !endsWithNT");

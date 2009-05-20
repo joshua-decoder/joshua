@@ -55,6 +55,7 @@
        <class name="joshua.prefix_tree.PrefixTreeAdvancedTest" />
        <class name="joshua.corpus.lexprob.SampledLexProbsTest" />
        <class name="joshua.corpus.lexprob.LexProbsTest" />    
+       <class name="joshua.corpus.lexprob.BetterLexProbsTest" />
     </classes>
   </test>
  

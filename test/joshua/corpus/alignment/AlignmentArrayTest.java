@@ -59,7 +59,7 @@ public class AlignmentArrayTest {
 		targetCorpus =
 			SuffixArrayFactory.createSuffixArray(targetArray, SuffixArray.DEFAULT_CACHE_CAPACITY);//SuffixArrayFactory.loadSuffixArray(targetLang, corpusName, directory);
 		
-		alignmentArray = (AlignmentArray) SuffixArrayFactory.createAlignmentArray(alignmentsFilename, sourceCorpus, targetCorpus); //SuffixArrayFactory.loadAlignmentArray(sourceLang, targetLang, corpusName, directory);
+		alignmentArray = (AlignmentArray) SuffixArrayFactory.createAlignments(alignmentsFilename, sourceCorpus, targetCorpus); //SuffixArrayFactory.loadAlignmentArray(sourceLang, targetLang, corpusName, directory);
 		
 	}
 	

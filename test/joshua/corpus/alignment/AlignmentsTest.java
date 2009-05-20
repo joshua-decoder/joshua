@@ -112,7 +112,7 @@ public class AlignmentsTest {
 			SuffixArray sourceSuffixArray = 
 				SuffixArrayFactory.createSuffixArray(sourceCorpusArray, SuffixArray.DEFAULT_CACHE_CAPACITY);
 			alignments = 
-				SuffixArrayFactory.createAlignmentArray(alignmentFileName, sourceSuffixArray, targetSuffixArray);
+				SuffixArrayFactory.createAlignments(alignmentFileName, sourceSuffixArray, targetSuffixArray);
 		} else if (alignmentsType.equals("AlignmentGrids")) {
 			alignments = new AlignmentGrids(new Scanner(new File(alignmentFileName)), sourceCorpusArray, targetCorpusArray, 3);			
 		} else if (alignmentsType.equals("MemoryMappedAlignmentGrids")) {

@@ -58,9 +58,13 @@ public class GridScrollPanelHeader extends JComponent {
 	 */
     private final int depth;
 
+    /** Words to display in this header. */
     private String[] words;
 
-    private Dimension size;
+    /** 
+     * Represents the total width and height of this component.
+     */
+//    private Dimension size;
     
     /**
      * Constructs a new scroll panel header.
@@ -79,6 +83,7 @@ public class GridScrollPanelHeader extends JComponent {
         
         if (logger.isLoggable(Level.FINE)) logger.fine(Arrays.toString(words));
         
+        Dimension size;
         if (orientation==Orientation.HORIZONTAL) {
         	size = new Dimension(breadth*words.length, depth);
         } else {
@@ -90,23 +95,46 @@ public class GridScrollPanelHeader extends JComponent {
         this.setMaximumSize(size);
     }
 
+    /**
+     * Gets the breadth of this header.
+     * <p>
+     * In a horizontal orientation, depth corresponds to cell width.
+	 * In a vertical orientation, depth corresponds to cell height.
+     * 
+     * @return breadth of this header
+     */
     public int getBreadth() {
         return breadth;
     }
 
+	/* See Javadoc for javax.swing.JComponent#printComponent(Graphics) */
+    @Override
     protected void printComponent(Graphics graphics) {
-    	
+//		Dimension d = this.getSize();
+//		graphics.setColor(Color.BLUE);
+//		graphics.fillRect(0, 0, d.width, d.height);
     }
     
 	/* See Javadoc for javax.swing.JComponent#paintComponent(Graphics) */
+    @Override
     protected void paintComponent(Graphics graphics) {
     	Graphics2D g = (Graphics2D) graphics;
     	
         Rectangle clipBounds = g.getClipBounds();
         logger.fine("Clip bounds = " + clipBounds);
         
+        int width, height;
+        if (orientation == Orientation.HORIZONTAL) {
+        	width = breadth*words.length;
+        	height = depth;
+        } else {
+        	width = depth;
+        	height = breadth*words.length;
+        }
+        
         g.setColor(new Color(230, 163, 4));
-        g.fillRect(0, 0, size.width, size.height);
+//        g.fillRect(0, 0, size.width, size.height);
+        g.fillRect(0, 0, width, height);
         
         g.setFont(new Font("SansSerif", Font.PLAIN, 10));
         g.setColor(Color.black);
@@ -116,11 +144,11 @@ public class GridScrollPanelHeader extends JComponent {
         if (orientation == Orientation.HORIZONTAL) {
             start = (clipBounds.x / breadth) * breadth;
             end = (((clipBounds.x + clipBounds.width) / breadth) + 1) * breadth;
-            if (end > size.width + 1) end = size.width + 1;
+            if (end > width + 1) end = width + 1;
         } else {
             start = (clipBounds.y / breadth) * breadth;
             end = (((clipBounds.y + clipBounds.height) / breadth) + 1) * breadth;
-            if (end > size.height + 1) end = size.height + 1;
+            if (end > height + 1) end = height + 1;
         }
 
     	double theta = Math.PI / -2.0;

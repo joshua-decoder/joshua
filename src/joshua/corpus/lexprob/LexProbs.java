@@ -17,14 +17,20 @@
  */
 package joshua.corpus.lexprob;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 
+import joshua.corpus.Corpus;
 import joshua.corpus.MatchedHierarchicalPhrases;
+import joshua.corpus.ParallelCorpus;
+import joshua.corpus.alignment.Alignments;
+import joshua.corpus.vocab.SymbolTable;
 import joshua.corpus.vocab.Vocabulary;
 import joshua.util.Pair;
 
@@ -47,8 +53,10 @@ public class LexProbs implements LexicalProbabilities {
 	private final Map<Integer,Map<Integer,Float>> sourceGivenTarget;
 	private final Map<Integer,Map<Integer,Float>> targetGivenSource;
 	
-	private final Vocabulary sourceVocab;
-	private final Vocabulary targetVocab;
+	private final SymbolTable sourceVocab;
+	private final SymbolTable targetVocab;
+	
+	private final ParallelCorpus parallelCorpus;
 	
 	/**
 	 * 
@@ -62,7 +70,161 @@ public class LexProbs implements LexicalProbabilities {
 		this.targetGivenSource = calculateLexProbs(target_given_source_counts_scanner, targetVocab, sourceVocab);
 		this.sourceVocab = sourceVocab;
 		this.targetVocab = targetVocab;
+		this.parallelCorpus = null;
 	}
+	
+	public LexProbs(ParallelCorpus parallelCorpus) {
+		
+		Pair<Map<Integer,Map<Integer,Integer>>, Map<Integer,Map<Integer,Integer>>> pair = 
+			initializeCooccurrenceCounts(parallelCorpus);
+		
+		this.sourceGivenTarget = calculateLexProbs(pair.getFirst());
+		this.targetGivenSource = calculateLexProbs(pair.getSecond());
+		
+		this.sourceVocab = parallelCorpus.getSourceCorpus().getVocabulary();
+		this.targetVocab = parallelCorpus.getTargetCorpus().getVocabulary();
+		
+		this.parallelCorpus = parallelCorpus;
+		
+	}
+	
+//	public LexProbs(Map<Integer,Map<Integer,Integer>> sourceToTargetCounts, Map<Integer,Map<Integer,Integer>> targetToSourceCounts, SymbolTable sourceVocab, SymbolTable targetVocab) {
+//		this.sourceVocab = sourceVocab;
+//		this.targetVocab = targetVocab;
+//		this.sourceGivenTarget = calculateLexProbs(targetToSourceCounts);
+//		this.targetGivenSource = calculateLexProbs(sourceToTargetCounts);
+//	}
+	
+	private static Pair<Map<Integer,Map<Integer,Integer>>, Map<Integer,Map<Integer,Integer>>> initializeCooccurrenceCounts(ParallelCorpus parallelCorpus) {
+		
+		Map<Integer,Map<Integer,Integer>> sourceToTargetCounts = new HashMap<Integer,Map<Integer,Integer>>();
+		Map<Integer,Map<Integer,Integer>> targetToSourceCounts = new HashMap<Integer,Map<Integer,Integer>>();
+		
+		Alignments alignments = parallelCorpus.getAlignments();
+		Corpus sourceCorpus = parallelCorpus.getSourceCorpus();
+		Corpus targetCorpus = parallelCorpus.getTargetCorpus();
+		int numSentences = parallelCorpus.getNumSentences();
+				
+		// Iterate over each sentence
+		for (int sentenceID=0; sentenceID<numSentences; sentenceID++) {
+
+			int sourceStart = sourceCorpus.getSentencePosition(sentenceID);
+			int sourceEnd = sourceCorpus.getSentenceEndPosition(sentenceID);
+
+			int targetStart = targetCorpus.getSentencePosition(sentenceID);
+			int targetEnd = targetCorpus.getSentenceEndPosition(sentenceID);
+
+			for (int sourceIndex=sourceStart; sourceIndex<sourceEnd; sourceIndex++) {
+
+				int[] targetPoints = alignments.getAlignedTargetIndices(sourceIndex);
+
+				int sourceWord = sourceCorpus.getWordID(sourceIndex);
+
+				// We may have never seen this source word before
+				if (! sourceToTargetCounts.containsKey(sourceWord)) {
+					// In that case, initialize a new map
+					sourceToTargetCounts.put(sourceWord, new HashMap<Integer,Integer>());
+				}
+
+				// Get the map for the current source word
+				Map<Integer,Integer> counts = sourceToTargetCounts.get(sourceWord);
+
+				// If the source word is unaligned,
+				// then we treat it as being aligned to a special NULL token;
+				// we use Java's null to represent the NULL token
+				if (targetPoints==null) {
+
+					if (counts.containsKey(null)) {
+						counts.put(null, counts.get(null) + 1);
+					} else {
+						counts.put(null, 1);
+					}
+
+
+				} else {
+
+					// If the source word is aligned,
+					// then we must iterate over each aligned target point
+					
+					for (int targetPoint : targetPoints) {
+
+						int targetWord = targetCorpus.getWordID(targetPoint);
+
+						if (counts.containsKey(targetWord)) {
+							counts.put(targetWord, counts.get(targetWord) + 1);
+						} else {
+							counts.put(targetWord, 1);
+						}
+					}
+
+				}
+
+			}
+
+
+			// TODO Repeat the above comments here, and split this method into two
+			
+			////
+			for (int targetIndex=targetStart; targetIndex<targetEnd; targetIndex++) {
+
+				int targetWord = targetCorpus.getWordID(targetIndex);
+
+				if (! targetToSourceCounts.containsKey(targetWord)) {
+					targetToSourceCounts.put(targetWord, new HashMap<Integer,Integer>());
+				}
+
+				Map<Integer,Integer> counts = targetToSourceCounts.get(targetWord);
+
+				int[] sourcePoints = alignments.getAlignedSourceIndices(targetIndex);
+				
+				if (sourcePoints==null) {
+
+					if (counts.containsKey(null)) {
+						counts.put(null, counts.get(null) + 1);
+					} else {
+						counts.put(null, 1);
+					}
+
+
+				} else {
+
+					for (int sourcePoint : sourcePoints) {
+
+						int sourceWord = sourceCorpus.getWordID(sourcePoint);
+
+						if (counts.containsKey(sourceWord)) {
+							counts.put(sourceWord, counts.get(sourceWord) + 1);
+						} else {
+							counts.put(sourceWord, 1);
+						}
+					}
+
+				}
+
+			}
+			////
+		}
+		
+		return new Pair<Map<Integer,Map<Integer,Integer>>, Map<Integer,Map<Integer,Integer>>>(
+				targetToSourceCounts, sourceToTargetCounts);
+	}
+	
+//	public static LexicalProbabilities createLexicalProbabilities(ParallelCorpus parallelCorpus) {
+//
+//		Alignments alignments = parallelCorpus.getAlignments();
+//		Corpus sourceCorpus = parallelCorpus.getSourceCorpus();
+//		Corpus targetCorpus = parallelCorpus.getTargetCorpus();
+//		int numSentences = parallelCorpus.getNumSentences();
+//
+//		Map<Integer,Map<Integer,Integer>> sourceToTargetCounts = new HashMap<Integer,Map<Integer,Integer>>();
+//		Map<Integer,Map<Integer,Integer>> targetToSourceCounts = new HashMap<Integer,Map<Integer,Integer>>();
+//
+//
+//		
+//
+//		return new LexProbs(sourceToTargetCounts, targetToSourceCounts, sourceCorpus.getVocabulary(), targetCorpus.getVocabulary());
+//		
+//	}
 	
 	/**
 	 * 
@@ -111,6 +273,52 @@ public class LexProbs implements LexicalProbabilities {
 	}
 	
 
+	/**
+	 * Calculates a lexical translation probability distribution.
+	 * 
+	 * @param Map from givenWord to word to co-occurrence count
+	 * @return A map from givenWord to word to probability
+	 */
+	private static Map<Integer,Map<Integer,Float>> calculateLexProbs(Map<Integer,Map<Integer,Integer>> counterMaps) {
+
+		Map<Integer,Map<Integer,Float>> map = new HashMap<Integer,Map<Integer,Float>>();
+
+		
+		for (Map.Entry<Integer,Map<Integer,Integer>> entry : counterMaps.entrySet()) {
+			
+			Integer givenWord = entry.getKey();
+			Map<Integer,Integer> wordCounts = entry.getValue();
+			
+			int denominatorCounter = 0;
+			for (int count : wordCounts.values()) {
+				denominatorCounter += count;
+			}
+			
+			if (denominatorCounter > 0) {
+				
+				Map<Integer,Float> probsMap = new HashMap<Integer,Float>();
+				
+				float denominator = (float) denominatorCounter;
+				for (Map.Entry<Integer, Integer> wordCountEntry : wordCounts.entrySet()) {
+					
+					Integer word = wordCountEntry.getKey();
+					int count = wordCountEntry.getValue();
+					
+					// This is the maximum likelihood estimate of p(word | givenWord)
+					probsMap.put(word, count / denominator);
+					
+				}
+				
+				map.put(givenWord, probsMap);
+				
+			}
+						
+		}
+		
+		return map;
+	}
+	
+	
 	/**
 	 * 
 	 * @param word_count_scanner
@@ -210,7 +418,92 @@ public class LexProbs implements LexicalProbabilities {
 		return map;
 	}
 
-	public Pair<Float, Float> calculateLexProbs(MatchedHierarchicalPhrases sourcePhrase, int sourcePhraseIndex) {
-		throw new UnsupportedOperationException("Not yet implemented");
+	public Pair<Float, Float> calculateLexProbs(MatchedHierarchicalPhrases sourcePhrases, int sourcePhraseIndex) {
+
+		float sourceGivenTarget = 1.0f;
+		
+		Map<Integer,List<Integer>> reverseAlignmentPoints = new HashMap<Integer,List<Integer>>(); 
+	
+		Corpus sourceCorpus = parallelCorpus.getSourceCorpus();
+		Corpus targetCorpus = parallelCorpus.getTargetCorpus();
+		Alignments alignments = parallelCorpus.getAlignments();
+		
+		// Iterate over each terminal sequence in the source phrase
+		for (int seq=0; seq<sourcePhrases.getNumberOfTerminalSequences(); seq++) {
+			
+			// Iterate over each source index in the current terminal sequence
+			for (int sourceWordIndex=sourcePhrases.getTerminalSequenceStartIndex(sourcePhraseIndex, seq),
+						end=sourcePhrases.getTerminalSequenceEndIndex(sourcePhraseIndex, seq);
+					sourceWordIndex<end; 
+					sourceWordIndex++) {
+				
+								
+				int sourceWord = sourceCorpus.getWordID(sourceWordIndex);
+				int[] targetIndices = alignments.getAlignedTargetIndices(sourceWordIndex);
+				
+				float sum = 0.0f;
+				
+				if (targetIndices==null) {
+					
+					sum += this.sourceGivenTarget(sourceWord, null);
+					
+				} else {
+					for (int targetIndex : targetIndices) {
+
+						int targetWord = targetCorpus.getWordID(targetIndex);
+						sum += sourceGivenTarget(sourceWord, targetWord);
+						
+						// Keeping track of the reverse alignment points 
+						//   (we need to do this convoluted step because we don't actually have a HierarchicalPhrase for the target side)
+						if (!reverseAlignmentPoints.containsKey(targetIndex)) {
+							reverseAlignmentPoints.put(targetIndex, new ArrayList<Integer>());
+						}
+						reverseAlignmentPoints.get(targetIndex).add(sourceWord);
+					}
+				}
+				
+				float average = sum / targetIndices.length;
+				sourceGivenTarget *= average;
+			}
+			
+		}
+
+		
+		float targetGivenSource = 1.0f;
+
+		// Iterate over each terminal sequence in the source phrase
+		for (int seq=0; seq<sourcePhrases.getNumberOfTerminalSequences(); seq++) {
+			
+			int sourceSequenceStart = sourcePhrases.getTerminalSequenceStartIndex(sourcePhraseIndex, seq);
+			int sourceSequenceEnd = sourcePhrases.getTerminalSequenceEndIndex(sourcePhraseIndex, seq);
+			
+			
+			
+			// Iterate over each source index in the current terminal sequence
+			for (int sourceWordIndex=sourcePhrases.getTerminalSequenceStartIndex(sourcePhraseIndex, seq),
+						end=sourcePhrases.getTerminalSequenceEndIndex(sourcePhraseIndex, seq);
+					sourceWordIndex<end; 
+					sourceWordIndex++) {
+				
+			}
+			
+		}
+		
+		// Actually calculate the reverse lexical translation probabilities
+		for (Map.Entry<Integer, List<Integer>> entry : reverseAlignmentPoints.entrySet()) {
+
+			int targetWord = targetCorpus.getWordID(entry.getKey());
+			float sum = 0.0f;
+
+			List<Integer> alignedSourceWords = entry.getValue();
+
+			for (int sourceWord : alignedSourceWords) {
+				sum += targetGivenSource(targetWord, sourceWord);
+			}
+			float average = sum / ((float) alignedSourceWords.size());
+			targetGivenSource *= average;
+		}
+
+		return new Pair<Float,Float>(sourceGivenTarget,targetGivenSource);
 	}
 }

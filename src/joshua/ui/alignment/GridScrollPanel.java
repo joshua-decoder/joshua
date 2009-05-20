@@ -1,4 +1,4 @@
-/*/* This file is part of the Joshua Machine Translation System.
+/* This file is part of the Joshua Machine Translation System.
  * 
  * Joshua is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as
@@ -17,6 +17,7 @@
  */
 package joshua.ui.alignment;
 
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -25,9 +26,8 @@ import java.awt.print.Printable;
 import java.awt.print.PrinterException;
 
 import javax.swing.BorderFactory;
-import javax.swing.BoxLayout;
-import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.border.Border;
 
 import joshua.ui.Orientation;
 import joshua.ui.alignment.GridPanel;
@@ -36,7 +36,7 @@ import joshua.ui.alignment.GridPanel;
  * 
  * @author Lane Schwartz
  */
-public class GridScrollPanel extends JPanel implements Printable {
+public class GridScrollPanel extends JScrollPane implements Printable {
 	
 	/** Panel containing alignment grid. */
 	private final GridPanel gridPanel;
@@ -53,7 +53,7 @@ public class GridScrollPanel extends JPanel implements Printable {
 	 * @param gridPanel An alignment grid
 	 */
 	public GridScrollPanel(GridPanel gridPanel) {
-		this.setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));
+		super(gridPanel);
 
 		this.gridPanel = gridPanel;
 		
@@ -66,21 +66,35 @@ public class GridScrollPanel extends JPanel implements Printable {
 		this.columnHeader = new GridScrollPanelHeader(targetWords, Orientation.HORIZONTAL, headerCellBreadth, headerCellDepth);
 		this.rowHeader = new GridScrollPanelHeader(sourceWords, Orientation.VERTICAL, headerCellBreadth, headerCellDepth);
 		
+		this.setPreferredSize(new Dimension(300, 250));
 		
-		JScrollPane pictureScrollPane = new JScrollPane(gridPanel);
-		pictureScrollPane.setPreferredSize(new Dimension(300, 250));
-		
-		pictureScrollPane.setColumnHeaderView(columnHeader);
-		pictureScrollPane.setRowHeaderView(rowHeader);
+		this.setColumnHeaderView(columnHeader);
+		this.setRowHeaderView(rowHeader);
 
-		this.add(pictureScrollPane);
-		this.setBorder(BorderFactory.createEmptyBorder(20,20,20,20));
+		Border outerBorder = BorderFactory.createEmptyBorder(20,20,20,20);
+		Border innerBorder = BorderFactory.createLineBorder(Color.BLACK);
+		this.setBorder(
+				BorderFactory.createCompoundBorder(outerBorder, innerBorder));
 	}
 
+	/* See Javadoc for javax.swing.JComponent#printComponent(Graphics) */
+	@Override
+	protected void printComponent(Graphics g) {
+		// The background of the page should be white
+		Dimension d = this.getSize();
+		g.setColor(Color.WHITE);
+		g.fillRect(0, 0, d.width, d.height);
+	}
+	
+	/* See Javadoc for javax.swing.JComponent#paintChildren(Graphics) */
+	@Override
 	protected void printChildren(Graphics g) {
+//		super.paintChildren(g);
+		columnHeader.printAll(g);
 		gridPanel.printAll(g);
 	}
 	
+	/* See Javadoc for java.awt.print.Printable#print(Graphics,PageFormat,int) */
 	public int print(Graphics graphics, PageFormat pageFormat, int page) throws PrinterException {
 
 		// We have only one page, and 'page' is zero-based

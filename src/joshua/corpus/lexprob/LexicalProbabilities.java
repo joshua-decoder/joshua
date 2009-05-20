@@ -11,19 +11,26 @@ import joshua.util.Pair;
  */
 public interface LexicalProbabilities {
 
+	
 	/**
+	 * Gets the lexical translation probability 
+	 * of the source word given the target word.
 	 * 
-	 * @param sourceWord
-	 * @param targetWord
-	 * @return
+	 * @param sourceWord Source language word symbol
+	 * @param targetWord Target language word symbol
+	 * @return the lexical translation probability 
+	 *         of the source word given the target word
 	 */
 	float sourceGivenTarget(Integer sourceWord, Integer targetWord);
 	
 	/**
+	 * Gets the lexical translation probability 
+	 * of the target word given the source word.
 	 * 
-	 * @param targetWord
-	 * @param sourceWord
-	 * @return
+	 * @param targetWord Target language word symbol
+	 * @param sourceWord Source language word symbol
+	 * @return the lexical translation probability 
+	 *         of the target word given the source word
 	 */
 	float targetGivenSource(Integer targetWord, Integer sourceWord);
 	

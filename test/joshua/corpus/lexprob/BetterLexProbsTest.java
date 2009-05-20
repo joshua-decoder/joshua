@@ -1,3 +1,20 @@
+/* This file is part of the Joshua Machine Translation System.
+ * 
+ * Joshua is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1
+ * of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free
+ * Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
+ */
 package joshua.corpus.lexprob;
 
 import java.io.File;
@@ -6,27 +23,34 @@ import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.util.Date;
 
+import joshua.corpus.Corpus;
 import joshua.corpus.CorpusArray;
+import joshua.corpus.ParallelCorpus;
 import joshua.corpus.alignment.Alignments;
-import joshua.corpus.lexprob.SampledLexProbs;
 import joshua.corpus.suffix_array.HierarchicalPhrases;
 import joshua.corpus.suffix_array.Pattern;
 import joshua.corpus.suffix_array.SuffixArray;
 import joshua.corpus.suffix_array.SuffixArrayFactory;
 import joshua.corpus.vocab.Vocabulary;
 import joshua.prefix_tree.PrefixTree;
-import joshua.util.Cache;
 import joshua.util.Pair;
 
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-public class SampledLexProbsTest {
+/**
+ * Unit tests for LexProbs class.
+ * 
+ * TODO This class needs to be extended to add unit tests that test for proper NULL alignment behavior.
+ * 
+ * @author Lane Schwartz
+ */
+public class BetterLexProbsTest {
 
 	// ä == \u00E4
 	// ü == \u00FC
 	
-	SampledLexProbs lexProbs;
+	LexicalProbabilities lexProbs;
 	Vocabulary sourceVocab, targetVocab;
 	Alignments alignmentArray;
 	CorpusArray sourceCorpusArray;
@@ -94,7 +118,7 @@ public class SampledLexProbsTest {
 		SuffixArray sourceSuffixArray =
 			SuffixArrayFactory.createSuffixArray(sourceCorpusArray, SuffixArray.DEFAULT_CACHE_CAPACITY);
 
-		CorpusArray targetCorpusArray =
+		final CorpusArray targetCorpusArray =
 			SuffixArrayFactory.createCorpusArray(targetFileName);
 		this.targetVocab = (Vocabulary) targetCorpusArray.getVocabulary();
 		SuffixArray targetSuffixArray = 
@@ -103,8 +127,16 @@ public class SampledLexProbsTest {
 		this.alignmentArray =
 			SuffixArrayFactory.createAlignments(alignmentFileName, sourceSuffixArray, targetSuffixArray);
 
-		this.lexProbs = 
-			new SampledLexProbs(Integer.MAX_VALUE, sourceSuffixArray, targetSuffixArray, alignmentArray, Cache.DEFAULT_CAPACITY, false);
+		ParallelCorpus parallelCorpus = new ParallelCorpus() {
+			public Alignments getAlignments() { return alignmentArray; } 
+			public int getNumSentences() { return 4; }
+			public Corpus getSourceCorpus() { return sourceCorpusArray; }
+			public Corpus getTargetCorpus() { return targetCorpusArray; }
+		};
+		
+		this.lexProbs = new LexProbs(parallelCorpus);
+//			SuffixArrayFactory.createLexicalProbabilities(parallelCorpus);
+//			new SampledLexProbs(Integer.MAX_VALUE, sourceSuffixArray, targetSuffixArray, alignmentArray, Cache.DEFAULT_CAPACITY, false);
 		
 	}
 	
