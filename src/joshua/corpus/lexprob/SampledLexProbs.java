@@ -109,7 +109,7 @@ public class SampledLexProbs implements LexicalProbabilities {
 		
 	}
 	
-	public String sizeInfo() {
+	public String toString() {
 		StringBuilder s = new StringBuilder();
 		
 		s.append("SampledLexProbs size information:");

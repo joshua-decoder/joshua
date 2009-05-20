@@ -31,14 +31,15 @@ import java.util.zip.GZIPOutputStream;
 
 import joshua.corpus.Corpus;
 import joshua.corpus.MatchedHierarchicalPhrases;
+import joshua.corpus.ParallelCorpus;
 import joshua.corpus.RuleExtractor;
 import joshua.corpus.alignment.AlignmentGrids;
 import joshua.corpus.alignment.Alignments;
 import joshua.corpus.alignment.mm.MemoryMappedAlignmentGrids;
-import joshua.corpus.lexprob.SampledLexProbs;
+import joshua.corpus.lexprob.LexProbs;
+import joshua.corpus.lexprob.LexicalProbabilities;
 import joshua.corpus.mm.MemoryMappedCorpusArray;
 import joshua.corpus.suffix_array.Pattern;
-import joshua.corpus.suffix_array.SuffixArray;
 import joshua.corpus.suffix_array.SuffixArrayFactory;
 import joshua.corpus.suffix_array.Suffixes;
 import joshua.corpus.suffix_array.mm.MemoryMappedSuffixArray;
@@ -97,7 +98,7 @@ public class ExtractRules {
 
 			Option<String> encoding = commandLine.addStringOption("encoding","ENCODING","UTF-8","File encoding format");
 
-			Option<Integer> lexSampleSize = commandLine.addIntegerOption("lexSampleSize","LEX_SAMPLE_SIZE",1000, "Size to use when sampling for lexical probability calculations");
+//			Option<Integer> lexSampleSize = commandLine.addIntegerOption("lexSampleSize","LEX_SAMPLE_SIZE",1000, "Size to use when sampling for lexical probability calculations");
 			Option<Integer> ruleSampleSize = commandLine.addIntegerOption("ruleSampleSize","RULE_SAMPLE_SIZE",300, "Maximum number of rules to store at each node in the prefix tree");
 
 			Option<Integer> maxPhraseSpan = commandLine.addIntegerOption("maxPhraseSpan","MAX_PHRASE_SPAN",10, "Maximum span in the training corpus of any extracted source phrase");
@@ -174,7 +175,7 @@ public class ExtractRules {
 			//////////////////////////////////
 			// Source language corpus array //
 			//////////////////////////////////
-			Corpus sourceCorpusArray;
+			final Corpus sourceCorpusArray;
 			if (commandLine.getValue(binarySource)) {
 				if (logger.isLoggable(Level.INFO)) logger.info("Constructing memory mapped source language corpus array.");
 				sourceCorpusArray = new MemoryMappedCorpusArray(sourceVocab, sourceFileName);
@@ -242,7 +243,7 @@ public class ExtractRules {
 			//////////////////////////////////
 			// Target language corpus array //
 			//////////////////////////////////
-			Corpus targetCorpusArray;
+			final Corpus targetCorpusArray;
 			if (commandLine.getValue(binaryTarget)) {
 				if (logger.isLoggable(Level.INFO)) logger.info("Constructing memory mapped target language corpus array.");
 				targetCorpusArray = new MemoryMappedCorpusArray(targetVocab, targetFileName);
@@ -288,7 +289,7 @@ public class ExtractRules {
 			/////////////////////
 			if (logger.isLoggable(Level.INFO)) logger.info("Reading alignment data.");
 			String alignmentFileName = commandLine.getValue(alignment);
-			Alignments alignments;
+			final Alignments alignments;
 			String alignmentsType = commandLine.getValue(alignmentType);
 			if ("AlignmentArray".equals(alignmentsType)) {
 				if (logger.isLoggable(Level.INFO)) logger.info("Using AlignmentArray");
@@ -323,8 +324,16 @@ public class ExtractRules {
 
 			if (logger.isLoggable(Level.INFO)) logger.info("Constructing lexical probabilities table");
 
-			SampledLexProbs lexProbs = 
-				new SampledLexProbs(commandLine.getValue(lexSampleSize), sourceSuffixArray, targetSuffixArray, alignments, SuffixArray.DEFAULT_CACHE_CAPACITY, false);
+			ParallelCorpus parallelCorpus = new ParallelCorpus() {
+				public Alignments getAlignments() { return alignments; } 
+				public int getNumSentences() { return sourceCorpusArray.getNumSentences(); }
+				public Corpus getSourceCorpus() { return sourceCorpusArray; }
+				public Corpus getTargetCorpus() { return targetCorpusArray; }
+			};
+			
+			LexicalProbabilities lexProbs = 
+				new LexProbs(parallelCorpus);
+//				new SampledLexProbs(commandLine.getValue(lexSampleSize), sourceSuffixArray, targetSuffixArray, alignments, SuffixArray.DEFAULT_CACHE_CAPACITY, false);
 			
 			if (logger.isLoggable(Level.INFO)) logger.info("Done constructing lexical probabilities table");
 
@@ -398,7 +407,7 @@ public class ExtractRules {
 					}
 				}
 				
-				if (logger.isLoggable(Level.FINER)) logger.finer(lexProbs.sizeInfo());
+				if (logger.isLoggable(Level.FINER)) logger.finer(lexProbs.toString());
 				
 				if (commandLine.getValue(confirm)) {
 					if (logger.isLoggable(Level.INFO)) logger.info("Please press a key to continue");

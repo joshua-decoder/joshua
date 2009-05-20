@@ -36,18 +36,24 @@ public interface LexicalProbabilities {
 	float targetGivenSource(Integer targetWord, Integer sourceWord);
 	
 	/**
+	 * Gets the lexical translation probability 
+	 * of the source word given the target word.
 	 * 
-	 * @param sourceWord
-	 * @param targetWord
-	 * @return
+	 * @param sourceWord Source language word 
+	 * @param targetWord Target language word 
+	 * @return the lexical translation probability 
+	 *         of the source word given the target word
 	 */
 	float sourceGivenTarget(String sourceWord, String targetWord);
 	
 	/**
+	 * Gets the lexical translation probability 
+	 * of the target word given the source word.
 	 * 
-	 * @param targetWord
-	 * @param sourceWord
-	 * @return
+	 * @param targetWord Target language word symbol
+	 * @param sourceWord Source language word symbol
+	 * @return the lexical translation probability 
+	 *         of the target word given the source word
 	 */
 	float targetGivenSource(String targetWord, String sourceWord);
 

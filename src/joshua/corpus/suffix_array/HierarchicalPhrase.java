@@ -17,7 +17,6 @@
  */
 package joshua.corpus.suffix_array;
 
-import joshua.corpus.ContiguousPhrase;
 import joshua.corpus.Corpus;
 import joshua.corpus.LabeledSpan;
 import joshua.corpus.Phrase;
@@ -47,14 +46,6 @@ import java.util.ArrayList;
  * @version $LastChangedDate:2008-09-18 12:47:23 -0500 (Thu, 18 Sep 2008) $
  */
 public class HierarchicalPhrase extends Pattern {
-
-	/** 
-	 * Represents a sequence of terminal and nonterminals as
-	 * integer IDs. The pattern is <em>not</em> rooted to a
-	 * location in a corpus.
-	 */
-//	protected final Pattern pattern;
-	
 	
 	/**
 	 * Represents one index into the source corpus for each
@@ -63,26 +54,15 @@ public class HierarchicalPhrase extends Pattern {
 	protected final int[] terminalSequenceStartIndices;
 	
 	
-	/**
-	 * Exclusive ending indices of each terminal sequence.
-	 */
+	/** Exclusive ending indices of each terminal sequence. */
 	protected final int[] terminalSequenceEndIndices;
 	
 	
-	/** */
+	/** Monolingual corpus from which this phrase was extracted. */
 	protected final Corpus corpusArray;
 	
 	
-//	/**
-//	 * the length of the matching phrase from the first terminal
-//	 * to the last terminal; not the pattern; this also means
-//	 * the length is invalid if the HP starts or ends with a
-//	 * nonterminal.
-//	 */
-//	protected final int length;
-	
-	
-	/** */
+	/** Index of the sentence in the corpus where this phrase was extracted. */
 	protected final int sentenceNumber;
 	
 	
@@ -91,53 +71,26 @@ public class HierarchicalPhrase extends Pattern {
 	// single HP to represent all HPs that start with that
 	// nonterminal, and storing the startIndex would spuriously
 	// require a list of HPs to store this.
-	
+	//
 	//protected final int startIndex;
 	
 	
 	/**
-	 * Constructs a hierarchical phrase from a pattern and
-	 * indices into a corpus.
-	 * <p>
-	 * A pattern does not contain any indices into an actual
-	 * corpus. For each sequence of terminals in the pattern,
-	 * an index into the corpus is required.
+	 * Constructs a hierarchical phrase rooted at a location in a corpus.
 	 * 
-	 * @param pattern     pattern of terminals and nonterminals
-	 * @param corpusIndicesOfTerminalSequences the starting
-	 *                    indices (in the corpus) of each
-	 *                    contiguous sequence of terminals
-	 * @param corpusArray integer array representation of a
-	 *                    corpus
-	 * @param length      the length (in the corpus) of the
-	 *                    matched hierarchical phrase; this is
-	 *                    <em>not</em> the same as the length
-	 *                    of the pattern
+	 * @param patternWords     Terminals and nonterminals comprising the pattern
+	 * @param span             Span in the corpus from the first terminal 
+	 *                         to the final terminal in the phrase
+	 * @param nonterminalSpans Locations of all nonterminals in this phrase.
+	 * @param corpus           Representation of a monolingual corpus.
 	 */
 	public HierarchicalPhrase(
-			int[]       words,
-			int[]       terminalSequenceStartIndices,
-			int[]       terminalSequenceEndIndices,
-			Corpus corpusArray,
-			int         length) {
-		
-		super(corpusArray.getVocabulary(), words);
-		
-		this.terminalSequenceStartIndices = terminalSequenceStartIndices;
-		this.terminalSequenceEndIndices = terminalSequenceEndIndices;
-		this.corpusArray = corpusArray;
-//		this.length = length;
-		
-		this.sentenceNumber = corpusArray.getSentenceIndex(terminalSequenceStartIndices[0]);
-	}
-		
-	public HierarchicalPhrase(
-			int[]             words,
+			int[]             patternWords,
 			Span              span,
 			List<LabeledSpan> nonterminalSpans,
-			Corpus corpusArray) {
+			Corpus corpus) {
 		
-		super(corpusArray.getVocabulary(), words);
+		super(corpus.getVocabulary(), patternWords);
 		
 		// Compute the list of terminal spans 
 		List<Span> terminalSpans = new ArrayList<Span>();
@@ -177,10 +130,9 @@ public class HierarchicalPhrase extends Pattern {
 		}
 		
 		
-		this.corpusArray = corpusArray;
-//		this.length = super.size();//span.size();
+		this.corpusArray = corpus;
 		
-		this.sentenceNumber = corpusArray.getSentenceIndex(terminalSequenceStartIndices[0]);
+		this.sentenceNumber = corpus.getSentenceIndex(terminalSequenceStartIndices[0]);
 	}
 	
 	
@@ -287,18 +239,6 @@ public class HierarchicalPhrase extends Pattern {
 	}
 	
 	
-//	/**
-//	 * Returns the vocabulary from which the words in this
-//	 * phrase are drawn.
-//	 * 
-//	 * @return the vocabulary from which the words in this
-//	 *         phrase are drawn.
-//	 */
-//	public SymbolTable getVocab() {
-//		return corpusArray.getVocabulary();
-//	}
-	
-	
 	/**
 	 * Returns a string representation of the phrase.
 	 * 
@@ -324,63 +264,6 @@ public class HierarchicalPhrase extends Pattern {
 	}
 	
 	
-//	/**
-//	 * Returns the integer word id of the terminal or nonterminal
-//	 * at the specified position in the phrase.
-//	 * <p>
-//	 * This method will throw an exception if the phrase starts
-//	 * with a nonterminal.
-//	 * 
-//	 * @param position Index of a word in this phrase.
-//	 * @throws UnableToGetWordIDException if the phrase starts with a nonterminal
-//	 * @return the integer word id of the terminal or nonterminal
-//	 *         at the specified position in this phrase.
-//	 */
-//	public int getWordID(int position) {
-//		
-//		if (startsWithNonterminal()) {
-//			
-//			// Ideally, a hierarchical phrase is a matched pattern.
-//			//
-//			// In this hypothetical ideal case, we would store the start position
-//			//    in the corpus of the matched pattern.
-//			// 
-//			// If we had the start position in the corpus,
-//			//    we could always determine the underlying word in the corpus
-//			//    that is found at startPosition + position
-//			//
-//			// In cases where the pattern starts with a nonterminal,
-//			//    if we stored the start position, 
-//			//    we would have a list of hierarchical phrases 
-//			//    which differed ONLY by start position.
-//			//
-//			// That is undesirable because it wastes memory.
-//			//
-//			// Since we do NOT store the start position,
-//			//    this method is ill-defined when the hierarchical phrase
-//			//    starts with a nonterminal.
-//			//
-//			// It may be that this method is never actually called.
-//			//
-//			// To help determine this, we throw an exception here.
-//			//
-//			// --Lane Schwartz
-//			
-//			throw new UnableToGetWordIDException("Getting the word ID of a hierarchical phrase that starts with a nonterminal is not defined");
-//			
-//		} else {
-//			
-//			return corpusArray.getWordID(terminalSequenceStartIndices[0]+position);
-//			
-//		}
-//	}
-//	
-//	
-//	public static class UnableToGetWordIDException extends RuntimeException {
-//		public UnableToGetWordIDException(String message) {
-//			super(message);
-//		}
-//	}
 	
 	public int getNumberOfTerminalSequences() {
 		return terminalSequenceStartIndices.length;
@@ -395,18 +278,6 @@ public class HierarchicalPhrase extends Pattern {
 		return this.terminalSequenceEndIndices[sequenceIndex];
 		
 	}
-	
-	
-//	/**
-//	 * Returns the combined number of terminals and nonterminals
-//	 * in this phrase.
-//	 * 
-//	 * @return the combined number of terminals and nonterminals
-//	 *         in this phrase.
-//	 */
-//	public int size() {
-//		return length;
-//	}
 	
 	
 	/**
@@ -444,8 +315,11 @@ public class HierarchicalPhrase extends Pattern {
 	 * @see ArrayList#subList(int, int)
 	 */
 	public Phrase subPhrase(int start, int end) {
-		//XXX lane Should this only return contiguous phrases?
-		return new ContiguousPhrase(terminalSequenceStartIndices[0]+start, terminalSequenceStartIndices[0]+end, corpusArray);
+		
+		// FIXME Lane This method should almost certainly return a HierarchicalPhrase in some cases
+		
+		//return new ContiguousPhrase(terminalSequenceStartIndices[0]+start, terminalSequenceStartIndices[0]+end, corpusArray);
+		throw new Error("This code is broken. It needs to be fixed.");
 	}
 	
 }

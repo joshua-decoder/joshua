@@ -232,7 +232,16 @@ public class LexProbs implements LexicalProbabilities {
 	 * @return
 	 */
 	public float sourceGivenTarget(Integer sourceWord, Integer targetWord) {
-		return sourceGivenTarget.get(targetWord).get(sourceWord);
+		float value = Float.MIN_VALUE;
+		
+		if (sourceGivenTarget.containsKey(targetWord)) {
+			Map<Integer,Float> map = sourceGivenTarget.get(targetWord);
+			if (map.containsKey(sourceWord)) {
+				value = map.get(sourceWord);
+			}
+		}
+		
+		return value;
 	}
 	
 	/**
@@ -242,14 +251,37 @@ public class LexProbs implements LexicalProbabilities {
 	 * @return
 	 */
 	public float targetGivenSource(Integer targetWord, Integer sourceWord) {
+		float value = Float.MIN_VALUE;
+		
 		if (targetGivenSource.containsKey(sourceWord)) {
 			Map<Integer,Float> map = targetGivenSource.get(sourceWord);
 			if (map.containsKey(targetWord)) {
-				return map.get(targetWord);
+				value = map.get(targetWord);
 			} 
 		}
 		
-		throw new RuntimeException("No target given source mapping for lexp(" +targetVocab.getWord(targetWord) + " | " + sourceVocab.getWord(sourceWord) + " )");
+		return value;
+		
+//		StringBuilder message = new StringBuilder();
+//		message.append("No target given source mapping for lexp(");
+//		if (targetWord==null) {
+//			message.append("NULL");
+//		} else if (targetVocab==null) {
+//			message.append(targetWord);
+//		} else {
+//			message.append(targetVocab.getWord(targetWord));
+//		}
+//		message.append(" | ");
+//		if (sourceWord==null) { 
+//			message.append("NULL");
+//		} else if (sourceVocab==null) {
+//			message.append(sourceWord);
+//		} else {
+//			message.append(sourceVocab.getWord(sourceWord));
+//		}
+//		message.append(" )");
+//		
+//		throw new RuntimeException(message.toString());
 	}
 	
 	/**
@@ -446,10 +478,12 @@ public class LexProbs implements LexicalProbabilities {
 				int[] targetIndices = alignments.getAlignedTargetIndices(sourceWordIndex);
 				
 				float sum = 0.0f;
+				float average;
 				
 				if (targetIndices==null) {
 					
 					sum += this.sourceGivenTarget(sourceWord, null);
+					average = sum;
 					
 				} else {
 					for (int targetIndex : targetIndices) {
@@ -458,9 +492,9 @@ public class LexProbs implements LexicalProbabilities {
 						sum += sourceGivenTarget(sourceWord, targetWord);
 						
 					}
+					average = sum / targetIndices.length;
 				}
 				
-				float average = sum / targetIndices.length;
 				sourceGivenTarget *= average;
 			}
 			
@@ -496,11 +530,13 @@ public class LexProbs implements LexicalProbabilities {
 				int[] sourceIndices = alignments.getAlignedSourceIndices(targetWordIndex);
 				
 				float sum = 0.0f;
+				float average;
 				
 				if (sourceIndices==null) {
 
 					sum += targetGivenSource(targetWord, null);
-
+					average = sum;
+					
 				} else {
 					for (int sourceIndex : sourceIndices) {
 
@@ -508,9 +544,9 @@ public class LexProbs implements LexicalProbabilities {
 						sum += targetGivenSource(targetWord, sourceWord);
 
 					}
+					average = sum / sourceIndices.length;
 				}
 
-				float average = sum / sourceIndices.length;
 				targetGivenSource *= average;
 				
 			}
@@ -518,5 +554,38 @@ public class LexProbs implements LexicalProbabilities {
 		}
 		
 		return targetGivenSource;
+	}
+
+	public String toString() {
+		StringBuilder s = new StringBuilder();
+		
+		s.append("SampledLexProbs size information:");
+		s.append('\n');
+		
+		s.append(sourceGivenTarget.size() + " target sides in sourceGivenTarget");
+		s.append('\n');
+		
+		int count = 0;
+		for (Map<Integer, Float> entry : sourceGivenTarget.values()) {
+			count += entry.size();
+		}
+		
+		s.append(count + " source-target pairs in sourceGivenTarget");
+		s.append('\n');
+		
+		
+		s.append(targetGivenSource.size() + " source sides in targetGivenSource");
+		s.append('\n');
+		
+		count = 0;
+		for (Map<Integer, Float> entry : targetGivenSource.values()) {
+			count += entry.size();
+		}
+		
+		s.append(count + " target-source pairs in targetGivenSource");
+		s.append('\n');		
+		
+		
+		return s.toString();
 	}
 }
