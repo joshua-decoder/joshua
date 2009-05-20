@@ -18,7 +18,6 @@
 package joshua.decoder.ff.lm.bloomfilter_lm;
 
 import java.util.logging.Logger;
-import java.util.logging.Level;
 import java.util.Scanner;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
@@ -45,7 +44,8 @@ public class BloomFilterLanguageModel extends DefaultNGramLanguageModel implemen
 	public static final int HASH_SEED = 17;
 	public static final int HASH_OFFSET = 37;
 
-	public static final Logger logger = Logger.getLogger(BloomFilterLanguageModel.class.getName());
+	public static final Logger logger = 
+		Logger.getLogger(BloomFilterLanguageModel.class.getName());
 
 	private SymbolTable vocabulary;
 	private BloomFilter bf;

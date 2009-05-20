@@ -73,8 +73,8 @@ public class AlignmentGrid implements Externalizable {
 	public AlignmentGrid(String alignmentPoints) {
 		HashSet<Coordinate> coordinates = new HashSet<Coordinate>();
 		String[] alignmentPointsArray = alignmentPoints.split(",|\\s");
-		for(int i = 0; i < alignmentPointsArray.length; i++) {
-			if(!alignmentPointsArray[i].trim().equals("")) {
+		for (int i = 0; i < alignmentPointsArray.length; i++) {
+			if (!alignmentPointsArray[i].trim().equals("")) {
 				Coordinate coord = new Coordinate(alignmentPointsArray[i]);
 				width = Math.max(width, coord.x+1);
 				height = Math.max(height, coord.y+1);

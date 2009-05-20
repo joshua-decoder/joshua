@@ -81,6 +81,7 @@ public class ExtractWordPairs {
 		for (int line_number=1; line_number<=number_of_lines; line_number++) {
 
 			// Read in the next line from the files
+			// BUG: use joshua.util.Regex.spaces.split(...)
 			String[] source_words = source_text.nextLine().split("\\s+");
 			String[] target_words = target_text.nextLine().split("\\s+");
 			String[] raw_alignment_points = alignments.nextLine().split("\\s+");

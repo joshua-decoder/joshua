@@ -19,7 +19,6 @@ package joshua.oracle;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.logging.Logger;
 
 import joshua.decoder.hypergraph.HGNode;
 import joshua.decoder.hypergraph.HyperEdge;
@@ -34,9 +33,6 @@ import joshua.decoder.hypergraph.HyperGraph;
  * @version $LastChangedDate$
  */
 public abstract class SplitHg {
-	
-	private static final Logger logger = 
-		Logger.getLogger(SplitHg.class.getName());
 	
 	HashMap<HGNode, ArrayList<VirtualItem>> g_tbl_split_virtual_items = 
 		new HashMap<HGNode, ArrayList<VirtualItem>>();

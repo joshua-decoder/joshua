@@ -33,7 +33,7 @@ public class SrilmSymbol extends DefaultSymbol {
 	private final SWIGTYPE_p_Ngram p_srilm;
 	
 	/** Logger for this class. */
-	private static Logger logger =
+	private static final Logger logger =
 		Logger.getLogger(SrilmSymbol.class.getName());
 	
 

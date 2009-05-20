@@ -19,7 +19,6 @@
 package joshua.decoder.ff;
 
 import java.util.ArrayList;
-import java.util.logging.Logger;
 
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.hypergraph.HyperEdge;
@@ -30,10 +29,7 @@ import joshua.decoder.hypergraph.HyperEdge;
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate$
  */
-
 public abstract class DefaultStatelessFF implements FeatureFunction {
-	
-	private static final Logger logger = Logger.getLogger(DefaultStatelessFF.class.getName());
 	
 	private      double weight = 0.0;
 	private         int featureID;

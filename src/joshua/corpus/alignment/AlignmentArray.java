@@ -205,20 +205,22 @@ public class AlignmentArray extends AbstractAlignments {
 		
 		if (alignedSourceIndices[targetIndex]!=null) {
 			for (int alignedSourceIndex : alignedSourceIndices[targetIndex]) {
-				for (int i=0; i<phraseLength; i++) {
+				for (int i = 0; i < phraseLength; i++) {
 					int sourceStart = sourcePhrases.getStartPosition(sourcePhraseIndex, i);
 					//int sourceStart = sourcePhrases.terminalSequenceStartIndices[sourcePhraseIndex*(sourcePhrases.terminalSequenceLengths.length)+i];
 					int sourceEnd = sourcePhrases.getEndPosition(sourcePhraseIndex, i);
-					if (alignedSourceIndex >= sourceStart &&
-							alignedSourceIndex < sourceEnd) {
-						if (logger.isLoggable(Level.FINEST)) logger.finest("Target index " + targetIndex + ", source index " + alignedSourceIndex + " is in source phrase at range ["+sourceStart + "-" + sourceEnd + ")");
+					if (alignedSourceIndex >= sourceStart
+					&& alignedSourceIndex < sourceEnd) {
+						if (logger.isLoggable(Level.FINEST)) 
+							logger.finest("Target index " + targetIndex + ", source index " + alignedSourceIndex + " is in source phrase at range [" + sourceStart + "-" + sourceEnd + ")");
 						return true;
 					}
 				}
 			}
 		}
 		
-		if (logger.isLoggable(Level.FINEST)) logger.warning("No aligned point");
+		if (logger.isLoggable(Level.FINEST))
+			logger.warning("No aligned point");
 		return false;
 	}
 	

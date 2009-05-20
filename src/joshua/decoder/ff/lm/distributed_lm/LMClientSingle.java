@@ -22,7 +22,6 @@ import joshua.util.SocketUtility;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.logging.Logger;
 
 
 /**
@@ -32,15 +31,13 @@ import java.util.logging.Logger;
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate$
  */
-public class LMClientSingle
-extends LMClient {
-	
-	private static final Logger logger = Logger.getLogger(LMClientSingle.class.getName());
+public class LMClientSingle extends LMClient {
 	
 	SocketUtility.ClientConnection  p_client;
-	HashMap<String,String>    request_cache    = new HashMap<String,String>();
-	int        cache_size_limit = 3000000;
-	static int BYTES_PER_CHAR   = 2;//TODO big bug
+	HashMap<String,String> request_cache = new HashMap<String,String>();
+	int cache_size_limit = 3000000;
+	
+	static int BYTES_PER_CHAR = 2;//TODO big bug
 	
 	
 	public LMClientSingle(String hostname, int port) {

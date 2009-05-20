@@ -44,6 +44,10 @@
 		
 		<exclude name="MisleadingVariableName"/>
 		-->
+		
+		<!-- This one runs afoul of convention to lowercase 'logger'. But otherwise is very good.
+		<exclude name="VariableNamingConventions"/>
+		-->
 	</rule>
 	<rule ref="rulesets/naming.xml/LongVariable">
 		<properties>
@@ -57,6 +61,9 @@
 	<rule ref="rulesets/typeresolution.xml">
 		<!-- This is provided by 'coupling' as well. So avoid duplicates. -->
 		<exclude name="LooseCoupling"/>
+		
+		<!-- This is provided by 'imports' as well. So avoid duplicates -->
+		<exclude name="UnusedImports"/>
 	</rule>
 	
 	<!-- TODO: We may want to remove LooseCoupling for too many false positives. -->
@@ -80,7 +87,10 @@
 	
 	<!-- We need to tweak what we want from this set to match our own style. Good rules include: SimplifyBooleanReturns, SimplifyBooleanExpressions, AvoidReassigningParameters, ConfusingTernary, UnnecessaryLocalBeforeReturn, PositionLiteralsFirstInComparisons, ReturnEmptyArrayRatherThanNull,...
 	-->
-	<rule ref="rulesets/design.xml"/>
+	<rule ref="rulesets/design.xml">
+		<!-- This rule gives false positives for the pattern: catch (e) { e' = new Excepion(); e'.initCause(e); throw e'; }
+		<exclude name="PreserveStackTrace"/> -->
+	</rule>
 	
 	<!-- These shouldn't be controversial -->
 	<rule ref="rulesets/controversial.xml/UnusedModifier"/>

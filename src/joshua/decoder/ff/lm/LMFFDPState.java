@@ -18,11 +18,8 @@
 
 package joshua.decoder.ff.lm;
 
-import java.util.logging.Logger;
-
 import joshua.corpus.vocab.SymbolTable;
 import joshua.decoder.ff.FFDPState;
-
 
 
 /**
@@ -30,10 +27,7 @@ import joshua.decoder.ff.FFDPState;
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate$
  */
-
 public class LMFFDPState implements FFDPState {
-	
-	private static final Logger logger = Logger.getLogger(LMFFDPState.class.getName());
 	
 	private int[] left_lm_state_words;
 	private int[] right_lm_state_words;

@@ -29,8 +29,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.PriorityQueue;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * this class implement:  lazy k-best extraction on a hyper-graph
@@ -46,8 +44,6 @@ import java.util.logging.Logger;
  * @version $LastChangedDate$
  */
 public class KBestExtractor {
-	
-	private static final Logger logger = Logger.getLogger(KBestExtractor.class.getName());
 	
 	private final HashMap<HGNode,VirtualItem> tbl_virtual_items = new HashMap<HGNode,VirtualItem>();
 	

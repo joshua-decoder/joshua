@@ -18,10 +18,21 @@
 
 package joshua.util;
 
-import joshua.zmert.*;
-import java.util.*;
-import java.io.*;
+import joshua.zmert.EvaluationMetric;
+
+import java.util.TreeSet;
 import java.text.DecimalFormat;
+
+// BUG: try using joshua.util.io.LineReader instead
+import java.io.IOException;
+import java.io.FileReader;
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 
 public class JoshuaEval {
 	final static DecimalFormat f4 = new DecimalFormat("###0.0000");

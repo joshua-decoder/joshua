@@ -121,12 +121,12 @@ public class LMServer {
 				ClientHandler handler = new ClientHandler(socket,server);
 				handler.start();
 			}
-		} catch(IOException ioe) {
+		} catch (IOException ioe) {
 			logger.severe("cannot create serversocket at port or connection fail");
 			ioe.printStackTrace();
 		} finally {
 			try {
-				serverSocket.close();
+				if (null != serverSocket) serverSocket.close();
 			} catch(IOException ioe) {
 				ioe.printStackTrace();
 			}
