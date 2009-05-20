@@ -94,6 +94,7 @@ public class DecoderFactory {
 	}
 	
 	
+	// BUG: this kind of file munging isn't going to work with generalized SegmentFileParser
 	private void run_parallel_decoder(String test_file, String nbest_file)
 	throws IOException {
 		this.parallelThreads =

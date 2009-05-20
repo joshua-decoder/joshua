@@ -25,6 +25,8 @@ import joshua.decoder.ff.tm.GrammarFactory;
 import joshua.decoder.hypergraph.DiskHyperGraph;
 import joshua.decoder.hypergraph.HyperGraph;
 import joshua.decoder.hypergraph.KBestExtractor;
+import joshua.decoder.segment_file.PlainSegmentParser;
+
 import joshua.lattice.Lattice;
 import joshua.oracle.OracleExtractor;
 import joshua.corpus.suffix_array.Pattern;
@@ -68,7 +70,7 @@ public class DecoderThread extends Thread {
 	 * This class explicitly uses the symbol table to get
 	 * integer IDs for the source language sentence.
 	 */
-	private final SymbolTable                symbolTable;
+	private final SymbolTable    symbolTable;
 	
 	//more test set specific
 	private final String         testFile;
@@ -94,10 +96,10 @@ public class DecoderThread extends Thread {
 		int startSentenceID
 	) throws IOException {
 		
-		this.grammarFactories    = grammarFactories;
-		this.hasLanguageModel    = hasLanguageModel;
-		this.featureFunctions    = featureFunctions;
-		this.symbolTable         = symbolTable;
+		this.grammarFactories = grammarFactories;
+		this.hasLanguageModel = hasLanguageModel;
+		this.featureFunctions = featureFunctions;
+		this.symbolTable      = symbolTable;
 		
 		this.testFile        = testFile;
 		this.nbestFile       = nbestFile;
@@ -110,7 +112,7 @@ public class DecoderThread extends Thread {
 			JoshuaConfiguration.use_tree_nbest,
 			JoshuaConfiguration.include_align_index,
 			JoshuaConfiguration.add_combined_cost,
-			false, (oracleFile==null));//true);
+			false, (oracleFile==null));
 		
 		if (JoshuaConfiguration.save_disk_hg) {
 			FeatureFunction languageModel = null;
@@ -121,7 +123,8 @@ public class DecoderThread extends Thread {
 				}
 			}
 			if (null == languageModel) {
-				throw new RuntimeException("No language model feature function found");
+				throw new RuntimeException(
+					"No language model feature function found");
 			}
 			
 			this.hypergraphSerializer = new DiskHyperGraph(
@@ -163,6 +166,7 @@ public class DecoderThread extends Thread {
 			? new NullReader<String>()
 			: new LineReader(this.oracleFile);
 			
+		// TODO: convert to using PlainSegmentParser (or SegmentFileParser in general, though note that this will break parallel decoding)
 		LineReader testReader = new LineReader(this.testFile);
 		try { for (String cnSentence : testReader) {
 			if (logger.isLoggable(Level.FINE))
@@ -170,6 +174,7 @@ public class DecoderThread extends Thread {
 			
 			/* Remove SGML tags around the sentence, and set sentenceID */
 			// BUG: this is too fragile and doesn't give good error messages
+			// TODO: this will be handled by general SegmentFileParser (SAXSegmentParser specifically)
 			if (cnSentence.matches("^<seg\\s+id=\"\\d+\"[^>]*>.*?</seg\\s*>\\s*$")) {
 				cnSentence = cnSentence.replaceFirst("^<seg\\s+id=\"", ""); // TODO: use joshua.util.Regex
 				
@@ -184,6 +189,7 @@ public class DecoderThread extends Thread {
 						id.append(cur);
 					}
 				}
+				// BUG: what about files that don't have integer ids? Should we force that requirement in the Segment interface?
 				sentenceID = Integer.parseInt(id.toString());
 				cnSentence = cnSentence.replaceFirst("^\\s*>", ""); // TODO: use joshua.util.Regex
 				cnSentence = cnSentence.replaceAll("</seg\\s*>\\s*$", ""); // TODO: use joshua.util.Regex
@@ -194,6 +200,7 @@ public class DecoderThread extends Thread {
 			
 			String oracleSentence = oracleReader.readLine();
 			
+			// TODO: cnSentence of type Segment
 			translate(cnSentence, oracleSentence, nbestWriter, sentenceID);
 			sentenceID++;
 			
@@ -207,6 +214,7 @@ public class DecoderThread extends Thread {
 	}
 	
 	
+	// TODO: 'sentence' should be of type Segment
 	/**
 	 * Translate a sentence.
 	 *
@@ -216,8 +224,8 @@ public class DecoderThread extends Thread {
 	 * @param sentenceID
 	 */
 	private void translate(String sentence, String oracleSentence,
-		BufferedWriter out, int sentenceID) throws IOException 
-	{
+		BufferedWriter out, int sentenceID)
+	throws IOException {
 		long startTime = 0;
 		if (logger.isLoggable(Level.FINER)) {
 			startTime = System.currentTimeMillis();
@@ -225,9 +233,8 @@ public class DecoderThread extends Thread {
 		
 		Chart chart; {
 
-			int[] intSentence = this.symbolTable.getIDs(sentence);			
-			Lattice<Integer> inputLattice =
-				Lattice.createLattice(intSentence);
+			int[] intSentence = this.symbolTable.getIDs(sentence);
+			Lattice<Integer> inputLattice = Lattice.createLattice(intSentence);
 			
 			Grammar[] grammars = new Grammar[grammarFactories.size()];
 			int i = 0;
@@ -245,6 +252,7 @@ public class DecoderThread extends Thread {
 			
 			
 			/* Seeding: the chart only sees the grammars, not the factories */
+			// TODO: Chart constructor should accept Iterator<ConstraintSpan>
 			chart = new Chart(
 				inputLattice,
 				this.featureFunctions,

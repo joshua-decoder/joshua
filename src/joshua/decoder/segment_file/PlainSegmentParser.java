@@ -30,7 +30,7 @@ import java.util.Iterator;
  * This is a parser for plain files with one sentence per line and
  * no annotations.
  *
- * @author wren ng thornton
+ * @author wren ng thornton <wren@users.sourceforge.net>
  * @version $LastChangedDate: 2009-03-26 15:06:57 -0400 (Thu, 26 Mar 2009) $
  */
 public class PlainSegmentParser implements SegmentFileParser {
@@ -52,14 +52,16 @@ public class PlainSegmentParser implements SegmentFileParser {
 		
 		LineReader reader = new LineReader(in);
 		try {
+			int i = 0;
 			while (reader.hasNext()) {
+				++i;
 				final String sentence = 
 					Regex.spaces.replaceAll(reader.next(), " ").trim();
 				
+				final String id = Integer.toString(i);
 				coit.coNext(new Segment() {
-					public String sentence() {
-						return sentence;
-					}
+					public String id()       { return id;       }
+					public String sentence() { return sentence; }
 					public Iterator<ConstraintSpan> constraints() {
 						return new NullIterator<ConstraintSpan>();
 					}

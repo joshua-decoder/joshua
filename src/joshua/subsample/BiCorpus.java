@@ -51,7 +51,8 @@ import java.io.IOException;
  * method.
  *
  * @author UMD (Jimmy Lin, Chris Dyer, et al.)
- * @author wren ng thornton
+ * @author wren ng thornton <wren@users.sourceforge.net>
+ * @version $LastChangedDate$
  */
 public class BiCorpus
 implements Iterable<PhrasePair> {

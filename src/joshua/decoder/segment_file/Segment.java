@@ -26,10 +26,16 @@ import java.util.Iterator;
  * and can additionally contain some constraints representing initial
  * items for seeding the chart.
  *
- * @author wren ng thornton
+ * @author wren ng thornton <wren@users.sourceforge.net>
  * @version $LastChangedDate: 2009-03-26 15:06:57 -0400 (Thu, 26 Mar 2009) $
  */
 public interface Segment {
+	
+	/**
+	 * Return the sentence ID.
+	 */
+	String id();
+	
 	
 	/**
 	 * Return the sentence to be translated. The client of this

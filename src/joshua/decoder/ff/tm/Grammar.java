@@ -27,7 +27,7 @@ import joshua.decoder.ff.tm.Trie;
  * Grammar is a class for wrapping a trie of TrieGrammar in order
  * to store holistic metadata.
  * 
- * @author wren ng thornton
+ * @author wren ng thornton <wren@users.sourceforge.net>
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate$
  */

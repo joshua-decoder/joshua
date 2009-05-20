@@ -51,7 +51,8 @@ import org.apache.commons.cli.HelpFormatter;
  * Due to the one-use nature of subclasses of <code>SubsampleCLI</code>,
  * they generally should be implemented as anonymous local classes.
  *
- * @author wren ng thornton
+ * @author wren ng thornton <wren@users.sourceforge.net>
+ * @version $LastChangedDate$
  */
 @SuppressWarnings("static-access")
 public class SubsamplerCLI {

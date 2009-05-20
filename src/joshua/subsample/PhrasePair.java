@@ -37,7 +37,8 @@ import joshua.corpus.Phrase;
  * maintaining sentence-alignment.
  *
  * @author UMD (Jimmy Lin, Chris Dyer, et al.)
- * @author wren ng thornton
+ * @author wren ng thornton <wren@users.sourceforge.net>
+ * @version $LastChangedDate$
  */
 public class PhrasePair {
 	// Making these final requires Java6, not Java5

@@ -28,7 +28,8 @@ import joshua.corpus.vocab.Vocabulary;
  * class is used by {@link AlignedSubsampler} in order to "override"
  * methods of {@link Subsampler}, minimizing code duplication.
  *
- * @author wren ng thornton
+ * @author wren ng thornton <wren@users.sourceforge.net>
+ * @version $LastChangedDate$
  */
 public class BiCorpusFactory {
 	// Making these final requires Java6, doesn't work in Java5

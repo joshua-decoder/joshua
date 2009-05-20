@@ -36,7 +36,8 @@ package joshua.subsample;
  * @see joshua.corpus.alignment.Alignments
  *
  * @author UMD (Jimmy Lin, Chris Dyer, et al.)
- * @author wren ng thornton
+ * @author wren ng thornton <wren@users.sourceforge.net>
+ * @version $LastChangedDate$
  */
 public class Alignment {
 	private short eLength;

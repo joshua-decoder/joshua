@@ -31,6 +31,7 @@ import joshua.decoder.ff.lm.srilm.LMGrammarSRILM;
 import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.GrammarFactory;
 import joshua.decoder.ff.tm.hiero.MemoryBasedBatchGrammar;
+
 import joshua.corpus.Corpus;
 import joshua.corpus.alignment.Alignments;
 import joshua.corpus.alignment.mm.MemoryMappedAlignmentGrids;
@@ -44,6 +45,7 @@ import joshua.corpus.vocab.BuildinSymbol;
 import joshua.corpus.vocab.SrilmSymbol;
 import joshua.corpus.vocab.SymbolTable;
 import joshua.corpus.vocab.Vocabulary;
+
 import joshua.util.io.BinaryIn;
 import joshua.util.io.LineReader;
 import joshua.util.FileUtility;

@@ -30,11 +30,11 @@ import java.util.List;
 /**
  * Parsing state for partial Segment objects.
  *
- * @author wren ng thornton
+ * @author wren ng thornton <wren@users.sourceforge.net>
  * @version $LastChangedDate: 2009-03-26 15:06:57 -0400 (Thu, 26 Mar 2009) $
  */
 public class SAXSegment {
-	private String id; // Does anyone want this?
+	private String id;
 	private List<SAXConstraintSpan> spans;
 	
 	public SAXSegment(String id) {
@@ -51,16 +51,16 @@ public class SAXSegment {
 	/** Verify type invariants for Segment. */
 	public Segment typeCheck(String text) throws SAXException {
 		
-		final String sentence =
-			Regex.spaces.replaceAll(text, " ").trim();
+		final String id       = this.id;
+		final String sentence = Regex.spaces.replaceAll(text, " ").trim();
 		
-		final List<ConstraintSpan> spans =
-			new LinkedList<ConstraintSpan>();
+		final List<ConstraintSpan> spans = new LinkedList<ConstraintSpan>();
 		for (SAXConstraintSpan span : this.spans) {
 			spans.add(span.typeCheck(sentence));
 		}
 		
 		return new Segment() {
+			public String id()       { return id;       }
 			public String sentence() { return sentence; }
 			public Iterator<ConstraintSpan> constraints() {
 				return spans.iterator();

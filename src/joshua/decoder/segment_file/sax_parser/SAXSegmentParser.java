@@ -50,7 +50,7 @@ import java.util.logging.Logger;
  * specified by SegmentFile.dtd. All extraneous tags and text are
  * ignored (they raise warnings, but do not halt the parser).
  *
- * @author wren ng thornton
+ * @author wren ng thornton <wren@users.sourceforge.net>
  * @version $LastChangedDate: 2009-03-26 15:06:57 -0400 (Thu, 26 Mar 2009) $
  */
 public class SAXSegmentParser extends DefaultHandler

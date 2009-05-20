@@ -36,7 +36,8 @@ import joshua.corpus.vocab.Vocabulary;
 /**
  * The simplest concrete implementation of Phrase.
  *
- * @author wren ng thornton
+ * @author wren ng thornton <wren@users.sourceforge.net>
+ * @version $LastChangedDate$
  */
 public class BasicPhrase extends AbstractPhrase {
 	private byte       language;

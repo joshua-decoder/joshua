@@ -22,9 +22,13 @@ import java.io.BufferedWriter;
 
 
 /**
- * A PhrasePair-parallel BufferedWriter. In an ideal world we could get the compiler to inline all of this, to have zero-overhead while not duplicating code. Alas, Java's not that cool. The "final" could help on JIT at least.
+ * A PhrasePair-parallel BufferedWriter. In an ideal world we could
+ * get the compiler to inline all of this, to have zero-overhead
+ * while not duplicating code. Alas, Java's not that cool. The
+ * "final" could help on JIT at least.
  *
- * @author wren ng thornton
+ * @author wren ng thornton <wren@users.sourceforge.net>
+ * @version $LastChangedDate$
  */
 final public class PhraseWriter {
 	// Making these final requires Java6, not Java5

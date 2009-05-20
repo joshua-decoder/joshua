@@ -38,7 +38,8 @@ import java.io.Reader;
  * Wrapper class to read in each line as a BasicPhrase.
  *
  * @author UMD (Jimmy Lin, Chris Dyer, et al.)
- * @author wren ng thornton
+ * @author wren ng thornton <wren@users.sourceforge.net>
+ * @version $LastChangedDate$
  */
 public class PhraseReader extends BufferedReader {
 	private Vocabulary vocabulary;

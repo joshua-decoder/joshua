@@ -33,7 +33,8 @@ import org.apache.commons.cli.Options;
  * techniques in order to "override" the superclass methods.
  *
  * @see joshua.subsample.Subsampler
- * @author wren ng thornton
+ * @author wren ng thornton <wren@users.sourceforge.net>
+ * @version $LastChangedDate$
  */
 public class AlignedSubsampler extends Subsampler {
 	
