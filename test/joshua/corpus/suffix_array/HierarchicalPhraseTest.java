@@ -86,7 +86,7 @@ public class HierarchicalPhraseTest {
 	}
 	
 	
-	@SuppressWarnings("deprecation")
+//	@SuppressWarnings("deprecation")
 	@Test(dependsOnMethods={"setup"})
 	public void testHasAlignedTerminal() {
 		{
@@ -94,12 +94,18 @@ public class HierarchicalPhraseTest {
 			SymbolTable vocab = sourceCorpusArray.getVocabulary();
 			
 			{
-				Pattern     pattern = new Pattern(vocab, vocab.getIDs("de sesiones del parlamento europeo"));
+//				Pattern     pattern = new Pattern(vocab, vocab.getIDs("de sesiones del parlamento europeo"));
 				int[]       terminalSequenceStartIndices = {4};
 				int[]       terminalSequenceEndIndices = {9};
 				int         length = 5;
 
-				HierarchicalPhrase phrase = new HierarchicalPhrase(pattern, terminalSequenceStartIndices, terminalSequenceEndIndices, sourceCorpusArray, length);
+				HierarchicalPhrase phrase = 
+					new HierarchicalPhrase(
+							vocab.getIDs("de sesiones del parlamento europeo"), 
+							terminalSequenceStartIndices, 
+							terminalSequenceEndIndices, 
+							sourceCorpusArray, 
+							length);
 
 				Assert.assertFalse(phrase.containsTerminalAt(0));
 				Assert.assertFalse(phrase.containsTerminalAt(1));
@@ -121,12 +127,18 @@ public class HierarchicalPhraseTest {
 			}
 			
 			{
-				Pattern     pattern = new Pattern(vocab, vocab.getIDs(","));
+//				Pattern     pattern = new Pattern(vocab, vocab.getIDs(","));
 				int[]       terminalSequenceStartIndices = {9};
 				int[]       terminalSequenceEndIndices = {10};
 				int         length = 1;
 
-				HierarchicalPhrase phrase = new HierarchicalPhrase(pattern, terminalSequenceStartIndices, terminalSequenceEndIndices, sourceCorpusArray, length);
+				HierarchicalPhrase phrase = 
+					new HierarchicalPhrase(
+							vocab.getIDs(","), 
+							terminalSequenceStartIndices, 
+							terminalSequenceEndIndices, 
+							sourceCorpusArray, 
+							length);
 
 				Assert.assertFalse(phrase.containsTerminalAt(0));
 				Assert.assertFalse(phrase.containsTerminalAt(1));

@@ -117,6 +117,10 @@ public interface MatchedHierarchicalPhrases extends PatternFormat {
 	/**
 	 * Gets the span in the backing corpus 
 	 * of the phrase at the specified index.
+	 * <p>
+	 * <em>Note</em>: The span returned by this method
+	 * is the span from the index of the first matched terminal in this phrase
+	 * to the one past the index of the last matched terminal in this phrase.
 	 * 
 	 * @param Index of a matched phrase
 	 * @return the span in the backing corpus 

@@ -216,7 +216,7 @@ public class BasicPhrase extends AbstractPhrase {
 		
 		for (int i = 0; i < size(); i++) {
 			for (int j = i + 1; (j <= size()) && (j - i <= maxLength); j++) {
-				BasicPhrase subPhrase = subPhrase(i,j);
+				Phrase subPhrase = subPhrase(i,j);
 				phrases.add(subPhrase);
 			}
 		}
@@ -237,7 +237,7 @@ public class BasicPhrase extends AbstractPhrase {
 	 * @return Phrase object representing the specified range
 	 * @see java.util.ArrayList#subList(int, int)
 	 */
-	public BasicPhrase subPhrase(int start, int end) {
+	public Phrase subPhrase(int start, int end) {
 		int subPhraseLength = end - start;
 		int[] subPhraseWords = new int[subPhraseLength];
 		for (int i = 0; i < subPhraseLength; i++) {

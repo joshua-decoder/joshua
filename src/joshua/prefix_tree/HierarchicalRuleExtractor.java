@@ -33,6 +33,7 @@ import joshua.corpus.RuleExtractor;
 import joshua.corpus.Span;
 import joshua.corpus.alignment.Alignments;
 import joshua.corpus.lexprob.LexicalProbabilities;
+import joshua.corpus.suffix_array.HierarchicalPhrase;
 import joshua.corpus.suffix_array.Pattern;
 import joshua.corpus.suffix_array.Suffixes;
 import joshua.decoder.ff.tm.BilingualRule;
@@ -118,7 +119,7 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 			//TODO Make getTranslation return a HierarchicalPhrase object instead of a pattern
 			//     We need the extra information in calculateLexProbs
 			
-			Pattern translation = getTranslation(sourceHierarchicalPhrases, i);
+			HierarchicalPhrase translation = getTranslation(sourceHierarchicalPhrases, i);
 			if (translation != null) {
 				translations.add(translation);
 				// We look up the lexprobs for this particular sourcePhrase (which corresponds to exactly one location in the source corpus)
@@ -236,7 +237,7 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 	 * 
 	 * @return null if no translation can be constructed
 	 */
-	protected Pattern constructTranslation(MatchedHierarchicalPhrases sourcePhrases, int sourcePhraseIndex, Span sourceSpan, Span targetSpan, boolean sourceStartsWithNT, boolean sourceEndsWithNT) {		
+	protected HierarchicalPhrase constructTranslation(MatchedHierarchicalPhrases sourcePhrases, int sourcePhraseIndex, Span sourceSpan, Span targetSpan, boolean sourceStartsWithNT, boolean sourceEndsWithNT) {		
 		if (logger.isLoggable(Level.FINE)) logger.fine("Constructing translation for source span " + sourceSpan + ", target span " + targetSpan);
 				
 		if (sourceSpan.size() > this.maxPhraseSpan)
@@ -256,8 +257,13 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 				for (int i=targetSpan.start; i<targetSpan.end; i++) {
 					words[i-targetSpan.start] = targetCorpus.getWordID(i);
 				}
-
-				return new Pattern(targetCorpus.getVocabulary(), words);
+				
+//				return new Pattern(targetCorpus.getVocabulary(), words);
+				return new HierarchicalPhrase(
+						words, 
+						targetSpan,
+						Collections.<LabeledSpan>emptyList(),
+						targetCorpus);
 			}
 		}
 
@@ -330,7 +336,6 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 			
 			int lastTerminalIndex = sourcePhrases.getLastTerminalIndex(sourcePhraseIndex);
 			
-//			if (sourceSpan.end - sourcePhrase.terminalSequenceEndIndices[sourcePhrase.terminalSequenceEndIndices.length-1] < minNonterminalSpan) {
 			if (sourceSpan.end - lastTerminalIndex < minNonterminalSpan) {
 				
 				return null;
@@ -418,7 +423,12 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 		}
 		
 		if (foundAlignedTerminal) {
-			return new Pattern(targetCorpus.getVocabulary(), words);
+			return new HierarchicalPhrase(
+					words, 
+					targetSpan,
+					targetNTSpans,
+					targetCorpus);
+//			return new Pattern(targetCorpus.getVocabulary(), words);
 		} else {
 			if (logger.isLoggable(Level.FINEST)) logger.finest("Potential translation contained no aligned terminals");
 			return null;
@@ -447,7 +457,7 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 	 * @param sourcePhrase
 	 * @return the target side translation pattern for a particular source phrase.
 	 */
-	protected Pattern getTranslation(MatchedHierarchicalPhrases sourcePhrase, int sourcePhraseIndex) {
+	protected HierarchicalPhrase getTranslation(MatchedHierarchicalPhrases sourcePhrase, int sourcePhraseIndex) {
 
 		//TODO It may be that this method should be moved to the AlignmentArray class.
 		//     Doing so would require that the maxPhraseSpan and similar variables be accessible from AlignmentArray.
@@ -471,7 +481,7 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 			if (targetSpan!=null && targetSpan.size()>=sourcePhrase.arity()+1 && targetSpan.size()<=maxPhraseSpan) {
 				
 				// Construct a translation
-				Pattern translation = constructTranslation(sourcePhrase, sourcePhraseIndex, sourceSpan, targetSpan, false, false);
+				HierarchicalPhrase translation = constructTranslation(sourcePhrase, sourcePhraseIndex, sourceSpan, targetSpan, false, false);
 				
 				
 				
@@ -515,7 +525,7 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 				if (targetSpan!=null && targetSpan.size()>=sourcePhrase.arity()+1 && targetSpan.size()<=maxPhraseSpan) {
 
 					// Construct a translation
-					Pattern translation = constructTranslation(sourcePhrase, sourcePhraseIndex, possibleSourceSpan, targetSpan, true, false);
+					HierarchicalPhrase translation = constructTranslation(sourcePhrase, sourcePhraseIndex, possibleSourceSpan, targetSpan, true, false);
 
 					if (translation != null) {
 						if (logger.isLoggable(Level.FINEST)) logger.finest("\tCase 2: Adding translation: '" + translation + "' for target span " + targetSpan + " from source span " + possibleSourceSpan);
@@ -564,7 +574,7 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 				if (targetSpan!=null && targetSpan.size()>=sourcePhrase.arity()+1 && targetSpan.size()<=maxPhraseSpan) {
 
 					// Construct a translation
-					Pattern translation = constructTranslation(sourcePhrase, sourcePhraseIndex, possibleSourceSpan, targetSpan, false, true);
+					HierarchicalPhrase translation = constructTranslation(sourcePhrase, sourcePhraseIndex, possibleSourceSpan, targetSpan, false, true);
 
 					if (translation != null) {
 						if (logger.isLoggable(Level.FINEST)) logger.finest("\tCase 3: Adding translation: '" + translation + "' for target span " + targetSpan + " from source span " + possibleSourceSpan);
@@ -615,7 +625,7 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 				if (targetSpan!=null && targetSpan.size()>=sourcePhrase.arity()+1 && targetSpan.size()<=maxPhraseSpan) {
 
 					// Construct a translation
-					Pattern translation = constructTranslation(sourcePhrase, sourcePhraseIndex, possibleSourceSpan, targetSpan, true, true);
+					HierarchicalPhrase translation = constructTranslation(sourcePhrase, sourcePhraseIndex, possibleSourceSpan, targetSpan, true, true);
 
 					if (translation != null) {
 						if (logger.isLoggable(Level.FINEST)) logger.finest("\tCase 4: Adding translation: '" + translation + "' for target span " + targetSpan + " from source span " + possibleSourceSpan);
