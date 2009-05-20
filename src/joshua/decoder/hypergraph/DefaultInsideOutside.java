@@ -116,14 +116,12 @@ public abstract class DefaultInsideOutside {
 		if(SEMIRING==LOG_SEMIRING){
 			double res = Math.exp((get_deduction_unnormalized_posterior_log_prob(dt, parent)-getLogNormalizationConstant()));
 			//System.out.println("dt cost: " + dt.get_transition_cost(false)+" ;merit: " + get_deduction_unnormalized_posterior_log_prob(dt, parent) + "; prob: " + res);
-			if(res<0.0-1e-2 || res >1.0+1e-2){
-				System.out.println("res is not within [0,1], must be wrong value: " + res);
-				System.exit(0);
+			if (res < 0.0-1e-2 || res > 1.0+1e-2) {
+				throw new RuntimeException("res is not within [0,1], must be wrong value: " + res);
 			}
 			return res;
-		}else{
-			System.out.println("not implemented"); System.exit(0);
-			return 1;
+		} else {
+			throw new RuntimeException("not implemented");
 		}
 	}
 	
@@ -141,14 +139,12 @@ public abstract class DefaultInsideOutside {
 		if(SEMIRING==LOG_SEMIRING){
 			double res = Math.exp((get_hgnode_unnormalized_posterior_log_prob(node)-getLogNormalizationConstant()));
 			//System.out.println("dt cost: " + dt.get_transition_cost(false)+" ;merit: " + get_deduction_unnormalized_posterior_log_prob(dt, parent) + "; prob: " + res);
-			if(res<0.0-1e-2 || res >1.0+1e-2){
-				System.out.println("res is not within [0,1], must be wrong value: " + res);
-				System.exit(0);
+			if (res < 0.0-1e-2 || res > 1.0+1e-2) {
+				throw new RuntimeException("res is not within [0,1], must be wrong value: " + res);
 			}
 			return res;
-		}else{
-			System.out.println("not implemented"); System.exit(0);
-			return 1;
+		} else {
+			throw new RuntimeException("not implemented");
 		}
 	}
 	
@@ -173,27 +169,28 @@ public abstract class DefaultInsideOutside {
 			sanity_check_deduction(dt);//deduction-specifc operation
 		}
 		double supposed_sum = get_hgnode_posterior_prob(it);
-		if(Math.abs(prob_sum-supposed_sum)>1e-3){
-			System.out.println("prob_sum=" + prob_sum + "; supposed_sum=" + supposed_sum + "; sanity check fail!!!!");
-			System.exit(0);
+		if (Math.abs(prob_sum-supposed_sum) > 1e-3) {
+			throw new RuntimeException("prob_sum=" + prob_sum + "; supposed_sum=" + supposed_sum + "; sanity check fail!!!!");
 		}
 		//### item-specific operation
 	}
 	
 	private void sanity_check_deduction(HyperEdge dt){
 		//### recursive call on each ant item
-		if(dt.get_ant_items()!=null)
-			for(HGNode ant_it : dt.get_ant_items())
+		if (null != dt.get_ant_items()) {
+			for (HGNode ant_it : dt.get_ant_items()) {
 				sanity_check_item(ant_it);
+			}
+		}
 		
-		//### deduction-specific operation				
+		//### deduction-specific operation
 		
 	}
-	//################## end use of inside-outside probs 
+	//################## end use of inside-outside probs
 	
 	
 	
-//############ bottomn-up insdide estimation ##########################	
+//############ bottomn-up insdide estimation ##########################
 	private void inside_estimation_hg(HyperGraph hg) {
 		tbl_inside_prob.clear(); 
 		tbl_num_parent_deductions.clear();
@@ -252,12 +249,15 @@ public abstract class DefaultInsideOutside {
 	
 	private void outside_estimation_item(HGNode cur_it, HGNode upper_item, HyperEdge parent_dt, double parent_deduct_prob){
 		Integer num_called = (Integer)tbl_num_parent_deductions.get(cur_it);
-		if(num_called==null || num_called==0){System.out.println("un-expected call, must be wrong"); System.exit(0);}
-		tbl_num_parent_deductions.put(cur_it, num_called-1);		
+		if (null == num_called || 0 == num_called) {
+			throw new RuntimeException("un-expected call, must be wrong");
+		}
+		tbl_num_parent_deductions.put(cur_it, num_called-1);
 		
 		double old_outside_prob = ZERO_IN_SEMIRING;
-		if(tbl_outside_prob.containsKey(cur_it))
+		if (tbl_outside_prob.containsKey(cur_it)) {
 			old_outside_prob = (Double) tbl_outside_prob.get(cur_it);
+		}
 		
 		double additional_outside_prob = ONE_IN_SEMIRING;
 		
@@ -309,56 +309,50 @@ public abstract class DefaultInsideOutside {
 	
 
 //############ common ##########################
-	private void setup_semiring(int semiring, int add_mode){
-		ADD_MODE=add_mode;		
+	// BUG: replace integer pseudo-enum with a real Java enum
+	// BUG: use a Semiring class instead of all this?
+	private void setup_semiring(int semiring, int add_mode) {
+		ADD_MODE = add_mode;
 		SEMIRING = semiring;
-		if(SEMIRING==LOG_SEMIRING){
-			if(ADD_MODE==0){//sum
+		if (SEMIRING == LOG_SEMIRING) {
+			if (ADD_MODE == 0) { // sum
 				ZERO_IN_SEMIRING = Double.NEGATIVE_INFINITY;
 				ONE_IN_SEMIRING = 0;
-			}else if (ADD_MODE==1){//viter-min
+			} else if (ADD_MODE == 1) { // viter-min
 				ZERO_IN_SEMIRING = Double.POSITIVE_INFINITY;
 				ONE_IN_SEMIRING = 0;
-			}else if (ADD_MODE==2){//viter-max
+			} else if (ADD_MODE == 2) { // viter-max
 				ZERO_IN_SEMIRING = Double.NEGATIVE_INFINITY;
 				ONE_IN_SEMIRING = 0;
-			}else{
-				System.out.println("invalid add mode"); System.exit(0);
-			}			
-		}else{
-			System.out.println("un-supported semiring"); System.exit(0);
+			} else {
+				throw new RuntimeException("invalid add mode");
+			}
+		} else {
+			throw new RuntimeException("un-supported semiring");
 		}
 	}
 	
-	private double multi_in_semiring(double x, double y){
-		if(SEMIRING==LOG_SEMIRING){
+	private double multi_in_semiring(double x, double y) {
+		if (SEMIRING == LOG_SEMIRING) {
 			return multi_in_log_semiring(x,y);
-		}else{
-			System.out.println("un-supported semiring"); System.exit(0); return -1;
+		} else {
+			throw new RuntimeException("un-supported semiring");
 		}
-	} 	
+	}
 	
-//TODO Method is never used - perhaps it should be deleted
-//	private double divide_in_semiring(double x, double y){// x/y
-//		if(SEMIRING==LOG_SEMIRING){
-//			return x-y;
-//		}else{
-//			System.out.println("un-supported semiring"); System.exit(0); return -1;
-//		}
-//	} 	
-	
-	private double add_in_semiring(double x, double y){
-		if(SEMIRING==LOG_SEMIRING){
+	private double add_in_semiring(double x, double y) {
+		if (SEMIRING == LOG_SEMIRING) {
 			return add_in_log_semiring(x,y);
-		}else{
-			System.out.println("un-supported semiring"); System.exit(0); return -1;
+		} else {
+			throw new RuntimeException("un-supported semiring");
 		}
-	} 	
+	}
 	
 	//AND
-	private double multi_in_log_semiring(double x, double y){//value is Log prob
+	private double multi_in_log_semiring(double x, double y) { // value is Log prob
 		return x + y;
 	}
+	
 	
 	//OR: return Math.log(Math.exp(x) + Math.exp(y));
 	// BUG: Replace ADD_MODE pseudo-enum with a real Java enum
@@ -381,9 +375,7 @@ public abstract class DefaultInsideOutside {
 		} else if (ADD_MODE == 2) { // viter-max
 			return (x >= y ? x : y);
 		} else {
-			System.out.println("invalid add mode");
-			System.exit(1);
-			return 0;
+			throw new RuntimeException("invalid add mode");
 		}
 	}
 //############ end common #####################

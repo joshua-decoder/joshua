@@ -95,9 +95,9 @@ public class LMFFDPState implements FFDPState {
 		//System.out.println("lm sig is:" + this.sig);
 		return this.sig;
 	}
-
 	
-
+	
+	
 	private void compute_state_sig(SymbolTable symbolTable, int[] state, StringBuffer sb) {
 		if (null != state) {
 			for (int i = 0; i < state.length; i++) {
@@ -118,9 +118,7 @@ public class LMFFDPState implements FFDPState {
 				}
 			}
 		} else {
-			logger.severe("state is null");
-			Thread.dumpStack();
-			System.exit(1);
+			throw new RuntimeException("state is null");
 		}
 	}
 

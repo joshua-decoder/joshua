@@ -71,17 +71,17 @@ public class HyperGraphPruning extends TrivialInsideOutside {
 	
 
 //	######################### pruning here ##############
-	public void pruning_hg(HyperGraph hg){
+	public void pruning_hg(HyperGraph hg) {
 		runInsideOutside(hg, 1, 2, 1.0);//viterbi-max, log-semiring
-		if(fix_threshold_pruning){
+		if (fix_threshold_pruning) {
 			pruning_hg_real(hg);
 			super.clearState();
-		}else{
-			System.out.println("wrong call"); System.exit(0);
-		}			
+		} else {
+			throw new RuntimeException("wrong call");
+		}
 	}
 	
-	private void  pruning_hg_real(HyperGraph hg){
+	private void  pruning_hg_real(HyperGraph hg) {
 		this.best_log_prob = getLogNormalizationConstant();//set the best_log_prob
 		
 		num_survived_deduction = 0;
@@ -117,8 +117,7 @@ public class HyperGraphPruning extends TrivialInsideOutside {
 		/*by defintion: "should_surive==false" should be impossible, since if I got called, then my upper-deduction must survive, then i will survive
 		* because there must be one way to reach me from lower part in order for my upper-deduction survive*/
 		if (! should_survive) {
-			System.out.println("item explored but does not survive");
-			System.exit(1);
+			throw new RuntimeException("item explored but does not survive");
 			//TODO: since we always keep the best_deduction, this should never be true
 		} else {
 			num_survived_item++;
@@ -154,8 +153,10 @@ public class HyperGraphPruning extends TrivialInsideOutside {
 		double post_log_prob = get_deduction_unnormalized_posterior_log_prob(dt, parent);
 		
 		//sanity check
-		//if(merit>worst_cost || merit < best_cost){System.out.println("merit is not between best and worst, best: " + best_cost +"; worset:" + worst_cost + "; merit: " + merit); System.exit(0);}
-		 
+		//if (merit > worst_cost || merit < best_cost) {
+		//throw new RuntimeException("merit is not between best and worst, best: " + best_cost +"; worset:" + worst_cost + "; merit: " + merit);
+		//}
+		
 		if (dt.get_rule() != null
 		&& dt.get_rule().getOwner() == glue_grammar_owner
 		&& dt.get_rule().getArity() == 2) { // specicial rule: S->S X

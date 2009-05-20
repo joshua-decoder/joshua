@@ -113,11 +113,13 @@ public class OracleExtractionHG extends SplitHg {
 		String f_rule_tbl="C:\\Users\\zli\\Documents\\mt03.src.txt.ss.nbest.hg.rules";
 		String f_ref_files="C:\\Users\\zli\\Documents\\mt03.ref.txt.1";
 		String f_orc_out ="C:\\Users\\zli\\Documents\\mt03.orc.txt";*/
-		if(args.length!=6){
-			System.out.println("wrong command, correct command should be: java Decoder f_hypergraphs f_rule_tbl f_ref_files f_orc_out lm_order orc_extract_nbest");
+		if (6 != args.length) {
+			System.out.println("Usage: java Decoder f_hypergraphs f_rule_tbl f_ref_files f_orc_out lm_order orc_extract_nbest");
 			System.out.println("num of args is "+ args.length);
-			for(int i=0; i <args.length; i++)System.out.println("arg is: " + args[i]);
-			System.exit(0);		
+			for (int i = 0; i < args.length; i++) {
+				System.out.println("arg is: " + args[i]);
+			}
+			System.exit(1);
 		}		
 		String f_hypergraphs = args[0].trim();
 		String f_rule_tbl = args[1].trim();
@@ -132,11 +134,11 @@ public class OracleExtractionHG extends SplitHg {
 		
 		SymbolTable p_symbolTable = new BuildinSymbol(null);
 		
-		KBestExtractor kbest_extractor =null;
-		int topN=300;//TODO
+		KBestExtractor kbest_extractor = null;
+		int topN = 300;//TODO
 		boolean extract_unique_nbest = true;//TODO
 		boolean do_ngram_clip_nbest = true; //TODO
-		if(orc_extract_nbest==true){
+		if (orc_extract_nbest) {
 			System.out.println("oracle extraction from nbest list");
 			kbest_extractor = new KBestExtractor(p_symbolTable, extract_unique_nbest, false, false, false,  false, true);
 		}
@@ -250,7 +252,9 @@ public class OracleExtractionHG extends SplitHg {
 	 * (1) identify all possible match
 	 * (2) add a new deduction for each matches*/
 	protected  void process_one_combination_axiom(HGNode parent_item, HashMap<String, VirtualItem> virtual_item_sigs, HyperEdge cur_dt){
-		if(cur_dt.get_rule()==null){System.out.println("error null rule in axiom"); System.exit(0);}
+		if (null == cur_dt.get_rule()) {
+			throw new RuntimeException("error null rule in axiom");
+		}
 		double avg_ref_len = (parent_item.j-parent_item.i>=src_sent_len) ? ref_sent_len :  (parent_item.j-parent_item.i)*ref_sent_len*1.0/src_sent_len;//avg len?
 		double bleu_score[] = new double[1];
 		DPStateOracle dps = compute_state(parent_item, cur_dt, null, tbl_ref_ngrams, do_local_ngram_clip, g_lm_order, avg_ref_len, bleu_score, tbl_suffix, tbl_prefix);
@@ -268,7 +272,9 @@ public class OracleExtractionHG extends SplitHg {
 	 *		(2.2.2) and add the item into virtual_item_sigs
 	 **/
 	protected  void process_one_combination_nonaxiom(HGNode parent_item, HashMap<String, VirtualItem> virtual_item_sigs, HyperEdge cur_dt, ArrayList<VirtualItem> l_ant_virtual_item){
-		if(l_ant_virtual_item==null){System.out.println("wrong call in process_one_combination_nonaxiom"); System.exit(0);}	
+		if (null == l_ant_virtual_item) {
+			throw new RuntimeException("wrong call in process_one_combination_nonaxiom");
+		}
 		double avg_ref_len = (parent_item.j-parent_item.i>=src_sent_len) ? ref_sent_len :  (parent_item.j-parent_item.i)*ref_sent_len*1.0/src_sent_len;//avg len?
 		double bleu_score[] = new double[1];
 		DPStateOracle dps = compute_state(parent_item, cur_dt, l_ant_virtual_item, tbl_ref_ngrams,  do_local_ngram_clip, g_lm_order, avg_ref_len, bleu_score, tbl_suffix, tbl_prefix);
@@ -339,8 +345,7 @@ public class OracleExtractionHG extends SplitHg {
 		//##### deductions under "goal item" does not have rule
 		if (null == dt.get_rule()) {
 			if (l_ant_virtual_item.size() != 1) {
-				System.out.println("error deduction under goal item have more than one item");
-				System.exit(1);
+				throw new RuntimeException("error deduction under goal item have more than one item");
 			}
 			bleu_score[0] = -l_ant_virtual_item.get(0).best_virtual_deduction.best_cost;
 			return new DPStateOracle(0, null, null,null); // no DPState at all
@@ -427,11 +432,10 @@ public class OracleExtractionHG extends SplitHg {
 					final_count -= (Integer)old_ngram_counts.get(ngram);
 					// BUG: Whoa, is that an actual hard-coded ID in there? :) 
 					if (final_count < 0) {
-						System.out.println("error: negative count for ngram: "
+						throw new RuntimeException("negative count for ngram: "
 							+ this.p_symbolTable.getWord(11844)
 							+ "; new: " + new_ngram_counts.get(ngram)
 							+ "; old: " + old_ngram_counts.get(ngram) );
-						System.exit(1);
 					}
 				}
 				if (final_count > 0) { // TODO: not correct/global ngram clip

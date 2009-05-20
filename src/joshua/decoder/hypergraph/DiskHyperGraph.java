@@ -234,8 +234,7 @@ public class DiskHyperGraph {
 		
 		// we save the hypergraph in a bottom-up way: so that reading is easy
 		if (this.idToItem.size() != this.itemToID.size()) {
-			logger.severe("Number of Items is not equal");
-			System.exit(1);
+			throw new RuntimeException("Number of Items is not equal");
 		}
 		for (int i = 1; i <= this.idToItem.size(); i++) {
 			writeItem(this.idToItem.get(i));
@@ -408,8 +407,7 @@ public class DiskHyperGraph {
 		}
 		
 		if (! line.startsWith(SENTENCE_TAG)) {
-			logger.severe("wrong sent tag line: " + line);
-			System.exit(1);
+			throw new RuntimeException("wrong sent tag line: " + line);
 		}
 		
 		// Test if we should skip this sentence
@@ -441,8 +439,7 @@ public class DiskHyperGraph {
 			//create hyper graph
 			HGNode goalItem = this.idToItem.get(qtyItems);
 			if (null == goalItem) {
-				logger.severe("no goal item");
-				System.exit(1);
+				throw new RuntimeException("no goal item");
 			}
 			return new HyperGraph(goalItem, qtyItems, qtyDeductions, sentenceID, sentenceLength);
 		}
@@ -453,8 +450,7 @@ public class DiskHyperGraph {
 		String  line = FileUtility.read_line_lzf(this.itemsReader);
 		String[] fds = line.split(ITEM_STATE_TAG); // TODO: use joshua.util.Regex
 		if (fds.length != 2) {
-			logger.severe("wrong item line");
-			System.exit(1);
+			throw new RuntimeException("wrong item line");
 		}
 		String[] words    = Regex.spaces.split(fds[0]);
 		int itemID        = Integer.parseInt(words[1]);
@@ -509,8 +505,7 @@ public class DiskHyperGraph {
 				final int itemID = Integer.parseInt(fds[2+t]);
 				HGNode item = this.idToItem.get(itemID);
 				if (null == item) {
-					logger.severe("item is null for id: " + itemID);
-					System.exit(1);
+					throw new RuntimeException("item is null for id: " + itemID);
 				}
 				antecedentItems.add(item);
 			}
@@ -523,8 +518,7 @@ public class DiskHyperGraph {
 			if (ruleID != pGrammar.getOOVRuleID()) {
 				rule = this.associatedGrammar.get(ruleID);
 				if (null == rule) {
-					logger.severe("rule is null but id is " + ruleID);
-					System.exit(1);
+					throw new RuntimeException("rule is null but id is " + ruleID);
 				}
 			} else {
 				rule = pGrammar.constructOOVRule(1,	this.symbolTable.addTerminal(fds[4+qtyAntecedents]), false);

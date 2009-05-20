@@ -42,15 +42,15 @@ public class BuildinSymbol extends DefaultSymbol {
 		this(null);
 	}
 	
-	public BuildinSymbol(String fname)  {
+	public BuildinSymbol(String fname) {
 		if (null != fname) {
 			logger.info("Construct the symbol table from a file " + fname);
 			try {
 				initializeSymTblFromFile(fname);
-			} catch (IOException e) {
-				logger.severe("Error encountered while constructing symbol table from file " + fname);
-				e.printStackTrace();
-				System.exit(-1);
+			} catch (IOException ioe) {
+				throw new RuntimeException(
+					"Error encountered while constructing symbol table from file " + fname,
+					ioe);
 			}
 		
 		} else {
@@ -64,42 +64,39 @@ public class BuildinSymbol extends DefaultSymbol {
 	
 	/** Get int for string (initial, or recover) */
 	public int getID(String str) {
-	//public int addTerminalSymbol(String str){
 		Integer res_id = (Integer)str_2_num_tbl.get(str);
 		if (null != res_id) { // already have this symbol
 			if (isNonterminal(res_id)) {
-				logger.severe("Error, terminal symbol mix with non-terminal, Sym: " + str + "; id: " + res_id);
-				System.exit(1);
+				throw new RuntimeException("terminal symbol mix with non-terminal, Sym: " + str + "; id: " + res_id);
 			}
 			return res_id;
 		} else {
 			str_2_num_tbl.put(str, cur_terminal_id);
 			num_2_str_tbl.put(cur_terminal_id, str);
 			cur_terminal_id++;
-			if(cur_terminal_id>lm_end_sym_id){
-				logger.severe("cur_terminal_id is greater than lm_end_sym_id");
-				System.exit(0);
+			if (cur_terminal_id > lm_end_sym_id) {
+				throw new RuntimeException("cur_terminal_id is greater than lm_end_sym_id");
 			}
-			//System.out.println("Sym: " + str + "; id: " + positive_id);
+			//logger.info("Sym: " + str + "; id: " + positive_id);
 			return (cur_terminal_id-1);
 		}
 	}
-
-
+	
+	
 	public String getTerminal(int id) {
-	//protected String getTerminalWord(int id){
-		 String res = (String)num_2_str_tbl.get(id);
-		 if(res == null){
-				logger.severe("try to query the string for non exist id, must exit, id is " + id);
-				System.exit(0);
-			}
+		String res = (String)num_2_str_tbl.get(id);
+		if (res == null) {
+			throw new RuntimeException("try to query the string for non exist id, must exit, id is " + id);
+		}
 		
-		 return  res;
-	 }
-
+		return  res;
+	}
+	
+	
 	public Collection<Integer> getAllIDs() {
 		return num_2_str_tbl.keySet();
 	}
+	
 	
 	public String getUnknownWord() {
 		//TODO Implement this method

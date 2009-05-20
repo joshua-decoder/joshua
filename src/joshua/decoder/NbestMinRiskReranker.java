@@ -74,8 +74,7 @@ public class NbestMinRiskReranker {
 			String[] fds = Regex.threeBarsWithSpace.split(hyp);
 			int t_sent_id = Integer.parseInt(fds[0]);
 			if (sent_id != t_sent_id) { 
-				System.out.println("sentence_id does not match");
-				System.exit(1);
+				throw new RuntimeException("sentence_id does not match");
 			}
 			l_hyp_itself.add(fds[1]);
 			
@@ -138,8 +137,7 @@ public class NbestMinRiskReranker {
 		}
 		System.out.println("best gain: " + best_gain);
 		if (null == best_hyp) {
-			System.out.println("mbr reranked one best is null, must be wrong");
-			System.exit(1);
+			throw new RuntimeException("mbr reranked one best is null, must be wrong");
 		}
 		return best_hyp;
 	}
@@ -161,17 +159,18 @@ public class NbestMinRiskReranker {
 			t_sum += normalized_prob;
 			nbest_logps.set(i, normalized_prob);
 			if (Double.isNaN(normalized_prob)) {
-				System.out.println("prob is NaN, must be wrong");
-				System.out.println("nbest_logps.get(i): "+ nbest_logps.get(i) + "; scaling_factor: " + scaling_factor +"; normalization_constant:" + normalization_constant);
-				System.exit(1);
+				throw new RuntimeException(
+					"prob is NaN, must be wrong\nnbest_logps.get(i): "
+					+ nbest_logps.get(i)
+					+ "; scaling_factor: " + scaling_factor
+					+ "; normalization_constant:" + normalization_constant );
 			}
-			//System.out.println("probability: " + normalized_prob);
+			//logger.info("probability: " + normalized_prob);
 		}
 		
 		//sanity check
 		if (Math.abs(t_sum - 1.0) > 1e-4) {
-			System.out.println("probabilities not sum to one, must be wrong");
-			System.exit(1);
+			throw new RuntimeException("probabilities not sum to one, must be wrong");
 		}
 		
 	} 
@@ -251,9 +250,7 @@ public class NbestMinRiskReranker {
 		} else if (add_mode == 2) { // viter-max
 			return (x >= y) ? x : y;
 		} else {
-			System.out.println("invalid add mode");
-			System.exit(0);
-			return 0;
+			throw new RuntimeException("invalid add mode");
 		}
 	}
 	
@@ -269,7 +266,7 @@ public class NbestMinRiskReranker {
 			for(int i = 0; i < args.length; i++) {
 				System.out.println("arg is: " + args[i]);
 			}
-			System.exit(0);
+			System.exit(-1);
 		}
 		long start_time = System.currentTimeMillis();
 		String f_nbest_in = args[0].trim();

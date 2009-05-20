@@ -96,8 +96,7 @@ public class LMGrammarRemote extends AbstractLM {
 		} } finally { reader.close(); }
 			
 		if (count != num_servers) {
-			logger.severe("num of lm servers does not match");
-			System.exit(1);
+			throw new IllegalArgumentException("num of lm servers does not match");
 		}
 	}
 	
@@ -118,8 +117,8 @@ public class LMGrammarRemote extends AbstractLM {
 			if (-1 != line.indexOf("=")) { // parameters
 				String[] fds = Regex.equalsWithSpaces.split(line);
 				if (fds.length != 2) {
-					logger.severe("Wrong config line: " + line);
-					System.exit(1);
+					throw new IllegalArgumentException(
+						"Wrong config line: " + line);
 				}
 				if ("lm_file".equals(fds[0])) {
 					String lm_file = fds[1].trim();
@@ -171,7 +170,6 @@ public class LMGrammarRemote extends AbstractLM {
 	
 	
 	public void write_vocab_map_srilm(String fname) {
-		logger.severe("Error: call write_vocab_map_srilm in remote, must exit");
-		System.exit(1);
+		throw new RuntimeException("call write_vocab_map_srilm in remote, must exit");
 	}
 }

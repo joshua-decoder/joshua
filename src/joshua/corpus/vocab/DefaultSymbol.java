@@ -90,8 +90,7 @@ extends AbstractSymbolTable implements SymbolTable {
 	final public String getNonterminal(int id) {
 		String res = this.id2string.get(id);
 		if (null == res) {
-			logger.severe("try to query the string for non exist id, must exit");
-			System.exit(0);
+			throw new RuntimeException("try to query the string for non exist id, must exit");
 		}
 		return res;
 	}
@@ -133,8 +132,7 @@ extends AbstractSymbolTable implements SymbolTable {
 		Integer id = this.string2id.get(str);
 		if (null != id) { // already have this symbol
 			if (! isNonterminal(id)) {
-				logger.severe("Error, NONTSym: " + str + "; id: " + id);
-				System.exit(1);
+				throw new RuntimeException("NONTSym: " + str + "; id: " + id);
 			}
 			return id;
 		} else {
@@ -180,16 +178,14 @@ extends AbstractSymbolTable implements SymbolTable {
 			
 			//it is guaranteed that the strings in localId2str are different
 			if (null != localId2str.get(id)) {
-				logger.severe("Error: duplicate id, have to exit; " + line);
-				System.exit(1);
+				throw new RuntimeException("duplicate id, have to exit; " + line);
 			} else {
 				localId2str.put(id, uniqueStr);
 			}
 		} } finally { symboltableReader.close(); }
 		
 		/*if (localId2str.size() >= this.lm_end_sym_id - this.lm_start_sym_id) {
-			logger.severe("read symbol tbl, tlb is too big");
-			System.exit(1);
+			throw new RuntimeException("read symbol tbl, tlb is too big");
 		}*/
 		
 		//#### now add the tbl into srilm/java-tbl
@@ -206,8 +202,7 @@ extends AbstractSymbolTable implements SymbolTable {
 				id = this.addTerminal("lzf" + i);
 			}
 			if (id != i) {
-				logger.severe("id supposed: " + i + " != assigned " + id + " symbol:" + str);
-				System.exit(1);
+				throw new RuntimeException("id supposed: " + i + " != assigned " + id + " symbol:" + str);
 			}
 			if (n_added >= localId2str.size()) {
 				break;

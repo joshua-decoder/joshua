@@ -80,7 +80,7 @@ public class LMServer {
 	
 	public static void main(String[] args) throws IOException {
 		if (args.length != 1) {
-			System.err.println("wrong command, correct command should be: java LMServer config_file");
+			System.err.println("Usage: java LMServer config_file");
 			
 			if (logger.isLoggable(Level.FINE)) {
 				logger.fine("num of args is "+ args.length);
@@ -107,8 +107,7 @@ public class LMServer {
 		try {
 			serverSocket = new ServerSocket(port);
 			if (null == serverSocket) {
-				logger.severe("Error: server socket is null");
-				System.exit(0);
+				throw new IOException("server socket is null");
 			}
 			init_lm_grammar();
 			
@@ -139,8 +138,7 @@ public class LMServer {
 	public static void init_lm_grammar() throws IOException {
 		if (use_srilm) {
 			if (use_left_euqivalent_state || use_right_euqivalent_state) {
-				logger.severe("when using local srilm, we cannot use suffix stuff");
-				System.exit(0);
+				throw new IllegalArgumentException("when using local srilm, we cannot use suffix stuff");
 			}
 			p_symbolTable = new SrilmSymbol(remote_symbol_tbl, g_lm_order);
 			p_lm = new LMGrammarSRILM((SrilmSymbol)p_symbolTable, g_lm_order, lm_file);
@@ -168,8 +166,7 @@ public class LMServer {
 			if (line.indexOf("=") != -1) { //parameters
 				String[] fds = Regex.equalsWithSpaces.split(line);
 				if (fds.length != 2) {
-					logger.severe("Wrong config line: " + line);
-					System.exit(0);
+					throw new IllegalArgumentException("Wrong config line: " + line);
 				}
 				if ("lm_file".equals(fds[0])) {
 					lm_file = fds[1].trim();
@@ -223,7 +220,7 @@ public class LMServer {
 					
 				} else {
 					logger.warning("LMServer doesn't use config line: " + line);
-					//System.exit(0);
+					//System.exit(1);
 				}
 			}
 		} } finally { configReader.close(); }
@@ -321,9 +318,8 @@ public class LMServer {
 		
 		// format: prob order wrds
 		private String get_prob_backoff_state(DecodedStructure ds) {
-			logger.severe("Error: call get_prob_backoff_state in lmserver, must exit");
-			System.exit(1);
-			return null;
+			throw new RuntimeException("call get_prob_backoff_state in lmserver, must exit");
+			
 			/*Double res = p_lm.get_prob_backoff_state(ds.wrds, ds.num, ds.num);
 			return res.toString();*/
 		}
@@ -331,17 +327,13 @@ public class LMServer {
 		
 		// format: prob order wrds
 		private String get_left_equiv_state(DecodedStructure ds) {
-			logger.severe("Error: call get_left_equiv_state in lmserver, must exit");
-			System.exit(1);
-			return null;
+			throw new RuntimeException("call get_left_equiv_state in lmserver, must exit");
 		}
 		
 		
 		// format: prob order wrds
 		private String get_right_equiv_state(DecodedStructure ds) {
-			logger.severe("Error: call get_right_equiv_state in lmserver, must exit");
-			System.exit(1);
-			return null;
+			throw new RuntimeException("call get_right_equiv_state in lmserver, must exit");
 		}
 		
 		

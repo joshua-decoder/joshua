@@ -267,10 +267,10 @@ public class Chart {
 		if (null != this.bins[0][sent_len]) {
 			goal_bin.transit_to_goal(this.bins[0][sent_len]);//update goal_bin				
 		} else {
-			logger.severe("No complete item in the cell(0,n); possible reasons: " +
-					"(1) your grammar does not have any valid derivation for the source sentence; " +
-					"(2) two aggressive pruning");
-			System.exit(1);
+			throw new RuntimeException(
+				"No complete item in the cell(0,n); possible reasons: " +
+				"(1) your grammar does not have any valid derivation for the source sentence; " +
+				"(2) two aggressive pruning");
 		}
 		
 		//debug purpose

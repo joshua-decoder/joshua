@@ -84,8 +84,7 @@ public class DecoderFactory {
 				}
 			} else {
 				if (JoshuaConfiguration.use_remote_lm_server) { // TODO
-					logger.severe("You cannot run parallel decoder and remote lm server together");
-					System.exit(1);
+					throw new RuntimeException("You cannot run parallel decoder and remote lm server together");
 				}
 				run_parallel_decoder(test_file, nbest_file);
 			}

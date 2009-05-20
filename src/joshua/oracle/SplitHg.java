@@ -63,8 +63,7 @@ public abstract class SplitHg {
 
 		if (l_virtual_items.size()!=1) {
 			// TODO: log this properly, fail properly
-			System.out.println("number of virtual goal items is not equal to one"); 
-			System.exit(0);
+			throw new RuntimeException("number of virtual goal items is not equal to one");
 		}
 		return l_virtual_items.get(0);
 	}
@@ -198,7 +197,7 @@ public abstract class SplitHg {
 						}					
 					}
 				} else {
-					logger.severe("Sorry, we can only deal with rules with at most TWO non-terminals");System.exit(0);
+					throw new RuntimeException("Sorry, we can only deal with rules with at most TWO non-terminals");
 				}
 			// axiom case: no nonterminal
 			} else {
@@ -209,7 +208,9 @@ public abstract class SplitHg {
 		//this function should be called by process_one_combination_axiom/process_one_combination_nonaxiom
 		//virtual_item_sigs is specific to parent_item
 		protected  void add_deduction(HGNode parent_item, HashMap<String, VirtualItem> virtual_item_sigs, VirtualDeduction t_ded, DPState dpstate, boolean maintain_onebest_only){
-			if(t_ded==null) {System.out.println("deduction is null"); System.exit(0);}
+			if (null == t_ded) {
+				throw new RuntimeException("deduction is null");
+			}
 			String sig = VirtualItem.get_signature(parent_item, dpstate);
 			VirtualItem t_virtual_item = (VirtualItem)virtual_item_sigs.get(sig);
 			if(t_virtual_item!=null){

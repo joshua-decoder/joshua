@@ -125,8 +125,8 @@ public class DotChart {
 	public void seed() {
 		for (int j = 0; j <= sent_len - 1; j++) {
 			if (p_grammar.hasRuleForSpan(j, j, sent_len)) {
-				if(p_grammar.getTrieRoot()==null){
-					logger.severe("trie root is null"); System.exit(0);
+				if (null == p_grammar.getTrieRoot()) {
+					throw new RuntimeException("trie root is null");
 				}
 				add_dot_item(p_grammar.getTrieRoot(), j, j, null, null, 0.0f);
 			}

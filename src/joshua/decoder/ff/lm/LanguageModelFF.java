@@ -134,17 +134,17 @@ public class LanguageModelFF extends DefaultStatefulFF {
 			int c_id = en_words[c];
 			if (p_symbolTable.isNonterminal(c_id)) {
 				if (null == previous_states) {
-					logger.severe("LMModel>>lookup_words1_equv_state: null previous_states");
-					System.exit(1);
+					throw new IllegalArgumentException(
+						"LMModel.lookup_words1_equv_state: null previous_states");
 				}
 				
-				int     index     = p_symbolTable.getTargetNonterminalIndex(c_id);
-				LMFFDPState state     = (LMFFDPState) previous_states.get(index);
-				int[]   l_context = state.getLeftLMStateWords();
-				int[]   r_context = state.getRightLMStateWords();
+				int index = p_symbolTable.getTargetNonterminalIndex(c_id);
+				LMFFDPState state = (LMFFDPState) previous_states.get(index);
+				int[] l_context = state.getLeftLMStateWords();
+				int[] r_context = state.getRightLMStateWords();
 				if (l_context.length != r_context.length) {
-					logger.severe("LMModel>>lookup_words1_equv_state: left and right contexts have unequal lengths");
-					System.exit(1);
+					throw new RuntimeException(
+						"LMModel.lookup_words1_equv_state: left and right contexts have unequal lengths");
 				}
 				
 				//##################left context
@@ -224,7 +224,7 @@ public class LanguageModelFF extends DefaultStatefulFF {
 		}
 		res_tbl.setFutureCostEstimation(estimated_future_cost);
 		//##### get right equiv state
-		//if(current_ngram.size()>this.ngramOrder-1 || equiv_l_state.length>this.ngramOrder-1)	System.exit(1);
+		//if(current_ngram.size()>this.ngramOrder-1 || equiv_l_state.length>this.ngramOrder-1) throw new RuntimeException();
 		int[] equiv_r_state = this.lmGrammar.rightEquivalentState(Support.sub_int_array(current_ngram, 0, current_ngram.size()), this.ngramOrder);
 		model_states.setRightLMStateWords(equiv_r_state);
 		//System.out.println("right state: " + Symbol.get_string(right_state));
@@ -340,8 +340,8 @@ public class LanguageModelFF extends DefaultStatefulFF {
 		int[]   l_context = state.getLeftLMStateWords();		
 		int[]   r_context = state.getRightLMStateWords();
 		if (l_context.length != r_context.length) {
-			logger.severe("LMModel>>compute_equiv_state_final_transition: left and right contexts have unequal lengths");
-			System.exit(1);
+			throw new RuntimeException(
+				"LMModel.compute_equiv_state_final_transition: left and right contexts have unequal lengths");
 		}
 		
 		//##################left context

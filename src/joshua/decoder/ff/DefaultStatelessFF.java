@@ -84,8 +84,7 @@ public abstract class DefaultStatelessFF implements FeatureFunction {
 	 */
 	public StatelessFFTransitionResult transition(Rule rule, ArrayList<FFDPState> previous_states, int span_start, int span_end) {
 		if (null != previous_states) {
-			logger.severe("transition: previous states for a stateless feature is NOT null");
-			System.exit(0);
+			throw new IllegalArgumentException("transition: previous states for a stateless feature is NOT null");
 		}
 		StatelessFFTransitionResult result = new StatelessFFTransitionResult();
 		result.setTransitionCost(this.estimate(rule));
@@ -96,8 +95,7 @@ public abstract class DefaultStatelessFF implements FeatureFunction {
 	/** Default implementation of finalTransition **/
 	public double finalTransition(FFDPState state) {
 		if (null != state) {
-			logger.severe("finalTransition: state for a stateless feature is NOT null");
-			System.exit(0);
+			throw new IllegalArgumentException("finalTransition: state for a stateless feature is NOT null");
 		}
 		return 0.0;
 	}

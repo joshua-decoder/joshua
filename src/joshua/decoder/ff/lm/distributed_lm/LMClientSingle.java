@@ -91,9 +91,8 @@ extends LMClient {
 	
 	//cmd: prob order wrd1 wrd2 ...
 	public double get_prob_backoff_state(int[] ngram, int n_additional_bow) {
-		logger.severe("Error: call get_prob_backoff_state in lmclient, must exit");
-		System.exit(1);
-		return -1;
+		throw new RuntimeException("call get_prob_backoff_state in lmclient, must exit");
+		
 		/*double res=0.0;
 		String packet= encode_packet("problbo", n_additional_bow, ngram);    	
 		String cmd_res = exe_request(packet);
@@ -103,9 +102,8 @@ extends LMClient {
 	
 	
 	public int[] get_left_euqi_state(int[] original_state_wrds, int order, double[] cost) {
-		logger.severe("Error: call get_left_euqi_state in lmclient, must exit");
-		System.exit(1);
-		return null;
+		throw new RuntimeException("call get_left_euqi_state in lmclient, must exit");
+		
 		/*
 		double res=0.0;    	
 		String packet= encode_packet("leftstate", order, original_state_wrds);    	
@@ -116,9 +114,8 @@ extends LMClient {
 	
 	
 	public int[] get_right_euqi_state(int[] original_state, int order) {
-		logger.severe("Error: call get_right_euqi_state in lmclient, must exit");
-		System.exit(1);
-		return null;
+		throw new RuntimeException("Error: call get_right_euqi_state in lmclient, must exit");
+		
 		/*
 		double res=0.0;
 		String packet= encode_packet("rightstate", order, original_state);    	

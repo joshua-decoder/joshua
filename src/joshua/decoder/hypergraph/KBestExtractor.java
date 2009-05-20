@@ -249,8 +249,7 @@ public class KBestExtractor {
 						error.append("model weight: " + l_models.get(k).getWeight() + "; cost: " +model_cost[k]+ "\n");
 //						System.out.println("model weight: " + l_models.get(k).getWeight() + "; cost: " +model_cost[k]);
 					}
-//					logger.severe(s.toString());
-//					System.exit(1);
+//					throw new RuntimeException(s.toString());
 					throw new RuntimeException(error.toString());
 				}
 			}
@@ -327,9 +326,8 @@ public class KBestExtractor {
 					
 					//debug: sanity check
 					t_added++;
-					if ( ! extract_unique_nbest && t_added > 1){//this is possible only when extracting unique nbest
-						if (logger.isLoggable(Level.SEVERE)) logger.finest("In lazy_k_best_extract, add more than one time, k is " + k);
-						System.exit(1);
+					if (!extract_unique_nbest && t_added > 1) { // this is possible only when extracting unique nbest
+						throw new RuntimeException("In lazy_k_best_extract, add more than one time, k is " + k);
 					}
 				} else {
 					break;
@@ -339,65 +337,70 @@ public class KBestExtractor {
 				res = null;//in case we do not get to the depth of k
 			}
 			//debug: sanity check
-			//if(l_nbest.size()>=k && l_nbest.get(k-1)!=res){System.out.println("In lazy_k_best_extract, ranking is not correct ");System.exit(1);}
+			//if (l_nbest.size() >= k && l_nbest.get(k-1) != res) {
+			//throw new RuntimeException("In lazy_k_best_extract, ranking is not correct ");
+			//}
 			
 			return res;
 		}
 		
 		//last: the last item that has been selected, we need to extend it
 		//get the next hyp at the "last" hyperedge
-		private void lazy_next(SymbolTable p_symbol, KBestExtractor kbest_extator, DerivationState last){
-			if(last.p_edge.get_ant_items()==null)
+		private void lazy_next(SymbolTable p_symbol, KBestExtractor kbest_extator, DerivationState last) {
+			if (null == last.p_edge.get_ant_items()) {
 				return;
-			for(int i=0; i < last.p_edge.get_ant_items().size();i++){//slide the ant item
+			}
+			for (int i = 0; i < last.p_edge.get_ant_items().size(); i++) { // slide the ant item
 				HGNode it = (HGNode) last.p_edge.get_ant_items().get(i);
 				VirtualItem virtual_it = kbest_extator.add_virtual_item(it);
 				int[] new_ranks = new int[last.ranks.length];
-				for(int c=0; c<new_ranks.length;c++)
-					new_ranks[c]=last.ranks[c];				
+				for (int c = 0; c < new_ranks.length;c++) {
+					new_ranks[c] = last.ranks[c];
+				}
 				
-				new_ranks[i]=last.ranks[i]+1;
+				new_ranks[i] = last.ranks[i] + 1;
 				String new_sig = getDerivationStateSignature(last.p_edge, new_ranks, last.hyperedge_pos);
 				
 				//why duplicate, e.g., 1 2 + 1 0 == 2 1 + 0 1 
-				if(derivation_tbl.containsKey(new_sig)==true){
+				if (derivation_tbl.containsKey(new_sig)) {
 					continue;
 				}
 				virtual_it.lazy_k_best_extract_item(p_symbol, kbest_extator, new_ranks[i]);
-				if(new_ranks[i]<=virtual_it.l_nbest.size()//exist the new_ranks[i] derivation
-				  /*&& "t" is not in heap_cands*/ ){//already checked before, check this condition
-					double cost= last.cost - ((DerivationState)virtual_it.l_nbest.get(last.ranks[i]-1)).cost + ((DerivationState)virtual_it.l_nbest.get(new_ranks[i]-1)).cost;
+				if (new_ranks[i] <= virtual_it.l_nbest.size() // exist the new_ranks[i] derivation
+				  /*&& "t" is not in heap_cands*/) { // already checked before, check this condition
+					double cost = last.cost - ((DerivationState)virtual_it.l_nbest.get(last.ranks[i]-1)).cost + ((DerivationState)virtual_it.l_nbest.get(new_ranks[i]-1)).cost;
 					DerivationState t = new DerivationState(last.p_parent_node, last.p_edge, new_ranks, cost, last.hyperedge_pos);
 					heap_cands.add(t);
 					derivation_tbl.put(new_sig,1);
-				}				
-			}		
+				  }
+			}
 		}
 
 		//this is the seeding function, for example, it will get down to the leaf, and sort the terminals
 		//get a 1best from each hyperedge, and add them into the heap_cands
-		private void get_candidates(SymbolTable p_symbol, KBestExtractor kbest_extator){
-			heap_cands=new PriorityQueue<DerivationState>();
-			derivation_tbl = new HashMap<String, Integer> ();
-			if(extract_unique_nbest==true)
-				nbest_str_tbl=new HashMap<String,Integer> ();
+		private void get_candidates(SymbolTable p_symbol, KBestExtractor kbest_extator) {
+			heap_cands = new PriorityQueue<DerivationState>();
+			derivation_tbl = new HashMap<String,Integer>();
+			if (extract_unique_nbest) {
+				nbest_str_tbl = new HashMap<String,Integer>();
+			}
 			//sanity check
 			if (null == p_item.l_hyperedges) {
-				System.out.println("Error, l_hyperedges is null in get_candidates, must be wrong");
-				System.exit(1);
+				throw new RuntimeException("l_hyperedges is null in get_candidates, must be wrong");
 			}
-			int pos=0;
-			for(HyperEdge hyper_edge : p_item.l_hyperedges){				
+			int pos = 0;
+			for (HyperEdge hyper_edge : p_item.l_hyperedges) {
 				DerivationState t = get_best_derivation(p_symbol,kbest_extator, p_item, hyper_edge,pos);
-//				why duplicate, e.g., 1 2 + 1 0 == 2 1 + 0 1 , but here we should not get duplicate				
-				if(derivation_tbl.containsKey(t.get_signature())==false){
+//				why duplicate, e.g., 1 2 + 1 0 == 2 1 + 0 1 , but here we should not get duplicate
+				if (!derivation_tbl.containsKey(t.get_signature())) {
 					heap_cands.add(t);
 					derivation_tbl.put(t.get_signature(),1);
-				}else{//sanity check
-					System.out.println("Error: get duplicate derivation in get_candidates, this should not happen");
-					System.out.println("signature is " + t.get_signature());
-					System.out.println("l_hyperedge size is " + p_item.l_hyperedges.size());
-					System.exit(1);
+				} else { // sanity check
+					throw new RuntimeException(
+						"get duplicate derivation in get_candidates, this should not happen"
+						+ "\nsignature is " + t.get_signature()
+						+ "\nl_hyperedge size is " + p_item.l_hyperedges.size()
+						);
 				}
 				pos++;
 			}	

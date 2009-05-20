@@ -158,8 +158,7 @@ public class LMGrammarJAVA extends AbstractLM {
 		} else {
 			//TODO: untranslated words
 			if (null == root) {
-				logger.severe("root is null");
-				System.exit(1);
+				throw new RuntimeException("root is null");
 			}
 			int last_word_id = ngram_wrds[ngram_wrds.length-1];
 			LMHash pos = root;
@@ -735,8 +734,7 @@ public class LMGrammarJAVA extends AbstractLM {
 		
 		public void put(int key, Object value) {
 			if (null == value) {
-				logger.severe("LMHash, value is null");
-				System.exit(1);
+				throw new IllegalArgumentException("LMHash, value is null");
 			}
 			
 			int pos = hash_pos(key, key_array.length);

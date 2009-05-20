@@ -163,14 +163,13 @@ public class Bin {
 					}
 					allItemStates.put(ff.getFeatureID(), itemState);
 				} else {
-					logger.severe("compute_item: null getStateForItem()"
+					throw new RuntimeException("compute_item: null getStateForItem()"
 						+ "\n*"
 						+ "\n* This will lead insidiously to a crash in"
 						+ "\n* HyperGraph$Item.get_signature() since noone"
 						+ "\n* checks invariant conditions before then."
 						+ "\n*"
 						+ "\n* Good luck tracking it down\n");
-					System.exit(0);
 				}
 			} else {
 				FFTransitionResult state = HyperGraph.computeTransition(
@@ -264,8 +263,7 @@ public class Bin {
 		ensure_sorted();
 		
 		if (1 != get_sorted_items().size()) {
-			logger.severe("the goal_bin does not have exactly one item");
-			System.exit(1);
+			throw new RuntimeException("the goal_bin does not have exactly one item");
 		}
 	}
 	
@@ -317,8 +315,8 @@ public class Bin {
 					}
 				}
 			} else {
-				logger.severe("Sorry, we can only deal with rules with at most TWO non-terminals");
-				System.exit(1);
+				// BUG: We should fix this, as per the suggested implementation over email.
+				throw new RuntimeException("Sorry, we can only deal with rules with at most TWO non-terminals");
 			}
 		}
 	}
@@ -652,8 +650,7 @@ public class Bin {
 			for (HGNode it : this.sortedItems) {
 				SuperItem si = this.tableSuperItems.get(it.lhs);
 				if (null == si) { // sanity check
-					logger.severe("Does not have super Item, have to exist");
-					System.exit(1);
+					throw new RuntimeException("Does not have super Item, have to exist");
 				}
 				si.l_items.add(it);
 			}

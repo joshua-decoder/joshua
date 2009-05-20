@@ -129,8 +129,7 @@ implements Iterable<PhrasePair> {
 				: new BufferedReader(new FileReader(this.alignmentFileName))
 				);
 		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-			System.exit(1);
+			throw new RuntimeException("File not found", e);
 		}
 		// Making final for closure capturing in the local class definition
 		final PhraseReader   rf = closureRF;
@@ -147,9 +146,8 @@ implements Iterable<PhrasePair> {
 				if (null == this.nextForeignPhrase) {
 					try {
 						this.nextForeignPhrase = rf.readPhrase();
-					} catch (IOException ex) {
-						ex.printStackTrace();
-						System.exit(1);
+					} catch (IOException e) {
+						throw new RuntimeException("IOException", e);
 					}
 				}
 				return null != this.nextForeignPhrase;
@@ -162,9 +160,8 @@ implements Iterable<PhrasePair> {
 					Phrase e = null;
 					try {
 						e = re.readPhrase();
-					} catch (IOException ex) {
-						ex.printStackTrace();
-						System.exit(1);
+					} catch (IOException ioe) {
+						throw new RuntimeException("IOException", ioe);
 					}
 					if (null == e) {
 						fileLengthMismatchException();
@@ -175,9 +172,8 @@ implements Iterable<PhrasePair> {
 								String line = null;
 								try {
 									line = ra.readLine();
-								} catch (IOException ex) {
-									ex.printStackTrace();
-									System.exit(1);
+								} catch (IOException ioe) {
+									throw new RuntimeException("IOException", ioe);
 								}
 								
 								if (null == line) {
