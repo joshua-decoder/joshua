@@ -53,7 +53,7 @@ public class StartupWindow extends JWindow {
 		int x = (screenSize.width-width)/2;
 		int y = (screenSize.height-height)/2;
 		setBounds(x,y,width,height);
-		
+
 		JLabel titleLabel = new JLabel(title, JLabel.CENTER);
 		titleLabel.setFont(new Font("Sans-Serif", Font.BOLD, 24));
 		content.add(titleLabel, BorderLayout.NORTH);	        
@@ -64,9 +64,8 @@ public class StartupWindow extends JWindow {
 
 		content.setBorder(BorderFactory.createLineBorder(borderColor, borderWidth));
 
+		// Display it
 		setVisible(true);
-
-
 	}
 
 }

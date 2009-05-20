@@ -20,9 +20,13 @@ package joshua.corpus.suffix_array;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 
 import joshua.corpus.CorpusArray;
+import joshua.corpus.LabeledSpan;
+import joshua.corpus.Span;
 import joshua.corpus.suffix_array.HierarchicalPhrases;
 import joshua.corpus.suffix_array.Pattern;
 import joshua.corpus.suffix_array.SuffixArrayFactory;
@@ -95,17 +99,29 @@ public class HierarchicalPhraseTest {
 			
 			{
 //				Pattern     pattern = new Pattern(vocab, vocab.getIDs("de sesiones del parlamento europeo"));
-				int[]       terminalSequenceStartIndices = {4};
-				int[]       terminalSequenceEndIndices = {9};
-				int         length = 5;
+//				int[]       terminalSequenceStartIndices = {4};
+//				int[]       terminalSequenceEndIndices = {9};
+//				int         length = 5;
 
+				Span span = new Span(4,9);
+				
+				int[] words = vocab.getIDs("de sesiones del parlamento europeo");
+				List<LabeledSpan> labeledSpans = Collections.<LabeledSpan>emptyList();
+				
 				HierarchicalPhrase phrase = 
 					new HierarchicalPhrase(
-							vocab.getIDs("de sesiones del parlamento europeo"), 
-							terminalSequenceStartIndices, 
-							terminalSequenceEndIndices, 
-							sourceCorpusArray, 
-							length);
+							words, 
+							span, 
+							labeledSpans, 
+							sourceCorpusArray);
+				
+//				HierarchicalPhrase phrase = 
+//					new HierarchicalPhrase(
+//							vocab.getIDs("de sesiones del parlamento europeo"), 
+//							terminalSequenceStartIndices, 
+//							terminalSequenceEndIndices, 
+//							sourceCorpusArray, 
+//							length);
 
 				Assert.assertFalse(phrase.containsTerminalAt(0));
 				Assert.assertFalse(phrase.containsTerminalAt(1));
@@ -128,17 +144,24 @@ public class HierarchicalPhraseTest {
 			
 			{
 //				Pattern     pattern = new Pattern(vocab, vocab.getIDs(","));
-				int[]       terminalSequenceStartIndices = {9};
-				int[]       terminalSequenceEndIndices = {10};
-				int         length = 1;
+//				int[]       terminalSequenceStartIndices = {9};
+//				int[]       terminalSequenceEndIndices = {10};
+//				int         length = 1;
 
 				HierarchicalPhrase phrase = 
 					new HierarchicalPhrase(
 							vocab.getIDs(","), 
-							terminalSequenceStartIndices, 
-							terminalSequenceEndIndices, 
-							sourceCorpusArray, 
-							length);
+							new Span(9,10), 
+							Collections.<LabeledSpan>emptyList(), 
+							sourceCorpusArray);
+				
+//				HierarchicalPhrase phrase = 
+//					new HierarchicalPhrase(
+//							vocab.getIDs(","), 
+//							terminalSequenceStartIndices, 
+//							terminalSequenceEndIndices, 
+//							sourceCorpusArray, 
+//							length);
 
 				Assert.assertFalse(phrase.containsTerminalAt(0));
 				Assert.assertFalse(phrase.containsTerminalAt(1));

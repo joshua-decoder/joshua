@@ -148,9 +148,23 @@ public class GridViewer extends JFrame implements ActionListener {
 
 	}
 
-	private static StartupWindow splashScreen = new StartupWindow("Alignment Viewer", Color.BLACK, 5);
-
+	private static StartupWindow splashScreen;// = new StartupWindow("Alignment Viewer", Color.BLACK, 5);
+//	private static components.SplashScreen splashScreen;// = null;// = new components.SplashScreen("Alignment Viewer", Color.BLACK, 5);
+	
 	public static void main(String[] args) {
+		
+//		splashScreen = 
+		
+		new Thread(
+		//javax.swing.SwingUtilities.invokeLater(
+				new Runnable() {
+			public void run() {
+				//splashScreen = new components.SplashScreen("Alignment Viewer", Color.BLACK, 5);
+				splashScreen = new StartupWindow("Alignment Viewer", Color.BLACK, 5);
+			}
+		}).start();
+		
+		 try { Thread.sleep(1000); } catch (Exception e) {}
 		
 		String joshDirName = args[0];
 

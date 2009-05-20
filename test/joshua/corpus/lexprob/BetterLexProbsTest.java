@@ -21,12 +21,16 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
+import java.util.Collections;
 import java.util.Date;
 
 import joshua.corpus.Corpus;
 import joshua.corpus.CorpusArray;
+import joshua.corpus.LabeledSpan;
 import joshua.corpus.ParallelCorpus;
+import joshua.corpus.Span;
 import joshua.corpus.alignment.Alignments;
+import joshua.corpus.suffix_array.HierarchicalPhrase;
 import joshua.corpus.suffix_array.HierarchicalPhrases;
 import joshua.corpus.suffix_array.Pattern;
 import joshua.corpus.suffix_array.SuffixArray;
@@ -54,6 +58,7 @@ public class BetterLexProbsTest {
 	Vocabulary sourceVocab, targetVocab;
 	Alignments alignmentArray;
 	CorpusArray sourceCorpusArray;
+	CorpusArray targetCorpusArray;
 	
 	@Test
 	public void setup() throws IOException {
@@ -118,7 +123,7 @@ public class BetterLexProbsTest {
 		SuffixArray sourceSuffixArray =
 			SuffixArrayFactory.createSuffixArray(sourceCorpusArray, SuffixArray.DEFAULT_CACHE_CAPACITY);
 
-		final CorpusArray targetCorpusArray =
+		this.targetCorpusArray =
 			SuffixArrayFactory.createCorpusArray(targetFileName);
 		this.targetVocab = (Vocabulary) targetCorpusArray.getVocabulary();
 		SuffixArray targetSuffixArray = 
@@ -198,106 +203,107 @@ public class BetterLexProbsTest {
 		
 		int phraseIndex = 0;
 		
-		results = lexProbs.calculateLexProbs(getPhrase("it", 0, 1), phraseIndex);
+		results = lexProbs.calculateLexProbs(getSourcePhrase("it", 0, 1), phraseIndex, getTargetPhrase("das", 0, 1));
 		Assert.assertNotNull(results);
 		Assert.assertEquals(results.first, 1.0f);  // lex P(it | das)
 		Assert.assertEquals(results.second, 0.25f);// lex P(das | it)
 		
-		results = lexProbs.calculateLexProbs(getPhrase("makes", 1, 2), phraseIndex);
+		results = lexProbs.calculateLexProbs(getSourcePhrase("makes", 1, 2), phraseIndex, getTargetPhrase("macht", 1, 2));
 		Assert.assertNotNull(results);
 		Assert.assertEquals(results.first, 1.0f); // lex P(makes | macht)
 		Assert.assertEquals(results.second, 1.0f);// lex P(macht | makes)
 		
-		results = lexProbs.calculateLexProbs(getPhrase("him", 2, 3), phraseIndex);
+		results = lexProbs.calculateLexProbs(getSourcePhrase("him", 2, 3), phraseIndex, getTargetPhrase("ihn", 2, 3));
 		Assert.assertNotNull(results);
 		Assert.assertEquals(results.first, 1.0f);
 		Assert.assertEquals(results.second, 1.0f);	
 		
-		results = lexProbs.calculateLexProbs(getPhrase("and", 3, 4), phraseIndex);
+		results = lexProbs.calculateLexProbs(getSourcePhrase("and", 3, 4), phraseIndex, getTargetPhrase("und", 3, 4));
 		Assert.assertNotNull(results);
 		Assert.assertEquals(results.first, 0.5f); // P(and | und)
 		Assert.assertEquals(results.second, 1.0f);// P(und | and)
 		
-		results = lexProbs.calculateLexProbs(getPhrase("it", 4, 5), phraseIndex);
+		results = lexProbs.calculateLexProbs(getSourcePhrase("it", 4, 5), phraseIndex, getTargetPhrase("es", 4, 5));
 		Assert.assertNotNull(results);
 		Assert.assertEquals(results.first, 1.0f);  // lex P(it | es)
 		Assert.assertEquals(results.second, 0.75f);// lex P(es | it)
 		
-		results = lexProbs.calculateLexProbs(getPhrase("mars", 5, 6), phraseIndex);
+		results = lexProbs.calculateLexProbs(getSourcePhrase("mars", 5, 6), phraseIndex, getTargetPhrase("besch\u00E4digt", 5, 6));
 		Assert.assertNotNull(results);
 		Assert.assertEquals(results.first, 1.0f);
 		Assert.assertEquals(results.second, 1.0f);	
 		
-		results = lexProbs.calculateLexProbs(getPhrase("him", 6, 7), phraseIndex);
+		results = lexProbs.calculateLexProbs(getSourcePhrase("him", 6, 7), phraseIndex, getTargetPhrase("ihn", 6, 7));
 		Assert.assertNotNull(results);
 		Assert.assertEquals(results.first, 1.0f);
 		Assert.assertEquals(results.second, 1.0f);	
 		
-		results = lexProbs.calculateLexProbs(getPhrase(",", 7, 8), phraseIndex);
+		results = lexProbs.calculateLexProbs(getSourcePhrase(",", 7, 8), phraseIndex, getTargetPhrase(",", 7, 8));
 		Assert.assertNotNull(results);
 		Assert.assertEquals(results.first, 1.0f);
 		Assert.assertEquals(results.second, 1.0f);	
 		
-		results = lexProbs.calculateLexProbs(getPhrase("it", 8, 9), phraseIndex);
+		results = lexProbs.calculateLexProbs(getSourcePhrase("it", 8, 9), phraseIndex, getTargetPhrase("es", 8, 9));
 		Assert.assertNotNull(results);
 		Assert.assertEquals(results.first, 1.0f);  // lex P(it | es)
 		Assert.assertEquals(results.second, 0.75f);// lex P(es | it)
 		
-		results = lexProbs.calculateLexProbs(getPhrase("sets", 9, 10), phraseIndex);
+		results = lexProbs.calculateLexProbs(getSourcePhrase("sets", 9, 10), phraseIndex, getTargetPhrase("setzt", 9, 10));
 		Assert.assertNotNull(results);
 		Assert.assertEquals(results.first, 1.0f);
 		Assert.assertEquals(results.second, 1.0f);	
 		
-		results = lexProbs.calculateLexProbs(getPhrase("him", 10, 11), phraseIndex);
+		results = lexProbs.calculateLexProbs(getSourcePhrase("him", 10, 11), phraseIndex, getTargetPhrase("ihn", 10, 11));
 		Assert.assertNotNull(results);
 		Assert.assertEquals(results.first, 1.0f);
 		Assert.assertEquals(results.second, 1.0f);	
 		
-		results = lexProbs.calculateLexProbs(getPhrase("on", 11, 12), phraseIndex);
+		results = lexProbs.calculateLexProbs(getSourcePhrase("on", 11, 12), phraseIndex, getTargetPhrase("auf", 11, 12));
 		Assert.assertNotNull(results);
 		Assert.assertEquals(results.first, 1.0f);
 		Assert.assertEquals(results.second, 1.0f);	
 		
-		results = lexProbs.calculateLexProbs(getPhrase("yet", 12, 13), phraseIndex);
+		results = lexProbs.calculateLexProbs(getSourcePhrase("yet", 12, 13), phraseIndex, getTargetPhrase("und", 12, 13));
 		Assert.assertNotNull(results);
 		Assert.assertEquals(results.first, 0.5f); // P(yet | und)
 		Assert.assertEquals(results.second, 1.0f);// P(und | yet)
 		
-		results = lexProbs.calculateLexProbs(getPhrase("it", 13, 14), phraseIndex);
+		results = lexProbs.calculateLexProbs(getSourcePhrase("it", 13, 14), phraseIndex, getTargetPhrase("es", 13, 14));
 		Assert.assertNotNull(results);
 		Assert.assertEquals(results.first, 1.0f);  // lex P(it | es)
 		Assert.assertEquals(results.second, 0.75f);// lex P(es | it)
 		
-		results = lexProbs.calculateLexProbs(getPhrase("takes", 14, 15), phraseIndex);
+		results = lexProbs.calculateLexProbs(getSourcePhrase("takes", 14, 15), phraseIndex, getTargetPhrase("f\u00FChrt", 14, 15));
 		Assert.assertNotNull(results);
 		Assert.assertEquals(results.first, 1.0f);
 		Assert.assertEquals(results.second, 1.0f);	
 		
-		results = lexProbs.calculateLexProbs(getPhrase("him", 15, 16), phraseIndex);
+		results = lexProbs.calculateLexProbs(getSourcePhrase("him", 15, 16), phraseIndex, getTargetPhrase("ihn", 15, 16));
 		Assert.assertNotNull(results);
 		Assert.assertEquals(results.first, 1.0f);
 		Assert.assertEquals(results.second, 1.0f);	
 		
-		results = lexProbs.calculateLexProbs(getPhrase("off", 16, 17), phraseIndex);
+		results = lexProbs.calculateLexProbs(getSourcePhrase("off", 16, 17), phraseIndex, getTargetPhrase("aus", 16, 17));
 		Assert.assertNotNull(results);
 		Assert.assertEquals(results.first, 1.0f);
 		Assert.assertEquals(results.second, 1.0f);	
 		
-		results = lexProbs.calculateLexProbs(getPhrase(".", 17, 18), phraseIndex);
+		results = lexProbs.calculateLexProbs(getSourcePhrase(".", 17, 18), phraseIndex, getTargetPhrase(".", 17, 18));
 		Assert.assertNotNull(results);
 		Assert.assertEquals(results.first, 1.0f);
 		Assert.assertEquals(results.second, 1.0f);	
 		
 		///////////
 		
-		results = lexProbs.calculateLexProbs(getPhrase("yet it", 12, 14), phraseIndex);
+		results = lexProbs.calculateLexProbs(getSourcePhrase("yet it", 12, 14), phraseIndex, getTargetPhrase("und es", 12, 14));
 		Assert.assertNotNull(results);
 		Assert.assertEquals(results.first, 0.5f * 1.0f);  // lex P(yet it | und es)
 		Assert.assertEquals(results.second, 1.0f * 0.75f);// lex P(und es | yet it)
 		
 		///////////
 		
-		results = lexProbs.calculateLexProbs(getPhrase("of the session", 19, 22), phraseIndex);
+		HierarchicalPhrase target = getTargetPhrase("der sitzungsperiode", 19, 21);
+		results = lexProbs.calculateLexProbs(getSourcePhrase("of the session", 19, 22), phraseIndex, target);
 		Assert.assertNotNull(results);
 		Assert.assertEquals(results.first, 0.5f * 0.5f * 1.0f);  // lex P(of the session | der sitzungsperiode)
 		Assert.assertEquals(results.second, 0.5f*((1.0f/3.0f) + (1.0f/3.0f)) * (1.0f/3.0f));// lex P(der sitzungsperiode | of the session)
@@ -339,14 +345,27 @@ public class BetterLexProbsTest {
 		//	"it makes him and it mars him , it sets him on yet it takes him off .";
 		// "das macht ihn und es besch\u00E4digt ihn , es setzt ihn auf und es f\u00FChrt ihn aus ."
 		
-		results = lexProbs.calculateLexProbs(phrases, phraseIndex);
+		int[] targetWords = {
+				targetVocab.getID("das"),
+				PrefixTree.X,
+				targetVocab.getID("und"),
+				targetVocab.getID("es")
+			};
+		
+		HierarchicalPhrase targetPhrase = new HierarchicalPhrase(
+				targetWords, 
+				new Span(0,5), 
+				Collections.<LabeledSpan>emptyList(), 
+				targetCorpusArray);
+		
+		results = lexProbs.calculateLexProbs(phrases, phraseIndex, targetPhrase);
 		Assert.assertNotNull(results);
 		Assert.assertEquals(results.first, 1.0f * 0.5f * 1.0f);   // lex P(it X and it | das X und es)
 		Assert.assertEquals(results.second, 0.25f * 1.0f * 0.75f);// lex P(das X und es | it X and it)
 		
 	}
 	
-	private HierarchicalPhrases getPhrase(String sourcePhrase, int startIndex, int endIndex) {
+	private HierarchicalPhrases getSourcePhrase(String sourcePhrase, int startIndex, int endIndex) {
 		Pattern pattern = new Pattern(sourceVocab, sourceVocab.getIDs(sourcePhrase));
 		int[] terminalSequenceStartIndices = {startIndex};
 		int[]       sentenceNumbers = {0};
@@ -355,6 +374,16 @@ public class BetterLexProbsTest {
 			new HierarchicalPhrases(pattern, terminalSequenceStartIndices, sentenceNumbers);
 		
 		return phrases;
+	}
+	
+	private HierarchicalPhrase getTargetPhrase(String targetPhrase, int startIndex, int endIndex) {
+		
+		return new HierarchicalPhrase(
+				targetVocab.getIDs(targetPhrase), 
+				new Span(startIndex,endIndex), 
+				Collections.<LabeledSpan>emptyList(), 
+				targetCorpusArray);
+
 	}
 	
 	@Test(dependsOnMethods={"setup"})

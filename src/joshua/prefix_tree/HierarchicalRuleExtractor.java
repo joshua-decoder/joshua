@@ -129,7 +129,7 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 				//       lexical probs until we have the unique <source pattern, target pattern, alignment> tuples.  I think that
 				//        this will be more efficient, because most of the time the alignments will be identical. 
 //				lexProbsList.add(lexProbs.calculateLexProbs(sourcePhrase));
-				lexProbsList.add(lexProbs.calculateLexProbs(sourceHierarchicalPhrases, i));
+				lexProbsList.add(lexProbs.calculateLexProbs(sourceHierarchicalPhrases, i, translation));
 			}
 		}
 

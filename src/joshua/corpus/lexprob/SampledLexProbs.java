@@ -33,6 +33,7 @@ import joshua.corpus.CorpusArray;
 import joshua.corpus.MatchedHierarchicalPhrases;
 import joshua.corpus.alignment.Alignments;
 import joshua.corpus.suffix_array.BasicPhrase;
+import joshua.corpus.suffix_array.HierarchicalPhrase;
 import joshua.corpus.suffix_array.SuffixArray;
 import joshua.corpus.suffix_array.SuffixArrayFactory;
 import joshua.corpus.suffix_array.Suffixes;
@@ -311,7 +312,7 @@ public class SampledLexProbs implements LexicalProbabilities {
 	 * @param sourcePhrase
 	 * @return the lexical probability and reverse lexical probability
 	 */
-	public Pair<Float,Float> calculateLexProbs(MatchedHierarchicalPhrases sourcePhrases, int sourcePhraseIndex) {
+	public Pair<Float,Float> calculateLexProbs(MatchedHierarchicalPhrases sourcePhrases, int sourcePhraseIndex, HierarchicalPhrase targetPhrase) {
 		
 //		HierarchicalPhrase sourcePhrase = sourcePhrases.get(sourcePhraseIndex, sourceSuffixArray.getCorpus());
 		

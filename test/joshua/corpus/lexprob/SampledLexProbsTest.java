@@ -166,106 +166,106 @@ public class SampledLexProbsTest {
 		
 		int phraseIndex = 0;
 		
-		results = lexProbs.calculateLexProbs(getPhrase("it", 0, 1), phraseIndex);
+		results = lexProbs.calculateLexProbs(getPhrase("it", 0, 1), phraseIndex, null);
 		Assert.assertNotNull(results);
 		Assert.assertEquals(results.first, 1.0f);  // lex P(it | das)
 		Assert.assertEquals(results.second, 0.25f);// lex P(das | it)
 		
-		results = lexProbs.calculateLexProbs(getPhrase("makes", 1, 2), phraseIndex);
+		results = lexProbs.calculateLexProbs(getPhrase("makes", 1, 2), phraseIndex, null);
 		Assert.assertNotNull(results);
 		Assert.assertEquals(results.first, 1.0f); // lex P(makes | macht)
 		Assert.assertEquals(results.second, 1.0f);// lex P(macht | makes)
 		
-		results = lexProbs.calculateLexProbs(getPhrase("him", 2, 3), phraseIndex);
+		results = lexProbs.calculateLexProbs(getPhrase("him", 2, 3), phraseIndex, null);
 		Assert.assertNotNull(results);
 		Assert.assertEquals(results.first, 1.0f);
 		Assert.assertEquals(results.second, 1.0f);	
 		
-		results = lexProbs.calculateLexProbs(getPhrase("and", 3, 4), phraseIndex);
+		results = lexProbs.calculateLexProbs(getPhrase("and", 3, 4), phraseIndex, null);
 		Assert.assertNotNull(results);
 		Assert.assertEquals(results.first, 0.5f); // P(and | und)
 		Assert.assertEquals(results.second, 1.0f);// P(und | and)
 		
-		results = lexProbs.calculateLexProbs(getPhrase("it", 4, 5), phraseIndex);
+		results = lexProbs.calculateLexProbs(getPhrase("it", 4, 5), phraseIndex, null);
 		Assert.assertNotNull(results);
 		Assert.assertEquals(results.first, 1.0f);  // lex P(it | es)
 		Assert.assertEquals(results.second, 0.75f);// lex P(es | it)
 		
-		results = lexProbs.calculateLexProbs(getPhrase("mars", 5, 6), phraseIndex);
+		results = lexProbs.calculateLexProbs(getPhrase("mars", 5, 6), phraseIndex, null);
 		Assert.assertNotNull(results);
 		Assert.assertEquals(results.first, 1.0f);
 		Assert.assertEquals(results.second, 1.0f);	
 		
-		results = lexProbs.calculateLexProbs(getPhrase("him", 6, 7), phraseIndex);
+		results = lexProbs.calculateLexProbs(getPhrase("him", 6, 7), phraseIndex, null);
 		Assert.assertNotNull(results);
 		Assert.assertEquals(results.first, 1.0f);
 		Assert.assertEquals(results.second, 1.0f);	
 		
-		results = lexProbs.calculateLexProbs(getPhrase(",", 7, 8), phraseIndex);
+		results = lexProbs.calculateLexProbs(getPhrase(",", 7, 8), phraseIndex, null);
 		Assert.assertNotNull(results);
 		Assert.assertEquals(results.first, 1.0f);
 		Assert.assertEquals(results.second, 1.0f);	
 		
-		results = lexProbs.calculateLexProbs(getPhrase("it", 8, 9), phraseIndex);
+		results = lexProbs.calculateLexProbs(getPhrase("it", 8, 9), phraseIndex, null);
 		Assert.assertNotNull(results);
 		Assert.assertEquals(results.first, 1.0f);  // lex P(it | es)
 		Assert.assertEquals(results.second, 0.75f);// lex P(es | it)
 		
-		results = lexProbs.calculateLexProbs(getPhrase("sets", 9, 10), phraseIndex);
+		results = lexProbs.calculateLexProbs(getPhrase("sets", 9, 10), phraseIndex, null);
 		Assert.assertNotNull(results);
 		Assert.assertEquals(results.first, 1.0f);
 		Assert.assertEquals(results.second, 1.0f);	
 		
-		results = lexProbs.calculateLexProbs(getPhrase("him", 10, 11), phraseIndex);
+		results = lexProbs.calculateLexProbs(getPhrase("him", 10, 11), phraseIndex, null);
 		Assert.assertNotNull(results);
 		Assert.assertEquals(results.first, 1.0f);
 		Assert.assertEquals(results.second, 1.0f);	
 		
-		results = lexProbs.calculateLexProbs(getPhrase("on", 11, 12), phraseIndex);
+		results = lexProbs.calculateLexProbs(getPhrase("on", 11, 12), phraseIndex, null);
 		Assert.assertNotNull(results);
 		Assert.assertEquals(results.first, 1.0f);
 		Assert.assertEquals(results.second, 1.0f);	
 		
-		results = lexProbs.calculateLexProbs(getPhrase("yet", 12, 13), phraseIndex);
+		results = lexProbs.calculateLexProbs(getPhrase("yet", 12, 13), phraseIndex, null);
 		Assert.assertNotNull(results);
 		Assert.assertEquals(results.first, 0.5f); // P(yet | und)
 		Assert.assertEquals(results.second, 1.0f);// P(und | yet)
 		
-		results = lexProbs.calculateLexProbs(getPhrase("it", 13, 14), phraseIndex);
+		results = lexProbs.calculateLexProbs(getPhrase("it", 13, 14), phraseIndex, null);
 		Assert.assertNotNull(results);
 		Assert.assertEquals(results.first, 1.0f);  // lex P(it | es)
 		Assert.assertEquals(results.second, 0.75f);// lex P(es | it)
 		
-		results = lexProbs.calculateLexProbs(getPhrase("takes", 14, 15), phraseIndex);
+		results = lexProbs.calculateLexProbs(getPhrase("takes", 14, 15), phraseIndex, null);
 		Assert.assertNotNull(results);
 		Assert.assertEquals(results.first, 1.0f);
 		Assert.assertEquals(results.second, 1.0f);	
 		
-		results = lexProbs.calculateLexProbs(getPhrase("him", 15, 16), phraseIndex);
+		results = lexProbs.calculateLexProbs(getPhrase("him", 15, 16), phraseIndex, null);
 		Assert.assertNotNull(results);
 		Assert.assertEquals(results.first, 1.0f);
 		Assert.assertEquals(results.second, 1.0f);	
 		
-		results = lexProbs.calculateLexProbs(getPhrase("off", 16, 17), phraseIndex);
+		results = lexProbs.calculateLexProbs(getPhrase("off", 16, 17), phraseIndex, null);
 		Assert.assertNotNull(results);
 		Assert.assertEquals(results.first, 1.0f);
 		Assert.assertEquals(results.second, 1.0f);	
 		
-		results = lexProbs.calculateLexProbs(getPhrase(".", 17, 18), phraseIndex);
+		results = lexProbs.calculateLexProbs(getPhrase(".", 17, 18), phraseIndex, null);
 		Assert.assertNotNull(results);
 		Assert.assertEquals(results.first, 1.0f);
 		Assert.assertEquals(results.second, 1.0f);	
 		
 		///////////
 		
-		results = lexProbs.calculateLexProbs(getPhrase("yet it", 12, 14), phraseIndex);
+		results = lexProbs.calculateLexProbs(getPhrase("yet it", 12, 14), phraseIndex, null);
 		Assert.assertNotNull(results);
 		Assert.assertEquals(results.first, 0.5f * 1.0f);  // lex P(yet it | und es)
 		Assert.assertEquals(results.second, 1.0f * 0.75f);// lex P(und es | yet it)
 		
 		///////////
 		
-		results = lexProbs.calculateLexProbs(getPhrase("of the session", 19, 22), phraseIndex);
+		results = lexProbs.calculateLexProbs(getPhrase("of the session", 19, 22), phraseIndex, null);
 		Assert.assertNotNull(results);
 		Assert.assertEquals(results.first, 0.5f * 0.5f * 1.0f);  // lex P(of the session | der sitzungsperiode)
 		Assert.assertEquals(results.second, 0.5f*((1.0f/3.0f) + (1.0f/3.0f)) * (1.0f/3.0f));// lex P(der sitzungsperiode | of the session)
@@ -307,7 +307,7 @@ public class SampledLexProbsTest {
 		//	"it makes him and it mars him , it sets him on yet it takes him off .";
 		// "das macht ihn und es besch\u00E4digt ihn , es setzt ihn auf und es f\u00FChrt ihn aus ."
 		
-		results = lexProbs.calculateLexProbs(phrases, phraseIndex);
+		results = lexProbs.calculateLexProbs(phrases, phraseIndex, null);
 		Assert.assertNotNull(results);
 		Assert.assertEquals(results.first, 1.0f * 0.5f * 1.0f);   // lex P(it X and it | das X und es)
 		Assert.assertEquals(results.second, 0.25f * 1.0f * 0.75f);// lex P(das X und es | it X and it)

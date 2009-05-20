@@ -161,7 +161,7 @@ public class HierarchicalPhrase extends Pattern {
 			}
 
 			if (span.end > possibleStart) {
-				terminalSpans.add(new Span(possibleStart, span.start));
+				terminalSpans.add(new Span(possibleStart, span.end));
 			}
 		}
 
@@ -374,12 +374,26 @@ public class HierarchicalPhrase extends Pattern {
 //			
 //		}
 //	}
+//	
+//	
+//	public static class UnableToGetWordIDException extends RuntimeException {
+//		public UnableToGetWordIDException(String message) {
+//			super(message);
+//		}
+//	}
 	
+	public int getNumberOfTerminalSequences() {
+		return terminalSequenceStartIndices.length;
+	}
 	
-	public static class UnableToGetWordIDException extends RuntimeException {
-		public UnableToGetWordIDException(String message) {
-			super(message);
-		}
+	public int getTerminalSequenceStartIndex(int sequenceIndex) {
+		return this.terminalSequenceStartIndices[sequenceIndex];
+	}
+	
+	public int getTerminalSequenceEndIndex(int sequenceIndex) {
+		
+		return this.terminalSequenceEndIndices[sequenceIndex];
+		
 	}
 	
 	
