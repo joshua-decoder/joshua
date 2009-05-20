@@ -208,17 +208,17 @@ public class KBestExtractor {
 						// we must account for the {i-j} substring
 						int ijStrIndex = tem[t].indexOf('{');
 						String tag = this.p_symbolTable.getWord(Integer.parseInt(tem[t].substring(1,ijStrIndex)));
-						str_hyp.append("(");
+						str_hyp.append('(');
 						str_hyp.append(tag);
 						str_hyp.append(tem[t].substring(ijStrIndex)); // append {i-j}
 					} else {
 						String tag = this.p_symbolTable.getWord(Integer.parseInt(tem[t].substring(1)));
-						str_hyp.append("(");
+						str_hyp.append('(');
 						str_hyp.append(tag);
 					}
 				} else {
 					//note: it may have more than two ")", e.g., "3499))"
-					int first_bracket_pos = tem[t].indexOf(")");//TODO: assume the tag/terminal does not have ")"
+					int first_bracket_pos = tem[t].indexOf(')');//TODO: assume the tag/terminal does not have ')'
 					String tag = this.p_symbolTable.getWord(Integer.parseInt(tem[t].substring(0,first_bracket_pos)));
 					str_hyp.append(tag);
 					str_hyp.append(tem[t].substring(first_bracket_pos));
@@ -227,7 +227,7 @@ public class KBestExtractor {
 				str_hyp.append(this.p_symbolTable.getWord(Integer.parseInt(tem[t])));
 			}
 			if (t < tem.length-1) {
-				str_hyp.append(" ");
+				str_hyp.append(' ');
 			}
 		}
 		
@@ -458,15 +458,16 @@ public class KBestExtractor {
 			hyperedge_pos=pos;
 		}
 		
-		private String get_signature(){
+		private String get_signature() {
 			StringBuffer res = new StringBuffer();
 			//res.apend(p_edge2.toString());//Wrong: this may not be unique to identify a hyperedge (as it represent the class name and hashcode which my be equal for different objects)
 			res.append(hyperedge_pos);
-			if(ranks!=null)
-				for(int i=0; i<ranks.length;i++){
-					res.append(" ");
-					res.append(ranks[i]);			
+			if (null != ranks) {
+				for (int i = 0; i < ranks.length;i++) {
+					res.append(' ');
+					res.append(ranks[i]);
 				}
+			}
 			return res.toString();
 		}
 		
@@ -474,70 +475,80 @@ public class KBestExtractor {
 		
 		//get the numeric sequence of the particular hypothesis
 		//if want to get model cost, then have to set model_cost and l_models
-		private String get_hypothesis(SymbolTable p_symbol, KBestExtractor kbest_extator, boolean useTreeFormat, double[] model_cost, ArrayList<FeatureFunction> l_models){
+		private String get_hypothesis(SymbolTable p_symbol, KBestExtractor kbest_extator, boolean useTreeFormat, double[] model_cost, ArrayList<FeatureFunction> l_models) {
 			//### accumulate cost of p_edge into model_cost if necessary
-			if(model_cost!=null) compute_cost(p_parent_node, p_edge, model_cost, l_models);
+			if (null != model_cost) {
+				compute_cost(p_parent_node, p_edge, model_cost, l_models);
+			}
 			
 			//### get hyp string recursively
-			StringBuffer res = new StringBuffer();			
+			StringBuffer res = new StringBuffer();
 			Rule rl = p_edge.get_rule();
-			if(rl==null){//hyperedges under "goal item" does not have rule
-				if(useTreeFormat==true){
+			if (null == rl) { // hyperedges under "goal item" does not have rule
+				if (useTreeFormat) {
 					//res.append("(ROOT ");
-					res.append("(");
+					res.append('(');
 					res.append(root_id);
-					if (include_align == true) {
+					if (include_align) {
 						// append "{i-j}"
-						res.append("{"); res.append(p_parent_node.i); res.append("-"); res.append(p_parent_node.j); res.append("}");
+						res.append('{');
+						res.append(p_parent_node.i);
+						res.append('-');
+						res.append(p_parent_node.j);
+						res.append('}');
 					}
-					res.append(" ");
+					res.append(' ');
 				}
-				for(int id=0; id < p_edge.get_ant_items().size();id++){
+				for (int id = 0; id < p_edge.get_ant_items().size(); id++) {
 					HGNode child = (HGNode)p_edge.get_ant_items().get(id);
 					VirtualItem virtual_child = kbest_extator.add_virtual_item(child);
 					res.append(((DerivationState)virtual_child.l_nbest.get(ranks[id]-1)).get_hypothesis(p_symbol,kbest_extator, useTreeFormat, model_cost,l_models));
-	    			if(id<p_edge.get_ant_items().size()-1) res.append(" ");		
-    			}
-				if(useTreeFormat==true) res.append(")");		
-			}else{			
-				if(useTreeFormat==true){
-					res.append("(");
+					if (id < p_edge.get_ant_items().size()-1) res.append(' ');
+				}
+				if (useTreeFormat) res.append(')');
+			} else {
+				if (useTreeFormat) {
+					res.append('(');
 					res.append(rl.getLHS());
-					if (include_align == true) {
+					if (include_align) {
 						// append "{i-j}"
-						res.append("{"); res.append(p_parent_node.i); res.append("-"); res.append(p_parent_node.j); res.append("}");
+						res.append('{');
+						res.append(p_parent_node.i);
+						res.append('-');
+						res.append(p_parent_node.j);
+						res.append('}');
 					}
-					res.append(" ");
+					res.append(' ');
 				}
-				if(isMonolingual==false){//bilingual
+				if (!isMonolingual) { // bilingual
 					int[] english = rl.getEnglish();
-					for(int c=0; c<english.length; c++){
-			    		if(p_symbol.isNonterminal(english[c])==true){
-			    			int id=p_symbol.getTargetNonterminalIndex(english[c]);
-			    			HGNode child = (HGNode)p_edge.get_ant_items().get(id);
-			    			VirtualItem virtual_child =kbest_extator.add_virtual_item(child);
-			    			res.append(((DerivationState)virtual_child.l_nbest.get(ranks[id]-1)).get_hypothesis(p_symbol,kbest_extator, useTreeFormat, model_cost, l_models));
-			    		}else{
-			    			res.append(english[c]);
-			    		}
-			    		if(c<english.length-1) res.append(" ");
+					for (int c = 0; c < english.length; c++) {
+						if (p_symbol.isNonterminal(english[c])) {
+							int id = p_symbol.getTargetNonterminalIndex(english[c]);
+							HGNode child = (HGNode)p_edge.get_ant_items().get(id);
+							VirtualItem virtual_child = kbest_extator.add_virtual_item(child);
+							res.append(((DerivationState)virtual_child.l_nbest.get(ranks[id]-1)).get_hypothesis(p_symbol,kbest_extator, useTreeFormat, model_cost, l_models));
+						} else {
+							res.append(english[c]);
+						}
+						if (c < english.length-1) res.append(' ');
 					}
-				}else{//monolingual
+				} else { // monolingual
 					int[] french = rl.getFrench();
-					int nonTerminalID =0;//the position of the non-terminal in the rule
-					for(int c=0; c<french.length; c++){
-			    		if(p_symbol.isNonterminal(french[c])==true){
-			    			HGNode child = (HGNode)p_edge.get_ant_items().get(nonTerminalID);
-			    			VirtualItem virtual_child =kbest_extator.add_virtual_item(child);
-			    			res.append(((DerivationState)virtual_child.l_nbest.get(ranks[nonTerminalID]-1)).get_hypothesis(p_symbol,kbest_extator, useTreeFormat, model_cost, l_models));
-			    			nonTerminalID++;
-			    		}else{
-			    			res.append(french[c]);
-			    		}
-			    		if(c<french.length-1) res.append(" ");
+					int nonTerminalID = 0;//the position of the non-terminal in the rule
+					for (int c = 0; c < french.length; c++) {
+						if (p_symbol.isNonterminal(french[c])) {
+							HGNode child = (HGNode)p_edge.get_ant_items().get(nonTerminalID);
+							VirtualItem virtual_child = kbest_extator.add_virtual_item(child);
+							res.append(((DerivationState)virtual_child.l_nbest.get(ranks[nonTerminalID]-1)).get_hypothesis(p_symbol,kbest_extator, useTreeFormat, model_cost, l_models));
+							nonTerminalID++;
+						} else {
+							res.append(french[c]);
+						}
+						if (c < french.length-1) res.append(' ');
 					}
 				}
-				if(useTreeFormat==true) res.append(")");
+				if (useTreeFormat) res.append(')');
 			}
 			
 			return res.toString();
@@ -609,15 +620,15 @@ public class KBestExtractor {
 	}//end of Class DerivationState
 	
 	private String getDerivationStateSignature(HyperEdge p_edge2, int[] ranks2, int pos) {
-		StringBuffer res = new StringBuffer();
-		//res.apend(p_edge2.toString());//Wrong: this may not be unique to identify a hyperedge (as it represent the class name and hashcode which my be equal for different objects)
-		res.append(pos);
+		StringBuffer sb = new StringBuffer();
+		//sb.apend(p_edge2.toString());//Wrong: this may not be unique to identify a hyperedge (as it represent the class name and hashcode which my be equal for different objects)
+		sb.append(pos);
 		if (null != ranks2) {
 			for (int i = 0; i < ranks2.length; i++) {
-				res.append(" ");
-				res.append(ranks2[i]);
+				sb.append(' ');
+				sb.append(ranks2[i]);
 			}
 		}
-		return res.toString();
+		return sb.toString();
 	}
 }

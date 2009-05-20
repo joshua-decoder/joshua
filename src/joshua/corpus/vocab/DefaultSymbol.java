@@ -102,7 +102,7 @@ extends AbstractSymbolTable implements SymbolTable {
 		
 		if (ids.length > 0) sb.append(this.getWord(ids[0]));
 		for (int i = 1; i < ids.length; i++) {
-			sb.append(" ").append(this.getWord(ids[i]));
+			sb.append(' ').append(this.getWord(ids[i]));
 		}
 		return sb.toString();
 	}
@@ -112,7 +112,7 @@ extends AbstractSymbolTable implements SymbolTable {
 		
 		if (ids.length > 0) sb.append(this.getWord(ids[0]));
 		for (int i = 1; i < ids.length; i++) {
-			sb.append(" ").append(this.getWord(ids[i]));
+			sb.append(' ').append(this.getWord(ids[i]));
 		}
 		return sb.toString();
 	}
@@ -122,7 +122,7 @@ extends AbstractSymbolTable implements SymbolTable {
 		Iterator<Integer> it = ids.iterator();
 		
 		if (it.hasNext()) sb.append(this.getWord(it.next()));
-		while (it.hasNext()) sb.append(" ").append(this.getWord(it.next()));
+		while (it.hasNext()) sb.append(' ').append(this.getWord(it.next()));
 		return sb.toString();
 	}
 	

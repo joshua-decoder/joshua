@@ -188,7 +188,7 @@ public class JoshuaDecoder {
 						throw new IllegalArgumentException("last field is not a number; the field is: " + fds[fds.length-1]);
 					}
 					for (int i = 0; i < fds.length-1; i++) {
-						newLine.append(fds[i]).append(" ");
+						newLine.append(fds[i]).append(' ');
 					}
 					newLine.append(newWeights[featureID++]);
 					writer.write(newLine.toString());

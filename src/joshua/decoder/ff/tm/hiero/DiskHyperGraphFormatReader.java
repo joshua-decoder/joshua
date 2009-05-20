@@ -122,11 +122,11 @@ public class DiskHyperGraphFormatReader extends GrammarReader<BilingualRule> {
 		StringBuffer sb = new StringBuffer();
 
 		sb.append(rule.getRuleID());
-		sb.append(" ");
+		sb.append(' ');
 		sb.append(symbolTable.getWord(rule.getOwner()));
 		sb.append(blockDelimiter);
 		
-		sb.append("[");
+		sb.append('[');
 		sb.append(symbolTable.getWord(rule.getLHS()));
 		
 		sb.append("] ||| ");

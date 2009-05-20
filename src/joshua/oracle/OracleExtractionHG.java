@@ -292,21 +292,26 @@ public class OracleExtractionHG extends SplitHg {
 			right_lm_state = right;
 		}
 		
-		protected String get_signature(){		
+		protected String get_signature() {
 			StringBuffer res = new StringBuffer();
-			if(maitain_length_state==true){	res.append(best_len); res.append(" ");}
-			if(left_lm_state!=null)//goal-item have null state
-				for(int i=0; i< left_lm_state.length; i++){
+			if (maitain_length_state) {
+				res.append(best_len);
+				res.append(' ');
+			}
+			if (null != left_lm_state) { // goal-item have null state
+				for (int i = 0; i < left_lm_state.length; i++) {
 					res.append(left_lm_state[i]);
-					res.append(" ");
+					res.append(' ');
 				}
+			}
 			res.append("lzf ");	
 			
-			if(right_lm_state!=null)//goal-item have null state
-				for(int i=0; i< right_lm_state.length; i++){
+			if (null != right_lm_state) { // goal-item have null state
+				for (int i = 0; i < right_lm_state.length; i++) {
 					res.append(right_lm_state[i]);
-					res.append(" ");
+					res.append(' ');
 				}
+			}
 			//if(left_lm_state==null || right_lm_state==null)System.out.println("sig is: " + res.toString());
 			return res.toString();
 		}
@@ -500,7 +505,7 @@ public class OracleExtractionHG extends SplitHg {
 		StringBuffer suffix = new StringBuffer();
 		for (int i = end_pos; i >= start_pos; i--) { // right-most first
 			suffix.append(left_state_sequence.get(i));
-			if (i > start_pos) suffix.append(" ");
+			if (i > start_pos) suffix.append(' ');
 		}
 		return (Boolean) tbl_suffix.containsKey(suffix.toString());
 	}
@@ -559,7 +564,7 @@ public class OracleExtractionHG extends SplitHg {
 		StringBuffer prefix = new StringBuffer();
 		for (int i = start_pos; i <= end_pos; i++) {
 			prefix.append(right_state_sequence.get(i));
-			if (i < end_pos) prefix.append(" ");
+			if (i < end_pos) prefix.append(' ');
 		}
 		return (Boolean) tbl_prefix.containsKey(prefix.toString());
 	}
@@ -622,7 +627,7 @@ public class OracleExtractionHG extends SplitHg {
 						if (ignore_null_equiv_symbol) break;
 					}
 					ngram.append(wrds[k]);
-					if (k < i+j) ngram.append(" ");
+					if (k < i+j) ngram.append(' ');
 				}
 				if (ignore_null_equiv_symbol && contain_null) continue; // skip this ngram
 				String ngram_str = ngram.toString();
@@ -652,7 +657,7 @@ public class OracleExtractionHG extends SplitHg {
 						if (ignore_null_equiv_symbol) break;
 					}
 					ngram.append(t_wrd);
-					if (k < i+j) ngram.append(" ");
+					if (k < i+j) ngram.append(' ');
 				}
 				// skip this ngram
 				if (ignore_null_equiv_symbol && contain_null) continue;
@@ -724,14 +729,14 @@ public class OracleExtractionHG extends SplitHg {
 				for (int k = i; k < i+j; k++) { // all ngrams [i,i+j-1]
 					ngram.append(wrds[k]);
 					prefix_tbl.put(ngram.toString(), true);
-					ngram.append(" ");
+					ngram.append(' ');
 				}
 				//### suffix: right-most wrd first
 				ngram = new StringBuffer();
 				for (int k = i+j; k > i; k--) { // all ngrams [i+1,i+j]: reverse order
 					ngram.append(wrds[k]);
 					suffix_tbl.put(ngram.toString(), true);//stored in reverse order
-					ngram.append(" ");
+					ngram.append(' ');
 				}
 			}
 		}

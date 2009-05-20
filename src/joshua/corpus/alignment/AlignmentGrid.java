@@ -282,16 +282,16 @@ public class AlignmentGrid implements Externalizable {
 		if(array.length == 0) return "";
 		
 		for(int y = 0; y < array[0].length; y++) {
-			buffer.append("|");
+			buffer.append('|');
 			for(int x = 0; x < array.length; x++) {
 				if(array[x][y]) {
 					buffer.append("XX");
 				} else {
 					buffer.append("  ");
 				}
-				buffer.append("|");
+				buffer.append('|');
 			}
-			buffer.append("\n");
+			buffer.append('\n');
 		}
 		return buffer.toString();
 	}

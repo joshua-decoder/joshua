@@ -345,22 +345,22 @@ public class DiskHyperGraph {
 			final int qtyItems = deduction.get_ant_items().size();
 			s.append(qtyItems);
 			for (int i = 0; i < qtyItems; i++) {
-				s.append(" ")
+				s.append(' ')
 					.append(this.itemToID.get(
 						deduction.get_ant_items().get(i) ));
 			}
 		}
-		s.append(" ")
+		s.append(' ')
 			.append(ruleID);
 		if (ruleID == pGrammar.getOOVRuleID()) {
 			//System.out.println("lhs id: " + deduction_rule.getLHS());
 			//System.out.println("rule words: " + deduction_rule.getEnglish());
-			s.append(" ")
+			s.append(' ')
 				.append(this.symbolTable.getWord(deduction_rule.getLHS()))
-				.append(" ")
+				.append(' ')
 				.append(this.symbolTable.getWords(deduction_rule.getEnglish()));
 		}
-		s.append("\n");
+		s.append('\n');
 		
 		// save model cost as a seprate line; optional
 		if (this.storeModelCosts) {

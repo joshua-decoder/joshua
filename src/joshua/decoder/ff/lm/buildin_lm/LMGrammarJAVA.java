@@ -134,9 +134,9 @@ public class LMGrammarJAVA extends AbstractLM {
 	
 	//	signature of this item: i, j, lhs, states (in fact, we do not need i, j)
 	private String get_signature(int[] words) {
-		StringBuffer s = new StringBuffer(words.length);						
+		StringBuffer s = new StringBuffer(words.length);
 		for (int i = 0; i < words.length; i++) {
-			s.append(" ").append(words[i]);
+			s.append(' ').append(words[i]);
 		}
 		return s.toString();
 	}

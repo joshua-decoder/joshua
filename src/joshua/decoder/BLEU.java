@@ -199,7 +199,7 @@ public class BLEU {
 				StringBuffer ngram = new StringBuffer();
 				for (int k = i; k <= i+j; k++) {
 					ngram.append(wrds[k]);
-					if (k < i+j) ngram.append(" ");
+					if (k < i+j) ngram.append(' ');
 				}
 				String ngram_str = ngram.toString();
 				if (tbl.containsKey(ngram_str)) {

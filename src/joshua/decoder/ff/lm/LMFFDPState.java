@@ -113,7 +113,7 @@ public class LMFFDPState implements FFDPState {
 						sb.append(state[i]);
 					}
 					if (i < state.length - 1) {
-						sb.append(" ");
+						sb.append(' ');
 					}
 				}
 			}

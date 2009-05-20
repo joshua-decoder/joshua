@@ -457,7 +457,7 @@ public class Bin {
 			StringBuffer sb = new StringBuffer();
 			if (null != ranks2) {
 				for (int i = 0; i < ranks2.length; i++) {
-					sb.append(" ").append(ranks2[i]);
+					sb.append(' ').append(ranks2[i]);
 				}
 			}
 			return sb.toString();

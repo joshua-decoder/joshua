@@ -163,10 +163,10 @@ extends LMClient {
 	private String encode_packet(String cmd, int num, int[] words) {
 		StringBuffer packet = new StringBuffer();
 		packet.append(cmd);
-		packet.append(" ");
+		packet.append(' ');
 		packet.append(num);
 		for (int i = 0; i < words.length; i++) {
-			packet.append(" ");
+			packet.append(' ');
 			packet.append(words[i]);
 		}
 		return packet.toString();
