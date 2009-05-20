@@ -204,6 +204,8 @@
 		
 		<mkdir dir="${pmdOUT}"/>
 		
+		<echo message="Starting analysis, this will take a few seconds..."/>
+		
 		<!-- TODO: define a set of XSLT filters for searching and grepping through the output (which can be verbose) in type=xml format. -->
 		<!-- N.B. PMD is run in the same process as Ant and therefore produces no visible output by default. -->
 		<pmd shortFilenames="true" rulesetfiles="${pmd}/default-ruleset.xml">

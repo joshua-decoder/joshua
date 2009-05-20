@@ -16,7 +16,7 @@
 			<constraint>
 				<lhs>A</lhs><rhs features="0.5;0.75">an</rhs></constraint>
 		</span>
-		<span start="1" end="2" hard="false">
+		<span start="1" end="1" hard="false">
 			<constraint>
 				<lhs>A</lhs><rhs features="0.5;0.25">a</rhs></constraint>
 			<constraint><lhs>B</lhs></constraint>

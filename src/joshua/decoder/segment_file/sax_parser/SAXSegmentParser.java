@@ -47,7 +47,8 @@ import java.util.logging.Logger;
 
 /**
  * This is a Xerces SAX parser for parsing files in the format
- * specified by SegmentFile.dtd.
+ * specified by SegmentFile.dtd. All extraneous tags and text are
+ * ignored (they raise warnings, but do not halt the parser).
  *
  * @author wren ng thornton
  */
@@ -57,7 +58,7 @@ implements SegmentFileParser {
 	/** Co-iterator for consuming output. */
 	private CoIterator<Segment> coit;
 	
-	// For maintaining context
+	// For maintaining contextx
 	private boolean             seenRootTag = false;
 	private Stack<StringBuffer> tempText;
 	private SAXSegment          tempSeg;
@@ -71,6 +72,10 @@ implements SegmentFileParser {
 		this.tempText = new Stack<StringBuffer>();
 	}
 	
+//===============================================================
+// SegmentFileParser Methods
+//===============================================================
+
 	public void parseSegmentFile(InputStream in, CoIterator<Segment> coit)
 	throws IOException {
 		if (null == coit) {
@@ -86,13 +91,15 @@ implements SegmentFileParser {
 			
 		} catch (SAXException e) {
 			// TODO: something better
-			IOException ioe = new IOException("SAXException");
+			IOException ioe = new IOException(
+				"SAXException: " + e.getMessage());
 			ioe.initCause(e);
 			throw ioe;
 			
 		} catch (ParserConfigurationException e) {
 			// TODO: something better
-			IOException ioe = new IOException("ParserConfigurationException");
+			IOException ioe = new IOException(
+				"ParserConfigurationException: " +  e.getMessage());
 			ioe.initCause(e);
 			throw ioe;
 		}
@@ -100,16 +107,12 @@ implements SegmentFileParser {
 	
 	
 //===============================================================
-// Event Handlers
+// DefaultHandler (non-default) Event Handlers
 //===============================================================
 	
 	public void startElement(
-		String uri, String localName, String qName, Attributes attributes) 
+		String uri, String localName, String qName, Attributes attributes)
 	throws SAXException {
-		// BUG: need to give warnings if the first one is
-		// ever filled, because it will be ignored as
-		// extraneous. Can't subclass StringBuffer to
-		// override append() because it is final :(
 		this.tempText.push(new StringBuffer());
 		
 		if (! this.seenRootTag) {
@@ -132,18 +135,29 @@ implements SegmentFileParser {
 			if (null == start) {
 				throw new SAXException(
 					"Missing start attribute for tag <span>");
-			} else if (null == end) {
+			}
+			if (null == end) {
 				throw new SAXException(
 					"Missing end attribute for tag <span>");
-			} else if (null == hard) {
+			}
+			if (null == hard) {
 				hard = "false";
 			}
 			
-			// BUG: debug for malformed attributes
-			this.tempSpan = new SAXConstraintSpan(
-				Integer.parseInt(start),
-				Integer.parseInt(end),
-				Boolean.parseBoolean(hard) );
+			// BUG: debug for malformed attributes (i.e. not an boolean)
+			//      malformed Integers already throw exception
+			try {
+				this.tempSpan = new SAXConstraintSpan(
+					Integer.parseInt(start),
+					Integer.parseInt(end),
+					Boolean.parseBoolean(hard) );
+				
+			} catch (NumberFormatException e) {
+				// TODO: the message for this one gets pretty long by the time it gets out.
+				throw new SAXException(
+					"NumberFormatException: " + e.getMessage(),
+					e);
+			}
 			
 		} else if ("constraint".equalsIgnoreCase(qName)) {
 			this.tempRule = new SAXConstraintRule();
@@ -153,10 +167,10 @@ implements SegmentFileParser {
 			
 		} else if ("rhs".equalsIgnoreCase(qName)) {
 			this.tempRule.setFeatures(
-				attributes.getValue("features")); // #IMPLIED
+				attributes.getValue("features")); // #IMPLIED, no check for null
 			
 		} else {
-			logger.warning("skipping unknown tag: " + qName);
+			logger.warning("Skipping unknown tag: " + qName);
 		}
 	}
 	
@@ -174,6 +188,7 @@ implements SegmentFileParser {
 	}
 	
 	
+	// TODO: this is ignorable afterall, should we ignore it?
 	public void ignorableWhitespace(char[] ch, int start, int length)
 	throws SAXException {
 		// TODO: maybe canonicalize it all to just ' '?
@@ -195,12 +210,12 @@ implements SegmentFileParser {
 				this.coit.coNext(seg);
 				
 			} else if ("span".equalsIgnoreCase(qName)) {
-				ignoringTextWarning(text);
+				ignoringTextWarning(qName, text);
 				this.tempSeg.addSpan(this.tempSpan);
 				this.tempSpan = null;
 				
 			} else if ("constraint".equalsIgnoreCase(qName)) {
-				ignoringTextWarning(text);
+				ignoringTextWarning(qName, text);
 				this.tempSpan.addRule(this.tempRule);
 				this.tempRule = null;
 				
@@ -209,6 +224,9 @@ implements SegmentFileParser {
 				
 			} else if ("rhs".equalsIgnoreCase(qName)) {
 				this.tempRule.setRhs(text);
+				
+			} else {
+				ignoringTextWarning(qName, text);
 			}
 			
 			this.tempText.pop();
@@ -221,11 +239,11 @@ implements SegmentFileParser {
 	}
 	
 	private static final Regex whitespaceOnly = new Regex("^\\s*$");
-	private void ignoringTextWarning(String text) {
+	private void ignoringTextWarning(String qName, String text) {
 		if (logger.isLoggable(Level.WARNING)
 		&& ! whitespaceOnly.matches(text)) {
 			logger.warning(
-				"Ignoring extraneous text in <constraint>: " + text);
+				"Ignoring extraneous text in <" + qName + ">: " + text);
 		}
 	}
 	
