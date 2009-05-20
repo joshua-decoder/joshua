@@ -15,46 +15,43 @@
  * Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  * MA 02111-1307 USA
  */
-package joshua.util.io;
+package joshua.util;
 
-import joshua.util.NullIterator;
-
-import java.io.IOException;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 
 /**
- * This class provides a null-object Reader. This is primarily
- * useful for when you may or may not have a {@link Reader}, and
- * you don't want to check for null all the time. All operations
- * are no-ops.
+ * This class provides a null-object Iterator. That is, an empty
+ * iterator.
  *
  * @author wren ng thornton <wren@users.sourceforge.net>
  * @version $LastChangedDate: 2009-03-26 15:06:57 -0400 (Thu, 26 Mar 2009) $
  */
-public class NullReader<E> extends NullIterator<E> implements Reader<E> {
+public class NullIterator<E> implements Iterable<E>, Iterator<E> {
 	
 //===============================================================
-// Constructors and destructors
+// Iterable -- because sometimes Java can be very stupid
 //===============================================================
 	
-	// TODO: use static factory method and singleton?
-	public NullReader() { }
-	
-	/** A no-op. */
-	public void close() throws IOException { }
+	/** Return this object. */
+	public Iterator<E> iterator() { return this; }
 	
 	
 //===============================================================
-// Reader
+// Iterator
 //===============================================================
 	
-	/**
-	 * Always returns true. Is this correct? What are the
-	 * semantics of ready()? We're always capable of delivering
-	 * nothing, but we're never capable of delivering anything...
-	 */
-	public boolean ready() { return true; }
+	/** Always returns false. */
+	public boolean hasNext() { return false; }
 	
-	/** Always returns null. */
-	public E readLine() throws IOException { return null; }
+	/** Always throws {@link NoSuchElementException}. */
+	public E next() throws NoSuchElementException {
+		throw new NoSuchElementException();
+	}
+	
+	/** Unsupported. */
+	public void remove() throws UnsupportedOperationException {
+		throw new UnsupportedOperationException();
+	}
 }

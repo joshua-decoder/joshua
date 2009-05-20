@@ -23,6 +23,7 @@ import java.util.NoSuchElementException;
 import java.nio.charset.Charset;
 import java.io.BufferedReader;
 import java.io.FileInputStream;
+import java.io.InputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.zip.GZIPInputStream;
@@ -61,15 +62,15 @@ public class LineReader implements Reader<String> {
 	 * @param filename the file to be opened
 	 */
 	public LineReader(String filename) throws IOException {
-		
-		FileInputStream fis = new FileInputStream(filename);
-		this.reader =
-			new BufferedReader(
-				new InputStreamReader(
-					filename.endsWith(".gz")
-						? new GZIPInputStream(fis)
-						: fis
-					, FILE_ENCODING));
+		this(filename.endsWith(".gz")
+			? new GZIPInputStream(new FileInputStream(filename))
+			: new FileInputStream(filename)
+			);
+	}
+	
+	public LineReader(InputStream in) {
+		this.reader = new BufferedReader(
+			new InputStreamReader(in, FILE_ENCODING));
 	}
 	
 	public LineReader(BufferedReader reader) {

@@ -31,6 +31,7 @@ import java.util.List;
  * Parsing state for partial ConstraintSpan objects.
  *
  * @author wren ng thornton
+ * @version $LastChangedDate: 2009-03-26 15:06:57 -0400 (Thu, 26 Mar 2009) $
  */
 public class SAXConstraintSpan {
 	private int     start;

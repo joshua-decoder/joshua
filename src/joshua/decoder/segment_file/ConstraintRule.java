@@ -25,6 +25,7 @@ package joshua.decoder.segment_file;
  * @see Type
  *
  * @author wren ng thornton
+ * @version $LastChangedDate: 2009-03-26 15:06:57 -0400 (Thu, 26 Mar 2009) $
  */
 public interface ConstraintRule {
 	
