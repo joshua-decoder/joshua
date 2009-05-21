@@ -1,3 +1,20 @@
+/* This file is part of the Joshua Machine Translation System.
+ * 
+ * Joshua is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1
+ * of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free
+ * Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
+ */
 package joshua.prefix_tree;
 
 import java.io.IOException;
@@ -7,11 +24,14 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import joshua.corpus.Corpus;
 import joshua.corpus.CorpusArray;
+import joshua.corpus.ParallelCorpus;
 import joshua.corpus.RuleExtractor;
 import joshua.corpus.alignment.AlignmentArray;
+import joshua.corpus.alignment.Alignments;
+import joshua.corpus.lexprob.LexProbs;
 import joshua.corpus.lexprob.LexicalProbabilities;
-import joshua.corpus.lexprob.SampledLexProbs;
 import joshua.corpus.suffix_array.BasicPhrase;
 import joshua.corpus.suffix_array.SuffixArray;
 import joshua.corpus.vocab.Vocabulary;
@@ -24,7 +44,11 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 
-
+/**
+ * More unit tests for prefix tree.
+ * 
+ * @author Lane Schwartz
+ */
 public class PrefixTreeAdvancedTest {
 
 	String corpusString, targetCorpusString;
@@ -160,13 +184,22 @@ public class PrefixTreeAdvancedTest {
 			Scanner sourceGivenTarget = new Scanner(sourceGivenTargetCounts);
 			Scanner targetGivenSource = new Scanner(targetGivenSourceCounts);
 			*/
-			String alignmentString = "0-0 1-1 2-2 3-3 4-4 5-5 6-6 7-7 8-8 9-9 10-10 11-11 12-12 13-13 14-14 15-15 16-16 17-17";
+//			String alignmentString = "0-0 1-1 2-2 3-3 4-4 5-5 6-6 7-7 8-8 9-9 10-10 11-11 12-12 13-13 14-14 15-15 16-16 17-17";
 		
-			try {
-				lexProbs = SampledLexProbs.getSampledLexProbs(corpusString, targetCorpusString, alignmentString);
-			} catch (IOException e) {
-				Assert.fail("Unable to initialize lexprobs");
-			}
+			ParallelCorpus parallelCorpus = new ParallelCorpus() {
+				public Alignments getAlignments() { return alignments; } 
+				public int getNumSentences() { return suffixArray.getCorpus().getNumSentences(); }
+				public Corpus getSourceCorpus() { return suffixArray.getCorpus(); }
+				public Corpus getTargetCorpus() { return targetCorpusArray; }
+			};
+			
+			this.lexProbs = new LexProbs(parallelCorpus, Float.MIN_VALUE);
+			
+//			try {
+//				lexProbs = SampledLexProbs.getSampledLexProbs(corpusString, targetCorpusString, alignmentString);
+//			} catch (IOException e) {
+//				Assert.fail("Unable to initialize lexprobs");
+//			}
 		//	lexProbs = new LexProbs(sourceGivenTarget, targetGivenSource, sourceVocab, targetVocab);
 		}
 	}

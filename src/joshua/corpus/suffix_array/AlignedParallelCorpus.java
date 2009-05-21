@@ -22,6 +22,7 @@ import joshua.corpus.ParallelCorpus;
 import joshua.corpus.Phrase;
 import joshua.corpus.RuleExtractor;
 import joshua.corpus.alignment.Alignments;
+import joshua.corpus.lexprob.LexProbs;
 import joshua.corpus.lexprob.LexicalProbabilities;
 import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.GrammarFactory;
@@ -62,15 +63,15 @@ public class AlignedParallelCorpus implements ParallelCorpus, GrammarFactory {
 	 * @param maxPhraseLength
 	 * @param maxNonterminals
 	 */
-	public AlignedParallelCorpus(Suffixes sourceSuffixArray, Corpus targetCorpus, Alignments alignments, LexicalProbabilities lexProbs, int sampleSize, int maxPhraseSpan, int maxPhraseLength, int maxNonterminals, int minNonterminalSpan) {
+	public AlignedParallelCorpus(Suffixes sourceSuffixArray, Corpus targetCorpus, Alignments alignments, int sampleSize, int maxPhraseSpan, int maxPhraseLength, int maxNonterminals, int minNonterminalSpan, float lexProbFloor) {
 		this.sourceSuffixArray = sourceSuffixArray;
 		this.targetCorpus      = targetCorpus;
 		this.alignments        = alignments;
-		this.lexProbs          = lexProbs;
 		this.maxPhraseSpan     = maxPhraseSpan;
 		this.maxPhraseLength   = maxPhraseLength;
 		this.maxNonterminals   = maxNonterminals;
 		this.minNonterminalSpan = minNonterminalSpan;
+		this.lexProbs          = new LexProbs(this,lexProbFloor); 
 		this.ruleExtractor = new HierarchicalRuleExtractor(sourceSuffixArray, targetCorpus, alignments, lexProbs, sampleSize, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan);
 		
 	}

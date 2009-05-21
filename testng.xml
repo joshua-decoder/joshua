@@ -53,8 +53,8 @@
        <class name="joshua.prefix_tree.PrefixTreeNodeTest" />       
        <class name="joshua.prefix_tree.PrefixTreeTest" />
        <class name="joshua.prefix_tree.PrefixTreeAdvancedTest" />
-       <class name="joshua.corpus.lexprob.SampledLexProbsTest" />
-       <class name="joshua.corpus.lexprob.LexProbsTest" />    
+<!--   <class name="joshua.corpus.lexprob.SampledLexProbsTest" />
+       <class name="joshua.corpus.lexprob.LexProbsTest" />  -->  
        <class name="joshua.corpus.lexprob.BetterLexProbsTest" />
     </classes>
   </test>
@@ -76,7 +76,7 @@
        <class name="joshua.corpus.suffix_array.SuffixArrayTest" />  
     </classes>
   </test>
-  
+  <!--
   <test name="AlignmentArray RuleExtraction">
      <parameter name="alignmentsType" value="AlignmentArray" />
      <classes>
@@ -90,10 +90,11 @@
        <class name="joshua.prefix_tree.ExtractRulesTest" />  
      </classes> 
   </test>  
-
+-->
   <test name="Util" >
     <classes>
-       <class name="joshua.util.CacheTest" /> 
+       <class name="joshua.util.CacheTest" />
+       <class name="joshua.util.CountsTest" /> 
     </classes>
   </test>
 

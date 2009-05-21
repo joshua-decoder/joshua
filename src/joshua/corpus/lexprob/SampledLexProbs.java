@@ -49,6 +49,7 @@ import joshua.util.Pair;
  * 
  * @author Lane Schwartz
  * @version $LastChangedDate:2008-11-13 13:13:31 -0600 (Thu, 13 Nov 2008) $
+ * @deprecated
  */
 public class SampledLexProbs implements LexicalProbabilities {
 
@@ -519,6 +520,24 @@ public class SampledLexProbs implements LexicalProbabilities {
 		if (logger.isLoggable(Level.FINER)) logger.finer("Storing " + targetProbs.size() + " probabilities for lexprob distribution P( TARGET | " + sourceVocab.getWord(sourceWord) + ")");
 		targetGivenSource.put(sourceWord, targetProbs);
 		
+	}
+
+	public float lexProbSourceGivenTarget(
+			MatchedHierarchicalPhrases sourcePhrases, int sourcePhraseIndex,
+			HierarchicalPhrase targetPhrase) {
+		// TODO Auto-generated method stub
+		throw new RuntimeException();
+	}
+
+	public float lexProbTargetGivenSource(
+			MatchedHierarchicalPhrases sourcePhrases, int sourcePhraseIndex,
+			HierarchicalPhrase targetPhrase) {
+		// TODO Auto-generated method stub
+		throw new RuntimeException();
+	}
+
+	public float getFloorProbability() {
+		return floorProbability;
 	}
 }
 

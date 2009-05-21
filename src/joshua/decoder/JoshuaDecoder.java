@@ -35,8 +35,6 @@ import joshua.decoder.ff.tm.hiero.MemoryBasedBatchGrammar;
 import joshua.corpus.Corpus;
 import joshua.corpus.alignment.Alignments;
 import joshua.corpus.alignment.mm.MemoryMappedAlignmentGrids;
-import joshua.corpus.lexprob.LexicalProbabilities;
-import joshua.corpus.lexprob.SampledLexProbs;
 import joshua.corpus.mm.MemoryMappedCorpusArray;
 import joshua.corpus.suffix_array.AlignedParallelCorpus;
 import joshua.corpus.suffix_array.Suffixes;
@@ -541,26 +539,29 @@ public class JoshuaDecoder {
 					sourceCorpusArray,
 					targetCorpusArray);
 		
+//		
+//		LexicalProbabilities lexProbs = new SampledLexProbs(
+//			JoshuaConfiguration.sa_lex_sample_size,
+//			sourceSuffixArray,
+//			targetSuffixArray,
+//			alignments,
+//			JoshuaConfiguration.sa_lex_cache_size,
+//			JoshuaConfiguration.sa_precalculate_lexprobs);
 		
-		LexicalProbabilities lexProbs = new SampledLexProbs(
-			JoshuaConfiguration.sa_lex_sample_size,
-			sourceSuffixArray,
-			targetSuffixArray,
-			alignments,
-			JoshuaConfiguration.sa_lex_cache_size,
-			JoshuaConfiguration.sa_precalculate_lexprobs);
+		//XXX Read this from config file
+		float lexFloorProb = Float.MIN_VALUE;
 		
 		// Finally, add the Suffix Array Grammar
 		AlignedParallelCorpus saGrammarFactory = new AlignedParallelCorpus(
 				sourceSuffixArray,
 				targetCorpusArray,
 				alignments,
-				lexProbs,
 				JoshuaConfiguration.sa_rule_sample_size,
 				JoshuaConfiguration.sa_max_phrase_span,
 				JoshuaConfiguration.sa_max_phrase_length,
 				JoshuaConfiguration.sa_max_nonterminals,
-				JoshuaConfiguration.sa_min_nonterminal_span);
+				JoshuaConfiguration.sa_min_nonterminal_span,
+				lexFloorProb);
 		grammarFactories.add(saGrammarFactory);
 		
 		return saGrammarFactory;

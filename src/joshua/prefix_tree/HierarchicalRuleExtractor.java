@@ -38,7 +38,6 @@ import joshua.corpus.suffix_array.Pattern;
 import joshua.corpus.suffix_array.Suffixes;
 import joshua.decoder.ff.tm.BilingualRule;
 import joshua.decoder.ff.tm.Rule;
-import joshua.util.Pair;
 
 /**
  * Rule extractor for Hiero-style hierarchical phrase-based translation.
@@ -105,8 +104,9 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 		
 		List<Rule> results = new ArrayList<Rule>(sourceHierarchicalPhrases.size());
 
-		List<Pattern> translations = new ArrayList<Pattern>();// = this.translate();
-		List<Pair<Float,Float>> lexProbsList = new ArrayList<Pair<Float,Float>>();
+		ArrayList<Pattern> translations = new ArrayList<Pattern>();// = this.translate();
+//		List<Pair<Float,Float>> lexProbsList = new ArrayList<Pair<Float,Float>>();
+		ArrayList<Float> lexProbsList = new ArrayList<Float>();
 
 		int totalPossibleTranslations = sourceHierarchicalPhrases.size();
 		
@@ -129,7 +129,9 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 				//       lexical probs until we have the unique <source pattern, target pattern, alignment> tuples.  I think that
 				//        this will be more efficient, because most of the time the alignments will be identical. 
 //				lexProbsList.add(lexProbs.calculateLexProbs(sourcePhrase));
-				lexProbsList.add(lexProbs.calculateLexProbs(sourceHierarchicalPhrases, i, translation));
+//				lexProbsList.add(lexProbs.calculateLexProbs(sourceHierarchicalPhrases, i, translation));
+				lexProbsList.add(lexProbs.lexProbSourceGivenTarget(sourceHierarchicalPhrases, i, translation));
+				lexProbsList.add(lexProbs.lexProbTargetGivenSource(sourceHierarchicalPhrases, i, translation));
 			}
 		}
 
@@ -148,19 +150,19 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 		Map<Pattern,Float> cumulativeTargetGivenSourceLexProbs = new HashMap<Pattern,Float>();
 		Map<Pattern,Integer> counterLexProbs = new HashMap<Pattern,Integer>();
 
-		for (int i=0; i<translations.size(); i++) {	
-
+		for (int i=0, j=0, n=translations.size(), m=n*2; i<n && j<m; i++, j+=2) {	
+		
 			Pattern translation = translations.get(i);
 
-			Pair<Float,Float> lexProbsPair = lexProbsList.get(i);
+//			Pair<Float,Float> lexProbsPair = lexProbsList.get(i);
 
 			{	// Perform lexical translation probability averaging
 				// This is to deal with the situation that there may be 
 				//  multiple alignments for a particular source pattern-translation pair.
 				// Koehn uses the max, we follow Chiang (2005) in using an average.
 				
-				float sourceGivenTargetLexProb = lexProbsPair.first;
-				float targetGivenSourceLexProb = lexProbsPair.second;
+				float sourceGivenTargetLexProb = lexProbsList.get(j);//lexProbsPair.first;
+				float targetGivenSourceLexProb = lexProbsList.get(j+1);//lexProbsPair.second;
 				
 				if (!cumulativeSourceGivenTargetLexProbs.containsKey(translation)) {
 					cumulativeSourceGivenTargetLexProbs.put(translation,sourceGivenTargetLexProb);

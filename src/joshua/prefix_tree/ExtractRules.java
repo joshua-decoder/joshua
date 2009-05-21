@@ -98,7 +98,7 @@ public class ExtractRules {
 
 			Option<String> encoding = commandLine.addStringOption("encoding","ENCODING","UTF-8","File encoding format");
 
-//			Option<Integer> lexSampleSize = commandLine.addIntegerOption("lexSampleSize","LEX_SAMPLE_SIZE",1000, "Size to use when sampling for lexical probability calculations");
+			Option<Integer> lexSampleSize = commandLine.addIntegerOption("lexSampleSize","LEX_SAMPLE_SIZE",1000, "Size to use when sampling for lexical probability calculations");
 			Option<Integer> ruleSampleSize = commandLine.addIntegerOption("ruleSampleSize","RULE_SAMPLE_SIZE",300, "Maximum number of rules to store at each node in the prefix tree");
 
 			Option<Integer> maxPhraseSpan = commandLine.addIntegerOption("maxPhraseSpan","MAX_PHRASE_SPAN",10, "Maximum span in the training corpus of any extracted source phrase");
@@ -332,7 +332,7 @@ public class ExtractRules {
 			};
 			
 			LexicalProbabilities lexProbs = 
-				new LexProbs(parallelCorpus);
+				new LexProbs(parallelCorpus, Float.MIN_VALUE);
 //				new SampledLexProbs(commandLine.getValue(lexSampleSize), sourceSuffixArray, targetSuffixArray, alignments, SuffixArray.DEFAULT_CACHE_CAPACITY, false);
 			
 			if (logger.isLoggable(Level.INFO)) logger.info("Done constructing lexical probabilities table");

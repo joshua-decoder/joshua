@@ -11,7 +11,7 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 public class LexProbsTest {
-
+/*
 	LexProbs lexProbs;
 	Vocabulary sourceVocab, targetVocab;
 	
@@ -152,4 +152,5 @@ public class LexProbsTest {
 		Assert.assertEquals(lexProbs.targetGivenSource(targetVocab.getID("und"), sourceVocab.getID("yet")), 1.0f);
 		
 	}
+	*/
 }
