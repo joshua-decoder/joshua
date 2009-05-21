@@ -76,7 +76,7 @@
        <class name="joshua.corpus.suffix_array.SuffixArrayTest" />  
     </classes>
   </test>
-  <!--
+
   <test name="AlignmentArray RuleExtraction">
      <parameter name="alignmentsType" value="AlignmentArray" />
      <classes>
@@ -90,7 +90,7 @@
        <class name="joshua.prefix_tree.ExtractRulesTest" />  
      </classes> 
   </test>  
--->
+
   <test name="Util" >
     <classes>
        <class name="joshua.util.CacheTest" />
