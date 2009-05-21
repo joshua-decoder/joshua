@@ -18,6 +18,10 @@
 \usepackage{url}
 \newcommand{\ignore}[1]{}
 
+\newcommand{\Trim}[1]{{\large\textcolor{green}{\textbf{[#1]}}}}
+%\newcommand{\Trim}[1]{}
+\newcommand{\Keep}[1]{{\large\textcolor{red}{\textbf{[#1]}}}}
+%\newcommand{\Keep}[1]{}
 
 
 \title{Demonstration of Joshua: An Open Source Toolkit for Parsing-based Machine Translation\thanks{$\;\:$This
@@ -62,7 +66,8 @@ in extending the toolkit.
 
 \end{abstract}
 
-
+\Trim{Intro is too long. Feel free to trim.}
+\Keep{Intro is juuuuust right. Don't touch.}
 \section{Introduction}
 
 Large scale parsing-based statistical machine translation (e.g., \newcite{Chiang2007},
