@@ -47,7 +47,10 @@ import java.util.logging.Logger;
 
 public class LanguageModelFF extends DefaultStatefulFF {
 	
-	private static final Logger logger = Logger.getLogger(LanguageModelFF.class.getName());
+	/** Logger for this class. */
+	@SuppressWarnings("unused")
+	private static final Logger logger = 
+		Logger.getLogger(LanguageModelFF.class.getName());
 	
 	static String START_SYM="<s>";
 	public  int START_SYM_ID;
