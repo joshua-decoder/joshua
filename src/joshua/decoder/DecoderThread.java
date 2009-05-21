@@ -25,7 +25,6 @@ import joshua.decoder.ff.tm.GrammarFactory;
 import joshua.decoder.hypergraph.DiskHyperGraph;
 import joshua.decoder.hypergraph.HyperGraph;
 import joshua.decoder.hypergraph.KBestExtractor;
-import joshua.decoder.segment_file.PlainSegmentParser;
 
 import joshua.lattice.Lattice;
 import joshua.oracle.OracleExtractor;

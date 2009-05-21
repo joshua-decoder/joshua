@@ -225,9 +225,10 @@ public class JoshuaDecoder {
 //					if (JoshuaConfiguration.use_sent_specific_tm) {
 						try {
 							
-							// Use suffix array grammar
-							initializeSuffixArrayGrammar();							
-
+							// Use corpus-based grammar
+							AlignedParallelCorpus parallelCorpus = getParallelCorpus();							
+							grammarFactories.add(parallelCorpus);
+							
 							// Needs: symbolTable; Sets: languageModel
 							if (JoshuaConfiguration.have_lm_model) initializeLanguageModel();
 
@@ -429,7 +430,7 @@ public class JoshuaDecoder {
 	}
 	
 	
-	private AlignedParallelCorpus initializeSuffixArrayGrammar()
+	private AlignedParallelCorpus getParallelCorpus()
 	throws IOException, ClassNotFoundException {
 		
 		int maxCacheSize = JoshuaConfiguration.sa_rule_cache_size;
@@ -463,9 +464,9 @@ public class JoshuaDecoder {
 			//			JoshuaConfiguration.sa_target + "." +
 //			JoshuaConfiguration.sa_corpus_suffix;
 		
-		String binaryTargetSuffixesFileName =
-			JoshuaConfiguration.tm_file + 
-			File.separator + "target.suffixes";
+//		String binaryTargetSuffixesFileName =
+//			JoshuaConfiguration.tm_file + 
+//			File.separator + "target.suffixes";
 			//			JoshuaConfiguration.sa_target + "." +
 //			JoshuaConfiguration.sa_suffixes_suffix;
 		
@@ -516,14 +517,14 @@ public class JoshuaDecoder {
 				commonVocab, binaryTargetCorpusFileName);
 		
 		
-		if (logger.isLoggable(Level.INFO))
-			logger.info("Reading target language suffix array from " +
-				binaryTargetSuffixesFileName);
-		Suffixes targetSuffixArray =
-			new MemoryMappedSuffixArray(
-					binaryTargetSuffixesFileName,
-					targetCorpusArray,
-					maxCacheSize);
+//		if (logger.isLoggable(Level.INFO))
+//			logger.info("Reading target language suffix array from " +
+//				binaryTargetSuffixesFileName);
+//		Suffixes targetSuffixArray =
+//			new MemoryMappedSuffixArray(
+//					binaryTargetSuffixesFileName,
+//					targetCorpusArray,
+//					maxCacheSize);
 		
 		
 		String binaryAlignmentFileName = 
@@ -538,21 +539,9 @@ public class JoshuaDecoder {
 					binaryAlignmentFileName,
 					sourceCorpusArray,
 					targetCorpusArray);
-		
-//		
-//		LexicalProbabilities lexProbs = new SampledLexProbs(
-//			JoshuaConfiguration.sa_lex_sample_size,
-//			sourceSuffixArray,
-//			targetSuffixArray,
-//			alignments,
-//			JoshuaConfiguration.sa_lex_cache_size,
-//			JoshuaConfiguration.sa_precalculate_lexprobs);
-		
-		//XXX Read this from config file
-		float lexFloorProb = Float.MIN_VALUE;
-		
-		// Finally, add the Suffix Array Grammar
-		AlignedParallelCorpus saGrammarFactory = new AlignedParallelCorpus(
+				
+		// Finally, add the parallel corpus that will serve as a grammar
+		AlignedParallelCorpus parallelCorpus = new AlignedParallelCorpus(
 				sourceSuffixArray,
 				targetCorpusArray,
 				alignments,
@@ -561,10 +550,9 @@ public class JoshuaDecoder {
 				JoshuaConfiguration.sa_max_phrase_length,
 				JoshuaConfiguration.sa_max_nonterminals,
 				JoshuaConfiguration.sa_min_nonterminal_span,
-				lexFloorProb);
-		grammarFactories.add(saGrammarFactory);
+				JoshuaConfiguration.sa_lex_floor_prob);
 		
-		return saGrammarFactory;
+		return parallelCorpus;
 	}
 	
 	

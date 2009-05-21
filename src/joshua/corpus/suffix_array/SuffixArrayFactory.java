@@ -19,11 +19,8 @@ package joshua.corpus.suffix_array;
 
 import joshua.corpus.Corpus;
 import joshua.corpus.CorpusArray;
-import joshua.corpus.ParallelCorpus;
 import joshua.corpus.alignment.AlignmentArray;
 import joshua.corpus.alignment.Alignments;
-import joshua.corpus.lexprob.LexProbs;
-import joshua.corpus.lexprob.LexicalProbabilities;
 import joshua.corpus.vocab.ExternalizableSymbolTable;
 import joshua.corpus.vocab.Vocabulary;
 import joshua.util.io.LineReader;

@@ -85,6 +85,7 @@ public class JoshuaConfiguration {
 	public static int     sa_rule_cache_size       = 1000;
 	public static boolean sa_sentence_initial_X    = true;
 	public static boolean sa_sentence_final_X      = true;
+	public static float   sa_lex_floor_prob        = Float.MIN_VALUE;
 	
 	// TODO: introduce the various corpus/tm file package formats
 //	public static String sa_vocab_suffix = "vocab";
@@ -256,6 +257,10 @@ public class JoshuaConfiguration {
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("should suffix array rule extraction allow rules from sentence-final X: %s", sa_sentence_final_X));
 					
+				} else if ("sa_lex_floor_prob".equals(fds[0])) {
+					sa_lex_floor_prob = Float.valueOf(fds[1].trim());
+					if (logger.isLoggable(Level.FINEST))
+						logger.finest(String.format("floor value for probabilities returned as lexical transaltion probabilities: %s", sa_lex_floor_prob));
 				} else if ("use_srilm".equals(fds[0])) {
 					use_srilm = Boolean.valueOf(fds[1]);
 					if (logger.isLoggable(Level.FINEST))
