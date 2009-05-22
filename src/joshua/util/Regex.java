@@ -18,6 +18,7 @@
 package joshua.util;
 
 import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 import java.util.regex.PatternSyntaxException;
 
 /**
@@ -65,7 +66,7 @@ public class Regex {
 	 * A pattern for splitting on the equals character, with
 	 * optional whitespace on each side.
 	 */
-	public static final Regex equalsWithSpaces   = new Regex("\\s*=\\s*");
+	public static final Regex equalsWithSpaces = new Regex("\\s*=\\s*");
 	
 	/**
 	 * A pattern for splitting on three vertical pipes, with
@@ -86,6 +87,18 @@ public class Regex {
 //===============================================================
 // Convenience Methods
 //===============================================================
+	
+	/**
+	 * Returns a {@link Matcher} object for the input string.
+	 * This is needed for patterns making use of grouping
+	 * operations.  If you just want to see whether this
+	 * <code>Regex</code> matches the input string, then use
+	 * <code>matches</code> instead.
+	 */
+	public final Matcher matcher(String input) {
+		return this.pattern.matcher(input);
+	}
+	
 	
 	/**
 	 * Returns whether the input string matches this

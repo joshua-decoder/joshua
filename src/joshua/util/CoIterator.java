@@ -30,6 +30,7 @@ package joshua.util;
  * as it is being created.
  */
 public interface CoIterator<E> {
+	
 	/**
 	 * The dual of <code>Iterator&lt;E&gt;.next</code>. This
 	 * method is called for each element of the stream being
@@ -38,9 +39,11 @@ public interface CoIterator<E> {
 	void coNext(E elem);
 	
 	/**
-	 * The dual of <code>Iterator&lt;E&gt;.hasNext</code>. This
-	 * method is called once the stream has terminated, in case
-	 * any cleanup needs to be done.
+	 * This method is called once the stream has terminated
+	 * or in the event the stream is interrupted by an (unchecked)
+	 * exception, in case any cleanup needs to be done. Clients
+	 * that do not ensure this method is called are considered
+	 * buggy.
 	 */
 	void finish();
 }

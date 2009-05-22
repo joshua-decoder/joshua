@@ -38,7 +38,7 @@ public class PlainSegmentParser implements SegmentFileParser {
 //===============================================================
 // SegmentFileParser Methods
 //===============================================================
-
+	
 	public void parseSegmentFile(InputStream in, CoIterator<Segment> coit)
 	throws IOException {
 		if (null == coit) {
@@ -50,25 +50,35 @@ public class PlainSegmentParser implements SegmentFileParser {
 			throw new IllegalArgumentException("null input stream");
 		}
 		
-		LineReader reader = new LineReader(in);
+		// coit.coNext may throw unchecked exceptions, so
+		// we try...finally to be sure we close the reader.
+		// reader.close may throw IOException or unchecked,
+		// so we try...finally to ensure that we finish the
+		// coiterator.
 		try {
+			LineReader reader = new LineReader(in);
 			int i = 0;
-			while (reader.hasNext()) {
-				++i;
-				final String sentence = 
-					Regex.spaces.replaceAll(reader.next(), " ").trim();
-				
-				final String id = Integer.toString(i);
-				coit.coNext(new Segment() {
-					public String id()       { return id;       }
-					public String sentence() { return sentence; }
-					public Iterator<ConstraintSpan> constraints() {
-						return new NullIterator<ConstraintSpan>();
-					}
-				});
+			try {
+				while (reader.hasNext()) {
+					final String id       = Integer.toString(i);
+					final String sentence = 
+						Regex.spaces.replaceAll(reader.next(), " ").trim();
+					
+					coit.coNext(new Segment() {
+						public String id()       { return id;       }
+						public String sentence() { return sentence; }
+						public Iterator<ConstraintSpan> constraints() {
+							return new NullIterator<ConstraintSpan>();
+						}
+					});
+					
+					++i;
+				}
+			} finally {
+				reader.close();
 			}
 		} finally {
-			reader.close();
+			coit.finish();
 		}
 	}
 }

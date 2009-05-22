@@ -87,22 +87,29 @@ implements SegmentFileParser {
 		
 		SAXParserFactory spf = SAXParserFactory.newInstance();
 		try {
-			SAXParser sp = spf.newSAXParser();
-			sp.parse(in, this);
+			try {
+				SAXParser sp = spf.newSAXParser();
+				sp.parse(in, this);
+				
+			} catch (SAXException e) {
+				// TODO: something better
+				IOException ioe = new IOException(
+					"SAXException: " + e.getMessage());
+				ioe.initCause(e);
+				throw ioe;
+				
+			} catch (ParserConfigurationException e) {
+				// TODO: something better
+				IOException ioe = new IOException(
+					"ParserConfigurationException: " +  e.getMessage());
+				ioe.initCause(e);
+				throw ioe;
+			}
 			
-		} catch (SAXException e) {
-			// TODO: something better
-			IOException ioe = new IOException(
-				"SAXException: " + e.getMessage());
-			ioe.initCause(e);
-			throw ioe;
+			// BUG: Do we need to close() the InputStream, or does parse() handle that?
 			
-		} catch (ParserConfigurationException e) {
-			// TODO: something better
-			IOException ioe = new IOException(
-				"ParserConfigurationException: " +  e.getMessage());
-			ioe.initCause(e);
-			throw ioe;
+		} finally {
+			coit.finish();
 		}
 	}
 	

@@ -44,6 +44,7 @@ import java.util.logging.Logger;
  */
 public class LanguageModelFF extends DefaultStatefulFF {
 	
+	// FIXME: why is this in here? Because it's private it won't be usable by subclasses, so there seems to be no reason to have it here if it's unused. Perhaps make it protected instead?
 	/** Logger for this class. */
 	@SuppressWarnings("unused")
 	private static final Logger logger = 

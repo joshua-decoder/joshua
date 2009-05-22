@@ -2,7 +2,7 @@
 
 # The number of MB to give to Java's heap
 # For this example 500 is minimum
-# For 32-bit Java 2100 is maximum
+# For 32-bit Java 2048 (or so) is the maximum
 MEM=500
 
 case "$1" in
@@ -16,18 +16,23 @@ esac
 
 rm -f example2.nbest example2.1best example2.1best.sgm example2.refs.sgm
 
-java    -classpath "$CLASSPATH:../bin"  \
-	-Djava.library.path=../lib       \
-	-Xmx${MEM}m -Xms${MEM}m          \
-	joshua.decoder.JoshuaDecoder     \
-	example2.config.$1               \
-	example2.src                     \
+java \
+	-classpath "../bin"          \
+	-Djava.library.path=../lib   \
+	-Xmx${MEM}m -Xms${MEM}m      \
+	-XX:MinHeapFreeRatio=10      \
+	joshua.decoder.JoshuaDecoder \
+	example2.config.$1           \
+	example2.src                 \
 	example2.nbest
 
 if [ $? -ne 0 ]; then
 	echo "Something went wrong with the parser: $?"
 	exit $?
 fi
+
+
+# BUG: we should fix the rest of this script to use our built-in tools now.
 
 ./get_1best_from_Nbest.pl example2.nbest example2.1best
 ./get_IBM_SGML_from_1best.pl example2

@@ -38,6 +38,9 @@ public interface SegmentFileParser {
 	 * to interrupt, and it can take too much memory to hold
 	 * the whole file in memory during transation or each
 	 * segment.
+	 *
+	 * This method shall close the InputStream before exiting,
+	 * since it consumes the entirety of the stream.
 	 */
 	void parseSegmentFile(InputStream in, CoIterator<Segment> coit)
 	throws IOException;
@@ -46,5 +49,9 @@ public interface SegmentFileParser {
 	 * and String URI in its parse methods. We use InputStream
 	 * because it's the most general and it allows for getting
 	 * inputs from places other than the file system.
+	 * 
+	 * To resolve the hack in LineReader, we may consider using
+	 * File instead or in addition to InputStream. An ugly
+	 * solution, but maybe less ugly than the LineReader hack.
 	 */
 }

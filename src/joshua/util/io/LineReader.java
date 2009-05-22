@@ -62,19 +62,51 @@ public class LineReader implements Reader<String> {
 	 * @param filename the file to be opened
 	 */
 	public LineReader(String filename) throws IOException {
-		this(filename.endsWith(".gz")
-			? new GZIPInputStream(new FileInputStream(filename))
-			: new FileInputStream(filename)
-			);
+		this(LineReader.getInputStream(filename));
 	}
 	
+	
+	/**
+	 * Wraps an InputStream for iterating line by line. Stream
+	 * encoding is assumed to be UTF-8.
+	 */
 	public LineReader(InputStream in) {
 		this.reader = new BufferedReader(
 			new InputStreamReader(in, FILE_ENCODING));
 	}
 	
+	
+	/**
+	 * Uses a BufferedReader for iterating line by line.
+	 */
 	public LineReader(BufferedReader reader) {
 		this.reader = reader;
+	}
+	
+	
+	/**
+	 * Returns an InputStream for a filename, using Joshua's
+	 * canonical means for interpreting that name (e.g\ detecting
+	 * gzipped files). This is used by the LineReader constructor
+	 * that accepts a String argument.
+	 *
+	 * @deprecated This method is provided in order for
+	 * {@link joshua.decoder.DecoderThread} to open files in
+	 * the canonical way for handing off to
+	 * {@link joshua.decoder.segment_file.SegmentFileParser}.
+	 * The <code>SegmentFileParser</code> interface can't be
+	 * made more liberal (e.g. to accept a {@link java.io.Reader})
+	 * because {@link javax.xml.parsers.SAXParser} can't parse
+	 * that argument and no common {@link java.io.Reader} gives
+	 * access to the underlying <code>InputStream</code>. This
+	 * method is considered a hack which should be removed once
+	 * a better solution presents itself.
+	 */
+	@Deprecated
+	public static final InputStream getInputStream(String filename)
+	throws IOException {
+		FileInputStream fis = new FileInputStream(filename);
+		return (filename.endsWith(".gz") ? new GZIPInputStream(fis) : fis);
 	}
 	
 	
@@ -92,13 +124,16 @@ public class LineReader implements Reader<String> {
 		
 		if (null != this.reader) {
 			try {
+				// We assume the wrappers will percolate this down.
 				this.reader.close();
+				
 			} catch (IOException e) {
 				// We need to trash our cached error for idempotence.
 				// Presumably the closing error is the more important
 				// one to throw.
 				this.error = null;
 				throw e;
+				
 			} finally {
 				this.reader = null;
 			}
@@ -144,6 +179,8 @@ public class LineReader implements Reader<String> {
 // Reader
 //===============================================================
 	
+	// Copied from interface documentation.
+	/** Determine if the reader is ready to read a line. */
 	public boolean ready() throws IOException {
 		return this.reader.ready();
 	}
@@ -174,6 +211,8 @@ public class LineReader implements Reader<String> {
 //===============================================================
 // Iterable -- because sometimes Java can be very stupid
 //===============================================================
+	
+	/** Return self as an iterator. */
 	public Iterator<String> iterator() {
 		return this;
 	}
@@ -183,6 +222,13 @@ public class LineReader implements Reader<String> {
 // Iterator
 //===============================================================
 	
+	// Copied from interface documentation.
+	/**
+	 * Returns <code>true</code> if the iteration has more
+	 * elements. (In other words, returns <code>true</code> if
+	 * <code>next</code> would return an element rather than
+	 * throwing an exception.)
+	 */
 	public boolean hasNext() {
 		if (null != this.buffer) {
 			return true;
@@ -229,7 +275,11 @@ public class LineReader implements Reader<String> {
 	
 	
 	/**
-	 * Iterates over all lines, ignoring their contents, and returns the count of lines. If some lines have already been read, this will return the count of remaining lines. Because no lines will remain after calling this method, we implicitly call close.
+	 * Iterates over all lines, ignoring their contents, and
+	 * returns the count of lines. If some lines have already
+	 * been read, this will return the count of remaining lines.
+	 * Because no lines will remain after calling this method,
+	 * we implicitly call close.
 	 * 
 	 * @return the number of lines read
 	 */

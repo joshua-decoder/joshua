@@ -25,6 +25,9 @@ import joshua.decoder.ff.tm.GrammarFactory;
 import joshua.decoder.hypergraph.DiskHyperGraph;
 import joshua.decoder.hypergraph.HyperGraph;
 import joshua.decoder.hypergraph.KBestExtractor;
+import joshua.decoder.segment_file.PlainSegmentParser;
+import joshua.decoder.segment_file.SegmentFileParser;
+import joshua.decoder.segment_file.Segment;
 
 import joshua.lattice.Lattice;
 import joshua.oracle.OracleExtractor;
@@ -34,7 +37,9 @@ import joshua.util.io.LineReader;
 import joshua.util.io.NullReader;
 import joshua.util.io.Reader;
 import joshua.util.FileUtility;
+import joshua.util.CoIterator;
 
+import java.io.InputStream;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -53,7 +58,9 @@ import java.util.logging.Logger;
 // BUG: known synchronization problem: LM cache; srilm call;
 
 public class DecoderThread extends Thread {
-	//these variables may be the same across all threads (e.g., just copy from DecoderFactory), or differ from thread to thread
+	/* these variables may be the same across all threads (e.g.,
+	 * just copy from DecoderFactory), or differ from thread
+	 * to thread */
 	private final ArrayList<GrammarFactory>  grammarFactories;
 	private final boolean                    hasLanguageModel;
 	private final ArrayList<FeatureFunction> featureFunctions;
@@ -154,8 +161,11 @@ public class DecoderThread extends Thread {
 	}
 	
 	
+/*// Begin original version
 	// BUG: log file is not properly handled for parallel decoding
+	@Deprecated
 	public void decode_a_file() throws IOException {
+	
 		int sentenceID = this.startSentenceID; // if no sent tag, then this will be used
 		
 		BufferedWriter nbestWriter =
@@ -165,13 +175,15 @@ public class DecoderThread extends Thread {
 			? new NullReader<String>()
 			: new LineReader(this.oracleFile);
 			
-		// TODO: convert to using PlainSegmentParser (or SegmentFileParser in general, though note that this will break parallel decoding)
+		// TODO: convert to using PlainSegmentParser (or SegmentFileParser in general, though note that this will break parallel decoding (see DecoderFactory)) See version below
+		
 		LineReader testReader = new LineReader(this.testFile);
 		try { for (String cnSentence : testReader) {
 			if (logger.isLoggable(Level.FINE))
 				logger.fine("now translating\n" + cnSentence);
 			
-			/* Remove SGML tags around the sentence, and set sentenceID */
+			// Remove SGML tags around the sentence, and set sentenceID
+			//
 			// BUG: this is too fragile and doesn't give good error messages
 			// TODO: this will be handled by general SegmentFileParser (SAXSegmentParser specifically)
 			if (cnSentence.matches("^<seg\\s+id=\"\\d+\"[^>]*>.*?</seg\\s*>\\s*$")) {
@@ -211,7 +223,104 @@ public class DecoderThread extends Thread {
 			nbestWriter.close();
 		}
 	}
+//// End original version */
+//// Begin SegmentFileParser version
+	// BUG: log file is not properly handled for parallel decoding
+	public void decode_a_file() throws IOException {
+		
+		// TODO: configuration flags to select the desired SegmentFileParser
+		SegmentFileParser segmentParser = new PlainSegmentParser();
+		
+		segmentParser.parseSegmentFile(
+			LineReader.getInputStream(this.testFile),
+			new TranslateCoiterator(
+				this.startSentenceID,
+				FileUtility.getWriteFileStream(this.nbestFile),
+				(null == this.oracleFile
+					? new NullReader<String>()
+					: new LineReader(this.oracleFile))
+			)
+		);
+	}
 	
+	/**
+	 * This coiterator is for calling the DecoderThread.translate
+	 * method on each Segment to be translated.
+	 */
+	private class TranslateCoiterator implements CoIterator<Segment> {
+		private int            sentenceID;
+		private BufferedWriter nbestWriter;
+		private Reader<String> oracleReader;
+		
+		public TranslateCoiterator(int startSentenceID, BufferedWriter nbestWriter, Reader<String> oracleReader) {
+			this.sentenceID   = startSentenceID;
+			this.nbestWriter  = nbestWriter;
+			this.oracleReader = oracleReader;
+		}
+		
+		public void coNext(Segment segment) {
+			if (DecoderThread.this.logger.isLoggable(Level.FINE))
+				DecoderThread.this.logger.fine(
+					"now translating\n" + segment.sentence());
+			
+			// BUG: pseudo-sgml hacks! And not even the
+			// same hacks as in the original version (we
+			// don't extract the id attribute)! This is
+			// necessary to produce identical output for
+			// the ./example run which has a <seg> tag on
+			// the first line. This is not necessary for
+			// ./example2 to produce identical output.
+			//
+			// BUG: if we end up keeping something like
+			// this, then we should define it as a new
+			// SegmentFileParser and should use joshua.util.Regex
+			// to avoid recompiling the patterns.
+			
+			String hackedSentence = segment.sentence()
+				.replaceFirst("^\\s*<seg\\s+id=\"\\d+\"\\s*>\\s*", "")
+				.replaceAll("\\s*</seg\\s*>\\s*$", "");
+			
+			this.sentenceID = Integer.parseInt(segment.id());
+			
+			
+			try { // HACK: Fix this!
+				
+				String oracleSentence = this.oracleReader.readLine();
+				
+				// TODO: translate should accept the whole
+				// Segment so that it can pass constraints
+				// to the Chart constructor. Of course,
+				// that obviates our pseudo-sgml hacking.
+				DecoderThread.this.translate(
+					hackedSentence,
+					oracleSentence,
+					this.nbestWriter,
+					this.sentenceID);
+				
+			} catch (IOException ioe) {
+				throw new RuntimeException(
+					"caught IOException in CoIterator", ioe);
+			}
+			
+			// This was for when the sgml hacking failed. Should be obviated.
+			this.sentenceID++;
+		}
+		
+		public void finish() {
+			try { // HACK: Fix this!
+				this.oracleReader.close();
+				
+				this.nbestWriter.flush();
+				this.nbestWriter.close();
+				
+			} catch (IOException ioe) {
+				throw new RuntimeException(
+					"caught IOException in CoIterator", ioe);
+			}
+		}
+	}
+//// End SegmentFileParser version */
+
 	
 	// TODO: 'sentence' should be of type Segment
 	/**
