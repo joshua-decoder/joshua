@@ -78,7 +78,7 @@ public class DecoderFactory {
 					this.featureFunctions, this.symbolTable,
 					test_file, nbest_file,	oracle_file, 0);
 				
-				pdecoder.decode_a_file();//do not run *start*; so that we stay in the current main thread
+				pdecoder.decodeTestFile();//do not run *start*; so that we stay in the current main thread
 				if (JoshuaConfiguration.save_disk_hg) {
 					pdecoder.hypergraphSerializer.writeRulesNonParallel(nbest_file + ".hg.rules");
 				}

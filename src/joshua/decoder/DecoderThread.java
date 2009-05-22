@@ -82,9 +82,11 @@ public class DecoderThread extends Thread {
 	private final String         testFile;
 	private final String         oracleFile;
 	        final String         nbestFile; // package-private for DecoderFactory
+	private       BufferedWriter nbestWriter; // set in decodeTestFile
 	private final int            startSentenceID;
 	private final KBestExtractor kbestExtractor;
 	              DiskHyperGraph hypergraphSerializer; // package-private for DecoderFactory
+	
 	
 	private static final Logger logger =
 		Logger.getLogger(DecoderThread.class.getName());
@@ -153,7 +155,7 @@ public class DecoderThread extends Thread {
 	// Overriding of Thread.run() cannot throw anything
 	public void run() {
 		try {
-			decode_a_file();
+			this.decodeTestFile();
 		} catch (IOException e) {
 			e.printStackTrace();
 			System.exit(1);
@@ -162,7 +164,7 @@ public class DecoderThread extends Thread {
 	
 	
 	// BUG: log file is not properly handled for parallel decoding
-	public void decode_a_file() throws IOException {
+	void decodeTestFile() throws IOException {
 		
 		// TODO: configuration flags to select the desired SegmentFileParser
 		SegmentFileParser segmentParser =
@@ -170,15 +172,20 @@ public class DecoderThread extends Thread {
 			new HackishSegmentParser(this.startSentenceID);
 		//	new SAXSegmentParser();
 		
-		segmentParser.parseSegmentFile(
-			LineReader.getInputStream(this.testFile),
-			new TranslateCoiterator(
-				FileUtility.getWriteFileStream(this.nbestFile),
-				(null == this.oracleFile
-					? new NullReader<String>()
-					: new LineReader(this.oracleFile))
-			)
-		);
+		this.nbestWriter = FileUtility.getWriteFileStream(this.nbestFile);
+		try {
+			segmentParser.parseSegmentFile(
+				LineReader.getInputStream(this.testFile),
+				new TranslateCoiterator(
+					null == this.oracleFile
+						? new NullReader<String>()
+						: new LineReader(this.oracleFile)
+				)
+			);
+		} finally {
+			this.nbestWriter.flush();
+			this.nbestWriter.close();
+		}
 	}
 	
 	/**
@@ -186,11 +193,9 @@ public class DecoderThread extends Thread {
 	 * method on each Segment to be translated.
 	 */
 	private class TranslateCoiterator implements CoIterator<Segment> {
-		private BufferedWriter nbestWriter;
 		private Reader<String> oracleReader;
 		
-		public TranslateCoiterator(BufferedWriter nbestWriter, Reader<String> oracleReader) {
-			this.nbestWriter  = nbestWriter;
+		public TranslateCoiterator(Reader<String> oracleReader) {
 			this.oracleReader = oracleReader;
 		}
 		
@@ -199,16 +204,10 @@ public class DecoderThread extends Thread {
 				DecoderThread.this.logger.fine(
 					"now translating\n" + segment.sentence());
 			
-			try { // HACK: Fix this!
-				
-				// TODO: translate should accept the whole
-				// Segment so that it can pass constraints
-				// to the Chart constructor.
+			try { // HACK: Fix this exception wrapping
 				DecoderThread.this.translate(
-					segment.sentence(),
-					this.oracleReader.readLine(),
-					this.nbestWriter,
-					Integer.parseInt(segment.id()));
+					segment,
+					this.oracleReader.readLine());
 				
 			} catch (IOException ioe) {
 				throw new RuntimeException(
@@ -217,11 +216,8 @@ public class DecoderThread extends Thread {
 		}
 		
 		public void finish() {
-			try { // HACK: Fix this!
+			try { // HACK: Fix this exception wrapping
 				this.oracleReader.close();
-				
-				this.nbestWriter.flush();
-				this.nbestWriter.close();
 				
 			} catch (IOException ioe) {
 				throw new RuntimeException(
@@ -231,17 +227,13 @@ public class DecoderThread extends Thread {
 	} // End inner class TranslateCoiterator
 	
 	
-	// TODO: 'sentence' should be of type Segment
 	/**
 	 * Translate a sentence.
 	 *
-	 * @param sentence The sentence to be translated.
+	 * @param segment The sentence to be translated.
 	 * @param oracleSentence
-	 * @param out
-	 * @param sentenceID
 	 */
-	private void translate(String sentence, String oracleSentence,
-		BufferedWriter out, int sentenceID)
+	private void translate(Segment segment, String oracleSentence)
 	throws IOException {
 		long startTime = 0;
 		if (logger.isLoggable(Level.FINER)) {
@@ -250,7 +242,7 @@ public class DecoderThread extends Thread {
 		
 		Chart chart; {
 
-			int[] intSentence = this.symbolTable.getIDs(sentence);
+			int[] intSentence = this.symbolTable.getIDs(segment.sentence());
 			Lattice<Integer> inputLattice = Lattice.createLattice(intSentence);
 			
 			Grammar[] grammars = new Grammar[grammarFactories.size()];
@@ -269,12 +261,12 @@ public class DecoderThread extends Thread {
 			
 			
 			/* Seeding: the chart only sees the grammars, not the factories */
-			// TODO: Chart constructor should accept Iterator<ConstraintSpan>
+			// TODO: Chart constructor should accept segment.constraints()
 			chart = new Chart(
 				inputLattice,
 				this.featureFunctions,
 				this.symbolTable,
-				sentenceID,
+				Integer.parseInt(segment.id()),
 				grammars,
 				this.hasLanguageModel,
 				JoshuaConfiguration.goal_symbol);
@@ -303,13 +295,13 @@ public class DecoderThread extends Thread {
 			
 			logger.finer("... Done Extracting. Getting k-best...");
 			this.kbestExtractor.lazy_k_best_extract_hg(
-				oracle, this.featureFunctions, JoshuaConfiguration.topN, sentenceID, out);
+				oracle, this.featureFunctions, JoshuaConfiguration.topN, Integer.parseInt(segment.id()), this.nbestWriter);
 			logger.finer("... Done getting k-best");
 			
 		} else {
 			/* k-best extraction */
 			this.kbestExtractor.lazy_k_best_extract_hg(
-				hypergraph, this.featureFunctions, JoshuaConfiguration.topN, sentenceID, out);
+				hypergraph, this.featureFunctions, JoshuaConfiguration.topN, Integer.parseInt(segment.id()), this.nbestWriter);
 			if (logger.isLoggable(Level.FINER))
 				logger.finer("after k-best, time: "
 				+ ((double)(System.currentTimeMillis() - startTime) / 1000.0)
