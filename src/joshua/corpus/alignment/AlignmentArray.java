@@ -39,7 +39,6 @@ import java.util.logging.Logger;
  * @author Lane Schwartz
  * @version $LastChangedDate:2008-07-30 17:15:52 -0400 (Wed, 30 Jul 2008) $
  */
-
 public class AlignmentArray extends AbstractAlignments {
 	
 //===============================================================

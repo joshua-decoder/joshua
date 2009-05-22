@@ -30,26 +30,38 @@ import joshua.corpus.Corpus;
 import joshua.util.io.BinaryOut;
 
 /**
- * 
+ * List of alignment grids representing all alignment data 
+ * for an aligned parallel corpus.
+ * <p>
+ * Instances of this class are created from 
+ * human-readable alignment text files.
  * 
  * @author Lane Schwartz
  */
 public class AlignmentGrids extends AbstractAlignmentGrids {
 
-	private static final Logger logger = Logger.getLogger(AlignmentGrids.class.getName()); 
+	/** Logger for this class. */
+	private static final Logger logger = 
+		Logger.getLogger(AlignmentGrids.class.getName()); 
 	
+	/** List of individual alignment grids. */
 	private final List<AlignmentGrid> alignments;
 	
 	/**
 	 * Constructs a list of AlignmentGrid objects.
 	 * <p>
-	 * The size parameter is used to allocate the initial capacity of the backing list.
-	 * If this number is off, things will still work, but memory usage may be less optimal.
+	 * The size parameter is used to allocate the initial capacity
+	 * of the backing list. If this number is off, things will still work, 
+	 * but memory usage may be less optimal.
+	 * <p>
+	 * The object returned by this constructor will required tight spans.
 	 * 
 	 * @param alignmentsFile
 	 * @param sourceCorpus
 	 * @param targetCorpus
-	 * @param expectedSize Expected number of training sentences. This parameter merely specifies the initial capacity of an array list.
+	 * @param expectedSize Expected number of training sentences. 
+	 *                     This parameter merely specifies the initial capacity
+	 *                     of an array list.
 	 */
 	public AlignmentGrids(Scanner alignmentScanner, Corpus sourceCorpus, Corpus targetCorpus, int expectedSize) {
 		this(alignmentScanner, sourceCorpus, targetCorpus, expectedSize, true);
@@ -58,13 +70,16 @@ public class AlignmentGrids extends AbstractAlignmentGrids {
 	/**
 	 * Constructs a list of AlignmentGrid objects.
 	 * <p>
-	 * The size parameter is used to allocate the initial capacity of the backing list.
-	 * If this number is off, things will still work, but memory usage may be less optimal.
+	 * The size parameter is used to allocate the initial capacity 
+	 * of the backing list. If this number is off, things will still work, 
+	 * but memory usage may be less optimal.
 	 * 
 	 * @param alignmentsFile
 	 * @param sourceCorpus
 	 * @param targetCorpus
-	 * @param expectedSize Expected number of training sentences. This parameter merely specifies the initial capacity of an array list.
+	 * @param expectedSize Expected number of training sentences. 
+	 *                     This parameter merely specifies the initial capacity
+	 *                     of an array list.
 	 * @param requireTightSpans 
 	 */
 	public AlignmentGrids(Scanner alignmentScanner, Corpus sourceCorpus, Corpus targetCorpus, int expectedSize, boolean requireTightSpans) {
@@ -83,24 +98,35 @@ public class AlignmentGrids extends AbstractAlignmentGrids {
 			alignments.add(new AlignmentGrid(line));
 			
 			lineNumber++;
-			if (finest && (lineNumber%tenthSize==0)) logger.finest("AlignmentGrids construction " + (lineNumber/tenthSize)+"0% complete");
+			if (finest && (lineNumber%tenthSize==0)) {
+				logger.finest("AlignmentGrids construction " + 
+						(lineNumber/tenthSize)+"0% complete");
+			}
 			
 		}
 	}
 	
+	/* See Javadoc for AbstractAlignmentGrids. */
 	protected int[] getSourcePoints(int sentenceID, int targetSpanStart, int targetSpanEnd) {
 		AlignmentGrid grid = alignments.get(sentenceID);
 		
 		return grid.getSourcePoints(targetSpanStart, targetSpanEnd);
 	}
 	
+	/* See Javadoc for AbstractAlignmentGrids. */
 	protected int[] getTargetPoints(int sentenceID, int sourceSpanStart, int sourceSpanEnd) {
 		AlignmentGrid grid = alignments.get(sentenceID);
 		
 		return grid.getTargetPoints(sourceSpanStart, sourceSpanEnd);
 	}
 
-
+	/**
+	 * Serializes this object as binary data.
+	 * 
+	 * @param out The stream to write this object to.
+	 * @throws IOException Includes any I/O exceptions that may occur
+	 * @see {@link java.io.Externalizable#writeExternal Externalizable}
+	 */
 	public void writeExternal(ObjectOutput out) throws IOException {
 		
 		// Start by writing the number of alignments
@@ -148,7 +174,20 @@ public class AlignmentGrids extends AbstractAlignmentGrids {
 		}
 		
 	}
+
+	/* See Javadoc for Alignments interface. */
+	public int size() {
+		return this.alignments.size();
+	}
 	
+	/**
+	 * Main method used to read a human-readable alignments file
+	 * and write it to disk as binary data.
+	 * 
+	 * @param args File names for an existing human-readable alignments file
+	 *             and for the binary data file to be written
+	 * @throws IOException Includes any I/O exceptions that may occur
+	 */
 	public static void main(String[] args) throws IOException {
 		
 		if (args.length != 2) {
@@ -168,10 +207,6 @@ public class AlignmentGrids extends AbstractAlignmentGrids {
 		grids.writeExternal(out);
 		out.flush();
 		out.close();
-	}
-
-	public int size() {
-		return this.alignments.size();
 	}
 	
 }

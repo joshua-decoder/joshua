@@ -21,21 +21,41 @@ import joshua.corpus.MatchedHierarchicalPhrases;
 import joshua.corpus.Span;
 
 /**
+ * Abstract implementation of <code>Alignments</code> interface.
+ * <p>
+ * This class includes code that is likely to be common to all
+ * concrete implementations of the interface. 
+ * 
+ * This includes common code to test for consistent alignment spans and
+ * to test for aligned terminals.
+ * 
  * @author Lane Schwartz
  * @version $LastChangedDate$
  */
 public abstract class AbstractAlignments implements Alignments {
 
+	/** Indicates whether tight spans are required during phrase extraction. */
 	protected final boolean requireTightSpans;
 	
+	/**
+	 * Constructs an abstract alignments object
+	 * where <code>requiredTightSpans</code> is true.
+	 */
 	public AbstractAlignments() {
 		this.requireTightSpans = true;
 	}
 	
+	/**
+	 * Constructs an abstract alignments object.
+	 * 
+	 * @param requireTightSpans Indicates whether tight spans 
+	 *                          are required during phrase extraction
+	 */
 	public AbstractAlignments(boolean requireTightSpans) {
 		this.requireTightSpans = requireTightSpans;
 	}
 	
+	/* See Javadoc for Alignments interface. */
 	public Span getConsistentTargetSpan(Span sourceSpan) {
 		Span targetSpan = getAlignedTargetSpan(sourceSpan);
 		
@@ -47,14 +67,14 @@ public abstract class AbstractAlignments implements Alignments {
 		Span correspondingSourceSpan = getAlignedSourceSpan(targetSpan.start, targetSpan.end);
 		
 		if (correspondingSourceSpan.start < sourceSpan.start
-		|| correspondingSourceSpan.end > sourceSpan.end) {
+				|| correspondingSourceSpan.end > sourceSpan.end) {
 			return null;
 		} else {
 			return targetSpan;
 		}
 	}
 
-
+	/* See Javadoc for Alignments interface. */
 	public boolean hasAlignedTerminal(int targetIndex, MatchedHierarchicalPhrases sourcePhrases, int sourcePhraseIndex) {
 		
 		int[] sourceIndices = getAlignedSourceIndices(targetIndex);
@@ -77,6 +97,7 @@ public abstract class AbstractAlignments implements Alignments {
 		
 	}
 	
+	/* See Javadoc for Alignments interface. */
 	public Span getAlignedTargetSpan(Span sourceSpan) {
 		return getAlignedTargetSpan(sourceSpan.start, sourceSpan.end);
 	}

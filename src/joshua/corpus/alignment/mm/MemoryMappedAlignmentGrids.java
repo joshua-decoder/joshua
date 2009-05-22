@@ -1,3 +1,20 @@
+/* This file is part of the Joshua Machine Translation System.
+ * 
+ * Joshua is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1
+ * of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free
+ * Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
+ */
 package joshua.corpus.alignment.mm;
 
 import java.io.IOException;
@@ -10,22 +27,104 @@ import joshua.corpus.Corpus;
 import joshua.corpus.alignment.AbstractAlignmentGrids;
 import joshua.corpus.alignment.AlignmentGrid;
 
+/**
+ * Memory-mapped list of alignment grids representing all alignment data 
+ * for an aligned parallel corpus.
+ * <p>
+ * Instances of this class are created from 
+ * binary alignment files, which are typically created using
+ * {@link joshua.corpus.alignment.AlignmentGrids#writeExternal(java.io.ObjectOut)}.
+ * 
+ * @author Lane Schwartz
+ */
 public class MemoryMappedAlignmentGrids extends AbstractAlignmentGrids {
 
-	/** Number of alignment grids */
+	/** Number of alignment grids in the aligned parallel corpus. */
 	private final int size;
-		
+	
+	/** 
+	 * Memory-mapped buffer containing the width of each alignment grid
+	 * in the aligned parallel corpus.
+	 * <p>
+	 * The number of integers in this buffer should be equal to 
+	 * the number of sentences in the aligned parallel corpus.
+	 */
 	private final IntBuffer widths;
+	
+	/** 
+	 * Memory-mapped buffer containing the height of each alignment grid
+	 * in the aligned parallel corpus.
+	 * <p>
+	 * The number of integers in this buffer should be equal to 
+	 * the number of sentences in the aligned parallel corpus.
+	 */
 	private final IntBuffer heights;
+	
+	/** 
+	 * Memory-mapped buffer containing the number of alignment points in
+	 * each alignment grid in the aligned parallel corpus.
+	 * <p>
+	 * The number of integers in this buffer should be equal to 
+	 * the number of sentences in the aligned parallel corpus.
+	 */
 	private final IntBuffer pointCounts;
 	
+	/**
+	 * Memory-mapped buffer containing all alignment points
+	 * in the aligned parallel corpus. Each alignment point
+	 * is encoded as a short.
+	 * <p>
+	 * The number of shorts in this buffer should be equal to
+	 * the number of alignment points in the aligned parallel corpus.
+	 * 
+	 * @see {@link joshua.corpus.alignment.AlignmentGrid#getKey(int,int)}
+	 * @see {@link joshua.corpus.alignment.AlignmentGrid#getLocation(short)}
+	 */
 	private final ShortBuffer alignmentPoints;
+	
+	/**
+	 * Memory-mapped buffer containing all reverse alignment points
+	 * in the aligned parallel corpus. Each reverse alignment point
+	 * is encoded as a short.
+	 * <p>
+	 * The number of shorts in this buffer should be equal to
+	 * the number of alignment points in the aligned parallel corpus.
+	 * 
+	 * @see {@link joshua.corpus.alignment.AlignmentGrid#getKey(int,int)}
+	 * @see {@link joshua.corpus.alignment.AlignmentGrid#getLocation(short)}
+	 */
 	private final ShortBuffer reverseAlignmentPoints;
 	
+	/**
+	 * Constructs memory-mapped alignment grids from the specified
+	 * binary file and the specified source and target corpora.
+	 * <p>
+	 * The object returned by this constructor will require tight spans.
+	 * 
+	 * @param binaryAlignmentsFilename Name of binary file 
+	 *                                 containing encoded alignment points
+	 * @param sourceCorpus Source language corpus
+	 * @param targetCorpus Target language corpus
+	 * @throws IOException Any I/O exception that was encountered
+	 * @see {@link joshua.corpus.alignment.AlignmentGrids#writeExternal(java.io.ObjectOut)}
+	 */
 	public MemoryMappedAlignmentGrids(String binaryAlignmentsFilename, Corpus sourceCorpus, Corpus targetCorpus) throws IOException {
 		this(binaryAlignmentsFilename, sourceCorpus, targetCorpus, true);
 	}
-	
+	 
+	/**
+	 * Constructs memory-mapped alignment grids from the specified
+	 * binary file and the specified source and target corpora.
+	 * 
+	 * @param binaryAlignmentsFilename Name of binary file 
+	 *                                 containing encoded alignment points
+	 * @param sourceCorpus Source language corpus
+	 * @param targetCorpus Target language corpus
+	 * @param requireTightSpans Indicates whether 
+	 *                          tight alignment spans are required
+	 * @throws IOException Any I/O exception that was encountered
+	 * @see {@link joshua.corpus.alignment.AlignmentGrids#writeExternal(java.io.ObjectOut)}
+	 */
 	public MemoryMappedAlignmentGrids(String binaryAlignmentsFilename, Corpus sourceCorpus, Corpus targetCorpus, boolean requireTightSpans) throws IOException {
 		super(sourceCorpus, targetCorpus, requireTightSpans);
 
@@ -66,6 +165,7 @@ public class MemoryMappedAlignmentGrids extends AbstractAlignmentGrids {
 	    this.reverseAlignmentPoints = binaryChannel.map( FileChannel.MapMode.READ_ONLY, start, length ).asShortBuffer().asReadOnlyBuffer();
 	}
 	
+	/* See Javadoc for AbstractAlignmentGrids. */
 	@Override
 	protected int[] getSourcePoints(int sentenceId, int targetSpanStart,
 			int targetSpanEnd) {
@@ -81,6 +181,7 @@ public class MemoryMappedAlignmentGrids extends AbstractAlignmentGrids {
 		
 	}
 
+	/* See Javadoc for AbstractAlignmentGrids. */
 	@Override
 	protected int[] getTargetPoints(int sentenceId, int sourceSpanStart,
 			int sourceSpanEnd) {
@@ -96,6 +197,7 @@ public class MemoryMappedAlignmentGrids extends AbstractAlignmentGrids {
 		
 	}
 
+	/* See Javadoc for Alignments. */
 	public int size() {
 		return this.size;
 	}
