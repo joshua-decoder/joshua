@@ -212,10 +212,15 @@ implements SegmentFileParser {
 			
 			// BUG: debug for pushing nulls due to malformed files
 			if ("seg".equalsIgnoreCase(qName)) {
-				Segment seg  = this.tempSeg.typeCheck(text);
-				this.tempSeg = null;
-				
-				this.coit.coNext(seg);
+				if (null == this.tempSeg) {
+					throw new SAXException(
+						"Found </seg> but segment was null (missing root tag?)");
+				} else {
+					Segment seg  = this.tempSeg.typeCheck(text);
+					this.tempSeg = null;
+					
+					this.coit.coNext(seg);
+				}
 				
 			} else if ("span".equalsIgnoreCase(qName)) {
 				ignoringTextWarning(qName, text);

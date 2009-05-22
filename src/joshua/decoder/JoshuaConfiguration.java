@@ -132,9 +132,11 @@ public class JoshuaConfiguration {
 	public static String f_confusion_grammar = "C:\\Users\\zli\\Documents\\confusion.hg.grammar";
 	//debug end
 	
-	
 	//do we use a LM feature?
 	public static boolean have_lm_model = false;
+	
+	public static String segmentFileParserClass = null;
+	
 	
 	private static final Logger logger =
 		Logger.getLogger(JoshuaConfiguration.class.getName());
@@ -451,6 +453,11 @@ public class JoshuaConfiguration {
 					forest_pruning_threshold = Double.parseDouble(fds[1]);
 					if (logger.isLoggable(Level.FINEST)) 
 						logger.finest(String.format("forest_pruning_threshold: %s", forest_pruning_threshold));
+					
+				} else if ("segment_file_parser_class".equals(fds[0])) {
+					segmentFileParserClass = fds[1].trim();
+					if (logger.isLoggable(Level.FINEST))
+						logger.finest("tm file: " + segmentFileParserClass);
 					
 				} else {
 					logger.warning("Maybe Wrong config line: " + line);

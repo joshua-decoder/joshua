@@ -25,8 +25,11 @@ import joshua.decoder.ff.tm.GrammarFactory;
 import joshua.decoder.hypergraph.DiskHyperGraph;
 import joshua.decoder.hypergraph.HyperGraph;
 import joshua.decoder.hypergraph.KBestExtractor;
-import joshua.decoder.segment_file.HackishSegmentParser;
+
 import joshua.decoder.segment_file.SegmentFileParser;
+import joshua.decoder.segment_file.PlainSegmentParser;
+import joshua.decoder.segment_file.HackishSegmentParser;
+import joshua.decoder.segment_file.sax_parser.SAXSegmentParser;
 import joshua.decoder.segment_file.Segment;
 
 import joshua.lattice.Lattice;
@@ -166,12 +169,30 @@ public class DecoderThread extends Thread {
 	
 	// BUG: log file is not properly handled for parallel decoding
 	void decodeTestFile() throws IOException {
+		SegmentFileParser segmentParser;
 		
-		// TODO: configuration flags to select the desired SegmentFileParser
-		SegmentFileParser segmentParser =
-		//	new PlainSegmentParser();
-			new HackishSegmentParser(this.startSentenceID);
-		//	new SAXSegmentParser();
+		// TODO: Fix JoshuaConfiguration so we can make this less gross.
+		//
+		// TODO: maybe using real reflection would be cleaner. If it weren't for the argument for HackishSegmentParser then we could do this all over in the JoshuaConfiguration class instead
+		final String className = JoshuaConfiguration.segmentFileParserClass;
+		if (null == className) {
+			// Use old behavior by default
+			segmentParser = new HackishSegmentParser(this.startSentenceID);
+			
+		} else if ("PlainSegmentParser".equals(className)) {
+			segmentParser = new PlainSegmentParser();
+			
+		} else if ("HackishSegmentParser".equals(className)) {
+			segmentParser = new HackishSegmentParser(this.startSentenceID);
+			
+		} else if ("SAXSegmentParser".equals(className)) {
+			segmentParser = new SAXSegmentParser();
+			
+		} else {
+			throw new IllegalArgumentException(
+				"Unknown SegmentFileParser class: " + className);
+		}
+		
 		
 		this.nbestWriter = FileUtility.getWriteFileStream(this.nbestFile);
 		try {
