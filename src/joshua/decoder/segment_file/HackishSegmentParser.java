@@ -98,16 +98,9 @@ public class HackishSegmentParser implements SegmentFileParser {
 						sentence = cleanedSentence;
 					}
 					
-					final String id = Integer.toString(this.sentenceID);
-					
-					// TODO: we could unify this anonymous class with the one in PlainSegmentParser
-					coit.coNext(new Segment() {
-						public String id()       { return id;       }
-						public String sentence() { return sentence; }
-						public Iterator<ConstraintSpan> constraints() {
-							return new NullIterator<ConstraintSpan>();
-						}
-					});
+					coit.coNext(new PlainSegment(
+						Integer.toString(this.sentenceID),
+						sentence));
 				}
 			} finally {
 				reader.close();

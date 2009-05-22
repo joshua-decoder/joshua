@@ -34,7 +34,8 @@ import java.util.logging.Logger;
 /**
  * this class implements:
  *
- * (1) parallel decoding: split the test file, initiate DecoderThread, wait and merge the decoding results
+ * (1) parallel decoding: split the test file, initiate DecoderThread,
+ *     wait and merge the decoding results
  * (2) non-parallel decoding is a special case of parallel decoding
  *
  * @author Zhifei Li, <zhifei.work@gmail.com>
@@ -42,9 +43,9 @@ import java.util.logging.Logger;
  */
 
 public class DecoderFactory {
-	private ArrayList<GrammarFactory> grammarFactories = null;
-	private boolean hasLanguageModel = false;
+	private ArrayList<GrammarFactory>  grammarFactories = null;
 	private ArrayList<FeatureFunction> featureFunctions = null;
+	private boolean                    hasLanguageModel = false;
 	
 	/**
 	 * Shared symbol table for source language terminals,
@@ -69,24 +70,34 @@ public class DecoderFactory {
 	}
 	
 	
-	public void decodeTestSet(String test_file, String nbest_file, String oracle_file) {
+	/**
+	 * This is the public-facing method to decode a set of
+	 * sentences. This automatically detects whether we should
+	 * run the decoder in parallel or not.
+	 */
+	public void decodeTestSet(String testFile, String nbestFile, String oracleFile) {
 		try {
-	//		###### decode the sentences, maybe in parallel
 			if (JoshuaConfiguration.num_parallel_decoders == 1) {
 				DecoderThread pdecoder = new DecoderThread(
 					this.grammarFactories, this.hasLanguageModel,
 					this.featureFunctions, this.symbolTable,
-					test_file, nbest_file,	oracle_file, 0);
+					testFile, nbestFile, oracleFile, 0);
 				
-				pdecoder.decodeTestFile();//do not run *start*; so that we stay in the current main thread
+				// do not call *start*; this way we stay in the current main thread
+				pdecoder.decodeTestFile();
+				
 				if (JoshuaConfiguration.save_disk_hg) {
-					pdecoder.hypergraphSerializer.writeRulesNonParallel(nbest_file + ".hg.rules");
+					pdecoder.hypergraphSerializer.writeRulesNonParallel(
+						nbestFile + ".hg.rules");
 				}
 			} else {
 				if (JoshuaConfiguration.use_remote_lm_server) { // TODO
-					throw new RuntimeException("You cannot run parallel decoder and remote lm server together");
+					throw new IllegalArgumentException("You cannot run parallel decoder and remote LM server together");
 				}
-				run_parallel_decoder(test_file, nbest_file);
+				if (null != oracleFile) {
+					logger.warning("Parallel decoding appears not to support oracle decoding, but you passed an oracle file in.");
+				}
+				run_parallel_decoder(testFile, nbestFile);
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -95,14 +106,14 @@ public class DecoderFactory {
 	
 	
 	// BUG: this kind of file munging isn't going to work with generalized SegmentFileParser
-	private void run_parallel_decoder(String test_file, String nbest_file)
+	private void run_parallel_decoder(String testFile, String nbestFile)
 	throws IOException {
 		this.parallelThreads =
 			new DecoderThread[JoshuaConfiguration.num_parallel_decoders];
 		
 		//==== compute number of lines for each decoder
 		int n_lines = 0; {
-			LineReader testReader = new LineReader(test_file);
+			LineReader testReader = new LineReader(testFile);
 			try {
 				n_lines = testReader.countLines();
 			} finally { testReader.close(); }
@@ -125,7 +136,7 @@ public class DecoderFactory {
 		int sent_id       = 0;
 		int start_sent_id = sent_id;
 		
-		LineReader testReader = new LineReader(test_file);
+		LineReader testReader = new LineReader(testFile);
 		try { for (String cn_sent : testReader) {
 			sent_id++;
 			t_writer_test.write(cn_sent);
@@ -204,11 +215,11 @@ public class DecoderFactory {
 		}
 		
 		//==== merge the nbest files, and remove tmp files
-		BufferedWriter t_writer_nbest =	FileUtility.getWriteFileStream(nbest_file);
+		BufferedWriter t_writer_nbest =	FileUtility.getWriteFileStream(nbestFile);
 		BufferedWriter t_writer_dhg_items = null;
 		if (JoshuaConfiguration.save_disk_hg) {
 			t_writer_dhg_items =
-				FileUtility.getWriteFileStream(nbest_file + ".hg.items");
+				FileUtility.getWriteFileStream(nbestFile + ".hg.items");
 		}
 		for (DecoderThread p_decoder : this.parallelThreads) {
 			//merge nbest
@@ -243,7 +254,7 @@ public class DecoderFactory {
 		if (JoshuaConfiguration.save_disk_hg) {
 			HashMap<Integer,Integer> tbl_done = new HashMap<Integer,Integer>();
 			BufferedWriter t_writer_dhg_rules =
-				FileUtility.getWriteFileStream(nbest_file + ".hg.rules");
+				FileUtility.getWriteFileStream(nbestFile + ".hg.rules");
 			for (DecoderThread p_decoder : this.parallelThreads) {
 				p_decoder.hypergraphSerializer.writeRulesParallel(t_writer_dhg_rules, tbl_done);
 			}

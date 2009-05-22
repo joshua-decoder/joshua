@@ -171,9 +171,10 @@ public class DecoderThread extends Thread {
 	void decodeTestFile() throws IOException {
 		SegmentFileParser segmentParser;
 		
+		// BUG: As written, this will need duplicating in DecoderFactory
 		// TODO: Fix JoshuaConfiguration so we can make this less gross.
 		//
-		// TODO: maybe using real reflection would be cleaner. If it weren't for the argument for HackishSegmentParser then we could do this all over in the JoshuaConfiguration class instead
+		// TODO: maybe using real reflection would be cleaner. If it weren't for the argument for HackishSegmentParser then we could do all this over in the JoshuaConfiguration class instead
 		final String className = JoshuaConfiguration.segmentFileParserClass;
 		if (null == className) {
 			// Use old behavior by default
@@ -219,6 +220,7 @@ public class DecoderThread extends Thread {
 	 * method on each Segment to be translated.
 	 */
 	private class TranslateCoiterator implements CoIterator<Segment> {
+		// TODO: it would be nice if we could somehow push this into the parseSegmentFile call and use a coiterator over some subclass of Segment which has another method for returning the oracular senence. That may take some work though, since Java hates mixins so much.
 		private Reader<String> oracleReader;
 		
 		public TranslateCoiterator(Reader<String> oracleReader) {
@@ -226,14 +228,9 @@ public class DecoderThread extends Thread {
 		}
 		
 		public void coNext(Segment segment) {
-			if (DecoderThread.this.logger.isLoggable(Level.FINE))
-				DecoderThread.this.logger.fine(
-					"now translating\n" + segment.sentence());
-			
 			try {
 				DecoderThread.this.translate(
-					segment,
-					this.oracleReader.readLine());
+					segment, this.oracleReader.readLine());
 				
 			} catch (IOException ioe) {
 				throw new UncheckedIOException(ioe);
@@ -262,6 +259,8 @@ public class DecoderThread extends Thread {
 		if (logger.isLoggable(Level.FINER)) {
 			startTime = System.currentTimeMillis();
 		}
+		if (logger.isLoggable(Level.FINE))
+			logger.fine("now translating\n" + segment.sentence());
 		
 		Chart chart; {
 

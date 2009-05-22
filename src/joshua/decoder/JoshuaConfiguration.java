@@ -436,6 +436,9 @@ public class JoshuaConfiguration {
 					
 				} else if ("num_parallel_decoders".equals(fds[0])) {
 					num_parallel_decoders = Integer.parseInt(fds[1]);
+					if (num_parallel_decoders <= 0) {
+						throw new IllegalArgumentException("Must specify a positive number for num_parallel_decoders");
+					}
 					if (logger.isLoggable(Level.FINEST)) 
 						logger.finest(String.format("num_parallel_decoders: %s", num_parallel_decoders));
 					

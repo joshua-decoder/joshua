@@ -60,17 +60,10 @@ public class PlainSegmentParser implements SegmentFileParser {
 			int i = 0;
 			try {
 				while (reader.hasNext()) {
-					final String id       = Integer.toString(i);
-					final String sentence = 
-						Regex.spaces.replaceAll(reader.next(), " ").trim();
 					
-					coit.coNext(new Segment() {
-						public String id()       { return id;       }
-						public String sentence() { return sentence; }
-						public Iterator<ConstraintSpan> constraints() {
-							return new NullIterator<ConstraintSpan>();
-						}
-					});
+					coit.coNext(new PlainSegment(
+						Integer.toString(i),
+						Regex.spaces.replaceAll(reader.next(), " ").trim() ));
 					
 					++i;
 				}

@@ -149,7 +149,7 @@ implements SegmentFileParser {
 					"Missing end attribute for tag <span>");
 			}
 			if (null == hard) {
-				hard = "false";
+				hard = "false"; // We can use anything that isn't case-insensitively equal to "true", including null.
 			}
 			
 			// BUG: debug for malformed attributes (i.e. not an boolean)
