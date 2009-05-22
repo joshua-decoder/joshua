@@ -18,7 +18,6 @@
 package joshua.util;
 
 import java.util.regex.Pattern;
-import java.util.regex.Matcher;
 import java.util.regex.PatternSyntaxException;
 
 /**
@@ -87,18 +86,6 @@ public class Regex {
 //===============================================================
 // Convenience Methods
 //===============================================================
-	
-	/**
-	 * Returns a {@link Matcher} object for the input string.
-	 * This is needed for patterns making use of grouping
-	 * operations.  If you just want to see whether this
-	 * <code>Regex</code> matches the input string, then use
-	 * <code>matches</code> instead.
-	 */
-	public final Matcher matcher(String input) {
-		return this.pattern.matcher(input);
-	}
-	
 	
 	/**
 	 * Returns whether the input string matches this
