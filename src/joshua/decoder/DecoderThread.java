@@ -25,7 +25,7 @@ import joshua.decoder.ff.tm.GrammarFactory;
 import joshua.decoder.hypergraph.DiskHyperGraph;
 import joshua.decoder.hypergraph.HyperGraph;
 import joshua.decoder.hypergraph.KBestExtractor;
-import joshua.decoder.segment_file.PlainSegmentParser;
+import joshua.decoder.segment_file.HackishSegmentParser;
 import joshua.decoder.segment_file.SegmentFileParser;
 import joshua.decoder.segment_file.Segment;
 
@@ -161,80 +161,18 @@ public class DecoderThread extends Thread {
 	}
 	
 	
-/*// Begin original version
-	// BUG: log file is not properly handled for parallel decoding
-	@Deprecated
-	public void decode_a_file() throws IOException {
-	
-		int sentenceID = this.startSentenceID; // if no sent tag, then this will be used
-		
-		BufferedWriter nbestWriter =
-			FileUtility.getWriteFileStream(this.nbestFile);
-		Reader<String> oracleReader =
-			null == this.oracleFile
-			? new NullReader<String>()
-			: new LineReader(this.oracleFile);
-			
-		// TODO: convert to using PlainSegmentParser (or SegmentFileParser in general, though note that this will break parallel decoding (see DecoderFactory)) See version below
-		
-		LineReader testReader = new LineReader(this.testFile);
-		try { for (String cnSentence : testReader) {
-			if (logger.isLoggable(Level.FINE))
-				logger.fine("now translating\n" + cnSentence);
-			
-			// Remove SGML tags around the sentence, and set sentenceID
-			//
-			// BUG: this is too fragile and doesn't give good error messages
-			// TODO: this will be handled by general SegmentFileParser (SAXSegmentParser specifically)
-			if (cnSentence.matches("^<seg\\s+id=\"\\d+\"[^>]*>.*?</seg\\s*>\\s*$")) {
-				cnSentence = cnSentence.replaceFirst("^<seg\\s+id=\"", ""); // TODO: use joshua.util.Regex
-				
-				StringBuffer id = new StringBuffer();
-				for (int i = 0; i < cnSentence.length(); i++) {
-					char cur = cnSentence.charAt(i);
-					if (cur == '"') {
-						// Drop the ID and the closing quotes
-						cnSentence = cnSentence.substring(i+1);
-						break;
-					} else {
-						id.append(cur);
-					}
-				}
-				// BUG: what about files that don't have integer ids? Should we force that requirement in the Segment interface?
-				sentenceID = Integer.parseInt(id.toString());
-				cnSentence = cnSentence.replaceFirst("^\\s*>", ""); // TODO: use joshua.util.Regex
-				cnSentence = cnSentence.replaceAll("</seg\\s*>\\s*$", ""); // TODO: use joshua.util.Regex
-			} else {
-				// don't set sentenceID, and don't alter cnSentence
-			}
-			
-			
-			String oracleSentence = oracleReader.readLine();
-			
-			// TODO: cnSentence of type Segment
-			translate(cnSentence, oracleSentence, nbestWriter, sentenceID);
-			sentenceID++;
-			
-		} } finally {
-			testReader.close();
-			oracleReader.close();
-			
-			nbestWriter.flush();
-			nbestWriter.close();
-		}
-	}
-//// End original version */
-//// Begin SegmentFileParser version
 	// BUG: log file is not properly handled for parallel decoding
 	public void decode_a_file() throws IOException {
 		
 		// TODO: configuration flags to select the desired SegmentFileParser
-		SegmentFileParser segmentParser = new PlainSegmentParser();
+		SegmentFileParser segmentParser =
+		//	new PlainSegmentParser();
+			new HackishSegmentParser(this.startSentenceID);
+		//	new SAXSegmentParser();
 		
 		segmentParser.parseSegmentFile(
 			LineReader.getInputStream(this.testFile),
 			new TranslateCoiterator(
-				this.startSentenceID,
 				FileUtility.getWriteFileStream(this.nbestFile),
 				(null == this.oracleFile
 					? new NullReader<String>()
@@ -248,12 +186,10 @@ public class DecoderThread extends Thread {
 	 * method on each Segment to be translated.
 	 */
 	private class TranslateCoiterator implements CoIterator<Segment> {
-		private int            sentenceID;
 		private BufferedWriter nbestWriter;
 		private Reader<String> oracleReader;
 		
-		public TranslateCoiterator(int startSentenceID, BufferedWriter nbestWriter, Reader<String> oracleReader) {
-			this.sentenceID   = startSentenceID;
+		public TranslateCoiterator(BufferedWriter nbestWriter, Reader<String> oracleReader) {
 			this.nbestWriter  = nbestWriter;
 			this.oracleReader = oracleReader;
 		}
@@ -263,47 +199,21 @@ public class DecoderThread extends Thread {
 				DecoderThread.this.logger.fine(
 					"now translating\n" + segment.sentence());
 			
-			// BUG: pseudo-sgml hacks! And not even the
-			// same hacks as in the original version (we
-			// don't extract the id attribute)! This is
-			// necessary to produce identical output for
-			// the ./example run which has a <seg> tag on
-			// the first line. This is not necessary for
-			// ./example2 to produce identical output.
-			//
-			// BUG: if we end up keeping something like
-			// this, then we should define it as a new
-			// SegmentFileParser and should use joshua.util.Regex
-			// to avoid recompiling the patterns.
-			
-			String hackedSentence = segment.sentence()
-				.replaceFirst("^\\s*<seg\\s+id=\"\\d+\"\\s*>\\s*", "")
-				.replaceAll("\\s*</seg\\s*>\\s*$", "");
-			
-			this.sentenceID = Integer.parseInt(segment.id());
-			
-			
 			try { // HACK: Fix this!
-				
-				String oracleSentence = this.oracleReader.readLine();
 				
 				// TODO: translate should accept the whole
 				// Segment so that it can pass constraints
-				// to the Chart constructor. Of course,
-				// that obviates our pseudo-sgml hacking.
+				// to the Chart constructor.
 				DecoderThread.this.translate(
-					hackedSentence,
-					oracleSentence,
+					segment.sentence(),
+					this.oracleReader.readLine(),
 					this.nbestWriter,
-					this.sentenceID);
+					Integer.parseInt(segment.id()));
 				
 			} catch (IOException ioe) {
 				throw new RuntimeException(
 					"caught IOException in CoIterator", ioe);
 			}
-			
-			// This was for when the sgml hacking failed. Should be obviated.
-			this.sentenceID++;
 		}
 		
 		public void finish() {
@@ -318,9 +228,8 @@ public class DecoderThread extends Thread {
 					"caught IOException in CoIterator", ioe);
 			}
 		}
-	}
-//// End SegmentFileParser version */
-
+	} // End inner class TranslateCoiterator
+	
 	
 	// TODO: 'sentence' should be of type Segment
 	/**
