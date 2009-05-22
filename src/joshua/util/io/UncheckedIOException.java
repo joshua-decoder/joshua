@@ -22,7 +22,10 @@ import java.io.PrintStream;
 import java.io.PrintWriter;
 
 /**
- * This class provides an unchecked version of IOException. It is generally preferable to use IOException directly, but this class can be useful in contexts where an interface does not allow one to throw checked exceptions.
+ * This class provides an unchecked version of IOException. It is
+ * generally preferable to use IOException directly, but this class
+ * can be useful in contexts where an interface does not allow one
+ * to throw checked exceptions.
  *
  * @author wren ng thornton <wren@users.sourceforge.net>
  * @version $LastChangedDate: 2009-03-26 15:06:57 -0400 (Thu, 26 Mar 2009) $
