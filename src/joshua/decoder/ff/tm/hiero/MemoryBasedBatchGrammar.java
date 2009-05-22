@@ -176,6 +176,11 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
 	}
 	
 	
+	public Rule constructManualRule(int lhs, int[] sourceWords, int[] targetWords, float[] scores, int arity) {
+		return new BilingualRule(lhs, sourceWords, targetWords, scores, arity, this.defaultOwner, 0, getOOVRuleID());
+	}
+	
+	
 	
 	
 	/** 
@@ -252,5 +257,6 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
 		/*if(root!=null)
 			root.print_info(Support.DEBUG);*/
 	}
+
 	
 }

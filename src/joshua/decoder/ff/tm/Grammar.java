@@ -105,4 +105,12 @@ public interface Grammar {
 	 *         out-of-vocabulary (OOV) rule
 	 */
 	int getOOVRuleID();
+	
+	
+	/**
+	 * This is used to construct a manual rule supported from outside the grammar, but the owner should be the same as the grammar
+	 * rule ID will the same as OOVRuleId, and no lattice cost
+	 */
+	Rule constructManualRule(int lhs, int[] sourceWords, int[] targetWords, float[] scores, int aritity);
+	
 }

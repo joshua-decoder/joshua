@@ -29,10 +29,14 @@ import joshua.decoder.ff.tm.RuleCollection;
 import joshua.decoder.ff.tm.Trie;
 import joshua.decoder.hypergraph.HGNode;
 import joshua.decoder.hypergraph.HyperGraph;
+import joshua.decoder.segment_file.ConstraintRule;
+import joshua.decoder.segment_file.ConstraintSpan;
 import joshua.lattice.Lattice;
 import joshua.lattice.Arc;
 import joshua.lattice.Node;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -111,6 +115,9 @@ public class Chart {
 	
 	int goalSymbolID = -1;
 	
+	Iterator<ConstraintSpan> constraintSpans =null;
+	HashMap<String, ConstraintSpan> tblConstraintSpansForFiltering =null;//TODO: each span only has one ConstraintSpan
+	
 	public Chart(
 		Lattice<Integer>           sentence_,
 		ArrayList<FeatureFunction> models_,
@@ -118,12 +125,14 @@ public class Chart {
 		int                        sent_id_,
 		Grammar[]                  grammars_,
 		boolean                    have_lm_model,
-		String                     goalSymbol) 
+		String                     goalSymbol,
+		Iterator<ConstraintSpan> constraintSpans_) 
 	{	
 		this.sentence = sentence_;
 		this.sent_len = sentence.size() - 1;
 		this.p_l_models   = models_;
 		this.p_symbolTable = symbolTable;
+		this.constraintSpans = constraintSpans_;
 		
 		// TODO: this is very expensive
 		this.bins     = new Bin[sent_len][sent_len+1];		
@@ -158,14 +167,52 @@ public class Chart {
 			}
 		}
 		
-		//TODO: add rule (only allow flat rules) into the chart as constraints
-		/*for(each constraint){
-			//add_axiom(i, j, rule, lattice_cost);
-		}*/
+		/** (1) add rule (only allow flat rules) into the chart as constraints
+		 *  (2) add RHS or LHS constraint into tblConstraintSpansForFiltering
+		 * */
+		if(constraintSpans!=null){
+			tblConstraintSpansForFiltering = new HashMap<String, ConstraintSpan>();
+			while(constraintSpans.hasNext()){
+				ConstraintSpan cSpan = constraintSpans.next();
+				if(cSpan.rules()!=null){
+					boolean shouldAdd = false;//contain LHS or RHS constraints?
+					while(cSpan.rules().hasNext()){
+						ConstraintRule cRule = cSpan.rules().next();
+						
+						if(cRule.type()==ConstraintRule.Type.RULE){
+							
+							//force the feature cost as zero
+							if(cSpan.isHard()){
+								//TODO: this require the input always specify the right number of features
+								for(int i=0; i<cRule.features().length; i++){
+									cRule.features()[i]=0;
+								}
+							}
+								
+							//TODO: which grammar should we use to create a mannual rule?
+							int arity = 0;//only allow flat rule (i.e. arity=0)
+							Rule rule = this.grammars[0].constructManualRule(
+									symbolTable.addNonterminal(cRule.lhs()), 
+									symbolTable.addTerminals( cRule.foreignRhs() ),
+									symbolTable.addTerminals( cRule.nativeRhs() ), 
+									cRule.features(), arity);
+							add_axiom(cSpan.start(), cSpan.end(), rule, 0);
+						}else{
+							shouldAdd =true;
+						}
+					}
+					if(shouldAdd==true){
+						tblConstraintSpansForFiltering.put(getSpanSignature(cSpan.start(),cSpan.end()),cSpan);
+					}
+				}
+			}
+		}
+		
 		
 		if (logger.isLoggable(Level.FINE)) logger.fine("Finished seeding chart.");
 	}
 	
+
 	
 	/** construct the hypergraph with the help from DotChart */
 	public HyperGraph expand() {
@@ -200,12 +247,8 @@ public class Chart {
 							float lattice_cost = dt.lattice_cost;
 							RuleCollection rules = dt.tnode.getRules();
 							if (null != rules) { // have rules under this trienode
-								//TODO: filter the rule according to LHS constraint
 								if (rules.getArity() == 0) { // rules without any non-terminal
-									List<Rule> l_rules = rules.getSortedRules();
-									for (Rule rule : l_rules) {
-										add_axiom(i, j, rule, lattice_cost);
-									}
+									add_axioms(i, j, rules, lattice_cost);
 								} else { // rules with non-terminal
 									if (JoshuaConfiguration.use_cube_prune) {
 										complete_cell_cube_prune(i, j, dt, rules, lattice_cost);
@@ -343,6 +386,12 @@ public class Chart {
 	}
 	
 	
+	private void add_axioms(int i, int j, RuleCollection rb, float lattice_cost){
+		List<Rule> l_rules = filterRules(i,j, rb.getSortedRules());
+		for (Rule rule : l_rules) {
+			add_axiom(i, j, rule, lattice_cost);
+		}
+	}
 	/** axiom is for rules with zero-arity */
 	private void add_axiom(int i, int j, Rule rule, float lattice_cost) {
 		if (null == this.bins[i][j]) {
@@ -356,7 +405,7 @@ public class Chart {
 		if (null == this.bins[i][j]) {
 			this.bins[i][j] = new Bin(this, this.goalSymbolID);
 		}
-		this.bins[i][j].complete_cell(i, j, dt.l_ant_super_items, rb, lattice_cost);//combinations: rules, antecent items
+		this.bins[i][j].complete_cell(i, j, dt.l_ant_super_items, filterRules(i,j,rb.getSortedRules()), rb.getArity(), lattice_cost);//combinations: rules, antecent items
 	}
 	
 	
@@ -364,6 +413,51 @@ public class Chart {
 		if (null == this.bins[i][j]) {
 			this.bins[i][j] = new Bin(this, this.goalSymbolID);
 		}
-		this.bins[i][j].complete_cell_cube_prune(i, j, dt.l_ant_super_items, rb, lattice_cost);//combinations: rules, antecent items
+		
+		this.bins[i][j].complete_cell_cube_prune(i, j, dt.l_ant_super_items, filterRules(i,j, rb.getSortedRules()), lattice_cost);//combinations: rules, antecent items
+	}
+	
+	private String getSpanSignature(int i, int j){
+		return "i j";
+	}
+	private List<Rule>  filterRules(int i, int j, List<Rule> rulesIn){
+		if(tblConstraintSpansForFiltering==null)
+			return rulesIn;
+		
+		ConstraintSpan cSpan = tblConstraintSpansForFiltering.get( getSpanSignature(i,j) );
+		if(cSpan==null){//no filtering
+			return rulesIn;
+		}else{
+			List<Rule>  rulesOut = new ArrayList<Rule>();
+			for(Rule gRule : rulesIn){
+				//gRule will survive, if any constraint (LHS or RHS) let gRule survive 
+				while(cSpan.rules().hasNext()){//TODO???????????????????? big bug, as the iterator may have already been iterated once
+					ConstraintRule cRule = cSpan.rules().next();
+					if(shouldSurvive(cRule, gRule)){
+						rulesOut.add(gRule);
+						break;
+					}
+				}
+			}
+			return rulesOut;
+		}
+	}
+	
+	
+	//should we filter out the gRule based on the manually provided constraint cRule
+	private boolean shouldSurvive(ConstraintRule cRule, Rule gRule){		
+		if(cRule.type() == ConstraintRule.Type.LHS){
+			return ( gRule.getLHS() == p_symbolTable.addNonterminal(cRule.lhs()) ) ? true: false;		
+		}else if(cRule.type() ==  ConstraintRule.Type.RHS){
+			int[] targetWords = p_symbolTable.addTerminals(cRule.nativeRhs());
+			if(targetWords.length!=gRule.getEnglish().length)
+				return false;
+			for(int t=0; t<targetWords.length; t++)
+				if(targetWords[t]!=gRule.getEnglish()[t])
+					return false;
+			return true;
+		}else{//default: not surviving
+			return false;
+		}	
 	}
 }

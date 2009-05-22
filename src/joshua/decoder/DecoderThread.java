@@ -291,7 +291,8 @@ public class DecoderThread extends Thread {
 				Integer.parseInt(segment.id()),
 				grammars,
 				this.hasLanguageModel,
-				JoshuaConfiguration.goal_symbol);
+				JoshuaConfiguration.goal_symbol,
+				segment.constraints());
 			
 			if (logger.isLoggable(Level.FINER))
 				logger.finer("after seed, time: "

@@ -279,14 +279,14 @@ public class Bin {
 	/* add complete Items in Chart pruning inside this function */
 	public void complete_cell(
 		int i, int j, ArrayList<SuperItem> superItems,
-		RuleCollection rules, float latticeCost
+		List<Rule> rules, int arity, float latticeCost
 	) {
 		//System.out.println(String.format("Complet_cell is called, n_rules: %d ", rules.size()));
 		// consider all the possbile combinations (while
 		// in Cube-pruning, we do not consider all the
 		// possible combinations)
-		for (Rule rule : rules.getSortedRules()) {
-			if (1 == rules.getArity()) {
+		for (Rule rule : rules) {
+			if (1 == arity) {
 				SuperItem super_ant1 = superItems.get(0);
 				//System.out.println(String.format("Complet_cell, size %d ", super_ant1.l_items.size()));
 				//rule.print_info(Support.DEBUG);
@@ -298,7 +298,7 @@ public class Bin {
 						rule, i, j, antecedents, latticeCost);
 				}
 				
-			} else if (rules.getArity() == 2) {
+			} else if (arity == 2) {
 				SuperItem super_ant1 = superItems.get(0);
 				SuperItem super_ant2 = superItems.get(1);
 				//System.out.println(String.format("Complet_cell, size %d * %d ", super_ant1.l_items.size(),super_ant2.l_items.size()));
@@ -330,7 +330,7 @@ public class Bin {
 	//       the description in Liang'2007 ACL paper
 	public void complete_cell_cube_prune(
 		int i, int j, ArrayList<SuperItem> superItems,
-		RuleCollection rules_, float latticeCost
+		List<Rule> rules, float latticeCost
 	) { // combinations: rules, antecent items
 		// in the paper, heap_cands is called cand[v]
 		PriorityQueue<CubePruneState> heap_cands =
@@ -339,7 +339,6 @@ public class Bin {
 		// rememeber which state has been explored
 		HashMap<String,Integer> cube_state_tbl = new HashMap<String,Integer>();
 		
-		List<Rule> rules = rules_.getSortedRules();
 		if (null == rules || rules.size() <= 0) {
 			return;
 		}

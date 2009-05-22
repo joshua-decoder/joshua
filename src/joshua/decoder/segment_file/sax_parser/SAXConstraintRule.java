@@ -30,7 +30,7 @@ import org.xml.sax.SAXException;
  * @version $LastChangedDate: 2009-03-26 15:06:57 -0400 (Thu, 26 Mar 2009) $
  */
 public class SAXConstraintRule {
-	private double[] features;
+	private float[] features;
 	private String lhs;
 	private String rhs;
 	
@@ -43,9 +43,9 @@ public class SAXConstraintRule {
 		if (null != features) {
 			String[] featureStrings = splitter.split(features);
 			
-			this.features = new double[featureStrings.length];
+			this.features = new float[featureStrings.length];
 			for (int i = 0; i < featureStrings.length; ++i) {
-				this.features[i] = Double.parseDouble(featureStrings[i]);
+				this.features[i] = Float.parseFloat(featureStrings[i]);
 			}
 		}
 	}
@@ -78,7 +78,7 @@ public class SAXConstraintRule {
 		
 		
 		final ConstraintRule.Type type = tempType;
-		final double[] features   = this.features;
+		final float[] features   = this.features;
 		final String   lhs        = this.lhs;
 		final String   nativeRhs  = this.rhs;
 		final String   foreignRhs = span;
@@ -86,7 +86,7 @@ public class SAXConstraintRule {
 		return new ConstraintRule() {
 			public ConstraintRule.Type type() { return type;       }
 			public String   lhs()             { return lhs;        }
-			public double[] features()        { return features;   }
+			public float[] features()        { return features;   }
 			public String   nativeRhs()       { return nativeRhs;  }
 			public String   foreignRhs()      { return foreignRhs; }
 		};

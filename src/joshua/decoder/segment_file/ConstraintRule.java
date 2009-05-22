@@ -89,5 +89,5 @@ public interface ConstraintRule {
 	 * grammar. We cannot enforce this requirement, but the
 	 * {@link Chart} must throw an error if there is a mismatch.
 	 */
-	double[] features();
+	float[] features();
 }

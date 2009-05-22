@@ -448,4 +448,9 @@ public class Node extends AbstractGrammar implements Comparable<Node>, Grammar, 
 		// TODO Auto-generated method stub
 		return 0;
 	}
+
+	public Rule constructManualRule(int lhs, int[] sourceWords, int[] targetWords, float[] scores, int aritity) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }
