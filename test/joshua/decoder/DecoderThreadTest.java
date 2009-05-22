@@ -31,7 +31,7 @@ public class DecoderThreadTest {
 	public void basicSuffixArrayGrammar() {
 		
 		// Write configuration to temp file on disk
-		String configFile;
+//		String configFile;
 		
 		
 //		JoshuaDecoder decoder = 

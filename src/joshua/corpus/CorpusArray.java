@@ -298,15 +298,21 @@ public class CorpusArray extends AbstractCorpus<ExternalizableSymbolTable> imple
 	 */
     public int compareSuffixes(int position1, int position2, int maxComparisonLength){
 		for (int i = 0; i < maxComparisonLength; i++) {
-			if (position1 + i < (corpus.length - 1)
-			&& position2 + i > (corpus.length - 1)) {
+			if (position1 + i < (corpus.length)
+					&& position2 + i >= (corpus.length)) {
 				return 1;
 			}
-			if (position2 + i < (corpus.length - 1)
-			&& position1 + i > (corpus.length - 1)) {
+			if (position2 + i < (corpus.length)
+					&& position1 + i >= (corpus.length)) {
 				return -1;
 			}
-			int diff = corpus[position1 + i] - corpus[position2 + i];
+			
+			int diff;
+			try {
+				diff = corpus[position1 + i] - corpus[position2 + i];
+			} catch (ArrayIndexOutOfBoundsException e) {
+				throw new Error("Bug in CorpusArray method compareSuffixes: " + e.getMessage());
+			}
 			
 			if (diff != 0) {
 				return diff;

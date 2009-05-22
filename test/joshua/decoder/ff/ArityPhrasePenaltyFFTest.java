@@ -18,6 +18,7 @@
 package joshua.decoder.ff;
 
 import joshua.decoder.ff.tm.BilingualRule;
+import joshua.decoder.ff.tm.MonolingualRule;
 import joshua.decoder.ff.tm.Rule;
 
 import org.testng.Assert;
@@ -41,7 +42,7 @@ public class ArityPhrasePenaltyFFTest {
 		
 		int featureID = 0;
 		double weight = 0.0;
-		int owner = 0;
+		int owner = MonolingualRule.DUMMY_OWNER;
 		int min = 1;
 		int max = 5;
 		
@@ -55,8 +56,7 @@ public class ArityPhrasePenaltyFFTest {
 		
 		Rule dummyRule = new BilingualRule(lhs, sourceRHS, targetRHS, featureScores, arity);
 		
-		//TODO Address the issue of rule owners
-		//Assert.assertEquals(featureFunction.estimate(dummyRule), ArityPhrasePenaltyFF.ALPHA);
+		Assert.assertEquals(featureFunction.estimate(dummyRule), ArityPhrasePenaltyFF.ALPHA);
 		
 	}
 	

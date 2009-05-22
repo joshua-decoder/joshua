@@ -71,7 +71,7 @@ public class MonolingualRule implements Rule {
 	// TODO: Ideally, we shouldn't have to have dummy rule IDs
 	// and dummy owners. How can this need be eliminated?
 	private static final int DUMMY_RULE_ID = 1;
-	private static final int DUMMY_OWNER = 1;
+	public static final int DUMMY_OWNER = 1;
 	
 	
 //===============================================================

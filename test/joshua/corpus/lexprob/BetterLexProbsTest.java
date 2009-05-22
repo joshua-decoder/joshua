@@ -79,7 +79,8 @@ public class BetterLexProbsTest {
 			"resumption of the session ." + "\n" +
 			"of the session" + "\n" + 
 			"of the session" + "\n" +
-			"thunder ; lightning";
+			"thunder ; lightning" + "\n" +
+			"; blither blather ;";
 		
 		String sourceFileName;
 		{
@@ -95,7 +96,8 @@ public class BetterLexProbsTest {
 			"wiederaufnahme der sitzungsperiode ." + "\n" +
 			"von dem sitzung" + "\n" + 
 			"von dem sitzung" + "\n" +
-			"blitzen";
+			"blitzen" + "\n" +
+			"; ;";
 		
 		String targetFileName;
 		{
@@ -111,7 +113,8 @@ public class BetterLexProbsTest {
 			"0-0 1-1 2-1 3-2 4-3" + "\n" +
 			"0-0 1-1 2-2" + "\n" +
 			"0-0 1-1 2-2" + "\n" +
-			"0-0 2-0";
+			"0-0 2-0" + "\n" + 
+			"0-0 3-1";
 		
 		String alignmentFileName;
 		{
@@ -151,7 +154,8 @@ public class BetterLexProbsTest {
 		this.lexProbs = new LexProbs(parallelCorpus, Float.MIN_VALUE);
 		
 		Counts<Integer,Integer> counts = lexProbs.getCounts();
-		
+
+		Assert.assertEquals(counts.getCount(sourceVocab.getID(";"), targetVocab.getID(";")), 2);
 		Assert.assertEquals(counts.getCount(sourceVocab.getID(";"), null), 1);
 		
 	}
@@ -409,6 +413,15 @@ public class BetterLexProbsTest {
 			Assert.assertEquals(targetGivenSource, 0.5f*((1.0f/3.0f) + (1.0f/3.0f)) * (1.0f/3.0f));// lex P(der sitzungsperiode | of the session)
 		}
 
+		{
+			HierarchicalPhrases phrases = getSourcePhrase("thunder ; lightning", 29, 32);
+			HierarchicalPhrase targetPhrase = getTargetPhrase("blitzen", 28, 29);
+			float sourceGivenTarget = lexProbs.lexProbSourceGivenTarget(phrases, phraseIndex, targetPhrase);
+			float targetGivenSource = lexProbs.lexProbTargetGivenSource(phrases, phraseIndex, targetPhrase);
+			Assert.assertEquals(sourceGivenTarget, 0.5f * (1.0f/3.0f) * 0.5f);  // lex P(thunder ; lightning | blitzen)
+			Assert.assertEquals(targetGivenSource, ((1.0f/2.0f) * (1.0f + 1.0f)));// lex P(blitzen | thunder ; lightning)
+		}
+		
 	}
 	
 	/**
@@ -508,7 +521,7 @@ public class BetterLexProbsTest {
 		Assert.assertEquals(lexProbs.sourceGivenTarget("and", "und"), 0.5f);
 		Assert.assertEquals(lexProbs.sourceGivenTarget("yet", "und"), 0.5f);
 		
-		Assert.assertEquals(lexProbs.sourceGivenTarget(";", null), 1.0f);
+		Assert.assertEquals(lexProbs.sourceGivenTarget(";", null), (1.0f/3.0f));
 	}
 	
 	@Test(dependsOnMethods={"setup"})
