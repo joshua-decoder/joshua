@@ -36,6 +36,7 @@ import joshua.corpus.vocab.SymbolTable;
 import joshua.util.io.LineReader;
 import joshua.util.io.NullReader;
 import joshua.util.io.Reader;
+import joshua.util.io.UncheckedIOException;
 import joshua.util.FileUtility;
 import joshua.util.CoIterator;
 
@@ -174,14 +175,18 @@ public class DecoderThread extends Thread {
 		
 		this.nbestWriter = FileUtility.getWriteFileStream(this.nbestFile);
 		try {
-			segmentParser.parseSegmentFile(
-				LineReader.getInputStream(this.testFile),
-				new TranslateCoiterator(
-					null == this.oracleFile
-						? new NullReader<String>()
-						: new LineReader(this.oracleFile)
-				)
-			);
+			try {
+				segmentParser.parseSegmentFile(
+					LineReader.getInputStream(this.testFile),
+					new TranslateCoiterator(
+						null == this.oracleFile
+							? new NullReader<String>()
+							: new LineReader(this.oracleFile)
+					)
+				);
+			} catch (UncheckedIOException e) {
+				e.throwCheckedException();
+			}
 		} finally {
 			this.nbestWriter.flush();
 			this.nbestWriter.close();
@@ -204,24 +209,21 @@ public class DecoderThread extends Thread {
 				DecoderThread.this.logger.fine(
 					"now translating\n" + segment.sentence());
 			
-			try { // HACK: Fix this exception wrapping
+			try {
 				DecoderThread.this.translate(
 					segment,
 					this.oracleReader.readLine());
 				
 			} catch (IOException ioe) {
-				throw new RuntimeException(
-					"caught IOException in CoIterator", ioe);
+				throw new UncheckedIOException(ioe);
 			}
 		}
 		
 		public void finish() {
-			try { // HACK: Fix this exception wrapping
+			try {
 				this.oracleReader.close();
-				
 			} catch (IOException ioe) {
-				throw new RuntimeException(
-					"caught IOException in CoIterator", ioe);
+				throw new UncheckedIOException(ioe);
 			}
 		}
 	} // End inner class TranslateCoiterator
@@ -295,13 +297,15 @@ public class DecoderThread extends Thread {
 			
 			logger.finer("... Done Extracting. Getting k-best...");
 			this.kbestExtractor.lazy_k_best_extract_hg(
-				oracle, this.featureFunctions, JoshuaConfiguration.topN, Integer.parseInt(segment.id()), this.nbestWriter);
+				oracle, this.featureFunctions, JoshuaConfiguration.topN,
+				Integer.parseInt(segment.id()), this.nbestWriter);
 			logger.finer("... Done getting k-best");
 			
 		} else {
 			/* k-best extraction */
 			this.kbestExtractor.lazy_k_best_extract_hg(
-				hypergraph, this.featureFunctions, JoshuaConfiguration.topN, Integer.parseInt(segment.id()), this.nbestWriter);
+				hypergraph, this.featureFunctions, JoshuaConfiguration.topN,
+				Integer.parseInt(segment.id()), this.nbestWriter);
 			if (logger.isLoggable(Level.FINER))
 				logger.finer("after k-best, time: "
 				+ ((double)(System.currentTimeMillis() - startTime) / 1000.0)

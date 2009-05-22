@@ -22,6 +22,8 @@ import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.tm.Rule;
 import joshua.corpus.vocab.SymbolTable;
 import joshua.util.Regex;
+import joshua.util.CoIterator;
+import joshua.util.io.UncheckedIOException;
 
 import java.io.BufferedWriter;
 import java.io.OutputStreamWriter;
@@ -90,68 +92,79 @@ public class KBestExtractor {
 	
 	
 //	########################################## kbest extraction algorithm ##########################	
+	// FIXME: Most of these arguments are the same every time this method is called. They should be moved to fields and set in the constructor or an initialization method. The only ones that vary are the HyperGraph and the sent_id (and the coiterator iff anyone starts to use the ArrayList variant).
 	public void lazy_k_best_extract_hg(
 		HyperGraph hg, ArrayList<FeatureFunction> l_models, int global_n,
-		int sent_id, BufferedWriter out		
-	) throws IOException {
+		int sent_id, CoIterator<String> coit) {
 		//long start = System.currentTimeMillis();
 		reset_state();
 		if (null == hg.goal_item) return;
 		
-		BufferedWriter out2 = null;
+		//VirtualItem virtual_goal_item = add_virtual_item(hg.goal_item);
+		try {
+			int next_n = 0;
+			while (true) {
+				/*
+				DerivationState cur = virtual_goal_item.lazy_k_best_extract_item(this, ++next_n, extract_unique_nbest, extract_nbest_tree, include_align); // global_n is not used at all
+				if (null == cur || virtual_goal_item.l_nbest.size() < next_n // do not have more hypotheses
+				|| virtual_goal_item.l_nbest.size() > global_n) { // get enough hyps
+					break;
+				}
+				String hyp_str = get_kth_hyp(cur, sent_id, l_models, extract_nbest_tree, include_align, add_combined_score);
+				*/
+				String hyp_str = get_kth_hyp(hg.goal_item, ++next_n, sent_id, l_models);
+				if (null == hyp_str || next_n > global_n) break;
+				
+				coit.coNext(hyp_str);
+			}
+			//g_time_kbest_extract += System.currentTimeMillis()-start;
+		} finally {
+			coit.finish();
+		}
+	}
+	
+	
+	public void lazy_k_best_extract_hg(
+		HyperGraph hg, ArrayList<FeatureFunction> l_models, int global_n,
+		int sent_id, BufferedWriter out
+	) throws IOException {
+		final BufferedWriter writer;
 		if (null == out) {
-			out2 = new BufferedWriter(new OutputStreamWriter(System.out));
+			writer = new BufferedWriter(new OutputStreamWriter(System.out));
 		} else {
-			out2 = out;
+			writer = out;
 		}
 		
-		
-		//VirtualItem virtual_goal_item = add_virtual_item( hg.goal_item);
-		int next_n = 0;
-		while (true) {
-			/*
-			DerivationState cur = virtual_goal_item.lazy_k_best_extract_item(this ,++next_n,extract_unique_nbest,extract_nbest_tree,include_align);//global_n is not used at all
-			if( cur==null || virtual_goal_item.l_nbest.size()<next_n //do not have more hypthesis
-				|| virtual_goal_item.l_nbest.size()>global_n)//get enough hyps
-						break;
-			String hyp_str = get_kth_hyp(cur, sent_id, l_models, extract_nbest_tree, include_align, add_combined_score);
-			*/
-			String hyp_str = get_kth_hyp(hg.goal_item, ++next_n, sent_id, l_models);
-			if(hyp_str==null || next_n > global_n) break;
-
-			//write to files
-			out2.write(hyp_str);
-			out2.write("\n");
+		try {
+			this.lazy_k_best_extract_hg(hg, l_models, global_n, sent_id,
+				new CoIterator<String>() {
+					public void coNext(String hyp_str) {
+						try {
+							writer.write(hyp_str);
+							writer.write("\n");
+						} catch (IOException e) {
+							throw new UncheckedIOException(e);
+						}
+					}
+					
+					public void finish() {}
+				});
+		} catch (UncheckedIOException e) {
+			e.throwCheckedException();
 		}
-		//g_time_kbest_extract += System.currentTimeMillis()-start;
 	}
+	
+	public void lazy_k_best_extract_hg(HyperGraph hg, ArrayList<FeatureFunction> l_models, int global_n, int sent_id, final ArrayList<String> out) {
 		
-	//the only difference from the above function is: we store the nbest into an arraylist, instead of a file
-	public void lazy_k_best_extract_hg(HyperGraph hg, ArrayList<FeatureFunction> l_models, int global_n, int sent_id, ArrayList<String> out){
-		//long start = System.currentTimeMillis();
-		reset_state();
-		if(hg.goal_item==null)return;		
-		//VirtualItem virtual_goal_item = add_virtual_item( hg.goal_item);
-		int next_n=0;
-		while(true){
-			/*
-			DerivationState cur = virtual_goal_item.lazy_k_best_extract_item(this ,++next_n,extract_unique_nbest,extract_nbest_tree,include_align);//global_n is not used at all
-			if( cur==null || virtual_goal_item.l_nbest.size()<next_n //do not have more hypthesis
-				|| virtual_goal_item.l_nbest.size()>global_n)//get enough hyps
-						break;
-			String hyp_str = get_kth_hyp(cur, sent_id, l_models, extract_nbest_tree, include_align, add_combined_score);
-			*/
-			String hyp_str = get_kth_hyp(hg.goal_item, ++next_n, sent_id, l_models);
-			if(hyp_str==null || next_n > global_n) break;
-
-			//write to files
-			out.add(hyp_str);			
-		}
-		//g_time_kbest_extract += System.currentTimeMillis()-start;
+		this.lazy_k_best_extract_hg(hg, l_models, global_n, sent_id,
+			new CoIterator<String>() {
+				public void coNext(String hyp_str) { out.add(hyp_str); }
+				public void finish() {}
+			});
 	}
 	
 	
-	public void reset_state(){
+	public void reset_state() {
 		tbl_virtual_items.clear();
 	}
 	
@@ -162,7 +175,7 @@ public class KBestExtractor {
 	 * add_combined_score==f: do not add combined model cost
 	 * */
 	//***************** you may need to reset_state() before you call this function for the first time
-	public String get_kth_hyp(HGNode it, int k,  int sent_id, ArrayList<FeatureFunction> l_models){
+	public String get_kth_hyp(HGNode it, int k,  int sent_id, ArrayList<FeatureFunction> l_models) {
 		VirtualItem virtual_item = add_virtual_item(it);
 		DerivationState cur = virtual_item.lazy_k_best_extract_item(p_symbolTable, this, k);
 		if( cur==null) return null;
