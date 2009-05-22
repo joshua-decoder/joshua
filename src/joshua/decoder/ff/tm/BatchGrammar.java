@@ -19,27 +19,32 @@ package joshua.decoder.ff.tm;
 
 import joshua.corpus.Phrase;
 
-
 /**
- * This class provides an abstract way to implement a batch grammar, 
- * meaning the grammar is for the whole test set, not sentence specific.
- * 
- * public interfaces
- *   TMGrammar: init and load the grammar
- *   TrieGrammar: match symbol for next layer
- *   RuleBin: get sorted rules
- *   Rule: rule information
+ * This class provides an abstract factory 
+ * that will return itself as a batch grammar.
+ * <p>
+ * This means that the grammar produced by this class will be constant 
+ * over any test set, and will not be specific to any provided sentence.
  * 
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate$
  */
-
-
-/* 
- * */
-
 public abstract class BatchGrammar extends AbstractGrammar implements GrammarFactory, Grammar {
 	
+	/**
+	 * Returns a grammar which is <em>not</em> adapted 
+	 * to the specified sentence.
+	 * <p>
+	 * This method always ignores the provided parameter.
+	 * 
+	 * The grammar returned will always be the same, 
+	 * regardless of the value of the sentence parameter.
+	 * 
+	 * @param sentence
+	 *            the next sentence to be translated
+	 * 
+	 * @return a grammar that represents a set of translation rules
+	 */
 	public Grammar getGrammarForSentence(Phrase sentence) {
 		return this;
 	}

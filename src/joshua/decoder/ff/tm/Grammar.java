@@ -34,7 +34,11 @@ import joshua.decoder.ff.tm.Trie;
 public interface Grammar {
 	
 	/**
-	 * Returns the root of the trie (as a small constant-time function).
+	 * Gets the root of the <code>Trie</code> backing this grammar.
+	 * <p>
+	 * <em>Note</em>: This method should run as a small constant-time function.
+	 * 
+	 * @return the root of the <code>Trie</code> backing this grammar
 	 */
 	Trie getTrieRoot();
 	
@@ -52,25 +56,38 @@ public interface Grammar {
 	
 	
 	/**
+	 * After calling this method, the rules in this grammar
+	 * are guaranteed to be sorted based on the latest feature function values.
+	 * <p>
 	 * Cube-pruning requires that the grammar be sorted based
 	 * on the latest feature functions.
+	 * 
+	 * @param models List of feature functions
 	 */
 	void sortGrammar(ArrayList<FeatureFunction> models);
 	
+	/** 
+	 * Determines whether the rules in this grammar
+	 * have been sorted based on the latest feature function values. 
+	 * <p>
+	 * This method is needed for the cube-pruning algorithm.
+	 * 
+	 * @return <code>true</code> if the rules in this grammar
+	 *         have been sorted based on the latest feature function values,
+	 *         <code>false</code> otherwise
+	 */
 	boolean isSorted();
-	
-	void setSorted(boolean sorted);
-	
+		
 	/**
-	 * return number of rules stored in the grammar
+	 * Gets the number of rules stored in the grammar.
+	 * 
+	 * @return the number of rules stored in the grammar
 	 */
 	int getNumRules();
 	
-	
-	
 	/**
-	 * Construct an OOV rule for the word source. Only called
-	 * when creating oov rule in Chart or DiskHypergraph, all
+	 * Construct an out-of-vocabulary (OOV) rule for the word source. 
+	 * Only called when creating oov rule in Chart or DiskHypergraph, all
 	 * the transition cost for phrase model, arity penalty,
 	 * word penalty are all zero, except the LM cost or the
 	 * first feature if no LM feature is used
@@ -81,7 +98,11 @@ public interface Grammar {
 	
 	
 	/**
-	 * return the OOV rule ID
+	 * Gets the integer identifier 
+	 * of this grammar's out-of-vocabulary (OOV) rule.
+	 * 
+	 * @return the integer identifier of this grammar's 
+	 *         out-of-vocabulary (OOV) rule
 	 */
 	int getOOVRuleID();
 }

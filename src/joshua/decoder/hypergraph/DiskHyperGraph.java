@@ -114,7 +114,7 @@ public class DiskHyperGraph {
 	 */
 	private static int NULL_RULE_ID = -1;
 	
-	//TODO: this is a hack for us to create OOVRule, and OOVRuleID
+	//FIXME: this is a hack for us to create OOVRule, and OOVRuleID
 	/**This is wrong as the default LHS and owner are not properly set. For this reason, the creation of OOV rule may cause bugs*/
 	private static Grammar pGrammar = new MemoryBasedBatchGrammar();
 	
@@ -315,7 +315,7 @@ public class DiskHyperGraph {
 	
 	
 	private final boolean isOutOfVocabularyRule(Rule rl) {
-		return (rl.getRuleID() == pGrammar.getOOVRuleID());
+		return (rl.getRuleID() == MemoryBasedBatchGrammar.OOV_RULE_ID);//pGrammar.getOOVRuleID());
 	}
 	
 	private void writeDeduction(HGNode item, HyperEdge deduction)
@@ -351,7 +351,7 @@ public class DiskHyperGraph {
 		}
 		s.append(' ')
 			.append(ruleID);
-		if (ruleID == pGrammar.getOOVRuleID()) {
+		if (ruleID == MemoryBasedBatchGrammar.OOV_RULE_ID) {//pGrammar.getOOVRuleID()) {
 			//System.out.println("lhs id: " + deduction_rule.getLHS());
 			//System.out.println("rule words: " + deduction_rule.getEnglish());
 			s.append(' ')
@@ -515,7 +515,7 @@ public class DiskHyperGraph {
 		Rule rule = null;
 		final int ruleID = Integer.parseInt(fds[2+qtyAntecedents]);
 		if (ruleID != NULL_RULE_ID) {
-			if (ruleID != pGrammar.getOOVRuleID()) {
+			if (ruleID != MemoryBasedBatchGrammar.OOV_RULE_ID) {//pGrammar.getOOVRuleID()) {
 				rule = this.associatedGrammar.get(ruleID);
 				if (null == rule) {
 					throw new RuntimeException("rule is null but id is " + ruleID);

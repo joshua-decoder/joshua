@@ -21,10 +21,18 @@ import joshua.corpus.Phrase;
 import joshua.decoder.ff.tm.Grammar;
 
 /**
- * To implement a new grammar, one must (1) implement GrammarFactory (2)
- * implement Grammar (3) implement TrieGrammar (4) implement RuleCollection
+ * Factory capable of getting a grammar 
+ * for use in translating a sentence.
+ * <p>
+ * Developers interested in implementing a new type of grammar must:
+ * <ol>
+ * <li>Implement <code>GrammarFactory</code>
+ * <li>Implement <code>Grammar</code>
+ * <li>Implement <code>TrieGrammar</code>
+ * <li>Implement <code>RuleCollection</code>
+ * </ol>
  * 
- * Also, one needs to pay attention to Rule class
+ * Also, attention should be directed to the <code>Rule</code> class.
  * 
  * @author Lane Schwartz
  * @version $LastChangedDate$

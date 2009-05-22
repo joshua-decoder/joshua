@@ -37,6 +37,11 @@ import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.RuleCollection;
 import joshua.decoder.ff.tm.Trie;
 
+/**
+ * Represents a node in a prefix tree.
+ * 
+ * @author Lane Schwartz
+ */
 public class Node extends AbstractGrammar implements Comparable<Node>, Grammar, Trie {
 
 	private static final Logger logger = Logger.getLogger(Node.class.getName());

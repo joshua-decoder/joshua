@@ -34,7 +34,7 @@ public class MemoryBasedTrie implements Trie {
 	HashMap<Integer,MemoryBasedTrie> tbl_children = null;
 	
 	
-	//looking for the next layer trinode corresponding to this symbol
+	/* See Javadoc for Trie interface. */
 	public MemoryBasedTrie matchOne(int sym_id) {
 		if (null == tbl_children) {
 			return null;
@@ -43,7 +43,7 @@ public class MemoryBasedTrie implements Trie {
 		}
 	}
 	
-	
+	/* See Javadoc for Trie interface. */
 	public boolean hasExtensions() {
 		return (null != this.tbl_children);
 	}
@@ -56,6 +56,7 @@ public class MemoryBasedTrie implements Trie {
 		this.tbl_children = tbl_children_;
 	}
 	
+	/* See Javadoc for Trie interface. */
 	public boolean hasRules() {
 		return (null != this.rule_bin);
 	}
@@ -65,6 +66,7 @@ public class MemoryBasedTrie implements Trie {
 		rule_bin = rb;
 	}
 	
+	/* See Javadoc for Trie interface. */
 	public RuleCollection getRules() {
 		return this.rule_bin;
 	}
@@ -83,7 +85,7 @@ public class MemoryBasedTrie implements Trie {
 		}
 	}
 	
-	
+	/* See Javadoc for Trie interface. */
 	public Collection<MemoryBasedTrie> getExtensions() {
 		return this.tbl_children.values();
 	}

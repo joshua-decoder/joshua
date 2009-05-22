@@ -37,7 +37,10 @@ public interface Trie {
 	
 	/**
 	 * Traverse one ply further down the trie. If there is no
-	 * match, the result is null
+	 * match, the result is null.
+	 * 
+	 * @param wordID
+	 * @return Child node of this trie
 	 */
 	Trie matchOne(int wordID);
 	
@@ -45,6 +48,9 @@ public interface Trie {
 	/**
 	 * Returns whether matchOne(Symbol) could succeed for any
 	 * symbol.
+	 * 
+	 * @return <code>true</code> if {@link #matchOne(int)} 
+	 *         could succeed for some symbol, <code>false</code> otherwise
 	 */
 	boolean hasExtensions();
 	
@@ -52,13 +58,19 @@ public interface Trie {
 	/**
 	 * If the trie node has extensions, then return a list of
 	 * extended trie nodes, otherwise return null.
+	 * 
+	 * @return A list of extended <code>Trie</code> nodes
+	 *         if this node has extensions, <code>null<code> otherwise
 	 */
 	Collection<? extends Trie> getExtensions();
 	
 	
 	/**
-	 * Returns whether the current node/state is a "final state"
+	 * Gets whether the current node/state is a "final state"
 	 * that has matching rules.
+	 * 
+	 * @return <code>true</code> if the current node/state is a "final state"
+	 *         that has matching rules, <code>false</code> otherwise
 	 */
 	boolean hasRules();
 	
@@ -67,13 +79,15 @@ public interface Trie {
 	 * Retrieve the rules at the current node/state. The
 	 * implementation of this method must adhere to the following
 	 * laws:
-	 *
-	 * (1) The return value is always non-null. The collection
-	 *     may be empty however.
-	 * (2) The collection must be empty if hasRules() is
-	 *     false, and must be non-empty if hasRules() is true.
-	 * (3) The collection must be sorted (at least as used by
-	 *     TMGrammar)
+	 * 
+	 * <ol>
+	 * <li>The return value is always non-null. The collection
+	 *     may be empty however.</li>
+	 * <li>The collection must be empty if hasRules() is
+	 *     false, and must be non-empty if hasRules() is true.</li>
+	 * <li>The collection must be sorted (at least as used by
+	 *     TMGrammar)</li>
+	 * </ol>
 	 */
 	RuleCollection getRules();
 	

@@ -34,17 +34,32 @@ import joshua.decoder.ff.FeatureFunction;
  */
 public class BasicRuleCollection implements RuleCollection {
 
+	/** Logger for this class. */
 	private static final Logger logger = 
 		Logger.getLogger(BasicRuleCollection.class.getName());
 	
+	/** 
+	 * Indicates whether the rules in this collection
+	 * have been sorted based on the latest feature function values. 
+	 */
 	protected boolean sorted = false;
+	
+	/** List of rules stored in this collection. */
 	protected final List<Rule> rules;
 	
-	/** Number of nonterminals */
+	/** Number of nonterminals in the source pattern. */
 	protected int arity;
+	
+	/** Sequence of terminals and nonterminals in the source pattern. */
 	protected int[] sourceTokens;
 	
-	
+	/**
+	 * Constructs an initially empty rule collection.
+	 * 
+	 * @param arity Number of nonterminals in the source pattern
+	 * @param sourceTokens Sequence of terminals and nonterminals 
+	 *                     in the source pattern
+	 */
 	public BasicRuleCollection(int arity, int[] sourceTokens) {
 		this.rules = new ArrayList<Rule>();
 		this.sourceTokens = sourceTokens;
@@ -71,10 +86,12 @@ public class BasicRuleCollection implements RuleCollection {
 		this.arity = arity;
 	}
 	
+	/* See Javadoc comments for RuleCollection interface. */
 	public int getArity() {
 		return this.arity;
 	}
 	
+	/* See Javadoc comments for RuleCollection interface. */
 	public void sortRules(ArrayList<FeatureFunction> l_models) {	
 		// use a priority queue to help sort
 		PriorityQueue<Rule> t_heapRules = new PriorityQueue<Rule>(1, Rule.NegtiveCostComparator);
@@ -94,14 +111,16 @@ public class BasicRuleCollection implements RuleCollection {
 		this.sorted = true;
 	}
 	
+	/* See Javadoc comments for RuleCollection interface. */
 	public List<Rule> getSortedRules() {		
 		if (!this.sorted) {
-			logger.severe("Grammar has not been sorted which is reqired by Cube pruning, make sure you call sortGrammar after loading the grammar");			
+			logger.severe("Grammar has not been sorted which is reqired by cube pruning; sortGrammar should have been called after loading the grammar, but was not.");			
 		}
 		
 		return this.rules;
 	}
 
+	/* See Javadoc comments for RuleCollection interface. */
 	public int[] getSourceSide() {
 		return this.sourceTokens;
 	}

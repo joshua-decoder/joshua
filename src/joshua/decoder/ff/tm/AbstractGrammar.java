@@ -17,31 +17,40 @@
  */
 package joshua.decoder.ff.tm;
 
-/**
- * Grammar is a class for wrapping a trie of TrieGrammar in order
- * to store holistic metadata.
- * 
- * @author Zhifei Li, <zhifei.work@gmail.com>
- * 
- * @version $LastChangedDate$
- */
-
 import java.util.ArrayList;
 
 import joshua.decoder.ff.FeatureFunction;
 
-
+/**
+ * Partial implementation of the <code>Grammar</code> interface
+ * that provides logic for sorting a grammar.
+ * <p>
+ * <em>Note</em>: New classes implementing the <code>Grammar</code> interface
+ * should probably inherit from this class, unless a specific sorting technique
+ * different from that implemented by this class is required. 
+ * 
+ * @author Lane Schwartz
+ */
 public abstract class AbstractGrammar implements Grammar {
  
+	/** 
+	 * Indicates whether the rules in this grammar
+	 * have been sorted based on the latest feature function values. 
+	 */
 	protected boolean sorted;
 	
+	/**
+	 * Constructs an empty, unsorted grammar.
+	 * 
+	 * @see Grammar#isSorted()
+	 */
 	public AbstractGrammar() {
 		this.sorted = false;
 	}
 	
 	/**
 	 * Cube-pruning requires that the grammar be sorted based on the latest feature functions.
-	 * To  avoid synchronization, this method should be called before multiple threads are intialized for parallel decoding
+	 * To  avoid synchronization, this method should be called before multiple threads are initialized for parallel decoding
 	 */
 	public void sortGrammar(ArrayList<FeatureFunction> models) {
 		Trie root = getTrieRoot();
@@ -50,11 +59,38 @@ public abstract class AbstractGrammar implements Grammar {
 			setSorted(true);
 		}
 	}
+
+	/* See Javadoc comments for Grammar interface. */
+	public boolean isSorted() {
+		return sorted;
+	}
 	
-	public void setSorted(boolean sorted) {
+	/**
+	 * Sets the flag indicating whether this grammar is sorted.
+	 * <p>
+	 * This method is called by {@link #sortGrammar(ArrayList)}
+	 * to indicate that the grammar has been sorted.
+	 * 
+	 * Its scope is protected so that child classes 
+	 * that override <code>sortGrammar</code> will also be able to
+	 * call this method to indicate that the grammar has been sorted.
+	 * 
+	 * @param sorted
+	 */
+	protected void setSorted(boolean sorted) {
 		this.sorted = sorted;
 	}
 	
+	/**
+	 * Recursively sorts the grammar using the provided feature functions.
+	 * <p>
+	 * This method first sorts the rules stored at the provided node,
+	 * then recursively calls itself on the child nodes of the provided node.
+	 * 
+	 * @param node Grammar node in the <code>Trie</code> 
+	 *             whose rules should be sorted.
+	 * @param models Feature function models to use during sorting.
+	 */
 	private void sort(Trie node, ArrayList<FeatureFunction> models) {
 		if (node != null) {
 			if(node.hasRules())
@@ -65,10 +101,6 @@ public abstract class AbstractGrammar implements Grammar {
 				}
 			}
 		}
-	}
-
-	public boolean isSorted() {
-		return sorted;
 	}
 	
 }

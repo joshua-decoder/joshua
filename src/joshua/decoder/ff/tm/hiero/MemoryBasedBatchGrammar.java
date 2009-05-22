@@ -30,7 +30,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * This class implements a memory-based bilingual BatchGrammar
+ * This class implements a memory-based bilingual BatchGrammar.
+ * <p>
  * The rules are stored in a trie.
  * Each trie node has: 
  *   (1) RuleBin: a list of rules matching the french sides so far
@@ -40,7 +41,6 @@ import java.util.logging.Logger;
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate$
  */
-
 public class MemoryBasedBatchGrammar extends BatchGrammar {
 	
 //===============================================================
@@ -64,7 +64,7 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
 	protected int goalSymbol;
 	
 	protected int spanLimit = 10;
-	SymbolTable symbolTable = null;
+	private final SymbolTable symbolTable;
 
 	protected GrammarReader<BilingualRule> modelReader;
 	
@@ -82,6 +82,7 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
 	
 	static int rule_id_count = 1;
 		
+	/** Logger for this class. */
 	private static final Logger logger = 
 		Logger.getLogger(MemoryBasedBatchGrammar.class.getName());
 
@@ -90,6 +91,7 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
 //===============================================================
 
 	public MemoryBasedBatchGrammar() {
+		symbolTable = null;
 	}
 	
 	public MemoryBasedBatchGrammar(

@@ -106,15 +106,24 @@ public class JoshuaDecoder {
 		this.initialize(configFile);
 	}
 	
-	public JoshuaDecoder() {
+	/** 
+	 * Constructs an uninitialized decoder for use in testing. 
+	 * <p>
+	 * This method is private because it should only ever be called
+	 * by the {@link #getUninitalizedDecoder()} method to provide
+	 * an uninitialized decoder for use in testing.
+	 */
+	private JoshuaDecoder() {
 		this.grammarFactories = new ArrayList<GrammarFactory>();
 	}
 	
-	/**
-	 * Constructs an uninitialized decoder
-	 * for use in testing.
+	/** 
+	 * Gets an uninitialized decoder for use in testing. 
+	 * <p>
+	 * This method is package-private because it should only ever be called
+	 * by unit tests located in this package for use in testing.
 	 */
-	static JoshuaDecoder getUninitalizedDecoder(String configFile) {
+	static JoshuaDecoder getUninitalizedDecoder() {
 		return new JoshuaDecoder();
 	}
 	
@@ -122,7 +131,14 @@ public class JoshuaDecoder {
 // Public Methods
 //===============================================================
 	
-	/** this assumes that the weights are ordered according to the decoder's config file */
+	/** 
+	 * Sets the feature weight values used by the decoder.
+	 * <p>
+	 * This method assumes that the order of the provided weights 
+	 * is the same as their order in the decoder's configuration file.
+	 * 
+	 * @param weights Feature weight values
+	 */
 	public void changeFeatureWeightVector(double[] weights) {
 		if (this.featureFunctions.size() != weights.length) {
 			throw new IllegalArgumentException("number of weights does not match number of feature functions");
@@ -135,7 +151,7 @@ public class JoshuaDecoder {
 				"; weight changed from " + oldWeight + " to " + ff.getWeight());
 		i++; }}
 		
-		// BUG: this works for Batch grammar only; not for sentence-specific grammars
+		//FIXME: this works for Batch grammar only; not for sentence-specific grammars
 		for (GrammarFactory grammarFactory : this.grammarFactories) {
 //			if (grammarFactory instanceof Grammar) {
 			grammarFactory.getGrammarForSentence(null)
@@ -145,7 +161,13 @@ public class JoshuaDecoder {
 	}
 	
 	
-	/** Decode a whole test set. This may be parallel. */
+	/** 
+	 * Decode a whole test set. This may be parallel. 
+	 * 
+	 * @param testFile
+	 * @param nbestFile
+	 * @param oracleFile
+	 */
 	public void decodeTestSet(String testFile, String nbestFile, String oracleFile) throws IOException {
 		this.decoderFactory.decodeTestSet(testFile, nbestFile, oracleFile);
 	}
@@ -213,7 +235,12 @@ public class JoshuaDecoder {
 // Initialization Methods
 //===============================================================
 	
-	/** Initialize all parts of the JoshuaDecoder. */
+	/** 
+	 * Initialize all parts of the JoshuaDecoder.
+	 * 
+	 * @param configFile File containing configuration options
+	 * @return An initialized decoder
+	 */
 	public JoshuaDecoder initialize(String configFile) {
 		try {
 			JoshuaConfiguration.readConfigFile(configFile);
