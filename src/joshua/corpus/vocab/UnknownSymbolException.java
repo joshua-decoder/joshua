@@ -18,16 +18,17 @@
 package joshua.corpus.vocab;
 
 /**
- * Used to indicate that a query has been made for a symbol that is not known.
- * 
+ * Used to indicate that a query has been made for a symbol that
+ * is not known.
+ *
  * @author Lane Schwartz
  * @version $LastChangedDate$
  */
 public class UnknownSymbolException extends RuntimeException {
 
 	/**
-	 * Constructs an exception indicating that the specified identifier 
-	 * cannot be found in the symbol table.
+	 * Constructs an exception indicating that the specified
+	 * identifier cannot be found in the symbol table.
 	 * 
 	 * @param id Integer identifier
 	 */
@@ -36,8 +37,8 @@ public class UnknownSymbolException extends RuntimeException {
 	}
 	
 	/**
-	 * Constructs an exception indicating that the specified symbol 
-	 * cannot be found in the symbol table.
+	 * Constructs an exception indicating that the specified
+	 * symbol cannot be found in the symbol table.
 	 * 
 	 * @param symbol String symbol 
 	 */

@@ -88,7 +88,7 @@ public abstract class DefaultStatelessFF implements FeatureFunction {
 	}
 	
 	
-	/** Default implementation of finalTransition **/
+	/** Default implementation of finalTransition */
 	public double finalTransition(FFDPState state) {
 		if (null != state) {
 			throw new IllegalArgumentException("finalTransition: state for a stateless feature is NOT null");

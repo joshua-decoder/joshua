@@ -22,7 +22,7 @@ package joshua.decoder.ff;
  * This interface provide the contract for what the outside world
  * needs from the internal state used by a class implementing the
  * FeatureFunction interface
- * 
+ *
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate$
  */

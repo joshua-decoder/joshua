@@ -26,7 +26,7 @@ import joshua.decoder.ff.FeatureFunction;
 /**
  * Represents a set of rules under a particular TrieGrammar node.
  * Therefore, all the rules under a RuleCollection will share:
- * 
+ *
  * <ul>
  *   <li>arity</li>
  *   <li>source side</li>
@@ -39,8 +39,8 @@ import joshua.decoder.ff.FeatureFunction;
 public interface RuleCollection {
 
 	/**
-	 * Sorts the grammar rules in this collection
-	 * using the provided feature functions.
+	 * Sorts the grammar rules in this collection using the
+	 * provided feature functions.
 	 * 
 	 * @param l_models Feature function models to use during sorting.
 	 */

@@ -33,12 +33,12 @@ import java.util.logging.Logger;
  * This class implements:
  * (1) seeding
  * (2) extend the dot by accessing the TM grammar, and create and
- * remember DotItems
+ *     remember DotItems
  * 
  * Note: the purpose of this class: (1) do CKY parsing in an efficient
  * way (i.e., identify the applicable rules fastly); (2) binarization
  * on the fly; (3) remember the partial application of rules
- * 
+ *
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate$
  */
@@ -74,7 +74,8 @@ public class DotChart {
 	 * Constructs a new dot chart from a specified input lattice,
 	 * a translation grammar, and a parse chart.
 	 * 
-	 * @param input   A lattice which represents an input sentence.
+	 * @param input   A lattice which represents an input
+	 *                sentence.
 	 * @param grammar A translation grammar.
 	 * @param chart   A CKY+ style chart in which completed
 	 *                span entries are stored.
@@ -120,7 +121,7 @@ public class DotChart {
 	
 	/**
 	 * add intial dot items: dot-items pointer to the root of
-	 * the grammar trie
+	 * the grammar trie.
 	 */
 	public void seed() {
 		for (int j = 0; j <= sent_len - 1; j++) {
@@ -137,7 +138,7 @@ public class DotChart {
 	/**
 	 * two kinds of symbols in the foreign side: (1) non-terminal
 	 * (e.g., X or NP); (2) CN-side terminal therefore, two
-	 * ways to extend the dot postion
+	 * ways to extend the dot postion.
 	 */
 	public void expand_cell(int i, int j) {
 		//if (logger.isLoggable(Level.FINE)) logger.fine("Expanding dot cell ("+i+","+j+")");
@@ -278,8 +279,8 @@ public class DotChart {
 	
 	
 	/**
-	 * remember the dot position in which a rule has been applied so far, 
-	 * and remember the old complete items
+	 * remember the dot position in which a rule has been applied
+	 * so far, and remember the old complete items.
 	 */
 	public static class DotItem {
 		

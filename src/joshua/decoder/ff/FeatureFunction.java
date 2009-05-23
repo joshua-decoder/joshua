@@ -29,7 +29,7 @@ import java.util.ArrayList; // BUG: should be List but that causes bugs
  * you must (1) implement this FeatureFunction interface, and (2)
  * implement the FFTransitionResult and FFDPState interfaces. BUG:
  * the distinction between those latter two interfaces is unclear.
- * 
+ *
  * @author wren ng thornton <wren@users.sourceforge.net>
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate$

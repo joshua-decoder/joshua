@@ -19,7 +19,7 @@ package joshua.corpus.vocab;
 
 /**
  * Partial basic implementation of a symbol table.
- * 
+ *
  * @author Lane Schwartz
  * @author Zhifei Li
  * @version $LastChangedDate$

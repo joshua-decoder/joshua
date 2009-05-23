@@ -34,8 +34,6 @@ import java.util.logging.Level;
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate$
  */
-
-
 //@todo: handle the case that the Hypergraph only maintains the one-best tree 
 public class HGNode implements Comparable<HGNode> {
 	public int i, j;

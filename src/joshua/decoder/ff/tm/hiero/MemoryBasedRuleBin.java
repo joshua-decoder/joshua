@@ -25,8 +25,8 @@ import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.RuleCollection;
 
 /**
- * Stores a collection of all rules 
- * with the same french side (and thus same arity).
+ * Stores a collection of all rules with the same french side (and
+ * thus same arity).
  *
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate$
@@ -39,9 +39,9 @@ public class MemoryBasedRuleBin extends BasicRuleCollection implements RuleColle
 
 	/**
 	 * Constructs an initially empty rule collection.
-	 * 
+	 *
 	 * @param arity Number of nonterminals in the source pattern
-	 * @param sourceTokens Sequence of terminals and nonterminals 
+	 * @param sourceTokens Sequence of terminals and nonterminals
 	 *                     in the source pattern
 	 */
 	public MemoryBasedRuleBin(int arity, int[] sourceTokens) {
@@ -50,7 +50,7 @@ public class MemoryBasedRuleBin extends BasicRuleCollection implements RuleColle
 	
 	/**
 	 * Adds a rule to this collection.
-	 * 
+	 *
 	 * @param rule Rule to add to this collection.
 	 */
 	public void addRule(Rule rule) {

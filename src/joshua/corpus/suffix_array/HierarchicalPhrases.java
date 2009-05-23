@@ -29,7 +29,8 @@ import joshua.corpus.vocab.SymbolTable;
 import joshua.prefix_tree.PrefixTree;
 
 /**
- * HierarchicalPhrases represents a list of matched hierarchical phrases.
+ * HierarchicalPhrases represents a list of matched hierarchical
+ * phrases.
  * <p>
  * 
  * TODO Add unit tests for this class.
@@ -48,29 +49,31 @@ public class HierarchicalPhrases extends AbstractHierarchicalPhrases implements 
 	final Pattern pattern;
 
 	/** 
-	 * Represents the length of each 
-	 * contiguous sequence of terminals in the pattern. 
+	 * Represents the length of each contiguous sequence of
+	 * terminals in the pattern.
 	 * <p>
-	 * To save memory, this information is stored as 
-	 * bytes instead of integers. 
+	 * To save memory, this information is stored as bytes
+	 * instead of integers.
 	 * 
-	 * This means that the maximum value that can be
-	 * stored here is 127. This should not be a problem
-	 * unless a very large value is used for maximum phrase length.
+	 * This means that the maximum value that can be stored
+	 * here is 127. This should not be a problem unless a very
+	 * large value is used for maximum phrase length.
 	 */
 	private final byte[] terminalSequenceLengths;
 	
 	
-	/** Number of hierarchical phrases represented by this object. */
+	/**
+	 * Number of hierarchical phrases represented by this object.
+	 */
 	private final int size;
 	
 	/**
-	 * Represents all locations in the corpus
-	 * that match the <code>pattern</code>.
+	 * Represents all locations in the corpus that match the
+	 * <code>pattern</code>.
 	 * <p>
-	 * Specifically, for each location in the corpus
-	 * that matches the pattern, the corpus index of the
-	 * of the first word in each terminal sequence is stored.
+	 * Specifically, for each location in the corpus that matches
+	 * the pattern, the corpus index of the of the first word
+	 * in each terminal sequence is stored.
 	 * <p>
 	 * The length of this array should be 
 	 * <code>size * terminalSequenceLengths.length</code>.
@@ -78,12 +81,12 @@ public class HierarchicalPhrases extends AbstractHierarchicalPhrases implements 
 	private final int[] terminalSequenceStartIndices;
 	
 	/**
-	 * Represents the sentence numbers of each location 
-	 * in the corpus that matches the pattern.
+	 * Represents the sentence numbers of each location in the
+	 * corpus that matches the pattern.
 	 * <p>
-	 * To save memory, this variable could be deleted 
-	 * if the actual calculation of this data were moved 
-	 * from the constructor to the <code>getSentenceNumber</code> method.
+	 * To save memory, this variable could be deleted if the
+	 * actual calculation of this data were moved from the
+	 * constructor to the <code>getSentenceNumber</code> method.
 	 */
 	private final int[] sentenceNumber;
 	
@@ -97,13 +100,13 @@ public class HierarchicalPhrases extends AbstractHierarchicalPhrases implements 
 	 * Constructs a list of hierarchical phrases.
 	 * 
 	 * @param pattern Pattern common to the list of phrases
-	 * @param startPositions  Represents all locations in the corpus
-	 *                        that match the pattern. 
-	 *                        Specifically, for each location in the corpus
-	 *                        that matches the pattern, the corpus index of the
-	 *                        of the first word in each terminal sequence is stored.
-	 * @param sentenceNumbers Represents the sentence number 
-	 *                        of each matched phrase location
+	 * @param startPositions  Represents all locations in the
+	 *            corpus that match the pattern. Specifically,
+	 *            for each location in the corpus that matches
+	 *            the pattern, the corpus index of the of the
+	 *            first word in each terminal sequence is stored.
+	 * @param sentenceNumbers Represents the sentence number
+	 *            of each matched phrase location
 	 */
 	public HierarchicalPhrases(Pattern pattern, int[] startPositions, int[] sentenceNumbers) {
 		this.pattern = pattern;
@@ -337,8 +340,7 @@ public class HierarchicalPhrases extends AbstractHierarchicalPhrases implements 
 	}
 	
 	/**
-	 * Gets the number of nonterminals 
-	 * in this object's pattern.
+	 * Gets the number of nonterminals in this object's pattern.
 	 * 
 	 * @return the number of nonterminals
 	 */

@@ -21,9 +21,9 @@ import java.util.ArrayList;
 
 
 /**
- * This class provides finer-grained abstraction 
- * of basic phrases, allowing for multiple implementations
- * of abstract phrase to share as much code as possible.
+ * This class provides finer-grained abstraction of basic phrases,
+ * allowing for multiple implementations of abstract phrase to share
+ * as much code as possible.
  *  
  * @author Lane Schwartz
  */

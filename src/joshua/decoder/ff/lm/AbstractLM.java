@@ -28,7 +28,7 @@ import java.util.ArrayList;
  * around the necessary functions to capture common errors. Most
  * methods are declared final, in an attempt to limit what subclasses
  * may be defined.
- * 
+ *
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate$
  */
@@ -72,7 +72,8 @@ public abstract class AbstractLM extends DefaultNGramLanguageModel {
 	
 	
 	/**
-	 * @deprecated this function is much slower than the int[] version
+	 * @deprecated this function is much slower than the int[]
+	 *             version
 	 */
 	@Deprecated
 	public final double logProbabilityOfBackoffState(ArrayList<Integer> ngram, int order, int qtyAdditionalBackoffWeight) {

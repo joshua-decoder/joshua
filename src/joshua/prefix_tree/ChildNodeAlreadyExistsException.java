@@ -18,17 +18,16 @@
 package joshua.prefix_tree;
 
 /**
- * Indicates that a child cannot be added to a parent node,
- * because it already exists.
- * 
+ * Indicates that a child cannot be added to a parent node, because
+ * it already exists.
+ *
  * @author Lane Schwartz
  */
 public class ChildNodeAlreadyExistsException extends RuntimeException {
 
 	/**
-	 * Constructs a new exception indicating
-	 * that a child cannot be added to a parent node,
-	 * because it already exists.
+	 * Constructs a new exception indicating that a child cannot
+	 * be added to a parent node, because it already exists.
 	 * 
 	 * @param parent A node in a prefix tree
 	 * @param childID Integer identifier of a child node

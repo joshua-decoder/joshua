@@ -31,7 +31,8 @@ import joshua.util.Counts;
 /**
  * Represents lexical probability distributions in both directions.
  * <p>
- * This class calculates the probabilities from sorted word pair counts.
+ * This class calculates the probabilities from sorted word pair
+ * counts.
  * 
  * @author Lane Schwartz
  * @version $LastChangedDate$
@@ -52,8 +53,8 @@ public class LexProbs implements LexicalProbabilities {
 	protected final ParallelCorpus parallelCorpus;
 	
 	/** 
-	 * The probability returned when 
-	 * no calculated lexical translation probability is known. 
+	 * The probability returned when no calculated lexical
+	 * translation probability is known.
 	 */
 	protected final float floorProbability;
 	
@@ -62,7 +63,8 @@ public class LexProbs implements LexicalProbabilities {
 	
 	
 	/**
-	 * Constructs lexical translation probabilities from a parallel corpus.
+	 * Constructs lexical translation probabilities from a
+	 * parallel corpus.
 	 * 
 	 * @param parallelCorpus Aligned parallel corpus
 	 * @param floorProbability
@@ -84,7 +86,8 @@ public class LexProbs implements LexicalProbabilities {
 	 * 
 	 * @param parallelCorpus Aligned parallel corpus
 	 * @param floorProbability
-	 * @return Word co-occurrence counts from the parallel corpus.
+	 * @return Word co-occurrence counts from the parallel
+	 *         corpus.
 	 */
 	protected static Counts<Integer,Integer> initializeCooccurrenceCounts(ParallelCorpus parallelCorpus, float floorProbability) {
 		

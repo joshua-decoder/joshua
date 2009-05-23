@@ -51,7 +51,7 @@ public class SrilmSymbol extends DefaultSymbol {
 	
 	/**
 	 * Construct an SRILM symbol table using the provided file.
-	 * 
+	 *
 	 * @param fname File name
 	 * @param lm_order Language model n-gram order
 	 * @throws IOException
@@ -73,8 +73,8 @@ public class SrilmSymbol extends DefaultSymbol {
 	}
 	
 	/**
-	 * Construct an SRILM symbol table using 
-	 * the symbol mapping from the provided symbol table.
+	 * Construct an SRILM symbol table using the symbol mapping
+	 * from the provided symbol table.
 	 * 
 	 * @param vocab Existing symbol table
 	 * @param lm_order Language model n-gram order

@@ -91,13 +91,13 @@ public class GridViewer extends JFrame implements ActionListener {
 	}
 	
 	/**
-	 * Constructs a runnable capable of 
-	 * initializing and displaying an alignment grid.
+	 * Constructs a runnable capable of initializing and
+	 * displaying an alignment grid.
 	 * 
 	 * @param joshDirName
 	 * @param sentenceNumber
-	 * @return a runnable capable of 
-	 *         initializing and displaying an alignment grid.
+	 * @return a runnable capable of initializing and displaying
+	 *         an alignment grid.
 	 */
 	public static Runnable displayGrid(final String joshDirName, final int sentenceNumber) {
 

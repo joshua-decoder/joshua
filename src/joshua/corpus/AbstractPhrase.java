@@ -21,9 +21,9 @@ import joshua.corpus.vocab.SymbolTable;
 
 
 /**
- * This class provides a skeletal implementation
- * of the base methods likely to be common to 
- * most or all implementations of the <code>Phrase</code> interface.
+ * This class provides a skeletal implementation of the base methods
+ * likely to be common to most or all implementations of the
+ * <code>Phrase</code> interface.
  * 
  * @author Lane Schwartz
  * @author Chris Callison-Burch
@@ -41,13 +41,15 @@ public abstract class AbstractPhrase implements Phrase {
 	public static final int HASH_OFFSET = 37;
 	
 	/**
-	 * Splits a sentence (on white space),
-	 * then looks up the integer representations of each word
-	 * using the supplied symbol table. 
+	 * Splits a sentence (on white space), then looks up the
+	 * integer representations of each word using the supplied
+	 * symbol table.
 	 * 
-	 * @param sentence White-space separated String of words.
-	 * @param vocabulary Symbol table for mapping tokens to integers.
-	 * @return Array of integers corresponding to the words in the sentence.
+	 * @param sentence   White-space separated String of words.
+	 * @param vocabulary Symbol table for mapping tokens to
+	 *                   integers.
+	 * @return Array of integers corresponding to the words in
+	 *         the sentence.
 	 */
 	protected int[] splitSentence(String sentence, SymbolTable vocabulary) {
 		String[] w      = sentence.split("\\s+");
@@ -59,8 +61,9 @@ public abstract class AbstractPhrase implements Phrase {
 	
 	/**
 	 * Uses the standard java approach of calculating hashCode.
-	 * Start with a seed, add in every value multiplying the exsiting
-	 * hash times an offset.
+	 * Start with a seed, add in every value multiplying the
+	 * exsiting hash times an offset.
+	 *
 	 * @return int hashCode for the list
 	 */
 	public int hashCode() {
@@ -73,9 +76,9 @@ public abstract class AbstractPhrase implements Phrase {
 	
 
 	/**
-	 * Two phrases are their word IDs are the same. Note that this
-	 * could give a false positive if their Vocabularies were different
-	 * but their IDs were somehow the same.  
+	 * Two phrases are their word IDs are the same. Note that
+	 * this could give a false positive if their Vocabularies
+	 * were different but their IDs were somehow the same.
 	 */
 	public boolean equals(Object o) {
 		
@@ -95,12 +98,14 @@ public abstract class AbstractPhrase implements Phrase {
 	
 	
 	/**
-	 * Compares the two strings based on the lexicographic order of words
-	 * defined in the Vocabulary.  
+	 * Compares the two strings based on the lexicographic order
+	 * of words defined in the Vocabulary.
 	 *
 	 * @param other the object to compare to
-	 * @return -1 if this object is less than the parameter, 0 if equals, 1 if greater
-	 * @exception ClassCastException if the passed object is not of type Phrase
+	 * @return -1 if this object is less than the parameter, 0
+	 *         if equals, 1 if greater
+	 * @exception ClassCastException if the passed object is
+	 *                               not of type Phrase
 	 */
 	public int compareTo(Phrase other) {
 		int length = size();
@@ -125,8 +130,9 @@ public abstract class AbstractPhrase implements Phrase {
 	
 	/**
 	 * Returns a string representation of the phrase.
-	 * 
-	 * @return a space-delimited string of the words in the phrase.
+	 *
+	 * @return a space-delimited string of the words in the
+	 *         phrase.
 	 */
 	public String toString() {
 		SymbolTable vocab = getVocab();

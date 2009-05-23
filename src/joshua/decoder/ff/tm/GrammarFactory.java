@@ -21,8 +21,8 @@ import joshua.corpus.Phrase;
 import joshua.decoder.ff.tm.Grammar;
 
 /**
- * Factory capable of getting a grammar 
- * for use in translating a sentence.
+ * Factory capable of getting a grammar for use in translating a
+ * sentence.
  * <p>
  * Developers interested in implementing a new type of grammar must:
  * <ol>
@@ -32,7 +32,8 @@ import joshua.decoder.ff.tm.Grammar;
  * <li>Implement <code>RuleCollection</code>
  * </ol>
  * 
- * Also, attention should be directed to the <code>Rule</code> class.
+ * Also, attention should be directed to the <code>Rule</code>
+ * class.
  * 
  * @author Lane Schwartz
  * @version $LastChangedDate$
@@ -40,14 +41,15 @@ import joshua.decoder.ff.tm.Grammar;
 public interface GrammarFactory {
 	
 	/**
-	 * Returns a grammar which is adapted to the specified sentence. Depending
-	 * on the implementation this grammar may be generated online, partially
-	 * loaded from disk, remain unchanged etc.
+	 * Returns a grammar which is adapted to the specified
+	 * sentence. Depending on the implementation this grammar
+	 * may be generated online, partially loaded from disk,
+	 * remain unchanged etc.
 	 * 
-	 * @param sentence
-	 *            the next sentence to be translated
+	 * @param sentence the next sentence to be translated
 	 * 
-	 * @return a grammar that represents a set of translation rules
+	 * @return a grammar that represents a set of translation
+	 *         rules
 	 */
 	Grammar getGrammarForSentence(Phrase sentence);
 

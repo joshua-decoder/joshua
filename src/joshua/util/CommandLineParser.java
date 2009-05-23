@@ -32,7 +32,7 @@ import java.util.Set;
  * The current version supports string and integer options.
  * <p>
  * Support is not included for options which take a list of values.
- * 
+ *
  * @author Lane O.B. Schwartz
  * @version $LastChangedDate$
  */

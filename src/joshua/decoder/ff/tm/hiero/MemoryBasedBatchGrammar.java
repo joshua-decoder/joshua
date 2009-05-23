@@ -32,11 +32,10 @@ import java.util.logging.Logger;
 /**
  * This class implements a memory-based bilingual BatchGrammar.
  * <p>
- * The rules are stored in a trie.
- * Each trie node has: 
- *   (1) RuleBin: a list of rules matching the french sides so far
- *   (2) A HashMap  of next-layer trie nodes, the next french word 
- *       used as the key in HashMap  
+ * The rules are stored in a trie. Each trie node has:
+ * (1) RuleBin: a list of rules matching the french sides so far
+ * (2) A HashMap  of next-layer trie nodes, the next french word
+ *     used as the key in HashMap
  * 
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate$
@@ -56,9 +55,11 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
 	//protected ArrayList<FeatureFunction> featureFunctions = null;
 	protected int defaultOwner;
 	
-	/**the OOV rule should have this lhs, this should be grammar specific as only the grammar knows 
-	 * what LHS symbol can be combined with other rules
-	 * */ 
+	/**
+	 * the OOV rule should have this lhs, this should be grammar
+	 * specific as only the grammar knows what LHS symbol can
+	 * be combined with other rules
+	 */ 
 	protected int defaultLHS; 
 	
 	protected int goalSymbol;
@@ -184,9 +185,9 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
 	
 	
 	/** 
-	 * if the span covered by the chart bin is greater than the limit, 
-	 * then return false 
-	 **/
+	 * if the span covered by the chart bin is greater than the
+	 * limit, then return false
+	 */
 	// TODO: catch glue grammar case in glue grammar class?
 	public boolean hasRuleForSpan(int startIndex,	int endIndex,	int pathLength) {
 		if (this.spanLimit == -1) { // mono-glue grammar

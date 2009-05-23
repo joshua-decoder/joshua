@@ -30,11 +30,11 @@ import joshua.corpus.Corpus;
 import joshua.util.io.BinaryOut;
 
 /**
- * List of alignment grids representing all alignment data 
- * for an aligned parallel corpus.
+ * List of alignment grids representing all alignment data for an
+ * aligned parallel corpus.
  * <p>
- * Instances of this class are created from 
- * human-readable alignment text files.
+ * Instances of this class are created from human-readable alignment
+ * text files.
  * 
  * @author Lane Schwartz
  */
@@ -50,18 +50,20 @@ public class AlignmentGrids extends AbstractAlignmentGrids {
 	/**
 	 * Constructs a list of AlignmentGrid objects.
 	 * <p>
-	 * The size parameter is used to allocate the initial capacity
-	 * of the backing list. If this number is off, things will still work, 
-	 * but memory usage may be less optimal.
+	 * The size parameter is used to allocate the initial
+	 * capacity of the backing list. If this number is off,
+	 * things will still work, but memory usage may be less
+	 * optimal.
 	 * <p>
-	 * The object returned by this constructor will required tight spans.
+	 * The object returned by this constructor will required
+	 * tight spans.
 	 * 
 	 * @param alignmentScanner
 	 * @param sourceCorpus
 	 * @param targetCorpus
-	 * @param expectedSize Expected number of training sentences. 
-	 *                     This parameter merely specifies the initial capacity
-	 *                     of an array list.
+	 * @param expectedSize Expected number of training sentences.
+	 *            This parameter merely specifies the initial
+	 *            capacity of an array list.
 	 */
 	public AlignmentGrids(Scanner alignmentScanner, Corpus sourceCorpus, Corpus targetCorpus, int expectedSize) {
 		this(alignmentScanner, sourceCorpus, targetCorpus, expectedSize, true);
@@ -70,16 +72,17 @@ public class AlignmentGrids extends AbstractAlignmentGrids {
 	/**
 	 * Constructs a list of AlignmentGrid objects.
 	 * <p>
-	 * The size parameter is used to allocate the initial capacity 
-	 * of the backing list. If this number is off, things will still work, 
-	 * but memory usage may be less optimal.
+	 * The size parameter is used to allocate the initial
+	 * capacity of the backing list. If this number is off,
+	 * things will still work, but memory usage may be less
+	 * optimal.
 	 * 
 	 * @param alignmentScanner
 	 * @param sourceCorpus
 	 * @param targetCorpus
-	 * @param expectedSize Expected number of training sentences. 
-	 *                     This parameter merely specifies the initial capacity
-	 *                     of an array list.
+	 * @param expectedSize Expected number of training sentences.
+	 *            This parameter merely specifies the initial
+	 *            capacity of an array list.
 	 * @param requireTightSpans 
 	 */
 	public AlignmentGrids(Scanner alignmentScanner, Corpus sourceCorpus, Corpus targetCorpus, int expectedSize, boolean requireTightSpans) {
@@ -181,11 +184,12 @@ public class AlignmentGrids extends AbstractAlignmentGrids {
 	}
 	
 	/**
-	 * Main method used to read a human-readable alignments file
-	 * and write it to disk as binary data.
+	 * Main method used to read a human-readable alignments
+	 * file and write it to disk as binary data.
 	 * 
-	 * @param args File names for an existing human-readable alignments file
-	 *             and for the binary data file to be written
+	 * @param args File names for an existing human-readable
+	 *             alignments file and for the binary data file
+	 *             to be written
 	 * @throws IOException Includes any I/O exceptions that may occur
 	 */
 	public static void main(String[] args) throws IOException {
@@ -210,4 +214,3 @@ public class AlignmentGrids extends AbstractAlignmentGrids {
 	}
 	
 }
-

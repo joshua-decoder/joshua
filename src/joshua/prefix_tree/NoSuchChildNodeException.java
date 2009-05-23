@@ -18,17 +18,16 @@
 package joshua.prefix_tree;
 
 /**
- * Indicates that a node in the prefix tree
- * does not have the expected child.
+ * Indicates that a node in the prefix tree does not have the
+ * expected child.
  * 
  * @author Lane Schwartz
  */
 public class NoSuchChildNodeException extends RuntimeException {
 
 	/**
-	 * Constructs a new exception indicating
-	 * that a child of a parent node was expected,
-	 * but does not exist.
+	 * Constructs a new exception indicating that a child of a
+	 * parent node was expected, but does not exist.
 	 * 
 	 * @param parent A node in a prefix tree
 	 * @param childID Integer identifier of an expected child node

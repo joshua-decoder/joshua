@@ -29,7 +29,7 @@ import joshua.corpus.vocab.SymbolTable;
  * <p>
  * The integer representation of each terminal must be positive.
  * The integer representation of each nonterminal must be negative.
- * 
+ *
  * @author Lane Schwartz
  * @version $LastChangedDate:2008-09-18 12:47:23 -0500 (Thu, 18 Sep 2008) $
  */
@@ -50,10 +50,12 @@ public class Pattern extends BasicPhrase implements PatternFormat {
 	/**
 	 * Constructs a pattern of terminals and nonterminals.
 	 * <p>
-	 * The integer representation of each terminal must be positive.
-	 * The integer representation of each nonterminal must be negative.
+	 * The integer representation of each terminal must be
+	 * positive. The integer representation of each nonterminal
+	 * must be negative.
 	 * 
-	 * @param vocab Vocabulary capable of mapping between symbols and integers.
+	 * @param vocab Vocabulary capable of mapping between symbols
+	 *              and integers.
 	 */
 	public Pattern(SymbolTable vocab, int... words) {
 		super(words, vocab);
@@ -64,7 +66,7 @@ public class Pattern extends BasicPhrase implements PatternFormat {
 	
 	/**
 	 * Constructs a pattern by copying an existing phrase.
-	 * 
+	 *
 	 * @param phrase an existing phrase
 	 */
 	public Pattern(Phrase phrase) {
@@ -79,8 +81,8 @@ public class Pattern extends BasicPhrase implements PatternFormat {
 	
 	
 	/**
-	 * Constructs a pattern by copying an existing pattern,
-	 * and then appending additional words to the new pattern.
+	 * Constructs a pattern by copying an existing pattern, and
+	 * then appending additional words to the new pattern.
 	 * 
 	 * @param pattern Existing pattern to copy.
 	 * @param word Words to append to the new pattern.
@@ -96,13 +98,13 @@ public class Pattern extends BasicPhrase implements PatternFormat {
 	}
 	
 	/**
-	 * Constructs a new integer array by concatenating
-	 * two existing integer arrays together.
+	 * Constructs a new integer array by concatenating two
+	 * existing integer arrays together.
 	 *  
 	 * @param oldPattern
 	 * @param newPattern
-	 * @return a new integer array representing 
-	 *         two existing integer arrays concatenated together
+	 * @return a new integer array representing two existing
+	 *         integer arrays concatenated together
 	 */
 	protected static int[] pattern(int[] oldPattern, int... newPattern) {
 		int[] pattern = new int[oldPattern.length + newPattern.length];
@@ -153,10 +155,11 @@ public class Pattern extends BasicPhrase implements PatternFormat {
 	}
 	
 	/**
-	 * Gets the lengths of each terminal sequence in this pattern.
+	 * Gets the lengths of each terminal sequence in this
+	 * pattern.
 	 * <p>
-	 * The result of this method is not well-defined 
-	 * for patterns that consist only of nonterminals.
+	 * The result of this method is not well-defined for patterns
+	 * that consist only of nonterminals.
 	 * 
 	 * @return the lengths of each terminal sequence in this pattern
 	 */
@@ -263,7 +266,7 @@ public class Pattern extends BasicPhrase implements PatternFormat {
 	
 	/**
 	 * Gets the number of nonterminals in this pattern.
-	 * 
+	 *
 	 * @return the number of nonterminals in this pattern.
 	 */
 	private int calculateArity(int[] words) {

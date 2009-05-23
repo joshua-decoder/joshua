@@ -21,32 +21,50 @@ import joshua.corpus.suffix_array.Pattern;
 
 /**
  * Represents a tuple used during prefix tree construction.
- * 
+ *
  * @author Lane Schwartz
  * @see Lopez (2008) PhD Thesis, Algorithm 2, p 76
  * @version $LastChangedDate$
  */
 class Tuple {
 
-	/** Pattern corresponding to the prefix node (NOT the pattern corresponding to the new node that will be constructed). */
+	/**
+	 * Pattern corresponding to the prefix node (NOT the pattern
+	 * corresponding to the new node that will be constructed).
+	 */
 	final Pattern pattern;
 	
-	/** Start index of the pattern in the source input sentence (inclusive, 1-based). */
+	/**
+	 * Start index of the pattern in the source input sentence
+	 * (inclusive, 1-based).
+	 */
 	final int spanStart;
 	
-	/** End index of the pattern in the source input sentence (inclusive, 1-based). */
+	/**
+	 * End index of the pattern in the source input sentence
+	 * (inclusive, 1-based).
+	 */
 	final int spanEnd;
 	
-	/** Node in the prefix tree to which a new node (corresponding to the pattern) will be attached. */
+	/**
+	 * Node in the prefix tree to which a new node (corresponding
+	 * to the pattern) will be attached.
+	 */
 	final Node prefixNode;
 
 	/**
 	 * Constructs a new tuple.
 	 * 
-	 * @param pattern Pattern corresponding to the prefix node (NOT the pattern corresponding to the new node that will be constructed).
-	 * @param spanStart Start index of the pattern in the source input sentence (inclusive, 1-based).
-	 * @param spanEnd End index of the pattern in the source input sentence (inclusive, 1-based).
-	 * @param prefixNode Node in the prefix tree to which a new node (corresponding to the pattern) will be attached.
+	 * @param pattern Pattern corresponding to the prefix node
+	 *            (NOT the pattern corresponding to the new
+	 *            node that will be constructed).
+	 * @param spanStart Start index of the pattern in the source
+	 *            input sentence (inclusive, 1-based).
+	 * @param spanEnd End index of the pattern in the source
+	 *            input sentence (inclusive, 1-based).
+	 * @param prefixNode Node in the prefix tree to which a new
+	 *            node (corresponding to the pattern) will be
+	 *            attached.
 	 */
 	Tuple(Pattern pattern, int spanStart, int spanEnd, Node prefixNode) {
 		this.pattern = pattern;

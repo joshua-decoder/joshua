@@ -19,7 +19,7 @@ package joshua.util;
 
 /**
  * Represents a pair of elements.
- * 
+ *
  * @author Lane Schwartz
  * @version $LastChangedDate$
  *
@@ -49,7 +49,7 @@ public class Pair<First, Second> {
 
 	/**
 	 * Gets the second element in the pair
-	 * 
+	 *
 	 * @return the first element in the pair
 	 */
 	public First getFirst() {

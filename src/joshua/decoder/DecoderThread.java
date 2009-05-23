@@ -52,15 +52,13 @@ import java.util.logging.Logger;
 
 /**
  * this class implements:
- * (1) interact with the chart-parsing functions to do the true decoding
- *
+ * (1) interact with the chart-parsing functions to do the true
+ *     decoding
  *
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate$
  */
-
 // BUG: known synchronization problem: LM cache; srilm call;
-
 public class DecoderThread extends Thread {
 	/* these variables may be the same across all threads (e.g.,
 	 * just copy from DecoderFactory), or differ from thread
@@ -71,14 +69,14 @@ public class DecoderThread extends Thread {
 	
 	
 	/**
-	 * Shared symbol table for source language terminals,
-	 * target language terminals, and shared nonterminals.
+	 * Shared symbol table for source language terminals, target
+	 * language terminals, and shared nonterminals.
 	 * <p>
-	 * It may be that separate tables should be maintained
-	 * for the source and target languages.
+	 * It may be that separate tables should be maintained for
+	 * the source and target languages.
 	 * <p>
-	 * This class explicitly uses the symbol table to get
-	 * integer IDs for the source language sentence.
+	 * This class explicitly uses the symbol table to get integer
+	 * IDs for the source language sentence.
 	 */
 	private final SymbolTable    symbolTable;
 	

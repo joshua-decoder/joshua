@@ -78,7 +78,7 @@ public class SuffixArrayFactory {
 
 	/**
 	 * Gets the standard filename for an AlignmentArray.
-	 */		
+	 */
 	public static String getAlignmentArrayFileName(String sourceLang, String targetLang, String corpus) {
 		return (sourceLang+"_"+targetLang+"_"+corpus+"_alignment_array.txt"); 
 	}
@@ -104,7 +104,8 @@ public class SuffixArrayFactory {
 	 * Counts the words and sentences in a plain text file.
 	 *
 	 * @param inputFilename the plain text file
-	 * @return a tuple containing the number of words in the corpus and number of sentences in the corpus
+	 * @return a tuple containing the number of words in the
+	 *         corpus and number of sentences in the corpus
 	 */
 	static int[] count(String inputFilename) throws IOException {
 
@@ -178,8 +179,8 @@ public class SuffixArrayFactory {
 
 
 	/**
-	 * Creates an Alignments object from a file containing Moses-style
-	 * alignments, and a source and target corpus.
+	 * Creates an Alignments object from a file containing
+	 * Moses-style alignments, and a source and target corpus.
 	 */
 	public static Alignments createAlignments(String alignmentsFilename, Suffixes sourceCorpus, Suffixes targetCorpus) throws IOException {
 

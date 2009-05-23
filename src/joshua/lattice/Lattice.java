@@ -31,7 +31,7 @@ import java.util.regex.Pattern;
 
 /**
  * A lattice representation of a directed graph.
- * 
+ *
  * @author Lane Schwartz
  * @since 2008-07-08
  * @version $LastChangedDate$
@@ -64,7 +64,8 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
 	 * If the list is not in topological order, the behavior
 	 * of the lattice is not defined.
 	 * 
-	 * @param nodes A list of nodes which must be in topological order.
+	 * @param nodes A list of nodes which must be in topological
+	 *              order.
 	 */
 	public Lattice(List<Node<Value>> nodes) {
 		this.nodes = nodes;
@@ -97,11 +98,11 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
 	}
 	
 	/** 
-	 * Convenience method to get a lattice from an int[]. 
-	 * 
-	 * This method is useful because Java's generics won't
-	 * allow a primitive array to be passed as a generic array.
-	 * 
+	 * Convenience method to get a lattice from an int[].
+	 *
+	 * This method is useful because Java's generics won't allow
+	 * a primitive array to be passed as a generic array.
+	 *
 	 * @param linearChain 
 	 * @return  Lattice representation of the linear chain.
 	 */
@@ -116,7 +117,7 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
 	
 	/**
 	 * Constructs a lattice from a given string representation.
-	 * 
+	 *
 	 * @param data String representation of a lattice.
 	 * @return A lattice that corresponds to the given string.
 	 */
@@ -186,10 +187,11 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
 	
 	/**
 	 * Gets the cost of the shortest path between two nodes.
-	 * 
+	 *
 	 * @param from ID of the starting node.
 	 * @param to ID of the ending node.
-	 * @return The cost of the shortest path between the two nodes.
+	 * @return The cost of the shortest path between the two
+	 *         nodes.
 	 */
 	public double getShortestPath(int from, int to) {
 		return costs[from][to];
@@ -198,7 +200,7 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
 	
 	/**
 	 * Gets the node with a specified integer identifier.
-	 * 
+	 *
 	 * @param index Integer identifier for a node.
 	 * @return The node with the specified integer identifier
 	 */
@@ -209,7 +211,7 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
 	
 	/**
 	 * Returns an iterator over the nodes in this lattice.
-	 * 
+	 *
 	 * @return An iterator over the nodes in this lattice.
 	 */
 	public Iterator<Node<Value>> iterator() {
@@ -228,13 +230,15 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
 	
 	
 	/**
-	 * Calculate the all-pairs shortest path for all pairs of nodes.
+	 * Calculate the all-pairs shortest path for all pairs of
+	 * nodes.
 	 * <p>
-	 * Note: This method assumes no backward arcs. 
-	 * If there are backward arcs, the returned shortest path
-	 * costs for that node may not be accurate.
+	 * Note: This method assumes no backward arcs. If there are
+	 * backward arcs, the returned shortest path costs for that
+	 * node may not be accurate.
 	 * 
-	 * @param nodes A list of nodes which must be in topological order.
+	 * @param nodes A list of nodes which must be in topological
+	 *              order.
 	 * @return The all-pairs shortest path for all pairs of nodes.
 	 */
 	private double[][] calculateAllPairsShortestPath(List<Node<Value>> nodes) {

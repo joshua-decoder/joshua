@@ -28,8 +28,8 @@ import java.util.logging.Logger;
 import joshua.corpus.Phrase;
 
 /**
- * Represents all locations in a corpus 
- * where the most frequent phrases are located.
+ * Represents all locations in a corpus where the most frequent
+ * phrases are located.
  * 
  * @author Lane Schwartz
  * @author Chris Callison-Burch
@@ -44,15 +44,17 @@ public class FrequentMatches {
 	/** 
 	 * Stores the frequency rank for each phrase.
 	 * <p>
-	 * For a given phrase p, this variable stores the value of n
-	 * indicating that p is the nth most frequent phrase in the corpus.
+	 * For a given phrase p, this variable stores the value of
+	 * n indicating that p is the nth most frequent phrase in
+	 * the corpus.
 	 * <p>
-	 * The iteration order of this map should 
-	 * start with the most frequent phrase and end
-	 * with the least frequent phrase stored in the map.
+	 * The iteration order of this map should start with the
+	 * most frequent phrase and end with the least frequent
+	 * phrase stored in the map.
 	 * <p>
-	 * The key set for this map should be identical to
-	 * the key set in the <code>FrequentPhrases.frequentPhrases</code> map. 
+	 * The key set for this map should be identical to the key
+	 * set in the <code>FrequentPhrases.frequentPhrases</code>
+	 * map.
 	 */
 	private final LinkedHashMap<Phrase,Short> ranks;
 
@@ -60,28 +62,29 @@ public class FrequentMatches {
 	private final short maxPhrases;
 	
 	/**
-	 * List of collocation identifiers 
-	 * that have been added to this object.
+	 * List of collocation identifiers that have been added to
+	 * this object.
 	 * <p>
-	 * The values for these identifiers are of the format 
+	 * The values for these identifiers are of the format
 	 * returned by the <code>getKey</code> method.
 	 */
 	final int[] keys;
 	
 	/**
-	 * List of positions in a corpus where 
-	 * the first phrase in a collocation starts.
+	 * List of positions in a corpus where the first phrase in
+	 * a collocation starts.
 	 */
 	final int[] position1;
 	
 	/**
-	 * List of positions in a corpus where 
-	 * the second phrase in a collocation starts.
+	 * List of positions in a corpus where the second phrase
+	 * in a collocation starts.
 	 */
 	final int[] position2;
 	
 	/**
-	 * The number of collocations that have been added to this object.
+	 * The number of collocations that have been added to this
+	 * object.
 	 */
 	int counter = 0;
 	
@@ -92,8 +95,8 @@ public class FrequentMatches {
 	
 	
 	/**
-	 * Constructs an empty list of locations where 
-	 * collocations of frequent phrases are found in a corpus.
+	 * Constructs an empty list of locations where collocations
+	 * of frequent phrases are found in a corpus.
 	 * 
 	 * @param ranks Map from phrase to frequency rank of the phrase.
 	 * @param maxPhrases The maximum number of frequent phrases.
@@ -117,9 +120,8 @@ public class FrequentMatches {
 
 	
 	/**
-	 * Adds a collocated pair of phrases to this
-	 * container, along with their respective positions
-	 * in the corpus.
+	 * Adds a collocated pair of phrases to this container,
+	 * along with their respective positions in the corpus.
 	 */
 	protected void add(Phrase phrase1, Phrase phrase2, int position1, int position2) {
 
@@ -141,17 +143,18 @@ public class FrequentMatches {
 
 	
 	/**
-	 * Returns an integer identifier for the collocation 
-	 * of <code>phrase1</code> with <code>phrase2</code>.
+	 * Returns an integer identifier for the collocation of
+	 * <code>phrase1</code> with <code>phrase2</code>.
 	 * <p>
 	 * If <code>rank1</code> is the rank of <code>phrase1</code>
 	 * and <code>rank2</code> is the rank of <code>phrase2</code>,
 	 * the identifier returned by this method is defined to be
 	 * <code>rank1*maxPhrases + rank2</code>.
 	 * <p>
-	 * As such, the range of possible values returned by this method
-	 * will be </code>0</code> through <code>maxPhrases*maxPhrases-1</code>.
-	 * 
+	 * As such, the range of possible values returned by this
+	 * method will be </code>0</code> through
+	 * <code>maxPhrases*maxPhrases-1</code>.
+	 *
 	 * @param phrase1 First phrase in a collocation.
 	 * @param phrase2 Second phrase in a collocation.
 	 * @return a unique integer identifier for the collocation.
@@ -168,8 +171,8 @@ public class FrequentMatches {
 	
 	
 	/**
-	 * Sorts the data maintained by this object
-	 * using a specialization of bucket sort.
+	 * Sorts the data maintained by this object using a
+	 * specialization of bucket sort.
 	 */
 	void histogramSort() {
 		int maxBuckets = maxPhrases*maxPhrases;
@@ -226,10 +229,10 @@ public class FrequentMatches {
 		offsets = null;
 		tmpKeys = null;
 		tmpPosition1 = null;
-		tmpPosition2 = null;			
+		tmpPosition2 = null;
 		
 	}
-
+	
 	
 	/**
 	 * Calculate how many times each key occurred.
@@ -295,7 +298,8 @@ public class FrequentMatches {
 	}
 
 	/**
-	 * Write the contents of this class as binary data to an output stream.
+	 * Write the contents of this class as binary data to an
+	 * output stream.
 	 * 
 	 * @param out
 	 */
@@ -303,6 +307,5 @@ public class FrequentMatches {
 		// TODO Auto-generated method stub
 		
 	}
-	
 
 }

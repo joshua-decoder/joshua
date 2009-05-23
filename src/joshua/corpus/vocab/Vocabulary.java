@@ -32,9 +32,9 @@ import joshua.util.io.LineReader;
 
 /**
  * Vocabulary is the class that keeps track of the unique words
- * that occur in a corpus of text for a particular language.  
- * It assigns integer IDs to Words, which is useful when we are
- * creating suffix arrays or doing similar things.
+ * that occur in a corpus of text for a particular language. It
+ * assigns integer IDs to Words, which is useful when we are creating
+ * suffix arrays or doing similar things.
  *
  * @author Chris Callison-Burch
  * @since  8 February 2005
@@ -58,10 +58,15 @@ public class Vocabulary extends AbstractExternalizableSymbolTable
 	protected final Map<String,Integer> terminalToInt;
 	protected final Map<Integer,String> intToString;
 	
-	/** Determines whether new words may be added to the vocabulary. */
+	/**
+	 * Determines whether new words may be added to the vocabulary.
+	 */
 	protected boolean isFixed;
 	
-	/** The value returned by this class's <code>hashCode</code> method. */
+	/**
+	 * The value returned by this class's <code>hashCode</code>
+	 * method.
+	 */
 	protected static final int HASH_CODE = 42;
 	
 //===============================================================
@@ -81,7 +86,8 @@ public class Vocabulary extends AbstractExternalizableSymbolTable
 	}
 
 	/** 
-	 * Constructor creates a fixed vocabulary from the given set of words.
+	 * Constructor creates a fixed vocabulary from the given
+	 * set of words.
 	 */
 	public Vocabulary(Set<String> words) {
 		this();
@@ -96,10 +102,13 @@ public class Vocabulary extends AbstractExternalizableSymbolTable
 	}
 	
 	/**
-	 * Constructs a vocabulary using the words from an SRILM language model file.
-	 * 
-	 * @param scanner Scanner configured to read an SRILM language model file.
-	 * @return Vocabulary initialized with the words from the SRILM language model file.
+	 * Constructs a vocabulary using the words from an SRILM
+	 * language model file.
+	 *
+	 * @param scanner Scanner configured to read an SRILM
+	 *                language model file.
+	 * @return Vocabulary initialized with the words from the
+	 *         SRILM language model file.
 	 */
 	public static Vocabulary getVocabFromSRILM(Scanner scanner) {
 		
@@ -149,13 +158,17 @@ public class Vocabulary extends AbstractExternalizableSymbolTable
 	
 	
 	/**
-	 * Initializes a Vocabulary by adding all words 
-	 * from a specified plain text file.
+	 * Initializes a Vocabulary by adding all words from a
+	 * specified plain text file.
 	 *
 	 * @param inputFilename the plain text file
-	 * @param vocab the Vocabulary to which words should be added 
-	 * @param fixVocabulary Should the vocabulary be fixed and alphabetized at the end of initialization
-	 * @return a tuple containing the number of words in the corpus and number of sentences in the corpus
+	 * @param vocab         the Vocabulary to which words should
+	 *                      be added
+	 * @param fixVocabulary Should the vocabulary be fixed and
+	 *                      alphabetized at the end of
+	 *                      initialization
+	 * @return a tuple containing the number of words in the
+	 *         corpus and number of sentences in the corpus
 	 */
 	public static int[] initializeVocabulary(String inputFilename, Vocabulary vocab, boolean fixVocabulary) throws IOException {
 		int numSentences = 0;
@@ -191,14 +204,15 @@ public class Vocabulary extends AbstractExternalizableSymbolTable
 	/**
 	 * Gets an integer identifier for the word.
 	 * <p>
-	 * If the word is in the vocabulary,
-	 * the integer returned will uniquely identify that word.
+	 * If the word is in the vocabulary, the integer returned
+	 * will uniquely identify that word.
 	 * 
-	 * If the word is not in the vocabulary,
-	 * the constant  <code>UNKNOWN_WORD</code> will be returned.
+	 * If the word is not in the vocabulary, the constant
+	 * <code>UNKNOWN_WORD</code> will be returned.
 	 * 
 	 * @return the unique integer identifier for wordString, 
-	 *         or UNKNOWN_WORD if wordString is not in the vocabulary
+	 *         or UNKNOWN_WORD if wordString is not in the
+	 *         vocabulary
 	 */
 	public int getID(String wordString) {
 		Integer ID = terminalToInt.get(wordString);
@@ -214,16 +228,17 @@ public class Vocabulary extends AbstractExternalizableSymbolTable
 	}
 	
 	/**
-	 * Gets the integer identifiers 
-	 * for all words in the provided sentence.
+	 * Gets the integer identifiers for all words in the provided
+	 * sentence.
 	 * <p>
-	 * The sentence will be split (on spaces) into words,
-	 * then the integer identifier for each word 
-	 * will be retrieved using <code>getID</code>.
+	 * The sentence will be split (on spaces) into words, then
+	 * the integer identifier for each word will be retrieved
+	 * using <code>getID</code>.
 	 * 
 	 * @see #getID(String)
 	 * @param sentence String of words, separated by spaces.
-	 * @return Array of integer identifiers for each word in the sentence
+	 * @return Array of integer identifiers for each word in
+	 *         the sentence
 	 */
 	public int[] getIDs(String sentence) {
 		String[] words = sentence.split(" ");
@@ -239,11 +254,13 @@ public class Vocabulary extends AbstractExternalizableSymbolTable
 	
 	
 	/**
-	 * Gets the String that corresponds to the specified integer identifier.
-	 * 
-	 * @return the String that corresponds to the specified integer identifier,
-	 *         or <code>UNKNOWN_WORD_STRING</code> if the identifier 
-	 *         does not correspond to a word in the vocabulary
+	 * Gets the String that corresponds to the specified integer
+	 * identifier.
+	 *
+	 * @return the String that corresponds to the specified
+	 *         integer identifier, or <code>UNKNOWN_WORD_STRING</code>
+	 *         if the identifier does not correspond to a word
+	 *         in the vocabulary
 	 */
 	public String getWord(int wordID) {
 		if (wordID==UNKNOWN_WORD || wordID >= intToString.size() || wordID < 0) {
@@ -266,8 +283,9 @@ public class Vocabulary extends AbstractExternalizableSymbolTable
 	
 	/**
 	 * Gets the list of all words represented by this vocabulary.
-	 * 
-	 * @return the list of all words represented by this vocabulary
+	 *
+	 * @return the list of all words represented by this
+	 *         vocabulary
 	 */
 	public Collection<String> getWords() {
 		return intToString.values();
@@ -275,7 +293,7 @@ public class Vocabulary extends AbstractExternalizableSymbolTable
 	
 	/**
 	 * Gets the number of unique words in the vocabulary.
-	 * 
+	 *
 	 * @return the number of unique words in the vocabulary.
 	 */
 	public int size() {
@@ -283,19 +301,19 @@ public class Vocabulary extends AbstractExternalizableSymbolTable
 	}
 	
 	/** 
-	 * Fixes the size of the vocabulary so that new words
-	 * may not be added.
+	 * Fixes the size of the vocabulary so that new words may
+	 * not be added.
 	 */
 	public void fixVocabulary() {
 		isFixed = true;
 	}
 	
 	/**
-	 * Determines if the phrase contains any words
-	 * that are not in the vocabulary.
+	 * Determines if the phrase contains any words that are not
+	 * in the vocabulary.
 	 * 
-	 * @return <code>true</code> if there are unknown words in the phrase,
-	 *         <code>false</code> otherwise
+	 * @return <code>true</code> if there are unknown words in
+	 *         the phrase, <code>false</code> otherwise
 	 */
 	public boolean containsUnknownWords(BasicPhrase phrase) {
 		for(int i = 0; i < phrase.size(); i++) {
@@ -306,17 +324,19 @@ public class Vocabulary extends AbstractExternalizableSymbolTable
 	
 	
 	/**
-	 * Checks that the Vocabularies are the same, by first checking that they have
-	 * the same number of terminals, and then checking that each word corresponds
-	 * to the same ID.
+	 * Checks that the Vocabularies are the same, by first
+	 * checking that they have the same number of terminals,
+	 * and then checking that each word corresponds to the same
+	 * ID.
 	 * <p>
-	 * XXX This method does NOT check to verify that the nonterminal vocabulary is the same.
-	 * 
+	 * XXX This method does NOT check to verify that the
+	 * nonterminal vocabulary is the same.
+	 *
 	 * @param o the object to check equivalence with
-	 * @return <code>true</code> if the other object is 
-	 *         a Vocabulary representing the same set of
-	 *         words with identically assigned IDs,
-	 *         <code>false</code> otherwise
+	 * @return <code>true</code> if the other object is a
+	 *         Vocabulary representing the same set of words
+	 *         with identically assigned IDs, <code>false</code>
+	 *         otherwise
 	 */
 	public boolean equals(Object o) {
 		if (o==this) {
@@ -343,11 +363,11 @@ public class Vocabulary extends AbstractExternalizableSymbolTable
 	}
 	
 	/**
-	 * It is expected that instances of this class 
-	 * will never be put into a hash table.
+	 * It is expected that instances of this class will never
+	 * be put into a hash table.
 	 * <p>
 	 * Therefore, this method always returns a constant value.
-	 * 
+	 *
 	 * @return a constant value
 	 */
 	@Override

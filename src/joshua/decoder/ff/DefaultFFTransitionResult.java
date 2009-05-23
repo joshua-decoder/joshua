@@ -24,8 +24,6 @@ package joshua.decoder.ff;
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate$
  */
-
-
 public abstract class DefaultFFTransitionResult implements FFTransitionResult {
 	private double transitionCost       = 0.0;
 	private double futureCostEstimation = 0.0;

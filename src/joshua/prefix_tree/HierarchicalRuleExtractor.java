@@ -40,8 +40,9 @@ import joshua.decoder.ff.tm.BilingualRule;
 import joshua.decoder.ff.tm.Rule;
 
 /**
- * Rule extractor for Hiero-style hierarchical phrase-based translation.
- * 
+ * Rule extractor for Hiero-style hierarchical phrase-based
+ * translation.
+ *
  * @author Lane Schwartz
  * @version $LastChangedDate$
  */
@@ -53,17 +54,29 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 	/** Lexical translation probabilities. */
 	protected final LexicalProbabilities lexProbs;
 	
-	/** Max span in the source corpus of any extracted hierarchical phrase */
+	/**
+	 * Max span in the source corpus of any extracted hierarchical
+	 * phrase
+	 */
 	protected final int maxPhraseSpan;
 	
 	
-	/** Maximum number of terminals plus nonterminals allowed in any extracted hierarchical phrase. */
+	/**
+	 * Maximum number of terminals plus nonterminals allowed
+	 * in any extracted hierarchical phrase.
+	 */
 	protected final int maxPhraseLength;
 	
-	/** Minimum span in the source corpus of any nonterminal in an extracted hierarchical phrase. */
+	/**
+	 * Minimum span in the source corpus of any nonterminal in
+	 * an extracted hierarchical phrase.
+	 */
 	protected final int minNonterminalSpan;
 	
-	/** Maximum span in the source corpus of any nonterminal in an extracted hierarchical phrase. */
+	/**
+	 * Maximum span in the source corpus of any nonterminal in
+	 * an extracted hierarchical phrase.
+	 */
 	protected final int maxNonterminalSpan;
 	
 	/** Suffix array representing the source language corpus. */
@@ -72,7 +85,10 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 	/** Corpus array representing the target language corpus. */
 	protected final Corpus targetCorpus;
 	
-	/** Represents alignments between words in the source corpus and the target corpus. */
+	/**
+	 * Represents alignments between words in the source corpus
+	 * and the target corpus.
+	 */
 	protected final Alignments alignments;
 	
 	protected final int sampleSize;
@@ -226,17 +242,26 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 
 
 	/**
-	 * Builds a hierarchical phrase in the target language substituting the terminal sequences
-	 *  in the target side with nonterminal symbols corresponding to the source nonterminals.
+	 * Builds a hierarchical phrase in the target language
+	 * substituting the terminal sequences in the target side
+	 * with nonterminal symbols corresponding to the source
+	 * nonterminals.
 	 * <p>
-	 * This assumes that the source and target spans are consistent.
-	 * 
+	 * This assumes that the source and target spans are
+	 * consistent.
+	 *
 	 * @param sourcePhrases Source language phrase to be translated.
-	 * @param sourceSpan Span in the corpus of the source phrase; this is needed because the accurate span will not be in the sourcePhrase if it starts or ends with a nonterminal
-	 * @param targetSpan Span in the target corpus of the target phrase.
-	 * @param sourceStartsWithNT Indicates whether or not the source phrase starts with a nonterminal.
-	 * @param sourceEndsWithNT Indicates whether or not the source phrase ends with a nonterminal.
-	 * 
+	 * @param sourceSpan Span in the corpus of the source phrase;
+	 *            this is needed because the accurate span will
+	 *            not be in the sourcePhrase if it starts or
+	 *            ends with a nonterminal
+	 * @param targetSpan Span in the target corpus of the target
+	 *            phrase.
+	 * @param sourceStartsWithNT Indicates whether or not the
+	 *            source phrase starts with a nonterminal.
+	 * @param sourceEndsWithNT Indicates whether or not the
+	 *            source phrase ends with a nonterminal.
+	 *
 	 * @return null if no translation can be constructed
 	 */
 	protected HierarchicalPhrase constructTranslation(
@@ -443,22 +468,27 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 	}
 	
 	/**
-	 * Gets the target side translation pattern for a particular source phrase.
+	 * Gets the target side translation pattern for a particular
+	 * source phrase.
 	 * <p>
-	 * This is a fairly involved method -
-	 * the complications arise because we must handle 4 cases:
+	 * This is a fairly involved method - the complications
+	 * arise because we must handle 4 cases:
 	 * <ul>
-	 * <li>The source phrase neither starts nor ends with a nonterminal</li>
-	 * <li>The source phrase starts but doesn't end with a nonterminal</li>
-	 * <li>The source phrase ends but doesn't start with a nonterminal</li>
-	 * <li>The source phrase both starts and ends with a nonterminal</li>
+	 * <li>The source phrase neither starts nor ends with a
+	 *     nonterminal</li>
+	 * <li>The source phrase starts but doesn't end with a
+	 *     nonterminal</li>
+	 * <li>The source phrase ends but doesn't start with a
+	 *     nonterminal</li>
+	 * <li>The source phrase both starts and ends with a
+	 *     nonterminal</li>
 	 * </ul>
 	 * <p>
-	 * When a hierarchical phrase begins (or ends) with a nonterminal
-	 * its start (or end) point is <em>not</em> explicitly stored. 
-	 * This is by design to allow a hierarchical phrase to describe 
-	 * a set of possibly matching points in the corpus,
-	 * but it complicates this method.
+	 * When a hierarchical phrase begins (or ends) with a
+	 * nonterminal its start (or end) point is <em>not</em>
+	 * explicitly stored. This is by design to allow a hierarchical
+	 * phrase to describe a set of possibly matching points in
+	 * the corpus, but it complicates this method.
 	 * 
 	 * @param sourcePhrase
 	 * @return the target side translation pattern for a particular source phrase.

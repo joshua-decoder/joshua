@@ -26,7 +26,6 @@ import joshua.corpus.vocab.SymbolTable;
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate$
  */
-
 public interface FFDPState {
 	String getSignature(boolean forceRecompute);
 	String getSignature(SymbolTable symbolTable, boolean forceRecompute);

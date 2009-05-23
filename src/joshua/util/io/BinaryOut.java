@@ -36,8 +36,9 @@ import java.util.logging.Logger;
  * A BinaryOut writes data to an output stream in raw binary form.
  * Each data type is converted to byte representation.
  * <p>
- * Unlike ObjectOutputStream, no extra Java meta-data is written to the stream.
- * 
+ * Unlike ObjectOutputStream, no extra Java meta-data is written
+ * to the stream.
+ *
  * @author Lane Schwartz
  * @see ObjectOutputStream
  * @see Externalizable
@@ -90,11 +91,11 @@ public class BinaryOut implements DataOutput, ObjectOutput, Flushable, Closeable
 	}
 
 	/**
-	 * Ensures that the buffer has at least enough space
-	 * available to hold <code>size</code> additional bytes.
+	 * Ensures that the buffer has at least enough space available
+	 * to hold <code>size</code> additional bytes.
 	 * <p>
-	 * If necessary, the current contents of the buffer 
-	 * will be written to the underlying output stream.
+	 * If necessary, the current contents of the buffer will
+	 * be written to the underlying output stream.
 	 * 
 	 * @param size
 	 * @throws IOException

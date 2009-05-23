@@ -27,12 +27,14 @@ import java.util.HashSet;
 import java.util.Iterator;
 
 /**
- * Representation of a 2-dimensional grid. This implementation is designed to 
- * be as memory-efficient as possible for storing many grids in memory. Most JVMs
- * use 32bit ints to store byte, short, and boolean individual primitives, but will actually
- * make efficient use of memory when these small primitives are stored in arrays. Therefore,
- * we create a single sorted array of shorts, where both the X and Y coordinate for a given 
- * "true" point are the grid are encoded in one short.
+ * Representation of a 2-dimensional grid. This implementation is
+ * designed to be as memory-efficient as possible for storing many
+ * grids in memory. Most JVMs use 32bit ints to store byte, short,
+ * and boolean individual primitives, but will actually make efficient
+ * use of memory when these small primitives are stored in arrays.
+ * Therefore, we create a single sorted array of shorts, where both
+ * the X and Y coordinate for a given "true" point are the grid are
+ * encoded in one short.
  *
  * @author Josh Schroeder
  * @since  09 Dec 2004
@@ -46,12 +48,12 @@ public class AlignmentGrid implements Externalizable {
 	//===============================================================
 
 	/**
-	 * Maximum size of a dimension
+	 * Maximum size of a dimension.
 	 */
 	static public final int MAX_LENGTH = 100;
 
 	/**
-	 * Constant used for generating coordinate short value
+	 * Constant used for generating coordinate short value.
 	 */
 	static private final short X_SHIFT = 100;
 
@@ -82,9 +84,11 @@ public class AlignmentGrid implements Externalizable {
 	protected short[] transposedCoordinates;
 
 	/**
-	 * Constructor takes the small string representation of alignment points.
+	 * Constructor takes the small string representation of
+	 * alignment points.
 	 * 
-	 * @param alignmentPoints the string representation of alignments.
+	 * @param alignmentPoints the string representation of
+	 *                        alignments.
 	 */
 	public AlignmentGrid(String alignmentPoints) {
 		HashSet<Coordinate> coordinates = new HashSet<Coordinate>();
@@ -101,12 +105,11 @@ public class AlignmentGrid implements Externalizable {
 	}
 
 	/**
-	 * Constructs a completely empty,
-	 * utterly uninitialized alignment grid,
-	 * containing <emph>absolutely nothing</emph>.
+	 * Constructs a completely empty, utterly uninitialized
+	 * alignment grid, containing <emph>absolutely nothing</emph>.
 	 * <p>
-	 * This constructor only exists to allow 
-	 * this class to be properly <code>Externalizable</code>.
+	 * This constructor only exists to allow this class to be
+	 * properly <code>Externalizable</code>.
 	 */
 	public AlignmentGrid() {
 		// This method intentionally left blank.
@@ -140,9 +143,9 @@ public class AlignmentGrid implements Externalizable {
 	}
 
 	/**
-	 * Checks if a coordinate's values fall within the bounds of the Grid.
-	 * DOES NOT check for the existance of the coordinate in the grid. Use
-	 * contains for that purpose.
+	 * Checks if a coordinate's values fall within the bounds
+	 * of the Grid. DOES NOT check for the existance of the
+	 * coordinate in the grid. Use contains for that purpose.
 	 * 
 	 * @param x the x value of the location to check validity for
 	 * @param y the y value of the location to check validity for
@@ -163,13 +166,13 @@ public class AlignmentGrid implements Externalizable {
 
 
 	/**
-	 * Compares this object to another. If it is also a grid, first
-	 * checks height and width compatibility, then checks that all
-	 * coordinates are equal.
+	 * Compares this object to another. If it is also a grid,
+	 * first checks height and width compatibility, then checks
+	 * that all coordinates are equal.
 	 * 
 	 * @param o object to comare to
-	 * @return <code>true</code> if o is a Grid of the same size and 
-	 *         containing the same points as this one, 
+	 * @return <code>true</code> if o is a Grid of the same
+	 *         size and containing the same points as this one,
 	 *         <code>false</code> otherwise
 	 */
 	public boolean equals(Object o) {
@@ -201,8 +204,9 @@ public class AlignmentGrid implements Externalizable {
 	 * 
 	 * @param x the x value of the coordinate to check for
 	 * @param y the y value of the coordinate to check for
-	 * @return <code>true</code> if the specified coordinate 
-	 *         is in bounds and exists, <code>false</code> otherwise
+	 * @return <code>true</code> if the specified coordinate
+	 *         is in bounds and exists, <code>false</code>
+	 *         otherwise
 	 */
 	public boolean contains(int x, int y) {
 		if (isValid(x,y)) {
@@ -215,9 +219,9 @@ public class AlignmentGrid implements Externalizable {
 	}
 
 	/**
-	 * Exports the contents of this grid to a 2-d boolean array, of the size
-	 * array[width][height]. Coordinates contained in this grid will be set to
-	 * true, all others false.
+	 * Exports the contents of this grid to a 2-d boolean array,
+	 * of the size array[width][height]. Coordinates contained
+	 * in this grid will be set to true, all others false.
 	 * 
 	 * @return a 2-d boolean array representation of this grid
 	 */
@@ -238,36 +242,36 @@ public class AlignmentGrid implements Externalizable {
 
 
 	/**
-	 * Returns a sorted list (includes any duplicates) 
-	 * of the target language indices that align with 
-	 * the given source language span.
+	 * Returns a sorted list (includes any duplicates) of the
+	 * target language indices that align with the given source
+	 * language span.
 	 * 
-	 * @param sourceSpanStart Inclusive start index 
+	 * @param sourceSpanStart Inclusive start index
 	 *                        into the source language sentence
-	 * @param sourceSpanEnd Exclusive end index into 
+	 * @param sourceSpanEnd Exclusive end index into
 	 *                      the source language sentence.
 	 *                      
-	 * @return a sorted list (includes any duplicates) 
-	 *         of the target language indices that align with 
-	 *         the given source language span
+	 * @return a sorted list (includes any duplicates) of the
+	 *         target language indices that align with the given
+	 *         source language span
 	 */
 	public int[] getTargetPoints(int sourceSpanStart, int sourceSpanEnd) {
 		return getPoints(sourceSpanStart, sourceSpanEnd, getHeight(), getCoordinates());
 	}
 
 	/**
-	 * Returns a sorted list (includes any duplicates) 
-	 * of the source language indices that align with 
-	 * the given target language span.
-	 * 
-	 * @param targetSpanStart Inclusive start index 
+	 * Returns a sorted list (includes any duplicates) of the
+	 * source language indices that align with the given target
+	 * language span.
+	 *
+	 * @param targetSpanStart Inclusive start index
 	 *                        into the target language sentence.
-	 * @param targetSpanEnd Exclusive end index into 
+	 * @param targetSpanEnd Exclusive end index into
 	 *                      the target language sentence.
 	 *                     
-	 * @return a sorted list (includes any duplicates) 
-	 *         of the source language indices that align with 
-	 *         the given target language span.
+	 * @return a sorted list (includes any duplicates) of the
+	 *         source language indices that align with the given
+	 *         target language span.
 	 */
 	public int[] getSourcePoints (int targetSpanStart, int targetSpanEnd) {
 		return getPoints(targetSpanStart, targetSpanEnd, getWidth(), getTransposedCoordinates());
@@ -275,18 +279,18 @@ public class AlignmentGrid implements Externalizable {
 
 
 	/**
-	 * Returns a sorted list (includes any duplicates) 
-	 * of alignment indices for the given span, constructed from
+	 * Returns a sorted list (includes any duplicates) of
+	 * alignment indices for the given span, constructed from
 	 * the provided array of encoded points.
-	 * 
+	 *
 	 * @param start Inclusive start index
 	 * @param end Exclusive end index
 	 * @param maxKey Maximum allowed coordinate value
 	 * @param points Encoded alignment points
-	 *                     
-	 * @return a sorted list (includes any duplicates) 
-	 *         of alignment indices for the given span, constructed from
-	 *         the provided array of encoded points
+	 *
+	 * @return a sorted list (includes any duplicates) of
+	 *         alignment indices for the given span, constructed
+	 *         from the provided array of encoded points.
 	 */
 	public static int[] getPoints(int start, int end, int maxKey, short[] points) {
 		short startKey = getKey(start,0);
@@ -305,13 +309,13 @@ public class AlignmentGrid implements Externalizable {
 	}
 	
 	/**
-	 * Gets a String representation of the grid's contents 
-	 * in the smallest number of characters. 
+	 * Gets a String representation of the grid's contents in
+	 * the smallest number of characters.
 	 * 
-	 * The format is <code>x1.y1,x2.y2,....xN.yN</code>. 
-	 * <em>Note</em>: The returned String does <em>not</em> imply the
-	 * full width and height of the array, only the points contained 
-	 * in the grid.
+	 * The format is <code>x1.y1,x2.y2,....xN.yN</code>.
+	 * <em>Note</em>: The returned String does <em>not</em>
+	 * imply the full width and height of the array, only the
+	 * points contained in the grid.
 	 *
 	 * @return a "thin" String representation of the grid.
 	 */
@@ -336,8 +340,8 @@ public class AlignmentGrid implements Externalizable {
 	
 	
 	/** 
-	 * Gets a String representation of the grid 
-	 * represented as an ASCII graph of the grid.
+	 * Gets a String representation of the grid represented as
+	 * an ASCII graph of the grid.
 	 * 
 	 * @return String displaying the grid as an ASCII graph
 	 */

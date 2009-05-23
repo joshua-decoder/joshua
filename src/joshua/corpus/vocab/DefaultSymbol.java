@@ -32,12 +32,14 @@ import java.util.logging.Logger;
  * (1) initialize the symbol table
  * (2) provide conversion between symbol and integers
  *
- * How to initialize the Symbol
- * Having multiple LM modes complicate the class, we have four LM modes: JAVA_LM, SRILM, Distributed_LM, and NONE_LM. The NONE_LM and JAVA_LM will be treated as same. 
- *JAVA_LM and NONE_LM: call add_global_symbols(true) to initialize
- *SRILM: the SRILM must first be initialized, then call add_global_symbols(false)
- *DistributedLM (from decoder): call init_sym_tbl_from_file(true)
- *DistributedLM (from LMServer): call init_sym_tbl_from_file(true/false)
+ * How to initialize the Symbol Having multiple LM modes complicate
+ * the class, we have four LM modes: JAVA_LM, SRILM, Distributed_LM,
+ * and NONE_LM. The NONE_LM and JAVA_LM will be treated as same.
+ *
+ * JAVA_LM and NONE_LM: call add_global_symbols(true) to initialize
+ * SRILM: the SRILM must first be initialized, then call add_global_symbols(false)
+ * DistributedLM (from decoder): call init_sym_tbl_from_file(true)
+ * DistributedLM (from LMServer): call init_sym_tbl_from_file(true/false)
  *
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate$

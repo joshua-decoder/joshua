@@ -38,7 +38,8 @@ import java.util.HashMap;
 /**
  * approximated BLEU
  * (1) do not consider clipping effect
- * (2) in the dynamic programming, do not maintain different states for different hyp length
+ * (2) in the dynamic programming, do not maintain different states
+ *     for different hyp length
  * (3) brief penalty is calculated based on the avg ref length
  * (4) using sentence-level BLEU, instead of doc-level BLEU
  * 
@@ -79,20 +80,17 @@ public class OracleExtractionHG extends SplitHg {
 
 	static boolean always_maintain_seperate_lm_state = true; //if true: the virtual item maintain its own lm state regardless whether lm_order>=g_bleu_order
 	
-	/**
-	 * 
-	 */
 	SymbolTable p_symbolTable;
 	
 	int lm_feat_id=0; //the baseline LM feature id
 	
 	/**
-	 * Constructs a new object capable of extracting
-	 * a tree from a hypergraph that most closely matches
-	 * a provided oracle sentence.
+	 * Constructs a new object capable of extracting a tree
+	 * from a hypergraph that most closely matches a provided
+	 * oracle sentence.
 	 * <p>
-	 * It seems that the symbol table here should only need
-	 * to represent monolingual terminals, plus nonterminals.
+	 * It seems that the symbol table here should only need to
+	 * represent monolingual terminals, plus nonterminals.
 	 * 
 	 * @param symbolTable 
 	 * @param lm_feat_id_

@@ -19,16 +19,17 @@ package joshua.corpus.suffix_array;
 
 
 /**
- * Indicates that the size of a suffix array
- * does not match the size of its associated corpus.
+ * Indicates that the size of a suffix array does not match the
+ * size of its associated corpus.
  * 
  * @author Lane Schwartz
  */
 public class MismatchedCorpusException extends RuntimeException {
 
 	/**
-	 * Constructs an exception indicating that the size of the suffix array
-	 * does not match the size of its associated corpus.
+	 * Constructs an exception indicating that the size of the
+	 * suffix array does not match the size of its associated
+	 * corpus.
 	 * 
 	 * @param suffixArray Suffix array
 	 */

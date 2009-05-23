@@ -66,7 +66,10 @@ public class Node extends AbstractGrammar implements Comparable<Node>, Grammar, 
 	MatchedHierarchicalPhrases sourceHierarchicalPhrases;
 
 	//TODO It may be that this could be deleted, since it's also stored in sourceHierarchicalPhrases
-	/** Representation of the source side tokens corresponding to the hierarchical phrases for this node. */
+	/**
+	 * Representation of the source side tokens corresponding
+	 * to the hierarchical phrases for this node.
+	 */
 	Pattern sourcePattern;
 	
 	/** Translation rules for this node. */
@@ -118,7 +121,7 @@ public class Node extends AbstractGrammar implements Comparable<Node>, Grammar, 
 	
 	/**
 	 * Gets rules for this node and the children of this node.
-	 * 
+	 *
 	 * @return rules for this node and the children of this node.
 	 */
 	public List<Rule> getAllRules() {
@@ -198,17 +201,17 @@ public class Node extends AbstractGrammar implements Comparable<Node>, Grammar, 
 
 
 	/**
-	 * Stores in this node
-	 * a list of source language hierarchical phrases, 
-	 * the associated source language pattern,
-	 * and the list of associated translation rules.
+	 * Stores in this node a list of source language hierarchical
+	 * phrases, the associated source language pattern, and the
+	 * list of associated translation rules.
 	 * <p>
 	 * This method is responsible for creating and storing
-	 * translation rules from the provided list 
-	 * of source language hierarchical phrases.
+	 * translation rules from the provided list of source
+	 * language hierarchical phrases.
 	 * 
 	 * @param hierarchicalPhrases Source language hierarchical phrases.
-	 * @param sourcePattern Source language pattern that should correspond to the hierarchical phrases.
+	 * @param sourcePattern Source language pattern that should
+	 *                      correspond to the hierarchical phrases.
 	 */
 	public void storeResults(MatchedHierarchicalPhrases hierarchicalPhrases, Pattern sourcePattern) {
 		

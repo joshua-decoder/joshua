@@ -27,10 +27,12 @@ import java.util.logging.Logger;
 
 /**
  * this class implement 
- * (1) HyperGraph-related data structures (Item and Hyper-edges) 
+ * (1) HyperGraph-related data structures (Item and Hyper-edges)
  *
- * Note:to seed the kbest extraction, each deduction should have the best_cost properly set. We do not require any list being sorted
- * 
+ * Note: to seed the kbest extraction, each deduction should have
+ * the best_cost properly set. We do not require any list being
+ * sorted
+ *
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate$
  */

@@ -48,7 +48,8 @@ import joshua.util.CommandLineParser.Option;
  * 
  * @author Lane Schwartz
  * @version $LastChangedDate$
- * @see "Section 4.4 of 'Statistical Phrase-Based Translation' by Philipp Koehn, Franz Josef Och, & Daniel Marcu (HLT-NAACL, 2003)"
+ * @see "Section 4.4 of 'Statistical Phrase-Based Translation' by
+ *      Philipp Koehn, Franz Josef Och, & Daniel Marcu (HLT-NAACL, 2003)"
  */
 public class ExtractWordPairs {
 
@@ -60,15 +61,19 @@ public class ExtractWordPairs {
 	/**
 	 * Extract aligned word pairs from an aligned corpus.
 	 * <p>
-	 * This method does not convert from upper case to lower case. All input needs to already be in the proper case.
+	 * This method does not convert from upper case to lower
+	 * case. All input needs to already be in the proper case.
 	 * <p>
-	 * NOTE: The scanners provided for source text, target text, and alignments must all be backed by data that uses Unix-style newlines.
+	 * NOTE: The scanners provided for source text, target text,
+	 * and alignments must all be backed by data that uses
+	 * Unix-style newlines.
 	 * 
-	 * @param number_of_lines The number of lines to process from the aligned corpus.
+	 * @param number_of_lines The number of lines to process
+	 *                    from the aligned corpus.
 	 * @param source_text Scanner backed by the source language text
 	 * @param target_text Scanner backed by the target language text
-	 * @param alignments Scanner backed by the sentence alignment data
-	 * @param outputFile Writer to use when producing output results
+	 * @param alignments  Scanner backed by the sentence alignment data
+	 * @param outputFile  Writer to use when producing output results
 	 * @throws IOException Thrown if an I/O error occurs when writing results
 	 */
 	public static void extract(int number_of_lines, Scanner source_text, Scanner target_text, Scanner alignments, Writer outputFile) throws IOException {
@@ -151,7 +156,8 @@ public class ExtractWordPairs {
 	}
 	
 	/**
-	 * Utility to extract aligned word pairs from an aligned corpus
+	 * Utility to extract aligned word pairs from an aligned
+	 * corpus.
 	 * 
 	 * @param args Command line arguments
 	 */

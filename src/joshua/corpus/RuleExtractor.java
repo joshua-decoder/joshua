@@ -24,21 +24,24 @@ import joshua.decoder.ff.tm.Rule;
 
 /**
  * Provides an interface for extracting translation rules.
- * 
+ *
  * @author Lane Schwartz
  * @version $LastChangedDate$
  */
 public interface RuleExtractor {
 
 	/**
-	 * Extract translation rules for a source language pattern 
-	 * given a list of instances in the source corpus of that pattern.
+	 * Extract translation rules for a source language pattern
+	 * given a list of instances in the source corpus of that
+	 * pattern.
 	 * <p>
-	 * This extractor is responsible for doing any sampling, if any is required.
-	 * 
+	 * This extractor is responsible for doing any sampling,
+	 * if any is required.
+	 *
 	 * @param sourcePattern
 	 * @param sourceHierarchicalPhrases
-	 * @return translation rules for the provided source language pattern
+	 * @return translation rules for the provided source language
+	 *         pattern
 	 */
 	List<Rule> extractRules(Pattern sourcePattern, MatchedHierarchicalPhrases sourceHierarchicalPhrases);
 	

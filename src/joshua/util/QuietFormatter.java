@@ -22,7 +22,7 @@ import java.util.logging.LogRecord;
 
 /**
  * Log formatter that prints just the message, with no time stamp.
- * 
+ *
  * @author Lane Schwartz
  * @version $LastChangedDate$
  */

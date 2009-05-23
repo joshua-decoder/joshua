@@ -30,8 +30,8 @@ import joshua.corpus.Corpus;
 import joshua.corpus.alignment.Alignments;
 
 /**
- * Presents a visual display of an alignment grid
- * for one aligned sentence.
+ * Presents a visual display of an alignment grid for one aligned
+ * sentence.
  * 
  * @author Lane Schwartz
  */
@@ -57,20 +57,19 @@ public class GridPanel extends JPanel {
 	private int numTargetWords;
 	
 	/** 
-	 * Represents the breadth and height of a cell
-	 * when displayed on screen.
+	 * Represents the breadth and height of a cell when displayed
+	 * on screen.
 	 */
 	private int screenScaleFactor = 25;
 	
 	/** 
-	 * Represents the breadth and height of a cell
-	 * when printed.
+	 * Represents the breadth and height of a cell when printed.
 	 */
 	private int printerScaleFactor = 10;
 	
 	/**
 	 * Constructs a panel to display an aligned sentence pair.
-	 * 
+	 *
 	 * @param sourceCorpus Source corpus
 	 * @param targetCorpus Target corpus
 	 * @param alignments Sentence alignments for the parallel corpus
@@ -86,8 +85,9 @@ public class GridPanel extends JPanel {
 	}
 		
 	/**
-	 * Sets the aligned sentence to be displayed by this component.
-	 * 
+	 * Sets the aligned sentence to be displayed by this
+	 * component.
+	 *
 	 * @param sentenceNumber Index of the sentence to display
 	 */
 	public void setSentenceNumber(int sentenceNumber) {

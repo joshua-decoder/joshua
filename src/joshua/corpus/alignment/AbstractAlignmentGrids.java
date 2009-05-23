@@ -56,44 +56,46 @@ public abstract class AbstractAlignmentGrids extends AbstractAlignments {
 	}
 	
 	/**
-	 * Gets the indices of all source words aligned to the specified span 
-	 * in the specified sentence.
+	 * Gets the indices of all source words aligned to the
+	 * specified span in the specified sentence.
 	 * <p>
 	 * All indices in this method are zero-based.
 	 * <p>
-	 * The span parameters of this method are relative to the sentence.
-	 * So, for example, calling this method to get the source indices 
-	 * for a target span covering the first three words of the eight sentence
-	 * in the parallel corpus, the following parameter values would be used:
+	 * The span parameters of this method are relative to the
+	 * sentene. So, for example, calling this method to get the
+	 * source indices for a target span covering the first three
+	 * words of the eight sentence in the parallel corpus, the
+	 * following parameter values would be used:
 	 * 
 	 * <code>getSourcePoints(7, 0, 3)</code>
 	 * 
 	 * @param sentenceID Index of a sentence in the aligned parallel corpus
 	 * @param targetSpanStart Inclusive start index in the target sentence
 	 * @param targetSpanEnd Exclusive end index in the target sentence
-	 * @return the indices of all source words aligned to the specified span 
-	 *         in the specified sentence
+	 * @return the indices of all source words aligned to the
+	 *         specified span in the specified sentence
 	 */
 	protected abstract int[] getSourcePoints(int sentenceID, int targetSpanStart, int targetSpanEnd);
 	
 	/**
-	 * Gets the indices of all target words aligned to the specified span 
-	 * in the specified sentence.
+	 * Gets the indices of all target words aligned to the
+	 * specified span in the specified sentence.
 	 * <p>
 	 * All indices in this method are zero-based.
 	 * <p>
-	 * The span parameters of this method are relative to the sentence.
-	 * So, for example, calling this method to get the target indices 
-	 * for a source span covering the first three words of the eight sentence
-	 * in the parallel corpus, the following parameter values would be used:
+	 * The span parameters of this method are relative to the
+	 * sentence. So, for example, calling this method to get
+	 * the target indices for a source span covering the first
+	 * three words of the eight sentence in the parallel corpus,
+	 * the following parameter values would be used:
 	 * 
 	 * <code>getSourcePoints(7, 0, 3)</code>
 	 * 
 	 * @param sentenceID Index of a sentence in the aligned parallel corpus
 	 * @param sourceSpanStart Inclusive start index in the source sentence
 	 * @param sourceSpanEnd Exclusive end index in the source sentence
-	 * @return the indices of all target words aligned to the specified span 
-	 *         in the specified sentence
+	 * @return the indices of all target words aligned to the
+	 *         specified span in the specified sentence
 	 */
 	protected abstract int[] getTargetPoints(int sentenceID, int sourceSpanStart, int sourceSpanEnd);
 	
@@ -190,10 +192,7 @@ public abstract class AbstractAlignmentGrids extends AbstractAlignments {
 			int endTargetIndex = targetOffset + targetIndices[targetIndices.length-1]+1;
 			
 			return new Span(startTargetIndex, endTargetIndex);
-			
 		}
-		
 	}
-
 
 }

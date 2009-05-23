@@ -24,9 +24,9 @@ import joshua.corpus.vocab.SymbolTable;
 
 
 /**
- * ContiguousPhrase implements the Phrase interface by linking
- * into indices within a corpus. This is intended to be a very
- * low-memory implementation of the class.
+ * ContiguousPhrase implements the Phrase interface by linking into
+ * indices within a corpus. This is intended to be a very low-memory
+ * implementation of the class.
  *
  * @author Chris Callison-Burch
  * @since  29 May 2008

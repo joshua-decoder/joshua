@@ -96,12 +96,14 @@ public class BasicPhrase extends AbstractPhrase {
 	public SymbolTable getVocab()       { return vocabulary; }
 	
 	/**
-	 * Returns a human-readable String representation of the phrase.
+	 * Returns a human-readable String representation of the
+	 * phrase.
 	 * <p>
-	 * The implementation of this method is slightly more efficient 
-	 * than that inherited from <code>AbstractPhrase</code>.
+	 * The implementation of this method is slightly more
+	 * efficient than that inherited from <code>AbstractPhrase</code>.
 	 * 
-	 * @return a human-readable String representation of the phrase.
+	 * @return a human-readable String representation of the
+	 *         phrase.
 	 */
 	public String toString() {
 		StringBuffer sb = new StringBuffer();

@@ -30,16 +30,16 @@ import java.util.logging.Logger;
 
 
 /**
- * SuffixArray is the main class for producing suffix arrays
- * from corpora, and manipulating them once created.  Suffix arrays
- * are a space economical way of storing a corpus and allowing
- * very quick searching of any substring within the corpus.  A
- * suffix array contains a list of references to every point in a
- * corpus, and each reference denotes the suffix starting at that
- * point and continuing to the end of the corpus.  The suffix array
- * is sorted alphabetically, so any substring within the corpus
- * can be found with a binary search in O(log n) time, where n is
- * the length of the corpus.
+ * SuffixArray is the main class for producing suffix arrays from
+ * corpora, and manipulating them once created. Suffix arrays are
+ * a space economical way of storing a corpus and allowing very
+ * quick searching of any substring within the corpus. A suffix
+ * array contains a list of references to every point in a corpus,
+ * and each reference denotes the suffix starting at that point and
+ * continuing to the end of the corpus. The suffix array is sorted
+ * alphabetically, so any substring within the corpus can be found
+ * with a binary search in O(log n) time, where n is the length of
+ * the corpus.
  *
  * @author  Colin Bannard
  * @since   10 December 2004

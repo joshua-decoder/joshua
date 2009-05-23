@@ -25,10 +25,10 @@ import joshua.decoder.hypergraph.HyperEdge;
 import joshua.decoder.hypergraph.HyperGraph;
 
 /**
- * This class implements general ways of spliting the hypergraph based on coarse-to-fine idea
- * input is a hypergraph
- * output is another hypergraph that has changed state structures.
- * 
+ * This class implements general ways of spliting the hypergraph
+ * based on coarse-to-fine idea input is a hypergraph output is
+ * another hypergraph that has changed state structures.
+ *
  * @author Zhifei Li, <zhifei.work@gmail.com> (Johns Hopkins University)
  * @version $LastChangedDate$
  */

@@ -24,7 +24,7 @@ import java.util.List;
 
 /**
  * A node in a directed graph.
- * 
+ *
  * @author Lane Schwartz
  * @since 2008-07-08
  * @version $LastChangedDate$
@@ -136,8 +136,9 @@ public class Node<Label> {
 	
 	/**
 	 * Gets the number of outgoing arcs that begin at this node.
-	 * 
-	 * @return The number of outgoing arcs that begin at this node.
+	 *
+	 * @return The number of outgoing arcs that begin at this
+	 *         node.
 	 */
 	public int size() {
 		return outgoingArcs.size();

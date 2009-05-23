@@ -26,42 +26,47 @@ import joshua.corpus.vocab.SymbolTable;
 import joshua.util.Cache;
 
 /**
- * This class provides a mostly-complete implementation 
- * of the <code>Suffixes</code> interface, 
- * designed to minimize the effort required to build 
- * a concrete implementation of a suffix array data structure.
+ * This class provides a mostly-complete implementation of the
+ * <code>Suffixes</code> interface, designed to minimize the effort
+ * required to build a concrete implementation of a suffix array
+ * data structure.
  * <p>
- * To implement a concrete suffix array, the programmer need only implement
- * the <code>getCorpusIndex(int suffixIndex)</code> and 
+ * To implement a concrete suffix array, the programmer need only
+ * implement the <code>getCorpusIndex(int suffixIndex)</code> and
  * <code>size()</code> methods.
  * 
  * @author Lane Schwartz
  * @author Chris Callison-Burch
  */
 public abstract class AbstractSuffixArray implements Suffixes {
-		
+	
 	/**
-	 * Maps from patterns to lists of hierarchical phrases
-	 * that match the corresponding pattern in the corpus.
+	 * Maps from patterns to lists of hierarchical phrases that
+	 * match the corresponding pattern in the corpus.
 	 * <p>
-	 * This cache is a most-recently accessed map, 
-	 * so commonly accessed patterns will remain in the cache,
-	 * while rare patterns will eventually drop out of the cache.
+	 * This cache is a most-recently accessed map, so commonly
+	 * accessed patterns will remain in the cache, while rare
+	 * patterns will eventually drop out of the cache.
 	 */
 	protected final Cache<Pattern,MatchedHierarchicalPhrases> hierarchicalPhraseCache;
 	
-	/** Integer array representation of the corpus for this suffix array. */
+	/**
+	 * Integer array representation of the corpus for this
+	 * suffix array.
+	 */
 	protected final Corpus corpus;
 	
 	/**
-	 * Constructs an abstract suffix array based on the provided corpus.
+	 * Constructs an abstract suffix array based on the provided
+	 * corpus.
 	 * 
-	 * The specified cache will be used 
-	 * to store matched hierarchical phrases for frequently accessed patterns.
-	 *  
+	 * The specified cache will be used to store matched
+	 * hierarchical phrases for frequently accessed patterns.
+	 * 
 	 * @param corpus Corpus upon which this suffix array is based.
-	 * @param hierarchicalPhraseCache Cache to store 
-	 * 		matched hierarchical phrases for frequently accessed patterns
+	 * @param hierarchicalPhraseCache Cache to store matched
+	 *               hierarchical phrases for frequently accessed
+	 *               patterns
 	 */
 	public AbstractSuffixArray(Corpus corpus, Cache<Pattern,MatchedHierarchicalPhrases> hierarchicalPhraseCache) {
 		this.hierarchicalPhraseCache = hierarchicalPhraseCache;
@@ -195,8 +200,9 @@ public abstract class AbstractSuffixArray implements Suffixes {
 	 *                    (inclusive)
 	 * @param phraseEnd   the end of the phrase in the sentence
 	 *                    (exclusive)
-	 * @return a tuple containing the (inclusive) start and the (inclusive) end bounds
-	 *         in the suffix array for the phrase
+	 * @return a tuple containing the (inclusive) start and the
+	 *         (inclusive) end bounds in the suffix array for
+	 *         the phrase
 	 */
 	protected int[] findPhrase(Phrase sentence, int phraseStart, int phraseEnd) {
 		return findPhrase(sentence, phraseStart, phraseEnd, 0, size()-1);
@@ -212,21 +218,21 @@ public abstract class AbstractSuffixArray implements Suffixes {
 	 * subphrase within the sentence between phraseStart and
 	 * phraseEnd.
 	 *
-	 * @param sentence         the sentence/superphrase in int
-	 *                         representation to draw the search
-	 *                         phrase from
-	 * @param phraseStart      the start of the phrase in the
-	 *                         sentence (inclusive)
-	 * @param phraseEnd        the end of the phrase in the
-	 *                         sentence (exclusive)
+	 * @param sentence    the sentence/superphrase in int
+	 *                    representation to draw the search
+	 *                    phrase from
+	 * @param phraseStart the start of the phrase in the sentence
+	 *                    (inclusive)
+	 * @param phraseEnd   the end of the phrase in the sentence
+	 *                    (exclusive)
 	 * @param suffixArrayStart the point at which to start the
-	 *                         search in the suffix array
-	 * @param suffixArrayEnd   the end point in the suffix array
-	 *                         beyond which the search doesn't
-	 *                         need to take place
-	 * @param findFirst        a flag that indicates whether
-	 *                         we should find the first or last
-	 *                         occurrence of the phrase
+	 *                    search in the suffix array
+	 * @param suffixArrayEnd the end point in the suffix array
+	 *                    beyond which the search doesn't need
+	 *                    to take place
+	 * @param findFirst   a flag that indicates whether we
+	 *                    should find the first or last occurrence
+	 *                    of the phrase
 	 */
 	private int findPhraseBound(
 		Phrase  sentence,

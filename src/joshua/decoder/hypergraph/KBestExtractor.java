@@ -33,14 +33,20 @@ import java.util.HashMap;
 import java.util.PriorityQueue;
 
 /**
- * this class implement:  lazy k-best extraction on a hyper-graph
- *to seed the kbest extraction, it only needs that each hyperedge should have the best_cost properly set, and it does not require any list being sorted
- *instead, the priority queue heap_cands will do internal sorting
- *In fact, the real crucial cost is the transition-cost at each hyperedge. We store the best-cost instead of the transition cost since it is easy to do pruning and
- *find one-best. Moreover, the transition cost can be recovered by get_transition_cost(), though somewhat expensive
+ * this class implement: lazy k-best extraction on a hyper-graph
+ * to seed the kbest extraction, it only needs that each hyperedge
+ * should have the best_cost properly set, and it does not require
+ * any list being sorted instead, the priority queue heap_cands
+ * will do internal sorting In fact, the real crucial cost is the
+ * transition-cost at each hyperedge. We store the best-cost instead
+ * of the transition cost since it is easy to do pruning and find
+ * one-best. Moreover, the transition cost can be recovered by
+ * get_transition_cost(), though somewhat expensive
  *
- * to recover the model cost for each individual model, we should either have access to the model, or store the model cost in the hyperedge 
- * (for example, in the case of disk-hypergraph, we need to store all these model cost at each hyperedge)
+ * to recover the model cost for each individual model, we should
+ * either have access to the model, or store the model cost in the
+ * hyperedge (for example, in the case of disk-hypergraph, we need
+ * to store all these model cost at each hyperedge)
  *
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate$
@@ -50,14 +56,14 @@ public class KBestExtractor {
 	private final HashMap<HGNode,VirtualItem> tbl_virtual_items = new HashMap<HGNode,VirtualItem>();
 	
 	/**
-	 * Shared symbol table for source language terminals,
-	 * target language terminals, and shared nonterminals.
+	 * Shared symbol table for source language terminals, target
+	 * language terminals, and shared nonterminals.
 	 * <p>
-	 * It may be that separate tables should be maintained
-	 * for the source and target languages.
+	 * It may be that separate tables should be maintained for
+	 * the source and target languages.
 	 * <p>
-	 * TODO It seems likely that only a target side symbol table is required
-	 *      for this class.
+	 * TODO It seems likely that only a target side symbol table
+	 *      is required for this class.
 	 */
 	private final SymbolTable p_symbolTable;
 	

@@ -26,7 +26,7 @@ import javax.swing.KeyStroke;
 
 /**
  * Menu bar for grid viewer application.
- * 
+ *
  * @author Lane Schwartz
  */
 public class GridViewerMenu extends JMenuBar {

@@ -28,18 +28,19 @@ import java.util.ArrayList;
 
 
 /**
- * HierarchicalPhrase is a class that represents a single matched hierarchical
- * phrase, and provides the methods necessary for accessing the
- * Pattern that it matches and for computing the intersection used
- * in the suffix array lookups of discontinuous phrases.
+ * HierarchicalPhrase is a class that represents a single matched
+ * hierarchical phrase, and provides the methods necessary for
+ * accessing the Pattern that it matches and for computing the
+ * intersection used in the suffix array lookups of discontinuous
+ * phrases.
  * <p>
- * For efficiency and space savings, this class should only be used 
+ * For efficiency and space savings, this class should only be used
  * when it is does not make sense to use MatchedHierarchicalPhrases.
  * 
  * In cases where many hierarchical phrases share a common pattern,
  * that class should be preferred, as it is able to store the phrases
- * in a much more memory-efficient manner compared to storing a collection
- * of HierarchicalPhrase objects.
+ * in a much more memory-efficient manner compared to storing a
+ * collection of HierarchicalPhrase objects.
  * 
  * @author Chris Callison-Burch and Lane Schwartz 
  * @since July 31 2008
@@ -62,7 +63,10 @@ public class HierarchicalPhrase extends Pattern {
 	protected final Corpus corpusArray;
 	
 	
-	/** Index of the sentence in the corpus where this phrase was extracted. */
+	/**
+	 * Index of the sentence in the corpus where this phrase
+	 * was extracted.
+	 */
 	protected final int sentenceNumber;
 	
 	
@@ -76,13 +80,17 @@ public class HierarchicalPhrase extends Pattern {
 	
 	
 	/**
-	 * Constructs a hierarchical phrase rooted at a location in a corpus.
+	 * Constructs a hierarchical phrase rooted at a location
+	 * in a corpus.
 	 * 
-	 * @param patternWords     Terminals and nonterminals comprising the pattern
-	 * @param span             Span in the corpus from the first terminal 
-	 *                         to the final terminal in the phrase
-	 * @param nonterminalSpans Locations of all nonterminals in this phrase.
-	 * @param corpus           Representation of a monolingual corpus.
+	 * @param patternWords Terminals and nonterminals comprising
+	 *                     the pattern
+	 * @param span         Span in the corpus from the first
+	 *                     terminal  to the final terminal in the phrase
+	 * @param nonterminalSpans Locations of all nonterminals
+	 *                     in this phrase.
+	 * @param corpus       Representation of a monolingual
+	 *                     corpus.
 	 */
 	public HierarchicalPhrase(
 			int[]             patternWords,
@@ -160,10 +168,11 @@ public class HierarchicalPhrase extends Pattern {
 	}
 	
 	/**
-	 * Gets whether this phrase contains a terminal at the specified index.
+	 * Gets whether this phrase contains a terminal at the
+	 * specified index.
 	 * 
-	 * @return <code>true</code> this phrase contains a terminal at the specified index
-	 *         <code>false</code> otherwise
+	 * @return <code>true</code> this phrase contains a terminal
+	 *         at the specified index <code>false</code> otherwise
 	 */
 	public boolean containsTerminalAt(int alignedPointIndex) {
 

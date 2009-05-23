@@ -20,8 +20,9 @@ package joshua.corpus;
 import java.util.Iterator;
 
 /**
- * Represents a span with an inclusive starting index and an exclusive ending index.
- * 
+ * Represents a span with an inclusive starting index and an exclusive
+ * ending index.
+ *
  * @author Lane Schwartz
  * @version $LastChangedDate:2008-09-18 12:47:23 -0500 (Thu, 18 Sep 2008) $
  */
@@ -35,8 +36,9 @@ public class Span implements Iterable<Integer>, Comparable<Span> {
 	
 	
 	/**
-	 * Constructs a new span with the given inclusive starting and exclusive ending indices.
-	 * 
+	 * Constructs a new span with the given inclusive starting
+	 * and exclusive ending indices.
+	 *
 	 * @param start Inclusive starting index of this span.
 	 * @param end Exclusive ending index of this span.
 	 */
@@ -49,8 +51,8 @@ public class Span implements Iterable<Integer>, Comparable<Span> {
 	/**
 	 * Returns the length of the span.
 	 * 
-	 * @return the length of the span; 
-	 *         this is equivalent to <code>span.end - span.start</code>.
+	 * @return the length of the span; this is equivalent to
+	 *         <code>span.end - span.start</code>.
 	 */
 	public int size() {
 		return end-start;

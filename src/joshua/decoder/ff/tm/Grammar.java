@@ -34,11 +34,14 @@ import joshua.decoder.ff.tm.Trie;
 public interface Grammar {
 	
 	/**
-	 * Gets the root of the <code>Trie</code> backing this grammar.
+	 * Gets the root of the <code>Trie</code> backing this
+	 * grammar.
 	 * <p>
-	 * <em>Note</em>: This method should run as a small constant-time function.
+	 * <em>Note</em>: This method should run as a small
+	 * constant-time function.
 	 * 
-	 * @return the root of the <code>Trie</code> backing this grammar
+	 * @return the root of the <code>Trie</code> backing this
+	 *         grammar
 	 */
 	Trie getTrieRoot();
 	
@@ -56,8 +59,9 @@ public interface Grammar {
 	
 	
 	/**
-	 * After calling this method, the rules in this grammar
-	 * are guaranteed to be sorted based on the latest feature function values.
+	 * After calling this method, the rules in this grammar are
+	 * guaranteed to be sorted based on the latest feature
+	 * function values.
 	 * <p>
 	 * Cube-pruning requires that the grammar be sorted based
 	 * on the latest feature functions.
@@ -67,14 +71,14 @@ public interface Grammar {
 	void sortGrammar(ArrayList<FeatureFunction> models);
 	
 	/** 
-	 * Determines whether the rules in this grammar
-	 * have been sorted based on the latest feature function values. 
+	 * Determines whether the rules in this grammar have been
+	 * sorted based on the latest feature function values.
 	 * <p>
 	 * This method is needed for the cube-pruning algorithm.
 	 * 
 	 * @return <code>true</code> if the rules in this grammar
-	 *         have been sorted based on the latest feature function values,
-	 *         <code>false</code> otherwise
+	 *         have been sorted based on the latest feature
+	 *         function values, <code>false</code> otherwise
 	 */
 	boolean isSorted();
 		
@@ -86,11 +90,11 @@ public interface Grammar {
 	int getNumRules();
 	
 	/**
-	 * Construct an out-of-vocabulary (OOV) rule for the word source. 
-	 * Only called when creating oov rule in Chart or DiskHypergraph, all
-	 * the transition cost for phrase model, arity penalty,
-	 * word penalty are all zero, except the LM cost or the
-	 * first feature if no LM feature is used
+	 * Construct an out-of-vocabulary (OOV) rule for the word
+	 * source. Only called when creating oov rule in Chart or
+	 * DiskHypergraph, all the transition cost for phrase model,
+	 * arity penalty, word penalty are all zero, except the LM
+	 * cost or the first feature if no LM feature is used.
 	 *
 	 * TODO: will try to get rid of owner, have_lm_model, and num_feats
 	 */
@@ -98,18 +102,20 @@ public interface Grammar {
 	
 	
 	/**
-	 * Gets the integer identifier 
-	 * of this grammar's out-of-vocabulary (OOV) rule.
+	 * Gets the integer identifier of this grammar's out-of-vocabulary
+	 * (OOV) rule.
 	 * 
-	 * @return the integer identifier of this grammar's 
+	 * @return the integer identifier of this grammar's
 	 *         out-of-vocabulary (OOV) rule
 	 */
 	int getOOVRuleID();
 	
 	
 	/**
-	 * This is used to construct a manual rule supported from outside the grammar, but the owner should be the same as the grammar
-	 * rule ID will the same as OOVRuleId, and no lattice cost
+	 * This is used to construct a manual rule supported from
+	 * outside the grammar, but the owner should be the same
+	 * as the grammar. Rule ID will the same as OOVRuleId, and
+	 * no lattice cost
 	 */
 	Rule constructManualRule(int lhs, int[] sourceWords, int[] targetWords, float[] scores, int aritity);
 	

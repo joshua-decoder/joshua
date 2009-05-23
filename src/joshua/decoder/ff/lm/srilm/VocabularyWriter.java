@@ -29,10 +29,11 @@ import joshua.util.io.BinaryOut;
 
 
 /**
- * Converts an SRILM language model file
- * to a Joshua-style binary vocabulary file.
+ * Converts an SRILM language model file to a Joshua-style binary
+ * vocabulary file.
  * <p>
- * TODO The logic required to export SrilmSymbol should be put in a <code>SrilmSymbol#writeExternal(ObjectOutput)</code> method.
+ * TODO The logic required to export SrilmSymbol should be put in
+ * a <code>SrilmSymbol#writeExternal(ObjectOutput)</code> method.
  */
 public class VocabularyWriter {
 	

@@ -28,9 +28,9 @@ import java.io.IOException;
 /**
  * Configuration file for Joshua decoder.
  * <p>
- * When adding new features to Joshua,
- * any new configurable parameters should be added to this class.
- * 
+ * When adding new features to Joshua, any new configurable parameters
+ * should be added to this class.
+ *
  * @author Zhifei Li, <zhifei.work@gmail.com>
  */
 public class JoshuaConfiguration {

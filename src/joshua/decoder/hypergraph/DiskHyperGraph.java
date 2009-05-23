@@ -115,7 +115,11 @@ public class DiskHyperGraph {
 	private static int NULL_RULE_ID = -1;
 	
 	//FIXME: this is a hack for us to create OOVRule, and OOVRuleID
-	/**This is wrong as the default LHS and owner are not properly set. For this reason, the creation of OOV rule may cause bugs*/
+	/**
+	 * This is wrong as the default LHS and owner are not
+	 * properly set. For this reason, the creation of OOV rule
+	 * may cause bugs
+	 */
 	private static Grammar pGrammar = new MemoryBasedBatchGrammar();
 	
 	private static final Logger logger =
@@ -127,7 +131,8 @@ public class DiskHyperGraph {
 //===============================================================
 	/**
 	 * For saving purpose, one needs to specify the featureFunctions.
-	 * For reading purpose, one does not need to provide the list.
+	 * For reading purpose, one does not need to provide the
+	 * list.
 	 */
 	public DiskHyperGraph(SymbolTable symbolTable, int LMFeatureID,
 		boolean storeModelCosts, ArrayList<FeatureFunction> featureFunctions) 
@@ -369,8 +374,10 @@ public class DiskHyperGraph {
 		this.writer.write(s.toString());
 	}
 	
-	/** Do not remove this function as it gives freedom for an extended class to override it
-	 * */
+	/**
+	 * Do not remove this function as it gives freedom for an
+	 * extended class to override it
+	 */
 	public String createModelCostLine(HGNode item, HyperEdge deduction){
 		StringBuffer line = new StringBuffer();		
 		for (int k = 0; k < this.featureFunctions.size(); k++) {

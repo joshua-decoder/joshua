@@ -21,7 +21,7 @@ import joshua.corpus.alignment.Alignments;
 
 /**
  * Represents an aligned parallel corpus.
- * 
+ *
  * @author Chris Callison-Burch
  * @author Lane Schwartz
  */
@@ -33,28 +33,30 @@ public interface ParallelCorpus {
 	
 	/**
 	 * Gets the source side of the parallel corpus.
-	 * 
+	 *
 	 * @return the source corpus 
 	 */
 	Corpus getSourceCorpus();
 	
 	/** 
 	 * Gets the target side of the parallel corpus.
-	 * 
+	 *
 	 * @return the target corpus 
 	 */	
 	Corpus getTargetCorpus();
 	
 	/**
 	 * Gets the sentence alignment data for the parallel corpus.
-	 * 
-	 * @return the sentence alignment data for the parallel corpus
+	 *
+	 * @return the sentence alignment data for the parallel
+	 *         corpus
 	 */
 	Alignments getAlignments();
 	
 	/**
-	 * Gets the number of aligned sentences in the parallel corpus.
-	 * 
+	 * Gets the number of aligned sentences in the parallel
+	 * corpus.
+	 *
 	 * @return the number of sentences in the corpus.
 	 */
 	int getNumSentences();

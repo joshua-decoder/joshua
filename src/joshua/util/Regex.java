@@ -27,7 +27,7 @@ import java.util.regex.PatternSyntaxException;
  * similar to the convenience functions on String. The convenience
  * methods on String are deprecated except for one-shot patterns
  * (which, by definition, are not in loops).
- * 
+ *
  * @author wren ng thornton <wren@users.sourceforge.net>
  * @version $LastChangedDate: 2009-03-28 07:40:25 -0400 (Sat, 28 Mar 2009) $
  */

@@ -29,79 +29,83 @@ import joshua.corpus.suffix_array.HierarchicalPhrase;
 public interface LexicalProbabilities {
 	
 	/**
-	 * Gets the lexical translation probability 
-	 * of the source word given the target word.
+	 * Gets the lexical translation probability of the source
+	 * word given the target word.
 	 * 
 	 * @param sourceWord Source language word symbol
 	 * @param targetWord Target language word symbol
-	 * @return the lexical translation probability 
-	 *         of the source word given the target word
+	 * @return the lexical translation probability of the source
+	 *         word given the target word
 	 */
 	float sourceGivenTarget(Integer sourceWord, Integer targetWord);
 	
 	/**
-	 * Gets the lexical translation probability 
-	 * of the target word given the source word.
+	 * Gets the lexical translation probability of the target
+	 * word given the source word.
 	 * 
 	 * @param targetWord Target language word symbol
 	 * @param sourceWord Source language word symbol
-	 * @return the lexical translation probability 
-	 *         of the target word given the source word
+	 * @return the lexical translation probability of the target
+	 *         word given the source word
 	 */
 	float targetGivenSource(Integer targetWord, Integer sourceWord);
 	
 	/**
-	 * Gets the lexical translation probability 
-	 * of the source word given the target word.
+	 * Gets the lexical translation probability of the source
+	 * word given the target word.
 	 * 
-	 * @param sourceWord Source language word 
-	 * @param targetWord Target language word 
-	 * @return the lexical translation probability 
-	 *         of the source word given the target word
+	 * @param sourceWord Source language word
+	 * @param targetWord Target language word
+	 * @return the lexical translation probability of the source
+	 *         word given the target word
 	 */
 	float sourceGivenTarget(String sourceWord, String targetWord);
 	
 	/**
-	 * Gets the lexical translation probability 
-	 * of the target word given the source word.
-	 * 
+	 * Gets the lexical translation probability of the target
+	 * word given the source word.
+	 *
 	 * @param targetWord Target language word symbol
 	 * @param sourceWord Source language word symbol
-	 * @return the lexical translation probability 
-	 *         of the target word given the source word
+	 * @return the lexical translation probability of the target
+	 *         word given the source word
 	 */
 	float targetGivenSource(String targetWord, String sourceWord);
 
 	/**
-	 * Gets the lexical translation probability
-	 * of a source phrase given a target phrase.
+	 * Gets the lexical translation probability of a source
+	 * phrase given a target phrase.
 	 * 
-	 * @param sourcePhrases Collection of source phrases with a common pattern
-	 * @param sourcePhraseIndex Index (into the collection) of a particular source phrase instance
-	 * @param targetPhrase Instance of a particular target phrase
-	 * @return the lexical translation probability
-	 *         of a source phrase given a target phrase.
+	 * @param sourcePhrases Collection of source phrases with
+	 *                      a common pattern
+	 * @param sourcePhraseIndex Index (into the collection) of
+	 *                      a particular source phrase instance
+	 * @param targetPhrase  Instance of a particular target phrase
+	 * @return the lexical translation probability of a source
+	 *         phrase given a target phrase.
 	 */
 	float lexProbSourceGivenTarget(MatchedHierarchicalPhrases sourcePhrases, int sourcePhraseIndex, HierarchicalPhrase targetPhrase);
 	
 	/**
-	 * Gets the lexical translation probability
-	 * of a target phrase given a source phrase.
+	 * Gets the lexical translation probability of a target
+	 * phrase given a source phrase.
 	 * 
-	 * @param sourcePhrases Collection of source phrases with a common pattern
-	 * @param sourcePhraseIndex Index (into the collection) of a particular source phrase instance
-	 * @param targetPhrase Instance of a particular target phrase
-	 * @return the lexical translation probability
-	 *         of a target phrase given a source phrase.
+	 * @param sourcePhrases Collection of source phrases with
+	 *                      a common pattern
+	 * @param sourcePhraseIndex Index (into the collection) of
+	 *                      a particular source phrase instance
+	 * @param targetPhrase  Instance of a particular target phrase
+	 * @return the lexical translation probability of a target
+	 *         phrase given a source phrase.
 	 */
 	float lexProbTargetGivenSource(MatchedHierarchicalPhrases sourcePhrases, int sourcePhraseIndex, HierarchicalPhrase targetPhrase);
 	
 	/**
-	 * Gets the probability returned when 
-	 * no calculated lexical translation probability is known.
-	 * 
-	 * @return the probability returned when 
-	 * no calculated lexical translation probability is known
+	 * Gets the probability returned when no calculated lexical
+	 * translation probability is known.
+	 *
+	 * @return the probability returned when no calculated
+	 *         lexical translation probability is known
 	 */
 	float getFloorProbability();
 }

@@ -28,8 +28,8 @@ import joshua.decoder.ff.FeatureFunction;
 /**
  * This class define the interface for Rule. Normally, the feature
  * score in the rule should be *cost* (i.e., -LogP), so that the
- * feature weight should be positive
- * 
+ * feature weight should be positive.
+ *
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate$
  */
@@ -67,7 +67,7 @@ public interface Rule {
 	 * feat_scores, for example, during EM training, we can
 	 * store the soft-count in it.
 	 *
-	 * column: start from zero
+	 * @param column start from zero
 	 */
 	void  setFeatureScore(int column, float score);
 	float getFeatureScore(int column);	

@@ -54,7 +54,8 @@ public class AlignedSubsampler extends Subsampler {
 	 * @param fpath  path to source F files
 	 * @param epath  path to source E files
 	 * @param apath  path to source alignment files
-	 * @param output basename for output files (will append extensions)
+	 * @param output basename for output files (will append
+	 *               extensions)
 	 */
 	public void subsample(
 		String filelist, float targetFtoERatio,

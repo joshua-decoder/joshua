@@ -27,7 +27,7 @@ import joshua.decoder.ff.FeatureFunction;
 
 /**
  * Basic collection of translation rules.
- * 
+ *
  * @author Lane Schwartz
  * @author Zhifei Li
  * @version $LastChangedDate$
@@ -39,8 +39,8 @@ public class BasicRuleCollection implements RuleCollection {
 		Logger.getLogger(BasicRuleCollection.class.getName());
 	
 	/** 
-	 * Indicates whether the rules in this collection
-	 * have been sorted based on the latest feature function values. 
+	 * Indicates whether the rules in this collection have been
+	 * sorted based on the latest feature function values.
 	 */
 	protected boolean sorted = false;
 	
@@ -50,14 +50,17 @@ public class BasicRuleCollection implements RuleCollection {
 	/** Number of nonterminals in the source pattern. */
 	protected int arity;
 	
-	/** Sequence of terminals and nonterminals in the source pattern. */
+	/**
+	 * Sequence of terminals and nonterminals in the source
+	 * pattern.
+	 */
 	protected int[] sourceTokens;
 	
 	/**
 	 * Constructs an initially empty rule collection.
 	 * 
 	 * @param arity Number of nonterminals in the source pattern
-	 * @param sourceTokens Sequence of terminals and nonterminals 
+	 * @param sourceTokens Sequence of terminals and nonterminals
 	 *                     in the source pattern
 	 */
 	public BasicRuleCollection(int arity, int[] sourceTokens) {
@@ -69,8 +72,8 @@ public class BasicRuleCollection implements RuleCollection {
 	/**
 	 * Constructs a rule collection with the given data.
 	 * <p>
-	 * NOTE: if rules==null, the rule member variable
-	 * will be initialized to an <em>immutable</em> empty list.
+	 * NOTE: if rules==null, the rule member variable will be
+	 * initialized to an <em>immutable</em> empty list.
 	 * 
 	 * @param arity
 	 * @param sourceTokens

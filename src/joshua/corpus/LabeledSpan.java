@@ -19,10 +19,11 @@ package joshua.corpus;
 
 
 /**
- * This is used to represent an indexed nonterminal span in the target language.
+ * This is used to represent an indexed nonterminal span in the
+ * target language.
  * <p>
  * It is used when constructing the translations of a source phrase.
- * 
+ *
  * @author Lane Schwartz
  * 
  * @since 2008-08-29

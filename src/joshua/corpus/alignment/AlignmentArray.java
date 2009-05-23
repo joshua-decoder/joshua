@@ -26,11 +26,11 @@ import java.util.logging.Logger;
 
 /**
  * AlignmentArray is an auxiliary class which stores alignment
- * information for a parallel corpus.  For each source word it
- * stores the minimum and maximum index of aligned words in the
- * target corpus, and for each target word it stores the min and
- * max indexed of aligned words in the source corpus.  The intent
- * is to increase the speed of the phrase extraction.
+ * information for a parallel corpus. For each source word it stores
+ * the minimum and maximum index of aligned words in the target
+ * corpus, and for each target word it stores the min and max indexed
+ * of aligned words in the source corpus. The intent is to increase
+ * the speed of the phrase extraction.
  *
  * This class was inspired by a conversation with Adam Lopez. 
  *
@@ -46,14 +46,14 @@ public class AlignmentArray extends AbstractAlignments {
 //===============================================================
 
 	/**
-	 * Stores the indices of all aligned target words for
-	 * each word in the source corpus.
+	 * Stores the indices of all aligned target words for each
+	 * word in the source corpus.
 	 */
 	protected final int[][] alignedTargetIndices;
 	
 	/**
-	 * Stores the indices of all aligned source words for
-	 * each word in the target corpus.
+	 * Stores the indices of all aligned source words for each
+	 * word in the target corpus.
 	 */
 	protected final int[][] alignedSourceIndices;
 	
@@ -89,7 +89,7 @@ public class AlignmentArray extends AbstractAlignments {
 	
 	/**
 	 * This method looks up target span for the given source
-	 * span
+	 * span.
 	 * 
 	 * @param startSourceIndex the staring position in the
 	 *                         source corpus (inclusive)
@@ -109,8 +109,8 @@ public class AlignmentArray extends AbstractAlignments {
 	}
 	
 	/**
-	 * Gets the indices of all source words aligned with 
-	 * a particular location in the target corpus.
+	 * Gets the indices of all source words aligned with a
+	 * particular location in the target corpus.
 	 * 
 	 * @param targetIndex Index into the target corpus
 	 * @return The indices of all source words aligned with 
@@ -121,11 +121,11 @@ public class AlignmentArray extends AbstractAlignments {
 	}
 
 	/**
-	 * Gets the indices of all target words aligned with 
-	 * a particular location in the source corpus.
+	 * Gets the indices of all target words aligned with a
+	 * particular location in the source corpus.
 	 * 
 	 * @param sourceIndex Index into the source corpus
-	 * @return The indices of all target words aligned with 
+	 * @return The indices of all target words aligned with
 	 *         the given location in the source corpus.
 	 */
 	public int[] getAlignedTargetIndices(int sourceIndex) {
@@ -133,7 +133,8 @@ public class AlignmentArray extends AbstractAlignments {
 	}
 	
 	/**
-	 * This method looks up source span for the given target span
+	 * This method looks up source span for the given target
+	 * span.
 	 * 
 	 * @param startTargetIndex the staring position in the
 	 *                         target corpus (inclusive)
@@ -141,8 +142,7 @@ public class AlignmentArray extends AbstractAlignments {
 	 *                         corpus (exclusive)
 	 * @return a tuple containing the min and max indices in
 	 *         the source corpus, if the span is unaligned the
-	 *         value will
-	 be <UNALIGNED, undefined>
+	 *         value will be <UNALIGNED, undefined>
 	 */
 	public Span getAlignedSourceSpan(int startTargetIndex, int endTargetIndex) {
 		return getAlignedSpan(startTargetIndex, endTargetIndex, alignedSourceIndices);
@@ -167,7 +167,8 @@ public class AlignmentArray extends AbstractAlignments {
 	}
 	
 	/**
-	 * Determines if any terminal in the source phrase aligns with the provided index into the target corpus.
+	 * Determines if any terminal in the source phrase aligns
+	 * with the provided index into the target corpus.
 	 * 
 	 * @param targetIndex
 	 * @param sourcePhrases

@@ -22,10 +22,9 @@ import java.util.ArrayList;
 import joshua.decoder.ff.tm.Rule;
 
 /**
-* @author Zhifei Li, <zhifei.work@gmail.com>
-* @version $LastChangedDate$
-*/
-
+ * @author Zhifei Li, <zhifei.work@gmail.com>
+ * @version $LastChangedDate$
+ */
 public class WithModelCostsHyperEdge extends HyperEdge {
 	public double[] modelCosts;//store the list of models costs
 

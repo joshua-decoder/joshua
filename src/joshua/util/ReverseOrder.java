@@ -21,7 +21,7 @@ import java.io.Serializable;
 import java.util.*;
 
 /**
- * ReverseOrder is a Comparator that reverses the natural order of  
+ * ReverseOrder is a Comparator that reverses the natural order of
  * Comparable objects.
  *
  * @author Chris Callison-Burch

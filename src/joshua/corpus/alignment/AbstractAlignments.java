@@ -24,22 +24,25 @@ import joshua.corpus.Span;
  * Abstract implementation of <code>Alignments</code> interface.
  * <p>
  * This class includes code that is likely to be common to all
- * concrete implementations of the interface. 
+ * concrete implementations of the interface.
  * 
- * This includes common code to test for consistent alignment spans and
- * to test for aligned terminals.
+ * This includes common code to test for consistent alignment spans
+ * and to test for aligned terminals.
  * 
  * @author Lane Schwartz
  * @version $LastChangedDate$
  */
 public abstract class AbstractAlignments implements Alignments {
 
-	/** Indicates whether tight spans are required during phrase extraction. */
+	/**
+	 * Indicates whether tight spans are required during phrase
+	 * extraction.
+	 */
 	protected final boolean requireTightSpans;
 	
 	/**
-	 * Constructs an abstract alignments object
-	 * where <code>requiredTightSpans</code> is true.
+	 * Constructs an abstract alignments object where
+	 * <code>requiredTightSpans</code> is true.
 	 */
 	public AbstractAlignments() {
 		this.requireTightSpans = true;
@@ -48,7 +51,7 @@ public abstract class AbstractAlignments implements Alignments {
 	/**
 	 * Constructs an abstract alignments object.
 	 * 
-	 * @param requireTightSpans Indicates whether tight spans 
+	 * @param requireTightSpans Indicates whether tight spans
 	 *                          are required during phrase extraction
 	 */
 	public AbstractAlignments(boolean requireTightSpans) {

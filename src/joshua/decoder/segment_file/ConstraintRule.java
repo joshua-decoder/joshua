@@ -36,17 +36,17 @@ public interface ConstraintRule {
 	 * returns null for everything else. And the RHS type
 	 * provides a (non-null) value for nativeRhs and foreignRhs
 	 * but returns null for the lhs and features.
-	 *
+	 * <p>
 	 * The interpretation of a RULE is that it adds a new rule
 	 * to the grammar which only applies to the associated span.
 	 * If the associated span is hard, then the set of rules
 	 * for that span will override the regular grammar.
-	 *
+	 * <p>
 	 * The intepretation of a LHS is that it provides a hard
 	 * constraint that the associated span be treated as the
 	 * nonterminal for that span, thus filtering the regular
 	 * grammar.
-	 *
+	 * <p>
 	 * The interpretation of a RHS is that it provides a hard
 	 * constraint to filter the regular grammar such that only
 	 * rules generating the desired translation can be used.

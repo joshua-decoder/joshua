@@ -30,11 +30,9 @@ import joshua.util.Regex;
  * this class implements: 
  * (1) sentence-level bleu, with smoothing
  * 
- * 
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate$
  */
-
 public class BLEU {
 	//do_ngram_clip: consider global n-gram clip
 	
@@ -174,7 +172,9 @@ public class BLEU {
 	}
 	
 	
-	/** construct a ngram table containing ngrams that appear in the ref_sents for a given source sentence
+	/**
+	 * construct a ngram table containing ngrams that appear
+	 * in the ref_sents for a given source sentence
 	 */
 	public  static HashMap<String, Integer> constructReferenceTable(String[] ref_sents, int bleu_order){		
 		HashMap<String, Integer> referenceNgramTable = new HashMap<String, Integer>();
@@ -213,8 +213,10 @@ public class BLEU {
 	
 	
 
-	/** speed consideration: assume hypNgramTable has a smaller size than referenceNgramTable does
-	 * */
+	/** 
+	 * speed consideration: assume hypNgramTable has a smaller
+	 * size than referenceNgramTable does
+	 */
 	public static double computeLinearCorpusGain(double[] linearCorpusGainThetas, int hypLength, HashMap<String,Double> hypNgramTable,  HashMap<String,Integer> referenceNgramTable) {
 		double res = 0;
 		int[] numMatches = new int[5];

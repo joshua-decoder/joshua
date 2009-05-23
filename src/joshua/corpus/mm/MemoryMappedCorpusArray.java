@@ -43,8 +43,8 @@ public class MemoryMappedCorpusArray extends AbstractCorpus<SymbolTable> {
 	/**
 	 * Constructs a corpus array from a binary file.
 	 * <p>
-	 * The binary file contains both the vocabulary,
-	 * which is read in first, and the corpus array data.
+	 * The binary file contains both the vocabulary, which is
+	 * read in first, and the corpus array data.
 	 *  
 	 * @param binaryFileName
 	 * @throws IOException
@@ -57,12 +57,13 @@ public class MemoryMappedCorpusArray extends AbstractCorpus<SymbolTable> {
 	/**
 	 * Constructs a corpus array from a binary file.
 	 * <p>
-	 * The binary file may or may not contain a vocabulary.
-	 * The first integer in the file specifies a header length.
-	 * If no vocabulary is contained, this value should be zero.
+	 * The binary file may or may not contain a vocabulary. The
+	 * first integer in the file specifies a header length. If
+	 * no vocabulary is contained, this value should be zero.
 	 * <p>
-	 * Even if the binary file contains a vocabulary, it is ignored,
-	 * and the symbol table provided to the constructor is used instead.
+	 * Even if the binary file contains a vocabulary, it is
+	 * ignored, and the symbol table provided to the constructor
+	 * is used instead.
 	 * 
 	 * @param symbolTable
 	 * @param binaryFileName

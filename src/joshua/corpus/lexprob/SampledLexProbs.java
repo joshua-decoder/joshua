@@ -45,7 +45,8 @@ import joshua.util.Pair;
 /**
  * Represents lexical probability distributions in both directions.
  * <p>
- * This class calculates the probabilities by sampling directly from a parallel corpus.
+ * This class calculates the probabilities by sampling directly
+ * from a parallel corpus.
  * 
  * @author Lane Schwartz
  * @version $LastChangedDate:2008-11-13 13:13:31 -0600 (Thu, 13 Nov 2008) $
@@ -65,7 +66,10 @@ public class SampledLexProbs implements LexicalProbabilities {
 	/** Corpus array representing the target language corpus. */
 	final Corpus targetCorpus; 
 	
-	/** Represents alignments between words in the source corpus and the target corpus. */
+	/**
+	 * Represents alignments between words in the source corpus
+	 * and the target corpus.
+	 */
 	private final Alignments alignments;
 	
 	private final SymbolTable sourceVocab;
@@ -74,9 +78,8 @@ public class SampledLexProbs implements LexicalProbabilities {
 	private final float floorProbability;
 	
 	/** 
-	 * When calculating probabilities, 
-	 * if a probability is less than this value,
-	 * do not explicitly store it.
+	 * When calculating probabilities, if a probability is less
+	 * than this value, do not explicitly store it.
 	 */
 	private final float thresholdProbability;
 	
@@ -198,10 +201,11 @@ public class SampledLexProbs implements LexicalProbabilities {
 	}
 	
 	/**
-	 * Calculates the lexical probability of a source word given a target word.
+	 * Calculates the lexical probability of a source word given
+	 * a target word.
 	 * <p>
-	 * If this information has not previously been stored,
-	 * this method calculates it. 
+	 * If this information has not previously been stored, this
+	 * method calculates it.
 	 * 
 	 * @param sourceWord
 	 * @param targetWord
@@ -276,44 +280,49 @@ public class SampledLexProbs implements LexicalProbabilities {
 
 	
 	/**
-	 * Calculates the lexical translation probabilities (in both directions) 
-	 * for a specific instance of a source phrase in the corpus.
+	 * Calculates the lexical translation probabilities (in
+	 * both directions) for a specific instance of a source
+	 * phrase in the corpus.
 	 * <p>
-	 * This method does NOT currently handle NULL aligned points 
-	 * according to Koehn et al (2003). This may change in future releases.
+	 * This method does NOT currently handle NULL aligned points
+	 * according to Koehn et al (2003). This may change in
+	 * future releases.
 	 * <p>
-	 * The problem arises when we need to calculate the word-to-word lexical weights
-	 * using the sourceGivenTarget and targetGivenSource methods
-	 * (actual calculations occur in calculateSourceGivenTarget and calculateTargetGivenSource).
+	 * The problem arises when we need to calculate the
+	 * word-to-word lexical weights using the sourceGivenTarget
+	 * and targetGivenSource methods (actual calculations occur
+	 * in calculateSourceGivenTarget and calculateTargetGivenSource).
 	 * <p>
-	 * Let's say we want to calculate P(s14 | t75). 
-	 * (s14 is a source word, t75 is a target word)
-	 * We call sourceGivenTarget and see that we haven't calculated
-	 * the map for P(? | t75), so we call calculateSourceGivenTarget(t75).
+	 * Let's say we want to calculate P(s14 | t75). (s14 is a
+	 * source word, t75 is a target word) We call sourceGivenTarget
+	 * and see that we haven't calculated the map for P(? | t75),
+	 * so we call calculateSourceGivenTarget(t75).
 	 * <p>
-	 * The calculateSourceGivenTarget method looks up 
-	 * all instances of t75 in the target suffix array.
-	 * It then samples some of those instances and 
-	 * looks up the aligned source word(s) for each sampled target word.
-	 * Based on that, probabilities are calculated and stored.
+	 * The calculateSourceGivenTarget method looks up all
+	 * instances of t75 in the target suffix array. It then
+	 * samples some of those instances and looks up the aligned
+	 * source word(s) for each sampled target word. Based on
+	 * that, probabilities are calculated and stored.
 	 * <p>
 	 * Now, what happens if instead of t75, we have NULL?
 	 * <p>
-	 * The calculateSourceGivenTarget cannot look up all instances 
+	 * The calculateSourceGivenTarget cannot look up all instances
 	 * of NULL in the target suffix array. This is a problem.
 	 * <p>
-	 * We have access to all the information we need 
-	 * to calculate null lexical translation probabilities.
-	 * But, this would probably be best done as a pre-process.
+	 * We have access to all the information we need to calculate
+	 * null lexical translation probabilities. But, this would
+	 * probably be best done as a pre-process.
 	 * <p>
-	 * One possible solution would be to have a pre-process 
-	 * that steps through each line in the alignment array 
-	 * to find null alignment points and calculates null probabilities at that point.
+	 * One possible solution would be to have a pre-process
+	 * that steps through each line in the alignment array to
+	 * find null alignment points and calculates null probabilities
+	 * at that point.
 	 * 
 	 * @param sourcePhrases
 	 * @param sourcePhraseIndex
 	 * @param targetPhrase
-	 * @return the lexical probability and reverse lexical probability
+	 * @return the lexical probability and reverse lexical
+	 *         probability
 	 */
 	public Pair<Float,Float> calculateLexProbs(MatchedHierarchicalPhrases sourcePhrases, int sourcePhraseIndex, HierarchicalPhrase targetPhrase) {
 		

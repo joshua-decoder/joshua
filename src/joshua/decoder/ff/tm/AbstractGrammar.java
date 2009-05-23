@@ -25,23 +25,24 @@ import joshua.decoder.ff.FeatureFunction;
  * Partial implementation of the <code>Grammar</code> interface
  * that provides logic for sorting a grammar.
  * <p>
- * <em>Note</em>: New classes implementing the <code>Grammar</code> interface
- * should probably inherit from this class, unless a specific sorting technique
- * different from that implemented by this class is required. 
- * 
+ * <em>Note</em>: New classes implementing the <code>Grammar</code>
+ * interface should probably inherit from this class, unless a
+ * specific sorting technique different from that implemented by
+ * this class is required.
+ *
  * @author Lane Schwartz
  */
 public abstract class AbstractGrammar implements Grammar {
  
 	/** 
-	 * Indicates whether the rules in this grammar
-	 * have been sorted based on the latest feature function values. 
+	 * Indicates whether the rules in this grammar have been
+	 * sorted based on the latest feature function values.
 	 */
 	protected boolean sorted;
 	
 	/**
 	 * Constructs an empty, unsorted grammar.
-	 * 
+	 *
 	 * @see Grammar#isSorted()
 	 */
 	public AbstractGrammar() {
@@ -49,8 +50,10 @@ public abstract class AbstractGrammar implements Grammar {
 	}
 	
 	/**
-	 * Cube-pruning requires that the grammar be sorted based on the latest feature functions.
-	 * To  avoid synchronization, this method should be called before multiple threads are initialized for parallel decoding
+	 * Cube-pruning requires that the grammar be sorted based
+	 * on the latest feature functions. To avoid synchronization,
+	 * this method should be called before multiple threads are
+	 * initialized for parallel decoding
 	 */
 	public void sortGrammar(ArrayList<FeatureFunction> models) {
 		Trie root = getTrieRoot();
@@ -71,9 +74,9 @@ public abstract class AbstractGrammar implements Grammar {
 	 * This method is called by {@link #sortGrammar(ArrayList)}
 	 * to indicate that the grammar has been sorted.
 	 * 
-	 * Its scope is protected so that child classes 
-	 * that override <code>sortGrammar</code> will also be able to
-	 * call this method to indicate that the grammar has been sorted.
+	 * Its scope is protected so that child classes that override
+	 * <code>sortGrammar</code> will also be able to call this
+	 * method to indicate that the grammar has been sorted.
 	 * 
 	 * @param sorted
 	 */
@@ -82,14 +85,17 @@ public abstract class AbstractGrammar implements Grammar {
 	}
 	
 	/**
-	 * Recursively sorts the grammar using the provided feature functions.
+	 * Recursively sorts the grammar using the provided feature
+	 * functions.
 	 * <p>
-	 * This method first sorts the rules stored at the provided node,
-	 * then recursively calls itself on the child nodes of the provided node.
+	 * This method first sorts the rules stored at the provided
+	 * node, then recursively calls itself on the child nodes
+	 * of the provided node.
 	 * 
-	 * @param node Grammar node in the <code>Trie</code> 
-	 *             whose rules should be sorted.
-	 * @param models Feature function models to use during sorting.
+	 * @param node   Grammar node in the <code>Trie</code> whose
+	 *               rules should be sorted.
+	 * @param models Feature function models to use during
+	 *               sorting.
 	 */
 	private void sort(Trie node, ArrayList<FeatureFunction> models) {
 		if (node != null) {

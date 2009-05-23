@@ -25,7 +25,7 @@ import joshua.util.Cache;
 
 /**
  * A representation of the suffixes in a corpus.
- * 
+ *
  * @author Lane Schwartz
  * @author Chris Callison-Burch
  */
@@ -42,8 +42,8 @@ public interface Suffixes {
 	int MAX_COMPARISON_LENGTH = 20;
 
 	/** 
-	 * Maximum number of items that can be stored 
-	 * in the cache of patterns and hierarchical phrases. 
+	 * Maximum number of items that can be stored in the cache
+	 * of patterns and hierarchical phrases.
 	 */
 	int DEFAULT_CACHE_CAPACITY = 100000;
 	
@@ -51,7 +51,7 @@ public interface Suffixes {
 	
 	/**
 	 * Gets the symbol table for this object.
-	 * 
+	 *
 	 * @return the symbol table for this object.
 	 */
 	SymbolTable getVocabulary();
@@ -65,19 +65,19 @@ public interface Suffixes {
 	
 	/**
 	 * This method creates a list of trivially HierarchicalPhrases
-	 * (i.e. they're really just contiguous phrases, but we
+	 * (i.e.\ they're really just contiguous phrases, but we
 	 * will want to perform some of the HierarchialPhrase
 	 * operations on them). Sorts the positions. Adds the results
-	 * to the cache.  
-	 *<p>
-	 * The construction of more complex hierarchical phrases is handled
-	 * within the prefix tree. 
+	 * to the cache.
+	 * <p>
+	 * The construction of more complex hierarchical phrases
+	 * is handled within the prefix tree.
 	 * 
 	 * @param startPositions an unsorted list of the positions
 	 *                in the corpus where the matched phrases begin
 	 * @param pattern a contiguous phrase
 	 * @return a list of trivially hierarchical phrases
-	 */ 
+	 */
 	MatchedHierarchicalPhrases createHierarchicalPhrases(int[] startPositions, Pattern pattern, SymbolTable vocab);
 	
 	/**
@@ -90,7 +90,7 @@ public interface Suffixes {
 	
 	/** 
 	 * Gets the position in the corpus corresponding to the
-	 *         specified index in the suffix array.
+	 * specified index in the suffix array.
 	 * 
 	 * @return the position in the corpus corresponding to the
 	 *         specified index in the suffix array.
@@ -98,12 +98,12 @@ public interface Suffixes {
 	int getCorpusIndex(int suffixIndex);
 	
 	/**
-	 * Gets the sentence number of the word
-	 * at the specified position in the corpus.
+	 * Gets the sentence number of the word at the specified
+	 * position in the corpus.
 	 * 
 	 * @param corpusIndex Position of a word in the corpus
-	 * @return the sentence number of the word
-	 *         at the specified position in the corpus
+	 * @return the sentence number of the word at the specified
+	 *         position in the corpus
 	 */
 	int getSentenceIndex(int corpusIndex);
 	
@@ -124,8 +124,9 @@ public interface Suffixes {
 	 * Finds a phrase in the suffix array.
 	 *
 	 * @param phrase the search phrase
-	 * @return a tuple containing the (inclusive) start and the (inclusive) end bounds
-	 *         in the suffix array for the phrase
+	 * @return a tuple containing the (inclusive) start and the
+	 *         (inclusive) end bounds in the suffix array for
+	 *         the phrase
 	 */
 	int[] findPhrase(Phrase phrase);
 	
@@ -146,24 +147,26 @@ public interface Suffixes {
 	 *                    that will bound the search
 	 * @param upperBound  the last index in the suffix array
 	 *                    that will bound the search
-	 * @return a tuple containing the (inclusive) start and the (inclusive) end bounds 
-	 *         in the suffix array for the phrase, or null if
-	 *         the phrase is not found.
+	 * @return a tuple containing the (inclusive) start and the
+	 *         (inclusive) end bounds in the suffix array for
+	 *         the phrase, or null if the phrase is not found.
 	 */
 	int[] findPhrase(Phrase sentence, int phraseStart, int phraseEnd, int lowerBound, int upperBound);
 	
 	/**
-	 * Gets a list of hierarchical phrases that match the pattern if they are already cached
-	 *         or null if the pattern is not in the cache.
+	 * Gets a list of hierarchical phrases that match the pattern
+	 * if they are already cached or null if the pattern is not
+	 * in the cache.
 	 * 
-	 * @return a list of hierarchical phrases that match the pattern if they are already cached
-	 *         or null if the pattern is not in the cache.
+	 * @return a list of hierarchical phrases that match the
+	 *         pattern if they are already cached or null if
+	 *         the pattern is not in the cache.
 	 */
 	MatchedHierarchicalPhrases getMatchingPhrases(Pattern pattern);
 	
 	
 	/** 
-	 * Caches the matching hierarchical phrases for the pattern. 
+	 * Caches the matching hierarchical phrases for the pattern.
 	 */
 	void setMatchingPhrases(Pattern pattern, MatchedHierarchicalPhrases matchings);
 	
@@ -172,14 +175,17 @@ public interface Suffixes {
 	 * in the suffix array, sorting the corpus position.
 	 * 
 	 * @param bounds Inclusive bounds in the suffix array
-	 * @return all positions in the corpus for the specified bounds
+	 * @return all positions in the corpus for the specified
+	 *         bounds
 	 */
 	int[] getAllPositions(int[] bounds);
 
 	/**
-	 * Gets the hierarchical phrase objects cached by this suffix array.
-	 * 
-	 * @return the hierarchical phrase objects cached by this suffix array
+	 * Gets the hierarchical phrase objects cached by this
+	 * suffix array.
+	 *
+	 * @return the hierarchical phrase objects cached by this
+	 *         suffix array
 	 */
 	Cache<Pattern,MatchedHierarchicalPhrases> getCachedHierarchicalPhrases();
 	

@@ -20,7 +20,7 @@ package joshua.lattice;
 
 /**
  * An arc in a directed graph.
- * 
+ *
  * @author Lane Schwartz
  * @since 2008-07-08
  * @version $LastChangedDate$
@@ -55,8 +55,9 @@ public class Arc<Label> {
 	final Label label;
 	
 	/**
-	 * Creates an arc with the specified head, tail, cost, and label.
-	 * 
+	 * Creates an arc with the specified head, tail, cost, and
+	 * label.
+	 *
 	 * @param head The node where this arc begins.
 	 * @param tail The node where this arc ends.
 	 * @param cost The cost of this arc.
@@ -71,7 +72,7 @@ public class Arc<Label> {
 
 	/**
 	 * Gets the cost of this arc.
-	 * 
+	 *
 	 * @return The cost of this arc.
 	 */
 	// TODO should support indexing for multiple costs associated with each arc
@@ -80,8 +81,9 @@ public class Arc<Label> {
 	}
 
 	/**
-	 * Gets the head of this arc (the node where this arc begins).
-	 * 
+	 * Gets the head of this arc (the node where this arc
+	 * begins).
+	 *
 	 * @return The head of this arc.
 	 */
 	public Node<Label> getHead() {
@@ -90,7 +92,7 @@ public class Arc<Label> {
 
 	/**
 	 * Gets the tail of this arc (the node where this arc ends).
-	 * 
+	 *
 	 * @return The tail of this arc.
 	 */
 	public Node<Label> getTail() {
@@ -99,7 +101,7 @@ public class Arc<Label> {
 	
 	/** 
 	 * Gets the label associated with this arc.
-	 * 
+	 *
 	 * @return The label associated with this arc.
 	 */
 	public Label getLabel() {

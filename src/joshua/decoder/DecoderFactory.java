@@ -33,7 +33,6 @@ import java.util.logging.Logger;
 
 /**
  * this class implements:
- *
  * (1) parallel decoding: split the test file, initiate DecoderThread,
  *     wait and merge the decoding results
  * (2) non-parallel decoding is a special case of parallel decoding
@@ -41,18 +40,17 @@ import java.util.logging.Logger;
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate$
  */
-
 public class DecoderFactory {
 	private ArrayList<GrammarFactory>  grammarFactories = null;
 	private ArrayList<FeatureFunction> featureFunctions = null;
 	private boolean                    hasLanguageModel = false;
 	
 	/**
-	 * Shared symbol table for source language terminals,
-	 * target language terminals, and shared nonterminals.
+	 * Shared symbol table for source language terminals, target
+	 * language terminals, and shared nonterminals.
 	 * <p>
-	 * It may be that separate tables should be maintained
-	 * for the source and target languages.
+	 * It may be that separate tables should be maintained for
+	 * the source and target languages.
 	 */
 	private SymbolTable symbolTable = null;
 	

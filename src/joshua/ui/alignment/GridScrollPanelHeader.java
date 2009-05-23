@@ -32,8 +32,8 @@ import javax.swing.JComponent;
 import joshua.ui.Orientation;
 
 /**
- * User interface for displaying words
- * as a header of an AlignmentGridPanel.
+ * User interface for displaying words as a header of an
+ * AlignmentGridPanel.
  * 
  * @author Lane Schwartz
  */
@@ -47,14 +47,16 @@ public class GridScrollPanelHeader extends JComponent {
     public Orientation orientation;
 	
     /**
-	 * In a horizontal orientation, breadth corresponds to cell height.
-	 * In a vertical orientation, breadth corresponds to cell width.
+	 * In a horizontal orientation, breadth corresponds to cell
+	 * height. In a vertical orientation, breadth corresponds
+	 * to cell width.
 	 */
     private int breadth;
     
 	/**
-	 * In a horizontal orientation, depth corresponds to cell width.
-	 * In a vertical orientation, depth corresponds to cell height.
+	 * In a horizontal orientation, depth corresponds to cell
+	 * width. In a vertical orientation, depth corresponds to
+	 * cell height.
 	 */
     private final int depth;
 
@@ -62,18 +64,21 @@ public class GridScrollPanelHeader extends JComponent {
     private String[] words;
 
     /** 
-     * Represents the total width and height of this component.
+	 * Represents the total width and height of this component.
      */
 //    private Dimension size;
     
     /**
-     * Constructs a new scroll panel header.
-     * 
-     * @param orientation Orientation of the header.
-     * @param breadth In a horizontal orientation, depth corresponds to cell width.
-	 *                In a vertical orientation, depth corresponds to cell height.
-     * @param depth In a horizontal orientation, depth corresponds to cell width.
-	 *              In a vertical orientation, depth corresponds to cell height.
+	 * Constructs a new scroll panel header.
+	 *
+	 * @param orientation Orientation of the header.
+	 * @param breadth In a horizontal orientation, depth
+	 *            corresponds to cell width. In a vertical
+	 *            orientation, depth corresponds to cell
+	 *            height.
+	 * @param depth In a horizontal orientation, depth corresponds
+	 *            to cell width. In a vertical orientation,
+	 *            depth corresponds to cell height.
      */
     public GridScrollPanelHeader(String[] words, Orientation orientation, int breadth, int depth) {
         this.orientation = orientation;
@@ -96,12 +101,13 @@ public class GridScrollPanelHeader extends JComponent {
     }
 
     /**
-     * Gets the breadth of this header.
+	 * Gets the breadth of this header.
      * <p>
-     * In a horizontal orientation, depth corresponds to cell width.
-	 * In a vertical orientation, depth corresponds to cell height.
-     * 
-     * @return breadth of this header
+	 * In a horizontal orientation, depth corresponds to cell
+	 * width. In a vertical orientation, depth corresponds to
+	 * cell height.
+	 *
+	 * @return breadth of this header
      */
     public int getBreadth() {
         return breadth;

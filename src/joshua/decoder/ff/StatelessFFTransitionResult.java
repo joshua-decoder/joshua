@@ -24,7 +24,6 @@ package joshua.decoder.ff;
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate$
  */
-
 public class StatelessFFTransitionResult extends DefaultFFTransitionResult {
 	
 	public FFDPState getStateForItem() {

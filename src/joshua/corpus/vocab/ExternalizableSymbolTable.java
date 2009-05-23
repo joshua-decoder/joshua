@@ -21,21 +21,23 @@ import java.io.Externalizable;
 
 /**
  * Symbol table capable of being externalized.
- * 
+ *
  * @author Lane Schwartz
  */
 public interface ExternalizableSymbolTable extends SymbolTable, Externalizable {
 
 	/**
-	 * Sets the character encoding used when exporting the symbol table.
-	 * 
+	 * Sets the character encoding used when exporting the
+	 * symbol table.
+	 *
 	 * @param charsetName Character encoding
 	 */
 	void setExternalizableEncoding(String charsetName);
 	
 	/**
-	 * Gets the character encoding used when exporting the symbol table.
-	 * 
+	 * Gets the character encoding used when exporting the
+	 * symbol table.
+	 *
 	 * @return Character encoding
 	 */
 	String getExternalizableEncoding();

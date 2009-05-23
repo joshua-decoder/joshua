@@ -24,10 +24,10 @@ import joshua.decoder.ff.tm.RuleCollection;
 
 /**
  * An interface for trie-like data structures. Remember that in the
- * mathematical definition of a trie, each node is isomorphic to an
- * entire trie (just like any subtree of a tree is itself also a
- * tree, and like any tail of a linked list is itself also a linked
- * list).
+ * mathematical definition of a trie, each node is isomorphic to
+ * an entire trie (just like any subtree of a tree is itself also
+ * a tree, and like any tail of a linked list is itself also a
+ * linked list).
  *
  * @author wren ng thornton <wren@users.sourceforge.net>
  * @author Zhifei Li, <zhifei.work@gmail.com>
@@ -49,8 +49,9 @@ public interface Trie {
 	 * Returns whether matchOne(Symbol) could succeed for any
 	 * symbol.
 	 * 
-	 * @return <code>true</code> if {@link #matchOne(int)} 
-	 *         could succeed for some symbol, <code>false</code> otherwise
+	 * @return <code>true</code> if {@link #matchOne(int)} could
+	 *         succeed for some symbol, <code>false</code>
+	 *         otherwise
 	 */
 	boolean hasExtensions();
 	
@@ -59,8 +60,9 @@ public interface Trie {
 	 * If the trie node has extensions, then return a list of
 	 * extended trie nodes, otherwise return null.
 	 * 
-	 * @return A list of extended <code>Trie</code> nodes
-	 *         if this node has extensions, <code>null<code> otherwise
+	 * @return A list of extended <code>Trie</code> nodes if
+	 *         this node has extensions, <code>null<code>
+	 *         otherwise
 	 */
 	Collection<? extends Trie> getExtensions();
 	
@@ -69,8 +71,9 @@ public interface Trie {
 	 * Gets whether the current node/state is a "final state"
 	 * that has matching rules.
 	 * 
-	 * @return <code>true</code> if the current node/state is a "final state"
-	 *         that has matching rules, <code>false</code> otherwise
+	 * @return <code>true</code> if the current node/state is
+	 *         a "final state" that has matching rules,
+	 *         <code>false</code> otherwise
 	 */
 	boolean hasRules();
 	
@@ -83,8 +86,8 @@ public interface Trie {
 	 * <ol>
 	 * <li>The return value is always non-null. The collection
 	 *     may be empty however.</li>
-	 * <li>The collection must be empty if hasRules() is
-	 *     false, and must be non-empty if hasRules() is true.</li>
+	 * <li>The collection must be empty if hasRules() is false,
+	 *     and must be non-empty if hasRules() is true.</li>
 	 * <li>The collection must be sorted (at least as used by
 	 *     TMGrammar)</li>
 	 * </ol>

@@ -26,7 +26,7 @@ import joshua.decoder.ff.FeatureFunction;
 
 /**
  * this class implements MonolingualRule
- * 
+ *
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate$
  */

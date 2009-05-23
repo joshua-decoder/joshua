@@ -29,7 +29,6 @@ import joshua.decoder.hypergraph.HyperEdge;
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate$
  */
-
 public abstract class DefaultStatefulFF implements FeatureFunction {
 	private double weight = 0.0;
 	private int    featureID; //the unique integer that identifies a feature

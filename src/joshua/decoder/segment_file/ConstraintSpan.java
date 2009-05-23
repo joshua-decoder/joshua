@@ -27,7 +27,7 @@ import java.util.Iterator;
  * parsing algorithm. Some constraints can be "hard", in which case
  * the regular grammar is not consulted for these spans. It is an
  * error to have hard constraints for overlapping spans.
- *
+ * <p>
  * Indices for the span boundaries mark the transitions between
  * words. Thus, the 0 index occurs before the first word, the 1
  * index occurs between the first and second words, 2 is between

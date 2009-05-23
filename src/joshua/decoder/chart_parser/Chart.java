@@ -43,8 +43,7 @@ import java.util.logging.Logger;
 
 
 /**
- * Chart class
- * this class implements chart-parsing: 
+ * Chart class this class implements chart-parsing:
  * (1) seeding the chart 
  * (2) cky main loop over bins, 
  * (3) identify applicable rules in each bin
@@ -57,8 +56,9 @@ import java.util.logging.Logger;
  * Deduction ("and" node)
  * 
  * index of sentences: start from zero
- * index of cell: cell (i,j) represent span of words indexed [i,j-1] where i is in [0,n-1] and j is in [1,n]
- * 
+ * index of cell: cell (i,j) represent span of words indexed [i,j-1]
+ * where i is in [0,n-1] and j is in [1,n]
+ *
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate$
  */
@@ -78,17 +78,18 @@ public class Chart {
 	ArrayList<FeatureFunction> p_l_models;
 	
 	/**
-	 * Shared symbol table for source language terminals,
-	 * target language terminals, and shared nonterminals.
+	 * Shared symbol table for source language terminals, target
+	 * language terminals, and shared nonterminals.
 	 * <p>
-	 * It may be that separate tables should be maintained
-	 * for the source and target languages.
+	 * It may be that separate tables should be maintained for
+	 * the source and target languages.
 	 * <p>
-	 * This class adds an untranslated word ID to the symbol table.
-	 * The Bin class adds a goal symbol nonterminal to the symbol table.
+	 * This class adds an untranslated word ID to the symbol
+	 * table. The Bin class adds a goal symbol nonterminal to
+	 * the symbol table.
 	 * <p>
-	 * TODO It is likely that this object could be removed from this class
-	 *      with relatively little impact.
+	 * TODO It is likely that this object could be removed from
+	 *      this class with relatively little impact.
 	 */
 	SymbolTable p_symbolTable;
 	
@@ -167,9 +168,12 @@ public class Chart {
 			}
 		}
 		
-		/** (1) add rule (only allow flat rules) into the chart as constraints
-		 *  (2) add RHS or LHS constraint into tblConstraintSpansForFiltering
-		 * */
+		/**
+		 * (1) add rule (only allow flat rules) into the
+		 *     chart as constraints
+		 * (2) add RHS or LHS constraint into
+		 *     tblConstraintSpansForFiltering
+		 */
 		if(constraintSpans!=null){
 			tblConstraintSpansForFiltering = new HashMap<String, ConstraintSpan>();
 			while(constraintSpans.hasNext()){
@@ -214,7 +218,9 @@ public class Chart {
 	
 
 	
-	/** construct the hypergraph with the help from DotChart */
+	/**
+	 * Construct the hypergraph with the help from DotChart.
+	 */
 	public HyperGraph expand() {
 //		long start = System.currentTimeMillis();
 //		long time_step1 = 0;
@@ -349,8 +355,10 @@ public class Chart {
 	}
 	
 	/**
-	 * agenda based extension: this is necessary in case more than two unary rules can be applied in topological order s->x; ss->s
-	 * for unary rules like s->x, once x is complete, then s is also complete
+	 * agenda based extension: this is necessary in case more
+	 * than two unary rules can be applied in topological order
+	 * s->x; ss->s for unary rules like s->x, once x is complete,
+	 * then s is also complete
 	 */
 	private int add_unary_items(Grammar gr, int i, int j) {
 		Bin chart_bin = this.bins[i][j];
@@ -392,7 +400,7 @@ public class Chart {
 			add_axiom(i, j, rule, lattice_cost);
 		}
 	}
-	/** axiom is for rules with zero-arity */
+	/** axiom is for rules with zero-arity*  */
 	private void add_axiom(int i, int j, Rule rule, float lattice_cost) {
 		if (null == this.bins[i][j]) {
 			this.bins[i][j] = new Bin(this, this.goalSymbolID);

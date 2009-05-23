@@ -20,15 +20,15 @@ package joshua.corpus.vocab;
 
 /**
  * Abstract symbol table capable of being externalized.
- * 
+ *
  * @author Lane Schwartz
  */
 public abstract class AbstractExternalizableSymbolTable extends AbstractSymbolTable
 		implements ExternalizableSymbolTable {
 	
 	/** 
-	 * Character set encoding used when 
-	 * exporting and importing binary files to and from disk. 
+	 * Character set encoding used when exporting and importing
+	 * binary files to and from disk.
 	 */
 	private String characterEncoding = "UTF-8";
 	

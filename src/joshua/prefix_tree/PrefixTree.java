@@ -40,9 +40,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Represents a prefix tree with suffix links, for use in extracting 
+ * Represents a prefix tree with suffix links, for use in extracting
  * hierarchical phrase-based statistical translation rules.
- * 
+ *
  * @author Lane Schwartz
  * @version $LastChangedDate:2008-11-13 13:13:31 -0600 (Thu, 13 Nov 2008) $
  */
@@ -51,7 +51,11 @@ public class PrefixTree {
 	/** Logger for this class. */
 	private static final Logger logger = Logger.getLogger(PrefixTree.class.getName());
 
-	/** Integer representation of the nonterminal X. All nonterminals are guaranteed to be represented by negative integers. */
+	/**
+	 * Integer representation of the nonterminal X. All
+	 * nonterminals are guaranteed to be represented by negative
+	 integers.
+	 */
 	public static final int X = -1;
 	
 	/** Operating system-specific end of line character(s). */
@@ -60,32 +64,52 @@ public class PrefixTree {
 	/** Root node of this tree. */
 	final Node root;
 
-	/** Responsible for performing sampling and creating translation rules. */
+	/**
+	 * Responsible for performing sampling and creating translation
+	 * rules.
+	 */
 	final RuleExtractor ruleExtractor;
 	
-	/** Max span in the source corpus of any extracted hierarchical phrase */
+	/**
+	 * Max span in the source corpus of any extracted hierarchical
+	 * phrase.
+	 */
 	final int maxPhraseSpan;   
 	
-	/** Maximum number of terminals plus nonterminals allowed in any extracted hierarchical phrase. */
+	/**
+	 * Maximum number of terminals plus nonterminals allowed
+	 * in any extracted hierarchical phrase.
+	 */
 	final int maxPhraseLength;
 	
-	/** Maximum number of nonterminals allowed in any extracted hierarchical phrase. */
+	/**
+	 * Maximum number of nonterminals allowed in any extracted
+	 * hierarchical phrase.
+	 */
 	final int maxNonterminals;
 
-	/** Minimum span in the source corpus of any nonterminal in an extracted hierarchical phrase. */
+	/**
+	 * Minimum span in the source corpus of any nonterminal in
+	 * an extracted hierarchical phrase.
+	 */
 	final int minNonterminalSpan;
 	
 	
-	/** Represents a very high cost, corresponding to a very unlikely probability. */
+	/**
+	 * Represents a very high cost, corresponding to a very
+	 * unlikely probability.
+	 */
 	static final float VERY_UNLIKELY = -1.0f * (float) Math.log(1.0e-9);
 	
 	/** 
-	 * Indicates whether rules with an initial source-side nonterminal 
-	 * should be extracted from phrases at the start of a sentence, 
-	 * even though such rules do not have supporting corporal evidence.
+	 * Indicates whether rules with an initial source-side
+	 * nonterminal should be extracted from phrases at the start
+	 * of a sentence, even though such rules do not have
+	 * supporting corporal evidence.
 	 * <p>
-	 * This is included for compatibility with Adam Lopez's Hiero rule extractor,
-	 * in which this setting is set to <code>true</code>.
+	 * This is included for compatibility with Adam Lopez's
+	 * Hiero rule extractor, in which this setting is set to
+	 * <code>true</code>.
 	 * <p>
 	 * The default value is <code>false</code>.
 	 */
@@ -93,11 +117,13 @@ public class PrefixTree {
 	
 	/** 
 	 * Indicates whether rules with a final source-side nonterminal 
-	 * should be extracted from phrases at the end of a sentence, 
-	 * even though such rules do not have supporting corporal evidence.
+	 * should be extracted from phrases at the end of a sentence,
+	 * even though such rules do not have supporting corporal
+	 * evidence.
 	 * <p>
-	 * This is included for compatibility with Adam Lopez's Hiero rule extractor,
-	 * in which this setting is set to <code>true</code>.
+	 * This is included for compatibility with Adam Lopez's
+	 * Hiero rule extractor, in which this setting is set to
+	 * <code>true</code>.
 	 * <p>
 	 * The default value is <code>false</code>.
 	 */
@@ -111,16 +137,20 @@ public class PrefixTree {
 	static final int ROOT_NODE_ID = -999;
 	
 	/** 
-	 * Unique integer identifier for the special ⊥ node that represents the suffix of the root node.
+	 * Unique integer identifier for the special ⊥ node
+	 * that represents the suffix of the root node.
 	 * @see Lopez (2008), footnote 9 on p73
 	 */
 	static final int BOT_NODE_ID = -2000;
 
 	/**
-	 * Gets a special map that maps any integer key to the root node.
-	 *  
-	 * @param root Root node, which this map will always return as a value. 
-	 * @return Special map that maps any integer key to the root node.
+	 * Gets a special map that maps any integer key to the root
+	 * node.
+	 *
+	 * @param root Root node, which this map will always return
+	 *             as a value.
+	 * @return Special map that maps any integer key to the
+	 *         root node.
 	 * @see "Lopez (2008), footnote 9 on p73"
 	 */
 	static Map<Integer,Node> botMap(final Node root) {
@@ -146,7 +176,10 @@ public class PrefixTree {
 	/** Corpus array representing the target language corpus. */
 	final Corpus targetCorpus;
 	
-	/** Represents alignments between words in the source corpus and the target corpus. */
+	/**
+	 * Represents alignments between words in the source corpus
+	 * and the target corpus.
+	 */
 	final Alignments alignments;
 	
 	/** Lexical translation probabilities. */
@@ -159,15 +192,15 @@ public class PrefixTree {
 	final Pattern epsilon;
 	
 	/** 
-	 * Node representing phrases that start with the nonterminal X. 
-	 * This node's parent is the root node of the tree. 
+	 * Node representing phrases that start with the nonterminal
+	 * X. This node's parent is the root node of the tree.
 	 */
 	private final Node xnode;
 
 	/**
-	 * Constructs a new prefix tree with suffix links
-	 * using the GENERATE_PREFIX_TREE algorithm 
-	 * from Lopez (2008) PhD Thesis, Algorithm 2, p 76. 
+	 * Constructs a new prefix tree with suffix links using the
+	 * GENERATE_PREFIX_TREE algorithm from Lopez (2008) PhD
+	 * Thesis, Algorithm 2, p 76.
 	 * 
 	 * @param suffixArray
 	 * @param targetCorpus
@@ -178,8 +211,9 @@ public class PrefixTree {
 	 * @param maxPhraseSpan
 	 * @param maxPhraseLength
 	 * @param maxNonterminals
-	 * @param minNonterminalSpan Minimum number of source language tokens 
-	 *                           a nonterminal is allowed to encompass.
+	 * @param minNonterminalSpan Minimum number of source
+	 *            language tokens a nonterminal is allowed to
+	 *            encompass.
 	 */
 	public PrefixTree(Suffixes suffixArray, 
 			Corpus targetCorpus, Alignments alignments, SymbolTable vocab, 
@@ -263,17 +297,18 @@ public class PrefixTree {
 	}
 
 	/**
-	 * Constructs a new prefix tree with suffix links
-	 * using the GENERATE_PREFIX_TREE algorithm 
-	 * from Lopez (2008) PhD Thesis, Algorithm 2, p 76. 
+	 * Constructs a new prefix tree with suffix links using the
+	 * GENERATE_PREFIX_TREE algorithm from Lopez (2008) PhD
+	 * Thesis, Algorithm 2, p 76.
 	 * <p>
 	 * This constructor does not take a suffix array parameter.
 	 * Instead any prefix tree constructed by this constructor
 	 * will assume that all possible phrases of this sentence
 	 * are valid phrases.
 	 * <p>
-	 * This constructor is meant to be used primarily for testing purposes.
-	 * 
+	 * This constructor is meant to be used primarily for testing
+	 * purposes.
+	 *
 	 * @param sentence
 	 * @param maxPhraseSpan
 	 * @param maxPhraseLength
@@ -285,8 +320,9 @@ public class PrefixTree {
 
 
 	/**
-	 * Modify this prefix tree by adding phrases for this sentence.
-	 * 
+	 * Modify this prefix tree by adding phrases for this
+	 * sentence.
+	 *
 	 * @param sentence
 	 */
 	public void add(int[] sentence) {
@@ -456,8 +492,9 @@ public class PrefixTree {
 	
 
 	/**
-	 * Implements the root QUERY algorithm (Algorithm 4) of Adam Lopez's (2008) doctoral thesis.
-	 * 
+	 * Implements the root QUERY algorithm (Algorithm 4) of
+	 * Adam Lopez's (2008) doctoral thesis.
+	 *
 	 * @param pattern Pattern to search for
 	 * @param node Node in the prefix tree
 	 * @param prefixNode Prefix node
@@ -543,14 +580,21 @@ public class PrefixTree {
 	}
 	
 	/**
-	 * Implements Function EXTEND_QUEUE from Lopez (2008) PhD Thesis, Algorithm 2, p 76
-	 * 
+	 * Implements Function EXTEND_QUEUE from Lopez (2008) PhD
+	 * Thesis, Algorithm 2, p 76
+	 *
 	 * @param queue Queue of tuples
-	 * @param i Start index of the pattern in the source input sentence (inclusive, 1-based).
-	 * @param j End index of the pattern in the source input sentence (inclusive, 1-based).
+	 * @param i Start index of the pattern in the source input
+	 *          sentence (inclusive, 1-based).
+	 * @param j End index of the pattern in the source input
+	 *          sentence (inclusive, 1-based).
 	 * @param sentence
-	 * @param pattern Pattern corresponding to the prefix node. In Lopez's terminology, this pattern is alpha f_j.
-	 * @param node Node in the prefix tree to which a new node (corresponding to the pattern) will eventually be attached.
+	 * @param pattern Pattern corresponding to the prefix node.
+	 *                In Lopez's terminology, this pattern is
+	 *                alpha f_j.
+	 * @param node Node in the prefix tree to which a new node
+	 *             (corresponding to the pattern) will eventually
+	 *             be attached.
 	 */
 	private void extendQueue(Queue<Tuple> queue, int i, int j, int[] sentence, Pattern pattern, Node node) {
 

@@ -22,7 +22,7 @@ import java.util.List;
 
 /**
  * List that performs sampling at specified intervals.
- * 
+ *
  * @author Lane Schwartz
  * @version $LastChangedDate$
  */
@@ -35,11 +35,12 @@ public class SampledList<E> extends AbstractList<E> implements List<E> {
 	/**
 	 * Constructs a sampled list backed by a provided list.
 	 * <p>
-	 * The maximum size of this list will be no greater 
-	 * than the provided sample size.
+	 * The maximum size of this list will be no greater than
+	 * the provided sample size.
 	 * 
-	 * @param list List from which to sample.
-	 * @param sampleSize Maximum number of items to include in the new sampled list.
+	 * @param list       List from which to sample.
+	 * @param sampleSize Maximum number of items to include in
+	 *                   the new sampled list.
 	 */
 	public SampledList(List<E> list, int sampleSize) {
 		this.list = list;		

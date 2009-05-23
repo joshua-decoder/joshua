@@ -59,13 +59,12 @@ import java.util.logging.Logger;
 /**
  * this class implements:
  * (1) mainly initialize, and control the interaction with
- * JoshuaConfiguration and DecoderThread
+ *     JoshuaConfiguration and DecoderThread
  *
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @author wren ng thornton <wren@users.sourceforge.net>
  * @version $LastChangedDate$
  */
-
 public class JoshuaDecoder {
 	/*
 	 * Many of these objects themselves are global objects. We
@@ -83,8 +82,8 @@ public class JoshuaDecoder {
 	private NGramLanguageModel         languageModel;
 	
 	/**
-	 * Shared symbol table for source language terminals,
-	 * target language terminals, and shared nonterminals.
+	 * Shared symbol table for source language terminals, target
+	 * language terminals, and shared nonterminals.
 	 */
 	private SymbolTable                symbolTable;
 	
@@ -97,8 +96,9 @@ public class JoshuaDecoder {
 //===============================================================
 
 	/**
-	 * Constructs a new decoder using the specified configuration file.
-	 * 
+	 * Constructs a new decoder using the specified configuration
+	 * file.
+	 *
 	 * @param configFile Name of configuration file.
 	 */
 	public JoshuaDecoder(String configFile) {
@@ -107,21 +107,22 @@ public class JoshuaDecoder {
 	}
 	
 	/** 
-	 * Constructs an uninitialized decoder for use in testing. 
+	 * Constructs an uninitialized decoder for use in testing.
 	 * <p>
-	 * This method is private because it should only ever be called
-	 * by the {@link #getUninitalizedDecoder()} method to provide
-	 * an uninitialized decoder for use in testing.
+	 * This method is private because it should only ever be
+	 * called by the {@link #getUninitalizedDecoder()} method
+	 * to provide an uninitialized decoder for use in testing.
 	 */
 	private JoshuaDecoder() {
 		this.grammarFactories = new ArrayList<GrammarFactory>();
 	}
 	
 	/** 
-	 * Gets an uninitialized decoder for use in testing. 
+	 * Gets an uninitialized decoder for use in testing.
 	 * <p>
-	 * This method is package-private because it should only ever be called
-	 * by unit tests located in this package for use in testing.
+	 * This method is package-private because it should only
+	 * ever be called by unit tests located in this package for
+	 * use in testing.
 	 */
 	static JoshuaDecoder getUninitalizedDecoder() {
 		return new JoshuaDecoder();
@@ -134,8 +135,9 @@ public class JoshuaDecoder {
 	/** 
 	 * Sets the feature weight values used by the decoder.
 	 * <p>
-	 * This method assumes that the order of the provided weights 
-	 * is the same as their order in the decoder's configuration file.
+	 * This method assumes that the order of the provided weights
+	 * is the same as their order in the decoder's configuration
+	 * file.
 	 * 
 	 * @param weights Feature weight values
 	 */
@@ -162,8 +164,8 @@ public class JoshuaDecoder {
 	
 	
 	/** 
-	 * Decode a whole test set. This may be parallel. 
-	 * 
+	 * Decode a whole test set. This may be parallel.
+	 *
 	 * @param testFile
 	 * @param nbestFile
 	 * @param oracleFile
@@ -237,7 +239,7 @@ public class JoshuaDecoder {
 	
 	/** 
 	 * Initialize all parts of the JoshuaDecoder.
-	 * 
+	 *
 	 * @param configFile File containing configuration options
 	 * @return An initialized decoder
 	 */

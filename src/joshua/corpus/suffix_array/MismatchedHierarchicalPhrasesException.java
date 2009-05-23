@@ -19,17 +19,17 @@ package joshua.corpus.suffix_array;
 
 
 /**
- * Indicates that two hierarchical phrases cannot be meaningfully compared
- * because of a mismatch in the expected sizes.
+ * Indicates that two hierarchical phrases cannot be meaningfully
+ * compared because of a mismatch in the expected sizes.
  * 
  * @author Lane Schwartz
  */
 public class MismatchedHierarchicalPhrasesException extends RuntimeException {
 
 	/**
-	 * Constructs an exception indicating that 
-	 * two hierarchical phrases cannot be meaningfully compared
-     * because of a mismatch in the expected sizes.
+	 * Constructs an exception indicating that two hierarchical
+	 * phrases cannot be meaningfully compared because of a
+	 * mismatch in the expected sizes.
 	 */
 	public MismatchedHierarchicalPhrasesException() {
 		super("Length of s(m_a_alpha) and p(m_alpha_b) do not match");

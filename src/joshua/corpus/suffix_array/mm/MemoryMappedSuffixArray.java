@@ -35,9 +35,8 @@ public class MemoryMappedSuffixArray extends AbstractSuffixArray {
 	private final int size;
 
 	/** 
-	 * Constructs a suffix array from 
-	 * an on-disk memory-mapped representation
-	 * and an existing Corpus.
+	 * Constructs a suffix array from an on-disk memory-mapped
+	 * representation and an existing Corpus.
 	 * 
 	 * @throws IOException 
 	 * @throws ClassNotFoundException 

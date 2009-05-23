@@ -58,7 +58,8 @@ public interface NGramLanguageModel {
 	
 	
 	/**
-	 * @param order used to temporarily reduce the order used by the model.
+	 * @param order used to temporarily reduce the order used
+	 *              by the model.
 	 */
 	double ngramLogProbability(ArrayList<Integer> ngram, int order);
 	double ngramLogProbability(int[] ngram, int order);
@@ -72,8 +73,8 @@ public interface NGramLanguageModel {
 	/**
 	 * This returns the log probability of the special backoff
 	 * symbol used to fill out contexts which have been backed-off.
-	 * The LanguageModelFF implementation is to call this
-	 * unigram probability for each such token, and then call
+	 * The LanguageModelFF implementation is to call this unigram
+	 * probability for each such token, and then call
 	 * ngramLogProbability for the remaining actual N-gram.
 	 */
 	//TODO Is this really the best interface?

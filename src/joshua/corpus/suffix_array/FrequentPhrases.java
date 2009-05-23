@@ -52,39 +52,40 @@ public class FrequentPhrases {
 	/** Logger for this class. */
 	private static final Logger logger = 
 		Logger.getLogger(FrequentPhrases.class.getName());
-
+	
 	/** Suffix array in which frequent phrases are located. */
 	private final Suffixes suffixes;
 	
 	/** 
-	 * Stores the number of times a phrase occurred in the corpus.
+	 * Stores the number of times a phrase occurred in the
+	 * corpus.
 	 * <p>
-	 * The iteration order of this map should 
-	 * start with the most frequent phrase and end
-	 * with the least frequent phrase stored in the map.
+	 * The iteration order of this map should start with the
+	 * most frequent phrase and end with the least frequent
+	 * phrase stored in the map.
 	 * <p>
-	 * The key set for this map should be identical to
-	 * the key set in the <code>ranks</code> map. 
+	 * The key set for this map should be identical to the key
+	 * set in the <code>ranks</code> map.
 	 */
-	private final LinkedHashMap<Phrase,Integer> frequentPhrases;	
-
+	private final LinkedHashMap<Phrase,Integer> frequentPhrases;
+	
 	/** Maximum number of phrases of which this object is aware. */
 	private final short maxPhrases;
 	
 	
 	/**
-	 * Constructs data regarding the frequencies 
-	 * of the <em>n</em> most frequent phrases found in the corpus
-	 * backed by the provided suffix array.
+	 * Constructs data regarding the frequencies of the <em>n</em>
+	 * most frequent phrases found in the corpus backed by the
+	 * provided suffix array.
 	 * 
-	 * @param suffixes Suffix array corresponding to a corpus.
-	 * @param minFrequency The minimum frequency required to 
-	 *                     for a phrase to be considered frequent.
+	 * @param suffixes   Suffix array corresponding to a corpus.
+	 * @param minFrequency The minimum frequency required to
+	 *                   for a phrase to be considered frequent.
 	 * @param maxPhrases The number of phrases to consider.
 	 * @param maxPhraseLength Maximum phrase length to consider.
 	 */
 	public FrequentPhrases(
-			Suffixes suffixes,		
+			Suffixes suffixes,
 			int minFrequency,
 			short maxPhrases,
 			int maxPhraseLength) {
@@ -106,10 +107,10 @@ public class FrequentPhrases {
 	 * Translation with Suffix Arrays" by Adam Lopez.
 	 *
 	 * @param maxPhraseLength the maximum length of any phrase
-	 *                        in the phrases
-	 * @param windowSize      the maximum allowable space between
-	 *                        phrases for them to still be
-	 *                        considered collocated
+	 *                   in the phrases
+	 * @param windowSize the maximum allowable space between
+	 *                   phrases for them to still be considered
+	 *                   collocated
 	 * @param minNonterminalSpan Minimum span allowed for a nonterminal 
 	 */
 	public FrequentMatches getCollocations(
@@ -124,10 +125,10 @@ public class FrequentPhrases {
 
 
 		// Get an initially empty collocations object
-		FrequentMatches collocations = 
+		FrequentMatches collocations =
 			new FrequentMatches(
-					getRanks(frequentPhrases), 
-					maxPhrases, 
+					getRanks(frequentPhrases),
+					maxPhrases,
 					totalCollocations,
 					minNonterminalSpan);
 
@@ -271,10 +272,10 @@ public class FrequentPhrases {
 	 * Translation with Suffix Arrays" by Adam Lopez.
 	 *
 	 * @param maxPhraseLength the maximum length of any phrase
-	 *                        in the phrases
-	 * @param windowSize      the maximum allowable space between
-	 *                        phrases for them to still be
-	 *                        considered collocated
+	 *                   in the phrases
+	 * @param windowSize the maximum allowable space between
+	 *                   phrases for them to still be considered
+	 *                   collocated
 	 */
 	protected int countCollocations(
 			int maxPhraseLength,
@@ -450,14 +451,15 @@ public class FrequentPhrases {
 	/**
 	 * Calculates the frequency ranks of the provided phrases.
 	 * <p>
-	 * The iteration order of the <code>frequentPhrases</code> parameter
-	 * is be used by this method to determine the rank of each phrase.
-	 * Specifically, the first phrase returned by the map's iterator is 
-	 * taken to be the most frequent phrase; the last phrase returned by the
-	 * map's iterator is taken to be the least frequent phrase.
+	 * The iteration order of the <code>frequentPhrases</code>
+	 * parameter is be used by this method to determine the
+	 * rank of each phrase. Specifically, the first phrase
+	 * returned by the map's iterator is taken to be the most
+	 * frequent phrase; the last phrase returned by the map's
+	 * iterator is taken to be the least frequent phrase.
 	 * 
-	 * @param frequentPhrases Map from phrase to 
-	 *                        frequency of that phrase in a corpus.
+	 * @param frequentPhrases Map from phrase to frequency of
+	 *                        that phrase in a corpus.
 	 * @return the frequency ranks of the provided phrases
 	 */
 	protected LinkedHashMap<Phrase,Short> getRanks(LinkedHashMap<Phrase,Integer> frequentPhrases) {
@@ -479,18 +481,18 @@ public class FrequentPhrases {
 	/**
 	 * Calculates the most frequent phrases in the corpus.
 	 * <p>
-	 * Allows a threshold to be set for the minimum frequency to remember, 
-	 * as well as the maximum number of phrases.
+	 * Allows a threshold to be set for the minimum frequency
+	 * to remember, as well as the maximum number of phrases.
 	 *
-	 * @param suffixes a suffix array for the corpus
+	 * @param suffixes     a suffix array for the corpus
 	 * @param minFrequency the minimum frequency required to
 	 *                     retain phrases
-	 * @param maxPhrases   the maximum number of phrases to return
-	 * @param maxPhraseLength the maximum phrase length to consider
+	 * @param maxPhrases   the maximum number of phrases to
+	 *                     return
+	 * @param maxPhraseLength the maximum phrase length to
+	 *                     consider
 	 * 
-	 * @return A map from phrase to the number of times that phrase occurred in the corpus.
-	 *         The iteration order of the map will start with the most frequent phrase,
-	 *         and end with the least frequent calculated phrase.
+	 * @return A map from phrase to the number of times that phrase occurred in the corpus. The iteration order of the map will start with the most frequent phrase, and end with the least frequent calculated phrase.
 	 */
 	protected LinkedHashMap<Phrase,Integer> getMostFrequentPhrases(
 			Suffixes suffixes,
@@ -678,7 +680,7 @@ public class FrequentPhrases {
 
 	public String toString() {
 
-		String format = null;	
+		String format = null;
 
 		StringBuilder s = new StringBuilder();
 

@@ -38,13 +38,19 @@ public abstract class AbstractHierarchicalPhrases implements
 		Logger.getLogger(AbstractHierarchicalPhrases.class.getName());
 	
 	/**
-	 * Implements the dotted operators (<̈, =̈, >̈) from Lopez (2008), p78-79.
+	 * Implements the dotted operators (<̈, =̈, >̈)
+	 * from Lopez (2008), p78-79.
 	 * <p>
-	 * This method behaves as follows when provided prefix phrase m_a_alpha and suffix phrase m_alpha_b:
+	 * This method behaves as follows when provided prefix
+	 * phrase m_a_alpha and suffix phrase m_alpha_b:
 	 * <ul>
 	 * <li>Returns 0 if m_a_alpha and m_alpha_b can be paired.</li>
-	 * <li>Returns -1 if m_a_alpha and m_alpha_b cannot be paired, and m_a_alpha precedes m_alpha_b in the corpus.</li>
-	 * <li>Returns  1 if m_a_alpha and m_alpha_b cannot be paired, and m_a_alpha follows m_alpha_b in the corpus.</li>
+	 * <li>Returns -1 if m_a_alpha and m_alpha_b cannot be
+	 *     paired, and m_a_alpha precedes m_alpha_b in the
+	 *     corpus.</li>
+	 * <li>Returns  1 if m_a_alpha and m_alpha_b cannot be
+	 *     paired, and m_a_alpha follows m_alpha_b in the
+	 *     corpus.</li>
 	 * </ul>
 	 * 
      * @param m_a_alpha List of prefix hierarchical phrases
@@ -56,8 +62,10 @@ public abstract class AbstractHierarchicalPhrases implements
 	 * @return
 	 * <ul>
 	 * <li>0 if m_a_alpha and m_alpha_b can be paired (=̈).</li>
-	 * <li>-1 if m_a_alpha and m_alpha_b cannot be paired, and m_a_alpha precedes m_alpha_b in the corpus (<̈).</li>
-	 * <li> 1 if m_a_alpha and m_alpha_b cannot be paired, and m_a_alpha follows m_alpha_b in the corpus. (>̈)</li>
+	 * <li>-1 if m_a_alpha and m_alpha_b cannot be paired, and
+	 *     m_a_alpha precedes m_alpha_b in the corpus (<̈).</li>
+	 * <li> 1 if m_a_alpha and m_alpha_b cannot be paired, and
+	 *     m_a_alpha follows m_alpha_b in the corpus. (>̈)</li>
 	 * </ul>
 	 */	
 	protected static int compare(
@@ -194,10 +202,11 @@ public abstract class AbstractHierarchicalPhrases implements
 	}
 	
 	/**
-	 * Constructs the data to represent the hierarchical phrase, 
-	 * formed by intersecting the <code>i<code>th phrase of <code>M_a_alpha</code>
-	 * with the <code>j<code>th phrase of <code>M_alpha_b</code>
-	 * and appends this new data to the <code>data</code> list.
+	 * Constructs the data to represent the hierarchical phrase,
+	 * formed by intersecting the <code>i<code>th phrase of
+	 * <code>M_a_alpha</code> with the <code>j<code>th phrase
+	 * of <code>M_alpha_b</code> and appends this new data to
+	 * the <code>data</code> list.
 	 * 
 	 * @param M_a_alpha List of prefix hierarchical phrases
 	 * @param i Index into M_a_alpha
@@ -233,8 +242,9 @@ public abstract class AbstractHierarchicalPhrases implements
 	}
 
 	/**
-	 * Implements the <tt>QUERY_INTERSECT</tt> algorithm from Adam Lopez's thesis (Lopez 2008).
-	 * This implementation follows a corrected algorithm (Lopez, personal communication).
+	 * Implements the <tt>QUERY_INTERSECT</tt> algorithm from
+	 * Adam Lopez's thesis (Lopez 2008). This implementation
+	 * follows a corrected algorithm (Lopez, personal communication).
 	 * 
 	 * @param pattern Pattern which will be associated with the new list
 	 *                of matched hierarchical phrases

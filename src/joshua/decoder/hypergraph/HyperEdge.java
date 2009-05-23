@@ -25,8 +25,6 @@ import joshua.decoder.ff.tm.Rule;
 /**
  * this class implement Hyperedge
  * 
- *
- * 
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate$
  */

@@ -21,10 +21,10 @@ import joshua.corpus.vocab.SymbolTable;
 
 
 /**
- * This class provides a mostly-complete implementation 
- * of the <code>Corpus</code> interface, 
- * designed to minimize the effort required to build 
- * a concrete implementation of a corpus array data structure.
+ * This class provides a mostly-complete implementation of the
+ * <code>Corpus</code> interface, designed to minimize the effort
+ * required to build a concrete implementation of a corpus array
+ * data structure.
  * 
  * @author Lane Schwartz
  * @author Chris Callison-Burch
@@ -32,18 +32,19 @@ import joshua.corpus.vocab.SymbolTable;
 public abstract class AbstractCorpus<Vocab extends SymbolTable> implements Corpus {
 
 	/** 
-	 * Symbol table for the corpus,
-	 * responsible for mapping between tokens in the corpus
-	 * and the integer representations of those tokens.
+	 * Symbol table for the corpus, responsible for mapping
+	 * between tokens in the corpus and the integer representations
+	 * of those tokens.
 	 */
 	protected Vocab symbolTable;
 	
 	/**
-	 * Constructs an abstract corpus with the specified symbol table.
-	 * 
-	 * @param symbolTable Symbol table for the corpus,
-	 * 		responsible for mapping between tokens in the corpus
-	 *		and the integer representations of those tokens
+	 * Constructs an abstract corpus with the specified symbol
+	 * table.
+	 *
+	 * @param symbolTable Symbol table for the corpus, responsible
+	 *            for mapping between tokens in the corpus and
+	 *            the integer representations of those tokens
 	 */
 	public AbstractCorpus(Vocab symbolTable) {
 		this.symbolTable = symbolTable;

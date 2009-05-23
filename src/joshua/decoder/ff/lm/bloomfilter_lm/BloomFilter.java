@@ -43,7 +43,9 @@ public class BloomFilter implements Externalizable {
 		bigPrime = getPrimeLargerThan(filterSize);
 	}
 
-	/** Adds an item (represented by an integer) to the bloom filter.
+	/**
+	 * Adds an item (represented by an integer) to the bloom
+	 * filter.
 	 */
 	public void add(int objectToAdd, long [][] hashFunctions) {
 		for (long [] h : hashFunctions) {
@@ -59,8 +61,9 @@ public class BloomFilter implements Externalizable {
 		}
 	}
 
-	/** Determines whether an item (represented by an integer) is present
-	 * in the bloom filter. Returns its value.
+	/**
+	 * Determines whether an item (represented by an integer)
+	 * is present in the bloom filter. Returns its value.
 	 */
 	public boolean query(int objectToQuery, long [][] hashFunctions) {
 		for (long [] h : hashFunctions) {

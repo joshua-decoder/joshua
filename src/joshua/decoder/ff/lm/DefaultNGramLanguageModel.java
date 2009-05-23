@@ -30,7 +30,7 @@ import java.util.ArrayList;
  * ArrayList<Integer> to int[]) and a default implementation for
  * sentenceLogProbability which enumerates the n-grams and calls
  * calls ngramLogProbability for each of them.
- * 
+ *
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @author wren ng thornton <wren@users.sourceforge.net>
  * @version $LastChangedDate$

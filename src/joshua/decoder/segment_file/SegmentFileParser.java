@@ -38,7 +38,7 @@ public interface SegmentFileParser {
 	 * to interrupt, and it can take too much memory to hold
 	 * the whole file in memory during transation or each
 	 * segment.
-	 *
+	 * <p>
 	 * This method shall close the InputStream before exiting,
 	 * since it consumes the entirety of the stream.
 	 */

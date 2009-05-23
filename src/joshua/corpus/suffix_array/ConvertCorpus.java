@@ -26,10 +26,10 @@ import joshua.corpus.vocab.Vocabulary;
 import joshua.util.io.BinaryIn;
 
 /**
- * Given a corpus and an existing symbol table,
- * read the corpus, and create a binary representation
- * of the corpus using the provided symbol table.
- * 
+ * Given a corpus and an existing symbol table, read the corpus,
+ * and create a binary representation of the corpus using the
+ * provided symbol table.
+ *
  * @author Lane Schwartz
  * @version $LastChangedDate$
  */
@@ -40,10 +40,10 @@ public class ConvertCorpus {
 		Logger.getLogger(ConvertCorpus.class.getName());
 	
 	/**
-	 * Given a corpus and an existing symbol table,
-	 * read the corpus, and create a binary representation
-	 * of the corpus using the provided symbol table.
-	 * 
+	 * Given a corpus and an existing symbol table, read the
+	 * corpus, and create a binary representation of the corpus
+	 * using the provided symbol table.
+	 *
 	 * @param args Command line arguments
 	 * @throws ClassNotFoundException 
 	 * @throws IOException 

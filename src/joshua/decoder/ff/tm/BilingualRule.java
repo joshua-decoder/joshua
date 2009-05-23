@@ -24,8 +24,8 @@ import joshua.corpus.vocab.SymbolTable;
 
 
 /**
- * Normally, the feature score in the rule should be *cost* (i.e., -LogP), 
- * so that the feature weight should be positive
+ * Normally, the feature score in the rule should be *cost* (i.e.,
+ * -LogP), so that the feature weight should be positive
  *
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate$
@@ -39,14 +39,15 @@ public class BilingualRule extends MonolingualRule {
 //===============================================================
 
 	/**
-	 * Constructs a new rule using the provided parameters.
-	 * The owner and rule id for this rule are undefined.
+	 * Constructs a new rule using the provided parameters. The
+	 * owner and rule id for this rule are undefined.
 	 * 
 	 * @param lhs Left-hand side of the rule.
 	 * @param sourceRhs Source language right-hand side of the rule.
 	 * @param targetRhs Target language right-hand side of the rule.
 	 * @param featureScores Feature value scores for the rule.
-	 * @param arity Number of nonterminals in the source language right-hand side.
+	 * @param arity Number of nonterminals in the source language
+	 *              right-hand side.
 	 * @param owner
 	 * @param latticeCost
 	 * @param ruleID

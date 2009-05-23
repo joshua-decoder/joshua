@@ -41,7 +41,7 @@ import java.io.IOException;
 /**
  * Class for representing a sentence-aligned bi-corpus (with optional
  * word-alignments).
- *
+ * <p>
  * In order to avoid memory crashes we no longer extend an ArrayList,
  * which tries to cache the entire file in memory at once. This
  * means we'll re-read through each file (1 +

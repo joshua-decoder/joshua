@@ -32,13 +32,15 @@ import java.util.logging.Logger;
 /**
  * This class performs the following:
  * <ol> 
- * <li> Gets the additional LM score due to combinations of small items into larger ones by using rules
+ * <li> Gets the additional LM score due to combinations of small
+ *      items into larger ones by using rules
  * <li> Gets the LM state 
  * <li> Gets the left-side LM state estimation score
  * </ol>
  * 
- * <em>Note</em>: the LMGrammar returns LogP; while the LanguageModelFF needs to return cost (i.e., -LogP)
- * 
+ * <em>Note</em>: the LMGrammar returns LogP; while the LanguageModelFF
+ * needs to return cost (i.e., -LogP)
+ *
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate$
  */
@@ -65,23 +67,29 @@ public class LanguageModelFF extends DefaultStatefulFF {
 	static public int NULL_RIGHT_LM_STATE_SYM_ID;//used for equivelant state
 	
 	/** 
-	 * N-gram language model. 
-	 * <p>
-	 * We assume the language model is in ARPA format for equivalent state: 
+	 * N-gram language model. We assume the language model is
+	 * in ARPA format for equivalent state:
 	 * 
 	 * <ol>
-	 * <li>We assume it is a backoff lm, and high-order ngram implies low-order ngram; absense of low-order ngram implies high-order ngram</li>
-	 * <li>For a ngram, existence of backoffweight => existence a probability
-	 *     Two ways of dealing with low counts:
+	 * <li>We assume it is a backoff lm, and high-order ngram
+	 *     implies low-order ngram; absense of low-order ngram
+	 *     implies high-order ngram</li>
+	 * <li>For a ngram, existence of backoffweight => existence
+	 *     a probability Two ways of dealing with low counts:
 	 *     <ul>
-	 *       <li>SRILM: don't multiply zeros in for unknown words</li>
-	 *       <li>Pharaoh: cap at a minimum score exp(-10), including unknown words</li>
+	 *       <li>SRILM: don't multiply zeros in for unknown
+	 *           words</li>
+	 *       <li>Pharaoh: cap at a minimum score exp(-10),
+	 *           including unknown words</li>
 	 *     </ul>
 	 * </li>
 	 */
 	private final NGramLanguageModel lmGrammar;
 	
-	/** We always use this order of ngram, though the LMGrammar may provide higher order probability. */
+	/**
+	 * We always use this order of ngram, though the LMGrammar
+	 * may provide higher order probability.
+	 */
 	private final int ngramOrder;// = 3;
 	//boolean add_boundary=false; //this is needed unless the text already has <s> and </s>
 	

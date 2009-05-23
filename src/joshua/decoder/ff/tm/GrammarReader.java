@@ -9,14 +9,14 @@ import joshua.corpus.vocab.SymbolTable;
 import joshua.util.io.LineReader;
 
 /**
- * This is a base class for simple, ASCII line-based grammars that are stored on
- * disk.
+ * This is a base class for simple, ASCII line-based grammars that
+ * are stored on disk.
  * 
  * @author Juri Ganitkevitch
  * 
  */
-public abstract class GrammarReader<R extends Rule> implements
-		Iterable<R>, Iterator<R> {
+public abstract class GrammarReader<R extends Rule>
+implements Iterable<R>, Iterator<R> {
 
 	protected static String fieldDelimiter;
 	protected static String nonTerminalRegEx;
@@ -33,14 +33,13 @@ public abstract class GrammarReader<R extends Rule> implements
 	private static final Logger logger = Logger
 			.getLogger(GrammarReader.class.getName());
 
-	// dummy constructor for 
+	// dummy constructor for
 	public GrammarReader() {
 		this.symbolTable = null;
 		this.fileName = null;
 	}
 	
-	public GrammarReader(String fileName, SymbolTable symbolTable) 
-	{
+	public GrammarReader(String fileName, SymbolTable symbolTable) {
 		this.fileName = fileName;
 		this.symbolTable = symbolTable;
 	}

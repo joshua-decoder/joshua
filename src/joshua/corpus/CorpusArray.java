@@ -34,10 +34,10 @@ import java.util.Arrays;
 
 
 /**
- * A compact int[] based representation of a corpus.  The class
- * keeps all of the words in their int form in a single array.  It
- * also maintains a separate int[] array that lists the start index
- * for each sentence in the corpus. This second array allows us to
+ * A compact int[] based representation of a corpus. The class keeps
+ * all of the words in their int form in a single array. It also
+ * maintains a separate int[] array that lists the start index for
+ * each sentence in the corpus. This second array allows us to
  * quickly determine the source sentence of any given position in
  * the corpus using a binary search.
  *
@@ -65,7 +65,7 @@ public class CorpusArray extends AbstractCorpus<ExternalizableSymbolTable> imple
 	
 	/**
 	 * Keeps the starting position in the corpus array for each
-	 * of the sentences.  The length of the sentences array is
+	 * of the sentences. The length of the sentences array is
 	 * equal to the number of sentences in the corpus.
 	 */
 	protected int[] sentences;
@@ -153,7 +153,7 @@ public class CorpusArray extends AbstractCorpus<ExternalizableSymbolTable> imple
 	
 	/**
 	 * @return the position in the corpus of the first word of
-	 *         the specified sentence.  If the sentenceID is
+	 *         the specified sentence. If the sentenceID is
 	 *         outside of the bounds of the sentences, then it
 	 *         returns the last position in the corpus + 1.
 	 */
@@ -165,12 +165,14 @@ public class CorpusArray extends AbstractCorpus<ExternalizableSymbolTable> imple
 	}
 	
 	/**
-	 * Gets the exclusive end position of a sentence in the corpus.
-	 * 
-	 * @return the position in the corpus one past the last word of
-	 *         the specified sentence.  If the sentenceID is
-	 *         outside of the bounds of the sentences, then it
-	 *         returns one past the last position in the corpus.
+	 * Gets the exclusive end position of a sentence in the
+	 * corpus.
+	 *
+	 * @return the position in the corpus one past the last
+	 *         word of the specified sentence. If the sentenceID
+	 *         is outside of the bounds of the sentences, then
+	 *         it returns one past the last position in the
+	 *         corpus.
 	 */
 	public int getSentenceEndPosition(int sentenceID) {
 		if (sentenceID >= sentences.length-1) {
@@ -213,9 +215,9 @@ public class CorpusArray extends AbstractCorpus<ExternalizableSymbolTable> imple
 	}
 	
 	/**
-	 * Sets the symbol table to the provided object,
-	 * and changes migrates all internal data 
-	 * to use the new mappings provided by that object.
+	 * Sets the symbol table to the provided object, and changes
+	 * migrates all internal data to use the new mappings
+	 * provided by that object.
 	 */
 	public void setSymbolTable(ExternalizableSymbolTable vocab) {
 		SymbolTable oldVocab = this.symbolTable;

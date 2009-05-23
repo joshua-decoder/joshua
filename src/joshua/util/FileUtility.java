@@ -32,7 +32,7 @@ import java.util.zip.GZIPInputStream;
 
 /**
  * utility functions for file operations
- * 
+ *
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @author wren ng thornton <wren@users.sourceforge.net>
  * @since 28 February 2009
@@ -49,7 +49,8 @@ public class FileUtility {
 	
 	
 	/**
-	 * @deprecated As of r610, use {@link joshua.util.io.LineReader} instead. 
+	 * @deprecated As of r610, use {@link joshua.util.io.LineReader}
+	 *             instead.
 	 */
 	@Deprecated
 	public static BufferedReader getReadFileStream(String filename)
@@ -97,9 +98,10 @@ public class FileUtility {
 	
 	/**
 	 * Recursively delete the specified file or directory.
-	 * 
+	 *
 	 * @param f File or directory to delete
-	 * @return <code>true</code> if the specified file or directory was deleted, <code>false</code> otherwise
+	 * @return <code>true</code> if the specified file or
+	 *         directory was deleted, <code>false</code> otherwise
 	 */
 	public static boolean deleteRecursively(File f) {
 		if (null != f) {
@@ -115,8 +117,7 @@ public class FileUtility {
 	
 	
 	/**
-	 * Writes data from the integer array to disk
-	 * as raw bytes.
+	 * Writes data from the integer array to disk as raw bytes.
 	 * 
 	 * @param data     The integer array to write to disk.
 	 * @param filename The filename where the data should be written.
@@ -153,6 +154,4 @@ public class FileUtility {
 			out.write(b);
 		}
 	}
-
-	
 }

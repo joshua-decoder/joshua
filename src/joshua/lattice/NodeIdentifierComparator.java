@@ -21,9 +21,9 @@ import java.io.Serializable;
 import java.util.Comparator;
 
 /**
- * Compares nodes based only 
- * on the natural order of their integer identifiers.
- * 
+ * Compares nodes based only on the natural order of their integer
+ * identifiers.
+ *
  * @author Lane Schwartz
  */
 public class NodeIdentifierComparator implements Comparator<Node<?>>, Serializable {

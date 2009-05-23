@@ -30,7 +30,9 @@ import java.util.Map;
  */
 public class Counts<A, B> {
 
-	/** Stores the number of times instances of A and B co-occur. */
+	/**
+	 * Stores the number of times instances of A and B co-occur.
+	 */
 	private final Map<A,Map<B,Integer>> counts;
 	
 	/** Stores the number of times instances of B occur. */
@@ -55,9 +57,9 @@ public class Counts<A, B> {
 	
 	/**
 	 * Constructs an initially empty co-occurrence counter.
-	 * 
-	 * @param floorProbability Floor probability to use 
-	 *                         when an unseen pair is queried.
+	 *
+	 * @param floorProbability Floor probability to use when
+	 *                         an unseen pair is queried.
 	 */
 	public Counts(float floorProbability) {
 		this.floorProbability = floorProbability;
@@ -68,8 +70,9 @@ public class Counts<A, B> {
 	}
 	
 	/**
-	 * Increments the co-occurrence count of the provided objects.
-	 * 
+	 * Increments the co-occurrence count of the provided
+	 * objects.
+	 *
 	 * @param a
 	 * @param b
 	 */
@@ -137,10 +140,12 @@ public class Counts<A, B> {
 	}
 
 	/**
-	 * Gets the total number of times the specified element has been seen.
-	 * 
+	 * Gets the total number of times the specified element has
+	 * been seen.
+	 *
 	 * @param b
-	 * @return the total number of times the specified element has been seen
+	 * @return the total number of times the specified element
+	 *         has been seen
 	 */
 	int getCount(B b) {
 	    
@@ -192,8 +197,9 @@ public class Counts<A, B> {
 	/**
 	 * Gets the probability of b given a.
 	 * <p>
-	 * This value is the relative frequency estimate in the reverse direction.
-	 * 
+	 * This value is the relative frequency estimate in the
+	 * reverse direction.
+	 *
 	 * @param b
 	 * @param a
 	 * @return the probability of b given a.
@@ -235,11 +241,11 @@ public class Counts<A, B> {
 	}
 	
 	/**
-	 * Gets the floor probability that is returned 
-	 * whenever an unseen pair is queried.
+	 * Gets the floor probability that is returned whenever an
+	 * unseen pair is queried.
 	 * 
-	 * @return The floor probability that is returned 
-	 *         whenever an unseen pair is queried
+	 * @return The floor probability that is returned whenever
+	 *         an unseen pair is queried
 	 */
 	public float getFloorProbability() {
 		return this.floorProbability;

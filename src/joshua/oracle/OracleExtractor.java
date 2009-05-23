@@ -22,7 +22,7 @@ import joshua.decoder.hypergraph.HyperGraph;
 
 /**
  * Convenience wrapper class for oracle extraction code.
- * 
+ *
  * @author Lane Schwartz
  * @version $LastChangedDate$
  */
@@ -31,8 +31,9 @@ public class OracleExtractor {
 	private final OracleExtractionHG extractor;
 	
 	/**
-	 * Constructs an object capable of extracting an oracle hypergraph.
-	 * 
+	 * Constructs an object capable of extracting an oracle
+	 * hypergraph.
+	 *
 	 * @param symbolTable
 	 */
 	public OracleExtractor(SymbolTable symbolTable) {
@@ -44,11 +45,12 @@ public class OracleExtractor {
 	
 	/**
 	 * Extract a hypergraph that represents the translation
-	 * from the original shared forest hypergraph 
-	 * that is closest to the reference translation.
+	 * from the original shared forest hypergraph that is closest
+	 * to the reference translation.
 	 * 
-	 * @param forest Original hypergraph representing a shared forest.
-	 * @param lmOrder N-gram order of the language model.
+	 * @param forest    Original hypergraph representing a
+	 *                  shared forest.
+	 * @param lmOrder   N-gram order of the language model.
 	 * @param reference Reference sentence.
 	 * @return Hypergraph closest to the reference.
 	 */

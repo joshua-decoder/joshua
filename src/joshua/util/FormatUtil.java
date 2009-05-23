@@ -22,17 +22,18 @@ import java.util.regex.Pattern;
 
 /**
  * Utility class for format issues.
- * 
+ *
  * @author Lane Schwartz
  * @version $LastChangedDate$
  */
 public class FormatUtil {
 
 	/**
-	 * Returns true if the String parameter represents a valid number.
+	 * Returns true if the String parameter represents a valid
+	 * number.
 	 * <p>
-	 * The body of this method is taken from the Javadoc documentation
-	 * for the Java Double class.
+	 * The body of this method is taken from the Javadoc
+	 * documentation for the Java Double class.
 	 * 
 	 * @param string
 	 * @see java.lang.Double
@@ -83,11 +84,12 @@ public class FormatUtil {
 	}
 	
 	/**
-	 * Set System.out and System.err to use the UTF8 character encoding.
-	 * 
-	 * @return <code>true</code> if both System.out and System.err 
-	 *         were successfully set to use UTF8,
-	 *         <code>false</code> otherwise.
+	 * Set System.out and System.err to use the UTF8 character
+	 * encoding.
+	 *
+	 * @return <code>true</code> if both System.out and System.err
+	 *         were successfully set to use UTF8, <code>false</code>
+	 *         otherwise.
 	 */
 	public static boolean useUTF8() {
 		

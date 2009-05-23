@@ -30,11 +30,11 @@ import joshua.prefix_tree.HierarchicalRuleExtractor;
 import joshua.prefix_tree.PrefixTree;
 
 /**
- * Aligned parallel corpus, 
- * capable of extracting a sentence-specific translation grammar.
+ * Aligned parallel corpus, capable of extracting a sentence-specific
+ * translation grammar.
  * <p>
- * The source side of the aligned parallel corpus
- * is backed by a suffix array.
+ * The source side of the aligned parallel corpus is backed by a
+ * suffix array.
  * 
  * @author Lane Schwartz
  */
@@ -54,7 +54,8 @@ public class AlignedParallelCorpus implements ParallelCorpus, GrammarFactory {
 	
 	
 	/**
-	 * Constructs a factory capable of getting a grammar backed by a suffix array.
+	 * Constructs a factory capable of getting a grammar backed
+	 * by a suffix array.
 	 * 
 	 * @param sourceSuffixArray
 	 * @param targetCorpus

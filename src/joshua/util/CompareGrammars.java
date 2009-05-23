@@ -28,7 +28,7 @@ import joshua.decoder.ff.tm.hiero.HieroFormatReader;
 
 /**
  * This class allows two grammars (loaded from disk) to be compared.
- * 
+ *
  * @author Lane Schwartz
  */
 public class CompareGrammars {
@@ -38,12 +38,15 @@ public class CompareGrammars {
 		Logger.getLogger(CompareGrammars.class.getName());
 	
 	/**
-	 * Gets a set containing all unique instances of the specified field.
-	 * 
+	 * Gets a set containing all unique instances of the specified
+	 * field.
+	 *
 	 * @param grammarFile File containing a grammar.
-	 * @param fieldDelimiter Regular expression to split each line
+	 * @param fieldDelimiter Regular expression to split each
+	 *                       line
 	 * @param fieldNumber Field from each rule to extract
-	 * @return set containing all unique instances of the specified field
+	 * @return set containing all unique instances of the
+	 *         specified field
 	 * @throws FileNotFoundException
 	 */
 	public static Set<String> getFields(File grammarFile, String fieldDelimiter, int fieldNumber) throws FileNotFoundException {
@@ -117,7 +120,7 @@ public class CompareGrammars {
 	 * Main method.
 	 * 
 	 * @param args names of the two grammars to be compared
-	 * @throws FileNotFoundException 
+	 * @throws FileNotFoundException
 	 */
 	public static void main(String[] args) throws FileNotFoundException {
 		

@@ -32,20 +32,20 @@ import java.util.Map.Entry;
 
 /**
  * this class implements: 
- * (1) nbest min risk (MBR) reranking using BLEU as a gain funtion
- * 
- * 
+ * (1) nbest min risk (MBR) reranking using BLEU as a gain funtion.
+ * <p>
+ * This assume that the string is unique in the nbest list In Hiero,
+ * due to spurious ambiguity, a string may correspond to many
+ * possible derivations, and ideally the probability of a string
+ * should be the sum of all the derivataions leading to that string.
+ * But, in practice, one normally uses a Viterbi approximation: the
+ * probability of a string is its best derivation probability So,
+ * if one want to deal with spurious ambiguity, he/she should do
+ * that before calling this class
+ *
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate$
  */
-
-/* This assume that the string is unique in the nbest list
- * In Hiero, due to spurious ambiguity, a string may correspond to many possible derivations, and ideally the probability of a string should be the sum of all the derivataions leading to
- * that string. But, in practice, one normally uses a Viterbi approximation: the probability of a string is its best derivation probability
- * So, if one want to deal with spurious ambiguity, he/she should do that before calling this class
- * */
-
-
 public class NbestMinRiskReranker {
 	boolean produce_reranked_nbest = false;//TODO: this functionality is not implemented yet; default is to produce 1best without any feature scores; 
 	double scaling_factor = 1.0;

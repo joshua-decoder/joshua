@@ -24,7 +24,6 @@ package joshua.decoder.ff;
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate$
  */
-
 public class StatefulFFTransitionResult extends DefaultFFTransitionResult {
 	private FFDPState dynamicProgrammingState = null;
 	

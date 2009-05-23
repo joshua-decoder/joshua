@@ -20,8 +20,8 @@ package joshua.corpus.vocab;
 import java.util.Collection;
 
 /**
- * Represents a symbol table capable
- * of mapping between strings and symbols.
+ * Represents a symbol table capable of mapping between strings and
+ * symbols.
  * 
  * @author Lane Schwartz
  * @author Zhifei Li
@@ -38,9 +38,9 @@ public interface SymbolTable {
 	 * the word ID is generated (otherwise unknown words can
 	 * become "known" if new words are added to the vocabulary
 	 * before testing).
-	 *<p>
-	 * Negative IDs are reserved for non-terminals. 
-	 * 
+	 * <p>
+	 * Negative IDs are reserved for non-terminals.
+	 *
 	 * Zero is reserved as the UNKNOWN_WORD.
 	 */
 	int UNKNOWN_WORD = 0;
@@ -56,15 +56,15 @@ public interface SymbolTable {
 	/**
 	 * Gets an integer identifier for the word.
 	 * <p>
-	 * If the word is in the vocabulary,
-	 * the integer returned will uniquely identify that word.
+	 * If the word is in the vocabulary, the integer returned
+	 * will uniquely identify that word.
 	 * <p>
-	 * If the word is not in the vocabulary,
-	 * the integer returned by <code>getUnknownWordID</code> may be returned.
+	 * If the word is not in the vocabulary, the integer returned
+	 * by <code>getUnknownWordID</code> may be returned.
 	 * 
-	 * Alternatively, implementations may, if they choose, 
-	 * add unknown words and assign them a symbol ID
-	 * instead of returning <code>getUnknownWordID</code>.
+	 * Alternatively, implementations may, if they choose, add
+	 * unknown words and assign them a symbol ID instead of
+	 * returning <code>getUnknownWordID</code>.
 	 * 
 	 * @see #getUnknownWordID
 	 * @return the unique integer identifier for wordString, 
@@ -74,48 +74,56 @@ public interface SymbolTable {
 	int getID(String wordString);
 	
 	/**
-	 * Gets the integer identifiers 
-	 * for all words in the provided sentence.
+	 * Gets the integer identifiers for all words in the provided
+	 * sentence.
 	 * <p>
-	 * The sentence will be split (on spaces) into words,
-	 * then the integer identifier for each word 
-	 * will be retrieved using <code>getID</code>.
+	 * The sentence will be split (on spaces) into words, then
+	 * the integer identifier for each word will be retrieved
+	 * using <code>getID</code>.
 	 * 
 	 * @see #getID(String)
 	 * @param sentence String of words, separated by spaces.
-	 * @return Array of integer identifiers for each word in the sentence
+	 * @return Array of integer identifiers for each word in
+	 *         the sentence
 	 */
 	int[] getIDs(String sentence);
 	
 	/**
-	 * Gets the String that corresponds to the specified integer identifier.
+	 * Gets the String that corresponds to the specified integer
+	 * identifier.
 	 * <p>
-	 * If the identifier is in the symbol vocabulary,
-	 * the String returned will correspond to that identifier.
+	 * If the identifier is in the symbol vocabulary, the String
+	 * returned will correspond to that identifier.
 	 * 
-	 * Otherwise, the String returned by <code>getUnknownWord<code> will be returned.
-	 * 
-	 * @return the String that corresponds to the specified integer identifier,
-	 *         or the result of <code>getUnknownWord</code> if the identifier 
+	 * Otherwise, the String returned by <code>getUnknownWord<code>
+	 * will be returned.
+	 *
+	 * @return the String that corresponds to the specified
+	 *         integer identifier, or the result of
+	 *         <code>getUnknownWord</code> if the identifier
 	 *         does not correspond to a word in the vocabulary
 	 */
 	String getTerminal(int wordID);
 	
 	/**
-	 * Gets the String that corresponds to the specified integer identifier.
+	 * Gets the String that corresponds to the specified integer
+	 * identifier.
 	 * <p>
 	 * This method can be called for terminals or nonterminals.
-	 * 
+	 *
 	 * @param tokenID Integer identifier
-	 * @return the String that corresponds to the specified integer identifier
+	 * @return the String that corresponds to the specified
+	 *         integer identifier
 	 */
 	String getWord(int tokenID);
 	
 	/**
-	 * Gets the String that corresponds to the sequence of specified integer identifiers.
-	 * 
+	 * Gets the String that corresponds to the sequence of
+	 * specified integer identifiers.
+	 *
 	 * @param ids Sequence of integer identifiers
-	 * @return the String that corresponds to the sequence of specified integer identifiers
+	 * @return the String that corresponds to the sequence of
+	 *         specified integer identifiers
 	 */
 	String getWords(int[] ids);
 	
@@ -127,64 +135,75 @@ public interface SymbolTable {
 	String getTerminals(int[] wordIDs);
 	
 	/**
-	 * Gets a collection over all symbol identifiers for the vocabulary.
-	 * @return a collection over all symbol identifiers for the vocabulary
+	 * Gets a collection over all symbol identifiers for the
+	 * vocabulary.
+	 *
+	 * @return a collection over all symbol identifiers for the
+	 *         vocabulary
 	 */
 	Collection<Integer> getAllIDs();
 	
 	/**
 	 * Gets the list of all words represented by this vocabulary.
-	 * 
-	 * @return the list of all words represented by this vocabulary
+	 *
+	 * @return the list of all words represented by this
+	 *         vocabulary
 	 */
 	Collection<String> getWords();
 	
 	/**
 	 * Gets the number of unique words in the vocabulary.
-	 * 
+	 *
 	 * @return the number of unique words in the vocabulary.
 	 */
 	int size();
 	
 	/**
-	 * Gets the integer symbol representation of the unknown word.
-	 * 
-	 * @return the integer symbol representation of the unknown word.
+	 * Gets the integer symbol representation of the unknown
+	 * word.
+	 *
+	 * @return the integer symbol representation of the unknown
+	 *         word.
 	 */
 	int getUnknownWordID();
 	
 	/**
 	 * Gets the string representation of the unknown word.
-	 * 
+	 *
 	 * @return the string representation of the unknown word.
 	 */
 	String getUnknownWord();
 	
 	/**
-	 * Returns <code>true</code> if the symbol id 
-	 * represents a nonterminal, <code>false</code> otherwise.
+	 * Returns <code>true</code> if the symbol id represents a
+	 * nonterminal, <code>false</code> otherwise.
 	 * 
 	 * @param id
-	 * @return <code>true</code> if the symbol id 
-	 * represents a nonterminal, <code>false</code> otherwise.
+	 * @return <code>true</code> if the symbol id represents a
+	 *         nonterminal, <code>false</code> otherwise.
 	 */
 	boolean isNonterminal(int id);
 	
 	/**
-	 * Gets the lowest-valued allowable terminal symbol id in this table.
-	 * 
-	 * @return the lowest-valued allowable terminal symbol id in this table.
+	 * Gets the lowest-valued allowable terminal symbol id in
+	 * this table.
+	 *
+	 * @return the lowest-valued allowable terminal symbol id
+	 *         in this table.
 	 */
 	int getLowestID();
 
 	
 	/**
-	 * Gets the highest-valued allowable terminal symbol id in this table.
+	 * Gets the highest-valued allowable terminal symbol id in
+	 * this table.
 	 * <p>
-	 * NOTE: This may or may not return the same value as <code>size</code>.
-	 * 
-	 * @return the highest-valued allowable terminal symbol id in this table.
-	 */	
+	 * NOTE: This may or may not return the same value as
+	 * <code>size</code>.
+	 *
+	 * @return the highest-valued allowable terminal symbol id
+	 *         in this table.
+	 */
 	int getHighestID();
 	
 	/**
@@ -213,4 +232,3 @@ public interface SymbolTable {
 	String getWords(int[] wordIDs, boolean ntIndexIncrements);
 	
 }
-

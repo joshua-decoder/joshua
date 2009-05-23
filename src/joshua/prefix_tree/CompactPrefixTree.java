@@ -26,8 +26,8 @@ public class CompactPrefixTree {
 	private int capacity;
 	
 	/** 
-	 * Value by which the capacity should be incremented 
-	 * if additional space is required to store more nodes. 
+	 * Value by which the capacity should be incremented if
+	 * additional space is required to store more nodes.
 	 */
 	private int capacityIncrement;
 	
@@ -40,9 +40,10 @@ public class CompactPrefixTree {
 	
 	/**
 	 * Stores several pieces of information compactly.
-	 * 
-	 * For each node in the tree, the following integers are stored:
-	 * 
+	 *
+	 * For each node in the tree, the following integers are
+	 * stored:
+	 *
 	 * <ul>
 	 *   <li>Incoming arc value</li>
 	 *   <li>Lower bound index</li>
@@ -50,13 +51,12 @@ public class CompactPrefixTree {
 	 *   <li>Node ID of suffix link</li>
 	 * </ul>
 	 * 
-	 * Each node is identified by a unique integer.
-	 * This identifier is not explicitly stored.
-	 * Rather, the identifier is implicitly stored
-	 * as the index into the data structure.
+	 * Each node is identified by a unique integer. This
+	 * identifier is not explicitly stored. Rather, the identifier
+	 * is implicitly stored as the index into the data structure.
 	 * <p>
 	 * In other words, the first values stored in data are for
-	 * the node with identifier 0; the next values are for the 
+	 * the node with identifier 0; the next values are for the
 	 * node with identifier 1, and so on.
 	 */
 	private int[] data;
@@ -92,7 +92,10 @@ public class CompactPrefixTree {
 	/** Corpus array representing the target language corpus. */
 	final Corpus targetCorpus;
 	
-	/** Represents alignments between words in the source corpus and the target corpus. */
+	/**
+	 * Represents alignments between words in the source corpus
+	 * and the target corpus.
+	 */
 	final Alignments alignments;
 	
 	/** Lexical translation probabilities. */
@@ -101,19 +104,34 @@ public class CompactPrefixTree {
 	/** Source side symbol table */
 	final SymbolTable vocab;
 	
-	/** Responsible for performing sampling and creating translation rules. */
+	/**
+	 * Responsible for performing sampling and creating translation
+	 * rules.
+	 */
 	final RuleExtractor ruleExtractor;
 	
-	/** Max span in the source corpus of any extracted hierarchical phrase */
+	/**
+	 * Max span in the source corpus of any extracted hierarchical
+	 * phrase
+	 */
 	final int maxPhraseSpan;   
 	
-	/** Maximum number of terminals plus nonterminals allowed in any extracted hierarchical phrase. */
+	/**
+	 * Maximum number of terminals plus nonterminals allowed
+	 * in any extracted hierarchical phrase.
+	 */
 	final int maxPhraseLength;
 	
-	/** Maximum number of nonterminals allowed in any extracted hierarchical phrase. */
+	/**
+	 * Maximum number of nonterminals allowed in any extracted
+	 * hierarchical phrase.
+	 */
 	final int maxNonterminals;
 
-	/** Minimum span in the source corpus of any nonterminal in an extracted hierarchical phrase. */
+	/**
+	 * Minimum span in the source corpus of any nonterminal in
+	 * an extracted hierarchical phrase.
+	 */
 	final int minNonterminalSpan;
 	
 	public CompactPrefixTree(Suffixes suffixArray, Corpus targetCorpus, Alignments alignments, SymbolTable vocab, LexicalProbabilities lexProbs, RuleExtractor ruleExtractor, int maxPhraseSpan, int maxPhraseLength, int maxNonterminals, int minNonterminalSpan) {
@@ -165,9 +183,10 @@ public class CompactPrefixTree {
 	
 	/**
 	 * Adds a new child node to a parent node.
-	 * 
-	 * @param parentNode Node to which a child will be added.
-	 * @param connectingArc Integer representation of the word that connects the parent to the child.
+	 *
+	 * @param parentNode    Node to which a child will be added.
+	 * @param connectingArc Integer representation of the word
+	 *                      that connects the parent to the child.
 	 */
 	private void addChild(int parentNode, int connectingArc) {
 		

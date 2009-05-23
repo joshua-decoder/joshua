@@ -25,31 +25,35 @@ import joshua.corpus.vocab.SymbolTable;
 
 /**
  * Representation of a sequence of tokens.
- * 
+ *
  * @version $LastChangedDate:2008-09-18 10:31:54 -0500 (Thu, 18 Sep 2008) $
  */
 public interface Phrase extends Comparable<Phrase> {
 
 	/**
-	 * Returns the vocabulary that the words in this phrase are drawn from.
-	 * 
-	 * @return the vocabulary that the words in this phrase are drawn from.
+	 * Returns the vocabulary that the words in this phrase are
+	 * drawn from.
+	 *
+	 * @return the vocabulary that the words in this phrase are
+	 *         drawn from.
 	 */
 	SymbolTable getVocab();
 	
 	
 	/**
-	 * Returns the integer word id of the word at the specified position.
-	 * 
+	 * Returns the integer word id of the word at the specified
+	 * position.
+	 *
 	 * @param position Index of a word in this phrase.
-	 * @return the integer word id of the word at the specified position.
+	 * @return the integer word id of the word at the specified
+	 *         position.
 	 */
 	int getWordID(int position);
 	
 	
 	/**
 	 * Returns the number of words in this phrase.
-	 * 
+	 *
 	 * @return the number of words in this phrase.
 	 */
 	int size();
@@ -113,9 +117,11 @@ public interface Phrase extends Comparable<Phrase> {
 	int compareTo(Phrase other);
 
 	/**
-	 * Returns a human-readable String representation of the phrase.
-	 * 
-	 * @return a human-readable String representation of the phrase.
+	 * Returns a human-readable String representation of the
+	 * phrase.
+	 *
+	 * @return a human-readable String representation of the
+	 *         phrase.
 	 */
 	String toString();
 }

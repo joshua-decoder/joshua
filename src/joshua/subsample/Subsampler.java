@@ -107,7 +107,8 @@ public class Subsampler {
 	 * @param exte   extension of E files
 	 * @param fpath  path to source F files
 	 * @param epath  path to source E files
-	 * @param output basename for output files (will append extensions)
+	 * @param output basename for output files (will append
+	 *               extensions)
 	 */
 	public void subsample(
 		String filelist, float targetFtoERatio,
@@ -135,7 +136,10 @@ public class Subsampler {
 			);
 	}
 	
-	/** The main wrapper for the subsample worker. Closes the PhraseWriter before exiting. */
+	/**
+	 * The main wrapper for the subsample worker. Closes the
+	 * PhraseWriter before exiting.
+	 */
 	protected void subsample(
 		String filelist, float targetFtoERatio,
 		PhraseWriter out, BiCorpusFactory bcFactory
@@ -224,11 +228,12 @@ public class Subsampler {
 	/**
 	 * The worker function for subsampling.
 	 *
-	 * @param set             The set to put selected sentences into
-	 * @param bc              The sentence-aligned corpus to read from
-	 * @param minLength       The minimum F sentence length
-	 * @param maxLength       The maximum F sentence length
-	 * @param targetFtoERatio The desired ratio of F length to E length
+	 * @param set       The set to put selected sentences into
+	 * @param bc        The sentence-aligned corpus to read from
+	 * @param minLength The minimum F sentence length
+	 * @param maxLength The maximum F sentence length
+	 * @param targetFtoERatio The desired ratio of F length to
+	 *                  E length
 	 */
 	private void subsample(
 		Set<PhrasePair> set,

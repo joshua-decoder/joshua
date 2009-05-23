@@ -117,10 +117,12 @@ public class BasicPhrase extends AbstractPhrase {
 	}
 	
 	/**
-	 * Gets the integer identifier for the word at the specified position.
+	 * Gets the integer identifier for the word at the specified
+	 * position.
 	 * 
 	 * @param position Index into the corpus
-	 * @return the integer identifier for the word at the specified position
+	 * @return the integer identifier for the word at the
+	 *         specified position
 	 */
 	public int getWordID(int position) {
 		return words[position];
@@ -137,10 +139,11 @@ public class BasicPhrase extends AbstractPhrase {
 	
 	
 	/**
-	 * This method gets the integer IDs of the phrase as an array of ints.
+	 * This method gets the integer IDs of the phrase as an
+	 * array of ints.
 	 * <p>
-	 * This method does <emph>not</emph> copy the array,
-	 * and so may be called very cheaply.
+	 * This method does <emph>not</emph> copy the array, and
+	 * so may be called very cheaply.
 	 * 
 	 * @return an int[] corresponding to the ID of each word
 	 *         in the phrase
@@ -156,8 +159,8 @@ public class BasicPhrase extends AbstractPhrase {
 	
 	
 	/**
-	 * Gets a space-delimited string representing the words in this
-	 *         Phrase
+	 * Gets a space-delimited string representing the words in
+	 * this Phrase
 	 * 
 	 * @return a space-delimited string of the words in this
 	 *         Phrase
@@ -273,40 +276,4 @@ public class BasicPhrase extends AbstractPhrase {
 			return 0;
 		}
 	}
-	
-	
-//===============================================================
-// Protected 
-//===============================================================
-	
-	//===============================================================
-	// Methods
-	//===============================================================
-
-
-//===============================================================
-// Private 
-//===============================================================
-	
-	//===============================================================
-	// Methods
-	//===============================================================
-	
-	
-//===============================================================
-// Static
-//===============================================================
-
-
-//===============================================================
-// Main 
-//===============================================================
-
-	/**
-	 * Main contains test code
-	 */
-	public static void main(String[] args) {
-
-	}
 }
-

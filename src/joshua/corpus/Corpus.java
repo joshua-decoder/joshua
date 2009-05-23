@@ -64,12 +64,14 @@ public interface Corpus { //extends Externalizable {
 	int getSentencePosition(int sentenceID);
 	
 	/**
-	 * Gets the exclusive end position of a sentence in the corpus.
-	 * 
-	 * @return the position in the corpus one past the last word of
-	 *         the specified sentence.  If the sentenceID is
-	 *         outside of the bounds of the sentences, then it
-	 *         returns one past the last position in the corpus.
+	 * Gets the exclusive end position of a sentence in the
+	 * corpus.
+	 *
+	 * @return the position in the corpus one past the last
+	 *         word of the specified sentence. If the sentenceID
+	 *         is outside of the bounds of the sentences, then
+	 *         it returns one past the last position in the
+	 *         corpus.
 	 */
 	int getSentenceEndPosition(int sentenceID);
 	

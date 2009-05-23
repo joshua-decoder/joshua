@@ -23,7 +23,9 @@ import java.util.HashMap;
 
 
 /**
- * to use the functions here, one need to extend the class  to provide a way to calculate the deduction cost based on feature set
+ * to use the functions here, one need to extend the class  to
+ * provide a way to calculate the deduction cost based on feature
+ * set
  *
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate$
@@ -34,10 +36,11 @@ import java.util.HashMap;
 //Note: this class requires the correctness of transition prob of each hyperedge, which itself may require the correctness of best_cost at each item
 
 public abstract class DefaultInsideOutside {
-	/**Two operations: add and multi
+	/**
+	 * Two operations: add and multi
 	 * add: different hyperedges lead to a specific item
 	 * multi: prob of a derivation is a multi of all constituents
-	 **/
+	 */
 	int ADD_MODE=0; //0: sum; 1: viterbi-min, 2: viterbi-max
 	int LOG_SEMIRING=1;
 	int SEMIRING=LOG_SEMIRING; //default is in log; or real, or logic
@@ -49,9 +52,14 @@ public abstract class DefaultInsideOutside {
 	private HashMap<HGNode,Double> tbl_outside_prob =  new HashMap<HGNode,Double>();//remember outside prob of each item
 	double normalization_constant = ONE_IN_SEMIRING;
 	
-	/** for each item, remember how many deductions pointering to me, this is needed for outside estimation
-	 * during outside estimation, an item will recursive call its deductions to do outside-estimation only after it itself is done with outside estimation, this is necessary because
-	 * the outside estimation of the items under its deductions require the item's outside value
+	/**
+	 * for each item, remember how many deductions pointering
+	 * to me, this is needed for outside estimation during
+	 * outside estimation, an item will recursive call its
+	 * deductions to do outside-estimation only after it itself
+	 * is done with outside estimation, this is necessary
+	 * because the outside estimation of the items under its
+	 * deductions require the item's outside value
 	 */
 	private HashMap<HGNode,Integer> tbl_num_parent_deductions = new HashMap<HGNode,Integer>();
 	
