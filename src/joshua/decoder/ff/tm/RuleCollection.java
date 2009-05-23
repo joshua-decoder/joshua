@@ -42,7 +42,7 @@ public interface RuleCollection {
 	 * Sorts the grammar rules in this collection
 	 * using the provided feature functions.
 	 * 
-	 * @param models Feature function models to use during sorting.
+	 * @param l_models Feature function models to use during sorting.
 	 */
 	void sortRules(ArrayList<FeatureFunction> l_models);
 	

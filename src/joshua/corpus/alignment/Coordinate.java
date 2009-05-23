@@ -58,9 +58,7 @@ public class Coordinate implements Comparable<Coordinate> {
 	 * Constructs a coordinate from a String in the format "X.Y", or in the
 	 * format "X-Y"
 	 * 
-	 * @param coordinate
-	 *            the String
-	 * @return a new coordinate object
+	 * @param coordinate String in the format "X.Y", or in the format "X-Y"
 	 */
 	public Coordinate(String coordinate) {
 		String points[] = coordinate.split("\\.|-");

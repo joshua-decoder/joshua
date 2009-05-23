@@ -25,15 +25,15 @@ package joshua.lattice;
  * @since 2008-07-08
  * @version $LastChangedDate$
  *
- * @param <Label> Type of label associated with an arc.
+ * @param Label Type of label associated with an arc.
  */
 public class Arc<Label> {
 
 	/**
 	 * Weight of this arc. Package-private scope so that Node
 	 * and Lattice can quickly access this variable.
-         * @todo should be a vector of costs
 	 */
+	// TODO should be a vector of costs
 	final double cost;
 	
 	/**
@@ -73,9 +73,8 @@ public class Arc<Label> {
 	 * Gets the cost of this arc.
 	 * 
 	 * @return The cost of this arc.
-         * @todo should support indexing for multiple costs associated
-         * with each arc
 	 */
+	// TODO should support indexing for multiple costs associated with each arc
 	public double getCost() {
 		return cost;
 	}

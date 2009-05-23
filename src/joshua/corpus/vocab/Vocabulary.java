@@ -221,7 +221,7 @@ public class Vocabulary extends AbstractExternalizableSymbolTable
 	 * then the integer identifier for each word 
 	 * will be retrieved using <code>getID</code>.
 	 * 
-	 * @see getID(String)
+	 * @see #getID(String)
 	 * @param sentence String of words, separated by spaces.
 	 * @return Array of integer identifiers for each word in the sentence
 	 */

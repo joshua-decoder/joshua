@@ -57,7 +57,7 @@ import joshua.util.io.BinaryIn;
  * 
  * @author Lane Schwartz
  * @version $LastChangedDate:2008-11-13 13:13:31 -0600 (Thu, 13 Nov 2008) $
- * @see Lopez (2008)
+ * @see "Lopez (2008)"
  */
 public class ExtractRules {
 

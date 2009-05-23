@@ -59,7 +59,7 @@ public interface Suffixes {
 	/**
 	 * Gets the corpus for this object.
 	 * 
-	 * @return
+	 * @return the corpus for this object
 	 */
 	Corpus getCorpus();
 	
@@ -108,9 +108,15 @@ public interface Suffixes {
 	int getSentenceIndex(int corpusIndex);
 	
 	/**
+	 * Gets the position in the corpus of the first word of
+	 *         the specified sentence.  If the sentenceID is
+	 *         outside of the bounds of the sentences, then it
+	 *         returns the last position in the corpus + 1.
 	 * 
-	 * @param sentenceIndex
-	 * @return
+	 * @return the position in the corpus of the first word of
+	 *         the specified sentence.  If the sentenceID is
+	 *         outside of the bounds of the sentences, then it
+	 *         returns the last position in the corpus + 1.
 	 */
 	int getSentencePosition(int sentenceIndex);
 	

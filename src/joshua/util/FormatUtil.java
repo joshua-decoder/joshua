@@ -35,8 +35,9 @@ public class FormatUtil {
 	 * for the Java Double class.
 	 * 
 	 * @param string
-	 * @see http://java.sun.com/j2se/1.5.0/docs/api/java/lang/Double.html
-	 * @return
+	 * @see java.lang.Double
+	 * @return <code>true</code> if the string represents a valid number,
+	 *         <code>false</code> otherwise
 	 */
 	public static boolean isNumber(String string) {
 		final String Digits     = "(\\p{Digit}+)";

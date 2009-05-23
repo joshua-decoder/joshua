@@ -121,7 +121,7 @@ public class PrefixTree {
 	 *  
 	 * @param root Root node, which this map will always return as a value. 
 	 * @return Special map that maps any integer key to the root node.
-	 * @see Lopez (2008), footnote 9 on p73
+	 * @see "Lopez (2008), footnote 9 on p73"
 	 */
 	static Map<Integer,Node> botMap(final Node root) {
 		return new Map<Integer,Node>() {
@@ -170,15 +170,24 @@ public class PrefixTree {
 	 * from Lopez (2008) PhD Thesis, Algorithm 2, p 76. 
 	 * 
 	 * @param suffixArray
-	 * @param sentence
+	 * @param targetCorpus
+	 * @param alignments
+	 * @param vocab
+	 * @param lexProbs
+	 * @param ruleExtractor
 	 * @param maxPhraseSpan
 	 * @param maxPhraseLength
 	 * @param maxNonterminals
 	 * @param minNonterminalSpan Minimum number of source language tokens 
 	 *                           a nonterminal is allowed to encompass.
 	 */
-	public PrefixTree(Suffixes suffixArray, Corpus targetCorpus, Alignments alignments, SymbolTable vocab, LexicalProbabilities lexProbs, RuleExtractor ruleExtractor, int maxPhraseSpan, int maxPhraseLength, int maxNonterminals, int minNonterminalSpan) {
+	public PrefixTree(Suffixes suffixArray, 
+			Corpus targetCorpus, Alignments alignments, SymbolTable vocab, 
+			LexicalProbabilities lexProbs, RuleExtractor ruleExtractor, 
+			int maxPhraseSpan, int maxPhraseLength, 
+			int maxNonterminals, int minNonterminalSpan) {
 
+		
 		if (logger.isLoggable(Level.FINE)) logger.fine("\n\n\nConstructing new PrefixTree\n\n");
 
 		this.suffixArray = suffixArray;
@@ -449,11 +458,13 @@ public class PrefixTree {
 	/**
 	 * Implements the root QUERY algorithm (Algorithm 4) of Adam Lopez's (2008) doctoral thesis.
 	 * 
-	 * @param pattern
-	 * @param node
-	 * @param prefixNode
-	 * @param suffixNode
-	 * @return
+	 * @param pattern Pattern to search for
+	 * @param node Node in the prefix tree
+	 * @param prefixNode Prefix node
+	 * @param suffixNode Suffix node
+	 * @return List of matched hierarchical phrases for the specified pattern.
+	 * 
+	 * @see "Lopez (2008)"
 	 */
 	public MatchedHierarchicalPhrases query(Pattern pattern, Node node, Node prefixNode, Node suffixNode) {
 

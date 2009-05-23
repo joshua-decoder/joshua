@@ -63,7 +63,7 @@ public interface Alignments {
 	 * Gets the indices of all source words aligned with 
 	 * a particular location in the target corpus.
 	 * 
-	 * @param index Index into the target corpus
+	 * @param targetIndex Index into the target corpus
 	 * @return The indices of all source words aligned with 
 	 *         the given location in the target corpus,
 	 *         or <code>null</code> unaligned.
@@ -74,7 +74,7 @@ public interface Alignments {
 	 * Gets the indices of all target words aligned with 
 	 * a particular location in the source corpus.
 	 * 
-	 * @param index Index into the source corpus
+	 * @param sourceIndex Index into the source corpus
 	 * @return The indices of all target words aligned with 
 	 *         the given location in the source corpus,
 	 *         or <code>null</code> unaligned.
@@ -99,7 +99,9 @@ public interface Alignments {
 	 * 
 	 * @param targetIndex
 	 * @param sourcePhrase
-	 * @return
+	 * @return <code>true</code> if any terminal in the source phrase 
+	 *         aligns with the provided index into the target corpus,
+	 *         <code>false</code> otherwise
 	 */
 	boolean hasAlignedTerminal(int targetIndex, MatchedHierarchicalPhrases sourcePhrase, int sourcePhraseIndex);
 

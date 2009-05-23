@@ -208,7 +208,7 @@ public class Node extends AbstractGrammar implements Comparable<Node>, Grammar, 
 	 * of source language hierarchical phrases.
 	 * 
 	 * @param hierarchicalPhrases Source language hierarchical phrases.
-	 * @param sourceTokens Source language pattern that should correspond to the hierarchical phrases.
+	 * @param sourcePattern Source language pattern that should correspond to the hierarchical phrases.
 	 */
 	public void storeResults(MatchedHierarchicalPhrases hierarchicalPhrases, Pattern sourcePattern) {
 		

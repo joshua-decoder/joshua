@@ -75,11 +75,11 @@ public interface NGramLanguageModel {
 	 * The LanguageModelFF implementation is to call this
 	 * unigram probability for each such token, and then call
 	 * ngramLogProbability for the remaining actual N-gram.
-	 *
-	 * @todo Is this really the best interface?
 	 */
+	//TODO Is this really the best interface?
 	double logProbabilityOfBackoffState(
 		ArrayList<Integer> ngram, int order, int qtyAdditionalBackoffWeight);
+	
 	double logProbabilityOfBackoffState(
 		int[] ngram, int order, int qtyAdditionalBackoffWeight);
 	

@@ -33,7 +33,7 @@ import joshua.corpus.alignment.AlignmentGrid;
  * <p>
  * Instances of this class are created from 
  * binary alignment files, which are typically created using
- * {@link joshua.corpus.alignment.AlignmentGrids#writeExternal(java.io.ObjectOut)}.
+ * the {@link joshua.corpus.alignment.AlignmentGrids#writeExternal} method.
  * 
  * @author Lane Schwartz
  */
@@ -77,8 +77,8 @@ public class MemoryMappedAlignmentGrids extends AbstractAlignmentGrids {
 	 * The number of shorts in this buffer should be equal to
 	 * the number of alignment points in the aligned parallel corpus.
 	 * 
-	 * @see {@link joshua.corpus.alignment.AlignmentGrid#getKey(int,int)}
-	 * @see {@link joshua.corpus.alignment.AlignmentGrid#getLocation(short)}
+	 * @see joshua.corpus.alignment.AlignmentGrid#getKey
+	 * @see joshua.corpus.alignment.AlignmentGrid#getLocation
 	 */
 	private final ShortBuffer alignmentPoints;
 	
@@ -90,8 +90,8 @@ public class MemoryMappedAlignmentGrids extends AbstractAlignmentGrids {
 	 * The number of shorts in this buffer should be equal to
 	 * the number of alignment points in the aligned parallel corpus.
 	 * 
-	 * @see {@link joshua.corpus.alignment.AlignmentGrid#getKey(int,int)}
-	 * @see {@link joshua.corpus.alignment.AlignmentGrid#getLocation(short)}
+	 * @see joshua.corpus.alignment.AlignmentGrid#getKey
+	 * @see oshua.corpus.alignment.AlignmentGrid#getLocation
 	 */
 	private final ShortBuffer reverseAlignmentPoints;
 	
@@ -106,7 +106,7 @@ public class MemoryMappedAlignmentGrids extends AbstractAlignmentGrids {
 	 * @param sourceCorpus Source language corpus
 	 * @param targetCorpus Target language corpus
 	 * @throws IOException Any I/O exception that was encountered
-	 * @see {@link joshua.corpus.alignment.AlignmentGrids#writeExternal(java.io.ObjectOut)}
+	 * @see joshua.corpus.alignment.AlignmentGrids#writeExternal
 	 */
 	public MemoryMappedAlignmentGrids(String binaryAlignmentsFilename, Corpus sourceCorpus, Corpus targetCorpus) throws IOException {
 		this(binaryAlignmentsFilename, sourceCorpus, targetCorpus, true);
@@ -123,7 +123,7 @@ public class MemoryMappedAlignmentGrids extends AbstractAlignmentGrids {
 	 * @param requireTightSpans Indicates whether 
 	 *                          tight alignment spans are required
 	 * @throws IOException Any I/O exception that was encountered
-	 * @see {@link joshua.corpus.alignment.AlignmentGrids#writeExternal(java.io.ObjectOut)}
+	 * @see joshua.corpus.alignment.AlignmentGrids#writeExternal
 	 */
 	public MemoryMappedAlignmentGrids(String binaryAlignmentsFilename, Corpus sourceCorpus, Corpus targetCorpus, boolean requireTightSpans) throws IOException {
 		super(sourceCorpus, targetCorpus, requireTightSpans);

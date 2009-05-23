@@ -30,8 +30,6 @@ import joshua.decoder.ff.FeatureFunction;
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate$
  */
-
-
 public class MonolingualRule implements Rule {
 	
 //===============================================================
@@ -83,20 +81,22 @@ public class MonolingualRule implements Rule {
 	 * owner and rule id for this rule are undefined.
 	 * 
 	 * @param lhs Left-hand side of the rule.
-	 * @param source_rhs Source language right-hand side of the rule.
-	 * @param target_rhs Target language right-hand side of the rule.
-	 * @param feature_scores Feature value scores for the rule.
+	 * @param sourceRhs Source language right-hand side of the rule.
+	 * @param featureScores Feature value scores for the rule.
 	 * @param arity Number of nonterminals in the source language
 	 *              right-hand side.
+	 * @param owner
+	 * @param latticeCost
+	 * @param ruleID
 	 */
-	public MonolingualRule(int lhs_, int[] source_rhs, float[] feature_scores, int arity_, int owner_, float lattice_cost_, int rule_id_) {
-		this.lhs          = lhs_;
-		this.p_french     = source_rhs;
-		this.feat_scores  = feature_scores;
-		this.arity        = arity_;
-		this.lattice_cost = lattice_cost_;
-		this.rule_id      = rule_id_;
-		this.owner        = owner_;
+	public MonolingualRule(int lhs, int[] sourceRhs, float[] featureScores, int arity, int owner, float latticeCost, int ruleID) {
+		this.lhs          = lhs;
+		this.p_french     = sourceRhs;
+		this.feat_scores  = featureScores;
+		this.arity        = arity;
+		this.lattice_cost = latticeCost;
+		this.rule_id      = ruleID;
+		this.owner        = owner;
 	}
 
 	

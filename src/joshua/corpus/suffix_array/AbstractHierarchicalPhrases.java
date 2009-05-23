@@ -33,7 +33,6 @@ import joshua.corpus.MatchedHierarchicalPhrases;
 public abstract class AbstractHierarchicalPhrases implements
 		MatchedHierarchicalPhrases {
 
-	
 	/** Logger for this class. */
 	private static final Logger logger = 
 		Logger.getLogger(AbstractHierarchicalPhrases.class.getName());
@@ -48,8 +47,12 @@ public abstract class AbstractHierarchicalPhrases implements
 	 * <li>Returns  1 if m_a_alpha and m_alpha_b cannot be paired, and m_a_alpha follows m_alpha_b in the corpus.</li>
 	 * </ul>
 	 * 
-	 * @param m_a_alpha Prefix phrase
-	 * @param m_alpha_b Suffix phrase
+     * @param m_a_alpha List of prefix hierarchical phrases
+	 * @param i Index into m_a_alpha
+	 * @param m_alpha_b List of suffix hierarchical phrases
+	 * @param j Index into m_alpha_b
+	 * @param minNonterminalSpan Minimum allowed nonterminal span
+	 * @param maxPhraseSpan Maximum allowed phrase span
 	 * @return
 	 * <ul>
 	 * <li>0 if m_a_alpha and m_alpha_b can be paired (=̈).</li>
@@ -57,7 +60,10 @@ public abstract class AbstractHierarchicalPhrases implements
 	 * <li> 1 if m_a_alpha and m_alpha_b cannot be paired, and m_a_alpha follows m_alpha_b in the corpus. (>̈)</li>
 	 * </ul>
 	 */	
-	protected static int compare(MatchedHierarchicalPhrases m_a_alpha, final int i, MatchedHierarchicalPhrases m_alpha_b, final int j, int minNonterminalSpan, int maxPhraseSpan) {
+	protected static int compare(
+			MatchedHierarchicalPhrases m_a_alpha, final int i, 
+			MatchedHierarchicalPhrases m_alpha_b, final int j, 
+			int minNonterminalSpan, int maxPhraseSpan) {
 	
 		int m_a_alphaTerminalSequenceLengths = m_a_alpha.getNumberOfTerminalSequences();//.terminalSequenceLengths.length;
 		int m_alpha_bTerminalSequenceLengths = m_alpha_b.getNumberOfTerminalSequences();//.terminalSequenceLengths.length;
@@ -193,14 +199,18 @@ public abstract class AbstractHierarchicalPhrases implements
 	 * with the <code>j<code>th phrase of <code>M_alpha_b</code>
 	 * and appends this new data to the <code>data</code> list.
 	 * 
-	 * @param pattern Pattern for the new hierarchical phrase
 	 * @param M_a_alpha List of prefix hierarchical phrases
 	 * @param i Index into M_a_alpha
 	 * @param M_alpha_b List of suffix hierarchical phrases
 	 * @param j Index into M_alpha_b
 	 * @param list List where new data will be added
 	 */
-	protected static void partiallyConstruct(MatchedHierarchicalPhrases M_a_alpha, int i, MatchedHierarchicalPhrases M_alpha_b, int j, List<Integer> list) {
+	protected static void partiallyConstruct(
+			MatchedHierarchicalPhrases M_a_alpha, int i, 
+			MatchedHierarchicalPhrases M_alpha_b, int j, 
+			List<Integer> list) {
+		
+		
 		boolean prefixEndsWithNonterminal = M_a_alpha.endsWithNonterminal();
 		
 		// Get all start positions for the prefix phrase, and append them to the running list
@@ -223,15 +233,23 @@ public abstract class AbstractHierarchicalPhrases implements
 	}
 
 	/**
-	 * Implements the QUERY_INTERSECT algorithm from Adam Lopez's thesis (Lopez 2008).
+	 * Implements the <tt>QUERY_INTERSECT</tt> algorithm from Adam Lopez's thesis (Lopez 2008).
 	 * This implementation follows a corrected algorithm (Lopez, personal communication).
 	 * 
-	 * @param pattern
-	 * @param M_a_alpha
-	 * @param M_alpha_b
-	 * @return
+	 * @param pattern Pattern which will be associated with the new list
+	 *                of matched hierarchical phrases
+	 * @param M_a_alpha Prefix list of matched hierarchical phrases
+	 * @param M_alpha_b Suffix list of matched hierarchical phrases
+	 * @param minNonterminalSpan Minimum allowed span for a nonterminal
+	 * @param maxPhraseSpan Maximum allowed phrase span
+	 * @return The list of matched hierarchical phrases resulting from
+	 *         the intersection of the two provided lists 
+	 *         of matched hierarchical phrases
 	 */
-	public static MatchedHierarchicalPhrases queryIntersect(Pattern pattern, MatchedHierarchicalPhrases M_a_alpha, MatchedHierarchicalPhrases M_alpha_b, int minNonterminalSpan, int maxPhraseSpan) {
+	public static MatchedHierarchicalPhrases queryIntersect(Pattern pattern, 
+			MatchedHierarchicalPhrases M_a_alpha, 
+			MatchedHierarchicalPhrases M_alpha_b, 
+			int minNonterminalSpan, int maxPhraseSpan) {
 
 		if (logger.isLoggable(Level.FINER)) {
 			logger.finer("queryIntersect("+pattern+" M_a_alpha.size=="+M_a_alpha.size() + ", M_alpha_b.size=="+M_alpha_b.size());			

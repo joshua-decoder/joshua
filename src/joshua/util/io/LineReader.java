@@ -159,8 +159,9 @@ public class LineReader implements Reader<String> {
 	 * Having a finalizer means the JVM can't do "fast allocation"
 	 * of LineReader objects (or subclasses). This isn't too
 	 * important due to disk latency, but may be worth noting.
-	 * See: {@link http://java2go.blogspot.com/2007/09/javaone-2007-performance-tips-2-finish.html},
-	 * {@link http://www.javaworld.com/javaworld/jw-06-1998/jw-06-techniques.html?page=1}
+	 * 
+	 * @see <a href="http://java2go.blogspot.com/2007/09/javaone-2007-performance-tips-2-finish.html">Performance Tips</a>
+	 * @see <a href="http://www.javaworld.com/javaworld/jw-06-1998/jw-06-techniques.html?page=1">Techniques</a>
 	 */
 	protected void finalize() throws Throwable {
 		try {

@@ -36,7 +36,7 @@ import java.util.regex.Pattern;
  * @since 2008-07-08
  * @version $LastChangedDate$
  *
- * @param <Label> Type of label associated with an arc.
+ * @param Label Type of label associated with an arc.
  */
 public class Lattice<Value> implements Iterable<Node<Value>> {
 

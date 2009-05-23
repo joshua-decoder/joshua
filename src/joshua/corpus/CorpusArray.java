@@ -99,7 +99,7 @@ public class CorpusArray extends AbstractCorpus<ExternalizableSymbolTable> imple
 	 * Protected constructor takes in the already prepared
 	 * member variables.
 	 *
-	 * @see SuffixArrayFactory#createCorpusArray(String,SymbolTable,int,int)
+	 * @see SuffixArrayFactory#createCorpusArray
 	 */
 	public CorpusArray (int[] corpus, int[] sentences, ExternalizableSymbolTable vocab) {
 		super(vocab);

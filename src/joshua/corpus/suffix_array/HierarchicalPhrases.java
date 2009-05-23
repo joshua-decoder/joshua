@@ -18,7 +18,6 @@
 package joshua.corpus.suffix_array;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Collections;
 import java.util.List;
@@ -39,7 +38,7 @@ import joshua.prefix_tree.PrefixTree;
  * @since Jan 9 2009
  * @version $LastChangedDate$
  */
-public class HierarchicalPhrases extends AbstractHierarchicalPhrases implements MatchedHierarchicalPhrases { //, Externalizable {
+public class HierarchicalPhrases extends AbstractHierarchicalPhrases implements MatchedHierarchicalPhrases {
 
 	/** 
 	 * Represents a sequence of terminal and nonterminals as
@@ -88,38 +87,65 @@ public class HierarchicalPhrases extends AbstractHierarchicalPhrases implements 
 	 */
 	private final int[] sentenceNumber;
 	
-	// der aoeu X mann snth nth ouad
-	// 7 8 13 16 78 79 81 84 
-	
 	/** Logger for this class. */
 	@SuppressWarnings("unused")
-	private static final Logger logger = Logger.getLogger(HierarchicalPhrases.class.getName());
+	private static final Logger logger = 
+		Logger.getLogger(HierarchicalPhrases.class.getName());
 	
 	
 	/**
 	 * Constructs a list of hierarchical phrases.
 	 * 
-	 * @param pattern 
-	 * @param startPositions Represents all locations in the corpus
-	 * that match the pattern. Specifically, for each location in the corpus
-	 * that matches the pattern, the corpus index of the
-	 * of the first word in each terminal sequence is stored.
-	 * @param prefixTree Prefix tree with which this object is associated
+	 * @param pattern Pattern common to the list of phrases
+	 * @param startPositions  Represents all locations in the corpus
+	 *                        that match the pattern. 
+	 *                        Specifically, for each location in the corpus
+	 *                        that matches the pattern, the corpus index of the
+	 *                        of the first word in each terminal sequence is stored.
+	 * @param sentenceNumbers Represents the sentence number 
+	 *                        of each matched phrase location
 	 */
-//	public HierarchicalPhrases(Pattern pattern, int[] startPositions, Corpus corpus) {
 	public HierarchicalPhrases(Pattern pattern, int[] startPositions, int[] sentenceNumbers) {
 		this.pattern = pattern;
-		this.size = sentenceNumbers.length;//startPositions.length;
+		this.size = sentenceNumbers.length;
 		this.terminalSequenceStartIndices = startPositions;
 		this.sentenceNumber = sentenceNumbers;
-//		this.sentenceNumber = new int[size];
-//		for (int i=0; i<size; i++) {
-//			this.sentenceNumber[i] = corpus.getSentenceIndex(startPositions[i]);
-//		}
 		this.terminalSequenceLengths = pattern.getTerminalSequenceLengths();
-		//
-//		this.startsWithNonterminal = pattern.startsWithNonterminal();
-//		this.endsWithNonterminal = pattern.endsWithNonterminal();
+	}
+	
+	/**
+	 * Constructs a list of hierarchical phrases.
+	 * 
+	 * @param pattern Pattern common to the list of phrases
+	 * @param terminalSequenceStartIndices  Represents all locations in the corpus
+	 *                        that match the pattern. 
+	 *                        Specifically, for each location in the corpus
+	 *                        that matches the pattern, the corpus index of the
+	 *                        of the first word in each terminal sequence is stored.
+	 * @param sentenceNumbers Represents the sentence number 
+	 *                        of each matched phrase location
+	 */
+	protected HierarchicalPhrases(Pattern pattern, 
+			List<Integer> terminalSequenceStartIndices, 
+			List<Integer> sentenceNumbers) {
+		
+		this.pattern = pattern;
+		this.terminalSequenceLengths = pattern.getTerminalSequenceLengths();
+		
+		int dataSize = terminalSequenceStartIndices.size();
+		int numberOfPhrases = (terminalSequenceLengths.length>0) ? terminalSequenceStartIndices.size() / terminalSequenceLengths.length : 0;
+		
+		this.terminalSequenceStartIndices = new int[dataSize];
+		for (int i=0; i<dataSize; i++) {
+			this.terminalSequenceStartIndices[i] = terminalSequenceStartIndices.get(i);
+		}
+
+		this.sentenceNumber = new int[numberOfPhrases];
+		for (int i=0; i<numberOfPhrases; i++) {
+			this.sentenceNumber[i] = sentenceNumbers.get(i);
+		}
+		
+		this.size = numberOfPhrases;	
 	}
 	
 	/**
@@ -137,7 +163,22 @@ public class HierarchicalPhrases extends AbstractHierarchicalPhrases implements 
 		this.terminalSequenceLengths = phrases.terminalSequenceLengths;
 		this.sentenceNumber = phrases.sentenceNumber;
 	}
+
+	/**
+	 * Gets an empty list of hierarchical phrases.
+	 * 
+	 * @param vocab Symbol table to associate with the list
+	 * @return an empty list of hierarchical phrases
+	 */
+	public static HierarchicalPhrases emptyList(SymbolTable vocab) {		
+		return new HierarchicalPhrases(
+				new Pattern(vocab), 
+				Collections.<Integer>emptyList(), 
+				Collections.<Integer>emptyList()
+			);
+	}
 	
+	/* See Javadoc for MatchedHierarchicalPhrases interface. */
 	public MatchedHierarchicalPhrases copyWithInitialX() {
 		int[] xwords = new int[pattern.words.length+1];
 		xwords[0] = PrefixTree.X;
@@ -148,38 +189,17 @@ public class HierarchicalPhrases extends AbstractHierarchicalPhrases implements 
 		return new HierarchicalPhrases(xpattern, this);
 	}
 	
+	/* See Javadoc for MatchedHierarchicalPhrases interface. */
 	public MatchedHierarchicalPhrases copyWithFinalX() {
 		return new HierarchicalPhrases(new Pattern(pattern.vocab, pattern.words, PrefixTree.X), this);
 	}
-		
-	protected HierarchicalPhrases(Pattern pattern, List<Integer> data, List<Integer> sentenceNumbers) {
-		this.pattern = pattern;
-		this.terminalSequenceLengths = pattern.getTerminalSequenceLengths();
-		
-		int dataSize = data.size();
-		int numberOfPhrases = (terminalSequenceLengths.length>0) ? data.size() / terminalSequenceLengths.length : 0;
-		
-		
-		this.terminalSequenceStartIndices = new int[dataSize];
-		for (int i=0; i<dataSize; i++) {
-			this.terminalSequenceStartIndices[i] = data.get(i);
-		}
-
-		this.sentenceNumber = new int[numberOfPhrases];
-		for (int i=0; i<numberOfPhrases; i++) {
-			this.sentenceNumber[i] = sentenceNumbers.get(i);
-		}
-		
-		this.size = numberOfPhrases;
-		
-	}
-
 	
+	/* See Javadoc for MatchedHierarchicalPhrases interface. */
 	public int getNumberOfTerminalSequences() {
 		return terminalSequenceLengths.length;
 	}
 	
-	
+	/* See Javadoc for MatchedHierarchicalPhrases interface. */
 	public int getTerminalSequenceStartIndex(int phraseIndex, int sequenceIndex) {
 		int n = terminalSequenceLengths.length;
 		int nthPhraseIndex = phraseIndex*n;
@@ -188,6 +208,7 @@ public class HierarchicalPhrases extends AbstractHierarchicalPhrases implements 
 		return start;
 	}
 	
+	/* See Javadoc for MatchedHierarchicalPhrases interface. */
 	public int getTerminalSequenceEndIndex(int phraseIndex, int sequenceIndex) {
 		int n = terminalSequenceLengths.length;
 		int nthPhraseIndex = phraseIndex*n;
@@ -198,6 +219,7 @@ public class HierarchicalPhrases extends AbstractHierarchicalPhrases implements 
 		return end;
 	}
 	
+	/* See Javadoc for MatchedHierarchicalPhrases interface. */
 	public int getFirstTerminalIndex(int phraseIndex) {
 		int n = terminalSequenceLengths.length;
 		int nthPhraseIndex = phraseIndex*n;
@@ -207,6 +229,7 @@ public class HierarchicalPhrases extends AbstractHierarchicalPhrases implements 
 		return start;
 	}
 	
+	/* See Javadoc for MatchedHierarchicalPhrases interface. */
 	public int getLastTerminalIndex(int phraseIndex) {
 		int n = terminalSequenceLengths.length;
 		int nthPhraseIndex = phraseIndex*n;
@@ -219,6 +242,7 @@ public class HierarchicalPhrases extends AbstractHierarchicalPhrases implements 
 		
 	}
 	
+	/* See Javadoc for MatchedHierarchicalPhrases interface. */
 	public boolean containsTerminalAt(int phraseIndex,
 			int alignedPointIndex) {
 		
@@ -237,6 +261,7 @@ public class HierarchicalPhrases extends AbstractHierarchicalPhrases implements 
 
 	}
 	
+	/* See Javadoc for MatchedHierarchicalPhrases interface. */
 	public Span getSpan(int phraseIndex) {
 		
 		int n = terminalSequenceLengths.length;
@@ -253,25 +278,14 @@ public class HierarchicalPhrases extends AbstractHierarchicalPhrases implements 
 	}
 	
 	
-	/**
-	 * Gets the position in the corpus of the first terminal in the i'th sequence of terminals in the j'th phrase known to this object.
-	 * 
-	 * @param phraseIndex
-	 * @param positionNumber
-	 * @return
-	 */
+	/* See Javadoc for MatchedHierarchicalPhrases interface. */
 	public int getStartPosition(int phraseIndex, int positionNumber) {
 
 		return terminalSequenceStartIndices[phraseIndex*(terminalSequenceLengths.length)+positionNumber];	
 		
 	}
 	
-	/**
-	 * 
-	 * @param phraseIndex
-	 * @param positionNumber
-	 * @return
-	 */
+	/* See Javadoc for MatchedHierarchicalPhrases interface. */
 	public int getEndPosition(int phraseIndex, int positionNumber) {
 		
 		return terminalSequenceStartIndices[phraseIndex*(terminalSequenceLengths.length)+positionNumber] + terminalSequenceLengths[positionNumber];
@@ -279,60 +293,45 @@ public class HierarchicalPhrases extends AbstractHierarchicalPhrases implements 
 	}
 
 	
-	/**
-	 * Gets the number of locations in the corpus 
-	 * that match the pattern.
-	 * 
-	 * @return The number of locations in the corpus 
-	 * that match the pattern.
-	 */
+	/* See Javadoc for MatchedHierarchicalPhrases interface. */
 	public int size() {
 		return size;
 	}
 	
-	
+	/* See Javadoc for MatchedHierarchicalPhrases interface. */
 	public boolean isEmpty() {
 		return ! (size > 0);
 	}
 	
-	public static HierarchicalPhrases emptyList(SymbolTable vocab) {		
-		return new HierarchicalPhrases(
-				new Pattern(vocab), 
-				Collections.<Integer>emptyList(), 
-				Collections.<Integer>emptyList()
-			);
-	}
-
+	/* See Javadoc for MatchedHierarchicalPhrases interface. */
 	public int getSentenceNumber(int phraseIndex) {
 		return this.sentenceNumber[phraseIndex];
 	}
 
 
-	/** 
-	 * Gets the number of terminals in the specified
-	 * terminal sequence of this object's pattern.
-	 * 
-	 * @param i Index of the terminal sequence to query
-	 * @return The number of terminals in the ith terminal sequence
-	 */
+	/* See Javadoc for MatchedHierarchicalPhrases interface. */
 	public int getTerminalSequenceLength(int i) {
 		return this.terminalSequenceLengths[i];
 	}
 
 	//////
 	
+	/* See Javadoc for PatternFormat interface. */
 	public boolean endsWithNonterminal() {
 		return pattern.endsWithNonterminal();
 	}
 	
+	/* See Javadoc for PatternFormat interface. */
 	public boolean startsWithNonterminal() {
 		return pattern.startsWithNonterminal();
 	}
 	
+	/* See Javadoc for PatternFormat interface. */
 	public boolean endsWithTwoTerminals() {
 		return pattern.endsWithTwoTerminals();
 	}
 	
+	/* See Javadoc for PatternFormat interface. */
 	public boolean secondTokenIsTerminal() {
 		return pattern.secondTokenIsTerminal();
 	}
@@ -347,16 +346,6 @@ public class HierarchicalPhrases extends AbstractHierarchicalPhrases implements 
 		return pattern.arity;
 	}
 	
-
-	
-	///
-	
-	public void readExternal(ObjectInput in) throws IOException,
-			ClassNotFoundException {
-
-		throw new RuntimeException("Not implemented");
-		
-	}
 
 	public void writeExternal(ObjectOutput out) throws IOException {
 		//TODO Finish and test this method

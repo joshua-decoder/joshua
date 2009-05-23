@@ -87,7 +87,7 @@ public interface ConstraintRule {
 	 * Return the grammar feature values for the RULE. The
 	 * length of this array must be the same as for the regular
 	 * grammar. We cannot enforce this requirement, but the
-	 * {@link Chart} must throw an error if there is a mismatch.
+	 * {@link joshua.decoder.chart_parser.Chart} must throw an error if there is a mismatch.
 	 */
 	float[] features();
 }

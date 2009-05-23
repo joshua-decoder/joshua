@@ -51,6 +51,11 @@ public interface Corpus { //extends Externalizable {
 	int[] getSentenceIndices(int[] positions);
 	
 	/**
+	 * Gets the position in the corpus of the first word of
+	 *         the specified sentence.  If the sentenceID is
+	 *         outside of the bounds of the sentences, then it
+	 *         returns the last position in the corpus + 1.
+	 * 
 	 * @return the position in the corpus of the first word of
 	 *         the specified sentence.  If the sentenceID is
 	 *         outside of the bounds of the sentences, then it

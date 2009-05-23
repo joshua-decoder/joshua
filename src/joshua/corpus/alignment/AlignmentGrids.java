@@ -56,7 +56,7 @@ public class AlignmentGrids extends AbstractAlignmentGrids {
 	 * <p>
 	 * The object returned by this constructor will required tight spans.
 	 * 
-	 * @param alignmentsFile
+	 * @param alignmentScanner
 	 * @param sourceCorpus
 	 * @param targetCorpus
 	 * @param expectedSize Expected number of training sentences. 
@@ -74,7 +74,7 @@ public class AlignmentGrids extends AbstractAlignmentGrids {
 	 * of the backing list. If this number is off, things will still work, 
 	 * but memory usage may be less optimal.
 	 * 
-	 * @param alignmentsFile
+	 * @param alignmentScanner
 	 * @param sourceCorpus
 	 * @param targetCorpus
 	 * @param expectedSize Expected number of training sentences. 
@@ -125,7 +125,7 @@ public class AlignmentGrids extends AbstractAlignmentGrids {
 	 * 
 	 * @param out The stream to write this object to.
 	 * @throws IOException Includes any I/O exceptions that may occur
-	 * @see {@link java.io.Externalizable#writeExternal Externalizable}
+	 * @see java.io.Externalizable#writeExternal
 	 */
 	public void writeExternal(ObjectOutput out) throws IOException {
 		

@@ -373,7 +373,7 @@ public class AlignmentGrid implements Externalizable {
 	/**
 	 * Called by the constructor to load a set of coordinates.
 	 * 
-	 * @param Coordinates to be used during initialization
+	 * @param coordinates Coordinates to be used during initialization
 	 */
 	protected void initializeCoordinates(Collection<Coordinate> coordinates) {
 		Iterator<Coordinate> it = coordinates.iterator();
@@ -397,7 +397,7 @@ public class AlignmentGrid implements Externalizable {
 	 * Gets an encoded short value for a given x,y pair.
 	 * 
 	 * @param x X coordinate
-	 * @param x Y coordinate
+	 * @param y Y coordinate
 	 * @return an encoded short value for a given x,y pair.
 	 */
 	protected static short getKey(int x, int y) {

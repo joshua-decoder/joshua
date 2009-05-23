@@ -43,10 +43,13 @@ public class BilingualRule extends MonolingualRule {
 	 * The owner and rule id for this rule are undefined.
 	 * 
 	 * @param lhs Left-hand side of the rule.
-	 * @param source_rhs Source language right-hand side of the rule.
-	 * @param target_rhs Target language right-hand side of the rule.
-	 * @param feature_scores Feature value scores for the rule.
+	 * @param sourceRhs Source language right-hand side of the rule.
+	 * @param targetRhs Target language right-hand side of the rule.
+	 * @param featureScores Feature value scores for the rule.
 	 * @param arity Number of nonterminals in the source language right-hand side.
+	 * @param owner
+	 * @param latticeCost
+	 * @param ruleID
 	 */
 	public BilingualRule(int lhs, int[] sourceRhs, int[] targetRhs, float[] featureScores, int arity, int owner, float latticeCost, int ruleID) {
 		super(lhs, sourceRhs, featureScores, arity, owner, latticeCost, ruleID);

@@ -310,7 +310,9 @@ public class SampledLexProbs implements LexicalProbabilities {
 	 * that steps through each line in the alignment array 
 	 * to find null alignment points and calculates null probabilities at that point.
 	 * 
-	 * @param sourcePhrase
+	 * @param sourcePhrases
+	 * @param sourcePhraseIndex
+	 * @param targetPhrase
 	 * @return the lexical probability and reverse lexical probability
 	 */
 	public Pair<Float,Float> calculateLexProbs(MatchedHierarchicalPhrases sourcePhrases, int sourcePhraseIndex, HierarchicalPhrase targetPhrase) {

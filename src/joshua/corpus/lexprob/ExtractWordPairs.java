@@ -48,7 +48,7 @@ import joshua.util.CommandLineParser.Option;
  * 
  * @author Lane Schwartz
  * @version $LastChangedDate$
- * @see Section 4.4 of "Statistical Phrase-Based Translation" by Philipp Koehn, Franz Josef Och, & Daniel Marcu (HLT-NAACL, 2003)
+ * @see "Section 4.4 of 'Statistical Phrase-Based Translation' by Philipp Koehn, Franz Josef Och, & Daniel Marcu (HLT-NAACL, 2003)"
  */
 public class ExtractWordPairs {
 

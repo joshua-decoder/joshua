@@ -38,18 +38,30 @@ public interface MatchedHierarchicalPhrases extends PatternFormat {
 	int getNumberOfTerminalSequences();
 	
 	/**
+	 * Gets the position in the corpus for the specified phrase 
+	 * of the first terminal in the specified sequence of terminals
+	 * within that phrase.
 	 * 
-	 * @param phraseIndex
-	 * @param positionNumber
-	 * @return
+	 * @param phraseIndex Index specifying a phrase in this object
+	 * @param positionNumber Specifies a sequence of terminals
+	 *                       within the specified phrase
+	 * @return The position in the corpus for the specified phrase 
+	 *         of the first terminal in the specified sequence of terminals
+	 *         within that phrase
 	 */
 	int getStartPosition(int phraseIndex, int positionNumber);
 	
 	/**
+	 * Gets the position in the corpus for the specified phrase 
+	 * just past the last terminal in the specified sequence of terminals
+	 * within that phrase.
 	 * 
-	 * @param phraseIndex
-	 * @param positionNumber
-	 * @return
+	 * @param phraseIndex Index specifying a phrase in this object
+	 * @param positionNumber Specifies a sequence of terminals
+	 *                       within the specified phrase
+	 * @return The position in the corpus for the specified phrase 
+	 *         just past the last terminal in the specified sequence of terminals
+	 *         within that phrase
 	 */
 	int getEndPosition(int phraseIndex, int positionNumber);
 	
@@ -59,7 +71,7 @@ public interface MatchedHierarchicalPhrases extends PatternFormat {
 	 * that match the pattern.
 	 * 
 	 * @return The number of locations in the corpus 
-	 * that match the pattern.
+	 *         that match the pattern.
 	 */
 	int size();
 	
@@ -72,18 +84,23 @@ public interface MatchedHierarchicalPhrases extends PatternFormat {
 	boolean isEmpty();
 	
 	/** 
-	 * Gets the index of the sentence from which the specified phrase was extracted.
+	 * Gets the index of the sentence 
+	 * from which the specified phrase was extracted.
 	 *  
-	 * @param phraseIndex Index of a phrase
-	 * @return the index of the sentence from which the specified phrase was extracted.
+	 * @param phraseIndex Index specifying a phrase in this object
+	 * @return The index of the sentence 
+	 *         from which the specified phrase was extracted.
 	 */
 	int getSentenceNumber(int phraseIndex);
 	
 	/**
-	 * Gets the number of terminal tokens in the specified terminal sequence.
+	 * Gets the number of terminal tokens 
+	 * in the specified terminal sequence.
 	 * 
-	 * @param i Index of a terminal sequence in this object's pattern.
-	 * @return the number of terminal tokens in the specified terminal sequence
+	 * @param i Index of a terminal sequence 
+	 *          in this object's pattern.
+	 * @return The number of terminal tokens 
+	 *         in the specified terminal sequence
 	 */
 	int getTerminalSequenceLength(int i);
 	
@@ -122,7 +139,7 @@ public interface MatchedHierarchicalPhrases extends PatternFormat {
 	 * is the span from the index of the first matched terminal in this phrase
 	 * to the one past the index of the last matched terminal in this phrase.
 	 * 
-	 * @param Index of a matched phrase
+	 * @param phraseIndex Index of a matched phrase
 	 * @return the span in the backing corpus 
 	 *         of the phrase at the specified index
 	 */
@@ -133,10 +150,12 @@ public interface MatchedHierarchicalPhrases extends PatternFormat {
 	int getFirstTerminalIndex(int phraseIndex);
 	
 	/**
-	 * Gets the exclusive ending index of the last terminal sequence of the specified phrase.
+	 * Gets the exclusive ending index 
+	 * of the last terminal sequence of the specified phrase.
 	 * 
-	 * @param phraseIndex
-	 * @return
+	 * @param phraseIndex Index specifying a phrase in this object
+	 * @return the exclusive ending index 
+	 *         of the last terminal sequence of the specified phrase
 	 */
 	int getLastTerminalIndex(int phraseIndex);
 	int getTerminalSequenceStartIndex(int phraseIndex, int sequenceIndex);

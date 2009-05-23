@@ -99,7 +99,7 @@ public class JoshuaDecoder {
 	/**
 	 * Constructs a new decoder using the specified configuration file.
 	 * 
-	 * @param Name of configuration file.
+	 * @param configFile Name of configuration file.
 	 */
 	public JoshuaDecoder(String configFile) {
 		this.grammarFactories = new ArrayList<GrammarFactory>();

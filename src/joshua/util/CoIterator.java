@@ -18,7 +18,7 @@
 package joshua.util;
 
 /**
- * This interface defines the dual of an {@link Iterator}.
+ * This interface defines the dual of an {@link java.util.Iterator}.
  *
  * In the plain case some class would have a method that returns
  * an iterator: <code>Iterator&lt;E&gt; method()</code>, and then

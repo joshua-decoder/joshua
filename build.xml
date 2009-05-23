@@ -153,7 +153,8 @@
 	<!-- Compile the Javadocs into web pages -->
 	<target name="javadoc">
 		<mkdir dir="${doc}"/>
-		<javadoc packagenames="joshua.*,org.apache.commons.cli.*"
+		<javadoc packagenames="joshua.*"
+			classpath="${cli}"
         	sourcepath="${src}"
 			destdir="${doc}"
 			author="true"
@@ -161,6 +162,7 @@
 			overview="src/overview.html"
 		>
 			<link href="http://java.sun.com/j2se/1.5.0/docs/api" />
+			<link href="http://commons.apache.org/cli/api-release" />
 		</javadoc>
 	</target>
 	

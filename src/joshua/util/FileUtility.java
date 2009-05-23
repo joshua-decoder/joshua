@@ -136,7 +136,7 @@ public class FileUtility {
 	 * as raw bytes.
 	 * 
 	 * @param data     The integer array to write to disk.
-	 * @param filename The filename where the data should be written.
+	 * @param out The output stream where the data should be written.
 	 * @throws IOException
 	 */
 	public static void writeBytes(int[] data, OutputStream out)

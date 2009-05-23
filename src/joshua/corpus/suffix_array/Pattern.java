@@ -96,12 +96,13 @@ public class Pattern extends BasicPhrase implements PatternFormat {
 	}
 	
 	/**
-	 * Constructs an new integer array by concatenating
+	 * Constructs a new integer array by concatenating
 	 * two existing integer arrays together.
 	 *  
 	 * @param oldPattern
 	 * @param newPattern
-	 * @return
+	 * @return a new integer array representing 
+	 *         two existing integer arrays concatenated together
 	 */
 	protected static int[] pattern(int[] oldPattern, int... newPattern) {
 		int[] pattern = new int[oldPattern.length + newPattern.length];
@@ -157,10 +158,9 @@ public class Pattern extends BasicPhrase implements PatternFormat {
 	 * The result of this method is not well-defined 
 	 * for patterns that consist only of nonterminals.
 	 * 
-	 * TODO Write unit tests for this method.
-	 * 
-	 * @return
+	 * @return the lengths of each terminal sequence in this pattern
 	 */
+	// TODO Write unit tests for this method.
 	public byte[] getTerminalSequenceLengths() {
 		
 		int size = 0;

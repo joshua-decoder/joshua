@@ -105,13 +105,12 @@ public class FrequentPhrases {
 	 * This procedure is described in "Hierarchical Phrase-Based
 	 * Translation with Suffix Arrays" by Adam Lopez.
 	 *
-	 * @param phrases         the phrases which are to be checked
-	 *                        for their collocation
 	 * @param maxPhraseLength the maximum length of any phrase
 	 *                        in the phrases
 	 * @param windowSize      the maximum allowable space between
 	 *                        phrases for them to still be
 	 *                        considered collocated
+	 * @param minNonterminalSpan Minimum span allowed for a nonterminal 
 	 */
 	public FrequentMatches getCollocations(
 			int maxPhraseLength,
@@ -271,8 +270,6 @@ public class FrequentPhrases {
 	 * This procedure is described in "Hierarchical Phrase-Based
 	 * Translation with Suffix Arrays" by Adam Lopez.
 	 *
-	 * @param phrases         the phrases which are to be checked
-	 *                        for their collocation
 	 * @param maxPhraseLength the maximum length of any phrase
 	 *                        in the phrases
 	 * @param windowSize      the maximum allowable space between

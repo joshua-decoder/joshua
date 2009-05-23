@@ -231,7 +231,7 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 	 * <p>
 	 * This assumes that the source and target spans are consistent.
 	 * 
-	 * @param sourcePhrase Source language phrase to be translated.
+	 * @param sourcePhrases Source language phrase to be translated.
 	 * @param sourceSpan Span in the corpus of the source phrase; this is needed because the accurate span will not be in the sourcePhrase if it starts or ends with a nonterminal
 	 * @param targetSpan Span in the target corpus of the target phrase.
 	 * @param sourceStartsWithNT Indicates whether or not the source phrase starts with a nonterminal.
@@ -239,7 +239,11 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 	 * 
 	 * @return null if no translation can be constructed
 	 */
-	protected HierarchicalPhrase constructTranslation(MatchedHierarchicalPhrases sourcePhrases, int sourcePhraseIndex, Span sourceSpan, Span targetSpan, boolean sourceStartsWithNT, boolean sourceEndsWithNT) {		
+	protected HierarchicalPhrase constructTranslation(
+			MatchedHierarchicalPhrases sourcePhrases, int sourcePhraseIndex, 
+			Span sourceSpan, Span targetSpan, boolean sourceStartsWithNT, boolean sourceEndsWithNT) {		
+		
+		
 		if (logger.isLoggable(Level.FINE)) logger.fine("Constructing translation for source span " + sourceSpan + ", target span " + targetSpan);
 				
 		if (sourceSpan.size() > this.maxPhraseSpan)
