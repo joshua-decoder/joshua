@@ -1,22 +1,3 @@
-/* This file is part of the Joshua Machine Translation System.
- *
- * Joshua is free software; you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as
- * published by the Free Software Foundation; either version 2.1
- * of the License, or (at your option) any later version.
- *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free
- * Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
- * MA 02111-1307 USA
- */
-package joshua.ui.tree_visualizer;
-
 import java.awt.Dimension;
 import java.awt.Paint;
 import java.awt.Color;
@@ -24,6 +5,8 @@ import java.awt.Stroke;
 import java.awt.BasicStroke;
 import java.awt.Shape;
 import java.awt.geom.*;
+
+import javax.swing.JLabel;
 
 import edu.uci.ics.jung.graph.*;
 import edu.uci.ics.jung.algorithms.layout.*;
@@ -43,9 +26,8 @@ public class DerivationViewer extends VisualizationViewer<Node,DerivationTreeEdg
 	public DerivationViewer(DerivationTree g)
 	{
 		super(new CircleLayout(g));
-		DelegateTree del = new DelegateTree(g);
-		del.setRoot(g.getRoot());
-		setGraphLayout(new TreeLayout(del, 100));
+		setGraphLayout(new StaticLayout(g, new DerivationTreeTransformer(g)));
+		g.addCorrespondences();
 		setPreferredSize(new Dimension(DEFAULT_HEIGHT, DEFAULT_WIDTH));
 		getRenderContext().setVertexLabelTransformer(new ToStringLabeller());
 
@@ -82,7 +64,8 @@ public class DerivationViewer extends VisualizationViewer<Node,DerivationTreeEdg
 	private static Transformer<Node,Shape> ns = new Transformer<Node,Shape>() {
 		public Shape transform(Node n)
 		{
-			double len = 10.0 * n.toString().length();
+			JLabel x = new JLabel();
+			double len = x.getFontMetrics(x.getFont()).stringWidth(n.toString());
 			double margin = 5.0;
 			return new Rectangle2D.Double((len + margin) / (-2), 0, len + 2 * margin, 20);
 		}

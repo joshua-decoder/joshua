@@ -1,24 +1,4 @@
-/* This file is part of the Joshua Machine Translation System.
- *
- * Joshua is free software; you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as
- * published by the Free Software Foundation; either version 2.1
- * of the License, or (at your option) any later version.
- *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free
- * Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
- * MA 02111-1307 USA
- */
-package joshua.ui.tree_visualizer;
-
 import edu.uci.ics.jung.graph.*;
-import edu.uci.ics.jung.algorithms.layout.*;
 
 import java.util.Scanner;
 import java.util.LinkedList;
@@ -37,6 +17,7 @@ public class DerivationTree extends DirectedOrderedSparseMultigraph {
 	public static final int SRC_LINE = 9;
 
 	private Node root;
+	private Node sourceRoot;
 	private String source;
 	private LinkedList<Node> vertices;
 
@@ -44,14 +25,14 @@ public class DerivationTree extends DirectedOrderedSparseMultigraph {
 	{
 		try {
 			int line = 1;
-			Scanner tgt = new Scanner(new File(argv[0]), "UTF-16");
+			Scanner tgt = new Scanner(new File(argv[0]), "UTF-8");
 			DerivationTree g;
 			while (line < TGT_LINE) {
 				tgt.nextLine();
 				line++;
 			}
 			if (argv.length > 1) {
-				Scanner src = new Scanner(new File(argv[1]), "UTF-16");
+				Scanner src = new Scanner(new File(argv[1]), "UTF-8");
 				int srcLine = 1;
 				while (srcLine < SRC_LINE) {
 					src.nextLine();
@@ -95,6 +76,11 @@ public class DerivationTree extends DirectedOrderedSparseMultigraph {
 	public Node getRoot()
 	{
 		return root;
+	}
+
+	public Node getSourceRoot()
+	{
+		return sourceRoot;
 	}
 
 	private void graph(String tree)
@@ -167,11 +153,13 @@ public class DerivationTree extends DirectedOrderedSparseMultigraph {
 
 	private void alignSource()
 	{
+	/*
 		String [] toks = source.split("\\s+");
 		Node [] src = new Node[toks.length];
 		for (int i = 0; i < toks.length; i++) {
 			src[i] = new Node(i + ". " + toks[i], true);
 		}
+	*/
 		for (Node v : vertices) {
 			if (outDegree(v) != 0)
 				continue;
@@ -197,10 +185,63 @@ public class DerivationTree extends DirectedOrderedSparseMultigraph {
 					continue;
 				}
 			}
+			/*
 			for (int j = start; j < end; j++) {
 				addEdge(new DerivationTreeEdge(true), v, src[j]);
 			}
+			*/
 		}
+		addSourceNodes(root, null);
 		return;
+	}
+
+	private void addSourceNodes(Node curr, Node parent)
+	{
+		LinkedList<Node> children = new LinkedList<Node>(getSuccessors(curr));
+		if (children.isEmpty()) {
+			String [] toks = source.split("\\s+");
+			String srcName = "";
+			for (int i = curr.sourceStart(); i < curr.sourceEnd(); i++) {
+				srcName += toks[i] + " ";
+			}
+			Node result = new Node(srcName, true);
+			if (parent == null) {
+				sourceRoot = result;
+				addVertex(result);
+			}
+			else {
+				addVertex(result);
+				addEdge(new DerivationTreeEdge(false), parent, result);
+			}
+			curr.setCounterpart(result);
+		}
+		else {
+			Node result = new Node(curr.toString(), true);
+			result.setSourceSpan(curr.sourceStart(), curr.sourceEnd());
+			addVertex(result);
+			if (parent != null)
+				addEdge(new DerivationTreeEdge(false), parent, result);
+			else
+				sourceRoot = result;
+			int nextChild = curr.sourceStart();
+			for (int i = 0; i < children.size(); i++) {
+				Node x = children.get(i);
+				if (x.sourceStart() == nextChild) {
+					addSourceNodes(x, result);
+					nextChild = x.sourceEnd();
+					children.remove(i);
+					i = -1;
+				}
+			}
+		}
+	}
+
+	public void addCorrespondences()
+	{
+		for (Node v : vertices) {
+			Node s = v.getCounterpart();
+			if (s != null)
+				addEdge(new DerivationTreeEdge(true), v, s);
+		}
 	}
 }
