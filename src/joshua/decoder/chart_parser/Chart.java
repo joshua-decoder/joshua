@@ -36,7 +36,6 @@ import joshua.lattice.Arc;
 import joshua.lattice.Node;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -88,8 +87,6 @@ public class Chart {
 	 * table. The Bin class adds a goal symbol nonterminal to
 	 * the symbol table.
 	 * <p>
-	 * TODO It is likely that this object could be removed from
-	 *      this class with relatively little impact.
 	 */
 	SymbolTable p_symbolTable;
 	
@@ -168,13 +165,13 @@ public class Chart {
 		}
 		
 		/**
-		 * (1) add rule (only allow flat rules) into the
+		 * (1) add manual rule (only allow flat rules) into the
 		 *     chart as constraints
 		 * (2) add RHS or LHS constraint into
 		 *     tblConstraintSpansForFiltering
 		 */
 		if (null != constraintSpans) {
-			tblConstraintSpansForFiltering = new HashMap<String, ConstraintSpan>();
+			
 			for (ConstraintSpan cSpan : constraintSpans) {
 				if (null != cSpan.rules()) {
 					boolean shouldAdd = false; // contain LHS or RHS constraints?
@@ -183,11 +180,12 @@ public class Chart {
 						if (cRule.type() == ConstraintRule.Type.RULE) {
 							
 							// force the feature cost as zero
-							if (cSpan.isHard()) {
-								//TODO: this require the input always specify the right number of features
-								for (int i = 0; i < cRule.features().length; i++) {
-									cRule.features()[i] = 0;
-								}
+							float[] featureScores = new float[cRule.features().length];//TODO: this require the input always specify the right number of features
+							for (int i = 0; i < featureScores.length; i++) {
+								if (cSpan.isHard())
+									featureScores[i] = 0;
+								else
+									featureScores[i] = cRule.features()[i];
 							}
 							
 							//TODO: which grammar should we use to create a mannual rule?
@@ -196,13 +194,16 @@ public class Chart {
 									symbolTable.addNonterminal(cRule.lhs()), 
 									symbolTable.addTerminals(cRule.foreignRhs()),
 									symbolTable.addTerminals(cRule.nativeRhs()),
-									cRule.features(), arity);
+									featureScores, 
+									arity);
 							add_axiom(cSpan.start(), cSpan.end(), rule, 0);
 						} else {
 							shouldAdd = true;
 						}
 					}
 					if (shouldAdd) {
+						if(tblConstraintSpansForFiltering == null )
+							tblConstraintSpansForFiltering = new HashMap<String, ConstraintSpan>();
 						tblConstraintSpansForFiltering.put(getSpanSignature(cSpan.start(), cSpan.end()), cSpan);
 					}
 				}
@@ -437,6 +438,10 @@ public class Chart {
 	private String getSpanSignature(int i, int j) {
 		return "i j";
 	}
+	
+	/** if there are any LHS or RHS constraints for a span, 
+	 * then all the applicable grammar rules in that span will have to pass the filter
+	 * */
 	private List<Rule> filterRules(int i, int j, List<Rule> rulesIn) {
 		if (null == tblConstraintSpansForFiltering)
 			return rulesIn;
@@ -447,8 +452,8 @@ public class Chart {
 		} else {
 			List<Rule> rulesOut = new ArrayList<Rule>();
 			for (Rule gRule : rulesIn) {
-				//gRule will survive, if any constraint (LHS or RHS) let gRule survive 
-				for (ConstraintRule cRule : cSpan.rules()) { //TODO???????????????????? big bug, as the iterator may have already been iterated once
+				//gRule will survive, if any constraint (LHS or RHS) lets it survive 
+				for (ConstraintRule cRule : cSpan.rules()) {
 					if (shouldSurvive(cRule, gRule)) {
 						rulesOut.add(gRule);
 						break;
