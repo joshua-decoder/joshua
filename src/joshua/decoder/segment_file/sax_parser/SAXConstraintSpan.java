@@ -22,7 +22,6 @@ import joshua.decoder.segment_file.ConstraintRule;
 
 import org.xml.sax.SAXException;
 
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -98,12 +97,10 @@ public class SAXConstraintSpan {
 		}
 		
 		return new ConstraintSpan() {
-			public int start()      { return start;  }
-			public int end()        { return end;    }
-			public boolean isHard() { return isHard; }
-			public Iterator<ConstraintRule> rules() {
-				return rules.iterator();
-			}
+			public int     start()              { return start;  }
+			public int     end()                { return end;    }
+			public boolean isHard()             { return isHard; }
+			public List<ConstraintRule> rules() { return rules;  }
 		};
 	}
 }

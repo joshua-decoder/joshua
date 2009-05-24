@@ -112,43 +112,42 @@ public class Chart {
 	static long g_time_check_nonterminal = 0;
 	static long g_time_kbest_extract     = 0;
 	
-	private static final Logger logger = Logger.getLogger(Chart.class.getName());
+	private static final Logger logger = 
+		Logger.getLogger(Chart.class.getName());
 	
 	int goalSymbolID = -1;
 	
-	Iterator<ConstraintSpan> constraintSpans =null;
-	HashMap<String, ConstraintSpan> tblConstraintSpansForFiltering =null;//TODO: each span only has one ConstraintSpan
+	HashMap<String,ConstraintSpan> tblConstraintSpansForFiltering; // TODO: each span only has one ConstraintSpan
 	
 	public Chart(
-		Lattice<Integer>           sentence_,
-		ArrayList<FeatureFunction> models_,
+		Lattice<Integer>           sentence,
+		ArrayList<FeatureFunction> models,
 		SymbolTable                symbolTable,
-		int                        sent_id_,
-		Grammar[]                  grammars_,
+		int                        sent_id,
+		Grammar[]                  grammars,
 		boolean                    have_lm_model,
 		String                     goalSymbol,
-		Iterator<ConstraintSpan> constraintSpans_) 
+		List<ConstraintSpan> constraintSpans)
 	{	
-		this.sentence = sentence_;
+		this.sentence = sentence;
 		this.sent_len = sentence.size() - 1;
-		this.p_l_models   = models_;
+		this.p_l_models = models;
 		this.p_symbolTable = symbolTable;
-		this.constraintSpans = constraintSpans_;
 		
 		// TODO: this is very expensive
-		this.bins     = new Bin[sent_len][sent_len+1];		
-		this.sent_id  = sent_id_;
+		this.bins     = new Bin[sent_len][sent_len+1];
+		this.sent_id  = sent_id;
 		this.goalSymbolID = this.p_symbolTable.addNonterminal(goalSymbol);
 		this.goal_bin = new Bin(this, this.goalSymbolID);
 		
 		// add un-translated words into the chart as item (with large cost)
 		// TODO: grammar specific?
-		this.grammars  = grammars_;
+		this.grammars = grammars;
 		
 		// each grammar will have a dot chart
 		this.dotcharts = new DotChart[this.grammars.length];
 		for (int i = 0; i < this.grammars.length; i++) {
-			this.dotcharts[i] = new DotChart(this.sentence,	this.grammars[i], this);
+			this.dotcharts[i] = new DotChart(this.sentence, this.grammars[i], this);
 			this.dotcharts[i].seed(); // TODO: should fold into the constructor
 		}
 		
@@ -156,13 +155,13 @@ public class Chart {
 		// TODO: the transition cost for phrase model, arity penalty, word penalty are all zero, except the LM cost
 		for (Node<Integer> node : sentence) {
 			for (Arc<Integer> arc : node.getOutgoingArcs()) {
-				// create a rule, but do not add into the grammar trie     
+				// create a rule, but do not add into the grammar trie
 				// TODO: which grammar should we use to create an OOV rule?
 				Rule rule = this.grammars[0].constructOOVRule(p_l_models.size(), 
 						arc.getLabel(), have_lm_model);
 				
 				// tail and head are switched - FIX names:
-				add_axiom(node.getNumber(), arc.getTail().getNumber(), rule, 
+				add_axiom(node.getNumber(), arc.getTail().getNumber(), rule,
 						(float)arc.getCost());
 				
 			}
@@ -174,49 +173,48 @@ public class Chart {
 		 * (2) add RHS or LHS constraint into
 		 *     tblConstraintSpansForFiltering
 		 */
-		if(constraintSpans!=null){
+		if (null != constraintSpans) {
 			tblConstraintSpansForFiltering = new HashMap<String, ConstraintSpan>();
-			while(constraintSpans.hasNext()){
-				ConstraintSpan cSpan = constraintSpans.next();
-				if(cSpan.rules()!=null){
-					boolean shouldAdd = false;//contain LHS or RHS constraints?
-					while(cSpan.rules().hasNext()){
-						ConstraintRule cRule = cSpan.rules().next();
-						
-						if(cRule.type()==ConstraintRule.Type.RULE){
+			for (ConstraintSpan cSpan : constraintSpans) {
+				if (null != cSpan.rules()) {
+					boolean shouldAdd = false; // contain LHS or RHS constraints?
+					for (ConstraintRule cRule : cSpan.rules()) {
+						// TODO: prefer switch for enum instead of ==
+						if (cRule.type() == ConstraintRule.Type.RULE) {
 							
-							//force the feature cost as zero
-							if(cSpan.isHard()){
+							// force the feature cost as zero
+							if (cSpan.isHard()) {
 								//TODO: this require the input always specify the right number of features
-								for(int i=0; i<cRule.features().length; i++){
-									cRule.features()[i]=0;
+								for (int i = 0; i < cRule.features().length; i++) {
+									cRule.features()[i] = 0;
 								}
 							}
-								
+							
 							//TODO: which grammar should we use to create a mannual rule?
-							int arity = 0;//only allow flat rule (i.e. arity=0)
+							int arity = 0; // only allow flat rule (i.e. arity=0)
 							Rule rule = this.grammars[0].constructManualRule(
 									symbolTable.addNonterminal(cRule.lhs()), 
-									symbolTable.addTerminals( cRule.foreignRhs() ),
-									symbolTable.addTerminals( cRule.nativeRhs() ), 
+									symbolTable.addTerminals(cRule.foreignRhs()),
+									symbolTable.addTerminals(cRule.nativeRhs()),
 									cRule.features(), arity);
 							add_axiom(cSpan.start(), cSpan.end(), rule, 0);
-						}else{
-							shouldAdd =true;
+						} else {
+							shouldAdd = true;
 						}
 					}
-					if(shouldAdd==true){
-						tblConstraintSpansForFiltering.put(getSpanSignature(cSpan.start(),cSpan.end()),cSpan);
+					if (shouldAdd) {
+						tblConstraintSpansForFiltering.put(getSpanSignature(cSpan.start(), cSpan.end()), cSpan);
 					}
 				}
 			}
 		}
 		
 		
-		if (logger.isLoggable(Level.FINE)) logger.fine("Finished seeding chart.");
+		if (logger.isLoggable(Level.FINE))
+			logger.fine("Finished seeding chart.");
 	}
 	
-
+	
 	
 	/**
 	 * Construct the hypergraph with the help from DotChart.
@@ -231,24 +229,28 @@ public class Chart {
 		for (int width = 1; width <= sent_len; width++) {
 			for (int i = 0; i <= sent_len-width; i++) {
 				int j = i + width;
-				if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("Process span (%d, %d)",i,j));
+				if (logger.isLoggable(Level.FINEST)) 
+					logger.finest(String.format("Process span (%d, %d)",i,j));
 				
 				//(1)### expand the cell in dotchart
 				//long start_step1= Support.current_time();
-				if (logger.isLoggable(Level.FINEST)) logger.finest("Expanding cell");
+				if (logger.isLoggable(Level.FINEST))
+					logger.finest("Expanding cell");
 				for (int k = 0; k < this.grammars.length; k++) {
 					this.dotcharts[k].expand_cell(i,j);
 				}			
-				if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("n_dotitem= %d",n_dotitem_added));
+				if (logger.isLoggable(Level.FINEST)) 
+					logger.finest(String.format("n_dotitem= %d", n_dotitem_added));
 				//time_step1 += Support.current_time()-start_step1;
 				
 				//(2)### populate COMPLETE rules into Chart: the regular CKY part
 				//long start_step2= Support.current_time();
-				if (logger.isLoggable(Level.FINEST)) logger.finest("Adding complete items into chart");
+				if (logger.isLoggable(Level.FINEST))
+					logger.finest("Adding complete items into chart");
 				for (int k = 0; k < this.grammars.length; k++) {
 					if (this.grammars[k].hasRuleForSpan(i, j, sent_len)
-							&& null != this.dotcharts[k].l_dot_bins[i][j]) 
-					{
+					&& null != this.dotcharts[k].l_dot_bins[i][j]) {
+						
 						for (DotItem dt: this.dotcharts[k].l_dot_bins[i][j].l_dot_items) {
 							float lattice_cost = dt.lattice_cost;
 							RuleCollection rules = dt.tnode.getRules();
@@ -270,9 +272,10 @@ public class Chart {
 				
 				//(3)### process unary rules (e.g., S->X, NP->NN), just add these items in chart, assume acyclic
 				//long start_step3= Support.current_time();
-				if (logger.isLoggable(Level.FINEST)) logger.finest("Adding unary items into chart");
+				if (logger.isLoggable(Level.FINEST))
+					logger.finest("Adding unary items into chart");
 				for (int k = 0; k < this.grammars.length; k++) {
-					if(this.grammars[k].hasRuleForSpan(i, j, sent_len)) {
+					if (this.grammars[k].hasRuleForSpan(i, j, sent_len)) {
 						add_unary_items(this.grammars[k],i,j);//single-branch path
 					}
 				}
@@ -280,7 +283,8 @@ public class Chart {
 				
 				//(4)### in dot_cell(i,j), add dot-items that start from the /complete/ superIterms in chart_cell(i,j)
 				//long start_step4= Support.current_time();
-				if (logger.isLoggable(Level.FINEST)) logger.finest("Initializing new dot-items that starting from complete items in this cell");
+				if (logger.isLoggable(Level.FINEST))
+					logger.finest("Initializing new dot-items that starting from complete items in this cell");
 				for (int k = 0; k < this.grammars.length; k++) {
 					if (this.grammars[k].hasRuleForSpan(i, j, sent_len)) {
 						this.dotcharts[k].start_dotitems(i,j);
@@ -289,7 +293,10 @@ public class Chart {
 				//time_step4 += Support.current_time()-start_step4;
 				
 				//(5)### sort the items in the cell: for pruning purpose
-				if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("After Process span (%d, %d), called:= %d", i, j, n_called_compute_item));
+				if (logger.isLoggable(Level.FINEST)) 
+					logger.finest(String.format(
+						"After Process span (%d, %d), called:= %d",
+						i, j, n_called_compute_item));
 				if (null != this.bins[i][j]) {
 					// this.bins[i][j].print_info(Support.INFO);
 
@@ -299,9 +306,11 @@ public class Chart {
 					
 					/*
 					// sanity check with this cell
-					int sum_d=0; double sum_c =0.0;	double sum_total=0.0;
-					for(Item t_item : l_s_its){
-						if(t_item.l_deductions!=null)
+					int sum_d = 0;
+					double sum_c = 0.0;
+					double sum_total=0.0;
+					for (Item t_item : l_s_its) {
+						if (null != t_item.l_deductions)
 							sum_d += t_item.l_deductions.size();
 						sum_c += t_item.best_deduction.best_cost;
 						sum_total += t_item.est_total_cost;
@@ -312,9 +321,9 @@ public class Chart {
 		}
 		print_info(Level.FINE);
 		logger.info("Sentence length: " + sent_len);
-		//transition_final: setup a goal item, which may have many deductions
+		// transition_final: setup a goal item, which may have many deductions
 		if (null != this.bins[0][sent_len]) {
-			goal_bin.transit_to_goal(this.bins[0][sent_len]);//update goal_bin				
+			goal_bin.transit_to_goal(this.bins[0][sent_len]); // update goal_bin				
 		} else {
 			throw new RuntimeException(
 				"No complete item in the cell(0,n); possible reasons: " +
@@ -337,7 +346,7 @@ public class Chart {
 		//logger.info(String.format("LM lookupwords1, step1: %d; step2: %d; step3: %d", tm_lm.time_step1, tm_lm.time_step2, tm_lm.time_step3));
 		//debug end
 		
-		return new HyperGraph((HGNode)goal_bin.get_sorted_items().get(0), -1,	-1,	sent_id, sent_len);//num_items/deductions : -1
+		return new HyperGraph(goal_bin.get_sorted_items().get(0), -1, -1, sent_id, sent_len); // num_items/deductions : -1
 	}
 	
 	public void print_info(Level level) {
@@ -371,17 +380,17 @@ public class Chart {
 		
 		
 		while (t_queue.size() > 0) {
-			HGNode item = (HGNode)t_queue.remove(0);
-			Trie child_tnode = gr.getTrieRoot().matchOne(item.lhs);//match rule and complete part
+			HGNode item = t_queue.remove(0);
+			Trie child_tnode = gr.getTrieRoot().matchOne(item.lhs); // match rule and complete part
 			if (child_tnode != null
 			&& child_tnode.getRules() != null
-			&& child_tnode.getRules().getArity() == 1) {//have unary rules under this trienode					
+			&& child_tnode.getRules().getArity() == 1) { // have unary rules under this trienode
 				ArrayList<HGNode> l_ants = new ArrayList<HGNode>();
 				l_ants.add(item);
 				List<Rule> l_rules = child_tnode.getRules().getSortedRules();
 				
-				for (Rule rule : l_rules){//for each unary rules								
-					ComputeItemResult tbl_states = chart_bin.compute_item(rule, l_ants, i, j);				
+				for (Rule rule : l_rules) { // for each unary rules								
+					ComputeItemResult tbl_states = chart_bin.compute_item(rule, l_ants, i, j);
 					HGNode res_item = chart_bin.add_deduction_in_bin(tbl_states, rule, i, j, l_ants, 0.0f);
 					if (null != res_item) {
 						t_queue.add(res_item);
@@ -394,13 +403,13 @@ public class Chart {
 	}
 	
 	
-	private void add_axioms(int i, int j, RuleCollection rb, float lattice_cost){
+	private void add_axioms(int i, int j, RuleCollection rb, float lattice_cost) {
 		List<Rule> l_rules = filterRules(i,j, rb.getSortedRules());
 		for (Rule rule : l_rules) {
 			add_axiom(i, j, rule, lattice_cost);
 		}
 	}
-	/** axiom is for rules with zero-arity*  */
+	/** axiom is for rules with zero-arity */
 	private void add_axiom(int i, int j, Rule rule, float lattice_cost) {
 		if (null == this.bins[i][j]) {
 			this.bins[i][j] = new Bin(this, this.goalSymbolID);
@@ -425,23 +434,22 @@ public class Chart {
 		this.bins[i][j].complete_cell_cube_prune(i, j, dt.l_ant_super_items, filterRules(i,j, rb.getSortedRules()), lattice_cost);//combinations: rules, antecent items
 	}
 	
-	private String getSpanSignature(int i, int j){
+	private String getSpanSignature(int i, int j) {
 		return "i j";
 	}
-	private List<Rule>  filterRules(int i, int j, List<Rule> rulesIn){
-		if(tblConstraintSpansForFiltering==null)
+	private List<Rule> filterRules(int i, int j, List<Rule> rulesIn) {
+		if (null == tblConstraintSpansForFiltering)
 			return rulesIn;
 		
-		ConstraintSpan cSpan = tblConstraintSpansForFiltering.get( getSpanSignature(i,j) );
-		if(cSpan==null){//no filtering
+		ConstraintSpan cSpan = tblConstraintSpansForFiltering.get( getSpanSignature(i,j));
+		if (null == cSpan) { // no filtering
 			return rulesIn;
-		}else{
-			List<Rule>  rulesOut = new ArrayList<Rule>();
-			for(Rule gRule : rulesIn){
+		} else {
+			List<Rule> rulesOut = new ArrayList<Rule>();
+			for (Rule gRule : rulesIn) {
 				//gRule will survive, if any constraint (LHS or RHS) let gRule survive 
-				while(cSpan.rules().hasNext()){//TODO???????????????????? big bug, as the iterator may have already been iterated once
-					ConstraintRule cRule = cSpan.rules().next();
-					if(shouldSurvive(cRule, gRule)){
+				for (ConstraintRule cRule : cSpan.rules()) { //TODO???????????????????? big bug, as the iterator may have already been iterated once
+					if (shouldSurvive(cRule, gRule)) {
 						rulesOut.add(gRule);
 						break;
 					}
@@ -453,19 +461,21 @@ public class Chart {
 	
 	
 	//should we filter out the gRule based on the manually provided constraint cRule
-	private boolean shouldSurvive(ConstraintRule cRule, Rule gRule){		
-		if(cRule.type() == ConstraintRule.Type.LHS){
-			return ( gRule.getLHS() == p_symbolTable.addNonterminal(cRule.lhs()) ) ? true: false;		
-		}else if(cRule.type() ==  ConstraintRule.Type.RHS){
+	private boolean shouldSurvive(ConstraintRule cRule, Rule gRule) {
+		switch (cRule.type()) {
+		case LHS:
+			return (gRule.getLHS() == p_symbolTable.addNonterminal(cRule.lhs()) );
+		case RHS:
 			int[] targetWords = p_symbolTable.addTerminals(cRule.nativeRhs());
-			if(targetWords.length!=gRule.getEnglish().length)
+			if (targetWords.length != gRule.getEnglish().length)
 				return false;
-			for(int t=0; t<targetWords.length; t++)
-				if(targetWords[t]!=gRule.getEnglish()[t])
+			for (int t = 0; t < targetWords.length; t++) {
+				if (targetWords[t] != gRule.getEnglish()[t])
 					return false;
+			}
 			return true;
-		}else{//default: not surviving
+		default: // not surviving
 			return false;
-		}	
+		}
 	}
 }

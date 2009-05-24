@@ -85,10 +85,10 @@ public class SAXConstraintRule {
 		
 		return new ConstraintRule() {
 			public ConstraintRule.Type type() { return type;       }
-			public String   lhs()             { return lhs;        }
-			public float[] features()        { return features;   }
-			public String   nativeRhs()       { return nativeRhs;  }
-			public String   foreignRhs()      { return foreignRhs; }
+			public String  lhs()              { return lhs;        }
+			public float[] features()         { return features;   }
+			public String  nativeRhs()        { return nativeRhs;  }
+			public String  foreignRhs()       { return foreignRhs; }
 		};
 	}
 }

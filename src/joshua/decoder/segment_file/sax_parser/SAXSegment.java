@@ -23,7 +23,6 @@ import joshua.util.Regex;
 
 import org.xml.sax.SAXException;
 
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -60,11 +59,9 @@ public class SAXSegment {
 		}
 		
 		return new Segment() {
-			public String id()       { return id;       }
-			public String sentence() { return sentence; }
-			public Iterator<ConstraintSpan> constraints() {
-				return spans.iterator();
-			}
+			public String id()                        { return id;       }
+			public String sentence()                  { return sentence; }
+			public List<ConstraintSpan> constraints() { return spans;    }
 		};
 	}
 }

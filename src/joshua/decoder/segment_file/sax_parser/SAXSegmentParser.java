@@ -299,10 +299,8 @@ implements SegmentFileParser {
 			++segs;
 			
 			System.out.println(s.sentence());
-			Iterator<ConstraintSpan> constraints = s.constraints();
 			int spans = 0;
-			while (constraints.hasNext()) {
-				ConstraintSpan span = constraints.next();
+			for (ConstraintSpan span : s.constraints()) {
 				++spans;
 				
 				System.out.println(
@@ -310,10 +308,8 @@ implements SegmentFileParser {
 					+ "\" end=\"" + span.end()
 					+ "\" hard=\"" + span.isHard()
 					+ "\">");
-				Iterator<ConstraintRule> rules = span.rules();
 				int rs = 0;
-				while (rules.hasNext()) {
-					ConstraintRule rule = rules.next();
+				for (ConstraintRule rule : span.rules()) {
 					++rs;
 					System.out.println(
 						"<lhs>" + rule.lhs()

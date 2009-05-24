@@ -21,6 +21,15 @@ package joshua.decoder.segment_file;
 /**
  * This interface is for an individual (partial) item to seed the
  * chart with. All rules should be flat (no hierarchical nonterminals).
+ * <p>
+ * The {@link Segment}, {@link ConstraintSpan}, and {@link ConstraintRule}
+ * interfaces are for defining an interchange format between a
+ * SegmentFileParser and the Chart class. These interfaces
+ * <emph>should not</emph> be used internally by the Chart. The
+ * objects returned by a SegmentFileParser will not be optimal for
+ * use during decoding. The Chart should convert each of these
+ * objects into its own internal representation during construction.
+ * That is the contract described by these interfaces.
  *
  * @see Type
  *
@@ -87,7 +96,8 @@ public interface ConstraintRule {
 	 * Return the grammar feature values for the RULE. The
 	 * length of this array must be the same as for the regular
 	 * grammar. We cannot enforce this requirement, but the
-	 * {@link joshua.decoder.chart_parser.Chart} must throw an error if there is a mismatch.
+	 * {@link joshua.decoder.chart_parser.Chart} must throw an
+	 * error if there is a mismatch.
 	 */
 	float[] features();
 }

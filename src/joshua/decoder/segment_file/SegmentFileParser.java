@@ -24,7 +24,18 @@ import java.io.IOException;
 
 
 /**
- * This interface defines a parser of segment files.
+ * This interface defines a parser of segment files. This is used
+ * by the main decoder loop (in DecoderThread) to enumerate the
+ * segments for translation.
+ * <p>
+ * The {@link Segment}, {@link ConstraintSpan}, and {@link ConstraintRule}
+ * interfaces are for defining an interchange format between a
+ * SegmentFileParser and the Chart class. These interfaces
+ * <emph>should not</emph> be used internally by the Chart. The
+ * objects returned by a SegmentFileParser will not be optimal for
+ * use during decoding. The Chart should convert each of these
+ * objects into its own internal representation during construction.
+ * That is the contract described by these interfaces.
  *
  * @author wren ng thornton <wren@users.sourceforge.net>
  * @version $LastChangedDate: 2009-03-26 15:06:57 -0400 (Thu, 26 Mar 2009) $
@@ -36,7 +47,7 @@ public interface SegmentFileParser {
 	 * and use the co-iterator to consume them. We use co-iterators
 	 * instead of iterators because some parsers are difficult
 	 * to interrupt, and it can take too much memory to hold
-	 * the whole file in memory during transation or each
+	 * the whole file in memory during transation of each
 	 * segment.
 	 * <p>
 	 * This method shall close the InputStream before exiting,

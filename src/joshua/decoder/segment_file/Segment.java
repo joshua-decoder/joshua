@@ -17,14 +17,23 @@
  */
 package joshua.decoder.segment_file;
 
-import java.util.Iterator;
+import java.util.List;
 
 /**
  * This interface represents an individual segment for translation,
  * corresponding with a single {@link joshua.decoder.chart_parser.Chart}.
- * Each segment contains approximately once sentence or one utterance,
+ * Each segment contains approximately one sentence or one utterance,
  * and can additionally contain some constraints representing initial
  * items for seeding the chart.
+ * <p>
+ * The {@link Segment}, {@link ConstraintSpan}, and {@link ConstraintRule}
+ * interfaces are for defining an interchange format between a
+ * SegmentFileParser and the Chart class. These interfaces
+ * <emph>should not</emph> be used internally by the Chart. The
+ * objects returned by a SegmentFileParser will not be optimal for
+ * use during decoding. The Chart should convert each of these
+ * objects into its own internal representation during construction.
+ * That is the contract described by these interfaces.
  *
  * @author wren ng thornton <wren@users.sourceforge.net>
  * @version $LastChangedDate: 2009-03-26 15:06:57 -0400 (Thu, 26 Mar 2009) $
@@ -51,6 +60,13 @@ public interface Segment {
 	/**
 	 * Return a collection of all constraints associated with
 	 * this segment.
+	 * <p>
+	 * This return type is suboptimal for some SegmentFileParsers.
+	 * It should be an {@link java.util.Iterator} instead in
+	 * order to reduce the coupling between this class and
+	 * Chart. See the note above about the fact that this
+	 * interface should not be used internally by the Chart
+	 * class because it will not be performant.
 	 */
-	Iterator<ConstraintSpan> constraints();
+	List<ConstraintSpan> constraints();
 }

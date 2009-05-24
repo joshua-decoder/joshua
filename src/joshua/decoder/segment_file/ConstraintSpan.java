@@ -17,7 +17,7 @@
  */
 package joshua.decoder.segment_file;
 
-import java.util.Iterator;
+import java.util.List;
 
 /**
  * This interface represents a collection of constraints for a given
@@ -37,6 +37,15 @@ import java.util.Iterator;
  * than the count of words in the segment. Clients may assume that
  * no <code>ConstraintSpan</code> objects are constructed which
  * violate these laws.
+ * <p>
+ * The {@link Segment}, {@link ConstraintSpan}, and {@link ConstraintRule}
+ * interfaces are for defining an interchange format between a
+ * SegmentFileParser and the Chart class. These interfaces
+ * <emph>should not</emph> be used internally by the Chart. The
+ * objects returned by a SegmentFileParser will not be optimal for
+ * use during decoding. The Chart should convert each of these
+ * objects into its own internal representation during construction.
+ * That is the contract described by these interfaces.
  *
  * @author wren ng thornton <wren@users.sourceforge.net>
  * @version $LastChangedDate: 2009-03-26 15:06:57 -0400 (Thu, 26 Mar 2009) $
@@ -59,13 +68,20 @@ public interface ConstraintSpan {
 	/**
 	 * Return whether this is a hard constraint which should
 	 * override the grammar. This value only really matters for
-	 * sets of RULE type constraints.
+	 * sets of <code>RULE</code> type constraints.
 	 */
 	boolean isHard();
 	
 	/**
 	 * Return a collection of the "rules" for this constraint
 	 * span.
+	 * <p>
+	 * This return type is suboptimal for some SegmentFileParsers.
+	 * It should be an {@link java.util.Iterator} instead in
+	 * order to reduce the coupling between this class and
+	 * Chart. See the note above about the fact that this
+	 * interface should not be used internally by the Chart
+	 * class because it will not be performant.
 	 */
-	Iterator<ConstraintRule> rules();
+	List<ConstraintRule> rules();
 }

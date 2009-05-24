@@ -106,6 +106,17 @@ public class DecoderFactory {
 	// BUG: this kind of file munging isn't going to work with generalized SegmentFileParser
 	private void run_parallel_decoder(String testFile, String nbestFile)
 	throws IOException {
+		{ // Guard against errors due the the hackishness of parallel decoding
+			final String className = JoshuaConfiguration.segmentFileParserClass;
+			if ("PlainSegmentParser".equals(className)) {
+				// Do nothing, this one is okay.
+			} else if ("HackishSegmentParser".equals(className)) {
+				logger.warning("Using HackishSegmentParser with parallel decoding may cause sentence IDs to become garbled");
+			} else {
+				throw new IllegalArgumentException("Parallel decoding is currently not supported with SegmentFileParsers other than PlainSegmentParser or HackishSegmentParser");
+			}
+		}
+		
 		this.parallelThreads =
 			new DecoderThread[JoshuaConfiguration.num_parallel_decoders];
 		

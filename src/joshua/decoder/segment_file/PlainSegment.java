@@ -17,9 +17,8 @@
  */
 package joshua.decoder.segment_file;
 
-import joshua.util.NullIterator;
-
-import java.util.Iterator;
+import java.util.List;
+import java.util.LinkedList;
 
 /**
  * This class provides a trivial implementation of a Segment with
@@ -29,8 +28,18 @@ import java.util.Iterator;
  * @version $LastChangedDate: 2009-03-26 15:06:57 -0400 (Thu, 26 Mar 2009) $
  */
 public class PlainSegment implements Segment {
-	private static final NullIterator<ConstraintSpan>
-		constraints = new NullIterator<ConstraintSpan>();
+	
+	/* FIXME: Zhifei demanded to be able to have Lists instead
+	 * of Iterators despite the fact that he should not be
+	 * holding onto them. That means we can no longer trust the
+	 * Chart to treat this class ephemerally since he may decide
+	 * to add things to the constraints list. Which means we
+	 * can no longer use the singleton pattern and allocate one
+	 * static joshua.util.NullIterator object for all instances
+	 * to share. Instead, we now have to allocate an empty
+	 * list for every instance. What a waste.
+	 */
+	private final List<ConstraintSpan> constraints;
 	
 	private final String id;
 	private final String sentence;
@@ -38,11 +47,12 @@ public class PlainSegment implements Segment {
 	public PlainSegment(String id, String sentence) {
 		this.id = id;
 		this.sentence = sentence;
+		this.constraints = new LinkedList<ConstraintSpan>();
 	}
 	
 	public String id() { return this.id; }
 	
 	public String sentence() { return this.sentence; }
 	
-	public Iterator<ConstraintSpan> constraints() { return this.constraints; }
+	public List<ConstraintSpan> constraints() { return this.constraints; }
 }
