@@ -20,14 +20,24 @@
 	<property name="cli"    value="${lib}/commons-cli-2.0-SNAPSHOT.jar"/>
 	
 	
-	<!-- FIXME: maybe we should use an environment variable like we do for FundBugs, in order to minimize the size of our SVN repository. -->
 	<path id="pmd.classpath">
 		<fileset dir="${lib}">
-			<!-- PMD uses a BSD-like license, see ./lib/PMD_LICENSE.txt -->
+			<!-- PMD uses a BSD-like license, see ./lib/LICENSES/LICENSE-pmd.txt -->
 			<include name="pmd-4.2.5.jar"/>
 			<include name="jaxen-1.1.1.jar"/>
 			<include name="asm-3.1.jar "/>
 			<!-- The tarball also came with a JUnit jar, but it seems unecessary. -->
+		</fileset>
+	</path>
+	
+	<path id="jung.classpath">
+		<fileset dir="${lib}">
+			<!-- Jung uses a BSD-like license, see ./lib/LICENSES/LICENSE-jung.txt -->
+			<include name="jung-graph-impl-2.0.jar"/>
+			<include name="jung-algorithms-2.0.jar"/>
+			<include name="jung-visualization-2.0.jar"/>
+			<include name="collections-generic-4.01.jar"/>
+			<!-- The zip file also came with other jars, but they seem unecessary. -->
 		</fileset>
 	</path>
 	
@@ -69,10 +79,15 @@
 	
 <!-- ~~~~~ Java build tasks ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 	
-	<!-- Compile the Java code -->
+	<!-- Compile the Java code for the base library. -->
 	<target name="compile" depends="init,srilm">
 		<javac compiler="javac1.5" srcdir="${src}" destdir="${build}" 
-			classpath="${cli}" debug="on" encoding="utf8"> 
+			classpath="${cli}" debug="on" encoding="utf8"
+			sourcepath="">
+			<!-- We nullify the sourcepath in order to disable Ant's usual resolution mechanism. This makes it an error for our basic code to call into code that has external dependencies, rather than auto-including those files and then having a classpath error. -->
+			<include name="**/*.java"/>
+			<exclude name="joshua/ui/**"/>
+			
 			<!-- This should be on, so people see it.
 				But it can be quite verbose...
 			<compilerarg value="-deprecation"/>
@@ -81,7 +96,7 @@
 	</target>
 	
 	
-	<!-- Create a JAR file of the compiled classes -->
+	<!-- Create a JAR file of the classes compiled at the time this task is run. -->
 	<target name="jar" depends="compile">
 		<jar destfile="${build}/joshua.jar">
 			<fileset dir="${build}">
@@ -91,7 +106,7 @@
 	</target>
 	
 	
-	<!-- Create a JAR file of the source code -->
+	<!-- Create a JAR file of *all* the source code -->
 	<target name="source-jar">
 		<jar destfile="${build}/joshua-src.jar">
 			<fileset dir="${build}">
