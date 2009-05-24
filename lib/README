@@ -14,10 +14,11 @@ The "test" Ant task (not actually Joshua code) requires:
 
 The joshua.ui.alignment_visualizer.* and joshua.ui.tree_visualizer.*
 code requires:
+* jung-api-2.0.jar
 * jung-graph-impl-2.0.jar
 * jung-algorithms-2.0.jar
-* collections-generic-4.01.jar
 * jung-visualization-2.0.jar
+* collections-generic-4.01.jar
 
 
 The joshua.subsample.* code requires:

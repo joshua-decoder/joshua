@@ -22,22 +22,23 @@
 	
 	<path id="pmd.classpath">
 		<fileset dir="${lib}">
-			<!-- PMD uses a BSD-like license, see ./lib/LICENSES/LICENSE-pmd.txt -->
+			<!-- PMD uses a BSD-like license,
+				see ./lib/LICENSES/LICENSE-pmd.txt -->
 			<include name="pmd-4.2.5.jar"/>
 			<include name="jaxen-1.1.1.jar"/>
 			<include name="asm-3.1.jar "/>
-			<!-- The tarball also came with a JUnit jar, but it seems unecessary. -->
 		</fileset>
 	</path>
 	
 	<path id="jung.classpath">
 		<fileset dir="${lib}">
-			<!-- Jung uses a BSD-like license, see ./lib/LICENSES/LICENSE-jung.txt -->
+			<!-- Jung uses a BSD-like license,
+				see ./lib/LICENSES/LICENSE-jung.txt -->
+			<include name="jung-api-2.0.jar"/>
 			<include name="jung-graph-impl-2.0.jar"/>
 			<include name="jung-algorithms-2.0.jar"/>
 			<include name="jung-visualization-2.0.jar"/>
 			<include name="collections-generic-4.01.jar"/>
-			<!-- The zip file also came with other jars, but they seem unecessary. -->
 		</fileset>
 	</path>
 	
@@ -94,13 +95,36 @@
 			-->
 		</javac>
 	</target>
-	
-	
-	<!-- Create a JAR file of the classes compiled at the time this task is run. -->
+	<!-- Create a JAR file of the base library -->
 	<target name="jar" depends="compile">
 		<jar destfile="${build}/joshua.jar">
 			<fileset dir="${build}">
 				<include name="**/*.class"/>
+				<exclude name="joshua/ui/**"/>
+			</fileset>
+		</jar>
+	</target>
+	
+	
+	<!-- Compile the Java code for the ui library. -->
+	<target name="compile-ui" depends="init,compile">
+		<javac compiler="javac1.5" srcdir="${src}" destdir="${build}" 
+			debug="on" encoding="utf8"
+			classpathref="jung.classpath"
+			sourcepath="">
+			<include name="joshua/ui/**/*.java"/>
+			
+			<!-- This should be on, so people see it.
+				But it can be quite verbose...
+			<compilerarg value="-deprecation"/>
+			-->
+		</javac>
+	</target>
+	<!-- Create a JAR file of the ui library -->
+	<target name="jar-ui" depends="compile-ui">
+		<jar destfile="${build}/joshua-ui.jar">
+			<fileset dir="${build}">
+				<include name="joshua/ui/**/*.class"/>
 			</fileset>
 		</jar>
 	</target>
