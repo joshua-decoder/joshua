@@ -13,8 +13,8 @@ public class DerivationTree extends DirectedOrderedSparseMultigraph {
 	// field seperator for joshua output
 	public static final String DELIMITER = "\\|\\|\\|";
 	public static final String SPACE = "\\s+";
-	public static final int TGT_LINE = 795;
-	public static final int SRC_LINE = 9;
+	public static final int TGT_LINE = 1;
+	public static final int SRC_LINE = 1;
 
 	private Node root;
 	private Node sourceRoot;
