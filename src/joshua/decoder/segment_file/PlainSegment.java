@@ -27,7 +27,7 @@ import java.util.LinkedList;
  * @author wren ng thornton <wren@users.sourceforge.net>
  * @version $LastChangedDate: 2009-03-26 15:06:57 -0400 (Thu, 26 Mar 2009) $
  */
-public class PlainSegment implements Segment {
+class PlainSegment implements Segment {
 	
 	/* FIXME: Zhifei demanded to be able to have Lists instead
 	 * of Iterators despite the fact that he should not be

@@ -32,7 +32,7 @@ import java.util.List;
  * @author wren ng thornton <wren@users.sourceforge.net>
  * @version $LastChangedDate: 2009-03-26 15:06:57 -0400 (Thu, 26 Mar 2009) $
  */
-public class SAXSegment {
+class SAXSegment {
 	private String id;
 	private List<SAXConstraintSpan> spans;
 	
