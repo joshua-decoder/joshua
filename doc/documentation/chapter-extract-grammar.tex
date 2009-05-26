@@ -1,10 +1,38 @@
 \chapter{Grammar Extraction}
 
-Start with a file - we'll call it source.txt. 
+Start by compiling an aligned parallel corpus into a directory containing binary data files used by Joshua to represent memory-mapped data structures:
 
 \begin{verbatim}
-java -cp bin joshua.corpus.suffix_array.SuffixArray source.txt vocab.bin corpus.bin suffixes.bin
+java -Dfile.encoding=UTF8 -Xms1024m -Xmx1024m \
+    -cp bin joshua.corpus.suffix_array.Compile \
+    corpus.src corpus.tgt alignments.src-tgt output.josh
 \end{verbatim}
+
+Next, select a test set for which rules will be extracted, and run grammar extraction for that test set:
+
+\begin{verbatim}
+java -Dfile.encoding=UTF8 -Xms4096m -Xmx4096m  \
+    -cp ../../bin joshua.prefix_tree.ExtractRules \
+    --binary-source \
+    --binary-target \
+    --source=output.josh/source.corpus \      
+    --target=output.josh/target.corpus \      
+    --source-vocab=output.josh/common.vocab \      
+    --target-vocab=output.josh/common.vocab \  
+    --source-suffixes=output.josh/source.suffixes \      
+    --target-suffixes=output.josh/target.suffixes \
+    --alignments=output.josh/alignment.grids \ 
+    --alignmentsType=MemoryMappedAlignmentGrids \
+    --test=test.src \
+    --output=src-tgt.grammar.raw \
+\end{verbatim}
+
+The raw grammar produced by {\tt ExtractRules} will almost certainly include duplicate rules. This is because grammar rules are extracted for each test sentence; all such rules are simply concatenated together. So, before the grammar can be used, duplicates must be removed. On systems with standard Unix tools installed, the following command will sort the grammar and remove duplicates:
+
+\begin{verbatim}
+sort -u -o src-tgt.grammar src-tgt.grammar.raw
+\end{verbatim}
+
 
 
 \section{Compatibility with Hiero}
@@ -12,9 +40,9 @@ java -cp bin joshua.corpus.suffix_array.SuffixArray source.txt vocab.bin corpus.
 In many cases it may be desirable to extract a grammar using Joshua that matches as closely as possible the grammars extracted by Hiero's grammar extraction code. The examples used in this section are taken directly from the unit tests for the ExtractRules class; for more information see the following files:
 
 \begin{verbatim}
-test/joshua/prefix\_tree/ExtractRulesTest.java
-src/joshua/prefix\_tree/ExtractRules.java
-src/joshua/prefix\_tree/PrefixTree.java
+test/joshua/prefix_tree/ExtractRulesTest.java
+src/joshua/prefix_tree/ExtractRules.java
+src/joshua/prefix_tree/PrefixTree.java
 \end{verbatim}
 
 
