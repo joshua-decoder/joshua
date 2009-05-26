@@ -115,6 +115,7 @@ public class Chart {
 	int goalSymbolID = -1;
 	
 	HashMap<String,ConstraintSpan> tblConstraintSpansForFiltering; // TODO: each span only has one ConstraintSpan
+	ArrayList<Span> listOfSpansWithHardRuleConstraint; //contain spans that have hard "rule" constraint; key: start_span; value: end_span
 	
 	public Chart(
 		Lattice<Integer>           sentence,
@@ -148,27 +149,14 @@ public class Chart {
 			this.dotcharts[i].seed(); // TODO: should fold into the constructor
 		}
 		
-		// add OOV rules
-		// TODO: the transition cost for phrase model, arity penalty, word penalty are all zero, except the LM cost
-		for (Node<Integer> node : sentence) {
-			for (Arc<Integer> arc : node.getOutgoingArcs()) {
-				// create a rule, but do not add into the grammar trie
-				// TODO: which grammar should we use to create an OOV rule?
-				Rule rule = this.grammars[0].constructOOVRule(p_l_models.size(), 
-						arc.getLabel(), have_lm_model);
-				
-				// tail and head are switched - FIX names:
-				add_axiom(node.getNumber(), arc.getTail().getNumber(), rule,
-						(float)arc.getCost());
-				
-			}
-		}
+	
 		
 		/**
 		 * (1) add manual rule (only allow flat rules) into the
 		 *     chart as constraints
 		 * (2) add RHS or LHS constraint into
 		 *     tblConstraintSpansForFiltering
+		 * (3) add span signature into setOfSpansWithHardRuleConstraint; if the span contains a hard "RULE" constraint
 		 */
 		if (null != constraintSpans) {
 			
@@ -176,6 +164,7 @@ public class Chart {
 				if (null != cSpan.rules()) {
 					boolean shouldAdd = false; // contain LHS or RHS constraints?
 					for (ConstraintRule cRule : cSpan.rules()) {
+						
 						// TODO: prefer switch for enum instead of ==
 						if (cRule.type() == ConstraintRule.Type.RULE) {
 							
@@ -188,6 +177,12 @@ public class Chart {
 									featureScores[i] = cRule.features()[i];
 							}
 							
+							if (cSpan.isHard()){
+								if(listOfSpansWithHardRuleConstraint==null)
+									listOfSpansWithHardRuleConstraint = new ArrayList<Span>();
+								listOfSpansWithHardRuleConstraint.add(new Span(cSpan.start(), cSpan.end()));
+								System.out.println("add hard rule constraint in span " +cSpan.start() +", " + cSpan.end());
+							}
 							//TODO: which grammar should we use to create a mannual rule?
 							int arity = 0; // only allow flat rule (i.e. arity=0)
 							Rule rule = this.grammars[0].constructManualRule(
@@ -210,12 +205,47 @@ public class Chart {
 			}
 		}
 		
+		// add OOV rules; this should be called after the manual constraints have been set up
+		// TODO: the transition cost for phrase model, arity penalty, word penalty are all zero, except the LM cost
+		for (Node<Integer> node : sentence) {
+			for (Arc<Integer> arc : node.getOutgoingArcs()) {
+				// create a rule, but do not add into the grammar trie
+				// TODO: which grammar should we use to create an OOV rule?
+				Rule rule = this.grammars[0].constructOOVRule(p_l_models.size(), 
+						arc.getLabel(), have_lm_model);
+				
+				// tail and head are switched - FIX names:
+				if(isContainHardRuleConstraint( node.getNumber(), arc.getTail().getNumber()) ){
+					//do not add the oov axiom
+					System.out.println("having hard rule constraint in span " +node.getNumber() +", " + arc.getTail().getNumber());
+				}else{
+					add_axiom(node.getNumber(), arc.getTail().getNumber(), rule, (float)arc.getCost());
+				}
+			}
+		}
 		
 		if (logger.isLoggable(Level.FINE))
 			logger.fine("Finished seeding chart.");
 	}
 	
+	private class Span{
+		int startPos;
+		int endPos;
+		public Span(int startPos_, int endPos_){
+			startPos= startPos_;
+			endPos = endPos_;
+		}
+	}
 	
+	private boolean isContainHardRuleConstraint(int startSpan, int endSpan){
+		if(listOfSpansWithHardRuleConstraint!=null){
+			for(Span span : listOfSpansWithHardRuleConstraint){
+				if(startSpan >= span.startPos && endSpan <= span.endPos)
+					return true;
+			}			
+		}
+		return false;
+	}
 	
 	/**
 	 * Construct the hypergraph with the help from DotChart.
@@ -405,6 +435,12 @@ public class Chart {
 	
 	
 	private void add_axioms(int i, int j, RuleCollection rb, float lattice_cost) {
+		if(isContainHardRuleConstraint( i, j )){
+			System.out.println("having hard rule constraint in span " +i +", " + j);
+			return; //do not add any axioms
+		}
+		
+		
 		List<Rule> l_rules = filterRules(i,j, rb.getSortedRules());
 		for (Rule rule : l_rules) {
 			add_axiom(i, j, rule, lattice_cost);
@@ -420,6 +456,11 @@ public class Chart {
 	
 	
 	private void complete_cell(int i, int j, DotItem dt, RuleCollection rb, float lattice_cost) {
+		if(isContainHardRuleConstraint( i, j )){
+			System.out.println("having hard rule constraint in span " +i +", " + j);
+			return; //do not add any axioms
+		}
+		
 		if (null == this.bins[i][j]) {
 			this.bins[i][j] = new Bin(this, this.goalSymbolID);
 		}
@@ -428,6 +469,11 @@ public class Chart {
 	
 	
 	private void complete_cell_cube_prune(int i, int j, DotItem dt,	RuleCollection rb,	float lattice_cost) {
+		if(isContainHardRuleConstraint( i, j )){
+			System.out.println("having hard rule constraints in span " +i +", " + j);
+			return; //do not add any axioms
+		}
+		
 		if (null == this.bins[i][j]) {
 			this.bins[i][j] = new Bin(this, this.goalSymbolID);
 		}
@@ -436,7 +482,7 @@ public class Chart {
 	}
 	
 	private String getSpanSignature(int i, int j) {
-		return "i j";
+		return i + " " + j;
 	}
 	
 	/** if there are any LHS or RHS constraints for a span, 
@@ -460,6 +506,7 @@ public class Chart {
 					}
 				}
 			}
+			//System.out.println("beging to look for " + i + " " + j + "; out size:" + rulesOut.size()+  "; input size: " + rulesIn.size());
 			return rulesOut;
 		}
 	}
@@ -467,17 +514,21 @@ public class Chart {
 	
 	//should we filter out the gRule based on the manually provided constraint cRule
 	private boolean shouldSurvive(ConstraintRule cRule, Rule gRule) {
+		
 		switch (cRule.type()) {
 		case LHS:
 			return (gRule.getLHS() == p_symbolTable.addNonterminal(cRule.lhs()) );
 		case RHS:
 			int[] targetWords = p_symbolTable.addTerminals(cRule.nativeRhs());
+			
 			if (targetWords.length != gRule.getEnglish().length)
 				return false;
+			
 			for (int t = 0; t < targetWords.length; t++) {
 				if (targetWords[t] != gRule.getEnglish()[t])
 					return false;
 			}
+			
 			return true;
 		default: // not surviving
 			return false;

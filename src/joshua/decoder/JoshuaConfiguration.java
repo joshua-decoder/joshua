@@ -135,7 +135,7 @@ public class JoshuaConfiguration {
 	//do we use a LM feature?
 	public static boolean have_lm_model = false;
 	
-	public static String segmentFileParserClass = null;
+	public static String segmentFileParserClass = null;//PlainSegmentParser, HackishSegmentParser, SAXSegmentParser
 	
 	
 	private static final Logger logger =
