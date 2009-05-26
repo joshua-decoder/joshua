@@ -19,8 +19,8 @@ package joshua.ui.tree_visualizer;
 
 import org.apache.commons.collections15.Transformer;
 
-import edu.uci.ics.jung.algorithms.layout.*;
-import edu.uci.ics.jung.graph.*;
+import edu.uci.ics.jung.algorithms.layout.TreeLayout;
+import edu.uci.ics.jung.graph.DelegateForest;
 
 import java.awt.geom.Point2D;
 
@@ -35,12 +35,12 @@ public class DerivationTreeTransformer implements Transformer<Node,Point2D> {
 	public DerivationTreeTransformer(DerivationTree t)
 	{
 		graph = t;
-		DelegateForest del = new DelegateForest(t);
+		DelegateForest<Node,DerivationTreeEdge> del = new DelegateForest<Node,DerivationTreeEdge>(t);
 		del.setRoot(t.getRoot());
 		del.setRoot(t.getSourceRoot());
 		root = t.getRoot();
 		sourceRoot = t.getSourceRoot();
-		treeLayout = new TreeLayout(del, 125);
+		treeLayout = new TreeLayout<Node,DerivationTreeEdge>(del, 125);
 	}
 
 	public Point2D transform(Node n)

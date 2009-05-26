@@ -17,18 +17,18 @@
  */
 package joshua.ui.tree_visualizer;
 
-import edu.uci.ics.jung.graph.*;
-
 import java.util.Scanner;
 import java.util.LinkedList;
-import java.util.Collection;
 
-import javax.swing.*;
+import edu.uci.ics.jung.graph.DirectedOrderedSparseMultigraph;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 
+import javax.swing.JFrame;
+import javax.swing.WindowConstants;
 
-public class DerivationTree extends DirectedOrderedSparseMultigraph {
+public class DerivationTree extends DirectedOrderedSparseMultigraph<Node,DerivationTreeEdge> {
 	// man are java regexes ugly
 	// field seperator for joshua output
 	public static final String DELIMITER = "\\|\\|\\|";
@@ -185,8 +185,8 @@ public class DerivationTree extends DirectedOrderedSparseMultigraph {
 				continue;
 			int start = v.sourceStart();
 			int end = v.sourceEnd();
-			Object par = getPredecessors(v).toArray()[0];
-			for (Node x : (Collection<Node>) getSuccessors(par)) {
+			Node par = (Node) getPredecessors(v).toArray()[0];
+			for (Node x : getSuccessors(par)) {
 				int xStart = x.sourceStart();
 				int xEnd = x.sourceEnd();
 				if (x == v) // pointer comparison

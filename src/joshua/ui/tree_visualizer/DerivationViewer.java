@@ -27,11 +27,12 @@ import java.awt.geom.*;
 
 import javax.swing.JLabel;
 
-import edu.uci.ics.jung.graph.*;
-import edu.uci.ics.jung.algorithms.layout.*;
-import edu.uci.ics.jung.visualization.*;
-import edu.uci.ics.jung.visualization.decorators.*;
-import edu.uci.ics.jung.visualization.control.*;
+import edu.uci.ics.jung.algorithms.layout.CircleLayout;
+import edu.uci.ics.jung.algorithms.layout.StaticLayout;
+import edu.uci.ics.jung.visualization.VisualizationViewer;
+import edu.uci.ics.jung.visualization.control.DefaultModalGraphMouse;
+import edu.uci.ics.jung.visualization.control.ModalGraphMouse;
+import edu.uci.ics.jung.visualization.decorators.ToStringLabeller;
 import edu.uci.ics.jung.visualization.renderers.Renderer.VertexLabel.Position;
 
 import org.apache.commons.collections15.Transformer;
@@ -44,13 +45,13 @@ public class DerivationViewer extends VisualizationViewer<Node,DerivationTreeEdg
 
 	public DerivationViewer(DerivationTree g)
 	{
-		super(new CircleLayout(g));
-		setGraphLayout(new StaticLayout(g, new DerivationTreeTransformer(g)));
+		super(new CircleLayout<Node,DerivationTreeEdge>(g));
+		setGraphLayout(new StaticLayout<Node,DerivationTreeEdge>(g, new DerivationTreeTransformer(g)));
 		g.addCorrespondences();
 		setPreferredSize(new Dimension(DEFAULT_HEIGHT, DEFAULT_WIDTH));
-		getRenderContext().setVertexLabelTransformer(new ToStringLabeller());
+		getRenderContext().setVertexLabelTransformer(new ToStringLabeller<Node>());
 
-		DefaultModalGraphMouse graphMouse = new DefaultModalGraphMouse();
+		DefaultModalGraphMouse<Node,DerivationTreeEdge> graphMouse = new DefaultModalGraphMouse<Node,DerivationTreeEdge>();
 		graphMouse.setMode(ModalGraphMouse.Mode.TRANSFORMING);
 		setGraphMouse(graphMouse);
 

@@ -21,16 +21,13 @@ package joshua.ui.alignment_visualizer;
 import java.awt.Dimension;
 import java.awt.Paint;
 import java.awt.Color;
-import java.awt.Stroke;
-import java.awt.BasicStroke;
 import java.awt.Shape;
-import java.awt.geom.*;
+import java.awt.geom.Rectangle2D;
 
-import edu.uci.ics.jung.graph.*;
-import edu.uci.ics.jung.algorithms.layout.*;
-import edu.uci.ics.jung.visualization.*;
-import edu.uci.ics.jung.visualization.decorators.*;
-import edu.uci.ics.jung.visualization.control.*;
+import edu.uci.ics.jung.visualization.VisualizationViewer;
+import edu.uci.ics.jung.visualization.control.DefaultModalGraphMouse;
+import edu.uci.ics.jung.visualization.control.ModalGraphMouse;
+import edu.uci.ics.jung.visualization.decorators.ToStringLabeller;
 import edu.uci.ics.jung.visualization.renderers.Renderer.VertexLabel.Position;
 
 import org.apache.commons.collections15.Transformer;
@@ -45,9 +42,9 @@ public class AlignmentViewer extends VisualizationViewer<Word,Integer> {
 	{
 		super(WordAlignmentLayout.makeWordAlignmentLayout(g, 100, 80));
 		setPreferredSize(new Dimension(DEFAULT_HEIGHT, DEFAULT_WIDTH));
-		getRenderContext().setVertexLabelTransformer(new ToStringLabeller());
+		getRenderContext().setVertexLabelTransformer(new ToStringLabeller<Word>());
 
-		DefaultModalGraphMouse graphMouse = new DefaultModalGraphMouse();
+		DefaultModalGraphMouse<Word,Integer> graphMouse = new DefaultModalGraphMouse<Word,Integer>();
 		graphMouse.setMode(ModalGraphMouse.Mode.TRANSFORMING);
 		setGraphMouse(graphMouse);
 
