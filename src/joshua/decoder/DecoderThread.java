@@ -193,6 +193,10 @@ public class DecoderThread extends Thread {
 		}
 		
 		
+		// BUG: we need to run the segmentParser over the file once in order to catch any errors before we do the actual translation. Getting formatting errors asynchronously after a long time is a Bad Thing(tm). Some errors may be recoverable (e.g. by skipping the sentence that's invalid), but we're going to call all exceptions errors for now.
+		
+		
+		// Translate the test file
 		this.nbestWriter = FileUtility.getWriteFileStream(this.nbestFile);
 		try {
 			try {

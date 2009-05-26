@@ -54,12 +54,10 @@ public interface Segment {
 	String sentence();
 	
 	
-	// TODO: maybe we should return a smarter collection like
-	// a map indexed on start and/or stop indices. That's up
-	// to the Chart constructors.
 	/**
 	 * Return a collection of all constraints associated with
-	 * this segment.
+	 * this segment. Implementations of this interface should
+	 * ensure that no overlapping hard spans are ever constructed.
 	 * <p>
 	 * This return type is suboptimal for some SegmentFileParsers.
 	 * It should be an {@link java.util.Iterator} instead in

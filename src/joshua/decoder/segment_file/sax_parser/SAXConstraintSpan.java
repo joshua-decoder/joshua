@@ -64,7 +64,16 @@ class SAXConstraintSpan {
 	}
 	
 	
-	/** Verify type invariants for ConstraintSpan. */
+	/**
+	 * Verify type invariants for ConstraintSpan. Namely, ensure
+	 * that the start and end indices are not too large. The
+	 * constructor already checks for indices which are too
+	 * small (i.e. negative) or where the end index is smaller
+	 * than the start index.
+	 * <p>
+	 * This method also ensures, recursively, that the
+	 * ConstraintRules are also type-correct.
+	 */
 	public ConstraintSpan typeCheck(String sentence) throws SAXException {
 		final int     start  = this.start;
 		final int     end    = this.end;

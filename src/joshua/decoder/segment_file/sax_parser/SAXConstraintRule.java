@@ -51,7 +51,11 @@ class SAXConstraintRule {
 	}
 	
 	
-	/** Verify type invariants for ConstraintRule. */
+	/**
+	 * Verify type invariants for ConstraintRule. Namely, ensure
+	 * that the object adheres to one of the {@link ConstraintRule.Type}
+	 * options.
+	 */
 	public ConstraintRule typeCheck(String span) throws SAXException {
 		
 		ConstraintRule.Type tempType = null;
@@ -79,9 +83,9 @@ class SAXConstraintRule {
 		
 		final ConstraintRule.Type type = tempType;
 		final float[] features   = this.features;
-		final String   lhs        = this.lhs;
-		final String   nativeRhs  = this.rhs;
-		final String   foreignRhs = span;
+		final String  lhs        = this.lhs;
+		final String  nativeRhs  = this.rhs;
+		final String  foreignRhs = span;
 		
 		return new ConstraintRule() {
 			public ConstraintRule.Type type() { return type;       }

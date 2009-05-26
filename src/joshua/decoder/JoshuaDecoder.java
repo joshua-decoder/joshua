@@ -102,7 +102,7 @@ public class JoshuaDecoder {
 	 * @param configFile Name of configuration file.
 	 */
 	public JoshuaDecoder(String configFile) {
-		this.grammarFactories = new ArrayList<GrammarFactory>();
+		this();
 		this.initialize(configFile);
 	}
 	
@@ -336,7 +336,7 @@ public class JoshuaDecoder {
 	// TODO: maybe move to JoshuaConfiguration to enable moving the featureFunction parsing there (Sets: symbolTable, defaultNonterminals)
 	private void initializeSymbolTable(SymbolTable existingSymbols) {
 		if (JoshuaConfiguration.use_remote_lm_server) {
-			if (existingSymbols==null) {
+			if (null == existingSymbols) {
 				// Within the decoder, we assume BuildinSymbol when using the remote LM
 				this.symbolTable =
 					new BuildinSymbol(JoshuaConfiguration.remote_symbol_tbl);
@@ -345,20 +345,18 @@ public class JoshuaDecoder {
 			}
 		} else if (JoshuaConfiguration.use_srilm) {
 			logger.finest("Using SRILM symbol table");
-			if (existingSymbols==null) {
+			if (null == existingSymbols) {
 				this.symbolTable =
 					new SrilmSymbol(JoshuaConfiguration.g_lm_order);
 			} else {
 				logger.finest("Populating SRILM symbol table with symbols from existing symbol table");
 				this.symbolTable =
 					new SrilmSymbol(
-							existingSymbols, 
+							existingSymbols,
 							JoshuaConfiguration.g_lm_order);
 			}
-			
-			
 		} else {
-			if (existingSymbols==null) {
+			if (null == existingSymbols) {
 				this.symbolTable = new BuildinSymbol(null);
 			} else {
 				this.symbolTable = existingSymbols;
@@ -408,7 +406,7 @@ public class JoshuaDecoder {
 					JoshuaConfiguration.g_lm_order,
 					JoshuaConfiguration.lm_file);
 		} else {
-			// using the built-in JAVA implementatoin of LM, may not be as scalable as SRILM
+			// using the built-in JAVA implementation of LM, may not be as scalable as SRILM
 			this.languageModel = new LMGrammarJAVA(
 				(BuildinSymbol)this.symbolTable,
 				JoshuaConfiguration.g_lm_order,
@@ -419,8 +417,6 @@ public class JoshuaDecoder {
 	}
 	
 	
-	// TODO: these Patterns should probably be extracted out and compiled only once (either by us or by MemoryBasedBatchGrammar)
-	// XXX: Huh? What patterns? Can the above todo be deleted? --Lane
 	private void initializeGlueGrammar() throws IOException {
 		logger.info("Constructing glue grammar...");
 		
@@ -454,7 +450,6 @@ public class JoshuaDecoder {
 					JoshuaConfiguration.default_non_terminal,
 					JoshuaConfiguration.goal_symbol,
 					JoshuaConfiguration.span_limit));
-		
 	}
 	
 	
@@ -478,7 +473,7 @@ public class JoshuaDecoder {
 		String binarySourceSuffixesFileName =
 			JoshuaConfiguration.tm_file + 
 			File.separator + "source.suffixes";
-			//			JoshuaConfiguration.sa_target + "." +
+//			JoshuaConfiguration.sa_target + "." +
 //			JoshuaConfiguration.sa_suffixes_suffix;
 		
 		
@@ -489,13 +484,13 @@ public class JoshuaDecoder {
 		String binaryTargetCorpusFileName =
 			JoshuaConfiguration.tm_file + 
 			File.separator + "target.corpus";
-			//			JoshuaConfiguration.sa_target + "." +
+//			JoshuaConfiguration.sa_target + "." +
 //			JoshuaConfiguration.sa_corpus_suffix;
 		
 //		String binaryTargetSuffixesFileName =
 //			JoshuaConfiguration.tm_file + 
 //			File.separator + "target.suffixes";
-			//			JoshuaConfiguration.sa_target + "." +
+//			JoshuaConfiguration.sa_target + "." +
 //			JoshuaConfiguration.sa_suffixes_suffix;
 		
 		
@@ -594,7 +589,7 @@ public class JoshuaDecoder {
 			line = line.trim();
 			if (Regex.commentOrEmptyLine.matches(line)) continue;
 			
-			if (line.indexOf("=") == -1) { //ignore lines with "="
+			if (line.indexOf("=") == -1) { // ignore lines with "="
 				String[] fds = Regex.spaces.split(line);
 				
 				if ("lm".equals(fds[0]) && fds.length == 2) { // lm order weight
@@ -635,7 +630,7 @@ public class JoshuaDecoder {
 							"Process Line: %s\nAdd PhraseModel, owner: %s; column: %d; weight: %.3f",
 							line, owner, column, weight));
 					
-				} else if ("arityphrasepenalty".equals(fds[0]) && fds.length == 5){//arityphrasepenalty owner start_arity end_arity weight
+				} else if ("arityphrasepenalty".equals(fds[0]) && fds.length == 5) { // arityphrasepenalty owner start_arity end_arity weight
 					int owner      = this.symbolTable.addTerminal(fds[1]);
 					int startArity = Integer.parseInt(fds[2].trim());
 					int endArity   = Integer.parseInt(fds[3].trim());

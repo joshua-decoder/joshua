@@ -25,6 +25,7 @@ import org.xml.sax.SAXException;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.BitSet;
 
 /**
  * Parsing state for partial Segment objects.
@@ -47,7 +48,14 @@ class SAXSegment {
 	}
 	
 	
-	/** Verify type invariants for Segment. */
+	/**
+	 * Verify type invariants for Segment. Namely, ensure that
+	 * there are no overlapping hard spans.
+	 * <p>
+	 * This method also ensures, recursively, that the
+	 * ConstraintSpans (and thus ConstraintRules) are also
+	 * type-correct.
+	 */
 	public Segment typeCheck(String text) throws SAXException {
 		
 		final String id       = this.id;
@@ -56,6 +64,23 @@ class SAXSegment {
 		final List<ConstraintSpan> spans = new LinkedList<ConstraintSpan>();
 		for (SAXConstraintSpan span : this.spans) {
 			spans.add(span.typeCheck(sentence));
+		}
+		
+		
+		// TODO: this bit-vector should be exposed through the Segment interface (without mutability!) since Chart will want to construct one anyways for ensuring proper implementation of hard constraints for overlapping grammar rules
+		BitSet hardSpans = new BitSet();
+		for (ConstraintSpan span : spans) {
+			if (span.isHard()) {
+				if (hardSpans.get(span.start(),span.end()).isEmpty()) {
+					hardSpans.set(span.start(),span.end());
+				} else {
+					// This is a potentially-recoverable exception (by skipping this segment).
+					// TODO: we should make a subclass of SAXException for potentially-recoverable invalidities (to distinguish them from unrecoverable invalidity, or from malformedness)
+					
+					// TODO: give a better error message (e.g. line/column numbers; segment id, span numbers, index range;...)
+					throw new SAXException("Overlapping hard spans");
+				}
+			}
 		}
 		
 		return new Segment() {

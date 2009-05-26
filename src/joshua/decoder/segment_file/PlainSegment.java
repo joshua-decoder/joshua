@@ -32,7 +32,7 @@ class PlainSegment implements Segment {
 	/* FIXME: Zhifei demanded to be able to have Lists instead
 	 * of Iterators despite the fact that he should not be
 	 * holding onto them. That means we can no longer trust the
-	 * Chart to treat this class ephemerally since he may decide
+	 * Chart to treat this class immutably since he may decide
 	 * to add things to the constraints list. Which means we
 	 * can no longer use the singleton pattern and allocate one
 	 * static joshua.util.NullIterator object for all instances
