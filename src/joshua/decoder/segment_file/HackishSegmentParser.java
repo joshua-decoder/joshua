@@ -18,7 +18,6 @@
 package joshua.decoder.segment_file;
 
 import joshua.util.io.LineReader;
-import joshua.util.NullIterator;
 import joshua.util.CoIterator;
 import joshua.util.Regex;
 
@@ -26,7 +25,6 @@ import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 import java.io.InputStream;
 import java.io.IOException;
-import java.util.Iterator;
 
 /**
  * This parser regognizes an ad hoc format that mixes an SGML-like

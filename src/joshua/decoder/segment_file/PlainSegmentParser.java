@@ -18,13 +18,11 @@
 package joshua.decoder.segment_file;
 
 import joshua.util.io.LineReader;
-import joshua.util.NullIterator;
 import joshua.util.CoIterator;
 import joshua.util.Regex;
 
 import java.io.InputStream;
 import java.io.IOException;
-import java.util.Iterator;
 
 /**
  * This is a parser for plain files with one sentence per line and

@@ -24,7 +24,6 @@ import joshua.decoder.ff.FFTransitionResult;
 import joshua.decoder.ff.FeatureFunction;
 
 import joshua.decoder.ff.tm.Rule;
-import joshua.decoder.ff.tm.RuleCollection;
 
 import joshua.decoder.hypergraph.HGNode;
 import joshua.decoder.hypergraph.HyperEdge;
