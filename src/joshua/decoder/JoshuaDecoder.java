@@ -120,11 +120,10 @@ public class JoshuaDecoder {
 	/** 
 	 * Gets an uninitialized decoder for use in testing.
 	 * <p>
-	 * This method is package-private because it should only
-	 * ever be called by unit tests located in this package for
-	 * use in testing.
+	 * This method is called by unit tests or any outside packages (e.g., MERT) 
+	 * relying on the decoder.
 	 */
-	static JoshuaDecoder getUninitalizedDecoder() {
+	static public JoshuaDecoder getUninitalizedDecoder() {
 		return new JoshuaDecoder();
 	}
 	
