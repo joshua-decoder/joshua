@@ -17,8 +17,8 @@
  */
 package joshua.corpus.suffix_array;
 
+import joshua.corpus.AlignedParallelCorpus;
 import joshua.corpus.Corpus;
-import joshua.corpus.ParallelCorpus;
 import joshua.corpus.Phrase;
 import joshua.corpus.RuleExtractor;
 import joshua.corpus.alignment.Alignments;
@@ -38,43 +38,65 @@ import joshua.prefix_tree.PrefixTree;
  * 
  * @author Lane Schwartz
  */
-public class AlignedParallelCorpus implements ParallelCorpus, GrammarFactory {
+public class ParallelCorpusGrammarFactory extends AlignedParallelCorpus implements GrammarFactory {
 
+	/** Source language corpus, represented as a suffix array. */
 	private final Suffixes sourceSuffixArray;
-	private final Corpus targetCorpus;
-	private final Alignments alignments;
+	
+	/** Lexical translation probability table. */
 	private final LexicalProbabilities lexProbs;
 	
-	private final int maxPhraseSpan;
-	private final int maxPhraseLength;
-	private final int maxNonterminals;
-	private final int minNonterminalSpan;
-	
+	/** Responsible for extracting translation rules from a parallel corpus. */
 	private final RuleExtractor ruleExtractor;
 	
+	/**
+	 * Max span in the source corpus of any extracted hierarchical
+	 * phrase
+	 */
+	private final int maxPhraseSpan;
+	
+	/**
+	 * Maximum number of terminals plus nonterminals allowed
+	 * in any extracted hierarchical phrase.
+	 */
+	private final int maxPhraseLength;
+	
+	/**
+	 * Maximum number of nonterminals allowed on the 
+	 * right-hand side of any extracted rule
+	 */
+	private final int maxNonterminals;
+	
+	/**
+	 * Minimum span in the source corpus of any 
+	 * nonterminal in an extracted hierarchical phrase.
+	 */                           
+	private final int minNonterminalSpan;
 	
 	/**
 	 * Constructs a factory capable of getting a grammar backed
 	 * by a suffix array.
 	 * 
-	 * @param sourceSuffixArray
-	 * @param targetCorpus
-	 * @param alignments
-	 * @param maxPhraseSpan
-	 * @param maxPhraseLength
-	 * @param maxNonterminals
+	 * @param sourceSuffixArray Source language corpus, 
+	 *                          represented as a suffix array
+	 * @param targetCorpus      Target language corpus
+	 * @param alignments        Parallel corpus alignment points
+	 * @param maxPhraseSpan     Max span in the source corpus of any 
+	 *                          extracted hierarchical phrase
+	 * @param maxPhraseLength   Maximum number of terminals plus nonterminals 
+	 *                          allowed in any extracted hierarchical phrase
+	 * @param maxNonterminals   Maximum number of nonterminals allowed on the 
+	 *                          right-hand side of any extracted rule
 	 */
-	public AlignedParallelCorpus(Suffixes sourceSuffixArray, Corpus targetCorpus, Alignments alignments, int sampleSize, int maxPhraseSpan, int maxPhraseLength, int maxNonterminals, int minNonterminalSpan, float lexProbFloor) {
+	public ParallelCorpusGrammarFactory(Suffixes sourceSuffixArray, Corpus targetCorpus, Alignments alignments, int sampleSize, int maxPhraseSpan, int maxPhraseLength, int maxNonterminals, int minNonterminalSpan, float lexProbFloor) {
+		super(sourceSuffixArray.getCorpus(), targetCorpus, alignments);
 		this.sourceSuffixArray = sourceSuffixArray;
-		this.targetCorpus      = targetCorpus;
-		this.alignments        = alignments;
 		this.maxPhraseSpan     = maxPhraseSpan;
 		this.maxPhraseLength   = maxPhraseLength;
 		this.maxNonterminals   = maxNonterminals;
 		this.minNonterminalSpan = minNonterminalSpan;
 		this.lexProbs          = new LexProbs(this,lexProbFloor); 
-		this.ruleExtractor = new HierarchicalRuleExtractor(sourceSuffixArray, targetCorpus, alignments, lexProbs, sampleSize, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan);
-		
+		this.ruleExtractor = new HierarchicalRuleExtractor(sourceSuffixArray, targetCorpus, alignments, lexProbs, sampleSize, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan);	
 	}
 	
 	
@@ -93,30 +115,15 @@ public class AlignedParallelCorpus implements ParallelCorpus, GrammarFactory {
 			words[i] = sentence.getWordID(i);
 		}
 		
-		PrefixTree prefixTree = new PrefixTree(sourceSuffixArray, targetCorpus, alignments, sourceSuffixArray.getVocabulary(), lexProbs, ruleExtractor, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan);
+		PrefixTree prefixTree = new PrefixTree(
+				sourceSuffixArray, targetCorpus, alignments, 
+				sourceSuffixArray.getVocabulary(), lexProbs, ruleExtractor, 
+				maxPhraseSpan, maxPhraseLength, 
+				maxNonterminals, minNonterminalSpan);
+		
 		prefixTree.add(words);
 		
 		return prefixTree.getRoot();
-	}
-
-
-	public Alignments getAlignments() {
-		return this.alignments;
-	}
-
-
-	public int getNumSentences() {
-		return this.alignments.size();
-	}
-
-
-	public Corpus getSourceCorpus() {
-		return this.sourceSuffixArray.getCorpus();
-	}
-
-
-	public Corpus getTargetCorpus() {
-		return this.targetCorpus;
 	}
 	
 }

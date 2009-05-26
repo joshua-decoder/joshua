@@ -91,8 +91,36 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 	 */
 	protected final Alignments alignments;
 	
+	/**
+	 * Specifies the maximum number of rules 
+	 * that will be extracted for any source pattern
+	 */
 	protected final int sampleSize;
 	
+	/**
+     * Constructs a rule extractor for 
+     * Hiero-style hierarchical phrase-based translation.
+	 * 
+	 * @param suffixArray        Suffix array representing the 
+	 *                           source language corpus
+	 * @param targetCorpus       Corpus array representing the
+	 *                           target language corpus
+	 * @param alignments         Represents alignments between words in the 
+	 *                           source corpus and the target corpus 
+	 * @param lexProbs           Lexical translation probability table
+	 * @param sampleSize         Specifies the maximum number of rules 
+	 *                           that will be extracted for any source pattern
+	 * @param maxPhraseSpan      Max span in the source corpus of any 
+	 *                           extracted hierarchical phrase
+	 * @param maxPhraseLength    Maximum number of terminals plus nonterminals
+	 *                           allowed in any extracted hierarchical phrase
+	 * @param minNonterminalSpan Minimum span in the source corpus of any 
+	 *                           nonterminal in an extracted hierarchical 
+	 *                           phrase
+	 * @param maxNonterminalSpan Maximum span in the source corpus of any 
+	 *                           nonterminal in an extracted hierarchical 
+	 *                           phrase
+	 */
 	public HierarchicalRuleExtractor(Suffixes suffixArray, Corpus targetCorpus, Alignments alignments, LexicalProbabilities lexProbs, int sampleSize, int maxPhraseSpan, int maxPhraseLength, int minNonterminalSpan, int maxNonterminalSpan) {
 		this.lexProbs = lexProbs;
 		this.maxPhraseSpan = maxPhraseSpan;

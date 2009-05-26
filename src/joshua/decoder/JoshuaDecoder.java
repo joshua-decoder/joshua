@@ -36,7 +36,7 @@ import joshua.corpus.Corpus;
 import joshua.corpus.alignment.Alignments;
 import joshua.corpus.alignment.mm.MemoryMappedAlignmentGrids;
 import joshua.corpus.mm.MemoryMappedCorpusArray;
-import joshua.corpus.suffix_array.AlignedParallelCorpus;
+import joshua.corpus.suffix_array.ParallelCorpusGrammarFactory;
 import joshua.corpus.suffix_array.Suffixes;
 import joshua.corpus.suffix_array.mm.MemoryMappedSuffixArray;
 import joshua.corpus.vocab.BuildinSymbol;
@@ -254,7 +254,7 @@ public class JoshuaDecoder {
 						try {
 							
 							// Use corpus-based grammar
-							AlignedParallelCorpus parallelCorpus = getParallelCorpus();							
+							ParallelCorpusGrammarFactory parallelCorpus = getParallelCorpus();							
 							grammarFactories.add(parallelCorpus);
 							
 							// Needs: symbolTable; Sets: languageModel
@@ -458,7 +458,7 @@ public class JoshuaDecoder {
 	}
 	
 	
-	private AlignedParallelCorpus getParallelCorpus()
+	private ParallelCorpusGrammarFactory getParallelCorpus()
 	throws IOException, ClassNotFoundException {
 		
 		int maxCacheSize = JoshuaConfiguration.sa_rule_cache_size;
@@ -569,7 +569,7 @@ public class JoshuaDecoder {
 					targetCorpusArray);
 				
 		// Finally, add the parallel corpus that will serve as a grammar
-		AlignedParallelCorpus parallelCorpus = new AlignedParallelCorpus(
+		ParallelCorpusGrammarFactory parallelCorpus = new ParallelCorpusGrammarFactory(
 				sourceSuffixArray,
 				targetCorpusArray,
 				alignments,

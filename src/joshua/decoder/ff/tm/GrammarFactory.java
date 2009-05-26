@@ -46,10 +46,10 @@ public interface GrammarFactory {
 	 * may be generated online, partially loaded from disk,
 	 * remain unchanged etc.
 	 * 
-	 * @param sentence the next sentence to be translated
+	 * @param sentence A sentence to be translated
 	 * 
-	 * @return a grammar that represents a set of translation
-	 *         rules
+	 * @return A grammar that represents a set of translation
+	 *         rules, relevant for translating (at least) the given sentence.
 	 */
 	Grammar getGrammarForSentence(Phrase sentence);
 

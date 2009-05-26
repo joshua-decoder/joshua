@@ -29,6 +29,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.GZIPOutputStream;
 
+import joshua.corpus.AlignedParallelCorpus;
 import joshua.corpus.Corpus;
 import joshua.corpus.MatchedHierarchicalPhrases;
 import joshua.corpus.ParallelCorpus;
@@ -325,12 +326,14 @@ public class ExtractRules {
 
 			if (logger.isLoggable(Level.INFO)) logger.info("Constructing lexical probabilities table");
 
-			ParallelCorpus parallelCorpus = new ParallelCorpus() {
-				public Alignments getAlignments() { return alignments; } 
-				public int getNumSentences() { return sourceCorpusArray.getNumSentences(); }
-				public Corpus getSourceCorpus() { return sourceCorpusArray; }
-				public Corpus getTargetCorpus() { return targetCorpusArray; }
-			};
+			ParallelCorpus parallelCorpus = 
+				new AlignedParallelCorpus(sourceCorpusArray, targetCorpusArray, alignments);
+//			{
+//				public Alignments getAlignments() { return alignments; } 
+//				public int getNumSentences() { return sourceCorpusArray.getNumSentences(); }
+//				public Corpus getSourceCorpus() { return sourceCorpusArray; }
+//				public Corpus getTargetCorpus() { return targetCorpusArray; }
+//			};
 			
 			LexicalProbabilities lexProbs = 
 				new LexProbs(parallelCorpus, Float.MIN_VALUE);

@@ -24,6 +24,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import joshua.corpus.AlignedParallelCorpus;
 import joshua.corpus.Corpus;
 import joshua.corpus.CorpusArray;
 import joshua.corpus.ParallelCorpus;
@@ -186,12 +187,14 @@ public class PrefixTreeAdvancedTest {
 			*/
 //			String alignmentString = "0-0 1-1 2-2 3-3 4-4 5-5 6-6 7-7 8-8 9-9 10-10 11-11 12-12 13-13 14-14 15-15 16-16 17-17";
 		
-			ParallelCorpus parallelCorpus = new ParallelCorpus() {
-				public Alignments getAlignments() { return alignments; } 
-				public int getNumSentences() { return suffixArray.getCorpus().getNumSentences(); }
-				public Corpus getSourceCorpus() { return suffixArray.getCorpus(); }
-				public Corpus getTargetCorpus() { return targetCorpusArray; }
-			};
+			ParallelCorpus parallelCorpus = 
+				new AlignedParallelCorpus(suffixArray.getCorpus(), targetCorpusArray, alignments);
+//			{
+//				public Alignments getAlignments() { return alignments; } 
+//				public int getNumSentences() { return suffixArray.getCorpus().getNumSentences(); }
+//				public Corpus getSourceCorpus() { return suffixArray.getCorpus(); }
+//				public Corpus getTargetCorpus() { return targetCorpusArray; }
+//			};
 			
 			this.lexProbs = new LexProbs(parallelCorpus, Float.MIN_VALUE);
 			

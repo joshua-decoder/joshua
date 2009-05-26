@@ -24,6 +24,7 @@ import java.io.UnsupportedEncodingException;
 import java.util.Collections;
 import java.util.Date;
 
+import joshua.corpus.AlignedParallelCorpus;
 import joshua.corpus.Corpus;
 import joshua.corpus.CorpusArray;
 import joshua.corpus.LabeledSpan;
@@ -140,12 +141,13 @@ public class BetterLexProbsTest {
 		this.alignmentArray =
 			SuffixArrayFactory.createAlignments(alignmentFileName, sourceSuffixArray, targetSuffixArray);
 
-		this.parallelCorpus = new ParallelCorpus() {
-			public Alignments getAlignments() { return alignmentArray; } 
-			public int getNumSentences() { return sourceCorpusArray.getNumSentences(); }
-			public Corpus getSourceCorpus() { return sourceCorpusArray; }
-			public Corpus getTargetCorpus() { return targetCorpusArray; }
-		};
+		this.parallelCorpus = new AlignedParallelCorpus(sourceCorpusArray, targetCorpusArray, alignmentArray);
+//		{
+//			public Alignments getAlignments() { return alignmentArray; } 
+//			public int getNumSentences() { return sourceCorpusArray.getNumSentences(); }
+//			public Corpus getSourceCorpus() { return sourceCorpusArray; }
+//			public Corpus getTargetCorpus() { return targetCorpusArray; }
+//		};
 	}
 	
 	@Test(dependsOnMethods={"setupCorpus"})
