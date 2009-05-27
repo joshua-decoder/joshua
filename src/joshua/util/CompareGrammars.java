@@ -140,6 +140,8 @@ public class CompareGrammars {
 
 		String fieldDelimiter = HieroFormatReader.getFieldDelimiter();
 		
+		boolean compareScores = true;
+		
 		// Compare left-hand sides
 		{
 			Set<String> leftHandSides1 = getFields(grammarFile1, fieldDelimiter, 0);
@@ -149,6 +151,7 @@ public class CompareGrammars {
 				logger.info("Grammar files have the same set of left-hand sides");
 			} else {
 				logger.warning("Grammar files have differing sets of left-hand sides");
+				compareScores = false;
 			}
 		}
 		
@@ -161,6 +164,7 @@ public class CompareGrammars {
 				logger.info("Grammar files have the same set of source right-hand sides");
 			} else {
 				logger.warning("Grammar files have differing sets of source right-hand sides");
+				compareScores = false;
 			}
 		}
 		
@@ -174,11 +178,12 @@ public class CompareGrammars {
 				logger.info("Grammar files have the same set of target right-hand sides");
 			} else {
 				logger.warning("Grammar files have differing sets of target right-hand sides");
+				compareScores = false;
 			}
 		}
 		
 		// Compare translation probs
-		{
+		if (compareScores) {
 			float delta = 0.001f;
 			compareValues(grammarFile1, grammarFile2, fieldDelimiter, 3, "\\s+", 0, delta);
 			compareValues(grammarFile1, grammarFile2, fieldDelimiter, 3, "\\s+", 1, delta);
