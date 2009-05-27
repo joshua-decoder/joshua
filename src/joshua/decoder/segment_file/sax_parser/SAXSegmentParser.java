@@ -17,6 +17,7 @@
  */
 package joshua.decoder.segment_file.sax_parser;
 
+import joshua.decoder.segment_file.TypeCheckingException;
 import joshua.decoder.segment_file.SegmentFileParser;
 import joshua.decoder.segment_file.Segment;
 import joshua.decoder.segment_file.ConstraintSpan;
@@ -43,6 +44,10 @@ import java.util.EmptyStackException;
 import java.util.Stack;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+
+// MAJOR TODO: We need to figure out how to make a decent Locator object for our InputStream. This will allow us to construct SAXParseExceptions instead of just SAXExceptions, which in turn will allow us to call the handler methods on our ErrorHandler interface (which should be updated to print location info). As it stands, no SAXExceptions are handled or logged and they all percolate out to be caugh by our clients.
+
 
 /**
  * This is a Xerces SAX parser for parsing files in the format
@@ -114,7 +119,8 @@ implements SegmentFileParser {
 	
 	
 //===============================================================
-// DefaultHandler (non-default) Event Handlers
+// org.xml.sax.ContentHandler non-default event handlers
+// (overriding DefaultHandler)
 //===============================================================
 	
 	public void startElement(
@@ -130,7 +136,8 @@ implements SegmentFileParser {
 		} else if ("seg".equalsIgnoreCase(qName)) {
 			String id = attributes.getValue("id");
 			if (null == id) {
-				throw new SAXException("Missing id attribute for tag <seg>");
+				// TODO: use error(SAXParseException) instead
+				throw new SAXException("Missing 'id' attribute for tag <seg>");
 			} else {
 				this.tempSeg = new SAXSegment(id);
 			}
@@ -140,19 +147,31 @@ implements SegmentFileParser {
 			String end   = attributes.getValue("end");
 			String hard  = attributes.getValue("hard");
 			if (null == start) {
+				// TODO: use error(SAXParseException) instead
 				throw new SAXException(
-					"Missing start attribute for tag <span>");
+					"Missing 'start' attribute for tag <span>");
 			}
+			// TODO: give good error message for NumberFormatException
+			
 			if (null == end) {
+				// TODO: use error(SAXParseException) instead
 				throw new SAXException(
-					"Missing end attribute for tag <span>");
+					"Missing 'end' attribute for tag <span>");
 			}
+			// TODO: give good error message for NumberFormatException
+			
 			if (null == hard) {
-				hard = "false"; // We can use anything that isn't case-insensitively equal to "true", including null.
+				hard = "false";
+			}
+			if (! (
+				"true".equalsIgnoreCase(hard) ||
+				"false".equalsIgnoreCase(hard)
+			)) {
+				// TODO: use error(SAXParseException) instead
+				throw new SAXException(
+					"Malformed 'hard' attribute for tag <span>. Must be \"true\" or \"false\", found: " + hard);
 			}
 			
-			// BUG: debug for malformed attributes (i.e. not an boolean)
-			//      malformed Integers already throw exception
 			try {
 				this.tempSpan = new SAXConstraintSpan(
 					Integer.parseInt(start),
@@ -160,10 +179,12 @@ implements SegmentFileParser {
 					Boolean.parseBoolean(hard) );
 				
 			} catch (NumberFormatException e) {
-				// TODO: the message for this one gets pretty long by the time it gets out.
-				throw new SAXException(
-					"NumberFormatException: " + e.getMessage(),
-					e);
+				// TODO: use error(SAXParseException) instead
+				throw new SAXException(e);
+				
+			} catch (TypeCheckingException e) {
+				// TODO: use error(SAXParseException) instead
+				throw new SAXException(e);
 			}
 			
 		} else if ("constraint".equalsIgnoreCase(qName)) {
@@ -188,6 +209,7 @@ implements SegmentFileParser {
 			this.tempText.peek().append(new String(ch, start, length));
 			
 		} catch (EmptyStackException e) {
+			// TODO: use fatalError(SAXParseException) instead
 			SAXException se = new SAXException("The impossible happened");
 			se.initCause(e);
 			throw se;
@@ -195,11 +217,9 @@ implements SegmentFileParser {
 	}
 	
 	
-	// TODO: this is ignorable afterall, should we ignore it?
+	// TODO: this *is* ignorable afterall, should we just ignore it?
 	public void ignorableWhitespace(char[] ch, int start, int length)
 	throws SAXException {
-		// TODO: maybe canonicalize it all to just ' '?
-		// We'll do it eventually anyways...
 		this.characters(ch, start, length);
 	}
 	
@@ -212,13 +232,19 @@ implements SegmentFileParser {
 			// BUG: debug for pushing nulls due to malformed files
 			if ("seg".equalsIgnoreCase(qName)) {
 				if (null == this.tempSeg) {
+					// TODO: use fatalError(SAXParseException) instead
 					throw new SAXException(
 						"Found </seg> but segment was null (missing root tag?)");
 				} else {
-					Segment seg  = this.tempSeg.typeCheck(text);
-					this.tempSeg = null;
-					
-					this.coit.coNext(seg);
+					try {
+						Segment seg  = this.tempSeg.typeCheck(text);
+						this.tempSeg = null;
+						this.coit.coNext(seg);
+						
+					} catch (TypeCheckingException e) {
+						// TODO: use error(SAXParseException) instead
+						throw new SAXException(e);
+					}
 				}
 				
 			} else if ("span".equalsIgnoreCase(qName)) {
@@ -244,6 +270,7 @@ implements SegmentFileParser {
 			this.tempText.pop();
 			
 		} catch (EmptyStackException e) {
+			// TODO: use fatalError(SAXParseException) instead
 			SAXException se = new SAXException("The impossible happened");
 			se.initCause(e);
 			throw se;
@@ -254,25 +281,43 @@ implements SegmentFileParser {
 	private void ignoringTextWarning(String qName, String text) {
 		if (logger.isLoggable(Level.WARNING)
 		&& ! whitespaceOnly.matches(text)) {
+			String cleanText = Regex.spaces.replaceAll(text, " ").trim();
 			logger.warning(
-				"Ignoring extraneous text in <" + qName + ">: " + text);
+				"Ignoring extraneous text in <" + qName + ">: " + cleanText);
 		}
 	}
 	
 	
+//===============================================================
+// org.xml.sax.ErrorHandler event handlers (overriding DefaultHandler)
+//===============================================================
+	// TODO: print the location info in the SAXParseException as well
+	
+	/**
+	 * Respond to recoverable warnings.
+	 */
 	public void warning(SAXParseException e) throws SAXException {
 		if (logger.isLoggable(Level.WARNING))
 			logger.warning(e.toString());
 	}
 	
+	/**
+	 * Respond to recoverable errors like validity violations.
+	 */
 	public void error(SAXParseException e) throws SAXException {
+		// FIXME: is that the right logging level?
 		if (logger.isLoggable(Level.WARNING))
 			logger.warning(e.toString());
+		throw e;
 	}
 	
+	/**
+	 * Respond to non-recoverable errors like well-formedness violations.
+	 */
 	public void fatalError(SAXParseException e) throws SAXException {
 		if (logger.isLoggable(Level.SEVERE))
 			logger.severe(e.toString());
+		throw e;
 	}
 	
 	

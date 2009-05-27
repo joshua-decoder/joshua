@@ -193,7 +193,9 @@ public class DecoderThread extends Thread {
 		}
 		
 		
-		// BUG: we need to run the segmentParser over the file once in order to catch any errors before we do the actual translation. Getting formatting errors asynchronously after a long time is a Bad Thing(tm). Some errors may be recoverable (e.g. by skipping the sentence that's invalid), but we're going to call all exceptions errors for now.
+		// TODO: we need to run the segmentParser over the file once in order to catch any errors before we do the actual translation. Getting formatting errors asynchronously after a long time is a Bad Thing(tm). Some errors may be recoverable (e.g. by skipping the sentence that's invalid), but we're going to call all exceptions errors for now.
+		
+		// TODO: we should also run the CoIterator<Segment> through a function to test compatibility with a given grammar, e.g. count of grammatical feature functions match, nonterminals match,...
 		
 		
 		// Translate the test file
@@ -219,7 +221,10 @@ public class DecoderThread extends Thread {
 	
 	/**
 	 * This coiterator is for calling the DecoderThread.translate
-	 * method on each Segment to be translated.
+	 * method on each Segment to be translated. All interface
+	 * methods can throw {@link UncheckedIOException}, which
+	 * should be converted back into a {@link IOException} once
+	 * it's possible.
 	 */
 	private class TranslateCoiterator implements CoIterator<Segment> {
 		// TODO: it would be nice if we could somehow push this into the parseSegmentFile call and use a coiterator over some subclass of Segment which has another method for returning the oracular senence. That may take some work though, since Java hates mixins so much.

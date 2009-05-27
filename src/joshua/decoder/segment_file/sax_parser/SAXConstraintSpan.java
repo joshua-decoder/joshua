@@ -17,6 +17,7 @@
  */
 package joshua.decoder.segment_file.sax_parser;
 
+import joshua.decoder.segment_file.TypeCheckingException;
 import joshua.decoder.segment_file.ConstraintSpan;
 import joshua.decoder.segment_file.ConstraintRule;
 
@@ -39,23 +40,24 @@ class SAXConstraintSpan {
 	private List<SAXConstraintRule> rules;
 	
 	public SAXConstraintSpan(int start, int end, boolean isHard)
-	throws SAXException {
+	throws TypeCheckingException {
+		this.start = start;
+		this.end   = end;
+		
 		// We catch too-large indices at typeCheck time
 		if (start < 0 || end < 0 || end <= start) {
 			throw this.illegalIndexesException();
 		}
 		
-		this.start  = start;
-		this.end    = end;
 		this.isHard = isHard;
 		this.rules  = new LinkedList<SAXConstraintRule>();
 	}
 	
 	
-	private SAXException illegalIndexesException() {
-		return new SAXException(
+	private TypeCheckingException illegalIndexesException() {
+		return new TypeCheckingException(
 			"Illegal indexes in <span start=\""
-			+ start + "\" end=\"" + end + "\">");
+			+ this.start + "\" end=\"" + this.end + "\">");
 	}
 	
 	
@@ -74,7 +76,9 @@ class SAXConstraintSpan {
 	 * This method also ensures, recursively, that the
 	 * ConstraintRules are also type-correct.
 	 */
-	public ConstraintSpan typeCheck(String sentence) throws SAXException {
+	public ConstraintSpan typeCheck(String sentence)
+	throws TypeCheckingException {
+		// We use final local variables instead of a non-static inner class to avoid memory leaks from holding onto this.rules too long. We have to convert that list's type anyways, so puting everything in one closure saves a pointer per ConstraintSpan
 		final int     start  = this.start;
 		final int     end    = this.end;
 		final boolean isHard = this.isHard;

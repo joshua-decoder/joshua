@@ -17,6 +17,7 @@
  */
 package joshua.decoder.segment_file.sax_parser;
 
+import joshua.decoder.segment_file.TypeCheckingException;
 import joshua.decoder.segment_file.ConstraintRule;
 import joshua.util.Regex;
 
@@ -56,7 +57,7 @@ class SAXConstraintRule {
 	 * that the object adheres to one of the {@link ConstraintRule.Type}
 	 * options.
 	 */
-	public ConstraintRule typeCheck(String span) throws SAXException {
+	public ConstraintRule typeCheck(String span) throws TypeCheckingException {
 		
 		ConstraintRule.Type tempType = null;
 		if (null != this.lhs) {
@@ -72,12 +73,12 @@ class SAXConstraintRule {
 			if (null == this.features) {
 				tempType = ConstraintRule.Type.RHS;
 			} else {
-				throw new SAXException(
+				throw new TypeCheckingException(
 					"Invalid ConstraintRule: Can only specify features attribute on <rhs> if there is a <lhs>");
 			}
 		}
 		if (null == tempType) {
-			throw new SAXException("Invalid ConstraintRule");
+			throw new TypeCheckingException("Invalid ConstraintRule");
 		}
 		
 		

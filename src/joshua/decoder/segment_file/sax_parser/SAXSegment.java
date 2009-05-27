@@ -17,6 +17,7 @@
  */
 package joshua.decoder.segment_file.sax_parser;
 
+import joshua.decoder.segment_file.TypeCheckingException;
 import joshua.decoder.segment_file.Segment;
 import joshua.decoder.segment_file.ConstraintSpan;
 import joshua.util.Regex;
@@ -56,7 +57,7 @@ class SAXSegment {
 	 * ConstraintSpans (and thus ConstraintRules) are also
 	 * type-correct.
 	 */
-	public Segment typeCheck(String text) throws SAXException {
+	public Segment typeCheck(String text) throws TypeCheckingException {
 		
 		final String id       = this.id;
 		final String sentence = Regex.spaces.replaceAll(text, " ").trim();
@@ -74,11 +75,8 @@ class SAXSegment {
 				if (hardSpans.get(span.start(),span.end()).isEmpty()) {
 					hardSpans.set(span.start(),span.end());
 				} else {
-					// This is a potentially-recoverable exception (by skipping this segment).
-					// TODO: we should make a subclass of SAXException for potentially-recoverable invalidities (to distinguish them from unrecoverable invalidity, or from malformedness)
-					
-					// TODO: give a better error message (e.g. line/column numbers; segment id, span numbers, index range;...)
-					throw new SAXException("Overlapping hard spans");
+					// TODO: give a better error message. Line/column info can be provided by the caller; we'd want to provide info about the segment id, which spans overlap, the index range of overlap, etc. We'll need more than a bit-vector to figure some of that out though...
+					throw new TypeCheckingException("Overlapping hard spans in segment " + id + ", approximately in the range of " + span.start() + " to " + span.end());
 				}
 			}
 		}
