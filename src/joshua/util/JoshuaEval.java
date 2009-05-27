@@ -172,7 +172,7 @@ line format:
 						System.exit(32);
 					}
 					
-					int read_i = Integer.parseInt(line.substring(0,line.indexOf(" |||")));
+					int read_i = Integer.parseInt(line.substring(0,line.indexOf(" |||")).trim());
 					if (read_i == i) {
 						line = line.substring(line.indexOf("||| ")+4); // get rid of initial text
 						candidate_str = line.substring(0,line.indexOf(" |||"));
@@ -180,7 +180,7 @@ line format:
 						if (i < numSentences-1) {
 							while (read_i == i) {
 								line = inFile.readLine();
-								read_i = Integer.parseInt(line.substring(0,line.indexOf(" |||")));
+								read_i = Integer.parseInt(line.substring(0,line.indexOf(" |||")).trim());
 							}
 						}
 						n = 1;

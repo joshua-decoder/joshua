@@ -2115,7 +2115,7 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
       deleteFile(newFileName);
       File oldFile = new File(origFileName);
       File newFile = new File(newFileName);
-      if (oldFile.renameTo(newFile)) {
+      if (!oldFile.renameTo(newFile)) {
         println("Warning: attempt to rename " + origFileName + " to " + newFileName + " was unsuccessful!",1);
       }
     } else {
