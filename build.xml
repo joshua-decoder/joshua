@@ -184,7 +184,7 @@
 			<fileset dir="${doc}" />
 		</delete>
 		
-		<delete verbose="true" quie="true" file="joshua-fb.xml" />
+		<delete verbose="true" quiet="true" file="joshua-fb.xml" />
 	</target>
 	
 	
