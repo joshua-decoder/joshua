@@ -68,7 +68,7 @@ public class Bin {
 	private int GOAL_SYM_ID;
 	
 	/* we need always maintain the priority queue (worst first),
-	 * so that we can do prunning effieciently. On the other
+	 * so that we can do prunning efficiently. On the other
 	 * hand, we need the this.sortedItems only when necessary
 	 */
 	
@@ -287,8 +287,6 @@ public class Bin {
 		for (Rule rule : rules) {
 			if (1 == arity) {
 				SuperItem super_ant1 = superItems.get(0);
-				//System.out.println(String.format("Complet_cell, size %d ", super_ant1.l_items.size()));
-				//rule.print_info(Support.DEBUG);
 				for (HGNode antecedent: super_ant1.l_items) {
 					ArrayList<HGNode> antecedents = new ArrayList<HGNode>();
 					antecedents.add(antecedent);
@@ -300,11 +298,8 @@ public class Bin {
 			} else if (arity == 2) {
 				SuperItem super_ant1 = superItems.get(0);
 				SuperItem super_ant2 = superItems.get(1);
-				//System.out.println(String.format("Complet_cell, size %d * %d ", super_ant1.l_items.size(),super_ant2.l_items.size()));
-				//rule.print_info(Support.DEBUG);
 				for (HGNode it_ant1: super_ant1.l_items) {
 					for (HGNode it_ant2: super_ant2.l_items) {
-						//System.out.println(String.format("Complet_cell, ant1(%d, %d), ant2(%d, %d) ",it_ant1.i,it_ant1.j,it_ant2.i,it_ant2.j ));
 						ArrayList<HGNode> antecedents = new ArrayList<HGNode>();
 						antecedents.add(it_ant1);
 						antecedents.add(it_ant2);
@@ -433,13 +428,17 @@ public class Bin {
 			}
 		}
 	}
+	
+	
 	private static class CubePruneState implements Comparable<CubePruneState> {
 		int[]             ranks;
 		ComputeItemResult tbl_item_states;
 		Rule              rule;
 		ArrayList<HGNode> l_ants;
 		
-		public CubePruneState(ComputeItemResult state, int[] ranks, Rule rule, ArrayList<HGNode> antecedents) {
+		public CubePruneState(ComputeItemResult state, int[] ranks, Rule rule, 
+				ArrayList<HGNode> antecedents) 
+		{
 			this.tbl_item_states = state;
 			this.ranks           = ranks;
 			this.rule            = rule;
@@ -463,7 +462,7 @@ public class Bin {
 			return get_signature(ranks);
 		}
 		
-		//natual order by cost
+		// natual order by cost
 		public int compareTo(CubePruneState that) {
 			if (this.tbl_item_states.getExpectedTotalCost() < that.tbl_item_states.getExpectedTotalCost()) {
 				return -1;

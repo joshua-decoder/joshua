@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.logging.Logger;
 
 import joshua.corpus.vocab.SymbolTable;
+import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.ff.tm.BilingualRule;
 import joshua.decoder.ff.tm.GrammarReader;
 
@@ -19,7 +20,7 @@ public class SamtFormatReader extends GrammarReader<BilingualRule> {
 	static {
 		fieldDelimiter = "#";
 		nonTerminalRegEx = "^@[^\\s]+";
-		nonTerminalCleanRegEx = "[\\,0-9\\s+]+";
+		nonTerminalCleanRegEx = "[\\,0-9\\s]+";
 		
 		samtNonTerminalMarkup = "@";
 		
@@ -61,6 +62,14 @@ public class SamtFormatReader extends GrammarReader<BilingualRule> {
 			}
 		}
 
+		// HACK: avoid source-side loop rules
+		// TODO: global lookup for goal symbol id would really help here
+		if ((french.length == 1) && (arity == 1)  
+				&& !adaptNonTerminalMarkup(fields[2]).equals(JoshuaConfiguration.goal_symbol)) 
+		{
+			return this.next();
+		}
+		
 		// english side
 		String[] englishWords = fields[1].split("\\s+");
 		int[] english = new int[englishWords.length];
@@ -92,12 +101,16 @@ public class SamtFormatReader extends GrammarReader<BilingualRule> {
 	
 	protected String adaptNonTerminalMarkup(String word) {
 		// changes SAMT markup to Hiero-style
-		return "[" + word.replaceAll(samtNonTerminalMarkup, "") + "]";
+		return "[" + word.replaceAll(",", "_COMMA_")
+			.replaceAll("\\$", "_DOLLAR_")
+			.replaceAll(samtNonTerminalMarkup, "") + "]";
 	}
 	
 	protected String adaptNonTerminalMarkup(String word, int ntIndex) {
 		// changes SAMT markup to Hiero-style
-		return "[" + word.replaceAll(samtNonTerminalMarkup, "") + "," + ntIndex + "]";
+		return "[" + word.replaceAll(",", "_COMMA_")
+		.replaceAll("\\$", "_DOLLAR_")
+		.replaceAll(samtNonTerminalMarkup, "") + "," + ntIndex + "]";
 	}
 	
 	@Override

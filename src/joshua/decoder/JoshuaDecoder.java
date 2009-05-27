@@ -421,8 +421,6 @@ public class JoshuaDecoder {
 		logger.info("Constructing glue grammar...");
 		
 		this.grammarFactories.add(
-			// if this is used, then it depends on the LMModel to do pruning
-//			new MemoryBasedBatchGrammarWithPrune(
 			new MemoryBasedBatchGrammar(
 					JoshuaConfiguration.glue_format,
 					JoshuaConfiguration.glue_file,

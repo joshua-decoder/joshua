@@ -14,8 +14,10 @@ public class HieroFormatReader extends GrammarReader<BilingualRule> {
 	
 	static {
 		fieldDelimiter = "\\s+\\|{3}\\s+";
-		nonTerminalRegEx = "^\\[[A-Z]+\\,[0-9]*\\]$";
-		nonTerminalCleanRegEx = "[\\[\\]\\,0-9\\s]+";
+		nonTerminalRegEx = "^\\[[^\\s]+\\,[0-9]*\\]$";
+		nonTerminalCleanRegEx = "[\\,0-9\\s+]+";
+//		nonTerminalRegEx = "^\\[[A-Z]+\\,[0-9]*\\]$";
+//		nonTerminalCleanRegEx = "[\\[\\]\\,0-9\\s]+";
 		
 		description = "Original Hiero format";
 	}

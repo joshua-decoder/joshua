@@ -188,7 +188,6 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
 	 * if the span covered by the chart bin is greater than the
 	 * limit, then return false
 	 */
-	// TODO: catch glue grammar case in glue grammar class?
 	public boolean hasRuleForSpan(int startIndex,	int endIndex,	int pathLength) {
 		if (this.spanLimit == -1) { // mono-glue grammar
 			return (startIndex == 0);

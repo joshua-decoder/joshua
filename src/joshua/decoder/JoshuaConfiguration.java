@@ -279,15 +279,29 @@ public class JoshuaConfiguration {
 						logger.finest(String.format("lm_ceiling_cost: %s", lm_ceiling_cost));
 					
 				// BUG: accepting typos in config file is not acceptable
-				} else if ("use_left_euqivalent_state".equals(fds[0])
-				|| "use_left_equivalent_state".equals(fds[0])) {
-					use_left_equivalent_state = Boolean.valueOf(fds[1]);
+				} else if ("use_left_euqivalent_state".equals(fds[0])) {
+					use_left_equivalent_state = new Boolean(fds[1]);
+					
+					logger.warning("Misspelling in configuration file: 'use_right_euqivalent_state'");
+					
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("use_left_equivalent_state: %s", use_left_equivalent_state));
 				
 				// BUG: accepting typos in config file is not acceptable
-				} else if ("use_right_euqivalent_state".equals(fds[0])
-				|| "use_right_equivalent_state".equals(fds[0])) {
+				} else if ("use_right_euqivalent_state".equals(fds[0])) {
+					use_right_equivalent_state = new Boolean(fds[1]);
+					
+					logger.warning("Misspelling in configuration file: 'use_right_euqivalent_state'");
+					
+					if (logger.isLoggable(Level.FINEST))
+						logger.finest(String.format("use_right_equivalent_state: %s", use_right_equivalent_state));
+					
+				} else if ("use_left_equivalent_state".equals(fds[0])) {
+					use_left_equivalent_state = Boolean.valueOf(fds[1]);
+					if (logger.isLoggable(Level.FINEST))
+						logger.finest(String.format("use_left_equivalent_state: %s", use_left_equivalent_state));
+				
+				} else if ("use_right_equivalent_state".equals(fds[0])) {
 					use_right_equivalent_state = Boolean.valueOf(fds[1]);
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("use_right_equivalent_state: %s", use_right_equivalent_state));
@@ -338,14 +352,14 @@ public class JoshuaConfiguration {
 						logger.finest(String.format("begin_mono_owner: %s", begin_mono_owner));
 					
 				} else if ("default_non_terminal".equals(fds[0])) {
-					//default_non_terminal = "[" + fds[1].trim() + "]";
-					default_non_terminal = fds[1].trim();
+					default_non_terminal = "[" + fds[1].trim() + "]";
+//					default_non_terminal = fds[1].trim();
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("default_non_terminal: %s", default_non_terminal));
 					
 				} else if ("goalSymbol".equals(fds[0])) {
-					//goal_symbol = "[" + fds[1].trim() + "]";
-					goal_symbol = fds[1].trim();
+					goal_symbol = "[" + fds[1].trim() + "]";
+//					goal_symbol = fds[1].trim();
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("goalSymbol: %s", goal_symbol));
 					

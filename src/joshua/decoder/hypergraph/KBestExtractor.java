@@ -33,20 +33,22 @@ import java.util.HashMap;
 import java.util.PriorityQueue;
 
 /**
- * this class implement: lazy k-best extraction on a hyper-graph
- * to seed the kbest extraction, it only needs that each hyperedge
- * should have the best_cost properly set, and it does not require
- * any list being sorted instead, the priority queue heap_cands
- * will do internal sorting In fact, the real crucial cost is the
- * transition-cost at each hyperedge. We store the best-cost instead
- * of the transition cost since it is easy to do pruning and find
- * one-best. Moreover, the transition cost can be recovered by
- * get_transition_cost(), though somewhat expensive
+ * This class implements lazy k-best extraction on a hyper-graph.
+ * To seed the kbest extraction, it only needs that each hyperedge 
+ * should have the best_cost properly set, and it does not require 
+ * any list being sorted.
+ * Instead, the priority queue heap_cands will do internal sorting
+ * In fact, the real crucial cost is the transition-cost at each 
+ * hyperedge. 
+ * We store the best-cost instead of the transition cost since it 
+ * is easy to do pruning and find one-best. Moreover, the transition 
+ * cost can be recovered by get_transition_cost(), though somewhat 
+ * expensive.
  *
- * to recover the model cost for each individual model, we should
- * either have access to the model, or store the model cost in the
- * hyperedge (for example, in the case of disk-hypergraph, we need
- * to store all these model cost at each hyperedge)
+ * To recover the model cost for each individual model, we should 
+ * either have access to the model, or store the model cost in the 
+ * hyperedge. (For example, in the case of disk-hypergraph, we need 
+ * to store all these model cost at each hyperedge.)
  *
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate$
@@ -253,7 +255,12 @@ public class KBestExtractor {
 			for (int k = 0; k < model_cost.length; k++) { /* note that all the transition cost (including finaltransition cost) is already stored in the hyperedge */
 				str_hyp.append(String.format(" %.3f", -model_cost[k]));
 				tem_sum += model_cost[k]*l_models.get(k).getWeight();
+				
+//				System.err.println("tem_sum: " + tem_sum + " += " + model_cost[k] + " * " + l_models.get(k).getWeight());
 			}
+			
+			
+			
 			//sanity check
 			if (performSanityCheck) {
 				if (Math.abs(cur.cost - tem_sum) > 1e-2) {
@@ -274,6 +281,9 @@ public class KBestExtractor {
 		if (add_combined_score) {
 			str_hyp.append(String.format(" ||| %.3f",-cur.cost));
 		}
+		
+//		System.err.println("Writing hyp");
+		
 		return str_hyp.toString();
 	}
 		
@@ -502,6 +512,7 @@ public class KBestExtractor {
 			//### get hyp string recursively
 			StringBuffer res = new StringBuffer();
 			Rule rl = p_edge.get_rule();
+			
 			if (null == rl) { // hyperedges under "goal item" does not have rule
 				if (useTreeFormat) {
 					//res.append("(ROOT ");

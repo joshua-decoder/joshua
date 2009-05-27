@@ -285,14 +285,28 @@ public class Chart {
 						for (DotItem dt: this.dotcharts[k].l_dot_bins[i][j].l_dot_items) {
 							float lattice_cost = dt.lattice_cost;
 							RuleCollection rules = dt.tnode.getRules();
+							
+							logger.finest("Checking DotItem for matched rules.");
+							
 							if (null != rules) { // have rules under this trienode
+								// TODO: filter the rule according to LHS constraint								
+								if (logger.isLoggable(Level.FINEST)) {
+									for (Rule r : rules.getSortedRules()) {
+										logger.finest("Matched [" + i + ", " +  
+												j + "] with " + p_symbolTable.getWord(r.getLHS()) +
+												" => " + p_symbolTable.getWords(r.getFrench()) + 
+												" | " + p_symbolTable.getWords(r.getEnglish()));
+									}
+								}
+								
 								if (rules.getArity() == 0) { // rules without any non-terminal
 									add_axioms(i, j, rules, lattice_cost);
 								} else { // rules with non-terminal
 									if (JoshuaConfiguration.use_cube_prune) {
 										complete_cell_cube_prune(i, j, dt, rules, lattice_cost);
 									} else {
-										complete_cell(i, j, dt, rules, lattice_cost);//populate chart.bin[i][j] with rules from dotchart[i][j]
+										// populate chart.bin[i][j] with rules from dotchart[i][j]
+										complete_cell(i, j, dt, rules, lattice_cost);
 									}
 								}
 							}
@@ -315,7 +329,7 @@ public class Chart {
 				//(4)### in dot_cell(i,j), add dot-items that start from the /complete/ superIterms in chart_cell(i,j)
 				//long start_step4= Support.current_time();
 				if (logger.isLoggable(Level.FINEST))
-					logger.finest("Initializing new dot-items that starting from complete items in this cell");
+					logger.finest("Initializing new dot-items that start from complete items in this cell");
 				for (int k = 0; k < this.grammars.length; k++) {
 					if (this.grammars[k].hasRuleForSpan(i, j, sent_len)) {
 						this.dotcharts[k].start_dotitems(i,j);
@@ -464,7 +478,8 @@ public class Chart {
 		if (null == this.bins[i][j]) {
 			this.bins[i][j] = new Bin(this, this.goalSymbolID);
 		}
-		this.bins[i][j].complete_cell(i, j, dt.l_ant_super_items, filterRules(i,j,rb.getSortedRules()), rb.getArity(), lattice_cost);//combinations: rules, antecent items
+		// combinations: rules, antecent items
+		this.bins[i][j].complete_cell(i, j, dt.l_ant_super_items, filterRules(i,j,rb.getSortedRules()), rb.getArity(), lattice_cost);
 	}
 	
 	

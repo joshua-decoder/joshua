@@ -30,8 +30,15 @@ import joshua.decoder.ff.tm.Rule;
  */
 
 public class HyperEdge {
-	public double best_cost= Double.POSITIVE_INFINITY;//the 1-best cost of all possible derivation: best costs of ant hgnodes + non_stateless_transition_cost + r.statelesscost
-	private Double transition_cost=null;//this remember the stateless + non_stateless cost assocated with the rule (excluding the best-cost from ant items)
+	// the 1-best cost of all possible derivation: 
+	// best costs of:
+	// ant hgnodes + non_stateless_transition_cost + r.statelesscost
+	public double best_cost= Double.POSITIVE_INFINITY;
+
+	// this remember the stateless + non_stateless
+	// cost assocated with the rule (excluding the 
+	// best-cost from ant items)
+	private Double transition_cost=null;
 	private Rule rule;
 
 	//if l_ant_items is null, then this shoud be the terminal rule
