@@ -12,7 +12,7 @@ Next, select a test set for which rules will be extracted, and run grammar extra
 
 \begin{verbatim}
 java -Dfile.encoding=UTF8 -Xms4096m -Xmx4096m  \
-    -cp ../../bin joshua.prefix_tree.ExtractRules \
+    -cp bin joshua.prefix_tree.ExtractRules \
     --binary-source \
     --binary-target \
     --source=output.josh/source.corpus \      
@@ -33,6 +33,15 @@ The raw grammar produced by {\tt ExtractRules} will almost certainly include dup
 sort -u -o src-tgt.grammar src-tgt.grammar.raw
 \end{verbatim}
 
+\section{Compare Grammars}
+
+Once a grammar has been extracted, it may be useful to compare it to another grammar. A typical use case may be comparing two grammars that were extracted from the same corpus by different tools.
+
+\begin{verbatim}
+java -Dfile.encoding=UTF8 -Xms4096m -Xmx4096m  \
+    -cp ../../bin joshua.util.CompareGrammars \
+    grammar1-file grammar2-file
+\end{verbatim}
 
 
 \section{Compatibility with Hiero}
