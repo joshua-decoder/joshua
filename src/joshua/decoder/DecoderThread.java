@@ -197,6 +197,8 @@ public class DecoderThread extends Thread {
 		
 		// TODO: we should also run the CoIterator<Segment> through a function to test compatibility with a given grammar, e.g. count of grammatical feature functions match, nonterminals match,...
 		
+		// TODO: we may also want to validate that all segments have different ids
+		
 		
 		// Translate the test file
 		this.nbestWriter = FileUtility.getWriteFileStream(this.nbestFile);

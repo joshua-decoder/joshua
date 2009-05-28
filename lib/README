@@ -2,7 +2,7 @@ This file contains a listing of which packages in Joshua require
 which jar files.
 
 
-The PMD Ant task (not actually Joshua code) requires:
+The "pmd" Ant task (not actually Joshua code) requires:
 * pmd-4.2.5.jar
 * jaxen-1.1.1.jar
 * asm-3.1.jar

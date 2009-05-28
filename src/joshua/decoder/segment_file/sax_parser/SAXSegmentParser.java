@@ -26,6 +26,7 @@ import joshua.util.Regex;
 import joshua.util.CoIterator;
 
 import org.xml.sax.Attributes;
+import org.xml.sax.Locator;
 import org.xml.sax.SAXParseException;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
@@ -46,7 +47,17 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 
-// MAJOR TODO: We need to figure out how to make a decent Locator object for our InputStream. This will allow us to construct SAXParseExceptions instead of just SAXExceptions, which in turn will allow us to call the handler methods on our ErrorHandler interface (which should be updated to print location info). As it stands, no SAXExceptions are handled or logged and they all percolate out to be caugh by our clients.
+// MAJOR TODO: We need to figure out how to make a *decent* Locator
+// object for our InputStream. This will allow us to (meaningfully)
+// construct SAXParseExceptions and call the handler methods on our
+// ErrorHandler interface (which should be updated to print location
+// info). As it stands, we use the interface for logging, but we
+// have no location info.
+//
+// TODO: we should also define helper methods akin to the ErrorHandler
+// interface, but which just take a message string and do all the
+// boilerplate for us. See, in particular, the bug notes about
+// mutable/volatile Locators.
 
 
 /**
@@ -63,19 +74,31 @@ implements SegmentFileParser {
 	/** Co-iterator for consuming output. */
 	private CoIterator<Segment> coit;
 	
-	// For maintaining contextx
+	/**
+	 * A Locater (or equivalent information) is needed to create
+	 * SAXParseExceptions. If this object is mutable or volatile
+	 * then it should not be shared by multiple SAXParseExceptions,
+	 * since that would allow locations to move out from under
+	 * the exception. See bug notes below.
+	 */
+	private Locator locator;
+	
+	// For maintaining context
 	private boolean             seenRootTag = false;
 	private Stack<StringBuffer> tempText;
 	private SAXSegment          tempSeg;
 	private SAXConstraintSpan   tempSpan;
 	private SAXConstraintRule   tempRule;
 	
+	
 	private static final Logger logger =
 		Logger.getLogger(SAXSegmentParser.class.getName());
+	
 	
 	public SAXSegmentParser() {
 		this.tempText = new Stack<StringBuffer>();
 	}
+	
 	
 //===============================================================
 // SegmentFileParser Methods
@@ -85,17 +108,61 @@ implements SegmentFileParser {
 	throws IOException {
 		if (null == coit) {
 			// Maybe just return immediately instead?
+			// Maybe use NullPointerException instead?
 			throw new IllegalArgumentException("null co-iterator");
 		}
 		this.coit = coit;
+		
+		// TODO: maybe ensure that this.tempText is the empty Stack?
 		
 		SAXParserFactory spf = SAXParserFactory.newInstance();
 		try {
 			try {
 				SAXParser sp = spf.newSAXParser();
+				
+// FIXME: this Locator is trivial, returning the "unavailable" value
+// for all methods. This works because we never actually call these
+// methods ourselves, but it's circumventing the very idea of Locator
+// just so that we can use the ErrorHandler interface.
+//
+// BUG: also, if the returned values ever change, it's buggy to
+// share this among different errors. We should always generate a
+// new one at exception-throwing time based on the InputStream state.
+				this.locator = new Locator() {
+					public String getPublicId()     { return null; }
+					public String getSystemId()     { return null; }
+					public int    getLineNumber()   { return -1;   }
+					public int    getColumnNumber() { return -1;   }
+				};
 				sp.parse(in, this);
 				
-			} catch (SAXException e) {
+// FIXME: see the bug notes above and below.
+//				final LocatorInputStream lin = new LocatorInputStream(in);
+//				this.locator = new Locator() {
+//					public String getPublicId()  { return null; } // FIXME
+//					public String getSystemId()  { return null; } // FIXME
+//					public int getLineNumber()   { return lin.getLineNumber(); }
+//					public int getColumnNumber() { return lin.getColumnNumber(); }
+//				};
+//				sp.parse(lin, this);
+//
+// BUG: the SAXParser (or FileInputStream?) reads in a huge buffer
+// at a time, so the line/column numbers from LocatorInputStream
+// will be very wrong, even moreso than specified by the Locator
+// interface.  I'm not sure how we can actually determine where in
+// the buffer the SAXParser is when it sends us the sax events that
+// cause errors...
+//			} catch (SAXParseException e) {
+//				// TODO: something better
+//				IOException ioe = new IOException(
+//					"SAXParseException before line "
+//					+ e.getLineNumber()
+//					+ ", column " + e.getColumnNumber()
+//					+ ": " + e.getMessage());
+//				ioe.initCause(e);
+//				throw ioe;
+				
+			} catch (SAXException e) { // other than SAXParseException
 				// TODO: something better
 				IOException ioe = new IOException(
 					"SAXException: " + e.getMessage());
@@ -110,7 +177,7 @@ implements SegmentFileParser {
 				throw ioe;
 			}
 			
-			// BUG: Do we need to close() the InputStream, or does parse() handle that?
+			// BUG: Do we need to close() the InputStream, or does parse() handle that? Or should clients handle that?
 			
 		} finally {
 			coit.finish();
@@ -122,6 +189,12 @@ implements SegmentFileParser {
 // org.xml.sax.ContentHandler non-default event handlers
 // (overriding DefaultHandler)
 //===============================================================
+	// BUG: we need to deal with uri+localName vs qName, in
+	// case anyone messes around with XML namespaces. (Assuming
+	// they're always absent, like we do, is a bug.) But that'll
+	// require putting SegmentFile.dtd in a public known location
+	// (with version numbers!) so people can refer to it; too
+	// much bother for now.
 	
 	public void startElement(
 		String uri, String localName, String qName, Attributes attributes)
@@ -136,55 +209,75 @@ implements SegmentFileParser {
 		} else if ("seg".equalsIgnoreCase(qName)) {
 			String id = attributes.getValue("id");
 			if (null == id) {
-				// TODO: use error(SAXParseException) instead
-				throw new SAXException("Missing 'id' attribute for tag <seg>");
+				this.error(new SAXParseException(
+					"Missing 'id' attribute for tag <seg>", this.locator));
 			} else {
 				this.tempSeg = new SAXSegment(id);
 			}
 			
 		} else if ("span".equalsIgnoreCase(qName)) {
-			String start = attributes.getValue("start");
-			String end   = attributes.getValue("end");
-			String hard  = attributes.getValue("hard");
-			if (null == start) {
-				// TODO: use error(SAXParseException) instead
-				throw new SAXException(
-					"Missing 'start' attribute for tag <span>");
+			// TODO: helper method to combine these two blocks
+			int start; {
+				String startString = attributes.getValue("start");
+				if (null == startString) {
+					this.error(new SAXParseException(
+						"Missing 'start' attribute for tag <span>",
+						this.locator));
+				}
+				try {
+					start = Integer.parseInt(startString);
+				} catch (NumberFormatException e) {
+					this.error(new SAXParseException(
+						"Malformed 'start' attribute for tag <span>. Must be an integer, found: " + startString,
+						this.locator, e));
+					
+					// Unreachable, but javac fails if this isn't here
+					start = -1;
+				}
 			}
-			// TODO: give good error message for NumberFormatException
 			
-			if (null == end) {
-				// TODO: use error(SAXParseException) instead
-				throw new SAXException(
-					"Missing 'end' attribute for tag <span>");
+			int end; {
+				String endString = attributes.getValue("end");
+				if (null == endString) {
+					this.error(new SAXParseException(
+						"Missing 'end' attribute for tag <span>",
+						this.locator));
+				}
+				try {
+					end = Integer.parseInt(endString);
+				} catch (NumberFormatException e) {
+					this.error(new SAXParseException(
+						"Malformed 'end' attribute for tag <span>. Must be an integer, found: " + endString,
+						this.locator, e));
+					
+					// Unreachable, but javac fails if this isn't here
+					end = -1;
+				}
 			}
-			// TODO: give good error message for NumberFormatException
 			
-			if (null == hard) {
-				hard = "false";
-			}
-			if (! (
-				"true".equalsIgnoreCase(hard) ||
-				"false".equalsIgnoreCase(hard)
-			)) {
-				// TODO: use error(SAXParseException) instead
-				throw new SAXException(
-					"Malformed 'hard' attribute for tag <span>. Must be \"true\" or \"false\", found: " + hard);
+			boolean hard; {
+				String hardString = attributes.getValue("hard");
+				// Boolean.parseBoolean is too permissive
+				if (null == hardString) {
+					hard = false;
+				} else if ("true".equalsIgnoreCase(hardString)) {
+					hard = true;
+				} else if ("false".equalsIgnoreCase(hardString)) {
+					hard = false;
+				} else {
+					this.error(new SAXParseException(
+						"Malformed 'hard' attribute for tag <span>. Must be \"true\" or \"false\", found: " + hardString,
+						this.locator));
+					
+					// Unreachable, but javac fails if this isn't here
+					hard = false;
+				}
 			}
 			
 			try {
-				this.tempSpan = new SAXConstraintSpan(
-					Integer.parseInt(start),
-					Integer.parseInt(end),
-					Boolean.parseBoolean(hard) );
-				
-			} catch (NumberFormatException e) {
-				// TODO: use error(SAXParseException) instead
-				throw new SAXException(e);
-				
+				this.tempSpan = new SAXConstraintSpan(start, end, hard);
 			} catch (TypeCheckingException e) {
-				// TODO: use error(SAXParseException) instead
-				throw new SAXException(e);
+				this.error(new SAXParseException(null, this.locator, e));
 			}
 			
 		} else if ("constraint".equalsIgnoreCase(qName)) {
@@ -209,10 +302,8 @@ implements SegmentFileParser {
 			this.tempText.peek().append(new String(ch, start, length));
 			
 		} catch (EmptyStackException e) {
-			// TODO: use fatalError(SAXParseException) instead
-			SAXException se = new SAXException("The impossible happened");
-			se.initCause(e);
-			throw se;
+			this.fatalError(new SAXParseException(
+				"The impossible happened", this.locator, e));
 		}
 	}
 	
@@ -232,9 +323,9 @@ implements SegmentFileParser {
 			// BUG: debug for pushing nulls due to malformed files
 			if ("seg".equalsIgnoreCase(qName)) {
 				if (null == this.tempSeg) {
-					// TODO: use fatalError(SAXParseException) instead
-					throw new SAXException(
-						"Found </seg> but segment was null (missing root tag?)");
+					this.fatalError(new SAXParseException(
+						"Found </seg> but segment was null (missing root tag?)",
+						this.locator));
 				} else {
 					try {
 						Segment seg  = this.tempSeg.typeCheck(text);
@@ -242,8 +333,8 @@ implements SegmentFileParser {
 						this.coit.coNext(seg);
 						
 					} catch (TypeCheckingException e) {
-						// TODO: use error(SAXParseException) instead
-						throw new SAXException(e);
+						this.error(new SAXParseException(
+							null, this.locator, e));
 					}
 				}
 				
@@ -270,10 +361,8 @@ implements SegmentFileParser {
 			this.tempText.pop();
 			
 		} catch (EmptyStackException e) {
-			// TODO: use fatalError(SAXParseException) instead
-			SAXException se = new SAXException("The impossible happened");
-			se.initCause(e);
-			throw se;
+			this.fatalError(new SAXParseException(
+				"The impossible happened", this.locator, e));
 		}
 	}
 	
@@ -298,7 +387,7 @@ implements SegmentFileParser {
 	 */
 	public void warning(SAXParseException e) throws SAXException {
 		if (logger.isLoggable(Level.WARNING))
-			logger.warning(e.toString());
+			logger.warning(e.getMessage());
 	}
 	
 	/**
@@ -307,16 +396,17 @@ implements SegmentFileParser {
 	public void error(SAXParseException e) throws SAXException {
 		// FIXME: is that the right logging level?
 		if (logger.isLoggable(Level.WARNING))
-			logger.warning(e.toString());
+			logger.warning(e.getMessage());
 		throw e;
 	}
 	
 	/**
-	 * Respond to non-recoverable errors like well-formedness violations.
+	 * Respond to non-recoverable errors like well-formedness
+	 * violations.
 	 */
 	public void fatalError(SAXParseException e) throws SAXException {
 		if (logger.isLoggable(Level.SEVERE))
-			logger.severe(e.toString());
+			logger.severe(e.getMessage());
 		throw e;
 	}
 	

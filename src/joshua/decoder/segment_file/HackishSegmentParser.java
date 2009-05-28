@@ -27,7 +27,7 @@ import java.io.InputStream;
 import java.io.IOException;
 
 /**
- * This parser regognizes an ad hoc format that mixes an SGML-like
+ * This parser recognizes an ad hoc format that mixes an SGML-like
  * format with a one-sentence-per-line format, both with no
  * annotations.
  *
