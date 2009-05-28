@@ -21,8 +21,6 @@ import joshua.decoder.segment_file.TypeCheckingException;
 import joshua.decoder.segment_file.ConstraintRule;
 import joshua.util.Regex;
 
-import org.xml.sax.SAXException;
-
 
 /**
  * Parsing state for partial ConstraintRule objects.
@@ -39,10 +37,10 @@ class SAXConstraintRule {
 	
 	public void setRhs(String rhs) { this.rhs = rhs; }
 	
-	private static final Regex splitter = new Regex("\\s*;\\s*");
+	private static final Regex SEMICOLON = new Regex("\\s*;\\s*");
 	public void setFeatures(String features) {
 		if (null != features) {
-			String[] featureStrings = splitter.split(features);
+			String[] featureStrings = SEMICOLON.split(features);
 			
 			this.features = new float[featureStrings.length];
 			for (int i = 0; i < featureStrings.length; ++i) {

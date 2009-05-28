@@ -97,7 +97,7 @@ public class AlignedSubsampler extends Subsampler {
 		new SubsamplerCLI() { /* Local class definition */
 			
 			//TODO hasArg is a static method. It should be accessed as OptionBuilder.hasArg()
-			final Option oa = OptionBuilder
+			protected final Option oa = OptionBuilder
 				.withArgName("lang")
 				.hasArg()
 				.withDescription("Word alignment extension")
@@ -105,7 +105,7 @@ public class AlignedSubsampler extends Subsampler {
 				.create("a");
 				
 			//TODO hasArg is a static method. It should be accessed as OptionBuilder.hasArg()
-			final Option oapath = OptionBuilder
+			protected final Option oapath = OptionBuilder
 				.withArgName("path")
 				.hasArg()
 				.withDescription("Directory containing word alignment files")

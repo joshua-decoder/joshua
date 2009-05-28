@@ -39,6 +39,7 @@ import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -56,13 +57,13 @@ import java.util.Set;
 public class Subsampler {
 	protected Vocabulary ve = new Vocabulary();
 	protected Vocabulary vf = new Vocabulary();
-	protected HashMap<Phrase,Integer> ngramCounts;
+	protected Map<Phrase,Integer> ngramCounts;
 	protected int maxN;
 	protected int targetCount;
 	protected int maxSubsample = 1500000;
 	
-	static final int MAX_SENTENCE_LENGTH = 100;
-	static final int MIN_RATIO_LENGTH    = 10;
+	protected static final int MAX_SENTENCE_LENGTH = 100;
+	protected static final int MIN_RATIO_LENGTH    = 10;
 	
 	
 	public Subsampler(String[] testFiles, int maxN, int targetCount)
@@ -82,7 +83,7 @@ public class Subsampler {
 			Phrase phrase;
 			int lineCount = 0;
 			try {
-				while((phrase = reader.readPhrase()) != null) {
+				while ((phrase = reader.readPhrase()) != null) {
 					lineCount++;
 					List<Phrase> ngrams = phrase.getSubPhrases(this.maxN);
 					for (Phrase ngram : ngrams) map.put(ngram, 0);

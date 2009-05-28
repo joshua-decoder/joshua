@@ -228,21 +228,21 @@ public class Chart {
 			logger.fine("Finished seeding chart.");
 	}
 	
-	private class Span{
+	private static class Span {
 		int startPos;
 		int endPos;
-		public Span(int startPos_, int endPos_){
-			startPos= startPos_;
-			endPos = endPos_;
+		public Span(int startPos, int endPos) {
+			this.startPos = startPos;
+			this.endPos = endPos;
 		}
 	}
 	
-	private boolean isContainHardRuleConstraint(int startSpan, int endSpan){
-		if(listOfSpansWithHardRuleConstraint!=null){
-			for(Span span : listOfSpansWithHardRuleConstraint){
-				if(startSpan >= span.startPos && endSpan <= span.endPos)
+	private boolean isContainHardRuleConstraint(int startSpan, int endSpan) {
+		if (null != listOfSpansWithHardRuleConstraint) {
+			for (Span span : listOfSpansWithHardRuleConstraint) {
+				if (startSpan >= span.startPos && endSpan <= span.endPos)
 					return true;
-			}			
+			}
 		}
 		return false;
 	}

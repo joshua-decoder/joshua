@@ -43,9 +43,9 @@ import java.io.IOException;
 public class HackishSegmentParser implements SegmentFileParser {
 	protected int sentenceID = -1;
 	
-	protected static final Pattern segStart = 
+	protected static final Pattern SEG_START =
 				Pattern.compile("^\\s*<seg\\s+id=\"(\\d+)\"[^>]*>\\s*");
-	protected static final Pattern segEnd =
+	protected static final Pattern SEG_END =
 				Pattern.compile("\\s*</seg\\s*>\\s*$");
 	
 	public HackishSegmentParser() {}
@@ -79,7 +79,7 @@ public class HackishSegmentParser implements SegmentFileParser {
 					String cleanedSentence =
 						Regex.spaces.replaceAll(reader.next(), " ").trim();
 					
-					Matcher m = segStart.matcher(cleanedSentence);
+					Matcher m = SEG_START.matcher(cleanedSentence);
 					
 					final String sentence;
 					if (m.find()) {
@@ -89,7 +89,7 @@ public class HackishSegmentParser implements SegmentFileParser {
 						} else {
 							this.sentenceID = Integer.parseInt(id);
 							sentence =
-								segEnd.matcher(m.replaceFirst("")).replaceAll("");
+								SEG_END.matcher(m.replaceFirst("")).replaceAll("");
 						}
 					} else {
 						this.sentenceID++;

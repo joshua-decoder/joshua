@@ -73,7 +73,20 @@
 <!-- These are good for analytic bugs (with a little salt) -->
 	<!-- Compare ourselves to http://pmd.sourceforge.net/scoreboard.html -->
 	<rule ref="rulesets/codesize.xml"/>
+	<!--
+		<! tweaking the parameters >
+		<exclude name="TooManyMethods"/>
+	</rule>
+	<rule ref="rulesets/codesize.xml/TooManyMethods">
+		<properties>
+			<! Default is 10 which gives 24 violations. Using 15 lowers that to 10 >
+			<property name="maxmethods" value="15" />
+		</properties>
+	</rule>
+	-->
+	
 	<rule ref="rulesets/strings.xml"/>
+	
 	<rule ref="rulesets/optimizations.xml">
 		<!-- This rule is excessively verbose. I believe modern Java compilers will perform analysis to determine when vars can/should be final, so I don't know that there's any real performance gain anymore. (Is there?) However, marking them as final *makes intentions clear* to code maintainers, and so we should probably turn this on for that reason. -->
 		<exclude name="LocalVariableCouldBeFinal"/>

@@ -22,8 +22,6 @@ import joshua.decoder.segment_file.Segment;
 import joshua.decoder.segment_file.ConstraintSpan;
 import joshua.util.Regex;
 
-import org.xml.sax.SAXException;
-
 import java.util.LinkedList;
 import java.util.List;
 import java.util.BitSet;
@@ -35,8 +33,8 @@ import java.util.BitSet;
  * @version $LastChangedDate: 2009-03-26 15:06:57 -0400 (Thu, 26 Mar 2009) $
  */
 class SAXSegment {
-	private String id;
-	private List<SAXConstraintSpan> spans;
+	private final String id;
+	private final List<SAXConstraintSpan> spans;
 	
 	public SAXSegment(String id) {
 		this.id    = id;

@@ -57,7 +57,7 @@ import org.apache.commons.cli.HelpFormatter;
 @SuppressWarnings("static-access")
 public class SubsamplerCLI {
 	//TODO hasArg is a static method. It should be accessed as OptionBuilder.hasArg()
-	final Option ot = OptionBuilder
+	protected final Option ot = OptionBuilder
 		.withArgName("filelist")
 		.hasArg()
 		.withDescription("File containing a list of training file basenames")
@@ -65,7 +65,7 @@ public class SubsamplerCLI {
 		.create("training");
 	
 	//TODO hasArg is a static method. It should be accessed as OptionBuilder.hasArg()
-	final Option otest = OptionBuilder
+	protected final Option otest = OptionBuilder
 		.withArgName("file")
 		.hasArgs()
 		.withDescription("File containing a list of training file basenames")
@@ -73,7 +73,7 @@ public class SubsamplerCLI {
 		.create("test");
 	
 	//TODO hasArg is a static method. It should be accessed as OptionBuilder.hasArg()
-	final Option ooutput = OptionBuilder
+	protected final Option ooutput = OptionBuilder
 		.withArgName("prefix")
 		.hasArgs()
 		.withDescription("File basename for output training corpus")
@@ -81,7 +81,7 @@ public class SubsamplerCLI {
 		.create("output");
 	
 	//TODO hasArg is a static method. It should be accessed as OptionBuilder.hasArg()
-	final Option of = OptionBuilder
+	protected final Option of = OptionBuilder
 		.withArgName("lang")
 		.hasArg()
 		.withDescription("Target language extension")
@@ -89,7 +89,7 @@ public class SubsamplerCLI {
 		.create("f");
 	
 	//TODO hasArg is a static method. It should be accessed as OptionBuilder.hasArg()
-	final Option oe = OptionBuilder
+	protected final Option oe = OptionBuilder
 		.withArgName("lang")
 		.hasArg()
 		.withDescription("Source language extension")
@@ -97,21 +97,21 @@ public class SubsamplerCLI {
 		.create("e");
 	
 	//TODO hasArg is a static method. It should be accessed as OptionBuilder.hasArg()
-	final Option ofpath = OptionBuilder
+	protected final Option ofpath = OptionBuilder
 		.withArgName("path")
 		.hasArg()
 		.withDescription("Directory containing source language files")
 		.create("fpath");
 	
 	//TODO hasArg is a static method. It should be accessed as OptionBuilder.hasArg()
-	final Option oepath = OptionBuilder
+	protected final Option oepath = OptionBuilder
 		.withArgName("path")
 		.hasArg()
 		.withDescription("Directory containing target language files")
 		.create("epath");
 	
 	//TODO hasArg is a static method. It should be accessed as OptionBuilder.hasArg()
-	final Option oratio = OptionBuilder
+	protected final Option oratio = OptionBuilder
 		.withArgName("ratio")
 		.hasArg()
 		.withDescription("Target F/E ratio")

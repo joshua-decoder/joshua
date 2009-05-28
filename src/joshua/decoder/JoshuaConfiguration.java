@@ -280,7 +280,7 @@ public class JoshuaConfiguration {
 					
 				// BUG: accepting typos in config file is not acceptable
 				} else if ("use_left_euqivalent_state".equals(fds[0])) {
-					use_left_equivalent_state = new Boolean(fds[1]);
+					use_left_equivalent_state = Boolean.parseBoolean(fds[1]);
 					
 					logger.warning("Misspelling in configuration file: 'use_right_euqivalent_state'");
 					
@@ -289,7 +289,7 @@ public class JoshuaConfiguration {
 				
 				// BUG: accepting typos in config file is not acceptable
 				} else if ("use_right_euqivalent_state".equals(fds[0])) {
-					use_right_equivalent_state = new Boolean(fds[1]);
+					use_right_equivalent_state = Boolean.parseBoolean(fds[1]);
 					
 					logger.warning("Misspelling in configuration file: 'use_right_euqivalent_state'");
 					

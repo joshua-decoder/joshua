@@ -21,8 +21,6 @@ import joshua.decoder.segment_file.TypeCheckingException;
 import joshua.decoder.segment_file.ConstraintSpan;
 import joshua.decoder.segment_file.ConstraintRule;
 
-import org.xml.sax.SAXException;
-
 import java.util.LinkedList;
 import java.util.List;
 
@@ -34,10 +32,10 @@ import java.util.List;
  * @version $LastChangedDate: 2009-03-26 15:06:57 -0400 (Thu, 26 Mar 2009) $
  */
 class SAXConstraintSpan {
-	private int     start;
-	private int     end;
-	private boolean isHard;
-	private List<SAXConstraintRule> rules;
+	private final int     start;
+	private final int     end;
+	private final boolean isHard;
+	private final List<SAXConstraintRule> rules;
 	
 	public SAXConstraintSpan(int start, int end, boolean isHard)
 	throws TypeCheckingException {

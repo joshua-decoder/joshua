@@ -366,10 +366,10 @@ implements SegmentFileParser {
 		}
 	}
 	
-	private static final Regex whitespaceOnly = new Regex("^\\s*$");
+	private static final Regex WHITESPACE_ONLY = new Regex("^\\s*$");
 	private void ignoringTextWarning(String qName, String text) {
 		if (logger.isLoggable(Level.WARNING)
-		&& ! whitespaceOnly.matches(text)) {
+		&& ! WHITESPACE_ONLY.matches(text)) {
 			String cleanText = Regex.spaces.replaceAll(text, " ").trim();
 			logger.warning(
 				"Ignoring extraneous text in <" + qName + ">: " + cleanText);
