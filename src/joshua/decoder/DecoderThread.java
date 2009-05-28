@@ -194,8 +194,20 @@ public class DecoderThread extends Thread {
 		
 		
 		// TODO: we need to run the segmentParser over the file once in order to catch any errors before we do the actual translation. Getting formatting errors asynchronously after a long time is a Bad Thing(tm). Some errors may be recoverable (e.g. by skipping the sentence that's invalid), but we're going to call all exceptions errors for now.
+		//
+		// TODO: we should unwrapper SAXExceptions and give good error messages
+		segmentParser.parseSegmentFile(
+			LineReader.getInputStream(this.testFile),
+			new CoIterator<Segment>() {
+				public void coNext(Segment seg) {
+					// Consume Segment and do nothing (for now)
+				}
+				public void finish() {
+					// Nothing to clean up
+				}
+			});
 		
-		// TODO: we should also run the CoIterator<Segment> through a function to test compatibility with a given grammar, e.g. count of grammatical feature functions match, nonterminals match,...
+		// TODO: we should also have the CoIterator<Segment> test compatibility with a given grammar, e.g. count of grammatical feature functions match, nonterminals match,...
 		
 		// TODO: we may also want to validate that all segments have different ids
 		
