@@ -53,10 +53,10 @@ import java.util.logging.Logger;
  */
 public class Bin {
 	
-	// remember the cost of the best item in the bin
+	/** The cost of the best item in the bin */
 	public double best_item_cost = IMPOSSIBLE_COST;
 	
-	// cutoff=best_item_cost+relative_threshold
+	/** cutoff=best_item_cost+relative_threshold */
 	public double cut_off_cost = IMPOSSIBLE_COST;
 	
 	// num of corrupted items in this.heapItems, note that the
@@ -118,10 +118,11 @@ public class Bin {
 // Methods
 //===============================================================
 	
-	/* compute cost and the states of this item returned
+	/** 
+	 * Compute cost and the states of this item returned
 	 * ArrayList: expectedTotalCost, finalizedTotalCost,
-	 * transition_cost, bonus, list of states */
-	
+	 * transition_cost, bonus, list of states 
+	 */
 	public ComputeItemResult compute_item(
 		Rule rule, ArrayList<HGNode> previousItems, int i, int j
 	) {
@@ -210,7 +211,8 @@ public class Bin {
 	}
 	
 	
-	/* add all the items with GOAL_SYM state into the goal bin
+	/** 
+	 * add all the items with GOAL_SYM state into the goal bin
 	 * the goal bin has only one Item, which itself has many
 	 * deductions only "goal bin" should call this function
 	 */
@@ -267,7 +269,7 @@ public class Bin {
 	}
 	
 	
-	// axiom is for the zero-arity rules
+	/** axiom is for the zero-arity rules */
 	public void add_axiom(int i, int j, Rule rule, float latticeCost) {
 		add_deduction_in_bin(
 			compute_item(rule, null, i, j),
@@ -275,7 +277,17 @@ public class Bin {
 	}
 	
 	
-	/* add complete Items in Chart pruning inside this function */
+	/**
+	 * Add complete Items in Chart, 
+	 * pruning inside this function.
+	 * 
+	 * @param i
+	 * @param j
+	 * @param superItems List of language model items
+	 * @param rules
+	 * @param arity Number of nonterminals
+	 * @param latticeCost
+	 */
 	public void complete_cell(
 		int i, int j, ArrayList<SuperItem> superItems,
 		List<Rule> rules, int arity, float latticeCost
@@ -316,7 +328,7 @@ public class Bin {
 	}
 	
 	
-	/* add complete Items in Chart pruning inside this function */
+	/** Add complete Items in Chart pruning inside this function */
 	// TODO: our implementation do the prunining for each DotItem
 	//       under each grammar, not aggregated as in the python
 	//       version
@@ -462,7 +474,15 @@ public class Bin {
 			return get_signature(ranks);
 		}
 		
-		// natual order by cost
+		/**
+		 * Compares states by expected cost,
+		 * allowing states to be sorted according to their natural order.
+		 * 
+		 * @param that State to which this state will be compared
+		 * @return -1 if this state's expected cost is less than that stat's expected cost,
+		 *          0 if this state's expected cost is equal to that stat's expected cost,
+		 *          1 if this state's expected cost is greater than that stat's expected cost
+		 */
 		public int compareTo(CubePruneState that) {
 			if (this.tbl_item_states.getExpectedTotalCost() < that.tbl_item_states.getExpectedTotalCost()) {
 				return -1;
@@ -678,16 +698,6 @@ public class Bin {
 		return this.tableSuperItems;
 	}
 	
-	
-	/* list of items that have the same lhs but may have different LM states */
-	public static class SuperItem {
-		int lhs; // state
-		ArrayList<HGNode> l_items = new ArrayList<HGNode>();
-		
-		public SuperItem(int lhs) {
-			this.lhs = lhs;
-		}
-	}
 	
 	public static class ComputeItemResult {
 		private double expectedTotalCost;

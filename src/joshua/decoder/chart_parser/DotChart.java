@@ -17,7 +17,6 @@
  */
 package joshua.decoder.chart_parser;
 
-import joshua.decoder.chart_parser.Bin.SuperItem;
 import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.Trie;
 import joshua.lattice.Arc;
@@ -200,8 +199,19 @@ public class DotChart {
 	
 	
 	/**
-	 * looking for (proved) theorems or axioms in the "Chart"
-	 * that may apply and extend the dot pos
+	 * Attempt to combine an item in the dot chart
+	 * with an item in the chart to create a new item
+	 * in the dot chart.
+	 * <p>
+	 * In other words, this method looks 
+	 * for (proved) theorems or axioms in the completed chart
+	 * that may apply and extend the dot position.
+	 * 
+	 * @param i Start index of a dot chart item
+	 * @param k End index of a dot chart item; 
+	 *          start index of a completed chart item
+	 * @param j End index of a completed chart item
+	 * @param startDotItems 
 	 */
 	private void extendDotItemsWithProvedItems(
 		int i, int k, int j,

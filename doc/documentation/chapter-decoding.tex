@@ -1,1 +1,44 @@
 \chapter{Decoding}
+
+Assumption: The grammar contains no epsilon rules.
+
+\begin{enumerate}
+\item Extend the dot chart
+\item Populate complete rules into the chart, as in regular CKY
+\item Process unary rules (e.g., S $\rightarrow$ X, NP $\rightarrow$ NN), just add these items in chart, assume the rule set is acyclic
+\item 
+\end{enumerate}
+
+
+\section{Extend the dot chart}
+
+Attempt to combine an item in the dot chart
+with an item in the chart to create a new item
+in the dot chart.
+
+In other words, this method looks 
+for (proved) theorems or axioms in the completed chart
+that may apply and extend the dot position.
+
+You can think of an item in the dot chart as a pointer into the grammar trie, plus some history data.
+
+
+\section{Populate completed chart}
+
+The grammar is assumed to be stored as a trie data structure. Each node in the trie may contain a list of translation rules.
+
+Populate complete rules into the chart, as in regular CKY
+
+Pruning, feature function evaluation, and creation of hypergraph all take place in this step
+
+
+
+\section{Process unary rules}
+
+Process unary rules (e.g., S $\rightarrow$ X, NP $\rightarrow$ NN), just add these items in chart, assume the rule set is acyclic.
+
+This step uses an agenda parsing approach.
+
+
+\section{}
+
