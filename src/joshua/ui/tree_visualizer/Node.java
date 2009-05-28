@@ -70,6 +70,16 @@ class Node {
 		return;
 	}
 
+	public void setSourceStart(int x)
+	{
+		sourceStart = x;
+	}
+
+	public void setSourceEnd(int x)
+	{
+		sourceEnd = x;
+	}
+
 	public boolean isSource()
 	{
 		return isSource;

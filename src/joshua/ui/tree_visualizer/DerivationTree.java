@@ -186,6 +186,24 @@ public class DerivationTree extends DirectedOrderedSparseMultigraph<Node,Derivat
 			int start = v.sourceStart();
 			int end = v.sourceEnd();
 			Node par = (Node) getPredecessors(v).toArray()[0];
+
+			int v_index;
+			Object [] siblings = getSuccessors(par).toArray();
+			for (int i = 0; i < siblings.length; i++) {
+				Node s = (Node) siblings[i];
+				if (s == v) {
+					if (i != 0)
+						v.setSourceStart(((Node) siblings[i-1]).sourceEnd());
+					else
+						v.setSourceStart(par.sourceStart());
+					if (i != siblings.length - 1)
+						v.setSourceEnd(((Node) siblings[i+1]).sourceStart());
+					else
+						v.setSourceEnd(par.sourceEnd());
+					break;
+				}
+			}
+		/*
 			for (Node x : getSuccessors(par)) {
 				int xStart = x.sourceStart();
 				int xEnd = x.sourceEnd();
@@ -205,6 +223,7 @@ public class DerivationTree extends DirectedOrderedSparseMultigraph<Node,Derivat
 					continue;
 				}
 			}
+		*/
 			/*
 			for (int j = start; j < end; j++) {
 				addEdge(new DerivationTreeEdge(true), v, src[j]);
@@ -224,6 +243,8 @@ public class DerivationTree extends DirectedOrderedSparseMultigraph<Node,Derivat
 			for (int i = curr.sourceStart(); i < curr.sourceEnd(); i++) {
 				srcName += toks[i] + " ";
 			}
+			if (srcName.equals(""))
+				return;
 			Node result = new Node(srcName, true);
 			if (parent == null) {
 				sourceRoot = result;
@@ -243,6 +264,16 @@ public class DerivationTree extends DirectedOrderedSparseMultigraph<Node,Derivat
 				addEdge(new DerivationTreeEdge(false), parent, result);
 			else
 				sourceRoot = result;
+			while (!children.isEmpty()) {
+				Node next = children.get(0);
+				for (Node x : children) {
+					if (x.sourceStart() < next.sourceStart())
+						next = x;
+				}
+				addSourceNodes(next, result);
+				children.remove(next);
+			}
+			/*
 			int nextChild = curr.sourceStart();
 			for (int i = 0; i < children.size(); i++) {
 				Node x = children.get(i);
@@ -253,6 +284,7 @@ public class DerivationTree extends DirectedOrderedSparseMultigraph<Node,Derivat
 					i = -1;
 				}
 			}
+			*/
 		}
 	}
 
