@@ -304,7 +304,6 @@ public class DecoderThread extends Thread {
 			
 			
 			/* Seeding: the chart only sees the grammars, not the factories */
-			// TODO: Chart constructor should accept segment.constraints()
 			chart = new Chart(
 				inputLattice,
 				this.featureFunctions,

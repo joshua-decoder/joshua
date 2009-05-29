@@ -62,7 +62,7 @@ class DotChart {
 	 */
 	private Chart p_chart;
 	
-	/** 
+	/**
 	 * Translation grammar which contains the translation rules.
 	 */
 	private Grammar p_grammar;
@@ -87,6 +87,8 @@ class DotChart {
 // Constructors
 //===============================================================
 
+	// TODO: Maybe this should be a non-static inner class of Chart. That would give us implicit access to all the arguments of this constructor. Though we would need to take an argument, i, to know which Chart.this.grammars[i] to use.
+	
 	/**
 	 * Constructs a new dot chart from a specified input lattice,
 	 * a translation grammar, and a parse chart.

@@ -31,13 +31,12 @@ if [ $? -ne 0 ]; then
 	exit $?
 fi
 
-
 # BUG: we should fix the rest of this script to use our built-in tools now.
 
-./get_1best_from_Nbest.pl example2.nbest example2.1best
-./get_IBM_SGML_from_1best.pl example2
+#./get_1best_from_Nbest.pl example2.nbest example2.1best
+#./get_IBM_SGML_from_1best.pl example2
 
 # Note: we do not distribute IBM's BLEU scorer because it is
 # (C) Copyright IBM Corp. 2001 All Rights Reserved.
 # The symlink in Subversion points to JHU's local copy on the CLSP grid
-./bleu-1.04.pl -t example2.1best.sgm -r example2.refs.sgm -n 4 -ci
+#./bleu-1.04.pl -t example2.1best.sgm -r example2.refs.sgm -n 4 -ci

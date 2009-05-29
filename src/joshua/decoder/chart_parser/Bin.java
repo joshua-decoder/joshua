@@ -58,18 +58,18 @@ class Bin {
 //===============================================================
 	
 	/** The cost of the best item in the bin */
-	private double best_item_cost = IMPOSSIBLE_COST;
+	private double bestItemCost = IMPOSSIBLE_COST;
 	
-	/** cutoff=best_item_cost+relative_threshold */
-	private double cut_off_cost = IMPOSSIBLE_COST;
+	/** cutoff = bestItemCost + relative_threshold */
+	private double cutoffCost = IMPOSSIBLE_COST;
 	
 	// num of corrupted items in this.heapItems, note that the
 	// item in this.tableItems is always good
-	private int dead_items = 0;
+	private int qtyDeadItems = 0;
 	
-	private Chart p_chart = null;
+	private Chart chart = null;
 	
-	private int GOAL_SYM_ID;
+	private int goalSymID;
 	
 	/* we need always maintain the priority queue (worst first),
 	 * so that we can do prunning efficiently. On the other
@@ -113,9 +113,11 @@ class Bin {
 // Constructor
 //===============================================================
 	
+	// TODO: This should be a non-static inner class of Chart. That would give us implicit access to all the arguments of this constructor (which are the same at all call sites)
+	
 	public Bin(Chart chart, int goalSymID) {
-		this.p_chart     = chart;
-		this.GOAL_SYM_ID = goalSymID;
+		this.chart     = chart;
+		this.goalSymID = goalSymID;
 	}
 	
 	
@@ -126,13 +128,13 @@ class Bin {
 	/** 
 	 * Compute cost and the states of this item returned
 	 * ArrayList: expectedTotalCost, finalizedTotalCost,
-	 * transition_cost, bonus, list of states 
+	 * transition_cost, bonus, list of states
 	 */
 	ComputeItemResult compute_item(
 		Rule rule, ArrayList<HGNode> previousItems, int i, int j
 	) {
 		long startTime = Support.current_time(); // It's a lie, always == 0
-		this.p_chart.n_called_compute_item++;
+		this.chart.n_called_compute_item++;
 		
 		double finalizedTotalCost = 0.0;
 		
@@ -148,7 +150,7 @@ class Bin {
 		double transitionCostSum    = 0.0;
 		double futureCostEstimation = 0.0;
 		
-		for (FeatureFunction ff : this.p_chart.p_l_models) {
+		for (FeatureFunction ff : this.chart.featureFunctions) {
 			////long start2 = Support.current_time();
 			if (ff.isStateful()) {
 				//System.out.println("class name is " + ff.getClass().getName());
@@ -210,7 +212,7 @@ class Bin {
 		result.setTransitionTotalCost(transitionCostSum);
 		result.setFeatDPStates(allItemStates);
 		
-		this.p_chart.g_time_compute_item += Support.current_time() - startTime;
+		this.chart.g_time_compute_item += Support.current_time() - startTime;
 		
 		return result;
 	}
@@ -226,11 +228,11 @@ class Bin {
 		HGNode goalItem = null;
 		
 		for (HGNode item : bin.get_sorted_items()) {
-			if (item.lhs == this.GOAL_SYM_ID) {
+			if (item.lhs == this.goalSymID) {
 				double cost = item.best_hyperedge.best_cost;
 				double finalTransitionCost = 0.0;
 				
-				for (FeatureFunction ff : this.p_chart.p_l_models) {
+				for (FeatureFunction ff : this.chart.featureFunctions) {
 					finalTransitionCost +=
 						ff.getWeight()
 						* ff.finalTransition(item.getFeatDPState(ff));
@@ -249,8 +251,9 @@ class Bin {
 				}
 				
 				if (null == goalItem) {
+					// FIXME: this is the only place Chart.sentenceLength is accessed outside of Chart. Maybe it should be an argument to this method? This is also the only method where we use goalSymID
 					goalItem = new HGNode(
-						0, this.p_chart.sent_len + 1, this.GOAL_SYM_ID, null, dt, cost + finalTransitionCost);
+						0, this.chart.sentenceLength + 1, this.goalSymID, null, dt, cost + finalTransitionCost);
 					this.sortedItems.add(goalItem);
 				} else {
 					goalItem.addHyperedgeInItem(dt);
@@ -258,13 +261,18 @@ class Bin {
 						goalItem.best_hyperedge = dt;
 					}
 				}
-			} // End if item.lhs == this.GOAL_SYM_ID
+			} // End if item.lhs == this.goalSymID
 		} // End foreach Item in bin.get_sorted_items()
 		
 		
 		if (logger.isLoggable(Level.INFO)) {
-			logger.info(String.format("Goal item, best cost is %.3f",
-				goalItem.best_hyperedge.best_cost));
+			// BUG: what happened to make this necessary? This happens for the ./example2 decoder run (but not for ./example). Whatever it was, it happened in r878
+			if (null == goalItem) {
+				logger.severe("goalItem is null (this will cause the RuntimeException below)");
+			} else {
+				logger.info(String.format("Goal item, best cost is %.3f",
+					goalItem.best_hyperedge.best_cost));
+			}
 		}
 		ensure_sorted();
 		
@@ -390,9 +398,9 @@ class Bin {
 			add_deduction_in_bin(cur_state.tbl_item_states, cur_state.rule, i, j,cur_state.l_ants, latticeCost); // pre-pruning inside this function
 			
 			//if the best state is pruned, then all the remaining states should be pruned away
-			if (cur_state.tbl_item_states.getExpectedTotalCost() > this.cut_off_cost + JoshuaConfiguration.fuzz1) {
+			if (cur_state.tbl_item_states.getExpectedTotalCost() > this.cutoffCost + JoshuaConfiguration.fuzz1) {
 				//n_prepruned += heap_cands.size();
-				p_chart.n_prepruned_fuzz1 += heap_cands.size();
+				this.chart.n_prepruned_fuzz1 += heap_cands.size();
 				break;
 			}
 			
@@ -430,11 +438,11 @@ class Bin {
 				// add state into heap
 				cube_state_tbl.put(new_sig,1);
 				
-				if (result.getExpectedTotalCost() < this.cut_off_cost + JoshuaConfiguration.fuzz2) {
+				if (result.getExpectedTotalCost() < this.cutoffCost + JoshuaConfiguration.fuzz2) {
 					heap_cands.add(t_state);
 				} else {
 					//n_prepruned += 1;
-					p_chart.n_prepruned_fuzz2 += 1;
+					this.chart.n_prepruned_fuzz2 += 1;
 				}
 				// recover
 				if (k == 0) { // rule
@@ -473,11 +481,11 @@ class Bin {
 			
 			res = item;
 		} else {
-			p_chart.n_prepruned++;
+			this.chart.n_prepruned++;
 //			if (logger.isLoggable(Level.INFO)) logger.finest(String.format("Prepruned an deduction with arity %d", rule.getArity()));
 			res = null;
 		}
-		p_chart.g_time_add_deduction += Support.current_time() - start;
+		this.chart.g_time_add_deduction += Support.current_time() - start;
 		return res;
 	}
 	
@@ -577,14 +585,14 @@ class Bin {
 		boolean res = false;
 		HGNode oldItem = this.tableItems.get(newItem.getSignature());
 		if (null != oldItem) { // have an item with same states, combine items
-			p_chart.n_merged++;
+			this.chart.n_merged++;
 			if (newItem.est_total_cost < oldItem.est_total_cost) {
 				// the position of oldItem in the this.heapItems
 				// may change, basically, we should remove the
 				// oldItem, and re-insert it (linear time,
 				// this is too expense)
 				oldItem.is_dead = true; // this.heapItems.remove(oldItem);
-				this.dead_items++;
+				this.qtyDeadItems++;
 				newItem.addHyperedgesInItem(oldItem.l_hyperedges);
 				add_new_item(newItem); // this will update the HashMap, so that the oldItem is destroyed
 				res = true;
@@ -592,12 +600,12 @@ class Bin {
 				oldItem.addHyperedgesInItem(newItem.l_hyperedges);
 			}
 		} else { // first time item
-			p_chart.n_added++; // however, this item may not be used in the future due to pruning in the hyper-graph
+			this.chart.n_added++; // however, this item may not be used in the future due to pruning in the hyper-graph
 			add_new_item(newItem);
 			res = true;
 		}
-		this.cut_off_cost = Support.find_min(
-			this.best_item_cost + JoshuaConfiguration.relative_threshold,
+		this.cutoffCost = Support.find_min(
+			this.bestItemCost + JoshuaConfiguration.relative_threshold,
 			IMPOSSIBLE_COST);
 		run_pruning();
 		return res;
@@ -619,8 +627,8 @@ class Bin {
 		}
 		si.l_items.add(item);
 		
-		if (item.est_total_cost < this.best_item_cost) {
-			this.best_item_cost = item.est_total_cost;
+		if (item.est_total_cost < this.bestItemCost) {
+			this.bestItemCost = item.est_total_cost;
 		}
 	}
 	
@@ -639,31 +647,31 @@ class Bin {
 	
 	
 	private boolean should_prune(double total_cost) {
-		return (total_cost >= this.cut_off_cost);
+		return (total_cost >= this.cutoffCost);
 	}
 	
 	
 	private void run_pruning() {
-		if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("Pruning: heap size: %d; n_dead_items: %d", this.heapItems.size(),this.dead_items));
-		if (this.heapItems.size() == this.dead_items) { // TODO:clear the heap, and reset this.dead_items??
+		if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("Pruning: heap size: %d; n_dead_items: %d", this.heapItems.size(),this.qtyDeadItems));
+		if (this.heapItems.size() == this.qtyDeadItems) { // TODO:clear the heap, and reset this.qtyDeadItems??
 			this.heapItems.clear();
-			this.dead_items = 0;
+			this.qtyDeadItems = 0;
 			return;
 		}
-		while (this.heapItems.size() - this.dead_items > JoshuaConfiguration.max_n_items //bin limit pruning
-		|| this.heapItems.peek().est_total_cost >= this.cut_off_cost) { // relative threshold pruning
+		while (this.heapItems.size() - this.qtyDeadItems > JoshuaConfiguration.max_n_items //bin limit pruning
+		|| this.heapItems.peek().est_total_cost >= this.cutoffCost) { // relative threshold pruning
 			HGNode worstItem = this.heapItems.poll();
 			if (worstItem.is_dead) { // clear the corrupted item
-				this.dead_items--;
+				this.qtyDeadItems--;
 			} else {
 				this.tableItems.remove(worstItem.getSignature()); // always make this.tableItems current
-				this.p_chart.n_pruned++;
-//				if (logger.isLoggable(Level.INFO)) logger.info(String.format("Run_pruning: %d; cutoff=%.3f, realcost: %.3f",p_chart.n_pruned,this.cut_off_cost,worstItem.est_total_cost));
+				this.chart.n_pruned++;
+//				if (logger.isLoggable(Level.INFO)) logger.info(String.format("Run_pruning: %d; cutoff=%.3f, realcost: %.3f",this.chart.n_pruned,this.cutoffCost,worstItem.est_total_cost));
 			}
 		}
-		if (this.heapItems.size() - this.dead_items == JoshuaConfiguration.max_n_items) { // TODO:??
-			this.cut_off_cost = Support.find_min(
-				this.cut_off_cost,
+		if (this.heapItems.size() - this.qtyDeadItems == JoshuaConfiguration.max_n_items) { // TODO:??
+			this.cutoffCost = Support.find_min(
+				this.cutoffCost,
 				this.heapItems.peek().est_total_cost + EPSILON);
 		}
 	}
