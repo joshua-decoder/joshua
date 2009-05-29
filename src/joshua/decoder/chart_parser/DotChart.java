@@ -41,7 +41,20 @@ import java.util.logging.Logger;
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate$
  */
-public class DotChart {
+class DotChart {
+	
+//===============================================================
+// Package-protected instance fields
+//===============================================================
+	/** 
+	 * Two-dimensional chart of cells. Some cells might be null.
+	 */
+	DotBin[][] l_dot_bins;
+	
+	
+//===============================================================
+// Private instance fields (maybe could be protected instead)
+//===============================================================
 	
 	/**
 	 * CKY+ style parse chart in which completed span entries
@@ -54,10 +67,6 @@ public class DotChart {
 	 */
 	private Grammar p_grammar;
 	
-	/** 
-	 * Two-dimensional chart of cells. Some cells might be null.
-	 */
-	DotBin[][] l_dot_bins;
 	
 	/** Length of input sentence. */
 	private final int sent_len;
@@ -65,10 +74,19 @@ public class DotChart {
 	/** Represents the input sentence being translated. */
 	private final Lattice<Integer> input;
 	
+	
+//===============================================================
+// Static fields
+//===============================================================
+	
 	private static final Logger logger = 
 		Logger.getLogger(DotChart.class.getName());
 	
 	
+//===============================================================
+// Constructors
+//===============================================================
+
 	/**
 	 * Constructs a new dot chart from a specified input lattice,
 	 * a translation grammar, and a parse chart.
@@ -118,11 +136,15 @@ public class DotChart {
 */
 	
 	
+//===============================================================
+// Package-protected methods
+//===============================================================
+	
 	/**
 	 * add intial dot items: dot-items pointer to the root of
 	 * the grammar trie.
 	 */
-	public void seed() {
+	void seed() {
 		for (int j = 0; j <= sent_len - 1; j++) {
 			if (p_grammar.hasRuleForSpan(j, j, sent_len)) {
 				if (null == p_grammar.getTrieRoot()) {
@@ -139,7 +161,7 @@ public class DotChart {
 	 * (e.g., X or NP); (2) CN-side terminal therefore, two
 	 * ways to extend the dot postion.
 	 */
-	public void expand_cell(int i, int j) {
+	void expand_cell(int i, int j) {
 		//if (logger.isLoggable(Level.FINE)) logger.fine("Expanding dot cell ("+i+","+j+")");
 		
 		// (1) if the dot is just to the left of a non-terminal variable, 
@@ -193,10 +215,14 @@ public class DotChart {
 	 * dotchart.expand_cell add dotitems that start with the
 	 * complete super-items in cell(i,j)
 	 */
-	public void start_dotitems(int i, int j) {
+	void start_dotitems(int i, int j) {
 		extendDotItemsWithProvedItems(i,i,j,true);
 	}
 	
+	
+//===============================================================
+// Private methods
+//===============================================================
 	
 	/**
 	 * Attempt to combine an item in the dot chart
@@ -215,7 +241,7 @@ public class DotChart {
 	 */
 	private void extendDotItemsWithProvedItems(
 		int i, int k, int j,
-		boolean startDotItems) 
+		boolean startDotItems)
 	{
 		if (this.l_dot_bins[i][k] == null || this.p_chart.bins[k][j] == null) {
 			return;
@@ -254,9 +280,9 @@ public class DotChart {
 	 * @param ant_s_items_in
 	 * @param cur_s_item
 	 */
-	private void addDotItem(Trie tnode, int i, int j, 
-			ArrayList<SuperItem> ant_s_items_in, SuperItem cur_s_item, 
-			float lattice_cost) 
+	private void addDotItem(Trie tnode, int i, int j,
+			ArrayList<SuperItem> ant_s_items_in, SuperItem cur_s_item,
+			float lattice_cost)
 	{
 		ArrayList<SuperItem> ant_s_items = new ArrayList<SuperItem>();
 		if (ant_s_items_in != null) {
@@ -277,14 +303,19 @@ public class DotChart {
 	}
 	
 	
+//===============================================================
+// Package-protected classes
+//===============================================================
+	
 	/**
 	 * Bin is a cell in parsing terminology
 	 */
-	public static class DotBin {
+	static class DotBin {
 		
-		public ArrayList<DotItem> l_dot_items = new ArrayList<DotItem>();
+		// Package-protected fields
+		ArrayList<DotItem> l_dot_items = new ArrayList<DotItem>();
 		
-		public void add_dot_item(DotItem dt) {
+		private void add_dot_item(DotItem dt) {
 			/*if(l_dot_items==null)
 				l_dot_items= new ArrayList<DotItem>();*/
 			l_dot_items.add(dt);
@@ -296,13 +327,18 @@ public class DotChart {
 	 * remember the dot position in which a rule has been applied
 	 * so far, and remember the old complete items.
 	 */
-	public static class DotItem {
+	static class DotItem {
+		
+		//=======================================================
+		// Package-protected instance fields
+		//=======================================================
 		
 		//int i, j; //start and end position in the chart
 		Trie tnode = null; // dot_position, point to grammar trie node, this is the only place that the DotChart points to the grammar
 		ArrayList<SuperItem> l_ant_super_items = null; //pointer to SuperItem in Chart
 		float lattice_cost;
-
+		
+		
 		public DotItem(int i_in, int j_in, Trie tnode_in, ArrayList<SuperItem> ant_super_items_in, float lattice_cost) {
 			//i = i_in;
 			//j = j_in;

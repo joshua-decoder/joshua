@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!-- Build file for Joshua. Last changed: $LastChangedDate$ -->
-<project name="JHU Decoder" default="compile" basedir=".">
+<project name="Joshua Machine Translation Toolkit" default="compile" basedir=".">
 	
 <!-- ~~~~~ Properties, Paths, etc ~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 	

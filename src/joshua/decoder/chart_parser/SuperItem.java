@@ -22,26 +22,26 @@ import java.util.ArrayList;
 import joshua.decoder.hypergraph.HGNode;
 
 /** 
- * Represents a list of items in the hypergraph
- * that have the same left-hand side 
- * but may have different LM states.
+ * Represents a list of items in the hypergraph that have the same
+ * left-hand side but may have different LM states.
  * 
  * @author Zhifei Li
  */
-public class SuperItem {
+class SuperItem {
 	
 	/** Common left-hand side state. */
 	final int lhs;
 	
 	/** 
-	 * List of hypergraph nodes,
-	 * each of which has its own language model state.
+	 * List of hypergraph nodes, each of which has its own
+	 * language model state.
 	 */
 	final ArrayList<HGNode> l_items;
 	
+	
 	/**
-	 * Constructs a super item
-	 * defined by a common left-hand side.
+	 * Constructs a super item defined by a common left-hand
+	 * side.
 	 * 
 	 * @param lhs Left-hand side token
 	 */

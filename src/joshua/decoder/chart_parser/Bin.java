@@ -51,19 +51,23 @@ import java.util.logging.Logger;
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate$
  */
-public class Bin {
+class Bin {
+	
+//===============================================================
+// Private instance fields (maybe could be protected instead)
+//===============================================================
 	
 	/** The cost of the best item in the bin */
-	public double best_item_cost = IMPOSSIBLE_COST;
+	private double best_item_cost = IMPOSSIBLE_COST;
 	
 	/** cutoff=best_item_cost+relative_threshold */
-	public double cut_off_cost = IMPOSSIBLE_COST;
+	private double cut_off_cost = IMPOSSIBLE_COST;
 	
 	// num of corrupted items in this.heapItems, note that the
 	// item in this.tableItems is always good
-	int dead_items = 0;
+	private int dead_items = 0;
 	
-	Chart p_chart = null;
+	private Chart p_chart = null;
 	
 	private int GOAL_SYM_ID;
 	
@@ -94,6 +98,7 @@ public class Bin {
 	// whenever necessary
 	private ArrayList<HGNode> sortedItems = null;
 	
+	
 //===============================================================
 // Static fields
 //===============================================================
@@ -115,7 +120,7 @@ public class Bin {
 	
 	
 //===============================================================
-// Methods
+// Package-protected methods
 //===============================================================
 	
 	/** 
@@ -123,7 +128,7 @@ public class Bin {
 	 * ArrayList: expectedTotalCost, finalizedTotalCost,
 	 * transition_cost, bonus, list of states 
 	 */
-	public ComputeItemResult compute_item(
+	ComputeItemResult compute_item(
 		Rule rule, ArrayList<HGNode> previousItems, int i, int j
 	) {
 		long startTime = Support.current_time(); // It's a lie, always == 0
@@ -216,7 +221,7 @@ public class Bin {
 	 * the goal bin has only one Item, which itself has many
 	 * deductions only "goal bin" should call this function
 	 */
-	public void transit_to_goal(Bin bin) { // the bin[0][n], this is not goal bin
+	void transit_to_goal(Bin bin) { // the bin[0][n], this is not goal bin
 		this.sortedItems = new ArrayList<HGNode>();
 		HGNode goalItem = null;
 		
@@ -270,7 +275,7 @@ public class Bin {
 	
 	
 	/** axiom is for the zero-arity rules */
-	public void add_axiom(int i, int j, Rule rule, float latticeCost) {
+	void add_axiom(int i, int j, Rule rule, float latticeCost) {
 		add_deduction_in_bin(
 			compute_item(rule, null, i, j),
 			rule, i, j, null, latticeCost);
@@ -288,7 +293,7 @@ public class Bin {
 	 * @param arity Number of nonterminals
 	 * @param latticeCost
 	 */
-	public void complete_cell(
+	void complete_cell(
 		int i, int j, ArrayList<SuperItem> superItems,
 		List<Rule> rules, int arity, float latticeCost
 	) {
@@ -334,7 +339,7 @@ public class Bin {
 	//       version
 	// TODO: the implementation is little bit different from
 	//       the description in Liang'2007 ACL paper
-	public void complete_cell_cube_prune(
+	void complete_cell_cube_prune(
 		int i, int j, ArrayList<SuperItem> superItems,
 		List<Rule> rules, float latticeCost
 	) { // combinations: rules, antecent items
@@ -442,60 +447,7 @@ public class Bin {
 	}
 	
 	
-	private static class CubePruneState implements Comparable<CubePruneState> {
-		int[]             ranks;
-		ComputeItemResult tbl_item_states;
-		Rule              rule;
-		ArrayList<HGNode> l_ants;
-		
-		public CubePruneState(ComputeItemResult state, int[] ranks, Rule rule, 
-				ArrayList<HGNode> antecedents) 
-		{
-			this.tbl_item_states = state;
-			this.ranks           = ranks;
-			this.rule            = rule;
-			// create a new vector is critical, because
-			// currentAntecedents will change later
-			this.l_ants = new ArrayList<HGNode>(antecedents);
-		}
-		
-		
-		private static String get_signature(int[] ranks2) {
-			StringBuffer sb = new StringBuffer();
-			if (null != ranks2) {
-				for (int i = 0; i < ranks2.length; i++) {
-					sb.append(' ').append(ranks2[i]);
-				}
-			}
-			return sb.toString();
-		}
-		
-		public String get_signature() {
-			return get_signature(ranks);
-		}
-		
-		/**
-		 * Compares states by expected cost,
-		 * allowing states to be sorted according to their natural order.
-		 * 
-		 * @param that State to which this state will be compared
-		 * @return -1 if this state's expected cost is less than that stat's expected cost,
-		 *          0 if this state's expected cost is equal to that stat's expected cost,
-		 *          1 if this state's expected cost is greater than that stat's expected cost
-		 */
-		public int compareTo(CubePruneState that) {
-			if (this.tbl_item_states.getExpectedTotalCost() < that.tbl_item_states.getExpectedTotalCost()) {
-				return -1;
-			} else if (this.tbl_item_states.getExpectedTotalCost() == that.tbl_item_states.getExpectedTotalCost()) {
-				return 0;
-			} else {
-				return 1;
-			}
-		}
-	}
-	
-	
-	public HGNode add_deduction_in_bin(
+	HGNode add_deduction_in_bin(
 		ComputeItemResult result, Rule rule, int i, int j,
 		ArrayList<HGNode> ants, float latticeCost
 	) {
@@ -530,7 +482,84 @@ public class Bin {
 	}
 	
 	
-//	 create a copy of the rule and set the lattice cost field
+	ArrayList<HGNode> get_sorted_items() {
+		ensure_sorted();
+		return this.sortedItems;
+	}
+	
+	
+	Map<Integer,SuperItem> get_sorted_super_items() {
+		ensure_sorted();
+		return this.tableSuperItems;
+	}
+	
+	
+//===============================================================
+// CubePruneState class
+//===============================================================
+	private static class CubePruneState implements Comparable<CubePruneState> {
+		int[]             ranks;
+		ComputeItemResult tbl_item_states;
+		Rule              rule;
+		ArrayList<HGNode> l_ants;
+		
+		public CubePruneState(ComputeItemResult state, int[] ranks, Rule rule, 
+				ArrayList<HGNode> antecedents)
+		{
+			this.tbl_item_states = state;
+			this.ranks           = ranks;
+			this.rule            = rule;
+			// create a new vector is critical, because
+			// currentAntecedents will change later
+			this.l_ants = new ArrayList<HGNode>(antecedents);
+		}
+		
+		
+		private static String get_signature(int[] ranks2) {
+			StringBuffer sb = new StringBuffer();
+			if (null != ranks2) {
+				for (int i = 0; i < ranks2.length; i++) {
+					sb.append(' ').append(ranks2[i]);
+				}
+			}
+			return sb.toString();
+		}
+		
+		
+		private String get_signature() {
+			return get_signature(ranks);
+		}
+		
+		
+		/**
+		 * Compares states by expected cost, allowing states
+		 * to be sorted according to their natural order.
+		 * 
+		 * @param that State to which this state will be compared
+		 * @return -1 if this state's expected cost is less
+		 *            than that stat's expected cost,
+		 *         0  if this state's expected cost is equal
+		 *            to that stat's expected cost,
+		 *         +1 if this state's expected cost is
+		 *            greater than that stat's expected cost
+		 */
+		public int compareTo(CubePruneState that) {
+			if (this.tbl_item_states.getExpectedTotalCost() < that.tbl_item_states.getExpectedTotalCost()) {
+				return -1;
+			} else if (this.tbl_item_states.getExpectedTotalCost() == that.tbl_item_states.getExpectedTotalCost()) {
+				return 0;
+			} else {
+				return 1;
+			}
+		}
+	}
+	
+	
+//===============================================================
+// Private Methods
+//===============================================================
+
+	//	 create a copy of the rule and set the lattice cost field
 	//TODO:change this bad behavior
 	private Rule cloneAndAddLatticeCostIfNonZero(Rule r, float latticeCost) {
 		//!!!!!!!!!!!!!!!!!!!!!!!!!!! this is wrong, we need to fix this when one seriously incorporates lattice
@@ -596,7 +625,7 @@ public class Bin {
 	}
 	
 	
-	public void print_info(Level level) {
+	private void print_info(Level level) {
 		if (logger.isLoggable(level))
 			logger.log(level,
 				String.format("#### Stat of Bin, n_items=%d, n_super_items=%d",
@@ -688,53 +717,46 @@ public class Bin {
 	}
 	
 	
-	public ArrayList<HGNode> get_sorted_items() {
-		ensure_sorted();
-		return this.sortedItems;
-	}
 	
-	public Map<Integer,SuperItem> get_sorted_super_items() {
-		ensure_sorted();
-		return this.tableSuperItems;
-	}
-	
-	
-	public static class ComputeItemResult {
+//===============================================================
+// Package-protected ComputeItemResult class
+//===============================================================
+	static class ComputeItemResult {
 		private double expectedTotalCost;
 		private double finalizedTotalCost;
 		private double transitionTotalCost;
 		// the key is feature id; tbl of dpstate for each stateful feature
 		private HashMap<Integer,FFDPState> tbl_feat_dpstates;
 		
-		public void setExpectedTotalCost(double cost) {
+		private void setExpectedTotalCost(double cost) {
 			this.expectedTotalCost = cost;
 		}
 		
-		public double getExpectedTotalCost() {
+		private double getExpectedTotalCost() {
 			return this.expectedTotalCost;
 		}
 		
-		public void setFinalizedTotalCost(double cost) {
+		private void setFinalizedTotalCost(double cost) {
 			this.finalizedTotalCost = cost;
 		}
 		
-		public double getFinalizedTotalCost() {
+		private double getFinalizedTotalCost() {
 			return this.finalizedTotalCost;
 		}
 		
-		public void setTransitionTotalCost(double cost) {
+		private void setTransitionTotalCost(double cost) {
 			this.transitionTotalCost = cost;
 		}
 		
-		public double getTransitionTotalCost() {
+		private double getTransitionTotalCost() {
 			return this.transitionTotalCost;
 		}
 		
-		public void setFeatDPStates(HashMap<Integer,FFDPState> states) {
+		private void setFeatDPStates(HashMap<Integer,FFDPState> states) {
 			this.tbl_feat_dpstates = states;
 		}
 		
-		public HashMap<Integer,FFDPState> getFeatDPStates() {
+		private HashMap<Integer,FFDPState> getFeatDPStates() {
 			return this.tbl_feat_dpstates;
 		}
 	}

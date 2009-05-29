@@ -17,7 +17,6 @@
  */
 package joshua.decoder.chart_parser;
 
-
 import joshua.corpus.vocab.SymbolTable;
 import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.chart_parser.Bin.ComputeItemResult;
@@ -63,18 +62,73 @@ import java.util.logging.Logger;
  */
 public class Chart {
 	
-	public  Grammar[]        grammars;
-	public  DotChart[]       dotcharts;//each grammar should have a dotchart associated with it
-	public  Bin[][]          bins;//note that in some cell, it might be null
-	private Bin              goal_bin;
+//===============================================================
+// Package-protected instance fields
+//===============================================================
 	
-	private Lattice<Integer> sentence;//a list of foreign words
-	//private int[] sentence;
-	public  int              sent_len;//foreign sent len
-	private int              sent_id;
+	Bin[][] bins; // note that in some cell, it might be null
+	int     sent_len; // foreign sent len
 	
-	//decoder-wide variables
+	
+	//===========================================================
+	// Decoder-wide fields (FIXME: by which we mean what?)
+	//===========================================================
 	ArrayList<FeatureFunction> p_l_models;
+	
+	
+	//===========================================================
+	// Satistics
+	//===========================================================
+	
+	/**
+	 * how many items have been pruned away because its cost
+	 * is greater than the cutoff in calling
+	 * chart.add_deduction_in_chart()
+	 */
+	int n_prepruned           = 0;
+	
+	int n_prepruned_fuzz1     = 0;
+	int n_prepruned_fuzz2     = 0;
+	int n_pruned              = 0;
+	int n_merged              = 0;
+	int n_added               = 0;
+	int n_dotitem_added       = 0; // note: there is no pruning in dot-item
+	int n_called_compute_item = 0;
+	
+	
+	//===========================================================
+	// Time-profiling variables for debugging
+	//===========================================================
+	long g_time_compute_item  = 0;
+	long g_time_add_deduction = 0;
+	
+	
+//===============================================================
+// Private instance fields (maybe could be protected instead)
+//===============================================================
+	
+	private  Grammar[]       grammars;
+	private  DotChart[]      dotcharts; // each grammar should have a dotchart associated with it
+	private Bin              goal_bin;
+	private Lattice<Integer> sentence; // a list of foreign words
+	private int              sent_id;
+	private int              goalSymbolID = -1;
+	
+	
+	//===========================================================
+	// Manual constraint annotations
+	//===========================================================
+	
+	// TODO: each span only has one ConstraintSpan
+	private HashMap<String,ConstraintSpan> tblConstraintSpansForFiltering;
+	
+	// contain spans that have hard "rule" constraint; key: start_span; value: end_span
+	private ArrayList<Span> listOfSpansWithHardRuleConstraint;
+	
+	
+	//===========================================================
+	// Decoder-wide fields (FIXME: by which we mean what?)
+	//===========================================================
 	
 	/**
 	 * Shared symbol table for source language terminals, target
@@ -88,34 +142,40 @@ public class Chart {
 	 * the symbol table.
 	 * <p>
 	 */
-	SymbolTable p_symbolTable;
+	private SymbolTable p_symbolTable;
 	
-	//statistics
-	int gtem                  = 0;
-	int n_prepruned           = 0;//how many items have been pruned away because its cost is greater than the cutoff in calling chart.add_deduction_in_chart()
-	int n_prepruned_fuzz1     = 0;
-	int n_prepruned_fuzz2     = 0;
-	int n_pruned              = 0;
-	int n_merged              = 0;
-	int n_added               = 0;
-	int n_dotitem_added       = 0;//note: there is no pruning in dot-item
-	int n_called_compute_item = 0;
 	
-	//time-profile variables, debug purpose
-	long        g_time_compute_item      = 0;
-	long        g_time_add_deduction     = 0;
-	static long g_time_lm                = 0;
-	static long g_time_score_sent        = 0;
-	static long g_time_check_nonterminal = 0;
-	static long g_time_kbest_extract     = 0;
+	//===========================================================
+	// Satistics
+	//===========================================================
+	private int gtem = 0;
 	
+	
+//===============================================================
+// Static fields
+//===============================================================
+	
+	//===========================================================
+	// Time-profiling variables for debugging
+	//===========================================================
+	private static long g_time_lm                = 0;
+	private static long g_time_score_sent        = 0;
+	private static long g_time_check_nonterminal = 0;
+	private static long g_time_kbest_extract     = 0;
+	
+	
+	//===========================================================
+	// Logger
+	//===========================================================
 	private static final Logger logger = 
 		Logger.getLogger(Chart.class.getName());
 	
-	int goalSymbolID = -1;
 	
-	HashMap<String,ConstraintSpan> tblConstraintSpansForFiltering; // TODO: each span only has one ConstraintSpan
-	ArrayList<Span> listOfSpansWithHardRuleConstraint; //contain spans that have hard "rule" constraint; key: start_span; value: end_span
+	
+	
+//===============================================================
+// Constructors
+//===============================================================
 	
 	public Chart(
 		Lattice<Integer>           sentence,
@@ -126,7 +186,7 @@ public class Chart {
 		boolean                    have_lm_model,
 		String                     goalSymbol,
 		List<ConstraintSpan> constraintSpans)
-	{	
+	{
 		this.sentence = sentence;
 		this.sent_len = sentence.size() - 1;
 		this.p_l_models = models;
@@ -149,7 +209,7 @@ public class Chart {
 			this.dotcharts[i].seed(); // TODO: should fold into the constructor
 		}
 		
-	
+		
 		
 		/**
 		 * (1) add manual rule (only allow flat rules) into the
@@ -228,6 +288,10 @@ public class Chart {
 			logger.fine("Finished seeding chart.");
 	}
 	
+	
+//===============================================================
+// Manual constraint annotation methods and classes
+//===============================================================
 	private static class Span {
 		int startPos;
 		int endPos;
@@ -246,6 +310,11 @@ public class Chart {
 		}
 		return false;
 	}
+	
+	
+//===============================================================
+// The primary method for filling in the chart
+//===============================================================
 	
 	/**
 	 * Construct the hypergraph with the help from DotChart.
@@ -394,7 +463,12 @@ public class Chart {
 		return new HyperGraph(goal_bin.get_sorted_items().get(0), -1, -1, sent_id, sent_len); // num_items/deductions : -1
 	}
 	
-	public void print_info(Level level) {
+	
+//===============================================================
+// Private methods
+//===============================================================
+	
+	private void print_info(Level level) {
 		if (logger.isLoggable(level)) {
 			logger.log(level,
 				String.format("ADDED: %d; MERGED: %d; PRUNED: %d; PRE-PRUNED: %d, FUZZ1: %d, FUZZ2: %d; DOT-ITEMS ADDED: %d",
@@ -407,6 +481,7 @@ public class Chart {
 					this.n_dotitem_added));
 		}
 	}
+	
 	
 	/**
 	 * agenda based extension: this is necessary in case more
@@ -460,6 +535,7 @@ public class Chart {
 			add_axiom(i, j, rule, lattice_cost);
 		}
 	}
+	
 	/** axiom is for rules with zero-arity */
 	private void add_axiom(int i, int j, Rule rule, float lattice_cost) {
 		if (null == this.bins[i][j]) {
@@ -496,13 +572,17 @@ public class Chart {
 		this.bins[i][j].complete_cell_cube_prune(i, j, dt.l_ant_super_items, filterRules(i,j, rb.getSortedRules()), lattice_cost);//combinations: rules, antecent items
 	}
 	
+	
 	private String getSpanSignature(int i, int j) {
 		return i + " " + j;
 	}
 	
-	/** if there are any LHS or RHS constraints for a span, 
-	 * then all the applicable grammar rules in that span will have to pass the filter
-	 * */
+	
+	/**
+	 * if there are any LHS or RHS constraints for a span, then
+	 * all the applicable grammar rules in that span will have
+	 * to pass the filter.
+	 */
 	private List<Rule> filterRules(int i, int j, List<Rule> rulesIn) {
 		if (null == tblConstraintSpansForFiltering)
 			return rulesIn;
