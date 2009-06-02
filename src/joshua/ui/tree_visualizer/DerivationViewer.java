@@ -32,6 +32,7 @@ import edu.uci.ics.jung.algorithms.layout.StaticLayout;
 import edu.uci.ics.jung.visualization.VisualizationViewer;
 import edu.uci.ics.jung.visualization.control.DefaultModalGraphMouse;
 import edu.uci.ics.jung.visualization.control.ModalGraphMouse;
+import edu.uci.ics.jung.visualization.control.LayoutScalingControl;
 import edu.uci.ics.jung.visualization.decorators.ToStringLabeller;
 import edu.uci.ics.jung.visualization.renderers.Renderer.VertexLabel.Position;
 
@@ -47,6 +48,7 @@ public class DerivationViewer extends VisualizationViewer<Node,DerivationTreeEdg
 	{
 		super(new CircleLayout<Node,DerivationTreeEdge>(g));
 		setGraphLayout(new StaticLayout<Node,DerivationTreeEdge>(g, new DerivationTreeTransformer(g)));
+		scaleToLayout(new LayoutScalingControl());
 		g.addCorrespondences();
 		setPreferredSize(new Dimension(DEFAULT_HEIGHT, DEFAULT_WIDTH));
 		getRenderContext().setVertexLabelTransformer(new ToStringLabeller<Node>());

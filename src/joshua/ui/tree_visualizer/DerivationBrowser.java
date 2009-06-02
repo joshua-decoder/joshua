@@ -23,7 +23,7 @@ public class DerivationBrowser {
 
 	private static JFileChooser fileChooser;
 
-	private static JFrame activeFrame;
+	private static ActiveFrame activeFrame;
 
 	public static final int DEFAULT_WIDTH = 640;
 	public static final int DEFAULT_HEIGHT = 480;
@@ -31,7 +31,7 @@ public class DerivationBrowser {
 	public static void main(String [] argv)
 	{
 		initializeJComponents();
-		drawGraph();
+		activeFrame.drawGraph();
 		chooserFrame.setVisible(true);
 		return;
 	}
@@ -61,7 +61,7 @@ public class DerivationBrowser {
 		// fileChooser
 		fileChooser = new JFileChooser();
 
-		activeFrame = createActiveFrame();
+		activeFrame = new ActiveFrame();
 		return;
 	}
 
@@ -79,7 +79,8 @@ public class DerivationBrowser {
 		creat.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
-				activeFrame = createActiveFrame();
+				activeFrame.fix();
+				activeFrame = new ActiveFrame();
 				return;
 			}
 		});
@@ -88,30 +89,6 @@ public class DerivationBrowser {
 		openMenu.add(tgt);
 		mb.add(openMenu);
 		return mb;
-	}
-
-	private static void drawGraph()
-	{
-		for (Component c : activeFrame.getContentPane().getComponents())
-			activeFrame.getContentPane().remove(c);
-		String src = (String) sourceList.getSelectedValue();
-		Derivation tgtDer = (Derivation) targetList.getSelectedValue();
-
-		if ((src == null) || (tgtDer == null)) {
-			JLabel lbl = new JLabel("No tree to display.");
-			activeFrame.getContentPane().add(lbl);
-			lbl.revalidate();
-			activeFrame.getContentPane().repaint();
-			return;
-		}
-		String tgt = tgtDer.complete();
-		DerivationTree tree = new DerivationTree(tgt.split(DerivationTree.DELIMITER)[1], src);
-		DerivationViewer dv = new DerivationViewer(tree);
-		activeFrame.getContentPane().add(dv);
-		dv.revalidate();
-		activeFrame.repaint();
-		activeFrame.getContentPane().repaint();
-		return;
 	}
 
 	private static void populateSourceList()
@@ -165,12 +142,99 @@ public class DerivationBrowser {
 		}
 	}
 
-	private static JFrame createActiveFrame()
-	{
-		JFrame ret = new JFrame("Joshua Derivation Tree");
-		ret.setSize(DEFAULT_WIDTH, DEFAULT_HEIGHT);
-		ret.setVisible(true);
-		return ret;
+	public static class ActiveFrame extends JFrame {
+		private JButton nextDerivation;
+		private JButton previousDerivation;
+		private JButton nextSource;
+		private JButton previousSource;
+
+		private JPanel controlPanel;
+		private JPanel viewPanel;
+
+		private JLabel source;
+		private JLabel derivation;
+
+		public ActiveFrame()
+		{
+			super("Joshua Derivation Tree");
+			setLayout(new BorderLayout());
+			setSize(DEFAULT_WIDTH, DEFAULT_HEIGHT);
+			controlPanel = new JPanel(new BorderLayout());
+
+			source = new JLabel("source: none");
+			derivation = new JLabel("derivation: none");
+
+			initializeButtons();
+			layoutControl();
+
+			viewPanel = new JPanel(new BorderLayout());
+
+			getContentPane().add(viewPanel, BorderLayout.CENTER);
+			getContentPane().add(controlPanel, BorderLayout.SOUTH);
+			setVisible(true);
+		}
+
+		private void layoutControl()
+		{
+			JPanel ctlLeft = new JPanel(new GridLayout(2, 1));
+			JPanel ctlCenter = new JPanel(new GridLayout(2, 1));
+			JPanel ctlRight = new JPanel(new GridLayout(2, 1));
+
+			controlPanel.add(ctlLeft, BorderLayout.WEST);
+			controlPanel.add(ctlCenter, BorderLayout.CENTER);
+			controlPanel.add(ctlRight, BorderLayout.EAST);
+
+			ctlLeft.add(previousDerivation);
+			ctlLeft.add(previousSource);
+			ctlCenter.add(derivation);
+			ctlCenter.add(source);
+			ctlRight.add(nextDerivation);
+			ctlRight.add(nextSource);
+			return;
+		}
+
+		private void initializeButtons()
+		{
+
+			nextDerivation = new JButton(">");
+			previousDerivation = new JButton("<");
+			nextSource = new JButton(">");
+			previousSource = new JButton("<");
+
+		/*
+			nextDerivation.setPreferredSize(new Dimension(50, 50));
+			previousDerivation.setPreferredSize(new Dimension(50, 50));
+			nextSource.setPreferredSize(new Dimension(50, 50));
+			previousSource.setPreferredSize(new Dimension(50, 50));
+		*/	
+			return;
+		}
+
+		public void drawGraph()
+		{
+			viewPanel.removeAll();
+			String src = (String) sourceList.getSelectedValue();
+			Derivation tgtDer = (Derivation) targetList.getSelectedValue();
+
+			if ((src == null) || (tgtDer == null)) {
+				return;
+			}
+			source.setText(src);
+			derivation.setText(tgtDer.toString());
+			String tgt = tgtDer.complete();
+			DerivationTree tree = new DerivationTree(tgt.split(DerivationTree.DELIMITER)[1], src);
+			DerivationViewer dv = new DerivationViewer(tree);
+			viewPanel.add(dv, BorderLayout.CENTER);
+			dv.revalidate();
+			repaint();
+			getContentPane().repaint();
+			return;
+		}
+
+		public void fix()
+		{
+		}
+
 	}
 
 	public static class FileChoiceListener implements ActionListener {
@@ -219,7 +283,7 @@ public class DerivationBrowser {
 				populateTargetList();
 				targetList.setSelectedIndex(0);
 			}
-			drawGraph();
+			activeFrame.drawGraph();
 			return;
 		}
 	}
