@@ -134,6 +134,7 @@ public class HierarchicalPhrase extends Pattern {
 			for (Span terminalSpan : terminalSpans) {
 				terminalSequenceStartIndices[terminalSpanNumber] = terminalSpan.start;
 				terminalSequenceEndIndices[terminalSpanNumber] = terminalSpan.end;
+				terminalSpanNumber++;
 			}
 		}
 		

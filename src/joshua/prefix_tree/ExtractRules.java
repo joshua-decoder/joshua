@@ -64,7 +64,8 @@ import joshua.util.io.BinaryIn;
 public class ExtractRules {
 
 	/** Logger for this class. */
-	private static final Logger logger = Logger.getLogger(ExtractRules.class.getName());
+	private static final Logger logger = 
+		Logger.getLogger(ExtractRules.class.getName());
 
 
 	/**

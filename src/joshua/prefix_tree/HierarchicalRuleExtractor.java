@@ -140,6 +140,16 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 		
 		if (logger.isLoggable(Level.FINE)) logger.fine("Extracting rules for source pattern: " + sourcePattern);
 		
+		{
+			joshua.corpus.vocab.SymbolTable vocab = suffixArray.getVocabulary();
+//			Pattern pattern = new Pattern(vocab, vocab.getIDs("que [X,1] ."));
+			if (sourcePattern.size()==3 && sourcePattern.getWordID(0)==vocab.getID("que") &&
+					sourcePattern.getWordID(2)==vocab.getID(".")) {
+				logger.severe("HERE");
+//				System.exit(-1);
+			}
+		}
+		
 		int listSize = sourceHierarchicalPhrases.size();
 		int stepSize; {
 			if (listSize <= sampleSize) {
