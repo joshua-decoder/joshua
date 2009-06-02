@@ -273,15 +273,39 @@ public class HierarchicalPhrase extends Pattern {
 	}
 	
 	
-	
+	/**
+	 * Gets the number of contiguous sequences of terminals
+	 * in the pattern corresponding to this phrase.
+	 * 
+	 * @return the number of contiguous sequences of terminals
+	 *         in the pattern corresponding to this phrase
+	 */
 	public int getNumberOfTerminalSequences() {
 		return terminalSequenceStartIndices.length;
 	}
 	
+	/**
+	 * Gets the starting index in the corpus for a specified
+	 * contiguous sequence of terminals in this phrase.
+	 * 
+	 * @param sequenceIndex Index specifying a contiguous sequence 
+	 *                      of terminals in this pattern
+	 * @return the starting index in the corpus for a specified
+	 *         contiguous sequence of terminals in this phrase
+	 */
 	public int getTerminalSequenceStartIndex(int sequenceIndex) {
 		return this.terminalSequenceStartIndices[sequenceIndex];
 	}
 	
+	/**
+	 * Gets the ending index in the corpus for a specified
+	 * contiguous sequence of terminals in this phrase.
+	 * 
+	 * @param sequenceIndex Index specifying a contiguous sequence 
+	 *                      of terminals in this pattern
+	 * @return the ending index in the corpus for a specified
+	 *         contiguous sequence of terminals in this phrase
+	 */
 	public int getTerminalSequenceEndIndex(int sequenceIndex) {
 		
 		return this.terminalSequenceEndIndices[sequenceIndex];
@@ -320,7 +344,10 @@ public class HierarchicalPhrase extends Pattern {
 	 * Phrase object. Memory taken up by other Words in the
 	 * Phrase is not freed since the underlying subList object
 	 * still points to the complete Phrase List.
-	 *
+	 * <p>
+	 * <em>This method is currently broken</em>, 
+	 * and is guaranteed to throw an <code>Error</code>.
+	 * 
 	 * @see ArrayList#subList(int, int)
 	 */
 	public Phrase subPhrase(int start, int end) {

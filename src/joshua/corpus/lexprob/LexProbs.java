@@ -89,7 +89,7 @@ public class LexProbs implements LexicalProbabilities {
 	 * @return Word co-occurrence counts from the parallel
 	 *         corpus.
 	 */
-	protected static Counts<Integer,Integer> initializeCooccurrenceCounts(ParallelCorpus parallelCorpus, float floorProbability) {
+	private static Counts<Integer,Integer> initializeCooccurrenceCounts(ParallelCorpus parallelCorpus, float floorProbability) {
 		
 		if (logger.isLoggable(Level.FINE)) {
 			logger.fine("Counting word co-occurrence from parallel corpus. Using floor probability " + floorProbability);
@@ -243,10 +243,24 @@ public class LexProbs implements LexicalProbabilities {
 	/* See Javadoc for LexicalProbabilities#lexProbTargetGivenSource(MatchedHierarchicalPhrases,int,HierarchicalPhrase). */
 	public float lexProbTargetGivenSource(MatchedHierarchicalPhrases sourcePhrases, int sourcePhraseIndex, HierarchicalPhrase targetPhrase) {
 		
+		final boolean LOGGING_FINEST = logger.isLoggable(Level.FINEST);
+		
 		Corpus sourceCorpus = parallelCorpus.getSourceCorpus();
 		Corpus targetCorpus = parallelCorpus.getTargetCorpus();
 		Alignments alignments = parallelCorpus.getAlignments();
-			
+		
+		StringBuilder s;
+		if (LOGGING_FINEST) {
+			s = new StringBuilder();
+			s.append("lexProb( ");
+			s.append(sourcePhrases.getPattern().toString());
+			s.append(" | ");
+			s.append(targetPhrase.toString());
+			s.append(" )  =  1.0");
+		} else {
+			s = null;
+		}
+		
 		float targetGivenSource = 1.0f;
 
 		// Iterate over each terminal sequence in the target phrase
@@ -264,26 +278,37 @@ public class LexProbs implements LexicalProbabilities {
 				float sum = 0.0f;
 				float average;
 				
+				if (LOGGING_FINEST) s.append(" * (");
+								
 				if (sourceIndices==null) {
 
 					sum += targetGivenSource(targetWord, null);
 					average = sum;
+					if (LOGGING_FINEST) s.append(sum);
 					
 				} else {
+					
 					for (int sourceIndex : sourceIndices) {
 
 						int sourceWord = sourceCorpus.getWordID(sourceIndex);
-						sum += targetGivenSource(targetWord, sourceWord);
-
+						float value = targetGivenSource(targetWord, sourceWord);
+						sum += value;
+						if (LOGGING_FINEST) {
+							s.append('+');
+							s.append(value);
+						}
 					}
 					average = sum / sourceIndices.length;
 				}
 
+				if (LOGGING_FINEST) s.append(')');
 				targetGivenSource *= average;
 				
 			}
 			
 		}
+		
+		if (LOGGING_FINEST) logger.finest(s.toString());
 		
 		return targetGivenSource;
 	}

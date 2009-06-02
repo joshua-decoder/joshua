@@ -2,10 +2,16 @@ package joshua.corpus.suffix_array.mm;
 
 import joshua.corpus.MatchedHierarchicalPhrases;
 import joshua.corpus.Span;
+import joshua.corpus.suffix_array.Pattern;
 
 public class MemoryMappedHierarchicalPhrases implements
 		MatchedHierarchicalPhrases {
 
+	/* See Javadoc for MatchedHierarchicalPhrases interface. */
+	public Pattern getPattern() {
+		return null;
+	}
+	
 	public boolean containsTerminalAt(int phraseIndex, int alignmentPointIndex) {
 		// TODO Auto-generated method stub
 		return false;

@@ -17,6 +17,7 @@
  */
 package joshua.corpus;
 
+import joshua.corpus.suffix_array.Pattern;
 import joshua.corpus.suffix_array.PatternFormat;
 
 /**
@@ -28,6 +29,13 @@ import joshua.corpus.suffix_array.PatternFormat;
  */
 public interface MatchedHierarchicalPhrases extends PatternFormat {
 
+	/**
+	 * Gets the pattern associated with this list of phrases.
+	 * 
+	 * @return the pattern associated with this list of phrases
+	 */
+	Pattern getPattern();
+	
 	/**
 	 * Gets the number of contiguous sequences of terminals in
 	 * the pattern represented by this object.

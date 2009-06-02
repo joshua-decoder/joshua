@@ -133,8 +133,11 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 		this.sampleSize = sampleSize;
 	}
 
+	/* See Javadoc for RuleExtractor class. */
 	public List<Rule> extractRules(Pattern sourcePattern, MatchedHierarchicalPhrases sourceHierarchicalPhrases) {
 
+		//TODO Add two new methods, split off from this method, that calculate the lexprobs in each direction
+		
 		if (logger.isLoggable(Level.FINE)) logger.fine("Extracting rules for source pattern: " + sourcePattern);
 		
 		int listSize = sourceHierarchicalPhrases.size();
@@ -145,6 +148,7 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 				stepSize = listSize / sampleSize;
 			}
 		}
+		
 		
 		List<Rule> results = new ArrayList<Rule>(sourceHierarchicalPhrases.size());
 
@@ -182,8 +186,7 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 		if (logger.isLoggable(Level.FINER)) logger.finer(translations.size() + " actual translations of " + sourcePattern + " being stored.");
 
 
-		Map<Pattern,Integer> counts = new HashMap<Pattern,Integer>();
-
+		
 		// Calculate the number of times each pattern was found as a translation
 		// This is needed for relative frequency estimation of p_e_given_f
 		// Simultaneously, calculate the max (or average) 
@@ -192,6 +195,9 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 		// Pattern is the translation of the source phrase, Float is its cumulative lexical prob
 		Map<Pattern,Float> cumulativeSourceGivenTargetLexProbs = new HashMap<Pattern,Float>();
 		Map<Pattern,Float> cumulativeTargetGivenSourceLexProbs = new HashMap<Pattern,Float>();
+		
+		//XXX These two variables seem to do the exact same thing. Get rid of one of them
+		Map<Pattern,Integer> counts = new HashMap<Pattern,Integer>();
 		Map<Pattern,Integer> counterLexProbs = new HashMap<Pattern,Integer>();
 
 		for (int i=0, j=0, n=translations.size(), m=n*2; i<n && j<m; i++, j+=2) {	
@@ -220,6 +226,8 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 					cumulativeTargetGivenSourceLexProbs.put(translation,runningTotal);
 				} 
 
+				// Keep a count of how many times we have seen this particular translation
+				// This count value will serve as the denominator in the lexprob average calculation below
 				if (!counterLexProbs.containsKey(translation)) {
 					counterLexProbs.put(translation, 1);
 				} else {

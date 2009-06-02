@@ -52,9 +52,8 @@ public class PrefixTree {
 	private static final Logger logger = Logger.getLogger(PrefixTree.class.getName());
 
 	/**
-	 * Integer representation of the nonterminal X. All
-	 * nonterminals are guaranteed to be represented by negative
-	 integers.
+	 * Integer representation of the nonterminal X. 
+	 * All nonterminals are guaranteed to be represented by negative integers.
 	 */
 	public static final int X = -1;
 	

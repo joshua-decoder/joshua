@@ -39,7 +39,7 @@ import joshua.prefix_tree.PrefixTree;
  * @since Jan 9 2009
  * @version $LastChangedDate$
  */
-public class HierarchicalPhrases extends AbstractHierarchicalPhrases implements MatchedHierarchicalPhrases {
+public class HierarchicalPhrases extends AbstractHierarchicalPhrases {
 
 	/** 
 	 * Represents a sequence of terminal and nonterminals as
@@ -179,6 +179,11 @@ public class HierarchicalPhrases extends AbstractHierarchicalPhrases implements 
 				Collections.<Integer>emptyList(), 
 				Collections.<Integer>emptyList()
 			);
+	}
+	
+	/* See Javadoc for MatchedHierarchicalPhrases interface. */
+	public Pattern getPattern() {
+		return this.pattern;
 	}
 	
 	/* See Javadoc for MatchedHierarchicalPhrases interface. */
