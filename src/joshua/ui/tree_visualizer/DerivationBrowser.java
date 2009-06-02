@@ -13,9 +13,7 @@ import java.awt.event.*;
 
 public class DerivationBrowser {
 
-	private static JFrame frame;
-	private static JPanel graphPanel;
-	private static JPanel chooserPanel;
+	private static JFrame chooserFrame;
 
 	private static JList sourceList;
 	private static JList targetList;
@@ -25,60 +23,67 @@ public class DerivationBrowser {
 
 	private static JFileChooser fileChooser;
 
+	private static JFrame activeFrame;
+
+	public static final int DEFAULT_WIDTH = 640;
+	public static final int DEFAULT_HEIGHT = 480;
+
 	public static void main(String [] argv)
 	{
 		initializeJComponents();
 		drawGraph();
-		frame.setVisible(true);
+		chooserFrame.setVisible(true);
 		return;
 	}
 
 	private static void initializeJComponents()
 	{
 		// JFrame init
-		frame = new JFrame("Joshua Derivation Tree Browser");
-		frame.setSize(640, 480);
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		frame.setJMenuBar(createJMenuBar());
-		frame.setLayout(new BorderLayout());
+		chooserFrame = new JFrame("Joshua Derivation Tree Browser");
+		chooserFrame.setSize(640, 480);
+		chooserFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		chooserFrame.setJMenuBar(createJMenuBar());
+		chooserFrame.setLayout(new GridLayout(2,1));
 
-		// chooserPanel
-		chooserPanel = new JPanel();
-		chooserPanel.setLayout(new GridLayout());
-		frame.getContentPane().add(chooserPanel, BorderLayout.WEST);
 		sourceList = new JList(new DefaultListModel());
 		sourceList.setFixedCellWidth(200);
 		sourceList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		targetList = new JList(new DefaultListModel());
 		targetList.setFixedCellWidth(200);
 		targetList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-		chooserPanel.add(new JScrollPane(sourceList));
-		chooserPanel.add(new JScrollPane(targetList));
+		chooserFrame.getContentPane().add(new JScrollPane(sourceList));
+		chooserFrame.getContentPane().add(new JScrollPane(targetList));
 
 		SentenceListListener sll = new SentenceListListener(sourceList, targetList);		
 		sourceList.getSelectionModel().addListSelectionListener(sll);
 		targetList.getSelectionModel().addListSelectionListener(sll);
 
-		// graphPanel
-		graphPanel = new JPanel();
-		graphPanel.setLayout(new BorderLayout());
-		graphPanel.setBorder(BorderFactory.createLineBorder(Color.BLACK));
-		frame.getContentPane().add(graphPanel, BorderLayout.CENTER);
-
 		// fileChooser
 		fileChooser = new JFileChooser();
+
+		activeFrame = createActiveFrame();
 		return;
 	}
 
 	private static JMenuBar createJMenuBar()
 	{
 		JMenuBar mb = new JMenuBar();
-		JMenu openMenu = new JMenu("Open");
-		JMenuItem src = new JMenuItem("Source ...");
-		JMenuItem tgt = new JMenuItem("Target ...");
+		JMenu openMenu = new JMenu("Control");
+		JMenuItem creat = new JMenuItem("New tree viewer window");
+		JMenuItem src = new JMenuItem("Open source file ...");
+		JMenuItem tgt = new JMenuItem("Open n-best derivations file ...");
 		FileChoiceListener fcl = new FileChoiceListener(src, tgt);
 		src.addActionListener(fcl);
 		tgt.addActionListener(fcl);
+
+		creat.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e)
+			{
+				activeFrame = createActiveFrame();
+				return;
+			}
+		});
+		openMenu.add(creat);
 		openMenu.add(src);
 		openMenu.add(tgt);
 		mb.add(openMenu);
@@ -87,21 +92,25 @@ public class DerivationBrowser {
 
 	private static void drawGraph()
 	{
-		for (Component c : graphPanel.getComponents())
-			graphPanel.remove(c);
+		for (Component c : activeFrame.getContentPane().getComponents())
+			activeFrame.getContentPane().remove(c);
 		String src = (String) sourceList.getSelectedValue();
-		String tgt = (String) targetList.getSelectedValue();
-		if ((src == null) || (tgt == null)) {
-			graphPanel.add(new JLabel("No tree to display."), BorderLayout.CENTER);
-			graphPanel.revalidate();
-			graphPanel.repaint();
+		Derivation tgtDer = (Derivation) targetList.getSelectedValue();
+
+		if ((src == null) || (tgtDer == null)) {
+			JLabel lbl = new JLabel("No tree to display.");
+			activeFrame.getContentPane().add(lbl);
+			lbl.revalidate();
+			activeFrame.getContentPane().repaint();
 			return;
 		}
+		String tgt = tgtDer.complete();
 		DerivationTree tree = new DerivationTree(tgt.split(DerivationTree.DELIMITER)[1], src);
 		DerivationViewer dv = new DerivationViewer(tree);
-		graphPanel.add(dv, BorderLayout.CENTER);
-		graphPanel.revalidate();
-		graphPanel.repaint();
+		activeFrame.getContentPane().add(dv);
+		dv.revalidate();
+		activeFrame.repaint();
+		activeFrame.getContentPane().repaint();
 		return;
 	}
 
@@ -144,7 +153,7 @@ public class DerivationBrowser {
 					if (src > selectedIndex)
 						return;
 					if (src == selectedIndex)
-						model.addElement(line);
+						model.addElement(new Derivation(line));
 				}
 				catch (NumberFormatException e) {
 					// fall through
@@ -154,6 +163,14 @@ public class DerivationBrowser {
 		catch (FileNotFoundException e) {
 
 		}
+	}
+
+	private static JFrame createActiveFrame()
+	{
+		JFrame ret = new JFrame("Joshua Derivation Tree");
+		ret.setSize(DEFAULT_WIDTH, DEFAULT_HEIGHT);
+		ret.setVisible(true);
+		return ret;
 	}
 
 	public static class FileChoiceListener implements ActionListener {
@@ -169,7 +186,7 @@ public class DerivationBrowser {
 
 		public void actionPerformed(ActionEvent e)
 		{
-			int ret = fileChooser.showOpenDialog(frame);
+			int ret = fileChooser.showOpenDialog(chooserFrame);
 			if (ret == JFileChooser.APPROVE_OPTION) {
 				File chosen = fileChooser.getSelectedFile();
 				JMenuItem origin = (JMenuItem) e.getSource();
@@ -200,9 +217,44 @@ public class DerivationBrowser {
 		{
 			if (e.getSource().equals(source.getSelectionModel())) {
 				populateTargetList();
+				targetList.setSelectedIndex(0);
 			}
 			drawGraph();
 			return;
+		}
+	}
+
+	public static class Derivation {
+		private String complete;
+		private String terminals;
+
+		public Derivation(String c)
+		{
+			complete = c;
+			terminals = extractTerminals(c);
+		}
+
+		public String complete()
+		{
+			return complete;
+		}
+
+		public String toString()
+		{
+			return terminals;
+		}
+
+		private static String extractTerminals(String s)
+		{
+			String tree = s.split(DerivationTree.DELIMITER)[1];
+			String [] tokens = tree.replaceAll("\\)", "\n)").split("\\s+");
+			String result = "";
+			for (String t : tokens) {
+				if (t.startsWith("(") || t.equals(")"))
+					continue;
+				result += " " + t;
+			}
+			return result;
 		}
 	}
 }
