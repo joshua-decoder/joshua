@@ -48,11 +48,11 @@ public class DerivationTreeTransformer implements Transformer<Node,Point2D> {
 		double x, y;
 		Point2D t = treeLayout.transform(n);
 		if (n.isSource()) {
-			x = treeLayout.transform(root).getX() + (t.getX() - treeLayout.transform(sourceRoot).getX());
+			x = /*treeLayout.transform(root).getX() +*/ (t.getX() - treeLayout.transform(sourceRoot).getX());
 			y = Y_DIST * (distanceToLeaf(n) + 1);
 		}
 		else {
-			x = t.getX();
+			x = t.getX() - treeLayout.transform(root).getX();;
 			y = Y_DIST * (-1) * distanceToLeaf(n);
 		}
 		return new Point2D.Double(x, y);
