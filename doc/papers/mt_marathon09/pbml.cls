@@ -240,21 +240,9 @@
      \expandafter{\expandafter\uppercase\expandafter{#1}}}
 \define@key{PBMLinfo}{year}{\def\pbml@year{#1}}
 
-\def\pbml@year{\number\year}
-\def\pbml@month{\ifcase\month\or
-    JANUARY\or
-    FEBRUARY\or
-    MARCH\or
-    APRIL\or
-    MAY\or
-    JUNE\or
-    JULY\or
-    AUGUST\or
-    SEPTEMBER\or
-    OCTOBER\or
-    NOVEMBER\or
-    DECEMBER\fi}
-\def\pbml@number{???}
+\def\pbml@year{\number2009}
+\def\pbml@month{JANUARY}
+\def\pbml@number{91}
 
 \def\PBMLinfo#{\setkeys{PBMLinfo}}
 

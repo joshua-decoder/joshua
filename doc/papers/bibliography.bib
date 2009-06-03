@@ -45,6 +45,7 @@
 @String{EACL-1989 = "4th Conference of the European Chapter of the Association for Computational Linguistics (EACL-1989)" }
 @String{EACL-2003 = "10th Conference of the European Chapter of the Association for Computational Linguistics (EACL-2003)"}
 @String{EACL-2006 = "11th Conference of the European Chapter of the Association for Computational Linguistics (EACL-2006)"}
+@String{EACL-2009 = "12th Conference of the European Chapter of the Association for Computational Linguistics (EACL-2009)"}
 
 @String{AMTA-2002 = "Proceedings of the 5th Biennial Conference of the Association for Machine Translation in the Americas (AMTA-2002)"}
 @String{AMTA-2004 = "Proceedings of the 6th Biennial Conference of the Association for Machine Translation in the Americas (AMTA-2004)"}
@@ -56,6 +57,8 @@
 @String{IWSLT = "Proceedings of the International Workshop on Spoken Language Technology"}
 @String{IWPT = "Proceedings of the International Workshop on Parsing Technologies"}
 @String{WMT = "Proceedings of the Workshop on Statistical Machine Translation"}
+@String{KDD = "Proceeding of the ACM SIGKDD international conference on Knowledge discovery and data mining"}
+
 
 
 @String{ACL-1989-address = "Vancouver, British Columbia, Canada"}
@@ -97,7 +100,9 @@
 @String{HLT-NAACL-2006-address = "New York, New York"}
 @String{EACL-2006-address = "Trento, Italy"}
 @String{AMTA-2006-address = "Cambridge, Massachusetts"}
-@String{HLT-NAACL-2007-address = "Rochester, New York,"}
+@String{HLT-NAACL-2007-address = "Rochester, New York"}
+@String{KDD-2008-address = "New York"}
+@String{EACL-2009-address = "Athens, Greece"}
 
 
 
@@ -148,6 +153,7 @@
 @String{EACL-1989 =  "Proceedings of EACL"}
 @String{EACL-2003 ="Proceedings of EACL"}
 @String{EACL-2006 = "Proceedings of EACL"}
+@String{EACL-2009 =  "Proceedings of EACL"}
 
 @String{AMTA-2002 = "Proceedings of AMTA"}
 @String{AMTA-2004 = "Proceedings of AMTA"}
@@ -195,6 +201,8 @@
 @String{EACL-2006-address = ""}
 @String{AMTA-2006-address = ""}
 @String{HLT-NAACL-2007-address = ""}
+@String{KDD-2008-address = ""}
+@String{EACL-2009-address =  ""}
 
 
 
@@ -338,18 +346,20 @@
   author =  {Omar F. Zaidan},
   title =   {{Z-MERT}: A Fully Configurable Open Source Tool for Minimum Error Rate Training of Machine Translation Systems},
   journal = {The Prague Bulletin of Mathematical Linguistics},
-  volume =  {this volume},
-  year =    {2009}
-}
-
-@article{Zaidan2009forwmt,
-  author =  {Omar F. Zaidan},
-  title =   {{Z-MERT}: A Fully Configurable Open Source Tool for Minimum Error Rate Training of Machine Translation Systems},
-  journal = {The Prague Bulletin of Mathematical Linguistics},
   volume =  {91},
   pages =   {79--88},
   year =    {2009}
 }
+
+@InProceedings{Foster2009,
+  author    = {George Foster  and  Roland  Kuhn},
+  title     = {Stabilizing Minimum Error Rate Training},
+  booktitle = WMT,
+  address   = EACL-2009-address,
+  year      = {2009},
+  url       = {http://www.aclweb.org/anthology/W/W09/W09-0x39}
+}
+
 
 @article{Li-PBML,
   author =  {Zhifei Li and Chris Callison-Burch and Sanjeev Khudanpur and Wren Thornton},
@@ -406,6 +416,8 @@
 }
 
 
+
+
 #######################
 ## Phrase-based translation
 #######################
@@ -419,6 +431,16 @@
   address = HLT-NAACL-2004-address,
   year = 	 {2004}
 }
+
+@InProceedings{Eisner2006,
+  author = 	 {Jason Eisner and Roy W. Tromble},
+  title = 	 {Local Search with Very Large-Scale Neighborhoods for Optimal Permutations in Machine Translation}, 
+  booktitle = HLT-NAACL-2006,
+  year = 	 2006,
+  address = HLT-NAACL-2006-address,
+  url =		 {http://cs.jhu.edu/~jason/papers/#hard06}
+}
+
 
 
 # different treatment of beam stacks
@@ -1012,6 +1034,40 @@
   address =   EMNLP-2008-address,
   year =                {2008}
  }
+
+
+@inproceedings{Schroeder2009,
+  title =               {Josh Schroeder and Trevor Cohn and Philipp Koehn},
+  author =              {Word Lattices for Multi-Source Translation}, 
+  booktitle =   EACL-2009,
+  address =   EACL-2009-address,
+  year =                {2009}
+ }
+
+
+@InProceedings{Och2001b,
+  author = {Franz Och and Hermann Ney},
+  title = {Statistical Multi-Source Translation},
+ booktitle = {MT Summit 2001},
+ address = {Santiago de Compostela, Spain},
+ year = {2001}
+}
+
+@InProceedings{Matusov2006,
+  author = {Evgeny Matusov and Nicola Ueffing and Hermann Ney},
+  title = {Computing Consensus Translation for Multiple Machine Translation Systems Using Enhanced Hypothesis Alignment},
+ booktitle =  EACL-2006,
+ address = EACL-2006-address,
+ year = {2006}
+}
+
+@InProceedings{Rosti2007,
+  author    = {Rosti, Antti-Veikko  and  Ayan, Necip Fazil  and  Xiang, Bing  and  Matsoukas, Spyros  and  Schwartz, Richard  and  Dorr, Bonnie},
+  title     = {Combining Outputs from Multiple Machine Translation Systems},
+  booktitle = HLT-NAACL-2007,
+  address   = HLT-NAACL-2007-address,
+  year      = {2007}
+}
 
 
 
@@ -1769,9 +1825,35 @@ translation},
   year = 	 {2006}
 }
 
+@inproceedings{Snow2008,
+  author =       {Rion Snow and Brendan O'Connor and Daniel Jurafsky and Andrew Y. Ng},
+  title =        {Cheap and Fast - But is it Good? {E}valuating Non-Expert Annotations for Natural Language Tasks},
+  booktitle = EMNLP-2008,
+  address = EMNLP-2008-address,
+  year = 	 {2008}
+}
+
+
+@inproceedings{Sheng2008,
+ author = {Victor S. Sheng and Foster Provost and  Panagiotis G. Ipeirotis},
+ title = {Get another label? improving data quality and data mining using multiple, noisy labelers},
+ booktitle = KDD,
+ address = KDD-2008-address,
+ year = {2008},
+ url = {http://pages.stern.nyu.edu/~panos/publications/kdd2008.pdf},
+ }
+ 
+ @inproceedings{Sorokin2008,
+ author = {Alexander Sorokin and David Forsyth},
+ title = {Utility data annotation with Amazon Mechanical Turk},
+ booktitle = {Proceedings of First IEEE Workshop on Internet Vision at Computer Vision and Pattern Recognition Workshops},
+ year = {2008},
+ url = {http://vision.cs.uiuc.edu/~sorokin2/papers/cvpr08_annotation.pdf},
+ }
+
 
 @inproceedings{Vilar2006,
-  author =       { David Vilar and Jia Xu and Luis Fernando D�Haro and Hermann Nye},
+  author =       { David Vilar and Jia Xu and Luis Fernando D'Haro and Hermann Ney},
   title =        {Error Analysis of Statistical Machine Translation Output},
   booktitle = 	 {Proceedings of Language Resources and Evaluation (LREC-2006)},
   address = {Genoa, Italy},
@@ -1779,7 +1861,7 @@ translation},
 }
 
 
-
+# Database of past evaluations
 @inproceedings{Niessen2000,
   author =       {Sonja Niessen and Franz Josef Och and Gregor Leusch and Hermann Ney},
   title =        {An Evaluation Tool for Machine Translation: Fast Evaluation for MT Research},
@@ -1788,6 +1870,18 @@ translation},
   year = 	 {2000},
   url = {http://www-i6.informatik.rwth-aachen.de/HTML/Publikationen/Abstracts_2000/abs_niessen2000-1.html}
 }
+
+
+@article{Schulze2003,
+  author =  {Markus Schulze},
+  title =   {A New Monotonic and Clone-Independent Single-Winner Election Method},
+  journal = {Voting Matters},
+  year =    {2003},
+  number =  {17},
+  month =   {October},
+  url =     {http://www.mcdougall.org.uk/VM/ISSUE17/ISSUE17.PDF}
+}
+
 
 
 @inproceedings{Koehn2006,
@@ -1855,7 +1949,8 @@ translation},
   author =	{Douglas Jones and Wade Shen and Neil Granoien and Martha Herzog and Clifford Weinstein},
   title =	{Measuring Translation Quality by Testing {E}nglish Speakers with a New Defense Language Proficiency Test for {A}rabic},
   booktitle =	{Proceedings of the 2005 International Conference on Intelligence Analysis},
-  year =	{2005}
+  year =	{2005},
+  url = {http://www.ll.mit.edu/mission/communications/ist/publications/050502_Jones2.pdf}
 }
 
 
@@ -2070,6 +2165,47 @@ Llu\'is M\`arquez},
   year =	{2004}
 }
 
+
+@inproceedings{Chan2008,
+  author =	{Yee Seng Chan and Hwee Tou Ng},
+  title =	{An automatic metric for machine translation evaluation based on maximum similary},
+  booktitle = {In the Metrics-MATR Workshop of AMTA-2008},
+  address = EMNLP-2008-address,
+  year =	{2008}
+}
+
+
+@inproceedings{Leusch2008,
+  author =	{Gregor Leusch and Hermann Ney},
+  title =	{{BLEUSP}, {PINVWER}, {CDER}: Three Improved {MT} Evaluation Measures},
+  booktitle = {In the Metrics-MATR Workshop of AMTA-2008},
+  address = EMNLP-2008-address,
+  year =	{2008}
+}
+
+@inproceedings{Gimenez2008,
+  author =       {Jes\'{u}s Gim\'{e}nez and Llu\'{i}s M\`{a}rquez},
+  title     = {A Smorgasbord of Features for Automatic {MT} Evaluation},
+  booktitle = {Proceedings of the Third Workshop on Statistical Machine Translation},
+  pages     = {195--198},
+  year =         {2008}
+}
+
+@article{kos:bojar:pbml:2009,
+  publicationtype = {article},
+  author = {Kamil Kos and Ond{\v{r}}ej Bojar},
+  title = {{Evaluation of Machine Translation Metrics for Czech as the Target Language}},
+  journal = {Prague Bulletin of Mathematical Linguistics},
+  issn = {0032-6585},
+  publisher = {Charles University},
+  volume = {92},
+  pubaddress = {Prague},
+  year = {2009},
+  note = {in print}
+}
+
+
+
 @unpublished{LDC-Translation-Assessment-Guidelines-2005,
   author =       {LDC},
   title =        {Linguistic Data Annotation Specification:  Assessment of Fluency and Adequacy in Translations},
@@ -2091,11 +2227,11 @@ Llu\'is M\`arquez},
 
 
 @unpublished{HTER-Editing-Guidelines-2007,
-  author =       {NIST and LDC},
-  title =        {Post Editing Guidelines For GALE Machine Translation Evaluation},
-  note =         {Guidelines developed by the National Institute of Standards and Technology (NIST), and the Linguistic Data Consortium (LDC)},
+  author =       {{NIST} and {LDC}},
+  title =        {Post Editing Guidelines For {GALE} Machine Translation Evaluation},
+  note =         {Guidelines developed by the {N}ational {I}nstitute of {S}tandards and {T}echnology ({NIST}), and the {L}inguistic {D}ata {C}onsortium ({LDC})},
   year =         {2007},
-  url =          {http://www.nist.gov/speech/tests/gale/2007/doc/GALEpostedit_guidelines-3.0.2.pdf}
+  url =          {http://projects.ldc.upenn.edu/gale/Translation/Editors/GALEpostedit_guidelines-3.0.2.pdf}
 }
 
 
@@ -2103,7 +2239,7 @@ Llu\'is M\`arquez},
 
 @inproceedings{Brew1994,
   author =	{Chris Brew and Henry Thompson},
-  title =	{Automatic Evaluation of Computer Generated Text: A Progress Report on the TextEval Project},
+  title =	{Automatic Evaluation of Computer Generated Text: A Progress Report on the {TextEval} Project},
   booktitle =	{Proceedings of Human Language Technology Workshop},
   address = 	{Plainsboro, New Jersey},
   year =	{1994},
@@ -2123,7 +2259,7 @@ Llu\'is M\`arquez},
 
 # Used multiple reference translation in conjunction with WER
 @inproceedings{Alshawi1998,
-  author =       {Hiyan Alshawi and Srinivas Bangalore andShona Douglas},
+  author =       {Hiyan Alshawi and Srinivas Bangalore and Shona Douglas},
   title =        {Automatic Acquisition of Hierarchical Transduction Models for Machine Translation},
   booktitle = ACL-1998,
   address = ACL-1998-address,
@@ -2154,7 +2290,7 @@ Llu\'is M\`arquez},
   title =        {METEOR: An Automatic Metric for {MT} Evaluation with Improved Correlation with Human Judgments},
   booktitle = 	 {Workshop on Intrinsic and Extrinsic Evaluation Measures for MT and/or Summarization},
   year = 	 {2005},
-  address =	{Ann Arbor, Michigan},
+  address =	ACL-2005-address,
   url = {http://acl.ldc.upenn.edu/W/W05/W05-0909.pdf}
 }
 
@@ -3066,6 +3202,16 @@ Computational Linguistics},
   address = HLT-NAACL-2006-address,
   year = 	 {2006}
 }
+
+@InProceedings{Chiang2008,
+  author    = {Chiang, David  and  DeNeefe, Steve  and  Chan, Yee Seng  and  Ng, Hwee Tou},
+  title     = {Decomposability of Translation Metrics for Improved Evaluation and Efficient Algorithms},
+  booktitle = 	 EMNLP-2008,
+  address = EMNLP-2008-address,
+  year = {2008},
+  url       = {http://www.aclweb.org/anthology/D08-1064}
+}
+
 
 
 @inproceedings{Callison-Burch2005,

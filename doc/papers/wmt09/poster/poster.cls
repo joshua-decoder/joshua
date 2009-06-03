@@ -54,8 +54,8 @@
 \newcommand{\poster@ancimage}{ANCnet.ps}
 \newcommand{\poster@deptimageheight}{1.5in}
 \newcommand{\poster@ancimageheight}{7.8in}
-\newcommand{\poster@mainimage}{GraphicB-pale.eps}
-\newcommand{\poster@mainedimage}{greylogo.ps}
+\newcommand{\poster@mainimage}{joshua-logo.eps}
+\newcommand{\poster@mainedimage}{joshua-logo.eps}
 \newcommand{\poster@deptname}{}
 \newcommand{\poster@centre}{}
 
@@ -273,7 +273,7 @@
 \newlength{\shieldoffset}
 \setlength{\shieldoffset}{\posterwidth}
 %% SJE: -5.5in for Edinburgh.
-\addtolength{\shieldoffset}{-7.5in}
+\addtolength{\shieldoffset}{-8.5in}
 
 
 \newlength{\ancoffset}
@@ -315,12 +315,12 @@
   \fi
   % EU shield
   \if@postershield
-    \rput(\shieldoffset,-1.7in){
+    \rput(\shieldoffset,-2.1in){
       %%SJE: add Cambridge Shield.
       %% \resizebox{5in}{!}{\includeshield}
       %% jhu-logo downloaded from
       %% http://www.cam.ac.uk/localusersonly/cambuniv/docstyle/
-      \includegraphics[width=20cm]{jhu-logo}
+      \includegraphics[width=25cm]{jhu-logo}
     }%
   \fi  
   % Put in the logo
