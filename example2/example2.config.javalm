@@ -20,6 +20,7 @@ phrase_owner=pt
 mono_owner=mono
 begin_mono_owner=begin_mono
 default_non_terminal=X
+goalSymbol=S
 
 #pruning config
 fuzz1=0.1
