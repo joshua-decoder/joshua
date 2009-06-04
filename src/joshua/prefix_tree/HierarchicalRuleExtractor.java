@@ -229,8 +229,9 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 			
 			float[] featureScores = { 
 					    logp_e_given_f, 
-					lex_logp_e_given_f, 
-					lex_logp_f_given_e };
+					lex_logp_f_given_e,    
+					lex_logp_e_given_f 
+					 };
 
 			Rule rule = new BilingualRule(
 					PrefixTree.X, 
