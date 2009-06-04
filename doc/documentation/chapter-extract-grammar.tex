@@ -1,4 +1,5 @@
 \chapter{Grammar Extraction}
+\label{ch:grammar-extraction}
 
 Start by compiling an aligned parallel corpus into a directory containing binary data files used by Joshua to represent memory-mapped data structures:
 
@@ -24,7 +25,7 @@ java -Dfile.encoding=UTF8 -Xms4096m -Xmx4096m  \
     --alignments=output.josh/alignment.grids \ 
     --alignmentsType=MemoryMappedAlignmentGrids \
     --test=test.src \
-    --output=src-tgt.grammar.raw \
+    --output=src-tgt.grammar.raw
 \end{verbatim}
 
 The raw grammar produced by {\tt ExtractRules} will almost certainly include duplicate rules. This is because grammar rules are extracted for each test sentence; all such rules are simply concatenated together. So, before the grammar can be used, duplicates must be removed. On systems with standard Unix tools installed, the following command will sort the grammar and remove duplicates:

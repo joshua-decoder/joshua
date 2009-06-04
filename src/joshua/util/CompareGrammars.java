@@ -22,6 +22,7 @@ import java.io.FileNotFoundException;
 import java.util.HashSet;
 import java.util.Scanner;
 import java.util.Set;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import joshua.decoder.ff.tm.hiero.HieroFormatReader;
@@ -97,9 +98,11 @@ public class CompareGrammars {
 				float diff = (diff1 < diff2) ? diff1 : diff2;
 								
 				if (diff > delta) {
-					logger.fine("Score mismatch: " + score1 + " vs " + score2);
+					logger.fine("Line " + counter + ":  Score mismatch: " + score1 + " vs " + score2);
 					set.add(line1);
 					totalOverDiffs += diff;
+				} else if (logger.isLoggable(Level.FINEST)) {
+				    logger.finest("Line " + counter + ": Scores MATCH: " + score1 + " vs " + score2);
 				}
 				
 			} else {
@@ -131,7 +134,7 @@ public class CompareGrammars {
 		
 		// Tell standard in and out to use UTF-8
 		FormatUtil.useUTF8();
-		
+		logger.finest("Using UTF-8");
 		
 		logger.info("Comparing grammar files " + args[0] + " and " + args[1]);
 		
