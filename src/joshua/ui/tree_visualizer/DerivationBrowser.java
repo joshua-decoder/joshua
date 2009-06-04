@@ -72,6 +72,8 @@ public class DerivationBrowser {
 		JMenuItem creat = new JMenuItem("New tree viewer window");
 		JMenuItem src = new JMenuItem("Open source file ...");
 		JMenuItem tgt = new JMenuItem("Open n-best derivations file ...");
+		JMenuItem quit = new JMenuItem("Quit");
+
 		FileChoiceListener fcl = new FileChoiceListener(src, tgt);
 		src.addActionListener(fcl);
 		tgt.addActionListener(fcl);
@@ -84,9 +86,16 @@ public class DerivationBrowser {
 				return;
 			}
 		});
+		quit.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e)
+			{
+				System.exit(0);
+			}
+		});
 		openMenu.add(creat);
 		openMenu.add(src);
 		openMenu.add(tgt);
+		openMenu.add(quit);
 		mb.add(openMenu);
 		return mb;
 	}
@@ -143,10 +152,10 @@ public class DerivationBrowser {
 	}
 
 	public static class ActiveFrame extends JFrame {
-		private JButton nextDerivation;
-		private JButton previousDerivation;
-		private JButton nextSource;
-		private JButton previousSource;
+		JButton nextDerivation;
+		JButton previousDerivation;
+		JButton nextSource;
+		JButton previousSource;
 
 		private JPanel controlPanel;
 		private JPanel viewPanel;
@@ -201,12 +210,38 @@ public class DerivationBrowser {
 			nextSource = new JButton(">");
 			previousSource = new JButton("<");
 
-		/*
-			nextDerivation.setPreferredSize(new Dimension(50, 50));
-			previousDerivation.setPreferredSize(new Dimension(50, 50));
-			nextSource.setPreferredSize(new Dimension(50, 50));
-			previousSource.setPreferredSize(new Dimension(50, 50));
-		*/	
+			nextDerivation.addActionListener(new ActionListener() {
+				public void actionPerformed(ActionEvent e)
+				{
+					int x = targetList.getSelectedIndex();
+					targetList.setSelectedIndex(x + 1);
+					return;
+				}
+			});
+			previousDerivation.addActionListener(new ActionListener(){
+				public void actionPerformed(ActionEvent e)
+				{
+					int x = targetList.getSelectedIndex();
+					targetList.setSelectedIndex(x - 1);
+					return;
+				}
+			});
+			nextSource.addActionListener(new ActionListener() {
+				public void actionPerformed(ActionEvent e)
+				{
+					int x = sourceList.getSelectedIndex();
+					sourceList.setSelectedIndex(x + 1);
+					return;
+				}
+			});
+			previousSource.addActionListener(new ActionListener() {
+				public void actionPerformed(ActionEvent e)
+				{
+					int x = sourceList.getSelectedIndex();
+					sourceList.setSelectedIndex(x - 1);
+					return;
+				}
+			});
 			return;
 		}
 
@@ -233,6 +268,12 @@ public class DerivationBrowser {
 
 		public void fix()
 		{
+			setTitle(getTitle() + " (fixed)");
+			nextDerivation.setEnabled(false);
+			previousDerivation.setEnabled(false);
+			nextSource.setEnabled(false);
+			previousSource.setEnabled(false);
+			return;
 		}
 
 	}
@@ -283,6 +324,24 @@ public class DerivationBrowser {
 				populateTargetList();
 				targetList.setSelectedIndex(0);
 			}
+			int src = sourceList.getSelectedIndex();
+			int tgt = targetList.getSelectedIndex();
+			if (src < 1)
+				activeFrame.previousSource.setEnabled(false);
+			else
+				activeFrame.previousSource.setEnabled(true);
+			if (src == sourceList.getModel().getSize() - 1)
+				activeFrame.nextSource.setEnabled(false);
+			else
+				activeFrame.nextSource.setEnabled(true);
+			if (tgt < 1)
+				activeFrame.previousDerivation.setEnabled(false);
+			else
+				activeFrame.previousDerivation.setEnabled(true);
+			if (tgt == targetList.getModel().getSize() - 1)
+				activeFrame.nextDerivation.setEnabled(false);
+			else
+				activeFrame.nextDerivation.setEnabled(true);
 			activeFrame.drawGraph();
 			return;
 		}
