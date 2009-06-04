@@ -114,6 +114,7 @@ public class JoshuaEval {
 
 		String[] topCand_str = new String[numSentences];
 		
+		// BUG: all of this needs to be replaced with the SegmentFileParser and related interfaces.
 		try {
 			
 			// read the candidates
