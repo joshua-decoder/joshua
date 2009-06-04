@@ -58,9 +58,9 @@ import org.apache.commons.cli.HelpFormatter;
 public class SubsamplerCLI {
 	//TODO hasArg is a static method. It should be accessed as OptionBuilder.hasArg()
 	protected final Option ot = OptionBuilder
-		.withArgName("filelist")
+		.withArgName("listfile")
 		.hasArg()
-		.withDescription("File containing a list of training file basenames")
+		.withDescription("A file containing a list of training file basenames (what to sample from)")
 		.isRequired()
 		.create("training");
 	
@@ -68,13 +68,13 @@ public class SubsamplerCLI {
 	protected final Option otest = OptionBuilder
 		.withArgName("file")
 		.hasArgs()
-		.withDescription("File containing a list of training file basenames")
+		.withDescription("The test file (what to sample for)")
 		.isRequired()
 		.create("test");
 	
 	//TODO hasArg is a static method. It should be accessed as OptionBuilder.hasArg()
 	protected final Option ooutput = OptionBuilder
-		.withArgName("prefix")
+		.withArgName("basename")
 		.hasArgs()
 		.withDescription("File basename for output training corpus")
 		.isRequired()
@@ -84,7 +84,7 @@ public class SubsamplerCLI {
 	protected final Option of = OptionBuilder
 		.withArgName("lang")
 		.hasArg()
-		.withDescription("Target language extension")
+		.withDescription("Foreign language extension")
 		.isRequired()
 		.create("f");
 	
@@ -92,7 +92,7 @@ public class SubsamplerCLI {
 	protected final Option oe = OptionBuilder
 		.withArgName("lang")
 		.hasArg()
-		.withDescription("Source language extension")
+		.withDescription("Native language extension")
 		.isRequired()
 		.create("e");
 	
@@ -100,14 +100,14 @@ public class SubsamplerCLI {
 	protected final Option ofpath = OptionBuilder
 		.withArgName("path")
 		.hasArg()
-		.withDescription("Directory containing source language files")
+		.withDescription("Directory containing foreign language files")
 		.create("fpath");
 	
 	//TODO hasArg is a static method. It should be accessed as OptionBuilder.hasArg()
 	protected final Option oepath = OptionBuilder
 		.withArgName("path")
 		.hasArg()
-		.withDescription("Directory containing target language files")
+		.withDescription("Directory containing native language files")
 		.create("epath");
 	
 	//TODO hasArg is a static method. It should be accessed as OptionBuilder.hasArg()
@@ -169,8 +169,8 @@ public class SubsamplerCLI {
 		try {
 			new GnuParser().parse(o, args);
 		} catch (ParseException pe) {
-			System.err.println("Error parsing command line: " + pe);
-			// BUG: The class should be overridable too.
+			// The message from pe is ugly, so we omit it.
+			System.err.println("Error parsing command line");
 			new HelpFormatter().printHelp(this.getClassName(), o);
 			System.exit(1);
 		}

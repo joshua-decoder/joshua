@@ -302,6 +302,7 @@ implements SegmentFileParser {
 			this.tempText.peek().append(new String(ch, start, length));
 			
 		} catch (EmptyStackException e) {
+			// TODO: maybe we should throw an Error instead?
 			this.fatalError(new SAXParseException(
 				"The impossible happened", this.locator, e));
 		}
@@ -361,6 +362,7 @@ implements SegmentFileParser {
 			this.tempText.pop();
 			
 		} catch (EmptyStackException e) {
+			// TODO: maybe we should throw an Error instead?
 			this.fatalError(new SAXParseException(
 				"The impossible happened", this.locator, e));
 		}

@@ -56,6 +56,8 @@ public interface SegmentFileParser {
 	void parseSegmentFile(InputStream in, CoIterator<Segment> coit)
 	throws IOException;
 	
+	// TODO: allow throwing java.text.ParseException as well, to make parsing errors standard rather than requiring IOException wrapping (ParseException wrapping is less wrong-headed)
+	
 	/* SAXParser also supports java.io.File, org.xml.sax.InputSource,
 	 * and String URI in its parse methods. We use InputStream
 	 * because it's the most general and it allows for getting
