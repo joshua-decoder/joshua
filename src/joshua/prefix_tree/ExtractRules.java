@@ -1,3 +1,4 @@
+
 /* This file is part of the Joshua Machine Translation System.
  * 
  * Joshua is free software; you can redistribute it and/or modify it
@@ -317,7 +318,7 @@ public class ExtractRules {
 			if ("-".equals(commandLine.getValue(output))) {
 				out = System.out;
 			} else if (commandLine.getValue(output).endsWith(".gz") || commandLine.getValue(output_gz)) {
-				//XXX This currently doesn't work
+				//FIXME This currently doesn't work
 				out = new PrintStream(new GZIPOutputStream(new FileOutputStream(commandLine.getValue(output))));
 				System.err.println("GZIP output not currently working properly");
 				System.exit(-1);

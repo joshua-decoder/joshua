@@ -27,6 +27,7 @@ import joshua.corpus.alignment.Alignments;
 import joshua.corpus.suffix_array.HierarchicalPhrase;
 import joshua.corpus.vocab.SymbolTable;
 import joshua.util.Counts;
+import joshua.util.Pair;
 
 /**
  * Represents lexical probability distributions in both directions.
@@ -316,6 +317,50 @@ public class LexProbs implements LexicalProbabilities {
 	/* See Javadoc for LexicalProbabilities#getFloorProbability. */
 	public float getFloorProbability() {
 		return floorProbability;
+	}
+	
+	/**
+	 * Gets a string representation of the lexical probabilities. 
+	 * <p>
+	 * The returned string will have one line per word pair.
+	 * The pairs are not guaranteed to be returned in any particular order.
+	 * 
+	 * @return a string representation of the lexical probabilities
+	 */
+	@Override
+	public String toString() {
+		
+		StringBuilder s = new StringBuilder();
+		
+		for (Pair<Integer,Integer> pair : counts) {
+
+			Integer sourceID = pair.first;
+			Integer targetID = pair.second;
+			
+			if (sourceID==null) {
+				s.append("NULL");
+			} else {
+				s.append(sourceVocab.getWord(sourceID));
+			}
+			
+			s.append(' ');
+			
+			if (targetID==null) {
+				s.append("NULL");
+			} else {
+				s.append(targetVocab.getWord(targetID));
+			}
+			
+			s.append(' ');
+			s.append(targetGivenSource(targetID,sourceID));
+			
+			s.append(' ');
+			s.append(sourceGivenTarget(sourceID,targetID));
+			
+			s.append('\n');
+		}
+		
+		return s.toString();
 	}
 	
 	/**

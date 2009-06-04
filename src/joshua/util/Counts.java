@@ -18,7 +18,9 @@
 package joshua.util;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 
 /**
  * Maintains element co-occurrence data.
@@ -28,7 +30,7 @@ import java.util.Map;
  * @param <A>
  * @param <B>
  */
-public class Counts<A, B> {
+public class Counts<A, B> implements Iterable<Pair<A,B>> {
 
 	/**
 	 * Stores the number of times instances of A and B co-occur.
@@ -249,6 +251,43 @@ public class Counts<A, B> {
 	 */
 	public float getFloorProbability() {
 		return this.floorProbability;
+	}
+
+	/**
+	 * Gets an iterator over all counted pairs.
+	 * <p>
+	 * The pairs are not guaranteed to be iterated over 
+	 * in any particular order.
+	 * 
+	 * @return an iterator over all counted pairs
+	 */
+	public Iterator<Pair<A, B>> iterator() {
+		
+		final Iterator<Entry<A,Map<B,Integer>>> aIterator = counts.entrySet().iterator();
+		
+		return new Iterator<Pair<A,B>>() {
+
+			Entry<A,Map<B,Integer>> entry = null;
+			Iterator<B> bIterator = null;
+			
+			public boolean hasNext() {
+				return (bIterator!=null && bIterator.hasNext()) || aIterator.hasNext();
+			}
+
+			public Pair<A, B> next() {
+				if (bIterator==null || ! bIterator.hasNext()) {
+					entry = aIterator.next();
+					bIterator = entry.getValue().keySet().iterator();
+				}
+				
+				return new Pair<A,B>(entry.getKey(),bIterator.next());
+			}
+
+			public void remove() {
+				throw new UnsupportedOperationException();
+			}
+			
+		};
 	}
 	
 }

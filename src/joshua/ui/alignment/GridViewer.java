@@ -43,6 +43,9 @@ import joshua.util.io.BinaryIn;
  */
 public class GridViewer extends JFrame implements ActionListener {
 
+	/** Serialization identifier. */
+	private static final long serialVersionUID = 1L;
+
 	/** Logger for this class. */
 	private static final Logger logger =
 		Logger.getLogger(GridViewer.class.getName());
