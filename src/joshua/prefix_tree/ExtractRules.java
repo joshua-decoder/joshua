@@ -412,7 +412,7 @@ public class ExtractRules {
 					}
 				}
 				
-				if (logger.isLoggable(Level.FINER)) logger.finer(lexProbs.toString());
+				if (logger.isLoggable(Level.FINEST)) logger.finest(lexProbs.toString());
 				
 				if (commandLine.getValue(confirm)) {
 					if (logger.isLoggable(Level.INFO)) logger.info("Please press a key to continue");

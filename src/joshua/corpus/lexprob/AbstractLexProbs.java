@@ -27,9 +27,8 @@ import joshua.corpus.suffix_array.Pattern;
  */
 public abstract class AbstractLexProbs implements LexicalProbabilities {
 
-	/* See Javadoc for LexicalProbabilities#lexProbSourceGivenTarget(Pattern,Pattern). */
-	public float lexProbSourceGivenTarget(Pattern sourcePattern, Pattern targetPattern) {
-		
+	/* See Javadoc for LexicalProbabilities#lexProbTargetGivenSource(Pattern,Pattern). */
+	public float lexProbTargetGivenSource(Pattern targetPattern, Pattern sourcePattern) {		
 		float sourceGivenTarget = 1.0f;
 		
 		for (Integer sourceWord : sourcePattern.getTerminals()) {
@@ -49,9 +48,10 @@ public abstract class AbstractLexProbs implements LexicalProbabilities {
 		
 		return sourceGivenTarget;
 	}
+
 	
-	/* See Javadoc for LexicalProbabilities#lexProbTargetGivenSource(Pattern,Pattern). */
-	public float lexProbTargetGivenSource(Pattern targetPattern, Pattern sourcePattern) {
+	/* See Javadoc for LexicalProbabilities#lexProbSourceGivenTarget(Pattern,Pattern). */
+	public float lexProbSourceGivenTarget(Pattern sourcePattern, Pattern targetPattern) {
 		
 		float targetGivenSource = 1.0f;
 		
