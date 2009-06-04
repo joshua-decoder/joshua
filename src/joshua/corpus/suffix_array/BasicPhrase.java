@@ -19,9 +19,11 @@ package joshua.corpus.suffix_array;
 
 import joshua.corpus.AbstractPhrase;
 import joshua.corpus.Phrase;
+import joshua.corpus.TerminalIterator;
 import joshua.corpus.vocab.SymbolTable;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 
@@ -89,14 +91,7 @@ public class BasicPhrase extends AbstractPhrase {
 			words[i] = vocab.addTerminal(wordStrings[i]);
 		}
 	}
-	
-	
-	/**
-	 * A protected constructor for subclasses.
-	 */
-	protected BasicPhrase() {
-	
-	}
+
 
 //===============================================================
 // Public
@@ -249,6 +244,21 @@ public class BasicPhrase extends AbstractPhrase {
 		return new BasicPhrase(subPhraseWords, vocab);
 	}
 	
+	/**
+	 * Gets an object capable of iterating over all terminals in this pattern.
+	 * 
+	 * @return an object capable of iterating 
+	 *         over all terminals in this pattern
+	 */
+	public Iterable<Integer> getTerminals() {
+		
+		return new Iterable<Integer>() {	
+			public Iterator<Integer> iterator() {
+				return new TerminalIterator(vocab,words);
+			}
+			
+		};
+	}
 	
 	/**
 	 * Compares the two strings based on the lexicographic order
@@ -276,4 +286,10 @@ public class BasicPhrase extends AbstractPhrase {
 			return 0;
 		}
 	}
+
+
+//===============================================================
+// Private 
+//===============================================================
+
 }

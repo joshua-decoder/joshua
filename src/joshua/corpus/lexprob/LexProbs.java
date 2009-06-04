@@ -38,7 +38,7 @@ import joshua.util.Pair;
  * @author Lane Schwartz
  * @version $LastChangedDate$
  */
-public class LexProbs implements LexicalProbabilities {
+public class LexProbs extends AbstractLexProbs {
 
 	/** Logger for this class. */
 	private static final Logger logger = 

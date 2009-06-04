@@ -70,8 +70,7 @@ public class Pattern extends BasicPhrase implements PatternFormat {
 	 * @param phrase an existing phrase
 	 */
 	public Pattern(Phrase phrase) {
-		this.words = new int[phrase.size()];
-		this.vocab = phrase.getVocab();
+		super(new int[phrase.size()], phrase.getVocab());
 		
 		for(int i = 0 ; i < phrase.size(); i++) {
 			words[i] = phrase.getWordID(i);
@@ -92,6 +91,15 @@ public class Pattern extends BasicPhrase implements PatternFormat {
 		this.arity = calculateArity(this.words);
 	}
 	
+	/**
+	 * Constructs a pattern by copying an int[] pattern, and
+	 * then appending additional words to the new pattern.
+	 * 
+	 * @param vocab Vocabulary capable of mapping between symbols
+	 *              and integers.
+	 * @param patternStart Existing pattern to copy.
+	 * @param patternEnd Words to append to the new pattern.
+	 */
 	public Pattern(SymbolTable vocab, int[] patternStart, int... patternEnd) {
 		super(pattern(patternStart,patternEnd), vocab);
 		this.arity = calculateArity(this.words);
@@ -269,7 +277,7 @@ public class Pattern extends BasicPhrase implements PatternFormat {
 	 *
 	 * @return the number of nonterminals in this pattern.
 	 */
-	private int calculateArity(int[] words) {
+	private static int calculateArity(int[] words) {
 		
 		int arity = 0;
 		
@@ -289,3 +297,4 @@ public class Pattern extends BasicPhrase implements PatternFormat {
 		}
 	}
 }
+

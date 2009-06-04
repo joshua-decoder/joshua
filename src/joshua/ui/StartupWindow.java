@@ -35,6 +35,9 @@ import javax.swing.JWindow;
  */
 public class StartupWindow extends JWindow {
 
+	/** Serialization identifier. */
+	private static final long serialVersionUID = 1L;
+	
 	/**
 	 * Constructs a splash screen.
 	 * 

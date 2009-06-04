@@ -26,6 +26,9 @@ package joshua.corpus.suffix_array;
  */
 public class MismatchedHierarchicalPhrasesException extends RuntimeException {
 
+	/** Serialization identifier. */
+	private static final long serialVersionUID = 1L;
+	
 	/**
 	 * Constructs an exception indicating that two hierarchical
 	 * phrases cannot be meaningfully compared because of a

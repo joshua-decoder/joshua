@@ -26,6 +26,9 @@ package joshua.corpus.vocab;
  */
 public class UnknownSymbolException extends RuntimeException {
 
+	/** Serialization identifier. */
+	private static final long serialVersionUID = 1L;
+
 	/**
 	 * Constructs an exception indicating that the specified
 	 * identifier cannot be found in the symbol table.

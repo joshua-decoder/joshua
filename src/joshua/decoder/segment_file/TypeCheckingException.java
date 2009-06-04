@@ -39,6 +39,9 @@ package joshua.decoder.segment_file;
 public class TypeCheckingException extends Exception {
 	// TODO: We may want to store more information than just a message. Perhaps having subtypes for the different type errors we have defined in the ConstraintRule, ConstraintSpan, and Segment interfaces? But we shouldn't over-design either.
 	
+	/** Serialization identifier. */
+	private static final long serialVersionUID = 1L;
+	
 	public TypeCheckingException(String message) {
 		super(message);
 	}

@@ -43,7 +43,6 @@ import joshua.util.io.UncheckedIOException;
 import joshua.util.FileUtility;
 import joshua.util.CoIterator;
 
-import java.io.InputStream;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.util.ArrayList;

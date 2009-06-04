@@ -207,33 +207,33 @@ public class Counts<A, B> implements Iterable<Pair<A,B>> {
 	 * @return the probability of b given a.
 	 */
 	public float getReverseProbability(B b, A a) {
-		
-		int aCount = 0;
-		for (Integer value : counts.get(a).values()) {
-			aCount += value;
-		}
-		
+
 		int count = getCount(a,b);
 		
-		Float value;
-		if (count==0 || aCount==0) {
-			
-			value = floorProbability;
-			
-		} else {
+		Float value = floorProbability;
 
-			Map<A,Float> aMap;
-			if (reverseProbabilities.containsKey(b)) {
-				aMap = reverseProbabilities.get(b);
-			} else {
-				aMap = new HashMap<A,Float>();
+		if (count > 0) {
+			
+			int aCount = 0;
+			for (Integer aValue : counts.get(a).values()) {
+				aCount += aValue;
 			}
+			
+			if (aCount > 0) {
 
-			if (aMap.containsKey(a)) {
-				value = aMap.get(a);	
-			} else {
-				value = (float) count / (float) aCount;
-				aMap.put(a, value);
+				Map<A,Float> aMap;
+				if (reverseProbabilities.containsKey(b)) {
+					aMap = reverseProbabilities.get(b);
+				} else {
+					aMap = new HashMap<A,Float>();
+				}
+
+				if (aMap.containsKey(a)) {
+					value = aMap.get(a);	
+				} else {
+					value = (float) count / (float) aCount;
+				}
+				
 			}
 			
 		}

@@ -26,6 +26,9 @@ package joshua.corpus.suffix_array;
  */
 public class MismatchedCorpusException extends RuntimeException {
 
+	/** Serialization identifier. */
+	private static final long serialVersionUID = 1L;
+	
 	/**
 	 * Constructs an exception indicating that the size of the
 	 * suffix array does not match the size of its associated

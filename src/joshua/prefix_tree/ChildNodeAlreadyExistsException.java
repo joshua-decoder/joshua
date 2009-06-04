@@ -25,6 +25,9 @@ package joshua.prefix_tree;
  */
 public class ChildNodeAlreadyExistsException extends RuntimeException {
 
+	/** Serialization identifier. */
+	private static final long serialVersionUID = 1L;
+	
 	/**
 	 * Constructs a new exception indicating that a child cannot
 	 * be added to a parent node, because it already exists.

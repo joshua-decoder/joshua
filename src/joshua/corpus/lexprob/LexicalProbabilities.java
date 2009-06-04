@@ -19,6 +19,7 @@ package joshua.corpus.lexprob;
 
 import joshua.corpus.MatchedHierarchicalPhrases;
 import joshua.corpus.suffix_array.HierarchicalPhrase;
+import joshua.corpus.suffix_array.Pattern;
 
 /**
  * Represents lexical probability distributions in both directions.
@@ -99,6 +100,32 @@ public interface LexicalProbabilities {
 	 *         phrase given a source phrase.
 	 */
 	float lexProbTargetGivenSource(MatchedHierarchicalPhrases sourcePhrases, int sourcePhraseIndex, HierarchicalPhrase targetPhrase);
+	
+	/**
+	 * Gets the lexical translation probability 
+	 * of a source pattern given a target pattern,
+	 * assuming the most likely (Viterbi) alignment 
+	 * between the words in the patterns.
+	 * 
+	 * @param sourcePattern Source language pattern
+	 * @param targetPattern Target language pattern
+	 * @return Gets the lexical translation probability 
+	 *         of a source pattern given a target pattern
+	 */
+	public float lexProbSourceGivenTarget(Pattern sourcePattern, Pattern targetPattern);
+	
+	/**
+	 * Gets the lexical translation probability 
+	 * of a target pattern given a source pattern,
+	 * assuming the most likely (Viterbi) alignment 
+	 * between the words in the patterns.
+	 * 
+	 * @param targetPattern Target language pattern
+	 * @param sourcePattern Source language pattern
+	 * @return Gets the lexical translation probability 
+	 *         of a target pattern given a source pattern
+	 */
+	public float lexProbTargetGivenSource(Pattern targetPattern, Pattern sourcePattern);
 	
 	/**
 	 * Gets the probability returned when no calculated lexical

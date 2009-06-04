@@ -52,7 +52,7 @@ import joshua.util.Pair;
  * @version $LastChangedDate:2008-11-13 13:13:31 -0600 (Thu, 13 Nov 2008) $
  * @deprecated
  */
-public class SampledLexProbs implements LexicalProbabilities {
+public class SampledLexProbs extends AbstractLexProbs {
 
 	/** Logger for this class. */
 	private static final Logger logger = Logger.getLogger(SampledLexProbs.class.getName());

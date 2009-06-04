@@ -25,6 +25,9 @@ package joshua.prefix_tree;
  */
 public class NoSuchChildNodeException extends RuntimeException {
 
+	/** Serializable identifier. */
+	private static final long serialVersionUID = 1L;
+	
 	/**
 	 * Constructs a new exception indicating that a child of a
 	 * parent node was expected, but does not exist.

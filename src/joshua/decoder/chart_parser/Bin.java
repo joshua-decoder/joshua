@@ -632,20 +632,6 @@ class Bin {
 		}
 	}
 	
-	
-	private void print_info(Level level) {
-		if (logger.isLoggable(level))
-			logger.log(level,
-				String.format("#### Stat of Bin, n_items=%d, n_super_items=%d",
-					this.tableItems.size(), this.tableSuperItems.size()));
-		
-		ensure_sorted();
-		for (HGNode it : this.sortedItems) {
-			it.print_info(level);
-		}
-	}
-	
-	
 	private boolean should_prune(double total_cost) {
 		return (total_cost >= this.cutoffCost);
 	}

@@ -1,4 +1,3 @@
-
 /* This file is part of the Joshua Machine Translation System.
  * 
  * Joshua is free software; you can redistribute it and/or modify it
