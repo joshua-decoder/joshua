@@ -250,6 +250,10 @@ public class DecoderThread extends Thread {
 		
 		public void coNext(Segment segment) {
 			try {
+				// TODO: should this be INFO or FINE? The length message is INFO, so is the "goal item best cost" message
+				if (logger.isLoggable(Level.INFO))
+					logger.info("Segment id: " + segment.id());
+				
 				DecoderThread.this.translate(
 					segment, this.oracleReader.readLine());
 				

@@ -439,7 +439,7 @@ public class Chart {
 			}
 		}
 		logStatistics(Level.FINE);
-		logger.info("Sentence length: " + sentenceLength);
+		logger.info("Segment length: " + sentenceLength);
 		// transition_final: setup a goal item, which may have many deductions
 		if (null != this.bins[0][sentenceLength]) {
 			this.goalBin.transit_to_goal(this.bins[0][sentenceLength]); // update goalBin				

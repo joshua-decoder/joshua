@@ -41,19 +41,22 @@ import java.io.IOException;
  */
 @Deprecated
 public class HackishSegmentParser implements SegmentFileParser {
-	protected int sentenceID = -1;
+	protected final int startSegmentID;
+	protected       int currentSegmentID;
 	
 	protected static final Pattern SEG_START =
 				Pattern.compile("^\\s*<seg\\s+id=\"(\\d+)\"[^>]*>\\s*");
 	protected static final Pattern SEG_END =
 				Pattern.compile("\\s*</seg\\s*>\\s*$");
 	
-	public HackishSegmentParser() {}
+	public HackishSegmentParser() {
+		this.startSegmentID = -1;
+	}
 	
-	public HackishSegmentParser(int startSentenceID) {
+	public HackishSegmentParser(int startSegmentID) {
 		// We subtract one because of the order in which
 		// we increment vs return the value to callers.
-		this.sentenceID = startSentenceID -1;
+		this.startSegmentID = startSegmentID - 1;
 	}
 	
 	
@@ -74,6 +77,7 @@ public class HackishSegmentParser implements SegmentFileParser {
 		
 		try {
 			LineReader reader = new LineReader(in);
+			this.currentSegmentID = this.startSegmentID;
 			try {
 				while (reader.hasNext()) {
 					String cleanedSentence =
@@ -87,17 +91,17 @@ public class HackishSegmentParser implements SegmentFileParser {
 						if (null == id) {
 							throw new RuntimeException("Something strange happened with regexes. This is a bug.");
 						} else {
-							this.sentenceID = Integer.parseInt(id);
+							this.currentSegmentID = Integer.parseInt(id);
 							sentence =
 								SEG_END.matcher(m.replaceFirst("")).replaceAll("");
 						}
 					} else {
-						this.sentenceID++;
+						this.currentSegmentID++;
 						sentence = cleanedSentence;
 					}
 					
 					coit.coNext(new PlainSegment(
-						Integer.toString(this.sentenceID),
+						Integer.toString(this.currentSegmentID),
 						sentence));
 				}
 			} finally {
