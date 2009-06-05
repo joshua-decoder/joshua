@@ -11,7 +11,7 @@ import joshua.decoder.ff.tm.GrammarReader;
 public class SamtFormatReader extends GrammarReader<BilingualRule> {
 
 	private static final Logger logger = Logger
-			.getLogger(HieroFormatReader.class.getName());
+			.getLogger(SamtFormatReader.class.getName());
 	
 	private static final String samtNonTerminalMarkup;
 	
