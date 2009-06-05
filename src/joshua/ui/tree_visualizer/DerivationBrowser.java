@@ -11,6 +11,8 @@ import java.util.LinkedList;
 import java.awt.*;
 import java.awt.event.*;
 
+import edu.uci.ics.jung.algorithms.layout.StaticLayout;
+
 public class DerivationBrowser {
 
 	private static JFrame chooserFrame;
@@ -163,6 +165,8 @@ public class DerivationBrowser {
 		private JLabel source;
 		private JLabel derivation;
 
+		private DerivationViewer dv;
+
 		public ActiveFrame()
 		{
 			super("Joshua Derivation Tree");
@@ -177,6 +181,7 @@ public class DerivationBrowser {
 			layoutControl();
 
 			viewPanel = new JPanel(new BorderLayout());
+			dv = null;
 
 			getContentPane().add(viewPanel, BorderLayout.CENTER);
 			getContentPane().add(controlPanel, BorderLayout.SOUTH);
@@ -258,7 +263,12 @@ public class DerivationBrowser {
 			derivation.setText(tgtDer.toString());
 			String tgt = tgtDer.complete();
 			DerivationTree tree = new DerivationTree(tgt.split(DerivationTree.DELIMITER)[1], src);
-			DerivationViewer dv = new DerivationViewer(tree);
+			if (dv == null)
+				dv = new DerivationViewer(tree);
+			else {
+				dv.setGraphLayout(new StaticLayout(tree, new DerivationTreeTransformer(tree)));
+				tree.addCorrespondences();
+			}
 			viewPanel.add(dv, BorderLayout.CENTER);
 			dv.revalidate();
 			repaint();
