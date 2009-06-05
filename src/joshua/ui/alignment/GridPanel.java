@@ -189,6 +189,11 @@ public class GridPanel extends JPanel {
 			int sourceSentenceStart = sourceCorpus.getSentencePosition(sentenceNumber);
 			int targetSentenceStart = targetCorpus.getSentencePosition(sentenceNumber);
 			
+			if (logger.isLoggable(Level.FINE)) {
+				logger.fine("Source sentence " + sentenceNumber + " starts at " + sourceSentenceStart);
+				logger.fine("Target sentence " + sentenceNumber + " starts at " + targetSentenceStart);
+			}
+			
 			// Draw aligned points
 			for (int sourceSentenceIndex=0, sourceCorpusIndex=sourceSentenceStart+sourceSentenceIndex; sourceSentenceIndex<numSourceWords; sourceSentenceIndex++, sourceCorpusIndex++) {
 				
@@ -199,6 +204,7 @@ public class GridPanel extends JPanel {
 				if (targetPoints != null) {
 					for (int targetCorpusIndex : targetPoints) {
 
+						if (logger.isLoggable(Level.FINER)) logger.finer("Alignment point in corpus at " + sourceCorpusIndex + "-" + targetCorpusIndex);
 						int targetSentenceIndex = targetCorpusIndex - targetSentenceStart;
 						int x = targetSentenceIndex * widthStep;
 
