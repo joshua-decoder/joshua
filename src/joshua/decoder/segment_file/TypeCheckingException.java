@@ -30,7 +30,7 @@ package joshua.decoder.segment_file;
  * where the responsibility lies for catching them.
  * <p>
  * This is presented as a general Exception rather than as a subclass
- * of {@link SAXException} so that it can be used by other
+ * of {@link org.xml.sax.SAXException} so that it can be used by other
  * SegmentFileParsers as well.
  *
  * @author wren ng thornton <wren@users.sourceforge.net>

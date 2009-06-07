@@ -26,17 +26,26 @@ java \
 	example2.src                 \
 	example2.nbest
 
-if [ $? -ne 0 ]; then
-	echo "Something went wrong with the parser: $?"
-	exit $?
+exitCode=$?
+if [ $exitCode -ne 0 ]; then
+	echo "Something went wrong with the parser: $exitCode"
+	exit $exitCode
 fi
 
-# BUG: we should fix the rest of this script to use our built-in tools now.
 
-#./get_1best_from_Nbest.pl example2.nbest example2.1best
+java \
+	-classpath "../bin"        \
+	joshua.util.ExtractTopCand \
+	example2.nbest             \
+	example2.1best
+
+exitCode=$?
+if [ $exitCode -ne 0 ]; then
+	echo "Something went wrong with the parser: $exitCode"
+	exit $exitCode
+fi
+
+# TODO: we should run our BLEU scoring script
+
 #./get_IBM_SGML_from_1best.pl example2
-
-# Note: we do not distribute IBM's BLEU scorer because it is
-# (C) Copyright IBM Corp. 2001 All Rights Reserved.
-# The symlink in Subversion points to JHU's local copy on the CLSP grid
 #./bleu-1.04.pl -t example2.1best.sgm -r example2.refs.sgm -n 4 -ci

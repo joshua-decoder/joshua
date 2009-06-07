@@ -49,8 +49,7 @@ public class FileUtility {
 	
 	
 	/**
-	 * @deprecated As of r610, use {@link joshua.util.io.LineReader}
-	 *             instead.
+	 * @deprecated use {@link joshua.util.io.LineReader} instead.
 	 */
 	@Deprecated
 	public static BufferedReader getReadFileStream(String filename)
@@ -71,7 +70,7 @@ public class FileUtility {
 		return new BufferedWriter(
 					new OutputStreamWriter(
 						// TODO: add GZIP
-						new FileOutputStream(filename), FILE_ENCODING));
+						new FileOutputStream(filename, false), FILE_ENCODING));
 	}
 	
 	
@@ -85,6 +84,10 @@ public class FileUtility {
 	}
 	
 	
+	/**
+	 * @deprecated use {@link joshua.util.io.LineReader} instead.
+	 */
+	@Deprecated
 	public static String read_line_lzf(BufferedReader in) {
 		String str = "";
 		try {
@@ -117,7 +120,7 @@ public class FileUtility {
 	
 	
 	/**
-	 * Writes data from the integer array to disk as raw bytes.
+	 * Writes data from the integer array to disk as raw bytes, overwriting the old file if present.
 	 * 
 	 * @param data     The integer array to write to disk.
 	 * @param filename The filename where the data should be written.
@@ -126,7 +129,7 @@ public class FileUtility {
 	 */
 	public static FileOutputStream writeBytes(int[] data, String filename)
 	throws IOException {
-		FileOutputStream out = new FileOutputStream(filename,false);
+		FileOutputStream out = new FileOutputStream(filename, false);
 		writeBytes(data, out);
 		return out;
 	}
