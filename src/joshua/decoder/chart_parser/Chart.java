@@ -222,28 +222,27 @@ public class Chart {
 				if (null != cSpan.rules()) {
 					boolean shouldAdd = false; // contain LHS or RHS constraints?
 					for (ConstraintRule cRule : cSpan.rules()) {
-						
-						if (cRule.type() == ConstraintRule.Type.RULE) {
-							
-							// force the feature cost as zero
+						switch (cRule.type()){
+						case RULE:
+							//== prepare the feature scores 
 							float[] featureScores = new float[cRule.features().length];//TODO: this require the input always specify the right number of features
 							for (int i = 0; i < featureScores.length; i++) {
 								if (cSpan.isHard()) {
-									featureScores[i] = 0;
+									featureScores[i] = 0;	// force the feature cost as zero
 								} else {
 									featureScores[i] = cRule.features()[i];
 								}
 							}
 							
+							/**If the RULE constraint is hard, then we should filter all out all consituents (within this span), 
+							 * which are contructed from regular grammar*/
 							if (cSpan.isHard()) {
 								if (null == this.spansWithHardRuleConstraint) {
 									this.spansWithHardRuleConstraint = new ArrayList<Span>();
 								}
-								this.spansWithHardRuleConstraint.add(new Span(cSpan.start(), cSpan.end()));
-								
-								if (logger.isLoggable(Level.INFO))
-									logger.info("Adding hard rule constraint for span " + cSpan.start() + ", " + cSpan.end());
+								this.spansWithHardRuleConstraint.add(new Span(cSpan.start(), cSpan.end()));								
 							}
+							
 							//TODO: which grammar should we use to create a mannual rule?
 							int arity = 0; // only allow flat rule (i.e. arity=0)
 							Rule rule = this.grammars[0].constructManualRule(
@@ -253,17 +252,20 @@ public class Chart {
 									featureScores, 
 									arity);
 							addAxiom(cSpan.start(), cSpan.end(), rule, 0);
-						} else {
+							if (logger.isLoggable(Level.INFO))
+								logger.info("Adding RULE constraint for span " + cSpan.start() + ", " + cSpan.end() + "; isHard=" + cSpan.isHard());
+							break;
+						default: 
 							shouldAdd = true;
 						}
 					}
 					if (shouldAdd) {
+						if (logger.isLoggable(Level.INFO))
+							logger.info("Adding LHS or RHS constraint for span " + cSpan.start() + ", " + cSpan.end());
 						if (null == this.constraintSpansForFiltering) {
 							this.constraintSpansForFiltering = new HashMap<String, ConstraintSpan>();
 						}
-						this.constraintSpansForFiltering.put(
-							getSpanSignature(cSpan.start(), cSpan.end()),
-							cSpan);
+						this.constraintSpansForFiltering.put(getSpanSignature(cSpan.start(), cSpan.end()), cSpan);
 					}
 				}
 			}
@@ -292,30 +294,7 @@ public class Chart {
 		if (logger.isLoggable(Level.FINE))
 			logger.fine("Finished seeding chart.");
 	}
-	
-	
-//===============================================================
-// Manual constraint annotation methods and classes
-//===============================================================
-	private static class Span {
-		int startPos;
-		int endPos;
-		public Span(int startPos, int endPos) {
-			this.startPos = startPos;
-			this.endPos = endPos;
-		}
-	}
-	
-	private boolean containsHardRuleConstraint(int startSpan, int endSpan) {
-		if (null != this.spansWithHardRuleConstraint) {
-			for (Span span : this.spansWithHardRuleConstraint) {
-				if (startSpan >= span.startPos && endSpan <= span.endPos)
-					return true;
-			}
-		}
-		return false;
-	}
-	
+
 	
 //===============================================================
 // The primary method for filling in the chart
@@ -578,10 +557,10 @@ public class Chart {
 		this.bins[i][j].complete_cell_cube_prune(i, j, dt.l_ant_super_items, filterRules(i,j, rb.getSortedRules()), latticeCost);//combinations: rules, antecent items
 	}
 	
-	
-	private String getSpanSignature(int i, int j) {
-		return i + " " + j;
-	}
+
+//	===============================================================
+//	 Manual constraint annotation methods and classes
+//	===============================================================
 	
 	
 	/**
@@ -597,6 +576,7 @@ public class Chart {
 		if (null == cSpan) { // no filtering
 			return rulesIn;
 		} else {
+			
 			List<Rule> rulesOut = new ArrayList<Rule>();
 			for (Rule gRule : rulesIn) {
 				//gRule will survive, if any constraint (LHS or RHS) lets it survive 
@@ -607,7 +587,7 @@ public class Chart {
 					}
 				}
 			}
-			//System.out.println("beging to look for " + i + " " + j + "; out size:" + rulesOut.size() + "; input size: " + rulesIn.size());
+			System.out.println("beging to look for " + i + " " + j + "; out size:" + rulesOut.size() + "; input size: " + rulesIn.size());
 			return rulesOut;
 		}
 	}
@@ -633,6 +613,29 @@ public class Chart {
 			return true;
 		default: // not surviving
 			return false;
+		}
+	}
+	
+	private boolean containsHardRuleConstraint(int startSpan, int endSpan) {
+		if (null != this.spansWithHardRuleConstraint) {
+			for (Span span : this.spansWithHardRuleConstraint) {
+				if (startSpan >= span.startPos && endSpan <= span.endPos)
+					return true;
+			}
+		}
+		return false;
+	}
+		
+	private String getSpanSignature(int i, int j) {
+		return i + " " + j;
+	}
+	
+	private static class Span {
+		int startPos;
+		int endPos;
+		public Span(int startPos, int endPos) {
+			this.startPos = startPos;
+			this.endPos = endPos;
 		}
 	}
 }
