@@ -185,6 +185,7 @@ public class DerivationBrowser {
 
 			getContentPane().add(viewPanel, BorderLayout.CENTER);
 			getContentPane().add(controlPanel, BorderLayout.SOUTH);
+			drawGraph();
 			setVisible(true);
 		}
 
