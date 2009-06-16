@@ -3,10 +3,14 @@ package joshua.ui.tree_visualizer;
 import javax.swing.*;
 import javax.swing.event.*;
 
+import java.io.InputStream;
+import java.io.FileInputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.Scanner;
 import java.util.LinkedList;
+import java.util.zip.GZIPInputStream;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -108,7 +112,12 @@ public class DerivationBrowser {
 			return;
 		try {
 			DefaultListModel model = (DefaultListModel) sourceList.getModel();
-			Scanner scanner = new Scanner(sourceFile, "UTF-8");
+			InputStream inp;
+			if (sourceFile.getName().endsWith("gz")) 
+				inp = new GZIPInputStream(new FileInputStream(sourceFile));
+			else
+				inp = new FileInputStream(sourceFile);
+			Scanner scanner = new Scanner(inp, "UTF-8");
 			model.removeAllElements();
 			while (scanner.hasNextLine())
 				model.addElement(scanner.nextLine());
@@ -116,6 +125,8 @@ public class DerivationBrowser {
 		}
 		catch (FileNotFoundException e) {
 
+		}
+		catch (IOException e) {
 		}
 	}
 
@@ -131,7 +142,12 @@ public class DerivationBrowser {
 		}
 		try {
 			int selectedIndex = sourceList.getSelectedIndex();
-			Scanner scanner = new Scanner(targetFile, "UTF-8");
+			InputStream inp;
+			if (targetFile.getName().endsWith("gz")) 
+				inp = new GZIPInputStream(new FileInputStream(targetFile));
+			else
+				inp = new FileInputStream(targetFile);
+			Scanner scanner = new Scanner(inp, "UTF-8");
 			int src;
 			while (scanner.hasNextLine()) {
 				String line = scanner.nextLine();
@@ -150,6 +166,8 @@ public class DerivationBrowser {
 		}
 		catch (FileNotFoundException e) {
 
+		}
+		catch (IOException e) {
 		}
 	}
 
