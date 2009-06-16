@@ -45,19 +45,33 @@ public class Compile {
 		Logger.getLogger(Compile.class.getName());
 	
 	
-	public static void main(String[] args) throws IOException {
-		
-		if (args.length < 4) {
-			System.err.println("Usage: java " + Compile.class.getName() + " sourceCorpus targetCorpus alignmentsFile outputDir.josh");
-			System.exit(0);
-		}
-		
-		String sourceCorpusFileName = args[0];
-		String targetCorpusFileName = args[1];
-		String alignmentsFileName = args[2];
-		String outputDirName = args[3];
-		String charset = (args.length > 4) ? args[4] : "UTF-8";
-
+	private String sourceCorpusFileName;
+	private String targetCorpusFileName;
+	private String alignmentsFileName;
+	private String outputDirName;
+	private String charset = "UTF-8";
+	
+	public void setSourceCorpus(String sourceCorpusFileName) {
+		this.sourceCorpusFileName = sourceCorpusFileName;
+	}
+	
+	public void setTargetCorpus(String targetCorpusFileName) {
+		this.targetCorpusFileName = targetCorpusFileName;
+	}
+	
+	public void setAlignments(String alignmentsFileName) {
+		this.alignmentsFileName = alignmentsFileName;
+	}
+	
+	public void setOutputDir(String outputDirName) {
+		this.outputDirName = outputDirName;
+	}
+	
+	public void setEncoding(String charset) {
+		this.charset = charset;
+	}
+	
+	public void execute() throws IOException {
 		// Verify that output directory exists or can be created
 		File outputDir = new File(outputDirName);
 		if (! outputDir.exists()) {
@@ -210,6 +224,23 @@ public class Compile {
 		
 		if (logger.isLoggable(Level.INFO)) logger.info("Completed writing binary files to disk");
 		
+	}
+	
+	public static void main(String[] args) throws IOException {
+		
+		if (args.length < 4) {
+			System.err.println("Usage: java " + Compile.class.getName() + " sourceCorpus targetCorpus alignmentsFile outputDir.josh");
+			System.exit(0);
+		}
+		
+		Compile compiler = new Compile();
+		compiler.setSourceCorpus(args[0]);
+		compiler.setTargetCorpus(args[1]);
+		compiler.setAlignments(args[2]);
+		compiler.setOutputDir(args[3]);
+		if (args.length > 4) compiler.setEncoding(args[4]);
+		
+		compiler.execute();
 	}
 	
 }
