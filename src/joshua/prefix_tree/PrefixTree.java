@@ -205,7 +205,7 @@ public class PrefixTree {
 		this.minNonterminalSpan = minNonterminalSpan;
 		this.vocab = vocab;
 
-		Node bot = new Node(vocab, BOT_NODE_ID);
+		Node bot = new Node();
 		bot.sourceHierarchicalPhrases = HierarchicalPhrases.emptyList(vocab);
 		
 		this.root = new RootNode(this,ROOT_NODE_ID);

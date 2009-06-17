@@ -79,9 +79,9 @@ public class PrefixTreeTest {
 		
 //		PrefixTree tree = PrefixTree.getDummyPrefixTree();
 		
-		Node bot = new Node(vocab,-999);
+		Node bot = new Node();
 		Assert.assertNotNull(bot);
-		Node root = new Node(vocab,-1);
+		Node root = new Node();
 		Assert.assertNotNull(root);
 		bot.children = new BotMap<Integer,Node>(root);//PrefixTree.botMap(root);
 		root.linkToSuffix(bot);
@@ -1106,7 +1106,7 @@ public class PrefixTreeTest {
 		
 //		PrefixTree tree = PrefixTree.getDummyPrefixTree();
 		
-		Node node = new Node(vocab, -999);
+		Node node = new Node();
 		
 		Assert.assertTrue(node.active);
 		Assert.assertNull(node.suffixLink);

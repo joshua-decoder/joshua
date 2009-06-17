@@ -1,5 +1,6 @@
 package joshua.prefix_tree;
 
+import joshua.corpus.vocab.SymbolTable;
 import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.Rule;
 
@@ -8,12 +9,16 @@ public class RootNode extends Node implements Grammar {
 	private final PrefixTree tree;
 	
 	RootNode(PrefixTree tree, int incomingArcValue) {
-		super(tree.vocab, incomingArcValue);
+		super();
 		this.tree = tree;
 	}
 	
 	public String toString() {
-		return toString(tree.vocab);
+		return toString(tree.vocab, PrefixTree.ROOT_NODE_ID);
+	}
+	
+	String toTreeString(String tabs, SymbolTable vocab) {
+		return super.toTreeString(tabs, vocab, PrefixTree.ROOT_NODE_ID);
 	}
 	
 	/* See Javadoc for joshua.decoder.ff.tm.Grammar#constructOOVRule */

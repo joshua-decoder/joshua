@@ -47,9 +47,6 @@ public class Node extends AbstractGrammar implements Comparable<Node>, Trie {
 	private static final Logger logger =
 		Logger.getLogger(Node.class.getName());
 
-	// TODO This is used only by toString methods. Try to remove it.
-	final int incomingArcValue;
-	
 	/** Unique integer identifier for this node. */
 	final int objectID;
 
@@ -84,26 +81,16 @@ public class Node extends AbstractGrammar implements Comparable<Node>, Trie {
 	/** Translation rules for this node. */
 	List<Rule> results;
 	
-	/** 
-	 * Symbol table for this node.
-	 * <p>
-	 * TODO Attempt to remove this member variable. 
-	 * It is only used for HierarchicalPhrases.emptyList(vocab)
-	 */
-	private final SymbolTable vocab;
-	
-	Node(SymbolTable vocab, int incomingArcValue) {
-		this(vocab, true, incomingArcValue);
+	Node() {
+		this(true);
 	}
 
-	Node(SymbolTable vocab, boolean active, int incomingArcValue) {
-		this.vocab = vocab;
+	Node(boolean active) {
 		this.active = active;
 		this.suffixLink = null;
 		this.children = new HashMap<Integer,Node>();
-		this.incomingArcValue = incomingArcValue;
 		this.objectID = nodeIDCounter++;
-		this.sourceHierarchicalPhrases = HierarchicalPhrases.emptyList(vocab);
+		this.sourceHierarchicalPhrases = HierarchicalPhrases.emptyList(null);
 		this.results = Collections.emptyList();
 	}
 	
@@ -113,7 +100,6 @@ public class Node extends AbstractGrammar implements Comparable<Node>, Trie {
 
 		if (suffixLink==null) {
 			throw new NoSuchChildNodeException(this, endOfPattern);
-//			throw new RuntimeException("No child " + endOfPattern + " for node " + this.suffixLink + " (Parent was " + this + ")");
 		}
 		
 		return suffixLink;
@@ -130,22 +116,6 @@ public class Node extends AbstractGrammar implements Comparable<Node>, Trie {
 		return sourceHierarchicalPhrases.getPattern();
 	}
 	
-	/* See Javadoc for joshua.decoder.ff.tm.Trie#getRules */
-	public RuleCollection getRules() {
-		
-		Pattern sourcePattern = sourceHierarchicalPhrases.getPattern();
-		
-		int[] empty = {};
-		
-		final int[] sourceSide = (sourcePattern==null) ? empty : sourcePattern.getWordIDs();
-		final int arity = (sourcePattern==null) ? 0 : sourcePattern.arity();
-//		final List<Rule> sortedResults = (results==null) ? Collections.<Rule>emptyList() : results;
-		
-		//XXX Is results sorted at this point? It needs to be, but I'm not sure it is.
-		
-		return new BasicRuleCollection(arity, sourceSide, results);
-		
-	}
 	
 	/**
 	 * Gets rules for this node and the children of this node.
@@ -162,6 +132,22 @@ public class Node extends AbstractGrammar implements Comparable<Node>, Trie {
 		}
 		
 		return result;
+	}
+	
+	/* See Javadoc for joshua.decoder.ff.tm.Trie#getRules */
+	public RuleCollection getRules() {
+		
+		Pattern sourcePattern = sourceHierarchicalPhrases.getPattern();
+		
+		int[] empty = {};
+		
+		final int[] sourceSide = (sourcePattern==null) ? empty : sourcePattern.getWordIDs();
+		final int arity = (sourcePattern==null) ? 0 : sourcePattern.arity();
+		
+		//XXX Is results sorted at this point? It needs to be, but I'm not sure it is.
+		
+		return new BasicRuleCollection(arity, sourceSide, results);
+		
 	}
 	
 	/* See Javadoc for joshua.decoder.ff.tm.Trie#hasExtensions */
@@ -183,6 +169,15 @@ public class Node extends AbstractGrammar implements Comparable<Node>, Trie {
 		}
 	}
 
+	/* See Javadoc for joshua.decoder.ff.tm.Trie#getExtensions */
+	public Collection<Node> getExtensions() {
+		return this.children.values();
+	}
+	
+	/* See Javadoc for joshua.decoder.ff.tm.Grammar#getTrieRoot */
+	public Trie getTrieRoot() {
+		return this;
+	}
 	
 	/**
 	 * Determines whether this node has a specified child.
@@ -203,7 +198,7 @@ public class Node extends AbstractGrammar implements Comparable<Node>, Trie {
 		if (children.containsKey(child)) {
 			throw new ChildNodeAlreadyExistsException(this, child);
 		} else {
-			Node node = new Node(vocab, child);
+			Node node = new Node();
 			children.put(child, node);
 			return node;
 		}
@@ -251,19 +246,32 @@ public class Node extends AbstractGrammar implements Comparable<Node>, Trie {
 			logger.finer("Storing " + hierarchicalPhrases.size() + " source phrases at node " + objectID + ":");
 		}
 
-//		SymbolTable vocab = (tree.suffixArray==null) ? null : tree.suffixArray.getVocabulary();
-//		this.sourcePattern = sourcePattern;
-//		this.sourcePattern = new Pattern(vocab, sourceTokens);
-//		this.results = new ArrayList<Rule>(hierarchicalPhrases.size());
-		
 		this.sourceHierarchicalPhrases = hierarchicalPhrases;
 		this.results = rules;
-//		if (tree.ruleExtractor!=null) {
-//			this.results = tree.ruleExtractor.extractRules(hierarchicalPhrases);
-//		}
 		
 	}
+
+
+
+	/**
+	 * Gets the number of rules stored in the grammar.
+	 * 
+	 * @return the number of rules stored in the grammar
+	 */
+	public int getNumRules() {
 		
+		int numRules = 
+			(results==null) ? 0 : results.size();
+
+		if (children != null) {
+			for (Node child : children.values()) {
+				numRules += child.getNumRules();
+			}
+		}
+		
+		return numRules;
+	}
+	
 	/**
 	 * Gets the number of nodes in the sub-tree rooted at this node.
 	 * <p>
@@ -283,154 +291,7 @@ public class Node extends AbstractGrammar implements Comparable<Node>, Trie {
 		return size;
 	}
 
-	public String toString() {
-		return toString(null);
-	}
-	
-	/**
-	 * Gets a String representation of the sub-tree rooted at this node.
-	 * 
-	 * @return a String representation of the sub-tree rooted at this node
-	 */
-	public String toString(SymbolTable vocab) {
 
-//		SymbolTable vocab = tree.vocab;
-		
-		StringBuilder s = new StringBuilder();
-
-		s.append("[id");
-		s.append(objectID);
-		s.append(' ');
-		
-		if (incomingArcValue==PrefixTree.X) {
-			s.append('X');
-		} else if (incomingArcValue==PrefixTree.ROOT_NODE_ID) {
-			s.append("ROOT");
-		} else if (vocab!=null) {
-			s.append(vocab.getWord(incomingArcValue));
-		} else {
-			s.append('v');
-			s.append(incomingArcValue);
-		} 
-
-		s.append(" (");
-		if (null != suffixLink) {
-			s.append(suffixLink.objectID);
-		} else {
-			s.append("null");
-		}
-		s.append(')');
-		s.append(' ');
-
-		List<Node> kids = new ArrayList<Node>(children.values());
-		Collections.sort(kids);
-
-		for (Node kid : kids) {
-			s.append(kid.toString(vocab));
-			s.append(' ');
-		}
-
-		if (!active) s.append('*');
-		s.append(']');
-
-		return s.toString();
-
-	}
-
-	String toShortString(SymbolTable vocab) {
-
-//		SymbolTable vocab = tree.vocab;
-		
-		StringBuilder s = new StringBuilder();
-
-		s.append("[id");
-		s.append(objectID);
-		s.append(' ');
-		
-		if (incomingArcValue==PrefixTree.X) {
-			s.append('X');
-		} else if (incomingArcValue==PrefixTree.ROOT_NODE_ID) {
-			s.append("ROOT");
-		} else if (vocab!=null) {
-			s.append(vocab.getWord(incomingArcValue));
-		} else 
-//			if (PrefixTree.idsToStrings==null || !PrefixTree.idsToStrings.containsKey(incomingArcValue)) 
-		{
-			s.append('v');
-			s.append(incomingArcValue);
-		} 
-//		else {
-//			s.append(PrefixTree.idsToStrings.get(incomingArcValue));
-//		}
-		s.append(" (");
-		if (null != suffixLink) {
-			s.append(suffixLink.objectID);
-		} else {
-			s.append("null");
-		}
-		s.append(')');
-		s.append(' ');
-
-		s.append('{');
-		s.append(children.size());
-		s.append(" children}");
-
-		if (!active) s.append('*');
-		s.append(']');
-
-		return s.toString();
-	}
-	
-	String toTreeString(String tabs, SymbolTable vocab) {
-
-		StringBuilder s = new StringBuilder();
-
-		s.append(tabs); 
-		s.append("[id");
-		s.append(objectID);
-		s.append(' ');
-
-		if (incomingArcValue==PrefixTree.X) {
-			s.append('X');
-		} else if (incomingArcValue==PrefixTree.ROOT_NODE_ID) {
-			s.append("ROOT");
-		} else if (vocab!=null) {
-			s.append(vocab.getWord(incomingArcValue));
-		} else {
-			s.append('v');
-			s.append(incomingArcValue);
-		} 
-
-		s.append(" (");
-		if (null != suffixLink) {
-			s.append(suffixLink.objectID);
-		} else {
-			s.append("null");
-		}
-		s.append(')');
-
-		if (children.size() > 0) {
-			s.append(" \n\n");
-
-			List<Node> kids = new ArrayList<Node>(children.values());
-			Collections.sort(kids);
-
-			for (Node entry : kids) {
-				s.append(entry.toTreeString(tabs+"\t", vocab));
-				s.append("\n\n");
-			}
-
-			s.append(tabs);
-		} else {
-			s.append(' ');
-		}
-
-		if (!active) s.append('*');
-		s.append(']');
-
-		return s.toString();
-
-	}
 
 	/* See Javadoc for java.lang.Object#hashCode */
 	public int hashCode() {
@@ -472,41 +333,143 @@ public class Node extends AbstractGrammar implements Comparable<Node>, Trie {
 
 		return i.compareTo(j);
 	}
+	
+	/**
+	 * Gets a String representation of the sub-tree rooted at this node.
+	 * 
+	 * @return a String representation of the sub-tree rooted at this node
+	 */
+	public String toString(SymbolTable vocab, int incomingArcValue) {
+		
+		StringBuilder s = new StringBuilder();
 
+		s.append("[id");
+		s.append(objectID);
+		s.append(' ');
+		
+		if (incomingArcValue==PrefixTree.X) {
+			s.append('X');
+		} else if (incomingArcValue==PrefixTree.ROOT_NODE_ID) {
+			s.append("ROOT");
+		} else if (vocab!=null) {
+			s.append(vocab.getWord(incomingArcValue));
+		} else {
+			s.append('v');
+			s.append(incomingArcValue);
+		} 
 
+		s.append(" (");
+		if (null != suffixLink) {
+			s.append(suffixLink.objectID);
+		} else {
+			s.append("null");
+		}
+		s.append(')');
+		s.append(' ');
 
-	/* See Javadoc for joshua.decoder.ff.tm.Trie#getExtensions */
-	public Collection<Node> getExtensions() {
-		return this.children.values();
+		ArrayList<Map.Entry<Integer, Node>> k = new ArrayList<Map.Entry<Integer, Node>>(children.entrySet());
+		Collections.sort(k, NodeEntryComparator.get());
+		
+		for (Map.Entry<Integer, Node> kidEntry : k) {
+			Integer arcValue = kidEntry.getKey();
+			Node kid = kidEntry.getValue();
+			
+			s.append(kid.toString(vocab, arcValue));
+			s.append(' ');
+		}
+
+		if (!active) s.append('*');
+		s.append(']');
+
+		return s.toString();
+
+	}
+
+	String toShortString(SymbolTable vocab) {
+		
+		StringBuilder s = new StringBuilder();
+
+		s.append("[id");
+		s.append(objectID);
+		s.append(' ');
+		
+		s.append(" (");
+		if (null != suffixLink) {
+			s.append(suffixLink.objectID);
+		} else {
+			s.append("null");
+		}
+		s.append(')');
+		s.append(' ');
+
+		s.append('{');
+		s.append(children.size());
+		s.append(" children}");
+
+		if (!active) s.append('*');
+		s.append(']');
+
+		return s.toString();
 	}
 	
-	/* See Javadoc for joshua.decoder.ff.tm.Grammar#getTrieRoot */
-	public Trie getTrieRoot() {
-		return this;
+	protected String toTreeString(String tabs, SymbolTable vocab, int incomingArcValue) {
+
+		StringBuilder s = new StringBuilder();
+
+		s.append(tabs); 
+		s.append("[id");
+		s.append(objectID);
+		s.append(' ');
+
+		if (incomingArcValue==PrefixTree.X) {
+			s.append('X');
+		} else if (incomingArcValue==PrefixTree.ROOT_NODE_ID) {
+			s.append("ROOT");
+		} else if (vocab!=null) {
+			s.append(vocab.getWord(incomingArcValue));
+		} else {
+			s.append('v');
+			s.append(incomingArcValue);
+		} 
+
+		s.append(" (");
+		if (null != suffixLink) {
+			s.append(suffixLink.objectID);
+		} else {
+			s.append("null");
+		}
+		s.append(')');
+
+		if (children.size() > 0) {
+			s.append(" \n\n");
+
+			ArrayList<Map.Entry<Integer, Node>> k = new ArrayList<Map.Entry<Integer, Node>>(children.entrySet());
+			Collections.sort(k, NodeEntryComparator.get());
+
+			for (Map.Entry<Integer, Node> kidEntry : k) {
+				Integer arcValue = kidEntry.getKey();
+				Node kid = kidEntry.getValue();
+
+				s.append(kid.toTreeString(tabs+"\t", vocab, arcValue));
+				s.append(' ');
+			}
+
+			s.append(tabs);
+		} else {
+			s.append(' ');
+		}
+
+		if (!active) s.append('*');
+		s.append(']');
+
+		return s.toString();
+
 	}
+	
 
 	static int nodeIDCounter = 0;
 	
 	static void resetNodeCounter() {
 		nodeIDCounter = 0;
-	}
-
-	/**
-	 * Gets the number of rules stored in the grammar.
-	 * 
-	 * @return the number of rules stored in the grammar
-	 */
-	public int getNumRules() {
-		
-		int numRules = 
-			(results==null) ? 0 : results.size();
-
-		if (children != null) {
-			for (Node child : children.values()) {
-				numRules += child.getNumRules();
-			}
-		}
-		
-		return numRules;
 	}
 }

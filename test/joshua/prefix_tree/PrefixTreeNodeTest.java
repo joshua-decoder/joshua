@@ -34,12 +34,12 @@ public class PrefixTreeNodeTest {
 		
 		Node.resetNodeCounter();
 		
-//		PrefixTree tree = PrefixTree.getDummyPrefixTree();
+		PrefixTree tree = PrefixTree.getDummyPrefixTree();
 		
 		@SuppressWarnings("unused")
-		Node bot = new Node(null,PrefixTree.BOT_NODE_ID);
+		Node bot = new Node();
 		
-		Node root = new Node(null,PrefixTree.ROOT_NODE_ID);
+		Node root = new RootNode(tree, PrefixTree.ROOT_NODE_ID);
 		Assert.assertEquals(root.toString(), "[id1 ROOT (null) ]");
 		
 		root.addChild(PrefixTree.X);
