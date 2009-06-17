@@ -62,6 +62,11 @@ public class Regex {
 	public static final Regex spaces = new Regex("\\s+");
 	
 	/**
+	 * A pattern for splitting on one or more whitespace.
+	 */
+	public static final Regex tabs = new Regex("\\t+");
+	
+	/**
 	 * A pattern for splitting on the equals character, with
 	 * optional whitespace on each side.
 	 */

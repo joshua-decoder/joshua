@@ -17,22 +17,37 @@
  */
 package joshua.decoder.ff.lm.buildin_lm;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Map;
+import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import joshua.corpus.vocab.SymbolTable;
 import joshua.decoder.ff.lm.ArpaFile;
 import joshua.decoder.ff.lm.ArpaNgram;
 import joshua.decoder.ff.lm.DefaultNGramLanguageModel;
 import joshua.util.Bits;
+import joshua.util.Regex;
 
 /**
- * 
+ * Relatively memory-compact language model
+ * stored as a reversed-word-order trie.
+ * <p>
+ * The trie itself represents language model context.
+ * <p>
+ * Conceptually, each node in the trie stores a map 
+ * from conditioning word to log probability.
+ * <p>
+ * Additionally, each node in the trie stores 
+ * the backoff weight for that context.
  * 
  * @author Lane Schwartz
+ * @see <a href="http://www.speech.sri.com/projects/srilm/manpages/ngram-discount.7.html">SRILM ngram-discount documentation</a>
  */
 public class TrieLM extends DefaultNGramLanguageModel {
 
@@ -40,42 +55,11 @@ public class TrieLM extends DefaultNGramLanguageModel {
 	private static Logger logger =
 		Logger.getLogger(TrieLM.class.getName());
 	
-//	/** Indicates that a node has no children. */
-//	public static final int NO_CHILDREN = -1;
-	
 	/**
 	 * Node ID for the root node.
 	 */
 	private static final int ROOT_NODE_ID = 0;
 	
-//	private static final int BACKOFF=Integer.MIN_VALUE;
-	
-//	/** 
-//	 * Stores the language model back-off weight for all nodes.
-//	 * <p>
-//	 * The n'th float in this array is the back-off weight
-//	 * for the node with node id n.
-//	 * <p>
-//	 * If a back-off weight for a particular node 
-//	 * is not specified in the language model file,
-//	 * the back-off weight for that node should be 1.0f.
-//	 */
-//	private final float[] backoffs;
-//	
-//	/** 
-//	 * Stores the language model n-gram probability values for all nodes.
-//	 * <p>
-//	 * The <i>n</i>'th float in this array is the n-gram probability value
-//	 * for the node with node id n.
-//	 * <p>
-//	 * If an n-gram probability value for a particular node 
-//	 * is not specified in the language model file,
-//	 * the n-gram probability value for that node is not valid.
-//     * 
-//     * The value {@link joshua.decoder.ff.lm.ArpaNgram#INVALID_VALUE} 
-//     * is used to indicate that a value is invalid.
-//	 */
-//	private final float[] values;
 	
 	/** 
 	 * Maps from (node id, word id for child) --> node id of child. 
@@ -91,12 +75,12 @@ public class TrieLM extends DefaultNGramLanguageModel {
 	private final Map<Long,Float> logProbs;
 	
 	/**
-	 * Maps from (node id, word id for lookup word) --> 
-	 * log prob of lookup word given context 
+	 * Maps from (node id) --> 
+	 * backoff weight for that context 
 	 * 
 	 * (the context is defined by where you are in the tree).
 	 */
-	private final Map<Long,Float> backoffs;
+	private final Map<Integer,Float> backoffs;
 	
 	/**
 	 * Constructs a language model object from the specified ARPA file.
@@ -106,59 +90,88 @@ public class TrieLM extends DefaultNGramLanguageModel {
 	 */
 	public TrieLM(ArpaFile arpaFile) throws FileNotFoundException {
 		super(arpaFile.getVocab(), arpaFile.getOrder());
-//	public TrieLM(SymbolTable symbolTable, int order, String arpaFileName) throws IOException {
-//		super(symbolTable, order);
-//		
-//		ArpaFile arpaFile = new ArpaFile(arpaFileName, symbolTable);
 		
 		int ngramCounts = arpaFile.size();
 		if (logger.isLoggable(Level.FINE)) logger.fine("ARPA file contains " + ngramCounts + " n-grams");
 		
 		this.children = new HashMap<Long,Integer>(ngramCounts);
 		this.logProbs = new HashMap<Long,Float>(ngramCounts);
-		this.backoffs = new HashMap<Long,Float>(ngramCounts);
+		this.backoffs = new HashMap<Integer,Float>(ngramCounts);
 		
 		int nodeCounter = 0;
 		
+		int lineNumber = 0;
 		for (ArpaNgram ngram : arpaFile) {
+			lineNumber += 1;
+			if (lineNumber%100000==0) logger.info("Line: " + lineNumber);
 			
-			logger.info(ngram.order() + "-gram: (" + ngram.getWord() + " | " + Arrays.toString(ngram.getContext()) + ")");
-//			int nodeID = ngram.getID();
+			if (logger.isLoggable(Level.FINEST)) logger.finest(ngram.order() + "-gram: (" + ngram.getWord() + " | " + Arrays.toString(ngram.getContext()) + ")");
 			int word = ngram.getWord();
 
 			int[] context = ngram.getContext();
 			
-			// Find where the log prob and backoff should be stored
-			int contextNodeID = ROOT_NODE_ID;
 			{
-				for (int i=context.length-1; i>=0; i--) {
-					long key = Bits.encodeAsLong(contextNodeID, context[i]);
-					int childID;
-					if (children.containsKey(key)) {
-						childID = children.get(key);
-					} else {
-						childID = ++nodeCounter;
-						logger.info("children.put(" + contextNodeID + ":"+context[i] + " , " + childID + ")");
-						children.put(key, childID);
+				// Find where the log prob should be stored
+				int contextNodeID = ROOT_NODE_ID;
+				{
+					for (int i=context.length-1; i>=0; i--) {
+						long key = Bits.encodeAsLong(contextNodeID, context[i]);
+						int childID;
+						if (children.containsKey(key)) {
+							childID = children.get(key);
+						} else {
+							childID = ++nodeCounter;
+							if (logger.isLoggable(Level.FINEST)) logger.finest("children.put(" + contextNodeID + ":"+context[i] + " , " + childID + ")");
+							children.put(key, childID);
+						}
+						contextNodeID = childID;
 					}
-					contextNodeID = childID;
+				}
+
+				// Store the log prob for this n-gram at this node in the trie
+				{
+					long key = Bits.encodeAsLong(contextNodeID, word);
+					float logProb = ngram.getValue();
+					if (logger.isLoggable(Level.FINEST)) logger.finest("logProbs.put(" + contextNodeID + ":"+word + " , " + logProb);
+					this.logProbs.put(key, logProb);
 				}
 			}
 			
-			// Store the log prob for this n-gram at this node in the trie
 			{
-				long key = Bits.encodeAsLong(contextNodeID, word);
-				float logProb = ngram.getValue();
-				logger.info("logProbs.put(" + contextNodeID + ":"+word + " , " + logProb);
-				this.logProbs.put(key, logProb);
-			}
+				// Find where the backoff should be stored
+				int backoffNodeID = ROOT_NODE_ID;
+				{	
+					long backoffNodeKey = Bits.encodeAsLong(backoffNodeID, word);
+					int wordChildID;
+					if (children.containsKey(backoffNodeKey)) {
+						wordChildID = children.get(backoffNodeKey);
+					} else {
+						wordChildID = ++nodeCounter;
+						if (logger.isLoggable(Level.FINEST)) logger.finest("children.put(" + backoffNodeID + ":"+word + " , " + wordChildID + ")");
+						children.put(backoffNodeKey, wordChildID);
+					}
+					backoffNodeID = wordChildID;
 
-			// Store the backoff for this n-gram at this node in the trie
-			{
-				long key = Bits.encodeAsLong(contextNodeID, word);
-				float backoff = ngram.getBackoff();
-				logger.info("backoffs.put(" + contextNodeID + ":" +word+" , " + backoff + ")");
-				this.backoffs.put(key, backoff);
+					for (int i=context.length-1; i>=0; i--) {
+						long key = Bits.encodeAsLong(backoffNodeID, context[i]);
+						int childID;
+						if (children.containsKey(key)) {
+							childID = children.get(key);
+						} else {
+							childID = ++nodeCounter;
+							if (logger.isLoggable(Level.FINEST)) logger.finest("children.put(" + backoffNodeID + ":"+context[i] + " , " + childID + ")");
+							children.put(key, childID);
+						}
+						backoffNodeID = childID;
+					}
+				}
+				
+				// Store the backoff for this n-gram at this node in the trie
+				{
+					float backoff = ngram.getBackoff();
+					if (logger.isLoggable(Level.FINEST)) logger.finest("backoffs.put(" + backoffNodeID + ":" +word+" , " + backoff + ")");
+					this.backoffs.put(backoffNodeID, backoff);
+				}
 			}
 			
 		}
@@ -192,13 +205,14 @@ public class TrieLM extends DefaultNGramLanguageModel {
 			
 			{
 				long key = Bits.encodeAsLong(nodeID, ngram[i]);
-				if (backoffs.containsKey(key)) {
-					backoff += backoffs.get(key);
-				}
 				
 				if (children.containsKey(key)) {
 					nodeID = children.get(key);
+					
+					backoff += backoffs.get(nodeID);
+				
 					i -= 1;
+					
 				} else {
 					break;
 				}
@@ -211,6 +225,69 @@ public class TrieLM extends DefaultNGramLanguageModel {
 	
 	public Map<Long,Integer> getChildren() {
 		return this.children;
+	}
+
+	public static void main(String[] args) throws FileNotFoundException {
+		
+		logger.info("Constructing ARPA file");
+		ArpaFile arpaFile = new ArpaFile(args[0]);
+		
+		logger.info("Getting symbol table");
+		SymbolTable vocab = arpaFile.getVocab();
+		
+		logger.info("Constructing TrieLM");
+		TrieLM lm = new TrieLM(arpaFile);
+		
+		int n = Integer.valueOf(args[2]);
+		logger.info("N-gram order will be " + n);
+		
+		Scanner scanner = new Scanner(new File(args[1]));
+		
+		LinkedList<String> wordList = new LinkedList<String>();
+		LinkedList<String> window = new LinkedList<String>();
+		
+		logger.info("Starting to scan " + args[1]);
+		while (scanner.hasNext()) {
+			
+			logger.info("Getting next line...");
+			String line = scanner.nextLine();
+			logger.info("Line: " + line);
+			
+			String[] words = Regex.spaces.split(line);
+			wordList.clear();
+			
+			wordList.add("<s>");
+			for (String word : words) {
+				wordList.add(word);
+			}
+			wordList.add("</s>");
+			
+			while (! wordList.isEmpty()) {
+				window.clear();
+
+				{
+					int i=0;
+					for (String word : wordList) {
+						if (i>=n) break;
+						window.add(word);
+						i++;
+					}
+					wordList.remove();
+				}
+
+				{
+					int i=0;
+					int[] wordIDs = new int[window.size()];
+					for (String word : window) {
+						wordIDs[i] = vocab.getID(word);
+						i++;
+					}
+
+					logger.info("logProb " + window.toString() + " = " + lm.ngramLogProbability(wordIDs, n));
+				}
+			}
+		}
+		
 	}
 	
 }

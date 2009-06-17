@@ -138,5 +138,13 @@
       <class name="joshua.util.io.BinaryTest" />
     </classes>
   </test>
+
+
+  <test name="Language Model">
+    <classes>
+      <class name="joshua.decoder.ff.lm.ArpaFileTest" />
+    </classes>  
+  </test>
+
   
 </suite>
