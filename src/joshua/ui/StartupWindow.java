@@ -19,9 +19,9 @@ package joshua.ui;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Dimension;
 import java.awt.Font;
-import java.awt.Toolkit;
+import java.awt.GraphicsEnvironment;
+import java.awt.Point;
 
 import javax.swing.BorderFactory;
 import javax.swing.JLabel;
@@ -32,6 +32,7 @@ import javax.swing.JWindow;
  * Startup window for Joshua programs.
  * 
  * @author Lane Schwartz
+ * @author Aaron Phillips
  */
 public class StartupWindow extends JWindow {
 
@@ -51,12 +52,11 @@ public class StartupWindow extends JWindow {
 		content.setBackground(Color.WHITE);
 
 		int width = 250;
-		int height = 100;
-		Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-		int x = (screenSize.width-width)/2;
-		int y = (screenSize.height-height)/2;
-		setBounds(x,y,width,height);
-
+		int height = 100;	
+		
+		Point center = GraphicsEnvironment.getLocalGraphicsEnvironment().getCenterPoint();
+		setBounds(center.x - width / 2, center.y - height / 2, width, height);
+	
 		JLabel titleLabel = new JLabel(title, JLabel.CENTER);
 		titleLabel.setFont(new Font("Sans-Serif", Font.BOLD, 24));
 		content.add(titleLabel, BorderLayout.NORTH);	        

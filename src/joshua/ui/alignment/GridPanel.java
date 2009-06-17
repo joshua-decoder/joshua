@@ -73,7 +73,7 @@ public class GridPanel extends JPanel {
 	 * @param sourceCorpus Source corpus
 	 * @param targetCorpus Target corpus
 	 * @param alignments Sentence alignments for the parallel corpus
-	 * @param sentenceNumber Index of the sentence to display
+	 * @param sentenceNumber Index of the sentence to display (0-based index)
 	 */
 	public GridPanel(Corpus sourceCorpus, Corpus targetCorpus, Alignments alignments, int sentenceNumber) {
 		this.sourceCorpus = sourceCorpus;
@@ -107,7 +107,7 @@ public class GridPanel extends JPanel {
 		preferredSize = new Dimension(preferredWidth, preferredHeight);
 		
 	}
-		
+	
 	/* See Javadoc for javax.swing.JComponent#getPreferredSize */
 	@Override
 	public Dimension getPreferredSize() {
@@ -145,6 +145,8 @@ public class GridPanel extends JPanel {
 	protected void paintSomething(Graphics graphics, int scaleFactor) {
 		
 //		Dimension d = preferredSize;
+		
+		int sentenceNumber = this.sentenceNumber;
 		
 		int width = numTargetWords*scaleFactor;
 		int height = numSourceWords*scaleFactor;
@@ -223,6 +225,9 @@ public class GridPanel extends JPanel {
 	
 	public String[] getSourceWords() {
 		
+		int sentenceNumber = this.sentenceNumber;
+		if (logger.isLoggable(Level.FINE)) logger.fine("Getting source words for sentence " + sentenceNumber);
+		
 		String[] words = new String[numSourceWords];
 		
 		int sentenceStart = sourceCorpus.getSentencePosition(sentenceNumber);
@@ -239,6 +244,9 @@ public class GridPanel extends JPanel {
 	
 	public String[] getTargetWords() {
 
+		int sentenceNumber = this.sentenceNumber;
+		if (logger.isLoggable(Level.FINE)) logger.fine("Getting target words for sentence " + sentenceNumber);
+		
 		String[] words = new String[numTargetWords];
 
 		int sentenceStart = targetCorpus.getSentencePosition(sentenceNumber);
@@ -253,4 +261,11 @@ public class GridPanel extends JPanel {
 		return words;
 	}
 
+	int getSentenceNumber() {
+		return sentenceNumber;
+	}
+	
+	int getNumSentences() {
+		return numSentences;
+	}
 }

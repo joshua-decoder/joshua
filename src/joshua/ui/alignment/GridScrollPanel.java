@@ -24,6 +24,7 @@ import java.awt.Graphics2D;
 import java.awt.print.PageFormat;
 import java.awt.print.Printable;
 import java.awt.print.PrinterException;
+import java.util.logging.Logger;
 
 import javax.swing.BorderFactory;
 import javax.swing.JScrollPane;
@@ -37,6 +38,10 @@ import joshua.ui.alignment.GridPanel;
  * @author Lane Schwartz
  */
 public class GridScrollPanel extends JScrollPane implements Printable {
+	
+	/** Logger for this class. */
+	private static final Logger logger =
+		Logger.getLogger(GridScrollPanel.class.getName());
 	
 	/** Panel containing alignment grid. */
 	private final GridPanel gridPanel;
@@ -77,6 +82,53 @@ public class GridScrollPanel extends JScrollPane implements Printable {
 				BorderFactory.createCompoundBorder(outerBorder, innerBorder));
 	}
 
+	
+	void gotoNextSentence() {
+		
+		int sentenceNumber = gridPanel.getSentenceNumber();
+		int numSentences = gridPanel.getNumSentences();
+		
+		int nextSentence = sentenceNumber+1;
+		if (nextSentence < numSentences) {
+			gridPanel.setSentenceNumber(nextSentence);
+		} else {
+			logger.warning("Attempted to navigate to sentence beyond the end of the corpus");
+		}
+		
+		refreshHeaders();
+		this.repaint();
+	}
+		
+	void gotoPreviousSentence() {
+		int sentenceNumber = gridPanel.getSentenceNumber();
+		
+		int prevSentence = sentenceNumber-1;
+		if (prevSentence >= 0) {
+			gridPanel.setSentenceNumber(prevSentence);
+		} else {
+			logger.warning("Attempted to navigate to sentence beyond the start of the corpus");
+		}
+		refreshHeaders();
+		this.repaint();
+	}
+	
+	void setSentenceNumber(int sentenceNumber) { 
+		gridPanel.setSentenceNumber(sentenceNumber);
+		refreshHeaders();
+		this.repaint();
+	}
+	
+	private void refreshHeaders() {
+
+		String[] sourceWords = gridPanel.getSourceWords();
+		String[] targetWords = gridPanel.getTargetWords();
+		
+		columnHeader.setWords(targetWords);
+		rowHeader.setWords(sourceWords);
+		
+		this.invalidate();
+	}
+	
 	/* See Javadoc for javax.swing.JComponent#printComponent(Graphics) */
 	@Override
 	protected void printComponent(Graphics g) {
@@ -114,4 +166,7 @@ public class GridScrollPanel extends JScrollPane implements Printable {
 		
 	}
 
+	GridPanel getGridPanel() {
+		return gridPanel;
+	}
 }

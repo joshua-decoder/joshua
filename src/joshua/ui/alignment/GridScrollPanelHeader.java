@@ -63,6 +63,10 @@ public class GridScrollPanelHeader extends JComponent {
     /** Words to display in this header. */
     private String[] words;
 
+    void setWords(String[] words) {
+    	this.words = words;
+    }
+    
     /** 
 	 * Represents the total width and height of this component.
      */

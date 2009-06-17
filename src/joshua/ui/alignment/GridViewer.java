@@ -17,6 +17,7 @@
  */
 package joshua.ui.alignment;
 
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -28,6 +29,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.swing.JFrame;
+import javax.swing.JPanel;
 
 import joshua.corpus.Corpus;
 import joshua.corpus.alignment.Alignments;
@@ -60,7 +62,12 @@ public class GridViewer extends JFrame implements ActionListener {
 		this.setJMenuBar(new GridViewerMenu(this));
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		
-		this.add(gridScrollPanel);
+		JPanel panel = new JPanel();
+		panel.setLayout(new BorderLayout());
+		
+		panel.add(gridScrollPanel, BorderLayout.CENTER);
+		panel.add(new NavigatorPanel(gridScrollPanel), BorderLayout.PAGE_END);
+		this.add(panel);
 //		this.setContentPane(gridScrollPanel);
 
 		//Display the window.
@@ -172,7 +179,7 @@ public class GridViewer extends JFrame implements ActionListener {
 		String joshDirName = args[0];
 
 		int sentenceNumber = 0;
-		if (args.length > 1) sentenceNumber = Integer.valueOf(args[1]) - 1;
+//		if (args.length > 1) sentenceNumber = Integer.valueOf(args[1]);
 		
 		// Ask Swing to start the user interface
 		javax.swing.SwingUtilities.invokeLater(
