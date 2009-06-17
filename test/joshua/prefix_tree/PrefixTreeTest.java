@@ -1105,7 +1105,7 @@ public class PrefixTreeTest {
 		
 		Node node = new Node(tree,-999);
 		
-		Assert.assertEquals(node.active, Node.ACTIVE);
+		Assert.assertTrue(node.active);
 		Assert.assertNull(node.suffixLink);
 		Assert.assertTrue(node.children.isEmpty());
 		

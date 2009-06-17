@@ -30,7 +30,7 @@ import javax.swing.JTextField;
 import joshua.util.FormatUtil;
 
 /**
- *
+ * User interface for navigating between sentences.
  *
  * @author Lane Schwartz
  */
@@ -49,6 +49,11 @@ public class NavigatorPanel extends JPanel implements ActionListener {
 
 	private JLabel statusLabel;
 	
+	/**
+	 * Constructs a panel for navigating between sentences.
+	 * 
+	 * @param gridScrollPanel Grid scroll panel
+	 */
 	public NavigatorPanel(GridScrollPanel gridScrollPanel) {
 		this.gridScrollPanel = gridScrollPanel;
 		this.setLayout(new BorderLayout());
@@ -79,7 +84,7 @@ public class NavigatorPanel extends JPanel implements ActionListener {
 		this.add(statusPanel, BorderLayout.PAGE_END);
 	}
 
-
+	/* See Javadoc for ActionListener. */
 	public void actionPerformed(ActionEvent e) {
 		Object source = e.getSource();
 		if (prev.equals(source)) {

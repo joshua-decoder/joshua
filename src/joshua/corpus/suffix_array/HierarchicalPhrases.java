@@ -173,9 +173,9 @@ public class HierarchicalPhrases extends AbstractHierarchicalPhrases {
 	 * @param vocab Symbol table to associate with the list
 	 * @return an empty list of hierarchical phrases
 	 */
-	public static HierarchicalPhrases emptyList(SymbolTable vocab) {		
+	public static HierarchicalPhrases emptyList(SymbolTable vocab, int... words) {		
 		return new HierarchicalPhrases(
-				new Pattern(vocab), 
+				new Pattern(vocab, words), 
 				Collections.<Integer>emptyList(), 
 				Collections.<Integer>emptyList()
 			);

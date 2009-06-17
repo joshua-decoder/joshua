@@ -248,8 +248,8 @@ public class PrefixTree {
 //		} else {
 		if (suffixArray != null) {
 //			vocab = suffixArray.getVocabulary();
-			int[] bounds = {0, suffixArray.size()-1};
-			root.setBounds(bounds);
+			//int[] bounds = {0, suffixArray.size()-1};
+			root.setBounds(0, suffixArray.size()-1);
 		}
 		root.sourceHierarchicalPhrases = HierarchicalPhrases.emptyList(vocab);
 
@@ -266,14 +266,14 @@ public class PrefixTree {
 			
 			{ 	// Set the list of hierarchical phrases be for the X node that comes off of ROOT to an empty list.
 				// Alternatively, one could consider every phrase in the corpus to match here.
-				xnode.sourceHierarchicalPhrases = HierarchicalPhrases.emptyList(vocab);
-				if (suffixArray != null)
-					xnode.sourcePattern = new Pattern(suffixArray.getVocabulary(), X);
+				xnode.sourceHierarchicalPhrases = HierarchicalPhrases.emptyList(vocab, X);
+//				if (suffixArray != null)
+//					xnode.sourcePattern = new Pattern(suffixArray.getVocabulary(), X);
 				
 				// Set the bounds of the X node to be the entire suffix array.
 				if (suffixArray!=null) {
-					int[] bounds = {0, suffixArray.size()-1};
-					xnode.setBounds(bounds);
+//					int[] bounds = {0, suffixArray.size()-1};
+					xnode.setBounds(0, suffixArray.size()-1);
 				}
 			}
 
@@ -397,7 +397,7 @@ public class PrefixTree {
 					Node child = prefixNode.getChild(sentence[j]);
 					
 					// 9: If p_alphaBetaF_j is inactive then
-					if (child.active == Node.INACTIVE) {
+					if (! child.active) {
 						
 						// 10: Continue to next item in queue
 						continue;
@@ -441,10 +441,10 @@ public class PrefixTree {
 
 
 					// 16: if p_beta_f_j is inactive then
-					if (suffixNode.active == Node.INACTIVE) {
+					if (! suffixNode.active) {
 						
 						// 17: Mark p_alpha_beta_f_j inactive
-						newNode.active = Node.INACTIVE;
+						newNode.active = false; //Node.INACTIVE;
 						
 						// 18: else
 					} else { 
@@ -465,13 +465,13 @@ public class PrefixTree {
 						if (result != null && result.isEmpty()) {
 							
 							// 21: Mark p_alpha_beta_f_j inactive
-							newNode.active = Node.INACTIVE;
+							newNode.active = false; //Node.INACTIVE;
 							
 							// 22: else
 						} else {
 							
 							// 23: Mark p_alpha_beta_f_j active
-							newNode.active = Node.ACTIVE;
+							newNode.active = true; //Node.ACTIVE;
 							
 							// 24: EXTEND_QUEUE(alpha beta f_j, i, j, f_1^I)
 							extendQueue(queue, i, j, sentence, extendedPattern, newNode);
@@ -522,7 +522,7 @@ public class PrefixTree {
 				result = HierarchicalPhrases.emptyList(vocab);
 				//TOOD Should node.setBounds(bounds) be called here?
 			} else {
-				node.setBounds(bounds);
+				node.setBounds(bounds[0],bounds[1]);
 				int[] startingPositions = suffixArray.getAllPositions(bounds);
 				result = suffixArray.createHierarchicalPhrases(startingPositions, pattern, vocab);
 			}
@@ -538,7 +538,7 @@ public class PrefixTree {
 				
 				// 16: M_a_alpha_b <-- QUERY_INTERSECT(M_a_alpha, M_alpha_b)
 				
-				int[] sourceWords = prefixNode.sourcePattern.getWordIDs();
+				int[] sourceWords = prefixNode.getSourcePattern().getWordIDs();
 				
 				// Special handling of case when prefixNode is the X off of root (hierarchicalPhrases for that node is empty)
 				//if (arity==1 && prefixNode.sourcePattern.startsWithNonterminal() && prefixNode.sourcePattern.endsWithNonterminal())
@@ -562,7 +562,7 @@ public class PrefixTree {
 					
 					// Normal query intersection case (when prefixNode != X off of root)
 					
-					if (logger.isLoggable(Level.FINEST)) logger.finest("Calling queryIntersect("+pattern+" M_a_alpha.pattern=="+prefixNode.sourcePattern + ", M_alpha_b.pattern=="+suffixNode.sourcePattern+")");
+					if (logger.isLoggable(Level.FINEST)) logger.finest("Calling queryIntersect("+pattern+" M_a_alpha.pattern=="+prefixNode.getSourcePattern() + ", M_alpha_b.pattern=="+suffixNode.getSourcePattern()+")");
 					
 					result = HierarchicalPhrases.queryIntersect(pattern, prefixNode.sourceHierarchicalPhrases, suffixNode.sourceHierarchicalPhrases, minNonterminalSpan, maxPhraseSpan);
 				}
@@ -642,7 +642,7 @@ public class PrefixTree {
 				}
 
 				// 5: Mark p_alphaX active
-				xNode.active = Node.ACTIVE;
+				xNode.active = true; //Node.ACTIVE;
 				
 				int[] patternWords = pattern.getWordIDs();
 				
@@ -699,18 +699,30 @@ public class PrefixTree {
 		return root;
 	}
 	
+	/**
+	 * Gets all translation rules stored in this tree.
+	 * 
+	 * @return all translation rules stored in this tree
+	 */
 	public List<Rule> getAllRules() {
 		
 		return root.getAllRules();
 		
 	}
 
-
-
+	/* See Javadoc for java.lang.Object#toString. */
 	public String toString() {
 		return root.toTreeString("", vocab);
 	}
 
+	/**
+	 * Gets the number of nodes in this tree.
+	 * <p>
+	 * This method recursively traverses through all nodes
+	 * in the tree every time this method is called.
+	 * 
+	 * @return the number of nodes in this tree
+	 */
 	public int size() {
 		return root.size();
 	}
