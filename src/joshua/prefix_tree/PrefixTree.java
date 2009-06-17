@@ -28,14 +28,11 @@ import joshua.corpus.suffix_array.Suffixes;
 import joshua.corpus.vocab.SymbolTable;
 import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.Rule;
+import joshua.util.BotMap;
 
-import java.util.Collection;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Queue;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -142,33 +139,6 @@ public class PrefixTree {
 	 */
 	static final int BOT_NODE_ID = -2000;
 
-	/**
-	 * Gets a special map that maps any integer key to the root
-	 * node.
-	 *
-	 * @param root Root node, which this map will always return
-	 *             as a value.
-	 * @return Special map that maps any integer key to the
-	 *         root node.
-	 * @see "Lopez (2008), footnote 9 on p73"
-	 */
-	static Map<Integer,Node> botMap(final Node root) {
-		return new Map<Integer,Node>() {
-			public void clear() { throw new UnsupportedOperationException(); }
-			public boolean containsKey(Object key) { return true; }
-			public boolean containsValue(Object value) { return value==root; }
-			public Set<java.util.Map.Entry<Integer, Node>> entrySet() { throw new UnsupportedOperationException(); }
-			public Node get(Object key) { return root; }
-			public boolean isEmpty() { return false; }
-			public Set<Integer> keySet() { throw new UnsupportedOperationException(); }
-			public Node put(Integer key, Node value) { throw new UnsupportedOperationException(); }
-			public void putAll(Map<? extends Integer, ? extends Node> t) { throw new UnsupportedOperationException(); }
-			public Node remove(Object key) { throw new UnsupportedOperationException(); }
-			public int size() { throw new UnsupportedOperationException(); }
-			public Collection<Node> values() { return Collections.singleton(root); }		
-		};
-	}
-
 	/** Suffix array representing the source language corpus. */
 	final Suffixes suffixArray;
 	
@@ -238,7 +208,7 @@ public class PrefixTree {
 		bot.sourceHierarchicalPhrases = HierarchicalPhrases.emptyList(vocab);
 		
 		this.root = new Node(this,ROOT_NODE_ID);
-		bot.children = botMap(root);
+		bot.children = new BotMap<Integer,Node>(root);//botMap(root);
 		this.root.linkToSuffix(bot);
 
 

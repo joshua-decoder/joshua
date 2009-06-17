@@ -17,6 +17,7 @@
 package joshua.prefix_tree;
 
 import joshua.corpus.vocab.Vocabulary;
+import joshua.util.BotMap;
 
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -80,7 +81,7 @@ public class PrefixTreeTest {
 		Assert.assertNotNull(bot);
 		Node root = new Node(tree,-1);
 		Assert.assertNotNull(root);
-		bot.children = PrefixTree.botMap(root);
+		bot.children = new BotMap<Integer,Node>(root);//PrefixTree.botMap(root);
 		root.linkToSuffix(bot);
 		Assert.assertNotNull(root.suffixLink);
 		Assert.assertEquals(root.suffixLink, bot);
