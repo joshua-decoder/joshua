@@ -34,13 +34,14 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
 
+import joshua.decoder.ff.lm.AbstractLM;
 import joshua.decoder.ff.lm.DefaultNGramLanguageModel;
 import joshua.decoder.ff.lm.bloomfilter_lm.BloomFilter;
 import joshua.corpus.vocab.SymbolTable;
 import joshua.corpus.vocab.Vocabulary;
 import joshua.util.Regex;
 
-public class BloomFilterLanguageModel extends DefaultNGramLanguageModel implements Externalizable {
+public class BloomFilterLanguageModel extends AbstractLM implements Externalizable {
 	public static final int HASH_SEED = 17;
 	public static final int HASH_OFFSET = 37;
 
@@ -99,17 +100,6 @@ public class BloomFilterLanguageModel extends DefaultNGramLanguageModel implemen
 		return map;
 	}
 	
-	/*
-	 * this is an abstract method from DefaultNGramLanguageModel
-	 * it returns the probability of an ngram.
-	 */
-	public double ngramLogProbability(int [] ngram, int order) {
-		int [] lm_ngram = new int[ngram.length];
-		for (int i = 0; i < ngram.length; i++) {
-			lm_ngram[i] = TMtoLMMapping[ngram[i]];
-		}
-		return wittenBell(lm_ngram, order);
-	}
 	
 	/*
 	 * calculates the linearly-interpolated witten-bell probability
@@ -449,5 +439,33 @@ public class BloomFilterLanguageModel extends DefaultNGramLanguageModel implemen
 		}
 		out.writeDouble(quantizationBase);
 		bf.writeExternal(out);
+	}
+
+	@Override
+	protected double logProbabilityOfBackoffState_helper(int[] ngram, int order, int qtyAdditionalBackoffWeight) {
+		throw new UnsupportedOperationException("probabilityOfBackoffState_helper undefined for srilm");
+	}
+	
+	/*
+	
+	 * this is an abstract method from DefaultNGramLanguageModel
+	 * it returns the probability of an ngram.
+	 
+	public double ngramLogProbability(int [] ngram, int order) {
+		int [] lm_ngram = new int[ngram.length];
+		for (int i = 0; i < ngram.length; i++) {
+			lm_ngram[i] = TMtoLMMapping[ngram[i]];
+		}
+		return wittenBell(lm_ngram, order);
+	}*/
+	
+
+	@Override
+	protected double ngramLogProbability_helper(int[] ngram, int order) {
+		int [] lm_ngram = new int[ngram.length];
+		for (int i = 0; i < ngram.length; i++) {
+			lm_ngram[i] = TMtoLMMapping[ngram[i]];
+		}
+		return wittenBell(lm_ngram, order);
 	}
 }
