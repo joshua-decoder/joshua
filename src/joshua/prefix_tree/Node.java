@@ -32,7 +32,6 @@ import joshua.corpus.suffix_array.Pattern;
 import joshua.corpus.vocab.SymbolTable;
 import joshua.decoder.ff.tm.AbstractGrammar;
 import joshua.decoder.ff.tm.BasicRuleCollection;
-import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.RuleCollection;
 import joshua.decoder.ff.tm.Trie;
@@ -42,7 +41,7 @@ import joshua.decoder.ff.tm.Trie;
  * 
  * @author Lane Schwartz
  */
-public class Node extends AbstractGrammar implements Comparable<Node>, Grammar, Trie {
+public class Node extends AbstractGrammar implements Comparable<Node>, Trie {
 
 	/** Logger for this class. */
 	private static final Logger logger =
@@ -86,24 +85,25 @@ public class Node extends AbstractGrammar implements Comparable<Node>, Grammar, 
 	List<Rule> results;
 	
 	/** 
-	 * Prefix tree to which this node belongs.
+	 * Symbol table for this node.
 	 * <p>
-	 * TODO Attempt to remove this member variable.
+	 * TODO Attempt to remove this member variable. 
+	 * It is only used for HierarchicalPhrases.emptyList(vocab)
 	 */
-	final PrefixTree tree;
+	private final SymbolTable vocab;
 	
-	Node(PrefixTree tree, int incomingArcValue) {
-		this(tree, true,incomingArcValue);
+	Node(SymbolTable vocab, int incomingArcValue) {
+		this(vocab, true, incomingArcValue);
 	}
 
-	Node(PrefixTree tree, boolean active, int incomingArcValue) {
-		this.tree = tree;
+	Node(SymbolTable vocab, boolean active, int incomingArcValue) {
+		this.vocab = vocab;
 		this.active = active;
 		this.suffixLink = null;
 		this.children = new HashMap<Integer,Node>();
 		this.incomingArcValue = incomingArcValue;
 		this.objectID = nodeIDCounter++;
-		this.sourceHierarchicalPhrases = HierarchicalPhrases.emptyList(tree.vocab);
+		this.sourceHierarchicalPhrases = HierarchicalPhrases.emptyList(vocab);
 		this.results = Collections.emptyList();
 	}
 	
@@ -130,6 +130,7 @@ public class Node extends AbstractGrammar implements Comparable<Node>, Grammar, 
 		return sourceHierarchicalPhrases.getPattern();
 	}
 	
+	/* See Javadoc for joshua.decoder.ff.tm.Trie#getRules */
 	public RuleCollection getRules() {
 		
 		Pattern sourcePattern = sourceHierarchicalPhrases.getPattern();
@@ -182,21 +183,6 @@ public class Node extends AbstractGrammar implements Comparable<Node>, Grammar, 
 		}
 	}
 
-//	public Trie matchPrefix(List<Integer> symbols) {
-//		
-//		Node node = this;
-//		
-//		for (Integer symbol : symbols) {
-//			if (node.children.containsKey(symbol)) {
-//				node = node.children.get(symbol);
-//			} else {
-//				//XXX Is this the right thing to do here?
-//				node = null;
-//			}
-//		}
-//		
-//		return node;
-//	}
 	
 	/**
 	 * Determines whether this node has a specified child.
@@ -217,7 +203,7 @@ public class Node extends AbstractGrammar implements Comparable<Node>, Grammar, 
 		if (children.containsKey(child)) {
 			throw new ChildNodeAlreadyExistsException(this, child);
 		} else {
-			Node node = new Node(tree,child);
+			Node node = new Node(vocab, child);
 			children.put(child, node);
 			return node;
 		}
@@ -258,10 +244,8 @@ public class Node extends AbstractGrammar implements Comparable<Node>, Grammar, 
 	 * language hierarchical phrases.
 	 * 
 	 * @param hierarchicalPhrases Source language hierarchical phrases.
-	 * @param sourcePattern Source language pattern that should
-	 *                      correspond to the hierarchical phrases.
 	 */
-	public void storeResults(MatchedHierarchicalPhrases hierarchicalPhrases, Pattern sourcePattern) {
+	public void storeResults(MatchedHierarchicalPhrases hierarchicalPhrases, List<Rule> rules) {
 		
 		if (logger.isLoggable(Level.FINER)) {
 			logger.finer("Storing " + hierarchicalPhrases.size() + " source phrases at node " + objectID + ":");
@@ -270,13 +254,13 @@ public class Node extends AbstractGrammar implements Comparable<Node>, Grammar, 
 //		SymbolTable vocab = (tree.suffixArray==null) ? null : tree.suffixArray.getVocabulary();
 //		this.sourcePattern = sourcePattern;
 //		this.sourcePattern = new Pattern(vocab, sourceTokens);
-		this.results = new ArrayList<Rule>(hierarchicalPhrases.size());
+//		this.results = new ArrayList<Rule>(hierarchicalPhrases.size());
 		
 		this.sourceHierarchicalPhrases = hierarchicalPhrases;
-
-		if (tree.ruleExtractor!=null) {
-			this.results = tree.ruleExtractor.extractRules(sourcePattern, hierarchicalPhrases);
-		}
+		this.results = rules;
+//		if (tree.ruleExtractor!=null) {
+//			this.results = tree.ruleExtractor.extractRules(hierarchicalPhrases);
+//		}
 		
 	}
 		
@@ -299,14 +283,18 @@ public class Node extends AbstractGrammar implements Comparable<Node>, Grammar, 
 		return size;
 	}
 
+	public String toString() {
+		return toString(null);
+	}
+	
 	/**
 	 * Gets a String representation of the sub-tree rooted at this node.
 	 * 
 	 * @return a String representation of the sub-tree rooted at this node
 	 */
-	public String toString() {
+	public String toString(SymbolTable vocab) {
 
-		SymbolTable vocab = tree.vocab;
+//		SymbolTable vocab = tree.vocab;
 		
 		StringBuilder s = new StringBuilder();
 
@@ -338,7 +326,7 @@ public class Node extends AbstractGrammar implements Comparable<Node>, Grammar, 
 		Collections.sort(kids);
 
 		for (Node kid : kids) {
-			s.append(kid.toString());
+			s.append(kid.toString(vocab));
 			s.append(' ');
 		}
 
@@ -349,9 +337,9 @@ public class Node extends AbstractGrammar implements Comparable<Node>, Grammar, 
 
 	}
 
-	String toShortString() {
+	String toShortString(SymbolTable vocab) {
 
-		SymbolTable vocab = tree.vocab;
+//		SymbolTable vocab = tree.vocab;
 		
 		StringBuilder s = new StringBuilder();
 
@@ -485,23 +473,16 @@ public class Node extends AbstractGrammar implements Comparable<Node>, Grammar, 
 		return i.compareTo(j);
 	}
 
-	/* See Javadoc for joshua.decoder.ff.tm.Grammar#getTrieRoot */
-	public Trie getTrieRoot() {
-		return this;
-	}
-	
-	/* See Javadoc for joshua.decoder.ff.tm.Grammar#hasRuleForSpan */
-	public boolean hasRuleForSpan(int startIndex, int endIndex, int pathLength) {
-		if (tree.maxPhraseSpan == -1) { // mono-glue grammar
-			return (startIndex == 0);
-		} else {
-			return (endIndex - startIndex <= tree.maxPhraseSpan);
-		}
-	}
+
 
 	/* See Javadoc for joshua.decoder.ff.tm.Trie#getExtensions */
 	public Collection<Node> getExtensions() {
 		return this.children.values();
+	}
+	
+	/* See Javadoc for joshua.decoder.ff.tm.Grammar#getTrieRoot */
+	public Trie getTrieRoot() {
+		return this;
 	}
 
 	static int nodeIDCounter = 0;
@@ -510,7 +491,11 @@ public class Node extends AbstractGrammar implements Comparable<Node>, Grammar, 
 		nodeIDCounter = 0;
 	}
 
-	/* See Javadoc for joshua.decoder.ff.tm.Grammar#getNumRules */
+	/**
+	 * Gets the number of rules stored in the grammar.
+	 * 
+	 * @return the number of rules stored in the grammar
+	 */
 	public int getNumRules() {
 		
 		int numRules = 
@@ -523,23 +508,5 @@ public class Node extends AbstractGrammar implements Comparable<Node>, Grammar, 
 		}
 		
 		return numRules;
-	}
-
-	/* See Javadoc for joshua.decoder.ff.tm.Grammar#constructOOVRule */
-	public Rule constructOOVRule(int num_feats, int sourceWord, boolean have_lm_model) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	/* See Javadoc for joshua.decoder.ff.tm.Grammar#getOOVRuleID */
-	public int getOOVRuleID() {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-
-	/* See Javadoc for joshua.decoder.ff.tm.Grammar#constructManualRule */
-	public Rule constructManualRule(int lhs, int[] sourceWords, int[] targetWords, float[] scores, int aritity) {
-		// TODO Auto-generated method stub
-		return null;
 	}
 }

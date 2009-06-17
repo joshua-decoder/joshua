@@ -64,7 +64,9 @@ public class PrefixTreeTest {
 
 	@Test(dependsOnMethods = {"setup"})
 	public void toStringTest() {
-		Assert.assertEquals(tree.root.toString(), "[id1 ROOT (0) [id2 X (1) [id13 persuades (5) [id14 X (6) [id54 and (32) [id103 it (82) ] ] [id55 it (34) ] ] [id52 him (30) [id53 X (31) [id102 it (79) ] ] [id100 and (77) [id101 X (78) ] [id129 it (118) ] ] ] ] [id15 him (7) [id16 X (8) [id58 it (39) [id107 disheartens (91) ] ] [id59 disheartens (41) ] ] [id56 and (37) [id57 X (38) [id106 disheartens (88) ] ] [id104 it (86) [id105 X (87) ] [id130 disheartens (123) ] ] ] ] [id17 and (9) [id18 X (10) [id62 disheartens (46) [id111 him (98) ] ] [id63 him (48) ] ] [id60 it (44) [id61 X (45) [id110 him (97) ] ] [id108 disheartens (95) [id109 X (96) ] [id131 him (128) ] ] ] ] [id19 it (3) [id20 X (4) [id66 him (25) ] ] [id64 disheartens (49) [id65 X (50) ] [id112 him (99) ] ] ] [id21 disheartens (11) [id22 X (12) ] [id67 him (51) ] ] ] [id3 it (1) [id4 X (2) [id25 him (15) [id26 X (16) [id75 it (58) ] ] [id73 and (56) [id74 X (57) ] [id117 it (104) ] ] ] [id27 and (17) [id28 X (18) ] [id76 it (60) ] ] [id29 it (19) ] ] [id23 persuades (5) [id24 X (6) [id70 and (32) [id71 X (33) ] [id116 it (82) ] ] [id72 it (34) ] ] [id68 him (30) [id69 X (31) [id115 it (79) ] ] [id113 and (77) [id114 X (78) ] [id132 it (118) ] ] ] ] [id49 disheartens (11) [id50 X (12) ] [id99 him (51) ] ] ] [id5 persuades (1) [id6 X (2) [id32 and (17) [id33 X (18) [id84 disheartens (62) ] ] [id82 it (60) [id83 X (61) ] [id122 disheartens (108) ] ] ] [id34 it (19) [id35 X (20) ] [id85 disheartens (64) ] ] [id36 disheartens (21) ] ] [id30 him (7) [id31 X (8) [id79 it (39) [id80 X (40) ] [id121 disheartens (91) ] ] [id81 disheartens (41) ] ] [id77 and (37) [id78 X (38) [id120 disheartens (88) ] ] [id118 it (86) [id119 X (87) ] [id133 disheartens (123) ] ] ] ] ] [id7 him (1) [id8 X (2) [id39 it (19) [id40 X (20) [id93 him (66) ] ] [id91 disheartens (64) [id92 X (65) ] [id127 him (112) ] ] ] [id41 disheartens (21) [id42 X (22) ] [id94 him (67) ] ] [id43 him (15) ] ] [id37 and (9) [id38 X (10) [id88 disheartens (46) [id89 X (47) ] [id126 him (98) ] ] [id90 him (48) ] ] [id86 it (44) [id87 X (45) [id125 him (97) ] ] [id123 disheartens (95) [id124 X (96) ] [id134 him (128) ] ] ] ] ] [id9 and (1) [id10 X (2) [id46 disheartens (21) [id47 X (22) ] [id98 him (67) ] ] [id48 him (15) ] ] [id44 it (3) [id45 X (4) [id97 him (25) ] ] [id95 disheartens (49) [id96 X (50) ] [id128 him (99) ] ] ] ] [id11 disheartens (1) [id12 X (2) ] [id51 him (7) ] ] ]");
+		String actualString = tree.getRoot().toString(); //tree.root.toString(vocab)
+		String expectedString = "[id1 ROOT (0) [id2 X (1) [id13 persuades (5) [id14 X (6) [id54 and (32) [id103 it (82) ] ] [id55 it (34) ] ] [id52 him (30) [id53 X (31) [id102 it (79) ] ] [id100 and (77) [id101 X (78) ] [id129 it (118) ] ] ] ] [id15 him (7) [id16 X (8) [id58 it (39) [id107 disheartens (91) ] ] [id59 disheartens (41) ] ] [id56 and (37) [id57 X (38) [id106 disheartens (88) ] ] [id104 it (86) [id105 X (87) ] [id130 disheartens (123) ] ] ] ] [id17 and (9) [id18 X (10) [id62 disheartens (46) [id111 him (98) ] ] [id63 him (48) ] ] [id60 it (44) [id61 X (45) [id110 him (97) ] ] [id108 disheartens (95) [id109 X (96) ] [id131 him (128) ] ] ] ] [id19 it (3) [id20 X (4) [id66 him (25) ] ] [id64 disheartens (49) [id65 X (50) ] [id112 him (99) ] ] ] [id21 disheartens (11) [id22 X (12) ] [id67 him (51) ] ] ] [id3 it (1) [id4 X (2) [id25 him (15) [id26 X (16) [id75 it (58) ] ] [id73 and (56) [id74 X (57) ] [id117 it (104) ] ] ] [id27 and (17) [id28 X (18) ] [id76 it (60) ] ] [id29 it (19) ] ] [id23 persuades (5) [id24 X (6) [id70 and (32) [id71 X (33) ] [id116 it (82) ] ] [id72 it (34) ] ] [id68 him (30) [id69 X (31) [id115 it (79) ] ] [id113 and (77) [id114 X (78) ] [id132 it (118) ] ] ] ] [id49 disheartens (11) [id50 X (12) ] [id99 him (51) ] ] ] [id5 persuades (1) [id6 X (2) [id32 and (17) [id33 X (18) [id84 disheartens (62) ] ] [id82 it (60) [id83 X (61) ] [id122 disheartens (108) ] ] ] [id34 it (19) [id35 X (20) ] [id85 disheartens (64) ] ] [id36 disheartens (21) ] ] [id30 him (7) [id31 X (8) [id79 it (39) [id80 X (40) ] [id121 disheartens (91) ] ] [id81 disheartens (41) ] ] [id77 and (37) [id78 X (38) [id120 disheartens (88) ] ] [id118 it (86) [id119 X (87) ] [id133 disheartens (123) ] ] ] ] ] [id7 him (1) [id8 X (2) [id39 it (19) [id40 X (20) [id93 him (66) ] ] [id91 disheartens (64) [id92 X (65) ] [id127 him (112) ] ] ] [id41 disheartens (21) [id42 X (22) ] [id94 him (67) ] ] [id43 him (15) ] ] [id37 and (9) [id38 X (10) [id88 disheartens (46) [id89 X (47) ] [id126 him (98) ] ] [id90 him (48) ] ] [id86 it (44) [id87 X (45) [id125 him (97) ] ] [id123 disheartens (95) [id124 X (96) ] [id134 him (128) ] ] ] ] ] [id9 and (1) [id10 X (2) [id46 disheartens (21) [id47 X (22) ] [id98 him (67) ] ] [id48 him (15) ] ] [id44 it (3) [id45 X (4) [id97 him (25) ] ] [id95 disheartens (49) [id96 X (50) ] [id128 him (99) ] ] ] ] [id11 disheartens (1) [id12 X (2) ] [id51 him (7) ] ] ]";
+		Assert.assertEquals(actualString, expectedString);
 	}
 	
 	@Test(dependsOnMethods = {"setup"})
@@ -75,11 +77,11 @@ public class PrefixTreeTest {
 	@Test(dependsOnMethods = {"prefixTreeNodes"})
 	public void suffixLinks() {
 		
-		PrefixTree tree = PrefixTree.getDummyPrefixTree();
+//		PrefixTree tree = PrefixTree.getDummyPrefixTree();
 		
-		Node bot = new Node(tree,-999);
+		Node bot = new Node(vocab,-999);
 		Assert.assertNotNull(bot);
-		Node root = new Node(tree,-1);
+		Node root = new Node(vocab,-1);
 		Assert.assertNotNull(root);
 		bot.children = new BotMap<Integer,Node>(root);//PrefixTree.botMap(root);
 		root.linkToSuffix(bot);
@@ -1102,9 +1104,9 @@ public class PrefixTreeTest {
 	@Test
 	public void prefixTreeNodes() {
 		
-		PrefixTree tree = PrefixTree.getDummyPrefixTree();
+//		PrefixTree tree = PrefixTree.getDummyPrefixTree();
 		
-		Node node = new Node(tree,-999);
+		Node node = new Node(vocab, -999);
 		
 		Assert.assertTrue(node.active);
 		Assert.assertNull(node.suffixLink);

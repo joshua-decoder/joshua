@@ -135,8 +135,10 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 	}
 
 	/* See Javadoc for RuleExtractor class. */
-	public List<Rule> extractRules(Pattern sourcePattern, MatchedHierarchicalPhrases sourceHierarchicalPhrases) {
+	public List<Rule> extractRules(MatchedHierarchicalPhrases sourceHierarchicalPhrases) {
 
+		Pattern sourcePattern = sourceHierarchicalPhrases.getPattern();
+		
 		if (logger.isLoggable(Level.FINE)) logger.fine("Extracting rules for source pattern: " + sourcePattern);
 			
 		int listSize = sourceHierarchicalPhrases.size();

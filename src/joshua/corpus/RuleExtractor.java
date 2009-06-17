@@ -19,7 +19,6 @@ package joshua.corpus;
 
 import java.util.List;
 
-import joshua.corpus.suffix_array.Pattern;
 import joshua.decoder.ff.tm.Rule;
 
 /**
@@ -38,11 +37,10 @@ public interface RuleExtractor {
 	 * This extractor is responsible for doing any sampling,
 	 * if any is required.
 	 *
-	 * @param sourcePattern
 	 * @param sourceHierarchicalPhrases
 	 * @return translation rules for the provided source language
 	 *         pattern
 	 */
-	List<Rule> extractRules(Pattern sourcePattern, MatchedHierarchicalPhrases sourceHierarchicalPhrases);
+	List<Rule> extractRules(MatchedHierarchicalPhrases sourceHierarchicalPhrases);
 	
 }

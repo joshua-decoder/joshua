@@ -32,7 +32,7 @@ import joshua.decoder.ff.FeatureFunction;
  *
  * @author Lane Schwartz
  */
-public abstract class AbstractGrammar implements Grammar {
+public abstract class AbstractGrammar {//implements Grammar {
  
 	/** 
 	 * Indicates whether the rules in this grammar have been
@@ -48,6 +48,18 @@ public abstract class AbstractGrammar implements Grammar {
 	public AbstractGrammar() {
 		this.sorted = false;
 	}
+	
+	/**
+	 * Gets the root of the <code>Trie</code> backing this
+	 * grammar.
+	 * <p>
+	 * <em>Note</em>: This method should run as a small
+	 * constant-time function.
+	 * 
+	 * @return the root of the <code>Trie</code> backing this
+	 *         grammar
+	 */
+	public abstract Trie getTrieRoot();
 	
 	/**
 	 * Cube-pruning requires that the grammar be sorted based

@@ -30,6 +30,7 @@ import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.Rule;
 import joshua.util.BotMap;
 
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
@@ -58,7 +59,7 @@ public class PrefixTree {
 	static final byte[] newline = System.getProperty("line.separator").getBytes();
 	
 	/** Root node of this tree. */
-	final Node root;
+	final RootNode root;
 
 	/**
 	 * Responsible for performing sampling and creating translation
@@ -204,10 +205,10 @@ public class PrefixTree {
 		this.minNonterminalSpan = minNonterminalSpan;
 		this.vocab = vocab;
 
-		Node bot = new Node(this,BOT_NODE_ID);
+		Node bot = new Node(vocab, BOT_NODE_ID);
 		bot.sourceHierarchicalPhrases = HierarchicalPhrases.emptyList(vocab);
 		
-		this.root = new Node(this,ROOT_NODE_ID);
+		this.root = new RootNode(this,ROOT_NODE_ID);
 		bot.children = new BotMap<Integer,Node>(root);//botMap(root);
 		this.root.linkToSuffix(bot);
 
@@ -253,7 +254,7 @@ public class PrefixTree {
 			if (logger.isLoggable(Level.FINEST)) {
 				String oldSuffixLink = (xnode.suffixLink==null) ? "null" : "id"+xnode.suffixLink.objectID;
 				String newSuffixLink = (suffixLink==null) ? "null" : "id"+suffixLink.objectID;
-				logger.finest("Changing suffix link from " + oldSuffixLink + " to " + newSuffixLink + " for node " + xnode.toShortString() + " with token " + X);
+				logger.finest("Changing suffix link from " + oldSuffixLink + " to " + newSuffixLink + " for node " + xnode.toShortString(vocab) + " with token " + X);
 			}
 
 			xnode.linkToSuffix(suffixLink);
@@ -306,7 +307,7 @@ public class PrefixTree {
 		// 2: for i from 1 to I
 		for (int i=START_OF_SENTENCE; i<=END_OF_SENTENCE; i++) {
 			//if (logger.isLoggable(Level.FINEST)) logger.finest("Adding tuple (" + i + ","+ i +","+root+",{"+intToString(sentence[i])+"})");
-			if (logger.isLoggable(Level.FINEST)) logger.finest("Adding tuple (\u03b5," + i + ","+ i +","+root.toShortString() +")");
+			if (logger.isLoggable(Level.FINEST)) logger.finest("Adding tuple (\u03b5," + i + ","+ i +","+root.toShortString(vocab) +")");
 			
 			// 3: Add <f_i, i, i+1, p_eps> to queue
 			queue.add(new Tuple(epsilon, i, i, root));
@@ -320,7 +321,7 @@ public class PrefixTree {
 			// 4: for i from 1 to I
 			for (int i=start; i<=END_OF_SENTENCE; i++) {
 				//if (logger.isLoggable(Level.FINEST)) logger.finest("Adding tuple (" + (i-1) + ","+(i)+","+root+",{"+X+","+intToString(sentence[i])+"})");
-				if (logger.isLoggable(Level.FINEST)) logger.finest("Adding tuple (X," + (i-1) + ","+ i +","+xnode.toShortString() +")");
+				if (logger.isLoggable(Level.FINEST)) logger.finest("Adding tuple (X," + (i-1) + ","+ i +","+xnode.toShortString(vocab) +")");
 				
 				// 5: Add <X f_i, i-1, i+1, p_x> to queue
 				if (EDGE_X_MAY_VIOLATE_PHRASE_SPAN) {
@@ -354,14 +355,14 @@ public class PrefixTree {
 //				x++;
 //			}
 			
-			if (logger.isLoggable(Level.FINE)) logger.fine("Have tuple (" +prefixPattern+","+ i + ","+j+","+prefixNode.toShortString()+")");
+			if (logger.isLoggable(Level.FINE)) logger.fine("Have tuple (" +prefixPattern+","+ i + ","+j+","+prefixNode.toShortString(vocab)+")");
 
 			if (j <= END_OF_SENTENCE) {
 
 				// 8: If p_alphaBetaF_i elementOf children(p_alphaBeta) then
 				if (prefixNode.hasChild(sentence[j])) {
 
-					if (logger.isLoggable(Level.FINER)) logger.finer("EXISTING node for \"" + sentence[j] + "\" from " + prefixNode.toShortString() + " to node " + prefixNode.getChild(sentence[j]).toShortString() + " with pattern " + prefixPattern);
+					if (logger.isLoggable(Level.FINER)) logger.finer("EXISTING node for \"" + sentence[j] + "\" from " + prefixNode.toShortString(vocab) + " to node " + prefixNode.getChild(sentence[j]).toShortString(vocab) + " with pattern " + prefixPattern);
 
 					// child is p_alphaBetaF_j
 					Node child = prefixNode.getChild(sentence[j]);
@@ -377,7 +378,7 @@ public class PrefixTree {
 						
 						// 12: EXTEND_QUEUE(alpha beta f_j, i, j, f_1^I)
 						if (logger.isLoggable(Level.FINER)) {
-							logger.finer("Calling EXTEND_QUEUE("+i+","+j+","+prefixPattern+","+prefixNode.toShortString());
+							logger.finer("Calling EXTEND_QUEUE("+i+","+j+","+prefixPattern+","+prefixNode.toShortString(vocab));
 							if (logger.isLoggable(Level.FINEST)) logger.finest("TREE BEFOR EXTEND: " + root);
 						}
 						extendQueue(queue, i, j, sentence, new Pattern(prefixPattern,sentence[j]), child);
@@ -389,11 +390,11 @@ public class PrefixTree {
 
 					// 14: children(alphaBeta) <-- children(alphaBeta) U p_alphaBetaF_j
 					//     (Add new child node)
-					if (logger.isLoggable(Level.FINER)) logger.finer("Adding new node to node " + prefixNode.toShortString());
+					if (logger.isLoggable(Level.FINER)) logger.finer("Adding new node to node " + prefixNode.toShortString(vocab));
 					Node newNode = prefixNode.addChild(sentence[j]);
 					if (logger.isLoggable(Level.FINER)) {
 						String word = (suffixArray==null) ? ""+sentence[j] : suffixArray.getVocabulary().getWord(sentence[j]);
-						logger.finer("Created new node " + newNode.toShortString() +" for \"" + word + "\" and \n  added it to " + prefixNode.toShortString());
+						logger.finer("Created new node " + newNode.toShortString(vocab) +" for \"" + word + "\" and \n  added it to " + prefixNode.toShortString(vocab));
 					}
 
 
@@ -404,7 +405,7 @@ public class PrefixTree {
 					if (logger.isLoggable(Level.FINEST)) {
 						String oldSuffixLink = (newNode.suffixLink==null) ? "null" : "id"+newNode.suffixLink.objectID;
 						String newSuffixLink = (suffixNode==null) ? "null" : "id"+suffixNode.objectID;
-						logger.finest("Changing suffix link from " + oldSuffixLink + " to " + newSuffixLink + " for node " + newNode.toShortString() + " (prefix node " + prefixNode.toShortString() + " ) with token " + sentence[j]);
+						logger.finest("Changing suffix link from " + oldSuffixLink + " to " + newSuffixLink + " for node " + newNode.toShortString(vocab) + " (prefix node " + prefixNode.toShortString(vocab) + " ) with token " + sentence[j]);
 					}
 					
 					newNode.linkToSuffix( suffixNode );
@@ -542,7 +543,7 @@ public class PrefixTree {
 		}
 
 		// 17: Return M_a_alpha_b
-		node.storeResults(result, pattern);
+		node.storeResults(result, ruleExtractor.extractRules(result));
 //		node.storeResults(result, pattern.words);
 		return result;
 
@@ -618,8 +619,8 @@ public class PrefixTree {
 				
 				// 6: Q_alphaX <-- Q_alpha
 				{
-					SymbolTable vocab = (suffixArray==null) ? null : suffixArray.getVocabulary();
-					Pattern xpattern = new Pattern(vocab, patternWords, X);
+//					SymbolTable vocab = (suffixArray==null) ? null : suffixArray.getVocabulary();
+//					Pattern xpattern = new Pattern(vocab, patternWords, X);
 					
 //					HierarchicalPhrases phrasesWithFinalX = new HierarchicalPhrases(xpattern, node.sourceHierarchicalPhrases); 
 					MatchedHierarchicalPhrases phrasesWithFinalX = 
@@ -627,7 +628,10 @@ public class PrefixTree {
 						node.sourceHierarchicalPhrases.copyWithFinalX();
 //						new HierarchicalPhrases(xpattern, node.sourceHierarchicalPhrases); 
 					
-					xNode.storeResults(phrasesWithFinalX, xpattern);
+					List<Rule> rules = (ruleExtractor==null) ? 
+								Collections.<Rule>emptyList() : 
+								ruleExtractor.extractRules(phrasesWithFinalX);
+					xNode.storeResults(phrasesWithFinalX, rules);
 //					xNode.storeResults(phrasesWithFinalX, xpattern.words);
 				}
 			
