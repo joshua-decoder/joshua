@@ -21,6 +21,8 @@ import java.util.logging.Logger;
 import java.util.Scanner;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
+import java.util.HashMap;
+import joshua.util.Regex;
 
 import java.io.File;
 import java.io.InputStream;
@@ -39,11 +41,13 @@ import joshua.decoder.ff.lm.DefaultNGramLanguageModel;
 import joshua.decoder.ff.lm.bloomfilter_lm.BloomFilter;
 import joshua.corpus.vocab.SymbolTable;
 import joshua.corpus.vocab.Vocabulary;
-import joshua.util.Regex;
+
 
 public class BloomFilterLanguageModel extends AbstractLM implements Externalizable {
 	public static final int HASH_SEED = 17;
 	public static final int HASH_OFFSET = 37;
+
+	public static final double MAX_SCORE = 100.0;
 
 	public static final Logger logger = 
 		Logger.getLogger(BloomFilterLanguageModel.class.getName());
@@ -69,8 +73,8 @@ public class BloomFilterLanguageModel extends AbstractLM implements Externalizab
 	/*
 	 * constructor.
 	 */
-	public BloomFilterLanguageModel(SymbolTable translationModelSymbols, int order, String filename) throws IOException {
-		super(translationModelSymbols, order);
+	public BloomFilterLanguageModel(SymbolTable symbols, int order, String filename) throws IOException {
+		super(symbols, order);
 		try {
 			readExternal(new ObjectInputStream(new GZIPInputStream(new FileInputStream(filename))));
 		} catch (ClassNotFoundException e) {
@@ -78,11 +82,28 @@ public class BloomFilterLanguageModel extends AbstractLM implements Externalizab
 			ioe.initCause(e);
 			throw ioe;
 		}
+
 		TMtoLMMapping = createTMtoLMMapping();
 		int vocabSize = vocabulary.size();
+		System.err.println("BFLM: vocabSize: " + vocabSize);
+//		System.err.println("BFLM: TM symbol table size: " + symbolTable.size());
 		p0 = -Math.log(vocabSize + 1);
+		double oneMinusLambda0 = numTokens - logAdd(Math.log(vocabSize), numTokens);
+		p0 += oneMinusLambda0;
+		System.err.println("BFLM: p0: " + p0);
 		lambda0 = Math.log(vocabSize) - logAdd(Math.log(vocabSize), numTokens);
+		System.err.println("BFLM: lambda0: " + lambda0);
 		maxQ = quantize((long) Math.exp(numTokens));
+		System.err.println("BFLM: maxQ: " + maxQ);
+		/*
+		for (String w : translationModelSymbols.getWords()) {
+			if (vocabulary.getID(w) != vocabulary.getUnknownWordID())
+				System.err.println("BFLM: word " + w + "found.");
+			int [] tmp = { vocabulary.getID(w) };
+			if (bf.query(hashNgram(tmp, 0, 1, 1), countFuncs))
+				System.err.println("BFLM: found " + w);
+		}
+		*/
 	}
 	
 	private BloomFilterLanguageModel(String filename, int order, int size, double base) {
@@ -99,7 +120,6 @@ public class BloomFilterLanguageModel extends AbstractLM implements Externalizab
 		}
 		return map;
 	}
-	
 	
 	/*
 	 * calculates the linearly-interpolated witten-bell probability
@@ -121,21 +141,19 @@ public class BloomFilterLanguageModel extends AbstractLM implements Externalizab
 	 * sided error rate inherent in using a bloom filter data structure.
 	 *
 	 */
-	private double wittenBell(int [] ngram, int order) {
+	private double wittenBell(int [] ngram, int ngramOrder) {
 		int end = ngram.length;
 		double p = p0; // current calculated probability
 		// note that p0 and lambda0 are independent of the given
 		// ngram so they are calculated ahead of time.
 		//p *= (1 - lambda0);
-		p += logAdd(0, -lambda0);
-		/*
-		int [] word = new int[1];
-		word[0] = ngram[ngram.length-1];
-		int [] history;
-		*/
+		//p += logAdd(0, -lambda0);
 		int MAX_QCOUNT = getCount(ngram, ngram.length-1, ngram.length, maxQ);
-//		System.err.println("word: " + unQuantize(MAX_QCOUNT));
+//		System.err.println("word: " + MAX_QCOUNT);
+		if (MAX_QCOUNT == 0) // OOV!
+			return p;
 		double pML = Math.log(unQuantize(MAX_QCOUNT)) - numTokens;
+
 //		System.err.println("pML: " + pML);
 		//p += lambda0 * pML;
 		p = logAdd(p, (lambda0 + pML));
@@ -144,22 +162,13 @@ public class BloomFilterLanguageModel extends AbstractLM implements Externalizab
 		}
 		// otherwise we calculate the linear interpolation
 		// with higher order models.
-		// this for loop is kind of ugly since ngram is of type String.
-		// but the idea is that with each pass through the for loop,
-		// we go to a higher-order model.
-		// that is, we prepend another token to both the whole ngram
-		// of interest and to the history.
-		for (int i = end - 2; i >= end - order; i--) {
-			/*
-			word = new int[ngram.length - i]; // higher-order word
-			System.arraycopy(ngram, i, word, 0, word.length);
-			history = new int[ngram.length - i - 1];
-			System.arraycopy(ngram, i, history, 0, history.length);
-			*/
+//		System.err.println("BFLM: end: " + end);
+//		System.err.println("BFLM: ngramOrder: " + ngramOrder);
+		for (int i = end - 2; i >= end - ngramOrder && i >= 0; i--) {
 			//System.err.println("word: " + word);
 			//System.err.println("history: " + history);
 			int historyCnt = getCount(ngram, i, end, MAX_QCOUNT);
-//			System.err.println("history count: " + unQuantize(historyCnt));
+//			System.err.println("history count: " + historyCnt);
 			// if the count for the history is zero, all higher
 			// terms in the interpolation must be zero, so we
 			// are done here.
@@ -172,7 +181,9 @@ public class BloomFilterLanguageModel extends AbstractLM implements Externalizab
 			double HTA = 1 + unQuantize(historyTypesAfter);
 			// interpolation constant
 			double lambda = Math.log(HTA) - Math.log(HTA + HC);
-			p += logAdd(0, -lambda);
+			double oneMinusLambda = Math.log(HC) - Math.log(HTA + HC);
+			// p *= 1 - lambda
+			p += oneMinusLambda; //logAdd(0, -lambda);
 			int wordCount = getCount(ngram, i+1, end, historyTypesAfter);
 			double WC = unQuantize(wordCount);
 //			System.err.println("HTA: " + HTA);
@@ -180,6 +191,8 @@ public class BloomFilterLanguageModel extends AbstractLM implements Externalizab
 //			System.err.println("WC: " + WC);
 //			System.err.println("pML(word) " + (WC/HC));
 			//p += (lambda * (WC / HC)); // p_ML(w|h)
+			if (WC == 0)
+				return p;
 			p = logAdd(p, lambda + Math.log(WC) - Math.log(HC));
 			MAX_QCOUNT = wordCount;
 		}
@@ -250,7 +263,7 @@ public class BloomFilterLanguageModel extends AbstractLM implements Externalizab
 		return result;
 	}
 	
-	private double logAdd(double x, double y) {
+	private static double logAdd(double x, double y) {
 		if (y <= x) {
 			return x + Math.log1p(Math.exp(y - x));
 		} else {
@@ -299,86 +312,69 @@ public class BloomFilterLanguageModel extends AbstractLM implements Externalizab
 	}
 	
 	private void populateBloomFilter(int bloomFilterSize, String filename) {
-		int numObjects = 2 * numLines(filename);
-		bf = new BloomFilter(bloomFilterSize, numObjects);
-		countFuncs = bf.initializeHashFunctions();
-		typesFuncs = bf.initializeHashFunctions();
+		HashMap<String,Long> typesAfter = new HashMap<String,Long>();
+		HashMap<String,Long> counts = new HashMap<String,Long>();
 		try {
 			FileInputStream in = new FileInputStream(filename);
 			if (filename.endsWith(".gz")) {
-				populateFromInputStream(new GZIPInputStream(in));
+				populateFromInputStream(new GZIPInputStream(in), counts, typesAfter);
 			} else {
-				populateFromInputStream(in);
+				populateFromInputStream(in, counts, typesAfter);
 			}
 			in.close();
 		} catch (FileNotFoundException e) {
 			System.err.println(e.getMessage());
+			return;
 		} catch (IOException e) {
 			System.err.println(e.getMessage());
+			return;
 		}
+		int numObjects = counts.size() + typesAfter.size();
+		bf = new BloomFilter(bloomFilterSize, numObjects);
+		countFuncs = bf.initializeHashFunctions();
+		typesFuncs = bf.initializeHashFunctions();
+		for (String ngram : counts.keySet()) {
+			String [] toks = Regex.spaces.split(ngram);
+			int [] ng = new int[toks.length];
+			for (int i = 0; i < ng.length; i++)
+				ng[i] = vocabulary.addTerminal(toks[i]);
+			add(ng, counts.get(ngram), countFuncs);
+		}
+		for (String history : typesAfter.keySet()) {
+			String [] toks = Regex.spaces.split(history);
+			int [] hist = new int[toks.length];
+			for (int i = 0; i < toks.length; i++)
+				hist[i] = vocabulary.addTerminal(toks[i]);
+			add(hist, typesAfter.get(history), typesFuncs);
+		}
+		return;
 	}
 	
-	private void populateFromInputStream(InputStream source) {
-		numTokens = -1;
-//		int num_lines = 0;
-		int [] prefix = null;
-		int prefixTypesAfter = 0;
-		try {
-			Scanner scanner = new Scanner(source, "UTF-8");
-			while (scanner.hasNextLine()) {
-				String [] toks = Regex.spaces.split(scanner.nextLine());
-				int currOrder = toks.length - 1;
-				// only go up to specified order
-				/*
-				if (currOrder > this.ngramOrder) {
-					if (prefix != null)
-						add(prefix, prefixTypesAfter, typesFuncs);
-					return;
-				}
-				*/
-				int currCount = Integer.parseInt(toks[currOrder]);
-				int [] ngram = new int[currOrder];
-				int [] currPrefix = null;
-				// convert the ngram to integers
-				for (int i = 0; i < currOrder; i++) {
-					ngram[i] = vocabulary.addTerminal(toks[i]);
-				}
-				// we need to update the training token count if we're on unigrams
-				if (currOrder == 1) {
-					if (numTokens == -1) {
-						numTokens = Math.log(currCount);
-					} else {
-						numTokens = logAdd(numTokens, Math.log(currCount));
-					}
-				} else {
-					// and we need to keep the suffix counts if we're on higher orders
-					currPrefix = new int[currOrder-1];
-					System.arraycopy(ngram, 0, currPrefix, 0, currOrder-1);
-				}
-				if ((currPrefix != null) && (currPrefix == prefix)) {
-					prefixTypesAfter++;
-				} else {
-					if (prefix != null) {
-						add(prefix, prefixTypesAfter, typesFuncs);
-					}
-					prefix = currPrefix;
-					prefixTypesAfter = 1;
-				}
-				
-				add(ngram, currCount, countFuncs);
-				
-				/*
-				num_lines++;
-				if (num_lines > 1000000) {
-					num_lines = 0;
-				
-					System.err.print(".");
-				}
-				*/
+	private void populateFromInputStream(InputStream source, HashMap<String,Long> counts, HashMap<String,Long> types) {
+		Scanner scanner = new Scanner(source);
+		numTokens = Double.NEGATIVE_INFINITY; // = log(0)
+		while (scanner.hasNextLine()) {
+			String [] toks = Regex.spaces.split(scanner.nextLine());
+			String ngram = "";
+			String history = "";
+			for (int i = 0; i < toks.length - 1; i++) {
+				ngram += toks[i] + " ";
+				if (i < toks.length - 2)
+					history += toks[i] + " ";
 			}
-		} catch (IllegalArgumentException e) {
-			System.err.println(e.getMessage());
+
+			long cnt = Long.parseLong(toks[toks.length-1]);
+			counts.put(ngram, cnt);
+			if (toks.length == 2) // unigram
+				numTokens = logAdd(numTokens, Math.log(cnt));
+			if (types.get(history) == null)
+				types.put(history, 1L);
+			else {
+				long x = (Long) types.get(history);
+				types.put(history, x + 1);
+			}
 		}
+		return;
 	}
 	
 	/*
@@ -464,7 +460,7 @@ public class BloomFilterLanguageModel extends AbstractLM implements Externalizab
 	protected double ngramLogProbability_helper(int[] ngram, int order) {
 		int [] lm_ngram = new int[ngram.length];
 		for (int i = 0; i < ngram.length; i++) {
-			lm_ngram[i] = TMtoLMMapping[ngram[i]];
+			lm_ngram[i] = vocabulary.getID(symbolTable.getWord(ngram[i]));
 		}
 		return wittenBell(lm_ngram, order);
 	}
