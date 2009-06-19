@@ -277,7 +277,7 @@ public class BloomFilterLanguageModel extends AbstractLM implements Externalizab
 			return;
 		}
 		int order = Integer.parseInt(argv[1]);
-		int size = (int) (Integer.parseInt(argv[2]) * Math.pow(2, 20));
+		int size = (int) (Integer.parseInt(argv[2]) * Math.pow(2, 23));
 		double base = Double.parseDouble(argv[3]);
 		
 		try {
@@ -313,14 +313,23 @@ public class BloomFilterLanguageModel extends AbstractLM implements Externalizab
 	
 	private void populateBloomFilter(int bloomFilterSize, String filename) {
 		HashMap<String,Long> typesAfter = new HashMap<String,Long>();
-		HashMap<String,Long> counts = new HashMap<String,Long>();
 		try {
-			FileInputStream in = new FileInputStream(filename);
+			FileInputStream file_in = new FileInputStream(filename);
+			FileInputStream file_in_copy = new FileInputStream(filename);
+			InputStream in;
+			InputStream estimateStream;
 			if (filename.endsWith(".gz")) {
-				populateFromInputStream(new GZIPInputStream(in), counts, typesAfter);
+				in = new GZIPInputStream(file_in);
+				estimateStream = new GZIPInputStream(file_in_copy);
 			} else {
-				populateFromInputStream(in, counts, typesAfter);
+				in = file_in;
+				estimateStream = file_in_copy;
 			}
+			int numObjects = estimateNumberOfObjects(estimateStream);
+			System.err.println("Estimated number of objects: " + numObjects);
+			bf = new BloomFilter(bloomFilterSize, numObjects);
+			countFuncs = bf.initializeHashFunctions();
+			populateFromInputStream(in, typesAfter);
 			in.close();
 		} catch (FileNotFoundException e) {
 			System.err.println(e.getMessage());
@@ -329,17 +338,7 @@ public class BloomFilterLanguageModel extends AbstractLM implements Externalizab
 			System.err.println(e.getMessage());
 			return;
 		}
-		int numObjects = counts.size() + typesAfter.size();
-		bf = new BloomFilter(bloomFilterSize, numObjects);
-		countFuncs = bf.initializeHashFunctions();
 		typesFuncs = bf.initializeHashFunctions();
-		for (String ngram : counts.keySet()) {
-			String [] toks = Regex.spaces.split(ngram);
-			int [] ng = new int[toks.length];
-			for (int i = 0; i < ng.length; i++)
-				ng[i] = vocabulary.addTerminal(toks[i]);
-			add(ng, counts.get(ngram), countFuncs);
-		}
 		for (String history : typesAfter.keySet()) {
 			String [] toks = Regex.spaces.split(history);
 			int [] hist = new int[toks.length];
@@ -349,29 +348,62 @@ public class BloomFilterLanguageModel extends AbstractLM implements Externalizab
 		}
 		return;
 	}
+
+	private int estimateNumberOfObjects(InputStream source)
+	{
+		Scanner scanner = new Scanner(source);
+		int numLines = 0;
+		long maxCount = 0;
+		while (scanner.hasNextLine()) {
+			String line = scanner.nextLine();
+			if (line.trim().equals(""))
+				continue;
+			String [] toks = Regex.spaces.split(line);
+			if (toks.length > ngramOrder + 1)
+				continue;
+			try {
+				long cnt = Long.parseLong(toks[toks.length-1]);
+				if (cnt > maxCount)
+					maxCount = cnt;
+			}
+			catch (NumberFormatException e) {
+				System.err.println("NumberFormatException! Line: " + line);
+				break;
+			}
+			numLines++;
+		}
+		double estimate = Math.log(maxCount) / Math.log(quantizationBase);
+		return (int) Math.round(numLines * estimate);
+	}
 	
-	private void populateFromInputStream(InputStream source, HashMap<String,Long> counts, HashMap<String,Long> types) {
+	private void populateFromInputStream(InputStream source, HashMap<String,Long> types) {
 		Scanner scanner = new Scanner(source);
 		numTokens = Double.NEGATIVE_INFINITY; // = log(0)
 		while (scanner.hasNextLine()) {
 			String [] toks = Regex.spaces.split(scanner.nextLine());
-			String ngram = "";
-			String history = "";
+			if ((toks.length < 2) || (toks.length > ngramOrder + 1))
+				continue;
+			int [] ngram = new int[toks.length - 1];
+			StringBuilder history = new StringBuilder();
 			for (int i = 0; i < toks.length - 1; i++) {
-				ngram += toks[i] + " ";
+				ngram[i] = vocabulary.addTerminal(toks[i]);
 				if (i < toks.length - 2)
-					history += toks[i] + " ";
+					history.append(toks[i]).append(" ");
 			}
 
 			long cnt = Long.parseLong(toks[toks.length-1]);
-			counts.put(ngram, cnt);
-			if (toks.length == 2) // unigram
+			add(ngram, cnt, countFuncs);
+			if (toks.length == 2) { // unigram
 				numTokens = logAdd(numTokens, Math.log(cnt));
+				// no need to count types after ""
+				// that's what vocabulary.size() is for.
+				continue;
+			}
 			if (types.get(history) == null)
-				types.put(history, 1L);
+				types.put(history.toString(), 1L);
 			else {
 				long x = (Long) types.get(history);
-				types.put(history, x + 1);
+				types.put(history.toString(), x + 1);
 			}
 		}
 		return;
@@ -439,7 +471,7 @@ public class BloomFilterLanguageModel extends AbstractLM implements Externalizab
 
 	@Override
 	protected double logProbabilityOfBackoffState_helper(int[] ngram, int order, int qtyAdditionalBackoffWeight) {
-		throw new UnsupportedOperationException("probabilityOfBackoffState_helper undefined for srilm");
+		throw new UnsupportedOperationException("probabilityOfBackoffState_helper undefined for bloom filter LM");
 	}
 	
 	/*
