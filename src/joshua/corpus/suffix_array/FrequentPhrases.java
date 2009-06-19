@@ -54,7 +54,7 @@ public class FrequentPhrases {
 		Logger.getLogger(FrequentPhrases.class.getName());
 	
 	/** Suffix array in which frequent phrases are located. */
-	private final Suffixes suffixes;
+	final Suffixes suffixes;
 	
 	/** 
 	 * Stores the number of times a phrase occurred in the
@@ -67,10 +67,10 @@ public class FrequentPhrases {
 	 * The key set for this map should be identical to the key
 	 * set in the <code>ranks</code> map.
 	 */
-	private final LinkedHashMap<Phrase,Integer> frequentPhrases;
+	final LinkedHashMap<Phrase,Integer> frequentPhrases;
 	
 	/** Maximum number of phrases of which this object is aware. */
-	private final short maxPhrases;
+	final short maxPhrases;
 	
 	
 	/**
@@ -97,7 +97,14 @@ public class FrequentPhrases {
 		
 	}
 
-
+	public short getMaxPhrases() {
+		return this.maxPhrases;
+	}
+	
+	public Suffixes getSuffixes() {
+		return this.suffixes;
+	}
+	
 	/**
 	 * This method performs a one-pass computation of the
 	 * collocation of two frequent subphrases. It is used for
@@ -119,151 +126,146 @@ public class FrequentPhrases {
 			short minNonterminalSpan
 	) {
 
-		logger.fine("Calculating number of frequent collocations");
-		int totalCollocations = countCollocations(maxPhraseLength, windowSize);
-		logger.fine("Total collocations: " + totalCollocations);
-
-
 		// Get an initially empty collocations object
-		FrequentMatches collocations =
-			new FrequentMatches(
-					getRanks(frequentPhrases),
-					maxPhrases,
-					totalCollocations,
-					minNonterminalSpan);
+//		FrequentMatches collocations =
+		return	
+			new FrequentMatches(this, maxPhraseLength, windowSize, minNonterminalSpan);
 
-		LinkedList<Phrase> phrasesInWindow = new LinkedList<Phrase>();
-		LinkedList<Integer> positions = new LinkedList<Integer>();
-		
-		int sentenceNumber = 1;
-		int endOfSentence = suffixes.getSentencePosition(sentenceNumber);
-
-		if (logger.isLoggable(Level.FINER)) logger.finer("END OF SENT: " + sentenceNumber + " at position " + endOfSentence);
-
-		Corpus corpus = suffixes.getCorpus();
-
-		// Start at the beginning of the corpus...
-		for (int currentPosition = 0, endOfCorpus=suffixes.size(); 
-				// ...and iterate through the end of the corpus
-				currentPosition < endOfCorpus; currentPosition++) {
-
-			// Start with a phrase length of 1, at the current position...
-			for (int i = 1, endOfPhrase = currentPosition + i; 
-					// ...ensure the phrase length isn't too long...
-					i < maxPhraseLength  &&  
-					// ...and that the phrase doesn't extend past the end of the sentence...
-					endOfPhrase <= endOfSentence  &&  
-					// ...or past the end of the corpus
-					endOfPhrase <= endOfCorpus; 
-					// ...then increment the phrase length and end of phrase marker.
-					i++, endOfPhrase = currentPosition + i) {
-
-				// Get the current phrase
-				Phrase phrase = new ContiguousPhrase(currentPosition, endOfPhrase, corpus);
-
-				if (logger.isLoggable(Level.FINEST)) logger.finest("Found phrase (" +currentPosition + ","+endOfPhrase+") "  + phrase);
-
-				// If the phrase is one we care about...
-				if (frequentPhrases.containsKey(phrase)) {
-
-					if (logger.isLoggable(Level.FINER)) logger.finer("\"" + phrase + "\" found at currentPosition " + currentPosition);
-
-					// Remember the phrase...
-					phrasesInWindow.add(phrase);
-
-					// ...and its starting position
-					positions.add(currentPosition);
-				}
-
-			} // end iterating over various phrase lengths
-
-
-			// check whether we're at the end of the sentence and dequeue...
-			if (currentPosition == endOfSentence) {
-
-				if (logger.isLoggable(Level.FINEST)) {
-					logger.finest("REACHED END OF SENT: " + currentPosition);
-					logger.finest("PHRASES:   " + phrasesInWindow);
-					logger.finest("POSITIONS: " + positions);
-				}
-
-				// empty the whole queue...
-				for (int i = 0, n=phrasesInWindow.size(); i < n; i++) {
-
-					Phrase phrase1 = phrasesInWindow.remove();
-					int position1 = positions.remove();
-
-					Iterator<Phrase> phraseIterator = phrasesInWindow.iterator();
-					Iterator<Integer> positionIterator = positions.iterator();
-
-					for (int j = i+1; j < n; j++) {
-
-						Phrase phrase2 = phraseIterator.next();//phrasesInWindow.get(j);
-						int position2 = positionIterator.next();//positions.get(j);
-
-						if (logger.isLoggable(Level.FINEST)) logger.finest("CASE1: " + phrase1 + "\t" + phrase2 + "\t" + position1 + "\t" + position2);
-						collocations.add(phrase1, phrase2, position1, position2);
-
-					}
-
-				}
-				// clear the queues
-				phrasesInWindow.clear();
-				positions.clear();
-
-				// update the end of sentence marker
-				sentenceNumber++;
-				endOfSentence = suffixes.getSentencePosition(sentenceNumber)-1;
-
-				if (logger.isLoggable(Level.FINER)) logger.finer("END OF SENT: " + sentenceNumber + " at position " + endOfSentence);
-
-			} // Done processing end of sentence.
-
-
-			// check whether the initial elements are
-			// outside the window size...
-			if (phrasesInWindow.size() > 0) {
-				int position1 = positions.peek();//.get(0);
-				// deque the first element and
-				// calculate its collocations...
-				while ((position1+windowSize < currentPosition)
-						&& phrasesInWindow.size() > 0) {
-
-					if (logger.isLoggable(Level.FINEST)) logger.finest("OUTSIDE OF WINDOW: " + position1 + " " +  currentPosition + " " + windowSize);
-					
-					Phrase phrase1 = phrasesInWindow.remove();
-					positions.remove();
-
-					Iterator<Phrase> phraseIterator = phrasesInWindow.iterator();
-					Iterator<Integer> positionIterator = positions.iterator();
-
-					for (int j = 0, n=phrasesInWindow.size(); j < n; j++) {
-
-						Phrase phrase2 = phraseIterator.next();
-						int position2 = positionIterator.next();
-
-						collocations.add(phrase1, phrase2, position1, position2);
-						
-						if (logger.isLoggable(Level.FINEST)) logger.finest("CASE2: " + phrase1 + "\t" + phrase2 + "\t" + position1 + "\t" + position2);
-					}
-					if (phrasesInWindow.size() > 0) {
-						position1 = positions.peek();
-					} else {
-						position1 = currentPosition;
-					}
-				}
-			}
-
-		} // end iterating over positions in the corpus
-
-		if (logger.isLoggable(Level.FINE)) logger.fine("Sorting collocations");
-		collocations.histogramSort();
-		
-		return collocations;
+//		LinkedList<Phrase> phrasesInWindow = new LinkedList<Phrase>();
+//		LinkedList<Integer> positions = new LinkedList<Integer>();
+//		
+//		int sentenceNumber = 1;
+//		int endOfSentence = suffixes.getSentencePosition(sentenceNumber);
+//
+//		if (logger.isLoggable(Level.FINER)) logger.finer("END OF SENT: " + sentenceNumber + " at position " + endOfSentence);
+//
+//		Corpus corpus = suffixes.getCorpus();
+//
+//		// Start at the beginning of the corpus...
+//		for (int currentPosition = 0, endOfCorpus=suffixes.size(); 
+//				// ...and iterate through the end of the corpus
+//				currentPosition < endOfCorpus; currentPosition++) {
+//
+//			// Start with a phrase length of 1, at the current position...
+//			for (int i = 1, endOfPhrase = currentPosition + i; 
+//					// ...ensure the phrase length isn't too long...
+//					i < maxPhraseLength  &&  
+//					// ...and that the phrase doesn't extend past the end of the sentence...
+//					endOfPhrase <= endOfSentence  &&  
+//					// ...or past the end of the corpus
+//					endOfPhrase <= endOfCorpus; 
+//					// ...then increment the phrase length and end of phrase marker.
+//					i++, endOfPhrase = currentPosition + i) {
+//
+//				// Get the current phrase
+//				Phrase phrase = new ContiguousPhrase(currentPosition, endOfPhrase, corpus);
+//
+//				if (logger.isLoggable(Level.FINEST)) logger.finest("Found phrase (" +currentPosition + ","+endOfPhrase+") "  + phrase);
+//
+//				// If the phrase is one we care about...
+//				if (frequentPhrases.containsKey(phrase)) {
+//
+//					if (logger.isLoggable(Level.FINER)) logger.finer("\"" + phrase + "\" found at currentPosition " + currentPosition);
+//
+//					// Remember the phrase...
+//					phrasesInWindow.add(phrase);
+//
+//					// ...and its starting position
+//					positions.add(currentPosition);
+//				}
+//
+//			} // end iterating over various phrase lengths
+//
+//
+//			// check whether we're at the end of the sentence and dequeue...
+//			if (currentPosition == endOfSentence) {
+//
+//				if (logger.isLoggable(Level.FINEST)) {
+//					logger.finest("REACHED END OF SENT: " + currentPosition);
+//					logger.finest("PHRASES:   " + phrasesInWindow);
+//					logger.finest("POSITIONS: " + positions);
+//				}
+//
+//				// empty the whole queue...
+//				for (int i = 0, n=phrasesInWindow.size(); i < n; i++) {
+//
+//					Phrase phrase1 = phrasesInWindow.remove();
+//					int position1 = positions.remove();
+//
+//					Iterator<Phrase> phraseIterator = phrasesInWindow.iterator();
+//					Iterator<Integer> positionIterator = positions.iterator();
+//
+//					for (int j = i+1; j < n; j++) {
+//
+//						Phrase phrase2 = phraseIterator.next();//phrasesInWindow.get(j);
+//						int position2 = positionIterator.next();//positions.get(j);
+//
+//						if (logger.isLoggable(Level.FINEST)) logger.finest("CASE1: " + phrase1 + "\t" + phrase2 + "\t" + position1 + "\t" + position2);
+//						collocations.add(phrase1, phrase2, position1, position2);
+//
+//					}
+//
+//				}
+//				// clear the queues
+//				phrasesInWindow.clear();
+//				positions.clear();
+//
+//				// update the end of sentence marker
+//				sentenceNumber++;
+//				endOfSentence = suffixes.getSentencePosition(sentenceNumber)-1;
+//
+//				if (logger.isLoggable(Level.FINER)) logger.finer("END OF SENT: " + sentenceNumber + " at position " + endOfSentence);
+//
+//			} // Done processing end of sentence.
+//
+//
+//			// check whether the initial elements are
+//			// outside the window size...
+//			if (phrasesInWindow.size() > 0) {
+//				int position1 = positions.peek();//.get(0);
+//				// deque the first element and
+//				// calculate its collocations...
+//				while ((position1+windowSize < currentPosition)
+//						&& phrasesInWindow.size() > 0) {
+//
+//					if (logger.isLoggable(Level.FINEST)) logger.finest("OUTSIDE OF WINDOW: " + position1 + " " +  currentPosition + " " + windowSize);
+//					
+//					Phrase phrase1 = phrasesInWindow.remove();
+//					positions.remove();
+//
+//					Iterator<Phrase> phraseIterator = phrasesInWindow.iterator();
+//					Iterator<Integer> positionIterator = positions.iterator();
+//
+//					for (int j = 0, n=phrasesInWindow.size(); j < n; j++) {
+//
+//						Phrase phrase2 = phraseIterator.next();
+//						int position2 = positionIterator.next();
+//
+//						collocations.add(phrase1, phrase2, position1, position2);
+//						
+//						if (logger.isLoggable(Level.FINEST)) logger.finest("CASE2: " + phrase1 + "\t" + phrase2 + "\t" + position1 + "\t" + position2);
+//					}
+//					if (phrasesInWindow.size() > 0) {
+//						position1 = positions.peek();
+//					} else {
+//						position1 = currentPosition;
+//					}
+//				}
+//			}
+//
+//		} // end iterating over positions in the corpus
+//
+//		if (logger.isLoggable(Level.FINE)) logger.fine("Sorting collocations");
+//		collocations.histogramSort();
+//		
+//		return collocations;
 	}
 
 
 	/**
+	 * Gets the number of times any frequent phrase co-occurred 
+	 * with any frequent phrase within the given window.
+	 * <p>        
 	 * This method performs a one-pass computation of the
 	 * collocation of two frequent subphrases. It is used for
 	 * the precalculation of the translations of hierarchical
@@ -276,6 +278,8 @@ public class FrequentPhrases {
 	 * @param windowSize the maximum allowable space between
 	 *                   phrases for them to still be considered
 	 *                   collocated
+	 * @return The number of times any frequent phrase co-occurred 
+	 *         with any frequent phrase within the given window.
 	 */
 	protected int countCollocations(
 			int maxPhraseLength,
@@ -462,7 +466,7 @@ public class FrequentPhrases {
 	 *                        that phrase in a corpus.
 	 * @return the frequency ranks of the provided phrases
 	 */
-	protected LinkedHashMap<Phrase,Short> getRanks(LinkedHashMap<Phrase,Integer> frequentPhrases) {
+	protected LinkedHashMap<Phrase,Short> getRanks() {
 		
 		logger.fine("Calculating ranks of frequent phrases");
 		
@@ -483,6 +487,10 @@ public class FrequentPhrases {
 	 * <p>
 	 * Allows a threshold to be set for the minimum frequency
 	 * to remember, as well as the maximum number of phrases.
+	 * <p>
+	 * This method is implements the 
+	 * <code>print_LDIs_stack</code> function defined in 
+	 * section 2.5 of Yamamoto and Church.
 	 *
 	 * @param suffixes     a suffix array for the corpus
 	 * @param minFrequency the minimum frequency required to
@@ -492,44 +500,70 @@ public class FrequentPhrases {
 	 * @param maxPhraseLength the maximum phrase length to
 	 *                     consider
 	 * 
-	 * @return A map from phrase to the number of times that phrase occurred in the corpus. The iteration order of the map will start with the most frequent phrase, and end with the least frequent calculated phrase.
+	 * @return A map from phrase to the number of times 
+	 *         that phrase occurred in the corpus. 
+	 *         The iteration order of the map will start 
+	 *         with the most frequent phrase, and 
+	 *         end with the least frequent calculated phrase.
+	 *         
+	 * @see "Yamamoto and Church (2001), section 2.5"
 	 */
-	protected LinkedHashMap<Phrase,Integer> getMostFrequentPhrases(
+	protected static LinkedHashMap<Phrase,Integer> getMostFrequentPhrases(
 			Suffixes suffixes,
 			int minFrequency,
 			int maxPhrases,
 			int maxPhraseLength
 	) {
 
-
 		LinkedList<Phrase> phrases = new LinkedList<Phrase>();
 		LinkedList<Integer> frequencies = new LinkedList<Integer>();
-
-		phrases.clear();
-		frequencies.clear();
 		Comparator<Integer> comparator = new ReverseOrder<Integer>();
 
 		// calculate the longest common prefix delimited intervals...
-		// This is taken from the Yamamoto and Church Compuational Linguistics article.
 		int[] longestCommonPrefixes = calculateLongestCommonPrefixes(suffixes);
+		
+		// stack_i <-- an integer array for the stack of left edges, i
 		Stack<Integer> startIndices = new Stack<Integer>();
+		
+		// stack_k <-- an integer array for the stack of representatives, k
 		Stack<Integer> shortestInteriorLCPIndices = new Stack<Integer>();
+		
+		// stack_i[0] <-- 0
 		startIndices.push(0);
+
+		// stack_k[0] <-- 0
 		shortestInteriorLCPIndices.push(0);
-		for (int j = 0, size=suffixes.size(); j < size; j++) {			
-			// trivial interval i==j, frequecy=1
+		
+		// sp <-- 1 (a stack pointer)
+		
+		// for j <-- 0,1,2, ..., N-1
+		for (int j = 0, size=suffixes.size(); j < size; j++) {	
+			
+			// Output an lcp-delimited interval <j,j> with tf=1
+			//        (trivial interval i==j, frequency=1)
 			recordPhraseFrequencies(suffixes,
 					longestCommonPrefixes, j, j, 0, phrases, frequencies,
 					minFrequency, maxPhrases, maxPhraseLength, comparator);
+			
+			// While lcp[j+1] < lcp[stack_k[sp-1]] do
 			while (longestCommonPrefixes[j+1] < longestCommonPrefixes[shortestInteriorLCPIndices.peek()]) {
-				// non-trivial interval 
+				
+				// Output an interval <i,j> with tf=j-i+1, if it is lcp-delimited
+				//                    (non-trivial interval)
+				// sp <-- sp - 1
 				recordPhraseFrequencies(suffixes, longestCommonPrefixes, startIndices.pop(), j, shortestInteriorLCPIndices.pop(),
 						phrases, frequencies, minFrequency, maxPhrases, maxPhraseLength, comparator);
 			}
+			
+			// stack_i[sp] <-- stack_k[sp-1]
 			startIndices.push(shortestInteriorLCPIndices.peek());
+
+			// stack_k[sp] <-- j+1
 			shortestInteriorLCPIndices.push(j+1);
 
+			// sp <-- sp + 1
 
+			
 			// trim the lists if they're too long...
 			if (phrases.size() > maxPhrases) {
 				int frequency = frequencies.get(maxPhrases);
@@ -575,6 +609,9 @@ public class FrequentPhrases {
 	 * Each elements lcp[i] indicates the length of the common
 	 * prefix between two positions s[i-1] and s[i] in the
 	 * suffix array.
+	 * 
+	 * @param suffixes Suffix array
+	 * @return Longest common prefix array
 	 */
 	protected static int[] calculateLongestCommonPrefixes(Suffixes suffixes) {
 
@@ -601,8 +638,7 @@ public class FrequentPhrases {
 		return longestCommonPrefixes;
 
 	}
-
-
+	
 	/**
 	 * This method extracts phrases which reach the specified
 	 * minimum frequency. It uses the equivalency classes for
@@ -610,6 +646,21 @@ public class FrequentPhrases {
 	 * defined in section 2.3 of the the Yamamoto and Church
 	 * CL article. This is a helper function for the
 	 * getMostFrequentPhrases method.
+	 * 
+	 * @param suffixes Suffix array
+	 * @param longestCommonPrefixes Longest common prefix array
+	 * @param i Index specifying a starting range in the suffix array
+	 * @param j Index specifying an ending range in the suffix array
+	 * @param k Index specifying a representative value of the range,
+	 *          such that i < k <= j, and such that longestCommonPrefixes[k]
+	 *          is the shortest interior longest common prefix of the range 
+	 *          (see section 2.5 of Yamamoto and Church)
+	 * @param phrases
+	 * @param frequencies
+	 * @param minFrequency
+	 * @param maxPhrases
+	 * @param maxPhraseLength
+	 * @param comparator
 	 */
 	protected static void recordPhraseFrequencies(
 			Suffixes            suffixes,
@@ -627,8 +678,13 @@ public class FrequentPhrases {
 		Corpus corpus = suffixes.getCorpus();
 
 		// Math.max is slow when called a lot - use an ternary if..then instead
-		int longestBoundingLCP = (longestCommonPrefixes[i] > longestCommonPrefixes[j+1]) ? longestCommonPrefixes[i] : longestCommonPrefixes[j+1];// Math.max(longestCommonPrefixes[i], longestCommonPrefixes[j+1])
+		int longestBoundingLCP = 
+			(longestCommonPrefixes[i] > longestCommonPrefixes[j+1]) 
+			? longestCommonPrefixes[i] 
+			: longestCommonPrefixes[j+1];
+			
 		int shortestInteriorLCP = longestCommonPrefixes[k];
+		
 		if(shortestInteriorLCP == 0) {
 			shortestInteriorLCP = suffixes.size() - suffixes.getCorpusIndex(i);
 		}
@@ -660,10 +716,17 @@ public class FrequentPhrases {
 				int maxLength = Math.min(shortestInteriorLCP-1, distanceToEndOfSentence); //(shortestInteriorLCP-1 < distanceToEndOfSentence) ? shortestInteriorLCP-1 : distanceToEndOfSentence;//
 				maxLength = Math.min(maxLength, maxPhraseLength); //(maxLength<maxPhraseLength) ? maxLength : maxPhraseLength; //
 
+				if (maxLength<1 && logger.isLoggable(Level.WARNING)) {
+					logger.warning("maxLength = " +maxLength + " < 1");
+				}
+				
 				// ccb - should this be < maxLength or <= maxLength
 				for(int length = longestBoundingLCP; length <= maxLength; length++) {
 					int endIndex = startIndex + length+1;
 					Phrase phrase = new ContiguousPhrase(startIndex, endIndex, corpus);
+					if (endIndex-startIndex > maxLength && logger.isLoggable(Level.WARNING)) {
+						logger.warning("Recording frequency for phrase \"" + phrase + "\" that is longer than maxLength " + maxLength);
+					}
 					phrases.add(position, phrase);
 					frequencies.add(position, frequency);
 					position++;

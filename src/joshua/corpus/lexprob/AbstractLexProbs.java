@@ -17,7 +17,9 @@
  */
 package joshua.corpus.lexprob;
 
+import joshua.corpus.alignment.AlignmentGrid;
 import joshua.corpus.suffix_array.Pattern;
+import joshua.corpus.vocab.SymbolTable;
 
 /**
  * Implements lexical probability methods 
@@ -27,6 +29,103 @@ import joshua.corpus.suffix_array.Pattern;
  */
 public abstract class AbstractLexProbs implements LexicalProbabilities {
 
+	/* See Javadoc for LexicalProbabilities#getTargetGivenSourceAlignments(Pattern,Pattern). */
+	public AlignmentGrid getTargetGivenSourceAlignments(Pattern targetPattern, Pattern sourcePattern) {
+		
+		SymbolTable sourceVocab = getSourceVocab();
+		SymbolTable targetVocab = getTargetVocab();
+		
+		StringBuilder alignmentPoints = new StringBuilder();
+		
+		int targetIndex = 0;
+		for (int targetWord : targetPattern.getWordIDs()) {
+			
+			if (targetVocab.isNonterminal(targetWord)) {
+				//TODO Do something special here
+				
+			} else {
+				
+				float max = targetGivenSource(targetWord, null);
+				Integer bestSource = null;
+				
+				int sourceIndex = 0;
+				for (int sourceWord : sourcePattern.getWordIDs()) {
+					
+					if (! sourceVocab.isNonterminal(sourceWord)) {
+						float score = this.targetGivenSource(targetWord, sourceWord);
+						if (score > max) {
+							max = score;
+							bestSource = sourceWord;
+						}
+						
+					}
+					
+					sourceIndex += 1;
+				}
+				
+				if (bestSource != null) {
+					alignmentPoints.append(sourceIndex);
+					alignmentPoints.append('-');
+					alignmentPoints.append(targetIndex);
+					alignmentPoints.append(' ');
+				}
+				
+			}
+			
+			targetIndex += 1;
+		}
+		
+		return new AlignmentGrid(alignmentPoints.toString());
+	}
+	
+	/* See Javadoc for LexicalProbabilities#getSourceGivenTargetAlignments(Pattern,Pattern). */
+	public AlignmentGrid getSourceGivenTargetAlignments(Pattern sourcePattern, Pattern targetPattern) {
+		
+		SymbolTable sourceVocab = getSourceVocab();
+		SymbolTable targetVocab = getTargetVocab();
+		
+		StringBuilder alignmentPoints = new StringBuilder();
+		
+		int sourceIndex = 0;
+		for (int sourceWord : sourcePattern.getWordIDs()) {
+			
+			if (sourceVocab.isNonterminal(sourceWord)) {
+				//TODO Do something special here
+				
+			} else {
+			
+				float max = sourceGivenTarget(sourceWord, null);
+				Integer bestTarget = null;
+				
+				int targetIndex = 0;
+				for (int targetWord : targetPattern.getWordIDs()) {
+					
+					if (! targetVocab.isNonterminal(targetWord)) {
+						float score = this.sourceGivenTarget(sourceWord, targetWord);
+						if (score > max) {
+							max = score;
+							bestTarget = targetWord;
+						}
+					}
+					
+					targetIndex += 1;
+				}
+				
+				
+				if (bestTarget != null) {
+					alignmentPoints.append(sourceIndex);
+					alignmentPoints.append('-');
+					alignmentPoints.append(targetIndex);
+					alignmentPoints.append(' ');
+				}
+			}
+		
+			sourceIndex += 1;
+		}
+		
+		return new AlignmentGrid(alignmentPoints.toString());
+	}
+	
 	/* See Javadoc for LexicalProbabilities#lexProbSourceGivenTarget(Pattern,Pattern). */
 	public float lexProbSourceGivenTarget(Pattern sourcePattern, Pattern targetPattern) {
 		

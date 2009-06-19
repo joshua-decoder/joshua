@@ -363,6 +363,14 @@ public class LexProbs extends AbstractLexProbs {
 		return s.toString();
 	}
 	
+	public SymbolTable getSourceVocab() {
+		return sourceVocab;
+	}
+	
+	public SymbolTable getTargetVocab() {
+		return targetVocab;
+	}
+	
 	/**
 	 * Gets the word co-occurrence counts for this object.
 	 * 

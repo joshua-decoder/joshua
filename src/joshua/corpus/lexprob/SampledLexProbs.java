@@ -550,5 +550,13 @@ public class SampledLexProbs extends AbstractLexProbs {
 	public float getFloorProbability() {
 		return floorProbability;
 	}
+	
+	public SymbolTable getSourceVocab() {
+		return sourceVocab;
+	}
+	
+	public SymbolTable getTargetVocab() {
+		return targetVocab;
+	}
 }
 

@@ -18,8 +18,10 @@
 package joshua.corpus.lexprob;
 
 import joshua.corpus.MatchedHierarchicalPhrases;
+import joshua.corpus.alignment.AlignmentGrid;
 import joshua.corpus.suffix_array.HierarchicalPhrase;
 import joshua.corpus.suffix_array.Pattern;
+import joshua.corpus.vocab.SymbolTable;
 
 /**
  * Represents lexical probability distributions in both directions.
@@ -109,7 +111,7 @@ public interface LexicalProbabilities {
 	 * 
 	 * @param sourcePattern Source language pattern
 	 * @param targetPattern Target language pattern
-	 * @return Gets the lexical translation probability 
+	 * @return The lexical translation probability 
 	 *         of a source pattern given a target pattern
 	 */
 	public float lexProbSourceGivenTarget(Pattern sourcePattern, Pattern targetPattern);
@@ -122,10 +124,42 @@ public interface LexicalProbabilities {
 	 * 
 	 * @param targetPattern Target language pattern
 	 * @param sourcePattern Source language pattern
-	 * @return Gets the lexical translation probability 
+	 * @return The lexical translation probability 
 	 *         of a target pattern given a source pattern
 	 */
 	public float lexProbTargetGivenSource(Pattern targetPattern, Pattern sourcePattern);
+	
+	/**
+	 * Gets the most likely (Viterbi) alignment between 
+	 * the words in the source pattern and the words in the target pattern,
+	 * as defined by the lexical translation probability distribution 
+	 * of source words given target words. 
+	 * 
+	 * @param sourcePattern Source language pattern
+	 * @param targetPattern Target language pattern
+	 * @return The most likely (Viterbi) alignment between 
+	 *         the words in the source pattern and 
+	 *         the words in the target pattern,
+	 *         as defined by the lexical translation probability distribution 
+	 *         of source words given target words
+	 */
+	public AlignmentGrid getSourceGivenTargetAlignments(Pattern sourcePattern, Pattern targetPattern); 
+	
+	/**
+	 * Gets the most likely (Viterbi) alignment between 
+	 * the words in the target pattern and the words in the source pattern,
+	 * as defined by the lexical translation probability distribution 
+	 * of target words given source words. 
+	 * 
+	 * @param targetPattern Target language pattern
+	 * @param sourcePattern Source language pattern
+	 * @return The most likely (Viterbi) alignment between 
+	 *         the words in the target pattern and 
+	 *         the words in the source pattern,
+	 *         as defined by the lexical translation probability distribution 
+	 *         of target words given source words
+	 */
+	public AlignmentGrid getTargetGivenSourceAlignments(Pattern targetPattern, Pattern sourcePattern); 
 	
 	/**
 	 * Gets the probability returned when no calculated lexical
@@ -135,4 +169,20 @@ public interface LexicalProbabilities {
 	 *         lexical translation probability is known
 	 */
 	float getFloorProbability();
+	
+	/**
+	 * Gets the symbol table for the source language.
+	 * This may well be the same table used for the target language.
+	 * 
+	 * @return The symbol table for the source language.
+	 */
+	SymbolTable getSourceVocab();
+	
+	/**
+	 * Gets the symbol table for the target language.
+	 * This may well be the same table used for the source language.
+	 * 
+	 * @return The symbol table for the target language.
+	 */
+	SymbolTable getTargetVocab();
 }

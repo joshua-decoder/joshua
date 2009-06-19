@@ -365,4 +365,33 @@ public abstract class AbstractHierarchicalPhrases implements
 		
 	}
 	
+	/* See Javadoc for PatternFormat interface. */
+	public boolean endsWithNonterminal() {
+		return getPattern().endsWithNonterminal();
+	}
+	
+	/* See Javadoc for PatternFormat interface. */
+	public boolean startsWithNonterminal() {
+		return getPattern().startsWithNonterminal();
+	}
+	
+	/* See Javadoc for PatternFormat interface. */
+	public boolean endsWithTwoTerminals() {
+		return getPattern().endsWithTwoTerminals();
+	}
+	
+	/* See Javadoc for PatternFormat interface. */
+	public boolean secondTokenIsTerminal() {
+		return getPattern().secondTokenIsTerminal();
+	}
+	
+	/**
+	 * Gets the number of nonterminals in this object's pattern.
+	 * 
+	 * @return the number of nonterminals
+	 */
+	public int arity() {
+		return getPattern().arity;
+	}
+	
 }

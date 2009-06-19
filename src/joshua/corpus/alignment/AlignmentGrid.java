@@ -106,7 +106,7 @@ public class AlignmentGrid implements Externalizable {
 
 	/**
 	 * Constructs a completely empty, utterly uninitialized
-	 * alignment grid, containing <emph>absolutely nothing</emph>.
+	 * alignment grid, containing <em>absolutely nothing</em>.
 	 * <p>
 	 * This constructor only exists to allow this class to be
 	 * properly <code>Externalizable</code>.
