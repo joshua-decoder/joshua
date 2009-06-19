@@ -20,6 +20,8 @@ package joshua.corpus.lexprob;
 import joshua.corpus.alignment.AlignmentGrid;
 import joshua.corpus.suffix_array.Pattern;
 import joshua.corpus.vocab.SymbolTable;
+import joshua.util.Lists;
+import joshua.util.Lists.IndexedInt;
 
 /**
  * Implements lexical probability methods 
@@ -37,8 +39,9 @@ public abstract class AbstractLexProbs implements LexicalProbabilities {
 		
 		StringBuilder alignmentPoints = new StringBuilder();
 		
-		int targetIndex = 0;
-		for (int targetWord : targetPattern.getWordIDs()) {
+		for (IndexedInt indexedTarget : Lists.eachWithIndex(targetPattern.getWordIDs())) {
+			final int targetWord = indexedTarget.getValue();
+			final int targetIndex = indexedTarget.getIndex();
 			
 			if (targetVocab.isNonterminal(targetWord)) {
 				//TODO Do something special here
@@ -46,25 +49,25 @@ public abstract class AbstractLexProbs implements LexicalProbabilities {
 			} else {
 				
 				float max = targetGivenSource(targetWord, null);
-				Integer bestSource = null;
+				Integer bestSourceIndex = null;
 				
-				int sourceIndex = 0;
-				for (int sourceWord : sourcePattern.getWordIDs()) {
+				for (IndexedInt indexedSource : Lists.eachWithIndex(sourcePattern.getWordIDs())) {	
+					int sourceWord = indexedSource.getValue();
+					int sourceIndex = indexedSource.getIndex();
 					
 					if (! sourceVocab.isNonterminal(sourceWord)) {
 						float score = this.targetGivenSource(targetWord, sourceWord);
 						if (score > max) {
 							max = score;
-							bestSource = sourceWord;
+							bestSourceIndex = sourceIndex;
 						}
 						
 					}
 					
-					sourceIndex += 1;
 				}
 				
-				if (bestSource != null) {
-					alignmentPoints.append(sourceIndex);
+				if (bestSourceIndex != null) {
+					alignmentPoints.append(bestSourceIndex);
 					alignmentPoints.append('-');
 					alignmentPoints.append(targetIndex);
 					alignmentPoints.append(' ');
@@ -72,7 +75,6 @@ public abstract class AbstractLexProbs implements LexicalProbabilities {
 				
 			}
 			
-			targetIndex += 1;
 		}
 		
 		return new AlignmentGrid(alignmentPoints.toString());
@@ -86,8 +88,9 @@ public abstract class AbstractLexProbs implements LexicalProbabilities {
 		
 		StringBuilder alignmentPoints = new StringBuilder();
 		
-		int sourceIndex = 0;
-		for (int sourceWord : sourcePattern.getWordIDs()) {
+		for (IndexedInt indexedSource : Lists.eachWithIndex(sourcePattern.getWordIDs())) {			
+			int sourceWord = indexedSource.getValue();
+			int sourceIndex = indexedSource.getIndex();
 			
 			if (sourceVocab.isNonterminal(sourceWord)) {
 				//TODO Do something special here
@@ -95,27 +98,27 @@ public abstract class AbstractLexProbs implements LexicalProbabilities {
 			} else {
 			
 				float max = sourceGivenTarget(sourceWord, null);
-				Integer bestTarget = null;
+				Integer bestTargetIndex = null;
 				
-				int targetIndex = 0;
-				for (int targetWord : targetPattern.getWordIDs()) {
+				for (IndexedInt indexedTarget : Lists.eachWithIndex(targetPattern.getWordIDs())) {				
+					int targetWord = indexedTarget.getValue();
+					int targetIndex = indexedTarget.getIndex();
 					
 					if (! targetVocab.isNonterminal(targetWord)) {
 						float score = this.sourceGivenTarget(sourceWord, targetWord);
 						if (score > max) {
 							max = score;
-							bestTarget = targetWord;
+							bestTargetIndex = targetIndex;
 						}
 					}
 					
-					targetIndex += 1;
 				}
 				
 				
-				if (bestTarget != null) {
+				if (bestTargetIndex != null) {
 					alignmentPoints.append(sourceIndex);
 					alignmentPoints.append('-');
-					alignmentPoints.append(targetIndex);
+					alignmentPoints.append(bestTargetIndex);
 					alignmentPoints.append(' ');
 				}
 			}

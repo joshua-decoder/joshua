@@ -369,171 +369,169 @@ public class Lists {
 		return eachWithIndex(iterable.iterator());
 	}
 	
-	
-}
+
+	public static class Index {
+		
+		int index;
+		
+		Index(int index) {
+			this.index = index;
+		}
+		
+		public int getIndex() {
+			return this.index;
+		}
+		
+		void setIndex(int index) {
+			this.index = index;
+		}
+	}
+
+	public static class IndexedBoolean extends Index {
+		
+		boolean value;
+		
+		IndexedBoolean(boolean value, int index) {
+			super(index);
+			this.value = value;
+		}
+		
+		public boolean getValue() {
+			return this.value;
+		}
+		
+		void setValue(boolean value) {
+			this.value = value;
+			this.index += 1;
+		}
+	}
+
+	public static class IndexedByte extends Index {
+		
+		byte value;
+		
+		IndexedByte(byte value, int index) {
+			super(index);
+			this.value = value;
+		}
+		
+		public byte getValue() {
+			return this.value;
+		}
+		
+		void setValue(byte value) {
+			this.value = value;
+			this.index += 1;
+		}
+	}
+
+	public static class IndexedShort extends Index {
+		
+		short value;
+		
+		IndexedShort(short value, int index) {
+			super(index);
+			this.value = value;
+		}
+		
+		public short getValue() {
+			return this.value;
+		}
+		
+		void setValue(short value) {
+			this.value = value;
+			this.index += 1;
+		}
+	}
+
+	public static class IndexedInt extends Index {
+		
+		int value;
+		
+		IndexedInt(int value, int index) {
+			super(index);
+			this.value = value;
+		}
+		
+		public int getValue() {
+			return this.value;
+		}
+		
+		void setValue(int value) {
+			this.value = value;
+			this.index += 1;
+		}
+	}
+
+	public static class IndexedLong extends Index {
+		
+		long value;
+		
+		IndexedLong(long value, int index) {
+			super(index);
+			this.value = value;
+		}
+		
+		public long getValue() {
+			return this.value;
+		}
+		
+		void setValue(long value) {
+			this.value = value;
+			this.index += 1;
+		}
+	}
+
+	public static class IndexedFloat extends Index {
+		
+		float value;
+		
+		IndexedFloat(float value, int index) {
+			super(index);
+			this.value = value;
+		}
+		
+		public float getValue() {
+			return this.value;
+		}
+		
+		void setValue(float value) {
+			this.value = value;
+			this.index += 1;
+		}
+	}
+
+	public static class IndexedDouble extends Index {
+		
+		double value;
+		
+		IndexedDouble(double value, int index) {
+			super(index);
+			this.value = value;
+		}
+		
+		public double getValue() {
+			return this.value;
+		}
+		
+		void setValue(double value) {
+			this.value = value;
+			this.index += 1;
+		}
+	}
 
 
-class Index {
-	
-	int index;
-	
-	Index(int index) {
-		this.index = index;
-	}
-	
-	public int getIndex() {
-		return this.index;
-	}
-	
-	void setIndex(int index) {
-		this.index = index;
-	}
-}
-
-class IndexedBoolean extends Index {
-	
-	boolean value;
-	
-	IndexedBoolean(boolean value, int index) {
-		super(index);
-		this.value = value;
-	}
-	
-	public boolean getValue() {
-		return this.value;
-	}
-	
-	void setValue(boolean value) {
-		this.value = value;
-		this.index += 1;
-	}
-}
-
-class IndexedByte extends Index {
-	
-	byte value;
-	
-	IndexedByte(byte value, int index) {
-		super(index);
-		this.value = value;
-	}
-	
-	public byte getValue() {
-		return this.value;
-	}
-	
-	void setValue(byte value) {
-		this.value = value;
-		this.index += 1;
-	}
-}
-
-class IndexedShort extends Index {
-	
-	short value;
-	
-	IndexedShort(short value, int index) {
-		super(index);
-		this.value = value;
-	}
-	
-	public short getValue() {
-		return this.value;
-	}
-	
-	void setValue(short value) {
-		this.value = value;
-		this.index += 1;
-	}
-}
-
-class IndexedInt extends Index {
-	
-	int value;
-	
-	IndexedInt(int value, int index) {
-		super(index);
-		this.value = value;
-	}
-	
-	public int getValue() {
-		return this.value;
-	}
-	
-	void setValue(int value) {
-		this.value = value;
-		this.index += 1;
-	}
-}
-
-class IndexedLong extends Index {
-	
-	long value;
-	
-	IndexedLong(long value, int index) {
-		super(index);
-		this.value = value;
-	}
-	
-	public long getValue() {
-		return this.value;
-	}
-	
-	void setValue(long value) {
-		this.value = value;
-		this.index += 1;
-	}
-}
-
-class IndexedFloat extends Index {
-	
-	float value;
-	
-	IndexedFloat(float value, int index) {
-		super(index);
-		this.value = value;
-	}
-	
-	public float getValue() {
-		return this.value;
-	}
-	
-	void setValue(float value) {
-		this.value = value;
-		this.index += 1;
-	}
-}
-
-class IndexedDouble extends Index {
-	
-	double value;
-	
-	IndexedDouble(double value, int index) {
-		super(index);
-		this.value = value;
-	}
-	
-	public double getValue() {
-		return this.value;
-	}
-	
-	void setValue(double value) {
-		this.value = value;
-		this.index += 1;
-	}
-}
-
-
-class Indexed<V> extends Index {
-	
-	V value;
-	
-	Indexed(V value, int index) {
-		super(index);
-		this.value = value;
-	}
-	
-	public V getValue() {
-		return this.value;
+	public static class Indexed<V> extends Index {
+		
+		V value;
+		
+		Indexed(V value, int index) {
+			super(index);
+			this.value = value;
+		}
+		
+		public V getValue() {
+			return this.value;
+		}
 	}
 }
