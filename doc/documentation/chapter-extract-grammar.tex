@@ -34,6 +34,30 @@ The raw grammar produced by {\tt ExtractRules} will almost certainly include dup
 sort -u -o src-tgt.grammar src-tgt.grammar.raw
 \end{verbatim}
 
+\section{Grammar Format}
+
+The grammar extracted by Joshua is a synchronous context free grammar. Each rule consists of a left-hand side nonterminal symbol, a source language right-hand side, a target language right-hand side, and feature values. The source language right-hand side consists of source language terminals, nonterminals, or a mix of terminals and nonterminals. The target language right-hand side likewise consists of target language terminals, nonterminals, or a mix of terminals and nonterminals. The major components of the rule (left-hand side, source right-hand side, target right-hand side, feature value collection) are delineated by three vertical bars $|||$. Any nonterminals that appear on the right-hand sides of the rules are co-indexed.
+
+The feature values currently included in the Joshua grammar rules are, in order:
+
+  \begin{itemize}
+  \item Translation model probability $p(e|f)$
+  \item Reverse lexical translation model probability $lex p(f|e)$
+  \item Lexical translation model probability $lex p(e|f)$
+  \end{itemize}
+
+An example grammar rule is shown below\footnote{In the grammar file, the above example rule would appear on only one line, not two. The characters $\backslash\backslash$ are used simply to indicate where the contents of the line continue onto the next line (because this page is not wide enough to display the text on one line).}:
+
+\begin{verbatim}
+[X] ||| am meisten [X,1] bei [X,2] ||| most [X,1] for [X,2] ||| \\
+          0.47712126 3.9386206 1.8700459
+\end{verbatim}
+
+
+
+
+
+
 \section{Compare Grammars}
 
 Once a grammar has been extracted, it may be useful to compare it to another grammar. A typical use case may be comparing two grammars that were extracted from the same corpus by different tools.
