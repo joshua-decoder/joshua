@@ -133,9 +133,10 @@
     </classes>
   </test>
   
-  <test name="BinaryFiles">
+  <test name="Binary Data">
     <classes>
       <class name="joshua.util.io.BinaryTest" />
+      <class name="joshua.util.BitsTest" />
     </classes>
   </test>
 
@@ -143,6 +144,12 @@
   <test name="Language Model">
     <classes>
       <class name="joshua.decoder.ff.lm.ArpaFileTest" />
+    </classes>  
+  </test>
+
+  <test name="Frequent Phrases">
+    <classes>
+      <class name="joshua.corpus.suffix_array.FrequentClassesTest" />
     </classes>  
   </test>
 

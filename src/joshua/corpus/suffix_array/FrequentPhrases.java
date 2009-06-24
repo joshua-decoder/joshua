@@ -20,13 +20,14 @@ package joshua.corpus.suffix_array;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.util.Collections;
-import java.util.Comparator;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
+import java.util.Set;
 import java.util.SortedSet;
 import java.util.Stack;
 import java.util.logging.Level;
@@ -40,7 +41,6 @@ import joshua.corpus.suffix_array.mm.MemoryMappedSuffixArray;
 import joshua.corpus.vocab.Vocabulary;
 import joshua.util.Cache;
 import joshua.util.Counted;
-import joshua.util.ReverseOrder;
 import joshua.util.io.BinaryIn;
 
 /**
@@ -484,6 +484,7 @@ public class FrequentPhrases {
 		return ranks;
 	}
 	
+
 	/**
 	 * Calculates the most frequent phrases in the corpus.
 	 * <p>
@@ -510,21 +511,110 @@ public class FrequentPhrases {
 	 *         
 	 * @see "Yamamoto and Church (2001), section 2.5"
 	 */
+	@SuppressWarnings("unchecked")
 	protected static LinkedHashMap<Phrase,Integer> getMostFrequentPhrases(
 			Suffixes suffixes,
 			int minFrequency,
 			int maxPhrases,
 			int maxPhraseLength
 	) {
-
-//		LinkedList<Phrase> phrases = new LinkedList<Phrase>();
-//		LinkedList<Integer> frequencies = new LinkedList<Integer>();
-//		Comparator<Integer> comparator = new ReverseOrder<Integer>();
-
+		
 		PriorityQueue<Counted<Phrase>> frequentPhrases = new PriorityQueue<Counted<Phrase>>();
+		Set<Integer> prunedFrequencies = new HashSet<Integer>();
+		
+		Corpus corpus = suffixes.getCorpus();
+		
+		FrequencyClasses frequencyClasses = getFrequencyClasses(suffixes);
+		
+		for (FrequencyClass frequencyClass : frequencyClasses.withMinimumFrequency(minFrequency)) {
+			
+			int frequency = frequencyClass.getFrequency();
+			
+			if (! prunedFrequencies.contains(frequency)) {
+				
+				int i = frequencyClass.getIntervalStart();
+				int startOfPhrase = suffixes.getCorpusIndex(i);
+				int sentenceNumber = suffixes.getSentenceIndex(startOfPhrase);
+				int endOfSentence = suffixes.getSentencePosition(sentenceNumber+1);
+				
+				int max = Math.min(maxPhraseLength, endOfSentence-startOfPhrase);
+				if (logger.isLoggable(Level.FINER)) logger.finer("Max phrase length is " + max + " for " + frequencyClass.toString());
+				
+				for (int phraseLength : frequencyClass.validPhraseLengths(max)) {
+					
+					int endOfPhrase = startOfPhrase + phraseLength;
+					
+					Phrase phrase = new ContiguousPhrase(
+							startOfPhrase, 
+							endOfPhrase, 
+							corpus);
+					
+					frequentPhrases.add(new Counted<Phrase>(phrase, frequency));
+					if (frequentPhrases.size() > maxPhrases) {
+						Counted<Phrase> pruned = frequentPhrases.poll();
+						int prunedFrequency = pruned.getCount();
+						prunedFrequencies.add(prunedFrequency);
+						if (logger.isLoggable(Level.FINER)) logger.info("Pruned " + pruned.getElement() + " with frequency " + prunedFrequency);
+						break;
+					}
+					
+				}
+			} else if (logger.isLoggable(Level.FINER)) {
+				logger.finer("Skipping pruned frequency " + frequency);
+			}
+		}
+
+		while (! frequentPhrases.isEmpty() && prunedFrequencies.contains(frequentPhrases.peek().getCount())) {
+			Counted<Phrase> pruned = frequentPhrases.poll();
+			if (logger.isLoggable(Level.FINER)) logger.finer("Pruned " + pruned.getElement() + " " + pruned.getCount());
+		}
+		
+		Counted<Phrase>[] reverse = new Counted[frequentPhrases.size()];
+		{
+			int i=frequentPhrases.size()-1;
+			while (! frequentPhrases.isEmpty()) {
+				reverse[i] = frequentPhrases.poll();
+				i -= 1;
+			}
+		}
+		
+		LinkedHashMap<Phrase,Integer> results = new LinkedHashMap<Phrase,Integer>();
+		for (Counted<Phrase> countedPhrase : reverse) {
+			Phrase phrase = countedPhrase.getElement();
+			Integer count = countedPhrase.getCount();
+			results.put(phrase, count);
+		}
+//		
+//		while (! frequentPhrases.isEmpty()) {
+//			Counted<Phrase> countedPhrase = frequentPhrases.poll();
+//			Phrase phrase = countedPhrase.getElement();
+//			Integer count = countedPhrase.getCount();
+//			results.put(phrase, count);
+//		}
+//		
+		return results;
+		
+	}
+	
+	/**
+	 * Calculates the frequencies for 
+	 * all phrase frequency classes in the corpus.
+	 * <p>
+	 * This method is implements the 
+	 * <code>print_LDIs_stack</code> function defined in 
+	 * section 2.5 of Yamamoto and Church.
+	 *
+	 * @param suffixes a suffix array for the corpus
+	 * @return A list of term frequency classes
+	 *         
+	 * @see "Yamamoto and Church (2001), section 2.5"
+	 */
+	protected static FrequencyClasses getFrequencyClasses(Suffixes suffixes) {
 		
 		// calculate the longest common prefix delimited intervals...
 		int[] longestCommonPrefixes = calculateLongestCommonPrefixes(suffixes);
+
+		FrequencyClasses frequencyClasses = new FrequencyClasses(longestCommonPrefixes);
 		
 		// stack_i <-- an integer array for the stack of left edges, i
 		Stack<Integer> startIndices = new Stack<Integer>();
@@ -545,22 +635,29 @@ public class FrequentPhrases {
 			
 			// Output an lcp-delimited interval <j,j> with tf=1
 			//        (trivial interval i==j, frequency=1)
-			logger.info("Output an lcp-delimited interval <"+j+","+j+"> with tf=1");
-			recordPhraseFrequencies(suffixes,
-					longestCommonPrefixes, j, j, 0, minFrequency, maxPhrases,
-					maxPhraseLength, frequentPhrases);
-			
+			if (logger.isLoggable(Level.FINE)) logger.fine("Output trivial interval <"+j+","+j+"> with tf=1");
+			frequencyClasses.record(j);
+			//frequencyClasses.record(j, j, Integer.MAX_VALUE, 1);
+
 			// While lcp[j+1] < lcp[stack_k[sp-1]] do
 			while (longestCommonPrefixes[j+1] < longestCommonPrefixes[shortestInteriorLCPIndices.peek()]) {
+							
+				int i = startIndices.pop();
+				int k = shortestInteriorLCPIndices.pop();
 				
+				int longestBoundingLCP = Math.max(longestCommonPrefixes[i], longestCommonPrefixes[j+1]);
+				int shortestInteriorLCP = longestCommonPrefixes[k];
+
 				// Output an interval <i,j> with tf=j-i+1, if it is lcp-delimited
 				//                    (non-trivial interval)
 				// sp <-- sp - 1
-				int i = startIndices.pop();
-				int k = shortestInteriorLCPIndices.pop();
-				logger.info("Output an lcp-delimited interval <"+i+","+j+"> with tf="+(j-i+1)+" and k="+k);
-				recordPhraseFrequencies(suffixes, longestCommonPrefixes, i, j, k,
-						minFrequency, maxPhrases, maxPhraseLength, frequentPhrases);
+				if (longestBoundingLCP < shortestInteriorLCP) {
+	
+					int frequency = j-i+1;
+					if (logger.isLoggable(Level.FINE)) logger.fine("Output interval <"+i+","+j+"> with k="+k+" and tf="+j+"-"+i+"+1="+(j-i+1));
+					frequencyClasses.record(i, j, k, frequency);	
+				}
+				
 			}
 			
 			// stack_i[sp] <-- stack_k[sp-1]
@@ -571,50 +668,12 @@ public class FrequentPhrases {
 
 			// sp <-- sp + 1
 
-			
-			// trim the lists if they're too long...
-//			if (phrases.size() > maxPhrases) {
-//				int frequency = frequencies.get(maxPhrases);
-//				int cutPoint = maxPhrases;
-//				if (phrases.size() >= maxPhrases
-//						&& frequency == frequencies.get(maxPhrases)) {
-//					cutPoint = Collections.binarySearch(frequencies, frequency, comparator);
-//					if (cutPoint < 0) {
-//						cutPoint = -1 * cutPoint;
-//						cutPoint--;
-//					}
-//					while (cutPoint > 0 && frequencies.get(cutPoint-1) == frequency) {
-//						cutPoint--;
-//					}
-//				}
-//				// ccb - not sure why the subList operation didn't carry over outside this method...
-//				//phrases = phrases.subList(0, cutPoint);
-//				//frequencies = frequencies.subList(0, cutPoint);
-//				// for now it seems that we have to explicity remove the elements. 
-//				for (int i = phrases.size()-1; i >= cutPoint; i--) {
-//					phrases.removeLast();
-//					frequencies.removeLast();
-//					//					phrases.remove(i);
-//					//					frequencies.remove(i);
-//				}
-//			}
-		}
-
-		LinkedHashMap<Phrase,Integer> results = new LinkedHashMap<Phrase,Integer>();
-
-		while (! frequentPhrases.isEmpty()) {
-			Counted<Phrase> countedPhrase = frequentPhrases.poll();
-			results.put(countedPhrase.getElement(), countedPhrase.getCount());
 		}
 		
-//		for (int i=phrases.size(); i>0; i--) {
-//			Phrase phrase = phrases.removeFirst();
-//			Integer frequency = frequencies.removeFirst();			
-//			results.put(phrase, frequency);
-//		}
-
-		return results;
+		return frequencyClasses;
 	}
+			
+
 
 	/**
 	 * Constructs an auxiliary array that stores longest common
@@ -652,242 +711,60 @@ public class FrequentPhrases {
 
 	}
 	
-	/**
-	 * This method extracts phrases which reach the specified
-	 * minimum frequency. It uses the equivalency classes for
-	 * substrings in the interval i-j in the suffix array, as
-	 * defined in section 2.3 of the the Yamamoto and Church
-	 * CL article. This is a helper function for the
-	 * getMostFrequentPhrases method.
-	 * 
-	 * @param suffixes Suffix array
-	 * @param longestCommonPrefixes Longest common prefix array
-	 * @param i Index specifying a starting range in the suffix array
-	 * @param j Index specifying an ending range in the suffix array
-	 * @param k Index specifying a representative value of the range,
-	 *          such that i < k <= j, and such that longestCommonPrefixes[k]
-	 *          is the shortest interior longest common prefix of the range 
-	 *          (see section 2.5 of Yamamoto and Church)
-	 * @param minFrequency Minimum frequency that a phrase 
-	 *                     must have in order to be recorded
-	 * @param maxPhrases Maximum number of phrases to record
-	 * @param maxPhraseLength Maximum phrase length to consider; 
-	 *                        phrases longer than this will not be recorded
-	 * @param frequentPhrases TODO
-	 */
-	protected static void recordPhraseFrequencies(
-			Suffixes            suffixes,
-			int[]               longestCommonPrefixes,
-			int                 i,
-			int                 j,
-			int                 k,
-			int                 minFrequency,
-			int                 maxPhrases,
-			int                 maxPhraseLength,
-			PriorityQueue<Counted<Phrase>> frequentPhrases
-	) {
-		Corpus corpus = suffixes.getCorpus();
-		
-		// Longest bounding LCP is defined in section 2.3 of Yamamoto & Church:
-		//         LBL(<i,j>) = max(lcp[i], lcp[j+1])
-		//
-		// However, Math.max is slow when called a lot
-		//        , so we use an ternary if..then instead
-		int longestBoundingLCP = 
-			(longestCommonPrefixes[i] > longestCommonPrefixes[j+1]) 
-			? longestCommonPrefixes[i] 
-			: longestCommonPrefixes[j+1];
-			
-			
-		{
-			int startIndex = suffixes.getCorpusIndex(i);
-			int sentenceNumber = suffixes.getSentenceIndex(startIndex);
-			int endOfSentence = suffixes.getSentencePosition(sentenceNumber+1);
-			
-		// A trivial interval is defined in section 2.3 of Yamamoto & Church
-		//   to be an interval that starts and ends in the same place (i==j) 
-		if (i==j) {
-			
-			// The phrases in a trivial class(<i,i>) are:
-			//
-			// 	s[i]_m is defined to be the phrase of length m 
-			//        located at position i in the suffix array
-			//
-			// class(<i,i>) = {s[i]_m | LBL(<i,i>) < m }
-			//
-			// In other words, class(<i,i>) is the set of phrases
-			//  such that each phrase begins at position i in the suffix array,
-			//  and is strictly shorter than LBL(<i,i>)
-			
-			// Trivial classes tend to be large,
-			// and the phrases in such classes have frequency==1
-			
-			if (minFrequency <= 1) {
-
-				int frequency = 1;
-				
-				for (int m=1, endM=endOfSentence - startIndex; 
-						m<=maxPhraseLength && m<longestBoundingLCP && m<=endM; m++) {
-
-					int endIndex = startIndex + m;
-					Phrase phrase = new ContiguousPhrase(startIndex, endIndex, corpus);
-					
-					if (m > maxPhraseLength && logger.isLoggable(Level.WARNING)) {
-						logger.warning("Recording frequency for phrase \"" + phrase + "\" that is longer than maxLength " + maxPhraseLength);
-					}
-					
-					logger.info("Adding     trivial phrase + '" + phrase + "' with frequency " + frequency + " and length " + m);
-					frequentPhrases.add(new Counted<Phrase>(phrase, frequency));
-					while (frequentPhrases.size() > maxPhrases) {
-						// Remove elements that we don't have space for
-						frequentPhrases.poll();
-					}
-				}
-			} else if (logger.isLoggable(Level.INFO)) {
-				
-				logger.info("Not getting phrases for trivial class class(<"+i+","+i+">) because minFrequency " + minFrequency + " < 1");
-				
-			}
-			
-		} else {
-			
-			// Shortest interior LCP is defined in section 2.3 of Yamamoto & Church:
-			//         SIL(<i,j>) = min(lcp[i+1], lcp[i+2], ... , lcp[j])
-			// 
-			// Section 2.5 of Yamamoto & Church further defines k such that
-			//         i < k <= j and lcp[k] = SIL(<i,j>)
-			int shortestInteriorLCP = longestCommonPrefixes[k];
-			
-			// A class(<i,j>) is lcp-delimited iff LBL(<i,j>) < SIL(<i,j>)
-			if (longestBoundingLCP < shortestInteriorLCP) {
-				
-				// The frequency of all phrases in this class is defined to be:
-				int frequency = j - 1 + 1;
-				
-				if (frequency < minFrequency) {
-					
-					// We are not recording phrases 
-					//    less frequent than minFrequency,
-					//    so don't do anything in this case.
-					
-					if (logger.isLoggable(Level.FINER)) {
-						logger.finer("Not recording phrases for class(<"+i+","+j+">) with frequency " + frequency);
-					}
-					
-				} else {
-					
-					// Now that LBL(<i,j>) and SIL(<i,j>) have been defined,
-					//     section 2.3 of Yamamoto & Church defines class(<i,j>)
-					//     as a set of phrases which share the same frequency:
-					//
-					// s[i]_m is defined to be the phrase of length m 
-					//        located at position i in the suffix array
-					//
-					// class(<i,j>) = { s[i]_m | LBL(<i,j>) < m <= SIL(<i,j>) }
-					//
-					// In other words, 
-					//    class(<i,j>) is the set of phrases such that
-					//    each phrase begins at position i in the suffix array,
-					//    is strictly longer than LBL<i,j>, and 
-					//    is no longer than SIL(<i,j>)
-					
-					for (int m=longestBoundingLCP+1, 
-							endM=endOfSentence - startIndex; 
-							m<=maxPhraseLength && m<=shortestInteriorLCP && m<=endM; m++) {
-						
-						int endIndex = startIndex + m;
-						Phrase phrase = new ContiguousPhrase(startIndex, endIndex, corpus);
-						
-						logger.info("<"+i+","+j+"> Adding non-trivial phrase + '" + phrase + "' with frequency " + frequency + " and length " + m);
-						frequentPhrases.add(new Counted<Phrase>(phrase, frequency));
-						while (frequentPhrases.size() > maxPhrases) {
-							// Remove elements that we don't have space for
-							frequentPhrases.poll();
-						}
-						
-						
-					}
-					
-				}
-				
-			} else {
-				
-				// The class(<i,j>) is defined to be empty
-				//     unless LBL(<i,j>) < SIL(<i,j>)
-				//
-				// That is not true here, 
-				//     so don't add any phrases in this case.
-				
-			}
-			
-			
-		}}
-		
-//		{
-//		// Shortest interior LCP is defined in section 2.3 of Yamamoto & Church:
-//		//         SIL(<i,j>) = min(lcp[i+1], lcp[i+2], ... , lcp[j])
-//		// 
-//		// Section 2.5 of Yamamoto & Church further defines k such that
-//		//         i < k <= j and lcp[k] = SIL(<i,j>)
-//		int shortestInteriorLCP = longestCommonPrefixes[k];
+//	/**
+//	 * This method extracts phrases which reach the specified
+//	 * minimum frequency. It uses the equivalency classes for
+//	 * substrings in the interval i-j in the suffix array, as
+//	 * defined in section 2.3 of the the Yamamoto and Church
+//	 * CL article. This is a helper function for the
+//	 * getMostFrequentPhrases method.
+//	 * 
+//	 * @param suffixes Suffix array
+//	 * @param longestCommonPrefixes Longest common prefix array
+//	 * @param i Index specifying a starting range in the suffix array
+//	 * @param j Index specifying an ending range in the suffix array
+//	 * @param k Index specifying a representative value of the range,
+//	 *          such that i < k <= j, and such that longestCommonPrefixes[k]
+//	 *          is the shortest interior longest common prefix of the range 
+//	 *          (see section 2.5 of Yamamoto and Church)
+//	 * @param phrases
+//	 * @param frequencies
+//	 * @param minFrequency
+//	 * @param maxPhrases
+//	 * @param maxPhraseLength
+//	 * @param comparator
+//	 */
+//	protected static void recordPhraseFrequencies(
+//			Suffixes            suffixes,
+//			int[]               longestCommonPrefixes,
+//			int                 i,
+//			int                 j,
+//			int                 k,
+//			List<Phrase>        phrases,
+//			List<Integer>       frequencies,
+//			int                 minFrequency,
+//			int                 maxPhrases,
+//			int                 maxPhraseLength,
+//			Comparator<Integer> comparator
+//	) {
 //		
-//		if(shortestInteriorLCP == 0) {
-//			shortestInteriorLCP = suffixes.size() - suffixes.getCorpusIndex(i);
-//		}
+//		if (i==j) {
+//			logger.info("Output trivial interval <"+j+","+j+"> with k="+k+" and tf=1");
+//		} else {
 //
+//			int LBL = Math.max(longestCommonPrefixes[i], longestCommonPrefixes[j+1]);
+//			int SIL = longestCommonPrefixes[k];
 //
-//		
-//		
-//		int frequency = 0;
-//		if (i == j) {
-//			frequency = 1;
-//		} else if (longestBoundingLCP < shortestInteriorLCP) {
-//			frequency = j-i+1;
-//		}
-//
-//		// increment the phrase frequencies, if we're above
-//		// the frequency threshold...
-//		if (frequency >= minFrequency) {
-//			int position = Collections.binarySearch(frequencies, frequency, comparator);
-//			if (position < 0) {
-//				position = -1 * position;
-//				position--;
-//			}
-//
-//
-//			// only increment if we've not already filled out the phrases
-//			// with phrases with higher frequencies...
-//			if (position < maxPhrases) {
-//				int startIndex = suffixes.getCorpusIndex(i);
-//				int sentenceNumber = suffixes.getSentenceIndex(startIndex);
-//				int endOfSentence = suffixes.getSentencePosition(sentenceNumber+1);
-//				int distanceToEndOfSentence = endOfSentence-startIndex;
-//				int maxLength = Math.min(shortestInteriorLCP-1, distanceToEndOfSentence); //(shortestInteriorLCP-1 < distanceToEndOfSentence) ? shortestInteriorLCP-1 : distanceToEndOfSentence;//
-//				maxLength = Math.min(maxLength, maxPhraseLength); //(maxLength<maxPhraseLength) ? maxLength : maxPhraseLength; //
-//
-////				if (maxLength<1 && logger.isLoggable(Level.WARNING)) {
-////					logger.warning("maxLength = " +maxLength + " < 1");
-////				}
-//				
-//				// ccb - should this be < maxLength or <= maxLength
-//				for(int length = longestBoundingLCP; length <= maxLength; length++) {
-//					int endIndex = startIndex + length+1;
-//					Phrase phrase = new ContiguousPhrase(startIndex, endIndex, corpus);
-//					if (endIndex-startIndex > maxLength && logger.isLoggable(Level.WARNING)) {
-//						logger.warning("Recording frequency for phrase \"" + phrase + "\" that is longer than maxLength " + maxLength);
-//					}
-//					phrases.add(position, phrase);
-//					frequencies.add(position, frequency);
-//					position++;
-//				}
+//			if (LBL < SIL) {
+//				logger.info("Output interval <"+i+","+j+"> with k="+k+" and tf="+j+"-"+i+"+1="+(j-i+1));				
+//			} else {
+//				logger.info("Interval <"+i+","+j+"> is NOT lcp-delimited, because " + LBL + " not < " +SIL);
 //			}
 //		}
-//		}
-	}
-
-
-
-
+//	}
+	
+	
+	
 
 
 
@@ -1077,5 +954,6 @@ public class FrequentPhrases {
 
 
 	}
-
+	
 }
+
