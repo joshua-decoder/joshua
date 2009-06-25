@@ -383,7 +383,7 @@ public class FrequentPhrases {
 				int position1 = positions.get(0);
 				// deque the first element and
 				// calculate its collocations...
-				while ((position1+windowSize < currentPosition)
+				while (((currentPosition+1==endOfCorpus) || (windowSize <= currentPosition-position1))
 						&& phrasesInWindow.size() > 0) {
 
 					if (logger.isLoggable(Level.FINEST)) logger.finest("OUTSIDE OF WINDOW: " + position1 + " " +  currentPosition + " " + windowSize);
