@@ -890,6 +890,8 @@ public class FrequentClassesTest {
 	@Test(dependsOnMethods = {"setup"})
 	public void simpleCollocationCount() {
 
+		short minNonterminalSpan = 0;
+		
 		{ // Use an essentially infinite window
 			
 			int maxPhraseLength = 1;
@@ -902,7 +904,7 @@ public class FrequentClassesTest {
 				FrequentPhrases frequentToBePhrases = new FrequentPhrases(suffixToBe, minFrequency, maxPhrases, maxPhraseLength);
 				Assert.assertNotNull(frequentToBePhrases);
 
-				int count = frequentToBePhrases.countCollocations(maxPhraseLength, windowSize);
+				int count = frequentToBePhrases.countCollocations(maxPhraseLength, windowSize, minNonterminalSpan);
 				Assert.assertTrue(count == 0);
 				Assert.assertEquals(count, 0);
 
@@ -914,7 +916,7 @@ public class FrequentClassesTest {
 				FrequentPhrases frequentToBePhrases = new FrequentPhrases(suffixToBe, minFrequency, maxPhrases, maxPhraseLength);
 				Assert.assertNotNull(frequentToBePhrases);
 
-				int count = frequentToBePhrases.countCollocations(maxPhraseLength, windowSize);
+				int count = frequentToBePhrases.countCollocations(maxPhraseLength, windowSize, minNonterminalSpan);
 				Assert.assertFalse(count == 0);
 				Assert.assertEquals(count, 10);
 
@@ -926,7 +928,7 @@ public class FrequentClassesTest {
 				FrequentPhrases frequentToBePhrases = new FrequentPhrases(suffixToBe, minFrequency, maxPhrases, maxPhraseLength);
 				Assert.assertNotNull(frequentToBePhrases);
 
-				int count = frequentToBePhrases.countCollocations(maxPhraseLength, windowSize);
+				int count = frequentToBePhrases.countCollocations(maxPhraseLength, windowSize, minNonterminalSpan);
 				Assert.assertFalse(count == 0);
 				Assert.assertEquals(count, 36);
 
@@ -938,7 +940,7 @@ public class FrequentClassesTest {
 				FrequentPhrases frequentToBePhrases = new FrequentPhrases(suffixToBe, minFrequency, maxPhrases, maxPhraseLength);
 				Assert.assertNotNull(frequentToBePhrases);
 
-				int count = frequentToBePhrases.countCollocations(maxPhraseLength, windowSize);
+				int count = frequentToBePhrases.countCollocations(maxPhraseLength, windowSize, minNonterminalSpan);
 				Assert.assertFalse(count == 0);
 				Assert.assertEquals(count, 66);
 
@@ -950,7 +952,7 @@ public class FrequentClassesTest {
 				FrequentPhrases frequentToBePhrases = new FrequentPhrases(suffixToBe, minFrequency, maxPhrases, maxPhraseLength);
 				Assert.assertNotNull(frequentToBePhrases);
 
-				int count = frequentToBePhrases.countCollocations(maxPhraseLength, windowSize);
+				int count = frequentToBePhrases.countCollocations(maxPhraseLength, windowSize, minNonterminalSpan);
 				Assert.assertFalse(count == 0);
 				Assert.assertEquals(count, 120);
 
@@ -962,7 +964,7 @@ public class FrequentClassesTest {
 				FrequentPhrases frequentToBePhrases = new FrequentPhrases(suffixToBe, minFrequency, maxPhrases, maxPhraseLength);
 				Assert.assertNotNull(frequentToBePhrases);
 
-				int count = frequentToBePhrases.countCollocations(maxPhraseLength, windowSize);
+				int count = frequentToBePhrases.countCollocations(maxPhraseLength, windowSize, minNonterminalSpan);
 				Assert.assertFalse(count == 0);
 				Assert.assertEquals(count, 153);
 
@@ -974,7 +976,7 @@ public class FrequentClassesTest {
 				FrequentPhrases frequentToBePhrases = new FrequentPhrases(suffixToBe, minFrequency, maxPhrases, maxPhraseLength);
 				Assert.assertNotNull(frequentToBePhrases);
 
-				int count = frequentToBePhrases.countCollocations(maxPhraseLength, windowSize);
+				int count = frequentToBePhrases.countCollocations(maxPhraseLength, windowSize, minNonterminalSpan);
 				Assert.assertFalse(count == 0);
 				Assert.assertEquals(count, 153);
 
@@ -995,7 +997,7 @@ public class FrequentClassesTest {
 				FrequentPhrases frequentToBePhrases = new FrequentPhrases(suffixToBe, minFrequency, maxPhrases, maxPhraseLength);
 				Assert.assertNotNull(frequentToBePhrases);
 
-				int count = frequentToBePhrases.countCollocations(maxPhraseLength, windowSize);
+				int count = frequentToBePhrases.countCollocations(maxPhraseLength, windowSize, minNonterminalSpan);
 				Assert.assertTrue(count == 0);
 				Assert.assertEquals(count, 0);
 
@@ -1007,7 +1009,7 @@ public class FrequentClassesTest {
 				FrequentPhrases frequentToBePhrases = new FrequentPhrases(suffixToBe, minFrequency, maxPhrases, maxPhraseLength);
 				Assert.assertNotNull(frequentToBePhrases);
 
-				int count = frequentToBePhrases.countCollocations(maxPhraseLength, windowSize);
+				int count = frequentToBePhrases.countCollocations(maxPhraseLength, windowSize, minNonterminalSpan);
 				Assert.assertTrue(count == 0);
 				Assert.assertEquals(count, 0);
 
@@ -1019,7 +1021,7 @@ public class FrequentClassesTest {
 				FrequentPhrases frequentToBePhrases = new FrequentPhrases(suffixToBe, minFrequency, maxPhrases, maxPhraseLength);
 				Assert.assertNotNull(frequentToBePhrases);
 
-				int count = frequentToBePhrases.countCollocations(maxPhraseLength, windowSize);
+				int count = frequentToBePhrases.countCollocations(maxPhraseLength, windowSize, minNonterminalSpan);
 				Assert.assertFalse(count == 0);
 				Assert.assertEquals(count, 3);
 
@@ -1031,7 +1033,7 @@ public class FrequentClassesTest {
 				FrequentPhrases frequentToBePhrases = new FrequentPhrases(suffixToBe, minFrequency, maxPhrases, maxPhraseLength);
 				Assert.assertNotNull(frequentToBePhrases);
 
-				int count = frequentToBePhrases.countCollocations(maxPhraseLength, windowSize);
+				int count = frequentToBePhrases.countCollocations(maxPhraseLength, windowSize, minNonterminalSpan);
 				Assert.assertFalse(count == 0);
 				Assert.assertEquals(count, 8);
 
@@ -1043,7 +1045,7 @@ public class FrequentClassesTest {
 				FrequentPhrases frequentToBePhrases = new FrequentPhrases(suffixToBe, minFrequency, maxPhrases, maxPhraseLength);
 				Assert.assertNotNull(frequentToBePhrases);
 
-				int count = frequentToBePhrases.countCollocations(maxPhraseLength, windowSize);
+				int count = frequentToBePhrases.countCollocations(maxPhraseLength, windowSize, minNonterminalSpan);
 				Assert.assertFalse(count == 0);
 				Assert.assertEquals(count, 13);
 
@@ -1055,7 +1057,7 @@ public class FrequentClassesTest {
 				FrequentPhrases frequentToBePhrases = new FrequentPhrases(suffixToBe, minFrequency, maxPhrases, maxPhraseLength);
 				Assert.assertNotNull(frequentToBePhrases);
 
-				int count = frequentToBePhrases.countCollocations(maxPhraseLength, windowSize);
+				int count = frequentToBePhrases.countCollocations(maxPhraseLength, windowSize, minNonterminalSpan);
 				Assert.assertFalse(count == 0);
 				Assert.assertEquals(count, 17);
 
@@ -1067,7 +1069,7 @@ public class FrequentClassesTest {
 				FrequentPhrases frequentToBePhrases = new FrequentPhrases(suffixToBe, minFrequency, maxPhrases, maxPhraseLength);
 				Assert.assertNotNull(frequentToBePhrases);
 
-				int count = frequentToBePhrases.countCollocations(maxPhraseLength, windowSize);
+				int count = frequentToBePhrases.countCollocations(maxPhraseLength, windowSize, minNonterminalSpan);
 				Assert.assertFalse(count == 0);
 				Assert.assertEquals(count, 17);
 
@@ -1075,6 +1077,7 @@ public class FrequentClassesTest {
 		}
 		
 		{ // Use a reasonable window
+		  // The expected values were worked out by hand, painfully.
 			
 			int maxPhraseLength = 1;
 			short maxPhrases = Short.MAX_VALUE;
@@ -1086,7 +1089,7 @@ public class FrequentClassesTest {
 				FrequentPhrases frequentToBePhrases = new FrequentPhrases(suffixToBe, minFrequency, maxPhrases, maxPhraseLength);
 				Assert.assertNotNull(frequentToBePhrases);
 
-				int count = frequentToBePhrases.countCollocations(maxPhraseLength, windowSize);
+				int count = frequentToBePhrases.countCollocations(maxPhraseLength, windowSize, minNonterminalSpan);
 				Assert.assertTrue(count == 0);
 				Assert.assertEquals(count, 0);
 
@@ -1098,7 +1101,7 @@ public class FrequentClassesTest {
 				FrequentPhrases frequentToBePhrases = new FrequentPhrases(suffixToBe, minFrequency, maxPhrases, maxPhraseLength);
 				Assert.assertNotNull(frequentToBePhrases);
 
-				int count = frequentToBePhrases.countCollocations(maxPhraseLength, windowSize);
+				int count = frequentToBePhrases.countCollocations(maxPhraseLength, windowSize, minNonterminalSpan);
 				Assert.assertFalse(count == 0);
 				Assert.assertEquals(count, 4);
 
@@ -1110,7 +1113,7 @@ public class FrequentClassesTest {
 				FrequentPhrases frequentToBePhrases = new FrequentPhrases(suffixToBe, minFrequency, maxPhrases, maxPhraseLength);
 				Assert.assertNotNull(frequentToBePhrases);
 
-				int count = frequentToBePhrases.countCollocations(maxPhraseLength, windowSize);
+				int count = frequentToBePhrases.countCollocations(maxPhraseLength, windowSize, minNonterminalSpan);
 				Assert.assertFalse(count == 0);
 				Assert.assertEquals(count, 3+2+3+2+2+3+2+1);
 
@@ -1122,7 +1125,7 @@ public class FrequentClassesTest {
 				FrequentPhrases frequentToBePhrases = new FrequentPhrases(suffixToBe, minFrequency, maxPhrases, maxPhraseLength);
 				Assert.assertNotNull(frequentToBePhrases);
 
-				int count = frequentToBePhrases.countCollocations(maxPhraseLength, windowSize);
+				int count = frequentToBePhrases.countCollocations(maxPhraseLength, windowSize, minNonterminalSpan);
 				Assert.assertFalse(count == 0);
 				Assert.assertEquals(count, 3+3+2 + 3+3 + 4 + 5 + 4+3+2+1);
 
@@ -1134,7 +1137,7 @@ public class FrequentClassesTest {
 				FrequentPhrases frequentToBePhrases = new FrequentPhrases(suffixToBe, minFrequency, maxPhrases, maxPhraseLength);
 				Assert.assertNotNull(frequentToBePhrases);
 
-				int count = frequentToBePhrases.countCollocations(maxPhraseLength, windowSize);
+				int count = frequentToBePhrases.countCollocations(maxPhraseLength, windowSize, minNonterminalSpan);
 				Assert.assertFalse(count == 0);
 				Assert.assertEquals(count, 5+5+4+4+3+3+3+4+5+5+5+4+3+2+1);
 
@@ -1146,7 +1149,7 @@ public class FrequentClassesTest {
 				FrequentPhrases frequentToBePhrases = new FrequentPhrases(suffixToBe, minFrequency, maxPhrases, maxPhraseLength);
 				Assert.assertNotNull(frequentToBePhrases);
 
-				int count = frequentToBePhrases.countCollocations(maxPhraseLength, windowSize);
+				int count = frequentToBePhrases.countCollocations(maxPhraseLength, windowSize, minNonterminalSpan);
 				Assert.assertFalse(count == 0);
 				Assert.assertEquals(count, 5+5+5+5+5+5+5+5+5+5+5+5+5+4+3+2+1);
 
@@ -1158,7 +1161,7 @@ public class FrequentClassesTest {
 				FrequentPhrases frequentToBePhrases = new FrequentPhrases(suffixToBe, minFrequency, maxPhrases, maxPhraseLength);
 				Assert.assertNotNull(frequentToBePhrases);
 
-				int count = frequentToBePhrases.countCollocations(maxPhraseLength, windowSize);
+				int count = frequentToBePhrases.countCollocations(maxPhraseLength, windowSize, minNonterminalSpan);
 				Assert.assertFalse(count == 0);
 				Assert.assertEquals(count, 5+5+5+5+5+5+5+5+5+5+5+5+5+4+3+2+1);
 
@@ -1173,11 +1176,11 @@ public class FrequentClassesTest {
 		
 		int maxPhraseLength = 1;
 		int windowSize = 100;
+		short minNonterminalSpan = 0;
 		
-		int count = frequentPhrases.countCollocations(maxPhraseLength, windowSize);
+		int count = frequentPhrases.countCollocations(maxPhraseLength, windowSize, minNonterminalSpan);
 		Assert.assertFalse(count == 0);
 		
-//		System.err.println(count);
 	}
 	
 	@Test(dependsOnMethods = {"setup"})

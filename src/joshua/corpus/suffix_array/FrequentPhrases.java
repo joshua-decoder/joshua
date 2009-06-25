@@ -127,141 +127,15 @@ public class FrequentPhrases {
 			int windowSize,
 			short minNonterminalSpan
 	) {
-
-		// Get an initially empty collocations object
-//		FrequentMatches collocations =
-		return	
-			new FrequentMatches(this, maxPhraseLength, windowSize, minNonterminalSpan);
-
+	
+		FrequentMatches collocations = new FrequentMatches(this, maxPhraseLength, windowSize, minNonterminalSpan);
 		
-//		LinkedList<Phrase> phrasesInWindow = new LinkedList<Phrase>();
-//		LinkedList<Integer> positions = new LinkedList<Integer>();
-//		
-//		int sentenceNumber = 1;
-//		int endOfSentence = suffixes.getSentencePosition(sentenceNumber);
-//
-//		if (logger.isLoggable(Level.FINER)) logger.finer("END OF SENT: " + sentenceNumber + " at position " + endOfSentence);
-//
-//		Corpus corpus = suffixes.getCorpus();
-//
-//		// Start at the beginning of the corpus...
-//		for (int currentPosition = 0, endOfCorpus=suffixes.size(); 
-//				// ...and iterate through the end of the corpus
-//				currentPosition < endOfCorpus; currentPosition++) {
-//
-//			// Start with a phrase length of 1, at the current position...
-//			for (int i = 1, endOfPhrase = currentPosition + i; 
-//					// ...ensure the phrase length isn't too long...
-//					i < maxPhraseLength  &&  
-//					// ...and that the phrase doesn't extend past the end of the sentence...
-//					endOfPhrase <= endOfSentence  &&  
-//					// ...or past the end of the corpus
-//					endOfPhrase <= endOfCorpus; 
-//					// ...then increment the phrase length and end of phrase marker.
-//					i++, endOfPhrase = currentPosition + i) {
-//
-//				// Get the current phrase
-//				Phrase phrase = new ContiguousPhrase(currentPosition, endOfPhrase, corpus);
-//
-//				if (logger.isLoggable(Level.FINEST)) logger.finest("Found phrase (" +currentPosition + ","+endOfPhrase+") "  + phrase);
-//
-//				// If the phrase is one we care about...
-//				if (frequentPhrases.containsKey(phrase)) {
-//
-//					if (logger.isLoggable(Level.FINER)) logger.finer("\"" + phrase + "\" found at currentPosition " + currentPosition);
-//
-//					// Remember the phrase...
-//					phrasesInWindow.add(phrase);
-//
-//					// ...and its starting position
-//					positions.add(currentPosition);
-//				}
-//
-//			} // end iterating over various phrase lengths
-//
-//
-//			// check whether we're at the end of the sentence and dequeue...
-//			if (currentPosition == endOfSentence) {
-//
-//				if (logger.isLoggable(Level.FINEST)) {
-//					logger.finest("REACHED END OF SENT: " + currentPosition);
-//					logger.finest("PHRASES:   " + phrasesInWindow);
-//					logger.finest("POSITIONS: " + positions);
-//				}
-//
-//				// empty the whole queue...
-//				for (int i = 0, n=phrasesInWindow.size(); i < n; i++) {
-//
-//					Phrase phrase1 = phrasesInWindow.remove();
-//					int position1 = positions.remove();
-//
-//					Iterator<Phrase> phraseIterator = phrasesInWindow.iterator();
-//					Iterator<Integer> positionIterator = positions.iterator();
-//
-//					for (int j = i+1; j < n; j++) {
-//
-//						Phrase phrase2 = phraseIterator.next();//phrasesInWindow.get(j);
-//						int position2 = positionIterator.next();//positions.get(j);
-//
-//						if (logger.isLoggable(Level.FINEST)) logger.finest("CASE1: " + phrase1 + "\t" + phrase2 + "\t" + position1 + "\t" + position2);
-//						collocations.add(phrase1, phrase2, position1, position2);
-//
-//					}
-//
-//				}
-//				// clear the queues
-//				phrasesInWindow.clear();
-//				positions.clear();
-//
-//				// update the end of sentence marker
-//				sentenceNumber++;
-//				endOfSentence = suffixes.getSentencePosition(sentenceNumber)-1;
-//
-//				if (logger.isLoggable(Level.FINER)) logger.finer("END OF SENT: " + sentenceNumber + " at position " + endOfSentence);
-//
-//			} // Done processing end of sentence.
-//
-//
-//			// check whether the initial elements are
-//			// outside the window size...
-//			if (phrasesInWindow.size() > 0) {
-//				int position1 = positions.peek();//.get(0);
-//				// deque the first element and
-//				// calculate its collocations...
-//				while ((position1+windowSize < currentPosition)
-//						&& phrasesInWindow.size() > 0) {
-//
-//					if (logger.isLoggable(Level.FINEST)) logger.finest("OUTSIDE OF WINDOW: " + position1 + " " +  currentPosition + " " + windowSize);
-//					
-//					Phrase phrase1 = phrasesInWindow.remove();
-//					positions.remove();
-//
-//					Iterator<Phrase> phraseIterator = phrasesInWindow.iterator();
-//					Iterator<Integer> positionIterator = positions.iterator();
-//
-//					for (int j = 0, n=phrasesInWindow.size(); j < n; j++) {
-//
-//						Phrase phrase2 = phraseIterator.next();
-//						int position2 = positionIterator.next();
-//
-//						collocations.add(phrase1, phrase2, position1, position2);
-//						
-//						if (logger.isLoggable(Level.FINEST)) logger.finest("CASE2: " + phrase1 + "\t" + phrase2 + "\t" + position1 + "\t" + position2);
-//					}
-//					if (phrasesInWindow.size() > 0) {
-//						position1 = positions.peek();
-//					} else {
-//						position1 = currentPosition;
-//					}
-//				}
-//			}
-//
-//		} // end iterating over positions in the corpus
-//
-//		if (logger.isLoggable(Level.FINE)) logger.fine("Sorting collocations");
-//		collocations.histogramSort();
-//		
-//		return collocations;
+		countCollocations(maxPhraseLength, windowSize, minNonterminalSpan, collocations);
+		
+		collocations.histogramSort();
+		
+		return collocations;
+		
 	}
 
 
@@ -286,7 +160,17 @@ public class FrequentPhrases {
 	 * @return The number of times any frequent phrase co-occurred 
 	 *         with any frequent phrase within the given window.
 	 */
-	protected int countCollocations(int maxPhraseLength, int windowSize) {
+	int countCollocations(int maxPhraseLength, int windowSize, short minNonterminalSpan) {
+		return countCollocations(maxPhraseLength, windowSize, minNonterminalSpan, null);
+		//return getCollocationData(maxPhraseLength, windowSize, minNonterminalSpan).size() / 3;
+	}
+	
+	private int countCollocations(int maxPhraseLength, int windowSize, short minNonterminalSpan, FrequentMatches frequentMatches) {
+//		
+//	ArrayList<Integer> getCollocationData(int maxPhraseLength, int windowSize, short minNonterminalSpan) {
+//		LinkedHashMap<Phrase,Short> ranks = getRanks();
+//		ArrayList<Integer> collocationData = new ArrayList<Integer>();
+		
 		
 		int count = 0;
 
@@ -360,6 +244,21 @@ public class FrequentPhrases {
 
 						if (logger.isLoggable(Level.FINEST)) logger.finest("CASE1: " + phrase1 + "\t" + phrase2 + "\t" + position1 + "\t" + position2);
 						count++;
+						if (frequentMatches != null) {
+							frequentMatches.add(phrase1, phrase2, position1, position2);
+//							// The second phrase must start after the first phrase ends,
+//							//     and there must be a minimum gap 
+//							//     (minNonterminalSpan) between the phrases
+//							if (position2 >= position1 + phrase1.size() + minNonterminalSpan) {
+//
+//								int key = getKey(ranks, phrase1, phrase2);
+//
+//								collocationData.add(key);
+//								collocationData.add(position1);
+//								collocationData.add(position2);
+//								
+//							}
+						}
 
 					}
 
@@ -390,7 +289,7 @@ public class FrequentPhrases {
 					
 					Phrase phrase1 = phrasesInWindow.removeFirst();
 					positions.removeFirst();
-
+					
 					Iterator<Phrase> phraseIterator = phrasesInWindow.iterator();
 					Iterator<Integer> positionIterator = positions.iterator();
 
@@ -400,6 +299,21 @@ public class FrequentPhrases {
 						int position2 = positionIterator.next();
 
 						count++;
+						if (frequentMatches != null) {
+							frequentMatches.add(phrase1, phrase2, position1, position2);
+//							// The second phrase must start after the first phrase ends,
+//							//     and there must be a minimum gap 
+//							//     (minNonterminalSpan) between the phrases
+//							if (position2 >= position1 + phrase1.size() + minNonterminalSpan) {
+//
+//								int key = getKey(ranks, phrase1, phrase2);
+//
+//								collocationData.add(key);
+//								collocationData.add(position1);
+//								collocationData.add(position2);
+//								
+//							}
+						}
 
 						if (logger.isLoggable(Level.FINEST)) logger.finest("CASE2: " + phrase1 + "\t" + phrase2 + "\t" + position1 + "\t" + position2);
 					}
@@ -414,9 +328,37 @@ public class FrequentPhrases {
 		} // end iterating over positions in the corpus
 
 		return count;
+//		return collocationData;
 	}
 
 
+//	/**
+//	 * Returns an integer identifier for the collocation of
+//	 * <code>phrase1</code> with <code>phrase2</code>.
+//	 * <p>
+//	 * If <code>rank1</code> is the rank of <code>phrase1</code>
+//	 * and <code>rank2</code> is the rank of <code>phrase2</code>,
+//	 * the identifier returned by this method is defined to be
+//	 * <code>rank1*maxPhrases + rank2</code>.
+//	 * <p>
+//	 * As such, the range of possible values returned by this
+//	 * method will be </code>0</code> through
+//	 * <code>maxPhrases*maxPhrases-1</code>.
+//	 *
+//	 * @param phrase1 First phrase in a collocation.
+//	 * @param phrase2 Second phrase in a collocation.
+//	 * @return a unique integer identifier for the collocation.
+//	 */
+//	private int getKey(LinkedHashMap<Phrase,Short> ranks, Phrase phrase1, Phrase phrase2) {
+//
+//		short rank1 = ranks.get(phrase1);
+//		short rank2 = ranks.get(phrase2);
+//
+//		int rank = rank1*maxPhrases + rank2;
+//
+//		return rank;
+//	}
+	
 
 	//	/**
 	//	 * Builds a HashMap of all the occurrences of the phrase,

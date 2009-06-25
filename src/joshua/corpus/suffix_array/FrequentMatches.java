@@ -21,14 +21,10 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
-import java.util.LinkedList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import joshua.corpus.ContiguousPhrase;
-import joshua.corpus.Corpus;
 import joshua.corpus.Phrase;
 
 /**
@@ -90,6 +86,8 @@ public class FrequentMatches {
 	 */
 	int[] bucketIndex;
 	
+	int[] keys;
+	
 	/**
 	 * List of positions in a corpus where the first phrase in
 	 * a collocation starts.
@@ -122,13 +120,14 @@ public class FrequentMatches {
 	 * @param maxPhrases The maximum number of frequent phrases.
 	 * @param capacity The total number of matches expected.
 	 */
-	FrequentMatches(FrequentPhrases frequentPhrases, 
+	FrequentMatches(
+			FrequentPhrases frequentPhrases, 
 			int maxPhraseLength,
 			int windowSize,
 			short minNonterminalSpan) {
 		
 		logger.fine("Calculating number of frequent collocations");
-		int capacity = frequentPhrases.countCollocations(maxPhraseLength, windowSize);
+		int capacity = frequentPhrases.countCollocations(maxPhraseLength, windowSize, minNonterminalSpan);
 		logger.fine("Total collocations: " + capacity);
 		
 		this.ranks = frequentPhrases.getRanks();
@@ -136,158 +135,23 @@ public class FrequentMatches {
 		this.minNonterminalSpan = minNonterminalSpan;
 		
 		if (logger.isLoggable(Level.FINE)) logger.fine("Allocating " + ((int)(capacity*4 / 1024.0 / 1024.0)) + "MB for collocation keys");
-		int[] keys = new int[capacity];
+		keys = new int[capacity];
 		if (logger.isLoggable(Level.FINE)) logger.fine("Allocating " + ((int)(capacity*4 / 1024.0 / 1024.0)) + "MB for collocation position1");
 		position1 = new int[capacity];
 		if (logger.isLoggable(Level.FINE)) logger.fine("Allocating " + ((int)(capacity*4 / 1024.0 / 1024.0)) + "MB for collocation position2");
 		position2 = new int[capacity];
 		if (logger.isLoggable(Level.FINE)) logger.fine("Done allocating memory for collocations data");
 	
-		initMatches(this, keys, frequentPhrases.getSuffixes(), this.ranks, maxPhraseLength, windowSize);
-		
-		if (logger.isLoggable(Level.FINE)) logger.fine("Sorting collocations");
-		this.bucketIndex = histogramSort(maxPhrases, keys, position1, position2);
 	}
 
 	
-	void initMatches(FrequentMatches collocations, 
-			int[] keys, Suffixes suffixes, 
-			LinkedHashMap<Phrase,Short> frequentPhrases, 
-			int maxPhraseLength, int windowSize) {
-		
-		
-		LinkedList<Phrase> phrasesInWindow = new LinkedList<Phrase>();
-		LinkedList<Integer> positions = new LinkedList<Integer>();
-		
-		int sentenceNumber = 1;
-		int endOfSentence = suffixes.getSentencePosition(sentenceNumber);
-
-		if (logger.isLoggable(Level.FINER)) logger.finer("END OF SENT: " + sentenceNumber + " at position " + endOfSentence);
-
-		Corpus corpus = suffixes.getCorpus();
-
-		// Start at the beginning of the corpus...
-		for (int currentPosition = 0, endOfCorpus=suffixes.size(); 
-				// ...and iterate through the end of the corpus
-				currentPosition < endOfCorpus; currentPosition++) {
-
-			// Start with a phrase length of 1, at the current position...
-			for (int i = 1, endOfPhrase = currentPosition + i; 
-					// ...ensure the phrase length isn't too long...
-					i < maxPhraseLength  &&  
-					// ...and that the phrase doesn't extend past the end of the sentence...
-					endOfPhrase <= endOfSentence  &&  
-					// ...or past the end of the corpus
-					endOfPhrase <= endOfCorpus; 
-					// ...then increment the phrase length and end of phrase marker.
-					i++, endOfPhrase = currentPosition + i) {
-
-				// Get the current phrase
-				Phrase phrase = new ContiguousPhrase(currentPosition, endOfPhrase, corpus);
-
-				if (logger.isLoggable(Level.FINEST)) logger.finest("Found phrase (" +currentPosition + ","+endOfPhrase+") "  + phrase);
-
-				// If the phrase is one we care about...
-				if (frequentPhrases.containsKey(phrase)) {
-
-					if (logger.isLoggable(Level.FINER)) logger.finer("\"" + phrase + "\" found at currentPosition " + currentPosition);
-
-					// Remember the phrase...
-					phrasesInWindow.add(phrase);
-
-					// ...and its starting position
-					positions.add(currentPosition);
-				}
-
-			} // end iterating over various phrase lengths
-
-
-			// check whether we're at the end of the sentence and dequeue...
-			if (currentPosition == endOfSentence) {
-
-				if (logger.isLoggable(Level.FINEST)) {
-					logger.finest("REACHED END OF SENT: " + currentPosition);
-					logger.finest("PHRASES:   " + phrasesInWindow);
-					logger.finest("POSITIONS: " + positions);
-				}
-
-				// empty the whole queue...
-				for (int i = 0, n=phrasesInWindow.size(); i < n; i++) {
-
-					Phrase phrase1 = phrasesInWindow.remove();
-					int position1 = positions.remove();
-
-					Iterator<Phrase> phraseIterator = phrasesInWindow.iterator();
-					Iterator<Integer> positionIterator = positions.iterator();
-
-					for (int j = i+1; j < n; j++) {
-
-						Phrase phrase2 = phraseIterator.next();//phrasesInWindow.get(j);
-						int position2 = positionIterator.next();//positions.get(j);
-
-						if (logger.isLoggable(Level.FINEST)) logger.finest("CASE1: " + phrase1 + "\t" + phrase2 + "\t" + position1 + "\t" + position2);
-						collocations.add(keys, phrase1, phrase2, position1, position2);
-
-					}
-
-				}
-				// clear the queues
-				phrasesInWindow.clear();
-				positions.clear();
-
-				// update the end of sentence marker
-				sentenceNumber++;
-				endOfSentence = suffixes.getSentencePosition(sentenceNumber)-1;
-
-				if (logger.isLoggable(Level.FINER)) logger.finer("END OF SENT: " + sentenceNumber + " at position " + endOfSentence);
-
-			} // Done processing end of sentence.
-
-
-			// check whether the initial elements are
-			// outside the window size...
-			if (phrasesInWindow.size() > 0) {
-				int position1 = positions.peek();//.get(0);
-				// deque the first element and
-				// calculate its collocations...
-				while ((position1+windowSize < currentPosition)
-						&& phrasesInWindow.size() > 0) {
-
-					if (logger.isLoggable(Level.FINEST)) logger.finest("OUTSIDE OF WINDOW: " + position1 + " " +  currentPosition + " " + windowSize);
-					
-					Phrase phrase1 = phrasesInWindow.remove();
-					positions.remove();
-
-					Iterator<Phrase> phraseIterator = phrasesInWindow.iterator();
-					Iterator<Integer> positionIterator = positions.iterator();
-
-					for (int j = 0, n=phrasesInWindow.size(); j < n; j++) {
-
-						Phrase phrase2 = phraseIterator.next();
-						int position2 = positionIterator.next();
-
-						collocations.add(keys, phrase1, phrase2, position1, position2);
-						
-						if (logger.isLoggable(Level.FINEST)) logger.finest("CASE2: " + phrase1 + "\t" + phrase2 + "\t" + position1 + "\t" + position2);
-					}
-					if (phrasesInWindow.size() > 0) {
-						position1 = positions.peek();
-					} else {
-						position1 = currentPosition;
-					}
-				}
-			}
-
-		} // end iterating over positions in the corpus
-
-	}
 	
 	
 	/**
 	 * Adds a collocated pair of phrases to this container,
 	 * along with their respective positions in the corpus.
 	 */
-	private void add(int[] keys, Phrase phrase1, Phrase phrase2, int position1, int position2) {
+	void add(Phrase phrase1, Phrase phrase2, int position1, int position2) {
 
 		// The second phrase must start after the first phrase ends,
 		//     and there must be a minimum gap 
@@ -305,7 +169,6 @@ public class FrequentMatches {
 		}
 	}
 
-	
 	/**
 	 * Returns an integer identifier for the collocation of
 	 * <code>phrase1</code> with <code>phrase2</code>.
@@ -331,8 +194,14 @@ public class FrequentMatches {
 		int rank = rank1*maxPhrases + rank2;
 
 		return rank;
+	}	
+
+	void histogramSort() {
+		if (logger.isLoggable(Level.FINE)) logger.fine("Sorting collocations");
+		this.bucketIndex = histogramSort(maxPhrases, keys, position1, position2);
+		
+		this.keys = null;
 	}
-	
 	
 	/**
 	 * Sorts match data using a specialization of bucket sort.
@@ -395,7 +264,6 @@ public class FrequentMatches {
 		System.arraycopy(tmpPosition2, 0, position2, 0, keys.length);
 		
 		// Try and help the garbage collector know we're done with these
-//		histogram = null;
 		offsets = null;
 		tmpKeys = null;
 		tmpPosition1 = null;
