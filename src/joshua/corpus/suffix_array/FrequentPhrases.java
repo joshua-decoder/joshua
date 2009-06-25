@@ -162,15 +162,47 @@ public class FrequentPhrases {
 	 */
 	int countCollocations(int maxPhraseLength, int windowSize, short minNonterminalSpan) {
 		return countCollocations(maxPhraseLength, windowSize, minNonterminalSpan, null);
-		//return getCollocationData(maxPhraseLength, windowSize, minNonterminalSpan).size() / 3;
 	}
 	
+	/**
+	 * Gets the number of times any frequent phrase co-occurred 
+	 * with any frequent phrase within the given window.
+	 * <p>        
+	 * This method performs a one-pass computation of the
+	 * collocation of two frequent sub-phrases. It is used for
+	 * the precalculation of the translations of hierarchical
+	 * phrases which are problematic to calculate on the fly.
+	 * 
+	 * This procedure is described in "Hierarchical Phrase-Based
+	 * Translation with Suffix Arrays" by Adam Lopez.
+	 * <p>
+	 * 
+	 * <em>Note</em>: In the course of constructing FrequentMatches, 
+	 * this method should be called twice. 
+	 * 
+	 * In the first call, the frequentMatches should be null. 
+	 * When frequentMatches is null, this method simply counts the
+	 * total number of collocations of frequent phrases.
+	 * 
+	 * In the second call, the frequentMatches parameter should be non-null.
+	 * When frequentMatches is not null, this method initializes 
+	 * the provided frequentMatches object with collocation data,
+	 * in addition to returning the total number of collocations
+	 * of frequent phrases.
+	 * 
+	 * @param maxPhraseLength the maximum length of any phrase
+	 *                   in the phrases
+	 * @param windowSize the maximum allowable space between
+	 *                   phrases for them to still be considered
+	 *                   collocated
+	 * @param frequentMatches Object for storing collocation data.
+	 *                        If non-null, this object will be initialized
+	 *                        with collocation data.
+	 *                   
+	 * @return The number of times any frequent phrase co-occurred 
+	 *         with any frequent phrase within the given window.
+	 */
 	private int countCollocations(int maxPhraseLength, int windowSize, short minNonterminalSpan, FrequentMatches frequentMatches) {
-//		
-//	ArrayList<Integer> getCollocationData(int maxPhraseLength, int windowSize, short minNonterminalSpan) {
-//		LinkedHashMap<Phrase,Short> ranks = getRanks();
-//		ArrayList<Integer> collocationData = new ArrayList<Integer>();
-		
 		
 		int count = 0;
 
@@ -246,18 +278,6 @@ public class FrequentPhrases {
 						count++;
 						if (frequentMatches != null) {
 							frequentMatches.add(phrase1, phrase2, position1, position2);
-//							// The second phrase must start after the first phrase ends,
-//							//     and there must be a minimum gap 
-//							//     (minNonterminalSpan) between the phrases
-//							if (position2 >= position1 + phrase1.size() + minNonterminalSpan) {
-//
-//								int key = getKey(ranks, phrase1, phrase2);
-//
-//								collocationData.add(key);
-//								collocationData.add(position1);
-//								collocationData.add(position2);
-//								
-//							}
 						}
 
 					}
@@ -301,18 +321,6 @@ public class FrequentPhrases {
 						count++;
 						if (frequentMatches != null) {
 							frequentMatches.add(phrase1, phrase2, position1, position2);
-//							// The second phrase must start after the first phrase ends,
-//							//     and there must be a minimum gap 
-//							//     (minNonterminalSpan) between the phrases
-//							if (position2 >= position1 + phrase1.size() + minNonterminalSpan) {
-//
-//								int key = getKey(ranks, phrase1, phrase2);
-//
-//								collocationData.add(key);
-//								collocationData.add(position1);
-//								collocationData.add(position2);
-//								
-//							}
 						}
 
 						if (logger.isLoggable(Level.FINEST)) logger.finest("CASE2: " + phrase1 + "\t" + phrase2 + "\t" + position1 + "\t" + position2);
@@ -328,7 +336,6 @@ public class FrequentPhrases {
 		} // end iterating over positions in the corpus
 
 		return count;
-//		return collocationData;
 	}
 
 
