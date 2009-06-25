@@ -26,6 +26,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.logging.Logger;
 
+import joshua.corpus.Corpus;
 import joshua.corpus.CorpusArray;
 import joshua.corpus.Phrase;
 import joshua.corpus.vocab.Vocabulary;
@@ -661,7 +662,7 @@ public class FrequentClassesTest {
 			Assert.assertNotNull(frequentPhrases.frequentPhrases);
 			
 			Assert.assertEquals(frequentPhrases.maxPhrases, maxPhrases);
-			for (Map.Entry<Phrase, Integer> entry : frequentPhrases.frequentPhrases.entrySet()) { System.out.println(entry.getKey().toString() + " " + entry.getValue()); }
+//			for (Map.Entry<Phrase, Integer> entry : frequentPhrases.frequentPhrases.entrySet()) { System.out.println(entry.getKey().toString() + " " + entry.getValue()); }
 			Assert.assertEquals(frequentPhrases.frequentPhrases.size(), maxPhrases);
 			
 			Assert.assertNotNull(frequentPhrases.getSuffixes());
@@ -887,18 +888,67 @@ public class FrequentClassesTest {
 	}
 	
 	
-//	@Test(dependsOnMethods = {"setup"})
-//	public void collocationCount() {
-//		
-//		int maxPhraseLength = 1;
-//		int windowSize = 100;
-//		
-//		int count = frequentPhrases.countCollocations(maxPhraseLength, windowSize);
-//		Assert.assertFalse(count == 0);
-//	}
+	@Test(dependsOnMethods = {"setup"})
+	public void collocationCount() {
+		
+		int maxPhraseLength = 1;
+		int windowSize = 100;
+		
+		int count = frequentPhrases.countCollocations(maxPhraseLength, windowSize);
+		Assert.assertFalse(count == 0);
+		
+		System.err.println(count);
+	}
+	
+	@Test(dependsOnMethods = {"setup"})
+	public void setupUnlimitedMaxPhrases() {
+		
+		// Tell System.out and System.err to use UTF8
+		FormatUtil.useUTF8();
+	
+		try {
+			
+			Vocabulary symbolTable;
+			Corpus corpusArray;
+			Suffixes suffixArray;
+			
+			logger.fine("Constructing vocabulary from file " + corpusFileName);
+			symbolTable = new Vocabulary();
+			int[] lengths = Vocabulary.initializeVocabulary(corpusFileName, symbolTable, true);
+
+			logger.fine("Constructing corpus array from file " + corpusFileName);
+			corpusArray = SuffixArrayFactory.createCorpusArray(corpusFileName, symbolTable, lengths[0], lengths[1]);
+
+			logger.fine("Constructing suffix array from file " + corpusFileName);
+			suffixArray = new SuffixArray(corpusArray, Cache.DEFAULT_CAPACITY);
+			
+			int minFrequency = 0;
+			short maxPhrases = Short.MAX_VALUE;
+			int maxPhraseLength = 1;
+			int uniqueWords = 87;
+			
+			logger.fine("Calculating " + maxPhrases + " most frequent phrases");
+			FrequentPhrases frequentPhrases = new FrequentPhrases(suffixArray, minFrequency, maxPhrases, maxPhraseLength);
+			
+			Assert.assertNotNull(frequentPhrases);
+			Assert.assertNotNull(frequentPhrases.frequentPhrases);
+			
+			Assert.assertEquals(frequentPhrases.maxPhrases, maxPhrases);
+			
+			Assert.assertEquals(frequentPhrases.frequentPhrases.size(), uniqueWords);
+			
+			Assert.assertNotNull(frequentPhrases.getSuffixes());
+			Assert.assertEquals(frequentPhrases.getSuffixes(), frequentPhrases.suffixes);
+			Assert.assertEquals(frequentPhrases.suffixes, suffixArray);
+			
+		} catch (IOException e) {
+			Assert.fail("Unable to write temporary file. " + e.toString());
+		}
+	
+	}
 	
 //	@Test(dependsOnMethods = {"setup"})
-//	public void extendedSetup() {
+//	public void setupUnlimitedMaxPhrasesLongPhrases() {
 //		
 //		// Tell System.out and System.err to use UTF8
 //		FormatUtil.useUTF8();
@@ -920,9 +970,9 @@ public class FrequentClassesTest {
 //			suffixArray = new SuffixArray(corpusArray, Cache.DEFAULT_CAPACITY);
 //			
 //			int minFrequency = 0;
-//			short maxPhrases = 11;
-//			int maxPhraseLength = 1;
-//			int uniqueWords = 11;
+//			short maxPhrases = Short.MAX_VALUE;
+//			int maxPhraseLength = 10;
+//			int uniqueWords = 87;
 //			
 //			logger.fine("Calculating " + maxPhrases + " most frequent phrases");
 //			FrequentPhrases frequentPhrases = new FrequentPhrases(suffixArray, minFrequency, maxPhrases, maxPhraseLength);
@@ -931,12 +981,6 @@ public class FrequentClassesTest {
 //			Assert.assertNotNull(frequentPhrases.frequentPhrases);
 //			
 //			Assert.assertEquals(frequentPhrases.maxPhrases, maxPhrases);
-//			
-//			for (Map.Entry<Phrase, Integer> entry : frequentPhrases.frequentPhrases.entrySet()) {
-//				Phrase phrase = entry.getKey();
-//				int count = entry.getValue();
-//				System.out.println(count + "\t" + phrase);
-//			}
 //			
 //			Assert.assertEquals(frequentPhrases.frequentPhrases.size(), uniqueWords);
 //			

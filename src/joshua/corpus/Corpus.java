@@ -148,6 +148,15 @@ public interface Corpus { //extends Externalizable {
 	
 	ContiguousPhrase getPhrase(int startPosition, int endPosition);
 	
+	/**
+	 * Gets an object capable of iterating 
+	 * over all positions in the corpus, in order.
+	 * 
+	 * @return An object capable of iterating 
+	 *         over all positions in the corpus, in order.
+	 */
+	Iterable<Integer> corpusPositions();
+	
 //	void write(String corpusFilename, String vocabFilename, String charset) throws IOException;
 }
 

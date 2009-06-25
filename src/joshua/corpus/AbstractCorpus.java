@@ -17,6 +17,8 @@
  */
 package joshua.corpus;
 
+import java.util.Iterator;
+
 import joshua.corpus.vocab.SymbolTable;
 
 
@@ -147,5 +149,35 @@ public abstract class AbstractCorpus<Vocab extends SymbolTable> implements Corpu
 
 	/* See Javadoc for Corpus interface. */
 	public abstract int size();
+
+	/* See Javadoc for Corpus interface. */
+	public Iterable<Integer> corpusPositions() {	
+		final int size = size();
+		
+		return new Iterable<Integer>() {
+			public Iterator<Integer> iterator() {
+				return new Iterator<Integer>() {
+
+					int position = 0;
+					
+					public boolean hasNext() {
+						return position < size;
+					}
+
+					public Integer next() {
+						int result = position;
+						position += 1;
+						return result;
+					}
+
+					public void remove() {
+						throw new UnsupportedOperationException();
+					}
+					
+				};
+			}
+			
+		};
+	}
 
 }

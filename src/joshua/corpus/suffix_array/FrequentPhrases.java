@@ -133,6 +133,7 @@ public class FrequentPhrases {
 		return	
 			new FrequentMatches(this, maxPhraseLength, windowSize, minNonterminalSpan);
 
+		
 //		LinkedList<Phrase> phrasesInWindow = new LinkedList<Phrase>();
 //		LinkedList<Integer> positions = new LinkedList<Integer>();
 //		
@@ -269,9 +270,10 @@ public class FrequentPhrases {
 	 * with any frequent phrase within the given window.
 	 * <p>        
 	 * This method performs a one-pass computation of the
-	 * collocation of two frequent subphrases. It is used for
+	 * collocation of two frequent sub-phrases. It is used for
 	 * the precalculation of the translations of hierarchical
 	 * phrases which are problematic to calculate on the fly.
+	 * 
 	 * This procedure is described in "Hierarchical Phrase-Based
 	 * Translation with Suffix Arrays" by Adam Lopez.
 	 *
@@ -280,13 +282,12 @@ public class FrequentPhrases {
 	 * @param windowSize the maximum allowable space between
 	 *                   phrases for them to still be considered
 	 *                   collocated
+	 *                   
 	 * @return The number of times any frequent phrase co-occurred 
 	 *         with any frequent phrase within the given window.
 	 */
-	protected int countCollocations(
-			int maxPhraseLength,
-			int windowSize
-	) {
+	protected int countCollocations(int maxPhraseLength, int windowSize) {
+		
 		int count = 0;
 
 		LinkedList<Phrase> phrasesInWindow = new LinkedList<Phrase>();
@@ -294,27 +295,26 @@ public class FrequentPhrases {
 		int sentenceNumber = 1;
 		int endOfSentence = suffixes.getSentencePosition(sentenceNumber);
 
-		// ccb - debugging
 		if (logger.isLoggable(Level.FINEST)) logger.finest("END OF SENT: " + endOfSentence);
 
 		Corpus corpus = suffixes.getCorpus();
-
+		int endOfCorpus = corpus.size();
+		
 		// Start at the beginning of the corpus...
-		for (int currentPosition = 0, endOfCorpus=suffixes.size(); 
-		// ...and iterate through the end of the corpus
-		currentPosition < endOfCorpus; currentPosition++) {
-
+		for (int currentPosition : corpus.corpusPositions()) {
+					
 			// Start with a phrase length of 1, at the current position...
 			for (int i = 1, endOfPhrase = currentPosition + i; 
-			// ...ensure the phrase length isn't too long...
-			i < maxPhraseLength  &&  
-			// ...and that the phrase doesn't extend past the end of the sentence...
-			endOfPhrase <= endOfSentence  &&  
-			// ...or past the end of the corpus
-			endOfPhrase <= endOfCorpus; 
-			// ...then increment the phrase length and end of phrase marker.
-			i++, endOfPhrase = currentPosition + i) {
+					// ...ensure the phrase length isn't too long...
+					i <= maxPhraseLength  &&  
+					// ...and that the phrase doesn't extend past the end of the sentence...
+					endOfPhrase <= endOfSentence  &&  
+					// ...or past the end of the corpus
+					endOfPhrase <= endOfCorpus; 
+					// ...then increment the phrase length and end of phrase marker.
+					i++, endOfPhrase = currentPosition + i) {
 
+				
 				// Get the current phrase
 				Phrase phrase = new ContiguousPhrase(currentPosition, endOfPhrase, corpus);
 

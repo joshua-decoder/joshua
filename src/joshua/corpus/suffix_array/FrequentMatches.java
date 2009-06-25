@@ -122,7 +122,7 @@ public class FrequentMatches {
 	 * @param maxPhrases The maximum number of frequent phrases.
 	 * @param capacity The total number of matches expected.
 	 */
-	public FrequentMatches(FrequentPhrases frequentPhrases, 
+	FrequentMatches(FrequentPhrases frequentPhrases, 
 			int maxPhraseLength,
 			int windowSize,
 			short minNonterminalSpan) {
@@ -150,7 +150,7 @@ public class FrequentMatches {
 	}
 
 	
-	private static void initMatches(FrequentMatches collocations, 
+	void initMatches(FrequentMatches collocations, 
 			int[] keys, Suffixes suffixes, 
 			LinkedHashMap<Phrase,Short> frequentPhrases, 
 			int maxPhraseLength, int windowSize) {
