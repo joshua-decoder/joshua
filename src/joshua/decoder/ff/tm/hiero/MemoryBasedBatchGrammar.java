@@ -118,7 +118,7 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
 		if (modelReader != null) {
 			modelReader.initialize();
 			for (BilingualRule rule : modelReader)
-				addRule(rule);
+				if (rule != null) addRule(rule);
 		} else {
 			if (logger.isLoggable(Level.WARNING))
 				logger.warning("Couldn't create a GrammarReader for file " + grammarFile + " with format " + formatKeyword);

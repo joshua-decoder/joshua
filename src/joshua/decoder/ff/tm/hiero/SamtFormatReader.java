@@ -67,7 +67,7 @@ public class SamtFormatReader extends GrammarReader<BilingualRule> {
 		if ((french.length == 1) && (arity == 1)  
 				&& !adaptNonTerminalMarkup(fields[2]).equals(JoshuaConfiguration.goal_symbol)) 
 		{
-			return this.next();
+			return null;
 		}
 		
 		// english side
