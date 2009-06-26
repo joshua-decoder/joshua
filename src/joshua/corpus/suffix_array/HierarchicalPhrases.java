@@ -71,7 +71,7 @@ public class HierarchicalPhrases extends AbstractHierarchicalPhrases {
 	/**
 	 * Number of hierarchical phrases represented by this object.
 	 */
-	protected final int size;
+//	protected final int size;
 	
 	/**
 	 * Constructs a list of hierarchical phrases.
@@ -87,8 +87,11 @@ public class HierarchicalPhrases extends AbstractHierarchicalPhrases {
 	 */
 	public HierarchicalPhrases(Pattern pattern, int[] startPositions, int[] sentenceNumbers) {
 //		super(pattern, startPositions.length);
-		super(pattern);
-		this.size = sentenceNumbers.length;//sentenceNumbers.length;
+		super(pattern, 
+				(pattern.getTerminalSequenceLengths().length>0) 
+				? startPositions.length / pattern.getTerminalSequenceLengths().length 
+				: 0);
+//		this.size = sentenceNumbers.length;//sentenceNumbers.length;
 		this.terminalSequenceStartIndices = startPositions;
 //		this.sentenceNumber = new int[size];
 		this.sentenceNumber = sentenceNumbers;
@@ -110,34 +113,34 @@ public class HierarchicalPhrases extends AbstractHierarchicalPhrases {
 			List<Integer> terminalSequenceStartIndices, 
 			List<Integer> sentenceNumbers) {
 		
-		super(pattern);
-//		super(pattern,
-//				(pattern.getTerminalSequenceLengths().length>0) 
-//				? terminalSequenceStartIndices.size() / pattern.getTerminalSequenceLengths().length 
-//				: 0);
+//		super(pattern);
+		super(pattern,
+				(pattern.getTerminalSequenceLengths().length>0) 
+				? terminalSequenceStartIndices.size() / pattern.getTerminalSequenceLengths().length 
+				: 0);
 
 //		int numberOfPhrases = ;
 		
 		int dataSize = terminalSequenceStartIndices.size();
-		int numberOfPhrases = (terminalSequenceLengths.length>0) ? dataSize / terminalSequenceLengths.length : 0;
+//		this.size = (terminalSequenceLengths.length>0) ? dataSize / terminalSequenceLengths.length : 0;
 		
 		this.terminalSequenceStartIndices = new int[dataSize];
 		for (int i=0; i<dataSize; i++) {
 			this.terminalSequenceStartIndices[i] = terminalSequenceStartIndices.get(i);
 		}
 
-		this.sentenceNumber = new int[numberOfPhrases];
-		for (int i=0; i<numberOfPhrases; i++) {
+		this.sentenceNumber = new int[size];
+		for (int i=0; i<size; i++) {
 			this.sentenceNumber[i] = sentenceNumbers.get(i);
 		}
 		
-		this.size = numberOfPhrases;	
+//		this.size = size;	
 	}
 	
-	/* See Javadoc for MatchedHierarchicalPhrases interface. */
-	public int size() {
-		return size;
-	}
+//	/* See Javadoc for MatchedHierarchicalPhrases interface. */
+//	public int size() {
+//		return size;
+//	}
 	
 	/**
 	 * Constructs a list of hierarchical phrases
@@ -148,9 +151,9 @@ public class HierarchicalPhrases extends AbstractHierarchicalPhrases {
 	 * @param phrases
 	 */
 	private HierarchicalPhrases(Pattern pattern, HierarchicalPhrases phrases) {
-//		super(pattern, phrases.size);
-		super(pattern);
-		this.size = phrases.size;
+		super(pattern, phrases.size);
+//		super(pattern);
+//		this.size = phrases.size;
 		this.terminalSequenceStartIndices = phrases.terminalSequenceStartIndices;
 		this.sentenceNumber = phrases.sentenceNumber;
 	}

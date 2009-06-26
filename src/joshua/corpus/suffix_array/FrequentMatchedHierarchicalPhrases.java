@@ -31,8 +31,8 @@ public class FrequentMatchedHierarchicalPhrases extends
 	
 	
 	public FrequentMatchedHierarchicalPhrases(Pattern pattern, FrequentMatches frequentMatches) {
-//		super(pattern, frequentMatches.getMatchCount(pattern));
-		super(pattern);
+		super(pattern, frequentMatches.getMatchCount(pattern));
+//		super(pattern);
 		
 		this.frequentMatches = frequentMatches;
 	}
@@ -78,11 +78,5 @@ public class FrequentMatchedHierarchicalPhrases extends
 	public boolean isEmpty() {
 		return ! frequentMatches.contains(pattern);
 	}
-
-	public int size() {
-		return 0;
-	}
-
-
 
 }

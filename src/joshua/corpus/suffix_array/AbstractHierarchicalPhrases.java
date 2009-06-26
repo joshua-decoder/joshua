@@ -59,10 +59,10 @@ public abstract class AbstractHierarchicalPhrases implements
 	protected final byte[] terminalSequenceLengths;
 	
 	
-//	/**
-//	 * Number of hierarchical phrases represented by this object.
-//	 */
-//	protected final int size;
+	/**
+	 * Number of hierarchical phrases represented by this object.
+	 */
+	protected final int size;
 	
 	/**
 	 * Constructs an abstract object representing
@@ -71,10 +71,15 @@ public abstract class AbstractHierarchicalPhrases implements
 	 * 
 	 * @param pattern Pattern representing a hierarchical phrase
 	 */
-	protected AbstractHierarchicalPhrases(Pattern pattern) {
+	protected AbstractHierarchicalPhrases(Pattern pattern, int numPhrases) {
 		this.pattern = pattern;
 		this.terminalSequenceLengths = pattern.getTerminalSequenceLengths();
-//		this.size = numPhrases;
+		this.size = numPhrases;
+	}
+	
+	/* See Javadoc for MatchedHierarchicalPhrases interface. */
+	public int size() {
+		return size;
 	}
 	
 	/**
