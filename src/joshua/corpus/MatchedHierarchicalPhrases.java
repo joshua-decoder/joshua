@@ -159,6 +159,18 @@ public interface MatchedHierarchicalPhrases extends PatternFormat {
 	
 	
 	boolean containsTerminalAt(int phraseIndex, int alignmentPointIndex);
+	
+	/**
+	 * Gets the index in the corpus of the first terminal token
+	 * of the <em>n</em>'th matched hierarchical phrase known to
+	 * this object, where <em>n</em> is provided as the 
+	 * <code>phraseIndex</code> parameter. 
+	 * 
+	 * @param phraseIndex Index of a matched phrase
+	 * @return Index in the corpus of the first terminal token
+	 *         of the <em>n</em>'th matched hierarchical phrase 
+	 *         known to this object
+	 */
 	int getFirstTerminalIndex(int phraseIndex);
 	
 	/**

@@ -887,6 +887,30 @@ public class FrequentClassesTest {
 		Assert.assertFalse(i.hasNext());
 	}
 	
+	
+	@Test(dependsOnMethods = {"simpleCollocationCount"})
+	public void simpleCollocations() {
+		short minNonterminalSpan = 0;
+
+		int maxPhraseLength = 1;
+		short maxPhrases = Short.MAX_VALUE;
+		int windowSize = Integer.MAX_VALUE;
+		
+		{
+			int minFrequency = 5;
+
+			FrequentPhrases frequentToBePhrases = new FrequentPhrases(suffixToBe, minFrequency, maxPhrases, maxPhraseLength);
+			Assert.assertNotNull(frequentToBePhrases);
+
+			int count = frequentToBePhrases.countCollocations(maxPhraseLength, windowSize, minNonterminalSpan);
+			Assert.assertFalse(count == 0);
+			Assert.assertEquals(count, 10);
+
+		}
+		
+	}
+	
+	
 	@Test(dependsOnMethods = {"setup"})
 	public void simpleCollocationCount() {
 

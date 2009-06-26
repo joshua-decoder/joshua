@@ -73,8 +73,14 @@ public class FrequentMatches {
 	 * <p>
 	 * The values for these identifiers are of the format
 	 * returned by the <code>getKey</code> method.
+	 * <p>
+	 * This variable is temporary, and is set to null 
+	 * once histogramSort is performed.
+	 * 
+	 * This variable is not serialized, 
+	 * and as such is marked transient.
 	 */
-//	final int[] keys;
+	private transient int[] keys;
 	
 	/**
 	 * For each of the n most frequent phrases,
@@ -85,8 +91,6 @@ public class FrequentMatches {
 	 * The length of this array is equal to <code>maxPhrases</code>.
 	 */
 	int[] bucketIndex;
-	
-	int[] keys;
 	
 	/**
 	 * List of positions in a corpus where the first phrase in
@@ -103,8 +107,11 @@ public class FrequentMatches {
 	/**
 	 * The number of collocations that have been added to this
 	 * object.
+	 * <p>
+	 * This variable is not serialized, 
+	 * and as such is marked transient.
 	 */
-	int counter = 0;
+	transient int counter = 0;
 	
 	/**
 	 * The minimum allowed span for a nonterminal gap.
@@ -123,6 +130,7 @@ public class FrequentMatches {
 	FrequentMatches(
 			FrequentPhrases frequentPhrases, 
 			int maxPhraseLength,
+			
 			int windowSize,
 			short minNonterminalSpan) {
 		
@@ -145,7 +153,50 @@ public class FrequentMatches {
 	}
 
 	
+	public int getRank(Phrase phrase) {
+		return ranks.get(phrase);
+	}
 	
+	public boolean contains(Phrase phrase) {
+		return ranks.containsKey(phrase);
+	}
+	
+	/**
+	 * Gets the starting position in the corpus
+	 * of the <em>n</em>'th instance of the specified phrase.
+	 * 
+	 * @param phrase
+	 * @param phraseIndex
+	 * @return
+	 */
+	int getStartPosition(Phrase phrase, int phraseIndex, int positionNumber) {
+		int rank = ranks.get(phrase);
+		int bucketStart = bucketIndex[rank];
+		if (positionNumber==0) {
+			return position1[bucketStart+phraseIndex];
+		} else if (positionNumber==1) {
+			return position2[bucketStart+phraseIndex]; 
+		} else {
+			throw new ArrayIndexOutOfBoundsException("");
+		}
+	}
+	
+	public int getMatchCount(Phrase phrase) {
+		if (ranks.containsKey(phrase)) {
+			
+			int rank = ranks.get(phrase);
+			
+			int start = bucketIndex[rank];
+			int end = (rank+1 < maxPhrases) 
+					? bucketIndex[rank+1] 
+					: position1.length;
+			
+			return end - start;
+			
+		} else {
+			return 0;
+		}
+	}
 	
 	/**
 	 * Adds a collocated pair of phrases to this container,
@@ -234,8 +285,8 @@ public class FrequentMatches {
 		}
 		
 		
-		if (logger.isLoggable(Level.FINE)) logger.fine("Allocating temporary memory for keys: " + ((keys.length)*4/1024/1024) + "MB");
-		int[] tmpKeys = new int[keys.length];
+//		if (logger.isLoggable(Level.FINE)) logger.fine("Allocating temporary memory for keys: " + ((keys.length)*4/1024/1024) + "MB");
+//		int[] tmpKeys = new int[keys.length];
 		if (logger.isLoggable(Level.FINE)) logger.fine("Allocating temporary memory for position1: " + ((keys.length)*4/1024/1024) + "MB");
 		int[] tmpPosition1 = new int[keys.length];
 		if (logger.isLoggable(Level.FINE)) logger.fine("Allocating temporary memory for position2: " + ((keys.length)*4/1024/1024) + "MB");
@@ -248,14 +299,14 @@ public class FrequentMatches {
 			int location = histogram[key] + offsets[key];
 			offsets[key] += 1;
 			
-			tmpKeys[location] = key;
+//			tmpKeys[location] = key;
 			tmpPosition1[location] = position1[i];
 			tmpPosition2[location] = position2[i];
 			
 		}
 		
-		logger.fine("Copying sorted keys to final location");
-		System.arraycopy(tmpKeys, 0, keys, 0, keys.length);
+//		logger.fine("Copying sorted keys to final location");
+//		System.arraycopy(tmpKeys, 0, keys, 0, keys.length);
 		
 		logger.fine("Copying sorted position1 data to final location");
 		System.arraycopy(tmpPosition1, 0, position1, 0, keys.length);
@@ -265,7 +316,7 @@ public class FrequentMatches {
 		
 		// Try and help the garbage collector know we're done with these
 		offsets = null;
-		tmpKeys = null;
+//		tmpKeys = null;
 		tmpPosition1 = null;
 		tmpPosition2 = null;
 		
@@ -312,14 +363,22 @@ public class FrequentMatches {
 				}
 			}
 			
-			int a = maxKey / maxPhrases;
-			int b = maxKey % maxPhrases;
+			if (maxKey != -1) {
+				int a = maxKey / maxPhrases;
+				int b = maxKey % maxPhrases;
+
+				logger.fine("Most frequent collocation is key " + maxKey + " a=="+a+ " b=="+b+" (" +max+") times");
+			} else {
+				logger.fine("Most frequent collocation not found");
+			}
 			
-			logger.fine("Most frequent collocation is key " + maxKey + " a=="+a+ " b=="+b+" (" +max+") times");
-			
-			int c = leastKey / maxPhrases;
-			int d = leastKey % maxPhrases;
-			logger.fine("Most frequent collocation is key " + leastKey + " c=="+c+ " d=="+d+" (" +least+") times");
+			if (leastKey != Integer.MAX_VALUE) {
+				int c = leastKey / maxPhrases;
+				int d = leastKey % maxPhrases;
+				logger.fine("Least frequent collocation is key " + leastKey + " c=="+c+ " d=="+d+" (" +least+") times");
+			} else {
+				logger.fine("Least frequent collocation not found");
+			}
 		}
 		
 		return histogram;

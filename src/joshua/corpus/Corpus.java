@@ -43,11 +43,23 @@ public interface Corpus { //extends Externalizable {
 	
 	
 	/**
+	 * Gets the sentence index associated with the specified
+	 *         position in the corpus.
+	 * 
+	 * @param position Index into the corpus
 	 * @return the sentence index associated with the specified
 	 *         position in the corpus.
 	 */
 	int getSentenceIndex(int position);
 	
+	
+	/**
+	 * Gets the sentence index of each specified position.
+	 * 
+	 * @param position Index into the corpus
+	 * @return array of the sentence indices associated
+	 *         with the specified positions in the corpus.
+	 */
 	int[] getSentenceIndices(int[] positions);
 	
 	/**
@@ -76,9 +88,9 @@ public interface Corpus { //extends Externalizable {
 	int getSentenceEndPosition(int sentenceID);
 	
 	/** 
-	 * Gets the sentence at the specified index (starting from
-	 * zero).
-	 *
+	 * Gets the specified sentence as a phrase.
+	 * 
+	 * @param sentenceIndex Zero-based sentence index
 	 * @return the sentence, or null if the specified sentence
 	 *         number doesn't exist
 	 */
@@ -86,12 +98,16 @@ public interface Corpus { //extends Externalizable {
 	
 	
 	/**
+	 * Gets the number of words in the corpus.
+	 * 
 	 * @return the number of words in the corpus.
 	 */
 	int size();
 	
 	
 	/**
+	 * Gets the number of sentences in the corpus.
+	 * 
 	 * @return the number of sentences in the corpus.
 	 */
 	int getNumSentences();
@@ -122,11 +138,20 @@ public interface Corpus { //extends Externalizable {
 	
 	
 	/**
-	 * compares the phrase that starts at position start with
+	 * Compares the phrase that starts at position start with
 	 * the phrase passed in. Compares the entire phrase.
+	 * 
+	 * @param corpusStart
+	 * @param phrase
+	 * @return
 	 */
 	int comparePhrase(int corpusStart, Phrase phrase);
 	
+	/**
+	 * Gets the symbol table associated with this corpus.
+	 * 
+	 * @return the symbol table associated with this corpus
+	 */
 	SymbolTable getVocabulary();
 	
 	
@@ -145,7 +170,12 @@ public interface Corpus { //extends Externalizable {
 	 */
     int compareSuffixes(int position1, int position2, int maxComparisonLength);
 	
-	
+	/**
+	 * 
+	 * @param startPosition
+	 * @param endPosition
+	 * @return
+	 */
 	ContiguousPhrase getPhrase(int startPosition, int endPosition);
 	
 	/**

@@ -18,7 +18,6 @@
 package joshua.corpus.suffix_array;
 
 import joshua.corpus.MatchedHierarchicalPhrases;
-import joshua.corpus.Span;
 
 /**
  *
@@ -29,135 +28,58 @@ public class FrequentMatchedHierarchicalPhrases extends
 		AbstractHierarchicalPhrases {
 
 	private final FrequentMatches frequentMatches;
-	private final Pattern pattern;
+	
 	
 	public FrequentMatchedHierarchicalPhrases(Pattern pattern, FrequentMatches frequentMatches) {
-		this.pattern = pattern;
+//		super(pattern, frequentMatches.getMatchCount(pattern));
+		super(pattern);
+		
 		this.frequentMatches = frequentMatches;
 	}
-	
-	/* (non-Javadoc)
-	 * @see joshua.corpus.MatchedHierarchicalPhrases#containsTerminalAt(int, int)
-	 */
-	public boolean containsTerminalAt(int phraseIndex, int alignmentPointIndex) {
-		// TODO Auto-generated method stub
-		return false;
-	}
 
-	/* (non-Javadoc)
-	 * @see joshua.corpus.MatchedHierarchicalPhrases#copyWithFinalX()
-	 */
+
+	/* @see joshua.corpus.MatchedHierarchicalPhrases#copyWithFinalX() */
 	public MatchedHierarchicalPhrases copyWithFinalX() {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
-	/* (non-Javadoc)
-	 * @see joshua.corpus.MatchedHierarchicalPhrases#copyWithInitialX()
-	 */
+	/* @see joshua.corpus.MatchedHierarchicalPhrases#copyWithInitialX() */
 	public MatchedHierarchicalPhrases copyWithInitialX() {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
-	/* (non-Javadoc)
-	 * @see joshua.corpus.MatchedHierarchicalPhrases#getEndPosition(int, int)
-	 */
-	public int getEndPosition(int phraseIndex, int positionNumber) {
-		// TODO Auto-generated method stub
-		return 0;
-	}
 
-	/* (non-Javadoc)
-	 * @see joshua.corpus.MatchedHierarchicalPhrases#getFirstTerminalIndex(int)
-	 */
-	public int getFirstTerminalIndex(int phraseIndex) {
-		// TODO Auto-generated method stub
-		return 0;
-	}
 
-	/* (non-Javadoc)
-	 * @see joshua.corpus.MatchedHierarchicalPhrases#getLastTerminalIndex(int)
-	 */
-	public int getLastTerminalIndex(int phraseIndex) {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-
-	/* (non-Javadoc)
-	 * @see joshua.corpus.MatchedHierarchicalPhrases#getNumberOfTerminalSequences()
-	 */
-	public int getNumberOfTerminalSequences() {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-
-	/* @see joshua.corpus.MatchedHierarchicalPhrases#getPattern() */
-	public Pattern getPattern() {
-		return pattern;
-	}
-
-	/* (non-Javadoc)
-	 * @see joshua.corpus.MatchedHierarchicalPhrases#getSentenceNumber(int)
-	 */
+	
+	/* @see joshua.corpus.MatchedHierarchicalPhrases#getSentenceNumber(int) */
 	public int getSentenceNumber(int phraseIndex) {
 		// TODO Auto-generated method stub
 		return 0;
 	}
 
-	/* (non-Javadoc)
-	 * @see joshua.corpus.MatchedHierarchicalPhrases#getSpan(int)
-	 */
-	public Span getSpan(int phraseIndex) {
-		// TODO Auto-generated method stub
-		return null;
-	}
 
-	/* (non-Javadoc)
-	 * @see joshua.corpus.MatchedHierarchicalPhrases#getStartPosition(int, int)
-	 */
+
+	
+	
+	
+	
+	
+	
+	/* @see joshua.corpus.MatchedHierarchicalPhrases#getStartPosition(int, int) */
 	public int getStartPosition(int phraseIndex, int positionNumber) {
-		// TODO Auto-generated method stub
-		return 0;
+		
+		return frequentMatches.getStartPosition(pattern, phraseIndex, positionNumber);
+		
 	}
-
-	/* (non-Javadoc)
-	 * @see joshua.corpus.MatchedHierarchicalPhrases#getTerminalSequenceEndIndex(int, int)
-	 */
-	public int getTerminalSequenceEndIndex(int phraseIndex, int sequenceIndex) {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-
-	/* (non-Javadoc)
-	 * @see joshua.corpus.MatchedHierarchicalPhrases#getTerminalSequenceLength(int)
-	 */
-	public int getTerminalSequenceLength(int i) {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-
-	/* (non-Javadoc)
-	 * @see joshua.corpus.MatchedHierarchicalPhrases#getTerminalSequenceStartIndex(int, int)
-	 */
-	public int getTerminalSequenceStartIndex(int phraseIndex, int sequenceIndex) {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-
-	/* (non-Javadoc)
-	 * @see joshua.corpus.MatchedHierarchicalPhrases#isEmpty()
-	 */
+	
+	/* @see joshua.corpus.MatchedHierarchicalPhrases#isEmpty() */
 	public boolean isEmpty() {
-		// TODO Auto-generated method stub
-		return false;
+		return ! frequentMatches.contains(pattern);
 	}
 
-	/* (non-Javadoc)
-	 * @see joshua.corpus.MatchedHierarchicalPhrases#size()
-	 */
 	public int size() {
-		// TODO Auto-generated method stub
 		return 0;
 	}
 

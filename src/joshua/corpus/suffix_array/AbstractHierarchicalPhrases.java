@@ -23,6 +23,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import joshua.corpus.MatchedHierarchicalPhrases;
+import joshua.corpus.Span;
 
 /**
  * Implements common algorithms used with hierarchical phrases.
@@ -36,6 +37,45 @@ public abstract class AbstractHierarchicalPhrases implements
 	/** Logger for this class. */
 	private static final Logger logger = 
 		Logger.getLogger(AbstractHierarchicalPhrases.class.getName());
+	
+	/** 
+	 * Represents a sequence of terminal and nonterminals as
+	 * integer IDs. The pattern is <em>not</em> rooted to a
+	 * location in a corpus.
+	 */
+	protected final Pattern pattern;
+	
+	/** 
+	 * Represents the length of each contiguous sequence of
+	 * terminals in the pattern.
+	 * <p>
+	 * To save memory, this information is stored as bytes
+	 * instead of integers.
+	 * 
+	 * This means that the maximum value that can be stored
+	 * here is 127. This should not be a problem unless a very
+	 * large value is used for maximum phrase length.
+	 */
+	protected final byte[] terminalSequenceLengths;
+	
+	
+//	/**
+//	 * Number of hierarchical phrases represented by this object.
+//	 */
+//	protected final int size;
+	
+	/**
+	 * Constructs an abstract object representing
+	 * locations in a corpus that match the hierarchical phrase
+	 * represented by the specified pattern. 
+	 * 
+	 * @param pattern Pattern representing a hierarchical phrase
+	 */
+	protected AbstractHierarchicalPhrases(Pattern pattern) {
+		this.pattern = pattern;
+		this.terminalSequenceLengths = pattern.getTerminalSequenceLengths();
+//		this.size = numPhrases;
+	}
 	
 	/**
 	 * Implements the dotted operators (<̈, =̈, >̈)
@@ -320,69 +360,125 @@ public abstract class AbstractHierarchicalPhrases implements
 		} // end while
 		
 		return new HierarchicalPhrases(pattern, data, sentenceNumbers);
-		
-			// Process all matchings in M_alpha_b with same first element
-//			ProcessMatchings:
-//			for (int jth_StartPosition = M_alpha_b.getStartPosition(j, 0),
-//					 lth_StartPosition = M_alpha_b.getStartPosition(l, 0);
-//					
-//					jth_StartPosition == lth_StartPosition;
-//					
-//					jth_StartPosition = M_alpha_b.getStartPosition(j, 0),
-//					lth_StartPosition = M_alpha_b.getStartPosition(l, 0)) {
-//				
-//				int compare_i_l = compare(M_a_alpha, i, M_alpha_b, l,  minNonterminalSpan, maxPhraseSpan);
-//				while (compare_i_l >= 0) {
-//					
-//					if (compare_i_l == 0) {
-//						
-//						// append M_a_alpha[i] |><| M_alpha_b[l] to M_a_alpha_b
-//						partiallyConstruct(M_a_alpha, i, M_alpha_b, l, data);
-//						sentenceNumbers.add(M_a_alpha.getSentenceNumber(i));
-//						
-//					} // end if
-//					
-//					l++; // we can visit m_alpha_b[l] again, but only next time through outermost loop
-//					
-//					if (l < J) {
-//						compare_i_l = compare(M_a_alpha, i, M_alpha_b, l,  minNonterminalSpan, maxPhraseSpan);
-//					} else {
-//						i++;
-//						break ProcessMatchings;
-//					}
-//					
-//				} // end while
-//				
-//				i++; // advance i past no longer needed item in M_a_alpha
-//				
-//				if (i >= I) break;
-//				
-//			} // end while
-			
-//		} // end while
-		
-//		return new HierarchicalPhrases(pattern, data, sentenceNumbers);
-		
+				
+	}
+
+	/* See Javadoc for MatchedHierarchicalPhrase interface. */
+	public int getTerminalSequenceLength(int i) {
+		return terminalSequenceLengths[i];
+	}
+	
+	/* See Javadoc for MatchedHierarchicalPhrases interface. */
+	public int getNumberOfTerminalSequences() {
+		return terminalSequenceLengths.length;
 	}
 	
 	/* See Javadoc for PatternFormat interface. */
 	public boolean endsWithNonterminal() {
-		return getPattern().endsWithNonterminal();
+		return pattern.endsWithNonterminal();
 	}
 	
 	/* See Javadoc for PatternFormat interface. */
 	public boolean startsWithNonterminal() {
-		return getPattern().startsWithNonterminal();
+		return pattern.startsWithNonterminal();
 	}
 	
 	/* See Javadoc for PatternFormat interface. */
 	public boolean endsWithTwoTerminals() {
-		return getPattern().endsWithTwoTerminals();
+		return pattern.endsWithTwoTerminals();
 	}
 	
 	/* See Javadoc for PatternFormat interface. */
 	public boolean secondTokenIsTerminal() {
-		return getPattern().secondTokenIsTerminal();
+		return pattern.secondTokenIsTerminal();
+	}
+	
+	/* See Javadoc for MatchedHierarchicalPhrases interface. */
+	public int getEndPosition(int phraseIndex, int positionNumber) {
+		
+		return getStartPosition(phraseIndex, positionNumber) + getTerminalSequenceLength(positionNumber);
+				
+	}
+	
+	/* See Javadoc for MatchedHierarchicalPhrases interface. */
+	public int getTerminalSequenceStartIndex(int phraseIndex, int sequenceIndex) {
+//		int n = terminalSequenceLengths.length;
+//		int nthPhraseIndex = phraseIndex*n;
+		
+		int start = this.getStartPosition(phraseIndex, sequenceIndex);//this.terminalSequenceStartIndices[nthPhraseIndex+sequenceIndex];
+		return start;
+	}
+	
+	/* See Javadoc for MatchedHierarchicalPhrases interface. */
+	public int getTerminalSequenceEndIndex(int phraseIndex, int sequenceIndex) {
+//		int n = terminalSequenceLengths.length;
+//		int nthPhraseIndex = phraseIndex*n;
+		
+		int start = this.getStartPosition(phraseIndex, sequenceIndex);//this.terminalSequenceStartIndices[nthPhraseIndex+sequenceIndex];
+		int end = start + this.terminalSequenceLengths[sequenceIndex];
+		
+		return end;
+	}
+	
+
+	/* See Javadoc for MatchedHierarchicalPhrases interface. */
+	public int getFirstTerminalIndex(int phraseIndex) {
+//		int n = terminalSequenceLengths.length;
+//		int nthPhraseIndex = phraseIndex*n;
+		int index = 0;
+		
+		int start = this.getStartPosition(phraseIndex, index);//this.terminalSequenceStartIndices[nthPhraseIndex+index];
+		return start;
+	}
+	
+	
+	
+	/* See Javadoc for MatchedHierarchicalPhrases interface. */
+	public boolean containsTerminalAt(int phraseIndex,
+			int alignedPointIndex) {
+		
+		int n = terminalSequenceLengths.length;
+//		int nthPhraseIndex = phraseIndex*n;
+		
+		for (int index=0; index<n; index++) {
+			int start = this.getStartPosition(phraseIndex, index);//this.terminalSequenceStartIndices[nthPhraseIndex+index];
+			if (alignedPointIndex >= start &&
+					alignedPointIndex < start + this.terminalSequenceLengths[index]) {
+				return true;
+			}
+		}		
+		
+		return false;
+
+	}
+	
+	/* See Javadoc for MatchedHierarchicalPhrases interface. */
+	public int getLastTerminalIndex(int phraseIndex) {
+		int n = terminalSequenceLengths.length;
+		int index = n-1;
+		
+		int start = getStartPosition(phraseIndex, index);
+		int end = start + this.terminalSequenceLengths[n-1];
+		
+		return end;
+		
+	}
+	
+	
+	/* See Javadoc for MatchedHierarchicalPhrases interface. */
+	public Span getSpan(int phraseIndex) {
+		
+		int n = terminalSequenceLengths.length;
+//		int nthPhraseIndex = phraseIndex*n;
+		
+		int lastIndex = n-1;
+		
+		int start = this.getStartPosition(phraseIndex, 0);//this.terminalSequenceStartIndices[nthPhraseIndex+0];
+		int lastStart = this.getStartPosition(phraseIndex, lastIndex);//this.terminalSequenceStartIndices[nthPhraseIndex+lastIndex];
+		int lastLength = this.terminalSequenceLengths[lastIndex];
+		int end = lastStart + lastLength;		
+		
+		return new Span(start, end);
 	}
 	
 	/**
@@ -391,7 +487,12 @@ public abstract class AbstractHierarchicalPhrases implements
 	 * @return the number of nonterminals
 	 */
 	public int arity() {
-		return getPattern().arity;
+		return pattern.arity;
+	}
+	
+	/* See Javadoc for MatchedHierarchicalPhrases interface. */
+	public Pattern getPattern() {
+		return this.pattern;
 	}
 	
 }
