@@ -25,7 +25,6 @@ import java.util.logging.Logger;
 
 import joshua.corpus.MatchedHierarchicalPhrases;
 import joshua.corpus.vocab.SymbolTable;
-import joshua.prefix_tree.PrefixTree;
 
 /**
  * HierarchicalPhrases represents a list of matched hierarchical
@@ -170,18 +169,12 @@ public class HierarchicalPhrases extends AbstractHierarchicalPhrases {
 	
 	/* See Javadoc for MatchedHierarchicalPhrases interface. */
 	public MatchedHierarchicalPhrases copyWithInitialX() {
-		int[] xwords = new int[pattern.words.length+1];
-		xwords[0] = PrefixTree.X;
-		for (int i=0; i<pattern.words.length; i++) {
-			xwords[i+1] = pattern.words[i];
-		}
-		Pattern xpattern = new Pattern(pattern.vocab, xwords);
-		return new HierarchicalPhrases(xpattern, this);
+		return new HierarchicalPhrases(getPatternWithInitialX(), this);
 	}
 	
 	/* See Javadoc for MatchedHierarchicalPhrases interface. */
 	public MatchedHierarchicalPhrases copyWithFinalX() {
-		return new HierarchicalPhrases(new Pattern(pattern.vocab, pattern.words, PrefixTree.X), this);
+		return new HierarchicalPhrases(getPatternWithFinalX(), this);
 	}
 
 

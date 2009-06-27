@@ -19,7 +19,6 @@ package joshua.corpus.suffix_array;
 
 import joshua.corpus.Corpus;
 import joshua.corpus.MatchedHierarchicalPhrases;
-import joshua.prefix_tree.PrefixTree;
 
 /**
  *
@@ -65,7 +64,7 @@ public class FrequentMatchedHierarchicalPhrases extends
 	/* @see joshua.corpus.MatchedHierarchicalPhrases#copyWithFinalX() */
 	public MatchedHierarchicalPhrases copyWithFinalX() {
 		
-		final Pattern patternX = new Pattern(pattern.vocab, pattern.words, PrefixTree.X);
+		final Pattern patternX = getPatternWithFinalX();
 		final FrequentMatchedHierarchicalPhrases parent = this;
 		
 		return new FrequentMatchedHierarchicalPhrases(patternX, frequentMatches, corpus) {
@@ -83,12 +82,7 @@ public class FrequentMatchedHierarchicalPhrases extends
 	/* @see joshua.corpus.MatchedHierarchicalPhrases#copyWithInitialX() */
 	public MatchedHierarchicalPhrases copyWithInitialX() {
 		
-		int[] xwords = new int[pattern.words.length+1];
-		xwords[0] = PrefixTree.X;
-		for (int i=0; i<pattern.words.length; i++) {
-			xwords[i+1] = pattern.words[i];
-		}
-		final Pattern xPattern = new Pattern(pattern.vocab, xwords);
+		final Pattern xPattern = getPatternWithInitialX();
 		final FrequentMatchedHierarchicalPhrases parent = this;
 		
 		return new FrequentMatchedHierarchicalPhrases(xPattern, frequentMatches, corpus) {
