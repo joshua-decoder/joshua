@@ -76,12 +76,7 @@ public abstract class AbstractHierarchicalPhrases implements
 		this.terminalSequenceLengths = pattern.getTerminalSequenceLengths();
 		this.size = numPhrases;
 	}
-	
-	/* See Javadoc for MatchedHierarchicalPhrases interface. */
-	public int size() {
-		return size;
-	}
-	
+		
 	/**
 	 * Implements the dotted operators (<̈, =̈, >̈)
 	 * from Lopez (2008), p78-79.
@@ -498,6 +493,11 @@ public abstract class AbstractHierarchicalPhrases implements
 	/* See Javadoc for MatchedHierarchicalPhrases interface. */
 	public Pattern getPattern() {
 		return this.pattern;
+	}
+
+	/* See Javadoc for MatchedHierarchicalPhrases interface. */
+	public int size() {
+		return size;
 	}
 	
 }

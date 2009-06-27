@@ -17,7 +17,9 @@
  */
 package joshua.corpus.suffix_array;
 
+import joshua.corpus.Corpus;
 import joshua.corpus.MatchedHierarchicalPhrases;
+import joshua.prefix_tree.PrefixTree;
 
 /**
  *
@@ -28,43 +30,24 @@ public class FrequentMatchedHierarchicalPhrases extends
 		AbstractHierarchicalPhrases {
 
 	private final FrequentMatches frequentMatches;
+	private final Corpus corpus;
 	
-	
-	public FrequentMatchedHierarchicalPhrases(Pattern pattern, FrequentMatches frequentMatches) {
+	public FrequentMatchedHierarchicalPhrases(Pattern pattern, FrequentMatches frequentMatches, Corpus corpus) {
 		super(pattern, frequentMatches.getMatchCount(pattern));
-//		super(pattern);
 		
 		this.frequentMatches = frequentMatches;
+		this.corpus = corpus;
 	}
-
-
-	/* @see joshua.corpus.MatchedHierarchicalPhrases#copyWithFinalX() */
-	public MatchedHierarchicalPhrases copyWithFinalX() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	/* @see joshua.corpus.MatchedHierarchicalPhrases#copyWithInitialX() */
-	public MatchedHierarchicalPhrases copyWithInitialX() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-
 
 	
 	/* @see joshua.corpus.MatchedHierarchicalPhrases#getSentenceNumber(int) */
 	public int getSentenceNumber(int phraseIndex) {
-		// TODO Auto-generated method stub
-		return 0;
+		
+		//TODO Remove this implementation, and instead have an implementation in AbstractHierarchicalPhrases
+		
+		int position = frequentMatches.getStartPosition(pattern, phraseIndex, 0);
+		return corpus.getSentenceIndex(position);
 	}
-
-
-
-	
-	
-	
-	
 	
 	
 	/* @see joshua.corpus.MatchedHierarchicalPhrases#getStartPosition(int, int) */
@@ -77,6 +60,46 @@ public class FrequentMatchedHierarchicalPhrases extends
 	/* @see joshua.corpus.MatchedHierarchicalPhrases#isEmpty() */
 	public boolean isEmpty() {
 		return ! frequentMatches.contains(pattern);
+	}
+	
+	/* @see joshua.corpus.MatchedHierarchicalPhrases#copyWithFinalX() */
+	public MatchedHierarchicalPhrases copyWithFinalX() {
+		
+		final Pattern patternX = new Pattern(pattern.vocab, pattern.words, PrefixTree.X);
+		final FrequentMatchedHierarchicalPhrases parent = this;
+		
+		return new FrequentMatchedHierarchicalPhrases(patternX, frequentMatches, corpus) {
+			public int getStartPosition(int phraseIndex, int positionNumber) {
+				return parent.getStartPosition(phraseIndex, positionNumber);
+			}
+			
+			public boolean isEmpty() {
+				return parent.isEmpty();
+			}
+		};
+		
+	}
+
+	/* @see joshua.corpus.MatchedHierarchicalPhrases#copyWithInitialX() */
+	public MatchedHierarchicalPhrases copyWithInitialX() {
+		
+		int[] xwords = new int[pattern.words.length+1];
+		xwords[0] = PrefixTree.X;
+		for (int i=0; i<pattern.words.length; i++) {
+			xwords[i+1] = pattern.words[i];
+		}
+		final Pattern xPattern = new Pattern(pattern.vocab, xwords);
+		final FrequentMatchedHierarchicalPhrases parent = this;
+		
+		return new FrequentMatchedHierarchicalPhrases(xPattern, frequentMatches, corpus) {
+			public int getStartPosition(int phraseIndex, int positionNumber) {
+				return parent.getStartPosition(phraseIndex, positionNumber);
+			}
+			
+			public boolean isEmpty() {
+				return parent.isEmpty();
+			}
+		};
 	}
 
 }

@@ -68,10 +68,6 @@ public class HierarchicalPhrases extends AbstractHierarchicalPhrases {
 	private static final Logger logger = 
 		Logger.getLogger(HierarchicalPhrases.class.getName());
 	
-	/**
-	 * Number of hierarchical phrases represented by this object.
-	 */
-//	protected final int size;
 	
 	/**
 	 * Constructs a list of hierarchical phrases.
