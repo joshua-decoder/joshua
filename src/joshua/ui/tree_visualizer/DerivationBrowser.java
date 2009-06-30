@@ -17,31 +17,91 @@ import java.awt.event.*;
 
 import edu.uci.ics.jung.algorithms.layout.StaticLayout;
 
+/**
+ * A stand-alone application for viewing derivation trees. Given files holding the source-side
+ * sentences and n-best output from the Joshua decoder, the user can browse through visualizations
+ * showing derivation trees for each sentence.
+ * 
+ * @author jonny
+ *
+ */
 public class DerivationBrowser {
 
+	/**
+	 * A frame that displays the list of source-side sentences and the list of target-side
+	 * sentences.
+	 */
 	private static JFrame chooserFrame;
 
+	/**
+	 * A list that will display all the sentences in the current source-side file.
+	 */
 	private static JList sourceList;
+	
+	/**
+	 * A list that will display all the candidate translations for the currently-selected
+	 * source sentence.
+	 */
 	private static JList targetList;
 
+	/**
+	 * A file containing source-side sentences.
+	 */
 	private static File sourceFile;
+	
+	/**
+	 * A file containing candidate translations for all source sentences, annotated with
+	 *  source-side alignments.
+	 */
 	private static File targetFile;
 
+	/**
+	 * Each member of this array is a linked list holding the candidate translations for one
+	 * particular sentence.
+	 */
+	private static LinkedList<String> [] nBestLists;
+
+	/**
+	 * A JFileChooser to allow the user to choose the source or target file.
+	 */
 	private static JFileChooser fileChooser;
 
+	/**
+	 * The active frame is the frame that displays a derivation tree for the currently selected
+	 * candidate translation.
+	 */
 	private static ActiveFrame activeFrame;
 
+	
 	public static final int DEFAULT_WIDTH = 640;
 	public static final int DEFAULT_HEIGHT = 480;
 
+	/**
+	 * The main method.
+	 * 
+	 * @param argv command-line parameters. Can specify the source or target file.
+	 */
 	public static void main(String [] argv)
 	{
 		initializeJComponents();
+		if (argv.length > 0) {
+			sourceFile = new File(argv[0]);
+			populateSourceList();
+		}
+		if (argv.length > 1) {
+			targetFile = new File(argv[1]);
+			setNBestLists();
+			populateTargetList();
+		}
 		activeFrame.drawGraph();
 		chooserFrame.setVisible(true);
 		return;
 	}
 
+	/**
+	 * Initializes the various components in the chooser frame. The two JLists are laid out,
+	 * and a menu bar is attached.
+	 */
 	private static void initializeJComponents()
 	{
 		// JFrame init
@@ -71,6 +131,12 @@ public class DerivationBrowser {
 		return;
 	}
 
+	/**
+	 * Creates the menu bar for the chooser frame. We put this in a seperate method so that
+	 * it can be easily found and changed if need be.
+	 * 
+	 * @return the menu bar for the chooser frame
+	 */
 	private static JMenuBar createJMenuBar()
 	{
 		JMenuBar mb = new JMenuBar();
@@ -87,7 +153,7 @@ public class DerivationBrowser {
 		creat.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
-				activeFrame.fix();
+				activeFrame.disableNavigationButtons();
 				activeFrame = new ActiveFrame();
 				return;
 			}
@@ -106,6 +172,10 @@ public class DerivationBrowser {
 		return mb;
 	}
 
+	/**
+	 * Displays the source-side sentences in their list. This method is called whenever the source-
+	 * side file is changed.
+	 */
 	private static void populateSourceList()
 	{
 		if (sourceFile == null)
@@ -130,18 +200,39 @@ public class DerivationBrowser {
 		}
 	}
 
+	/**
+	 * Displays the candidate translations for the current source sentence in their list. This method
+	 * is called whenever the source list's selected value is changed.
+	 */
 	private static void populateTargetList()
 	{
-		if (targetFile == null)
-			return;
-
 		DefaultListModel model = (DefaultListModel) targetList.getModel();
 		model.removeAllElements();
 		if (sourceList.getSelectedValue() == null) {
 			return;
 		}
+		for (String s : nBestLists[sourceList.getSelectedIndex()]) {
+			model.addElement(new Derivation(s));
+		}
+		return;
+	}
+
+	/**
+	 * Reads in the currently set target file and organizes it into seperate n-best lists. Each
+	 * n-best list corresponds to a different source sentence.
+	 */
+	private static void setNBestLists()
+	{
+		if (targetFile == null) {
+			System.err.println("setNBestLists: target file null");
+			return;
+		}
+
+		nBestLists = new LinkedList[sourceList.getModel().getSize()];
+		for (int i = 0; i < nBestLists.length; i++)
+			nBestLists[i] = new LinkedList<String>();
+
 		try {
-			int selectedIndex = sourceList.getSelectedIndex();
 			InputStream inp;
 			if (targetFile.getName().endsWith("gz")) 
 				inp = new GZIPInputStream(new FileInputStream(targetFile));
@@ -154,12 +245,11 @@ public class DerivationBrowser {
 				String [] tokens = line.split(DerivationTree.DELIMITER);
 				try {
 					src = Integer.parseInt(tokens[0].trim());
-					if (src > selectedIndex)
-						return;
-					if (src == selectedIndex)
-						model.addElement(new Derivation(line));
+				//	System.err.println("Derivation for source sentence " + src);
+					nBestLists[src].add(line);
 				}
 				catch (NumberFormatException e) {
+					System.err.println("Caught NumberFormatException in setNBestLists");
 					// fall through
 				}
 			}
@@ -169,22 +259,71 @@ public class DerivationBrowser {
 		}
 		catch (IOException e) {
 		}
+		return;
 	}
 
+	/**
+	 * ActiveFrame is a Frame that's specially designed to display a derivation tree. An important
+	 * property of an ActiveFrame is that it can be "fixed", meaning that its displayed derivation
+	 * tree can no longer be changed.
+	 * 
+	 * The DerivationBrowser will have at most one un-fixed frame at any one time. Other, fixed
+	 * frames can be maintained so that derivation trees can be compared.
+	 * 
+	 * @author Jonathan Weese
+	 *
+	 */
 	public static class ActiveFrame extends JFrame {
+		/**
+		 * The serial version UID. I don't know what it's for, but eclipse is convinced it's
+		 * necessary.
+		 */
+		private static final long serialVersionUID = 6482495170692955314L;
+		
+		/**
+		 * A button that should be pressed to view the next candidate translation in the list.
+		 */
 		JButton nextDerivation;
+		/**
+		 * A button that should be pressed to view the previous candidate translation in the list.
+		 */
 		JButton previousDerivation;
+		/**
+		 * A button to move to the next source-side sentence in the file.
+		 */
 		JButton nextSource;
+		/**
+		 * A button to move to the previous source-side sentence in the file.
+		 */
 		JButton previousSource;
 
+		/**
+		 * A panel that holds the buttons, as well as labels to show which derivation is currently
+		 * being displayed.
+		 */
 		private JPanel controlPanel;
+		/**
+		 * A panel used to display the derivation tree itself.
+		 */
 		private JPanel viewPanel;
 
+		/**
+		 * This label displays the text of the source sentence.
+		 */
 		private JLabel source;
+		/**
+		 * This label displays the text of the candidate translation.
+		 */
 		private JLabel derivation;
 
+		/**
+		 * This component displays the derivation tree's JUNG graph.
+		 */
 		private DerivationViewer dv;
 
+		/**
+		 * The default constructor.
+		 */
 		public ActiveFrame()
 		{
 			super("Joshua Derivation Tree");
@@ -207,6 +346,9 @@ public class DerivationBrowser {
 			setVisible(true);
 		}
 
+		/**
+		 * Lays out the control buttons of this frame.
+		 */
 		private void layoutControl()
 		{
 			JPanel ctlLeft = new JPanel(new GridLayout(2, 1));
@@ -226,6 +368,9 @@ public class DerivationBrowser {
 			return;
 		}
 
+		/**
+		 * Initializes the control buttons of this frame.
+		 */
 		private void initializeButtons()
 		{
 
@@ -269,6 +414,11 @@ public class DerivationBrowser {
 			return;
 		}
 
+		/**
+		 * Displays the derivation tree for the current candidate translation. The current candidate
+		 * translation is whichever translation is currently highlighted in the Derivation Browser's
+		 * chooser frame.
+		 */
 		public void drawGraph()
 		{
 			viewPanel.removeAll();
@@ -285,7 +435,7 @@ public class DerivationBrowser {
 			if (dv == null)
 				dv = new DerivationViewer(tree);
 			else {
-				dv.setGraphLayout(new StaticLayout(tree, new DerivationTreeTransformer(tree)));
+				dv.setGraphLayout(new StaticLayout<Node,DerivationTreeEdge>(tree, new DerivationTreeTransformer(tree)));
 				tree.addCorrespondences();
 			}
 			viewPanel.add(dv, BorderLayout.CENTER);
@@ -295,7 +445,13 @@ public class DerivationBrowser {
 			return;
 		}
 
-		public void fix()
+		/**
+		 * Makes this frame unmodifiable, so that the tree it displays cannot be changed. In fact,
+		 * all that happens is the title is update and the navigation buttons are disabled. This
+		 * method is intended to prevent the user from modifying the frame, not to prevent other code
+		 * from modifying it.
+		 */
+		public void disableNavigationButtons()
 		{
 			setTitle(getTitle() + " (fixed)");
 			nextDerivation.setEnabled(false);
@@ -307,17 +463,34 @@ public class DerivationBrowser {
 
 	}
 
+	/**
+	 * An action listener that updates the source and target sentence lists when a new file is chosen
+	 * in the main frame of the application.
+	 * 
+	 * @author Jonathan Weese
+	 *
+	 */
 	public static class FileChoiceListener implements ActionListener {
+		/**
+		 * The button in the main frame's "Control" menu that's labelled "Open source file".
+		 */
 		private JMenuItem source;
-		private JMenuItem target;
 
+		/**
+		 * The default constructor.
+		 * 
+		 * @param s the button in the main frame's "Control" menu for opening a source file.
+		 * @param t the button in the main frame's "Control" menu for opening a target file.
+		 */
 		public FileChoiceListener(JMenuItem s, JMenuItem t)
 		{
 			super();
 			source = s;
-			target = t;
 		}
 
+		/**
+		 * 
+		 */
 		public void actionPerformed(ActionEvent e)
 		{
 			int ret = fileChooser.showOpenDialog(chooserFrame);
@@ -330,6 +503,7 @@ public class DerivationBrowser {
 				}
 				else {
 					targetFile = chosen;
+					setNBestLists();
 					populateTargetList();
 				}
 			}
@@ -339,12 +513,10 @@ public class DerivationBrowser {
 
 	public static class SentenceListListener implements ListSelectionListener {
 		private JList source;
-		private JList target;
 
 		public SentenceListListener(JList s, JList t)
 		{
 			source = s;
-			target = t;
 		}
 
 		public void valueChanged(ListSelectionEvent e)
@@ -376,16 +548,41 @@ public class DerivationBrowser {
 		}
 	}
 
+	/**
+	 * This class represents a candidate translation. We want a distinct class for this because we
+	 * are keeping the candidate translations in a JList, and the JList by default displays items
+	 * as the results of their toString() method. Hence we want a toString method that will extract
+	 * the terminal symbols from the annotated derivation.
+	 * 
+	 * @author Jonathan Weese
+	 *
+	 */
 	public static class Derivation {
+		/**
+		 * The raw output from the joshua decoder.
+		 */
 		private String complete;
+		/**
+		 * The terminal symbols of the derivation; a "human-readable" translation.
+		 */
 		private String terminals;
 
+		/**
+		 * This constructor takes the raw annotated output from the joshua decoder.
+		 * 
+		 * @param c a candidate translation from the joshua decoder.
+		 */
 		public Derivation(String c)
 		{
 			complete = c;
 			terminals = extractTerminals(c);
 		}
 
+		/**
+		 * Gets the raw derivation from the joshua decoder.
+		 * 
+		 * @return the annotated derivation-tree representation of this candidate translation.
+		 */
 		public String complete()
 		{
 			return complete;
@@ -396,6 +593,12 @@ public class DerivationBrowser {
 			return terminals;
 		}
 
+		/**
+		 * Extracts only the terminal symbols of a derivation-tree representation, in order.
+		 * 
+		 * @param s a derivation-tree representation of a candidate translation
+		 * @return the terminal symbols of the representation.
+		 */
 		private static String extractTerminals(String s)
 		{
 			String tree = s.split(DerivationTree.DELIMITER)[1];
