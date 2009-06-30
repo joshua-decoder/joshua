@@ -17,8 +17,21 @@
 	<!-- TODO: should these be made into 'path's instead of 'property's? -->
 	<property name="testng" value="${lib}/testng-5.8-jdk15.jar"/>
 	<!-- <property name="bdb"    value="${lib}/je-3.2.23.jar"/> -->
-	<property name="cli"    value="${lib}/commons-cli-2.0-SNAPSHOT.jar"/>
+	<property name="cli"    value="commons-cli-2.0-SNAPSHOT.jar"/>
 	
+	<path id="compile.all.classpath">
+		<fileset dir="${lib}">
+			<include name="${cli}"/>
+			<!-- Jung uses a BSD-like license,
+				see ./lib/LICENSES/LICENSE-jung.txt -->
+			<include name="jung-api-2.0.jar"/>
+			<include name="jung-graph-impl-2.0.jar"/>
+			<include name="jung-algorithms-2.0.jar"/>
+			<include name="jung-visualization-2.0.jar"/>
+			<include name="collections-generic-4.01.jar"/>
+		</fileset>
+	</path>
+		
 	
 	<path id="pmd.classpath">
 		<fileset dir="${lib}">
@@ -83,11 +96,11 @@
 	<!-- Compile the Java code for the base library. -->
 	<target name="compile" depends="init,srilm">
 		<javac compiler="javac1.5" srcdir="${src}" destdir="${build}" 
-			classpath="${cli}" debug="on" encoding="utf8"
+			classpathref="compile.all.classpath" debug="on" encoding="utf8"
 			sourcepath="">
 			<!-- We nullify the sourcepath in order to disable Ant's usual resolution mechanism. This makes it an error for our basic code to call into code that has external dependencies, rather than auto-including those files and then having a classpath error. -->
 			<include name="**/*.java"/>
-			<exclude name="joshua/ui/**"/>
+			<!-- <exclude name="joshua/ui/**"/> -->
 			
 			<!-- This should be on, so people see it.
 				But it can be quite verbose...
@@ -100,7 +113,7 @@
 		<jar destfile="${build}/joshua.jar">
 			<fileset dir="${build}">
 				<include name="**/*.class"/>
-				<exclude name="joshua/ui/**"/>
+				<!-- <exclude name="joshua/ui/**"/> -->
 			</fileset>
 		</jar>
 	</target>
