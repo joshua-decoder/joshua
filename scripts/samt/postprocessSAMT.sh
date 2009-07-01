@@ -12,6 +12,6 @@ then
 fi
 
 zgrep -v COUNT $1 | gzip > $2
-zgrep COUNT $1 | awk 'BEGIN { FS="#" } ; { print $3 "#@1#@GOAL#1 0 0 0 0 0 0 0"; print "@GOAL " $3 "#@1 @2#@GOAL#1 0 0 0 0.434294482 0 0 0" }' | gzip > $3
-
+zgrep COUNT $1 | awk 'BEGIN { FS="#" } ; { print $3 "#@1#@GOAL#1 0 0 0 0 0 0 0";\
+	 print "@GOAL " $3 "#@1 @2#@GOAL#1 0 0 0 0.434294482 0 0 0" }' | gzip > $3
 
