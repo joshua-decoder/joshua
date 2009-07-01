@@ -14,8 +14,8 @@ def main():
   
   for line in inFile:
     (source, target, tgs, sgt) = line.rstrip().split(u" ")
-    tgsFile.write(tgs + u" " + source + u" " + target + u" " + tgs + u"\n")
-    sgtFile.write(sgt + u" " + target + u" " + source + u" " + sgt + u"\n")
+    tgsFile.write(target + u" " + source + u" " + tgs + u"\n")
+    sgtFile.write(source + u" " + target + u" " + sgt + u"\n")
     
 if __name__ == "__main__":
     main()
