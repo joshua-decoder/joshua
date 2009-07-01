@@ -1,7 +1,7 @@
 
 if [ $# -ne 3 ]
 then
-  echo "Usage: `basename $0` samt.merged.gz samt.tm.gz samt.glue.gz"
+  echo "Usage: postprocessSAMT.sh mergedrules.gz samt.tm.gz samt.glue.gz"
   exit 2
 fi
 
