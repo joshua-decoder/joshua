@@ -47,7 +47,10 @@ public class DerivationViewer extends VisualizationViewer<Node,DerivationTreeEdg
 	public DerivationViewer(DerivationTree g)
 	{
 		super(new CircleLayout<Node,DerivationTreeEdge>(g));
-		setGraphLayout(new StaticLayout<Node,DerivationTreeEdge>(g, new DerivationTreeTransformer(g)));
+		DerivationTreeTransformer dtt = new DerivationTreeTransformer(g);
+		StaticLayout<Node,DerivationTreeEdge> derivationLayout = new StaticLayout<Node,DerivationTreeEdge>(g, dtt);
+		derivationLayout.setSize(dtt.getSize());
+		setGraphLayout(derivationLayout);
 		scaleToLayout(new LayoutScalingControl());
 		g.addCorrespondences();
 		setPreferredSize(new Dimension(DEFAULT_HEIGHT, DEFAULT_WIDTH));

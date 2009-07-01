@@ -22,6 +22,7 @@ import org.apache.commons.collections15.Transformer;
 import edu.uci.ics.jung.algorithms.layout.TreeLayout;
 import edu.uci.ics.jung.graph.DelegateForest;
 
+import java.awt.Dimension;
 import java.awt.geom.Point2D;
 
 public class DerivationTreeTransformer implements Transformer<Node,Point2D> {
@@ -48,14 +49,14 @@ public class DerivationTreeTransformer implements Transformer<Node,Point2D> {
 		double x, y;
 		Point2D t = treeLayout.transform(n);
 		if (n.isSource()) {
-			x = /*treeLayout.transform(root).getX() +*/ (t.getX() - treeLayout.transform(sourceRoot).getX());
+			x = /*treeLayout.transform(root).getX() +*/ (t.getX() - treeLayout.transform(sourceRoot).getX() + treeLayout.transform(root).getX());
 			y = Y_DIST * (distanceToLeaf(n) + 1);
 		}
 		else {
-			x = t.getX() - treeLayout.transform(root).getX();;
+			x = t.getX();
 			y = Y_DIST * (-1) * distanceToLeaf(n);
 		}
-		return new Point2D.Double(x, y);
+		return new Point2D.Double(x, y + Y_DIST * (1 + distanceToLeaf(root)));
 	}
 
 	private int distanceToLeaf(Node n)
@@ -69,5 +70,13 @@ public class DerivationTreeTransformer implements Transformer<Node,Point2D> {
 				result = tmp;
 		}
 		return 1 + result;
+	}
+	
+	public Dimension getSize()
+	{
+		int height = 2 * Y_DIST * (1 + distanceToLeaf(root));
+		int width = (int) Math.round(2 * treeLayout.transform(root).getX());
+		Dimension ret = new Dimension(width, height);
+		return ret;
 	}
 }
