@@ -27,7 +27,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import joshua.corpus.MatchedHierarchicalPhrases;
-import joshua.corpus.suffix_array.HierarchicalPhrases;
 import joshua.corpus.suffix_array.Pattern;
 import joshua.corpus.vocab.SymbolTable;
 import joshua.decoder.ff.tm.AbstractGrammar;
@@ -90,7 +89,7 @@ public class Node extends AbstractGrammar implements Comparable<Node>, Trie {
 		this.suffixLink = null;
 		this.children = new HashMap<Integer,Node>();
 		this.objectID = nodeIDCounter++;
-		this.sourceHierarchicalPhrases = HierarchicalPhrases.emptyList(null);
+		this.sourceHierarchicalPhrases = null;//HierarchicalPhrases.emptyList((SymbolTable) null);
 		this.results = Collections.emptyList();
 	}
 	
@@ -145,6 +144,7 @@ public class Node extends AbstractGrammar implements Comparable<Node>, Trie {
 		final int arity = (sourcePattern==null) ? 0 : sourcePattern.arity();
 		
 		//XXX Is results sorted at this point? It needs to be, but I'm not sure it is.
+		logger.severe("Node sorted == " + this.isSorted());
 		
 		return new BasicRuleCollection(arity, sourceSide, results);
 		

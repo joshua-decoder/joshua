@@ -17,10 +17,13 @@
  */
 package joshua.corpus.suffix_array;
 
+import java.util.List;
+
 import joshua.corpus.Corpus;
 import joshua.corpus.MatchedHierarchicalPhrases;
 import joshua.corpus.Phrase;
 import joshua.corpus.vocab.SymbolTable;
+import joshua.decoder.ff.tm.Rule;
 import joshua.util.Cache;
 
 /**
@@ -168,7 +171,7 @@ public interface Suffixes {
 	/** 
 	 * Caches the matching hierarchical phrases for the pattern.
 	 */
-	void setMatchingPhrases(Pattern pattern, MatchedHierarchicalPhrases matchings);
+	void cacheMatchingPhrases(MatchedHierarchicalPhrases matchings);
 	
 	/**
 	 * Gets all of the positions in the corpus for the bounds
@@ -189,4 +192,12 @@ public interface Suffixes {
 	 */
 	Cache<Pattern,MatchedHierarchicalPhrases> getCachedHierarchicalPhrases();
 	
+	/**
+	 * Gets the list of rule objects cached by this
+	 * suffix array.
+	 *
+	 * @return the list of rule objects cached by this
+	 *         suffix array
+	 */
+	Cache<Pattern,List<Rule>> getCachedRules();
 }

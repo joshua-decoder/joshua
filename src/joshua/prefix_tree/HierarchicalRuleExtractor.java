@@ -38,6 +38,7 @@ import joshua.corpus.suffix_array.Pattern;
 import joshua.corpus.suffix_array.Suffixes;
 import joshua.decoder.ff.tm.BilingualRule;
 import joshua.decoder.ff.tm.Rule;
+import joshua.util.Cache;
 
 /**
  * Rule extractor for Hiero-style hierarchical phrase-based
@@ -141,113 +142,122 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 		
 		if (logger.isLoggable(Level.FINE)) logger.fine("Extracting rules for source pattern: " + sourcePattern);
 			
-		int listSize = sourceHierarchicalPhrases.size();
-		int stepSize; {
-			if (listSize <= sampleSize) {
-				stepSize = 1;
-			} else {
-				stepSize = listSize / sampleSize;
-			}
-		}
+		Cache<Pattern,List<Rule>> cache = suffixArray.getCachedRules();
 		
-		
-		List<Rule> results = new ArrayList<Rule>(sourceHierarchicalPhrases.size());
+		if (cache.containsKey(sourcePattern)) {
+			return cache.get(sourcePattern);
+		} else {
 
-		ArrayList<Pattern> translations = new ArrayList<Pattern>();
-		Map<Pattern,Integer> counts = new HashMap<Pattern,Integer>();
-		
-		// For each sample HierarchicalPhrase
-		for (int i=0, n=sourceHierarchicalPhrases.size(); i<n; i+=stepSize) { 
-			
-			HierarchicalPhrase translation = getTranslation(sourceHierarchicalPhrases, i);
-			if (translation != null) {
-				translations.add(translation);
-				Integer count = counts.get(translation);
-				if (null == count) {
-					count = 1;
+			int listSize = sourceHierarchicalPhrases.size();
+			int stepSize; {
+				if (listSize <= sampleSize) {
+					stepSize = 1;
 				} else {
-					count++;
+					stepSize = listSize / sampleSize;
 				}
-				counts.put(translation, count);
 			}
-		}
 
-		if (logger.isLoggable(Level.FINER)) { logger.finer(
+
+			List<Rule> results = new ArrayList<Rule>(sourceHierarchicalPhrases.size());
+
+			ArrayList<Pattern> translations = new ArrayList<Pattern>();
+			Map<Pattern,Integer> counts = new HashMap<Pattern,Integer>();
+
+			// For each sample HierarchicalPhrase
+			for (int i=0, n=sourceHierarchicalPhrases.size(); i<n; i+=stepSize) { 
+
+				HierarchicalPhrase translation = getTranslation(sourceHierarchicalPhrases, i);
+				if (translation != null) {
+					translations.add(translation);
+					Integer count = counts.get(translation);
+					if (null == count) {
+						count = 1;
+					} else {
+						count++;
+					}
+					counts.put(translation, count);
+				}
+			}
+
+			if (logger.isLoggable(Level.FINER)) { logger.finer(
 					translations.size() + " actual translations of " + 
 					sourcePattern + " being stored.");
+			}
+
+
+			float p_e_given_f_denominator = translations.size();
+
+			// We don't want to produce duplicate rules
+			HashSet<Pattern> uniqueTranslations = new HashSet<Pattern>(translations);
+
+			for (Pattern translation : uniqueTranslations) {
+
+				// Get translation probability
+				float p_e_given_f = 
+					counts.get(translation) / p_e_given_f_denominator;
+				float logp_e_given_f = -1.0f * (float) Math.log10(p_e_given_f);
+				if (Float.isInfinite(logp_e_given_f)) {
+					p_e_given_f = PrefixTree.VERY_UNLIKELY;
+				}
+				if (logger.isLoggable(Level.FINER)) {
+					logger.finer(
+							"   prob( "+ translation.toString() + " | " + 
+							sourcePattern.toString() + " ) =  -log10(" + 
+							counts.get(translation)+ " / " +p_e_given_f_denominator
+							+ ") = " + p_e_given_f);
+				}
+
+				// Get lexical translation probability
+				float lex_p_e_given_f = 
+					lexProbs.lexProbTargetGivenSource(translation, sourcePattern);
+				float lex_logp_e_given_f =
+					-1.0f * (float) Math.log10(lex_p_e_given_f);			
+				if (Float.isInfinite(lex_logp_e_given_f)) {
+					lex_p_e_given_f = PrefixTree.VERY_UNLIKELY;
+				}
+				if (logger.isLoggable(Level.FINER)) {
+					logger.finer(
+							"lexprob( " + translation.toString() + " | " + 
+							sourcePattern.toString() + " ) =  -log10(" +
+							lex_p_e_given_f + ") = " + lex_logp_e_given_f);
+				}
+
+				// Get reveres lexical translation probability
+				float lex_p_f_given_e =
+					lexProbs.lexProbSourceGivenTarget(sourcePattern, translation);
+				float lex_logp_f_given_e =
+					-1.0f * (float) Math.log10(lex_p_f_given_e);
+				if (Float.isInfinite(lex_logp_f_given_e)) {
+					lex_p_f_given_e = PrefixTree.VERY_UNLIKELY;
+				}
+				if (logger.isLoggable(Level.FINER)) {
+					logger.finer(
+							"lexprob( " + sourcePattern.toString() + " | " + 
+							translation.toString()+ " ) =  -log10(" +
+							lex_p_f_given_e + ") = " + lex_logp_f_given_e);
+				}
+
+				float[] featureScores = { 
+						logp_e_given_f, 
+						lex_logp_f_given_e,    
+						lex_logp_e_given_f 
+				};
+
+				Rule rule = new BilingualRule(
+						PrefixTree.X, 
+						sourcePattern.getWordIDs(), 
+						translation.getWordIDs(), 
+						featureScores, 
+						translation.arity());
+
+				results.add(rule);
+			}
+
+			cache.put(sourcePattern, results);
+			
+			return results;
 		}
-
 		
-		float p_e_given_f_denominator = translations.size();
-
-		// We don't want to produce duplicate rules
-		HashSet<Pattern> uniqueTranslations = new HashSet<Pattern>(translations);
-		
-		for (Pattern translation : uniqueTranslations) {
-			
-			// Get translation probability
-			float p_e_given_f = 
-				counts.get(translation) / p_e_given_f_denominator;
-			float logp_e_given_f = -1.0f * (float) Math.log10(p_e_given_f);
-			if (Float.isInfinite(logp_e_given_f)) {
-				p_e_given_f = PrefixTree.VERY_UNLIKELY;
-			}
-			if (logger.isLoggable(Level.FINER)) {
-				logger.finer(
-						"   prob( "+ translation.toString() + " | " + 
-						sourcePattern.toString() + " ) =  -log10(" + 
-						counts.get(translation)+ " / " +p_e_given_f_denominator
-						+ ") = " + p_e_given_f);
-			}
-
-			// Get lexical translation probability
-			float lex_p_e_given_f = 
-				lexProbs.lexProbTargetGivenSource(translation, sourcePattern);
-			float lex_logp_e_given_f =
-				-1.0f * (float) Math.log10(lex_p_e_given_f);			
-			if (Float.isInfinite(lex_logp_e_given_f)) {
-				lex_p_e_given_f = PrefixTree.VERY_UNLIKELY;
-			}
-			if (logger.isLoggable(Level.FINER)) {
-				logger.finer(
-						"lexprob( " + translation.toString() + " | " + 
-						sourcePattern.toString() + " ) =  -log10(" +
-						lex_p_e_given_f + ") = " + lex_logp_e_given_f);
-			}
-			
-			// Get reveres lexical translation probability
-			float lex_p_f_given_e =
-				lexProbs.lexProbSourceGivenTarget(sourcePattern, translation);
-			float lex_logp_f_given_e =
-				-1.0f * (float) Math.log10(lex_p_f_given_e);
-			if (Float.isInfinite(lex_logp_f_given_e)) {
-				lex_p_f_given_e = PrefixTree.VERY_UNLIKELY;
-			}
-			if (logger.isLoggable(Level.FINER)) {
-				logger.finer(
-						"lexprob( " + sourcePattern.toString() + " | " + 
-						translation.toString()+ " ) =  -log10(" +
-						lex_p_f_given_e + ") = " + lex_logp_f_given_e);
-			}
-			
-			float[] featureScores = { 
-					    logp_e_given_f, 
-					lex_logp_f_given_e,    
-					lex_logp_e_given_f 
-					 };
-
-			Rule rule = new BilingualRule(
-					PrefixTree.X, 
-					sourcePattern.getWordIDs(), 
-					translation.getWordIDs(), 
-					featureScores, 
-					translation.arity());
-			
-			results.add(rule);
-		}
-
-		return results;
-
 	}
 
 

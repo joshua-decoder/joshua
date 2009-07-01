@@ -42,7 +42,7 @@ public class BasicRuleCollection implements RuleCollection {
 	 * Indicates whether the rules in this collection have been
 	 * sorted based on the latest feature function values.
 	 */
-	protected boolean sorted = false;
+	protected boolean sorted;
 	
 	/** List of rules stored in this collection. */
 	protected final List<Rule> rules;
@@ -67,6 +67,7 @@ public class BasicRuleCollection implements RuleCollection {
 		this.rules = new ArrayList<Rule>();
 		this.sourceTokens = sourceTokens;
 		this.arity = arity;
+		this.sorted = false;
 	}
 	
 	/**
@@ -87,6 +88,7 @@ public class BasicRuleCollection implements RuleCollection {
 		}
 		this.sourceTokens = sourceTokens;
 		this.arity = arity;
+		this.sorted = false;
 	}
 	
 	/* See Javadoc comments for RuleCollection interface. */

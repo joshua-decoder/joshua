@@ -29,6 +29,7 @@ import joshua.corpus.vocab.SymbolTable;
 import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.Rule;
 import joshua.util.BotMap;
+import joshua.util.Cache;
 
 import java.util.Collections;
 import java.util.LinkedList;
@@ -285,6 +286,7 @@ public class PrefixTree {
 	 * @param maxNonterminals
 	 */
 	PrefixTree(SymbolTable vocab, int maxPhraseSpan, int maxPhraseLength, int maxNonterminals) {
+//		this(new SuffixArray(new CorpusArray()), null, null, vocab, null, null, maxPhraseSpan, maxPhraseLength, maxNonterminals, 2);
 		this(null, null, null, vocab, null, null, maxPhraseSpan, maxPhraseLength, maxNonterminals, 2);
 	}
 
@@ -490,7 +492,8 @@ public class PrefixTree {
 			// Get the first and last index in the suffix array for the specified pattern
 			int[] bounds = suffixArray.findPhrase(pattern, 0, pattern.size(), prefixNode.lowBoundIndex, prefixNode.highBoundIndex);
 			if (bounds==null) {
-				result = HierarchicalPhrases.emptyList(vocab);
+				result = HierarchicalPhrases.emptyList(pattern);
+				suffixArray.cacheMatchingPhrases(result);
 				//TOOD Should node.setBounds(bounds) be called here?
 			} else {
 				node.setBounds(bounds[0],bounds[1]);
@@ -502,10 +505,14 @@ public class PrefixTree {
 
 			// 8: If M_a_alpha_b has been precomputed (then result will be non-null)
 			// 9: Retrieve M_a_alpha_b from cache of precomputations
-			result = suffixArray.getMatchingPhrases(pattern);
+//			result = suffixArray.getMatchingPhrases(pattern);
+			
 			
 			// 10: else
-			if (result == null) {
+//			if (result == null) {
+			if (suffixArray.getCachedHierarchicalPhrases().containsKey(pattern)) {	
+				result = suffixArray.getMatchingPhrases(pattern);
+			} else {
 				
 				// 16: M_a_alpha_b <-- QUERY_INTERSECT(M_a_alpha, M_alpha_b)
 				
@@ -527,6 +534,7 @@ public class PrefixTree {
 //					Pattern xpattern = new Pattern(vocab, xwords);
 //					result = suffixNode.sourceHierarchicalPhrases.copyWith(xpattern);
 					result = suffixNode.sourceHierarchicalPhrases.copyWithInitialX();
+					
 //					result = new HierarchicalPhrases(xpattern, suffixNode.sourceHierarchicalPhrases);
 
 				} else { 
@@ -535,10 +543,11 @@ public class PrefixTree {
 					
 					if (logger.isLoggable(Level.FINEST)) logger.finest("Calling queryIntersect("+pattern+" M_a_alpha.pattern=="+prefixNode.getSourcePattern() + ", M_alpha_b.pattern=="+suffixNode.getSourcePattern()+")");
 					
-					result = HierarchicalPhrases.queryIntersect(pattern, prefixNode.sourceHierarchicalPhrases, suffixNode.sourceHierarchicalPhrases, minNonterminalSpan, maxPhraseSpan);
+					result = HierarchicalPhrases.queryIntersect(pattern, prefixNode.sourceHierarchicalPhrases, suffixNode.sourceHierarchicalPhrases, minNonterminalSpan, maxPhraseSpan, suffixArray);
+					
 				}
 				
-				suffixArray.setMatchingPhrases(pattern, result);
+				suffixArray.cacheMatchingPhrases(result);
 			}
 		}
 
@@ -619,14 +628,35 @@ public class PrefixTree {
 				
 				// 6: Q_alphaX <-- Q_alpha
 				{
-//					SymbolTable vocab = (suffixArray==null) ? null : suffixArray.getVocabulary();
-//					Pattern xpattern = new Pattern(vocab, patternWords, X);
+					SymbolTable vocab = (suffixArray==null) ? null : suffixArray.getVocabulary();
+					Pattern xpattern = new Pattern(vocab, patternWords, X);
 					
 //					HierarchicalPhrases phrasesWithFinalX = new HierarchicalPhrases(xpattern, node.sourceHierarchicalPhrases); 
-					MatchedHierarchicalPhrases phrasesWithFinalX = 
-//						node.sourceHierarchicalPhrases.copyWith(xpattern);
-						node.sourceHierarchicalPhrases.copyWithFinalX();
-//						new HierarchicalPhrases(xpattern, node.sourceHierarchicalPhrases); 
+					MatchedHierarchicalPhrases phrasesWithFinalX;
+					if (suffixArray==null) {
+						// This should only happen in certain unit tests
+						logger.severe("This should only be encountered during unit testing!");
+						if (node.sourceHierarchicalPhrases==null) {
+							node.sourceHierarchicalPhrases = HierarchicalPhrases.emptyList((SymbolTable) null);
+						}
+						phrasesWithFinalX = node.sourceHierarchicalPhrases.copyWithFinalX();
+					} else {
+						Cache<Pattern,MatchedHierarchicalPhrases> cache = suffixArray.getCachedHierarchicalPhrases();
+						if (cache.containsKey(xpattern)) {
+							phrasesWithFinalX = cache.get(xpattern);
+						} else {
+							phrasesWithFinalX = node.sourceHierarchicalPhrases.copyWithFinalX();
+							suffixArray.cacheMatchingPhrases(phrasesWithFinalX);
+						}
+					}
+//							(suffixArray.getCachedHierarchicalPhrases().containsKey(xpattern))
+//							? suffixArray.getCachedHierarchicalPhrases().get(xpattern)
+//							: 
+//						
+////						node.sourceHierarchicalPhrases.copyWith(xpattern);
+//						
+////						new HierarchicalPhrases(xpattern, node.sourceHierarchicalPhrases); 
+					
 					
 					List<Rule> rules = (ruleExtractor==null) ? 
 								Collections.<Rule>emptyList() : 

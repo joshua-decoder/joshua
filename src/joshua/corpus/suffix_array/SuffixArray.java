@@ -19,13 +19,15 @@ package joshua.corpus.suffix_array;
 
 import joshua.corpus.Corpus;
 import joshua.corpus.MatchedHierarchicalPhrases;
+import joshua.decoder.ff.tm.Rule;
 import joshua.util.FileUtility;
 import joshua.util.Cache;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutput;
-import java.util.*;
+import java.util.List;
+import java.util.Random;
 import java.util.logging.Logger;
 
 
@@ -84,9 +86,11 @@ public class SuffixArray extends AbstractSuffixArray {
 	 */
 	public SuffixArray(Corpus corpusArray, int maxCacheSize) {
 		super(corpusArray, 
-				(maxCacheSize > 0) ? 
-						new Cache<Pattern,MatchedHierarchicalPhrases>(maxCacheSize) :
-						null);
+				new Cache<Pattern,MatchedHierarchicalPhrases>(maxCacheSize),
+				new Cache<Pattern,List<Rule>>(maxCacheSize));
+//				(maxCacheSize > 0) ? 
+//						new Cache<Pattern,MatchedHierarchicalPhrases>(maxCacheSize) :
+//						null);
 		
 		suffixes = new int[corpusArray.size()];
 
@@ -118,9 +122,11 @@ public class SuffixArray extends AbstractSuffixArray {
 	 */
 	protected SuffixArray(int[] suffixes, Corpus corpusArray, int maxCacheSize) {
 		super(corpusArray, 
-				(maxCacheSize > 0) ? 
-						new Cache<Pattern,MatchedHierarchicalPhrases>(maxCacheSize) :
-						null);
+				new Cache<Pattern,MatchedHierarchicalPhrases>(maxCacheSize),
+				new Cache<Pattern,List<Rule>>(maxCacheSize));
+//				(maxCacheSize > 0) ? 
+//						new Cache<Pattern,MatchedHierarchicalPhrases>(maxCacheSize) :
+//						null);
 		
 		this.suffixes = suffixes;
 		

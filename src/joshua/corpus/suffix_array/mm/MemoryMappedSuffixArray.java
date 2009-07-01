@@ -21,12 +21,14 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.IntBuffer;
 import java.nio.channels.FileChannel;
+import java.util.List;
 
 import joshua.corpus.Corpus;
 import joshua.corpus.MatchedHierarchicalPhrases;
 import joshua.corpus.suffix_array.AbstractSuffixArray;
 import joshua.corpus.suffix_array.MismatchedCorpusException;
 import joshua.corpus.suffix_array.Pattern;
+import joshua.decoder.ff.tm.Rule;
 import joshua.util.Cache;
 
 public class MemoryMappedSuffixArray extends AbstractSuffixArray {
@@ -42,7 +44,9 @@ public class MemoryMappedSuffixArray extends AbstractSuffixArray {
 	 * @throws ClassNotFoundException 
 	 */
 	public MemoryMappedSuffixArray(String suffixesFileName, Corpus corpus, int maxCacheSize) throws IOException, ClassNotFoundException {
-		super(corpus, new Cache<Pattern,MatchedHierarchicalPhrases>(maxCacheSize));
+		super(corpus, 
+				new Cache<Pattern,MatchedHierarchicalPhrases>(maxCacheSize),
+				new Cache<Pattern,List<Rule>>(maxCacheSize));
 		
 		RandomAccessFile binaryFile = new RandomAccessFile( suffixesFileName, "r" );
 	    FileChannel binaryChannel = binaryFile.getChannel();

@@ -17,6 +17,8 @@
  */
 package joshua.corpus.vocab;
 
+import joshua.util.FormatUtil;
+
 /**
  * Partial basic implementation of a symbol table.
  *
@@ -57,7 +59,16 @@ public abstract class AbstractSymbolTable implements SymbolTable {
 		// and extracts it, starting from one.
 		// Assumes the whole prefix is the
 		// nonterminal-ID portion of the string
-		return Integer.parseInt( wrd.substring(wrd.length() - 2,	wrd.length() - 1) ) - 1;
+		String nonterminalID = 
+			wrd.substring(wrd.length() - 2,	wrd.length() - 1);
+		
+		if (FormatUtil.isNumber(nonterminalID)) {
+			return Integer.parseInt( nonterminalID ) - 1;
+		} else {
+			throw new MalformedNonterminalException(
+					"Substring '" +nonterminalID+ "' " +
+					"of string '" +wrd+ "' is not a number");
+		}
 	}
 
 	/* See Javadoc for SymbolTable interface. */

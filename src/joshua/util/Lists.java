@@ -55,6 +55,32 @@ public class Lists {
 //	}
 	
 
+	public static Iterable<Integer> upto(final int exclusiveUpperBound) {
+		return new Iterable<Integer>() {
+			public Iterator<Integer> iterator() {
+				return new Iterator<Integer>() {
+					int next = 0;
+					
+					public boolean hasNext() {
+						return next < exclusiveUpperBound;
+					}
+
+					public Integer next() {
+						int result = next;
+						next += 1;
+						return result;
+					}
+
+					public void remove() {
+						throw new UnsupportedOperationException();
+					}
+					
+				};
+			}
+			
+		};
+	}
+	
 	public static Iterable<IndexedByte> eachWithIndex(final byte[] list) {
 		
 		return new Iterable<IndexedByte>() {

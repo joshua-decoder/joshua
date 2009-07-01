@@ -21,6 +21,7 @@ import joshua.corpus.Phrase;
 import joshua.corpus.suffix_array.Pattern;
 import joshua.corpus.vocab.Vocabulary;
 import joshua.prefix_tree.PrefixTree;
+import joshua.util.Cache;
 
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -184,6 +185,21 @@ public class PatternTest {
 			Assert.assertEquals(hierSeqs[1], 2);
 			Assert.assertEquals(hierSeqs[2], 4);
 		}
+	}
+	
+	@Test(dependsOnMethods = {"extendedPattern","copiedPattern"})
+	public void cacheTest() {
+		
+		Cache<Pattern,Integer> cache = new Cache<Pattern,Integer>(10);
+		
+		cache.put(pattern, 1);
+		
+		Assert.assertTrue(cache.containsKey(pattern));
+		Assert.assertEquals((int) cache.get(pattern), 1);
+		
+		Pattern copiedPattern = new Pattern(pattern);
+		Assert.assertTrue(cache.containsKey(copiedPattern));
+		Assert.assertEquals((int) cache.get(copiedPattern), 1);
 	}
 	
 }

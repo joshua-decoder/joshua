@@ -18,6 +18,9 @@
 package joshua.decoder.ff.tm;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import joshua.decoder.ff.FeatureFunction;
 
@@ -32,8 +35,13 @@ import joshua.decoder.ff.FeatureFunction;
  *
  * @author Lane Schwartz
  */
-public abstract class AbstractGrammar {//implements Grammar {
+public abstract class AbstractGrammar implements SortableGrammar {
  
+	/** Logger for this class. */
+	private static final Logger logger =
+		Logger.getLogger(AbstractGrammar.class.getName());
+	
+	
 	/** 
 	 * Indicates whether the rules in this grammar have been
 	 * sorted based on the latest feature function values.
@@ -48,18 +56,6 @@ public abstract class AbstractGrammar {//implements Grammar {
 	public AbstractGrammar() {
 		this.sorted = false;
 	}
-	
-	/**
-	 * Gets the root of the <code>Trie</code> backing this
-	 * grammar.
-	 * <p>
-	 * <em>Note</em>: This method should run as a small
-	 * constant-time function.
-	 * 
-	 * @return the root of the <code>Trie</code> backing this
-	 *         grammar
-	 */
-	public abstract Trie getTrieRoot();
 	
 	/**
 	 * Cube-pruning requires that the grammar be sorted based
@@ -94,6 +90,7 @@ public abstract class AbstractGrammar {//implements Grammar {
 	 */
 	protected void setSorted(boolean sorted) {
 		this.sorted = sorted;
+		logger.info("This node is now sorted: " + this);
 	}
 	
 	/**
@@ -109,16 +106,32 @@ public abstract class AbstractGrammar {//implements Grammar {
 	 * @param models Feature function models to use during
 	 *               sorting.
 	 */
+	//private void sort(Trie node, ArrayList<FeatureFunction> models) {
 	private void sort(Trie node, ArrayList<FeatureFunction> models) {
 		if (node != null) {
-			if(node.hasRules())
+			
+			logger.info("Sorting node " + node);
+			
+			if(node.hasRules()) {
 				node.getRules().sortRules(models);
+			}
+			
+			if (node instanceof AbstractGrammar) {
+				((AbstractGrammar) node).setSorted(true);
+			}
+			
 			if(node.hasExtensions()){
+				Collection<? extends Trie> children = node.getExtensions();
+				logger.info("Node has " + children.size() + " children to extend: " + node);
 				for (Trie child : node.getExtensions()) {
 					sort(child, models);
 				}
+			} else if (logger.isLoggable(Level.INFO)) {
+				logger.info("Node has 0 children to extend: " + node);
 			}
 		}
 	}
 	
 }
+
+	

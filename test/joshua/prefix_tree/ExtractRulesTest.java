@@ -2127,5 +2127,5 @@ public class ExtractRulesTest {
 		verifyLine(lines.get(n++), "[X]", "yet", "und");
 
 	}
-
+	
 }

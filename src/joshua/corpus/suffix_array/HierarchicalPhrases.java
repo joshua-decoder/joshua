@@ -90,7 +90,13 @@ public class HierarchicalPhrases extends AbstractHierarchicalPhrases {
 		this.terminalSequenceStartIndices = startPositions;
 //		this.sentenceNumber = new int[size];
 		this.sentenceNumber = sentenceNumbers;
+		publicCounter += 1;
 	}
+	
+	public static int publicCounter = 0;
+	public static int protectedCounter = 0; 
+	public static int privateCounter = 0;
+	public static int emptyListCounter = 0;
 	
 	/**
 	 * Constructs a list of hierarchical phrases.
@@ -129,6 +135,7 @@ public class HierarchicalPhrases extends AbstractHierarchicalPhrases {
 			this.sentenceNumber[i] = sentenceNumbers.get(i);
 		}
 		
+		protectedCounter += 1;
 //		this.size = size;	
 	}
 	
@@ -151,6 +158,7 @@ public class HierarchicalPhrases extends AbstractHierarchicalPhrases {
 //		this.size = phrases.size;
 		this.terminalSequenceStartIndices = phrases.terminalSequenceStartIndices;
 		this.sentenceNumber = phrases.sentenceNumber;
+		privateCounter += 1;
 	}
 
 	/**
@@ -159,9 +167,20 @@ public class HierarchicalPhrases extends AbstractHierarchicalPhrases {
 	 * @param vocab Symbol table to associate with the list
 	 * @return an empty list of hierarchical phrases
 	 */
-	public static HierarchicalPhrases emptyList(SymbolTable vocab, int... words) {		
+	public static HierarchicalPhrases emptyList(SymbolTable vocab, int... words) {	
+		return emptyList(new Pattern(vocab, words));
+	}
+	
+	/**
+	 * Gets an empty list of hierarchical phrases.
+	 * 
+	 * @param vocab Symbol table to associate with the list
+	 * @return an empty list of hierarchical phrases
+	 */
+	public static HierarchicalPhrases emptyList(Pattern pattern) {	
+		emptyListCounter += 1;
 		return new HierarchicalPhrases(
-				new Pattern(vocab, words), 
+				pattern, 
 				Collections.<Integer>emptyList(), 
 				Collections.<Integer>emptyList()
 			);

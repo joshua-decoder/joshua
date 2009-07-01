@@ -91,7 +91,7 @@ public class AbstractHierarchicalPhrasesTest {
 		int maxPhraseSpan = 10;
 		
 		MatchedHierarchicalPhrases M_a_alpha_b =
-			AbstractHierarchicalPhrases.queryIntersect(new Pattern(vocab, en, X, de, X, en), M_a_alpha, M_alpha_b, minNonterminalSpan, maxPhraseSpan);
+			AbstractHierarchicalPhrases.queryIntersect(new Pattern(vocab, en, X, de, X, en), M_a_alpha, M_alpha_b, minNonterminalSpan, maxPhraseSpan, null);
 	
 		Assert.assertNotNull(M_a_alpha_b);
 		Assert.assertEquals(M_a_alpha_b.size(), 3);
