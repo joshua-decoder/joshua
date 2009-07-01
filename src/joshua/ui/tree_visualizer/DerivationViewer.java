@@ -33,6 +33,7 @@ import edu.uci.ics.jung.visualization.VisualizationViewer;
 import edu.uci.ics.jung.visualization.control.DefaultModalGraphMouse;
 import edu.uci.ics.jung.visualization.control.ModalGraphMouse;
 import edu.uci.ics.jung.visualization.control.LayoutScalingControl;
+import edu.uci.ics.jung.visualization.control.ViewScalingControl;
 import edu.uci.ics.jung.visualization.decorators.ToStringLabeller;
 import edu.uci.ics.jung.visualization.renderers.Renderer.VertexLabel.Position;
 
@@ -44,12 +45,12 @@ public class DerivationViewer extends VisualizationViewer<Node,DerivationTreeEdg
 	public static final Color SRC = Color.WHITE;
 	public static final Color TGT = Color.RED;
 
-	public DerivationViewer(DerivationTree g)
+	public DerivationViewer(DerivationTree g, Dimension d)
 	{
 		super(new CircleLayout<Node,DerivationTreeEdge>(g));
-		DerivationTreeTransformer dtt = new DerivationTreeTransformer(g);
+		DerivationTreeTransformer dtt = new DerivationTreeTransformer(g, d);
 		StaticLayout<Node,DerivationTreeEdge> derivationLayout = new StaticLayout<Node,DerivationTreeEdge>(g, dtt);
-		derivationLayout.setSize(dtt.getSize());
+//		derivationLayout.setSize(dtt.getSize());
 		setGraphLayout(derivationLayout);
 		scaleToLayout(new LayoutScalingControl());
 		g.addCorrespondences();

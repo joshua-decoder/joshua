@@ -432,10 +432,11 @@ public class DerivationBrowser {
 			derivation.setText(tgtDer.toString());
 			String tgt = tgtDer.complete();
 			DerivationTree tree = new DerivationTree(tgt.split(DerivationTree.DELIMITER)[1], src);
-			if (dv == null)
-				dv = new DerivationViewer(tree);
+			if (dv == null) {
+				dv = new DerivationViewer(tree, viewPanel.getSize());
+			}
 			else {
-				dv.setGraphLayout(new StaticLayout<Node,DerivationTreeEdge>(tree, new DerivationTreeTransformer(tree)));
+				dv.setGraphLayout(new StaticLayout<Node,DerivationTreeEdge>(tree, new DerivationTreeTransformer(tree, dv.getSize())));
 				tree.addCorrespondences();
 			}
 			viewPanel.add(dv, BorderLayout.CENTER);

@@ -31,9 +31,10 @@ public class DerivationTreeTransformer implements Transformer<Node,Point2D> {
 	private Node root;
 	private Node sourceRoot;
 
-	static int Y_DIST = 50;
+	private double Y_DIST;
+	private double X_DIST;
 
-	public DerivationTreeTransformer(DerivationTree t)
+	public DerivationTreeTransformer(DerivationTree t, Dimension d)
 	{
 		graph = t;
 		DelegateForest<Node,DerivationTreeEdge> del = new DelegateForest<Node,DerivationTreeEdge>(t);
@@ -41,7 +42,15 @@ public class DerivationTreeTransformer implements Transformer<Node,Point2D> {
 		del.setRoot(t.getSourceRoot());
 		root = t.getRoot();
 		sourceRoot = t.getSourceRoot();
-		treeLayout = new TreeLayout<Node,DerivationTreeEdge>(del, 125);
+		Y_DIST = d.getHeight() / (2 * (1 + distanceToLeaf(root)));
+		int leafCount = 0;
+		for (Node n : t.getVertices()) {
+			if (t.outDegree(n) == 0)
+				leafCount++;
+		}
+		X_DIST = d.getWidth() / leafCount;
+		
+		treeLayout = new TreeLayout<Node,DerivationTreeEdge>(del, (int) Math.round(X_DIST));
 	}
 
 	public Point2D transform(Node n)
@@ -74,7 +83,7 @@ public class DerivationTreeTransformer implements Transformer<Node,Point2D> {
 	
 	public Dimension getSize()
 	{
-		int height = 2 * Y_DIST * (1 + distanceToLeaf(root));
+		int height = (int) Math.round(2 * Y_DIST * (1 + distanceToLeaf(root)));
 		int width = (int) Math.round(2 * treeLayout.transform(root).getX());
 		Dimension ret = new Dimension(width, height);
 		return ret;

@@ -63,9 +63,10 @@ public class DerivationTree extends DirectedOrderedSparseMultigraph<Node,Derivat
 			else {
 				g = new DerivationTree(tgt.nextLine().split(DELIMITER)[1]);
 			}
-			DerivationViewer viewer = new DerivationViewer(g);
+
 
 			JFrame frame = new JFrame("derivation tree");
+			DerivationViewer viewer = new DerivationViewer(g, frame.getSize());
 			frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 			frame.setSize(500, 500);
 			frame.getContentPane().add(viewer);
@@ -239,10 +240,13 @@ public class DerivationTree extends DirectedOrderedSparseMultigraph<Node,Derivat
 		LinkedList<Node> children = new LinkedList<Node>(getSuccessors(curr));
 		if (children.isEmpty()) {
 			String [] toks = source.split("\\s+");
-			String srcName = "";
+			//String srcName = "";
+			StringBuffer srcBuf = new StringBuffer();
 			for (int i = curr.sourceStart(); i < curr.sourceEnd(); i++) {
-				srcName += toks[i] + " ";
+			//	srcName += toks[i] + " ";
+				srcBuf.append(toks[i]).append(" ");
 			}
+			String srcName = srcBuf.toString();
 			if (srcName.equals(""))
 				return;
 			Node result = new Node(srcName, true);
