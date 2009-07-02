@@ -200,4 +200,5 @@ public interface Suffixes {
 	 *         suffix array
 	 */
 	Cache<Pattern,List<Rule>> getCachedRules();
+
 }

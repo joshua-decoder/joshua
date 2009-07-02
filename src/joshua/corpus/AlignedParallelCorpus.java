@@ -42,7 +42,11 @@ public class AlignedParallelCorpus implements ParallelCorpus {
 
 
 	public int getNumSentences() {
-		return this.alignments.size();
+		if (alignments==null) {
+			return 0;
+		} else {
+			return this.alignments.size();
+		}
 	}
 
 

@@ -29,17 +29,13 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.GZIPOutputStream;
 
-import joshua.corpus.AlignedParallelCorpus;
 import joshua.corpus.Corpus;
 import joshua.corpus.MatchedHierarchicalPhrases;
-import joshua.corpus.ParallelCorpus;
-import joshua.corpus.RuleExtractor;
 import joshua.corpus.alignment.AlignmentGrids;
 import joshua.corpus.alignment.Alignments;
 import joshua.corpus.alignment.mm.MemoryMappedAlignmentGrids;
-import joshua.corpus.lexprob.LexProbs;
-import joshua.corpus.lexprob.LexicalProbabilities;
 import joshua.corpus.mm.MemoryMappedCorpusArray;
+import joshua.corpus.suffix_array.ParallelCorpusGrammarFactory;
 import joshua.corpus.suffix_array.Pattern;
 import joshua.corpus.suffix_array.SuffixArrayFactory;
 import joshua.corpus.suffix_array.Suffixes;
@@ -69,7 +65,7 @@ public class ExtractRules {
 
 	private String encoding = "UTF-8";
 
-private String outputFile = "";
+	private String outputFile = "";
 	
 	private String sourceFileName = "";
 	private String sourceSuffixesFileName = "";
@@ -84,7 +80,7 @@ private String outputFile = "";
 	private String testFileName = "";
 	
 	
-	private int cacheSize = 1000;
+	private int cacheSize = Cache.DEFAULT_CAPACITY;
 	
 	private int maxPhraseSpan = 10;
 	private int maxPhraseLength = 5;
@@ -361,11 +357,11 @@ private String outputFile = "";
 			System.exit(-1);
 		}
 		
-		ParallelCorpus parallelCorpus = 
-			new AlignedParallelCorpus(sourceCorpusArray, targetCorpusArray, alignments);
-		
-		LexicalProbabilities lexProbs = 
-			new LexProbs(parallelCorpus, Float.MIN_VALUE);
+//		ParallelCorpus parallelCorpus = 
+//			new AlignedParallelCorpus(sourceCorpusArray, targetCorpusArray, alignments);
+//		
+//		LexicalProbabilities lexProbs = 
+//			new LexProbs(parallelCorpus, Float.MIN_VALUE);
 
 		Map<Integer,String> ntVocab = new HashMap<Integer,String>();
 		ntVocab.put(PrefixTree.X, "X");
@@ -379,9 +375,12 @@ private String outputFile = "";
 		
 		int lineNumber = 0;
 
-		RuleExtractor ruleExtractor = new HierarchicalRuleExtractor(sourceSuffixArray, targetCorpusArray, alignments, lexProbs, ruleSampleSize, maxPhraseSpan, maxPhraseLength, minNonterminalSpan, maxPhraseSpan);
+//		RuleExtractor ruleExtractor = new HierarchicalRuleExtractor(sourceSuffixArray, targetCorpusArray, alignments, lexProbs, ruleSampleSize, maxPhraseSpan, maxPhraseLength, minNonterminalSpan, maxPhraseSpan);
 		
 		boolean oneTreePerSentence = ! this.keepTree;//commandLine.getValue(keepTree);
+		
+		ParallelCorpusGrammarFactory parallelCorpus = new ParallelCorpusGrammarFactory(sourceSuffixArray, targetCorpusArray, alignments, ruleSampleSize, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan, Float.MIN_VALUE);
+
 		
 		PrefixTree prefixTree = null;
 		while (testFileScanner.hasNextLine()) {
@@ -397,7 +396,8 @@ private String outputFile = "";
 			if (logger.isLoggable(Level.INFO)) logger.info("Constructing prefix tree for source line " + lineNumber + ": " + line);
 
 			if (oneTreePerSentence || null==prefixTree) {
-				prefixTree = new PrefixTree(sourceSuffixArray, targetCorpusArray, alignments, sourceSuffixArray.getVocabulary(), lexProbs, ruleExtractor, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan);
+//				prefixTree = new PrefixTree(sourceSuffixArray, targetCorpusArray, alignments, sourceSuffixArray.getVocabulary(), lexProbs, ruleExtractor, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan);
+				prefixTree = new PrefixTree(parallelCorpus, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan);
 			}
 			try {
 				prefixTree.add(words);
@@ -408,7 +408,8 @@ private String outputFile = "";
 				prefixTree = null;
 				System.gc();
 				logger.info("Cleared cache and collected garbage. Now attempting to re-construct prefix tree...");
-				prefixTree = new PrefixTree(sourceSuffixArray, targetCorpusArray, alignments, sourceSuffixArray.getVocabulary(), lexProbs, ruleExtractor, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan);
+//				prefixTree = new PrefixTree(sourceSuffixArray, targetCorpusArray, alignments, sourceSuffixArray.getVocabulary(), lexProbs, ruleExtractor, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan);
+				prefixTree = new PrefixTree(parallelCorpus, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan);
 				prefixTree.add(words);
 			}
 			
@@ -426,7 +427,7 @@ private String outputFile = "";
 				}
 			}
 			
-			if (logger.isLoggable(Level.FINEST)) logger.finest(lexProbs.toString());
+//			if (logger.isLoggable(Level.FINEST)) logger.finest(lexProbs.toString());
 			
 		
 		}
@@ -475,7 +476,7 @@ private String outputFile = "";
 			Option<Integer> maxNonterminals = commandLine.addIntegerOption("maxNonterminals","MAX_NONTERMINALS",2, "Max nonterminals");
 			Option<Integer> minNonterminalSpan = commandLine.addIntegerOption("minNonterminalSpan","MIN_NONTERMINAL_SPAN", 2, "Minimum nonterminal span");
 			
-			Option<Integer> cacheSize = commandLine.addIntegerOption("cache","CACHE",1000, "Max number of patterns for which to cache hierarchical phrases");
+			Option<Integer> cacheSize = commandLine.addIntegerOption("cache","CACHE",Cache.DEFAULT_CAPACITY, "Max number of patterns for which to cache hierarchical phrases");
 
 			Option<Boolean> output_gz = commandLine.addBooleanOption("output-gzipped",false,"should the output file be gzipped");
 
@@ -693,8 +694,8 @@ private String outputFile = "";
 
 			if (logger.isLoggable(Level.INFO)) logger.info("Constructing lexical probabilities table");
 
-			ParallelCorpus parallelCorpus = 
-				new AlignedParallelCorpus(sourceCorpusArray, targetCorpusArray, alignments);
+//			ParallelCorpus parallelCorpus = 
+//				new AlignedParallelCorpus(sourceCorpusArray, targetCorpusArray, alignments);
 //			{
 //				public Alignments getAlignments() { return alignments; } 
 //				public int getNumSentences() { return sourceCorpusArray.getNumSentences(); }
@@ -702,8 +703,8 @@ private String outputFile = "";
 //				public Corpus getTargetCorpus() { return targetCorpusArray; }
 //			};
 			
-			LexicalProbabilities lexProbs = 
-				new LexProbs(parallelCorpus, Float.MIN_VALUE);
+//			LexicalProbabilities lexProbs = 
+//				new LexProbs(parallelCorpus, Float.MIN_VALUE);
 //				new SampledLexProbs(commandLine.getValue(lexSampleSize), sourceSuffixArray, targetSuffixArray, alignments, SuffixArray.DEFAULT_CACHE_CAPACITY, false);
 			
 			if (logger.isLoggable(Level.INFO)) logger.info("Done constructing lexical probabilities table");
@@ -732,9 +733,12 @@ private String outputFile = "";
 			
 			int lineNumber = 0;
 
-			RuleExtractor ruleExtractor = new HierarchicalRuleExtractor(sourceSuffixArray, targetCorpusArray, alignments, lexProbs, commandLine.getValue(ruleSampleSize), commandLine.getValue(maxPhraseSpan), commandLine.getValue(maxPhraseLength), commandLine.getValue(minNonterminalSpan), commandLine.getValue(maxPhraseSpan));
+//			RuleExtractor ruleExtractor = new HierarchicalRuleExtractor(sourceSuffixArray, targetCorpusArray, alignments, lexProbs, commandLine.getValue(ruleSampleSize), commandLine.getValue(maxPhraseSpan), commandLine.getValue(maxPhraseLength), commandLine.getValue(minNonterminalSpan), commandLine.getValue(maxPhraseSpan));
 			
 			boolean oneTreePerSentence = ! commandLine.getValue(keepTree);
+			
+			ParallelCorpusGrammarFactory parallelCorpus = new ParallelCorpusGrammarFactory(sourceSuffixArray, targetCorpusArray, alignments, commandLine.getValue(ruleSampleSize), commandLine.getValue(maxPhraseSpan), commandLine.getValue(maxPhraseLength), commandLine.getValue(minNonterminalSpan), commandLine.getValue(maxPhraseSpan), Float.MIN_VALUE);
+
 			
 			PrefixTree prefixTree = null;
 			while (testFileScanner.hasNextLine()) {
@@ -749,7 +753,8 @@ private String outputFile = "";
 				if (logger.isLoggable(Level.INFO)) logger.info("Constructing prefix tree for source line " + lineNumber + ": " + line);
 
 				if (oneTreePerSentence || null==prefixTree) {
-					prefixTree = new PrefixTree(sourceSuffixArray, targetCorpusArray, alignments, sourceSuffixArray.getVocabulary(), lexProbs, ruleExtractor, commandLine.getValue(maxPhraseSpan), commandLine.getValue(maxPhraseLength), commandLine.getValue(maxNonterminals), commandLine.getValue(minNonterminalSpan));
+//					prefixTree = new PrefixTree(sourceSuffixArray, targetCorpusArray, alignments, sourceSuffixArray.getVocabulary(), lexProbs, ruleExtractor, commandLine.getValue(maxPhraseSpan), commandLine.getValue(maxPhraseLength), commandLine.getValue(maxNonterminals), commandLine.getValue(minNonterminalSpan));
+					prefixTree = new PrefixTree(parallelCorpus, commandLine.getValue(maxPhraseSpan), commandLine.getValue(maxPhraseLength), commandLine.getValue(maxNonterminals), commandLine.getValue(minNonterminalSpan));
 				}
 				try {
 					prefixTree.add(words);
@@ -760,7 +765,8 @@ private String outputFile = "";
 					prefixTree = null;
 					System.gc();
 					logger.info("Cleared cache and collected garbage. Now attempting to re-construct prefix tree...");
-					prefixTree = new PrefixTree(sourceSuffixArray, targetCorpusArray, alignments, sourceSuffixArray.getVocabulary(), lexProbs, ruleExtractor, commandLine.getValue(maxPhraseSpan), commandLine.getValue(maxPhraseLength), commandLine.getValue(maxNonterminals), commandLine.getValue(minNonterminalSpan));
+//					prefixTree = new PrefixTree(sourceSuffixArray, targetCorpusArray, alignments, sourceSuffixArray.getVocabulary(), lexProbs, ruleExtractor, commandLine.getValue(maxPhraseSpan), commandLine.getValue(maxPhraseLength), commandLine.getValue(maxNonterminals), commandLine.getValue(minNonterminalSpan));
+					prefixTree = new PrefixTree(parallelCorpus, commandLine.getValue(maxPhraseSpan), commandLine.getValue(maxPhraseLength), commandLine.getValue(maxNonterminals), commandLine.getValue(minNonterminalSpan));
 					prefixTree.add(words);
 				}
 				
@@ -778,7 +784,7 @@ private String outputFile = "";
 					}
 				}
 				
-				if (logger.isLoggable(Level.FINEST)) logger.finest(lexProbs.toString());
+//				if (logger.isLoggable(Level.FINEST)) logger.finest(lexProbs.toString());
 				
 				if (commandLine.getValue(confirm)) {
 					if (logger.isLoggable(Level.INFO)) logger.info("Please press a key to continue");

@@ -23,12 +23,12 @@ import joshua.corpus.RuleExtractor;
 import joshua.corpus.alignment.Alignments;
 import joshua.corpus.lexprob.LexicalProbabilities;
 import joshua.corpus.suffix_array.HierarchicalPhrases;
+import joshua.corpus.suffix_array.ParallelCorpusGrammarFactory;
 import joshua.corpus.suffix_array.Pattern;
 import joshua.corpus.suffix_array.Suffixes;
 import joshua.corpus.vocab.SymbolTable;
 import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.Rule;
-import joshua.util.BotMap;
 import joshua.util.Cache;
 
 import java.util.Collections;
@@ -147,6 +147,9 @@ public class PrefixTree {
 	/** Corpus array representing the target language corpus. */
 	final Corpus targetCorpus;
 	
+	/** */
+	final ParallelCorpusGrammarFactory parallelCorpus;
+	
 	/**
 	 * Represents alignments between words in the source corpus
 	 * and the target corpus.
@@ -186,44 +189,48 @@ public class PrefixTree {
 	 *            language tokens a nonterminal is allowed to
 	 *            encompass.
 	 */
-	public PrefixTree(Suffixes suffixArray, 
-			Corpus targetCorpus, Alignments alignments, SymbolTable vocab, 
-			LexicalProbabilities lexProbs, RuleExtractor ruleExtractor, 
+	public PrefixTree(ParallelCorpusGrammarFactory parallelCorpus,
+//	public PrefixTree(Suffixes suffixArray, 
+//			Corpus targetCorpus, Alignments alignments, SymbolTable vocab, 
+//			LexicalProbabilities lexProbs, RuleExtractor ruleExtractor, 
 			int maxPhraseSpan, int maxPhraseLength, 
 			int maxNonterminals, int minNonterminalSpan) {
 
 		
 		if (logger.isLoggable(Level.FINE)) logger.fine("\n\n\nConstructing new PrefixTree\n\n");
 
-		this.suffixArray = suffixArray;
-		this.targetCorpus = targetCorpus;
-		this.alignments = alignments;
-		this.lexProbs = lexProbs;
-		this.ruleExtractor = ruleExtractor;
+		this.parallelCorpus = parallelCorpus;
+		this.suffixArray = parallelCorpus.getSuffixArray();
+		this.targetCorpus = parallelCorpus.getTargetCorpus();
+		this.alignments = parallelCorpus.getAlignments();
+		this.lexProbs = parallelCorpus.getLexProbs();
+		this.ruleExtractor = parallelCorpus.getRuleExtractor();
+//		this.suffixArray = suffixArray;
+//		this.targetCorpus = targetCorpus;
+//		this.alignments = alignments;
+//		this.lexProbs = lexProbs;
+//		this.ruleExtractor = ruleExtractor;
 		this.maxPhraseSpan = maxPhraseSpan;
 		this.maxPhraseLength = maxPhraseLength;
 		this.maxNonterminals = maxNonterminals;
 		this.minNonterminalSpan = minNonterminalSpan;
-		this.vocab = vocab;
+		this.vocab = parallelCorpus.getSourceCorpus().getVocabulary();
 
-		Node bot = new Node();
-		bot.sourceHierarchicalPhrases = HierarchicalPhrases.emptyList(vocab);
-		
 		this.root = new RootNode(this,ROOT_NODE_ID);
-		bot.children = new BotMap<Integer,Node>(root);//botMap(root);
+		Node bot = new BotNode(parallelCorpus, root);
 		this.root.linkToSuffix(bot);
 
 
 		
-//		if (suffixArray==null) {
-////			vocab = null;
-//		} else {
-		if (suffixArray != null) {
-//			vocab = suffixArray.getVocabulary();
-			//int[] bounds = {0, suffixArray.size()-1};
-			root.setBounds(0, suffixArray.size()-1);
-		}
-		root.sourceHierarchicalPhrases = HierarchicalPhrases.emptyList(vocab);
+////		if (suffixArray==null) {
+//////			vocab = null;
+////		} else {
+//		if (suffixArray != null) {
+////			vocab = suffixArray.getVocabulary();
+//			//int[] bounds = {0, suffixArray.size()-1};
+//			root.setBounds(0, suffixArray.size()-1);
+//		}
+//		root.sourceHierarchicalPhrases = HierarchicalPhrases.emptyList(vocab);
 
 		// Define epsilon to be an empty pattern
 		epsilon = new Pattern(vocab);
@@ -239,6 +246,7 @@ public class PrefixTree {
 			{ 	// Set the list of hierarchical phrases be for the X node that comes off of ROOT to an empty list.
 				// Alternatively, one could consider every phrase in the corpus to match here.
 				xnode.sourceHierarchicalPhrases = HierarchicalPhrases.emptyList(vocab, X);
+				xnode.sourcePattern = xnode.sourceHierarchicalPhrases.getPattern();
 //				if (suffixArray != null)
 //					xnode.sourcePattern = new Pattern(suffixArray.getVocabulary(), X);
 				
@@ -286,8 +294,12 @@ public class PrefixTree {
 	 * @param maxNonterminals
 	 */
 	PrefixTree(SymbolTable vocab, int maxPhraseSpan, int maxPhraseLength, int maxNonterminals) {
+		
 //		this(new SuffixArray(new CorpusArray()), null, null, vocab, null, null, maxPhraseSpan, maxPhraseLength, maxNonterminals, 2);
-		this(null, null, null, vocab, null, null, maxPhraseSpan, maxPhraseLength, maxNonterminals, 2);
+		//this(null, null, null, vocab, null, null, maxPhraseSpan, maxPhraseLength, maxNonterminals, 2);
+		this(
+				new ParallelCorpusGrammarFactory((Suffixes) null, (Corpus) null, (Alignments) null, Integer.MAX_VALUE, maxPhraseSpan, maxPhraseLength, maxNonterminals, 2, Float.MIN_VALUE),
+				maxPhraseSpan, maxPhraseLength, maxNonterminals, 2);
 	}
 
 
@@ -494,7 +506,7 @@ public class PrefixTree {
 			if (bounds==null) {
 				result = HierarchicalPhrases.emptyList(pattern);
 				suffixArray.cacheMatchingPhrases(result);
-				//TOOD Should node.setBounds(bounds) be called here?
+				//TODO Should node.setBounds(bounds) be called here?
 			} else {
 				node.setBounds(bounds[0],bounds[1]);
 				int[] startingPositions = suffixArray.getAllPositions(bounds);
@@ -505,11 +517,9 @@ public class PrefixTree {
 
 			// 8: If M_a_alpha_b has been precomputed (then result will be non-null)
 			// 9: Retrieve M_a_alpha_b from cache of precomputations
-//			result = suffixArray.getMatchingPhrases(pattern);
 			
 			
 			// 10: else
-//			if (result == null) {
 			if (suffixArray.getCachedHierarchicalPhrases().containsKey(pattern)) {	
 				result = suffixArray.getMatchingPhrases(pattern);
 			} else {
@@ -519,31 +529,17 @@ public class PrefixTree {
 				int[] sourceWords = prefixNode.getSourcePattern().getWordIDs();
 				
 				// Special handling of case when prefixNode is the X off of root (hierarchicalPhrases for that node is empty)
-				//if (arity==1 && prefixNode.sourcePattern.startsWithNonterminal() && prefixNode.sourcePattern.endsWithNonterminal())
 				if (arity==1 && sourceWords[0] < 0 && sourceWords[sourceWords.length-1] < 0){
-				//prefixNode.sourcePattern.words[prefixNode.sourcePattern.words.length-1] < 0
-					
-					
-//					SymbolTable vocab = (suffixArray==null) ? null : suffixArray.getVocabulary();
-					
-//					int[] xwords = new int[suffixNode.sourcePattern.words.length+1];
-//					xwords[0] = X;
-//					for (int i=0; i<suffixNode.sourcePattern.words.length; i++) {
-//						xwords[i+1] = suffixNode.sourcePattern.words[i];
-//					}
-//					Pattern xpattern = new Pattern(vocab, xwords);
-//					result = suffixNode.sourceHierarchicalPhrases.copyWith(xpattern);
-					result = suffixNode.sourceHierarchicalPhrases.copyWithInitialX();
-					
-//					result = new HierarchicalPhrases(xpattern, suffixNode.sourceHierarchicalPhrases);
 
+					result = suffixNode.getMatchedPhrases().copyWithInitialX();
+					
 				} else { 
 					
 					// Normal query intersection case (when prefixNode != X off of root)
 					
 					if (logger.isLoggable(Level.FINEST)) logger.finest("Calling queryIntersect("+pattern+" M_a_alpha.pattern=="+prefixNode.getSourcePattern() + ", M_alpha_b.pattern=="+suffixNode.getSourcePattern()+")");
 					
-					result = HierarchicalPhrases.queryIntersect(pattern, prefixNode.sourceHierarchicalPhrases, suffixNode.sourceHierarchicalPhrases, minNonterminalSpan, maxPhraseSpan, suffixArray);
+					result = HierarchicalPhrases.queryIntersect(pattern, prefixNode.getMatchedPhrases(), suffixNode.getMatchedPhrases(), minNonterminalSpan, maxPhraseSpan, suffixArray);
 					
 				}
 				
@@ -553,7 +549,6 @@ public class PrefixTree {
 
 		// 17: Return M_a_alpha_b
 		node.storeResults(result, ruleExtractor.extractRules(result));
-//		node.storeResults(result, pattern.words);
 		return result;
 
 	}
@@ -638,31 +633,23 @@ public class PrefixTree {
 						logger.severe("This should only be encountered during unit testing!");
 						if (node.sourceHierarchicalPhrases==null) {
 							node.sourceHierarchicalPhrases = HierarchicalPhrases.emptyList((SymbolTable) null);
+							node.sourcePattern = node.sourceHierarchicalPhrases.getPattern();
 						}
-						phrasesWithFinalX = node.sourceHierarchicalPhrases.copyWithFinalX();
+						phrasesWithFinalX = node.getMatchedPhrases().copyWithFinalX();
 					} else {
 						Cache<Pattern,MatchedHierarchicalPhrases> cache = suffixArray.getCachedHierarchicalPhrases();
 						if (cache.containsKey(xpattern)) {
 							phrasesWithFinalX = cache.get(xpattern);
 						} else {
-							phrasesWithFinalX = node.sourceHierarchicalPhrases.copyWithFinalX();
+							phrasesWithFinalX = node.getMatchedPhrases().copyWithFinalX();
 							suffixArray.cacheMatchingPhrases(phrasesWithFinalX);
 						}
-					}
-//							(suffixArray.getCachedHierarchicalPhrases().containsKey(xpattern))
-//							? suffixArray.getCachedHierarchicalPhrases().get(xpattern)
-//							: 
-//						
-////						node.sourceHierarchicalPhrases.copyWith(xpattern);
-//						
-////						new HierarchicalPhrases(xpattern, node.sourceHierarchicalPhrases); 
-					
+					}	
 					
 					List<Rule> rules = (ruleExtractor==null) ? 
 								Collections.<Rule>emptyList() : 
 								ruleExtractor.extractRules(phrasesWithFinalX);
 					xNode.storeResults(phrasesWithFinalX, rules);
-//					xNode.storeResults(phrasesWithFinalX, xpattern.words);
 				}
 			
 				if (logger.isLoggable(Level.FINEST)) logger.finest("Alpha pattern is " + pattern);
@@ -749,6 +736,7 @@ public class PrefixTree {
 	 */
 	private PrefixTree(int maxPhraseSpan, int maxPhraseLength, int maxNonterminals, int minNonterminalSpan) {
 		root = null;
+		parallelCorpus = null;
 		suffixArray = null;
 		targetCorpus = null;
 		alignments = null;

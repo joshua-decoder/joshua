@@ -1,5 +1,11 @@
 package joshua.prefix_tree;
 
+import java.util.Collections;
+import java.util.List;
+
+import joshua.corpus.MatchedHierarchicalPhrases;
+import joshua.corpus.suffix_array.HierarchicalPhrases;
+import joshua.corpus.suffix_array.Suffixes;
 import joshua.corpus.vocab.SymbolTable;
 import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.Rule;
@@ -7,10 +13,27 @@ import joshua.decoder.ff.tm.Rule;
 public class RootNode extends Node implements Grammar {
 
 	private final PrefixTree tree;
+	private final MatchedHierarchicalPhrases matchedPhrases;
 	
 	RootNode(PrefixTree tree, int incomingArcValue) {
-		super();
+		super(tree.parallelCorpus, 1);
 		this.tree = tree;
+		SymbolTable vocab = tree.vocab;
+		this.matchedPhrases = HierarchicalPhrases.emptyList(vocab);
+		Suffixes suffixArray = tree.suffixArray;
+		if (suffixArray != null) {
+//			vocab = suffixArray.getVocabulary();
+			//int[] bounds = {0, suffixArray.size()-1};
+			setBounds(0, suffixArray.size()-1);
+		}
+	}
+	
+	protected List<Rule> getResults() {
+		return Collections.emptyList();
+	}
+	
+	protected MatchedHierarchicalPhrases getMatchedPhrases()  {
+		return matchedPhrases;
 	}
 	
 	public String toString() {

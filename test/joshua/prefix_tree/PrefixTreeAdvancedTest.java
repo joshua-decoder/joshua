@@ -25,14 +25,18 @@ import java.util.Map;
 import java.util.Set;
 
 import joshua.corpus.AlignedParallelCorpus;
+import joshua.corpus.Corpus;
 import joshua.corpus.CorpusArray;
 import joshua.corpus.ParallelCorpus;
 import joshua.corpus.RuleExtractor;
 import joshua.corpus.alignment.AlignmentArray;
+import joshua.corpus.alignment.Alignments;
 import joshua.corpus.lexprob.LexProbs;
 import joshua.corpus.lexprob.LexicalProbabilities;
 import joshua.corpus.suffix_array.BasicPhrase;
+import joshua.corpus.suffix_array.ParallelCorpusGrammarFactory;
 import joshua.corpus.suffix_array.SuffixArray;
+import joshua.corpus.suffix_array.Suffixes;
 import joshua.corpus.vocab.Vocabulary;
 import joshua.prefix_tree.HierarchicalRuleExtractor;
 import joshua.prefix_tree.Node;
@@ -214,13 +218,15 @@ public class PrefixTreeAdvancedTest {
 		int maxNonterminals = 2;
 		int sampleSize = 300;
 		int minNonterminalSpan = 2;
-		RuleExtractor ruleExtractor = new HierarchicalRuleExtractor(suffixArray, targetCorpusArray, alignments, lexProbs, sampleSize, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan);
+//		RuleExtractor ruleExtractor = new HierarchicalRuleExtractor(suffixArray, targetCorpusArray, alignments, lexProbs, sampleSize, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan);
 		
 		
 		BasicPhrase query = new BasicPhrase("it makes him", sourceVocab);
 		//BasicPhrase query = new BasicPhrase("it makes him and it mars him", sourceVocab);
 		//BasicPhrase query = new BasicPhrase("it makes him and it mars him , it sets him on and it takes him off .", sourceVocab);
-		simplePrefixTree = new PrefixTree(suffixArray, targetCorpusArray, alignments, suffixArray.getVocabulary(), lexProbs, ruleExtractor, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan);
+		ParallelCorpusGrammarFactory parallelCorpus = new ParallelCorpusGrammarFactory(suffixArray, targetCorpusArray, alignments, sampleSize, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan, Float.MIN_VALUE);
+//		simplePrefixTree = new PrefixTree(suffixArray, targetCorpusArray, alignments, suffixArray.getVocabulary(), lexProbs, ruleExtractor, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan);
+		simplePrefixTree = new PrefixTree(parallelCorpus, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan);
 		simplePrefixTree.add(query.getWordIDs());
 		
 		Assert.assertNotNull(simplePrefixTree.root);
@@ -358,13 +364,15 @@ public class PrefixTreeAdvancedTest {
 		int maxNonterminals = 2;
 		int sampleSize = 300;
 		int minNonterminalSpan = 2;
-		RuleExtractor ruleExtractor = new HierarchicalRuleExtractor(suffixArray, targetCorpusArray, alignments, lexProbs, sampleSize, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan);
+//		RuleExtractor ruleExtractor = new HierarchicalRuleExtractor(suffixArray, targetCorpusArray, alignments, lexProbs, sampleSize, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan);
 		
 		
 		//BasicPhrase query = new BasicPhrase("it makes him", sourceVocab);
 		//BasicPhrase query = new BasicPhrase("it makes him and it mars him", sourceVocab);
 		BasicPhrase query = new BasicPhrase("it makes him and it mars him , it sets him on and it takes him off .", sourceVocab);
-		PrefixTree prefixTree = new PrefixTree(suffixArray, targetCorpusArray, alignments, suffixArray.getVocabulary(), lexProbs, ruleExtractor, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan);
+		ParallelCorpusGrammarFactory parallelCorpus = new ParallelCorpusGrammarFactory(suffixArray, targetCorpusArray, alignments, sampleSize, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan, Float.MIN_VALUE);
+//		PrefixTree prefixTree = new PrefixTree(suffixArray, targetCorpusArray, alignments, suffixArray.getVocabulary(), lexProbs, ruleExtractor, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan);
+		PrefixTree prefixTree = new PrefixTree(parallelCorpus, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan);
 		prefixTree.add(query.getWordIDs());
 			
 		Assert.assertNotNull(prefixTree.root);
@@ -565,7 +573,8 @@ public class PrefixTreeAdvancedTest {
 		int maxNonterminals = 2;
 		
 		int minNonterminalSpan = 2;
-		RuleExtractor ruleExtractor = new HierarchicalRuleExtractor(suffixArray, targetCorpusArray, alignments, lexProbs, Integer.MAX_VALUE, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan);
+		int sampleSize = Integer.MAX_VALUE;
+//		RuleExtractor ruleExtractor = new HierarchicalRuleExtractor(suffixArray, targetCorpusArray, alignments, lexProbs, sampleSize, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan);
 		
 		
 		String queryString = "it persuades him and it disheartens him";
@@ -574,8 +583,10 @@ public class PrefixTreeAdvancedTest {
 		
 		Assert.assertEquals(querySentence.toString(), "it UNK him and it UNK him");
 		Assert.assertEquals(corpusSentence.toString(), corpusString);
-		
-		PrefixTree prefixTree = new PrefixTree(suffixArray, targetCorpusArray, alignments, suffixArray.getVocabulary(), lexProbs, ruleExtractor, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan);
+		ParallelCorpusGrammarFactory parallelCorpus = new ParallelCorpusGrammarFactory(suffixArray, targetCorpusArray, alignments, sampleSize, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan, Float.MIN_VALUE);
+
+//		PrefixTree prefixTree = new PrefixTree(suffixArray, targetCorpusArray, alignments, suffixArray.getVocabulary(), lexProbs, ruleExtractor, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan);
+		PrefixTree prefixTree = new PrefixTree(parallelCorpus, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan);
 		prefixTree.add(querySentence.getWordIDs());
 
 		
@@ -598,20 +609,20 @@ public class PrefixTreeAdvancedTest {
 		
 		//////
 		
-		Assert.assertNotNull(prefixTree.root.getChild(sourceVocab.getID("it")).sourceHierarchicalPhrases);
+		Assert.assertNotNull(prefixTree.root.getChild(sourceVocab.getID("it")).getMatchedPhrases());
 		
 		for (Node node : prefixTree.root.children.values()) {
 			
-			Assert.assertNotNull(node.sourceHierarchicalPhrases);
-			Assert.assertNotNull(node.results);
+			Assert.assertNotNull(node.getMatchedPhrases());
+			Assert.assertNotNull(node.getResults());
 			
 		}
 		
 		
 		for (Node node : prefixTree.root.getChild(sourceVocab.getID("him")).children.values()) {
 			
-			Assert.assertNotNull(node.sourceHierarchicalPhrases);
-			Assert.assertNotNull(node.results);
+			Assert.assertNotNull(node.getMatchedPhrases());
+			Assert.assertNotNull(node.getResults());
 			
 		}
 		

@@ -27,16 +27,12 @@ import java.util.Map;
 import java.util.Scanner;
 import java.util.logging.Logger;
 
-import joshua.corpus.AlignedParallelCorpus;
 import joshua.corpus.Corpus;
-import joshua.corpus.ParallelCorpus;
-import joshua.corpus.RuleExtractor;
 import joshua.corpus.alignment.AlignmentGrids;
 import joshua.corpus.alignment.Alignments;
-import joshua.corpus.lexprob.LexProbs;
-import joshua.corpus.lexprob.LexicalProbabilities;
 import joshua.corpus.suffix_array.AbstractHierarchicalPhrases;
 import joshua.corpus.suffix_array.HierarchicalPhrases;
+import joshua.corpus.suffix_array.ParallelCorpusGrammarFactory;
 import joshua.corpus.suffix_array.SuffixArrayFactory;
 import joshua.corpus.suffix_array.Suffixes;
 import joshua.corpus.vocab.Vocabulary;
@@ -133,11 +129,11 @@ public class ExtractRuleProfiler {
 		boolean requireTightSpans = true;
 		Alignments alignments = new AlignmentGrids(new Scanner(new File(alignmentFileName)), sourceCorpusArray, targetCorpusArray, trainingSize, requireTightSpans);
 		
-		ParallelCorpus parallelCorpus = 
-			new AlignedParallelCorpus(sourceCorpusArray, targetCorpusArray, alignments);
+//		ParallelCorpus parallelCorpus = 
+//			new AlignedParallelCorpus(sourceCorpusArray, targetCorpusArray, alignments);
 		
-		LexicalProbabilities lexProbs = 
-			new LexProbs(parallelCorpus, Float.MIN_VALUE);
+//		LexicalProbabilities lexProbs = 
+//			new LexProbs(parallelCorpus, Float.MIN_VALUE);
 		
 		Map<Integer,String> ntVocab = new HashMap<Integer,String>();
 		ntVocab.put(PrefixTree.X, "X");
@@ -152,7 +148,7 @@ public class ExtractRuleProfiler {
 		int minNonterminalSpan = 2;
 		int maxNonterminals = 2;
 		
-		RuleExtractor ruleExtractor = new HierarchicalRuleExtractor(sourceSuffixArray, targetCorpusArray, alignments, lexProbs, ruleSampleSize, maxPhraseSpan, maxPhraseLength, minNonterminalSpan, maxPhraseSpan);
+//		RuleExtractor ruleExtractor = new HierarchicalRuleExtractor(sourceSuffixArray, targetCorpusArray, alignments, lexProbs, ruleSampleSize, maxPhraseSpan, maxPhraseLength, minNonterminalSpan, maxPhraseSpan);
 		
 		int[] words = sourceVocab.getIDs(sourceCorpusString);
 		
@@ -163,7 +159,10 @@ public class ExtractRuleProfiler {
 			logger.info("Extracting rules for sentence " + (i+1) + ".");
 			long startTime1 = System.currentTimeMillis();
 			{
-				PrefixTree prefixTree = new PrefixTree(sourceSuffixArray, targetCorpusArray, alignments, sourceSuffixArray.getVocabulary(), lexProbs, ruleExtractor, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan);
+				ParallelCorpusGrammarFactory parallelCorpus = new ParallelCorpusGrammarFactory(sourceSuffixArray, targetCorpusArray, alignments, ruleSampleSize, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan, Float.MIN_VALUE);
+
+//				PrefixTree prefixTree = new PrefixTree(sourceSuffixArray, targetCorpusArray, alignments, sourceSuffixArray.getVocabulary(), lexProbs, ruleExtractor, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan);
+				PrefixTree prefixTree = new PrefixTree(parallelCorpus, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan);
 				prefixTree.add(words);
 			}
 			long endTime1 = System.currentTimeMillis();

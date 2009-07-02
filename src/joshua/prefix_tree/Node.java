@@ -27,6 +27,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import joshua.corpus.MatchedHierarchicalPhrases;
+import joshua.corpus.suffix_array.ParallelCorpusGrammarFactory;
 import joshua.corpus.suffix_array.Pattern;
 import joshua.corpus.vocab.SymbolTable;
 import joshua.decoder.ff.tm.AbstractGrammar;
@@ -34,6 +35,7 @@ import joshua.decoder.ff.tm.BasicRuleCollection;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.RuleCollection;
 import joshua.decoder.ff.tm.Trie;
+import joshua.util.Cache;
 
 /**
  * Represents a node in a prefix tree.
@@ -77,20 +79,93 @@ public class Node extends AbstractGrammar implements Comparable<Node>, Trie {
 	/** Source side hierarchical phrases for this node. */
 	MatchedHierarchicalPhrases sourceHierarchicalPhrases;
 	
-	/** Translation rules for this node. */
-	List<Rule> results;
 	
-	Node() {
-		this(true);
+//	List<Rule> results;
+	
+	private final ParallelCorpusGrammarFactory parallelCorpus;
+	
+//	private final Suffixes suffixArray;
+//	private final Cache<Pattern, List<Rule>> ruleCache;
+//	private final Cache<Pattern, MatchedHierarchicalPhrases> matchedPhrasesCache;
+	
+	Pattern sourcePattern;
+	
+	/** 
+	 * Gets translation rules for this node. 
+	 * 
+	 * @return translation rules for this node
+	 */
+	protected List<Rule> getResults() {
+		
+		Cache<Pattern,List<Rule>> ruleCache = parallelCorpus.getSuffixArray().getCachedRules();
+		
+		List<Rule> results;
+		
+		if (ruleCache.containsKey(sourcePattern)) {
+			results = ruleCache.get(sourcePattern);
+		} else {
+			results = parallelCorpus.getRuleExtractor().extractRules(getMatchedPhrases());
+			ruleCache.put(sourcePattern, results);
+		}
+		
+		return results;
 	}
-
-	Node(boolean active) {
+	
+	protected MatchedHierarchicalPhrases getMatchedPhrases() {
+		
+		//TODO Implement this method
+		return this.sourceHierarchicalPhrases;
+		
+//		MatchedHierarchicalPhrases results;
+//		
+//		if (matchedPhrasesCache.containsKey(sourcePattern)) {
+//			results = matchedPhrasesCache.get(sourcePattern);
+//		} else {
+//			
+//			// Do some extra lookup
+//			
+//			
+//			throw new RuntimeException("This code not yet implemented");
+//			
+//		}
+//		
+//		return results;
+	}
+	
+	Node(Node parent) {
+//		this(parent.ruleCache, parent.matchedPhrasesCache, true);
+		this(parent.parallelCorpus, true, nodeIDCounter++);
+	}
+	
+	Node(ParallelCorpusGrammarFactory parallelCorpus, int objectID) {
+		this(parallelCorpus, true, objectID);
+//		this(
+//			(suffixArray==null ? null : suffixArray.getCachedRules()), 
+//			(suffixArray==null ? null : suffixArray.getCachedHierarchicalPhrases()), 
+//			true, objectID);
+	}
+	
+	Node(ParallelCorpusGrammarFactory parallelCorpus, boolean active) {
+		this(parallelCorpus, active, nodeIDCounter++);
+	}
+	
+	
+//	Node(Cache<Pattern, List<Rule>> ruleCache, Cache<Pattern, MatchedHierarchicalPhrases> matchedPhrasesCache, boolean active) {
+//		this(ruleCache, matchedPhrasesCache, active, nodeIDCounter++);
+//	}
+	
+//	Node(Cache<Pattern, List<Rule>> ruleCache, Cache<Pattern, MatchedHierarchicalPhrases> matchedPhrasesCache, boolean active, int objectID) {
+	Node(ParallelCorpusGrammarFactory parallelCorpus, boolean active, int objectID) {
+//		this.ruleCache = ruleCache;
+//		this.matchedPhrasesCache = matchedPhrasesCache;
+		this.parallelCorpus = parallelCorpus;
+//		this.suffixArray = suffixArray;
 		this.active = active;
 		this.suffixLink = null;
 		this.children = new HashMap<Integer,Node>();
-		this.objectID = nodeIDCounter++;
+		this.objectID = objectID;
 		this.sourceHierarchicalPhrases = null;//HierarchicalPhrases.emptyList((SymbolTable) null);
-		this.results = Collections.emptyList();
+//		this.results = Collections.emptyList();
 	}
 	
 	Node calculateSuffixLink(int endOfPattern) {
@@ -112,7 +187,8 @@ public class Node extends AbstractGrammar implements Comparable<Node>, Trie {
 	 * @return the source language pattern for this node
 	 */
 	public Pattern getSourcePattern() {
-		return sourceHierarchicalPhrases.getPattern();
+//		return sourceHierarchicalPhrases.getPattern();
+		return sourcePattern;
 	}
 	
 	
@@ -122,6 +198,8 @@ public class Node extends AbstractGrammar implements Comparable<Node>, Trie {
 	 * @return rules for this node and the children of this node.
 	 */
 	public List<Rule> getAllRules() {
+		
+		List<Rule> results = this.getResults();
 		
 		List<Rule> result = new ArrayList<Rule>(
 				(results==null) ? Collections.<Rule>emptyList() : results);
@@ -136,12 +214,13 @@ public class Node extends AbstractGrammar implements Comparable<Node>, Trie {
 	/* See Javadoc for joshua.decoder.ff.tm.Trie#getRules */
 	public RuleCollection getRules() {
 		
-		Pattern sourcePattern = sourceHierarchicalPhrases.getPattern();
+//		Pattern sourcePattern = sourceHierarchicalPhrases.getPattern();
 		
 		int[] empty = {};
 		
 		final int[] sourceSide = (sourcePattern==null) ? empty : sourcePattern.getWordIDs();
 		final int arity = (sourcePattern==null) ? 0 : sourcePattern.arity();
+		List<Rule> results = this.getResults();
 		
 		//XXX Is results sorted at this point? It needs to be, but I'm not sure it is.
 		logger.severe("Node sorted == " + this.isSorted());
@@ -157,6 +236,9 @@ public class Node extends AbstractGrammar implements Comparable<Node>, Trie {
 	
 	/* See Javadoc for joshua.decoder.ff.tm.Trie#hasRules */
 	public boolean hasRules() {
+		
+		MatchedHierarchicalPhrases sourceHierarchicalPhrases = this.getMatchedPhrases();
+		
 		return ! sourceHierarchicalPhrases.isEmpty();
 	}
 	
@@ -198,7 +280,7 @@ public class Node extends AbstractGrammar implements Comparable<Node>, Trie {
 		if (children.containsKey(child)) {
 			throw new ChildNodeAlreadyExistsException(this, child);
 		} else {
-			Node node = new Node();
+			Node node = new Node(this);
 			children.put(child, node);
 			return node;
 		}
@@ -246,8 +328,11 @@ public class Node extends AbstractGrammar implements Comparable<Node>, Trie {
 			logger.finer("Storing " + hierarchicalPhrases.size() + " source phrases at node " + objectID + ":");
 		}
 
+		this.sourcePattern = hierarchicalPhrases.getPattern();
+//		this.matchedPhrasesCache.put(sourcePattern, hierarchicalPhrases);
+		this.parallelCorpus.getSuffixArray().getCachedRules().put(sourcePattern, rules);
 		this.sourceHierarchicalPhrases = hierarchicalPhrases;
-		this.results = rules;
+//		this.results = rules;
 		
 	}
 
@@ -259,6 +344,8 @@ public class Node extends AbstractGrammar implements Comparable<Node>, Trie {
 	 * @return the number of rules stored in the grammar
 	 */
 	public int getNumRules() {
+		
+		List<Rule> results = this.getResults();
 		
 		int numRules = 
 			(results==null) ? 0 : results.size();
@@ -467,9 +554,9 @@ public class Node extends AbstractGrammar implements Comparable<Node>, Trie {
 	}
 	
 
-	static int nodeIDCounter = 0;
+	static int nodeIDCounter = 2;
 	
 	static void resetNodeCounter() {
-		nodeIDCounter = 0;
+		nodeIDCounter = 2;
 	}
 }

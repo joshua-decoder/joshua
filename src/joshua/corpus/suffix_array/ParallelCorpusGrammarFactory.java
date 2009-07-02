@@ -89,7 +89,7 @@ public class ParallelCorpusGrammarFactory extends AlignedParallelCorpus implemen
 	 *                          right-hand side of any extracted rule
 	 */
 	public ParallelCorpusGrammarFactory(Suffixes sourceSuffixArray, Corpus targetCorpus, Alignments alignments, int sampleSize, int maxPhraseSpan, int maxPhraseLength, int maxNonterminals, int minNonterminalSpan, float lexProbFloor) {
-		super(sourceSuffixArray.getCorpus(), targetCorpus, alignments);
+		super((sourceSuffixArray==null)?null:sourceSuffixArray.getCorpus(), targetCorpus, alignments);
 		this.sourceSuffixArray = sourceSuffixArray;
 		this.maxPhraseSpan     = maxPhraseSpan;
 		this.maxPhraseLength   = maxPhraseLength;
@@ -116,8 +116,9 @@ public class ParallelCorpusGrammarFactory extends AlignedParallelCorpus implemen
 		}
 		
 		PrefixTree prefixTree = new PrefixTree(
-				sourceSuffixArray, targetCorpus, alignments, 
-				sourceSuffixArray.getVocabulary(), lexProbs, ruleExtractor, 
+//				sourceSuffixArray, targetCorpus, alignments, 
+//				sourceSuffixArray.getVocabulary(), lexProbs, ruleExtractor, 
+				this,
 				maxPhraseSpan, maxPhraseLength, 
 				maxNonterminals, minNonterminalSpan);
 		
@@ -126,4 +127,25 @@ public class ParallelCorpusGrammarFactory extends AlignedParallelCorpus implemen
 		return prefixTree.getRoot();
 	}
 	
+	/**
+	 * Gets the source side suffix array.
+	 * 
+	 * @return the source side suffix array
+	 */
+	public Suffixes getSuffixArray() {
+		return this.sourceSuffixArray;
+	}
+	
+	/**
+	 * Gets the rule extractor.
+	 * 
+	 * @return the rule extractor
+	 */
+	public RuleExtractor getRuleExtractor() {
+		return this.ruleExtractor;
+	}
+	
+	public LexicalProbabilities getLexProbs() {
+		return this.lexProbs;
+	}
 }
