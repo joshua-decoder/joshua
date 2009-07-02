@@ -737,8 +737,31 @@ public class ExtractRules {
 			
 			boolean oneTreePerSentence = ! commandLine.getValue(keepTree);
 			
-			ParallelCorpusGrammarFactory parallelCorpus = new ParallelCorpusGrammarFactory(sourceSuffixArray, targetCorpusArray, alignments, commandLine.getValue(ruleSampleSize), commandLine.getValue(maxPhraseSpan), commandLine.getValue(maxPhraseLength), commandLine.getValue(minNonterminalSpan), commandLine.getValue(maxPhraseSpan), Float.MIN_VALUE);
+			ParallelCorpusGrammarFactory parallelCorpus = 
+				new ParallelCorpusGrammarFactory(
+						sourceSuffixArray, 
+						targetCorpusArray, 
+						alignments, 
+						commandLine.getValue(ruleSampleSize), 
+						commandLine.getValue(maxPhraseSpan), 
+						commandLine.getValue(maxPhraseLength), 
+//						commandLine.getValue(minNonterminalSpan), 
+						commandLine.getValue(maxNonterminals), 
+//						commandLine.getValue(maxPhraseSpan), 
+						commandLine.getValue(minNonterminalSpan), 
+						Float.MIN_VALUE);
 
+			/*
+			Suffixes sourceSuffixArray, 
+			Corpus targetCorpus, 
+			Alignments alignments, 
+			int sampleSize, 
+			int maxPhraseSpan,  
+			int maxPhraseLength, 
+			int maxNonterminals, 
+			int minNonterminalSpan, 
+			float lexProbFloor
+			*/
 			
 			PrefixTree prefixTree = null;
 			while (testFileScanner.hasNextLine()) {

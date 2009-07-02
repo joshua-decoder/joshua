@@ -88,15 +88,55 @@ public class ParallelCorpusGrammarFactory extends AlignedParallelCorpus implemen
 	 * @param maxNonterminals   Maximum number of nonterminals allowed on the 
 	 *                          right-hand side of any extracted rule
 	 */
-	public ParallelCorpusGrammarFactory(Suffixes sourceSuffixArray, Corpus targetCorpus, Alignments alignments, int sampleSize, int maxPhraseSpan, int maxPhraseLength, int maxNonterminals, int minNonterminalSpan, float lexProbFloor) {
+	public ParallelCorpusGrammarFactory(
+			Suffixes sourceSuffixArray, 
+			Corpus targetCorpus, 
+			Alignments alignments, 
+			int sampleSize, 
+			int maxPhraseSpan,  
+			int maxPhraseLength, 
+			int maxNonterminals, 
+			int minNonterminalSpan, 
+			float lexProbFloor) {
+		
 		super((sourceSuffixArray==null)?null:sourceSuffixArray.getCorpus(), targetCorpus, alignments);
 		this.sourceSuffixArray = sourceSuffixArray;
 		this.maxPhraseSpan     = maxPhraseSpan;
 		this.maxPhraseLength   = maxPhraseLength;
 		this.maxNonterminals   = maxNonterminals;
 		this.minNonterminalSpan = minNonterminalSpan;
-		this.lexProbs          = new LexProbs(this,lexProbFloor); 
-		this.ruleExtractor = new HierarchicalRuleExtractor(sourceSuffixArray, targetCorpus, alignments, lexProbs, sampleSize, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan);	
+		this.lexProbs          = new LexProbs(this,lexProbFloor);
+		
+		int maxNonterminalSpan = maxPhraseSpan;
+		
+		this.ruleExtractor = 
+			new HierarchicalRuleExtractor(
+					sourceSuffixArray, 
+					targetCorpus, 
+					alignments, 
+					lexProbs, 
+					sampleSize, 
+					maxPhraseSpan, 
+					maxPhraseLength,
+//					maxNonterminals, 
+//					minNonterminalSpan
+					minNonterminalSpan,
+					maxNonterminalSpan
+				);	
+		
+		/*
+	public HierarchicalRuleExtractor(
+			Suffixes suffixArray, 
+			Corpus targetCorpus, 
+			Alignments alignments, 
+			LexicalProbabilities lexProbs, 
+			int sampleSize, 
+			int maxPhraseSpan, 
+			int maxPhraseLength, 
+			int minNonterminalSpan, 
+			int maxNonterminalSpan)
+		 
+		 */
 	}
 	
 	

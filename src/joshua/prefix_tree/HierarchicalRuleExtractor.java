@@ -123,7 +123,16 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 	 *                           nonterminal in an extracted hierarchical 
 	 *                           phrase
 	 */
-	public HierarchicalRuleExtractor(Suffixes suffixArray, Corpus targetCorpus, Alignments alignments, LexicalProbabilities lexProbs, int sampleSize, int maxPhraseSpan, int maxPhraseLength, int minNonterminalSpan, int maxNonterminalSpan) {
+	public HierarchicalRuleExtractor(
+			Suffixes suffixArray, 
+			Corpus targetCorpus, 
+			Alignments alignments, 
+			LexicalProbabilities lexProbs, 
+			int sampleSize, 
+			int maxPhraseSpan, 
+			int maxPhraseLength, 
+			int minNonterminalSpan, 
+			int maxNonterminalSpan) {
 		this.lexProbs = lexProbs;
 		this.maxPhraseSpan = maxPhraseSpan;
 		this.maxPhraseLength = maxPhraseLength;
