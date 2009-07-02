@@ -66,7 +66,6 @@ class FileChoiceListener implements ActionListener {
 		nBest.addActionListener(this);
 	}
 
-	@Override
 	public void actionPerformed(ActionEvent e) {
 		if (fileChooser.showOpenDialog(enclosingFrame) == JFileChooser.APPROVE_OPTION) {
 			JMenuItem eventSource = (JMenuItem) e.getSource();

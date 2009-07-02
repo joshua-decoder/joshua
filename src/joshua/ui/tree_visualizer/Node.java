@@ -22,7 +22,7 @@ package joshua.ui.tree_visualizer;
 // being the same node.
 // JUNG uses equals() comparison rather than pointer comparison to see
 // if two nodes are the same.
-class Node {
+public class Node {
 	private String name;
 	private int sourceStart;
 	private int sourceEnd;

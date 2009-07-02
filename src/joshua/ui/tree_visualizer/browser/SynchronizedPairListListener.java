@@ -34,7 +34,6 @@ class SynchronizedPairListListener implements ListSelectionListener {
 		second.getSelectionModel().addListSelectionListener(this);
 	}
 
-	@Override
 	public void valueChanged(ListSelectionEvent e) {
 		if (e.getSource().equals(second.getSelectionModel())) {
 			if (first.getSelectedIndex() != second.getSelectedIndex()) {
