@@ -226,7 +226,7 @@ public class PrefixTreeAdvancedTest {
 		//BasicPhrase query = new BasicPhrase("it makes him and it mars him , it sets him on and it takes him off .", sourceVocab);
 		ParallelCorpusGrammarFactory parallelCorpus = new ParallelCorpusGrammarFactory(suffixArray, targetCorpusArray, alignments, sampleSize, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan, Float.MIN_VALUE);
 //		simplePrefixTree = new PrefixTree(suffixArray, targetCorpusArray, alignments, suffixArray.getVocabulary(), lexProbs, ruleExtractor, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan);
-		simplePrefixTree = new PrefixTree(parallelCorpus, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan);
+		simplePrefixTree = new PrefixTree(parallelCorpus);
 		simplePrefixTree.add(query.getWordIDs());
 		
 		Assert.assertNotNull(simplePrefixTree.root);
@@ -372,7 +372,7 @@ public class PrefixTreeAdvancedTest {
 		BasicPhrase query = new BasicPhrase("it makes him and it mars him , it sets him on and it takes him off .", sourceVocab);
 		ParallelCorpusGrammarFactory parallelCorpus = new ParallelCorpusGrammarFactory(suffixArray, targetCorpusArray, alignments, sampleSize, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan, Float.MIN_VALUE);
 //		PrefixTree prefixTree = new PrefixTree(suffixArray, targetCorpusArray, alignments, suffixArray.getVocabulary(), lexProbs, ruleExtractor, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan);
-		PrefixTree prefixTree = new PrefixTree(parallelCorpus, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan);
+		PrefixTree prefixTree = new PrefixTree(parallelCorpus);
 		prefixTree.add(query.getWordIDs());
 			
 		Assert.assertNotNull(prefixTree.root);
@@ -586,7 +586,7 @@ public class PrefixTreeAdvancedTest {
 		ParallelCorpusGrammarFactory parallelCorpus = new ParallelCorpusGrammarFactory(suffixArray, targetCorpusArray, alignments, sampleSize, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan, Float.MIN_VALUE);
 
 //		PrefixTree prefixTree = new PrefixTree(suffixArray, targetCorpusArray, alignments, suffixArray.getVocabulary(), lexProbs, ruleExtractor, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan);
-		PrefixTree prefixTree = new PrefixTree(parallelCorpus, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan);
+		PrefixTree prefixTree = new PrefixTree(parallelCorpus);
 		prefixTree.add(querySentence.getWordIDs());
 
 		

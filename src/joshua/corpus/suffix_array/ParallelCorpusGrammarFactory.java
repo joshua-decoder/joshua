@@ -93,7 +93,7 @@ public class ParallelCorpusGrammarFactory extends AlignedParallelCorpus implemen
 			Corpus targetCorpus, 
 			Alignments alignments, 
 			int sampleSize, 
-			int maxPhraseSpan,  
+			int maxPhraseSpan, 
 			int maxPhraseLength, 
 			int maxNonterminals, 
 			int minNonterminalSpan, 
@@ -158,9 +158,7 @@ public class ParallelCorpusGrammarFactory extends AlignedParallelCorpus implemen
 		PrefixTree prefixTree = new PrefixTree(
 //				sourceSuffixArray, targetCorpus, alignments, 
 //				sourceSuffixArray.getVocabulary(), lexProbs, ruleExtractor, 
-				this,
-				maxPhraseSpan, maxPhraseLength, 
-				maxNonterminals, minNonterminalSpan);
+				this);
 		
 		prefixTree.add(words);
 		
@@ -187,5 +185,37 @@ public class ParallelCorpusGrammarFactory extends AlignedParallelCorpus implemen
 	
 	public LexicalProbabilities getLexProbs() {
 		return this.lexProbs;
+	}
+	
+	/**
+	 * Max span in the source corpus of any extracted hierarchical
+	 * phrase
+	 */
+	public int getMaxPhraseSpan() {
+		return this.maxPhraseSpan;
+	}
+	
+	/**
+	 * Maximum number of terminals plus nonterminals allowed
+	 * in any extracted hierarchical phrase.
+	 */
+	public int getMaxPhraseLength() {
+		return this.maxPhraseLength;
+	}
+	
+	/**
+	 * Maximum number of nonterminals allowed on the 
+	 * right-hand side of any extracted rule
+	 */
+	public int getMaxNonterminals() {
+		return this.maxNonterminals;
+	}
+	
+	/**
+	 * Minimum span in the source corpus of any 
+	 * nonterminal in an extracted hierarchical phrase.
+	 */                           
+	public int getMinNonterminalSpan() {
+		return this.minNonterminalSpan;
 	}
 }

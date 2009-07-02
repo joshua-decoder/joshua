@@ -162,7 +162,7 @@ public class ExtractRuleProfiler {
 				ParallelCorpusGrammarFactory parallelCorpus = new ParallelCorpusGrammarFactory(sourceSuffixArray, targetCorpusArray, alignments, ruleSampleSize, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan, Float.MIN_VALUE);
 
 //				PrefixTree prefixTree = new PrefixTree(sourceSuffixArray, targetCorpusArray, alignments, sourceSuffixArray.getVocabulary(), lexProbs, ruleExtractor, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan);
-				PrefixTree prefixTree = new PrefixTree(parallelCorpus, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan);
+				PrefixTree prefixTree = new PrefixTree(parallelCorpus);
 				prefixTree.add(words);
 			}
 			long endTime1 = System.currentTimeMillis();

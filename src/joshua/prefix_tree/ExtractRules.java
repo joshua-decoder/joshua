@@ -397,7 +397,7 @@ public class ExtractRules {
 
 			if (oneTreePerSentence || null==prefixTree) {
 //				prefixTree = new PrefixTree(sourceSuffixArray, targetCorpusArray, alignments, sourceSuffixArray.getVocabulary(), lexProbs, ruleExtractor, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan);
-				prefixTree = new PrefixTree(parallelCorpus, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan);
+				prefixTree = new PrefixTree(parallelCorpus);
 			}
 			try {
 				prefixTree.add(words);
@@ -409,7 +409,7 @@ public class ExtractRules {
 				System.gc();
 				logger.info("Cleared cache and collected garbage. Now attempting to re-construct prefix tree...");
 //				prefixTree = new PrefixTree(sourceSuffixArray, targetCorpusArray, alignments, sourceSuffixArray.getVocabulary(), lexProbs, ruleExtractor, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan);
-				prefixTree = new PrefixTree(parallelCorpus, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan);
+				prefixTree = new PrefixTree(parallelCorpus);
 				prefixTree.add(words);
 			}
 			
@@ -777,7 +777,7 @@ public class ExtractRules {
 
 				if (oneTreePerSentence || null==prefixTree) {
 //					prefixTree = new PrefixTree(sourceSuffixArray, targetCorpusArray, alignments, sourceSuffixArray.getVocabulary(), lexProbs, ruleExtractor, commandLine.getValue(maxPhraseSpan), commandLine.getValue(maxPhraseLength), commandLine.getValue(maxNonterminals), commandLine.getValue(minNonterminalSpan));
-					prefixTree = new PrefixTree(parallelCorpus, commandLine.getValue(maxPhraseSpan), commandLine.getValue(maxPhraseLength), commandLine.getValue(maxNonterminals), commandLine.getValue(minNonterminalSpan));
+					prefixTree = new PrefixTree(parallelCorpus);
 				}
 				try {
 					prefixTree.add(words);
@@ -789,7 +789,7 @@ public class ExtractRules {
 					System.gc();
 					logger.info("Cleared cache and collected garbage. Now attempting to re-construct prefix tree...");
 //					prefixTree = new PrefixTree(sourceSuffixArray, targetCorpusArray, alignments, sourceSuffixArray.getVocabulary(), lexProbs, ruleExtractor, commandLine.getValue(maxPhraseSpan), commandLine.getValue(maxPhraseLength), commandLine.getValue(maxNonterminals), commandLine.getValue(minNonterminalSpan));
-					prefixTree = new PrefixTree(parallelCorpus, commandLine.getValue(maxPhraseSpan), commandLine.getValue(maxPhraseLength), commandLine.getValue(maxNonterminals), commandLine.getValue(minNonterminalSpan));
+					prefixTree = new PrefixTree(parallelCorpus);
 					prefixTree.add(words);
 				}
 				

@@ -96,7 +96,7 @@ public class PrefixTreeTest {
 		ParallelCorpusGrammarFactory parallelCorpus = new ParallelCorpusGrammarFactory(sourceSuffixes, targetCorpus, alignments, Integer.MAX_VALUE, maxPhraseSpan, maxPhraseLength, maxNonterminals, 2, Float.MIN_VALUE);
 		
 //		tree = new PrefixTree(vocab, maxPhraseSpan, maxPhraseLength, maxNonterminals);
-		tree = new PrefixTree(parallelCorpus, maxPhraseSpan, maxPhraseLength, maxNonterminals, 2);
+		tree = new PrefixTree(parallelCorpus);
 		Assert.assertNotNull(tree);
 		
 		tree.add(sentence);

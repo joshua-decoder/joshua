@@ -175,26 +175,14 @@ public class PrefixTree {
 	 * Constructs a new prefix tree with suffix links using the
 	 * GENERATE_PREFIX_TREE algorithm from Lopez (2008) PhD
 	 * Thesis, Algorithm 2, p 76.
-	 * 
 	 * @param suffixArray
 	 * @param targetCorpus
 	 * @param alignments
 	 * @param vocab
 	 * @param lexProbs
 	 * @param ruleExtractor
-	 * @param maxPhraseSpan
-	 * @param maxPhraseLength
-	 * @param maxNonterminals
-	 * @param minNonterminalSpan Minimum number of source
-	 *            language tokens a nonterminal is allowed to
-	 *            encompass.
 	 */
-	public PrefixTree(ParallelCorpusGrammarFactory parallelCorpus,
-//	public PrefixTree(Suffixes suffixArray, 
-//			Corpus targetCorpus, Alignments alignments, SymbolTable vocab, 
-//			LexicalProbabilities lexProbs, RuleExtractor ruleExtractor, 
-			int maxPhraseSpan, int maxPhraseLength, 
-			int maxNonterminals, int minNonterminalSpan) {
+	public PrefixTree(ParallelCorpusGrammarFactory parallelCorpus) {
 
 		
 		if (logger.isLoggable(Level.FINE)) logger.fine("\n\n\nConstructing new PrefixTree\n\n");
@@ -205,15 +193,10 @@ public class PrefixTree {
 		this.alignments = parallelCorpus.getAlignments();
 		this.lexProbs = parallelCorpus.getLexProbs();
 		this.ruleExtractor = parallelCorpus.getRuleExtractor();
-//		this.suffixArray = suffixArray;
-//		this.targetCorpus = targetCorpus;
-//		this.alignments = alignments;
-//		this.lexProbs = lexProbs;
-//		this.ruleExtractor = ruleExtractor;
-		this.maxPhraseSpan = maxPhraseSpan;
-		this.maxPhraseLength = maxPhraseLength;
-		this.maxNonterminals = maxNonterminals;
-		this.minNonterminalSpan = minNonterminalSpan;
+		this.maxPhraseSpan = parallelCorpus.getMaxPhraseSpan();
+		this.maxPhraseLength = parallelCorpus.getMaxPhraseLength();
+		this.maxNonterminals = parallelCorpus.getMaxNonterminals();
+		this.minNonterminalSpan = parallelCorpus.getMinNonterminalSpan();
 		this.vocab = parallelCorpus.getSourceCorpus().getVocabulary();
 
 		this.root = new RootNode(this,ROOT_NODE_ID);
@@ -298,8 +281,7 @@ public class PrefixTree {
 //		this(new SuffixArray(new CorpusArray()), null, null, vocab, null, null, maxPhraseSpan, maxPhraseLength, maxNonterminals, 2);
 		//this(null, null, null, vocab, null, null, maxPhraseSpan, maxPhraseLength, maxNonterminals, 2);
 		this(
-				new ParallelCorpusGrammarFactory((Suffixes) null, (Corpus) null, (Alignments) null, Integer.MAX_VALUE, maxPhraseSpan, maxPhraseLength, maxNonterminals, 2, Float.MIN_VALUE),
-				maxPhraseSpan, maxPhraseLength, maxNonterminals, 2);
+				new ParallelCorpusGrammarFactory((Suffixes) null, (Corpus) null, (Alignments) null, Integer.MAX_VALUE, maxPhraseSpan, maxPhraseLength, maxNonterminals, 2, Float.MIN_VALUE));
 	}
 
 
