@@ -82,7 +82,7 @@ public class Node extends AbstractGrammar implements Comparable<Node>, Trie {
 	
 //	List<Rule> results;
 	
-	private final ParallelCorpusGrammarFactory parallelCorpus;
+	protected final ParallelCorpusGrammarFactory parallelCorpus;
 	
 //	private final Suffixes suffixArray;
 //	private final Cache<Pattern, List<Rule>> ruleCache;

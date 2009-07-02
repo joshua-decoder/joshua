@@ -1,3 +1,20 @@
+/* This file is part of the Joshua Machine Translation System.
+ * 
+ * Joshua is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1
+ * of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free
+ * Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
+ */
 package joshua.prefix_tree;
 
 import java.util.Collections;
@@ -10,6 +27,11 @@ import joshua.corpus.vocab.SymbolTable;
 import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.Rule;
 
+/**
+ * Root node of a prefix tree.
+ *
+ * @author Lane Schwartz
+ */
 public class RootNode extends Node implements Grammar {
 
 	private final PrefixTree tree;
@@ -22,22 +44,53 @@ public class RootNode extends Node implements Grammar {
 		this.matchedPhrases = HierarchicalPhrases.emptyList(vocab);
 		Suffixes suffixArray = tree.suffixArray;
 		if (suffixArray != null) {
-//			vocab = suffixArray.getVocabulary();
-			//int[] bounds = {0, suffixArray.size()-1};
 			setBounds(0, suffixArray.size()-1);
 		}
 	}
 	
+	/**
+	 * Gets an empty list of rules.
+	 * 
+	 * @return an empty list of rules
+	 */
 	protected List<Rule> getResults() {
 		return Collections.emptyList();
 	}
 	
+	/**
+	 * Gets an empty list of matched hierarchical phrases.
+	 * <p>
+	 * The list of hierarchical phrases 
+     * for the X node that comes off of ROOT 
+     * is defined to be an empty list.
+     * <p>
+     * One could alternatively consider 
+     * every phrase in the corpus to match here,
+     * but we don't.
+     * 
+     * @return an empty list of matched hierarchical phrases
+	 */
 	protected MatchedHierarchicalPhrases getMatchedPhrases()  {
 		return matchedPhrases;
 	}
 	
 	public String toString() {
 		return toString(tree.vocab, PrefixTree.ROOT_NODE_ID);
+	}
+	
+	public Node addChild(int child) {
+		if (child==PrefixTree.X) {
+			if (children.containsKey(child)) {
+				throw new ChildNodeAlreadyExistsException(this, child);
+			} else {
+				XNode node = new XNode(this);
+				children.put(child, node);
+				return node;
+			}
+		} else {
+			return super.addChild(child);
+		}
+
 	}
 	
 	String toTreeString(String tabs, SymbolTable vocab) {

@@ -225,20 +225,6 @@ public class PrefixTree {
 			
 			// Add a link from root node to X
 			xnode = root.addChild(X);
-			
-			{ 	// Set the list of hierarchical phrases be for the X node that comes off of ROOT to an empty list.
-				// Alternatively, one could consider every phrase in the corpus to match here.
-				xnode.sourceHierarchicalPhrases = HierarchicalPhrases.emptyList(vocab, X);
-				xnode.sourcePattern = xnode.sourceHierarchicalPhrases.getPattern();
-//				if (suffixArray != null)
-//					xnode.sourcePattern = new Pattern(suffixArray.getVocabulary(), X);
-				
-				// Set the bounds of the X node to be the entire suffix array.
-				if (suffixArray!=null) {
-//					int[] bounds = {0, suffixArray.size()-1};
-					xnode.setBounds(0, suffixArray.size()-1);
-				}
-			}
 
 			// Add a suffix link from X back to root
 			Node suffixLink = root.calculateSuffixLink(X);
@@ -277,11 +263,7 @@ public class PrefixTree {
 	 * @param maxNonterminals
 	 */
 	PrefixTree(SymbolTable vocab, int maxPhraseSpan, int maxPhraseLength, int maxNonterminals) {
-		
-//		this(new SuffixArray(new CorpusArray()), null, null, vocab, null, null, maxPhraseSpan, maxPhraseLength, maxNonterminals, 2);
-		//this(null, null, null, vocab, null, null, maxPhraseSpan, maxPhraseLength, maxNonterminals, 2);
-		this(
-				new ParallelCorpusGrammarFactory((Suffixes) null, (Corpus) null, (Alignments) null, Integer.MAX_VALUE, maxPhraseSpan, maxPhraseLength, maxNonterminals, 2, Float.MIN_VALUE));
+		this(new ParallelCorpusGrammarFactory((Suffixes) null, (Corpus) null, (Alignments) null, Integer.MAX_VALUE, maxPhraseSpan, maxPhraseLength, maxNonterminals, 2, Float.MIN_VALUE));
 	}
 
 
