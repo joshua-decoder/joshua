@@ -64,8 +64,15 @@ wait
 gzcat chunk_*/extractrules.gz | $SAMT/scripts/sortsafe.sh -T $TMP | \
 	$SAMT/bin/MergeRules 0 0 8 8 0 | gzip > mergedrules.gz
 
-# TODO: filtering step to add lexical features.. ..are dropped by
-#       MergeRules, need to re-add.
+(gzcat mergedrules.gz | $SAMT/scripts/filterrules.pl \
+	--cachesize 4000 --PhrasalFeatureCount 0 \
+	--LexicalWeightFile data.lexprobs.samt.sgt \
+	--LexicalWeightFileReversed data.lexprobs.samt.tgs \
+	--MinOccurrenceCountLexicalrules 0 \
+	--MinOccurrenceCountNonlexicalrules 0 \
+	-o rules.db ) >& log-filterrules &
+
+
 
 # throw away rules that do not have target side terminals
 

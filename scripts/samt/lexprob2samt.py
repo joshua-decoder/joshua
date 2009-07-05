@@ -2,7 +2,20 @@
 
 import os, sys, codecs
 
+def usage():
+  print "Usage info for lexprob2samt.py"
+  print "  lexprob2samt.py lexfile"
+  print "Where:"
+  print "  lexfile  - Joshua lexprob file"
+  print "  output   - lexfile.samt.{tgs,sgt}" 
+  
+  print
+  sys.exit()
+
 def main():
+  if (len(sys.argv) == 1 or sys.argv[1] == "-h"):
+    usage()
+  
   fileName = sys.argv[1]
   
   tgsName = fileName + ".samt.tgs"
