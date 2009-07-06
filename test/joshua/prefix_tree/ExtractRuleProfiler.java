@@ -138,10 +138,6 @@ public class ExtractRuleProfiler {
 		Map<Integer,String> ntVocab = new HashMap<Integer,String>();
 		ntVocab.put(PrefixTree.X, "X");
 		
-		PrefixTree.SENTENCE_INITIAL_X = true;
-		PrefixTree.SENTENCE_FINAL_X   = true;
-		PrefixTree.EDGE_X_MAY_VIOLATE_PHRASE_SPAN = true;
-		
 		int ruleSampleSize = 300;
 		int maxPhraseSpan = 10;
 		int maxPhraseLength = 10;
@@ -163,6 +159,10 @@ public class ExtractRuleProfiler {
 
 //				PrefixTree prefixTree = new PrefixTree(sourceSuffixArray, targetCorpusArray, alignments, sourceSuffixArray.getVocabulary(), lexProbs, ruleExtractor, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan);
 				PrefixTree prefixTree = new PrefixTree(parallelCorpus);
+				
+				prefixTree.sentenceInitialX = true;
+				prefixTree.sentenceFinalX   = true;
+				prefixTree.edgeXMayViolatePhraseSpan = true;
 				prefixTree.add(words);
 			}
 			long endTime1 = System.currentTimeMillis();

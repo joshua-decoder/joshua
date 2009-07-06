@@ -31,10 +31,15 @@ import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.Rule;
 import joshua.util.Cache;
 
+import java.io.PrintStream;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Queue;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -111,7 +116,7 @@ public class PrefixTree {
 	 * <p>
 	 * The default value is <code>false</code>.
 	 */
-	static boolean SENTENCE_INITIAL_X = false;
+	boolean sentenceInitialX = false;
 	
 	/** 
 	 * Indicates whether rules with a final source-side nonterminal 
@@ -125,10 +130,10 @@ public class PrefixTree {
 	 * <p>
 	 * The default value is <code>false</code>.
 	 */
-	static boolean SENTENCE_FINAL_X = false;
+	boolean sentenceFinalX = false;
 	
 	
-	static boolean EDGE_X_MAY_VIOLATE_PHRASE_SPAN = false;
+	boolean edgeXMayViolatePhraseSpan = false;
 	
 	
 	/** Unique integer identifier for the root node. */
@@ -139,7 +144,7 @@ public class PrefixTree {
 	 * that represents the suffix of the root node.
 	 * @see Lopez (2008), footnote 9 on p73
 	 */
-	static final int BOT_NODE_ID = -2000;
+	static final int BOT_NODE_ID = 0;//-2000;
 
 	/** Suffix array representing the source language corpus. */
 	final Suffixes suffixArray;
@@ -171,6 +176,12 @@ public class PrefixTree {
 	 */
 	private final Node xnode;
 
+	private Set<Integer> printedNodes = null;
+	
+	private Map<Integer,String> ntVocab;
+	
+	private PrintStream out = null;
+	
 	/**
 	 * Constructs a new prefix tree with suffix links using the
 	 * GENERATE_PREFIX_TREE algorithm from Lopez (2008) PhD
@@ -203,7 +214,8 @@ public class PrefixTree {
 		Node bot = new BotNode(parallelCorpus, root);
 		this.root.linkToSuffix(bot);
 
-
+		this.ntVocab = new HashMap<Integer,String>();
+		ntVocab.put(PrefixTree.X, "X");
 		
 ////		if (suffixArray==null) {
 //////			vocab = null;
@@ -268,6 +280,18 @@ public class PrefixTree {
 
 
 	/**
+	 * Sets a print stream to which newly extracted rules will be written.
+	 *
+	 * @param out a print stream
+	 *            to which newly extracted rules will be written
+	 */
+	public void setPrintStream(PrintStream out) {
+		logger.info("Setting output stream");
+		this.out = out;
+		this.printedNodes = new HashSet<Integer>();
+	}
+	
+	/**
 	 * Modify this prefix tree by adding phrases for this
 	 * sentence.
 	 *
@@ -294,7 +318,7 @@ public class PrefixTree {
 		if (this.maxNonterminals > 0) {	Pattern xpattern = new Pattern(vocab,X);
 			
 			int start = START_OF_SENTENCE;
-			if (!SENTENCE_INITIAL_X) start += 1;
+			if (!sentenceInitialX) start += 1;
 		
 			// 4: for i from 1 to I
 			for (int i=start; i<=END_OF_SENTENCE; i++) {
@@ -302,7 +326,7 @@ public class PrefixTree {
 				if (logger.isLoggable(Level.FINEST)) logger.finest("Adding tuple (X," + (i-1) + ","+ i +","+xnode.toShortString(vocab) +")");
 				
 				// 5: Add <X f_i, i-1, i+1, p_x> to queue
-				if (EDGE_X_MAY_VIOLATE_PHRASE_SPAN) {
+				if (edgeXMayViolatePhraseSpan) {
 					queue.add(new Tuple(xpattern, i, i, xnode));	
 				} else {
 					queue.add(new Tuple(xpattern, i-1, i, xnode));
@@ -512,9 +536,32 @@ public class PrefixTree {
 		}
 
 		// 17: Return M_a_alpha_b
-		node.storeResults(result, ruleExtractor.extractRules(result));
+		List<Rule> rules = ruleExtractor.extractRules(result);
+//		node.storeResults(result, rules);
+		storeResults(node, result, rules);
+		
 		return result;
 
+	}
+	
+	@SuppressWarnings("deprecation")
+	private void storeResults(Node node, MatchedHierarchicalPhrases result, List<Rule> rules) {
+		if (printedNodes==null || !printedNodes.contains(node.objectID)) {
+			node.storeResults(result, rules);
+
+			if (out==null) {
+				logger.fine("Not printing rules");
+			} else {
+
+				for (Rule rule : rules) {
+					String ruleString = rule.toString(ntVocab, suffixArray.getVocabulary(), targetCorpus.getVocabulary());
+					if (logger.isLoggable(Level.FINEST)) logger.finest("Rule: " + ruleString);
+					out.println(ruleString);
+				}
+				printedNodes.add(node.objectID);
+
+			}
+		}
 	}
 	
 	/**
@@ -537,7 +584,7 @@ public class PrefixTree {
 	private void extendQueue(Queue<Tuple> queue, int i, int j, int[] sentence, Pattern pattern, Node node) {
 
 		int J = j;
-		if (!SENTENCE_FINAL_X) J += 1;
+		if (!sentenceFinalX) J += 1;
 
 		int endOfPhraseSpan = (j+1)-i+1;
 
@@ -552,7 +599,7 @@ public class PrefixTree {
 				queue.add(new Tuple(pattern, i, j+1, node));//, sentence[j+1]));
 			}
 
-			if (EDGE_X_MAY_VIOLATE_PHRASE_SPAN) endOfPhraseSpan -= 1;
+			if (edgeXMayViolatePhraseSpan) endOfPhraseSpan -= 1;
 			
 			// 3: if arity(alpha) < MaxNonterminals then
 			if (pattern.arity() < maxNonterminals && endOfPhraseSpan <= maxPhraseSpan) {
@@ -613,7 +660,8 @@ public class PrefixTree {
 					List<Rule> rules = (ruleExtractor==null) ? 
 								Collections.<Rule>emptyList() : 
 								ruleExtractor.extractRules(phrasesWithFinalX);
-					xNode.storeResults(phrasesWithFinalX, rules);
+					//xNode.storeResults(phrasesWithFinalX, rules);
+					storeResults(xNode, phrasesWithFinalX, rules);
 				}
 			
 				if (logger.isLoggable(Level.FINEST)) logger.finest("Alpha pattern is " + pattern);
@@ -622,7 +670,7 @@ public class PrefixTree {
 				if (patternWords.length+2 <= maxPhraseLength) {
 					
 					int I = sentence.length;
-					if (!SENTENCE_FINAL_X) I -= 1;
+					if (!sentenceFinalX) I -= 1;
 					
 					int min = (I<i+maxPhraseSpan) ? I : i+maxPhraseSpan-1;
 					Pattern patternX = new Pattern(pattern, X);

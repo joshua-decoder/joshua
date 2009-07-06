@@ -33,11 +33,11 @@ import joshua.util.BotMap;
  * @author Lane Schwartz
  */
 class BotNode extends Node {
-
+	
 	MatchedHierarchicalPhrases matchedPhrases;
 	
 	BotNode(ParallelCorpusGrammarFactory parallelCorpus, RootNode root) {
-		super(parallelCorpus, 0);
+		super(parallelCorpus, PrefixTree.BOT_NODE_ID);
 		SymbolTable symbolTable = (parallelCorpus==null) ? null : parallelCorpus.getSuffixArray().getVocabulary();
 		this.matchedPhrases = HierarchicalPhrases.emptyList(symbolTable);
 		this.children = new BotMap<Integer,Node>(root);

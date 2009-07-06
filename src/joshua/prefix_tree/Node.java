@@ -332,6 +332,7 @@ public class Node extends AbstractGrammar implements Comparable<Node>, Trie {
 //		this.matchedPhrasesCache.put(sourcePattern, hierarchicalPhrases);
 		this.parallelCorpus.getSuffixArray().getCachedRules().put(sourcePattern, rules);
 		this.sourceHierarchicalPhrases = hierarchicalPhrases;
+		
 //		this.results = rules;
 		
 	}

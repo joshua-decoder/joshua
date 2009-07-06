@@ -25,20 +25,15 @@ import java.util.Map;
 import java.util.Set;
 
 import joshua.corpus.AlignedParallelCorpus;
-import joshua.corpus.Corpus;
 import joshua.corpus.CorpusArray;
 import joshua.corpus.ParallelCorpus;
-import joshua.corpus.RuleExtractor;
 import joshua.corpus.alignment.AlignmentArray;
-import joshua.corpus.alignment.Alignments;
 import joshua.corpus.lexprob.LexProbs;
 import joshua.corpus.lexprob.LexicalProbabilities;
 import joshua.corpus.suffix_array.BasicPhrase;
 import joshua.corpus.suffix_array.ParallelCorpusGrammarFactory;
 import joshua.corpus.suffix_array.SuffixArray;
-import joshua.corpus.suffix_array.Suffixes;
 import joshua.corpus.vocab.Vocabulary;
-import joshua.prefix_tree.HierarchicalRuleExtractor;
 import joshua.prefix_tree.Node;
 import joshua.prefix_tree.PrefixTree;
 

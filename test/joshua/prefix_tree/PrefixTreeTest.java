@@ -16,9 +16,6 @@
  */
 package joshua.prefix_tree;
 
-import java.util.regex.Pattern;
-
-import joshua.corpus.Corpus;
 import joshua.corpus.CorpusArray;
 import joshua.corpus.alignment.AlignmentArray;
 import joshua.corpus.alignment.Alignments;
