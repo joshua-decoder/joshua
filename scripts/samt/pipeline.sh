@@ -62,20 +62,24 @@ done
 wait
 
 gzcat chunk_*/extractrules.gz | $SAMT/scripts/sortsafe.sh -T $TMP | \
-	$SAMT/bin/MergeRules 0 0 8 8 0 | gzip > mergedrules.gz
+	$SAMT/myoptions.coe/MergeRules 0 0 8 8 0 | gzip > mergedrules.gz
 
-(gzcat mergedrules.gz | $SAMT/scripts/filterrules.pl \
-	--cachesize 4000 --PhrasalFeatureCount 0 \
-	--LexicalWeightFile data.lexprobs.samt.sgt \
-	--LexicalWeightFileReversed data.lexprobs.samt.tgs \
-	--MinOccurrenceCountLexicalrules 0 \
-	--MinOccurrenceCountNonlexicalrules 0 \
-	-o rules.db ) >& log-filterrules &
+#(gzcat mergedrules.gz | $SAMT/scripts/filterrules.pl \
+#	--cachesize 4000 --PhrasalFeatureCount 0 \
+#	--LexicalWeightFile data.lexprobs.samt.sgt \
+#	--LexicalWeightFileReversed data.lexprobs.samt.tgs \
+#	--MinOccurrenceCountLexicalrules 0 \
+#	--MinOccurrenceCountNonlexicalrules 0 \
+#	-o rules.db ) >& log-filterrules &
 
 
 
 # throw away rules that do not have target side terminals
+#zgrep -v "^\([^#]* \)*[^ @#][^ @#]*[^#]*#\(@[0-9][ ]*\)*#" filteredrules.gz | \
+#	grep -v "#1 [0-9]" | gzip > filteredrules.clean.gz
+		
+#zgrep "#1 [0-9]" filteredrules.gz | grep -v COUNT | \
+#	sed -e "s/@_S/@GOAL/g" | \
+#	awk '{ print $0; gsub(/ @2/, ""); gsub(/^@GOAL /, ""); print; }' | \
+#	gzip > samt.original.glue.gz
 
-# TODO: work in progress here
-# zgrep -v "[^#]*#[^a-z#]*"
-	
