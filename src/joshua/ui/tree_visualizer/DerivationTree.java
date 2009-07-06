@@ -28,7 +28,14 @@ import java.io.FileNotFoundException;
 import javax.swing.JFrame;
 import javax.swing.WindowConstants;
 
+import joshua.util.Regex;
+
 public class DerivationTree extends DirectedOrderedSparseMultigraph<Node,DerivationTreeEdge> {
+	/**
+	 * Eclipse thinks this is necessary.
+	 */
+	private static final long serialVersionUID = 2914449263979566324L;
+	
 	// man are java regexes ugly
 	// field seperator for joshua output
 	public static final String DELIMITER = "\\|\\|\\|";
@@ -109,7 +116,7 @@ public class DerivationTree extends DirectedOrderedSparseMultigraph<Node,Derivat
 		String [] toks = tree.replaceAll("\\)", "\n)").split(SPACE);
 		treeToGraph(toks, null, 0);
 		if (source != null) {
-			alignSource();
+			addSourceNodes(root, null, 0);
 		}
 		return;
 	}
@@ -125,16 +132,16 @@ public class DerivationTree extends DirectedOrderedSparseMultigraph<Node,Derivat
 			}
 			curr++;
 			if (head.equals(")")) {
-				addVertexWithContext(child, parent);
+				addVertexWithContext(child, parent, false);
 				return curr;
 			}
 			if (head.startsWith("(")) {
 				if (child != null) {
-					addVertexWithContext(child, parent);
+					addVertexWithContext(child, parent, false);
 				}
 				child = null;
 				String nodeStr = head.substring(1);
-				Node node = addVertexWithContext(nodeStr, parent);
+				Node node = addVertexWithContext(nodeStr, parent, false);
 				curr = treeToGraph(toks, node, curr);
 			}
 			else {
@@ -149,147 +156,81 @@ public class DerivationTree extends DirectedOrderedSparseMultigraph<Node,Derivat
 		return curr;
 	}
 
-	private Node addVertexWithContext(String child, Node parent)
+	private Node addVertexWithContext(String child, Node parent, boolean isSource)
 	{
 		Node childNode;
 		if (child == null)
 			return null;
 		if (parent != null) {
 			if (source != null) {
-				childNode = new Node(child, parent, false);
+				childNode = new Node(child, parent, isSource);
 			}
 			else {
-				childNode = new Node(child, false);
+				childNode = new Node(child, isSource);
 			}
 			addEdge(new DerivationTreeEdge(false), parent, childNode);
 		}
 		else {
-			childNode = new Node(child, false);
+			childNode = new Node(child, isSource);
 			addVertex(childNode);
-			root = childNode;
+			if (isSource)
+				sourceRoot = childNode;
+			else
+				root = childNode;
 		}
-		vertices.add(childNode);
+		if (!isSource)
+			vertices.add(childNode);
 		return childNode;
 	}
 
-	private void alignSource()
+	private int addSourceNodes(Node curr, Node parent, int currentSourceIndex)
 	{
-	/*
-		String [] toks = source.split("\\s+");
-		Node [] src = new Node[toks.length];
-		for (int i = 0; i < toks.length; i++) {
-			src[i] = new Node(i + ". " + toks[i], true);
-		}
-	*/
-		for (Node v : vertices) {
-			if (outDegree(v) != 0)
-				continue;
-			int start = v.sourceStart();
-			int end = v.sourceEnd();
-			Node par = (Node) getPredecessors(v).toArray()[0];
-
-			int v_index;
-			Object [] siblings = getSuccessors(par).toArray();
-			for (int i = 0; i < siblings.length; i++) {
-				Node s = (Node) siblings[i];
-				if (s == v) {
-					if (i != 0)
-						v.setSourceStart(((Node) siblings[i-1]).sourceEnd());
-					else
-						v.setSourceStart(par.sourceStart());
-					if (i != siblings.length - 1)
-						v.setSourceEnd(((Node) siblings[i+1]).sourceStart());
-					else
-						v.setSourceEnd(par.sourceEnd());
-					break;
-				}
-			}
-		/*
-			for (Node x : getSuccessors(par)) {
-				int xStart = x.sourceStart();
-				int xEnd = x.sourceEnd();
-				if (x == v) // pointer comparison
-					continue;
-				// we only deal with nonterminal siblings
-				if (outDegree(x) == 0)
-					continue;
-				if ((xStart < end) && (xEnd >= end)) {
-					end = xStart;
-					v.setSourceSpan(start, end);
-					continue;
-				}
-				if ((xEnd > start) && (xStart <= start)) {
-					start = xEnd;
-					v.setSourceSpan(start, end);
-					continue;
-				}
-			}
-		*/
-			/*
-			for (int j = start; j < end; j++) {
-				addEdge(new DerivationTreeEdge(true), v, src[j]);
-			}
-			*/
-		}
-		addSourceNodes(root, null);
-		return;
-	}
-
-	private void addSourceNodes(Node curr, Node parent)
-	{
+		System.err.println(curr);
+		if (getSuccessors(curr).isEmpty())
+			return currentSourceIndex;
 		LinkedList<Node> children = new LinkedList<Node>(getSuccessors(curr));
-		if (children.isEmpty()) {
-			String [] toks = source.split("\\s+");
-			//String srcName = "";
-			StringBuffer srcBuf = new StringBuffer();
-			for (int i = curr.sourceStart(); i < curr.sourceEnd(); i++) {
-			//	srcName += toks[i] + " ";
-				srcBuf.append(toks[i]).append(" ");
+		Node currSource = addVertexWithContext(curr.toString(), parent, true);
+		currSource.setSourceSpan(curr.sourceStart(), curr.sourceEnd());
+		while (!children.isEmpty()) {
+			Node leftMost = children.get(0);
+			for (Node n : children) {
+				if (n.sourceStart() < leftMost.sourceStart())
+					leftMost = n;
 			}
-			String srcName = srcBuf.toString();
-			if (srcName.equals(""))
-				return;
-			Node result = new Node(srcName, true);
-			if (parent == null) {
-				sourceRoot = result;
-				addVertex(result);
+			if (leftMost.sourceStart() > currentSourceIndex) {
+				String [] sourceTokens = Regex.spaces.split(source);
+				String sourceLeafName = sourceTokens[currentSourceIndex];
+				for (int i = currentSourceIndex + 1; i < leftMost.sourceStart(); i++)
+					sourceLeafName += " " + sourceTokens[i];
+				System.err.print("among non-terminals: ");
+				System.err.println(sourceLeafName);
+				addVertexWithContext(sourceLeafName, currSource, true);
+				currentSourceIndex = leftMost.sourceStart();
 			}
 			else {
-				addVertex(result);
-				addEdge(new DerivationTreeEdge(false), parent, result);
+				currentSourceIndex = addSourceNodes(leftMost, currSource, leftMost.sourceStart());
+				children.remove(leftMost);
 			}
-			curr.setCounterpart(result);
 		}
-		else {
-			Node result = new Node(curr.toString(), true);
-			result.setSourceSpan(curr.sourceStart(), curr.sourceEnd());
-			addVertex(result);
-			if (parent != null)
-				addEdge(new DerivationTreeEdge(false), parent, result);
-			else
-				sourceRoot = result;
-			while (!children.isEmpty()) {
-				Node next = children.get(0);
-				for (Node x : children) {
-					if (x.sourceStart() < next.sourceStart())
-						next = x;
-				}
-				addSourceNodes(next, result);
-				children.remove(next);
-			}
-			/*
-			int nextChild = curr.sourceStart();
-			for (int i = 0; i < children.size(); i++) {
-				Node x = children.get(i);
-				if (x.sourceStart() == nextChild) {
-					addSourceNodes(x, result);
-					nextChild = x.sourceEnd();
-					children.remove(i);
-					i = -1;
-				}
-			}
-			*/
+		// HACK ALERT:
+		// for some reason, the ROOT node in joshua output has a listed source span that is
+		// one token longer than the actual source sentence. so we have to correct for that.
+		int actualSourceEnd;
+		if (parent == null) // ROOT node
+			actualSourceEnd = currSource.sourceEnd() - 1;
+		else
+			actualSourceEnd = currSource.sourceEnd();
+		if (currentSourceIndex < actualSourceEnd) {
+			String [] sourceTokens = Regex.spaces.split(source);
+			String sourceLeafName = sourceTokens[currentSourceIndex];
+			for (int i = currentSourceIndex + 1; i < actualSourceEnd; i++)
+				sourceLeafName += " " + sourceTokens[i];
+			System.err.print("after terminals: ");
+			System.err.println(sourceLeafName);
+			addVertexWithContext(sourceLeafName,currSource, true);
+			currentSourceIndex = actualSourceEnd;
 		}
+		return currentSourceIndex;
 	}
 
 	public void addCorrespondences()
