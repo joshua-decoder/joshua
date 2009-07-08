@@ -19,6 +19,7 @@ package joshua.corpus.suffix_array;
 
 import joshua.corpus.Phrase;
 import joshua.corpus.suffix_array.Pattern;
+import joshua.corpus.vocab.SymbolTable;
 import joshua.corpus.vocab.Vocabulary;
 import joshua.prefix_tree.PrefixTree;
 import joshua.util.Cache;
@@ -35,9 +36,9 @@ import org.testng.annotations.Test;
  */
 public class PatternTest {
 
-	int[] words = {1, 2, 3, PrefixTree.X, 4, 5, 6, PrefixTree.X, 7};
+	int[] words = {1, 2, 3, SymbolTable.X, 4, 5, 6, SymbolTable.X, 7};
 	int[] extra = {30, 70, 22};
-	int[] extendedWords = {1, 2, 3, PrefixTree.X, 4, 5, 6, PrefixTree.X, 7, 30, 70, 22};
+	int[] extendedWords = {1, 2, 3, SymbolTable.X, 4, 5, 6, SymbolTable.X, 7, 30, 70, 22};
 	Vocabulary vocab = new Vocabulary();
 	
 	Pattern pattern;
@@ -99,7 +100,7 @@ public class PatternTest {
 		}
 		
 		{
-			int[] hierWords = {1, PrefixTree.X, 6, 7};
+			int[] hierWords = {1, SymbolTable.X, 6, 7};
 			Pattern hier = new Pattern(vocab, hierWords);
 			byte[] hierSeqs = hier.getTerminalSequenceLengths();
 			
@@ -110,7 +111,7 @@ public class PatternTest {
 		}
 		
 		{
-			int[] hierWords = {PrefixTree.X, 6, 7};
+			int[] hierWords = {SymbolTable.X, 6, 7};
 			Pattern hier = new Pattern(vocab, hierWords);
 			byte[] hierSeqs = hier.getTerminalSequenceLengths();
 			
@@ -120,7 +121,7 @@ public class PatternTest {
 		}
 		
 		{
-			int[] hierWords = {1, 2, 3, PrefixTree.X};
+			int[] hierWords = {1, 2, 3, SymbolTable.X};
 			Pattern hier = new Pattern(vocab, hierWords);
 			byte[] hierSeqs = hier.getTerminalSequenceLengths();
 			
@@ -130,7 +131,7 @@ public class PatternTest {
 		}
 		
 		{
-			int[] hierWords = {1, PrefixTree.X, 6, 7, PrefixTree.X};
+			int[] hierWords = {1, SymbolTable.X, 6, 7, SymbolTable.X};
 			Pattern hier = new Pattern(vocab, hierWords);
 			byte[] hierSeqs = hier.getTerminalSequenceLengths();
 			
@@ -141,7 +142,7 @@ public class PatternTest {
 		}
 		
 		{
-			int[] hierWords = {PrefixTree.X, 6, 7, PrefixTree.X, 10};
+			int[] hierWords = {SymbolTable.X, 6, 7, SymbolTable.X, 10};
 			Pattern hier = new Pattern(vocab, hierWords);
 			byte[] hierSeqs = hier.getTerminalSequenceLengths();
 			
@@ -152,7 +153,7 @@ public class PatternTest {
 		}
 		
 		{
-			int[] hierWords = {1, 2, 3, PrefixTree.X, 6, 7, PrefixTree.X};
+			int[] hierWords = {1, 2, 3, SymbolTable.X, 6, 7, SymbolTable.X};
 			Pattern hier = new Pattern(vocab, hierWords);
 			byte[] hierSeqs = hier.getTerminalSequenceLengths();
 			
@@ -163,7 +164,7 @@ public class PatternTest {
 		}
 		
 		{
-			int[] hierWords = {1, PrefixTree.X, 6, PrefixTree.X, 9};
+			int[] hierWords = {1, SymbolTable.X, 6, SymbolTable.X, 9};
 			Pattern hier = new Pattern(vocab, hierWords);
 			byte[] hierSeqs = hier.getTerminalSequenceLengths();
 			
@@ -175,7 +176,7 @@ public class PatternTest {
 		}
 		
 		{
-			int[] hierWords = {1, 2, 3, PrefixTree.X, 6, 7, PrefixTree.X, 9, 10, 11, 12};
+			int[] hierWords = {1, 2, 3, SymbolTable.X, 6, 7, SymbolTable.X, 9, 10, 11, 12};
 			Pattern hier = new Pattern(vocab, hierWords);
 			byte[] hierSeqs = hier.getTerminalSequenceLengths();
 			

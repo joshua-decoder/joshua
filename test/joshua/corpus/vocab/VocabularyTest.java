@@ -37,6 +37,9 @@ import org.testng.annotations.Test;
  */
 public class VocabularyTest {
 
+	/** [OOV], [X], [X,1], [X,2] */
+	int numBuiltInSymbols = 4;
+	
 	@Test
 	public void basicVocabTest() {
 		
@@ -45,14 +48,13 @@ public class VocabularyTest {
 		
 		Assert.assertEquals(vocab1, vocab2);
 		
-
 		Assert.assertFalse(vocab1.intToString.isEmpty());
 		Assert.assertTrue(vocab1.intToString.get(0)==Vocabulary.UNKNOWN_WORD_STRING);
 		Assert.assertFalse(vocab1.getWords().isEmpty());
 		Assert.assertTrue(vocab1.getWord(0)==Vocabulary.UNKNOWN_WORD_STRING);
 		Assert.assertEquals(vocab1.getWords(), vocab1.intToString.values());
 
-		Assert.assertEquals(vocab1.size(), 1);
+		Assert.assertEquals(vocab1.size(), numBuiltInSymbols);
 		Assert.assertEquals(vocab1.getWord(Vocabulary.UNKNOWN_WORD), Vocabulary.UNKNOWN_WORD_STRING);
 
 		Assert.assertEquals(vocab1.getID("sample"), Vocabulary.UNKNOWN_WORD);
@@ -65,6 +67,14 @@ public class VocabularyTest {
 		vocab1.fixVocabulary();
 		Assert.assertTrue(vocab1.isFixed);
 		
+		Assert.assertEquals(vocab1.getID(SymbolTable.X_STRING), -1);
+		Assert.assertEquals(vocab1.getID(SymbolTable.X1_STRING), -2);
+		Assert.assertEquals(vocab1.getID(SymbolTable.X2_STRING), -3);
+		
+		Assert.assertEquals(vocab1.getWord(-1), SymbolTable.X_STRING);
+		Assert.assertEquals(vocab1.getWord(-2), SymbolTable.X1_STRING);
+		Assert.assertEquals(vocab1.getWord(-3), SymbolTable.X2_STRING);
+		
 		
 		
 		Assert.assertFalse(vocab2.intToString.isEmpty());
@@ -73,7 +83,7 @@ public class VocabularyTest {
 		Assert.assertTrue(vocab2.getWord(0)==Vocabulary.UNKNOWN_WORD_STRING);
 		Assert.assertEquals(vocab2.getWords(), vocab2.intToString.values());
 
-		Assert.assertEquals(vocab2.size(), 1);
+		Assert.assertEquals(vocab2.size(), numBuiltInSymbols);
 		Assert.assertEquals(vocab2.getWord(Vocabulary.UNKNOWN_WORD), Vocabulary.UNKNOWN_WORD_STRING);
 
 		Assert.assertEquals(vocab2.getID("sample"), Vocabulary.UNKNOWN_WORD);
@@ -82,6 +92,8 @@ public class VocabularyTest {
 		Assert.assertFalse(vocab2.terminalToInt.isEmpty());
 		Assert.assertEquals(vocab2.terminalToInt.size(), 1);
 		Assert.assertTrue(vocab2.isFixed);
+		
+
 
 	}
 
@@ -140,7 +152,7 @@ public class VocabularyTest {
 			Assert.assertEquals(result[1], numSentences);  
 			
 			Assert.assertTrue(vocab.isFixed);
-			Assert.assertEquals(vocab.size(), numUniqWords+1);
+			Assert.assertEquals(vocab.size(), numUniqWords+numBuiltInSymbols);
 			
 		} catch (IOException e) {
 			Assert.fail("Could not load file " + filename);
@@ -156,7 +168,7 @@ public class VocabularyTest {
 			Assert.assertEquals(result[1], numSentences);  
 			
 			Assert.assertTrue(vocab2.isFixed);
-			Assert.assertEquals(vocab2.size(), numUniqWords+1);
+			Assert.assertEquals(vocab2.size(), numUniqWords+numBuiltInSymbols);
 			
 		} catch (IOException e) {
 			Assert.fail("Could not load file " + filename);

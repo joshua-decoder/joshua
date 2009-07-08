@@ -79,7 +79,7 @@ public class RootNode extends Node implements Grammar {
 	}
 	
 	public Node addChild(int child) {
-		if (child==PrefixTree.X) {
+		if (child==SymbolTable.X) {
 			if (children.containsKey(child)) {
 				throw new ChildNodeAlreadyExistsException(this, child);
 			} else {

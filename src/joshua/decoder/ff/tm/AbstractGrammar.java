@@ -66,7 +66,7 @@ public abstract class AbstractGrammar implements SortableGrammar {
 	public void sortGrammar(ArrayList<FeatureFunction> models) {
 		Trie root = getTrieRoot();
 		if(root!=null){
-			sort(getTrieRoot(), models);
+			sort(root, models);
 			setSorted(true);
 		}
 	}
@@ -90,7 +90,7 @@ public abstract class AbstractGrammar implements SortableGrammar {
 	 */
 	protected void setSorted(boolean sorted) {
 		this.sorted = sorted;
-		logger.info("This node is now sorted: " + this);
+		logger.fine("This node is now sorted: " + this);
 	}
 	
 	/**
@@ -110,7 +110,7 @@ public abstract class AbstractGrammar implements SortableGrammar {
 	private void sort(Trie node, ArrayList<FeatureFunction> models) {
 		if (node != null) {
 			
-			logger.info("Sorting node " + node);
+			logger.fine("Sorting node " + node);
 			
 			if(node.hasRules()) {
 				node.getRules().sortRules(models);
@@ -122,12 +122,12 @@ public abstract class AbstractGrammar implements SortableGrammar {
 			
 			if(node.hasExtensions()){
 				Collection<? extends Trie> children = node.getExtensions();
-				logger.info("Node has " + children.size() + " children to extend: " + node);
+				logger.fine("Node has " + children.size() + " children to extend: " + node);
 				for (Trie child : node.getExtensions()) {
 					sort(child, models);
 				}
 			} else if (logger.isLoggable(Level.INFO)) {
-				logger.info("Node has 0 children to extend: " + node);
+				logger.fine("Node has 0 children to extend: " + node);
 			}
 		}
 	}

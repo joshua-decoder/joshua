@@ -46,10 +46,17 @@ public abstract class AbstractSymbolTable implements SymbolTable {
 		if (! isNonterminal(id)) {
 			return -1;
 		} else {
-			// TODO: get rid of this expensive interim object
-			String symbol = getWord(id);
 			
-			return getTargetNonterminalIndex(symbol);
+			switch(id) {
+				case SymbolTable.X1: return 0;
+				case SymbolTable.X2: return 1;
+				default: {
+					String symbol = getWord(id);
+					
+					return getTargetNonterminalIndex(symbol);
+				}
+			}
+			
 		}
 	}
 	
@@ -61,7 +68,7 @@ public abstract class AbstractSymbolTable implements SymbolTable {
 		// nonterminal-ID portion of the string
 		String nonterminalID = 
 			wrd.substring(wrd.length() - 2,	wrd.length() - 1);
-		
+
 		if (FormatUtil.isNumber(nonterminalID)) {
 			return Integer.parseInt( nonterminalID ) - 1;
 		} else {
@@ -69,6 +76,7 @@ public abstract class AbstractSymbolTable implements SymbolTable {
 					"Substring '" +nonterminalID+ "' " +
 					"of string '" +wrd+ "' is not a number");
 		}
+
 	}
 
 	/* See Javadoc for SymbolTable interface. */
@@ -86,7 +94,7 @@ public abstract class AbstractSymbolTable implements SymbolTable {
 		StringBuilder s = new StringBuilder();
 		
 		int nextNTIndex = 1;
-		for(int t=0; t<wordIDs.length; t++){
+		for (int t=0; t<wordIDs.length; t++) {
 			if(t>0) {
 				s.append(' ');
 			}
@@ -96,7 +104,7 @@ public abstract class AbstractSymbolTable implements SymbolTable {
 //			if (wordID >= vocabList.size()) { 
 //				s.append(UNKNOWN_WORD_STRING);
 //			} else 
-			if (wordID < 0) {
+			if (wordID < 0 && ntIndexIncrements) {
 				s.append("[X,"); //XXX This should NOT be hardcoded here!
 				if (ntIndexIncrements) {
 					s.append(nextNTIndex++);

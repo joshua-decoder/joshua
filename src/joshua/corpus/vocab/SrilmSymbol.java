@@ -46,6 +46,9 @@ public class SrilmSymbol extends DefaultSymbol {
 		System.loadLibrary("srilm"); //load once		
 		this.p_srilm = srilm.initLM(lm_order, lm_start_sym_id, lm_end_sym_id );
 		logger.info("Construct the symbol table on the fly");
+		addNonterminal(X_STRING);
+		addNonterminal(X1_STRING);
+		addNonterminal(X2_STRING);
 	}
 	
 	

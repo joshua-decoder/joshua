@@ -48,9 +48,88 @@ public interface SymbolTable {
 	/** String representation for out-of-vocabulary words. */
 	String UNKNOWN_WORD_STRING = "UNK";
 	
+	/**
+	 * Integer representation of the bare (non-indexed) nonterminal X,
+	 * which represents a wild-card gap in a phrase.
+	 * <p>
+	 * All nonterminals are guaranteed to be represented by negative integers.
+	 */
+	int X = -1;
+	
+	/**
+	 * String representation of the bare (non-indexed) nonterminal X,
+	 * which represents a wild-card gap in a phrase.
+	 */
+	String X_STRING = "X";
+	
+	/**
+	 * Integer representation of the nonterminal X with index 1,
+	 * which represents a wild-card gap in a phrase.
+	 * <p>
+	 * All nonterminals are guaranteed to be represented by negative integers.
+	 */
+	int X1 = -2;
+	
+	/**
+	 * String representation of the nonterminal X with index 1,
+	 * which represents a wild-card gap in a phrase.
+	 */
+	String X1_STRING = "[X,1]";
+	
+	/**
+	 * Integer representation of the nonterminal X with index 1,
+	 * which represents a wild-card gap in a phrase.
+	 * <p>
+	 * All nonterminals are guaranteed to be represented by negative integers.
+	 */
+	int X2 = -3;
+	
+	/**
+	 * String representation of the nonterminal X with index 2,
+	 * which represents a wild-card gap in a phrase.
+	 */
+	String X2_STRING = "[X,2]";	
+	
+	/**
+	 * Gets a unique integer identifier for the nonterminal.
+	 * <p>
+	 * The integer returned is guaranteed to be a negative number.
+	 * 
+	 * If the nonterminal is {@link #X_STRING},
+	 * then the value returned must be {@link #X}.
+	 * 
+	 * Otherwise, the value returned must be a negative number 
+	 * whose value is less than {@link X}.
+	 * 
+	 * @param nonterminal Nonterminal symbol
+	 * @return a unique integer identifier for the nonterminal
+	 */
 	int addNonterminal(String nonterminal);
+	
+	/**
+	 * Gets a unique integer identifier for the terminal.
+	 * 
+	 * @param terminal Terminal symbol
+	 * @return a unique integer identifier for the terminal
+	 */
 	int addTerminal(String terminal);
+	
+	/**
+	 * Gets the unique integer identifiers for the words.
+	 * 
+	 * @param words Array of symbols
+	 * @return the unique integer identifiers for the words
+	 */
 	int[] addTerminals(String[] words);
+	
+	/**
+	 * Gets the unique integer identifiers for the words
+	 * in the sentence.
+	 * 
+	 * @param sentence Space-delimited string of symbols
+	 * @return the unique integer identifiers for the words
+	 *         in the sentence
+	 */
 	int[] addTerminals(String sentence);
 	
 	/**

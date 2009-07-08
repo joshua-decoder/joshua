@@ -36,6 +36,7 @@ import joshua.corpus.lexprob.LexicalProbabilities;
 import joshua.corpus.suffix_array.HierarchicalPhrase;
 import joshua.corpus.suffix_array.Pattern;
 import joshua.corpus.suffix_array.Suffixes;
+import joshua.corpus.vocab.SymbolTable;
 import joshua.decoder.ff.tm.BilingualRule;
 import joshua.decoder.ff.tm.Rule;
 import joshua.util.Cache;
@@ -100,6 +101,11 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 	protected final int sampleSize;
 	
 	/**
+	 * Integer identifiers for the indexed nonterminals.
+	 */
+	protected final int[] nonterminalIDs;
+	
+	/**
      * Constructs a rule extractor for 
      * Hiero-style hierarchical phrase-based translation.
 	 * 
@@ -142,12 +148,19 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 		this.alignments = alignments;
 		this.suffixArray = suffixArray;
 		this.sampleSize = sampleSize;
+		
+		SymbolTable vocab = suffixArray.getVocabulary();
+		this.nonterminalIDs = new int[]{vocab.getID(SymbolTable.X1_STRING), vocab.getID(SymbolTable.X2_STRING)};
 	}
 
 	/* See Javadoc for RuleExtractor class. */
 	public List<Rule> extractRules(MatchedHierarchicalPhrases sourceHierarchicalPhrases) {
 
-		Pattern sourcePattern = sourceHierarchicalPhrases.getPattern();
+		if (sourceHierarchicalPhrases==null) {
+			int x;
+			x=1;
+		}
+			Pattern sourcePattern = sourceHierarchicalPhrases.getPattern();
 		
 		if (logger.isLoggable(Level.FINE)) logger.fine("Extracting rules for source pattern: " + sourcePattern);
 			
@@ -253,7 +266,7 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 				};
 
 				Rule rule = new BilingualRule(
-						PrefixTree.X, 
+						SymbolTable.X, 
 						sourcePattern.getWordIDs(), 
 						translation.getWordIDs(), 
 						featureScores, 
@@ -331,7 +344,7 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 		List<LabeledSpan> targetNTSpans = new ArrayList<LabeledSpan>();
 		int patternSize = targetSpan.size();
 		
-		int nonterminalID = -1;
+		int ntIndex = 0;
 		
 		// For each non terminal in the source, find their corresponding positions in the target span... 
 		
@@ -351,8 +364,8 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 
 				if (nonterminalTargetSpan==null || nonterminalTargetSpan.equals(targetSpan)) return null;
 
-				targetNTSpans.add(new LabeledSpan(nonterminalID,nonterminalTargetSpan));
-				nonterminalID--;
+				targetNTSpans.add(new LabeledSpan(nonterminalIDs[ntIndex],nonterminalTargetSpan));
+				ntIndex++;
 				// the pattern length will be reduced by the length of the non-terminal, and increased by 1 for the NT itself.
 				patternSize = patternSize - nonterminalTargetSpan.size() +1;
 			}
@@ -379,8 +392,8 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 
 				if (nonterminalTargetSpan==null || nonterminalTargetSpan.equals(targetSpan)) return null;
 
-				targetNTSpans.add(new LabeledSpan(nonterminalID,nonterminalTargetSpan));
-				nonterminalID--;
+				targetNTSpans.add(new LabeledSpan(nonterminalIDs[ntIndex],nonterminalTargetSpan));
+				ntIndex++;
 				patternSize = patternSize - nonterminalTargetSpan.size() + 1;
 				
 			}
@@ -406,8 +419,8 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 
 				if (nonterminalTargetSpan==null || nonterminalTargetSpan.equals(targetSpan)) return null;
 
-				targetNTSpans.add(new LabeledSpan(nonterminalID,nonterminalTargetSpan));
-				nonterminalID--;
+				targetNTSpans.add(new LabeledSpan(nonterminalIDs[ntIndex],nonterminalTargetSpan));
+				ntIndex++;
 				patternSize = patternSize - nonterminalTargetSpan.size() + 1;
 
 			}

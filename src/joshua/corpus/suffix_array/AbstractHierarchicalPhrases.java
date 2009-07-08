@@ -24,7 +24,7 @@ import java.util.logging.Logger;
 
 import joshua.corpus.MatchedHierarchicalPhrases;
 import joshua.corpus.Span;
-import joshua.prefix_tree.PrefixTree;
+import joshua.corpus.vocab.SymbolTable;
 
 /**
  * Implements common algorithms used with hierarchical phrases.
@@ -520,7 +520,7 @@ public abstract class AbstractHierarchicalPhrases implements
 	
 	protected Pattern getPatternWithInitialX() {
 		int[] xwords = new int[pattern.words.length+1];
-		xwords[0] = PrefixTree.X;
+		xwords[0] = SymbolTable.X;
 		for (int i=0; i<pattern.words.length; i++) {
 			xwords[i+1] = pattern.words[i];
 		}
@@ -528,6 +528,6 @@ public abstract class AbstractHierarchicalPhrases implements
 	}
 	
 	protected Pattern getPatternWithFinalX() {
-		return new Pattern(pattern.vocab, pattern.words, PrefixTree.X);
+		return new Pattern(pattern.vocab, pattern.words, SymbolTable.X);
 	}
 }

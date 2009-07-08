@@ -276,7 +276,8 @@ class Bin {
 		}
 		ensure_sorted();
 		
-		if (1 != get_sorted_items().size()) {
+		int itemsInGoalBin = get_sorted_items().size();
+		if (1 != itemsInGoalBin) {
 			throw new RuntimeException("the goal_bin does not have exactly one item");
 		}
 	}

@@ -213,19 +213,23 @@ public class Node extends AbstractGrammar implements Comparable<Node>, Trie {
 	
 	/* See Javadoc for joshua.decoder.ff.tm.Trie#getRules */
 	public RuleCollection getRules() {
+				
+		final int[] sourceSide = 
+			(sourcePattern==null) 
+			? new int[]{}  
+			: sourcePattern.getWordIDs();
+			
+		final int arity = 
+			(sourcePattern==null) 
+			? 0 
+			: sourcePattern.arity();
 		
-//		Pattern sourcePattern = sourceHierarchicalPhrases.getPattern();
-		
-		int[] empty = {};
-		
-		final int[] sourceSide = (sourcePattern==null) ? empty : sourcePattern.getWordIDs();
-		final int arity = (sourcePattern==null) ? 0 : sourcePattern.arity();
 		List<Rule> results = this.getResults();
 		
-		//XXX Is results sorted at this point? It needs to be, but I'm not sure it is.
-		logger.severe("Node sorted == " + this.isSorted());
+		// Results needs to be sorted by this point
+		logger.fine("Node sorted == " + this.isSorted());
 		
-		return new BasicRuleCollection(arity, sourceSide, results);
+		return new BasicRuleCollection(arity, sourceSide, results, this.isSorted());
 		
 	}
 	
@@ -237,15 +241,25 @@ public class Node extends AbstractGrammar implements Comparable<Node>, Trie {
 	/* See Javadoc for joshua.decoder.ff.tm.Trie#hasRules */
 	public boolean hasRules() {
 		
-		MatchedHierarchicalPhrases sourceHierarchicalPhrases = this.getMatchedPhrases();
-		
-		return ! sourceHierarchicalPhrases.isEmpty();
+		if (active) {
+			MatchedHierarchicalPhrases sourceHierarchicalPhrases = this.getMatchedPhrases();
+
+			return ! sourceHierarchicalPhrases.isEmpty();
+		} else {
+			return false;
+		}
 	}
 	
 	/* See Javadoc for joshua.decoder.ff.tm.Trie#matchOne */
 	public Trie matchOne(int symbol) {
 		if (children.containsKey(symbol)) {
-			return children.get(symbol);
+			Node child = children.get(symbol);
+			if (child.active) {
+				return child;
+			} else {
+				return null;
+			}
+//			return children.get(symbol);
 		} else {
 			return null;
 		}
@@ -435,7 +449,7 @@ public class Node extends AbstractGrammar implements Comparable<Node>, Trie {
 		s.append(objectID);
 		s.append(' ');
 		
-		if (incomingArcValue==PrefixTree.X) {
+		if (incomingArcValue==SymbolTable.X) {
 			s.append('X');
 		} else if (incomingArcValue==PrefixTree.ROOT_NODE_ID) {
 			s.append("ROOT");
@@ -509,7 +523,7 @@ public class Node extends AbstractGrammar implements Comparable<Node>, Trie {
 		s.append(objectID);
 		s.append(' ');
 
-		if (incomingArcValue==PrefixTree.X) {
+		if (incomingArcValue==SymbolTable.X) {
 			s.append('X');
 		} else if (incomingArcValue==PrefixTree.ROOT_NODE_ID) {
 			s.append("ROOT");

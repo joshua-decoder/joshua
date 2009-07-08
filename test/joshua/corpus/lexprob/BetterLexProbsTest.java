@@ -36,6 +36,7 @@ import joshua.corpus.suffix_array.HierarchicalPhrases;
 import joshua.corpus.suffix_array.Pattern;
 import joshua.corpus.suffix_array.SuffixArray;
 import joshua.corpus.suffix_array.SuffixArrayFactory;
+import joshua.corpus.vocab.SymbolTable;
 import joshua.corpus.vocab.Vocabulary;
 import joshua.prefix_tree.PrefixTree;
 import joshua.util.Counts;
@@ -435,7 +436,7 @@ public class BetterLexProbsTest {
 		
 		Pattern pattern = new Pattern(sourceVocab, 
 				sourceVocab.getID("it"), 
-				PrefixTree.X, 
+				SymbolTable.X, 
 				sourceVocab.getID("and"), 
 				sourceVocab.getID("it"));
 		
@@ -462,7 +463,7 @@ public class BetterLexProbsTest {
 		
 		int[] targetWords = {
 				targetVocab.getID("das"),
-				PrefixTree.X,
+				SymbolTable.X,
 				targetVocab.getID("und"),
 				targetVocab.getID("es")
 			};

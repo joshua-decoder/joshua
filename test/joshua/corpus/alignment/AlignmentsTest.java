@@ -209,7 +209,7 @@ public class AlignmentsTest {
 		SymbolTable vocab = sourceCorpusArray.getVocabulary();
 		
 		{
-			Pattern     pattern = new Pattern(new Pattern(new Pattern(vocab, vocab.getIDs("de sesiones")), PrefixTree.X), vocab.getIDs("europo"));// del parlamento europeo"));
+			Pattern     pattern = new Pattern(new Pattern(new Pattern(vocab, vocab.getIDs("de sesiones")), SymbolTable.X), vocab.getIDs("europo"));// del parlamento europeo"));
 			int[]       terminalSequenceStartIndices = {4,8};
 			int[]       sentenceNumbers = {0};
 			int phraseIndex = 0;

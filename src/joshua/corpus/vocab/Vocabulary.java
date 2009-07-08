@@ -83,6 +83,9 @@ public class Vocabulary extends AbstractExternalizableSymbolTable
 		isFixed = false;
 		terminalToInt.put(UNKNOWN_WORD_STRING, UNKNOWN_WORD);
 		intToString.put(UNKNOWN_WORD, UNKNOWN_WORD_STRING);
+		addNonterminal(X_STRING);
+		addNonterminal(X1_STRING);
+		addNonterminal(X2_STRING);
 	}
 
 	/** 
@@ -215,11 +218,12 @@ public class Vocabulary extends AbstractExternalizableSymbolTable
 	 *         vocabulary
 	 */
 	public int getID(String wordString) {
-		Integer ID = terminalToInt.get(wordString);
-		if (ID == null) {
-			return UNKNOWN_WORD;
+		if (terminalToInt.containsKey(wordString)) {
+			return terminalToInt.get(wordString);
+		} else if (nonterminalToInt.containsKey(wordString)) {
+			return nonterminalToInt.get(wordString);
 		} else {
-			return ID.intValue();
+			return UNKNOWN_WORD;
 		}
 	}
 
@@ -241,7 +245,7 @@ public class Vocabulary extends AbstractExternalizableSymbolTable
 	 *         the sentence
 	 */
 	public int[] getIDs(String sentence) {
-		String[] words = sentence.split(" ");
+		String[] words = sentence.trim().split(" ");
 		int[] wordIDs = new int[words.length];
 		
 		for (int i=0; i<words.length; i++) {
@@ -263,7 +267,7 @@ public class Vocabulary extends AbstractExternalizableSymbolTable
 	 *         in the vocabulary
 	 */
 	public String getWord(int wordID) {
-		if (wordID==UNKNOWN_WORD || wordID >= intToString.size() || wordID < 0) {
+		if (wordID==UNKNOWN_WORD || wordID >= terminalToInt.size() || wordID < -(nonterminalToInt.size())) {
 			return UNKNOWN_WORD_STRING;
 		}
 		return intToString.get(wordID);
@@ -343,20 +347,20 @@ public class Vocabulary extends AbstractExternalizableSymbolTable
 			return true;
 		} else if (o instanceof SymbolTable) {
 			SymbolTable other = (SymbolTable) o;
-			   if(other.size() != this.size()) return false;
-			     for(int i = 0; i < this.size(); i++) {
-			    	 String thisWord = this.intToString.get(i);
-			    	 String otherWord = other.getTerminal(i);
-			    	 if(!(thisWord.equals(otherWord))) return false;
-			    	 Integer thisID = this.terminalToInt.get(thisWord);
-			    	 Integer otherID = other.getID(otherWord);
-			    	 if(thisID != null && otherID != null) {
-			    		 if(!(thisID.equals(otherID))) return false;
-			    	 } 
-			     } 
-			     return true;
-	     
-			
+			if(other.size() != this.size()) return false;
+			for (int i=-(nonterminalToInt.size()), n=terminalToInt.size(); i<n; i++) {
+				String thisWord = this.intToString.get(i);
+				String otherWord = other.getWord(i);
+				if(!(thisWord.equals(otherWord))) return false;
+				Integer thisID = (this.isNonterminal(i)) ? this.nonterminalToInt.get(thisWord) : this.terminalToInt.get(thisWord);
+				Integer otherID = other.getID(otherWord);
+				if(thisID != null && otherID != null) {
+					if(!(thisID.equals(otherID))) return false;
+				}  
+			}
+
+			return true;
+
 		} else {
 			return false;
 		}
@@ -393,7 +397,7 @@ public class Vocabulary extends AbstractExternalizableSymbolTable
 	 */
 	public void alphabetize() {
 		
-		ArrayList<String> wordList = new ArrayList<String>(intToString.values());
+		ArrayList<String> wordList = new ArrayList<String>(terminalToInt.keySet());//intToString.values());
 		
 		// alphabetize 
 		Collections.sort(wordList, new Comparator<String>(){
@@ -416,7 +420,12 @@ public class Vocabulary extends AbstractExternalizableSymbolTable
 		terminalToInt.clear();
 		intToString.clear();
 		
-		// Reassign mappings
+		// Reassign nonterminal mappings
+		for (Map.Entry<String, Integer> ntEntry : nonterminalToInt.entrySet()) {
+			intToString.put(ntEntry.getValue(), ntEntry.getKey());
+		}
+		
+		// Reassign terminal mappings
 		for(int i = 0; i < wordList.size(); i++) {
 			String wordString = wordList.get(i);
 			terminalToInt.put(wordString, i);
@@ -430,7 +439,7 @@ public class Vocabulary extends AbstractExternalizableSymbolTable
 	}
 
 	public int getLowestID() {
-		return 1;
+		return -(nonterminalToInt.size());
 	}
 	
 //===============================================================

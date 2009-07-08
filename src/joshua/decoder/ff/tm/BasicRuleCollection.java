@@ -80,7 +80,7 @@ public class BasicRuleCollection implements RuleCollection {
 	 * @param sourceTokens
 	 * @param rules
 	 */
-	public BasicRuleCollection(int arity, int[] sourceTokens, List<Rule> rules) {
+	public BasicRuleCollection(int arity, int[] sourceTokens, List<Rule> rules, boolean sorted) {
 		if (rules==null) {
 			this.rules = Collections.<Rule>emptyList();
 		} else {
@@ -88,7 +88,7 @@ public class BasicRuleCollection implements RuleCollection {
 		}
 		this.sourceTokens = sourceTokens;
 		this.arity = arity;
-		this.sorted = false;
+		this.sorted = sorted;
 	}
 	
 	/* See Javadoc comments for RuleCollection interface. */

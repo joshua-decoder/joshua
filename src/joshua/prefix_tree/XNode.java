@@ -43,7 +43,7 @@ public class XNode extends Node {
 		this.matchedPhrases = 
 			HierarchicalPhrases.emptyList(
 					vocab, 
-					PrefixTree.X);
+					SymbolTable.X);
 		
 		this.sourcePattern = this.matchedPhrases.getPattern();
 	}

@@ -35,6 +35,7 @@ import joshua.corpus.suffix_array.ParallelCorpusGrammarFactory;
 import joshua.corpus.suffix_array.SuffixArrayFactory;
 import joshua.corpus.suffix_array.Suffixes;
 import joshua.corpus.suffix_array.mm.MemoryMappedSuffixArray;
+import joshua.corpus.vocab.SymbolTable;
 import joshua.corpus.vocab.Vocabulary;
 import joshua.util.Cache;
 import joshua.util.io.BinaryIn;
@@ -90,7 +91,7 @@ public class ExtractRules {
 	
 	private String alignmentsType = "MemoryMappedAlignmentGrids";
 	
-	private boolean keepTree = false;
+	private boolean keepTree = true;
 	private int ruleSampleSize = 300;
 	private boolean printPrefixTree = false;
 	
@@ -213,8 +214,10 @@ public class ExtractRules {
 		PrintStream out;
 		if ("-".equals(this.outputFile)) {
 			out = System.out;
+			logger.info("Rules will be written to standard out");
 		} else {
 			out = new PrintStream(outputFile);
+			logger.info("Rules will be written to " + outputFile);
 		}
 		
 		////////////////////////////////
@@ -352,10 +355,11 @@ public class ExtractRules {
 //			new LexProbs(parallelCorpus, Float.MIN_VALUE);
 
 		Map<Integer,String> ntVocab = new HashMap<Integer,String>();
-		ntVocab.put(PrefixTree.X, "X");
+		ntVocab.put(SymbolTable.X, SymbolTable.X_STRING);
 
 		Scanner testFileScanner = new Scanner(new File(testFileName), encoding);
-
+		logger.info("Reading test sentences from " + testFileName);
+//		logger.info("Scanner has line == " +testFileScanner.hasNextLine());
 //		PrefixTree.SENTENCE_INITIAL_X = this.sentenceInitialX;//commandLine.getValue(sentence_initial_X);
 //		PrefixTree.SENTENCE_FINAL_X   = this.sentenceFinalX; // commandLine.getValue(sentence_final_X);
 //		
@@ -427,6 +431,8 @@ public class ExtractRules {
 			
 		
 		}
+		
+		logger.info("Done extracting rules for file " + testFileName);
 		
 	}
 	
