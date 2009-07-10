@@ -373,22 +373,24 @@ public class ExtractRules {
 		
 		ParallelCorpusGrammarFactory parallelCorpus = new ParallelCorpusGrammarFactory(sourceSuffixArray, targetCorpusArray, alignments, ruleSampleSize, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan, Float.MIN_VALUE);
 
+
+
 		
 		PrefixTree prefixTree = null;
 		while (testFileScanner.hasNextLine()) {
 
 			
-			Node.resetNodeCounter();
 			
 			String line = testFileScanner.nextLine();
 			lineNumber++;
 			
 			int[] words = sourceVocab.getIDs(line);
 			
-			if (logger.isLoggable(Level.INFO)) logger.info("Constructing prefix tree for source line " + lineNumber + ": " + line);
-
-			if (oneTreePerSentence || null==prefixTree) {
+			if (oneTreePerSentence || null==prefixTree) 
+			{
 //				prefixTree = new PrefixTree(sourceSuffixArray, targetCorpusArray, alignments, sourceSuffixArray.getVocabulary(), lexProbs, ruleExtractor, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan);
+				if (logger.isLoggable(Level.INFO)) logger.info("Constructing new prefix tree");
+				Node.resetNodeCounter();
 				prefixTree = new PrefixTree(parallelCorpus);
 				prefixTree.setPrintStream(out);
 				prefixTree.sentenceInitialX = this.sentenceInitialX;
@@ -396,6 +398,7 @@ public class ExtractRules {
 				prefixTree.edgeXMayViolatePhraseSpan = this.edgeXViolates;
 			}
 			try {
+				if (logger.isLoggable(Level.INFO)) logger.info("Processing source line " + lineNumber + ": " + line);
 				prefixTree.add(words);
 			} catch (OutOfMemoryError e) {
 				logger.warning("Out of memory - attempting to clear cache to free space");
@@ -405,11 +408,13 @@ public class ExtractRules {
 				System.gc();
 				logger.info("Cleared cache and collected garbage. Now attempting to re-construct prefix tree...");
 //				prefixTree = new PrefixTree(sourceSuffixArray, targetCorpusArray, alignments, sourceSuffixArray.getVocabulary(), lexProbs, ruleExtractor, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan);
+				Node.resetNodeCounter();
 				prefixTree = new PrefixTree(parallelCorpus);
 				prefixTree.setPrintStream(out);
 				prefixTree.sentenceInitialX = this.sentenceInitialX;
 				prefixTree.sentenceFinalX   = this.sentenceFinalX;
 				prefixTree.edgeXMayViolatePhraseSpan = this.edgeXViolates;
+				if (logger.isLoggable(Level.INFO)) logger.info("Re-processing source line " + lineNumber + ": " + line);
 				prefixTree.add(words);
 			}
 			
