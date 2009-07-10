@@ -440,8 +440,9 @@ public class ExtractRules {
 	/**
 	 * @param args
 	 * @throws IOException 
+	 * @throws ClassNotFoundException 
 	 */
-	public static void main(String[] args) throws IOException {
+	public static void main(String[] args) throws IOException, ClassNotFoundException {
 		
 		if (args.length != 3) {
 			System.err.println("Usage: joshDir outputRules testFile");
@@ -451,6 +452,7 @@ public class ExtractRules {
 			extractRules.setJoshDir(args[0]);
 			extractRules.setOutputFile(args[1]);
 			extractRules.setTestFile(args[2]);
+			extractRules.execute();
 			
 		}
 		
