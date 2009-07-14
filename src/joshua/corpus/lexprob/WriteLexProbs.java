@@ -105,4 +105,28 @@ public class WriteLexProbs {
 	
 		return new AlignedParallelCorpus(sourceCorpusArray, targetCorpusArray, alignments);
 	}
+	
+	
+
+	/**
+	 * Takes a directory containing a compiled suffix array and writes LexProb file to disk.
+	 * @param args
+	 * @throws IOException
+	 */
+	public static void main(String[] args) throws IOException, ClassNotFoundException
+	{
+		if(args.length != 2) {
+			System.err.println("Usage: java LexProbs joshDir outputFile");
+			System.exit(0);
+		}
+		
+		String joshDir = args[0];
+		String outputFile = args[1];
+		
+		WriteLexProbs lexProbWriter = new WriteLexProbs();
+		lexProbWriter.setJoshDir(joshDir);
+		lexProbWriter.setOutput(outputFile);
+		lexProbWriter.execute();
+		
+	}
 }
