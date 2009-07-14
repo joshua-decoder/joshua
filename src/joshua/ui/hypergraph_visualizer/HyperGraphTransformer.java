@@ -23,37 +23,47 @@ import edu.uci.ics.jung.algorithms.layout.TreeLayout;
 import edu.uci.ics.jung.graph.DelegateForest;
 
 import java.awt.geom.Point2D;
+import java.util.HashMap;
 
 public class HyperGraphTransformer implements Transformer<Vertex,Point2D> {
 	private JungHyperGraph graph;
 	private Vertex root;
+	private HashMap<Integer,Integer> verticesAtHeight;
 
 	static int Y_DIST = 50;
+	static int X_DIST = 50;
 
 	public HyperGraphTransformer(JungHyperGraph t)
 	{
 		graph = t;
 		root = t.getRoot();
+		verticesAtHeight = new HashMap<Integer,Integer>();
+		tabulateVertices();
+	}
+	
+	public void tabulateVertices()
+	{
+		for (Vertex v : graph.getVertices()) {
+			int height = v.height();
+			Integer currHeight = verticesAtHeight.get(height);
+			if (currHeight == null)
+				verticesAtHeight.put(height, 1);
+			else
+				verticesAtHeight.put(height, currHeight + 1);
+		}
+		return;
 	}
 
 	public Point2D transform(Vertex v)
 	{
 		double x, y;
-		x = 0;
+		x = X_DIST * v.width();
 		y = Y_DIST * distanceToRoot(v);
 		return new Point2D.Double(x, y);
 	}
 
 	private int distanceToRoot(Vertex v)
 	{
-		if (graph.getSuccessors(v).isEmpty())
-			return 0;
-		int result = 0;
-		for (Object x : graph.getSuccessors(v)) {
-			int tmp = distanceToRoot((Vertex) x);
-			if (tmp > result)
-				result = tmp;
-		}
-		return 1 + result;
+		return v.height();
 	}
 }

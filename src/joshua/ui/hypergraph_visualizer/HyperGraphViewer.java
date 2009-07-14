@@ -30,6 +30,8 @@ import javax.swing.JFrame;
 
 import edu.uci.ics.jung.algorithms.layout.DAGLayout;
 import edu.uci.ics.jung.algorithms.layout.StaticLayout;
+import edu.uci.ics.jung.algorithms.layout.TreeLayout;
+import edu.uci.ics.jung.graph.DelegateTree;
 import edu.uci.ics.jung.visualization.VisualizationViewer;
 import edu.uci.ics.jung.visualization.control.DefaultModalGraphMouse;
 import edu.uci.ics.jung.visualization.control.ModalGraphMouse;
@@ -39,22 +41,33 @@ import edu.uci.ics.jung.visualization.renderers.Renderer.VertexLabel.Position;
 
 import org.apache.commons.collections15.Transformer;
 
+import joshua.corpus.vocab.Vocabulary;
 import joshua.decoder.hypergraph.*;
 import joshua.decoder.ff.tm.BilingualRule;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public class HyperGraphViewer extends VisualizationViewer<Vertex,Edge> {
 	public static final int DEFAULT_HEIGHT = 500;
 	public static final int DEFAULT_WIDTH = 500;
 	public static final Color SRC = Color.WHITE;
 	public static final Color TGT = Color.RED;
+	
+	public static final String USAGE = "USAGE: HyperGraphViewer <items file> <rules file> <first sentence> <last sentence>";
 
+	static Vocabulary vocab;
+	
 	public HyperGraphViewer(JungHyperGraph g)
 	{
+//		super(new StaticLayout(g, new HyperGraphTransformer(g)));
 		super(new DAGLayout<Vertex,Edge>(g));
+//		DelegateTree<Vertex,Edge> gtree = new DelegateTree<Vertex,Edge>(g);
+//		gtree.setRoot(g.getRoot());
+//		setGraphLayout(new TreeLayout<Vertex,Edge>(gtree));
 //		setGraphLayout(new StaticLayout<Vertex,Edge>(g, new HyperGraphTransformer(g)));
-		getRenderContext().setVertexLabelTransformer(new ToStringLabeller<Vertex>());
+//		getRenderContext().setVertexLabelTransformer(new ToStringLabeller<Vertex>());
+		setVertexToolTipTransformer(new ToStringLabeller<Vertex>());
 
 		DefaultModalGraphMouse<Vertex,Edge> graphMouse = new DefaultModalGraphMouse<Vertex,Edge>();
 		graphMouse.setMode(ModalGraphMouse.Mode.TRANSFORMING);
@@ -98,32 +111,34 @@ public class HyperGraphViewer extends VisualizationViewer<Vertex,Edge> {
 			if (v.isHGNode())
 				return new Rectangle2D.Double((len + margin) / (-2), 0, len + 2 * margin, 20);
 			else
-				return new Ellipse2D.Double(0, 0, 20, 20);
+				return new Ellipse2D.Double(-10, -10, 20, 20);
 		}
 	};
 
 	public static void main(String [] argv)
 	{
+		if (argv.length < 4) {
+			System.err.println(USAGE);
+			System.exit(1);
+		}
+		String itemsFile = argv[0];
+		String rulesFile = argv[1];
+		int firstSentence = Integer.parseInt(argv[2]);
+		int lastSentence = Integer.parseInt(argv[3]);
+		HashMap<Integer,Integer> chosenSentences = new HashMap<Integer,Integer>();
+		for (int i = firstSentence; i < lastSentence; i++) {
+			chosenSentences.put(i, i);
+		}
+		vocab = new Vocabulary();
+		DiskHyperGraph dhg = new DiskHyperGraph(vocab, 0, true, null);
+		dhg.initRead(itemsFile, rulesFile, chosenSentences);
+		JungHyperGraph hg = new JungHyperGraph(dhg.readHyperGraph());
 		JFrame frame = new JFrame("Joshua Hypergraph");
-		HyperGraph g = hardCodedHyperGraph();
-		JungHyperGraph hg = new JungHyperGraph(g);
 		frame.getContentPane().add(new HyperGraphViewer(hg));
 		frame.setSize(500, 500);
+		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.setVisible(true);
+		hg.addNode(hg.getRoot().node(), null, 0, 0);
 		return;
-	}
-
-	private static HyperGraph hardCodedHyperGraph()
-	{
-		BilingualRule r = new BilingualRule(0, new int[]{1,2}, new int[]{3,4}, new float[]{0.2f}, 0, 0, 2.0f, 0);
-		HGNode a = new HGNode(0, 2, 1, null, null, 0.0);
-		HGNode b = new HGNode(2, 5, 1, null, null, 0.0);
-		ArrayList<HGNode> l = new ArrayList<HGNode>();
-		l.add(a);
-		l.add(b);
-		HyperEdge e1 = new HyperEdge(r, 1.0, 0.5, l);
-		HGNode root = new HGNode(0, 5, 1, null, e1, 0.0);
-		HyperGraph ret = new HyperGraph(root, 3, 4, 0, 0);
-		return ret;
 	}
 }
