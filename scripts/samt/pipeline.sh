@@ -6,9 +6,11 @@ then
   exit 2
 fi
 
-MOSES="../moses/"
-SAMT="../samt/"
-TMP="../tmp"
+MOSES="/home/hltcoe/ccallison/Moses/trunk/"
+SAMT="/home/hltcoe/ccallison/SAMT/"
+TMP="/tmp"
+
+export MALLOC_CHECK_=0
 
 #
 # This is a terrible and hackish script. Use with care.
@@ -45,7 +47,8 @@ for C in chunk_*; do
 	($MOSES/scripts/training/phrase-extract/extract \
 		$C/$2 $C/$1 \
 		$C/$3 extract 8 --OnlyOutputSpanInfo > \
-		$C/phrases.log &); 
+		$C/phrases.log );
+# ccb - removed &
 done
 wait
 
@@ -57,14 +60,15 @@ for C in chunk_*; do
 		--MaxSourceLength 12 \
 		--LexicalWeightFile data.lexprobs.samt.sgt \
 		--LexicalWeightFileReversed data.lexprobs.samt.tgs | \
-		gzip > $C/extractrules.gz) >& $C/extractrules.log &); 
+		gzip > $C/extractrules.gz) >& $C/extractrules.log ); 
+# ccb - removed &
 done
 wait
 
-gzcat chunk_*/extractrules.gz | $SAMT/scripts/sortsafe.sh -T $TMP | \
-	$SAMT/myoptions.coe/MergeRules 0 0 8 8 0 | gzip > mergedrules.gz
 
-#(gzcat mergedrules.gz | $SAMT/scripts/filterrules.pl \
+zcat chunk_*/extractrules.gz | $SAMT/scripts/sortsafe.sh -T $TMP | $SAMT/myoptions.coe/MergeRules 0 0 8 8 0 | gzip > mergedrules.gz
+
+#(zcat mergedrules.gz | $SAMT/scripts/filterrules.pl \
 #	--cachesize 4000 --PhrasalFeatureCount 0 \
 #	--LexicalWeightFile data.lexprobs.samt.sgt \
 #	--LexicalWeightFileReversed data.lexprobs.samt.tgs \
