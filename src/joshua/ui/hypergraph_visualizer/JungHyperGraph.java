@@ -1,7 +1,9 @@
 package joshua.ui.hypergraph_visualizer;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
+import joshua.corpus.vocab.SymbolTable;
 import joshua.corpus.vocab.Vocabulary;
 import joshua.decoder.hypergraph.*;
 
@@ -9,6 +11,8 @@ import edu.uci.ics.jung.graph.DirectedOrderedSparseMultigraph;
 
 public class JungHyperGraph extends DirectedOrderedSparseMultigraph<Vertex,Edge> {
 	private Vertex root;
+	private SymbolTable vocab;
+	private int targetIndex;
 	
 	public static final String USAGE = "usage: JungHyperGraph <items file> <rules file> <first sentence> <last sentence>";
 
@@ -26,16 +30,18 @@ public class JungHyperGraph extends DirectedOrderedSparseMultigraph<Vertex,Edge>
 		for (int i = firstSentence; i < lastSentence; i++) {
 			chosenSentences.put(i, i);
 		}
-		DiskHyperGraph dhg = new DiskHyperGraph(new Vocabulary(), 0, true, null);
+		Vocabulary vocab = new Vocabulary();
+		DiskHyperGraph dhg = new DiskHyperGraph(vocab, 0, true, null);
 		dhg.initRead(itemsFile, rulesFile, chosenSentences);
-		JungHyperGraph hg = new JungHyperGraph(dhg.readHyperGraph());
+		JungHyperGraph hg = new JungHyperGraph(dhg.readHyperGraph(), vocab);
 		return;
 	}
 
-	public JungHyperGraph(HyperGraph hg)
+	public JungHyperGraph(HyperGraph hg, SymbolTable st)
 	{
-		root = new Vertex(hg.goal_item, 0, 0);
-	//	addNode(hg.goal_item, null, 0, 0);
+		vocab = st;
+		targetIndex = 0;
+		addNode(hg.goal_item, null);
 	}
 
 	public Vertex getRoot()
@@ -43,41 +49,69 @@ public class JungHyperGraph extends DirectedOrderedSparseMultigraph<Vertex,Edge>
 		return root;
 	}
 
-	void addNode(HGNode n, Vertex edge_out, int height, int width)
+	private void addNode(HGNode n, Vertex edge_out)
 	{
-		Vertex v = new Vertex(n, height, width);
+		Vertex v = new NodeVertex(n);
 		if (getVertices().contains(v)) {
-			addEdge(new Edge(false), v, edge_out);
+			addEdge(new Edge(false), edge_out, v);
 			return;
 		}
 		if (edge_out != null)
-			addEdge(new Edge(false), v, edge_out);
-		int i = 0;
-		try {
-		Thread.sleep(1000);
-		}
-		catch (InterruptedException e) {
-			System.err.println("sleep was interrupted!");
-		}
-		for (HyperEdge e : n.l_hyperedges) {
-			addHyperEdge(v, e, height + 1, i);
-			i++;
-		}
+			addEdge(new Edge(false), edge_out, v);
+		else
+			root = v;
+		addHyperEdge(v, n.best_hyperedge);
 		return;
 	}
 
-	private void addHyperEdge(Vertex parent, HyperEdge e, int height, int width)
+	private void addHyperEdge(Vertex parent, HyperEdge e)
 	{
 		if (e == null)
 			return;
-		Vertex v = new Vertex(e, height, width);
-		addEdge(new Edge(false), v, parent);
-		if (e.get_ant_items() == null)
+		Vertex v = new HyperEdgeVertex(e);
+		addEdge(new Edge(false), parent, v);
+		if (e.get_rule() != null) {
+			ArrayList<HGNode> items = null;
+			if (e.get_ant_items() != null)
+				items = new ArrayList<HGNode>(e.get_ant_items());
+			for (int t : e.get_rule().getEnglish()) {
+				if (vocab.isNonterminal(t)) {
+					addNode(items.get(0), v);
+					items.remove(0);
+				}
+				else {
+					addEdge(new Edge(false), v, new LeafVertex(t, targetIndex));
+					targetIndex++;
+				}
+			}
+		}
+		else {
+			for (HGNode i : e.get_ant_items()) {
+				addNode(i, v);
+			}
+		}
+		return;
+	}
+	
+	public void incrementHyperEdge(NodeVertex v)
+	{
+		removeSubtreeBelow(v);
+		addHyperEdge(v, v.incrementEdge());
+		return;
+	}
+	
+	private void removeSubtreeBelow(Vertex v)
+	{
+		if (getSuccessorCount(v) == 0)
 			return;
-		int i = 0;
-		for (HGNode n : e.get_ant_items()) {
-			addNode(n, v, height + 1, i);
-			i++;
+		else {
+			for (Vertex s : getSuccessors(v)) {
+				removeSubtreeBelow(s);
+				for (Edge e : findEdgeSet(v, s)) {
+					removeEdge(e);
+				}
+				removeVertex(s);
+			}
 		}
 		return;
 	}

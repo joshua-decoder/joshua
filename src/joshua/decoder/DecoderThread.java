@@ -36,6 +36,7 @@ import joshua.lattice.Lattice;
 import joshua.oracle.OracleExtractor;
 import joshua.corpus.suffix_array.Pattern;
 import joshua.corpus.vocab.SymbolTable;
+import joshua.ui.hypergraph_visualizer.HyperGraphViewer;
 import joshua.util.io.LineReader;
 import joshua.util.io.NullReader;
 import joshua.util.io.Reader;
@@ -327,6 +328,9 @@ public class DecoderThread extends Thread {
 		
 		/* Parsing */
 		HyperGraph hypergraph = chart.expand();
+		if (JoshuaConfiguration.visualize_hypergraph) {
+			HyperGraphViewer.visualizeHypergraphInFrame(hypergraph, symbolTable);
+		}
 		if (logger.isLoggable(Level.FINER))
 			logger.finer("after expand, time: "
 				+ ((double)(System.currentTimeMillis() - startTime) / 1000.0)

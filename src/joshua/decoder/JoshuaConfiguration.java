@@ -124,6 +124,9 @@ public class JoshuaConfiguration {
 	public static boolean forest_pruning           = false;
 	public static double  forest_pruning_threshold = 10;
 	
+	// hypergraph visualization
+	public static boolean visualize_hypergraph = false;
+	
 	//variational decoding
 	public static boolean use_variational_decoding = false;
 	
@@ -470,7 +473,11 @@ public class JoshuaConfiguration {
 					forest_pruning_threshold = Double.parseDouble(fds[1]);
 					if (logger.isLoggable(Level.FINEST)) 
 						logger.finest(String.format("forest_pruning_threshold: %s", forest_pruning_threshold));
-					
+				
+				} else if ("visualize_hypergraph".equals(fds[0])) {
+					visualize_hypergraph = Boolean.valueOf(fds[1]);
+					if (logger.isLoggable(Level.FINEST))
+						logger.finest(String.format("visualize_hypergraph: %s", visualize_hypergraph));
 				} else if ("segment_file_parser_class".equals(fds[0])) {
 					segmentFileParserClass = fds[1].trim();
 					if (logger.isLoggable(Level.FINEST))

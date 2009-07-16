@@ -23,6 +23,8 @@ import java.awt.Color;
 import java.awt.Stroke;
 import java.awt.BasicStroke;
 import java.awt.Shape;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.geom.*;
 
 import javax.swing.JLabel;
@@ -41,9 +43,11 @@ import edu.uci.ics.jung.visualization.renderers.Renderer.VertexLabel.Position;
 
 import org.apache.commons.collections15.Transformer;
 
+import joshua.corpus.vocab.SymbolTable;
 import joshua.corpus.vocab.Vocabulary;
 import joshua.decoder.hypergraph.*;
 import joshua.decoder.ff.tm.BilingualRule;
+import joshua.decoder.ff.tm.Rule;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -55,42 +59,85 @@ public class HyperGraphViewer extends VisualizationViewer<Vertex,Edge> {
 	public static final Color TGT = Color.RED;
 	
 	public static final String USAGE = "USAGE: HyperGraphViewer <items file> <rules file> <first sentence> <last sentence>";
-
-	static Vocabulary vocab;
+	public static final double EDGE_ELLIPSE_SIZE = 10;
 	
-	public HyperGraphViewer(JungHyperGraph g)
+	private SymbolTable vocab;
+	JungHyperGraph graph;
+	
+	public HyperGraphViewer(JungHyperGraph g, SymbolTable vocab)
 	{
-//		super(new StaticLayout(g, new HyperGraphTransformer(g)));
-		super(new DAGLayout<Vertex,Edge>(g));
+		super(new StaticLayout<Vertex,Edge>(g, new HyperGraphTransformer(g)));
+		this.vocab = vocab;
+		this.graph = g;
+//		super(new DAGLayout<Vertex,Edge>(g));
 //		DelegateTree<Vertex,Edge> gtree = new DelegateTree<Vertex,Edge>(g);
 //		gtree.setRoot(g.getRoot());
 //		setGraphLayout(new TreeLayout<Vertex,Edge>(gtree));
 //		setGraphLayout(new StaticLayout<Vertex,Edge>(g, new HyperGraphTransformer(g)));
+		getRenderContext().setVertexLabelTransformer(toStringTransformer());
 //		getRenderContext().setVertexLabelTransformer(new ToStringLabeller<Vertex>());
-		setVertexToolTipTransformer(new ToStringLabeller<Vertex>());
+		setVertexToolTipTransformer(toolTipTransformer());
 
 		DefaultModalGraphMouse<Vertex,Edge> graphMouse = new DefaultModalGraphMouse<Vertex,Edge>();
-		graphMouse.setMode(ModalGraphMouse.Mode.TRANSFORMING);
+		graphMouse.setMode(ModalGraphMouse.Mode.PICKING);
+		this.setPickedVertexState(new HyperGraphPickedState(this));
 		setGraphMouse(graphMouse);
 
-		getRenderContext().setVertexFillPaintTransformer(vp);
+		getRenderContext().setVertexFillPaintTransformer(vertexPainter());
 	//	getRenderContext().setEdgeStrokeTransformer(es);
 		getRenderContext().setVertexShapeTransformer(ns);
 	//	getRenderer().getVertexLabelRenderer().setPosition(Position.CNTR);
 	}
+	
+	private Transformer<Vertex,String> toStringTransformer() {
+		return new Transformer<Vertex,String>() {
+			public String transform(Vertex v) {
+				if (v instanceof LeafVertex) {
+					return vocab.getWord(((LeafVertex) v).getEnglish());
+				}
+				else if (v instanceof NodeVertex) {
+					return vocab.getWord(((NodeVertex) v).getNode().lhs);
+				}
+				else {
+					Rule r = ((HyperEdgeVertex) v).getHyperEdge().get_rule();
+					if (r != null)
+						return r.toString(vocab);
+					else
+						return "";
+				}
+			}
+		};
+	}
+	
+	private Transformer<Vertex,String> toolTipTransformer() {
+		return new Transformer<Vertex,String>() {
+			public String transform(Vertex v)
+			{
+				if (v instanceof HyperEdgeVertex) {
+					NodeVertex pred = (NodeVertex) graph.getPredecessors(v).toArray()[0];
+					int otherEdges = pred.getNode().l_hyperedges.size() - 1;
+					return String.format("%d other edges", otherEdges);
+				}
+				else if (v instanceof NodeVertex) {
+					return ((NodeVertex) v).getNode().getSignature();
+				}
+				else {
+					return "";
+				}
+			}
+		};
+	}
 
-	private static Transformer<Vertex,Paint> vp = new Transformer<Vertex,Paint>() {
-		public Paint transform(Vertex v)
-		{
-		/*
-			if (n.isSource())
-				return SRC;
-			else
-				return TGT;
-		*/
-			return Color.BLUE;
-		}
-	};
+	private Transformer<Vertex,Paint> vertexPainter() {
+		return new Transformer<Vertex,Paint>() {
+			public Paint transform(Vertex v)
+			{
+				if (getPickedVertexState().getPicked().contains(v))
+					return Color.red;
+				return Color.BLUE;
+			}
+		};
+	}
 
 	private static Transformer<Edge,Stroke> es = new Transformer<Edge,Stroke>() {
 		public Stroke transform(Edge e)
@@ -108,12 +155,22 @@ public class HyperGraphViewer extends VisualizationViewer<Vertex,Edge> {
 		//	JLabel x = new JLabel();
 			double len = 20; //x.getFontMetrics(x.getFont()).stringWidth(n.toString());
 			double margin = 5.0;
-			if (v.isHGNode())
+			if (v instanceof NodeVertex || v instanceof LeafVertex)
 				return new Rectangle2D.Double((len + margin) / (-2), 0, len + 2 * margin, 20);
 			else
-				return new Ellipse2D.Double(-10, -10, 20, 20);
+				return new Ellipse2D.Double(-.5 * EDGE_ELLIPSE_SIZE, -.5 * EDGE_ELLIPSE_SIZE, EDGE_ELLIPSE_SIZE, EDGE_ELLIPSE_SIZE);
 		}
 	};
+	
+	public static void visualizeHypergraphInFrame(HyperGraph hg, SymbolTable st)
+	{
+		JFrame frame = new JFrame("Joshua Hypergraph");
+		frame.getContentPane().add(new HyperGraphViewer(new JungHyperGraph(hg, st), st));
+		frame.setSize(500, 500);
+		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		frame.setVisible(true);
+		return;
+	}
 
 	public static void main(String [] argv)
 	{
@@ -129,16 +186,15 @@ public class HyperGraphViewer extends VisualizationViewer<Vertex,Edge> {
 		for (int i = firstSentence; i < lastSentence; i++) {
 			chosenSentences.put(i, i);
 		}
-		vocab = new Vocabulary();
+		Vocabulary vocab = new Vocabulary();
 		DiskHyperGraph dhg = new DiskHyperGraph(vocab, 0, true, null);
 		dhg.initRead(itemsFile, rulesFile, chosenSentences);
-		JungHyperGraph hg = new JungHyperGraph(dhg.readHyperGraph());
+		JungHyperGraph hg = new JungHyperGraph(dhg.readHyperGraph(), vocab);
 		JFrame frame = new JFrame("Joshua Hypergraph");
-		frame.getContentPane().add(new HyperGraphViewer(hg));
+		frame.getContentPane().add(new HyperGraphViewer(hg, vocab));
 		frame.setSize(500, 500);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.setVisible(true);
-		hg.addNode(hg.getRoot().node(), null, 0, 0);
 		return;
 	}
 }
