@@ -79,9 +79,10 @@ public class HyperGraphViewer extends VisualizationViewer<Vertex,Edge> {
 		setVertexToolTipTransformer(toolTipTransformer());
 
 		DefaultModalGraphMouse<Vertex,Edge> graphMouse = new DefaultModalGraphMouse<Vertex,Edge>();
-		graphMouse.setMode(ModalGraphMouse.Mode.PICKING);
+		graphMouse.setMode(ModalGraphMouse.Mode.TRANSFORMING);
 		this.setPickedVertexState(new HyperGraphPickedState(this));
 		setGraphMouse(graphMouse);
+		addKeyListener(graphMouse.getModeKeyListener());
 
 		getRenderContext().setVertexFillPaintTransformer(vertexPainter());
 	//	getRenderContext().setEdgeStrokeTransformer(es);
