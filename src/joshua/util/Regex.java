@@ -76,7 +76,7 @@ public class Regex {
 	 * A pattern for splitting on three vertical pipes, with
 	 * one or more whitespace on each side.
 	 */
-	public static final Regex threeBarsWithSpace = new Regex("\\s+\\|{3}\\s+");
+	public static final Regex threeBarsWithSpace = new Regex("\\s\\|{3}\\s");
 	
 	
 //===============================================================
