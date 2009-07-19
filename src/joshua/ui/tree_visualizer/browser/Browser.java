@@ -17,10 +17,13 @@
  */
 package joshua.ui.tree_visualizer.browser;
 
-import java.awt.GridLayout;
+import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 
 import javax.swing.DefaultListModel;
 import javax.swing.JFrame;
@@ -30,6 +33,8 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JScrollPane;
 import javax.swing.ListSelectionModel;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 
 public class Browser {
 	
@@ -54,10 +59,6 @@ public class Browser {
 	private static TranslationInfoList translations;
 	
 	/**
-	 * A list that contains the reference translation of each source sentences.
-	 */
-	private static JList referenceList;
-	/**
 	 * A list that contains the one best translation of each source sentence.
 	 */
 	private static JList oneBestList;
@@ -65,7 +66,7 @@ public class Browser {
 	/**
 	 * The current frame that displays a derivation tree.
 	 */
-	static DerivationTreeFrame activeFrame;
+	static ArrayList<DerivationTreeFrame> activeFrame;
 	/**
 	 * Default width of the chooser frame.
 	 */
@@ -75,6 +76,11 @@ public class Browser {
 	 * Default height of the chooser frame.
 	 */
 	private static final int DEFAULT_HEIGHT = 480;
+	
+	/**
+	 * List of colors to be used in derivation trees
+	 */
+	static Color [] dataSetColors = {Color.red, Color.orange, Color.blue, Color.green};
 
 	/**
 	 * @param args the paths to the source, reference, and n-best files
@@ -87,8 +93,11 @@ public class Browser {
 		try {
 			String src = args[0];
 			String ref = args[1];
-			String nbest = args[2];
-			translations = new TranslationInfoList(src, ref, nbest);
+			translations = new TranslationInfoList();
+			translations.setSourceFile(new File(src));
+			translations.setReferenceFile(new File(ref));
+			for (int i = 2; i < args.length; i++)
+				translations.addNBestFile(new File(args[i]));
 			initializeChooserFrame();
 		}
 		catch (IOException e) {
@@ -105,11 +114,10 @@ public class Browser {
 	private static void initializeChooserFrame()
 	{
 		JFrame chooserFrame = new JFrame("Joshua Derivation Tree Browser");
-		chooserFrame.setLayout(new GridLayout(2,1));
+		chooserFrame.setLayout(new BorderLayout());
 		
 		JMenuBar mb = new JMenuBar();
 		JMenu openMenu = new JMenu("Control");
-		JMenuItem creat = new JMenuItem("New tree viewer window");
 		JMenuItem src = new JMenuItem("Open source file ...");
 		JMenuItem ref = new JMenuItem("Open reference file ...");
 		JMenuItem tgt = new JMenuItem("Open n-best derivations file ...");
@@ -117,21 +125,12 @@ public class Browser {
 
 		new FileChoiceListener(chooserFrame, src, ref, tgt);
 
-		creat.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				activeFrame.disableNavigationButtons();
-				activeFrame = new DerivationTreeFrame();
-				return;
-			}
-		});
 		quit.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
 				System.exit(0);
 			}
 		});
-		openMenu.add(creat);
 		openMenu.add(src);
 		openMenu.add(ref);
 		openMenu.add(tgt);
@@ -139,24 +138,30 @@ public class Browser {
 		mb.add(openMenu);
 		chooserFrame.setJMenuBar(mb);
 		
-		referenceList = new JList(new DefaultListModel());
-		referenceList.setFixedCellWidth(200);
-		referenceList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-//		referenceList.setCellRenderer(new DerivationBrowserListCellRenderer());
 		oneBestList = new JList(new DefaultListModel());
 		oneBestList.setFixedCellWidth(200);
 		oneBestList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 //		oneBestList.setCellRenderer(new DerivationBrowserListCellRenderer());
-		chooserFrame.getContentPane().add(new JScrollPane(referenceList));
-		chooserFrame.getContentPane().add(new JScrollPane(oneBestList));
 		
-		new SynchronizedPairListListener(referenceList, oneBestList);
+		oneBestList.addListSelectionListener(new ListSelectionListener() {
+			public void valueChanged(ListSelectionEvent e) {
+				setCurrentSourceIndex(oneBestList.getSelectedIndex());
+				for (DerivationTreeFrame frame : activeFrame) {
+					frame.drawGraph();
+				}
+				return;
+			}
+		});
+		chooserFrame.getContentPane().add(new JScrollPane(oneBestList), BorderLayout.CENTER);
 		
 		refreshLists();
 		chooserFrame.setSize(DEFAULT_WIDTH, DEFAULT_HEIGHT);
 		chooserFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		
-		activeFrame = new DerivationTreeFrame();
+		activeFrame = new ArrayList<DerivationTreeFrame>();
+		int numNBestFiles = translations.getNumberOfNBestFiles();
+		for (int i = 0; i < numNBestFiles; i++)
+			activeFrame.add(new DerivationTreeFrame(i));
 		chooserFrame.setVisible(true);
 		return;
 	}
@@ -166,14 +171,11 @@ public class Browser {
 	 */
 	private static void refreshLists()
 	{
-		referenceList.removeAll();
 		oneBestList.removeAll();
 		
-		DefaultListModel referenceListModel = (DefaultListModel) referenceList.getModel();
 		DefaultListModel oneBestListModel = (DefaultListModel) oneBestList.getModel();
 		for (TranslationInfo ti : translations.getAllInfo()) {
-			referenceListModel.addElement(ti.getReferenceTranslation());
-			oneBestListModel.addElement(ti.getOneBest());
+			oneBestListModel.addElement(ti.getReferenceTranslation());
 		}
 		return;
 	}
@@ -186,7 +188,7 @@ public class Browser {
 		if (currentSourceIndex == translations.getAllInfo().size() - 1)
 			return;
 		currentSourceIndex++;
-		referenceList.setSelectedIndex(currentSourceIndex);
+		oneBestList.setSelectedIndex(currentSourceIndex);
 		return;
 	}
 	
@@ -198,7 +200,7 @@ public class Browser {
 		if (currentSourceIndex == 0)
 			return;
 		currentSourceIndex--;
-		referenceList.setSelectedIndex(currentSourceIndex);
+		oneBestList.setSelectedIndex(currentSourceIndex);
 		return;
 	}
 	
@@ -207,7 +209,7 @@ public class Browser {
 		if ((index < 0) || (index > translations.getAllInfo().size() - 1))
 			return;
 		currentSourceIndex = index;
-		referenceList.setSelectedIndex(currentSourceIndex);
+		oneBestList.setSelectedIndex(currentSourceIndex);
 	}
 	
 	/**
@@ -272,9 +274,9 @@ public class Browser {
 	 * 
 	 * @return the current candidate translation
 	 */
-	static String getCurrentCandidateTranslation()
+	static ArrayList<String> getCurrentCandidateTranslations()
 	{
-		return translations.getInfo(currentSourceIndex).getTranslation(currentCandidateIndex);
+		return translations.getInfo(currentSourceIndex).getAllTranslationsByIndex(currentCandidateIndex);
 	}
 	
 	/**
@@ -282,9 +284,9 @@ public class Browser {
 	 * 
 	 * @return the current one-best translation text
 	 */
-	static String getCurrentOneBest()
+	static ArrayList<String> getCurrentOneBests()
 	{
-		return translations.getInfo(currentSourceIndex).getOneBest();
+		return translations.getInfo(currentSourceIndex).getAllOneBest();
 	}
 	
 	/**

@@ -63,7 +63,7 @@ class FileChoiceListener implements ActionListener {
 		
 		src.addActionListener(this);
 		ref.addActionListener(this);
-		nBest.addActionListener(this);
+		this.nBest.addActionListener(this);
 	}
 
 	public void actionPerformed(ActionEvent e) {
@@ -78,7 +78,8 @@ class FileChoiceListener implements ActionListener {
 					Browser.getTranslationInfo().setReferenceFile(chosenFile);
 				}
 				if (eventSource.equals(nBest)) {
-					Browser.getTranslationInfo().setNBestFile(chosenFile);
+					Browser.getTranslationInfo().addNBestFile(chosenFile);
+					Browser.activeFrame.add(new DerivationTreeFrame(Browser.activeFrame.size()));
 				}
 			}
 			catch (IOException ioe) {

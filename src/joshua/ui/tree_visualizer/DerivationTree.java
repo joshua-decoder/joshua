@@ -22,6 +22,7 @@ import java.util.LinkedList;
 
 import edu.uci.ics.jung.graph.DirectedOrderedSparseMultigraph;
 
+import java.awt.Color;
 import java.io.File;
 import java.io.FileNotFoundException;
 
@@ -73,7 +74,7 @@ public class DerivationTree extends DirectedOrderedSparseMultigraph<Node,Derivat
 
 
 			JFrame frame = new JFrame("derivation tree");
-			DerivationViewer viewer = new DerivationViewer(g, frame.getSize());
+			DerivationViewer viewer = new DerivationViewer(g, frame.getSize(), Color.red);
 			frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 			frame.setSize(500, 500);
 			frame.getContentPane().add(viewer);
@@ -185,7 +186,6 @@ public class DerivationTree extends DirectedOrderedSparseMultigraph<Node,Derivat
 
 	private int addSourceNodes(Node curr, Node parent, int currentSourceIndex)
 	{
-		System.err.println(curr);
 		if (getSuccessors(curr).isEmpty())
 			return currentSourceIndex;
 		LinkedList<Node> children = new LinkedList<Node>(getSuccessors(curr));
@@ -202,8 +202,6 @@ public class DerivationTree extends DirectedOrderedSparseMultigraph<Node,Derivat
 				String sourceLeafName = sourceTokens[currentSourceIndex];
 				for (int i = currentSourceIndex + 1; i < leftMost.sourceStart(); i++)
 					sourceLeafName += " " + sourceTokens[i];
-				System.err.print("among non-terminals: ");
-				System.err.println(sourceLeafName);
 				addVertexWithContext(sourceLeafName, currSource, true);
 				currentSourceIndex = leftMost.sourceStart();
 			}
@@ -225,8 +223,6 @@ public class DerivationTree extends DirectedOrderedSparseMultigraph<Node,Derivat
 			String sourceLeafName = sourceTokens[currentSourceIndex];
 			for (int i = currentSourceIndex + 1; i < actualSourceEnd; i++)
 				sourceLeafName += " " + sourceTokens[i];
-			System.err.print("after terminals: ");
-			System.err.println(sourceLeafName);
 			addVertexWithContext(sourceLeafName,currSource, true);
 			currentSourceIndex = actualSourceEnd;
 		}

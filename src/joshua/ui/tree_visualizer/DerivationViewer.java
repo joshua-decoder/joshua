@@ -43,9 +43,9 @@ public class DerivationViewer extends VisualizationViewer<Node,DerivationTreeEdg
 	public static final int DEFAULT_HEIGHT = 500;
 	public static final int DEFAULT_WIDTH = 500;
 	public static final Color SRC = Color.WHITE;
-	public static final Color TGT = Color.RED;
+	private Color TGT;
 
-	public DerivationViewer(DerivationTree g, Dimension d)
+	public DerivationViewer(DerivationTree g, Dimension d, Color targetColor)
 	{
 		super(new CircleLayout<Node,DerivationTreeEdge>(g));
 		DerivationTreeTransformer dtt = new DerivationTreeTransformer(g, d);
@@ -53,7 +53,7 @@ public class DerivationViewer extends VisualizationViewer<Node,DerivationTreeEdg
 //		derivationLayout.setSize(dtt.getSize());
 		setGraphLayout(derivationLayout);
 		scaleToLayout(new LayoutScalingControl());
-		g.addCorrespondences();
+//		g.addCorrespondences();
 		setPreferredSize(new Dimension(DEFAULT_HEIGHT, DEFAULT_WIDTH));
 		getRenderContext().setVertexLabelTransformer(new ToStringLabeller<Node>());
 
@@ -65,9 +65,11 @@ public class DerivationViewer extends VisualizationViewer<Node,DerivationTreeEdg
 		getRenderContext().setEdgeStrokeTransformer(es);
 		getRenderContext().setVertexShapeTransformer(ns);
 		getRenderer().getVertexLabelRenderer().setPosition(Position.CNTR);
+		
+		TGT = targetColor;
 	}
 
-	private static Transformer<Node,Paint> vp = new Transformer<Node,Paint>() {
+	private Transformer<Node,Paint> vp = new Transformer<Node,Paint>() {
 		public Paint transform(Node n)
 		{
 			if (n.isSource())

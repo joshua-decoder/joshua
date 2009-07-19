@@ -22,31 +22,37 @@ import java.util.ArrayList;
 class TranslationInfo {
 	private String sourceSentence;
 	private String referenceTranslation;
-	private String oneBest;
-	private ArrayList<String> translations;
+	private ArrayList<String> oneBest;
+	private ArrayList<ArrayList<String>> translations;
 	
-	public TranslationInfo(String src, String ref)
+	public TranslationInfo()
 	{
-		sourceSentence = src;
-		referenceTranslation = ref;
-		translations = new ArrayList<String>();
+		oneBest = new ArrayList<String>();
+		translations = new ArrayList<ArrayList<String>>();
 	}
 	
-	public void addTranslation(String candidate)
+	public void addTranslations(ArrayList<String> candidates)
 	{
-		if (translations.isEmpty()) {
-			oneBest = extractTerminals(candidate);
-		}
-		translations.add(candidate);
+		oneBest.add(extractTerminals(candidates.get(0)));
+		translations.add(candidates);
 		return;
 	}
 	
-	public ArrayList<String> getAllTranslations()
+	public ArrayList<ArrayList<String>> getAllTranslations()
 	{
 		return translations;
 	}
 	
-	public String getTranslation(int index)
+	public ArrayList<String> getAllTranslationsByIndex(int index)
+	{
+		ArrayList<String> ret = new ArrayList<String>();
+		for (ArrayList<String> dataSet : translations) {
+			ret.add(dataSet.get(index));
+		}
+		return ret;
+	}
+	
+	public ArrayList<String> getOneTranslationList(int index)
 	{
 		return translations.get(index);
 	}
@@ -73,10 +79,13 @@ class TranslationInfo {
 		return;
 	}
 	
-	public String getOneBest()
+	public ArrayList<String> getAllOneBest()
 	{
-		if (translations.isEmpty())
-			return "** LIST OF CANDIDATE TRANSLATIONS IS EMPTY";
+		if (translations.isEmpty()) {
+			ArrayList<String> ret = new ArrayList<String>();
+			ret.add("** LIST OF CANDIDATE TRANSLATIONS IS EMPTY");
+			return ret;
+		}
 		return oneBest;
 	}
 	

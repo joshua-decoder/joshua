@@ -46,7 +46,8 @@ class SynchronizedPairListListener implements ListSelectionListener {
 				second.setSelectedIndex(first.getSelectedIndex());
 			}
 			Browser.setCurrentSourceIndex(first.getSelectedIndex());
-			Browser.activeFrame.drawGraph();
+			for (DerivationTreeFrame dtf : Browser.activeFrame)
+				dtf.drawGraph();
 		}
 		return;
 	}

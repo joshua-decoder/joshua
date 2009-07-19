@@ -17,6 +17,8 @@
  */
 package joshua.ui.tree_visualizer;
 
+import java.awt.Color;
+
 import javax.swing.JApplet;
 
 /**
@@ -35,7 +37,7 @@ public class DerivationViewerApplet extends JApplet {
 		String source = getParameter("sourceSentence");
 		String derivation = getParameter("derivationTree");
 		
-		add(new DerivationViewer(new DerivationTree(derivation, source), getSize()));
+		add(new DerivationViewer(new DerivationTree(derivation, source), getSize(), Color.red));
 		return;
 	}
 }

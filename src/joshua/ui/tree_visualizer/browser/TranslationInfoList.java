@@ -31,17 +31,9 @@ import java.util.Scanner;
  */
 class TranslationInfoList {
 	/**
-	 * The path to the source-side file.
+	 * The path to the files containing the n-best candidate translations.
 	 */
-	private String sourceFile;
-	/**
-	 * The path to the file containing reference translations.
-	 */
-	private String referenceFile;
-	/**
-	 * The path to the file containing the n-best candidate translations.
-	 */
-	private String nbestFile;
+	private ArrayList<String> nbestFiles;
 	
 	/**
 	 * Contains information about each translation.
@@ -56,13 +48,10 @@ class TranslationInfoList {
 	 * @param nbest path to the n-best candidate translation file.
 	 * @throws IOException if an input/output exception occurs.
 	 */
-	public TranslationInfoList(String src, String ref, String nbest) throws IOException
+	public TranslationInfoList() throws IOException
 	{
-		sourceFile = src;
-		referenceFile = ref;
-		nbestFile = nbest;
+		nbestFiles = new ArrayList<String>();
 		translations = new ArrayList<TranslationInfo>();
-		initialize();
 	}
 	
 	/**
@@ -81,56 +70,22 @@ class TranslationInfoList {
 		return translations.get(index);
 	}
 	
-	/**
-	 * Reads in the currently set files and populates the ArrayList of translation information.
-	 * 
-	 * @throws IOException if an input/output exception occurs.
-	 */
-	private void initialize() throws IOException
-	{
-		Scanner sourceScanner = new Scanner(new File(sourceFile), "UTF-8");
-		Scanner referenceScanner = new Scanner(new File(referenceFile), "UTF-8");
-		Scanner nbestScanner = new Scanner(new File(nbestFile), "UTF-8");
-		
-		while (sourceScanner.hasNextLine()) {
-			String source = sourceScanner.nextLine();
-			if (referenceScanner.hasNextLine()) {
-				String ref = referenceScanner.nextLine();
-				translations.add(new TranslationInfo(source, ref));
-			}
-			else {
-				// TODO: decide what to do if source and reference files are different sizes
-			}
-		}
-		
-		while (nbestScanner.hasNextLine()) {
-			String candidate = nbestScanner.nextLine();
-			int sentenceNum = Integer.parseInt(candidate.split("\\|\\|\\|", 2)[0].trim());
-			if ((sentenceNum >= 0) && (sentenceNum < translations.size())) {
-				translations.get(sentenceNum).addTranslation(candidate);
-			}
-		}
-		return;
-	}
-	
 	public void setSourceFile(File src) throws IOException
 	{
-		sourceFile = src.getName();
 		Scanner sourceScanner = new Scanner(src, "UTF-8");
-		for (TranslationInfo ti : translations) {
-			if (sourceScanner.hasNextLine()) {
-				ti.setSourceSentence(sourceScanner.nextLine());
+		int currentIndex = 0;
+		while (sourceScanner.hasNextLine()) {
+			if (currentIndex > translations.size() - 1) {
+				translations.add(new TranslationInfo());
 			}
-			else {
-				// TODO: decide what to do if the source file is a different length
-			}
+			translations.get(currentIndex).setSourceSentence(sourceScanner.nextLine());
+			currentIndex++;
 		}
 		return;
 	}
 	
 	public void setReferenceFile(File ref) throws IOException
 	{
-		referenceFile = ref.getName();
 		Scanner referenceScanner = new Scanner(ref, "UTF-8");
 		for (TranslationInfo ti : translations) {
 			if (referenceScanner.hasNextLine()) {
@@ -143,20 +98,31 @@ class TranslationInfoList {
 		return;
 	}
 	
-	public void setNBestFile(File nbest) throws IOException
+	public void addNBestFile(File nbest) throws IOException
 	{
-		nbestFile = nbest.getName();
+		nbestFiles.add(nbest.getName());
 		Scanner nbestScanner = new Scanner(nbest, "UTF-8");
-		for (TranslationInfo ti : translations) {
-			ti.getAllTranslations().clear();
-		}
+		int currentIndex = 0;
+		ArrayList<String> translationsFromFile = new ArrayList<String>();
 		while (nbestScanner.hasNextLine()) {
 			String candidate = nbestScanner.nextLine();
 			int sentenceNum = Integer.parseInt(candidate.split("\\|\\|\\|", 2)[0].trim());
-			if ((sentenceNum >= 0) && (sentenceNum < translations.size())) {
-				translations.get(sentenceNum).addTranslation(candidate);
+			if (sentenceNum == currentIndex) {
+				translationsFromFile.add(candidate);
+			}
+			else {
+				translations.get(currentIndex).addTranslations(translationsFromFile);
+				translationsFromFile = new ArrayList<String>();
+				translationsFromFile.add(candidate);
+				currentIndex++;
 			}
 		}
+		translations.get(currentIndex).addTranslations(translationsFromFile);
 		return;
+	}
+	
+	public int getNumberOfNBestFiles()
+	{
+		return nbestFiles.size();
 	}
 }

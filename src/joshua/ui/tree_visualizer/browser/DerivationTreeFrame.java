@@ -18,6 +18,7 @@
 package joshua.ui.tree_visualizer.browser;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -95,13 +96,23 @@ class DerivationTreeFrame extends JFrame {
 	 */
 	private DerivationViewer dv;
 	
+	/**
+	 * Index to determine which data set (which n-best file) this frame brings its graphs from.
+	 */
+	private int dataSetIndex;
+	
 	private static final int DEFAULT_WIDTH = 640;
 	private static final int DEFAULT_HEIGHT = 480;
+	
+	/**
+	 * Color to use to render target-side trees.
+	 */
+	private Color targetColor;
 
 	/**
 	 * The default constructor.
 	 */
-	public DerivationTreeFrame()
+	public DerivationTreeFrame(int index)
 	{
 		super("Joshua Derivation Tree");
 		setLayout(new BorderLayout());
@@ -125,10 +136,13 @@ class DerivationTreeFrame extends JFrame {
 
 		viewPanel = new JPanel(new BorderLayout());
 		dv = null;
+		
+		dataSetIndex = index;
+		targetColor = Browser.dataSetColors[dataSetIndex % Browser.dataSetColors.length];
 
 		getContentPane().add(viewPanel, BorderLayout.CENTER);
 		getContentPane().add(controlPanel, BorderLayout.SOUTH);
-	//	drawGraph();
+//		drawGraph();
 		setVisible(true);
 	}
 
@@ -204,11 +218,11 @@ class DerivationTreeFrame extends JFrame {
 	{
 		viewPanel.removeAll();
 		String src = Browser.getCurrentSourceSentence();
-		String tgt = Browser.getCurrentCandidateTranslation();
+		String tgt = Browser.getCurrentCandidateTranslations().get(dataSetIndex);
 		
 		sourceLabel.setText(Browser.getCurrentSourceSentence());
 		referenceLabel.setText(Browser.getCurrentReferenceTranslation());
-		oneBestLabel.setText(Browser.getCurrentOneBest());
+		oneBestLabel.setText(Browser.getCurrentOneBests().get(dataSetIndex));
 
 		if ((src == null) || (tgt == null)) {
 			return;
@@ -216,7 +230,7 @@ class DerivationTreeFrame extends JFrame {
 
 		DerivationTree tree = new DerivationTree(tgt.split(DerivationTree.DELIMITER)[1], src);
 		if (dv == null) {
-			dv = new DerivationViewer(tree, viewPanel.getSize());
+			dv = new DerivationViewer(tree, viewPanel.getSize(), targetColor);
 		}
 		else {
 			dv.setGraphLayout(new StaticLayout<Node,DerivationTreeEdge>(tree, new DerivationTreeTransformer(tree, dv.getSize())));

@@ -433,7 +433,7 @@ public class DerivationBrowser {
 			String tgt = tgtDer.complete();
 			DerivationTree tree = new DerivationTree(tgt.split(DerivationTree.DELIMITER)[1], src);
 			if (dv == null) {
-				dv = new DerivationViewer(tree, viewPanel.getSize());
+				dv = new DerivationViewer(tree, viewPanel.getSize(), Color.red);
 			}
 			else {
 				dv.setGraphLayout(new StaticLayout<Node,DerivationTreeEdge>(tree, new DerivationTreeTransformer(tree, dv.getSize())));
