@@ -74,7 +74,7 @@ public class DerivationTree extends DirectedOrderedSparseMultigraph<Node,Derivat
 
 
 			JFrame frame = new JFrame("derivation tree");
-			DerivationViewer viewer = new DerivationViewer(g, frame.getSize(), Color.red);
+			DerivationViewer viewer = new DerivationViewer(g, frame.getSize(), Color.red, DerivationViewer.AnchorType.ANCHOR_LEFTMOST_LEAF);
 			frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 			frame.setSize(500, 500);
 			frame.getContentPane().add(viewer);

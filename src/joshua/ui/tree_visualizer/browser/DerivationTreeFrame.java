@@ -230,10 +230,10 @@ class DerivationTreeFrame extends JFrame {
 
 		DerivationTree tree = new DerivationTree(tgt.split(DerivationTree.DELIMITER)[1], src);
 		if (dv == null) {
-			dv = new DerivationViewer(tree, viewPanel.getSize(), targetColor);
+			dv = new DerivationViewer(tree, viewPanel.getSize(), targetColor, DerivationViewer.AnchorType.ANCHOR_LEFTMOST_LEAF);
 		}
 		else {
-			dv.setGraphLayout(new StaticLayout<Node,DerivationTreeEdge>(tree, new DerivationTreeTransformer(tree, dv.getSize())));
+			dv.setGraph(tree);
 			tree.addCorrespondences();
 		}
 		viewPanel.add(dv, BorderLayout.CENTER);

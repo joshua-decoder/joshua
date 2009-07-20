@@ -44,11 +44,17 @@ public class DerivationViewer extends VisualizationViewer<Node,DerivationTreeEdg
 	public static final int DEFAULT_WIDTH = 500;
 	public static final Color SRC = Color.WHITE;
 	private Color TGT;
+	
+	public static enum AnchorType { ANCHOR_ROOT, ANCHOR_LEFTMOST_LEAF };
+	
+	private AnchorType anchorStyle;
+	private Point2D anchorPoint;
 
-	public DerivationViewer(DerivationTree g, Dimension d, Color targetColor)
+	public DerivationViewer(DerivationTree g, Dimension d, Color targetColor, AnchorType anchor)
 	{
 		super(new CircleLayout<Node,DerivationTreeEdge>(g));
-		DerivationTreeTransformer dtt = new DerivationTreeTransformer(g, d);
+		anchorStyle = anchor;
+		DerivationTreeTransformer dtt = new DerivationTreeTransformer(g, d, false);
 		StaticLayout<Node,DerivationTreeEdge> derivationLayout = new StaticLayout<Node,DerivationTreeEdge>(g, dtt);
 //		derivationLayout.setSize(dtt.getSize());
 		setGraphLayout(derivationLayout);
@@ -67,6 +73,14 @@ public class DerivationViewer extends VisualizationViewer<Node,DerivationTreeEdg
 		getRenderer().getVertexLabelRenderer().setPosition(Position.CNTR);
 		
 		TGT = targetColor;
+		anchorPoint = dtt.getAnchorPosition(anchorStyle);
+	}
+	
+	public void setGraph(DerivationTree tree)
+	{
+		DerivationTreeTransformer dtt = new DerivationTreeTransformer(tree, getSize(), true);
+		dtt.setAnchorPoint(anchorStyle, anchorPoint);
+		setGraphLayout(new StaticLayout<Node,DerivationTreeEdge>(tree, dtt));
 	}
 
 	private Transformer<Node,Paint> vp = new Transformer<Node,Paint>() {

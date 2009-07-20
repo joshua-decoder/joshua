@@ -30,12 +30,18 @@ public class DerivationTreeTransformer implements Transformer<Node,Point2D> {
 	private DerivationTree graph;
 	private Node root;
 	private Node sourceRoot;
+	
+	private boolean isAnchored;
+	private Point2D anchorPoint;
 
 	private double Y_DIST;
 	private double X_DIST;
+	
 
-	public DerivationTreeTransformer(DerivationTree t, Dimension d)
+	public DerivationTreeTransformer(DerivationTree t, Dimension d, boolean isAnchored)
 	{
+		this.isAnchored = isAnchored;
+		anchorPoint = new Point2D.Double(0, 0);
 		graph = t;
 		DelegateForest<Node,DerivationTreeEdge> del = new DelegateForest<Node,DerivationTreeEdge>(t);
 		del.setRoot(t.getRoot());
@@ -65,6 +71,10 @@ public class DerivationTreeTransformer implements Transformer<Node,Point2D> {
 			x = t.getX();
 			y = Y_DIST * (-1) * distanceToLeaf(n);
 		}
+		if (isAnchored) {
+			x += anchorPoint.getX();
+			y += anchorPoint.getY();
+		}
 		return new Point2D.Double(x, y + Y_DIST * (1 + distanceToLeaf(root)));
 	}
 
@@ -87,5 +97,28 @@ public class DerivationTreeTransformer implements Transformer<Node,Point2D> {
 		int width = (int) Math.round(2 * treeLayout.transform(root).getX());
 		Dimension ret = new Dimension(width, height);
 		return ret;
+	}
+	
+	public Point2D getAnchorPosition(DerivationViewer.AnchorType type)
+	{
+		switch (type) {
+		case ANCHOR_ROOT:
+			return transform(root);
+		case ANCHOR_LEFTMOST_LEAF:
+			Node n = root;
+			while (graph.getSuccessorCount(n) != 0)
+				n = (Node) graph.getSuccessors(n).toArray()[0];
+			return transform(n);
+		default:
+			return new Point2D.Double(0, 0);
+		}
+	}
+	
+	public void setAnchorPoint(DerivationViewer.AnchorType type, Point2D viewerAnchor)
+	{
+		Point2D oldAnchor = getAnchorPosition(type);
+		double x = viewerAnchor.getX() - oldAnchor.getX();
+		double y = viewerAnchor.getY() - oldAnchor.getY();
+		anchorPoint = new Point2D.Double(x, y);
 	}
 }
