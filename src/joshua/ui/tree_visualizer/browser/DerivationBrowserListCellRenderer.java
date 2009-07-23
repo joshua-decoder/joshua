@@ -17,7 +17,6 @@ public class DerivationBrowserListCellRenderer extends JPanel implements ListCel
 		setOpaque(true);
 	}
 	
-	@Override
 	public Component getListCellRendererComponent(JList list, Object value,
 			int index, boolean isSelected, boolean cellHasFocus) {
 		setLayout(new GridLayout(1 + Browser.getTranslationInfo().getNumberOfNBestFiles(), 1));
