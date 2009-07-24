@@ -218,6 +218,8 @@ public class DerivationTree extends DirectedOrderedSparseMultigraph<Node,Derivat
 			actualSourceEnd = currSource.sourceEnd() - 1;
 		else
 			actualSourceEnd = currSource.sourceEnd();
+		if (actualSourceEnd > Regex.spaces.split(source).length)
+			actualSourceEnd = Regex.spaces.split(source).length;
 		if (currentSourceIndex < actualSourceEnd) {
 			String [] sourceTokens = Regex.spaces.split(source);
 			String sourceLeafName = sourceTokens[currentSourceIndex];
