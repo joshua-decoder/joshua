@@ -44,6 +44,7 @@ import joshua.corpus.vocab.SrilmSymbol;
 import joshua.corpus.vocab.SymbolTable;
 import joshua.corpus.vocab.Vocabulary;
 
+import joshua.ui.hypergraph_visualizer.HyperGraphViewer;
 import joshua.util.io.BinaryIn;
 import joshua.util.io.LineReader;
 import joshua.util.FileUtility;
@@ -187,6 +188,11 @@ public class JoshuaDecoder {
 	public void cleanUp() {
 		//TODO
 		//this.languageModel.end_lm_grammar(); //end the threads
+	}
+	
+	public void visualizeHyperGraphForSentence(String sentence)
+	{
+		HyperGraphViewer.visualizeHypergraphInFrame(this.decoderFactory.getHyperGraphForSentence(sentence), this.symbolTable);
 	}
 	
 	

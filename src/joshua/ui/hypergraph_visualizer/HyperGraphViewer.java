@@ -97,12 +97,17 @@ public class HyperGraphViewer extends VisualizationViewer<Vertex,Edge> {
 					return vocab.getWord(((LeafVertex) v).getEnglish());
 				}
 				else if (v instanceof NodeVertex) {
-					return vocab.getWord(((NodeVertex) v).getNode().lhs);
+					String nt = vocab.getWord(((NodeVertex) v).getNode().lhs);
+					return String.format("%s{%d-%d}", nt, ((NodeVertex) v).getNode().i, ((NodeVertex) v).getNode().j);
 				}
 				else {
 					Rule r = ((HyperEdgeVertex) v).getHyperEdge().get_rule();
-					if (r != null)
-						return r.toString(vocab);
+					if (r != null) {
+						String lhs = vocab.getWord(r.getLHS());
+						String french = vocab.getWords(r.getFrench());
+						String english = vocab.getWords(r.getEnglish());
+						return String.format("%s -> { %s ; %s }", lhs, french, english);
+					}
 					else
 						return "";
 				}

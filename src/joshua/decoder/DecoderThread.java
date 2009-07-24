@@ -26,6 +26,7 @@ import joshua.decoder.hypergraph.DiskHyperGraph;
 import joshua.decoder.hypergraph.HyperGraph;
 import joshua.decoder.hypergraph.KBestExtractor;
 
+import joshua.decoder.segment_file.ConstraintSpan;
 import joshua.decoder.segment_file.SegmentFileParser;
 import joshua.decoder.segment_file.PlainSegmentParser;
 import joshua.decoder.segment_file.HackishSegmentParser;
@@ -47,6 +48,7 @@ import joshua.util.CoIterator;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -375,5 +377,39 @@ public class DecoderThread extends Thread {
 		
 		//debug
 		//g_con.get_confusion_in_hyper_graph_cell_specific(hypergraph, hypergraph.sent_len);
+	}
+	
+	public HyperGraph getHyperGraph(String sentence)
+	{
+		Chart chart;
+		
+		int[] intSentence = this.symbolTable.getIDs(sentence);
+		Lattice<Integer> inputLattice = Lattice.createLattice(intSentence);
+		
+		Grammar[] grammars = new Grammar[grammarFactories.size()];
+		int i = 0;
+		for (GrammarFactory factory : this.grammarFactories) {
+			grammars[i] = factory.getGrammarForSentence(
+					new Pattern(this.symbolTable, intSentence));
+			
+			// For batch grammar, we do not want to sort it every time
+			if (! grammars[i].isSorted()) {
+				grammars[i].sortGrammar(this.featureFunctions);
+			}
+			
+			i++;
+		}
+		
+		chart = new Chart(
+				inputLattice,
+				this.featureFunctions,
+				this.symbolTable,
+				0,
+				grammars,
+				this.hasLanguageModel,
+				JoshuaConfiguration.goal_symbol,
+				new LinkedList<ConstraintSpan>());
+		
+		return chart.expand();
 	}
 }

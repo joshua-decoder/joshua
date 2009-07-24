@@ -20,6 +20,7 @@ package joshua.decoder;
 import joshua.corpus.vocab.SymbolTable;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.tm.GrammarFactory;
+import joshua.decoder.hypergraph.HyperGraph;
 import joshua.util.io.LineReader;
 import joshua.util.FileUtility;
 import joshua.util.Regex;
@@ -100,6 +101,21 @@ public class DecoderFactory {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+	
+	public HyperGraph getHyperGraphForSentence(String sentence)
+	{
+		try {
+			DecoderThread pdecoder = new DecoderThread(
+				this.grammarFactories, this.hasLanguageModel,
+				this.featureFunctions, this.symbolTable,
+				sentence, null, null, 0);
+			return pdecoder.getHyperGraph(sentence);
+		}
+		catch (IOException e) {
+			e.printStackTrace();
+		}
+		return null;
 	}
 	
 	
