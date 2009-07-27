@@ -253,7 +253,7 @@ public class Chart {
 									arity);
 							addAxiom(cSpan.start(), cSpan.end(), rule, 0);
 							if (logger.isLoggable(Level.INFO))
-								logger.info("Adding RULE constraint for span " + cSpan.start() + ", " + cSpan.end() + "; isHard=" + cSpan.isHard());
+								logger.info("Adding RULE constraint for span " + cSpan.start() + ", " + cSpan.end() + "; isHard=" + cSpan.isHard() +rule.getLHS());
 							break;
 						default: 
 							shouldAdd = true;
@@ -372,11 +372,17 @@ public class Chart {
 				//long start_step3= Support.current_time();
 				if (logger.isLoggable(Level.FINEST))
 					logger.finest("Adding unary items into chart");
+				
+				/**zhifei replaced the following code to address an interaction problem between different grammars
+				 * the problem is: if [X]->[NT,1],[NT,1] in a regular grammar, but  [S]->[X,1],[X,1] is in a glue grammar; then [S]->[NT,1],[NT,1] is not achievable
 				for (int k = 0; k < this.grammars.length; k++) {
 					if (this.grammars[k].hasRuleForSpan(i, j, sentenceLength)) {
 						addUnaryItems(this.grammars[k],i,j);//single-branch path
 					}
-				}
+				}*/
+				addUnaryItems(this.grammars,i,j);//single-branch path
+				
+				
 				//time_step3 += Support.current_time()-start_step3;
 				
 				//(4)### in dot_cell(i,j), add dot-items that start from the /complete/ superIterms in chart_cell(i,j)
@@ -473,7 +479,7 @@ public class Chart {
 	 * s->x; ss->s for unary rules like s->x, once x is complete,
 	 * then s is also complete
 	 */
-	private int addUnaryItems(Grammar gr, int i, int j) {
+	private int addUnaryItems(Grammar[] grs, int i, int j) {
 		Bin chartBin = this.bins[i][j];
 		if (null == chartBin) {
 			return 0;
@@ -483,22 +489,29 @@ public class Chart {
 			= new ArrayList<HGNode>(chartBin.get_sorted_items());
 		
 		
+		
 		while (queue.size() > 0) {
 			HGNode item = queue.remove(0);
-			Trie childNode = gr.getTrieRoot().matchOne(item.lhs); // match rule and complete part
-			if (childNode != null
-			&& childNode.getRules() != null
-			&& childNode.getRules().getArity() == 1) { // have unary rules under this trienode
-				ArrayList<HGNode> antecedents = new ArrayList<HGNode>();
-				antecedents.add(item);
-				List<Rule> rules = childNode.getRules().getSortedRules();
-				
-				for (Rule rule : rules) { // for each unary rules								
-					ComputeItemResult tbl_states = chartBin.compute_item(rule, antecedents, i, j);
-					HGNode res_item = chartBin.add_deduction_in_bin(tbl_states, rule, i, j, antecedents, 0.0f);
-					if (null != res_item) {
-						queue.add(res_item);
-						qtyAdditionsToQueue++;
+			for(Grammar gr : grs){
+				Trie childNode = gr.getTrieRoot().matchOne(item.lhs); // match rule and complete part
+				if (childNode != null
+				&& childNode.getRules() != null
+				&& childNode.getRules().getArity() == 1) { // have unary rules under this trienode
+					ArrayList<HGNode> antecedents = new ArrayList<HGNode>();
+					antecedents.add(item);
+					List<Rule> rules = childNode.getRules().getSortedRules();
+					
+					for (Rule rule : rules) { // for each unary rules								
+						ComputeItemResult tbl_states = chartBin.compute_item(rule, antecedents, i, j);
+						//System.out.println("add unary rule " +i +", " + j + rule.toString(this.symbolTable));
+						HGNode res_item = chartBin.add_deduction_in_bin(tbl_states, rule, i, j, antecedents, 0.0f);
+						if (null != res_item) {
+							queue.add(res_item);
+							qtyAdditionsToQueue++;
+							//System.out.println("Unary Item's lhs " + res_item.lhs + "; string=" + this.symbolTable.getWord(res_item.lhs));
+						}else{
+							//System.out.println("!!!!!!!!!!!!!!!!!!!!!!! pruned unary rule " +i +", " + j + rule.toString(this.symbolTable));
+						}
 					}
 				}
 			}
