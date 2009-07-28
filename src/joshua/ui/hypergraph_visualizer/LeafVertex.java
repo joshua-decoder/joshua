@@ -30,6 +30,6 @@ public class LeafVertex extends Vertex {
 		if (!(o instanceof LeafVertex))
 			return false;
 		LeafVertex other = (LeafVertex) o;
-		return ((english == other.getEnglish()) && (targetPosition == other.getTargetPosition()));
+		return ((english == other.getEnglish())); // && (targetPosition == other.getTargetPosition()));
 	}
 }

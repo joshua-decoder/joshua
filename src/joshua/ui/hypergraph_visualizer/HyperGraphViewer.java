@@ -17,6 +17,7 @@
  */
 package joshua.ui.hypergraph_visualizer;
 
+import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.Paint;
 import java.awt.Color;
@@ -27,8 +28,13 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.geom.*;
 
+import javax.swing.DefaultListModel;
 import javax.swing.JLabel;
 import javax.swing.JFrame;
+import javax.swing.JList;
+import javax.swing.JScrollPane;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 
 import edu.uci.ics.jung.algorithms.layout.DAGLayout;
 import edu.uci.ics.jung.algorithms.layout.StaticLayout;
@@ -64,11 +70,16 @@ public class HyperGraphViewer extends VisualizationViewer<Vertex,Edge> {
 	private SymbolTable vocab;
 	JungHyperGraph graph;
 	
+	JList edgeList;
+	
 	public HyperGraphViewer(JungHyperGraph g, SymbolTable vocab)
 	{
 		super(new StaticLayout<Vertex,Edge>(g, new HyperGraphTransformer(g)));
 		this.vocab = vocab;
 		this.graph = g;
+		this.edgeList = new JList(new DefaultListModel());
+		this.edgeList.setCellRenderer(new HyperEdgeListCellRenderer(vocab));
+		this.edgeList.addListSelectionListener(new HyperEdgeListSelectionListener(this));
 //		super(new DAGLayout<Vertex,Edge>(g));
 //		DelegateTree<Vertex,Edge> gtree = new DelegateTree<Vertex,Edge>(g);
 //		gtree.setRoot(g.getRoot());
@@ -171,7 +182,11 @@ public class HyperGraphViewer extends VisualizationViewer<Vertex,Edge> {
 	public static void visualizeHypergraphInFrame(HyperGraph hg, SymbolTable st)
 	{
 		JFrame frame = new JFrame("Joshua Hypergraph");
-		frame.getContentPane().add(new HyperGraphViewer(new JungHyperGraph(hg, st), st));
+		frame.setLayout(new BorderLayout());
+		HyperGraphViewer vv = new HyperGraphViewer(new JungHyperGraph(hg, st), st);
+		
+		frame.getContentPane().add(vv, BorderLayout.CENTER);
+		frame.getContentPane().add(new JScrollPane(vv.edgeList), BorderLayout.WEST);
 		frame.setSize(500, 500);
 		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		frame.setVisible(true);
