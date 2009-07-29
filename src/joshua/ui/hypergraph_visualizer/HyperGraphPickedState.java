@@ -16,9 +16,9 @@ public class HyperGraphPickedState extends MultiPickedState<Vertex> {
 	
 	public boolean pick(Vertex v, boolean state)
 	{
-		if (!(v instanceof HyperEdgeVertex))
+		if (!(v instanceof NodeVertex))
 			return false;
-		NodeVertex node = (NodeVertex) viewer.graph.getPredecessors(v).toArray()[0];
+		NodeVertex node =  (NodeVertex) v; //(NodeVertex) viewer.graph.getPredecessors(v).toArray()[0];
 		viewer.graph.picked = node;
 	//	viewer.graph.incrementHyperEdge(node);
 	//	viewer.setGraphLayout(new StaticLayout<Vertex,Edge>(viewer.graph, new HyperGraphTransformer(viewer.graph)));
@@ -27,7 +27,10 @@ public class HyperGraphPickedState extends MultiPickedState<Vertex> {
 		for (HyperEdge e : node.getNode().l_hyperedges) {
 			edgeListModel.addElement(e);
 		}
-		viewer.edgeList.setSelectedValue(((HyperEdgeVertex) v).getHyperEdge(), true);
+		if (node.getNode().l_hyperedges.size() == 0)
+			return true;
+		HyperEdgeVertex currentEdge = (HyperEdgeVertex) viewer.graph.getSuccessors(v).toArray()[0];
+		viewer.edgeList.setSelectedValue(currentEdge.getHyperEdge(), true);
 		return true;
 	}
 }
