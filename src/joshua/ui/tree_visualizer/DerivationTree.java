@@ -48,6 +48,8 @@ public class DerivationTree extends DirectedOrderedSparseMultigraph<Node,Derivat
 	private Node sourceRoot;
 	private String source;
 	private LinkedList<Node> vertices;
+	
+	Node picked;
 
 	public static void main(String [] argv)
 	{
@@ -238,5 +240,14 @@ public class DerivationTree extends DirectedOrderedSparseMultigraph<Node,Derivat
 			if (s != null)
 				addEdge(new DerivationTreeEdge(true), v, s);
 		}
+	}
+	
+	public void setSubtreeHighlight(Node n, boolean b)
+	{
+		n.setHighlighted(b);
+		for (Node s : getSuccessors(n)) {
+			setSubtreeHighlight(s, b);
+		}
+		return;
 	}
 }

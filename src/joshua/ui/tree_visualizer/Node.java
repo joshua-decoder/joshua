@@ -60,6 +60,11 @@ public class Node {
 	 * non-terminals.
 	 */
 	public static final String DELIM = "[\\{\\}\\-]";
+	
+	/**
+	 * A boolean to let the renderer know whether this vertex is highlighted.
+	 */
+	private boolean isHighlighted = false;
 
 	/**
 	 * Constructor used for root nodes or nodes whose parent is not given.
@@ -224,5 +229,15 @@ public class Node {
 	public Node getCounterpart()
 	{
 		return counterpart;
+	}
+	
+	public boolean isHighlighted()
+	{
+		return isHighlighted;
+	}
+	
+	public void setHighlighted(boolean b)
+	{
+		isHighlighted = b;
 	}
 }

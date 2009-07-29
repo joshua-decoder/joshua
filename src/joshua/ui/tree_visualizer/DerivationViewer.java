@@ -45,6 +45,8 @@ public class DerivationViewer extends VisualizationViewer<Node,DerivationTreeEdg
 	public static final Color SRC = Color.WHITE;
 	private Color TGT;
 	
+	public static final Color HIGHLIGHT = Color.pink;
+	
 	public static enum AnchorType { ANCHOR_ROOT, ANCHOR_LEFTMOST_LEAF };
 	
 	private AnchorType anchorStyle;
@@ -66,6 +68,8 @@ public class DerivationViewer extends VisualizationViewer<Node,DerivationTreeEdg
 		DefaultModalGraphMouse<Node,DerivationTreeEdge> graphMouse = new DefaultModalGraphMouse<Node,DerivationTreeEdge>();
 		graphMouse.setMode(ModalGraphMouse.Mode.TRANSFORMING);
 		setGraphMouse(graphMouse);
+		addKeyListener(graphMouse.getModeKeyListener());
+		this.setPickedVertexState(new DerivationTreePickedState(g));
 
 		getRenderContext().setVertexFillPaintTransformer(vp);
 		getRenderContext().setEdgeStrokeTransformer(es);
@@ -86,6 +90,8 @@ public class DerivationViewer extends VisualizationViewer<Node,DerivationTreeEdg
 	private Transformer<Node,Paint> vp = new Transformer<Node,Paint>() {
 		public Paint transform(Node n)
 		{
+			if (n.isHighlighted())
+				return HIGHLIGHT;
 			if (n.isSource())
 				return SRC;
 			else
