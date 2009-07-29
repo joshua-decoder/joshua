@@ -157,7 +157,20 @@ public class JungHyperGraph extends DirectedOrderedSparseMultigraph<Vertex,Edge>
 			HyperEdge e = (HyperEdge) o;
 			addHyperEdge(picked, e);
 		}
+		int color = 1;
+		for (Vertex v : getSuccessors(picked)) {
+			setSubTreeColor(v, color);
+			color++;
+		}
 		checkDuplicateVertices = false;
 		return;
+	}
+	
+	public void setSubTreeColor(Vertex v, int color)
+	{
+		v.setColor(color);
+		for (Vertex s : getSuccessors(v)) {
+			setSubTreeColor(s, color);
+		}
 	}
 }

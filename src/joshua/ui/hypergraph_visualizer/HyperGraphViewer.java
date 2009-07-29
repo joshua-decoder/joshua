@@ -147,11 +147,10 @@ public class HyperGraphViewer extends VisualizationViewer<Vertex,Edge> {
 
 	private Transformer<Vertex,Paint> vertexPainter() {
 		return new Transformer<Vertex,Paint>() {
+			private Color [] colors = { Color.blue, Color.red, Color.yellow, Color.green, Color.cyan };
 			public Paint transform(Vertex v)
 			{
-				if (getPickedVertexState().getPicked().contains(v))
-					return Color.red;
-				return Color.BLUE;
+				return colors[v.getColor() % colors.length];
 			}
 		};
 	}
