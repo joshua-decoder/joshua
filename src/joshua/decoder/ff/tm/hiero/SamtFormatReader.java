@@ -43,6 +43,8 @@ public class SamtFormatReader extends GrammarReader<BilingualRule> {
 		String[] fields = line.split(fieldDelimiter);
 		if (fields.length != 4) {
 			logger.severe("Rule line does not have four fields: " + line);
+			logger.severe("Skipped.");
+			return null;
 		}
 
 		int lhs = symbolTable.addNonterminal(adaptNonTerminalMarkup(fields[2]));
