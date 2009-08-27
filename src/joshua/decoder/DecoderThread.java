@@ -291,14 +291,23 @@ public class DecoderThread extends Thread {
 		
 		Chart chart; {
 
-			int[] intSentence = this.symbolTable.getIDs(segment.sentence());
-			Lattice<Integer> inputLattice = Lattice.createLattice(intSentence);
-			
+			final boolean looksLikeLattice = segment.sentence().startsWith("(((");
+			Lattice<Integer> inputLattice = null;
+			Pattern sentence = null;
+			if (looksLikeLattice) {
+				inputLattice = Lattice.createFromString(segment.sentence(),
+									this.symbolTable);
+				sentence = null; // TODO SA needs to accept lattices!
+			} else {
+				int[] intSentence = this.symbolTable.getIDs(segment.sentence());
+				inputLattice = Lattice.createLattice(intSentence);
+				sentence = new Pattern(this.symbolTable, intSentence);
+			}
+
 			Grammar[] grammars = new Grammar[grammarFactories.size()];
 			int i = 0;
 			for (GrammarFactory factory : this.grammarFactories) {
-				grammars[i] = factory.getGrammarForSentence(
-						new Pattern(this.symbolTable, intSentence));
+				grammars[i] = factory.getGrammarForSentence(sentence);
 				
 				// For batch grammar, we do not want to sort it every time
 				if (! grammars[i].isSorted()) {

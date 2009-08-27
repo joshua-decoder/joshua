@@ -339,7 +339,8 @@ public class Chart {
 							float latticeCost = dt.lattice_cost;
 							RuleCollection rules = dt.tnode.getRules();
 							
-							logger.finest("Checking DotItem for matched rules.");
+							if (logger.isLoggable(Level.FINEST))
+								logger.finest("Checking DotItem for matched rules: lc=" + latticeCost);
 							
 							if (null != rules) { // have rules under this trienode
 								// TODO: filter the rule according to LHS constraint
@@ -430,7 +431,7 @@ public class Chart {
 			this.goalBin.transit_to_goal(this.bins[0][sentenceLength]); // update goalBin				
 		} else {
 			throw new RuntimeException(
-				"No complete item in the cell(0,n); possible reasons: " +
+				"No complete item in the cell(0," + sentenceLength + "); possible reasons: " +
 				"(1) your grammar does not have any valid derivation for the source sentence; " +
 				"(2) too aggressive pruning");
 		}

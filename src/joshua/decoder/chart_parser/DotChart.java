@@ -164,7 +164,7 @@ class DotChart {
 	 * ways to extend the dot postion.
 	 */
 	void expand_cell(int i, int j) {
-		//if (logger.isLoggable(Level.FINE)) logger.fine("Expanding dot cell ("+i+","+j+")");
+		//if (logger.isLoggable(Level.FINEST)) logger.finest("Expanding dot cell ("+i+","+j+")");
 		
 		// (1) if the dot is just to the left of a non-terminal variable, 
 		//     looking for theorems or axioms in the Chart that may apply and 
@@ -301,7 +301,7 @@ class DotChart {
 		l_dot_bins[i][j].add_dot_item(item);
 		p_chart.n_dotitem_added++;
 		
-		if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("Add a dotitem in cell (%d, %d), n_dotitem=%d", i, j, p_chart.n_dotitem_added));
+		if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("Add a dotitem in cell (%d, %d), n_dotitem=%d, lattice_cost=%f", i, j, p_chart.n_dotitem_added, lattice_cost));
 	}
 	
 	

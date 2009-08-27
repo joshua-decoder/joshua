@@ -28,6 +28,7 @@ import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import joshua.corpus.vocab.SymbolTable;
 
 /**
  * A lattice representation of a directed graph.
@@ -39,6 +40,11 @@ import java.util.regex.Pattern;
  * @param Label Type of label associated with an arc.
  */
 public class Lattice<Value> implements Iterable<Node<Value>> {
+
+	/**
+	 * True if there is more than one path through the lattice.
+	 */
+	private final boolean latticeHasAmbiguity;
 
 	/** 
 	 * Costs of the best path between each pair of nodes in the
@@ -70,10 +76,19 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
 	public Lattice(List<Node<Value>> nodes) {
 		this.nodes = nodes;
 		this.costs = calculateAllPairsShortestPath(nodes);
+		this.latticeHasAmbiguity = true;
+	}
+
+	public Lattice(List<Node<Value>> nodes, boolean isAmbiguous) {
+		//Node<Value> sink = new Node<Value>(nodes.size());
+		//nodes.add(sink);
+		this.nodes = nodes;
+		this.costs = calculateAllPairsShortestPath(nodes);
+		this.latticeHasAmbiguity = isAmbiguous;
 	}
 	
-	
 	public Lattice(Value[] linearChain) {
+		this.latticeHasAmbiguity = false;
 		this.nodes = new ArrayList<Node<Value>>();
 		
 		Node<Value> previous = new Node<Value>(0);
@@ -96,6 +111,10 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
 		
 		this.costs = calculateAllPairsShortestPath(nodes);
 	}
+
+	public final boolean hasMoreThanOnePath() {
+		return latticeHasAmbiguity;
+	}
 	
 	/** 
 	 * Convenience method to get a lattice from an int[].
@@ -115,6 +134,72 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
 		return new Lattice<Integer>(integerSentence);
 	}
 	
+	public static Lattice<Integer> createFromString(String data, SymbolTable symbolTable) {
+		Map<Integer,Node<Integer>> nodes = new HashMap<Integer,Node<Integer>>();
+		
+		Pattern nodePattern = Pattern.compile("(.+?)\\((\\(.+?\\),)\\)(.*)");
+		Pattern arcPattern = Pattern.compile("\\('(.+?)',(-?\\d+\\.?\\d+?),(\\d+)\\),(.*)");
+		
+		Matcher nodeMatcher = nodePattern.matcher(data);
+		
+		int nodeID = -1;
+		boolean latticeIsAmbiguous = false;
+		
+		while (nodeMatcher.matches()) {
+			
+			String nodeData = nodeMatcher.group(2);
+			String remainingData = nodeMatcher.group(3);
+			
+			nodeID++;
+			
+			Node<Integer> currentNode = null;
+			if (nodes.containsKey(nodeID)) {
+				currentNode = nodes.get(nodeID);
+			} else {
+				currentNode = new Node<Integer>(nodeID);
+				nodes.put(nodeID, currentNode);
+			}
+			
+			if (logger.isLoggable(Level.FINE)) logger.fine("Node " + nodeID + ":");
+			
+			Matcher arcMatcher = arcPattern.matcher(nodeData);
+			int numArcs = 0;
+			if (!arcMatcher.matches()) { throw new RuntimeException("Parse error!"); }
+			while (arcMatcher.matches()) {
+				numArcs++;
+				String arcLabel = arcMatcher.group(1);
+				double arcWeight = Double.valueOf(arcMatcher.group(2));
+				int destinationNodeID = nodeID + Integer.valueOf(arcMatcher.group(3));
+				
+				Node<Integer> destinationNode;
+				if (nodes.containsKey(destinationNodeID)) {
+					destinationNode = nodes.get(destinationNodeID);
+				} else {
+					destinationNode = new Node<Integer>(destinationNodeID);
+					nodes.put(destinationNodeID, destinationNode);
+				}
+				
+				String remainingArcs = arcMatcher.group(4);
+				
+				if (logger.isLoggable(Level.FINE)) logger.fine("\t" + arcLabel + " " + arcWeight + " " + destinationNodeID);
+				Integer intArcLabel = symbolTable.getID(arcLabel);
+				currentNode.addArc(destinationNode, arcWeight, intArcLabel);
+				
+				arcMatcher = arcPattern.matcher(remainingArcs);
+			}
+			if (numArcs > 1) latticeIsAmbiguous = true;
+			
+			nodeMatcher = nodePattern.matcher(remainingData);
+		}
+		
+		List<Node<Integer>> nodeList = new ArrayList<Node<Integer>>(nodes.values());
+		Collections.sort(nodeList, new NodeIdentifierComparator());
+		
+		if (logger.isLoggable(Level.FINE)) logger.fine(nodeList.toString());
+		
+		return new Lattice<Integer>(nodeList, latticeIsAmbiguous);
+	}
+
 	/**
 	 * Constructs a lattice from a given string representation.
 	 *
