@@ -134,4 +134,8 @@ public class HieroFormatReader extends GrammarReader<BilingualRule> {
 	public static String getFieldDelimiter() {
 		return fieldDelimiter;
 	}
+	
+	public static boolean isNonTerminal(final String word) {
+		return GrammarReader.isNonTerminal(word);
+	}
 }

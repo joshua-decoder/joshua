@@ -27,6 +27,9 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
+import joshua.corpus.Corpus;
+import joshua.corpus.alignment.Alignments;
+import joshua.corpus.suffix_array.Suffixes;
 import joshua.util.FormatUtil;
 
 /**
@@ -57,6 +60,7 @@ public class NavigatorPanel extends JPanel implements ActionListener {
 	public NavigatorPanel(GridScrollPanel gridScrollPanel) {
 		this.gridScrollPanel = gridScrollPanel;
 		this.setLayout(new BorderLayout());
+				
 		
 		JPanel buttonPanel = new JPanel();
 		JPanel statusPanel = new JPanel();
@@ -79,11 +83,30 @@ public class NavigatorPanel extends JPanel implements ActionListener {
 		GridPanel gridPanel = gridScrollPanel.getGridPanel();
 		this.statusLabel = new JLabel("Sentence " + (gridPanel.getSentenceNumber()+1) + " of " + gridPanel.getNumSentences());
 		statusPanel.add(statusLabel);
+		updateStatusLabel();
 		
 		this.add(buttonPanel, BorderLayout.PAGE_START);
 		this.add(statusPanel, BorderLayout.PAGE_END);
 	}
 
+	private void updateStatusLabel() {
+		GridPanel gridPanel = gridScrollPanel.getGridPanel();
+		int sentenceNumber = gridPanel.getSentenceNumber()+1;
+		this.statusLabel.setText("Sentence " + sentenceNumber + " of " + gridPanel.getNumSentences());
+		
+		if (sentenceNumber==1) {
+			prev.setEnabled(false);
+		} else {
+			prev.setEnabled(true);
+		}
+		
+		if (sentenceNumber < gridPanel.getNumSentences()) {
+			next.setEnabled(true);
+		} else {
+			next.setEnabled(false);
+		}
+	}
+	
 	/* See Javadoc for ActionListener. */
 	public void actionPerformed(ActionEvent e) {
 		Object source = e.getSource();
@@ -109,8 +132,7 @@ public class NavigatorPanel extends JPanel implements ActionListener {
 		}
 		
 
-		GridPanel gridPanel = gridScrollPanel.getGridPanel();
-		this.statusLabel.setText("Sentence " + (gridPanel.getSentenceNumber()+1) + " of " + gridPanel.getNumSentences());
+		updateStatusLabel();
 	}
 	
 	

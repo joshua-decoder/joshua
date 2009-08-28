@@ -10,6 +10,15 @@ Assumption: The grammar contains no epsilon rules.
 \end{enumerate}
 
 
+\section{Data structures}
+
+At the lowest level, Joshua grammars are stored internally in a trie data structure. This structure is specified by the {\tt Trie} interface in the {\tt joshua.decoder.ff.tm} package.
+
+The decoding algorithm makes use of cube pruning \cite{chiang07}. Cube pruning requires that all rules which share a common source language right-hand side be sorted. The {\tt SortableGrammar} interface in the {\tt joshua.decoder.ff.tm} package provides a specification based on this requirement. A key method of {\tt SortableGrammar} is {\tt getTrieRoot()}, which returns the root node of the trie that defines the grammar.
+
+The abstract class {\tt AbstractGrammar} in the {\tt joshua.decoder.ff.tm} package provides a default implementation of the sorting mechanism specified by {\tt SortableGrammar}. All concrete grammar implementations should inherit from {\tt AbstractGrammar}.
+
+
 \section{Extend the dot chart}
 
 Attempt to combine an item in the dot chart

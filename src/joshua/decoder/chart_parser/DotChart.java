@@ -17,13 +17,17 @@
  */
 package joshua.decoder.chart_parser;
 
+import joshua.corpus.vocab.SymbolTable;
 import joshua.decoder.ff.tm.Grammar;
+import joshua.decoder.ff.tm.Rule;
+import joshua.decoder.ff.tm.RuleCollection;
 import joshua.decoder.ff.tm.Trie;
 import joshua.lattice.Arc;
 import joshua.lattice.Lattice;
 import joshua.lattice.Node;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -183,7 +187,7 @@ class DotChart {
 			// Tail and Head are backward! FIX names!
 			int arc_len = arc.getTail().getNumber() - arc.getHead().getNumber();
 			float cost = (float)arc.getCost();
-			if (logger.isLoggable(Level.FINEST)) logger.finest("last_word="+last_word+ " for node " +node.getNumber());
+			if (logger.isLoggable(Level.FINEST)) logger.finest("last_word=\""+p_chart.getVocabulary().getWord(last_word)+ "\" for node " +node.getNumber());
 			
 			//int last_word=foreign_sent[j-1]; // input.getNode(j-1).getNumber(); //	
 			
@@ -200,6 +204,47 @@ class DotChart {
 					} else {
 						// match the terminal
 						Trie child_tnode = dt.tnode.matchOne(last_word);
+						if (logger.isLoggable(Level.FINEST)) {
+							SymbolTable vocab = p_chart.getVocabulary();
+							String sourceWords;
+							if (child_tnode != null) {
+								RuleCollection rules = child_tnode.getRules();
+								if (rules==null) {
+									sourceWords = "nullRules";
+								} else {
+									int[] sourceSide = rules.getSourceSide();
+									sourceWords = 
+										"\"" + vocab.getWords(sourceSide) 
+										+ "\" with " + rules.getSortedRules().size()
+										+ " rules at " + child_tnode;
+
+									for (Rule r : rules.getSortedRules()) {
+										sourceWords = sourceWords + 
+										"\n\t" 
+										+ r.toString() + " --- "
+										+ vocab.getWord(r.getLHS())
+										+ " ||| "
+										+ vocab.getWords(r.getFrench()) + Arrays.toString(r.getFrench())
+										+ " ||| "
+										+ vocab.getWords(r.getEnglish()) + Arrays.toString(r.getEnglish())
+										+ " ||| "
+										+ Arrays.toString(r.getFeatureScores())
+										+ " ||| " 
+										+ r.getEstCost();
+									}
+								}
+							} else {
+								sourceWords = "null";
+							}
+							logger.finest(
+									"Attempting to match \""
+									+vocab.getWord(last_word)
+									+"\" at " + dt.tnode + " yields "
+									+ sourceWords //+ "\" at "
+									//+ child_tnode
+									);
+							
+						}
 						if (null != child_tnode) {
 							// we do not have an ant for the terminal
 							addDotItem(child_tnode, i, j - 1 + arc_len, dt.l_ant_super_items, null, dt.lattice_cost + cost);
@@ -263,7 +308,8 @@ class DotChart {
 						continue; //TODO
 					}
 					if (logger.isLoggable(Level.FINEST)) {
-						logger.finest(String.format("Add a dotitem with superitem.lhs: %s", s_t.lhs));
+//						logger.finest(String.format("Add a dotitem with superitem.lhs: %s", s_t.lhs));
+						logger.finest(String.format("Add a dotitem with superitem.lhs: %s", p_chart.getVocabulary().getWord(s_t.lhs)));
 					}
 					addDotItem(child_tnode, i, j, dt.l_ant_super_items, s_t, dt.lattice_cost);
 				}

@@ -31,6 +31,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.PriorityQueue;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * This class implements lazy k-best extraction on a hyper-graph.
@@ -54,6 +56,10 @@ import java.util.PriorityQueue;
  * @version $LastChangedDate$
  */
 public class KBestExtractor {
+	
+	/** Logger for this class. */
+	private static final Logger logger =
+		Logger.getLogger(KBestExtractor.class.getName());
 	
 	private final HashMap<HGNode,VirtualItem> tbl_virtual_items = new HashMap<HGNode,VirtualItem>();
 	
@@ -150,6 +156,9 @@ public class KBestExtractor {
 						try {
 							writer.write(hyp_str);
 							writer.write("\n");
+							if (logger.isLoggable(Level.FINE)) {
+								logger.fine(hyp_str);
+							}
 						} catch (IOException e) {
 							throw new UncheckedIOException(e);
 						}
@@ -259,10 +268,12 @@ public class KBestExtractor {
 //				System.err.println("tem_sum: " + tem_sum + " += " + model_cost[k] + " * " + l_models.get(k).getWeight());
 			}
 			
-			
+			int x = 0;
+			x++;
 			
 			//sanity check
-			if (performSanityCheck) {
+			if (false) {
+//			if (performSanityCheck) {
 				if (Math.abs(cur.cost - tem_sum) > 1e-2) {
 					StringBuilder error = new StringBuilder();
 					error.append("\nIn nbest extraction, Cost does not match; cur.cost: " + cur.cost + "; temsum: " +tem_sum + "\n");

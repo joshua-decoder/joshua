@@ -21,6 +21,8 @@ import joshua.decoder.Support;
 import joshua.corpus.vocab.SymbolTable;
 
 import java.util.ArrayList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * This class provides a default implementation for the Equivalent
@@ -36,6 +38,10 @@ import java.util.ArrayList;
  * @version $LastChangedDate$
  */
 public abstract class DefaultNGramLanguageModel implements NGramLanguageModel {
+	
+	/** Logger for this class. */
+	private static final Logger logger =
+		Logger.getLogger(DefaultNGramLanguageModel.class.getName());
 	
 	protected final SymbolTable symbolTable;
 	protected final int         ngramOrder;
@@ -72,14 +78,24 @@ public abstract class DefaultNGramLanguageModel implements NGramLanguageModel {
 		// partial ngrams at the begining
 		for (int j = startIndex; j < order && j <= sentenceLength; j++) {
 			//TODO: startIndex dependents on the order, e.g., this.ngramOrder-1 (in srilm, for 3-gram lm, start_index=2. othercase, need to check)
-			probability += ngramLogProbability(
-				Support.sub_int_array(sentence, 0, j), order);
+			int[] ngram = Support.sub_int_array(sentence, 0, j);
+			double logProb = ngramLogProbability(ngram, order);
+			if (logger.isLoggable(Level.FINE)) {
+				String words = symbolTable.getWords(ngram);
+				logger.fine("\tlogp ( " + words + " )  =  " + logProb);
+			}
+			probability += logProb;
 		}
 		
 		// regular-order ngrams
 		for (int i = 0; i <= sentenceLength - order; i++) {
-			probability += ngramLogProbability(
-				Support.sub_int_array(sentence, i, i + order), order);
+			int[] ngram = Support.sub_int_array(sentence, i, i + order);
+			double logProb = ngramLogProbability(ngram, order);
+			if (logger.isLoggable(Level.FINE)) {
+				String words = symbolTable.getWords(ngram);
+				logger.fine("\tlogp ( " + words + " )  =  " + logProb);
+			}
+			probability += logProb;
 		}
 		
 		return probability;

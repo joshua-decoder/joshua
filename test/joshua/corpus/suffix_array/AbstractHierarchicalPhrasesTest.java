@@ -30,6 +30,64 @@ import org.testng.annotations.Test;
  */
 public class AbstractHierarchicalPhrasesTest {
 
+	@Test
+	public void equalityTest() {
+	
+		Vocabulary vocab = new Vocabulary();
+		vocab.addNonterminal("X");
+		vocab.addTerminal("en");
+		vocab.addTerminal("de");
+		int X = vocab.getNonterminalID("X");
+		int en = vocab.getID("en");
+		int de = vocab.getID("de");
+		
+		int[] M_a_alpha_startPositions = {25,30,27,30};
+		int[] M_a_alpha_sentenceNumbers = {2,2};
+		Pattern M_a_alpha_pattern = new Pattern(vocab, en, X, de, X);
+		Assert.assertEquals(M_a_alpha_pattern.arity(),2);
+		
+		MatchedHierarchicalPhrases a = 
+			new HierarchicalPhrases(M_a_alpha_pattern, M_a_alpha_startPositions, M_a_alpha_sentenceNumbers);
+		
+		MatchedHierarchicalPhrases b = 
+			new HierarchicalPhrases(M_a_alpha_pattern, M_a_alpha_startPositions, M_a_alpha_sentenceNumbers);
+		
+		MatchedHierarchicalPhrases c = 
+			new HierarchicalPhrases(M_a_alpha_pattern, M_a_alpha_startPositions, M_a_alpha_sentenceNumbers);
+		
+		
+		Assert.assertTrue(a.equals(a));
+		Assert.assertTrue(b.equals(b));
+		Assert.assertTrue(c.equals(c));
+		
+		Assert.assertFalse(a==b);
+		Assert.assertFalse(a==c);
+		Assert.assertFalse(b==a);
+		Assert.assertFalse(b==c);
+		
+		Assert.assertTrue(a.equals(b));
+		Assert.assertTrue(a.equals(c));
+		Assert.assertTrue(b.equals(a));
+		Assert.assertTrue(b.equals(c));
+		Assert.assertTrue(c.equals(a));
+		Assert.assertTrue(c.equals(b));
+		
+		
+		int[] M_alpha_b_startPositions = {2,5,30,33,30,36,700,703,952,956};
+		int[] M_alpha_b_sentenceNumbers = {1,2,2,57,94};
+		Pattern M_alpha_b_pattern = new Pattern(vocab, X, de, X, en);
+		Assert.assertEquals(M_alpha_b_pattern.arity(),2);
+		MatchedHierarchicalPhrases d = 
+			new HierarchicalPhrases(M_alpha_b_pattern, M_alpha_b_startPositions, M_alpha_b_sentenceNumbers);
+		
+		Assert.assertFalse(a.equals(d));
+		Assert.assertFalse(b.equals(d));
+		Assert.assertFalse(c.equals(d));
+		
+		Assert.assertFalse(d.equals(a));
+		Assert.assertFalse(d.equals(b));
+		Assert.assertFalse(d.equals(c));
+	}
 	
 	@Test
 	public void queryIntersectTest() {

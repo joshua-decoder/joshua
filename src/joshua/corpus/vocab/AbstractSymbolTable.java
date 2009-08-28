@@ -113,7 +113,8 @@ public abstract class AbstractSymbolTable implements SymbolTable {
 				}
 				s.append(']');
 			} else {
-				s.append(getWord(wordID));
+				String word = getWord(wordID);
+				s.append(word);
 			}
 
 		}

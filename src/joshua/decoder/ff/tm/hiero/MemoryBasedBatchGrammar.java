@@ -73,7 +73,7 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
 // Static Fields
 //===============================================================
 
-	public static int OOV_RULE_ID = 0;
+	public static final int OOV_RULE_ID = 0;
 
 	/* Three kinds of rules: 
 	 * 		regular rule (id>0)

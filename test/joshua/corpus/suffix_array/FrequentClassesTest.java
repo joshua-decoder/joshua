@@ -20,9 +20,13 @@ package joshua.corpus.suffix_array;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.logging.Logger;
 
@@ -80,15 +84,21 @@ public class FrequentClassesTest {
 			
 			File sourceFile = File.createTempFile("to_be", new Date().toString());
 			PrintStream sourcePrintStream = new PrintStream(sourceFile, "UTF-8");
-			for (String sentence : to_be_or_not_to_be) {
+				for (String sentence : to_be_or_not_to_be) {
 				sourcePrintStream.println(sentence);
 			}
 			sourcePrintStream.close();
 			String corpusFileName = sourceFile.getAbsolutePath();
 			
 			logger.fine("Constructing vocabulary from file " + corpusFileName);
-			symbolTableToBe = new Vocabulary();
-			int[] lengths = Vocabulary.initializeVocabulary(corpusFileName, symbolTableToBe, true);
+			LinkedHashSet<String> set = new LinkedHashSet<String>();
+			for (String sentence : to_be_or_not_to_be) {
+				String[] array = sentence.split("\\s+");
+				Arrays.sort(array);
+				for (String s : array) { set.add(s); }
+			}
+			symbolTableToBe = new Vocabulary(set);
+			int[] lengths = Vocabulary.initializeVocabulary(corpusFileName, new Vocabulary(), true);
 
 			logger.fine("Constructing corpus array from file " + corpusFileName);
 			corpusToBe = SuffixArrayFactory.createCorpusArray(corpusFileName, symbolTableToBe, lengths[0], lengths[1]);
@@ -642,8 +652,19 @@ public class FrequentClassesTest {
 			Vocabulary symbolTable;
 			
 			logger.fine("Constructing vocabulary from file " + corpusFileName);
-			symbolTable = new Vocabulary();
-			int[] lengths = Vocabulary.initializeVocabulary(corpusFileName, symbolTable, true);
+			ArrayList<String> words = new ArrayList<String>();
+			for (String sentence : sentences) {
+				String[] array = sentence.split("\\s+");
+				for (String s : array) { 
+					if (! words.contains(s)) {
+						words.add(s); 
+					}
+				}
+			}
+			Collections.sort(words);
+			LinkedHashSet<String> set = new LinkedHashSet<String>(words);
+			symbolTable = new Vocabulary(set);
+			int[] lengths = Vocabulary.initializeVocabulary(corpusFileName, new Vocabulary(), true);
 
 			logger.fine("Constructing corpus array from file " + corpusFileName);
 			corpusArray = SuffixArrayFactory.createCorpusArray(corpusFileName, symbolTable, lengths[0], lengths[1]);

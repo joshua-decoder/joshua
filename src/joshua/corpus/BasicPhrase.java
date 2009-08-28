@@ -61,6 +61,10 @@ public class BasicPhrase extends AbstractPhrase {
 	
 	private BasicPhrase() {}
 	
+	public int[] getWordIDs()  {
+		return words;
+	}
+	
 	/* See Javadoc for Phrase interface. */
 	public BasicPhrase subPhrase(int start, int end) {
 		BasicPhrase that = new BasicPhrase();

@@ -84,6 +84,15 @@ public interface Suffixes {
 	MatchedHierarchicalPhrases createHierarchicalPhrases(int[] startPositions, Pattern pattern, SymbolTable vocab);
 	
 	/**
+	 * 
+	 * @param pattern
+	 * @param minNonterminalSpan
+	 * @param maxPhraseSpan
+	 * @return
+	 */
+	MatchedHierarchicalPhrases createHierarchicalPhrases(Pattern pattern, int minNonterminalSpan, int maxPhraseSpan);
+	
+	/**
 	 * Returns the number of suffixes in the suffix array, which
 	 * is identical to the length of the corpus.
 	 * 

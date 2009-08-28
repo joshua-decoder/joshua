@@ -47,6 +47,7 @@ import joshua.util.CoIterator;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.logging.Level;
@@ -300,9 +301,11 @@ public class DecoderThread extends Thread {
 				sentence = null; // TODO SA needs to accept lattices!
 			} else {
 				int[] intSentence = this.symbolTable.getIDs(segment.sentence());
+				if (logger.isLoggable(Level.FINEST)) logger.finest("Converted \"" + segment.sentence() + "\" into " + Arrays.toString(intSentence));
 				inputLattice = Lattice.createLattice(intSentence);
 				sentence = new Pattern(this.symbolTable, intSentence);
 			}
+			if (logger.isLoggable(Level.FINEST)) logger.finest("Translating input lattice:\n" + inputLattice.toString());
 
 			Grammar[] grammars = new Grammar[grammarFactories.size()];
 			int i = 0;
@@ -311,6 +314,7 @@ public class DecoderThread extends Thread {
 				
 				// For batch grammar, we do not want to sort it every time
 				if (! grammars[i].isSorted()) {
+					// TODO Check to see if this is ever called here. It probably is not
 					grammars[i].sortGrammar(this.featureFunctions);
 				}
 				

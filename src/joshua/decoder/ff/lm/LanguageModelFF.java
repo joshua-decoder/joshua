@@ -26,6 +26,7 @@ import joshua.decoder.ff.StatefulFFTransitionResult;
 import joshua.decoder.ff.tm.Rule;
 
 import java.util.ArrayList;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 
@@ -46,9 +47,7 @@ import java.util.logging.Logger;
  */
 public class LanguageModelFF extends DefaultStatefulFF {
 	
-	// FIXME: why is this in here? Because it's private it won't be usable by subclasses, so there seems to be no reason to have it here if it's unused. Perhaps make it protected instead?
 	/** Logger for this class. */
-	@SuppressWarnings("unused")
 	private static final Logger logger = 
 		Logger.getLogger(LanguageModelFF.class.getName());
 	
@@ -156,6 +155,19 @@ public class LanguageModelFF extends DefaultStatefulFF {
 				}
 				
 				int index = p_symbolTable.getTargetNonterminalIndex(c_id);
+				if (logger.isLoggable(Level.FINEST)) {
+					logger.finest(
+						"Target symbol " + p_symbolTable.getWord(c_id) 
+						+ " with id " + c_id 
+						+ " and nonterminal index of " + index);
+				}
+				if (index >= previous_states.size()) {
+					logger.severe(
+							"Target symbol " + p_symbolTable.getWord(c_id) 
+							+ " with id " + c_id 
+							+ " and nonterminal index of " + index 
+							+ " is about to trigger an IndexOutOfBoundsException");
+				}
 				LMFFDPState state = (LMFFDPState) previous_states.get(index);
 				int[] l_context = state.getLeftLMStateWords();
 				int[] r_context = state.getRightLMStateWords();

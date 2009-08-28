@@ -58,12 +58,13 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * this class implements:
- * (1) mainly initialize, and control the interaction with
- *     JoshuaConfiguration and DecoderThread
+ * Implements decoder initialization,
+ * including interaction with <code>JoshuaConfiguration</code>
+ * and <code>DecoderThread</code>.
  *
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @author wren ng thornton <wren@users.sourceforge.net>
+ * @author Lane Schwartz <dowobeha@users.sourceforge.net>
  * @version $LastChangedDate$
  */
 public class JoshuaDecoder {
@@ -256,35 +257,19 @@ public class JoshuaDecoder {
 
 				if (JoshuaConfiguration.tm_file.endsWith(".josh")) {
 
-//					if (JoshuaConfiguration.use_sent_specific_tm) {
-						try {
-							
-							// Use corpus-based grammar
-							ParallelCorpusGrammarFactory parallelCorpus = getParallelCorpus();							
-							grammarFactories.add(parallelCorpus);
-							
-							// Needs: symbolTable; Sets: languageModel
-							if (JoshuaConfiguration.have_lm_model) initializeLanguageModel();
+					try {
 
-							// Initialize the features: requires that
-							// LM model has been initialized. If an LM
-							// feature is used, need to read config file
-							// again
-							this.initializeFeatureFunctions(configFile);
+						// Use corpus-based grammar
+						ParallelCorpusGrammarFactory parallelCorpus = getParallelCorpus(configFile);							
+						grammarFactories.add(parallelCorpus);
 
-						} catch (Exception e) {
-							IOException ioe = new IOException("Error reading suffix array grammar.");
-							ioe.initCause(e);
-							throw ioe;
-						}
-//					} else {
-//						logger.severe(
-//								"A suffix array grammar was provided, " +
-//								"but the decoder was configured to " +
-//								"not use sentence specific grammars. " +
-//								"These two options are incompatible.");
-//						System.exit(-1);
-//					}
+					
+
+					} catch (Exception e) {
+						IOException ioe = new IOException("Error reading suffix array grammar.");
+						ioe.initCause(e);
+						throw ioe;
+					}
 
 				} else {
 
@@ -311,17 +296,12 @@ public class JoshuaDecoder {
 				throw new RuntimeException("No translation grammar or suffix array grammar was specified.");
 			}
 			
-			
 						
 			// Sort the TM grammars (needed to do cube pruning)
-			//
-			// NOTE: this only sorts Batch grammars - 
-			//       sentence-specific grammars will be sorted later
 			for (GrammarFactory grammarFactory : this.grammarFactories) {
 				if (grammarFactory instanceof Grammar) {
 					Grammar batchGrammar = (Grammar) grammarFactory;
 					batchGrammar.sortGrammar(this.featureFunctions);
-					//System.out.println("Grammar is sortred " + batchGrammar.isSorted());
 				}
 			}
 			
@@ -363,7 +343,7 @@ public class JoshuaDecoder {
 			}
 		} else {
 			if (null == existingSymbols) {
-				this.symbolTable = new BuildinSymbol(null);
+				this.symbolTable = new Vocabulary();//new BuildinSymbol(null);
 			} else {
 				this.symbolTable = existingSymbols;
 			}
@@ -412,9 +392,17 @@ public class JoshuaDecoder {
 					JoshuaConfiguration.g_lm_order,
 					JoshuaConfiguration.lm_file);
 		} else {
+			
+//			logger.info("Reading language model from " + JoshuaConfiguration.lm_file + " into internal trie");
+//			this.languageModel = new TrieLM(
+//					new ArpaFile(
+//							JoshuaConfiguration.lm_file,
+//							this.symbolTable
+//					));
+			
 			// using the built-in JAVA implementation of LM, may not be as scalable as SRILM
 			this.languageModel = new LMGrammarJAVA(
-				(BuildinSymbol)this.symbolTable,
+				this.symbolTable,
 				JoshuaConfiguration.g_lm_order,
 				JoshuaConfiguration.lm_file,
 				JoshuaConfiguration.use_left_equivalent_state,
@@ -457,7 +445,7 @@ public class JoshuaDecoder {
 	}
 	
 	
-	private ParallelCorpusGrammarFactory getParallelCorpus()
+	private ParallelCorpusGrammarFactory getParallelCorpus(String configFile)
 	throws IOException, ClassNotFoundException {
 		
 		int maxCacheSize = JoshuaConfiguration.sa_rule_cache_size;
@@ -465,57 +453,52 @@ public class JoshuaDecoder {
 		String binaryVocabFileName =
 			JoshuaConfiguration.tm_file + 
 			File.separator + "common.vocab";
-//			JoshuaConfiguration.sa_source + "." +
-//			JoshuaConfiguration.sa_vocab_suffix;
 		
 		String binarySourceCorpusFileName =
 			JoshuaConfiguration.tm_file + 
 			File.separator + "source.corpus";
-//			JoshuaConfiguration.sa_source + "." +
-//			JoshuaConfiguration.sa_corpus_suffix;
 		
 		String binarySourceSuffixesFileName =
 			JoshuaConfiguration.tm_file + 
 			File.separator + "source.suffixes";
-//			JoshuaConfiguration.sa_target + "." +
-//			JoshuaConfiguration.sa_suffixes_suffix;
-		
-		
-//		String binaryTargetVocabFileName =
-//			JoshuaConfiguration.sa_target + "." +
-//			JoshuaConfiguration.sa_vocab_suffix;
 		
 		String binaryTargetCorpusFileName =
 			JoshuaConfiguration.tm_file + 
 			File.separator + "target.corpus";
-//			JoshuaConfiguration.sa_target + "." +
-//			JoshuaConfiguration.sa_corpus_suffix;
 		
-//		String binaryTargetSuffixesFileName =
-//			JoshuaConfiguration.tm_file + 
-//			File.separator + "target.suffixes";
-//			JoshuaConfiguration.sa_target + "." +
-//			JoshuaConfiguration.sa_suffixes_suffix;
-		
-		
-		if (logger.isLoggable(Level.INFO))
-			logger.info("Reading common vocabulary from " + 
-					binaryVocabFileName);
-		Vocabulary commonVocab = new Vocabulary();
-		commonVocab.readExternal(
-			BinaryIn.vocabulary(binaryVocabFileName));
-		
-		// Initialize symbol table using suffix array's vocab
-		this.initializeSymbolTable(commonVocab);
-		
+		{	// Load the symbol table from disk
+			// Keep this code in its own block
+			//      to ensure that this symbol table is not
+			//      accidentally used anywhere.
+			
+			if (logger.isLoggable(Level.INFO))
+				logger.info("Reading common vocabulary from " + 
+						binaryVocabFileName);
+			Vocabulary commonVocab = new Vocabulary();
+			commonVocab.readExternal(
+					BinaryIn.vocabulary(binaryVocabFileName));
+
+			// Initialize symbol table using suffix array's vocab
+			this.initializeSymbolTable(commonVocab);
+		}
+
 		initializeGlueGrammar();
+		
+		// Needs: symbolTable; Sets: languageModel
+		if (JoshuaConfiguration.have_lm_model) initializeLanguageModel();
+
+		// Initialize the features: requires that
+		// LM model has been initialized. If an LM
+		// feature is used, need to read config file
+		// again
+		this.initializeFeatureFunctions(configFile);
 		
 		if (logger.isLoggable(Level.INFO))
 			logger.info("Reading source language corpus from " +
 				binarySourceCorpusFileName);
 		Corpus sourceCorpusArray =
 			new MemoryMappedCorpusArray(
-				commonVocab, binarySourceCorpusFileName);
+				this.symbolTable, binarySourceCorpusFileName);
 		
 		
 		if (logger.isLoggable(Level.INFO))
@@ -526,38 +509,18 @@ public class JoshuaDecoder {
 					binarySourceSuffixesFileName,
 					sourceCorpusArray,
 					maxCacheSize);
-		
-		
-//		if (logger.isLoggable(Level.INFO))
-//			logger.info("Reading target language vocabulary from " +
-//				binarySourceVocabFileName);
-//		Vocabulary targetVocab = new Vocabulary();
-//		sourceVocab.readExternal(
-//			BinaryIn.vocabulary(binaryTargetVocabFileName));
-//		
-		
+	
 		if (logger.isLoggable(Level.INFO))
 			logger.info("Reading target language corpus from " +
 				binaryTargetCorpusFileName);
 		Corpus targetCorpusArray =
 			new MemoryMappedCorpusArray(
-				commonVocab, binaryTargetCorpusFileName);
-		
-		
-//		if (logger.isLoggable(Level.INFO))
-//			logger.info("Reading target language suffix array from " +
-//				binaryTargetSuffixesFileName);
-//		Suffixes targetSuffixArray =
-//			new MemoryMappedSuffixArray(
-//					binaryTargetSuffixesFileName,
-//					targetCorpusArray,
-//					maxCacheSize);
+				this.symbolTable, binaryTargetCorpusFileName);
 		
 		
 		String binaryAlignmentFileName = 
 			JoshuaConfiguration.tm_file + 
 			File.separator + "alignment.grids";
-//			JoshuaConfiguration.sa_alignment;
 		if (logger.isLoggable(Level.INFO))
 			logger.info("Reading alignment grid data from " +
 				binaryAlignmentFileName);
@@ -572,6 +535,7 @@ public class JoshuaDecoder {
 				sourceSuffixArray,
 				targetCorpusArray,
 				alignments,
+				this.featureFunctions,
 				JoshuaConfiguration.sa_rule_sample_size,
 				JoshuaConfiguration.sa_max_phrase_span,
 				JoshuaConfiguration.sa_max_phrase_length,

@@ -26,6 +26,7 @@ import java.util.Map;
 
 import joshua.corpus.vocab.SymbolTable;
 import joshua.corpus.vocab.Vocabulary;
+import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.ff.lm.buildin_lm.TrieLM;
 
 import org.testng.Assert;
@@ -180,6 +181,10 @@ public class ArpaFileTest {
 		Assert.assertEquals(lm.ngramLogProbability(vocab.getIDs("potato")),-9.753210, 0.000001f);
 		Assert.assertEquals(lm.ngramLogProbability(vocab.getIDs("resumption")),-4.678545, 0.000001f);
 		Assert.assertEquals(lm.ngramLogProbability(vocab.getIDs("the")),-1.712444, 0.000001f);
+		
+		// Test unigrams known to NOT be in the language model
+		Assert.assertEquals(lm.ngramLogProbability(vocab.getIDs("banana")), -JoshuaConfiguration.lm_ceiling_cost, 0.000001f);
+		
 		
 		// Test bigrams known to be in the language model
 		Assert.assertEquals(lm.ngramLogProbability(vocab.getIDs("because of")), -0.3552987, 0.000001f);

@@ -55,6 +55,10 @@ public abstract class AbstractLM extends DefaultNGramLanguageModel {
 		if (ngram.length > order) {
 			throw new RuntimeException("ngram length is greather than the max order");
 		}
+//		if (ngram.length==1 && "we".equals(symbolTable.getWord(ngram[0]))) {
+//			System.err.println("Something weird is about to happen");
+//		}
+		
 		int historySize = ngram.length - 1;
 		if (historySize >= order || historySize < 0) {
 			// BUG: use logger or exception. Don't zero default

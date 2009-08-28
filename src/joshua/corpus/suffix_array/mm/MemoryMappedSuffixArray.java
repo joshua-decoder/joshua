@@ -36,6 +36,11 @@ public class MemoryMappedSuffixArray extends AbstractSuffixArray {
 	private final IntBuffer binarySuffixBuffer;
 	private final int size;
 
+	
+	public MemoryMappedSuffixArray(String suffixesFileName, Corpus corpus) throws IOException, ClassNotFoundException {
+		this(suffixesFileName, corpus, Cache.DEFAULT_CAPACITY);
+	}
+	
 	/** 
 	 * Constructs a suffix array from an on-disk memory-mapped
 	 * representation and an existing Corpus.

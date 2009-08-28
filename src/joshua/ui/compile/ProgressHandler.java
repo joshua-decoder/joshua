@@ -1,0 +1,63 @@
+/* This file is part of the Joshua Machine Translation System.
+ * 
+ * Joshua is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1
+ * of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free
+ * Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
+ */
+package joshua.ui.compile;
+
+import java.io.IOException;
+import java.io.StringWriter;
+import java.util.logging.Handler;
+import java.util.logging.LogRecord;
+
+/**
+ *
+ *
+ * @author Lane Schwartz
+ */
+public class ProgressHandler extends Handler {
+
+	StringWriter s = new StringWriter();
+	
+	/* (non-Javadoc)
+	 * @see java.util.logging.Handler#close()
+	 */
+	@Override
+	public void close() throws SecurityException {
+		try {
+			s.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+	/* (non-Javadoc)
+	 * @see java.util.logging.Handler#flush()
+	 */
+	@Override
+	public void flush() {
+		s.flush();
+	}
+
+	/* (non-Javadoc)
+	 * @see java.util.logging.Handler#publish(java.util.logging.LogRecord)
+	 */
+	@Override
+	public void publish(LogRecord record) {
+		s.write(record.getMessage());
+	}
+
+}

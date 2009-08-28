@@ -62,7 +62,7 @@ public class PrefixTreeTest {
 		himF = vocab.addTerminal("himF");
 		andF = vocab.addTerminal("andF");
 		disheartensF = vocab.addTerminal("disheartensF");
-		vocab.fixVocabulary();
+//		vocab.fixVocabulary();
 		
 //		String testSentence = "it persuades him and it disheartens him";
 		// create the suffix array...
@@ -90,7 +90,7 @@ public class PrefixTreeTest {
 		
 		CorpusArray sourceCorpus = new CorpusArray(sentence, sentenceStartPositions, vocab);
 		SuffixArray sourceSuffixes = new SuffixArray(sourceCorpus);
-		ParallelCorpusGrammarFactory parallelCorpus = new ParallelCorpusGrammarFactory(sourceSuffixes, targetCorpus, alignments, Integer.MAX_VALUE, maxPhraseSpan, maxPhraseLength, maxNonterminals, 2, Float.MIN_VALUE);
+		ParallelCorpusGrammarFactory parallelCorpus = new ParallelCorpusGrammarFactory(sourceSuffixes, targetCorpus, alignments, null, Integer.MAX_VALUE, maxPhraseSpan, maxPhraseLength, maxNonterminals, 2, Float.MIN_VALUE);
 		
 //		tree = new PrefixTree(vocab, maxPhraseSpan, maxPhraseLength, maxNonterminals);
 		tree = new PrefixTree(parallelCorpus);

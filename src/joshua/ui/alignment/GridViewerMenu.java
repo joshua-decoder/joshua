@@ -31,21 +31,32 @@ import javax.swing.KeyStroke;
  */
 public class GridViewerMenu extends JMenuBar {
 
+	public static final String fileMenuName = "File";
+	public static final String openMenuItemName = "Open...";
+	public static final String printMenuItemName = "Print...";
+	public static final String exitMenuItemName = "Exit";
+	
 	public GridViewerMenu(final GridViewer frame) {
 
 		// Add File menu...
-		JMenu fileMenu = new JMenu("File");
+		JMenu fileMenu = new JMenu(fileMenuName);
 		this.add(fileMenu);
-
+		
+		// Add Open menu item
+		JMenuItem openMenuItem = new JMenuItem(openMenuItemName);
+		openMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, java.awt.Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+		openMenuItem.addActionListener(frame);
+		fileMenu.add(openMenuItem);
+		
 		// Add Print menu item
-		JMenuItem printMenuItem = new JMenuItem("Print");
+		JMenuItem printMenuItem = new JMenuItem(printMenuItemName);
 		printMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_P, java.awt.Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
 		printMenuItem.addActionListener(frame);
 		fileMenu.add(printMenuItem);
 		
 		// Add Exit menu item, if not on Mac OS
 		if (! isMac()) {
-			JMenuItem exitMenuItem = new JMenuItem("Exit");
+			JMenuItem exitMenuItem = new JMenuItem(exitMenuItemName);
 			exitMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q, java.awt.Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
 			exitMenuItem.addActionListener(frame);
 			fileMenu.add(exitMenuItem);

@@ -62,7 +62,7 @@ public class VocabularyWriter {
 		// Create a vocabulary object from using the SRILM integer mappings
 		Scanner scanner = new Scanner(tmpFile);
 		Vocabulary vocab = Vocabulary.getVocabFromSRILM(scanner);
-		vocab.fixVocabulary();
+//		vocab.fixVocabulary();
 		
 		
 		// Write the vocabulary to disk in binary format

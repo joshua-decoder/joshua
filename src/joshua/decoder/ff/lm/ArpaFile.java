@@ -18,7 +18,10 @@
 package joshua.decoder.ff.lm;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
@@ -26,6 +29,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.zip.GZIPInputStream;
 
 import joshua.corpus.vocab.SymbolTable;
 import joshua.corpus.vocab.Vocabulary;
@@ -212,7 +216,15 @@ public class ArpaFile implements Iterable<ArpaNgram> {
 	public Iterator<ArpaNgram> iterator() {
 
 		try {
-			final Scanner scanner = new Scanner(arpaFile);
+			final Scanner scanner;
+			
+			if (arpaFile.getName().endsWith("gz")) {
+				InputStream in = new GZIPInputStream(
+						new FileInputStream(arpaFile));
+				scanner = new Scanner(in);
+			} else {
+				scanner = new Scanner(arpaFile);
+			}
 			
 			// Eat initial header lines
 			while (scanner.hasNextLine()) {
@@ -297,6 +309,9 @@ public class ArpaFile implements Iterable<ArpaNgram> {
 				
 			};
 		} catch (FileNotFoundException e) {
+			logger.severe(e.toString());
+			return null;
+		} catch (IOException e) {
 			logger.severe(e.toString());
 			return null;
 		}

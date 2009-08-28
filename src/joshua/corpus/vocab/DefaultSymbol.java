@@ -44,8 +44,7 @@ import java.util.logging.Logger;
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate$
  */
-public abstract class DefaultSymbol
-extends AbstractSymbolTable implements SymbolTable {
+public abstract class DefaultSymbol extends AbstractSymbolTable {
 	
 	public boolean is_reading_from_file = false;
 	
@@ -92,7 +91,7 @@ extends AbstractSymbolTable implements SymbolTable {
 	final public String getNonterminal(int id) {
 		String res = this.id2string.get(id);
 		if (null == res) {
-			throw new RuntimeException("try to query the string for non exist id, must exit");
+			throw new RuntimeException("try to query the string for non exist id " + id + ", must exit");
 		}
 		return res;
 	}

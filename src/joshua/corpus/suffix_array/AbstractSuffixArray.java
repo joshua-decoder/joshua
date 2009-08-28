@@ -105,6 +105,82 @@ public abstract class AbstractSuffixArray implements Suffixes {
 		return this.ruleCache;
 	}
 	
+	public MatchedHierarchicalPhrases createHierarchicalPhrases(Pattern pattern, int minNonterminalSpan, int maxPhraseSpan) {
+		
+		if (hierarchicalPhraseCache.containsKey(pattern)) {
+			return hierarchicalPhraseCache.get(pattern);
+		} else {
+
+			int arity = pattern.arity();
+			int size = pattern.size();
+			int[] patternTokens = pattern.getWordIDs();
+			
+			SymbolTable vocab = corpus.getVocabulary();
+			
+			if (arity==0) {
+				int[] bounds = this.findPhrase(pattern, 0, pattern.size(), 0, this.size());
+				int[] startPositions = this.getAllPositions(bounds);
+				MatchedHierarchicalPhrases result = this.createHierarchicalPhrases(startPositions, pattern, vocab);
+				return result;
+			} else if (arity==size) {
+				int[] startPositions = new int[]{};
+				MatchedHierarchicalPhrases result = this.createHierarchicalPhrases(startPositions, pattern, vocab);
+				return result;
+			} else if (arity==1 && pattern.startsWithNonterminal()) {
+				int[] terminals = new int[size-1];
+				for (int i=1; i<size; i++) {
+					terminals[i-1] = patternTokens[i];
+				}
+				Pattern terminalsPattern = new Pattern(vocab, terminals);
+				MatchedHierarchicalPhrases terminalsMatch = this.createHierarchicalPhrases(terminalsPattern, minNonterminalSpan, maxPhraseSpan);
+				MatchedHierarchicalPhrases result = terminalsMatch.copyWithInitialX();
+				hierarchicalPhraseCache.put(pattern, result);
+				return result;
+			} else if (arity==1 && pattern.endsWithNonterminal()) {
+				int[] terminals = new int[size-1];
+				for (int i=0, n=size-1; i<n; i++) {
+					terminals[i] = patternTokens[i];
+				}
+				Pattern terminalsPattern = new Pattern(vocab, terminals);
+				MatchedHierarchicalPhrases terminalsMatch = this.createHierarchicalPhrases(terminalsPattern, minNonterminalSpan, maxPhraseSpan);
+				MatchedHierarchicalPhrases result = terminalsMatch.copyWithFinalX();
+				hierarchicalPhraseCache.put(pattern, result);
+				return result;
+//				int[] bounds = this.findPhrase(pattern, 0, size, 0, this.size());
+//				int[] startPositions = this.getAllPositions(bounds);
+////				Pattern patternX = new Pattern(pattern, PrefixTree.X);
+//				MatchedHierarchicalPhrases result = this.createHierarchicalPhrases(startPositions, pattern, vocab);
+//				return result;
+			}  else {
+				
+				int[] prefixTokens = new int[patternTokens.length - 1];
+				for (int i=0, n=patternTokens.length-1; i<n; i++) {
+					prefixTokens[i] = patternTokens[i];
+				}
+				
+				int[] suffixTokens = new int[patternTokens.length - 1];
+				for (int i=1, n=patternTokens.length; i<n; i++) {
+					suffixTokens[i-1] = patternTokens[i];
+				}
+				
+				Pattern prefix = new Pattern(vocab, prefixTokens);
+				Pattern suffix = new Pattern(vocab, suffixTokens);
+				
+				MatchedHierarchicalPhrases prefixMatches = createHierarchicalPhrases(prefix, minNonterminalSpan, maxPhraseSpan);
+				MatchedHierarchicalPhrases suffixMatches = createHierarchicalPhrases(suffix, minNonterminalSpan, maxPhraseSpan);
+				
+				MatchedHierarchicalPhrases result = 
+					HierarchicalPhrases.queryIntersect(
+							pattern, prefixMatches, suffixMatches, 
+							minNonterminalSpan, maxPhraseSpan, this);
+			
+				hierarchicalPhraseCache.put(pattern, result);
+				return result;
+			}
+		}
+		
+	}
+	
 	/* See Javadoc for Suffixes interface.*/
 	public MatchedHierarchicalPhrases createHierarchicalPhrases(int[] startPositions,
 			Pattern pattern, SymbolTable vocab) {

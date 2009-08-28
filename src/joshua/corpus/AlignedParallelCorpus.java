@@ -25,22 +25,47 @@ import joshua.corpus.alignment.Alignments;
  * @author Lane Schwartz
  */
 public class AlignedParallelCorpus implements ParallelCorpus {
-
+	
+	/** Source language corpus. */
 	protected final Corpus sourceCorpus;
+	
+	/** Target language corpus. */
 	protected final Corpus targetCorpus;
+	
+	/** Source-target word alignments. */
 	protected final Alignments alignments;
 
+	/**
+	 * Constructs an aligned parallel corpus from
+	 * a source language corpus, a target language corpus,
+	 * and source to target word alignments.
+	 * 
+	 * @param sourceCorpus Source language corpus
+	 * @param targetCorpus Target language corpus
+	 * @param alignments Source-target word alignments
+	 */
 	public AlignedParallelCorpus(Corpus sourceCorpus, Corpus targetCorpus, Alignments alignments) {
 		this.sourceCorpus = sourceCorpus;
 		this.targetCorpus = targetCorpus;
 		this.alignments = alignments;
 	}
 	
+	/**
+	 * Gets the source-target word alignments.
+	 * 
+	 * @return Source-target word alignments
+	 */
 	public Alignments getAlignments() {
 		return this.alignments;
 	}
 
-
+	/**
+	 * Gets the number of aligned sentences
+	 * in this parallel corpus.
+	 * 
+	 * @return The number of aligned sentences
+	 *         in this parallel corpus
+	 */
 	public int getNumSentences() {
 		if (alignments==null) {
 			return 0;
@@ -49,12 +74,20 @@ public class AlignedParallelCorpus implements ParallelCorpus {
 		}
 	}
 
-
+	/**
+	 * Gets the source language corpus.
+	 * 
+	 * @return The source language corpus
+	 */
 	public Corpus getSourceCorpus() {
 		return this.sourceCorpus;
 	}
 
-
+	/**
+	 * Gets the target language corpus.
+	 * 
+	 * @return The target language corpus
+	 */
 	public Corpus getTargetCorpus() {
 		return this.targetCorpus;
 	}

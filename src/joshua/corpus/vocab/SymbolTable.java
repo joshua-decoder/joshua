@@ -29,6 +29,8 @@ import java.util.Collection;
  */
 public interface SymbolTable {
 
+	//TODO Remove all hard-coded references to nonterminals
+	
 	/**
 	 * The unknown word's ID will be the size of the vocabulary,
 	 * ensuring that it is outside of the vocabulary. Note that
@@ -43,10 +45,10 @@ public interface SymbolTable {
 	 *
 	 * Zero is reserved as the UNKNOWN_WORD.
 	 */
-	int UNKNOWN_WORD = 0;
+	int UNKNOWN_WORD = 1;
 	
 	/** String representation for out-of-vocabulary words. */
-	String UNKNOWN_WORD_STRING = "UNK";
+	String UNKNOWN_WORD_STRING = "<unk>";
 	
 	/**
 	 * Integer representation of the bare (non-indexed) nonterminal X,
@@ -60,7 +62,7 @@ public interface SymbolTable {
 	 * String representation of the bare (non-indexed) nonterminal X,
 	 * which represents a wild-card gap in a phrase.
 	 */
-	String X_STRING = "X";
+	String X_STRING = "[X]";
 	
 	/**
 	 * Integer representation of the nonterminal X with index 1,
@@ -89,6 +91,32 @@ public interface SymbolTable {
 	 * which represents a wild-card gap in a phrase.
 	 */
 	String X2_STRING = "[X,2]";	
+	
+	/**
+	 * Integer representation of the nonterminal S.
+	 * <p>
+	 * All nonterminals are guaranteed to be represented by negative integers.
+	 */
+	int S = -4;
+	
+	/**
+	 * String representation of the nonterminal S..
+	 */
+	String S_STRING = "[S]";	
+	
+	/**
+	 * Integer representation of the nonterminal X with index 1,
+	 * which represents a wild-card gap in a phrase.
+	 * <p>
+	 * All nonterminals are guaranteed to be represented by negative integers.
+	 */
+	int S1 = -5;
+	
+	/**
+	 * String representation of the nonterminal X with index 2,
+	 * which represents a wild-card gap in a phrase.
+	 */
+	String S1_STRING = "[S,1]";	
 	
 	/**
 	 * Gets a unique integer identifier for the nonterminal.

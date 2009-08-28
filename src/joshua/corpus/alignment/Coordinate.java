@@ -33,7 +33,7 @@ public class Coordinate implements Comparable<Coordinate> {
 	 * The scope of this field is package-private so that it
 	 * can be efficiently accessed by {@link AlignmentGrid}
 	 */
-	int	x;
+	final int x;
 	
 	/**
 	 * Y value of the coordinate.
@@ -41,7 +41,7 @@ public class Coordinate implements Comparable<Coordinate> {
 	 * The scope of this field is package-private so that it
 	 * can be efficiently accessed by {@link AlignmentGrid}
 	 */
-	int	y;
+	final int y;
 
 	/**
 	 * Constructs a coordinate with the specified x and y values.
@@ -65,16 +65,6 @@ public class Coordinate implements Comparable<Coordinate> {
 		String points[] = coordinate.split("\\.|-");
 		this.x = Integer.parseInt(points[0]);
 		this.y = Integer.parseInt(points[1]);
-	}
-
-	/**
-	 * Switches the X and Y values. Useful when "rotating" a
-	 * grid.
-	 */
-	public void transpose() {
-		int oldX = this.x;
-		this.x = this.y;
-		this.y = oldX;
 	}
 
 	/**

@@ -28,6 +28,7 @@ import javax.swing.JPanel;
 
 import joshua.corpus.Corpus;
 import joshua.corpus.alignment.Alignments;
+import joshua.prefix_tree.PrefixTree;
 
 /**
  * Presents a visual display of an alignment grid for one aligned
@@ -65,7 +66,9 @@ public class GridPanel extends JPanel {
 	/** 
 	 * Represents the breadth and height of a cell when printed.
 	 */
-	private int printerScaleFactor = 10;
+	private int printerScaleFactor = 25;
+	
+	private final PrefixTree prefixTree;
 	
 	/**
 	 * Constructs a panel to display an aligned sentence pair.
@@ -75,12 +78,13 @@ public class GridPanel extends JPanel {
 	 * @param alignments Sentence alignments for the parallel corpus
 	 * @param sentenceNumber Index of the sentence to display (0-based index)
 	 */
-	public GridPanel(Corpus sourceCorpus, Corpus targetCorpus, Alignments alignments, int sentenceNumber) {
+	public GridPanel(Corpus sourceCorpus, Corpus targetCorpus, Alignments alignments, int sentenceNumber, PrefixTree prefixTree) {
 		this.sourceCorpus = sourceCorpus;
 		this.targetCorpus = targetCorpus;
 		this.alignments = alignments;
 		this.numSentences = alignments.size();
-		
+		this.prefixTree = prefixTree;
+		prefixTree.setPrintStream(System.out);
 		this.setSentenceNumber(sentenceNumber);
 	}
 		
@@ -106,6 +110,12 @@ public class GridPanel extends JPanel {
 				
 		preferredSize = new Dimension(preferredWidth, preferredHeight);
 		
+		String[] sourceWords = this.getSourceWords();
+		int[] sourceIDs = new int[sourceWords.length];
+		for (int i=0, n=sourceIDs.length; i<n; i++) {
+			sourceIDs[i] = sourceCorpus.getVocabulary().getID(sourceWords[i]);
+		}
+		prefixTree.add(sourceIDs);
 	}
 	
 	/* See Javadoc for javax.swing.JComponent#getPreferredSize */

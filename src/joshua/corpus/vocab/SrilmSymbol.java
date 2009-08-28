@@ -19,9 +19,11 @@ package joshua.corpus.vocab;
 
 import joshua.decoder.ff.lm.srilm.SWIGTYPE_p_Ngram;
 import joshua.decoder.ff.lm.srilm.srilm;
+import joshua.decoder.ff.tm.hiero.HieroFormatReader;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -49,6 +51,8 @@ public class SrilmSymbol extends DefaultSymbol {
 		addNonterminal(X_STRING);
 		addNonterminal(X1_STRING);
 		addNonterminal(X2_STRING);
+		addNonterminal(S_STRING);
+		addNonterminal(S1_STRING);
 	}
 	
 	
@@ -87,25 +91,87 @@ public class SrilmSymbol extends DefaultSymbol {
 		int vocabLow = vocab.getLowestID();
 		int vocabHigh = vocab.getHighestID();
 		
-		int start = vocabLow - 1;
+		if (logger.isLoggable(Level.FINEST)) logger.finest("In existing symbol table, lowestID=="+vocabLow+ " and highestID=="+vocabHigh);
+		
+		int start = 1;//(vocabLow>0) ? vocabLow - 1 : -4;
 		int end = lm_end_sym_id - lm_start_sym_id;
 		
 		System.loadLibrary("srilm"); //load once		
 		this.p_srilm = srilm.initLM(lm_order, start, end);
 		
+//		if (logger.isLoggable(Level.FINEST)) {
+//			logger.fine(this.getWord(1));
+//			logger.fine(this.getWord(2));
+//			logger.fine(this.getWord(3));
+//			logger.fine(this.getWord(4));
+//		}
+		
 		// Add all symbols from the supplied symbol table, in order
-		for (int i=vocabLow; i<=vocabHigh; i++) {
+//		for (int i=vocabLow; i<=vocabHigh; i++) {
+//			String symbol = vocab.getWord(i);
+//			if (vocab.isNonterminal(i)) {
+//				int id = this.addNonterminal(symbol);
+//				logger.fine("Added symbol " + symbol + " with id " + id + "; original id was " + i + " " + this.getWord(id));
+//			} else {
+//				int id = this.addTerminal(symbol);
+//				logger.fine("Added symbol " + symbol + " with id " + id + "; original id was " + i + " " + this.getWord(id));
+//			}
+//		}
+		
+		int lowestNonNegative = (vocabLow < 0) ? 1 : vocabLow;
+		for (int i=lowestNonNegative; i<=vocabHigh; i++) {
 			
 			String symbol = vocab.getWord(i);
 			
 			if (symbol != null) {
 				if (vocab.isNonterminal(i)) {
-					this.addNonterminal(symbol);
+					int id = this.addNonterminal(symbol);
+					logger.fine("Added symbol " + symbol + " with id " + id + "; original id was " + i + " " + this.getWord(id));
+					if (id!=i || !symbol.equals(this.getWord(id))) { 
+						throw new RuntimeException("Symbol mismatch between " + id + " and " + i + " for nonterminal symbol " + symbol);
+					}
 				} else {
-					this.addTerminal(symbol);
+					int id = this.addTerminal(symbol);
+					logger.fine("Added symbol " + symbol + " with id " + id + "; original id was " + i + " " + this.getWord(id));
+					if (id!=i || !symbol.equals(this.getWord(id))) { 
+						throw new RuntimeException("Symbol mismatch between " + id + " and " + i + " for terminal symbol " + symbol);
+					}
 				}
 			}
 			
+		}
+		
+		if (vocabLow < 0) {
+			for (int i=-1; i>=vocabLow; i--) {
+				String symbol = vocab.getWord(i);
+				
+				if (symbol != null) {
+					if (vocab.isNonterminal(i)) {
+						int id = this.addNonterminal(symbol);
+						logger.fine("Added symbol " + symbol + " with id " + id + "; original id was " + i + " " + this.getWord(id));
+						if (id!=i || !symbol.equals(this.getWord(id))) { 
+							throw new RuntimeException("Symbol mismatch between " + id + " and " + i + " for nonterminal symbol " + symbol);
+						}
+					} else {
+						int id = this.addTerminal(symbol);
+						logger.fine("Added symbol " + symbol + " with id " + id + "; original id was " + i + " " + this.getWord(id));
+						if (id!=i || !symbol.equals(this.getWord(id))) { 
+							throw new RuntimeException("Symbol mismatch between " + id + " and " + i + " for terminal symbol " + symbol);
+						}
+					}
+				}
+			}
+		}
+		
+		if (logger.isLoggable(Level.FINEST)) {
+			for (int i=vocabLow+1; i<0; i++) {
+				String symbol = this.getWord(i);
+				logger.fine("ID " + i + " => " + symbol);
+			}
+			for (int i=1; i<=vocabHigh; i++) {
+				String symbol = this.getWord(i);
+				logger.fine("ID " + i + " => " + symbol);
+			}
 		}
 		
 	}
@@ -116,8 +182,13 @@ public class SrilmSymbol extends DefaultSymbol {
 	
 	 /* This will automatically add str into srilm table if it is not there
 	  * */
-	 public int addTerminal(String str){	
-		return (int)srilm.getIndexForWord(str);
+	 public int addTerminal(String str){
+//		 if (HieroFormatReader.isNonTerminal(str)) {
+//			 throw new RuntimeException("Attempting to add nonterminal " + str + " as a terminal");
+//		 }
+		 
+		 int id = (int) srilm.getIndexForWord(str); 
+		return id;
 	 }
 
 	 
@@ -137,7 +208,11 @@ public class SrilmSymbol extends DefaultSymbol {
 	}
 
 	public int getID(String wordString) {
-		return addTerminal(wordString);
+		 if (HieroFormatReader.isNonTerminal(wordString)) {
+			 return addNonterminal(wordString);
+		 } else {
+			 return addTerminal(wordString);
+		 }
 	}
 
 }

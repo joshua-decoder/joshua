@@ -20,11 +20,13 @@ package joshua.corpus.suffix_array;
 import java.io.IOException;
 
 import joshua.corpus.CorpusArray;
+import joshua.corpus.MatchedHierarchicalPhrases;
 import joshua.corpus.Phrase;
 import joshua.corpus.suffix_array.BasicPhrase;
 import joshua.corpus.suffix_array.SuffixArray;
 import joshua.corpus.suffix_array.Suffixes;
 import joshua.corpus.suffix_array.mm.MemoryMappedSuffixArray;
+import joshua.corpus.vocab.SymbolTable;
 import joshua.corpus.vocab.Vocabulary;
 
 
@@ -32,8 +34,11 @@ import org.testng.Assert;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-
-
+/**
+ * Unit tests for suffix array.
+ *
+ * @author Lane Schwartz
+ */
 public class SuffixArrayTest {
 
 	private final Suffixes suffixArray;
@@ -41,13 +46,12 @@ public class SuffixArrayTest {
 	
 	@Parameters({"binaryFileName"})
 	public SuffixArrayTest(String binaryFileName) throws IOException, ClassNotFoundException {
+		
 		// Adam Lopez's example...
 		String corpusString = "it makes him and it mars him , it sets him on and it takes him off .";
 
 		vocab = new Vocabulary();
 		Phrase exampleSentence = new BasicPhrase(corpusString, vocab);
-		vocab.alphabetize();
-		vocab.fixVocabulary();
 		
 		exampleSentence = new BasicPhrase(corpusString, vocab);
 		int[] sentences = new int[1];
@@ -66,6 +70,70 @@ public class SuffixArrayTest {
 		
 	}
 	
+	
+	@Test
+	public void findTriviallyHieroPhrase() {
+		Assert.assertNotNull(vocab);
+		Assert.assertNotNull(suffixArray);
+		
+		Pattern pattern = new Pattern(vocab, vocab.getID("it"), vocab.getID("makes"), vocab.getID("him"));
+		Assert.assertEquals(pattern.arity(), 0);
+		Assert.assertEquals(pattern.size(), 3);
+		
+		int minNonterminalSpan = 2;
+		int maxPhraseSpan = 5;
+		
+		MatchedHierarchicalPhrases matches = 
+			suffixArray.createHierarchicalPhrases(pattern, minNonterminalSpan, maxPhraseSpan);
+		
+		Assert.assertNotNull(matches);
+		Assert.assertEquals(matches.getPattern(), pattern);
+		Assert.assertEquals(matches.arity(), 0);
+		Assert.assertEquals(matches.size(), 1);
+	}
+	
+	@Test(dependsOnMethods={"findTriviallyHieroPhrase"})
+	public void findHieroPhrase() {
+		
+		Assert.assertNotNull(vocab);
+		Assert.assertNotNull(suffixArray);
+		
+		{
+			Pattern pattern = new Pattern(vocab, vocab.getID("it"), vocab.getID(SymbolTable.X_STRING));
+			Assert.assertEquals(pattern.arity(), 1);
+			Assert.assertEquals(pattern.size(), 2);
+			
+			int minNonterminalSpan = 2;
+			int maxPhraseSpan = 5;
+
+			MatchedHierarchicalPhrases matches = 
+				suffixArray.createHierarchicalPhrases(pattern, minNonterminalSpan, maxPhraseSpan);
+
+			Assert.assertNotNull(matches);
+			Assert.assertEquals(matches.getPattern(), pattern);
+			Assert.assertEquals(matches.arity(), 1);
+			Assert.assertEquals(matches.size(), 4);
+		}
+		
+		{
+			Pattern pattern = new Pattern(vocab, vocab.getID("it"), vocab.getID(SymbolTable.X_STRING), vocab.getID("and"));
+			Assert.assertEquals(pattern.arity(), 1);
+			Assert.assertEquals(pattern.size(), 3);
+
+			int minNonterminalSpan = 2;
+			int maxPhraseSpan = 5;
+
+			MatchedHierarchicalPhrases matches = 
+				suffixArray.createHierarchicalPhrases(pattern, minNonterminalSpan, maxPhraseSpan);
+
+			Assert.assertNotNull(matches);
+			Assert.assertEquals(matches.getPattern(), pattern);
+			Assert.assertEquals(matches.arity(), 1);
+			Assert.assertEquals(matches.size(), 2);
+		}
+	}
+	
+	
 	@Test
 	public void findPhrase() {
 		
@@ -74,8 +142,8 @@ public class SuffixArrayTest {
 		Phrase phrase = new BasicPhrase("it makes him", vocab);
 		int[] bounds = suffixArray.findPhrase(phrase);
 		
-		int expectedSuffixArrayStartIndex = 8;
-		int expectedSuffixArrayEndIndex = 8;
+		int expectedSuffixArrayStartIndex = 0;
+		int expectedSuffixArrayEndIndex = 0;
 		
 		Assert.assertEquals(bounds.length, 2);
 		Assert.assertEquals(bounds[0], expectedSuffixArrayStartIndex);
@@ -87,61 +155,12 @@ public class SuffixArrayTest {
 		phrase = new BasicPhrase("and it", vocab);
 		bounds = suffixArray.findPhrase(phrase);
 		
-		expectedSuffixArrayStartIndex = 2;
-		expectedSuffixArrayEndIndex = 3;
+		expectedSuffixArrayStartIndex = 9;
+		expectedSuffixArrayEndIndex = 10;
 		
 		Assert.assertEquals(bounds.length, 2);
 		Assert.assertEquals(bounds[0], expectedSuffixArrayStartIndex);
 		Assert.assertEquals(bounds[1], expectedSuffixArrayEndIndex);
 	}
-	
-//	//@Test
-//	public void print() {
-//		
-//		int[] lcpArray = suffixArray.calculateLongestCommonPrefixes();
-//		
-//		System.out.println("I\tS[I]\tLCP\tSUFFIX");
-//		for(int i = 0; i < suffixArray.size(); i++) {
-//			Phrase phrase = new ContiguousPhrase(suffixArray.suffixes[i], suffixArray.size(), suffixArray.corpus);
-//			System.out.println(i + "\t" + suffixArray.suffixes[i] + "\t" + lcpArray[i] + "\t"+ phrase);
-//		}
-//		System.out.println();
-//		
-//		//ArrayList<Phrase> phrases = new ArrayList<Phrase>();
-//		ArrayList<Integer> frequencies = new ArrayList<Integer>();
-//		int minFrequency = 1;
-//		int maxPhrasesToRetain = 100;
-//		int maxPhraseLength = 100;
-//		List<Phrase> phrases = suffixArray.getMostFrequentPhrases(frequencies, minFrequency, maxPhrasesToRetain, maxPhraseLength);
-//		
-//		System.out.println("Frequency\tphrase");
-//		for(int i = 0; i < phrases.size(); i++) {
-//			System.out.println(frequencies.get(i) + "\t" + phrases.get(i));
-//		}
-//		System.out.println();
-//		
-//		
-//		System.out.println("Collocations");
-//		Collocations collocations = suffixArray.getCollocations(new HashSet<Phrase>(phrases), maxPhraseLength, 100);
-//		System.out.println(collocations);	
-//		
-//		Phrase phrase1 = new BasicPhrase("him", vocab);
-//		Phrase phrase2 = new BasicPhrase("it", vocab);
-//		
-//		int[] positions1 = suffixArray.getAllPositions(suffixArray.findPhrase(phrase1));
-//		int[] positions2 = suffixArray.getAllPositions(suffixArray.findPhrase(phrase2));
-//		
-//		System.out.print(phrase1 + " occurred at positions: ");
-//		for(int i = 0; i < positions1.length; i++) {
-//			System.out.print(positions1[i] + " ");
-//		}
-//		System.out.println();
-//		
-//		System.out.print(phrase2 + " occurred at positions: ");
-//		for(int i = 0; i < positions2.length; i++) {
-//			System.out.print(positions2[i] + " ");
-//		}
-//		System.out.println();
-//
-//	}
+
 }

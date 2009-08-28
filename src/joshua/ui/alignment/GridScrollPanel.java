@@ -122,7 +122,7 @@ public class GridScrollPanel extends JScrollPane implements Printable {
 
 		String[] sourceWords = gridPanel.getSourceWords();
 		String[] targetWords = gridPanel.getTargetWords();
-		
+	
 		columnHeader.setWords(targetWords);
 		rowHeader.setWords(sourceWords);
 		
@@ -146,6 +146,12 @@ public class GridScrollPanel extends JScrollPane implements Printable {
 		gridPanel.printAll(g);
 	}
 	
+	/* See Javadoc for java.awt.print.Printable#printBorder(Graphics) */
+	@Override
+	protected void printBorder(Graphics g) {
+		// This method intentionally left blank.
+	}
+	
 	/* See Javadoc for java.awt.print.Printable#print(Graphics,PageFormat,int) */
 	public int print(Graphics graphics, PageFormat pageFormat, int page) throws PrinterException {
 
@@ -165,7 +171,7 @@ public class GridScrollPanel extends JScrollPane implements Printable {
 	    return PAGE_EXISTS;
 		
 	}
-
+	
 	GridPanel getGridPanel() {
 		return gridPanel;
 	}

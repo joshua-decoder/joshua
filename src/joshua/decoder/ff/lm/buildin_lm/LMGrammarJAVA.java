@@ -17,7 +17,7 @@
  */
 package joshua.decoder.ff.lm.buildin_lm;
 
-import joshua.corpus.vocab.BuildinSymbol;
+import joshua.corpus.vocab.SymbolTable;
 import joshua.decoder.ff.lm.AbstractLM;
 import joshua.decoder.ff.lm.LanguageModelFF;
 import joshua.decoder.JoshuaConfiguration;
@@ -85,7 +85,7 @@ public class LMGrammarJAVA extends AbstractLM {
 	private static final Logger logger = 
 		Logger.getLogger(LMGrammarJAVA.class.getName());
 	
-	public LMGrammarJAVA(BuildinSymbol psymbol, int order, String lm_file, boolean is_add_suffix_infor, boolean is_add_prefix_infor) throws IOException {
+	public LMGrammarJAVA(SymbolTable psymbol, int order, String lm_file, boolean is_add_suffix_infor, boolean is_add_prefix_infor) throws IOException {
 		super(psymbol, order);
 		logger.info("use java lm");
 		

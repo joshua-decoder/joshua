@@ -108,4 +108,19 @@ public class Arc<Label> {
 		return label;
 	}
 	
+	@Override
+	public String toString() {
+		StringBuilder s = new StringBuilder();
+		
+		s.append(label.toString());
+		s.append("  :  ");
+		s.append(head.toString());
+		s.append(" ==> ");
+		s.append(tail.toString());
+		s.append("  :  ");
+		s.append(cost);
+		
+		return s.toString();
+	}
+	
 }

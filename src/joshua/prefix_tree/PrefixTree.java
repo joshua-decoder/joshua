@@ -59,7 +59,7 @@ public class PrefixTree {
 	 * Integer representation of the nonterminal X. 
 	 * All nonterminals are guaranteed to be represented by negative integers.
 	 */
-	public static final int X = -1;
+	public static final int X = SymbolTable.X;//-1;
 	
 	/** Operating system-specific end of line character(s). */
 	static final byte[] newline = System.getProperty("line.separator").getBytes();
@@ -275,7 +275,7 @@ public class PrefixTree {
 	 * @param maxNonterminals
 	 */
 	PrefixTree(SymbolTable vocab, int maxPhraseSpan, int maxPhraseLength, int maxNonterminals) {
-		this(new ParallelCorpusGrammarFactory((Suffixes) null, (Corpus) null, (Alignments) null, Integer.MAX_VALUE, maxPhraseSpan, maxPhraseLength, maxNonterminals, 2, Float.MIN_VALUE));
+		this(new ParallelCorpusGrammarFactory((Suffixes) null, (Corpus) null, (Alignments) null, null, Integer.MAX_VALUE, maxPhraseSpan, maxPhraseLength, maxNonterminals, 2, Float.MIN_VALUE));
 	}
 
 

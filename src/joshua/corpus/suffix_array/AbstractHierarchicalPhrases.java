@@ -518,13 +518,51 @@ public abstract class AbstractHierarchicalPhrases implements
 		return size;
 	}
 	
-	protected Pattern getPatternWithInitialX() {
+	public boolean equals(Object o) {
+		if (o instanceof AbstractHierarchicalPhrases) {
+			AbstractHierarchicalPhrases other = (AbstractHierarchicalPhrases) o;
+			
+			if (this.getPattern().equals(other.getPattern()) 
+					&& this.size()==other.size()
+					&& this.arity()==other.arity() 
+					&& this.getNumberOfTerminalSequences() == other.getNumberOfTerminalSequences()
+					&& this.endsWithNonterminal()==other.endsWithNonterminal()
+					&& this.startsWithNonterminal()==other.startsWithNonterminal()
+					&& this.endsWithTwoTerminals()==other.endsWithTwoTerminals()
+					&& this.secondTokenIsTerminal()==other.secondTokenIsTerminal()) {
+			
+				int n = getNumberOfTerminalSequences();
+				for (int i=0, size=this.size(); i<size; i++) {
+					for (int seq=0; seq<n; seq++) {
+						if (this.getStartPosition(i, seq) != other.getStartPosition(i, seq) ||
+								this.getEndPosition(i, seq) != other.getEndPosition(i, seq)) {
+							return false;
+						}
+					}
+				}
+				
+				return true;
+			} else {
+				return false;
+			}
+			
+		} else {
+			return false;
+		}
+	}
+	
+	
+	protected static Pattern getPatternWithInitialX(Pattern pattern) {
 		int[] xwords = new int[pattern.words.length+1];
 		xwords[0] = SymbolTable.X;
 		for (int i=0; i<pattern.words.length; i++) {
 			xwords[i+1] = pattern.words[i];
 		}
 		return new Pattern(pattern.vocab, xwords);
+	}
+	
+	protected Pattern getPatternWithInitialX() {
+		return getPatternWithInitialX(pattern);
 	}
 	
 	protected Pattern getPatternWithFinalX() {

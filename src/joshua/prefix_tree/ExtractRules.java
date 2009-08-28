@@ -20,6 +20,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.PrintStream;
+import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
@@ -76,7 +77,7 @@ public class ExtractRules {
 	private int cacheSize = Cache.DEFAULT_CAPACITY;
 	
 	private int maxPhraseSpan = 10;
-	private int maxPhraseLength = 5;
+	private int maxPhraseLength = 10;
 	private int maxNonterminals = 2;
 	private int minNonterminalSpan = 2;
 	
@@ -95,7 +96,14 @@ public class ExtractRules {
 	private int ruleSampleSize = 300;
 	private boolean printPrefixTree = false;
 	
+	private int maxTestSentences = Integer.MAX_VALUE;
+	private int startingSentence = 1;
+	
 	public ExtractRules() {
+	}
+	
+	public void setStartingSentence(int startingSentence) {
+		this.startingSentence = startingSentence;
 	}
 	
 	public void setMaxPhraseSpan(int maxPhraseSpan) {
@@ -116,6 +124,10 @@ public class ExtractRules {
 	
 	public void setCacheSize(int cacheSize) {
 		this.cacheSize = cacheSize;
+	}
+	
+	public void setMaxTestSentences(int maxTestSentences) {
+		this.maxTestSentences = maxTestSentences;
 	}
 	
 	public void setJoshDir(String joshDir) {
@@ -209,16 +221,8 @@ public class ExtractRules {
 	}
 	
 	
-	public void execute() throws IOException, ClassNotFoundException {
-		
-		PrintStream out;
-		if ("-".equals(this.outputFile)) {
-			out = System.out;
-			logger.info("Rules will be written to standard out");
-		} else {
-			out = new PrintStream(outputFile);
-			logger.info("Rules will be written to " + outputFile);
-		}
+	
+	public ParallelCorpusGrammarFactory getGrammarFactory() throws IOException, ClassNotFoundException {
 		
 		////////////////////////////////
 		// Source language vocabulary //
@@ -357,32 +361,63 @@ public class ExtractRules {
 		Map<Integer,String> ntVocab = new HashMap<Integer,String>();
 		ntVocab.put(SymbolTable.X, SymbolTable.X_STRING);
 
-		Scanner testFileScanner = new Scanner(new File(testFileName), encoding);
-		logger.info("Reading test sentences from " + testFileName);
+	
+		
 //		logger.info("Scanner has line == " +testFileScanner.hasNextLine());
 //		PrefixTree.SENTENCE_INITIAL_X = this.sentenceInitialX;//commandLine.getValue(sentence_initial_X);
 //		PrefixTree.SENTENCE_FINAL_X   = this.sentenceFinalX; // commandLine.getValue(sentence_final_X);
 //		
 //		PrefixTree.EDGE_X_MAY_VIOLATE_PHRASE_SPAN = this.edgeXViolates; //commandLine.getValue(edge_X_violates);
 		
-		int lineNumber = 0;
 
 //		RuleExtractor ruleExtractor = new HierarchicalRuleExtractor(sourceSuffixArray, targetCorpusArray, alignments, lexProbs, ruleSampleSize, maxPhraseSpan, maxPhraseLength, minNonterminalSpan, maxPhraseSpan);
 		
-		boolean oneTreePerSentence = ! this.keepTree;//commandLine.getValue(keepTree);
+		//commandLine.getValue(keepTree);
 		
-		ParallelCorpusGrammarFactory parallelCorpus = new ParallelCorpusGrammarFactory(sourceSuffixArray, targetCorpusArray, alignments, ruleSampleSize, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan, Float.MIN_VALUE);
+		logger.info("Constructing grammar factory from parallel corpus");
+		ParallelCorpusGrammarFactory parallelCorpus = new ParallelCorpusGrammarFactory(sourceSuffixArray, targetCorpusArray, alignments, null, ruleSampleSize, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan, Float.MIN_VALUE);
+		return parallelCorpus;
+	}
 
 
+	public void execute() throws IOException, ClassNotFoundException  {
 
+		// Set System.out and System.err to use the provided character encoding
+		try {
+			System.setOut(new PrintStream(System.out, true, "UTF-8"));
+			System.setErr(new PrintStream(System.err, true, "UTF-8"));
+		} catch (UnsupportedEncodingException e1) {
+			System.err.println("UTF-8 is not a valid encoding; using system default encoding for System.out and System.err.");
+		} catch (SecurityException e2) {
+			System.err.println("Security manager is configured to disallow changes to System.out or System.err; using system default encoding.");
+		}
 		
+		PrintStream out;
+		if ("-".equals(this.outputFile)) {
+			out = System.out;
+			logger.info("Rules will be written to standard out");
+		} else {
+			out = new PrintStream(outputFile,"UTF-8");
+			logger.info("Rules will be written to " + outputFile);
+		}
+		
+		ParallelCorpusGrammarFactory parallelCorpus = this.getGrammarFactory();
+		
+		SymbolTable sourceVocab = parallelCorpus.getSourceCorpus().getVocabulary();
+		
+		int lineNumber = 0;
+		boolean oneTreePerSentence = ! this.keepTree;
+		
+		logger.info("Will read test sentences from " + testFileName);
+		Scanner testFileScanner = new Scanner(new File(testFileName), encoding);
+		
+		logger.info("Read test sentences from " + testFileName);
 		PrefixTree prefixTree = null;
-		while (testFileScanner.hasNextLine()) {
+		while (testFileScanner.hasNextLine() && (lineNumber-startingSentence+1)<maxTestSentences) {
 
-			
-			
 			String line = testFileScanner.nextLine();
 			lineNumber++;
+			if (lineNumber < startingSentence) continue;
 			
 			int[] words = sourceVocab.getIDs(line);
 			
@@ -402,8 +437,8 @@ public class ExtractRules {
 				prefixTree.add(words);
 			} catch (OutOfMemoryError e) {
 				logger.warning("Out of memory - attempting to clear cache to free space");
-				sourceSuffixArray.getCachedHierarchicalPhrases().clear();
-				targetSuffixArray.getCachedHierarchicalPhrases().clear();
+				parallelCorpus.getSuffixArray().getCachedHierarchicalPhrases().clear();
+//				targetSuffixArray.getCachedHierarchicalPhrases().clear();
 				prefixTree = null;
 				System.gc();
 				logger.info("Cleared cache and collected garbage. Now attempting to re-construct prefix tree...");
@@ -452,7 +487,7 @@ public class ExtractRules {
 		if (args.length != 3) {
 			System.err.println("Usage: joshDir outputRules testFile");
 		} else {
-			
+					
 			ExtractRules extractRules = new ExtractRules();
 			extractRules.setJoshDir(args[0]);
 			extractRules.setOutputFile(args[1]);

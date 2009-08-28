@@ -37,7 +37,11 @@ import joshua.corpus.suffix_array.HierarchicalPhrase;
 import joshua.corpus.suffix_array.Pattern;
 import joshua.corpus.suffix_array.Suffixes;
 import joshua.corpus.vocab.SymbolTable;
+import joshua.decoder.JoshuaConfiguration;
+import joshua.decoder.ff.FeatureFunction;
+import joshua.decoder.ff.tm.BasicRuleCollection;
 import joshua.decoder.ff.tm.BilingualRule;
+import joshua.decoder.ff.tm.MonolingualRule;
 import joshua.decoder.ff.tm.Rule;
 import joshua.util.Cache;
 
@@ -94,6 +98,8 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 	 */
 	protected final Alignments alignments;
 	
+	protected final ArrayList<FeatureFunction> models;
+	
 	/**
 	 * Specifies the maximum number of rules 
 	 * that will be extracted for any source pattern
@@ -133,7 +139,8 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 			Suffixes suffixArray, 
 			Corpus targetCorpus, 
 			Alignments alignments, 
-			LexicalProbabilities lexProbs, 
+			LexicalProbabilities lexProbs,
+			ArrayList<FeatureFunction> models,
 			int sampleSize, 
 			int maxPhraseSpan, 
 			int maxPhraseLength, 
@@ -148,9 +155,10 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 		this.alignments = alignments;
 		this.suffixArray = suffixArray;
 		this.sampleSize = sampleSize;
+		this.models = models;
 		
 		SymbolTable vocab = suffixArray.getVocabulary();
-		this.nonterminalIDs = new int[]{vocab.getID(SymbolTable.X1_STRING), vocab.getID(SymbolTable.X2_STRING)};
+		this.nonterminalIDs = new int[]{vocab.addNonterminal(SymbolTable.X1_STRING), vocab.addNonterminal(SymbolTable.X2_STRING)};
 	}
 
 	/* See Javadoc for RuleExtractor class. */
@@ -194,25 +202,32 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 			
 			List<Rule> results = new ArrayList<Rule>(sourceHierarchicalPhrases.size());
 			
+			int sourcePatternCount = sourceHierarchicalPhrases.size();
 			for (HierarchicalPhrase translation : uniqueTranslations) {
-
 				float[] featureScores = 
 					calculateFeatureValues(
 							sourcePattern, 
+							sourcePatternCount, 
 							translation, 
-							counts, 
-							p_e_given_f_denominator);
+							counts, p_e_given_f_denominator);
 
 				Rule rule = new BilingualRule(
 						SymbolTable.X, 
 						sourcePattern.getWordIDs(), 
 						translation.getWordIDs(), 
 						featureScores, 
-						translation.arity());
+						translation.arity(),
+						suffixArray.getVocabulary().addTerminal(JoshuaConfiguration.phrase_owner),
+						0.0f,
+						MonolingualRule.DUMMY_RULE_ID);
 
 				results.add(rule);
 			}
-
+			
+			if (models != null) {
+				BasicRuleCollection.sortRules(results, models);
+			}
+			
 			cache.put(sourcePattern, results);
 			
 			return results;
@@ -224,6 +239,7 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 	 * Calculate feature values for given source-target pair.
 	 * 
 	 * @param sourcePattern Source language pattern
+	 * @param sourcePatternCount TODO
 	 * @param translation Target language pattern
 	 * @param counts Map from target pattern to the number of times
 	 *               that pattern was returned as the translation of
@@ -235,7 +251,7 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 	 *                              counted multiple times in this total.
 	 * @return Feature value array
 	 */
-	protected float[] calculateFeatureValues(Pattern sourcePattern, HierarchicalPhrase translation, Map<Pattern,Integer> counts, float totalTranslationCount) {
+	protected float[] calculateFeatureValues(Pattern sourcePattern, int sourcePatternCount, HierarchicalPhrase translation, Map<Pattern,Integer> counts, float totalTranslationCount) {
 			
 		// Get translation probability
 		float p_e_given_f = 
@@ -282,10 +298,17 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 					lex_p_f_given_e + ") = " + lex_logp_f_given_e);
 		}
 
+//		int tenOrMore = (sourcePatternCount >= 10) ? 1 : 0;
+//		int hundredOrMore = (sourcePatternCount >= 100) ? 1 : 0;
+//		int thousandOrMore = (sourcePatternCount >= 1000) ? 1 : 0;
+		
 		float[] featureScores = { 
-				logp_e_given_f, 
-				lex_logp_f_given_e,    
-				lex_logp_e_given_f 
+				logp_e_given_f
+				,lex_logp_f_given_e  
+				,lex_logp_e_given_f
+//				,tenOrMore
+//				,hundredOrMore
+//				,thousandOrMore
 		};
 		
 		return featureScores;

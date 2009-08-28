@@ -17,6 +17,8 @@
  */
 package joshua.corpus.suffix_array;
 
+import java.util.ArrayList;
+
 import joshua.corpus.AlignedParallelCorpus;
 import joshua.corpus.Corpus;
 import joshua.corpus.Phrase;
@@ -24,6 +26,7 @@ import joshua.corpus.RuleExtractor;
 import joshua.corpus.alignment.Alignments;
 import joshua.corpus.lexprob.LexProbs;
 import joshua.corpus.lexprob.LexicalProbabilities;
+import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.GrammarFactory;
 import joshua.prefix_tree.HierarchicalRuleExtractor;
@@ -92,6 +95,7 @@ public class ParallelCorpusGrammarFactory extends AlignedParallelCorpus implemen
 			Suffixes sourceSuffixArray, 
 			Corpus targetCorpus, 
 			Alignments alignments, 
+			ArrayList<FeatureFunction> models,
 			int sampleSize, 
 			int maxPhraseSpan, 
 			int maxPhraseLength, 
@@ -115,6 +119,7 @@ public class ParallelCorpusGrammarFactory extends AlignedParallelCorpus implemen
 					targetCorpus, 
 					alignments, 
 					lexProbs, 
+					models,
 					sampleSize, 
 					maxPhraseSpan, 
 					maxPhraseLength,

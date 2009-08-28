@@ -33,7 +33,9 @@ import joshua.decoder.segment_file.ConstraintSpan;
 import joshua.lattice.Lattice;
 import joshua.lattice.Arc;
 import joshua.lattice.Node;
+
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
@@ -203,6 +205,21 @@ public class Chart {
 		// each grammar will have a dot chart
 		this.dotcharts = new DotChart[this.grammars.length];
 		for (int i = 0; i < this.grammars.length; i++) {
+			
+//			if (logger.isLoggable(Level.FINE)) {
+//				logger.fine("Grammar has "+this.grammars[i].getNumRules() + " rules");
+//				if (logger.isLoggable(Level.FINEST) && grammars[i] instanceof RootNode) {
+//					for (Rule rule : ((RootNode) this.grammars[i]).getAllRules()) {
+//						Map<Integer,String> map = new HashMap<Integer,String>();
+//						map.put(SymbolTable.X, SymbolTable.X_STRING);
+//						String ruleString = rule.toString(map, symbolTable, symbolTable);
+//						if (logger.isLoggable(Level.FINEST)) logger.finest("Rule: " + ruleString);
+//						logger.finest("Grammar rule: " + ruleString);
+//					}
+//				}
+//			}
+			
+
 			this.dotcharts[i] = new DotChart(this.sentence, this.grammars[i], this);
 			this.dotcharts[i].seed(); // TODO: should fold into the constructor
 		}
@@ -345,11 +362,23 @@ public class Chart {
 							if (null != rules) { // have rules under this trienode
 								// TODO: filter the rule according to LHS constraint
 								if (logger.isLoggable(Level.FINEST)) {
-									for (Rule r : rules.getSortedRules()) {
+									List<Rule> sortedRules = rules.getSortedRules();
+									logger.finest("Matched " + sortedRules.size() + " rules");
+									for (Rule r : sortedRules) {
+										
+										String lhs = this.symbolTable.getWord(r.getLHS());
+										String rhs = (SymbolTable.S_STRING.equals(lhs))
+												? this.symbolTable.getWords(r.getFrench())
+												: this.symbolTable.getWords(r.getFrench(),true);
+										int[] targetRHS_IDs = r.getEnglish();
 										logger.finest("Matched [" + i + ", " + 
-												j + "] with " + this.symbolTable.getWord(r.getLHS()) +
-												" => " + this.symbolTable.getWords(r.getFrench()) + 
-												" | " + this.symbolTable.getWords(r.getEnglish()));
+												j + "] with " + lhs +
+												" => " + rhs + 
+												" | " + this.symbolTable.getWords(targetRHS_IDs) +
+//												"  " + Arrays.toString(targetRHS_IDs) + " " + 
+												"   |||  with features scores:  " 
+												+ Arrays.toString(r.getFeatureScores())
+												+ " ==est_cost==> " + r.getEstCost());
 									}
 								}
 								
@@ -523,14 +552,14 @@ public class Chart {
 	
 	private void addAxioms(int i, int j, RuleCollection rb, float latticeCost) {
 		if (containsHardRuleConstraint(i, j)) {
-			System.out.println("having hard rule constraint in span " +i +", " + j);
+			if (logger.isLoggable(Level.FINE)) logger.fine("Hard rule constraint for span " +i +", " + j);
 			return; //do not add any axioms
-		}
-		
-		
-		List<Rule> rules = filterRules(i,j, rb.getSortedRules());
-		for (Rule rule : rules) {
-			addAxiom(i, j, rule, latticeCost);
+		} else {
+
+			List<Rule> rules = filterRules(i,j, rb.getSortedRules());
+			for (Rule rule : rules) {
+				addAxiom(i, j, rule, latticeCost);
+			}
 		}
 	}
 	
@@ -642,6 +671,10 @@ public class Chart {
 		
 	private String getSpanSignature(int i, int j) {
 		return i + " " + j;
+	}
+	
+	SymbolTable getVocabulary() {
+		return symbolTable;
 	}
 	
 	private static class Span {

@@ -392,6 +392,20 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
 	}
 	
 	
+	@Override
+	public String toString() {
+		StringBuilder s = new StringBuilder();
+		
+		for (Node<Value> start : this) {
+			for (Arc<Value> arc : start.getOutgoingArcs()) {
+				s.append(arc.toString());
+				s.append('\n');
+			}
+		}
+		
+		return s.toString();
+	}
+	
 	public static void main(String[] args) {
 		
 		List<Node<String>> nodes = new ArrayList<Node<String>>();

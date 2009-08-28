@@ -24,8 +24,10 @@ import joshua.corpus.MatchedHierarchicalPhrases;
 import joshua.corpus.suffix_array.HierarchicalPhrases;
 import joshua.corpus.suffix_array.Suffixes;
 import joshua.corpus.vocab.SymbolTable;
+import joshua.decoder.ff.tm.BilingualRule;
 import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.Rule;
+import joshua.decoder.ff.tm.hiero.MemoryBasedBatchGrammar;
 
 /**
  * Root node of a prefix tree.
@@ -99,14 +101,27 @@ public class RootNode extends Node implements Grammar {
 	
 	/* See Javadoc for joshua.decoder.ff.tm.Grammar#constructOOVRule */
 	public Rule constructOOVRule(int num_feats, int sourceWord, boolean have_lm_model) {
-		// TODO Auto-generated method stub
-		return null;
+		int[] p_french      = new int[1];
+		p_french[0]         = sourceWord;
+		int[] english       = new int[1];
+		english[0]          = sourceWord;
+		float[] feat_scores = new float[num_feats];
+		
+		// TODO: This is a hack to make the decoding without a LM works
+		// no LM is used for decoding, so we should set the stateless cost
+		boolean hasLM = true; //THIS IS A HACK
+		if (! hasLM) { 
+			//this.feat_scores[0]=100.0/(this.featureFunctions.get(0)).getWeight();
+			feat_scores[0] = 100;
+		}
+		int defaultOwner = 0; // THIS IS A HACK
+		return new BilingualRule(SymbolTable.X, p_french, english, feat_scores, 0, defaultOwner, 0, getOOVRuleID());
+
 	}
 
 	/* See Javadoc for joshua.decoder.ff.tm.Grammar#getOOVRuleID */
 	public int getOOVRuleID() {
-		// TODO Auto-generated method stub
-		return 0;
+		return MemoryBasedBatchGrammar.OOV_RULE_ID;
 	}
 
 	/* See Javadoc for joshua.decoder.ff.tm.Grammar#constructManualRule */

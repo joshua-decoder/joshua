@@ -96,30 +96,36 @@ public class BasicRuleCollection implements RuleCollection {
 		return this.arity;
 	}
 	
-	/* See Javadoc comments for RuleCollection interface. */
-	public void sortRules(ArrayList<FeatureFunction> l_models) {	
+	public static void sortRules(List<Rule> rules, ArrayList<FeatureFunction> l_models) {
 		// use a priority queue to help sort
 		PriorityQueue<Rule> t_heapRules = new PriorityQueue<Rule>(1, Rule.NegtiveCostComparator);
 		for (Rule rule : rules) {
-			if (null != l_models) {
+//			if (null != l_models) {
 				rule.estimateRuleCost(l_models);
-			}
+//			}
 			t_heapRules.add(rule);
 		}
 		
 		// rearange the sortedRules based on t_heapRules
 		rules.clear();
 		while (t_heapRules.size() > 0) {
-			Rule t_r = (Rule) t_heapRules.poll();
+			Rule t_r = t_heapRules.poll();
 			rules.add(0, t_r);
-		}		
+		}	
+	}
+	
+	/* See Javadoc comments for RuleCollection interface. */
+	public void sortRules(ArrayList<FeatureFunction> l_models) {	
+		sortRules(this.rules, l_models);
 		this.sorted = true;
 	}
 	
 	/* See Javadoc comments for RuleCollection interface. */
 	public List<Rule> getSortedRules() {		
 		if (!this.sorted) {
-			logger.severe("Grammar has not been sorted which is reqired by cube pruning; sortGrammar should have been called after loading the grammar, but was not.");			
+			String message = "Grammar has not been sorted which is reqired by cube pruning; sortGrammar should have been called after loading the grammar, but was not.";
+			logger.severe(message);			
+			throw new RuntimeException(message);
 		}
 		
 		return this.rules;

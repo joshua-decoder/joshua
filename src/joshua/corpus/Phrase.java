@@ -41,6 +41,15 @@ public interface Phrase extends Comparable<Phrase> {
 	
 	
 	/**
+	 * This method gets the integer IDs of the phrase as an
+	 * array of ints.
+	 * 
+	 * @return an int[] corresponding to the ID of each word
+	 *         in the phrase
+	 */
+	public int[] getWordIDs();
+	
+	/**
 	 * Returns the integer word id of the word at the specified
 	 * position.
 	 *

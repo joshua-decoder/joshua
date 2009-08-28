@@ -29,7 +29,7 @@ import java.util.List;
  * The {@link Segment}, {@link ConstraintSpan}, and {@link ConstraintRule}
  * interfaces are for defining an interchange format between a
  * SegmentFileParser and the Chart class. These interfaces
- * <emph>should not</emph> be used internally by the Chart. The
+ * <em>should not</em> be used internally by the Chart. The
  * objects returned by a SegmentFileParser will not be optimal for
  * use during decoding. The Chart should convert each of these
  * objects into its own internal representation during construction.

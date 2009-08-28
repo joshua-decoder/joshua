@@ -20,6 +20,8 @@ package joshua.decoder.ff.tm;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import joshua.corpus.vocab.SymbolTable;
 import joshua.decoder.ff.FeatureFunction;
@@ -31,6 +33,9 @@ import joshua.decoder.ff.FeatureFunction;
  * @version $LastChangedDate$
  */
 public class MonolingualRule implements Rule {
+	
+	private static final Logger logger =
+		Logger.getLogger(MonolingualRule.class.getName());
 	
 //===============================================================
 // Instance Fields
@@ -68,7 +73,7 @@ public class MonolingualRule implements Rule {
 	
 	// TODO: Ideally, we shouldn't have to have dummy rule IDs
 	// and dummy owners. How can this need be eliminated?
-	private static final int DUMMY_RULE_ID = 1;
+	public static final int DUMMY_RULE_ID = 1;
 	public static final int DUMMY_OWNER = 1;
 	
 	
@@ -189,6 +194,9 @@ public class MonolingualRule implements Rule {
 				double mdcost = ff.estimate(this) * ff.getWeight();
 				estcost += mdcost;
 			}
+			if (logger.isLoggable(Level.FINEST)) {
+				logger.finest("Updating rule estimated cost from " + this.est_cost + " to " + estcost + " for " + super.toString() + "  " + this.getClass().getName() + "@" + Integer.toHexString(System.identityHashCode(this)));
+			}
 			this.est_cost = estcost;
 			return estcost;
 		}
@@ -251,7 +259,8 @@ public class MonolingualRule implements Rule {
 		@Deprecated
 		public String toString() {
 			if (null == this.cachedToString) {
-				StringBuffer sb = new StringBuffer("[");
+				StringBuffer sb = new StringBuffer();
+				sb.append("[");
 				sb.append(this.lhs);
 				sb.append("] ||| ");
 				sb.append(Arrays.toString(this.p_french));

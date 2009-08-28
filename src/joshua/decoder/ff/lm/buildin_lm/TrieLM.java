@@ -19,6 +19,7 @@ package joshua.decoder.ff.lm.buildin_lm;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -28,6 +29,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import joshua.corpus.vocab.SymbolTable;
+import joshua.decoder.JoshuaConfiguration;
+import joshua.decoder.ff.lm.AbstractLM;
 import joshua.decoder.ff.lm.ArpaFile;
 import joshua.decoder.ff.lm.ArpaNgram;
 import joshua.decoder.ff.lm.DefaultNGramLanguageModel;
@@ -49,7 +52,7 @@ import joshua.util.Regex;
  * @author Lane Schwartz
  * @see <a href="http://www.speech.sri.com/projects/srilm/manpages/ngram-discount.7.html">SRILM ngram-discount documentation</a>
  */
-public class TrieLM extends DefaultNGramLanguageModel {
+public class TrieLM extends AbstractLM { //DefaultNGramLanguageModel {
 
 	/** Logger for this class. */
 	private static Logger logger =
@@ -177,10 +180,21 @@ public class TrieLM extends DefaultNGramLanguageModel {
 		}
 	}
 	
+
 	@Override
-	public double ngramLogProbability(int[] ngram, int order) {
+	protected double logProbabilityOfBackoffState_helper(
+			int[] ngram, int order, int qtyAdditionalBackoffWeight
+	) {
+		throw new UnsupportedOperationException("probabilityOfBackoffState_helper undefined for TrieLM");
+	}
+
+	@Override
+	protected double ngramLogProbability_helper(int[] ngram, int order) {
+	
+//	@Override
+//	public double ngramLogProbability(int[] ngram, int order) {
 		
-		float logProb = Float.NEGATIVE_INFINITY; // log(0.0f)
+		float logProb = (float) -JoshuaConfiguration.lm_ceiling_cost;//Float.NEGATIVE_INFINITY; // log(0.0f)
 		float backoff = 0.0f; // log(1.0f)
 		
 		int i = ngram.length - 1;
@@ -220,7 +234,12 @@ public class TrieLM extends DefaultNGramLanguageModel {
 			
 		}
 		
-		return logProb + backoff;
+		double result = logProb + backoff;
+		if (result < -JoshuaConfiguration.lm_ceiling_cost) {
+			result = -JoshuaConfiguration.lm_ceiling_cost;
+		}
+		
+		return result;
 	}
 	
 	public Map<Long,Integer> getChildren() {
@@ -262,6 +281,15 @@ public class TrieLM extends DefaultNGramLanguageModel {
 			}
 			wordList.add("</s>");
 			
+			ArrayList<Integer> sentence = new ArrayList<Integer>();
+//				int[] ids = new int[wordList.size()];
+				for (int i=0, size=wordList.size(); i<size; i++) {
+					sentence.add(vocab.getID(wordList.get(i)));
+//					ids[i] = ;
+				}
+			
+			
+			
 			while (! wordList.isEmpty()) {
 				window.clear();
 
@@ -286,8 +314,15 @@ public class TrieLM extends DefaultNGramLanguageModel {
 					logger.info("logProb " + window.toString() + " = " + lm.ngramLogProbability(wordIDs, n));
 				}
 			}
+			
+			double logProb = lm.sentenceLogProbability(sentence, n, 2);//.ngramLogProbability(ids, n);
+			double prob = Math.exp(logProb);
+			
+			logger.info("Total logProb = " + logProb);
+			logger.info("Total    prob = " + prob);
 		}
 		
 	}
+
 	
 }

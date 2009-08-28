@@ -141,7 +141,7 @@ implements Iterable<R>, Iterator<R> {
 		return word.replaceAll(nonTerminalCleanRegEx, "");
 	}
 
-	public final boolean isNonTerminal(final String word) {
+	public static boolean isNonTerminal(final String word) {
 		// checks if word matches NT regex
 		return word.matches(nonTerminalRegEx);
 	}

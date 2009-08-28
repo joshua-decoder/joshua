@@ -18,6 +18,7 @@
 package joshua.decoder.ff.tm;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -110,10 +111,35 @@ public abstract class AbstractGrammar implements SortableGrammar {
 	private void sort(Trie node, ArrayList<FeatureFunction> models) {
 		if (node != null) {
 			
-			logger.fine("Sorting node " + node);
 			
 			if(node.hasRules()) {
-				node.getRules().sortRules(models);
+				RuleCollection rules = node.getRules();
+				if (logger.isLoggable(Level.FINE)) logger.fine("Sorting node " + Arrays.toString(rules.getSourceSide()));	
+				rules.sortRules(models);
+				if (logger.isLoggable(Level.FINEST)) {
+					StringBuilder s = new StringBuilder();
+					if (rules == null) {
+						s.append("\n\tNo rules");
+					} else {
+						
+						for (Rule r : rules.getSortedRules()) {
+							s.append(
+									"\n\t" 
+									+ r.getLHS()
+									+ " ||| "
+									+ Arrays.toString(r.getFrench())
+									+ " ||| "
+									+ Arrays.toString(r.getEnglish())
+									+ " ||| "
+									+ Arrays.toString(r.getFeatureScores())
+									+ " ||| " 
+									+ r.getEstCost()
+									+ "  "
+									+ r.getClass().getName() + "@" + Integer.toHexString(System.identityHashCode(r)));
+						}
+					}
+					logger.finest(s.toString());
+				}
 			}
 			
 			if (node instanceof AbstractGrammar) {
@@ -126,7 +152,7 @@ public abstract class AbstractGrammar implements SortableGrammar {
 				for (Trie child : node.getExtensions()) {
 					sort(child, models);
 				}
-			} else if (logger.isLoggable(Level.INFO)) {
+			} else if (logger.isLoggable(Level.FINE)) {
 				logger.fine("Node has 0 children to extend: " + node);
 			}
 		}

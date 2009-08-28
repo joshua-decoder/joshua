@@ -63,8 +63,20 @@ public class GridScrollPanelHeader extends JComponent {
     /** Words to display in this header. */
     private String[] words;
 
+    private Color backgroundColor;
+    
     void setWords(String[] words) {
     	this.words = words;
+    	Dimension size;
+        if (orientation==Orientation.HORIZONTAL) {
+        	size = new Dimension(breadth*words.length, depth);
+        } else {
+        	size = new Dimension(depth, breadth*words.length);
+        }
+        
+        this.setPreferredSize(size);
+        this.setSize(size);
+        this.setMaximumSize(size);
     }
     
     /** 
@@ -102,6 +114,10 @@ public class GridScrollPanelHeader extends JComponent {
         this.setPreferredSize(size);
         this.setSize(size);
         this.setMaximumSize(size);
+        
+        backgroundColor = new Color(230, 163, 4);
+//        Border innerBorder = BorderFactory.createLineBorder(Color.BLACK);
+//		this.setBorder(innerBorder);
     }
 
     /**
@@ -120,10 +136,33 @@ public class GridScrollPanelHeader extends JComponent {
 	/* See Javadoc for javax.swing.JComponent#printComponent(Graphics) */
     @Override
     protected void printComponent(Graphics graphics) {
+    	paintComponent(graphics);
 //		Dimension d = this.getSize();
 //		graphics.setColor(Color.BLUE);
 //		graphics.fillRect(0, 0, d.width, d.height);
     }
+    
+    @Override
+    protected void printBorder(Graphics graphics) {
+    	printOrPaintBorder(graphics);
+    }
+    
+    @Override
+    protected void paintBorder(Graphics graphics) {
+    	printOrPaintBorder(graphics);
+    }
+    
+    protected void printOrPaintBorder(Graphics graphics) {
+    	graphics.setColor(Color.BLACK);
+    	int breadth = this.breadth*words.length;
+    	if (orientation == Orientation.HORIZONTAL) {
+    		graphics.drawLine(0, 0, breadth, 0);
+    	} else {
+    		graphics.drawLine(0, 0, 0, breadth);
+    	}
+    }
+    
+    
     
 	/* See Javadoc for javax.swing.JComponent#paintComponent(Graphics) */
     @Override
@@ -142,7 +181,7 @@ public class GridScrollPanelHeader extends JComponent {
         	height = breadth*words.length;
         }
         
-        g.setColor(new Color(230, 163, 4));
+        g.setColor(backgroundColor);
 //        g.fillRect(0, 0, size.width, size.height);
         g.fillRect(0, 0, width, height);
         

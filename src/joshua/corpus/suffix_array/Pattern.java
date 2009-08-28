@@ -19,6 +19,9 @@ package joshua.corpus.suffix_array;
 
 import java.io.IOException;
 import java.io.ObjectOutput;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import joshua.corpus.Phrase;
 import joshua.corpus.vocab.SymbolTable;
@@ -219,6 +222,37 @@ public class Pattern extends BasicPhrase implements PatternFormat {
 	// Methods
 	//===========================================================
 
+	public List<Pattern> split() {
+		int arity = this.arity();
+		if (arity==0) {
+			return Collections.singletonList(this);
+		} else {
+			
+			List<Pattern> patternList = new ArrayList<Pattern>(arity);
+			List<Integer> tokenList = new ArrayList<Integer>(this.size());
+			
+			for (int token : this.getWordIDs()) {
+				if (token < 0) {
+					if (! tokenList.isEmpty()) {
+						int[] tokens = new int[tokenList.size()];
+						patternList.add(new Pattern(this.getVocab(), tokens));
+						tokenList.clear();
+					}
+				} else {
+					tokenList.add(token);
+				}
+			}
+			
+			if (! tokenList.isEmpty()) {
+				int[] tokens = new int[tokenList.size()];
+				patternList.add(new Pattern(this.getVocab(), tokens));
+				tokenList.clear();
+			}
+			
+			return patternList;
+		}
+	}
+	
 	public int arity() {
 		return arity;
 	}
