@@ -21,13 +21,18 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutput;
+import java.io.OutputStreamWriter;
 import java.io.PrintStream;
 import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import joshua.corpus.AlignedParallelCorpus;
 import joshua.corpus.CorpusArray;
+import joshua.corpus.ParallelCorpus;
 import joshua.corpus.alignment.AlignmentGrids;
+import joshua.corpus.lexprob.LexProbs;
+import joshua.corpus.lexprob.LexicalProbabilities;
 import joshua.corpus.vocab.Vocabulary;
 import joshua.util.Cache;
 import joshua.util.io.BinaryOut;
@@ -201,8 +206,8 @@ public class Compile {
 		// Construct alignments data structure
 		AlignmentGrids grids = new AlignmentGrids(
 				new Scanner(new File(alignmentsFileName)), 
-				null, 
-				null, 
+				sourceCorpusArray, 
+				targetCorpusArray,
 				numberOfSentences);
 		
 		// Write alignments to disk
@@ -216,6 +221,27 @@ public class Compile {
 			alignmentsOut.close();
 			
 	    	out.println("Source-target alignment grids: " + binaryAlignmentsFilename);
+		}
+		
+		// Write lexprobs to disk
+		{
+	    	ParallelCorpus parallelCorpus = new AlignedParallelCorpus(sourceCorpusArray, targetCorpusArray, grids);
+	    	
+	    	if (logger.isLoggable(Level.INFO)) logger.info("Constructing lexprob table");
+	    	LexicalProbabilities lexProbs = 
+				new LexProbs(parallelCorpus, Float.MIN_VALUE);
+			
+	    	String lexprobsFilename = outputDirName + File.separator + "lexprobs.txt";
+	    	FileOutputStream stream = new FileOutputStream(lexprobsFilename);
+	    	OutputStreamWriter lexprobsOut = new OutputStreamWriter(stream, charset);
+
+	    	String s = lexProbs.toString();
+
+	    	if (logger.isLoggable(Level.INFO)) logger.info("Writing lexprobs at " + lexprobsFilename);
+	    	lexprobsOut.write(s);  
+	    	lexprobsOut.flush();
+	    	lexprobsOut.close();
+	    	out.println("Lexprobs at " + lexprobsFilename);
 		}
 		
 		
