@@ -20,6 +20,7 @@ package joshua.decoder.hypergraph;
 
 import java.util.ArrayList;
 
+import joshua.decoder.chart_parser.SourcePath;
 import joshua.decoder.ff.tm.Rule;
 
 /**
@@ -40,19 +41,25 @@ public class HyperEdge {
 	// best-cost from ant items)
 	private Double transition_cost=null;
 	private Rule rule;
+	private SourcePath srcPath = null;
 
 	//if l_ant_items is null, then this shoud be the terminal rule
 	private ArrayList<HGNode> l_ant_hgnodes=null; //the items appear in the list as per the index of the Foreign side non-terminal
 	
-	public HyperEdge(Rule rl, double total_cost, Double trans_cost, ArrayList<HGNode> ant_items){
+	public HyperEdge(Rule rl, double total_cost, Double trans_cost, ArrayList<HGNode> ant_items, SourcePath sp){
 		best_cost=total_cost;
 		transition_cost=trans_cost;
 		rule=rl;
 		l_ant_hgnodes=ant_items;
+		srcPath = sp;
 	}
 	
 	public Rule get_rule(){
 		return rule;
+	}
+
+	public SourcePath getSourcePath() {
+		return srcPath;
 	}
 	
 	public ArrayList<HGNode> get_ant_items(){

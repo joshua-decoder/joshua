@@ -21,6 +21,7 @@ import joshua.decoder.ff.FFDPState;
 import joshua.decoder.ff.FFTransitionResult;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.tm.Rule;
+import joshua.decoder.chart_parser.SourcePath;
 
 import java.util.ArrayList;
 import java.util.logging.Logger;
@@ -59,13 +60,13 @@ public class HyperGraph {
 	
 	
 	static public FFTransitionResult computeTransition(HyperEdge dt, FeatureFunction m, int start_span, int end_span){
-		return computeTransition(dt, dt.get_rule(), dt.get_ant_items(), m,  start_span,  end_span);
+		return computeTransition(dt, dt.get_rule(), dt.get_ant_items(), m,  start_span,  end_span, dt.getSourcePath());
 	}
 	
-	static public FFTransitionResult computeTransition(HyperEdge dt, Rule rl,  ArrayList<HGNode> l_ant_hgnodes, FeatureFunction m, int start_span, int end_span){
+	static public FFTransitionResult computeTransition(HyperEdge dt, Rule rl,  ArrayList<HGNode> l_ant_hgnodes, FeatureFunction m, int start_span, int end_span, SourcePath srcPath){
 		FFTransitionResult res = null;
 		if(m.isStateful() == false){//stateless feature
-			res = m.transition(dt, rl, null, start_span, end_span);
+			res = m.transition(dt, rl, null, start_span, end_span, srcPath);
 		}else{
 			ArrayList<FFDPState> previous_states = null;
 			if (l_ant_hgnodes != null) {
@@ -74,7 +75,7 @@ public class HyperGraph {
 					previous_states.add( it.getFeatDPState(m) );
 				}
 			}
-			res = m.transition(dt, rl, previous_states, start_span, end_span);
+			res = m.transition(dt, rl, previous_states, start_span, end_span, srcPath);
 		}
 		if (null == res) {
 			logger.severe("compute_item: transition returned null state");

@@ -24,6 +24,7 @@ import joshua.decoder.ff.DefaultStatefulFF;
 import joshua.decoder.ff.FFDPState;
 import joshua.decoder.ff.StatefulFFTransitionResult;
 import joshua.decoder.ff.tm.Rule;
+import joshua.decoder.chart_parser.SourcePath;
 
 import java.util.ArrayList;
 import java.util.logging.Level;
@@ -110,7 +111,7 @@ public class LanguageModelFF extends DefaultStatefulFF {
 	/*the transition cost for LM: sum of the costs of the new ngrams created
 	 * depends on the antstates and current rule*/
 	//antstates: ArrayList of states of this model in ant items
-	public StatefulFFTransitionResult transition(Rule rule, ArrayList<FFDPState> previous_states, int span_start, int span_end) {
+	public StatefulFFTransitionResult transition(Rule rule, ArrayList<FFDPState> previous_states, int span_start, int span_end, SourcePath srcPath) {
 		//long start = Support.current_time();		
 		StatefulFFTransitionResult res = this.lookup_words1_equv_state(rule.getEnglish(), previous_states);	
 		//	Chart.g_time_lm += Support.current_time()-start;

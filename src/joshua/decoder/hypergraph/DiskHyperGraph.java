@@ -547,9 +547,9 @@ public class DiskHyperGraph {
 			for (int i = 0; i < costs_s.length; i++) {
 				costs[i] = Double.parseDouble(costs_s[i]);
 			}
-			hyperEdge = new WithModelCostsHyperEdge(rule, bestCost, null, antecedentItems, costs);
+			hyperEdge = new WithModelCostsHyperEdge(rule, bestCost, null, antecedentItems, costs, null);
 		} else {
-			hyperEdge = new HyperEdge(rule, bestCost, null, antecedentItems);
+			hyperEdge = new HyperEdge(rule, bestCost, null, antecedentItems, null);
 		}
 		hyperEdge.get_transition_cost(true); // to set the transition cost
 		return hyperEdge;

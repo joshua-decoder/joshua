@@ -21,6 +21,7 @@ package joshua.decoder.ff;
 import java.util.ArrayList;
 
 import joshua.decoder.ff.tm.Rule;
+import joshua.decoder.chart_parser.SourcePath;
 import joshua.decoder.hypergraph.HyperEdge;
 
 
@@ -64,8 +65,8 @@ public abstract class DefaultStatelessFF implements FeatureFunction {
 	
 	
 	/** Default behavior: ignore "edge". */
-	public FFTransitionResult transition(HyperEdge edge, Rule rule, ArrayList<FFDPState> previous_states, int span_start, int span_end) {
-		return transition(rule, previous_states, span_start,span_end);
+	public FFTransitionResult transition(HyperEdge edge, Rule rule, ArrayList<FFDPState> previous_states, int span_start, int span_end, SourcePath srcPath) {
+		return transition(rule, previous_states, span_start, span_end, srcPath);
 	}
 	
 	/** Default behavior: ignore "edge". */
@@ -78,7 +79,7 @@ public abstract class DefaultStatelessFF implements FeatureFunction {
 	 * (1) use estimate() to get transition cost
 	 * (2) no future cost estimation
 	 */
-	public StatelessFFTransitionResult transition(Rule rule, ArrayList<FFDPState> previous_states, int span_start, int span_end) {
+	public StatelessFFTransitionResult transition(Rule rule, ArrayList<FFDPState> previous_states, int span_start, int span_end, SourcePath srcPath) {
 		if (null != previous_states) {
 			throw new IllegalArgumentException("transition: previous states for a stateless feature is NOT null");
 		}

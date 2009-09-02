@@ -90,7 +90,7 @@ public class ViterbiExtractor  {
 		if (null != dt_in.get_ant_items()) {
 			l_ant_items = new ArrayList<HGNode>(dt_in.get_ant_items());//l_ant_items will be changed in get_1best_tree_item
 		}
-		HyperEdge res = new HyperEdge(dt_in.get_rule(), dt_in.best_cost, dt_in.get_transition_cost(false), l_ant_items);
+		HyperEdge res = new HyperEdge(dt_in.get_rule(), dt_in.best_cost, dt_in.get_transition_cost(false), l_ant_items, dt_in.getSourcePath());
 		return res;
 	}
 	//###end

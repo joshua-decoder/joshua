@@ -156,7 +156,7 @@ class DotChart {
 				if (null == p_grammar.getTrieRoot()) {
 					throw new RuntimeException("trie root is null");
 				}
-				addDotItem(p_grammar.getTrieRoot(), j, j, null, null, 0.0f);
+				addDotItem(p_grammar.getTrieRoot(), j, j, null, null, new SourcePath());
 			}
 		}
 	}
@@ -247,7 +247,7 @@ class DotChart {
 						}
 						if (null != child_tnode) {
 							// we do not have an ant for the terminal
-							addDotItem(child_tnode, i, j - 1 + arc_len, dt.l_ant_super_items, null, dt.lattice_cost + cost);
+							addDotItem(child_tnode, i, j - 1 + arc_len, dt.l_ant_super_items, null, dt.srcPath.extend(arc));
 						}
 					}
 				} // end foreach DotItem
@@ -311,7 +311,7 @@ class DotChart {
 //						logger.finest(String.format("Add a dotitem with superitem.lhs: %s", s_t.lhs));
 						logger.finest(String.format("Add a dotitem with superitem.lhs: %s", p_chart.getVocabulary().getWord(s_t.lhs)));
 					}
-					addDotItem(child_tnode, i, j, dt.l_ant_super_items, s_t, dt.lattice_cost);
+					addDotItem(child_tnode, i, j, dt.l_ant_super_items, s_t, dt.srcPath.extendNonTerminal());
 				}
 			}
 		}
@@ -330,7 +330,7 @@ class DotChart {
 	 */
 	private void addDotItem(Trie tnode, int i, int j,
 			ArrayList<SuperItem> ant_s_items_in, SuperItem cur_s_item,
-			float lattice_cost)
+			SourcePath srcPath)
 	{
 		ArrayList<SuperItem> ant_s_items = new ArrayList<SuperItem>();
 		if (ant_s_items_in != null) {
@@ -340,14 +340,14 @@ class DotChart {
 			ant_s_items.add(cur_s_item);
 		}
 		
-		DotItem item = new DotItem(i, j, tnode, ant_s_items, lattice_cost);
+		DotItem item = new DotItem(i, j, tnode, ant_s_items, srcPath);
 		if (l_dot_bins[i][j] == null) {
 			l_dot_bins[i][j] = new DotBin();
 		}
 		l_dot_bins[i][j].add_dot_item(item);
 		p_chart.n_dotitem_added++;
 		
-		if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("Add a dotitem in cell (%d, %d), n_dotitem=%d, lattice_cost=%f", i, j, p_chart.n_dotitem_added, lattice_cost));
+		if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("Add a dotitem in cell (%d, %d), n_dotitem=%d, %s", i, j, p_chart.n_dotitem_added, srcPath));
 	}
 	
 	
@@ -384,15 +384,15 @@ class DotChart {
 		//int i, j; //start and end position in the chart
 		Trie tnode = null; // dot_position, point to grammar trie node, this is the only place that the DotChart points to the grammar
 		ArrayList<SuperItem> l_ant_super_items = null; //pointer to SuperItem in Chart
-		float lattice_cost;
+		SourcePath srcPath;
 		
 		
-		public DotItem(int i_in, int j_in, Trie tnode_in, ArrayList<SuperItem> ant_super_items_in, float lattice_cost) {
+		public DotItem(int i_in, int j_in, Trie tnode_in, ArrayList<SuperItem> ant_super_items_in, SourcePath srcPath) {
 			//i = i_in;
 			//j = j_in;
 			this.tnode = tnode_in;
 			this.l_ant_super_items = ant_super_items_in;
-			this.lattice_cost = lattice_cost;
+			this.srcPath = srcPath;
 		}
 	}
 

@@ -21,7 +21,7 @@ import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.ArityPhrasePenaltyFF;
 import joshua.decoder.ff.PhraseModelFF;
 import joshua.decoder.ff.WordPenaltyFF;
-import joshua.decoder.ff.SourceLatticeArcCostFF;
+import joshua.decoder.ff.SourcePathFF;
 import joshua.decoder.ff.lm.LanguageModelFF;
 import joshua.decoder.ff.lm.NGramLanguageModel;
 import joshua.decoder.ff.lm.bloomfilter_lm.BloomFilterLanguageModel;
@@ -578,7 +578,7 @@ public class JoshuaDecoder {
 				} else if ("latticecost".equals(fds[0]) && fds.length == 2) {
 					double weight = Double.parseDouble(fds[1].trim());
 					this.featureFunctions.add(
-						new SourceLatticeArcCostFF(
+						new SourcePathFF(
 							this.featureFunctions.size(), weight));
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format(

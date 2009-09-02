@@ -131,7 +131,7 @@ class Bin {
 	 * transition_cost, bonus, list of states
 	 */
 	ComputeItemResult compute_item(
-		Rule rule, ArrayList<HGNode> previousItems, int i, int j
+		Rule rule, ArrayList<HGNode> previousItems, int i, int j, SourcePath srcPath
 	) {
 		long startTime = Support.current_time(); // It's a lie, always == 0
 		this.chart.n_called_compute_item++;
@@ -155,7 +155,7 @@ class Bin {
 			if (ff.isStateful()) {
 				//System.out.println("class name is " + ff.getClass().getName());
 				FFTransitionResult state = HyperGraph.computeTransition(
-					null, rule, previousItems, ff, i, j);
+					null, rule, previousItems, ff, i, j, srcPath);
 				
 				transitionCostSum +=
 					ff.getWeight() * state.getTransitionCost();
@@ -180,7 +180,7 @@ class Bin {
 				}
 			} else {
 				FFTransitionResult state = HyperGraph.computeTransition(
-					null, rule, previousItems, ff, i, j);
+					null, rule, previousItems, ff, i, j, srcPath);
 				
 				transitionCostSum +=
 					ff.getWeight() * state.getTransitionCost();
@@ -242,7 +242,7 @@ class Bin {
 				previousItems.add(item);
 				
 				HyperEdge dt = new HyperEdge(
-					null, cost + finalTransitionCost, finalTransitionCost, previousItems);
+					null, cost + finalTransitionCost, finalTransitionCost, previousItems, null);
 				
 				if (logger.isLoggable(Level.FINE)) {
 					logger.fine(String.format(
@@ -284,10 +284,10 @@ class Bin {
 	
 	
 	/** axiom is for the zero-arity rules */
-	void add_axiom(int i, int j, Rule rule, float latticeCost) {
+	void add_axiom(int i, int j, Rule rule, SourcePath srcPath) {
 		add_deduction_in_bin(
-			compute_item(rule, null, i, j),
-			rule, i, j, null, latticeCost);
+			compute_item(rule, null, i, j, srcPath),
+			rule, i, j, null, srcPath);
 	}
 	
 	
@@ -300,11 +300,11 @@ class Bin {
 	 * @param superItems List of language model items
 	 * @param rules
 	 * @param arity Number of nonterminals
-	 * @param latticeCost
+	 * @param srcPath
 	 */
 	void complete_cell(
 		int i, int j, ArrayList<SuperItem> superItems,
-		List<Rule> rules, int arity, float latticeCost
+		List<Rule> rules, int arity, SourcePath srcPath
 	) {
 		//System.out.println(String.format("Complet_cell is called, n_rules: %d ", rules.size()));
 		// consider all the possbile combinations (while
@@ -317,8 +317,8 @@ class Bin {
 					ArrayList<HGNode> antecedents = new ArrayList<HGNode>();
 					antecedents.add(antecedent);
 					add_deduction_in_bin(
-						compute_item(rule, antecedents, i, j),
-						rule, i, j, antecedents, latticeCost);
+						compute_item(rule, antecedents, i, j, srcPath),
+						rule, i, j, antecedents, srcPath);
 				}
 				
 			} else if (arity == 2) {
@@ -330,8 +330,8 @@ class Bin {
 						antecedents.add(it_ant1);
 						antecedents.add(it_ant2);
 						add_deduction_in_bin(
-							compute_item(rule, antecedents, i, j),
-							rule, i, j, antecedents, latticeCost);
+							compute_item(rule, antecedents, i, j, srcPath),
+							rule, i, j, antecedents, srcPath);
 					}
 				}
 			} else {
@@ -350,7 +350,7 @@ class Bin {
 	//       the description in Liang'2007 ACL paper
 	void complete_cell_cube_prune(
 		int i, int j, ArrayList<SuperItem> superItems,
-		List<Rule> rules, float latticeCost
+		List<Rule> rules, SourcePath srcPath
 	) { // combinations: rules, antecent items
 		// in the paper, heap_cands is called cand[v]
 		PriorityQueue<CubePruneState> heap_cands =
@@ -371,7 +371,7 @@ class Bin {
 			currentAntecedents.add(si.l_items.get(0));
 		}
 		ComputeItemResult result =
-			compute_item(currentRule, currentAntecedents, i, j);
+			compute_item(currentRule, currentAntecedents, i, j, srcPath);
 		
 		int[] ranks = new int[1+superItems.size()]; // rule, ant items
 		for (int d = 0; d < ranks.length; d++) {
@@ -396,7 +396,7 @@ class Bin {
 			currentRule = cur_state.rule;
 			currentAntecedents = new ArrayList<HGNode>(cur_state.l_ants); // critical to create a new list
 			//cube_state_tbl.remove(cur_state.get_signature()); // TODO, repeat
-			add_deduction_in_bin(cur_state.tbl_item_states, cur_state.rule, i, j,cur_state.l_ants, latticeCost); // pre-pruning inside this function
+			add_deduction_in_bin(cur_state.tbl_item_states, cur_state.rule, i, j,cur_state.l_ants, srcPath); // pre-pruning inside this function
 			
 			//if the best state is pruned, then all the remaining states should be pruned away
 			if (cur_state.tbl_item_states.getExpectedTotalCost() > this.cutoffCost + JoshuaConfiguration.fuzz1) {
@@ -433,7 +433,7 @@ class Bin {
 				}
 				
 				CubePruneState t_state = new CubePruneState(
-					compute_item(currentRule, currentAntecedents, i, j),
+					compute_item(currentRule, currentAntecedents, i, j, srcPath),
 					new_ranks, currentRule, currentAntecedents);
 				
 				// add state into heap
@@ -458,13 +458,10 @@ class Bin {
 	
 	HGNode add_deduction_in_bin(
 		ComputeItemResult result, Rule rule, int i, int j,
-		ArrayList<HGNode> ants, float latticeCost
+		ArrayList<HGNode> ants, SourcePath srcPath
 	) {
 		long start = Support.current_time();
 		HGNode res = null;
-		if (latticeCost != 0.0f) {
-			rule = cloneAndAddLatticeCostIfNonZero(rule, latticeCost);
-		}
 		HashMap<Integer,FFDPState> item_state_tbl = result.getFeatDPStates();
 		double expectedTotalCost  = result.getExpectedTotalCost(); // including outside estimation
 		double transition_cost    = result.getTransitionTotalCost();
@@ -473,7 +470,7 @@ class Bin {
 		//double bonus = tbl_states.get(BONUS); // not used
 		if (! should_prune(expectedTotalCost)) {
 			HyperEdge dt = new HyperEdge(
-				rule, finalizedTotalCost, transition_cost, ants);
+				rule, finalizedTotalCost, transition_cost, ants, srcPath);
 			HGNode item = new HGNode(
 				i, j, rule.getLHS(), item_state_tbl, dt, expectedTotalCost);
 			add_deduction(item);
@@ -568,19 +565,6 @@ class Bin {
 // Private Methods
 //===============================================================
 
-	//	 create a copy of the rule and set the lattice cost field
-	//TODO:change this bad behavior
-	private Rule cloneAndAddLatticeCostIfNonZero(Rule r, float latticeCost) {
-		//!!!!!!!!!!!!!!!!!!!!!!!!!!! this is wrong, we need to fix this when one seriously incorporates lattice
-		return r;
-		/*if (latticeCost == 0.0f) {
-			return r;
-		} else {
-			return new Rule(r.getLHS(), r.getFrench(), r.getEnglish(),r.getFeatureScores(), r.getArity(), r.getOwner(), latticeCost, r.getRuleID());
-		}*/
-	}
-	
-	
 	/* each item has a list of deductions need to check whether the item is already exist, if yes, just add the deductions */
 	private boolean add_deduction(HGNode newItem) {
 		boolean res = false;

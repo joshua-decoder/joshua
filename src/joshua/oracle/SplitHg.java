@@ -100,7 +100,7 @@ public abstract class SplitHg {
 		ArrayList<HGNode> l_ant_items = null;
 		// l_ant_items will be changed in get_1best_tree_item
 		if(original_dt.get_ant_items() != null) l_ant_items = new ArrayList<HGNode>(original_dt.get_ant_items());
-		HyperEdge res = new HyperEdge(original_dt.get_rule(), original_dt.best_cost, original_dt.get_transition_cost(false), l_ant_items);
+		HyperEdge res = new HyperEdge(original_dt.get_rule(), original_dt.best_cost, original_dt.get_transition_cost(false), l_ant_items, original_dt.getSourcePath());
 		return res;
 	}
 	

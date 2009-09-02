@@ -268,7 +268,7 @@ public class Chart {
 									symbolTable.addTerminals(cRule.nativeRhs()),
 									featureScores, 
 									arity);
-							addAxiom(cSpan.start(), cSpan.end(), rule, 0);
+							addAxiom(cSpan.start(), cSpan.end(), rule, new SourcePath());
 							if (logger.isLoggable(Level.INFO))
 								logger.info("Adding RULE constraint for span " + cSpan.start() + ", " + cSpan.end() + "; isHard=" + cSpan.isHard() +rule.getLHS());
 							break;
@@ -303,7 +303,7 @@ public class Chart {
 					if (logger.isLoggable(Level.INFO))
 						logger.info("Using hard rule constraint for span " + node.getNumber() + ", " + arc.getTail().getNumber());
 				} else {
-					addAxiom(node.getNumber(), arc.getTail().getNumber(), rule, (float)arc.getCost());
+					addAxiom(node.getNumber(), arc.getTail().getNumber(), rule, new SourcePath().extend(arc));
 				}
 			}
 		}
@@ -353,11 +353,11 @@ public class Chart {
 					&& null != this.dotcharts[k].l_dot_bins[i][j]) {
 						
 						for (DotItem dt: this.dotcharts[k].l_dot_bins[i][j].l_dot_items) {
-							float latticeCost = dt.lattice_cost;
+							SourcePath srcPath = dt.srcPath;
 							RuleCollection rules = dt.tnode.getRules();
 							
 							if (logger.isLoggable(Level.FINEST))
-								logger.finest("Checking DotItem for matched rules: lc=" + latticeCost);
+								logger.finest("Checking DotItem for matched rules. " + srcPath);
 							
 							if (null != rules) { // have rules under this trienode
 								// TODO: filter the rule according to LHS constraint
@@ -383,13 +383,13 @@ public class Chart {
 								}
 								
 								if (rules.getArity() == 0) { // rules without any non-terminal
-									addAxioms(i, j, rules, latticeCost);
+									addAxioms(i, j, rules, srcPath);
 								} else { // rules with non-terminal
 									if (JoshuaConfiguration.use_cube_prune) {
-										completeCellCubePrune(i, j, dt, rules, latticeCost);
+										completeCellCubePrune(i, j, dt, rules, srcPath);
 									} else {
 										// populate chart.bin[i][j] with rules from dotchart[i][j]
-										completeCell(i, j, dt, rules, latticeCost);
+										completeCell(i, j, dt, rules, srcPath);
 									}
 								}
 							}
@@ -532,9 +532,9 @@ public class Chart {
 					List<Rule> rules = childNode.getRules().getSortedRules();
 					
 					for (Rule rule : rules) { // for each unary rules								
-						ComputeItemResult tbl_states = chartBin.compute_item(rule, antecedents, i, j);
+						ComputeItemResult tbl_states = chartBin.compute_item(rule, antecedents, i, j, new SourcePath());
 						//System.out.println("add unary rule " +i +", " + j + rule.toString(this.symbolTable));
-						HGNode res_item = chartBin.add_deduction_in_bin(tbl_states, rule, i, j, antecedents, 0.0f);
+						HGNode res_item = chartBin.add_deduction_in_bin(tbl_states, rule, i, j, antecedents, new SourcePath());
 						if (null != res_item) {
 							queue.add(res_item);
 							qtyAdditionsToQueue++;
@@ -550,7 +550,7 @@ public class Chart {
 	}
 	
 	
-	private void addAxioms(int i, int j, RuleCollection rb, float latticeCost) {
+	private void addAxioms(int i, int j, RuleCollection rb, SourcePath srcPath) {
 		if (containsHardRuleConstraint(i, j)) {
 			if (logger.isLoggable(Level.FINE)) logger.fine("Hard rule constraint for span " +i +", " + j);
 			return; //do not add any axioms
@@ -558,22 +558,22 @@ public class Chart {
 
 			List<Rule> rules = filterRules(i,j, rb.getSortedRules());
 			for (Rule rule : rules) {
-				addAxiom(i, j, rule, latticeCost);
+				addAxiom(i, j, rule, srcPath);
 			}
 		}
 	}
 	
 	
 	/** axiom is for rules with zero-arity */
-	private void addAxiom(int i, int j, Rule rule, float latticeCost) {
+	private void addAxiom(int i, int j, Rule rule, SourcePath srcPath) {
 		if (null == this.bins[i][j]) {
 			this.bins[i][j] = new Bin(this, this.goalSymbolID);
 		}
-		this.bins[i][j].add_axiom(i, j, rule, latticeCost);
+		this.bins[i][j].add_axiom(i, j, rule, srcPath);
 	}
 	
 	
-	private void completeCell(int i, int j, DotItem dt, RuleCollection rb, float latticeCost) {
+	private void completeCell(int i, int j, DotItem dt, RuleCollection rb, SourcePath srcPath) {
 		if (containsHardRuleConstraint(i, j)) {
 			System.out.println("having hard rule constraint in span " +i +", " + j);
 			return; //do not add any axioms
@@ -583,11 +583,11 @@ public class Chart {
 			this.bins[i][j] = new Bin(this, this.goalSymbolID);
 		}
 		// combinations: rules, antecent items
-		this.bins[i][j].complete_cell(i, j, dt.l_ant_super_items, filterRules(i,j,rb.getSortedRules()), rb.getArity(), latticeCost);
+		this.bins[i][j].complete_cell(i, j, dt.l_ant_super_items, filterRules(i,j,rb.getSortedRules()), rb.getArity(), srcPath);
 	}
 	
 	
-	private void completeCellCubePrune(int i, int j, DotItem dt, RuleCollection rb, float latticeCost) {
+	private void completeCellCubePrune(int i, int j, DotItem dt, RuleCollection rb, SourcePath srcPath) {
 		if (containsHardRuleConstraint(i, j)) {
 			System.out.println("having hard rule constraints in span " +i +", " + j);
 			return; //do not add any axioms
@@ -597,7 +597,7 @@ public class Chart {
 			this.bins[i][j] = new Bin(this, this.goalSymbolID);
 		}
 		
-		this.bins[i][j].complete_cell_cube_prune(i, j, dt.l_ant_super_items, filterRules(i,j, rb.getSortedRules()), latticeCost);//combinations: rules, antecent items
+		this.bins[i][j].complete_cell_cube_prune(i, j, dt.l_ant_super_items, filterRules(i,j, rb.getSortedRules()), srcPath);//combinations: rules, antecent items
 	}
 	
 

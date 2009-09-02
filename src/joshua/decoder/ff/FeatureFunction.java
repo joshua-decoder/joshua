@@ -19,6 +19,7 @@ package joshua.decoder.ff;
 
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.hypergraph.HyperEdge;
+import joshua.decoder.chart_parser.SourcePath;
 
 import java.util.ArrayList; // BUG: should be List but that causes bugs
 
@@ -76,11 +77,11 @@ public interface FeatureFunction {
 	 */
 	FFTransitionResult transition(
 			Rule rule, ArrayList<FFDPState> previous_states,
-		int span_start, int span_end);
+		int span_start, int span_end, SourcePath srcPath);
 	
 	FFTransitionResult transition(HyperEdge edge,
 			Rule rule, ArrayList<FFDPState> previous_states,
-		int span_start, int span_end);
+		int span_start, int span_end, SourcePath srcPath);
 	
 	
 	double finalTransition(FFDPState state);
