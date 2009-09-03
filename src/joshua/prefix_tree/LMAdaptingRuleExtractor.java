@@ -72,7 +72,7 @@ public class LMAdaptingRuleExtractor extends HierarchicalRuleExtractor {
 	public LMAdaptingRuleExtractor(
 			String largeArpaLM, String testArpaLM, int lmOrder,
 			Suffixes suffixArray, 
-			Corpus targetCorpus, 
+			Suffixes targetSuffixArray, 
 			Alignments alignments, 
 			LexicalProbabilities lexProbs, 
 			ArrayList<FeatureFunction> models,
@@ -83,7 +83,7 @@ public class LMAdaptingRuleExtractor extends HierarchicalRuleExtractor {
 			int maxNonterminalSpan) throws IOException {
 		
 		super(suffixArray, 
-				targetCorpus, alignments, 
+				targetSuffixArray, alignments, 
 				lexProbs, models, sampleSize, 
 				maxPhraseSpan, maxPhraseLength, 
 				minNonterminalSpan, maxNonterminalSpan);

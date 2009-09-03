@@ -87,10 +87,11 @@ public class PrefixTreeTest {
 		Alignments alignments = new AlignmentArray(alignedTargetIndices, alignedSourceIndices, 1);
 		
 		CorpusArray targetCorpus = new CorpusArray(sentenceF, sentenceStartPositions, vocab);
-		
+		SuffixArray targetSuffixes = new SuffixArray(targetCorpus);
+
 		CorpusArray sourceCorpus = new CorpusArray(sentence, sentenceStartPositions, vocab);
 		SuffixArray sourceSuffixes = new SuffixArray(sourceCorpus);
-		ParallelCorpusGrammarFactory parallelCorpus = new ParallelCorpusGrammarFactory(sourceSuffixes, targetCorpus, alignments, null, Integer.MAX_VALUE, maxPhraseSpan, maxPhraseLength, maxNonterminals, 2, Float.MIN_VALUE);
+		ParallelCorpusGrammarFactory parallelCorpus = new ParallelCorpusGrammarFactory(sourceSuffixes, targetSuffixes, alignments, null, Integer.MAX_VALUE, maxPhraseSpan, maxPhraseLength, maxNonterminals, 2, Float.MIN_VALUE);
 		
 //		tree = new PrefixTree(vocab, maxPhraseSpan, maxPhraseLength, maxNonterminals);
 		tree = new PrefixTree(parallelCorpus);

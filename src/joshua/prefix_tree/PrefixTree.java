@@ -186,12 +186,8 @@ public class PrefixTree {
 	 * Constructs a new prefix tree with suffix links using the
 	 * GENERATE_PREFIX_TREE algorithm from Lopez (2008) PhD
 	 * Thesis, Algorithm 2, p 76.
-	 * @param suffixArray
-	 * @param targetCorpus
-	 * @param alignments
-	 * @param vocab
-	 * @param lexProbs
-	 * @param ruleExtractor
+	 * 
+	 * @param parallelCorpus
 	 */
 	public PrefixTree(ParallelCorpusGrammarFactory parallelCorpus) {
 
@@ -275,7 +271,7 @@ public class PrefixTree {
 	 * @param maxNonterminals
 	 */
 	PrefixTree(SymbolTable vocab, int maxPhraseSpan, int maxPhraseLength, int maxNonterminals) {
-		this(new ParallelCorpusGrammarFactory((Suffixes) null, (Corpus) null, (Alignments) null, null, Integer.MAX_VALUE, maxPhraseSpan, maxPhraseLength, maxNonterminals, 2, Float.MIN_VALUE));
+		this(new ParallelCorpusGrammarFactory((Suffixes) null, (Suffixes) null, (Alignments) null, null, Integer.MAX_VALUE, maxPhraseSpan, maxPhraseLength, maxNonterminals, 2, Float.MIN_VALUE));
 	}
 
 

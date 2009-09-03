@@ -53,9 +53,9 @@ public class PrefixTreeAdvancedTest {
 	Vocabulary sourceVocab, targetVocab;
 	Map<Integer,String> ntVocab;
 	BasicPhrase corpusSentence;
-	SuffixArray suffixArray;
+	SuffixArray suffixArray, targetSuffixArray;
 	AlignmentArray alignments;
-	CorpusArray targetCorpusArray;
+//	CorpusArray targetCorpusArray;
 	LexicalProbabilities lexProbs;
 
 	@Test
@@ -115,7 +115,9 @@ public class PrefixTreeAdvancedTest {
 			
 
 			
-			targetCorpusArray = new CorpusArray(targetCorpus, targetSentenceStartPositions, targetVocab);
+			CorpusArray targetCorpusArray = new CorpusArray(targetCorpus, targetSentenceStartPositions, targetVocab);
+			targetSuffixArray = new SuffixArray(targetCorpusArray);
+
 			
 			int[] lowestAlignedTargetIndex = new int[corpusSentence.size()];
 			int[] highestAlignedTargetIndex = new int[corpusSentence.size()];
@@ -185,7 +187,7 @@ public class PrefixTreeAdvancedTest {
 //			String alignmentString = "0-0 1-1 2-2 3-3 4-4 5-5 6-6 7-7 8-8 9-9 10-10 11-11 12-12 13-13 14-14 15-15 16-16 17-17";
 		
 			ParallelCorpus parallelCorpus = 
-				new AlignedParallelCorpus(suffixArray.getCorpus(), targetCorpusArray, alignments);
+				new AlignedParallelCorpus(suffixArray.getCorpus(), targetSuffixArray.getCorpus(), alignments);
 //			{
 //				public Alignments getAlignments() { return alignments; } 
 //				public int getNumSentences() { return suffixArray.getCorpus().getNumSentences(); }
@@ -219,7 +221,7 @@ public class PrefixTreeAdvancedTest {
 		BasicPhrase query = new BasicPhrase("it makes him", sourceVocab);
 		//BasicPhrase query = new BasicPhrase("it makes him and it mars him", sourceVocab);
 		//BasicPhrase query = new BasicPhrase("it makes him and it mars him , it sets him on and it takes him off .", sourceVocab);
-		ParallelCorpusGrammarFactory parallelCorpus = new ParallelCorpusGrammarFactory(suffixArray, targetCorpusArray, alignments, null, sampleSize, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan, Float.MIN_VALUE);
+		ParallelCorpusGrammarFactory parallelCorpus = new ParallelCorpusGrammarFactory(suffixArray, targetSuffixArray, alignments, null, sampleSize, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan, Float.MIN_VALUE);
 //		simplePrefixTree = new PrefixTree(suffixArray, targetCorpusArray, alignments, suffixArray.getVocabulary(), lexProbs, ruleExtractor, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan);
 		simplePrefixTree = new PrefixTree(parallelCorpus);
 		simplePrefixTree.add(query.getWordIDs());
@@ -365,7 +367,7 @@ public class PrefixTreeAdvancedTest {
 		//BasicPhrase query = new BasicPhrase("it makes him", sourceVocab);
 		//BasicPhrase query = new BasicPhrase("it makes him and it mars him", sourceVocab);
 		BasicPhrase query = new BasicPhrase("it makes him and it mars him , it sets him on and it takes him off .", sourceVocab);
-		ParallelCorpusGrammarFactory parallelCorpus = new ParallelCorpusGrammarFactory(suffixArray, targetCorpusArray, alignments, null, sampleSize, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan, Float.MIN_VALUE);
+		ParallelCorpusGrammarFactory parallelCorpus = new ParallelCorpusGrammarFactory(suffixArray, targetSuffixArray, alignments, null, sampleSize, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan, Float.MIN_VALUE);
 //		PrefixTree prefixTree = new PrefixTree(suffixArray, targetCorpusArray, alignments, suffixArray.getVocabulary(), lexProbs, ruleExtractor, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan);
 		PrefixTree prefixTree = new PrefixTree(parallelCorpus);
 		prefixTree.add(query.getWordIDs());
@@ -578,7 +580,7 @@ public class PrefixTreeAdvancedTest {
 		
 		Assert.assertEquals(querySentence.toString(), "it UNK him and it UNK him");
 		Assert.assertEquals(corpusSentence.toString(), corpusString);
-		ParallelCorpusGrammarFactory parallelCorpus = new ParallelCorpusGrammarFactory(suffixArray, targetCorpusArray, alignments, null, sampleSize, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan, Float.MIN_VALUE);
+		ParallelCorpusGrammarFactory parallelCorpus = new ParallelCorpusGrammarFactory(suffixArray, targetSuffixArray, alignments, null, sampleSize, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan, Float.MIN_VALUE);
 
 //		PrefixTree prefixTree = new PrefixTree(suffixArray, targetCorpusArray, alignments, suffixArray.getVocabulary(), lexProbs, ruleExtractor, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan);
 		PrefixTree prefixTree = new PrefixTree(parallelCorpus);

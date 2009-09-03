@@ -20,7 +20,6 @@ package joshua.corpus.suffix_array;
 import java.util.ArrayList;
 
 import joshua.corpus.AlignedParallelCorpus;
-import joshua.corpus.Corpus;
 import joshua.corpus.Phrase;
 import joshua.corpus.RuleExtractor;
 import joshua.corpus.alignment.Alignments;
@@ -82,7 +81,8 @@ public class ParallelCorpusGrammarFactory extends AlignedParallelCorpus implemen
 	 * 
 	 * @param sourceSuffixArray Source language corpus, 
 	 *                          represented as a suffix array
-	 * @param targetCorpus      Target language corpus
+	 * @param targetSuffixArray Target language corpus
+	 *                          represented as a suffix array
 	 * @param alignments        Parallel corpus alignment points
 	 * @param maxPhraseSpan     Max span in the source corpus of any 
 	 *                          extracted hierarchical phrase
@@ -93,7 +93,7 @@ public class ParallelCorpusGrammarFactory extends AlignedParallelCorpus implemen
 	 */
 	public ParallelCorpusGrammarFactory(
 			Suffixes sourceSuffixArray, 
-			Corpus targetCorpus, 
+			Suffixes targetSuffixArray, 
 			Alignments alignments, 
 			ArrayList<FeatureFunction> models,
 			int sampleSize, 
@@ -103,7 +103,9 @@ public class ParallelCorpusGrammarFactory extends AlignedParallelCorpus implemen
 			int minNonterminalSpan, 
 			float lexProbFloor) {
 		
-		super((sourceSuffixArray==null)?null:sourceSuffixArray.getCorpus(), targetCorpus, alignments);
+		super((sourceSuffixArray==null)?null:sourceSuffixArray.getCorpus(), 
+				(targetSuffixArray==null)?null:targetSuffixArray.getCorpus(), 
+				alignments);
 		this.sourceSuffixArray = sourceSuffixArray;
 		this.maxPhraseSpan     = maxPhraseSpan;
 		this.maxPhraseLength   = maxPhraseLength;
@@ -116,7 +118,7 @@ public class ParallelCorpusGrammarFactory extends AlignedParallelCorpus implemen
 		this.ruleExtractor = 
 			new HierarchicalRuleExtractor(
 					sourceSuffixArray, 
-					targetCorpus, 
+					targetSuffixArray, 
 					alignments, 
 					lexProbs, 
 					models,

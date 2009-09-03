@@ -118,7 +118,7 @@ public abstract class AbstractSuffixArray implements Suffixes {
 			SymbolTable vocab = corpus.getVocabulary();
 			
 			if (arity==0) {
-				int[] bounds = this.findPhrase(pattern, 0, pattern.size(), 0, this.size());
+				int[] bounds = this.findPhrase(pattern, 0, pattern.size(), 0, this.size()-1);
 				int[] startPositions = this.getAllPositions(bounds);
 				MatchedHierarchicalPhrases result = this.createHierarchicalPhrases(startPositions, pattern, vocab);
 				return result;

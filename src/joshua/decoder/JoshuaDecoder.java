@@ -466,6 +466,10 @@ public class JoshuaDecoder {
 			JoshuaConfiguration.tm_file + 
 			File.separator + "target.corpus";
 		
+		String binaryTargetSuffixesFileName =
+			JoshuaConfiguration.tm_file + 
+			File.separator + "target.suffixes";
+		
 		{	// Load the symbol table from disk
 			// Keep this code in its own block
 			//      to ensure that this symbol table is not
@@ -509,7 +513,8 @@ public class JoshuaDecoder {
 					binarySourceSuffixesFileName,
 					sourceCorpusArray,
 					maxCacheSize);
-	
+
+		
 		if (logger.isLoggable(Level.INFO))
 			logger.info("Reading target language corpus from " +
 				binaryTargetCorpusFileName);
@@ -517,6 +522,14 @@ public class JoshuaDecoder {
 			new MemoryMappedCorpusArray(
 				this.symbolTable, binaryTargetCorpusFileName);
 		
+		if (logger.isLoggable(Level.INFO))
+			logger.info("Reading target language suffix array from " +
+				binaryTargetSuffixesFileName);
+		Suffixes targetSuffixArray =
+			new MemoryMappedSuffixArray(
+					binaryTargetSuffixesFileName,
+					targetCorpusArray,
+					maxCacheSize);
 		
 		String binaryAlignmentFileName = 
 			JoshuaConfiguration.tm_file + 
@@ -533,7 +546,7 @@ public class JoshuaDecoder {
 		// Finally, add the parallel corpus that will serve as a grammar
 		ParallelCorpusGrammarFactory parallelCorpus = new ParallelCorpusGrammarFactory(
 				sourceSuffixArray,
-				targetCorpusArray,
+				targetSuffixArray,
 				alignments,
 				this.featureFunctions,
 				JoshuaConfiguration.sa_rule_sample_size,

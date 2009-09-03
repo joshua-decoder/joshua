@@ -123,7 +123,7 @@ public class ExtractRuleProfiler {
 		numTargetSentences = targetWordsSentences[1];
 		
 		Corpus targetCorpusArray = SuffixArrayFactory.createCorpusArray(targetFileName, targetVocab, numTargetWords, numTargetSentences);
-//		Suffixes targetSuffixArray = SuffixArrayFactory.createSuffixArray(targetCorpusArray, maxCacheSize);
+		Suffixes targetSuffixArray = SuffixArrayFactory.createSuffixArray(targetCorpusArray, maxCacheSize);
 		
 		int trainingSize = sourceCorpusArray.getNumSentences();
 		boolean requireTightSpans = true;
@@ -155,7 +155,7 @@ public class ExtractRuleProfiler {
 			logger.info("Extracting rules for sentence " + (i+1) + ".");
 			long startTime1 = System.currentTimeMillis();
 			{
-				ParallelCorpusGrammarFactory parallelCorpus = new ParallelCorpusGrammarFactory(sourceSuffixArray, targetCorpusArray, alignments, null, ruleSampleSize, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan, Float.MIN_VALUE);
+				ParallelCorpusGrammarFactory parallelCorpus = new ParallelCorpusGrammarFactory(sourceSuffixArray, targetSuffixArray, alignments, null, ruleSampleSize, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan, Float.MIN_VALUE);
 
 //				PrefixTree prefixTree = new PrefixTree(sourceSuffixArray, targetCorpusArray, alignments, sourceSuffixArray.getVocabulary(), lexProbs, ruleExtractor, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan);
 				PrefixTree prefixTree = new PrefixTree(parallelCorpus);

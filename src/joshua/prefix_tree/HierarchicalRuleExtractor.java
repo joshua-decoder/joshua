@@ -87,7 +87,10 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 	protected final int maxNonterminalSpan;
 	
 	/** Suffix array representing the source language corpus. */
-	protected final Suffixes suffixArray;
+	protected final Suffixes sourceSuffixArray;
+	
+	/** Corpus array representing the target language corpus. */
+	protected final Suffixes targetSuffixArray;
 	
 	/** Corpus array representing the target language corpus. */
 	protected final Corpus targetCorpus;
@@ -115,9 +118,9 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
      * Constructs a rule extractor for 
      * Hiero-style hierarchical phrase-based translation.
 	 * 
-	 * @param suffixArray        Suffix array representing the 
+	 * @param sourceSuffixArray        Suffix array representing the 
 	 *                           source language corpus
-	 * @param targetCorpus       Corpus array representing the
+	 * @param targetSuffixArray  Suffix array representing the
 	 *                           target language corpus
 	 * @param alignments         Represents alignments between words in the 
 	 *                           source corpus and the target corpus 
@@ -136,8 +139,8 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 	 *                           phrase
 	 */
 	public HierarchicalRuleExtractor(
-			Suffixes suffixArray, 
-			Corpus targetCorpus, 
+			Suffixes sourceSuffixArray, 
+			Suffixes targetSuffixArray, 
 			Alignments alignments, 
 			LexicalProbabilities lexProbs,
 			ArrayList<FeatureFunction> models,
@@ -151,13 +154,14 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 		this.maxPhraseLength = maxPhraseLength;
 		this.minNonterminalSpan = minNonterminalSpan;
 		this.maxNonterminalSpan = maxNonterminalSpan;
-		this.targetCorpus = targetCorpus;
+		this.targetSuffixArray = targetSuffixArray;
+		this.targetCorpus = targetSuffixArray.getCorpus();
 		this.alignments = alignments;
-		this.suffixArray = suffixArray;
+		this.sourceSuffixArray = sourceSuffixArray;
 		this.sampleSize = sampleSize;
 		this.models = models;
 		
-		SymbolTable vocab = suffixArray.getVocabulary();
+		SymbolTable vocab = sourceSuffixArray.getVocabulary();
 		this.nonterminalIDs = new int[]{vocab.addNonterminal(SymbolTable.X1_STRING), vocab.addNonterminal(SymbolTable.X2_STRING)};
 	}
 
@@ -168,7 +172,7 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 		
 		if (logger.isLoggable(Level.FINE)) logger.fine("Extracting rules for source pattern: " + sourcePattern);
 			
-		Cache<Pattern,List<Rule>> cache = suffixArray.getCachedRules();
+		Cache<Pattern,List<Rule>> cache = sourceSuffixArray.getCachedRules();
 		
 		if (cache.containsKey(sourcePattern)) {
 			return cache.get(sourcePattern);
@@ -217,7 +221,7 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 						translation.getWordIDs(), 
 						featureScores, 
 						translation.arity(),
-						suffixArray.getVocabulary().addTerminal(JoshuaConfiguration.phrase_owner),
+						sourceSuffixArray.getVocabulary().addTerminal(JoshuaConfiguration.phrase_owner),
 						0.0f,
 						MonolingualRule.DUMMY_RULE_ID);
 
@@ -235,6 +239,14 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 		
 	}
 
+	protected float calculateProbSourceGivenTarget(Pattern sourcePattern, Pattern targetPattern) {
+		
+		
+		
+		
+		return 0.0f;
+	}
+	
 	/**
 	 * Calculate feature values for given source-target pair.
 	 * 
@@ -620,7 +632,7 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 			
 			if (logger.isLoggable(Level.FINER)) logger.finer("Case 2: Source phrase startsWithNT && !endsWithNT");
 			
-			int startOfSentence = suffixArray.getCorpus().getSentencePosition(sourcePhrase.getSentenceNumber(sourcePhraseIndex));
+			int startOfSentence = sourceSuffixArray.getCorpus().getSentencePosition(sourcePhrase.getSentenceNumber(sourcePhraseIndex));
 			int startOfTerminalSequence = sourcePhrase.getFirstTerminalIndex(sourcePhraseIndex);
 			int endOfTerminalSequence = sourcePhrase.getLastTerminalIndex(sourcePhraseIndex);
 			
@@ -662,7 +674,7 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 			
 			if (logger.isLoggable(Level.FINER)) logger.finer("Case 3: Source phrase !startsWithNT && endsWithNT");
 			
-			int endOfSentence = suffixArray.getCorpus().getSentenceEndPosition(sourcePhrase.getSentenceNumber(sourcePhraseIndex));
+			int endOfSentence = sourceSuffixArray.getCorpus().getSentenceEndPosition(sourcePhrase.getSentenceNumber(sourcePhraseIndex));
 			int startOfTerminalSequence = sourcePhrase.getFirstTerminalIndex(sourcePhraseIndex);
 			int endOfTerminalSequence = sourcePhrase.getLastTerminalIndex(sourcePhraseIndex);
 			
@@ -706,8 +718,8 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 			if (logger.isLoggable(Level.FINER)) logger.finer("Case 4: Source phrase startsWithNT && endsWithNT");
 			
 			int sentenceNumber = sourcePhrase.getSentenceNumber(sourcePhraseIndex);
-			int startOfSentence = suffixArray.getCorpus().getSentencePosition(sentenceNumber);
-			int endOfSentence = suffixArray.getCorpus().getSentenceEndPosition(sentenceNumber);
+			int startOfSentence = sourceSuffixArray.getCorpus().getSentencePosition(sentenceNumber);
+			int endOfSentence = sourceSuffixArray.getCorpus().getSentenceEndPosition(sentenceNumber);
 			int startOfTerminalSequence = sourcePhrase.getFirstTerminalIndex(sourcePhraseIndex);
 			int endOfTerminalSequence = sourcePhrase.getLastTerminalIndex(sourcePhraseIndex);
 			

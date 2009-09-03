@@ -136,6 +136,7 @@ public class GridViewer extends JFrame implements ActionListener {
 					String binarySourceFileName = joshDirName + File.separator + "source.corpus";
 					String binarySourceSuffixesFileName = joshDirName + File.separator + "source.suffixes";
 					String binaryTargetFileName = joshDirName + File.separator + "target.corpus";
+					String binaryTargetSuffixesFileName = joshDirName + File.separator + "target.suffixes";
 					String binaryAlignmentFileName = joshDirName + File.separator + "alignment.grids";
 
 					logger.fine("Loading vocabulary...");
@@ -151,13 +152,16 @@ public class GridViewer extends JFrame implements ActionListener {
 					
 					logger.fine("Loading target corpus...");		
 					Corpus targetCorpus = new MemoryMappedCorpusArray(commonVocab, binaryTargetFileName);
+					
+					logger.fine("Loading target suffix array...");
+					Suffixes targetSuffixes = new MemoryMappedSuffixArray(binarySourceSuffixesFileName, sourceCorpus);
 
 					logger.fine("Loading alignment grids...");
 					Alignments alignments = new MemoryMappedAlignmentGrids(binaryAlignmentFileName, sourceCorpus, targetCorpus);
 					
 					ParallelCorpusGrammarFactory parallelCorpus = new ParallelCorpusGrammarFactory(
 							sourceSuffixes, 
-							targetCorpus, 
+							targetSuffixes, 
 							alignments, 
 							null,
 							JoshuaConfiguration.sa_rule_sample_size,
