@@ -139,8 +139,8 @@ public abstract class AbstractPhrase implements Phrase {
 		StringBuffer buf = new StringBuffer();
         for (int i=0; i<size(); i++) {
 			String word = vocab.getWord(getWordID(i));
+			if (i != 0) buf.append(' ');
             buf.append(word);
-            if (i<size()-1) buf.append(' ');
         }
         return buf.toString();
 	}
