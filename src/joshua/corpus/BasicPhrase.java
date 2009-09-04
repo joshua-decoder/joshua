@@ -113,7 +113,7 @@ public class BasicPhrase extends AbstractPhrase {
 		StringBuffer sb = new StringBuffer();
 		if (words != null) {
 			for (int i = 0; i < words.length; ++i) {
-				if (i != words.length-1) sb.append(' ');
+				if (i != 0) sb.append(' ');
 				sb.append(vocabulary.getWord(words[i]));
 			}
 		}
