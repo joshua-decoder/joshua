@@ -150,34 +150,6 @@ public class ExtractRulesTest {
 		compileJoshDir.setOutputDir(joshDirName);
 		compileJoshDir.execute();
 		
-//		
-//		String[] args = {
-//				"--sentence-initial-X="+sentenceInitialX,
-//				"--sentence-final-X="+sentenceFinalX,
-//				"--violating-X="+violatingX,
-//				"--maxPhraseLength=5",
-//				"--minNonterminalSpan="+minNonterminalSpan,
-//				"--print-prefix-tree="+printPrefixTree,
-////				"--source="+sourceFileName,
-////				"--target="+targetFileName,
-////				"--alignments="+alignmentFileName,
-//				"--binary-source",
-//				"--source="+joshDirName+File.separatorChar+"source.corpus",
-//				"--source-suffixes="+joshDirName+File.separatorChar+"source.suffixes",
-//				"--source-vocab="+joshDirName+File.separatorChar+"common.vocab",
-//				"--binary-target",
-//				"--target="+joshDirName+File.separatorChar+"target.corpus",
-//				"--target-suffixes="+joshDirName+File.separatorChar+"target.suffixes",
-//				"--target-vocab="+joshDirName+File.separatorChar+"common.vocab",
-////				"--alignments="+joshDirName+File.separatorChar+"alignment.grids",
-////				"--alignmentsType=MemoryMappedAlignmentGrids",
-//				("MemoryMappedAlignmentGrids".equals(alignmentsType) ? ("--alignments="+joshDirName+File.separatorChar+"alignment.grids") : ("--alignments="+alignmentFileName)),
-//				"--alignmentsType="+alignmentsType,
-//				"--test="+testFileName,
-//				"--output="+rulesFileName
-//		};
-//		
-//		ExtractRules.main(args);
 		ExtractRules extractRules = new ExtractRules();
 		extractRules.setSentenceInitialX(sentenceInitialX);
 		extractRules.setSentenceFinalX(sentenceFinalX);

@@ -6,7 +6,7 @@ Start by compiling an aligned parallel corpus into a directory containing binary
 \begin{verbatim}
 java -Dfile.encoding=UTF8 -Xms1024m -Xmx1024m \
     -cp bin joshua.corpus.suffix_array.Compile \
-    corpus.src corpus.tgt alignments.src-tgt output.josh
+    corpus.src corpus.tgt alignments.src-tgt compiled-corpus.josh
 \end{verbatim}
 
 Next, select a test set for which rules will be extracted, and run grammar extraction for that test set:
@@ -14,25 +14,9 @@ Next, select a test set for which rules will be extracted, and run grammar extra
 \begin{verbatim}
 java -Dfile.encoding=UTF8 -Xms4096m -Xmx4096m  \
     -cp bin joshua.prefix_tree.ExtractRules \
-    --binary-source \
-    --binary-target \
-    --source=output.josh/source.corpus \      
-    --target=output.josh/target.corpus \      
-    --source-vocab=output.josh/common.vocab \      
-    --target-vocab=output.josh/common.vocab \  
-    --source-suffixes=output.josh/source.suffixes \      
-    --target-suffixes=output.josh/target.suffixes \
-    --alignments=output.josh/alignment.grids \ 
-    --alignmentsType=MemoryMappedAlignmentGrids \
-    --test=test.src \
-    --output=src-tgt.grammar.raw
+    compiled-corpus.josh test.grammar test.src
 \end{verbatim}
 
-The raw grammar produced by {\tt ExtractRules} will almost certainly include duplicate rules. This is because grammar rules are extracted for each test sentence; all such rules are simply concatenated together. So, before the grammar can be used, duplicates must be removed. On systems with standard Unix tools installed, the following command will sort the grammar and remove duplicates:
-
-\begin{verbatim}
-sort -u -o src-tgt.grammar src-tgt.grammar.raw
-\end{verbatim}
 
 \section{Grammar Format}
 
@@ -64,7 +48,7 @@ Once a grammar has been extracted, it may be useful to compare it to another gra
 
 \begin{verbatim}
 java -Dfile.encoding=UTF8 -Xms4096m -Xmx4096m  \
-    -cp ../../bin joshua.util.CompareGrammars \
+    -cp bin joshua.util.CompareGrammars \
     grammar1-file grammar2-file
 \end{verbatim}
 

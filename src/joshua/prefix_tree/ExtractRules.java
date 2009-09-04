@@ -68,8 +68,7 @@ public class ExtractRules {
 	private String targetSuffixesFileName = "";
 	
 	private String alignmentsFileName = "";
-	private String sourceVocabFileName = "";
-	private String targetVocabFileName = "";
+	private String commonVocabFileName = "";
 	
 	private String testFileName = "";
 	
@@ -87,10 +86,9 @@ public class ExtractRules {
 	
 	private boolean requireTightSpans = true;
 	
-	private boolean binarySource = true;
-	private boolean binaryTarget = true;
+	private boolean binaryCorpus = false;
 	
-	private String alignmentsType = "MemoryMappedAlignmentGrids";
+	private String alignmentsType = "AlignmentGrids";
 	
 	private boolean keepTree = true;
 	private int ruleSampleSize = 300;
@@ -100,6 +98,18 @@ public class ExtractRules {
 	private int startingSentence = 1;
 	
 	public ExtractRules() {
+	}
+	
+	public void setSourceFileName(String sourceFileName) {
+		this.sourceFileName = sourceFileName;
+	}
+	
+	public void setTargetFileName(String targetFileName) {
+		this.targetFileName = targetFileName;
+	}
+	
+	public void setAlignmentsFileName(String alignmentsFileName) {
+		this.alignmentsFileName = alignmentsFileName;
 	}
 	
 	public void setStartingSentence(int startingSentence) {
@@ -135,8 +145,7 @@ public class ExtractRules {
 		this.sourceFileName = joshDir + File.separator + "source.corpus";
 		this.targetFileName = joshDir + File.separator + "target.corpus";
 		
-		this.sourceVocabFileName = joshDir + File.separator + "common.vocab";
-		this.targetVocabFileName = joshDir + File.separator + "common.vocab";
+		this.commonVocabFileName = joshDir + File.separator + "common.vocab";
 		
 		this.sourceSuffixesFileName = joshDir + File.separator + "source.suffixes";
 		this.targetSuffixesFileName = joshDir + File.separator + "target.suffixes";
@@ -144,8 +153,7 @@ public class ExtractRules {
 		this.alignmentsFileName = joshDir + File.separator + "alignment.grids";
 		this.alignmentsType = "MemoryMappedAlignmentGrids";
 		
-		this.binarySource = true;
-		this.binaryTarget = true;
+		this.binaryCorpus = true;
 	}
 	
 	public void setTestFile(String testFileName) {
@@ -175,39 +183,7 @@ public class ExtractRules {
 	public void setRequireTightSpans(boolean requireTightSpans) {
 		this.requireTightSpans = requireTightSpans;
 	}
-	
-//	private void setBinarySource(boolean binarySource) {
-//		this.binarySource = binarySource;
-//	}
-//	
-//	private void setSourceFile(String sourceFileName) {
-//		this.sourceFileName = sourceFileName;
-//	}
-//	
-//	private void setBinaryTarget(boolean binaryTarget) {
-//		this.binaryTarget = binaryTarget;
-//	}
-//	
-//	private void setTargetFile(String targetFileName) {
-//		this.targetFileName = targetFileName;
-//	}
-//	
-//	private void setAlignmentsFile(String alignmentsFileName) {
-//		this.alignmentsFileName = alignmentsFileName;
-//	}
-//	
-//	private void setSourceVocab(String vocabFileName) {
-//		this.sourceVocabFileName = vocabFileName;
-//	}
-//	
-//	private void setTargetVocab(String vocabFileName) {
-//		this.targetVocabFileName = vocabFileName;
-//	}
-//	
-//	private void setAlignmentsType(String alignmentsType) {
-//		this.alignmentsType = alignmentsType;
-//	}
-	
+		
 	public void setKeepTree(boolean keepTree) {
 		this.keepTree = keepTree;
 	}
@@ -225,38 +201,47 @@ public class ExtractRules {
 	public ParallelCorpusGrammarFactory getGrammarFactory() throws IOException, ClassNotFoundException {
 		
 		////////////////////////////////
-		// Source language vocabulary //
+		// Common vocabulary          //
 		////////////////////////////////
+		if (logger.isLoggable(Level.INFO)) logger.info("Constructing empty common vocabulary");
+		Vocabulary commonVocab = new Vocabulary();
 		int numSourceWords, numSourceSentences;
-		Vocabulary sourceVocab = new Vocabulary();
-		String binarySourceVocabFileName = this.sourceVocabFileName;
-		if ( binarySourceVocabFileName.equals("")) {
-			if (logger.isLoggable(Level.INFO)) logger.info("Constructing source language vocabulary from source corpus " + sourceFileName);
-			int[] sourceWordsSentences = Vocabulary.initializeVocabulary(sourceFileName, sourceVocab, true);
-			numSourceWords = sourceWordsSentences[0];
-			numSourceSentences = sourceWordsSentences[1];
-		} else {
-			if (logger.isLoggable(Level.INFO)) logger.info("Constructing source language vocabulary from binary file " + binarySourceVocabFileName);
-			ObjectInput in = BinaryIn.vocabulary(binarySourceVocabFileName);
-			sourceVocab.readExternal(in);
+		int numTargetWords, numTargetSentences;
+		String binaryCommonVocabFileName = this.commonVocabFileName;
+		if (binaryCorpus) {
+			if (logger.isLoggable(Level.INFO)) logger.info("Initializing common vocabulary from binary file " + binaryCommonVocabFileName);
+			ObjectInput in = BinaryIn.vocabulary(binaryCommonVocabFileName);
+			commonVocab.readExternal(in);
+			
 			numSourceWords = Integer.MIN_VALUE;
 			numSourceSentences = Integer.MIN_VALUE;
+			
+			numTargetWords = Integer.MIN_VALUE;
+			numTargetSentences = Integer.MIN_VALUE;
+		} else {
+			if (logger.isLoggable(Level.INFO)) logger.info("Initializing common vocabulary with source corpus " + sourceFileName);
+			int[] sourceWordsSentences = Vocabulary.initializeVocabulary(sourceFileName, commonVocab, true);
+			numSourceWords = sourceWordsSentences[0];
+			numSourceSentences = sourceWordsSentences[1];
+			
+			if (logger.isLoggable(Level.INFO)) logger.info("Initializing common vocabulary with target corpus " + sourceFileName);			
+			int[] targetWordsSentences = Vocabulary.initializeVocabulary(targetFileName, commonVocab, true);
+			numTargetWords = targetWordsSentences[0];
+			numTargetSentences = targetWordsSentences[1];
 		}
+	
+		
 		
 		//////////////////////////////////
 		// Source language corpus array //
 		//////////////////////////////////
 		final Corpus sourceCorpusArray;
-		if (binarySource) {
+		if (binaryCorpus) {
 			if (logger.isLoggable(Level.INFO)) logger.info("Constructing memory mapped source language corpus array.");
-			sourceCorpusArray = new MemoryMappedCorpusArray(sourceVocab, sourceFileName);
-		} else if (numSourceSentences==Integer.MIN_VALUE || numSourceWords==Integer.MIN_VALUE) {
-			sourceCorpusArray = null;
-			logger.severe("If a binary source vocab file is specified, the corresponding source corpus must also be a binary file.");
-			System.exit(-1);
+			sourceCorpusArray = new MemoryMappedCorpusArray(commonVocab, sourceFileName);
 		} else {
 			if (logger.isLoggable(Level.INFO)) logger.info("Constructing source language corpus array.");
-			sourceCorpusArray = SuffixArrayFactory.createCorpusArray(sourceFileName, sourceVocab, numSourceWords, numSourceSentences);
+			sourceCorpusArray = SuffixArrayFactory.createCorpusArray(sourceFileName, commonVocab, numSourceWords, numSourceSentences);
 		}
 
 		//////////////////////////////////
@@ -264,50 +249,27 @@ public class ExtractRules {
 		//////////////////////////////////
 		Suffixes sourceSuffixArray;
 		String binarySourceSuffixArrayFileName = sourceSuffixesFileName;
-		if (binarySourceSuffixArrayFileName.equals("")) {
-			if (logger.isLoggable(Level.INFO)) logger.info("Constructing source language suffix array from source corpus.");
-			sourceSuffixArray = SuffixArrayFactory.createSuffixArray(sourceCorpusArray, cacheSize);
-		} else {
+		if (binaryCorpus) {
 			if (logger.isLoggable(Level.INFO)) logger.info("Constructing source language suffix array from binary file " + binarySourceSuffixArrayFileName);
 			sourceSuffixArray = new MemoryMappedSuffixArray(binarySourceSuffixArrayFileName, sourceCorpusArray, cacheSize);
-		}
-		
-		
-		////////////////////////////////
-		// Target language vocabulary //
-		////////////////////////////////
-		int numTargetWords, numTargetSentences;
-		Vocabulary targetVocab = new Vocabulary();
-
-		String binaryTargetVocabFileName = this.targetVocabFileName;
-		if ( binaryTargetVocabFileName.equals("")) {
-			if (logger.isLoggable(Level.INFO)) logger.info("Constructing target language vocabulary from target corpus " + targetFileName);		
-//			targetFileName = commandLine.getValue(target);
-			int[] targetWordsSentences = Vocabulary.initializeVocabulary(targetFileName, targetVocab, true);
-			numTargetWords = targetWordsSentences[0];
-			numTargetSentences = targetWordsSentences[1];
 		} else {
-			if (logger.isLoggable(Level.INFO)) logger.info("Constructing target language vocabulary from binary file " + binaryTargetVocabFileName);
-			ObjectInput in = BinaryIn.vocabulary(binaryTargetVocabFileName);
-			targetVocab.readExternal(in);
-			numTargetWords = Integer.MIN_VALUE;
-			numTargetSentences = Integer.MIN_VALUE;
+			if (logger.isLoggable(Level.INFO)) logger.info("Constructing source language suffix array from source corpus.");
+			sourceSuffixArray = SuffixArrayFactory.createSuffixArray(sourceCorpusArray, cacheSize);
 		}
+		
+		
+
 				
 		//////////////////////////////////
 		// Target language corpus array //
 		//////////////////////////////////
 		final Corpus targetCorpusArray;
-		if (binaryTarget) {
+		if (binaryCorpus) {
 			if (logger.isLoggable(Level.INFO)) logger.info("Constructing memory mapped target language corpus array.");
-			targetCorpusArray = new MemoryMappedCorpusArray(targetVocab, targetFileName);
-		} else if (numTargetSentences==Integer.MIN_VALUE || numTargetWords==Integer.MIN_VALUE) {
-			targetCorpusArray = null;
-			logger.severe("If a binary target vocab file is specified, the corresponding target corpus must also be a binary file.");
-			System.exit(-1);
+			targetCorpusArray = new MemoryMappedCorpusArray(commonVocab, targetFileName);
 		} else {
 			if (logger.isLoggable(Level.INFO)) logger.info("Constructing target language corpus array.");
-			targetCorpusArray = SuffixArrayFactory.createCorpusArray(targetFileName, targetVocab, numTargetWords, numTargetSentences);
+			targetCorpusArray = SuffixArrayFactory.createCorpusArray(targetFileName, commonVocab, numTargetWords, numTargetSentences);
 		}
 		
 
@@ -316,12 +278,12 @@ public class ExtractRules {
 		//////////////////////////////////
 		Suffixes targetSuffixArray;
 		String binaryTargetSuffixArrayFileName = targetSuffixesFileName;
-		if (binaryTargetSuffixArrayFileName.equals("")) {
-			if (logger.isLoggable(Level.INFO)) logger.info("Constructing target language suffix array from target corpus.");
-			targetSuffixArray = SuffixArrayFactory.createSuffixArray(targetCorpusArray, cacheSize);
-		} else {
+		if (binaryCorpus) {
 			if (logger.isLoggable(Level.INFO)) logger.info("Constructing target language suffix array from binary file " + binaryTargetSuffixArrayFileName);
 			targetSuffixArray = new MemoryMappedSuffixArray(binaryTargetSuffixArrayFileName, targetCorpusArray, cacheSize);
+		} else {
+			if (logger.isLoggable(Level.INFO)) logger.info("Constructing target language suffix array from target corpus.");
+			targetSuffixArray = SuffixArrayFactory.createSuffixArray(targetCorpusArray, cacheSize);
 		}
 
 		int trainingSize = sourceCorpusArray.getNumSentences();
@@ -334,9 +296,7 @@ public class ExtractRules {
 		// Alignment data  //
 		/////////////////////
 		if (logger.isLoggable(Level.INFO)) logger.info("Reading alignment data.");
-//		String alignmentFileName = commandLine.getValue(alignment);
 		final Alignments alignments;
-//		String alignmentsType = commandLine.getValue(alignmentType);
 		if ("AlignmentArray".equals(alignmentsType)) {
 			if (logger.isLoggable(Level.INFO)) logger.info("Using AlignmentArray");
 			alignments = SuffixArrayFactory.createAlignments(alignmentsFileName, sourceSuffixArray, targetSuffixArray);
@@ -352,27 +312,8 @@ public class ExtractRules {
 			System.exit(-1);
 		}
 		
-//		ParallelCorpus parallelCorpus = 
-//			new AlignedParallelCorpus(sourceCorpusArray, targetCorpusArray, alignments);
-//		
-//		LexicalProbabilities lexProbs = 
-//			new LexProbs(parallelCorpus, Float.MIN_VALUE);
-
 		Map<Integer,String> ntVocab = new HashMap<Integer,String>();
 		ntVocab.put(SymbolTable.X, SymbolTable.X_STRING);
-
-	
-		
-//		logger.info("Scanner has line == " +testFileScanner.hasNextLine());
-//		PrefixTree.SENTENCE_INITIAL_X = this.sentenceInitialX;//commandLine.getValue(sentence_initial_X);
-//		PrefixTree.SENTENCE_FINAL_X   = this.sentenceFinalX; // commandLine.getValue(sentence_final_X);
-//		
-//		PrefixTree.EDGE_X_MAY_VIOLATE_PHRASE_SPAN = this.edgeXViolates; //commandLine.getValue(edge_X_violates);
-		
-
-//		RuleExtractor ruleExtractor = new HierarchicalRuleExtractor(sourceSuffixArray, targetCorpusArray, alignments, lexProbs, ruleSampleSize, maxPhraseSpan, maxPhraseLength, minNonterminalSpan, maxPhraseSpan);
-		
-		//commandLine.getValue(keepTree);
 		
 		logger.info("Constructing grammar factory from parallel corpus");
 		ParallelCorpusGrammarFactory parallelCorpus = new ParallelCorpusGrammarFactory(sourceSuffixArray, targetSuffixArray, alignments, null, ruleSampleSize, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan, Float.MIN_VALUE);
@@ -484,16 +425,24 @@ public class ExtractRules {
 	 */
 	public static void main(String[] args) throws IOException, ClassNotFoundException {
 		
-		if (args.length != 3) {
-			System.err.println("Usage: joshDir outputRules testFile");
-		} else {
-					
+		if (args.length==3) {
 			ExtractRules extractRules = new ExtractRules();
 			extractRules.setJoshDir(args[0]);
 			extractRules.setOutputFile(args[1]);
 			extractRules.setTestFile(args[2]);
 			extractRules.execute();
-			
+		} else if (args.length==5) {
+			ExtractRules extractRules = new ExtractRules();
+			extractRules.setSourceFileName(args[0]);
+			extractRules.setTargetFileName(args[1]);
+			extractRules.setAlignmentsFileName(args[2]);
+			extractRules.setOutputFile(args[3]);
+			extractRules.setTestFile(args[4]);
+			extractRules.execute();
+		} else {
+			System.err.println("Usage: joshDir outputRules testFile");
+			System.err.println("---------------OR------------------");
+			System.err.println("Usage: source.txt target.txt alignments.txt outputRules testFile");
 		}
 		
 	}
