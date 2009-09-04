@@ -1,0 +1,196 @@
+[X] ||| das ||| the ||| 0.30103 0.0 0.30103
+[X] ||| das ||| that ||| 0.30103 0.0 0.30103
+[X] ||| das [X,1] ||| that [X,1] ||| 0.25527248 0.0 0.30103
+[X] ||| das [X,1] ||| the [X,1] ||| 0.3521825 0.0 0.30103
+[X] ||| haus ||| house ||| 0.0222764 0.0 0.021189298
+[X] ||| haus ||| small house ||| 1.30103 0.0 1.3434086
+[X] ||| haus [X,1] ||| house [X,1] ||| 0.0 0.0 0.021189298
+[X] ||| klein ||| small ||| 0.0 0.43365556 0.0
+[X] ||| klein [X,1] ||| [X,1] small ||| 0.0 0.43365556 0.0
+[X] ||| ist ||| is ||| 0.0 0.34845465 0.0
+[X] ||| [X,1] haus ||| [X,1] house ||| 0.0 0.0 0.021189298
+[X] ||| [X,1] ist ||| is [X,1] ||| 0.09691001 0.34845465 0.0
+[X] ||| [X,1] ist ||| [X,1] is ||| 0.69897 0.34845465 0.0
+[X] ||| das haus ||| the house ||| 0.0 0.0 0.32221928
+[X] ||| das haus [X,1] ||| the house [X,1] ||| 0.0 0.0 0.32221928
+[X] ||| das [X,1] ist ||| that is [X,1] ||| 0.0 0.34845465 0.30103
+[X] ||| klein ist ||| is small ||| 0.0 0.7821102 0.0
+[X] ||| [X,1] klein ist ||| [X,1] is small ||| 0.0 0.7821102 0.0
+[X] ||| haus klein ist ||| house is small ||| 0.0 0.7821102 0.021189298
+[X] ||| das haus klein ist ||| the house is small ||| 0.0 0.7821102 0.32221928
+[X] ||| es ||| there ||| 0.0 0.0 0.0
+[X] ||| es [X,1] ||| there [X,1] ||| 0.0 0.0 0.0
+[X] ||| ein ||| a ||| 0.0 0.22847936 0.0
+[X] ||| ein [X,1] ||| a [X,1] ||| 0.0 0.22847936 0.0
+[X] ||| gibt ||| is ||| 0.0 0.258278 0.0
+[X] ||| [X,1] gibt ||| is [X,1] ||| 0.0 0.258278 0.0
+[X] ||| es [X,1] gibt ||| there is [X,1] ||| 0.0 0.258278 0.0
+[X] ||| ein haus ||| a house ||| 0.079181254 0.22847936 0.021189298
+[X] ||| ein haus ||| a small house ||| 0.7781512 0.22847936 1.3434086
+[X] ||| ein [X,1] gibt ||| is a [X,1] ||| 0.0 0.48675737 0.0
+[X] ||| [X,1] haus gibt ||| is [X,1] house ||| 0.0 0.258278 0.021189298
+[X] ||| es ein [X,1] gibt ||| there is a [X,1] ||| 0.0 0.48675737 0.0
+[X] ||| es [X,1] haus gibt ||| there is [X,1] house ||| 0.0 0.258278 0.021189298
+[X] ||| ein haus gibt ||| is a small house ||| 0.47712123 0.48675737 1.3434086
+[X] ||| ein haus gibt ||| is a house ||| 0.17609124 0.48675737 0.021189298
+[X] ||| es ein haus gibt ||| there is a small house ||| 0.47712123 0.48675737 1.3434086
+[X] ||| es ein haus gibt ||| there is a house ||| 0.17609124 0.48675737 0.021189298
+[X] ||| klein das [X,1] ||| the [X,1] small ||| 0.0 0.43365556 0.30103
+[X] ||| klein [X,1] ist ||| [X,1] is small ||| 0.0 0.7821102 0.0
+[X] ||| haus ist ||| house is ||| 0.0 0.34845465 0.021189298
+[X] ||| [X,1] haus ist ||| is [X,1] house ||| 0.0 0.34845465 0.021189298
+[X] ||| das haus ist ||| the house is ||| 0.0 0.34845465 0.32221928
+[X] ||| klein das haus ist ||| the house is small ||| 0.0 0.7821102 0.32221928
+[X] ||| dieses ||| this ||| 0.0 0.0 0.0
+[X] ||| dieses [X,1] ||| this [X,1] ||| 0.0 0.0 0.0
+[X] ||| dieses haus ||| this house ||| 0.0 0.0 0.021189298
+[X] ||| dieses haus [X,1] ||| this house [X,1] ||| 0.0 0.0 0.021189298
+[X] ||| dieses [X,1] ist ||| this is [X,1] ||| 0.0 0.34845465 0.0
+[X] ||| dieses haus klein ist ||| this house is small ||| 0.0 0.7821102 0.021189298
+[X] ||| kleine ||| small ||| 0.0 0.50060236 0.0
+[X] ||| kleine [X,1] ||| small [X,1] ||| 0.0 0.50060236 0.0
+[X] ||| [X,1] kleine ||| [X,1] small ||| 0.0 0.50060236 0.0
+[X] ||| dieses kleine ||| this small ||| 0.0 0.50060236 0.0
+[X] ||| kleine haus ||| small house ||| 0.0 0.50060236 0.021189298
+[X] ||| dieses kleine haus ||| this small house ||| 0.0 0.50060236 0.021189298
+[X] ||| kleines ||| small ||| 0.0 0.57978356 0.0
+[X] ||| kleines [X,1] ||| small [X,1] ||| 0.0 0.57978356 0.0
+[X] ||| [X,1] kleines ||| [X,1] small ||| 0.0 0.57978356 0.0
+[X] ||| ein kleines ||| a small ||| 0.0 0.80826294 0.0
+[X] ||| ein kleines [X,1] ||| a small [X,1] ||| 0.0 0.80826294 0.0
+[X] ||| ein [X,1] haus ||| a [X,1] house ||| 0.0 0.22847936 0.021189298
+[X] ||| kleines haus ||| small house ||| 0.0 0.57978356 0.021189298
+[X] ||| [X,1] kleines haus ||| [X,1] small house ||| 0.0 0.57978356 0.021189298
+[X] ||| ein kleines haus ||| a small house ||| 0.0 0.80826294 0.021189298
+[X] ||| ein kleines [X,1] gibt ||| is a small [X,1] ||| 0.0 1.066541 0.0
+[X] ||| ein [X,1] haus gibt ||| is a [X,1] house ||| 0.0 0.48675737 0.021189298
+[X] ||| [X,1] kleines haus gibt ||| is [X,1] small house ||| 0.0 0.8380616 0.021189298
+[X] ||| es ein kleines [X,1] gibt ||| there is a small [X,1] ||| 0.0 1.066541 0.0
+[X] ||| es ein [X,1] haus gibt ||| there is a [X,1] house ||| 0.0 0.48675737 0.021189298
+[X] ||| es [X,1] kleines haus gibt ||| there is [X,1] small house ||| 0.0 0.8380616 0.021189298
+[X] ||| ein kleines haus gibt ||| is a small house ||| 0.0 1.066541 0.021189298
+[X] ||| es ein kleines haus gibt ||| there is a small house ||| 0.0 1.066541 0.021189298
+[X] ||| ein [X,1] ist ||| is a [X,1] ||| 0.0 0.576934 0.0
+[X] ||| das ein [X,1] ist ||| that is a [X,1] ||| 0.0 0.576934 0.30103
+[X] ||| das [X,1] haus ist ||| that is [X,1] house ||| 0.0 0.34845465 0.32221928
+[X] ||| ein kleines haus ist ||| is a small house ||| 0.0 1.1567175 0.021189298
+[X] ||| das ein kleines haus ist ||| that is a small house ||| 0.0 1.1567175 0.32221928
+[X] ||| dieses ein [X,1] ist ||| this is a [X,1] ||| 0.0 0.576934 0.0
+[X] ||| dieses [X,1] haus ist ||| this is [X,1] house ||| 0.0 0.34845465 0.021189298
+[X] ||| dieses ein kleines haus ist ||| this is a small house ||| 0.0 1.1567175 0.021189298
+[X] ||| das kleine ||| the small ||| 0.0 0.50060236 0.30103
+[X] ||| das kleine haus ||| the small house ||| 0.0 0.50060236 0.32221928
+[X] ||| das klein ist ||| that is small ||| 0.0 0.7821102 0.30103
+[X] ||| eines ||| one ||| 0.0 0.30103 0.0
+[X] ||| tages ||| day ||| 0.0 0.0 0.0
+[X] ||| eines tages ||| one day ||| 0.0 0.30103 0.0
+[X] ||| eins ||| one ||| 0.0 0.30103 0.0
+[X] ||| keins ||| none ||| 0.0 0.0 0.0
+[X] ||| keins [X,1] ||| none [X,1] ||| 0.0 0.0 0.0
+[X] ||| aus ||| out ||| 0.47712123 0.0 0.22184873
+[X] ||| aus ||| out of ||| 0.17609124 0.0 0.61978877
+[X] ||| aus [X,1] ||| out [X,1] ||| 0.47712123 0.0 0.22184873
+[X] ||| aus [X,1] ||| out of [X,1] ||| 0.17609124 0.0 0.61978877
+[X] ||| dem haeuschen ||| of control ||| 0.0 0.60206 0.30103
+[X] ||| aus dem haeuschen ||| out of control ||| 0.0 0.60206 0.5228787
+[X] ||| eine ||| a ||| 0.0 0.38818017 0.0
+[X] ||| eine [X,1] ||| a [X,1] ||| 0.0 0.38818017 0.0
+[X] ||| maus ||| mouse ||| 0.0 0.0 0.0
+[X] ||| maus [X,1] ||| mouse [X,1] ||| 0.0 0.0 0.0
+[X] ||| [X,1] maus ||| [X,1] mouse ||| 0.0 0.0 0.0
+[X] ||| eine maus ||| a mouse ||| 0.0 0.38818017 0.0
+[X] ||| eine maus [X,1] ||| a mouse [X,1] ||| 0.0 0.38818017 0.0
+[X] ||| eine [X,1] gibt ||| is a [X,1] ||| 0.0 0.6464582 0.0
+[X] ||| [X,1] maus gibt ||| is [X,1] mouse ||| 0.0 0.258278 0.0
+[X] ||| es eine [X,1] gibt ||| there is a [X,1] ||| 0.0 0.6464582 0.0
+[X] ||| es [X,1] maus gibt ||| there is [X,1] mouse ||| 0.0 0.258278 0.0
+[X] ||| eine maus gibt ||| is a mouse ||| 0.0 0.6464582 0.0
+[X] ||| es eine maus gibt ||| there is a mouse ||| 0.0 0.6464582 0.0
+[X] ||| eine kleine ||| a small ||| 0.0 0.8887825 0.0
+[X] ||| eine kleine [X,1] ||| a small [X,1] ||| 0.0 0.8887825 0.0
+[X] ||| eine [X,1] maus ||| a [X,1] mouse ||| 0.0 0.38818017 0.0
+[X] ||| kleine maus ||| small mouse ||| 0.0 0.50060236 0.0
+[X] ||| [X,1] kleine maus ||| [X,1] small mouse ||| 0.0 0.50060236 0.0
+[X] ||| eine kleine maus ||| a small mouse ||| 0.0 0.8887825 0.0
+[X] ||| eine kleine [X,1] gibt ||| is a small [X,1] ||| 0.0 1.1470605 0.0
+[X] ||| eine [X,1] maus gibt ||| is a [X,1] mouse ||| 0.0 0.6464582 0.0
+[X] ||| [X,1] kleine maus gibt ||| is [X,1] small mouse ||| 0.0 0.7588804 0.0
+[X] ||| es eine kleine [X,1] gibt ||| there is a small [X,1] ||| 0.0 1.1470605 0.0
+[X] ||| es eine [X,1] maus gibt ||| there is a [X,1] mouse ||| 0.0 0.6464582 0.0
+[X] ||| es [X,1] kleine maus gibt ||| there is [X,1] small mouse ||| 0.0 0.7588804 0.0
+[X] ||| eine kleine maus gibt ||| is a small mouse ||| 0.0 1.1470605 0.0
+[X] ||| es eine kleine maus gibt ||| there is a small mouse ||| 0.0 1.1470605 0.0
+[X] ||| keins gibt ||| is none ||| 0.0 0.258278 0.0
+[X] ||| es keins gibt ||| there is none ||| 0.0 0.258278 0.0
+[X] ||| meins ||| mine ||| 0.0 0.0 0.0
+[X] ||| meins [X,1] ||| mine [X,1] ||| 0.0 0.0 0.0
+[X] ||| meins ist ||| is mine ||| 0.0 0.34845465 0.0
+[X] ||| das meins ist ||| that is mine ||| 0.0 0.34845465 0.30103
+[X] ||| meins klein ist ||| mine is small ||| 0.0 0.7821102 0.0
+[X] ||| aus das ||| out of the ||| 0.0 0.0 0.92081875
+[X] ||| aus das haus ||| out of the house ||| 0.0 0.0 0.942008
+[X] ||| aus ein ||| out of a ||| 0.0 0.22847936 0.61978877
+[X] ||| aus ein haus ||| out of a house ||| 0.0 0.22847936 0.64097804
+[X] ||| keins klein ist ||| none is small ||| 0.0 0.7821102 0.0
+[X] ||| maus [X,1] ist ||| mouse is [X,1] ||| 0.0 0.34845465 0.0
+[X] ||| eine maus [X,1] ist ||| a mouse is [X,1] ||| 0.0 0.7366348 0.0
+[X] ||| ein haus ist ||| is a house ||| 0.0 0.576934 0.021189298
+[X] ||| [X,1] ein haus ist ||| [X,1] is a house ||| 0.0 0.576934 0.021189298
+[X] ||| maus ein haus ist ||| mouse is a house ||| 0.0 0.576934 0.021189298
+[X] ||| eine maus ein haus ist ||| a mouse is a house ||| 0.0 0.9651142 0.021189298
+[X] ||| gelb ||| yellow ||| 0.0 0.0 0.0
+[X] ||| gelb [X,1] ||| yellow [X,1] ||| 0.0 0.0 0.0
+[X] ||| [X,1] gelb ||| [X,1] yellow ||| 0.0 0.0 0.0
+[X] ||| eine gelb ||| a yellow ||| 0.0 0.38818017 0.0
+[X] ||| eine gelb [X,1] ||| a yellow [X,1] ||| 0.0 0.38818017 0.0
+[X] ||| gelb maus ||| yellow mouse ||| 0.0 0.0 0.0
+[X] ||| [X,1] gelb maus ||| [X,1] yellow mouse ||| 0.0 0.0 0.0
+[X] ||| eine gelb maus ||| a yellow mouse ||| 0.0 0.38818017 0.0
+[X] ||| eine gelb [X,1] gibt ||| is a yellow [X,1] ||| 0.0 0.6464582 0.0
+[X] ||| [X,1] gelb maus gibt ||| is [X,1] yellow mouse ||| 0.0 0.258278 0.0
+[X] ||| es eine gelb [X,1] gibt ||| there is a yellow [X,1] ||| 0.0 0.6464582 0.0
+[X] ||| es [X,1] gelb maus gibt ||| there is [X,1] yellow mouse ||| 0.0 0.258278 0.0
+[X] ||| eine gelb maus gibt ||| is a yellow mouse ||| 0.0 0.6464582 0.0
+[X] ||| es eine gelb maus gibt ||| there is a yellow mouse ||| 0.0 0.6464582 0.0
+[X] ||| ein gelb ||| a yellow ||| 0.0 0.22847936 0.0
+[X] ||| ein gelb [X,1] ||| a yellow [X,1] ||| 0.0 0.22847936 0.0
+[X] ||| gelb haus ||| yellow house ||| 0.0 0.0 0.021189298
+[X] ||| [X,1] gelb haus ||| [X,1] yellow house ||| 0.0 0.0 0.021189298
+[X] ||| ein gelb haus ||| a yellow house ||| 0.0 0.22847936 0.021189298
+[X] ||| ein gelb [X,1] gibt ||| is a yellow [X,1] ||| 0.0 0.48675737 0.0
+[X] ||| [X,1] gelb haus gibt ||| is [X,1] yellow house ||| 0.0 0.258278 0.021189298
+[X] ||| es ein gelb [X,1] gibt ||| there is a yellow [X,1] ||| 0.0 0.48675737 0.0
+[X] ||| es [X,1] gelb haus gibt ||| there is [X,1] yellow house ||| 0.0 0.258278 0.021189298
+[X] ||| ein gelb haus gibt ||| is a yellow house ||| 0.0 0.48675737 0.021189298
+[X] ||| es ein gelb haus gibt ||| there is a yellow house ||| 0.0 0.48675737 0.021189298
+[X] ||| ein gelb haus ist ||| is a yellow house ||| 0.0 0.576934 0.021189298
+[X] ||| das ein gelb haus ist ||| that is a yellow house ||| 0.0 0.576934 0.32221928
+[X] ||| gelb kleines ||| yellow small ||| 0.0 0.57978356 0.0
+[X] ||| ein gelb kleines ||| a yellow small ||| 0.0 0.80826294 0.0
+[X] ||| gelb kleines haus ||| yellow small house ||| 0.0 0.57978356 0.021189298
+[X] ||| ein gelb kleines haus ||| a yellow small house ||| 0.0 0.80826294 0.021189298
+[X] ||| ein gelb kleines haus gibt ||| is a yellow small house ||| 0.0 1.066541 0.021189298
+[X] ||| kleines gelb ||| small yellow ||| 0.0 0.57978356 0.0
+[X] ||| ein kleines gelb ||| a small yellow ||| 0.0 0.80826294 0.0
+[X] ||| kleines gelb haus ||| small yellow house ||| 0.0 0.57978356 0.021189298
+[X] ||| ein kleines gelb haus ||| a small yellow house ||| 0.0 0.80826294 0.021189298
+[X] ||| ein kleines gelb haus gibt ||| is a small yellow house ||| 0.0 1.066541 0.021189298
+[X] ||| kleine gelb ||| small yellow ||| 0.0 0.50060236 0.0
+[X] ||| eine kleine gelb ||| a small yellow ||| 0.0 0.8887825 0.0
+[X] ||| kleine gelb maus ||| small yellow mouse ||| 0.0 0.50060236 0.0
+[X] ||| eine kleine gelb maus ||| a small yellow mouse ||| 0.0 0.8887825 0.0
+[X] ||| eine kleine gelb maus gibt ||| is a small yellow mouse ||| 0.0 1.1470605 0.0
+[X] ||| gelb kleine ||| yellow small ||| 0.0 0.50060236 0.0
+[X] ||| eine gelb kleine ||| a yellow small ||| 0.0 0.8887825 0.0
+[X] ||| gelb kleine maus ||| yellow small mouse ||| 0.0 0.50060236 0.0
+[X] ||| eine gelb kleine maus ||| a yellow small mouse ||| 0.0 0.8887825 0.0
+[X] ||| eine gelb kleine maus gibt ||| is a yellow small mouse ||| 0.0 1.1470605 0.0
+[X] ||| geld ||| money ||| 0.0 0.0 0.0
+[X] ||| geld gibt ||| is money ||| 0.0 0.258278 0.0
+[X] ||| es geld gibt ||| there is money ||| 0.0 0.258278 0.0
+[X] ||| geld ist ||| is money ||| 0.0 0.34845465 0.0
+[X] ||| das geld ist ||| that is money ||| 0.0 0.34845465 0.30103
+[X] ||| gruen ||| green ||| 0.0 0.0 0.0
+[X] ||| eine gruen ||| a green ||| 0.0 0.38818017 0.0
+[X] ||| gruen maus ||| green mouse ||| 0.0 0.0 0.0
+[X] ||| eine gruen maus ||| a green mouse ||| 0.0 0.38818017 0.0
