@@ -72,6 +72,7 @@ public class LexProbs extends AbstractLexProbs {
 	 */
 	public LexProbs(ParallelCorpus parallelCorpus, float floorProbability) {
 		
+		logger.info("Calculating lexical translation probability table");
 		this.counts = initializeCooccurrenceCounts(parallelCorpus, floorProbability);
 		
 		this.sourceVocab = parallelCorpus.getSourceCorpus().getVocabulary();
@@ -79,6 +80,7 @@ public class LexProbs extends AbstractLexProbs {
 		
 		this.parallelCorpus = parallelCorpus;
 		this.floorProbability = floorProbability; //Float.MIN_VALUE;
+		logger.info("Calculating lexical translation probability table");
 		
 	}
 

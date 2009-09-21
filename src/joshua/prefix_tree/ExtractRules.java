@@ -344,6 +344,7 @@ public class ExtractRules {
 		
 		ParallelCorpusGrammarFactory parallelCorpus = this.getGrammarFactory();
 		
+		logger.info("Getting symbol table");
 		SymbolTable sourceVocab = parallelCorpus.getSourceCorpus().getVocabulary();
 		
 		int lineNumber = 0;
