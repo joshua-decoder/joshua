@@ -43,40 +43,50 @@ export MALLOC_CHECK_=0
 
 chunki.py 45000 $1 $2 $3 $4
 
-for C in chunk_*; do 
-	($MOSES/scripts/training/phrase-extract/extract \
-		$C/$2 $C/$1 \
-		$C/$3 extract 8 --OnlyOutputSpanInfo > \
-		$C/phrases.log );
-# ccb - removed &
-done
-wait
+HOLD_FOR=""
 
 for C in chunk_*; do 
-	(($SAMT/scripts/extractrules.pl \
+	JOB_ID=`qsub -S /bin/bash -V -N samt.phrase_extract.${C} \
+		-h -b y \
+		"($MOSES/scripts/training/phrase-extract/extract \
+		$C/$2 $C/$1 \
+		$C/$3 extract 8 --OnlyOutputSpanInfo > \
+		$C/phrases.log )" | \
+		sed -e "s/Your job \([0-9]*\).* has been submitted/\1/g"`;
+	
+	HOLD_FOR="${HOLD_FOR},"`qsub -S /bin/bash -V \
+		-N samt.rule_extract.${C} \
+		-h -b y -hold_jid ${JOB_ID} \
+		"(($SAMT/scripts/extractrules.pl \
 		--PhrasePairFeedFile $C/phrases.log \
 		--TargetParseTreeFile $C/$4 \
 		-r $5 \
 		--MaxSourceLength 12 \
 		--LexicalWeightFile data.lexprobs.samt.sgt \
 		--LexicalWeightFileReversed data.lexprobs.samt.tgs | \
-		gzip > $C/extractrules.gz) >& $C/extractrules.log ); 
-# ccb - removed &
+		gzip > $C/extractrules.gz) >& $C/extractrules.log )" | \
+		sed -e "s/Your job \([0-9]*\).* has been submitted/\1/g"`;
 done
-wait
 
+HOLD_FOR=`echo ${HOLD_FOR} | sed -e "s/.\(.*\)/\1/g"`
 
-zcat chunk_*/extractrules.gz | $SAMT/scripts/sortsafe.sh -T $TMP | $SAMT/myoptions.coe/MergeRules 0 0 8 8 0 | gzip > mergedrules.gz
+JOB_ID=`qsub -S /bin/bash -V -N samt.rules_merge \
+		-h -b y -hold_jid ${HOLD_FOR} \
+		"zcat chunk_*/extractrules.gz | $SAMT/scripts/sortsafe.sh -T $TMP | \
+		$SAMT/myoptions.coe/MergeRules 0 0 8 8 0 | gzip > mergedrules.gz" | \
+		sed -e "s/Your job \([0-9]*\).* has been submitted/\1/g"`;
 
-#(zcat mergedrules.gz | $SAMT/scripts/filterrules.pl \
-#	--cachesize 4000 --PhrasalFeatureCount 0 \
-#	--LexicalWeightFile data.lexprobs.samt.sgt \
-#	--LexicalWeightFileReversed data.lexprobs.samt.tgs \
-#	--MinOccurrenceCountLexicalrules 0 \
-#	--MinOccurrenceCountNonlexicalrules 0 \
-#	-o rules.db ) >& log-filterrules &
-
-
+JOB_ID=`qsub -S /bin/bash -V -N samt.rules_merge \
+		-h -b y -hold_jid ${JOB_ID} \
+		"((zcat mergedrules.gz | \
+		$SAMT/scripts/filterrules.pl --cachesize 4000 \
+		--PhrasalFeatureCount 0 \
+		--LexicalWeightFile data.lexprobs.giza.sgt \
+		--LexicalWeightFileReversed data.lexprobs.giza.tgs \
+		--MinOccurrenceCountLexicalrules 0 --MinOccurrenceCountNonlexicalrules 0 \
+		--noUsePerlHashForRules | \
+		gzip > filteredrules.gz ) >& filteredrules.log)" | \
+		sed -e "s/Your job \([0-9]*\).* has been submitted/\1/g"`;
 
 # throw away rules that do not have target side terminals
 #zgrep -v "^\([^#]* \)*[^ @#][^ @#]*[^#]*#\(@[0-9][ ]*\)*#" filteredrules.gz | \
