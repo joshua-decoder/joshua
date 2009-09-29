@@ -76,7 +76,7 @@ JOB_ID=`qsub -S /bin/bash -V -N samt.rules_merge \
 		$SAMT/myoptions.coe/MergeRules 0 0 8 8 0 | gzip > mergedrules.gz" | \
 		sed -e "s/Your job \([0-9]*\).* has been submitted/\1/g"`;
 
-JOB_ID=`qsub -S /bin/bash -V -N samt.rules_merge \
+JOB_ID=`qsub -S /bin/bash -V -N samt.rules_filter \
 		-h -b y -hold_jid ${JOB_ID} \
 		"((zcat mergedrules.gz | \
 		$SAMT/scripts/filterrules.pl --cachesize 4000 \
