@@ -41,51 +41,71 @@ export MALLOC_CHECK_=0
 #     I'll whip up a script for that sometime soon, if you deem it
 #     useful.
 
+# TODO: dynamic chunking
 chunki.py 45000 $1 $2 $3 $4
 
 HOLD_FOR=""
 
 for C in chunk_*; do 
-	JOB_ID=`qsub -S /bin/bash -V -N samt.phrase_extract.${C} \
-		-h -b y \
-		"($MOSES/scripts/training/phrase-extract/extract \
+	RUN_PHRASE_EXTRACT="${TMP}/samt.phrase_extract.${C}.sh"
+
+	echo "($MOSES/scripts/training/phrase-extract/extract \
 		$C/$2 $C/$1 \
 		$C/$3 extract 8 --OnlyOutputSpanInfo > \
-		$C/phrases.log )" | \
+		$C/phrases.log )" \
+		> $RUN_PHRASE_EXTRACT
+
+	JOB_ID=`qsub -cwd -N samt.phrase_extract.${C} \
+		bash $RUN_PHRASE_EXTRACT | \
 		sed -e "s/Your job \([0-9]*\).* has been submitted/\1/g"`;
 	
-	HOLD_FOR="${HOLD_FOR},"`qsub -S /bin/bash -V \
-		-N samt.rule_extract.${C} \
-		-h -b y -hold_jid ${JOB_ID} \
-		"(($SAMT/scripts/extractrules.pl \
+	RUN_RULE_EXTRACT="${TMP}/samt.rule_extract.${C}.sh"
+	
+	echo "(($SAMT/scripts/extractrules.pl \
 		--PhrasePairFeedFile $C/phrases.log \
 		--TargetParseTreeFile $C/$4 \
 		-r $5 \
 		--MaxSourceLength 12 \
 		--LexicalWeightFile data.lexprobs.samt.sgt \
 		--LexicalWeightFileReversed data.lexprobs.samt.tgs | \
-		gzip > $C/extractrules.gz) >& $C/extractrules.log )" | \
+		gzip > $C/extractrules.gz ) >& $C/extractrules.log )" \
+		> $RUN_RULE_EXTRACT
+	
+	HOLD_FOR="${HOLD_FOR},"`qsub -cwd \
+		-N samt.rule_extract.${C} \
+		-hold_jid ${JOB_ID} \
+		bash $RUN_RULE_EXTRACT | \
 		sed -e "s/Your job \([0-9]*\).* has been submitted/\1/g"`;
 done
 
 HOLD_FOR=`echo ${HOLD_FOR} | sed -e "s/.\(.*\)/\1/g"`
 
-JOB_ID=`qsub -S /bin/bash -V -N samt.rules_merge \
-		-h -b y -hold_jid ${HOLD_FOR} \
-		"zcat chunk_*/extractrules.gz | $SAMT/scripts/sortsafe.sh -T $TMP | \
-		$SAMT/myoptions.coe/MergeRules 0 0 8 8 0 | gzip > mergedrules.gz" | \
+RUN_RULE_MERGE="${TMP}/samt.rule_merge.${C}.sh"
+
+echo "zcat chunk_*/extractrules.gz | $SAMT/scripts/sortsafe.sh -T $TMP | \
+		$SAMT/myoptions.coe/MergeRules 0 0 8 8 0 | gzip > mergedrules.gz" > \
+		$RUN_RULE_MERGE
+
+JOB_ID=`qsub -cwd -N samt.rule_merge \
+		-hold_jid ${HOLD_FOR} \
+		bash $RUN_RULE_MERGE | \
 		sed -e "s/Your job \([0-9]*\).* has been submitted/\1/g"`;
 
-JOB_ID=`qsub -S /bin/bash -V -N samt.rules_filter \
-		-h -b y -hold_jid ${JOB_ID} \
-		"((zcat mergedrules.gz | \
+RUN_RULE_FILTER="${TMP}/samt.rule_filter.${C}.sh"
+
+echo "((zcat mergedrules.gz | \
 		$SAMT/scripts/filterrules.pl --cachesize 4000 \
 		--PhrasalFeatureCount 0 \
 		--LexicalWeightFile data.lexprobs.giza.sgt \
 		--LexicalWeightFileReversed data.lexprobs.giza.tgs \
 		--MinOccurrenceCountLexicalrules 0 --MinOccurrenceCountNonlexicalrules 0 \
 		--noUsePerlHashForRules | \
-		gzip > filteredrules.gz ) >& filteredrules.log)" | \
+		gzip > filteredrules.gz ) >& filteredrules.log)" > \
+		$RUN_RULE_FILTER
+
+JOB_ID=`qsub -cwd -N samt.rule_filter \
+		-hold_jid ${JOB_ID} \
+		bash $RUN_RULE_FILTER | \
 		sed -e "s/Your job \([0-9]*\).* has been submitted/\1/g"`;
 
 # throw away rules that do not have target side terminals
