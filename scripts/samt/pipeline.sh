@@ -42,7 +42,7 @@ export MALLOC_CHECK_=0
 #     useful.
 
 # TODO: dynamic chunking
-chunki.py 45000 $1 $2 $3 $4
+chunki.py 200 $1 $2 $3 $4
 
 HOLD_FOR=""
 
@@ -57,7 +57,7 @@ for C in chunk_*; do
 
 chmod u+x $RUN_PHRASE_EXTRACT
 
-	JOB_ID=`qsub -cwd -N samt.phrase_extract.${C} \
+	JOB_ID=`qsub -V -cwd -N samt.phrase_extract.${C} \
 		$RUN_PHRASE_EXTRACT | \
 		sed -e "s/Your job \([0-9]*\).* has been submitted/\1/g"`;
 	
@@ -75,7 +75,7 @@ chmod u+x $RUN_PHRASE_EXTRACT
 
 chmod u+x $RUN_RULE_EXTRACT
 	
-	HOLD_FOR="${HOLD_FOR},"`qsub -cwd \
+	HOLD_FOR="${HOLD_FOR},"`qsub -V -cwd \
 		-N samt.rule_extract.${C} \
 		-hold_jid ${JOB_ID} \
 		$RUN_RULE_EXTRACT | \
@@ -92,7 +92,7 @@ echo "zcat chunk_*/extractrules.gz | $SAMT/scripts/sortsafe.sh -T $TMP | \
 
 chmod u+x $RUN_RULE_MERGE
 
-JOB_ID=`qsub -cwd -N samt.rule_merge \
+JOB_ID=`qsub -V -cwd -N samt.rule_merge \
 		-hold_jid ${HOLD_FOR} \
 		$RUN_RULE_MERGE | \
 		sed -e "s/Your job \([0-9]*\).* has been submitted/\1/g"`;
@@ -111,7 +111,7 @@ echo "((zcat mergedrules.gz | \
 
 chmod u+x $RUN_RULE_FILTER
 
-JOB_ID=`qsub -cwd -N samt.rule_filter \
+JOB_ID=`qsub -V -cwd -N samt.rule_filter \
 		-hold_jid ${JOB_ID} \
 		$RUN_RULE_FILTER | \
 		sed -e "s/Your job \([0-9]*\).* has been submitted/\1/g"`;

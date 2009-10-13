@@ -13,7 +13,7 @@ public class HieroFormatReader extends GrammarReader<BilingualRule> {
 			.getLogger(HieroFormatReader.class.getName());
 	
 	static {
-		fieldDelimiter = "\\s+\\|{3}\\s+";
+		fieldDelimiter = "\\s\\|{3}\\s";
 		nonTerminalRegEx = "^\\[[^\\s]+\\,[0-9]*\\]$";
 		nonTerminalCleanRegEx = "[\\,0-9\\s+]+";
 //		nonTerminalRegEx = "^\\[[A-Z]+\\,[0-9]*\\]$";

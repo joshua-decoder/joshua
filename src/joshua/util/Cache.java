@@ -45,7 +45,7 @@ public class Cache<K,V> extends LinkedHashMap<K,V> {
 	 * A constant is used as the default the cache size if none
 	 * is specified.
 	 */
-	public static final int DEFAULT_CAPACITY = 100000;
+	public static final int DEFAULT_CAPACITY = 100000000;
 
 	/** Default initial capacity of the cache. */
 	public static final int INITIAL_CAPACITY = 16;
