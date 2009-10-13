@@ -55,8 +55,10 @@ for C in chunk_*; do
 		$C/phrases.log )" \
 		> $RUN_PHRASE_EXTRACT
 
+chmod u+x $RUN_PHRASE_EXTRACT
+
 	JOB_ID=`qsub -cwd -N samt.phrase_extract.${C} \
-		bash $RUN_PHRASE_EXTRACT | \
+		$RUN_PHRASE_EXTRACT | \
 		sed -e "s/Your job \([0-9]*\).* has been submitted/\1/g"`;
 	
 	RUN_RULE_EXTRACT="${TMP}/samt.rule_extract.${C}.sh"
@@ -70,11 +72,13 @@ for C in chunk_*; do
 		--LexicalWeightFileReversed data.lexprobs.samt.tgs | \
 		gzip > $C/extractrules.gz ) >& $C/extractrules.log )" \
 		> $RUN_RULE_EXTRACT
+
+chmod u+x $RUN_RULE_EXTRACT
 	
 	HOLD_FOR="${HOLD_FOR},"`qsub -cwd \
 		-N samt.rule_extract.${C} \
 		-hold_jid ${JOB_ID} \
-		bash $RUN_RULE_EXTRACT | \
+		$RUN_RULE_EXTRACT | \
 		sed -e "s/Your job \([0-9]*\).* has been submitted/\1/g"`;
 done
 
@@ -86,9 +90,11 @@ echo "zcat chunk_*/extractrules.gz | $SAMT/scripts/sortsafe.sh -T $TMP | \
 		$SAMT/myoptions.coe/MergeRules 0 0 8 8 0 | gzip > mergedrules.gz" > \
 		$RUN_RULE_MERGE
 
+chmod u+x $RUN_RULE_MERGE
+
 JOB_ID=`qsub -cwd -N samt.rule_merge \
 		-hold_jid ${HOLD_FOR} \
-		bash $RUN_RULE_MERGE | \
+		$RUN_RULE_MERGE | \
 		sed -e "s/Your job \([0-9]*\).* has been submitted/\1/g"`;
 
 RUN_RULE_FILTER="${TMP}/samt.rule_filter.${C}.sh"
@@ -103,9 +109,11 @@ echo "((zcat mergedrules.gz | \
 		gzip > filteredrules.gz ) >& filteredrules.log)" > \
 		$RUN_RULE_FILTER
 
+chmod u+x $RUN_RULE_FILTER
+
 JOB_ID=`qsub -cwd -N samt.rule_filter \
 		-hold_jid ${JOB_ID} \
-		bash $RUN_RULE_FILTER | \
+		$RUN_RULE_FILTER | \
 		sed -e "s/Your job \([0-9]*\).* has been submitted/\1/g"`;
 
 # throw away rules that do not have target side terminals
