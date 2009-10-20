@@ -48,7 +48,7 @@ public class Cache<K,V> extends LinkedHashMap<K,V> {
 	public static final int DEFAULT_CAPACITY = 100000000;
 
 	/** Default initial capacity of the cache. */
-	public static final int INITIAL_CAPACITY = 16;
+	public static final int INITIAL_CAPACITY = 1000000;
 	
 	/** Default load factor of the cache. */
 	public static final float LOAD_FACTOR = 0.75f;
