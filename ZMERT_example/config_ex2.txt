@@ -7,10 +7,10 @@ glue_file=grammars/hiero.glue
 glue_format=hiero
 
 #lm config
-use_srilm=false
+use_srilm=true
 lm_ceiling_cost=100
-use_left_euqivalent_state=false
-use_right_euqivalent_state=false
+use_left_equivalent_state=false
+use_right_equivalent_state=false
 order=4
 
 
@@ -20,6 +20,7 @@ phrase_owner=pt
 mono_owner=mono
 begin_mono_owner=begin_mono
 default_non_terminal=X
+goalSymbol=S
 
 #pruning config
 fuzz1=0.1
