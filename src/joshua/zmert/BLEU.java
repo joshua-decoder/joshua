@@ -256,7 +256,7 @@ else { // average
   public double score(int[] stats)
   {
     if (stats.length != suffStatsCount) {
-      logger.severe("Mismatch between stats.length and suffStatsCount (" + stats.length + " vs. " + suffStatsCount + ")");
+      logger.severe("Mismatch between stats.length and suffStatsCount (" + stats.length + " vs. " + suffStatsCount + ") in BLEU.score(int[])");
       System.exit(2);
     }
 

@@ -85,7 +85,7 @@ public class __new_metric_CLASS_name__ extends EvaluationMetric
   public double score(int[] stats)
   {
     if (stats.length != suffStatsCount) {
-      System.out.println("Mismatch between stats.length and suffStatsCount (" + stats.length + " vs. " + suffStatsCount + ")");
+      System.out.println("Mismatch between stats.length and suffStatsCount (" + stats.length + " vs. " + suffStatsCount + ") in NewMetric.score(int[])");
       System.exit(1);
     }
 

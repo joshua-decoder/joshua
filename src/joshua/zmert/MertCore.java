@@ -638,6 +638,11 @@ public class MertCore
 
         String sents_str, feats_str, stats_str;
 
+        // BUG: this assumes a candidate string cannot be produced for two
+        //      different source sentences, which is not necessarily true
+        // (It's not actually a bug, but only because existingCandStats gets
+        // cleared before moving to the next source sentence.)
+        // FIX: should be made an array, indexed by i
         HashMap<String,String> existingCandStats = new HashMap<String,String>();
           // Stores precalculated sufficient statistics for candidates, in case
           // the same candidate is seen again. (SS stored as a String.)
@@ -732,6 +737,8 @@ public class MertCore
           BufferedWriter outFile_sentsCurrIt_IP = new BufferedWriter(outStreamWriter);
 
           Vector<String> unknownCands_V = new Vector<String>();
+            // which candidates (of the i'th source sentence) have not been seen before
+            // this iteration?
 
           for (int n = 0; n <= sizeOfNBest; ++n) {
           // Why up to and *including* sizeOfNBest?
@@ -757,8 +764,8 @@ public class MertCore
 
           outFile_sentsCurrIt_IP.close();
 
-          // now unknown_V has the candidates for which we need to calculate
-          // sufficient statistics
+          // now unknownCands_V has the candidates for which we need to calculate
+          // sufficient statistics (for the i'th source sentence)
           int sizeUnknown = unknownCands_V.size();
           String[] unknownCands = new String[sizeUnknown];
           unknownCands_V.toArray(unknownCands);

@@ -164,6 +164,15 @@ public class TER extends EvaluationMetric
         stats[d][0] = (int)Double.parseDouble(strA[1]);
         stats[d][1] = (int)Double.parseDouble(strA[2]);
       }
+
+
+      // 4) Delete TER files
+
+      File fd;
+      fd = new File("hyp.txt.TER"); if (fd.exists()) fd.delete();
+      fd = new File("ref.txt.TER"); if (fd.exists()) fd.delete();
+      fd = new File("TER_out.ter"); if (fd.exists()) fd.delete();
+
     } catch (IOException e) {
       System.err.println("IOException in TER.suffStats(String[],int[]): " + e.getMessage());
       System.exit(99902);
@@ -178,7 +187,7 @@ public class TER extends EvaluationMetric
   public double score(int[] stats)
   {
     if (stats.length != suffStatsCount) {
-      System.out.println("Mismatch between stats.length and suffStatsCount (" + stats.length + " vs. " + suffStatsCount + ")");
+      System.out.println("Mismatch between stats.length and suffStatsCount (" + stats.length + " vs. " + suffStatsCount + ") in TER.score(int[])");
       System.exit(1);
     }
 
