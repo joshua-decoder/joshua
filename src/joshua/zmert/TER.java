@@ -130,7 +130,7 @@ public class TER extends EvaluationMetric
 
       // 2) Launch tercom.7.25.jar as an external process
 
-      String cmd_str = "java -jar tercom.7.25.jar -r ref.txt.TER -h hyp.txt.TER -o ter -n TER_out";
+      String cmd_str = "java -Dfile.encoding=utf8 -jar tercom.7.25.jar -r ref.txt.TER -h hyp.txt.TER -o ter -n TER_out";
       cmd_str += " -b " + beamWidth;
       cmd_str += " -d " + maxShiftDist;
       if (caseSensitive) { cmd_str += " -S"; }

@@ -1077,7 +1077,7 @@ public class MertCore
 
       // if min number of iterations executed, investigate if early exit should happen
       if (iteration >= minIts && earlyStop >= stopMinIts) {
-        println("Some early stopping criteria has been ovserved "
+        println("Some early stopping criteria has been observed "
               + "in " + stopMinIts + " consecutive iterations; exiting Z-MERT.",1);
         println("",1);
         break; // exit for (iteration) loop preemptively

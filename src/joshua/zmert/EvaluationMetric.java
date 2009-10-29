@@ -57,6 +57,8 @@ public abstract class EvaluationMetric
       // the "RYPT" metric expects an options array of length 5
     metricOptionCount.put("TER-BLEU",6);
       // the "TER-BLEU" metric expects an options array of length 6
+//    metricOptionCount.put("WER",0);
+      // the "WER" metric expects an options array of length 0
   }
 
   public static EvaluationMetric getMetric(String metricName, String[] metricOptions)
@@ -64,19 +66,21 @@ public abstract class EvaluationMetric
     EvaluationMetric retMetric = null;
 
     if (metricName.equals("BLEU")) {
-      retMetric = new BLEU(metricOptions);         // the "BLEU" metric corresponds to the BLEU class
+      retMetric = new BLEU(metricOptions);          // the "BLEU" metric corresponds to the BLEU class
     } else if (metricName.equals("BLEU_SBP")) {
-      retMetric = new BLEU_SBP(metricOptions);     // the "BLEU_SBP" metric corresponds to the BLEU_SBP class
+      retMetric = new BLEU_SBP(metricOptions);      // the "BLEU_SBP" metric corresponds to the BLEU_SBP class
     } else if (metricName.equals("01LOSS")) {
-      retMetric = new ZeroOneLoss(metricOptions);  // the "01LOSS" metric corresponds to the ZeroOneLoss class
+      retMetric = new ZeroOneLoss(metricOptions);   // the "01LOSS" metric corresponds to the ZeroOneLoss class
     } else if (metricName.equals("TER")) {
-      retMetric = new TER(metricOptions);          // the "TER" metric corresponds to the TER class
+      retMetric = new TER(metricOptions);           // the "TER" metric corresponds to the TER class
 //    } else if (metricName.equals("METEOR")) {
-//      retMetric = new METEOR(metricOptions);       // the "METEOR" metric corresponds to the METEOR class
+//      retMetric = new METEOR(metricOptions);        // the "METEOR" metric corresponds to the METEOR class
 //    } else if (metricName.equals("RYPT")) {
-//      retMetric = new RYPT(metricOptions);         // the "RYPT" metric corresponds to the RYPT class
+//      retMetric = new RYPT(metricOptions);          // the "RYPT" metric corresponds to the RYPT class
     } else if (metricName.equals("TER-BLEU")) {
-      retMetric = new TERMinusBLEU(metricOptions); // the "TER-BLEU" metric corresponds to the TERMinusBLEU class
+      retMetric = new TERMinusBLEU(metricOptions);  // the "TER-BLEU" metric corresponds to the TERMinusBLEU class
+//    } else if (metricName.equals("WER")) {
+//      retMetric = new WordErrorRate(metricOptions); // the "WER" metric corresponds to the WordErrorRate class
     }
 
     return retMetric;
