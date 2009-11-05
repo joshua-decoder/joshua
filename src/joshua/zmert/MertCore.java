@@ -19,6 +19,7 @@
 package joshua.zmert;
 import joshua.decoder.*;
 import java.util.*;
+import java.util.zip.*;
 import java.io.*;
 import java.text.DecimalFormat;
 
@@ -557,7 +558,7 @@ public class MertCore
         if (!copyFile(decoderOutFileName,decoderOutFileName+".ZMERT.it"+iteration)) {
           println("Warning: attempt to make copy of decoder output file (to create" + decoderOutFileName+".ZMERT.it"+iteration + ") was unsuccessful!",1);
         }
-        if (compressFiles) {
+        if (compressFiles == 1) {
           gzipFile(decoderOutFileName+".ZMERT.it"+iteration);
         }
       }
@@ -2563,28 +2564,33 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
     return checker.exists();
   }
 
-  private void gzipFile(String inputFileName) throws IOException
+  private void gzipFile(String inputFileName)
   {
     gzipFile(inputFileName, inputFileName + ".gz");
   }
 
-  private void gzipFile(String inputFileName, String gzippedFileName) throws IOException
+  private void gzipFile(String inputFileName, String gzippedFileName)
   {
-    FileInputStream in = new FileInputStream(inputFileName);
-    GZIPOutputStream out = new GZIPOutputStream(new FileOutputStream(gzippedFileName));
+    try {
+      FileInputStream in = new FileInputStream(inputFileName);
+      GZIPOutputStream out = new GZIPOutputStream(new FileOutputStream(gzippedFileName));
 
-    byte[] buffer = new byte[4096];
-    int len;
-    while ((len = in.read(buffer)) > 0) {
-      out.write(buffer, 0, len);
+      byte[] buffer = new byte[4096];
+      int len;
+      while ((len = in.read(buffer)) > 0) {
+        out.write(buffer, 0, len);
+      }
+
+      in.close();
+      out.finish();
+      out.close();
+    } catch (IOException e) {
+      System.err.println("IOException in MertCore.initialize(int): " + e.getMessage());
+      System.exit(99902);
     }
-
-    in.close();
-    out.finish();
-    out.close();
   }
 
-  private void gunzipFile(String gzippedFileName) throws IOException
+  private void gunzipFile(String gzippedFileName)
   {
     if (gzippedFileName.endsWith(".gz")) {
       gunzipFile(gzippedFileName, gzippedFileName.substring(0,gzippedFileName.length()-3));
@@ -2593,19 +2599,24 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
     }
   }
 
-  private void gunzipFile(String gzippedFileName, String outputFileName) throws IOException
+  private void gunzipFile(String gzippedFileName, String outputFileName)
   {
-    GZIPInputStream in = new GZIPInputStream(new FileInputStream(gzippedFileName));
-    FileOutputStream out = new FileOutputStream(outputFileName);
+    try {
+      GZIPInputStream in = new GZIPInputStream(new FileInputStream(gzippedFileName));
+      FileOutputStream out = new FileOutputStream(outputFileName);
 
-    byte[] buffer = new byte[4096];
-    int len;
-    while ((len = in.read(buffer)) > 0) {
-      out.write(buffer, 0, len);
+      byte[] buffer = new byte[4096];
+      int len;
+      while ((len = in.read(buffer)) > 0) {
+        out.write(buffer, 0, len);
+      }
+
+      in.close();
+      out.close();
+    } catch (IOException e) {
+      System.err.println("IOException in MertCore.initialize(int): " + e.getMessage());
+      System.exit(99902);
     }
-
-    in.close();
-    out.close();
   }
 
   private String createUnifiedRefFile(String prefix, int numFiles)
