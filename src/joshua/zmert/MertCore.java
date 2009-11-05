@@ -168,7 +168,11 @@ public class MertCore
   private String paramsFileName, finalLambdaFileName;
   private String sourceFileName, refFileName, decoderOutFileName;
   private String decoderConfigFileName, decoderCommandFileName;
-  private String fakeFileNamePrefix;
+  private String fakeFileNamePrefix, fakeFileNameSuffix;
+    // e.g. output.it[1-x].someOldRun would be specified as:
+    //      output.it?.someOldRun
+    //      and we'd have prefix = "output.it" and suffix = ".sameOldRun"
+
 //  private int useDisk;
 
   public MertCore()
@@ -597,6 +601,7 @@ public class MertCore
         // i.e. only process candidates from the current iteration and candidates
         // from up to prevIts previous iterations.
       println("Reading candidate translations from iterations " + firstIt + "-" + iteration,1);
+      println("(and computing their " + metricName + " sufficient statistics)",1);
       progress = 0;
 
       int[] newCandidatesAdded = new int[1+iteration];
@@ -618,17 +623,33 @@ public class MertCore
         BufferedReader[] inFile_stats = new BufferedReader[iteration];
 
         for (int it = firstIt; it < iteration; ++it) {
-          InputStream inStream_sents = new FileInputStream(new File(decoderOutFileName+".temp.sents.it"+it));
+          InputStream inStream_sents, inStream_feats, inStread_stats;
+          if (compressFiles == 0) {
+            inStream_sents = new FileInputStream(decoderOutFileName+".temp.sents.it"+it);
+            inStream_feats = new FileInputStream(decoderOutFileName+".temp.feats.it"+it);
+          } else {
+            inStream_sents = new GZIPInputStream(new FileInputStream(decoderOutFileName+".temp.sents.it"+it+".gz"));
+            inStream_feats = new GZIPInputStream(new FileInputStream(decoderOutFileName+".temp.feats.it"+it+".gz"));
+          }
+
           inFile_sents[it] = new BufferedReader(new InputStreamReader(inStream_sents, "utf8"));
-//          inFile_sents[it] = new BufferedReader(new FileReader(decoderOutFileName+".temp.sents.it"+it));
-          inFile_feats[it] = new BufferedReader(new FileReader(decoderOutFileName+".temp.feats.it"+it));
+          inFile_feats[it] = new BufferedReader(new InputStreamReader(inStream_feats, "utf8"));
+
           inFile_stats[it] = new BufferedReader(new FileReader(decoderOutFileName+".temp.stats.it"+it));
         }
 
 
-        InputStream inStream_sents = new FileInputStream(new File(decoderOutFileName+".temp.sents.it"+iteration));
-        BufferedReader inFile_sentsCurrIt = new BufferedReader(new InputStreamReader(inStream_sents, "utf8"));
-        BufferedReader inFile_featsCurrIt = new BufferedReader(new FileReader(decoderOutFileName+".temp.feats.it"+iteration));
+        InputStream inStream_sentsCurrIt, inStream_featsCurrIt, inStream_statsCurrIt;
+        if (compressFiles == 0) {
+          inStream_sentsCurrIt = new FileInputStream(decoderOutFileName+".temp.sents.it"+iteration);
+          inStream_featsCurrIt = new FileInputStream(decoderOutFileName+".temp.feats.it"+iteration);
+        } else {
+          inStream_sentsCurrIt = new GZIPInputStream(new FileInputStream(decoderOutFileName+".temp.sents.it"+iteration+".gz"));
+          inStream_featsCurrIt = new GZIPInputStream(new FileInputStream(decoderOutFileName+".temp.feats.it"+iteration+".gz"));
+        }
+
+        BufferedReader inFile_sentsCurrIt = new BufferedReader(new InputStreamReader(inStream_sentsCurrIt, "utf8"));
+        BufferedReader inFile_featsCurrIt = new BufferedReader(new InputStreamReader(inStream_featsCurrIt, "utf8"));
 
         BufferedReader inFile_statsCurrIt = null;
         boolean statsCurrIt_exists = false;
@@ -1273,9 +1294,9 @@ public class MertCore
 
   private void run_decoder(int iteration)
   {
-    if (fakeFileNamePrefix != null && fileExists(fakeFileNamePrefix+iteration)) {
-      println("Running fake decoder (making copy of " + fakeFileNamePrefix+iteration + ")...",1);
-      copyFile(fakeFileNamePrefix+iteration,decoderOutFileName);
+    if (fakeFileNamePrefix != null && fileExists(fakeFileNamePrefix+iteration+fakeFileNameSuffix)) {
+      println("Running fake decoder (making copy of " + fakeFileNamePrefix+iteration+fakeFileNameSuffix + ")...",1);
+      copyFile(fakeFileNamePrefix+iteration+fakeFileNameSuffix,decoderOutFileName);
     } else if (decoderCommand == null) {
 
       if (myDecoder == null) {
@@ -1868,6 +1889,12 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
       inFile.close();
       outFile_sents.close();
       outFile_feats.close();
+
+      if (compressFiles == 1) {
+        gzipFile(sentsFileName);
+        gzipFile(featsFileName);
+      }
+
     } catch (FileNotFoundException e) {
       System.err.println("FileNotFoundException in MertCore.produceTempFiles(int): " + e.getMessage());
       System.exit(99901);
@@ -2291,6 +2318,7 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
 	decoderConfigFileName = "dec_cfg.txt";
 	sizeOfNBest = 100;
 	fakeFileNamePrefix = null;
+	fakeFileNameSuffix = null;
 	// Output specs
 	verbosity = 1;
 	decVerbosity = 0;
@@ -2444,7 +2472,15 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
 				println("decVerbosity should be either 0 or 1"); 
 				System.exit(10);
 			}
-		} else if (option.equals("-fake")) { fakeFileNamePrefix = args[i+1];
+		} else if (option.equals("-fake")) {
+			String fakeFileName = args[i+1];
+			int QM_i = fakeFileName.indexOf("?");
+			if (QM_i <= 0) {
+				println("fakeFileName must contain '?' to indicate position of iteration number");
+				System.exit(10);
+			}
+            fakeFileNamePrefix = fakeFileName.substring(0,QM_i);
+            fakeFileNameSuffix = fakeFileName.substring(QM_i+1);
 		} else {
 			println("Unknown option " + option);
 			System.exit(10);
@@ -2506,7 +2542,7 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
 
       int lastGoodIt = 0;
       for (int it = 1; it <= maxMERTIterations; ++it) {
-        if (fileExists(fakeFileNamePrefix+it)) {
+        if (fileExists(fakeFileNamePrefix+it+fakeFileNameSuffix)) {
           lastGoodIt = it;
         } else {
           break; // from for (it) loop
@@ -2514,7 +2550,7 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
       }
 
       if (lastGoodIt == 0) {
-        println("Fake decoder cannot find first output file " + (fakeFileNamePrefix+1));
+        println("Fake decoder cannot find first output file " + (fakeFileNamePrefix+"1"+fakeFileNameSuffix));
         System.exit(13);
       } else if (lastGoodIt < maxMERTIterations) {
         if (firstTime)
@@ -2571,6 +2607,8 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
 
   private void gzipFile(String inputFileName, String gzippedFileName)
   {
+    // NOTE: this will delete the original file
+
     try {
       FileInputStream in = new FileInputStream(inputFileName);
       GZIPOutputStream out = new GZIPOutputStream(new FileOutputStream(gzippedFileName));
@@ -2584,8 +2622,11 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
       in.close();
       out.finish();
       out.close();
+
+      deleteFile(inputFileName);
+
     } catch (IOException e) {
-      System.err.println("IOException in MertCore.initialize(int): " + e.getMessage());
+      System.err.println("IOException in MertCore.gzipFile(String,String): " + e.getMessage());
       System.exit(99902);
     }
   }
@@ -2601,6 +2642,8 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
 
   private void gunzipFile(String gzippedFileName, String outputFileName)
   {
+    // NOTE: this will delete the original file
+
     try {
       GZIPInputStream in = new GZIPInputStream(new FileInputStream(gzippedFileName));
       FileOutputStream out = new FileOutputStream(outputFileName);
@@ -2613,8 +2656,11 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
 
       in.close();
       out.close();
+
+      deleteFile(gzippedFileName);
+
     } catch (IOException e) {
-      System.err.println("IOException in MertCore.initialize(int): " + e.getMessage());
+      System.err.println("IOException in MertCore.gunzipFile(String,String): " + e.getMessage());
       System.exit(99902);
     }
   }
