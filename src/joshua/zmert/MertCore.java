@@ -496,12 +496,6 @@ public class MertCore
       }
     }
 
-    // delete .temp.stats.merged file
-    deleteFile(decoderOutFileName+".temp.stats.merged");
-
-    // delete .temp.sents.currIt.IP file
-    deleteFile(decoderOutFileName+".temp.sents.currIt.IP");
-
   } // void run_MERT(int maxIts)
 
 
@@ -956,6 +950,9 @@ public class MertCore
 
         outFile_statsMerged.close();
 
+        // delete .temp.sents.currIt.IP file, since all candidates already read
+        deleteFile(decoderOutFileName+".temp.sents.currIt.IP");
+
         println("",2); // to finish off progress dot line
 
 //        cleanupMemory();
@@ -1171,6 +1168,11 @@ public class MertCore
       done = true;
 
     } // while (!done) // NOTE: this "loop" will only be carried out once
+
+
+    // delete .temp.stats.merged file, since it is not needed in the next
+    // iteration (it will be recreated from scratch)
+    deleteFile(decoderOutFileName+".temp.stats.merged");
 
     retA[0] = FINAL_score;
     retA[1] = earlyStop;
@@ -3501,12 +3503,6 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
           }
         }
       }
-
-      // delete .temp.stats.merged file
-      DMC.deleteFile(DMC.decoderOutFileName+".temp.stats.merged");
-
-      // delete .temp.sents.currIt.IP file
-      DMC.deleteFile(DMC.decoderOutFileName+".temp.sents.currIt.IP");
 
 
       DMC.finish();
