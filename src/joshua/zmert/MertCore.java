@@ -825,6 +825,7 @@ public class MertCore
             } else if (!existingCandStats.containsKey(sents_str)) {
               unknownCands_V.add(sents_str);
               existingCandStats.put(sents_str,"U"); // i.e. unknown
+              // we add sents_str to avoid duplicate entries in unknownCands_V
             }
 
             showProgress();
@@ -841,6 +842,8 @@ public class MertCore
           int[] indices = new int[sizeUnknown];
           for (int d = 0; d < sizeUnknown; ++d) {
             existingCandStats.remove(unknownCands[d]);
+            // remove the (unknownCands[d],"U") entry from existingCandStats
+            // (we had added it while constructing unknownCands_V to avoid duplicate entries)
             indices[d] = i;
           }
 
@@ -935,7 +938,8 @@ public class MertCore
 
           } // for (n)
 
-          // now d = sizeUnknown
+          // now d = sizeUnknown - 1
+          // i.e. last valid index in newSuffStats
 
           inFile_sentsCurrIt_IP.close();
 

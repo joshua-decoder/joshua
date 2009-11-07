@@ -100,7 +100,7 @@ public class TER extends EvaluationMetric
   {
     // this method should never be used when the metric is TER,
     // because TER.java overrides suffStats(String[],int[]) below,
-    // which is the only method that calls suffStats(Sting,int).
+    // which is the only method that calls suffStats(String,int).
     return null;
   }
 
