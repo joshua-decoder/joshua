@@ -801,9 +801,7 @@ public class MertCore
                PrintWriter outFile_statsCurrIt
           */
 
-          FileOutputStream outStream = new FileOutputStream(tmpDirPrefix+".temp.sents.currIt.IP", false);
-          OutputStreamWriter outStreamWriter = new OutputStreamWriter(outStream, "utf8");
-          BufferedWriter outFile_sentsCurrIt_IP = new BufferedWriter(outStreamWriter);
+          String[] sentsCurrIt_currSrcSent = new String[sizeOfNBest+1];
 
           Vector<String> unknownCands_V = new Vector<String>();
             // which candidates (of the i'th source sentence) have not been seen before
@@ -815,10 +813,10 @@ public class MertCore
           // a complete list of sizeOfNBest candidates.
 
             // for the nth candidate for the ith sentence, read the sentence,
-            // and rewrite it to the IP file
+            // and store it in the sentsCurrIt_currSrcSent array
 
             sents_str = inFile_sentsCurrIt.readLine();
-            writeLine(sents_str,outFile_sentsCurrIt_IP); // Note: possibly "||||||"
+            sentsCurrIt_currSrcSent[n] = sents_str; // Note: possibly "||||||"
 
             if (sents_str.equals("||||||")) {
               n = sizeOfNBest+1;
@@ -832,7 +830,7 @@ public class MertCore
 
           } // for (n)
 
-          outFile_sentsCurrIt_IP.close();
+
 
           // now unknownCands_V has the candidates for which we need to calculate
           // sufficient statistics (for the i'th source sentence)
@@ -855,9 +853,6 @@ public class MertCore
           int d = -1;
 
 
-          InputStream inStream_sentsCurrIt_IP = new FileInputStream(new File(tmpDirPrefix+".temp.sents.currIt.IP"));
-          BufferedReader inFile_sentsCurrIt_IP = new BufferedReader(new InputStreamReader(inStream_sentsCurrIt_IP, "utf8"));
-
           int[] stats = new int[suffStatsCount];
 
           for (int n = 0; n <= sizeOfNBest; ++n) {
@@ -868,7 +863,7 @@ public class MertCore
             // for the nth candidate for the ith sentence, read the sentence, feature values,
             // and sufficient statistics from the various temp files
 
-            sents_str = inFile_sentsCurrIt_IP.readLine();
+            sents_str = sentsCurrIt_currSrcSent[n];
             feats_str = inFile_featsCurrIt.readLine();
 
             if (sents_str.equals("||||||")) {
@@ -941,7 +936,6 @@ public class MertCore
           // now d = sizeUnknown - 1
           // i.e. last valid index in newSuffStats
 
-          inFile_sentsCurrIt_IP.close();
 
           if (statsCurrIt_exists)
             inFile_statsCurrIt.readLine();
@@ -971,9 +965,6 @@ public class MertCore
         }
 
         outFile_statsMerged.close();
-
-        // delete .temp.sents.currIt.IP file, since all candidates already read
-        deleteFile(tmpDirPrefix+".temp.sents.currIt.IP");
 
         println("",2); // to finish off progress dot line
 
