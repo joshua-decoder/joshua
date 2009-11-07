@@ -49,14 +49,14 @@ public abstract class EvaluationMetric
       // the "BLEU_SBP" metric expects an options array of length 2
     metricOptionCount.put("01LOSS",0);
       // the "01LOSS" metric expects an options array of length 0
-    metricOptionCount.put("TER",4);
-      // the "TER" metric expects an options array of length 4
+    metricOptionCount.put("TER",5);
+      // the "TER" metric expects an options array of length 5
 //    metricOptionCount.put("METEOR",4);
       // the "METEOR" metric expects an options array of length 4
 //    metricOptionCount.put("RYPT",5);
       // the "RYPT" metric expects an options array of length 5
-    metricOptionCount.put("TER-BLEU",6);
-      // the "TER-BLEU" metric expects an options array of length 6
+    metricOptionCount.put("TER-BLEU",7);
+      // the "TER-BLEU" metric expects an options array of length 7
 //    metricOptionCount.put("WER",0);
       // the "WER" metric expects an options array of length 0
   }

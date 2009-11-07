@@ -25,6 +25,7 @@ public class TER extends EvaluationMetric
   private boolean withPunctuation;
   private int beamWidth;
   private int maxShiftDist;
+  private String tercomJarFileName;
 
   public TER(String[] Metric_options)
   {
@@ -32,8 +33,9 @@ public class TER extends EvaluationMetric
     // M_o[1]: with-punctuation, punc/nopunc
     // M_o[2]: beam width, positive integer
     // M_o[3]: maximum shift distance, positive integer
+    // M_o[4]: filename of tercom jar file
 
-    // default in tercom-0.7.25: nocase, punc, 20, 50
+    // for 0-3, default values in tercom-0.7.25 are: nocase, punc, 20, 50
 
     if (Metric_options[0].equals("case")) {
       caseSensitive = true;
@@ -58,13 +60,27 @@ public class TER extends EvaluationMetric
     beamWidth = Integer.parseInt(Metric_options[2]);
     if (beamWidth < 1) {
       System.out.println("Beam width must be positive");
-      System.exit(2);
+      System.exit(1);
     }
 
     maxShiftDist = Integer.parseInt(Metric_options[3]);
     if (maxShiftDist < 1) {
       System.out.println("Maximum shift distance must be positive");
-      System.exit(2);
+      System.exit(1);
+    }
+
+    tercomJarFileName = Metric_options[4];
+
+    if (tercomJarFileName == null || tercomJarFileName = "") {
+      System.out.println("Problem processing tercom's jar filename");
+      System.exit(1);
+    } else {
+      File checker = new File(tercomJarFileName);
+      if (!checker.exists()) {
+        System.out.println("Could not find tercom jar file " + tercomJarFileName);
+        System.out.println("(Please make sure you use the full path in the filename)");
+        System.exit(1);
+      }
     }
 
     initialize(); // set the data members of the metric
@@ -102,7 +118,7 @@ public class TER extends EvaluationMetric
 
     try {
 
-      // 1) Create input files for tercom.7.25.jar
+      // 1) Create input files for tercom
 
       // 1a) Create hypothesis file
       FileOutputStream outStream = new FileOutputStream("hyp.txt.TER", false); // false: don't append
@@ -128,9 +144,9 @@ public class TER extends EvaluationMetric
 
       outFile.close();
 
-      // 2) Launch tercom.7.25.jar as an external process
+      // 2) Launch tercom as an external process
 
-      String cmd_str = "java -Dfile.encoding=utf8 -jar tercom.7.25.jar -r ref.txt.TER -h hyp.txt.TER -o ter -n TER_out";
+      String cmd_str = "java -Dfile.encoding=utf8 -jar " + tercomJarFileName + " -r ref.txt.TER -h hyp.txt.TER -o ter -n TER_out";
       cmd_str += " -b " + beamWidth;
       cmd_str += " -d " + maxShiftDist;
       if (caseSensitive) { cmd_str += " -S"; }
@@ -188,7 +204,7 @@ public class TER extends EvaluationMetric
   {
     if (stats.length != suffStatsCount) {
       System.out.println("Mismatch between stats.length and suffStatsCount (" + stats.length + " vs. " + suffStatsCount + ") in TER.score(int[])");
-      System.exit(1);
+      System.exit(2);
     }
 
     double sc = 0.0;

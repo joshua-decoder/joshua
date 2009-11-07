@@ -164,6 +164,9 @@ public class MertCore
   private int suffStatsCount;
     // number of sufficient statistics for the evaluation metric
 
+  private String tmpDirPrefix;
+    // prefix for the ZMERT.temp.* files
+
   private String dirPrefix; // where are all these files located?
   private String paramsFileName, finalLambdaFileName;
   private String sourceFileName, refFileName, decoderOutFileName;
@@ -478,20 +481,20 @@ public class MertCore
     // delete intermediate .temp.*.it* decoder output files
     for (int iteration = 1; iteration <= maxIts; ++iteration) {
       if (compressFiles == 1) {
-        deleteFile(decoderOutFileName+".temp.sents.it"+iteration+".gz");
-        deleteFile(decoderOutFileName+".temp.feats.it"+iteration+".gz");
-        if (fileExists(decoderOutFileName+".temp.stats.it"+iteration+".copy.gz")) {
-          deleteFile(decoderOutFileName+".temp.stats.it"+iteration+".copy.gz");
+        deleteFile(tmpDirPrefix+".temp.sents.it"+iteration+".gz");
+        deleteFile(tmpDirPrefix+".temp.feats.it"+iteration+".gz");
+        if (fileExists(tmpDirPrefix+".temp.stats.it"+iteration+".copy.gz")) {
+          deleteFile(tmpDirPrefix+".temp.stats.it"+iteration+".copy.gz");
         } else {
-          deleteFile(decoderOutFileName+".temp.stats.it"+iteration+".gz");
+          deleteFile(tmpDirPrefix+".temp.stats.it"+iteration+".gz");
         }
       } else {
-        deleteFile(decoderOutFileName+".temp.sents.it"+iteration);
-        deleteFile(decoderOutFileName+".temp.feats.it"+iteration);
-        if (fileExists(decoderOutFileName+".temp.stats.it"+iteration+".copy")) {
-          deleteFile(decoderOutFileName+".temp.stats.it"+iteration+".copy");
+        deleteFile(tmpDirPrefix+".temp.sents.it"+iteration);
+        deleteFile(tmpDirPrefix+".temp.feats.it"+iteration);
+        if (fileExists(tmpDirPrefix+".temp.stats.it"+iteration+".copy")) {
+          deleteFile(tmpDirPrefix+".temp.stats.it"+iteration+".copy");
         } else {
-          deleteFile(decoderOutFileName+".temp.stats.it"+iteration);
+          deleteFile(tmpDirPrefix+".temp.stats.it"+iteration);
         }
       }
     }
@@ -550,19 +553,20 @@ public class MertCore
         println("Redecoding using weight vector " + lambdaToString(lambda),1);
       }
 
-      int run_decoder_result = run_decoder(iteration); // iteration passed in case fake decoder will be used
-        // the returned value indicates how the output file was obtained:
+      String[] decRunResult = run_decoder(iteration); // iteration passed in case fake decoder will be used
+        // [0] name of file to be processed
+        // [1] indicates how the output file was obtained:
         //   1: external decoder
         //   2: fake decoder
         //   3: internal decoder
 
       println("...finished decoding @ " + (new Date()),1);
 
-      checkFile(decoderOutFileName);
+      checkFile(decRunResult[0]);
 
       println("Producing temp files for iteration "+iteration,3);
 
-      produceTempFiles(iteration);
+      produceTempFiles(decRunResult[0], iteration);
 
       if (saveInterFiles == 1 || saveInterFiles == 3) { // make copy of intermediate config file
         if (!copyFile(decoderConfigFileName,decoderConfigFileName+".ZMERT.it"+iteration)) {
@@ -570,14 +574,24 @@ public class MertCore
         }
       }
       if (saveInterFiles == 2 || saveInterFiles == 3) { // make copy of intermediate decoder output file...
-        if (run_decoder_result != 2) { // ...but only if no fake decoder
-          if (!copyFile(decoderOutFileName,decoderOutFileName+".ZMERT.it"+iteration)) {
-            println("Warning: attempt to make copy of decoder output file (to create" + decoderOutFileName+".ZMERT.it"+iteration + ") was unsuccessful!",1);
+
+        if (!decRunResult[1].equals("2")) { // ...but only if no fake decoder
+          if (!decRunResult[0].endsWith(".gz")) {
+            if (!copyFile(decRunResult[0],decRunResult[0]+".ZMERT.it"+iteration)) {
+              println("Warning: attempt to make copy of decoder output file (to create" + decRunResult[0]+".ZMERT.it"+iteration + ") was unsuccessful!",1);
+            }
+          } else {
+            String prefix = decRunResult[0].substring(0,decRunResult[0].length()-3);
+            if (!copyFile(prefix+".gz",prefix+".ZMERT.it"+iteration+".gz")) {
+              println("Warning: attempt to make copy of decoder output file (to create" + prefix+".ZMERT.it"+iteration+".gz" + ") was unsuccessful!",1);
+            }
           }
-          if (compressFiles == 1) {
-            gzipFile(decoderOutFileName+".ZMERT.it"+iteration);
+
+          if (compressFiles == 1 && !decRunResult[0].endsWith(".gz")) {
+            gzipFile(decRunResult[0]+".ZMERT.it"+iteration);
           }
-        }
+        } // if (!fake)
+
       }
 
       int[] candCount = new int[numSentences];
@@ -638,13 +652,13 @@ public class MertCore
         for (int it = firstIt; it < iteration; ++it) {
           InputStream inStream_sents, inStream_feats, inStream_stats;
           if (compressFiles == 0) {
-            inStream_sents = new FileInputStream(decoderOutFileName+".temp.sents.it"+it);
-            inStream_feats = new FileInputStream(decoderOutFileName+".temp.feats.it"+it);
-            inStream_stats = new FileInputStream(decoderOutFileName+".temp.stats.it"+it);
+            inStream_sents = new FileInputStream(tmpDirPrefix+".temp.sents.it"+it);
+            inStream_feats = new FileInputStream(tmpDirPrefix+".temp.feats.it"+it);
+            inStream_stats = new FileInputStream(tmpDirPrefix+".temp.stats.it"+it);
           } else {
-            inStream_sents = new GZIPInputStream(new FileInputStream(decoderOutFileName+".temp.sents.it"+it+".gz"));
-            inStream_feats = new GZIPInputStream(new FileInputStream(decoderOutFileName+".temp.feats.it"+it+".gz"));
-            inStream_stats = new GZIPInputStream(new FileInputStream(decoderOutFileName+".temp.stats.it"+it+".gz"));
+            inStream_sents = new GZIPInputStream(new FileInputStream(tmpDirPrefix+".temp.sents.it"+it+".gz"));
+            inStream_feats = new GZIPInputStream(new FileInputStream(tmpDirPrefix+".temp.feats.it"+it+".gz"));
+            inStream_stats = new GZIPInputStream(new FileInputStream(tmpDirPrefix+".temp.stats.it"+it+".gz"));
           }
 
           inFile_sents[it] = new BufferedReader(new InputStreamReader(inStream_sents, "utf8"));
@@ -655,11 +669,11 @@ public class MertCore
 
         InputStream inStream_sentsCurrIt, inStream_featsCurrIt, inStream_statsCurrIt;
         if (compressFiles == 0) {
-          inStream_sentsCurrIt = new FileInputStream(decoderOutFileName+".temp.sents.it"+iteration);
-          inStream_featsCurrIt = new FileInputStream(decoderOutFileName+".temp.feats.it"+iteration);
+          inStream_sentsCurrIt = new FileInputStream(tmpDirPrefix+".temp.sents.it"+iteration);
+          inStream_featsCurrIt = new FileInputStream(tmpDirPrefix+".temp.feats.it"+iteration);
         } else {
-          inStream_sentsCurrIt = new GZIPInputStream(new FileInputStream(decoderOutFileName+".temp.sents.it"+iteration+".gz"));
-          inStream_featsCurrIt = new GZIPInputStream(new FileInputStream(decoderOutFileName+".temp.feats.it"+iteration+".gz"));
+          inStream_sentsCurrIt = new GZIPInputStream(new FileInputStream(tmpDirPrefix+".temp.sents.it"+iteration+".gz"));
+          inStream_featsCurrIt = new GZIPInputStream(new FileInputStream(tmpDirPrefix+".temp.feats.it"+iteration+".gz"));
         }
 
         BufferedReader inFile_sentsCurrIt = new BufferedReader(new InputStreamReader(inStream_sentsCurrIt, "utf8"));
@@ -668,21 +682,21 @@ public class MertCore
         BufferedReader inFile_statsCurrIt = null; // will only be used if statsCurrIt_exists below is set to true
         PrintWriter outFile_statsCurrIt = null; // will only be used if statsCurrIt_exists below is set to false
         boolean statsCurrIt_exists = false;
-        if (fileExists(decoderOutFileName+".temp.stats.it"+iteration)) {
-          inStream_statsCurrIt = new FileInputStream(decoderOutFileName+".temp.stats.it"+iteration);
+        if (fileExists(tmpDirPrefix+".temp.stats.it"+iteration)) {
+          inStream_statsCurrIt = new FileInputStream(tmpDirPrefix+".temp.stats.it"+iteration);
           inFile_statsCurrIt = new BufferedReader(new InputStreamReader(inStream_statsCurrIt, "utf8"));
           statsCurrIt_exists = true;
-          copyFile(decoderOutFileName+".temp.stats.it"+iteration,decoderOutFileName+".temp.stats.it"+iteration+".copy");
-        } else if (fileExists(decoderOutFileName+".temp.stats.it"+iteration+".gz")) {
-          inStream_statsCurrIt = new GZIPInputStream(new FileInputStream(decoderOutFileName+".temp.stats.it"+iteration+".gz"));
+          copyFile(tmpDirPrefix+".temp.stats.it"+iteration,tmpDirPrefix+".temp.stats.it"+iteration+".copy");
+        } else if (fileExists(tmpDirPrefix+".temp.stats.it"+iteration+".gz")) {
+          inStream_statsCurrIt = new GZIPInputStream(new FileInputStream(tmpDirPrefix+".temp.stats.it"+iteration+".gz"));
           inFile_statsCurrIt = new BufferedReader(new InputStreamReader(inStream_statsCurrIt, "utf8"));
           statsCurrIt_exists = true;
-          copyFile(decoderOutFileName+".temp.stats.it"+iteration+".gz",decoderOutFileName+".temp.stats.it"+iteration+".copy.gz");
+          copyFile(tmpDirPrefix+".temp.stats.it"+iteration+".gz",tmpDirPrefix+".temp.stats.it"+iteration+".copy.gz");
         } else {
-          outFile_statsCurrIt = new PrintWriter(decoderOutFileName+".temp.stats.it"+iteration);
+          outFile_statsCurrIt = new PrintWriter(tmpDirPrefix+".temp.stats.it"+iteration);
         }
 
-        PrintWriter outFile_statsMerged = new PrintWriter(decoderOutFileName+".temp.stats.merged");
+        PrintWriter outFile_statsMerged = new PrintWriter(tmpDirPrefix+".temp.stats.merged");
           // write sufficient statistics from all the sentences
           // from the output files into a single file
 
@@ -783,7 +797,7 @@ public class MertCore
                PrintWriter outFile_statsCurrIt
           */
 
-          FileOutputStream outStream = new FileOutputStream(decoderOutFileName+".temp.sents.currIt.IP", false);
+          FileOutputStream outStream = new FileOutputStream(tmpDirPrefix+".temp.sents.currIt.IP", false);
           OutputStreamWriter outStreamWriter = new OutputStreamWriter(outStream, "utf8");
           BufferedWriter outFile_sentsCurrIt_IP = new BufferedWriter(outStreamWriter);
 
@@ -834,7 +848,7 @@ public class MertCore
           int d = -1;
 
 
-          InputStream inStream_sentsCurrIt_IP = new FileInputStream(new File(decoderOutFileName+".temp.sents.currIt.IP"));
+          InputStream inStream_sentsCurrIt_IP = new FileInputStream(new File(tmpDirPrefix+".temp.sents.currIt.IP"));
           BufferedReader inFile_sentsCurrIt_IP = new BufferedReader(new InputStreamReader(inStream_sentsCurrIt_IP, "utf8"));
 
           int[] stats = new int[suffStatsCount];
@@ -945,13 +959,13 @@ public class MertCore
           outFile_statsCurrIt.close();
 
         if (compressFiles == 1 && !statsCurrIt_exists) {
-          gzipFile(decoderOutFileName+".temp.stats.it"+iteration);
+          gzipFile(tmpDirPrefix+".temp.stats.it"+iteration);
         }
 
         outFile_statsMerged.close();
 
         // delete .temp.sents.currIt.IP file, since all candidates already read
-        deleteFile(decoderOutFileName+".temp.sents.currIt.IP");
+        deleteFile(tmpDirPrefix+".temp.sents.currIt.IP");
 
         println("",2); // to finish off progress dot line
 
@@ -1172,7 +1186,7 @@ public class MertCore
 
     // delete .temp.stats.merged file, since it is not needed in the next
     // iteration (it will be recreated from scratch)
-    deleteFile(decoderOutFileName+".temp.stats.merged");
+    deleteFile(tmpDirPrefix+".temp.stats.merged");
 
     retA[0] = FINAL_score;
     retA[1] = earlyStop;
@@ -1330,25 +1344,28 @@ public class MertCore
     return retStr;
   }
 
-  private int run_decoder(int iteration)
+  private String[] run_decoder(int iteration)
   {
-    // returns an integer indicating how the output file was obtained:
-    //   1: external decoder
-    //   2: fake decoder
-    //   3: internal decoder
+    String[] retSA = new String[2];
+      // [0] name of file to be processed
+      // [1] indicates how the output file was obtained:
+      //   1: external decoder
+      //   2: fake decoder
+      //   3: internal decoder
 
     if (fakeFileNamePrefix != null && fileExists(fakeFileNamePrefix+iteration+fakeFileNameSuffix)) {
       String fakeFileName = fakeFileNamePrefix+iteration+fakeFileNameSuffix;
+      println("Not running decoder; using " + fakeFileName + " instead...",1);
+/*
       if (fakeFileName.endsWith(".gz")) {
-        println("Running fake decoder (making copy of " + fakeFileName + " and decompressing)...",1);
         copyFile(fakeFileName,decoderOutFileName+".gz");
         gunzipFile(decoderOutFileName+".gz");
       } else {
-        println("Running fake decoder (making copy of " + fakeFileName + ")...",1);
         copyFile(fakeFileName,decoderOutFileName);
       }
-
-      return 2;
+*/
+      retSA[0] = fakeFileName;
+      retSA[1] = "2";
 
     } else if (decoderCommand == null) {
 
@@ -1366,7 +1383,8 @@ public class MertCore
       myDecoder.changeFeatureWeightVector(zeroBased_lambda);
       myDecoder.decodeTestSet(sourceFileName, decoderOutFileName);
 
-      return 3;
+      retSA[0] = decoderOutFileName;
+      retSA[1] = "3";
 
     } else {
       println("Running external decoder...",1);
@@ -1395,9 +1413,12 @@ public class MertCore
         System.exit(99903);
       }
 
-      return 1;
+      retSA[0] = decoderOutFileName;
+      retSA[1] = "1";
 
     }
+
+    return retSA;
 
   }
 
@@ -1874,11 +1895,11 @@ public class MertCore
 
   } // int[] initial_indexOfCurrBest (int c)
 
-  private void produceTempFiles(int iteration)
+  private void produceTempFiles(String nbestFileName, int iteration)
   {
     try {
-      String sentsFileName = decoderOutFileName+".temp.sents.it"+iteration;
-      String featsFileName = decoderOutFileName+".temp.feats.it"+iteration;
+      String sentsFileName = tmpDirPrefix+".temp.sents.it"+iteration;
+      String featsFileName = tmpDirPrefix+".temp.feats.it"+iteration;
 
       FileOutputStream outStream_sents = new FileOutputStream(sentsFileName, false);
       OutputStreamWriter outStreamWriter_sents = new OutputStreamWriter(outStream_sents, "utf8");
@@ -1887,15 +1908,20 @@ public class MertCore
       PrintWriter outFile_feats = new PrintWriter(featsFileName);
 
 
-      InputStream inStream = new FileInputStream(new File(decoderOutFileName));
-      BufferedReader inFile = new BufferedReader(new InputStreamReader(inStream, "utf8"));
+      InputStream inStream_nbest = null;
+      if (nbestFileName.endsWith(".gz")) {
+        inStream_nbest = new GZIPInputStream(new FileInputStream(nbestFileName));
+      } else {
+        inStream_nbest = new FileInputStream(nbestFileName);
+      }
+      BufferedReader inFile_nbest = new BufferedReader(new InputStreamReader(inStream_nbest, "utf8"));
 
       String line; //, prevLine;
       String candidate_str = "";
       String feats_str = "";
 
       int i = 0; int n = 0;
-      line = inFile.readLine();
+      line = inFile_nbest.readLine();
 
       while (line != null) {
 
@@ -1937,7 +1963,7 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
           n = 0; ++i;
         }
 
-        line = inFile.readLine();
+        line = inFile_nbest.readLine();
       }
 
       if (i != numSentences) { // last sentence had too few candidates
@@ -1945,7 +1971,7 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
         outFile_feats.println("||||||");
       }
 
-      inFile.close();
+      inFile_nbest.close();
       outFile_sents.close();
       outFile_feats.close();
 
@@ -1955,10 +1981,10 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
       }
 
     } catch (FileNotFoundException e) {
-      System.err.println("FileNotFoundException in MertCore.produceTempFiles(int): " + e.getMessage());
+      System.err.println("FileNotFoundException in MertCore.produceTempFiles(String, int): " + e.getMessage());
       System.exit(99901);
     } catch (IOException e) {
-      System.err.println("IOException in MertCore.produceTempFiles(int): " + e.getMessage());
+      System.err.println("IOException in MertCore.produceTempFiles(String, int): " + e.getMessage());
       System.exit(99902);
     }
 
@@ -2586,6 +2612,15 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
       if (decoderCommandFileName != null) { decoderCommandFileName = fullPath(dirPrefix,decoderCommandFileName); }
       if (fakeFileNamePrefix != null) { fakeFileNamePrefix = fullPath(dirPrefix,fakeFileNamePrefix); }
     }
+
+    // TODO: make this an argument
+    int k = decoderOutFileName.lastIndexOf("/");
+    if (k >= 0) {
+      tmpDirPrefix = decoderOutFileName.substring(0,k+1) + "ZMERT";
+    } else {
+      tmpDirPrefix = "ZMERT";
+    }
+    println("tmpDirPrefix: " + tmpDirPrefix);
 
     checkFile(paramsFileName);
     checkFile(decoderConfigFileName);
@@ -3266,7 +3301,7 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
 
       // process the merged sufficient statistics file, and read (and store) the
       // stats for candidates of interest
-      BufferedReader inFile = new BufferedReader(new FileReader(decoderOutFileName+".temp.stats.merged"));
+      BufferedReader inFile = new BufferedReader(new FileReader(tmpDirPrefix+".temp.stats.merged"));
       String candidate_suffStats;
 
       for (int i = 0; i < numSentences; ++i) {
@@ -3486,20 +3521,20 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
       // delete intermediate .temp.*.it* decoder output files
       for (int iteration = 1; iteration <= DMC.maxMERTIterations; ++iteration) {
         if (DMC.compressFiles == 1) {
-          DMC.deleteFile(DMC.decoderOutFileName+".temp.sents.it"+iteration+".gz");
-          DMC.deleteFile(DMC.decoderOutFileName+".temp.feats.it"+iteration+".gz");
-          if (DMC.fileExists(DMC.decoderOutFileName+".temp.stats.it"+iteration+".copy.gz")) {
-            DMC.deleteFile(DMC.decoderOutFileName+".temp.stats.it"+iteration+".copy.gz");
+          DMC.deleteFile(DMC.tmpDirPrefix+".temp.sents.it"+iteration+".gz");
+          DMC.deleteFile(DMC.tmpDirPrefix+".temp.feats.it"+iteration+".gz");
+          if (DMC.fileExists(DMC.tmpDirPrefix+".temp.stats.it"+iteration+".copy.gz")) {
+            DMC.deleteFile(DMC.tmpDirPrefix+".temp.stats.it"+iteration+".copy.gz");
           } else {
-            DMC.deleteFile(DMC.decoderOutFileName+".temp.stats.it"+iteration+".gz");
+            DMC.deleteFile(DMC.tmpDirPrefix+".temp.stats.it"+iteration+".gz");
           }
         } else {
-          DMC.deleteFile(DMC.decoderOutFileName+".temp.sents.it"+iteration);
-          DMC.deleteFile(DMC.decoderOutFileName+".temp.feats.it"+iteration);
-          if (DMC.fileExists(DMC.decoderOutFileName+".temp.stats.it"+iteration+".copy")) {
-            DMC.deleteFile(DMC.decoderOutFileName+".temp.stats.it"+iteration+".copy");
+          DMC.deleteFile(DMC.tmpDirPrefix+".temp.sents.it"+iteration);
+          DMC.deleteFile(DMC.tmpDirPrefix+".temp.feats.it"+iteration);
+          if (DMC.fileExists(DMC.tmpDirPrefix+".temp.stats.it"+iteration+".copy")) {
+            DMC.deleteFile(DMC.tmpDirPrefix+".temp.stats.it"+iteration+".copy");
           } else {
-            DMC.deleteFile(DMC.decoderOutFileName+".temp.stats.it"+iteration);
+            DMC.deleteFile(DMC.tmpDirPrefix+".temp.stats.it"+iteration);
           }
         }
       }

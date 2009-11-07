@@ -48,7 +48,7 @@ public class BLEU extends EvaluationMetric
       maxGramLength = mxGrmLn;
     } else {
       logger.severe("Maximum gram length must be positive");
-      System.exit(2);
+      System.exit(1);
     }
 
     if (methodStr.equals("closest")) {
