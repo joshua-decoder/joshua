@@ -71,7 +71,7 @@ public class TER extends EvaluationMetric
 
     tercomJarFileName = Metric_options[4];
 
-    if (tercomJarFileName == null || tercomJarFileName = "") {
+    if (tercomJarFileName == null || tercomJarFileName.equals("")) {
       System.out.println("Problem processing tercom's jar filename");
       System.exit(1);
     } else {
