@@ -112,6 +112,7 @@ public class ZMERT
       println("");
       println("Decoder specs:");
       println("  -cmd commandFile: name of file containing commands to run the decoder\n    [[default: null string (i.e. decoder is a JoshuaDecoder object)]]");
+      println("  -passIt passIterationToDecoder: should iteration number be passed\n    to command file (1) or not (0)\n    [[default: 0]]");
       println("  -decOut decoderOutFile: name of the output file produced by the decoder\n    [[default: output.nbest]]");
       println("  -decExit validExit: value returned by decoder to indicate success\n    [[default: 0]]");
       println("  -dcfg decConfigFile: name of decoder config file\n    [[default: dec_cfg.txt]]");

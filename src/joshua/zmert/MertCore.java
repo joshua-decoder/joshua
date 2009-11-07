@@ -167,6 +167,10 @@ public class MertCore
   private String tmpDirPrefix;
     // prefix for the ZMERT.temp.* files
 
+  private int passIterationToDecoder;
+    // should the iteration number be passed as an argument to decoderCommandFileName?
+    // If 1, iteration number is passed.  If 0, launch with no arguments.
+
   private String dirPrefix; // where are all these files located?
   private String paramsFileName, finalLambdaFileName;
   private String sourceFileName, refFileName, decoderOutFileName;
@@ -1391,7 +1395,11 @@ public class MertCore
 
       try {
         Runtime rt = Runtime.getRuntime();
-        Process p = rt.exec(decoderCommandFileName);
+        String cmd = decoderCommandFileName;
+        if (passIterationToDecoder == 1) {
+          cmd = cmd + " " + iteration;
+        }
+        Process p = rt.exec(cmd);
 
         StreamGobbler errorGobbler = new StreamGobbler(p.getErrorStream(), decVerbosity);
         StreamGobbler outputGobbler = new StreamGobbler(p.getInputStream(), decVerbosity);
@@ -2414,6 +2422,7 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
 //    useDisk = 2;
 	// Decoder specs
 	decoderCommandFileName = null;
+    passIterationToDecoder = 0;
 	decoderOutFileName = "output.nbest";
 	validDecoderExitValue = 0;
 	decoderConfigFileName = "dec_cfg.txt";
@@ -2547,6 +2556,12 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
 		// Decoder specs
 		else if (option.equals("-cmd")) {
 			decoderCommandFileName = args[i+1];
+		} else if (option.equals("-passIt")) {
+			passIterationToDecoder = Integer.parseInt(args[i+1]);
+			if (passIterationToDecoder < 0 || passIterationToDecoder > 1) {
+				println("passIterationToDecoder should be either 0 or 1"); 
+				System.exit(10);
+			}
 		} else if (option.equals("-decOut")) {
 			decoderOutFileName = args[i+1];
 		} else if (option.equals("-decExit")) {
