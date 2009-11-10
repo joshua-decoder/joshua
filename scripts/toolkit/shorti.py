@@ -4,7 +4,7 @@ import os, sys, codecs
 
 def usage():
   print "Usage info for shorti.py"
-  print "  shorti.py source target alignment"
+  print "  shorti.py source target alignment [limit]"
   
   print
   sys.exit()
@@ -32,12 +32,16 @@ def main():
   print "[INF]\tfiltering corpus, only sentences shorter than %d words" % (limit)
   
   while (True):
-    f_line = f.readline().rstrip().lstrip()
-    e_line = e.readline().rstrip().lstrip()
-    a_line = a.readline().rstrip().lstrip()
+    f_line = f.readline()
+    e_line = e.readline()
+    a_line = a.readline()
     
     if ((a_line == "") or (f_line == "") or (e_line == "")):
       break
+
+    f_line = f_line.rstrip().lstrip()
+    e_line = e_line.rstrip().lstrip()
+    a_line = a_line.rstrip().lstrip()
     
     oversized = False
     points = a_line.split()
