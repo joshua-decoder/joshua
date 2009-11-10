@@ -30,6 +30,7 @@ public abstract class EvaluationMetric
   protected static String[][] refSentences;
   protected final static DecimalFormat f0 = new DecimalFormat("###0");
   protected final static DecimalFormat f4 = new DecimalFormat("###0.0000");
+  protected static String tmpDirPrefix;
 
   /* non-static data members */
   protected int suffStatsCount; // number of sufficient statistics
@@ -89,6 +90,7 @@ public abstract class EvaluationMetric
 
   public static void set_numSentences(int x) { numSentences = x; }
   public static void set_refsPerSen(int x) { refsPerSen = x; }
+  public static void set_tmpDirPrefix(String S) { tmpDirPrefix = S; }
   public static void set_refSentences(String[][] refs)
   {
     refSentences = new String[numSentences][refsPerSen];

@@ -314,6 +314,7 @@ public class MertCore
     EvaluationMetric.set_numSentences(numSentences);
     EvaluationMetric.set_refsPerSen(refsPerSen);
     EvaluationMetric.set_refSentences(refSentences);
+    EvaluationMetric.set_tmpDirPrefix(tmpDirPrefix);
 
     evalMetric = EvaluationMetric.getMetric(metricName,metricOptions);
 
@@ -2506,7 +2507,7 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
     processArgsArray(args,true);
   }
 
-	private void processArgsArray(String[] args, boolean firstTime) {
+  private void processArgsArray(String[] args, boolean firstTime) {
 	/* set default values */
 	// Relevant files
 	dirPrefix = null;
@@ -2746,6 +2747,7 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
 
     // TODO: make this an argument
     // TODO: also use this for the state file? could be tricky, since that file is created by ZMERT.java
+    // TODO: change name from tmpDirPrefix to tmpFilePrefix?
     int k = decoderOutFileName.lastIndexOf("/");
     if (k >= 0) {
       tmpDirPrefix = decoderOutFileName.substring(0,k+1) + "ZMERT";

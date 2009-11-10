@@ -194,8 +194,8 @@ public class TER extends EvaluationMetric
 
       while (true) {
         ++batchCount;
-        int readCount = createTercomHypFile(inFile_cands, "hyp.txt.TER."+batchCount, 10000);
-        createTercomRefFile(inFile_indices, "ref.txt.TER."+batchCount, 10000);
+        int readCount = createTercomHypFile(inFile_cands, tmpDirPrefix+".hyp.txt.TER."+batchCount, 10000);
+        createTercomRefFile(inFile_indices, tmpDirPrefix+".ref.txt.TER."+batchCount, 10000);
 
         if (readCount == 0) {
           --batchCount;
@@ -208,21 +208,21 @@ public class TER extends EvaluationMetric
       PrintWriter outFile = new PrintWriter(outputFileName);
 
       for (int b = 1; b <= batchCount; ++b) {
-        runTercom("ref.txt.TER."+b, "hyp.txt.TER."+b, "TER_out", 500);
-        copySS("TER_out.ter", outFile);
+        runTercom(tmpDirPrefix+".ref.txt.TER."+b, tmpDirPrefix+".hyp.txt.TER."+b, tmpDirPrefix+".TER_out", 500);
+        copySS(tmpDirPrefix+".TER_out.ter", outFile);
 
         File fd;
-        fd = new File("hyp.txt.TER."+b); if (fd.exists()) fd.delete();
-        fd = new File("ref.txt.TER."+b); if (fd.exists()) fd.delete();
+        fd = new File(tmpDirPrefix+".hyp.txt.TER."+b); if (fd.exists()) fd.delete();
+        fd = new File(tmpDirPrefix+".ref.txt.TER."+b); if (fd.exists()) fd.delete();
 
       }
 
       outFile.close();
 
-      File fd = new File("TER_out.ter"); if (fd.exists()) fd.delete();
+      File fd = new File(tmpDirPrefix+".TER_out.ter"); if (fd.exists()) fd.delete();
 
     } catch (IOException e) {
-      System.err.println("IOException in TER.createTercomHypFile(...): " + e.getMessage());
+      System.err.println("IOException in TER.createSuffStatsFile(...): " + e.getMessage());
       System.exit(99902);
     }
 
