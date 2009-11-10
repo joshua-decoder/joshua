@@ -85,6 +85,42 @@ public class TERMinusBLEU extends EvaluationMetric
 
   }
 
+  public void createSuffStatsFile(String cand_strings_fileName, String cand_indices_fileName, String outputFileName, int maxBatchSize)
+  {
+    try {
+      myTER.createSuffStatsFile(cand_strings_fileName, cand_indices_fileName, outputFileName+".TER", maxBatchSize);
+      myBLEU.createSuffStatsFile(cand_strings_fileName, cand_indices_fileName, outputFileName+".BLEU", maxBatchSize);
+
+      PrintWriter outFile = new PrintWriter(outputFileName);
+
+      FileInputStream inStream_TER = new FileInputStream(outputFileName+".TER");
+      BufferedReader inFile_TER = new BufferedReader(new InputStreamReader(inStream_TER, "utf8"));
+
+      FileInputStream inStream_BLEU = new FileInputStream(outputFileName+".BLEU");
+      BufferedReader inFile_BLEU = new BufferedReader(new InputStreamReader(inStream_BLEU, "utf8"));
+
+      String line_TER = inFile_TER.readLine();
+      String line_BLEU = inFile_BLEU.readLine();
+
+      // combine the two files into one
+      while (line_TER != null) {
+        outFile.println(line_TER + " " + line_BLEU);
+        line_TER = inFile_TER.readLine();
+        line_BLEU = inFile_BLEU.readLine();
+      }
+
+      inFile_TER.close();
+      inFile_BLEU.close();
+      outFile.close();
+
+      File fd;
+      fd = new File(outputFileName+".TER"); if (fd.exists()) fd.delete();
+      fd = new File(outputFileName+".BLEU"); if (fd.exists()) fd.delete();
+    } catch (IOException e) {
+      System.err.println("IOException in TER.createTercomHypFile(...): " + e.getMessage());
+      System.exit(99902);
+    }
+  }
 
   public double score(int[] stats)
   {
@@ -120,7 +156,7 @@ public class TERMinusBLEU extends EvaluationMetric
     System.out.println("---BLEU---");
     myBLEU.printDetailedScore_fromStats(stats_BLEU, oneLiner);
     System.out.println("---------");
-    System.out.println("  => " + metricName + " = " + score(stats));
+    System.out.println("  => " + metricName + " = " + f4.format(score(stats)));
   }
 
 }

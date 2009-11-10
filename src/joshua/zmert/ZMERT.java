@@ -103,12 +103,12 @@ public class ZMERT
       println("  -stopIt stopMinIts: some early stopping criterion must be satisfied in\n    stopMinIts *consecutive* iterations before an early exit\n    [[default: 3]]");
       println("  -stopSig sigValue: early MERT exit if no weight changes by more than sigValue\n    [[default: -1 (i.e. this criterion is never investigated)]]");
       println("  -save saveInter: save intermediate cfg files (1) or decoder outputs (2)\n    or both (3) or neither (0)\n    [[default: 3]]");
-      println("  -compress compressFiles: should Z-MERT compress large files (1) or not (0)\n    [[default: 0]]");
+      println("  -compress compressFiles: should Z-MERT compress the files it produces (1)\n    or not (0)\n    [[default: 0]]");
       println("  -ipi initsPerIt: number of intermediate initial points per iteration\n    [[default: 20]]");
       println("  -opi oncePerIt: modify a parameter only once per iteration (1) or not (0)\n    [[default: 0]]");
       println("  -rand randInit: choose initial point randomly (1) or from paramsFile (0)\n    [[default: 0]]");
       println("  -seed seed: seed used to initialize random number generator\n    [[default: time (i.e. value returned by System.currentTimeMillis()]]");
-      println("  -ud useDisk: reliance on disk (0-2; higher value => more reliance)\n    [[default: 2]]");
+//      println("  -ud useDisk: reliance on disk (0-2; higher value => more reliance)\n    [[default: 2]]");
       println("");
       println("Decoder specs:");
       println("  -cmd commandFile: name of file containing commands to run the decoder\n    [[default: null string (i.e. decoder is a JoshuaDecoder object)]]");

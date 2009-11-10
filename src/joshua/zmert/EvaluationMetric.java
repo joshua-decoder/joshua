@@ -19,6 +19,7 @@
 package joshua.zmert;
 import java.util.*;
 import java.text.DecimalFormat;
+import java.io.*;
 
 public abstract class EvaluationMetric
 {
@@ -178,6 +179,73 @@ public abstract class EvaluationMetric
     } // for (d)
 
     return stats;
+  }
+
+  public void createSuffStatsFile(String cand_strings_fileName, String cand_indices_fileName, String outputFileName, int maxBatchSize)
+  {
+    // similar to the above suffStats(String[], int[])
+
+    try {
+      FileInputStream inStream_cands = new FileInputStream(cand_strings_fileName);
+      BufferedReader inFile_cands = new BufferedReader(new InputStreamReader(inStream_cands, "utf8"));
+
+      FileInputStream inStream_indices = new FileInputStream(cand_indices_fileName);
+      BufferedReader inFile_indices = new BufferedReader(new InputStreamReader(inStream_indices, "utf8"));
+
+      PrintWriter outFile = new PrintWriter(outputFileName);
+
+      String[] cand_strings = new String[maxBatchSize];
+      int[] cand_indices = new int[maxBatchSize];
+
+      String line_cand = inFile_cands.readLine();
+      String line_index = inFile_indices.readLine();
+
+      while (line_cand != null) {
+        int size = 0;
+        while (line_cand != null) {
+          cand_strings[size] = line_cand;
+          cand_indices[size] = Integer.parseInt(line_index);
+          ++size; // now size is how many were read for this currnet batch
+          if (size == maxBatchSize) break;
+
+          line_cand = inFile_cands.readLine();
+          line_index = inFile_indices.readLine();
+        }
+
+        if (size < maxBatchSize) { // last batch, and smaller than maxBatchSize
+          String[] cand_strings_temp = new String[size];
+          int[] cand_indices_temp = new int[size];
+          for (int d = 0; d < size; ++d) {
+            cand_strings_temp[d] = cand_strings[d];
+            cand_indices_temp[d] = cand_indices[d];
+          }
+          cand_strings = cand_strings_temp;
+          cand_indices = cand_indices_temp;
+        }
+
+        int[][] SS = suffStats(cand_strings, cand_indices);
+        for (int d = 0; d < size; ++d) {
+          String stats_str = "";
+
+          for (int s = 0; s < suffStatsCount-1; ++s) { stats_str += SS[d][s] + " "; }
+          stats_str += SS[d][suffStatsCount-1];
+
+          outFile.println(stats_str);
+        }
+
+        line_cand = inFile_cands.readLine();
+        line_index = inFile_indices.readLine();
+      }
+
+      inFile_cands.close();
+      inFile_indices.close();
+      outFile.close();
+
+    } catch (IOException e) {
+      System.err.println("IOException in EvaluationMetric.createSuffStatsFile(...): " + e.getMessage());
+      System.exit(99902);
+    }
+
   }
 
   public void printDetailedScore(String[] topCand_str, boolean oneLiner)

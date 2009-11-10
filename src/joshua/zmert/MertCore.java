@@ -632,8 +632,8 @@ public class MertCore
         // i.e. only process candidates from the current iteration and candidates
         // from up to prevIts previous iterations.
       println("Reading candidate translations from iterations " + firstIt + "-" + iteration,1);
-      println("(and computing their " + metricName + " sufficient statistics)",1);
-      progress = 0;
+      println("(and computing " + metricName + " sufficient statistics for previously unseen candidates)",1);
+      print("  Progress: ");
 
       int[] newCandidatesAdded = new int[1+iteration];
       for (int it = 1; it <= iteration; ++it) { newCandidatesAdded[it] = 0; }
@@ -642,10 +642,7 @@ public class MertCore
 
 
 
-
-
       try {
-
 
         // each inFile corresponds to the output of an iteration
         // (index 0 is not used; no corresponding index for the current iteration)
@@ -703,14 +700,23 @@ public class MertCore
         PrintWriter outFile_statsMerged = new PrintWriter(tmpDirPrefix+".temp.stats.merged");
           // write sufficient statistics from all the sentences
           // from the output files into a single file
+        PrintWriter outFile_statsMergedKnown = new PrintWriter(tmpDirPrefix+".temp.stats.mergedKnown");
+          // write sufficient statistics from all the sentences
+          // from the output files into a single file
+
+        FileOutputStream outStream_unknownCands = new FileOutputStream(tmpDirPrefix+".temp.currIt.unknownCands", false);
+        OutputStreamWriter outStreamWriter_unknownCands = new OutputStreamWriter(outStream_unknownCands, "utf8");
+        BufferedWriter outFile_unknownCands = new BufferedWriter(outStreamWriter_unknownCands);
+
+        PrintWriter outFile_unknownIndices = new PrintWriter(tmpDirPrefix+".temp.currIt.unknownIndices");
 
 
         String sents_str, feats_str, stats_str;
 
         // BUG: this assumes a candidate string cannot be produced for two
         //      different source sentences, which is not necessarily true
-        // (It's not actually a bug, but only because existingCandStats gets
-        // cleared before moving to the next source sentence.)
+        //   (It's not actually a bug, but only because existingCandStats gets
+        //    cleared before moving to the next source sentence.)
         // FIX: should be made an array, indexed by i
         HashMap<String,String> existingCandStats = new HashMap<String,String>();
           // Stores precalculated sufficient statistics for candidates, in case
@@ -724,6 +730,12 @@ public class MertCore
         String[] featVal_str;
 
         int totalCandidateCount = 0;
+
+
+
+        int[] sizeUnknown_currIt = new int[numSentences];
+
+
 
         for (int i = 0; i < numSentences; ++i) {
 
@@ -753,7 +765,7 @@ public class MertCore
                 n = sizeOfNBest+1;
               } else if (!existingCandStats.containsKey(sents_str)) {
 
-                outFile_statsMerged.println(stats_str);
+                outFile_statsMergedKnown.println(stats_str);
 
                 featVal_str = feats_str.split("\\s+");
 
@@ -775,7 +787,7 @@ public class MertCore
                     for (int s = 0; s < suffStatsCount; ++s)
                       best1Cand_suffStats[j][i][s] = Integer.parseInt(tempStats[s]);
                   }
-                }
+                } // for (j)
 
                 existingCandStats.put(sents_str,stats_str);
 
@@ -784,16 +796,17 @@ public class MertCore
 
                 newCandidatesAdded[it] += 1;
 
-              }
-
-              showProgress();
+              } // if unseen candidate
 
             } // for (n)
 
           } // for (it)
 
+          outFile_statsMergedKnown.println("||||||");
+
 
           // now process the candidates of the current iteration
+          // now determine the new candidates of the current iteration
 
           /* remember:
                BufferedReader inFile_sentsCurrIt
@@ -822,11 +835,12 @@ public class MertCore
               n = sizeOfNBest+1;
             } else if (!existingCandStats.containsKey(sents_str)) {
               unknownCands_V.add(sents_str);
+              writeLine(sents_str,outFile_unknownCands);
+              outFile_unknownIndices.println(i);
+              newCandidatesAdded[iteration] += 1;
               existingCandStats.put(sents_str,"U"); // i.e. unknown
               // we add sents_str to avoid duplicate entries in unknownCands_V
             }
-
-            showProgress();
 
           } // for (n)
 
@@ -835,6 +849,10 @@ public class MertCore
           // now unknownCands_V has the candidates for which we need to calculate
           // sufficient statistics (for the i'th source sentence)
           int sizeUnknown = unknownCands_V.size();
+          sizeUnknown_currIt[i] = sizeUnknown;
+
+          /*********************************************/
+/*
           String[] unknownCands = new String[sizeUnknown];
           unknownCands_V.toArray(unknownCands);
           int[] indices = new int[sizeUnknown];
@@ -844,11 +862,95 @@ public class MertCore
             // (we had added it while constructing unknownCands_V to avoid duplicate entries)
             indices[d] = i;
           }
+*/
+          /*********************************************/
 
+          existingCandStats.clear();
+
+        } // for (i)
+
+/*
           int[][] newSuffStats = null;
           if (!statsCurrIt_exists && sizeUnknown > 0) {
             newSuffStats = evalMetric.suffStats(unknownCands, indices);
           }
+*/
+
+        outFile_statsMergedKnown.close();
+        outFile_unknownCands.close();
+        outFile_unknownIndices.close();
+
+
+        for (int it = firstIt; it < iteration; ++it) {
+          inFile_sents[it].close();
+          inFile_stats[it].close();
+
+          InputStream inStream_sents, inStream_stats;
+          if (compressFiles == 0) {
+            inStream_sents = new FileInputStream(tmpDirPrefix+".temp.sents.it"+it);
+            inStream_stats = new FileInputStream(tmpDirPrefix+".temp.stats.it"+it);
+          } else {
+            inStream_sents = new GZIPInputStream(new FileInputStream(tmpDirPrefix+".temp.sents.it"+it+".gz"));
+            inStream_stats = new GZIPInputStream(new FileInputStream(tmpDirPrefix+".temp.stats.it"+it+".gz"));
+          }
+
+          inFile_sents[it] = new BufferedReader(new InputStreamReader(inStream_sents, "utf8"));
+          inFile_stats[it] = new BufferedReader(new InputStreamReader(inStream_stats, "utf8"));
+        }
+
+        inFile_sentsCurrIt.close();
+        if (compressFiles == 0) {
+          inStream_sentsCurrIt = new FileInputStream(tmpDirPrefix+".temp.sents.it"+iteration);
+        } else {
+          inStream_sentsCurrIt = new GZIPInputStream(new FileInputStream(tmpDirPrefix+".temp.sents.it"+iteration+".gz"));
+        }
+        inFile_sentsCurrIt = new BufferedReader(new InputStreamReader(inStream_sentsCurrIt, "utf8"));
+
+
+
+        // calculate SS for unseen candidates and write them to file
+        FileInputStream inStream_statsCurrIt_unknown = null;
+        BufferedReader inFile_statsCurrIt_unknown = null;
+
+        if (!statsCurrIt_exists && newCandidatesAdded[iteration] > 0) {
+          // create the file...
+          evalMetric.createSuffStatsFile(tmpDirPrefix+".temp.currIt.unknownCands", tmpDirPrefix+".temp.currIt.unknownIndices", tmpDirPrefix+".temp.stats.unknown", sizeOfNBest);
+
+          // ...and open it
+          inStream_statsCurrIt_unknown = new FileInputStream(tmpDirPrefix+".temp.stats.unknown");
+          inFile_statsCurrIt_unknown = new BufferedReader(new InputStreamReader(inStream_statsCurrIt_unknown, "utf8"));
+        }
+
+        // OPEN mergedKnown file
+        FileInputStream instream_statsMergedKnown = new FileInputStream(tmpDirPrefix+".temp.stats.mergedKnown");
+        BufferedReader inFile_statsMergedKnown = new BufferedReader(new InputStreamReader(instream_statsMergedKnown, "utf8"));
+
+
+        for (int i = 0; i < numSentences; ++i) {
+
+          // reprocess candidates from previous iterations
+          for (int it = firstIt; it < iteration; ++it) {
+            for (int n = 0; n <= sizeOfNBest; ++n) {
+
+              sents_str = inFile_sents[it].readLine();
+              stats_str = inFile_stats[it].readLine();
+
+              if (sents_str.equals("||||||")) {
+                n = sizeOfNBest+1;
+              } else if (!existingCandStats.containsKey(sents_str)) {
+                existingCandStats.put(sents_str,stats_str);
+              } // if unseen candidate
+
+            } // for (n)
+          } // for (it)
+
+          // copy relevant portion from mergedKnown to the merged file
+          String line_mergedKnown = inFile_statsMergedKnown.readLine();
+          while (!line_mergedKnown.equals("||||||")) {
+            outFile_statsMerged.println(line_mergedKnown);
+            line_mergedKnown = inFile_statsMergedKnown.readLine();
+          }
+
 
           int d = -1;
 
@@ -863,7 +965,7 @@ public class MertCore
             // for the nth candidate for the ith sentence, read the sentence, feature values,
             // and sufficient statistics from the various temp files
 
-            sents_str = sentsCurrIt_currSrcSent[n];
+            sents_str = inFile_sentsCurrIt.readLine();
             feats_str = inFile_featsCurrIt.readLine();
 
             if (sents_str.equals("||||||")) {
@@ -873,6 +975,14 @@ public class MertCore
               ++d;
 
               if (!statsCurrIt_exists) {
+                stats_str = inFile_statsCurrIt_unknown.readLine();
+
+                String[] temp_stats = stats_str.split("\\s+");
+                for (int s = 0; s < suffStatsCount; ++s) {
+                  stats[s] = Integer.parseInt(temp_stats[s]);
+                }
+
+/*
                 stats_str = "";
                 for (int s = 0; s < suffStatsCount-1; ++s) {
                   stats[s] = newSuffStats[d][s];
@@ -880,6 +990,8 @@ public class MertCore
                 }
                 stats[suffStatsCount-1] = newSuffStats[d][suffStatsCount-1];
                 stats_str += stats[suffStatsCount-1];
+*/
+
                 outFile_statsCurrIt.println(stats_str);
               } else {
                 stats_str = inFile_statsCurrIt.readLine();
@@ -910,14 +1022,15 @@ public class MertCore
                   for (int s = 0; s < suffStatsCount; ++s)
                     best1Cand_suffStats[j][i][s] = stats[s];
                 }
-              }
+              } // for (j)
 
               existingCandStats.put(sents_str,stats_str);
 
               setFeats(featVal_array,i,lastUsedIndex,maxIndex,currFeatVal);
               candCount[i] += 1;
 
-              newCandidatesAdded[iteration] += 1;
+//              newCandidatesAdded[iteration] += 1;
+              // moved to code above detecting new candidates
 
             } else {
               if (statsCurrIt_exists)
@@ -929,13 +1042,9 @@ public class MertCore
               }
             }
 
-            showProgress();
-
           } // for (n)
 
-          // now d = sizeUnknown - 1
-          // i.e. last valid index in newSuffStats
-
+          // now d = sizeUnknown_currIt[i] - 1
 
           if (statsCurrIt_exists)
             inFile_statsCurrIt.readLine();
@@ -945,7 +1054,18 @@ public class MertCore
           existingCandStats.clear();
           totalCandidateCount += candCount[i];
 
+          if ((i+1) % 500 == 0) { print((i+1) + "\n" + "            ",1); }
+          else if ((i+1) % 100 == 0) { print("+",1); }
+          else if ((i+1) % 25 == 0) { print(".",1); }
+
         } // for (i)
+
+        outFile_statsMerged.close();
+
+
+
+
+        println("",1); // finish progress line
 
         for (int it = firstIt; it < iteration; ++it) {
           inFile_sents[it].close();
@@ -964,9 +1084,10 @@ public class MertCore
           gzipFile(tmpDirPrefix+".temp.stats.it"+iteration);
         }
 
-        outFile_statsMerged.close();
-
-        println("",2); // to finish off progress dot line
+        deleteFile(tmpDirPrefix+".temp.currIt.unknownCands");
+        deleteFile(tmpDirPrefix+".temp.currIt.unknownIndices");
+        deleteFile(tmpDirPrefix+".temp.stats.unknown");
+        deleteFile(tmpDirPrefix+".temp.stats.mergedKnown");
 
 //        cleanupMemory();
 
@@ -2624,6 +2745,7 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
     }
 
     // TODO: make this an argument
+    // TODO: also use this for the state file? could be tricky, since that file is created by ZMERT.java
     int k = decoderOutFileName.lastIndexOf("/");
     if (k >= 0) {
       tmpDirPrefix = decoderOutFileName.substring(0,k+1) + "ZMERT";

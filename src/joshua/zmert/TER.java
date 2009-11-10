@@ -99,7 +99,7 @@ public class TER extends EvaluationMetric
   public int[] suffStats(String cand_str, int i)
   {
     // this method should never be used when the metric is TER,
-    // because TER.java overrides suffStats(String[],int[]) below,
+    // because TER.java overrides createSuffStatsFile below,
     // which is the only method that calls suffStats(String,int).
     return null;
   }
@@ -146,24 +146,7 @@ public class TER extends EvaluationMetric
 
       // 2) Launch tercom as an external process
 
-      String cmd_str = "java -Dfile.encoding=utf8 -jar " + tercomJarFileName + " -r ref.txt.TER -h hyp.txt.TER -o ter -n TER_out";
-      cmd_str += " -b " + beamWidth;
-      cmd_str += " -d " + maxShiftDist;
-      if (caseSensitive) { cmd_str += " -S"; }
-      if (withPunctuation) { cmd_str += " -P"; }
-
-      Runtime rt = Runtime.getRuntime();
-      Process p = rt.exec(cmd_str);
-
-      StreamGobbler errorGobbler = new StreamGobbler(p.getErrorStream(), 0);
-      StreamGobbler outputGobbler = new StreamGobbler(p.getInputStream(), 0);
-
-      errorGobbler.start();
-      outputGobbler.start();
-
-      @SuppressWarnings("unused")
-      int exitValue = p.waitFor();
-
+      runTercom("ref.txt.TER", "hyp.txt.TER", "TER_out", 500);
 
       // 3) Read SS from output file produced by tercom.7.25.jar
 
@@ -192,12 +175,210 @@ public class TER extends EvaluationMetric
     } catch (IOException e) {
       System.err.println("IOException in TER.suffStats(String[],int[]): " + e.getMessage());
       System.exit(99902);
-    } catch (InterruptedException e) {
-      System.err.println("InterruptedException in TER.suffStats(String[],int[]): " + e.getMessage());
-      System.exit(99903);
     }
 
     return stats;
+  }
+
+  public void createSuffStatsFile(String cand_strings_fileName, String cand_indices_fileName, String outputFileName, int maxBatchSize)
+  {
+
+    try {
+      int batchCount = 0;
+
+      FileInputStream inStream_cands = new FileInputStream(cand_strings_fileName);
+      BufferedReader inFile_cands = new BufferedReader(new InputStreamReader(inStream_cands, "utf8"));
+
+      FileInputStream inStream_indices = new FileInputStream(cand_indices_fileName);
+      BufferedReader inFile_indices = new BufferedReader(new InputStreamReader(inStream_indices, "utf8"));
+
+      while (true) {
+        ++batchCount;
+        int readCount = createTercomHypFile(inFile_cands, "hyp.txt.TER."+batchCount, 10000);
+        createTercomRefFile(inFile_indices, "ref.txt.TER."+batchCount, 10000);
+
+        if (readCount == 0) {
+          --batchCount;
+          break;
+        } else if (readCount < 10000) {
+          break;
+        }
+      }
+
+      PrintWriter outFile = new PrintWriter(outputFileName);
+
+      for (int b = 1; b <= batchCount; ++b) {
+        runTercom("ref.txt.TER."+b, "hyp.txt.TER."+b, "TER_out", 500);
+        copySS("TER_out.ter", outFile);
+
+        File fd;
+        fd = new File("hyp.txt.TER."+b); if (fd.exists()) fd.delete();
+        fd = new File("ref.txt.TER."+b); if (fd.exists()) fd.delete();
+
+      }
+
+      outFile.close();
+
+      File fd = new File("TER_out.ter"); if (fd.exists()) fd.delete();
+
+    } catch (IOException e) {
+      System.err.println("IOException in TER.createTercomHypFile(...): " + e.getMessage());
+      System.exit(99902);
+    }
+
+  }
+
+  public int createTercomHypFile(BufferedReader inFile_cands, String hypFileName, int numCands)
+  {
+    // returns # lines read
+
+    int readCount = 0;
+
+    try {
+      FileOutputStream outStream = new FileOutputStream(hypFileName, false); // false: don't append
+      OutputStreamWriter outStreamWriter = new OutputStreamWriter(outStream, "utf8");
+      BufferedWriter outFile = new BufferedWriter(outStreamWriter);
+
+      String line_cand = "";
+
+      if (numCands > 0) {
+        for (int d = 0; d < numCands; ++d) {
+          line_cand = inFile_cands.readLine();
+          if (line_cand != null) {
+            ++readCount;
+            writeLine(line_cand + " (ID" + d + ")",outFile);
+          } else {
+            break;
+          }
+        }
+      } else {
+        line_cand = inFile_cands.readLine();
+        int d = -1;
+        while (line_cand != null) {
+          ++readCount;
+          ++d;
+          writeLine(line_cand + " (ID" + d + ")",outFile);
+          line_cand = inFile_cands.readLine();
+        }
+      }
+
+      outFile.close();
+
+    } catch (IOException e) {
+      System.err.println("IOException in TER.createTercomHypFile(...): " + e.getMessage());
+      System.exit(99902);
+    }
+
+    return readCount;
+
+  }
+
+  public int createTercomRefFile(BufferedReader inFile_indices, String refFileName, int numIndices)
+  {
+    // returns # lines read
+
+    int readCount = 0;
+
+    try {
+      FileOutputStream outStream = new FileOutputStream(refFileName, false); // false: don't append
+      OutputStreamWriter outStreamWriter = new OutputStreamWriter(outStream, "utf8");
+      BufferedWriter outFile = new BufferedWriter(outStreamWriter);
+
+      String line_index = "";
+
+      if (numIndices > 0) {
+        for (int d = 0; d < numIndices; ++d) {
+          line_index = inFile_indices.readLine();
+          if (line_index != null) {
+            ++readCount;
+            int index = Integer.parseInt(line_index);
+            for (int r = 0; r < refsPerSen; ++r) {
+              writeLine(refSentences[index][r] + " (ID" + d + ")",outFile);
+            }
+          } else {
+            break;
+          }
+        }
+      } else {
+        line_index = inFile_indices.readLine();
+        int d = -1;
+        while (line_index != null) {
+          ++readCount;
+          ++d;
+          int index = Integer.parseInt(line_index);
+          for (int r = 0; r < refsPerSen; ++r) {
+            writeLine(refSentences[index][r] + " (ID" + d + ")",outFile);
+          }
+          line_index = inFile_indices.readLine();
+        }
+      }
+
+      outFile.close();
+
+    } catch (IOException e) {
+      System.err.println("IOException in TER.createTercomRefFile(...): " + e.getMessage());
+      System.exit(99902);
+    }
+
+    return readCount;
+
+  }
+
+  public int runTercom(String refFileName, String hypFileName, String outFileNamePrefix, int memSize)
+  {
+    int exitValue = -1;
+
+    try {
+
+      String cmd_str = "java -Xmx" + memSize + "m -Dfile.encoding=utf8 -jar " + tercomJarFileName + " -r " + refFileName + " -h " + hypFileName + " -o ter -n " + outFileNamePrefix;
+      cmd_str += " -b " + beamWidth;
+      cmd_str += " -d " + maxShiftDist;
+      if (caseSensitive) { cmd_str += " -S"; }
+      if (withPunctuation) { cmd_str += " -P"; }
+
+      Runtime rt = Runtime.getRuntime();
+      Process p = rt.exec(cmd_str);
+
+      StreamGobbler errorGobbler = new StreamGobbler(p.getErrorStream(), 0);
+      StreamGobbler outputGobbler = new StreamGobbler(p.getInputStream(), 0);
+
+      errorGobbler.start();
+      outputGobbler.start();
+
+      exitValue = p.waitFor();
+
+    } catch (IOException e) {
+      System.err.println("IOException in TER.runTercom(...): " + e.getMessage());
+      System.exit(99902);
+    } catch (InterruptedException e) {
+      System.err.println("InterruptedException in TER.runTercom(...): " + e.getMessage());
+      System.exit(99903);
+    }
+
+    return exitValue;
+
+  }
+
+  public void copySS(String inputFileName, PrintWriter outFile)
+  {
+    try {
+      BufferedReader inFile = new BufferedReader(new FileReader(inputFileName));
+      String line = "";
+
+      line = inFile.readLine(); // skip hyp line
+      line = inFile.readLine(); // skip ref line
+
+      line = inFile.readLine(); // read info for first line
+
+      while (line != null) {
+        String[] strA = line.split("\\s+");
+        outFile.println((int)Double.parseDouble(strA[1]) + " " + (int)Double.parseDouble(strA[2]));
+        line = inFile.readLine(); // read info for next line
+      }
+    } catch (IOException e) {
+      System.err.println("IOException in TER.copySS(String,PrintWriter): " + e.getMessage());
+      System.exit(99902);
+    }
   }
 
   public double score(int[] stats)
@@ -217,11 +398,11 @@ public class TER extends EvaluationMetric
   public void printDetailedScore_fromStats(int[] stats, boolean oneLiner)
   {
     if (oneLiner) {
-      System.out.println("TER = " + stats[0] + " / " + stats[1] + " = " + score(stats));
+      System.out.println("TER = " + stats[0] + " / " + stats[1] + " = " + f4.format(score(stats)));
     } else {
       System.out.println("# edits = " + stats[0]);
       System.out.println("Reference length = " + stats[1]);
-      System.out.println("TER = " + stats[0] + " / " + stats[1] + " = " + score(stats));
+      System.out.println("TER = " + stats[0] + " / " + stats[1] + " = " + f4.format(score(stats)));
     }
   }
 
@@ -233,4 +414,5 @@ public class TER extends EvaluationMetric
   }
 
 }
+
 
