@@ -98,7 +98,7 @@ public class AlignmentGrid implements Externalizable {
 				Coordinate coord = new Coordinate(alignmentPointsArray[i]);
 				width = Math.max(width, coord.x+1);
 				height = Math.max(height, coord.y+1);
-				if (width>=MAX_LENGTH || height>=MAX_LENGTH) {
+				if (width>MAX_LENGTH || height>MAX_LENGTH) {
 					throw new RuntimeException("Encountered alignment point " + coord + " which exceeds the maximum that can be represented " + new Coordinate(MAX_LENGTH-1, MAX_LENGTH-1) + ". Please ensure that each training sentence contains fewer than " + MAX_LENGTH + " words.");
 				}
 				coordinates.add(coord);
