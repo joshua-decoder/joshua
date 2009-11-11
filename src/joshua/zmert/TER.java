@@ -333,8 +333,12 @@ public class TER extends EvaluationMetric
       String cmd_str = "java -Xmx" + memSize + "m -Dfile.encoding=utf8 -jar " + tercomJarFileName + " -r " + refFileName + " -h " + hypFileName + " -o ter -n " + outFileNamePrefix;
       cmd_str += " -b " + beamWidth;
       cmd_str += " -d " + maxShiftDist;
-      if (caseSensitive) { cmd_str += " -S"; }
-      if (withPunctuation) { cmd_str += " -P"; }
+      if (caseSensitive) { cmd_str += " -s"; }
+      if (!withPunctuation) { cmd_str += " -P"; }
+      /* From tercom's README:
+           -s case sensitivity, optional, default is insensitive
+           -P no punctuations, default is with punctuations.
+      */
 
       Runtime rt = Runtime.getRuntime();
       Process p = rt.exec(cmd_str);
