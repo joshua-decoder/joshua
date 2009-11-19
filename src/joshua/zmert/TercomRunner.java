@@ -83,6 +83,7 @@ public class TercomRunner implements Runnable
 
       int exitValue = p.waitFor();
 
+      File fd;
       fd = new File(hypFileName); if (fd.exists()) fd.delete();
       fd = new File(refFileName); if (fd.exists()) fd.delete();
 
