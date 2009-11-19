@@ -18,13 +18,14 @@ public class TERMinusBLEU extends EvaluationMetric
     // M_o[2]: beam width, positive integer
     // M_o[3]: maximum shift distance, positive integer
     // M_o[4]: filename of tercom jar file
-    // M_o[5]: maximum gram length, positive integer
-    // M_o[6]: effective length calculation method, closest/shortest/average
+    // M_o[5]: number of threads to use for TER scoring (= number of tercom processes launched)
+    // M_o[6]: maximum gram length, positive integer
+    // M_o[7]: effective length calculation method, closest/shortest/average
 
     // for 0-3, default values in tercom-0.7.25 are: nocase, punc, 20, 50
 
     myTER = new TER(Metric_options);
-    myBLEU = new BLEU(Integer.parseInt(Metric_options[5]),Metric_options[6]);
+    myBLEU = new BLEU(Integer.parseInt(Metric_options[6]),Metric_options[7]);
 
     initialize(); // set the data members of the metric
   }

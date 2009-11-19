@@ -102,6 +102,7 @@ public class ZMERT
       println("  -minIt minMERTIts: number of iterations before considering an early exit\n    [[default: 5]]");
       println("  -stopIt stopMinIts: some early stopping criterion must be satisfied in\n    stopMinIts *consecutive* iterations before an early exit\n    [[default: 3]]");
       println("  -stopSig sigValue: early MERT exit if no weight changes by more than sigValue\n    [[default: -1 (i.e. this criterion is never investigated)]]");
+      println("  -thrCnt threadCount: number of threads to run in parallel when optimizing\n    [[default: 1]]");
       println("  -save saveInter: save intermediate cfg files (1) or decoder outputs (2)\n    or both (3) or neither (0)\n    [[default: 3]]");
       println("  -compress compressFiles: should Z-MERT compress the files it produces (1)\n    or not (0)\n    [[default: 0]]");
       println("  -ipi initsPerIt: number of intermediate initial points per iteration\n    [[default: 20]]");

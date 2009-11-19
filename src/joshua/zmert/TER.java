@@ -18,6 +18,9 @@
 
 package joshua.zmert;
 import java.io.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Semaphore;
 
 public class TER extends EvaluationMetric
 {
@@ -26,6 +29,7 @@ public class TER extends EvaluationMetric
   private int beamWidth;
   private int maxShiftDist;
   private String tercomJarFileName;
+  private int numScoringThreads;
 
   public TER(String[] Metric_options)
   {
@@ -34,6 +38,7 @@ public class TER extends EvaluationMetric
     // M_o[2]: beam width, positive integer
     // M_o[3]: maximum shift distance, positive integer
     // M_o[4]: filename of tercom jar file
+    // M_o[5]: number of threads to use for TER scoring (= number of tercom processes launched)
 
     // for 0-3, default values in tercom-0.7.25 are: nocase, punc, 20, 50
 
@@ -82,6 +87,16 @@ public class TER extends EvaluationMetric
         System.exit(1);
       }
     }
+
+    numScoringThreads = Integer.parseInt(Metric_options[5]);
+    if (numScoringThreads < 1) {
+      System.out.println("Number of TER scoring threads must be positive");
+      System.exit(1);
+    }
+
+
+    TercomRunner.set_TercomParams(caseSensitive, withPunctuation, beamWidth, maxShiftDist, tercomJarFileName);
+
 
     initialize(); // set the data members of the metric
   }
@@ -194,8 +209,8 @@ public class TER extends EvaluationMetric
 
       while (true) {
         ++batchCount;
-        int readCount = createTercomHypFile(inFile_cands, tmpDirPrefix+".hyp.txt.TER."+batchCount, 10000);
-        createTercomRefFile(inFile_indices, tmpDirPrefix+".ref.txt.TER."+batchCount, 10000);
+        int readCount = createTercomHypFile(inFile_cands, tmpDirPrefix+"hyp.txt.TER.batch"+batchCount, 10000);
+        createTercomRefFile(inFile_indices, tmpDirPrefix+"ref.txt.TER.batch"+batchCount, 10000);
 
         if (readCount == 0) {
           --batchCount;
@@ -205,21 +220,34 @@ public class TER extends EvaluationMetric
         }
       }
 
-      PrintWriter outFile = new PrintWriter(outputFileName);
+      // score the batchCount batches of candidates, in parallel, across numThreads threads
+      ExecutorService pool = Executors.newFixedThreadPool(numScoringThreads);
+      Semaphore blocker = new Semaphore(0);
 
       for (int b = 1; b <= batchCount; ++b) {
-        runTercom(tmpDirPrefix+".ref.txt.TER."+b, tmpDirPrefix+".hyp.txt.TER."+b, tmpDirPrefix+".TER_out", 500);
-        copySS(tmpDirPrefix+".TER_out.ter", outFile);
-
-        File fd;
-        fd = new File(tmpDirPrefix+".hyp.txt.TER."+b); if (fd.exists()) fd.delete();
-        fd = new File(tmpDirPrefix+".ref.txt.TER."+b); if (fd.exists()) fd.delete();
-
+        pool.execute(new TercomRunner(blocker, tmpDirPrefix+"ref.txt.TER.batch"+b, tmpDirPrefix+"hyp.txt.TER.batch"+b, tmpDirPrefix+"TER_out.batch"+b, 500));
+          // Each thread scores the candidates, creating a tercom output file,
+          // and then deletes the .hyp. and .ref. files, which are not needed
+          // for other batches.
       }
 
-      outFile.close();
+      pool.shutdown();
 
-      File fd = new File(tmpDirPrefix+".TER_out.ter"); if (fd.exists()) fd.delete();
+      try {
+        blocker.acquire(batchCount);
+      } catch(java.lang.InterruptedException e) {
+        System.err.println("InterruptedException in TER.createSuffStatsFile(...): " + e.getMessage());
+        System.exit(99906);
+      }
+
+      PrintWriter outFile = new PrintWriter(outputFileName);
+      for (int b = 1; b <= batchCount; ++b) {
+        copySS(tmpDirPrefix+"TER_out.batch"+b+".ter", outFile);
+        File fd;
+        fd = new File(tmpDirPrefix+"TER_out.batch"+b+".ter"); if (fd.exists()) fd.delete();
+        // .hyp. and .ref. already deleted by individual threads
+      }
+      outFile.close();
 
     } catch (IOException e) {
       System.err.println("IOException in TER.createSuffStatsFile(...): " + e.getMessage());
