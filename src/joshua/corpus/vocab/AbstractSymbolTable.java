@@ -46,17 +46,8 @@ public abstract class AbstractSymbolTable implements SymbolTable {
 		if (! isNonterminal(id)) {
 			return -1;
 		} else {
-			
-			switch(id) {
-				case SymbolTable.X1: return 0;
-				case SymbolTable.X2: return 1;
-				default: {
-					String symbol = getWord(id);
-					
-					return getTargetNonterminalIndex(symbol);
-				}
-			}
-			
+			String symbol = getWord(id);			
+			return getTargetNonterminalIndex(symbol);
 		}
 	}
 	

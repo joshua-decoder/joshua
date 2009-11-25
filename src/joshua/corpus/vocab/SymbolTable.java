@@ -64,13 +64,7 @@ public interface SymbolTable {
 	 */
 	String X_STRING = "[X]";
 	
-	/**
-	 * Integer representation of the nonterminal X with index 1,
-	 * which represents a wild-card gap in a phrase.
-	 * <p>
-	 * All nonterminals are guaranteed to be represented by negative integers.
-	 */
-	int X1 = -2;
+	
 	
 	/**
 	 * String representation of the nonterminal X with index 1,
@@ -78,13 +72,7 @@ public interface SymbolTable {
 	 */
 	String X1_STRING = "[X,1]";
 	
-	/**
-	 * Integer representation of the nonterminal X with index 1,
-	 * which represents a wild-card gap in a phrase.
-	 * <p>
-	 * All nonterminals are guaranteed to be represented by negative integers.
-	 */
-	int X2 = -3;
+	
 	
 	/**
 	 * String representation of the nonterminal X with index 2,

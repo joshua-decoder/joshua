@@ -343,7 +343,8 @@ public class JoshuaDecoder {
 			}
 		} else {
 			if (null == existingSymbols) {
-				this.symbolTable = new Vocabulary();//new BuildinSymbol(null);
+				//this.symbolTable = new Vocabulary();//new BuildinSymbol(null);
+				this.symbolTable = new BuildinSymbol();
 			} else {
 				this.symbolTable = existingSymbols;
 			}

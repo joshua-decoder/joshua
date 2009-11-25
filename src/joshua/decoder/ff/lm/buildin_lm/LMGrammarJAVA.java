@@ -60,7 +60,7 @@ public class LMGrammarJAVA extends AbstractLM {
 	
 	/*a backoff node is a hashtable, it may include:
 	 * (1) probabilititis for next words
-	 * (2) pointers to a next-layer backoff node (hashtable)
+	 * (2) pointers to a next-layer backoff node (hashtable); the key lookup the value is: sym_id + highestID
 	 * (3) backoff weight for this node
 	 * (4) suffix/prefix flag to indicate that there is ngrams start from this suffix
 	 */
@@ -92,6 +92,7 @@ public class LMGrammarJAVA extends AbstractLM {
 		this.BACKOFF_WGHT_SYM_ID   = psymbol.addTerminal(BACKOFF_WGHT_SYM);
 		this.LM_HAVE_PREFIX_SYM_ID = psymbol.addTerminal(LM_HAVE_PREFIX_SYM);
 		this.UNK_SYM_ID            = psymbol.addTerminal(UNK_SYM);
+		
 		
 		g_is_add_prefix_infor = is_add_prefix_infor;
 		g_is_add_suffix_infor = is_add_suffix_infor;
@@ -544,6 +545,7 @@ public class LMGrammarJAVA extends AbstractLM {
 				}
 			}
 			int cur_sym_id = this.symbolTable.addTerminal(wrds[i]);
+			//System.out.println(this.symbolTable.getHighestID());
 			LMHash next_layer =
 				(LMHash) pos.get(cur_sym_id + this.symbolTable.getHighestID());
 			if (null != next_layer) {
@@ -680,7 +682,7 @@ public class LMGrammarJAVA extends AbstractLM {
 	//in practice: 211 bytes (init size is 20)
 	//important note: if we use tbl.put(key, new Integer(1)) instead of tbl.put(key, (new Integer(1)).intValue()), then for each element, we waste 16 bytes for the Integer object, 
 	//and the GC will not collect this Double object, because the hashtable ref it
-	public static class LMHash //4bytes
+	private static class LMHash //4bytes
 	{
 		//######note: key must be positive integer, and value must not be null
 		/*if key can be both positive and negative, then lot of collision, or will take very long to call get()

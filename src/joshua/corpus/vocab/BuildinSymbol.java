@@ -38,7 +38,7 @@ public class BuildinSymbol extends DefaultSymbol {
 	
 	private int cur_terminal_id = lm_start_sym_id ;//must be positive
 	
-	public BuildinSymbol() throws IOException {
+	public BuildinSymbol() {
 		this(null);
 	}
 	
