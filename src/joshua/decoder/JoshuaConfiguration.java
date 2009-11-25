@@ -486,7 +486,7 @@ public class JoshuaConfiguration {
 				} else if ("segment_file_parser_class".equals(fds[0])) {
 					segmentFileParserClass = fds[1].trim();
 					if (logger.isLoggable(Level.FINEST))
-						logger.finest("tm file: " + segmentFileParserClass);
+						logger.finest("segmentFileParserClass: " + segmentFileParserClass);
 					
 				} else {
 					logger.warning("Maybe Wrong config line: " + line);

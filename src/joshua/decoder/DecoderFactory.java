@@ -124,7 +124,8 @@ public class DecoderFactory {
 	throws IOException {
 		{ // Guard against errors due the the hackishness of parallel decoding
 			final String className = JoshuaConfiguration.segmentFileParserClass;
-			if ("PlainSegmentParser".equals(className)) {
+
+			if (className==null || "PlainSegmentParser".equals(className)) {
 				// Do nothing, this one is okay.
 			} else if ("HackishSegmentParser".equals(className)) {
 				logger.warning("Using HackishSegmentParser with parallel decoding may cause sentence IDs to become garbled");
