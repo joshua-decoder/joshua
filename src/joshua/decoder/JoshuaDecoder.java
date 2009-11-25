@@ -146,13 +146,15 @@ public class JoshuaDecoder {
 		if (this.featureFunctions.size() != weights.length) {
 			throw new IllegalArgumentException("number of weights does not match number of feature functions");
 		}
-		{ int i = 0; for (FeatureFunction ff : this.featureFunctions) {
+		
+		int i = 0; for (FeatureFunction ff : this.featureFunctions) {
 			double oldWeight = ff.getWeight();
 			ff.setWeight(weights[i]);
 			System.out.println("Feature function : " +
 				ff.getClass().getSimpleName() +
 				"; weight changed from " + oldWeight + " to " + ff.getWeight());
-		i++; }}
+			i++; 
+		}
 		
 		//FIXME: this works for Batch grammar only; not for sentence-specific grammars
 		for (GrammarFactory grammarFactory : this.grammarFactories) {
@@ -255,16 +257,15 @@ public class JoshuaDecoder {
 
 			if (JoshuaConfiguration.tm_file != null) {
 
+				//TODO: should not use file suffix to decide which kind of grammar we are using
 				if (JoshuaConfiguration.tm_file.endsWith(".josh")) {
-
+					
 					try {
-
 						// Use corpus-based grammar
+						//inside getParallelCorpus, we will initialize symboltable, lm, and feature functions
 						ParallelCorpusGrammarFactory parallelCorpus = getParallelCorpus(configFile);							
 						grammarFactories.add(parallelCorpus);
-
-					
-
+						
 					} catch (Exception e) {
 						IOException ioe = new IOException("Error reading suffix array grammar.");
 						ioe.initCause(e);
@@ -274,10 +275,12 @@ public class JoshuaDecoder {
 				} else {
 
 					// Sets: symbolTable, defaultNonterminals
+					//symbol table may grow on the fly during decoding
 					this.initializeSymbolTable(null);
 
 					// Needs: symbolTable; Sets: languageModel
-					if (JoshuaConfiguration.have_lm_model) initializeLanguageModel();
+					if (JoshuaConfiguration.have_lm_model)
+						initializeLanguageModel();
 
 					// Initialize the features: requires that
 					// LM model has been initialized. If an LM
@@ -289,9 +292,6 @@ public class JoshuaDecoder {
 					initializeTranslationGrammars(JoshuaConfiguration.tm_file);
 
 				}
-
-
-
 			} else {
 				throw new RuntimeException("No translation grammar or suffix array grammar was specified.");
 			}
@@ -324,22 +324,17 @@ public class JoshuaDecoder {
 		if (JoshuaConfiguration.use_remote_lm_server) {
 			if (null == existingSymbols) {
 				// Within the decoder, we assume BuildinSymbol when using the remote LM
-				this.symbolTable =
-					new BuildinSymbol(JoshuaConfiguration.remote_symbol_tbl);
+				this.symbolTable = new BuildinSymbol(JoshuaConfiguration.remote_symbol_tbl);
 			} else {
 				this.symbolTable = existingSymbols;
 			}
 		} else if (JoshuaConfiguration.use_srilm) {
 			logger.finest("Using SRILM symbol table");
 			if (null == existingSymbols) {
-				this.symbolTable =
-					new SrilmSymbol(JoshuaConfiguration.g_lm_order);
+				this.symbolTable = new SrilmSymbol(JoshuaConfiguration.g_lm_order);
 			} else {
 				logger.finest("Populating SRILM symbol table with symbols from existing symbol table");
-				this.symbolTable =
-					new SrilmSymbol(
-							existingSymbols,
-							JoshuaConfiguration.g_lm_order);
+				this.symbolTable = new SrilmSymbol(existingSymbols, JoshuaConfiguration.g_lm_order);
 			}
 		} else {
 			if (null == existingSymbols) {
@@ -674,7 +669,7 @@ public class JoshuaDecoder {
 		String oracleFile = (4 == args.length ? args[3].trim() : null);
 		
 		
-		/* Step-1: initialize the decoder */
+		/* Step-1: initialize the decoder, test-set independent */
 		JoshuaDecoder decoder = new JoshuaDecoder(configFile);
 		if (logger.isLoggable(Level.INFO)) {
 			logger.info("Before translation, loading time is "

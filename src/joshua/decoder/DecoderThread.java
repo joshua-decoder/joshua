@@ -36,7 +36,7 @@ import joshua.decoder.segment_file.Segment;
 import joshua.lattice.Lattice;
 import joshua.oracle.OracleExtractor;
 import joshua.corpus.suffix_array.Pattern;
-import joshua.corpus.vocab.SymbolTable;
+import joshua.corpus.vocab.SymbolTable;	
 import joshua.ui.hypergraph_visualizer.HyperGraphViewer;
 import joshua.util.io.LineReader;
 import joshua.util.io.NullReader;
@@ -215,10 +215,11 @@ public class DecoderThread extends Thread {
 		// TODO: we may also want to validate that all segments have different ids
 		
 		
-		// Translate the test file
-		this.nbestWriter = FileUtility.getWriteFileStream(this.nbestFile);
+		//=== Translate the test file
+		this.nbestWriter = FileUtility.getWriteFileStream(this.nbestFile);		
 		try {
 			try {
+				//this method will analyze the input file (to generate segments), and then translate segments one by one 
 				segmentParser.parseSegmentFile(
 					LineReader.getInputStream(this.testFile),
 					new TranslateCoiterator(
@@ -291,7 +292,7 @@ public class DecoderThread extends Thread {
 			logger.fine("now translating\n" + segment.sentence());
 		
 		Chart chart; {
-
+			//TODO: we should not use "(((" to decide whether it is a lattice input
 			final boolean looksLikeLattice = segment.sentence().startsWith("(((");
 			Lattice<Integer> inputLattice = null;
 			Pattern sentence = null;
@@ -301,7 +302,8 @@ public class DecoderThread extends Thread {
 				sentence = null; // TODO SA needs to accept lattices!
 			} else {
 				int[] intSentence = this.symbolTable.getIDs(segment.sentence());
-				if (logger.isLoggable(Level.FINEST)) logger.finest("Converted \"" + segment.sentence() + "\" into " + Arrays.toString(intSentence));
+				if (logger.isLoggable(Level.FINEST)) 
+					logger.finest("Converted \"" + segment.sentence() + "\" into " + Arrays.toString(intSentence));
 				inputLattice = Lattice.createLattice(intSentence);
 				sentence = new Pattern(this.symbolTable, intSentence);
 			}
@@ -343,9 +345,11 @@ public class DecoderThread extends Thread {
 		
 		/* Parsing */
 		HyperGraph hypergraph = chart.expand();
+		
 		if (JoshuaConfiguration.visualize_hypergraph) {
 			HyperGraphViewer.visualizeHypergraphInFrame(hypergraph, symbolTable);
 		}
+		
 		if (logger.isLoggable(Level.FINER))
 			logger.finer("after expand, time: "
 				+ ((double)(System.currentTimeMillis() - startTime) / 1000.0)
@@ -387,11 +391,12 @@ public class DecoderThread extends Thread {
 		}
 		// end */
 		
-		
 		//debug
 		//g_con.get_confusion_in_hyper_graph_cell_specific(hypergraph, hypergraph.sent_len);
 	}
 	
+	
+	/**decode a sentence, and return a hypergraph*/
 	public HyperGraph getHyperGraph(String sentence)
 	{
 		Chart chart;
@@ -421,7 +426,7 @@ public class DecoderThread extends Thread {
 				grammars,
 				this.hasLanguageModel,
 				JoshuaConfiguration.goal_symbol,
-				new LinkedList<ConstraintSpan>());
+				null);
 		
 		return chart.expand();
 	}

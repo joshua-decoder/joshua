@@ -49,9 +49,6 @@ public class DecoderFactory {
 	/**
 	 * Shared symbol table for source language terminals, target
 	 * language terminals, and shared nonterminals.
-	 * <p>
-	 * It may be that separate tables should be maintained for
-	 * the source and target languages.
 	 */
 	private SymbolTable symbolTable = null;
 	
@@ -103,6 +100,8 @@ public class DecoderFactory {
 		}
 	}
 	
+	/**decode a single sentence, and returns a hypergraph
+	 * */
 	public HyperGraph getHyperGraphForSentence(String sentence)
 	{
 		try {
@@ -122,20 +121,29 @@ public class DecoderFactory {
 	// BUG: this kind of file munging isn't going to work with generalized SegmentFileParser
 	private void run_parallel_decoder(String testFile, String nbestFile)
 	throws IOException {
-		{ // Guard against errors due the the hackishness of parallel decoding
+		{ 
+			/**if a segment corresponds to a single line in the input file, we can use parallel decoding as we can simply split the file.
+			 * This is true for the input files that will be processed by PlainSegmentParser and PlainSegmentParser.
+			 * But, if a segment corresponds to multiple lines (as in the case of xml file input, which has
+			 * manual constraints specified in the xml format), we cannot do parallel decoding as we do below.
+			 * This is true for the file that will be handled by the SAXSegmentParser 
+			 **/
+			//TODO: what about lattice input? is it a single input?
+			
 			final String className = JoshuaConfiguration.segmentFileParserClass;
 
 			if (className==null || "PlainSegmentParser".equals(className)) {
 				// Do nothing, this one is okay.
-			} else if ("HackishSegmentParser".equals(className)) {
+			} else if ("PlainSegmentParser".equals(className)) {
 				logger.warning("Using HackishSegmentParser with parallel decoding may cause sentence IDs to become garbled");
 			} else {
 				throw new IllegalArgumentException("Parallel decoding is currently not supported with SegmentFileParsers other than PlainSegmentParser or HackishSegmentParser");
 			}
 		}
 		
-		this.parallelThreads =
-			new DecoderThread[JoshuaConfiguration.num_parallel_decoders];
+		
+		
+		this.parallelThreads = new DecoderThread[JoshuaConfiguration.num_parallel_decoders];
 		
 		//==== compute number of lines for each decoder
 		int n_lines = 0; {
@@ -153,7 +161,7 @@ public class DecoderFactory {
 				+ "num_per_file_int: " + num_per_thread_int);
 		
 		
-		//#### Initialize all threads and their input files
+		//==== Initialize all threads and their input files
 		int decoder_i = 1;
 		String cur_test_file  = JoshuaConfiguration.parallel_files_prefix + ".test." + decoder_i;
 		String cur_nbest_file = JoshuaConfiguration.parallel_files_prefix + ".nbest." + decoder_i;
