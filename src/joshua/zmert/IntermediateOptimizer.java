@@ -30,6 +30,7 @@ public class IntermediateOptimizer implements Runnable
   private int j;
   private Semaphore blocker;
   private Vector<String> threadOutput;
+  private String strToPrint;
 
   private double[] initialLambda;
   private double[][] finalLambda;
@@ -45,6 +46,11 @@ public class IntermediateOptimizer implements Runnable
   private final static double PosInf = (+1.0 / 0.0);
 
   private static int numSentences;
+  private static int numDocuments;
+  private static int[] docOfSentence;
+  private static int docSubset_firstRank;
+  private static int docSubset_lastRank;
+  private static boolean optimizeSubset;
   private static int numParams;
   private static double[] normalizationOptions;
   private static boolean[] isOptimizable;
@@ -53,17 +59,27 @@ public class IntermediateOptimizer implements Runnable
   private static boolean oneModificationPerIteration;
   private static EvaluationMetric evalMetric;
   private static String metricName;
+  private static String metricName_display;
   private static int suffStatsCount;
   private static String tmpDirPrefix;
   private static int verbosity;
 
   public static void set_MERTparams(
-      int in_numSentences, int in_numParams, double[] in_normalizationOptions,
+      int in_numSentences, int in_numDocuments, int[] in_docOfSentence, int[] in_docSubsetInfo,
+      int in_numParams, double[] in_normalizationOptions,
       boolean[] in_isOptimizable, double[] in_minThValue, double[] in_maxThValue,
       boolean in_oneModificationPerIteration, EvaluationMetric in_evalMetric,
       String in_tmpDirPrefix, int in_verbosity)
   {
     numSentences = in_numSentences;
+    numDocuments = in_numDocuments;
+    docOfSentence = in_docOfSentence;
+
+    docSubset_firstRank = in_docSubsetInfo[1];
+    docSubset_lastRank = in_docSubsetInfo[2];
+    if (in_docSubsetInfo[3] != numDocuments) optimizeSubset = true;
+    else optimizeSubset = false;
+
     numParams = in_numParams;
     normalizationOptions = in_normalizationOptions;
     isOptimizable = in_isOptimizable;
@@ -72,6 +88,8 @@ public class IntermediateOptimizer implements Runnable
     oneModificationPerIteration = in_oneModificationPerIteration;
     evalMetric = in_evalMetric;
     metricName = evalMetric.get_metricName();
+    metricName_display = metricName;
+    if (numDocuments > 1) metricName_display = "doc-level " + metricName;
     suffStatsCount = evalMetric.get_suffStatsCount();
     tmpDirPrefix = in_tmpDirPrefix;
     verbosity = in_verbosity;
@@ -86,6 +104,7 @@ public class IntermediateOptimizer implements Runnable
     j = in_j;
     blocker = in_blocker;
     threadOutput = in_threadOutput;
+    strToPrint = "";
 
     initialLambda = in_initialLambda;
     finalLambda = in_finalLambda;
@@ -232,6 +251,12 @@ public class IntermediateOptimizer implements Runnable
       int last_new_k = -1;
 
       while (currIndex != maxSlopeIndex) {
+
+        if (currIndex < 0) break;
+          // Due to rounding errors, the index identified as maxSlopeIndex above
+          // might be different from the one this loop expects, in which case
+          // it won't be found and currIndex remains -1.  So if currIndex is -1
+          // a rounding error happened, which is cool since we can just break.
 
 //        print("cI=" + currIndex + " ",4);
 
@@ -438,27 +463,37 @@ public class IntermediateOptimizer implements Runnable
       // statistic from the candidate for the ith sentence (the candidate
       // indicated by indexOfCurrBest[i]).
 
-    int[] suffStats_tot = new int[suffStatsCount];
-      // suffStats_tot[s] := SUM_i suffStats[i][s]
+    int[][] suffStats_doc = new int[numDocuments][suffStatsCount];
+      // suffStats_doc[doc][s] := SUM_i suffStats[i][s], over sentences in the doc'th document
+      // i.e. treat each document as a mini corpus
+      // (if not doing document-level optimization, all sentences will belong in a single
+      //  document: the 1st one, indexed 0)
 
-    for (int s = 0; s < suffStatsCount; ++s) { suffStats_tot[s] = 0; }
+    // initialize document SS
+    for (int doc = 0; doc < numDocuments; ++doc) {
+      for (int s = 0; s < suffStatsCount; ++s) {
+        suffStats_doc[doc][s] = 0;
+      }
+    }
 
-    // Now, set suffStats[][], and increment suffStats_tot[]
+    // Now, set suffStats[][], and increment suffStats_doc[][]
     for (int i = 0; i < numSentences; ++i) {
       suffStats[i] = suffStats_array[i].get(indexOfCurrBest[i]);
 
       for (int s = 0; s < suffStatsCount; ++s) {
-        suffStats_tot[s] += suffStats[i][s];
+        suffStats_doc[docOfSentence[i]][s] += suffStats[i][s];
       }
     }
 
 
 
-    double bestScore = evalMetric.score(suffStats_tot);
+    double bestScore = 0.0;
+    if (optimizeSubset) bestScore = evalMetric.score(suffStats_doc,docSubset_firstRank,docSubset_lastRank);
+    else bestScore = evalMetric.score(suffStats_doc);
     double bestLambdaVal = temp_lambda[c];
     double nextLambdaVal = bestLambdaVal;
     println("At lambda[" + c + "] = " + bestLambdaVal + ","
-          + "\t" + metricName + " = " + bestScore + " (*)",3);
+          + "\t" + metricName_display + " = " + bestScore + " (*)",3);
 
     Iterator<Double> It = (thresholdsAll.keySet()).iterator();
     if (It.hasNext()) { ip_curr = It.next(); }
@@ -472,27 +507,33 @@ public class IntermediateOptimizer implements Runnable
       Iterator<Integer> It2 = (th_info_M.keySet()).iterator();
       while (It2.hasNext()) {
         int i = It2.next();
+          // i.e. the 1-best for the i'th sentence changes at this threshold value
+        int docOf_i = docOfSentence[i];
+
         int[] th_info = th_info_M.get(i);
         @SuppressWarnings("unused")
         int old_k = th_info[0]; // should be equal to indexOfCurrBest[i]
         int new_k = th_info[1];
 
         for (int s = 0; s < suffStatsCount; ++s) {
-          suffStats_tot[s] -= suffStats[i][s]; // subtract stats for candidate old_k
+          suffStats_doc[docOf_i][s] -= suffStats[i][s]; // subtract stats for candidate old_k
         }
 
         indexOfCurrBest[i] = new_k;
-        suffStats[i] = suffStats_array[i].get(indexOfCurrBest[i]);
+        suffStats[i] = suffStats_array[i].get(indexOfCurrBest[i]); // update the SS for the i'th sentence
 
         for (int s = 0; s < suffStatsCount; ++s) {
-          suffStats_tot[s] += suffStats[i][s]; // add stats for candidate new_k
+          suffStats_doc[docOf_i][s] += suffStats[i][s]; // add stats for candidate new_k
         }
 
       }
 
-      double nextTestScore = evalMetric.score(suffStats_tot);
+      double nextTestScore = 0.0;
+      if (optimizeSubset) nextTestScore = evalMetric.score(suffStats_doc,docSubset_firstRank,docSubset_lastRank);
+      else nextTestScore = evalMetric.score(suffStats_doc);
+
       print("At lambda[" + c + "] = " + nextLambdaVal + ","
-          + "\t" + metricName + " = " + nextTestScore,3);
+          + "\t" + metricName_display + " = " + nextTestScore,3);
 
       if (evalMetric.isBetter(nextTestScore,bestScore)) {
         bestScore = nextTestScore;
@@ -735,8 +776,7 @@ public class IntermediateOptimizer implements Runnable
 
       if (isOptimizable[c]) {
         double[] bestScoreInfo_c =
-          line_opt(thresholdsAll[c],indexOfCurrBest[c],c,
-                   currLambda);
+          line_opt(thresholdsAll[c],indexOfCurrBest[c],c,currLambda);
           // get best score and its lambda value
 
         double bestLambdaVal_c = bestScoreInfo_c[0];
@@ -864,19 +904,25 @@ public class IntermediateOptimizer implements Runnable
     double[] currLambda = new double[1+numParams];
     System.arraycopy(initialLambda,1,currLambda,1,numParams);
 
-    int[] best1Cand_suffStats_tot = new int[suffStatsCount];
-    for (int s = 0; s < suffStatsCount; ++s) best1Cand_suffStats_tot[s] = 0;
-
-    for (int i = 0; i < numSentences; ++i) {
+    int[][] best1Cand_suffStats_doc = new int[numDocuments][suffStatsCount];
+    for (int doc = 0; doc < numDocuments; ++doc) {
       for (int s = 0; s < suffStatsCount; ++s) {
-        best1Cand_suffStats_tot[s] += best1Cand_suffStats[i][s];
+        best1Cand_suffStats_doc[doc][s] = 0;
       }
     }
 
-    double initialScore = evalMetric.score(best1Cand_suffStats_tot);
+    for (int i = 0; i < numSentences; ++i) {
+      for (int s = 0; s < suffStatsCount; ++s) {
+        best1Cand_suffStats_doc[docOfSentence[i]][s] += best1Cand_suffStats[i][s];
+      }
+    }
+
+    double initialScore = 0.0;
+    if (optimizeSubset) initialScore = evalMetric.score(best1Cand_suffStats_doc,docSubset_firstRank,docSubset_lastRank);
+    else initialScore = evalMetric.score(best1Cand_suffStats_doc);
 
     println("Initial lambda[j=" + j + "]: " + lambdaToString(initialLambda),1);
-    println("(Initial " + metricName + "[j=" + j + "]: " + initialScore + ")",1);
+    println("(Initial " + metricName_display + "[j=" + j + "]: " + initialScore + ")",1);
     println("",1);
     finalScore[j] = initialScore;
 
@@ -898,9 +944,9 @@ public class IntermediateOptimizer implements Runnable
       if (evalMetric.isBetter(bestScore,finalScore[j])) {
         println("*** Changing lambda[j=" + j + "][" + c_best + "] from "
               + f4.format(currLambda[c_best])
-              + " (" + metricName + ": " + f4.format(finalScore[j]) + ") to "
+              + " (" + metricName_display + ": " + f4.format(finalScore[j]) + ") to "
               + f4.format(bestLambdaVal)
-              + " (" + metricName + ": " + f4.format(bestScore) + ") ***",2);
+              + " (" + metricName_display + ": " + f4.format(bestScore) + ") ***",2);
         println("*** Old lambda[j=" + j + "]: " + lambdaToString(currLambda) + " ***",2);
         currLambda[c_best] = bestLambdaVal;
         finalScore[j] = bestScore;
@@ -930,7 +976,7 @@ public class IntermediateOptimizer implements Runnable
       }
     }
     println("Final lambda[j=" + j + "]: " + lambdaToString(finalLambda[j]),1);
-    println("(Final " + metricName + "[j=" + j + "]: " + finalScore[j] + ")",1);
+    println("(Final " + metricName_display + "[j=" + j + "]: " + finalScore[j] + ")",1);
     println("",1);
 
     blocker.release();
@@ -943,13 +989,16 @@ public class IntermediateOptimizer implements Runnable
       System.err.println("Exception in IntermediateOptimizer.run(): " + e.getMessage());
       System.exit(99905);
     }
+    if (!strToPrint.equals("")) {
+      threadOutput.add(strToPrint);
+    }
   }
 
   private void println(String str, int priority) { if (priority <= verbosity) println(str); }
   private void print(String str, int priority) { if (priority <= verbosity) print(str); }
 
-  private void println(String str) { threadOutput.add(str); }
-  private void print(String str) { threadOutput.add(str); }
+  private void println(String str) { threadOutput.add(strToPrint + str); strToPrint = ""; }
+  private void print(String str) { strToPrint += str; }
 
   private String lambdaToString(double[] lambdaA)
   {

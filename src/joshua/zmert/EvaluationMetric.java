@@ -26,6 +26,7 @@ public abstract class EvaluationMetric
   /* static data members */
   private static TreeMap<String,Integer> metricOptionCount; // maps metric names -> number of options for that metric
   protected static int numSentences; // number of sentences in the MERT set
+  protected static int numDocuments; // number of documents in the MERT set
   protected static int refsPerSen;
   protected static String[][] refSentences;
   protected final static DecimalFormat f0 = new DecimalFormat("###0");
@@ -89,6 +90,7 @@ public abstract class EvaluationMetric
   }
 
   public static void set_numSentences(int x) { numSentences = x; }
+  public static void set_numDocuments(int x) { numDocuments = x; }
   public static void set_refsPerSen(int x) { refsPerSen = x; }
   public static void set_tmpDirPrefix(String S) { tmpDirPrefix = S; }
   public static void set_refSentences(String[][] refs)
@@ -254,6 +256,77 @@ public abstract class EvaluationMetric
   {
     int[] stats = suffStats(topCand_str);
     printDetailedScore_fromStats(stats,oneLiner);
+  }
+
+  public double score(int[][] stats)
+  {
+    // returns an average of document scores (aka the document-level score, as opposed to corpus-level score)
+    // stats[][] is indexed [doc][s]
+
+    double retVal = 0.0;
+    for (int doc = 0; doc < numDocuments; ++doc) {
+      retVal += score(stats[doc]);
+    }
+    return retVal / numDocuments;
+  }
+
+  public double score(int[][] stats, int firstRank, int lastRank)
+  {
+    // returns an average of document scores, restricted to the documents
+    // ranked firstRank-lastRank, inclusive (ranks are 1-indexed, even though the docs are 0-indexed)
+
+    double[] scores = docScores(stats);
+
+    Arrays.sort(scores);
+    // sorts into ascending order
+
+    double retVal = 0.0;
+
+    if (toBeMinimized) {
+      // scores[0] is rank 1, scores[numDocuments-1] is rank numDocuments
+      //   => scores[j] is rank j+1
+      //   => rank r is scores[r-1]
+      for (int j = firstRank-1; j < lastRank; ++j) {
+        retVal += scores[j];
+      }
+    } else {
+      // scores[numDocuments-1] is rank 1, scores[0] is rank numDocuments
+      //   => scores[j] is rank numDocuments-j
+      //   => rank r is scores[numDocuments-r]
+      for (int j = numDocuments-firstRank; j >= numDocuments-lastRank; --j) {
+        retVal += scores[j];
+      }
+    }
+
+    return retVal / (lastRank-firstRank+1);
+
+  }
+
+  public double[] docScores(int[][] stats)
+  {
+    // returns an array of document scores
+    // stats[][] is indexed [doc][s]
+
+    double[] scores = new double[numDocuments];
+    for (int doc = 0; doc < numDocuments; ++doc) {
+      scores[doc] = score(stats[doc]);
+    }
+    return scores;
+  }
+
+  public void printDetailedScore_fromStats(int[][] stats, String[] docNames)
+  {
+    // prints individual document scores
+    // stats[][] is indexed [doc][s]
+
+    for (int doc = 0; doc < numDocuments; ++doc) {
+      if (docNames == null) {
+        System.out.print("Document #" + doc + ": ");
+      } else {
+        System.out.print(docNames[doc] + ": ");
+      }
+      printDetailedScore_fromStats(stats[doc],true);
+    }
   }
 
   /* abstract (=> also non-static) methods */

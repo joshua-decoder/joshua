@@ -93,6 +93,7 @@ public class ZMERT
       println("  -rps refsPerSen: number of reference translations per sentence\n    [[default: 1]]");
       println("  -txtNrm textNormMethod: how should text be normalized?\n       (0) don't normalize text,\n    or (1) \"NIST-style\", and also rejoin 're, *'s, n't, etc,\n    or (2) apply 1 and also rejoin dashes between letters,\n    or (3) apply 1 and also drop non-ASCII characters,\n    or (4) apply 1+2+3\n    [[default: 1]]");
       println("  -p paramsFile: file containing parameter names, initial values, and ranges\n    [[default: params.txt]]");
+      println("  -docInfo documentInfoFile: file informing Z-MERT which document each\n    sentence belongs to\n    [[default: null string (i.e. all sentences are in one 'document')]]");
       println("  -fin finalLambda: file name for final lambda[] values\n    [[default: null string (i.e. no such file will be created)]]");
       println("");
       println("MERT specs:");

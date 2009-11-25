@@ -51,6 +51,26 @@ public class MertCore
     // number of sentences in the dev set
     // (aka the "MERT training" set)
 
+  private int numDocuments;
+    // number of documents in the dev set
+    // this should be 1, unless doing doc-level optimization
+
+  private int[] docOfSentence;
+    // docOfSentence[i] stores which document contains the i'th sentence.
+    // docOfSentence is 0-indexed, as are the documents (i.e. first doc is indexed 0)
+
+  private int[] docSubsetInfo;
+    // stores information regarding which subset of the documents are evaluated
+    // [0]: method (0-6)
+    // [1]: first (1-indexed)
+    // [2]: last (1-indexed)
+    // [3]: size
+    // [4]: center
+    // [5]: arg1
+    // [6]: arg2
+    // [1-6] are 0 for method 0, [6] is 0 for methods 1-4 as well
+    // only [1] and [2] are needed for optimization. The rest are only needed for an output message.
+
   private int refsPerSen;
     // number of reference translations per sentence
 
@@ -162,6 +182,9 @@ public class MertCore
   private String metricName;
     // name of evaluation metric optimized by MERT
 
+  private String metricName_display;
+    // name of evaluation metric optimized by MERT, possibly with "doc-level " prefixed
+
   private String[] metricOptions;
     // options for the evaluation metric (e.g. for BLEU, maxGramLength and effLengthMethod)
 
@@ -179,10 +202,10 @@ public class MertCore
     // If 1, iteration number is passed.  If 0, launch with no arguments.
 
   private String dirPrefix; // where are all these files located?
-  private String paramsFileName, finalLambdaFileName;
+  private String paramsFileName, docInfoFileName, finalLambdaFileName;
   private String sourceFileName, refFileName, decoderOutFileName;
   private String decoderConfigFileName, decoderCommandFileName;
-  private String fakeFileNamePrefix, fakeFileNameSuffix;
+  private String fakeFileNameTemplate, fakeFileNamePrefix, fakeFileNameSuffix;
     // e.g. output.it[1-x].someOldRun would be specified as:
     //      output.it?.someOldRun
     //      and we'd have prefix = "output.it" and suffix = ".sameOldRun"
@@ -212,7 +235,7 @@ public class MertCore
     println("NegInf: " + NegInf + ", PosInf: " + PosInf + ", epsilon: " + epsilon,4);
 
     randGen = new Random(seed);
-    for (int i = 1; i <= randsToSkip; ++i) {
+    for (int r = 1; r <= randsToSkip; ++r) {
       randGen.nextDouble();
     }
     generatedRands = randsToSkip;
@@ -228,6 +251,16 @@ public class MertCore
     }
 
     numSentences = countLines(refFileName) / refsPerSen;
+
+    processDocInfo();
+      // sets numDocuments and docOfSentence[]
+
+    if (numDocuments > 1) metricName_display = "doc-level " + metricName;
+
+    set_docSubsetInfo(docSubsetInfo);
+
+
+
     numParams = countNonEmptyLines(paramsFileName) - 1;
       // the parameter file contains one line per parameter
       // and one line for the normalization method
@@ -317,6 +350,7 @@ public class MertCore
 
     // set static data members for the EvaluationMetric class
     EvaluationMetric.set_numSentences(numSentences);
+    EvaluationMetric.set_numDocuments(numDocuments);
     EvaluationMetric.set_refsPerSen(refsPerSen);
     EvaluationMetric.set_refSentences(refSentences);
     EvaluationMetric.set_tmpDirPrefix(tmpDirPrefix);
@@ -326,7 +360,8 @@ public class MertCore
     suffStatsCount = evalMetric.get_suffStatsCount();
 
     // set static data members for the IntermediateOptimizer class
-    IntermediateOptimizer.set_MERTparams(numSentences, numParams, normalizationOptions,
+    IntermediateOptimizer.set_MERTparams(numSentences, numDocuments, docOfSentence, docSubsetInfo,
+                                         numParams, normalizationOptions,
                                          isOptimizable, minThValue, maxThValue,
                                          oneModificationPerIteration, evalMetric,
                                          tmpDirPrefix, verbosity);
@@ -335,6 +370,13 @@ public class MertCore
 
     if (randsToSkip == 0) { // i.e. first iteration
       println("Number of sentences: " + numSentences,1);
+      println("Number of documents: " + numDocuments,1);
+      println("Optimizing " + metricName_display,1);
+
+print("docSubsetInfo: {",1);
+for (int f = 0; f < 6; ++f) print(docSubsetInfo[f] + ", ",1);
+println(docSubsetInfo[6] + "}",1);
+
       println("Number of features: " + numParams,1);
       print("Feature names: {",1);
       for (int c = 1; c <= numParams; ++c) {
@@ -390,7 +432,7 @@ public class MertCore
     } // if (randsToSkip == 0)
 
 
-    if (decoderCommand == null && fakeFileNamePrefix == null) {
+    if (decoderCommand == null && fakeFileNameTemplate == null) {
       println("Loading Joshua decoder...",1);
       myDecoder = new JoshuaDecoder(decoderConfigFileName+".ZMERT.orig");
       println("...finished loading @ " + (new Date()),1);
@@ -486,7 +528,7 @@ public class MertCore
     println("----------------------------------------------------",1);
     println("",1);
     println("FINAL lambda: " + lambdaToString(lambda)
-          + " (" + metricName + ": " + FINAL_score + ")",1);
+          + " (" + metricName_display + ": " + FINAL_score + ")",1);
     // check if a lambda is outside its threshold range
     for (int c = 1; c <= numParams; ++c) {
       if (lambda[c] < minThValue[c] || lambda[c] > maxThValue[c]) {
@@ -578,7 +620,9 @@ public class MertCore
         //   2: fake decoder
         //   3: internal decoder
 
-      println("...finished decoding @ " + (new Date()),1);
+      if (!decRunResult[1].equals("2")) {
+        println("...finished decoding @ " + (new Date()),1);
+      }
 
       checkFile(decRunResult[0]);
 
@@ -785,13 +829,13 @@ public class MertCore
 
                 for (int c = 1; c <= numParams; ++c) {
                   currFeatVal[c] = Double.parseDouble(featVal_str[c-1]);
-//                  print("fV[" + c + "]=" + featVal[c] + " ",4);
+//                  print("fV[" + c + "]=" + currFeatVal[c] + " ",4);
                 }
 //                println("",4);
 
 
                 for (int j = 1; j <= initsPerIt; ++j) {
-                  double score = 0;
+                  double score = 0; // i.e. score assigned by decoder
                   for (int c = 1; c <= numParams; ++c) {
                     score += initialLambda[j][c] * currFeatVal[c];
                   }
@@ -1021,13 +1065,13 @@ public class MertCore
 
               for (int c = 1; c <= numParams; ++c) {
                 currFeatVal[c] = Double.parseDouble(featVal_str[c-1]);
-//                print("fV[" + c + "]=" + featVal[c] + " ",4);
+//                print("fV[" + c + "]=" + currFeatVal[c] + " ",4);
               }
 //              println("",4);
 
 
               for (int j = 1; j <= initsPerIt; ++j) {
-                double score = 0;
+                double score = 0; // i.e. score assigned by decoder
                 for (int c = 1; c <= numParams; ++c) {
                   score += initialLambda[j][c] * currFeatVal[c];
                 }
@@ -1174,7 +1218,7 @@ public class MertCore
 
       if (initsPerIt > 1) {
         println("Best final lambda is lambda[j=" + best_j + "] "
-              + "(" + metricName + ": " + f4.format(bestFinalScore) + ").",1);
+              + "(" + metricName_display + ": " + f4.format(bestFinalScore) + ").",1);
         println("",1);
       }
 
@@ -1283,9 +1327,9 @@ public class MertCore
       //   2: fake decoder
       //   3: internal decoder
 
-    if (fakeFileNamePrefix != null && fileExists(fakeFileNamePrefix+iteration+fakeFileNameSuffix)) {
+    if (fakeFileNameTemplate != null && fileExists(fakeFileNamePrefix+iteration+fakeFileNameSuffix)) {
       String fakeFileName = fakeFileNamePrefix+iteration+fakeFileNameSuffix;
-      println("Not running decoder; using " + fakeFileName + " instead...",1);
+      println("Not running decoder; using " + fakeFileName + " instead.",1);
 /*
       if (fakeFileName.endsWith(".gz")) {
         copyFile(fakeFileName,decoderOutFileName+".gz");
@@ -1670,6 +1714,105 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
     inFile_init.close();
   }
 
+  private void processDocInfo()
+  {
+    // sets numDocuments and docOfSentence[]
+    docOfSentence = new int[numSentences];
+
+    if (docInfoFileName == null) {
+      for (int i = 0; i < numSentences; ++i) docOfSentence[i] = 0;
+      numDocuments = 1;
+    } else {
+
+      try {
+
+        // 4 possible formats:
+        //   1) List of numbers, one per document, indicating # sentences in each document.
+        //   2) List of "docName size" pairs, one per document, indicating name of document and # sentences.
+        //   3) List of docName's, one per sentence, indicating which doument each sentence belongs to.
+        //   4) List of docName_number's, one per sentence, indicating which doument each sentence belongs to,
+        //      and its order in that document. (can also use '-' instead of '_')
+
+        int docInfoSize = countNonEmptyLines(docInfoFileName);
+
+        if (docInfoSize < numSentences) { // format #1 or #2
+          boolean format1 = false;
+
+          numDocuments = docInfoSize;
+          int i = 0;
+
+          BufferedReader inFile = new BufferedReader(new FileReader(docInfoFileName));
+          for (int doc = 0; doc < numDocuments; ++doc) {
+            String line = inFile.readLine();
+
+            int docSize = 0;
+            if (format1) {
+              docSize = Integer.parseInt(line);
+            } else {
+              docSize = Integer.parseInt(line.split("\\s+")[1]);
+            }
+
+            for (int i2 = 1; i2 <= docSize; ++i2) {
+              docOfSentence[i] = doc;
+              ++i;
+            }
+
+          }
+
+          // now i == numSentences
+
+          inFile.close();
+
+        } else if (docInfoSize == numSentences) { // format #3 or #4
+
+          boolean format3 = false;
+
+          HashSet<String> seenDocNames = new HashSet<String>();
+          HashMap<String,Integer> docOrder = new HashMap<String,Integer>();
+            // maps a document name to the order (0-indexed) in which it was seen
+
+          BufferedReader inFile = new BufferedReader(new FileReader(docInfoFileName));
+          for (int i = 0; i < numSentences; ++i) {
+            String line = inFile.readLine();
+
+            String docName = "";
+            if (format3) {
+              docName = line;
+            } else {
+              int sep_i = Math.max(line.indexOf('_'),line.indexOf('-'));
+              docName = line.substring(0,sep_i);
+            }
+
+            if (!seenDocNames.contains(docName)) {
+              seenDocNames.add(docName);
+              docOrder.put(docName,seenDocNames.size()-1);
+            }
+
+            int docOrder_i = docOrder.get(docName);
+
+            docOfSentence[i] = docOrder_i;
+
+          }
+
+          inFile.close();
+
+          numDocuments = seenDocNames.size();
+
+        } else { // badly formatted
+
+        }
+
+      } catch (FileNotFoundException e) {
+        System.err.println("FileNotFoundException in MertCore.processDocInfo(): " + e.getMessage());
+        System.exit(99901);
+      } catch (IOException e) {
+        System.err.println("IOException in MertCore.processDocInfo(): " + e.getMessage());
+        System.exit(99902);
+      }
+    }
+
+  }
+
   private boolean copyFile(String origFileName, String newFileName)
   {
     try {
@@ -1807,8 +1950,8 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
           if (paramA.length == 2 && paramA[0].charAt(0) == '-') {
             argsVector.add(paramA[0]);
             argsVector.add(paramA[1]);
-          } else if (paramA.length > 2 && paramA[0].equals("-m")) {
-            // -m (metricName) is allowed to have extra optinos
+          } else if (paramA.length > 2 && (paramA[0].equals("-m") || paramA[0].equals("-docSet"))) {
+            // -m (metricName) and -docSet are allowed to have extra optinos
             for (int opt = 0; opt < paramA.length; ++opt) { argsVector.add(paramA[opt]); }
           } else {
             println("Malformed line in config file:");
@@ -1852,35 +1995,40 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
 	refsPerSen = 1;
 	textNormMethod = 1;
 	paramsFileName = "params.txt";
+	docInfoFileName = null;
 	finalLambdaFileName = null;
 	// MERT specs
 	metricName = "BLEU";
+	metricName_display = metricName;
 	metricOptions = new String[2];
 	metricOptions[0] = "4";
 	metricOptions[1] = "closest";
+	docSubsetInfo = new int[7];
+	docSubsetInfo[0] = 0;
 	maxMERTIterations = 20;
 	prevMERTIterations = 20;
 	minMERTIterations = 5;
 	stopMinIts = 3;
 	stopSigValue = -1;
 //
-//  /* possibly other early stopping criteria here */
+//	/* possibly other early stopping criteria here */
 //
-    numOptThreads = 1;
+	numOptThreads = 1;
 	saveInterFiles = 3;
-    compressFiles = 0;
+	compressFiles = 0;
 	initsPerIt = 20;
 	oneModificationPerIteration = false;
 	randInit = false;
 	seed = System.currentTimeMillis();
-//    useDisk = 2;
+//	useDisk = 2;
 	// Decoder specs
 	decoderCommandFileName = null;
-    passIterationToDecoder = 0;
+	passIterationToDecoder = 0;
 	decoderOutFileName = "output.nbest";
 	validDecoderExitValue = 0;
 	decoderConfigFileName = "dec_cfg.txt";
 	sizeOfNBest = 100;
+	fakeFileNameTemplate = null;
 	fakeFileNamePrefix = null;
 	fakeFileNameSuffix = null;
 	// Output specs
@@ -1907,11 +2055,15 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
 				println("textNormMethod should be between 0 and 4");
 				System.exit(10);
 			}
-		} else if (option.equals("-p")) { paramsFileName = args[i+1];
+		} else if (option.equals("-p")) {
+			paramsFileName = args[i+1];
+		} else if (option.equals("-docInfo")) {
+			docInfoFileName = args[i+1];
 		} else if (option.equals("-fin")) { finalLambdaFileName = args[i+1];
 			// MERT specs
 		} else if (option.equals("-m")) {
 			metricName = args[i+1];
+			metricName_display = metricName;
 			if (EvaluationMetric.knownMetricName(metricName)) {
 				int optionCount = EvaluationMetric.metricOptionCount(metricName);
 				metricOptions = new String[optionCount];
@@ -1921,6 +2073,52 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
 				i += optionCount;
 			} else {
 				println("Unknown metric name " + metricName + ".");
+				System.exit(10);
+			}
+		} else if (option.equals("-docSet")) {
+			String method = args[i+1];
+
+			if (method.equals("all")) {
+				docSubsetInfo[0] = 0;
+				i += 0;
+			} else if (method.equals("bottom")) {
+				String a = args[i+2];
+				if (a.endsWith("d")) {
+					docSubsetInfo[0] = 1;
+					a = a.substring(0,a.indexOf("d"));
+				} else {
+					docSubsetInfo[0] = 2;
+					a = a.substring(0,a.indexOf("%"));
+				}
+				docSubsetInfo[5] = Integer.parseInt(a);
+				i += 1;
+			} else if (method.equals("top")) {
+				String a = args[i+2];
+				if (a.endsWith("d")) {
+					docSubsetInfo[0] = 3;
+					a = a.substring(0,a.indexOf("d"));
+				} else {
+					docSubsetInfo[0] = 4;
+					a = a.substring(0,a.indexOf("%"));
+				}
+				docSubsetInfo[5] = Integer.parseInt(a);
+				i += 1;
+			} else if (method.equals("window")) {
+				String a1 = args[i+2];
+				a1 = a1.substring(0,a1.indexOf("d")); // size of window
+				String a2 = args[i+4];
+				if (a2.indexOf("p") > 0) {
+					docSubsetInfo[0] = 5;
+					a2 = a2.substring(0,a2.indexOf("p"));
+				} else {
+					docSubsetInfo[0] = 6;
+					a2 = a2.substring(0,a2.indexOf("r"));
+				}
+				docSubsetInfo[5] = Integer.parseInt(a1);
+				docSubsetInfo[6] = Integer.parseInt(a2);
+				i += 3;
+			} else {
+				println("Unknown docSet method " + method + ".");
 				System.exit(10);
 			}
 		} else if (option.equals("-maxIt")) {
@@ -1951,7 +2149,7 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
 			stopSigValue = Double.parseDouble(args[i+1]);
 		}
 //
-//  /* possibly other early stopping criteria here */
+//	/* possibly other early stopping criteria here */
 //
 		else if (option.equals("-thrCnt")) {
 			numOptThreads = Integer.parseInt(args[i+1]);
@@ -2049,14 +2247,14 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
 				System.exit(10);
 			}
 		} else if (option.equals("-fake")) {
-			String fakeFileName = args[i+1];
-			int QM_i = fakeFileName.indexOf("?");
+			fakeFileNameTemplate = args[i+1];
+			int QM_i = fakeFileNameTemplate.indexOf("?");
 			if (QM_i <= 0) {
-				println("fakeFileName must contain '?' to indicate position of iteration number");
+				println("fakeFileNameTemplate must contain '?' to indicate position of iteration number");
 				System.exit(10);
 			}
-            fakeFileNamePrefix = fakeFileName.substring(0,QM_i);
-            fakeFileNameSuffix = fakeFileName.substring(QM_i+1);
+			fakeFileNamePrefix = fakeFileNameTemplate.substring(0,QM_i);
+			fakeFileNameSuffix = fakeFileNameTemplate.substring(QM_i+1);
 		} else {
 			println("Unknown option " + option);
 			System.exit(10);
@@ -2065,9 +2263,9 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
 		i += 2;
 		
 	} // while (i)
-	
-	if (maxMERTIterations < minMERTIterations) {
-		
+
+    if (maxMERTIterations < minMERTIterations) {
+
       if (firstTime)
         println("Warning: maxMERTIts is smaller than minMERTIts; "
               + "decreasing minMERTIts from " + minMERTIterations + " to maxMERTIts "
@@ -2083,6 +2281,7 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
       decoderConfigFileName = fullPath(dirPrefix,decoderConfigFileName);
 
       if (sourceFileName != null) { sourceFileName = fullPath(dirPrefix,sourceFileName); }
+      if (docInfoFileName != null) { docInfoFileName = fullPath(dirPrefix,docInfoFileName); }
       if (finalLambdaFileName != null) { finalLambdaFileName = fullPath(dirPrefix,finalLambdaFileName); }
       if (decoderCommandFileName != null) { decoderCommandFileName = fullPath(dirPrefix,decoderCommandFileName); }
       if (fakeFileNamePrefix != null) { fakeFileNamePrefix = fullPath(dirPrefix,fakeFileNamePrefix); }
@@ -2116,7 +2315,7 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
         println("Warning: specified source file "
               + sourceFileName + " was not found.",1);
     }
-    boolean canRunFake = (fakeFileNamePrefix != null);
+    boolean canRunFake = (fakeFileNameTemplate != null);
 
     if (!canRunCommand && !canRunJoshua) { // can only run fake decoder
 
@@ -2129,7 +2328,7 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
 
       int lastGoodIt = 0;
       for (int it = 1; it <= maxMERTIterations; ++it) {
-        if (fileExists(fakeFileNamePrefix+it)) {
+        if (fileExists(fakeFileNamePrefix+it+fakeFileNameSuffix)) {
           lastGoodIt = it;
         } else {
           break; // from for (it) loop
@@ -2137,7 +2336,7 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
       }
 
       if (lastGoodIt == 0) {
-        println("Fake decoder cannot find first output file " + (fakeFileNamePrefix+1));
+        println("Fake decoder cannot find first output file " + (fakeFileNamePrefix+1+fakeFileNameSuffix));
         System.exit(13);
       } else if (lastGoodIt < maxMERTIterations) {
         if (firstTime)
@@ -2171,6 +2370,68 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
     }
 
   } // processArgs(String[] args)
+
+  private void set_docSubsetInfo(int[] info)
+  {
+
+/*
+1: -docSet bottom 8d
+2: -docSet bottom 25%				the bottom ceil(0.20*numDocs) documents
+3: -docSet top 8d
+4: -docSet top 25%					the top ceil(0.20*numDocs) documents
+
+5: -docSet window 11d around 90percentile		11 docs centered around 80th percentile
+												(complain if not enough docs; don't adjust)
+6: -docSet window 11d around 40rank				11 docs centered around doc ranked 50
+		                						(complain if not enough docs; don't adjust)
+
+
+[0]: method (0-6)
+[1]: first (1-indexed)
+[2]: last (1-indexed)
+[3]: size
+[4]: center
+[5]: arg1 (-1 for method 0)
+[6]: arg2 (-1 for methods 0-4)
+*/
+    if (info[0] == 0) { // all
+      info[1] = 1;
+      info[2] = numDocuments;
+      info[3] = numDocuments;
+      info[4] = (info[1] + info[2]) / 2;
+    } if (info[0] == 1) { // bottom d
+      info[3] = info[5];
+      info[2] = numDocuments;
+      info[1] = numDocuments - info[3] + 1;
+      info[4] = (info[1] + info[2]) / 2;
+    } if (info[0] == 2) { // bottom p
+      info[3] = (int)(Math.ceil((info[5]/100.0) * numDocuments));
+      info[2] = numDocuments;
+      info[1] = numDocuments - info[3] + 1;
+      info[4] = (info[1] + info[2]) / 2;
+    } if (info[0] == 3) { // top d
+      info[3] = info[5];
+      info[1] = 1;
+      info[2] = info[3];
+      info[4] = (info[1] + info[2]) / 2;
+    } if (info[0] == 4) { // top p
+      info[3] = (int)(Math.ceil((info[5]/100.0) * numDocuments));
+      info[1] = 1;
+      info[2] = info[3];
+      info[4] = (info[1] + info[2]) / 2;
+    } if (info[0] == 5) { // window around percentile
+      info[3] = info[5];
+      info[4] = (int)(Math.floor((info[6]/100.0) * numDocuments));
+      info[1] = info[4] - ((info[3]-1) / 2);
+      info[2] = info[4] + ((info[3]-1) / 2);
+    } if (info[0] == 6) { // window around rank
+      info[3] = info[5];
+      info[4] = info[6];
+      info[1] = info[4] - ((info[3]-1) / 2);
+      info[2] = info[4] + ((info[3]-1) / 2);
+    }
+
+  }
 
   private void checkFile(String fileName)
   {
@@ -2840,7 +3101,7 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
       DMC.println("----------------------------------------------------",1);
       DMC.println("",1);
       DMC.println("FINAL lambda: " + DMC.lambdaToString(DMC.lambda)
-                + " (" + DMC.metricName + ": " + FINAL_score + ")",1);
+                + " (" + DMC.metricName_display + ": " + FINAL_score + ")",1);
       // check if a lambda is outside its threshold range
       for (int c = 1; c <= DMC.numParams; ++c) {
         if (DMC.lambda[c] < DMC.minThValue[c] || DMC.lambda[c] > DMC.maxThValue[c]) {

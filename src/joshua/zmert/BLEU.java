@@ -370,7 +370,7 @@ else { // average
       System.out.println("");
     }
 
-    System.out.println("BLEU = " + f4.format(BP*Math.exp(BLEUsum)));
+    System.out.println("  => BLEU = " + f4.format(BP*Math.exp(BLEUsum)));
   }
 
 
