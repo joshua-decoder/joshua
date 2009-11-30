@@ -454,7 +454,7 @@ public class JoshuaConfiguration {
 					
 				} else if ("parallel_files_prefix".equals(fds[0])) {
 					Random random = new Random();
-		            int v = random.nextInt(100000);//make it random
+		            int v = random.nextInt(10000000);//make it random
 					parallel_files_prefix = fds[1] + v;
 					logger.info(String.format("parallel_files_prefix: %s", parallel_files_prefix));
 				} else if ("num_parallel_decoders".equals(fds[0])) {

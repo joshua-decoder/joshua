@@ -382,7 +382,7 @@ public class Chart {
 				 * the problem is: if [X]->[NT,1],[NT,1] in a regular grammar, but  [S]->[X,1],[X,1] is in a glue grammar; then [S]->[NT,1],[NT,1] is not achievable
 				for (int k = 0; k < this.grammars.length; k++) {
 					if (this.grammars[k].hasRuleForSpan(i, j, sentenceLength)) {
-						addUnaryItems(this.grammars[k],i,j);//single-branch path
+						addUnaryItemsPerGrammar(this.grammars[k],i,j);//single-branch path
 					}
 				}*/
 				addUnaryItems(this.grammars,i,j);//single-branch path
@@ -455,6 +455,7 @@ public class Chart {
 		//logger.info(String.format("LM lookupwords1, step1: %d; step2: %d; step3: %d", tm_lm.time_step1, tm_lm.time_step2, tm_lm.time_step3));
 		//debug end
 		logger.info("Finished expand");
+		logger.info("called " + temCount);
 		return new HyperGraph(this.goalBin.get_sorted_items().get(0), -1, -1, this.segmentID, sentenceLength); // num_items/deductions : -1
 	}
 	
@@ -484,7 +485,10 @@ public class Chart {
 	 * s->x; ss->s for unary rules like s->x, once x is complete,
 	 * then s is also complete
 	 */
+	static int temCount=0;
 	private int addUnaryItems(Grammar[] grs, int i, int j) {
+		
+		
 		Bin chartBin = this.bins[i][j];
 		if (null == chartBin) {
 			return 0;
@@ -496,10 +500,14 @@ public class Chart {
 		while (queue.size() > 0) {
 			HGNode item = queue.remove(0);
 			for(Grammar gr : grs){
+				if (! gr.hasRuleForSpan(i, j, sentenceLength))
+					continue;
+				temCount++;
 				Trie childNode = gr.getTrieRoot().matchOne(item.lhs); // match rule and complete part
 				if (childNode != null
 				&& childNode.getRules() != null
 				&& childNode.getRules().getArity() == 1) { // have unary rules under this trienode
+					//System.out.println("hello");
 					ArrayList<HGNode> antecedents = new ArrayList<HGNode>();
 					antecedents.add(item);
 					List<Rule> rules = childNode.getRules().getSortedRules();
@@ -521,6 +529,46 @@ public class Chart {
 		}
 		return qtyAdditionsToQueue;
 	}
+	
+	/**
+     * agenda based extension: this is necessary in case more than two unary rules can be applied in topological order s->x; ss->s
+     * for unary rules like s->x, once x is complete, then s is also complete
+     */
+    private int addUnaryItemsPerGrammar(Grammar gr, int i, int j) {
+            Bin chart_bin = this.bins[i][j];
+            if (null == chart_bin) {
+                    return 0;
+            }
+            int count_of_additions_to_t_queue = 0;
+            ArrayList<HGNode> t_queue
+                    = new ArrayList<HGNode>(chart_bin.get_sorted_items());
+
+
+            while (t_queue.size() > 0) {
+            	HGNode item = (HGNode)t_queue.remove(0);
+            	temCount++;
+                Trie child_tnode = gr.getTrieRoot().matchOne(item.lhs);//match rule and complete part
+                if (child_tnode != null
+                && child_tnode.getRules() != null
+                && child_tnode.getRules().getArity() == 1) {//have unary rules under this trienode
+                        ArrayList<HGNode> l_ants = new ArrayList<HGNode>();
+                        l_ants.add(item);
+                        List<Rule> l_rules =
+                                child_tnode.getRules().getSortedRules();
+
+                        for (Rule rule : l_rules){//for each unary rules
+                        	ComputeItemResult tbl_states = chart_bin.compute_item(rule, l_ants, i, j, new SourcePath());
+                                HGNode res_item = chart_bin.add_deduction_in_bin(tbl_states, rule, i, j, l_ants, new SourcePath());
+                                if (null != res_item) {
+                                        t_queue.add(res_item);
+                                        count_of_additions_to_t_queue++;
+                                }
+                        }
+                }
+            }
+            return count_of_additions_to_t_queue;
+    }
+
 	
 	
 	private void addAxioms(int i, int j, RuleCollection rb, SourcePath srcPath) {
