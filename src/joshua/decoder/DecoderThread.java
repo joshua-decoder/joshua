@@ -26,7 +26,6 @@ import joshua.decoder.hypergraph.DiskHyperGraph;
 import joshua.decoder.hypergraph.HyperGraph;
 import joshua.decoder.hypergraph.KBestExtractor;
 
-import joshua.decoder.segment_file.ConstraintSpan;
 import joshua.decoder.segment_file.SegmentFileParser;
 import joshua.decoder.segment_file.PlainSegmentParser;
 import joshua.decoder.segment_file.HackishSegmentParser;

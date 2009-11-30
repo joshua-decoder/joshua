@@ -21,6 +21,7 @@ import joshua.util.Cache;
 import joshua.util.Regex;
 import joshua.util.io.LineReader;
 
+import java.util.Random;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.io.IOException;
@@ -452,10 +453,10 @@ public class JoshuaConfiguration {
 						logger.finest(String.format("remote_lm_server_port: not used"));
 					
 				} else if ("parallel_files_prefix".equals(fds[0])) {
-					parallel_files_prefix = fds[1];
-					if (logger.isLoggable(Level.FINEST)) 
-						logger.finest(String.format("parallel_files_prefix: %s", parallel_files_prefix));
-					
+					Random random = new Random();
+		            int v = random.nextInt(100000);//make it random
+					parallel_files_prefix = fds[1] + v;
+					logger.info(String.format("parallel_files_prefix: %s", parallel_files_prefix));
 				} else if ("num_parallel_decoders".equals(fds[0])) {
 					num_parallel_decoders = Integer.parseInt(fds[1]);
 					if (num_parallel_decoders <= 0) {
