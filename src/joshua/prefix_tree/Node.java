@@ -574,4 +574,24 @@ public class Node extends AbstractGrammar implements Comparable<Node>, Trie {
 	static void resetNodeCounter() {
 		nodeIDCounter = 2;
 	}
+
+	public Rule constructManualRule(int lhs, int[] sourceWords, int[] targetWords, float[] scores, int aritity) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public Rule constructOOVRule(int num_feats, int sourceWord, boolean have_lm_model) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public int getOOVRuleID() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	public boolean hasRuleForSpan(int startIndex, int endIndex, int pathLength) {
+		// TODO Auto-generated method stub
+		return false;
+	}
 }

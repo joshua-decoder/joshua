@@ -57,16 +57,21 @@ public abstract class AbstractSymbolTable implements SymbolTable {
 		// and extracts it, starting from one.
 		// Assumes the whole prefix is the
 		// nonterminal-ID portion of the string
+		
+		//TODO: this function is called exponentially many times, we should speed it up further
+		return Integer.parseInt( wrd.substring(wrd.length() - 2,	wrd.length() - 1) ) - 1;
+		
+		/*
 		String nonterminalID = 
 			wrd.substring(wrd.length() - 2,	wrd.length() - 1);
 
-		if (FormatUtil.isNumber(nonterminalID)) {
+		if (FormatUtil.isNumber(nonterminalID)) {//!!!!!!!!!!!!!! this function causes the decoding 7 times slow, confirmed by zhifei
 			return Integer.parseInt( nonterminalID ) - 1;
 		} else {
 			throw new MalformedNonterminalException(
 					"Substring '" +nonterminalID+ "' " +
 					"of string '" +wrd+ "' is not a number");
-		}
+		}*/
 
 	}
 

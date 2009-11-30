@@ -97,6 +97,7 @@ public class BasicRuleCollection implements RuleCollection {
 	}
 	
 	public static void sortRules(List<Rule> rules, ArrayList<FeatureFunction> l_models) {
+		
 		// use a priority queue to help sort
 		PriorityQueue<Rule> t_heapRules = new PriorityQueue<Rule>(1, Rule.NegtiveCostComparator);
 		for (Rule rule : rules) {
@@ -111,7 +112,7 @@ public class BasicRuleCollection implements RuleCollection {
 		while (t_heapRules.size() > 0) {
 			Rule t_r = t_heapRules.poll();
 			rules.add(0, t_r);
-		}	
+		}
 	}
 	
 	/* See Javadoc comments for RuleCollection interface. */
@@ -121,8 +122,9 @@ public class BasicRuleCollection implements RuleCollection {
 	}
 	
 	/* See Javadoc comments for RuleCollection interface. */
-	public List<Rule> getSortedRules() {		
+	public List<Rule> getSortedRules() {	
 		if (!this.sorted) {
+			System.out.println("!!!!!!!!!!!!!!!!!!!!!! rule collection, sorting!!!!!!!");
 			String message = "Grammar has not been sorted which is reqired by cube pruning; sortGrammar should have been called after loading the grammar, but was not.";
 			logger.severe(message);			
 			throw new RuntimeException(message);

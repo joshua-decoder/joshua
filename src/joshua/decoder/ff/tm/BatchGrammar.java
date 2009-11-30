@@ -30,7 +30,7 @@ import joshua.corpus.Phrase;
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate$
  */
-public abstract class BatchGrammar extends AbstractGrammar implements GrammarFactory, Grammar {
+public abstract class BatchGrammar extends AbstractGrammar implements GrammarFactory {
 	
 	/**
 	 * Returns a grammar which is <em>not</em> adapted to the

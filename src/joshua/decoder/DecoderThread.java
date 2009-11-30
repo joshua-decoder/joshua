@@ -48,7 +48,6 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -315,6 +314,7 @@ public class DecoderThread extends Thread {
 				
 				// For batch grammar, we do not want to sort it every time
 				if (! grammars[i].isSorted()) {
+					System.out.println("!!!!!!!!!!!! called again");
 					// TODO Check to see if this is ever called here. It probably is not
 					grammars[i].sortGrammar(this.featureFunctions);
 				}

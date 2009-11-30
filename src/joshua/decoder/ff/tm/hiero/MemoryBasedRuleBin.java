@@ -22,7 +22,6 @@ import java.util.logging.Logger;
 
 import joshua.decoder.ff.tm.BasicRuleCollection;
 import joshua.decoder.ff.tm.Rule;
-import joshua.decoder.ff.tm.RuleCollection;
 
 /**
  * Stores a collection of all rules with the same french side (and
@@ -31,7 +30,7 @@ import joshua.decoder.ff.tm.RuleCollection;
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate$
  */
-public class MemoryBasedRuleBin extends BasicRuleCollection implements RuleCollection {
+public class MemoryBasedRuleBin extends BasicRuleCollection {
 
 	/** Logger for this class. */
 	private static final Logger logger = 

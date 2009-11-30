@@ -455,7 +455,6 @@ public class Chart {
 		//logger.info(String.format("LM lookupwords1, step1: %d; step2: %d; step3: %d", tm_lm.time_step1, tm_lm.time_step2, tm_lm.time_step3));
 		//debug end
 		logger.info("Finished expand");
-		logger.info("called " + temCount);
 		return new HyperGraph(this.goalBin.get_sorted_items().get(0), -1, -1, this.segmentID, sentenceLength); // num_items/deductions : -1
 	}
 	
@@ -485,7 +484,6 @@ public class Chart {
 	 * s->x; ss->s for unary rules like s->x, once x is complete,
 	 * then s is also complete
 	 */
-	static int temCount=0;
 	private int addUnaryItems(Grammar[] grs, int i, int j) {
 		
 		
@@ -502,7 +500,6 @@ public class Chart {
 			for(Grammar gr : grs){
 				if (! gr.hasRuleForSpan(i, j, sentenceLength))
 					continue;
-				temCount++;
 				Trie childNode = gr.getTrieRoot().matchOne(item.lhs); // match rule and complete part
 				if (childNode != null
 				&& childNode.getRules() != null
@@ -546,7 +543,6 @@ public class Chart {
 
             while (t_queue.size() > 0) {
             	HGNode item = (HGNode)t_queue.remove(0);
-            	temCount++;
                 Trie child_tnode = gr.getTrieRoot().matchOne(item.lhs);//match rule and complete part
                 if (child_tnode != null
                 && child_tnode.getRules() != null

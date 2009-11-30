@@ -19,7 +19,6 @@ package joshua.decoder.ff.tm;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -34,9 +33,10 @@ import joshua.decoder.ff.FeatureFunction;
  * specific sorting technique different from that implemented by
  * this class is required.
  *
+ * @author Zhifei Li
  * @author Lane Schwartz
  */
-public abstract class AbstractGrammar implements SortableGrammar {
+public abstract class AbstractGrammar implements Grammar {
  
 	/** Logger for this class. */
 	private static final Logger logger =
@@ -91,7 +91,7 @@ public abstract class AbstractGrammar implements SortableGrammar {
 	 */
 	protected void setSorted(boolean sorted) {
 		this.sorted = sorted;
-		logger.fine("This node is now sorted: " + this);
+		logger.fine("This grammar is now sorted: " + this);
 	}
 	
 	/**
@@ -107,15 +107,13 @@ public abstract class AbstractGrammar implements SortableGrammar {
 	 * @param models Feature function models to use during
 	 *               sorting.
 	 */
-	//private void sort(Trie node, ArrayList<FeatureFunction> models) {
 	private void sort(Trie node, ArrayList<FeatureFunction> models) {
-		if (node != null) {
-			
-			
+		if (node != null) {			
 			if(node.hasRules()) {
 				RuleCollection rules = node.getRules();
 				if (logger.isLoggable(Level.FINE)) logger.fine("Sorting node " + Arrays.toString(rules.getSourceSide()));	
 				rules.sortRules(models);
+				
 				if (logger.isLoggable(Level.FINEST)) {
 					StringBuilder s = new StringBuilder();
 					if (rules == null) {
@@ -142,13 +140,12 @@ public abstract class AbstractGrammar implements SortableGrammar {
 				}
 			}
 			
+			/*TODO: why is this necessary?
 			if (node instanceof AbstractGrammar) {
 				((AbstractGrammar) node).setSorted(true);
-			}
+			}*/
 			
 			if(node.hasExtensions()){
-				Collection<? extends Trie> children = node.getExtensions();
-				logger.fine("Node has " + children.size() + " children to extend: " + node);
 				for (Trie child : node.getExtensions()) {
 					sort(child, models);
 				}

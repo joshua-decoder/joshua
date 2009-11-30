@@ -17,6 +17,10 @@
  */
 package joshua.decoder.ff.tm;
 
+import java.util.ArrayList;
+
+import joshua.decoder.ff.FeatureFunction;
+
 /**
  * Grammar is a class for wrapping a trie of TrieGrammar in order
  * to store holistic metadata.
@@ -25,7 +29,47 @@ package joshua.decoder.ff.tm;
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate$
  */
-public interface Grammar extends SortableGrammar {
+public interface Grammar  {
+	
+	/**
+	 * Gets the root of the <code>Trie</code> backing this
+	 * grammar.
+	 * <p>
+	 * <em>Note</em>: This method should run as a small
+	 * constant-time function.
+	 * 
+	 * @return the root of the <code>Trie</code> backing this
+	 *         grammar
+	 */
+	Trie getTrieRoot();
+	
+	
+	
+	/**
+	 * After calling this method, the rules in this grammar are
+	 * guaranteed to be sorted based on the latest feature
+	 * function values.
+	 * <p>
+	 * Cube-pruning requires that the grammar be sorted based
+	 * on the latest feature functions.
+	 * 
+	 * @param models List of feature functions
+	 */
+	void sortGrammar(ArrayList<FeatureFunction> models);
+	
+
+	
+	/** 
+	 * Determines whether the rules in this grammar have been
+	 * sorted based on the latest feature function values.
+	 * <p>
+	 * This method is needed for the cube-pruning algorithm.
+	 * 
+	 * @return <code>true</code> if the rules in this grammar
+	 *         have been sorted based on the latest feature
+	 *         function values, <code>false</code> otherwise
+	 */
+	boolean isSorted();
 	
 	/**
 	 * Returns whether this grammar has any valid rules for

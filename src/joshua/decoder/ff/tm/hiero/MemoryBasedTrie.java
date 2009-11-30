@@ -17,11 +17,9 @@
  */
 package joshua.decoder.ff.tm.hiero;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 
-import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.tm.RuleCollection;
 import joshua.decoder.ff.tm.Trie;
 
@@ -76,6 +74,7 @@ public class MemoryBasedTrie implements Trie {
 	}
 	
 	
+	/*
 	//recursive call, to make sure all rules are sorted
 	public void ensure_sorted(ArrayList<FeatureFunction> l_models) {
 		if (null != this.rule_bin) {
@@ -87,7 +86,7 @@ public class MemoryBasedTrie implements Trie {
 				((MemoryBasedTrie)tem[i]).ensure_sorted(l_models);
 			}
 		}
-	}
+	}*/
 	
 	/* See Javadoc for Trie interface. */
 	public Collection<MemoryBasedTrie> getExtensions() {
