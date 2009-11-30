@@ -56,7 +56,7 @@ import java.util.HashMap;
 //Bottom-up
 //line: SENTENCE_TAG, sent_id, sent_len, num_items, num_deductions (in average, num_deductions is about 10 times larger than the num_items, which is in average about 4000)
 //line: ITEM_TAG, item id, i, j, lhs, num_deductions, tbl_state;
-//line: best_cost, num_items, item_ids, rule id, OOV-Non-Terminal (optional), OOV (optional),
+//line: best_cost, num_items, item_ids, rule id, OOV-Non-Terminal (optional), OOV (optional), \\feature scores
 public class DiskHyperGraph {
 	
 //===============================================================

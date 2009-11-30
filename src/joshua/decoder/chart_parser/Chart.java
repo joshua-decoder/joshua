@@ -17,6 +17,12 @@
  */
 package joshua.decoder.chart_parser;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 import joshua.corpus.vocab.SymbolTable;
 import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.chart_parser.Bin.ComputeItemResult;
@@ -30,16 +36,9 @@ import joshua.decoder.hypergraph.HGNode;
 import joshua.decoder.hypergraph.HyperGraph;
 import joshua.decoder.segment_file.ConstraintRule;
 import joshua.decoder.segment_file.ConstraintSpan;
-import joshua.lattice.Lattice;
 import joshua.lattice.Arc;
+import joshua.lattice.Lattice;
 import joshua.lattice.Node;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 
 /**
@@ -75,7 +74,7 @@ public class Chart {
 	
 	
 	//===========================================================
-	// Decoder-wide fields (FIXME: by which we mean what?)
+	// Decoder-wide fields
 	//===========================================================
 	ArrayList<FeatureFunction> featureFunctions;
 	
@@ -124,6 +123,7 @@ public class Chart {
 	//===========================================================
 	
 	// TODO: each span only has one ConstraintSpan
+	// contain spans that have LHS or RHS constraints (they are always hard)
 	private HashMap<String,ConstraintSpan> constraintSpansForFiltering;
 	
 	// contain spans that have hard "rule" constraint; key: start_span; value: end_span
@@ -131,7 +131,7 @@ public class Chart {
 	
 	
 	//===========================================================
-	// Decoder-wide fields (FIXME: by which we mean what?)
+	// Decoder-wide fields
 	//===========================================================
 	
 	/**
@@ -205,26 +205,13 @@ public class Chart {
 		// each grammar will have a dot chart
 		this.dotcharts = new DotChart[this.grammars.length];
 		for (int i = 0; i < this.grammars.length; i++) {
-			
-//			if (logger.isLoggable(Level.FINE)) {
-//				logger.fine("Grammar has "+this.grammars[i].getNumRules() + " rules");
-//				if (logger.isLoggable(Level.FINEST) && grammars[i] instanceof RootNode) {
-//					for (Rule rule : ((RootNode) this.grammars[i]).getAllRules()) {
-//						Map<Integer,String> map = new HashMap<Integer,String>();
-//						map.put(SymbolTable.X, SymbolTable.X_STRING);
-//						String ruleString = rule.toString(map, symbolTable, symbolTable);
-//						if (logger.isLoggable(Level.FINEST)) logger.finest("Rule: " + ruleString);
-//						logger.finest("Grammar rule: " + ruleString);
-//					}
-//				}
-//			}
-			
-
 			this.dotcharts[i] = new DotChart(this.sentence, this.grammars[i], this);
 			this.dotcharts[i].seed(); // TODO: should fold into the constructor
 		}
 		
 		
+		/** Note that below is not required for seeding
+		 * */
 		
 		/**
 		 * (1) add manual rule (only allow flat rules) into the
@@ -233,12 +220,17 @@ public class Chart {
 		 *     constraintSpansForFiltering
 		 * (3) add span signature into setOfSpansWithHardRuleConstraint; if the span contains a hard "RULE" constraint
 		 */
+		
+		
 		if (null != constraintSpans) {
-			
+		
 			for (ConstraintSpan cSpan : constraintSpans) {
 				if (null != cSpan.rules()) {
 					boolean shouldAdd = false; // contain LHS or RHS constraints?
 					for (ConstraintRule cRule : cSpan.rules()) {
+						/** Note that LHS and RHS constraints are always hard, 
+						 * while Rule constraint can be soft or hard
+						 **/
 						switch (cRule.type()){
 						case RULE:
 							//== prepare the feature scores 
@@ -268,10 +260,12 @@ public class Chart {
 									symbolTable.addTerminals(cRule.nativeRhs()),
 									featureScores, 
 									arity);
+							//add to the chart
 							addAxiom(cSpan.start(), cSpan.end(), rule, new SourcePath());
 							if (logger.isLoggable(Level.INFO))
 								logger.info("Adding RULE constraint for span " + cSpan.start() + ", " + cSpan.end() + "; isHard=" + cSpan.isHard() +rule.getLHS());
 							break;
+							
 						default: 
 							shouldAdd = true;
 						}
@@ -288,7 +282,9 @@ public class Chart {
 			}
 		}
 		
-		// add OOV rules; this should be called after the manual constraints have been set up
+		/**add OOV rules; 
+		 * this should be called after the manual constraints have been set up
+		 **/
 		// TODO: the transition cost for phrase model, arity penalty, word penalty are all zero, except the LM cost
 		for (Node<Integer> node : sentence) {
 			for (Arc<Integer> arc : node.getOutgoingArcs()) {
@@ -326,7 +322,7 @@ public class Chart {
 //		long time_step2 = 0;
 //		long time_step3 = 0;
 //		long time_step4 = 0;
-		
+		logger.info("Begin expand");
 		for (int width = 1; width <= sentenceLength; width++) {
 			for (int i = 0; i <= sentenceLength - width; i++) {
 				int j = i + width;
@@ -361,27 +357,6 @@ public class Chart {
 							
 							if (null != rules) { // have rules under this trienode
 								// TODO: filter the rule according to LHS constraint
-								if (logger.isLoggable(Level.FINEST)) {
-									List<Rule> sortedRules = rules.getSortedRules();
-									logger.finest("Matched " + sortedRules.size() + " rules");
-									for (Rule r : sortedRules) {
-										
-										String lhs = this.symbolTable.getWord(r.getLHS());
-										String rhs = (SymbolTable.S_STRING.equals(lhs))
-												? this.symbolTable.getWords(r.getFrench())
-												: this.symbolTable.getWords(r.getFrench(),true);
-										int[] targetRHS_IDs = r.getEnglish();
-										logger.finest("Matched [" + i + ", " + 
-												j + "] with " + lhs +
-												" => " + rhs + 
-												" | " + this.symbolTable.getWords(targetRHS_IDs) +
-//												"  " + Arrays.toString(targetRHS_IDs) + " " + 
-												"   |||  with features scores:  " 
-												+ Arrays.toString(r.getFeatureScores())
-												+ " ==est_cost==> " + r.getEstCost());
-									}
-								}
-								
 								if (rules.getArity() == 0) { // rules without any non-terminal
 									addAxioms(i, j, rules, srcPath);
 								} else { // rules with non-terminal
@@ -454,7 +429,7 @@ public class Chart {
 			}
 		}
 		logStatistics(Level.FINE);
-		logger.info("Segment length: " + sentenceLength);
+
 		// transition_final: setup a goal item, which may have many deductions
 		if (null != this.bins[0][sentenceLength]) {
 			this.goalBin.transit_to_goal(this.bins[0][sentenceLength]); // update goalBin				
@@ -479,7 +454,7 @@ public class Chart {
 		//LMModel tm_lm = (LMModel)this.models.get(0);
 		//logger.info(String.format("LM lookupwords1, step1: %d; step2: %d; step3: %d", tm_lm.time_step1, tm_lm.time_step2, tm_lm.time_step3));
 		//debug end
-		
+		logger.info("Finished expand");
 		return new HyperGraph(this.goalBin.get_sorted_items().get(0), -1, -1, this.segmentID, sentenceLength); // num_items/deductions : -1
 	}
 	
@@ -517,8 +492,6 @@ public class Chart {
 		int qtyAdditionsToQueue = 0;
 		ArrayList<HGNode> queue
 			= new ArrayList<HGNode>(chartBin.get_sorted_items());
-		
-		
 		
 		while (queue.size() > 0) {
 			HGNode item = queue.remove(0);
@@ -601,6 +574,9 @@ public class Chart {
 	}
 	
 
+	
+	
+
 //	===============================================================
 //	 Manual constraint annotation methods and classes
 //	===============================================================
@@ -614,7 +590,6 @@ public class Chart {
 	private List<Rule> filterRules(int i, int j, List<Rule> rulesIn) {
 		if (null == this.constraintSpansForFiltering)
 			return rulesIn;
-		
 		ConstraintSpan cSpan = this.constraintSpansForFiltering.get( getSpanSignature(i,j));
 		if (null == cSpan) { // no filtering
 			return rulesIn;
@@ -630,11 +605,9 @@ public class Chart {
 					}
 				}
 			}
-			System.out.println("beging to look for " + i + " " + j + "; out size:" + rulesOut.size() + "; input size: " + rulesIn.size());
 			return rulesOut;
 		}
 	}
-	
 	
 	//should we filter out the gRule based on the manually provided constraint cRule
 	private boolean shouldSurvive(ConstraintRule cRule, Rule gRule) {
@@ -659,6 +632,11 @@ public class Chart {
 		}
 	}
 	
+	
+	/**
+	 * if a span is *within* the coverage of a *hard* rule constraint, 
+	 * then this span will be only allowed to use the mannual rules 
+	 */
 	private boolean containsHardRuleConstraint(int startSpan, int endSpan) {
 		if (null != this.spansWithHardRuleConstraint) {
 			for (Span span : this.spansWithHardRuleConstraint) {
@@ -669,13 +647,8 @@ public class Chart {
 		return false;
 	}
 		
-	private String getSpanSignature(int i, int j) {
-		return i + " " + j;
-	}
 	
-	SymbolTable getVocabulary() {
-		return symbolTable;
-	}
+	
 	
 	private static class Span {
 		int startPos;
@@ -684,5 +657,9 @@ public class Chart {
 			this.startPos = startPos;
 			this.endPos = endPos;
 		}
+	}
+	
+	private String getSpanSignature(int i, int j) {
+		return i + " " + j;
 	}
 }
