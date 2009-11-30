@@ -17,7 +17,8 @@
  */
 package joshua.corpus.vocab;
 
-import joshua.util.FormatUtil;
+import java.util.HashMap;
+
 
 /**
  * Partial basic implementation of a symbol table.
@@ -27,6 +28,8 @@ import joshua.util.FormatUtil;
  * @version $LastChangedDate$
  */
 public abstract class AbstractSymbolTable implements SymbolTable {	
+	/*a speed up trick*/
+	HashMap<Integer, Integer> targetNonterminalIntexCache = new HashMap<Integer, Integer> ();
 	
 	/* See Javadoc for SymbolTable interface. */
 	final public int[] addTerminals(String sentence){
@@ -46,8 +49,14 @@ public abstract class AbstractSymbolTable implements SymbolTable {
 		if (! isNonterminal(id)) {
 			return -1;
 		} else {
-			String symbol = getWord(id);			
-			return getTargetNonterminalIndex(symbol);
+			Integer res = targetNonterminalIntexCache.get(id);
+			if(res!=null)
+				return res;
+			else{
+				res = getTargetNonterminalIndex( getWord(id) );//convert to string, and then get the index
+				targetNonterminalIntexCache.put(id, res);
+				return res;
+			}
 		}
 	}
 	
