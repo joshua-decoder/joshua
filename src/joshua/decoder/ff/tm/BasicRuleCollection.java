@@ -96,6 +96,10 @@ public class BasicRuleCollection implements RuleCollection {
 		return this.arity;
 	}
 	
+	public List<Rule> getRules(){
+		return this.rules;
+	}
+	
 	public static void sortRules(List<Rule> rules, ArrayList<FeatureFunction> l_models) {
 		
 		// use a priority queue to help sort

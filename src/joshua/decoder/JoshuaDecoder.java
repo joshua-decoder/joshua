@@ -417,7 +417,6 @@ public class JoshuaDecoder {
 					this.symbolTable,
 					JoshuaConfiguration.begin_mono_owner,
 					JoshuaConfiguration.default_non_terminal,
-					JoshuaConfiguration.goal_symbol,
 					-1));
 	}
 	
@@ -436,7 +435,6 @@ public class JoshuaDecoder {
 					this.symbolTable,
 					JoshuaConfiguration.phrase_owner,
 					JoshuaConfiguration.default_non_terminal,
-					JoshuaConfiguration.goal_symbol,
 					JoshuaConfiguration.span_limit));
 	}
 	

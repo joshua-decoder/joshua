@@ -64,6 +64,12 @@ public interface RuleCollection {
 	 */
 	List<Rule> getSortedRules();
 	
+	
+	/**get the list of rules (which may not be sorted or not)
+	 * */
+	List<Rule> getRules();
+	
+	
 	/**
 	 * Gets the source side for all rules in this RuleCollection.
 	 * This source side is the same for all the rules in the

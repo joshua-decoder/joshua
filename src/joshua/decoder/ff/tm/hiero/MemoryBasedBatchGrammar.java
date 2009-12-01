@@ -46,28 +46,27 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
 // Instance Fields
 //===============================================================
 	
-	static protected double tem_estcost = 0.0;
+	static private double tem_estcost = 0.0;
 	
-	protected int qtyRulesRead = 0;
-	protected int qtyRuleBins  = 0;
-	protected MemoryBasedTrie root = null;
+	private int qtyRulesRead = 0;
+	private int qtyRuleBins  = 0;
+	private MemoryBasedTrie root = null;
 	
 	//protected ArrayList<FeatureFunction> featureFunctions = null;
-	protected int defaultOwner;
+	private int defaultOwner;
 	
 	/**
 	 * the OOV rule should have this lhs, this should be grammar
 	 * specific as only the grammar knows what LHS symbol can
 	 * be combined with other rules
 	 */ 
-	protected int defaultLHS; 
+	private int defaultLHS; 
 	
-	protected int goalSymbol;
 	
-	protected int spanLimit = 10;
+	private int spanLimit = 10;
 	private final SymbolTable symbolTable;
 
-	protected GrammarReader<BilingualRule> modelReader;
+	private GrammarReader<BilingualRule> modelReader;
 	
 //===============================================================
 // Static Fields
@@ -101,14 +100,12 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
 			SymbolTable symbolTable, 
 			String defaultOwner,
 			String defaultLHSSymbol,
-			String goalSymbol,
 			int span_limit) throws IOException 
 	{
 		
 		this.symbolTable  = symbolTable;
 		this.defaultOwner = this.symbolTable.addTerminal(defaultOwner);
 		this.defaultLHS   = this.symbolTable.addNonterminal(defaultLHSSymbol);
-		this.goalSymbol   = this.symbolTable.addNonterminal(goalSymbol);
 		this.spanLimit    = span_limit;
 		
 		this.root = new MemoryBasedTrie();
