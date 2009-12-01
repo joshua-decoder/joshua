@@ -182,7 +182,7 @@ public class DecoderFactory {
 					String words[] = Regex.spaces.split(cn_sent);
 					this.symbolTable.addTerminals(words); // TODO
 				}
-				logger.info("sent_id="+sent_id);
+				//logger.info("sent_id="+sent_id);
 				// we will include all additional lines into last file
 				//prepare current job
 				if (0 != sent_id
