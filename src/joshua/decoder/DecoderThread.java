@@ -133,21 +133,23 @@ public class DecoderThread extends Thread {
 					break;
 				}
 			}
+			int lmFeatID = -1;
 			if (null == languageModel) {
-				throw new RuntimeException(
-					"No language model feature function found");
+				logger.warning("No language model feature function found, but save disk hg");
+			}else{
+				lmFeatID = languageModel.getFeatureID();
 			}
 			
 			this.hypergraphSerializer = new DiskHyperGraph(
-				this.symbolTable,
-				languageModel.getFeatureID(),
-				true, // always store model cost
-				this.featureFunctions);
-			
-			this.hypergraphSerializer.initWrite(
-				this.nbestFile + ".hg.items",
-				JoshuaConfiguration.forest_pruning,
-				JoshuaConfiguration.forest_pruning_threshold);
+					this.symbolTable,
+					lmFeatID,
+					true, // always store model cost
+					this.featureFunctions);
+				
+				this.hypergraphSerializer.initWrite(
+					this.nbestFile + ".hg.items",
+					JoshuaConfiguration.forest_pruning,
+					JoshuaConfiguration.forest_pruning_threshold);
 		}
 	}
 	

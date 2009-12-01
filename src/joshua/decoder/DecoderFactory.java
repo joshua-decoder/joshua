@@ -158,7 +158,7 @@ public class DecoderFactory {
 		
 		if (logger.isLoggable(Level.INFO))
 			logger.info("num_per_file_double: " + num_per_thread_double
-				+ "num_per_file_int: " + num_per_thread_int);
+				+ "; num_per_file_int: " + num_per_thread_int);
 		
 		
 		//==== Initialize all threads and their input files
@@ -171,45 +171,47 @@ public class DecoderFactory {
 		int start_sent_id = sent_id;
 		
 		LineReader testReader = new LineReader(testFile);
-		try { for (String cn_sent : testReader) {
-			sent_id++;
-			t_writer_test.write(cn_sent);
-			t_writer_test.newLine();
-			
-			//make the Symbol table finalized before running multiple threads, this is to avoid synchronization among threads
-			{
-				String words[] = Regex.spaces.split(cn_sent);
-				this.symbolTable.addTerminals(words); // TODO
-			}
-			
-			// we will include all additional lines into last file
-			if (0 != sent_id
-			&& decoder_i < JoshuaConfiguration.num_parallel_decoders
-			&& sent_id % num_per_thread_int == 0
-			) {
+		try { 
+			for (String cn_sent : testReader) {
+				sent_id++;
+				t_writer_test.write(cn_sent);
+				t_writer_test.newLine();
+				
+				//make the Symbol table finalized before running multiple threads, this is to avoid synchronization among threads
+				{
+					String words[] = Regex.spaces.split(cn_sent);
+					this.symbolTable.addTerminals(words); // TODO
+				}
+				logger.info("sent_id="+sent_id);
+				// we will include all additional lines into last file
 				//prepare current job
-				t_writer_test.flush();
-				t_writer_test.close();
-				
-				DecoderThread pdecoder = new DecoderThread(
-					this.grammarFactories,
-					this.hasLanguageModel,
-					this.featureFunctions,
-					this.symbolTable,
-					cur_test_file,
-					cur_nbest_file,
-					null,
-					start_sent_id);
-				this.parallelThreads[decoder_i-1] = pdecoder;
-				
-				// prepare next job
-				start_sent_id  = sent_id;
-				decoder_i++;
-				cur_test_file  = JoshuaConfiguration.parallel_files_prefix + ".test." + decoder_i;
-				cur_nbest_file = JoshuaConfiguration.parallel_files_prefix + ".nbest." + decoder_i;
-				t_writer_test  = FileUtility.getWriteFileStream(cur_test_file);
+				if (0 != sent_id
+				&& decoder_i < JoshuaConfiguration.num_parallel_decoders
+				&& sent_id % num_per_thread_int == 0
+				) {
+					t_writer_test.flush();
+					t_writer_test.close();
+					
+					DecoderThread pdecoder = new DecoderThread(
+						this.grammarFactories,
+						this.hasLanguageModel,
+						this.featureFunctions,
+						this.symbolTable,
+						cur_test_file,
+						cur_nbest_file,
+						null,
+						start_sent_id);
+					this.parallelThreads[decoder_i-1] = pdecoder;
+					
+					// prepare next job
+					start_sent_id  = sent_id;
+					decoder_i++;
+					cur_test_file  = JoshuaConfiguration.parallel_files_prefix + ".test." + decoder_i;
+					cur_nbest_file = JoshuaConfiguration.parallel_files_prefix + ".nbest." + decoder_i;
+					t_writer_test  = FileUtility.getWriteFileStream(cur_test_file);
+				}
 			}
-		} } finally {
+		}finally {
 			testReader.close();
 			
 			//==== prepare the the last job
