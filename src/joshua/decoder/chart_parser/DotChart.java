@@ -105,6 +105,9 @@ class DotChart {
 		this.input      = input;
 		this.sent_len   = input.size();
 		this.l_dot_bins = new DotBin[sent_len][sent_len+1];
+		
+		//seeding the dotChart
+		seed();
 	}
 	
 	
@@ -163,7 +166,7 @@ class DotChart {
 	 * (e.g., X or NP); (2) CN-side terminal therefore, two
 	 * ways to extend the dot postion.
 	 */
-	void expand_cell(int i, int j) {
+	void expandDotCell(int i, int j) {
 		//if (logger.isLoggable(Level.FINEST)) logger.finest("Expanding dot cell ("+i+","+j+")");
 		
 		// (1) if the dot is just to the left of a non-terminal variable, 
@@ -216,7 +219,7 @@ class DotChart {
 	 * dotchart.expand_cell add dotitems that start with the
 	 * complete super-items in cell(i,j)
 	 */
-	void start_dotitems(int i, int j) {
+	void startDotItems(int i, int j) {
 		extendDotItemsWithProvedItems(i,i,j,true);
 	}
 	

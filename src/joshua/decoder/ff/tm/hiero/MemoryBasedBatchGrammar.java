@@ -163,6 +163,7 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
 		// no LM is used for decoding, so we should set the stateless cost
 		if (! hasLM) { 
 			//this.feat_scores[0]=100.0/(this.featureFunctions.get(0)).getWeight();
+			//System.out.println("feature cost is 100");
 			feat_scores[0] = 100;
 		}
 		

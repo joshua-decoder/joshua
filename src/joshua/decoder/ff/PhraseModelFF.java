@@ -46,11 +46,14 @@ public final class PhraseModelFF extends DefaultStatelessFF {
 	
 	
 	public double estimate(final Rule rule) {
-//		if (logger.isLoggable(Level.FINEST)) logger.finest("model owner: " + owner + "; rule owner: " + rule.getOwner());
+				
 		if (this.owner == rule.getOwner()) {
+
 			float[] feat_scores = rule.getFeatureScores();
-			if (logger.isLoggable(Level.FINEST)) logger.finest("Rule ( " + rule.getLHS() + " => " + Arrays.toString(rule.getFrench()) + " ||| " + Arrays.toString(rule.getEnglish()) + " ) has feature scores: " + Arrays.toString(feat_scores));
-			if (this.columnIndex < feat_scores.length) {
+			if (logger.isLoggable(Level.FINEST)) 
+				logger.finest("Rule ( " + rule.getLHS() + " => " + Arrays.toString(rule.getFrench()) + " ||| " + Arrays.toString(rule.getEnglish()) + " ) has feature scores: " + Arrays.toString(feat_scores));
+			
+			if (this.columnIndex < feat_scores.length) {				
 				return feat_scores[this.columnIndex];
 			} else {
 				logger.warning("In PhraseModelFF: columnIndex is not right, model columnIndex: " + columnIndex + "; num of features in rul is :" + feat_scores.length);
@@ -60,8 +63,9 @@ public final class PhraseModelFF extends DefaultStatelessFF {
 				System.exit(0);*/
 				return 0.0;
 			}
-		} else {
-			if (logger.isLoggable(Level.FINEST)) logger.finest("Rule ( " + rule.getLHS() + " => " + Arrays.toString(rule.getFrench()) + " ||| " + Arrays.toString(rule.getEnglish()) + " ) has feature scores treated as 0.0 because feature function owner " + this.owner + " does not match rule owner " + rule.getOwner());
+		} else {			
+			if (logger.isLoggable(Level.FINEST)) 
+				logger.finest("Rule ( " + rule.getLHS() + " => " + Arrays.toString(rule.getFrench()) + " ||| " + Arrays.toString(rule.getEnglish()) + " ) has feature scores treated as 0.0 because feature function owner " + this.owner + " does not match rule owner " + rule.getOwner());
 			return 0.0;
 		}
 	}

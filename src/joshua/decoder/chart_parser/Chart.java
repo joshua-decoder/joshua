@@ -192,36 +192,29 @@ public class Chart {
 		this.featureFunctions = featureFunctions;
 		this.symbolTable      = symbolTable;
 		
-		// TODO: this is very expensive
+		// TODO: this is very memory-expensive
 		this.bins         = new Bin[sentenceLength][sentenceLength+1];
+		
 		this.segmentID    = segmentID;
 		this.goalSymbolID = this.symbolTable.addNonterminal(goalSymbol);
 		this.goalBin      = new Bin(this, this.goalSymbolID);
-		
-		// add un-translated words into the chart as item (with large cost)
-		// TODO: grammar specific?
 		this.grammars = grammars;
 		
 		// each grammar will have a dot chart
 		this.dotcharts = new DotChart[this.grammars.length];
-		for (int i = 0; i < this.grammars.length; i++) {
+		for (int i = 0; i < this.grammars.length; i++)
 			this.dotcharts[i] = new DotChart(this.sentence, this.grammars[i], this);
-			this.dotcharts[i].seed(); // TODO: should fold into the constructor
-		}
 		
 		
-		/** Note that below is not required for seeding
-		 * */
-		
+		/** Note that manual constraints or OOV handling is not part of seeding
+		 * */	
 		/**
 		 * (1) add manual rule (only allow flat rules) into the
 		 *     chart as constraints
 		 * (2) add RHS or LHS constraint into
 		 *     constraintSpansForFiltering
 		 * (3) add span signature into setOfSpansWithHardRuleConstraint; if the span contains a hard "RULE" constraint
-		 */
-		
-		
+		 */		
 		if (null != constraintSpans) {
 		
 			for (ConstraintSpan cSpan : constraintSpans) {
@@ -254,7 +247,7 @@ public class Chart {
 							
 							//TODO: which grammar should we use to create a mannual rule?
 							int arity = 0; // only allow flat rule (i.e. arity=0)
-							Rule rule = this.grammars[0].constructManualRule(
+							Rule rule = this.grammars[1].constructManualRule(//this is the regular grammar
 									symbolTable.addNonterminal(cRule.lhs()), 
 									symbolTable.addTerminals(cRule.foreignRhs()),
 									symbolTable.addTerminals(cRule.nativeRhs()),
@@ -282,15 +275,17 @@ public class Chart {
 			}
 		}
 		
+		
 		/**add OOV rules; 
 		 * this should be called after the manual constraints have been set up
+		 * Different grammar differ in hasRuleForSpan, defaultOwner, and defaultLHSSymbol
 		 **/
 		// TODO: the transition cost for phrase model, arity penalty, word penalty are all zero, except the LM cost
 		for (Node<Integer> node : sentence) {
 			for (Arc<Integer> arc : node.getOutgoingArcs()) {
 				// create a rule, but do not add into the grammar trie
 				// TODO: which grammar should we use to create an OOV rule?
-				Rule rule = this.grammars[0].constructOOVRule(
+				Rule rule = this.grammars[1].constructOOVRule(//this is the regular grammar
 					this.featureFunctions.size(), arc.getLabel(), hasLM);
 				
 				// tail and head are switched - FIX names:
@@ -299,6 +294,7 @@ public class Chart {
 					if (logger.isLoggable(Level.INFO))
 						logger.info("Using hard rule constraint for span " + node.getNumber() + ", " + arc.getTail().getNumber());
 				} else {
+					//System.out.println(rule.toString(symbolTable));
 					addAxiom(node.getNumber(), arc.getTail().getNumber(), rule, new SourcePath().extend(arc));
 				}
 			}
@@ -329,18 +325,26 @@ public class Chart {
 				if (logger.isLoggable(Level.FINEST)) 
 					logger.finest(String.format("Processing span (%d, %d)",i,j));
 				
-				//(1)### expand the cell in dotchart
+				
+				
+				//(1)=== expand the cell in dotchart
 				//long start_step1= Support.current_time();
 				if (logger.isLoggable(Level.FINEST))
 					logger.finest("Expanding cell");
 				for (int k = 0; k < this.grammars.length; k++) {
-					this.dotcharts[k].expand_cell(i,j);
+					/**each dotChart can act individually (without consulting other dotCharts)
+					 * because it either consumes the source input or the complete nonTerminals, 
+					 * which are both grammar-independent
+					 **/
+					this.dotcharts[k].expandDotCell(i,j);
 				}
 				if (logger.isLoggable(Level.FINEST)) 
 					logger.finest(String.format("n_dotitem= %d", n_dotitem_added));
 				//time_step1 += Support.current_time()-start_step1;
 				
-				//(2)### populate COMPLETE rules into Chart: the regular CKY part
+				
+				
+				//(2)=== populate COMPLETE rules into Chart: the regular CKY part
 				//long start_step2= Support.current_time();
 				if (logger.isLoggable(Level.FINEST))
 					logger.finest("Adding complete items into chart");
@@ -362,8 +366,7 @@ public class Chart {
 								} else { // rules with non-terminal
 									if (JoshuaConfiguration.use_cube_prune) {
 										completeCellCubePrune(i, j, dt, rules, srcPath);
-									} else {
-										// populate chart.bin[i][j] with rules from dotchart[i][j]
+									} else {//fill chart.bin[i][j] with rules from dotchart[i][j]
 										completeCell(i, j, dt, rules, srcPath);
 									}
 								}
@@ -373,58 +376,50 @@ public class Chart {
 				}
 				//time_step2 += Support.current_time()-start_step2;
 				
-				//(3)### process unary rules (e.g., S->X, NP->NN), just add these items in chart, assume acyclic
+				
+				
+				//(3)=== process unary rules (e.g., S->X, NP->NN), just add these items in chart, assume acyclic
 				//long start_step3= Support.current_time();
 				if (logger.isLoggable(Level.FINEST))
 					logger.finest("Adding unary items into chart");
 				
 				/**zhifei replaced the following code to address an interaction problem between different grammars
-				 * the problem is: if [X]->[NT,1],[NT,1] in a regular grammar, but  [S]->[X,1],[X,1] is in a glue grammar; then [S]->[NT,1],[NT,1] is not achievable
-				for (int k = 0; k < this.grammars.length; k++) {
-					if (this.grammars[k].hasRuleForSpan(i, j, sentenceLength)) {
-						addUnaryItemsPerGrammar(this.grammars[k],i,j);//single-branch path
+				 * the problem is: if [X]->[NT,1],[NT,1] in a regular grammar, but  [S]->[X,1],[X,1] is in a glue grammar; 
+				 * then [S]->[NT,1],[NT,1] may not be achievable, depending on which grammar is processed first.
+				 */
+				if(false){//behavior depend on the order of the grammars got processed, which is bad 
+					for (int k = 0; k < this.grammars.length; k++) {
+						if (this.grammars[k].hasRuleForSpan(i, j, sentenceLength)) {
+							addUnaryItemsPerGrammar(this.grammars[k],i,j);//single-branch path
+						}
 					}
-				}*/
-				addUnaryItems(this.grammars,i,j);//single-branch path
-				
-				
+				}else{//behavior does not depend on the order of the grammars got processed
+					addUnaryItems(this.grammars,i,j);
+				}				
 				//time_step3 += Support.current_time()-start_step3;
 				
-				//(4)### in dot_cell(i,j), add dot-items that start from the /complete/ superIterms in chart_cell(i,j)
+				
+				
+				//(4)=== in dot_cell(i,j), add dot-items that start from the /complete/ superIterms in chart_cell(i,j)
 				//long start_step4= Support.current_time();
 				if (logger.isLoggable(Level.FINEST))
 					logger.finest("Initializing new dot-items that start from complete items in this cell");
 				for (int k = 0; k < this.grammars.length; k++) {
 					if (this.grammars[k].hasRuleForSpan(i, j, sentenceLength)) {
-						this.dotcharts[k].start_dotitems(i,j);
+						this.dotcharts[k].startDotItems(i,j);
 					}
 				}
 				//time_step4 += Support.current_time()-start_step4;
 				
-				//(5)### sort the items in the cell: for pruning purpose
+				
+				//(5)=== sort the items in the cell: for pruning purpose
 				if (logger.isLoggable(Level.FINEST)) 
-					logger.finest(String.format(
-						"After Process span (%d, %d), called:= %d",
-						i, j, n_called_compute_item));
+					logger.finest(String.format("After Process span (%d, %d), called:= %d", i, j, n_called_compute_item));
+				
 				if (null != this.bins[i][j]) {
-					// this.bins[i][j].logStatistics(Level.INFO);
-
+					// this.bins[i][j].logStatistics(Level.INFO);					
 					// this is required
-					@SuppressWarnings("unused")
-					ArrayList<HGNode> l_s_its = this.bins[i][j].get_sorted_items();
-					
-					/*
-					// sanity check with this cell
-					int sum_d = 0;
-					double sum_c = 0.0;
-					double sum_total=0.0;
-					for (Item t_item : l_s_its) {
-						if (null != t_item.l_deductions)
-							sum_d += t_item.l_deductions.size();
-						sum_c += t_item.best_deduction.best_cost;
-						sum_total += t_item.est_total_cost;
-					}
-					*/
+					this.bins[i][j].get_sorted_items();
 				}
 			}
 		}
@@ -454,6 +449,7 @@ public class Chart {
 		//LMModel tm_lm = (LMModel)this.models.get(0);
 		//logger.info(String.format("LM lookupwords1, step1: %d; step2: %d; step3: %d", tm_lm.time_step1, tm_lm.time_step2, tm_lm.time_step3));
 		//debug end
+		
 		logger.info("Finished expand");
 		return new HyperGraph(this.goalBin.get_sorted_items().get(0), -1, -1, this.segmentID, sentenceLength); // num_items/deductions : -1
 	}

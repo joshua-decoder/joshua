@@ -272,17 +272,16 @@ public class KBestExtractor {
 			x++;
 			
 			//sanity check
-			if (false) {
-//			if (performSanityCheck) {
+//			if (false) {
+			if (performSanityCheck) {
 				if (Math.abs(cur.cost - tem_sum) > 1e-2) {
 					StringBuilder error = new StringBuilder();
 					error.append("\nIn nbest extraction, Cost does not match; cur.cost: " + cur.cost + "; temsum: " +tem_sum + "\n");
-//					System.out.println("In nbest extraction, Cost does not match; cur.cost: " + cur.cost + "; temsum: " +tem_sum);
+					//System.out.println("In nbest extraction, Cost does not match; cur.cost: " + cur.cost + "; temsum: " +tem_sum);
 					for (int k = 0; k < model_cost.length; k++) {
 						error.append("model weight: " + l_models.get(k).getWeight() + "; cost: " +model_cost[k]+ "\n");
-//						System.out.println("model weight: " + l_models.get(k).getWeight() + "; cost: " +model_cost[k]);
+						//System.out.println("model weight: " + l_models.get(k).getWeight() + "; cost: " +model_cost[k]);
 					}
-//					throw new RuntimeException(s.toString());
 					throw new RuntimeException(error.toString());
 				}
 			}
