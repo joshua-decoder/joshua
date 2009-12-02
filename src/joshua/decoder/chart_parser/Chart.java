@@ -25,7 +25,7 @@ import java.util.logging.Logger;
 
 import joshua.corpus.vocab.SymbolTable;
 import joshua.decoder.JoshuaConfiguration;
-import joshua.decoder.chart_parser.Bin.ComputeItemResult;
+import joshua.decoder.chart_parser.Cell.ComputeItemResult;
 import joshua.decoder.chart_parser.DotChart.DotItem;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.tm.Grammar;
@@ -67,7 +67,7 @@ public class Chart {
 // Package-protected instance fields
 //===============================================================
 	
-	Bin[][] bins; // note that in some cell, it might be null
+	Cell[][] cells; // note that in some cell, it might be null
 	
 	/** This is the length of the foreign side input sentence. */
 	int sentenceLength;
@@ -112,7 +112,7 @@ public class Chart {
 	
 	private  Grammar[]       grammars;
 	private  DotChart[]      dotcharts; // each grammar should have a dotchart associated with it
-	private Bin              goalBin;
+	private Cell              goalBin;
 	private int              goalSymbolID = -1;
 	private Lattice<Integer> sentence; // a list of foreign words
 	private int              segmentID;
@@ -193,11 +193,11 @@ public class Chart {
 		this.symbolTable      = symbolTable;
 		
 		// TODO: this is very memory-expensive
-		this.bins         = new Bin[sentenceLength][sentenceLength+1];
+		this.cells         = new Cell[sentenceLength][sentenceLength+1];
 		
 		this.segmentID    = segmentID;
 		this.goalSymbolID = this.symbolTable.addNonterminal(goalSymbol);
-		this.goalBin      = new Bin(this, this.goalSymbolID);
+		this.goalBin      = new Cell(this, this.goalSymbolID);
 		this.grammars = grammars;
 		
 		// each grammar will have a dot chart
@@ -276,6 +276,8 @@ public class Chart {
 		}
 		
 		
+		
+		
 		/**add OOV rules; 
 		 * this should be called after the manual constraints have been set up
 		 * Different grammar differ in hasRuleForSpan, defaultOwner, and defaultLHSSymbol
@@ -312,6 +314,11 @@ public class Chart {
 	/**
 	 * Construct the hypergraph with the help from DotChart.
 	 */
+	/* a parser that can handle:
+	 * - multiple grammars
+	 * - on the fly binarization
+	 * - unary rules (without cycle)
+	 * */
 	public HyperGraph expand() {
 //		long start = System.currentTimeMillis();
 //		long time_step1 = 0;
@@ -349,8 +356,9 @@ public class Chart {
 				if (logger.isLoggable(Level.FINEST))
 					logger.finest("Adding complete items into chart");
 				for (int k = 0; k < this.grammars.length; k++) {
+					
 					if (this.grammars[k].hasRuleForSpan(i, j, sentenceLength)
-					&& null != this.dotcharts[k].l_dot_bins[i][j]) {
+						&& null != this.dotcharts[k].l_dot_bins[i][j]) {
 						
 						for (DotItem dt: this.dotcharts[k].l_dot_bins[i][j].l_dot_items) {
 							SourcePath srcPath = dt.srcPath;
@@ -416,18 +424,18 @@ public class Chart {
 				if (logger.isLoggable(Level.FINEST)) 
 					logger.finest(String.format("After Process span (%d, %d), called:= %d", i, j, n_called_compute_item));
 				
-				if (null != this.bins[i][j]) {
+				if (null != this.cells[i][j]) {
 					// this.bins[i][j].logStatistics(Level.INFO);					
 					// this is required
-					this.bins[i][j].get_sorted_items();
+					this.cells[i][j].getSortedItems();
 				}
 			}
 		}
 		logStatistics(Level.FINE);
 
 		// transition_final: setup a goal item, which may have many deductions
-		if (null != this.bins[0][sentenceLength]) {
-			this.goalBin.transit_to_goal(this.bins[0][sentenceLength]); // update goalBin				
+		if (null != this.cells[0][sentenceLength]) {
+			this.goalBin.transitToGoal(this.cells[0][sentenceLength]); // update goalBin				
 		} else {
 			throw new RuntimeException(
 				"No complete item in the cell(0," + sentenceLength + "); possible reasons: " +
@@ -451,7 +459,7 @@ public class Chart {
 		//debug end
 		
 		logger.info("Finished expand");
-		return new HyperGraph(this.goalBin.get_sorted_items().get(0), -1, -1, this.segmentID, sentenceLength); // num_items/deductions : -1
+		return new HyperGraph(this.goalBin.getSortedItems().get(0), -1, -1, this.segmentID, sentenceLength); // num_items/deductions : -1
 	}
 	
 	
@@ -480,16 +488,15 @@ public class Chart {
 	 * s->x; ss->s for unary rules like s->x, once x is complete,
 	 * then s is also complete
 	 */
-	private int addUnaryItems(Grammar[] grs, int i, int j) {
+	private int addUnaryItems(Grammar[] grs, int i, int j) {		
 		
-		
-		Bin chartBin = this.bins[i][j];
+		Cell chartBin = this.cells[i][j];
 		if (null == chartBin) {
 			return 0;
 		}
 		int qtyAdditionsToQueue = 0;
 		ArrayList<HGNode> queue
-			= new ArrayList<HGNode>(chartBin.get_sorted_items());
+			= new ArrayList<HGNode>(chartBin.getSortedItems());
 		
 		while (queue.size() > 0) {
 			HGNode item = queue.remove(0);
@@ -506,9 +513,9 @@ public class Chart {
 					List<Rule> rules = childNode.getRules().getSortedRules();
 					
 					for (Rule rule : rules) { // for each unary rules								
-						ComputeItemResult tbl_states = chartBin.compute_item(rule, antecedents, i, j, new SourcePath());
+						ComputeItemResult tbl_states = chartBin.computeItem(rule, antecedents, i, j, new SourcePath());
 						//System.out.println("add unary rule " +i +", " + j + rule.toString(this.symbolTable));
-						HGNode res_item = chartBin.add_deduction_in_bin(tbl_states, rule, i, j, antecedents, new SourcePath());
+						HGNode res_item = chartBin.addHyperEdgeInCell(tbl_states, rule, i, j, antecedents, new SourcePath());
 						if (null != res_item) {
 							queue.add(res_item);
 							qtyAdditionsToQueue++;
@@ -528,13 +535,14 @@ public class Chart {
      * for unary rules like s->x, once x is complete, then s is also complete
      */
     private int addUnaryItemsPerGrammar(Grammar gr, int i, int j) {
-            Bin chart_bin = this.bins[i][j];
+    	
+            Cell chart_bin = this.cells[i][j];
             if (null == chart_bin) {
                     return 0;
             }
             int count_of_additions_to_t_queue = 0;
             ArrayList<HGNode> t_queue
-                    = new ArrayList<HGNode>(chart_bin.get_sorted_items());
+                    = new ArrayList<HGNode>(chart_bin.getSortedItems());
 
 
             while (t_queue.size() > 0) {
@@ -549,8 +557,8 @@ public class Chart {
                                 child_tnode.getRules().getSortedRules();
 
                         for (Rule rule : l_rules){//for each unary rules
-                        	ComputeItemResult tbl_states = chart_bin.compute_item(rule, l_ants, i, j, new SourcePath());
-                                HGNode res_item = chart_bin.add_deduction_in_bin(tbl_states, rule, i, j, l_ants, new SourcePath());
+                        	ComputeItemResult tbl_states = chart_bin.computeItem(rule, l_ants, i, j, new SourcePath());
+                                HGNode res_item = chart_bin.addHyperEdgeInCell(tbl_states, rule, i, j, l_ants, new SourcePath());
                                 if (null != res_item) {
                                         t_queue.add(res_item);
                                         count_of_additions_to_t_queue++;
@@ -579,10 +587,10 @@ public class Chart {
 	
 	/** axiom is for rules with zero-arity */
 	private void addAxiom(int i, int j, Rule rule, SourcePath srcPath) {
-		if (null == this.bins[i][j]) {
-			this.bins[i][j] = new Bin(this, this.goalSymbolID);
+		if (null == this.cells[i][j]) {
+			this.cells[i][j] = new Cell(this, this.goalSymbolID);
 		}
-		this.bins[i][j].add_axiom(i, j, rule, srcPath);
+		this.cells[i][j].addAxiom(i, j, rule, srcPath);
 	}
 	
 	
@@ -592,11 +600,11 @@ public class Chart {
 			return; //do not add any axioms
 		}
 		
-		if (null == this.bins[i][j]) {
-			this.bins[i][j] = new Bin(this, this.goalSymbolID);
+		if (null == this.cells[i][j]) {
+			this.cells[i][j] = new Cell(this, this.goalSymbolID);
 		}
 		// combinations: rules, antecent items
-		this.bins[i][j].complete_cell(i, j, dt.l_ant_super_items, filterRules(i,j,rb.getSortedRules()), rb.getArity(), srcPath);
+		this.cells[i][j].completeCell(i, j, dt.l_ant_super_items, filterRules(i,j,rb.getSortedRules()), rb.getArity(), srcPath);
 	}
 	
 	
@@ -606,21 +614,19 @@ public class Chart {
 			return; //do not add any axioms
 		}
 		
-		if (null == this.bins[i][j]) {
-			this.bins[i][j] = new Bin(this, this.goalSymbolID);
+		if (null == this.cells[i][j]) {
+			this.cells[i][j] = new Cell(this, this.goalSymbolID);
 		}
 		
-		this.bins[i][j].complete_cell_cube_prune(i, j, dt.l_ant_super_items, filterRules(i,j, rb.getSortedRules()), srcPath);//combinations: rules, antecent items
+		this.cells[i][j].completeCellWithCubePrune(i, j, dt.l_ant_super_items, filterRules(i,j, rb.getSortedRules()), srcPath);//combinations: rules, antecent items
 	}
 	
 
-	
 	
 
 //	===============================================================
 //	 Manual constraint annotation methods and classes
 //	===============================================================
-	
 	
 	/**
 	 * if there are any LHS or RHS constraints for a span, then

@@ -247,13 +247,13 @@ class DotChart {
 		int i, int k, int j,
 		boolean startDotItems)
 	{
-		if (this.l_dot_bins[i][k] == null || this.p_chart.bins[k][j] == null) {
+		if (this.l_dot_bins[i][k] == null || this.p_chart.cells[k][j] == null) {
 			return;
 		}
 		
 		// complete super-items
 		List<SuperItem> t_ArrayList = new ArrayList<SuperItem>(this.
-				p_chart.bins[k][j].get_sorted_super_items().values());
+				p_chart.cells[k][j].getSortedSuperItems().values());
 		
 		// dotitem in dot_bins[i][k]: looking for an item in the right to the dot
 		for (DotItem dt : l_dot_bins[i][k].l_dot_items) {

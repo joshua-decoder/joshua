@@ -51,7 +51,7 @@ import java.util.logging.Logger;
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate$
  */
-class Bin {
+class Cell {
 	
 //===============================================================
 // Private instance fields (maybe could be protected instead)
@@ -106,7 +106,7 @@ class Bin {
 	private static final double EPSILON = 0.000001;
 	private static final int IMPOSSIBLE_COST = 99999;
 	
-	private static final Logger logger = Logger.getLogger(Bin.class.getName());
+	private static final Logger logger = Logger.getLogger(Cell.class.getName());
 	
 	
 //===============================================================
@@ -115,7 +115,7 @@ class Bin {
 	
 	// TODO: This should be a non-static inner class of Chart. That would give us implicit access to all the arguments of this constructor (which are the same at all call sites)
 	
-	public Bin(Chart chart, int goalSymID) {
+	public Cell(Chart chart, int goalSymID) {
 		this.chart     = chart;
 		this.goalSymID = goalSymID;
 	}
@@ -130,7 +130,7 @@ class Bin {
 	 * ArrayList: expectedTotalCost, finalizedTotalCost,
 	 * transition_cost, bonus, list of states
 	 */
-	ComputeItemResult compute_item(
+	ComputeItemResult computeItem(
 		Rule rule, ArrayList<HGNode> previousItems, int i, int j, SourcePath srcPath
 	) {
 		long startTime = Support.current_time(); // It's a lie, always == 0
@@ -223,11 +223,11 @@ class Bin {
 	 * the goal bin has only one Item, which itself has many
 	 * deductions only "goal bin" should call this function
 	 */
-	void transit_to_goal(Bin bin) { // the bin[0][n], this is not goal bin
+	void transitToGoal(Cell bin) { // the bin[0][n], this is not goal bin
 		this.sortedItems = new ArrayList<HGNode>();
 		HGNode goalItem = null;
 		
-		for (HGNode item : bin.get_sorted_items()) {
+		for (HGNode item : bin.getSortedItems()) {
 			if (item.lhs == this.goalSymID) {
 				double cost = item.best_hyperedge.best_cost;
 				double finalTransitionCost = 0.0;
@@ -274,9 +274,9 @@ class Bin {
 					goalItem.best_hyperedge.best_cost));
 			}
 		}
-		ensure_sorted();
+		ensureSorted();
 		
-		int itemsInGoalBin = get_sorted_items().size();
+		int itemsInGoalBin = getSortedItems().size();
 		if (1 != itemsInGoalBin) {
 			throw new RuntimeException("the goal_bin does not have exactly one item");
 		}
@@ -284,9 +284,9 @@ class Bin {
 	
 	
 	/** axiom is for the zero-arity rules */
-	void add_axiom(int i, int j, Rule rule, SourcePath srcPath) {
-		add_deduction_in_bin(
-			compute_item(rule, null, i, j, srcPath),
+	void addAxiom(int i, int j, Rule rule, SourcePath srcPath) {
+		addHyperEdgeInCell(
+			computeItem(rule, null, i, j, srcPath),
 			rule, i, j, null, srcPath);
 	}
 	
@@ -302,7 +302,7 @@ class Bin {
 	 * @param arity Number of nonterminals
 	 * @param srcPath
 	 */
-	void complete_cell(
+	void completeCell(
 		int i, int j, ArrayList<SuperItem> superItems,
 		List<Rule> rules, int arity, SourcePath srcPath
 	) {
@@ -316,8 +316,8 @@ class Bin {
 				for (HGNode antecedent: super_ant1.l_items) {
 					ArrayList<HGNode> antecedents = new ArrayList<HGNode>();
 					antecedents.add(antecedent);
-					add_deduction_in_bin(
-						compute_item(rule, antecedents, i, j, srcPath),
+					addHyperEdgeInCell(
+						computeItem(rule, antecedents, i, j, srcPath),
 						rule, i, j, antecedents, srcPath);
 				}
 				
@@ -329,8 +329,8 @@ class Bin {
 						ArrayList<HGNode> antecedents = new ArrayList<HGNode>();
 						antecedents.add(it_ant1);
 						antecedents.add(it_ant2);
-						add_deduction_in_bin(
-							compute_item(rule, antecedents, i, j, srcPath),
+						addHyperEdgeInCell(
+							computeItem(rule, antecedents, i, j, srcPath),
 							rule, i, j, antecedents, srcPath);
 					}
 				}
@@ -348,13 +348,12 @@ class Bin {
 	//       version
 	// TODO: the implementation is little bit different from
 	//       the description in Liang'2007 ACL paper
-	void complete_cell_cube_prune(
+	void completeCellWithCubePrune(
 		int i, int j, ArrayList<SuperItem> superItems,
 		List<Rule> rules, SourcePath srcPath
 	) { // combinations: rules, antecent items
 		// in the paper, heap_cands is called cand[v]
-		PriorityQueue<CubePruneState> heap_cands =
-			new PriorityQueue<CubePruneState>();
+		PriorityQueue<CubePruneState> combinationHeap =	new PriorityQueue<CubePruneState>();
 		
 		// rememeber which state has been explored
 		HashMap<String,Integer> cube_state_tbl = new HashMap<String,Integer>();
@@ -363,24 +362,22 @@ class Bin {
 			return;
 		}
 		
-		// seed the heap with best item
+		//== seed the heap with best item
 		Rule currentRule = rules.get(0);
 		ArrayList<HGNode> currentAntecedents = new ArrayList<HGNode>();
 		for (SuperItem si : superItems) {
 			// TODO: si.l_items must be sorted
 			currentAntecedents.add(si.l_items.get(0));
 		}
-		ComputeItemResult result =
-			compute_item(currentRule, currentAntecedents, i, j, srcPath);
+		ComputeItemResult result =	computeItem(currentRule, currentAntecedents, i, j, srcPath);
 		
 		int[] ranks = new int[1+superItems.size()]; // rule, ant items
 		for (int d = 0; d < ranks.length; d++) {
 			ranks[d] = 1;
 		}
 		
-		CubePruneState best_state =
-			new CubePruneState(result, ranks, currentRule, currentAntecedents);
-		heap_cands.add(best_state);
+		CubePruneState best_state =	new CubePruneState(result, ranks, currentRule, currentAntecedents);
+		combinationHeap.add(best_state);
 		cube_state_tbl.put(best_state.get_signature(),1);
 		// cube_state_tbl.put(best_state,1);
 		
@@ -388,25 +385,26 @@ class Bin {
 		Rule   oldRule = null;
 		HGNode oldItem = null;
 		int    tem_c   = 0;
-		while (heap_cands.size() > 0) {
+		while (combinationHeap.size() > 0) {
 			
 			//========== decide if the top in the heap should be pruned
 			tem_c++;
-			CubePruneState cur_state = heap_cands.poll();
+			CubePruneState cur_state = combinationHeap.poll();
 			currentRule = cur_state.rule;
 			currentAntecedents = new ArrayList<HGNode>(cur_state.l_ants); // critical to create a new list
 			//cube_state_tbl.remove(cur_state.get_signature()); // TODO, repeat
-			add_deduction_in_bin(cur_state.tbl_item_states, cur_state.rule, i, j,cur_state.l_ants, srcPath); // pre-pruning inside this function
+			addHyperEdgeInCell(cur_state.tbl_item_states, cur_state.rule, i, j,cur_state.l_ants, srcPath); // pre-pruning inside this function
 			
 			//if the best state is pruned, then all the remaining states should be pruned away
 			if (cur_state.tbl_item_states.getExpectedTotalCost() > this.cutoffCost + JoshuaConfiguration.fuzz1) {
 				//n_prepruned += heap_cands.size();
-				this.chart.n_prepruned_fuzz1 += heap_cands.size();
+				this.chart.n_prepruned_fuzz1 += combinationHeap.size();
 				break;
 			}
 			
 			//========== extend the cur_state, and add the candidates into the heap
 			for (int k = 0; k < cur_state.ranks.length; k++) {
+				
 				//GET new_ranks
 				int[] new_ranks = new int[cur_state.ranks.length];
 				for (int d = 0; d < cur_state.ranks.length; d++) {
@@ -433,18 +431,18 @@ class Bin {
 				}
 				
 				CubePruneState t_state = new CubePruneState(
-					compute_item(currentRule, currentAntecedents, i, j, srcPath),
+					computeItem(currentRule, currentAntecedents, i, j, srcPath),
 					new_ranks, currentRule, currentAntecedents);
 				
 				// add state into heap
-				cube_state_tbl.put(new_sig,1);
-				
+				cube_state_tbl.put(new_sig,1);				
 				if (result.getExpectedTotalCost() < this.cutoffCost + JoshuaConfiguration.fuzz2) {
-					heap_cands.add(t_state);
+					combinationHeap.add(t_state);
 				} else {
 					//n_prepruned += 1;
 					this.chart.n_prepruned_fuzz2 += 1;
 				}
+				
 				// recover
 				if (k == 0) { // rule
 					currentRule = oldRule;
@@ -455,8 +453,14 @@ class Bin {
 		}
 	}
 	
+	/**in order to add a hyperedge into the chart, we need to
+	 * (1) do the combination, and compute the cost (if pass the cube-prunning)
+	 * (2) run through the beam and threshold pruning, which itself has two steps
+	 * */
 	
-	HGNode add_deduction_in_bin(
+	/**create a hyperege, and add it into the chart if not got prunned
+	 * */
+	HGNode addHyperEdgeInCell(
 		ComputeItemResult result, Rule rule, int i, int j,
 		ArrayList<HGNode> ants, SourcePath srcPath
 	) {
@@ -468,14 +472,14 @@ class Bin {
 		double finalizedTotalCost = result.getFinalizedTotalCost();
 		
 		//double bonus = tbl_states.get(BONUS); // not used
-		if (! should_prune(expectedTotalCost)) {
-			HyperEdge dt = new HyperEdge(
-				rule, finalizedTotalCost, transition_cost, ants, srcPath);
-			HGNode item = new HGNode(
-				i, j, rule.getLHS(), item_state_tbl, dt, expectedTotalCost);
-			add_deduction(item);
+		if ( ! shouldPruneEdge(expectedTotalCost) ) {
+			HyperEdge dt = new HyperEdge(rule, finalizedTotalCost, transition_cost, ants, srcPath);
+			HGNode item = new HGNode(i, j, rule.getLHS(), item_state_tbl, dt, expectedTotalCost);
 			
-			if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("add an deduction with arity %d", rule.getArity()));
+			addHyperedge(item);
+			
+			if (logger.isLoggable(Level.FINEST)) 
+				logger.finest(String.format("add an deduction with arity %d", rule.getArity()));
 			
 			res = item;
 		} else {
@@ -488,14 +492,14 @@ class Bin {
 	}
 	
 	
-	ArrayList<HGNode> get_sorted_items() {
-		ensure_sorted();
+	ArrayList<HGNode> getSortedItems() {
+		ensureSorted();
 		return this.sortedItems;
 	}
 	
 	
-	Map<Integer,SuperItem> get_sorted_super_items() {
-		ensure_sorted();
+	Map<Integer,SuperItem> getSortedSuperItems() {
+		ensureSorted();
 		return this.tableSuperItems;
 	}
 	
@@ -565,8 +569,11 @@ class Bin {
 // Private Methods
 //===============================================================
 
-	/* each item has a list of deductions need to check whether the item is already exist, if yes, just add the deductions */
-	private boolean add_deduction(HGNode newItem) {
+	/** each item has a list of hyperedges,
+	 * need to check whether the item is already exist, 
+	 * if yes, just add the hyperedges, this will change the best cost of the item 
+	 * */
+	private boolean addHyperedge(HGNode newItem) {
 		boolean res = false;
 		HGNode oldItem = this.tableItems.get(newItem.getSignature());
 		if (null != oldItem) { // have an item with same states, combine items
@@ -579,26 +586,27 @@ class Bin {
 				oldItem.is_dead = true; // this.heapItems.remove(oldItem);
 				this.qtyDeadItems++;
 				newItem.addHyperedgesInItem(oldItem.l_hyperedges);
-				add_new_item(newItem); // this will update the HashMap, so that the oldItem is destroyed
+				addNewItem(newItem); // this will update the HashMap, so that the oldItem is destroyed
 				res = true;
 			} else {
 				oldItem.addHyperedgesInItem(newItem.l_hyperedges);
 			}
 		} else { // first time item
 			this.chart.n_added++; // however, this item may not be used in the future due to pruning in the hyper-graph
-			add_new_item(newItem);
+			addNewItem(newItem);
 			res = true;
 		}
 		this.cutoffCost = Support.find_min(
 			this.bestItemCost + JoshuaConfiguration.relative_threshold,
 			IMPOSSIBLE_COST);
-		run_pruning();
+		pruningItems();
 		return res;
 	}
 	
 	
-//	this function is called only there is no such item in the tbl
-	private void add_new_item(HGNode item) {
+	/**this function is called only 
+	 * there is no such item in the tbl*/
+	private void addNewItem(HGNode item) {
 		this.tableItems.put(item.getSignature(), item); // add/replace the item
 		this.sortedItems = null; // reset the list
 		this.heapItems.add(item);
@@ -617,12 +625,12 @@ class Bin {
 		}
 	}
 	
-	private boolean should_prune(double total_cost) {
+	private boolean shouldPruneEdge(double total_cost) {
 		return (total_cost >= this.cutoffCost);
 	}
 	
 	
-	private void run_pruning() {
+	private void pruningItems() {
 		if (logger.isLoggable(Level.FINEST)) logger.finest(String.format("Pruning: heap size: %d; n_dead_items: %d", this.heapItems.size(),this.qtyDeadItems));
 		if (this.heapItems.size() == this.qtyDeadItems) { // TODO:clear the heap, and reset this.qtyDeadItems??
 			this.heapItems.clear();
@@ -648,13 +656,14 @@ class Bin {
 	}
 	
 	
-	/* get a sorted list of Items in the bin, and also make
+	/** get a sorted list of Items in the bin, and also make
 	 * sure the list of items in any SuperItem is sorted, this
 	 * will be called only necessary, which means that the list
 	 * is not always sorted mainly needed for goal_bin and
 	 * cube-pruning
 	 */
-	private void ensure_sorted() {
+	private void ensureSorted() {
+		
 		if (null == this.sortedItems) {
 			//get a sorted items ArrayList
 			Object[] t_col = this.tableItems.values().toArray();
