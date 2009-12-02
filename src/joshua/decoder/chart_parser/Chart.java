@@ -25,7 +25,6 @@ import java.util.logging.Logger;
 
 import joshua.corpus.vocab.SymbolTable;
 import joshua.decoder.JoshuaConfiguration;
-import joshua.decoder.chart_parser.Cell.ComputeItemResult;
 import joshua.decoder.chart_parser.DotChart.DotItem;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.tm.Grammar;
@@ -88,11 +87,11 @@ public class Chart {
 	 * is greater than the cutoff in calling
 	 * chart.add_deduction_in_chart()
 	 */
-	int n_prepruned           = 0;
+	int nPreprunedEdges           = 0;
 	
 	int n_prepruned_fuzz1     = 0;
 	int n_prepruned_fuzz2     = 0;
-	int n_pruned              = 0;
+	int nPrunedItems              = 0;
 	int n_merged              = 0;
 	int n_added               = 0;
 	int n_dotitem_added       = 0; // note: there is no pruning in dot-item
@@ -129,6 +128,9 @@ public class Chart {
 	// contain spans that have hard "rule" constraint; key: start_span; value: end_span
 	private ArrayList<Span> spansWithHardRuleConstraint;
 	
+	
+	Combiner combiner = null;
+
 	
 	//===========================================================
 	// Decoder-wide fields
@@ -185,7 +187,8 @@ public class Chart {
 		Grammar[]                  grammars,
 		boolean                    hasLM,
 		String                     goalSymbol,
-		List<ConstraintSpan>       constraintSpans)
+		List<ConstraintSpan>       constraintSpans
+		)
 	{
 		this.sentence         = sentence;
 		this.sentenceLength   = sentence.size() - 1;
@@ -205,6 +208,11 @@ public class Chart {
 		for (int i = 0; i < this.grammars.length; i++)
 			this.dotcharts[i] = new DotChart(this.sentence, this.grammars[i], this);
 		
+		
+		if(JoshuaConfiguration.useCubePrune)//TODO: should not directly refer to JoshuaConfiguration
+			combiner = new CubePruneCombiner();
+		else
+			combiner = new ExhaustiveCombiner();
 		
 		/** Note that manual constraints or OOV handling is not part of seeding
 		 * */	
@@ -302,6 +310,8 @@ public class Chart {
 			}
 		}
 		
+	
+		
 		if (logger.isLoggable(Level.FINE))
 			logger.fine("Finished seeding chart.");
 	}
@@ -372,11 +382,7 @@ public class Chart {
 								if (rules.getArity() == 0) { // rules without any non-terminal
 									addAxioms(i, j, rules, srcPath);
 								} else { // rules with non-terminal
-									if (JoshuaConfiguration.use_cube_prune) {
-										completeCellCubePrune(i, j, dt, rules, srcPath);
-									} else {//fill chart.bin[i][j] with rules from dotchart[i][j]
-										completeCell(i, j, dt, rules, srcPath);
-									}
+									completeCell(i, j, dt, rules, srcPath);									
 								}
 							}
 						}
@@ -431,7 +437,7 @@ public class Chart {
 				}
 			}
 		}
-		logStatistics(Level.FINE);
+		logStatistics(Level.INFO);
 
 		// transition_final: setup a goal item, which may have many deductions
 		if (null != this.cells[0][sentenceLength]) {
@@ -473,8 +479,8 @@ public class Chart {
 				String.format("ADDED: %d; MERGED: %d; PRUNED: %d; PRE-PRUNED: %d, FUZZ1: %d, FUZZ2: %d; DOT-ITEMS ADDED: %d",
 					this.n_added,
 					this.n_merged,
-					this.n_pruned,
-					this.n_prepruned,
+					this.nPrunedItems,
+					this.nPreprunedEdges,
 					this.n_prepruned_fuzz1,
 					this.n_prepruned_fuzz2,
 					this.n_dotitem_added));
@@ -513,8 +519,7 @@ public class Chart {
 					List<Rule> rules = childNode.getRules().getSortedRules();
 					
 					for (Rule rule : rules) { // for each unary rules								
-						ComputeItemResult tbl_states = chartBin.computeItem(rule, antecedents, i, j, new SourcePath());
-						//System.out.println("add unary rule " +i +", " + j + rule.toString(this.symbolTable));
+						ComputeItemResult tbl_states = new ComputeItemResult(this.featureFunctions, rule, antecedents, i, j, new SourcePath());
 						HGNode res_item = chartBin.addHyperEdgeInCell(tbl_states, rule, i, j, antecedents, new SourcePath());
 						if (null != res_item) {
 							queue.add(res_item);
@@ -557,12 +562,12 @@ public class Chart {
                                 child_tnode.getRules().getSortedRules();
 
                         for (Rule rule : l_rules){//for each unary rules
-                        	ComputeItemResult tbl_states = chart_bin.computeItem(rule, l_ants, i, j, new SourcePath());
-                                HGNode res_item = chart_bin.addHyperEdgeInCell(tbl_states, rule, i, j, l_ants, new SourcePath());
-                                if (null != res_item) {
-                                        t_queue.add(res_item);
-                                        count_of_additions_to_t_queue++;
-                                }
+                        	ComputeItemResult tbl_states = new ComputeItemResult(this.featureFunctions, rule, l_ants, i, j, new SourcePath());
+                            HGNode res_item = chart_bin.addHyperEdgeInCell(tbl_states, rule, i, j, l_ants, new SourcePath());
+                            if (null != res_item) {
+                                    t_queue.add(res_item);
+                                    count_of_additions_to_t_queue++;
+                            }
                         }
                 }
             }
@@ -589,8 +594,11 @@ public class Chart {
 	private void addAxiom(int i, int j, Rule rule, SourcePath srcPath) {
 		if (null == this.cells[i][j]) {
 			this.cells[i][j] = new Cell(this, this.goalSymbolID);
-		}
-		this.cells[i][j].addAxiom(i, j, rule, srcPath);
+		}		
+		
+		this.cells[i][j].addHyperEdgeInCell(
+				new ComputeItemResult(this.featureFunctions, rule, null, i, j, srcPath),
+				rule, i, j, null, srcPath);
 	}
 	
 	
@@ -604,25 +612,9 @@ public class Chart {
 			this.cells[i][j] = new Cell(this, this.goalSymbolID);
 		}
 		// combinations: rules, antecent items
-		this.cells[i][j].completeCell(i, j, dt.l_ant_super_items, filterRules(i,j,rb.getSortedRules()), rb.getArity(), srcPath);
-	}
-	
-	
-	private void completeCellCubePrune(int i, int j, DotItem dt, RuleCollection rb, SourcePath srcPath) {
-		if (containsHardRuleConstraint(i, j)) {
-			System.out.println("having hard rule constraints in span " +i +", " + j);
-			return; //do not add any axioms
-		}
-		
-		if (null == this.cells[i][j]) {
-			this.cells[i][j] = new Cell(this, this.goalSymbolID);
-		}
-		
-		this.cells[i][j].completeCellWithCubePrune(i, j, dt.l_ant_super_items, filterRules(i,j, rb.getSortedRules()), srcPath);//combinations: rules, antecent items
-	}
-	
-
-	
+		//this.cells[i][j].completeCell(i, j, dt.l_ant_super_items, filterRules(i,j,rb.getSortedRules()), rb.getArity(), srcPath);
+		combiner.combine(this, this.cells[i][j], i, j,  dt.l_ant_super_items, filterRules(i,j, rb.getSortedRules()), rb.getArity(), srcPath);
+	}	
 
 //	===============================================================
 //	 Manual constraint annotation methods and classes

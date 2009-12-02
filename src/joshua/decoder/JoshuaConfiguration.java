@@ -96,7 +96,9 @@ public class JoshuaConfiguration {
 	
 	
 	//pruning config
-	public static boolean use_cube_prune          = true;
+	//note we can use both cube pruning and "beamAndThreshold" pruning
+	public static boolean useCubePrune          = true;
+	public static boolean useBeamAndThresholdPrune = true;
 	public static double  fuzz1                   = 0.1;
 	public static double  fuzz2                   = 0.1;
 	public static int     max_n_items             = 30;
@@ -489,6 +491,18 @@ public class JoshuaConfiguration {
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest("segmentFileParserClass: " + segmentFileParserClass);
 					
+				} else if ("useCubePrune".equals(fds[0])) {
+					useCubePrune = Boolean.valueOf(fds[1]);
+					if(useCubePrune==false)
+						logger.warning("useCubePrune=false");
+					if (logger.isLoggable(Level.FINEST))
+						logger.finest(String.format("useCubePrune: %s", useCubePrune));				
+				}else if ("useBeamAndThresholdPrune".equals(fds[0])) {
+					useBeamAndThresholdPrune = Boolean.valueOf(fds[1]);
+					if(useBeamAndThresholdPrune==false)
+						logger.warning("useBeamAndThresholdPrune=false");
+					if (logger.isLoggable(Level.FINEST))
+						logger.finest(String.format("useBeamAndThresholdPrune: %s", useBeamAndThresholdPrune));				
 				} else {
 					logger.warning("Maybe Wrong config line: " + line);
 				}
