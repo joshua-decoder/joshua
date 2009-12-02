@@ -163,7 +163,9 @@ public class HGNode implements Comparable<HGNode> {
 	}
 	
 	
-	//sort by est_total_cost: for prunning purpose
+	/*this will called by the sorting
+	 * in Cell.ensureSorted()*/
+	//sort by est_total_cost: for pruning purpose
 	public int compareTo(HGNode anotherItem) {
 		if (this.est_total_cost < anotherItem.est_total_cost) {
 			return -1;
@@ -172,6 +174,7 @@ public class HGNode implements Comparable<HGNode> {
 		} else {
 			return 1;
 		}
+		
 	}
 	
 	

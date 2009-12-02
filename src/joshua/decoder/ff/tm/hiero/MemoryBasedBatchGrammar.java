@@ -55,6 +55,8 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
 	//protected ArrayList<FeatureFunction> featureFunctions = null;
 	private int defaultOwner;
 	
+	private float oovFeatureCost = 100;
+	
 	/**
 	 * the OOV rule should have this lhs, this should be grammar
 	 * specific as only the grammar knows what LHS symbol can
@@ -100,14 +102,15 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
 			SymbolTable symbolTable, 
 			String defaultOwner,
 			String defaultLHSSymbol,
-			int span_limit) throws IOException 
+			int span_limit,
+			float oovFeatureCost_) throws IOException 
 	{
 		
 		this.symbolTable  = symbolTable;
 		this.defaultOwner = this.symbolTable.addTerminal(defaultOwner);
 		this.defaultLHS   = this.symbolTable.addNonterminal(defaultLHSSymbol);
 		this.spanLimit    = span_limit;
-		
+		this.oovFeatureCost = oovFeatureCost_;
 		this.root = new MemoryBasedTrie();
 		
 		//==== loading grammar
@@ -161,10 +164,10 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
 		
 		// TODO: This is a hack to make the decoding without a LM works
 		// no LM is used for decoding, so we should set the stateless cost
-		if (! hasLM) { 
+		if ( (!hasLM) && qtyFeatures > 0) { 
 			//this.feat_scores[0]=100.0/(this.featureFunctions.get(0)).getWeight();
 			//System.out.println("feature cost is 100");
-			feat_scores[0] = 100;
+			feat_scores[0] = oovFeatureCost;
 		}
 		
 		return new BilingualRule(this.defaultLHS, p_french, english, feat_scores, 0, this.defaultOwner, 0, getOOVRuleID());
@@ -239,7 +242,6 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
 			pos.rule_bin = new MemoryBasedRuleBin(rule.getArity(), rule.getFrench());
 			this.qtyRuleBins++;
 		}
-		
 		pos.rule_bin.addRule(rule);
 	}
 

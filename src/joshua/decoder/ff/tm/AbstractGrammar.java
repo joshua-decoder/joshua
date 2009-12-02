@@ -108,10 +108,13 @@ public abstract class AbstractGrammar implements Grammar {
 	 *               sorting.
 	 */
 	private void sort(Trie node, ArrayList<FeatureFunction> models) {
+	
 		if (node != null) {			
 			if(node.hasRules()) {
 				RuleCollection rules = node.getRules();
-				if (logger.isLoggable(Level.FINE)) logger.fine("Sorting node " + Arrays.toString(rules.getSourceSide()));	
+				if (logger.isLoggable(Level.FINE)) 
+					logger.fine("Sorting node " + Arrays.toString(rules.getSourceSide()));	
+				
 				rules.sortRules(models);
 				
 				if (logger.isLoggable(Level.FINEST)) {

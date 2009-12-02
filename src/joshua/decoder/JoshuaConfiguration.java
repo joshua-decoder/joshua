@@ -56,6 +56,7 @@ public class JoshuaConfiguration {
 	public static String  goal_symbol                = "S";
 	public static boolean use_sent_specific_tm       = false;
 	public static String  g_sent_tm_file_name_prefix = "tm.";
+	public static float   oovFeatureCost = 100;
 	
 	public static String  tm_file                    = null;
 	// TODO: default to glue grammar provided with Joshua
@@ -503,6 +504,10 @@ public class JoshuaConfiguration {
 						logger.warning("useBeamAndThresholdPrune=false");
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("useBeamAndThresholdPrune: %s", useBeamAndThresholdPrune));				
+				} else if ("oovFeatureCost".equals(fds[0])) {
+					oovFeatureCost = Float.parseFloat(fds[1]);
+					if (logger.isLoggable(Level.FINEST))
+						logger.finest(String.format("oovFeatureCost: %s", oovFeatureCost));
 				} else {
 					logger.warning("Maybe Wrong config line: " + line);
 				}

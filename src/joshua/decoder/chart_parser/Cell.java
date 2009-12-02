@@ -81,11 +81,11 @@ class Cell {
 	 * pruning
 	 */
 	// TODO: initial capacity?
-	private PriorityQueue<HGNode> heapItems =
+	private PriorityQueue<HGNode> itemsHeap =
 		new PriorityQueue<HGNode>(1, HGNode.negtiveCostComparator);
 	
 	// to maintain uniqueness of items
-	private HashMap<String,HGNode> tableItems =
+	private HashMap<String,HGNode> itemsTbl =
 		new HashMap<String,HGNode>();
 	
 	// signature by lhs
@@ -225,7 +225,7 @@ class Cell {
 			 * need to check whether the item is already exist, 
 			 * if yes, just add the hyperedges, this will change the best cost of the item 
 			 * */
-			HGNode oldItem = this.tableItems.get( res.getSignature() );
+			HGNode oldItem = this.itemsTbl.get( res.getSignature() );
 			if (null != oldItem) { // have an item with same states, combine items
 				this.chart.n_merged++;
 				
@@ -279,9 +279,10 @@ class Cell {
 	 * (2) a new hyperedge's signature matches an old item's signature, but the best-cost of old item is worse than the hyperedge's cost
 	 * */
 	private void addNewItem(HGNode item) {
-		this.tableItems.put(item.getSignature(), item); // add/replace the item
+		this.itemsTbl.put(item.getSignature(), item); // add/replace the item
 		this.sortedItems = null; // reset the list
-		this.heapItems.add(item);
+		if(JoshuaConfiguration.useBeamAndThresholdPrune)
+			this.itemsHeap.add(item);
 		
 		//since this.sortedItems == null, this is not necessary because we will always call ensure_sorted to reconstruct the this.tableSuperItems
 		//add a super-items if necessary
@@ -323,29 +324,29 @@ class Cell {
 			return;
 		
 		if (logger.isLoggable(Level.FINEST)) 
-			logger.finest(String.format("Pruning: heap size: %d; n_dead_items: %d", this.heapItems.size(),this.qtyDeadItems));
+			logger.finest(String.format("Pruning: heap size: %d; n_dead_items: %d", this.itemsHeap.size(),this.qtyDeadItems));
 		
-		if (this.heapItems.size() == this.qtyDeadItems) { // TODO:clear the heap, and reset this.qtyDeadItems??
-			this.heapItems.clear();
+		if (this.itemsHeap.size() == this.qtyDeadItems) { // TODO:clear the heap, and reset this.qtyDeadItems??
+			this.itemsHeap.clear();
 			this.qtyDeadItems = 0;
 			return;
 		}
 		
-		while (this.heapItems.size() - this.qtyDeadItems > JoshuaConfiguration.max_n_items //bin limit pruning
-				|| this.heapItems.peek().est_total_cost >= this.cutoffCost) { // relative threshold pruning
-			HGNode worstItem = this.heapItems.poll();
+		while (this.itemsHeap.size() - this.qtyDeadItems > JoshuaConfiguration.max_n_items //bin limit pruning
+				|| this.itemsHeap.peek().est_total_cost >= this.cutoffCost) { // relative threshold pruning
+			HGNode worstItem = this.itemsHeap.poll();
 			if (worstItem.is_dead) { // clear the corrupted item
 				this.qtyDeadItems--;
 			} else {
-				this.tableItems.remove(worstItem.getSignature()); // always make this.tableItems current
+				this.itemsTbl.remove(worstItem.getSignature()); // always make this.tableItems current
 				this.chart.nPrunedItems++;
 			}
 		}
 		
-		if (this.heapItems.size() - this.qtyDeadItems == JoshuaConfiguration.max_n_items) {//TODO:??
+		if (this.itemsHeap.size() - this.qtyDeadItems == JoshuaConfiguration.max_n_items) {//TODO:??
 			this.cutoffCost = Support.find_min(
 				this.cutoffCost,
-				this.heapItems.peek().est_total_cost + EPSILON);
+				this.itemsHeap.peek().est_total_cost + EPSILON);
 		}
 	}
 	
@@ -353,22 +354,24 @@ class Cell {
 	/** get a sorted list of Items in the bin, and also make
 	 * sure the list of items in any SuperItem is sorted, this
 	 * will be called only necessary, which means that the list
-	 * is not always sorted mainly needed for goal_bin and
+	 * is not always sorted, mainly needed for goal_bin and
 	 * cube-pruning
 	 */
 	private void ensureSorted() {
 		
 		if (null == this.sortedItems) {
 			//get a sorted items ArrayList
-			Object[] t_col = this.tableItems.values().toArray();
+			Object[] t_col = this.itemsTbl.values().toArray();
+			
 			Arrays.sort(t_col);
+			
 			this.sortedItems = new ArrayList<HGNode>();
 			for (int c = 0; c < t_col.length;c++) {
 				this.sortedItems.add((HGNode)t_col[c]);
 			}
 			//TODO: we cannot create new SuperItem here because the DotItem link to them
 			
-			//update this.tableSuperItems
+			//update superItemsTbl
 			ArrayList<SuperItem> tem_list =
 				new ArrayList<SuperItem>(this.superItemsTbl.values());
 			for (SuperItem t_si : tem_list) {

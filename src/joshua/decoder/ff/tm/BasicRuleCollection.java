@@ -128,7 +128,6 @@ public class BasicRuleCollection implements RuleCollection {
 	/* See Javadoc comments for RuleCollection interface. */
 	public List<Rule> getSortedRules() {	
 		if (!this.sorted) {
-			System.out.println("!!!!!!!!!!!!!!!!!!!!!! rule collection, sorting!!!!!!!");
 			String message = "Grammar has not been sorted which is reqired by cube pruning; sortGrammar should have been called after loading the grammar, but was not.";
 			logger.severe(message);			
 			throw new RuntimeException(message);
