@@ -203,6 +203,8 @@
 		<testng classpath="${build}" sourcedir="${test}">
 			<jvmarg value="-Dfile.encoding=UTF8"/>
 			<jvmarg value="-Djava.util.logging.config.file=logging.tests.properties"/>
+			<jvmarg value="-Xms256m" />
+			<jvmarg value="-Xmx256m" />
 			<xmlfileset dir="." includes="testng.xml"/>
 		</testng>
 	</target>
