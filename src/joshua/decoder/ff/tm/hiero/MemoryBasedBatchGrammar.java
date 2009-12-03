@@ -163,10 +163,11 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
 		float[] feat_scores = new float[qtyFeatures];
 		
 		// TODO: This is a hack to make the decoding without a LM works
-		// no LM is used for decoding, so we should set the stateless cost
+		/**when a ngram LM is used, the OOV word will have a cost 100.
+		 * if no LM is used for decoding, so we should set the cost of some
+		 * TM feature to be maximum
+		 * */
 		if ( (!hasLM) && qtyFeatures > 0) { 
-			//this.feat_scores[0]=100.0/(this.featureFunctions.get(0)).getWeight();
-			//System.out.println("feature cost is 100");
 			feat_scores[0] = oovFeatureCost;
 		}
 		
