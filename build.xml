@@ -75,6 +75,7 @@
 		<exec executable="make">
 			<arg value="-C" />
 			<arg value="${src}/joshua/decoder/ff/lm/srilm" />
+			<arg value="install" />
 		</exec>
 	</target>
 	

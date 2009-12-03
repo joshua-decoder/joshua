@@ -33,21 +33,15 @@ SRILM_ROOT=$(SRILM)
 SRILM_LIBS=$(SRILM_ROOT)/lib/$(MTYPE)
 SRILM_INC=$(SRILM_ROOT)/include
 
+# Define where the installed library will go
+SRI_LIB_DIR:=../../../../../../lib
+SRI_LIB_INSTALLED:=$(SRI_LIB_DIR)/$(notdir $(SRI_LIB))
 
 # Java headers
 # TODO: What's the behaviour on Windows?
 JAVA_INC=$(JAVA_HOME)/include/
 JAVA_INC_OS=$(JAVA_HOME)/include/linux 
 
-
-# First undefine all the rules for suffixes, then add ours in.
-# (Actually, we don't have any generic rules. Maybe we should genericize)
-.SUFFIXES:
-#.SUFFIXES: .cxx .o .so .dylib .jnilib
-
-# Marking these tarkets as phony ensures they are always run if
-# asked to (even if someone's named a file after them).
-.PHONY: all dummy libsrilm clean install
 
 
 # Input files: srilm.h, srilm.c, and srilm_java.i
@@ -83,7 +77,22 @@ srilm.o: srilm.c
 clean:
 	rm -rf srilm.o srilm*.java srilm_*_wrap.* SWIGTYPE*.java $(SRI_LIB)
 
-# TODO: we need a 'distclean' target that will remove this too
-install:
-	cp $(SRI_LIB) ../../../../../../lib/
+
+
+install: $(SRI_LIB_INSTALLED)
+
+$(SRI_LIB_INSTALLED): $(SRI_LIB) | $(SRI_LIB_DIR)
+	cp $(SRI_LIB) $(SRI_LIB_DIR)
+
+distclean: clean
+	rm -f $(SRI_LIB_INSTALLED)
+
+# First undefine all the rules for suffixes, then add ours in.
+# (Actually, we don't have any generic rules. Maybe we should genericize)
+.SUFFIXES:
+#.SUFFIXES: .cxx .o .so .dylib .jnilib
+
+# Marking these tarkets as phony ensures they are always run if
+# asked to (even if someone's named a file after them).
+.PHONY: all dummy libsrilm clean install distclean
 
