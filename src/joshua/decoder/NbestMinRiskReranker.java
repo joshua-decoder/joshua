@@ -28,6 +28,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.PriorityBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 
 /**
@@ -54,6 +58,9 @@ public class NbestMinRiskReranker {
 	static boolean do_ngram_clip = true;
 	
 	static boolean use_google_linear_corpus_gain = false;
+	
+	final PriorityBlockingQueue<RankerResult> resultsQueue =
+		new PriorityBlockingQueue<RankerResult>();
 	
 	public NbestMinRiskReranker(boolean produce_reranked_nbest_, double scaling_factor_) {
 		this.produce_reranked_nbest = produce_reranked_nbest_;
@@ -260,8 +267,8 @@ public class NbestMinRiskReranker {
 		
 		// If you don't know what to use for scaling factor, try using 1
 		
-		if (4 != args.length) {
-			System.out.println("wrong command, correct command should be: java NbestMinRiskReranker f_nbest_in f_out produce_reranked_nbest scaling_factor");
+		if (args.length<4 || args.length>5) {
+			System.out.println("wrong command, correct command should be: java NbestMinRiskReranker f_nbest_in f_out produce_reranked_nbest scaling_factor [numThreads]");
 			System.out.println("num of args is "+ args.length);
 			for(int i = 0; i < args.length; i++) {
 				System.out.println("arg is: " + args[i]);
@@ -273,6 +280,7 @@ public class NbestMinRiskReranker {
 		String f_out = args[1].trim();
 		boolean produce_reranked_nbest = Boolean.valueOf(args[2].trim());
 		double scaling_factor = Double.parseDouble(args[3].trim());
+		int numThreads = (args.length==5) ? Integer.parseInt(args[4].trim()) : 1;
 	
 		
 		BufferedWriter t_writer_out =	FileUtility.getWriteFileStream(f_out);
@@ -280,34 +288,114 @@ public class NbestMinRiskReranker {
 			new NbestMinRiskReranker(produce_reranked_nbest, scaling_factor);
 		
 		System.out.println("##############running mbr reranking");
+		
 		int old_sent_id = -1;
-		ArrayList<String> nbest = new ArrayList<String>();
-		
 		LineReader nbestReader = new LineReader(f_nbest_in);
-		try { for (String line : nbestReader) {
-			String[] fds = Regex.threeBarsWithSpace.split(line);
-			int new_sent_id = Integer.parseInt(fds[0]);
-			if (old_sent_id != -1 && old_sent_id != new_sent_id) {
-				String best_hyp = mbr_reranker.process_one_sent(nbest, old_sent_id);//nbest: list of unique strings
-				t_writer_out.write(best_hyp);
-				t_writer_out.newLine();
-				t_writer_out.flush();
-				nbest.clear();
+		ArrayList<String> nbest = new ArrayList<String>();
+
+		if (numThreads==1) {
+			
+			try { for (String line : nbestReader) {
+				String[] fds = Regex.threeBarsWithSpace.split(line);
+				int new_sent_id = Integer.parseInt(fds[0]);
+				if (old_sent_id != -1 && old_sent_id != new_sent_id) {
+					String best_hyp = mbr_reranker.process_one_sent(nbest, old_sent_id);//nbest: list of unique strings
+					t_writer_out.write(best_hyp);
+					t_writer_out.newLine();
+					t_writer_out.flush();
+					nbest.clear();
+				}
+				old_sent_id = new_sent_id;
+				nbest.add(line);
+			} } finally { nbestReader.close(); }
+
+			//last nbest
+			String best_hyp = mbr_reranker.process_one_sent(nbest, old_sent_id);
+			t_writer_out.write(best_hyp);
+			t_writer_out.newLine();
+			t_writer_out.flush();
+			nbest.clear();
+			t_writer_out.close();
+			
+		} else {
+			
+			ExecutorService threadPool = Executors.newFixedThreadPool(numThreads);
+			
+			for (String line : nbestReader) {			
+				String[] fds = Regex.threeBarsWithSpace.split(line);
+				int new_sent_id = Integer.parseInt(fds[0]);
+				if (old_sent_id != -1 && old_sent_id != new_sent_id) {
+					
+					threadPool.execute(mbr_reranker.new RankerTask(nbest, old_sent_id));
+					
+					nbest.clear();
+				}
+				old_sent_id = new_sent_id;
+				nbest.add(line);
 			}
-			old_sent_id = new_sent_id;
-			nbest.add(line);
-		} } finally { nbestReader.close(); }
+			
+			//last nbest
+			threadPool.execute(mbr_reranker.new RankerTask(nbest, old_sent_id));
+			nbest.clear();
+			
+			threadPool.shutdown();
+			
+			try {
+				threadPool.awaitTermination(Integer.MAX_VALUE, TimeUnit.SECONDS);
+				
+				while (! mbr_reranker.resultsQueue.isEmpty()) {
+					RankerResult result = mbr_reranker.resultsQueue.remove();
+					String best_hyp = result.toString();
+					t_writer_out.write(best_hyp);
+					t_writer_out.newLine();
+				}
+				
+				t_writer_out.flush();
+				
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			} finally {
+				t_writer_out.close();
+			}
+			
+		}
 		
-		//last nbest
-		String best_hyp = mbr_reranker.process_one_sent(nbest, old_sent_id);
-		t_writer_out.write(best_hyp);
-		t_writer_out.newLine();
-		t_writer_out.flush();
-		nbest.clear();
-		
-		t_writer_out.close();
 		System.out.println("Total running time (seconds) is "
 			+ (System.currentTimeMillis() - start_time) / 1000.0);
 	}
 	
+	private class RankerTask implements Runnable {
+
+		final ArrayList<String> nbest;
+		final int sent_id;
+		
+		RankerTask(final ArrayList<String> nbest, final int sent_id) {
+			this.nbest = new ArrayList<String>(nbest);
+			this.sent_id = sent_id;
+		}
+		
+		public void run() {
+			String result = process_one_sent(nbest, sent_id);
+			resultsQueue.add(new RankerResult(result,sent_id));
+		}
+		
+	}
+	
+	private static class RankerResult implements Comparable<RankerResult> {
+		final String result;
+		final Integer sentenceNumber;
+		
+		RankerResult(String result, int sentenceNumber) {
+			this.result = result;
+			this.sentenceNumber = sentenceNumber;
+		}
+
+		public int compareTo(RankerResult o) {
+			return sentenceNumber.compareTo(o.sentenceNumber);
+		}
+		
+		public String toString() {
+			return result;
+		}
+	}
 }
