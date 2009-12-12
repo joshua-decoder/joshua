@@ -33,7 +33,7 @@ public class IntermediateOptimizer implements Runnable
   private String strToPrint;
 
   private double[] initialLambda;
-  private double[][] finalLambda;
+  private double[] finalLambda;
   private int[][] best1Cand_suffStats;
   private double[] finalScore;
   private int[] candCount;
@@ -97,7 +97,7 @@ public class IntermediateOptimizer implements Runnable
 
   public IntermediateOptimizer(
       int in_j, Semaphore in_blocker, Vector<String> in_threadOutput,
-      double[] in_initialLambda, double[][] in_finalLambda, int[][] in_best1Cand_suffStats,
+      double[] in_initialLambda, double[] in_finalLambda, int[][] in_best1Cand_suffStats,
       double[] in_finalScore, int[] in_candCount, double[][][] in_featVal_array,
       ConcurrentHashMap<Integer,int[]>[] in_suffStats_array)
   {
@@ -966,16 +966,16 @@ public class IntermediateOptimizer implements Runnable
     // now currLambda is the optimized weight vector on the current candidate list
     // (corresponding to initialLambda)
 
-    System.arraycopy(currLambda,1,finalLambda[j],1,numParams);
-    normalizeLambda(finalLambda[j]);
+    System.arraycopy(currLambda,1,finalLambda,1,numParams);
+    normalizeLambda(finalLambda);
     // check if a lambda is outside its threshold range
     for (int c = 1; c <= numParams; ++c) {
-      if (finalLambda[j][c] < minThValue[c] || finalLambda[j][c] > maxThValue[c]) {
+      if (finalLambda[c] < minThValue[c] || finalLambda[c] > maxThValue[c]) {
         println("Warning: after normalization, final lambda[j=" + j + "][" + c + "]="
-              + f4.format(finalLambda[j][c]) + " is outside its critical value range.",2);
+              + f4.format(finalLambda[c]) + " is outside its critical value range.",2);
       }
     }
-    println("Final lambda[j=" + j + "]: " + lambdaToString(finalLambda[j]),1);
+    println("Final lambda[j=" + j + "]: " + lambdaToString(finalLambda),1);
     println("(Final " + metricName_display + "[j=" + j + "]: " + finalScore[j] + ")",1);
     println("",1);
 

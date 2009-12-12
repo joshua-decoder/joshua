@@ -116,6 +116,10 @@ public class MertCore
     // chosen from the [minRandValue[c],maxRandValue[c]] range.
     // (*) minRandValue and maxRandValue must be real values, but not -Inf or +Inf
 
+  private int damianos_method;
+  private double damianos_param;
+  private double damianos_mult;
+
   private double[] defaultLambda;
     // "default" parameter values; simply the values read in the parameter file
 
@@ -674,7 +678,15 @@ println(docSubsetInfo[6] + "}",1);
 
       // set initialLambda[][]
       System.arraycopy(lambda,1,initialLambda[1],1,numParams);
-      for (int j = 2; j <= initsPerIt; ++j) { initialLambda[j] = randomLambda(); }
+      for (int j = 2; j <= initsPerIt; ++j) {
+        if (damianos_method == 0) {
+          initialLambda[j] = randomLambda();
+        } else {
+          initialLambda[j] = randomPerturbation(initialLambda[1], iteration, damianos_method, damianos_param, damianos_mult);
+        }
+      }
+
+
 
       double[] initialScore = new double[1+initsPerIt];
       double[] finalScore = new double[1+initsPerIt];
@@ -1187,7 +1199,7 @@ println(docSubsetInfo[6] + "}",1);
       for (int j = 1; j <= initsPerIt; ++j) {
         threadOutput[j] = new Vector<String>();
         pool.execute(new IntermediateOptimizer(j, blocker, threadOutput[j],
-                             initialLambda[j], finalLambda, best1Cand_suffStats[j],
+                             initialLambda[j], finalLambda[j], best1Cand_suffStats[j],
                              finalScore, candCount, featVal_array, suffStats_array));
       }
 
@@ -1736,14 +1748,16 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
         int docInfoSize = countNonEmptyLines(docInfoFileName);
 
         if (docInfoSize < numSentences) { // format #1 or #2
-          boolean format1 = false;
-
           numDocuments = docInfoSize;
           int i = 0;
 
           BufferedReader inFile = new BufferedReader(new FileReader(docInfoFileName));
+          String line = inFile.readLine();
+          boolean format1 = (!(line.contains(" ")));
+
           for (int doc = 0; doc < numDocuments; ++doc) {
-            String line = inFile.readLine();
+
+            if (doc != 0) line = inFile.readLine();
 
             int docSize = 0;
             if (format1) {
@@ -1767,11 +1781,22 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
 
           boolean format3 = false;
 
+          HashSet<String> seenStrings = new HashSet<String>();
+          BufferedReader inFile = new BufferedReader(new FileReader(docInfoFileName));
+          for (int i = 0; i < numSentences; ++i) {
+            // set format3 = true if a duplicate is found
+            String line = inFile.readLine();
+            if (seenStrings.contains(line)) format3 = true;
+            seenStrings.add(line);
+          }
+
+          inFile.close();
+
           HashSet<String> seenDocNames = new HashSet<String>();
           HashMap<String,Integer> docOrder = new HashMap<String,Integer>();
             // maps a document name to the order (0-indexed) in which it was seen
 
-          BufferedReader inFile = new BufferedReader(new FileReader(docInfoFileName));
+          inFile = new BufferedReader(new FileReader(docInfoFileName));
           for (int i = 0; i < numSentences; ++i) {
             String line = inFile.readLine();
 
@@ -1779,7 +1804,7 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
             if (format3) {
               docName = line;
             } else {
-              int sep_i = Math.max(line.indexOf('_'),line.indexOf('-'));
+              int sep_i = Math.max(line.lastIndexOf('_'),line.lastIndexOf('-'));
               docName = line.substring(0,sep_i);
             }
 
@@ -1950,8 +1975,8 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
           if (paramA.length == 2 && paramA[0].charAt(0) == '-') {
             argsVector.add(paramA[0]);
             argsVector.add(paramA[1]);
-          } else if (paramA.length > 2 && (paramA[0].equals("-m") || paramA[0].equals("-docSet"))) {
-            // -m (metricName) and -docSet are allowed to have extra optinos
+          } else if (paramA.length > 2 && (paramA[0].equals("-m") || paramA[0].equals("-docSet") || paramA[0].equals("-damianos"))) {
+            // -m (metricName), -docSet, and -damianos are allowed to have extra optinos
             for (int opt = 0; opt < paramA.length; ++opt) { argsVector.add(paramA[opt]); }
           } else {
             println("Malformed line in config file:");
@@ -2034,6 +2059,10 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
 	// Output specs
 	verbosity = 1;
 	decVerbosity = 0;
+	
+	damianos_method = 0;
+	damianos_param = 0.0;
+	damianos_mult = 0.0;
 	
 	int i = 0;
 	
@@ -2255,6 +2284,15 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
 			}
 			fakeFileNamePrefix = fakeFileNameTemplate.substring(0,QM_i);
 			fakeFileNameSuffix = fakeFileNameTemplate.substring(QM_i+1);
+		} else if (option.equals("-damianos")) {
+			damianos_method = Integer.parseInt(args[i+1]);
+			if (damianos_method < 0 || damianos_method > 3) {
+				println("damianos_method should be between 0 and 3");
+				System.exit(10);
+			}
+			damianos_param = Double.parseDouble(args[i+2]);
+			damianos_mult = Double.parseDouble(args[i+3]);
+			i += 2;
 		} else {
 			println("Unknown option " + option);
 			System.exit(10);
@@ -2849,7 +2887,7 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
 
   private double[] randomLambda()
   {
-    double[] retVal = new double[1+numParams];
+    double[] retLambda = new double[1+numParams];
 
     for (int c = 1; c <= numParams; ++c) {
       if (isOptimizable[c]) {
@@ -2857,13 +2895,45 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
         ++generatedRands;
         randVal = randVal * (maxRandValue[c] - minRandValue[c]); // number in [0.0,max-min]
         randVal = minRandValue[c] + randVal; // number in [min,max]
-        retVal[c] = randVal;
+        retLambda[c] = randVal;
       } else {
-        retVal[c] = defaultLambda[c];
+        retLambda[c] = defaultLambda[c];
       }
     }
 
-    return retVal;
+    return retLambda;
+  }
+
+  private double[] randomPerturbation(double[] origLambda, int i, double method, double param, double mult)
+  {
+    double sigma = 0.0;
+    if (method == 1) {
+      sigma = 1.0/Math.pow(i,param);
+    } else if (method == 2) {
+      sigma = Math.exp(-param*i);
+    } else if (method == 3) {
+      sigma = Math.max(0.0 , 1.0 - (i/param));
+    }
+
+    sigma = mult*sigma;
+
+    double[] retLambda = new double[1+numParams];
+
+    for (int c = 1; c <= numParams; ++c) {
+      if (isOptimizable[c]) {
+        double randVal = 2*randGen.nextDouble() - 1.0; // number in [-1.0,1.0]
+        ++generatedRands;
+        randVal = randVal * sigma; // number in [-sigma,sigma]
+        randVal = randVal * origLambda[c]; // number in [-sigma*orig[c],sigma*orig[c]]
+        randVal = randVal + origLambda[c]; // number in [orig[c]-sigma*orig[c],orig[c]+sigma*orig[c]]
+                                           //         = [orig[c]*(1-sigma),orig[c]*(1+sigma)]
+        retLambda[c] = randVal;
+      } else {
+        retLambda[c] = origLambda[c];
+      }
+    }
+
+    return retLambda;
   }
 
   private int c_fromParamName (String pName)
