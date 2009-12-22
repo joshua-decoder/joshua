@@ -29,9 +29,10 @@ import joshua.decoder.ff.FFDPState;
  */
 public class LMFFDPState implements FFDPState {
 	
-	private int[] left_lm_state_words;
-	private int[] right_lm_state_words;
+	private int[] leftLMStateWords;
+	private int[] rightLMStateWords;
 	private String sig = null;
+	
 	static String SIG_PREAMBLE = "lm "; //seperator for state in signature
 	static String SIG_SEP = " -S- "; //seperator for state in signature
 
@@ -45,24 +46,24 @@ public class LMFFDPState implements FFDPState {
 	public  LMFFDPState(SymbolTable p_symbolTable, String sig_) {
 		this.sig = sig_;
 		String[] states = sig.split(SIG_SEP); // TODO: use joshua.util.Regex
-		this.left_lm_state_words = p_symbolTable.getIDs(states[0]);
-		this.right_lm_state_words = p_symbolTable.getIDs(states[1]);
+		this.leftLMStateWords = p_symbolTable.getIDs(states[0]);
+		this.rightLMStateWords = p_symbolTable.getIDs(states[1]);
 	}
 		
 	public void setLeftLMStateWords(int[] words_){
-		this.left_lm_state_words = words_;
+		this.leftLMStateWords = words_;
 	}
 	
 	public int[] getLeftLMStateWords(){
-		return this.left_lm_state_words;
+		return this.leftLMStateWords;
 	}
 	
 	public void setRightLMStateWords(int[] words_){
-		this.right_lm_state_words = words_;
+		this.rightLMStateWords = words_;
 	}
 	
 	public int[] getRightLMStateWords(){
-		return this.right_lm_state_words;
+		return this.rightLMStateWords;
 	}
 
 	public String getSignature(boolean forceRecompute) {
@@ -78,11 +79,11 @@ public class LMFFDPState implements FFDPState {
 			
 			/*we can not simply use sb.append(left_lm_state_words), as it will just add the address of left_lm_state_words
 			 */
-			compute_state_sig(symbolTable, left_lm_state_words, sb); 
+			compute_state_sig(symbolTable, leftLMStateWords, sb); 
 			
 			sb.append(SIG_SEP);//TODO: do we really need this
 			
-			compute_state_sig(symbolTable, right_lm_state_words, sb);
+			compute_state_sig(symbolTable, rightLMStateWords, sb);
 			
 			this.sig = sb.toString();
 		}

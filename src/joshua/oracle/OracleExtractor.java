@@ -55,7 +55,7 @@ public class OracleExtractor {
 	 * @return Hypergraph closest to the reference.
 	 */
 	public HyperGraph getOracle(HyperGraph forest, int lmOrder, String reference) {
-		return extractor.oracle_extract_hg(forest, forest.sent_len, lmOrder, reference);
+		return extractor.oracle_extract_hg(forest, forest.sentLen, lmOrder, reference);
 	}
 	
 }

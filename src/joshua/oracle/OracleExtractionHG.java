@@ -175,8 +175,8 @@ public class OracleExtractionHG extends SplitHg {
 				orc_sent = (String) res[0];
 				orc_bleu = (Double) res[1];
 			}else{				
-				HyperGraph hg_oracle = orc_extractor.oracle_extract_hg(hg, hg.sent_len, lm_order, ref_sent);
-				orc_sent =  ViterbiExtractor.extractViterbiString(p_symbolTable, hg_oracle.goal_item);
+				HyperGraph hg_oracle = orc_extractor.oracle_extract_hg(hg, hg.sentLen, lm_order, ref_sent);
+				orc_sent =  ViterbiExtractor.extractViterbiString(p_symbolTable, hg_oracle.goalNode);
 				orc_bleu = orc_extractor.get_best_goal_cost(hg, orc_extractor.g_tbl_split_virtual_items);
 				
 				time_on_orc_extract += System.currentTimeMillis()-start_time;
@@ -200,13 +200,13 @@ public class OracleExtractionHG extends SplitHg {
 	
 	//find the oracle hypothesis in the nbest list
 	public Object[] oracle_extract_nbest(KBestExtractor kbest_extractor, HyperGraph hg, int n, boolean do_ngram_clip, String ref_sent){
-		if(hg.goal_item==null) return null;
+		if(hg.goalNode==null) return null;
 		kbest_extractor.reset_state();				
 		int next_n=0;
 		double orc_bleu=-1;
 		String orc_sent=null;
 		while(true){
-			String hyp_sent = kbest_extractor.get_kth_hyp(hg.goal_item, ++next_n, -1, null);//?????????
+			String hyp_sent = kbest_extractor.get_kth_hyp(hg.goalNode, ++next_n, -1, null);//?????????
 			if(hyp_sent==null || next_n > n) break;
 			double t_bleu = compute_sentence_bleu(this.p_symbolTable, ref_sent, hyp_sent, do_ngram_clip, 4);
 			if(t_bleu>orc_bleu){
@@ -250,7 +250,7 @@ public class OracleExtractionHG extends SplitHg {
 	 * (1) identify all possible match
 	 * (2) add a new deduction for each matches*/
 	protected  void process_one_combination_axiom(HGNode parent_item, HashMap<String, VirtualItem> virtual_item_sigs, HyperEdge cur_dt){
-		if (null == cur_dt.get_rule()) {
+		if (null == cur_dt.getRule()) {
 			throw new RuntimeException("error null rule in axiom");
 		}
 		double avg_ref_len = (parent_item.j-parent_item.i>=src_sent_len) ? ref_sent_len :  (parent_item.j-parent_item.i)*ref_sent_len*1.0/src_sent_len;//avg len?
@@ -341,7 +341,7 @@ public class OracleExtractionHG extends SplitHg {
 		boolean do_local_ngram_clip, int lm_order, double ref_len, double[] bleu_score, HashMap<String, Boolean> tbl_suffix, HashMap<String, Boolean> tbl_prefix
 	) {
 		//##### deductions under "goal item" does not have rule
-		if (null == dt.get_rule()) {
+		if (null == dt.getRule()) {
 			if (l_ant_virtual_item.size() != 1) {
 				throw new RuntimeException("error deduction under goal item have more than one item");
 			}
@@ -354,7 +354,7 @@ public class OracleExtractionHG extends SplitHg {
 		HashMap<String, Integer> old_ngram_counts = new HashMap<String, Integer>();//the ngram that has already been computed
 		int total_hyp_len =0;
 		int[] num_ngram_match = new int[g_bleu_order];
-		int[] en_words = dt.get_rule().getEnglish();
+		int[] en_words = dt.getRule().getEnglish();
 		
 		//####calulate new and old ngram counts, and len
 		
@@ -440,7 +440,7 @@ public class OracleExtractionHG extends SplitHg {
 					if (do_local_ngram_clip) {
 						// BUG: use joshua.util.Regex.spaces.split(...)
 						num_ngram_match[ngram.split("\\s+").length-1] +=
-						Support.find_min(final_count, (Integer)tbl_ref_ngrams.get(ngram));
+						Support.findMin(final_count, (Integer)tbl_ref_ngrams.get(ngram));
 					} else {
 						// BUG: use joshua.util.Regex.spaces.split(...)
 						num_ngram_match[ngram.split("\\s+").length-1] += final_count; //do not do any cliping
@@ -696,7 +696,7 @@ public class OracleExtractionHG extends SplitHg {
 			if (ref_ngram_tbl.containsKey(ngram)) {
 				if (do_ngram_clip) {
 					// BUG: use joshua.util.Regex.spaces.split(...)
-					num_ngram_match[ngram.split("\\s+").length-1] += Support.find_min((Integer)ref_ngram_tbl.get(ngram),(Integer)hyp_ngram_tbl.get(ngram)); //ngram clip
+					num_ngram_match[ngram.split("\\s+").length-1] += Support.findMin((Integer)ref_ngram_tbl.get(ngram),(Integer)hyp_ngram_tbl.get(ngram)); //ngram clip
 				} else {
 					// BUG: use joshua.util.Regex.spaces.split(...)
 					num_ngram_match[ngram.split("\\s+").length-1] += (Integer)hyp_ngram_tbl.get(ngram);//without ngram count clipping

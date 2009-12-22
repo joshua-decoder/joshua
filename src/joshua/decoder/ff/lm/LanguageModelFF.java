@@ -57,7 +57,7 @@ public class LanguageModelFF extends DefaultStatefulFF {
 	private final String STOP_SYM="</s>";
 	private final int STOP_SYM_ID;
 	
-	private final boolean add_start_and_end_symbol = true;
+	private final boolean addStartAndEndSymbol = true;
 	
 	
 	/* These must be static (for now) for LMGrammar, but they shouldn't be! in case of multiple LM features */
@@ -94,18 +94,18 @@ public class LanguageModelFF extends DefaultStatefulFF {
 	//boolean add_boundary=false; //this is needed unless the text already has <s> and </s>
 	
 	/** Symbol table that maps between Strings and integers. */
-	private final SymbolTable p_symbolTable;
+	private final SymbolTable symbolTable;
 	
 	public LanguageModelFF(int feat_id_, int ngram_order, SymbolTable psymbol, NGramLanguageModel lm_grammar, double weight_) {
 		super(weight_, feat_id_);
 		this.ngramOrder = ngram_order;
 		this.lmGrammar  = lm_grammar;
-		this.p_symbolTable = psymbol;
+		this.symbolTable = psymbol;
 		this.START_SYM_ID = psymbol.addTerminal(START_SYM);
 		this.STOP_SYM_ID = psymbol.addTerminal(STOP_SYM);
 		
-		LanguageModelFF.BACKOFF_LEFT_LM_STATE_SYM_ID = p_symbolTable.addTerminal(BACKOFF_LEFT_LM_STATE_SYM);
-		LanguageModelFF.NULL_RIGHT_LM_STATE_SYM_ID = p_symbolTable.addTerminal(NULL_RIGHT_LM_STATE_SYM);
+		LanguageModelFF.BACKOFF_LEFT_LM_STATE_SYM_ID = symbolTable.addTerminal(BACKOFF_LEFT_LM_STATE_SYM);
+		LanguageModelFF.NULL_RIGHT_LM_STATE_SYM_ID = symbolTable.addTerminal(NULL_RIGHT_LM_STATE_SYM);
 	}
 	
 	/*the transition cost for LM: sum of the costs of the new ngrams created
@@ -113,23 +113,22 @@ public class LanguageModelFF extends DefaultStatefulFF {
 	//antstates: ArrayList of states of this model in ant items
 	public StatefulFFTransitionResult transition(Rule rule, ArrayList<FFDPState> previous_states, int span_start, int span_end, SourcePath srcPath) {
 		//long start = Support.current_time();		
-		StatefulFFTransitionResult res = this.lookup_words1_equv_state(rule.getEnglish(), previous_states);	
+		StatefulFFTransitionResult res = this.lookupWordsEquvState(rule.getEnglish(), previous_states);	
 		//	Chart.g_time_lm += Support.current_time()-start;
 		return res;
 	}
-
 
 	
 	/*depends on the rule only*/
 	/*will consider all the complete ngrams, and all the incomplete-ngrams that will have sth fit into its left side*/
 	public double estimate(Rule rule) {
-		return estimate_rule_prob(rule.getEnglish());
+		return estimateRuleProb(rule.getEnglish());
 	}
 	
 	//only called after a complete hyp for the whole input sentence is obtaned
 	public double finalTransition(FFDPState state) {
 		if (null != state) {
-			return compute_equiv_state_final_transition((LMFFDPState)state);
+			return computeEquivStateFinalTransition((LMFFDPState)state);
 		} else {
 			return 0.0;
 		}
@@ -137,39 +136,39 @@ public class LanguageModelFF extends DefaultStatefulFF {
 	
 	/*when calculate transition prob: when saw a <bo>, then need to add backoff weights, start from non-state words*/
 	//	return states and cost
-	private StatefulFFTransitionResult lookup_words1_equv_state(int[] en_words,	ArrayList<FFDPState> previous_states) {
+	private StatefulFFTransitionResult lookupWordsEquvState(int[] enWords,	ArrayList<FFDPState> previousStates) {
 		//long start_step1 = Support.current_time();
 		//for left state
-		ArrayList<Integer> left_state_org_wrds = new ArrayList<Integer>();
+		ArrayList<Integer> leftLMStateWrds = new ArrayList<Integer>();
 		//boolean keep_left_state = true;//stop if: (1) end of rule; (2) left_state_org_wrds.size()==this.ngramOrder-1; (3) seperating point;
 		
 		//before l_context finish, left state words are in current_ngram, after that, all words will be replaced with right state words
 		ArrayList<Integer> current_ngram   = new ArrayList<Integer>();
 		double             transition_cost = 0.0;
 		
-		for (int c = 0; c < en_words.length; c++) {
-			int c_id = en_words[c];
-			if (p_symbolTable.isNonterminal(c_id)) {
-				if (null == previous_states) {
+		for (int c = 0; c < enWords.length; c++) {
+			int c_id = enWords[c];
+			if (symbolTable.isNonterminal(c_id)) {
+				if (null == previousStates) {
 					throw new IllegalArgumentException(
 						"LMModel.lookup_words1_equv_state: null previous_states");
 				}
 				
-				int index = p_symbolTable.getTargetNonterminalIndex(c_id);
+				int index = symbolTable.getTargetNonterminalIndex(c_id);
 				if (logger.isLoggable(Level.FINEST)) {
 					logger.finest(
-						"Target symbol " + p_symbolTable.getWord(c_id) 
+						"Target symbol " + symbolTable.getWord(c_id) 
 						+ " with id " + c_id 
 						+ " and nonterminal index of " + index);
 				}
-				if (index >= previous_states.size()) {
+				if (index >= previousStates.size()) {
 					logger.severe(
-							"Target symbol " + p_symbolTable.getWord(c_id) 
+							"Target symbol " + symbolTable.getWord(c_id) 
 							+ " with id " + c_id 
 							+ " and nonterminal index of " + index 
 							+ " is about to trigger an IndexOutOfBoundsException");
 				}
-				LMFFDPState state = (LMFFDPState) previous_states.get(index);
+				LMFFDPState state = (LMFFDPState) previousStates.get(index);
 				int[] l_context = state.getLeftLMStateWords();
 				int[] r_context = state.getRightLMStateWords();
 				if (l_context.length != r_context.length) {
@@ -200,8 +199,8 @@ public class LanguageModelFF extends DefaultStatefulFF {
 						current_ngram.remove(0);
 					}
 					
-					if (left_state_org_wrds.size() < this.ngramOrder - 1) {
-						left_state_org_wrds.add(t);
+					if (leftLMStateWrds.size() < this.ngramOrder - 1) {
+						leftLMStateWrds.add(t);
 					}
 				}
 				
@@ -224,47 +223,47 @@ public class LanguageModelFF extends DefaultStatefulFF {
 					
 					current_ngram.remove(0);
 				}
-				if (left_state_org_wrds.size() < this.ngramOrder - 1) {
-					left_state_org_wrds.add(c_id);
+				if (leftLMStateWrds.size() < this.ngramOrder - 1) {
+					leftLMStateWrds.add(c_id);
 				}
 			}
 		}
 		//### create tabl
-		StatefulFFTransitionResult res_tbl = new StatefulFFTransitionResult();
-		LMFFDPState  model_states = new LMFFDPState();
-		res_tbl.setStateForItem(model_states);
+		StatefulFFTransitionResult resTbl = new StatefulFFTransitionResult();
+		LMFFDPState  modelStates = new LMFFDPState();
+		resTbl.setStateForItem(modelStates);
 		
 		//##### get left euquiv state 
 		double[] lm_l_cost = new double[2];
-		int[] equiv_l_state = this.lmGrammar.leftEquivalentState(Support.sub_int_array(left_state_org_wrds, 0, left_state_org_wrds.size()),	this.ngramOrder, lm_l_cost);
-		model_states.setLeftLMStateWords(equiv_l_state);
+		int[] equiv_l_state = this.lmGrammar.leftEquivalentState(Support.sub_int_array(leftLMStateWrds, 0, leftLMStateWrds.size()),	this.ngramOrder, lm_l_cost);
+		modelStates.setLeftLMStateWords(equiv_l_state);
 		//System.out.println("left state: " + Symbol.get_string(equiv_l_state));
 		
 		//##### trabsition and estimate cost
 		transition_cost += lm_l_cost[0];//add finalized cost for the left state words
-		res_tbl.setTransitionCost(transition_cost);
+		resTbl.setTransitionCost(transition_cost);
 		//System.out.println("##tran cost: " + transition_cost +" lm_l_cost[0]: " + lm_l_cost[0]);
-		double estimated_future_cost=0.0;
+		double estimatedFutureCost=0.0;
 		if(this.ngramOrder>1){//no estiamtion for unigram lm
 			if (JoshuaConfiguration.use_left_equivalent_state) {
-				estimated_future_cost = lm_l_cost[1];
+				estimatedFutureCost = lm_l_cost[1];
 			} else {
-				estimated_future_cost = estimate_state_prob(model_states,false,false);//bonus function
+				estimatedFutureCost = estimateStateProb(modelStates, false, false);//bonus function
 			}
 		}
-		res_tbl.setFutureCostEstimation(estimated_future_cost);
+		resTbl.setFutureCostEstimation(estimatedFutureCost);
 		//##### get right equiv state
 		//if(current_ngram.size()>this.ngramOrder-1 || equiv_l_state.length>this.ngramOrder-1) throw new RuntimeException();
 		int[] equiv_r_state = this.lmGrammar.rightEquivalentState(Support.sub_int_array(current_ngram, 0, current_ngram.size()), this.ngramOrder);
-		model_states.setRightLMStateWords(equiv_r_state);
+		modelStates.setRightLMStateWords(equiv_r_state);
 		//System.out.println("right state: " + Symbol.get_string(right_state));
 		
 		//time_step2 += Support.current_time()-start_step2;
-		return res_tbl;	
+		return resTbl;	
 	}
 	
 	
-	private double score_chunk(ArrayList<Integer> words, boolean consider_incomplete_ngrams, boolean skip_start) {
+	private double scoreChunk(ArrayList<Integer> words, boolean consider_incomplete_ngrams, boolean skip_start) {
 		if (words.size() <= 0) {
 			return 0.0;
 		} else {
@@ -288,22 +287,22 @@ public class LanguageModelFF extends DefaultStatefulFF {
 	*if the left side of incomplete-ngrams is a ECLIPS, then ignore the incomplete-ngrams
 	*if the left side of incomplete-ngrams is a Non-Terminal, then consider the incomplete-ngrams  
 	*if the left side of incomplete-ngrams is boundary of a rule, then consider the incomplete-ngrams*/
-	private double estimate_rule_prob(int[] en_words) {
+	private double estimateRuleProb(int[] enWords) {
 		double    estimate   = 0.0;
 		boolean   consider_incomplete_ngrams = true;
 		ArrayList<Integer> words      = new ArrayList<Integer>();
-		boolean   skip_start = (en_words[0] == START_SYM_ID);
+		boolean   skip_start = (enWords[0] == START_SYM_ID);
 		
-		for (int c = 0; c < en_words.length; c++) {
-			int c_wrd = en_words[c];
+		for (int c = 0; c < enWords.length; c++) {
+			int c_wrd = enWords[c];
 			/*if (c_wrd == Symbol.ECLIPS_SYM_ID) {
 				estimate += score_chunk(
 					words, consider_incomplete_ngrams, skip_start);
 				consider_incomplete_ngrams = false;//for the LM bonus function: this simply means the right state will not be considered at all because all the ngrams in right-context will be incomplete
 				words.clear();
 				skip_start = false;
-			} else*/ if (p_symbolTable.isNonterminal(c_wrd)) {
-				estimate += score_chunk(
+			} else*/ if (symbolTable.isNonterminal(c_wrd)) {
+				estimate += scoreChunk(
 					words, consider_incomplete_ngrams, skip_start);
 				consider_incomplete_ngrams = true;
 				words.clear();
@@ -312,7 +311,7 @@ public class LanguageModelFF extends DefaultStatefulFF {
 				words.add(c_wrd);
 			}
 		}
-		estimate += score_chunk(
+		estimate += scoreChunk(
 			words, consider_incomplete_ngrams, skip_start);
 		return estimate;
 	}
@@ -322,7 +321,7 @@ public class LanguageModelFF extends DefaultStatefulFF {
 	//in state, all the ngrams are incomplete
 	//only get the estimation for the left-state
 	//get the true prob for right-state, if add_end==true
-	private double estimate_state_prob(LMFFDPState state, boolean add_start, boolean add_end) {
+	private double estimateStateProb(LMFFDPState state, boolean add_start, boolean add_end) {
 		double res = 0.0;
 		
 		int[]   l_context = state.getLeftLMStateWords();
@@ -344,7 +343,7 @@ public class LanguageModelFF extends DefaultStatefulFF {
 			if ((Integer)list.get(0) != START_SYM_ID) {
 				skip_start = false;
 			}
-			res += score_chunk(list, consider_incomplete_ngrams, skip_start);
+			res += scoreChunk(list, consider_incomplete_ngrams, skip_start);
 		}
 		/*if (add_start == true) {
 			System.out.println("left context: " +Symbol.get_string(l_context) + ";prob "+res);
@@ -356,7 +355,7 @@ public class LanguageModelFF extends DefaultStatefulFF {
 				list.add(r_context[k]);
 			}
 			list.add(STOP_SYM_ID);
-			double tem = score_chunk(list, false, false);
+			double tem = scoreChunk(list, false, false);
 			res += tem;
 			//System.out.println("right context:"+ Symbol.get_string(r_context) + "; score: "  + tem);
 		}
@@ -364,7 +363,8 @@ public class LanguageModelFF extends DefaultStatefulFF {
 	}
 	
 	
-	private double compute_equiv_state_final_transition(LMFFDPState state) {
+	private double computeEquivStateFinalTransition(LMFFDPState state) {
+		
 		double res = 0.0;
 		ArrayList<Integer> current_ngram = new ArrayList<Integer>();
 		int[]   l_context = state.getLeftLMStateWords();		
@@ -375,7 +375,7 @@ public class LanguageModelFF extends DefaultStatefulFF {
 		}
 		
 		//##################left context
-		if (add_start_and_end_symbol) current_ngram.add(START_SYM_ID);
+		if (addStartAndEndSymbol) current_ngram.add(START_SYM_ID);
 		
 		for (int i = 0; i < l_context.length; i++) {
 			int t = l_context[i];
@@ -402,7 +402,7 @@ public class LanguageModelFF extends DefaultStatefulFF {
 		
 		//####################right context
 		//switch context, we will never score the right context probablity because they are either duplicate or partional ngram
-		if(add_start_and_end_symbol){
+		if(addStartAndEndSymbol){
 			int t_size = current_ngram.size();
 			for (int i = 0; i < r_context.length; i++) {
 				//replace context

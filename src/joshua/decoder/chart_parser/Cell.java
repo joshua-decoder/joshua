@@ -133,7 +133,7 @@ class Cell {
 		
 		for (HGNode item : bin.getSortedItems()) {
 			if (item.lhs == this.goalSymID) {
-				double cost = item.best_hyperedge.best_cost;
+				double cost = item.bestHyperedge.bestDerivationCost;
 				double finalTransitionCost = 0.0;
 				
 				for (FeatureFunction ff : this.chart.featureFunctions) {
@@ -161,8 +161,8 @@ class Cell {
 					this.sortedItems.add(goalItem);
 				} else {
 					goalItem.addHyperedgeInItem(dt);
-					if (goalItem.best_hyperedge.best_cost > dt.best_cost) {
-						goalItem.best_hyperedge = dt;
+					if (goalItem.bestHyperedge.bestDerivationCost > dt.bestDerivationCost) {
+						goalItem.bestHyperedge = dt;
 					}
 				}
 			} // End if item.lhs == this.goalSymID
@@ -175,7 +175,7 @@ class Cell {
 				logger.severe("goalItem is null (this will cause the RuntimeException below)");
 			} else {
 				logger.info(String.format("Goal item, best cost is %.3f",
-					goalItem.best_hyperedge.best_cost));
+					goalItem.bestHyperedge.bestDerivationCost));
 			}
 		}
 		ensureSorted();
@@ -233,14 +233,14 @@ class Cell {
 				 *  may change, basically, we should remove the
 				 *  oldItem, and re-insert it (linear time), this is too expense)
 				 **/
-				if (res.est_total_cost < oldItem.est_total_cost) {//merget old to new					
-					oldItem.is_dead = true; // this.heapItems.remove(oldItem);
+				if (res.estTotalCost < oldItem.estTotalCost) {//merget old to new					
+					oldItem.isDead = true; // this.heapItems.remove(oldItem);
 					this.qtyDeadItems++;
-					res.addHyperedgesInItem(oldItem.l_hyperedges);
+					res.addHyperedgesInItem(oldItem.hyperedges);
 					addNewItem(res); //this will update the HashMap, so that the oldItem is destroyed
 					
 				} else {//merge new to old, does not trigger pruningItems
-					oldItem.addHyperedgesInItem(res.l_hyperedges);
+					oldItem.addHyperedgesInItem(res.hyperedges);
 				}
 				
 			} else { // first time item
@@ -294,9 +294,9 @@ class Cell {
 		si.l_items.add(item);//TODO what about the dead items?
 		
 		//update bestItemCost and cutoffCost
-		if (item.est_total_cost < this.bestItemCost) {
-			this.bestItemCost = item.est_total_cost;
-			this.cutoffCost = Support.find_min(
+		if (item.estTotalCost < this.bestItemCost) {
+			this.bestItemCost = item.estTotalCost;
+			this.cutoffCost = Support.findMin(
 					this.bestItemCost + JoshuaConfiguration.relative_threshold, 
 					IMPOSSIBLE_COST);
 		}
@@ -333,9 +333,9 @@ class Cell {
 		}
 		
 		while (this.itemsHeap.size() - this.qtyDeadItems > JoshuaConfiguration.max_n_items //bin limit pruning
-				|| this.itemsHeap.peek().est_total_cost >= this.cutoffCost) { // relative threshold pruning
+				|| this.itemsHeap.peek().estTotalCost >= this.cutoffCost) { // relative threshold pruning
 			HGNode worstItem = this.itemsHeap.poll();
-			if (worstItem.is_dead) { // clear the corrupted item
+			if (worstItem.isDead) { // clear the corrupted item
 				this.qtyDeadItems--;
 			} else {
 				this.itemsTbl.remove(worstItem.getSignature()); // always make this.tableItems current
@@ -344,9 +344,9 @@ class Cell {
 		}
 		
 		if (this.itemsHeap.size() - this.qtyDeadItems == JoshuaConfiguration.max_n_items) {//TODO:??
-			this.cutoffCost = Support.find_min(
+			this.cutoffCost = Support.findMin(
 				this.cutoffCost,
-				this.itemsHeap.peek().est_total_cost + EPSILON);
+				this.itemsHeap.peek().estTotalCost + EPSILON);
 		}
 	}
 	

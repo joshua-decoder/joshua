@@ -76,14 +76,15 @@ public interface FeatureFunction {
 	 * (3) extract dynamic-programming state
 	 */
 	FFTransitionResult transition(
-			Rule rule, ArrayList<FFDPState> previous_states,
-		int span_start, int span_end, SourcePath srcPath);
+			Rule rule, ArrayList<FFDPState> previousStates,
+		int spanStart, int spanEnd, SourcePath srcPath);
 	
 	FFTransitionResult transition(HyperEdge edge,
-			Rule rule, ArrayList<FFDPState> previous_states,
-		int span_start, int span_end, SourcePath srcPath);
+			Rule rule, ArrayList<FFDPState> previousStates,
+		int spanStart, int spanEnd, SourcePath srcPath);
 	
 	
 	double finalTransition(FFDPState state);
+	
 	double finalTransition(HyperEdge edge, FFDPState state);
 }

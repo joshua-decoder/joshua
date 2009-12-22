@@ -230,8 +230,8 @@ public class DiskHyperGraph {
 		if (logger.isLoggable(Level.INFO)) 
 			logger.info("Number of Items is: " + this.itemToID.size());
 		this.writer.write(
-			SENTENCE_TAG + hg.sent_id
-			+ " " + hg.sent_len
+			SENTENCE_TAG + hg.sentID
+			+ " " + hg.sentLen
 			+ " " + this.itemToID.size()
 			+ " " + this.qtyDeductions
 			+ "\n" );
@@ -255,7 +255,7 @@ public class DiskHyperGraph {
 	 */
 	private void constructItemTables(HyperGraph hg) {
 		resetStates();
-		constructItemTables(hg.goal_item);
+		constructItemTables(hg.goalNode);
 	}
 	
 	/**
@@ -266,10 +266,10 @@ public class DiskHyperGraph {
 		if (this.itemToID.containsKey(item)) return;
 		
 		// first: assign IDs to all my antecedents
-		for (HyperEdge hyperEdge : item.l_hyperedges) {
+		for (HyperEdge hyperEdge : item.hyperedges) {
 			this.qtyDeductions++;
-			if (null != hyperEdge.get_ant_items()) {
-				for (HGNode antecedentItem : hyperEdge.get_ant_items()) {
+			if (null != hyperEdge.getAntNodes()) {
+				for (HGNode antecedentItem : hyperEdge.getAntNodes()) {
 					constructItemTables(antecedentItem);
 				}
 			}
@@ -295,9 +295,9 @@ public class DiskHyperGraph {
 				.append(this.symbolTable.getWord(item.lhs))
 				.append(" ")
 				.append(
-					null == item.l_hyperedges
+					null == item.hyperedges
 					? 0
-					: item.l_hyperedges.size() )
+					: item.hyperedges.size() )
 				.append(ITEM_STATE_TAG)
 				.append(
 					// Assume LM is the only stateful feature
@@ -310,8 +310,8 @@ public class DiskHyperGraph {
 				.toString()
 			);
 		
-		if (null != item.l_hyperedges) {
-			for (HyperEdge hyperEdge : item.l_hyperedges) {
+		if (null != item.hyperedges) {
+			for (HyperEdge hyperEdge : item.hyperedges) {
 				writeDeduction(item, hyperEdge);
 			}
 		}
@@ -327,7 +327,7 @@ public class DiskHyperGraph {
 	throws IOException {
 		//get rule id
 		int ruleID = NULL_RULE_ID;
-		final Rule deduction_rule = deduction.get_rule();
+		final Rule deduction_rule = deduction.getRule();
 		if (null != deduction_rule) {
 			ruleID = deduction_rule.getRuleID();
 			if	(! isOutOfVocabularyRule(deduction_rule)) {
@@ -337,21 +337,21 @@ public class DiskHyperGraph {
 		
 		StringBuffer s = new StringBuffer();
 		//line: best_cost, num_items, item_ids, rule id, OOV-Non-Terminal (optional), OOV (optional),
-		s.append(String.format("%.4f ", deduction.best_cost));
+		s.append(String.format("%.4f ", deduction.bestDerivationCost));
 		//s.append(" ").append(cur_d.best_cost).append(" ");//this 1.2 faster than the previous statement
 		
 		//s.append(String.format("%.4f ", cur_d.get_transition_cost(false)));
 		//s.append(cur_d.get_transition_cost(false)).append(" ");//this 1.2 faster than the previous statement, but cost 1.4 larger disk space
 		
-		if (null == deduction.get_ant_items()) {
+		if (null == deduction.getAntNodes()) {
 			s.append(0);
 		} else {
-			final int qtyItems = deduction.get_ant_items().size();
+			final int qtyItems = deduction.getAntNodes().size();
 			s.append(qtyItems);
 			for (int i = 0; i < qtyItems; i++) {
 				s.append(' ')
 					.append(this.itemToID.get(
-						deduction.get_ant_items().get(i) ));
+						deduction.getAntNodes().get(i) ));
 			}
 		}
 		s.append(' ')
@@ -383,7 +383,7 @@ public class DiskHyperGraph {
 		for (int k = 0; k < this.featureFunctions.size(); k++) {
 			FeatureFunction m = this.featureFunctions.get(k);
 			line.append(String.format("%.4f",
-				null != deduction.get_rule()
+				null != deduction.getRule()
 				? // deductions under goal item do not have rules
 					HyperGraph
 						.computeTransition(deduction, m, item.i, item.j)
@@ -484,8 +484,8 @@ public class DiskHyperGraph {
 			for (int t = 0; t < qtyDeductions; t++) {
 				HyperEdge deduction = readDeduction();
 				deductions.add(deduction);
-				if (deduction.best_cost < bestCost) {
-					bestCost      = deduction.best_cost;
+				if (deduction.bestDerivationCost < bestCost) {
+					bestCost      = deduction.bestDerivationCost;
 					bestDeduction = deduction;
 				}
 			}
@@ -551,7 +551,7 @@ public class DiskHyperGraph {
 		} else {
 			hyperEdge = new HyperEdge(rule, bestCost, null, antecedentItems, null);
 		}
-		hyperEdge.get_transition_cost(true); // to set the transition cost
+		hyperEdge.getTransitionCost(true); // to set the transition cost
 		return hyperEdge;
 	}
 	

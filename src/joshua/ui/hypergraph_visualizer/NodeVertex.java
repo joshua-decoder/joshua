@@ -33,10 +33,10 @@ public class NodeVertex extends Vertex {
 	
 	public HyperEdge incrementEdge()
 	{
-		if (edgeIndex == node.l_hyperedges.size() - 1)
+		if (edgeIndex == node.hyperedges.size() - 1)
 			edgeIndex = 0;
 		else
 			edgeIndex++;
-		return node.l_hyperedges.get(edgeIndex);
+		return node.hyperedges.get(edgeIndex);
 	}
 }

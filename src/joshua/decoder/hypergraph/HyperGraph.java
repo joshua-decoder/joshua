@@ -40,27 +40,27 @@ import java.util.logging.Logger;
 public class HyperGraph {
 
 	// pointer to goal HGNode
-	public HGNode goal_item = null;
+	public HGNode goalNode = null;
 	
-	public int num_items = -1;
-	public int num_hyperedges = -1;
-	public int sent_id = -1;
-	public int sent_len = -1;
+	public int numNodes = -1;
+	public int numEdges = -1;
+	public int sentID = -1;
+	public int sentLen = -1;
 	
 	static final Logger logger = Logger.getLogger(HyperGraph.class.getName());
 	
 	public HyperGraph(HGNode g_item, int n_items, int n_deducts, int s_id, int s_len){
-		goal_item = g_item;
-		num_items = n_items;
-		num_hyperedges = n_deducts;
-		sent_id = s_id;
-		sent_len = s_len;
+		goalNode = g_item;
+		numNodes = n_items;
+		numEdges = n_deducts;
+		sentID = s_id;
+		sentLen = s_len;
 	}
 	
 	
 	
 	static public FFTransitionResult computeTransition(HyperEdge dt, FeatureFunction m, int start_span, int end_span){
-		return computeTransition(dt, dt.get_rule(), dt.get_ant_items(), m,  start_span,  end_span, dt.getSourcePath());
+		return computeTransition(dt, dt.getRule(), dt.getAntNodes(), m,  start_span,  end_span, dt.getSourcePath());
 	}
 	
 	static public FFTransitionResult computeTransition(HyperEdge dt, Rule rl,  ArrayList<HGNode> l_ant_hgnodes, FeatureFunction m, int start_span, int end_span, SourcePath srcPath){
@@ -89,7 +89,7 @@ public class HyperGraph {
 		if(m.isStateful() == false){//stateless feature
 			res = m.finalTransition(dt, null);
 		}else{//stateful feature
-			res = m.finalTransition(dt, dt.get_ant_items().get(0).getFeatDPState(m));
+			res = m.finalTransition(dt, dt.getAntNodes().get(0).getFeatDPState(m));
 		}
 		return res;
 	} 
@@ -98,31 +98,35 @@ public class HyperGraph {
 	
 	//####### template to explore hypergraph #########################
 	/*
-	private void operation_hg(HyperGraph hg){		
-		tbl_processed_items.clear(); 
-		operation_item(hg.goal_item);
+	private HashSet<HGNode> processHGNodesTbl =  new HashSet<HGNode>();
+	
+	private void operationHG(HyperGraph hg){		
+		processHGNodesTbl.clear(); 
+		operationNode(hg.goalNode);
 	}
 	
-	private void operation_item(Item it){
-		if(tbl_processed_items.containsKey(it))return;
-		tbl_processed_items.put(it,1);
+	private void operationNode(HGNode it){
+		if(processHGNodesTbl.contains(it))
+			return;
+		processHGNodesTbl.add(it);
 		
-		//### recursive call on each deduction
-		for(Deduction dt : it.l_deductions){
-			operation_deduction(dt);//deduction-specifc operation
+		//=== recursive call on each edge
+		for(HyperEdge dt : it.hyperedges){
+			operationEdge(dt);
 		}
 		
-		//### item-specific operation
+		//=== node-specific operation
 	}
 	
-	private void operation_deduction(Deduction dt){
-		//### recursive call on each ant item
-		if(dt.get_ant_items()!=null)
-			for(Item ant_it : dt.get_ant_items())
-				operation_item(ant_it);
+	private void operationEdge(HyperEdge dt){
 		
-		//### deduction-specific operation				
-		Rule rl = dt.get_rule();
+		//=== recursive call on each ant node
+		if(dt.getAntNodes()!=null)
+			for(HGNode ant_it : dt.getAntNodes())
+				operationNode(ant_it);
+		
+		//=== edge-specific operation				
+		Rule rl = dt.getRule();
 		if(rl!=null){
 		
 		}

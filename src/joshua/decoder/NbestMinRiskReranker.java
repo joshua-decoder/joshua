@@ -195,7 +195,7 @@ public class NbestMinRiskReranker {
 			HashMap<String,Integer> tbl_ngram_true_hyp = l_ngram_tbls.get(i);
 			double true_prob = nbest_probs.get(i);
 			int true_len = l_sent_lens.get(i);
-			gain += true_prob * BLEU.compute_sentence_bleu(true_len, tbl_ngram_true_hyp, cur_hyp_len, tbl_ngram_cur_hyp, do_ngram_clip, bleu_order);
+			gain += true_prob * BLEU.computeSentenceBleu(true_len, tbl_ngram_true_hyp, cur_hyp_len, tbl_ngram_cur_hyp, do_ngram_clip, bleu_order);
 		}
 		//System.out.println("Gain is " + gain);
 		return gain;
@@ -211,7 +211,7 @@ public class NbestMinRiskReranker {
 		for (int i = 0; i < nbest_hyps.size(); i++) {
 			String true_hyp  = nbest_hyps.get(i);
 			double true_prob = nbest_probs.get(i);
-			gain += true_prob * BLEU.compute_sentence_bleu(true_hyp, cur_hyp, do_ngram_clip, bleu_order);
+			gain += true_prob * BLEU.computeSentenceBleu(true_hyp, cur_hyp, do_ngram_clip, bleu_order);
 		}
 		//System.out.println("Gain is " + gain);
 		return gain;

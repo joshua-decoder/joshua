@@ -36,7 +36,7 @@ public class ComputeItemResult {
 		
 		if (null != previousItems) {
 			for (HGNode item : previousItems) {
-				finalizedTotalCost += item.best_hyperedge.best_cost;
+				finalizedTotalCost += item.bestHyperedge.bestDerivationCost;
 			}
 		}
 		

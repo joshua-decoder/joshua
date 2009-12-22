@@ -49,7 +49,7 @@ public class JungHyperGraph extends DirectedOrderedSparseMultigraph<Vertex,Edge>
 		vocab = st;
 		targetIndex = 0;
 		nonTreeEdgeEndpoints = new ArrayList<Vertex>();
-		addNode(hg.goal_item, null);
+		addNode(hg.goalNode, null);
 	}
 
 	public Vertex getRoot()
@@ -71,7 +71,7 @@ public class JungHyperGraph extends DirectedOrderedSparseMultigraph<Vertex,Edge>
 			addEdge(new Edge(false), edge_out, v);
 		else
 			root = v;
-		addHyperEdge(v, n.best_hyperedge);
+		addHyperEdge(v, n.bestHyperedge);
 		return;
 	}
 
@@ -81,11 +81,11 @@ public class JungHyperGraph extends DirectedOrderedSparseMultigraph<Vertex,Edge>
 			return;
 		Vertex v = new HyperEdgeVertex(e);
 		addEdge(new Edge(false), parent, v);
-		if (e.get_rule() != null) {
+		if (e.getRule() != null) {
 			ArrayList<HGNode> items = null;
-			if (e.get_ant_items() != null)
-				items = new ArrayList<HGNode>(e.get_ant_items());
-			for (int t : e.get_rule().getEnglish()) {
+			if (e.getAntNodes() != null)
+				items = new ArrayList<HGNode>(e.getAntNodes());
+			for (int t : e.getRule().getEnglish()) {
 				if (vocab.isNonterminal(t)) {
 					addNode(items.get(0), v);
 					items.remove(0);
@@ -106,7 +106,7 @@ public class JungHyperGraph extends DirectedOrderedSparseMultigraph<Vertex,Edge>
 			}
 		}
 		else {
-			for (HGNode i : e.get_ant_items()) {
+			for (HGNode i : e.getAntNodes()) {
 				addNode(i, v);
 			}
 		}

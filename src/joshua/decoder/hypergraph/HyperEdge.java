@@ -31,30 +31,35 @@ import joshua.decoder.ff.tm.Rule;
  */
 
 public class HyperEdge {
-	// the 1-best cost of all possible derivation: 
-	// best costs of:
-	// ant hgnodes + non_stateless_transition_cost + r.statelesscost
-	public double best_cost= Double.POSITIVE_INFINITY;
+	
+	/** the 1-best cost of all possible derivations: 
+	 * best costs of ant hgnodes + transitionCost
+	 **/
+	public double bestDerivationCost = Double.POSITIVE_INFINITY;
 
-	// this remember the stateless + non_stateless
-	// cost assocated with the rule (excluding the 
-	// best-cost from ant items)
-	private Double transition_cost=null;
+	/**this remembers the stateless + non_stateless cost 
+	 * assocated with the rule (excluding the best-cost from ant nodes)
+	 * */
+	private Double transitionCost=null;
+	
 	private Rule rule;
+	
 	private SourcePath srcPath = null;
 
-	//if l_ant_items is null, then this shoud be the terminal rule
-	private ArrayList<HGNode> l_ant_hgnodes=null; //the items appear in the list as per the index of the Foreign side non-terminal
+	/**If antNodes is null, then this edge corresponds to a rule with zero arity.
+	 * Aslo, the nodes appear in the list as per the index of the Foreign side non-terminal
+	 * */
+	private ArrayList<HGNode> antNodes = null; 
 	
-	public HyperEdge(Rule rl, double total_cost, Double trans_cost, ArrayList<HGNode> ant_items, SourcePath sp){
-		best_cost=total_cost;
-		transition_cost=trans_cost;
+	public HyperEdge(Rule rl, double bestDerivationCost_, Double transitionCost_, ArrayList<HGNode> antNodes_, SourcePath sp){
+		bestDerivationCost = bestDerivationCost_;
+		transitionCost=transitionCost_;
 		rule=rl;
-		l_ant_hgnodes=ant_items;
+		antNodes= antNodes_;
 		srcPath = sp;
 	}
 	
-	public Rule get_rule(){
+	public Rule getRule(){
 		return rule;
 	}
 
@@ -62,24 +67,24 @@ public class HyperEdge {
 		return srcPath;
 	}
 	
-	public ArrayList<HGNode> get_ant_items(){
-		return l_ant_hgnodes;
+	public ArrayList<HGNode> getAntNodes(){
+		return antNodes;
 	}
 	
-	//public double get_best_cost(){return best_cost;}
 	
-	public double get_transition_cost(boolean force_compute){//note: transition_cost is already linearly interpolated
-		if(force_compute || transition_cost==null){
-			double res = best_cost;
-			if(l_ant_hgnodes!=null)	
-				for(HGNode ant_it : l_ant_hgnodes)
-					res -= ant_it.best_hyperedge.best_cost;
-			transition_cost = res;				
+	public double getTransitionCost(boolean forceCompute){//note: transition_cost is already linearly interpolated
+		if(forceCompute || transitionCost==null){
+			double res = bestDerivationCost;
+			if(antNodes!=null)	
+				for(HGNode ant_it : antNodes)
+					res -= ant_it.bestHyperedge.bestDerivationCost;
+			transitionCost = res;				
 		}
-		return transition_cost;
+		return transitionCost;
 	}
 	
-	public void setTransitionCost(double transCost){
-		transition_cost = transCost;
+	public void setTransitionCost(double transitionCost_){
+		transitionCost = transitionCost_;
 	}
+	
 }

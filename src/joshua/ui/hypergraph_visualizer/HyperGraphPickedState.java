@@ -26,10 +26,10 @@ public class HyperGraphPickedState extends MultiPickedState<Vertex> {
 	//	viewer.setGraphLayout(new StaticLayout<Vertex,Edge>(viewer.graph, new HyperGraphTransformer(viewer.graph)));
 		DefaultListModel edgeListModel = (DefaultListModel) viewer.edgeList.getModel();
 		edgeListModel.removeAllElements();
-		for (HyperEdge e : node.getNode().l_hyperedges) {
+		for (HyperEdge e : node.getNode().hyperedges) {
 			edgeListModel.addElement(e);
 		}
-		if (node.getNode().l_hyperedges.size() == 0)
+		if (node.getNode().hyperedges.size() == 0)
 			return true;
 		HyperEdgeVertex currentEdge = (HyperEdgeVertex) viewer.graph.getSuccessors(v).toArray()[0];
 		viewer.edgeList.setSelectedValue(currentEdge.getHyperEdge(), true);

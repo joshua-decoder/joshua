@@ -112,7 +112,7 @@ public class HyperGraphViewer extends VisualizationViewer<Vertex,Edge> {
 					return String.format("%s{%d-%d}", nt, ((NodeVertex) v).getNode().i, ((NodeVertex) v).getNode().j);
 				}
 				else {
-					Rule r = ((HyperEdgeVertex) v).getHyperEdge().get_rule();
+					Rule r = ((HyperEdgeVertex) v).getHyperEdge().getRule();
 					if (r != null) {
 						String lhs = vocab.getWord(r.getLHS());
 						String french = vocab.getWords(r.getFrench());
@@ -132,7 +132,7 @@ public class HyperGraphViewer extends VisualizationViewer<Vertex,Edge> {
 			{
 				if (v instanceof HyperEdgeVertex) {
 					NodeVertex pred = (NodeVertex) graph.getPredecessors(v).toArray()[0];
-					int otherEdges = pred.getNode().l_hyperedges.size() - 1;
+					int otherEdges = pred.getNode().hyperedges.size() - 1;
 					return String.format("%d other edges", otherEdges);
 				}
 				else if (v instanceof NodeVertex) {

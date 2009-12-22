@@ -26,7 +26,7 @@ import java.util.ArrayList;
 public class Support {
 	
 	
-	public static double find_min(double a, double b) {
+	public static double findMin(double a, double b) {
 		return (a <= b) ? a : b;
 	}
 	

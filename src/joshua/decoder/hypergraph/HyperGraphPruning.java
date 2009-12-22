@@ -88,13 +88,13 @@ public class HyperGraphPruning extends TrivialInsideOutside {
 		num_survived_deduction = 0;
 		num_survived_item = 0;
 		tbl_processed_items.clear(); 
-		pruning_item(hg.goal_item);
+		pruning_item(hg.goalNode);
 		
 		//clear up
 		tbl_processed_items.clear();
 		
-		System.out.println("Item suvived ratio: "+ num_survived_item*1.0/hg.num_items + " =  " + num_survived_item + "/" + hg.num_items);
-		System.out.println("Deduct suvived ratio: "+ num_survived_deduction*1.0/hg.num_hyperedges + " =  " + num_survived_deduction + "/" + hg.num_hyperedges);
+		System.out.println("Item suvived ratio: "+ num_survived_item*1.0/hg.numNodes + " =  " + num_survived_item + "/" + hg.numNodes);
+		System.out.println("Deduct suvived ratio: "+ num_survived_deduction*1.0/hg.numEdges + " =  " + num_survived_deduction + "/" + hg.numEdges);
 	}
 		
 	
@@ -103,13 +103,13 @@ public class HyperGraphPruning extends TrivialInsideOutside {
 		tbl_processed_items.put(it,true);
 		boolean should_survive = false;
 		//### recursive call on each deduction
-		for (int i = 0; i < it.l_hyperedges.size(); i++) {
-			HyperEdge dt = it.l_hyperedges.get(i);
+		for (int i = 0; i < it.hyperedges.size(); i++) {
+			HyperEdge dt = it.hyperedges.get(i);
 			boolean survived = pruning_deduction(dt, it);//deduction-specifc operation
 			if (survived) {
 				should_survive = true; // at least one deduction survive
 			} else {
-				it.l_hyperedges.remove(i);
+				it.hyperedges.remove(i);
 				i--;
 			}
 		}
@@ -130,7 +130,7 @@ public class HyperGraphPruning extends TrivialInsideOutside {
 	//best-deduction is always kept
 	private boolean pruning_deduction(HyperEdge dt, HGNode parent) {
 		//TODO: theoretically, if an item is get called, then its best deduction should always be kept even just by the threshold-checling. In reality, due to precision of Double, the threshold-checking may not be perfect
-		if (dt != parent.best_hyperedge) { // best deduction should always survive if the Item is get called
+		if (dt != parent.bestHyperedge) { // best deduction should always survive if the Item is get called
 			//### prune?
 			if (should_prune_deduction(dt, parent)) {
 				return false; // early stop
@@ -138,8 +138,8 @@ public class HyperGraphPruning extends TrivialInsideOutside {
 		}
 		
 		//### still survive, recursive call all my ant-items
-		if (null != dt.get_ant_items()) {
-			for (HGNode ant_it : dt.get_ant_items()) {
+		if (null != dt.getAntNodes()) {
+			for (HGNode ant_it : dt.getAntNodes()) {
 				pruning_item(ant_it); // recursive call on each ant item, note: the ant_it will not be pruned as I need it
 			}
 		}
@@ -158,9 +158,9 @@ public class HyperGraphPruning extends TrivialInsideOutside {
 		//throw new RuntimeException("merit is not between best and worst, best: " + best_cost +"; worset:" + worst_cost + "; merit: " + merit);
 		//}
 		
-		if (dt.get_rule() != null
-		&& dt.get_rule().getOwner() == glue_grammar_owner
-		&& dt.get_rule().getArity() == 2) { // specicial rule: S->S X
+		if (dt.getRule() != null
+		&& dt.getRule().getOwner() == glue_grammar_owner
+		&& dt.getRule().getArity() == 2) { // specicial rule: S->S X
 			//TODO
 			return (post_log_prob - this.best_log_prob < CUR_THRESHOLD_GLUE);
 		} else {

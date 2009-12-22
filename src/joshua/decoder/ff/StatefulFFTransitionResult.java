@@ -25,6 +25,7 @@ package joshua.decoder.ff;
  * @version $LastChangedDate$
  */
 public class StatefulFFTransitionResult extends DefaultFFTransitionResult {
+	
 	private FFDPState dynamicProgrammingState = null;
 	
 	

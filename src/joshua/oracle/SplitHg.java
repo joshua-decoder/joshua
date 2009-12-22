@@ -55,7 +55,7 @@ public abstract class SplitHg {
 	
 	
 	public VirtualItem get_virtual_goal_item(HyperGraph original_hg, HashMap<HGNode, ArrayList<VirtualItem>> g_tbl_split_virtual_items){
-		ArrayList<VirtualItem> l_virtual_items = g_tbl_split_virtual_items.get(original_hg.goal_item);
+		ArrayList<VirtualItem> l_virtual_items = g_tbl_split_virtual_items.get(original_hg.goalNode);
 
 		if (l_virtual_items.size()!=1) {
 			// TODO: log this properly, fail properly
@@ -69,7 +69,7 @@ public abstract class SplitHg {
 	public HyperGraph get_1best_tree_hg(HyperGraph original_hg, HashMap<HGNode, ArrayList<VirtualItem>> g_tbl_split_virtual_items){
 		VirtualItem virutal_goal_item =  get_virtual_goal_item(original_hg, g_tbl_split_virtual_items);
 		HGNode onebest_goal_item = clone_item_with_best_deduction(virutal_goal_item);		
-		HyperGraph res = new HyperGraph(onebest_goal_item, -1, -1, original_hg.sent_id, original_hg.sent_len);//TODO: number of items/deductions
+		HyperGraph res = new HyperGraph(onebest_goal_item, -1, -1, original_hg.sentID, original_hg.sentLen);//TODO: number of items/deductions
 		get_1best_tree_item(virutal_goal_item, onebest_goal_item);
 		return res;
 	}
@@ -80,7 +80,7 @@ public abstract class SplitHg {
 			for(int i=0; i< virtual_dt.l_ant_virtual_items.size(); i++){
 				VirtualItem ant_it = (VirtualItem) virtual_dt.l_ant_virtual_items.get(i);
 				HGNode new_it = clone_item_with_best_deduction(ant_it);
-				onebest_item.best_hyperedge.get_ant_items().set(i, new_it);
+				onebest_item.bestHyperedge.getAntNodes().set(i, new_it);
 				get_1best_tree_item(ant_it,new_it);	
 			}		
 	}	
@@ -99,8 +99,8 @@ public abstract class SplitHg {
 		HyperEdge original_dt = virtual_dt.p_dt;
 		ArrayList<HGNode> l_ant_items = null;
 		// l_ant_items will be changed in get_1best_tree_item
-		if(original_dt.get_ant_items() != null) l_ant_items = new ArrayList<HGNode>(original_dt.get_ant_items());
-		HyperEdge res = new HyperEdge(original_dt.get_rule(), original_dt.best_cost, original_dt.get_transition_cost(false), l_ant_items, original_dt.getSourcePath());
+		if(original_dt.getAntNodes() != null) l_ant_items = new ArrayList<HGNode>(original_dt.getAntNodes());
+		HyperEdge res = new HyperEdge(original_dt.getRule(), original_dt.bestDerivationCost, original_dt.getTransitionCost(false), l_ant_items, original_dt.getSourcePath());
 		return res;
 	}
 	
@@ -124,7 +124,7 @@ public abstract class SplitHg {
 			g_tbl_split_virtual_items.clear(); 
 			g_num_virtual_items = 0;
 			g_num_virtual_deductions = 0;				
-			split_item(hg.goal_item);	
+			split_item(hg.goalNode);	
 		}	
 		
 		//for each original Item, get a list of VirtualItem
@@ -134,7 +134,7 @@ public abstract class SplitHg {
 					new HashMap<String, VirtualItem>();
 			//### recursive call on each deduction
 			if( speed_up_item(it) ){
-				for(HyperEdge dt : it.l_hyperedges){					
+				for(HyperEdge dt : it.hyperedges){					
 					split_deduction(dt, virtual_item_sigs, it);
 				}
 			}
@@ -153,8 +153,8 @@ public abstract class SplitHg {
 			if(speed_up_deduction(cur_dt)==false) return;//no need to continue
 			
 			//### recursively split all my ant items, get a l_split_items for each original item
-			if(cur_dt.get_ant_items()!=null)
-				for(HGNode ant_it : cur_dt.get_ant_items())
+			if(cur_dt.getAntNodes()!=null)
+				for(HGNode ant_it : cur_dt.getAntNodes())
 					split_item(ant_it);
 			
 			//### recombine the deduction
@@ -162,7 +162,7 @@ public abstract class SplitHg {
 		}	
 			
 		private void redo_combine(HyperEdge cur_dt, HashMap<String, VirtualItem> virtual_item_sigs, HGNode parent_item){
-			ArrayList<HGNode> l_ant_items = cur_dt.get_ant_items();
+			ArrayList<HGNode> l_ant_items = cur_dt.getAntNodes();
 			if(l_ant_items!=null){
 				// arity: one
 				if(l_ant_items.size() == 1){

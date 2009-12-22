@@ -36,86 +36,137 @@ import joshua.util.Regex;
 public class BLEU {
 	//do_ngram_clip: consider global n-gram clip
 	
-	public  static double compute_sentence_bleu(String[] ref_sents, String hyp_sent) {
-		return compute_sentence_bleu(ref_sents, hyp_sent, true, 4, false);
+	public  static double computeSentenceBleu(String[] refSents, String hypSent) {
+		return computeSentenceBleu(refSents, hypSent, true, 4, false);
 	}
 	
-	//########################multiple references
+	//====================multiple references
 	/**
 	 * 
-	 * @param ref_sents 
-	 * @param hyp_sent
-	 * @param do_ngram_clip Should usually be true
-	 * @param bleu_order Should usually be 4
-	 * @param use_shortest_ref Probably use false
+	 * @param refSents 
+	 * @param hypSent
+	 * @param doNgramClip Should usually be true
+	 * @param bleuOrder Should usually be 4
+	 * @param useShortestRef Probably use false
 	 */
-	public  static double compute_sentence_bleu(String[] ref_sents, String hyp_sent, boolean do_ngram_clip, int bleu_order, boolean use_shortest_ref){
-		int[] ref_lens = new int[ref_sents.length];
-		ArrayList<HashMap<String, Integer>> list_ref_ngram_tbl = new ArrayList<HashMap<String, Integer>>();
-		for(int i =0; i<ref_sents.length; i++){
-			String[] ref_wrds = Regex.spaces.split(ref_sents[i]);
-			ref_lens[i] = ref_wrds.length;
-			HashMap<String, Integer> ref_ngram_tbl = new HashMap<String, Integer>();
-			accumulateNgramCounts(ref_ngram_tbl, bleu_order, ref_wrds);	
-			list_ref_ngram_tbl.add(ref_ngram_tbl);			
+	public  static double computeSentenceBleu(String[] refSents, String hypSent, boolean doNgramClip, int bleuOrder, boolean useShortestRef){
+		//=== ref tbl
+		HashMap<String, Integer> maxRefCountTbl = constructMaxRefCountTable(refSents, bleuOrder);
+		
+		//== ref len
+		int[] refLens = new int[refSents.length];
+		for(int i =0; i<refSents.length; i++){
+			String[] refWords = Regex.spaces.split(refSents[i]);
+			refLens[i] = refWords.length;					
 		}
-		double effective_ref_len=computeEffectiveLen(ref_lens, use_shortest_ref);
 		
-				
-		String[] hyp_wrds = Regex.spaces.split(hyp_sent);
-		HashMap<String, Integer> hyp_ngram_tbl = new HashMap<String, Integer>();
-		accumulateNgramCounts(hyp_ngram_tbl, bleu_order, hyp_wrds);
+		double effectiveRefLen=computeEffectiveLen(refLens, useShortestRef);
 		
-		return compute_sentence_bleu(effective_ref_len, list_ref_ngram_tbl, hyp_wrds.length, hyp_ngram_tbl, do_ngram_clip, bleu_order);
+		//=== hyp tbl
+		String[] hypWrds = Regex.spaces.split(hypSent);
+		HashMap<String, Integer> hypNgramTbl = new HashMap<String, Integer>();
+		accumulateNgramCounts(hypNgramTbl, bleuOrder, hypWrds);
+		
+		return computeSentenceBleu(effectiveRefLen, maxRefCountTbl, hypWrds.length, hypNgramTbl, doNgramClip, bleuOrder);
 	}
 	
-	private static double computeEffectiveLen(int[] ref_lens, boolean use_shortest_ref ){
-		if(use_shortest_ref){
-			int res=1000000000;
-			for(int i=0; i<ref_lens.length;i++)
-				if(ref_lens[i]<res)
-					res = ref_lens[i];
+	public static double computeEffectiveLen(int[] refLens, boolean useShortestRef ){
+		if(useShortestRef){
+			int res=Integer.MAX_VALUE;
+			for(int i=0; i<refLens.length;i++)
+				if(refLens[i]<res)
+					res = refLens[i];
 			return res;
 		}else{//default is average length
 			double res=0;
-			for(int i=0; i<ref_lens.length;i++)
-				res += ref_lens[i];
-			return res*1.0/ref_lens.length;
+			for(int i=0; i<refLens.length;i++)
+				res += refLens[i];
+			return res*1.0/refLens.length;
 		}
 	}
 	
-	public  static double compute_sentence_bleu(double effective_ref_len, ArrayList<HashMap<String, Integer>> list_ref_ngram_tbl, int hyp_len, HashMap<String, Integer> hyp_ngram_tbl, boolean do_ngram_clip, int bleu_order){
-		double res_bleu = 0;
+	
+	/**
+	 * construct maxRefCount tbl for multiple references
+	 */
+	public  static HashMap<String, Integer> constructMaxRefCountTable(String[] refSents, int bleuOrder){
 		
-		int[] num_ngram_match = new int[bleu_order];
-		for(Iterator<String> it = hyp_ngram_tbl.keySet().iterator(); it.hasNext();){
-			String ngram = it.next();
-			int effective_num_match = 0;
-			for(HashMap<String, Integer> ref_ngram_tbl : list_ref_ngram_tbl){
-				if(ref_ngram_tbl.containsKey(ngram)){
-					if(do_ngram_clip){
-						int t_num = (int)Support.find_min(ref_ngram_tbl.get(ngram), hyp_ngram_tbl.get(ngram)); //ngram clip;
-						if(t_num>effective_num_match)
-							effective_num_match=t_num;
-					}else{
-						effective_num_match += hyp_ngram_tbl.get(ngram);//without ngram count clipping
-						break;
-					}    			
-	    		}
-			}
-			num_ngram_match[Regex.spaces.split(ngram).length-1] += effective_num_match;
+		ArrayList<HashMap<String, Integer>> listRefNgramTbl = new ArrayList<HashMap<String, Integer>>();
+		for(int i =0; i<refSents.length; i++){
+			String[] refWords = Regex.spaces.split(refSents[i]);			
+			HashMap<String, Integer> refNgramTbl = new HashMap<String, Integer>();
+			accumulateNgramCounts(refNgramTbl, bleuOrder, refWords);	
+			listRefNgramTbl.add(refNgramTbl);			
 		}
-		res_bleu = compute_bleu(hyp_len, effective_ref_len, num_ngram_match, bleu_order);
+		
+		return computeMaxRefCountTbl(listRefNgramTbl);
+	}
+	
+	/**compute max_ref_count for each ngram in the reference sentences
+	 * */
+	public static HashMap<String, Integer> computeMaxRefCountTbl(ArrayList<HashMap<String, Integer>> listRefNgramTbl){
+		
+		HashMap<String, Integer> merged = new HashMap<String, Integer>();
+		
+		//== get merged key set
+		for(HashMap<String, Integer> tbl : listRefNgramTbl){
+			for(String ngram : tbl.keySet()){
+				merged.put(ngram, 0);
+			}
+		}
+		
+		//== get max ref count
+		for(String ngram : merged.keySet()){
+			int max=0;
+			for(HashMap<String, Integer> tbl : listRefNgramTbl){
+				Integer val = tbl.get(ngram);
+				if(val!=null && val>max)
+					max = val;
+			}			
+			
+			merged.put(ngram, max);
+		}
+		return merged;
+	}
+	
+	public  static double computeSentenceBleu(double effectiveRefLen, HashMap<String, Integer> maxRefCountTbl, int hypLen, 
+			HashMap<String, Integer> hypNgramTbl, boolean doNgramClip, int bleuOrder){
+		
+		double resBleu = 0;
+		
+		int[] numNgramMatch = new int[bleuOrder];
+		for(String ngram : hypNgramTbl.keySet()){//each ngram in hyp
+			if(maxRefCountTbl.containsKey(ngram)){				
+				int hypNgramCount =  hypNgramTbl.get(ngram);
+				
+				int effectiveNumMatch = hypNgramCount;				
+				
+				if(doNgramClip){//min{hypNgramCount, maxRefCount}
+					int maxRefCount =  maxRefCountTbl.get(ngram);				
+					effectiveNumMatch = (int)Support.findMin(hypNgramCount, maxRefCount); //ngram clip;
+				}    			
+		    		
+				
+				numNgramMatch[Regex.spaces.split(ngram).length-1] += effectiveNumMatch;
+			}
+		}
+		
+		resBleu = computeBleu(hypLen, effectiveRefLen, numNgramMatch, bleuOrder);
 		//System.out.println("hyp_len: " + hyp_sent.length + "; ref_len:" + ref_sent.length + "; bleu: " + res_bleu +" num_ngram_matches: " + num_ngram_match[0] + " " +num_ngram_match[1]+
 		//		" " + num_ngram_match[2] + " " +num_ngram_match[3]);
 		//System.out.println("Blue is " + res_bleu);
-		return res_bleu;
+		return resBleu;
 	}
-	//########################multiple end
+	
+	
+	//==============================multiple references end
 	
 	
 	
-	public  static double compute_sentence_bleu(String ref_sent, String hyp_sent, boolean do_ngram_clip, int bleu_order){
+	
+	
+	
+	public  static double computeSentenceBleu(String ref_sent, String hyp_sent, boolean do_ngram_clip, int bleu_order){
 		String[] ref_wrds = Regex.spaces.split(ref_sent);
 		String[] hyp_wrds = Regex.spaces.split(hyp_sent);
 		HashMap<String, Integer> ref_ngram_tbl = new HashMap<String, Integer>();
@@ -123,10 +174,10 @@ public class BLEU {
 		HashMap<String, Integer> hyp_ngram_tbl = new HashMap<String, Integer>();
 		accumulateNgramCounts(hyp_ngram_tbl, bleu_order, hyp_wrds);
 		
-		return compute_sentence_bleu(ref_wrds.length, ref_ngram_tbl, hyp_wrds.length, hyp_ngram_tbl, do_ngram_clip, bleu_order);
+		return computeSentenceBleu(ref_wrds.length, ref_ngram_tbl, hyp_wrds.length, hyp_ngram_tbl, do_ngram_clip, bleu_order);
 	}
 	
-	public  static double compute_sentence_bleu(int ref_len, HashMap<String, Integer> ref_ngram_tbl, int hyp_len, HashMap<String, Integer> hyp_ngram_tbl, boolean do_ngram_clip, int bleu_order){
+	public  static double computeSentenceBleu(int ref_len, HashMap<String, Integer> ref_ngram_tbl, int hyp_len, HashMap<String, Integer> hyp_ngram_tbl, boolean do_ngram_clip, int bleu_order){
 		double res_bleu = 0;
 		
 		int[] num_ngram_match = new int[bleu_order];
@@ -134,13 +185,13 @@ public class BLEU {
 			String ngram = it.next();
 			if (ref_ngram_tbl.containsKey(ngram)) {
 				if (do_ngram_clip) {
-					num_ngram_match[Regex.spaces.split(ngram).length-1] += Support.find_min(ref_ngram_tbl.get(ngram), hyp_ngram_tbl.get(ngram)); //ngram clip
+					num_ngram_match[Regex.spaces.split(ngram).length-1] += Support.findMin(ref_ngram_tbl.get(ngram), hyp_ngram_tbl.get(ngram)); //ngram clip
 				} else {
 					num_ngram_match[Regex.spaces.split(ngram).length-1] += hyp_ngram_tbl.get(ngram);//without ngram count clipping
 				}
     		}
 		}
-		res_bleu = compute_bleu(hyp_len, ref_len, num_ngram_match, bleu_order);
+		res_bleu = computeBleu(hyp_len, ref_len, num_ngram_match, bleu_order);
 		//System.out.println("hyp_len: " + hyp_sent.length + "; ref_len:" + ref_sent.length + "; bleu: " + res_bleu +" num_ngram_matches: " + num_ngram_match[0] + " " +num_ngram_match[1]+
 		//		" " + num_ngram_match[2] + " " +num_ngram_match[3]);
 		//System.out.println("Blue is " + res_bleu);
@@ -148,7 +199,7 @@ public class BLEU {
 	}
 	
 	//sentence-bleu: BLEU= bp * prec; where prec = exp (sum 1/4 * log(prec[order]))
-	public static double compute_bleu(int hyp_len, double ref_len, int[] num_ngram_match, int bleu_order){
+	public static double computeBleu(int hyp_len, double ref_len, int[] num_ngram_match, int bleu_order){
 		if (hyp_len <= 0 || ref_len <= 0) {
 			System.out.println("error: ref or hyp is zero len");
 			System.exit(1);
@@ -172,18 +223,8 @@ public class BLEU {
 	}
 	
 	
-	/**
-	 * construct a ngram table containing ngrams that appear
-	 * in the ref_sents for a given source sentence
-	 */
-	public  static HashMap<String, Integer> constructReferenceTable(String[] ref_sents, int bleu_order){		
-		HashMap<String, Integer> referenceNgramTable = new HashMap<String, Integer>();
-		for(String refSentence: ref_sents){
-			String[] ref_wrds = Regex.spaces.split(refSentence);			
-			accumulateNgramCounts(referenceNgramTable, bleu_order, ref_wrds);				
-		}
-		return referenceNgramTable;
-	}
+	
+	
 	public  static HashMap<String, Integer> constructReferenceTable(String refSentence, int bleu_order){		
 		HashMap<String, Integer> referenceNgramTable = new HashMap<String, Integer>();	
 		String[] ref_wrds = Regex.spaces.split(refSentence);			
@@ -191,8 +232,8 @@ public class BLEU {
 	
 		return referenceNgramTable;
 	}
-	
-//	accumulate ngram counts into tbl; ngrams with an order in [1,order]
+
+
 	public static void accumulateNgramCounts(HashMap<String,Integer> tbl, int order, String[] wrds) {
 		for (int i = 0; i < wrds.length; i++) {
 			for (int j = 0; j < order && j + i < wrds.length; j++) { // ngram: [i,i+j]
@@ -210,7 +251,6 @@ public class BLEU {
 			}
 		}
 	}
-	
 	
 
 	/** 
@@ -245,7 +285,7 @@ public class BLEU {
 	
 	
 	static public  double[] computeLinearCorpusThetas(int numUnigramTokens, double unigramPrecision, double decayRatio){
-		double[] res =new double[5];
+		double[] res = new double[5];
 		res[0] = -1.0/numUnigramTokens;
 		for(int i=1; i<5; i++)
 			res[i] = 1.0/(4.0*numUnigramTokens*unigramPrecision*Math.pow(decayRatio, i-1));

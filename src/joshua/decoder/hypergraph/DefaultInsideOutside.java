@@ -81,7 +81,7 @@ public abstract class DefaultInsideOutside {
 		inside_estimation_hg(hg);
 		//System.out.println("inside estimation");
 		outside_estimation_hg(hg);
-		normalization_constant = (Double)tbl_inside_prob.get(hg.goal_item);
+		normalization_constant = (Double)tbl_inside_prob.get(hg.goalNode);
 		System.out.println("normalization constant is " + normalization_constant);
 		tbl_num_parent_deductions.clear();
 		//sanity_check_hg(hg);
@@ -107,8 +107,8 @@ public abstract class DefaultInsideOutside {
 		
 		//### get inside prob of all my ant-items
 		double inside = ONE_IN_SEMIRING;
-		if(dt.get_ant_items()!=null){
-			for(HGNode ant_it : dt.get_ant_items())
+		if(dt.getAntNodes()!=null){
+			for(HGNode ant_it : dt.getAntNodes())
 				inside = multi_in_semiring(inside,(Double)tbl_inside_prob.get(ant_it));
 		}
 		
@@ -162,7 +162,7 @@ public abstract class DefaultInsideOutside {
 	public void sanity_check_hg(HyperGraph hg){	
 		tbl_for_sanity_check = new HashMap<HGNode,Integer>();
 		//System.out.println("num_dts: " + hg.goal_item.l_deductions.size());
-		sanity_check_item(hg.goal_item);
+		sanity_check_item(hg.goalNode);
 		System.out.println("survied sanity check!!!!");
 	}
 	
@@ -171,7 +171,7 @@ public abstract class DefaultInsideOutside {
 		tbl_for_sanity_check.put(it,1);
 		double prob_sum=0;
 		//### recursive call on each deduction
-		for(HyperEdge dt : it.l_hyperedges){
+		for(HyperEdge dt : it.hyperedges){
 			prob_sum += get_deduction_posterior_prob(dt,it);
 			//System.out.println("tran_cost: " + dt.get_transition_cost(true) + "; prob: " +  get_deduction_posterior_prob(dt,it));
 			sanity_check_deduction(dt);//deduction-specifc operation
@@ -185,8 +185,8 @@ public abstract class DefaultInsideOutside {
 	
 	private void sanity_check_deduction(HyperEdge dt){
 		//### recursive call on each ant item
-		if (null != dt.get_ant_items()) {
-			for (HGNode ant_it : dt.get_ant_items()) {
+		if (null != dt.getAntNodes()) {
+			for (HGNode ant_it : dt.getAntNodes()) {
 				sanity_check_item(ant_it);
 			}
 		}
@@ -202,7 +202,7 @@ public abstract class DefaultInsideOutside {
 	private void inside_estimation_hg(HyperGraph hg) {
 		tbl_inside_prob.clear(); 
 		tbl_num_parent_deductions.clear();
-		inside_estimation_item(hg.goal_item);
+		inside_estimation_item(hg.goalNode);
 	}
 	
 	private double inside_estimation_item(HGNode it) {
@@ -220,7 +220,7 @@ public abstract class DefaultInsideOutside {
 		double inside_prob = ZERO_IN_SEMIRING;
 		
 		//### recursive call on each deduction
-		for (HyperEdge dt : it.l_hyperedges) {
+		for (HyperEdge dt : it.hyperedges) {
 			double v_dt = inside_estimation_deduction(dt, it);//deduction-specifc operation
 			inside_prob = add_in_semiring(inside_prob, v_dt);
 		}
@@ -233,8 +233,8 @@ public abstract class DefaultInsideOutside {
 	private double inside_estimation_deduction(HyperEdge dt, HGNode parent_item){
 		double inside_prob = ONE_IN_SEMIRING; 
 		//### recursive call on each ant item
-		if(dt.get_ant_items()!=null)
-			for(HGNode ant_it : dt.get_ant_items()){
+		if(dt.getAntNodes()!=null)
+			for(HGNode ant_it : dt.getAntNodes()){
 				double v_item = inside_estimation_item(ant_it);
 				inside_prob =  multi_in_semiring(inside_prob, v_item);				
 			}
@@ -250,9 +250,9 @@ public abstract class DefaultInsideOutside {
 	
 	private void outside_estimation_hg(HyperGraph hg){	
 		tbl_outside_prob.clear(); 
-		tbl_outside_prob.put(hg.goal_item, ONE_IN_SEMIRING);//initialize
-		for(HyperEdge dt : hg.goal_item.l_hyperedges)
-			outside_estimation_deduction(dt, hg.goal_item);	
+		tbl_outside_prob.put(hg.goalNode, ONE_IN_SEMIRING);//initialize
+		for(HyperEdge dt : hg.goalNode.hyperedges)
+			outside_estimation_deduction(dt, hg.goalNode);	
 	}
 	
 	private void outside_estimation_item(HGNode cur_it, HGNode upper_item, HyperEdge parent_dt, double parent_deduct_prob){
@@ -273,8 +273,8 @@ public abstract class DefaultInsideOutside {
 		additional_outside_prob =  multi_in_semiring(additional_outside_prob, parent_deduct_prob);
 		
 		//### sibing specifc
-		if(parent_dt.get_ant_items()!=null && parent_dt.get_ant_items().size()>1)
-			for(HGNode ant_it : parent_dt.get_ant_items()){
+		if(parent_dt.getAntNodes()!=null && parent_dt.getAntNodes().size()>1)
+			for(HGNode ant_it : parent_dt.getAntNodes()){
 				if(ant_it != cur_it){
 					double inside_prob_item =(Double)tbl_inside_prob.get(ant_it);//inside prob
 					additional_outside_prob =  multi_in_semiring(additional_outside_prob, inside_prob_item);
@@ -292,7 +292,7 @@ public abstract class DefaultInsideOutside {
 		
 		//### recursive call on each deduction
 		if( num_called-1<=0){//i am done
-			for(HyperEdge dt : cur_it.l_hyperedges){
+			for(HyperEdge dt : cur_it.hyperedges){
 				//TODO: potentially, we can collect the feature expection in each hyperedge here, to avoid another pass of the hypergraph to get the counts
 				outside_estimation_deduction(dt, cur_it);
 			}
@@ -302,12 +302,12 @@ public abstract class DefaultInsideOutside {
 	
 	private void outside_estimation_deduction(HyperEdge dt, HGNode parent_item){
 		//we do not need to outside prob if no ant items
-		if(dt.get_ant_items()!=null){
+		if(dt.getAntNodes()!=null){
 			//### deduction specific prob
 			double deduction_prob = getHyperedgeLogProb(dt, parent_item, this.scaling_factor);//feature-set specific
 			
 			//### recursive call on each ant item
-			for(HGNode ant_it : dt.get_ant_items()){
+			for(HGNode ant_it : dt.getAntNodes()){
 				outside_estimation_item(ant_it, parent_item, dt, deduction_prob);
 			}
 		}

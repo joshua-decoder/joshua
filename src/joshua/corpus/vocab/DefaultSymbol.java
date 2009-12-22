@@ -49,7 +49,9 @@ public abstract class DefaultSymbol extends AbstractSymbolTable {
 	public boolean is_reading_from_file = false;
 	
 	protected int lm_start_sym_id = 10000; // 1..10000 reserved for special purpose
-	protected int lm_end_sym_id = 500000001; // max vocab 1000k
+	
+	//@todo: change this to a very large value such as 500000001 or a very small value such as 50001 seems slow down the JavaLM significatnlty
+	protected int lm_end_sym_id = 5000001; // max vocab 1000k 
 	
 	// terminal symbol may get from a tbl file, srilm, or a lm file
 	//**non-terminal symbol is always from myself, and the integer should always be negative	
