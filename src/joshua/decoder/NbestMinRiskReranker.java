@@ -51,6 +51,7 @@ import java.util.concurrent.TimeUnit;
  * @version $LastChangedDate$
  */
 public class NbestMinRiskReranker {
+	
 	boolean produce_reranked_nbest = false;//TODO: this functionality is not implemented yet; default is to produce 1best without any feature scores; 
 	double scaling_factor = 1.0;
 	
@@ -149,34 +150,41 @@ public class NbestMinRiskReranker {
 		return best_hyp;
 	}
 
+	
+	/**based on a list of log-probabilities in nbestLogProbs, obtain a 
+	 * normalized distribution, and put the normalized probability (real value in [0,1]) into nbestLogProbs
+	 * */
 	//get a normalized distributeion and put it back to nbest_logps
-	static public void computeNormalizedProbs(List<Double> nbest_logps, double scaling_factor){
-		//### get noralization constant, remember features, remember the combined linear score
-		double normalization_constant = Double.NEGATIVE_INFINITY;//log-semiring
+	static public void computeNormalizedProbs(List<Double> nbestLogProbs, double scalingFactor){
 		
-		for (double logp : nbest_logps) {
-			normalization_constant = add_in_log_semiring(normalization_constant, logp * scaling_factor, 0);
+		//=== get noralization constant, remember features, remember the combined linear score
+		double normalizationConstant = Double.NEGATIVE_INFINITY;//log-semiring
+		
+		for (double logp : nbestLogProbs) {
+			normalizationConstant = addInLogSemiring(normalizationConstant, logp * scalingFactor, 0);
 		}
 		//System.out.println("normalization_constant (logP) is " + normalization_constant);
 		
-		//### get normalized prob for each hyp
-		double t_sum = 0;
-		for (int i = 0; i < nbest_logps.size(); i++) {
-			double normalized_prob = Math.exp(nbest_logps.get(i) * scaling_factor-normalization_constant);
-			t_sum += normalized_prob;
-			nbest_logps.set(i, normalized_prob);
-			if (Double.isNaN(normalized_prob)) {
+		//=== get normalized prob for each hyp
+		double tSum = 0;
+		for (int i = 0; i < nbestLogProbs.size(); i++) {
+			
+			double normalizedProb = Math.exp(nbestLogProbs.get(i) * scalingFactor-normalizationConstant);
+			tSum += normalizedProb;
+			nbestLogProbs.set(i, normalizedProb);
+			
+			if (Double.isNaN(normalizedProb)) {
 				throw new RuntimeException(
 					"prob is NaN, must be wrong\nnbest_logps.get(i): "
-					+ nbest_logps.get(i)
-					+ "; scaling_factor: " + scaling_factor
-					+ "; normalization_constant:" + normalization_constant );
+					+ nbestLogProbs.get(i)
+					+ "; scaling_factor: " + scalingFactor
+					+ "; normalization_constant:" + normalizationConstant );
 			}
 			//logger.info("probability: " + normalized_prob);
 		}
 		
 		//sanity check
-		if (Math.abs(t_sum - 1.0) > 1e-4) {
+		if (Math.abs(tSum - 1.0) > 1e-4) {
 			throw new RuntimeException("probabilities not sum to one, must be wrong");
 		}
 		
@@ -238,8 +246,8 @@ public class NbestMinRiskReranker {
 	}
 	
 //	OR: return Math.log(Math.exp(x) + Math.exp(y));
-	static private double add_in_log_semiring(double x, double y, int add_mode){//prevent over-flow 
-		if (add_mode == 0) { // sum
+	static private double addInLogSemiring(double x, double y, int addMode){//prevent over-flow 
+		if (addMode == 0) { // sum
 			if (x == Double.NEGATIVE_INFINITY) {//if y is also n-infinity, then return n-infinity
 				return y;
 			}
@@ -252,9 +260,9 @@ public class NbestMinRiskReranker {
 			} else {
 				return y + Math.log(1+Math.exp(x-y));
 			}
-		} else if (add_mode == 1) { // viter-min
+		} else if (addMode == 1) { // viter-min
 			return (x <= y) ? x : y;
-		} else if (add_mode == 2) { // viter-max
+		} else if (addMode == 2) { // viter-max
 			return (x >= y) ? x : y;
 		} else {
 			throw new RuntimeException("invalid add mode");
