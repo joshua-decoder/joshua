@@ -295,8 +295,11 @@ public class Chart {
 			for (Arc<Integer> arc : node.getOutgoingArcs()) {
 				// create a rule, but do not add into the grammar trie
 				// TODO: which grammar should we use to create an OOV rule?
-				Rule rule = this.grammars[1].constructOOVRule(//this is the regular grammar
-					this.featureFunctions.size(), arc.getLabel(), hasLM);
+//				this is the regular grammar
+				int sourceWord = arc.getLabel();
+				int targetWord = symbolTable.addTerminal( symbolTable.getWord(sourceWord)+"_OOV");
+				Rule rule = this.grammars[1].constructOOVRule(
+					this.featureFunctions.size(), sourceWord, targetWord, hasLM);
 				
 				// tail and head are switched - FIX names:
 				if (containsHardRuleConstraint(node.getNumber(), arc.getTail().getNumber())) {

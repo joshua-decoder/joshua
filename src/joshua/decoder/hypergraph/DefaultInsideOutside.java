@@ -50,7 +50,7 @@ public abstract class DefaultInsideOutside {
 	
 	private HashMap<HGNode,Double> tbl_inside_prob =  new HashMap<HGNode,Double>();//remember inside prob of each item: 
 	private HashMap<HGNode,Double> tbl_outside_prob =  new HashMap<HGNode,Double>();//remember outside prob of each item
-	double normalization_constant = ONE_IN_SEMIRING;
+	double normalizationConstant = ONE_IN_SEMIRING;
 	
 	/**
 	 * for each item, remember how many deductions pointering
@@ -74,6 +74,7 @@ public abstract class DefaultInsideOutside {
 	
 	//the results are stored in tbl_inside_prob and tbl_outside_prob
 	public void runInsideOutside(HyperGraph hg, int add_mode, int semiring, double scaling_factor_){//add_mode||| 0: sum; 1: viterbi-min, 2: viterbi-max
+		
 		setup_semiring(semiring, add_mode);
 		scaling_factor = scaling_factor_;
 		
@@ -81,10 +82,10 @@ public abstract class DefaultInsideOutside {
 		inside_estimation_hg(hg);
 		//System.out.println("inside estimation");
 		outside_estimation_hg(hg);
-		normalization_constant = (Double)tbl_inside_prob.get(hg.goalNode);
-		System.out.println("normalization constant is " + normalization_constant);
+		normalizationConstant = tbl_inside_prob.get(hg.goalNode);
+		System.out.println("normalization constant is " + normalizationConstant);
 		tbl_num_parent_deductions.clear();
-		//sanity_check_hg(hg);
+		sanityCheckHG(hg);
 	}
 	
 	//to save memory, external class should call this method
@@ -97,11 +98,11 @@ public abstract class DefaultInsideOutside {
 	//######### use of inside-outside probs ##########################
 	//this is the logZ where Z is the sum[ exp( log prob ) ]
     public double getLogNormalizationConstant(){
-    	return normalization_constant;
+    	return normalizationConstant;
     }
 	
 	//this is the log of expected/posterior prob (i.e., LogP, where P is the posterior probability), without normalization
-	public double get_deduction_unnormalized_posterior_log_prob(HyperEdge dt, HGNode parent){
+	public double getEdgeUnormalizedPosteriorLogProb(HyperEdge dt, HGNode parent){
 		//### outside of parent
 		double outside = (Double)tbl_outside_prob.get(parent);
 		
@@ -120,9 +121,9 @@ public abstract class DefaultInsideOutside {
 	}	
 	
 	//normalized probabily in [0,1]
-	public double get_deduction_posterior_prob(HyperEdge dt, HGNode parent ){
+	public double getEdgePosteriorProb(HyperEdge dt, HGNode parent ){
 		if(SEMIRING==LOG_SEMIRING){
-			double res = Math.exp((get_deduction_unnormalized_posterior_log_prob(dt, parent)-getLogNormalizationConstant()));
+			double res = Math.exp((getEdgeUnormalizedPosteriorLogProb(dt, parent)-getLogNormalizationConstant()));
 			//System.out.println("dt cost: " + dt.get_transition_cost(false)+" ;merit: " + get_deduction_unnormalized_posterior_log_prob(dt, parent) + "; prob: " + res);
 			if (res < 0.0-1e-2 || res > 1.0+1e-2) {
 				throw new RuntimeException("res is not within [0,1], must be wrong value: " + res);
@@ -134,7 +135,7 @@ public abstract class DefaultInsideOutside {
 	}
 	
 //	this is the log of expected/posterior prob (i.e., LogP, where P is the posterior probability), without normalization
-	public double get_hgnode_unnormalized_posterior_log_prob(HGNode node){
+	public double getNodeUnnormalizedPosteriorLogProb(HGNode node){
 		//### outside of parent
 		double inside =  (Double)tbl_inside_prob.get(node);
 		double outside = (Double)tbl_outside_prob.get(node);
@@ -143,9 +144,9 @@ public abstract class DefaultInsideOutside {
 	
 	
 //	normalized probabily in [0,1]
-	public double get_hgnode_posterior_prob(HGNode node ){
+	public double getNodePosteriorProb(HGNode node ){
 		if(SEMIRING==LOG_SEMIRING){
-			double res = Math.exp((get_hgnode_unnormalized_posterior_log_prob(node)-getLogNormalizationConstant()));
+			double res = Math.exp((getNodeUnnormalizedPosteriorLogProb(node)-getLogNormalizationConstant()));
 			//System.out.println("dt cost: " + dt.get_transition_cost(false)+" ;merit: " + get_deduction_unnormalized_posterior_log_prob(dt, parent) + "; prob: " + res);
 			if (res < 0.0-1e-2 || res > 1.0+1e-2) {
 				throw new RuntimeException("res is not within [0,1], must be wrong value: " + res);
@@ -159,7 +160,7 @@ public abstract class DefaultInsideOutside {
 	/*Originally, to see if the sum of the posterior probabilities of all the hyperedges sum to one
 	 * However, this won't work! The sum should be greater than 1.
 	 * */
-	public void sanity_check_hg(HyperGraph hg){	
+	public void sanityCheckHG(HyperGraph hg){	
 		tbl_for_sanity_check = new HashMap<HGNode,Integer>();
 		//System.out.println("num_dts: " + hg.goal_item.l_deductions.size());
 		sanity_check_item(hg.goalNode);
@@ -172,11 +173,11 @@ public abstract class DefaultInsideOutside {
 		double prob_sum=0;
 		//### recursive call on each deduction
 		for(HyperEdge dt : it.hyperedges){
-			prob_sum += get_deduction_posterior_prob(dt,it);
+			prob_sum += getEdgePosteriorProb(dt,it);
 			//System.out.println("tran_cost: " + dt.get_transition_cost(true) + "; prob: " +  get_deduction_posterior_prob(dt,it));
 			sanity_check_deduction(dt);//deduction-specifc operation
 		}
-		double supposed_sum = get_hgnode_posterior_prob(it);
+		double supposed_sum = getNodePosteriorProb(it);
 		if (Math.abs(prob_sum-supposed_sum) > 1e-3) {
 			throw new RuntimeException("prob_sum=" + prob_sum + "; supposed_sum=" + supposed_sum + "; sanity check fail!!!!");
 		}

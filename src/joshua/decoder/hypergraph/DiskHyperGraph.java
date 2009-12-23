@@ -166,8 +166,7 @@ public class DiskHyperGraph {
 			ruleReader = new DiskHyperGraphFormatReader(null, this.symbolTable);
 			
 		if (useForestPruning) {
-			this.pruner = new HyperGraphPruning(
-					this.symbolTable, true, threshold, threshold, 1, 1);
+			this.pruner = new HyperGraphPruning(this.symbolTable, true, threshold, threshold);
 		}
 	}
 	
@@ -225,7 +224,7 @@ public class DiskHyperGraph {
 	
 	public void saveHyperGraph(HyperGraph hg) throws IOException {
 		resetStates();
-		if (null != this.pruner) this.pruner.pruning_hg(hg);
+		if (null != this.pruner) this.pruner.pruningHG(hg);
 		constructItemTables(hg);
 		if (logger.isLoggable(Level.INFO)) 
 			logger.info("Number of Items is: " + this.itemToID.size());
@@ -528,7 +527,7 @@ public class DiskHyperGraph {
 					throw new RuntimeException("rule is null but id is " + ruleID);
 				}
 			} else {
-				rule = pGrammar.constructOOVRule(1,	this.symbolTable.addTerminal(fds[4+qtyAntecedents]), false);
+				rule = pGrammar.constructOOVRule(1,	this.symbolTable.addTerminal(fds[4+qtyAntecedents]), this.symbolTable.addTerminal(fds[4+qtyAntecedents]), false);
 				
 				/**This is a hack. as the pGrammar does not set defaultLHS properly*/
 				int lhs = this.symbolTable.addNonterminal(fds[3+qtyAntecedents]);

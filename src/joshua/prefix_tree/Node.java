@@ -580,10 +580,6 @@ public class Node extends AbstractGrammar implements Comparable<Node>, Trie {
 		return null;
 	}
 
-	public Rule constructOOVRule(int num_feats, int sourceWord, boolean have_lm_model) {
-		// TODO Auto-generated method stub
-		return null;
-	}
 
 	public int getOOVRuleID() {
 		// TODO Auto-generated method stub
@@ -593,5 +589,10 @@ public class Node extends AbstractGrammar implements Comparable<Node>, Trie {
 	public boolean hasRuleForSpan(int startIndex, int endIndex, int pathLength) {
 		// TODO Auto-generated method stub
 		return false;
+	}
+
+	public Rule constructOOVRule(int num_feats, int sourceWord, int targetWord, boolean have_lm_model) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

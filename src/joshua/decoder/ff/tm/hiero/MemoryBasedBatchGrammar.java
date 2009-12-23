@@ -155,11 +155,11 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
 	}
 
 
-	public Rule constructOOVRule(int qtyFeatures, int sourceWord,  boolean hasLM) {
-		int[] p_french      = new int[1];
-		p_french[0]         = sourceWord;
+	public Rule constructOOVRule(int qtyFeatures, int sourceWord, int targetWord, boolean hasLM) {
+		int[] french      = new int[1];
+		french[0]         = sourceWord;
 		int[] english       = new int[1];
-		english[0]          = sourceWord;
+		english[0]          = targetWord;
 		float[] feat_scores = new float[qtyFeatures];
 		
 		// TODO: This is a hack to make the decoding without a LM works
@@ -171,7 +171,7 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
 			feat_scores[0] = oovFeatureCost;
 		}
 		
-		return new BilingualRule(this.defaultLHS, p_french, english, feat_scores, 0, this.defaultOwner, 0, getOOVRuleID());
+		return new BilingualRule(this.defaultLHS, french, english, feat_scores, 0, this.defaultOwner, 0, getOOVRuleID());
 	}
 
 	public int getOOVRuleID() {
