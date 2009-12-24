@@ -19,8 +19,6 @@ package joshua.decoder.ff.tm;
 
 import java.util.Arrays;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import joshua.corpus.vocab.SymbolTable;
 
@@ -33,9 +31,6 @@ import joshua.corpus.vocab.SymbolTable;
  * @version $LastChangedDate$
  */
 public class BilingualRule extends MonolingualRule {
-	
-	private static final Logger logger = 
-		Logger.getLogger(BilingualRule.class.getName());
 	
 	private int[] english;
 	
@@ -59,19 +54,13 @@ public class BilingualRule extends MonolingualRule {
 	 */
 	public BilingualRule(int lhs, int[] sourceRhs, int[] targetRhs, float[] featureScores, int arity, int owner, float latticeCost, int ruleID) {
 		super(lhs, sourceRhs, featureScores, arity, owner, latticeCost, ruleID);
-		this.english = targetRhs;
-		if (logger.isLoggable(Level.FINEST)) {
-			logger.finest("Constructing bilingual rule: " + this.getClass().getName() + "@" + Integer.toHexString(System.identityHashCode(this)) + "  "+ this.toString());
-		}
+		this.english = targetRhs;		
 	}
 	
 	//called by class who does not care about lattice_cost, rule_id, and owner
 	public BilingualRule(int lhs, int[] sourceRhs, int[] targetRhs, float[] featureScores, int arity) {
 		super(lhs, sourceRhs, featureScores, arity);
 		this.english = targetRhs;
-		if (logger.isLoggable(Level.FINEST)) {
-			logger.finest("Constructing bilingual rule: " + this.getClass().getName() + "@" + Integer.toHexString(System.identityHashCode(this)) + "  "+ this.toString());
-		}
 	}
 	
 	
@@ -124,9 +113,8 @@ public class BilingualRule extends MonolingualRule {
 			StringBuffer sb = new StringBuffer();
 			sb.append(this.getClass().getName() + "@" + Integer.toHexString(System.identityHashCode(this)));
 			sb.append("~~~");
-			sb.append("[");
 			sb.append(this.getLHS());
-			sb.append("] ||| ");
+			sb.append(" ||| ");
 			sb.append(Arrays.toString(this.getFrench()));
 			sb.append(" ||| ");
 			sb.append(Arrays.toString(this.english));
@@ -142,9 +130,9 @@ public class BilingualRule extends MonolingualRule {
 	
 	public String toString(SymbolTable symbolTable) {
 		if (null == this.cachedToString) {
-			StringBuffer sb = new StringBuffer("[");
+			StringBuffer sb = new StringBuffer();
 			sb.append(symbolTable.getWord(this.getLHS()));
-			sb.append("] ||| ");
+			sb.append(" ||| ");
 			sb.append(symbolTable.getWords(this.getFrench()));
 			sb.append(" ||| ");
 			sb.append(symbolTable.getWords(this.english));
@@ -157,14 +145,15 @@ public class BilingualRule extends MonolingualRule {
 		return this.cachedToString;
 	}
 	
-	
 	public String toStringWithoutFeatScores(SymbolTable symbolTable) {
-		return new StringBuffer("[")
+		return new StringBuffer()
 			.append(symbolTable.getWord(this.getLHS()))
-			.append("] ||| ")
+			.append(" ||| ")
 			.append(symbolTable.getWords(this.getFrench()))
 			.append(" ||| ")
 			.append(symbolTable.getWords(english))
 			.toString();
 	}
+	
+
 }

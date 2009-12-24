@@ -288,14 +288,14 @@ public class DecoderFactory {
 		
 		//merge the grammar rules for disk hyper-graphs
 		if (JoshuaConfiguration.save_disk_hg) {
-			HashMap<Integer,Integer> tbl_done = new HashMap<Integer,Integer>();
-			BufferedWriter t_writer_dhg_rules =
+			HashMap<Integer,Integer> tblDone = new HashMap<Integer,Integer>();
+			BufferedWriter rulesWriter =
 				FileUtility.getWriteFileStream(nbestFile + ".hg.rules");
-			for (DecoderThread p_decoder : this.parallelThreads) {
-				p_decoder.hypergraphSerializer.writeRulesParallel(t_writer_dhg_rules, tbl_done);
+			for (DecoderThread decoder : this.parallelThreads) {
+				decoder.hypergraphSerializer.writeRulesParallel(rulesWriter, tblDone);
 			}
-			t_writer_dhg_rules.flush();
-			t_writer_dhg_rules.close();
+			rulesWriter.flush();
+			rulesWriter.close();
 		}
 	}
 }

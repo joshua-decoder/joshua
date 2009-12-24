@@ -117,9 +117,9 @@ public class SamtFormatReader extends GrammarReader<BilingualRule> {
 	
 	@Override
 	public String toTokenIds(BilingualRule rule) {
-		StringBuffer sb = new StringBuffer("[");
+		StringBuffer sb = new StringBuffer();
 		sb.append(rule.getLHS());
-		sb.append("] ||| ");
+		sb.append(" ||| ");
 		sb.append(Arrays.toString(rule.getFrench()));
 		sb.append(" ||| ");
 		sb.append(Arrays.toString(rule.getEnglish()));
@@ -134,9 +134,9 @@ public class SamtFormatReader extends GrammarReader<BilingualRule> {
 
 	@Override
 	public String toTokenIdsWithoutFeatureScores(BilingualRule rule) {
-		StringBuffer sb = new StringBuffer("[");
+		StringBuffer sb = new StringBuffer();
 		sb.append(rule.getLHS());
-		sb.append("] ||| ");
+		sb.append(" ||| ");
 		sb.append(Arrays.toString(rule.getFrench()));
 		sb.append(" ||| ");
 		sb.append(Arrays.toString(rule.getEnglish()));

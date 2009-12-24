@@ -15,7 +15,7 @@ public class HieroFormatReader extends GrammarReader<BilingualRule> {
 	static {
 		fieldDelimiter = "\\s\\|{3}\\s";
 		nonTerminalRegEx = "^\\[[^\\s]+\\,[0-9]*\\]$";
-		nonTerminalCleanRegEx = "[\\,0-9\\s+]+";
+		nonTerminalCleanRegEx = "[\\,0-9\\s]+";
 //		nonTerminalRegEx = "^\\[[A-Z]+\\,[0-9]*\\]$";
 //		nonTerminalCleanRegEx = "[\\[\\]\\,0-9\\s]+";
 		
@@ -74,9 +74,9 @@ public class HieroFormatReader extends GrammarReader<BilingualRule> {
 
 	@Override
 	public String toTokenIds(BilingualRule rule) {
-		StringBuffer sb = new StringBuffer("[");
+		StringBuffer sb = new StringBuffer();
 		sb.append(rule.getLHS());
-		sb.append("] ||| ");
+		sb.append(" ||| ");
 		sb.append(Arrays.toString(rule.getFrench()));
 		sb.append(" ||| ");
 		sb.append(Arrays.toString(rule.getEnglish()));
@@ -91,9 +91,9 @@ public class HieroFormatReader extends GrammarReader<BilingualRule> {
 
 	@Override
 	public String toTokenIdsWithoutFeatureScores(BilingualRule rule) {
-		StringBuffer sb = new StringBuffer("[");
+		StringBuffer sb = new StringBuffer();
 		sb.append(rule.getLHS());
-		sb.append("] ||| ");
+		sb.append(" ||| ");
 		sb.append(Arrays.toString(rule.getFrench()));
 		sb.append(" ||| ");
 		sb.append(Arrays.toString(rule.getEnglish()));
@@ -119,9 +119,9 @@ public class HieroFormatReader extends GrammarReader<BilingualRule> {
 
 	@Override
 	public String toWordsWithoutFeatureScores(BilingualRule rule) {
-		StringBuffer sb = new StringBuffer("[");
+		StringBuffer sb = new StringBuffer();
 		sb.append(rule.getLHS());
-		sb.append("] ||| ");
+		sb.append(" ||| ");
 		sb.append(symbolTable.getWords(rule.getFrench()));
 		sb.append(" ||| ");
 		sb.append(symbolTable.getWords(rule.getEnglish()));

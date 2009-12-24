@@ -240,9 +240,9 @@ public class MonolingualRule implements Rule {
 		@Deprecated
 		public String toString(Map<Integer,String> ntVocab, SymbolTable sourceVocab, SymbolTable targetVocab) {
 			if (null == this.cachedToString) {
-				StringBuffer sb = new StringBuffer("[");
+				StringBuffer sb = new StringBuffer();
 				sb.append(ntVocab.get(this.lhs));
-				sb.append("] ||| ");
+				sb.append(" ||| ");
 				sb.append(sourceVocab.getWords(this.p_french,true));
 				sb.append(" |||");
 				for (int i = 0; i < this.feat_scores.length; i++) {
@@ -260,9 +260,8 @@ public class MonolingualRule implements Rule {
 		public String toString() {
 			if (null == this.cachedToString) {
 				StringBuffer sb = new StringBuffer();
-				sb.append("[");
 				sb.append(this.lhs);
-				sb.append("] ||| ");
+				sb.append(" ||| ");
 				sb.append(Arrays.toString(this.p_french));
 				sb.append(" |||");
 				for (int i = 0; i < this.feat_scores.length; i++) {
@@ -277,9 +276,9 @@ public class MonolingualRule implements Rule {
 		//do not use cachedToString
 		@Deprecated
 		public String toString(SymbolTable symbolTable) {
-			StringBuffer sb = new StringBuffer("[");
+			StringBuffer sb = new StringBuffer();
 			sb.append(symbolTable.getWord(this.lhs));
-			sb.append("] ||| ");
+			sb.append(" ||| ");
 			sb.append(symbolTable.getWords(this.p_french));
 			sb.append(" |||");
 			for (int i = 0; i < this.feat_scores.length; i++) {
@@ -290,9 +289,9 @@ public class MonolingualRule implements Rule {
 		
 		@Deprecated
 		public String toStringWithoutFeatScores(SymbolTable symbolTable) {
-			return new StringBuffer("[")
+			return new StringBuffer()
 				.append(symbolTable.getWord(lhs))
-				.append("] ||| ")
+				.append(" ||| ")
 				.append(symbolTable.getWords(p_french))
 				.toString();
 		}

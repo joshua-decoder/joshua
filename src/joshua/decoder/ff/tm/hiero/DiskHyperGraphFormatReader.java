@@ -7,6 +7,12 @@ import joshua.corpus.vocab.SymbolTable;
 import joshua.decoder.ff.tm.BilingualRule;
 import joshua.decoder.ff.tm.GrammarReader;
 
+/**
+ * this class implements the grammar reader for disk hypergraph
+ * @author Zhifei Li, <zhifei.work@gmail.com>
+ * @version $LastChangedDate: 2009-11-30 23:52:12 -0500 (星期一, 30 十一月 2009) $
+ */
+
 public class DiskHyperGraphFormatReader extends GrammarReader<BilingualRule> {
 
 	protected static final String blockDelimiter;
@@ -18,7 +24,8 @@ public class DiskHyperGraphFormatReader extends GrammarReader<BilingualRule> {
 		blockDelimiter = " -LZF- ";
 		fieldDelimiter = "\\s+\\|{3}\\s+";
 		nonTerminalRegEx = "^\\[[A-Z]+\\,[0-9]*\\]$";
-		nonTerminalCleanRegEx = "[\\[\\]\\,0-9]+";
+		nonTerminalCleanRegEx = "[\\,0-9\\s]+";
+		//nonTerminalCleanRegEx = "[\\[\\]\\,0-9]+";
 		description = "Joshua hypergraph rule file format";
 	}
 	
@@ -91,9 +98,9 @@ public class DiskHyperGraphFormatReader extends GrammarReader<BilingualRule> {
 
 	@Override
 	public String toTokenIds(BilingualRule rule) {
-		StringBuffer sb = new StringBuffer("[");
+		StringBuffer sb = new StringBuffer();
 		sb.append(rule.getLHS());
-		sb.append("] ||| ");
+		sb.append(" ||| ");
 		sb.append(Arrays.toString(rule.getFrench()));
 		sb.append(" ||| ");
 		sb.append(Arrays.toString(rule.getEnglish()));
@@ -108,9 +115,9 @@ public class DiskHyperGraphFormatReader extends GrammarReader<BilingualRule> {
 
 	@Override
 	public String toTokenIdsWithoutFeatureScores(BilingualRule rule) {
-		StringBuffer sb = new StringBuffer("[");
+		StringBuffer sb = new StringBuffer();
 		sb.append(rule.getLHS());
-		sb.append("] ||| ");
+		sb.append(" ||| ");
 		sb.append(Arrays.toString(rule.getFrench()));
 		sb.append(" ||| ");
 		sb.append(Arrays.toString(rule.getEnglish()));
@@ -126,10 +133,9 @@ public class DiskHyperGraphFormatReader extends GrammarReader<BilingualRule> {
 		sb.append(symbolTable.getWord(rule.getOwner()));
 		sb.append(blockDelimiter);
 		
-		sb.append('[');
 		sb.append(symbolTable.getWord(rule.getLHS()));
 		
-		sb.append("] ||| ");
+		sb.append(" ||| ");
 		sb.append(symbolTable.getWords(rule.getFrench()));
 		sb.append(" ||| ");
 		sb.append(symbolTable.getWords(rule.getEnglish()));
@@ -144,9 +150,9 @@ public class DiskHyperGraphFormatReader extends GrammarReader<BilingualRule> {
 
 	@Override
 	public String toWordsWithoutFeatureScores(BilingualRule rule) {
-		StringBuffer sb = new StringBuffer("[");
+		StringBuffer sb = new StringBuffer();
 		sb.append(symbolTable.getWord(rule.getLHS()));
-		sb.append("] ||| ");
+		sb.append(" ||| ");
 		sb.append(symbolTable.getWords(rule.getFrench()));
 		sb.append(" ||| ");
 		sb.append(symbolTable.getWords(rule.getEnglish()));

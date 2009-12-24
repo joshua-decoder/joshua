@@ -28,40 +28,40 @@ import joshua.decoder.ff.tm.Trie;
 * @version $LastChangedDate$
 */
 public class MemoryBasedTrie implements Trie {
-	MemoryBasedRuleBin rule_bin = null;
-	HashMap<Integer,MemoryBasedTrie> tbl_children = null;
+	MemoryBasedRuleBin ruleBin = null;
+	HashMap<Integer,MemoryBasedTrie> childrenTbl = null;
 	
 	
 	/* See Javadoc for Trie interface. */
 	public MemoryBasedTrie matchOne(int sym_id) {
-		if (null == tbl_children) {
+		if (null == childrenTbl) {
 			return null;
 		} else {
-			return tbl_children.get(sym_id);
+			return childrenTbl.get(sym_id);
 		}
 	}
 	
 	/* See Javadoc for Trie interface. */
 	public boolean hasExtensions() {
-		return (null != this.tbl_children);
+		return (null != this.childrenTbl);
 	}
 	
 	public HashMap<Integer,MemoryBasedTrie> getExtensionsTable() {
-		return this.tbl_children;
+		return this.childrenTbl;
 	}
 	
 	public void setExtensions(HashMap<Integer,MemoryBasedTrie> tbl_children_) {
-		this.tbl_children = tbl_children_;
+		this.childrenTbl = tbl_children_;
 	}
 	
 	/* See Javadoc for Trie interface. */
 	public boolean hasRules() {
-		return (null != this.rule_bin);
+		return (null != this.ruleBin);
 	}
 	
 	
 	public void setRuleBin(MemoryBasedRuleBin rb) {
-		rule_bin = rb;
+		ruleBin = rb;
 	}
 	
 	/* See Javadoc for Trie interface. */
@@ -69,7 +69,7 @@ public class MemoryBasedTrie implements Trie {
 //		if (this.rule_bin==null) {
 //			throw new Error("Uninitialized RuleCollection encountered. Instead of returning a null pointer, this error is being thrown.");
 //		} else {
-			return this.rule_bin;
+			return this.ruleBin;
 //		}
 	}
 	
@@ -90,7 +90,7 @@ public class MemoryBasedTrie implements Trie {
 	
 	/* See Javadoc for Trie interface. */
 	public Collection<MemoryBasedTrie> getExtensions() {
-		return this.tbl_children.values();
+		return this.childrenTbl.values();
 	}
 	
 }

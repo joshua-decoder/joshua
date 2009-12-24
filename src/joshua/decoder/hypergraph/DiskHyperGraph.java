@@ -54,9 +54,9 @@ import java.util.HashMap;
 
 
 //Bottom-up
-//line: SENTENCE_TAG, sent_id, sent_len, num_items, num_deductions (in average, num_deductions is about 10 times larger than the num_items, which is in average about 4000)
-//line: ITEM_TAG, item id, i, j, lhs, num_deductions, tbl_state;
-//line: best_cost, num_items, item_ids, rule id, OOV-Non-Terminal (optional), OOV (optional), \\feature scores
+//line: SENTENCE_TAG, sent_id, sent_len, numNodes, numEdges (in average, numEdges is about 10 times larger than the numNodes, which is in average about 4000)
+//line: ITEM_TAG, item id, i, j, lhs, numEdges, tbl_state;
+//line: best_cost, numNodes, item_ids, rule id, OOV-Non-Terminal (optional), OOV (optional), \newline feature scores
 public class DiskHyperGraph {
 	
 //===============================================================
@@ -209,9 +209,10 @@ public class DiskHyperGraph {
 		this.qtyDeductions = 0;
 	}
 	
-	public void closeItemsReader(){
+	public void closeReaders(){
 		try {
 			this.itemsReader.close();
+			this.ruleReader.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -311,7 +312,7 @@ public class DiskHyperGraph {
 		
 		if (null != item.hyperedges) {
 			for (HyperEdge hyperEdge : item.hyperedges) {
-				writeDeduction(item, hyperEdge);
+				writeHyperedge(item, hyperEdge);
 			}
 		}
 		this.writer.flush();
@@ -322,35 +323,35 @@ public class DiskHyperGraph {
 		return (rl.getRuleID() == MemoryBasedBatchGrammar.OOV_RULE_ID);//pGrammar.getOOVRuleID());
 	}
 	
-	private void writeDeduction(HGNode item, HyperEdge deduction)
+	private void writeHyperedge(HGNode node, HyperEdge edge)
 	throws IOException {
 		//get rule id
 		int ruleID = NULL_RULE_ID;
-		final Rule deduction_rule = deduction.getRule();
-		if (null != deduction_rule) {
-			ruleID = deduction_rule.getRuleID();
-			if	(! isOutOfVocabularyRule(deduction_rule)) {
-				this.associatedGrammar.put(ruleID, deduction_rule); //remember used regular rule
+		final Rule edgeRule = edge.getRule();
+		if (null != edgeRule) {
+			ruleID = edgeRule.getRuleID();
+			if	(! isOutOfVocabularyRule(edgeRule)) {
+				this.associatedGrammar.put(ruleID, edgeRule); //remember used regular rule
 			}
 		}
 		
 		StringBuffer s = new StringBuffer();
-		//line: best_cost, num_items, item_ids, rule id, OOV-Non-Terminal (optional), OOV (optional),
-		s.append(String.format("%.4f ", deduction.bestDerivationCost));
+		//line: best_cost, numNodes, item_ids, rule id, OOV-Non-Terminal (optional), OOV (optional),
+		s.append(String.format("%.4f ", edge.bestDerivationCost));
 		//s.append(" ").append(cur_d.best_cost).append(" ");//this 1.2 faster than the previous statement
 		
 		//s.append(String.format("%.4f ", cur_d.get_transition_cost(false)));
 		//s.append(cur_d.get_transition_cost(false)).append(" ");//this 1.2 faster than the previous statement, but cost 1.4 larger disk space
 		
-		if (null == deduction.getAntNodes()) {
+		if (null == edge.getAntNodes()) {
 			s.append(0);
 		} else {
-			final int qtyItems = deduction.getAntNodes().size();
+			final int qtyItems = edge.getAntNodes().size();
 			s.append(qtyItems);
 			for (int i = 0; i < qtyItems; i++) {
 				s.append(' ')
 					.append(this.itemToID.get(
-						deduction.getAntNodes().get(i) ));
+						edge.getAntNodes().get(i) ));
 			}
 		}
 		s.append(' ')
@@ -359,15 +360,15 @@ public class DiskHyperGraph {
 			//System.out.println("lhs id: " + deduction_rule.getLHS());
 			//System.out.println("rule words: " + deduction_rule.getEnglish());
 			s.append(' ')
-				.append(this.symbolTable.getWord(deduction_rule.getLHS()))
+				.append(this.symbolTable.getWord(edgeRule.getLHS()))
 				.append(' ')
-				.append(this.symbolTable.getWords(deduction_rule.getEnglish()));
+				.append(this.symbolTable.getWords(edgeRule.getEnglish()));
 		}
 		s.append('\n');
 		
 		// save model cost as a seprate line; optional
 		if (this.storeModelCosts) {
-			s.append( createModelCostLine(item, deduction) );
+			s.append( createModelCostLine(node, edge) );
 		}
 		
 		this.writer.write(s.toString());
@@ -403,7 +404,7 @@ public class DiskHyperGraph {
 	
 	public HyperGraph readHyperGraph() {
 		resetStates();
-		//read first line: SENTENCE_TAG, sent_id, sent_len, num_items, num_deduct
+		//read first line: SENTENCE_TAG, sent_id, sent_len, numNodes, num_deduct
 		String line = null;
 		if (null != this.startLine) { // the previous sentence is skipped
 			line = this.startLine;
@@ -436,10 +437,11 @@ public class DiskHyperGraph {
 			int qtyDeductions  = Integer.parseInt(fds[4]);
 			
 			System.out.println(
-				"num_items: "       + qtyItems
+				"numNodes: "       + qtyItems
 				+ "; num_deducts: " + qtyDeductions);
 			
-			for (int i = 0; i < qtyItems; i++) readItem();
+			for (int i = 0; i < qtyItems; i++) 
+				readNode();
 			//TODO check if the file reaches EOF, or if the num_deducts matches 
 			
 			//create hyper graph
@@ -451,7 +453,7 @@ public class DiskHyperGraph {
 		}
 	}
 	
-	private HGNode readItem() {
+	private HGNode readNode() {
 		//line: ITEM_TAG itemID i j lhs qtyDeductions ITEM_STATE_TAG item_state
 		String  line = FileUtility.read_line_lzf(this.itemsReader);
 		String[] fds = line.split(ITEM_STATE_TAG); // TODO: use joshua.util.Regex
@@ -481,7 +483,7 @@ public class DiskHyperGraph {
 		if (qtyDeductions > 0) {
 			deductions = new ArrayList<HyperEdge>();
 			for (int t = 0; t < qtyDeductions; t++) {
-				HyperEdge deduction = readDeduction();
+				HyperEdge deduction = readHyperedge();
 				deductions.add(deduction);
 				if (deduction.bestDerivationCost < bestCost) {
 					bestCost      = deduction.bestDerivationCost;
@@ -496,12 +498,12 @@ public class DiskHyperGraph {
 	}
 	
 	// Assumption: has this.associatedGrammar and this.idToItem
-	private HyperEdge readDeduction() {
-		//line: flag, best_cost, num_items, item_ids, rule id, OOV-Non-Terminal (optional), OOV (optional)
+	private HyperEdge readHyperedge() {
+		//line: flag, best_cost, numNodes, item_ids, rule id, OOV-Non-Terminal (optional), OOV (optional)
 		String  line = FileUtility.read_line_lzf(this.itemsReader);
 		String[] fds = Regex.spaces.split(line);
 		
-		//best_cost transition_cost num_items item_ids
+		//best_cost transition_cost numNodes item_ids
 		double bestCost = Double.parseDouble(fds[0]);
 		ArrayList<HGNode> antecedentItems = null;
 		final int qtyAntecedents = Integer.parseInt(fds[1]);
@@ -557,6 +559,8 @@ public class DiskHyperGraph {
 // end readHyperGraph()
 //===============================================================
 	
+	
+	
 	public void writeRulesNonParallel(String rulesFile)
 	throws IOException {
 		BufferedWriter out = 
@@ -578,7 +582,7 @@ public class DiskHyperGraph {
 	{
 		logger.info("writing rules in a partition");
 		for (int ruleID : this.associatedGrammar.keySet()) {
-			if (! writtenRules.containsKey(ruleID)) {
+			if (! writtenRules.containsKey(ruleID)) {//not been written on disk yet
 				writtenRules.put(ruleID, 1);
 				writeRule(out, this.associatedGrammar.get(ruleID), ruleID);
 			}
@@ -590,7 +594,7 @@ public class DiskHyperGraph {
 			int ruleID) throws IOException 
 	{
 		// HACK: this is VERY wrong, but avoiding it seems to require major architectural changes
-		out.write(this.ruleReader.toWords((BilingualRule) rule));
+		out.write(this.ruleReader.toWords( (BilingualRule) rule));
 		out.write("\n");
 	}
 }

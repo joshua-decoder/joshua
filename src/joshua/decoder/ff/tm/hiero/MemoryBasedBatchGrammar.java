@@ -82,7 +82,7 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
 	 * 		null rule (id=-1)
 	 */
 	
-	static int rule_id_count = 1;
+	static int ruleIDCount = 1;
 		
 	/** Logger for this class. */
 	private static final Logger logger = 
@@ -102,14 +102,14 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
 			SymbolTable symbolTable, 
 			String defaultOwner,
 			String defaultLHSSymbol,
-			int span_limit,
+			int spanLimit,
 			float oovFeatureCost_) throws IOException 
 	{
 		
 		this.symbolTable  = symbolTable;
 		this.defaultOwner = this.symbolTable.addTerminal(defaultOwner);
 		this.defaultLHS   = this.symbolTable.addNonterminal(defaultLHSSymbol);
-		this.spanLimit    = span_limit;
+		this.spanLimit    = spanLimit;
 		this.oovFeatureCost = oovFeatureCost_;
 		this.root = new MemoryBasedTrie();
 		
@@ -118,18 +118,19 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
 		if (modelReader != null) {
 			modelReader.initialize();
 			for (BilingualRule rule : modelReader)
-				if (rule != null) addRule(rule);
+				if (rule != null) 
+					addRule(rule);
 		} else {
 			if (logger.isLoggable(Level.WARNING))
 				logger.warning("Couldn't create a GrammarReader for file " + grammarFile + " with format " + formatKeyword);
 		}
 
-		this.print_grammar();
+		this.printGrammar();
 	}
 	
 	protected GrammarReader<BilingualRule> createReader(String formatKeyword,
-			String grammarFile, SymbolTable symbolTable) 
-	{
+			String grammarFile, SymbolTable symbolTable){
+		
 		if ("hiero".equals(formatKeyword)) {
 			return new HieroFormatReader(grammarFile, symbolTable);
 		} else if ("samt".equals(formatKeyword)) {
@@ -206,49 +207,51 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
 		
 		// TODO: Why two increments? 
 		this.qtyRulesRead++;
-		rule_id_count++;
+		ruleIDCount++;
 
-		rule.setRuleID(rule_id_count);
+		rule.setRuleID(ruleIDCount);
 		rule.setOwner(defaultOwner);
 		
 		// TODO: make sure costs are calculated here or in reader
 		tem_estcost += rule.getEstCost();
 		
-		// identify the position, and insert the trie nodes as necessary
+		//=== identify the position, and insert the trie nodes as necessary
 		MemoryBasedTrie pos = root;
-		int[] p_french = rule.getFrench();
-		for (int k = 0; k < p_french.length; k++) {
-			int cur_sym_id = p_french[k];
-			if (this.symbolTable.isNonterminal(p_french[k])) { 
-				cur_sym_id = modelReader.cleanNonTerminal(p_french[k]);
+		int[] french = rule.getFrench();
+		for (int k = 0; k < french.length; k++) {
+			int curSymID = french[k];
+			
+			/**Note that the nonTerminal symbol in the french is not cleaned (i.e., will be sth 
+			 * like [X,1]), but the symbol in the Trie has to be cleaned, so that the match does
+			 * not care about the markup (i.e., [X,1] or [X,2] means the same thing, that is X)*/
+			if (this.symbolTable.isNonterminal(french[k])) { 
+				curSymID = modelReader.cleanNonTerminal(french[k]);
 			}
 			
-			MemoryBasedTrie next_layer = pos.matchOne(cur_sym_id);
-			if (null == next_layer) {
-				next_layer = new MemoryBasedTrie();
+			MemoryBasedTrie nextLayer = pos.matchOne(curSymID);
+			if (null == nextLayer) {
+				nextLayer = new MemoryBasedTrie();
 				if (pos.hasExtensions() == false) {
-					pos.tbl_children = new HashMap<Integer, MemoryBasedTrie>();
+					pos.childrenTbl = new HashMap<Integer, MemoryBasedTrie>();
 				}
-				pos.tbl_children.put(cur_sym_id, next_layer);
+				pos.childrenTbl.put(curSymID, nextLayer);
 			}
-			pos = next_layer;
+			pos = nextLayer;
 		}
 		
-		this.insertRule(pos, rule);
-	}
-	
-	protected void insertRule(MemoryBasedTrie pos, BilingualRule rule) {
-		// add the rule into the trie node
+		
+		//=== add the rule into the trie node
 		if (! pos.hasRules()) {
-			pos.rule_bin = new MemoryBasedRuleBin(rule.getArity(), rule.getFrench());
+			pos.ruleBin = new MemoryBasedRuleBin(rule.getArity(), rule.getFrench());
 			this.qtyRuleBins++;
 		}
-		pos.rule_bin.addRule(rule);
+		pos.ruleBin.addRule(rule);
 	}
+	
 
 	
 	// BUG: This always prints 0 for all fields
-	protected void print_grammar() {
+	protected void printGrammar() {
 		if (logger.isLoggable(Level.INFO)) {
 			logger.info("###########Grammar###########");
 			logger.info(String.format(

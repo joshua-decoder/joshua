@@ -69,7 +69,7 @@ implements Iterable<R>, Iterator<R> {
 	}
 	
 	
-	private void close() {
+	public void close() {
 		if (null != this.reader) {
 			try {
 				this.reader.close();
@@ -131,13 +131,13 @@ implements Iterable<R>, Iterator<R> {
 	public abstract String toTokenIdsWithoutFeatureScores(R rule);
 	
 	public int cleanNonTerminal(int tokenID) {
-		// cleans NT of any markup
+		// cleans NT of any markup, e.g., [X,1] may becomes [X], depending 
 		return symbolTable.addNonterminal(
 				cleanNonTerminal(symbolTable.getWord(tokenID)));
 	}
 
 	public String cleanNonTerminal(String word) {
-		// cleans NT of any markup
+		// cleans NT of any markup,  e.g., [X,1] may becomes [X], depending on nonTerminalCleanRegEx
 		return word.replaceAll(nonTerminalCleanRegEx, "");
 	}
 
