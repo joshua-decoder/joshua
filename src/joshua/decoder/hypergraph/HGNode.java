@@ -165,6 +165,9 @@ public class HGNode implements Comparable<HGNode> {
 		return this.signature;
 	}
 	
+	public void releaseStateMemory(){
+		ffDpstatesTbl = null;
+	}
 	
 	/*this will called by the sorting
 	 * in Cell.ensureSorted()*/
