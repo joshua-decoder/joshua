@@ -205,7 +205,7 @@ class Cell {
 	/**create a hyperege, and add it into the chart if not got prunned
 	 * */
 	HGNode addHyperEdgeInCell(
-		ComputeItemResult result, Rule rule, int i, int j,
+		ComputeNodeResult result, Rule rule, int i, int j,
 		ArrayList<HGNode> ants, SourcePath srcPath
 	) {
 		HGNode res = null;

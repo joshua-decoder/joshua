@@ -59,23 +59,23 @@ public class HyperGraph {
 	
 	
 	
-	static public FFTransitionResult computeTransition(HyperEdge dt, FeatureFunction m, int start_span, int end_span){
-		return computeTransition(dt, dt.getRule(), dt.getAntNodes(), m,  start_span,  end_span, dt.getSourcePath());
+	static public FFTransitionResult computeTransition(HyperEdge dt, FeatureFunction m, int startSpan, int endSpan){
+		return computeTransition(dt, dt.getRule(), dt.getAntNodes(), m,  startSpan,  endSpan, dt.getSourcePath());
 	}
 	
-	static public FFTransitionResult computeTransition(HyperEdge dt, Rule rl,  ArrayList<HGNode> l_ant_hgnodes, FeatureFunction m, int start_span, int end_span, SourcePath srcPath){
+	static public FFTransitionResult computeTransition(HyperEdge dt, Rule rl,  ArrayList<HGNode> antNodes, FeatureFunction m, int startSpan, int endSpan, SourcePath srcPath){
 		FFTransitionResult res = null;
 		if(m.isStateful() == false){//stateless feature
-			res = m.transition(dt, rl, null, start_span, end_span, srcPath);
+			res = m.transition(dt, rl, null, startSpan, endSpan, srcPath);
 		}else{
-			ArrayList<FFDPState> previous_states = null;
-			if (l_ant_hgnodes != null) {
-				previous_states = new ArrayList<FFDPState>();
-				for (HGNode it : l_ant_hgnodes) {
-					previous_states.add( it.getFeatDPState(m) );
+			ArrayList<FFDPState> previousStates = null;
+			if (antNodes != null) {
+				previousStates = new ArrayList<FFDPState>();
+				for (HGNode it : antNodes) {
+					previousStates.add( it.getFeatDPState(m) );
 				}
 			}
-			res = m.transition(dt, rl, previous_states, start_span, end_span, srcPath);
+			res = m.transition(dt, rl, previousStates, startSpan, endSpan, srcPath);
 		}
 		if (null == res) {
 			logger.severe("compute_item: transition returned null state");

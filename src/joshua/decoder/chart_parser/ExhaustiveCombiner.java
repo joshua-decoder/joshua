@@ -31,7 +31,7 @@ public class ExhaustiveCombiner implements Combiner{
 					ArrayList<HGNode> antecedents = new ArrayList<HGNode>();
 					antecedents.add(antecedent);
 					cell.addHyperEdgeInCell(
-							new ComputeItemResult(chart.featureFunctions, rule, antecedents, i, j, srcPath),
+							new ComputeNodeResult(chart.featureFunctions, rule, antecedents, i, j, srcPath),
 						rule, i, j, antecedents, srcPath);
 				}
 				
@@ -44,7 +44,7 @@ public class ExhaustiveCombiner implements Combiner{
 						antecedents.add(it_ant1);
 						antecedents.add(it_ant2);
 						cell.addHyperEdgeInCell(
-								new ComputeItemResult(chart.featureFunctions, rule, antecedents, i, j, srcPath),
+								new ComputeNodeResult(chart.featureFunctions, rule, antecedents, i, j, srcPath),
 							rule, i, j, antecedents, srcPath);
 					}
 				}

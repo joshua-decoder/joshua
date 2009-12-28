@@ -1,6 +1,4 @@
-/**
- * 
- */
+
 package joshua.decoder.chart_parser;
 
 import java.util.ArrayList;
@@ -14,33 +12,40 @@ import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.hypergraph.HGNode;
 import joshua.decoder.hypergraph.HyperGraph;
 
-public class ComputeItemResult {
+/**
+ *
+ * @author Zhifei Li, <zhifei.work@gmail.com>
+ * @version $LastChangedDate: 2009-12-22 14:00:36 -0500 (星期二, 22 十二月 2009) $
+ */
+
+public class ComputeNodeResult {
+	
 	private double expectedTotalCost;
 	private double finalizedTotalCost;
 	private double transitionTotalCost;
 	
 	// the key is feature id; tbl of dpstate for each stateful feature
-	private HashMap<Integer,FFDPState> tbl_feat_dpstates;
+	private HashMap<Integer,FFDPState> featDPStatesTbl;
 	
 	
 	/** 
-	 * Compute cost and the states of this item returned
+	 * Compute cost and the states of this node returned
 	 * ArrayList: expectedTotalCost, finalizedTotalCost,
 	 * transition_cost, bonus, list of states
 	 */
-	public ComputeItemResult(List<FeatureFunction> featureFunctions, Rule rule, 
-			ArrayList<HGNode> previousItems, int i, int j, SourcePath srcPath){
+	public ComputeNodeResult(List<FeatureFunction> featureFunctions, Rule rule, 
+			ArrayList<HGNode> antNodes, int i, int j, SourcePath srcPath){
 		
 		double finalizedTotalCost = 0.0;
 		
 		
-		if (null != previousItems) {
-			for (HGNode item : previousItems) {
+		if (null != antNodes) {
+			for (HGNode item : antNodes) {
 				finalizedTotalCost += item.bestHyperedge.bestDerivationCost;
 			}
 		}
 		
-		HashMap<Integer,FFDPState> allItemStates = null;
+		HashMap<Integer,FFDPState> allDPStates = null;
 		double transitionCostSum    = 0.0;
 		double futureCostEstimation = 0.0;
 		
@@ -49,7 +54,7 @@ public class ComputeItemResult {
 			if (ff.isStateful()) {
 				//System.out.println("class name is " + ff.getClass().getName());
 				FFTransitionResult state = HyperGraph.computeTransition(
-					null, rule, previousItems, ff, i, j, srcPath);
+					null, rule, antNodes, ff, i, j, srcPath);
 				
 				transitionCostSum +=
 					ff.getWeight() * state.getTransitionCost();
@@ -59,10 +64,10 @@ public class ComputeItemResult {
 				
 				FFDPState itemState = state.getStateForNode();
 				if (null != itemState) {
-					if (null == allItemStates) {
-						allItemStates = new HashMap<Integer,FFDPState>();
+					if (null == allDPStates) {
+						allDPStates = new HashMap<Integer,FFDPState>();
 					}
-					allItemStates.put(ff.getFeatureID(), itemState);
+					allDPStates.put(ff.getFeatureID(), itemState);
 				} else {
 					throw new RuntimeException("compute_item: null getStateForItem()"
 						+ "\n*"
@@ -74,7 +79,7 @@ public class ComputeItemResult {
 				}
 			} else {
 				FFTransitionResult state = HyperGraph.computeTransition(
-					null, rule, previousItems, ff, i, j, srcPath);
+					null, rule, antNodes, ff, i, j, srcPath);
 				
 				transitionCostSum +=
 					ff.getWeight() * state.getTransitionCost();
@@ -105,7 +110,7 @@ public class ComputeItemResult {
 		this.expectedTotalCost = expectedTotalCost;
 		this.finalizedTotalCost = finalizedTotalCost;
 		this.transitionTotalCost = transitionCostSum;
-		this.tbl_feat_dpstates =  allItemStates;
+		this.featDPStatesTbl =  allDPStates;
 	}
 	
 	
@@ -135,10 +140,10 @@ public class ComputeItemResult {
 	}
 	
 	void setFeatDPStates(HashMap<Integer,FFDPState> states) {
-		this.tbl_feat_dpstates = states;
+		this.featDPStatesTbl = states;
 	}
 	
 	HashMap<Integer,FFDPState> getFeatDPStates() {
-		return this.tbl_feat_dpstates;
+		return this.featDPStatesTbl;
 	}
 }

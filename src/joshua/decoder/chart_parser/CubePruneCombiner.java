@@ -37,7 +37,7 @@ public class CubePruneCombiner implements Combiner{
 			// TODO: si.l_items must be sorted
 			currentAntecedents.add(si.l_items.get(0));
 		}
-		ComputeItemResult result =	new ComputeItemResult(chart.featureFunctions, currentRule, currentAntecedents, i, j, srcPath);
+		ComputeNodeResult result =	new ComputeNodeResult(chart.featureFunctions, currentRule, currentAntecedents, i, j, srcPath);
 		
 		int[] ranks = new int[1+superItems.size()]; // rule, ant items
 		for (int d = 0; d < ranks.length; d++) {
@@ -99,7 +99,7 @@ public class CubePruneCombiner implements Combiner{
 				}
 				
 				CubePruneState t_state = new CubePruneState(
-						new ComputeItemResult(chart.featureFunctions, currentRule, currentAntecedents, i, j, srcPath),
+						new ComputeNodeResult(chart.featureFunctions, currentRule, currentAntecedents, i, j, srcPath),
 					new_ranks, currentRule, currentAntecedents);
 				
 				// add state into heap
@@ -130,11 +130,11 @@ public class CubePruneCombiner implements Combiner{
 //	===============================================================
 		private static class CubePruneState implements Comparable<CubePruneState> {
 			int[]             ranks;
-			ComputeItemResult tbl_item_states;
+			ComputeNodeResult tbl_item_states;
 			Rule              rule;
 			ArrayList<HGNode> l_ants;
 			
-			public CubePruneState(ComputeItemResult state, int[] ranks, Rule rule, 
+			public CubePruneState(ComputeNodeResult state, int[] ranks, Rule rule, 
 					ArrayList<HGNode> antecedents)
 			{
 				this.tbl_item_states = state;
