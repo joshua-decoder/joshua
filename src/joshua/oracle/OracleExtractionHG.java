@@ -572,7 +572,7 @@ public class OracleExtractionHG extends SplitHg {
 	}
 	
 	// TODO: never called. remove?
-	private boolean is_a_prefix_in_grammar(
+	private boolean isAPrefixInGrammar(
 		ArrayList<Integer> right_state_sequence, 
 		int start_pos, int end_pos, PrefixGrammar gr_prefix)
 	{
@@ -711,7 +711,7 @@ public class OracleExtractionHG extends SplitHg {
 	}
 	
 	// TODO: never called, remove?
-	private static void print_state(Object[] state) {
+	private static void printState(Object[] state) {
 		System.out.println("State is");
 		for (int i = 0; i < state.length; i++) {
 			System.out.print(state[i] + " ---- ");

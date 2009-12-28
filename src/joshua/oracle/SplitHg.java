@@ -104,19 +104,7 @@ public abstract class SplitHg {
 		return res;
 	}
 	
-	// TODO: is never called. remove?
-	// return the best cost in the list of split virtual items corresponding to the original item
-	private double get_best_virtual_score(HGNode it){
-		ArrayList<VirtualItem> l_virtual_items = g_tbl_split_virtual_items.get(it);
-		Double  best = null;
-		for(int i=0; i<l_virtual_items.size(); i++){
-			VirtualItem vit = (VirtualItem)l_virtual_items.get(i);
-			if(best==null || vit.best_virtual_deduction.best_cost < best)
-				best = vit.best_virtual_deduction.best_cost;
-		}
-		System.out.println("best cost is " + best);	
-		return best;
-	} 
+	
 	
 //	############### split hg #####	
 		public  void split_hg(HyperGraph hg){	
