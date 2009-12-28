@@ -26,11 +26,11 @@ package joshua.decoder.ff;
  */
 public class StatelessFFTransitionResult extends DefaultFFTransitionResult {
 	
-	public FFDPState getStateForItem() {
+	public FFDPState getStateForNode() {
 		return null;
 	}
 	
-	public void setStateForItem(FFDPState map) {
+	public void setStateForNode(FFDPState map) {
 		throw new IllegalArgumentException("attempt to assign FFDPState to stateless feature");
 	}
 }

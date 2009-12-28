@@ -17,8 +17,7 @@
  */
 package joshua.decoder.ff;
 
-import java.util.Arrays;
-import java.util.logging.Level;
+
 import java.util.logging.Logger;
 
 import joshua.decoder.ff.tm.Rule;
@@ -50,9 +49,7 @@ public final class PhraseModelFF extends DefaultStatelessFF {
 		if (this.owner == rule.getOwner()) {
 
 			float[] feat_scores = rule.getFeatureScores();
-			if (logger.isLoggable(Level.FINEST)) 
-				logger.finest("Rule ( " + rule.getLHS() + " => " + Arrays.toString(rule.getFrench()) + " ||| " + Arrays.toString(rule.getEnglish()) + " ) has feature scores: " + Arrays.toString(feat_scores));
-			
+		 	
 			if (this.columnIndex < feat_scores.length) {				
 				return feat_scores[this.columnIndex];
 			} else {
@@ -64,8 +61,6 @@ public final class PhraseModelFF extends DefaultStatelessFF {
 				return 0.0;
 			}
 		} else {			
-			if (logger.isLoggable(Level.FINEST)) 
-				logger.finest("Rule ( " + rule.getLHS() + " => " + Arrays.toString(rule.getFrench()) + " ||| " + Arrays.toString(rule.getEnglish()) + " ) has feature scores treated as 0.0 because feature function owner " + this.owner + " does not match rule owner " + rule.getOwner());
 			return 0.0;
 		}
 	}

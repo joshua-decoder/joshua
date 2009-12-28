@@ -17,7 +17,6 @@
  */
 package joshua.decoder.ff;
 
-import java.util.logging.Logger;
 import java.util.ArrayList;
 
 import joshua.decoder.ff.tm.Rule;
@@ -34,8 +33,8 @@ public final class SourcePathFF extends DefaultStatelessFF {
 		super(weight, -1, featureID);
 	}
 
-	public StatelessFFTransitionResult transition(Rule rule, ArrayList<FFDPState> previous_states, int span_start, int span_end, SourcePath srcPath) {
-		if (null != previous_states) {
+	public StatelessFFTransitionResult transition(Rule rule, ArrayList<FFDPState> previousStates, int spanStart, int spanEnd, SourcePath srcPath) {
+		if (null != previousStates) {
 			throw new IllegalArgumentException("transition: previous states for a stateless feature is NOT null");
 		}
 		StatelessFFTransitionResult result = new StatelessFFTransitionResult();

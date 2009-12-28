@@ -29,11 +29,11 @@ public class StatefulFFTransitionResult extends DefaultFFTransitionResult {
 	private FFDPState dynamicProgrammingState = null;
 	
 	
-	public FFDPState getStateForItem() {
+	public FFDPState getStateForNode() {
 		return this.dynamicProgrammingState;
 	}
 	
-	public void setStateForItem(FFDPState map) {
+	public void setStateForNode(FFDPState map) {
 		this.dynamicProgrammingState = map;
 	}
 }

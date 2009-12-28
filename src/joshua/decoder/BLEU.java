@@ -92,8 +92,9 @@ public class BLEU {
 	public  static HashMap<String, Integer> constructMaxRefCountTable(String[] refSents, int bleuOrder){
 		
 		ArrayList<HashMap<String, Integer>> listRefNgramTbl = new ArrayList<HashMap<String, Integer>>();
-		for(int i =0; i<refSents.length; i++){
-			String[] refWords = Regex.spaces.split(refSents[i]);			
+		for(int i=0; i<refSents.length; i++){
+			//if(refSents[i]==null){System.out.println("null ref sent"); System.exit(1);}
+			String[] refWords = refSents[i].split("\\s+");			
 			HashMap<String, Integer> refNgramTbl = new HashMap<String, Integer>();
 			accumulateNgramCounts(refNgramTbl, bleuOrder, refWords);	
 			listRefNgramTbl.add(refNgramTbl);			

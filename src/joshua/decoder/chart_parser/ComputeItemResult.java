@@ -57,7 +57,7 @@ public class ComputeItemResult {
 				futureCostEstimation +=
 					ff.getWeight() * state.getFutureCostEstimation();
 				
-				FFDPState itemState = state.getStateForItem();
+				FFDPState itemState = state.getStateForNode();
 				if (null != itemState) {
 					if (null == allItemStates) {
 						allItemStates = new HashMap<Integer,FFDPState>();

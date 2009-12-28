@@ -96,10 +96,10 @@ public class LanguageModelFF extends DefaultStatefulFF {
 	/** Symbol table that maps between Strings and integers. */
 	private final SymbolTable symbolTable;
 	
-	public LanguageModelFF(int feat_id_, int ngram_order, SymbolTable psymbol, NGramLanguageModel lm_grammar, double weight_) {
-		super(weight_, feat_id_);
-		this.ngramOrder = ngram_order;
-		this.lmGrammar  = lm_grammar;
+	public LanguageModelFF(int featID, int ngramOrder, SymbolTable psymbol, NGramLanguageModel lmGrammar, double weight) {
+		super(weight, featID);
+		this.ngramOrder = ngramOrder;
+		this.lmGrammar  = lmGrammar;
 		this.symbolTable = psymbol;
 		this.START_SYM_ID = psymbol.addTerminal(START_SYM);
 		this.STOP_SYM_ID = psymbol.addTerminal(STOP_SYM);
@@ -111,9 +111,9 @@ public class LanguageModelFF extends DefaultStatefulFF {
 	/*the transition cost for LM: sum of the costs of the new ngrams created
 	 * depends on the antstates and current rule*/
 	//antstates: ArrayList of states of this model in ant items
-	public StatefulFFTransitionResult transition(Rule rule, ArrayList<FFDPState> previous_states, int span_start, int span_end, SourcePath srcPath) {
+	public StatefulFFTransitionResult transition(Rule rule, ArrayList<FFDPState> previousStates, int spanStart, int spanEnd, SourcePath srcPath) {
 		//long start = Support.current_time();		
-		StatefulFFTransitionResult res = this.lookupWordsEquvState(rule.getEnglish(), previous_states);	
+		StatefulFFTransitionResult res = this.lookupWordsEquvState(rule.getEnglish(), previousStates);	
 		//	Chart.g_time_lm += Support.current_time()-start;
 		return res;
 	}
@@ -231,7 +231,7 @@ public class LanguageModelFF extends DefaultStatefulFF {
 		//### create tabl
 		StatefulFFTransitionResult resTbl = new StatefulFFTransitionResult();
 		LMFFDPState  modelStates = new LMFFDPState();
-		resTbl.setStateForItem(modelStates);
+		resTbl.setStateForNode(modelStates);
 		
 		//##### get left euquiv state 
 		double[] lm_l_cost = new double[2];
@@ -263,14 +263,14 @@ public class LanguageModelFF extends DefaultStatefulFF {
 	}
 	
 	
-	private double scoreChunk(ArrayList<Integer> words, boolean consider_incomplete_ngrams, boolean skip_start) {
+	private double scoreChunk(ArrayList<Integer> words, boolean considerIncompleteNgrams, boolean skipStart) {
 		if (words.size() <= 0) {
 			return 0.0;
 		} else {
 			int startIndex;
-			if (! consider_incomplete_ngrams) {
+			if (! considerIncompleteNgrams) {
 				startIndex = this.ngramOrder;
-			} else if (skip_start) {
+			} else if (skipStart) {
 				startIndex = 2;
 			} else {
 				startIndex = 1;
@@ -321,14 +321,14 @@ public class LanguageModelFF extends DefaultStatefulFF {
 	//in state, all the ngrams are incomplete
 	//only get the estimation for the left-state
 	//get the true prob for right-state, if add_end==true
-	private double estimateStateProb(LMFFDPState state, boolean add_start, boolean add_end) {
+	private double estimateStateProb(LMFFDPState state, boolean addStart, boolean addEnd) {
 		double res = 0.0;
 		
 		int[]   l_context = state.getLeftLMStateWords();
 		
 		if (null != l_context) {
 			ArrayList<Integer> list;
-			if (add_start == true) {
+			if (addStart == true) {
 				list = new ArrayList<Integer>(l_context.length + 1);
 				list.add(START_SYM_ID);
 			} else {
@@ -348,7 +348,7 @@ public class LanguageModelFF extends DefaultStatefulFF {
 		/*if (add_start == true) {
 			System.out.println("left context: " +Symbol.get_string(l_context) + ";prob "+res);
 		}*/
-		if (add_end == true) {//only when add_end is true, we get a complete ngram, otherwise, all ngrams in r_state are incomplete and we should do nothing
+		if (addEnd == true) {//only when add_end is true, we get a complete ngram, otherwise, all ngrams in r_state are incomplete and we should do nothing
 			int[]   r_context = state.getRightLMStateWords();
 			ArrayList<Integer> list = new ArrayList<Integer>(r_context.length+1);
 			for (int k = 0; k < r_context.length; k++) {

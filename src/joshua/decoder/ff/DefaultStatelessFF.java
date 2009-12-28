@@ -64,9 +64,10 @@ public abstract class DefaultStatelessFF implements FeatureFunction {
 	}
 	
 	
-	/** Default behavior: ignore "edge". */
-	public FFTransitionResult transition(HyperEdge edge, Rule rule, ArrayList<FFDPState> previous_states, int span_start, int span_end, SourcePath srcPath) {
-		return transition(rule, previous_states, span_start, span_end, srcPath);
+	/** Default behavior: ignore "edge". 
+	 **/
+	public FFTransitionResult transition(HyperEdge edge, Rule rule, ArrayList<FFDPState> previousStates, int spanStart, int spanEnd, SourcePath srcPath) {
+		return transition(rule, previousStates, spanStart, spanEnd, srcPath);
 	}
 	
 	/** Default behavior: ignore "edge". */
@@ -79,8 +80,8 @@ public abstract class DefaultStatelessFF implements FeatureFunction {
 	 * (1) use estimate() to get transition cost
 	 * (2) no future cost estimation
 	 */
-	public StatelessFFTransitionResult transition(Rule rule, ArrayList<FFDPState> previous_states, int span_start, int span_end, SourcePath srcPath) {
-		if (null != previous_states) {
+	public StatelessFFTransitionResult transition(Rule rule, ArrayList<FFDPState> previousStates, int spanStart, int spanEnd, SourcePath srcPath) {
+		if (null != previousStates) {
 			throw new IllegalArgumentException("transition: previous states for a stateless feature is NOT null");
 		}
 		StatelessFFTransitionResult result = new StatelessFFTransitionResult();

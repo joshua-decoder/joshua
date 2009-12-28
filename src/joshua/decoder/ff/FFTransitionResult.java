@@ -34,8 +34,8 @@ public interface FFTransitionResult {
 	double getTransitionCost();
 	void   setTransitionCost(double transitionCost);
 	
-	FFDPState getStateForItem();
-	void      setStateForItem(FFDPState map);
+	FFDPState getStateForNode();
+	void      setStateForNode(FFDPState map);
 	
 	double getFutureCostEstimation();
 	void   setFutureCostEstimation(double cost);

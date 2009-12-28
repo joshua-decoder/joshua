@@ -61,10 +61,10 @@ public abstract class DefaultStatefulFF implements FeatureFunction {
 	
 	/** default behavior: ignore "edge" */
 	public FFTransitionResult transition(HyperEdge edge, Rule rule,
-		ArrayList<FFDPState> previous_states, int span_start, int span_end,
-		SourcePath srcPath
+			ArrayList<FFDPState> previousStates, int spanStart, int spanEnd,
+			SourcePath srcPath
 	) {
-		return transition(rule, previous_states, span_start,span_end,srcPath);
+		return transition(rule, previousStates, spanStart, spanEnd, srcPath);
 	}
 	
 	/** default behavior: ignore "edge" */

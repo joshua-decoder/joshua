@@ -70,18 +70,21 @@ public interface FeatureFunction {
 	 * assume it.)
 	 */
 	
-	/**
+	/**The transition function will do:
 	 * (1) calculate transition cost
 	 * (2) estimate future cost
 	 * (3) extract dynamic-programming state
+	 * 
+	 * These results are stored in FFTransitionResult.
 	 */
 	FFTransitionResult transition(
 			Rule rule, ArrayList<FFDPState> previousStates,
-		int spanStart, int spanEnd, SourcePath srcPath);
+			int spanStart, int spanEnd, SourcePath srcPath);
 	
-	FFTransitionResult transition(HyperEdge edge,
+	FFTransitionResult transition(
+			HyperEdge edge,
 			Rule rule, ArrayList<FFDPState> previousStates,
-		int spanStart, int spanEnd, SourcePath srcPath);
+			int spanStart, int spanEnd, SourcePath srcPath);
 	
 	
 	double finalTransition(FFDPState state);
