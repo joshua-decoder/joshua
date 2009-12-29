@@ -143,7 +143,7 @@ public class LanguageModelFF extends DefaultStatefulFF {
 		//boolean keep_left_state = true;//stop if: (1) end of rule; (2) left_state_org_wrds.size()==this.ngramOrder-1; (3) seperating point;
 		
 		//before l_context finish, left state words are in current_ngram, after that, all words will be replaced with right state words
-		ArrayList<Integer> current_ngram   = new ArrayList<Integer>();
+		ArrayList<Integer> currentNgram   = new ArrayList<Integer>();
 		double             transition_cost = 0.0;
 		
 		for (int c = 0; c < enWords.length; c++) {
@@ -180,23 +180,23 @@ public class LanguageModelFF extends DefaultStatefulFF {
 				//System.out.println("left context: " + Symbol.get_string(l_context));
 				for (int i = 0; i < l_context.length; i++) {
 					int t = l_context[i];
-					current_ngram.add(t);
+					currentNgram.add(t);
 					
 					//always calculate cost for <bo>: additional backoff weight
 					if (t == BACKOFF_LEFT_LM_STATE_SYM_ID) {
-						int additional_backoff_weight = current_ngram.size() - (i+1);
+						int additional_backoff_weight = currentNgram.size() - (i+1);
 						
 						//compute additional backoff weight
-						transition_cost	-= this.lmGrammar.logProbabilityOfBackoffState(current_ngram, current_ngram.size(), additional_backoff_weight);
+						transition_cost	-= this.lmGrammar.logProbabilityOfBackoffState(currentNgram, currentNgram.size(), additional_backoff_weight);
 						
-						if (current_ngram.size() == this.ngramOrder) {
-							current_ngram.remove(0);
+						if (currentNgram.size() == this.ngramOrder) {
+							currentNgram.remove(0);
 						}
-					} else if (current_ngram.size() == this.ngramOrder) {
+					} else if (currentNgram.size() == this.ngramOrder) {
 						// compute the current word probablity, and remove it
-						transition_cost -= this.lmGrammar.ngramLogProbability(current_ngram, this.ngramOrder);
+						transition_cost -= this.lmGrammar.ngramLogProbability(currentNgram, this.ngramOrder);
 						
-						current_ngram.remove(0);
+						currentNgram.remove(0);
 					}
 					
 					if (leftLMStateWrds.size() < this.ngramOrder - 1) {
@@ -208,38 +208,38 @@ public class LanguageModelFF extends DefaultStatefulFF {
 				//note: left_state_org_wrds will never take words from right context because it is either duplicate or out of range
 				//also, we will never score the right context probablity because they are either duplicate or partional ngram
 				//System.out.println("right context: " + Symbol.get_string(r_context));
-				int t_size = current_ngram.size();
+				int t_size = currentNgram.size();
 				for (int i = 0; i < r_context.length; i++) {
 					// replace context
-					current_ngram.set(t_size - r_context.length + i, r_context[i]);
+					currentNgram.set(t_size - r_context.length + i, r_context[i]);
 				}
 			
 			} else {//terminal words
 				//System.out.println("terminal: " + Symbol.get_string(c_id));
-				current_ngram.add(c_id);
-				if (current_ngram.size() == this.ngramOrder) {
+				currentNgram.add(c_id);
+				if (currentNgram.size() == this.ngramOrder) {
 					// compute the current word probablity, and remove it
-					transition_cost -= this.lmGrammar.ngramLogProbability(current_ngram, this.ngramOrder);
+					transition_cost -= this.lmGrammar.ngramLogProbability(currentNgram, this.ngramOrder);
 					
-					current_ngram.remove(0);
+					currentNgram.remove(0);
 				}
 				if (leftLMStateWrds.size() < this.ngramOrder - 1) {
 					leftLMStateWrds.add(c_id);
 				}
 			}
 		}
-		//### create tabl
+		//===== create tabl
 		StatefulFFTransitionResult resTbl = new StatefulFFTransitionResult();
 		LMFFDPState  modelStates = new LMFFDPState();
 		resTbl.setStateForNode(modelStates);
 		
-		//##### get left euquiv state 
+		//===== get left euquiv state 
 		double[] lm_l_cost = new double[2];
 		int[] equiv_l_state = this.lmGrammar.leftEquivalentState(Support.sub_int_array(leftLMStateWrds, 0, leftLMStateWrds.size()),	this.ngramOrder, lm_l_cost);
 		modelStates.setLeftLMStateWords(equiv_l_state);
 		//System.out.println("left state: " + Symbol.get_string(equiv_l_state));
 		
-		//##### trabsition and estimate cost
+		//===== trabsition and estimate cost
 		transition_cost += lm_l_cost[0];//add finalized cost for the left state words
 		resTbl.setTransitionCost(transition_cost);
 		//System.out.println("##tran cost: " + transition_cost +" lm_l_cost[0]: " + lm_l_cost[0]);
@@ -252,9 +252,10 @@ public class LanguageModelFF extends DefaultStatefulFF {
 			}
 		}
 		resTbl.setFutureCostEstimation(estimatedFutureCost);
-		//##### get right equiv state
+		
+		//===== get right equiv state
 		//if(current_ngram.size()>this.ngramOrder-1 || equiv_l_state.length>this.ngramOrder-1) throw new RuntimeException();
-		int[] equiv_r_state = this.lmGrammar.rightEquivalentState(Support.sub_int_array(current_ngram, 0, current_ngram.size()), this.ngramOrder);
+		int[] equiv_r_state = this.lmGrammar.rightEquivalentState(Support.sub_int_array(currentNgram, 0, currentNgram.size()), this.ngramOrder);
 		modelStates.setRightLMStateWords(equiv_r_state);
 		//System.out.println("right state: " + Symbol.get_string(right_state));
 		

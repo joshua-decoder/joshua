@@ -522,8 +522,8 @@ public class Chart {
 					List<Rule> rules = childNode.getRules().getSortedRules();
 					
 					for (Rule rule : rules) { // for each unary rules								
-						ComputeNodeResult tbl_states = new ComputeNodeResult(this.featureFunctions, rule, antecedents, i, j, new SourcePath());
-						HGNode res_item = chartBin.addHyperEdgeInCell(tbl_states, rule, i, j, antecedents, new SourcePath());
+						ComputeNodeResult states = new ComputeNodeResult(this.featureFunctions, rule, antecedents, i, j, new SourcePath());
+						HGNode res_item = chartBin.addHyperEdgeInCell(states, rule, i, j, antecedents, new SourcePath());
 						if (null != res_item) {
 							queue.add(res_item);
 							qtyAdditionsToQueue++;
@@ -565,8 +565,8 @@ public class Chart {
                                 child_tnode.getRules().getSortedRules();
 
                         for (Rule rule : l_rules){//for each unary rules
-                        	ComputeNodeResult tbl_states = new ComputeNodeResult(this.featureFunctions, rule, l_ants, i, j, new SourcePath());
-                            HGNode res_item = chart_bin.addHyperEdgeInCell(tbl_states, rule, i, j, l_ants, new SourcePath());
+                        	ComputeNodeResult states = new ComputeNodeResult(this.featureFunctions, rule, l_ants, i, j, new SourcePath());
+                            HGNode res_item = chart_bin.addHyperEdgeInCell(states, rule, i, j, l_ants, new SourcePath());
                             if (null != res_item) {
                                     t_queue.add(res_item);
                                     count_of_additions_to_t_queue++;

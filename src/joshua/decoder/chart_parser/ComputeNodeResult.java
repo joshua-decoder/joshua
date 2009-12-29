@@ -29,15 +29,12 @@ public class ComputeNodeResult {
 	
 	
 	/** 
-	 * Compute cost and the states of this node returned
-	 * ArrayList: expectedTotalCost, finalizedTotalCost,
-	 * transition_cost, bonus, list of states
+	 * Compute costS and the states of thE node
 	 */
 	public ComputeNodeResult(List<FeatureFunction> featureFunctions, Rule rule, 
 			ArrayList<HGNode> antNodes, int i, int j, SourcePath srcPath){
 		
 		double finalizedTotalCost = 0.0;
-		
 		
 		if (null != antNodes) {
 			for (HGNode item : antNodes) {
@@ -51,14 +48,12 @@ public class ComputeNodeResult {
 		
 		for (FeatureFunction ff : featureFunctions) {
 			////long start2 = Support.current_time();
-			if (ff.isStateful()) {
-				//System.out.println("class name is " + ff.getClass().getName());
-				FFTransitionResult state = HyperGraph.computeTransition(
+			FFTransitionResult state = HyperGraph.computeTransition(
 					null, rule, antNodes, ff, i, j, srcPath);
-				
-				transitionCostSum +=
-					ff.getWeight() * state.getTransitionCost();
-				
+			transitionCostSum +=
+				ff.getWeight() * state.getTransitionCost();
+			
+			if (ff.isStateful()) {
 				futureCostEstimation +=
 					ff.getWeight() * state.getFutureCostEstimation();
 				
@@ -69,21 +64,9 @@ public class ComputeNodeResult {
 					}
 					allDPStates.put(ff.getFeatureID(), itemState);
 				} else {
-					throw new RuntimeException("compute_item: null getStateForItem()"
-						+ "\n*"
-						+ "\n* This will lead insidiously to a crash in"
-						+ "\n* HyperGraph$Item.get_signature() since noone"
-						+ "\n* checks invariant conditions before then."
-						+ "\n*"
-						+ "\n* Good luck tracking it down\n");
+					throw new RuntimeException("ComputeNodeResult: null getStateForItem()\n");					
 				}
-			} else {
-				FFTransitionResult state = HyperGraph.computeTransition(
-					null, rule, antNodes, ff, i, j, srcPath);
-				
-				transitionCostSum +=
-					ff.getWeight() * state.getTransitionCost();
-				
+			} else {	
 				futureCostEstimation += 0.0;
 			}
 			////ff.time_consumed += Support.current_time() - start2;
@@ -92,7 +75,7 @@ public class ComputeNodeResult {
 		/* if we use this one (instead of compute transition
 		 * cost on the fly, we will rely on the correctness
 		 * of rule.statelesscost. This will cause a nasty
-		 * bug for MERT. specifically, even we change the
+		 * bug for MERT. Specifically, even we change the
 		 * weight vector for features along the iteration,
 		 * the HG cost does not reflect that as the Grammar
 		 * is not reestimated!!! Of course, compute it on
