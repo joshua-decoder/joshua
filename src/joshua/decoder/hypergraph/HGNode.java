@@ -62,7 +62,7 @@ public class HGNode implements Comparable<HGNode> {
 	
 	//============== for pruning purpose
 	public boolean isDead        = false;
-	public double  estTotalCost = 0.0; //it includes the bonus cost
+	public double  estTotalCost = 0.0; //it includes the estimated cost
 	
 	
 //===============================================================
@@ -99,8 +99,7 @@ public class HGNode implements Comparable<HGNode> {
 			hyperedges = new ArrayList<HyperEdge>();
 		}
 		hyperedges.add(dt);
-		if (null == bestHyperedge
-		|| bestHyperedge.bestDerivationCost > dt.bestDerivationCost) {
+		if (null == bestHyperedge || bestHyperedge.bestDerivationCost > dt.bestDerivationCost) {
 			bestHyperedge = dt; //no change when tied
 		}
 	}
@@ -131,7 +130,7 @@ public class HGNode implements Comparable<HGNode> {
 	}
 	
 	
-	public void print_info(Level level) {
+	public void printInfo(Level level) {
 		if (HyperGraph.logger.isLoggable(level))
 			HyperGraph.logger.log(level,
 				String.format("lhs: %s; cost: %.3f",
@@ -146,22 +145,19 @@ public class HGNode implements Comparable<HGNode> {
 			s.append(lhs);
 			s.append(" ");
 			
-			if (null != this.ffDpstatesTbl
-			&& this.ffDpstatesTbl.size() > 0) {
-				Iterator<Map.Entry<Integer,FFDPState>> it
-					= this.ffDpstatesTbl.entrySet().iterator();
+			if (null != this.ffDpstatesTbl && this.ffDpstatesTbl.size() > 0) {
+				Iterator<Map.Entry<Integer,FFDPState>> it = this.ffDpstatesTbl.entrySet().iterator();
 				while (it.hasNext()) {
-					Map.Entry<Integer,FFDPState> entry = it.next();
-					
+					Map.Entry<Integer,FFDPState> entry = it.next();					
 					s.append(entry.getValue().getSignature(false));
-					if (it.hasNext()) s.append(FF_SIG_SEP);
+					if (it.hasNext()) 
+						s.append(FF_SIG_SEP);
 				}
 			}
 			
 			this.signature = s.toString();
 		}
-		// TODO: class needs logger
-//		if (logger.isLoggable(Level.INFO)) logger.finest(String.format("Signature is %s", res));
+	
 		return this.signature;
 	}
 	

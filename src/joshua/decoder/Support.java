@@ -48,7 +48,7 @@ public class Support {
 	 * @param start inclusive
 	 * @param end   exclusive
 	 */
-	public static int[] sub_int_array(ArrayList<Integer> in, int start, int end) {
+	public static int[] subIntArray(ArrayList<Integer> in, int start, int end) {
 		int[] res = new int[end-start];
 		for(int i = start; i < end; i++) {
 			res[i-start] = in.get(i);

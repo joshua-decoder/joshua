@@ -78,7 +78,7 @@ public abstract class DefaultNGramLanguageModel implements NGramLanguageModel {
 		// partial ngrams at the begining
 		for (int j = startIndex; j < order && j <= sentenceLength; j++) {
 			//TODO: startIndex dependents on the order, e.g., this.ngramOrder-1 (in srilm, for 3-gram lm, start_index=2. othercase, need to check)
-			int[] ngram = Support.sub_int_array(sentence, 0, j);
+			int[] ngram = Support.subIntArray(sentence, 0, j);
 			double logProb = ngramLogProbability(ngram, order);
 			if (logger.isLoggable(Level.FINE)) {
 				String words = symbolTable.getWords(ngram);
@@ -89,7 +89,7 @@ public abstract class DefaultNGramLanguageModel implements NGramLanguageModel {
 		
 		// regular-order ngrams
 		for (int i = 0; i <= sentenceLength - order; i++) {
-			int[] ngram = Support.sub_int_array(sentence, i, i + order);
+			int[] ngram = Support.subIntArray(sentence, i, i + order);
 			double logProb = ngramLogProbability(ngram, order);
 			if (logger.isLoggable(Level.FINE)) {
 				String words = symbolTable.getWords(ngram);
@@ -106,7 +106,7 @@ public abstract class DefaultNGramLanguageModel implements NGramLanguageModel {
 	@Deprecated
 	public double ngramLogProbability(ArrayList<Integer> ngram, int order) {
 		return ngramLogProbability(
-			Support.sub_int_array(ngram, 0, ngram.size()), order);
+			Support.subIntArray(ngram, 0, ngram.size()), order);
 	}
 	
 	
@@ -122,7 +122,7 @@ public abstract class DefaultNGramLanguageModel implements NGramLanguageModel {
 	 * token will never exist. However, were it to be called,
 	 * it should return a probability of 1 (logprob of 0).
 	 */
-	public double logProbabilityOfBackoffState(ArrayList<Integer> ngram, int order, int qtyAdditionalBackoffWeight) {
+	public double logProbOfBackoffState(ArrayList<Integer> ngram, int order, int qtyAdditionalBackoffWeight) {
 		return 0; // log(1) == 0;
 	}
 	

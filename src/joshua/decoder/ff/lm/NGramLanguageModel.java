@@ -78,7 +78,7 @@ public interface NGramLanguageModel {
 	 * ngramLogProbability for the remaining actual N-gram.
 	 */
 	//TODO Is this really the best interface?
-	double logProbabilityOfBackoffState(
+	double logProbOfBackoffState(
 		ArrayList<Integer> ngram, int order, int qtyAdditionalBackoffWeight);
 	
 	double logProbabilityOfBackoffState(

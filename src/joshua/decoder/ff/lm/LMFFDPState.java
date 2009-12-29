@@ -43,11 +43,11 @@ public class LMFFDPState implements FFDPState {
 	 
 	
 	//construct an instance from the signature string
-	public  LMFFDPState(SymbolTable p_symbolTable, String sig_) {
-		this.sig = sig_;
+	public  LMFFDPState(SymbolTable symbolTable, String sig) {
+		this.sig = sig;
 		String[] states = sig.split(SIG_SEP); // TODO: use joshua.util.Regex
-		this.leftLMStateWords = p_symbolTable.getIDs(states[0]);
-		this.rightLMStateWords = p_symbolTable.getIDs(states[1]);
+		this.leftLMStateWords = symbolTable.getIDs(states[0]);
+		this.rightLMStateWords = symbolTable.getIDs(states[1]);
 	}
 		
 	public void setLeftLMStateWords(int[] words_){
@@ -70,20 +70,22 @@ public class LMFFDPState implements FFDPState {
 		return getSignature(null, forceRecompute);
 	}
 	
-	/* BUG: now, the getSignature is also got called by diskgraph; this may change the this.sig from integers to strings
+	/* BUG: now, the getSignature is also got called by diskgraph; 
+	 * this may change the this.sig from integers to strings
 	 * */
 	public String getSignature(SymbolTable symbolTable, boolean forceRecompute) {
 		if (forceRecompute || sig == null) {
 			StringBuffer sb = new StringBuffer();
 			//sb.append(SIG_PREAMBLE);//TODO: do we really need this
 			
-			/*we can not simply use sb.append(left_lm_state_words), as it will just add the address of left_lm_state_words
+			/**we can not simply use sb.append(leftLMStateWords), 
+			 * as it will just add the address of leftLMStateWords.
 			 */
-			compute_state_sig(symbolTable, leftLMStateWords, sb); 
+			computeStateSig(symbolTable, leftLMStateWords, sb); 
 			
 			sb.append(SIG_SEP);//TODO: do we really need this
 			
-			compute_state_sig(symbolTable, rightLMStateWords, sb);
+			computeStateSig(symbolTable, rightLMStateWords, sb);
 			
 			this.sig = sb.toString();
 		}
@@ -93,7 +95,8 @@ public class LMFFDPState implements FFDPState {
 	
 	
 	
-	private void compute_state_sig(SymbolTable symbolTable, int[] state, StringBuffer sb) {
+	private void computeStateSig(SymbolTable symbolTable, int[] state, StringBuffer sb) {
+		
 		if (null != state) {
 			for (int i = 0; i < state.length; i++) {
 				if (true

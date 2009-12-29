@@ -56,8 +56,9 @@ public interface FeatureFunction {
 // Methods
 //===============================================================
 	/**
-	 * Only used when initializing translation grammars (for
-	 * pruning purpose, and to get stateless cost for each rule)
+	 * It is used when initializing translation grammars (for
+	 * pruning purpose, and to get stateless cost for each rule).
+	 * This is also required to sort the rules (required by Cube-pruning)
 	 */
 	double estimate(Rule rule);
 	

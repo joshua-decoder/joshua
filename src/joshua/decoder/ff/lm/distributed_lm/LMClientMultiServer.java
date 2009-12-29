@@ -110,7 +110,7 @@ extends LMClient {
 	
 	//cmd: prob order wrd1 wrd2 ...
 	public double get_prob(ArrayList<Integer> ngram, int order) {
-		return get_prob(Support.sub_int_array(ngram, 0, ngram.size()), order);
+		return get_prob(Support.subIntArray(ngram, 0, ngram.size()), order);
 	}
 	
 	
