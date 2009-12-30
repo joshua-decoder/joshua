@@ -19,6 +19,7 @@ package joshua.decoder;
 
 import joshua.corpus.vocab.SymbolTable;
 import joshua.decoder.ff.FeatureFunction;
+import joshua.decoder.ff.StateComputer;
 import joshua.decoder.ff.tm.GrammarFactory;
 import joshua.decoder.hypergraph.HyperGraph;
 import joshua.util.io.LineReader;
@@ -44,6 +45,7 @@ import java.util.logging.Logger;
 public class DecoderFactory {
 	private ArrayList<GrammarFactory>  grammarFactories = null;
 	private ArrayList<FeatureFunction> featureFunctions = null;
+	private ArrayList<StateComputer> stateComputers;
 	private boolean                    hasLanguageModel = false;
 	
 	/**
@@ -58,10 +60,12 @@ public class DecoderFactory {
 		Logger.getLogger(DecoderFactory.class.getName());
 	
 	
-	public DecoderFactory(ArrayList<GrammarFactory> grammarFactories, boolean hasLanguageModel, ArrayList<FeatureFunction> featureFunctions, SymbolTable symbolTable) {
+	public DecoderFactory(ArrayList<GrammarFactory> grammarFactories, boolean hasLanguageModel, ArrayList<FeatureFunction> featureFunctions, 
+			ArrayList<StateComputer> stateComputers, SymbolTable symbolTable) {
 		this.grammarFactories = grammarFactories;
 		this.hasLanguageModel = hasLanguageModel;
 		this.featureFunctions = featureFunctions;
+		this.stateComputers = stateComputers;
 		this.symbolTable      = symbolTable;
 	}
 	
@@ -76,7 +80,7 @@ public class DecoderFactory {
 			if (JoshuaConfiguration.num_parallel_decoders == 1) {
 				DecoderThread pdecoder = new DecoderThread(
 					this.grammarFactories, this.hasLanguageModel,
-					this.featureFunctions, this.symbolTable,
+					this.featureFunctions, this.stateComputers, this.symbolTable,
 					testFile, nbestFile, oracleFile, 0);
 				
 				// do not call *start*; this way we stay in the current main thread
@@ -107,7 +111,7 @@ public class DecoderFactory {
 		try {
 			DecoderThread pdecoder = new DecoderThread(
 				this.grammarFactories, this.hasLanguageModel,
-				this.featureFunctions, this.symbolTable,
+				this.featureFunctions, this.stateComputers, this.symbolTable,
 				sentence, null, null, 0);
 			return pdecoder.getHyperGraph(sentence);
 		}
@@ -196,6 +200,7 @@ public class DecoderFactory {
 						this.grammarFactories,
 						this.hasLanguageModel,
 						this.featureFunctions,
+						this.stateComputers,
 						this.symbolTable,
 						cur_test_file,
 						cur_nbest_file,
@@ -223,6 +228,7 @@ public class DecoderFactory {
 			this.grammarFactories,
 			this.hasLanguageModel,
 			this.featureFunctions,
+			this.stateComputers,
 			this.symbolTable,
 			cur_test_file,
 			cur_nbest_file,

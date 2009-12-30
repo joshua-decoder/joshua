@@ -21,7 +21,8 @@ import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.Support;
 import joshua.corpus.vocab.SymbolTable;
 
-import java.util.ArrayList;
+
+import java.util.List;
 
 /**
  * This class implements NGramLanguageModel by creating wrappers
@@ -40,7 +41,7 @@ public abstract class AbstractLM extends DefaultNGramLanguageModel {
 	
 	
 	public final double sentenceLogProbability(
-		ArrayList<Integer> sentence, int order, int startIndex
+		List<Integer> sentence, int order, int startIndex
 	) {
 		return super.sentenceLogProbability(sentence, order, startIndex);
 	}
@@ -80,7 +81,7 @@ public abstract class AbstractLM extends DefaultNGramLanguageModel {
 	 *             version
 	 */
 	@Deprecated
-	public final double logProbOfBackoffState(ArrayList<Integer> ngram, int order, int qtyAdditionalBackoffWeight) {
+	public final double logProbOfBackoffState(List<Integer> ngram, int order, int qtyAdditionalBackoffWeight) {
 		return logProbabilityOfBackoffState(
 			Support.subIntArray(ngram, 0, ngram.size()),
 			order, qtyAdditionalBackoffWeight);

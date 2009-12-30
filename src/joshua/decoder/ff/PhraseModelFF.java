@@ -74,4 +74,6 @@ public final class PhraseModelFF extends DefaultStatelessFF {
 	public void setColumnIndex(int columnIndex) {
 		this.columnIndex = columnIndex;
 	}
+
+
 }

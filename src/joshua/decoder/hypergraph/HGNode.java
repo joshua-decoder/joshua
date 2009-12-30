@@ -17,8 +17,8 @@
  */
 package joshua.decoder.hypergraph;
 
-import joshua.decoder.ff.FFDPState;
-import joshua.decoder.ff.FeatureFunction;
+import joshua.decoder.ff.DPState;
+
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -51,7 +51,7 @@ public class HGNode implements Comparable<HGNode> {
 	
 
 	// the key is the feature id; remember the state required by each model, for example, edge-ngrams for LM model
-	HashMap<Integer,FFDPState> ffDpstatesTbl;
+	HashMap<Integer,DPState> dpStates;
 	
 	
 	//============== auxiluary variables, no need to store on disk
@@ -69,24 +69,24 @@ public class HGNode implements Comparable<HGNode> {
 // Constructors
 //===============================================================
 
-	public HGNode(int i, int j, int lhs, HashMap<Integer,FFDPState> states, HyperEdge init_hyperedge, double est_total_cost) {
+	public HGNode(int i, int j, int lhs, HashMap<Integer,DPState> states, HyperEdge init_hyperedge, double est_total_cost) {
 		this.i   = i;
 		this.j   = j;
 		this.lhs = lhs;
-		this.ffDpstatesTbl = states;
+		this.dpStates = states;
 		this.estTotalCost  = est_total_cost;
 		addHyperedgeInItem(init_hyperedge);
 	}
 	
 	
 	//used by disk hg
-	public HGNode(int i, int j, int lhs, ArrayList<HyperEdge> l_hyperedges, HyperEdge best_hyperedge, HashMap<Integer,FFDPState> states) {
+	public HGNode(int i, int j, int lhs, ArrayList<HyperEdge> l_hyperedges, HyperEdge best_hyperedge, HashMap<Integer,DPState> states) {
 		this.i   = i;
 		this.j   = j;
 		this.lhs = lhs;
 		this.hyperedges    = l_hyperedges;
 		this.bestHyperedge  = best_hyperedge;
-		this.ffDpstatesTbl = states;
+		this.dpStates = states;
 	}
 	
 	
@@ -111,21 +111,16 @@ public class HGNode implements Comparable<HGNode> {
 	}
 	
 	
-	public HashMap<Integer,FFDPState> getTblFeatDPStates() {
-		return ffDpstatesTbl;
+	public HashMap<Integer,DPState> getTblFeatDPStates() {
+		return dpStates;
 	}
 	
 	
-	public FFDPState getFeatDPState(FeatureFunction ff) {
-		return getFeatDPState(ff.getFeatureID());
-	}
-	
-	
-	public FFDPState getFeatDPState(int featureID) {
-		if (null == this.ffDpstatesTbl) {
+	public DPState getDPState(int stateID) {
+		if (null == this.dpStates) {
 			return null;
 		} else {
-			return this.ffDpstatesTbl.get(featureID);
+			return this.dpStates.get(stateID);
 		}
 	}
 	
@@ -145,10 +140,10 @@ public class HGNode implements Comparable<HGNode> {
 			s.append(lhs);
 			s.append(" ");
 			
-			if (null != this.ffDpstatesTbl && this.ffDpstatesTbl.size() > 0) {
-				Iterator<Map.Entry<Integer,FFDPState>> it = this.ffDpstatesTbl.entrySet().iterator();
+			if (null != this.dpStates && this.dpStates.size() > 0) {
+				Iterator<Map.Entry<Integer,DPState>> it = this.dpStates.entrySet().iterator();
 				while (it.hasNext()) {
-					Map.Entry<Integer,FFDPState> entry = it.next();					
+					Map.Entry<Integer,DPState> entry = it.next();					
 					s.append(entry.getValue().getSignature(false));
 					if (it.hasNext()) 
 						s.append(FF_SIG_SEP);
@@ -162,7 +157,7 @@ public class HGNode implements Comparable<HGNode> {
 	}
 	
 	public void releaseStateMemory(){
-		ffDpstatesTbl = null;
+		dpStates = null;
 	}
 	
 	/*this will called by the sorting

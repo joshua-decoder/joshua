@@ -20,7 +20,7 @@ package joshua.decoder.ff.lm;
 
 // BUG: At best we should use List, but we use int[] everywhere to
 // represent phrases therefore these additional methods are excessive.
-import java.util.ArrayList;
+import java.util.List;
 
 /**
  * An interface for new language models to implement. An object of
@@ -54,14 +54,14 @@ public interface NGramLanguageModel {
 	 *                   then startIndex should be 1
 	 * @return the LogP of the whole sentence
 	 */
-	double sentenceLogProbability(ArrayList<Integer> sentence, int order, int startIndex);
+	double sentenceLogProbability(List<Integer> sentence, int order, int startIndex);
 	
 	
 	/**
 	 * @param order used to temporarily reduce the order used
 	 *              by the model.
 	 */
-	double ngramLogProbability(ArrayList<Integer> ngram, int order);
+	double ngramLogProbability(List<Integer> ngram, int order);
 	double ngramLogProbability(int[] ngram, int order);
 	double ngramLogProbability(int[] ngram);
 	
@@ -79,7 +79,7 @@ public interface NGramLanguageModel {
 	 */
 	//TODO Is this really the best interface?
 	double logProbOfBackoffState(
-		ArrayList<Integer> ngram, int order, int qtyAdditionalBackoffWeight);
+		List<Integer> ngram, int order, int qtyAdditionalBackoffWeight);
 	
 	double logProbabilityOfBackoffState(
 		int[] ngram, int order, int qtyAdditionalBackoffWeight);

@@ -17,13 +17,6 @@
  */
 package joshua.decoder.hypergraph;
 
-import joshua.decoder.ff.FFDPState;
-import joshua.decoder.ff.FFTransitionResult;
-import joshua.decoder.ff.FeatureFunction;
-import joshua.decoder.ff.tm.Rule;
-import joshua.decoder.chart_parser.SourcePath;
-
-import java.util.ArrayList;
 import java.util.logging.Logger;
 
 /**
@@ -58,41 +51,6 @@ public class HyperGraph {
 	}
 	
 	
-	
-	static public FFTransitionResult computeTransition(HyperEdge dt, FeatureFunction m, int startSpan, int endSpan){
-		return computeTransition(dt, dt.getRule(), dt.getAntNodes(), m,  startSpan,  endSpan, dt.getSourcePath());
-	}
-	
-	static public FFTransitionResult computeTransition(HyperEdge dt, Rule rl,  ArrayList<HGNode> antNodes, FeatureFunction m, int startSpan, int endSpan, SourcePath srcPath){
-		FFTransitionResult res = null;
-		if(m.isStateful() == false){//stateless feature
-			res = m.transition(dt, rl, null, startSpan, endSpan, srcPath);
-		}else{
-			ArrayList<FFDPState> previousStates = null;
-			if (antNodes != null) {
-				previousStates = new ArrayList<FFDPState>();
-				for (HGNode it : antNodes) {
-					previousStates.add( it.getFeatDPState(m) );
-				}
-			}
-			res = m.transition(dt, rl, previousStates, startSpan, endSpan, srcPath);
-		}
-		if (null == res) {
-			logger.severe("compute_item: transition returned null state");
-			System.exit(0);
-		}
-		return res;
-	} 
-	
-	static public double computeFinalTransition(HyperEdge dt, FeatureFunction m){
-		double res = 0;
-		if(m.isStateful() == false){//stateless feature
-			res = m.finalTransition(dt, null);
-		}else{//stateful feature
-			res = m.finalTransition(dt, dt.getAntNodes().get(0).getFeatDPState(m));
-		}
-		return res;
-	} 
 	
 	
 	

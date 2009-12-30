@@ -19,6 +19,7 @@ package joshua.decoder;
 
 import joshua.decoder.chart_parser.Chart;
 import joshua.decoder.ff.FeatureFunction;
+import joshua.decoder.ff.StateComputer;
 import joshua.decoder.ff.lm.LanguageModelFF;
 import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.GrammarFactory;
@@ -67,6 +68,7 @@ public class DecoderThread extends Thread {
 	private final ArrayList<GrammarFactory>  grammarFactories;
 	private final boolean                    hasLanguageModel;
 	private final ArrayList<FeatureFunction> featureFunctions;
+	private final ArrayList<StateComputer> stateComputers;
 	
 	
 	/**
@@ -102,6 +104,7 @@ public class DecoderThread extends Thread {
 		ArrayList<GrammarFactory>  grammarFactories,
 		boolean                    hasLanguageModel,
 		ArrayList<FeatureFunction> featureFunctions,
+		ArrayList<StateComputer> stateComputers,
 		SymbolTable                symbolTable,
 		String testFile, String nbestFile, String oracleFile,
 		int startSentenceID
@@ -110,6 +113,7 @@ public class DecoderThread extends Thread {
 		this.grammarFactories = grammarFactories;
 		this.hasLanguageModel = hasLanguageModel;
 		this.featureFunctions = featureFunctions;
+		this.stateComputers = stateComputers;
 		this.symbolTable      = symbolTable;
 		
 		this.testFile        = testFile;
@@ -329,6 +333,7 @@ public class DecoderThread extends Thread {
 			chart = new Chart(
 				inputLattice,
 				this.featureFunctions,
+				this.stateComputers,
 				this.symbolTable,
 				Integer.parseInt(segment.id()),
 				grammars,
@@ -365,14 +370,16 @@ public class DecoderThread extends Thread {
 			
 			logger.finer("... Done Extracting. Getting k-best...");
 			this.kbestExtractor.lazy_k_best_extract_hg(
-				oracle, this.featureFunctions, JoshuaConfiguration.topN,
+				oracle, this.featureFunctions, this.stateComputers, 
+				JoshuaConfiguration.topN,
 				Integer.parseInt(segment.id()), this.nbestWriter);
 			logger.finer("... Done getting k-best");
 			
 		} else {
 			/* k-best extraction */
 			this.kbestExtractor.lazy_k_best_extract_hg(
-				hypergraph, this.featureFunctions, JoshuaConfiguration.topN,
+				hypergraph, this.featureFunctions, this.stateComputers, 
+				JoshuaConfiguration.topN,
 				Integer.parseInt(segment.id()), this.nbestWriter);
 			if (logger.isLoggable(Level.FINER))
 				logger.finer("after k-best, time: "
@@ -422,6 +429,7 @@ public class DecoderThread extends Thread {
 		chart = new Chart(
 				inputLattice,
 				this.featureFunctions,
+				this.stateComputers,
 				this.symbolTable,
 				0,
 				grammars,

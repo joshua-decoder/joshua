@@ -87,4 +87,7 @@ public class HyperEdge {
 		transitionCost = transitionCost_;
 	}
 	
+	
+	
+	
 }

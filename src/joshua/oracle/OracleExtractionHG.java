@@ -17,23 +17,23 @@
  */
 package joshua.oracle;
 
-import joshua.decoder.ff.lm.LMFFDPState;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+
+import joshua.corpus.vocab.BuildinSymbol;
+import joshua.corpus.vocab.SymbolTable;
+import joshua.decoder.Support;
+import joshua.decoder.ff.NgramDPState;
 import joshua.decoder.hypergraph.DiskHyperGraph;
 import joshua.decoder.hypergraph.HGNode;
 import joshua.decoder.hypergraph.HyperEdge;
 import joshua.decoder.hypergraph.HyperGraph;
 import joshua.decoder.hypergraph.KBestExtractor;
 import joshua.decoder.hypergraph.ViterbiExtractor;
-import joshua.decoder.Support;
-import joshua.corpus.vocab.BuildinSymbol;
-import joshua.corpus.vocab.SymbolTable;
 import joshua.util.FileUtility;
-
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
 
 /**
  * approximated BLEU
@@ -206,7 +206,7 @@ public class OracleExtractionHG extends SplitHg {
 		double orc_bleu=-1;
 		String orc_sent=null;
 		while(true){
-			String hyp_sent = kbest_extractor.get_kth_hyp(hg.goalNode, ++next_n, -1, null);//?????????
+			String hyp_sent = kbest_extractor.getKthHyp(hg.goalNode, ++next_n, -1, null);//?????????
 			if(hyp_sent==null || next_n > n) break;
 			double t_bleu = compute_sentence_bleu(this.p_symbolTable, ref_sent, hyp_sent, do_ngram_clip, 4);
 			if(t_bleu>orc_bleu){
@@ -453,7 +453,7 @@ public class OracleExtractionHG extends SplitHg {
 		int[] left_lm_state  = null;
 		int[] right_lm_state = null;
 		if (!always_maintain_seperate_lm_state && lm_order >= g_bleu_order) {	//do not need to change lm state, just use orignal lm state
-			LMFFDPState state = (LMFFDPState) parent_item.getFeatDPState(this.lm_feat_id);
+			NgramDPState state = (NgramDPState) parent_item.getDPState(this.lm_feat_id);
 			left_lm_state = state.getLeftLMStateWords();
 			right_lm_state = state.getRightLMStateWords();
 		} else {

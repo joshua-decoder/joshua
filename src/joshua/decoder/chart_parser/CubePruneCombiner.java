@@ -37,7 +37,8 @@ public class CubePruneCombiner implements Combiner{
 			// TODO: si.l_items must be sorted
 			currentAntecedents.add(si.l_items.get(0));
 		}
-		ComputeNodeResult result =	new ComputeNodeResult(chart.featureFunctions, currentRule, currentAntecedents, i, j, srcPath);
+		ComputeNodeResult result =	new ComputeNodeResult(chart.featureFunctions, currentRule, currentAntecedents, i, j, srcPath,
+				chart.stateComputers);
 		
 		int[] ranks = new int[1+superItems.size()]; // rule, ant items
 		for (int d = 0; d < ranks.length; d++) {
@@ -99,7 +100,8 @@ public class CubePruneCombiner implements Combiner{
 				}
 				
 				CubePruneState t_state = new CubePruneState(
-						new ComputeNodeResult(chart.featureFunctions, currentRule, currentAntecedents, i, j, srcPath),
+						new ComputeNodeResult(chart.featureFunctions, currentRule, 
+								currentAntecedents, i, j, srcPath, chart.stateComputers),
 					new_ranks, currentRule, currentAntecedents);
 				
 				// add state into heap

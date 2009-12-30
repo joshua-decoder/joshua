@@ -20,7 +20,8 @@ package joshua.decoder.ff.lm;
 import joshua.decoder.Support;
 import joshua.corpus.vocab.SymbolTable;
 
-import java.util.ArrayList;
+
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -68,7 +69,7 @@ public abstract class DefaultNGramLanguageModel implements NGramLanguageModel {
 //===============================================================
 
 	public double sentenceLogProbability(
-		ArrayList<Integer> sentence, int order, int startIndex
+		List<Integer> sentence, int order, int startIndex
 	) {
 		if (sentence==null) return 0.0;
 		int sentenceLength = sentence.size();
@@ -104,7 +105,7 @@ public abstract class DefaultNGramLanguageModel implements NGramLanguageModel {
 	
 	/** @deprecated this function is much slower than the int[] version */
 	@Deprecated
-	public double ngramLogProbability(ArrayList<Integer> ngram, int order) {
+	public double ngramLogProbability(List<Integer> ngram, int order) {
 		return ngramLogProbability(
 			Support.subIntArray(ngram, 0, ngram.size()), order);
 	}
@@ -122,7 +123,7 @@ public abstract class DefaultNGramLanguageModel implements NGramLanguageModel {
 	 * token will never exist. However, were it to be called,
 	 * it should return a probability of 1 (logprob of 0).
 	 */
-	public double logProbOfBackoffState(ArrayList<Integer> ngram, int order, int qtyAdditionalBackoffWeight) {
+	public double logProbOfBackoffState(List<Integer> ngram, int order, int qtyAdditionalBackoffWeight) {
 		return 0; // log(1) == 0;
 	}
 	

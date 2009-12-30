@@ -17,27 +17,28 @@
  */
 package joshua.decoder.hypergraph;
 
-import joshua.decoder.ff.lm.LMFFDPState;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import joshua.corpus.vocab.SymbolTable;
+import joshua.decoder.chart_parser.ComputeNodeResult;
+import joshua.decoder.ff.DPState;
+import joshua.decoder.ff.FeatureFunction;
+import joshua.decoder.ff.NgramDPState;
 import joshua.decoder.ff.tm.BilingualRule;
 import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.GrammarReader;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.hiero.DiskHyperGraphFormatReader;
 import joshua.decoder.ff.tm.hiero.MemoryBasedBatchGrammar;
-import joshua.decoder.ff.FFDPState;
-import joshua.decoder.ff.FeatureFunction;
-import joshua.corpus.vocab.SymbolTable;
 import joshua.util.FileUtility;
 import joshua.util.Regex;
-
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.OutputStreamWriter;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import java.util.HashMap;
 
 
 /**
@@ -378,18 +379,16 @@ public class DiskHyperGraph {
 	 * Do not remove this function as it gives freedom for an
 	 * extended class to override it
 	 */
-	public String createModelCostLine(HGNode item, HyperEdge deduction){
-		StringBuffer line = new StringBuffer();		
+	public String createModelCostLine(HGNode parentNode, HyperEdge edge){
+		StringBuffer line = new StringBuffer();	
+		
+		double[] transitionCosts = ComputeNodeResult.computeModelTransitionCost(
+				this.featureFunctions, edge.getRule(), edge.getAntNodes(), 
+				parentNode.i, parentNode.j, edge.getSourcePath(), stateComputers);
+		
 		for (int k = 0; k < this.featureFunctions.size(); k++) {
 			FeatureFunction m = this.featureFunctions.get(k);
-			line.append(String.format("%.4f",
-				null != deduction.getRule()
-				? // deductions under goal item do not have rules
-					HyperGraph
-						.computeTransition(deduction, m, item.i, item.j)
-						.getTransitionCost()
-				: HyperGraph.computeFinalTransition(deduction, m)
-				))
+			line.append(String.format("%.4f", transitionCosts[k]))
 				.append(
 					k < this.featureFunctions.size() - 1
 					? " "
@@ -468,13 +467,12 @@ public class DiskHyperGraph {
 		int qtyDeductions = Integer.parseInt(words[5]);
 		
 		//item state: signature (created from HashMap tbl_states)
-		HashMap<Integer,FFDPState> dpStates = null;
+		HashMap<Integer,DPState> dpStates = null;
 		
 		if (fds[1].compareTo(NULL_ITEM_STATE) != 0) {
 			// Assume the only stateful feature is lm feature
-			dpStates = new HashMap<Integer,FFDPState>();
-			dpStates.put(this.LMFeatureID,
-					new LMFFDPState(this.symbolTable, fds[1]));
+			dpStates = new HashMap<Integer,DPState>();
+			dpStates.put(this.LMFeatureID,	new NgramDPState(this.symbolTable, fds[1]));
 		}
 		
 		ArrayList<HyperEdge> deductions = null;

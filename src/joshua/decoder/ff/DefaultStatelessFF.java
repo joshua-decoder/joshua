@@ -18,11 +18,9 @@
 
 package joshua.decoder.ff;
 
-import java.util.ArrayList;
 
 import joshua.decoder.ff.tm.Rule;
-import joshua.decoder.chart_parser.SourcePath;
-import joshua.decoder.hypergraph.HyperEdge;
+
 
 
 /**
@@ -31,6 +29,8 @@ import joshua.decoder.hypergraph.HyperEdge;
  * @version $LastChangedDate$
  */
 public abstract class DefaultStatelessFF implements FeatureFunction {
+	
+	private int stateID = -1;//invalid id
 	
 	private      double weight = 0.0;
 	private         int featureID;
@@ -63,37 +63,34 @@ public abstract class DefaultStatelessFF implements FeatureFunction {
 		this.featureID = id;
 	}
 	
-	
-	/** Default behavior: ignore "edge". 
-	 **/
-	public FFTransitionResult transition(HyperEdge edge, Rule rule, ArrayList<FFDPState> previousStates, int spanStart, int spanEnd, SourcePath srcPath) {
-		return transition(rule, previousStates, spanStart, spanEnd, srcPath);
+	public final int getStateID() {
+		return this.stateID;
 	}
 	
-	/** Default behavior: ignore "edge". */
-	public double finalTransition(HyperEdge edge, FFDPState state) {
-		return finalTransition(state);
+	public final void setStateID(final int id) {
+		this.stateID = id;
 	}
 	
-	/**
-	 * Generic transition for FeatureFunctions which are Stateless
-	 * (1) use estimate() to get transition cost
-	 * (2) no future cost estimation
-	 */
-	public StatelessFFTransitionResult transition(Rule rule, ArrayList<FFDPState> previousStates, int spanStart, int spanEnd, SourcePath srcPath) {
-		if (null != previousStates) {
-			throw new IllegalArgumentException("transition: previous states for a stateless feature is NOT null");
+	
+	public double transition(Rule rule, StateComputeResult stateResult) {
+		if (null != stateResult) {
+			throw new IllegalArgumentException("transition: stateResult for a stateless feature is NOT null");
 		}
-		StatelessFFTransitionResult result = new StatelessFFTransitionResult();
-		result.setTransitionCost(this.estimate(rule));
-		return result;
+		return estimate(rule);
+	}
+	
+	public final double estimateFutureCost(Rule rule, StateComputeResult stateResult){
+		if (null != stateResult) {
+			throw new IllegalArgumentException("estimateFutureCost: stateResult for a stateless feature is NOT null");
+		}
+		return 0;
 	}
 	
 	
-	/** Default implementation of finalTransition */
-	public double finalTransition(FFDPState state) {
-		if (null != state) {
-			throw new IllegalArgumentException("finalTransition: state for a stateless feature is NOT null");
+	
+	public final double finalTransition(StateComputeResult stateResult) {
+		if (null != stateResult) {
+			throw new IllegalArgumentException("finalTransition: stateResult for a stateless feature is NOT null");
 		}
 		return 0.0;
 	}

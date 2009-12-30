@@ -33,15 +33,16 @@ public final class SourcePathFF extends DefaultStatelessFF {
 		super(weight, -1, featureID);
 	}
 
-	public StatelessFFTransitionResult transition(Rule rule, ArrayList<FFDPState> previousStates, int spanStart, int spanEnd, SourcePath srcPath) {
-		if (null != previousStates) {
-			throw new IllegalArgumentException("transition: previous states for a stateless feature is NOT null");
+	public double transition(Rule rule, StateComputeResult stateResult) {
+		if (null != stateResult) {
+			throw new IllegalArgumentException("transition: stateResult for a stateless feature is NOT null");
 		}
-		StatelessFFTransitionResult result = new StatelessFFTransitionResult();
-		result.setTransitionCost(srcPath.getPathCost());
-		return result;
+		
+		return srcPath.getPathCost();
 	}
 
+	
+	
 	public double estimate(final Rule rule) {
 		return 0.0;
 	}

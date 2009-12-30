@@ -27,6 +27,7 @@ import joshua.corpus.vocab.SymbolTable;
 import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.chart_parser.DotChart.DotItem;
 import joshua.decoder.ff.FeatureFunction;
+import joshua.decoder.ff.StateComputer;
 import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.RuleCollection;
@@ -77,6 +78,7 @@ public class Chart {
 	//===========================================================
 	ArrayList<FeatureFunction> featureFunctions;
 	
+	ArrayList<StateComputer> stateComputers;
 	
 	//===========================================================
 	// Satistics
@@ -182,6 +184,7 @@ public class Chart {
 	public Chart(
 		Lattice<Integer>           sentence,
 		ArrayList<FeatureFunction> featureFunctions,
+		ArrayList<StateComputer> stateComputers,
 		SymbolTable                symbolTable,
 		int                        segmentID,
 		Grammar[]                  grammars,
@@ -193,6 +196,7 @@ public class Chart {
 		this.sentence         = sentence;
 		this.sentenceLength   = sentence.size() - 1;
 		this.featureFunctions = featureFunctions;
+		this.stateComputers = stateComputers;
 		this.symbolTable      = symbolTable;
 		
 		// TODO: this is very memory-expensive
@@ -522,7 +526,7 @@ public class Chart {
 					List<Rule> rules = childNode.getRules().getSortedRules();
 					
 					for (Rule rule : rules) { // for each unary rules								
-						ComputeNodeResult states = new ComputeNodeResult(this.featureFunctions, rule, antecedents, i, j, new SourcePath());
+						ComputeNodeResult states = new ComputeNodeResult(this.featureFunctions, rule, antecedents, i, j, new SourcePath(), stateComputers);
 						HGNode res_item = chartBin.addHyperEdgeInCell(states, rule, i, j, antecedents, new SourcePath());
 						if (null != res_item) {
 							queue.add(res_item);
@@ -565,7 +569,7 @@ public class Chart {
                                 child_tnode.getRules().getSortedRules();
 
                         for (Rule rule : l_rules){//for each unary rules
-                        	ComputeNodeResult states = new ComputeNodeResult(this.featureFunctions, rule, l_ants, i, j, new SourcePath());
+                        	ComputeNodeResult states = new ComputeNodeResult(this.featureFunctions, rule, l_ants, i, j, new SourcePath(), stateComputers);
                             HGNode res_item = chart_bin.addHyperEdgeInCell(states, rule, i, j, l_ants, new SourcePath());
                             if (null != res_item) {
                                     t_queue.add(res_item);
@@ -600,7 +604,7 @@ public class Chart {
 		}		
 		
 		this.cells[i][j].addHyperEdgeInCell(
-				new ComputeNodeResult(this.featureFunctions, rule, null, i, j, srcPath),
+				new ComputeNodeResult(this.featureFunctions, rule, null, i, j, srcPath, stateComputers),
 				rule, i, j, null, srcPath);
 	}
 	

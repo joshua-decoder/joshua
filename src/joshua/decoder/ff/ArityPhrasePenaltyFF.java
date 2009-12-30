@@ -50,4 +50,5 @@ public final class ArityPhrasePenaltyFF extends DefaultStatelessFF {
 			return 0.0;
 		}
 	}
+
 }

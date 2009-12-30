@@ -19,8 +19,9 @@ package joshua.decoder.chart_parser;
 
 import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.Support;
-import joshua.decoder.ff.FFDPState;
+import joshua.decoder.ff.DPState;
 import joshua.decoder.ff.FeatureFunction;
+
 
 import joshua.decoder.ff.tm.Rule;
 
@@ -30,6 +31,7 @@ import joshua.decoder.hypergraph.HyperEdge;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.logging.Level;
@@ -125,28 +127,31 @@ class Cell {
 	/** 
 	 * add all the items with GOAL_SYM state into the goal bin
 	 * the goal bin has only one Item, which itself has many
-	 * deductions only "goal bin" should call this function
+	 * hyperedges only "goal bin" should call this function
 	 */
 	void transitToGoal(Cell bin) { // the bin[0][n], this is not goal bin
 		this.sortedItems = new ArrayList<HGNode>();
 		HGNode goalItem = null;
 		
-		for (HGNode item : bin.getSortedItems()) {
-			if (item.lhs == this.goalSymID) {
-				double cost = item.bestHyperedge.bestDerivationCost;
+		for (HGNode antNode : bin.getSortedItems()) {
+			if (antNode.lhs == this.goalSymID) {
+				double cost = antNode.bestHyperedge.bestDerivationCost;
 				double finalTransitionCost = 0.0;
-				
+				List<HGNode> antNodes = new ArrayList<HGNode>();
+				antNodes.add(antNode);
+				double[] modelCosts = ComputeNodeResult.computeModelTransitionCost(
+						this.chart.featureFunctions, null, antNodes, 0, this.chart.sentenceLength, null, this.chart.stateComputers);
+								
+				int count=0;
 				for (FeatureFunction ff : this.chart.featureFunctions) {
-					finalTransitionCost +=
-						ff.getWeight()
-						* ff.finalTransition(item.getFeatDPState(ff));
+					finalTransitionCost += ff.getWeight() * modelCosts[count];
+					count++;
 				}
 				
 				ArrayList<HGNode> previousItems = new ArrayList<HGNode>();
-				previousItems.add(item);
+				previousItems.add(antNode);
 				
-				HyperEdge dt = new HyperEdge(
-					null, cost + finalTransitionCost, finalTransitionCost, previousItems, null);
+				HyperEdge dt = new HyperEdge(null, cost + finalTransitionCost, finalTransitionCost, previousItems, null);
 				
 				if (logger.isLoggable(Level.FINE)) {
 					logger.fine(String.format(
@@ -155,9 +160,7 @@ class Cell {
 				}
 				
 				if (null == goalItem) {
-					// FIXME: this is the only place Chart.sentenceLength is accessed outside of Chart. Maybe it should be an argument to this method? This is also the only method where we use goalSymID
-					goalItem = new HGNode(
-						0, this.chart.sentenceLength + 1, this.goalSymID, null, dt, cost + finalTransitionCost);
+					goalItem = new HGNode(0, this.chart.sentenceLength + 1, this.goalSymID, null, dt, cost + finalTransitionCost);
 					this.sortedItems.add(goalItem);
 				} else {
 					goalItem.addHyperedgeInItem(dt);
@@ -170,7 +173,6 @@ class Cell {
 		
 		
 		if (logger.isLoggable(Level.INFO)) {
-			// BUG: what happened to make this necessary? This happens for the ./example2 decoder run (but not for ./example). Whatever it was, it happened in r878
 			if (null == goalItem) {
 				logger.severe("goalItem is null (this will cause the RuntimeException below)");
 			} else {
@@ -210,7 +212,7 @@ class Cell {
 	) {
 		HGNode res = null;
 		
-		HashMap<Integer,FFDPState> itemStateTbl = result.getFeatDPStates();
+		HashMap<Integer,DPState> itemStateTbl = result.getFeatDPStates();
 		double expectedTotalCost  = result.getExpectedTotalCost(); // including outside estimation
 		double transitionCost    = result.getTransitionTotalCost();
 		double finalizedTotalCost = result.getFinalizedTotalCost();

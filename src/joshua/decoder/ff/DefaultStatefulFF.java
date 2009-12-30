@@ -18,11 +18,6 @@
 
 package joshua.decoder.ff;
 
-import java.util.ArrayList;
-
-import joshua.decoder.ff.tm.Rule;
-import joshua.decoder.hypergraph.HyperEdge;
-import joshua.decoder.chart_parser.SourcePath;
 
 
 /**
@@ -30,13 +25,16 @@ import joshua.decoder.chart_parser.SourcePath;
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate$
  */
-public abstract class DefaultStatefulFF implements FeatureFunction {
+public abstract class DefaultStatefulFF<S extends StateComputeResult> implements FeatureFunction<S> {
+	private int stateID;
+	
 	private double weight = 0.0;
 	private int    featureID; //the unique integer that identifies a feature
 	
-	public DefaultStatefulFF(double weight, int id) {
+	public DefaultStatefulFF(int stateID, double weight, int featureID) {
 		this.weight    = weight;
-		this.featureID = id;
+		this.featureID = featureID;
+		this.stateID = stateID;
 	}
 	
 	public boolean isStateful() {
@@ -59,16 +57,11 @@ public abstract class DefaultStatefulFF implements FeatureFunction {
 		this.featureID = id;
 	}
 	
-	/** default behavior: ignore "edge" */
-	public FFTransitionResult transition(HyperEdge edge, Rule rule,
-			ArrayList<FFDPState> previousStates, int spanStart, int spanEnd,
-			SourcePath srcPath
-	) {
-		return transition(rule, previousStates, spanStart, spanEnd, srcPath);
+	public final int getStateID() {
+		return this.stateID;
 	}
 	
-	/** default behavior: ignore "edge" */
-	public double finalTransition(HyperEdge edge, FFDPState state) {
-		return finalTransition(state);
+	public final void setStateID(final int id) {
+		this.stateID = id;
 	}
 }

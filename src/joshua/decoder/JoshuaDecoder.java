@@ -19,7 +19,9 @@ package joshua.decoder;
 
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.ArityPhrasePenaltyFF;
+import joshua.decoder.ff.NgramStateComputer;
 import joshua.decoder.ff.PhraseModelFF;
+import joshua.decoder.ff.StateComputer;
 import joshua.decoder.ff.WordPenaltyFF;
 import joshua.decoder.ff.SourcePathFF;
 import joshua.decoder.ff.lm.LanguageModelFF;
@@ -82,6 +84,10 @@ public class JoshuaDecoder {
 	private ArrayList<GrammarFactory>  grammarFactories;
 	private ArrayList<FeatureFunction> featureFunctions;
 	private NGramLanguageModel         languageModel;
+	
+	private ArrayList<StateComputer> stateComputers;
+	private int ngramStateID = 0;//TODO?????????????
+	private int ngramOrder = 3;//TODO???????????????????
 	
 	/**
 	 * Shared symbol table for source language terminals, target
@@ -287,6 +293,8 @@ public class JoshuaDecoder {
 					// feature is used, need to read config file
 					// again
 					this.initializeFeatureFunctions(configFile);
+					
+					this.initializeStateComputers(symbolTable, ngramOrder, ngramStateID);
 
 					// initialize and load grammar
 					initializeTranslationGrammars(JoshuaConfiguration.tm_file);
@@ -310,6 +318,7 @@ public class JoshuaDecoder {
 				this.grammarFactories,
 				JoshuaConfiguration.have_lm_model,
 				this.featureFunctions,
+				this.stateComputers,
 				this.symbolTable);
 			
 		} catch (IOException e) {
@@ -493,6 +502,8 @@ public class JoshuaDecoder {
 		// again
 		this.initializeFeatureFunctions(configFile);
 		
+		this.initializeStateComputers(symbolTable, ngramOrder, ngramStateID);
+		
 		if (logger.isLoggable(Level.INFO))
 			logger.info("Reading source language corpus from " +
 				binarySourceCorpusFileName);
@@ -555,6 +566,11 @@ public class JoshuaDecoder {
 		return parallelCorpus;
 	}
 	
+	private void initializeStateComputers(SymbolTable symbolTable, int nGramOrder, int ngramStateID){
+		stateComputers = new ArrayList<StateComputer>();
+		StateComputer ngramStateComputer = new NgramStateComputer(symbolTable, nGramOrder, ngramStateID);
+		stateComputers.add(ngramStateComputer);
+	}
 	
 	// BUG: why are we re-reading the configFile? JoshuaConfiguration should do this. (Needs: languageModel, symbolTable, (logger?); Sets: featureFunctions)
 	private void initializeFeatureFunctions(String configFile)
@@ -576,6 +592,7 @@ public class JoshuaDecoder {
 					double weight = Double.parseDouble(fds[1].trim());
 					this.featureFunctions.add(
 						new LanguageModelFF(
+							this.ngramStateID,	
 							this.featureFunctions.size(),
 							JoshuaConfiguration.g_lm_order,
 							this.symbolTable, this.languageModel, weight));

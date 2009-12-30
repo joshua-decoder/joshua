@@ -5,12 +5,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import joshua.decoder.ff.FFDPState;
-import joshua.decoder.ff.FFTransitionResult;
+import joshua.decoder.ff.DPState;
 import joshua.decoder.ff.FeatureFunction;
+import joshua.decoder.ff.StateComputeResult;
+import joshua.decoder.ff.StateComputer;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.hypergraph.HGNode;
-import joshua.decoder.hypergraph.HyperGraph;
+
 
 /**
  *
@@ -25,14 +26,17 @@ public class ComputeNodeResult {
 	private double transitionTotalCost;
 	
 	// the key is feature id; tbl of dpstate for each stateful feature
-	private HashMap<Integer,FFDPState> featDPStatesTbl;
+	private HashMap<Integer,DPState> featDPStatesTbl;
+	
+	
 	
 	
 	/** 
 	 * Compute costS and the states of thE node
 	 */
 	public ComputeNodeResult(List<FeatureFunction> featureFunctions, Rule rule, 
-			ArrayList<HGNode> antNodes, int i, int j, SourcePath srcPath){
+			ArrayList<HGNode> antNodes, int i, int j, SourcePath srcPath,
+			List<StateComputer> stateComputers){
 		
 		double finalizedTotalCost = 0.0;
 		
@@ -42,34 +46,35 @@ public class ComputeNodeResult {
 			}
 		}
 		
-		HashMap<Integer,FFDPState> allDPStates = null;
+		HashMap<Integer, StateComputeResult>  allStateResults = null;
+		HashMap<Integer,DPState> allDPStates = null;
+		
+		for(StateComputer stateComputer : stateComputers){
+			StateComputeResult stateResult = stateComputer.computeState(rule, antNodes, i, j, srcPath);			
+			if(allStateResults==null)
+				allStateResults = new HashMap<Integer, StateComputeResult>();
+			allStateResults.put(stateComputer.getStateID(), stateResult);
+			
+			DPState dpState = stateResult.generateDPState();
+			if(allDPStates==null)
+				allDPStates = new HashMap<Integer,DPState>();
+			allDPStates.put(stateComputer.getStateID(), dpState);
+		}
+		
+		
+		//=== compute feature costs
 		double transitionCostSum    = 0.0;
 		double futureCostEstimation = 0.0;
 		
 		for (FeatureFunction ff : featureFunctions) {
-			////long start2 = Support.current_time();
-			FFTransitionResult state = HyperGraph.computeTransition(
-					null, rule, antNodes, ff, i, j, srcPath);
-			transitionCostSum +=
-				ff.getWeight() * state.getTransitionCost();
+			StateComputeResult stateResult = allStateResults.get(ff.getStateID());
 			
-			if (ff.isStateful()) {
-				futureCostEstimation +=
-					ff.getWeight() * state.getFutureCostEstimation();
-				
-				FFDPState itemState = state.getStateForNode();
-				if (null != itemState) {
-					if (null == allDPStates) {
-						allDPStates = new HashMap<Integer,FFDPState>();
-					}
-					allDPStates.put(ff.getFeatureID(), itemState);
-				} else {
-					throw new RuntimeException("ComputeNodeResult: null getStateForItem()\n");					
-				}
-			} else {	
-				futureCostEstimation += 0.0;
-			}
-			////ff.time_consumed += Support.current_time() - start2;
+			transitionCostSum += 
+				ff.getWeight() * ff.transition(rule, stateResult);
+			
+			futureCostEstimation +=
+				ff.getWeight() * ff.estimateFutureCost(rule, stateResult);
+			
 		}
 		
 		/* if we use this one (instead of compute transition
@@ -98,6 +103,42 @@ public class ComputeNodeResult {
 	
 	
 	
+	public static double[] computeModelTransitionCost(List<FeatureFunction> featureFunctions, Rule rule, 
+					List<HGNode> antNodes, int i, int j, SourcePath srcPath,
+					List<StateComputer> stateComputers){
+		
+		double[] res = new double[featureFunctions.size()];
+		
+		//=== compute state
+		HashMap<Integer, StateComputeResult>  allStateResults = null;
+		for(StateComputer stateComputer : stateComputers){
+			StateComputeResult stateResult;
+			if(rule!=null)
+				stateResult = stateComputer.computeState(rule, antNodes, i, j, srcPath);
+			else
+				stateResult = stateComputer.computeFinalState(antNodes.get(0), i, j, srcPath);
+			
+			if(allStateResults==null)
+				allStateResults = new HashMap<Integer, StateComputeResult>();
+			allStateResults.put(stateComputer.getStateID(), stateResult);			
+		}
+		
+		
+		//=== compute feature costs
+		int k=0;
+		for(FeatureFunction ff : featureFunctions) {			
+			StateComputeResult stateResult = allStateResults.get(ff.getStateID());	
+			if(rule!=null)
+				res[k] = ff.transition(rule, stateResult);
+			else
+				res[k] = ff.finalTransition(stateResult);		
+			k++;
+		}
+		
+		return res;		
+	}
+		
+	
 	void setExpectedTotalCost(double cost) {
 		this.expectedTotalCost = cost;
 	}
@@ -122,11 +163,11 @@ public class ComputeNodeResult {
 		return this.transitionTotalCost;
 	}
 	
-	void setFeatDPStates(HashMap<Integer,FFDPState> states) {
+	void setFeatDPStates(HashMap<Integer,DPState> states) {
 		this.featDPStatesTbl = states;
 	}
 	
-	HashMap<Integer,FFDPState> getFeatDPStates() {
+	HashMap<Integer,DPState> getFeatDPStates() {
 		return this.featDPStatesTbl;
 	}
 }

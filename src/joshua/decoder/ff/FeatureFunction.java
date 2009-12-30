@@ -18,10 +18,6 @@
 package joshua.decoder.ff;
 
 import joshua.decoder.ff.tm.Rule;
-import joshua.decoder.hypergraph.HyperEdge;
-import joshua.decoder.chart_parser.SourcePath;
-
-import java.util.ArrayList; // BUG: should be List but that causes bugs
 
 
 /**
@@ -35,13 +31,13 @@ import java.util.ArrayList; // BUG: should be List but that causes bugs
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate$
  */
-public interface FeatureFunction {
+public interface FeatureFunction<S extends StateComputeResult> {
 
 //===============================================================
 // Attributes
 //===============================================================
 	
-	/* It is essential to make sure the feature ID is unique
+	/** It is essential to make sure the feature ID is unique
 	 * for each feature. */
 	void    setFeatureID(int id);
 	int     getFeatureID();
@@ -51,10 +47,13 @@ public interface FeatureFunction {
 	
 	boolean isStateful();
 	
+	void    setStateID(int stateID);
+	int     getStateID();
 	
 //===============================================================
 // Methods
 //===============================================================
+	
 	/**
 	 * It is used when initializing translation grammars (for
 	 * pruning purpose, and to get stateless cost for each rule).
@@ -63,32 +62,25 @@ public interface FeatureFunction {
 	double estimate(Rule rule);
 	
 	
-	/*
+	
+	/**estimate future cost, e.g., the costs of partial n-grams
+	 * asscociated with the left-edge state
+	 * */
+	double estimateFutureCost(Rule rule, S stateResult);
+	
+	
+	/**
 	 * In general, it is quite possible that the edge is not
 	 * created yet when this function is called. In this case,
 	 * call the specialized implementation; DO NOT pass a null
 	 * pointer. (Implementations may allow it, Clients must not
 	 * assume it.)
 	 */
-	
-	/**The transition function will do:
-	 * (1) calculate transition cost
-	 * (2) estimate future cost
-	 * (3) extract dynamic-programming state
-	 * 
-	 * These results are stored in FFTransitionResult.
-	 */
-	FFTransitionResult transition(
-			Rule rule, ArrayList<FFDPState> previousStates,
-			int spanStart, int spanEnd, SourcePath srcPath);
-	
-	FFTransitionResult transition(
-			HyperEdge edge,
-			Rule rule, ArrayList<FFDPState> previousStates,
-			int spanStart, int spanEnd, SourcePath srcPath);
+	double transition(Rule rule, S stateResult);
 	
 	
-	double finalTransition(FFDPState state);
+	/**Edges calling this function do not have concret rules associated with them. 
+	 * */
+	double finalTransition(S stateResult);
 	
-	double finalTransition(HyperEdge edge, FFDPState state);
 }

@@ -18,22 +18,15 @@
 
 package joshua.decoder.ff;
 
+import joshua.corpus.vocab.SymbolTable;
+
 
 /**
  * 
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate$
  */
-public class StatefulFFTransitionResult extends DefaultFFTransitionResult {
-	
-	private FFDPState dynamicProgrammingState = null;
-	
-	
-	public FFDPState getStateForNode() {
-		return this.dynamicProgrammingState;
-	}
-	
-	public void setStateForNode(FFDPState map) {
-		this.dynamicProgrammingState = map;
-	}
+public interface DPState {
+	String getSignature(boolean forceRecompute);
+	String getSignature(SymbolTable symbolTable, boolean forceRecompute);
 }

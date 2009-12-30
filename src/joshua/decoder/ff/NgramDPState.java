@@ -16,53 +16,56 @@
  * MA 02111-1307 USA
  */
 
-package joshua.decoder.ff.lm;
+package joshua.decoder.ff;
+
+import java.util.List;
 
 import joshua.corpus.vocab.SymbolTable;
-import joshua.decoder.ff.FFDPState;
+import joshua.decoder.ff.DPState;
 
 
 /**
  * 
  * @author Zhifei Li, <zhifei.work@gmail.com>
- * @version $LastChangedDate$
+ * @version $LastChangedDate: 2009-12-29 14:58:42 -0500 (星期二, 29 十二月 2009) $
  */
-public class LMFFDPState implements FFDPState {
+public class NgramDPState implements DPState {
 	
-	private int[] leftLMStateWords;
-	private int[] rightLMStateWords;
+	private List<Integer> leftLMStateWords;
+	private List<Integer> rightLMStateWords;
 	private String sig = null;
 	
 	static String SIG_PREAMBLE = "lm "; //seperator for state in signature
 	static String SIG_SEP = " -S- "; //seperator for state in signature
 
-	public  LMFFDPState() {
-		//do nothing
+	public  NgramDPState(List<Integer> leftLMStateWords, List<Integer> rightLMStateWords) {
+		this.leftLMStateWords = leftLMStateWords;
+		this.rightLMStateWords = rightLMStateWords;
 	}
 	
 	 
-	
+	/*
 	//construct an instance from the signature string
-	public  LMFFDPState(SymbolTable symbolTable, String sig) {
+	public  NgramDPState(SymbolTable symbolTable, String sig) {
 		this.sig = sig;
 		String[] states = sig.split(SIG_SEP); // TODO: use joshua.util.Regex
 		this.leftLMStateWords = symbolTable.getIDs(states[0]);
 		this.rightLMStateWords = symbolTable.getIDs(states[1]);
-	}
+	}*/
 		
-	public void setLeftLMStateWords(int[] words_){
+	public void setLeftLMStateWords( List<Integer>  words_){
 		this.leftLMStateWords = words_;
 	}
 	
-	public int[] getLeftLMStateWords(){
+	public  List<Integer>  getLeftLMStateWords(){
 		return this.leftLMStateWords;
 	}
 	
-	public void setRightLMStateWords(int[] words_){
+	public void setRightLMStateWords( List<Integer>  words_){
 		this.rightLMStateWords = words_;
 	}
 	
-	public int[] getRightLMStateWords(){
+	public  List<Integer>  getRightLMStateWords(){
 		return this.rightLMStateWords;
 	}
 
@@ -95,10 +98,10 @@ public class LMFFDPState implements FFDPState {
 	
 	
 	
-	private void computeStateSig(SymbolTable symbolTable, int[] state, StringBuffer sb) {
+	private void computeStateSig(SymbolTable symbolTable,  List<Integer>  state, StringBuffer sb) {
 		
 		if (null != state) {
-			for (int i = 0; i < state.length; i++) {
+			for (int i = 0; i < state.size(); i++) {
 				if (true
 					//TODO: equivalnce: number of <null> or <bo>?
 					/* states[i]!=Symbol.NULL_RIGHT_LM_STATE_SYM_ID
@@ -106,11 +109,11 @@ public class LMFFDPState implements FFDPState {
 					 * && states[i]!=Symbol.LM_STATE_OVERLAP_SYM_ID*/
 				) {
 					if (null != symbolTable) {
-						sb.append(symbolTable.getWord(state[i]));
+						sb.append(symbolTable.getWord(state.get(i)));
 					} else {
-						sb.append(state[i]);
+						sb.append(state.get(i));
 					}
-					if (i < state.length - 1) {
+					if (i < state.size() - 1) {
 						sb.append(' ');
 					}
 				}

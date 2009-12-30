@@ -81,7 +81,7 @@ public class ViterbiExtractor  {
 		ArrayList<HyperEdge> l_deductions = new ArrayList<HyperEdge>(1);
 		HyperEdge clone_dt = clone_deduction(it_in.bestHyperedge);
 		l_deductions.add(clone_dt);
-		return new HGNode(it_in.i, it_in.j, it_in.lhs,  l_deductions, clone_dt, it_in.ffDpstatesTbl);
+		return new HGNode(it_in.i, it_in.j, it_in.lhs,  l_deductions, clone_dt, it_in.dpStates);
 	}
 	
 	
