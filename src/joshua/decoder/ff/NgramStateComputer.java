@@ -11,6 +11,7 @@ import joshua.decoder.hypergraph.HGNode;
 
 
 public class NgramStateComputer implements StateComputer<NgramDPState> {
+	
 	SymbolTable symbolTable;
 	int ngramOrder;
 	int stateID;

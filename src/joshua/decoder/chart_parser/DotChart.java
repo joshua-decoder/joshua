@@ -49,7 +49,7 @@ class DotChart {
 	/** 
 	 * Two-dimensional chart of cells. Some cells might be null.
 	 */
-	DotBin[][] l_dot_bins;
+	DotBin[][] dotbins;
 	
 	
 //===============================================================
@@ -60,16 +60,16 @@ class DotChart {
 	 * CKY+ style parse chart in which completed span entries
 	 * are stored.
 	 */
-	private Chart p_chart;
+	private Chart pChart;
 	
 	/**
 	 * Translation grammar which contains the translation rules.
 	 */
-	private Grammar p_grammar;
+	private Grammar pGrammar;
 	
 	
 	/** Length of input sentence. */
-	private final int sent_len;
+	private final int sentLen;
 	
 	/** Represents the input sentence being translated. */
 	private final Lattice<Integer> input;
@@ -100,11 +100,11 @@ class DotChart {
 	 *                span entries are stored.
 	 */
 	public DotChart(Lattice<Integer> input, Grammar grammar, Chart chart) {
-		this.p_chart    = chart;
-		this.p_grammar  = grammar;
+		this.pChart    = chart;
+		this.pGrammar  = grammar;
 		this.input      = input;
-		this.sent_len   = input.size();
-		this.l_dot_bins = new DotBin[sent_len][sent_len+1];
+		this.sentLen   = input.size();
+		this.dotbins = new DotBin[sentLen][sentLen+1];
 		
 		//seeding the dotChart
 		seed();
@@ -150,12 +150,12 @@ class DotChart {
 	 * the grammar trie.
 	 */
 	void seed() {
-		for (int j = 0; j <= sent_len - 1; j++) {
-			if (p_grammar.hasRuleForSpan(j, j, sent_len)) {
-				if (null == p_grammar.getTrieRoot()) {
+		for (int j = 0; j <= sentLen - 1; j++) {
+			if (pGrammar.hasRuleForSpan(j, j, sentLen)) {
+				if (null == pGrammar.getTrieRoot()) {
 					throw new RuntimeException("trie root is null");
 				}
-				addDotItem(p_grammar.getTrieRoot(), j, j, null, null, new SourcePath());
+				addDotItem(pGrammar.getTrieRoot(), j, j, null, null, new SourcePath());
 			}
 		}
 	}
@@ -189,9 +189,9 @@ class DotChart {
 			
 			//int last_word=foreign_sent[j-1]; // input.getNode(j-1).getNumber(); //	
 			
-			if (null != l_dot_bins[i][j-1]) {
+			if (null != dotbins[i][j-1]) {
 				//dotitem in dot_bins[i][k]: looking for an item in the right to the dot
-				for (DotItem dt : l_dot_bins[i][j-1].l_dot_items) {
+				for (DotItem dt : dotbins[i][j-1].l_dot_items) {
 					if (null == dt.tnode) {
 						// We'll get one anyways in the else branch
 						// TODO: better debugging.
@@ -204,7 +204,7 @@ class DotChart {
 						Trie child_tnode = dt.tnode.matchOne(last_word);
 						if (null != child_tnode) {
 							// we do not have an ant for the terminal
-							addDotItem(child_tnode, i, j - 1 + arc_len, dt.l_ant_super_items, null, dt.srcPath.extend(arc));
+							addDotItem(child_tnode, i, j - 1 + arc_len, dt.antSuperNodes, null, dt.srcPath.extend(arc));
 						}
 					}
 				} // end foreach DotItem
@@ -247,24 +247,24 @@ class DotChart {
 		int i, int k, int j,
 		boolean startDotItems)
 	{
-		if (this.l_dot_bins[i][k] == null || this.p_chart.cells[k][j] == null) {
+		if (this.dotbins[i][k] == null || this.pChart.cells[k][j] == null) {
 			return;
 		}
 		
 		// complete super-items
-		List<SuperItem> t_ArrayList = new ArrayList<SuperItem>(this.
-				p_chart.cells[k][j].getSortedSuperItems().values());
+		List<SuperNode> t_ArrayList = new ArrayList<SuperNode>(this.
+				pChart.cells[k][j].getSortedSuperItems().values());
 		
 		// dotitem in dot_bins[i][k]: looking for an item in the right to the dot
-		for (DotItem dt : l_dot_bins[i][k].l_dot_items) {
+		for (DotItem dt : dotbins[i][k].l_dot_items) {
 			// see if it matches what the dotitem is looking for
-			for (SuperItem s_t : t_ArrayList) {
+			for (SuperNode s_t : t_ArrayList) {
 				Trie child_tnode = dt.tnode.matchOne(s_t.lhs);
 				if (null != child_tnode) {
 					if (true == startDotItems && !child_tnode.hasExtensions()) {
 						continue; //TODO
 					}
-					addDotItem(child_tnode, i, j, dt.l_ant_super_items, s_t, dt.srcPath.extendNonTerminal());
+					addDotItem(child_tnode, i, j, dt.antSuperNodes, s_t, dt.srcPath.extendNonTerminal());
 				}
 			}
 		}
@@ -282,10 +282,10 @@ class DotChart {
 	 * @param cur_s_item
 	 */
 	private void addDotItem(Trie tnode, int i, int j,
-			ArrayList<SuperItem> ant_s_items_in, SuperItem cur_s_item,
+			ArrayList<SuperNode> ant_s_items_in, SuperNode cur_s_item,
 			SourcePath srcPath)
 	{
-		ArrayList<SuperItem> ant_s_items = new ArrayList<SuperItem>();
+		ArrayList<SuperNode> ant_s_items = new ArrayList<SuperNode>();
 		if (ant_s_items_in != null) {
 			ant_s_items.addAll(ant_s_items_in);
 		}
@@ -294,14 +294,14 @@ class DotChart {
 		}
 		
 		DotItem item = new DotItem(i, j, tnode, ant_s_items, srcPath);
-		if (l_dot_bins[i][j] == null) {
-			l_dot_bins[i][j] = new DotBin();
+		if (dotbins[i][j] == null) {
+			dotbins[i][j] = new DotBin();
 		}
-		l_dot_bins[i][j].add_dot_item(item);
-		p_chart.n_dotitem_added++;
+		dotbins[i][j].add_dot_item(item);
+		pChart.nDotitemAdded++;
 		
 		if (logger.isLoggable(Level.FINEST)) 
-			logger.finest(String.format("Add a dotitem in cell (%d, %d), n_dotitem=%d, %s", i, j, p_chart.n_dotitem_added, srcPath));
+			logger.finest(String.format("Add a dotitem in cell (%d, %d), n_dotitem=%d, %s", i, j, pChart.nDotitemAdded, srcPath));
 	}
 	
 	
@@ -337,15 +337,15 @@ class DotChart {
 		
 		//int i, j; //start and end position in the chart
 		Trie tnode = null; // dot_position, point to grammar trie node, this is the only place that the DotChart points to the grammar
-		ArrayList<SuperItem> l_ant_super_items = null; //pointer to SuperItem in Chart
+		ArrayList<SuperNode> antSuperNodes = null; //pointer to SuperItem in Chart
 		SourcePath srcPath;
 		
 		
-		public DotItem(int i_in, int j_in, Trie tnode_in, ArrayList<SuperItem> ant_super_items_in, SourcePath srcPath) {
+		public DotItem(int i_in, int j_in, Trie tnode_in, ArrayList<SuperNode> ant_super_items_in, SourcePath srcPath) {
 			//i = i_in;
 			//j = j_in;
 			this.tnode = tnode_in;
-			this.l_ant_super_items = ant_super_items_in;
+			this.antSuperNodes = ant_super_items_in;
 			this.srcPath = srcPath;
 		}
 	}

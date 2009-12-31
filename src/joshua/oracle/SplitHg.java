@@ -19,6 +19,7 @@ package joshua.oracle;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 import joshua.decoder.hypergraph.HGNode;
 import joshua.decoder.hypergraph.HyperEdge;
@@ -150,7 +151,7 @@ public abstract class SplitHg {
 		}	
 			
 		private void redo_combine(HyperEdge cur_dt, HashMap<String, VirtualItem> virtual_item_sigs, HGNode parent_item){
-			ArrayList<HGNode> l_ant_items = cur_dt.getAntNodes();
+			List<HGNode> l_ant_items = cur_dt.getAntNodes();
 			if(l_ant_items!=null){
 				// arity: one
 				if(l_ant_items.size() == 1){

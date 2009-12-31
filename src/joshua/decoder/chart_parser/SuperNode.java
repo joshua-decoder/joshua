@@ -18,6 +18,7 @@
 package joshua.decoder.chart_parser;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import joshua.decoder.hypergraph.HGNode;
 
@@ -27,7 +28,7 @@ import joshua.decoder.hypergraph.HGNode;
  * 
  * @author Zhifei Li
  */
-class SuperItem {
+class SuperNode {
 	
 	/** Common left-hand side state. */
 	final int lhs;
@@ -36,7 +37,7 @@ class SuperItem {
 	 * List of hypergraph nodes, each of which has its own
 	 * language model state.
 	 */
-	final ArrayList<HGNode> l_items;
+	final List<HGNode> nodes;
 	
 	
 	/**
@@ -45,8 +46,8 @@ class SuperItem {
 	 * 
 	 * @param lhs Left-hand side token
 	 */
-	public SuperItem(int lhs) {
+	public SuperNode(int lhs) {
 		this.lhs = lhs;
-		this.l_items = new ArrayList<HGNode>();
+		this.nodes = new ArrayList<HGNode>();
 	}
 }

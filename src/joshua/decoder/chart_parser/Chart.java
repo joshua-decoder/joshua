@@ -18,7 +18,6 @@
 package joshua.decoder.chart_parser;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -34,7 +33,6 @@ import joshua.decoder.ff.tm.RuleCollection;
 import joshua.decoder.ff.tm.Trie;
 import joshua.decoder.hypergraph.HGNode;
 import joshua.decoder.hypergraph.HyperGraph;
-import joshua.decoder.segment_file.ConstraintRule;
 import joshua.decoder.segment_file.ConstraintSpan;
 import joshua.lattice.Arc;
 import joshua.lattice.Lattice;
@@ -91,20 +89,20 @@ public class Chart {
 	 */
 	int nPreprunedEdges           = 0;
 	
-	int n_prepruned_fuzz1     = 0;
-	int n_prepruned_fuzz2     = 0;
+	int nPreprunedFuzz1     = 0;
+	int nPreprunedFuzz2     = 0;
 	int nPrunedItems              = 0;
-	int n_merged              = 0;
-	int n_added               = 0;
-	int n_dotitem_added       = 0; // note: there is no pruning in dot-item
-	int n_called_compute_item = 0;
+	int nMerged              = 0;
+	int nAdded               = 0;
+	int nDotitemAdded       = 0; // note: there is no pruning in dot-item
+	int nCalledComputeNode = 0;
 	
 	
 	//===========================================================
 	// Time-profiling variables for debugging
 	//===========================================================
-	long g_time_compute_item  = 0;
-	long g_time_add_deduction = 0;
+	long timeComputeNode  = 0;
+	long timeAddHyperedge = 0;
 	
 	
 //===============================================================
@@ -118,21 +116,9 @@ public class Chart {
 	private Lattice<Integer> sentence; // a list of foreign words
 	private int              segmentID;
 	
-	
-	//===========================================================
-	// Manual constraint annotations
-	//===========================================================
-	
-	// TODO: each span only has one ConstraintSpan
-	// contain spans that have LHS or RHS constraints (they are always hard)
-	private HashMap<String,ConstraintSpan> constraintSpansForFiltering;
-	
-	// contain spans that have hard "rule" constraint; key: start_span; value: end_span
-	private ArrayList<Span> spansWithHardRuleConstraint;
-	
-	
+		
 	Combiner combiner = null;
-
+	ManualConstraintsHandler manualConstraintsHandler;
 	
 	//===========================================================
 	// Decoder-wide fields
@@ -217,77 +203,11 @@ public class Chart {
 			combiner = new CubePruneCombiner();
 		else
 			combiner = new ExhaustiveCombiner();
-		
-		/** Note that manual constraints or OOV handling is not part of seeding
-		 * */	
-		/**
-		 * (1) add manual rule (only allow flat rules) into the
-		 *     chart as constraints
-		 * (2) add RHS or LHS constraint into
-		 *     constraintSpansForFiltering
-		 * (3) add span signature into setOfSpansWithHardRuleConstraint; if the span contains a hard "RULE" constraint
-		 */		
-		if (null != constraintSpans) {
-		
-			for (ConstraintSpan cSpan : constraintSpans) {
-				if (null != cSpan.rules()) {
-					boolean shouldAdd = false; // contain LHS or RHS constraints?
-					for (ConstraintRule cRule : cSpan.rules()) {
-						/** Note that LHS and RHS constraints are always hard, 
-						 * while Rule constraint can be soft or hard
-						 **/
-						switch (cRule.type()){
-						case RULE:
-							//== prepare the feature scores 
-							float[] featureScores = new float[cRule.features().length];//TODO: this require the input always specify the right number of features
-							for (int i = 0; i < featureScores.length; i++) {
-								if (cSpan.isHard()) {
-									featureScores[i] = 0;	// force the feature cost as zero
-								} else {
-									featureScores[i] = cRule.features()[i];
-								}
-							}
-							
-							/**If the RULE constraint is hard, then we should filter all out all consituents (within this span), 
-							 * which are contructed from regular grammar*/
-							if (cSpan.isHard()) {
-								if (null == this.spansWithHardRuleConstraint) {
-									this.spansWithHardRuleConstraint = new ArrayList<Span>();
-								}
-								this.spansWithHardRuleConstraint.add(new Span(cSpan.start(), cSpan.end()));								
-							}
-							
-							//TODO: which grammar should we use to create a mannual rule?
-							int arity = 0; // only allow flat rule (i.e. arity=0)
-							Rule rule = this.grammars[1].constructManualRule(//this is the regular grammar
-									symbolTable.addNonterminal(cRule.lhs()), 
-									symbolTable.addTerminals(cRule.foreignRhs()),
-									symbolTable.addTerminals(cRule.nativeRhs()),
-									featureScores, 
-									arity);
-							//add to the chart
-							addAxiom(cSpan.start(), cSpan.end(), rule, new SourcePath());
-							if (logger.isLoggable(Level.INFO))
-								logger.info("Adding RULE constraint for span " + cSpan.start() + ", " + cSpan.end() + "; isHard=" + cSpan.isHard() +rule.getLHS());
-							break;
-							
-						default: 
-							shouldAdd = true;
-						}
-					}
-					if (shouldAdd) {
-						if (logger.isLoggable(Level.INFO))
-							logger.info("Adding LHS or RHS constraint for span " + cSpan.start() + ", " + cSpan.end());
-						if (null == this.constraintSpansForFiltering) {
-							this.constraintSpansForFiltering = new HashMap<String, ConstraintSpan>();
-						}
-						this.constraintSpansForFiltering.put(getSpanSignature(cSpan.start(), cSpan.end()), cSpan);
-					}
-				}
-			}
-		}
-		
-		
+
+		//============== begin to do initialization work
+
+		//TODO: which grammar should we use to create a mannual rule?, grammar[1] is the regular grammar
+		manualConstraintsHandler = new ManualConstraintsHandler(symbolTable, this, grammars[1], constraintSpans);
 		
 		
 		/**add OOV rules; 
@@ -304,9 +224,8 @@ public class Chart {
 				int targetWord = symbolTable.addTerminal( symbolTable.getWord(sourceWord)+"_OOV");
 				Rule rule = this.grammars[1].constructOOVRule(
 					this.featureFunctions.size(), sourceWord, targetWord, hasLM);
-				
-				// tail and head are switched - FIX names:
-				if (containsHardRuleConstraint(node.getNumber(), arc.getTail().getNumber())) {
+			
+				if (manualConstraintsHandler.containHardRuleConstraint(node.getNumber(), arc.getTail().getNumber())) {
 					//do not add the oov axiom
 					if (logger.isLoggable(Level.INFO))
 						logger.info("Using hard rule constraint for span " + node.getNumber() + ", " + arc.getTail().getNumber());
@@ -363,7 +282,7 @@ public class Chart {
 					this.dotcharts[k].expandDotCell(i,j);
 				}
 				if (logger.isLoggable(Level.FINEST)) 
-					logger.finest(String.format("n_dotitem= %d", n_dotitem_added));
+					logger.finest(String.format("n_dotitem= %d", nDotitemAdded));
 				//time_step1 += Support.current_time()-start_step1;
 				
 				
@@ -375,9 +294,9 @@ public class Chart {
 				for (int k = 0; k < this.grammars.length; k++) {
 					
 					if (this.grammars[k].hasRuleForSpan(i, j, sentenceLength)
-						&& null != this.dotcharts[k].l_dot_bins[i][j]) {
+						&& null != this.dotcharts[k].dotbins[i][j]) {
 						
-						for (DotItem dt: this.dotcharts[k].l_dot_bins[i][j].l_dot_items) {
+						for (DotItem dt: this.dotcharts[k].dotbins[i][j].l_dot_items) {
 							SourcePath srcPath = dt.srcPath;
 							RuleCollection rules = dt.tnode.getRules();
 							
@@ -411,11 +330,11 @@ public class Chart {
 				if(false){//behavior depend on the order of the grammars got processed, which is bad 
 					for (int k = 0; k < this.grammars.length; k++) {
 						if (this.grammars[k].hasRuleForSpan(i, j, sentenceLength)) {
-							addUnaryItemsPerGrammar(this.grammars[k],i,j);//single-branch path
+							addUnaryNodesPerGrammar(this.grammars[k],i,j);//single-branch path
 						}
 					}
 				}else{//behavior does not depend on the order of the grammars got processed
-					addUnaryItems(this.grammars,i,j);
+					addUnaryNodes(this.grammars,i,j);
 				}				
 				//time_step3 += Support.current_time()-start_step3;
 				
@@ -435,12 +354,12 @@ public class Chart {
 				
 				//(5)=== sort the items in the cell: for pruning purpose
 				if (logger.isLoggable(Level.FINEST)) 
-					logger.finest(String.format("After Process span (%d, %d), called:= %d", i, j, n_called_compute_item));
+					logger.finest(String.format("After Process span (%d, %d), called:= %d", i, j, nCalledComputeNode));
 				
 				if (null != this.cells[i][j]) {
 					// this.bins[i][j].logStatistics(Level.INFO);					
 					// this is required
-					this.cells[i][j].getSortedItems();
+					this.cells[i][j].getSortedNodes();
 				}
 			}
 		}
@@ -472,7 +391,7 @@ public class Chart {
 		//debug end
 		
 		logger.info("Finished expand");
-		return new HyperGraph(this.goalBin.getSortedItems().get(0), -1, -1, this.segmentID, sentenceLength); // num_items/deductions : -1
+		return new HyperGraph(this.goalBin.getSortedNodes().get(0), -1, -1, this.segmentID, sentenceLength); // num_items/deductions : -1
 	}
 	
 	
@@ -484,13 +403,13 @@ public class Chart {
 		if (logger.isLoggable(level)) {
 			logger.log(level,
 				String.format("ADDED: %d; MERGED: %d; PRUNED: %d; PRE-PRUNED: %d, FUZZ1: %d, FUZZ2: %d; DOT-ITEMS ADDED: %d",
-					this.n_added,
-					this.n_merged,
+					this.nAdded,
+					this.nMerged,
 					this.nPrunedItems,
 					this.nPreprunedEdges,
-					this.n_prepruned_fuzz1,
-					this.n_prepruned_fuzz2,
-					this.n_dotitem_added));
+					this.nPreprunedFuzz1,
+					this.nPreprunedFuzz2,
+					this.nDotitemAdded));
 		}
 	}
 	
@@ -501,7 +420,7 @@ public class Chart {
 	 * s->x; ss->s for unary rules like s->x, once x is complete,
 	 * then s is also complete
 	 */
-	private int addUnaryItems(Grammar[] grs, int i, int j) {		
+	private int addUnaryNodes(Grammar[] grs, int i, int j) {		
 		
 		Cell chartBin = this.cells[i][j];
 		if (null == chartBin) {
@@ -509,7 +428,7 @@ public class Chart {
 		}
 		int qtyAdditionsToQueue = 0;
 		ArrayList<HGNode> queue
-			= new ArrayList<HGNode>(chartBin.getSortedItems());
+			= new ArrayList<HGNode>(chartBin.getSortedNodes());
 		
 		while (queue.size() > 0) {
 			HGNode item = queue.remove(0);
@@ -546,7 +465,7 @@ public class Chart {
      * agenda based extension: this is necessary in case more than two unary rules can be applied in topological order s->x; ss->s
      * for unary rules like s->x, once x is complete, then s is also complete
      */
-    private int addUnaryItemsPerGrammar(Grammar gr, int i, int j) {
+    private int addUnaryNodesPerGrammar(Grammar gr, int i, int j) {
     	
             Cell chart_bin = this.cells[i][j];
             if (null == chart_bin) {
@@ -554,7 +473,7 @@ public class Chart {
             }
             int count_of_additions_to_t_queue = 0;
             ArrayList<HGNode> t_queue
-                    = new ArrayList<HGNode>(chart_bin.getSortedItems());
+                    = new ArrayList<HGNode>(chart_bin.getSortedNodes());
 
 
             while (t_queue.size() > 0) {
@@ -584,12 +503,13 @@ public class Chart {
 	
 	
 	private void addAxioms(int i, int j, RuleCollection rb, SourcePath srcPath) {
-		if (containsHardRuleConstraint(i, j)) {
-			if (logger.isLoggable(Level.FINE)) logger.fine("Hard rule constraint for span " +i +", " + j);
+		if (manualConstraintsHandler.containHardRuleConstraint(i, j)) {
+			if (logger.isLoggable(Level.FINE)) 
+				logger.fine("Hard rule constraint for span " +i +", " + j);
 			return; //do not add any axioms
 		} else {
 
-			List<Rule> rules = filterRules(i,j, rb.getSortedRules());
+			List<Rule> rules = manualConstraintsHandler.filterRules(i,j, rb.getSortedRules());
 			for (Rule rule : rules) {
 				addAxiom(i, j, rule, srcPath);
 			}
@@ -598,7 +518,7 @@ public class Chart {
 	
 	
 	/** axiom is for rules with zero-arity */
-	private void addAxiom(int i, int j, Rule rule, SourcePath srcPath) {
+	public void addAxiom(int i, int j, Rule rule, SourcePath srcPath) {
 		if (null == this.cells[i][j]) {
 			this.cells[i][j] = new Cell(this, this.goalSymbolID);
 		}		
@@ -610,7 +530,7 @@ public class Chart {
 	
 	
 	private void completeCell(int i, int j, DotItem dt, RuleCollection rb, SourcePath srcPath) {
-		if (containsHardRuleConstraint(i, j)) {
+		if (manualConstraintsHandler.containHardRuleConstraint(i, j)) {
 			System.out.println("having hard rule constraint in span " +i +", " + j);
 			return; //do not add any axioms
 		}
@@ -620,91 +540,7 @@ public class Chart {
 		}
 		// combinations: rules, antecent items
 		//this.cells[i][j].completeCell(i, j, dt.l_ant_super_items, filterRules(i,j,rb.getSortedRules()), rb.getArity(), srcPath);
-		combiner.combine(this, this.cells[i][j], i, j,  dt.l_ant_super_items, filterRules(i,j, rb.getSortedRules()), rb.getArity(), srcPath);
+		combiner.combine(this, this.cells[i][j], i, j,  dt.antSuperNodes, manualConstraintsHandler.filterRules(i,j, rb.getSortedRules()), rb.getArity(), srcPath);
 	}	
-
-//	===============================================================
-//	 Manual constraint annotation methods and classes
-//	===============================================================
 	
-	/**
-	 * if there are any LHS or RHS constraints for a span, then
-	 * all the applicable grammar rules in that span will have
-	 * to pass the filter.
-	 */
-	private List<Rule> filterRules(int i, int j, List<Rule> rulesIn) {
-		if (null == this.constraintSpansForFiltering)
-			return rulesIn;
-		ConstraintSpan cSpan = this.constraintSpansForFiltering.get( getSpanSignature(i,j));
-		if (null == cSpan) { // no filtering
-			return rulesIn;
-		} else {
-			
-			List<Rule> rulesOut = new ArrayList<Rule>();
-			for (Rule gRule : rulesIn) {
-				//gRule will survive, if any constraint (LHS or RHS) lets it survive 
-				for (ConstraintRule cRule : cSpan.rules()) {
-					if (shouldSurvive(cRule, gRule)) {
-						rulesOut.add(gRule);
-						break;
-					}
-				}
-			}
-			return rulesOut;
-		}
-	}
-	
-	//should we filter out the gRule based on the manually provided constraint cRule
-	private boolean shouldSurvive(ConstraintRule cRule, Rule gRule) {
-		
-		switch (cRule.type()) {
-		case LHS:
-			return (gRule.getLHS() == this.symbolTable.addNonterminal(cRule.lhs()));
-		case RHS:
-			int[] targetWords = this.symbolTable.addTerminals(cRule.nativeRhs());
-			
-			if (targetWords.length != gRule.getEnglish().length)
-				return false;
-			
-			for (int t = 0; t < targetWords.length; t++) {
-				if (targetWords[t] != gRule.getEnglish()[t])
-					return false;
-			}
-			
-			return true;
-		default: // not surviving
-			return false;
-		}
-	}
-	
-	
-	/**
-	 * if a span is *within* the coverage of a *hard* rule constraint, 
-	 * then this span will be only allowed to use the mannual rules 
-	 */
-	private boolean containsHardRuleConstraint(int startSpan, int endSpan) {
-		if (null != this.spansWithHardRuleConstraint) {
-			for (Span span : this.spansWithHardRuleConstraint) {
-				if (startSpan >= span.startPos && endSpan <= span.endPos)
-					return true;
-			}
-		}
-		return false;
-	}
-		
-	
-	
-	
-	private static class Span {
-		int startPos;
-		int endPos;
-		public Span(int startPos, int endPos) {
-			this.startPos = startPos;
-			this.endPos = endPos;
-		}
-	}
-	
-	private String getSpanSignature(int i, int j) {
-		return i + " " + j;
-	}
 }

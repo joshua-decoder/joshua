@@ -369,7 +369,7 @@ public class DecoderThread extends Thread {
 			HyperGraph oracle = extractor.getOracle(hypergraph, 3, oracleSentence);
 			
 			logger.finer("... Done Extracting. Getting k-best...");
-			this.kbestExtractor.lazy_k_best_extract_hg(
+			this.kbestExtractor.lazyKBestExtractOnHG(
 				oracle, this.featureFunctions, 
 				JoshuaConfiguration.topN,
 				Integer.parseInt(segment.id()), this.nbestWriter);
@@ -377,7 +377,7 @@ public class DecoderThread extends Thread {
 			
 		} else {
 			/* k-best extraction */
-			this.kbestExtractor.lazy_k_best_extract_hg(
+			this.kbestExtractor.lazyKBestExtractOnHG(
 				hypergraph, this.featureFunctions,
 				JoshuaConfiguration.topN,
 				Integer.parseInt(segment.id()), this.nbestWriter);

@@ -202,7 +202,7 @@ public class OracleExtractionHG extends SplitHg {
 	//find the oracle hypothesis in the nbest list
 	public Object[] oracle_extract_nbest(KBestExtractor kbest_extractor, HyperGraph hg, int n, boolean do_ngram_clip, String ref_sent){
 		if(hg.goalNode==null) return null;
-		kbest_extractor.reset_state();				
+		kbest_extractor.resetState();				
 		int next_n=0;
 		double orc_bleu=-1;
 		String orc_sent=null;

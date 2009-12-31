@@ -18,7 +18,8 @@
 
 package joshua.decoder.hypergraph;
 
-import java.util.ArrayList;
+
+import java.util.List;
 
 import joshua.decoder.chart_parser.SourcePath;
 import joshua.decoder.ff.tm.Rule;
@@ -49,9 +50,9 @@ public class HyperEdge {
 	/**If antNodes is null, then this edge corresponds to a rule with zero arity.
 	 * Aslo, the nodes appear in the list as per the index of the Foreign side non-terminal
 	 * */
-	private ArrayList<HGNode> antNodes = null; 
+	private List<HGNode> antNodes = null; 
 	
-	public HyperEdge(Rule rl, double bestDerivationCost_, Double transitionCost_, ArrayList<HGNode> antNodes_, SourcePath sp){
+	public HyperEdge(Rule rl, double bestDerivationCost_, Double transitionCost_, List<HGNode> antNodes_, SourcePath sp){
 		bestDerivationCost = bestDerivationCost_;
 		transitionCost=transitionCost_;
 		rule=rl;
@@ -67,7 +68,7 @@ public class HyperEdge {
 		return srcPath;
 	}
 	
-	public ArrayList<HGNode> getAntNodes(){
+	public List<HGNode> getAntNodes(){
 		return antNodes;
 	}
 	

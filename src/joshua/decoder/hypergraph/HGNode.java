@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 
@@ -44,7 +45,7 @@ public class HGNode implements Comparable<HGNode> {
 	public int lhs;
 	
 	// each hyperedge is an "and" node
-	public ArrayList<HyperEdge> hyperedges = null;
+	public List<HyperEdge> hyperedges = null;
 	
 	// used in pruning, compute_item, and transit_to_goal
 	public HyperEdge bestHyperedge = null;
@@ -69,23 +70,23 @@ public class HGNode implements Comparable<HGNode> {
 // Constructors
 //===============================================================
 
-	public HGNode(int i, int j, int lhs, HashMap<Integer,DPState> states, HyperEdge init_hyperedge, double est_total_cost) {
+	public HGNode(int i, int j, int lhs, HashMap<Integer,DPState> dpStates, HyperEdge initHyperedge, double estTotalCost) {
 		this.i   = i;
 		this.j   = j;
 		this.lhs = lhs;
-		this.dpStates = states;
-		this.estTotalCost  = est_total_cost;
-		addHyperedgeInItem(init_hyperedge);
+		this.dpStates = dpStates;
+		this.estTotalCost  = estTotalCost;
+		addHyperedgeInItem(initHyperedge);
 	}
 	
 	
 	//used by disk hg
-	public HGNode(int i, int j, int lhs, ArrayList<HyperEdge> l_hyperedges, HyperEdge best_hyperedge, HashMap<Integer,DPState> states) {
+	public HGNode(int i, int j, int lhs, List<HyperEdge> hyperedges, HyperEdge bestHyperedge, HashMap<Integer,DPState> states) {
 		this.i   = i;
 		this.j   = j;
 		this.lhs = lhs;
-		this.hyperedges    = l_hyperedges;
-		this.bestHyperedge  = best_hyperedge;
+		this.hyperedges    = hyperedges;
+		this.bestHyperedge  = bestHyperedge;
 		this.dpStates = states;
 	}
 	
@@ -105,7 +106,7 @@ public class HGNode implements Comparable<HGNode> {
 	}
 	
 	
-	public void addHyperedgesInItem(ArrayList<HyperEdge> hyperedges) {
+	public void addHyperedgesInItem(List<HyperEdge> hyperedges) {
 		for(HyperEdge hyperEdge : hyperedges) 
 			addHyperedgeInItem(hyperEdge);
 	}
@@ -156,9 +157,10 @@ public class HGNode implements Comparable<HGNode> {
 		return this.signature;
 	}
 	
-	public void releaseStateMemory(){
+	public void releaseDPStatesMemory(){
 		dpStates = null;
 	}
+	
 	
 	/*this will called by the sorting
 	 * in Cell.ensureSorted()*/

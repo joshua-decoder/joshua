@@ -75,11 +75,11 @@ public class KBestExtractor {
 	 * TODO It seems likely that only a target side symbol table
 	 *      is required for this class.
 	 */
-	private final SymbolTable p_symbolTable;
+	private final SymbolTable symbolTable;
 	
 	
 	static String root_sym = "ROOT";
-	static int root_id;//TODO: bug
+	static int rootID;//TODO: bug
 	
 	//configuratoin option
 	private boolean extract_unique_nbest  = true;
@@ -95,8 +95,8 @@ public class KBestExtractor {
 	
 	public KBestExtractor(SymbolTable symbolTable, boolean extract_unique_nbest_, boolean 	extract_nbest_tree_,  boolean include_align_,
 			boolean add_combined_score_,  boolean isMonolingual_,  boolean performSanityCheck_){
-		this.p_symbolTable = symbolTable;
-		root_id = p_symbolTable.addNonterminal(root_sym);
+		this.symbolTable = symbolTable;
+		rootID = symbolTable.addNonterminal(root_sym);
 		
 		this.extract_unique_nbest = extract_unique_nbest_;
 		this.extract_nbest_tree = extract_nbest_tree_;
@@ -109,17 +109,21 @@ public class KBestExtractor {
 	
 //	########################################## kbest extraction algorithm ##########################	
 	// FIXME: Most of these arguments are the same every time this method is called. They should be moved to fields and set in the constructor or an initialization method. The only ones that vary are the HyperGraph and the sent_id (and the coiterator iff anyone starts to use the ArrayList variant).
-	public void lazy_k_best_extract_hg(
-		HyperGraph hg, List<FeatureFunction> l_models, 
-		int global_n,
-		int sent_id, CoIterator<String> coit) {
+	public void lazyKBestExtractOnHG(
+		HyperGraph hg, 
+		List<FeatureFunction> featureFunctions, 
+		int globalN,
+		int sentID, 
+		CoIterator<String> coit) {
 		//long start = System.currentTimeMillis();
-		reset_state();
-		if (null == hg.goalNode) return;
+		resetState();
+		
+		if (null == hg.goalNode) 
+			return;
 		
 		//VirtualItem virtual_goal_item = add_virtual_item(hg.goal_item);
 		try {
-			int next_n = 0;
+			int nextN = 0;
 			while (true) {
 				/*
 				DerivationState cur = virtual_goal_item.lazy_k_best_extract_item(this, ++next_n, extract_unique_nbest, extract_nbest_tree, include_align); // global_n is not used at all
@@ -129,8 +133,8 @@ public class KBestExtractor {
 				}
 				String hyp_str = get_kth_hyp(cur, sent_id, l_models, extract_nbest_tree, include_align, add_combined_score);
 				*/
-				String hyp_str = getKthHyp(hg.goalNode, ++next_n, sent_id, l_models);
-				if (null == hyp_str || next_n > global_n) break;
+				String hyp_str = getKthHyp(hg.goalNode, ++nextN, sentID, featureFunctions);
+				if (null == hyp_str || nextN > globalN) break;
 				
 				coit.coNext(hyp_str);
 			}
@@ -141,11 +145,13 @@ public class KBestExtractor {
 	}
 	
 	
-	public void lazy_k_best_extract_hg(
+	public void lazyKBestExtractOnHG(
 		HyperGraph hg, List<FeatureFunction> l_models,
-		int global_n,
-		int sent_id, BufferedWriter out
+		int globalN,
+		int sentID, 
+		BufferedWriter out
 	) throws IOException {
+		
 		final BufferedWriter writer;
 		if (null == out) {
 			writer = new BufferedWriter(new OutputStreamWriter(System.out));
@@ -154,7 +160,7 @@ public class KBestExtractor {
 		}
 		
 		try {
-			this.lazy_k_best_extract_hg(hg, l_models, global_n, sent_id,
+			this.lazyKBestExtractOnHG(hg, l_models, globalN, sentID,
 				new CoIterator<String>() {
 					public void coNext(String hyp_str) {
 						try {
@@ -178,7 +184,7 @@ public class KBestExtractor {
 	public void lazyKBestExtractHG(HyperGraph hg, List<FeatureFunction> l_models, 
 			int global_n, int sent_id, final ArrayList<String> out) {
 		
-		this.lazy_k_best_extract_hg(hg, l_models, global_n, sent_id,
+		this.lazyKBestExtractOnHG(hg, l_models, global_n, sent_id,
 			new CoIterator<String>() {
 				public void coNext(String hyp_str) { out.add(hyp_str); }
 				public void finish() {}
@@ -186,7 +192,7 @@ public class KBestExtractor {
 	}
 	
 	
-	public void reset_state() {
+	public void resetState() {
 		tbl_virtual_items.clear();
 	}
 	
@@ -199,7 +205,7 @@ public class KBestExtractor {
 	//***************** you may need to reset_state() before you call this function for the first time
 	public String getKthHyp(HGNode it, int k,  int sent_id, List<FeatureFunction> l_models) {
 		VirtualItem virtual_item = add_virtual_item(it);
-		DerivationState cur = virtual_item.lazy_k_best_extract_item(p_symbolTable, this, k);
+		DerivationState cur = virtual_item.lazy_k_best_extract_item(symbolTable, this, k);
 		if( cur==null) return null;
 		return getKthHyp(cur, sent_id, l_models);
 	}
@@ -208,7 +214,7 @@ public class KBestExtractor {
 		double[] model_cost = null;
 		if(l_models!=null) 
 			model_cost = new double[l_models.size()];		
-		String str_hyp_numeric = cur.getHypothesis(p_symbolTable, this, extract_nbest_tree, model_cost,l_models);	
+		String str_hyp_numeric = cur.getHypothesis(symbolTable, this, extract_nbest_tree, model_cost,l_models);	
 		//for(int k=0; k<model_cost.length; k++) System.out.println(model_cost[k]);
 		String str_hyp_str = convertHyp2String(sent_id, cur, l_models, str_hyp_numeric, model_cost);
 		return str_hyp_str;
@@ -239,24 +245,24 @@ public class KBestExtractor {
 					if (include_align) {
 						// we must account for the {i-j} substring
 						int ijStrIndex = tem[t].indexOf('{');
-						String tag = this.p_symbolTable.getWord(Integer.parseInt(tem[t].substring(1,ijStrIndex)));
+						String tag = this.symbolTable.getWord(Integer.parseInt(tem[t].substring(1,ijStrIndex)));
 						str_hyp.append('(');
 						str_hyp.append(tag);
 						str_hyp.append(tem[t].substring(ijStrIndex)); // append {i-j}
 					} else {
-						String tag = this.p_symbolTable.getWord(Integer.parseInt(tem[t].substring(1)));
+						String tag = this.symbolTable.getWord(Integer.parseInt(tem[t].substring(1)));
 						str_hyp.append('(');
 						str_hyp.append(tag);
 					}
 				} else {
 					//note: it may have more than two ")", e.g., "3499))"
 					int first_bracket_pos = tem[t].indexOf(')');//TODO: assume the tag/terminal does not have ')'
-					String tag = this.p_symbolTable.getWord(Integer.parseInt(tem[t].substring(0,first_bracket_pos)));
+					String tag = this.symbolTable.getWord(Integer.parseInt(tem[t].substring(0,first_bracket_pos)));
 					str_hyp.append(tag);
 					str_hyp.append(tem[t].substring(first_bracket_pos));
 				}
 			} else { // terminal symbol
-				str_hyp.append(this.p_symbolTable.getWord(Integer.parseInt(tem[t])));
+				str_hyp.append(this.symbolTable.getWord(Integer.parseInt(tem[t])));
 			}
 			if (t < tem.length-1) {
 				str_hyp.append(' ');
@@ -534,7 +540,7 @@ public class KBestExtractor {
 				if (useTreeFormat) {
 					//res.append("(ROOT ");
 					res.append('(');
-					res.append(root_id);
+					res.append(rootID);
 					if (include_align) {
 						// append "{i-j}"
 						res.append('{');

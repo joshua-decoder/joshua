@@ -18,34 +18,34 @@ public class ExhaustiveCombiner implements Combiner{
 	 * @param arity Number of nonterminals
 	 * @param srcPath
 	 */
-	public void combine(Chart chart, Cell cell, int i, int j, ArrayList<SuperItem> superItems, List<Rule> rules, int arity, SourcePath srcPath) {
+	public void combine(Chart chart, Cell cell, int i, int j, List<SuperNode> superItems, List<Rule> rules, int arity, SourcePath srcPath) {
 		
 		//System.out.println(String.format("Complet_cell is called, n_rules: %d ", rules.size()));
 		// consider all the possbile combinations (while
 		// in Cube-pruning, we do not consider all the
 		// possible combinations)
 		for (Rule rule : rules) {
-			if (1 == arity) {
-				SuperItem super_ant1 = superItems.get(0);
-				for (HGNode antecedent: super_ant1.l_items) {
-					ArrayList<HGNode> antecedents = new ArrayList<HGNode>();
-					antecedents.add(antecedent);
+			if (arity == 1) {
+				SuperNode superAnt1 = superItems.get(0);
+				for (HGNode antNode: superAnt1.nodes) {
+					List<HGNode> antNodes = new ArrayList<HGNode>();
+					antNodes.add(antNode);
 					cell.addHyperEdgeInCell(
-							new ComputeNodeResult(chart.featureFunctions, rule, antecedents, i, j, srcPath, chart.stateComputers),
-						rule, i, j, antecedents, srcPath);
+							new ComputeNodeResult(chart.featureFunctions, rule, antNodes, i, j, srcPath, chart.stateComputers),
+							rule, i, j, antNodes, srcPath);
 				}
 				
 			} else if (arity == 2) {
-				SuperItem super_ant1 = superItems.get(0);
-				SuperItem super_ant2 = superItems.get(1);
-				for (HGNode it_ant1: super_ant1.l_items) {
-					for (HGNode it_ant2: super_ant2.l_items) {
+				SuperNode superAnt1 = superItems.get(0);
+				SuperNode superAnt2 = superItems.get(1);
+				for (HGNode antNode1: superAnt1.nodes) {
+					for (HGNode antNode2: superAnt2.nodes) {
 						ArrayList<HGNode> antecedents = new ArrayList<HGNode>();
-						antecedents.add(it_ant1);
-						antecedents.add(it_ant2);
+						antecedents.add(antNode1);
+						antecedents.add(antNode2);
 						cell.addHyperEdgeInCell(
 								new ComputeNodeResult(chart.featureFunctions, rule, antecedents, i, j, srcPath, chart.stateComputers),
-							rule, i, j, antecedents, srcPath);
+								rule, i, j, antecedents, srcPath);
 					}
 				}
 			} else {

@@ -1,7 +1,6 @@
 
 package joshua.decoder.chart_parser;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -10,6 +9,7 @@ import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.StateComputer;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.hypergraph.HGNode;
+import joshua.decoder.hypergraph.HyperEdge;
 
 
 /**
@@ -24,8 +24,8 @@ public class ComputeNodeResult {
 	private double finalizedTotalCost;
 	private double transitionTotalCost;
 	
-	// the key is feature id; tbl of dpstate for each stateful feature
-	private HashMap<Integer,DPState> featDPStatesTbl;
+	// the key is state id;
+	private HashMap<Integer,DPState> dpStates;
 	
 	
 	
@@ -33,7 +33,7 @@ public class ComputeNodeResult {
 	/** 
 	 * Compute costS and the states of thE node
 	 */
-	public ComputeNodeResult(List<FeatureFunction> featureFunctions, Rule rule, 
+	public ComputeNodeResult(List<FeatureFunction> featureFunctions, Rule rule,
 			List<HGNode> antNodes, int i, int j, SourcePath srcPath,
 			List<StateComputer> stateComputers){
 		
@@ -92,10 +92,21 @@ public class ComputeNodeResult {
 		this.expectedTotalCost = expectedTotalCost;
 		this.finalizedTotalCost = finalizedTotalCost;
 		this.transitionTotalCost = transitionCostSum;
-		this.featDPStatesTbl =  allDPStates;
+		this.dpStates =  allDPStates;
 	}
 	
 	
+	
+	public static double computeCombinedTransitionCost(List<FeatureFunction> featureFunctions, HGNode parentNode, HyperEdge dt){
+		double res = 0;
+		for(FeatureFunction ff : featureFunctions) {				
+			if(dt.getRule()!=null)
+				res += ff.getWeight() * ff.transition(dt.getRule(), dt.getAntNodes(), parentNode.i, parentNode.j, dt.getSourcePath());
+			else
+				res += ff.getWeight() * ff.finalTransition(dt.getAntNodes().get(0),  parentNode.i, parentNode.j, dt.getSourcePath());		
+		}
+		return res;
+	}
 	
 	public static double[] computeModelTransitionCost(List<FeatureFunction> featureFunctions, Rule rule, 
 					List<HGNode> antNodes, int i, int j, SourcePath srcPath){
@@ -140,11 +151,11 @@ public class ComputeNodeResult {
 		return this.transitionTotalCost;
 	}
 	
-	void setFeatDPStates(HashMap<Integer,DPState> states) {
-		this.featDPStatesTbl = states;
+	void setDPStates(HashMap<Integer,DPState> states) {
+		this.dpStates = states;
 	}
 	
-	HashMap<Integer,DPState> getFeatDPStates() {
-		return this.featDPStatesTbl;
+	HashMap<Integer,DPState> getDPStates() {
+		return this.dpStates;
 	}
 }
