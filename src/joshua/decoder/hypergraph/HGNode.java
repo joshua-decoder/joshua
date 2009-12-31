@@ -50,15 +50,15 @@ public class HGNode implements Comparable<HGNode> {
 	public HyperEdge bestHyperedge = null;
 	
 
-	// the key is the feature id; remember the state required by each model, for example, edge-ngrams for LM model
+	// the key is the state id; remember the state required by each model, for example, edge-ngrams for LM model
 	HashMap<Integer,DPState> dpStates;
 	
 	
 	//============== auxiluary variables, no need to store on disk
 	// signature of this item: lhs, states
 	private String signature = null;
-	// seperator for the signature for each feature function
-	private static final String FF_SIG_SEP = " -f- ";
+	// seperator for the signature for each state
+	private static final String STATE_SIG_SEP = " -f- ";
 	
 	//============== for pruning purpose
 	public boolean isDead        = false;
@@ -111,7 +111,7 @@ public class HGNode implements Comparable<HGNode> {
 	}
 	
 	
-	public HashMap<Integer,DPState> getTblFeatDPStates() {
+	public HashMap<Integer,DPState> getDPStates() {
 		return dpStates;
 	}
 	
@@ -146,7 +146,7 @@ public class HGNode implements Comparable<HGNode> {
 					Map.Entry<Integer,DPState> entry = it.next();					
 					s.append(entry.getValue().getSignature(false));
 					if (it.hasNext()) 
-						s.append(FF_SIG_SEP);
+						s.append(STATE_SIG_SEP);
 				}
 			}
 			

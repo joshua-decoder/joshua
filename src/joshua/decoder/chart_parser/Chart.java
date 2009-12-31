@@ -76,9 +76,9 @@ public class Chart {
 	//===========================================================
 	// Decoder-wide fields
 	//===========================================================
-	ArrayList<FeatureFunction> featureFunctions;
+	List<FeatureFunction> featureFunctions;
 	
-	ArrayList<StateComputer> stateComputers;
+	List<StateComputer> stateComputers;
 	
 	//===========================================================
 	// Satistics

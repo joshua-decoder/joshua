@@ -25,7 +25,9 @@ package joshua.decoder.ff;
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate$
  */
-public abstract class DefaultStatefulFF<S extends StateComputeResult> implements FeatureFunction<S> {
+public abstract class DefaultStatefulFF implements FeatureFunction {
+	
+	/** any integers exept -1*/
 	private int stateID;
 	
 	private double weight = 0.0;

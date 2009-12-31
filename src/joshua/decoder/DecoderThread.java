@@ -370,7 +370,7 @@ public class DecoderThread extends Thread {
 			
 			logger.finer("... Done Extracting. Getting k-best...");
 			this.kbestExtractor.lazy_k_best_extract_hg(
-				oracle, this.featureFunctions, this.stateComputers, 
+				oracle, this.featureFunctions, 
 				JoshuaConfiguration.topN,
 				Integer.parseInt(segment.id()), this.nbestWriter);
 			logger.finer("... Done getting k-best");
@@ -378,7 +378,7 @@ public class DecoderThread extends Thread {
 		} else {
 			/* k-best extraction */
 			this.kbestExtractor.lazy_k_best_extract_hg(
-				hypergraph, this.featureFunctions, this.stateComputers, 
+				hypergraph, this.featureFunctions,
 				JoshuaConfiguration.topN,
 				Integer.parseInt(segment.id()), this.nbestWriter);
 			if (logger.isLoggable(Level.FINER))

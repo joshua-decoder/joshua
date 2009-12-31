@@ -18,6 +18,7 @@
 
 package joshua.decoder.ff;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import joshua.corpus.vocab.SymbolTable;
@@ -44,15 +45,17 @@ public class NgramDPState implements DPState {
 	}
 	
 	 
-	/*
+	
 	//construct an instance from the signature string
 	public  NgramDPState(SymbolTable symbolTable, String sig) {
 		this.sig = sig;
-		String[] states = sig.split(SIG_SEP); // TODO: use joshua.util.Regex
-		this.leftLMStateWords = symbolTable.getIDs(states[0]);
-		this.rightLMStateWords = symbolTable.getIDs(states[1]);
-	}*/
+		String[] states = sig.split(SIG_SEP); // TODO: use joshua.util.Regex				
+		this.leftLMStateWords = intArrayToList( symbolTable.getIDs(states[0]) );
+		this.rightLMStateWords = intArrayToList( symbolTable.getIDs(states[1]) );
+	}
 		
+
+	
 	public void setLeftLMStateWords( List<Integer>  words_){
 		this.leftLMStateWords = words_;
 	}
@@ -121,6 +124,13 @@ public class NgramDPState implements DPState {
 		} else {
 			throw new RuntimeException("state is null");
 		}
+	}
+	
+	private List<Integer> intArrayToList(int[] words){
+		List<Integer> res = new ArrayList<Integer>();
+		for(int wrd : words)
+			res.add(wrd);
+		return res;
 	}
 
 }

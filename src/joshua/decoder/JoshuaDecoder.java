@@ -86,8 +86,8 @@ public class JoshuaDecoder {
 	private NGramLanguageModel         languageModel;
 	
 	private ArrayList<StateComputer> stateComputers;
-	private int ngramStateID = 0;//TODO?????????????
-	private int ngramOrder = 3;//TODO???????????????????
+	
+	
 	
 	/**
 	 * Shared symbol table for source language terminals, target
@@ -294,7 +294,7 @@ public class JoshuaDecoder {
 					// again
 					this.initializeFeatureFunctions(configFile);
 					
-					this.initializeStateComputers(symbolTable, ngramOrder, ngramStateID);
+					this.initializeStateComputers(symbolTable, JoshuaConfiguration.lmOrder, JoshuaConfiguration.ngramStateID);
 
 					// initialize and load grammar
 					initializeTranslationGrammars(JoshuaConfiguration.tm_file);
@@ -340,10 +340,10 @@ public class JoshuaDecoder {
 		} else if (JoshuaConfiguration.use_srilm) {
 			logger.finest("Using SRILM symbol table");
 			if (null == existingSymbols) {
-				this.symbolTable = new SrilmSymbol(JoshuaConfiguration.g_lm_order);
+				this.symbolTable = new SrilmSymbol(JoshuaConfiguration.lmOrder);
 			} else {
 				logger.finest("Populating SRILM symbol table with symbols from existing symbol table");
-				this.symbolTable = new SrilmSymbol(existingSymbols, JoshuaConfiguration.g_lm_order);
+				this.symbolTable = new SrilmSymbol(existingSymbols, JoshuaConfiguration.lmOrder);
 			}
 		} else {
 			if (null == existingSymbols) {
@@ -373,7 +373,7 @@ public class JoshuaDecoder {
 			}
 			this.languageModel = new LMGrammarRemote(
 				this.symbolTable,
-				JoshuaConfiguration.g_lm_order,
+				JoshuaConfiguration.lmOrder,
 				JoshuaConfiguration.f_remote_server_list,
 				JoshuaConfiguration.num_remote_lm_servers);
 			
@@ -384,7 +384,7 @@ public class JoshuaDecoder {
 			}
 			this.languageModel = new LMGrammarSRILM(
 				(SrilmSymbol)this.symbolTable,
-				JoshuaConfiguration.g_lm_order,
+				JoshuaConfiguration.lmOrder,
 				JoshuaConfiguration.lm_file);
 			
 		} else if (JoshuaConfiguration.use_bloomfilter_lm) {
@@ -394,7 +394,7 @@ public class JoshuaDecoder {
 			}
 			this.languageModel = new BloomFilterLanguageModel(
 					this.symbolTable,
-					JoshuaConfiguration.g_lm_order,
+					JoshuaConfiguration.lmOrder,
 					JoshuaConfiguration.lm_file);
 		} else {
 			
@@ -408,7 +408,7 @@ public class JoshuaDecoder {
 			// using the built-in JAVA implementation of LM, may not be as scalable as SRILM
 			this.languageModel = new LMGrammarJAVA(
 				this.symbolTable,
-				JoshuaConfiguration.g_lm_order,
+				JoshuaConfiguration.lmOrder,
 				JoshuaConfiguration.lm_file,
 				JoshuaConfiguration.use_left_equivalent_state,
 				JoshuaConfiguration.use_right_equivalent_state);
@@ -502,7 +502,7 @@ public class JoshuaDecoder {
 		// again
 		this.initializeFeatureFunctions(configFile);
 		
-		this.initializeStateComputers(symbolTable, ngramOrder, ngramStateID);
+		this.initializeStateComputers(symbolTable, JoshuaConfiguration.lmOrder, JoshuaConfiguration.ngramStateID);
 		
 		if (logger.isLoggable(Level.INFO))
 			logger.info("Reading source language corpus from " +
@@ -580,7 +580,8 @@ public class JoshuaDecoder {
 		LineReader reader = new LineReader(configFile);
 		try { for (String line : reader) {
 			line = line.trim();
-			if (Regex.commentOrEmptyLine.matches(line)) continue;
+			if (Regex.commentOrEmptyLine.matches(line)) 
+				continue;
 			
 			if (line.indexOf("=") == -1) { // ignore lines with "="
 				String[] fds = Regex.spaces.split(line);
@@ -592,14 +593,14 @@ public class JoshuaDecoder {
 					double weight = Double.parseDouble(fds[1].trim());
 					this.featureFunctions.add(
 						new LanguageModelFF(
-							this.ngramStateID,	
+							JoshuaConfiguration.ngramStateID,	
 							this.featureFunctions.size(),
-							JoshuaConfiguration.g_lm_order,
+							JoshuaConfiguration.lmOrder,
 							this.symbolTable, this.languageModel, weight));
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format(
 							"Line: %s\nAdd LM, order: %d; weight: %.3f;",
-							line, JoshuaConfiguration.g_lm_order, weight));
+							line, JoshuaConfiguration.lmOrder, weight));
 					
 				} else if ("latticecost".equals(fds[0]) && fds.length == 2) {
 					double weight = Double.parseDouble(fds[1].trim());

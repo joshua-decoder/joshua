@@ -20,7 +20,6 @@ package joshua.decoder.hypergraph;
 
 import joshua.decoder.chart_parser.ComputeNodeResult;
 import joshua.decoder.ff.FeatureFunction;
-import joshua.decoder.ff.StateComputer;
 import joshua.decoder.ff.tm.Rule;
 import joshua.corpus.vocab.SymbolTable;
 import joshua.util.Regex;
@@ -32,6 +31,7 @@ import java.io.OutputStreamWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.PriorityQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -110,8 +110,7 @@ public class KBestExtractor {
 //	########################################## kbest extraction algorithm ##########################	
 	// FIXME: Most of these arguments are the same every time this method is called. They should be moved to fields and set in the constructor or an initialization method. The only ones that vary are the HyperGraph and the sent_id (and the coiterator iff anyone starts to use the ArrayList variant).
 	public void lazy_k_best_extract_hg(
-		HyperGraph hg, ArrayList<FeatureFunction> l_models, 
-		 ArrayList<StateComputer> stateComputers,
+		HyperGraph hg, List<FeatureFunction> l_models, 
 		int global_n,
 		int sent_id, CoIterator<String> coit) {
 		//long start = System.currentTimeMillis();
@@ -130,7 +129,7 @@ public class KBestExtractor {
 				}
 				String hyp_str = get_kth_hyp(cur, sent_id, l_models, extract_nbest_tree, include_align, add_combined_score);
 				*/
-				String hyp_str = getKthHyp(hg.goalNode, ++next_n, sent_id, l_models, stateComputers);
+				String hyp_str = getKthHyp(hg.goalNode, ++next_n, sent_id, l_models);
 				if (null == hyp_str || next_n > global_n) break;
 				
 				coit.coNext(hyp_str);
@@ -143,8 +142,7 @@ public class KBestExtractor {
 	
 	
 	public void lazy_k_best_extract_hg(
-		HyperGraph hg, ArrayList<FeatureFunction> l_models,
-		ArrayList<StateComputer> stateComputers,
+		HyperGraph hg, List<FeatureFunction> l_models,
 		int global_n,
 		int sent_id, BufferedWriter out
 	) throws IOException {
@@ -156,7 +154,7 @@ public class KBestExtractor {
 		}
 		
 		try {
-			this.lazy_k_best_extract_hg(hg, l_models, stateComputers, global_n, sent_id,
+			this.lazy_k_best_extract_hg(hg, l_models, global_n, sent_id,
 				new CoIterator<String>() {
 					public void coNext(String hyp_str) {
 						try {
@@ -177,10 +175,10 @@ public class KBestExtractor {
 		}
 	}
 	
-	public void lazyKBestExtractHG(HyperGraph hg, ArrayList<FeatureFunction> l_models, 
-			ArrayList<StateComputer> stateComputers, int global_n, int sent_id, final ArrayList<String> out) {
+	public void lazyKBestExtractHG(HyperGraph hg, List<FeatureFunction> l_models, 
+			int global_n, int sent_id, final ArrayList<String> out) {
 		
-		this.lazy_k_best_extract_hg(hg, l_models, stateComputers, global_n, sent_id,
+		this.lazy_k_best_extract_hg(hg, l_models, global_n, sent_id,
 			new CoIterator<String>() {
 				public void coNext(String hyp_str) { out.add(hyp_str); }
 				public void finish() {}
@@ -199,18 +197,18 @@ public class KBestExtractor {
 	 * add_combined_score==f: do not add combined model cost
 	 * */
 	//***************** you may need to reset_state() before you call this function for the first time
-	public String getKthHyp(HGNode it, int k,  int sent_id, ArrayList<FeatureFunction> l_models, ArrayList<StateComputer> stateComputers) {
+	public String getKthHyp(HGNode it, int k,  int sent_id, List<FeatureFunction> l_models) {
 		VirtualItem virtual_item = add_virtual_item(it);
 		DerivationState cur = virtual_item.lazy_k_best_extract_item(p_symbolTable, this, k);
 		if( cur==null) return null;
-		return getKthHyp(cur, sent_id, l_models, stateComputers);
+		return getKthHyp(cur, sent_id, l_models);
 	}
 	
-	private String getKthHyp(DerivationState cur, int sent_id, ArrayList<FeatureFunction> l_models, ArrayList<StateComputer> stateComputers){
+	private String getKthHyp(DerivationState cur, int sent_id, List<FeatureFunction> l_models){
 		double[] model_cost = null;
 		if(l_models!=null) 
 			model_cost = new double[l_models.size()];		
-		String str_hyp_numeric = cur.getHypothesis(p_symbolTable, this, extract_nbest_tree, model_cost,l_models, stateComputers);	
+		String str_hyp_numeric = cur.getHypothesis(p_symbolTable, this, extract_nbest_tree, model_cost,l_models);	
 		//for(int k=0; k<model_cost.length; k++) System.out.println(model_cost[k]);
 		String str_hyp_str = convertHyp2String(sent_id, cur, l_models, str_hyp_numeric, model_cost);
 		return str_hyp_str;
@@ -222,7 +220,7 @@ public class KBestExtractor {
 	 * l_models==null: do not add model cost
 	 * add_combined_score==f: do not add combined model cost
 	 * */
-	private String convertHyp2String(int sent_id, DerivationState cur, ArrayList<FeatureFunction> l_models, String str_hyp_numeric, double[] model_cost){
+	private String convertHyp2String(int sent_id, DerivationState cur, List<FeatureFunction> l_models, String str_hyp_numeric, double[] model_cost){
 		String[] tem = Regex.spaces.split(str_hyp_numeric);
 		StringBuffer str_hyp = new StringBuffer();
 		
@@ -353,7 +351,7 @@ public class KBestExtractor {
 					//derivation_tbl.remove(res.get_signature());//TODO: should remove? note that two state may be tied because the cost is the same
 					if (extract_unique_nbest) {
 						boolean useTreeFormat=false;
-						String res_str = res.getHypothesis(p_symbol,kbest_extator,useTreeFormat, null,null,null);
+						String res_str = res.getHypothesis(p_symbol,kbest_extator,useTreeFormat, null,null);
 						// We pass false for extract_nbest_tree because we want; 
 						// to check that the hypothesis *strings* are unique,
 						// not the trees.
@@ -522,10 +520,10 @@ public class KBestExtractor {
 		//get the numeric sequence of the particular hypothesis
 		//if want to get model cost, then have to set model_cost and l_models
 		private String getHypothesis(SymbolTable p_symbol, KBestExtractor kbest_extator, boolean useTreeFormat, double[] model_cost,
-				ArrayList<FeatureFunction> l_models, ArrayList<StateComputer> stateComputers) {
+				List<FeatureFunction> l_models) {
 			//### accumulate cost of p_edge into model_cost if necessary
 			if (null != model_cost) {
-				computeCost(p_parent_node, p_edge, model_cost, l_models, stateComputers);
+				computeCost(p_parent_node, p_edge, model_cost, l_models);
 			}
 			
 			//### get hyp string recursively
@@ -550,7 +548,7 @@ public class KBestExtractor {
 				for (int id = 0; id < p_edge.getAntNodes().size(); id++) {
 					HGNode child = (HGNode)p_edge.getAntNodes().get(id);
 					VirtualItem virtual_child = kbest_extator.add_virtual_item(child);
-					res.append(((DerivationState)virtual_child.l_nbest.get(ranks[id]-1)).getHypothesis(p_symbol,kbest_extator, useTreeFormat, model_cost,l_models, stateComputers));
+					res.append(((DerivationState)virtual_child.l_nbest.get(ranks[id]-1)).getHypothesis(p_symbol,kbest_extator, useTreeFormat, model_cost,l_models));
 					if (id < p_edge.getAntNodes().size()-1) res.append(' ');
 				}
 				if (useTreeFormat) res.append(')');
@@ -575,7 +573,7 @@ public class KBestExtractor {
 							int id = p_symbol.getTargetNonterminalIndex(english[c]);
 							HGNode child = (HGNode)p_edge.getAntNodes().get(id);
 							VirtualItem virtual_child = kbest_extator.add_virtual_item(child);
-							res.append(((DerivationState)virtual_child.l_nbest.get(ranks[id]-1)).getHypothesis(p_symbol,kbest_extator, useTreeFormat, model_cost, l_models, stateComputers));
+							res.append(((DerivationState)virtual_child.l_nbest.get(ranks[id]-1)).getHypothesis(p_symbol,kbest_extator, useTreeFormat, model_cost, l_models));
 						} else {
 							res.append(english[c]);
 						}
@@ -588,7 +586,7 @@ public class KBestExtractor {
 						if (p_symbol.isNonterminal(french[c])) {
 							HGNode child = (HGNode)p_edge.getAntNodes().get(nonTerminalID);
 							VirtualItem virtual_child = kbest_extator.add_virtual_item(child);
-							res.append(((DerivationState)virtual_child.l_nbest.get(ranks[nonTerminalID]-1)).getHypothesis(p_symbol,kbest_extator, useTreeFormat, model_cost, l_models, stateComputers));
+							res.append(((DerivationState)virtual_child.l_nbest.get(ranks[nonTerminalID]-1)).getHypothesis(p_symbol,kbest_extator, useTreeFormat, model_cost, l_models));
 							nonTerminalID++;
 						} else {
 							res.append(french[c]);
@@ -637,11 +635,11 @@ public class KBestExtractor {
 		
 		
 		//accumulate cost into modelCost
-		private void computeCost(HGNode parentNode, HyperEdge dt, double[] modelCost, ArrayList<FeatureFunction> models, ArrayList<StateComputer>  stateComputers){
+		private void computeCost(HGNode parentNode, HyperEdge dt, double[] modelCost, List<FeatureFunction> models){
 			if (null == modelCost) 
 				return;
 			//System.out.println("Rule is: " + dt.rule.toString());
-			double[] transitionCosts = ComputeNodeResult.computeModelTransitionCost(models, dt.getRule(), dt.getAntNodes(), parentNode.i, parentNode.j, dt.getSourcePath(), stateComputers);
+			double[] transitionCosts = ComputeNodeResult.computeModelTransitionCost(models, dt.getRule(), dt.getAntNodes(), parentNode.i, parentNode.j, dt.getSourcePath());
 			
 		
 			for(int i=0; i<transitionCosts.length; i++){

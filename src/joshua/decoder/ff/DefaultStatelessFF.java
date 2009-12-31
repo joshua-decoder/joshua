@@ -19,7 +19,11 @@
 package joshua.decoder.ff;
 
 
+import java.util.List;
+
+import joshua.decoder.chart_parser.SourcePath;
 import joshua.decoder.ff.tm.Rule;
+import joshua.decoder.hypergraph.HGNode;
 
 
 
@@ -72,26 +76,19 @@ public abstract class DefaultStatelessFF implements FeatureFunction {
 	}
 	
 	
-	public double transition(Rule rule, StateComputeResult stateResult) {
-		if (null != stateResult) {
-			throw new IllegalArgumentException("transition: stateResult for a stateless feature is NOT null");
-		}
+	public double transition(Rule rule, List<HGNode> antNodes, int spanStart, int spanEnd, SourcePath srcPath){
 		return estimate(rule);
 	}
 	
-	public final double estimateFutureCost(Rule rule, StateComputeResult stateResult){
-		if (null != stateResult) {
-			throw new IllegalArgumentException("estimateFutureCost: stateResult for a stateless feature is NOT null");
+	public final double estimateFutureCost(Rule rule, DPState curDPState){
+		if (null != curDPState) {
+			throw new IllegalArgumentException("estimateFutureCost: curDPState for a stateless feature is NOT null");
 		}
 		return 0;
 	}
 	
 	
-	
-	public final double finalTransition(StateComputeResult stateResult) {
-		if (null != stateResult) {
-			throw new IllegalArgumentException("finalTransition: stateResult for a stateless feature is NOT null");
-		}
+	public final double finalTransition(HGNode antNode, int spanStart, int spanEnd, SourcePath srcPath){
 		return 0.0;
 	}
 }

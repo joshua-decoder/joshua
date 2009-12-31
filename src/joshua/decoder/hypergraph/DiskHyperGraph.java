@@ -302,8 +302,8 @@ public class DiskHyperGraph {
 				.append(ITEM_STATE_TAG)
 				.append(
 					// Assume LM is the only stateful feature
-					null != item.getTblFeatDPStates()
-					? item.getTblFeatDPStates()
+					null != item.getDPStates()
+					? item.getDPStates()
 						.get(this.LMFeatureID)
 						.getSignature(this.symbolTable, true)
 					: NULL_ITEM_STATE )
@@ -384,10 +384,9 @@ public class DiskHyperGraph {
 		
 		double[] transitionCosts = ComputeNodeResult.computeModelTransitionCost(
 				this.featureFunctions, edge.getRule(), edge.getAntNodes(), 
-				parentNode.i, parentNode.j, edge.getSourcePath(), stateComputers);
+				parentNode.i, parentNode.j, edge.getSourcePath());
 		
 		for (int k = 0; k < this.featureFunctions.size(); k++) {
-			FeatureFunction m = this.featureFunctions.get(k);
 			line.append(String.format("%.4f", transitionCosts[k]))
 				.append(
 					k < this.featureFunctions.size() - 1

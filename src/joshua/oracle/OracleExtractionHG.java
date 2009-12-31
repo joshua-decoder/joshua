@@ -22,6 +22,7 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 import joshua.corpus.vocab.BuildinSymbol;
 import joshua.corpus.vocab.SymbolTable;
@@ -454,8 +455,8 @@ public class OracleExtractionHG extends SplitHg {
 		int[] right_lm_state = null;
 		if (!always_maintain_seperate_lm_state && lm_order >= g_bleu_order) {	//do not need to change lm state, just use orignal lm state
 			NgramDPState state = (NgramDPState) parent_item.getDPState(this.lm_feat_id);
-			left_lm_state = state.getLeftLMStateWords();
-			right_lm_state = state.getRightLMStateWords();
+			left_lm_state = intListToArray( state.getLeftLMStateWords() );
+			right_lm_state = intListToArray( state.getRightLMStateWords() );
 		} else {
 			left_lm_state = get_left_equiv_state(left_state_sequence, tbl_suffix);
 			right_lm_state = get_right_equiv_state(right_state_sequence, tbl_prefix);
@@ -471,6 +472,13 @@ public class OracleExtractionHG extends SplitHg {
 		return new DPStateOracle(total_hyp_len, num_ngram_match, left_lm_state, right_lm_state);
 	}
 	
+	private int[] intListToArray(List<Integer> words){
+		int[] res = new int[words.size()];
+		int i=0;
+		for(int wrd : words)
+			res[i++] = wrd;
+		return res;
+	}
 	
 	private int[] get_left_equiv_state(ArrayList<Integer> left_state_sequence, 
 		HashMap<String, Boolean> tbl_suffix)

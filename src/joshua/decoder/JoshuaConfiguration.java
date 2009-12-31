@@ -41,10 +41,11 @@ public class JoshuaConfiguration {
 	public static double  lm_ceiling_cost            = 100;
 	public static boolean use_left_equivalent_state  = false;
 	public static boolean use_right_equivalent_state = true;
-	public static int     g_lm_order                 = 3;
+	public static int     lmOrder                 = 3;
 	public static boolean use_sent_specific_lm       = false;
 	public static String  g_sent_lm_file_name_prefix = "lm.";
 	public static String  lm_file                    = null;//TODO
+	public static int ngramStateID = 0;//TODO?????????????
 	
 	//tm config
 	public static int span_limit = 10;
@@ -319,9 +320,9 @@ public class JoshuaConfiguration {
 						logger.finest(String.format("use_right_equivalent_state: %s", use_right_equivalent_state));
 					
 				} else if ("order".equals(fds[0])) {
-					g_lm_order = Integer.parseInt(fds[1]);
+					lmOrder = Integer.parseInt(fds[1]);
 					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format("g_lm_order: %s", g_lm_order));
+						logger.finest(String.format("g_lm_order: %s", lmOrder));
 					
 				} else if ("use_sent_specific_lm".equals(fds[0])) {
 					use_sent_specific_lm = Boolean.valueOf(fds[1]);

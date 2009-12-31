@@ -91,7 +91,7 @@ public abstract class SplitHg {
 		ArrayList<HyperEdge> l_deductions = new ArrayList<HyperEdge>();		
 		HyperEdge clone_dt = clone_deduction(virtual_it.best_virtual_deduction);
 		l_deductions.add(clone_dt);
-		return new HGNode(original_it.i, original_it.j, original_it.lhs,  l_deductions, clone_dt, original_it.getTblFeatDPStates());	
+		return new HGNode(original_it.i, original_it.j, original_it.lhs,  l_deductions, clone_dt, original_it.getDPStates());	
 	}
 	
 

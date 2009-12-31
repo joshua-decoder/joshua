@@ -17,7 +17,11 @@
  */
 package joshua.decoder.ff;
 
+import java.util.List;
+
+import joshua.decoder.chart_parser.SourcePath;
 import joshua.decoder.ff.tm.Rule;
+import joshua.decoder.hypergraph.HGNode;
 
 
 /**
@@ -31,7 +35,7 @@ import joshua.decoder.ff.tm.Rule;
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate$
  */
-public interface FeatureFunction<S extends StateComputeResult> {
+public interface FeatureFunction {
 
 //===============================================================
 // Attributes
@@ -57,30 +61,22 @@ public interface FeatureFunction<S extends StateComputeResult> {
 	/**
 	 * It is used when initializing translation grammars (for
 	 * pruning purpose, and to get stateless cost for each rule).
-	 * This is also required to sort the rules (required by Cube-pruning)
+	 * This is also required to sort the rules (required by Cube-pruning).
 	 */
 	double estimate(Rule rule);
 	
-	
-	
+		
 	/**estimate future cost, e.g., the costs of partial n-grams
-	 * asscociated with the left-edge state
+	 * asscociated with the left-edge ngram state
 	 * */
-	double estimateFutureCost(Rule rule, S stateResult);
+	double estimateFutureCost(Rule rule, DPState curDPState);
 	
 	
-	/**
-	 * In general, it is quite possible that the edge is not
-	 * created yet when this function is called. In this case,
-	 * call the specialized implementation; DO NOT pass a null
-	 * pointer. (Implementations may allow it, Clients must not
-	 * assume it.)
-	 */
-	double transition(Rule rule, S stateResult);
-	
+	double transition(Rule rule, List<HGNode> antNodes, int spanStart, int spanEnd, SourcePath srcPath);
 	
 	/**Edges calling this function do not have concret rules associated with them. 
 	 * */
-	double finalTransition(S stateResult);
+	double finalTransition(HGNode antNode, int spanStart, int spanEnd, SourcePath srcPath);
+	
 	
 }
