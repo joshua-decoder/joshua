@@ -49,7 +49,11 @@ class DotChart {
 	/** 
 	 * Two-dimensional chart of cells. Some cells might be null.
 	 */
-	DotBin[][] dotbins;
+	private DotBin[][] dotbins;
+	
+	public DotBin getDotCell(int i, int j){
+		return dotbins[i][j];
+	}
 	
 	
 //===============================================================
@@ -191,8 +195,8 @@ class DotChart {
 			
 			if (null != dotbins[i][j-1]) {
 				//dotitem in dot_bins[i][k]: looking for an item in the right to the dot
-				for (DotItem dt : dotbins[i][j-1].l_dot_items) {
-					if (null == dt.tnode) {
+				for (DotNode dt : dotbins[i][j-1].dotNodes) {
+					if (null == dt.trieNode) {
 						// We'll get one anyways in the else branch
 						// TODO: better debugging.
 						throw new NullPointerException(
@@ -201,7 +205,7 @@ class DotChart {
 						
 					} else {
 						// match the terminal
-						Trie child_tnode = dt.tnode.matchOne(last_word);
+						Trie child_tnode = dt.trieNode.matchOne(last_word);
 						if (null != child_tnode) {
 							// we do not have an ant for the terminal
 							addDotItem(child_tnode, i, j - 1 + arc_len, dt.antSuperNodes, null, dt.srcPath.extend(arc));
@@ -247,24 +251,24 @@ class DotChart {
 		int i, int k, int j,
 		boolean startDotItems)
 	{
-		if (this.dotbins[i][k] == null || this.pChart.cells[k][j] == null) {
+		if (this.dotbins[i][k] == null || this.pChart.getCell(k, j) == null) {
 			return;
 		}
 		
 		// complete super-items
 		List<SuperNode> t_ArrayList = new ArrayList<SuperNode>(this.
-				pChart.cells[k][j].getSortedSuperItems().values());
+				pChart.getCell(k, j).getSortedSuperItems().values());
 		
 		// dotitem in dot_bins[i][k]: looking for an item in the right to the dot
-		for (DotItem dt : dotbins[i][k].l_dot_items) {
+		for (DotNode dt : dotbins[i][k].dotNodes) {
 			// see if it matches what the dotitem is looking for
 			for (SuperNode s_t : t_ArrayList) {
-				Trie child_tnode = dt.tnode.matchOne(s_t.lhs);
+				Trie child_tnode = dt.trieNode.matchOne(s_t.lhs);
 				if (null != child_tnode) {
 					if (true == startDotItems && !child_tnode.hasExtensions()) {
 						continue; //TODO
 					}
-					addDotItem(child_tnode, i, j, dt.antSuperNodes, s_t, dt.srcPath.extendNonTerminal());
+					addDotItem(child_tnode, i, j, dt.getAntSuperNodes(), s_t, dt.getSourcePath().extendNonTerminal());
 				}
 			}
 		}
@@ -279,25 +283,25 @@ class DotChart {
 	 * @param i
 	 * @param j
 	 * @param ant_s_items_in
-	 * @param cur_s_item
+	 * @param curSuperNode
 	 */
 	private void addDotItem(Trie tnode, int i, int j,
-			ArrayList<SuperNode> ant_s_items_in, SuperNode cur_s_item,
+			List<SuperNode> antSuperNodesIn, SuperNode curSuperNode,
 			SourcePath srcPath)
 	{
-		ArrayList<SuperNode> ant_s_items = new ArrayList<SuperNode>();
-		if (ant_s_items_in != null) {
-			ant_s_items.addAll(ant_s_items_in);
+		List<SuperNode> antSuperNodes = new ArrayList<SuperNode>();
+		if (antSuperNodesIn != null) {
+			antSuperNodes.addAll(antSuperNodesIn);
 		}
-		if (cur_s_item != null) {
-			ant_s_items.add(cur_s_item);
+		if (curSuperNode != null) {
+			antSuperNodes.add(curSuperNode);
 		}
 		
-		DotItem item = new DotItem(i, j, tnode, ant_s_items, srcPath);
+		DotNode item = new DotNode(i, j, tnode, antSuperNodes, srcPath);
 		if (dotbins[i][j] == null) {
 			dotbins[i][j] = new DotBin();
 		}
-		dotbins[i][j].add_dot_item(item);
+		dotbins[i][j].addDotNode(item);
 		pChart.nDotitemAdded++;
 		
 		if (logger.isLoggable(Level.FINEST)) 
@@ -315,13 +319,19 @@ class DotChart {
 	static class DotBin {
 		
 		// Package-protected fields
-		ArrayList<DotItem> l_dot_items = new ArrayList<DotItem>();
+		private List<DotNode> dotNodes = new ArrayList<DotNode>();
 		
-		private void add_dot_item(DotItem dt) {
+		public  List<DotNode> getDotNodes(){
+			return dotNodes;
+		}
+		
+		private void addDotNode(DotNode dt) {
 			/*if(l_dot_items==null)
 				l_dot_items= new ArrayList<DotItem>();*/
-			l_dot_items.add(dt);
+			dotNodes.add(dt);
 		}
+		
+		
 	}
 	
 	
@@ -329,24 +339,36 @@ class DotChart {
 	 * remember the dot position in which a rule has been applied
 	 * so far, and remember the old complete items.
 	 */
-	static class DotItem {
+	static class DotNode {
 		
 		//=======================================================
 		// Package-protected instance fields
 		//=======================================================
 		
 		//int i, j; //start and end position in the chart
-		Trie tnode = null; // dot_position, point to grammar trie node, this is the only place that the DotChart points to the grammar
-		ArrayList<SuperNode> antSuperNodes = null; //pointer to SuperItem in Chart
-		SourcePath srcPath;
+		private Trie trieNode = null; // dot_position, point to grammar trie node, this is the only place that the DotChart points to the grammar
+		private List<SuperNode> antSuperNodes = null; //pointer to SuperNode in Chart
+		private SourcePath srcPath;
 		
 		
-		public DotItem(int i_in, int j_in, Trie tnode_in, ArrayList<SuperNode> ant_super_items_in, SourcePath srcPath) {
+		public DotNode(int i, int j, Trie trieNode,  List<SuperNode> antSuperNodes, SourcePath srcPath) {
 			//i = i_in;
 			//j = j_in;
-			this.tnode = tnode_in;
-			this.antSuperNodes = ant_super_items_in;
+			this.trieNode = trieNode;
+			this.antSuperNodes = antSuperNodes;
 			this.srcPath = srcPath;
+		}
+		
+		public Trie getTrieNode(){
+			return trieNode;			
+		}
+		
+		public SourcePath getSourcePath(){
+			return srcPath;			
+		}
+		
+		public List<SuperNode> getAntSuperNodes(){
+			return antSuperNodes;			
 		}
 	}
 

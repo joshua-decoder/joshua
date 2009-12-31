@@ -24,7 +24,7 @@ import java.util.logging.Logger;
 
 import joshua.corpus.vocab.SymbolTable;
 import joshua.decoder.JoshuaConfiguration;
-import joshua.decoder.chart_parser.DotChart.DotItem;
+import joshua.decoder.chart_parser.DotChart.DotNode;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.StateComputer;
 import joshua.decoder.ff.tm.Grammar;
@@ -44,13 +44,14 @@ import joshua.lattice.Node;
  * (1) seeding the chart 
  * (2) cky main loop over bins, 
  * (3) identify applicable rules in each bin
- * Note: the combination operation will be done in Bin
+ * 
+ * Note: the combination operation will be done in Cell
  * 
  * Signatures of class:
- * Bin: i, j
- * SuperItem (used for CKY check): i,j, lhs
- * Item ("or" node): i,j, lhs, edge ngrams
- * Deduction ("and" node)
+ * Cell: i, j
+ * SuperNode (used for CKY check): i,j, lhs
+ * HGNode ("or" node): i,j, lhs, edge ngrams
+ * HyperEdge ("and" node)
  * 
  * index of sentences: start from zero
  * index of cell: cell (i,j) represent span of words indexed [i,j-1]
@@ -59,25 +60,10 @@ import joshua.lattice.Node;
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate$
  */
+
 public class Chart {
-	
-//===============================================================
-// Package-protected instance fields
-//===============================================================
-	
-	Cell[][] cells; // note that in some cell, it might be null
-	
-	/** This is the length of the foreign side input sentence. */
-	int sentenceLength;
-	
-	
-	//===========================================================
-	// Decoder-wide fields
-	//===========================================================
-	List<FeatureFunction> featureFunctions;
-	
-	List<StateComputer> stateComputers;
-	
+		
+
 	//===========================================================
 	// Satistics
 	//===========================================================
@@ -98,17 +84,13 @@ public class Chart {
 	int nCalledComputeNode = 0;
 	
 	
-	//===========================================================
-	// Time-profiling variables for debugging
-	//===========================================================
-	long timeComputeNode  = 0;
-	long timeAddHyperedge = 0;
-	
-	
 //===============================================================
 // Private instance fields (maybe could be protected instead)
 //===============================================================
-	
+	private Cell[][] cells; // note that in some cell, it might be null
+	private int foreignSentenceLength;
+	private List<FeatureFunction> featureFunctions;	
+	private List<StateComputer> stateComputers;	
 	private  Grammar[]       grammars;
 	private  DotChart[]      dotcharts; // each grammar should have a dotchart associated with it
 	private Cell              goalBin;
@@ -117,8 +99,8 @@ public class Chart {
 	private int              segmentID;
 	
 		
-	Combiner combiner = null;
-	ManualConstraintsHandler manualConstraintsHandler;
+	private Combiner combiner = null;
+	private ManualConstraintsHandler manualConstraintsHandler;
 	
 	//===========================================================
 	// Decoder-wide fields
@@ -165,7 +147,13 @@ public class Chart {
 // Constructors
 //===============================================================
 	
-	// TODO: Once the Segment interface is adjusted to provide a Latice<String> for the sentence() method, we should just accept a Segment instead of the sentence, segmentID, and constraintSpans parameters. We have the symbol table already, so we can do the integerization here instead of in DecoderThread. GrammarFactory.getGrammarForSentence will want the integerized sentence as well, but then we'll need to adjust that interface to deal with (non-trivial) lattices too. Of course, we get passed the grammars too so we could move all of that into here.
+	/**TODO: Once the Segment interface is adjusted to provide a Latice<String> for the sentence() method, 
+	 * we should just accept a Segment instead of the sentence, segmentID, and constraintSpans parameters.
+	 * We have the symbol table already, so we can do the integerization here instead of in DecoderThread. 
+	 * GrammarFactory.getGrammarForSentence will want the integerized sentence as well, 
+	 * but then we'll need to adjust that interface to deal with (non-trivial) lattices too. Of course, 
+	 * we get passed the grammars too so we could move all of that into here.
+	 */
 	
 	public Chart(
 		Lattice<Integer>           sentence,
@@ -180,13 +168,13 @@ public class Chart {
 		)
 	{
 		this.sentence         = sentence;
-		this.sentenceLength   = sentence.size() - 1;
+		this.foreignSentenceLength   = sentence.size() - 1;
 		this.featureFunctions = featureFunctions;
 		this.stateComputers = stateComputers;
 		this.symbolTable      = symbolTable;
 		
 		// TODO: this is very memory-expensive
-		this.cells         = new Cell[sentenceLength][sentenceLength+1];
+		this.cells         = new Cell[foreignSentenceLength][foreignSentenceLength+1];
 		
 		this.segmentID    = segmentID;
 		this.goalSymbolID = this.symbolTable.addNonterminal(goalSymbol);
@@ -200,9 +188,9 @@ public class Chart {
 		
 		
 		if(JoshuaConfiguration.useCubePrune)//TODO: should not directly refer to JoshuaConfiguration
-			combiner = new CubePruneCombiner();
+			combiner = new CubePruneCombiner(this.featureFunctions, this.stateComputers);
 		else
-			combiner = new ExhaustiveCombiner();
+			combiner = new ExhaustiveCombiner(this.featureFunctions, this.stateComputers);
 
 		//============== begin to do initialization work
 
@@ -250,28 +238,24 @@ public class Chart {
 	/**
 	 * Construct the hypergraph with the help from DotChart.
 	 */
-	/* a parser that can handle:
+	
+	/** a parser that can handle:
 	 * - multiple grammars
 	 * - on the fly binarization
 	 * - unary rules (without cycle)
 	 * */
+	
 	public HyperGraph expand() {
-//		long start = System.currentTimeMillis();
-//		long time_step1 = 0;
-//		long time_step2 = 0;
-//		long time_step3 = 0;
-//		long time_step4 = 0;
+		
 		logger.info("Begin expand");
-		for (int width = 1; width <= sentenceLength; width++) {
-			for (int i = 0; i <= sentenceLength - width; i++) {
+		for (int width = 1; width <= foreignSentenceLength; width++) {
+			for (int i = 0; i <= foreignSentenceLength - width; i++) {
 				int j = i + width;
 				if (logger.isLoggable(Level.FINEST)) 
 					logger.finest(String.format("Processing span (%d, %d)",i,j));
 				
 				
-				
 				//(1)=== expand the cell in dotchart
-				//long start_step1= Support.current_time();
 				if (logger.isLoggable(Level.FINEST))
 					logger.finest("Expanding cell");
 				for (int k = 0; k < this.grammars.length; k++) {
@@ -281,45 +265,31 @@ public class Chart {
 					 **/
 					this.dotcharts[k].expandDotCell(i,j);
 				}
-				if (logger.isLoggable(Level.FINEST)) 
-					logger.finest(String.format("n_dotitem= %d", nDotitemAdded));
-				//time_step1 += Support.current_time()-start_step1;
-				
-				
+			
 				
 				//(2)=== populate COMPLETE rules into Chart: the regular CKY part
-				//long start_step2= Support.current_time();
 				if (logger.isLoggable(Level.FINEST))
 					logger.finest("Adding complete items into chart");
 				for (int k = 0; k < this.grammars.length; k++) {
 					
-					if (this.grammars[k].hasRuleForSpan(i, j, sentenceLength)
-						&& null != this.dotcharts[k].dotbins[i][j]) {
+					if (this.grammars[k].hasRuleForSpan(i, j, foreignSentenceLength)
+						&& null != this.dotcharts[k].getDotCell(i, j)) {
 						
-						for (DotItem dt: this.dotcharts[k].dotbins[i][j].l_dot_items) {
-							SourcePath srcPath = dt.srcPath;
-							RuleCollection rules = dt.tnode.getRules();
-							
-							if (logger.isLoggable(Level.FINEST))
-								logger.finest("Checking DotItem for matched rules. " + srcPath);
-							
-							if (null != rules) { // have rules under this trienode
+						for (DotNode dt: this.dotcharts[k].getDotCell(i, j).getDotNodes()) {
+							RuleCollection rules = dt.getTrieNode().getRules();
+							if (rules != null) { // have rules under this trienode
 								// TODO: filter the rule according to LHS constraint
 								if (rules.getArity() == 0) { // rules without any non-terminal
-									addAxioms(i, j, rules, srcPath);
+									addAxioms(i, j, rules, dt.getSourcePath());
 								} else { // rules with non-terminal
-									completeCell(i, j, dt, rules, srcPath);									
+									completeCell(i, j, dt, rules, dt.getSourcePath());									
 								}
 							}
 						}
 					}
-				}
-				//time_step2 += Support.current_time()-start_step2;
-				
-				
+				}				
 				
 				//(3)=== process unary rules (e.g., S->X, NP->NN), just add these items in chart, assume acyclic
-				//long start_step3= Support.current_time();
 				if (logger.isLoggable(Level.FINEST))
 					logger.finest("Adding unary items into chart");
 				
@@ -329,69 +299,50 @@ public class Chart {
 				 */
 				if(false){//behavior depend on the order of the grammars got processed, which is bad 
 					for (int k = 0; k < this.grammars.length; k++) {
-						if (this.grammars[k].hasRuleForSpan(i, j, sentenceLength)) {
+						if (this.grammars[k].hasRuleForSpan(i, j, foreignSentenceLength)) {
 							addUnaryNodesPerGrammar(this.grammars[k],i,j);//single-branch path
 						}
 					}
 				}else{//behavior does not depend on the order of the grammars got processed
 					addUnaryNodes(this.grammars,i,j);
 				}				
-				//time_step3 += Support.current_time()-start_step3;
 				
 				
-				
-				//(4)=== in dot_cell(i,j), add dot-items that start from the /complete/ superIterms in chart_cell(i,j)
-				//long start_step4= Support.current_time();
+				//(4)=== in dot_cell(i,j), add dot-nodes that start from the /complete/ superIterms in chart_cell(i,j)
 				if (logger.isLoggable(Level.FINEST))
 					logger.finest("Initializing new dot-items that start from complete items in this cell");
 				for (int k = 0; k < this.grammars.length; k++) {
-					if (this.grammars[k].hasRuleForSpan(i, j, sentenceLength)) {
+					if (this.grammars[k].hasRuleForSpan(i, j, foreignSentenceLength)) {
 						this.dotcharts[k].startDotItems(i,j);
 					}
-				}
-				//time_step4 += Support.current_time()-start_step4;
+				}				
 				
-				
-				//(5)=== sort the items in the cell: for pruning purpose
-				if (logger.isLoggable(Level.FINEST)) 
-					logger.finest(String.format("After Process span (%d, %d), called:= %d", i, j, nCalledComputeNode));
-				
+				//(5)=== sort the items in the cell: for pruning purpose		
 				if (null != this.cells[i][j]) {
-					// this.bins[i][j].logStatistics(Level.INFO);					
-					// this is required
 					this.cells[i][j].getSortedNodes();
 				}
 			}
 		}
+		
 		logStatistics(Level.INFO);
 
 		// transition_final: setup a goal item, which may have many deductions
-		if (null != this.cells[0][sentenceLength]) {
-			this.goalBin.transitToGoal(this.cells[0][sentenceLength]); // update goalBin				
+		if (null != this.cells[0][foreignSentenceLength]) {
+			this.goalBin.transitToGoal(this.cells[0][foreignSentenceLength], this.featureFunctions, this.foreignSentenceLength);				
 		} else {
 			throw new RuntimeException(
-				"No complete item in the cell(0," + sentenceLength + "); possible reasons: " +
+				"No complete item in the cell(0," + foreignSentenceLength + "); possible reasons: " +
 				"(1) your grammar does not have any valid derivation for the source sentence; " +
 				"(2) too aggressive pruning");
 		}
 		
-		// For debugging
-		//long sec_consumed = (System.currentTimeMillis() -start)/1000;
-		//logger.info("######Expand time consumption: "+ sec_consumed);
-		//logger.info(String.format("Step1: %d; step2: %d; step3: %d; step4: %d", time_step1, time_step2, time_step3, time_step4));
-		
-		/*logger.info(String.format("t_compute_item: %d; t_add_deduction: %d;", g_time_compute_item / 1000, g_time_add_deduction / 1000));
-		for (FeatureFunction m: this.models) {
-			logger.info("FeatureFunction cost: " + m.time_consumed/1000);
-		}*/
-
-		//logger.info(String.format("t_lm: %d; t_score_lm: %d; t_check_nonterminal: %d", g_time_lm, g_time_score_sent, g_time_check_nonterminal));
-		//LMModel tm_lm = (LMModel)this.models.get(0);
-		//logger.info(String.format("LM lookupwords1, step1: %d; step2: %d; step3: %d", tm_lm.time_step1, tm_lm.time_step2, tm_lm.time_step3));
-		//debug end
-		
 		logger.info("Finished expand");
-		return new HyperGraph(this.goalBin.getSortedNodes().get(0), -1, -1, this.segmentID, sentenceLength); // num_items/deductions : -1
+		return new HyperGraph(this.goalBin.getSortedNodes().get(0), -1, -1, this.segmentID, foreignSentenceLength);
+	}
+	
+	
+	public Cell getCell(int i, int j){
+		return this.cells[i][j];
 	}
 	
 	
@@ -433,13 +384,12 @@ public class Chart {
 		while (queue.size() > 0) {
 			HGNode item = queue.remove(0);
 			for(Grammar gr : grs){
-				if (! gr.hasRuleForSpan(i, j, sentenceLength))
+				if (! gr.hasRuleForSpan(i, j, foreignSentenceLength))
 					continue;
 				Trie childNode = gr.getTrieRoot().matchOne(item.lhs); // match rule and complete part
 				if (childNode != null
 				&& childNode.getRules() != null
 				&& childNode.getRules().getArity() == 1) { // have unary rules under this trienode
-					//System.out.println("hello");
 					ArrayList<HGNode> antecedents = new ArrayList<HGNode>();
 					antecedents.add(item);
 					List<Rule> rules = childNode.getRules().getSortedRules();
@@ -450,9 +400,6 @@ public class Chart {
 						if (null != res_item) {
 							queue.add(res_item);
 							qtyAdditionsToQueue++;
-							//System.out.println("Unary Item's lhs " + res_item.lhs + "; string=" + this.symbolTable.getWord(res_item.lhs));
-						}else{
-							//System.out.println("!!!!!!!!!!!!!!!!!!!!!!! pruned unary rule " +i +", " + j + rule.toString(this.symbolTable));
 						}
 					}
 				}
@@ -529,7 +476,7 @@ public class Chart {
 	}
 	
 	
-	private void completeCell(int i, int j, DotItem dt, RuleCollection rb, SourcePath srcPath) {
+	private void completeCell(int i, int j, DotNode dt, RuleCollection rb, SourcePath srcPath) {
 		if (manualConstraintsHandler.containHardRuleConstraint(i, j)) {
 			System.out.println("having hard rule constraint in span " +i +", " + j);
 			return; //do not add any axioms
@@ -540,7 +487,7 @@ public class Chart {
 		}
 		// combinations: rules, antecent items
 		//this.cells[i][j].completeCell(i, j, dt.l_ant_super_items, filterRules(i,j,rb.getSortedRules()), rb.getArity(), srcPath);
-		combiner.combine(this, this.cells[i][j], i, j,  dt.antSuperNodes, manualConstraintsHandler.filterRules(i,j, rb.getSortedRules()), rb.getArity(), srcPath);
+		combiner.combine(this, this.cells[i][j], i, j,  dt.getAntSuperNodes(), manualConstraintsHandler.filterRules(i,j, rb.getSortedRules()), rb.getArity(), srcPath);
 	}	
 	
 }

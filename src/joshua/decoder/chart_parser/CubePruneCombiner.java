@@ -6,11 +6,21 @@ import java.util.List;
 import java.util.PriorityQueue;
 
 import joshua.decoder.JoshuaConfiguration;
+import joshua.decoder.ff.FeatureFunction;
+import joshua.decoder.ff.StateComputer;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.hypergraph.HGNode;
 
 public class CubePruneCombiner implements Combiner{
-
+	
+	private List<FeatureFunction> featureFunctions;
+	private List<StateComputer> stateComputers;
+	
+	public CubePruneCombiner(List<FeatureFunction> featureFunctions, List<StateComputer> stateComputers){
+		this.featureFunctions = featureFunctions;
+		this.stateComputers = stateComputers;
+	}
+	
 	
 	/** Add complete Items in Chart pruning inside this function */
 	// TODO: our implementation do the prunining for each DotItem
@@ -38,8 +48,7 @@ public class CubePruneCombiner implements Combiner{
 			// TODO: si.nodes must be sorted
 			currentAntNodes.add(si.nodes.get(0));
 		}
-		ComputeNodeResult result =	new ComputeNodeResult(chart.featureFunctions, currentRule, currentAntNodes, i, j, srcPath,
-														  chart.stateComputers);
+		ComputeNodeResult result =	new ComputeNodeResult(featureFunctions, currentRule, currentAntNodes, i, j, srcPath, stateComputers);
 		
 		int[] ranks = new int[1+superNodes.size()]; // rule, ant items
 		for (int d = 0; d < ranks.length; d++) {
@@ -101,8 +110,8 @@ public class CubePruneCombiner implements Combiner{
 				}
 				
 				CubePruneState tState = new CubePruneState(
-						new ComputeNodeResult(chart.featureFunctions, currentRule, 
-								currentAntNodes, i, j, srcPath, chart.stateComputers),
+						new ComputeNodeResult(featureFunctions, currentRule, 
+								currentAntNodes, i, j, srcPath, stateComputers),
 					newRanks, currentRule, currentAntNodes);
 				
 				// add state into heap

@@ -3,10 +3,23 @@ package joshua.decoder.chart_parser;
 import java.util.ArrayList;
 import java.util.List;
 
+import joshua.decoder.ff.FeatureFunction;
+import joshua.decoder.ff.StateComputer;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.hypergraph.HGNode;
 
 public class ExhaustiveCombiner implements Combiner{
+	
+	private List<FeatureFunction> featureFunctions;
+	private List<StateComputer> stateComputers;
+	
+	public ExhaustiveCombiner(List<FeatureFunction> featureFunctions, List<StateComputer> stateComputers){
+		this.featureFunctions = featureFunctions;
+		this.stateComputers = stateComputers;
+	}
+	
+	
+	
 	/**
 	 * Add complete Items in Chart, 
 	 * pruning inside this function.
@@ -31,7 +44,7 @@ public class ExhaustiveCombiner implements Combiner{
 					List<HGNode> antNodes = new ArrayList<HGNode>();
 					antNodes.add(antNode);
 					cell.addHyperEdgeInCell(
-							new ComputeNodeResult(chart.featureFunctions, rule, antNodes, i, j, srcPath, chart.stateComputers),
+							new ComputeNodeResult(featureFunctions, rule, antNodes, i, j, srcPath, stateComputers),
 							rule, i, j, antNodes, srcPath);
 				}
 				
@@ -44,7 +57,7 @@ public class ExhaustiveCombiner implements Combiner{
 						antecedents.add(antNode1);
 						antecedents.add(antNode2);
 						cell.addHyperEdgeInCell(
-								new ComputeNodeResult(chart.featureFunctions, rule, antecedents, i, j, srcPath, chart.stateComputers),
+								new ComputeNodeResult(featureFunctions, rule, antecedents, i, j, srcPath, stateComputers),
 								rule, i, j, antecedents, srcPath);
 					}
 				}

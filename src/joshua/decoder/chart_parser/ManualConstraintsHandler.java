@@ -13,11 +13,14 @@ import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.segment_file.ConstraintRule;
 import joshua.decoder.segment_file.ConstraintSpan;
 
+
+/**
+ * @author Zhifei Li, <zhifei.work@gmail.com>
+ * @version $LastChangedDate: 2009-12-31 11:37:41 -0500 (星期四, 31 十二月 2009) $
+ */
+
 public class ManualConstraintsHandler {
-//	===========================================================
-	// Manual constraint annotations
-	//===========================================================
-	
+
 	// TODO: each span only has one ConstraintSpan
 	// contain spans that have LHS or RHS constraints (they are always hard)
 	private HashMap<String,ConstraintSpan> constraintSpansForFiltering;
@@ -64,7 +67,9 @@ public class ManualConstraintsHandler {
 						switch (cRule.type()){
 						case RULE:
 							//== prepare the feature scores 
-							float[] featureScores = new float[cRule.features().length];//TODO: this require the input always specify the right number of features
+							//TODO: this require the input always specify the right number of features
+							float[] featureScores = new float[cRule.features().length];
+							
 							for (int i = 0; i < featureScores.length; i++) {
 								if (cSpan.isHard()) {
 									featureScores[i] = 0;	// force the feature cost as zero
@@ -89,6 +94,7 @@ public class ManualConstraintsHandler {
 									symbolTable.addTerminals(cRule.nativeRhs()),
 									featureScores, 
 									arity);
+							
 							//add to the chart
 							chart.addAxiom(cSpan.start(), cSpan.end(), rule, new SourcePath());
 							if (logger.isLoggable(Level.INFO))
@@ -146,7 +152,8 @@ public class ManualConstraintsHandler {
 		}
 	}
 	
-	//should we filter out the gRule based on the manually provided constraint cRule
+	/**should we filter out the gRule 
+	 * based on the manually provided constraint cRule*/
 	public boolean shouldSurvive(ConstraintRule cRule, Rule gRule) {
 		
 		switch (cRule.type()) {
@@ -183,9 +190,12 @@ public class ManualConstraintsHandler {
 		}
 		return false;
 	}
-		
 	
 	
+	
+	private String getSpanSignature(int i, int j) {
+		return i + " " + j;
+	}	
 	
 	private static class Span {
 		int startPos;
@@ -196,7 +206,5 @@ public class ManualConstraintsHandler {
 		}
 	}
 	
-	private String getSpanSignature(int i, int j) {
-		return i + " " + j;
-	}
+
 }

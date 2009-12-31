@@ -87,7 +87,7 @@ class Cell {
 		new PriorityQueue<HGNode>(1, HGNode.negtiveCostComparator);
 	
 	// to maintain uniqueness of items
-	private HashMap<String,HGNode> itemsTbl =
+	private HashMap<String,HGNode> nodesTbl =
 		new HashMap<String,HGNode>();
 	
 	// signature by lhs
@@ -97,6 +97,7 @@ class Cell {
 	// sort values in tbl_item_signature, we need this list
 	// whenever necessary
 	private ArrayList<HGNode> sortedNodes = null;
+	
 	
 	
 //===============================================================
@@ -129,7 +130,8 @@ class Cell {
 	 * the goal bin has only one Item, which itself has many
 	 * hyperedges only "goal bin" should call this function
 	 */
-	void transitToGoal(Cell bin) { // the bin[0][n], this is not goal bin
+	//note that thei nput bin is  bin[0][n], not the goal bin
+	void transitToGoal(Cell bin, List<FeatureFunction> featureFunctions, int sentenceLength) { 
 		this.sortedNodes = new ArrayList<HGNode>();
 		HGNode goalItem = null;
 		
@@ -140,10 +142,10 @@ class Cell {
 				List<HGNode> antNodes = new ArrayList<HGNode>();
 				antNodes.add(antNode);
 				double[] modelCosts = ComputeNodeResult.computeModelTransitionCost(
-						this.chart.featureFunctions, null, antNodes, 0, this.chart.sentenceLength, null);
+						featureFunctions, null, antNodes, 0, sentenceLength, null);
 								
 				int count=0;
-				for (FeatureFunction ff : this.chart.featureFunctions) {
+				for (FeatureFunction ff : featureFunctions) {
 					finalTransitionCost += ff.getWeight() * modelCosts[count];
 					count++;
 				}
@@ -160,7 +162,7 @@ class Cell {
 				}
 				
 				if (null == goalItem) {
-					goalItem = new HGNode(0, this.chart.sentenceLength + 1, this.goalSymID, null, dt, cost + finalTransitionCost);
+					goalItem = new HGNode(0, sentenceLength + 1, this.goalSymID, null, dt, cost + finalTransitionCost);
 					this.sortedNodes.add(goalItem);
 				} else {
 					goalItem.addHyperedgeInItem(dt);
@@ -226,22 +228,22 @@ class Cell {
 			 * need to check whether the item is already exist, 
 			 * if yes, just add the hyperedges, this will change the best cost of the item 
 			 * */
-			HGNode oldItem = this.itemsTbl.get( res.getSignature() );
-			if (null != oldItem) { // have an item with same states, combine items
+			HGNode oldNode = this.nodesTbl.get( res.getSignature() );
+			if (null != oldNode) { // have an item with same states, combine items
 				this.chart.nMerged++;
 				
 				/** the position of oldItem in this.heapItems
 				 *  may change, basically, we should remove the
 				 *  oldItem, and re-insert it (linear time), this is too expense)
 				 **/
-				if (res.estTotalCost < oldItem.estTotalCost) {//merget old to new					
-					oldItem.isDead = true; // this.heapItems.remove(oldItem);
+				if (res.estTotalCost < oldNode.estTotalCost) {//merget old to new					
+					oldNode.isDead = true; // this.heapItems.remove(oldItem);
 					this.qtyDeadItems++;
-					res.addHyperedgesInItem(oldItem.hyperedges);
+					res.addHyperedgesInItem(oldNode.hyperedges);
 					addNewNode(res); //this will update the HashMap, so that the oldItem is destroyed
 					
 				} else {//merge new to old, does not trigger pruningItems
-					oldItem.addHyperedgesInItem(res.hyperedges);
+					oldNode.addHyperedgesInItem(res.hyperedges);
 				}
 				
 			} else { // first time item
@@ -280,7 +282,7 @@ class Cell {
 	 * (2) a new hyperedge's signature matches an old node's signature, but the best-cost of old node is worse than the hyperedge's cost
 	 * */
 	private void addNewNode(HGNode node) {
-		this.itemsTbl.put(node.getSignature(), node); // add/replace the item
+		this.nodesTbl.put(node.getSignature(), node); // add/replace the item
 		this.sortedNodes = null; // reset the list
 		if(JoshuaConfiguration.useBeamAndThresholdPrune)
 			this.nodesHeap.add(node);
@@ -339,7 +341,7 @@ class Cell {
 			if (worstItem.isDead) { // clear the corrupted item
 				this.qtyDeadItems--;
 			} else {
-				this.itemsTbl.remove(worstItem.getSignature()); // always make this.tableItems current
+				this.nodesTbl.remove(worstItem.getSignature()); // always make this.tableItems current
 				this.chart.nPrunedItems++;
 			}
 		}
@@ -362,7 +364,7 @@ class Cell {
 		
 		if (null == this.sortedNodes) {
 			//get a sorted items ArrayList
-			Object[] t_col = this.itemsTbl.values().toArray();
+			Object[] t_col = this.nodesTbl.values().toArray();
 			
 			Arrays.sort(t_col);
 			
