@@ -21,6 +21,7 @@ public class CubePruneCombiner implements Combiner{
 		this.stateComputers = stateComputers;
 	}
 	
+	//BUG:???????????????????? CubePrune will depend on relativeThresholdPruning, but  cell.beamPruner can be null ????????????????
 	
 	/** Add complete Items in Chart pruning inside this function */
 	// TODO: our implementation do the prunining for each DotItem
@@ -57,7 +58,7 @@ public class CubePruneCombiner implements Combiner{
 		
 		CubePruneState bestState =	new CubePruneState(result, ranks, currentRule, currentAntNodes);
 		combinationHeap.add(bestState);
-		cubeStateTbl.put(bestState.get_signature(),1);
+		cubeStateTbl.put(bestState.getSignature(),1);
 		// cube_state_tbl.put(best_state,1);
 		
 		// extend the heap
@@ -75,7 +76,7 @@ public class CubePruneCombiner implements Combiner{
 			cell.addHyperEdgeInCell(curState.nodeStatesTbl, curState.rule, i, j,curState.antNodes, srcPath); // pre-pruning inside this function
 			
 			//if the best state is pruned, then all the remaining states should be pruned away
-			if (curState.nodeStatesTbl.getExpectedTotalCost() > cell.getCutCost() + JoshuaConfiguration.fuzz1) {
+			if (curState.nodeStatesTbl.getExpectedTotalCost() > cell.beamPruner.getCutCost() + JoshuaConfiguration.fuzz1) {
 				//n_prepruned += heap_cands.size();
 				chart.nPreprunedFuzz1 += combinationHeap.size();
 				break;
@@ -91,7 +92,7 @@ public class CubePruneCombiner implements Combiner{
 				}
 				newRanks[k] = curState.ranks[k] + 1;
 				
-				String new_sig = CubePruneState.get_signature(newRanks);
+				String new_sig = CubePruneState.getSignature(newRanks);
 				
 				if (cubeStateTbl.containsKey(new_sig) // explored before
 				|| (k == 0 && newRanks[k] > rules.size())
@@ -116,7 +117,7 @@ public class CubePruneCombiner implements Combiner{
 				
 				// add state into heap
 				cubeStateTbl.put(new_sig,1);				
-				if (result.getExpectedTotalCost() < cell.getCutCost() + JoshuaConfiguration.fuzz2) {
+				if (result.getExpectedTotalCost() < cell.beamPruner.getCutCost() + JoshuaConfiguration.fuzz2) {
 					combinationHeap.add(tState);
 				} else {
 					//n_prepruned += 1;
@@ -144,7 +145,7 @@ public class CubePruneCombiner implements Combiner{
 			int[]             ranks;
 			ComputeNodeResult nodeStatesTbl;
 			Rule              rule;
-			ArrayList<HGNode> antNodes;
+			List<HGNode> antNodes;
 			
 			public CubePruneState(ComputeNodeResult state, int[] ranks, Rule rule, 
 					ArrayList<HGNode> antecedents)
@@ -158,7 +159,7 @@ public class CubePruneCombiner implements Combiner{
 			}
 			
 			
-			private static String get_signature(int[] ranks2) {
+			private static String getSignature(int[] ranks2) {
 				StringBuffer sb = new StringBuffer();
 				if (null != ranks2) {
 					for (int i = 0; i < ranks2.length; i++) {
@@ -169,8 +170,8 @@ public class CubePruneCombiner implements Combiner{
 			}
 			
 			
-			private String get_signature() {
-				return get_signature(ranks);
+			private String getSignature() {
+				return getSignature(ranks);
 			}
 			
 			

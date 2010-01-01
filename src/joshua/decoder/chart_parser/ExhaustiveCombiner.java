@@ -53,12 +53,12 @@ public class ExhaustiveCombiner implements Combiner{
 				SuperNode superAnt2 = superItems.get(1);
 				for (HGNode antNode1: superAnt1.nodes) {
 					for (HGNode antNode2: superAnt2.nodes) {
-						ArrayList<HGNode> antecedents = new ArrayList<HGNode>();
-						antecedents.add(antNode1);
-						antecedents.add(antNode2);
+						ArrayList<HGNode> antNodes = new ArrayList<HGNode>();
+						antNodes.add(antNode1);
+						antNodes.add(antNode2);
 						cell.addHyperEdgeInCell(
-								new ComputeNodeResult(featureFunctions, rule, antecedents, i, j, srcPath, stateComputers),
-								rule, i, j, antecedents, srcPath);
+								new ComputeNodeResult(featureFunctions, rule, antNodes, i, j, srcPath, stateComputers),
+								rule, i, j, antNodes, srcPath);
 					}
 				}
 			} else {

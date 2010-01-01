@@ -275,14 +275,14 @@ public class Chart {
 					if (this.grammars[k].hasRuleForSpan(i, j, foreignSentenceLength)
 						&& null != this.dotcharts[k].getDotCell(i, j)) {
 						
-						for (DotNode dt: this.dotcharts[k].getDotCell(i, j).getDotNodes()) {
-							RuleCollection rules = dt.getTrieNode().getRules();
+						for (DotNode dotNode: this.dotcharts[k].getDotCell(i, j).getDotNodes()) {
+							RuleCollection rules = dotNode.getTrieNode().getRules();
 							if (rules != null) { // have rules under this trienode
 								// TODO: filter the rule according to LHS constraint
 								if (rules.getArity() == 0) { // rules without any non-terminal
-									addAxioms(i, j, rules, dt.getSourcePath());
+									addAxioms(i, j, rules, dotNode.getSourcePath());
 								} else { // rules with non-terminal
-									completeCell(i, j, dt, rules, dt.getSourcePath());									
+									completeCell(i, j, dotNode, rules, dotNode.getSourcePath());									
 								}
 							}
 						}
@@ -317,7 +317,10 @@ public class Chart {
 					}
 				}				
 				
-				//(5)=== sort the items in the cell: for pruning purpose		
+				//(5)=== sort the nodes in the cell
+				/**Cube-pruning requires the nodes being sorted, when prunning for later/wider cell.
+				 * Cuebe-pruning will see superNode, which contains a list of nodes.
+				 * getSortedNodes() will make the nodes in the superNode get sorted*/
 				if (null != this.cells[i][j]) {
 					this.cells[i][j].getSortedNodes();
 				}
@@ -476,7 +479,7 @@ public class Chart {
 	}
 	
 	
-	private void completeCell(int i, int j, DotNode dt, RuleCollection rb, SourcePath srcPath) {
+	private void completeCell(int i, int j, DotNode dotNode, RuleCollection rb, SourcePath srcPath) {
 		if (manualConstraintsHandler.containHardRuleConstraint(i, j)) {
 			System.out.println("having hard rule constraint in span " +i +", " + j);
 			return; //do not add any axioms
@@ -487,7 +490,7 @@ public class Chart {
 		}
 		// combinations: rules, antecent items
 		//this.cells[i][j].completeCell(i, j, dt.l_ant_super_items, filterRules(i,j,rb.getSortedRules()), rb.getArity(), srcPath);
-		combiner.combine(this, this.cells[i][j], i, j,  dt.getAntSuperNodes(), manualConstraintsHandler.filterRules(i,j, rb.getSortedRules()), rb.getArity(), srcPath);
+		combiner.combine(this, this.cells[i][j], i, j,  dotNode.getAntSuperNodes(), manualConstraintsHandler.filterRules(i,j, rb.getSortedRules()), rb.getArity(), srcPath);
 	}	
 	
 }

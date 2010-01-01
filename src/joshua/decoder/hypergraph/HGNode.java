@@ -17,6 +17,7 @@
  */
 package joshua.decoder.hypergraph;
 
+import joshua.decoder.chart_parser.Prunable;
 import joshua.decoder.ff.DPState;
 
 
@@ -37,7 +38,7 @@ import java.util.logging.Level;
  */
 
 //@todo: handle the case that the Hypergraph only maintains the one-best tree 
-public class HGNode implements Comparable<HGNode> {
+public class HGNode implements Prunable<HGNode> {
 	
 	public int i, j;
 	
@@ -106,7 +107,7 @@ public class HGNode implements Comparable<HGNode> {
 	}
 	
 	
-	public void addHyperedgesInItem(List<HyperEdge> hyperedges) {
+	public void addHyperedgesInNode(List<HyperEdge> hyperedges) {
 		for(HyperEdge hyperEdge : hyperedges) 
 			addHyperedgeInItem(hyperEdge);
 	}
@@ -190,4 +191,25 @@ public class HGNode implements Comparable<HGNode> {
 				}
 			}
 	};
+
+ 
+
+	public boolean isDead() {
+		return this.isDead;
+	}
+
+
+	public double getPruneCost() {
+		return estTotalCost;
+	}
+
+
+	public void setDead() {
+		this.isDead = true;		
+	}
+
+
+	public void setPruneCost(double cost) {
+		this.estTotalCost = cost;
+	}
 }

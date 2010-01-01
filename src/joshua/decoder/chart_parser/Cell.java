@@ -18,7 +18,6 @@
 package joshua.decoder.chart_parser;
 
 import joshua.decoder.JoshuaConfiguration;
-import joshua.decoder.Support;
 import joshua.decoder.ff.DPState;
 import joshua.decoder.ff.FeatureFunction;
 
@@ -54,59 +53,30 @@ class Cell {
 	
 //===============================================================
 // Private instance fields
-//===============================================================
-	
-	/** The cost of the best item in the bin */
-	private double bestItemCost = IMPOSSIBLE_COST;
-	
-	/** cutoff = bestItemCost + relative_threshold */
-	private double cutoffCost = IMPOSSIBLE_COST;//TODO
-	
-	// num of corrupted items in this.heapItems, note that the
-	// item in this.tableItems is always good
-	private int qtyDeadItems = 0;
-	
+//===============================================================	
 	private Chart chart = null;
+	
+	public BeamPruner<HGNode> beamPruner;//TODO: CubePruneCombiner access this
 	
 	private int goalSymID;
 	
-	
-	/* we need always maintain the priority queue (worst first),
-	 * so that we can do prunning efficiently. On the other
-	 * hand, we need the this.sortedItems only when necessary
-	 */
-	
-	/* NOTE: MIN-HEAP, we put the worst-cost item at the top
-	 * of the heap by manipulating the compare function
-	 * this.heapItems: the only purpose is to help deecide which
-	 * items should be removed from this.tableItems during
-	 * pruning
-	 */
-	// TODO: initial capacity?
-	private PriorityQueue<HGNode> nodesHeap =
-		new PriorityQueue<HGNode>(1, HGNode.negtiveCostComparator);
-	
-	// to maintain uniqueness of items
-	private HashMap<String,HGNode> nodesTbl =
-		new HashMap<String,HGNode>();
+		
+	// to maintain uniqueness of nodes
+	private HashMap<String,HGNode> nodesSigTbl = new HashMap<String,HGNode>();
 	
 	// signature by lhs
-	private Map<Integer,SuperNode> superNodesTbl =
-		new HashMap<Integer,SuperNode>();
+	private Map<Integer,SuperNode> superNodesTbl = new HashMap<Integer,SuperNode>();
 	
-	// sort values in tbl_item_signature, we need this list
-	// whenever necessary
-	private ArrayList<HGNode> sortedNodes = null;
+	/** sort values in nodesSigTbl, 
+	 * we need this list when necessary
+	 */
+	private List<HGNode> sortedNodes = null;
 	
 	
 	
 //===============================================================
 // Static fields
 //===============================================================
-	
-	private static final double EPSILON = 0.000001;
-	private static final int IMPOSSIBLE_COST = 99999;
-	
 	private static final Logger logger = Logger.getLogger(Cell.class.getName());
 	
 	
@@ -117,6 +87,11 @@ class Cell {
 	public Cell(Chart chart, int goalSymID) {
 		this.chart     = chart;
 		this.goalSymID = goalSymID;
+		
+		if(JoshuaConfiguration.useBeamAndThresholdPrune){
+			PriorityQueue<HGNode> nodesHeap =new PriorityQueue<HGNode>(1, HGNode.negtiveCostComparator);		
+			beamPruner = new BeamPruner<HGNode>(nodesHeap, JoshuaConfiguration.relative_threshold, JoshuaConfiguration.max_n_items);
+		}
 	}
 	
 	
@@ -217,18 +192,20 @@ class Cell {
 		double expectedTotalCost  = result.getExpectedTotalCost(); // including outside estimation
 		double transitionCost    = result.getTransitionTotalCost();
 		double finalizedTotalCost = result.getFinalizedTotalCost();
-		//double bonus = tbl_states.get(BONUS); // not used
+	
 		
-		
-		if ( ! shouldPruneEdge(expectedTotalCost) ) {
+		if(beamPruner!=null &&  beamPruner.relativeThresholdPrune(expectedTotalCost)){//the hyperedge should be pruned
+			this.chart.nPreprunedEdges++;
+			res = null;
+		}else{
 			HyperEdge dt = new HyperEdge(rule, finalizedTotalCost, transitionCost, ants, srcPath);
 			res = new HGNode(i, j, rule.getLHS(), dpStates, dt, expectedTotalCost);
 			
-			/** each item has a list of hyperedges,
-			 * need to check whether the item is already exist, 
-			 * if yes, just add the hyperedges, this will change the best cost of the item 
+			/** each node has a list of hyperedges,
+			 * need to check whether the node is already exist, 
+			 * if yes, just add the hyperedges, this may change the best cost of the node 
 			 * */
-			HGNode oldNode = this.nodesTbl.get( res.getSignature() );
+			HGNode oldNode = this.nodesSigTbl.get( res.getSignature() );
 			if (null != oldNode) { // have an item with same states, combine items
 				this.chart.nMerged++;
 				
@@ -237,28 +214,29 @@ class Cell {
 				 *  oldItem, and re-insert it (linear time), this is too expense)
 				 **/
 				if (res.estTotalCost < oldNode.estTotalCost) {//merget old to new					
-					oldNode.isDead = true; // this.heapItems.remove(oldItem);
-					this.qtyDeadItems++;
-					res.addHyperedgesInItem(oldNode.hyperedges);
-					addNewNode(res); //this will update the HashMap, so that the oldItem is destroyed
+
+					if(beamPruner!=null){
+						oldNode.setDead();// this.heapItems.remove(oldItem);
+						beamPruner.incrementDeadObjs();
+					}
+					
+					res.addHyperedgesInNode(oldNode.hyperedges);
+					addNewNode(res); //this will update the HashMap, so that the oldNode is destroyed
 					
 				} else {//merge new to old, does not trigger pruningItems
-					oldNode.addHyperedgesInItem(res.hyperedges);
+					oldNode.addHyperedgesInNode(res.hyperedges);
 				}
 				
 			} else { // first time item
 				this.chart.nAdded++; // however, this item may not be used in the future due to pruning in the hyper-graph
 				addNewNode(res);
 			}
-		} else {//the hyperedge should be pruned
-			this.chart.nPreprunedEdges++;
-			res = null;
 		}
 		return res;
 	}
 	
 	
-	ArrayList<HGNode> getSortedNodes() {
+	List<HGNode> getSortedNodes() {
 		ensureSorted();
 		return this.sortedNodes;
 	}
@@ -269,9 +247,7 @@ class Cell {
 		return this.superNodesTbl;
 	}
 	
-	double getCutCost(){
-		return this.cutoffCost;
-	}
+	 
 	
 //===============================================================
 // Private Methods
@@ -279,13 +255,19 @@ class Cell {
 
 	/**two cases this function gets called
 	 * (1) a new hyperedge leads to a non-existing node signature
-	 * (2) a new hyperedge's signature matches an old node's signature, but the best-cost of old node is worse than the hyperedge's cost
+	 * (2) a new hyperedge's signature matches an old node's signature, but the best-cost of old node is worse than the new hyperedge's cost
 	 * */
 	private void addNewNode(HGNode node) {
-		this.nodesTbl.put(node.getSignature(), node); // add/replace the item
+		this.nodesSigTbl.put(node.getSignature(), node); // add/replace the item
 		this.sortedNodes = null; // reset the list
-		if(JoshuaConfiguration.useBeamAndThresholdPrune)
-			this.nodesHeap.add(node);
+			
+		//update bestItemCost and cutoffCost
+		if(beamPruner!=null){
+			List<HGNode> prunedNodes = beamPruner.addOneObjWithPrune(node);
+			this.chart.nPrunedItems += prunedNodes.size();
+			for(HGNode prunedNode : prunedNodes)
+				nodesSigTbl.remove(prunedNode.getSignature());
+		}	
 		
 		//since this.sortedItems == null, this is not necessary because we will always call ensure_sorted to reconstruct the this.tableSuperItems
 		//add a super-items if necessary
@@ -296,66 +278,13 @@ class Cell {
 		}
 		si.nodes.add(node);//TODO what about the dead items?
 		
-		//update bestItemCost and cutoffCost
-		if (node.estTotalCost < this.bestItemCost) {
-			this.bestItemCost = node.estTotalCost;
-			this.cutoffCost = Support.findMin(
-					this.bestItemCost + JoshuaConfiguration.relative_threshold, 
-					IMPOSSIBLE_COST);
-		}
-		
-		// the follwoing pruning is necessary only a new item get added or the cutoffCost changes
-		pruningNodes();
+	
 	}
 
 	
-	/**threshold cutoff pruning for an individual hyperedge
-	 * */
-	private boolean shouldPruneEdge(double totalCost) {
-		if(JoshuaConfiguration.useBeamAndThresholdPrune==false)
-			return false;
-		else
-			return (totalCost >= this.cutoffCost);
-	}
 	
-	
-	
-	/*pruning at the node level
-	 **/
-	private void pruningNodes() {
-		if(JoshuaConfiguration.useBeamAndThresholdPrune==false)
-			return;
-		
-		if (logger.isLoggable(Level.FINEST)) 
-			logger.finest(String.format("Pruning: heap size: %d; n_dead_items: %d", this.nodesHeap.size(),this.qtyDeadItems));
-		
-		if (this.nodesHeap.size() == this.qtyDeadItems) { // TODO:clear the heap, and reset this.qtyDeadItems??
-			this.nodesHeap.clear();
-			this.qtyDeadItems = 0;
-			return;
-		}
-		
-		while (this.nodesHeap.size() - this.qtyDeadItems > JoshuaConfiguration.max_n_items //bin limit pruning
-				|| this.nodesHeap.peek().estTotalCost >= this.cutoffCost) { // relative threshold pruning
-			HGNode worstItem = this.nodesHeap.poll();
-			if (worstItem.isDead) { // clear the corrupted item
-				this.qtyDeadItems--;
-			} else {
-				this.nodesTbl.remove(worstItem.getSignature()); // always make this.tableItems current
-				this.chart.nPrunedItems++;
-			}
-		}
-		
-		if (this.nodesHeap.size() - this.qtyDeadItems == JoshuaConfiguration.max_n_items) {//TODO:??
-			this.cutoffCost = Support.findMin(
-				this.cutoffCost,
-				this.nodesHeap.peek().estTotalCost + EPSILON);
-		}
-	}
-	
-	
-	/** get a sorted list of Items in the bin, and also make
-	 * sure the list of items in any SuperItem is sorted, this
+	/** get a sorted list of Nodes in the cell, and also make
+	 * sure the list of node in any SuperItem is sorted, this
 	 * will be called only necessary, which means that the list
 	 * is not always sorted, mainly needed for goal_bin and
 	 * cube-pruning
@@ -363,18 +292,18 @@ class Cell {
 	private void ensureSorted() {
 		
 		if (null == this.sortedNodes) {
-			//get a sorted items ArrayList
-			Object[] t_col = this.nodesTbl.values().toArray();
+			//== get sortedNodes
+			Object[] tCollection = this.nodesSigTbl.values().toArray();
 			
-			Arrays.sort(t_col);
+			Arrays.sort(tCollection);
 			
 			this.sortedNodes = new ArrayList<HGNode>();
-			for (int c = 0; c < t_col.length;c++) {
-				this.sortedNodes.add((HGNode)t_col[c]);
+			for (int c = 0; c < tCollection.length;c++) {
+				this.sortedNodes.add((HGNode)tCollection[c]);
 			}
 			//TODO: we cannot create new SuperItem here because the DotItem link to them
 			
-			//update superItemsTbl
+			//== update superNodesTbl
 			ArrayList<SuperNode> tem_list =
 				new ArrayList<SuperNode>(this.superNodesTbl.values());
 			for (SuperNode t_si : tem_list) {
@@ -389,11 +318,12 @@ class Cell {
 				si.nodes.add(it);
 			}
 			
+			//== remove SuperNodes who may not contain any node any more due to pruning
 			ArrayList<Integer> to_remove = new ArrayList<Integer>();
-			//note: some SuperItem may not contain any items any more due to pruning
 			for (Integer k : this.superNodesTbl.keySet()) {
 				if (this.superNodesTbl.get(k).nodes.size() <= 0) {
-					to_remove.add(k); // note that: we cannot directly do the remove, because it will throw ConcurrentModificationException
+					 // note that: we cannot directly do the remove, because it will throw ConcurrentModificationException
+					to_remove.add(k);
 					//System.out.println("have zero items in superitem " + k);
 					//this.tableSuperItems.remove(k);
 				}
