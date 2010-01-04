@@ -8,6 +8,9 @@ import joshua.decoder.ff.StateComputer;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.hypergraph.HGNode;
 
+/**Do the combination, and prepare hyperedges
+ * */
+
 public class ExhaustiveCombiner implements Combiner{
 	
 	private List<FeatureFunction> featureFunctions;
@@ -66,6 +69,22 @@ public class ExhaustiveCombiner implements Combiner{
 				throw new RuntimeException("Sorry, we can only deal with rules with at most TWO non-terminals");
 			}
 		}
+	}
+
+
+
+	public void addAxioms(Chart chart, Cell cell, int i, int j, List<Rule> rules, SourcePath srcPath) {
+		for (Rule rule : rules) {
+			addAxiom(chart, cell, i, j, rule, srcPath);
+		}
+	}
+
+
+
+	public void addAxiom(Chart chart, Cell cell, int i, int j, Rule rule, SourcePath srcPath) {
+		cell.addHyperEdgeInCell(
+				new ComputeNodeResult(this.featureFunctions, rule, null, i, j, srcPath, stateComputers),
+				rule, i, j, null, srcPath);
 	}
 
 }

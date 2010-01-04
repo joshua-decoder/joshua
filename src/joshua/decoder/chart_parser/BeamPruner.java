@@ -76,7 +76,7 @@ public class BeamPruner<Obj extends Prunable> {
 
 	/**This will add the object, update the cutOff cost,
 	 * and trigger pruningObjs*/
-	public List<Obj> addOneObjWithPrune(Obj obj){		
+	public List<Obj> addOneObjInHeapWithPrune(Obj obj){		
 		this.nodesHeap.add(obj);
 		updateCutoffCost(obj.getPruneCost());
 		List<Obj> prunedNodes = pruningObjs();

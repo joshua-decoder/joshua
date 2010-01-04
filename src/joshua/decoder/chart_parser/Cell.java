@@ -140,7 +140,7 @@ class Cell {
 					goalItem = new HGNode(0, sentenceLength + 1, this.goalSymID, null, dt, cost + finalTransitionCost);
 					this.sortedNodes.add(goalItem);
 				} else {
-					goalItem.addHyperedgeInItem(dt);
+					goalItem.addHyperedgeInNode(dt);
 					if (goalItem.bestHyperedge.bestDerivationCost > dt.bestDerivationCost) {
 						goalItem.bestHyperedge = dt;
 					}
@@ -263,7 +263,7 @@ class Cell {
 			
 		//update bestItemCost and cutoffCost
 		if(beamPruner!=null){
-			List<HGNode> prunedNodes = beamPruner.addOneObjWithPrune(node);
+			List<HGNode> prunedNodes = beamPruner.addOneObjInHeapWithPrune(node);
 			this.chart.nPrunedItems += prunedNodes.size();
 			for(HGNode prunedNode : prunedNodes)
 				nodesSigTbl.remove(prunedNode.getSignature());

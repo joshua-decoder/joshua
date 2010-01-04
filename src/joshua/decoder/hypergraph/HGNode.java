@@ -77,7 +77,7 @@ public class HGNode implements Prunable<HGNode> {
 		this.lhs = lhs;
 		this.dpStates = dpStates;
 		this.estTotalCost  = estTotalCost;
-		addHyperedgeInItem(initHyperedge);
+		addHyperedgeInNode(initHyperedge);
 	}
 	
 	
@@ -96,7 +96,7 @@ public class HGNode implements Prunable<HGNode> {
 // Methods
 //===============================================================
 	
-	public void addHyperedgeInItem(HyperEdge dt) {
+	public void addHyperedgeInNode(HyperEdge dt) {
 		if (null == hyperedges) {
 			hyperedges = new ArrayList<HyperEdge>();
 		}
@@ -109,7 +109,7 @@ public class HGNode implements Prunable<HGNode> {
 	
 	public void addHyperedgesInNode(List<HyperEdge> hyperedges) {
 		for(HyperEdge hyperEdge : hyperedges) 
-			addHyperedgeInItem(hyperEdge);
+			addHyperedgeInNode(hyperEdge);
 	}
 	
 	

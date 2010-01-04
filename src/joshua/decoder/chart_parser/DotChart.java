@@ -49,9 +49,9 @@ class DotChart {
 	/** 
 	 * Two-dimensional chart of cells. Some cells might be null.
 	 */
-	private DotBin[][] dotbins;
+	private DotCell[][] dotbins;
 	
-	public DotBin getDotCell(int i, int j){
+	public DotCell getDotCell(int i, int j){
 		return dotbins[i][j];
 	}
 	
@@ -108,7 +108,7 @@ class DotChart {
 		this.pGrammar  = grammar;
 		this.input      = input;
 		this.sentLen   = input.size();
-		this.dotbins = new DotBin[sentLen][sentLen+1];
+		this.dotbins = new DotCell[sentLen][sentLen+1];
 		
 		//seeding the dotChart
 		seed();
@@ -256,8 +256,8 @@ class DotChart {
 		}
 		
 		// complete super-items
-		List<SuperNode> t_ArrayList = new ArrayList<SuperNode>(this.
-				pChart.getCell(k, j).getSortedSuperItems().values());
+		List<SuperNode> t_ArrayList = new ArrayList<SuperNode>(
+				this.pChart.getCell(k, j).getSortedSuperItems().values());
 		
 		// dotitem in dot_bins[i][k]: looking for an item in the right to the dot
 		for (DotNode dt : dotbins[i][k].dotNodes) {
@@ -299,7 +299,7 @@ class DotChart {
 		
 		DotNode item = new DotNode(i, j, tnode, antSuperNodes, srcPath);
 		if (dotbins[i][j] == null) {
-			dotbins[i][j] = new DotBin();
+			dotbins[i][j] = new DotCell();
 		}
 		dotbins[i][j].addDotNode(item);
 		pChart.nDotitemAdded++;
@@ -316,7 +316,7 @@ class DotChart {
 	/**
 	 * Bin is a cell in parsing terminology
 	 */
-	static class DotBin {
+	static class DotCell {
 		
 		// Package-protected fields
 		private List<DotNode> dotNodes = new ArrayList<DotNode>();

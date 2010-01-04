@@ -276,14 +276,11 @@ public class Chart {
 						&& null != this.dotcharts[k].getDotCell(i, j)) {
 						
 						for (DotNode dotNode: this.dotcharts[k].getDotCell(i, j).getDotNodes()) {
-							RuleCollection rules = dotNode.getTrieNode().getRules();
-							if (rules != null) { // have rules under this trienode
-								// TODO: filter the rule according to LHS constraint
-								if (rules.getArity() == 0) { // rules without any non-terminal
-									addAxioms(i, j, rules, dotNode.getSourcePath());
-								} else { // rules with non-terminal
-									completeCell(i, j, dotNode, rules, dotNode.getSourcePath());									
-								}
+							RuleCollection ruleCollection = dotNode.getTrieNode().getRules();
+							if (ruleCollection != null) { // have rules under this trienode
+								// TODO: filter the rule according to LHS constraint								
+								completeCell(i, j, dotNode, ruleCollection.getSortedRules(), ruleCollection.getArity(), dotNode.getSourcePath());									
+								
 							}
 						}
 					}
@@ -381,27 +378,28 @@ public class Chart {
 			return 0;
 		}
 		int qtyAdditionsToQueue = 0;
-		ArrayList<HGNode> queue
-			= new ArrayList<HGNode>(chartBin.getSortedNodes());
+		ArrayList<HGNode> queue	= new ArrayList<HGNode>( chartBin.getSortedNodes() );
 		
 		while (queue.size() > 0) {
-			HGNode item = queue.remove(0);
+			HGNode node = queue.remove(0);
 			for(Grammar gr : grs){
 				if (! gr.hasRuleForSpan(i, j, foreignSentenceLength))
 					continue;
-				Trie childNode = gr.getTrieRoot().matchOne(item.lhs); // match rule and complete part
+				
+				Trie childNode = gr.getTrieRoot().matchOne(node.lhs); // match rule and complete part
 				if (childNode != null
-				&& childNode.getRules() != null
-				&& childNode.getRules().getArity() == 1) { // have unary rules under this trienode
+					&& childNode.getRules() != null
+					&& childNode.getRules().getArity() == 1) { // have unary rules under this trienode
+					
 					ArrayList<HGNode> antecedents = new ArrayList<HGNode>();
-					antecedents.add(item);
+					antecedents.add(node);
 					List<Rule> rules = childNode.getRules().getSortedRules();
 					
 					for (Rule rule : rules) { // for each unary rules								
 						ComputeNodeResult states = new ComputeNodeResult(this.featureFunctions, rule, antecedents, i, j, new SourcePath(), stateComputers);
-						HGNode res_item = chartBin.addHyperEdgeInCell(states, rule, i, j, antecedents, new SourcePath());
-						if (null != res_item) {
-							queue.add(res_item);
+						HGNode resNode = chartBin.addHyperEdgeInCell(states, rule, i, j, antecedents, new SourcePath());
+						if (null != resNode) {
+							queue.add(resNode);
 							qtyAdditionsToQueue++;
 						}
 					}
@@ -417,80 +415,70 @@ public class Chart {
      */
     private int addUnaryNodesPerGrammar(Grammar gr, int i, int j) {
     	
-            Cell chart_bin = this.cells[i][j];
-            if (null == chart_bin) {
+            Cell chartCell = this.cells[i][j];
+            if (null == chartCell) {
                     return 0;
             }
-            int count_of_additions_to_t_queue = 0;
-            ArrayList<HGNode> t_queue
-                    = new ArrayList<HGNode>(chart_bin.getSortedNodes());
+            int qtyAdditionsToQueue = 0;
+            ArrayList<HGNode> queue
+                    = new ArrayList<HGNode>(chartCell.getSortedNodes());
 
 
-            while (t_queue.size() > 0) {
-            	HGNode item = (HGNode)t_queue.remove(0);
+            while (queue.size() > 0) {
+            	HGNode item = (HGNode)queue.remove(0);
                 Trie child_tnode = gr.getTrieRoot().matchOne(item.lhs);//match rule and complete part
                 if (child_tnode != null
                 && child_tnode.getRules() != null
                 && child_tnode.getRules().getArity() == 1) {//have unary rules under this trienode
                         ArrayList<HGNode> l_ants = new ArrayList<HGNode>();
                         l_ants.add(item);
-                        List<Rule> l_rules =
+                        List<Rule> rules =
                                 child_tnode.getRules().getSortedRules();
 
-                        for (Rule rule : l_rules){//for each unary rules
+                        for (Rule rule : rules){//for each unary rules
                         	ComputeNodeResult states = new ComputeNodeResult(this.featureFunctions, rule, l_ants, i, j, new SourcePath(), stateComputers);
-                            HGNode res_item = chart_bin.addHyperEdgeInCell(states, rule, i, j, l_ants, new SourcePath());
+                            HGNode res_item = chartCell.addHyperEdgeInCell(states, rule, i, j, l_ants, new SourcePath());
                             if (null != res_item) {
-                                    t_queue.add(res_item);
-                                    count_of_additions_to_t_queue++;
+                                    queue.add(res_item);
+                                    qtyAdditionsToQueue++;
                             }
                         }
                 }
             }
-            return count_of_additions_to_t_queue;
+            return qtyAdditionsToQueue;
     }
 
-	
-	
-	private void addAxioms(int i, int j, RuleCollection rb, SourcePath srcPath) {
-		if (manualConstraintsHandler.containHardRuleConstraint(i, j)) {
-			if (logger.isLoggable(Level.FINE)) 
-				logger.fine("Hard rule constraint for span " +i +", " + j);
-			return; //do not add any axioms
-		} else {
-
-			List<Rule> rules = manualConstraintsHandler.filterRules(i,j, rb.getSortedRules());
-			for (Rule rule : rules) {
-				addAxiom(i, j, rule, srcPath);
-			}
-		}
-	}
-	
 	
 	/** axiom is for rules with zero-arity */
 	public void addAxiom(int i, int j, Rule rule, SourcePath srcPath) {
 		if (null == this.cells[i][j]) {
 			this.cells[i][j] = new Cell(this, this.goalSymbolID);
 		}		
-		
-		this.cells[i][j].addHyperEdgeInCell(
-				new ComputeNodeResult(this.featureFunctions, rule, null, i, j, srcPath, stateComputers),
-				rule, i, j, null, srcPath);
+		combiner.addAxiom(this, this.cells[i][j], i, j, rule, srcPath);
 	}
 	
 	
-	private void completeCell(int i, int j, DotNode dotNode, RuleCollection rb, SourcePath srcPath) {
+	
+	private void completeCell(int i, int j, DotNode dotNode, List<Rule> sortedRules, int arity, SourcePath srcPath) {
+		
 		if (manualConstraintsHandler.containHardRuleConstraint(i, j)) {
-			System.out.println("having hard rule constraint in span " +i +", " + j);
-			return; //do not add any axioms
+			if (logger.isLoggable(Level.FINE)) 
+				logger.fine("Hard rule constraint for span " +i +", " + j);
+			return; //do not add any nodes
 		}
 		
 		if (null == this.cells[i][j]) {
 			this.cells[i][j] = new Cell(this, this.goalSymbolID);
 		}
 		// combinations: rules, antecent items
-		//this.cells[i][j].completeCell(i, j, dt.l_ant_super_items, filterRules(i,j,rb.getSortedRules()), rb.getArity(), srcPath);
-		combiner.combine(this, this.cells[i][j], i, j,  dotNode.getAntSuperNodes(), manualConstraintsHandler.filterRules(i,j, rb.getSortedRules()), rb.getArity(), srcPath);
+		List<Rule> filteredRules =  manualConstraintsHandler.filterRules(i,j, sortedRules);
+		if(arity==0)
+			combiner.addAxioms(this, this.cells[i][j], i, j, filteredRules, srcPath);
+		else
+			//this.cells[i][j].completeCell(i, j, dt.l_ant_super_items, filterRules(i,j,rb.getSortedRules()), rb.getArity(), srcPath);
+			combiner.combine(this, this.cells[i][j], i, j,  dotNode.getAntSuperNodes(), filteredRules, arity, srcPath);
 	}	
+	
+	
 	
 }

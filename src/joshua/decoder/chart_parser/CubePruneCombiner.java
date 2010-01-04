@@ -23,6 +23,24 @@ public class CubePruneCombiner implements Combiner{
 	
 	//BUG:???????????????????? CubePrune will depend on relativeThresholdPruning, but  cell.beamPruner can be null ????????????????
 	
+	
+	
+
+	public void addAxioms(Chart chart, Cell cell, int i, int j, List<Rule> rules, SourcePath srcPath) {
+		for (Rule rule : rules) {
+			addAxiom(chart, cell, i, j, rule, srcPath);
+		}
+	}
+
+
+
+	public void addAxiom(Chart chart, Cell cell, int i, int j, Rule rule, SourcePath srcPath) {
+		cell.addHyperEdgeInCell(
+				new ComputeNodeResult(this.featureFunctions, rule, null, i, j, srcPath, stateComputers),
+				rule, i, j, null, srcPath);
+	}
+
+	
 	/** Add complete Items in Chart pruning inside this function */
 	// TODO: our implementation do the prunining for each DotItem
 	//       under each grammar, not aggregated as in the python
