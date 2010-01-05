@@ -27,7 +27,7 @@ import java.util.List;
 import joshua.corpus.vocab.BuildinSymbol;
 import joshua.corpus.vocab.SymbolTable;
 import joshua.decoder.Support;
-import joshua.decoder.ff.NgramDPState;
+import joshua.decoder.ff.state_maintenance.NgramDPState;
 import joshua.decoder.hypergraph.DiskHyperGraph;
 import joshua.decoder.hypergraph.HGNode;
 import joshua.decoder.hypergraph.HyperEdge;

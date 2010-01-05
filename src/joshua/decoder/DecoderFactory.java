@@ -19,7 +19,7 @@ package joshua.decoder;
 
 import joshua.corpus.vocab.SymbolTable;
 import joshua.decoder.ff.FeatureFunction;
-import joshua.decoder.ff.StateComputer;
+import joshua.decoder.ff.state_maintenance.StateComputer;
 import joshua.decoder.ff.tm.GrammarFactory;
 import joshua.decoder.hypergraph.HyperGraph;
 import joshua.util.io.LineReader;

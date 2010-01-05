@@ -18,7 +18,7 @@
 package joshua.decoder.hypergraph;
 
 import joshua.decoder.chart_parser.Prunable;
-import joshua.decoder.ff.DPState;
+import joshua.decoder.ff.state_maintenance.DPState;
 
 
 import java.util.ArrayList;

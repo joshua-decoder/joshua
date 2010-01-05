@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import joshua.decoder.ff.FeatureFunction;
-import joshua.decoder.ff.StateComputer;
+import joshua.decoder.ff.state_maintenance.StateComputer;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.hypergraph.HGNode;
 

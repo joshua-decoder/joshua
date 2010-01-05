@@ -20,8 +20,10 @@ package joshua.decoder.ff;
 import java.util.List;
 
 import joshua.decoder.chart_parser.SourcePath;
+import joshua.decoder.ff.state_maintenance.DPState;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.hypergraph.HGNode;
+import joshua.decoder.hypergraph.HyperEdge;
 
 
 /**
@@ -74,9 +76,14 @@ public interface FeatureFunction {
 	
 	double transition(Rule rule, List<HGNode> antNodes, int spanStart, int spanEnd, SourcePath srcPath);
 	
+	double transition(HyperEdge edge, int spanStart, int spanEnd);
+	
 	/**Edges calling this function do not have concret rules associated with them. 
 	 * */
 	double finalTransition(HGNode antNode, int spanStart, int spanEnd, SourcePath srcPath);
 	
+	/**Edges calling this function do not have concret rules associated with them. 
+	 * */
+	double finalTransition(HyperEdge edge, int spanStart, int spanEnd);
 	
 }

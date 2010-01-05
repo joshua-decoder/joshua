@@ -23,9 +23,9 @@ import java.util.logging.Logger;
 
 import joshua.corpus.vocab.SymbolTable;
 import joshua.decoder.chart_parser.SourcePath;
-import joshua.decoder.ff.DPState;
 import joshua.decoder.ff.DefaultStatefulFF;
-import joshua.decoder.ff.NgramDPState;
+import joshua.decoder.ff.state_maintenance.DPState;
+import joshua.decoder.ff.state_maintenance.NgramDPState;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.hypergraph.HGNode;
 

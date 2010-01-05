@@ -16,7 +16,7 @@
  * MA 02111-1307 USA
  */
 
-package joshua.decoder.ff;
+package joshua.decoder.ff.state_maintenance;
 
 import joshua.corpus.vocab.SymbolTable;
 

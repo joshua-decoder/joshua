@@ -18,10 +18,10 @@
 package joshua.decoder.chart_parser;
 
 import joshua.decoder.JoshuaConfiguration;
-import joshua.decoder.ff.DPState;
 import joshua.decoder.ff.FeatureFunction;
 
 
+import joshua.decoder.ff.state_maintenance.DPState;
 import joshua.decoder.ff.tm.Rule;
 
 import joshua.decoder.hypergraph.HGNode;

@@ -22,8 +22,10 @@ package joshua.decoder.ff;
 import java.util.List;
 
 import joshua.decoder.chart_parser.SourcePath;
+import joshua.decoder.ff.state_maintenance.DPState;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.hypergraph.HGNode;
+import joshua.decoder.hypergraph.HyperEdge;
 
 
 
@@ -76,6 +78,10 @@ public abstract class DefaultStatelessFF implements FeatureFunction {
 	}
 	
 	
+	public double transition(HyperEdge edge, int spanStart, int spanEnd){
+		return transition(edge.getRule(), edge.getAntNodes(), spanStart, spanEnd, edge.getSourcePath() );
+	}
+	
 	public double transition(Rule rule, List<HGNode> antNodes, int spanStart, int spanEnd, SourcePath srcPath){
 		return estimate(rule);
 	}
@@ -90,5 +96,9 @@ public abstract class DefaultStatelessFF implements FeatureFunction {
 	
 	public final double finalTransition(HGNode antNode, int spanStart, int spanEnd, SourcePath srcPath){
 		return 0.0;
+	}
+	
+	public double finalTransition(HyperEdge edge, int spanStart, int spanEnd){
+		return  finalTransition(edge.getAntNodes().get(0), spanStart, spanEnd, edge.getSourcePath() );
 	}
 }

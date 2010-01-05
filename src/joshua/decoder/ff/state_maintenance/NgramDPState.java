@@ -16,13 +16,12 @@
  * MA 02111-1307 USA
  */
 
-package joshua.decoder.ff;
+package joshua.decoder.ff.state_maintenance;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import joshua.corpus.vocab.SymbolTable;
-import joshua.decoder.ff.DPState;
 
 
 /**

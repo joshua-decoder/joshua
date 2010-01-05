@@ -28,9 +28,9 @@ import java.util.logging.Logger;
 
 import joshua.corpus.vocab.SymbolTable;
 import joshua.decoder.chart_parser.ComputeNodeResult;
-import joshua.decoder.ff.DPState;
 import joshua.decoder.ff.FeatureFunction;
-import joshua.decoder.ff.NgramDPState;
+import joshua.decoder.ff.state_maintenance.DPState;
+import joshua.decoder.ff.state_maintenance.NgramDPState;
 import joshua.decoder.ff.tm.BilingualRule;
 import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.GrammarReader;

@@ -19,9 +19,7 @@ package joshua.decoder;
 
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.ArityPhrasePenaltyFF;
-import joshua.decoder.ff.NgramStateComputer;
 import joshua.decoder.ff.PhraseModelFF;
-import joshua.decoder.ff.StateComputer;
 import joshua.decoder.ff.WordPenaltyFF;
 import joshua.decoder.ff.SourcePathFF;
 import joshua.decoder.ff.lm.LanguageModelFF;
@@ -30,6 +28,8 @@ import joshua.decoder.ff.lm.bloomfilter_lm.BloomFilterLanguageModel;
 import joshua.decoder.ff.lm.buildin_lm.LMGrammarJAVA;
 import joshua.decoder.ff.lm.distributed_lm.LMGrammarRemote;
 import joshua.decoder.ff.lm.srilm.LMGrammarSRILM;
+import joshua.decoder.ff.state_maintenance.NgramStateComputer;
+import joshua.decoder.ff.state_maintenance.StateComputer;
 import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.GrammarFactory;
 import joshua.decoder.ff.tm.hiero.MemoryBasedBatchGrammar;
