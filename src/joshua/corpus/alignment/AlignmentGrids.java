@@ -152,13 +152,21 @@ public class AlignmentGrids extends AbstractAlignmentGrids {
 		// Write the widths of each grid
 		logger.fine("Exporting widths: " + size + " integers (" + size*4 + ") bytes");
 		for (AlignmentGrid grid : alignments) {
+		    if(grid != null) {
 			out.writeInt(grid.width);
+		    } else {
+			out.writeInt(0);
+		    }
 		}
 		
 		// Write the widths of each grid
 		logger.fine("Exporting widths: " + size + " integers (" + size*4 + ") bytes");
 		for (AlignmentGrid grid : alignments) {
+		    if(grid != null) {
 			out.writeInt(grid.height);
+		    } else {
+			out.writeInt(0);
+		    }
 		}
 		
 		// Write the number of alignment points in each grid
@@ -166,8 +174,12 @@ public class AlignmentGrids extends AbstractAlignmentGrids {
 		int pointCounter = 0;
 		out.writeInt(pointCounter);
 		for (AlignmentGrid grid : alignments) {
+		    if(grid != null) {
 			pointCounter += grid.coordinates.length; 
 			out.writeInt(pointCounter);
+		    } else {
+			out.writeInt(0);
+		    }
 		}
 		logger.finer("\tfinal pointCounter value was: " + pointCounter);
 
@@ -175,17 +187,21 @@ public class AlignmentGrids extends AbstractAlignmentGrids {
 		// Write the alignment points
 		logger.fine("Exporting grid coordinates: " + pointCounter + " shorts (" + pointCounter*2 + ") bytes");
 		for (AlignmentGrid grid : alignments) {
+		    if(grid != null) {
 			for (short point : grid.coordinates) {
 				out.writeShort(point);
 			}
+		    }
 		}
 		
 		// Write the reverse alignment points
 		logger.fine("Exporting reverse grid coordinates: " + pointCounter + " shorts (" + pointCounter*2 + ") bytes");
 		for (AlignmentGrid grid : alignments) {
+		    if(grid != null) {
 			for (short point : grid.transposedCoordinates) {
 				out.writeShort(point);
 			}
+		    }
 		}
 		
 	}
