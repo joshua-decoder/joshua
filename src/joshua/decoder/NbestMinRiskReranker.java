@@ -84,9 +84,10 @@ public class NbestMinRiskReranker {
 			if (sent_id != t_sent_id) { 
 				throw new RuntimeException("sentence_id does not match");
 			}
-			l_hyp_itself.add(fds[1]);
+			String hypothesis = (fds.length==4) ? fds[1] : "";
+			l_hyp_itself.add(hypothesis);
 			
-			String[] t_wrds = Regex.spaces.split(fds[1]);
+			String[] t_wrds = Regex.spaces.split(hypothesis);
 			l_sent_lens.add(t_wrds.length);
 			
 			HashMap<String,Integer> tbl_ngram = new HashMap<String,Integer>();
@@ -94,7 +95,12 @@ public class NbestMinRiskReranker {
 			l_ngram_tbls.add(tbl_ngram);
 			
 			//l_feat_scores.add(fds[2]);
-			l_baseline_scores.add(Double.parseDouble(fds[3]));
+			
+			// The value of finalIndex is expected to be 3,
+			//     unless the hyp_itself is empty,
+			//     in which case finalIndex will be 2.
+			int finalIndex = fds.length - 1;
+			l_baseline_scores.add(Double.parseDouble(fds[finalIndex]));
 			
 		}
 		
