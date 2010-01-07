@@ -50,12 +50,12 @@ public class AlignmentGrid implements Externalizable {
 	/**
 	 * Maximum size of a dimension.
 	 */
-	static public final int MAX_LENGTH = 1000;
+	static public final int MAX_LENGTH = 100;
 
 	/**
 	 * Constant used for generating coordinate short value.
 	 */
-	static private final short X_SHIFT = 1000;
+	static private final short X_SHIFT = 100;
 
 	//===============================================================
 	// Member variables

@@ -98,7 +98,13 @@ public class AlignmentGrids extends AbstractAlignmentGrids {
 			
 			String line = alignmentScanner.nextLine();
 			
-			alignments.add(new AlignmentGrid(line));
+			try {
+			    AlignmentGrid grid = new AlignmentGrid(line);
+			    alignments.add(grid);
+			} catch (Exception e) {
+			    logger.warning("Sentence pair number " + lineNumber + " was too long, skipping this item");
+			    alignments.add(null);
+			}
 			
 			lineNumber++;
 			if (finest && (lineNumber%tenthSize==0)) {
@@ -112,15 +118,21 @@ public class AlignmentGrids extends AbstractAlignmentGrids {
 	/* See Javadoc for AbstractAlignmentGrids. */
 	protected int[] getSourcePoints(int sentenceID, int targetSpanStart, int targetSpanEnd) {
 		AlignmentGrid grid = alignments.get(sentenceID);
-		
-		return grid.getSourcePoints(targetSpanStart, targetSpanEnd);
+		if(grid != null) {
+		    return grid.getSourcePoints(targetSpanStart, targetSpanEnd);
+		} else {
+		    return new int[0];
+		}
 	}
 	
 	/* See Javadoc for AbstractAlignmentGrids. */
 	protected int[] getTargetPoints(int sentenceID, int sourceSpanStart, int sourceSpanEnd) {
 		AlignmentGrid grid = alignments.get(sentenceID);
-		
-		return grid.getTargetPoints(sourceSpanStart, sourceSpanEnd);
+		if(grid != null) {
+		    return grid.getTargetPoints(sourceSpanStart, sourceSpanEnd);
+		} else {
+                    return new int[0];
+		}
 	}
 
 	/**
