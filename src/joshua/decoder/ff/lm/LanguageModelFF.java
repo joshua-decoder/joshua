@@ -304,27 +304,26 @@ public class LanguageModelFF extends DefaultStatefulFF {
 	}
 	
 	
-	//this function is called when left_equiv state is NOT used
-	//in state, all the ngrams are incomplete
-	//only get the estimation for the left-state
-	//get the true prob for right-state, if add_end==true
+	/**TODO:
+	 * This does not work when addStart == true or addEnd == true
+	 **/
 	private double estimateStateProb(NgramDPState state, boolean addStart, boolean addEnd) {
 		
 		double res = 0.0;		
 		List<Integer>   leftContext = state.getLeftLMStateWords();
 		
 		if (null != leftContext) {
-			List<Integer> list = new ArrayList<Integer>();;
+			List<Integer> words = new ArrayList<Integer>();;
 			if (addStart == true)
-				list.add(START_SYM_ID);
-			list.addAll(leftContext);
+				words.add(START_SYM_ID);
+			words.addAll(leftContext);
 			
 			boolean considerIncompleteNgrams = true;
 			boolean skipStart = true;
-			if (list.get(0) != START_SYM_ID) {
+			if (words.get(0) != START_SYM_ID) {
 				skipStart = false;
 			}
-			res += scoreChunk(list, considerIncompleteNgrams, skipStart);
+			res += scoreChunk(words, considerIncompleteNgrams, skipStart);
 		}
 		/*if (add_start == true) {
 			System.out.println("left context: " +Symbol.get_string(l_context) + ";prob "+res);

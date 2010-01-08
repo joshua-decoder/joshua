@@ -18,21 +18,22 @@ public class DiscriminativeNgramModel extends DefaultStatefulFF {
 	private HashMap<String, Double> ngramModel;
 	
 	private int startNgramOrder =1;
-	private int endNgramOrder =3;	
-	private SymbolTable symbolTbl = null;	
+	private int endNgramOrder =3;
+	private SymbolTable symbolTbl = null;
 	private NgramExtractor ngramExtractor;
-	
+	private boolean useIntegerNgram = true;
 
-	public DiscriminativeNgramModel(int ngramStateID, int featID, SymbolTable psymbol, int startNgramOrder, int endNgramOrder, HashMap<String, Double>  ngramModel, double weight,
-			int baselineLMOrder) {
+	public DiscriminativeNgramModel(int ngramStateID, int featID, SymbolTable symbolTbl, int startNgramOrder, int endNgramOrder, 
+			HashMap<String, Double>  ngramModel, double weight,	int baselineLMOrder) {
+		
 		super(ngramStateID, weight, featID);
 		
 		this.startNgramOrder = startNgramOrder;
 		this.endNgramOrder = endNgramOrder;
 		this.ngramModel  = ngramModel;
-		this.symbolTbl = psymbol;
+		this.symbolTbl = symbolTbl;
 			
-		this.ngramExtractor = new NgramExtractor(symbolTbl, ngramStateID, false, baselineLMOrder); 
+		this.ngramExtractor = new NgramExtractor(symbolTbl, ngramStateID, useIntegerNgram, baselineLMOrder); 
 		
 		if(ngramModel!=null){
 			System.out.println("ngramModel size is " + ngramModel.size());
@@ -45,8 +46,7 @@ public class DiscriminativeNgramModel extends DefaultStatefulFF {
 
 
 	public double estimate(Rule rule, int sentID) {
-		// TODO Auto-generated method stub
-		return 0;
+		return computeCost( ngramExtractor.getRuleNgrams(rule, startNgramOrder, endNgramOrder) );
 	}
 
 	public double estimateFutureCost(Rule rule, DPState curDPState, int sentID) {
@@ -60,13 +60,10 @@ public class DiscriminativeNgramModel extends DefaultStatefulFF {
 	}
 
 	public double finalTransition(HGNode antNode, int spanStart, int spanEnd, SourcePath srcPath, int sentID) {
-		// TODO Auto-generated method stub
-		return 0;
+		return computeCost( ngramExtractor.getFinalTransitionNgrams(antNode, startNgramOrder, endNgramOrder) );
 	}
 
 	
-	
-
 	private double computeCost(HashMap<String, Integer> ngramTbl){
 		
 		double transitionCost = 0;

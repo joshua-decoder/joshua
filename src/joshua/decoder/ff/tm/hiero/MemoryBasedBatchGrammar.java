@@ -46,7 +46,7 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
 // Instance Fields
 //===============================================================
 	
-	static private double tem_estcost = 0.0;
+	static private double temEstcost = 0.0;
 	
 	private int qtyRulesRead = 0;
 	private int qtyRuleBins  = 0;
@@ -213,7 +213,7 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
 		rule.setOwner(defaultOwner);
 		
 		// TODO: make sure costs are calculated here or in reader
-		tem_estcost += rule.getEstCost();
+		temEstcost += rule.getEstCost();
 		
 		//=== identify the position, and insert the trie nodes as necessary
 		MemoryBasedTrie pos = root;
@@ -256,7 +256,7 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
 			logger.info("###########Grammar###########");
 			logger.info(String.format(
 				"####num_rules: %d; num_bins: %d; num_pruned: %d; sumest_cost: %.5f",
-				this.qtyRulesRead, this.qtyRuleBins, 0, tem_estcost));
+				this.qtyRulesRead, this.qtyRuleBins, 0, temEstcost));
 		}
 		/*if(root!=null)
 			root.print_info(Support.DEBUG);*/
