@@ -12,9 +12,9 @@ import joshua.decoder.hypergraph.HGNode;
 
 public class NgramStateComputer implements StateComputer<NgramDPState> {
 	
-	SymbolTable symbolTable;
-	int ngramOrder;
-	int stateID;
+	private SymbolTable symbolTable;
+	private int ngramOrder;
+	private int stateID;
 	
 	private static final Logger logger =
 		Logger.getLogger(NgramStateComputer.class.getName());

@@ -93,6 +93,8 @@ public class KBestExtractor {
 //		this.p_symbolTable = symbolTable;
 //	}
 	
+	private int sentID;
+	
 	public KBestExtractor(SymbolTable symbolTable, boolean extractUniqueNbest, boolean 	extractNbestTree,  boolean includeAlign,
 			boolean addCombinedScore,  boolean isMonolingual,  boolean performSanityCheck){
 		this.symbolTable = symbolTable;
@@ -115,6 +117,7 @@ public class KBestExtractor {
 	 * */
 	//***************** you may need to reset_state() before you call this function for the first time
 	public String getKthHyp(HGNode it, int k,  int sentID, List<FeatureFunction> models) {
+		this.sentID = sentID;
 		VirtualNode virtualNode = addVirtualNode(it);
 		DerivationState cur = virtualNode.lazyKBestExtractOnNode(symbolTable, this, k);
 		if( cur==null) 
@@ -188,7 +191,7 @@ public class KBestExtractor {
 		int sentID, 
 		CoIterator<String> coit) {
 	
-		
+		this.sentID = sentID;
 		resetState();
 		
 		if (null == hg.goalNode) 
@@ -562,7 +565,7 @@ public class KBestExtractor {
 				for (int id = 0; id < edge.getAntNodes().size(); id++) {
 					HGNode child = edge.getAntNodes().get(id);
 					VirtualNode virtualChild = kbestExtator.addVirtualNode(child);
-					res.append( virtualChild.nbests.get(ranks[id]-1).getHypothesis(symbolTbl,kbestExtator, useTreeFormat, modelCost,models) );
+					res.append( virtualChild.nbests.get(ranks[id]-1).getHypothesis(symbolTbl,kbestExtator, useTreeFormat, modelCost, models) );
 					if (id < edge.getAntNodes().size()-1) res.append(' ');
 				}
 				if (useTreeFormat) 
@@ -654,7 +657,7 @@ public class KBestExtractor {
 			if (null == modelCost) 
 				return;
 			//System.out.println("Rule is: " + dt.rule.toString());
-			double[] transitionCosts = ComputeNodeResult.computeModelTransitionCost(models, dt.getRule(), dt.getAntNodes(), parentNode.i, parentNode.j, dt.getSourcePath());
+			double[] transitionCosts = ComputeNodeResult.computeModelTransitionCost(models, dt.getRule(), dt.getAntNodes(), parentNode.i, parentNode.j, dt.getSourcePath(), sentID);
 			
 		
 			for(int i=0; i<transitionCosts.length; i++){

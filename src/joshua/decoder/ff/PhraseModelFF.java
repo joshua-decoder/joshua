@@ -44,7 +44,7 @@ public final class PhraseModelFF extends DefaultStatelessFF {
 	}
 	
 	
-	public double estimate(final Rule rule) {
+	public double estimate(final Rule rule, int sentID) {
 				
 		if (this.owner == rule.getOwner()) {
 

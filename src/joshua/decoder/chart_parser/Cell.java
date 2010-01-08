@@ -117,7 +117,7 @@ class Cell {
 				List<HGNode> antNodes = new ArrayList<HGNode>();
 				antNodes.add(antNode);
 				double[] modelCosts = ComputeNodeResult.computeModelTransitionCost(
-						featureFunctions, null, antNodes, 0, sentenceLength, null);
+						featureFunctions, null, antNodes, 0, sentenceLength, null, this.chart.segmentID);
 								
 				int count=0;
 				for (FeatureFunction ff : featureFunctions) {

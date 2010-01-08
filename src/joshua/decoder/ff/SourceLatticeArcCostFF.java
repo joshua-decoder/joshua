@@ -31,7 +31,7 @@ public final class SourceLatticeArcCostFF extends DefaultStatelessFF {
 	}
 	
 	
-	public double estimate(final Rule rule) {
+	public double estimate(final Rule rule, int sentID) {
 		// TODO: why not check the owner
 		/*if (this.owner == rule.owner) {
 			return rule.lattice_cost;

@@ -20,6 +20,7 @@ package joshua.decoder;
 
 import joshua.util.io.LineReader;
 import joshua.util.FileUtility;
+import joshua.util.Ngram;
 import joshua.util.Regex;
 
 import java.io.BufferedWriter;
@@ -90,9 +91,9 @@ public class NbestMinRiskReranker {
 			String[] t_wrds = Regex.spaces.split(hypothesis);
 			l_sent_lens.add(t_wrds.length);
 			
-			HashMap<String,Integer> tbl_ngram = new HashMap<String,Integer>();
-			BLEU.accumulateNgramCounts(tbl_ngram, 4, t_wrds);
-			l_ngram_tbls.add(tbl_ngram);
+			HashMap<String,Integer> ngramTbl = new HashMap<String,Integer>();
+			Ngram.getNgrams(ngramTbl, 1, 4, t_wrds);
+			l_ngram_tbls.add(ngramTbl);
 			
 			//l_feat_scores.add(fds[2]);
 			

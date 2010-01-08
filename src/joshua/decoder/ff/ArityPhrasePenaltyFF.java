@@ -41,7 +41,7 @@ public final class ArityPhrasePenaltyFF extends DefaultStatelessFF {
 	}
 	
 	
-	public double estimate(final Rule rule) {
+	public double estimate(final Rule rule, int sentID) {
 		if (this.owner == rule.getOwner()
 		&& this.minArity <= rule.getArity()
 		&& this.maxArity >= rule.getArity()) {

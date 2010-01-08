@@ -98,6 +98,7 @@ public class LanguageModelFF extends DefaultStatefulFF {
 	/** stateID is any integer exept -1
 	 **/
 	public LanguageModelFF(int stateID, int featID, int ngramOrder, SymbolTable psymbol, NGramLanguageModel lmGrammar, double weight) {
+		
 		super(stateID, weight, featID);
 		this.ngramOrder = ngramOrder;
 		this.lmGrammar  = lmGrammar;
@@ -113,12 +114,12 @@ public class LanguageModelFF extends DefaultStatefulFF {
 	
 
 
-	public double transition(Rule rule, List<HGNode> antNodes, int spanStart, int spanEnd, SourcePath srcPath) {
+	public double transition(Rule rule, List<HGNode> antNodes, int spanStart, int spanEnd, SourcePath srcPath, int sentID) {
 		return computeTransition(rule.getEnglish(), antNodes);
 	}
 
 	
-	public double finalTransition(HGNode antNode, int spanStart, int spanEnd, SourcePath srcPath) {
+	public double finalTransition(HGNode antNode, int spanStart, int spanEnd, SourcePath srcPath, int sentID) {
 		return computeFinalTransition((NgramDPState)antNode.getDPState(this.getStateID()));
 	}
 	
@@ -126,14 +127,18 @@ public class LanguageModelFF extends DefaultStatefulFF {
 
 	/**will consider all the complete ngrams, 
 	 * and all the incomplete-ngrams that will have sth fit into its left side*/
-	public double estimate(Rule rule) {
+	public double estimate(Rule rule, int sentID) {
 		return estimateRuleProb(rule.getEnglish());
 	}
 	
 
 
-	public double estimateFutureCost(Rule rule, DPState curDPState) {
-		return estimateStateProb((NgramDPState)curDPState, false, false);
+	public double estimateFutureCost(Rule rule, DPState curDPState, int sentID) {
+		//TODO: do not consider <s> and </s>
+		boolean addStart = false;
+		boolean addEnd = false;
+		 
+		return estimateStateProb((NgramDPState)curDPState, addStart, addEnd);
 	}
 
 
@@ -143,7 +148,7 @@ public class LanguageModelFF extends DefaultStatefulFF {
 	 * */
 	private double computeTransition(int[] enWords,	List<HGNode> antNodes) {
 				
-		ArrayList<Integer> currentNgram   = new ArrayList<Integer>();
+		List<Integer> currentNgram   = new ArrayList<Integer>();
 		double             transitionCost = 0.0;
 		
 		for (int c = 0; c < enWords.length; c++) {
@@ -155,7 +160,7 @@ public class LanguageModelFF extends DefaultStatefulFF {
 				List<Integer> leftContext = state.getLeftLMStateWords();
 				List<Integer> rightContext = state.getRightLMStateWords();
 				if (leftContext.size() != rightContext.size() ) {
-					throw new RuntimeException("LMModel.lookup_words1_equv_state: left and right contexts have unequal lengths");
+					throw new RuntimeException("computeTransition: left and right contexts have unequal lengths");
 				}
 				
 				//================ left context
@@ -217,6 +222,7 @@ public class LanguageModelFF extends DefaultStatefulFF {
 		List<Integer> currentNgram = new ArrayList<Integer>();
 		List<Integer>   leftContext = state.getLeftLMStateWords();		
 		List<Integer>   rightContext = state.getRightLMStateWords();
+		
 		if (leftContext.size() != rightContext.size()) {
 			throw new RuntimeException(
 				"LMModel.compute_equiv_state_final_transition: left and right contexts have unequal lengths");
@@ -231,11 +237,11 @@ public class LanguageModelFF extends DefaultStatefulFF {
 			currentNgram.add(t);
 			
 			if (t == BACKOFF_LEFT_LM_STATE_SYM_ID) {//calculate cost for <bo>: additional backoff weight
-				int additional_backoff_weight = currentNgram.size() - (i+1);
+				int additionalBackoffWeight = currentNgram.size() - (i+1);
 				//compute additional backoff weight
 				//TOTO: may not work with the case that add_start_and_end_symbol=false
 				res -= this.lmGrammar.logProbOfBackoffState(
-					currentNgram, currentNgram.size(), additional_backoff_weight);
+					currentNgram, currentNgram.size(), additionalBackoffWeight);
 				
 			} else { // partial ngram
 				//compute the current word probablity
@@ -253,8 +259,7 @@ public class LanguageModelFF extends DefaultStatefulFF {
 		//switch context, we will never score the right context probablity because they are either duplicate or partional ngram
 		if(addStartAndEndSymbol){
 			int tSize = currentNgram.size();
-			for (int i = 0; i < rightContext.size(); i++) {
-				//replace context
+			for (int i = 0; i < rightContext.size(); i++) {//replace context
 				currentNgram.set(tSize - rightContext.size() + i, rightContext.get(i));
 			}
 			
@@ -273,8 +278,8 @@ public class LanguageModelFF extends DefaultStatefulFF {
 	private double estimateRuleProb(int[] enWords) {
 		double    estimate   = 0.0;
 		boolean   considerIncompleteNgrams = true;
-		ArrayList<Integer> words      = new ArrayList<Integer>();
-		boolean   skip_start = (enWords[0] == START_SYM_ID);
+		List<Integer> words      = new ArrayList<Integer>();
+		boolean   skipStart = (enWords[0] == START_SYM_ID);
 		
 		for (int c = 0; c < enWords.length; c++) {
 			int curWrd = enWords[c];
@@ -285,18 +290,16 @@ public class LanguageModelFF extends DefaultStatefulFF {
 				//for the LM bonus function: this simply means the right state will not be considered at all because all the ngrams in right-context will be incomplete
 				words.clear();
 				skip_start = false;
-			} else*/ if (symbolTable.isNonterminal(curWrd)) {
-				estimate += scoreChunk(
-					words, considerIncompleteNgrams, skip_start);
+			} else*/ if( symbolTable.isNonterminal(curWrd) ) {
+				estimate += scoreChunk(	words, considerIncompleteNgrams, skipStart);
 				considerIncompleteNgrams = true;
 				words.clear();
-				skip_start = false;
+				skipStart = false;
 			} else {
 				words.add(curWrd);
 			}
 		}
-		estimate += scoreChunk(
-			words, considerIncompleteNgrams, skip_start);
+		estimate += scoreChunk( words, considerIncompleteNgrams, skipStart );
 		return estimate;
 	}
 	
@@ -306,38 +309,29 @@ public class LanguageModelFF extends DefaultStatefulFF {
 	//only get the estimation for the left-state
 	//get the true prob for right-state, if add_end==true
 	private double estimateStateProb(NgramDPState state, boolean addStart, boolean addEnd) {
-		double res = 0.0;
 		
+		double res = 0.0;		
 		List<Integer>   leftContext = state.getLeftLMStateWords();
 		
 		if (null != leftContext) {
-			ArrayList<Integer> list;
-			if (addStart == true) {
-				list = new ArrayList<Integer>(leftContext.size() + 1);
+			List<Integer> list = new ArrayList<Integer>();;
+			if (addStart == true)
 				list.add(START_SYM_ID);
-			} else {
-				list = new ArrayList<Integer>(leftContext.size());
-			}
-			for (int k = 0; k <leftContext.size(); k++) {
-				//if(l_context[k]!=Symbol.LM_STATE_OVERLAP_SYM_ID)
-					list.add(leftContext.get(k));
-			}
+			list.addAll(leftContext);
+			
 			boolean considerIncompleteNgrams = true;
-			boolean skip_start = true;
+			boolean skipStart = true;
 			if (list.get(0) != START_SYM_ID) {
-				skip_start = false;
+				skipStart = false;
 			}
-			res += scoreChunk(list, considerIncompleteNgrams, skip_start);
+			res += scoreChunk(list, considerIncompleteNgrams, skipStart);
 		}
 		/*if (add_start == true) {
 			System.out.println("left context: " +Symbol.get_string(l_context) + ";prob "+res);
 		}*/
 		if (addEnd == true) {//only when add_end is true, we get a complete ngram, otherwise, all ngrams in r_state are incomplete and we should do nothing
 			List<Integer>    rightContext = state.getRightLMStateWords();
-			List<Integer> list = new ArrayList<Integer>(rightContext.size()+1);
-			for (int k = 0; k < rightContext.size(); k++) {
-				list.add(rightContext.get(k));
-			}
+			List<Integer> list = new ArrayList<Integer>(rightContext);
 			list.add(STOP_SYM_ID);
 			double tem = scoreChunk(list, false, false);
 			res += tem;

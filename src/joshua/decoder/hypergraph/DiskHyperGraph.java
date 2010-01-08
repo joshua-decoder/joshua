@@ -99,6 +99,7 @@ public class DiskHyperGraph {
 	// Set in init_read(...), used in read_hyper_graph()
 	private HashMap<Integer,?> selectedSentences;
 	
+	private int sentID;
 	
 //===============================================================
 // Static Fields
@@ -237,7 +238,7 @@ public class DiskHyperGraph {
 			+ " " + this.qtyDeductions
 			+ "\n" );
 		
-		
+		this.sentID = hg.sentID;
 		// we save the hypergraph in a bottom-up way: so that reading is easy
 		if (this.idToItem.size() != this.itemToID.size()) {
 			throw new RuntimeException("Number of Items is not equal");
@@ -384,7 +385,7 @@ public class DiskHyperGraph {
 		
 		double[] transitionCosts = ComputeNodeResult.computeModelTransitionCost(
 				this.featureFunctions, edge.getRule(), edge.getAntNodes(), 
-				parentNode.i, parentNode.j, edge.getSourcePath());
+				parentNode.i, parentNode.j, edge.getSourcePath(), this.sentID);
 		
 		for (int k = 0; k < this.featureFunctions.size(); k++) {
 			line.append(String.format("%.4f", transitionCosts[k]))

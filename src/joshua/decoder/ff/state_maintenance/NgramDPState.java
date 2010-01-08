@@ -35,8 +35,7 @@ public class NgramDPState implements DPState {
 	private List<Integer> rightLMStateWords;
 	private String sig = null;
 	
-	static String SIG_PREAMBLE = "lm "; //seperator for state in signature
-	static String SIG_SEP = " -S- "; //seperator for state in signature
+	private static String SIG_SEP = " -S- "; //seperator for state in signature
 
 	public  NgramDPState(List<Integer> leftLMStateWords, List<Integer> rightLMStateWords) {
 		this.leftLMStateWords = leftLMStateWords;

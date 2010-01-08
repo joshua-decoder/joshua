@@ -34,8 +34,8 @@ public class ComputeNodeResult {
 	 * Compute costS and the states of thE node
 	 */
 	public ComputeNodeResult(List<FeatureFunction> featureFunctions, Rule rule,
-			List<HGNode> antNodes, int i, int j, SourcePath srcPath,
-			List<StateComputer> stateComputers){
+			List<HGNode> antNodes, int i, int j, SourcePath srcPath, 
+			List<StateComputer> stateComputers, int sentID){
 		
 		double finalizedTotalCost = 0.0;
 		
@@ -63,11 +63,11 @@ public class ComputeNodeResult {
 		
 		for (FeatureFunction ff : featureFunctions) {		
 			transitionCostSum += 
-				ff.getWeight() * ff.transition(rule, antNodes, i, j, srcPath);
+				ff.getWeight() * ff.transition(rule, antNodes, i, j, srcPath, sentID);
 			
 			DPState dpState = allDPStates.get(ff.getStateID());
 			futureCostEstimation +=
-				ff.getWeight() * ff.estimateFutureCost(rule, dpState);
+				ff.getWeight() * ff.estimateFutureCost(rule, dpState, sentID);
 			
 		}
 		
@@ -97,19 +97,19 @@ public class ComputeNodeResult {
 	
 	
 	
-	public static double computeCombinedTransitionCost(List<FeatureFunction> featureFunctions, HGNode parentNode, HyperEdge dt){
+	public static double computeCombinedTransitionCost(List<FeatureFunction> featureFunctions, HGNode parentNode, HyperEdge dt, int sentID){
 		double res = 0;
 		for(FeatureFunction ff : featureFunctions) {				
 			if(dt.getRule()!=null)
-				res += ff.getWeight() * ff.transition(dt.getRule(), dt.getAntNodes(), parentNode.i, parentNode.j, dt.getSourcePath());
+				res += ff.getWeight() * ff.transition(dt.getRule(), dt.getAntNodes(), parentNode.i, parentNode.j, dt.getSourcePath(), sentID);
 			else
-				res += ff.getWeight() * ff.finalTransition(dt.getAntNodes().get(0),  parentNode.i, parentNode.j, dt.getSourcePath());		
+				res += ff.getWeight() * ff.finalTransition(dt.getAntNodes().get(0),  parentNode.i, parentNode.j, dt.getSourcePath(), sentID);		
 		}
 		return res;
 	}
 	
 	public static double[] computeModelTransitionCost(List<FeatureFunction> featureFunctions, Rule rule, 
-					List<HGNode> antNodes, int i, int j, SourcePath srcPath){
+					List<HGNode> antNodes, int i, int j, SourcePath srcPath, int sentID){
 		
 		double[] res = new double[featureFunctions.size()];
 		
@@ -117,9 +117,9 @@ public class ComputeNodeResult {
 		int k=0;
 		for(FeatureFunction ff : featureFunctions) {				
 			if(rule!=null)
-				res[k] = ff.transition(rule, antNodes, i, j, srcPath);
+				res[k] = ff.transition(rule, antNodes, i, j, srcPath, sentID);
 			else
-				res[k] = ff.finalTransition(antNodes.get(0),  i, j, srcPath);		
+				res[k] = ff.finalTransition(antNodes.get(0),  i, j, srcPath, sentID);		
 			k++;
 		}
 		

@@ -47,7 +47,7 @@ public class ExhaustiveCombiner implements Combiner{
 					List<HGNode> antNodes = new ArrayList<HGNode>();
 					antNodes.add(antNode);
 					cell.addHyperEdgeInCell(
-							new ComputeNodeResult(featureFunctions, rule, antNodes, i, j, srcPath, stateComputers),
+							new ComputeNodeResult(featureFunctions, rule, antNodes, i, j, srcPath, stateComputers, chart.segmentID),
 							rule, i, j, antNodes, srcPath);
 				}
 				
@@ -60,7 +60,7 @@ public class ExhaustiveCombiner implements Combiner{
 						antNodes.add(antNode1);
 						antNodes.add(antNode2);
 						cell.addHyperEdgeInCell(
-								new ComputeNodeResult(featureFunctions, rule, antNodes, i, j, srcPath, stateComputers),
+								new ComputeNodeResult(featureFunctions, rule, antNodes, i, j, srcPath, stateComputers, chart.segmentID),
 								rule, i, j, antNodes, srcPath);
 					}
 				}
@@ -83,7 +83,7 @@ public class ExhaustiveCombiner implements Combiner{
 
 	public void addAxiom(Chart chart, Cell cell, int i, int j, Rule rule, SourcePath srcPath) {
 		cell.addHyperEdgeInCell(
-				new ComputeNodeResult(this.featureFunctions, rule, null, i, j, srcPath, stateComputers),
+				new ComputeNodeResult(this.featureFunctions, rule, null, i, j, srcPath, stateComputers, chart.segmentID),
 				rule, i, j, null, srcPath);
 	}
 

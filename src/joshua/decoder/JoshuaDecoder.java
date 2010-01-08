@@ -22,6 +22,7 @@ import joshua.decoder.ff.ArityPhrasePenaltyFF;
 import joshua.decoder.ff.PhraseModelFF;
 import joshua.decoder.ff.WordPenaltyFF;
 import joshua.decoder.ff.SourcePathFF;
+import joshua.decoder.ff.discriminative.BLEUOracleModel;
 import joshua.decoder.ff.lm.LanguageModelFF;
 import joshua.decoder.ff.lm.NGramLanguageModel;
 import joshua.decoder.ff.lm.bloomfilter_lm.BloomFilterLanguageModel;
@@ -586,7 +587,7 @@ public class JoshuaDecoder {
 			if (line.indexOf("=") == -1) { // ignore lines with "="
 				String[] fds = Regex.spaces.split(line);
 				
-				if ("lm".equals(fds[0]) && fds.length == 2) { // lm order weight
+				if ("lm".equals(fds[0]) && fds.length == 2) { // lm weight
 					if (null == this.languageModel) {
 						throw new IllegalArgumentException("LM model has not been properly initialized before setting order and weight");
 					}
@@ -600,6 +601,24 @@ public class JoshuaDecoder {
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format(
 							"Line: %s\nAdd LM, order: %d; weight: %.3f;",
+							line, JoshuaConfiguration.lmOrder, weight));
+					
+				} else if ("oracle".equals(fds[0]) && fds.length >= 3) { //oracle weight files
+					if (null == this.languageModel) {
+						throw new IllegalArgumentException("LM model has not been properly initialized before setting order and weight");
+					}
+					double weight = Double.parseDouble(fds[1].trim());
+					String[] referenceFiles = new String[fds.length-2];
+					for(int i=0; i< referenceFiles.length; i++)
+						referenceFiles[i] =  fds[i+2].trim();			
+
+					this.featureFunctions.add(
+						new BLEUOracleModel(JoshuaConfiguration.ngramStateID, JoshuaConfiguration.lmOrder, this.featureFunctions.size(),
+								this.symbolTable, weight,
+								referenceFiles));
+					if (logger.isLoggable(Level.FINEST))
+						logger.finest(String.format(
+							"Line: %s\nAdd BLEUOracleModel, order: %d; weight: %.3f;",
 							line, JoshuaConfiguration.lmOrder, weight));
 					
 				} else if ("latticecost".equals(fds[0]) && fds.length == 2) {

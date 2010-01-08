@@ -69,11 +69,11 @@ public abstract class DefaultStatefulFF implements FeatureFunction {
 		this.stateID = id;
 	}
 	
-	public double transition(HyperEdge edge, int spanStart, int spanEnd){
-		return transition(edge.getRule(), edge.getAntNodes(), spanStart, spanEnd, edge.getSourcePath() );
+	public double transition(HyperEdge edge, int spanStart, int spanEnd, int sentID){
+		return transition(edge.getRule(), edge.getAntNodes(), spanStart, spanEnd, edge.getSourcePath(), sentID );
 	}
 	
-	public double finalTransition(HyperEdge edge, int spanStart, int spanEnd){
-		return  finalTransition(edge.getAntNodes().get(0), spanStart, spanEnd, edge.getSourcePath() );
+	public double finalTransition(HyperEdge edge, int spanStart, int spanEnd, int sentID){
+		return  finalTransition(edge.getAntNodes().get(0), spanStart, spanEnd, edge.getSourcePath(), sentID );
 	}
 }

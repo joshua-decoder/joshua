@@ -36,7 +36,7 @@ public class CubePruneCombiner implements Combiner{
 
 	public void addAxiom(Chart chart, Cell cell, int i, int j, Rule rule, SourcePath srcPath) {
 		cell.addHyperEdgeInCell(
-				new ComputeNodeResult(this.featureFunctions, rule, null, i, j, srcPath, stateComputers),
+				new ComputeNodeResult(this.featureFunctions, rule, null, i, j, srcPath, stateComputers, chart.segmentID),
 				rule, i, j, null, srcPath);
 	}
 
@@ -67,7 +67,7 @@ public class CubePruneCombiner implements Combiner{
 			// TODO: si.nodes must be sorted
 			currentAntNodes.add(si.nodes.get(0));
 		}
-		ComputeNodeResult result =	new ComputeNodeResult(featureFunctions, currentRule, currentAntNodes, i, j, srcPath, stateComputers);
+		ComputeNodeResult result =	new ComputeNodeResult(featureFunctions, currentRule, currentAntNodes, i, j, srcPath, stateComputers, chart.segmentID);
 		
 		int[] ranks = new int[1+superNodes.size()]; // rule, ant items
 		for (int d = 0; d < ranks.length; d++) {
@@ -130,7 +130,7 @@ public class CubePruneCombiner implements Combiner{
 				
 				CubePruneState tState = new CubePruneState(
 						new ComputeNodeResult(featureFunctions, currentRule, 
-								currentAntNodes, i, j, srcPath, stateComputers),
+								currentAntNodes, i, j, srcPath, stateComputers, chart.segmentID),
 					newRanks, currentRule, currentAntNodes);
 				
 				// add state into heap

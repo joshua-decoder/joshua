@@ -83,6 +83,7 @@ public class Chart {
 	int nDotitemAdded       = 0; // note: there is no pruning in dot-item
 	int nCalledComputeNode = 0;
 	
+	int              segmentID;
 	
 //===============================================================
 // Private instance fields (maybe could be protected instead)
@@ -96,7 +97,7 @@ public class Chart {
 	private Cell              goalBin;
 	private int              goalSymbolID = -1;
 	private Lattice<Integer> sentence; // a list of foreign words
-	private int              segmentID;
+	
 	
 		
 	private Combiner combiner = null;
@@ -396,7 +397,7 @@ public class Chart {
 					List<Rule> rules = childNode.getRules().getSortedRules();
 					
 					for (Rule rule : rules) { // for each unary rules								
-						ComputeNodeResult states = new ComputeNodeResult(this.featureFunctions, rule, antecedents, i, j, new SourcePath(), stateComputers);
+						ComputeNodeResult states = new ComputeNodeResult(this.featureFunctions, rule, antecedents, i, j, new SourcePath(), stateComputers, this.segmentID);
 						HGNode resNode = chartBin.addHyperEdgeInCell(states, rule, i, j, antecedents, new SourcePath());
 						if (null != resNode) {
 							queue.add(resNode);
@@ -436,7 +437,7 @@ public class Chart {
                                 child_tnode.getRules().getSortedRules();
 
                         for (Rule rule : rules){//for each unary rules
-                        	ComputeNodeResult states = new ComputeNodeResult(this.featureFunctions, rule, l_ants, i, j, new SourcePath(), stateComputers);
+                        	ComputeNodeResult states = new ComputeNodeResult(this.featureFunctions, rule, l_ants, i, j, new SourcePath(), stateComputers, this.segmentID);
                             HGNode res_item = chartCell.addHyperEdgeInCell(states, rule, i, j, l_ants, new SourcePath());
                             if (null != res_item) {
                                     queue.add(res_item);

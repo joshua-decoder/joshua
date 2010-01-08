@@ -59,31 +59,30 @@ public interface FeatureFunction {
 //===============================================================
 // Methods
 //===============================================================
+	/**sentID might be useful for sentence-specific features (e.g., oralce model)
+	 * */
 	
 	/**
 	 * It is used when initializing translation grammars (for
 	 * pruning purpose, and to get stateless cost for each rule).
 	 * This is also required to sort the rules (required by Cube-pruning).
 	 */
-	double estimate(Rule rule);
+	double estimate(Rule rule, int sentID);
 	
 		
 	/**estimate future cost, e.g., the costs of partial n-grams
 	 * asscociated with the left-edge ngram state
 	 * */
-	double estimateFutureCost(Rule rule, DPState curDPState);
+	double estimateFutureCost(Rule rule, DPState curDPState, int sentID);	
 	
+	double transition(Rule rule, List<HGNode> antNodes, int spanStart, int spanEnd, SourcePath srcPath, int sentID);
 	
-	double transition(Rule rule, List<HGNode> antNodes, int spanStart, int spanEnd, SourcePath srcPath);
+	double transition(HyperEdge edge, int spanStart, int spanEnd, int sentID);
 	
-	double transition(HyperEdge edge, int spanStart, int spanEnd);
-	
-	/**Edges calling this function do not have concret rules associated with them. 
+	/**Edges calling finalTransition do not have concret rules associated with them. 
 	 * */
-	double finalTransition(HGNode antNode, int spanStart, int spanEnd, SourcePath srcPath);
+	double finalTransition(HGNode antNode, int spanStart, int spanEnd, SourcePath srcPath, int sentID);
 	
-	/**Edges calling this function do not have concret rules associated with them. 
-	 * */
-	double finalTransition(HyperEdge edge, int spanStart, int spanEnd);
+	double finalTransition(HyperEdge edge, int spanStart, int spanEnd, int sentID);
 	
 }

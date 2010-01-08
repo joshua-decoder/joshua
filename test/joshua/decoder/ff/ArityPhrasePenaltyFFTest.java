@@ -56,7 +56,7 @@ public class ArityPhrasePenaltyFFTest {
 		
 		Rule dummyRule = new BilingualRule(lhs, sourceRHS, targetRHS, featureScores, arity);
 		
-		Assert.assertEquals(featureFunction.estimate(dummyRule), ArityPhrasePenaltyFF.ALPHA);
+		Assert.assertEquals(featureFunction.estimate(dummyRule, -1), ArityPhrasePenaltyFF.ALPHA);
 		
 	}
 	

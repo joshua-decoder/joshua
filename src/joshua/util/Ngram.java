@@ -3,93 +3,95 @@ package joshua.util;
 import java.util.HashMap;
 import java.util.List;
 
+import joshua.corpus.vocab.SymbolTable;
+
 public class Ngram {
 
-	//TODO: consider merge with Discriminative merge
 	
-	public static void getNgrams(HashMap<String, Integer> tbl, int order, int[] wrds){
+
+	public static void getNgrams(HashMap<String, Integer> tbl, int startOrder, int endOrder, final List<Integer> wrds){
+		getNgrams(null, tbl, startOrder, endOrder, wrds);
+	}
+
+	public static void getNgrams(HashMap<String, Integer> tbl,  int startOrder, int endOrder,  final int[] wrds){
+		getNgrams(null, tbl, startOrder, endOrder, wrds);
+	}
+
+	public static void getNgrams(HashMap<String, Integer> tbl,  int startOrder, int endOrder, final  String[] wrds){
+		getNgrams(null, tbl, startOrder, endOrder, wrds);
+	}
+	
+	/**if symbolTbl!=null, then convert interger to String */
+	public static void getNgrams(SymbolTable symbolTbl, HashMap<String, Integer> tbl,  int startOrder, int endOrder,  final int[] wrds){
 		
 		for(int i=0; i<wrds.length; i++)
-			for(int j=0; j<order && j+i<wrds.length; j++){//ngram: [i,i+j]
+			for(int j=startOrder-1; j<endOrder  && j+i<wrds.length; j++){//ngram: [i,i+j]
 				StringBuffer ngram = new StringBuffer();
 				for(int k=i; k<=i+j; k++){
-					
-					ngram.append(wrds[k]);
+					int t_wrd = wrds[k];
+					if(symbolTbl!=null)
+						ngram.append(symbolTbl.getWord(t_wrd));
+					else
+						ngram.append(t_wrd);
 					if(k<i+j) 
 						ngram.append(" ");
 				}
-			
 				String ngramStr = ngram.toString();
-				if(tbl.containsKey(ngramStr))
-					tbl.put(ngramStr,  tbl.get(ngramStr)+1);
-				else
-					tbl.put(ngramStr, 1);
+				increaseCount(tbl, ngramStr, 1);
 			}
 	}
 	
-//	accumulate ngram counts into tbl
-	public static void getNgrams(HashMap<String, Integer>  tbl, int order, List<Integer> wrds){
+	
+	/**if symbolTbl!=null, then convert interger to String */
+	public static void getNgrams(SymbolTable symbolTbl, HashMap<String, Integer> tbl, int startOrder, int endOrder, final List<Integer> wrds){
 		
 		for(int i=0; i<wrds.size(); i++)
-			for(int j=0; j<order && j+i<wrds.size(); j++){//ngram: [i,i+j]
+			for(int j=startOrder-1; j<endOrder && j+i<wrds.size(); j++){//ngram: [i,i+j]
 				StringBuffer ngram = new StringBuffer();
 				for(int k=i; k<=i+j; k++){
 					int t_wrd = wrds.get(k);
-					ngram.append(t_wrd);
+					if(symbolTbl!=null)
+						ngram.append(symbolTbl.getWord(t_wrd));
+					else
+						ngram.append(t_wrd);
 					if(k<i+j) 
 						ngram.append(" ");
 				}
-				
 				String ngramStr = ngram.toString();
-				if(tbl.containsKey(ngramStr))
-					tbl.put(ngramStr, tbl.get(ngramStr)+1);
-				else
-					tbl.put(ngramStr, 1);
+				increaseCount(tbl, ngramStr, 1);
 			}
 	}
 	
-//	accumulate ngram counts into tbl
-	public static void getHighestOrderNgrams(HashMap<String, Integer>  tbl, int order, List<Integer> wrds){
-		if(wrds.size()<order)
-			return;
+	/**if symbolTbl!=null, then convert string to integer */
+	public static void getNgrams(SymbolTable symbolTbl, HashMap<String, Integer> tbl, int startOrder, int endOrder, final String[] wrds){
 		
-		for(int i=0; i<=wrds.size()-order; i++){
-			int j = order-1;
-			
-			//== one ngram [i,i+j]
-			StringBuffer ngram = new StringBuffer();
-			for(int k=i; k<=i+j; k++){
-				int t_wrd = wrds.get(k);
-				ngram.append(t_wrd);
-				if(k<i+j) 
-					ngram.append(" ");
+		for(int i=0; i<wrds.length; i++)
+			for(int j=startOrder-1; j<endOrder && j+i<wrds.length; j++){//ngram: [i,i+j]
+				StringBuffer ngram = new StringBuffer();
+				for(int k=i; k<=i+j; k++){
+					String t_wrd = wrds[k];
+					if(symbolTbl!=null)
+						ngram.append(symbolTbl.getID(t_wrd));
+					else
+						ngram.append(t_wrd);
+					if(k<i+j) 
+						ngram.append(" ");
+				}
+				String ngramStr = ngram.toString();
+				increaseCount(tbl, ngramStr, 1);
 			}
-			
-			String ngramStr = ngram.toString();
-			if(tbl.containsKey(ngramStr))
-				tbl.put(ngramStr, tbl.get(ngramStr)+1);
-			else
-				tbl.put(ngramStr, 1);
-				
-		}
 	}
 	
-	public static void incrementOneNgram(List<Integer> words, HashMap<String, Integer> tbl, int count){
-		
-		StringBuffer ngram = new StringBuffer();
-		for(int i=0; i<words.size(); i++){
-			int word = words.get(i);
-			ngram.append(word);
-			if(i<words.size()-1) 
-				ngram.append(" ");
-		}
-		
-		String ngramStr = ngram.toString();
-		if(tbl.containsKey(ngramStr))
-			tbl.put(ngramStr, tbl.get(ngramStr)+count);
+	static private void increaseCount(HashMap<String, Integer> tbl, String feat, int increment){
+		Integer oldCount = tbl.get(feat);
+		if(oldCount!=null)
+			tbl.put(feat, oldCount + increment);
 		else
-			tbl.put(ngramStr, count);
+			tbl.put(feat, increment);
 	}
 	
+
+	
+
 	
 }
