@@ -53,47 +53,52 @@ import java.util.concurrent.TimeUnit;
  */
 public class NbestMinRiskReranker {
 	
-	boolean produce_reranked_nbest = false;//TODO: this functionality is not implemented yet; default is to produce 1best without any feature scores; 
-	double scaling_factor = 1.0;
+	//TODO: this functionality is not implemented yet; default is to produce 1best without any feature scores;
+	boolean produceRerankedNbest = false; 
 	
-	static int bleu_order = 4;
-	static boolean do_ngram_clip = true;
+	double scalingFactor = 1.0;
 	
-	static boolean use_google_linear_corpus_gain = false;
+	static int bleuOrder = 4;
+	static boolean doNgramClip = true;
+	
+	static boolean useGoogleLinearCorpusGain = false;
 	
 	final PriorityBlockingQueue<RankerResult> resultsQueue =
 		new PriorityBlockingQueue<RankerResult>();
 	
-	public NbestMinRiskReranker(boolean produce_reranked_nbest_, double scaling_factor_) {
-		this.produce_reranked_nbest = produce_reranked_nbest_;
-		this.scaling_factor = scaling_factor_;
+	public NbestMinRiskReranker(boolean produceRerankedNbest, double scalingFactor) {
+		this.produceRerankedNbest = produceRerankedNbest;
+		this.scalingFactor = scalingFactor;
 	}
 	
 	
-	public String process_one_sent( ArrayList<String> nbest, int sent_id) {
-		System.out.println("Now process sentence " + sent_id);
+	public String processOneSent( List<String> nbest, int sentID) {
+		System.out.println("Now process sentence " + sentID);
+		
 		//step-0: preprocess
 		//assumption: each hyp has a formate: "sent_id ||| hyp_itself ||| feature scores ||| linear-combination-of-feature-scores(this should be logP)"
-		ArrayList<String> l_hyp_itself = new ArrayList<String>();
+		
+		List<String> hypsItself = new ArrayList<String>();
 		//ArrayList<String> l_feat_scores = new ArrayList<String>();
-		ArrayList<Double> l_baseline_scores = new ArrayList<Double>(); // linear combination of all baseline features
-		ArrayList<HashMap<String,Integer>> l_ngram_tbls = new ArrayList<HashMap<String,Integer>>();
-		ArrayList<Integer> l_sent_lens = new ArrayList<Integer>();
+		List<Double> baselineScores = new ArrayList<Double>(); // linear combination of all baseline features
+		List<HashMap<String,Integer>> ngramTbls = new ArrayList<HashMap<String,Integer>>();
+		List<Integer> sentLens = new ArrayList<Integer>();
+		
 		for (String hyp : nbest) {
 			String[] fds = Regex.threeBarsWithSpace.split(hyp);
-			int t_sent_id = Integer.parseInt(fds[0]);
-			if (sent_id != t_sent_id) { 
+			int tSentID = Integer.parseInt(fds[0]);
+			if (sentID != tSentID) { 
 				throw new RuntimeException("sentence_id does not match");
 			}
 			String hypothesis = (fds.length==4) ? fds[1] : "";
-			l_hyp_itself.add(hypothesis);
+			hypsItself.add(hypothesis);
 			
-			String[] t_wrds = Regex.spaces.split(hypothesis);
-			l_sent_lens.add(t_wrds.length);
+			String[] words = Regex.spaces.split(hypothesis);
+			sentLens.add(words.length);
 			
 			HashMap<String,Integer> ngramTbl = new HashMap<String,Integer>();
-			Ngram.getNgrams(ngramTbl, 1, 4, t_wrds);
-			l_ngram_tbls.add(ngramTbl);
+			Ngram.getNgrams(ngramTbl, 1, bleuOrder, words);
+			ngramTbls.add(ngramTbl);
 			
 			//l_feat_scores.add(fds[2]);
 			
@@ -101,47 +106,51 @@ public class NbestMinRiskReranker {
 			//     unless the hyp_itself is empty,
 			//     in which case finalIndex will be 2.
 			int finalIndex = fds.length - 1;
-			l_baseline_scores.add(Double.parseDouble(fds[finalIndex]));
+			baselineScores.add(Double.parseDouble(fds[finalIndex]));
 			
 		}
 		
 		//step-1: get normalized distribution
-		computeNormalizedProbs(l_baseline_scores, scaling_factor);//value in l_baseline_scores will be changed to normalized probability
-		ArrayList<Double> l_normalized_probs = l_baseline_scores;
 		
-		//#### required by google linear corpus gain
-		HashMap<String, Double> tbl_posterior_counts = null;
-		if (use_google_linear_corpus_gain) {
-			tbl_posterior_counts = new HashMap<String,Double>();
-			getGooglePosteriorCounts(l_ngram_tbls, l_normalized_probs, tbl_posterior_counts);
+		/**value in baselineScores will be changed to normalized probability
+		 * */
+		computeNormalizedProbs(baselineScores, scalingFactor);
+		
+		List<Double> normalizedProbs = baselineScores;
+		
+		//=== required by google linear corpus gain
+		HashMap<String, Double> posteriorCountsTbl = null;
+		if (useGoogleLinearCorpusGain) {
+			posteriorCountsTbl = new HashMap<String,Double>();
+			getGooglePosteriorCounts(ngramTbls, normalizedProbs, posteriorCountsTbl);
 		}
-		//####
+	
 		
 		//step-2: rerank the nbest
-		double best_gain = -1000000000;//set as worst gain
-		String best_hyp = null;
-		ArrayList<Double> l_gains = new ArrayList<Double>();
-		for (int i = 0; i < l_hyp_itself.size(); i++) {
-			String cur_hyp = (String) l_hyp_itself.get(i);
-			int cur_hyp_len = (Integer) l_sent_lens.get(i);
-			HashMap<String, Integer> tbl_ngram_cur_hyp = l_ngram_tbls.get(i);
+		double bestGain = -1000000000;//set as worst gain
+		String bestHyp = null;
+		List<Double> gains = new ArrayList<Double>();
+		for (int i = 0; i < hypsItself.size(); i++) {
+			String curHyp =  hypsItself.get(i);
+			int curHypLen = sentLens.get(i);
+			HashMap<String, Integer> curHypNgramTbl = ngramTbls.get(i);
 			//double cur_gain = computeGain(cur_hyp, l_hyp_itself, l_normalized_probs);
-			double cur_gain = 0;
-			if (use_google_linear_corpus_gain) {
-				cur_gain = computeLinearCorpusGain(cur_hyp_len, tbl_ngram_cur_hyp, tbl_posterior_counts);
+			double curGain = 0;
+			if (useGoogleLinearCorpusGain) {
+				curGain = computeExpectedLinearCorpusGain(curHypLen, curHypNgramTbl, posteriorCountsTbl);
 			} else {
-				cur_gain = computeGain(cur_hyp_len, tbl_ngram_cur_hyp, l_ngram_tbls, l_sent_lens,l_normalized_probs);
+				curGain = computeExpectedGain(curHypLen, curHypNgramTbl, ngramTbls, sentLens,normalizedProbs);
 			}
 			
-			l_gains.add( cur_gain);
-			if (i == 0 || cur_gain > best_gain) { // maximize
-				best_gain = cur_gain;
-				best_hyp = cur_hyp;
+			gains.add( curGain);
+			if (i == 0 || curGain > bestGain) { // maximize
+				bestGain = curGain;
+				bestHyp = curHyp;
 			}
 		}
 		
 		//step-3: output the 1best or nbest
-		if (this.produce_reranked_nbest) {
+		if (this.produceRerankedNbest) {
 			//TOTO: sort the list and write the reranked nbest; Use Collections.sort(List list, Comparator c)
 		} else {
 			/*
@@ -150,18 +159,19 @@ public class NbestMinRiskReranker {
 			out.flush();
 			*/
 		}
-		System.out.println("best gain: " + best_gain);
-		if (null == best_hyp) {
+		
+		System.out.println("best gain: " + bestGain);
+		if (null == bestHyp) {
 			throw new RuntimeException("mbr reranked one best is null, must be wrong");
 		}
-		return best_hyp;
+		return bestHyp;
 	}
 
 	
 	/**based on a list of log-probabilities in nbestLogProbs, obtain a 
 	 * normalized distribution, and put the normalized probability (real value in [0,1]) into nbestLogProbs
 	 * */
-	//get a normalized distributeion and put it back to nbest_logps
+	//get a normalized distributeion and put it back to nbestLogProbs
 	static public void computeNormalizedProbs(List<Double> nbestLogProbs, double scalingFactor){
 		
 		//=== get noralization constant, remember features, remember the combined linear score
@@ -198,55 +208,56 @@ public class NbestMinRiskReranker {
 	} 
 	
 	
-	//Gain(e) = \sum_{e'} G(e, e')P(e')
-	//cur_hyp: e
-	//true_hyp: e'
-	public double computeGain(int cur_hyp_len, HashMap<String, Integer> tbl_ngram_cur_hyp, ArrayList<HashMap<String,Integer>> l_ngram_tbls, 
-			ArrayList<Integer> l_sent_lens, ArrayList<Double> nbest_probs) {
+	//Gain(e) = negative risk = \sum_{e'} G(e, e')P(e')
+	//curHyp: e
+	//trueHyp: e'
+	public double computeExpectedGain(int curHypLen, HashMap<String, Integer> curHypNgramTbl, List<HashMap<String,Integer>> ngramTbls, 
+			List<Integer> sentLens, List<Double> nbestProbs) {
+		
 		//### get noralization constant, remember features, remember the combined linear score
 		double gain = 0;
 		
-		for (int i = 0; i < nbest_probs.size(); i++) {
-			HashMap<String,Integer> tbl_ngram_true_hyp = l_ngram_tbls.get(i);
-			double true_prob = nbest_probs.get(i);
-			int true_len = l_sent_lens.get(i);
-			gain += true_prob * BLEU.computeSentenceBleu(true_len, tbl_ngram_true_hyp, cur_hyp_len, tbl_ngram_cur_hyp, do_ngram_clip, bleu_order);
+		for (int i = 0; i < nbestProbs.size(); i++) {
+			HashMap<String,Integer> trueHypNgramTbl = ngramTbls.get(i);
+			double trueProb = nbestProbs.get(i);
+			int trueLen = sentLens.get(i);
+			gain += trueProb * BLEU.computeSentenceBleu(trueLen, trueHypNgramTbl, curHypLen, curHypNgramTbl, doNgramClip, bleuOrder);
 		}
 		//System.out.println("Gain is " + gain);
 		return gain;
 	} 
 	
-	//Gain(e) = \sum_{e'} G(e, e')P(e')
-	//cur_hyp: e
-	//true_hyp: e'
-	static public double computeGain(String cur_hyp, List<String> nbest_hyps, List<Double> nbest_probs) {
+	//Gain(e) = negative risk =  \sum_{e'} G(e, e')P(e')
+	//curHyp: e
+	//trueHyp: e'
+	static public double computeExpectedGain(String curHyp, List<String> nbestHyps, List<Double> nbestProbs) {
 		//### get noralization constant, remember features, remember the combined linear score
 		double gain = 0;
 		
-		for (int i = 0; i < nbest_hyps.size(); i++) {
-			String true_hyp  = nbest_hyps.get(i);
-			double true_prob = nbest_probs.get(i);
-			gain += true_prob * BLEU.computeSentenceBleu(true_hyp, cur_hyp, do_ngram_clip, bleu_order);
+		for (int i = 0; i < nbestHyps.size(); i++) {
+			String trueHyp  = nbestHyps.get(i);
+			double trueProb = nbestProbs.get(i);
+			gain += trueProb * BLEU.computeSentenceBleu(trueHyp, curHyp, doNgramClip, bleuOrder);
 		}
 		//System.out.println("Gain is " + gain);
 		return gain;
 	} 
 	
-	void getGooglePosteriorCounts(ArrayList<HashMap<String,Integer>>  l_ngram_tbls, ArrayList<Double> l_normalized_probs, HashMap<String,Double> tbl_posterior_counts) {
+	void getGooglePosteriorCounts( List<HashMap<String,Integer>>  ngramTbls,  List<Double> normalizedProbs, HashMap<String,Double> posteriorCountsTbl) {
 		//TODO
 	}
 	
-	double computeLinearCorpusGain(int cur_hyp_len, HashMap<String,Integer> tbl_ngram_cur_hyp, HashMap<String,Double> tbl_posterior_counts) {
+	double computeExpectedLinearCorpusGain(int curHypLen, HashMap<String,Integer> curHypNgramTbl, HashMap<String,Double> posteriorCountsTbl) {
 		//TODO
 		double[] thetas = { -1, 1, 1, 1, 1 };
 		
 		double res = 0;
-		res += thetas[0] * cur_hyp_len;
-		for (Entry<String,Integer> entry : tbl_ngram_cur_hyp.entrySet()) {
+		res += thetas[0] * curHypLen;
+		for (Entry<String,Integer> entry : curHypNgramTbl.entrySet()) {
 			String   key = entry.getKey();
 			String[] tem = Regex.spaces.split(key);
 			
-			double post_prob = tbl_posterior_counts.get(key);
+			double post_prob = posteriorCountsTbl.get(key);
 			res += entry.getValue() * post_prob * thetas[tem.length];
 		}
 		return res;
@@ -290,47 +301,47 @@ public class NbestMinRiskReranker {
 			}
 			System.exit(-1);
 		}
-		long start_time = System.currentTimeMillis();
-		String f_nbest_in = args[0].trim();
-		String f_out = args[1].trim();
-		boolean produce_reranked_nbest = Boolean.valueOf(args[2].trim());
-		double scaling_factor = Double.parseDouble(args[3].trim());
+		long startTime = System.currentTimeMillis();
+		String inputNbest = args[0].trim();
+		String output = args[1].trim();
+		boolean produceRerankedNbest = Boolean.valueOf(args[2].trim());
+		double scalingFactor = Double.parseDouble(args[3].trim());
 		int numThreads = (args.length==5) ? Integer.parseInt(args[4].trim()) : 1;
 	
 		
-		BufferedWriter t_writer_out =	FileUtility.getWriteFileStream(f_out);
-		NbestMinRiskReranker mbr_reranker =
-			new NbestMinRiskReranker(produce_reranked_nbest, scaling_factor);
+		BufferedWriter outWriter =	FileUtility.getWriteFileStream(output);
+		NbestMinRiskReranker mbrReranker =
+			new NbestMinRiskReranker(produceRerankedNbest, scalingFactor);
 		
 		System.out.println("##############running mbr reranking");
 		
-		int old_sent_id = -1;
-		LineReader nbestReader = new LineReader(f_nbest_in);
-		ArrayList<String> nbest = new ArrayList<String>();
+		int oldSentID = -1;
+		LineReader nbestReader = new LineReader(inputNbest);
+		List<String> nbest = new ArrayList<String>();
 
 		if (numThreads==1) {
 			
 			try { for (String line : nbestReader) {
 				String[] fds = Regex.threeBarsWithSpace.split(line);
-				int new_sent_id = Integer.parseInt(fds[0]);
-				if (old_sent_id != -1 && old_sent_id != new_sent_id) {
-					String best_hyp = mbr_reranker.process_one_sent(nbest, old_sent_id);//nbest: list of unique strings
-					t_writer_out.write(best_hyp);
-					t_writer_out.newLine();
-					t_writer_out.flush();
+				int newSentID = Integer.parseInt(fds[0]);
+				if (oldSentID != -1 && oldSentID != newSentID) {
+					String best_hyp = mbrReranker.processOneSent(nbest, oldSentID);//nbest: list of unique strings
+					outWriter.write(best_hyp);
+					outWriter.newLine();
+					outWriter.flush();
 					nbest.clear();
 				}
-				old_sent_id = new_sent_id;
+				oldSentID = newSentID;
 				nbest.add(line);
 			} } finally { nbestReader.close(); }
 
 			//last nbest
-			String best_hyp = mbr_reranker.process_one_sent(nbest, old_sent_id);
-			t_writer_out.write(best_hyp);
-			t_writer_out.newLine();
-			t_writer_out.flush();
+			String bestHyp = mbrReranker.processOneSent(nbest, oldSentID);
+			outWriter.write(bestHyp);
+			outWriter.newLine();
+			outWriter.flush();
 			nbest.clear();
-			t_writer_out.close();
+			outWriter.close();
 			
 		} else {
 			
@@ -338,19 +349,19 @@ public class NbestMinRiskReranker {
 			
 			for (String line : nbestReader) {			
 				String[] fds = Regex.threeBarsWithSpace.split(line);
-				int new_sent_id = Integer.parseInt(fds[0]);
-				if (old_sent_id != -1 && old_sent_id != new_sent_id) {
+				int newSentID = Integer.parseInt(fds[0]);
+				if (oldSentID != -1 && oldSentID != newSentID) {
 					
-					threadPool.execute(mbr_reranker.new RankerTask(nbest, old_sent_id));
+					threadPool.execute(mbrReranker.new RankerTask(nbest, oldSentID));
 					
 					nbest.clear();
 				}
-				old_sent_id = new_sent_id;
+				oldSentID = newSentID;
 				nbest.add(line);
 			}
 			
 			//last nbest
-			threadPool.execute(mbr_reranker.new RankerTask(nbest, old_sent_id));
+			threadPool.execute(mbrReranker.new RankerTask(nbest, oldSentID));
 			nbest.clear();
 			
 			threadPool.shutdown();
@@ -358,40 +369,40 @@ public class NbestMinRiskReranker {
 			try {
 				threadPool.awaitTermination(Integer.MAX_VALUE, TimeUnit.SECONDS);
 				
-				while (! mbr_reranker.resultsQueue.isEmpty()) {
-					RankerResult result = mbr_reranker.resultsQueue.remove();
+				while (! mbrReranker.resultsQueue.isEmpty()) {
+					RankerResult result = mbrReranker.resultsQueue.remove();
 					String best_hyp = result.toString();
-					t_writer_out.write(best_hyp);
-					t_writer_out.newLine();
+					outWriter.write(best_hyp);
+					outWriter.newLine();
 				}
 				
-				t_writer_out.flush();
+				outWriter.flush();
 				
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			} finally {
-				t_writer_out.close();
+				outWriter.close();
 			}
 			
 		}
 		
 		System.out.println("Total running time (seconds) is "
-			+ (System.currentTimeMillis() - start_time) / 1000.0);
+			+ (System.currentTimeMillis() - startTime) / 1000.0);
 	}
 	
 	private class RankerTask implements Runnable {
 
 		final ArrayList<String> nbest;
-		final int sent_id;
+		final int sentID;
 		
-		RankerTask(final ArrayList<String> nbest, final int sent_id) {
+		RankerTask(final List<String> nbest, final int sentID) {
 			this.nbest = new ArrayList<String>(nbest);
-			this.sent_id = sent_id;
+			this.sentID = sentID;
 		}
 		
 		public void run() {
-			String result = process_one_sent(nbest, sent_id);
-			resultsQueue.add(new RankerResult(result,sent_id));
+			String result = processOneSent(nbest, sentID);
+			resultsQueue.add(new RankerResult(result,sentID));
 		}
 		
 	}
