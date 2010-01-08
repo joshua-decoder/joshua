@@ -127,6 +127,11 @@ public class NbestMinRiskReranker {
 	
 		
 		//step-2: rerank the nbest
+		/**TODO: zhifei: now the re-ranking takes O(n^2) where n is the size of the nbest.
+		 * But, we can significantly speed up this (leadding to O(n)) by 
+		 * first estimating a model on nbest, and then rerank the nbest
+		 * using the estimated model.
+		 * */
 		double bestGain = -1000000000;//set as worst gain
 		String bestHyp = null;
 		List<Double> gains = new ArrayList<Double>();
@@ -392,7 +397,7 @@ public class NbestMinRiskReranker {
 	
 	private class RankerTask implements Runnable {
 
-		final ArrayList<String> nbest;
+		final List<String> nbest;
 		final int sentID;
 		
 		RankerTask(final List<String> nbest, final int sentID) {
