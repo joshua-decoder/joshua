@@ -52,12 +52,12 @@ public class HyperEdge {
 	 * */
 	private List<HGNode> antNodes = null; 
 	
-	public HyperEdge(Rule rl, double bestDerivationCost_, Double transitionCost_, List<HGNode> antNodes_, SourcePath sp){
-		bestDerivationCost = bestDerivationCost_;
-		transitionCost=transitionCost_;
-		rule=rl;
-		antNodes= antNodes_;
-		srcPath = sp;
+	public HyperEdge(Rule rule, double bestDerivationCost, Double transitionCost, List<HGNode> antNodes, SourcePath srcPath){
+		this.bestDerivationCost = bestDerivationCost;
+		this.transitionCost=transitionCost;
+		this.rule=rule;
+		this.antNodes= antNodes;
+		this.srcPath = srcPath;
 	}
 	
 	public Rule getRule(){
@@ -77,8 +77,8 @@ public class HyperEdge {
 		if(forceCompute || transitionCost==null){
 			double res = bestDerivationCost;
 			if(antNodes!=null)	
-				for(HGNode ant_it : antNodes)
-					res -= ant_it.bestHyperedge.bestDerivationCost;
+				for(HGNode antNode : antNodes)
+					res -= antNode.bestHyperedge.bestDerivationCost;
 			transitionCost = res;				
 		}
 		return transitionCost;

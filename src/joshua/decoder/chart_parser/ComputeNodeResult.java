@@ -127,6 +127,24 @@ public class ComputeNodeResult {
 	}
 		
 	
+	public static double[] computeModelTransitionCost(List<FeatureFunction> featureFunctions, HyperEdge edge, 
+			int i, int j,  int sentID){
+
+			double[] res = new double[featureFunctions.size()];
+			
+			//=== compute feature costs
+			int k=0;
+			for(FeatureFunction ff : featureFunctions) {				
+				if(edge.getRule()!=null)
+					res[k] = ff.transition(edge, i, j, sentID);
+				else
+					res[k] = ff.finalTransition(edge,  i, j, sentID);		
+				k++;
+			}
+			
+			return res;		
+	}
+	
 	void setExpectedTotalCost(double cost) {
 		this.expectedTotalCost = cost;
 	}

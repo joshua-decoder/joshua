@@ -281,10 +281,10 @@ public class KBestExtractor {
 		//####individual model cost, and final transition cost
 		if (null != modelCost) {
 			strHyp.append(" |||");
-			double tem_sum = 0.0;
+			double temSum = 0.0;
 			for (int k = 0; k < modelCost.length; k++) { /* note that all the transition cost (including finaltransition cost) is already stored in the hyperedge */
 				strHyp.append(String.format(" %.3f", -modelCost[k]));
-				tem_sum += modelCost[k]*models.get(k).getWeight();
+				temSum += modelCost[k]*models.get(k).getWeight();
 				
 //				System.err.println("tem_sum: " + tem_sum + " += " + model_cost[k] + " * " + l_models.get(k).getWeight());
 			}
@@ -295,9 +295,9 @@ public class KBestExtractor {
 			//sanity check
 //			if (false) {
 			if (performSanityCheck) {
-				if (Math.abs(cur.cost - tem_sum) > 1e-2) {
+				if (Math.abs(cur.cost - temSum) > 1e-2) {
 					StringBuilder error = new StringBuilder();
-					error.append("\nIn nbest extraction, Cost does not match; cur.cost: " + cur.cost + "; temsum: " +tem_sum + "\n");
+					error.append("\nIn nbest extraction, Cost does not match; cur.cost: " + cur.cost + "; temsum: " +temSum + "\n");
 					//System.out.println("In nbest extraction, Cost does not match; cur.cost: " + cur.cost + "; temsum: " +tem_sum);
 					for (int k = 0; k < modelCost.length; k++) {
 						error.append("model weight: " + models.get(k).getWeight() + "; cost: " +modelCost[k]+ "\n");
@@ -657,8 +657,8 @@ public class KBestExtractor {
 			if (null == modelCost) 
 				return;
 			//System.out.println("Rule is: " + dt.rule.toString());
-			double[] transitionCosts = ComputeNodeResult.computeModelTransitionCost(models, dt.getRule(), dt.getAntNodes(), parentNode.i, parentNode.j, dt.getSourcePath(), sentID);
-			
+			//double[] transitionCosts = ComputeNodeResult.computeModelTransitionCost(models, dt.getRule(), dt.getAntNodes(), parentNode.i, parentNode.j, dt.getSourcePath(), sentID);
+			double[] transitionCosts = ComputeNodeResult.computeModelTransitionCost(models, dt, parentNode.i, parentNode.j, sentID);
 		
 			for(int i=0; i<transitionCosts.length; i++){
 				modelCost[i] += transitionCosts[i];
