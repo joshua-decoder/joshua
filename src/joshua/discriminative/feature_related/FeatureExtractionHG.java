@@ -22,20 +22,20 @@ import joshua.discriminative.feature_related.feature_template.FeatureTemplate;
 public class FeatureExtractionHG  {
 	
 	static private HashSet<HGNode> processedNodes =  new HashSet<HGNode>();
-	static private HashMap restrictedFeatSet =null; //feature set
+	static private HashSet<String> restrictedFeatSet =null; //feature set
 	static private List<FeatureTemplate> featureTemplates=null;
 	static private DefaultInsideOutside insideOutsider = null;//compute the feature expectation
 	static private double sumOfScale = 0;
 
-	static public void featureExtractionOnHG(HyperGraph hg, HashMap featTbl, HashMap restrictedFeatureSet, List<FeatureTemplate> featTemplates){
+	static public void featureExtractionOnHG(HyperGraph hg, HashMap featTbl, HashSet<String> restrictedFeatureSet, List<FeatureTemplate> featTemplates){
 		featureExtractionOnHG(hg, null, featTbl, restrictedFeatureSet, featTemplates);
 	}
 	
-	static public void featureExtractionOnHG(HyperGraph hg, HashMap featTbl, HashMap restrictedFeatureSet, FeatureTemplate  featTemplate){
+	static public void featureExtractionOnHG(HyperGraph hg, HashMap featTbl, HashSet<String> restrictedFeatureSet, FeatureTemplate  featTemplate){
 		featureExtractionOnHG(hg, null, featTbl, restrictedFeatureSet, featTemplate);
 	}
 	
-	static public void featureExtractionOnHG(HyperGraph hg, DefaultInsideOutside insideOutside, HashMap featTbl, HashMap restrictedFeatureSet, FeatureTemplate  featTemplate){
+	static public void featureExtractionOnHG(HyperGraph hg, DefaultInsideOutside insideOutside, HashMap featTbl, HashSet<String> restrictedFeatureSet, FeatureTemplate  featTemplate){
 		ArrayList<FeatureTemplate> featTemplates = new ArrayList<FeatureTemplate> ();
 		featTemplates.add(featTemplate);
 		featureExtractionOnHG(hg, insideOutside, featTbl, restrictedFeatureSet, featTemplates);
@@ -43,7 +43,7 @@ public class FeatureExtractionHG  {
 	
 	//Features: deduction-indenpent item feature, pare-item-sensitve deduction feature, and parent-item-indenpent deduction feature
 	//recursive
-	static public void featureExtractionOnHG(HyperGraph hg, DefaultInsideOutside insideOutside, HashMap featTbl, HashMap restrictedFeatureSet, List<FeatureTemplate> featTemplates){		
+	static public void featureExtractionOnHG(HyperGraph hg, DefaultInsideOutside insideOutside, HashMap featTbl, HashSet<String> restrictedFeatureSet, List<FeatureTemplate> featTemplates){		
 		sumOfScale = 0;
 		processedNodes.clear();
 		restrictedFeatSet = restrictedFeatureSet;
@@ -101,7 +101,7 @@ public class FeatureExtractionHG  {
 	//### feature require parent item information 
 	/*normally, the information in pararent item can be recovered by the dt itself, however, we give a pointer to parent to save computation whenever possible
 	 *but, some features may not be obtained by dt, for example, how many deductions the parent_item has, what is the best cost among the deductions, and so on*/
-	static public void featureExtractionHyeredgeHelper(HGNode parentNode, HyperEdge dt,  HashMap featureTbl, List<FeatureTemplate> featTemplates, HashMap restrictedFeatSet, double scale ){		
+	static public void featureExtractionHyeredgeHelper(HGNode parentNode, HyperEdge dt,  HashMap featureTbl, List<FeatureTemplate> featTemplates, HashSet<String> restrictedFeatSet, double scale ){		
 		for(FeatureTemplate template : featTemplates){
 			template.getFeatureCounts(dt,  featureTbl,  restrictedFeatSet, scale);
 		}		

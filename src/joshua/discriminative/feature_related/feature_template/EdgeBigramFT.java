@@ -1,6 +1,7 @@
 package joshua.discriminative.feature_related.feature_template;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 
@@ -26,7 +27,7 @@ public class EdgeBigramFT extends AbstractFeatureTemplate {
 	
 	
 	
-	public void getFeatureCounts(Rule rule, List<HGNode> antNodes, HashMap<String, Double> featureTbl, HashMap<String, Integer> restrictedFeatureSet, double scale) {
+	public void getFeatureCounts(Rule rule, List<HGNode> antNodes, HashMap<String, Double> featureTbl, HashSet<String> restrictedFeatureSet, double scale) {
 
 		HashMap ngramsTbl=null;
 		
@@ -35,7 +36,7 @@ public class EdgeBigramFT extends AbstractFeatureTemplate {
 		if(ngramsTbl!=null){						
 			for(Iterator it = ngramsTbl.keySet().iterator(); it.hasNext(); ){
 				String ngram_feat_key=(String) it.next();				
-				if(restrictedFeatureSet ==null || restrictedFeatureSet.containsKey(ngram_feat_key)==true){
+				if(restrictedFeatureSet ==null || restrictedFeatureSet.contains(ngram_feat_key)==true){
 					DiscriminativeSupport.increaseCount(featureTbl, ngram_feat_key, (Double)ngramsTbl.get(ngram_feat_key)*scale);
 				}
 			}

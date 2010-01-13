@@ -658,7 +658,7 @@ public class KBestExtractor {
 				return;
 			//System.out.println("Rule is: " + dt.rule.toString());
 			//double[] transitionCosts = ComputeNodeResult.computeModelTransitionCost(models, dt.getRule(), dt.getAntNodes(), parentNode.i, parentNode.j, dt.getSourcePath(), sentID);
-			double[] transitionCosts = ComputeNodeResult.computeModelTransitionCost(models, dt, parentNode.i, parentNode.j, sentID);
+			double[] transitionCosts = ComputeNodeResult.computeModelTransitionCosts(models, dt, parentNode.i, parentNode.j, sentID);
 		
 			for(int i=0; i<transitionCosts.length; i++){
 				modelCost[i] += transitionCosts[i];

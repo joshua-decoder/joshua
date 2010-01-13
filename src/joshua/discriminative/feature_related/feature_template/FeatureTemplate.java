@@ -1,6 +1,7 @@
 package joshua.discriminative.feature_related.feature_template;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 
 import joshua.decoder.ff.tm.Rule;
@@ -12,9 +13,9 @@ import joshua.decoder.hypergraph.HyperEdge;
 
 public interface FeatureTemplate {
 	
-	void getFeatureCounts(Rule rule, List<HGNode> antNodes, HashMap<String, Double> featureTbl, HashMap<String, Integer> restrictedFeatureSet, double scale);
+	void getFeatureCounts(Rule rule, List<HGNode> antNodes, HashMap<String, Double> featureTbl, HashSet<String> restrictedFeatureSet, double scale);
 	
-	void getFeatureCounts(HyperEdge dt,  HashMap<String, Double> featureTbl, HashMap<String, Integer> restrictedFeatureSet, double scale);
+	void getFeatureCounts(HyperEdge dt,  HashMap<String, Double> featureTbl, HashSet<String> restrictedFeatureSet, double scale);
 	
 	
 }

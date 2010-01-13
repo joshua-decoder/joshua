@@ -95,20 +95,37 @@ public class ComputeNodeResult {
 		this.dpStates =  allDPStates;
 	}
 	
-	
-	
-	public static double computeCombinedTransitionCost(List<FeatureFunction> featureFunctions, HGNode parentNode, HyperEdge dt, int sentID){
+	public static double computeCombinedTransitionCost(List<FeatureFunction> featureFunctions, HyperEdge edge, 
+			int i, int j, int sentID){
 		double res = 0;
 		for(FeatureFunction ff : featureFunctions) {				
-			if(dt.getRule()!=null)
-				res += ff.getWeight() * ff.transition(dt.getRule(), dt.getAntNodes(), parentNode.i, parentNode.j, dt.getSourcePath(), sentID);
+			if(edge.getRule()!=null)
+				res += ff.getWeight() * ff.transition(edge, i,  j, sentID);
 			else
-				res += ff.getWeight() * ff.finalTransition(dt.getAntNodes().get(0),  parentNode.i, parentNode.j, dt.getSourcePath(), sentID);		
+				res += ff.getWeight() * ff.finalTransition(edge, i, j, sentID);		
 		}
 		return res;
 	}
 	
-	public static double[] computeModelTransitionCost(List<FeatureFunction> featureFunctions, Rule rule, 
+	public static double[] computeModelTransitionCosts(List<FeatureFunction> featureFunctions, HyperEdge edge, 
+			int i, int j,  int sentID){
+
+			double[] res = new double[featureFunctions.size()];
+			
+			//=== compute feature costs
+			int k=0;
+			for(FeatureFunction ff : featureFunctions) {				
+				if(edge.getRule()!=null)
+					res[k] = ff.transition(edge, i, j, sentID);
+				else
+					res[k] = ff.finalTransition(edge,  i, j, sentID);		
+				k++;
+			}
+			
+			return res;		
+	}
+
+	public static double[] computeModelTransitionCosts(List<FeatureFunction> featureFunctions, Rule rule, 
 					List<HGNode> antNodes, int i, int j, SourcePath srcPath, int sentID){
 		
 		double[] res = new double[featureFunctions.size()];
@@ -127,23 +144,6 @@ public class ComputeNodeResult {
 	}
 		
 	
-	public static double[] computeModelTransitionCost(List<FeatureFunction> featureFunctions, HyperEdge edge, 
-			int i, int j,  int sentID){
-
-			double[] res = new double[featureFunctions.size()];
-			
-			//=== compute feature costs
-			int k=0;
-			for(FeatureFunction ff : featureFunctions) {				
-				if(edge.getRule()!=null)
-					res[k] = ff.transition(edge, i, j, sentID);
-				else
-					res[k] = ff.finalTransition(edge,  i, j, sentID);		
-				k++;
-			}
-			
-			return res;		
-	}
 	
 	void setExpectedTotalCost(double cost) {
 		this.expectedTotalCost = cost;

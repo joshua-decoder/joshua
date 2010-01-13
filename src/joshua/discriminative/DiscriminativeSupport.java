@@ -3,13 +3,26 @@ package joshua.discriminative;
 import java.io.BufferedReader;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
+
+import joshua.corpus.vocab.SymbolTable;
+import joshua.discriminative.feature_related.feature_function.FeatureTemplateBasedFF;
+import joshua.discriminative.feature_related.feature_template.EdgeBigramFT;
+import joshua.discriminative.feature_related.feature_template.FeatureTemplate;
+import joshua.discriminative.feature_related.feature_template.NgramFT;
+import joshua.discriminative.feature_related.feature_template.TMFT;
+
 
 
 
 
 public class DiscriminativeSupport {
+	
+	static private Logger logger = Logger.getLogger(DiscriminativeSupport.class.getName()); 
+	
 	
 	static public void increaseCount(HashMap<String, Double> tbl, String feat, double increment){
 		Double oldCount = tbl.get(feat);
@@ -20,58 +33,40 @@ public class DiscriminativeSupport {
 	}
 
 	
-	
-	
-	public static void loadRegularModel(String f_avg_model, HashMap<String, Double> tbl_model, boolean negateFeatureWeight, String baselineFeatName){
-		BufferedReader t_reader = FileUtilityOld.getReadFileStream(f_avg_model,"UTF-8");
-		tbl_model.clear();		
+	public static void loadModel(String modelFile, HashMap<String, Double> modelTable){
+		
+		BufferedReader reader = FileUtilityOld.getReadFileStream(modelFile,"UTF-8");
+		modelTable.clear();		
 		String line;
-		while((line=FileUtilityOld.readLineLzf(t_reader))!=null){
+		while((line=FileUtilityOld.readLineLzf(reader))!=null){
 			String[] fds = line.split("\\s+\\|{3}\\s+");
-			StringBuffer feat_key = new StringBuffer();
+			StringBuffer featKey = new StringBuffer();
 			for(int i=0; i<fds.length-1; i++){
-				feat_key.append(fds[i]);
-				if(i<fds.length-2) feat_key.append(" ||| ");
+				featKey.append(fds[i]);
+				if(i<fds.length-2) 
+					featKey.append(" ||| ");
 			}
 			double val = new Double(fds[fds.length-1]);
-			if(negateFeatureWeight && feat_key.toString().compareTo(baselineFeatName)!=0){//negate all the feature weights except the baseline feature
-					val = -val; 
-			}
-			tbl_model.put(feat_key.toString(), val);
+			
+			modelTable.put(featKey.toString(), val);
 			//System.out.println("key: " + feat_key.toString() + "; val: " + val);
 		}
-		FileUtilityOld.closeReadFile(t_reader);
+		FileUtilityOld.closeReadFile(reader);
 	}
 	
-
-	public static void loadAvgPercetronModel(String f_avg_model, HashMap<String, Double[]> avgModelTbl, boolean negateFeatureWeight,  String baselineFeatName){
-		BufferedReader t_reader = FileUtilityOld.getReadFileStream(f_avg_model,"UTF-8");
-		avgModelTbl.clear();		
-		String line;
-		while((line=FileUtilityOld.readLineLzf(t_reader))!=null){
-			String[] fds = line.split("\\s+\\|{3}\\s+");
-			StringBuffer feat_key = new StringBuffer();
-			for(int i=0; i<fds.length-1; i++){
-				feat_key.append(fds[i]);
-				if(i<fds.length-2) feat_key.append(" ||| ");
-			}
-			String vals = fds[fds.length-1];
-			String[] wrds = vals.split("\\s+");
-			Double[] wrds_val = new Double[wrds.length];
-			for(int i=0; i<wrds.length; i++){
-				if(i==0 && negateFeatureWeight && feat_key.toString().compareTo(baselineFeatName)!=0){//negate all the feature weights except the baseline feature
-					wrds_val[i] = - new Double(wrds[i]);
-				}else
-					wrds_val[i] = new Double(wrds[i]);
-			}
-			avgModelTbl.put(feat_key.toString(), wrds_val);
+	public static void loadFeatureSet(String featureSetFile, HashSet<String> featSet){
+		featSet.clear();
+		BufferedReader t_reader = FileUtilityOld.getReadFileStream(featureSetFile,"UTF-8");
+		String feat;
+		while((feat=FileUtilityOld.readLineLzf(t_reader))!=null){
+			featSet.add(feat);
 		}
-		FileUtilityOld.closeReadFile(t_reader);
+		FileUtilityOld.closeReadFile(t_reader);		
 	}
 	
-
-	static public ArrayList readFileList(String file){
-		ArrayList<String> res = new ArrayList<String>();
+	
+	static public List<String> readFileList(String file){
+		List<String> res = new ArrayList<String>();
 		BufferedReader t_reader = FileUtilityOld.getReadFileStream(file,"UTF-8");
 		String line;
 		while((line=FileUtilityOld.readLineLzf(t_reader))!=null){
@@ -95,16 +90,7 @@ public class DiscriminativeSupport {
 		return res;
 	}
 	
-//	read the feat set into the hashtable
-	public static void loadFeatureSet(String featureSetFile, HashMap<String, Double> featSet){
-		featSet.clear();
-		BufferedReader t_reader = FileUtilityOld.getReadFileStream(featureSetFile,"UTF-8");
-		String feat;
-		while((feat=FileUtilityOld.readLineLzf(t_reader))!=null){
-			featSet.put(feat, 1.0);
-		}
-		FileUtilityOld.closeReadFile(t_reader);		
-	}
+
 	
 	
 	public static void scaleMapEntries(HashMap<?, Double> map, double scale){
@@ -113,22 +99,78 @@ public class DiscriminativeSupport {
 		}
 	}
 
- 
-	
 	
 	//speed issue: assume tbl_feats is smaller than model
-	static public double computeLinearCombination(HashMap featTbl, HashMap  model, boolean isValueAVector){
+	static public double computeLinearCombination(HashMap<String, Double> featTbl, HashMap<String, Double>  model){
 		double res = 0;
-		for(Iterator it = featTbl.keySet().iterator(); it.hasNext();){//TODO use entryset to speed up
-			String feat_key = (String) it.next();
-			double feat_count = (Double)featTbl.get(feat_key);
-			Double weight = null;
-			if(isValueAVector){
-				if(model.containsKey(feat_key)) weight = ((Double[])model.get(feat_key))[0];
-			}else
-				weight =(Double)model.get(feat_key);
-			if(weight!=null) res += weight*feat_count;
+		for(Map.Entry<String, Double> entry : featTbl.entrySet()){
+			String featKey = entry.getKey();
+			double featCount = entry.getValue();
+			if(model.containsKey(featKey)){
+				double weight = model.get(featKey);
+				res += weight*featCount;
+			}else{
+				//logger.info("nonexisit feature: " + featKey);
+			}
 		}	
 		return res;
 	}
+	
+	
+	
+	static public FeatureTemplateBasedFF setupRerankingFeature(
+			int featID, double weight,
+			SymbolTable symbolTbl, boolean useTMFeat, boolean useLMFeat, boolean useEdgeNgramOnly, int ngramStateID, int baselineLMOrder,
+			int startNgramOrder, int endNgramOrder,	
+			String featureFile, String modelFile
+			){
+		
+		
+		List<FeatureTemplate> featTemplates =  DiscriminativeSupport.setupFeatureTemplates(symbolTbl, useTMFeat, useLMFeat,
+				useEdgeNgramOnly, ngramStateID, baselineLMOrder, startNgramOrder, endNgramOrder);	
+		
+		
+		//============= restricted feature set
+		HashSet<String> restrictedFeatureSet = null;
+		if(featureFile!=null){
+			restrictedFeatureSet = new HashSet<String>();
+			DiscriminativeSupport.loadFeatureSet(featureFile, restrictedFeatureSet);
+			//restricted_feature_set.put(HGDiscriminativeLearner.g_baseline_feat_name, 1.0); //should not add the baseline feature
+			logger.info("============use  restricted feature set========================");
+		}
+		
+		//================ discriminative reranking model
+		HashMap<String, Double> modelTbl =  new HashMap<String, Double>();			
+		DiscriminativeSupport.loadModel(modelFile, modelTbl);			
+		
+		return new FeatureTemplateBasedFF(featID, weight, modelTbl, featTemplates, restrictedFeatureSet); 
+	}
+	
+	
+	
+	static public List<FeatureTemplate> setupFeatureTemplates(
+			SymbolTable symbolTbl, boolean useTMFeat, boolean useLMFeat, boolean useEdgeNgramOnly, 
+			int ngramStateID, int baselineLMOrder,
+			int startNgramOrder, int endNgramOrder	
+			){
+		
+		List<FeatureTemplate> featTemplates =  new ArrayList<FeatureTemplate>();	
+		if(useTMFeat==true){
+			FeatureTemplate ft = new TMFT(symbolTbl);
+			featTemplates.add(ft);
+		}
+					
+		if(useLMFeat==true){	
+			FeatureTemplate ft = new NgramFT(symbolTbl, false, ngramStateID, baselineLMOrder, startNgramOrder, endNgramOrder);
+			featTemplates.add(ft);
+		}else if(useEdgeNgramOnly){//exclusive with use_lm_feat
+			FeatureTemplate ft = new EdgeBigramFT(symbolTbl, ngramStateID, baselineLMOrder);
+			featTemplates.add(ft);
+		}		
+		logger.info("templates are: " + featTemplates);
+				
+		
+		return featTemplates; 
+	}
+	
 }

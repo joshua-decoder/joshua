@@ -2,6 +2,8 @@ package joshua.discriminative.feature_related;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 
 import joshua.corpus.vocab.BuildinSymbol;
 import joshua.corpus.vocab.SymbolTable;
@@ -33,10 +35,10 @@ public class FeatureIntersection {
 		String f_l_train_rules=args[1].trim();
 		String f_l_num_sents=args[2].trim();
 		String f_data_sel=args[3].trim();
-		boolean use_tm_feat = new Boolean(args[4].trim());
-		boolean use_lm_feat = new Boolean(args[5].trim());
-		boolean use_edge_ngram_only = new Boolean(args[6].trim());
-		String f_feature_set =  args[7].trim();
+		boolean useTMFeat = new Boolean(args[4].trim());
+		boolean useLMFeat = new Boolean(args[5].trim());
+		boolean useEdgeNgramOnly = new Boolean(args[6].trim());
+		String featureFile =  args[7].trim();
 		
 		boolean saveModelCosts = false;
 		
@@ -47,61 +49,60 @@ public class FeatureIntersection {
 		SymbolTable p_symbol = new BuildinSymbol(null);
 		
 		//##setup feature templates list
-		ArrayList<FeatureTemplate> l_feat_templates =  new ArrayList<FeatureTemplate>();
+		ArrayList<FeatureTemplate> featTemplates =  new ArrayList<FeatureTemplate>();
 		
 		
-		if(use_tm_feat==true){
+		if(useTMFeat==true){
 			FeatureTemplate ft = new TMFT(p_symbol);
-			l_feat_templates.add(ft);
+			featTemplates.add(ft);
 		}
 		
 		int baseline_lm_order = 3;//TODO
-		if(use_lm_feat==true){
+		if(useLMFeat==true){
 			FeatureTemplate ft = new NgramFT(p_symbol, false, ngramStateID, baseline_lm_order,1,2);//TODO: unigram and bi gram
-			l_feat_templates.add(ft);
-		}else if(use_edge_ngram_only){//exclusive with use_lm_feat
+			featTemplates.add(ft);
+		}else if(useEdgeNgramOnly){//exclusive with use_lm_feat
 			FeatureTemplate ft = new EdgeBigramFT(p_symbol, ngramStateID, baseline_lm_order);
-			l_feat_templates.add(ft);
+			featTemplates.add(ft);
 		}		
 		
-		System.out.println("feature template are " + l_feat_templates.toString());
+		System.out.println("feature template are " + featTemplates.toString());
 		
-		ArrayList l_file_train_items = DiscriminativeSupport.readFileList(f_l_train_items);
-		ArrayList l_file_train_rules = DiscriminativeSupport.readFileList(f_l_train_rules);
+		List<String> l_file_train_items = DiscriminativeSupport.readFileList(f_l_train_items);
+		List<String> l_file_train_rules = DiscriminativeSupport.readFileList(f_l_train_rules);
 		
-		ArrayList l_num_sents = DiscriminativeSupport.readFileList(f_l_num_sents);		
+		List<String> l_num_sents = DiscriminativeSupport.readFileList(f_l_num_sents);		
 		HashMap<Integer, Boolean> tbl_sent_selected = DiscriminativeSupport.setupDataSelTbl(f_data_sel);//for data selection
 		
-		HashMap<String, Double> restrictedFeatureSet = new HashMap<String, Double>();
+		HashSet<String> restrictedFeatureSet = new HashSet<String>();
 		HashMap<String,Double> featureIntersectionSet = new HashMap<String,Double>();
 		
 		
-		if(f_feature_set!=null)
-			DiscriminativeSupport.loadFeatureSet(f_feature_set, restrictedFeatureSet);
+		if(featureFile!=null)
+			DiscriminativeSupport.loadFeatureSet(featureFile, restrictedFeatureSet);
 		else{
-			System.out.println("In crf, must specify feature set"); System.exit(0);
+			System.out.println("Must specify feature set"); 
+			System.exit(0);
 		}
 			
 		//#####begin to do training
-		int g_sent_id=0;
-		for(int loop_id=0; loop_id<1; loop_id++){
-			System.out.println("###################################Loop " + loop_id);
-			for(int fid=0; fid < l_file_train_items.size(); fid++){
-				System.out.println("############Process file id " + fid);
-				DiskHyperGraph dhg_train = new DiskHyperGraph(p_symbol, ngramStateID, saveModelCosts, null); 
-				dhg_train.initRead((String)l_file_train_items.get(fid), (String)l_file_train_rules.get(fid),tbl_sent_selected);
-					
-				int total_num_sent = new Integer((String)l_num_sents.get(fid));
-				for(int sent_id=0; sent_id < total_num_sent; sent_id ++){
-					System.out.println("#Process sentence " + g_sent_id);
-					HyperGraph hg_train = dhg_train.readHyperGraph();
-					if(hg_train!=null)//sent is not skipped
-						FeatureExtractionHG.featureExtractionOnHG(hg_train,featureIntersectionSet, restrictedFeatureSet,  l_feat_templates);
+		int sentID=0;		
+		for(int fid=0; fid < l_file_train_items.size(); fid++){
+			System.out.println("############Process file id " + fid);
+			DiskHyperGraph diskHG = new DiskHyperGraph(p_symbol, ngramStateID, saveModelCosts, null); 
+			diskHG.initRead(l_file_train_items.get(fid), l_file_train_rules.get(fid),tbl_sent_selected);
 				
-					g_sent_id++;
-				}
+			int total_num_sent = new Integer((String)l_num_sents.get(fid));
+			for(int sent_id=0; sent_id < total_num_sent; sent_id ++){
+				System.out.println("#Process sentence " + sentID);
+				HyperGraph hg = diskHG.readHyperGraph();
+				if(hg!=null)//sent is not skipped
+					FeatureExtractionHG.featureExtractionOnHG(hg,featureIntersectionSet, restrictedFeatureSet,  featTemplates);
+			
+				sentID++;
 			}
 		}
-		FileUtilityOld.printHashTblAboveThreshold(featureIntersectionSet, f_feature_set+".intersection", false, 0, false, false, null);
+		
+		FileUtilityOld.printHashTblAboveThreshold(featureIntersectionSet, featureFile+".intersection", false, 0, false, false, null);
 }
 }

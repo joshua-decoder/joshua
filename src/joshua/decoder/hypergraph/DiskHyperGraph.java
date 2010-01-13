@@ -383,9 +383,8 @@ public class DiskHyperGraph {
 	public String createModelCostLine(HGNode parentNode, HyperEdge edge){
 		StringBuffer line = new StringBuffer();	
 		
-		double[] transitionCosts = ComputeNodeResult.computeModelTransitionCost(
-				this.featureFunctions, edge.getRule(), edge.getAntNodes(), 
-				parentNode.i, parentNode.j, edge.getSourcePath(), this.sentID);
+		double[] transitionCosts = ComputeNodeResult.computeModelTransitionCosts(
+				this.featureFunctions, edge, parentNode.i, parentNode.j, this.sentID);
 		
 		for (int k = 0; k < this.featureFunctions.size(); k++) {
 			line.append(String.format("%.4f", transitionCosts[k]))

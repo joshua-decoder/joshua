@@ -1,6 +1,7 @@
 package joshua.discriminative.feature_related.feature_template;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -27,15 +28,15 @@ public class IndividualBaselineFT extends AbstractFeatureTemplate {
 	}
 
 
-	public void getFeatureCounts(HyperEdge dt,  HashMap<String, Double> featureTbl, HashMap<String, Integer> restrictedFeatureSet, double scale) {
-		if(restrictedFeatureSet == null || restrictedFeatureSet.containsKey(featName)==true){
+	public void getFeatureCounts(HyperEdge dt,  HashMap<String, Double> featureTbl, HashSet<String> restrictedFeatureSet, double scale) {
+		if(restrictedFeatureSet == null || restrictedFeatureSet.contains(featName)==true){
 			double val = getFeatureCost(dt, featureID);
 			//System.out.println("baseline is " + val + " ; scale = " + scale);
 			DiscriminativeSupport.increaseCount(featureTbl, featName, val*scale);					
 		}		
 	}
 
-	public void getFeatureCounts(Rule rule, List<HGNode> antNodes, HashMap<String, Double> featureTbl, HashMap<String, Integer> restrictedFeatureSet, double scale) {
+	public void getFeatureCounts(Rule rule, List<HGNode> antNodes, HashMap<String, Double> featureTbl, HashSet<String> restrictedFeatureSet, double scale) {
 		logger.severe("unimplement function");
 		System.exit(0);
 	}

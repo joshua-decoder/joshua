@@ -1,6 +1,7 @@
 package joshua.discriminative.feature_related.feature_template;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 
 import joshua.corpus.vocab.SymbolTable;
@@ -26,11 +27,11 @@ public class TMFT extends AbstractFeatureTemplate {
 	}
 	
 	
-	public void getFeatureCounts(Rule rule, List<HGNode> antNodes, HashMap<String, Double> featureTbl, HashMap<String, Integer> restrictedFeatureSet, double scale) {
+	public void getFeatureCounts(Rule rule, List<HGNode> antNodes, HashMap<String, Double> featureTbl, HashSet<String> restrictedFeatureSet, double scale) {
 		
 		if(rule != null){			
 			String key =  rule.toStringWithoutFeatScores(symbolTbl);//TODO
-			if(restrictedFeatureSet == null || restrictedFeatureSet.containsKey(key)==true){
+			if(restrictedFeatureSet == null || restrictedFeatureSet.contains(key)==true){
 				DiscriminativeSupport.increaseCount(featureTbl, key, scale*globalScale);
 				//System.out.println("key is " + key +"; lhs " + symbolTbl.getWord(rl.getLHS()));	//System.exit(0);
 			}

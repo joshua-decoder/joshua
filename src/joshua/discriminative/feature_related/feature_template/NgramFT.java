@@ -1,6 +1,7 @@
 package joshua.discriminative.feature_related.feature_template;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -45,7 +46,7 @@ public class NgramFT extends AbstractFeatureTemplate {
 	}
 	
 	
-	public void getFeatureCounts(HyperEdge dt,  HashMap<String, Double> featureTbl, HashMap<String, Integer> restrictedFeatureSet, double scale) {
+	public void getFeatureCounts(HyperEdge dt,  HashMap<String, Double> featureTbl, HashSet<String> restrictedFeatureSet, double scale) {
 		HashMap<String,Integer> ngramsTbl;
 		if(dt.getRule()==null)
 			ngramsTbl = ngramExtractor.getFinalTransitionNgrams(dt, startNgramOrder, endNgramOrder);
@@ -55,7 +56,7 @@ public class NgramFT extends AbstractFeatureTemplate {
 		if(ngramsTbl!=null){						
 			for(Map.Entry<String,Integer> entry : ngramsTbl.entrySet()){
 				String ngramFeatKey= entry.getKey();					
-				if(restrictedFeatureSet ==null || restrictedFeatureSet.containsKey(ngramFeatKey)==true){				
+				if(restrictedFeatureSet ==null || restrictedFeatureSet.contains(ngramFeatKey)==true){				
 						DiscriminativeSupport.increaseCount(featureTbl, ngramFeatKey,entry.getValue()*scale*globalScale);	
 				
 				}
@@ -64,7 +65,7 @@ public class NgramFT extends AbstractFeatureTemplate {
 	}
 
 
-	public void getFeatureCounts(Rule rule, List<HGNode> antNodes, HashMap<String, Double> featureTbl, HashMap<String, Integer> restrictedFeatureSet, double scale) {
+	public void getFeatureCounts(Rule rule, List<HGNode> antNodes, HashMap<String, Double> featureTbl, HashSet<String> restrictedFeatureSet, double scale) {
 		HashMap<String,Integer> ngramsTbl;
 		if(rule==null)
 			ngramsTbl = ngramExtractor.getFinalTransitionNgrams(antNodes.get(0), startNgramOrder, endNgramOrder);
@@ -74,7 +75,7 @@ public class NgramFT extends AbstractFeatureTemplate {
 		if(ngramsTbl!=null){						
 			for(Map.Entry<String,Integer> entry : ngramsTbl.entrySet()){
 				String ngramFeatKey= entry.getKey();					
-				if(restrictedFeatureSet ==null || restrictedFeatureSet.containsKey(ngramFeatKey)==true){				
+				if(restrictedFeatureSet ==null || restrictedFeatureSet.contains(ngramFeatKey)==true){				
 						DiscriminativeSupport.increaseCount(featureTbl, ngramFeatKey,entry.getValue()*scale*globalScale);	
 				
 				}

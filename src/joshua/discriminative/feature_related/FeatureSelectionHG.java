@@ -3,6 +3,7 @@ package joshua.discriminative.feature_related;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 import joshua.corpus.vocab.BuildinSymbol;
 import joshua.corpus.vocab.SymbolTable;
@@ -78,9 +79,9 @@ public class FeatureSelectionHG {
 		}
 		
 		
-		ArrayList testItemsFiles = DiscriminativeSupport.readFileList(f_l_test_items);
-		ArrayList testRulesFiles = DiscriminativeSupport.readFileList(f_l_test_rules);
-		ArrayList l_num_sents = DiscriminativeSupport.readFileList(f_l_num_sents);				
+		List<String> testItemsFiles = DiscriminativeSupport.readFileList(f_l_test_items);
+		List<String> testRulesFiles = DiscriminativeSupport.readFileList(f_l_test_rules);
+		List<String> l_num_sents = DiscriminativeSupport.readFileList(f_l_num_sents);				
 	
 		//#### extract feat tbl
 		HashMap<String, Double> tbl_feats = new HashMap<String, Double>();

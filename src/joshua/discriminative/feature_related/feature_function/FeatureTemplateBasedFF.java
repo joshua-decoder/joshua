@@ -1,7 +1,8 @@
-package joshua.discriminative.feature_related;
+package joshua.discriminative.feature_related.feature_function;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -22,10 +23,10 @@ import joshua.discriminative.feature_related.feature_template.FeatureTemplate;
 public class FeatureTemplateBasedFF  extends DefaultStatelessFF {
 	
 	private HashMap<String, Double> correctiveModel = null; //corrective model: this should not have the baseline feature
-	private boolean isValueAVector = false;
+	
 	
 	private List<FeatureTemplate> featTemplates=null;
-	private HashMap<String, Integer> restrictedFeatSet =null; //feature set
+	private HashSet<String> restrictedFeatSet =null; //feature set
 
 	private static Logger logger = Logger.getLogger(FeatureTemplateBasedFF.class.getName());
 	
@@ -35,23 +36,20 @@ public class FeatureTemplateBasedFF  extends DefaultStatelessFF {
 		super(weight, -1, featID);
 		
 		this.correctiveModel = null;
-		this.isValueAVector = false;
 		
 		this.featTemplates = new ArrayList<FeatureTemplate>();
 		this.featTemplates.add(featTemplate);
 		
 		this.restrictedFeatSet = null;
-
 	}
 	
 	
 	public FeatureTemplateBasedFF(int featID, double weight,
-							HashMap<String, Double> correctiveModel,  boolean isValueAVector,
-							List<FeatureTemplate> featTemplates, HashMap<String, Integer> restrictedFeatSet){
+							HashMap<String, Double> correctiveModel, 
+							List<FeatureTemplate> featTemplates, HashSet<String> restrictedFeatSet){
 		
 		super(weight, -1, featID);
 		this.correctiveModel = correctiveModel;
-		this.isValueAVector = isValueAVector;
 		
 		this.featTemplates = featTemplates;
 		this.restrictedFeatSet = restrictedFeatSet;
@@ -94,7 +92,7 @@ public class FeatureTemplateBasedFF  extends DefaultStatelessFF {
 		
 		//=== compute cost
 		double res =0;
-		res = DiscriminativeSupport.computeLinearCombination(featTbl, correctiveModel, isValueAVector);
+		res = DiscriminativeSupport.computeLinearCombination(featTbl, correctiveModel);
 		
 		//System.out.println("TransitionCost: " + res);
 		return res;
