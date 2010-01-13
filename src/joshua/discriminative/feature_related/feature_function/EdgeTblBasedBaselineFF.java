@@ -12,9 +12,9 @@ import joshua.decoder.hypergraph.HGNode;
 import joshua.decoder.hypergraph.HyperEdge;
 import joshua.decoder.hypergraph.HyperGraph;
 
-public class TableBasedBaselineFF extends DefaultStatelessFF {
+public class EdgeTblBasedBaselineFF extends DefaultStatelessFF {
 	
-	private static Logger logger = Logger.getLogger(TableBasedBaselineFF.class.getName());
+	private static Logger logger = Logger.getLogger(EdgeTblBasedBaselineFF.class.getName());
 	
 	private HashMap<HyperEdge, Double> hyperEdgeBaselineCostTbl = new HashMap<HyperEdge, Double>() ;
 	private HashSet<HGNode> processedNodesTtbl = new HashSet<HGNode>();
@@ -22,7 +22,7 @@ public class TableBasedBaselineFF extends DefaultStatelessFF {
 	
 	/*baseline_feat_tbl should contain **cost**; not prob
 	 * */
-	public TableBasedBaselineFF(final int featID, final double weight) {
+	public EdgeTblBasedBaselineFF(final int featID, final double weight) {
 		super(weight, -1, featID);//TODO: owner
 		
 	}

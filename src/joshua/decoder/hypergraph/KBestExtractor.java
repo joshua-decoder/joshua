@@ -282,8 +282,8 @@ public class KBestExtractor {
 		if (null != modelCost) {
 			strHyp.append(" |||");
 			double temSum = 0.0;
-			for (int k = 0; k < modelCost.length; k++) { /* note that all the transition cost (including finaltransition cost) is already stored in the hyperedge */
-				strHyp.append(String.format(" %.3f", -modelCost[k]));
+			for (int k = 0; k < modelCost.length; k++) {
+				strHyp.append(String.format(" %.3f", - modelCost[k]));
 				temSum += modelCost[k]*models.get(k).getWeight();
 				
 //				System.err.println("tem_sum: " + tem_sum + " += " + model_cost[k] + " * " + l_models.get(k).getWeight());

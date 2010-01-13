@@ -34,6 +34,7 @@ import joshua.decoder.ff.state_maintenance.StateComputer;
 import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.GrammarFactory;
 import joshua.decoder.ff.tm.hiero.MemoryBasedBatchGrammar;
+import joshua.discriminative.DiscriminativeSupport;
 
 import joshua.corpus.Corpus;
 import joshua.corpus.alignment.Alignments;
@@ -621,7 +622,33 @@ public class JoshuaDecoder {
 							"Line: %s\nAdd BLEUOracleModel, order: %d; weight: %.3f;",
 							line, JoshuaConfiguration.lmOrder, weight));
 					
-				} else if ("latticecost".equals(fds[0]) && fds.length == 2) {
+				} else if ("discriminative".equals(fds[0]) && fds.length == 3) { //discriminative weight modelFile
+					if (null == this.languageModel) {
+						throw new IllegalArgumentException("LM model has not been properly initialized before setting order and weight");
+					}
+					double weight = Double.parseDouble(fds[1].trim());
+
+					//TODO???????
+					boolean useTMFeat = true;
+					boolean useLMFeat = true;
+					boolean useEdgeNgramOnly = false;
+					int startNgramOrder = 1;
+					int endNgramOrder = 2;
+					String featureFile = null;
+					//??????????
+					
+					String modelFile = fds[2].trim();
+					
+					this.featureFunctions.add (DiscriminativeSupport.setupRerankingFeature(this.featureFunctions.size(), weight, symbolTable, 
+							useTMFeat, useLMFeat, useEdgeNgramOnly, JoshuaConfiguration.ngramStateID, 
+							JoshuaConfiguration.lmOrder, startNgramOrder, endNgramOrder, featureFile, modelFile) );
+					
+					if (logger.isLoggable(Level.FINEST))
+						logger.finest(String.format(
+							"Line: %s\nAdd FeatureTemplateBasedFF, order: %d; weight: %.3f;",
+							line, JoshuaConfiguration.lmOrder, weight));
+					
+				}else if ("latticecost".equals(fds[0]) && fds.length == 2) {
 					double weight = Double.parseDouble(fds[1].trim());
 					this.featureFunctions.add(
 						new SourcePathFF(

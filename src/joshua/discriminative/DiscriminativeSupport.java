@@ -16,9 +16,6 @@ import joshua.discriminative.feature_related.feature_template.NgramFT;
 import joshua.discriminative.feature_related.feature_template.TMFT;
 
 
-
-
-
 public class DiscriminativeSupport {
 	
 	static private Logger logger = Logger.getLogger(DiscriminativeSupport.class.getName()); 

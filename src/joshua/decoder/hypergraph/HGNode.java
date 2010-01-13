@@ -101,7 +101,7 @@ public class HGNode implements Prunable<HGNode> {
 			hyperedges = new ArrayList<HyperEdge>();
 		}
 		hyperedges.add(dt);
-		if (null == bestHyperedge || bestHyperedge.bestDerivationCost > dt.bestDerivationCost) {
+		if (null == bestHyperedge || bestHyperedge.bestDerivationCost > dt.bestDerivationCost){//semiring + operation
 			bestHyperedge = dt; //no change when tied
 		}
 	}

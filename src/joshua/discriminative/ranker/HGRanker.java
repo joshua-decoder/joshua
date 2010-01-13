@@ -20,7 +20,7 @@ import joshua.decoder.hypergraph.KBestExtractor;
 import joshua.decoder.hypergraph.ViterbiExtractor;
 import joshua.discriminative.DiscriminativeSupport;
 import joshua.discriminative.FileUtilityOld;
-import joshua.discriminative.feature_related.feature_function.TableBasedBaselineFF;
+import joshua.discriminative.feature_related.feature_function.EdgeTblBasedBaselineFF;
 
 
 /**This class implements functions to rank HG based on a bunch of feature functions
@@ -156,7 +156,7 @@ public class HGRanker {
 		int baselineFeatID = 99;
 		//??????????????????????????????????????
 		
-		TableBasedBaselineFF baselineFeature = new TableBasedBaselineFF(baselineFeatID, baselineWeight);
+		EdgeTblBasedBaselineFF baselineFeature = new EdgeTblBasedBaselineFF(baselineFeatID, baselineWeight);
 		features.add(baselineFeature);
 		
 
