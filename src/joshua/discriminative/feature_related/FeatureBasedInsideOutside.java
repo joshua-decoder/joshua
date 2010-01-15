@@ -22,12 +22,12 @@ import joshua.discriminative.feature_related.feature_template.FeatureTemplate;
 
 public class FeatureBasedInsideOutside extends DefaultInsideOutside {
 	
-	HashMap correctiveModel = null;
+	HashMap<String, Double> correctiveModel = null;
 	List<FeatureTemplate> featTemplates = null;
 	HashSet<String> restrictedFeatSet = null;
 	
 	
-	public FeatureBasedInsideOutside(HashMap correctiveModel, List<FeatureTemplate> featTemplates, HashSet<String> restrictedFeatSet ){
+	public FeatureBasedInsideOutside(HashMap<String, Double> correctiveModel, List<FeatureTemplate> featTemplates, HashSet<String> restrictedFeatSet ){
 		this.correctiveModel = correctiveModel;//this one should also include baseline feature weight, if we want it to be active
 		this.featTemplates = featTemplates;//should have baseline feature template, if we want it to be active
 		this.restrictedFeatSet = restrictedFeatSet;
@@ -46,7 +46,7 @@ public class FeatureBasedInsideOutside extends DefaultInsideOutside {
 		//## (2) get linear combination score		
 		double res = DiscriminativeSupport.computeLinearCombinationLogP(featureCountTbl, correctiveModel);
 		
-		return -res;
+		return res;
 	}
 
 	

@@ -24,7 +24,7 @@ import java.util.HashMap;
 
 /**
  * to use the functions here, one need to extend the class  to
- * provide a way to calculate the deduction cost based on feature
+ * provide a way to calculate the transitionLogP based on feature
  * set
  *
  * @author Zhifei Li, <zhifei.work@gmail.com>
@@ -33,7 +33,7 @@ import java.util.HashMap;
 
 //TODO: currently assume log semiring, need to generalize to other semiring
 //already implement both max-product and sum-product algortithms for log-semiring
-//Note: this class requires the correctness of transition prob of each hyperedge, which itself may require the correctness of best_cost at each item
+//Note: this class requires the correctness of transitionLogP of each hyperedge, which itself may require the correctness of bestDerivationLogP at each item
 
 public abstract class DefaultInsideOutside {
 	/**
@@ -124,7 +124,6 @@ public abstract class DefaultInsideOutside {
 	public double getEdgePosteriorProb(HyperEdge dt, HGNode parent ){
 		if(SEMIRING==LOG_SEMIRING){
 			double res = Math.exp((getEdgeUnormalizedPosteriorLogProb(dt, parent)-getLogNormalizationConstant()));
-			//System.out.println("dt cost: " + dt.get_transition_cost(false)+" ;merit: " + get_deduction_unnormalized_posterior_log_prob(dt, parent) + "; prob: " + res);
 			if (res < 0.0-1e-2 || res > 1.0+1e-2) {
 				throw new RuntimeException("res is not within [0,1], must be wrong value: " + res);
 			}
@@ -147,7 +146,6 @@ public abstract class DefaultInsideOutside {
 	public double getNodePosteriorProb(HGNode node ){
 		if(SEMIRING==LOG_SEMIRING){
 			double res = Math.exp((getNodeUnnormalizedPosteriorLogProb(node)-getLogNormalizationConstant()));
-			//System.out.println("dt cost: " + dt.get_transition_cost(false)+" ;merit: " + get_deduction_unnormalized_posterior_log_prob(dt, parent) + "; prob: " + res);
 			if (res < 0.0-1e-2 || res > 1.0+1e-2) {
 				throw new RuntimeException("res is not within [0,1], must be wrong value: " + res);
 			}
@@ -174,7 +172,6 @@ public abstract class DefaultInsideOutside {
 		//### recursive call on each deduction
 		for(HyperEdge dt : it.hyperedges){
 			prob_sum += getEdgePosteriorProb(dt,it);
-			//System.out.println("tran_cost: " + dt.get_transition_cost(true) + "; prob: " +  get_deduction_posterior_prob(dt,it));
 			sanity_check_deduction(dt);//deduction-specifc operation
 		}
 		double supposed_sum = getNodePosteriorProb(it);

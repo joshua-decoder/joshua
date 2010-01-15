@@ -104,7 +104,7 @@ public class HGNode implements Prunable<HGNode> {
 		semiringPlus(dt);
 	}
 	
-	private void semiringPlus(HyperEdge dt){		
+	public void semiringPlus(HyperEdge dt){		
 		if (null == bestHyperedge || bestHyperedge.bestDerivationLogP < dt.bestDerivationLogP){//semiring + operation
 			bestHyperedge = dt; //no change when tied
 		}

@@ -157,10 +157,6 @@ public class HyperGraphPruning extends TrivialInsideOutside {
 		//### get merit
 		double postLogProb = getEdgeUnormalizedPosteriorLogProb(dt, parent);
 		
-		//sanity check
-		//if (merit > worst_cost || merit < best_cost) {
-		//throw new RuntimeException("merit is not between best and worst, best: " + best_cost +"; worset:" + worst_cost + "; merit: " + merit);
-		//}
 		
 		if (dt.getRule() != null
 		&& dt.getRule().getOwner() == glueGrammarOwner

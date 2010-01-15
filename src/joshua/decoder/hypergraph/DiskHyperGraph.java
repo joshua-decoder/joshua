@@ -57,7 +57,7 @@ import joshua.util.Regex;
 //Bottom-up
 //line: SENTENCE_TAG, sent_id, sent_len, numNodes, numEdges (in average, numEdges is about 10 times larger than the numNodes, which is in average about 4000)
 //line: ITEM_TAG, item id, i, j, lhs, numEdges, tbl_state;
-//line: best_cost, numNodes, item_ids, rule id, OOV-Non-Terminal (optional), OOV (optional), \newline feature scores
+//line: bestLogP, numNodes, item_ids, rule id, OOV-Non-Terminal (optional), OOV (optional), \newline feature scores
 public class DiskHyperGraph {
 	
 //===============================================================
@@ -66,12 +66,13 @@ public class DiskHyperGraph {
 	private int         LMFeatureID          = 0;
 	private SymbolTable symbolTable;
 	
-	//when saving the hg, we simply compute all the model cost on the fly and store them on the disk
-	//TODO: when reading the hg, we read thm into a WithModelCostsHyperEdge; now, we let a program outside this class to figure out which model cost corresponds which feature function, we should avoid this in the future
+	//when saving the hg, we simply compute all the model logP on the fly and store them on the disk
+	/*TODO: when reading the hg, we read thm into a WithModelCostsHyperEdge; 
+	 *now, we let a program outside this class to figure out which model logP corresponds which feature function, we should avoid this in the future*/
 	private ArrayList<FeatureFunction> featureFunctions;
 	
-	// Whether to store the costs at each HyperEdge
-	private boolean storeModelCosts = false;
+	// Whether to store the logPs at each HyperEdge
+	private boolean storeModelLogP = false;
 	
 	// This will be set if the previous sentence is skipped
 	private String startLine;
@@ -141,7 +142,7 @@ public class DiskHyperGraph {
 	{
 		this.symbolTable      = symbolTable;
 		this.LMFeatureID      = LMFeatureID;
-		this.storeModelCosts  = storeModelCosts;
+		this.storeModelLogP  = storeModelCosts;
 		this.featureFunctions = featureFunctions;
 	}
 	
@@ -338,12 +339,12 @@ public class DiskHyperGraph {
 		}
 		
 		StringBuffer s = new StringBuffer();
-		//line: best_cost, numNodes, item_ids, rule id, OOV-Non-Terminal (optional), OOV (optional),
+		//line: bestLogP, numNodes, item_ids, rule id, OOV-Non-Terminal (optional), OOV (optional),
 		s.append(String.format("%.4f ", edge.bestDerivationLogP));
-		//s.append(" ").append(cur_d.best_cost).append(" ");//this 1.2 faster than the previous statement
+		//s.append(" ").append(cur_d.bestDerivationLogP).append(" ");//this 1.2 faster than the previous statement
 		
-		//s.append(String.format("%.4f ", cur_d.get_transition_cost(false)));
-		//s.append(cur_d.get_transition_cost(false)).append(" ");//this 1.2 faster than the previous statement, but cost 1.4 larger disk space
+		//s.append(String.format("%.4f ", cur_d.get_transition_logP(false)));
+		//s.append(cur_d.get_transition_logP(false)).append(" ");//this 1.2 faster than the previous statement, but cost 1.4 larger disk space
 		
 		if (null == edge.getAntNodes()) {
 			s.append(0);
@@ -368,9 +369,9 @@ public class DiskHyperGraph {
 		}
 		s.append('\n');
 		
-		// save model cost as a seprate line; optional
-		if (this.storeModelCosts) {
-			s.append( createModelCostLine(node, edge) );
+		// save model logPs as a seprate line; optional
+		if (this.storeModelLogP) {
+			s.append( createModelLogPLine(node, edge) );
 		}
 		
 		this.writer.write(s.toString());
@@ -380,7 +381,7 @@ public class DiskHyperGraph {
 	 * Do not remove this function as it gives freedom for an
 	 * extended class to override it
 	 */
-	public String createModelCostLine(HGNode parentNode, HyperEdge edge){
+	public String createModelLogPLine(HGNode parentNode, HyperEdge edge){
 		StringBuffer line = new StringBuffer();	
 		
 		double[] transitionCosts = ComputeNodeResult.computeModelTransitionLogPs(
@@ -496,12 +497,12 @@ public class DiskHyperGraph {
 	
 	// Assumption: has this.associatedGrammar and this.idToItem
 	private HyperEdge readHyperedge() {
-		//line: flag, best_cost, numNodes, item_ids, rule id, OOV-Non-Terminal (optional), OOV (optional)
+		//line: flag, bestLogP, numNodes, item_ids, rule id, OOV-Non-Terminal (optional), OOV (optional)
 		String  line = FileUtility.read_line_lzf(this.itemsReader);
 		String[] fds = Regex.spaces.split(line);
 		
-		//best_cost transition_cost numNodes item_ids
-		double bestCost = Double.parseDouble(fds[0]);
+		//bestLogP transitionLogP numNodes item_ids
+		double bestLogP = Double.parseDouble(fds[0]);
 		ArrayList<HGNode> antecedentItems = null;
 		final int qtyAntecedents = Integer.parseInt(fds[1]);
 		if (qtyAntecedents > 0) {
@@ -537,19 +538,18 @@ public class DiskHyperGraph {
 		}
 		
 		HyperEdge hyperEdge;
-		//read model costs
-		if (this.storeModelCosts) {
-			String[] costs_s =
+		if (this.storeModelLogP) {
+			String[] logPString =
 				Regex.spaces.split(FileUtility.read_line_lzf(this.itemsReader));
-			double[] costs = new double[costs_s.length];
-			for (int i = 0; i < costs_s.length; i++) {
-				costs[i] = Double.parseDouble(costs_s[i]);
+			double[] logPs = new double[logPString.length];
+			for (int i = 0; i < logPString.length; i++) {
+				logPs[i] = Double.parseDouble(logPString[i]);
 			}
-			hyperEdge = new WithModelLogPsHyperEdge(rule, bestCost, null, antecedentItems, costs, null);
+			hyperEdge = new WithModelLogPsHyperEdge(rule, bestLogP, null, antecedentItems, logPs, null);
 		} else {
-			hyperEdge = new HyperEdge(rule, bestCost, null, antecedentItems, null);
+			hyperEdge = new HyperEdge(rule, bestLogP, null, antecedentItems, null);
 		}
-		hyperEdge.getTransitionLogP(true); // to set the transition cost
+		hyperEdge.getTransitionLogP(true); // to set the transition logP
 		return hyperEdge;
 	}
 	

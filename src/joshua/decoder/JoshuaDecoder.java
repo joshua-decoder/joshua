@@ -22,7 +22,6 @@ import joshua.decoder.ff.ArityPhrasePenaltyFF;
 import joshua.decoder.ff.PhraseModelFF;
 import joshua.decoder.ff.WordPenaltyFF;
 import joshua.decoder.ff.SourcePathFF;
-import joshua.decoder.ff.discriminative.BLEUOracleModel;
 import joshua.decoder.ff.lm.LanguageModelFF;
 import joshua.decoder.ff.lm.NGramLanguageModel;
 import joshua.decoder.ff.lm.bloomfilter_lm.BloomFilterLanguageModel;
@@ -35,6 +34,7 @@ import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.GrammarFactory;
 import joshua.decoder.ff.tm.hiero.MemoryBasedBatchGrammar;
 import joshua.discriminative.DiscriminativeSupport;
+import joshua.discriminative.feature_related.feature_function.BLEUOracleModel;
 
 import joshua.corpus.Corpus;
 import joshua.corpus.alignment.Alignments;

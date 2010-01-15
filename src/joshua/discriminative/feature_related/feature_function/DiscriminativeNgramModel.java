@@ -1,4 +1,4 @@
-package joshua.decoder.ff.discriminative;
+package joshua.discriminative.feature_related.feature_function;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -15,7 +15,7 @@ import joshua.decoder.hypergraph.HGNode;
 import joshua.util.io.LineReader;
 import joshua.util.io.UncheckedIOException;
 
-
+@Deprecated
 public class DiscriminativeNgramModel extends DefaultStatefulFF {
 	
 	private HashMap<String, Double> ngramModel;

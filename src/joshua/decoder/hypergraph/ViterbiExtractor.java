@@ -86,12 +86,12 @@ public class ViterbiExtractor  {
 	}
 	
 	
-	private static HyperEdge cloneHyperedge(HyperEdge dt_in) {
-		ArrayList<HGNode> l_ant_items = null;
-		if (null != dt_in.getAntNodes()) {
-			l_ant_items = new ArrayList<HGNode>(dt_in.getAntNodes());//l_ant_items will be changed in get_1best_tree_item
+	private static HyperEdge cloneHyperedge(HyperEdge inEdge) {
+		List<HGNode> antNodes = null;
+		if (null != inEdge.getAntNodes()) {
+			antNodes = new ArrayList<HGNode>(inEdge.getAntNodes());//l_ant_items will be changed in get_1best_tree_item
 		}
-		HyperEdge res = new HyperEdge(dt_in.getRule(), dt_in.bestDerivationLogP, dt_in.getTransitionLogP(false), l_ant_items, dt_in.getSourcePath());
+		HyperEdge res = new HyperEdge(inEdge.getRule(), inEdge.bestDerivationLogP, inEdge.getTransitionLogP(false), antNodes, inEdge.getSourcePath());
 		return res;
 	}
 	//###end

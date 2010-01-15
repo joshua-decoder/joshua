@@ -100,7 +100,7 @@ public class FeatureExtractionHG  {
 	//extract feature from the individual deduction, non-recursive
 	//### feature require parent item information 
 	/*normally, the information in pararent item can be recovered by the dt itself, however, we give a pointer to parent to save computation whenever possible
-	 *but, some features may not be obtained by dt, for example, how many deductions the parent_item has, what is the best cost among the deductions, and so on*/
+	 *but, some features may not be obtained by dt, for example, how many deductions the parent_item has, what is the best logP among the deductions, and so on*/
 	static public void featureExtractionHyeredgeHelper(HGNode parentNode, HyperEdge dt,  HashMap featureTbl, List<FeatureTemplate> featTemplates, HashSet<String> restrictedFeatSet, double scale ){		
 		for(FeatureTemplate template : featTemplates){
 			template.getFeatureCounts(dt,  featureTbl,  restrictedFeatSet, scale);

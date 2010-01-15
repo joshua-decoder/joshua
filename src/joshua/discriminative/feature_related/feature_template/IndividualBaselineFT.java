@@ -30,7 +30,7 @@ public class IndividualBaselineFT extends AbstractFeatureTemplate {
 
 	public void getFeatureCounts(HyperEdge dt,  HashMap<String, Double> featureTbl, HashSet<String> restrictedFeatureSet, double scale) {
 		if(restrictedFeatureSet == null || restrictedFeatureSet.contains(featName)==true){
-			double val = getFeatureCost(dt, featureID);
+			double val = getFeatureLogP(dt, featureID);
 			//System.out.println("baseline is " + val + " ; scale = " + scale);
 			DiscriminativeSupport.increaseCount(featureTbl, featName, val*scale);					
 		}		
@@ -41,7 +41,7 @@ public class IndividualBaselineFT extends AbstractFeatureTemplate {
 		System.exit(0);
 	}
  	
-	private final double getFeatureCost(HyperEdge dt, int feature){
+	private final double getFeatureLogP(HyperEdge dt, int feature){
 		if(useDiskHyperGraph)
 			return ((WithModelLogPsHyperEdge)dt).modeLogPs[feature];//TODO
 		else{

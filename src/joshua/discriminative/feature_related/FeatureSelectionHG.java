@@ -45,7 +45,7 @@ public class FeatureSelectionHG {
 		double threshold = 0.0;
 		if(args.length>9) threshold = new Double(args[9].trim());
 		
-		boolean saveModelCosts = true;//diskHG have costs stored
+		boolean saveModelScore = true;//diskHG have costs stored
 		
 //		????????????????????????????????????????????????????
 		int ngramStateID = 0; 
@@ -88,7 +88,7 @@ public class FeatureSelectionHG {
 				
 		for(int fid=0; fid < testItemsFiles.size(); fid++){
 			System.out.println("############Process file id " + fid);
-			DiskHyperGraph dhg_train = new DiskHyperGraph(p_symbol, ngramStateID, saveModelCosts, null); 
+			DiskHyperGraph dhg_train = new DiskHyperGraph(p_symbol, ngramStateID, saveModelScore, null); 
 			dhg_train.initRead((String)testItemsFiles.get(fid), (String)testRulesFiles.get(fid),null);		
 			int total_num_sent = new Integer((String)l_num_sents.get(fid));
 			for(int sent_id=0; sent_id < total_num_sent; sent_id ++){

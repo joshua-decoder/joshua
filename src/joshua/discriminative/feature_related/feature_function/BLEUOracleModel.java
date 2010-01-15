@@ -1,4 +1,4 @@
-package joshua.decoder.ff.discriminative;
+package joshua.discriminative.feature_related.feature_function;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -120,7 +120,7 @@ public class BLEUOracleModel  extends DefaultStatefulFF {
 		}
 	
 		
-		return getRiskTransitionLogP(rule, antNodes);
+		return getBleuTransitionLogP(rule, antNodes);
 	}
 	
 
@@ -144,17 +144,17 @@ public class BLEUOracleModel  extends DefaultStatefulFF {
 	}
 	
 	
-	private double getRiskTransitionLogP(Rule rule, List<HGNode> antNodes){ 
+	private double getBleuTransitionLogP(Rule rule, List<HGNode> antNodes){ 
 		
-		double transitionRisk = 0;
+		double transitionBLEU = 0;
 		
 		if(rule != null){//note: hyperedges under goal item does not contribute BLEU
 			int hypLength = rule.getEnglish().length-rule.getArity();
 			HashMap<String, Integer> hyperedgeNgramTable = ngramExtractor.getTransitionNgrams(rule, antNodes, startNgramOrder, endNgramOrder);				
-			transitionRisk = - BLEU.computeLinearCorpusGain(linearCorpusGainThetas, hypLength, hyperedgeNgramTable, refereceNgramTable);			
+			transitionBLEU = BLEU.computeLinearCorpusGain(linearCorpusGainThetas, hypLength, hyperedgeNgramTable, refereceNgramTable);			
 		}
 		
-		return - transitionRisk;
+		return transitionBLEU;
 	}
 
 

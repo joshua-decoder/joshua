@@ -2,8 +2,8 @@ package joshua.discriminative.feature_related.feature_template;
 
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import joshua.corpus.vocab.SymbolTable;
 import joshua.decoder.ff.state_maintenance.NgramDPState;
@@ -11,17 +11,18 @@ import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.hypergraph.HGNode;
 import joshua.discriminative.DiscriminativeSupport;
 
+@Deprecated
 public class EdgeBigramFT extends AbstractFeatureTemplate {
 
 	int baselineLMOrder =3;
 	SymbolTable symbolTbl;
 	
-	int lmFeatID=0; //the baseline LM feature id
+	int ngramStateID=0; //the baseline LM feature id
 	
-	public EdgeBigramFT(SymbolTable symbol_, int lmFeatID_, int baselineLMOrder_){
-		this.symbolTbl = symbol_;
-		this.lmFeatID = lmFeatID_;
-		this.baselineLMOrder = baselineLMOrder_;
+	public EdgeBigramFT(SymbolTable symbolTbl, int ngramStateID, int baselineLMOrder){
+		this.symbolTbl = symbolTbl;
+		this.ngramStateID = ngramStateID;
+		this.baselineLMOrder = baselineLMOrder;
 		System.out.println("use edge ngram only");
 	}
 	
@@ -29,15 +30,13 @@ public class EdgeBigramFT extends AbstractFeatureTemplate {
 	
 	public void getFeatureCounts(Rule rule, List<HGNode> antNodes, HashMap<String, Double> featureTbl, HashSet<String> restrictedFeatureSet, double scale) {
 
-		HashMap ngramsTbl=null;
+		HashMap<String,Double> ngramsTbl = getEdgeBigrams(rule, antNodes, baselineLMOrder);
 		
-		ngramsTbl = getEdgeBigrams(rule, antNodes, baselineLMOrder);
-		
-		if(ngramsTbl!=null){						
-			for(Iterator it = ngramsTbl.keySet().iterator(); it.hasNext(); ){
-				String ngram_feat_key=(String) it.next();				
-				if(restrictedFeatureSet ==null || restrictedFeatureSet.contains(ngram_feat_key)==true){
-					DiscriminativeSupport.increaseCount(featureTbl, ngram_feat_key, (Double)ngramsTbl.get(ngram_feat_key)*scale);
+		if(ngramsTbl!=null){		
+			for(Map.Entry<String,Double> entry : ngramsTbl.entrySet() ){
+				String ngramFeatKey= entry.getKey();				
+				if(restrictedFeatureSet ==null || restrictedFeatureSet.contains(ngramFeatKey)==true){
+					DiscriminativeSupport.increaseCount(featureTbl, ngramFeatKey, entry.getValue()*scale);
 				}
 			}
 		}	
@@ -46,7 +45,7 @@ public class EdgeBigramFT extends AbstractFeatureTemplate {
 
 
 	
-	private HashMap getEdgeBigrams(Rule rule, List<HGNode> antNodes, int baselineLMOrder){
+	private HashMap<String,Double> getEdgeBigrams(Rule rule, List<HGNode> antNodes, int baselineLMOrder){
 		if(baselineLMOrder<=1){
 			System.out.println("lm order is too small"); 
 			System.exit(0);
@@ -73,7 +72,7 @@ public class EdgeBigramFT extends AbstractFeatureTemplate {
     			int index=symbolTbl.getTargetNonterminalIndex(c_id);
     			HGNode antNode = antNodes.get(index);    
     			
-    			NgramDPState state     = (NgramDPState) antNode.getDPState(this.lmFeatID);
+    			NgramDPState state     = (NgramDPState) antNode.getDPState(this.ngramStateID);
     			List<Integer>   l_context = state.getLeftLMStateWords();
     			List<Integer>   r_context = state.getRightLMStateWords();
     

@@ -16,21 +16,13 @@ public class NgramFT extends AbstractFeatureTemplate {
 	
 	private int startNgramOrder = 1;
 	private int endNgramOrder = 3;
-	
-	private double globalScale;
-	
+		
 	private NgramExtractor ngramExtractor;
 	
 	public NgramFT(SymbolTable symbolTbl, boolean useIntegerNgram, int ngramStateID, int baselineLMOrder, int startOrder, int endOrder){
-		this(symbolTbl, useIntegerNgram, ngramStateID, baselineLMOrder, startOrder, endOrder, 1.0);
-	}
-	
-	
-	public NgramFT(SymbolTable symbolTbl, boolean useIntegerNgram, int ngramStateID, int baselineLMOrder, int startOrder, int endOrder, double globalScale){
 	
 		this.startNgramOrder = startOrder;
 		this.endNgramOrder = endOrder;
-		this.globalScale = globalScale;
 	
 		if(baselineLMOrder<endNgramOrder){
 			System.out.println("baseline lm order is smaller than end_lm_order");
@@ -39,7 +31,6 @@ public class NgramFT extends AbstractFeatureTemplate {
 		
 		ngramExtractor = new NgramExtractor(symbolTbl, ngramStateID, useIntegerNgram, baselineLMOrder);
 		
-		System.out.println("NgramFeatureTemplate, globalScale is " + globalScale);
 		System.out.println("startOrder=" + startOrder);
 		System.out.println("endOrder=" + endOrder);
 		
@@ -57,7 +48,7 @@ public class NgramFT extends AbstractFeatureTemplate {
 			for(Map.Entry<String,Integer> entry : ngramsTbl.entrySet()){
 				String ngramFeatKey= entry.getKey();					
 				if(restrictedFeatureSet ==null || restrictedFeatureSet.contains(ngramFeatKey)==true){				
-						DiscriminativeSupport.increaseCount(featureTbl, ngramFeatKey,entry.getValue()*scale*globalScale);	
+						DiscriminativeSupport.increaseCount(featureTbl, ngramFeatKey,entry.getValue()*scale);	
 				
 				}
 			}
@@ -76,7 +67,7 @@ public class NgramFT extends AbstractFeatureTemplate {
 			for(Map.Entry<String,Integer> entry : ngramsTbl.entrySet()){
 				String ngramFeatKey= entry.getKey();					
 				if(restrictedFeatureSet ==null || restrictedFeatureSet.contains(ngramFeatKey)==true){				
-						DiscriminativeSupport.increaseCount(featureTbl, ngramFeatKey,entry.getValue()*scale*globalScale);	
+						DiscriminativeSupport.increaseCount(featureTbl, ngramFeatKey,entry.getValue()*scale);	
 				
 				}
 			}

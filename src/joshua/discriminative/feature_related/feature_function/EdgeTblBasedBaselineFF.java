@@ -18,7 +18,7 @@ public class EdgeTblBasedBaselineFF extends DefaultStatelessFF {
 	
 	private HashMap<HyperEdge, Double> hyperEdgeBaselineLogPTbl = new HashMap<HyperEdge, Double>() ;
 	private HashSet<HGNode> processedNodesTtbl = new HashSet<HGNode>();
-	private double sumBaselineLogP = 0;
+	
 	
 	/*hyperEdgeBaselineLogPTbl should contain **logP**; not cost
 	 * */
@@ -48,9 +48,8 @@ public class EdgeTblBasedBaselineFF extends DefaultStatelessFF {
 	public HashMap<HyperEdge, Double>  collectTransitionLogPs(HyperGraph hg){
 		hyperEdgeBaselineLogPTbl.clear();
 		processedNodesTtbl.clear();		
-		sumBaselineLogP = 0;
 		collectTransitionCosts(hg.goalNode);
-		logger.info("sumBaselineCost="+sumBaselineLogP);
+	
 		processedNodesTtbl.clear();
 		return hyperEdgeBaselineLogPTbl;
 	}
@@ -68,7 +67,7 @@ public class EdgeTblBasedBaselineFF extends DefaultStatelessFF {
 	//parent_changed_cost;//deduction-idenpendent parent item cost
 	private void collectTransitionCosts(HGNode parentNode, HyperEdge dt){
 		hyperEdgeBaselineLogPTbl.put(dt, dt.getTransitionLogP(false));//get baseline score	
-		sumBaselineLogP +=  dt.getTransitionLogP(false);
+	
 		if(dt.getAntNodes()!=null){
 			for(HGNode antNode : dt.getAntNodes()){
 				collectTransitionCosts(antNode);

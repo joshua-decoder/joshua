@@ -35,7 +35,7 @@ public class HGRanker {
 	private List<FeatureFunction> featFunctions;
 	
 	private int numChangedBestHyperedge = 0;
-	private double sumTransCost = 0;
+
 	
 	private static Logger logger = Logger.getLogger(HGRanker.class.getName());
 	
@@ -50,7 +50,6 @@ public class HGRanker {
 		rankHGNode(hg.goalNode);
 		logger.info("number of nodes whose best hyperedge changes is " + numChangedBestHyperedge 
 				+ " among total number of nodes " + processedNodesTbl.size() );
-		logger.info("sumTransCost=" + sumTransCost);
 		resetState();		
 	}
 	
@@ -64,7 +63,6 @@ public class HGRanker {
 	public void resetState(){
 		processedNodesTbl.clear();
 		numChangedBestHyperedge = 0;
-		sumTransCost = 0;
 	}
 	
  
@@ -79,8 +77,7 @@ public class HGRanker {
 		it.bestHyperedge=null;
 		for(HyperEdge dt : it.hyperedges){					
 			rankHyperEdge(it, dt );
-			if(it.bestHyperedge==null || dt.bestDerivationLogP < it.bestHyperedge.bestDerivationLogP) 
-				it.bestHyperedge = dt;//prefer smaller cost
+			it.semiringPlus(dt);
 		}	
 		
 		if(it.bestHyperedge!=oldBestHyperedge){
@@ -98,16 +95,14 @@ public class HGRanker {
 				dt.bestDerivationLogP += antNode.bestHyperedge.bestDerivationLogP;
 			}
 		}
-		double transCost = getTransitionCost(parentNode, dt);
-		sumTransCost+=transCost;
-		
-		dt.setTransitionLogP(transCost);		
-		dt.bestDerivationLogP += transCost;
+		double transLogP = getTransitionLogP(parentNode, dt);		
+		dt.setTransitionLogP(transLogP);		
+		dt.bestDerivationLogP += transLogP;
 		
 	}	
 	
 	
-	private double getTransitionCost(HGNode parentNode, HyperEdge dt ){
+	private double getTransitionLogP(HGNode parentNode, HyperEdge dt ){
 		return ComputeNodeResult.computeCombinedTransitionLogP(
 				this.featFunctions, dt, parentNode.i, parentNode.j, -1);
 	}

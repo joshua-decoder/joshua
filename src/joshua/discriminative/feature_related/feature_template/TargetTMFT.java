@@ -14,16 +14,11 @@ public class TargetTMFT  extends AbstractFeatureTemplate {
 
 	SymbolTable symbolTbl;
 	
-	double globalScale;
 	
-	public TargetTMFT(SymbolTable symbolTbl, double globalScale){
+	public TargetTMFT(SymbolTable symbolTbl){
 		this.symbolTbl = symbolTbl;	
-		this.globalScale = globalScale;
-		System.out.println("TM template, globalScale is " + this.globalScale);
-	}
-	
-	public TargetTMFT(SymbolTable symbol){
-		this(symbol, 1);
+		
+		System.out.println("TargetTMFT template");
 	}
 	
 
@@ -33,7 +28,7 @@ public class TargetTMFT  extends AbstractFeatureTemplate {
 			String featName= ruleEnglishString( (BilingualRule) rule, symbolTbl);//TODO
 			if(  restrictedFeatureSet==null ||
 			   ( restrictedFeatureSet!=null && restrictedFeatureSet.contains(featName) ) ){
-				DiscriminativeSupport.increaseCount(featureTbl, featName, scale*globalScale);									
+				DiscriminativeSupport.increaseCount(featureTbl, featName, scale);									
 			}	
 		}	
 	}

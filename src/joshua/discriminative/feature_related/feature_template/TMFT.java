@@ -14,16 +14,11 @@ import joshua.discriminative.DiscriminativeSupport;
 public class TMFT extends AbstractFeatureTemplate {
 
 	SymbolTable symbolTbl;	
-	double globalScale;
-	
-	public TMFT(SymbolTable symbolTbl, double globalScale){
-		this.symbolTbl = symbolTbl;		
-		this.globalScale = globalScale;
-		System.out.println("TM template, globalScale is " + this.globalScale);
-	}
 	
 	public TMFT(SymbolTable symbolTbl){
-		this(symbolTbl, 1);
+		this.symbolTbl = symbolTbl;		
+		
+		System.out.println("TM template");
 	}
 	
 	
@@ -32,7 +27,7 @@ public class TMFT extends AbstractFeatureTemplate {
 		if(rule != null){			
 			String key =  rule.toStringWithoutFeatScores(symbolTbl);//TODO
 			if(restrictedFeatureSet == null || restrictedFeatureSet.contains(key)==true){
-				DiscriminativeSupport.increaseCount(featureTbl, key, scale*globalScale);
+				DiscriminativeSupport.increaseCount(featureTbl, key, scale);
 				//System.out.println("key is " + key +"; lhs " + symbolTbl.getWord(rl.getLHS()));	//System.exit(0);
 			}
 			

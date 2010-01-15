@@ -11,29 +11,29 @@ import joshua.decoder.hypergraph.HyperEdge;
 import joshua.discriminative.DiscriminativeSupport;
 
 
-/* This return the baseline transition cost of the hyperedge (not the accumlative cost)
+/* This return the baseline transitionLogP of the hyperedge (not the accumlative LogP)
  * */
 
-/*while the cost of the baseline feature will not change, 
+/*while the LogP of the baseline feature will not change, 
  * the weight of the baseline feature may change*/
 
 public class BaselineFT extends AbstractFeatureTemplate {
 	
 	private String baselineFeatName = null;
-	private boolean isFixBaselineCost=true;
+	private boolean isFixBaselineLogP=true;
 	
 	private static Logger logger = Logger.getLogger(BaselineFT.class.getName());
 	
-	public BaselineFT(String baselineFeatName, boolean isFixBaselineCost){
+	public BaselineFT(String baselineFeatName, boolean isFixBaselineLogP){
 		this.baselineFeatName = baselineFeatName;
-		this.isFixBaselineCost = isFixBaselineCost;
+		this.isFixBaselineLogP = isFixBaselineLogP;
 	}
 
 
 	public void getFeatureCounts(HyperEdge dt, HashMap<String, Double> featureTbl, HashSet<String> restrictedFeatureSet, double scale) {
 		
 		if(restrictedFeatureSet == null || restrictedFeatureSet.contains(baselineFeatName)==true){
-			double val = dt.getTransitionLogP( ! isFixBaselineCost);
+			double val = dt.getTransitionLogP( ! isFixBaselineLogP);
 			//System.out.println("baseline is " + val + " ; scale = " + scale);
 			DiscriminativeSupport.increaseCount(featureTbl, baselineFeatName, val*scale);					
 		}		
