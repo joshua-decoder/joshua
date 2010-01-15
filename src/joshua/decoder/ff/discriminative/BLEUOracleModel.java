@@ -91,16 +91,16 @@ public class BLEUOracleModel  extends DefaultStatefulFF {
 	
 	/**we do not have sentence-specific estimation
 	 * */
-	public double estimate(Rule rule, int sentID) {
+	public double estimateLogP(Rule rule, int sentID) {
 		return 0;
 	}
 
-	public double estimateFutureCost(Rule rule, DPState curDPState, int sentID) {
+	public double estimateFutureLogP(Rule rule, DPState curDPState, int sentID) {
 		// TODO Auto-generated method stub
 		return 0;
 	}
 
-	public double finalTransition(HGNode antNode, int spanStart, int spanEnd, SourcePath srcPath, int sentID) {
+	public double finalTransitionLogP(HGNode antNode, int spanStart, int spanEnd, SourcePath srcPath, int sentID) {
 		//TODO Auto-generated method stub
 		return 0;
 	}
@@ -109,7 +109,7 @@ public class BLEUOracleModel  extends DefaultStatefulFF {
 	/**TODO: we assume that this function will be called by exactly once for each source sentence.
 	 * This is because the reference line reader will read a line after each call.
 	 * */
-	public double transition(Rule rule, List<HGNode> antNodes, int spanStart, int spanEnd, SourcePath srcPath, int sentID) {
+	public double transitionLogP(Rule rule, List<HGNode> antNodes, int spanStart, int spanEnd, SourcePath srcPath, int sentID) {
 		
 		if(firstSent || sentID!=oldSentID){
 			logger.info("oracle extraction for sentence " + sentID );
@@ -120,7 +120,7 @@ public class BLEUOracleModel  extends DefaultStatefulFF {
 		}
 	
 		
-		return getRiskTransitionCost(rule, antNodes);
+		return getRiskTransitionLogP(rule, antNodes);
 	}
 	
 
@@ -144,7 +144,7 @@ public class BLEUOracleModel  extends DefaultStatefulFF {
 	}
 	
 	
-	private double getRiskTransitionCost(Rule rule, List<HGNode> antNodes){ 
+	private double getRiskTransitionLogP(Rule rule, List<HGNode> antNodes){ 
 		
 		double transitionRisk = 0;
 		
@@ -154,7 +154,7 @@ public class BLEUOracleModel  extends DefaultStatefulFF {
 			transitionRisk = - BLEU.computeLinearCorpusGain(linearCorpusGainThetas, hypLength, hyperedgeNgramTable, refereceNgramTable);			
 		}
 		
-		return transitionRisk;
+		return - transitionRisk;
 	}
 
 

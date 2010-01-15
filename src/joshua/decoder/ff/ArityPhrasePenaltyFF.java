@@ -27,7 +27,7 @@ import joshua.decoder.ff.tm.Rule;
  */
 public final class ArityPhrasePenaltyFF extends DefaultStatelessFF {
 	
-	static final double ALPHA = Math.log10(Math.E);
+	static final double ALPHA = - Math.log10(Math.E);
 	
 	// when the rule.arity is in the range, then this feature is activated
 	private final int minArity;
@@ -41,7 +41,7 @@ public final class ArityPhrasePenaltyFF extends DefaultStatelessFF {
 	}
 	
 	
-	public double estimate(final Rule rule, int sentID) {
+	public double estimateLogP(final Rule rule, int sentID) {
 		if (this.owner == rule.getOwner()
 		&& this.minArity <= rule.getArity()
 		&& this.maxArity >= rule.getArity()) {

@@ -33,15 +33,15 @@ import joshua.decoder.ff.tm.Rule;
 
 public class HyperEdge {
 	
-	/** the 1-best cost of all possible derivations: 
-	 * best costs of ant hgnodes + transitionCost
+	/** the 1-best logP of all possible derivations: 
+	 * best logP of ant hgnodes + transitionlogP
 	 **/
-	public double bestDerivationCost = Double.POSITIVE_INFINITY;
+	public double bestDerivationLogP = Double.NEGATIVE_INFINITY;
 
-	/**this remembers the stateless + non_stateless cost 
-	 * assocated with the rule (excluding the best-cost from ant nodes)
+	/**this remembers the stateless + non_stateless logP 
+	 * assocated with the rule (excluding the best-logP from ant nodes)
 	 * */
-	private Double transitionCost=null;
+	private Double transitionLogP=null;
 	
 	private Rule rule;
 	
@@ -52,9 +52,9 @@ public class HyperEdge {
 	 * */
 	private List<HGNode> antNodes = null; 
 	
-	public HyperEdge(Rule rule, double bestDerivationCost, Double transitionCost, List<HGNode> antNodes, SourcePath srcPath){
-		this.bestDerivationCost = bestDerivationCost;
-		this.transitionCost=transitionCost;
+	public HyperEdge(Rule rule, double bestDerivationLogP, Double transitionLogP, List<HGNode> antNodes, SourcePath srcPath){
+		this.bestDerivationLogP = bestDerivationLogP;
+		this.transitionLogP=transitionLogP;
 		this.rule=rule;
 		this.antNodes= antNodes;
 		this.srcPath = srcPath;
@@ -73,19 +73,19 @@ public class HyperEdge {
 	}
 	
 	
-	public double getTransitionCost(boolean forceCompute){//note: transition_cost is already linearly interpolated
-		if(forceCompute || transitionCost==null){
-			double res = bestDerivationCost;
+	public double getTransitionLogP(boolean forceCompute){//note: transitionLogP is already linearly interpolated
+		if(forceCompute || transitionLogP==null){
+			double res = bestDerivationLogP;
 			if(antNodes!=null)	
 				for(HGNode antNode : antNodes)
-					res -= antNode.bestHyperedge.bestDerivationCost;
-			transitionCost = res;				
+					res -= antNode.bestHyperedge.bestDerivationLogP;
+			transitionLogP = res;				
 		}
-		return transitionCost;
+		return transitionLogP;
 	}
 	
-	public void setTransitionCost(double transitionCost_){
-		transitionCost = transitionCost_;
+	public void setTransitionLogP(double transitionLogP){
+		this.transitionLogP = transitionLogP;
 	}
 	
 	

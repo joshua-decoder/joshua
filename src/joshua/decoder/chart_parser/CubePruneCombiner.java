@@ -60,9 +60,9 @@ public class CubePruneCombiner implements Combiner{
 			return;
 		}
 		
-		//== seed the heap with best node
+		//===== seed the heap with best node
 		Rule currentRule = rules.get(0);
-		ArrayList<HGNode> currentAntNodes = new ArrayList<HGNode>();
+		List<HGNode> currentAntNodes = new ArrayList<HGNode>();
 		for (SuperNode si : superNodes) {
 			// TODO: si.nodes must be sorted
 			currentAntNodes.add(si.nodes.get(0));
@@ -79,7 +79,7 @@ public class CubePruneCombiner implements Combiner{
 		cubeStateTbl.put(bestState.getSignature(),1);
 		// cube_state_tbl.put(best_state,1);
 		
-		// extend the heap
+		//====== extend the heap
 		Rule   oldRule = null;
 		HGNode oldItem = null;
 		int    tem_c   = 0;
@@ -91,10 +91,10 @@ public class CubePruneCombiner implements Combiner{
 			currentRule = curState.rule;
 			currentAntNodes = new ArrayList<HGNode>(curState.antNodes); // critical to create a new list
 			//cube_state_tbl.remove(cur_state.get_signature()); // TODO, repeat
-			cell.addHyperEdgeInCell(curState.nodeStatesTbl, curState.rule, i, j,curState.antNodes, srcPath); // pre-pruning inside this function
+			cell.addHyperEdgeInCell(curState.nodeStatesTbl, curState.rule, i, j, curState.antNodes, srcPath); // pre-pruning inside this function
 			
 			//if the best state is pruned, then all the remaining states should be pruned away
-			if (curState.nodeStatesTbl.getExpectedTotalCost() > cell.beamPruner.getCutCost() + JoshuaConfiguration.fuzz1) {
+			if (curState.nodeStatesTbl.getExpectedTotalLogP() < cell.beamPruner.getCutoffLogP() - JoshuaConfiguration.fuzz1) {
 				//n_prepruned += heap_cands.size();
 				chart.nPreprunedFuzz1 += combinationHeap.size();
 				break;
@@ -135,7 +135,7 @@ public class CubePruneCombiner implements Combiner{
 				
 				// add state into heap
 				cubeStateTbl.put(new_sig,1);				
-				if (result.getExpectedTotalCost() < cell.beamPruner.getCutCost() + JoshuaConfiguration.fuzz2) {
+				if (result.getExpectedTotalLogP() > cell.beamPruner.getCutoffLogP() - JoshuaConfiguration.fuzz2) {
 					combinationHeap.add(tState);
 				} else {
 					//n_prepruned += 1;
@@ -166,7 +166,7 @@ public class CubePruneCombiner implements Combiner{
 			List<HGNode> antNodes;
 			
 			public CubePruneState(ComputeNodeResult state, int[] ranks, Rule rule, 
-					ArrayList<HGNode> antecedents)
+					List<HGNode> antecedents)
 			{
 				this.nodeStatesTbl = state;
 				this.ranks           = ranks;
@@ -194,24 +194,16 @@ public class CubePruneCombiner implements Combiner{
 			
 			
 			/**
-			 * Compares states by expected cost, allowing states
-			 * to be sorted according to their natural order.
-			 * 
-			 * @param another State to which this state will be compared
-			 * @return -1 if this state's expected cost is less
-			 *            than that stat's expected cost,
-			 *         0  if this state's expected cost is equal
-			 *            to that stat's expected cost,
-			 *         +1 if this state's expected cost is
-			 *            greater than that stat's expected cost
+			 * Compares states by ExpectedTotalLogP, allowing states
+			 * to be sorted according to their inverse order (high-prob first).
 			 */
 			public int compareTo(CubePruneState another) {
-				if (this.nodeStatesTbl.getExpectedTotalCost() < another.nodeStatesTbl.getExpectedTotalCost()) {
-					return -1;
-				} else if (this.nodeStatesTbl.getExpectedTotalCost() == another.nodeStatesTbl.getExpectedTotalCost()) {
+				if (this.nodeStatesTbl.getExpectedTotalLogP() < another.nodeStatesTbl.getExpectedTotalLogP()) {
+					return 1;
+				} else if (this.nodeStatesTbl.getExpectedTotalLogP() == another.nodeStatesTbl.getExpectedTotalLogP()) {
 					return 0;
 				} else {
-					return 1;
+					return -1;
 				}
 			}
 		}

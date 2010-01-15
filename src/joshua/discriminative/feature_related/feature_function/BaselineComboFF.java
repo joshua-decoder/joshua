@@ -6,7 +6,7 @@ import java.util.logging.Logger;
 import joshua.decoder.ff.DefaultStatelessFF;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.hypergraph.HyperEdge;
-import joshua.decoder.hypergraph.WithModelCostsHyperEdge;
+import joshua.decoder.hypergraph.WithModelLogPsHyperEdge;
 
 /*This model implements a combined feature, which combines a set of baseline feature
  **/
@@ -18,8 +18,7 @@ public class BaselineComboFF extends DefaultStatelessFF {
 	
 	private static Logger logger = Logger.getLogger(BaselineComboFF.class.getName());
 	
-	/*baseline_feat_tbl should contain **cost**; not prob
-	 * */
+
 	public BaselineComboFF(final int featID, final double weight, List<Integer> featPos, List<Double> interWeights) {
 		super(weight, -1, featID);//TODO: owner
 		this.featPos = featPos;
@@ -31,7 +30,7 @@ public class BaselineComboFF extends DefaultStatelessFF {
 	}
 	
 
-	public double estimate(Rule rule, int sentID) {
+	public double estimateLogP(Rule rule, int sentID) {
 		logger.severe("unimplement function");
 		System.exit(1);
 		return 0;
@@ -40,26 +39,26 @@ public class BaselineComboFF extends DefaultStatelessFF {
 	
 	
 	@Override
-	public double transition(HyperEdge edge, int spanStart, int spanEnd, int sentID){
-		return this.getCombinedCost(edge);
+	public double transitionLogP(HyperEdge edge, int spanStart, int spanEnd, int sentID){
+		return this.getCombinedLogP(edge);
 	}
 
 	@Override
-	public double finalTransition(HyperEdge edge, int spanStart, int spanEnd, int sentID){
-		return this.getCombinedCost(edge);
+	public double finalTransitionLogP(HyperEdge edge, int spanStart, int spanEnd, int sentID){
+		return this.getCombinedLogP(edge);
 	}
 	
 	
 	
-	private double getCombinedCost(HyperEdge edge){
+	private double getCombinedLogP(HyperEdge edge){
 
-		double tranCost = 0;
+		double res = 0;
 		for(int i=0; i<featPos.size(); i++){
 			int pos = featPos.get(i);
 			double weight = interWeights.get(i);
-			tranCost += weight*((WithModelCostsHyperEdge)edge).modelCosts[pos];
+			res += weight*((WithModelLogPsHyperEdge)edge).modeLogPs[pos];
 		}
-		return tranCost;
+		return res;
 	}
 	
 }

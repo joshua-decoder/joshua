@@ -16,47 +16,43 @@ public class EdgeTblBasedBaselineFF extends DefaultStatelessFF {
 	
 	private static Logger logger = Logger.getLogger(EdgeTblBasedBaselineFF.class.getName());
 	
-	private HashMap<HyperEdge, Double> hyperEdgeBaselineCostTbl = new HashMap<HyperEdge, Double>() ;
+	private HashMap<HyperEdge, Double> hyperEdgeBaselineLogPTbl = new HashMap<HyperEdge, Double>() ;
 	private HashSet<HGNode> processedNodesTtbl = new HashSet<HGNode>();
-	private double sumBaselineCost = 0;
+	private double sumBaselineLogP = 0;
 	
-	/*baseline_feat_tbl should contain **cost**; not prob
+	/*hyperEdgeBaselineLogPTbl should contain **logP**; not cost
 	 * */
 	public EdgeTblBasedBaselineFF(final int featID, final double weight) {
 		super(weight, -1, featID);//TODO: owner
 		
 	}
 	
-	public double estimate(Rule rule, int sentID) {
+	public double estimateLogP(Rule rule, int sentID) {
 		logger.severe("unimplement function");
 		System.exit(1);
 		return 0;
 	}
 	
 	@Override
-	public double transition(HyperEdge edge, int spanStart, int spanEnd, int sentID){
-		//return this.baselineFeatTbl.get(edge);
-		//System.out.println("cost:" + edge.getTransitionCost(true));
-		//return edge.getTransitionCost(true);
-		return hyperEdgeBaselineCostTbl.get(edge);
+	public double transitionLogP(HyperEdge edge, int spanStart, int spanEnd, int sentID){
+		return hyperEdgeBaselineLogPTbl.get(edge);
 	}
 
 	@Override
-	public double finalTransition(HyperEdge edge, int spanStart, int spanEnd, int sentID){
-		//return this.baselineFeatTbl.get(edge);
-		return hyperEdgeBaselineCostTbl.get(edge);
+	public double finalTransitionLogP(HyperEdge edge, int spanStart, int spanEnd, int sentID){
+		return hyperEdgeBaselineLogPTbl.get(edge);
 	}
 	
 	
 //	==========================================
-	public HashMap<HyperEdge, Double>  collectTransitionCosts(HyperGraph hg){
-		hyperEdgeBaselineCostTbl.clear();
+	public HashMap<HyperEdge, Double>  collectTransitionLogPs(HyperGraph hg){
+		hyperEdgeBaselineLogPTbl.clear();
 		processedNodesTtbl.clear();		
-		sumBaselineCost = 0;
+		sumBaselineLogP = 0;
 		collectTransitionCosts(hg.goalNode);
-		logger.info("sumBaselineCost="+sumBaselineCost);
+		logger.info("sumBaselineCost="+sumBaselineLogP);
 		processedNodesTtbl.clear();
-		return hyperEdgeBaselineCostTbl;
+		return hyperEdgeBaselineLogPTbl;
 	}
 	
 //	item: recursively call my children deductions, change pointer for best_deduction, and remember changed_cost 
@@ -71,8 +67,8 @@ public class EdgeTblBasedBaselineFF extends DefaultStatelessFF {
 //	adjust best_cost, and recursively call my ant items
 	//parent_changed_cost;//deduction-idenpendent parent item cost
 	private void collectTransitionCosts(HGNode parentNode, HyperEdge dt){
-		hyperEdgeBaselineCostTbl.put(dt, dt.getTransitionCost(false));//get baseline score	
-		sumBaselineCost +=  dt.getTransitionCost(false);
+		hyperEdgeBaselineLogPTbl.put(dt, dt.getTransitionLogP(false));//get baseline score	
+		sumBaselineLogP +=  dt.getTransitionLogP(false);
 		if(dt.getAntNodes()!=null){
 			for(HGNode antNode : dt.getAntNodes()){
 				collectTransitionCosts(antNode);

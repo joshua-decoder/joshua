@@ -20,9 +20,9 @@ import joshua.decoder.hypergraph.HyperEdge;
 
 public class ComputeNodeResult {
 	
-	private double expectedTotalCost;
-	private double finalizedTotalCost;
-	private double transitionTotalCost;
+	private double expectedTotalLogP;
+	private double finalizedTotalLogP;
+	private double transitionTotalLogP;
 	
 	// the key is state id;
 	private HashMap<Integer,DPState> dpStates;
@@ -31,48 +31,51 @@ public class ComputeNodeResult {
 	
 	
 	/** 
-	 * Compute costS and the states of thE node
+	 * Compute logPs and the states of thE node
 	 */
 	public ComputeNodeResult(List<FeatureFunction> featureFunctions, Rule rule,
 			List<HGNode> antNodes, int i, int j, SourcePath srcPath, 
 			List<StateComputer> stateComputers, int sentID){
 		
-		double finalizedTotalCost = 0.0;
+		double finalizedTotalLogP = 0.0;
 		
 		if (null != antNodes) {
 			for (HGNode item : antNodes) {
-				finalizedTotalCost += item.bestHyperedge.bestDerivationCost;
+				finalizedTotalLogP += item.bestHyperedge.bestDerivationLogP; //semiring times
 			}
 		}
 		
 		
 		HashMap<Integer,DPState> allDPStates = null;
 		
-		for(StateComputer stateComputer : stateComputers){
-			DPState dpState = stateComputer.computeState(rule, antNodes, i, j, srcPath);					
-			
-			if(allDPStates==null)
-				allDPStates = new HashMap<Integer,DPState>();
-			allDPStates.put(stateComputer.getStateID(), dpState);
+		if(stateComputers!=null){
+			for(StateComputer stateComputer : stateComputers){
+				DPState dpState = stateComputer.computeState(rule, antNodes, i, j, srcPath);					
+				
+				if(allDPStates==null)
+					allDPStates = new HashMap<Integer,DPState>();
+				allDPStates.put(stateComputer.getStateID(), dpState);
+			}
 		}
 		
-		
-		//=== compute feature costs
-		double transitionCostSum    = 0.0;
-		double futureCostEstimation = 0.0;
+		//=== compute feature logPs
+		double transitionLogPSum    = 0.0;
+		double futureLogPEstimation = 0.0;
 		
 		for (FeatureFunction ff : featureFunctions) {		
-			transitionCostSum += 
-				ff.getWeight() * ff.transition(rule, antNodes, i, j, srcPath, sentID);
+			transitionLogPSum += 
+				ff.getWeight() * ff.transitionLogP(rule, antNodes, i, j, srcPath, sentID);
 			
-			DPState dpState = allDPStates.get(ff.getStateID());
-			futureCostEstimation +=
-				ff.getWeight() * ff.estimateFutureCost(rule, dpState, sentID);
+			DPState dpState = null;
+			if(allDPStates!=null)
+				dpState = allDPStates.get(ff.getStateID());
+			futureLogPEstimation +=
+				ff.getWeight() * ff.estimateFutureLogP(rule, dpState, sentID);
 			
 		}
 		
 		/* if we use this one (instead of compute transition
-		 * cost on the fly, we will rely on the correctness
+		 * logP on the fly, we will rely on the correctness
 		 * of rule.statelesscost. This will cause a nasty
 		 * bug for MERT. Specifically, even we change the
 		 * weight vector for features along the iteration,
@@ -83,60 +86,76 @@ public class ComputeNodeResult {
 		 * set)
 		 */
 		//transitionCostSum += rule.getStatelessCost();
+		//System.out.println(futureLogPEstimation);
 		
-		finalizedTotalCost += transitionCostSum;
-		double expectedTotalCost = finalizedTotalCost + futureCostEstimation;
+		finalizedTotalLogP += transitionLogPSum;
+		double expectedTotalLogP = finalizedTotalLogP + futureLogPEstimation;
 		
 		
 		//== set the final results
-		this.expectedTotalCost = expectedTotalCost;
-		this.finalizedTotalCost = finalizedTotalCost;
-		this.transitionTotalCost = transitionCostSum;
+		this.expectedTotalLogP = expectedTotalLogP;
+		this.finalizedTotalLogP = finalizedTotalLogP;
+		this.transitionTotalLogP = transitionLogPSum;
 		this.dpStates =  allDPStates;
+		
+		//System.out.println(rule.toString());
+		//printInfo();
 	}
 	
-	public static double computeCombinedTransitionCost(List<FeatureFunction> featureFunctions, HyperEdge edge, 
+	public static double computeCombinedTransitionLogP(List<FeatureFunction> featureFunctions, HyperEdge edge, 
 			int i, int j, int sentID){
 		double res = 0;
 		for(FeatureFunction ff : featureFunctions) {				
 			if(edge.getRule()!=null)
-				res += ff.getWeight() * ff.transition(edge, i,  j, sentID);
+				res += ff.getWeight() * ff.transitionLogP(edge, i,  j, sentID);
 			else
-				res += ff.getWeight() * ff.finalTransition(edge, i, j, sentID);		
+				res += ff.getWeight() * ff.finalTransitionLogP(edge, i, j, sentID);		
 		}
 		return res;
 	}
 	
-	public static double[] computeModelTransitionCosts(List<FeatureFunction> featureFunctions, HyperEdge edge, 
+	public static double computeCombinedTransitionLogP(List<FeatureFunction> featureFunctions, Rule rule, 
+			List<HGNode> antNodes,  int i, int j,  SourcePath srcPath, int sentID){
+		double res = 0;
+		for(FeatureFunction ff : featureFunctions) {				
+			if(rule!=null)
+				res += ff.getWeight() * ff.transitionLogP(rule, antNodes, i,  j, srcPath, sentID);
+			else
+				res += ff.getWeight() * ff.finalTransitionLogP(antNodes.get(0), i,  j, srcPath, sentID);		
+		}
+		return res;
+	}
+	
+	public static double[] computeModelTransitionLogPs(List<FeatureFunction> featureFunctions, HyperEdge edge, 
 			int i, int j,  int sentID){
 
 			double[] res = new double[featureFunctions.size()];
 			
-			//=== compute feature costs
+			//=== compute feature logPs
 			int k=0;
 			for(FeatureFunction ff : featureFunctions) {				
 				if(edge.getRule()!=null)
-					res[k] = ff.transition(edge, i, j, sentID);
+					res[k] = ff.transitionLogP(edge, i, j, sentID);
 				else
-					res[k] = ff.finalTransition(edge,  i, j, sentID);		
+					res[k] = ff.finalTransitionLogP(edge,  i, j, sentID);		
 				k++;
 			}
 			
 			return res;		
 	}
 
-	public static double[] computeModelTransitionCosts(List<FeatureFunction> featureFunctions, Rule rule, 
+	public static double[] computeModelTransitionLogPs(List<FeatureFunction> featureFunctions, Rule rule, 
 					List<HGNode> antNodes, int i, int j, SourcePath srcPath, int sentID){
 		
 		double[] res = new double[featureFunctions.size()];
 		
-		//=== compute feature costs
+		//=== compute feature logPs
 		int k=0;
 		for(FeatureFunction ff : featureFunctions) {				
 			if(rule!=null)
-				res[k] = ff.transition(rule, antNodes, i, j, srcPath, sentID);
+				res[k] = ff.transitionLogP(rule, antNodes, i, j, srcPath, sentID);
 			else
-				res[k] = ff.finalTransition(antNodes.get(0),  i, j, srcPath, sentID);		
+				res[k] = ff.finalTransitionLogP(antNodes.get(0),  i, j, srcPath, sentID);		
 			k++;
 		}
 		
@@ -145,28 +164,28 @@ public class ComputeNodeResult {
 		
 	
 	
-	void setExpectedTotalCost(double cost) {
-		this.expectedTotalCost = cost;
+	void setExpectedTotalLogP(double logP) {
+		this.expectedTotalLogP = logP;
 	}
 	
-	public double getExpectedTotalCost() {
-		return this.expectedTotalCost;
+	public double getExpectedTotalLogP() {
+		return this.expectedTotalLogP;
 	}
 	
-	void setFinalizedTotalCost(double cost) {
-		this.finalizedTotalCost = cost;
+	void setFinalizedTotalLogP(double logP) {
+		this.finalizedTotalLogP = logP;
 	}
 	
-	double getFinalizedTotalCost() {
-		return this.finalizedTotalCost;
+	double getFinalizedTotalLogP() {
+		return this.finalizedTotalLogP;
 	}
 	
-	void setTransitionTotalCost(double cost) {
-		this.transitionTotalCost = cost;
+	void setTransitionTotalLogP(double logP) {
+		this.transitionTotalLogP = logP;
 	}
 	
-	double getTransitionTotalCost() {
-		return this.transitionTotalCost;
+	double getTransitionTotalLogP() {
+		return this.transitionTotalLogP;
 	}
 	
 	void setDPStates(HashMap<Integer,DPState> states) {
@@ -175,5 +194,9 @@ public class ComputeNodeResult {
 	
 	HashMap<Integer,DPState> getDPStates() {
 		return this.dpStates;
+	}
+	
+	public void printInfo(){
+		System.out.println("scores: "+ transitionTotalLogP + "; " + finalizedTotalLogP + "; " +  expectedTotalLogP);
 	}
 }

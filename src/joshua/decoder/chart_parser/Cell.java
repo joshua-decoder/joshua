@@ -17,16 +17,6 @@
  */
 package joshua.decoder.chart_parser;
 
-import joshua.decoder.JoshuaConfiguration;
-import joshua.decoder.ff.FeatureFunction;
-
-
-import joshua.decoder.ff.state_maintenance.DPState;
-import joshua.decoder.ff.tm.Rule;
-
-import joshua.decoder.hypergraph.HGNode;
-import joshua.decoder.hypergraph.HyperEdge;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -36,12 +26,19 @@ import java.util.PriorityQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import joshua.decoder.JoshuaConfiguration;
+import joshua.decoder.ff.FeatureFunction;
+import joshua.decoder.ff.state_maintenance.DPState;
+import joshua.decoder.ff.tm.Rule;
+import joshua.decoder.hypergraph.HGNode;
+import joshua.decoder.hypergraph.HyperEdge;
+
 
 /**
  * this class implement functions:
  * (1) combine small itesm into larger ones using rules, and create
  *     items and hyper-edges to construct a hyper-graph,
- * (2) evaluate model cost for items,
+ * (2) evaluate model score for items,
  * (3) cube-pruning
  * Note: Bin creates Items, but not all Items will be used in the
  * hyper-graph
@@ -89,7 +86,7 @@ class Cell {
 		this.goalSymID = goalSymID;
 		
 		if(JoshuaConfiguration.useBeamAndThresholdPrune){
-			PriorityQueue<HGNode> nodesHeap =new PriorityQueue<HGNode>(1, HGNode.negtiveCostComparator);		
+			PriorityQueue<HGNode> nodesHeap = new PriorityQueue<HGNode>(1, HGNode.logPComparator);		
 			beamPruner = new BeamPruner<HGNode>(nodesHeap, JoshuaConfiguration.relative_threshold, JoshuaConfiguration.max_n_items);
 		}
 	}
@@ -112,38 +109,22 @@ class Cell {
 		
 		for (HGNode antNode : bin.getSortedNodes()) {
 			if (antNode.lhs == this.goalSymID) {
-				double cost = antNode.bestHyperedge.bestDerivationCost;
-				double finalTransitionCost = 0.0;
+				double logP = antNode.bestHyperedge.bestDerivationLogP;
 				List<HGNode> antNodes = new ArrayList<HGNode>();
 				antNodes.add(antNode);
-				double[] modelCosts = ComputeNodeResult.computeModelTransitionCosts(
-						featureFunctions, null, antNodes, 0, sentenceLength, null, this.chart.segmentID);
-								
-				int count=0;
-				for (FeatureFunction ff : featureFunctions) {
-					finalTransitionCost += ff.getWeight() * modelCosts[count];
-					count++;
-				}
 				
-				ArrayList<HGNode> previousItems = new ArrayList<HGNode>();
+				double finalTransitionLogP = ComputeNodeResult.computeCombinedTransitionLogP(featureFunctions, null, antNodes, 0, sentenceLength, null, this.chart.segmentID);
+										
+				List<HGNode> previousItems = new ArrayList<HGNode>();
 				previousItems.add(antNode);
 				
-				HyperEdge dt = new HyperEdge(null, cost + finalTransitionCost, finalTransitionCost, previousItems, null);
-				
-				if (logger.isLoggable(Level.FINE)) {
-					logger.fine(String.format(
-						"Goal item, total_cost: %.3f; ant_cost: %.3f; final_tran: %.3f; ",
-						cost + finalTransitionCost, cost, finalTransitionCost));
-				}
-				
+				HyperEdge dt = new HyperEdge(null, logP + finalTransitionLogP, finalTransitionLogP, previousItems, null);
+								
 				if (null == goalItem) {
-					goalItem = new HGNode(0, sentenceLength + 1, this.goalSymID, null, dt, cost + finalTransitionCost);
+					goalItem = new HGNode(0, sentenceLength + 1, this.goalSymID, null, dt, logP + finalTransitionLogP);
 					this.sortedNodes.add(goalItem);
 				} else {
 					goalItem.addHyperedgeInNode(dt);
-					if (goalItem.bestHyperedge.bestDerivationCost > dt.bestDerivationCost) {
-						goalItem.bestHyperedge = dt;
-					}
 				}
 			} // End if item.lhs == this.goalSymID
 		} // End foreach Item in bin.get_sorted_items()
@@ -153,8 +134,8 @@ class Cell {
 			if (null == goalItem) {
 				logger.severe("goalItem is null (this will cause the RuntimeException below)");
 			} else {
-				logger.info(String.format("Goal item, best cost is %.3f",
-					goalItem.bestHyperedge.bestDerivationCost));
+				logger.info(String.format("Goal item, best logP is %.3f",
+					goalItem.bestHyperedge.bestDerivationLogP));
 			}
 		}
 		ensureSorted();
@@ -168,14 +149,14 @@ class Cell {
 	
 	
 	/**in order to add a hyperedge into the chart, we need to
-	 * (1) do the combination, and compute the cost (if pass the cube-prunning filter)
+	 * (1) do the combination, and compute the logP (if pass the cube-prunning filter)
 	 * (2) run through the beam and threshold pruning, which itself has two steps.
 	 * */
 	
 	/**a note about pruning:
 	 * when a hyperedge gets created, it first needs to pass through shouldPruneEdge filter.
 	 * Then, if it does not trigger a new node (i.e. will be merged to an old node), then does not trigger pruningNodes.
-	 * If it does trigger a new node (either because its signature is new or because its cost is better than the old node's cost), 
+	 * If it does trigger a new node (either because its signature is new or because its logP is better than the old node's logP), 
 	 * then it will trigger pruningNodes, which might causes *other* nodes got pruned as well
 	 * */
 	
@@ -189,21 +170,22 @@ class Cell {
 		HGNode res = null;
 		
 		HashMap<Integer,DPState> dpStates = result.getDPStates();
-		double expectedTotalCost  = result.getExpectedTotalCost(); // including outside estimation
-		double transitionCost    = result.getTransitionTotalCost();
-		double finalizedTotalCost = result.getFinalizedTotalCost();
-	
+		double expectedTotalLogP  = result.getExpectedTotalLogP(); // including outside estimation
+		double transitionLogP    = result.getTransitionTotalLogP();
+		double finalizedTotalLogP = result.getFinalizedTotalLogP();
 		
-		if(beamPruner!=null &&  beamPruner.relativeThresholdPrune(expectedTotalCost)){//the hyperedge should be pruned
+		
+		
+		if(beamPruner!=null &&  beamPruner.relativeThresholdPrune(expectedTotalLogP)){//the hyperedge should be pruned
 			this.chart.nPreprunedEdges++;
 			res = null;
 		}else{
-			HyperEdge dt = new HyperEdge(rule, finalizedTotalCost, transitionCost, ants, srcPath);
-			res = new HGNode(i, j, rule.getLHS(), dpStates, dt, expectedTotalCost);
+			HyperEdge dt = new HyperEdge(rule, finalizedTotalLogP, transitionLogP, ants, srcPath);
+			res = new HGNode(i, j, rule.getLHS(), dpStates, dt, expectedTotalLogP);
 			
 			/** each node has a list of hyperedges,
 			 * need to check whether the node is already exist, 
-			 * if yes, just add the hyperedges, this may change the best cost of the node 
+			 * if yes, just add the hyperedges, this may change the best logP of the node 
 			 * */
 			HGNode oldNode = this.nodesSigTbl.get( res.getSignature() );
 			if (null != oldNode) { // have an item with same states, combine items
@@ -213,7 +195,7 @@ class Cell {
 				 *  may change, basically, we should remove the
 				 *  oldItem, and re-insert it (linear time), this is too expense)
 				 **/
-				if (res.estTotalCost < oldNode.estTotalCost) {//merget old to new					
+				if ( res.getPruneLogP() > oldNode.getPruneLogP() ) {//merget old to new: semiring plus					
 
 					if(beamPruner!=null){
 						oldNode.setDead();// this.heapItems.remove(oldItem);
@@ -255,13 +237,13 @@ class Cell {
 
 	/**two cases this function gets called
 	 * (1) a new hyperedge leads to a non-existing node signature
-	 * (2) a new hyperedge's signature matches an old node's signature, but the best-cost of old node is worse than the new hyperedge's cost
+	 * (2) a new hyperedge's signature matches an old node's signature, but the best-logp of old node is worse than the new hyperedge's logP
 	 * */
 	private void addNewNode(HGNode node) {
 		this.nodesSigTbl.put(node.getSignature(), node); // add/replace the item
 		this.sortedNodes = null; // reset the list
 			
-		//update bestItemCost and cutoffCost
+	
 		if(beamPruner!=null){
 			List<HGNode> prunedNodes = beamPruner.addOneObjInHeapWithPrune(node);
 			this.chart.nPrunedItems += prunedNodes.size();
@@ -293,19 +275,28 @@ class Cell {
 		
 		if (null == this.sortedNodes) {
 			//== get sortedNodes
-			Object[] tCollection = this.nodesSigTbl.values().toArray();
+			//HGNode[] tCollection =(HGNode[])((Collection<HGNode>)this.nodesSigTbl.values()).toArray();
+			HGNode[] nodesArray = new HGNode[this.nodesSigTbl.size()];
+			int i=0;
+			for(HGNode node : this.nodesSigTbl.values() )
+				nodesArray[i++]= node;
 			
-			Arrays.sort(tCollection);
+			/**sort the node in an decreasing-LogP order
+			 * */
+			Arrays.sort(nodesArray, HGNode.inverseLogPComparator);
 			
 			this.sortedNodes = new ArrayList<HGNode>();
-			for (int c = 0; c < tCollection.length;c++) {
-				this.sortedNodes.add((HGNode)tCollection[c]);
+			for (HGNode node : nodesArray) {
+				this.sortedNodes.add(node);
+				//System.out.println(node.getPruneLogP());
 			}
+			
+			
+			
 			//TODO: we cannot create new SuperItem here because the DotItem link to them
 			
 			//== update superNodesTbl
-			ArrayList<SuperNode> tem_list =
-				new ArrayList<SuperNode>(this.superNodesTbl.values());
+			List<SuperNode> tem_list = new ArrayList<SuperNode>(this.superNodesTbl.values());
 			for (SuperNode t_si : tem_list) {
 				t_si.nodes.clear();
 			}
@@ -319,16 +310,16 @@ class Cell {
 			}
 			
 			//== remove SuperNodes who may not contain any node any more due to pruning
-			ArrayList<Integer> to_remove = new ArrayList<Integer>();
+			List<Integer> toRemove = new ArrayList<Integer>();
 			for (Integer k : this.superNodesTbl.keySet()) {
 				if (this.superNodesTbl.get(k).nodes.size() <= 0) {
 					 // note that: we cannot directly do the remove, because it will throw ConcurrentModificationException
-					to_remove.add(k);
+					toRemove.add(k);
 					//System.out.println("have zero items in superitem " + k);
 					//this.tableSuperItems.remove(k);
 				}
 			}
-			for (Integer t : to_remove) {
+			for (Integer t : toRemove) {
 				this.superNodesTbl.remove(t);
 			}
 		}

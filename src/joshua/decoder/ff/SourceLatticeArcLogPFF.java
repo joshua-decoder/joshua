@@ -24,20 +24,20 @@ import joshua.decoder.ff.tm.Rule;
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate$
  */
-public final class SourceLatticeArcCostFF extends DefaultStatelessFF {
+public final class SourceLatticeArcLogPFF extends DefaultStatelessFF {
 	
-	public SourceLatticeArcCostFF(final int featureID, final double weight) {
+	public SourceLatticeArcLogPFF(final int featureID, final double weight) {
 		super(weight, -1, featureID); // TODO: owner
 	}
 	
 	
-	public double estimate(final Rule rule, int sentID) {
+	public double estimateLogP(final Rule rule, int sentID) {
 		// TODO: why not check the owner
 		/*if (this.owner == rule.owner) {
 			return rule.lattice_cost;
 		} else {
 			return 0.0;
 		}*/
-		return rule.getLatticeCost();
+		return - rule.getLatticeCost();
 	}
 }

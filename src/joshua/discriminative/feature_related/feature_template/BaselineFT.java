@@ -33,7 +33,7 @@ public class BaselineFT extends AbstractFeatureTemplate {
 	public void getFeatureCounts(HyperEdge dt, HashMap<String, Double> featureTbl, HashSet<String> restrictedFeatureSet, double scale) {
 		
 		if(restrictedFeatureSet == null || restrictedFeatureSet.contains(baselineFeatName)==true){
-			double val = dt.getTransitionCost( ! isFixBaselineCost);
+			double val = dt.getTransitionLogP( ! isFixBaselineCost);
 			//System.out.println("baseline is " + val + " ; scale = " + scale);
 			DiscriminativeSupport.increaseCount(featureTbl, baselineFeatName, val*scale);					
 		}		

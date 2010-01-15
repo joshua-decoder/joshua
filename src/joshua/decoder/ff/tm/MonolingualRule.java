@@ -191,7 +191,7 @@ public class MonolingualRule implements Rule {
 		} else {
 			float estcost = 0.0f;
 			for (FeatureFunction ff : featureFunctions) {
-				double mdcost = ff.estimate(this, -1) * ff.getWeight();
+				double mdcost = - ff.estimateLogP(this, -1) * ff.getWeight();
 				estcost += mdcost;
 			}
 			if (logger.isLoggable(Level.FINEST)) {

@@ -78,15 +78,15 @@ public abstract class DefaultStatelessFF implements FeatureFunction {
 	}
 	
 	
-	public double transition(HyperEdge edge, int spanStart, int spanEnd, int sentID){
-		return transition(edge.getRule(), edge.getAntNodes(), spanStart, spanEnd, edge.getSourcePath(), sentID );
+	public double transitionLogP(HyperEdge edge, int spanStart, int spanEnd, int sentID){
+		return transitionLogP(edge.getRule(), edge.getAntNodes(), spanStart, spanEnd, edge.getSourcePath(), sentID );
 	}
 	
-	public double transition(Rule rule, List<HGNode> antNodes, int spanStart, int spanEnd, SourcePath srcPath, int sentID){
-		return estimate(rule, sentID);
+	public double transitionLogP(Rule rule, List<HGNode> antNodes, int spanStart, int spanEnd, SourcePath srcPath, int sentID){
+		return estimateLogP(rule, sentID);
 	}
 	
-	public final double estimateFutureCost(Rule rule, DPState curDPState, int sentID){
+	public final double estimateFutureLogP(Rule rule, DPState curDPState, int sentID){
 		if (null != curDPState) {
 			throw new IllegalArgumentException("estimateFutureCost: curDPState for a stateless feature is NOT null");
 		}
@@ -94,11 +94,11 @@ public abstract class DefaultStatelessFF implements FeatureFunction {
 	}
 	
 	
-	public final double finalTransition(HGNode antNode, int spanStart, int spanEnd, SourcePath srcPath, int sentID){
+	public final double finalTransitionLogP(HGNode antNode, int spanStart, int spanEnd, SourcePath srcPath, int sentID){
 		return 0.0;
 	}
 	
-	public double finalTransition(HyperEdge edge, int spanStart, int spanEnd, int sentID){
-		return  finalTransition(edge.getAntNodes().get(0), spanStart, spanEnd, edge.getSourcePath(), sentID );
+	public double finalTransitionLogP(HyperEdge edge, int spanStart, int spanEnd, int sentID){
+		return  finalTransitionLogP(edge.getAntNodes().get(0), spanStart, spanEnd, edge.getSourcePath(), sentID );
 	}
 }

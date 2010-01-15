@@ -339,7 +339,7 @@ public class DiskHyperGraph {
 		
 		StringBuffer s = new StringBuffer();
 		//line: best_cost, numNodes, item_ids, rule id, OOV-Non-Terminal (optional), OOV (optional),
-		s.append(String.format("%.4f ", edge.bestDerivationCost));
+		s.append(String.format("%.4f ", edge.bestDerivationLogP));
 		//s.append(" ").append(cur_d.best_cost).append(" ");//this 1.2 faster than the previous statement
 		
 		//s.append(String.format("%.4f ", cur_d.get_transition_cost(false)));
@@ -383,7 +383,7 @@ public class DiskHyperGraph {
 	public String createModelCostLine(HGNode parentNode, HyperEdge edge){
 		StringBuffer line = new StringBuffer();	
 		
-		double[] transitionCosts = ComputeNodeResult.computeModelTransitionCosts(
+		double[] transitionCosts = ComputeNodeResult.computeModelTransitionLogPs(
 				this.featureFunctions, edge, parentNode.i, parentNode.j, this.sentID);
 		
 		for (int k = 0; k < this.featureFunctions.size(); k++) {
@@ -482,8 +482,8 @@ public class DiskHyperGraph {
 			for (int t = 0; t < qtyDeductions; t++) {
 				HyperEdge deduction = readHyperedge();
 				deductions.add(deduction);
-				if (deduction.bestDerivationCost < bestCost) {
-					bestCost      = deduction.bestDerivationCost;
+				if (deduction.bestDerivationLogP < bestCost) {
+					bestCost      = deduction.bestDerivationLogP;
 					bestDeduction = deduction;
 				}
 			}
@@ -545,11 +545,11 @@ public class DiskHyperGraph {
 			for (int i = 0; i < costs_s.length; i++) {
 				costs[i] = Double.parseDouble(costs_s[i]);
 			}
-			hyperEdge = new WithModelCostsHyperEdge(rule, bestCost, null, antecedentItems, costs, null);
+			hyperEdge = new WithModelLogPsHyperEdge(rule, bestCost, null, antecedentItems, costs, null);
 		} else {
 			hyperEdge = new HyperEdge(rule, bestCost, null, antecedentItems, null);
 		}
-		hyperEdge.getTransitionCost(true); // to set the transition cost
+		hyperEdge.getTransitionLogP(true); // to set the transition cost
 		return hyperEdge;
 	}
 	

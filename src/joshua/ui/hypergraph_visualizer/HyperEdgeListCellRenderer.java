@@ -22,7 +22,7 @@ public class HyperEdgeListCellRenderer implements ListCellRenderer {
 	public Component getListCellRendererComponent(JList list, Object value,
 			int index, boolean isSelected, boolean cellHasFocus) {
 		Rule r = ((HyperEdge) value).getRule();
-		double score = ((HyperEdge) value).bestDerivationCost;
+		double score = ((HyperEdge) value).bestDerivationLogP;
 		String lhs = vocab.getWord(r.getLHS());
 		String french = vocab.getWords(r.getFrench());
 		String english = vocab.getWords(r.getEnglish());

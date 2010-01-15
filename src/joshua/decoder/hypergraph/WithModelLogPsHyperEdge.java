@@ -17,7 +17,7 @@
  */
 package joshua.decoder.hypergraph;
 
-import java.util.ArrayList;
+import java.util.List;
 
 import joshua.decoder.chart_parser.SourcePath;
 import joshua.decoder.ff.tm.Rule;
@@ -26,12 +26,12 @@ import joshua.decoder.ff.tm.Rule;
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate$
  */
-public class WithModelCostsHyperEdge extends HyperEdge {
-	public double[] modelCosts;//store the list of models costs
+public class WithModelLogPsHyperEdge extends HyperEdge {
+	public double[] modeLogPs;
 
-	public WithModelCostsHyperEdge(Rule rl, double total_cost, Double trans_cost, ArrayList<HGNode> ant_items, double[] model_costs_, SourcePath srcPath) {
-		super(rl, total_cost, trans_cost, ant_items, srcPath);
-		this.modelCosts = model_costs_;
+	public WithModelLogPsHyperEdge(Rule rule, double bestDerivationLogP, Double transitionLogP, List<HGNode> antNodes, double[] modeLogPs, SourcePath srcPath) {
+		super(rule, bestDerivationLogP, transitionLogP, antNodes, srcPath);
+		this.modeLogPs = modeLogPs;
 	}
 
 }

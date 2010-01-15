@@ -91,8 +91,8 @@ import joshua.discriminative.feature_related.feature_template.TableBasedBaseline
 //	adjust best_cost, and recursively call my ant items
 	//parent_changed_cost;//deduction-idenpendent parent item cost
 	private void collectTransitionCosts(HGNode parentNode, HyperEdge dt){
-		hyperEdgeBaselineCostTbl.put(dt, dt.getTransitionCost(false));//get baseline score	
-		sumBaselineCost += dt.getTransitionCost(false);
+		hyperEdgeBaselineCostTbl.put(dt, dt.getTransitionLogP(false));//get baseline score	
+		sumBaselineCost += dt.getTransitionLogP(false);
 		if(dt.getAntNodes()!=null){
 			for(HGNode antNode : dt.getAntNodes()){
 				collectTransitionCosts(antNode);
@@ -125,7 +125,7 @@ import joshua.discriminative.feature_related.feature_template.TableBasedBaseline
 		it.bestHyperedge=null;
 		for(HyperEdge dt : it.hyperedges){					
 			adjustHyperedgeCost(it, dt );//deduction-specifc feature
-			if(it.bestHyperedge==null || dt.bestDerivationCost < it.bestHyperedge.bestDerivationCost) 
+			if(it.bestHyperedge==null || dt.bestDerivationLogP < it.bestHyperedge.bestDerivationLogP) 
 				it.bestHyperedge = dt;//prefer smaller cost
 		}
 		if(it.bestHyperedge!=oldEdge)
@@ -135,16 +135,16 @@ import joshua.discriminative.feature_related.feature_template.TableBasedBaseline
 	
 	//adjust best_cost, and recursively call my ant items
 	private void adjustHyperedgeCost(HGNode parentNode, HyperEdge dt){
-		dt.bestDerivationCost =0;
+		dt.bestDerivationLogP =0;
 		if(dt.getAntNodes()!=null){
 			for(HGNode antNode : dt.getAntNodes()){
 				adjustNodeCost(antNode);
-				dt.bestDerivationCost += antNode.bestHyperedge.bestDerivationCost;
+				dt.bestDerivationLogP += antNode.bestHyperedge.bestDerivationLogP;
 			}
 		}
 		double transCost = getTransitionCost(parentNode, dt);
-		dt.setTransitionCost(transCost) ;
-		dt.bestDerivationCost += transCost;
+		dt.setTransitionLogP(transCost) ;
+		dt.bestDerivationLogP += transCost;
 		
 	}	
 	
@@ -158,7 +158,7 @@ import joshua.discriminative.feature_related.feature_template.TableBasedBaseline
 			template.getFeatureCounts(dt,  featTbl,  restrictedFeatSet, 1);//scale is one: hard count			
 		}	
 		
-		res = DiscriminativeSupport.computeLinearCombination(featTbl, correctiveModel);
+		res = DiscriminativeSupport.computeLinearCombinationLogP(featTbl, correctiveModel);
 		
 		//System.out.println("deduction corrective cost " + res);
 		sumTransCost += res;
@@ -264,7 +264,7 @@ import joshua.discriminative.feature_related.feature_template.TableBasedBaseline
 				HyperGraph testHG = diskHG.readHyperGraph();
 				((TableBasedBaselineFT) baselineFeature).setBaselineScoreTbl( reranker.collectTransitionCosts(testHG) );
 				HyperGraph rerankedOnebestHG = reranker.rerankHGAndGet1best(testHG, modelTbl, restrictedFeatureSet, featTemplates, isAvgModel);
-				System.out.println("bestScore=" + rerankedOnebestHG.goalNode.bestHyperedge.bestDerivationCost );
+				System.out.println("bestScore=" + rerankedOnebestHG.goalNode.bestHyperedge.bestDerivationLogP );
 				String reranked_1best = ViterbiExtractor.extractViterbiString(symbolTbl, rerankedOnebestHG.goalNode);
 				
 				FileUtilityOld.writeLzf(out1best, reranked_1best + "\n");				

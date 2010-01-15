@@ -6,30 +6,29 @@ import java.util.PriorityQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-
 import joshua.decoder.Support;
 
 
 /**(1) relative threshold pruning 
- * when the cost of a new edge (or an existing node) is worse than the best by a threshold, prune it
+ * when the logP of a new edge (or an existing node) is worse than the best by a threshold, prune it
  * (2) when the number of node is greater than a threshold, prune some nodes
- * (3) maintain bestCost and nodesHeap
+ * (3) maintain bestLogP and nodesHeap
  * */
 
 public class BeamPruner<Obj extends Prunable> {
 
-	/**Ideally, if the cost of an object changes, it should be 
+	/**Ideally, if the goodness of an object changes, it should be 
 	 * removed from the heap (linear time), and re-insert it (logN time). But, this is 
 	 * too expensive. So, instead, we will mark an object as dead, and simply add
-	 * a new object with the updated cost.
+	 * a new object with the updated goodness.
 	 * */
 	
 	//num of corrupted items in this.heapItems
 	private int qtyDeadItems = 0;
 		
 	
-	/** cutoff = bestItemCost + relative_threshold */
-	private double cutoffCost = Integer.MAX_VALUE;
+	/** cutoff = bestItemLogP - relative_threshold */
+	private double cutoffLogP = Double.NEGATIVE_INFINITY;
 	
 	private double relativeThreshold;
 	
@@ -65,8 +64,8 @@ public class BeamPruner<Obj extends Prunable> {
 		
 	/**threshold cutoff pruning
 	 * */
-	public boolean relativeThresholdPrune(double totalCost) {		
-		return (totalCost >= this.cutoffCost);
+	public boolean relativeThresholdPrune(double logP) {		
+		return (logP <= this.cutoffLogP);
 	}
 	
 	
@@ -74,19 +73,21 @@ public class BeamPruner<Obj extends Prunable> {
 		return ++ this.qtyDeadItems;
 	}
 
-	/**This will add the object, update the cutOff cost,
+	/**This will add the object, update the cutOff logP,
 	 * and trigger pruningObjs*/
 	public List<Obj> addOneObjInHeapWithPrune(Obj obj){		
 		this.nodesHeap.add(obj);
-		updateCutoffCost(obj.getPruneCost());
+		//System.out.println("Add: " + obj.getPruneLogP()+ "; " +((HGNode)obj).i + "; " + ((HGNode)obj).j + "; best= " + ((HGNode)obj).bestHyperedge.bestDerivationLogP);
+		updateCutoffLogP(obj.getPruneLogP());
 		List<Obj> prunedNodes = pruningObjs();
 		return prunedNodes;
 	}
 	
-	public double getCutCost(){
-		return this.cutoffCost;
+	public double getCutoffLogP(){
+		return this.cutoffLogP;
 	}	
 
+	
 	
 	/**pruning at the object level
 	 **/
@@ -100,16 +101,18 @@ public class BeamPruner<Obj extends Prunable> {
 			
 			/**since all these objects are already dead, 
 			 * we do not consider them prunned objectives, so return null*/
+			
 			return null;
 		}
 		
 		
-		List<Obj> prunedObjs = new ArrayList<Obj>();
+		List<Obj> prunedObjs = new ArrayList<Obj>();		
+		
 		while (this.nodesHeap.size() - this.qtyDeadItems > maxNumObjs //bin limit pruning				
 				
-				/**This pruning is necessary as the bestCost may have been changed after the object is
+				/**This pruning is necessary as the bestLogP may have been changed after the object is
 				 * inserted into the heap*/
-				|| relativeThresholdPrune( this.nodesHeap.peek().getPruneCost() ) ) { // relative threshold pruning
+				|| relativeThresholdPrune( this.nodesHeap.peek().getPruneLogP() ) ) { // relative threshold pruning
 			
 			Obj worstNode = this.nodesHeap.poll();
 			if ( worstNode.isDead() ) { //dead object
@@ -121,28 +124,28 @@ public class BeamPruner<Obj extends Prunable> {
 		}
 		
 		/**if the heap reaches its capacity, we will do more
-		 * aggressive threshold pruning, by reduce the cutoffCost
+		 * aggressive threshold pruning, by increase the cutoffLogP
 		 * */
 		if (this.nodesHeap.size() - this.qtyDeadItems >= maxNumObjs) {
-			greedyUpdateCutoffCost(this.nodesHeap.peek().getPruneCost());
+			greedyUpdateCutoffLogP(this.nodesHeap.peek().getPruneLogP());
 		}
 		return prunedObjs;
 	}
 	
 	
 	
-	private void updateCutoffCost(double newCost){		
-		this.cutoffCost = 
-			Support.findMin(this.cutoffCost, newCost + relativeThreshold);		
+	private void updateCutoffLogP(double newLogP){		
+		this.cutoffLogP = 
+			Support.findMax(this.cutoffLogP, newLogP - relativeThreshold);		
 	}
 	
 	/**if the heap is already full, then we do more
 	 * aggressive threshold pruning
 	 * */
-	private void greedyUpdateCutoffCost(double worstHeapCost){
-		this.cutoffCost = Support.findMin(
-				this.cutoffCost,
-				worstHeapCost + EPSILON);
+	private void greedyUpdateCutoffLogP(double worstHeapLogP){
+		this.cutoffLogP = Support.findMax(
+				this.cutoffLogP,
+				worstHeapLogP - EPSILON);
 	}
 	
 }

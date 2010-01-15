@@ -63,15 +63,13 @@ public class FeatureTemplateBasedFF  extends DefaultStatelessFF {
 
 	
 	@Override
-	public double transition(Rule rule, List<HGNode> antNodes, int spanStart, int spanEnd, SourcePath srcPath, int sentID){
-		//logger.severe("cost: " + getTransitionCost(rule, antNodes));
-		//System.exit(0);
-		return getTransitionCost(rule, antNodes);
+	public double transitionLogP(Rule rule, List<HGNode> antNodes, int spanStart, int spanEnd, SourcePath srcPath, int sentID){
+		return getTransitionLogP(rule, antNodes);
 	}
 	
 	
 
-	public double estimate(Rule rule, int sentID) {
+	public double estimateLogP(Rule rule, int sentID) {
 		return 0;
 	}
 
@@ -86,18 +84,18 @@ public class FeatureTemplateBasedFF  extends DefaultStatelessFF {
 	}
 		
 
-	private double getTransitionCost(Rule rule, List<HGNode> antNodes){
+	private double getTransitionLogP(Rule rule, List<HGNode> antNodes){
 		//=== extract features
 		HashMap<String, Double> featTbl = new HashMap<String, Double>();
 		for(FeatureTemplate template : featTemplates){			
 			template.getFeatureCounts(rule, antNodes, featTbl, restrictedFeatSet, scale);			
 		}	
 		
-		//=== compute cost
+		//=== compute logP
 		double res =0;
-		res = DiscriminativeSupport.computeLinearCombination(featTbl, model);
+		res = DiscriminativeSupport.computeLinearCombinationLogP(featTbl, model);
 		
-		//System.out.println("TransitionCost: " + res);
+		//System.out.println("TransitionLogP: " + res);
 		return res;
 	}
 	

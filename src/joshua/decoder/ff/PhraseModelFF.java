@@ -27,6 +27,10 @@ import joshua.decoder.ff.tm.Rule;
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate$
  */
+
+
+/**
+ * */
 public final class PhraseModelFF extends DefaultStatelessFF {
 	
 	private static final Logger logger = Logger.getLogger(PhraseModelFF.class.getName());
@@ -44,16 +48,21 @@ public final class PhraseModelFF extends DefaultStatelessFF {
 	}
 	
 	
-	public double estimate(final Rule rule, int sentID) {
+
+	
+	
+	public double estimateLogP(final Rule rule, int sentID) {
 				
 		if (this.owner == rule.getOwner()) {
 
-			float[] feat_scores = rule.getFeatureScores();
+			/**assume featScores are cost (i.e., - logP)
+			 * */
+			float[] featScores = rule.getFeatureScores();
 		 	
-			if (this.columnIndex < feat_scores.length) {				
-				return feat_scores[this.columnIndex];
+			if (this.columnIndex < featScores.length) {				
+				return  - featScores[this.columnIndex];//negate it
 			} else {
-				logger.warning("In PhraseModelFF: columnIndex is not right, model columnIndex: " + columnIndex + "; num of features in rul is :" + feat_scores.length);
+				logger.warning("In PhraseModelFF: columnIndex is not right, model columnIndex: " + columnIndex + "; num of features in rul is :" + featScores.length);
 				/*for (int i = 0; i < rule.feat_scores.length; i++) {
 					System.out.println(String.format(" %.4f", rule.feat_scores[i]));
 				}

@@ -44,32 +44,32 @@ public class DiscriminativeNgramModel extends DefaultStatefulFF {
 	
 	
 
-	public double estimate(Rule rule, int sentID) {
-		return computeCost( ngramExtractor.getRuleNgrams(rule, startNgramOrder, endNgramOrder) );
+	public double estimateLogP(Rule rule, int sentID) {
+		return computeLogP( ngramExtractor.getRuleNgrams(rule, startNgramOrder, endNgramOrder) );
 	}
 
-	public double estimateFutureCost(Rule rule, DPState curDPState, int sentID) {
+	public double estimateFutureLogP(Rule rule, DPState curDPState, int sentID) {
 		//TODO: should we just return 0?
-		return computeCost( ngramExtractor.getFutureNgrams(rule, curDPState, startNgramOrder, endNgramOrder) );
+		return computeLogP( ngramExtractor.getFutureNgrams(rule, curDPState, startNgramOrder, endNgramOrder) );
 	}
 
 
-	public double transition(Rule rule, List<HGNode> antNodes, int spanStart, int spanEnd, SourcePath srcPath, int sentID) {
-		return computeCost( ngramExtractor.getTransitionNgrams(rule, antNodes, startNgramOrder, endNgramOrder) );	
+	public double transitionLogP(Rule rule, List<HGNode> antNodes, int spanStart, int spanEnd, SourcePath srcPath, int sentID) {
+		return computeLogP( ngramExtractor.getTransitionNgrams(rule, antNodes, startNgramOrder, endNgramOrder) );	
 	}
 
-	public double finalTransition(HGNode antNode, int spanStart, int spanEnd, SourcePath srcPath, int sentID) {
-		return computeCost( ngramExtractor.getFinalTransitionNgrams(antNode, startNgramOrder, endNgramOrder) );
+	public double finalTransitionLogP(HGNode antNode, int spanStart, int spanEnd, SourcePath srcPath, int sentID) {
+		return computeLogP( ngramExtractor.getFinalTransitionNgrams(antNode, startNgramOrder, endNgramOrder) );
 	}
 
 	
-	private double computeCost(HashMap<String, Integer> ngramTbl){
+	private double computeLogP(HashMap<String, Integer> ngramTbl){
 		
-		double transitionCost = 0;
+		double transitionLogP = 0;
 		for(Map.Entry<String,Integer> ngram : ngramTbl.entrySet()){		
-    		transitionCost += this.getLogProb(ngram.getKey())*ngram.getValue();
+    		transitionLogP += this.getLogProb(ngram.getKey())*ngram.getValue();
     	}
-		return -transitionCost;
+		return transitionLogP;
 	}
 
 

@@ -79,7 +79,7 @@ public class HGRanker {
 		it.bestHyperedge=null;
 		for(HyperEdge dt : it.hyperedges){					
 			rankHyperEdge(it, dt );
-			if(it.bestHyperedge==null || dt.bestDerivationCost < it.bestHyperedge.bestDerivationCost) 
+			if(it.bestHyperedge==null || dt.bestDerivationLogP < it.bestHyperedge.bestDerivationLogP) 
 				it.bestHyperedge = dt;//prefer smaller cost
 		}	
 		
@@ -91,24 +91,24 @@ public class HGRanker {
 
 	private void rankHyperEdge(HGNode parentNode, HyperEdge dt){
 		
-		dt.bestDerivationCost = 0;
+		dt.bestDerivationLogP = 0;
 		if(dt.getAntNodes()!=null){
 			for(HGNode antNode : dt.getAntNodes()){
 				rankHGNode(antNode);
-				dt.bestDerivationCost += antNode.bestHyperedge.bestDerivationCost;
+				dt.bestDerivationLogP += antNode.bestHyperedge.bestDerivationLogP;
 			}
 		}
 		double transCost = getTransitionCost(parentNode, dt);
 		sumTransCost+=transCost;
 		
-		dt.setTransitionCost(transCost);		
-		dt.bestDerivationCost += transCost;
+		dt.setTransitionLogP(transCost);		
+		dt.bestDerivationLogP += transCost;
 		
 	}	
 	
 	
 	private double getTransitionCost(HGNode parentNode, HyperEdge dt ){
-		return ComputeNodeResult.computeCombinedTransitionCost(
+		return ComputeNodeResult.computeCombinedTransitionLogP(
 				this.featFunctions, dt, parentNode.i, parentNode.j, -1);
 	}
 	
@@ -193,7 +193,7 @@ public class HGRanker {
 		for(int sent_id=0; sent_id < numSent; sent_id ++){
 			System.out.println("#Process sentence " + sent_id);
 			HyperGraph testHG = diskHG.readHyperGraph();
-			baselineFeature.collectTransitionCosts(testHG);
+			baselineFeature.collectTransitionLogPs(testHG);
 			reranker.rankHG(testHG);
 		
 			try{

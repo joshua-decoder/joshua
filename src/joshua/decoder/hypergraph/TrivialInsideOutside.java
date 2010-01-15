@@ -25,6 +25,6 @@ package joshua.decoder.hypergraph;
 public class TrivialInsideOutside extends DefaultInsideOutside {
 //	used by inside-outside estimation
 	protected  double getHyperedgeLogProb(HyperEdge dt, HGNode parent_it){
-		return -dt.getTransitionCost(false);//TODO this is very bad in terms of computation
+		return -dt.getTransitionLogP(false);//TODO this is very bad in terms of computation
 	}
 }

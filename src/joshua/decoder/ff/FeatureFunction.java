@@ -27,7 +27,7 @@ import joshua.decoder.hypergraph.HyperEdge;
 
 
 /**
- * This interface provide ways to calculate cost based on rule and
+ * This interface provide ways to calculate logP based on rule and
  * state information. In order to implement a new feature function
  * you must (1) implement this FeatureFunction interface, and (2)
  * implement the FFTransitionResult and FFDPState interfaces. BUG:
@@ -64,25 +64,25 @@ public interface FeatureFunction {
 	
 	/**
 	 * It is used when initializing translation grammars (for
-	 * pruning purpose, and to get stateless cost for each rule).
+	 * pruning purpose, and to get stateless logP for each rule).
 	 * This is also required to sort the rules (required by Cube-pruning).
 	 */
-	double estimate(Rule rule, int sentID);
+	double estimateLogP(Rule rule, int sentID);
 	
 		
-	/**estimate future cost, e.g., the costs of partial n-grams
+	/**estimate future logP, e.g., the logPs of partial n-grams
 	 * asscociated with the left-edge ngram state
 	 * */
-	double estimateFutureCost(Rule rule, DPState curDPState, int sentID);	
+	double estimateFutureLogP(Rule rule, DPState curDPState, int sentID);	
 	
-	double transition(Rule rule, List<HGNode> antNodes, int spanStart, int spanEnd, SourcePath srcPath, int sentID);
+	double transitionLogP(Rule rule, List<HGNode> antNodes, int spanStart, int spanEnd, SourcePath srcPath, int sentID);
 	
-	double transition(HyperEdge edge, int spanStart, int spanEnd, int sentID);
+	double transitionLogP(HyperEdge edge, int spanStart, int spanEnd, int sentID);
 	
 	/**Edges calling finalTransition do not have concret rules associated with them. 
 	 * */
-	double finalTransition(HGNode antNode, int spanStart, int spanEnd, SourcePath srcPath, int sentID);
+	double finalTransitionLogP(HGNode antNode, int spanStart, int spanEnd, SourcePath srcPath, int sentID);
 	
-	double finalTransition(HyperEdge edge, int spanStart, int spanEnd, int sentID);
+	double finalTransitionLogP(HyperEdge edge, int spanStart, int spanEnd, int sentID);
 	
 }

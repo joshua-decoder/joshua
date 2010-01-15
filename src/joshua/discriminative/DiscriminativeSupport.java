@@ -98,7 +98,7 @@ public class DiscriminativeSupport {
 
 	
 	//speed issue: assume tbl_feats is smaller than model
-	static public double computeLinearCombination(HashMap<String, Double> featTbl, HashMap<String, Double>  model){
+	static public double computeLinearCombinationLogP(HashMap<String, Double> featTbl, HashMap<String, Double>  model){
 		double res = 0;
 		for(Map.Entry<String, Double> entry : featTbl.entrySet()){
 			String featKey = entry.getKey();

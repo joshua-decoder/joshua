@@ -35,12 +35,12 @@ public final class SourcePathFF extends DefaultStatelessFF {
 	}
 
 	
-	public double transition(Rule rule, List<HGNode> antNodes, int spanStart, int spanEnd, SourcePath srcPath, int sentID){
-		return srcPath.getPathCost();
+	public double transitionLogP(Rule rule, List<HGNode> antNodes, int spanStart, int spanEnd, SourcePath srcPath, int sentID){
+		return - srcPath.getPathCost();
 	}
 	
 	
-	public double estimate(final Rule rule, int sentID) {
+	public double estimateLogP(final Rule rule, int sentID) {
 		return 0.0;
 	}
 

@@ -424,7 +424,7 @@ public class KBestExtractor {
 				virtualIT.lazyKBestExtractOnNode(symbolTbl, kbestExtator, newRanks[i]);
 				if (newRanks[i] <= virtualIT.nbests.size() // exist the new_ranks[i] derivation
 				  /*&& "t" is not in heap_cands*/) { // already checked before, check this condition
-					double cost = last.cost - ((DerivationState)virtualIT.nbests.get(last.ranks[i]-1)).cost + ((DerivationState)virtualIT.nbests.get(newRanks[i]-1)).cost;
+					double cost = last.cost - virtualIT.nbests.get(last.ranks[i]-1).cost + virtualIT.nbests.get(newRanks[i]-1).cost;
 					DerivationState t = new DerivationState(last.parentNode, last.edge, newRanks, cost, last.edgePos);
 					candHeap.add(t);
 					derivationTbl.put(newSig,1);
@@ -477,7 +477,7 @@ public class KBestExtractor {
 			double cost=0;
 			if(hyperEdge.getAntNodes()==null){//axiom
 				ranks=null;
-				cost=hyperEdge.bestDerivationCost;//seeding: this hyperedge only have one single translation for the terminal symbol
+				cost= - hyperEdge.bestDerivationLogP;//seeding: this hyperedge only have one single translation for the terminal symbol
 			}else{//best combination					
 				ranks = new int[hyperEdge.getAntNodes().size()];					
 				for(int i=0; i < hyperEdge.getAntNodes().size();i++){//make sure the 1best at my children is ready
@@ -486,7 +486,7 @@ public class KBestExtractor {
 					VirtualNode virtual_child_it = kbestExtator.addVirtualNode(child_it);
 					virtual_child_it.lazyKBestExtractOnNode(symbolTbl, kbestExtator,  ranks[i]);
 				}
-				cost = hyperEdge.bestDerivationCost;//seeding
+				cost = - hyperEdge.bestDerivationLogP;//seeding
 			}				
 			DerivationState t = new DerivationState(parentNode, hyperEdge, ranks, cost, edgePos );
 			return t;
@@ -658,10 +658,10 @@ public class KBestExtractor {
 				return;
 			//System.out.println("Rule is: " + dt.rule.toString());
 			//double[] transitionCosts = ComputeNodeResult.computeModelTransitionCost(models, dt.getRule(), dt.getAntNodes(), parentNode.i, parentNode.j, dt.getSourcePath(), sentID);
-			double[] transitionCosts = ComputeNodeResult.computeModelTransitionCosts(models, dt, parentNode.i, parentNode.j, sentID);
+			double[] transitionCosts = ComputeNodeResult.computeModelTransitionLogPs(models, dt, parentNode.i, parentNode.j, sentID);
 		
 			for(int i=0; i<transitionCosts.length; i++){
-				modelCost[i] += transitionCosts[i];
+				modelCost[i] -= transitionCosts[i];
 			}
 		}
 		

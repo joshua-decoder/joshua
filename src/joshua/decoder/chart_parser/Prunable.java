@@ -6,7 +6,7 @@ public interface Prunable<O> extends Comparable<O> {
 	
 	void setDead();
 	
-	double getPruneCost();
+	double getPruneLogP();
 	
-	void setPruneCost(double cost);
+	void setPruneLogP(double logP);
 }

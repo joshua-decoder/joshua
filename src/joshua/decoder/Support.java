@@ -31,6 +31,10 @@ public class Support {
 		return (a <= b) ? a : b;
 	}
 	
+	public static double findMax(double a, double b) {
+		return (a > b) ? a : b;
+	}
+	
 	
 	/**
 	 * @param start inclusive

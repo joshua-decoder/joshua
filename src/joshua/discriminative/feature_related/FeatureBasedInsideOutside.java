@@ -44,7 +44,7 @@ public class FeatureBasedInsideOutside extends DefaultInsideOutside {
 		FeatureExtractionHG.featureExtractionHyeredgeHelper(parentNode, dt, featureCountTbl, featTemplates, restrictedFeatSet, 1);//scale is one
 		
 		//## (2) get linear combination score		
-		double res = DiscriminativeSupport.computeLinearCombination(featureCountTbl, correctiveModel);
+		double res = DiscriminativeSupport.computeLinearCombinationLogP(featureCountTbl, correctiveModel);
 		
 		return -res;
 	}

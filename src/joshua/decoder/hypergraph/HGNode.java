@@ -64,19 +64,19 @@ public class HGNode implements Prunable<HGNode> {
 	
 	//============== for pruning purpose
 	public boolean isDead        = false;
-	public double  estTotalCost = 0.0; //it includes the estimated cost
+	private double  estTotalLogP = 0.0; //it includes the estimated LogP
 	
 	
 //===============================================================
 // Constructors
 //===============================================================
 
-	public HGNode(int i, int j, int lhs, HashMap<Integer,DPState> dpStates, HyperEdge initHyperedge, double estTotalCost) {
+	public HGNode(int i, int j, int lhs, HashMap<Integer,DPState> dpStates, HyperEdge initHyperedge, double estTotalLogP) {
 		this.i   = i;
 		this.j   = j;
 		this.lhs = lhs;
 		this.dpStates = dpStates;
-		this.estTotalCost  = estTotalCost;
+		this.estTotalLogP  = estTotalLogP;
 		addHyperedgeInNode(initHyperedge);
 	}
 	
@@ -101,11 +101,14 @@ public class HGNode implements Prunable<HGNode> {
 			hyperedges = new ArrayList<HyperEdge>();
 		}
 		hyperedges.add(dt);
-		if (null == bestHyperedge || bestHyperedge.bestDerivationCost > dt.bestDerivationCost){//semiring + operation
+		semiringPlus(dt);
+	}
+	
+	private void semiringPlus(HyperEdge dt){		
+		if (null == bestHyperedge || bestHyperedge.bestDerivationLogP < dt.bestDerivationLogP){//semiring + operation
 			bestHyperedge = dt; //no change when tied
 		}
 	}
-	
 	
 	public void addHyperedgesInNode(List<HyperEdge> hyperedges) {
 		for(HyperEdge hyperEdge : hyperedges) 
@@ -130,8 +133,8 @@ public class HGNode implements Prunable<HGNode> {
 	public void printInfo(Level level) {
 		if (HyperGraph.logger.isLoggable(level))
 			HyperGraph.logger.log(level,
-				String.format("lhs: %s; cost: %.3f",
-					lhs, bestHyperedge.bestDerivationCost));
+				String.format("lhs: %s; logP: %.3f",
+					lhs, bestHyperedge.bestDerivationLogP));
 	}
 	
 	
@@ -165,42 +168,60 @@ public class HGNode implements Prunable<HGNode> {
 	
 	/*this will called by the sorting
 	 * in Cell.ensureSorted()*/
-	//sort by est_total_cost: for pruning purpose
+	//sort by estTotalLogP: for pruning purpose
 	public int compareTo(HGNode anotherItem) {
-		if (this.estTotalCost < anotherItem.estTotalCost) {
+		System.out.println("HGNode, compare functiuon should never be called");
+		System.exit(1);
+		return 0;
+		/*
+		if (this.estTotalLogP > anotherItem.estTotalLogP) {
 			return -1;
-		} else if (this.estTotalCost == anotherItem.estTotalCost) {
+		} else if (this.estTotalLogP == anotherItem.estTotalLogP) {
 			return 0;
 		} else {
 			return 1;
-		}
+		}*/
 		
 	}
 	
 	
-	public static Comparator<HGNode> negtiveCostComparator	= new Comparator<HGNode>() {			
-			public int compare(HGNode item1, HGNode item2) {
-				double cost1 = item1.estTotalCost;
-				double cost2 = item2.estTotalCost;
-				if (cost1 > cost2) {
-					return -1;
-				} else if (cost1 == cost2) {
-					return 0;
-				} else {
-					return 1;
-				}
+	public static Comparator<HGNode> inverseLogPComparator	= new Comparator<HGNode>() {			
+		public int compare(HGNode item1, HGNode item2) {
+			double logp1 = item1.estTotalLogP;
+			double logp2 = item2.estTotalLogP;
+			if (logp1 > logp2) {
+				return -1;
+			} else if (logp1 == logp2) {
+				return 0;
+			} else {
+				return 1;
 			}
+		}
 	};
 
- 
+	/**natural order
+	 * */
+	public static Comparator<HGNode> logPComparator	= new Comparator<HGNode>() {			
+		public int compare(HGNode item1, HGNode item2) {
+			double logp1 = item1.estTotalLogP;
+			double logp2 = item2.estTotalLogP;
+			if (logp1 > logp2) {
+				return 1;
+			} else if (logp1 == logp2) {
+				return 0;
+			} else {
+				return -1;
+			}
+		}
+	};
 
 	public boolean isDead() {
 		return this.isDead;
 	}
 
 
-	public double getPruneCost() {
-		return estTotalCost;
+	public double getPruneLogP() {
+		return this.estTotalLogP;
 	}
 
 
@@ -209,7 +230,7 @@ public class HGNode implements Prunable<HGNode> {
 	}
 
 
-	public void setPruneCost(double cost) {
-		this.estTotalCost = cost;
+	public void setPruneLogP(double estTotalLogP) {
+		this.estTotalLogP = estTotalLogP;
 	}
 }
