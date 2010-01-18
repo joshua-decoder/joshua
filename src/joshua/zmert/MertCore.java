@@ -1366,7 +1366,7 @@ println(docSubsetInfo[6] + "}",1);
 //      myDecoder.initialize(decoderConfigFileName);
       double[] zeroBased_lambda = new double[numParams];
       System.arraycopy(lambda,1,zeroBased_lambda,0,numParams);
-      myDecoder.changeFeatureWeightVector(zeroBased_lambda);
+      myDecoder.changeBaselineFeatureWeights(zeroBased_lambda);
       myDecoder.decodeTestSet(sourceFileName, decoderOutFileName);
 
       retSA[0] = decoderOutFileName;

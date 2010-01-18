@@ -65,6 +65,7 @@ public abstract class AbstractGrammar implements Grammar {
 	 * initialized for parallel decoding
 	 */
 	public void sortGrammar(ArrayList<FeatureFunction> models) {
+		logger.info("sort grammar");
 		Trie root = getTrieRoot();
 		if(root!=null){
 			sort(root, models);

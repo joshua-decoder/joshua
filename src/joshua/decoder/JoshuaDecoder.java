@@ -17,11 +17,30 @@
  */
 package joshua.decoder;
 
-import joshua.decoder.ff.FeatureFunction;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import joshua.corpus.Corpus;
+import joshua.corpus.alignment.Alignments;
+import joshua.corpus.alignment.mm.MemoryMappedAlignmentGrids;
+import joshua.corpus.mm.MemoryMappedCorpusArray;
+import joshua.corpus.suffix_array.ParallelCorpusGrammarFactory;
+import joshua.corpus.suffix_array.Suffixes;
+import joshua.corpus.suffix_array.mm.MemoryMappedSuffixArray;
+import joshua.corpus.vocab.BuildinSymbol;
+import joshua.corpus.vocab.SrilmSymbol;
+import joshua.corpus.vocab.SymbolTable;
+import joshua.corpus.vocab.Vocabulary;
 import joshua.decoder.ff.ArityPhrasePenaltyFF;
+import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.PhraseModelFF;
-import joshua.decoder.ff.WordPenaltyFF;
 import joshua.decoder.ff.SourcePathFF;
+import joshua.decoder.ff.WordPenaltyFF;
 import joshua.decoder.ff.lm.LanguageModelFF;
 import joshua.decoder.ff.lm.NGramLanguageModel;
 import joshua.decoder.ff.lm.bloomfilter_lm.BloomFilterLanguageModel;
@@ -35,31 +54,12 @@ import joshua.decoder.ff.tm.GrammarFactory;
 import joshua.decoder.ff.tm.hiero.MemoryBasedBatchGrammar;
 import joshua.discriminative.DiscriminativeSupport;
 import joshua.discriminative.feature_related.feature_function.BLEUOracleModel;
-
-import joshua.corpus.Corpus;
-import joshua.corpus.alignment.Alignments;
-import joshua.corpus.alignment.mm.MemoryMappedAlignmentGrids;
-import joshua.corpus.mm.MemoryMappedCorpusArray;
-import joshua.corpus.suffix_array.ParallelCorpusGrammarFactory;
-import joshua.corpus.suffix_array.Suffixes;
-import joshua.corpus.suffix_array.mm.MemoryMappedSuffixArray;
-import joshua.corpus.vocab.BuildinSymbol;
-import joshua.corpus.vocab.SrilmSymbol;
-import joshua.corpus.vocab.SymbolTable;
-import joshua.corpus.vocab.Vocabulary;
-
+import joshua.discriminative.feature_related.feature_function.FeatureTemplateBasedFF;
 import joshua.ui.hypergraph_visualizer.HyperGraphViewer;
-import joshua.util.io.BinaryIn;
-import joshua.util.io.LineReader;
 import joshua.util.FileUtility;
 import joshua.util.Regex;
-
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import joshua.util.io.BinaryIn;
+import joshua.util.io.LineReader;
 
 /**
  * Implements decoder initialization,
@@ -141,6 +141,14 @@ public class JoshuaDecoder {
 // Public Methods
 //===============================================================
 	
+	public void changeBaselineFeatureWeights(double[] weights){
+		changeFeatureWeightVector(weights, null);
+	} 
+	
+	public void changeDiscrminativeModelOnly(String discrminativeModelFile) {
+		changeFeatureWeightVector(null, discrminativeModelFile);
+	}
+	
 	/** 
 	 * Sets the feature weight values used by the decoder.
 	 * <p>
@@ -150,19 +158,24 @@ public class JoshuaDecoder {
 	 * 
 	 * @param weights Feature weight values
 	 */
-	public void changeFeatureWeightVector(double[] weights) {
-		if (this.featureFunctions.size() != weights.length) {
-			throw new IllegalArgumentException("number of weights does not match number of feature functions");
+	public void changeFeatureWeightVector(double[] weights, String discrminativeModelFile) {
+		if(weights!=null){
+			if (this.featureFunctions.size() != weights.length) {
+				throw new IllegalArgumentException("number of weights does not match number of feature functions");
+			}
+			
+			int i = 0; 
+			for (FeatureFunction ff : this.featureFunctions) {
+				double oldWeight = ff.getWeight();
+				ff.setWeight(weights[i]);
+				logger.info("Feature function : " +	ff.getClass().getSimpleName() 
+						+	"; weight changed from " + oldWeight + " to " + ff.getWeight());
+				i++; 
+			}
 		}
 		
-		int i = 0; for (FeatureFunction ff : this.featureFunctions) {
-			double oldWeight = ff.getWeight();
-			ff.setWeight(weights[i]);
-			System.out.println("Feature function : " +
-				ff.getClass().getSimpleName() +
-				"; weight changed from " + oldWeight + " to " + ff.getWeight());
-			i++; 
-		}
+		if(discrminativeModelFile!=null)
+			changeDiscrminativeModelWeights(discrminativeModelFile);
 		
 		//FIXME: this works for Batch grammar only; not for sentence-specific grammars
 		for (GrammarFactory grammarFactory : this.grammarFactories) {
@@ -170,6 +183,19 @@ public class JoshuaDecoder {
 			grammarFactory.getGrammarForSentence(null)
 				.sortGrammar(this.featureFunctions);
 //			}
+		}
+	}
+	
+	
+
+	private void changeDiscrminativeModelWeights(String discrminativeModelFile){
+		for (FeatureFunction ff : this.featureFunctions) {					
+			//== set the discriminative model
+			if(discrminativeModelFile!=null && ff instanceof FeatureTemplateBasedFF){
+				HashMap<String, Double> modelTable = new HashMap<String, Double>(); 
+				DiscriminativeSupport.loadModel(discrminativeModelFile, modelTable);
+				((FeatureTemplateBasedFF) ff).setModel(modelTable);
+			}
 		}
 	}
 	
@@ -207,7 +233,7 @@ public class JoshuaDecoder {
 	}
 	
 	
-	public void writeConfigFile(double[] newWeights, String template, String outputFile) {
+	public static void writeConfigFile(double[] newWeights, String template, String outputFile) {
 		try {
 			int featureID = 0;
 			
@@ -627,29 +653,22 @@ public class JoshuaDecoder {
 					if (null == this.languageModel) {
 						throw new IllegalArgumentException("LM model has not been properly initialized before setting order and weight");
 					}
-					double weight = Double.parseDouble(fds[1].trim());
-
-					//TODO???????
-					boolean useTMFeat = true;
-					boolean useLMFeat = true;
-					boolean useEdgeNgramOnly = false;
-					int startNgramOrder = 1;
-					int endNgramOrder = 2;
-					String featureFile = null;
-					//??????????
 					
-					String modelFile = fds[2].trim();
+					String featureFile = null;//TODO???????					
+					String modelFile = fds[1].trim();
+					
+					double weight = Double.parseDouble(fds[2].trim());
 					
 					this.featureFunctions.add (DiscriminativeSupport.setupRerankingFeature(this.featureFunctions.size(), weight, symbolTable, 
-							useTMFeat, useLMFeat, useEdgeNgramOnly, JoshuaConfiguration.ngramStateID, 
-							JoshuaConfiguration.lmOrder, startNgramOrder, endNgramOrder, featureFile, modelFile) );
+							JoshuaConfiguration.useTMFeat, JoshuaConfiguration.useLMFeat, JoshuaConfiguration.useEdgeNgramOnly, JoshuaConfiguration.ngramStateID, 
+							JoshuaConfiguration.lmOrder, JoshuaConfiguration.startNgramOrder, JoshuaConfiguration.endNgramOrder, featureFile, modelFile) );
 					
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format(
 							"Line: %s\nAdd FeatureTemplateBasedFF, order: %d; weight: %.3f;",
 							line, JoshuaConfiguration.lmOrder, weight));
 					
-				}else if ("latticecost".equals(fds[0]) && fds.length == 2) {
+				} else if ("latticecost".equals(fds[0]) && fds.length == 2) {
 					double weight = Double.parseDouble(fds[1].trim());
 					this.featureFunctions.add(
 						new SourcePathFF(

@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -384,11 +385,11 @@ public class DiskHyperGraph {
 	public String createModelLogPLine(HGNode parentNode, HyperEdge edge){
 		StringBuffer line = new StringBuffer();	
 		
-		double[] transitionCosts = ComputeNodeResult.computeModelTransitionLogPs(
+		double[] transitionLogPs = ComputeNodeResult.computeModelTransitionLogPs(
 				this.featureFunctions, edge, parentNode.i, parentNode.j, this.sentID);
 		
 		for (int k = 0; k < this.featureFunctions.size(); k++) {
-			line.append(String.format("%.4f", transitionCosts[k]))
+			line.append(String.format("%.4f", transitionLogPs[k]))
 				.append(
 					k < this.featureFunctions.size() - 1
 					? " "
@@ -475,33 +476,33 @@ public class DiskHyperGraph {
 			dpStates.put(this.LMFeatureID,	new NgramDPState(this.symbolTable, fds[1]));
 		}
 		
-		ArrayList<HyperEdge> deductions = null;
-		HyperEdge         bestDeduction = null;
-		double bestCost = Double.POSITIVE_INFINITY;
+		List<HyperEdge> edges = null;
+		HyperEdge         bestEdge = null;
+		double bestLogP = Double.NEGATIVE_INFINITY;
 		if (qtyDeductions > 0) {
-			deductions = new ArrayList<HyperEdge>();
+			edges = new ArrayList<HyperEdge>();
 			for (int t = 0; t < qtyDeductions; t++) {
-				HyperEdge deduction = readHyperedge();
-				deductions.add(deduction);
-				if (deduction.bestDerivationLogP < bestCost) {
-					bestCost      = deduction.bestDerivationLogP;
-					bestDeduction = deduction;
+				HyperEdge edge = readHyperedge();
+				edges.add(edge);
+				if (edge.bestDerivationLogP > bestLogP) {//semiring plus
+					bestLogP      = edge.bestDerivationLogP;
+					bestEdge = edge;
 				}
 			}
 		}
 		
-		HGNode item = new HGNode(i, j, lhs, deductions, bestDeduction, dpStates);
+		HGNode item = new HGNode(i, j, lhs, edges, bestEdge, dpStates);
 		this.idToItem.put(itemID, item);
 		return item;
 	}
 	
 	// Assumption: has this.associatedGrammar and this.idToItem
 	private HyperEdge readHyperedge() {
-		//line: flag, bestLogP, numNodes, item_ids, rule id, OOV-Non-Terminal (optional), OOV (optional)
+		//line: bestLogP, numNodes, item_ids, rule id, OOV-Non-Terminal (optional), OOV (optional),
 		String  line = FileUtility.read_line_lzf(this.itemsReader);
 		String[] fds = Regex.spaces.split(line);
 		
-		//bestLogP transitionLogP numNodes item_ids
+		//bestLogP numNodes item_ids
 		double bestLogP = Double.parseDouble(fds[0]);
 		ArrayList<HGNode> antecedentItems = null;
 		final int qtyAntecedents = Integer.parseInt(fds[1]);

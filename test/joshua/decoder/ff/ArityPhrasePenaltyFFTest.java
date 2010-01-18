@@ -34,7 +34,7 @@ public class ArityPhrasePenaltyFFTest {
 
 	@Test
 	public void alpha() {
-		Assert.assertEquals(ArityPhrasePenaltyFF.ALPHA, Math.log10(Math.E));
+		Assert.assertEquals(ArityPhrasePenaltyFF.ALPHA, - Math.log10(Math.E));
 	}
 	
 	@Test

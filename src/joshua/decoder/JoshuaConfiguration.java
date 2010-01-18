@@ -147,6 +147,13 @@ public class JoshuaConfiguration {
 	public static String segmentFileParserClass = null;//PlainSegmentParser, HackishSegmentParser, SAXSegmentParser
 	
 	
+	//discriminative model options
+	public static boolean useTMFeat = true;
+	public static boolean useLMFeat = true;
+	public static boolean useEdgeNgramOnly = false;
+	public static int startNgramOrder = 1;
+	public static int endNgramOrder = 2;
+	
 	private static final Logger logger =
 		Logger.getLogger(JoshuaConfiguration.class.getName());
 	
@@ -509,7 +516,15 @@ public class JoshuaConfiguration {
 					oovFeatureCost = Float.parseFloat(fds[1]);
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("oovFeatureCost: %s", oovFeatureCost));
-				} else {
+				} else if ("useTMFeat".equals(fds[0])) {
+					useTMFeat = Boolean.valueOf(fds[1]);
+					if (logger.isLoggable(Level.FINEST))
+						logger.finest(String.format("useTMFeat: %s", useTMFeat));
+				} else if ("useLMFeat".equals(fds[0])) {
+					useTMFeat = Boolean.valueOf(fds[1]);
+					if (logger.isLoggable(Level.FINEST))
+						logger.finest(String.format("useTMFeat: %s", useTMFeat));
+				}else {
 					logger.warning("Maybe Wrong config line: " + line);
 				}
 			} else { // feature function
