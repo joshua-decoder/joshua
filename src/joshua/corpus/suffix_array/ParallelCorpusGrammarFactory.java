@@ -75,6 +75,13 @@ public class ParallelCorpusGrammarFactory extends AlignedParallelCorpus implemen
 	 */                           
 	private final int minNonterminalSpan;
 	
+	
+	private final String ruleOwner;
+	
+	private final String defaultLHSSymbol;
+	
+	private final float oovFeatureCost;
+	
 	/**
 	 * Constructs a factory capable of getting a grammar backed
 	 * by a suffix array.
@@ -90,6 +97,9 @@ public class ParallelCorpusGrammarFactory extends AlignedParallelCorpus implemen
 	 *                          allowed in any extracted hierarchical phrase
 	 * @param maxNonterminals   Maximum number of nonterminals allowed on the 
 	 *                          right-hand side of any extracted rule
+	 * @param ruleOwner 		Specifies a name identifier for this grammar
+	 * @param defaultLHSSymbol TODO
+	 * @param oovFeatureCost TODO
 	 */
 	public ParallelCorpusGrammarFactory(
 			Suffixes sourceSuffixArray, 
@@ -101,7 +111,10 @@ public class ParallelCorpusGrammarFactory extends AlignedParallelCorpus implemen
 			int maxPhraseLength, 
 			int maxNonterminals, 
 			int minNonterminalSpan, 
-			float lexProbFloor) {
+			float lexProbFloor, 
+			String ruleOwner, 
+			String defaultLHSSymbol, 
+			float oovFeatureCost) {
 		
 		super((sourceSuffixArray==null)?null:sourceSuffixArray.getCorpus(), 
 				(targetSuffixArray==null)?null:targetSuffixArray.getCorpus(), 
@@ -112,6 +125,9 @@ public class ParallelCorpusGrammarFactory extends AlignedParallelCorpus implemen
 		this.maxNonterminals   = maxNonterminals;
 		this.minNonterminalSpan = minNonterminalSpan;
 		this.lexProbs          = new LexProbs(this,lexProbFloor);
+		this.ruleOwner = ruleOwner;
+		this.defaultLHSSymbol = defaultLHSSymbol;
+		this.oovFeatureCost = oovFeatureCost;
 		
 		int maxNonterminalSpan = maxPhraseSpan;
 		
@@ -169,7 +185,8 @@ public class ParallelCorpusGrammarFactory extends AlignedParallelCorpus implemen
 		
 		prefixTree.add(words);
 		
-		return prefixTree.getRoot();
+		return prefixTree;
+//		return prefixTree.getRoot();
 	}
 	
 	/**
@@ -224,5 +241,17 @@ public class ParallelCorpusGrammarFactory extends AlignedParallelCorpus implemen
 	 */                           
 	public int getMinNonterminalSpan() {
 		return this.minNonterminalSpan;
+	}
+	
+	public String getRuleOwner() {
+		return this.ruleOwner;
+	}
+	
+	public String getDefaultLHSSymbol() {
+		return this.defaultLHSSymbol;
+	}
+	
+	public float getOovFeatureCost() {
+		return this.oovFeatureCost;
 	}
 }

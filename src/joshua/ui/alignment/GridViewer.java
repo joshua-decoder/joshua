@@ -136,7 +136,7 @@ public class GridViewer extends JFrame implements ActionListener {
 					String binarySourceFileName = joshDirName + File.separator + "source.corpus";
 					String binarySourceSuffixesFileName = joshDirName + File.separator + "source.suffixes";
 					String binaryTargetFileName = joshDirName + File.separator + "target.corpus";
-					String binaryTargetSuffixesFileName = joshDirName + File.separator + "target.suffixes";
+//					String binaryTargetSuffixesFileName = joshDirName + File.separator + "target.suffixes";
 					String binaryAlignmentFileName = joshDirName + File.separator + "alignment.grids";
 
 					logger.fine("Loading vocabulary...");
@@ -159,22 +159,22 @@ public class GridViewer extends JFrame implements ActionListener {
 					logger.fine("Loading alignment grids...");
 					Alignments alignments = new MemoryMappedAlignmentGrids(binaryAlignmentFileName, sourceCorpus, targetCorpus);
 					
-					ParallelCorpusGrammarFactory parallelCorpus = new ParallelCorpusGrammarFactory(
-							sourceSuffixes, 
-							targetSuffixes, 
-							alignments, 
-							null,
-							JoshuaConfiguration.sa_rule_sample_size,
-							JoshuaConfiguration.sa_max_phrase_span,
-							JoshuaConfiguration.sa_max_phrase_length,
-							JoshuaConfiguration.sa_max_nonterminals,
-							JoshuaConfiguration.sa_min_nonterminal_span,
-							JoshuaConfiguration.sa_lex_floor_prob);
-					
-					PrefixTree prefixTree = new PrefixTree(parallelCorpus);
+//					ParallelCorpusGrammarFactory parallelCorpus = new ParallelCorpusGrammarFactory(
+//							sourceSuffixes, 
+//							targetSuffixes, 
+//							alignments, 
+//							null,
+//							JoshuaConfiguration.sa_rule_sample_size,
+//							JoshuaConfiguration.sa_max_phrase_span,
+//							JoshuaConfiguration.sa_max_phrase_length,
+//							JoshuaConfiguration.sa_max_nonterminals,
+//							JoshuaConfiguration.sa_min_nonterminal_span,
+//							JoshuaConfiguration.sa_lex_floor_prob);
+//					
+//					PrefixTree prefixTree = new PrefixTree(parallelCorpus);
 					
 					logger.fine("Constructing panel...");
-					GridPanel gridPanel = new GridPanel(sourceCorpus, targetCorpus, alignments, sentenceNumber, prefixTree);
+					GridPanel gridPanel = new GridPanel(sourceCorpus, targetCorpus, alignments, sentenceNumber);
 
 					//Create and set up the content pane.
 					GridScrollPanel scrollPanel = new GridScrollPanel(gridPanel);

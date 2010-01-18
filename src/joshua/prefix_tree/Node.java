@@ -27,12 +27,11 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import joshua.corpus.MatchedHierarchicalPhrases;
+import joshua.corpus.RuleExtractor;
 import joshua.corpus.suffix_array.ParallelCorpusGrammarFactory;
 import joshua.corpus.suffix_array.Pattern;
 import joshua.corpus.vocab.SymbolTable;
-import joshua.decoder.ff.tm.AbstractGrammar;
 import joshua.decoder.ff.tm.BasicRuleCollection;
-import joshua.decoder.ff.tm.BilingualRule;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.RuleCollection;
 import joshua.decoder.ff.tm.Trie;
@@ -43,7 +42,7 @@ import joshua.util.Cache;
  * 
  * @author Lane Schwartz
  */
-public class Node extends AbstractGrammar implements Comparable<Node>, Trie {
+public class Node implements Comparable<Node>, Trie {
 
 	/** Logger for this class. */
 	private static final Logger logger =
@@ -94,25 +93,33 @@ public class Node extends AbstractGrammar implements Comparable<Node>, Trie {
 	
 	
 	
-//================================	
-	//add by zhifei??????????????????????????????????????????? these parameters are not intialized by the constructor
-	public static final int OOV_RULE_ID = 0;
-	private int defaultOwner;
-	private float oovFeatureCost = 100;
-	
-	/**
-	 * the OOV rule should have this lhs, this should be grammar
-	 * specific as only the grammar knows what LHS symbol can
-	 * be combined with other rules
-	 */ 
-	private int defaultLHS;
-	private int spanLimit = 10;
-//==============================	
-	
+////================================	
+//	//add by zhifei??????????????????????????????????????????? these parameters are not intialized by the constructor
+//	public static final int OOV_RULE_ID = 0;
+//	private int defaultOwner;
+//	private float oovFeatureCost = 100;
+//	
+//	/**
+//	 * the OOV rule should have this lhs, this should be grammar
+//	 * specific as only the grammar knows what LHS symbol can
+//	 * be combined with other rules
+//	 */ 
+//	private int defaultLHS;
+//	private int spanLimit = 10;
+////==============================	
+//	
 	
 	/** 
 	 * Gets translation rules for this node. 
+	 * <p>
+	 * The results of this method are guaranteed to be 
+	 * sorted according to whatever feature functions are in use.
 	 * 
+	 * Calling this method will return results equivalent to those 
+	 * that would be returned by calling 
+	 * <code>HierarchicalRuleExtractor#extractRules(getMatchedPhrases())</code>.
+	 * 
+	 * @see RuleExtractor#extractRules(MatchedHierarchicalPhrases)
 	 * @return translation rules for this node
 	 */
 	protected List<Rule> getResults() {
@@ -123,11 +130,14 @@ public class Node extends AbstractGrammar implements Comparable<Node>, Trie {
 		
 		if (ruleCache.containsKey(sourcePattern)) {
 			results = ruleCache.get(sourcePattern);
+			// The rules from the cache are guaranteed to be sorted.
 		} else {
 			results = parallelCorpus.getRuleExtractor().extractRules(getMatchedPhrases());
+			// The above list of rules extracted is guaranteed to be sorted.
 			ruleCache.put(sourcePattern, results);
 		}
 		
+		// These rules are sorted.
 		return results;
 	}
 	
@@ -246,10 +256,7 @@ public class Node extends AbstractGrammar implements Comparable<Node>, Trie {
 		
 		List<Rule> results = this.getResults();
 		
-		// Results needs to be sorted by this point
-		logger.fine("Node sorted == " + this.isSorted());
-		
-		return new BasicRuleCollection(arity, sourceSide, results, this.isSorted());
+		return new BasicRuleCollection(arity, sourceSide, results);
 		
 	}
 	
@@ -595,44 +602,44 @@ public class Node extends AbstractGrammar implements Comparable<Node>, Trie {
 		nodeIDCounter = 2;
 	}
 
-	public Rule constructManualRule(int lhs, int[] sourceWords, int[] targetWords, float[] scores, int arity) {
-		return new BilingualRule(lhs, sourceWords, targetWords, scores, arity, this.defaultOwner, 0, getOOVRuleID());
-	}
-	
-
-
-	public int getOOVRuleID() {
-		return OOV_RULE_ID;
-	}
-	/** 
-	 * if the span covered by the chart bin is greater than the
-	 * limit, then return false
-	 */
-	public boolean hasRuleForSpan(int startIndex,	int endIndex,	int pathLength) {
-		if (this.spanLimit == -1) { // mono-glue grammar
-			return (startIndex == 0);
-		} else {
-			return (endIndex - startIndex <= this.spanLimit);
-		}
-	}
-
-	public Rule constructOOVRule(int qtyFeatures, int sourceWord, int targetWord, boolean hasLM) {
-		int[] french      = new int[1];
-		french[0]         = sourceWord;
-		int[] english       = new int[1];
-		english[0]          = targetWord;
-		float[] feat_scores = new float[qtyFeatures];
-		
-		// TODO: This is a hack to make the decoding without a LM works
-		/**when a ngram LM is used, the OOV word will have a cost 100.
-		 * if no LM is used for decoding, so we should set the cost of some
-		 * TM feature to be maximum
-		 * */
-		if ( (!hasLM) && qtyFeatures > 0) { 
-			feat_scores[0] = oovFeatureCost;
-		}
-		
-		return new BilingualRule(this.defaultLHS, french, english, feat_scores, 0, this.defaultOwner, 0, getOOVRuleID());
-	}
+//	public Rule constructManualRule(int lhs, int[] sourceWords, int[] targetWords, float[] scores, int arity) {
+//		return new BilingualRule(lhs, sourceWords, targetWords, scores, arity, this.defaultOwner, 0, getOOVRuleID());
+//	}
+//	
+//
+//
+//	public int getOOVRuleID() {
+//		return OOV_RULE_ID;
+//	}
+//	/** 
+//	 * if the span covered by the chart bin is greater than the
+//	 * limit, then return false
+//	 */
+//	public boolean hasRuleForSpan(int startIndex,	int endIndex,	int pathLength) {
+//		if (this.spanLimit == -1) { // mono-glue grammar
+//			return (startIndex == 0);
+//		} else {
+//			return (endIndex - startIndex <= this.spanLimit);
+//		}
+//	}
+//
+//	public Rule constructOOVRule(int qtyFeatures, int sourceWord, int targetWord, boolean hasLM) {
+//		int[] french      = new int[1];
+//		french[0]         = sourceWord;
+//		int[] english       = new int[1];
+//		english[0]          = targetWord;
+//		float[] feat_scores = new float[qtyFeatures];
+//		
+//		// TODO: This is a hack to make the decoding without a LM works
+//		/**when a ngram LM is used, the OOV word will have a cost 100.
+//		 * if no LM is used for decoding, so we should set the cost of some
+//		 * TM feature to be maximum
+//		 * */
+//		if ( (!hasLM) && qtyFeatures > 0) { 
+//			feat_scores[0] = oovFeatureCost;
+//		}
+//		
+//		return new BilingualRule(this.defaultLHS, french, english, feat_scores, 0, this.defaultOwner, 0, getOOVRuleID());
+//	}
 
 }

@@ -27,8 +27,12 @@ import joshua.corpus.suffix_array.ParallelCorpusGrammarFactory;
 import joshua.corpus.suffix_array.Pattern;
 import joshua.corpus.suffix_array.Suffixes;
 import joshua.corpus.vocab.SymbolTable;
-import joshua.decoder.ff.tm.Grammar;
+import joshua.decoder.JoshuaConfiguration;
+import joshua.decoder.ff.tm.AbstractGrammar;
+import joshua.decoder.ff.tm.BilingualRule;
 import joshua.decoder.ff.tm.Rule;
+import joshua.decoder.ff.tm.Trie;
+import joshua.decoder.ff.tm.hiero.MemoryBasedBatchGrammar;
 import joshua.util.Cache;
 
 import java.io.PrintStream;
@@ -50,7 +54,7 @@ import java.util.logging.Logger;
  * @author Lane Schwartz
  * @version $LastChangedDate:2008-11-13 13:13:31 -0600 (Thu, 13 Nov 2008) $
  */
-public class PrefixTree {
+public class PrefixTree extends AbstractGrammar {
 
 	/** Logger for this class. */
 	private static final Logger logger = Logger.getLogger(PrefixTree.class.getName());
@@ -182,6 +186,12 @@ public class PrefixTree {
 	
 	private PrintStream out = null;
 	
+	private final int ruleOwner;
+	
+	private final int defaultLHS;
+	
+	private final float oovFeatureCost;
+	
 	/**
 	 * Constructs a new prefix tree with suffix links using the
 	 * GENERATE_PREFIX_TREE algorithm from Lopez (2008) PhD
@@ -205,7 +215,10 @@ public class PrefixTree {
 		this.maxNonterminals = parallelCorpus.getMaxNonterminals();
 		this.minNonterminalSpan = parallelCorpus.getMinNonterminalSpan();
 		this.vocab = parallelCorpus.getSourceCorpus().getVocabulary();
-
+		this.ruleOwner = vocab.getID(parallelCorpus.getRuleOwner());
+		this.defaultLHS = vocab.getID(parallelCorpus.getDefaultLHSSymbol());
+		this.oovFeatureCost = parallelCorpus.getOovFeatureCost();
+		
 		this.root = new RootNode(this,ROOT_NODE_ID);
 		Node bot = new BotNode(parallelCorpus, root);
 		this.root.linkToSuffix(bot);
@@ -271,7 +284,7 @@ public class PrefixTree {
 	 * @param maxNonterminals
 	 */
 	PrefixTree(SymbolTable vocab, int maxPhraseSpan, int maxPhraseLength, int maxNonterminals) {
-		this(new ParallelCorpusGrammarFactory((Suffixes) null, (Suffixes) null, (Alignments) null, null, Integer.MAX_VALUE, maxPhraseSpan, maxPhraseLength, maxNonterminals, 2, Float.MIN_VALUE));
+		this(new ParallelCorpusGrammarFactory((Suffixes) null, (Suffixes) null, (Alignments) null, null, Integer.MAX_VALUE, maxPhraseSpan, maxPhraseLength, maxNonterminals, 2, Float.MIN_VALUE, JoshuaConfiguration.phrase_owner, JoshuaConfiguration.default_non_terminal, JoshuaConfiguration.oovFeatureCost));
 	}
 
 
@@ -689,25 +702,25 @@ public class PrefixTree {
 	}
 
 
-	/**
-	 * Gets the root node of this tree.
-	 * 
-	 * @return the root node of this tree
-	 */
-	public Grammar getRoot() {
-		return root;
-	}
+//	/**
+//	 * Gets the root node of this tree.
+//	 * 
+//	 * @return the root node of this tree
+//	 */
+//	public Grammar getRoot() {
+//		return root;
+//	}
 	
-	/**
-	 * Gets all translation rules stored in this tree.
-	 * 
-	 * @return all translation rules stored in this tree
-	 */
-	public List<Rule> getAllRules() {
-		
-		return root.getAllRules();
-		
-	}
+//	/**
+//	 * Gets all translation rules stored in this tree.
+//	 * 
+//	 * @return all translation rules stored in this tree
+//	 */
+//	public List<Rule> getAllRules() {
+//		
+//		return root.getAllRules();
+//		
+//	}
 
 	/* See Javadoc for java.lang.Object#toString. */
 	public String toString() {
@@ -728,21 +741,11 @@ public class PrefixTree {
 
 	
 	/**
-	 * Default constructor - for testing purposes only.
+	 * Constructs an invalid, dummy prefix tree.
 	 * <p>
 	 * The unit tests for Node require a dummy PrefixTree.
 	 */
 	private PrefixTree() {
-		this(Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MAX_VALUE);
-	}
-	
-	/**
-	 * Gets an invalid, dummy prefix tree.
-	 * <p>
-	 * For testing purposes only.
-	 * 
-	 */
-	private PrefixTree(int maxPhraseSpan, int maxPhraseLength, int maxNonterminals, int minNonterminalSpan) {
 		root = null;
 		parallelCorpus = null;
 		suffixArray = null;
@@ -753,12 +756,15 @@ public class PrefixTree {
 		ruleExtractor = null;
 		this.epsilon = null;
 		this.vocab = null;
-		this.maxPhraseSpan = maxPhraseSpan;
-		this.maxPhraseLength = maxPhraseLength;
-		this.maxNonterminals = maxNonterminals;
-		this.minNonterminalSpan = minNonterminalSpan;
+		this.maxPhraseSpan = Integer.MIN_VALUE;
+		this.maxPhraseLength = Integer.MIN_VALUE;
+		this.maxNonterminals = Integer.MIN_VALUE;
+		this.minNonterminalSpan = Integer.MAX_VALUE;
+		this.ruleOwner = Integer.MIN_VALUE;
+		this.defaultLHS = Integer.MIN_VALUE;
+		this.oovFeatureCost = Float.NaN;
 	}
-
+	
 	/**
 	 * Gets an invalid, dummy prefix tree.
 	 * <p>
@@ -770,16 +776,50 @@ public class PrefixTree {
 		return new PrefixTree();
 	}
 	
-	/**
-	 * Gets an invalid, dummy prefix tree.
-	 * <p>
-	 * For testing purposes only.
-	 * 
-	 * @return an invalid, dummy prefix tree
-	 */
-	static PrefixTree getDummyPrefixTree(int maxPhraseSpan, int maxPhraseLength, int maxNonterminals, int minNonterminalSpan) {
-		return new PrefixTree(maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan);
+	
+	public Rule constructManualRule(int lhs, int[] sourceWords,
+			int[] targetWords, float[] scores, int arity) {
+		return new BilingualRule(lhs, sourceWords, targetWords, scores, arity, this.ruleOwner, 0, getOOVRuleID());
+	}
+
+	public Rule constructOOVRule(int numFeatures, int sourceWord, int targetWord,
+			boolean hasLM) {
+		int[] french      = new int[1];
+		french[0]         = sourceWord;
+		int[] english       = new int[1];
+		english[0]          = targetWord;
+		float[] feat_scores = new float[numFeatures];
+		
+		// TODO: This is a hack to make the decoding without a LM works
+		/**when a ngram LM is used, the OOV word will have a cost 100.
+		 * if no LM is used for decoding, so we should set the cost of some
+		 * TM feature to be maximum
+		 * */
+		if ( (!hasLM) && numFeatures > 0) { 
+			feat_scores[0] = oovFeatureCost;
+		}
+		
+		return new BilingualRule(
+				this.defaultLHS, french, english, 
+				feat_scores, 0, this.ruleOwner, 
+				0, getOOVRuleID());
+
+	}
+
+	public int getNumRules() {
+		return root.getNumRules();
+	}
+
+	public int getOOVRuleID() {
+		return MemoryBasedBatchGrammar.OOV_RULE_ID;
+	}
+
+	public Trie getTrieRoot() {
+		return root;
+	}
+
+	public boolean hasRuleForSpan(int startIndex, int endIndex, int pathLength) {
+		return (endIndex - startIndex <= this.maxPhraseSpan);
 	}
 	
-
 }

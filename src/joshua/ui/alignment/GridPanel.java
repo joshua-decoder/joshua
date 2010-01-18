@@ -28,7 +28,6 @@ import javax.swing.JPanel;
 
 import joshua.corpus.Corpus;
 import joshua.corpus.alignment.Alignments;
-import joshua.prefix_tree.PrefixTree;
 
 /**
  * Presents a visual display of an alignment grid for one aligned
@@ -68,7 +67,7 @@ public class GridPanel extends JPanel {
 	 */
 	private int printerScaleFactor = 25;
 	
-	private final PrefixTree prefixTree;
+//	private final PrefixTree prefixTree;
 	
 	/**
 	 * Constructs a panel to display an aligned sentence pair.
@@ -78,13 +77,13 @@ public class GridPanel extends JPanel {
 	 * @param alignments Sentence alignments for the parallel corpus
 	 * @param sentenceNumber Index of the sentence to display (0-based index)
 	 */
-	public GridPanel(Corpus sourceCorpus, Corpus targetCorpus, Alignments alignments, int sentenceNumber, PrefixTree prefixTree) {
+	public GridPanel(Corpus sourceCorpus, Corpus targetCorpus, Alignments alignments, int sentenceNumber) {
 		this.sourceCorpus = sourceCorpus;
 		this.targetCorpus = targetCorpus;
 		this.alignments = alignments;
 		this.numSentences = alignments.size();
-		this.prefixTree = prefixTree;
-		prefixTree.setPrintStream(System.out);
+//		this.prefixTree = prefixTree;
+//		prefixTree.setPrintStream(System.out);
 		this.setSentenceNumber(sentenceNumber);
 	}
 		
@@ -115,7 +114,7 @@ public class GridPanel extends JPanel {
 		for (int i=0, n=sourceIDs.length; i<n; i++) {
 			sourceIDs[i] = sourceCorpus.getVocabulary().getID(sourceWords[i]);
 		}
-		prefixTree.add(sourceIDs);
+//		prefixTree.add(sourceIDs);
 	}
 	
 	/* See Javadoc for javax.swing.JComponent#getPreferredSize */
@@ -163,10 +162,15 @@ public class GridPanel extends JPanel {
 		
 		Graphics2D g = (Graphics2D) graphics;
 		
+//		{
+//			g.setColor(Color.GREEN);
+//			g.fillRect(0, 0, this.getWidth(), this.getHeight());
+//		}
+		
 		g.setBackground(Color.WHITE);
 		g.setColor(Color.WHITE);
 		
-//		g.fillRect(0, 0, d.width, d.height);
+//		
 		g.fillRect(0, 0, width, height);
 		
 		if (sentenceNumber < numSentences) {

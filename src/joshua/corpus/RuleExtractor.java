@@ -30,14 +30,22 @@ import joshua.decoder.ff.tm.Rule;
 public interface RuleExtractor {
 
 	/**
-	 * Extract translation rules for a source language pattern
-	 * given a list of instances in the source corpus of that
-	 * pattern.
+	 * Extract sorted list of translation rules for a source language pattern,
+	 * given a list of instances of that pattern in the source corpus.
 	 * <p>
 	 * This extractor is responsible for doing any sampling,
 	 * if any is required.
+	 * <p>
+	 * Any implementation must ensure that the returned list of rules
+	 * is sorted according to whatever feature functions are in use.
+	 * 
+	 * This requirement ensures that during decoding, 
+	 * the cube pruning algorithm can correctly utilize 
+	 * the rules returned by this method.
 	 *
-	 * @param sourceHierarchicalPhrases
+	 * @param sourceHierarchicalPhrases Represents a source language pattern,
+	 * 		and the list of corpus indices where that source pattern is found.
+	 * 
 	 * @return translation rules for the provided source language
 	 *         pattern
 	 */

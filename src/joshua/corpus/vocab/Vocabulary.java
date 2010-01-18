@@ -96,7 +96,7 @@ public class Vocabulary extends AbstractExternalizableSymbolTable
 	}
 
 	/** 
-	 * Constructor creates a fixed vocabulary from the given
+	 * Constructor creates a vocabulary initialized with the given
 	 * set of words.
 	 */
 	public Vocabulary(Set<String> words) {

@@ -73,6 +73,8 @@ public class BasicRuleCollection implements RuleCollection {
 	/**
 	 * Constructs a rule collection with the given data.
 	 * <p>
+	 * The list of rules must already be sorted
+	 * <p>
 	 * NOTE: if rules==null, the rule member variable will be
 	 * initialized to an <em>immutable</em> empty list.
 	 * 
@@ -80,7 +82,7 @@ public class BasicRuleCollection implements RuleCollection {
 	 * @param sourceTokens
 	 * @param rules
 	 */
-	public BasicRuleCollection(int arity, int[] sourceTokens, List<Rule> rules, boolean sorted) {
+	public BasicRuleCollection(int arity, int[] sourceTokens, List<Rule> rules) {
 		if (rules==null) {
 			this.rules = Collections.<Rule>emptyList();
 		} else {
@@ -88,7 +90,7 @@ public class BasicRuleCollection implements RuleCollection {
 		}
 		this.sourceTokens = sourceTokens;
 		this.arity = arity;
-		this.sorted = sorted;
+		this.sorted = true;
 	}
 	
 	/* See Javadoc comments for RuleCollection interface. */
@@ -128,9 +130,10 @@ public class BasicRuleCollection implements RuleCollection {
 	/* See Javadoc comments for RuleCollection interface. */
 	public List<Rule> getSortedRules() {	
 		if (!this.sorted) {
-			String message = "Grammar has not been sorted which is reqired by cube pruning; sortGrammar should have been called after loading the grammar, but was not.";
+			String message = "Grammar has not been sorted which is reqired by cube pruning; " +
+				"sortGrammar should have been called after loading the grammar, but was not.";
 			logger.severe(message);			
-			throw new RuntimeException(message);
+			throw new UnsortedRuleCollectionException(message);
 		}
 		
 		return this.rules;

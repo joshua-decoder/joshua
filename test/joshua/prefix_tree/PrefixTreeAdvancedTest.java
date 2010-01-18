@@ -34,6 +34,7 @@ import joshua.corpus.suffix_array.BasicPhrase;
 import joshua.corpus.suffix_array.ParallelCorpusGrammarFactory;
 import joshua.corpus.suffix_array.SuffixArray;
 import joshua.corpus.vocab.Vocabulary;
+import joshua.decoder.JoshuaConfiguration;
 import joshua.prefix_tree.Node;
 import joshua.prefix_tree.PrefixTree;
 
@@ -221,7 +222,7 @@ public class PrefixTreeAdvancedTest {
 		BasicPhrase query = new BasicPhrase("it makes him", sourceVocab);
 		//BasicPhrase query = new BasicPhrase("it makes him and it mars him", sourceVocab);
 		//BasicPhrase query = new BasicPhrase("it makes him and it mars him , it sets him on and it takes him off .", sourceVocab);
-		ParallelCorpusGrammarFactory parallelCorpus = new ParallelCorpusGrammarFactory(suffixArray, targetSuffixArray, alignments, null, sampleSize, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan, Float.MIN_VALUE);
+		ParallelCorpusGrammarFactory parallelCorpus = new ParallelCorpusGrammarFactory(suffixArray, targetSuffixArray, alignments, null, sampleSize, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan, Float.MIN_VALUE, JoshuaConfiguration.phrase_owner, JoshuaConfiguration.default_non_terminal, JoshuaConfiguration.oovFeatureCost);
 //		simplePrefixTree = new PrefixTree(suffixArray, targetCorpusArray, alignments, suffixArray.getVocabulary(), lexProbs, ruleExtractor, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan);
 		simplePrefixTree = new PrefixTree(parallelCorpus);
 		simplePrefixTree.add(query.getWordIDs());
@@ -367,7 +368,7 @@ public class PrefixTreeAdvancedTest {
 		//BasicPhrase query = new BasicPhrase("it makes him", sourceVocab);
 		//BasicPhrase query = new BasicPhrase("it makes him and it mars him", sourceVocab);
 		BasicPhrase query = new BasicPhrase("it makes him and it mars him , it sets him on and it takes him off .", sourceVocab);
-		ParallelCorpusGrammarFactory parallelCorpus = new ParallelCorpusGrammarFactory(suffixArray, targetSuffixArray, alignments, null, sampleSize, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan, Float.MIN_VALUE);
+		ParallelCorpusGrammarFactory parallelCorpus = new ParallelCorpusGrammarFactory(suffixArray, targetSuffixArray, alignments, null, sampleSize, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan, Float.MIN_VALUE, JoshuaConfiguration.phrase_owner, JoshuaConfiguration.default_non_terminal, JoshuaConfiguration.oovFeatureCost);
 //		PrefixTree prefixTree = new PrefixTree(suffixArray, targetCorpusArray, alignments, suffixArray.getVocabulary(), lexProbs, ruleExtractor, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan);
 		PrefixTree prefixTree = new PrefixTree(parallelCorpus);
 		prefixTree.add(query.getWordIDs());
@@ -580,7 +581,7 @@ public class PrefixTreeAdvancedTest {
 		
 		Assert.assertEquals(querySentence.toString(), "it UNK him and it UNK him");
 		Assert.assertEquals(corpusSentence.toString(), corpusString);
-		ParallelCorpusGrammarFactory parallelCorpus = new ParallelCorpusGrammarFactory(suffixArray, targetSuffixArray, alignments, null, sampleSize, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan, Float.MIN_VALUE);
+		ParallelCorpusGrammarFactory parallelCorpus = new ParallelCorpusGrammarFactory(suffixArray, targetSuffixArray, alignments, null, sampleSize, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan, Float.MIN_VALUE, JoshuaConfiguration.phrase_owner, JoshuaConfiguration.default_non_terminal, JoshuaConfiguration.oovFeatureCost);
 
 //		PrefixTree prefixTree = new PrefixTree(suffixArray, targetCorpusArray, alignments, suffixArray.getVocabulary(), lexProbs, ruleExtractor, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan);
 		PrefixTree prefixTree = new PrefixTree(parallelCorpus);

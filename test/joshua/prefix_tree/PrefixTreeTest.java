@@ -22,6 +22,7 @@ import joshua.corpus.alignment.Alignments;
 import joshua.corpus.suffix_array.ParallelCorpusGrammarFactory;
 import joshua.corpus.suffix_array.SuffixArray;
 import joshua.corpus.vocab.Vocabulary;
+import joshua.decoder.JoshuaConfiguration;
 import joshua.util.BotMap;
 
 import org.testng.Assert;
@@ -91,7 +92,7 @@ public class PrefixTreeTest {
 
 		CorpusArray sourceCorpus = new CorpusArray(sentence, sentenceStartPositions, vocab);
 		SuffixArray sourceSuffixes = new SuffixArray(sourceCorpus);
-		ParallelCorpusGrammarFactory parallelCorpus = new ParallelCorpusGrammarFactory(sourceSuffixes, targetSuffixes, alignments, null, Integer.MAX_VALUE, maxPhraseSpan, maxPhraseLength, maxNonterminals, 2, Float.MIN_VALUE);
+		ParallelCorpusGrammarFactory parallelCorpus = new ParallelCorpusGrammarFactory(sourceSuffixes, targetSuffixes, alignments, null, Integer.MAX_VALUE, maxPhraseSpan, maxPhraseLength, maxNonterminals, 2, Float.MIN_VALUE, JoshuaConfiguration.phrase_owner, JoshuaConfiguration.default_non_terminal, JoshuaConfiguration.oovFeatureCost);
 		
 //		tree = new PrefixTree(vocab, maxPhraseSpan, maxPhraseLength, maxNonterminals);
 		tree = new PrefixTree(parallelCorpus);
@@ -103,7 +104,7 @@ public class PrefixTreeTest {
 
 	@Test(dependsOnMethods = {"setup"})
 	public void toStringTest() {
-		String actualString = tree.getRoot().toString(); //tree.root.toString(vocab)
+		String actualString = tree.getTrieRoot().toString(); //tree.root.toString(vocab)
 		
 		// Remove *
 		actualString = actualString.replaceAll("\\*", "");

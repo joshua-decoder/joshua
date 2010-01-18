@@ -38,6 +38,7 @@ import joshua.corpus.suffix_array.Suffixes;
 import joshua.corpus.suffix_array.mm.MemoryMappedSuffixArray;
 import joshua.corpus.vocab.SymbolTable;
 import joshua.corpus.vocab.Vocabulary;
+import joshua.decoder.JoshuaConfiguration;
 import joshua.util.Cache;
 import joshua.util.io.BinaryIn;
 
@@ -316,7 +317,7 @@ public class ExtractRules {
 		ntVocab.put(SymbolTable.X, SymbolTable.X_STRING);
 		
 		logger.info("Constructing grammar factory from parallel corpus");
-		ParallelCorpusGrammarFactory parallelCorpus = new ParallelCorpusGrammarFactory(sourceSuffixArray, targetSuffixArray, alignments, null, ruleSampleSize, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan, Float.MIN_VALUE);
+		ParallelCorpusGrammarFactory parallelCorpus = new ParallelCorpusGrammarFactory(sourceSuffixArray, targetSuffixArray, alignments, null, ruleSampleSize, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan, Float.MIN_VALUE, JoshuaConfiguration.phrase_owner, JoshuaConfiguration.default_non_terminal, JoshuaConfiguration.oovFeatureCost);
 		return parallelCorpus;
 	}
 

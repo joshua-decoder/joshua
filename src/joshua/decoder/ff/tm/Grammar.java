@@ -79,6 +79,19 @@ public interface Grammar  {
 	 * "regular" grammar will only say True if the span is less
 	 * than the span limit. Other grammars, e.g. for rule-based
 	 * systems, may have different behaviors.
+	 * 
+	 * @param startIndex Indicates the starting index 
+	 * 		of a phrase in a source input phrase,
+	 * 		or a starting node identifier 
+	 * 		in a source input lattice
+	 * @param endIndex Indicates the ending index 
+	 * 		of a phrase in a source input phrase,
+	 * 		or an ending node identifier 
+	 * 		in a source input lattice
+	 * @param pathLength Length of the input path in a source input lattice.
+	 * 		If a source input phrase is used instead of a lattice,
+	 * 		this value will likely be ignored by the underlying implementation,
+	 * 		but would normally be defined as <code>endIndex-startIndex</code>
 	 */
 	boolean hasRuleForSpan(int startIndex, int endIndex, int pathLength);
 

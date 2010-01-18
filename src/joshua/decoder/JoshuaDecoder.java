@@ -563,7 +563,8 @@ public class JoshuaDecoder {
 				JoshuaConfiguration.sa_max_phrase_length,
 				JoshuaConfiguration.sa_max_nonterminals,
 				JoshuaConfiguration.sa_min_nonterminal_span,
-				JoshuaConfiguration.sa_lex_floor_prob);
+				JoshuaConfiguration.sa_lex_floor_prob, 
+				JoshuaConfiguration.phrase_owner, JoshuaConfiguration.default_non_terminal, JoshuaConfiguration.oovFeatureCost);
 		
 		return parallelCorpus;
 	}
