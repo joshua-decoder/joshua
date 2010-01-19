@@ -46,7 +46,7 @@ public class SrilmSymbol extends DefaultSymbol {
 	 */
 	public SrilmSymbol(int lm_order) {
 		System.loadLibrary("srilm"); //load once		
-		this.p_srilm = srilm.initLM(lm_order, lm_start_sym_id, lm_end_sym_id );
+		this.p_srilm = srilm.initLM(lm_order, lmStartSymID, lmEndSymID );
 		logger.info("Construct the symbol table on the fly");
 		addNonterminal(X_STRING);
 		addNonterminal(X1_STRING);
@@ -68,7 +68,7 @@ public class SrilmSymbol extends DefaultSymbol {
 		// We have to call the following two functions before we add any symbol into the SRILM table
 		// This is unfortunate as we need to provide lm_order, which seems unrelated
 		System.loadLibrary("srilm"); //load once		
-		this.p_srilm = srilm.initLM(lm_order, lm_start_sym_id, lm_end_sym_id );
+		this.p_srilm = srilm.initLM(lm_order, lmStartSymID, lmEndSymID );
 		
 		//now we can begin to add symbols
 		if(fname !=null){
@@ -94,7 +94,7 @@ public class SrilmSymbol extends DefaultSymbol {
 		if (logger.isLoggable(Level.FINEST)) logger.finest("In existing symbol table, lowestID=="+vocabLow+ " and highestID=="+vocabHigh);
 		
 		int start = 1;//(vocabLow>0) ? vocabLow - 1 : -4;
-		int end = lm_end_sym_id - lm_start_sym_id;
+		int end = lmEndSymID - lmStartSymID;
 		
 		System.loadLibrary("srilm"); //load once		
 		this.p_srilm = srilm.initLM(lm_order, start, end);

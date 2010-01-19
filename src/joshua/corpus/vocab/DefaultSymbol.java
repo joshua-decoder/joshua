@@ -48,10 +48,10 @@ public abstract class DefaultSymbol extends AbstractSymbolTable {
 	
 	public boolean is_reading_from_file = false;
 	
-	protected int lm_start_sym_id = 10000; // 1..10000 reserved for special purpose
+	protected int lmStartSymID = 10000; // 1..10000 reserved for special purpose
 	
 	//@todo: change this to a very large value such as 500000001 or a very small value such as 50001 seems slow down the JavaLM significatnlty
-	protected int lm_end_sym_id = 5000001; // max vocab 1000k 
+	protected int lmEndSymID = 5000001; // max vocab 1000k 
 	
 	// terminal symbol may get from a tbl file, srilm, or a lm file
 	//**non-terminal symbol is always from myself, and the integer should always be negative	
@@ -81,12 +81,12 @@ public abstract class DefaultSymbol extends AbstractSymbolTable {
 	
 	
 	final public int getLowestID() {
-		return this.lm_start_sym_id;
+		return this.lmStartSymID;
 	}
 	
 	
 	final public int getHighestID() {
-		return this.lm_end_sym_id;
+		return this.lmEndSymID;
 	}
 	
 	
@@ -193,7 +193,7 @@ public abstract class DefaultSymbol extends AbstractSymbolTable {
 		
 		//#### now add the tbl into srilm/java-tbl
 		int n_added = 0;
-		for (int i = this.lm_start_sym_id; i < this.lm_end_sym_id; i++) {
+		for (int i = this.lmStartSymID; i < this.lmEndSymID; i++) {
 			// it is guranteed that the strings in localId2str are different
 			String str = localId2str.get(i);
 			int id;

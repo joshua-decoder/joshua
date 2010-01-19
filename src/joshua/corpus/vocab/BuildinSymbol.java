@@ -33,10 +33,10 @@ public class BuildinSymbol extends DefaultSymbol {
 	
 	private static final Logger logger = Logger.getLogger(BuildinSymbol.class.getName());
 	
-	private HashMap<String,Integer> str_2_num_tbl = new HashMap<String,Integer>();
-	private HashMap<Integer,String> num_2_str_tbl = new HashMap<Integer,String>();
+	private HashMap<String,Integer> strToIntTbl = new HashMap<String,Integer>();
+	private HashMap<Integer,String> intToStrTbl = new HashMap<Integer,String>();
 	
-	private int cur_terminal_id = lm_start_sym_id ;//must be positive
+	private int curTerminalID = lmStartSymID ;//must be positive
 	
 	public BuildinSymbol() {
 		this(null);
@@ -58,33 +58,33 @@ public class BuildinSymbol extends DefaultSymbol {
 		}
 	}
 	
-	public int addTerminal(String terminal) {
+	synchronized  public int addTerminal(String terminal) {
 		return getID(terminal);
 	}
 	
 	/** Get int for string (initial, or recover) */
-	public int getID(String str) {
-		Integer res_id = (Integer)str_2_num_tbl.get(str);
-		if (null != res_id) { // already have this symbol
-			if (isNonterminal(res_id)) {
-				throw new RuntimeException("terminal symbol mix with non-terminal, Sym: " + str + "; id: " + res_id);
+	synchronized  public int getID(String str) {
+		Integer resID = strToIntTbl.get(str);
+		if (null != resID) { // already have this symbol
+			if (isNonterminal(resID)) {
+				throw new RuntimeException("terminal symbol mix with non-terminal, Sym: " + str + "; id: " + resID);
 			}
-			return res_id;
+			return resID;
 		} else {
-			str_2_num_tbl.put(str, cur_terminal_id);
-			num_2_str_tbl.put(cur_terminal_id, str);
-			cur_terminal_id++;
-			if (cur_terminal_id > lm_end_sym_id) {
-				throw new RuntimeException("cur_terminal_id is greater than lm_end_sym_id");
+			strToIntTbl.put(str, curTerminalID);
+			intToStrTbl.put(curTerminalID, str);
+			curTerminalID++;
+			if (curTerminalID > lmEndSymID) {
+				throw new RuntimeException("curTerminalID is greater than lmEndSymID");
 			}
 			//logger.info("Sym: " + str + "; id: " + positive_id);
-			return (cur_terminal_id-1);
+			return (curTerminalID-1);
 		}
 	}
 	
 	
-	public String getTerminal(int id) {
-		String res = (String)num_2_str_tbl.get(id);
+	synchronized  public String getTerminal(int id) {
+		String res = intToStrTbl.get(id);
 		if (res == null) {
 			throw new RuntimeException("try to query the string for non exist id, must exit, id is " + id);
 		}
@@ -94,7 +94,7 @@ public class BuildinSymbol extends DefaultSymbol {
 	
 	
 	public Collection<Integer> getAllIDs() {
-		return num_2_str_tbl.keySet();
+		return intToStrTbl.keySet();
 	}
 	
 	
