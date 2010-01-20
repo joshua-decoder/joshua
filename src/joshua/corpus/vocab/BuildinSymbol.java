@@ -58,12 +58,12 @@ public class BuildinSymbol extends DefaultSymbol {
 		}
 	}
 	
-	synchronized  public int addTerminal(String terminal) {
+	public int addTerminal(String terminal) {
 		return getID(terminal);
 	}
 	
 	/** Get int for string (initial, or recover) */
-	synchronized  public int getID(String str) {
+	public int getID(String str) {
 		Integer resID = strToIntTbl.get(str);
 		if (null != resID) { // already have this symbol
 			if (isNonterminal(resID)) {
@@ -83,10 +83,11 @@ public class BuildinSymbol extends DefaultSymbol {
 	}
 	
 	
-	synchronized  public String getTerminal(int id) {
+	public String getTerminal(int id) {
 		String res = intToStrTbl.get(id);
 		if (res == null) {
-			throw new RuntimeException("try to query the string for non exist id, must exit, id is " + id);
+			//throw new RuntimeException("try to query the string for non exist id, must exit, id is " + id);
+			logger.warning("null string for id="+id);
 			//System.exit(1);
 		}
 		

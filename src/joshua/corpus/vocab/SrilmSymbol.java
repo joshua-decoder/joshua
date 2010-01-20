@@ -176,13 +176,13 @@ public class SrilmSymbol extends DefaultSymbol {
 		
 	}
 	
-	synchronized public SWIGTYPE_p_Ngram getSrilmPointer(){
+	public SWIGTYPE_p_Ngram getSrilmPointer(){
 		return this.p_srilm;
 	}
 	
 	 /* This will automatically add str into srilm table if it is not there
 	  * */
-	 synchronized public int addTerminal(String str){
+	 public int addTerminal(String str){
 //		 if (HieroFormatReader.isNonTerminal(str)) {
 //			 throw new RuntimeException("Attempting to add nonterminal " + str + " as a terminal");
 //		 }
@@ -192,23 +192,24 @@ public class SrilmSymbol extends DefaultSymbol {
 	 }
 
 	 
-	 synchronized public  String  getTerminal(int id){
+	 public  String  getTerminal(int id){
 		 String res = (String) srilm.getWordForIndex(id);
 		 
 		 if(res == null){
-			 throw new UnknownSymbolException(id);			
+			 //throw new UnknownSymbolException(id);
+			 logger.warning("null string for id="+id);
 		 }
 		
 		 return  res;
 	 }
 
-	 synchronized public Collection<Integer> getAllIDs() {
+	 public Collection<Integer> getAllIDs() {
 		//TODO Implement this method
 		throw new RuntimeException("Method not yet implemented");
 	}
 
-	synchronized public int getID(String wordString) {
-		 if (HieroFormatReader.isNonTerminal(wordString)) {
+	public int getID(String wordString) {
+		 if (HieroFormatReader.isNonTerminal(wordString)) {//TODO: this is so wrong
 			 return addNonterminal(wordString);
 		 } else {
 			 return addTerminal(wordString);

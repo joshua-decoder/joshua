@@ -527,10 +527,22 @@ public class JoshuaConfiguration {
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("useTMFeat: %s", useTMFeat));
 				} else if ("useLMFeat".equals(fds[0])) {
-					useTMFeat = Boolean.valueOf(fds[1]);
+					useLMFeat = Boolean.valueOf(fds[1]);
 					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format("useTMFeat: %s", useTMFeat));
-				}else {
+						logger.finest(String.format("useLMFeat: %s", useLMFeat));
+				} else if ("startNgramOrder".equals(fds[0])) {
+					startNgramOrder = Integer.parseInt(fds[1]);
+					if (logger.isLoggable(Level.FINEST))
+						logger.finest(String.format("startNgramOrder: %s", startNgramOrder));
+				} else if ("endNgramOrder".equals(fds[0])) {
+					endNgramOrder = Integer.parseInt(fds[1]);
+					if (logger.isLoggable(Level.FINEST))
+						logger.finest(String.format("endNgramOrder: %s", endNgramOrder));
+				}else if ("useEdgeNgramOnly".equals(fds[0])) {
+					useEdgeNgramOnly = Boolean.valueOf(fds[1]);
+					if (logger.isLoggable(Level.FINEST))
+						logger.finest(String.format("useEdgeNgramOnly: %s", useEdgeNgramOnly));
+				} else {
 					logger.warning("Maybe Wrong config line: " + line);
 				}
 			} else { // feature function
