@@ -93,6 +93,7 @@ implements Iterable<R>, Iterator<R> {
 	 */
 	protected void finalize() throws Throwable {
 		logger.severe("Grammar file stream was not closed, this indicates a coding error: " + this.fileName);
+		
 		this.close();
 		super.finalize();
 	}
@@ -106,9 +107,8 @@ implements Iterable<R>, Iterator<R> {
 	private void advanceReader() {
 		try {
 			lookAhead = reader.readLine();
-		} catch (IOException e) {
-			if (logger.isLoggable(Level.SEVERE))
-				logger.severe("Error reading grammar from file: " + fileName);
+		} catch (IOException e) {			
+			logger.severe("Error reading grammar from file: " + fileName);
 		}
 		if (lookAhead == null && reader != null) {
 			this.close();

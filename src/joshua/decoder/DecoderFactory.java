@@ -97,7 +97,7 @@ public class DecoderFactory {
 				if (null != oracleFile) {
 					logger.warning("Parallel decoding appears not to support oracle decoding, but you passed an oracle file in.");
 				}
-				run_parallel_decoder(testFile, nbestFile);
+				runParallelDecoder(testFile, nbestFile);
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -123,7 +123,7 @@ public class DecoderFactory {
 	
 	
 	// BUG: this kind of file munging isn't going to work with generalized SegmentFileParser
-	private void run_parallel_decoder(String testFile, String nbestFile)
+	private void runParallelDecoder(String testFile, String nbestFile)
 	throws IOException {
 		{ 
 			/**if a segment corresponds to a single line in the input file, we can use parallel decoding as we can simply split the file.
@@ -299,6 +299,7 @@ public class DecoderFactory {
 				FileUtility.getWriteFileStream(nbestFile + ".hg.rules");
 			for (DecoderThread decoder : this.parallelThreads) {
 				decoder.hypergraphSerializer.writeRulesParallel(rulesWriter, tblDone);
+				//decoder.hypergraphSerializer.closeReaders();
 			}
 			rulesWriter.flush();
 			rulesWriter.close();

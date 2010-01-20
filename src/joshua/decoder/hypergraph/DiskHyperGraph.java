@@ -197,7 +197,8 @@ public class DiskHyperGraph {
 			ruleReader.initialize();
 			for (Rule rule : ruleReader) {				
 				this.associatedGrammar.put(rule.getRuleID(), rule);
-			}
+			}			
+			ruleReader.close();			
 		}
 	}
 	
@@ -248,7 +249,8 @@ public class DiskHyperGraph {
 		for (int i = 1; i <= this.idToItem.size(); i++) {
 			writeItem(this.idToItem.get(i));
 		}
-		if (null != this.pruner) this.pruner.clearState();
+		if (null != this.pruner) 
+			this.pruner.clearState();
 	}
 	
 	/**
@@ -572,6 +574,7 @@ public class DiskHyperGraph {
 		}
 		out.flush();
 		out.close();
+		this.ruleReader.close();
 	}
 	
 	// writtenRules: remember what kind of rules have already been saved

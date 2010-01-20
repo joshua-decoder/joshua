@@ -150,7 +150,7 @@ public class DecoderThread extends Thread {
 					true, // always store model cost
 					this.featureFunctions);
 				
-				this.hypergraphSerializer.initWrite(
+			this.hypergraphSerializer.initWrite(
 					this.nbestFile + ".hg.items",
 					JoshuaConfiguration.forest_pruning,
 					JoshuaConfiguration.forest_pruning_threshold);
@@ -165,6 +165,7 @@ public class DecoderThread extends Thread {
 	public void run() {
 		try {
 			this.decodeTestFile();
+			//this.hypergraphSerializer.closeReaders();
 		} catch (IOException e) {
 			e.printStackTrace();
 			System.exit(1);
