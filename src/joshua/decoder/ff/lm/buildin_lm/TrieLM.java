@@ -19,6 +19,7 @@ package joshua.decoder.ff.lm.buildin_lm;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -33,7 +34,6 @@ import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.ff.lm.AbstractLM;
 import joshua.decoder.ff.lm.ArpaFile;
 import joshua.decoder.ff.lm.ArpaNgram;
-import joshua.decoder.ff.lm.DefaultNGramLanguageModel;
 import joshua.util.Bits;
 import joshua.util.Regex;
 
@@ -84,6 +84,10 @@ public class TrieLM extends AbstractLM { //DefaultNGramLanguageModel {
 	 * (the context is defined by where you are in the tree).
 	 */
 	private final Map<Integer,Float> backoffs;
+	
+	public TrieLM(SymbolTable vocab, String file) throws FileNotFoundException {
+		this(new ArpaFile(file,vocab));
+	}
 	
 	/**
 	 * Constructs a language model object from the specified ARPA file.
@@ -246,7 +250,7 @@ public class TrieLM extends AbstractLM { //DefaultNGramLanguageModel {
 		return this.children;
 	}
 
-	public static void main(String[] args) throws FileNotFoundException {
+	public static void main(String[] args) throws IOException {
 		
 		logger.info("Constructing ARPA file");
 		ArpaFile arpaFile = new ArpaFile(args[0]);

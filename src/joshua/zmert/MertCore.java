@@ -566,7 +566,8 @@ println(docSubsetInfo[6] + "}",1);
   } // void run_MERT(int maxIts)
 
 
-  public double[] run_single_iteration(
+  @SuppressWarnings("unchecked")
+public double[] run_single_iteration(
     int iteration, int minIts, int maxIts, int prevIts, int earlyStop, int[]maxIndex)
   {
     double FINAL_score = 0;

@@ -38,6 +38,7 @@ public class JoshuaConfiguration {
 	//lm config
 	public static boolean use_srilm                  = false;
 	public static boolean use_bloomfilter_lm         = false;
+	public static boolean use_trie_lm                = false;
 	public static double  lm_ceiling_cost            = 100;
 	public static boolean use_left_equivalent_state  = false;
 	public static boolean use_right_equivalent_state = true;
@@ -292,6 +293,11 @@ public class JoshuaConfiguration {
 					use_bloomfilter_lm = Boolean.valueOf(fds[1]);
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("use_bloomfilter_lm: %s", use_bloomfilter_lm));
+					
+				} else if ("use_trie_lm".equals(fds[0])) {
+					use_trie_lm = Boolean.valueOf(fds[1]);
+					if (logger.isLoggable(Level.FINEST))
+						logger.finest(String.format("use_trie_lm: %s", use_trie_lm));
 					
 				} else if ("lm_ceiling_cost".equals(fds[0])) {
 					lm_ceiling_cost = Double.parseDouble(fds[1]);

@@ -45,6 +45,7 @@ import joshua.decoder.ff.lm.LanguageModelFF;
 import joshua.decoder.ff.lm.NGramLanguageModel;
 import joshua.decoder.ff.lm.bloomfilter_lm.BloomFilterLanguageModel;
 import joshua.decoder.ff.lm.buildin_lm.LMGrammarJAVA;
+import joshua.decoder.ff.lm.buildin_lm.TrieLM;
 import joshua.decoder.ff.lm.distributed_lm.LMGrammarRemote;
 import joshua.decoder.ff.lm.srilm.LMGrammarSRILM;
 import joshua.decoder.ff.state_maintenance.NgramStateComputer;
@@ -438,7 +439,15 @@ public class JoshuaDecoder {
 					this.symbolTable,
 					JoshuaConfiguration.lmOrder,
 					JoshuaConfiguration.lm_file);
-		} else {
+		} else if (JoshuaConfiguration.use_trie_lm) {
+			if (JoshuaConfiguration.use_left_equivalent_state
+					|| JoshuaConfiguration.use_right_equivalent_state) {
+						throw new IllegalArgumentException("using Trie LM, we cannot use suffix/prefix stuff");
+					}
+					this.languageModel = new TrieLM(
+							this.symbolTable,
+							JoshuaConfiguration.lm_file);
+				} else {
 			
 //			logger.info("Reading language model from " + JoshuaConfiguration.lm_file + " into internal trie");
 //			this.languageModel = new TrieLM(

@@ -34,6 +34,7 @@ import java.util.zip.GZIPInputStream;
 import joshua.corpus.vocab.SymbolTable;
 import joshua.corpus.vocab.Vocabulary;
 import joshua.util.Regex;
+import joshua.util.io.LineReader;
 
 /**
  * Utility class for reading ARPA language model files.
@@ -78,11 +79,11 @@ public class ArpaFile implements Iterable<ArpaNgram> {
 		this.vocab = vocab;
 	}
 
-	public ArpaFile(String arpaFileName) throws FileNotFoundException {
+	public ArpaFile(String arpaFileName) throws IOException {
 		this.arpaFile = new File(arpaFileName);
 		this.vocab = new Vocabulary();
 		
-		final Scanner scanner = new Scanner(arpaFile);
+//		final Scanner scanner = new Scanner(arpaFile);
 		
 //		// Eat initial header lines
 //		while (scanner.hasNextLine()) {
@@ -95,23 +96,34 @@ public class ArpaFile implements Iterable<ArpaNgram> {
 		
 //		int ngramOrder = 1;
 		
-		while (scanner.hasNext()) {
-			
-			String line = scanner.nextLine();
-			
-			String[] parts = Regex.spaces.split(line);
-			if (parts.length > 1) {
-				String[] words = Regex.spaces.split(parts[1]);
+		LineReader grammarReader = new LineReader(arpaFileName);
+		
+		try {
+			for (String line : grammarReader) {
 
-				for (String word : words) {
-					if (logger.isLoggable(Level.FINE)) logger.fine("Adding to vocab: " + word);
-					vocab.addTerminal(word);	
+
+//		while (scanner.hasNext()) {
+//			
+//			String line = scanner.nextLine();
+
+				String[] parts = Regex.spaces.split(line);
+				if (parts.length > 1) {
+					String[] words = Regex.spaces.split(parts[1]);
+
+					for (String word : words) {
+						if (logger.isLoggable(Level.FINE)) logger.fine("Adding to vocab: " + word);
+						vocab.addTerminal(word);	
+					}
+
+				} else {
+					logger.info(line);
 				}
-				
-			} else {
-				logger.info(line);
+
 			}
-			
+		} finally { 
+			grammarReader.close(); 
+		}
+
 //			
 //			boolean lineIsHeader = NGRAM_HEADER.matches(line);
 //			
@@ -142,7 +154,7 @@ public class ArpaFile implements Iterable<ArpaNgram> {
 //				vocab.addTerminal(parts[i]);
 //			}
 			
-		}
+//		}
 		
 		logger.info("Done constructing ArpaFile");
 		
