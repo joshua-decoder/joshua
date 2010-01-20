@@ -87,6 +87,7 @@ public class BuildinSymbol extends DefaultSymbol {
 		String res = intToStrTbl.get(id);
 		if (res == null) {
 			throw new RuntimeException("try to query the string for non exist id, must exit, id is " + id);
+			//System.exit(1);
 		}
 		
 		return  res;

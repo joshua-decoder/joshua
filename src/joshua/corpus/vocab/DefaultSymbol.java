@@ -46,7 +46,7 @@ import java.util.logging.Logger;
  */
 public abstract class DefaultSymbol extends AbstractSymbolTable {
 	
-	public boolean is_reading_from_file = false;
+	public boolean isReadingFromFile = false;
 	
 	protected int lmStartSymID = 10000; // 1..10000 reserved for special purpose
 	
@@ -154,7 +154,7 @@ public abstract class DefaultSymbol extends AbstractSymbolTable {
 	
 	protected void initializeSymTblFromFile(String fname)
 	throws IOException {
-		this.is_reading_from_file = true;
+		this.isReadingFromFile = true;
 		//### read file into tbls
 		HashMap<String,Integer> localStr2id = new HashMap<String,Integer>();
 		HashMap<Integer,String> localId2str = new HashMap<Integer,String>();

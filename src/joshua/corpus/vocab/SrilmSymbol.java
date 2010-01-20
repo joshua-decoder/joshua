@@ -42,11 +42,11 @@ public class SrilmSymbol extends DefaultSymbol {
 	/**
 	 * Construct an empty SRILM symbol table.
 	 * 
-	 * @param lm_order Language model n-gram order
+	 * @param lmOrder Language model n-gram order
 	 */
-	public SrilmSymbol(int lm_order) {
+	public SrilmSymbol(int lmOrder) {
 		System.loadLibrary("srilm"); //load once		
-		this.p_srilm = srilm.initLM(lm_order, lmStartSymID, lmEndSymID );
+		this.p_srilm = srilm.initLM(lmOrder, lmStartSymID, lmEndSymID );
 		logger.info("Construct the symbol table on the fly");
 		addNonterminal(X_STRING);
 		addNonterminal(X1_STRING);
@@ -60,15 +60,15 @@ public class SrilmSymbol extends DefaultSymbol {
 	 * Construct an SRILM symbol table using the provided file.
 	 *
 	 * @param fname File name
-	 * @param lm_order Language model n-gram order
+	 * @param lmOrder Language model n-gram order
 	 * @throws IOException
 	 */
-	public SrilmSymbol(String fname, int lm_order) throws IOException {
+	public SrilmSymbol(String fname, int lmOrder) throws IOException {
 		
 		// We have to call the following two functions before we add any symbol into the SRILM table
 		// This is unfortunate as we need to provide lm_order, which seems unrelated
 		System.loadLibrary("srilm"); //load once		
-		this.p_srilm = srilm.initLM(lm_order, lmStartSymID, lmEndSymID );
+		this.p_srilm = srilm.initLM(lmOrder, lmStartSymID, lmEndSymID );
 		
 		//now we can begin to add symbols
 		if(fname !=null){
@@ -84,9 +84,9 @@ public class SrilmSymbol extends DefaultSymbol {
 	 * from the provided symbol table.
 	 * 
 	 * @param vocab Existing symbol table
-	 * @param lm_order Language model n-gram order
+	 * @param lmOrder Language model n-gram order
 	 */
-	public SrilmSymbol(SymbolTable vocab, int lm_order) {
+	public SrilmSymbol(SymbolTable vocab, int lmOrder) {
 		
 		int vocabLow = vocab.getLowestID();
 		int vocabHigh = vocab.getHighestID();
@@ -97,7 +97,7 @@ public class SrilmSymbol extends DefaultSymbol {
 		int end = lmEndSymID - lmStartSymID;
 		
 		System.loadLibrary("srilm"); //load once		
-		this.p_srilm = srilm.initLM(lm_order, start, end);
+		this.p_srilm = srilm.initLM(lmOrder, start, end);
 		
 //		if (logger.isLoggable(Level.FINEST)) {
 //			logger.fine(this.getWord(1));
@@ -176,13 +176,13 @@ public class SrilmSymbol extends DefaultSymbol {
 		
 	}
 	
-	public SWIGTYPE_p_Ngram getSrilmPointer(){
+	synchronized public SWIGTYPE_p_Ngram getSrilmPointer(){
 		return this.p_srilm;
 	}
 	
 	 /* This will automatically add str into srilm table if it is not there
 	  * */
-	 public int addTerminal(String str){
+	 synchronized public int addTerminal(String str){
 //		 if (HieroFormatReader.isNonTerminal(str)) {
 //			 throw new RuntimeException("Attempting to add nonterminal " + str + " as a terminal");
 //		 }
@@ -192,7 +192,7 @@ public class SrilmSymbol extends DefaultSymbol {
 	 }
 
 	 
-	 public  String  getTerminal(int id){
+	 synchronized public  String  getTerminal(int id){
 		 String res = (String) srilm.getWordForIndex(id);
 		 
 		 if(res == null){
@@ -202,12 +202,12 @@ public class SrilmSymbol extends DefaultSymbol {
 		 return  res;
 	 }
 
-	public Collection<Integer> getAllIDs() {
+	 synchronized public Collection<Integer> getAllIDs() {
 		//TODO Implement this method
 		throw new RuntimeException("Method not yet implemented");
 	}
 
-	public int getID(String wordString) {
+	synchronized public int getID(String wordString) {
 		 if (HieroFormatReader.isNonTerminal(wordString)) {
 			 return addNonterminal(wordString);
 		 } else {
