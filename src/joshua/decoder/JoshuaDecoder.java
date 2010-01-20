@@ -233,7 +233,7 @@ public class JoshuaDecoder {
 	}
 	
 	
-	public static void writeConfigFile(double[] newWeights, String template, String outputFile) {
+	public static void writeConfigFile(double[] newWeights, String template, String outputFile, String newDiscriminativeModel) {
 		try {
 			int featureID = 0;
 			
@@ -249,15 +249,28 @@ public class JoshuaDecoder {
 					
 				} else { //models: replace the weight
 					String[] fds = Regex.spaces.split(line);
-					StringBuffer newLine = new StringBuffer();
+					StringBuffer newSent = new StringBuffer();
 					if (! Regex.floatingNumber.matches(fds[fds.length-1])) {
 						throw new IllegalArgumentException("last field is not a number; the field is: " + fds[fds.length-1]);
 					}
-					for (int i = 0; i < fds.length-1; i++) {
-						newLine.append(fds[i]).append(' ');
+					
+					if(newDiscriminativeModel!=null && "discriminative".equals(fds[0])){
+						newSent.append(fds[0]).append(' ');
+						newSent.append(newDiscriminativeModel).append(' ');//change the file name
+						for (int i = 2; i < fds.length-1; i++) {
+							newSent.append(fds[i]).append(' ');
+						}
+					}else{//regular
+						for (int i = 0; i < fds.length-1; i++) {
+							newSent.append(fds[i]).append(' ');
+						}
 					}
-					newLine.append(newWeights[featureID++]);
-					writer.write(newLine.toString());
+					if(newWeights!=null)
+						newSent.append(newWeights[featureID++]);//change the weight
+					else
+						newSent.append(fds[fds.length-1]);//do not change
+					
+					writer.write(newSent.toString());
 					writer.newLine();
 				}
 			} } finally {
@@ -265,7 +278,7 @@ public class JoshuaDecoder {
 				writer.close();
 			}
 			
-			if (featureID != newWeights.length) {
+			if (newWeights!=null && featureID != newWeights.length) {
 				throw new IllegalArgumentException("number of models does not match number of weights");
 			}
 			
@@ -273,6 +286,7 @@ public class JoshuaDecoder {
 			e.printStackTrace();
 		}
 	}
+	
 	
 	
 //===============================================================

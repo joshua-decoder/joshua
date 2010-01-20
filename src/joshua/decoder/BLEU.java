@@ -256,26 +256,15 @@ public class BLEU {
 	 */
 	public static double computeLinearCorpusGain(double[] linearCorpusGainThetas, int hypLength, HashMap<String,Integer> hypNgramTable,  HashMap<String,Integer> referenceNgramTable) {
 		double res = 0;
-		int[] numMatches = new int[5];
 		res += linearCorpusGainThetas[0] * hypLength;
-		numMatches[0] = hypLength;
 		for (Entry<String,Integer> entry : hypNgramTable.entrySet()) {
 			String   key = entry.getKey();
 			Integer refNgramCount = referenceNgramTable.get(key);
-			//System.out.println("key is " + key); System.exit(1);
 			if(refNgramCount!=null){//delta function
 				int ngramOrder = Regex.spaces.split(key).length;
 				res += entry.getValue() * linearCorpusGainThetas[ngramOrder];
-				numMatches[ngramOrder] += entry.getValue();
 			}
 		}
-		/*
-		System.out.print("Google BLEU stats are: ");
-		for(int i=0; i<5; i++)
-			System.out.print(numMatches[i]+ " ");
-		System.out.print(" ; BLUE is " + res);
-		System.out.println();
-		*/
 		return res;
 	}
 	
