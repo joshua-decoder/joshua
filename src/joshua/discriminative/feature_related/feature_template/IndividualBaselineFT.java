@@ -16,21 +16,21 @@ import joshua.discriminative.DiscriminativeSupport;
 public class IndividualBaselineFT extends AbstractFeatureTemplate {
 	
 	private String featName = null;
-	private int featureID;
+	private int columnID;
 	private boolean useDiskHyperGraph;
 	
 	private static Logger logger = Logger.getLogger(IndividualBaselineFT.class.getName());
 	
-	public IndividualBaselineFT(String featName, int featureID, boolean useDiskHyperGraph){
+	public IndividualBaselineFT(String featName, int columnID, boolean useDiskHyperGraph){
 		this.featName = featName;
-		this.featureID = featureID;
+		this.columnID = columnID;
 		this.useDiskHyperGraph = useDiskHyperGraph;
 	}
 
 
 	public void getFeatureCounts(HyperEdge dt,  HashMap<String, Double> featureTbl, HashSet<String> restrictedFeatureSet, double scale) {
 		if(restrictedFeatureSet == null || restrictedFeatureSet.contains(featName)==true){
-			double val = getFeatureLogP(dt, featureID);
+			double val = getFeatureLogP(dt, columnID);
 			//System.out.println("baseline is " + val + " ; scale = " + scale);
 			DiscriminativeSupport.increaseCount(featureTbl, featName, val*scale);					
 		}		
@@ -41,9 +41,9 @@ public class IndividualBaselineFT extends AbstractFeatureTemplate {
 		System.exit(0);
 	}
  	
-	private final double getFeatureLogP(HyperEdge dt, int feature){
+	private final double getFeatureLogP(HyperEdge dt, int columnID){
 		if(useDiskHyperGraph)
-			return ((WithModelLogPsHyperEdge)dt).modeLogPs[feature];//TODO
+			return ((WithModelLogPsHyperEdge)dt).modeLogPs[columnID];//TODO
 		else{
 			System.out.println("we only support disk HG with stored feature scores");
 			System.exit(1);

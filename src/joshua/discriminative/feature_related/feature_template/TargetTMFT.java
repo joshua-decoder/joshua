@@ -14,10 +14,11 @@ public class TargetTMFT  extends AbstractFeatureTemplate {
 
 	SymbolTable symbolTbl;
 	
+	boolean useIntegerString = true;
 	
-	public TargetTMFT(SymbolTable symbolTbl){
+	public TargetTMFT(SymbolTable symbolTbl, boolean useIntegerString){
 		this.symbolTbl = symbolTbl;	
-		
+		this.useIntegerString = useIntegerString;
 		System.out.println("TargetTMFT template");
 	}
 	
@@ -25,7 +26,7 @@ public class TargetTMFT  extends AbstractFeatureTemplate {
 	public void getFeatureCounts(Rule rule, List<HGNode> antNodes, HashMap<String, Double> featureTbl, HashSet<String> restrictedFeatureSet, double scale) {
 		
 		if(rule!=null){
-			String featName= ruleEnglishString( (BilingualRule) rule, symbolTbl);//TODO
+			String featName= ruleEnglishString( (BilingualRule) rule, this.symbolTbl);//TODO
 			if(  restrictedFeatureSet==null ||
 			   ( restrictedFeatureSet!=null && restrictedFeatureSet.contains(featName) ) ){
 				DiscriminativeSupport.increaseCount(featureTbl, featName, scale);									
@@ -35,7 +36,11 @@ public class TargetTMFT  extends AbstractFeatureTemplate {
 	
 	
 	private String ruleEnglishString(BilingualRule rule, SymbolTable symbolTable) {
-		return symbolTable.getWords(rule.getEnglish());
+		if(useIntegerString){			
+			return rule.convertToString(rule.getEnglish(), null);			
+		}else{
+			return rule.convertToString(rule.getEnglish(), symbolTable);
+		}
 	}
 
 	

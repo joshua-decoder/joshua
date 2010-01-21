@@ -236,7 +236,7 @@ public class JoshuaDecoder {
 	
 	public static void writeConfigFile(double[] newWeights, String template, String outputFile, String newDiscriminativeModel) {
 		try {
-			int featureID = 0;
+			int columnID = 0;
 			
 			BufferedWriter writer = FileUtility.getWriteFileStream(outputFile);
 			LineReader     reader = new LineReader(template);
@@ -267,7 +267,7 @@ public class JoshuaDecoder {
 						}
 					}
 					if(newWeights!=null)
-						newSent.append(newWeights[featureID++]);//change the weight
+						newSent.append(newWeights[columnID++]);//change the weight
 					else
 						newSent.append(fds[fds.length-1]);//do not change
 					
@@ -279,7 +279,7 @@ public class JoshuaDecoder {
 				writer.close();
 			}
 			
-			if (newWeights!=null && featureID != newWeights.length) {
+			if (newWeights!=null && columnID != newWeights.length) {
 				throw new IllegalArgumentException("number of models does not match number of weights");
 			}
 			

@@ -19,17 +19,18 @@ public class NgramFT extends AbstractFeatureTemplate {
 		
 	private NgramExtractor ngramExtractor;
 	
+	
 	public NgramFT(SymbolTable symbolTbl, boolean useIntegerNgram, int ngramStateID, int baselineLMOrder, int startOrder, int endOrder){
 	
 		this.startNgramOrder = startOrder;
 		this.endNgramOrder = endOrder;
-	
+		
 		if(baselineLMOrder<endNgramOrder){
 			System.out.println("baseline lm order is smaller than end_lm_order");
 			System.exit(0);
 		}
 		
-		ngramExtractor = new NgramExtractor(symbolTbl, ngramStateID, useIntegerNgram, baselineLMOrder);
+		this.ngramExtractor = new NgramExtractor(symbolTbl, ngramStateID, useIntegerNgram, baselineLMOrder);
 		
 		System.out.println("startOrder=" + startOrder);
 		System.out.println("endOrder=" + endOrder);

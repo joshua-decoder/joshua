@@ -51,9 +51,10 @@ public class FeatureIntersection {
 		//##setup feature templates list
 		ArrayList<FeatureTemplate> featTemplates =  new ArrayList<FeatureTemplate>();
 		
+		boolean useIntegerString = false;
 		
 		if(useTMFeat==true){
-			FeatureTemplate ft = new TMFT(p_symbol);
+			FeatureTemplate ft = new TMFT(p_symbol, useIntegerString);
 			featTemplates.add(ft);
 		}
 		
@@ -62,7 +63,7 @@ public class FeatureIntersection {
 			FeatureTemplate ft = new NgramFT(p_symbol, false, ngramStateID, baseline_lm_order,1,2);//TODO: unigram and bi gram
 			featTemplates.add(ft);
 		}else if(useEdgeNgramOnly){//exclusive with use_lm_feat
-			FeatureTemplate ft = new EdgeBigramFT(p_symbol, ngramStateID, baseline_lm_order);
+			FeatureTemplate ft = new EdgeBigramFT(p_symbol, ngramStateID, baseline_lm_order, useIntegerString);
 			featTemplates.add(ft);
 		}		
 		

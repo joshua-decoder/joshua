@@ -200,6 +200,8 @@ import joshua.discriminative.feature_related.feature_template.TableBasedBaseline
 		
 		SymbolTable symbolTbl = new BuildinSymbol(null);
 		
+		boolean useIntegerString = false;
+		
 		//####### nbest decoding
 		/*if(is_nbest){
 			//TODO
@@ -214,7 +216,7 @@ import joshua.discriminative.feature_related.feature_template.TableBasedBaseline
 			featTemplates.add(baselineFeature);	
 			
 			if(useTMFeat==true){
-				FeatureTemplate ft = new TMFT(symbolTbl);
+				FeatureTemplate ft = new TMFT(symbolTbl, useIntegerString);
 				featTemplates.add(ft);
 			}
 				
@@ -223,7 +225,7 @@ import joshua.discriminative.feature_related.feature_template.TableBasedBaseline
 				FeatureTemplate ft = new NgramFT(symbolTbl, false, ngramStateID, baselineLMOrder, 1, 2);//TODO: unigram and bi gram
 				featTemplates.add(ft);
 			}else if(useEdgeNgramOnly){//exclusive with use_lm_feat
-				FeatureTemplate ft = new EdgeBigramFT(symbolTbl, ngramStateID, baselineLMOrder);
+				FeatureTemplate ft = new EdgeBigramFT(symbolTbl, ngramStateID, baselineLMOrder, useIntegerString);
 				featTemplates.add(ft);
 			}		
 			System.out.println("templates are: " + featTemplates);

@@ -13,10 +13,13 @@ import joshua.discriminative.DiscriminativeSupport;
 
 public class TMFT extends AbstractFeatureTemplate {
 
-	SymbolTable symbolTbl;	
+	SymbolTable symbolTbl;
 	
-	public TMFT(SymbolTable symbolTbl){
-		this.symbolTbl = symbolTbl;		
+	boolean useIntegerString = true;
+	
+	public TMFT(SymbolTable symbolTbl, boolean useIntegerString){
+		this.symbolTbl = symbolTbl;	
+		this.useIntegerString = useIntegerString;
 		
 		System.out.println("TM template");
 	}
@@ -25,15 +28,21 @@ public class TMFT extends AbstractFeatureTemplate {
 	public void getFeatureCounts(Rule rule, List<HGNode> antNodes, HashMap<String, Double> featureTbl, HashSet<String> restrictedFeatureSet, double scale) {
 		
 		if(rule != null){			
-			String key =  rule.toStringWithoutFeatScores(symbolTbl);//TODO
+			String key = null;
+			if(this.useIntegerString)//TODO
+				key =  rule.toStringWithoutFeatScores(null);
+			else
+				key =  rule.toStringWithoutFeatScores(symbolTbl);
+			
 			if(restrictedFeatureSet == null || restrictedFeatureSet.contains(key)==true){
 				DiscriminativeSupport.increaseCount(featureTbl, key, scale);
-				//System.out.println("key is " + key +"; lhs " + symbolTbl.getWord(rl.getLHS()));	//System.exit(0);
+				//System.out.println("key is " + key +"; lhs " + symbolTbl.getWord(rule.getLHS()));	//System.exit(0);
 			}
 			
 		}
 		
 	}
-
+	
+	
 
 }

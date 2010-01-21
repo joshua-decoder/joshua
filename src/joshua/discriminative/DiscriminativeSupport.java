@@ -122,9 +122,10 @@ public class DiscriminativeSupport {
 			String featureFile, String modelFile
 			){
 		
+		boolean useIntegerString = false;
 		
 		List<FeatureTemplate> featTemplates =  DiscriminativeSupport.setupFeatureTemplates(symbolTbl, useTMFeat, useLMFeat,
-				useEdgeNgramOnly, ngramStateID, baselineLMOrder, startNgramOrder, endNgramOrder);	
+				useEdgeNgramOnly, ngramStateID, baselineLMOrder, startNgramOrder, endNgramOrder, useIntegerString);	
 		
 		
 		//============= restricted feature set
@@ -148,20 +149,21 @@ public class DiscriminativeSupport {
 	static public List<FeatureTemplate> setupFeatureTemplates(
 			SymbolTable symbolTbl, boolean useTMFeat, boolean useLMFeat, boolean useEdgeNgramOnly, 
 			int ngramStateID, int baselineLMOrder,
-			int startNgramOrder, int endNgramOrder	
+			int startNgramOrder, int endNgramOrder,
+			boolean useIntegerString
 			){
 		
 		List<FeatureTemplate> featTemplates =  new ArrayList<FeatureTemplate>();	
 		if(useTMFeat==true){
-			FeatureTemplate ft = new TMFT(symbolTbl);
+			FeatureTemplate ft = new TMFT(symbolTbl, useIntegerString);
 			featTemplates.add(ft);
 		}
 					
 		if(useLMFeat==true){	
-			FeatureTemplate ft = new NgramFT(symbolTbl, false, ngramStateID, baselineLMOrder, startNgramOrder, endNgramOrder);
+			FeatureTemplate ft = new NgramFT(symbolTbl, useIntegerString, ngramStateID, baselineLMOrder, startNgramOrder, endNgramOrder);
 			featTemplates.add(ft);
 		}else if(useEdgeNgramOnly){//exclusive with use_lm_feat
-			FeatureTemplate ft = new EdgeBigramFT(symbolTbl, ngramStateID, baselineLMOrder);
+			FeatureTemplate ft = new EdgeBigramFT(symbolTbl, ngramStateID, baselineLMOrder, useIntegerString);
 			featTemplates.add(ft);
 		}		
 		logger.info("templates are: " + featTemplates);

@@ -146,14 +146,21 @@ public class BilingualRule extends MonolingualRule {
 	}
 	
 	public String toStringWithoutFeatScores(SymbolTable symbolTable) {
-		return new StringBuffer()
-			.append(symbolTable.getWord(this.getLHS()))
-			.append(" ||| ")
-			.append(symbolTable.getWords(this.getFrench()))
-			.append(" ||| ")
-			.append(symbolTable.getWords(english))
-			.toString();
+		StringBuffer sb = new StringBuffer();
+		if(symbolTable==null)
+			sb.append(this.getLHS());
+		else
+			sb.append(symbolTable.getWord(this.getLHS()));
+		
+		return sb.append(" ||| ")
+		  		 .append(convertToString(this.getFrench(), symbolTable))
+		  		 .append(" ||| ")
+		  		 .append(convertToString(this.getEnglish(), symbolTable))
+		  		 .toString();
 	}
+	
+	
+	
 	
 
 }

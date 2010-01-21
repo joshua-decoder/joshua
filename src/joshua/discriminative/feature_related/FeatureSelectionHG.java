@@ -60,8 +60,10 @@ public class FeatureSelectionHG {
 //		##setup feature templates list
 		ArrayList<FeatureTemplate> featureTemplates =  new ArrayList<FeatureTemplate>();
 		
+		boolean useIntegerString = false;
+		
 		if(use_tm_feat==true){
-			FeatureTemplate ft = new TMFT(p_symbol);
+			FeatureTemplate ft = new TMFT(p_symbol, useIntegerString);
 			featureTemplates.add(ft);
 		}
 		
@@ -69,7 +71,7 @@ public class FeatureSelectionHG {
 			FeatureTemplate ft = new NgramFT(p_symbol, false, ngramStateID, baseline_lm_order, 1 ,2);//TODO: unigram and bi gram
 			featureTemplates.add(ft);
 		}else if(use_edge_ngram_only){//exclusive with use_lm_feat
-			FeatureTemplate ft = new EdgeBigramFT(p_symbol, ngramStateID, baseline_lm_order);
+			FeatureTemplate ft = new EdgeBigramFT(p_symbol, ngramStateID, baseline_lm_order, useIntegerString);
 			featureTemplates.add(ft);
 		}
 		

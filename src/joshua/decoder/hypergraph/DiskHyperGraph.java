@@ -438,9 +438,7 @@ public class DiskHyperGraph {
 			int qtyItems       = Integer.parseInt(fds[3]);
 			int qtyDeductions  = Integer.parseInt(fds[4]);
 			
-			System.out.println(
-				"numNodes: "       + qtyItems
-				+ "; num_deducts: " + qtyDeductions);
+			//System.out.println("numNodes: "+ qtyItems + "; num_deducts: " + qtyDeductions);
 			
 			for (int i = 0; i < qtyItems; i++) 
 				readNode();

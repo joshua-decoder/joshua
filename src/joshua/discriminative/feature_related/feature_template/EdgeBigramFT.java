@@ -19,10 +19,13 @@ public class EdgeBigramFT extends AbstractFeatureTemplate {
 	
 	int ngramStateID=0; //the baseline LM feature id
 	
-	public EdgeBigramFT(SymbolTable symbolTbl, int ngramStateID, int baselineLMOrder){
+	boolean useIntegerString = true;
+	
+	public EdgeBigramFT(SymbolTable symbolTbl, int ngramStateID, int baselineLMOrder, boolean useIntegerString){
 		this.symbolTbl = symbolTbl;
 		this.ngramStateID = ngramStateID;
 		this.baselineLMOrder = baselineLMOrder;
+		this.useIntegerString = useIntegerString;
 		System.out.println("use edge ngram only");
 	}
 	
@@ -77,7 +80,12 @@ public class EdgeBigramFT extends AbstractFeatureTemplate {
     			List<Integer>   r_context = state.getRightLMStateWords();
     
     			if(contextWord!=null){
-    				String bigram = symbolTbl.getWord(contextWord) +  " " + symbolTbl.getWord(l_context.get(0));
+    				String bigram = null;
+    				if(this.useIntegerString)
+    					bigram = contextWord +  " " + l_context.get(0);
+    				else
+    					bigram = symbolTbl.getWord(contextWord) +  " " + symbolTbl.getWord(l_context.get(0));
+    				
     				DiscriminativeSupport.increaseCount(edgeBigrams, bigram,1);
     			}
     			if(r_context.size()>0)
@@ -88,7 +96,13 @@ public class EdgeBigramFT extends AbstractFeatureTemplate {
     		}else{
     			if(afterNonterminal==true){
     				afterNonterminal=false;
-    				String bigram = symbolTbl.getWord(contextWord) +  " " + symbolTbl.getWord(c_id);
+    				
+    				String bigram = null;
+    				if(this.useIntegerString)
+    					bigram = contextWord +  " " + c_id;
+    				else
+    					bigram = symbolTbl.getWord(contextWord) +  " " + symbolTbl.getWord(c_id);
+    				
     				DiscriminativeSupport.increaseCount(edgeBigrams, bigram,1);
     			}
     			contextWord = c_id;

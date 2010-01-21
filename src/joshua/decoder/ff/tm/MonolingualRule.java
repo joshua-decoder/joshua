@@ -287,12 +287,33 @@ public class MonolingualRule implements Rule {
 			return sb.toString();
 		}
 		
+		
 		@Deprecated
 		public String toStringWithoutFeatScores(SymbolTable symbolTable) {
-			return new StringBuffer()
-				.append(symbolTable.getWord(lhs))
-				.append(" ||| ")
-				.append(symbolTable.getWords(p_french))
-				.toString();
+			StringBuffer sb = new StringBuffer();
+			if(symbolTable==null)
+				sb.append(this.getLHS());
+			else
+				sb.append(symbolTable.getWord(this.getLHS()));
+			
+			return sb.append(" ||| ")
+			  		 .append(convertToString(this.getFrench(), symbolTable))
+			  		 .toString();
+		}
+		
+		
+		
+		public String convertToString(int[] words, SymbolTable symbolTable){		
+			StringBuffer sb = new StringBuffer();
+			for (int i = 0; i < words.length; i++) {
+				if(symbolTable!=null)
+					sb.append( symbolTable.getWord(words[i]) );
+				else
+					sb.append(words[i]);
+				
+				if(i<words.length-1)
+					sb.append(" ");
+			}
+			return sb.toString();
 		}
 }
