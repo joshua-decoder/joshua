@@ -17,21 +17,22 @@
  */
 package joshua.decoder;
 
-import joshua.corpus.vocab.SymbolTable;
-import joshua.decoder.ff.FeatureFunction;
-import joshua.decoder.ff.state_maintenance.StateComputer;
-import joshua.decoder.ff.tm.GrammarFactory;
-import joshua.decoder.hypergraph.HyperGraph;
-import joshua.util.io.LineReader;
-import joshua.util.FileUtility;
-import joshua.util.Regex;
-
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import joshua.corpus.vocab.SymbolTable;
+import joshua.decoder.ff.FeatureFunction;
+import joshua.decoder.ff.state_maintenance.StateComputer;
+import joshua.decoder.ff.tm.GrammarFactory;
+import joshua.decoder.hypergraph.HyperGraph;
+import joshua.discriminative.FileUtilityOld;
+import joshua.util.FileUtility;
+import joshua.util.Regex;
+import joshua.util.io.LineReader;
 
 /**
  * this class implements:
@@ -257,46 +258,55 @@ public class DecoderFactory {
 		}
 		
 		//==== merge the nbest files, and remove tmp files
-		BufferedWriter t_writer_nbest =	FileUtility.getWriteFileStream(nbestFile);
-		BufferedWriter t_writer_dhg_items = null;
+		BufferedWriter nbestWriter =	FileUtility.getWriteFileStream(nbestFile);
+		BufferedWriter itemsWriter = null;
 		if (JoshuaConfiguration.save_disk_hg) {
-			t_writer_dhg_items =
-				FileUtility.getWriteFileStream(nbestFile + ".hg.items");
+			itemsWriter = FileUtility.getWriteFileStream(nbestFile + ".hg.items");
 		}
-		for (DecoderThread p_decoder : this.parallelThreads) {
+		for (DecoderThread decoder : this.parallelThreads) {
 			//merge nbest
-			LineReader reader = new LineReader(p_decoder.nbestFile);
-			try { for (String sent : reader) {
-				t_writer_nbest.write(sent);
-				t_writer_nbest.newLine();
-			} } finally { reader.close(); }
-			//TODO: remove the tem nbest file
+			LineReader nbestReader = new LineReader(decoder.nbestFile);
+			try { 
+				for (String sent : nbestReader) {
+					nbestWriter.write(sent);
+					nbestWriter.newLine();
+				} 
+			} finally { 
+				nbestReader.close(); 
+			}
+
+			//remove the tem nbest file
+			FileUtilityOld.deleteFile(decoder.nbestFile);
+			FileUtilityOld.deleteFile(decoder.testFile);
 			
 			//merge hypergrpah items
 			if (JoshuaConfiguration.save_disk_hg) {
-				LineReader dhgItemReader =
-					new LineReader(p_decoder.nbestFile + ".hg.items");
-				try { for (String sent : dhgItemReader) {
-					
-					t_writer_dhg_items.write(sent);
-					t_writer_dhg_items.newLine();
-					
-				} } finally { dhgItemReader.close(); }
-				//TODO: remove the tem nbest file
+				LineReader itemReader = new LineReader(decoder.nbestFile + ".hg.items");
+				try { 
+					for (String sent : itemReader) {					
+						itemsWriter.write(sent);
+						itemsWriter.newLine();
+					}
+				} finally {
+					itemReader.close();
+					decoder.hypergraphSerializer.closeItemsWriter();
+				}
+				//remove the tem item file
+				FileUtilityOld.deleteFile(decoder.nbestFile + ".hg.items");
 			}
 		}
-		t_writer_nbest.flush();
-		t_writer_nbest.close();
+		nbestWriter.flush();
+		nbestWriter.close();
+		
 		if (JoshuaConfiguration.save_disk_hg) {
-			t_writer_dhg_items.flush();
-			t_writer_dhg_items.close();
+			itemsWriter.flush();
+			itemsWriter.close();
 		}
 		
 		//merge the grammar rules for disk hyper-graphs
 		if (JoshuaConfiguration.save_disk_hg) {
 			HashMap<Integer,Integer> tblDone = new HashMap<Integer,Integer>();
-			BufferedWriter rulesWriter =
-				FileUtility.getWriteFileStream(nbestFile + ".hg.rules");
+			BufferedWriter rulesWriter = FileUtility.getWriteFileStream(nbestFile + ".hg.rules");
 			for (DecoderThread decoder : this.parallelThreads) {
 				decoder.hypergraphSerializer.writeRulesParallel(rulesWriter, tblDone);
 				//decoder.hypergraphSerializer.closeReaders();

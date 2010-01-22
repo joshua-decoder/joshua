@@ -262,6 +262,38 @@ public class FileUtilityOld {
     		out.write(b);
     	}
     }
-	
+
+    
+    
+    
+    static public boolean deleteFile(String fileName) {
+ 
+    	File f = new File(fileName);
+
+        // Make sure the file or directory exists and isn't write protected
+        if (!f.exists())
+          System.out.println("Delete: no such file or directory: " + fileName);
+
+        if (!f.canWrite())
+        	System.out.println("Delete: write protected: " + fileName);
+
+        // If it is a directory, make sure it is empty
+        if (f.isDirectory()) {
+          String[] files = f.list();
+          if (files.length > 0)
+        	  System.out.println("Delete: directory not empty: " + fileName);
+        }
+
+        // Attempt to delete it
+        boolean success = f.delete();
+
+        if (!success)
+        	System.out.println("Delete: deletion failed");
+        
+        return success;
+        
+     }
+
+    
 }
 //end of utility for file options

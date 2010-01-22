@@ -91,7 +91,7 @@ public class DiskHyperGraph {
 //	Shared by many hypergraphs, via the initialization functions
 	private HashMap<Integer,Rule> associatedGrammar = new HashMap<Integer, Rule>();
 	
-	private BufferedWriter    writer;
+	private BufferedWriter    itemsWriter;
 	private BufferedReader    itemsReader;
 	private HyperGraphPruning pruner;
 	
@@ -161,7 +161,7 @@ public class DiskHyperGraph {
 	public void initWrite(String itemsFile, boolean useForestPruning, 
 			double threshold) throws IOException 
 	{
-		this.writer =
+		this.itemsWriter =
 			(null == itemsFile)
 			? new BufferedWriter(new OutputStreamWriter(System.out))
 			: FileUtility.getWriteFileStream(itemsFile);
@@ -185,8 +185,8 @@ public class DiskHyperGraph {
 		this.selectedSentences = selectedSentences;
 		
 		/* Reload the rule table */
-		if (logger.isLoggable(Level.INFO)) 
-			logger.info("Reading rules from file " + rulesFile);
+		if (logger.isLoggable(Level.FINE)) 
+			logger.fine("Reading rules from file " + rulesFile);
 		
 		this.associatedGrammar.clear();
 		
@@ -223,6 +223,14 @@ public class DiskHyperGraph {
 		}
 	}
 	
+	public void closeItemsWriter(){
+		try {
+			if(this.itemsWriter!=null)
+				this.itemsWriter.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}		
+	}
 	
 //===============================================================
 // Methods
@@ -232,9 +240,9 @@ public class DiskHyperGraph {
 		resetStates();
 		if (null != this.pruner) this.pruner.pruningHG(hg);
 		constructItemTables(hg);
-		if (logger.isLoggable(Level.INFO)) 
-			logger.info("Number of Items is: " + this.itemToID.size());
-		this.writer.write(
+		if (logger.isLoggable(Level.FINE)) 
+			logger.fine("Number of Items is: " + this.itemToID.size());
+		this.itemsWriter.write(
 			SENTENCE_TAG + hg.sentID
 			+ " " + hg.sentLen
 			+ " " + this.itemToID.size()
@@ -288,7 +296,7 @@ public class DiskHyperGraph {
 	}
 	
 	private void writeItem(HGNode item) throws IOException {
-		this.writer.write(
+		this.itemsWriter.write(
 			new StringBuffer()
 				.append(ITEM_TAG)
 				.append(" ")
@@ -321,7 +329,7 @@ public class DiskHyperGraph {
 				writeHyperedge(item, hyperEdge);
 			}
 		}
-		this.writer.flush();
+		this.itemsWriter.flush();
 	}
 	
 	
@@ -377,7 +385,7 @@ public class DiskHyperGraph {
 			s.append( createModelLogPLine(node, edge) );
 		}
 		
-		this.writer.write(s.toString());
+		this.itemsWriter.write(s.toString());
 	}
 	
 	/**
@@ -557,7 +565,7 @@ public class DiskHyperGraph {
 // end readHyperGraph()
 //===============================================================
 	
-	
+
 	
 	public void writeRulesNonParallel(String rulesFile)
 	throws IOException {

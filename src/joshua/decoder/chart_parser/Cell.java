@@ -134,7 +134,7 @@ class Cell {
 			if (null == goalItem) {
 				logger.severe("goalItem is null (this will cause the RuntimeException below)");
 			} else {
-				logger.info(String.format("Goal item, best logP is %.3f",
+				logger.info(String.format("Sentence id=" + this.chart.segmentID +"; BestlogP=%.3f",
 					goalItem.bestHyperedge.bestDerivationLogP));
 			}
 		}

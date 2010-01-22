@@ -216,8 +216,8 @@ public class Chart {
 			
 				if (manualConstraintsHandler.containHardRuleConstraint(node.getNumber(), arc.getTail().getNumber())) {
 					//do not add the oov axiom
-					if (logger.isLoggable(Level.INFO))
-						logger.info("Using hard rule constraint for span " + node.getNumber() + ", " + arc.getTail().getNumber());
+					if (logger.isLoggable(Level.FINE))
+						logger.fine("Using hard rule constraint for span " + node.getNumber() + ", " + arc.getTail().getNumber());
 				} else {
 					//System.out.println(rule.toString(symbolTable));
 					addAxiom(node.getNumber(), arc.getTail().getNumber(), rule, new SourcePath().extend(arc));
@@ -248,7 +248,9 @@ public class Chart {
 	
 	public HyperGraph expand() {
 		
-		logger.info("Begin expand");
+		if (logger.isLoggable(Level.FINE))
+			logger.fine("Begin expand.");
+		
 		for (int width = 1; width <= foreignSentenceLength; width++) {
 			for (int i = 0; i <= foreignSentenceLength - width; i++) {
 				int j = i + width;
@@ -337,7 +339,8 @@ public class Chart {
 				"(2) too aggressive pruning");
 		}
 		
-		logger.info("Finished expand");
+		if(logger.isLoggable(Level.FINE))
+			logger.fine("Finished expand");
 		return new HyperGraph(this.goalBin.getSortedNodes().get(0), -1, -1, this.segmentID, foreignSentenceLength);
 	}
 	

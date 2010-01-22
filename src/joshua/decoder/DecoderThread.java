@@ -84,7 +84,7 @@ public class DecoderThread extends Thread {
 	private final SymbolTable    symbolTable;
 	
 	//more test set specific
-	private final String         testFile;
+	final String         testFile;
 	private final String         oracleFile;
 	        final String         nbestFile; // package-private for DecoderFactory
 	private       BufferedWriter nbestWriter; // set in decodeTestFile
@@ -259,9 +259,9 @@ public class DecoderThread extends Thread {
 		
 		public void coNext(Segment segment) {
 			try {
-				// TODO: should this be INFO or FINE? The length message is INFO, so is the "goal item best cost" message
-				if (logger.isLoggable(Level.INFO))
-					logger.info("Segment id: " + segment.id());
+
+				if (logger.isLoggable(Level.FINE))
+					logger.fine("Segment id: " + segment.id());
 				
 				DecoderThread.this.translate(
 					segment, this.oracleReader.readLine());
@@ -312,7 +312,8 @@ public class DecoderThread extends Thread {
 				inputLattice = Lattice.createLattice(intSentence);
 				sentence = new Pattern(this.symbolTable, intSentence);
 			}
-			if (logger.isLoggable(Level.FINEST)) logger.finest("Translating input lattice:\n" + inputLattice.toString());
+			if (logger.isLoggable(Level.FINEST)) 
+				logger.finest("Translating input lattice:\n" + inputLattice.toString());
 
 			Grammar[] grammars = new Grammar[grammarFactories.size()];
 			int i = 0;
