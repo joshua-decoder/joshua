@@ -14,6 +14,7 @@ import joshua.discriminative.feature_related.feature_template.EdgeBigramFT;
 import joshua.discriminative.feature_related.feature_template.FeatureTemplate;
 import joshua.discriminative.feature_related.feature_template.NgramFT;
 import joshua.discriminative.feature_related.feature_template.TMFT;
+import joshua.discriminative.feature_related.feature_template.TargetTMFT;
 
 
 public class DiscriminativeSupport {
@@ -117,7 +118,7 @@ public class DiscriminativeSupport {
 	
 	static public FeatureTemplateBasedFF setupRerankingFeature(
 			int featID, double weight,
-			SymbolTable symbolTbl, boolean useTMFeat, boolean useLMFeat, boolean useEdgeNgramOnly, int ngramStateID, int baselineLMOrder,
+			SymbolTable symbolTbl, boolean useTMFeat, boolean useLMFeat, boolean useEdgeNgramOnly, boolean useTMTargetFeat, int ngramStateID, int baselineLMOrder,
 			int startNgramOrder, int endNgramOrder,	
 			String featureFile, String modelFile
 			){
@@ -125,7 +126,7 @@ public class DiscriminativeSupport {
 		boolean useIntegerString = false;
 		
 		List<FeatureTemplate> featTemplates =  DiscriminativeSupport.setupFeatureTemplates(symbolTbl, useTMFeat, useLMFeat,
-				useEdgeNgramOnly, ngramStateID, baselineLMOrder, startNgramOrder, endNgramOrder, useIntegerString);	
+				useEdgeNgramOnly, useTMTargetFeat, ngramStateID, baselineLMOrder, startNgramOrder, endNgramOrder, useIntegerString);	
 		
 		
 		//============= restricted feature set
@@ -147,7 +148,7 @@ public class DiscriminativeSupport {
 	
 	
 	static public List<FeatureTemplate> setupFeatureTemplates(
-			SymbolTable symbolTbl, boolean useTMFeat, boolean useLMFeat, boolean useEdgeNgramOnly, 
+			SymbolTable symbolTbl, boolean useTMFeat, boolean useLMFeat, boolean useEdgeNgramOnly, boolean useTMTargetFeat,
 			int ngramStateID, int baselineLMOrder,
 			int startNgramOrder, int endNgramOrder,
 			boolean useIntegerString
@@ -158,7 +159,11 @@ public class DiscriminativeSupport {
 			FeatureTemplate ft = new TMFT(symbolTbl, useIntegerString);
 			featTemplates.add(ft);
 		}
-					
+		if(useTMTargetFeat==true){
+			FeatureTemplate ft = new TargetTMFT(symbolTbl, useIntegerString);
+			featTemplates.add(ft);
+		}
+		
 		if(useLMFeat==true){	
 			FeatureTemplate ft = new NgramFT(symbolTbl, useIntegerString, ngramStateID, baselineLMOrder, startNgramOrder, endNgramOrder);
 			featTemplates.add(ft);

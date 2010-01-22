@@ -151,6 +151,7 @@ public class JoshuaConfiguration {
 	//discriminative model options
 	public static boolean useTMFeat = true;
 	public static boolean useLMFeat = true;
+	public static boolean useTMTargetFeat = true;
 	public static boolean useEdgeNgramOnly = false;
 	public static int startNgramOrder = 1;
 	public static int endNgramOrder = 2;

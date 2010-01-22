@@ -114,7 +114,7 @@ public class HGRanker {
 	
 	public static void main(String[] args) 	throws IOException{
 		
-		if(args.length<9){
+		if(args.length<10){
 			System.out.println("wrong command, correct command");
 			System.out.println("num of args is "+ args.length);
 			for(int i=0; i <args.length; i++)
@@ -132,7 +132,8 @@ public class HGRanker {
 		boolean useTMFeat = new Boolean(args[5].trim());
 		boolean useLMFeat = new Boolean(args[6].trim());
 		boolean useEdgeNgramOnly = new Boolean(args[7].trim());
-		String reranked1bestFile = args[8].trim();
+		boolean useTMTargetFeat = new Boolean(args[8].trim());
+		String reranked1bestFile = args[9].trim();
 
 		boolean saveModelCosts = true;
 		
@@ -165,7 +166,7 @@ public class HGRanker {
 		double weight = 1.0;
 		//????????
 	
-		FeatureFunction rerankFF = DiscriminativeSupport.setupRerankingFeature(featID, weight, symbolTbl, useTMFeat, useLMFeat, useEdgeNgramOnly, ngramStateID, 
+		FeatureFunction rerankFF = DiscriminativeSupport.setupRerankingFeature(featID, weight, symbolTbl, useTMFeat, useLMFeat, useEdgeNgramOnly, useTMTargetFeat, ngramStateID, 
 				baselineLMOrder, startNgramOrder, endNgramOrder, featureFile, modelFile);
 		
 		features.add(rerankFF);
