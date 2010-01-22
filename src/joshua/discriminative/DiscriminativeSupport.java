@@ -155,6 +155,7 @@ public class DiscriminativeSupport {
 			){
 		
 		List<FeatureTemplate> featTemplates =  new ArrayList<FeatureTemplate>();	
+		
 		if(useTMFeat==true){
 			FeatureTemplate ft = new TMFT(symbolTbl, useIntegerString);
 			featTemplates.add(ft);

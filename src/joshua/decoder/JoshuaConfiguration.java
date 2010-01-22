@@ -543,9 +543,16 @@ public class JoshuaConfiguration {
 					useEdgeNgramOnly = Boolean.valueOf(fds[1]);
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("useEdgeNgramOnly: %s", useEdgeNgramOnly));
+				}else if ("useTMTargetFeat".equals(fds[0])) {
+					useTMTargetFeat = Boolean.valueOf(fds[1]);
+					if (logger.isLoggable(Level.FINEST))
+						logger.finest(String.format("useTMTargetFeat: %s", useTMTargetFeat));
 				} else {
 					logger.warning("Maybe Wrong config line: " + line);
 				}
+				
+			
+				
 			} else { // feature function
 				String[] fds = Regex.spaces.split(line);
 				if ("lm".equals(fds[0]) && fds.length == 2) { // lm order weight

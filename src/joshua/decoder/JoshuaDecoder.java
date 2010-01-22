@@ -683,7 +683,7 @@ public class JoshuaDecoder {
 					double weight = Double.parseDouble(fds[2].trim());
 					
 					this.featureFunctions.add (DiscriminativeSupport.setupRerankingFeature(this.featureFunctions.size(), weight, symbolTable, 
-							JoshuaConfiguration.useTMFeat, JoshuaConfiguration.useLMFeat, JoshuaConfiguration.useTMTargetFeat, JoshuaConfiguration.useEdgeNgramOnly, JoshuaConfiguration.ngramStateID, 
+							JoshuaConfiguration.useTMFeat, JoshuaConfiguration.useLMFeat, JoshuaConfiguration.useEdgeNgramOnly, JoshuaConfiguration.useTMTargetFeat, JoshuaConfiguration.ngramStateID, 
 							JoshuaConfiguration.lmOrder, JoshuaConfiguration.startNgramOrder, JoshuaConfiguration.endNgramOrder, featureFile, modelFile) );
 					
 					if (logger.isLoggable(Level.FINEST))
