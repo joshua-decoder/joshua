@@ -44,7 +44,7 @@ public interface RuleCollection {
 	 * 
 	 * @param l_models Feature function models to use during sorting.
 	 */
-	void sortRules(ArrayList<FeatureFunction> l_models);
+	void sortRules(List<FeatureFunction> l_models);
 	
 	/**
 	 * TODO: now, we assume this function will be called only

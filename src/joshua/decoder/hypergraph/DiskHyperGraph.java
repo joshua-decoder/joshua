@@ -24,9 +24,11 @@ import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import joshua.corpus.vocab.BuildinSymbol;
 import joshua.corpus.vocab.SymbolTable;
 import joshua.decoder.chart_parser.ComputeNodeResult;
 import joshua.decoder.ff.FeatureFunction;
@@ -70,7 +72,7 @@ public class DiskHyperGraph {
 	//when saving the hg, we simply compute all the model logP on the fly and store them on the disk
 	/*TODO: when reading the hg, we read thm into a WithModelCostsHyperEdge; 
 	 *now, we let a program outside this class to figure out which model logP corresponds which feature function, we should avoid this in the future*/
-	private ArrayList<FeatureFunction> featureFunctions;
+	private List<FeatureFunction> featureFunctions;
 	
 	// Whether to store the logPs at each HyperEdge
 	private boolean storeModelLogP = false;
@@ -139,13 +141,15 @@ public class DiskHyperGraph {
 	 * list.
 	 */
 	public DiskHyperGraph(SymbolTable symbolTable, int LMFeatureID,
-		boolean storeModelCosts, ArrayList<FeatureFunction> featureFunctions) 
+		boolean storeModelCosts, List<FeatureFunction> featureFunctions) 
 	{
 		this.symbolTable      = symbolTable;
 		this.LMFeatureID      = LMFeatureID;
 		this.storeModelLogP  = storeModelCosts;
 		this.featureFunctions = featureFunctions;
 	}
+	
+	
 	
 	
 //===============================================================
@@ -201,6 +205,8 @@ public class DiskHyperGraph {
 			ruleReader.close();			
 		}
 	}
+	
+	
 	
 	
 	public HashMap<Integer,Rule> getAssocatedGrammar(){
@@ -564,6 +570,20 @@ public class DiskHyperGraph {
 	
 // end readHyperGraph()
 //===============================================================
+	static public Map<String,Integer> obtainRulesIDTable(String rulesFile) {
+				
+		SymbolTable symbolTable = new BuildinSymbol(null);
+		GrammarReader<BilingualRule> ruleReader = new DiskHyperGraphFormatReader(rulesFile, symbolTable);
+		Map<String,Integer> rulesIDTable = new HashMap<String,Integer>();
+		
+		ruleReader.initialize();
+		for (Rule rule : ruleReader) {				
+			rulesIDTable.put(rule.toStringWithoutFeatScores(symbolTable), rule.getRuleID());
+		}			
+		ruleReader.close();			
+	
+		return rulesIDTable;
+	}
 	
 
 	

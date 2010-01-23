@@ -61,9 +61,10 @@ public class FeatureSelectionHG {
 		ArrayList<FeatureTemplate> featureTemplates =  new ArrayList<FeatureTemplate>();
 		
 		boolean useIntegerString = false;
+		boolean useRuleIDName = false;
 		
 		if(use_tm_feat==true){
-			FeatureTemplate ft = new TMFT(p_symbol, useIntegerString);
+			FeatureTemplate ft = new TMFT(p_symbol, useIntegerString, useRuleIDName);
 			featureTemplates.add(ft);
 		}
 		

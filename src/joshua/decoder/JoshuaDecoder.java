@@ -22,6 +22,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -84,13 +86,13 @@ public class JoshuaDecoder {
 	 */
 	/** The DecoderFactory is the main thread of decoding */
 	private DecoderFactory             decoderFactory;
-	private ArrayList<GrammarFactory>  grammarFactories;
+	private List<GrammarFactory>  grammarFactories;
 	private ArrayList<FeatureFunction> featureFunctions;
 	private NGramLanguageModel         languageModel;
 	
-	private ArrayList<StateComputer> stateComputers;
+	private List<StateComputer> stateComputers;
 	
-	
+	private Map<String,Integer> rulesIDTable;
 	
 	/**
 	 * Shared symbol table for source language terminals, target
@@ -194,7 +196,7 @@ public class JoshuaDecoder {
 			//== set the discriminative model
 			if(discrminativeModelFile!=null && ff instanceof FeatureTemplateBasedFF){
 				HashMap<String, Double> modelTable = new HashMap<String, Double>(); 
-				DiscriminativeSupport.loadModel(discrminativeModelFile, modelTable);
+				DiscriminativeSupport.loadModel(discrminativeModelFile, modelTable, this.rulesIDTable);
 				((FeatureTemplateBasedFF) ff).setModel(modelTable);
 			}
 		}
@@ -331,16 +333,18 @@ public class JoshuaDecoder {
 					if (JoshuaConfiguration.have_lm_model)
 						initializeLanguageModel();
 
-					// Initialize the features: requires that
+
+					// initialize and load grammar
+					this.initializeGlueGrammar();					
+					this.initializeMainTranslationGrammar();
+					
+//					 Initialize the features: requires that
 					// LM model has been initialized. If an LM
 					// feature is used, need to read config file
 					// again
 					this.initializeFeatureFunctions(configFile);
 					
 					this.initializeStateComputers(symbolTable, JoshuaConfiguration.lmOrder, JoshuaConfiguration.ngramStateID);
-
-					// initialize and load grammar
-					initializeTranslationGrammars(JoshuaConfiguration.tm_file);
 
 				}
 			} else {
@@ -470,34 +474,46 @@ public class JoshuaDecoder {
 	private void initializeGlueGrammar() throws IOException {
 		logger.info("Constructing glue grammar...");
 		
-		this.grammarFactories.add(
-			new MemoryBasedBatchGrammar(
-					JoshuaConfiguration.glue_format,
-					JoshuaConfiguration.glue_file,
-					this.symbolTable,
-					JoshuaConfiguration.begin_mono_owner,
-					JoshuaConfiguration.default_non_terminal,
-					-1,
-					JoshuaConfiguration.oovFeatureCost));
+		MemoryBasedBatchGrammar gr = new MemoryBasedBatchGrammar(
+				JoshuaConfiguration.glue_format,
+				JoshuaConfiguration.glue_file,
+				this.symbolTable,
+				JoshuaConfiguration.begin_mono_owner,
+				JoshuaConfiguration.default_non_terminal,
+				-1,
+				JoshuaConfiguration.oovFeatureCost);
+		
+		this.grammarFactories.add(gr);
+		
+		if(JoshuaConfiguration.useRuleIDName){
+			if(this.rulesIDTable==null)
+				this.rulesIDTable = new HashMap<String,Integer>();
+			gr.obtainRulesIDTable(this.rulesIDTable, this.symbolTable);			
+		}
+		
 	}
 	
 	
-	private void initializeTranslationGrammars(String tmFile)
-	throws IOException {
-		initializeGlueGrammar();
-		
+	private void initializeMainTranslationGrammar() throws IOException {
+				
 		if (logger.isLoggable(Level.INFO))
-			logger.info("Using grammar read from file " + tmFile);
+			logger.info("Using grammar read from file " + JoshuaConfiguration.tm_file);
 		
-		this.grammarFactories.add(
-			new MemoryBasedBatchGrammar(
-					JoshuaConfiguration.tm_format,
-					JoshuaConfiguration.tm_file,
-					this.symbolTable,
-					JoshuaConfiguration.phrase_owner,
-					JoshuaConfiguration.default_non_terminal,
-					JoshuaConfiguration.span_limit,
-					JoshuaConfiguration.oovFeatureCost));
+		MemoryBasedBatchGrammar gr = new MemoryBasedBatchGrammar(
+				JoshuaConfiguration.tm_format,
+				JoshuaConfiguration.tm_file,
+				this.symbolTable,
+				JoshuaConfiguration.phrase_owner,
+				JoshuaConfiguration.default_non_terminal,
+				JoshuaConfiguration.span_limit,
+				JoshuaConfiguration.oovFeatureCost);
+		this.grammarFactories.add(gr);
+		
+		if(JoshuaConfiguration.useRuleIDName){
+			if(this.rulesIDTable==null)
+				this.rulesIDTable = new HashMap<String,Integer>();
+			gr.obtainRulesIDTable(this.rulesIDTable, this.symbolTable);			
+		}
 	}
 	
 	
@@ -545,7 +561,8 @@ public class JoshuaDecoder {
 		initializeGlueGrammar();
 		
 		// Needs: symbolTable; Sets: languageModel
-		if (JoshuaConfiguration.have_lm_model) initializeLanguageModel();
+		if (JoshuaConfiguration.have_lm_model) 
+			initializeLanguageModel();
 
 		// Initialize the features: requires that
 		// LM model has been initialized. If an LM
@@ -684,7 +701,7 @@ public class JoshuaDecoder {
 					
 					this.featureFunctions.add (DiscriminativeSupport.setupRerankingFeature(this.featureFunctions.size(), weight, symbolTable, 
 							JoshuaConfiguration.useTMFeat, JoshuaConfiguration.useLMFeat, JoshuaConfiguration.useEdgeNgramOnly, JoshuaConfiguration.useTMTargetFeat, JoshuaConfiguration.ngramStateID, 
-							JoshuaConfiguration.lmOrder, JoshuaConfiguration.startNgramOrder, JoshuaConfiguration.endNgramOrder, featureFile, modelFile) );
+							JoshuaConfiguration.lmOrder, JoshuaConfiguration.startNgramOrder, JoshuaConfiguration.endNgramOrder, featureFile, modelFile, this.rulesIDTable) );
 					
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format(

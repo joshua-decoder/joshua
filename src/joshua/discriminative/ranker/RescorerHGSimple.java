@@ -201,6 +201,8 @@ import joshua.discriminative.feature_related.feature_template.TableBasedBaseline
 		SymbolTable symbolTbl = new BuildinSymbol(null);
 		
 		boolean useIntegerString = false;
+		boolean useRuleIDName = false;
+		
 		
 		//####### nbest decoding
 		/*if(is_nbest){
@@ -216,7 +218,7 @@ import joshua.discriminative.feature_related.feature_template.TableBasedBaseline
 			featTemplates.add(baselineFeature);	
 			
 			if(useTMFeat==true){
-				FeatureTemplate ft = new TMFT(symbolTbl, useIntegerString);
+				FeatureTemplate ft = new TMFT(symbolTbl, useIntegerString, useRuleIDName);
 				featTemplates.add(ft);
 			}
 				
@@ -242,7 +244,7 @@ import joshua.discriminative.feature_related.feature_template.TableBasedBaseline
 			//================ model
 			HashMap<String, Double> modelTbl =  new HashMap<String, Double>();
 						
-			DiscriminativeSupport.loadModel(modelFile, modelTbl);
+			DiscriminativeSupport.loadModel(modelFile, modelTbl, null);
 			
 			BufferedWriter out1best = FileUtilityOld.getWriteFileStream(reranked1bestFile);
 			

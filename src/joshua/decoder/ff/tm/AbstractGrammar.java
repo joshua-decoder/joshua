@@ -17,12 +17,18 @@
  */
 package joshua.decoder.ff.tm;
 
+import java.io.BufferedWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import joshua.corpus.vocab.SymbolTable;
 import joshua.decoder.ff.FeatureFunction;
+import joshua.discriminative.FileUtilityOld;
 
 /**
  * Partial implementation of the <code>Grammar</code> interface
@@ -64,7 +70,7 @@ public abstract class AbstractGrammar implements Grammar {
 	 * this method should be called before multiple threads are
 	 * initialized for parallel decoding
 	 */
-	public void sortGrammar(ArrayList<FeatureFunction> models) {
+	public void sortGrammar(List<FeatureFunction> models) {
 		logger.info("sort grammar");
 		Trie root = getTrieRoot();
 		if(root!=null){
@@ -108,7 +114,7 @@ public abstract class AbstractGrammar implements Grammar {
 	 * @param models Feature function models to use during
 	 *               sorting.
 	 */
-	private void sort(Trie node, ArrayList<FeatureFunction> models) {
+	private void sort(Trie node, List<FeatureFunction> models) {
 	
 		if (node != null) {			
 			if(node.hasRules()) {
@@ -155,6 +161,83 @@ public abstract class AbstractGrammar implements Grammar {
 				}
 			} else if (logger.isLoggable(Level.FINE)) {
 				logger.fine("Node has 0 children to extend: " + node);
+			}
+		}
+	}
+	
+	
+	
+	//write grammar to disk
+	public void writeGrammarOnDisk(String file, SymbolTable symbolTable) {
+		BufferedWriter writer = FileUtilityOld.getWriteFileStream(file);
+		writeGrammarOnDisk(this.getTrieRoot(), writer, symbolTable);
+		FileUtilityOld.closeWriteFile(writer);
+	}
+	
+	private void writeGrammarOnDisk(Trie trie, BufferedWriter writer, SymbolTable symbolTable) {
+		if(trie.hasRules()){
+			RuleCollection rlCollection = trie.getRules();
+			for(Rule rl : rlCollection.getSortedRules()){
+				FileUtilityOld.writeLzf(writer, rl.toString(symbolTable));
+				FileUtilityOld.writeLzf(writer,"\n");
+			}
+		}
+		
+		if (trie.hasExtensions()) {
+			Object[] tem = trie.getExtensions().toArray();
+			
+			for (int i = 0; i < tem.length; i++) {
+				writeGrammarOnDisk((Trie)tem[i], writer, symbolTable);
+			}
+		}
+	}
+	
+
+	//change the feature weight in the grammar
+	public void changeGrammarCosts(Map<String, Double> weightTbl, HashMap<String, Integer> featureMap, double[] scores, String prefix, int column, boolean negate) {		
+		changeGrammarCosts(this.getTrieRoot(), featureMap, scores, prefix, column, negate);
+	}
+	
+	private void changeGrammarCosts(Trie trie, HashMap<String, Integer> featureMap, double[] scores, String prefix, int column, boolean negate) {
+		if(trie.hasRules()){
+			RuleCollection rlCollection = trie.getRules();
+			for(Rule rl : rlCollection.getSortedRules()){
+				String featName = prefix + rl.getRuleID();
+				float weight = (float)scores[featureMap.get(featName)];
+				if(negate)
+					weight *= -1.0;
+				rl.setFeatureCost(column, weight);				
+			}
+		}
+		
+		if (trie.hasExtensions()) {
+			Object[] tem = trie.getExtensions().toArray();
+			
+			for (int i = 0; i < tem.length; i++) {
+				changeGrammarCosts((Trie)tem[i], featureMap, scores, prefix, column, negate);
+			}
+		}
+	}
+	
+	
+	//obtain RulesIDTable in the grammar, accumalative 
+	public void obtainRulesIDTable(Map<String, Integer> rulesIDTable,  SymbolTable symbolTable) {		
+		obtainRulesIDTable(this.getTrieRoot(), rulesIDTable, symbolTable);
+	}
+	
+	private void obtainRulesIDTable(Trie trie, Map<String, Integer> rulesIDTable,  SymbolTable symbolTable) {
+		if(trie.hasRules()){
+			RuleCollection rlCollection = trie.getRules();
+			for(Rule rl : rlCollection.getRules()){
+				rulesIDTable.put( rl.toStringWithoutFeatScores(symbolTable), rl.getRuleID());
+			}
+		}
+		
+		if (trie.hasExtensions()) {
+			Object[] tem = trie.getExtensions().toArray();
+			
+			for (int i = 0; i < tem.length; i++) {
+				obtainRulesIDTable((Trie)tem[i], rulesIDTable, symbolTable);
 			}
 		}
 	}

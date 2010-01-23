@@ -17,8 +17,11 @@
  */
 package joshua.decoder.ff.tm;
 
-import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
+import joshua.corpus.vocab.SymbolTable;
 import joshua.decoder.ff.FeatureFunction;
 
 /**
@@ -55,7 +58,7 @@ public interface Grammar  {
 	 * 
 	 * @param models List of feature functions
 	 */
-	void sortGrammar(ArrayList<FeatureFunction> models);
+	void sortGrammar(List<FeatureFunction> models);
 	
 
 	
@@ -133,4 +136,10 @@ public interface Grammar  {
 	 */
 	Rule constructManualRule(int lhs, int[] sourceWords, int[] targetWords, float[] scores, int aritity);
 	
+	
+	void writeGrammarOnDisk(String file, SymbolTable symbolTable);
+	
+	void changeGrammarCosts(Map<String, Double> weightTbl, HashMap<String, Integer> featureMap, double[] scores, String prefix, int column, boolean negate);
+	
+	void obtainRulesIDTable(Map<String, Integer> rulesIDTable,  SymbolTable symbolTable); 
 }

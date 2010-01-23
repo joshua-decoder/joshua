@@ -17,8 +17,8 @@
  */
 package joshua.decoder.ff.tm;
 
-import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 
 import joshua.corpus.vocab.SymbolTable;
@@ -62,15 +62,10 @@ public interface Rule {
 	
 	
 	/**
-	 * the following methods will be useful when we store a
-	 * non-standard score in the last field of a rule's
-	 * feat_scores, for example, during EM training, we can
-	 * store the soft-count in it.
-	 *
 	 * @param column start from zero
 	 */
-	void  setFeatureScore(int column, float score);
-	float getFeatureScore(int column);	
+	void  setFeatureCost(int column, float cost);
+	float getFeatureCost(int column);	
 	float incrementFeatureScore(int column, double score);
 	
 	void  setLatticeCost(float cost);
@@ -88,7 +83,7 @@ public interface Rule {
 	 * Set a lower-bound estimate inside the rule returns full
 	 * estimate.
 	 */
-	float estimateRuleCost(ArrayList<FeatureFunction> featureFunctions);
+	float estimateRuleCost(List<FeatureFunction> featureFunctions);
 	
 	
 	/**

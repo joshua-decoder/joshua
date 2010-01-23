@@ -21,6 +21,7 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -44,9 +45,9 @@ import joshua.util.io.LineReader;
  * @version $LastChangedDate$
  */
 public class DecoderFactory {
-	private ArrayList<GrammarFactory>  grammarFactories = null;
-	private ArrayList<FeatureFunction> featureFunctions = null;
-	private ArrayList<StateComputer> stateComputers;
+	private List<GrammarFactory>  grammarFactories = null;
+	private List<FeatureFunction> featureFunctions = null;
+	private List<StateComputer> stateComputers;
 	private boolean                    hasLanguageModel = false;
 	
 	/**
@@ -61,8 +62,8 @@ public class DecoderFactory {
 		Logger.getLogger(DecoderFactory.class.getName());
 	
 	
-	public DecoderFactory(ArrayList<GrammarFactory> grammarFactories, boolean hasLanguageModel, ArrayList<FeatureFunction> featureFunctions, 
-			ArrayList<StateComputer> stateComputers, SymbolTable symbolTable) {
+	public DecoderFactory(List<GrammarFactory> grammarFactories, boolean hasLanguageModel, List<FeatureFunction> featureFunctions, 
+			List<StateComputer> stateComputers, SymbolTable symbolTable) {
 		this.grammarFactories = grammarFactories;
 		this.hasLanguageModel = hasLanguageModel;
 		this.featureFunctions = featureFunctions;

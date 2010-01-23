@@ -150,6 +150,7 @@ public class JoshuaConfiguration {
 	
 	//discriminative model options
 	public static boolean useTMFeat = true;
+	public static boolean useRuleIDName = false;
 	public static boolean useLMFeat = true;
 	public static boolean useTMTargetFeat = true;
 	public static boolean useEdgeNgramOnly = false;
@@ -531,7 +532,11 @@ public class JoshuaConfiguration {
 					useLMFeat = Boolean.valueOf(fds[1]);
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("useLMFeat: %s", useLMFeat));
-				} else if ("startNgramOrder".equals(fds[0])) {
+				} else if ("useRuleIDName".equals(fds[0])) {
+					useRuleIDName = new Boolean(fds[1].trim());
+					if (logger.isLoggable(Level.FINEST))
+						logger.finest(String.format("useRuleIDName: %s", useRuleIDName));					
+				}else if ("startNgramOrder".equals(fds[0])) {
 					startNgramOrder = Integer.parseInt(fds[1]);
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("startNgramOrder: %s", startNgramOrder));

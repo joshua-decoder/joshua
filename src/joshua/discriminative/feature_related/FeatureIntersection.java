@@ -52,9 +52,10 @@ public class FeatureIntersection {
 		ArrayList<FeatureTemplate> featTemplates =  new ArrayList<FeatureTemplate>();
 		
 		boolean useIntegerString = false;
+		boolean useRuleIDName = false;
 		
 		if(useTMFeat==true){
-			FeatureTemplate ft = new TMFT(p_symbol, useIntegerString);
+			FeatureTemplate ft = new TMFT(p_symbol, useIntegerString, useRuleIDName);
 			featTemplates.add(ft);
 		}
 		

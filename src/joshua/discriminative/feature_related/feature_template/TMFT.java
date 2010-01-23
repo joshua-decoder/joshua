@@ -17,9 +17,17 @@ public class TMFT extends AbstractFeatureTemplate {
 	
 	boolean useIntegerString = true;
 	
-	public TMFT(SymbolTable symbolTbl, boolean useIntegerString){
+	/**we can use the ruleID 
+	 * as feature name*/
+	boolean useRuleIDName = true;
+	String prefix="r";
+	
+	
+	
+	public TMFT(SymbolTable symbolTbl, boolean useIntegerString, boolean useRuleIDName){
 		this.symbolTbl = symbolTbl;	
 		this.useIntegerString = useIntegerString;
+		this.useRuleIDName = useRuleIDName;
 		
 		System.out.println("TM template");
 	}
@@ -29,14 +37,20 @@ public class TMFT extends AbstractFeatureTemplate {
 		
 		if(rule != null){			
 			String key = null;
-			if(this.useIntegerString)//TODO
-				key =  rule.toStringWithoutFeatScores(null);
-			else
-				key =  rule.toStringWithoutFeatScores(symbolTbl);
+			if(this.useRuleIDName){
+				key = this.prefix + rule.getRuleID();
+				//System.out.println("key is " + key + "; And: " +rule.toStringWithoutFeatScores(symbolTbl));System.exit(0);
+			}else{
+				if(this.useIntegerString)//TODO
+					key =  rule.toStringWithoutFeatScores(null);
+				else
+					key =  rule.toStringWithoutFeatScores(symbolTbl);
+			}
 			
 			if(restrictedFeatureSet == null || restrictedFeatureSet.contains(key)==true){
 				DiscriminativeSupport.increaseCount(featureTbl, key, scale);
-				//System.out.println("key is " + key +"; lhs " + symbolTbl.getWord(rule.getLHS()));	//System.exit(0);
+				//System.out.println("key is " + key +"; lhs " + symbolTbl.getWord(rule.getLHS()));	
+				
 			}
 			
 		}

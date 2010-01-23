@@ -17,6 +17,16 @@
  */
 package joshua.decoder;
 
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import joshua.corpus.suffix_array.Pattern;
+import joshua.corpus.vocab.SymbolTable;
 import joshua.decoder.chart_parser.Chart;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.lm.LanguageModelFF;
@@ -26,31 +36,20 @@ import joshua.decoder.ff.tm.GrammarFactory;
 import joshua.decoder.hypergraph.DiskHyperGraph;
 import joshua.decoder.hypergraph.HyperGraph;
 import joshua.decoder.hypergraph.KBestExtractor;
-
-import joshua.decoder.segment_file.SegmentFileParser;
-import joshua.decoder.segment_file.PlainSegmentParser;
 import joshua.decoder.segment_file.HackishSegmentParser;
-import joshua.decoder.segment_file.sax_parser.SAXSegmentParser;
+import joshua.decoder.segment_file.PlainSegmentParser;
 import joshua.decoder.segment_file.Segment;
-
+import joshua.decoder.segment_file.SegmentFileParser;
+import joshua.decoder.segment_file.sax_parser.SAXSegmentParser;
 import joshua.lattice.Lattice;
 import joshua.oracle.OracleExtractor;
-import joshua.corpus.suffix_array.Pattern;
-import joshua.corpus.vocab.SymbolTable;	
 import joshua.ui.hypergraph_visualizer.HyperGraphViewer;
+import joshua.util.CoIterator;
+import joshua.util.FileUtility;
 import joshua.util.io.LineReader;
 import joshua.util.io.NullReader;
 import joshua.util.io.Reader;
 import joshua.util.io.UncheckedIOException;
-import joshua.util.FileUtility;
-import joshua.util.CoIterator;
-
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.ArrayList;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * this class implements:
@@ -65,10 +64,10 @@ public class DecoderThread extends Thread {
 	/* these variables may be the same across all threads (e.g.,
 	 * just copy from DecoderFactory), or differ from thread
 	 * to thread */
-	private final ArrayList<GrammarFactory>  grammarFactories;
+	private final List<GrammarFactory>  grammarFactories;
 	private final boolean                    hasLanguageModel;
-	private final ArrayList<FeatureFunction> featureFunctions;
-	private final ArrayList<StateComputer> stateComputers;
+	private final List<FeatureFunction> featureFunctions;
+	private final List<StateComputer> stateComputers;
 	
 	
 	/**
@@ -101,10 +100,10 @@ public class DecoderThread extends Thread {
 // Constructor
 //===============================================================
 	public DecoderThread(
-		ArrayList<GrammarFactory>  grammarFactories,
+		List<GrammarFactory>  grammarFactories,
 		boolean                    hasLanguageModel,
-		ArrayList<FeatureFunction> featureFunctions,
-		ArrayList<StateComputer> stateComputers,
+		List<FeatureFunction> featureFunctions,
+		List<StateComputer> stateComputers,
 		SymbolTable                symbolTable,
 		String testFile, String nbestFile, String oracleFile,
 		int startSentenceID

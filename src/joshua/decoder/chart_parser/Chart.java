@@ -158,8 +158,8 @@ public class Chart {
 	
 	public Chart(
 		Lattice<Integer>           sentence,
-		ArrayList<FeatureFunction> featureFunctions,
-		ArrayList<StateComputer> stateComputers,
+		List<FeatureFunction> featureFunctions,
+		List<StateComputer> stateComputers,
 		SymbolTable                symbolTable,
 		int                        segmentID,
 		Grammar[]                  grammars,

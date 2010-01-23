@@ -31,22 +31,30 @@ public class DiscriminativeSupport {
 	}
 
 	
-	public static void loadModel(String modelFile, HashMap<String, Double> modelTable){
+	public static void loadModel(String modelFile, HashMap<String, Double> modelTable, Map<String,Integer> rulesIDTable){
 		
 		BufferedReader reader = FileUtilityOld.getReadFileStream(modelFile,"UTF-8");
 		modelTable.clear();		
 		String line;
 		while((line=FileUtilityOld.readLineLzf(reader))!=null){
 			String[] fds = line.split("\\s+\\|{3}\\s+");
-			StringBuffer featKey = new StringBuffer();
+			StringBuffer featNameSB = new StringBuffer();
 			for(int i=0; i<fds.length-1; i++){
-				featKey.append(fds[i]);
+				featNameSB.append(fds[i]);
 				if(i<fds.length-2) 
-					featKey.append(" ||| ");
+					featNameSB.append(" ||| ");
 			}
-			double val = new Double(fds[fds.length-1]);
+			String featName = featNameSB.toString();
+
+			//obtain abbreviated featName 
+			if(rulesIDTable!=null){
+				Integer id = rulesIDTable.get(featName);
+				if(id!=null)
+					featName = "r" + id;//TODO????????????????
+			}
 			
-			modelTable.put(featKey.toString(), val);
+			double val = new Double(fds[fds.length-1]);			
+			modelTable.put(featName, val);
 			//System.out.println("key: " + feat_key.toString() + "; val: " + val);
 		}
 		FileUtilityOld.closeReadFile(reader);
@@ -54,23 +62,23 @@ public class DiscriminativeSupport {
 	
 	public static void loadFeatureSet(String featureSetFile, HashSet<String> featSet){
 		featSet.clear();
-		BufferedReader t_reader = FileUtilityOld.getReadFileStream(featureSetFile,"UTF-8");
+		BufferedReader reader = FileUtilityOld.getReadFileStream(featureSetFile,"UTF-8");
 		String feat;
-		while((feat=FileUtilityOld.readLineLzf(t_reader))!=null){
+		while((feat=FileUtilityOld.readLineLzf(reader))!=null){
 			featSet.add(feat);
 		}
-		FileUtilityOld.closeReadFile(t_reader);		
+		FileUtilityOld.closeReadFile(reader);		
 	}
 	
 	
 	static public List<String> readFileList(String file){
 		List<String> res = new ArrayList<String>();
-		BufferedReader t_reader = FileUtilityOld.getReadFileStream(file,"UTF-8");
+		BufferedReader reader = FileUtilityOld.getReadFileStream(file,"UTF-8");
 		String line;
-		while((line=FileUtilityOld.readLineLzf(t_reader))!=null){
+		while((line=FileUtilityOld.readLineLzf(reader))!=null){
 			res.add(line);
 		}
-		FileUtilityOld.closeReadFile(t_reader);
+		FileUtilityOld.closeReadFile(reader);
 		return res;
 	}
 	
@@ -120,13 +128,16 @@ public class DiscriminativeSupport {
 			int featID, double weight,
 			SymbolTable symbolTbl, boolean useTMFeat, boolean useLMFeat, boolean useEdgeNgramOnly, boolean useTMTargetFeat, int ngramStateID, int baselineLMOrder,
 			int startNgramOrder, int endNgramOrder,	
-			String featureFile, String modelFile
+			String featureFile, String modelFile, Map<String,Integer> rulesIDTable
 			){
 		
 		boolean useIntegerString = false;
+		boolean useRuleIDName = false;
+		if(rulesIDTable!=null)
+			useRuleIDName = true;
 		
 		List<FeatureTemplate> featTemplates =  DiscriminativeSupport.setupFeatureTemplates(symbolTbl, useTMFeat, useLMFeat,
-				useEdgeNgramOnly, useTMTargetFeat, ngramStateID, baselineLMOrder, startNgramOrder, endNgramOrder, useIntegerString);	
+				useEdgeNgramOnly, useTMTargetFeat, ngramStateID, baselineLMOrder, startNgramOrder, endNgramOrder, useIntegerString, useRuleIDName);	
 		
 		
 		//============= restricted feature set
@@ -140,7 +151,7 @@ public class DiscriminativeSupport {
 		
 		//================ discriminative reranking model
 		HashMap<String, Double> modelTbl =  new HashMap<String, Double>();			
-		DiscriminativeSupport.loadModel(modelFile, modelTbl);			
+		DiscriminativeSupport.loadModel(modelFile, modelTbl, rulesIDTable);			
 		
 		return new FeatureTemplateBasedFF(featID, weight, modelTbl, featTemplates, restrictedFeatureSet); 
 	}
@@ -151,13 +162,13 @@ public class DiscriminativeSupport {
 			SymbolTable symbolTbl, boolean useTMFeat, boolean useLMFeat, boolean useEdgeNgramOnly, boolean useTMTargetFeat,
 			int ngramStateID, int baselineLMOrder,
 			int startNgramOrder, int endNgramOrder,
-			boolean useIntegerString
+			boolean useIntegerString, boolean useRuleID
 			){
 		
 		List<FeatureTemplate> featTemplates =  new ArrayList<FeatureTemplate>();	
 		
 		if(useTMFeat==true){
-			FeatureTemplate ft = new TMFT(symbolTbl, useIntegerString);
+			FeatureTemplate ft = new TMFT(symbolTbl, useIntegerString, useRuleID);
 			featTemplates.add(ft);
 		}
 		if(useTMTargetFeat==true){

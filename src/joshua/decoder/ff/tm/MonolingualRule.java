@@ -17,8 +17,8 @@
  */
 package joshua.decoder.ff.tm;
 
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -44,11 +44,11 @@ public class MonolingualRule implements Rule {
 	/* The string format of Rule is:
 	 * [Phrase] ||| french ||| english ||| feature scores
 	 */
-	private int rule_id;
+	private int ruleID;
 	private int lhs; // tag of this rule
-	private int[] p_french; //pointer to the RuleCollection, as all the rules under it share the same Source side
+	private int[] pFrench; //pointer to the RuleCollection, as all the rules under it share the same Source side
 	private int arity;
-	private float[] feat_scores; // the feature scores for this rule
+	private float[] featScores; // the feature scores for this rule
 	
 	/* a feature function will be fired for this rule
 	 * only if the owner of the rule matches the owner of the feature function
@@ -57,7 +57,7 @@ public class MonolingualRule implements Rule {
 	
 	// TODO: consider remove this from the general class, and
 	// create a new specific Rule class
-	private	float lattice_cost; 
+	private	float latticeCost; 
 	
 	/**
 	 * estimate_cost depends on rule itself: statelesscost +
@@ -96,11 +96,11 @@ public class MonolingualRule implements Rule {
 	 */
 	public MonolingualRule(int lhs, int[] sourceRhs, float[] featureScores, int arity, int owner, float latticeCost, int ruleID) {
 		this.lhs          = lhs;
-		this.p_french     = sourceRhs;
-		this.feat_scores  = featureScores;
+		this.pFrench     = sourceRhs;
+		this.featScores  = featureScores;
 		this.arity        = arity;
-		this.lattice_cost = latticeCost;
-		this.rule_id      = ruleID;
+		this.latticeCost = latticeCost;
+		this.ruleID      = ruleID;
 		this.owner        = owner;
 	}
 
@@ -109,13 +109,13 @@ public class MonolingualRule implements Rule {
 	// rule_id, and owner
 	public MonolingualRule(int lhs_, int[] source_rhs, float[] feature_scores, int arity_) {
 		this.lhs         = lhs_;
-		this.p_french    = source_rhs;
-		this.feat_scores = feature_scores;
+		this.pFrench    = source_rhs;
+		this.featScores = feature_scores;
 		this.arity       = arity_;
 		
 		//==== dummy values
-		this.lattice_cost = 0;
-		this.rule_id      = DUMMY_RULE_ID;
+		this.latticeCost = 0;
+		this.ruleID      = DUMMY_RULE_ID;
 		this.owner        = DUMMY_OWNER;
 	}
 	
@@ -124,9 +124,9 @@ public class MonolingualRule implements Rule {
 // Attributes
 //===============================================================
 	
-	public final void setRuleID(int id) { this.rule_id = id; }
+	public final void setRuleID(int id) { this.ruleID = id; }
 	
-	public final int getRuleID() { return this.rule_id; }
+	public final int getRuleID() { return this.ruleID; }
 	
 	
 	public final void setArity(int arity) { this.arity = arity; }
@@ -154,23 +154,23 @@ public class MonolingualRule implements Rule {
 	}
 	
 	
-	public final void setFrench(int[] french) { this.p_french = french; }
+	public final void setFrench(int[] french) { this.pFrench = french; }
 	
-	public final int[] getFrench() { return this.p_french; }
+	public final int[] getFrench() { return this.pFrench; }
 	
 	
 	public final void setFeatureScores(float[] scores) {
-		this.feat_scores = scores;
+		this.featScores = scores;
 	}
 	
 	public final float[] getFeatureScores() {
-		return this.feat_scores;
+		return this.featScores;
 	}
 	
 	
-	public final void setLatticeCost(float cost) { this.lattice_cost = cost; }
+	public final void setLatticeCost(float cost) { this.latticeCost = cost; }
 	
-	public final float getLatticeCost() { return this.lattice_cost; }
+	public final float getLatticeCost() { return this.latticeCost; }
 	
 	
 	public final float getEstCost() {
@@ -185,7 +185,7 @@ public class MonolingualRule implements Rule {
 	 * Set a lower-bound estimate inside the rule returns full
 	 * estimate.
 	 */
-	public final float estimateRuleCost(ArrayList<FeatureFunction> featureFunctions) {
+	public final float estimateRuleCost(List<FeatureFunction> featureFunctions) {
 		if (null == featureFunctions) {
 			return 0;
 		} else {
@@ -208,22 +208,22 @@ public class MonolingualRule implements Rule {
 	
 	public float incrementFeatureScore(int column, double score) {
 		synchronized(this) {
-			feat_scores[column] += score;
-			return feat_scores[column];
+			featScores[column] += score;
+			return featScores[column];
 		}
 	}
 	
 	
-	public void setFeatureScore(int column, float score) {
+	public void setFeatureCost(int column, float score) {
 		synchronized(this) {
-			feat_scores[column] = score;
+			featScores[column] = score;
 		}
 	}
 	
 	
-	public float getFeatureScore(int column) {
+	public float getFeatureCost(int column) {
 		synchronized(this) {
-			return feat_scores[column];
+			return featScores[column];
 		}
 	}
 	
@@ -243,11 +243,11 @@ public class MonolingualRule implements Rule {
 				StringBuffer sb = new StringBuffer();
 				sb.append(ntVocab.get(this.lhs));
 				sb.append(" ||| ");
-				sb.append(sourceVocab.getWords(this.p_french,true));
+				sb.append(sourceVocab.getWords(this.pFrench,true));
 				sb.append(" |||");
-				for (int i = 0; i < this.feat_scores.length; i++) {
+				for (int i = 0; i < this.featScores.length; i++) {
 					//sb.append(String.format(" %.4f", this.feat_scores[i]));
-					sb.append(' ').append(Float.toString(this.feat_scores[i]));
+					sb.append(' ').append(Float.toString(this.featScores[i]));
 				}
 				this.cachedToString = sb.toString();
 			}
@@ -262,10 +262,10 @@ public class MonolingualRule implements Rule {
 				StringBuffer sb = new StringBuffer();
 				sb.append(this.lhs);
 				sb.append(" ||| ");
-				sb.append(Arrays.toString(this.p_french));
+				sb.append(Arrays.toString(this.pFrench));
 				sb.append(" |||");
-				for (int i = 0; i < this.feat_scores.length; i++) {
-					sb.append(String.format(" %.4f", this.feat_scores[i]));
+				for (int i = 0; i < this.featScores.length; i++) {
+					sb.append(String.format(" %.4f", this.featScores[i]));
 				}
 				this.cachedToString = sb.toString();
 			}
@@ -279,10 +279,10 @@ public class MonolingualRule implements Rule {
 			StringBuffer sb = new StringBuffer();
 			sb.append(symbolTable.getWord(this.lhs));
 			sb.append(" ||| ");
-			sb.append(symbolTable.getWords(this.p_french));
+			sb.append(symbolTable.getWords(this.pFrench));
 			sb.append(" |||");
-			for (int i = 0; i < this.feat_scores.length; i++) {
-				sb.append(String.format(" %.4f", this.feat_scores[i]));
+			for (int i = 0; i < this.featScores.length; i++) {
+				sb.append(String.format(" %.4f", this.featScores[i]));
 			}
 			return sb.toString();
 		}

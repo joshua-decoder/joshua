@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
 
 import joshua.corpus.vocab.BuildinSymbol;
@@ -165,9 +166,11 @@ public class HGRanker {
 		int featID = 100;
 		double weight = 1.0;
 		//????????
+		
+		Map<String,Integer> rulesIDTable = null; //TODO??
 	
 		FeatureFunction rerankFF = DiscriminativeSupport.setupRerankingFeature(featID, weight, symbolTbl, useTMFeat, useLMFeat, useEdgeNgramOnly, useTMTargetFeat, ngramStateID, 
-				baselineLMOrder, startNgramOrder, endNgramOrder, featureFile, modelFile);
+				baselineLMOrder, startNgramOrder, endNgramOrder, featureFile, modelFile, rulesIDTable);
 		
 		features.add(rerankFF);
 		

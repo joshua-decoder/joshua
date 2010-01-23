@@ -102,7 +102,7 @@ public class BasicRuleCollection implements RuleCollection {
 		return this.rules;
 	}
 	
-	public static void sortRules(List<Rule> rules, ArrayList<FeatureFunction> l_models) {
+	public static void sortRules(List<Rule> rules, List<FeatureFunction> l_models) {
 		
 		// use a priority queue to help sort
 		PriorityQueue<Rule> t_heapRules = new PriorityQueue<Rule>(1, Rule.NegtiveCostComparator);
@@ -122,7 +122,7 @@ public class BasicRuleCollection implements RuleCollection {
 	}
 	
 	/* See Javadoc comments for RuleCollection interface. */
-	public void sortRules(ArrayList<FeatureFunction> l_models) {	
+	public void sortRules(List<FeatureFunction> l_models) {	
 		sortRules(this.rules, l_models);
 		this.sorted = true;
 	}
