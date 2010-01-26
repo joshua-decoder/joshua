@@ -26,7 +26,7 @@ import joshua.discriminative.feature_related.feature_function.EdgeTblBasedBaseli
 
 /**This class implements functions to rank HG based on a bunch of feature functions
  *It does not change the topology of the HG, but it changes the 
- *bestHyperedge and bestCost in hypergraph.
+ *bestHyperedge and bestLogP in hypergraph.
  **/
 
 
@@ -67,6 +67,8 @@ public class HGRanker {
 	}
 	
  
+	
+	
 	private  void rankHGNode(HGNode it ){
 		if(processedNodesTbl.contains(it))	
 			return;
@@ -81,11 +83,12 @@ public class HGRanker {
 			it.semiringPlus(dt);
 		}	
 		
+		/**Due to diskHG precision, the behavior may not be precise
+		 **/
 		if(it.bestHyperedge!=oldBestHyperedge){
 			numChangedBestHyperedge++;
 		}
 	}
-	
 
 	private void rankHyperEdge(HGNode parentNode, HyperEdge dt){
 		
@@ -93,7 +96,7 @@ public class HGRanker {
 		if(dt.getAntNodes()!=null){
 			for(HGNode antNode : dt.getAntNodes()){
 				rankHGNode(antNode);
-				dt.bestDerivationLogP += antNode.bestHyperedge.bestDerivationLogP;
+				dt.bestDerivationLogP += antNode.bestHyperedge.bestDerivationLogP;//semiring times
 			}
 		}
 		double transLogP = getTransitionLogP(parentNode, dt);		
@@ -189,14 +192,14 @@ public class HGRanker {
 		
 		DiskHyperGraph diskHG = new DiskHyperGraph(symbolTbl, ngramStateID, saveModelCosts, null); 
 		diskHG.initRead(testNodesFile, testRulesFile, null);
-		for(int sent_id=0; sent_id < numSent; sent_id ++){
-			System.out.println("#Process sentence " + sent_id);
+		for(int sentID=0; sentID < numSent; sentID ++){
+			System.out.println("#Process sentence " + sentID);
 			HyperGraph testHG = diskHG.readHyperGraph();
 			baselineFeature.collectTransitionLogPs(testHG);
 			reranker.rankHG(testHG);
 		
 			try{
-				kbestExtractor.lazyKBestExtractOnHG(testHG, features, topN, sent_id, out1best);
+				kbestExtractor.lazyKBestExtractOnHG(testHG, features, topN, sentID, out1best);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}

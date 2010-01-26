@@ -94,7 +94,7 @@ public abstract class DefaultStatelessFF implements FeatureFunction {
 	}
 	
 	
-	public final double finalTransitionLogP(HGNode antNode, int spanStart, int spanEnd, SourcePath srcPath, int sentID){
+	public double finalTransitionLogP(HGNode antNode, int spanStart, int spanEnd, SourcePath srcPath, int sentID){
 		return 0.0;
 	}
 	

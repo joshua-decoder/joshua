@@ -13,6 +13,8 @@ import joshua.decoder.hypergraph.HyperEdge;
 
 public interface FeatureTemplate {
 	
+	void estimateFeatureCounts(Rule rule, HashMap<String, Double> featureTbl, HashSet<String> restrictedFeatureSet, double scale);
+	
 	void getFeatureCounts(Rule rule, List<HGNode> antNodes, HashMap<String, Double> featureTbl, HashSet<String> restrictedFeatureSet, double scale);
 	
 	void getFeatureCounts(HyperEdge dt,  HashMap<String, Double> featureTbl, HashSet<String> restrictedFeatureSet, double scale);

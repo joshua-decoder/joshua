@@ -248,7 +248,7 @@ public class BLEU {
 
 
 	
-	
+	//================================ Google linear corpus gain ============================================
 
 	/** 
 	 * speed consideration: assume hypNgramTable has a smaller

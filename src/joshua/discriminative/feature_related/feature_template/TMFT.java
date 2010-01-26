@@ -34,7 +34,15 @@ public class TMFT extends AbstractFeatureTemplate {
 	
 	
 	public void getFeatureCounts(Rule rule, List<HGNode> antNodes, HashMap<String, Double> featureTbl, HashSet<String> restrictedFeatureSet, double scale) {
-		
+		computeCounts(rule, featureTbl, restrictedFeatureSet, scale);		
+	}
+
+
+	public void estimateFeatureCounts(Rule rule, HashMap<String, Double> featureTbl, HashSet<String> restrictedFeatureSet, double scale) {
+		computeCounts(rule, featureTbl, restrictedFeatureSet, scale);		
+	}
+	
+	private void computeCounts(Rule rule, HashMap<String, Double> featureTbl, HashSet<String> restrictedFeatureSet, double scale){
 		if(rule != null){			
 			String key = null;
 			if(this.useRuleIDName){
@@ -55,8 +63,8 @@ public class TMFT extends AbstractFeatureTemplate {
 			
 		}
 		
+		
 	}
-	
 	
 
 }

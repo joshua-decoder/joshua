@@ -111,6 +111,13 @@ public class EdgeBigramFT extends AbstractFeatureTemplate {
     	return edgeBigrams;
 	}
 
+
+
+	public void estimateFeatureCounts(Rule rule, HashMap<String, Double> featureTbl, HashSet<String> restrictedFeatureSet, double scale) {
+		// TODO Auto-generated method stub
+		
+	}
+
 	
 	
 

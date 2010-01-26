@@ -51,7 +51,9 @@ public class HyperGraph {
 	}
 	
 	
-	
+	public double bestLogP(){
+		return this.goalNode.bestHyperedge.bestDerivationLogP;
+	}
 	
 	
 	//####### template to explore hypergraph #########################

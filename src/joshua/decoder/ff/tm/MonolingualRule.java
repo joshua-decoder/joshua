@@ -194,9 +194,7 @@ public class MonolingualRule implements Rule {
 				double mdcost = - ff.estimateLogP(this, -1) * ff.getWeight();
 				estcost += mdcost;
 			}
-			if (logger.isLoggable(Level.FINEST)) {
-				logger.finest("Updating rule estimated cost from " + this.est_cost + " to " + estcost + " for " + super.toString() + "  " + this.getClass().getName() + "@" + Integer.toHexString(System.identityHashCode(this)));
-			}
+			
 			this.est_cost = estcost;
 			return estcost;
 		}

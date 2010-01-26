@@ -136,6 +136,7 @@ public class DiscriminativeSupport {
 		if(rulesIDTable!=null)
 			useRuleIDName = true;
 		
+		//============= feature templates
 		List<FeatureTemplate> featTemplates =  DiscriminativeSupport.setupFeatureTemplates(symbolTbl, useTMFeat, useLMFeat,
 				useEdgeNgramOnly, useTMTargetFeat, ngramStateID, baselineLMOrder, startNgramOrder, endNgramOrder, useIntegerString, useRuleIDName);	
 		

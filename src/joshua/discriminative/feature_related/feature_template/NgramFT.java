@@ -76,5 +76,18 @@ public class NgramFT extends AbstractFeatureTemplate {
 		
 	}
 
+
+	public void estimateFeatureCounts(Rule rule, HashMap<String, Double> featureTbl, HashSet<String> restrictedFeatureSet, double scale) {
+		HashMap<String,Integer> ngramsTbl = ngramExtractor.getRuleNgrams(rule, startNgramOrder, endNgramOrder);		
+		if(ngramsTbl!=null){						
+			for(Map.Entry<String,Integer> entry : ngramsTbl.entrySet()){
+				String ngramFeatKey= entry.getKey();					
+				if(restrictedFeatureSet ==null || restrictedFeatureSet.contains(ngramFeatKey)==true){				
+						DiscriminativeSupport.increaseCount(featureTbl, ngramFeatKey,entry.getValue()*scale);				
+				}
+			}
+		}		
+	}
+
 	
 }

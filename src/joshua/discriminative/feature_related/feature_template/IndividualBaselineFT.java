@@ -52,5 +52,11 @@ public class IndividualBaselineFT extends AbstractFeatureTemplate {
 	}
 
 
+	public void estimateFeatureCounts(Rule rule, HashMap<String, Double> featureTbl, HashSet<String> restrictedFeatureSet, double scale) {
+		logger.severe("unimplement function");
+		System.exit(0);		
+	}
+
+
 	
 }

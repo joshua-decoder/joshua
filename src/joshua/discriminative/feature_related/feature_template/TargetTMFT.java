@@ -24,16 +24,13 @@ public class TargetTMFT  extends AbstractFeatureTemplate {
 	
 
 	public void getFeatureCounts(Rule rule, List<HGNode> antNodes, HashMap<String, Double> featureTbl, HashSet<String> restrictedFeatureSet, double scale) {
+		computeCounts(rule, featureTbl, restrictedFeatureSet, scale);
 		
-		if(rule!=null){
-			String featName= ruleEnglishString( (BilingualRule) rule, this.symbolTbl);//TODO
-			if(  restrictedFeatureSet==null ||
-			   ( restrictedFeatureSet!=null && restrictedFeatureSet.contains(featName) ) ){
-				DiscriminativeSupport.increaseCount(featureTbl, featName, scale);									
-			}	
-		}	
 	}
 	
+	public void estimateFeatureCounts(Rule rule, HashMap<String, Double> featureTbl, HashSet<String> restrictedFeatureSet, double scale) {
+		computeCounts(rule, featureTbl, restrictedFeatureSet, scale);				
+	}
 	
 	private String ruleEnglishString(BilingualRule rule, SymbolTable symbolTable) {
 		if(useIntegerString){			
@@ -43,5 +40,16 @@ public class TargetTMFT  extends AbstractFeatureTemplate {
 		}
 	}
 
+
+
+	private void computeCounts(Rule rule, HashMap<String, Double> featureTbl, HashSet<String> restrictedFeatureSet, double scale){
+		if(rule!=null){
+			String featName= ruleEnglishString( (BilingualRule) rule, this.symbolTbl);//TODO
+			if(  restrictedFeatureSet==null ||
+			   ( restrictedFeatureSet!=null && restrictedFeatureSet.contains(featName) ) ){
+				DiscriminativeSupport.increaseCount(featureTbl, featName, scale);									
+			}	
+		}	
+	}
 	
 }

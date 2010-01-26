@@ -10,6 +10,7 @@ import joshua.decoder.chart_parser.SourcePath;
 import joshua.decoder.ff.DefaultStatelessFF;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.hypergraph.HGNode;
+import joshua.decoder.hypergraph.HyperEdge;
 import joshua.discriminative.DiscriminativeSupport;
 import joshua.discriminative.feature_related.feature_template.FeatureTemplate;
 
@@ -18,7 +19,7 @@ import joshua.discriminative.feature_related.feature_template.FeatureTemplate;
  * this model extracts feature and compute the model score
  * */
 
-//TODO: it is possible some featureTemplate may be stateful 
+//TODO: it is possible some featureTemplate may be stateful, e.g., the ngram baseline feature 
 
 public class FeatureTemplateBasedFF  extends DefaultStatelessFF {
 	
@@ -67,10 +68,26 @@ public class FeatureTemplateBasedFF  extends DefaultStatelessFF {
 		return getTransitionLogP(rule, antNodes);
 	}
 	
+	@Override
+	public double transitionLogP(HyperEdge edge, int spanStart, int spanEnd, int sentID){
+		return getTransitionLogP(edge);
+	}
 	
+	@Override
+	public double finalTransitionLogP(HGNode antNode, int spanStart, int spanEnd, SourcePath srcPath, int sentID){
+		List<HGNode> antNodes = new ArrayList<HGNode>();
+		antNodes.add(antNode);
+		return getTransitionLogP(null, antNodes);
+	}
+	
+	@Override
+	public double finalTransitionLogP(HyperEdge edge, int spanStart, int spanEnd, int sentID){
+		return getTransitionLogP(edge);
+	}
 
 	public double estimateLogP(Rule rule, int sentID) {
-		return 0;
+		return getEstimateLogP(rule);
+		//return 0;
 	}
 
 	
@@ -83,6 +100,25 @@ public class FeatureTemplateBasedFF  extends DefaultStatelessFF {
 		return this.model;
 	}
 		
+	
+	private double getEstimateLogP(Rule rule){
+		//=== extract features
+		HashMap<String, Double> featTbl = new HashMap<String, Double>();
+		for(FeatureTemplate template : featTemplates){			
+			template.estimateFeatureCounts(rule, featTbl, restrictedFeatSet, scale);			
+		}	
+		
+		//=== compute logP
+		double res =0;
+		res = DiscriminativeSupport.computeLinearCombinationLogP(featTbl, model);
+		
+		/*if(res!=0){
+			System.out.println("getEstimateLogP: " + res);
+			System.out.println(featTbl);
+		}*/
+		
+		return res;
+	}
 
 	private double getTransitionLogP(Rule rule, List<HGNode> antNodes){
 		//=== extract features
@@ -99,5 +135,19 @@ public class FeatureTemplateBasedFF  extends DefaultStatelessFF {
 		return res;
 	}
 	
+	private double getTransitionLogP(HyperEdge edge){
+		//=== extract features
+		HashMap<String, Double> featTbl = new HashMap<String, Double>();
+		for(FeatureTemplate template : featTemplates){			
+			template.getFeatureCounts(edge, featTbl, restrictedFeatSet, scale);			
+		}	
+		
+		//=== compute logP
+		double res =0;
+		res = DiscriminativeSupport.computeLinearCombinationLogP(featTbl, model);
+		
+		//System.out.println("TransitionLogP: " + res);
+		return res;
+	}
 	
 }
