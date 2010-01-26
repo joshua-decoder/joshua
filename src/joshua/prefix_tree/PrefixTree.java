@@ -558,16 +558,27 @@ public class PrefixTree extends AbstractGrammar {
 				}
 			}
 		}
+		
+		long finalQueryTime = System.nanoTime();
+		if (logger.isLoggable(Level.FINE)) {
+			long elapsedQueryTime = finalQueryTime - startTime;
+			long microseconds = elapsedQueryTime / 1000;
+			float milliseconds = microseconds / 1000.0f;
+			logger.fine("Time to query pattern:\t" + pattern.toString() + "\t" + milliseconds + " milliseconds\t" + result.size() + " instances");
+		}
+		
 		// 17: Return M_a_alpha_b
 		List<Rule> rules = ruleExtractor.extractRules(result);
 //		node.storeResults(result, rules);
 		storeResults(node, result, rules);
 		
-		long elapsedTime = System.nanoTime() - startTime;//((float) (elapsedTime / 1000000000.0))
-		long microseconds = elapsedTime / 1000;
-		float milliseconds = microseconds / 1000.0f;
-		logger.fine("Time to query pattern:\t" + pattern.toString() + "\t" + milliseconds + " milliseconds\t" + result.size() + " instances");
-		
+		if (logger.isLoggable(Level.FINE)) {
+			long elapsedTime = System.nanoTime() - finalQueryTime;
+			long microseconds = elapsedTime / 1000;
+			float milliseconds = microseconds / 1000.0f;
+			logger.fine("Time to extract rules for pattern:\t" + pattern.toString() + "\t" + milliseconds + " milliseconds\t" + result.size() + " instances");
+		}
+
 		return result;
 
 	}
