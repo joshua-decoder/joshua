@@ -19,6 +19,7 @@ package joshua.corpus.suffix_array;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import joshua.corpus.Corpus;
@@ -44,7 +45,6 @@ import joshua.util.Cache;
 public abstract class AbstractSuffixArray implements Suffixes {
 	
 	/** Logger for this class. */
-	@SuppressWarnings("unused")
 	private static Logger logger =
 		Logger.getLogger(AbstractSuffixArray.class.getName());
 	
@@ -101,10 +101,12 @@ public abstract class AbstractSuffixArray implements Suffixes {
 		return hierarchicalPhraseCache;
 	}
 
+	/* See Javadoc for Suffixes interface.*/
 	public Cache<Pattern,List<Rule>> getCachedRules() {
 		return this.ruleCache;
 	}
 	
+	/* See Javadoc for Suffixes interface.*/
 	public MatchedHierarchicalPhrases createHierarchicalPhrases(Pattern pattern, int minNonterminalSpan, int maxPhraseSpan) {
 		
 		if (hierarchicalPhraseCache.containsKey(pattern)) {
@@ -120,11 +122,11 @@ public abstract class AbstractSuffixArray implements Suffixes {
 			if (arity==0) {
 				int[] bounds = this.findPhrase(pattern, 0, pattern.size(), 0, this.size()-1);
 				int[] startPositions = this.getAllPositions(bounds);
-				MatchedHierarchicalPhrases result = this.createHierarchicalPhrases(startPositions, pattern, vocab);
+				MatchedHierarchicalPhrases result = this.createTriviallyHierarchicalPhrases(startPositions, pattern, vocab);
 				return result;
 			} else if (arity==size) {
 				int[] startPositions = new int[]{};
-				MatchedHierarchicalPhrases result = this.createHierarchicalPhrases(startPositions, pattern, vocab);
+				MatchedHierarchicalPhrases result = this.createTriviallyHierarchicalPhrases(startPositions, pattern, vocab);
 				return result;
 			} else if (arity==1 && pattern.startsWithNonterminal()) {
 				int[] terminals = new int[size-1];
@@ -182,30 +184,24 @@ public abstract class AbstractSuffixArray implements Suffixes {
 	}
 	
 	/* See Javadoc for Suffixes interface.*/
-	public MatchedHierarchicalPhrases createHierarchicalPhrases(int[] startPositions,
+	public MatchedHierarchicalPhrases createTriviallyHierarchicalPhrases(int[] startPositions,
 			Pattern pattern, SymbolTable vocab) {
 
-//		if (startPositions == null) {
-//			HierarchicalPhrases hierarchicalPhrases = HierarchicalPhrases.emptyList(vocab);
-//			hierarchicalPhraseCache.put(pattern, hierarchicalPhrases);
-//			return hierarchicalPhrases;
-//		} else {
 			if (hierarchicalPhraseCache.containsKey(pattern)) {
-//				logger.severe("Using cache!");
-//				throw new RuntimeException("Using cache for pattern '" + pattern.toString() + "'");
+				if (logger.isLoggable(Level.FINEST)) logger.finest("Cache has " + hierarchicalPhraseCache.size() + " entries, and did contain pattern:    	" + pattern.toString());
 				return hierarchicalPhraseCache.get(pattern);
 			} else {
-//				logger.info("Cache has " + hierarchicalPhraseCache.size() + " entries, but not one for '" + pattern.toString() + "'");
-				// In the case of contiguous phrases, the hpCache is essentially acting as Adam's Inverted Index, because it stores 
-				// the corpus-sorted indexes of each of the phrases.  It differs because it creates a HierarhicalPhrases object rather 
-				// than just int[].
+				if (logger.isLoggable(Level.FINEST)) logger.finest("Cache has " + hierarchicalPhraseCache.size() + " entries, but did not contain pattern:	" + pattern.toString());
+				// In the case of contiguous phrases, 
+				//   the hpCache is essentially acting as Adam's Inverted Index, 
+				//   because it stores the corpus-sorted indexes of each of the phrases.  
+				// It differs because it creates a HierarchicalPhrases object rather than just int[].
 				Arrays.sort(startPositions);
 				HierarchicalPhrases hierarchicalPhrases = new HierarchicalPhrases(pattern, startPositions, getCorpus().getSentenceIndices(startPositions));	
 				hierarchicalPhraseCache.put(pattern, hierarchicalPhrases);
 				return hierarchicalPhrases;
 			}
-//		}
-		
+			
 	}
 
 	/* See Javadoc for Suffixes interface.*/
@@ -213,7 +209,6 @@ public abstract class AbstractSuffixArray implements Suffixes {
 		return findPhrase(phrase, 0, phrase.size());
 	}
 
-	
 	/* See Javadoc for Suffixes interface.*/
 	public int[] findPhrase(Phrase sentence, int phraseStart, int phraseEnd,
 			int lowerBound, int upperBound) {
@@ -274,10 +269,8 @@ public abstract class AbstractSuffixArray implements Suffixes {
 	}
 
 	/* See Javadoc for Suffixes interface.*/
-	public void cacheMatchingPhrases(MatchedHierarchicalPhrases matchings) {
-		
-		hierarchicalPhraseCache.put(matchings.getPattern(), matchings);
-		
+	public void cacheMatchingPhrases(MatchedHierarchicalPhrases matchings) {	
+		hierarchicalPhraseCache.put(matchings.getPattern(), matchings);	
 	}
 
 	/* See Javadoc for Suffixes interface.*/

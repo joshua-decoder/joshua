@@ -371,7 +371,10 @@ public class Node implements Comparable<Node>, Trie {
 
 		this.sourcePattern = hierarchicalPhrases.getPattern();
 //		this.matchedPhrasesCache.put(sourcePattern, hierarchicalPhrases);
-		this.parallelCorpus.getSuffixArray().getCachedRules().put(sourcePattern, rules);
+		
+		//This is not needed, because this is put into the cache by HierarchicalRuleExtractor
+//		this.parallelCorpus.getSuffixArray().getCachedRules().put(sourcePattern, rules);
+		
 		this.sourceHierarchicalPhrases = hierarchicalPhrases;
 		
 //		this.results = rules;

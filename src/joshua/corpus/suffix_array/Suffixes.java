@@ -81,13 +81,21 @@ public interface Suffixes {
 	 * @param pattern a contiguous phrase
 	 * @return a list of trivially hierarchical phrases
 	 */
-	MatchedHierarchicalPhrases createHierarchicalPhrases(int[] startPositions, Pattern pattern, SymbolTable vocab);
+	MatchedHierarchicalPhrases createTriviallyHierarchicalPhrases(int[] startPositions, Pattern pattern, SymbolTable vocab);
 	
 	/**
+	 * Gets all locations in the corpus 
+	 * of the specified hierarchical pattern,
+	 * subject to the specified span constraints.
+	 * <p>
+	 * This method exists to provide an easy mechanism
+	 * for getting all instances of arbitrary hierarchical phrases.
 	 * 
-	 * @param pattern
-	 * @param minNonterminalSpan
-	 * @param maxPhraseSpan
+	 * @param pattern Pattern of terminals and (optionally) nonterminals.
+	 * @param minNonterminalSpan Minimum number of terminals 
+	 * 		that a nonterminal is allowed to represent
+	 * @param maxPhraseSpan Maximum length in the corpus 
+	 * 		that an extracted phrase may represent
 	 * @return
 	 */
 	MatchedHierarchicalPhrases createHierarchicalPhrases(Pattern pattern, int minNonterminalSpan, int maxPhraseSpan);
@@ -147,9 +155,9 @@ public interface Suffixes {
 	 * from the sentence given the start and end points. This
 	 * version of the method allows bounds to be specified in
 	 * the suffix array, which is useful when searching for
-	 * increasingly longer subrphases in a sentences.
+	 * increasingly longer sub-phrases in a sentences.
 	 *
-	 * @param sentence    the sentence/superphrase to draw the
+	 * @param sentence    the sentence/super-phrase to draw the
 	 *                    search phrase from
 	 * @param phraseStart the start of the phrase in the sentence
 	 *                    (inclusive)
@@ -179,6 +187,9 @@ public interface Suffixes {
 	
 	/** 
 	 * Caches the matching hierarchical phrases for the pattern.
+	 * 
+	 * @param matchings Hierarchical phrases located in the corpus
+	 * 		that match a common pattern.
 	 */
 	void cacheMatchingPhrases(MatchedHierarchicalPhrases matchings);
 	

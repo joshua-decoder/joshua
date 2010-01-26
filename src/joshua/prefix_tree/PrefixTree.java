@@ -308,6 +308,8 @@ public class PrefixTree extends AbstractGrammar {
 	 */
 	public void add(int[] sentence) {
 		
+		long startTime = System.nanoTime();
+		
 		int START_OF_SENTENCE = 0;
 		int END_OF_SENTENCE = sentence.length - 1;
 		
@@ -465,6 +467,12 @@ public class PrefixTree extends AbstractGrammar {
 
 		}
 
+		long endTime = System.nanoTime();
+		long microseconds = (endTime - startTime) / 1000;
+		float milliseconds = microseconds / 1000.0f;
+		logger.info("Sentence total extraction time:\t"+ milliseconds + " milliseconds");
+		
+		
 		if (logger.isLoggable(Level.FINER)) {
 			logger.finer("\n");
 			if (logger.isLoggable(Level.FINEST)) logger.finest("FINAL TREE:  " + root);
@@ -487,67 +495,78 @@ public class PrefixTree extends AbstractGrammar {
 	public MatchedHierarchicalPhrases query(Pattern pattern, Node node, Node prefixNode, Node suffixNode) {
 
 		if (logger.isLoggable(Level.FINE)) logger.fine("PrefixTree.query( " + pattern + ",\n\t   new node " + node + ",\n\tprefix node " + prefixNode + ",\n\tsuffix node " + suffixNode + ")");
-		
+		long startTime = System.nanoTime();
 		
 		MatchedHierarchicalPhrases result;
 
-		int arity = pattern.arity();
-		
-		// 1: if alpha=u then
-		//    If the pattern is contiguous, look up the pattern in the suffix array
-		if (arity == 0) {
-
-			// 2: SUFFIX-ARRAY-LOOKUP(SA_f, a alpha b, l_a_alpha, h_a_alpha
-			// Get the first and last index in the suffix array for the specified pattern
-			int[] bounds = suffixArray.findPhrase(pattern, 0, pattern.size(), prefixNode.lowBoundIndex, prefixNode.highBoundIndex);
-			if (bounds==null) {
-				result = HierarchicalPhrases.emptyList(pattern);
-				suffixArray.cacheMatchingPhrases(result);
-				//TODO Should node.setBounds(bounds) be called here?
-			} else {
-				node.setBounds(bounds[0],bounds[1]);
-				int[] startingPositions = suffixArray.getAllPositions(bounds);
-				result = suffixArray.createHierarchicalPhrases(startingPositions, pattern, vocab);
-			}
+		if (suffixArray.getCachedHierarchicalPhrases().containsKey(pattern)) {
+			result = suffixArray.getCachedHierarchicalPhrases().get(pattern);
+		} else {
 			
-		} else { // 3: else --- alpha is a discontiguous pattern
 
-			// 8: If M_a_alpha_b has been precomputed (then result will be non-null)
-			// 9: Retrieve M_a_alpha_b from cache of precomputations
-			
-			
-			// 10: else
-			if (suffixArray.getCachedHierarchicalPhrases().containsKey(pattern)) {	
-				result = suffixArray.getMatchingPhrases(pattern);
-			} else {
-				
-				// 16: M_a_alpha_b <-- QUERY_INTERSECT(M_a_alpha, M_alpha_b)
-				
-				int[] sourceWords = prefixNode.getSourcePattern().getWordIDs();
-				
-				// Special handling of case when prefixNode is the X off of root (hierarchicalPhrases for that node is empty)
-				if (arity==1 && sourceWords[0] < 0 && sourceWords[sourceWords.length-1] < 0){
+			int arity = pattern.arity();
 
-					result = suffixNode.getMatchedPhrases().copyWithInitialX();
-					
-				} else { 
-					
-					// Normal query intersection case (when prefixNode != X off of root)
-					
-					if (logger.isLoggable(Level.FINEST)) logger.finest("Calling queryIntersect("+pattern+" M_a_alpha.pattern=="+prefixNode.getSourcePattern() + ", M_alpha_b.pattern=="+suffixNode.getSourcePattern()+")");
-					
-					result = HierarchicalPhrases.queryIntersect(pattern, prefixNode.getMatchedPhrases(), suffixNode.getMatchedPhrases(), minNonterminalSpan, maxPhraseSpan, suffixArray);
-					
+			// 1: if alpha=u then
+			//    If the pattern is contiguous, look up the pattern in the suffix array
+			if (arity == 0) {
+
+				// 2: SUFFIX-ARRAY-LOOKUP(SA_f, a alpha b, l_a_alpha, h_a_alpha
+				// Get the first and last index in the suffix array for the specified pattern
+				int[] bounds = suffixArray.findPhrase(pattern, 0, pattern.size(), prefixNode.lowBoundIndex, prefixNode.highBoundIndex);
+				if (bounds==null) {
+					result = HierarchicalPhrases.emptyList(pattern);
+					suffixArray.cacheMatchingPhrases(result);
+					//TODO Should node.setBounds(bounds) be called here?
+				} else {
+					node.setBounds(bounds[0],bounds[1]);
+					int[] startingPositions = suffixArray.getAllPositions(bounds);
+					result = suffixArray.createTriviallyHierarchicalPhrases(startingPositions, pattern, vocab);
 				}
-				
-				suffixArray.cacheMatchingPhrases(result);
+
+
+			} else { // 3: else --- alpha is a discontiguous pattern
+
+				// 8: If M_a_alpha_b has been precomputed (then result will be non-null)
+				// 9: Retrieve M_a_alpha_b from cache of precomputations
+
+
+				// 10: else
+				if (suffixArray.getCachedHierarchicalPhrases().containsKey(pattern)) {	
+					result = suffixArray.getMatchingPhrases(pattern);
+				} else {
+
+					// 16: M_a_alpha_b <-- QUERY_INTERSECT(M_a_alpha, M_alpha_b)
+
+					int[] sourceWords = prefixNode.getSourcePattern().getWordIDs();
+
+					// Special handling of case when prefixNode is the X off of root (hierarchicalPhrases for that node is empty)
+					if (arity==1 && sourceWords[0] < 0 && sourceWords[sourceWords.length-1] < 0){
+
+						result = suffixNode.getMatchedPhrases().copyWithInitialX();
+
+					} else { 
+
+						// Normal query intersection case (when prefixNode != X off of root)
+
+						if (logger.isLoggable(Level.FINEST)) logger.finest("Calling queryIntersect("+pattern+" M_a_alpha.pattern=="+prefixNode.getSourcePattern() + ", M_alpha_b.pattern=="+suffixNode.getSourcePattern()+")");
+
+						result = HierarchicalPhrases.queryIntersect(pattern, prefixNode.getMatchedPhrases(), suffixNode.getMatchedPhrases(), minNonterminalSpan, maxPhraseSpan, suffixArray);
+
+					}
+
+					suffixArray.cacheMatchingPhrases(result);
+				}
 			}
 		}
-
 		// 17: Return M_a_alpha_b
 		List<Rule> rules = ruleExtractor.extractRules(result);
 //		node.storeResults(result, rules);
 		storeResults(node, result, rules);
+		
+		long elapsedTime = System.nanoTime() - startTime;//((float) (elapsedTime / 1000000000.0))
+		long microseconds = elapsedTime / 1000;
+		float milliseconds = microseconds / 1000.0f;
+		logger.info("Time to query pattern:\t" + pattern.toString() + "\t" + milliseconds + " milliseconds\t" + result.size() + " instances");
 		
 		return result;
 
