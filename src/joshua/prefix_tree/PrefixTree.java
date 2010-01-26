@@ -202,7 +202,7 @@ public class PrefixTree extends AbstractGrammar {
 	public PrefixTree(ParallelCorpusGrammarFactory parallelCorpus) {
 
 		
-		if (logger.isLoggable(Level.FINE)) logger.fine("\n\n\nConstructing new PrefixTree\n\n");
+		if (logger.isLoggable(Level.FINER)) logger.finer("\n\n\nConstructing new PrefixTree\n\n");
 
 		this.parallelCorpus = parallelCorpus;
 		this.suffixArray = parallelCorpus.getSuffixArray();
@@ -315,7 +315,7 @@ public class PrefixTree extends AbstractGrammar {
 		
 		Queue<Tuple> queue = new LinkedList<Tuple>();
 
-		if (logger.isLoggable(Level.FINE)) logger.fine("Last sentence index == I == " + END_OF_SENTENCE);
+		if (logger.isLoggable(Level.FINER)) logger.finer("Last sentence index == I == " + END_OF_SENTENCE);
 
 		// 2: for i from 1 to I
 		for (int i=START_OF_SENTENCE; i<=END_OF_SENTENCE; i++) {
@@ -368,7 +368,7 @@ public class PrefixTree extends AbstractGrammar {
 //				x++;
 //			}
 			
-			if (logger.isLoggable(Level.FINE)) logger.fine("Have tuple (" +prefixPattern+","+ i + ","+j+","+prefixNode.toShortString(vocab)+")");
+			if (logger.isLoggable(Level.FINER)) logger.finer("Have tuple (" +prefixPattern+","+ i + ","+j+","+prefixNode.toShortString(vocab)+")");
 
 			if (j <= END_OF_SENTENCE) {
 
@@ -494,7 +494,7 @@ public class PrefixTree extends AbstractGrammar {
 	 */
 	public MatchedHierarchicalPhrases query(Pattern pattern, Node node, Node prefixNode, Node suffixNode) {
 
-		if (logger.isLoggable(Level.FINE)) logger.fine("PrefixTree.query( " + pattern + ",\n\t   new node " + node + ",\n\tprefix node " + prefixNode + ",\n\tsuffix node " + suffixNode + ")");
+		if (logger.isLoggable(Level.FINER)) logger.finer("PrefixTree.query( " + pattern + ",\n\t   new node " + node + ",\n\tprefix node " + prefixNode + ",\n\tsuffix node " + suffixNode + ")");
 		long startTime = System.nanoTime();
 		
 		MatchedHierarchicalPhrases result;
@@ -566,7 +566,7 @@ public class PrefixTree extends AbstractGrammar {
 		long elapsedTime = System.nanoTime() - startTime;//((float) (elapsedTime / 1000000000.0))
 		long microseconds = elapsedTime / 1000;
 		float milliseconds = microseconds / 1000.0f;
-		logger.info("Time to query pattern:\t" + pattern.toString() + "\t" + milliseconds + " milliseconds\t" + result.size() + " instances");
+		logger.fine("Time to query pattern:\t" + pattern.toString() + "\t" + milliseconds + " milliseconds\t" + result.size() + " instances");
 		
 		return result;
 
@@ -578,7 +578,7 @@ public class PrefixTree extends AbstractGrammar {
 			node.storeResults(result, rules);
 
 			if (out==null) {
-				logger.fine("Not printing rules");
+				logger.finer("Not printing rules");
 			} else {
 
 				for (Rule rule : rules) {
