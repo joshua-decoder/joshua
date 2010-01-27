@@ -49,8 +49,8 @@ public class HGRanker {
 	public void rankHG(HyperGraph hg){
 		resetState();
 		rankHGNode(hg.goalNode);
-		logger.info("number of nodes whose best hyperedge changes is " + numChangedBestHyperedge 
-				+ " among total number of nodes " + processedNodesTbl.size() );
+		//logger.info("number of nodes whose best hyperedge changes is " + numChangedBestHyperedge 
+		//		+ " among total number of nodes " + processedNodesTbl.size() );
 		resetState();		
 	}
 	
