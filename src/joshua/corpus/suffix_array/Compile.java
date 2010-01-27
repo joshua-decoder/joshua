@@ -34,6 +34,7 @@ import joshua.corpus.alignment.AlignmentGrids;
 import joshua.corpus.lexprob.LexProbs;
 import joshua.corpus.lexprob.LexicalProbabilities;
 import joshua.corpus.vocab.Vocabulary;
+import joshua.decoder.JoshuaConfiguration;
 import joshua.util.Cache;
 import joshua.util.io.BinaryOut;
 
@@ -55,6 +56,22 @@ public class Compile {
 	private String alignmentsFileName;
 	private String outputDirName;
 	private String charset = "UTF-8";
+	
+	private int minFrequency = 0;
+	private short maxPhrases = 1000;
+	private int maxPhraseLength = JoshuaConfiguration.sa_max_phrase_length;
+	
+	public void setMinFrequency(int minFrequency) {
+		this.minFrequency = minFrequency;
+	}
+	
+	public void setMaxPhrases(short maxPhrases) {
+		this.maxPhrases = maxPhrases;
+	}
+	
+	public void setMaxPhraseLength(int maxPhraseLength) {
+		this.maxPhraseLength = maxPhraseLength;
+	}
 	
 	public void setSourceCorpus(String sourceCorpusFileName) {
 		this.sourceCorpusFileName = sourceCorpusFileName;
@@ -242,8 +259,20 @@ public class Compile {
 	    	lexprobsOut.flush();
 	    	lexprobsOut.close();
 	    	out.println("Lexprobs at " + lexprobsFilename);
+	    	
+	    	if (logger.isLoggable(Level.INFO)) logger.info("Precomputing indices for most frequent phrases");
+	    	
 		}
 		
+		// Precompute and write frequent phrase locations to disk
+		{
+			FrequentPhrases frequentPhrases = 
+				new FrequentPhrases(sourceSuffixArray, minFrequency, maxPhrases, maxPhraseLength);
+			
+			String frequentPhrasesFilename = outputDirName + File.separator + "frequentPhrases";
+			BinaryOut frequentPhrasesOut = new BinaryOut(frequentPhrasesFilename);
+			frequentPhrases.writeExternal(frequentPhrasesOut);
+		}
 		
 		out.flush();
 		out.close();

@@ -17,8 +17,10 @@
  */
 package joshua.corpus.suffix_array;
 
+import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -40,6 +42,7 @@ import joshua.corpus.Corpus;
 import joshua.corpus.Phrase;
 import joshua.corpus.mm.MemoryMappedCorpusArray;
 import joshua.corpus.suffix_array.mm.MemoryMappedSuffixArray;
+import joshua.corpus.vocab.SymbolTable;
 import joshua.corpus.vocab.Vocabulary;
 import joshua.util.Cache;
 import joshua.util.Counted;
@@ -71,13 +74,16 @@ public class FrequentPhrases {
 	 * The key set for this map should be identical to the key
 	 * set in the <code>ranks</code> map.
 	 */
-	final LinkedHashMap<Phrase,Integer> frequentPhrases;
+	LinkedHashMap<Phrase,Integer> frequentPhrases;
 	
 	/** Maximum number of phrases of which this object is aware. */
-	final short maxPhrases;
+	short maxPhrases;
 	
 	/** Maximum phrase length to consider. */
-	final int maxPhraseLength;
+	int maxPhraseLength;
+	
+	/** Stores sorted lists of corpus locations for most frequent phrases. */
+	Map<Phrase,InvertedIndex> invertedIndices;
 	
 	/**
 	 * Constructs data regarding the frequencies of the <em>n</em>
@@ -101,6 +107,11 @@ public class FrequentPhrases {
 		
 		this.suffixes = suffixes;
 		this.frequentPhrases = getMostFrequentPhrases(suffixes, minFrequency, maxPhrases, maxPhraseLength);
+		this.invertedIndices = calculateInvertedIndices();
+	}
+	
+	public FrequentPhrases(Suffixes suffixes, String binaryFilename) {
+		this.suffixes = suffixes;
 		
 	}
 
@@ -590,7 +601,7 @@ public class FrequentPhrases {
 			
 			// Output an lcp-delimited interval <j,j> with tf=1
 			//        (trivial interval i==j, frequency=1)
-			if (logger.isLoggable(Level.FINE)) logger.fine("Output trivial interval <"+j+","+j+"> with tf=1");
+			if (logger.isLoggable(Level.FINEST)) logger.finest("Output trivial interval <"+j+","+j+"> with tf=1");
 			frequencyClasses.record(j);
 			//frequencyClasses.record(j, j, Integer.MAX_VALUE, 1);
 
@@ -609,7 +620,7 @@ public class FrequentPhrases {
 				if (longestBoundingLCP < shortestInteriorLCP) {
 	
 					int frequency = j-i+1;
-					if (logger.isLoggable(Level.FINE)) logger.fine("Output interval <"+i+","+j+"> with k="+k+" and tf="+j+"-"+i+"+1="+(j-i+1));
+					if (logger.isLoggable(Level.FINEST)) logger.finest("Output interval <"+i+","+j+"> with k="+k+" and tf="+j+"-"+i+"+1="+(j-i+1));
 					frequencyClasses.record(i, j, k, frequency);	
 				}
 				
@@ -801,8 +812,6 @@ public class FrequentPhrases {
 	
 	public void cacheInvertedIndices() {
 
-		Map<Phrase,InvertedIndex> invertedIndices = calculateInvertedIndices();
-
 		for (Map.Entry<Phrase, InvertedIndex> entry : invertedIndices.entrySet()) {
 			
 			Pattern pattern = new Pattern(entry.getKey());
@@ -827,8 +836,120 @@ public class FrequentPhrases {
 		}
 		
 	}
+	
+	/* See Javadoc for java.io.Externalizable interface. */
+	public void readExternal(ObjectInput in) throws IOException,
+			ClassNotFoundException {
+		
+		SymbolTable vocab = suffixes.getVocabulary();
+		
+		// Read in the maximum number of phrases of which this object is aware.
+		this.maxPhrases = in.readShort();
+		
+		// Read in the maximum phrase length to consider.
+		this.maxPhraseLength = in.readInt();
+		
+		// Read in the count of frequent phrase types
+		int frequentPhrasesSize = in.readInt();
+		
+		// Read in the frequentPhrases map
+		this.frequentPhrases = new LinkedHashMap<Phrase,Integer>();
+		for (int i=0; i<frequentPhrasesSize; i++) {
+			
+			// Write out number of times the phrase is found in the corpus
+			int count = in.readInt();
+			
+			// Read in the number of tokens in the phrase
+			int tokenCount = in.readInt();
+			
+			int[] wordIDs = new int[tokenCount];
+			for (int j=0; i<tokenCount; i++) {
+				wordIDs[j] = in.readInt();
+			}
+			
+			BasicPhrase phrase = new BasicPhrase(wordIDs, vocab);
+			this.frequentPhrases.put(phrase, count);
+			
+		}
+		
+		// Read in number of inverted indices
+		int invertedIndicesCount = in.readInt();
+		
+		// Read in inverted indices
+		this.invertedIndices = new HashMap<Phrase,InvertedIndex>(frequentPhrases.keySet().size());
+		for (int i=0; i<invertedIndicesCount; i++) {
+			
+			// Read in the number of tokens in the phrase
+			int tokenCount = in.readInt();
+			
+			int[] wordIDs = new int[tokenCount];
+			for (int j=0; i<tokenCount; i++) {
+				wordIDs[j] = in.readInt();
+			}
+			
+			// Reconstruct phrase
+			BasicPhrase phrase = new BasicPhrase(wordIDs, vocab);
+			
+			// Read in inverted index
+			InvertedIndex invertedIndex = new InvertedIndex();
+			invertedIndex.readExternal(in);
+			
+			this.invertedIndices.put(phrase, invertedIndex);
+		}
+	}
 
-
+	public void writeExternal(ObjectOutput out) throws IOException { 
+		
+		// Write out maximum number of phrases of which this object is aware.
+		out.writeShort(maxPhrases);
+		
+		// Write out maximum phrase length to consider.
+		out.writeInt(maxPhraseLength);
+		
+		// Write out count of frequent phrase types
+		out.writeInt(frequentPhrases.size());
+		
+		// Write out frequentPhrases map
+		for (Map.Entry<Phrase, Integer> entry : frequentPhrases.entrySet()) {
+			Phrase phrase = entry.getKey();
+			int phraseCount = entry.getValue();
+			int[] wordIDs = phrase.getWordIDs();
+			
+			// Write out number of times the phrase is found in the corpus
+			out.writeInt(phraseCount);
+			
+			// Write out the number of tokens in the phrase
+			out.writeInt(wordIDs.length);
+			
+			// Write out each token in the phrase
+			for (int wordID : wordIDs) {
+				out.writeInt(wordID);
+			}
+		}
+		
+		// Write out number of inverted indices
+		out.writeInt(invertedIndices.size());
+		
+		// Write out inverted indices
+		for (Map.Entry<Phrase, InvertedIndex> entry : invertedIndices.entrySet()) {
+			
+			Pattern pattern = new Pattern(entry.getKey());
+			int[] wordIDs = pattern.getWordIDs();
+			
+			// Write out number of tokens in the pattern
+			out.writeInt(wordIDs.length);
+			
+			// Write out each token in the phrase
+			for (int wordID : wordIDs) {
+				out.writeInt(wordID);
+			}
+			
+			// Write out inverted index for this phrase
+			InvertedIndex list = entry.getValue();
+			out.writeObject(list);
+		}
+	}
+	
 
 	public String toString() {
 
@@ -886,7 +1007,6 @@ public class FrequentPhrases {
 			fastIntersect(sortedData.subList(index+1, sortedData.size()), sortedQueries.subList(medianQueryIndex+1, sortedQueries.size()), result);
 		}
 	}	
-
 
 
 	//===============================================================
@@ -1020,9 +1140,9 @@ public class FrequentPhrases {
 
 	}
 	
-	private static final class InvertedIndex {
-		private final List<Integer> corpusLocations;
-		private final List<Integer> sentenceNumbers;
+	private static final class InvertedIndex implements Externalizable {
+		private final ArrayList<Integer> corpusLocations;
+		private final ArrayList<Integer> sentenceNumbers;
 		
 		private InvertedIndex() {
 			this.corpusLocations = new ArrayList<Integer>();
@@ -1032,6 +1152,47 @@ public class FrequentPhrases {
 		private void record(int corpusLocation, int sentenceNumber) {
 			corpusLocations.add(corpusLocation);
 			sentenceNumbers.add(sentenceNumber);
+		}
+
+		public void readExternal(ObjectInput in) throws IOException,
+				ClassNotFoundException {
+
+			// Read number of corpus locations
+			int corpusSize = in.readInt();
+			
+			// Read number of sentence numbers
+			int sentences = in.readInt();
+			
+			// Read in all corpus locations
+			corpusLocations.ensureCapacity(corpusSize);
+			for (int i=0; i<corpusSize; i++) {
+				corpusLocations.add(in.readInt());
+			}
+			
+			// Read out all sentence numbers
+			sentenceNumbers.ensureCapacity(sentences);
+			for (int i=0; i<sentences; i++) {
+				sentenceNumbers.add(in.readInt());
+			}
+		}
+
+		public void writeExternal(ObjectOutput out) throws IOException {
+			
+			// Write number of corpus locations
+			out.writeInt(corpusLocations.size());
+			
+			// Write number of sentence numbers
+			out.writeInt(sentenceNumbers.size());
+			
+			// Write out all corpus locations
+			for (Integer location : corpusLocations) {
+				out.writeInt(location);
+			}
+			
+			// Write out all sentence numbers
+			for (Integer sentenceNumber : sentenceNumbers) {
+				out.writeInt(sentenceNumber);
+			}
 		}
 		
 	}
