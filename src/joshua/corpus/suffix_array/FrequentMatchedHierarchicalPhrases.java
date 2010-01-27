@@ -42,8 +42,6 @@ public class FrequentMatchedHierarchicalPhrases extends
 	/* @see joshua.corpus.MatchedHierarchicalPhrases#getSentenceNumber(int) */
 	public int getSentenceNumber(int phraseIndex) {
 		
-		//TODO Remove this implementation, and instead have an implementation in AbstractHierarchicalPhrases
-		
 		int position = frequentMatches.getStartPosition(pattern, phraseIndex, 0);
 		return corpus.getSentenceIndex(position);
 	}

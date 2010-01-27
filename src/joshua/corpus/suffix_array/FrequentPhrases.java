@@ -19,7 +19,9 @@ package joshua.corpus.suffix_array;
 
 import java.io.IOException;
 import java.io.ObjectInput;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -74,6 +76,8 @@ public class FrequentPhrases {
 	/** Maximum number of phrases of which this object is aware. */
 	final short maxPhrases;
 	
+	/** Maximum phrase length to consider. */
+	final int maxPhraseLength;
 	
 	/**
 	 * Constructs data regarding the frequencies of the <em>n</em>
@@ -93,6 +97,7 @@ public class FrequentPhrases {
 			int maxPhraseLength) {
 		
 		this.maxPhrases = maxPhrases;
+		this.maxPhraseLength = maxPhraseLength;
 		
 		this.suffixes = suffixes;
 		this.frequentPhrases = getMostFrequentPhrases(suffixes, minFrequency, maxPhrases, maxPhraseLength);
@@ -300,7 +305,7 @@ public class FrequentPhrases {
 			// outside the window size...
 			if (phrasesInWindow.size() > 0) {
 				int position1 = positions.get(0);
-				// deque the first element and
+				// dequeue the first element and
 				// calculate its collocations...
 				while (((currentPosition+1==endOfCorpus) || (windowSize <= currentPosition-position1))
 						&& phrasesInWindow.size() > 0) {
@@ -407,7 +412,7 @@ public class FrequentPhrases {
 	 * Calculates the frequency ranks of the provided phrases.
 	 * <p>
 	 * The iteration order of the <code>frequentPhrases</code>
-	 * parameter is be used by this method to determine the
+	 * parameter is used by this method to determine the
 	 * rank of each phrase. Specifically, the first phrase
 	 * returned by the map's iterator is taken to be the most
 	 * frequent phrase; the last phrase returned by the map's
@@ -440,7 +445,7 @@ public class FrequentPhrases {
 	 * Allows a threshold to be set for the minimum frequency
 	 * to remember, as well as the maximum number of phrases.
 	 * <p>
-	 * This method is implements the 
+	 * This method implements the 
 	 * <code>print_LDIs_stack</code> function defined in 
 	 * section 2.5 of Yamamoto and Church.
 	 *
@@ -563,6 +568,7 @@ public class FrequentPhrases {
 		// calculate the longest common prefix delimited intervals...
 		int[] longestCommonPrefixes = calculateLongestCommonPrefixes(suffixes);
 
+		// Construct an initially empty object to hold class frequency information
 		FrequencyClasses frequencyClasses = new FrequencyClasses(longestCommonPrefixes);
 		
 		// stack_i <-- an integer array for the stack of left edges, i
@@ -640,22 +646,43 @@ public class FrequentPhrases {
 		Corpus corpus = suffixes.getCorpus();
 
 		int[] longestCommonPrefixes = new int[length +1];
+		
+		// For each element in the suffix array
 		for (int i = 1; i < length; i++) {
-			int commonPrefixSize = 0;
 			int corpusIndex = suffixes.getCorpusIndex(i);
 			int prevCorpusIndex = suffixes.getCorpusIndex(i-1);
 
+			// Start by assuming that the two positions 
+			//    don't have anything in common
+			int commonPrefixSize = 0;
+			
+			// While the 1st position is not at the end of the corpus...
 			while(corpusIndex+commonPrefixSize < length && 
+					// ... and the 2nd position is not at the end of the corpus...
 					prevCorpusIndex + commonPrefixSize < length &&
+					// ... and the nth word at the 1st position ...
 					(corpus.getWordID(corpusIndex  + commonPrefixSize) == 
+						// ... is the same as the nth word at the 2nd position ...
 						corpus.getWordID(prevCorpusIndex + commonPrefixSize) && 
+						// ... and the length to consider isn't too long
 						commonPrefixSize <= Suffixes.MAX_COMPARISON_LENGTH)) {
+				
+				// The two positions match for their respective nth words!
+				// Increment commonPrefixSize to reflect this fact
 				commonPrefixSize++;
 			}
+			
+			// Record how long the common prefix is between
+			//    suffix array element s[i] and s[i-1] 
 			longestCommonPrefixes[i] = commonPrefixSize;
 		}
+		
+		// By definition, the 0th element of lcp is 0
 		longestCommonPrefixes[0] = 0;
+		
+		// By definition, the final element of lcp is 0
 		longestCommonPrefixes[length] = 0;
+		
 		return longestCommonPrefixes;
 
 	}
@@ -713,7 +740,93 @@ public class FrequentPhrases {
 //	}
 	
 	
+	private Map<Phrase,InvertedIndex> calculateInvertedIndices() {
+		Map<Phrase,InvertedIndex> invertedIndices = new HashMap<Phrase,InvertedIndex>(frequentPhrases.keySet().size());
+		
+		Corpus corpus = suffixes.getCorpus();
+		int endOfCorpus = corpus.size();
+		logger.fine("Corpus has size " + endOfCorpus);
+		
+		int sentenceNumber = 1;
+		int endOfSentence = suffixes.getSentencePosition(sentenceNumber);
+		
+		// Start at the beginning of the corpus...
+		for (int currentPosition : corpus.corpusPositions()) {
+					
+			logger.fine("At corpus position " + currentPosition);
+			
+			// Start with a phrase length of 1, at the current position...
+			for (int i = 1, endOfPhrase = currentPosition + i; 
+					// ...ensure the phrase length isn't too long...
+					i <= maxPhraseLength  &&  
+					// ...and that the phrase doesn't extend past the end of the sentence...
+					endOfPhrase <= endOfSentence  &&  
+					// ...or past the end of the corpus
+					endOfPhrase <= endOfCorpus; 
+					// ...then increment the phrase length and end of phrase marker.
+					i++, endOfPhrase = currentPosition + i) {
+
+				
+				// Get the current phrase
+				Phrase phrase = new ContiguousPhrase(currentPosition, endOfPhrase, corpus);
+
+				if (logger.isLoggable(Level.FINE)) logger.fine("In sentence " + sentenceNumber + " found phrase (" +currentPosition + ","+endOfPhrase+") "  + phrase);
+
+				// If the phrase is one we care about...
+				if (frequentPhrases.containsKey(phrase)) {
+
+					if (logger.isLoggable(Level.FINER)) logger.finer("\"" + phrase + "\" found at currentPosition " + currentPosition);
+
+					if (! invertedIndices.containsKey(phrase)) {
+						invertedIndices.put(phrase, new InvertedIndex());
+					}
+					
+					InvertedIndex invertedIndex = invertedIndices.get(phrase);
+					
+					logger.fine("Recording position " + currentPosition + " in sentence " + sentenceNumber + " for phrase " + phrase);
+					invertedIndex.record(currentPosition, sentenceNumber);
+
+				}
+				
+			} // end iterating over various phrase lengths
+
+			if (currentPosition == endOfSentence) {
+				sentenceNumber += 1;
+				endOfSentence = suffixes.getSentencePosition(sentenceNumber);
+			}
+		}
+		
+		return invertedIndices;
+	}
 	
+	public void cacheInvertedIndices() {
+
+		Map<Phrase,InvertedIndex> invertedIndices = calculateInvertedIndices();
+
+		for (Map.Entry<Phrase, InvertedIndex> entry : invertedIndices.entrySet()) {
+			
+			Pattern pattern = new Pattern(entry.getKey());
+			InvertedIndex list = entry.getValue();
+			
+			HierarchicalPhrases phraseLocations = new HierarchicalPhrases(pattern,list.corpusLocations, list.sentenceNumbers);
+			suffixes.cacheMatchingPhrases(phraseLocations);
+			if (logger.isLoggable(Level.FINE)) logger.fine("Cached sorted locations for " + pattern);
+			
+			if (logger.isLoggable(Level.FINE)) {
+				StringBuilder s = new StringBuilder();
+				String patternString = pattern.toString();
+				for (Integer i : list.corpusLocations) {
+					s.append(patternString);
+					s.append('\t');
+					s.append(i);
+					s.append('\n');
+				}
+				logger.fine(s.toString());
+			}
+			
+		}
+		
+	}
 
 
 
@@ -855,16 +968,19 @@ public class FrequentPhrases {
 
 		logger.info("Frequent phrases: \n" + frequentPhrases.toString());
 
-
+		logger.info("Caching inverted indices");
+		frequentPhrases.cacheInvertedIndices();
+		
 		logger.info("Calculating collocations for most frequent phrases");
 		FrequentMatches matches = frequentPhrases.getCollocations(maxPhraseLength, windowSize, minNonterminalSpan);
 
 		
 
-//		matches.histogramSort(maxPhrases);
 		
-		logger.info("Printing collocations for most frequent phrases");		
-		logger.info("Total collocations: " + matches.counter);
+//		logger.info("Printing collocations for most frequent phrases");		
+//		logger.info("Total collocations: " + matches.counter);
+		
+		
 		//		for (int i=0, n=collocations.size(); i<n; i+=3) {
 		//			
 		//			int key = collocations.get(i);
@@ -902,6 +1018,22 @@ public class FrequentPhrases {
 		//		}
 
 
+	}
+	
+	private static final class InvertedIndex {
+		private final List<Integer> corpusLocations;
+		private final List<Integer> sentenceNumbers;
+		
+		private InvertedIndex() {
+			this.corpusLocations = new ArrayList<Integer>();
+			this.sentenceNumbers = new ArrayList<Integer>();
+		}
+		
+		private void record(int corpusLocation, int sentenceNumber) {
+			corpusLocations.add(corpusLocation);
+			sentenceNumbers.add(sentenceNumber);
+		}
+		
 	}
 	
 }
