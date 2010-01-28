@@ -95,7 +95,7 @@ public class SuffixArray extends AbstractSuffixArray {
 		suffixes = new int[corpusArray.size()];
 
 		// Create an array of suffix IDs
-		for (int i = 0; i < corpusArray.size(); i++) {
+		for (int i = 0, n=corpusArray.size(); i < n; i++) {
 			suffixes[i] = i;
 		}
 		// Sort the array of suffixes

@@ -31,7 +31,6 @@ import joshua.corpus.Corpus;
 import joshua.corpus.alignment.AlignmentGrids;
 import joshua.corpus.alignment.Alignments;
 import joshua.corpus.alignment.mm.MemoryMappedAlignmentGrids;
-import joshua.corpus.lexprob.LexProbs;
 import joshua.corpus.mm.MemoryMappedCorpusArray;
 import joshua.corpus.suffix_array.FrequentPhrases;
 import joshua.corpus.suffix_array.ParallelCorpusGrammarFactory;

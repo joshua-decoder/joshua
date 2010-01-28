@@ -282,6 +282,7 @@ public class Compile {
 	    	if (logger.isLoggable(Level.INFO)) logger.info("Writing precomputing indices for most frequent phrases at " + frequentPhrasesFilename);
 	    	BinaryOut frequentPhrasesOut = new BinaryOut(frequentPhrasesFilename);
 			frequentPhrases.writeExternal(frequentPhrasesOut);
+			frequentPhrasesOut.close();
 		}
 		
 		out.flush();
