@@ -118,7 +118,7 @@ public abstract class LBFGSWrapper {
         	gradientVector = computeFuncValAndGradient(getCurWeightVector(), resFuncVal);
         	
         	if(this.useModelDivergenceRegula){
-        		this.doL2ForConditionalEntropy(resFuncVal, getCurWeightVector(), gradientVector, resFuncVal, this.lambda);
+        		this.doL2ForConditionalEntropy(this.initWeights, getCurWeightVector(), gradientVector, resFuncVal, this.lambda);
         	}
         	
         	if(useL2Regula){
