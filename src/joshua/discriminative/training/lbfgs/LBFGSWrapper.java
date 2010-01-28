@@ -36,6 +36,11 @@ public abstract class LBFGSWrapper {
 	boolean useL2Regula = false;
 	double varianceForL2 = 1;
 	
+	//to regular that the current model does not derivate from the orignal model too much
+	boolean useModelDivergenceRegula = false;
+	double lambda = 1;
+	double[] initWeights;
+	
 	
 	
 	/**Input:
@@ -52,7 +57,7 @@ public abstract class LBFGSWrapper {
 	 * */
 	public abstract double[] computeFuncValAndGradient(double[] curWeights, double[] resFuncVal);
 	
-	public LBFGSWrapper(int numPara, double[] initWeights,  boolean isMinimizer, boolean useL2Regula, double varianceForL2){
+	public LBFGSWrapper(int numPara, double[] initWeights,  boolean isMinimizer, boolean useL2Regula, double varianceForL2, boolean useModelDivergenceRegula, double lambda){
 		this.isMinimizer = isMinimizer;
 		this.useL2Regula = useL2Regula;
 		this.varianceForL2 = varianceForL2;
@@ -67,6 +72,14 @@ public abstract class LBFGSWrapper {
 			else
 				weightsVector[i] = 1.0/numPara;//TODO
 		}
+		
+		//for model divergence regularization
+		this.useModelDivergenceRegula = useModelDivergenceRegula;
+		this.lambda = lambda;
+		if(useModelDivergenceRegula){
+			copyInitWeights(initWeights);
+		}
+		
 		
 		this.diag = new double[numPara];//lbfgs requires this even we do not set the values
 		
@@ -88,11 +101,7 @@ public abstract class LBFGSWrapper {
 		
 	}
 	
-	public LBFGSWrapper(int numPara, double[] initWeights,  boolean isMinimizer, int maxNumCall, boolean useL2Regula, double varianceForL2){
-		this(numPara, initWeights, isMinimizer, useL2Regula, varianceForL2);
-		this.maxNumCall = maxNumCall;
-	}
-	
+	 
 	
 	/*call LBFGS for multiple iteratons to get the best weights
 	 **/
@@ -107,6 +116,10 @@ public abstract class LBFGSWrapper {
        
         while (numCalls==0 || ( isLBFGSConverged() == false) && (numCalls <= maxNumCall)){
         	gradientVector = computeFuncValAndGradient(getCurWeightVector(), resFuncVal);
+        	
+        	if(this.useModelDivergenceRegula){
+        		this.doL2ForConditionalEntropy(resFuncVal, getCurWeightVector(), gradientVector, resFuncVal, this.lambda);
+        	}
         	
         	if(useL2Regula){
         		//adjust gradientVector and resFuncVal
@@ -272,9 +285,9 @@ public abstract class LBFGSWrapper {
 	
 	
 	  
-    //===================== for regularization of minimum conditioal entropy????????????????
-	double[] initWeights;//used for minimize conditional entropy
-    private double[] setInitWeights(double[] weights){
+    //===================== for regularization of minimum conditional entropy
+	
+	private double[] copyInitWeights(double[] weights){
 		double[] initWeights = new double[weights.length];
 		for(int i=0; i<weights.length; i++)
 			initWeights[i] = weights[i];
@@ -282,15 +295,16 @@ public abstract class LBFGSWrapper {
 	}
     
 
-	private void doL2ForConditionalEntropy(double[] initWeights, double[] curWeights, double[]  gradientVector,  double[] resFuncVal){
+    // f + lambda*l2
+	private void doL2ForConditionalEntropy(double[] initWeights, double[] curWeights, double[]  gradientVector,  double[] resFuncVal, double lambda){
 		double l2Norm = 0;
-		double lamda  = -1.0;
 		
 		for(int k=0; k<gradientVector.length; k++){
-			double difference = Math.abs( initWeights[k]-curWeights[k] );//abs????
-			l2Norm += lamda*difference*difference;			
-			gradientVector[k] +=  2*lamda*difference;//??abs
-		}			
-		resFuncVal[0] += l2Norm;    		
+			double difference = curWeights[k]  - initWeights[k];
+			l2Norm += difference*difference;		
+			gradientVector[k] += 2*lambda*difference;
+		}
+		resFuncVal[0] += lambda*l2Norm;    
+		System.out.println("L2ForConditionalEntropy is " + l2Norm + " for isMinimizer=" + this.isMinimizer);
 	}
 }

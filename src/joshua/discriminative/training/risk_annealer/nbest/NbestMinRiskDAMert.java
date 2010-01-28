@@ -30,6 +30,8 @@ public abstract class NbestMinRiskDAMert extends AbstractMinRiskMERT {
 	//TODO
 	boolean useL2Regula = false;
 	double varianceForL2 = 1;
+	boolean useModelDivergenceRegula = false;
+	double lambda = 1;
 	
 	public NbestMinRiskDAMert(boolean useShortestRef, String decoderConfigFile, int numSentInTrainSet, String[] refFiles, String nbestPrefix) {
 		super(decoderConfigFile, numSentInTrainSet, refFiles);	
@@ -64,7 +66,8 @@ public abstract class NbestMinRiskDAMert extends AbstractMinRiskMERT {
         	//String f_nbest_merged_new = "C:/Users/zli/Documents/minriskannealer.nbest.merged.17";//????????????
         	//String f_nbest_merged_new = "C:/Users/zli/Documents/minriskannealer.nbest.merged.1";//????????????
         	GradientComputer gradientComputer = new NbestRiskGradientComputer(f_nbest_merged_new, referenceFiles, useShortestRef, numTrainingSentence, numPara, MRConfig.gainFactor, 1.0, 0.0, true, linearCorpusGainThetas);
-        	annealer = new DeterministicAnnealer( numPara,  lastWeightVector, MRConfig.isMinimizer, gradientComputer, this.useL2Regula, this.varianceForL2);
+        	annealer = new DeterministicAnnealer( numPara,  lastWeightVector, MRConfig.isMinimizer, gradientComputer, 
+        			this.useL2Regula, this.varianceForL2, this.useModelDivergenceRegula, this.lambda);
         	
         	if(MRConfig.annealingMode==0)//do not anneal
         		lastWeightVector = annealer.runWithoutAnnealing(MRConfig.isScalingFactorTunable, MRConfig.startScaleAtNoAnnealing, MRConfig.temperatureAtNoAnnealing);

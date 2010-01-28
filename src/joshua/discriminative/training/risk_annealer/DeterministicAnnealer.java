@@ -36,8 +36,11 @@ public class DeterministicAnnealer {
 	boolean useL2Regula = false;
 	double varianceForL2 = 1;
 	
+	boolean useModelDivergenceRegula = false;
+	double lambda = 1;
 		
-	public DeterministicAnnealer( int numParameters,  double[] lastWeightVector, boolean isMinimizer, GradientComputer gradientComputer,  boolean useL2Regula, double varianceForL2) {
+	public DeterministicAnnealer( int numParameters,  double[] lastWeightVector, boolean isMinimizer, GradientComputer gradientComputer,  
+			boolean useL2Regula, double varianceForL2, boolean useModelDivergenceRegula, double lambda) {
 		this.numParameters = numParameters;
 		this.isMinimizer = isMinimizer;
 		this.lastWeightVector = lastWeightVector;
@@ -45,6 +48,9 @@ public class DeterministicAnnealer {
         
         this.useL2Regula = useL2Regula;
 		this.varianceForL2 = varianceForL2;
+		
+		this.useModelDivergenceRegula = useModelDivergenceRegula;
+		this.lambda = lambda;		
 	}
 	
 	
@@ -160,7 +166,8 @@ public class DeterministicAnnealer {
 	    	
 	    	/**re-start lbfgs
 	    	 * */
-        	lbfgsRunner = new GradientOptimizer(numParameters+1, weightsIncludingScaling, isMinimizer, gradientComputer, this.useL2Regula, this.varianceForL2);
+        	lbfgsRunner = new GradientOptimizer(numParameters+1, weightsIncludingScaling, isMinimizer, gradientComputer, 
+        			this.useL2Regula, this.varianceForL2, this.useModelDivergenceRegula, this.lambda);
         	
         	weightsIncludingScaling = lbfgsRunner.runLBFGS(); //run LBFGS to get the best weight vector; (LBFGS itself requires multiple iterations)
         	
@@ -171,7 +178,8 @@ public class DeterministicAnnealer {
 		}else{//fix scale
 		 	/**re-start lbfgs
 	    	 * */
-			lbfgsRunner = new GradientOptimizer(numParameters, lastWeightVector, isMinimizer, gradientComputer, this.useL2Regula, this.varianceForL2);
+			lbfgsRunner = new GradientOptimizer(numParameters, lastWeightVector, isMinimizer, gradientComputer, 
+					this.useL2Regula, this.varianceForL2, this.useModelDivergenceRegula, this.lambda);
 			
 			double[] tWeightVector = lbfgsRunner.runLBFGS(); //run LBFGS to get the best weight vector; LBFGS itself requires multiple iterations
 			gradientComputer.printLastestStatistics();

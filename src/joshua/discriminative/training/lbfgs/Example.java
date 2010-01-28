@@ -5,7 +5,7 @@ public class Example extends LBFGSWrapper{
 	
 	
 	public Example(int numPara, double[] initWeights,  boolean isMinimizer){
-		super(numPara, initWeights, isMinimizer, false, 1);
+		super(numPara, initWeights, isMinimizer, false, 1, false, 1);
 	}
 	//optimize y=-((x-3)^2+(y-4)^2)+10
 	public double[] computeFuncValAndGradient(double[] curWeights, double[] resFuncVal) {

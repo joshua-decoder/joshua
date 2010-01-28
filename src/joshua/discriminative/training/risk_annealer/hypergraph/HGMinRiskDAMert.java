@@ -145,7 +145,8 @@ public class HGMinRiskDAMert extends AbstractMinRiskMERT {
         			this.haveRefereces
     		);
  	        
-        	annealer = new DeterministicAnnealer(numPara,  lastWeightVector, MRConfig.isMinimizer, gradientComputer,  MRConfig.useL2Regula, MRConfig.varianceForL2);
+        	annealer = new DeterministicAnnealer(numPara,  lastWeightVector, MRConfig.isMinimizer, gradientComputer, 
+        			MRConfig.useL2Regula, MRConfig.varianceForL2, MRConfig.useModelDivergenceRegula, MRConfig.lambda);
         	if(MRConfig.annealingMode==0)//do not anneal
         		lastWeightVector = annealer.runWithoutAnnealing(MRConfig.isScalingFactorTunable, MRConfig.startScaleAtNoAnnealing, MRConfig.temperatureAtNoAnnealing);
         	else if(MRConfig.annealingMode==1)

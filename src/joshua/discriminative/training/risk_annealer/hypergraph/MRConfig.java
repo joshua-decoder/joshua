@@ -39,6 +39,9 @@ public class MRConfig {
 	public static boolean useL2Regula = false;
 	public static double varianceForL2 = 1;
 	
+	public static boolean useModelDivergenceRegula = false;
+	public static double lambda = -1;
+	
 	/*when we do not anneal, is the scaling factor a parameter in the tuning?*/
 	public static boolean isScalingFactorTunable = false; 
 	
@@ -126,6 +129,14 @@ public class MRConfig {
 					varianceForL2 = new Double(fds[1].trim());
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("varianceForL2: %s", varianceForL2));					
+				} else if ("useModelDivergenceRegula".equals(fds[0])) {
+					useModelDivergenceRegula = new Boolean(fds[1].trim());
+					if (logger.isLoggable(Level.FINEST))
+						logger.finest(String.format("useModelDivergenceRegula: %s", useModelDivergenceRegula));					
+				} else if ("lambda".equals(fds[0])) {
+					lambda = new Double(fds[1].trim());
+					if (logger.isLoggable(Level.FINEST))
+						logger.finest(String.format("lambda: %s", lambda));					
 				} else if ("isScalingFactorTunable".equals(fds[0])) {
 					isScalingFactorTunable = new Boolean(fds[1].trim());
 					if (logger.isLoggable(Level.FINEST))
