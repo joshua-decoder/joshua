@@ -492,42 +492,6 @@ public class Counts<A, B> implements Iterable<Pair<A,B>> {
 */
 
 	/**
-	 * set the counts with existing map
-	 * @param cMap
-	 */
-	public void setCounts(Map<A, Map<B, Integer>> cMap){
-		this.counts =cMap;
-	}
-	
-	/**
-	 * set the counts with existing map
-	 * @param bMap
-	 */
-	public void setBTotals(Map<B, Integer> bMap){
-		this.bTotals =bMap;
-	}
-
-	/**
-	 * set the probabilities with existing map
-	 * @param pMap
-	 */
-	public void setProbabilities(Map<A, Map<B, Float>> pMap){
-		this.probabilities =pMap;
-	}
-
-	/**
-	 * set the probabilities with existing map
-	 * @param pMap
-	 */
-	public void setReverseProbabilities(Map<B, Map<A, Float>> rMap){
-		this.reverseProbabilities =rMap;
-	}
-	
-
-	public void setFloorProbability(float f) {
-		this.floorProbability = f;
-	}
-	/**
 	 * Gets an iterator over all counted pairs.
 	 * <p>
 	 * The pairs are not guaranteed to be iterated over 
