@@ -21,6 +21,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutput;
+import java.io.ObjectOutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintStream;
 import java.util.Scanner;
@@ -84,6 +85,7 @@ public class Compile {
 	public void setAlignments(String alignmentsFileName) {
 		this.alignmentsFileName = alignmentsFileName;
 	}
+	
 	
 	public void setOutputDir(String outputDirName) {
 		this.outputDirName = outputDirName;
@@ -251,7 +253,15 @@ public class Compile {
 	    	String lexprobsFilename = outputDirName + File.separator + "lexprobs.txt";
 	    	FileOutputStream stream = new FileOutputStream(lexprobsFilename);
 	    	OutputStreamWriter lexprobsOut = new OutputStreamWriter(stream, charset);
-
+	    	
+	    	String binaryLexCountFilename = outputDirName + File.separator + "lexicon.counts";
+			if (logger.isLoggable(Level.INFO)) logger.info("Writing binary lexicon counts to disk at " + binaryLexCountFilename);
+	    	
+//			BinaryOut lexCountOut = new BinaryOut(binaryLexCountFilename);
+			ObjectOutput lexCountOut = new ObjectOutputStream(new FileOutputStream(binaryLexCountFilename));
+			lexProbs.writeExternal(lexCountOut);
+			lexCountOut.close();
+			
 	    	String s = lexProbs.toString();
 
 	    	if (logger.isLoggable(Level.INFO)) logger.info("Writing lexprobs at " + lexprobsFilename);

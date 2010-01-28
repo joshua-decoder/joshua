@@ -31,6 +31,7 @@ import joshua.corpus.Corpus;
 import joshua.corpus.alignment.AlignmentGrids;
 import joshua.corpus.alignment.Alignments;
 import joshua.corpus.alignment.mm.MemoryMappedAlignmentGrids;
+import joshua.corpus.lexprob.LexProbs;
 import joshua.corpus.mm.MemoryMappedCorpusArray;
 import joshua.corpus.suffix_array.FrequentPhrases;
 import joshua.corpus.suffix_array.ParallelCorpusGrammarFactory;
@@ -71,6 +72,8 @@ public class ExtractRules {
 	
 	private String alignmentsFileName = "";
 	private String commonVocabFileName = "";
+	
+	private String lexCountsFileName = "";
 	
 	private String testFileName = "";
 	private String frequentPhrasesFileName = "";
@@ -120,6 +123,10 @@ public class ExtractRules {
 		this.alignmentsFileName = alignmentsFileName;
 	}
 	
+	public void setLexCountsFileName(String lexCountsFileName) {
+		this.lexCountsFileName = lexCountsFileName;
+	}
+	
 	public void setStartingSentence(int startingSentence) {
 		this.startingSentence = startingSentence;
 	}
@@ -154,7 +161,9 @@ public class ExtractRules {
 		this.targetFileName = joshDir + File.separator + "target.corpus";
 		
 		this.commonVocabFileName = joshDir + File.separator + "common.vocab";
-		
+
+		this.lexCountsFileName = joshDir + File.separator + "lexicon.counts";
+
 		this.sourceSuffixesFileName = joshDir + File.separator + "source.suffixes";
 		this.targetSuffixesFileName = joshDir + File.separator + "target.suffixes";
 		
@@ -325,6 +334,13 @@ public class ExtractRules {
 		Map<Integer,String> ntVocab = new HashMap<Integer,String>();
 		ntVocab.put(SymbolTable.X, SymbolTable.X_STRING);
 		
+		//////////////////////
+		// Lexical Probs    //
+		//////////////////////		
+
+		logger.info("Constructing grammar factory from parallel corpus");
+//		final LexProbs lexProbs;
+		String binaryLexCountsFilename = this.lexCountsFileName;
 		
 		//////////////////////
 		// Frequent Phrases //
@@ -333,9 +349,16 @@ public class ExtractRules {
 			FrequentPhrases frequentPhrases = new FrequentPhrases(sourceSuffixArray, frequentPhrasesFileName);
 			frequentPhrases.cacheInvertedIndices();
 		}
+
 		
-		logger.info("Constructing grammar factory from parallel corpus");
-		ParallelCorpusGrammarFactory parallelCorpus = new ParallelCorpusGrammarFactory(sourceSuffixArray, targetSuffixArray, alignments, null, ruleSampleSize, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan, Float.MIN_VALUE, JoshuaConfiguration.phrase_owner, JoshuaConfiguration.default_non_terminal, JoshuaConfiguration.oovFeatureCost);
+		ParallelCorpusGrammarFactory parallelCorpus;
+		if (binaryCorpus) {
+			if (logger.isLoggable(Level.INFO)) logger.info("Constructing lexical translation probabilities from binary file " + binaryLexCountsFilename);
+			parallelCorpus = new ParallelCorpusGrammarFactory(sourceSuffixArray, targetSuffixArray, alignments, null, binaryLexCountsFilename, ruleSampleSize, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan, JoshuaConfiguration.phrase_owner, JoshuaConfiguration.default_non_terminal, JoshuaConfiguration.oovFeatureCost);
+		} else { 
+			if (logger.isLoggable(Level.INFO)) logger.info("Constructing lexical translation probabilities from parallel corpus"); 
+			parallelCorpus = new ParallelCorpusGrammarFactory(sourceSuffixArray, targetSuffixArray, alignments, null, ruleSampleSize, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan, Float.MIN_VALUE, JoshuaConfiguration.phrase_owner, JoshuaConfiguration.default_non_terminal, JoshuaConfiguration.oovFeatureCost);
+		}
 		return parallelCorpus;
 	}
 

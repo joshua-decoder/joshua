@@ -17,6 +17,15 @@
  */
 package joshua.corpus.lexprob;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutput;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -28,6 +37,8 @@ import joshua.corpus.suffix_array.HierarchicalPhrase;
 import joshua.corpus.vocab.SymbolTable;
 import joshua.util.Counts;
 import joshua.util.Pair;
+import joshua.util.io.BinaryIn;
+import joshua.util.io.BinaryOut;
 
 /**
  * Represents lexical probability distributions in both directions.
@@ -57,10 +68,10 @@ public class LexProbs extends AbstractLexProbs {
 	 * The probability returned when no calculated lexical
 	 * translation probability is known.
 	 */
-	protected final float floorProbability;
+	protected float floorProbability;
 	
 	/** Word co-occurrence counts from the parallel corpus. */
-	protected final Counts<Integer,Integer> counts;
+	protected Counts<Integer,Integer> counts;
 	
 	
 	/**
@@ -84,6 +95,50 @@ public class LexProbs extends AbstractLexProbs {
 		
 	}
 
+	/**
+	 * Constructs lexical translation probabilities from a
+	 * parallel corpus.
+	 * 
+	 * @param parallelCorpus Aligned parallel corpus
+	 * @param ObjectIn
+	 */
+	public LexProbs(ParallelCorpus parallelCorpus, String lexCountsFileName) {
+		
+//		logger.info("Calculating lexical translation probability table");
+//		this.counts = initializeCooccurrenceCounts(parallelCorpus, floorProbability);
+		
+		this.sourceVocab = parallelCorpus.getSourceCorpus().getVocabulary();
+		this.targetVocab = parallelCorpus.getTargetCorpus().getVocabulary();
+		
+		this.parallelCorpus = parallelCorpus;
+		
+//		File lexCounts = new File(lexCountsFileName);
+		this.counts = new Counts<Integer, Integer>();
+		this.floorProbability = Float.MIN_VALUE;
+//		File lexCounts = new File(lexCountsFileName);
+//		if (!lexCounts.exists()) {
+//		} else {
+			
+		try {
+			ObjectInput in = new ObjectInputStream(new FileInputStream(lexCountsFileName));
+//			readExternal(in);
+			logger.info("Reading lexical translation probability table");
+			readExternal(in);
+			in.close();
+		} catch (Exception e) {
+			logger.info("Calculating lexical translation probability table");
+			this.counts = initializeCooccurrenceCounts(parallelCorpus, floorProbability);
+			// TODO Auto-generated catch block
+//			e.printStackTrace();
+		} 
+			
+//		}
+
+
+		
+//		logger.info("Calculating lexical translation probability table");
+		
+	}
 	/**
 	 * Gets co-occurrence counts from a parallel corpus.
 	 * 
@@ -363,6 +418,43 @@ public class LexProbs extends AbstractLexProbs {
 		}
 		
 		return s.toString();
+	}
+	
+	public void writeExternal(ObjectOutput out) throws IOException {
+		
+		counts.writeExternal(out);
+		
+	}
+	
+	public void readExternal(ObjectInput in) throws IOException,
+	ClassNotFoundException {
+		/*
+		Map<Integer, Map<Integer, Integer>> ctMap = 
+			(HashMap<Integer,Map<Integer,Integer>>) in.readObject();
+		counts.setCounts(ctMap);
+		
+		// Read bTotals
+
+		Map<Integer, Integer> btMap = 
+			(HashMap<Integer,Integer>) in.readObject();
+		
+		counts.setBTotals(btMap);
+		
+		// Read probabilities 
+		Map<Integer, Map<Integer, Float>> pbMap = 
+			(HashMap<Integer,Map<Integer,Float>>) in.readObject();
+		counts.setProbabilities(pbMap);
+		
+		// Read reverse probabilities 
+		Map<Integer, Map<Integer, Float>> rpMap = 
+			(HashMap<Integer,Map<Integer,Float>>) in.readObject();
+		counts.setProbabilities(rpMap);
+		*/
+		
+		this.counts.readExternal(in);
+		floorProbability = counts.getFloorProbability();
+		
+
 	}
 	
 	public SymbolTable getSourceVocab() {

@@ -17,10 +17,15 @@
  */
 package joshua.util;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.logging.Level;
 
 /**
  * Maintains element co-occurrence data.
@@ -35,19 +40,19 @@ public class Counts<A, B> implements Iterable<Pair<A,B>> {
 	/**
 	 * Stores the number of times instances of A and B co-occur.
 	 */
-	private final Map<A,Map<B,Integer>> counts;
+	private Map<A,Map<B,Integer>> counts;
 	
 	/** Stores the number of times instances of B occur. */
-	private final Map<B,Integer> bTotals;
+	private Map<B,Integer> bTotals;
 	
 	/** Stores relative frequency estimates for p(A | B). */
-	private final Map<A,Map<B,Float>> probabilities;
+	private Map<A,Map<B,Float>> probabilities;
 	
 	/** Stores relative frequency estimates for p(B | A). */
-	private final Map<B,Map<A,Float>> reverseProbabilities;
+	private Map<B,Map<A,Float>> reverseProbabilities;
 	
 	/** Stores the value to return when an unseen pair is queried. */
-	private final float floorProbability;
+	private float floorProbability;
 	
 	/**
 	 * Constructs an initially empty co-occurrence counter,
@@ -70,6 +75,7 @@ public class Counts<A, B> implements Iterable<Pair<A,B>> {
 		this.probabilities = new HashMap<A,Map<B,Float>>();
 		this.reverseProbabilities = new HashMap<B,Map<A,Float>>();
 	}
+	
 	
 	/**
 	 * Increments the co-occurrence count of the provided
@@ -253,6 +259,274 @@ public class Counts<A, B> implements Iterable<Pair<A,B>> {
 		return this.floorProbability;
 	}
 
+	public void writeExternal(ObjectOutput out) throws IOException {
+		out.writeObject(counts);
+		out.writeObject(bTotals);
+		out.writeObject(probabilities);
+		out.writeObject(reverseProbabilities);
+		out.writeFloat(floorProbability);
+//		out.close();
+	}
+	
+	public void readExternal(ObjectInput in) throws ClassNotFoundException, IOException {
+		this.counts = (HashMap<A, Map<B, Integer>>) in.readObject();
+		this.bTotals = (HashMap<B,Integer>) in.readObject();
+		this.probabilities = (HashMap<A,Map<B,Float>>) in.readObject();
+		this.reverseProbabilities = (HashMap<B,Map<A,Float>>) in.readObject();
+		this.floorProbability = in.readFloat();
+		/*
+		Map<Integer, Map<Integer, Integer>> ctMap = 
+			(HashMap<Integer,Map<Integer,Integer>>) in.readObject();
+		counts.setCounts(ctMap);
+		
+		// Read bTotals
+
+		Map<Integer, Integer> btMap = 
+			(HashMap<Integer,Integer>) in.readObject();
+		
+		counts.setBTotals(btMap);
+		
+		// Read probabilities 
+		Map<Integer, Map<Integer, Float>> pbMap = 
+			(HashMap<Integer,Map<Integer,Float>>) in.readObject();
+		counts.setProbabilities(pbMap);
+		
+		// Read reverse probabilities 
+		Map<Integer, Map<Integer, Float>> rpMap = 
+			(HashMap<Integer,Map<Integer,Float>>) in.readObject();
+		counts.setProbabilities(rpMap);
+		*/
+	}
+	/*
+	public void writeExternal(ObjectOutput out) throws IOException {
+		// write floorProbability
+		out.writeFloat(floorProbability);
+
+		out.writeInt(counts.size());
+		for (Map.Entry<A,Map<B,Integer>> ae : counts.entrySet()) {
+			String a;
+			if (ae.getKey() == null) {
+				a = "NULL";
+			} else {
+				a = ae.getKey().toString();
+			}
+			out.writeChars(a);
+			out.writeInt(ae.getValue().size());
+			for (Map.Entry<B, Integer> be : ae.getValue().entrySet()) {
+				String b;
+				if (be.getKey() == null) {
+					b = "NULL";
+				} else {
+					b = be.getKey().toString();
+				}
+				out.writeChars(b);
+				out.writeInt(be.getValue());
+				
+			}
+		}
+
+		// write bTotals: size followed by the object
+		out.writeInt(bTotals.size());
+		
+		for (Map.Entry<B,Integer> be : bTotals.entrySet()) {
+			String b;
+			if (be.getKey() == null) {
+				b = "NULL";
+			} else {
+				b = be.getKey().toString();
+			}
+			out.writeChars(b);
+			out.writeInt(be.getValue());
+			
+		}		
+
+		// write probabilities: size followed by the object
+		out.writeInt(probabilities.size());
+		for (Map.Entry<A, Map<B, Float>> ae : probabilities.entrySet()) {
+			
+			String a;
+			if (ae.getKey() == null) {
+				a = "NULL";
+			} else {
+				a = ae.getKey().toString();
+			}
+			out.writeChars(a);
+			out.writeInt(ae.getValue().size());
+
+			for (Map.Entry<B, Float> be: ae.getValue().entrySet()) {
+
+				String b;
+				if (be.getKey() == null) {
+					b = "NULL";
+				} else {
+					b = be.getKey().toString();
+				}
+				out.writeChars(b);
+				out.writeFloat(be.getValue());
+
+			}
+			
+		}
+		
+		// write reverseProbabilities: size followed by the object
+		out.writeInt(reverseProbabilities.size());
+		for (Map.Entry<B, Map<A, Float>> be : reverseProbabilities.entrySet()) {
+
+			String b;
+			if (be.getKey() == null) {
+				b = "NULL";
+			} else {
+				b = be.getKey().toString();
+			}
+			out.writeChars(b);
+			out.writeInt(be.getValue().size());
+
+			for (Map.Entry<A, Float> ae: be.getValue().entrySet()) {
+
+				String a;
+				if (ae.getKey() == null) {
+					a = "NULL";
+				} else {
+					a = ae.getKey().toString();
+				}
+				out.writeChars(a);
+				out.writeFloat(ae.getValue());
+
+			}
+			
+		}
+		
+
+	}
+	
+*/
+	/*
+	public void readExternal(ObjectInput in) throws IOException,
+	ClassNotFoundException {
+
+		// Read counts
+		int countsSize = in.readInt();
+		for (int i=0; i < countsSize; i++) {
+
+			A a = (A) in.readObject();
+
+			int bMapSize = in.readInt();
+					
+			Map<B, Integer> bMap = new HashMap<B,Integer>();
+			
+			for (int j=0; j< bMapSize; j++) {
+				
+				B b = (B) in.readObject();
+				int pairCount = in.readInt();
+				bMap.put(b, pairCount);
+
+			}
+			
+			counts.put(a, bMap);
+			
+			
+		}
+		
+		// Read bTotals
+		int bTotalsSize = in.readInt();
+		for (int i=0; i < bTotalsSize; i++) {
+			
+			B b = (B) in.readObject();
+			int bCount = in.readInt();
+			bTotals.put(b, bCount);
+		}
+		
+		// Read probabilities
+		int probSize = in.readInt();
+
+		for (int i=0; i < probSize; i++) {
+
+			A a = (A) in.readObject();
+
+			int bMapSize = in.readInt();
+					
+			Map<B, Float> bMap = new HashMap<B,Float>();
+			
+			for (int j=0; j< bMapSize; j++) {
+				
+				B b = (B) in.readObject();
+				float pairProb = in.readFloat();
+				bMap.put(b, pairProb);
+
+			}
+			
+			probabilities.put(a, bMap);
+			
+			
+		}
+
+		// Read reversed probabilities
+		int revProbSize = in.readInt();
+
+		for (int i=0; i < revProbSize; i++) {
+
+			B b = (B) in.readObject();
+
+			int aMapSize = in.readInt();
+					
+			Map<A, Float> aMap = new HashMap<A,Float>();
+			
+			for (int j=0; j< aMapSize; j++) {
+				
+				A a = (A) in.readObject();
+				float pairProb = in.readFloat();
+				aMap.put(a, pairProb);
+
+			}
+			
+			reverseProbabilities.put(b, aMap);
+			
+			
+		}
+		
+		// Read floorProbability
+		floorProbability = in.readFloat();
+
+}
+
+*/
+
+	/**
+	 * set the counts with existing map
+	 * @param cMap
+	 */
+	public void setCounts(Map<A, Map<B, Integer>> cMap){
+		this.counts =cMap;
+	}
+	
+	/**
+	 * set the counts with existing map
+	 * @param bMap
+	 */
+	public void setBTotals(Map<B, Integer> bMap){
+		this.bTotals =bMap;
+	}
+
+	/**
+	 * set the probabilities with existing map
+	 * @param pMap
+	 */
+	public void setProbabilities(Map<A, Map<B, Float>> pMap){
+		this.probabilities =pMap;
+	}
+
+	/**
+	 * set the probabilities with existing map
+	 * @param pMap
+	 */
+	public void setReverseProbabilities(Map<B, Map<A, Float>> rMap){
+		this.reverseProbabilities =rMap;
+	}
+	
+
+	public void setFloorProbability(float f) {
+		this.floorProbability = f;
+	}
 	/**
 	 * Gets an iterator over all counted pairs.
 	 * <p>

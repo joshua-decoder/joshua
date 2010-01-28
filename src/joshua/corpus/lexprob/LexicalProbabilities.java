@@ -17,6 +17,10 @@
  */
 package joshua.corpus.lexprob;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+
 import joshua.corpus.MatchedHierarchicalPhrases;
 import joshua.corpus.alignment.AlignmentGrid;
 import joshua.corpus.suffix_array.HierarchicalPhrase;
@@ -161,6 +165,8 @@ public interface LexicalProbabilities {
 	 */
 	public AlignmentGrid getTargetGivenSourceAlignments(Pattern targetPattern, Pattern sourcePattern); 
 	
+	
+	
 	/**
 	 * Gets the probability returned when no calculated lexical
 	 * translation probability is known.
@@ -185,4 +191,17 @@ public interface LexicalProbabilities {
 	 * @return The symbol table for the target language.
 	 */
 	SymbolTable getTargetVocab();
+	
+	/**
+	 * Read external binarized object
+	 * @param in
+	 */
+	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException;
+	
+	/**
+	 * Write the object externally
+	 * @param out
+	 */
+	public void writeExternal(ObjectOutput out) throws IOException;
+	
 }

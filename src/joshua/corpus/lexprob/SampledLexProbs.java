@@ -19,6 +19,8 @@ package joshua.corpus.lexprob;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Date;
@@ -557,6 +559,17 @@ public class SampledLexProbs extends AbstractLexProbs {
 	
 	public SymbolTable getTargetVocab() {
 		return targetVocab;
+	}
+
+	public void readExternal(ObjectInput in) throws IOException,
+			ClassNotFoundException {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public void writeExternal(ObjectOutput out) throws IOException {
+		// TODO Auto-generated method stub
+		
 	}
 }
 

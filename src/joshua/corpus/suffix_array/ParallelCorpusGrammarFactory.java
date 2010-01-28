@@ -163,6 +163,87 @@ public class ParallelCorpusGrammarFactory extends AlignedParallelCorpus implemen
 	}
 	
 	
+	/**
+	 * Constructs a factory capable of getting a grammar backed
+	 * by a suffix array.
+	 * 
+	 * @param sourceSuffixArray Source language corpus, 
+	 *                          represented as a suffix array
+	 * @param targetSuffixArray Target language corpus
+	 *                          represented as a suffix array
+	 * @param alignments        Parallel corpus alignment points
+	 * @param maxPhraseSpan     Max span in the source corpus of any 
+	 *                          extracted hierarchical phrase
+	 * @param maxPhraseLength   Maximum number of terminals plus nonterminals 
+	 *                          allowed in any extracted hierarchical phrase
+	 * @param maxNonterminals   Maximum number of nonterminals allowed on the 
+	 *                          right-hand side of any extracted rule
+	 * @param ruleOwner 		Specifies a name identifier for this grammar
+	 * @param defaultLHSSymbol TODO
+	 * @param oovFeatureCost TODO
+	 */
+	public ParallelCorpusGrammarFactory(
+			Suffixes sourceSuffixArray, 
+			Suffixes targetSuffixArray, 
+			Alignments alignments, 
+			ArrayList<FeatureFunction> models,
+			String lexCountsFilename,
+			int sampleSize, 
+			int maxPhraseSpan, 
+			int maxPhraseLength, 
+			int maxNonterminals, 
+			int minNonterminalSpan,  
+			String ruleOwner, 
+			String defaultLHSSymbol, 
+			float oovFeatureCost) {
+		
+		super((sourceSuffixArray==null)?null:sourceSuffixArray.getCorpus(), 
+				(targetSuffixArray==null)?null:targetSuffixArray.getCorpus(), 
+				alignments);
+		this.sourceSuffixArray = sourceSuffixArray;
+		this.maxPhraseSpan     = maxPhraseSpan;
+		this.maxPhraseLength   = maxPhraseLength;
+		this.maxNonterminals   = maxNonterminals;
+		this.minNonterminalSpan = minNonterminalSpan;
+		this.lexProbs          = new LexProbs(this, lexCountsFilename);
+		this.ruleOwner = ruleOwner;
+		this.defaultLHSSymbol = defaultLHSSymbol;
+		this.oovFeatureCost = oovFeatureCost;
+		
+		int maxNonterminalSpan = maxPhraseSpan;
+		
+		this.ruleExtractor = 
+			new HierarchicalRuleExtractor(
+					sourceSuffixArray, 
+					targetSuffixArray, 
+					alignments, 
+					lexProbs, 
+					models,
+					sampleSize, 
+					maxPhraseSpan, 
+					maxPhraseLength,
+//					maxNonterminals, 
+//					minNonterminalSpan
+					minNonterminalSpan,
+					maxNonterminalSpan
+				);	
+		
+		/*
+	public HierarchicalRuleExtractor(
+			Suffixes suffixArray, 
+			Corpus targetCorpus, 
+			Alignments alignments, 
+			LexicalProbabilities lexProbs, 
+			int sampleSize, 
+			int maxPhraseSpan, 
+			int maxPhraseLength, 
+			int minNonterminalSpan, 
+			int maxNonterminalSpan)
+		 
+		 */
+	}
+	
+	
 	/** 
 	 * Extracts a grammar which contains only those rules
 	 * relevant for translating the specified sentence.
