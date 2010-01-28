@@ -260,17 +260,17 @@ public class Compile {
 	    	lexprobsOut.close();
 	    	out.println("Lexprobs at " + lexprobsFilename);
 	    	
-	    	if (logger.isLoggable(Level.INFO)) logger.info("Precomputing indices for most frequent phrases");
-	    	
 		}
 		
 		// Precompute and write frequent phrase locations to disk
 		{
-			FrequentPhrases frequentPhrases = 
+			if (logger.isLoggable(Level.INFO)) logger.info("Precomputing indices for most frequent phrases");
+	    	FrequentPhrases frequentPhrases = 
 				new FrequentPhrases(sourceSuffixArray, minFrequency, maxPhrases, maxPhraseLength);
 			
-			String frequentPhrasesFilename = outputDirName + File.separator + "frequentPhrases";
-			BinaryOut frequentPhrasesOut = new BinaryOut(frequentPhrasesFilename);
+	    	String frequentPhrasesFilename = outputDirName + File.separator + "frequentPhrases";
+	    	if (logger.isLoggable(Level.INFO)) logger.info("Writing precomputing indices for most frequent phrases at " + frequentPhrasesFilename);
+	    	BinaryOut frequentPhrasesOut = new BinaryOut(frequentPhrasesFilename);
 			frequentPhrases.writeExternal(frequentPhrasesOut);
 		}
 		

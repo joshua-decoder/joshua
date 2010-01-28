@@ -32,6 +32,7 @@ import joshua.corpus.alignment.AlignmentGrids;
 import joshua.corpus.alignment.Alignments;
 import joshua.corpus.alignment.mm.MemoryMappedAlignmentGrids;
 import joshua.corpus.mm.MemoryMappedCorpusArray;
+import joshua.corpus.suffix_array.FrequentPhrases;
 import joshua.corpus.suffix_array.ParallelCorpusGrammarFactory;
 import joshua.corpus.suffix_array.SuffixArrayFactory;
 import joshua.corpus.suffix_array.Suffixes;
@@ -72,7 +73,7 @@ public class ExtractRules {
 	private String commonVocabFileName = "";
 	
 	private String testFileName = "";
-	
+	private String frequentPhrasesFileName = "";
 	
 	private int cacheSize = Cache.DEFAULT_CAPACITY;
 	
@@ -153,6 +154,8 @@ public class ExtractRules {
 		
 		this.alignmentsFileName = joshDir + File.separator + "alignment.grids";
 		this.alignmentsType = "MemoryMappedAlignmentGrids";
+		
+		this.frequentPhrasesFileName = joshDir + File.separator + "frequentPhrases";
 		
 		this.binaryCorpus = true;
 	}
@@ -315,6 +318,14 @@ public class ExtractRules {
 		
 		Map<Integer,String> ntVocab = new HashMap<Integer,String>();
 		ntVocab.put(SymbolTable.X, SymbolTable.X_STRING);
+		
+		
+		//////////////////////
+		// Frequent Phrases //
+		//////////////////////
+		FrequentPhrases frequentPhrases = new FrequentPhrases(sourceSuffixArray, frequentPhrasesFileName);
+		frequentPhrases.cacheInvertedIndices();
+		
 		
 		logger.info("Constructing grammar factory from parallel corpus");
 		ParallelCorpusGrammarFactory parallelCorpus = new ParallelCorpusGrammarFactory(sourceSuffixArray, targetSuffixArray, alignments, null, ruleSampleSize, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan, Float.MIN_VALUE, JoshuaConfiguration.phrase_owner, JoshuaConfiguration.default_non_terminal, JoshuaConfiguration.oovFeatureCost);
