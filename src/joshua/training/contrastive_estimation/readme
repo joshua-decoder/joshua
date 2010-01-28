@@ -1,0 +1,9 @@
+Three steps:
+
+(1) collect confusion grammar from test-hypergraphs
+
+(2) decode English monolingual data
+
+(3) discriminative training
+
+(4) use the model in decoding

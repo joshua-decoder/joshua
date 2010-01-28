@@ -1,0 +1,26 @@
+baseline_lm_order=5
+baseline_lm_feat_id=0
+insideoutside_scaling_factor=1
+
+vbaseline 1.0
+#vconstituent 1.0
+
+#feature lm_order weight
+#vlm 1 1.0
+#vlm 2 1.0
+#vlm 3 1.0
+#vlm 4 1.0
+vlm 5 1.0
+#vlm_with_i_j 3 1.0
+#vlm_with_i_j_lhs 3 1.0
+
+#word_penalty_weight 1.0
+
+#baseline lm feature
+#vbaselinecombo 0||1.0 1.0 
+
+#baseline tm features
+#vbaselinecombo 1||1.066893 2||0.752247 3||0.589793 1.0
+
+#baseline word penalty
+#vbaselinecombo 4||1.0 1.0 

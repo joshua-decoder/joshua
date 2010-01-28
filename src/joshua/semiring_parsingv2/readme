@@ -1,0 +1,36 @@
+Design:
+
+We make two categories: 
+
+(Note: we also tried to create a separate class vector-space.
+ This might be useful as it can be combined with any semiring to get a p-module.
+ However, we found this is not the case as we need to create many more objects.
+ For example, to get a ScalarPM, we need to do sth like "new ScalarPM(new ScalarVS())".
+ In terms of number of classes, having a separate vector class does not reduce the workload.)
+
+p-module, 
+
+BilinearPModule
+
+
+==========================================================
+Extend DefaultIOParserWithXLinearCombinator
+Parameterize ExpectationSemiring
+
+
+To compute a new **first-order** statistics, we just need to specify a weight for each hyperedge.
+Specifically, we need to implement the following two functions
+1. createNewKWeight
+2. getEdgeKWeight
+
+
+To compute a new **second-order** statistics, we just need to specify a weight for each hyperedge.
+Specifically, we need to implement the following four functions
+1. createNewKWeight
+2. createNewXWeight
+3. getEdgeKWeight
+4. getEdgeXWeight
+
+In either case, we may need to define new semiring, P-module, Bilinear P-module,
+and then uses these new classes in implementing the above functions.
+

@@ -1,0 +1,663 @@
+false
+C:/data_disk/java_work_space/discriminative_at_clsp/edu/jhu/joshua/discriminative_training/risk_annealer/example.config.javalm
+1.0
+C:/data_disk/java_work_space/sf_trunk/example/example.test.in
+C:/data_disk/java_work_space/discriminative_at_clsp/edu/jhu/joshua/discriminative_training/risk_annealer/example.nbest.javalm.out.vmert
+C:/data_disk/java_work_space/sf_trunk/example/example.test.ref.0
+C:/data_disk/java_work_space/sf_trunk/example/example.test.ref.1
+C:/data_disk/java_work_space/sf_trunk/example/example.test.ref.2
+C:/data_disk/java_work_space/sf_trunk/example/example.test.ref.3
+
+
+==================== one iteration of nbest min da mert =============
+weight: 1.0
+weight: 1.066893
+weight: 0.752247
+weight: 0.589793
+weight: -2.844814
+2009-4-20 10:00:56 joshua.decoder.JoshuaConfiguration readConfigFile
+信息: you use a LM feature function, so make sure you have a LM grammar
+2009-4-20 10:00:56 joshua.decoder.BuildinSymbol <init>
+信息: Construct the symbol table on the fly
+2009-4-20 10:00:56 joshua.decoder.ff.lm.buildin_lm.LMGrammarJAVA <init>
+信息: use java lm
+2009-4-20 10:00:56 joshua.decoder.ff.lm.buildin_lm.LMGrammarJAVA read_lm_grammar_from_file
+信息: Reading grammar from file C:/data_disk/java_work_space/sf_trunk/example/example.trigram.lm.gz
+2009-4-20 10:00:56 joshua.decoder.ff.lm.buildin_lm.LMGrammarJAVA read_lm_grammar_from_file
+信息: begin to read ngrams with order 1
+2009-4-20 10:00:56 joshua.decoder.ff.lm.buildin_lm.LMGrammarJAVA read_lm_grammar_from_file
+信息: begin to read ngrams with order 2
+2009-4-20 10:00:56 joshua.decoder.ff.lm.buildin_lm.LMGrammarJAVA read_lm_grammar_from_file
+信息: begin to read ngrams with order 3
+2009-4-20 10:00:56 joshua.decoder.JoshuaDecoder initializeGlueGrammar
+信息: Constructing glue grammar...
+2009-4-20 10:00:56 joshua.decoder.ff.tm.hiero.MemoryBasedBatchGrammar print_grammar
+信息: ###########Grammar###########
+2009-4-20 10:00:56 joshua.decoder.ff.tm.hiero.MemoryBasedBatchGrammar print_grammar
+信息: ####num_rules: 2; num_bins: 2; num_pruned: 0; sumest_cost: 0.00000
+2009-4-20 10:00:56 joshua.decoder.JoshuaDecoder initializeTranslationGrammars
+信息: Using grammar read from file C:/data_disk/java_work_space/sf_trunk/example/example.hiero.tm.gz
+2009-4-20 10:00:57 joshua.decoder.ff.tm.hiero.MemoryBasedBatchGrammar print_grammar
+信息: ###########Grammar###########
+2009-4-20 10:00:57 joshua.decoder.ff.tm.hiero.MemoryBasedBatchGrammar print_grammar
+信息: ####num_rules: 15939; num_bins: 2029; num_pruned: 0; sumest_cost: 0.00000
+Feature function : LanguageModelFF; weight changed from 1.0 to 1.0
+Feature function : PhraseModelFF; weight changed from 1.066893 to 1.066893
+Feature function : PhraseModelFF; weight changed from 0.752247 to 0.752247
+Feature function : PhraseModelFF; weight changed from 0.589793 to 0.589793
+Feature function : WordPenaltyFF; weight changed from -2.844814 to -2.844814
+2009-4-20 10:00:57 joshua.decoder.chart_parser.Chart expand
+信息: Sentence length: 9
+2009-4-20 10:00:57 joshua.decoder.chart_parser.Bin transit_to_goal
+信息: Goal item, best cost is 135.267
+2009-4-20 10:00:58 joshua.decoder.chart_parser.Chart expand
+信息: Sentence length: 42
+2009-4-20 10:00:58 joshua.decoder.chart_parser.Bin transit_to_goal
+信息: Goal item, best cost is 214.873
+2009-4-20 10:00:59 joshua.decoder.chart_parser.Chart expand
+信息: Sentence length: 23
+2009-4-20 10:00:59 joshua.decoder.chart_parser.Bin transit_to_goal
+信息: Goal item, best cost is 156.188
+2009-4-20 10:01:00 joshua.decoder.chart_parser.Chart expand
+信息: Sentence length: 24
+2009-4-20 10:01:00 joshua.decoder.chart_parser.Bin transit_to_goal
+信息: Goal item, best cost is 160.277
+2009-4-20 10:01:00 joshua.decoder.chart_parser.Chart expand
+信息: Sentence length: 27
+2009-4-20 10:01:00 joshua.decoder.chart_parser.Bin transit_to_goal
+信息: Goal item, best cost is 76.116
+preprocess nbest and ref files
+after proprecessing
+l_feature_value size 7500
+l_gain_withrespectto_ref size 1500
+======= cooling stage =======
+Minimize the function: false
+====================== runLBFGS: temperature= 1000.0; scaling= 0.1
+================ beging to run LBFGS =======================
+LBFGS early stops because the function value does not change; break at iter 5
+##############Func value: 28520.03104948431 at iteration number 5
+Gradient vector:  1.6637219779624957E-6 -1.37247731587807E-6 7.997342779688895E-8 8.556530856828281E-7 -1.6937528122393979E-6 -5.728742796913479E-7
+Weight vector:  1.048551056209264E-5 0.9934335409218491 1.060294497181129 0.7532405432944157 0.5880638066440051 -2.845666576690486
+Func value=28520.031049495916=1.1186762538146928+28518.912373242096
+AVG Expected_gain=22.373525076293856%; avg entropy=5.703782474648419
+Minimize the function: false
+====================== runLBFGS: temperature= 500.0; scaling= 1.048551056209264E-5
+================ beging to run LBFGS =======================
+##############Func value: 14260.574862894327 at iteration number 4
+Gradient vector:  -2.5161357442016197E-9 -2.7455885066585114E-6 1.5996257108385798E-7 1.7116911899293995E-6 -3.3882717743716727E-6 -1.146008091531533E-6
+Weight vector:  2.0975756786876162E-5 0.9934335293317283 1.0602944979324966 0.753240550555927 0.5880637922875098 -2.845666581544543
+Func value=14260.574862894327=1.1186763316374426+14259.456186562691
+AVG Expected_gain=22.373526632748852%; avg entropy=5.7037824746250765
+Minimize the function: false
+====================== runLBFGS: temperature= 250.0; scaling= 2.0975756786876162E-5
+================ beging to run LBFGS =======================
+##############Func value: 7130.846769651903 at iteration number 4
+Gradient vector:  -1.3636318962895189E-8 -5.4911946176672454E-6 3.1992744051721495E-7 3.423393147485986E-6 -6.776561346056556E-6 -2.292021858190616E-6
+Weight vector:  4.1951684967668826E-5 0.9934334829677868 1.0602945009381588 0.7532405796041185 0.5880637348573017 -2.8456666009621987
+Func value=7130.846769651903=1.1186764872508468+7129.728093164652
+AVG Expected_gain=22.373529745016935%; avg entropy=5.703782474531722
+Minimize the function: false
+====================== runLBFGS: temperature= 125.0; scaling= 4.1951684967668826E-5
+================ beging to run LBFGS =======================
+##############Func value: 3565.9827231473837 at iteration number 4
+Gradient vector:  -5.820779913623397E-8 -1.0982538168017743E-5 6.398650109842874E-7 6.846876792193125E-6 -1.3553290614276808E-5 -4.584099151382738E-6
+Weight vector:  8.390465886327289E-5 0.9934332975108308 1.0602945129608996 0.75324069579759 0.588063505135252 -2.845666678633214
+Func value=3565.9827231473837=1.1186767984957249+3564.8640463488873
+AVG Expected_gain=22.373535969914496%; avg entropy=5.70378247415822
+Minimize the function: false
+====================== runLBFGS: temperature= 62.5; scaling= 8.390465886327289E-5
+================ beging to run LBFGS =======================
+LBFGS early stops because the function value does not change; break at iter 5
+##############Func value: 1783.5507001286433 at iteration number 5
+Gradient vector:  -1.7430639138671378E-5 -2.202152408859746E-5 1.2810507084544474E-6 1.3728042738635562E-5 -2.7174974985637833E-5 -9.191364626447173E-6
+Weight vector:  1.6823220572007036E-4 0.9934300304810463 1.0602947082156442 0.7532427348835818 0.5880594699336782 -2.8456680433392343
+Func value=1783.5507001287776=1.118677424344614+1782.4320227044332
+AVG Expected_gain=22.373548486892282%; avg entropy=5.703782472654186
+Minimize the function: false
+====================== runLBFGS: temperature= 31.25; scaling= 1.6823220572007036E-4
+================ beging to run LBFGS =======================
+LBFGS early stops because the function value does not change; break at iter 5
+##############Func value: 892.334689087153 at iteration number 5
+Gradient vector:  -7.034044560635944E-5 -4.439566190236518E-5 2.5700171275115646E-6 2.7670250989469698E-5 -5.4777602183046043E-5 -1.8527587815908477E-5
+Weight vector:  3.391076350848707E-4 0.9934164545412317 1.0602955191668766 0.7532512080012891 0.5880427021135 -2.8456737142179285
+Func value=892.334689088197=1.118678694214044+891.2160103939829
+AVG Expected_gain=22.37357388428088%; avg entropy=5.70378246652149
+Minimize the function: false
+====================== runLBFGS: temperature= 15.625; scaling= 3.391076350848707E-4
+================ beging to run LBFGS =======================
+LBFGS early stops because the function value does not change; break at iter 5
+##############Func value: 446.72668450901415 at iteration number 5
+Gradient vector:  -5.432283690704198E-4 -9.544672954730292E-5 5.26155797414668E-6 5.937557401818966E-5 -1.1763723999445603E-4 -3.979297414619275E-5
+Weight vector:  7.28159675492957E-4 0.9932224198654128 1.0603069069095756 0.7533722171244667 0.5878031787549589 -2.845754725026824
+Func value=446.72668454280586=1.1186816403235837+445.60800290248227
+AVG Expected_gain=22.373632806471676%; avg entropy=5.703782437151773
+Minimize the function: false
+====================== runLBFGS: temperature= 7.8125; scaling= 7.28159675492957E-4
+================ beging to run LBFGS =======================
+LBFGS early stops because the function value does not change; break at iter 5
+##############Func value: 223.92268425128177 at iteration number 5
+Gradient vector:  -9.331649792060151E-4 -2.0516031082630563E-4 1.0635019972171509E-5 1.273791521982213E-4 -2.527337546580899E-4 -8.549628962610563E-5
+Weight vector:  0.0015648232941762592 0.9927081961878245 1.060336955553843 0.7536929148586182 0.5871681728654515 -2.8459694869583796
+Func value=223.9226843954094=1.1186882432570577+222.8039961521523
+AVG Expected_gain=22.373764865141155%; avg entropy=5.703782301495099
+Minimize the function: false
+====================== runLBFGS: temperature= 3.90625; scaling= 0.0015648232941762592
+================ beging to run LBFGS =======================
+LBFGS early stops because the function value does not change; break at iter 5
+##############Func value: 112.52069055731172 at iteration number 5
+Gradient vector:  -0.005157921630375848 -7.495004606389842E-4 -5.967742880451984E-7 4.5529804711329073E-4 -9.379709609940059E-4 -3.1694964361968426E-4
+Weight vector:  0.005893414504378821 0.9841751361797298 1.0608164748731264 0.7590091010744715 0.5766268941376761 -2.8495344750014637
+Func value=112.52069526476438=1.1187417977101093+111.40195346705427
+AVG Expected_gain=22.374835954202187%; avg entropy=5.7037800175131785
+Minimize the function: false
+====================== runLBFGS: temperature= 1.953125; scaling= 0.005893414504378821
+================ beging to run LBFGS =======================
+LBFGS early stops because the function value does not change; break at iter 6
+##############Func value: 56.81974184917611 at iteration number 6
+Gradient vector:  -0.0042455797242503535 -0.0016743865243236406 -2.1861476420022058E-4 0.0010120610061592362 -0.0024346168432951222 -8.13226725063806E-4
+Weight vector:  0.016533807513978295 0.9617078564593856 1.0614519664920767 0.772892614863623 0.5484062518786521 -2.8590658635455912
+Func value=56.81980915671967=1.1190100689503732+55.7007990877693
+AVG Expected_gain=22.380201379007467%; avg entropy=5.703761826587576
+Minimize the function: false
+====================== runLBFGS: temperature= 0.9765625; scaling= 0.016533807513978295
+================ beging to run LBFGS =======================
+LBFGS early stops because the function value does not change; break at iter 12
+##############Func value: 28.970770230850338 at iteration number 12
+Gradient vector:  0.0024693896416088934 0.0014678030377875467 -9.713065266474797E-4 -8.53373267310608E-4 -9.725401219497377E-4 -2.473850009479191E-4
+Weight vector:  0.02132910905177859 0.723989876806698 0.9618505517226654 0.9211144363871253 0.039132364148754054 -3.0250794772601157
+Func value=28.970823306719158=1.1218881808734493+27.848935125845706
+AVG Expected_gain=22.437763617468985%; avg entropy=5.703461913773201
+Minimize the function: false
+====================== runLBFGS: temperature= 0.48828125; scaling= 0.02132910905177859
+================ beging to run LBFGS =======================
+LBFGS early stops because the function value does not change; break at iter 8
+##############Func value: 15.047639883128932 at iteration number 8
+Gradient vector:  -0.029464910701951504 0.0018295274917447342 -7.61535936565558E-5 -0.002779727411913061 0.0012724514329202747 4.1369088037158827E-4
+Weight vector:  0.07004234073977204 0.8878374044754619 0.8571512071843551 0.8227374665290076 -0.05839800876991301 -3.049486105701506
+Func value=15.047769098872202=1.1281617998853983+13.9196072989868
+AVG Expected_gain=22.563235997707967%; avg entropy=5.701471149664994
+Minimize the function: false
+====================== runLBFGS: temperature= 0.244140625; scaling= 0.07004234073977204
+================ beging to run LBFGS =======================
+LBFGS early stops because the function value does not change; break at iter 5
+##############Func value: 8.089020208358441 at iteration number 5
+Gradient vector:  -0.001572074934756456 1.4377789796822136E-4 -2.9886117663382094E-6 -0.0020516113801263515 -0.001107794458524712 -4.234776004005249E-4
+Weight vector:  0.11122095084028766 0.8857126805642909 0.8575473120980518 0.8136819589960878 -0.06926519484469744 -3.0532827856022546
+Func value=8.089039768425252=1.1336608265938124+6.955378941831437
+AVG Expected_gain=22.673216531876246%; avg entropy=5.6978464291483135
+Minimize the function: false
+====================== runLBFGS: temperature= 0.1220703125; scaling= 0.11122095084028766
+================ beging to run LBFGS =======================
+LBFGS early stops because the function value does not change; break at iter 12
+##############Func value: 4.614960752189335 at iteration number 12
+Gradient vector:  -4.281041124854033E-5 -7.231471743686038E-6 -1.491645838949912E-5 -1.9490543118650576E-5 7.453655941593376E-5 -1.3105271408241222E-5
+Weight vector:  0.1545621315804016 0.6803465369470835 0.6349599385692716 0.5157132121121814 -0.32997447333929936 -3.236948175762256
+Func value=4.614961239874027=1.1464466166206255+3.468514623253401
+AVG Expected_gain=22.928932332412508%; avg entropy=5.682814358738373
+Minimize the function: false
+====================== runLBFGS: temperature= 0.06103515625; scaling= 0.1545621315804016
+================ beging to run LBFGS =======================
+LBFGS early stops because the function value does not change; break at iter 6
+##############Func value: 2.885723155720679 at iteration number 6
+Gradient vector:  8.446149159117931E-4 -3.824844241340048E-4 4.859196199274814E-5 -3.2887361831085947E-4 1.654162069509549E-4 -2.116497691760877E-4
+Weight vector:  0.27157264930790176 0.6928138382926656 0.6212705336125379 0.5043522100991403 -0.3421753661859402 -3.2442536945287572
+Func value=2.88573099580442=1.165576106126721+1.7201548896776993
+AVG Expected_gain=23.31152212253442%; avg entropy=5.636603542495886
+Minimize the function: false
+====================== runLBFGS: temperature= 0.030517578125; scaling= 0.27157264930790176
+================ beging to run LBFGS =======================
+LBFGS early stops because the function value does not change; break at iter 11
+##############Func value: 2.034014413906234 at iteration number 11
+Gradient vector:  6.333763538846534E-4 -4.068190241126311E-5 2.043184452333498E-4 1.9101650915829294E-4 2.1824314549986684E-6 -5.494877626235022E-5
+Weight vector:  0.5170497027103408 0.619575424995292 0.5041598026166744 0.34581279280254873 -0.2223841660130404 -3.350626049474249
+Func value=2.03401705658026=1.1975632509804246+0.8364538055998354
+AVG Expected_gain=23.951265019608492%; avg entropy=5.481783660379081
+Minimize the function: false
+====================== runLBFGS: temperature= 0.0152587890625; scaling= 0.5170497027103408
+================ beging to run LBFGS =======================
+LBFGS early stops because the function value does not change; break at iter 13
+##############Func value: 1.6286033900374854 at iteration number 13
+Gradient vector:  -2.491445586848421E-4 2.2790117213953564E-4 4.2645517817548035E-4 -4.686333897627004E-4 -9.826771287658473E-5 1.3062732643507517E-4
+Weight vector:  0.9541224981282007 0.6870574993612659 0.49266989609871925 0.34630325034739606 -0.12476738258575651 -3.478357998406584
+Func value=1.6286051942852475=1.2435313813272395+0.3850738129580081
+AVG Expected_gain=24.870627626544792%; avg entropy=5.047239481203204
+Minimize the function: false
+====================== runLBFGS: temperature= 0.00762939453125; scaling= 0.9541224981282007
+================ beging to run LBFGS =======================
+LBFGS early stops because the function value does not change; break at iter 11
+##############Func value: 1.4469448327712406 at iteration number 11
+Gradient vector:  -2.2154224228025214E-5 -4.855832730934451E-5 -2.043980250096781E-5 -1.735605524169558E-5 -8.186966493571822E-5 7.201757692410192E-7
+Weight vector:  1.1806120919367429 0.8471651506152691 0.4002882386569346 0.4567355807699201 -0.41048080640061235 -3.493047165481957
+Func value=1.4469448946497199=1.2856078476209734+0.16133704702874663
+AVG Expected_gain=25.71215695241947%; avg entropy=4.229353885630376
+Minimize the function: false
+====================== runLBFGS: temperature= 0.003814697265625; scaling= 1.1806120919367429
+================ beging to run LBFGS =======================
+LBFGS early stops because the function value does not change; break at iter 12
+##############Func value: 1.3888721073445016 at iteration number 12
+Gradient vector:  -1.8029776677495587E-4 3.2873460825613466E-4 -4.147335278304241E-4 -1.501462317623025E-4 2.0020933717394845E-4 7.962550543388772E-5
+Weight vector:  1.638498417702024 1.3411010175053926 0.33918056317273454 0.6764487976162089 -1.1339374911122144 -3.3534890457896998
+Func value=1.3888788220934194=1.3513261159764534+0.037552706116966164
+AVG Expected_gain=27.026522319529068%; avg entropy=1.9688433184651957
+Minimize the function: false
+====================== runLBFGS: temperature= 0.0019073486328125; scaling= 1.638498417702024
+================ beging to run LBFGS =======================
+LBFGS early stops because the function value does not change; break at iter 29
+##############Func value: 1.3758410407731123 at iteration number 29
+Gradient vector:  3.3800091069688177E-6 5.525808411266206E-6 -1.968538404146958E-5 -2.611268866985535E-6 -1.822426814350219E-5 -2.086351604019313E-6
+Weight vector:  4.83031124336722 1.2395411835647525 0.520668022456387 0.34551257612637076 -0.45931651631784387 -5.875374840581868
+Func value=1.3758410924955813=1.3683777080260415+0.00746338446953974
+AVG Expected_gain=27.367554160520832%; avg entropy=0.7825925833532102
+Minimize the function: false
+====================== runLBFGS: temperature= 9.5367431640625E-4; scaling= 4.83031124336722
+================ beging to run LBFGS =======================
+LBFGS early stops because the function value does not change; break at iter 17
+##############Func value: 1.3729086881115031 at iteration number 17
+Gradient vector:  1.5924598831107253E-6 3.290831323075282E-5 -6.1819927863963175E-6 1.3890818370601751E-5 3.606584171667768E-6 5.380765363349619E-6
+Weight vector:  6.438938804807418 1.5326488515777958 0.7535825639926702 0.33781778205121177 -0.48587970219140847 -7.14855445941625
+Func value=1.3729090116592422=1.3708406715797175+0.002068340079524605
+AVG Expected_gain=27.416813431594345%; avg entropy=0.4337623534455184
+======= quenching stage  =======
+Minimize the function: false
+================ beging to run LBFGS =======================
+##############Func value: 1.3715861539883138 at iteration number 15
+Gradient vector:  3.554910331578302E-6 2.435560227823516E-5 -4.746442481261735E-5 -9.560655537103743E-6 -5.707061448226154E-6
+Weight vector:  3.3283837840844557 1.3285059433827968 0.028516494232928263 -2.299509797187415 -14.297974558052804
+Func value=1.3715861539883138=1.3715861539883138+0.0
+AVG Expected_gain=27.43172307976628%; avg entropy=0.08036070442701701
+Minimize the function: false
+================ beging to run LBFGS =======================
+##############Func value: 1.371611492172144 at iteration number 7
+Gradient vector:  -1.8525336384668404E-7 3.503139767217867E-7 -2.8902415583405816E-7 -1.4148477266183692E-7 -4.618517466082126E-8
+Weight vector:  3.361779370731502 1.341856469542333 -0.03386796215779668 -2.2967865716917366 -14.29920078894654
+Func value=1.371611492172144=1.371611492172144+0.0
+AVG Expected_gain=27.432229843442883%; avg entropy=0.018126882188532364
+Minimize the function: false
+================ beging to run LBFGS =======================
+LBFGS early stops because the function value does not change; break at iter 5
+##############Func value: 1.3716115661133963 at iteration number 5
+Gradient vector:  9.82468029625219E-10 1.1046753674448541E-10 2.9673358941996357E-10 1.4331087012592775E-10 1.0391330219761248E-10
+Weight vector:  3.361779394205011 1.341856472269413 -0.03386795586511106 -2.296786568611032 -14.299200786758053
+Func value=1.3716115661132628=1.3716115661132628+0.0
+AVG Expected_gain=27.432231322265256%; avg entropy=6.088464426855656E-4
+Minimize the function: false
+================ beging to run LBFGS =======================
+LBFGS early stops because the function value does not change; break at iter 5
+##############Func value: 1.3716115661139934 at iteration number 5
+Gradient vector:  -4.339207428002509E-10 -5.375115667113647E-11 -8.635006001764839E-11 -4.4029042780348184E-11 -2.938689261924917E-11
+Weight vector:  3.3617793932429425 1.3418564721502428 -0.03386795605670814 -2.2967865687087254 -14.299200786823219
+Func value=1.3716115661139934=1.3716115661139934+0.0
+AVG Expected_gain=27.43223132227987%; avg entropy=3.896411684873491E-7
+Minimize the function: false
+================ beging to run LBFGS =======================
+LBFGS early stops because the function value does not change; break at iter 8
+##############Func value: 1.3716115654472194 at iteration number 8
+Gradient vector:  9.528612838190797E-11 1.1807238892033273E-11 1.9072641430970015E-11 9.735644130481133E-12 6.456211257268659E-12
+Weight vector:  3.442773073252272 1.3519263502760128 -0.017637134036076266 -2.2885488153246976 -14.29367148938634
+LBFGS returns a bad optimal value; best: 1.371611566114057; last: 1.3716115654472194
+Func value=1.3716115661140595=1.3716115661140595+0.0
+AVG Expected_gain=27.43223132228119%; avg entropy=1.3610818813954521E-13
+Feature function : LanguageModelFF; weight changed from 1.0 to 1.0
+Feature function : PhraseModelFF; weight changed from 1.066893 to 0.39915066254714
+Feature function : PhraseModelFF; weight changed from 0.752247 to -0.010074413605122791
+Feature function : PhraseModelFF; weight changed from 0.589793 to -0.6832056182286039
+Feature function : WordPenaltyFF; weight changed from -2.844814 to -4.253461965875603
+2009-4-20 10:01:02 joshua.decoder.chart_parser.Chart expand
+
+
+
+
+
+
+
+
+
+
+
+
+
+============== one iteration of HG train
+2009-4-20 21:29:07 joshua.decoder.BuildinSymbol <init>
+信息: Construct the symbol table on the fly
+weight: 1.0
+weight: 1.066893
+weight: 0.752247
+weight: 0.589793
+weight: -2.844814
+Thetas are: -0.1 0.029411764705882353 0.04201680672268908 0.06002400960384155 0.08574858514834507 
+2009-4-20 21:29:07 joshua.decoder.JoshuaConfiguration readConfigFile
+警告: Maybe Wrong config line: useGoogleLinearCorpusGain=true
+2009-4-20 21:29:07 joshua.decoder.JoshuaConfiguration readConfigFile
+警告: Maybe Wrong config line: unigramPrecision=0.85
+2009-4-20 21:29:07 joshua.decoder.JoshuaConfiguration readConfigFile
+警告: Maybe Wrong config line: precisionDecayRatio=0.7
+2009-4-20 21:29:07 joshua.decoder.JoshuaConfiguration readConfigFile
+警告: Maybe Wrong config line: numUnigramTokens=10
+2009-4-20 21:29:07 joshua.decoder.JoshuaConfiguration readConfigFile
+警告: Maybe Wrong config line: noAnnealing=false
+2009-4-20 21:29:07 joshua.decoder.JoshuaConfiguration readConfigFile
+警告: Maybe Wrong config line: isScalingFactorTunable=true
+2009-4-20 21:29:07 joshua.decoder.JoshuaConfiguration readConfigFile
+信息: you use a LM feature function, so make sure you have a LM grammar
+2009-4-20 21:29:07 joshua.decoder.BuildinSymbol <init>
+信息: Construct the symbol table on the fly
+2009-4-20 21:29:07 joshua.decoder.ff.lm.buildin_lm.LMGrammarJAVA <init>
+信息: use java lm
+2009-4-20 21:29:07 joshua.decoder.ff.lm.buildin_lm.LMGrammarJAVA read_lm_grammar_from_file
+信息: Reading grammar from file C:/data_disk/java_work_space/sf_trunk/example/example.trigram.lm.gz
+2009-4-20 21:29:07 joshua.decoder.ff.lm.buildin_lm.LMGrammarJAVA read_lm_grammar_from_file
+信息: begin to read ngrams with order 1
+2009-4-20 21:29:07 joshua.decoder.ff.lm.buildin_lm.LMGrammarJAVA read_lm_grammar_from_file
+信息: begin to read ngrams with order 2
+2009-4-20 21:29:07 joshua.decoder.ff.lm.buildin_lm.LMGrammarJAVA read_lm_grammar_from_file
+信息: begin to read ngrams with order 3
+2009-4-20 21:29:07 joshua.decoder.JoshuaDecoder initializeGlueGrammar
+信息: Constructing glue grammar...
+2009-4-20 21:29:07 joshua.decoder.ff.tm.hiero.MemoryBasedBatchGrammar print_grammar
+信息: ###########Grammar###########
+2009-4-20 21:29:07 joshua.decoder.ff.tm.hiero.MemoryBasedBatchGrammar print_grammar
+信息: ####num_rules: 2; num_bins: 2; num_pruned: 0; sumest_cost: 0.00000
+2009-4-20 21:29:07 joshua.decoder.JoshuaDecoder initializeTranslationGrammars
+信息: Using grammar read from file C:/data_disk/java_work_space/sf_trunk/example/example.hiero.tm.gz
+2009-4-20 21:29:08 joshua.decoder.ff.tm.hiero.MemoryBasedBatchGrammar print_grammar
+信息: ###########Grammar###########
+2009-4-20 21:29:08 joshua.decoder.ff.tm.hiero.MemoryBasedBatchGrammar print_grammar
+信息: ####num_rules: 15939; num_bins: 2029; num_pruned: 0; sumest_cost: 0.00000
+Feature function : LanguageModelFF; weight changed from 1.0 to 1.0
+Feature function : PhraseModelFF; weight changed from 1.066893 to 1.066893
+Feature function : PhraseModelFF; weight changed from 0.752247 to 0.752247
+Feature function : PhraseModelFF; weight changed from 0.589793 to 0.589793
+Feature function : WordPenaltyFF; weight changed from -2.844814 to -2.844814
+2009-4-20 21:29:08 joshua.decoder.chart_parser.Chart expand
+信息: Sentence length: 9
+2009-4-20 21:29:08 joshua.decoder.chart_parser.Bin transit_to_goal
+信息: Goal item, best cost is 135.267
+2009-4-20 21:29:08 joshua.decoder.hypergraph.DiskHyperGraph saveHyperGraph
+信息: Number of Items is: 599
+2009-4-20 21:29:09 joshua.decoder.chart_parser.Chart expand
+信息: Sentence length: 42
+2009-4-20 21:29:09 joshua.decoder.chart_parser.Bin transit_to_goal
+信息: Goal item, best cost is 214.873
+2009-4-20 21:29:10 joshua.decoder.hypergraph.DiskHyperGraph saveHyperGraph
+信息: Number of Items is: 5837
+2009-4-20 21:29:13 joshua.decoder.chart_parser.Chart expand
+信息: Sentence length: 23
+2009-4-20 21:29:13 joshua.decoder.chart_parser.Bin transit_to_goal
+信息: Goal item, best cost is 156.188
+2009-4-20 21:29:13 joshua.decoder.hypergraph.DiskHyperGraph saveHyperGraph
+信息: Number of Items is: 1830
+2009-4-20 21:29:14 joshua.decoder.chart_parser.Chart expand
+信息: Sentence length: 24
+2009-4-20 21:29:14 joshua.decoder.chart_parser.Bin transit_to_goal
+信息: Goal item, best cost is 160.277
+2009-4-20 21:29:14 joshua.decoder.hypergraph.DiskHyperGraph saveHyperGraph
+信息: Number of Items is: 1991
+2009-4-20 21:29:15 joshua.decoder.chart_parser.Chart expand
+信息: Sentence length: 27
+2009-4-20 21:29:15 joshua.decoder.chart_parser.Bin transit_to_goal
+信息: Goal item, best cost is 76.116
+2009-4-20 21:29:16 joshua.decoder.hypergraph.DiskHyperGraph saveHyperGraph
+信息: Number of Items is: 3847
+2009-4-20 21:29:17 joshua.decoder.hypergraph.DiskHyperGraph writeRulesNonParallel
+信息: writing rules
+2009-4-20 21:29:17 joshua.decoder.hypergraph.DiskHyperGraph initRead
+信息: Reading rules from file C:/data_disk/java_work_space/discriminative_at_clsp/edu/jhu/joshua/discriminative_training/risk_annealer/example.nbest.javalm.hgmert.1.hg.rules
+#Process sentence 0
+num_items: 599; num_deducts: 2110
+2009-4-20 21:29:17 joshua.decoder.hypergraph.DiskHyperGraph saveHyperGraph
+信息: Number of Items is: 599
+#Process sentence 1
+num_items: 5837; num_deducts: 43717
+2009-4-20 21:29:18 joshua.decoder.hypergraph.DiskHyperGraph saveHyperGraph
+信息: Number of Items is: 5837
+#Process sentence 2
+num_items: 1830; num_deducts: 9074
+2009-4-20 21:29:21 joshua.decoder.hypergraph.DiskHyperGraph saveHyperGraph
+信息: Number of Items is: 1830
+#Process sentence 3
+num_items: 1991; num_deducts: 13054
+2009-4-20 21:29:22 joshua.decoder.hypergraph.DiskHyperGraph saveHyperGraph
+信息: Number of Items is: 1991
+#Process sentence 4
+num_items: 3847; num_deducts: 25239
+2009-4-20 21:29:23 joshua.decoder.hypergraph.DiskHyperGraph saveHyperGraph
+信息: Number of Items is: 3847
+2009-4-20 21:29:24 joshua.decoder.hypergraph.DiskHyperGraph writeRulesNonParallel
+信息: writing rules
+======= cooling stage =======
+############### runLBFGS: temperature= 1000.0; scaling= 0.1; tuneScale=true
+2009-4-20 21:29:25 joshua.decoder.hypergraph.DiskHyperGraph initRead
+信息: Reading rules from file C:/data_disk/java_work_space/discriminative_at_clsp/edu/jhu/joshua/discriminative_training/risk_annealer/example.nbest.javalm.hgmert.1.withMatches.hg.rules
+num_items: 599; num_deducts: 2110
+num_items: 5837; num_deducts: 43717
+num_items: 1830; num_deducts: 9074
+num_items: 1991; num_deducts: 13054
+num_items: 3847; num_deducts: 25239
+LBFGS early stops because the function value does not change; break at iter 6
+=======Func value: 168868.34929291857 at iteration number 6
+Gradient vector:  1.7893213220820936E-7 1.4383526875686608E-5 -1.998250104806816E-6 -6.423139959498259E-6 6.468849269875091E-6 3.919276189595658E-6
+Weight vector:  2.2018813255691456E-5 0.9945427492315165 1.0632553730633592 0.7521426998872467 0.5879171849676216 -2.8455274760929763
+Func value=168868.34929291857=-8.09133248084607*1.0+1000.0*168.87644062539943
+############### runLBFGS: temperature= 500.0; scaling= 2.2018813255691456E-5; tuneScale=true
+LBFGS early stops because the function value does not change; break at iter 5
+=======Func value: 84430.12899009566 at iteration number 5
+Gradient vector:  -3.7058216362691188E-6 2.876668562656839E-5 -3.996451221592092E-6 -1.284624264330271E-5 1.2937601495939474E-5 7.838491962503028E-6
+Weight vector:  4.40376684403497E-5 0.9945427505387081 1.0632553730676697 0.7521426994257826 0.5879171855312266 -2.845527475771769
+Func value=84430.12899009566=-8.091292973719607*1.0+500.0*168.87644056613877
+############### runLBFGS: temperature= 250.0; scaling= 4.40376684403497E-5; tuneScale=true
+LBFGS early stops because the function value does not change; break at iter 5
+=======Func value: 42211.01886831386 at iteration number 5
+Gradient vector:  2.975326225333752E-5 5.7532976163174996E-5 -7.99105587375002E-6 -2.5691633329712677E-5 2.5875064609741787E-5 1.5676697388835015E-5
+Weight vector:  8.80734805524758E-5 0.9945427698887221 1.063255371123211 0.7521426912737622 0.5879171941366413 -2.8455274706390803
+Func value=42211.01886831386=-8.091213965171793*1.0+250.0*168.87644032911612
+############### runLBFGS: temperature= 125.0; scaling= 8.80734805524758E-5; tuneScale=true
+LBFGS early stops because the function value does not change; break at iter 5
+=======Func value: 21101.463866679303 at iteration number 5
+Gradient vector:  -1.3909484001643768E-5 1.1505858458945301E-4 -1.598358029214224E-5 -5.1383626975318044E-5 5.174823439786507E-5 3.135248832598226E-5
+Weight vector:  1.7615039394166393E-4 0.9945427915077114 1.0632553710951 0.7521426835760037 0.5879172034710299 -2.845527465307946
+LBFGS returns a bad optimal value; best: 21101.46386667931; last: 21101.463866679303
+Func value=21101.463866679303=-8.091055947794679*1.0+125.0*168.87643938101678
+############### runLBFGS: temperature= 62.5; scaling= 1.7615039394166393E-4; tuneScale=true
+LBFGS early stops because the function value does not change; break at iter 5
+=======Func value: 10546.686484362728 at iteration number 5
+Gradient vector:  1.203442361488831E-4 2.3011074694245532E-4 -3.193755179329091E-5 -1.0275355227736608E-4 1.0349423105936107E-4 6.270037134590358E-5
+Weight vector:  3.5227099459851164E-4 0.9945431011534932 1.0632553399876796 0.7521425531147398 0.5879173411849339 -2.845527383169676
+Func value=10546.686484362728=-8.09074000926545*1.0+62.5*168.87643558995188
+############### runLBFGS: temperature= 31.25; scaling= 3.5227099459851164E-4; tuneScale=true
+LBFGS early stops because the function value does not change; break at iter 5
+=======Func value: 5269.298030158162 at iteration number 5
+Gradient vector:  2.442837406289658E-4 4.60164744867678E-4 -6.380299175142257E-5 -2.0547176612228224E-4 2.0697231248546568E-4 1.2538347138011123E-4
+Weight vector:  7.044795482298579E-4 0.9945443399733995 1.0632552155767667 0.7521420311160446 0.5879178921838654 -2.8455270545362175
+Func value=5269.298030158162=-8.090108336519817*1.0+31.25*168.8764204318298
+############### runLBFGS: temperature= 15.625; scaling= 7.044795482298579E-4; tuneScale=true
+LBFGS early stops because the function value does not change; break at iter 5
+=======Func value: 2630.6042767753943 at iteration number 5
+Gradient vector:  5.029239706512336E-4 9.201008681455115E-4 -1.2731079027499453E-4 -4.1079745231380074E-4 4.1387965409528426E-4 2.5069687085600733E-4
+Weight vector:  0.0014087005037542607 0.9945492972533125 1.0632547180684935 0.7521399418433912 0.5879200973771901 -2.845525739328893
+Func value=2630.6042767753943=-8.088845919363807*1.0+15.625*168.87635985246453
+############### runLBFGS: temperature= 7.8125; scaling= 0.0014087005037542607; tuneScale=true
+LBFGS early stops because the function value does not change; break at iter 5
+=======Func value: 1311.2583467931133 at iteration number 5
+Gradient vector:  0.0010637102765235478 0.0018392745509408317 -2.5338628871525546E-4 -8.20972578444206E-4 8.274964501025469E-4 5.01105525942644E-4
+Weight vector:  0.00281629517330578 0.9945691434262696 1.0632527288243108 0.7521315739407232 0.5879289282776943 -2.8455204727724563
+Func value=1311.2583467931133=-8.08632485823392*1.0+7.8125*168.87611797137245
+############### runLBFGS: temperature= 3.90625; scaling= 0.00281629517330578; tuneScale=true
+LBFGS early stops because the function value does not change; break at iter 5
+=======Func value: 651.5872724741976 at iteration number 5
+Gradient vector:  0.002362428959979625 0.0036747424902348015 -5.013879971662586E-4 -0.001639149293496311 0.0016539174317104235 0.0010009942174629117
+Weight vector:  0.005627583717397032 0.994648682139629 1.0632447733190946 0.7520980060267689 0.587964342008611 -2.845499355077808
+Func value=651.5872724741976=-8.08129832223391*1.0+3.90625*168.87515412388643
+############### runLBFGS: temperature= 1.953125; scaling= 0.005627583717397032; tuneScale=true
+LBFGS early stops because the function value does not change; break at iter 5
+=======Func value: 321.75550705272894 at iteration number 5
+Gradient vector:  0.0056944776112113436 0.00733353094736819 -9.775730403921148E-4 -0.0032646210662120264 0.00330333461336123 0.001996599448634349
+Weight vector:  0.011230281547942728 0.9949683770593613 1.0632128811182513 0.751962794102973 0.5881068762655325 -2.845414374510443
+Func value=321.75550705272894=-8.071311791072985*1.0+1.953125*168.8713312480266
+############### runLBFGS: temperature= 0.9765625; scaling= 0.011230281547942728; tuneScale=true
+LBFGS early stops because the function value does not change; break at iter 5
+=======Func value: 156.84714014447147 at iteration number 5
+Gradient vector:  0.015523350818536476 0.01459813873862142 -0.0018231165839335962 -0.006453858623378762 0.006586898153018009 0.0039672689687396566
+Weight vector:  0.02231879634869268 0.9962653474899512 1.0630832786932665 0.751411242658699 0.5886870321922435 -2.8450685315103987
+Func value=156.84714014447147=-8.051642632828248*1.0+0.9765625*168.8563535639549
+############### runLBFGS: temperature= 0.48828125; scaling= 0.02231879634869268; tuneScale=true
+LBFGS early stops because the function value does not change; break at iter 5
+=======Func value: 74.4079565354472 at iteration number 5
+Gradient vector:  0.04999217617021619 0.0288826528669378 -0.0028384211041176002 -0.012426964179979138 0.013073871150490033 0.007790787109445659
+Weight vector:  0.043669934252690196 1.0017305286794882 1.0625186320707682 0.7490497586999411 0.5911539239086602 -2.8435972091723873
+Func value=74.4079565354472=-8.01389480286894*1.0+0.48828125*168.79995154087143
+############### runLBFGS: temperature= 0.244140625; scaling= 0.043669934252690196; tuneScale=true
+LBFGS early stops because the function value does not change; break at iter 14
+=======Func value: 33.24504520430122 at iteration number 14
+Gradient vector:  -0.001729634840321105 -0.0025408002827262497 0.007377483345457821 0.00400895157797616 0.008322611608270873 0.0046122546626884255
+Weight vector:  0.04813708210741287 2.2092414064082195 0.8866641835378392 0.17775060819293384 1.1735371650432076 -2.4913750617589496
+Func value=33.24504520430122=-7.881194950741811*1.0+0.244140625*168.45307967505627
+############### runLBFGS: temperature= 0.1220703125; scaling= 0.04813708210741287; tuneScale=true
+LBFGS early stops because the function value does not change; break at iter 27
+=======Func value: 12.758617451068382 at iteration number 27
+Gradient vector:  0.04489531393984303 0.0014002723785255821 0.0022681754125535823 -2.3622657548077672E-4 -0.001323948012602286 0.0013969466785584371
+Weight vector:  0.0425440886161982 3.275168536270764 1.7654050761028572 0.10123364668046063 6.380088739540969 1.2817050955780402
+Func value=12.758617451068382=-7.634747547857675*1.0+0.1220703125*167.06244607120226
+############### runLBFGS: temperature= 0.06103515625; scaling= 0.0425440886161982; tuneScale=true
+LBFGS early stops because the function value does not change; break at iter 6
+=======Func value: 2.6655543485773903 at iteration number 6
+Gradient vector:  -0.010011814752352466 3.786353733586617E-4 0.004232540190527467 5.07178660601377E-4 -0.0019831623146209596 0.0023460288550973462
+Weight vector:  0.08780636568305476 3.2755212011216175 1.7659295262461907 0.10120845900057507 6.3800109748536515 1.281983212304761
+Func value=2.6655543485773903=-7.229769159612939*1.0+0.06103515625*162.12498035819033
+############### runLBFGS: temperature= 0.030517578125; scaling= 0.08780636568305476; tuneScale=true
+LBFGS early stops because the function value does not change; break at iter 3
+=======Func value: -2.1210652956953275 at iteration number 3
+Gradient vector:  0.04373974201020864 -0.0011930160033992 0.00526861630896909 0.0027083559660990193 -4.7603234722260346E-4 0.003517932670160575
+Weight vector:  0.16332928899545512 3.276579338510076 1.766383898368969 0.1008785590649393 6.38034665184992 1.2821819813418087
+Func value=-2.1210652956953275=-6.6497209457120325*1.0+0.030517578125*148.39498833974739
+############### runLBFGS: temperature= 0.0152587890625; scaling= 0.16332928899545512; tuneScale=true
+LBFGS early stops because the function value does not change; break at iter 3
+=======Func value: -4.245957912316911 at iteration number 3
+Gradient vector:  -0.1273200877587402 -0.009334254734297314 -0.0010993266240953425 0.0034661568786026973 -8.418012332602944E-4 0.0032191123333031313
+Weight vector:  0.2627150271751888 3.2792310063104764 1.7673927685974764 0.09977601652809316 6.381169296889585 1.2826691292550125
+Func value=-4.245957912316911=-6.164694793505706*1.0+0.0152587890625*125.74634024558893
+############### runLBFGS: temperature= 0.00762939453125; scaling= 0.2627150271751888; tuneScale=true
+LBFGS early stops because the function value does not change; break at iter 3
+=======Func value: -4.935559587506708 at iteration number 3
+Gradient vector:  0.06915056327017197 -0.05457414605528112 -0.09091123666360071 0.08545282443255404 0.05357067211709972 0.02533153548438932
+Weight vector:  1.3781418627443396 2.5176239654537 1.8993522478466376 0.1107460254621284 6.774665005199438 1.3020137465661012
+Func value=-4.935559587506708=-5.261827077522536*1.0+0.00762939453125*42.76453245135457
+############### runLBFGS: temperature= 0.003814697265625; scaling= 1.3781418627443396; tuneScale=true
+LBFGS early stops because the function value does not change; break at iter 3
+=======Func value: -5.030117350991822 at iteration number 3
+Gradient vector:  0.024483793763691714 0.07631785563126114 -0.013654100721572738 -0.08642840345737161 -0.0051159520413265516 0.006714862002166911
+Weight vector:  1.9416391896433511 1.9571049357825425 1.4628136705387702 0.6419029338964344 7.120598080916558 1.4977717737811322
+LBFGS returns a bad optimal value; best: -5.026995284086934; last: -5.030117350991822
+Func value=-5.030117350991822=-5.184443479300995*1.0+0.003814697265625*40.45566857947989
+############### runLBFGS: temperature= 0.0019073486328125; scaling= 1.9416391896433511; tuneScale=true
+LBFGS early stops because the function value does not change; break at iter 3
+=======Func value: -5.098760570828848 at iteration number 3
+Gradient vector:  0.0029560975350359266 -0.03271278823844037 0.011916425498305098 0.023442329842022307 0.00555477811422485 0.0038200808212571764
+Weight vector:  2.0391003870066213 2.0951810921646836 1.4835402076697886 0.49303425454885036 7.11654301016531 1.5182426627787773
+Func value=-5.098760570828848=-5.171363441131105*1.0+0.0019073486328125*38.064813665029874
+############### runLBFGS: temperature= 9.5367431640625E-4; scaling= 2.0391003870066213; tuneScale=true
+LBFGS early stops because the function value does not change; break at iter 3
+=======Func value: -5.130263586392252 at iteration number 3
+Gradient vector:  0.040764880758586426 0.06112840715651276 -0.008796646166332748 -0.05769696666707837 0.0018905399631584437 0.004887756770607153
+Weight vector:  2.2173165061204 1.926391452506887 1.6348341722459958 0.5919894845045469 7.169544837048033 1.5577997347712573
+Func value=-5.130263586392252=-5.164478740223875*1.0+9.5367431640625E-4*35.87718914414745
+======= quenching stage  =======
+############### runLBFGS: temperature= 0.0; scaling= 2.2173165061204; tuneScale=false
+LBFGS early stops because the function value does not change; break at iter 3
+=======Func value: -5.160661331771395 at iteration number 3
+Gradient vector:  -0.0024856735013438734 0.008632064012786628 8.520416282593087E-4 0.008288923679769055 0.004210800109072675
+Weight vector:  1.9974356458488234 1.6330655452728426 0.5284187909949867 7.1719522021588356 1.5634709332793721
+Func value=-5.160661331771395=-5.160661331771395*1.0+0.0*35.41962943592978
+############### runLBFGS: temperature= 0.0; scaling= 4.4346330122408; tuneScale=false
+LBFGS early stops because the function value does not change; break at iter 3
+=======Func value: -5.583112053385522 at iteration number 3
+Gradient vector:  1.0161596097268792 -0.12758416689375576 -0.6991162840879603 -0.09140630311003455 0.05895858159996216
+Weight vector:  1.1767639689563416 1.8388496056062391 0.7126299463817821 7.300704936471494 1.5663063410136537
+LBFGS returns a bad optimal value; best: -5.150234663083994; last: -5.583112053385522
+Func value=-5.583112053385522=-5.583112053385522*1.0+0.0*22.37461319853685
+############### runLBFGS: temperature= 0.0; scaling= 8.8692660244816; tuneScale=false
+LBFGS early stops because the function value does not change; break at iter 3
+=======Func value: -5.16741801613527 at iteration number 3
+Gradient vector:  -0.1349152045663623 0.05393089677727979 -0.05530101802217109 0.022418733896249356 2.601016737832092E-5
+Weight vector:  1.8462156938418386 1.6450385195021695 0.5762901951586791 7.199546829834482 1.563486452216824
+Func value=-5.16741801613527=-5.16741801613527*1.0+0.0*10.911368766814121
+############### runLBFGS: temperature= 0.0; scaling= 17.7385320489632; tuneScale=false
+LBFGS early stops because the function value does not change; break at iter 3
+=======Func value: -5.179426133292652 at iteration number 3
+Gradient vector:  -0.05190599251935407 0.11834030409767166 -0.2377255299149869 0.009432165092279919 1.6069096303973934E-8
+Weight vector:  1.8785599724944948 1.6235958951849752 0.6150076689396469 7.198959558100863 1.5634709327572962
+Func value=-5.179426133292652=-5.179426133292652*1.0+0.0*7.098564295642063
+############### runLBFGS: temperature= 0.0; scaling= 35.4770640979264; tuneScale=false
+LBFGS early stops because the function value does not change; break at iter 3
+=======Func value: -5.2633297285927885 at iteration number 3
+Gradient vector:  -0.008970013094796343 -2.6285722492340555E-4 0.006980887716291943 0.002172459485142792 4.878845078695124E-10
+Weight vector:  1.9856732531174601 1.6324340557959347 0.5384053290623947 7.175013988062523 1.5634709362066082
+LBFGS returns a bad optimal value; best: -5.232149516408668; last: -5.2633297285927885
+Func value=-5.2633297285927885=-5.2633297285927885*1.0+0.0*4.329498241582769
+############### runLBFGS: temperature= 0.0; scaling= 70.9541281958528; tuneScale=false
+Entropy is negative, must be wrong; -1.0059011401608586E-8
+Entropy is negative, must be wrong; -4.0428858483210206E-8
+LBFGS early stops because the function value does not change; break at iter 3
+=======Func value: -5.262790126297107 at iteration number 3
+Gradient vector:  1.291386066837515E-4 -1.08468645372993E-5 1.7295757228268796E-4 5.284289519660003E-5 -1.3613154666667214E-8
+Weight vector:  1.9980544130135873 1.6330130024902019 0.529259887910232 7.172209077191182 1.5634709678440728
+Func value=-5.262790126297107=-5.262790126297107*1.0+0.0*3.5511439605143096
+############### runLBFGS: temperature= 0.0; scaling= 141.9082563917056; tuneScale=false
+Entropy is negative, must be wrong; -2.5416375137865543E-7
+Entropy is negative, must be wrong; -2.993547241203487E-7
+Entropy is negative, must be wrong; -4.3274485506117344E-7
+LBFGS early stops because the function value does not change; break at iter 3
+=======Func value: -5.248850563394442 at iteration number 3
+Gradient vector:  6.667090638606222E-4 4.640787310299466E-8 7.639023283612984E-9 2.927653656807061E-8 -3.7468433657675685E-8
+Weight vector:  3.0030420291381485 1.6330057312339512 0.5284707020973216 7.17205828929917 1.5635629486126594
+Func value=-5.248850563394442=-5.248850563394442*1.0+0.0*2.9450065997225465
+Feature function : LanguageModelFF; weight changed from 1.0 to 1.0
+Feature function : PhraseModelFF; weight changed from 1.066893 to 0.8175810563242756
+Feature function : PhraseModelFF; weight changed from 0.752247 to 0.26454859363963723
+Feature function : PhraseModelFF; weight changed from 0.589793 to 3.590579860264318
+Feature function : WordPenaltyFF; weight changed from -2.844814 to 0.7827390767400493
+
+
+
+
+############## runLBFGS: temperature= 0.0; scaling= 1.0; tuneScale=true
+2009-4-20 21:37:05 joshua.decoder.hypergraph.DiskHyperGraph initRead
+信息: Reading rules from file C:/data_disk/java_work_space/discriminative_at_clsp/edu/jhu/joshua/discriminative_training/risk_annealer/example.nbest.javalm.hgmert.1.withMatches.hg.rules
+num_items: 599; num_deducts: 2110
+num_items: 5837; num_deducts: 43717
+num_items: 1830; num_deducts: 9074
+num_items: 1991; num_deducts: 13054
+num_items: 3847; num_deducts: 25239
+LBFGS early stops because the function value does not change; break at iter 3
+=======Func value: -5.257922934868353 at iteration number 3
+Gradient vector:  0.05352806324800943 0.04461090847668712 0.0675650273689599 0.08510032768306497 0.03764451282543298 0.0054678924632293215
+Weight vector:  2.685699773069846 2.787485884683954 1.4799303678107851 -1.4356155049265802 1.4718949372667922 -2.527651048254647
+Func value=-5.257922934868353=-5.257922934868353*1.0+0.0*27.47775302778126
+optimal scaling factor is 2.685699773069846
+Feature function : LanguageModelFF; weight changed from 1.0 to 1.0
+Feature function : PhraseModelFF; weight changed from 1.066893 to 0.5309194123429902
+Feature function : PhraseModelFF; weight changed from 0.752247 to -0.5150216231819057
+Feature function : PhraseModelFF; weight changed from 0.589793 to 0.5280367320796949
+Feature function : WordPenaltyFF; weight changed from -2.844814 to -0.9067852368842517
+
+
+2009-4-20 21:38:51 joshua.decoder.hypergraph.DiskHyperGraph writeRulesNonParallel
+信息: writing rules
+############### runLBFGS: temperature= 0.0; scaling= 1.0; tuneScale=false
+2009-4-20 21:38:51 joshua.decoder.hypergraph.DiskHyperGraph initRead
+信息: Reading rules from file C:/data_disk/java_work_space/discriminative_at_clsp/edu/jhu/joshua/discriminative_training/risk_annealer/example.nbest.javalm.hgmert.1.withMatches.hg.rules
+num_items: 599; num_deducts: 2110
+num_items: 5837; num_deducts: 43717
+num_items: 1830; num_deducts: 9074
+num_items: 1991; num_deducts: 13054
+num_items: 3847; num_deducts: 25239
+LBFGS early stops because the function value does not change; break at iter 3
+=======Func value: -5.530504007043294 at iteration number 3
+Gradient vector:  0.06608486616323006 0.07155084108324239 -0.07739704053565077 0.05644436801438335 0.030695732619738347
+Weight vector:  3.1609406269598703 1.6278388952188003 -1.1574727096003696 1.4563076990286397 -2.365499807174212
+Func value=-5.530504007043294=-5.530504007043294*1.0+0.0*56.24327409284302
+Feature function : LanguageModelFF; weight changed from 1.0 to 1.0
+Feature function : PhraseModelFF; weight changed from 1.066893 to 0.5149855967982617
+Feature function : PhraseModelFF; weight changed from 0.752247 to -0.36617983258787234
+Feature function : PhraseModelFF; weight changed from 0.589793 to 0.46071972583341037
+Feature function : WordPenaltyFF; weight changed from -2.844814 to -0.7483531284955841
+2009-4-20 21:38:57 joshua.decoder.chart_parser.Chart expand

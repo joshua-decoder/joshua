@@ -1,0 +1,19 @@
+what can we do after we get a hypergraph?
+
+(1) extract stuff from the hypergraph
+ - feature extraction
+ - oracle extraction
+ - confusion extraction
+ 
+ - expectation extraction (for parameter estimation)
+ - other decoding extraction (e.g. one/k-best extraction)
+
+(2) transform the hypergraph
+ - rerank on the hypergraph
+ - split and filter
+ - convert it to a lattice
+ 
+(3) applications
+ - variational decoding (require feature extraction and rerank)
+ - discriminative training (require feature extraction, expectation, and rerank)
+ - graphical modeling on a hypergraph

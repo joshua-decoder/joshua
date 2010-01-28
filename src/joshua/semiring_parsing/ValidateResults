@@ -1,0 +1,328 @@
+
+2009-4-21 23:30:02 joshua.decoder.BuildinSymbol <init>
+信息: Construct the symbol table on the fly
+2009-4-21 23:30:02 joshua.decoder.hypergraph.DiskHyperGraph initRead
+信息: Reading rules from file C:\data_disk\java_work_space\sf_trunk\example\example.nbest.javalm.out.hg.rules
+#Process sentence 0
+num_items: 599; num_deducts: 2127
+prob: -127.87791304175094; factor1: 9.163892015521501
+#Process sentence 1
+num_items: 5832; num_deducts: 43582
+prob: -179.91968618595743; factor1: 39.79006010835656
+#Process sentence 2
+num_items: 1831; num_deducts: 9084
+prob: -136.45995146057305; factor1: 21.377819917886956
+#Process sentence 3
+num_items: 1993; num_deducts: 13090
+prob: -147.37931389206815; factor1: 20.089939144240734
+#Process sentence 4
+num_items: 3847; num_deducts: 25250
+prob: -53.11915160379693; factor1: 27.000698923935335
+
+
+
+2009-4-21 23:34:11 joshua.decoder.BuildinSymbol <init>
+信息: Construct the symbol table on the fly
+2009-4-21 23:34:11 joshua.decoder.hypergraph.DiskHyperGraph initRead
+信息: Reading rules from file C:\data_disk\java_work_space\sf_trunk\example\example.nbest.javalm.out.hg.rules
+#Process sentence 0
+num_items: 599; num_deducts: 2127
+prob: -127.87791304175094; factor1: 9.163892015521501; factor2: 9.163892015521501; combined:84.20439584819081
+#Process sentence 1
+num_items: 5832; num_deducts: 43582
+prob: -179.91968618595743; factor1: 39.79006010835656; factor2: 39.79006010835656; combined:1585.4484275224122
+#Process sentence 2
+num_items: 1831; num_deducts: 9084
+prob: -136.45995146057305; factor1: 21.377819917886956; factor2: 21.377819917886956; combined:457.8323193203709
+#Process sentence 3
+num_items: 1993; num_deducts: 13090
+prob: -147.37931389206815; factor1: 20.089939144240734; factor2: 20.089939144240734; combined:404.86900614561137
+#Process sentence 4
+num_items: 3847; num_deducts: 25250
+prob: -53.11915160379693; factor1: 27.000698923935335; factor2: 27.000698923935335; combined:730.6816491514937
+
+
+
+
+
+
+
+2009-4-10 10:54:18 joshua.decoder.BuildinSymbol <init>
+信息: Construct the symbol table on the fly
+2009-4-10 10:54:18 joshua.decoder.hypergraph.DiskHyperGraph initRead
+信息: Reading rules from file C:\data_disk\java_work_space\sf_trunk\example\example.nbest.javalm.out.hg.rules
+#Process sentence 0
+num_items: 599; num_deducts: 2127
+prob: -127.87791304175094; factor1: -138.51446094483364
+entropy is 10.6365479030827
+#Process sentence 1
+num_items: 5832; num_deducts: 43582
+prob: -179.91968618595743; factor1: -231.19691571633228
+entropy is 51.27722953037485
+#Process sentence 2
+num_items: 1831; num_deducts: 9084
+prob: -136.45995146057305; factor1: -165.16251438951056
+entropy is 28.70256292893751
+#Process sentence 3
+num_items: 1993; num_deducts: 13090
+prob: -147.37931389206815; factor1: -167.3049122693208
+entropy is 19.92559837725264
+#Process sentence 4
+num_items: 3847; num_deducts: 25250
+prob: -53.11915160379693; factor1: -89.00210614458692
+entropy is 35.88295454078999
+
+
+
+
+
+
+
+
+
+
+%%%%%%%%%%%%%%%% for DA function value
+2009-4-19 17:51:17 joshua.decoder.BuildinSymbol <init>
+信息: Construct the symbol table on the fly
+Thetas are: -1.0 0.3125 0.44642857142857145 0.6377551020408164 0.9110787172011664 
+2009-4-19 17:51:17 joshua.decoder.hypergraph.DiskHyperGraph initRead
+信息: Reading rules from file C:/data_disk/java_work_space/discriminative_at_clsp/edu/jhu/joshua/discriminative_training/risk_annealer/example.nbest.javalm.hgmert.1.withMatches.hg.rules
+#Process sentence 0
+num_items: 599; num_deducts: 2110
+prob: -127.87920507218463
+factor1: 7.002761168413701 138.51139285024982
+Risk is : 7.002761168413701
+Entropy is : 10.632187778065187
+Function value is : -7.002761168413701
+#Process sentence 1
+num_items: 5837; num_deducts: 43717
+prob: -179.91131040653642
+factor1: 25.1762155571153 231.20393186150275
+Risk is : 25.1762155571153
+Entropy is : 51.29262145496634
+Function value is : -25.1762155571153
+#Process sentence 2
+num_items: 1830; num_deducts: 9074
+prob: -136.4631695274986
+factor1: 12.600619900290146 165.15828632645287
+Risk is : 12.600619900290146
+Entropy is : 28.695116798954274
+Function value is : -12.600619900290146
+#Process sentence 3
+num_items: 1991; num_deducts: 13054
+prob: -147.3873879170388
+factor1: 9.221033040846317 167.29067819568252
+Risk is : 9.221033040846317
+Entropy is : 19.90329027864371
+Function value is : -9.221033040846317
+#Process sentence 4
+num_items: 3847; num_deducts: 25239
+prob: -53.11671501172222
+factor1: 15.139416987666621 88.99960203115018
+Risk is : 15.139416987666621
+Entropy is : 35.882887019427955
+Function value is : -15.139416987666621
+
+
+
+
+%%%%%%%%%%%%%%%% for DA gradients
+2009-4-19 19:06:45 joshua.decoder.BuildinSymbol <init>
+信息: Construct the symbol table on the fly
+Thetas are: -1.0 0.29411764705882354 0.42016806722689076 0.6002400960384154 0.8574858514834508 
+Thetas are: -1.0 0.29411764705882354 0.42016806722689076 0.6002400960384154 0.8574858514834508 
+2009-4-19 19:06:45 joshua.decoder.hypergraph.DiskHyperGraph initRead
+信息: Reading rules from file C:/data_disk/java_work_space/discriminative_at_clsp/edu/jhu/joshua/discriminative_training/risk_annealer/example.nbest.javalm.hgmert.1.withMatches.hg.rules
+#Process sentence 0
+num_items: 599; num_deducts: 2110
+prob: -127.87920507218463
+factor1: 7.002761168413701
+factor2: 127.8923723125781 8.871224562651358 11.935710808397888 5.9277383957574905 3.9792999154893614
+factor1*factor2: 895.5997385668295 62.12306688361275 83.58293216646443 41.51053625432548 27.866086925660824
+combinedfactor:  895.732140523939 62.17718080157801 83.5573328143442 41.667740849267666 27.912221162548548
+Gradients are: -0.1324019571095505 -0.05411391796526033 0.02559935212022424 -0.1572045949421863 -0.046134236887724 
+#Process sentence 1
+num_items: 5837; num_deducts: 43717
+prob: -179.91131040653642
+factor1: 25.1762155571153
+factor2: 192.23505943148234 33.725991569543694 52.02443591684444 22.062499781174438 17.28080840159022
+factor1*factor2: 4839.75129388187 849.0928336322854 1309.7784128798069 555.4502502196567 435.0653573196445
+combinedfactor:  4842.649363924611 850.0053516570906 1308.9303532141105 556.5885150304073 435.6747478027927
+Gradients are: -2.898070042740983 -0.9125180248051947 0.8480596656963826 -1.1382648107505702 -0.6093904831482178 
+#Process sentence 2
+num_items: 1830; num_deducts: 9074
+prob: -136.4631695274986
+factor1: 12.600619900290146
+factor2: 145.53835184664993 16.906100873986965 28.907338368803998 10.596730915884088 9.284404000731612
+factor1*factor2: 1833.8734525343264 213.02735110907278 364.25038311437254 133.52537845670886 116.98924581395221
+combinedfactor:  1834.693802055719 214.357833857657 363.012723346894 134.6046106482673 117.37769611233522
+Gradients are: -0.8203495213926999 -1.3304827485842168 1.237659767478533 -1.0792321915584466 -0.38845029838300604 
+#Process sentence 3
+num_items: 1991; num_deducts: 13054
+prob: -147.3873879170388
+factor1: 9.221033040846317
+factor2: 143.01087400828337 18.889997109924202 28.961963401861404 12.149447581973948 8.726760596676755
+factor1*factor2: 1318.7079944306906 174.1852874921025 267.0592214563458 112.03045758141216 80.46974780151207
+combinedfactor:  1321.817114323032 175.33003046734137 265.76616506767573 113.2624062248176 80.9826091615826
+Gradients are: -3.1091198923413685 -1.14474297523887 1.2930563886700952 -1.2319486434054312 -0.5128613600705307 
+#Process sentence 4
+num_items: 3847; num_deducts: 25239
+prob: -53.11671501172222
+factor1: 15.139416987666621
+factor2: 62.48856885815536 26.03193316794534 27.278013690448 19.628079232972752 11.726095906447679
+factor1*factor2: 946.0405009061327 394.1082912245938 412.9732238549711 297.1576761749341 177.526255565082
+combinedfactor:  948.1543499010555 394.43681968094955 412.6653031143498 297.18698113498624 177.65189926629537
+Gradients are: -2.1138489949228187 -0.3285284563557411 0.3079207406212845 -0.029304960052115803 -0.1256437012133631 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%% HG DA the first two iterations
+2009-4-21 23:44:24 joshua.decoder.BuildinSymbol <init>
+信息: Construct the symbol table on the fly
+weight: 1.0
+weight: 1.066893
+weight: 0.752247
+weight: 0.589793
+weight: -2.844814
+Thetas are: -0.1 0.029411764705882353 0.04201680672268908 0.06002400960384155 0.08574858514834507 
+2009-4-21 23:44:24 joshua.decoder.JoshuaConfiguration readConfigFile
+警告: Maybe Wrong config line: useGoogleLinearCorpusGain=true
+2009-4-21 23:44:24 joshua.decoder.JoshuaConfiguration readConfigFile
+警告: Maybe Wrong config line: unigramPrecision=0.85
+2009-4-21 23:44:24 joshua.decoder.JoshuaConfiguration readConfigFile
+警告: Maybe Wrong config line: precisionDecayRatio=0.7
+2009-4-21 23:44:24 joshua.decoder.JoshuaConfiguration readConfigFile
+警告: Maybe Wrong config line: numUnigramTokens=10
+2009-4-21 23:44:24 joshua.decoder.JoshuaConfiguration readConfigFile
+警告: Maybe Wrong config line: noAnnealing=false
+2009-4-21 23:44:24 joshua.decoder.JoshuaConfiguration readConfigFile
+警告: Maybe Wrong config line: isScalingFactorTunable=false
+2009-4-21 23:44:24 joshua.decoder.JoshuaConfiguration readConfigFile
+信息: you use a LM feature function, so make sure you have a LM grammar
+2009-4-21 23:44:24 joshua.decoder.BuildinSymbol <init>
+信息: Construct the symbol table on the fly
+2009-4-21 23:44:24 joshua.decoder.ff.lm.buildin_lm.LMGrammarJAVA <init>
+信息: use java lm
+2009-4-21 23:44:24 joshua.decoder.ff.lm.buildin_lm.LMGrammarJAVA read_lm_grammar_from_file
+信息: Reading grammar from file C:/data_disk/java_work_space/sf_trunk/example/example.trigram.lm.gz
+2009-4-21 23:44:24 joshua.decoder.ff.lm.buildin_lm.LMGrammarJAVA read_lm_grammar_from_file
+信息: begin to read ngrams with order 1
+2009-4-21 23:44:25 joshua.decoder.ff.lm.buildin_lm.LMGrammarJAVA read_lm_grammar_from_file
+信息: begin to read ngrams with order 2
+2009-4-21 23:44:25 joshua.decoder.ff.lm.buildin_lm.LMGrammarJAVA read_lm_grammar_from_file
+信息: begin to read ngrams with order 3
+2009-4-21 23:44:25 joshua.decoder.JoshuaDecoder initializeGlueGrammar
+信息: Constructing glue grammar...
+2009-4-21 23:44:25 joshua.decoder.ff.tm.hiero.MemoryBasedBatchGrammar print_grammar
+信息: ###########Grammar###########
+2009-4-21 23:44:25 joshua.decoder.ff.tm.hiero.MemoryBasedBatchGrammar print_grammar
+信息: ####num_rules: 2; num_bins: 2; num_pruned: 0; sumest_cost: 0.00000
+2009-4-21 23:44:25 joshua.decoder.JoshuaDecoder initializeTranslationGrammars
+信息: Using grammar read from file C:/data_disk/java_work_space/sf_trunk/example/example.hiero.tm.gz
+2009-4-21 23:44:25 joshua.decoder.ff.tm.hiero.MemoryBasedBatchGrammar print_grammar
+信息: ###########Grammar###########
+2009-4-21 23:44:25 joshua.decoder.ff.tm.hiero.MemoryBasedBatchGrammar print_grammar
+信息: ####num_rules: 15939; num_bins: 2029; num_pruned: 0; sumest_cost: 0.00000
+Feature function : LanguageModelFF; weight changed from 1.0 to 1.0
+Feature function : PhraseModelFF; weight changed from 1.066893 to 1.066893
+Feature function : PhraseModelFF; weight changed from 0.752247 to 0.752247
+Feature function : PhraseModelFF; weight changed from 0.589793 to 0.589793
+Feature function : WordPenaltyFF; weight changed from -2.844814 to -2.844814
+2009-4-21 23:44:26 joshua.decoder.chart_parser.Chart expand
+信息: Sentence length: 9
+2009-4-21 23:44:26 joshua.decoder.chart_parser.Bin transit_to_goal
+信息: Goal item, best cost is 135.267
+2009-4-21 23:44:26 joshua.decoder.hypergraph.DiskHyperGraph saveHyperGraph
+信息: Number of Items is: 599
+2009-4-21 23:44:27 joshua.decoder.chart_parser.Chart expand
+信息: Sentence length: 42
+2009-4-21 23:44:27 joshua.decoder.chart_parser.Bin transit_to_goal
+信息: Goal item, best cost is 214.873
+2009-4-21 23:44:27 joshua.decoder.hypergraph.DiskHyperGraph saveHyperGraph
+信息: Number of Items is: 5837
+2009-4-21 23:44:30 joshua.decoder.chart_parser.Chart expand
+信息: Sentence length: 23
+2009-4-21 23:44:30 joshua.decoder.chart_parser.Bin transit_to_goal
+信息: Goal item, best cost is 156.188
+2009-4-21 23:44:31 joshua.decoder.hypergraph.DiskHyperGraph saveHyperGraph
+信息: Number of Items is: 1830
+2009-4-21 23:44:32 joshua.decoder.chart_parser.Chart expand
+信息: Sentence length: 24
+2009-4-21 23:44:32 joshua.decoder.chart_parser.Bin transit_to_goal
+信息: Goal item, best cost is 160.277
+2009-4-21 23:44:32 joshua.decoder.hypergraph.DiskHyperGraph saveHyperGraph
+信息: Number of Items is: 1991
+2009-4-21 23:44:33 joshua.decoder.chart_parser.Chart expand
+信息: Sentence length: 27
+2009-4-21 23:44:33 joshua.decoder.chart_parser.Bin transit_to_goal
+信息: Goal item, best cost is 76.116
+2009-4-21 23:44:33 joshua.decoder.hypergraph.DiskHyperGraph saveHyperGraph
+信息: Number of Items is: 3847
+2009-4-21 23:44:35 joshua.decoder.hypergraph.DiskHyperGraph writeRulesNonParallel
+信息: writing rules
+2009-4-21 23:44:35 joshua.decoder.hypergraph.DiskHyperGraph initRead
+信息: Reading rules from file C:/data_disk/java_work_space/discriminative_at_clsp/edu/jhu/joshua/discriminative_training/risk_annealer/example.nbest.javalm.hgmert.1.hg.rules
+#Process sentence 0
+num_items: 599; num_deducts: 2110
+2009-4-21 23:44:35 joshua.decoder.hypergraph.DiskHyperGraph saveHyperGraph
+信息: Number of Items is: 599
+#Process sentence 1
+num_items: 5837; num_deducts: 43717
+2009-4-21 23:44:36 joshua.decoder.hypergraph.DiskHyperGraph saveHyperGraph
+信息: Number of Items is: 5837
+#Process sentence 2
+num_items: 1830; num_deducts: 9074
+2009-4-21 23:44:39 joshua.decoder.hypergraph.DiskHyperGraph saveHyperGraph
+信息: Number of Items is: 1830
+#Process sentence 3
+num_items: 1991; num_deducts: 13054
+2009-4-21 23:44:40 joshua.decoder.hypergraph.DiskHyperGraph saveHyperGraph
+信息: Number of Items is: 1991
+#Process sentence 4
+num_items: 3847; num_deducts: 25239
+2009-4-21 23:44:41 joshua.decoder.hypergraph.DiskHyperGraph saveHyperGraph
+信息: Number of Items is: 3847
+2009-4-21 23:44:42 joshua.decoder.hypergraph.DiskHyperGraph writeRulesNonParallel
+信息: writing rules
+======= cooling stage =======
+############### runLBFGS: temperature= 1000.0; scaling= 0.1; tuneScale=true
+2009-4-21 23:44:42 joshua.decoder.hypergraph.DiskHyperGraph initRead
+信息: Reading rules from file C:/data_disk/java_work_space/discriminative_at_clsp/edu/jhu/joshua/discriminative_training/risk_annealer/example.nbest.javalm.hgmert.1.withMatches.hg.rules
+num_items: 599; num_deducts: 2110
+num_items: 5837; num_deducts: 43717
+num_items: 1830; num_deducts: 9074
+num_items: 1991; num_deducts: 13054
+num_items: 3847; num_deducts: 25239
+LBFGS early stops because the function value does not change; break at iter 6
+=======Func value: 168868.34929291857 at iteration number 6
+Gradient vector:  1.7893213220820936E-7 1.4383526875686608E-5 -1.998250104806816E-6 -6.423139959498259E-6 6.468849269875091E-6 3.919276189595658E-6
+Weight vector:  2.2018813255691456E-5 0.9945427492315165 1.0632553730633592 0.7521426998872467 0.5879171849676216 -2.8455274760929763
+Func value=168868.34929291857=-8.09133248084607*1.0+1000.0*168.87644062539943
+############### runLBFGS: temperature= 500.0; scaling= 2.2018813255691456E-5; tuneScale=true
+LBFGS early stops because the function value does not change; break at iter 5
+=======Func value: 84430.12899009566 at iteration number 5
+Gradient vector:  -3.7058216362691188E-6 2.876668562656839E-5 -3.996451221592092E-6 -1.284624264330271E-5 1.2937601495939474E-5 7.838491962503028E-6
+Weight vector:  4.40376684403497E-5 0.9945427505387081 1.0632553730676697 0.7521426994257826 0.5879171855312266 -2.845527475771769
+Func value=84430.12899009566=-8.091292973719607*1.0+500.0*168.87644056613877
+############### runLBFGS: temperature= 250.0; scaling= 4.40376684403497E-5; tuneScale=true
+
+
+bs0 ||| 1.0
+bs1 ||| 1.066893
+bs2 ||| 0.752247
+bs3 ||| 0.589793
+bs4 ||| -2.844814

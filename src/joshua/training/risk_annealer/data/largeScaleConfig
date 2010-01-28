@@ -1,0 +1,37 @@
+useSemiringV2=true
+maxNumHGInQueue=100
+numThreads=4
+
+normalizeByFirstFeature=true
+
+#google linear corpus gain
+useGoogleLinearCorpusGain=true
+unigramPrecision=0.85
+precisionDecayRatio=0.7
+numUnigramTokens=10
+
+#annealing?
+noAnnealing=false
+isScalingFactorTunable=true
+
+baselineLMOrder=4
+largeScale=true
+doFeatureFiltering=true
+
+useBaseline=true
+baselineFeatureName=baseline_lzf
+useIndividualBaselines=false
+numIndividualBaselines=5
+useTM=true
+useTMTarget=false
+
+useLM=true
+startOrder=1
+endOrder=2
+
+
+#load all the disk hg in memory?
+saveHGInMemory=false
+
+#fix the first feature (e.g., baseline feature)
+fixFirstFeature=true

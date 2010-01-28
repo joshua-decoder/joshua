@@ -1,0 +1,10 @@
+Training Methods:
+
+Batch-based:
+- CRF
+- Min-risk
+- EM
+
+Online-based:
+- Perceptron
+- SGD
