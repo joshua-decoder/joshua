@@ -12,7 +12,7 @@ public abstract class LBFGSWrapper {
 	private double lastFunctionVal;
 	
 	private  boolean isMinimizer = true;
-	private  int maxNumCall = 100;//run at most 100 iterations (i.e., number of funcion and gradient evaluation) for this particular run
+	private  int maxNumCall = 5;//run at most 100 iterations (i.e., number of funcion and gradient evaluation) for this particular run
 	
 	//==== stop criterion
 	private double relativeFuncThreshold = 1e-3;//if the relative change of the function value is smaller than this value, then we terminate
@@ -153,10 +153,10 @@ public abstract class LBFGSWrapper {
             	break;
             };
             numCalls++;
-            //printStatistics(num_calls, lastFunctionVal, gradient_vector, weightsVector);
+            printStatistics(numCalls, lastFunctionVal, gradientVector, weightsVector);
             //System.exit(1);//????????????
         }
-        //printStatistics(numCalls, lastFunctionVal, gradientVector, weightsVector);
+        printStatistics(numCalls, lastFunctionVal, gradientVector, weightsVector);
        
         if(isMinimizer==true  && lastFunctionVal>bestFunctionVal) {
         	System.out.println("LBFGS returns a bad optimal value; best: " + bestFunctionVal + "; last: " + lastFunctionVal);
