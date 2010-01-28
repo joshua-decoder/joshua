@@ -1,0 +1,86 @@
+package joshua.discriminative.training.risk_annealer;
+
+import java.io.BufferedReader;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.logging.Logger;
+
+import joshua.discriminative.FileUtilityOld;
+
+public abstract class AbstractMinRiskMERT {
+		
+	protected String configFile;	
+	protected double[] lastWeightVector;
+	
+	//== annealer specific
+	protected DeterministicAnnealer annealer;	
+	protected String[] referenceFiles;
+	protected int numPara;
+	protected int numTrainingSentence;
+	
+	protected double[] linearCorpusGainThetas;
+	
+	
+//=======================================
+	
+	
+	private static final Logger logger =
+		Logger.getLogger(AbstractMinRiskMERT.class.getSimpleName());
+	
+	
+	public AbstractMinRiskMERT(String configFile, int numTrainingSentence, String[] referenceFiles) {	
+		
+		this.configFile = configFile;					
+		this.referenceFiles = referenceFiles;		
+		this.numTrainingSentence = numTrainingSentence;
+	
+	}
+
+	//this function should have an option for not annealing
+	public abstract void mainLoop();	
+	public abstract void decodingTestSet(double[] weights, String nbestFile);
+	
+
+	
+	
+	protected List<Double> readBaselineFeatureWeights(String configFile){
+		
+		logger.info("intilize features and weights");
+		
+		//== get the weights
+		List<Double> weights = new ArrayList<Double>();
+		BufferedReader configReader = FileUtilityOld.getReadFileStream(configFile);
+		String line;
+		while ((line = FileUtilityOld.readLineLzf(configReader)) != null) {
+			line = line.trim();
+			if (line.matches("^\\s*\\#.*$") || line.matches("^\\s*$")) {
+				continue;
+			}else if (line.indexOf("=") != -1) { // parameters
+				continue;				
+			}else{//models
+				String[] fds = line.split("\\s+");
+				double weight = new Double(fds[fds.length-1].trim());
+				weights.add(weight);
+			}
+		}
+		FileUtilityOld.closeReadFile(configReader);
+		return weights;
+	}
+	
+	
+	
+
+	protected void normalizeWeightsByFirstFeature(double[] weightVector){
+		//TODO: which one should be fixed? what if the one to be fixed has a negative value?
+		double lmWeight = weightVector[0];
+		if(lmWeight<=0){
+			logger.severe("first weight becomes negative, we cannot normalize"); 
+			System.exit(0);
+		}else{
+			for(int i=0; i<weightVector.length; i++)
+				weightVector[i] /=  lmWeight;
+		}
+	}
+	
+
+}
