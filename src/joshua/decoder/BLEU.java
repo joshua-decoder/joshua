@@ -239,17 +239,23 @@ public class BLEU {
 	
 	
 	
-	public  static HashMap<String, Integer> constructReferenceTable(String refSentence, int bleuOrder){		
-		HashMap<String, Integer> referenceNgramTable = new HashMap<String, Integer>();	
-		String[] refWrds = Regex.spaces.split(refSentence);						
-		Ngram.getNgrams(referenceNgramTable, 1, bleuOrder, refWrds);
-		return referenceNgramTable;
+	public  static HashMap<String, Integer> constructNgramTable(String sentence, int bleuOrder){		
+		HashMap<String, Integer> ngramTable = new HashMap<String, Integer>();	
+		String[] refWrds = Regex.spaces.split(sentence);						
+		Ngram.getNgrams(ngramTable, 1, bleuOrder, refWrds);
+		return ngramTable;
 	}
 
 
 	
 	//================================ Google linear corpus gain ============================================
-
+	public  static double computeLinearCorpusGain(double[] linearCorpusGainThetas, String[] refSents, String hypSent){
+		int bleuOrder = 4;
+		int hypLength =Regex.spaces.split(hypSent).length;
+		HashMap<String, Integer> refereceNgramTable = BLEU.constructMaxRefCountTable(refSents, bleuOrder);
+		HashMap<String, Integer> hypNgramTable = BLEU.constructNgramTable(hypSent, bleuOrder); 
+		return BLEU.computeLinearCorpusGain(linearCorpusGainThetas, hypLength, hypNgramTable,  refereceNgramTable);
+	}
 	/** 
 	 * speed consideration: assume hypNgramTable has a smaller
 	 * size than referenceNgramTable does
