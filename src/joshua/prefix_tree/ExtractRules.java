@@ -99,7 +99,13 @@ public class ExtractRules {
 	private int maxTestSentences = Integer.MAX_VALUE;
 	private int startingSentence = 1;
 	
+	private boolean precomputeFrequentPhrases = true;
+	
 	public ExtractRules() {
+	}
+	
+	public void setPrecomputeFrequentPhrases(boolean precomputeFrequentPhrases) {
+		this.precomputeFrequentPhrases = precomputeFrequentPhrases;
 	}
 	
 	public void setSourceFileName(String sourceFileName) {
@@ -323,9 +329,10 @@ public class ExtractRules {
 		//////////////////////
 		// Frequent Phrases //
 		//////////////////////
-		FrequentPhrases frequentPhrases = new FrequentPhrases(sourceSuffixArray, frequentPhrasesFileName);
-		frequentPhrases.cacheInvertedIndices();
-		
+		if (precomputeFrequentPhrases) {
+			FrequentPhrases frequentPhrases = new FrequentPhrases(sourceSuffixArray, frequentPhrasesFileName);
+			frequentPhrases.cacheInvertedIndices();
+		}
 		
 		logger.info("Constructing grammar factory from parallel corpus");
 		ParallelCorpusGrammarFactory parallelCorpus = new ParallelCorpusGrammarFactory(sourceSuffixArray, targetSuffixArray, alignments, null, ruleSampleSize, maxPhraseSpan, maxPhraseLength, maxNonterminals, minNonterminalSpan, Float.MIN_VALUE, JoshuaConfiguration.phrase_owner, JoshuaConfiguration.default_non_terminal, JoshuaConfiguration.oovFeatureCost);
