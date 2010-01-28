@@ -99,13 +99,13 @@ public class ExtractRules {
 	private int maxTestSentences = Integer.MAX_VALUE;
 	private int startingSentence = 1;
 	
-	private boolean precomputeFrequentPhrases = true;
+	private boolean usePrecomputedFrequentPhrases = true;
 	
 	public ExtractRules() {
 	}
 	
-	public void setPrecomputeFrequentPhrases(boolean precomputeFrequentPhrases) {
-		this.precomputeFrequentPhrases = precomputeFrequentPhrases;
+	public void setUsePrecomputedFrequentPhrases(boolean usePrecomputedFrequentPhrases) {
+		this.usePrecomputedFrequentPhrases = usePrecomputedFrequentPhrases;
 	}
 	
 	public void setSourceFileName(String sourceFileName) {
@@ -329,7 +329,7 @@ public class ExtractRules {
 		//////////////////////
 		// Frequent Phrases //
 		//////////////////////
-		if (precomputeFrequentPhrases) {
+		if (usePrecomputedFrequentPhrases) {
 			FrequentPhrases frequentPhrases = new FrequentPhrases(sourceSuffixArray, frequentPhrasesFileName);
 			frequentPhrases.cacheInvertedIndices();
 		}
