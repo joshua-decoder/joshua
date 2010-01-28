@@ -12,7 +12,7 @@ public abstract class LBFGSWrapper {
 	private double lastFunctionVal;
 	
 	private  boolean isMinimizer = true;
-	private  int maxNumCall = 5;//run at most 100 iterations (i.e., number of funcion and gradient evaluation) for this particular run
+	private  int maxNumCall = 100;//run at most 100 iterations (i.e., number of funcion and gradient evaluation) for this particular run
 	
 	//==== stop criterion
 	private double relativeFuncThreshold = 1e-3;//if the relative change of the function value is smaller than this value, then we terminate
@@ -262,12 +262,12 @@ public abstract class LBFGSWrapper {
 				gradientVector[k] +=  weightsVector[k]/this.varianceForL2;
 			else
 				gradientVector[k] -=  weightsVector[k]/this.varianceForL2;
-		}
-		
+		}		
 		if(this.isMinimizer)
 			resFuncVal[0] += l2Norm/(2.0*this.varianceForL2);
 		else
-			resFuncVal[0] -= l2Norm/(2.0*this.varianceForL2);    		
+			resFuncVal[0] -= l2Norm/(2.0*this.varianceForL2);
+		System.out.println("l2Norm is " + l2Norm + " for isMinimizer=" + this.isMinimizer);
 	}
 	
 	
