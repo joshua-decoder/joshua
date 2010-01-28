@@ -346,7 +346,7 @@ public class ExtractRules {
 		//////////////////////
 		if (usePrecomputedFrequentPhrases) {
 			FrequentPhrases frequentPhrases = new FrequentPhrases(sourceSuffixArray, frequentPhrasesFileName);
-			frequentPhrases.cacheInvertedIndices();
+//			frequentPhrases.cacheInvertedIndices();
 		}
 
 		

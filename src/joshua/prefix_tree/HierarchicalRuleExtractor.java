@@ -632,7 +632,8 @@ public class HierarchicalRuleExtractor implements RuleExtractor {
 			
 			if (logger.isLoggable(Level.FINER)) logger.finer("Case 2: Source phrase startsWithNT && !endsWithNT");
 			
-			int startOfSentence = sourceSuffixArray.getCorpus().getSentencePosition(sourcePhrase.getSentenceNumber(sourcePhraseIndex));
+			int sentenceNumber = sourcePhrase.getSentenceNumber(sourcePhraseIndex);
+			int startOfSentence = sourceSuffixArray.getCorpus().getSentencePosition(sentenceNumber);
 			int startOfTerminalSequence = sourcePhrase.getFirstTerminalIndex(sourcePhraseIndex);
 			int endOfTerminalSequence = sourcePhrase.getLastTerminalIndex(sourcePhraseIndex);
 			

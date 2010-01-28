@@ -1003,8 +1003,12 @@ public class ExtractRulesTest {
 	public void testRuleSet1Expanded() throws IOException {
 		
 		List<String> lines = extractRules("it", true, true, false);
+//		
+//		for (String line : lines) {
+//			System.err.println(line);
+//		}
 		
-//		Assert.assertEquals(lines.size(), 6);
+		Assert.assertEquals(lines.size(), 6);
 		
 		int n = 0;
 		verifyLine(lines.get(n++), "[X]", "[X,1] it [X,2]", "[X,1] es [X,2]");

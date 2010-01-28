@@ -17,13 +17,9 @@
  */
 package joshua.corpus.suffix_array;
 
-import java.io.Externalizable;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -761,7 +757,7 @@ public class FrequentPhrases {
 		int endOfCorpus = corpus.size();
 		logger.fine("Corpus has size " + endOfCorpus);
 		
-		int sentenceNumber = 1;
+		int sentenceNumber = 0;
 		int endOfSentence = suffixes.getSentencePosition(sentenceNumber);
 		
 		// Start at the beginning of the corpus...
@@ -850,15 +846,15 @@ public class FrequentPhrases {
 		
 		// Read in the maximum number of phrases of which this object is aware.
 		this.maxPhrases = in.readShort();
-		if (loggingFinest) logger.finest("Read: maxPhrases="+maxPhrases);
+		if (loggingFinest) logger.finest(" Read: maxPhrases="+maxPhrases);
 		
 		// Read in the maximum phrase length to consider.
 		this.maxPhraseLength = in.readInt();
-		if (loggingFinest) logger.finest("Read: maxPhraseLength="+maxPhraseLength);
+		if (loggingFinest) logger.finest(" Read: maxPhraseLength="+maxPhraseLength);
 		
 		// Read in the count of frequent phrase types
 		int frequentPhrasesSize = in.readInt();
-		if (loggingFinest) logger.finest("Read: frequentPhrases.size()="+frequentPhrasesSize);
+		if (loggingFinest) logger.finest(" Read: frequentPhrases.size()="+frequentPhrasesSize);
 		
 		// Read in the frequentPhrases map
 		this.frequentPhrases = new LinkedHashMap<Phrase,Integer>();
@@ -866,16 +862,16 @@ public class FrequentPhrases {
 			
 			// Write out number of times the phrase is found in the corpus
 			int count = in.readInt();
-			if (loggingFinest) logger.finest("Read: phraseCount="+count);
+			if (loggingFinest) logger.finest(" Read: phraseCount="+count);
 			
 			// Read in the number of tokens in the phrase
 			int tokenCount = in.readInt();
-			if (loggingFinest) logger.finest("Read: wordIDs.length="+tokenCount);
+			if (loggingFinest) logger.finest(" Read: wordIDs.length="+tokenCount);
 			
 			int[] wordIDs = new int[tokenCount];
 			for (int j=0; j<tokenCount; j++) {
 				int wordID = in.readInt();
-				if (loggingFinest) logger.finest("Read: wordIDs["+j+"]="+wordID);
+				if (loggingFinest) logger.finest(" Read: wordIDs["+j+"]="+wordID);
 				wordIDs[j] = wordID;
 			}
 			
@@ -888,6 +884,7 @@ public class FrequentPhrases {
 		
 		// Read in number of inverted indices
 		int invertedIndicesCount = in.readInt();
+		if (loggingFinest) logger.finest(" Read: invertedIndices.size()="+invertedIndicesCount);
 		
 		// Read in inverted indices
 		this.invertedIndices = new HashMap<Phrase,InvertedIndex>(frequentPhrases.keySet().size());
@@ -895,10 +892,12 @@ public class FrequentPhrases {
 			
 			// Read in the number of tokens in the phrase
 			int tokenCount = in.readInt();
+			if (loggingFinest) logger.finest(" Read: wordIDs.length="+tokenCount);
 			
 			int[] wordIDs = new int[tokenCount];
-			for (int j=0; i<tokenCount; i++) {
+			for (int j=0; j<tokenCount; j++) {
 				wordIDs[j] = in.readInt();
+				if (loggingFinest) logger.finest(" Read: wordID["+j+"]="+wordIDs[j]);
 			}
 			
 			// Reconstruct phrase
@@ -906,6 +905,7 @@ public class FrequentPhrases {
 			
 			// Read in inverted index
 			InvertedIndex invertedIndex = new InvertedIndex();
+			if (loggingFinest) logger.finest(" Read: about to InvertedIndex");
 			invertedIndex.readExternal(in);
 			
 			this.invertedIndices.put(phrase, invertedIndex);
@@ -943,10 +943,13 @@ public class FrequentPhrases {
 			if (loggingFinest) logger.finest("Wrote: wordIDs.length="+wordIDs.length);
 			
 			// Write out each token in the phrase
+			int index = 0;
 			for (int wordID : wordIDs) {
 				out.writeInt(wordID);
+				if (loggingFinest) logger.finest("Wrote: wordIDs["+index+"]="+wordID);
+				index+=1;
 			}
-			if (loggingFinest) logger.finest("Wrote: wordIDs="+Arrays.toString(wordIDs));
+//			if (loggingFinest) logger.finest("Wrote: wordIDs="+Arrays.toString(wordIDs));
 		}
 		
 		// Write out number of inverted indices
@@ -961,14 +964,19 @@ public class FrequentPhrases {
 			
 			// Write out number of tokens in the pattern
 			out.writeInt(wordIDs.length);
+			if (loggingFinest) logger.finest("Wrote: wordIDs.length="+wordIDs.length);
 			
 			// Write out each token in the phrase
+			int index = 0;
 			for (int wordID : wordIDs) {
 				out.writeInt(wordID);
+				if (loggingFinest) logger.finest("Wrote: wordID["+index+"]="+wordID);
+				index+=1;
 			}
 			
 			// Write out inverted index for this phrase
 			InvertedIndex list = entry.getValue();
+			if (loggingFinest) logger.finest("Wrote: about to InvertedIndex");
 			out.writeObject(list);
 		}
 	}
@@ -1161,65 +1169,6 @@ public class FrequentPhrases {
 		//		}
 
 
-	}
-	
-	private static final class InvertedIndex implements Externalizable {
-		private final ArrayList<Integer> corpusLocations;
-		private final ArrayList<Integer> sentenceNumbers;
-		
-		private InvertedIndex() {
-			this.corpusLocations = new ArrayList<Integer>();
-			this.sentenceNumbers = new ArrayList<Integer>();
-		}
-		
-		private void record(int corpusLocation, int sentenceNumber) {
-			corpusLocations.add(corpusLocation);
-			sentenceNumbers.add(sentenceNumber);
-		}
-
-		public void readExternal(ObjectInput in) throws IOException,
-				ClassNotFoundException {
-
-			// Read number of corpus locations
-			int corpusSize = in.readInt();
-			
-			// Read number of sentence numbers
-			int sentences = in.readInt();
-			
-			// Read in all corpus locations
-			corpusLocations.ensureCapacity(corpusSize);
-			for (int i=0; i<corpusSize; i++) {
-				corpusLocations.add(in.readInt());
-			}
-			
-			// Read out all sentence numbers
-			sentenceNumbers.ensureCapacity(sentences);
-			for (int i=0; i<sentences; i++) {
-				sentenceNumbers.add(in.readInt());
-			}
-		}
-
-		public void writeExternal(ObjectOutput out) throws IOException {
-			
-			// Write number of corpus locations
-			out.writeInt(corpusLocations.size());
-			
-			// Write number of sentence numbers
-			int sentenceNumberCount = sentenceNumbers.size();
-			//System.err.println(sentenceNumberCount);
-			out.writeInt(sentenceNumberCount);
-			
-			// Write out all corpus locations
-			for (Integer location : corpusLocations) {
-				out.writeInt(location);
-			}
-			
-			// Write out all sentence numbers
-			for (Integer sentenceNumber : sentenceNumbers) {
-				out.writeInt(sentenceNumber);
-			}
-		}
-		
 	}
 	
 }
