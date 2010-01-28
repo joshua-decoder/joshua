@@ -77,7 +77,7 @@ public abstract class LBFGSWrapper {
 		this.useModelDivergenceRegula = useModelDivergenceRegula;
 		this.lambda = lambda;
 		if(useModelDivergenceRegula){
-			copyInitWeights(initWeights);
+			this.initWeights = copyInitWeights(initWeights);
 		}
 		
 		
