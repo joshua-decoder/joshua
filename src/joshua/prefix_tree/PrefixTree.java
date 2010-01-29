@@ -499,10 +499,34 @@ public class PrefixTree extends AbstractGrammar {
 		
 		MatchedHierarchicalPhrases result;
 
+//		boolean stop = false;
+//		if (pattern.toString().startsWith("[de ")) {
+//			logger.warning("Found it! " + pattern.toString() + " yahoo");
+//			int x;
+//			x=5;
+//			x+=1;
+//			stop = true;
+//		}
+//		
+//		if (stop) {
+//			if (stop) {
+//				logger.info("Stopping");
+//				logger.info("Did you stop?");
+//			}
+//		}
+//		
+		
 		if (suffixArray.getCachedHierarchicalPhrases().containsKey(pattern)) {
 			result = suffixArray.getCachedHierarchicalPhrases().get(pattern);
+			int[] bounds = suffixArray.findPhrase(pattern, 0, pattern.size(), prefixNode.lowBoundIndex, prefixNode.highBoundIndex);
+			if (bounds!=null) {
+				node.setBounds(bounds[0],bounds[1]);
+			}
 		} else {
-			
+			if (pattern.toString().startsWith("[de ")) {
+				int x = 5;
+				x++;
+			}
 
 			int arity = pattern.arity();
 

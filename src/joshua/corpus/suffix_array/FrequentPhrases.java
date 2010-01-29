@@ -640,6 +640,37 @@ public class FrequentPhrases {
 			
 
 
+	public void cacheInvertedIndices() {
+	
+		for (Map.Entry<Phrase, InvertedIndex> entry : invertedIndices.entrySet()) {
+			
+			Pattern pattern = new Pattern(entry.getKey());
+			InvertedIndex list = entry.getValue();
+			
+			HierarchicalPhrases phraseLocations = new HierarchicalPhrases(pattern,list.corpusLocations, list.sentenceNumbers);
+			suffixes.cacheMatchingPhrases(phraseLocations);
+			if (logger.isLoggable(Level.FINE)) logger.fine("Cached sorted locations for " + pattern);
+			
+			if (pattern.toString().equals("[.]")) {
+				logger.fine("Found .");
+			}
+			
+			if (logger.isLoggable(Level.FINE)) {
+				StringBuilder s = new StringBuilder();
+				String patternString = pattern.toString();
+				for (Integer i : list.corpusLocations) {
+					s.append(patternString);
+					s.append('\t');
+					s.append(i);
+					s.append('\n');
+				}
+				logger.fine(s.toString());
+			}
+			
+		}
+		
+	}
+
 	/**
 	 * Constructs an auxiliary array that stores longest common
 	 * prefixes. The length of the array is the corpus size+1.
@@ -758,12 +789,19 @@ public class FrequentPhrases {
 		logger.fine("Corpus has size " + endOfCorpus);
 		
 		int sentenceNumber = 0;
-		int endOfSentence = suffixes.getSentencePosition(sentenceNumber);
-		
+		int endOfSentence = suffixes.getSentencePosition(sentenceNumber+1);
+		boolean trackMe = false;
 		// Start at the beginning of the corpus...
 		for (int currentPosition : corpus.corpusPositions()) {
-					
-			logger.fine("At corpus position " + currentPosition);
+//					
+			if (trackMe) 
+				{
+				logger.fine("At corpus position " + currentPosition);
+				}
+//			
+//			if (currentPosition==0 || currentPosition==1) {
+//				logger.fine("Here!");
+//			}
 			
 			// Start with a phrase length of 1, at the current position...
 			for (int i = 1, endOfPhrase = currentPosition + i; 
@@ -776,10 +814,15 @@ public class FrequentPhrases {
 					// ...then increment the phrase length and end of phrase marker.
 					i++, endOfPhrase = currentPosition + i) {
 
-				
+				if (trackMe) logger.fine("endOfPhrase=="+endOfPhrase);
 				// Get the current phrase
 				Phrase phrase = new ContiguousPhrase(currentPosition, endOfPhrase, corpus);
 
+				if (phrase.toString().equals(".")) {
+					logger.fine("Huzzah, £20 for the King!");
+					trackMe = true;
+				}
+				
 				if (logger.isLoggable(Level.FINE)) logger.fine("In sentence " + sentenceNumber + " found phrase (" +currentPosition + ","+endOfPhrase+") "  + phrase);
 
 				// If the phrase is one we care about...
@@ -800,61 +843,34 @@ public class FrequentPhrases {
 				
 			} // end iterating over various phrase lengths
 
-			if (currentPosition == endOfSentence) {
+			if (currentPosition+1 == endOfSentence) {
 				sentenceNumber += 1;
-				endOfSentence = suffixes.getSentencePosition(sentenceNumber);
+				endOfSentence = suffixes.getSentencePosition(sentenceNumber+1);
 			}
 		}
 		
 		return invertedIndices;
 	}
 	
-	public void cacheInvertedIndices() {
-
-		for (Map.Entry<Phrase, InvertedIndex> entry : invertedIndices.entrySet()) {
-			
-			Pattern pattern = new Pattern(entry.getKey());
-			InvertedIndex list = entry.getValue();
-			
-			HierarchicalPhrases phraseLocations = new HierarchicalPhrases(pattern,list.corpusLocations, list.sentenceNumbers);
-			suffixes.cacheMatchingPhrases(phraseLocations);
-			if (logger.isLoggable(Level.FINE)) logger.fine("Cached sorted locations for " + pattern);
-			
-			if (logger.isLoggable(Level.FINE)) {
-				StringBuilder s = new StringBuilder();
-				String patternString = pattern.toString();
-				for (Integer i : list.corpusLocations) {
-					s.append(patternString);
-					s.append('\t');
-					s.append(i);
-					s.append('\n');
-				}
-				logger.fine(s.toString());
-			}
-			
-		}
-		
-	}
-	
 	/* See Javadoc for java.io.Externalizable interface. */
 	public void readExternal(ObjectInput in) throws IOException,
 			ClassNotFoundException {
 		
-		boolean loggingFinest = logger.isLoggable(Level.FINEST);
+		boolean loggingFiner = logger.isLoggable(Level.FINER);
 		
 		SymbolTable vocab = suffixes.getVocabulary();
 		
 		// Read in the maximum number of phrases of which this object is aware.
 		this.maxPhrases = in.readShort();
-		if (loggingFinest) logger.finest(" Read: maxPhrases="+maxPhrases);
+		if (loggingFiner) logger.finer(" Read: maxPhrases="+maxPhrases);
 		
 		// Read in the maximum phrase length to consider.
 		this.maxPhraseLength = in.readInt();
-		if (loggingFinest) logger.finest(" Read: maxPhraseLength="+maxPhraseLength);
+		if (loggingFiner) logger.finer(" Read: maxPhraseLength="+maxPhraseLength);
 		
 		// Read in the count of frequent phrase types
 		int frequentPhrasesSize = in.readInt();
-		if (loggingFinest) logger.finest(" Read: frequentPhrases.size()="+frequentPhrasesSize);
+		if (loggingFiner) logger.finer(" Read: frequentPhrases.size()="+frequentPhrasesSize);
 		
 		// Read in the frequentPhrases map
 		this.frequentPhrases = new LinkedHashMap<Phrase,Integer>();
@@ -862,29 +878,29 @@ public class FrequentPhrases {
 			
 			// Write out number of times the phrase is found in the corpus
 			int count = in.readInt();
-			if (loggingFinest) logger.finest(" Read: phraseCount="+count);
+			if (loggingFiner) logger.finer(" Read: phraseCount="+count);
 			
 			// Read in the number of tokens in the phrase
 			int tokenCount = in.readInt();
-			if (loggingFinest) logger.finest(" Read: wordIDs.length="+tokenCount);
+			if (loggingFiner) logger.finer(" Read: wordIDs.length="+tokenCount);
 			
 			int[] wordIDs = new int[tokenCount];
 			for (int j=0; j<tokenCount; j++) {
 				int wordID = in.readInt();
-				if (loggingFinest) logger.finest(" Read: wordIDs["+j+"]="+wordID);
+				if (loggingFiner) logger.finer(" Read: wordIDs["+j+"]="+wordID);
 				wordIDs[j] = wordID;
 			}
 			
 			
 			BasicPhrase phrase = new BasicPhrase(wordIDs, vocab);
-//			if (loggingFinest) logger.finest("Read: phrase="+Arrays.toString(wordIDs)+ " " + phrase);
+//			if (loggingFinest) logger.finer("Read: phrase="+Arrays.toString(wordIDs)+ " " + phrase);
 			this.frequentPhrases.put(phrase, count);
 			
 		}
 		
 		// Read in number of inverted indices
 		int invertedIndicesCount = in.readInt();
-		if (loggingFinest) logger.finest(" Read: invertedIndices.size()="+invertedIndicesCount);
+		if (loggingFiner) logger.finer(" Read: invertedIndices.size()="+invertedIndicesCount);
 		
 		// Read in inverted indices
 		this.invertedIndices = new HashMap<Phrase,InvertedIndex>(frequentPhrases.keySet().size());
@@ -892,12 +908,12 @@ public class FrequentPhrases {
 			
 			// Read in the number of tokens in the phrase
 			int tokenCount = in.readInt();
-			if (loggingFinest) logger.finest(" Read: wordIDs.length="+tokenCount);
+			if (loggingFiner) logger.finer(" Read: wordIDs.length="+tokenCount);
 			
 			int[] wordIDs = new int[tokenCount];
 			for (int j=0; j<tokenCount; j++) {
 				wordIDs[j] = in.readInt();
-				if (loggingFinest) logger.finest(" Read: wordID["+j+"]="+wordIDs[j]);
+				if (loggingFiner) logger.finer(" Read: wordID["+j+"]="+wordIDs[j]);
 			}
 			
 			// Reconstruct phrase
@@ -905,7 +921,10 @@ public class FrequentPhrases {
 			
 			// Read in inverted index
 			InvertedIndex invertedIndex = new InvertedIndex();
-			if (loggingFinest) logger.finest(" Read: about to InvertedIndex");
+			if (loggingFiner) logger.finer(" Read: about to InvertedIndex");
+			if (phrase.toString().equals("it")) {
+				logger.fine("Found it!");
+			}
 			invertedIndex.readExternal(in);
 			
 			this.invertedIndices.put(phrase, invertedIndex);
@@ -914,19 +933,19 @@ public class FrequentPhrases {
 
 	public void writeExternal(ObjectOutput out) throws IOException { 
 		
-		boolean loggingFinest = logger.isLoggable(Level.FINEST);
+		boolean loggingFiner = logger.isLoggable(Level.FINER);
 		
 		// Write out maximum number of phrases of which this object is aware.
 		out.writeShort(maxPhrases);
-		if (loggingFinest) logger.finest("Wrote: maxPhrases="+maxPhrases);
+		if (loggingFiner) logger.finest("Wrote: maxPhrases="+maxPhrases);
 		
 		// Write out maximum phrase length to consider.
 		out.writeInt(maxPhraseLength);
-		if (loggingFinest) logger.finest("Wrote: maxPhraseLength="+maxPhraseLength);
+		if (loggingFiner) logger.finest("Wrote: maxPhraseLength="+maxPhraseLength);
 		
 		// Write out count of frequent phrase types
 		out.writeInt(frequentPhrases.size());
-		if (loggingFinest) logger.finest("Wrote: frequentPhrases.size()="+frequentPhrases.size());
+		if (loggingFiner) logger.finest("Wrote: frequentPhrases.size()="+frequentPhrases.size());
 		
 		// Write out frequentPhrases map
 		for (Map.Entry<Phrase, Integer> entry : frequentPhrases.entrySet()) {
@@ -936,17 +955,17 @@ public class FrequentPhrases {
 			
 			// Write out number of times the phrase is found in the corpus
 			out.writeInt(phraseCount);
-			if (loggingFinest) logger.finest("Wrote: phraseCount="+phraseCount);
+			if (loggingFiner) logger.finer("Wrote: phraseCount="+phraseCount);
 			
 			// Write out the number of tokens in the phrase
 			out.writeInt(wordIDs.length);
-			if (loggingFinest) logger.finest("Wrote: wordIDs.length="+wordIDs.length);
+			if (loggingFiner) logger.finer("Wrote: wordIDs.length="+wordIDs.length);
 			
 			// Write out each token in the phrase
 			int index = 0;
 			for (int wordID : wordIDs) {
 				out.writeInt(wordID);
-				if (loggingFinest) logger.finest("Wrote: wordIDs["+index+"]="+wordID);
+				if (loggingFiner) logger.finer("Wrote: wordIDs["+index+"]="+wordID);
 				index+=1;
 			}
 //			if (loggingFinest) logger.finest("Wrote: wordIDs="+Arrays.toString(wordIDs));
@@ -954,7 +973,7 @@ public class FrequentPhrases {
 		
 		// Write out number of inverted indices
 		out.writeInt(invertedIndices.size());
-		if (loggingFinest) logger.finest("Wrote: invertedIndices.size()="+invertedIndices.size());
+		if (loggingFiner) logger.finer("Wrote: invertedIndices.size()="+invertedIndices.size());
 		
 		// Write out inverted indices
 		for (Map.Entry<Phrase, InvertedIndex> entry : invertedIndices.entrySet()) {
@@ -964,19 +983,22 @@ public class FrequentPhrases {
 			
 			// Write out number of tokens in the pattern
 			out.writeInt(wordIDs.length);
-			if (loggingFinest) logger.finest("Wrote: wordIDs.length="+wordIDs.length);
+			if (loggingFiner) logger.finer("Wrote: wordIDs.length="+wordIDs.length);
 			
 			// Write out each token in the phrase
 			int index = 0;
 			for (int wordID : wordIDs) {
 				out.writeInt(wordID);
-				if (loggingFinest) logger.finest("Wrote: wordID["+index+"]="+wordID);
+				if (loggingFiner) logger.finer("Wrote: wordID["+index+"]="+wordID);
 				index+=1;
 			}
 			
 			// Write out inverted index for this phrase
 			InvertedIndex list = entry.getValue();
-			if (loggingFinest) logger.finest("Wrote: about to InvertedIndex");
+			if (loggingFiner) logger.finer("Wrote: about to InvertedIndex");
+//			if (pattern.toString().contains("[it]")) {
+//				logger.fine("Found it!");
+//			}
 			out.writeObject(list);
 		}
 	}

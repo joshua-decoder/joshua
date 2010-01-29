@@ -75,7 +75,7 @@ public final class InvertedIndex implements Externalizable {
 		for (int i=0; i<sentences; i++) {
 			int sentenceNumber = in.readInt();
 			sentenceNumbers.add(sentenceNumber);
-			if (loggingFinest) logger.finest("Wrote: sentenceNumbers["+i+"]="+sentenceNumber);
+			if (loggingFinest) logger.finest(" Read: sentenceNumbers["+i+"]="+sentenceNumber);
 		}
 	}
 

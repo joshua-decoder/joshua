@@ -377,6 +377,12 @@ public class Node implements Comparable<Node>, Trie {
 		
 		this.sourceHierarchicalPhrases = hierarchicalPhrases;
 		
+//		int numPhrases = hierarchicalPhrases.size();
+//		if (numPhrases > 0) {
+//			int lowerBound = hierarchicalPhrases.getFirstTerminalIndex(0);
+//			int upperBound = hierarchicalPhrases.getFirstTerminalIndex(numPhrases-1);
+//			this.setBounds(lowerBound, upperBound);
+//		}
 //		this.results = rules;
 		
 	}
