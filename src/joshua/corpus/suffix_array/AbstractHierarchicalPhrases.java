@@ -120,127 +120,142 @@ public abstract class AbstractHierarchicalPhrases implements
 		int m_a_alphaTerminalSequenceLengths = m_a_alpha.getNumberOfTerminalSequences();//.terminalSequenceLengths.length;
 		int m_alpha_bTerminalSequenceLengths = m_alpha_b.getNumberOfTerminalSequences();//.terminalSequenceLengths.length;
 		
-		boolean m_a_alpha_startsWithNonterminal = m_a_alpha.startsWithNonterminal();
-		boolean m_a_alpha_endsWithNonterminal = m_a_alpha.endsWithNonterminal();
-		boolean m_alpha_b_startsWithNonterminal = m_alpha_b.startsWithNonterminal();
-		boolean m_alpha_b_endsWithNonterminal = m_alpha_b.endsWithNonterminal();		
-		
-		// Does the prefix (m_a_alpha) overlap with
-		//      the suffix (m_alpha_b) on any words?
-		// we assume that the nonterminal symbols will be denoted with negative numbers
-		boolean matchesOverlap =
-			! ( m_a_alpha_endsWithNonterminal && 
-				m_alpha_b_startsWithNonterminal && 
-				m_a_alpha.arity()==1 &&
-				m_alpha_b.arity()==1 &&
-				m_a_alpha.getTerminalSequenceLength(0)==1 &&
-				m_alpha_b.getTerminalSequenceLength(0)==1);
-
 		int prefixStartPosition = m_a_alpha.getStartPosition(i, 0);
 		int suffixStartPosition = m_alpha_b.getStartPosition(j, 0);
 		
-		
-		if (matchesOverlap) {
-
-			int m_alpha_b_prefix_start = j*m_alpha_bTerminalSequenceLengths;
-			int m_alpha_b_prefix_end;
-
-			// If the m_alpha_b pattern ends with a nonterminal
-			if (m_alpha_b_endsWithNonterminal || 
-					// ...or if the m_alpha_b pattern ends with two terminals
-					m_alpha_b.endsWithTwoTerminals()) {
-
-				m_alpha_b_prefix_end = m_alpha_b_prefix_start + m_alpha_bTerminalSequenceLengths;
-
-			} else { // Then the m_alpha_b pattern ends with a nonterminal followed by a terminal
-
-				m_alpha_b_prefix_end = m_alpha_b_prefix_start + m_alpha_bTerminalSequenceLengths - 1;
-
-			}
-
-			int m_a_alpha_suffix_start;
-			int m_a_alpha_suffix_end;
-			boolean increment_m_a_alpha_suffix_start;
-
-			int m_a_alphaExtra;
-			
-			// If the m_a_alpha pattern starts with a nonterminal
-			if (m_a_alpha_startsWithNonterminal) { 
-				m_a_alphaExtra = 0;
-				m_a_alpha_suffix_start = i*m_a_alphaTerminalSequenceLengths;
-				m_a_alpha_suffix_end = m_a_alpha_suffix_start + m_a_alphaTerminalSequenceLengths;
-				increment_m_a_alpha_suffix_start = false;
-			} else if (m_a_alpha.secondTokenIsTerminal()) {
-				// Then the m_a_alpha pattern starts with two terminals
-				m_a_alphaExtra = 0;
-				m_a_alpha_suffix_start = i*m_a_alphaTerminalSequenceLengths;
-				m_a_alpha_suffix_end = m_a_alpha_suffix_start + m_a_alphaTerminalSequenceLengths;
-
-				increment_m_a_alpha_suffix_start = true;
-			} else {
-				// Then the m_a_alpha pattern starts with a terminal followed by a nonterminal
-				m_a_alphaExtra = 1;
-				m_a_alpha_suffix_start = i*m_a_alphaTerminalSequenceLengths + 1;
-				m_a_alpha_suffix_end = i*m_a_alphaTerminalSequenceLengths + m_a_alphaTerminalSequenceLengths;
-
-				increment_m_a_alpha_suffix_start = false;
-			}
-
-			int m_a_alpha_suffix_length = m_a_alpha_suffix_end - m_a_alpha_suffix_start;
-			int m_alpha_b_prefix_length = m_alpha_b_prefix_end - m_alpha_b_prefix_start;
-
-			if (m_alpha_b_prefix_length != m_a_alpha_suffix_length) {
-				throw new MismatchedHierarchicalPhrasesException();
-			} else {
-
-				int result = 0;
-
-				for (int index=0; index<m_a_alpha_suffix_length; index++) {
-
-					int a = m_a_alpha.getStartPosition(i, index+m_a_alphaExtra);
-					if (increment_m_a_alpha_suffix_start && index==0) {
-						a++;
-					}
-					int b = m_alpha_b.getStartPosition(j, index);
-					
-					if (a > b) {
-						result = 1;
-						break;
-					} else if (a < b) {
-						result = -1;
-						break;
-					}
-				}
-
-				if (result==0) {
-					int positionNumber = m_alpha_bTerminalSequenceLengths-1;
-					int length = m_alpha_b.getStartPosition(j, positionNumber) + m_alpha_b.getTerminalSequenceLength(positionNumber) - prefixStartPosition;
-					
-					if (m_alpha_b_endsWithNonterminal)
-						length += minNonterminalSpan;
-					if (m_a_alpha_startsWithNonterminal)
-						length += minNonterminalSpan;
-
-					if (length > maxPhraseSpan) {
-						result = -1;
-					}
-				}
-
-				return result;
-			}
-
+		if (m_a_alpha.getSentenceNumber(i) < m_alpha_b.getSentenceNumber(j)) {
+			return -1;
+		} else if (m_a_alpha.getSentenceNumber(i) > m_alpha_b.getSentenceNumber(j)) {
+			return 1;
+		} else if (prefixStartPosition > suffixStartPosition) {
+			return 1;
+		} else if (prefixStartPosition <= suffixStartPosition-maxPhraseSpan) {
+			return -1;
 		} else {
-			
-			if (m_a_alpha.getSentenceNumber(i) < m_alpha_b.getSentenceNumber(j)) {
-				return -1;
-			} else if (m_a_alpha.getSentenceNumber(i) > m_alpha_b.getSentenceNumber(j)) {
-				return 1;
-			} else if (prefixStartPosition >= suffixStartPosition-1) {
-				return 1;
-			} else if (prefixStartPosition <= suffixStartPosition-maxPhraseSpan) {
-				return -1;
+
+			boolean m_a_alpha_startsWithNonterminal = m_a_alpha.startsWithNonterminal();
+			boolean m_a_alpha_endsWithNonterminal = m_a_alpha.endsWithNonterminal();
+			boolean m_alpha_b_startsWithNonterminal = m_alpha_b.startsWithNonterminal();
+			boolean m_alpha_b_endsWithNonterminal = m_alpha_b.endsWithNonterminal();		
+
+			// Does the prefix (m_a_alpha) overlap with
+			//      the suffix (m_alpha_b) on any words?
+			// we assume that the nonterminal symbols will be denoted with negative numbers
+			boolean matchesOverlap =
+				! ( m_a_alpha_endsWithNonterminal && 
+						m_alpha_b_startsWithNonterminal && 
+						m_a_alpha.arity()==1 &&
+						m_alpha_b.arity()==1 &&
+						m_a_alpha.getTerminalSequenceLength(0)==1 &&
+						m_alpha_b.getTerminalSequenceLength(0)==1);
+
+			if (matchesOverlap) {
+
+				int m_alpha_b_prefix_start = j*m_alpha_bTerminalSequenceLengths;
+				int m_alpha_b_prefix_end;
+
+				// If the m_alpha_b pattern ends with a nonterminal
+				if (m_alpha_b_endsWithNonterminal || 
+						// ...or if the m_alpha_b pattern ends with two terminals
+						m_alpha_b.endsWithTwoTerminals()) {
+
+					m_alpha_b_prefix_end = m_alpha_b_prefix_start + m_alpha_bTerminalSequenceLengths;
+
+				} else { // Then the m_alpha_b pattern ends with a nonterminal followed by a terminal
+
+					m_alpha_b_prefix_end = m_alpha_b_prefix_start + m_alpha_bTerminalSequenceLengths - 1;
+
+				}
+
+				int m_a_alpha_suffix_start;
+				int m_a_alpha_suffix_end;
+				boolean increment_m_a_alpha_suffix_start;
+
+				int m_a_alphaExtra;
+
+				// If the m_a_alpha pattern starts with a nonterminal
+				if (m_a_alpha_startsWithNonterminal) { 
+					m_a_alphaExtra = 0;
+					m_a_alpha_suffix_start = i*m_a_alphaTerminalSequenceLengths;
+					m_a_alpha_suffix_end = m_a_alpha_suffix_start + m_a_alphaTerminalSequenceLengths;
+					increment_m_a_alpha_suffix_start = false;
+				} else if (m_a_alpha.secondTokenIsTerminal()) {
+					// Then the m_a_alpha pattern starts with two terminals
+					m_a_alphaExtra = 0;
+					m_a_alpha_suffix_start = i*m_a_alphaTerminalSequenceLengths;
+					m_a_alpha_suffix_end = m_a_alpha_suffix_start + m_a_alphaTerminalSequenceLengths;
+
+					increment_m_a_alpha_suffix_start = true;
+				} else {
+					// Then the m_a_alpha pattern starts with a terminal followed by a nonterminal
+					m_a_alphaExtra = 1;
+					m_a_alpha_suffix_start = i*m_a_alphaTerminalSequenceLengths + 1;
+					m_a_alpha_suffix_end = i*m_a_alphaTerminalSequenceLengths + m_a_alphaTerminalSequenceLengths;
+
+					increment_m_a_alpha_suffix_start = false;
+				}
+
+				int m_a_alpha_suffix_length = m_a_alpha_suffix_end - m_a_alpha_suffix_start;
+				int m_alpha_b_prefix_length = m_alpha_b_prefix_end - m_alpha_b_prefix_start;
+
+				if (m_alpha_b_prefix_length != m_a_alpha_suffix_length) {
+					throw new MismatchedHierarchicalPhrasesException();
+				} else {
+
+					int result = 0;
+
+					for (int index=0; index<m_a_alpha_suffix_length; index++) {
+
+						int a = m_a_alpha.getStartPosition(i, index+m_a_alphaExtra);
+						if (increment_m_a_alpha_suffix_start && index==0) {
+							a++;
+						}
+						int b = m_alpha_b.getStartPosition(j, index);
+
+						if (a > b) {
+							result = 1;
+							break;
+						} else if (a < b) {
+							result = -1;
+							break;
+						}
+					}
+
+					if (result==0) {
+						int positionNumber = m_alpha_bTerminalSequenceLengths-1;
+						int length = m_alpha_b.getStartPosition(j, positionNumber) + m_alpha_b.getTerminalSequenceLength(positionNumber) - prefixStartPosition;
+
+						if (m_alpha_b_endsWithNonterminal)
+							length += minNonterminalSpan;
+						if (m_a_alpha_startsWithNonterminal)
+							length += minNonterminalSpan;
+
+						if (length > maxPhraseSpan) {
+							result = -1;
+						}
+					}
+
+					return result;
+				}
+
 			} else {
-				return 0;
+
+//				if (m_a_alpha.getSentenceNumber(i) < m_alpha_b.getSentenceNumber(j)) {
+//					return -1;
+//				} else if (m_a_alpha.getSentenceNumber(i) > m_alpha_b.getSentenceNumber(j)) {
+//					return 1;
+//				} else 
+				//XXX It's quite likely that this if block could be deleted, 
+				//    leaving just the return 0;
+				if (prefixStartPosition >= suffixStartPosition-1) {
+					return 1;
+				} 
+//					else if (prefixStartPosition <= suffixStartPosition-maxPhraseSpan) {
+//					return -1;
+//				} 
+				else {
+					return 0;
+				}
 			}
 		}
 	}
