@@ -337,7 +337,6 @@ public class ExtractRules {
 		// Lexical Probs    //
 		//////////////////////		
 
-		logger.info("Constructing grammar factory from parallel corpus");
 //		final LexProbs lexProbs;
 		String binaryLexCountsFilename = this.lexCountsFileName;
 		
@@ -345,11 +344,13 @@ public class ExtractRules {
 		// Frequent Phrases //
 		//////////////////////
 		if (usePrecomputedFrequentPhrases) {
+			logger.info("Reading precomputed frequent phrases from disk");
 			FrequentPhrases frequentPhrases = new FrequentPhrases(sourceSuffixArray, frequentPhrasesFileName);
 			frequentPhrases.cacheInvertedIndices();
 		}
 
-		
+
+		logger.info("Constructing grammar factory from parallel corpus");
 		ParallelCorpusGrammarFactory parallelCorpus;
 		if (binaryCorpus) {
 			if (logger.isLoggable(Level.INFO)) logger.info("Constructing lexical translation probabilities from binary file " + binaryLexCountsFilename);
