@@ -17,16 +17,19 @@
  */
 package joshua.util;
 
-import java.nio.charset.Charset;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.nio.channels.FileChannel;
+import java.nio.charset.Charset;
 import java.util.zip.GZIPInputStream;
 
 
@@ -157,4 +160,81 @@ public class FileUtility {
 			out.write(b);
 		}
 	}
+	
+
+	public static void copyFile(String srFile, String dtFile) throws IOException{
+	    try{
+	      File f1 = new File(srFile);
+	      File f2 = new File(dtFile);
+	      copyFile(f1, f2);
+	    }
+	    catch(FileNotFoundException ex){
+	      System.out.println(ex.getMessage() + " in the specified directory.");
+	      System.exit(0);
+	    }
+	    catch(IOException e){
+	      System.out.println(e.getMessage());      
+	    }
+	}
+	
+	public static void copyFile(File srFile, File dtFile) throws IOException{
+	    try{
+	   
+	      InputStream in = new FileInputStream(srFile);
+	      
+	      //For Append the file.
+//	      OutputStream out = new FileOutputStream(f2,true);
+
+	      //For Overwrite the file.
+	      OutputStream out = new FileOutputStream(dtFile);
+
+	      byte[] buf = new byte[1024];
+	      int len;
+	      while ((len = in.read(buf)) > 0){
+	        out.write(buf, 0, len);
+	      }
+	      in.close();
+	      out.close();
+	      System.out.println("File copied.");
+	    }
+	    catch(FileNotFoundException ex){
+	      System.out.println(ex.getMessage() + " in the specified directory.");
+	      System.exit(0);
+	    }
+	    catch(IOException e){
+	      System.out.println(e.getMessage());      
+	    }
+	  }
+	
+	
+	
+	static public boolean deleteFile(String fileName) {
+		 
+    	File f = new File(fileName);
+
+        // Make sure the file or directory exists and isn't write protected
+        if (!f.exists())
+          System.out.println("Delete: no such file or directory: " + fileName);
+
+        if (!f.canWrite())
+        	System.out.println("Delete: write protected: " + fileName);
+
+        // If it is a directory, make sure it is empty
+        if (f.isDirectory()) {
+          String[] files = f.list();
+          if (files.length > 0)
+        	  System.out.println("Delete: directory not empty: " + fileName);
+        }
+
+        // Attempt to delete it
+        boolean success = f.delete();
+
+        if (!success)
+        	System.out.println("Delete: deletion failed");
+        
+        return success;
+        
+     }
+
+
 }

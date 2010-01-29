@@ -277,8 +277,8 @@ public class DecoderFactory {
 			}
 
 			//remove the tem nbest file
-			FileUtilityOld.deleteFile(decoder.nbestFile);
-			FileUtilityOld.deleteFile(decoder.testFile);
+			FileUtility.deleteFile(decoder.nbestFile);
+			FileUtility.deleteFile(decoder.testFile);
 			
 			//merge hypergrpah items
 			if (JoshuaConfiguration.save_disk_hg) {
@@ -293,7 +293,7 @@ public class DecoderFactory {
 					decoder.hypergraphSerializer.closeItemsWriter();
 				}
 				//remove the tem item file
-				FileUtilityOld.deleteFile(decoder.nbestFile + ".hg.items");
+				FileUtility.deleteFile(decoder.nbestFile + ".hg.items");
 			}
 		}
 		nbestWriter.flush();

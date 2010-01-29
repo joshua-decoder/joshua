@@ -1,4 +1,4 @@
-package joshua.discriminative.feature_related.feature_function;
+package joshua.discriminative.bleu_approximater;
 
 import java.io.IOException;
 import java.util.ArrayList;

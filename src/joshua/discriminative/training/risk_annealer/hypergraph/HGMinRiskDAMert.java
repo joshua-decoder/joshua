@@ -29,6 +29,7 @@ import joshua.discriminative.ranker.HGRanker;
 import joshua.discriminative.training.risk_annealer.AbstractMinRiskMERT;
 import joshua.discriminative.training.risk_annealer.DeterministicAnnealer;
 import joshua.discriminative.training.risk_annealer.GradientComputer;
+import joshua.util.FileUtility;
 
 public class HGMinRiskDAMert extends AbstractMinRiskMERT {
 	
@@ -170,8 +171,8 @@ public class HGMinRiskDAMert extends AbstractMinRiskMERT {
         	
         	//@todo: delete files
         	if(false){
-	        	FileUtilityOld.deleteFile(this.curHypFilePrefix+".hg.items");
-	        	FileUtilityOld.deleteFile(this.curHypFilePrefix+".hg.rules");
+	        	FileUtility.deleteFile(this.curHypFilePrefix+".hg.items");
+	        	FileUtility.deleteFile(this.curHypFilePrefix+".hg.rules");
         	}
         }
         
