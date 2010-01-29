@@ -105,7 +105,8 @@ public class KBestExtractor {
 		this.includeAlign = includeAlign;
 		this.addCombinedScore = addCombinedScore;
 		this.isMonolingual = isMonolingual;
-		this.performSanityCheck = performSanityCheck;		
+		this.performSanityCheck = performSanityCheck;
+		System.out.println("===============sanitycheck="+performSanityCheck);
 	}
 	
 	

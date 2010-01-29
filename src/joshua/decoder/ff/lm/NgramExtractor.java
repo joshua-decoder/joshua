@@ -80,6 +80,7 @@ public class NgramExtractor {
 	
 	 /**work for both generative and discriminative model
 	  * */
+	 //TODO: consider speed up this function
 	 private HashMap<String,Integer> computeTransitionNgrams(Rule rule, List<HGNode> antNodes, int startNgramOrder, int endNgramOrder){
 	    	
 	    	if(baselineLMOrder < endNgramOrder){
@@ -96,10 +97,10 @@ public class NgramExtractor {
 			List<Integer> words = new ArrayList<Integer>();		
 			
 			for(int c=0; c<enWords.length; c++){
-	    		int c_id = enWords[c];
-	    		if(symbolTable.isNonterminal(c_id)==true){//non-terminal words    			
+	    		int curID = enWords[c];
+	    		if(symbolTable.isNonterminal(curID)==true){//non-terminal words    			
 	    			//== get the left and right context
-	    			int index= symbolTable.getTargetNonterminalIndex(c_id);
+	    			int index = symbolTable.getTargetNonterminalIndex(curID);
 	    			HGNode antNode =  antNodes.get(index);
 	    			NgramDPState state     = (NgramDPState) antNode.getDPState(this.ngramStateID);
 	    			//System.out.println("lm_feat_is: " + this.lm_feat_id + " ; state is: " + state);
@@ -125,7 +126,7 @@ public class NgramExtractor {
 		    				words.add(t);	    			
 		    		}
 	    		}else{//terminal words
-	    			words.add(c_id);
+	    			words.add(curID);
 	    		}
 	    	}
 			

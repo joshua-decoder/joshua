@@ -21,10 +21,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 
 import joshua.corpus.vocab.SymbolTable;
-import joshua.decoder.Support;
 import joshua.util.Ngram;
 import joshua.util.Regex;
 
@@ -254,27 +254,45 @@ public class BLEU {
 		int hypLength =Regex.spaces.split(hypSent).length;
 		HashMap<String, Integer> refereceNgramTable = BLEU.constructMaxRefCountTable(refSents, bleuOrder);
 		HashMap<String, Integer> hypNgramTable = BLEU.constructNgramTable(hypSent, bleuOrder); 
-		return BLEU.computeLinearCorpusGain(linearCorpusGainThetas, hypLength, hypNgramTable,  refereceNgramTable);
+		return computeLinearCorpusGain(linearCorpusGainThetas, hypLength, hypNgramTable,  refereceNgramTable);
 	}
 	/** 
 	 * speed consideration: assume hypNgramTable has a smaller
 	 * size than referenceNgramTable does
 	 */
-	public static double computeLinearCorpusGain(double[] linearCorpusGainThetas, int hypLength, HashMap<String,Integer> hypNgramTable,  HashMap<String,Integer> referenceNgramTable) {
+	public static double computeLinearCorpusGain(double[] linearCorpusGainThetas, int hypLength, Map<String,Integer> hypNgramTable,  Map<String,Integer> referenceNgramTable) {
 		double res = 0;
 		res += linearCorpusGainThetas[0] * hypLength;
 		for (Entry<String,Integer> entry : hypNgramTable.entrySet()) {
-			String   key = entry.getKey();
-			Integer refNgramCount = referenceNgramTable.get(key);
-			if(refNgramCount!=null){//delta function
-				int ngramOrder = Regex.spaces.split(key).length;
+			String   ngram = entry.getKey();
+			if(referenceNgramTable.containsKey(ngram)){//delta function
+				int ngramOrder = Regex.spaces.split(ngram).length;
 				res += entry.getValue() * linearCorpusGainThetas[ngramOrder];
 			}
 		}
 		return res;
 	}
 	
+	public static int[] computeNgramMatches(String[] refSents, String hypSent){
+		int bleuOrder = 4;
+		int hypLength =Regex.spaces.split(hypSent).length;
+		HashMap<String, Integer> refereceNgramTable = BLEU.constructMaxRefCountTable(refSents, bleuOrder);
+		HashMap<String, Integer> hypNgramTable = BLEU.constructNgramTable(hypSent, bleuOrder); 
+		return computeNgramMatches(hypLength, hypNgramTable,  refereceNgramTable, bleuOrder);
+	}
 	
+	public static int[] computeNgramMatches(int hypLength, Map<String,Integer> hypNgramTable,  Map<String,Integer> referenceNgramTable, int highestOrder) {
+		int[] res = new int[highestOrder+1];
+		res[0] = hypLength;
+		for (Entry<String,Integer> entry : hypNgramTable.entrySet()) {
+			String   ngram = entry.getKey();
+			if(referenceNgramTable.containsKey(ngram)){//delta function
+				int ngramOrder = Regex.spaces.split(ngram).length;
+				res[ngramOrder] += entry.getValue();
+			}
+		}
+		return res;
+	}
 	
 	static public  double[] computeLinearCorpusThetas(int numUnigramTokens, double unigramPrecision, double decayRatio){
 		double[] res = new double[5];

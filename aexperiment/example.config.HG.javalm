@@ -49,7 +49,7 @@ remote_lm_server_port=9000
 
 
 #parallel deocoder: it cannot be used together with remote lm
-num_parallel_decoders=2
+num_parallel_decoders=1
 parallel_files_prefix=.
 
 #disk hg
@@ -60,12 +60,12 @@ forest_pruning_threshold=150
 
 ###### model weights
 #lm order weight
-lm 1.000000
+lm 0.000000
 
 #phrasemodel owner column(0-indexed) weight
-phrasemodel pt 0 1.066893
-phrasemodel pt 1 0.752247
-phrasemodel pt 2 0.589793
+#phrasemodel pt 0 1.066893
+#phrasemodel pt 1 0.752247
+#phrasemodel pt 2 0.589793
 
 #arityphrasepenalty owner start_arity end_arity weight
 #arityphrasepenalty pt 0 0 1.0
@@ -74,9 +74,10 @@ phrasemodel pt 2 0.589793
 #phrasemodel mono 0 0.5
 
 #wordpenalty weight
-wordpenalty -2.844814
+#wordpenalty -2.844814
 #latticecost 1.0
 
+oracle 1.0 example/example.test.ref.0 example/example.test.ref.1 example/example.test.ref.2 example/example.test.ref.3
 
 #========================discriminative model options
 #discriminative C:\data_disk\java_work_space\discriminative_at_clsp\edu\jhu\joshua\training\risk_annealer\data\example.hiero.feature 1.0

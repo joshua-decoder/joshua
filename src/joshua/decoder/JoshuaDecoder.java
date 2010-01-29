@@ -681,9 +681,8 @@ public class JoshuaDecoder {
 						referenceFiles[i] =  fds[i+2].trim();			
 
 					this.featureFunctions.add(
-						new BLEUOracleModel(JoshuaConfiguration.ngramStateID, JoshuaConfiguration.lmOrder, this.featureFunctions.size(),
-								this.symbolTable, weight,
-								referenceFiles));
+						new BLEUOracleModel(JoshuaConfiguration.ngramStateID, JoshuaConfiguration.lmOrder, 
+								this.featureFunctions.size(), this.symbolTable, weight, referenceFiles));
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format(
 							"Line: %s\nAdd BLEUOracleModel, order: %d; weight: %.3f;",

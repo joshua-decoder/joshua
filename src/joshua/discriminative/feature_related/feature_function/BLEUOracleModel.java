@@ -3,6 +3,7 @@ package joshua.discriminative.feature_related.feature_function;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
 
 import joshua.corpus.vocab.SymbolTable;
@@ -19,10 +20,6 @@ import joshua.util.io.Reader;
 import joshua.util.io.UncheckedIOException;
 
 
-/**TODO: we assume that the transition() function will be called by exactly once for each source sentence.
- * This is because the reference line reader will read a line after each call.
- * */
-
 public class BLEUOracleModel  extends DefaultStatefulFF {
 	
 	private int startNgramOrder = 1;
@@ -32,15 +29,14 @@ public class BLEUOracleModel  extends DefaultStatefulFF {
 	
 	
 	private Reader<String>[] referenceReaders;
-	private HashMap<String, Integer> refereceNgramTable;
 	
-	
+
 	private boolean useIntegerNgram = true; 
 	
 	private static Logger logger = Logger.getLogger(BLEUOracleModel.class.getName());
 	
-	private boolean firstSent = true;
-	private int oldSentID; 
+	Map<Integer, Map<String,Integer>> tblOfReferenceNgramTbls;
+	private int maxSentIDSoFar=-1;//TODO: assume valid sentID start from zero
 	
 	//===TODO
 	private static double unigramPrecision = 0.85;
@@ -67,6 +63,7 @@ public class BLEUOracleModel  extends DefaultStatefulFF {
 		this.referenceReaders = new LineReader[1];
 		LineReader reader = openOneFile(referenceFile);
 		this.referenceReaders[0] = reader;
+		this.tblOfReferenceNgramTbls = new HashMap<Integer, Map<String,Integer>>();
 		logger.info("number of references used is " + referenceReaders.length);
 	}
 	
@@ -85,6 +82,7 @@ public class BLEUOracleModel  extends DefaultStatefulFF {
 			LineReader reader = openOneFile(referenceFiles[i]);
 			this.referenceReaders[i] = reader;
 		}
+		this.tblOfReferenceNgramTbls = new HashMap<Integer, Map<String,Integer>>();
 		logger.info("number of references used is " + referenceReaders.length);
 	}
 
@@ -105,53 +103,52 @@ public class BLEUOracleModel  extends DefaultStatefulFF {
 		return 0;
 	}
 
-
-	/**TODO: we assume that this function will be called by exactly once for each source sentence.
-	 * This is because the reference line reader will read a line after each call.
-	 * */
-	public double transitionLogP(Rule rule, List<HGNode> antNodes, int spanStart, int spanEnd, SourcePath srcPath, int sentID) {
-		
-		if(firstSent || sentID!=oldSentID){
-			logger.info("oracle extraction for sentence " + sentID );
-			firstSent = false;
-			oldSentID = sentID;
-			
-			setupReference();
-		}
-	
-		
-		return getBleuTransitionLogP(rule, antNodes);
+	public double transitionLogP(Rule rule, List<HGNode> antNodes, int spanStart, int spanEnd, SourcePath srcPath, int sentID) {		
+		return computeTransitionBleu(rule, antNodes, setupReferenceNgramTable(sentID));		
 	}
 	
-
 	//========================= risk related =============
-	private void setupReference(){
-		try {
-			String[] referenceSentences = new String[referenceReaders.length];
-			for(int i=0; i<referenceReaders.length; i++){
-				referenceSentences[i] = referenceReaders[i].readLine();
+	synchronized private Map<String,Integer> setupReferenceNgramTable(int sentID){
+		while(this.maxSentIDSoFar<sentID){
+			this.maxSentIDSoFar++;
+			try {	
+				logger.info("open a new sentence with id " + this.maxSentIDSoFar);
+				String[] referenceSentences = new String[referenceReaders.length];
+				for(int i=0; i<referenceReaders.length; i++){
+					referenceSentences[i] = referenceReaders[i].readLine();
+				}
+				
+				if(this.useIntegerNgram){
+					referenceSentences = convertToIntegerString(referenceSentences);
+				}
+				
+				Map<String,Integer> ngramTable = BLEU.constructMaxRefCountTable(referenceSentences, endNgramOrder);
+				this.tblOfReferenceNgramTbls.put(this.maxSentIDSoFar, ngramTable);
+				
+			} catch (IOException ioe) {
+				logger.severe("read references error");
+				System.exit(0);				
+				throw new UncheckedIOException(ioe);				
 			}
-			
-			if(this.useIntegerNgram){
-				referenceSentences = convertToIntegerString(referenceSentences);
-			}
-			
-			this.refereceNgramTable = BLEU.constructMaxRefCountTable(referenceSentences, endNgramOrder);
-			
-		} catch (IOException ioe) {
-			throw new UncheckedIOException(ioe);
 		}
+		return this.tblOfReferenceNgramTbls.get(sentID);
 	}
 	
 	
-	private double getBleuTransitionLogP(Rule rule, List<HGNode> antNodes){ 
+	private double computeTransitionBleu(Rule rule, List<HGNode> antNodes, Map<String,Integer> refNgramTable){
 		
 		double transitionBLEU = 0;
 		
-		if(rule != null){//note: hyperedges under goal item does not contribute BLEU
+		if(rule != null){
 			int hypLength = rule.getEnglish().length-rule.getArity();
+			
+			/**this statement is most time-consuming
+			 **/
 			HashMap<String, Integer> hyperedgeNgramTable = ngramExtractor.getTransitionNgrams(rule, antNodes, startNgramOrder, endNgramOrder);				
-			transitionBLEU = BLEU.computeLinearCorpusGain(linearCorpusGainThetas, hypLength, hyperedgeNgramTable, refereceNgramTable);			
+			
+			transitionBLEU = BLEU.computeLinearCorpusGain(linearCorpusGainThetas, hypLength, hyperedgeNgramTable, refNgramTable);			
+		}else{
+			//note: hyperedges under goal item does not contribute BLEU, do nothing
 		}
 		
 		return transitionBLEU;
@@ -200,10 +197,8 @@ public class BLEUOracleModel  extends DefaultStatefulFF {
 			String[] wrds = Regex.spaces.split(str);
 			int[] ids = this.symbolTbl.addTerminals(wrds);
 			
-			StringBuffer intSent=null;
+			StringBuffer intSent = new StringBuffer();;
 			for(int i=0; i<ids.length; i++){
-				if(intSent==null)
-					intSent = new StringBuffer();
 				intSent.append(ids[i]);
 				if(i<ids.length-1)
 					intSent.append(" ");
