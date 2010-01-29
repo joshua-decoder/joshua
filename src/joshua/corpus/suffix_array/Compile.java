@@ -59,8 +59,8 @@ public class Compile {
 	private String charset = "UTF-8";
 	
 	private int minFrequency = 0;
-//	private short maxPhrases = 1000;
-	private short maxPhrases = 1;
+	private short maxPhrases = 1000;
+//	private short maxPhrases = 1;
 	
 	private int maxPhraseLength = JoshuaConfiguration.sa_max_phrase_length;
 	
