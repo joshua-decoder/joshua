@@ -60,9 +60,20 @@ public class Compile {
 	
 	private int minFrequency = 0;
 	private short maxPhrases = 1000;
-//	private short maxPhrases = 1;
-	
+
 	private int maxPhraseLength = JoshuaConfiguration.sa_max_phrase_length;
+	
+	private int maxPhraseSpan = JoshuaConfiguration.sa_max_phrase_span;
+	
+	private int minNonterminalSpan = JoshuaConfiguration.sa_min_nonterminal_span;
+	
+	public void setMinNonterminalSpan(int minNonterminalSpan) {
+		this.minNonterminalSpan = minNonterminalSpan;
+	}
+	
+	public void setMaxPhraseSpan(int maxPhraseSpan) {
+		this.maxPhraseSpan = maxPhraseSpan;
+	}
 	
 	public void setMinFrequency(int minFrequency) {
 		this.minFrequency = minFrequency;
@@ -278,7 +289,7 @@ public class Compile {
 		{
 			if (logger.isLoggable(Level.INFO)) logger.info("Precomputing indices for most frequent phrases");
 	    	FrequentPhrases frequentPhrases = 
-				new FrequentPhrases(sourceSuffixArray, minFrequency, maxPhrases, maxPhraseLength);
+				new FrequentPhrases(sourceSuffixArray, minFrequency, maxPhrases, maxPhraseLength, maxPhraseLength, maxPhraseSpan, minNonterminalSpan);
 			
 	    	String frequentPhrasesFilename = outputDirName + File.separator + "frequentPhrases";
 	    	if (logger.isLoggable(Level.INFO)) logger.info("Writing precomputing indices for most frequent phrases at " + frequentPhrasesFilename);

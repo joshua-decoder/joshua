@@ -20,7 +20,9 @@ package joshua.corpus.suffix_array;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -80,8 +82,26 @@ public class FrequentPhrases {
 	/** Maximum phrase length to consider. */
 	int maxPhraseLength;
 	
+	/** 
+	 * Minimum number of words in a corpus 
+	 * which a nonterminal may represent. 
+	 */
+	int minNonterminalSpan;
+	
+	/**
+	 * Maximum span (from first token to last token) in a corpus
+	 * which a phrase may represent.
+	 */
+	int maxPhraseSpan;
+	
 	/** Stores sorted lists of corpus locations for most frequent phrases. */
 	Map<Phrase,InvertedIndex> invertedIndices;
+	
+	/** 
+	 * Stores the corpus locations of collocations 
+	 * of frequent phrases with other frequent phrases.
+	 */
+	List<HierarchicalPhrases> frequentCollocations;
 	
 	/**
 	 * Constructs data regarding the frequencies of the <em>n</em>
@@ -93,19 +113,29 @@ public class FrequentPhrases {
 	 *                   for a phrase to be considered frequent.
 	 * @param maxPhrases The number of phrases to consider.
 	 * @param maxPhraseLength Maximum phrase length to consider.
+	 * @param maxContiguousPhraseLength Maximum phrase length to consider for a contiguous phrase
+	 * @param maxPhraseSpan Maximum span (from first token to last token) in a corpus
+	 *                      which a phrase may represent.
+	 * @param minNonterminalSpan Minimum number of words in a corpus 
+	 *                           which a nonterminal may represent.
 	 */
 	public FrequentPhrases(
 			Suffixes suffixes,
 			int minFrequency,
 			short maxPhrases,
-			int maxPhraseLength) {
+			int maxPhraseLength,
+			int maxContiguousPhraseLength,
+			int maxPhraseSpan, int minNonterminalSpan) {
 		
 		this.maxPhrases = maxPhrases;
 		this.maxPhraseLength = maxPhraseLength;
+		this.minNonterminalSpan = minNonterminalSpan;
+		this.maxPhraseSpan = maxPhraseSpan;
 		
 		this.suffixes = suffixes;
-		this.frequentPhrases = getMostFrequentPhrases(suffixes, minFrequency, maxPhrases, maxPhraseLength);
+		this.frequentPhrases = getMostFrequentPhrases(suffixes, minFrequency, maxPhrases, maxContiguousPhraseLength);
 		this.invertedIndices = calculateInvertedIndices();
+		this.frequentCollocations = countCollocations();
 	}
 	
 	public FrequentPhrases(Suffixes suffixes, String binaryFilename) throws IOException, ClassNotFoundException {
@@ -113,45 +143,47 @@ public class FrequentPhrases {
 		BinaryIn<InvertedIndex> in = new BinaryIn<InvertedIndex>(binaryFilename, InvertedIndex.class);
 		this.readExternal(in);
 	}
-
-	public short getMaxPhrases() {
-		return this.maxPhrases;
-	}
+//
+//	public short getMaxPhrases() {
+//		return this.maxPhrases;
+//	}
 	
-	public Suffixes getSuffixes() {
+	Suffixes getSuffixes() {
 		return this.suffixes;
 	}
 	
-	/**
-	 * This method performs a one-pass computation of the
-	 * collocation of two frequent subphrases. It is used for
-	 * the precalculation of the translations of hierarchical
-	 * phrases which are problematic to calculate on the fly.
-	 * This procedure is described in "Hierarchical Phrase-Based
-	 * Translation with Suffix Arrays" by Adam Lopez.
-	 *
-	 * @param maxPhraseLength the maximum length of any phrase
-	 *                   in the phrases
-	 * @param windowSize the maximum allowable space between
-	 *                   phrases for them to still be considered
-	 *                   collocated
-	 * @param minNonterminalSpan Minimum span allowed for a nonterminal 
-	 */
-	public FrequentMatches getCollocations(
-			int maxPhraseLength,
-			int windowSize,
-			short minNonterminalSpan
-	) {
-	
-		FrequentMatches collocations = new FrequentMatches(this, maxPhraseLength, windowSize, minNonterminalSpan);
-		
-		countCollocations(maxPhraseLength, windowSize, minNonterminalSpan, collocations);
-		
-		collocations.histogramSort();
-		
-		return collocations;
-		
-	}
+//	/**
+//	 * This method performs a one-pass computation of the
+//	 * collocation of two frequent subphrases. It is used for
+//	 * the precalculation of the translations of hierarchical
+//	 * phrases which are problematic to calculate on the fly.
+//	 * This procedure is described in "Hierarchical Phrase-Based
+//	 * Translation with Suffix Arrays" by Adam Lopez.
+//	 *
+//	 * @param maxPhraseLength the maximum length of any phrase
+//	 *                   in the phrases
+//	 * @param windowSize the maximum allowable space between
+//	 *                   phrases for them to still be considered
+//	 *                   collocated
+//	 * @param minNonterminalSpan Minimum span allowed for a nonterminal 
+//	 */
+//	public FrequentMatches getCollocations(
+//			int maxPhraseLength,
+//			int windowSize,
+//			short minNonterminalSpan
+//	) {
+//	
+////		FrequentMatches collocations = new FrequentMatches(this, maxPhraseLength, windowSize, minNonterminalSpan);
+////		
+////		countCollocations(maxPhraseLength, windowSize, minNonterminalSpan);
+////		
+////		collocations.histogramSort();
+////		
+////		return collocations;
+//		
+//		throw new RuntimeException("Not currently supported");
+//		
+//	}
 
 
 	/**
@@ -175,13 +207,20 @@ public class FrequentPhrases {
 	 * @return The number of times any frequent phrase co-occurred 
 	 *         with any frequent phrase within the given window.
 	 */
-	int countCollocations(int maxPhraseLength, int windowSize, short minNonterminalSpan) {
-		return countCollocations(maxPhraseLength, windowSize, minNonterminalSpan, null);
+//	int countCollocations(int maxPhraseLength, int windowSize, short minNonterminalSpan) {
+//		return countCollocations(maxPhraseLength, windowSize, minNonterminalSpan);
+//	}
+	
+	
+	protected List<HierarchicalPhrases> getFrequentCollocations() {
+		return this.frequentCollocations;
 	}
 	
+	
 	/**
-	 * Gets the number of times any frequent phrase co-occurred 
-	 * with any frequent phrase within the given window.
+	 * Gets the hierarchical phrases that represent 
+	 * the collocations of one frequent phrase with 
+	 * another frequent phrase.
 	 * <p>        
 	 * This method performs a one-pass computation of the
 	 * collocation of two frequent sub-phrases. It is used for
@@ -190,36 +229,13 @@ public class FrequentPhrases {
 	 * 
 	 * This procedure is described in "Hierarchical Phrase-Based
 	 * Translation with Suffix Arrays" by Adam Lopez.
-	 * <p>
 	 * 
-	 * <em>Note</em>: In the course of constructing FrequentMatches, 
-	 * this method should be called twice. 
-	 * 
-	 * In the first call, the frequentMatches should be null. 
-	 * When frequentMatches is null, this method simply counts the
-	 * total number of collocations of frequent phrases.
-	 * 
-	 * In the second call, the frequentMatches parameter should be non-null.
-	 * When frequentMatches is not null, this method initializes 
-	 * the provided frequentMatches object with collocation data,
-	 * in addition to returning the total number of collocations
-	 * of frequent phrases.
-	 * 
-	 * @param maxPhraseLength the maximum length of any phrase
-	 *                   in the phrases
-	 * @param windowSize the maximum allowable space between
-	 *                   phrases for them to still be considered
-	 *                   collocated
-	 * @param frequentMatches Object for storing collocation data.
-	 *                        If non-null, this object will be initialized
-	 *                        with collocation data.
-	 *                   
 	 * @return The number of times any frequent phrase co-occurred 
 	 *         with any frequent phrase within the given window.
 	 */
-	private int countCollocations(int maxPhraseLength, int windowSize, short minNonterminalSpan, FrequentMatches frequentMatches) {
+	private List<HierarchicalPhrases> countCollocations() {
 		
-		int count = 0;
+		PhrasePairCollocations collocations = new PhrasePairCollocations(suffixes.getCorpus());
 
 		LinkedList<Phrase> phrasesInWindow = new LinkedList<Phrase>();
 		LinkedList<Integer> positions = new LinkedList<Integer>();
@@ -276,26 +292,10 @@ public class FrequentPhrases {
 				}
 
 				// empty the whole queue...
-				for (int i = 0, n=phrasesInWindow.size(); i < n; i++) {
+//				for (int i = 0, n=phrasesInWindow.size(); i < n; i++) {
+				while (! phrasesInWindow.isEmpty()) {
 
-					Phrase phrase1 = phrasesInWindow.removeFirst();
-					int position1 = positions.removeFirst();
-
-					Iterator<Phrase> phraseIterator = phrasesInWindow.iterator();
-					Iterator<Integer> positionIterator = positions.iterator();
-
-					for (int j = i+1; j < n; j++) {
-
-						Phrase phrase2 = phraseIterator.next();
-						int position2 = positionIterator.next();
-
-						if (logger.isLoggable(Level.FINEST)) logger.finest("CASE1: " + phrase1 + "\t" + phrase2 + "\t" + position1 + "\t" + position2);
-						count++;
-						if (frequentMatches != null) {
-							frequentMatches.add(phrase1, phrase2, position1, position2);
-						}
-
-					}
+					processPhraseWindow(collocations, phrasesInWindow, positions);
 
 				}
 				// clear the queues
@@ -313,33 +313,38 @@ public class FrequentPhrases {
 
 			// check whether the initial elements are
 			// outside the window size...
-			if (phrasesInWindow.size() > 0) {
+			if (! phrasesInWindow.isEmpty()) {
 				int position1 = positions.get(0);
 				// dequeue the first element and
 				// calculate its collocations...
-				while (((currentPosition+1==endOfCorpus) || (windowSize <= currentPosition-position1))
-						&& phrasesInWindow.size() > 0) {
+				while (! phrasesInWindow.isEmpty() &&
+						((currentPosition+1==endOfCorpus) || 
+								(currentPosition-position1 >= maxPhraseSpan))) {
 
-					if (logger.isLoggable(Level.FINEST)) logger.finest("OUTSIDE OF WINDOW: " + position1 + " " +  currentPosition + " " + windowSize);
+					processPhraseWindow(collocations, phrasesInWindow, positions);
 					
-					Phrase phrase1 = phrasesInWindow.removeFirst();
-					positions.removeFirst();
-					
-					Iterator<Phrase> phraseIterator = phrasesInWindow.iterator();
-					Iterator<Integer> positionIterator = positions.iterator();
-
-					for (int j = 0, n=phrasesInWindow.size(); j < n; j++) {
-
-						Phrase phrase2 = phraseIterator.next();
-						int position2 = positionIterator.next();
-
-						count++;
-						if (frequentMatches != null) {
-							frequentMatches.add(phrase1, phrase2, position1, position2);
-						}
-
-						if (logger.isLoggable(Level.FINEST)) logger.finest("CASE2: " + phrase1 + "\t" + phrase2 + "\t" + position1 + "\t" + position2);
-					}
+//					if (logger.isLoggable(Level.FINEST)) logger.finest("OUTSIDE OF WINDOW: " + position1 + " " +  currentPosition + " " + maxPhraseSpan);
+//					
+//					Phrase phrase1 = phrasesInWindow.removeFirst();
+//					positions.removeFirst();
+//					
+//					Iterator<Phrase> phraseIterator = phrasesInWindow.iterator();
+//					Iterator<Integer> positionIterator = positions.iterator();
+//
+//					int end1 = position1 + phrase1.size();
+//					
+//					for (int j = 0, n=phrasesInWindow.size(); j < n; j++) {
+//
+//						Phrase phrase2 = phraseIterator.next();
+//						int position2 = positionIterator.next();
+//
+//						if (position2-end1 >= minNonterminalSpan) {
+//							if (logger.isLoggable(Level.FINEST)) logger.finest("CASE2: " + phrase1 + "\t" + phrase2 + "\t" + position1 + "\t" + position2);
+//							collocations.record(phrase1, phrase2, position1, position2);
+//						} else if (logger.isLoggable(Level.FINEST)) {
+//							logger.finest("Not recording collocation: " + phrase1 + "\t" + phrase2 + "\t" + position1 + "\t" + position2);
+//						}
+//					}
 					if (phrasesInWindow.size() > 0) {
 						position1 = positions.getFirst();
 					} else {
@@ -350,7 +355,44 @@ public class FrequentPhrases {
 
 		} // end iterating over positions in the corpus
 
-		return count;
+		return collocations.getHierarchicalPhrases();
+//		return count;
+	}
+
+	/**
+	 * @param collocations
+	 * @param phrasesInWindow
+	 * @param positions
+	 * @param i
+	 * @param n
+	 */
+	private void processPhraseWindow(PhrasePairCollocations collocations,
+			LinkedList<Phrase> phrasesInWindow,
+			LinkedList<Integer> positions) {
+		
+		Phrase phrase1 = phrasesInWindow.removeFirst();
+		int position1 = positions.removeFirst();
+
+		Iterator<Phrase> phraseIterator = phrasesInWindow.iterator();
+		Iterator<Integer> positionIterator = positions.iterator();
+
+		int end1 = position1 + phrase1.size();
+		
+		while (phraseIterator.hasNext() && positionIterator.hasNext()) {
+		
+			Phrase phrase2 = phraseIterator.next();
+			int position2 = positionIterator.next();
+
+			int end2 = position2 + phrase2.size();
+			
+			if (position2-end1 >= minNonterminalSpan  &&  end2-position1 <= maxPhraseSpan) {
+				if (logger.isLoggable(Level.FINEST)) logger.finest("    Recording collocation: " + phrase1 + "\t" + phrase2 + "\t" + position1 + "\t" + position2);
+				collocations.record(phrase1, phrase2, position1, position2);
+			} else if (logger.isLoggable(Level.FINEST)) {
+				logger.finest("Not recording collocation: "+ phrase1 + "\t" + phrase2 + "\t" + position1 + "\t" + position2);
+			}
+
+		}
 	}
 
 
@@ -642,6 +684,10 @@ public class FrequentPhrases {
 
 	public void cacheInvertedIndices() {
 	
+		for (HierarchicalPhrases phrases : frequentCollocations) {
+			suffixes.cacheMatchingPhrases(phrases);
+		}
+		
 		for (Map.Entry<Phrase, InvertedIndex> entry : invertedIndices.entrySet()) {
 			
 			Pattern pattern = new Pattern(entry.getKey());
@@ -929,6 +975,47 @@ public class FrequentPhrases {
 			
 			this.invertedIndices.put(phrase, invertedIndex);
 		}
+		
+		// Read collocations
+		int frequentCollocationsSize = in.readInt();
+		this.frequentCollocations = new ArrayList<HierarchicalPhrases>(frequentCollocationsSize);
+		for (int i=0; i<frequentCollocationsSize; i++) {
+			
+			// Read the pattern
+			int wordsLength = in.readInt();
+			int[] words = new int[wordsLength];
+			for (int j=0; j<wordsLength; j++) {
+				words[j]=in.readInt();
+			}
+			Pattern pattern = new Pattern(vocab, words);
+			
+//			int terminalSequenceLengthsLength = in.readInt();
+//			int[] terminalSequenceLengths = new int[terminalSequenceLengthsLength];
+//			for (int j=0; j<terminalSequenceLengthsLength; j++) {
+//				terminalSequenceLengths[j]=in.readInt();
+//			}
+			
+			// Read the number of corpus matches
+//			int phrasesSize = in.readInt();
+			
+			// Next, read the sentence numbers
+			// There should be size of these
+			int[] sentenceNumber = new int[in.readInt()];
+			for (int j=0, n=sentenceNumber.length; j<n; j++) {
+				sentenceNumber[j] = in.readInt();
+			}
+			
+			// Next, read the start index of each corpus match
+			// There should be size of these
+			int[] terminalSequenceStartIndices = new int[in.readInt()];
+			for (int j=0, n=terminalSequenceStartIndices.length; j<n; j++) {
+				terminalSequenceStartIndices[j] = in.readInt();
+			}
+
+			HierarchicalPhrases phrases = new HierarchicalPhrases(pattern, terminalSequenceStartIndices, sentenceNumber);
+			this.frequentCollocations.add(phrases);
+			
+		}
 	}
 
 	public void writeExternal(ObjectOutput out) throws IOException { 
@@ -1001,6 +1088,46 @@ public class FrequentPhrases {
 //			}
 			out.writeObject(list);
 		}
+		
+		/////////////
+		
+		// Write collocations
+		out.writeInt(frequentCollocations.size());
+		for (HierarchicalPhrases phrases : frequentCollocations) {
+			
+			// Write the pattern
+			int[] words = phrases.pattern.getWordIDs();
+			out.writeInt(words.length);
+			for (int token : phrases.pattern.getWordIDs()) {
+				out.writeInt(token);
+			}
+//			out.writeInt(phrases.pattern.arity());
+//			
+//			out.writeInt(phrases.terminalSequenceLengths.length);
+//			for (int l : phrases.terminalSequenceLengths) {
+//				out.writeInt(l);
+//			}
+			
+			// Write the number of corpus matches
+//			out.writeInt(phrases.size);
+			
+			// Next, write the sentence numbers
+			// There should be size of these
+			out.writeInt(phrases.sentenceNumber.length);
+			for (int n : phrases.sentenceNumber) {
+				out.writeInt(n);
+			}
+			
+			// Next, write the start index of each corpus match
+			// There should be size of these
+			out.writeInt(phrases.terminalSequenceStartIndices.length);
+			for (int startIndex : phrases.terminalSequenceStartIndices) {
+				out.writeInt(startIndex);
+			}
+			
+		}
+		
+
 	}
 	
 
@@ -1133,11 +1260,11 @@ public class FrequentPhrases {
 		int minFrequency = 0;
 		short maxPhrases = 100;
 		int maxPhraseLength = 10;
-		int windowSize = 10;
+		int maxPhraseSpan = 10;
 		short minNonterminalSpan = 2;
 
 		logger.info("Calculating " + maxPhrases + " most frequent phrases");
-		frequentPhrases = new FrequentPhrases(suffixArray, minFrequency, maxPhrases, maxPhraseLength);
+		frequentPhrases = new FrequentPhrases(suffixArray, minFrequency, maxPhrases, maxPhraseLength, maxPhraseLength, maxPhraseSpan, minNonterminalSpan);
 
 		logger.info("Frequent phrases: \n" + frequentPhrases.toString());
 
@@ -1145,30 +1272,45 @@ public class FrequentPhrases {
 		frequentPhrases.cacheInvertedIndices();
 		
 		logger.info("Calculating collocations for most frequent phrases");
-		FrequentMatches matches = frequentPhrases.getCollocations(maxPhraseLength, windowSize, minNonterminalSpan);
-
+		List<HierarchicalPhrases> collocations = frequentPhrases.getFrequentCollocations();//frequentPhrases.countCollocations(maxPhraseLength, maxPhraseSpan, minNonterminalSpan);
 		
-
-		
+		Comparator<HierarchicalPhrases> compare = new Comparator<HierarchicalPhrases>() {
+			public int compare(HierarchicalPhrases o1, HierarchicalPhrases o2) {
+				Integer i1 = o1.size;
+				Integer i2 = o2.size();
+				return i2.compareTo(i1);
+			}
+			
+		};
+		Collections.sort(collocations,compare);
+		for (HierarchicalPhrases locations : collocations) {
+			logger.info(locations.toString());
+		}
+//		FrequentMatches matches = frequentPhrases.getCollocations(maxPhraseLength, windowSize, minNonterminalSpan);
+//
+//		
+//
+//		
 //		logger.info("Printing collocations for most frequent phrases");		
 //		logger.info("Total collocations: " + matches.counter);
+//		
+//		logger.info(matches.toString());
 		
-		
-		//		for (int i=0, n=collocations.size(); i<n; i+=3) {
-		//			
-		//			int key = collocations.get(i);
-		//			short rank2 = (short) key;
-		//			short rank1 = (short) (key >> 8);
-		//			Phrase phrase1 = frequentPhrases.phraseList.get(rank1);
-		//			Phrase phrase2 = frequentPhrases.phraseList.get(rank2);
-		//			
-		//			String pattern = phrase1.toString() + " X " + phrase2.toString();
-		//			
-		//			int position1 = collocations.get(i+1);
-		//			int position2 = collocations.get(i+2);
-		//			
-		//			System.out.println(pattern + " " + position1 + "," + position2);
-		//		}
+//				for (int i=0, n=matches.counter; i<n; i+=3) {
+//					
+//					int key = matches..get(i);
+//					short rank2 = (short) key;
+//					short rank1 = (short) (key >> 8);
+//					Phrase phrase1 = frequentPhrases.phraseList.get(rank1);
+//					Phrase phrase2 = frequentPhrases.phraseList.get(rank2);
+//					
+//					String pattern = phrase1.toString() + " X " + phrase2.toString();
+//					
+//					int position1 = collocations.get(i+1);
+//					int position2 = collocations.get(i+2);
+//					
+//					System.out.println(pattern + " " + position1 + "," + position2);
+//				}
 
 
 

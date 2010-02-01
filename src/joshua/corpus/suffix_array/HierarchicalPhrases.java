@@ -17,8 +17,6 @@
  */
 package joshua.corpus.suffix_array;
 
-import java.io.IOException;
-import java.io.ObjectOutput;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
@@ -50,7 +48,7 @@ public class HierarchicalPhrases extends AbstractHierarchicalPhrases {
 	 * The length of this array should be 
 	 * <code>size * terminalSequenceLengths.length</code>.
 	 */
-	private final int[] terminalSequenceStartIndices;
+	final int[] terminalSequenceStartIndices;
 	
 	/**
 	 * Represents the sentence numbers of each location in the
@@ -60,7 +58,7 @@ public class HierarchicalPhrases extends AbstractHierarchicalPhrases {
 	 * actual calculation of this data were moved from the
 	 * constructor to the <code>getSentenceNumber</code> method.
 	 */
-	private final int[] sentenceNumber;
+	final int[] sentenceNumber;
 	
 	/** Logger for this class. */
 	@SuppressWarnings("unused")
@@ -97,6 +95,17 @@ public class HierarchicalPhrases extends AbstractHierarchicalPhrases {
 	public static int protectedCounter = 0; 
 	public static int privateCounter = 0;
 	public static int emptyListCounter = 0;
+	
+	public String toString() {
+		StringBuilder s = new StringBuilder();
+		
+		s.append(this.pattern.toString());
+		s.append('\t');
+		s.append(this.size());
+		s.append(" locations");
+		
+		return s.toString();
+	}
 	
 	/**
 	 * Constructs a list of hierarchical phrases.
@@ -215,44 +224,6 @@ public class HierarchicalPhrases extends AbstractHierarchicalPhrases {
 	public int getSentenceNumber(int phraseIndex) {
 		
 		return this.sentenceNumber[phraseIndex];
-	}
-
-	//////
-	
-
-	public void writeExternal(ObjectOutput out) throws IOException {
-		//TODO Finish and test this method
-		
-		
-		// Write the pattern
-		int[] words = pattern.getWordIDs();
-		out.writeInt(words.length);
-		for (int token : pattern.getWordIDs()) {
-			out.writeInt(token);
-		}
-		out.writeInt(pattern.arity());
-		
-		out.writeInt(terminalSequenceLengths.length);
-		for (int l : terminalSequenceLengths) {
-			out.writeInt(l);
-		}
-		
-		// Write the number of corpus matches
-		out.writeInt(size);
-		
-		// Next, write the sentence numbers
-		// There should be size of these
-		for (int n : sentenceNumber) {
-			out.writeInt(n);
-		}
-		
-		// Next, write the start index of each corpus match
-		// There should be size of these
-		for (int startIndex : terminalSequenceStartIndices) {
-			out.writeInt(startIndex);
-		}
-		
-		
 	}
 	
 }
