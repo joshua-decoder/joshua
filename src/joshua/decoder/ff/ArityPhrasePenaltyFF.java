@@ -27,7 +27,7 @@ import joshua.decoder.ff.tm.Rule;
  */
 public final class ArityPhrasePenaltyFF extends DefaultStatelessFF {
 	
-	static final double ALPHA = - Math.log10(Math.E);
+	static final double ALPHA = - Math.log10(Math.E);//-0.435
 	
 	// when the rule.arity is in the range, then this feature is activated
 	private final int minArity;
@@ -38,15 +38,21 @@ public final class ArityPhrasePenaltyFF extends DefaultStatelessFF {
 		super(weight, owner, featureID);
 		this.minArity = min;
 		this.maxArity = max;
+		System.out.println("ArityPhrasePenaltyFF feature with owner=" + this.owner +"; minArity=" + this.minArity+ "; maxArity="+this.maxArity);
 	}
 	
 	
 	public double estimateLogP(final Rule rule, int sentID) {
+		
 		if (this.owner == rule.getOwner()
-		&& this.minArity <= rule.getArity()
-		&& this.maxArity >= rule.getArity()) {
+			&& rule.getArity() >= this.minArity 
+			&& rule.getArity() <= this.maxArity) {
+			//System.out.println("y");
+			//System.out.println(rule.getOwner() + "; " + rule.getArity() );
+			//System.out.println("ArityPhrasePenaltyFF feature with owner=" + this.owner +"; minArity=" + this.minArity+ "; maxArity="+this.maxArity);
 			return ALPHA;
 		} else {
+			
 			return 0.0;
 		}
 	}

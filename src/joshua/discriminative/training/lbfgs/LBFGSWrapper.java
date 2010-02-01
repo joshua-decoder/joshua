@@ -41,7 +41,8 @@ public abstract class LBFGSWrapper {
 	double lambda = 1;
 	double[] initWeights;
 	
-	
+	//print debug information
+	int printFirstN = 0;
 	
 	/**Input:
 	 * curWeights: the current weight vectors
@@ -57,7 +58,7 @@ public abstract class LBFGSWrapper {
 	 * */
 	public abstract double[] computeFuncValAndGradient(double[] curWeights, double[] resFuncVal);
 	
-	public LBFGSWrapper(int numPara, double[] initWeights,  boolean isMinimizer, boolean useL2Regula, double varianceForL2, boolean useModelDivergenceRegula, double lambda){
+	public LBFGSWrapper(int numPara, double[] initWeights,  boolean isMinimizer, boolean useL2Regula, double varianceForL2, boolean useModelDivergenceRegula, double lambda, int printFirstN){
 		this.isMinimizer = isMinimizer;
 		this.useL2Regula = useL2Regula;
 		this.varianceForL2 = varianceForL2;
@@ -99,6 +100,7 @@ public abstract class LBFGSWrapper {
 			rProp = new RProp(initWeights, numPara, isMinimizer);
 		}
 		
+		this.printFirstN = printFirstN;
 	}
 	
 	 
@@ -190,9 +192,11 @@ public abstract class LBFGSWrapper {
 	public void printStatistics(int iter_num, double func_val, double[] gradient_vector, double[] weights_vector){
 		System.out.println("=======Func value: " + func_val + " at iteration number " + iter_num);
 		
+		if(printFirstN<=0)
+			return;
 		if(gradient_vector!=null){
 			System.out.print("Gradient vector: ");
-			for(int i=0; i<gradient_vector.length; i++){
+			for(int i=0; i<gradient_vector.length && i<this.printFirstN; i++){
 				System.out.print(" " + gradient_vector[i]);
 			}
 			System.out.print("\n");
@@ -200,7 +204,7 @@ public abstract class LBFGSWrapper {
 		
 		if(weights_vector!=null){
 			System.out.print("Weight vector: ");
-			for(int i=0; i<weights_vector.length; i++){
+			for(int i=0; i<weights_vector.length && i<this.printFirstN; i++){
 				System.out.print(" " + weights_vector[i]);
 			}
 			System.out.print("\n");

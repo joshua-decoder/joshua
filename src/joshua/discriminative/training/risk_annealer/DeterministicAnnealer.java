@@ -36,11 +36,13 @@ public class DeterministicAnnealer {
 	boolean useL2Regula = false;
 	double varianceForL2 = 1;
 	
+	int printFirstN=0;
+	
 	boolean useModelDivergenceRegula = false;
 	double lambda = 1;
 		
 	public DeterministicAnnealer( int numParameters,  double[] lastWeightVector, boolean isMinimizer, GradientComputer gradientComputer,  
-			boolean useL2Regula, double varianceForL2, boolean useModelDivergenceRegula, double lambda) {
+			boolean useL2Regula, double varianceForL2, boolean useModelDivergenceRegula, double lambda, int printFirstN) {
 		this.numParameters = numParameters;
 		this.isMinimizer = isMinimizer;
 		this.lastWeightVector = lastWeightVector;
@@ -51,6 +53,7 @@ public class DeterministicAnnealer {
 		
 		this.useModelDivergenceRegula = useModelDivergenceRegula;
 		this.lambda = lambda;		
+		this.printFirstN = printFirstN;
 	}
 	
 	
@@ -167,7 +170,7 @@ public class DeterministicAnnealer {
 	    	/**re-start lbfgs
 	    	 * */
         	lbfgsRunner = new GradientOptimizer(numParameters+1, weightsIncludingScaling, isMinimizer, gradientComputer, 
-        			this.useL2Regula, this.varianceForL2, this.useModelDivergenceRegula, this.lambda);
+        			this.useL2Regula, this.varianceForL2, this.useModelDivergenceRegula, this.lambda, this.printFirstN);
         	
         	weightsIncludingScaling = lbfgsRunner.runLBFGS(); //run LBFGS to get the best weight vector; (LBFGS itself requires multiple iterations)
         	
@@ -179,7 +182,7 @@ public class DeterministicAnnealer {
 		 	/**re-start lbfgs
 	    	 * */
 			lbfgsRunner = new GradientOptimizer(numParameters, lastWeightVector, isMinimizer, gradientComputer, 
-					this.useL2Regula, this.varianceForL2, this.useModelDivergenceRegula, this.lambda);
+					this.useL2Regula, this.varianceForL2, this.useModelDivergenceRegula, this.lambda, this.printFirstN);
 			
 			double[] tWeightVector = lbfgsRunner.runLBFGS(); //run LBFGS to get the best weight vector; LBFGS itself requires multiple iterations
 			gradientComputer.printLastestStatistics();

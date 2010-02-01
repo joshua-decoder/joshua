@@ -53,7 +53,7 @@ public class HyperGraphPruning extends TrivialInsideOutside {
 		fixThresholdPruning = fixThreshold;
 		THRESHOLD_GENERAL = thresholdGeneral;
 		THRESHOLD_GLUE = thresholdGlue;
-		glueGrammarOwner = symbolTable.addTerminal(JoshuaConfiguration.begin_mono_owner);//TODO
+		glueGrammarOwner = symbolTable.addTerminal(JoshuaConfiguration.glue_owner);//TODO
 	}
 	
 	

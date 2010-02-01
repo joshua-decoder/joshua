@@ -81,6 +81,11 @@ public class HGMinRiskDAMert extends AbstractMinRiskMERT {
 		
 		if(haveRefereces==false){//minimize conditional entropy
 			MRConfig.temperatureAtNoAnnealing = 1;//TODO
+		}else{
+			if(MRConfig.useModelDivergenceRegula){
+				System.out.println("supervised training, we should not do model divergence regular");
+				System.exit(0);
+			}
 		}
 			
 	}
@@ -98,7 +103,7 @@ public class HGMinRiskDAMert extends AbstractMinRiskMERT {
         	this.curConfigFile =  configFile+"." + iter;
         	this.curFeatureFile = MRConfig.featureFile +"." + iter;
         	if(MRConfig.normalizeByFirstFeature)
-        		normalizeWeightsByFirstFeature(lastWeightVector);        	     	
+        		normalizeWeightsByFirstFeature(lastWeightVector, 0);        	     	
         	saveLastModel(configFile, curConfigFile, MRConfig.featureFile, curFeatureFile);
         	//writeConfigFile(lastWeightVector, configFile, configFile+"." + iter);
         	
@@ -147,7 +152,7 @@ public class HGMinRiskDAMert extends AbstractMinRiskMERT {
     		);
  	        
         	annealer = new DeterministicAnnealer(numPara,  lastWeightVector, MRConfig.isMinimizer, gradientComputer, 
-        			MRConfig.useL2Regula, MRConfig.varianceForL2, MRConfig.useModelDivergenceRegula, MRConfig.lambda);
+        			MRConfig.useL2Regula, MRConfig.varianceForL2, MRConfig.useModelDivergenceRegula, MRConfig.lambda, MRConfig.printFirstN);
         	if(MRConfig.annealingMode==0)//do not anneal
         		lastWeightVector = annealer.runWithoutAnnealing(MRConfig.isScalingFactorTunable, MRConfig.startScaleAtNoAnnealing, MRConfig.temperatureAtNoAnnealing);
         	else if(MRConfig.annealingMode==1)
@@ -162,7 +167,7 @@ public class HGMinRiskDAMert extends AbstractMinRiskMERT {
         	
         	//=====re-compute onebest BLEU
         	if(MRConfig.normalizeByFirstFeature)
-            	normalizeWeightsByFirstFeature(lastWeightVector);
+            	normalizeWeightsByFirstFeature(lastWeightVector, 0);
         	
         	
         	computeOneBestBLEU(curHypFilePrefix);
@@ -178,7 +183,7 @@ public class HGMinRiskDAMert extends AbstractMinRiskMERT {
         
         //final output
         if(MRConfig.normalizeByFirstFeature)
-        	normalizeWeightsByFirstFeature(lastWeightVector);        	     	
+        	normalizeWeightsByFirstFeature(lastWeightVector, 0);        	     	
     	saveLastModel(configFile, configFile + ".final", MRConfig.featureFile, MRConfig.featureFile + ".final");
         //writeConfigFile(lastWeightVector, configFile, configFile+".final");
     	
@@ -300,17 +305,9 @@ public class HGMinRiskDAMert extends AbstractMinRiskMERT {
 		}
 		
 		if(MRConfig.useIndividualBaselines){
-			for(int i=0; i<MRConfig.numIndividualBaselines; i++){
-				/**when we are tune the sparce features,
-				 * we should skip the last feature, which is the aggregatge discriminative model
-				 * TODO: assume the discriminative model appear last in the last of the config file
-				 **/
-				if(MRConfig.useSparseFeature && i == MRConfig.numIndividualBaselines-1)
-					continue;
-				
-				String featName = MRConfig.individualBSFeatNamePrefix +i;
-				int columnID = i;
-				FeatureTemplate ft = new IndividualBaselineFT(featName, columnID, true);
+			for(int id : MRConfig.baselineFeatIDsToTune){				
+				String featName = MRConfig.individualBSFeatNamePrefix +id;				
+				FeatureTemplate ft = new IndividualBaselineFT(featName, id, true);
 				featTemplates.add(ft);	
 			}
 		}
@@ -353,18 +350,11 @@ public class HGMinRiskDAMert extends AbstractMinRiskMERT {
 		
 		//==== individual bs feature
 		if(MRConfig.useIndividualBaselines){
-		List<Double> weights = readBaselineFeatureWeights(this.configFile);
-			for(int i=0; i<MRConfig.numIndividualBaselines; i++){
-				/**when we are tune the sparce features,
-				 * we should skip the last feature, which is the aggregatge discriminative model
-				 * TODO: assume the discriminative model appear last in the last of the config file
-				 **/
-				if(MRConfig.useSparseFeature && i == MRConfig.numIndividualBaselines-1)
-					continue;
-				
-				String featName = MRConfig.individualBSFeatNamePrefix +i;	
+			List<Double> weights = readBaselineFeatureWeights(this.configFile);
+			for(int id : MRConfig.baselineFeatIDsToTune){				
+				String featName = MRConfig.individualBSFeatNamePrefix + id;	
 				featureStringToIntegerMap.put(featName,  featID++);
-				double  weight = weights.get(i);
+				double  weight = weights.get(id);
 				temInitWeights.add(weight);
 			}
 		}
@@ -403,54 +393,24 @@ public class HGMinRiskDAMert extends AbstractMinRiskMERT {
 		if(MRConfig.useBaseline)
 			baselineWeight = getBaselineWeight();
 		
-		double[] weights = new double[MRConfig.numIndividualBaselines];
+		List<Double> weights  = readBaselineFeatureWeights(this.configFile);
 		
+		//change the weights we are tunning
 		if(MRConfig.useIndividualBaselines){		
-			for(int i=0; i<MRConfig.numIndividualBaselines; i++){
-				/**when we are tune the sparce features,
-				 * we should skip the last feature, which is the aggregatge discriminative model
-				 * TODO: assume the discriminative model appear last in the last of the config file
-				 **/
-				if(MRConfig.useSparseFeature && i == MRConfig.numIndividualBaselines-1){
-					weights[i] = readDiscriminativeWeight(this.configFile);//TODO
-					
-				}else{
-					String featName = MRConfig.individualBSFeatNamePrefix +i;
-					int featID = featureStringToIntegerMap.get(featName);
-					weights[i] = baselineWeight*lastWeightVector[featID];
-				}
-			}			
-		}else{
-			List<Double> tWeights  = readBaselineFeatureWeights(this.configFile);//TODO
-			for(int i=0; i<tWeights.size(); i++){
-				weights[i] = tWeights.get(i);
+			for(int id : MRConfig.baselineFeatIDsToTune){				
+				String featName = MRConfig.individualBSFeatNamePrefix +id;
+				int featID = featureStringToIntegerMap.get(featName);
+				weights.set(id, baselineWeight*lastWeightVector[featID]);
+				
 			}
 		}
-		return weights;
-	}
-	
-	protected double readDiscriminativeWeight(String configFile){
 		
-		Double res = null;
-		BufferedReader configReader = FileUtilityOld.getReadFileStream(configFile);
-		String line;
-		while ((line = FileUtilityOld.readLineLzf(configReader)) != null) {
-			line = line.trim();
-			if (line.matches("^\\s*\\#.*$") || line.matches("^\\s*$")) {
-				continue;
-			}else if (line.indexOf("=") != -1) { // parameters
-				continue;				
-			}else{//models
-				String[] fds = line.split("\\s+");
-				if("discriminative".equals(fds[0])){				
-					res = new Double(fds[fds.length-1].trim());
-				}
-			}
-		}
-		FileUtilityOld.closeReadFile(configReader);
-		System.out.println("discriminative model weight is " + res);
+		double[] res = new double[weights.size()];
+		for(int i=0; i<res.length; i++)
+			res[i] = weights.get(i);
 		return res;
 	}
+	
 
 	private double getBaselineWeight(){
 		String featName = MRConfig.baselineFeatureName;
@@ -499,6 +459,29 @@ public class HGMinRiskDAMert extends AbstractMinRiskMERT {
 		}
 		return modelTbl;
 	}
+	
+	
+	private void addAbbreviatedNames(){
+//		try to abbrevate the featuers if possible
+    	if(MRConfig.useRuleIDName){
+    		//add the abbreviated feature name into featureStringToIntegerMap
+    		Map<String, Integer> rulesIDTable = DiskHyperGraph.obtainRulesIDTable(curHypFilePrefix+".hg.rules");
+    		//System.out.println("size1=" + featureStringToIntegerMap.size());
+    		
+    		for(Entry<String, Integer> entry : rulesIDTable.entrySet()){
+    			Integer featureID = featureStringToIntegerMap.get(entry.getKey());
+    			if(featureID!=null){
+    				String abbrFeatName = "r" + entry.getValue();//TODO??????
+    				featureStringToIntegerMap.put(abbrFeatName, featureID);
+    				//System.out.println("full="+entry.getKey() + "; abbrFeatName="+abbrFeatName + "; id="+featureID);
+    			}
+    		}
+    		//System.out.println("size2=" + featureStringToIntegerMap);
+    		//System.exit(0);
+    	}
+    	
+	}
+	
 	
 	static public void addAllWordsIntoSymbolTbl(String file, SymbolTable symbolTbl){
 		BufferedReader reader = FileUtilityOld.getReadFileStream(file,"UTF-8");	

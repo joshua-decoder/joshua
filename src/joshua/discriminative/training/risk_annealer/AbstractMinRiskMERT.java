@@ -45,8 +45,6 @@ public abstract class AbstractMinRiskMERT {
 	
 	protected List<Double> readBaselineFeatureWeights(String configFile){
 		
-		logger.info("intilize features and weights");
-		
 		//== get the weights
 		List<Double> weights = new ArrayList<Double>();
 		BufferedReader configReader = FileUtilityOld.getReadFileStream(configFile);
@@ -70,15 +68,14 @@ public abstract class AbstractMinRiskMERT {
 	
 	
 
-	protected void normalizeWeightsByFirstFeature(double[] weightVector){
-		//TODO: which one should be fixed? what if the one to be fixed has a negative value?
-		double lmWeight = weightVector[0];
-		if(lmWeight<=0){
-			logger.severe("first weight becomes negative, we cannot normalize"); 
-			System.exit(0);
+	protected void normalizeWeightsByFirstFeature(double[] weightVector, int featID){
+		double weight = weightVector[featID];
+		if(weight<=0){
+			logger.warning("first weight is negative"); 
+			//System.exit(0);
 		}else{
 			for(int i=0; i<weightVector.length; i++)
-				weightVector[i] /=  lmWeight;
+				weightVector[i] /=  Math.abs( weight );
 		}
 	}
 	

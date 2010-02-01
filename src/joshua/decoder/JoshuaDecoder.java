@@ -478,7 +478,7 @@ public class JoshuaDecoder {
 				JoshuaConfiguration.glue_format,
 				JoshuaConfiguration.glue_file,
 				this.symbolTable,
-				JoshuaConfiguration.begin_mono_owner,
+				JoshuaConfiguration.glue_owner,
 				JoshuaConfiguration.default_non_terminal,
 				-1,
 				JoshuaConfiguration.oovFeatureCost);
@@ -671,15 +671,15 @@ public class JoshuaDecoder {
 							"Line: %s\nAdd LM, order: %d; weight: %.3f;",
 							line, JoshuaConfiguration.lmOrder, weight));
 					
-				} else if ("oracle".equals(fds[0]) && fds.length >= 3) { //oracle weight files
+				} else if ("oracle".equals(fds[0]) && fds.length >= 3) { //oracle files weight
 					if (null == this.languageModel) {
 						throw new IllegalArgumentException("LM model has not been properly initialized before setting order and weight");
-					}
-					double weight = Double.parseDouble(fds[1].trim());
+					}					
 					String[] referenceFiles = new String[fds.length-2];
 					for(int i=0; i< referenceFiles.length; i++)
-						referenceFiles[i] =  fds[i+2].trim();			
-
+						referenceFiles[i] =  fds[i+1].trim();			
+					double weight = Double.parseDouble(fds[fds.length-1].trim());
+					
 					this.featureFunctions.add(
 						new BLEUOracleModel(JoshuaConfiguration.ngramStateID, JoshuaConfiguration.lmOrder, 
 								this.featureFunctions.size(), this.symbolTable, weight, referenceFiles));
@@ -739,7 +739,8 @@ public class JoshuaDecoder {
 						new ArityPhrasePenaltyFF(
 							this.featureFunctions.size(),
 							weight, owner, startArity, endArity));
-					if (logger.isLoggable(Level.FINEST))
+					
+					if (logger.isLoggable(Level.INFO))
 						logger.finest(String.format(
 							"Process Line: %s\nAdd ArityPhrasePenalty, owner: %s; startArity: %d; endArity: %d; weight: %.3f",
 							line, owner, startArity, endArity, weight));

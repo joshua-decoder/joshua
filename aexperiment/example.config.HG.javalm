@@ -18,8 +18,7 @@ order=4
 #tm config
 span_limit=10
 phrase_owner=pt
-mono_owner=mono
-begin_mono_owner=begin_mono
+glue_owner=glue
 default_non_terminal=X
 goalSymbol=S
 
@@ -34,9 +33,10 @@ max_n_rules=50
 rule_relative_threshold=10.0
 
 #nbest config
-use_unique_nbest=true
-use_tree_nbest=false
+use_unique_nbest=false
+use_tree_nbest=true
 add_combined_cost=true
+include_align_index=false
 top_n=300
 
 
@@ -53,34 +53,38 @@ num_parallel_decoders=1
 parallel_files_prefix=.
 
 #disk hg
-save_disk_hg=true
+save_disk_hg=false
 forest_pruning=false
 forest_pruning_threshold=150
 
 
 ###### model weights
 #lm order weight
-lm 0.000000
+lm 1.000000
 
 #phrasemodel owner column(0-indexed) weight
-#phrasemodel pt 0 1.066893
-#phrasemodel pt 1 0.752247
-#phrasemodel pt 2 0.589793
+phrasemodel pt 0 1.066893
+phrasemodel pt 1 0.752247
+phrasemodel pt 2 0.589793
 
 #arityphrasepenalty owner start_arity end_arity weight
-#arityphrasepenalty pt 0 0 1.0
-#arityphrasepenalty pt 1 2 -1.0
+arityphrasepenalty pt 0 0 1.0
+arityphrasepenalty pt 1 1 -1.0
+arityphrasepenalty pt 2 2 -2.0
+
+arityphrasepenalty glue 1 1 1.0
+arityphrasepenalty glue 1 2 2.0
 
 #phrasemodel mono 0 0.5
 
 #wordpenalty weight
-#wordpenalty -2.844814
+wordpenalty -2.844814
 #latticecost 1.0
 
-oracle 1.0 example/example.test.ref.0 example/example.test.ref.1 example/example.test.ref.2 example/example.test.ref.3
+oracle example/example.test.ref.0 example/example.test.ref.1 example/example.test.ref.2 example/example.test.ref.3 1.0
 
 #========================discriminative model options
-#discriminative C:\data_disk\java_work_space\discriminative_at_clsp\edu\jhu\joshua\training\risk_annealer\data\example.hiero.feature 1.0
+#discriminative aexperiment/featureFile 1.0
 
 #general
 maxNumIter=2
@@ -88,7 +92,7 @@ useSemiringV2=true
 maxNumHGInQueue=100
 numThreads=4
 saveHGInMemory=false
-
+printFirstN=10
 
 #option for first feature (e.g., baseline feature)
 normalizeByFirstFeature=true
@@ -106,7 +110,7 @@ annealingMode=0
 isScalingFactorTunable=false
 useL2Regula=false
 varianceForL2=1
-useModelDivergenceRegula=true
+useModelDivergenceRegula=false
 lambda=-1
 
 #feature related
@@ -116,15 +120,15 @@ baselineFeatureName=baseline_lzf
 baselineFeatureWeight=1.0
 
 useIndividualBaselines=true
-numIndividualBaselines=5
+baselineFeatIDsToTune=0;1;2;3;4
 
 #sparse features
-useSparseFeature=false
+useSparseFeature=true
 useTMFeat=true
 useRuleIDName=true
 useTMTargetFeat=false
 
-useLMFeat=false
+useLMFeat=true
 startNgramOrder=1
 endNgramOrder=2
 

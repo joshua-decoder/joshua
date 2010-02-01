@@ -32,6 +32,7 @@ public abstract class NbestMinRiskDAMert extends AbstractMinRiskMERT {
 	double varianceForL2 = 1;
 	boolean useModelDivergenceRegula = false;
 	double lambda = 1;
+	int printFirstN = 5;
 	
 	public NbestMinRiskDAMert(boolean useShortestRef, String decoderConfigFile, int numSentInTrainSet, String[] refFiles, String nbestPrefix) {
 		super(decoderConfigFile, numSentInTrainSet, refFiles);	
@@ -46,7 +47,7 @@ public abstract class NbestMinRiskDAMert extends AbstractMinRiskMERT {
 	public void mainLoop(){
         for(int iter=1; iter<=MRConfig.maxNumIter; iter++){
         	//#re-normalize weights
-        	normalizeWeightsByFirstFeature(lastWeightVector);
+        	normalizeWeightsByFirstFeature(lastWeightVector,0);
         
         	//############decoding        
         	writeConfigFile(lastWeightVector, configFile, configFile+"." + iter);
@@ -67,7 +68,7 @@ public abstract class NbestMinRiskDAMert extends AbstractMinRiskMERT {
         	//String f_nbest_merged_new = "C:/Users/zli/Documents/minriskannealer.nbest.merged.1";//????????????
         	GradientComputer gradientComputer = new NbestRiskGradientComputer(f_nbest_merged_new, referenceFiles, useShortestRef, numTrainingSentence, numPara, MRConfig.gainFactor, 1.0, 0.0, true, linearCorpusGainThetas);
         	annealer = new DeterministicAnnealer( numPara,  lastWeightVector, MRConfig.isMinimizer, gradientComputer, 
-        			this.useL2Regula, this.varianceForL2, this.useModelDivergenceRegula, this.lambda);
+        			this.useL2Regula, this.varianceForL2, this.useModelDivergenceRegula, this.lambda, this.printFirstN);
         	
         	if(MRConfig.annealingMode==0)//do not anneal
         		lastWeightVector = annealer.runWithoutAnnealing(MRConfig.isScalingFactorTunable, MRConfig.startScaleAtNoAnnealing, MRConfig.temperatureAtNoAnnealing);
@@ -83,7 +84,7 @@ public abstract class NbestMinRiskDAMert extends AbstractMinRiskMERT {
         }
         
         //final output
-        normalizeWeightsByFirstFeature(lastWeightVector);
+        normalizeWeightsByFirstFeature(lastWeightVector,0);
         writeConfigFile(lastWeightVector, configFile, configFile+".final");
         System.out.println("#### Final weights are: ");
         annealer.getLBFGSRunner().printStatistics(-1, -1, null, lastWeightVector);

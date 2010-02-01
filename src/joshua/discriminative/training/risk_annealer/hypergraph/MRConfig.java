@@ -1,9 +1,10 @@
 package joshua.discriminative.training.risk_annealer.hypergraph;
 
 import java.io.BufferedReader;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
 
 import joshua.discriminative.FileUtilityOld;
 import joshua.util.Regex;
@@ -63,7 +64,8 @@ public class MRConfig {
 	
 	public static boolean useIndividualBaselines;
 	public static String individualBSFeatNamePrefix="bs";
-	public static int numIndividualBaselines = 5;
+	public static List<Integer> baselineFeatIDsToTune;
+	
 	
 	//== sparse features
 	public static String featureFile;
@@ -77,6 +79,7 @@ public class MRConfig {
 	public static int startNgramOrder = 1;
 	public static int endNgramOrder = 2;
 	
+	public static int printFirstN=2;
 	
 		
 	private static final Logger logger =
@@ -173,10 +176,13 @@ public class MRConfig {
 					useIndividualBaselines = new Boolean(fds[1].trim());
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("useIndividualBaselines: %s", useIndividualBaselines));					
-				}else if ("numIndividualBaselines".equals(fds[0])) {
-					numIndividualBaselines = new Integer(fds[1].trim());
-					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format("numIndividualBaselines: %s", numIndividualBaselines));					
+				}else if ("baselineFeatIDsToTune".equals(fds[0])) {
+					String[] ids = fds[1].trim().split(";");
+					baselineFeatIDsToTune = new ArrayList<Integer>();
+					for(String id : ids){
+						baselineFeatIDsToTune.add(new Integer(id.trim()));
+					}
+					System.out.println(String.format("baselineFeatIDsToTune: %s", baselineFeatIDsToTune));					
 				} else if ("useSparseFeature".equals(fds[0])) {
 					useSparseFeature = new Boolean(fds[1].trim());
 					if (logger.isLoggable(Level.FINEST))
@@ -229,9 +235,12 @@ public class MRConfig {
 					normalizeByFirstFeature = new Boolean(fds[1].trim());
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("normalizeByFirstFeature: %s", normalizeByFirstFeature));					
+				} else if ("printFirstN".equals(fds[0])) {
+					printFirstN = new Integer(fds[1].trim());
+					if (logger.isLoggable(Level.FINEST))
+						logger.finest(String.format("printFirstN: %s", printFirstN));					
 				} 
-				     
-							
+									
 				
 			}else{//models
 				

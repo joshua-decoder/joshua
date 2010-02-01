@@ -52,8 +52,7 @@ public class JoshuaConfiguration {
 	public static int span_limit = 10;
 	//note: owner should be different from each other, it can have same value as a word in LM/TM
 	public static String  phrase_owner               = "pt";
-	public static String  mono_owner                 = "mono";
-	public static String  begin_mono_owner           = "begin_mono";//if such a rule is get applied, then no reordering is possible
+	public static String  glue_owner           = "glue_owner";//if such a rule is get applied, then no reordering is possible
 	public static String  default_non_terminal       = "PHRASE";
 	public static String  goal_symbol                = "S";
 	public static boolean use_sent_specific_tm       = false;
@@ -369,17 +368,12 @@ public class JoshuaConfiguration {
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("phrase_owner: %s", phrase_owner));
 					
-				} else if ("mono_owner".equals(fds[0])) {
-					mono_owner = fds[1].trim();
+				} else if ("glue_owner".equals(fds[0])) {
+					glue_owner = fds[1].trim();
 					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format("mono_owner: %s", mono_owner));
+						logger.finest(String.format("glue_owner: %s", glue_owner));
 					
-				} else if ("begin_mono_owner".equals(fds[0])) {
-					begin_mono_owner = fds[1].trim();
-					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format("begin_mono_owner: %s", begin_mono_owner));
-					
-				} else if ("default_non_terminal".equals(fds[0])) {
+				}  else if ("default_non_terminal".equals(fds[0])) {
 					default_non_terminal = "[" + fds[1].trim() + "]";
 //					default_non_terminal = fds[1].trim();
 					if (logger.isLoggable(Level.FINEST))

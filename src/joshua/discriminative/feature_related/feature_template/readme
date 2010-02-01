@@ -1,0 +1,8 @@
+All the features on the english side.
+
+(1) first and last symbol of the rule (bigram); decision phrase boundary
+We assume a list of function word, non-function word, and nonterminal symbol
+
+(2) function word guide ordering
+For hierarchical rules only.
+With arity one, we look
