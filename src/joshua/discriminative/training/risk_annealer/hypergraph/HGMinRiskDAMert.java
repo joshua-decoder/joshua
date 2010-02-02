@@ -22,7 +22,10 @@ import joshua.discriminative.feature_related.feature_function.FeatureTemplateBas
 import joshua.discriminative.feature_related.feature_template.BaselineFT;
 import joshua.discriminative.feature_related.feature_template.FeatureTemplate;
 import joshua.discriminative.feature_related.feature_template.IndividualBaselineFT;
+import joshua.discriminative.feature_related.feature_template.MicroRuleFT;
+import joshua.discriminative.feature_related.feature_template.MicroRuleFeature;
 import joshua.discriminative.feature_related.feature_template.NgramFT;
+import joshua.discriminative.feature_related.feature_template.SetupMicroRuleFeatures;
 import joshua.discriminative.feature_related.feature_template.TMFT;
 import joshua.discriminative.feature_related.feature_template.TargetTMFT;
 import joshua.discriminative.ranker.HGRanker;
@@ -40,6 +43,9 @@ public class HGMinRiskDAMert extends AbstractMinRiskMERT {
 	
 	List<FeatureTemplate> featTemplates;
 	HashMap<String, Integer> featureStringToIntegerMap;
+	
+	MicroRuleFT microRuleFeatureTemplate = null;
+	
 	
 	String hypFilePrefix;//training hypothesis file prefix
 	String curConfigFile;
@@ -115,25 +121,18 @@ public class HGMinRiskDAMert extends AbstractMinRiskMERT {
 	        	decodingTestSet(null, curHypFilePrefix);
         	}
 
+        	Map<String, Integer>  ruleStringToIDTable = DiskHyperGraph.obtainRuleStringToIDTable(curHypFilePrefix+".hg.rules");
         	
         	//try to abbrevate the featuers if possible
-        	if(MRConfig.useRuleIDName){
-        		//add the abbreviated feature name into featureStringToIntegerMap
-        		Map<String, Integer> rulesIDTable = DiskHyperGraph.obtainRulesIDTable(curHypFilePrefix+".hg.rules");
-        		//System.out.println("size1=" + featureStringToIntegerMap.size());
-        		
-        		for(Entry<String, Integer> entry : rulesIDTable.entrySet()){
-        			Integer featureID = featureStringToIntegerMap.get(entry.getKey());
-        			if(featureID!=null){
-        				String abbrFeatName = "r" + entry.getValue();//TODO??????
-        				featureStringToIntegerMap.put(abbrFeatName, featureID);
-        				//System.out.println("full="+entry.getKey() + "; abbrFeatName="+abbrFeatName + "; id="+featureID);
-        			}
-        		}
-        		//System.out.println("size2=" + featureStringToIntegerMap);
-        		//System.exit(0);
-        	}
+        	addAbbreviatedNames(ruleStringToIDTable);
         	
+        	
+        	//micro rule features
+        	if(MRConfig.useMicroTMFeat){
+	        	SetupMicroRuleFeatures microRulesSetup = new SetupMicroRuleFeatures();
+	        	Map<String, List<MicroRuleFeature>> microRuleFeaturesTbl = microRulesSetup.setupTbl(ruleStringToIDTable, featureStringToIntegerMap);
+	        	this.microRuleFeatureTemplate.setModelTbl(microRuleFeaturesTbl);
+        	}
 
         	//=====compute onebest BLEU
         	computeOneBestBLEU(curHypFilePrefix);
@@ -147,7 +146,7 @@ public class HGMinRiskDAMert extends AbstractMinRiskMERT {
         			
         			MRConfig.ngramStateID,  MRConfig.baselineLMOrder, symbolTbl,
         			featureStringToIntegerMap, featTemplates,
-        			linearCorpusGainThetas,
+        			MRConfig.linearCorpusGainThetas,
         			this.haveRefereces
     		);
  	        
@@ -250,7 +249,7 @@ public class HGMinRiskDAMert extends AbstractMinRiskMERT {
 			double bleu = BLEU.computeSentenceBleu(res.referenceSentences, hypSent);
 			bleuSum  += bleu;
 			
-			double googleGain = BLEU.computeLinearCorpusGain(linearCorpusGainThetas, res.referenceSentences, hypSent);
+			double googleGain = BLEU.computeLinearCorpusGain(MRConfig.linearCorpusGainThetas, res.referenceSentences, hypSent);
 			googleGainSum += googleGain;
 			
 			modelSum +=  res.hg.bestLogP();
@@ -280,8 +279,7 @@ public class HGMinRiskDAMert extends AbstractMinRiskMERT {
 		
 		//===== initialize googleCorpusBLEU
 		if(MRConfig.useGoogleLinearCorpusGain==true){
-			this.linearCorpusGainThetas = BLEU.computeLinearCorpusThetas(
-					MRConfig.numUnigramTokens, MRConfig.unigramPrecision, MRConfig.precisionDecayRatio);			
+			//do nothing		
 		}else{
 			logger.severe("On hypergraph, we must use the linear corpus gain.");
 			System.exit(1);
@@ -313,9 +311,15 @@ public class HGMinRiskDAMert extends AbstractMinRiskMERT {
 		}
 		
 		if(MRConfig.useSparseFeature){
-			if(MRConfig.useTMFeat){	
-				FeatureTemplate ft = new TMFT(symbolTbl, useIntegerString, MRConfig.useRuleIDName);
-				featTemplates.add(ft);
+			if(MRConfig.useTMFeat){	//??????
+				//FeatureTemplate ft = new TMFT(symbolTbl, useIntegerString, MRConfig.useRuleIDName);				
+				//featTemplates.add(ft);
+			}
+			
+			if(MRConfig.useMicroTMFeat){	
+				//FeatureTemplate ft = new TMFT(symbolTbl, useIntegerString, MRConfig.useRuleIDName);
+				this.microRuleFeatureTemplate = new MicroRuleFT(MRConfig.useRuleIDName, null);
+				featTemplates.add(microRuleFeatureTemplate);
 			}
 			
 			if(MRConfig.useTMTargetFeat){			
@@ -461,11 +465,11 @@ public class HGMinRiskDAMert extends AbstractMinRiskMERT {
 	}
 	
 	
-	private void addAbbreviatedNames(){
+	private void addAbbreviatedNames(Map<String, Integer> rulesIDTable){
 //		try to abbrevate the featuers if possible
     	if(MRConfig.useRuleIDName){
     		//add the abbreviated feature name into featureStringToIntegerMap
-    		Map<String, Integer> rulesIDTable = DiskHyperGraph.obtainRulesIDTable(curHypFilePrefix+".hg.rules");
+    		
     		//System.out.println("size1=" + featureStringToIntegerMap.size());
     		
     		for(Entry<String, Integer> entry : rulesIDTable.entrySet()){

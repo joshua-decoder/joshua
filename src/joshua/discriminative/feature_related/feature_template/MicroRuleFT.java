@@ -34,15 +34,21 @@ public class MicroRuleFT extends AbstractFeatureTemplate {
 		computeCounts(rule, featureTbl, restrictedFeatureSet, scale);
 	}
 
+	public void setModelTbl(Map<String, List<MicroRuleFeature>>  ruleFeatureTbl){
+		this.ruleFeatureTbl = ruleFeatureTbl;;
+	}
+	
 	private void computeCounts(Rule rule, HashMap<String, Double> featureTbl, HashSet<String> restrictedFeatureSet, double scale){
 		if(rule != null){			
 			if(this.useRuleIDName){
 				String key = this.prefix + rule.getRuleID();
 				List<MicroRuleFeature> features = ruleFeatureTbl.get(key);
-				for(MicroRuleFeature feature : features ){
-					if(restrictedFeatureSet == null || restrictedFeatureSet.contains(feature.featName)==true){
-						DiscriminativeSupport.increaseCount(featureTbl, feature.featName, scale*feature.featValue);
-						//System.out.println("key is " + key +"; lhs " + symbolTbl.getWord(rule.getLHS()));	
+				if(features!=null){
+					for(MicroRuleFeature feature : features ){
+						if(restrictedFeatureSet == null || restrictedFeatureSet.contains(feature.featName)==true){ 	
+							DiscriminativeSupport.increaseCount(featureTbl, feature.featName, scale*feature.featValue);
+							System.out.println("key=" + key + "; value="+feature.featValue);	
+						}
 					}
 				}
 				//System.out.println("key is " + key + "; And: " +rule.toStringWithoutFeatScores(symbolTbl));System.exit(0);

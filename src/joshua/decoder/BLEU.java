@@ -299,10 +299,17 @@ public class BLEU {
 		res[0] = -1.0/numUnigramTokens;
 		for(int i=1; i<5; i++)
 			res[i] = 1.0/(4.0*numUnigramTokens*unigramPrecision*Math.pow(decayRatio, i-1));
-		System.out.print("Thetas are: ");
+		
+		double firstWeight = res[0];
+		for(int i=0; i<5; i++)
+			res[i] /= Math.abs(firstWeight);//normalize by first one
+		
+		
+		System.out.print("Normalized Thetas are: ");
 		for(int i=0; i<5; i++)
 			System.out.print(res[i] + " ");
 		System.out.print("\n");
+				
 		return res;
 	}		
 	

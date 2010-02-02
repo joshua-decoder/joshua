@@ -38,16 +38,16 @@ public class BLEUOracleModel  extends DefaultStatefulFF {
 	Map<Integer, Map<String,Integer>> tblOfReferenceNgramTbls;
 	private int maxSentIDSoFar=-1;//TODO: assume valid sentID start from zero
 	
-	//===TODO
+	/*
 	private static double unigramPrecision = 0.85;
 	private static double precisionDecayRatio = 0.7;
 	private static int numUnigramTokens = 10;
 	private static double[] linearCorpusGainThetas =BLEU.computeLinearCorpusThetas(
 			numUnigramTokens, unigramPrecision,	precisionDecayRatio);
+	*/
+	private double[] linearCorpusGainThetas = null;
 	
-	
-	
-	public BLEUOracleModel(int ngramStateID, int baselineLMOrder, int featID, SymbolTable psymbol, double weight, String referenceFile) {
+	public BLEUOracleModel(int ngramStateID, int baselineLMOrder, int featID, SymbolTable psymbol, double weight, String referenceFile, double[] linearCorpusGainThetas) {
 		
 		super(ngramStateID, weight, featID);
 		
@@ -58,6 +58,8 @@ public class BLEUOracleModel  extends DefaultStatefulFF {
 		this.symbolTbl = psymbol;
 		this.ngramExtractor = new NgramExtractor(symbolTbl, ngramStateID, useIntegerNgram, baselineLMOrder);
 		 
+		this.linearCorpusGainThetas = linearCorpusGainThetas;
+		logger.info("linearCorpusGainThetas=" + this.linearCorpusGainThetas);
 
 		//setup reference reader
 		this.referenceReaders = new LineReader[1];
@@ -68,13 +70,16 @@ public class BLEUOracleModel  extends DefaultStatefulFF {
 	}
 	
 
-	public BLEUOracleModel(int ngramStateID, int baselineLMOrder, int featID, SymbolTable psymbol, double weight, String[] referenceFiles) {
+	public BLEUOracleModel(int ngramStateID, int baselineLMOrder, int featID, SymbolTable psymbol, double weight, String[] referenceFiles, double[] linearCorpusGainThetas) {
 	
 		super(ngramStateID, weight, featID);
 		
 		this.symbolTbl = psymbol;
 		this.ngramExtractor = new NgramExtractor(symbolTbl, ngramStateID, useIntegerNgram, baselineLMOrder);
 		
+		
+		this.linearCorpusGainThetas = linearCorpusGainThetas;
+		logger.info("linearCorpusGainThetas=" + this.linearCorpusGainThetas);
 		
 		//setup reference readers
 		this.referenceReaders = new LineReader[referenceFiles.length];

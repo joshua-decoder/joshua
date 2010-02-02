@@ -682,7 +682,7 @@ public class JoshuaDecoder {
 					
 					this.featureFunctions.add(
 						new BLEUOracleModel(JoshuaConfiguration.ngramStateID, JoshuaConfiguration.lmOrder, 
-								this.featureFunctions.size(), this.symbolTable, weight, referenceFiles));
+								this.featureFunctions.size(), this.symbolTable, weight, referenceFiles, JoshuaConfiguration.linearCorpusGainThetas));
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format(
 							"Line: %s\nAdd BLEUOracleModel, order: %d; weight: %.3f;",

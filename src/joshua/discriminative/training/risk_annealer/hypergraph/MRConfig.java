@@ -49,9 +49,7 @@ public class MRConfig {
 	
 	//=== use goolge linear corpus gain?
 	public static boolean useGoogleLinearCorpusGain = false;
-	public static double unigramPrecision = 0.85;
-	public static double precisionDecayRatio = 0.7;
-	public static int numUnigramTokens = 10;
+	public static double[] linearCorpusGainThetas = null;
 	
 	
 	//======= feature realtes
@@ -73,6 +71,8 @@ public class MRConfig {
 	public static boolean useSparseFeature;
 	public static boolean useTMFeat;
 	public static boolean useRuleIDName= true;
+	
+	public static boolean useMicroTMFeat = true;
 	
 	public static boolean useTMTargetFeat;
 	public static boolean useLMFeat;
@@ -104,19 +104,20 @@ public class MRConfig {
 					useGoogleLinearCorpusGain = new Boolean(fds[1].trim());
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("useGoogleLinearCorpusGain: %s", useGoogleLinearCorpusGain));					
-				}else if ("unigramPrecision".equals(fds[0])) {
-					unigramPrecision = new Double(fds[1].trim());
+				} else if ("googleBLEUWeights".equals(fds[0])) {
+					String[] googleWeights = fds[1].trim().split(";");
+					if(googleWeights.length!=5){
+						logger.severe("wrong line=" + line);
+						System.exit(1);
+					}
+					linearCorpusGainThetas = new double[5];
+					for(int i=0; i<5; i++)
+						linearCorpusGainThetas[i] = new Double(googleWeights[i]);
+					
 					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format("unigramPrecision: %s", unigramPrecision));					
-				}else if ("precisionDecayRatio".equals(fds[0])) {
-					precisionDecayRatio = new Double(fds[1].trim());
-					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format("precisionDecayRatio: %s", precisionDecayRatio));					
-				}else if ("numUnigramTokens".equals(fds[0])) {
-					numUnigramTokens = new Integer(fds[1].trim());
-					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format("numUnigramTokens: %s", numUnigramTokens));					
-				}else if ("oneTimeHGRerank".equals(fds[0])) {
+						logger.finest(String.format("googleBLEUWeights: %s", linearCorpusGainThetas));		
+					
+				}  else if ("oneTimeHGRerank".equals(fds[0])) {
 					oneTimeHGRerank = new Boolean(fds[1].trim());
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("oneTimeHGRerank: %s", oneTimeHGRerank));					
@@ -191,6 +192,10 @@ public class MRConfig {
 					useTMFeat = new Boolean(fds[1].trim());
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("useTMFeat: %s", useTMFeat));					
+				} else if ("useMicroTMFeat".equals(fds[0])) {
+					useMicroTMFeat = new Boolean(fds[1].trim());
+					if (logger.isLoggable(Level.FINEST))
+						logger.finest(String.format("useMicroTMFeat: %s", useMicroTMFeat));					
 				} else if ("useRuleIDName".equals(fds[0])) {
 					useRuleIDName = new Boolean(fds[1].trim());
 					if (logger.isLoggable(Level.FINEST))
@@ -270,6 +275,14 @@ public class MRConfig {
 			logger.info("========== scenario: IndividualBaselines + sparseFeature");
 		}else{
 			logger.info("==== wrong training scenario ====");
+			System.exit(1);
+		}
+		
+		if( useGoogleLinearCorpusGain && linearCorpusGainThetas==null ){
+			logger.info("linearCorpusGainThetas is null, did you set googleBLEUWeights properly?");
+			System.exit(1);
+		}else if(linearCorpusGainThetas.length!=5){
+			logger.info("linearCorpusGainThetas does not have five values, did you set googleBLEUWeights properly?");
 			System.exit(1);
 		}
 		

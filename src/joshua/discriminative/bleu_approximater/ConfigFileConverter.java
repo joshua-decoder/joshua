@@ -5,9 +5,19 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.JoshuaDecoder;
+import joshua.decoder.ff.ArityPhrasePenaltyFF;
+import joshua.decoder.ff.FeatureFunction;
+import joshua.decoder.ff.PhraseModelFF;
+import joshua.decoder.ff.SourcePathFF;
+import joshua.decoder.ff.WordPenaltyFF;
+import joshua.decoder.ff.lm.LanguageModelFF;
+import joshua.discriminative.DiscriminativeSupport;
+import joshua.discriminative.feature_related.feature_function.BLEUOracleModel;
 import joshua.util.FileUtility;
 import joshua.util.Regex;
 import joshua.util.io.LineReader;
@@ -17,9 +27,9 @@ public class ConfigFileConverter {
 	
 	static Logger logger = Logger.getLogger(ConfigFileConverter.class.getSimpleName());
 	
-	public static List<Double> readGoogleWeightsFromJoshuaConfig(String mertConfig) throws IOException{
+	public static List<Double> readGoogleWeightsFromJoshuaConfig(String joshuaConfig) throws IOException{
 		List<Double> res = new ArrayList<Double>();
-		LineReader     reader = new LineReader(mertConfig);
+		LineReader     reader = new LineReader(joshuaConfig);
 		for (String line : reader) {
 			line = line.trim();
 			
@@ -132,7 +142,33 @@ public class ConfigFileConverter {
 	}
 	
 	
-	
+	public static String[] getReferenceFileNames(String configFile)	throws IOException {
+		
+		String[] referenceFiles= null;
+		
+		LineReader reader = new LineReader(configFile);
+		try { 
+			for (String line : reader) {
+				line = line.trim();
+				if (Regex.commentOrEmptyLine.matches(line)) 
+					continue;
+				
+				if (line.indexOf("=") == -1) { // ignore lines with "="
+					String[] fds = Regex.spaces.split(line);
+					
+					if ("oracle".equals(fds[0]) && fds.length >= 3) { //oracle files weight										
+						referenceFiles = new String[fds.length-2];
+						for(int i=0; i< referenceFiles.length; i++)
+							referenceFiles[i] =  fds[i+1].trim();			
+					}
+				}
+			} 
+		} finally {
+			reader.close();
+		}
+		
+		return referenceFiles;
+	}
 	
 	public static void main(String[] args) throws IOException {
 		

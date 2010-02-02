@@ -156,6 +156,12 @@ public class JoshuaConfiguration {
 	public static int startNgramOrder = 1;
 	public static int endNgramOrder = 2;
 	
+	
+	//=== use goolge linear corpus gain?
+	public static boolean useGoogleLinearCorpusGain = false;
+	public static double[] linearCorpusGainThetas = null;
+	
+	
 	private static final Logger logger =
 		Logger.getLogger(JoshuaConfiguration.class.getName());
 	
@@ -546,11 +552,27 @@ public class JoshuaConfiguration {
 					useTMTargetFeat = Boolean.valueOf(fds[1]);
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("useTMTargetFeat: %s", useTMTargetFeat));
+				} else if ("useGoogleLinearCorpusGain".equals(fds[0])) {
+					useGoogleLinearCorpusGain = new Boolean(fds[1].trim());
+					if (logger.isLoggable(Level.FINEST))
+						logger.finest(String.format("useGoogleLinearCorpusGain: %s", useGoogleLinearCorpusGain));					
+				} else if ("googleBLEUWeights".equals(fds[0])) {
+					String[] googleWeights = fds[1].trim().split(";");
+					if(googleWeights.length!=5){
+						logger.severe("wrong line=" + line);
+						System.exit(1);
+					}
+					linearCorpusGainThetas = new double[5];
+					for(int i=0; i<5; i++)
+						linearCorpusGainThetas[i] = new Double(googleWeights[i]);
+					
+					
+					logger.finest(String.format("googleBLEUWeights: %s", linearCorpusGainThetas));		
+					
 				} else {
 					logger.warning("Maybe Wrong config line: " + line);
 				}
 				
-			
 				
 			} else { // feature function
 				String[] fds = Regex.spaces.split(line);
@@ -559,6 +581,19 @@ public class JoshuaConfiguration {
 					logger.info("you use a LM feature function, so make sure you have a LM grammar");
 				} 
 			}
+			
+			
+			
 		} } finally { configReader.close(); }
+		
+		if( useGoogleLinearCorpusGain  ){
+			if( linearCorpusGainThetas==null){
+				logger.info("linearCorpusGainThetas is null, did you set googleBLEUWeights properly?");
+				System.exit(1);
+			}else if( linearCorpusGainThetas.length!=5){
+				logger.info("linearCorpusGainThetas does not have five values, did you set googleBLEUWeights properly?");
+				System.exit(1);
+			}
+		}
 	}
 }

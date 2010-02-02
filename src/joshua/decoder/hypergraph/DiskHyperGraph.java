@@ -570,7 +570,7 @@ public class DiskHyperGraph {
 	
 // end readHyperGraph()
 //===============================================================
-	static public Map<String,Integer> obtainRulesIDTable(String rulesFile) {
+	static public Map<String,Integer> obtainRuleStringToIDTable(String rulesFile) {
 				
 		SymbolTable symbolTable = new BuildinSymbol(null);
 		GrammarReader<BilingualRule> ruleReader = new DiskHyperGraphFormatReader(rulesFile, symbolTable);

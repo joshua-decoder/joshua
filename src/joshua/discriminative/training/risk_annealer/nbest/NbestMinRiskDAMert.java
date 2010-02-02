@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
-import joshua.decoder.BLEU;
 import joshua.discriminative.FileUtilityOld;
 import joshua.discriminative.training.risk_annealer.AbstractMinRiskMERT;
 import joshua.discriminative.training.risk_annealer.DeterministicAnnealer;
@@ -66,7 +65,7 @@ public abstract class NbestMinRiskDAMert extends AbstractMinRiskMERT {
         	
         	//String f_nbest_merged_new = "C:/Users/zli/Documents/minriskannealer.nbest.merged.17";//????????????
         	//String f_nbest_merged_new = "C:/Users/zli/Documents/minriskannealer.nbest.merged.1";//????????????
-        	GradientComputer gradientComputer = new NbestRiskGradientComputer(f_nbest_merged_new, referenceFiles, useShortestRef, numTrainingSentence, numPara, MRConfig.gainFactor, 1.0, 0.0, true, linearCorpusGainThetas);
+        	GradientComputer gradientComputer = new NbestRiskGradientComputer(f_nbest_merged_new, referenceFiles, useShortestRef, numTrainingSentence, numPara, MRConfig.gainFactor, 1.0, 0.0, true, MRConfig.linearCorpusGainThetas);
         	annealer = new DeterministicAnnealer( numPara,  lastWeightVector, MRConfig.isMinimizer, gradientComputer, 
         			this.useL2Regula, this.varianceForL2, this.useModelDivergenceRegula, this.lambda, this.printFirstN);
         	
@@ -174,13 +173,6 @@ public abstract class NbestMinRiskDAMert extends AbstractMinRiskMERT {
 	private void initialize() {
 		//===== read configurations
 		MRConfig.readConfigFile(this.configFile);
-		
-		
-		/**initialize the linear corpus gain*/
-		if(MRConfig.useGoogleLinearCorpusGain==true){
-			this.linearCorpusGainThetas = 
-				BLEU.computeLinearCorpusThetas(MRConfig.numUnigramTokens, MRConfig.unigramPrecision, MRConfig.precisionDecayRatio);
-		}
 		
 		
 		logger.info("intilize features and weights");

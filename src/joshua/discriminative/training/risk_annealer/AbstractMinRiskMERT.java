@@ -18,7 +18,7 @@ public abstract class AbstractMinRiskMERT {
 	protected int numPara;
 	protected int numTrainingSentence;
 	
-	protected double[] linearCorpusGainThetas;
+	//protected double[] linearCorpusGainThetas;
 	
 	
 //=======================================

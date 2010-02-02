@@ -1,10 +1,11 @@
 package joshua.discriminative.bleu_approximater;
 
 import java.io.IOException;
-import java.util.logging.Level;
+import java.util.List;
 import java.util.logging.Logger;
 
 import joshua.decoder.JoshuaDecoder;
+import joshua.util.FileUtility;
 
 public class OracleDecoderForZmert {
 	
@@ -12,16 +13,6 @@ public class OracleDecoderForZmert {
 		Logger.getLogger(OracleDecoderForZmert.class.getName());
 	
 	public static void main(String[] args) throws IOException {
-		for (int i = 0; i < args.length; i++) {
-			System.out.println("arg is: " + args[i]);
-		}
-		
-		logger.finest("Starting decoder");
-		
-		long startTime = 0;
-		if (logger.isLoggable(Level.INFO)) {
-			startTime = System.currentTimeMillis();
-		}
 		
 		if (args.length != 4) {
 			System.out.println("Usage: java " +
@@ -35,37 +26,39 @@ public class OracleDecoderForZmert {
 			System.exit(1);
 		}
 		
+		logger.finest("Starting decoder");
 		
 		
-		String configFile = args[0].trim();
+		String joshuaConfigForZmert = args[0].trim();//joshua config for zmert
 		String testFile   = args[1].trim();
 		String nbestFile  = args[2].trim();
-		String trueConfigTempalte = args[3].trim();
+		String joshuaConfigTempalte = args[3].trim();//joshua config for decoder
+	
 		
-		String rightJoshuaConfigFile = configFile + ".true";
+		String[] refFiles = ConfigFileConverter.getReferenceFileNames(joshuaConfigTempalte);
+		logger.info("reffiles are: " + refFiles);
 		
-		ConfigFileConverter.convertMertToJoshuaFormat(configFile, trueConfigTempalte, rightJoshuaConfigFile);	
+		String trueJoshuaConfigFile = joshuaConfigTempalte + ".true";
+	
+		//============== convert config file
+		ConfigFileConverter.convertMertToJoshuaFormat(joshuaConfigForZmert, joshuaConfigTempalte, trueJoshuaConfigFile);	
+
 		
-		/* Step-1: initialize the decoder, test-set independent */
-		JoshuaDecoder decoder = new JoshuaDecoder(rightJoshuaConfigFile);
-		if (logger.isLoggable(Level.INFO)) {
-			logger.info("Before translation, loading time is "
-				+ ((double)(System.currentTimeMillis() - startTime) / 1000.0)
-				+ " seconds");
-		}
-		
-		
-		/* Step-2: Decoding */
-		decoder.decodeTestSet(testFile, nbestFile, null);
-		
-		
-		/* Step-3: clean up */
+		//============== generate nbest by joshua decoder
+		logger.info("joshua decoding using " + trueJoshuaConfigFile);
+		JoshuaDecoder decoder = new JoshuaDecoder(trueJoshuaConfigFile);
+		String nbestTemFile = nbestFile + ".tem";
+		decoder.decodeTestSet(testFile, nbestTemFile, null);
 		decoder.cleanUp();
-		if (logger.isLoggable(Level.INFO)) {
-			logger.info("Total running time is "
-				+ ((double)(System.currentTimeMillis() - startTime) / 1000.0)
-				+ " seconds");
-		}
+		
+		
+		//============== convert nbest to mert format		
+		List<Double> googleWeights = ConfigFileConverter.readGoogleWeightsFromJoshuaConfig(trueJoshuaConfigFile);
+		LinearCorpusGainRecover recover = new LinearCorpusGainRecover(googleWeights);
+		recover.processWholeSet(nbestTemFile, nbestFile, refFiles);
+		
+		FileUtility.deleteFile(nbestTemFile);
+	
 	}
 
 }
