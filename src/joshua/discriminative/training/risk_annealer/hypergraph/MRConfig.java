@@ -68,13 +68,16 @@ public class MRConfig {
 	//== sparse features
 	public static String featureFile;
 	
-	public static boolean useSparseFeature;
-	public static boolean useTMFeat;
+	public static boolean useSparseFeature = false;
+	public static boolean useTMFeat = false;
 	public static boolean useRuleIDName= true;
 	
 	public static boolean useMicroTMFeat = true;
+	public static String wordMapFile = null; /*tbl for mapping rule words*/
 	
-	public static boolean useTMTargetFeat;
+	public static boolean useTMTargetFeat = false;
+	public static boolean useTMTargetNgramFeat = false;
+	
 	public static boolean useLMFeat;
 	public static int startNgramOrder = 1;
 	public static int endNgramOrder = 2;
@@ -188,6 +191,10 @@ public class MRConfig {
 					useSparseFeature = new Boolean(fds[1].trim());
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("useSparseFeature: %s", useSparseFeature));					
+				} else if ("wordMapFile".equals(fds[0])) {
+					wordMapFile = fds[1].trim();
+					if (logger.isLoggable(Level.FINEST))
+						logger.finest(String.format("wordMapFile: %s", wordMapFile));					
 				} else if ("useTMFeat".equals(fds[0])) {
 					useTMFeat = new Boolean(fds[1].trim());
 					if (logger.isLoggable(Level.FINEST))
@@ -204,6 +211,10 @@ public class MRConfig {
 					useTMTargetFeat = new Boolean(fds[1].trim());
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("useTMTargetFeat: %s", useTMTargetFeat));					
+				} else if ("useTMTargetNgramFeat".equals(fds[0])) {
+					useTMTargetNgramFeat = new Boolean(fds[1].trim());
+					if (logger.isLoggable(Level.FINEST))
+						logger.finest(String.format("useTMTargetNgramFeat: %s", useTMTargetNgramFeat));					
 				} else if ("useLMFeat".equals(fds[0])) {
 					useLMFeat = new Boolean(fds[1].trim());
 					if (logger.isLoggable(Level.FINEST))

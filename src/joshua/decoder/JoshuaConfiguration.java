@@ -156,6 +156,10 @@ public class JoshuaConfiguration {
 	public static int startNgramOrder = 1;
 	public static int endNgramOrder = 2;
 	
+	public static boolean useMicroTMFeat = true;
+	public static String wordMapFile;/*tbl for mapping rule words*/
+	public static boolean useTMTargetNgramFeat = false;
+	
 	
 	//=== use goolge linear corpus gain?
 	public static boolean useGoogleLinearCorpusGain = false;
@@ -532,6 +536,18 @@ public class JoshuaConfiguration {
 					useLMFeat = Boolean.valueOf(fds[1]);
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("useLMFeat: %s", useLMFeat));
+				} else if ("useMicroTMFeat".equals(fds[0])) {
+					useMicroTMFeat = new Boolean(fds[1].trim());
+					if (logger.isLoggable(Level.FINEST))
+						logger.finest(String.format("useMicroTMFeat: %s", useMicroTMFeat));					
+				} else if ("wordMapFile".equals(fds[0])) {
+					wordMapFile = fds[1].trim();
+					if (logger.isLoggable(Level.FINEST))
+						logger.finest(String.format("wordMapFile: %s", wordMapFile));					
+				} else if ("useTMTargetNgramFeat".equals(fds[0])) {
+					useTMTargetNgramFeat = new Boolean(fds[1].trim());
+					if (logger.isLoggable(Level.FINEST))
+						logger.finest(String.format("useTMTargetNgramFeat: %s", useTMTargetNgramFeat));					
 				} else if ("useRuleIDName".equals(fds[0])) {
 					useRuleIDName = new Boolean(fds[1].trim());
 					if (logger.isLoggable(Level.FINEST))

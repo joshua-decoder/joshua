@@ -11,6 +11,7 @@ import java.util.logging.Logger;
 
 import joshua.corpus.vocab.BuildinSymbol;
 import joshua.corpus.vocab.SymbolTable;
+import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.chart_parser.ComputeNodeResult;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.hypergraph.DiskHyperGraph;
@@ -172,7 +173,10 @@ public class HGRanker {
 		
 		Map<String,Integer> rulesIDTable = null; //TODO??
 	
-		FeatureFunction rerankFF = DiscriminativeSupport.setupRerankingFeature(featID, weight, symbolTbl, useTMFeat, useLMFeat, useEdgeNgramOnly, useTMTargetFeat, ngramStateID, 
+		//TODO
+		FeatureFunction rerankFF = DiscriminativeSupport.setupRerankingFeature(featID, weight, symbolTbl, useTMFeat, useLMFeat, useEdgeNgramOnly, useTMTargetFeat, 
+				JoshuaConfiguration.useTMTargetNgramFeat, JoshuaConfiguration.useMicroTMFeat, JoshuaConfiguration.wordMapFile,
+				ngramStateID, 
 				baselineLMOrder, startNgramOrder, endNgramOrder, featureFile, modelFile, rulesIDTable);
 		
 		features.add(rerankFF);

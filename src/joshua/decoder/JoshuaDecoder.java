@@ -92,7 +92,7 @@ public class JoshuaDecoder {
 	
 	private List<StateComputer> stateComputers;
 	
-	private Map<String,Integer> rulesIDTable;
+	private Map<String,Integer> ruleStringToIDTable;
 	
 	/**
 	 * Shared symbol table for source language terminals, target
@@ -196,7 +196,7 @@ public class JoshuaDecoder {
 			//== set the discriminative model
 			if(discrminativeModelFile!=null && ff instanceof FeatureTemplateBasedFF){
 				HashMap<String, Double> modelTable = new HashMap<String, Double>(); 
-				DiscriminativeSupport.loadModel(discrminativeModelFile, modelTable, this.rulesIDTable);
+				DiscriminativeSupport.loadModel(discrminativeModelFile, modelTable, this.ruleStringToIDTable);
 				((FeatureTemplateBasedFF) ff).setModel(modelTable);
 			}
 		}
@@ -486,9 +486,9 @@ public class JoshuaDecoder {
 		this.grammarFactories.add(gr);
 		
 		if(JoshuaConfiguration.useRuleIDName){
-			if(this.rulesIDTable==null)
-				this.rulesIDTable = new HashMap<String,Integer>();
-			gr.obtainRulesIDTable(this.rulesIDTable, this.symbolTable);			
+			if(this.ruleStringToIDTable==null)
+				this.ruleStringToIDTable = new HashMap<String,Integer>();
+			gr.obtainRulesIDTable(this.ruleStringToIDTable, this.symbolTable);			
 		}
 		
 	}
@@ -510,9 +510,9 @@ public class JoshuaDecoder {
 		this.grammarFactories.add(gr);
 		
 		if(JoshuaConfiguration.useRuleIDName){
-			if(this.rulesIDTable==null)
-				this.rulesIDTable = new HashMap<String,Integer>();
-			gr.obtainRulesIDTable(this.rulesIDTable, this.symbolTable);			
+			if(this.ruleStringToIDTable==null)
+				this.ruleStringToIDTable = new HashMap<String,Integer>();
+			gr.obtainRulesIDTable(this.ruleStringToIDTable, this.symbolTable);			
 		}
 	}
 	
@@ -699,8 +699,10 @@ public class JoshuaDecoder {
 					double weight = Double.parseDouble(fds[2].trim());
 					
 					this.featureFunctions.add (DiscriminativeSupport.setupRerankingFeature(this.featureFunctions.size(), weight, symbolTable, 
-							JoshuaConfiguration.useTMFeat, JoshuaConfiguration.useLMFeat, JoshuaConfiguration.useEdgeNgramOnly, JoshuaConfiguration.useTMTargetFeat, JoshuaConfiguration.ngramStateID, 
-							JoshuaConfiguration.lmOrder, JoshuaConfiguration.startNgramOrder, JoshuaConfiguration.endNgramOrder, featureFile, modelFile, this.rulesIDTable) );
+							JoshuaConfiguration.useTMFeat, JoshuaConfiguration.useLMFeat, JoshuaConfiguration.useEdgeNgramOnly, JoshuaConfiguration.useTMTargetFeat,
+							JoshuaConfiguration.useTMTargetNgramFeat, JoshuaConfiguration.useMicroTMFeat, JoshuaConfiguration.wordMapFile,
+							JoshuaConfiguration.ngramStateID, 
+							JoshuaConfiguration.lmOrder, JoshuaConfiguration.startNgramOrder, JoshuaConfiguration.endNgramOrder, featureFile, modelFile, this.ruleStringToIDTable) );
 					
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format(

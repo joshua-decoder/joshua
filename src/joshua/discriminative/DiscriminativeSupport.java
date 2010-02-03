@@ -6,12 +6,14 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Logger;
 
 import joshua.corpus.vocab.SymbolTable;
 import joshua.discriminative.feature_related.feature_function.FeatureTemplateBasedFF;
 import joshua.discriminative.feature_related.feature_template.EdgeBigramFT;
 import joshua.discriminative.feature_related.feature_template.FeatureTemplate;
+import joshua.discriminative.feature_related.feature_template.MicroRuleFT;
 import joshua.discriminative.feature_related.feature_template.NgramFT;
 import joshua.discriminative.feature_related.feature_template.TMFT;
 import joshua.discriminative.feature_related.feature_template.TargetTMFT;
@@ -126,20 +128,16 @@ public class DiscriminativeSupport {
 	
 	static public FeatureTemplateBasedFF setupRerankingFeature(
 			int featID, double weight,
-			SymbolTable symbolTbl, boolean useTMFeat, boolean useLMFeat, boolean useEdgeNgramOnly, boolean useTMTargetFeat, int ngramStateID, int baselineLMOrder,
+			SymbolTable symbolTbl, boolean useTMFeat, boolean useLMFeat, boolean useEdgeNgramOnly, boolean useTMTargetFeat, boolean useTMTargetNgramFeat, boolean useMicroTMFeat, String wordMapFile,
+			int ngramStateID, int baselineLMOrder,
 			int startNgramOrder, int endNgramOrder,	
-			String featureFile, String modelFile, Map<String,Integer> rulesIDTable
+			String featureFile, String modelFile, Map<String,Integer> rulesStringToIDTable
 			){
 		
 		boolean useIntegerString = false;
 		boolean useRuleIDName = false;
-		if(rulesIDTable!=null)
+		if(rulesStringToIDTable!=null)
 			useRuleIDName = true;
-		
-		//============= feature templates
-		List<FeatureTemplate> featTemplates =  DiscriminativeSupport.setupFeatureTemplates(symbolTbl, useTMFeat, useLMFeat,
-				useEdgeNgramOnly, useTMTargetFeat, ngramStateID, baselineLMOrder, startNgramOrder, endNgramOrder, useIntegerString, useRuleIDName);	
-		
 		
 		//============= restricted feature set
 		HashSet<String> restrictedFeatureSet = null;
@@ -150,33 +148,58 @@ public class DiscriminativeSupport {
 			logger.info("============use  restricted feature set========================");
 		}
 		
+		
+		//============= feature templates
+		List<FeatureTemplate> featTemplates =  DiscriminativeSupport.setupFeatureTemplates(symbolTbl, useTMFeat, useLMFeat,
+				useEdgeNgramOnly, useTMTargetFeat, useTMTargetNgramFeat, useMicroTMFeat, wordMapFile,
+				ngramStateID, baselineLMOrder, startNgramOrder, endNgramOrder, 
+				useIntegerString, useRuleIDName,
+				rulesStringToIDTable, restrictedFeatureSet);	
+		
+		
+		
 		//================ discriminative reranking model
 		HashMap<String, Double> modelTbl =  new HashMap<String, Double>();			
-		DiscriminativeSupport.loadModel(modelFile, modelTbl, rulesIDTable);			
+		DiscriminativeSupport.loadModel(modelFile, modelTbl, rulesStringToIDTable);			
 		
 		return new FeatureTemplateBasedFF(featID, weight, modelTbl, featTemplates, restrictedFeatureSet); 
 	}
 	
 	
-	
+	//TODO: should merge with setupFeatureTemplates in HGMinRiskDAMert
 	static public List<FeatureTemplate> setupFeatureTemplates(
-			SymbolTable symbolTbl, boolean useTMFeat, boolean useLMFeat, boolean useEdgeNgramOnly, boolean useTMTargetFeat,
+			SymbolTable symbolTbl, boolean useTMFeat, boolean useLMFeat, boolean useEdgeNgramOnly, boolean useTMTargetFeat, boolean useTMTargetNgramFeat, boolean useMicroTMFeat, String wordMapFile,
 			int ngramStateID, int baselineLMOrder,
 			int startNgramOrder, int endNgramOrder,
-			boolean useIntegerString, boolean useRuleID
+			boolean useIntegerString, boolean useRuleIDName,
+			Map<String,Integer> rulesStringToIDTable, Set<String> restrictedFeatureSet
 			){
 		
 		List<FeatureTemplate> featTemplates =  new ArrayList<FeatureTemplate>();	
 		
-		if(useTMFeat==true){
-			FeatureTemplate ft = new TMFT(symbolTbl, useIntegerString, useRuleID);
-			featTemplates.add(ft);
-		}
-		if(useTMTargetFeat==true){
-			FeatureTemplate ft = new TargetTMFT(symbolTbl, useIntegerString);
-			featTemplates.add(ft);
-		}
 		
+//		micro rule features
+		if(useMicroTMFeat){	
+			MicroRuleFT microRuleFeatureTemplate = new MicroRuleFT(useRuleIDName, useTMFeat, useTMTargetFeat, useTMTargetNgramFeat, wordMapFile);
+			microRuleFeatureTemplate.setupTbl(rulesStringToIDTable, restrictedFeatureSet);
+			
+        	featTemplates.add(microRuleFeatureTemplate);
+		}else{
+	    	if(useTMFeat==true){
+				FeatureTemplate ft = new TMFT(symbolTbl, useIntegerString, useRuleIDName);
+				featTemplates.add(ft);
+			}
+	    	
+			if(useTMTargetFeat==true){
+				FeatureTemplate ft = new TargetTMFT(symbolTbl, useIntegerString);
+				featTemplates.add(ft);
+			}
+			
+			if(useTMTargetNgramFeat){
+				logger.severe("not implemented useTMTargetNgramFeat");
+				System.exit(1);
+			}
+    	}
 		if(useLMFeat==true){	
 			FeatureTemplate ft = new NgramFT(symbolTbl, useIntegerString, ngramStateID, baselineLMOrder, startNgramOrder, endNgramOrder);
 			featTemplates.add(ft);

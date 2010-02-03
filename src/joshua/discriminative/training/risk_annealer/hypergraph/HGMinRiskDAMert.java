@@ -23,9 +23,7 @@ import joshua.discriminative.feature_related.feature_template.BaselineFT;
 import joshua.discriminative.feature_related.feature_template.FeatureTemplate;
 import joshua.discriminative.feature_related.feature_template.IndividualBaselineFT;
 import joshua.discriminative.feature_related.feature_template.MicroRuleFT;
-import joshua.discriminative.feature_related.feature_template.MicroRuleFeature;
 import joshua.discriminative.feature_related.feature_template.NgramFT;
-import joshua.discriminative.feature_related.feature_template.SetupMicroRuleFeatures;
 import joshua.discriminative.feature_related.feature_template.TMFT;
 import joshua.discriminative.feature_related.feature_template.TargetTMFT;
 import joshua.discriminative.ranker.HGRanker;
@@ -128,10 +126,8 @@ public class HGMinRiskDAMert extends AbstractMinRiskMERT {
         	
         	
         	//micro rule features
-        	if(MRConfig.useMicroTMFeat){
-	        	SetupMicroRuleFeatures microRulesSetup = new SetupMicroRuleFeatures();
-	        	Map<String, List<MicroRuleFeature>> microRuleFeaturesTbl = microRulesSetup.setupTbl(ruleStringToIDTable, featureStringToIntegerMap);
-	        	this.microRuleFeatureTemplate.setModelTbl(microRuleFeaturesTbl);
+        	if(MRConfig.useMicroTMFeat){	        	
+	        	this.microRuleFeatureTemplate.setupTbl(ruleStringToIDTable, featureStringToIntegerMap.keySet());
         	}
 
         	//=====compute onebest BLEU
@@ -266,8 +262,7 @@ public class HGMinRiskDAMert extends AbstractMinRiskMERT {
 	public void saveLastModel(String configTemplate, String configOutput, String sparseFeaturesTemplate, String sparseFeaturesOutput){
 		if(MRConfig.useSparseFeature){
 			JoshuaDecoder.writeConfigFile( getIndividualBaselineWeights(), configTemplate, configOutput, sparseFeaturesOutput);
-			saveSparseFeatureFile(sparseFeaturesTemplate, sparseFeaturesOutput);
-			
+			saveSparseFeatureFile(sparseFeaturesTemplate, sparseFeaturesOutput);			
 		}else{
 			JoshuaDecoder.writeConfigFile( getIndividualBaselineWeights(), configTemplate, configOutput, null);
 		}
@@ -293,6 +288,7 @@ public class HGMinRiskDAMert extends AbstractMinRiskMERT {
 	}
 	
 	
+	//TODO: should merge with setupFeatureTemplates in HGMinRiskDAMert
 	private void setupFeatureTemplates(){
 		
 		this.featTemplates = new ArrayList<FeatureTemplate>();
@@ -311,21 +307,28 @@ public class HGMinRiskDAMert extends AbstractMinRiskMERT {
 		}
 		
 		if(MRConfig.useSparseFeature){
-			if(MRConfig.useTMFeat){	//??????
-				//FeatureTemplate ft = new TMFT(symbolTbl, useIntegerString, MRConfig.useRuleIDName);				
-				//featTemplates.add(ft);
-			}
 			
 			if(MRConfig.useMicroTMFeat){	
 				//FeatureTemplate ft = new TMFT(symbolTbl, useIntegerString, MRConfig.useRuleIDName);
-				this.microRuleFeatureTemplate = new MicroRuleFT(MRConfig.useRuleIDName, null);
+				this.microRuleFeatureTemplate = new MicroRuleFT(MRConfig.useRuleIDName, MRConfig.useTMFeat,  MRConfig.useTMTargetFeat, MRConfig.useTMTargetNgramFeat, MRConfig.wordMapFile);
 				featTemplates.add(microRuleFeatureTemplate);
+			}else{
+				if(MRConfig.useTMFeat){
+					FeatureTemplate ft = new TMFT(symbolTbl, useIntegerString, MRConfig.useRuleIDName);				
+					featTemplates.add(ft);
+				}
+				
+				if(MRConfig.useTMTargetFeat){			
+					FeatureTemplate ft = new TargetTMFT(symbolTbl, useIntegerString);
+					featTemplates.add(ft);		
+				}	
+				
+				if(MRConfig.useTMTargetNgramFeat){
+					logger.severe("not implemented useTMTargetNgramFeat");
+					System.exit(1);
+				}
 			}
-			
-			if(MRConfig.useTMTargetFeat){			
-				FeatureTemplate ft = new TargetTMFT(symbolTbl, useIntegerString);
-				featTemplates.add(ft);		
-			}
+					
 			
 			if(MRConfig.useLMFeat){
 				FeatureTemplate ft = new NgramFT(symbolTbl, useIntegerString, MRConfig.ngramStateID, 
@@ -333,6 +336,7 @@ public class HGMinRiskDAMert extends AbstractMinRiskMERT {
 				featTemplates.add(ft);
 			}
 		}	
+		
 		System.out.println("feature template are " + featTemplates.toString());
 
 	}
@@ -404,8 +408,7 @@ public class HGMinRiskDAMert extends AbstractMinRiskMERT {
 			for(int id : MRConfig.baselineFeatIDsToTune){				
 				String featName = MRConfig.individualBSFeatNamePrefix +id;
 				int featID = featureStringToIntegerMap.get(featName);
-				weights.set(id, baselineWeight*lastWeightVector[featID]);
-				
+				weights.set(id, baselineWeight*lastWeightVector[featID]);				
 			}
 		}
 		

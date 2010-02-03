@@ -1,7 +1,7 @@
 package joshua.util;
 
-import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import joshua.corpus.vocab.SymbolTable;
 
@@ -9,20 +9,20 @@ public class Ngram {
 
 	
 
-	public static void getNgrams(HashMap<String, Integer> tbl, int startOrder, int endOrder, final List<Integer> wrds){
+	public static void getNgrams(Map<String, Integer> tbl, int startOrder, int endOrder, final List<Integer> wrds){
 		getNgrams(null, tbl, startOrder, endOrder, wrds);
 	}
 
-	public static void getNgrams(HashMap<String, Integer> tbl,  int startOrder, int endOrder,  final int[] wrds){
+	public static void getNgrams(Map<String, Integer> tbl,  int startOrder, int endOrder,  final int[] wrds){
 		getNgrams(null, tbl, startOrder, endOrder, wrds);
 	}
 
-	public static void getNgrams(HashMap<String, Integer> tbl,  int startOrder, int endOrder, final  String[] wrds){
+	public static void getNgrams(Map<String, Integer> tbl,  int startOrder, int endOrder, final  String[] wrds){
 		getNgrams(null, tbl, startOrder, endOrder, wrds);
 	}
 	
 	/**if symbolTbl!=null, then convert interger to String */
-	public static void getNgrams(SymbolTable symbolTbl, HashMap<String, Integer> tbl,  int startOrder, int endOrder,  final int[] wrds){
+	public static void getNgrams(SymbolTable symbolTbl, Map<String, Integer> tbl,  int startOrder, int endOrder,  final int[] wrds){
 		
 		for(int i=0; i<wrds.length; i++)
 			for(int j=startOrder-1; j<endOrder  && j+i<wrds.length; j++){//ngram: [i,i+j]
@@ -43,7 +43,7 @@ public class Ngram {
 	
 	
 	/**if symbolTbl!=null, then convert interger to String */
-	public static void getNgrams(SymbolTable symbolTbl, HashMap<String, Integer> tbl, int startOrder, int endOrder, final List<Integer> wrds){
+	public static void getNgrams(SymbolTable symbolTbl, Map<String, Integer> tbl, int startOrder, int endOrder, final List<Integer> wrds){
 		
 		for(int i=0; i<wrds.size(); i++)
 			for(int j=startOrder-1; j<endOrder && j+i<wrds.size(); j++){//ngram: [i,i+j]
@@ -63,7 +63,7 @@ public class Ngram {
 	}
 	
 	/**if symbolTbl!=null, then convert string to integer */
-	public static void getNgrams(SymbolTable symbolTbl, HashMap<String, Integer> tbl, int startOrder, int endOrder, final String[] wrds){
+	public static void getNgrams(SymbolTable symbolTbl, Map<String, Integer> tbl, int startOrder, int endOrder, final String[] wrds){
 		
 		for(int i=0; i<wrds.length; i++)
 			for(int j=startOrder-1; j<endOrder && j+i<wrds.length; j++){//ngram: [i,i+j]
@@ -82,7 +82,7 @@ public class Ngram {
 			}
 	}
 	
-	static private void increaseCount(HashMap<String, Integer> tbl, String feat, int increment){
+	static private void increaseCount(Map<String, Integer> tbl, String feat, int increment){
 		Integer oldCount = tbl.get(feat);
 		if(oldCount!=null)
 			tbl.put(feat, oldCount + increment);
