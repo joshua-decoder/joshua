@@ -126,7 +126,7 @@ public class HGMinRiskDAMert extends AbstractMinRiskMERT {
         	
         	
         	//micro rule features
-        	if(MRConfig.useMicroTMFeat){	        	
+        	if(MRConfig.useSparseFeature && MRConfig.useMicroTMFeat){	        	
 	        	this.microRuleFeatureTemplate.setupTbl(ruleStringToIDTable, featureStringToIntegerMap.keySet());
         	}
 
@@ -249,7 +249,7 @@ public class HGMinRiskDAMert extends AbstractMinRiskMERT {
 			googleGainSum += googleGain;
 			
 			modelSum +=  res.hg.bestLogP();
-			System.out.println("logP=" + res.hg.bestLogP() + "; Bleu=" + bleu +"; googleGain="+googleGain);
+			//System.out.println("logP=" + res.hg.bestLogP() + "; Bleu=" + bleu +"; googleGain="+googleGain);
 							
 		}
 		hgFactory.endLoop();

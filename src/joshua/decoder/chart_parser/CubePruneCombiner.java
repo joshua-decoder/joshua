@@ -37,7 +37,7 @@ public class CubePruneCombiner implements Combiner{
 	public void addAxiom(Chart chart, Cell cell, int i, int j, Rule rule, SourcePath srcPath) {
 		cell.addHyperEdgeInCell(
 				new ComputeNodeResult(this.featureFunctions, rule, null, i, j, srcPath, stateComputers, chart.segmentID),
-				rule, i, j, null, srcPath);
+				rule, i, j, null, srcPath, false);
 	}
 
 	
@@ -91,7 +91,7 @@ public class CubePruneCombiner implements Combiner{
 			currentRule = curState.rule;
 			currentAntNodes = new ArrayList<HGNode>(curState.antNodes); // critical to create a new list
 			//cube_state_tbl.remove(cur_state.get_signature()); // TODO, repeat
-			cell.addHyperEdgeInCell(curState.nodeStatesTbl, curState.rule, i, j, curState.antNodes, srcPath); // pre-pruning inside this function
+			cell.addHyperEdgeInCell(curState.nodeStatesTbl, curState.rule, i, j, curState.antNodes, srcPath, false); // pre-pruning inside this function
 			
 			//if the best state is pruned, then all the remaining states should be pruned away
 			if (curState.nodeStatesTbl.getExpectedTotalLogP() < cell.beamPruner.getCutoffLogP() - JoshuaConfiguration.fuzz1) {

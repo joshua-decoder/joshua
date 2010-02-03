@@ -132,7 +132,7 @@ class Cell {
 		
 		if (logger.isLoggable(Level.INFO)) {
 			if (null == goalItem) {
-				logger.severe("goalItem is null (this will cause the RuntimeException below)");
+				logger.severe("goalItem is null!");
 			} else {
 				logger.info(String.format("Sentence id=" + this.chart.segmentID +"; BestlogP=%.3f",
 					goalItem.bestHyperedge.bestDerivationLogP));
@@ -141,7 +141,7 @@ class Cell {
 		ensureSorted();
 		
 		int itemsInGoalBin = getSortedNodes().size();
-		if (1 != itemsInGoalBin) {
+		if (1 != itemsInGoalBin) {		
 			throw new RuntimeException("the goal_bin does not have exactly one item");
 		}
 	}
@@ -165,7 +165,7 @@ class Cell {
 	 * */
 	HGNode addHyperEdgeInCell(
 		ComputeNodeResult result, Rule rule, int i, int j,
-		List<HGNode> ants, SourcePath srcPath
+		List<HGNode> ants, SourcePath srcPath, boolean noPrune
 	) {
 		HGNode res = null;
 		
@@ -176,7 +176,7 @@ class Cell {
 		
 		
 		
-		if(beamPruner!=null &&  beamPruner.relativeThresholdPrune(expectedTotalLogP)){//the hyperedge should be pruned
+		if(noPrune==false && beamPruner!=null &&  beamPruner.relativeThresholdPrune(expectedTotalLogP)){//the hyperedge should be pruned
 			this.chart.nPreprunedEdges++;
 			res = null;
 		}else{
@@ -203,7 +203,7 @@ class Cell {
 					}
 					
 					res.addHyperedgesInNode(oldNode.hyperedges);
-					addNewNode(res); //this will update the HashMap, so that the oldNode is destroyed
+					addNewNode(res, noPrune); //this will update the HashMap, so that the oldNode is destroyed
 					
 				} else {//merge new to old, does not trigger pruningItems
 					oldNode.addHyperedgesInNode(res.hyperedges);
@@ -211,7 +211,7 @@ class Cell {
 				
 			} else { // first time item
 				this.chart.nAdded++; // however, this item may not be used in the future due to pruning in the hyper-graph
-				addNewNode(res);
+				addNewNode(res, noPrune);
 			}
 		}
 		return res;
@@ -239,16 +239,20 @@ class Cell {
 	 * (1) a new hyperedge leads to a non-existing node signature
 	 * (2) a new hyperedge's signature matches an old node's signature, but the best-logp of old node is worse than the new hyperedge's logP
 	 * */
-	private void addNewNode(HGNode node) {
+	private void addNewNode(HGNode node, boolean noPrune) {
 		this.nodesSigTbl.put(node.getSignature(), node); // add/replace the item
 		this.sortedNodes = null; // reset the list
 			
 	
 		if(beamPruner!=null){
-			List<HGNode> prunedNodes = beamPruner.addOneObjInHeapWithPrune(node);
-			this.chart.nPrunedItems += prunedNodes.size();
-			for(HGNode prunedNode : prunedNodes)
-				nodesSigTbl.remove(prunedNode.getSignature());
+			if(noPrune==false){
+				List<HGNode> prunedNodes = beamPruner.addOneObjInHeapWithPrune(node);
+				this.chart.nPrunedItems += prunedNodes.size();
+				for(HGNode prunedNode : prunedNodes)
+					nodesSigTbl.remove(prunedNode.getSignature());
+			}else{
+				beamPruner.addOneObjInHeapWithoutPrune(node);
+			}
 		}	
 		
 		//since this.sortedItems == null, this is not necessary because we will always call ensure_sorted to reconstruct the this.tableSuperItems

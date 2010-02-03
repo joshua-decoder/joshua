@@ -83,6 +83,16 @@ public class BeamPruner<Obj extends Prunable> {
 		return prunedNodes;
 	}
 	
+
+	/**This will add the object, update the cutOff logP,*/
+	public List<Obj> addOneObjInHeapWithoutPrune(Obj obj){		
+		this.nodesHeap.add(obj);
+		//System.out.println("Add: " + obj.getPruneLogP()+ "; " +((HGNode)obj).i + "; " + ((HGNode)obj).j + "; best= " + ((HGNode)obj).bestHyperedge.bestDerivationLogP);
+		updateCutoffLogP(obj.getPruneLogP());
+
+		return null;
+	}
+	
 	public double getCutoffLogP(){
 		return this.cutoffLogP;
 	}	

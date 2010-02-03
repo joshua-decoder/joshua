@@ -1,7 +1,9 @@
-lm_file=example2/example2.4gram.lm.gz
+#lm_file=example2/example2.4gram.lm.gz
 #lm_file=C:/data_disk/java_work_space/sf_trunk/example/example.trigram.lm.gz
+lm_file=aexperiment/iwslt/models/corpus.en.lm.gz
 
-tm_file=example/example.hiero.tm.gz
+#tm_file=example/example.hiero.tm.gz
+tm_file=aexperiment/iwslt/models/iwslt.grammar.combined.gz
 tm_format=hiero
 
 glue_file=grammars/hiero.glue
@@ -12,7 +14,7 @@ use_srilm=false
 lm_ceiling_cost=100
 use_left_euqivalent_state=false
 use_right_euqivalent_state=false
-order=4
+order=5
 
 
 #tm config
@@ -27,17 +29,17 @@ useCubePrune=true
 useBeamAndThresholdPrune=true
 fuzz1=0.1
 fuzz2=0.1
-max_n_items=30
+max_n_items=50
 relative_threshold=10.0
 max_n_rules=50
 rule_relative_threshold=10.0
 
 #nbest config
-use_unique_nbest=false
+use_unique_nbest=true
 use_tree_nbest=true
 add_combined_cost=true
 include_align_index=false
-top_n=300
+top_n=30
 
 
 #remoter lm server config,we should first prepare remote_symbol_tbl before starting any jobs
@@ -49,11 +51,11 @@ remote_lm_server_port=9000
 
 
 #parallel deocoder: it cannot be used together with remote lm
-num_parallel_decoders=1
+num_parallel_decoders=10
 parallel_files_prefix=.
 
 #disk hg
-save_disk_hg=false
+save_disk_hg=true
 forest_pruning=false
 forest_pruning_threshold=150
 
@@ -81,16 +83,16 @@ arityphrasepenalty glue 1 2 2.0
 wordpenalty -2.844814
 #latticecost 1.0
 
-oracle example/example.test.ref.0 example/example.test.ref.1 example/example.test.ref.2 example/example.test.ref.3 1.0
+#oracle example/example.test.ref.0 example/example.test.ref.1 example/example.test.ref.2 example/example.test.ref.3 1.0
 
 #========================discriminative model options
 #discriminative aexperiment/featureFile 1.0
 
 #general
-maxNumIter=2
+maxNumIter=10
 useSemiringV2=true
 maxNumHGInQueue=100
-numThreads=4
+numThreads=10
 saveHGInMemory=false
 printFirstN=10
 
@@ -101,9 +103,7 @@ fixFirstFeature=false
 
 #google linear corpus gain
 useGoogleLinearCorpusGain=true
-unigramPrecision=0.85
-precisionDecayRatio=0.7
-numUnigramTokens=10
+googleBLEUWeights=-1.0;0.10277777076514476;0.07949965001350584;0.6993000659479868;0.09565585699195878
 
 #annealing?
 annealingMode=0
@@ -120,17 +120,18 @@ baselineFeatureName=baseline_lzf
 baselineFeatureWeight=1.0
 
 useIndividualBaselines=true
-baselineFeatIDsToTune=0;1;2;3;4
+baselineFeatIDsToTune=0;1;2;3;4;5;6;7;8;9
 
 #sparse features
-useSparseFeature=true
+useSparseFeature=false
+
+useRuleIDName=true
 
 useTMFeat=true
-useRuleIDName=true
 useTMTargetFeat=false
 
 useMicroTMFeat=true
-wordMapFile=example/wordMap
+wordMapFile=src/joshua/discriminative/training/risk_annealer/data/wordMap
 
 useLMFeat=true
 startNgramOrder=1

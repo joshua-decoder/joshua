@@ -333,10 +333,11 @@ public class Chart {
 		if (null != this.cells[0][foreignSentenceLength]) {
 			this.goalBin.transitToGoal(this.cells[0][foreignSentenceLength], this.featureFunctions, this.foreignSentenceLength);				
 		} else {
-			throw new RuntimeException(
+			logger.severe(
 				"No complete item in the cell(0," + foreignSentenceLength + "); possible reasons: " +
 				"(1) your grammar does not have any valid derivation for the source sentence; " +
 				"(2) too aggressive pruning");
+			System.exit(1);
 		}
 		
 		if(logger.isLoggable(Level.FINE))
@@ -401,7 +402,7 @@ public class Chart {
 					
 					for (Rule rule : rules) { // for each unary rules								
 						ComputeNodeResult states = new ComputeNodeResult(this.featureFunctions, rule, antecedents, i, j, new SourcePath(), stateComputers, this.segmentID);
-						HGNode resNode = chartBin.addHyperEdgeInCell(states, rule, i, j, antecedents, new SourcePath());
+						HGNode resNode = chartBin.addHyperEdgeInCell(states, rule, i, j, antecedents, new SourcePath(), true);
 						if (null != resNode) {
 							queue.add(resNode);
 							qtyAdditionsToQueue++;
@@ -441,7 +442,7 @@ public class Chart {
 
                         for (Rule rule : rules){//for each unary rules
                         	ComputeNodeResult states = new ComputeNodeResult(this.featureFunctions, rule, l_ants, i, j, new SourcePath(), stateComputers, this.segmentID);
-                            HGNode res_item = chartCell.addHyperEdgeInCell(states, rule, i, j, l_ants, new SourcePath());
+                            HGNode res_item = chartCell.addHyperEdgeInCell(states, rule, i, j, l_ants, new SourcePath(), false);
                             if (null != res_item) {
                                     queue.add(res_item);
                                     qtyAdditionsToQueue++;

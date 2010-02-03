@@ -48,7 +48,7 @@ public class ExhaustiveCombiner implements Combiner{
 					antNodes.add(antNode);
 					cell.addHyperEdgeInCell(
 							new ComputeNodeResult(featureFunctions, rule, antNodes, i, j, srcPath, stateComputers, chart.segmentID),
-							rule, i, j, antNodes, srcPath);
+							rule, i, j, antNodes, srcPath, false);
 				}
 				
 			} else if (arity == 2) {
@@ -61,7 +61,7 @@ public class ExhaustiveCombiner implements Combiner{
 						antNodes.add(antNode2);
 						cell.addHyperEdgeInCell(
 								new ComputeNodeResult(featureFunctions, rule, antNodes, i, j, srcPath, stateComputers, chart.segmentID),
-								rule, i, j, antNodes, srcPath);
+								rule, i, j, antNodes, srcPath, false);
 					}
 				}
 			} else {
@@ -84,7 +84,7 @@ public class ExhaustiveCombiner implements Combiner{
 	public void addAxiom(Chart chart, Cell cell, int i, int j, Rule rule, SourcePath srcPath) {
 		cell.addHyperEdgeInCell(
 				new ComputeNodeResult(this.featureFunctions, rule, null, i, j, srcPath, stateComputers, chart.segmentID),
-				rule, i, j, null, srcPath);
+				rule, i, j, null, srcPath, false);
 	}
 
 }

@@ -72,7 +72,7 @@ public class MicroRuleFT extends AbstractFeatureTemplate {
 					for(MicroRuleFeature feature : features ){
 						if(restrictedFeatureSet == null || restrictedFeatureSet.contains(feature.featName)==true){ 	
 							DiscriminativeSupport.increaseCount(featureTbl, feature.featName, scale*feature.featValue);
-							System.out.println("key=" + key + "; value="+feature.featValue);	
+							//System.out.println("key=" + feature.featName + "; value="+feature.featValue);	
 						}
 					}
 				}
@@ -146,7 +146,7 @@ public class MicroRuleFT extends AbstractFeatureTemplate {
 		Map<String,Integer> ngramFeatures = computeTargetNgramFeature(ruleFullName, convertMap, this.startNgramOrder, this.endNgramOrder);
 		
 		for(Map.Entry<String,Integer> entry : ngramFeatures.entrySet()){			
-			if(restrictedFeatureSet.contains(entry.getKey())){
+			if(restrictedFeatureSet == null || restrictedFeatureSet.contains(entry.getKey())){
 				MicroRuleFeature feature = new MicroRuleFeature(entry.getKey(), entry.getValue());
 				microRuleFeatures.add(feature);
 			}
@@ -179,7 +179,7 @@ public class MicroRuleFT extends AbstractFeatureTemplate {
 				outStr.append(" ");
 			}
 		}
-		System.out.println(inStr + " === " + outStr.toString() );
+		//System.out.println(inStr + " === " + outStr.toString() );
 		return outStr.toString();
 	}
 	
