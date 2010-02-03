@@ -24,7 +24,7 @@ public class ExtractMicroRuleFeatsFromGrammar {
 		Map<String, String> wordMap = MicroRuleFT.readWordMap(wordMapFile);
 		
 		//======== read grmmar and extract features
-		LineReader     grammarReader = new LineReader(grammarFile);
+		LineReader   grammarReader = new LineReader(grammarFile);
 		Map<String, Integer> featMap = new HashMap<String, Integer>();		
 		for (String line : grammarReader) {
 			Map<String,Integer> tbl = MicroRuleFT.computeTargetNgramFeature(line.trim(), wordMap, startNgramOrder, endNgramOrder);
@@ -39,10 +39,6 @@ public class ExtractMicroRuleFeatsFromGrammar {
 			writer.write(name +" ||| " +  initWeight +"\n");
 		}
 		writer.close();
-		
-		
-		
-		
 		
 	}
 	

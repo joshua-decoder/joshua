@@ -24,13 +24,8 @@ public class MicroRuleFT extends AbstractFeatureTemplate {
 	 * as feature name*/
 	boolean useRuleIDName = true;
 	String prefix="r";
-	
-
-	
-	boolean useWholeRuleFeature = true;
-	boolean useTargetSideRuleFeature = false;
-	
-	boolean useTargetRuleNgramFeature = false;
+		
+	boolean useTargetRuleNgramFeature = true;
 	int startNgramOrder = 2;//TODO
 	int endNgramOrder = 2;//TODO
 	
@@ -42,13 +37,11 @@ public class MicroRuleFT extends AbstractFeatureTemplate {
 	
 	static Logger logger = Logger.getLogger(MicroRuleFT.class.getSimpleName());
 	
-	public MicroRuleFT( boolean useRuleIDName, boolean useWholeRuleFeature,boolean useTargetSideRuleFeature, boolean useTargetRuleNgramFeature, String wordMapFile){
-		this.useWholeRuleFeature = useWholeRuleFeature;
+	public MicroRuleFT( boolean useRuleIDName, int startNgramOrder, int endNgramOrder, String wordMapFile){
+
 		this.useRuleIDName = useRuleIDName;
-		this.useTargetRuleNgramFeature = useTargetSideRuleFeature;
-		this.useTargetRuleNgramFeature = useTargetRuleNgramFeature;		
-		//this.startOrder = startOrder;
-		//this.endOrder = endOrder;
+		this.startNgramOrder = startNgramOrder;
+		this.endNgramOrder = endNgramOrder;
 		
 		try {
 			this.wordMap = readWordMap(wordMapFile);
@@ -106,13 +99,13 @@ public class MicroRuleFT extends AbstractFeatureTemplate {
 			List<MicroRuleFeature> microRuleFeatures = new ArrayList<MicroRuleFeature>();
 			this.ruleFeatureTbl.put(ruleAbbrName, microRuleFeatures);
 			
-			if(useWholeRuleFeature){//e.g., [x] ||| a b c ||| c d e
+			/*if(useWholeRuleFeature){//e.g., [x] ||| a b c ||| c d e
 				extractWholeRuleFeature(ruleFullName, ruleAbbrName, restrictedFeatureSet, microRuleFeatures);
 			}
 			
 			if(useTargetSideRuleFeature){
 				extractTargetRuleFeature(ruleFullName, restrictedFeatureSet, microRuleFeatures);
-			}
+			}*/
 			
 			if(useTargetRuleNgramFeature){
 				this.extractTargetNgramFeature(ruleFullName, restrictedFeatureSet, microRuleFeatures, this.wordMap);
@@ -122,6 +115,7 @@ public class MicroRuleFT extends AbstractFeatureTemplate {
 		
 	}
 	
+	/*
 	private void extractWholeRuleFeature(String ruleFullName, String ruleAbbrName, Set<String> restrictedFeatureSet, List<MicroRuleFeature> microRuleFeatures){
 		String featureName = null;
 		if(this.useRuleIDName)
@@ -145,6 +139,7 @@ public class MicroRuleFT extends AbstractFeatureTemplate {
 		}
 		
 	}
+	*/
 	
 	private void extractTargetNgramFeature(String ruleFullName, Set<String> restrictedFeatureSet, List<MicroRuleFeature> microRuleFeatures, Map<String,String> convertMap){
 		
@@ -184,6 +179,7 @@ public class MicroRuleFT extends AbstractFeatureTemplate {
 				outStr.append(" ");
 			}
 		}
+		System.out.println(inStr + " === " + outStr.toString() );
 		return outStr.toString();
 	}
 	

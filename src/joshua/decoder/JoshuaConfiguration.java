@@ -158,7 +158,7 @@ public class JoshuaConfiguration {
 	
 	public static boolean useMicroTMFeat = true;
 	public static String wordMapFile;/*tbl for mapping rule words*/
-	public static boolean useTMTargetNgramFeat = false;
+
 	
 	
 	//=== use goolge linear corpus gain?
@@ -544,10 +544,6 @@ public class JoshuaConfiguration {
 					wordMapFile = fds[1].trim();
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("wordMapFile: %s", wordMapFile));					
-				} else if ("useTMTargetNgramFeat".equals(fds[0])) {
-					useTMTargetNgramFeat = new Boolean(fds[1].trim());
-					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format("useTMTargetNgramFeat: %s", useTMTargetNgramFeat));					
 				} else if ("useRuleIDName".equals(fds[0])) {
 					useRuleIDName = new Boolean(fds[1].trim());
 					if (logger.isLoggable(Level.FINEST))

@@ -74,9 +74,11 @@ public class MRConfig {
 	
 	public static boolean useMicroTMFeat = true;
 	public static String wordMapFile = null; /*tbl for mapping rule words*/
+	public static int startTargetNgramOrder = 2;//TODO
+	public static int endTargetNgramOrder = 2;//TODO
+	
 	
 	public static boolean useTMTargetFeat = false;
-	public static boolean useTMTargetNgramFeat = false;
 	
 	public static boolean useLMFeat;
 	public static int startNgramOrder = 1;
@@ -211,10 +213,6 @@ public class MRConfig {
 					useTMTargetFeat = new Boolean(fds[1].trim());
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("useTMTargetFeat: %s", useTMTargetFeat));					
-				} else if ("useTMTargetNgramFeat".equals(fds[0])) {
-					useTMTargetNgramFeat = new Boolean(fds[1].trim());
-					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format("useTMTargetNgramFeat: %s", useTMTargetNgramFeat));					
 				} else if ("useLMFeat".equals(fds[0])) {
 					useLMFeat = new Boolean(fds[1].trim());
 					if (logger.isLoggable(Level.FINEST))

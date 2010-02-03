@@ -700,7 +700,7 @@ public class JoshuaDecoder {
 					
 					this.featureFunctions.add (DiscriminativeSupport.setupRerankingFeature(this.featureFunctions.size(), weight, symbolTable, 
 							JoshuaConfiguration.useTMFeat, JoshuaConfiguration.useLMFeat, JoshuaConfiguration.useEdgeNgramOnly, JoshuaConfiguration.useTMTargetFeat,
-							JoshuaConfiguration.useTMTargetNgramFeat, JoshuaConfiguration.useMicroTMFeat, JoshuaConfiguration.wordMapFile,
+							JoshuaConfiguration.useMicroTMFeat, JoshuaConfiguration.wordMapFile,
 							JoshuaConfiguration.ngramStateID, 
 							JoshuaConfiguration.lmOrder, JoshuaConfiguration.startNgramOrder, JoshuaConfiguration.endNgramOrder, featureFile, modelFile, this.ruleStringToIDTable) );
 					

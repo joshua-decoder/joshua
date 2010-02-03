@@ -175,7 +175,7 @@ public class HGRanker {
 	
 		//TODO
 		FeatureFunction rerankFF = DiscriminativeSupport.setupRerankingFeature(featID, weight, symbolTbl, useTMFeat, useLMFeat, useEdgeNgramOnly, useTMTargetFeat, 
-				JoshuaConfiguration.useTMTargetNgramFeat, JoshuaConfiguration.useMicroTMFeat, JoshuaConfiguration.wordMapFile,
+				JoshuaConfiguration.useMicroTMFeat, JoshuaConfiguration.wordMapFile,
 				ngramStateID, 
 				baselineLMOrder, startNgramOrder, endNgramOrder, featureFile, modelFile, rulesIDTable);
 		

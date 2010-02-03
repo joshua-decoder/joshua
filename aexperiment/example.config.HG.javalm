@@ -124,9 +124,13 @@ baselineFeatIDsToTune=0;1;2;3;4
 
 #sparse features
 useSparseFeature=true
+
 useTMFeat=true
 useRuleIDName=true
 useTMTargetFeat=false
+
+useMicroTMFeat=true
+wordMapFile=example/wordMap
 
 useLMFeat=true
 startNgramOrder=1

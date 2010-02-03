@@ -310,26 +310,20 @@ public class HGMinRiskDAMert extends AbstractMinRiskMERT {
 			
 			if(MRConfig.useMicroTMFeat){	
 				//FeatureTemplate ft = new TMFT(symbolTbl, useIntegerString, MRConfig.useRuleIDName);
-				this.microRuleFeatureTemplate = new MicroRuleFT(MRConfig.useRuleIDName, MRConfig.useTMFeat,  MRConfig.useTMTargetFeat, MRConfig.useTMTargetNgramFeat, MRConfig.wordMapFile);
+				this.microRuleFeatureTemplate = new MicroRuleFT(MRConfig.useRuleIDName, MRConfig.startTargetNgramOrder, MRConfig.endNgramOrder, MRConfig.wordMapFile);
 				featTemplates.add(microRuleFeatureTemplate);
-			}else{
-				if(MRConfig.useTMFeat){
-					FeatureTemplate ft = new TMFT(symbolTbl, useIntegerString, MRConfig.useRuleIDName);				
-					featTemplates.add(ft);
-				}
-				
-				if(MRConfig.useTMTargetFeat){			
-					FeatureTemplate ft = new TargetTMFT(symbolTbl, useIntegerString);
-					featTemplates.add(ft);		
-				}	
-				
-				if(MRConfig.useTMTargetNgramFeat){
-					logger.severe("not implemented useTMTargetNgramFeat");
-					System.exit(1);
-				}
 			}
-					
 			
+			if(MRConfig.useTMFeat){
+				FeatureTemplate ft = new TMFT(symbolTbl, useIntegerString, MRConfig.useRuleIDName);				
+				featTemplates.add(ft);
+			}
+			
+			if(MRConfig.useTMTargetFeat){			
+				FeatureTemplate ft = new TargetTMFT(symbolTbl, useIntegerString);
+				featTemplates.add(ft);		
+			}	
+				
 			if(MRConfig.useLMFeat){
 				FeatureTemplate ft = new NgramFT(symbolTbl, useIntegerString, MRConfig.ngramStateID, 
 												MRConfig.baselineLMOrder, MRConfig.startNgramOrder, MRConfig.endNgramOrder);

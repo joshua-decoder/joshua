@@ -128,7 +128,7 @@ public class DiscriminativeSupport {
 	
 	static public FeatureTemplateBasedFF setupRerankingFeature(
 			int featID, double weight,
-			SymbolTable symbolTbl, boolean useTMFeat, boolean useLMFeat, boolean useEdgeNgramOnly, boolean useTMTargetFeat, boolean useTMTargetNgramFeat, boolean useMicroTMFeat, String wordMapFile,
+			SymbolTable symbolTbl, boolean useTMFeat, boolean useLMFeat, boolean useEdgeNgramOnly, boolean useTMTargetFeat, boolean useMicroTMFeat, String wordMapFile,
 			int ngramStateID, int baselineLMOrder,
 			int startNgramOrder, int endNgramOrder,	
 			String featureFile, String modelFile, Map<String,Integer> rulesStringToIDTable
@@ -151,7 +151,7 @@ public class DiscriminativeSupport {
 		
 		//============= feature templates
 		List<FeatureTemplate> featTemplates =  DiscriminativeSupport.setupFeatureTemplates(symbolTbl, useTMFeat, useLMFeat,
-				useEdgeNgramOnly, useTMTargetFeat, useTMTargetNgramFeat, useMicroTMFeat, wordMapFile,
+				useEdgeNgramOnly, useTMTargetFeat, useMicroTMFeat, wordMapFile,
 				ngramStateID, baselineLMOrder, startNgramOrder, endNgramOrder, 
 				useIntegerString, useRuleIDName,
 				rulesStringToIDTable, restrictedFeatureSet);	
@@ -168,7 +168,7 @@ public class DiscriminativeSupport {
 	
 	//TODO: should merge with setupFeatureTemplates in HGMinRiskDAMert
 	static public List<FeatureTemplate> setupFeatureTemplates(
-			SymbolTable symbolTbl, boolean useTMFeat, boolean useLMFeat, boolean useEdgeNgramOnly, boolean useTMTargetFeat, boolean useTMTargetNgramFeat, boolean useMicroTMFeat, String wordMapFile,
+			SymbolTable symbolTbl, boolean useTMFeat, boolean useLMFeat, boolean useEdgeNgramOnly, boolean useTMTargetFeat, boolean useMicroTMFeat, String wordMapFile,
 			int ngramStateID, int baselineLMOrder,
 			int startNgramOrder, int endNgramOrder,
 			boolean useIntegerString, boolean useRuleIDName,
@@ -177,29 +177,24 @@ public class DiscriminativeSupport {
 		
 		List<FeatureTemplate> featTemplates =  new ArrayList<FeatureTemplate>();	
 		
-		
-//		micro rule features
-		if(useMicroTMFeat){	
-			MicroRuleFT microRuleFeatureTemplate = new MicroRuleFT(useRuleIDName, useTMFeat, useTMTargetFeat, useTMTargetNgramFeat, wordMapFile);
-			microRuleFeatureTemplate.setupTbl(rulesStringToIDTable, restrictedFeatureSet);
+    	if(useTMFeat==true){
+			FeatureTemplate ft = new TMFT(symbolTbl, useIntegerString, useRuleIDName);
+			featTemplates.add(ft);
+		}
+    	
+		if(useTMTargetFeat==true){
+			FeatureTemplate ft = new TargetTMFT(symbolTbl, useIntegerString);
+			featTemplates.add(ft);
+		}
 			
+		if(useMicroTMFeat){			
+			int startOrder =2;//TODO
+			int endOrder =2;//TODO			
+			MicroRuleFT microRuleFeatureTemplate = new MicroRuleFT(useRuleIDName, startOrder, endOrder, wordMapFile);
+			microRuleFeatureTemplate.setupTbl(rulesStringToIDTable, restrictedFeatureSet);			
         	featTemplates.add(microRuleFeatureTemplate);
-		}else{
-	    	if(useTMFeat==true){
-				FeatureTemplate ft = new TMFT(symbolTbl, useIntegerString, useRuleIDName);
-				featTemplates.add(ft);
-			}
-	    	
-			if(useTMTargetFeat==true){
-				FeatureTemplate ft = new TargetTMFT(symbolTbl, useIntegerString);
-				featTemplates.add(ft);
-			}
-			
-			if(useTMTargetNgramFeat){
-				logger.severe("not implemented useTMTargetNgramFeat");
-				System.exit(1);
-			}
-    	}
+		}	
+    	
 		if(useLMFeat==true){	
 			FeatureTemplate ft = new NgramFT(symbolTbl, useIntegerString, ngramStateID, baselineLMOrder, startNgramOrder, endNgramOrder);
 			featTemplates.add(ft);
