@@ -197,7 +197,9 @@ public abstract class LBFGSWrapper {
 		if(gradient_vector!=null){
 			System.out.print("Gradient vector: ");
 			for(int i=0; i<gradient_vector.length && i<this.printFirstN; i++){
-				System.out.print(" " + gradient_vector[i]);
+				//System.out.print(" " + gradient_vector[i]);
+				System.out.print(String.format(" %.4f", gradient_vector[i]));
+				
 			}
 			System.out.print("\n");
 		}
@@ -205,7 +207,8 @@ public abstract class LBFGSWrapper {
 		if(weights_vector!=null){
 			System.out.print("Weight vector: ");
 			for(int i=0; i<weights_vector.length && i<this.printFirstN; i++){
-				System.out.print(" " + weights_vector[i]);
+				//System.out.print(" " + weights_vector[i]);
+				System.out.print(String.format(" %.4f", weights_vector[i]));
 			}
 			System.out.print("\n");
 		}
