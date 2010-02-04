@@ -75,7 +75,7 @@ arityphrasepenalty pt 1 1 -1.0
 arityphrasepenalty pt 2 2 -2.0
 
 arityphrasepenalty glue 1 1 1.0
-arityphrasepenalty glue 1 2 2.0
+arityphrasepenalty glue 2 2 2.0
 
 #phrasemodel mono 0 0.5
 

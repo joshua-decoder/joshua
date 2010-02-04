@@ -437,6 +437,12 @@ public class HGMinRiskDAMert extends AbstractMinRiskMERT {
 		}
 		
 		if(MRConfig.lossAugmentedPrune){
+			String featName = MRConfig.individualBSFeatNamePrefix +this.oralceFeatureID;
+			if(featureStringToIntegerMap.containsKey(featName)){
+				logger.severe("we are tuning the oracle model, must be wrong in specifying baselineFeatIDsToTune");
+				System.exit(1);
+			}
+			
 			weights.set(this.oralceFeatureID, this.curLossScale);
 			System.out.println("curLossScale=" + this.curLossScale + "; oralceFeatureID="+this.oralceFeatureID);
 		}
