@@ -13,6 +13,29 @@ public class JoshuaNbestMinRiskDAMert extends NbestMinRiskDAMert{
 	JoshuaDecoder joshuaDecoder;
 	String sourceTrainingFile;
 	
+	public JoshuaNbestMinRiskDAMert(boolean useShortestRef, String joshuaConfig, String devSrcFile, int numSentInDevSet, String[] refFiles, String nbestPrefix) {
+		super(useShortestRef, joshuaConfig, numSentInDevSet, refFiles, nbestPrefix);
+		
+		//initiallize
+		//?????????????
+		sourceTrainingFile = devSrcFile;
+		joshuaDecoder = JoshuaDecoder.getUninitalizedDecoder();
+		joshuaDecoder.initialize(configFile);
+	}
+	
+
+	public void decodingTestSet(double[] weights, String nbestFile) {
+    	joshuaDecoder.changeBaselineFeatureWeights(weights);
+    	joshuaDecoder.decodeTestSet(sourceTrainingFile, nbestFile); //call Joshua decoder to produce an nbest using the new weight vector		
+	}
+
+
+	public void writeConfigFile(double[] weights, String configTemplate, String outConfig){
+		JoshuaDecoder.writeConfigFile(weights, configTemplate, outConfig, null);
+	}
+
+	
+	
 	public static void main(String[] args) {
 		/*String f_joshua_config="C:/data_disk/java_work_space/discriminative_at_clsp/edu/jhu/joshua/discriminative_training/lbfgs/example.config.javalm";
 		String f_dev_src="C:/data_disk/java_work_space/sf_trunk/example/example.test.in";
@@ -35,35 +58,8 @@ public class JoshuaNbestMinRiskDAMert extends NbestMinRiskDAMert{
 		
 		
 		int numSentInDevSet = FileUtilityOld.numberLinesInFile(devSrcFile);
-		
-
-	
-		
-		
-		NbestMinRiskDAMert p_trainer= new JoshuaNbestMinRiskDAMert(useShortestRef, joshuaConfig, devSrcFile, numSentInDevSet, refFiles, nbestPrefix);
-		p_trainer.mainLoop();
+		NbestMinRiskDAMert trainer= new JoshuaNbestMinRiskDAMert(useShortestRef, joshuaConfig, devSrcFile, numSentInDevSet, refFiles, nbestPrefix);
+		trainer.mainLoop();
 	}
 
-	
-	public JoshuaNbestMinRiskDAMert(boolean useShortestRef, String joshuaConfig, String devSrcFile, int numSentInDevSet, String[] refFiles, String nbestPrefix) {
-		super(useShortestRef, joshuaConfig, numSentInDevSet, refFiles, nbestPrefix);
-		
-		//initiallize
-		//?????????????
-		sourceTrainingFile = devSrcFile;
-		joshuaDecoder = JoshuaDecoder.getUninitalizedDecoder();
-		joshuaDecoder.initialize(configFile);
-	}
-	
-
-	public void decodingTestSet(double[] weights, String f_nbest) {
-    	joshuaDecoder.changeBaselineFeatureWeights(weights);
-    	joshuaDecoder.decodeTestSet(sourceTrainingFile, f_nbest); //call Joshua decoder to produce an nbest using the new weight vector		
-	}
-
-
-	public void writeConfigFile(double[] weights, String f_config_template, String f_config_out){
-		JoshuaDecoder.writeConfigFile(weights, f_config_template, f_config_out, null);
-	}
-	
 }
