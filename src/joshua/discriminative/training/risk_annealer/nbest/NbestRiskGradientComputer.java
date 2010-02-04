@@ -20,20 +20,20 @@ public class NbestRiskGradientComputer extends GradientComputer {
 	//size: the number of hyp in the nbest
 	//ArrayList<String> l_nbest_translations;//the translation itself: each source has multiple hypothesized translations
 	//ArrayList<String> l_ref;
-	private List<Double> l_gain_withrespectto_ref =  new ArrayList<Double>();;
+	private List<Double> gainsWithRespectToRef =  new ArrayList<Double>();;
 	
 	//size:the number of hyp in the nbest * num_features
-	private List<Double> l_feature_value=   new ArrayList<Double>();;//each hyp has multiple features
+	private List<Double> featureValues=   new ArrayList<Double>();;//each hyp has multiple features
 	
 	//size: number of source sentences
-	private List<Integer> l_start_pos =  new ArrayList<Integer>();//inclusive
-	private List<Integer> l_end_pos =  new ArrayList<Integer>();//exclusive
+	private List<Integer> startPoss =  new ArrayList<Integer>();//inclusive
+	private List<Integer> endPoss =  new ArrayList<Integer>();//exclusive
 	
 	//### if the weight vector or scale changes, we need to change the following two lists 
 	//size: the number of hyp in the nbest
-	private List<Double> l_hyp_probability =  new ArrayList<Double>();
+	private List<Double> hypProbs =  new ArrayList<Double>();
 	//size: the number of source sentences * num_features
-	private List<Double> l_expected_feature_value= new ArrayList<Double>();//each source sentence has a vector
+	private List<Double> expectedFeatureValues= new ArrayList<Double>();//each source sentence has a vector
 	
 	//for tuning of scaling factor
 	//ArrayList<Double> l_hyp_final_score =  new ArrayList<Double>(); // this is the linear sum, no scaling
@@ -46,16 +46,16 @@ public class NbestRiskGradientComputer extends GradientComputer {
 	double[] linearCorpusGainThetas; //weights in the Goolge linear corpus gain function
 	
 	//### nums
-	private int total_num_sent;
+	private int totalNumSent;
 	
 
-	private double sum_expected_gain;
-	private double sum_entropy;
+	private double expectedGainSum;
+	private double entropySum;
 	
 	private String nbesFile;
 	private String[] refFiles;
 	
-	private boolean use_shortest_ref_len=true;
+	private boolean useShortestRefLen=true;
 	
 	
 	//## for BLEU
@@ -64,21 +64,21 @@ public class NbestRiskGradientComputer extends GradientComputer {
 		
 	/*whenever the nbesFile_ or refFile_ changes, we need to reconstruct everything*
 	 */
-	public NbestRiskGradientComputer(String nbesFile_, String[] refFiles_, boolean use_shortest_ref_len_, int num_sent_,  
-			int num_features_, double gainFactor_, double annealing_scale_, double cooling_temperature_, boolean compute_scaling_gradient_, double[] linearCorpusGainThetas_){
-		super( num_features_, gainFactor_, annealing_scale_, cooling_temperature_, compute_scaling_gradient_);
-		nbesFile = nbesFile_;
-		refFiles = refFiles_;
-		use_shortest_ref_len = use_shortest_ref_len_;
-		total_num_sent = num_sent_;
+	public NbestRiskGradientComputer(String nbesFile, String[] refFiles, boolean useShortestRefLen, int totalNumSent,  
+			int numFeatures, double gainFactor, double annealingScale, double coolingTemperature, boolean computeScalingGradient, double[] linearCorpusGainThetas){
+		super( numFeatures, gainFactor, annealingScale, coolingTemperature, computeScalingGradient);
+		this.nbesFile = nbesFile;
+		this.refFiles = refFiles;
+		this.useShortestRefLen = useShortestRefLen;
+		this.totalNumSent = totalNumSent;
 		
-		this.linearCorpusGainThetas = linearCorpusGainThetas_;;
+		this.linearCorpusGainThetas = linearCorpusGainThetas;
 		if(this.linearCorpusGainThetas!=null)
-			useGoogleLinearCorpusGain = true;
+			this.useGoogleLinearCorpusGain = true;
 		else
-			useGoogleLinearCorpusGain = false;
+			this.useGoogleLinearCorpusGain = false;
 		
-		preprocessCorpus(nbesFile, refFiles);
+		preprocessCorpus(this.nbesFile, this.refFiles);
 	}
 	
 	/*use the latest weights, annealing_scale, and cooling_temperature
@@ -120,18 +120,18 @@ public class NbestRiskGradientComputer extends GradientComputer {
 	
 	public void printLastestStatistics(){
 	 	System.out.println("Func value=" + getLatestFunctionValue() + "="  + getLatestExpectedGain()+"*"+gainFactor + "+" + getLatestEntropy()+"*"+temperature);
-	 	System.out.println("AVG Expected_gain=" + (getLatestExpectedGain())/total_num_sent+ "%; avg entropy=" + getLatestEntropy()/total_num_sent);
+	 	System.out.println("AVG Expected_gain=" + (getLatestExpectedGain())/totalNumSent+ "%; avg entropy=" + getLatestEntropy()/totalNumSent);
 	}
 	
 	
 	private double getLatestEntropy(){
-		if(Double.isNaN(sum_entropy)){System.out.println("func_val isNaN"); System.exit(1);} 
-		return sum_entropy;
+		if(Double.isNaN(entropySum)){System.out.println("func_val isNaN"); System.exit(1);} 
+		return entropySum;
 	}
 	
 	private double getLatestExpectedGain(){
-		if(Double.isNaN(sum_expected_gain)){System.out.println("func_val isNaN"); System.exit(1);} 
-		return sum_expected_gain;
+		if(Double.isNaN(expectedGainSum)){System.out.println("func_val isNaN"); System.exit(1);} 
+		return expectedGainSum;
 	}
 	
 	
@@ -142,9 +142,9 @@ public class NbestRiskGradientComputer extends GradientComputer {
 		System.out.println("preprocess nbest and ref files");
 		//### process nbest file
 		BufferedReader t_reader_nbest = FileUtilityOld.getReadFileStream(nbesFile,"UTF-8");
-		BufferedReader[] t_reader_refs = new BufferedReader[refFiles.length];
+		BufferedReader[] refReaders = new BufferedReader[refFiles.length];
 		for(int i=0; i<refFiles.length; i++)
-			t_reader_refs[i] = FileUtilityOld.getReadFileStream(refFiles[i],"UTF-8");
+			refReaders[i] = FileUtilityOld.getReadFileStream(refFiles[i],"UTF-8");
 		
 		String line=null;
 		int old_sent_id=-1;
@@ -153,9 +153,9 @@ public class NbestRiskGradientComputer extends GradientComputer {
 			String[] fds = line.split("\\s+\\|{3}\\s+");
 			int new_sent_id = new Integer(fds[0]);
 			if(old_sent_id!=-1 && old_sent_id!=new_sent_id){
-				String[] refs = new String[t_reader_refs.length];
-				for(int i=0; i<t_reader_refs.length; i++)
-				    refs[i]=FileUtilityOld.readLineLzf(t_reader_refs[i]);
+				String[] refs = new String[refReaders.length];
+				for(int i=0; i<refReaders.length; i++)
+				    refs[i]=FileUtilityOld.readLineLzf(refReaders[i]);
 				preprocessSentNbest(nbest, old_sent_id, refs);			
 				nbest.clear();
 			}
@@ -163,21 +163,21 @@ public class NbestRiskGradientComputer extends GradientComputer {
 			nbest.add(line);
 		}
 		//last source sentence
-		String[] refs = new String[t_reader_refs.length];
-		for(int i=0; i<t_reader_refs.length; i++)
-		    refs[i]=FileUtilityOld.readLineLzf(t_reader_refs[i]);
+		String[] refs = new String[refReaders.length];
+		for(int i=0; i<refReaders.length; i++)
+		    refs[i]=FileUtilityOld.readLineLzf(refReaders[i]);
 		preprocessSentNbest(nbest, old_sent_id, refs);			
 		nbest.clear();
 		
 		FileUtilityOld.closeReadFile(t_reader_nbest);
-		for(int i=0; i<t_reader_refs.length; i++)
-			FileUtilityOld.closeReadFile(t_reader_refs[i]);
+		for(int i=0; i<refReaders.length; i++)
+			FileUtilityOld.closeReadFile(refReaders[i]);
 		
 		System.out.println("after proprecessing");
 		//System.out.println("l_start_pos size " + l_start_pos.toString());
 		//System.out.println("l_end_pos size " + l_end_pos.toString());
-		System.out.println("l_feature_value size " + l_feature_value.size());
-		System.out.println("l_gain_withrespectto_ref size " + l_gain_withrespectto_ref.size());
+		System.out.println("l_feature_value size " + featureValues.size());
+		System.out.println("l_gain_withrespectto_ref size " + gainsWithRespectToRef.size());
 		//System.exit(1);
 	}
 	
@@ -187,10 +187,10 @@ public class NbestRiskGradientComputer extends GradientComputer {
 	
 	private void preprocessSentNbest(ArrayList<String> nbest, int sent_id, String[] refs){
 		//### add start and end pos
-		int start_pos = l_gain_withrespectto_ref.size();//inclusive
+		int start_pos = gainsWithRespectToRef.size();//inclusive
 		int end_pos = start_pos + nbest.size();//exclusive
-		l_start_pos.add(start_pos);
-		l_end_pos.add(end_pos);
+		startPoss.add(start_pos);
+		endPoss.add(end_pos);
 		
 		//### compute gain for each hyp corresponding to ref; and add feature values
 		for(String hyp : nbest){
@@ -203,29 +203,29 @@ public class NbestRiskGradientComputer extends GradientComputer {
 				HashMap<String, Integer> hypNgramTable = BLEU.constructNgramTable(fds[1], bleu_order);
 				gain = BLEU.computeLinearCorpusGain(linearCorpusGainThetas, hypLength, hypNgramTable,  refereceNgramTable); 
 			}else{
-				gain = BLEU.computeSentenceBleu(refs, fds[1], do_ngram_clip, bleu_order, use_shortest_ref_len);
+				gain = BLEU.computeSentenceBleu(refs, fds[1], do_ngram_clip, bleu_order, useShortestRefLen);
 			}
 			
 			if(useLogBleu){
 				if(gain==0)
-					l_gain_withrespectto_ref.add(0.0);//log0=0
+					gainsWithRespectToRef.add(0.0);//log0=0
 				else
-					l_gain_withrespectto_ref.add(Math.log(gain));
+					gainsWithRespectToRef.add(Math.log(gain));
 			}else
-				l_gain_withrespectto_ref.add(gain);
+				gainsWithRespectToRef.add(gain);
 			//System.out.println("Gain is: " +gain + "||| " + ref + "||| " +fds[1]);
-			l_hyp_probability.add(0.0);//add fake probe
+			hypProbs.add(0.0);//add fake probe
 			
 			//feat values
 			String[] logFeatProb = fds[2].split("\\s+");
 			for(int i=0; i< logFeatProb.length; i++){
-				l_feature_value.add(new Double(logFeatProb[i]));
+				featureValues.add(new Double(logFeatProb[i]));
 			}			
 		}
 		 
 		//add fake feature expectations
 		for(int i=0; i< numFeatures; i++){
-			l_expected_feature_value.add(0.0);
+			expectedFeatureValues.add(0.0);
 		}
 		
 		//if(sent_id==1) System.exit(1);
@@ -235,19 +235,19 @@ public class NbestRiskGradientComputer extends GradientComputer {
 //=================Inference: based on current weight vector, scaling_factor
 //	change l_hyp_probability and l_expected_feature_value, optional: l_hyp_final_score and l_expected_feature_value
 	private void redoCorpusInference(double[] weights, double scaling_factor){
-		for(int i=0; i<total_num_sent; i++){
+		for(int i=0; i<totalNumSent; i++){
 			redoSentInference(i, weights, scaling_factor);
 		}
 		//System.exit(1);
 	}	
 	
 	private void redoSentInference(int sent_id, double[] weights, double scaling_factor){
-		int start_pos = l_start_pos.get(sent_id);
-		int end_pos = l_end_pos.get(sent_id);
-		List<Double> nbest_logprobs = l_hyp_probability.subList(start_pos, end_pos);
+		int start_pos = startPoss.get(sent_id);
+		int end_pos = endPoss.get(sent_id);
+		List<Double> nbestLogProbs = hypProbs.subList(start_pos, end_pos);
 		
 		//### first reset nbest_logprobs to the new final score, this reflects the change of weight vector
-		for(int i=0; i< nbest_logprobs.size(); i++){
+		for(int i=0; i< nbestLogProbs.size(); i++){
 			double final_score = 0;;
 			for(int j=0; j<numFeatures; j++){
 				double hyp_feat_val = getFeatVal(start_pos, i, j);
@@ -259,28 +259,28 @@ public class NbestRiskGradientComputer extends GradientComputer {
 					System.out.println("weight: "+ weights[t]);
 				System.exit(1);
 			}
-			nbest_logprobs.set(i, final_score);
+			nbestLogProbs.set(i, final_score);
 		}
 		
 		//### change the probability distribution
-		NbestMinRiskReranker.computeNormalizedProbs(nbest_logprobs, scaling_factor);//this will automatically change l_hyp_probability
+		NbestMinRiskReranker.computeNormalizedProbs(nbestLogProbs, scaling_factor);//this will automatically change l_hyp_probability
 		
 		//### re-compute the expectation of feature values		
-		double[] t_expected_values = new double[numFeatures];
-		for(int i=0; i< nbest_logprobs.size(); i++){
-			double prob = nbest_logprobs.get(i);
+		double[] expectedValues = new double[numFeatures];
+		for(int i=0; i< nbestLogProbs.size(); i++){
+			double prob = nbestLogProbs.get(i);
 			for(int j=0; j<numFeatures; j++){
-				double hyp_feat_val = getFeatVal(start_pos, i, j);
-				t_expected_values[j] += hyp_feat_val*prob;
+				double hypFeatVal = getFeatVal(start_pos, i, j);
+				expectedValues[j] += hypFeatVal*prob;
 			}
 		}
 		
 		//set the expected feature values
-		List<Double> l_expeced_feat_scores = getSentExpectedFeatureScoreList(sent_id);
+		List<Double> expecedFeatScores = getSentExpectedFeatureScoreList(sent_id);
 		double t_expected_sum=0;
 		for(int j=0; j<numFeatures; j++){
-			l_expeced_feat_scores.set(j, t_expected_values[j]);
-			t_expected_sum +=  t_expected_values[j]*weights[j];
+			expecedFeatScores.set(j, expectedValues[j]);
+			t_expected_sum +=  expectedValues[j]*weights[j];
 		}
 		//System.out.println("sub list size is " + l_expeced_feat_scores);
 		
@@ -290,17 +290,17 @@ public class NbestRiskGradientComputer extends GradientComputer {
 	
 //=================compute Gradient
 	private void computeCorpusGradient(double[] weights, double[] gradients, double temperature, double scale){	
-		for(int i=0; i<total_num_sent; i++){
+		for(int i=0; i<totalNumSent; i++){
 			accumulateSentGradient(i, temperature, weights, gradients, scale);
 		}
 	}
 	
 	//accumulate sentence gradient into gradients
 	private void accumulateSentGradient(int sent_id, double temperature,  double[] weights, double[] gradients, double scale){
-		int start_pos = l_start_pos.get(sent_id);
-		int end_pos = l_end_pos.get(sent_id);
-		List<Double> nbest_probs = l_hyp_probability.subList(start_pos, end_pos);
-		List<Double> gain_withrespecitto_ref = l_gain_withrespectto_ref.subList(start_pos, end_pos);
+		int start_pos = startPoss.get(sent_id);
+		int end_pos = endPoss.get(sent_id);
+		List<Double> nbest_probs = hypProbs.subList(start_pos, end_pos);
+		List<Double> gain_withrespecitto_ref = gainsWithRespectToRef.subList(start_pos, end_pos);
 		List<Double> expected_feature_values = getSentExpectedFeatureScoreList(sent_id);		
 		
 		double expected_hyp_final_score = 0;
@@ -348,28 +348,28 @@ public class NbestRiskGradientComputer extends GradientComputer {
 	
 	private void computeCorpusFuncVal(double temperature){
 		functionValue = 0;
-		sum_expected_gain = 0;
-		sum_entropy = 0;
+		expectedGainSum = 0;
+		entropySum = 0;
 			
-		for(int i=0; i<total_num_sent; i++){
+		for(int i=0; i<totalNumSent; i++){
 			computeSentFuncVal(i, temperature);
 		}
 		//return func_val;
 	}
 	
 	private void computeSentFuncVal(int sent_id, double temperature){
-		int start_pos = l_start_pos.get(sent_id);
-		int end_pos = l_end_pos.get(sent_id);
-		List<Double> nbest_gains = l_gain_withrespectto_ref.subList(start_pos, end_pos);
-		List<Double> nbest_probs = l_hyp_probability.subList(start_pos, end_pos);
+		int start_pos = startPoss.get(sent_id);
+		int end_pos = endPoss.get(sent_id);
+		List<Double> nbest_gains = gainsWithRespectToRef.subList(start_pos, end_pos);
+		List<Double> nbest_probs = hypProbs.subList(start_pos, end_pos);
 		double expected_gain = computeExpectedGain(nbest_gains, nbest_probs);
 		
 		double entropy=0;
 		//if(temperature!=0){
 			entropy = computeEntropy(nbest_probs);//compute it always, though may not be used in the objective
 		//}
-		sum_expected_gain += expected_gain;
-		sum_entropy += entropy;
+		expectedGainSum += expected_gain;
+		entropySum += entropy;
 		functionValue +=  expected_gain*gainFactor+entropy*temperature;//maximize function
 	}
 //=================compute Gradient: END	
@@ -468,12 +468,12 @@ public class NbestRiskGradientComputer extends GradientComputer {
 	} 
 	
 	private List<Double> getSentExpectedFeatureScoreList(int sent_id){
-		return l_expected_feature_value.subList(sent_id*numFeatures, (sent_id+1)*numFeatures);
+		return expectedFeatureValues.subList(sent_id*numFeatures, (sent_id+1)*numFeatures);
 	}
 
 	
 	private  double getFeatVal(int start_pos, int hyp_id, int feat_id){
-		return l_feature_value.get((start_pos+hyp_id)*numFeatures+feat_id);
+		return featureValues.get((start_pos+hyp_id)*numFeatures+feat_id);
 	}
 	
 	

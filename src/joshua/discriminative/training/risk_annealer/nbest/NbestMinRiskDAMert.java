@@ -54,18 +54,21 @@ public abstract class NbestMinRiskDAMert extends AbstractMinRiskMERT {
         	decodingTestSet(lastWeightVector, f_nbest); //call decoder to produce an nbest using the new weight vector
            
         	//##############merge nbest and check convergency
-        	String f_nbest_merged_old = nbestPrefix +".merged." + (iter-1);
-        	String f_nbest_merged_new = nbestPrefix +".merged." + (iter);
+        	String oldNbestMergedFile = nbestPrefix +".merged." + (iter-1);
+        	String newNbestMergedFile = nbestPrefix +".merged." + (iter);
         	if(iter ==1){
-        		copyNbest(f_nbest, f_nbest_merged_new);
+        		copyNbest(f_nbest, newNbestMergedFile);
         	}else{
-	            boolean have_new_hyp = mergeNbest(f_nbest_merged_old, f_nbest, f_nbest_merged_new);
-	            if(have_new_hyp==false) {System.out.println("No new hypotheses generated at iteration " + iter); break;}
+	            boolean haveNewHyp = mergeNbest(oldNbestMergedFile, f_nbest, newNbestMergedFile);
+	            if(haveNewHyp==false) {
+	            	System.out.println("No new hypotheses generated at iteration " + iter); 
+	            	break;
+	            }
             }
         	
         	//String f_nbest_merged_new = "C:/Users/zli/Documents/minriskannealer.nbest.merged.17";//????????????
         	//String f_nbest_merged_new = "C:/Users/zli/Documents/minriskannealer.nbest.merged.1";//????????????
-        	GradientComputer gradientComputer = new NbestRiskGradientComputer(f_nbest_merged_new, referenceFiles, useShortestRef, numTrainingSentence, numPara, MRConfig.gainFactor, 1.0, 0.0, true, MRConfig.linearCorpusGainThetas);
+        	GradientComputer gradientComputer = new NbestRiskGradientComputer(newNbestMergedFile, referenceFiles, useShortestRef, numTrainingSentence, numPara, MRConfig.gainFactor, 1.0, 0.0, true, MRConfig.linearCorpusGainThetas);
         	annealer = new DeterministicAnnealer( numPara,  lastWeightVector, MRConfig.isMinimizer, gradientComputer, 
         			this.useL2Regula, this.varianceForL2, this.useModelDivergenceRegula, this.lambda, this.printFirstN);
         	
