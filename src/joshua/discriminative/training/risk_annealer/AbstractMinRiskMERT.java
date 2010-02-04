@@ -101,13 +101,15 @@ public abstract class AbstractMinRiskMERT {
 
 	protected void normalizeWeightsByFirstFeature(double[] weightVector, int featID){
 		double weight = weightVector[featID];
+		
 		if(weight<=0){
 			logger.warning("first weight is negative"); 
 			//System.exit(0);
-		}else{
-			for(int i=0; i<weightVector.length; i++)
-				weightVector[i] /=  Math.abs( weight );
 		}
+		
+		for(int i=0; i<weightVector.length; i++)
+			weightVector[i] /=  Math.abs( weight );
+		
 	}
 	
 

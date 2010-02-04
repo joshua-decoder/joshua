@@ -340,7 +340,7 @@ public class HGMinRiskDAMert extends AbstractMinRiskMERT {
 			
 			if(MRConfig.useMicroTMFeat){	
 				//FeatureTemplate ft = new TMFT(symbolTbl, useIntegerString, MRConfig.useRuleIDName);
-				this.microRuleFeatureTemplate = new MicroRuleFT(MRConfig.useRuleIDName, MRConfig.startTargetNgramOrder, MRConfig.endNgramOrder, MRConfig.wordMapFile);
+				this.microRuleFeatureTemplate = new MicroRuleFT(MRConfig.useRuleIDName, MRConfig.startTargetNgramOrder, MRConfig.endTargetNgramOrder, MRConfig.wordMapFile);
 				featTemplates.add(microRuleFeatureTemplate);
 			}
 			
