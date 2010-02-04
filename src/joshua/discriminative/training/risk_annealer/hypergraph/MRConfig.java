@@ -86,6 +86,11 @@ public class MRConfig {
 	
 	public static int printFirstN=2;
 	
+	//==loss augmented inferene
+	public static boolean lossAugmentedPrune = false;
+	public static double startLossScale = 10;
+	public static double lossDecreaseConstant = 1;
+	
 		
 	private static final Logger logger =
 		Logger.getLogger(MRConfig.class.getName());
@@ -122,7 +127,19 @@ public class MRConfig {
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("googleBLEUWeights: %s", linearCorpusGainThetas));		
 					
-				}  else if ("oneTimeHGRerank".equals(fds[0])) {
+				} else if ("lossAugmentedPrune".equals(fds[0])) {
+					lossAugmentedPrune = new Boolean(fds[1].trim());
+					if (logger.isLoggable(Level.FINEST))
+						logger.finest(String.format("lossAugmentedPrune: %s", lossAugmentedPrune));					
+				} else if ("startLossScale".equals(fds[0])) {
+					startLossScale = new Double(fds[1].trim());
+					if (logger.isLoggable(Level.FINEST))
+						logger.finest(String.format("startLossScale: %s", startLossScale));					
+				} else if ("lossDecreaseConstant".equals(fds[0])) {
+					lossDecreaseConstant = new Double(fds[1].trim());
+					if (logger.isLoggable(Level.FINEST))
+						logger.finest(String.format("lossDecreaseConstant: %s", lossDecreaseConstant));					
+				} else if ("oneTimeHGRerank".equals(fds[0])) {
 					oneTimeHGRerank = new Boolean(fds[1].trim());
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("oneTimeHGRerank: %s", oneTimeHGRerank));					

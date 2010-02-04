@@ -1,9 +1,9 @@
-#lm_file=example2/example2.4gram.lm.gz
+lm_file=example2/example2.4gram.lm.gz
 #lm_file=C:/data_disk/java_work_space/sf_trunk/example/example.trigram.lm.gz
-lm_file=aexperiment/iwslt/models/corpus.en.lm.gz
+#lm_file=aexperiment/iwslt/models/corpus.en.lm.gz
 
-#tm_file=example/example.hiero.tm.gz
-tm_file=aexperiment/iwslt/models/iwslt.grammar.combined.gz
+tm_file=example/example.hiero.tm.gz
+#tm_file=aexperiment/iwslt/models/iwslt.grammar.combined.gz
 tm_format=hiero
 
 glue_file=grammars/hiero.glue
@@ -14,7 +14,7 @@ use_srilm=false
 lm_ceiling_cost=100
 use_left_euqivalent_state=false
 use_right_euqivalent_state=false
-order=5
+order=4
 
 
 #tm config
@@ -51,7 +51,7 @@ remote_lm_server_port=9000
 
 
 #parallel deocoder: it cannot be used together with remote lm
-num_parallel_decoders=10
+num_parallel_decoders=1
 parallel_files_prefix=.
 
 #disk hg
@@ -83,7 +83,7 @@ arityphrasepenalty glue 1 2 2.0
 wordpenalty -2.844814
 #latticecost 1.0
 
-#oracle example/example.test.ref.0 example/example.test.ref.1 example/example.test.ref.2 example/example.test.ref.3 1.0
+oracle example/example.test.ref.0 example/example.test.ref.1 example/example.test.ref.2 example/example.test.ref.3 1.0
 
 #========================discriminative model options
 #discriminative aexperiment/featureFile 1.0
@@ -100,10 +100,16 @@ printFirstN=10
 normalizeByFirstFeature=true
 fixFirstFeature=false
 
+#loss-augmented pruning
+lossAugmentedPrune=true
+startLossScale=10
+lossDecreaseConstant=2
+
 
 #google linear corpus gain
 useGoogleLinearCorpusGain=true
-googleBLEUWeights=-1.0;0.10277777076514476;0.07949965001350584;0.6993000659479868;0.09565585699195878
+#googleBLEUWeights=-1.0;0.10277777076514476;0.07949965001350584;0.6993000659479868;0.09565585699195878
+googleBLEUWeights=-1.0;0.2941176470588235;0.42016806722689076;0.6002400960384154;0.8574858514834507
 
 #annealing?
 annealingMode=0

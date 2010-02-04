@@ -54,6 +54,11 @@ public class HGMinRiskDAMert extends AbstractMinRiskMERT {
 	
 	boolean haveRefereces = true;
 	
+	
+	//== for loss-augmented pruning
+	double curLossScale = 0;
+	int oralceFeatureID = 0;
+	
 	static private Logger logger = 
 		Logger.getLogger(HGMinRiskDAMert.class.getSimpleName());
 	
@@ -82,6 +87,25 @@ public class HGMinRiskDAMert extends AbstractMinRiskMERT {
 			joshuaDecoder = JoshuaDecoder.getUninitalizedDecoder();
 			joshuaDecoder.initialize(configFile);
 		}
+		
+		//oralce id-realted
+		Integer id = inferOracleFeatureID(this.configFile);
+		if(id != null && MRConfig.lossAugmentedPrune==false ){
+			logger.severe("lossAugmentedPrune=false, but has a oracle model");
+			System.exit(1);
+		}
+		if(MRConfig.lossAugmentedPrune == true){
+			if(id==null){
+				logger.severe("no oralce model while doing loss-augmented pruning, must be wrong");
+				System.exit(1);
+			}else{
+				this.oralceFeatureID = id;
+			}
+			
+			this.curLossScale = MRConfig.startLossScale;
+			logger.info("startLossScale="+MRConfig.startLossScale+"; oralceFeatureID="+this.oralceFeatureID);
+		}
+		
 		
 		if(haveRefereces==false){//minimize conditional entropy
 			MRConfig.temperatureAtNoAnnealing = 1;//TODO
@@ -174,6 +198,12 @@ public class HGMinRiskDAMert extends AbstractMinRiskMERT {
 	        	FileUtility.deleteFile(this.curHypFilePrefix+".hg.items");
 	        	FileUtility.deleteFile(this.curHypFilePrefix+".hg.rules");
         	}
+        	
+        	if(MRConfig.lossAugmentedPrune){
+    			this.curLossScale -= MRConfig.lossDecreaseConstant;
+    			if(this.curLossScale<=0)
+    				this.curLossScale = 0;
+    		}
         }
         
         //final output
@@ -404,6 +434,11 @@ public class HGMinRiskDAMert extends AbstractMinRiskMERT {
 				int featID = featureStringToIntegerMap.get(featName);
 				weights.set(id, baselineWeight*lastWeightVector[featID]);				
 			}
+		}
+		
+		if(MRConfig.lossAugmentedPrune){
+			weights.set(this.oralceFeatureID, this.curLossScale);
+			System.out.println("curLossScale=" + this.curLossScale + "; oralceFeatureID="+this.oralceFeatureID);
 		}
 		
 		double[] res = new double[weights.size()];

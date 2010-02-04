@@ -66,6 +66,37 @@ public abstract class AbstractMinRiskMERT {
 	}
 	
 	
+	protected Integer inferOracleFeatureID(String configFile){
+		
+		//== get the weights
+		
+		BufferedReader configReader = FileUtilityOld.getReadFileStream(configFile);
+		String line;
+		int id = 0;
+		Integer oracleFeatureID = null;
+		while ((line = FileUtilityOld.readLineLzf(configReader)) != null) {
+			line = line.trim();
+			if (line.matches("^\\s*\\#.*$") || line.matches("^\\s*$")) {
+				continue;
+			}else if (line.indexOf("=") != -1) { // parameters
+				continue;				
+			}else{//models
+				String[] fds = line.split("\\s+");
+				if("oracle".equals(fds[0])){
+					if(oracleFeatureID==null)
+						oracleFeatureID = id;
+					else{
+						logger.severe("more than one oralce model, must be wrong");
+						System.exit(1);
+					}
+				}
+				id++;
+			}
+		}
+		FileUtilityOld.closeReadFile(configReader);
+	
+		return oracleFeatureID;
+	}
 	
 
 	protected void normalizeWeightsByFirstFeature(double[] weightVector, int featID){
