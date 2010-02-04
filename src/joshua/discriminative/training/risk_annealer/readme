@@ -1,0 +1,43 @@
+three training scenarios:
+
+(1) tune baseline features only (just like mert)
+
+useIndividualBaselines=true
+useSparseFeature=false
+useBaseline=false
+
+### chose features to tune, must be in order
+baselineFeatIDsToTune=0;1;2;3;4;5;6;7;8;9
+
+(2) tune  sparse features only
+
+#first, must have a model,
+discriminative aexperiment/featureFile 1.0
+
+#second, set training scenario
+useIndividualBaselines=false
+useSparseFeature=true
+useBaseline=false
+
+#now, choose feature templates:
+useTMFeat=true
+#example: x ||| i am ||| i am
+
+useTMTargetFeat=false
+
+useMicroTMFeat=true
+wordMapFile=src/joshua/discriminative/training/risk_annealer/data/wordMap
+
+useLMFeat=true
+startNgramOrder=1
+endNgramOrder=2
+
+
+(3) tune one aggregate baseline feature + sparse features
+
+useIndividualBaselines=false
+useSparseFeature=true
+useBaseline=true
+
+
+
