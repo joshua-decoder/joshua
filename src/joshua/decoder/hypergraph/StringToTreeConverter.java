@@ -1,12 +1,9 @@
 package joshua.decoder.hypergraph;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Stack;
 
-import joshua.decoder.chart_parser.SourcePath;
-import joshua.decoder.ff.state_maintenance.DPState;
-import joshua.decoder.ff.tm.Rule;
+//example: (ROOT ([S] ([X] ([X] scientists completed ([X] for ([X] ([X] chromosome) related to ([X] early ([X] OOV))))) sequencing)))
 
 public class StringToTreeConverter {
 	
