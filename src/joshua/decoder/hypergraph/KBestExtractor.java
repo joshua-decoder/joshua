@@ -118,12 +118,23 @@ public class KBestExtractor {
 	 * */
 	//***************** you may need to reset_state() before you call this function for the first time
 	public String getKthHyp(HGNode it, int k,  int sentID, List<FeatureFunction> models) {
+		
 		this.sentID = sentID;
 		VirtualNode virtualNode = addVirtualNode(it);
+		
+		//==== setup the kbest at each hgnode
 		DerivationState cur = virtualNode.lazyKBestExtractOnNode(symbolTable, this, k);
 		if( cur==null) 
 			return null;
-		return getKthHyp(cur, sentID, models);
+		
+		//==== read the kbest from each hgnode and convert to output format
+		double[] modelCost = null;
+		if(models!=null) 
+			modelCost = new double[models.size()];		
+		String strHypNumeric = cur.getHypothesis(symbolTable, this, extractNbestTree, modelCost,models);	
+		//for(int k=0; k<model_cost.length; k++) System.out.println(model_cost[k]);
+		String strHypStr = convertHyp2String(sentID, cur, models, strHypNumeric, modelCost);
+		return strHypStr;
 	}
 	
 	
@@ -219,16 +230,6 @@ public class KBestExtractor {
 		virtualNodesTbl.clear();
 	}
 	
-	
-	private String getKthHyp(DerivationState cur, int sentID, List<FeatureFunction> models){
-		double[] modelCost = null;
-		if(models!=null) 
-			modelCost = new double[models.size()];		
-		String strHypNumeric = cur.getHypothesis(symbolTable, this, extractNbestTree, modelCost,models);	
-		//for(int k=0; k<model_cost.length; k++) System.out.println(model_cost[k]);
-		String strHypStr = convertHyp2String(sentID, cur, models, strHypNumeric, modelCost);
-		return strHypStr;
-	}
 	
 	/* non-recursive function
 	 * format: sent_id ||| hyp ||| individual model cost ||| combined cost
