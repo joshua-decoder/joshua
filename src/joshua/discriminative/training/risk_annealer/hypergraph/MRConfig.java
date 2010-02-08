@@ -91,7 +91,12 @@ public class MRConfig {
 	public static double startLossScale = 10;
 	public static double lossDecreaseConstant = 1;
 	
-		
+	//nbest based training
+	public static boolean use_unique_nbest    = false;
+	public static boolean use_tree_nbest      = false;
+	public static int topN = 500;
+	public static boolean use_kbest_hg = false;
+	
 	private static final Logger logger =
 		Logger.getLogger(MRConfig.class.getName());
 	
@@ -270,7 +275,23 @@ public class MRConfig {
 					printFirstN = new Integer(fds[1].trim());
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("printFirstN: %s", printFirstN));					
-				} 
+				} else if ("use_unique_nbest".equals(fds[0])) {
+					use_unique_nbest = Boolean.valueOf(fds[1]);
+					if (logger.isLoggable(Level.FINEST)) 
+						logger.finest(String.format("use_unique_nbest: %s", use_unique_nbest));					
+				} else if ("use_tree_nbest".equals(fds[0])) {
+					use_tree_nbest = Boolean.valueOf(fds[1]);
+					if (logger.isLoggable(Level.FINEST)) 
+						logger.finest(String.format("use_tree_nbest: %s", use_tree_nbest));					
+				} else if ("top_n".equals(fds[0])) {
+					topN = Integer.parseInt(fds[1]);
+					if (logger.isLoggable(Level.FINEST))
+						logger.finest(String.format("topN: %s", topN));					
+				} else if ("use_kbest_hg".equals(fds[0])) {
+					use_kbest_hg = Boolean.valueOf(fds[1]);
+					if (logger.isLoggable(Level.FINEST)) 
+						logger.finest(String.format("use_kbest_hg: %s", use_kbest_hg));					
+				}
 									
 				
 			}else{//models

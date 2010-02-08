@@ -97,11 +97,13 @@ public class HGNode implements Prunable<HGNode> {
 //===============================================================
 	
 	public void addHyperedgeInNode(HyperEdge dt) {
-		if (null == hyperedges) {
-			hyperedges = new ArrayList<HyperEdge>();
+		if(dt!=null){
+			if (null == hyperedges) {
+				hyperedges = new ArrayList<HyperEdge>();
+			}
+			hyperedges.add(dt);
+			semiringPlus(dt);
 		}
-		hyperedges.add(dt);
-		semiringPlus(dt);
 	}
 	
 	public void semiringPlus(HyperEdge dt){		
@@ -163,6 +165,10 @@ public class HGNode implements Prunable<HGNode> {
 	
 	public void releaseDPStatesMemory(){
 		dpStates = null;
+	}
+	
+	public double getEstTotalLogP(){
+		return this.estTotalLogP;
 	}
 	
 	

@@ -18,23 +18,23 @@
 package joshua.decoder.hypergraph;
 
 
-import joshua.decoder.chart_parser.ComputeNodeResult;
-import joshua.decoder.ff.FeatureFunction;
-import joshua.decoder.ff.tm.Rule;
-import joshua.corpus.vocab.SymbolTable;
-import joshua.util.Regex;
-import joshua.util.CoIterator;
-import joshua.util.io.UncheckedIOException;
-
 import java.io.BufferedWriter;
-import java.io.OutputStreamWriter;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.PriorityQueue;
-import java.util.logging.Level;
+import java.util.Set;
 import java.util.logging.Logger;
+
+import joshua.corpus.vocab.SymbolTable;
+import joshua.decoder.chart_parser.ComputeNodeResult;
+import joshua.decoder.ff.FeatureFunction;
+import joshua.decoder.ff.tm.Rule;
+import joshua.util.CoIterator;
+import joshua.util.Regex;
+import joshua.util.io.UncheckedIOException;
 
 /**
  * This class implements lazy k-best extraction on a hyper-graph.
@@ -64,17 +64,8 @@ public class KBestExtractor {
 		Logger.getLogger(KBestExtractor.class.getName());
 	
 	private final HashMap<HGNode,VirtualNode> virtualNodesTbl = new HashMap<HGNode,VirtualNode>();
+
 	
-	/**
-	 * Shared symbol table for source language terminals, target
-	 * language terminals, and shared nonterminals.
-	 * <p>
-	 * It may be that separate tables should be maintained for
-	 * the source and target languages.
-	 * <p>
-	 * TODO It seems likely that only a target side symbol table
-	 *      is required for this class.
-	 */
 	private final SymbolTable symbolTable;
 	
 	
@@ -106,18 +97,13 @@ public class KBestExtractor {
 		this.addCombinedScore = addCombinedScore;
 		this.isMonolingual = isMonolingual;
 		this.performSanityCheck = performSanityCheck;
-		System.out.println("===============sanitycheck="+performSanityCheck);
+		//System.out.println("===============sanitycheck="+performSanityCheck);
 	}
 	
 	
-	/*get the k-th hyp at the node
-	 * format: sent_id ||| hyp ||| individual model cost ||| combined cost
-	 * sent_id<0: do not add sent_id
-	 * l_models==null: do not add model cost
-	 * add_combined_score==f: do not add combined model cost
-	 * */
+	//k start from 1
 	//***************** you may need to reset_state() before you call this function for the first time
-	public String getKthHyp(HGNode it, int k,  int sentID, List<FeatureFunction> models) {
+	public String getKthHyp(HGNode it, int k,  int sentID, List<FeatureFunction> models, int[] numNodesAndEdges) {
 		
 		this.sentID = sentID;
 		VirtualNode virtualNode = addVirtualNode(it);
@@ -126,16 +112,103 @@ public class KBestExtractor {
 		DerivationState cur = virtualNode.lazyKBestExtractOnNode(symbolTable, this, k);
 		if( cur==null) 
 			return null;
-		
-		//==== read the kbest from each hgnode and convert to output format
-		double[] modelCost = null;
-		if(models!=null) 
-			modelCost = new double[models.size()];		
-		String strHypNumeric = cur.getHypothesis(symbolTable, this, extractNbestTree, modelCost,models);	
-		//for(int k=0; k<model_cost.length; k++) System.out.println(model_cost[k]);
-		String strHypStr = convertHyp2String(sentID, cur, models, strHypNumeric, modelCost);
-		return strHypStr;
+		else{		
+			//==== read the kbest from each hgnode and convert to output format
+			double[] modelCost = null;
+			if(models!=null) 
+				modelCost = new double[models.size()];		
+			String strHypNumeric = cur.getHypothesis(symbolTable, this, extractNbestTree, modelCost, models, numNodesAndEdges);	
+			//for(int k=0; k<model_cost.length; k++) System.out.println(model_cost[k]);
+			String strHypStr = convertHyp2String(sentID, cur, models, strHypNumeric, modelCost);
+			return strHypStr;
+		}
 	}
+	
+	//================= extract kbest into trivial kbest hypergraphs	
+	public HyperGraph extractKbestIntoHyperGraph(HyperGraph inHG, int topN){
+		if ( inHG.goalNode == null ){
+			logger.severe("Goal node is null");
+			System.exit(1);
+		} 
+		resetState();
+		
+		List<HyperGraph> hgs = new ArrayList<HyperGraph>();
+		int nextN = 0;
+		while (true) {
+			int[] numNodesAndEdges = new int[2];
+			HGNode newGoalNode = getKthHyp(inHG.goalNode, ++nextN, numNodesAndEdges);
+			
+			if(newGoalNode!=null){
+				hgs.add( new HyperGraph(newGoalNode, numNodesAndEdges[0], numNodesAndEdges[1], inHG.sentID, inHG.sentLen) );
+			}
+			
+			if (null == newGoalNode || nextN >= topN) 
+				break;
+		}
+		//System.out.println("numHgs=" + hgs.size() + " for topn="+topN);
+		return HyperGraph.mergeHyperGraphs(hgs);
+	}
+	
+	//k start from 1
+	public HGNode  getKthHyp(HGNode it, int k, int[] numNodesAndEdges) {
+		//==== setup the kbest at each hgnode
+		VirtualNode virtualNode = addVirtualNode(it);
+		DerivationState cur = virtualNode.lazyKBestExtractOnNode(symbolTable, this, k);
+		if( cur==null) 
+			return null;
+		else{		
+			//==== recursive setup hgnodes
+			return cur.getHypothesis(this, numNodesAndEdges);
+		}
+	}
+	
+	/*
+	public void  getNumNodesAndEdges(HGNode it, int k, int[] numNodesAndEdges) {
+		//==== setup the kbest at each hgnode
+		VirtualNode virtualNode = addVirtualNode(it);
+		DerivationState cur = virtualNode.lazyKBestExtractOnNode(symbolTable, this, k);
+		if( cur==null){ 
+			numNodesAndEdges[0]=0;
+			numNodesAndEdges[1]=0;
+		}else{		
+			cur.getNumNodesAndEdges(this, numNodesAndEdges);
+		}
+	}
+	*/
+	
+	/**Filter out those hypotheses that are already in uniqueHyps
+	 * */
+	public void filterKbestHypergraph(HyperGraph hg, Set<String> uniqueHyps){
+		resetState();
+		
+		for(int i=0; i<hg.goalNode.hyperedges.size(); i++){
+			HyperEdge goalEdge = hg.goalNode.hyperedges.get(i);	
+			if(goalEdge.getAntNodes().size()!=1){
+				logger.severe("gaol edge does not have exactly one child, must be wrong");
+				System.exit(1);
+			}
+			HGNode childNode = goalEdge.getAntNodes().get(0);
+		
+
+			//get the yield and number of nodes and edges in the tree
+			int[] numNodesAndEdges = new int[2];
+			String hypStr = getKthHyp(childNode, 1, hg.sentID, null, numNodesAndEdges);
+			if(hypStr==null || (numNodesAndEdges[0]==0 && numNodesAndEdges[1]==0 )){
+				logger.severe("hypStr==null or numNodesAndEdges==0, must be wrong");
+				System.exit(1);
+			}
+			
+			if(uniqueHyps.contains(hypStr)){//skip this edge
+				hg.numNodes -= numNodesAndEdges[0];
+				hg.numEdges -= (numNodesAndEdges[1]+1);
+				hg.goalNode.hyperedges.remove(i);
+				i--;
+			}else{
+				uniqueHyps.add(hypStr);				
+			}
+		}
+	}
+	//=========================== end kbestHypergraph
 	
 	
 	public void lazyKBestExtractOnHG(
@@ -158,7 +231,7 @@ public class KBestExtractor {
 	
 	public void lazyKBestExtractOnHG(
 			HyperGraph hg, List<FeatureFunction> models,
-			int globalN,
+			int topN,
 			int sentID, 
 			BufferedWriter out
 		) throws IOException {
@@ -177,9 +250,6 @@ public class KBestExtractor {
 						try {
 							writer.write(hypStr);
 							writer.write("\n");
-							if (logger.isLoggable(Level.FINE)) {
-								logger.fine(hypStr);
-							}
 						} catch (IOException e) {
 							throw new UncheckedIOException(e);
 						}
@@ -189,7 +259,7 @@ public class KBestExtractor {
 					}
 				};
 				
-				this.lazyKBestExtractOnHG(hg, models, globalN, sentID, coIt);
+				this.lazyKBestExtractOnHG(hg, models, topN, sentID, coIt);
 			} catch (UncheckedIOException e) {
 				e.throwCheckedException();
 			}
@@ -199,7 +269,7 @@ public class KBestExtractor {
 	private void lazyKBestExtractOnHG(
 		HyperGraph hg, 
 		List<FeatureFunction> featureFunctions, 
-		int globalN,
+		int topN,
 		int sentID, 
 		CoIterator<String> coit) {
 	
@@ -213,11 +283,12 @@ public class KBestExtractor {
 		try {
 			int nextN = 0;
 			while (true) {
-				String hypStr = getKthHyp(hg.goalNode, ++nextN, sentID, featureFunctions);
-				if (null == hypStr || nextN > globalN) 
-					break;
+				String hypStr = getKthHyp(hg.goalNode, ++nextN, sentID, featureFunctions, null);
+				if(hypStr !=null)
+					coit.coNext(hypStr);
 				
-				coit.coNext(hypStr);
+				if (null == hypStr || nextN >= topN) 
+					break;
 			}
 			//g_time_kbest_extract += System.currentTimeMillis()-start;
 		} finally {
@@ -348,10 +419,7 @@ public class KBestExtractor {
 		}
 		
 		//return: the k-th hyp or null; k is started from one
-		private DerivationState lazyKBestExtractOnNode(SymbolTable symbolTbl,
-			KBestExtractor kbestExtator,
-			int             k
-		) {
+		private DerivationState lazyKBestExtractOnNode(SymbolTable symbolTbl, KBestExtractor kbestExtator, int k) {
 			if (nbests.size() >= k) { // no need to continue
 				return nbests.get(k-1);
 			}
@@ -368,7 +436,7 @@ public class KBestExtractor {
 					//derivation_tbl.remove(res.get_signature());//TODO: should remove? note that two state may be tied because the cost is the same
 					if (extractUniqueNbest) {
 						boolean useTreeFormat=false;
-						String res_str = res.getHypothesis(symbolTbl, kbestExtator, useTreeFormat, null, null);
+						String res_str = res.getHypothesis(symbolTbl, kbestExtator, useTreeFormat, null, null,  null);
 						// We pass false for extract_nbest_tree because we want; 
 						// to check that the hypothesis *strings* are unique,
 						// not the trees.
@@ -503,10 +571,10 @@ public class KBestExtractor {
 	 * remember the ranks of a hyperedge node
 	 * used for kbest extraction*/
 	
-	//each DerivationState rougly correponds a hypothesis 
+	//each DerivationState roughly correponds to a hypothesis 
 	private class DerivationState implements Comparable<DerivationState> 
 	{
-		HGNode parentNode;
+		HGNode parentNode;//the parentNode of the edge
 		HyperEdge edge;//in the paper, it is "e"		
 		//**lesson: once we define this as a static variable, which cause big trouble
 		int edgePos; //this is my position in my parent's Item.l_hyperedges, used for signature calculation
@@ -539,7 +607,7 @@ public class KBestExtractor {
 		//get the numeric sequence of the particular hypothesis
 		//if want to get model cost, then have to set model_cost and l_models
 		private String getHypothesis(SymbolTable symbolTbl, KBestExtractor kbestExtator, boolean useTreeFormat, double[] modelCost,
-				List<FeatureFunction> models) {
+				List<FeatureFunction> models,  int[] numNodesAndEdges) {
 			//### accumulate cost of p_edge into model_cost if necessary
 			if (null != modelCost) {
 				computeCost(parentNode, edge, modelCost, models);
@@ -565,9 +633,7 @@ public class KBestExtractor {
 					res.append(' ');
 				}
 				for (int id = 0; id < edge.getAntNodes().size(); id++) {
-					HGNode child = edge.getAntNodes().get(id);
-					VirtualNode virtualChild = kbestExtator.addVirtualNode(child);
-					res.append( virtualChild.nbests.get(ranks[id]-1).getHypothesis(symbolTbl,kbestExtator, useTreeFormat, modelCost, models) );
+					res.append( getChildDerivationState(kbestExtator, edge, id).getHypothesis(symbolTbl,kbestExtator, useTreeFormat, modelCost, models, numNodesAndEdges) );
 					if (id < edge.getAntNodes().size()-1) res.append(' ');
 				}
 				if (useTreeFormat) 
@@ -591,9 +657,7 @@ public class KBestExtractor {
 					for (int c = 0; c < english.length; c++) {
 						if (symbolTbl.isNonterminal(english[c])) {
 							int id = symbolTbl.getTargetNonterminalIndex(english[c]);
-							HGNode child = edge.getAntNodes().get(id);
-							VirtualNode virtualChild = kbestExtator.addVirtualNode(child);
-							res.append( virtualChild.nbests.get(ranks[id]-1).getHypothesis(symbolTbl, kbestExtator, useTreeFormat, modelCost, models));
+							res.append( getChildDerivationState(kbestExtator, edge, id).getHypothesis(symbolTbl, kbestExtator, useTreeFormat, modelCost, models, numNodesAndEdges));
 						} else {
 							res.append(english[c]);
 						}
@@ -604,9 +668,7 @@ public class KBestExtractor {
 					int nonTerminalID = 0;//the position of the non-terminal in the rule
 					for (int c = 0; c < french.length; c++) {
 						if (symbolTbl.isNonterminal(french[c])) {
-							HGNode child =  edge.getAntNodes().get(nonTerminalID);
-							VirtualNode virtualChild = kbestExtator.addVirtualNode(child);
-							res.append( virtualChild.nbests.get(ranks[nonTerminalID]-1).getHypothesis(symbolTbl,kbestExtator, useTreeFormat, modelCost, models));
+							res.append( getChildDerivationState(kbestExtator, edge, nonTerminalID).getHypothesis(symbolTbl,kbestExtator, useTreeFormat, modelCost, models, numNodesAndEdges));
 							nonTerminalID++;
 						} else {
 							res.append(french[c]);
@@ -614,10 +676,52 @@ public class KBestExtractor {
 						if (c < french.length-1) res.append(' ');
 					}
 				}
-				if (useTreeFormat) res.append(')');
+				if (useTreeFormat) 
+					res.append(')');
+			}
+			if(numNodesAndEdges!=null){
+				numNodesAndEdges[0]++;
+				numNodesAndEdges[1]++;
+			}
+			return res.toString();
+		}
+		
+		private HGNode getHypothesis( KBestExtractor kbestExtator,  int[] numNodesAndEdges) {
+			
+			List<HGNode> newAntNodes = null;
+			if(edge.getAntNodes()!=null){
+				newAntNodes = new ArrayList<HGNode>();
+				for (int id = 0; id < edge.getAntNodes().size(); id++) {
+					HGNode newNode = getChildDerivationState(kbestExtator, edge, id).getHypothesis(kbestExtator, numNodesAndEdges) ;	
+					newAntNodes.add(newNode);
+				}
 			}
 			
-			return res.toString();
+			HyperEdge newEdge = new HyperEdge(edge.getRule(), this.cost, edge.getTransitionLogP(false), newAntNodes, edge.getSourcePath());
+			numNodesAndEdges[1]++;
+			
+			HGNode newNode = new HGNode(parentNode.i, parentNode.j, parentNode.lhs, parentNode.dpStates, newEdge, parentNode.getEstTotalLogP());
+			numNodesAndEdges[0]++;
+			
+			return newNode;	
+		}
+		
+		/*
+		private void getNumNodesAndEdges(KBestExtractor kbestExtator, int[] numNodesAndEdges) {			
+			if(edge.getAntNodes()!=null){
+				for (int id = 0; id < edge.getAntNodes().size(); id++) {
+					getChildDerivationState(kbestExtator, edge, id).getNumNodesAndEdges(kbestExtator, numNodesAndEdges) ;						
+				}
+			}
+			numNodesAndEdges[0]++;
+			numNodesAndEdges[1]++;
+		}
+		*/
+		
+		private DerivationState getChildDerivationState(KBestExtractor kbestExtator, HyperEdge edge, int id){
+			HGNode child = edge.getAntNodes().get(id);
+			VirtualNode virtualChild = kbestExtator.addVirtualNode(child);
+			return virtualChild.nbests.get(ranks[id]-1);
 		}
 		
 		/*
@@ -678,6 +782,7 @@ public class KBestExtractor {
 				return 1;
 			}
 		}
+		
 	}//end of Class DerivationState
 	
 	private String getDerivationStateSignature(HyperEdge edge2, int[] ranks2, int pos) {

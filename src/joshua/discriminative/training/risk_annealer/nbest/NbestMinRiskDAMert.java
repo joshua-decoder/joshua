@@ -25,12 +25,6 @@ public abstract class NbestMinRiskDAMert extends AbstractMinRiskMERT {
 	
 	private static Logger logger = Logger.getLogger(NbestMinRiskDAMert.class.getSimpleName());
 	
-	//TODO
-	boolean useL2Regula = false;
-	double varianceForL2 = 1;
-	boolean useModelDivergenceRegula = false;
-	double lambda = 1;
-	int printFirstN = 5;
 	
 	public NbestMinRiskDAMert(boolean useShortestRef, String decoderConfigFile, int numSentInTrainSet, String[] refFiles, String nbestPrefix) {
 		super(decoderConfigFile, numSentInTrainSet, refFiles);	
@@ -70,7 +64,7 @@ public abstract class NbestMinRiskDAMert extends AbstractMinRiskMERT {
         	GradientComputer gradientComputer = new NbestRiskGradientComputer(newNbestMergedFile, referenceFiles, useShortestRef, numTrainingSentence, 
         			numPara, MRConfig.gainFactor, 1.0, 0.0, true, MRConfig.linearCorpusGainThetas);
         	annealer = new DeterministicAnnealer( numPara,  lastWeightVector, MRConfig.isMinimizer, gradientComputer, 
-        			this.useL2Regula, this.varianceForL2, this.useModelDivergenceRegula, this.lambda, this.printFirstN);
+        			MRConfig.useL2Regula, MRConfig.varianceForL2, MRConfig.useModelDivergenceRegula, MRConfig.lambda, MRConfig.printFirstN);
         	
         	if(MRConfig.annealingMode==0)//do not anneal
         		lastWeightVector = annealer.runWithoutAnnealing(MRConfig.isScalingFactorTunable, MRConfig.startScaleAtNoAnnealing, MRConfig.temperatureAtNoAnnealing);

@@ -73,9 +73,10 @@ public class NbestRiskGradientComputer extends GradientComputer {
 		this.totalNumSent = totalNumSent;
 		
 		this.linearCorpusGainThetas = linearCorpusGainThetas;
-		if(this.linearCorpusGainThetas!=null)
+		if(this.linearCorpusGainThetas!=null){
 			this.useGoogleLinearCorpusGain = true;
-		else
+			//System.out.println("============= use google corpuse blue ========="+ linearCorpusGainThetas[0] +"; " +linearCorpusGainThetas[1]);
+		}else
 			this.useGoogleLinearCorpusGain = false;
 		
 		preprocessCorpus(this.nbesFile, this.refFiles);
@@ -139,7 +140,7 @@ public class NbestRiskGradientComputer extends GradientComputer {
 //######preprocess:	create: l_feature_value, l_gain_withrespectto_ref, l_start_pos, l_end_pos
 	//do not need to store nbest and reference themselves
 	private void preprocessCorpus(String nbestFile, String[] refFiles){
-		System.out.println("preprocess nbest and ref files");
+		System.out.println("preprocess nbest " + nbestFile + " and ref files " + refFiles);
 		//### process nbest file
 		BufferedReader nbestReader = FileUtilityOld.getReadFileStream(nbestFile,"UTF-8");
 		BufferedReader[] refReaders = new BufferedReader[refFiles.length];

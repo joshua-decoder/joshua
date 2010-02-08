@@ -389,7 +389,12 @@ public class DecoderThread extends Thread {
 		}
 		
 		if (null != this.hypergraphSerializer) {
-			this.hypergraphSerializer.saveHyperGraph(hypergraph);
+			if(JoshuaConfiguration.use_kbest_hg){
+				HyperGraph kbestHG = this.kbestExtractor.extractKbestIntoHyperGraph(hypergraph, JoshuaConfiguration.topN);
+				this.hypergraphSerializer.saveHyperGraph(kbestHG);
+			}else{
+				this.hypergraphSerializer.saveHyperGraph(hypergraph);				
+			}
 		}
 		
 		/* //debug

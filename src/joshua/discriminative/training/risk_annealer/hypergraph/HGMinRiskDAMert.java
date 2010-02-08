@@ -2,6 +2,7 @@ package joshua.discriminative.training.risk_annealer.hypergraph;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -44,7 +45,6 @@ public class HGMinRiskDAMert extends AbstractMinRiskMERT {
 	
 	MicroRuleFT microRuleFeatureTemplate = null;
 	
-	
 	String hypFilePrefix;//training hypothesis file prefix
 	String curConfigFile;
 	String curFeatureFile;
@@ -53,6 +53,8 @@ public class HGMinRiskDAMert extends AbstractMinRiskMERT {
 	boolean useIntegerString = false;//TODO
 	
 	boolean haveRefereces = true;
+	
+	int totalNumHyp = 0;
 	
 	
 	//== for loss-augmented pruning
@@ -119,6 +121,7 @@ public class HGMinRiskDAMert extends AbstractMinRiskMERT {
 	}
 
 	
+	
 	public void mainLoop(){
 		
 		/**Here, we need multiple iterations as we do pruning when generate the hypergraph
@@ -143,6 +146,40 @@ public class HGMinRiskDAMert extends AbstractMinRiskMERT {
 	        	decodingTestSet(null, curHypFilePrefix);
         	}
 
+        	
+        	//==== merge hypergrphs and check convergency
+        	if(MRConfig.use_kbest_hg){
+        		try {
+		        	String oldMergedFile = hypFilePrefix +".merged." + (iter-1);
+		        	String newMergedFile = hypFilePrefix +".merged." + (iter);
+		        	if(iter ==1){		        		
+						FileUtility.copyFile(curHypFilePrefix+".hg.items", newMergedFile+".hg.items");						
+		        		FileUtility.copyFile(curHypFilePrefix+".hg.rules", newMergedFile+".hg.rules");
+		        	}else{
+		        		boolean saveModelCosts = true;
+			         
+			            /**TODO: this assumes that the feature values for the same hypothesis does not change,
+			             * though the weights for these features can change. In particular, this means
+			             * we cannot tune the weight for the aggregate discriminative model while we are tunining the individual 
+			             * discriminative feature. This is also true for the bestHyperEdge pointer.*/
+			            int newTotalNumHyp = DiskHyperGraph.mergeDiskHyperGraphs(MRConfig.ngramStateID, saveModelCosts, this.numTrainingSentence, 
+			            		MRConfig.use_unique_nbest, MRConfig.use_tree_nbest,
+			            		oldMergedFile, curHypFilePrefix, newMergedFile);
+			            this.curHypFilePrefix = newMergedFile;
+			            
+			     
+			            if((newTotalNumHyp-totalNumHyp)*1.0/totalNumHyp<1e-1) {
+			            	System.out.println("No new hypotheses generated at iteration " + iter); 
+			            	break;
+			            }else{
+			            	totalNumHyp = newTotalNumHyp;
+			            }
+		            }
+        		} catch (IOException e) {
+					e.printStackTrace();
+				}
+        	}
+        	
         	Map<String, Integer>  ruleStringToIDTable = DiskHyperGraph.obtainRuleStringToIDTable(curHypFilePrefix+".hg.rules");
         	
         	//try to abbrevate the featuers if possible
@@ -259,10 +296,8 @@ public class HGMinRiskDAMert extends AbstractMinRiskMERT {
 		
 		
 		//==== kbest 
-		boolean useUniqueNbest =true;
-		boolean useTreeNbest = false;
 		boolean addCombinedCost = false;	
-		KBestExtractor kbestExtractor = new KBestExtractor(symbolTbl, useUniqueNbest, useTreeNbest, false, addCombinedCost, false, true);
+		KBestExtractor kbestExtractor = new KBestExtractor(symbolTbl, MRConfig.use_unique_nbest, MRConfig.use_tree_nbest, false, addCombinedCost, false, true);
 		
 		//==== loop
 		HyperGraphFactory hgFactory = new HyperGraphFactory(curHypFilePrefix, referenceFiles, MRConfig.ngramStateID,  symbolTbl, true);
@@ -271,7 +306,7 @@ public class HGMinRiskDAMert extends AbstractMinRiskMERT {
 			HGAndReferences res = hgFactory.nextHG();
 			reranker.rankHG(res.hg);//reset best pointer and transition prob
 		
-			String hypSent = kbestExtractor.getKthHyp(res.hg.goalNode, 1, -1, null);
+			String hypSent = kbestExtractor.getKthHyp(res.hg.goalNode, 1, -1, null, null);
 			double bleu = BLEU.computeSentenceBleu(res.referenceSentences, hypSent);
 			bleuSum  += bleu;
 			

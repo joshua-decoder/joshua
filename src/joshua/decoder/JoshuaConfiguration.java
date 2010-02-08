@@ -127,6 +127,7 @@ public class JoshuaConfiguration {
 	
 	//disk hg
 	public static boolean save_disk_hg             = false; //if true, save three files: fnbest, fnbest.hg.items, fnbest.hg.rules
+	public static boolean use_kbest_hg = false;
 	public static boolean forest_pruning           = false;
 	public static double  forest_pruning_threshold = 10;
 	
@@ -492,6 +493,11 @@ public class JoshuaConfiguration {
 					save_disk_hg = Boolean.valueOf(fds[1]);
 					if (logger.isLoggable(Level.FINEST)) 
 						logger.finest(String.format("save_disk_hg: %s", save_disk_hg));
+					
+				} else if ("use_kbest_hg".equals(fds[0])) {
+					use_kbest_hg = Boolean.valueOf(fds[1]);
+					if (logger.isLoggable(Level.FINEST)) 
+						logger.finest(String.format("use_kbest_hg: %s", use_kbest_hg));
 					
 				} else if ("forest_pruning".equals(fds[0])) {
 					forest_pruning = Boolean.valueOf(fds[1]);

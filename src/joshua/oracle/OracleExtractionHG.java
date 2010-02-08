@@ -207,7 +207,7 @@ public class OracleExtractionHG extends SplitHg {
 		double orc_bleu=-1;
 		String orc_sent=null;
 		while(true){
-			String hyp_sent = kbest_extractor.getKthHyp(hg.goalNode, ++next_n, -1, null);//?????????
+			String hyp_sent = kbest_extractor.getKthHyp(hg.goalNode, ++next_n, -1, null, null);//?????????
 			if(hyp_sent==null || next_n > n) break;
 			double t_bleu = compute_sentence_bleu(this.p_symbolTable, ref_sent, hyp_sent, do_ngram_clip, 4);
 			if(t_bleu>orc_bleu){

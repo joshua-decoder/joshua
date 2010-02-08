@@ -52,7 +52,7 @@ public class OracleExtractionOnHGV3 extends RefineHG<DPStateOracle> {
 		double orc_bleu=-1;
 		String orc_sent=null;
 		while(true){
-			String hyp_sent = kbest_extractor.getKthHyp(hg.goalNode, ++next_n, -1, null);//?????????
+			String hyp_sent = kbest_extractor.getKthHyp(hg.goalNode, ++next_n, -1, null, null);//?????????
 			//System.out.println(hyp_sent);
 			if(hyp_sent==null || next_n > n) break;
 			double t_bleu = computeSentenceBleu(this.symbolTable, ref_sent, hyp_sent, do_ngram_clip, 4);

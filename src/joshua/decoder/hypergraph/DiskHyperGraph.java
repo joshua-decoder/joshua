@@ -23,8 +23,10 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -222,8 +224,10 @@ public class DiskHyperGraph {
 	
 	public void closeReaders(){
 		try {
-			this.itemsReader.close();
-			this.ruleReader.close();
+			if(this.itemsReader!=null)
+				this.itemsReader.close();
+			if(this.ruleReader!=null)
+				this.ruleReader.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -399,15 +403,19 @@ public class DiskHyperGraph {
 	 * extended class to override it
 	 */
 	public String createModelLogPLine(HGNode parentNode, HyperEdge edge){
-		StringBuffer line = new StringBuffer();	
+		StringBuffer line = new StringBuffer();
+		double[] transitionLogPs = null;
+		if(this.featureFunctions!=null){
+			transitionLogPs = ComputeNodeResult.computeModelTransitionLogPs(
+					this.featureFunctions, edge, parentNode.i, parentNode.j, this.sentID);
+		}else{
+			transitionLogPs = ((WithModelLogPsHyperEdge) edge).modeLogPs;
+		}
 		
-		double[] transitionLogPs = ComputeNodeResult.computeModelTransitionLogPs(
-				this.featureFunctions, edge, parentNode.i, parentNode.j, this.sentID);
-		
-		for (int k = 0; k < this.featureFunctions.size(); k++) {
+		for (int k = 0; k < transitionLogPs.length; k++) {
 			line.append(String.format("%.4f", transitionLogPs[k]))
 				.append(
-					k < this.featureFunctions.size() - 1
+					k < transitionLogPs.length - 1
 					? " "
 					: "\n");
 		}
@@ -586,6 +594,55 @@ public class DiskHyperGraph {
 	}
 	
 
+	static public int mergeDiskHyperGraphs(int ngramStateID, boolean saveModelCosts, int totalNumSent,
+			boolean useUniqueNbest, boolean useTreeNbest,
+			String filePrefix1, String filePrefix2, String filePrefixOut) throws IOException{
+		
+		SymbolTable symbolTbl = new BuildinSymbol();
+		
+		DiskHyperGraph diskHG1 = new DiskHyperGraph(symbolTbl, ngramStateID, saveModelCosts, null); 
+		diskHG1.initRead(filePrefix1+".hg.items", filePrefix1+".hg.rules", null);
+		
+		DiskHyperGraph diskHG2 = new DiskHyperGraph(symbolTbl, ngramStateID, saveModelCosts, null); 
+		diskHG2.initRead(filePrefix2+".hg.items", filePrefix2+".hg.rules", null);
+		
+		DiskHyperGraph diskHGOut = new DiskHyperGraph(symbolTbl, ngramStateID, saveModelCosts, null);
+		
+		//TODO
+		boolean forestPruning = false;
+		double forestPruningThreshold = -1;		
+		diskHGOut.initWrite(filePrefixOut + ".hg.items", forestPruning, forestPruningThreshold);
+		
+		KBestExtractor kbestExtrator = new KBestExtractor(symbolTbl, useUniqueNbest, useTreeNbest,
+				false,	false,	false, false);
+		
+		int totalNumHyp = 0;
+		for(int sentID=0; sentID < totalNumSent; sentID ++){
+			System.out.println("#Process sentence " + sentID);
+			HyperGraph hg1 = diskHG1.readHyperGraph();
+			HyperGraph hg2 = diskHG2.readHyperGraph();
+			Set<String> uniqueHyps = new HashSet<String>();
+			kbestExtrator.filterKbestHypergraph(hg1, uniqueHyps);
+			kbestExtrator.filterKbestHypergraph(hg2, uniqueHyps);
+			HyperGraph mergedHG = HyperGraph.mergeTwoHyperGraphs(hg1, hg2);
+			diskHGOut.saveHyperGraph(mergedHG);
+			
+			/*System.out.println("size1=" + hg1.goalNode.hyperedges.size() + 
+							  "; size2=" + hg2.goalNode.hyperedges.size() +
+							  "; mergedsize=" + mergedHG.goalNode.hyperedges.size());
+			*/
+			totalNumHyp += mergedHG.goalNode.hyperedges.size();
+		}
+		diskHGOut.writeRulesNonParallel(filePrefixOut + ".hg.rules");
+		System.out.println("totalMergeSize="+totalNumHyp);
+		
+		diskHG1.closeReaders();
+		diskHG2.closeReaders();
+		diskHGOut.closeReaders();
+		diskHGOut.closeItemsWriter();
+		return totalNumHyp;
+	}
+	
 	
 	public void writeRulesNonParallel(String rulesFile)
 	throws IOException {

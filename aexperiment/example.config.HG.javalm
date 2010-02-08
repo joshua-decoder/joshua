@@ -36,10 +36,10 @@ rule_relative_threshold=10.0
 
 #nbest config
 use_unique_nbest=true
-use_tree_nbest=true
+use_tree_nbest=false
 add_combined_cost=true
 include_align_index=false
-top_n=30
+top_n=300
 
 
 #remoter lm server config,we should first prepare remote_symbol_tbl before starting any jobs
@@ -56,6 +56,7 @@ parallel_files_prefix=.
 
 #disk hg
 save_disk_hg=true
+use_kbest_hg=true
 forest_pruning=false
 forest_pruning_threshold=150
 
@@ -70,12 +71,12 @@ phrasemodel pt 1 0.752247
 phrasemodel pt 2 0.589793
 
 #arityphrasepenalty owner start_arity end_arity weight
-arityphrasepenalty pt 0 0 1.0
-arityphrasepenalty pt 1 1 -1.0
-arityphrasepenalty pt 2 2 -2.0
+#arityphrasepenalty pt 0 0 1.0
+#arityphrasepenalty pt 1 1 -1.0
+#arityphrasepenalty pt 2 2 -2.0
 
-arityphrasepenalty glue 1 1 1.0
-arityphrasepenalty glue 2 2 2.0
+#arityphrasepenalty glue 1 1 1.0
+#arityphrasepenalty glue 2 2 2.0
 
 #phrasemodel mono 0 0.5
 
@@ -83,7 +84,7 @@ arityphrasepenalty glue 2 2 2.0
 wordpenalty -2.844814
 #latticecost 1.0
 
-oracle example/example.test.ref.0 example/example.test.ref.1 example/example.test.ref.2 example/example.test.ref.3 1.0
+#oracle example/example.test.ref.0 example/example.test.ref.1 example/example.test.ref.2 example/example.test.ref.3 1.0
 
 #========================discriminative model options
 #discriminative aexperiment/featureFile 1.0
@@ -101,7 +102,7 @@ normalizeByFirstFeature=true
 fixFirstFeature=false
 
 #loss-augmented pruning
-lossAugmentedPrune=true
+lossAugmentedPrune=false
 startLossScale=10
 lossDecreaseConstant=2
 
@@ -126,7 +127,8 @@ baselineFeatureName=baseline_lzf
 baselineFeatureWeight=1.0
 
 useIndividualBaselines=true
-baselineFeatIDsToTune=0;1;2;3;4;5;6;7;8;9
+#baselineFeatIDsToTune=0;1;2;3;4;5;6;7;8;9
+baselineFeatIDsToTune=0;1;2;3;4
 
 #sparse features
 useSparseFeature=false
