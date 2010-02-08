@@ -618,7 +618,7 @@ public class DiskHyperGraph {
 		
 		int totalNumHyp = 0;
 		for(int sentID=0; sentID < totalNumSent; sentID ++){
-			System.out.println("#Process sentence " + sentID);
+			//System.out.println("#Process sentence " + sentID);
 			HyperGraph hg1 = diskHG1.readHyperGraph();
 			HyperGraph hg2 = diskHG2.readHyperGraph();
 			Set<String> uniqueHyps = new HashSet<String>();
