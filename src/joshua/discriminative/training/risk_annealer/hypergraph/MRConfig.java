@@ -96,6 +96,7 @@ public class MRConfig {
 	public static boolean use_tree_nbest      = false;
 	public static int topN = 500;
 	public static boolean use_kbest_hg = false;
+	public static double stop_hyp_ratio = 1e-2; //how many new hypotheses should be generated before converge
 	
 	private static final Logger logger =
 		Logger.getLogger(MRConfig.class.getName());
@@ -291,6 +292,10 @@ public class MRConfig {
 					use_kbest_hg = Boolean.valueOf(fds[1]);
 					if (logger.isLoggable(Level.FINEST)) 
 						logger.finest(String.format("use_kbest_hg: %s", use_kbest_hg));					
+				} else if ("stop_hyp_ratio".equals(fds[0])) {
+					stop_hyp_ratio = new Double( fds[1].trim() );
+					if (logger.isLoggable(Level.FINEST)) 
+						logger.finest(String.format("stop_hyp_ratio: %s", stop_hyp_ratio));					
 				}
 									
 				

@@ -168,8 +168,8 @@ public class HGMinRiskDAMert extends AbstractMinRiskMERT {
 			            this.curHypFilePrefix = newMergedFile;
 			            
 			     
-			            if((newTotalNumHyp-totalNumHyp)*1.0/totalNumHyp<5e-2) {
-			            	System.out.println("No new hypotheses generated at iteration " + iter); 
+			            if((newTotalNumHyp-totalNumHyp)*1.0/totalNumHyp<MRConfig.stop_hyp_ratio ) {
+			            	System.out.println("No new hypotheses generated at iteration " + iter + " for stop_hyp_ratio=" + MRConfig.stop_hyp_ratio); 
 			            	break;
 			            }else{
 			            	totalNumHyp = newTotalNumHyp;
