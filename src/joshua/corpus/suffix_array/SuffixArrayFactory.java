@@ -126,7 +126,6 @@ public class SuffixArrayFactory {
 	}
 
 
-	// HACK: This is package-private for ExtractRules and CorpusArrayTest to use
 	/**
 	 * Creates a new CorpusArray from a plain text file, given
 	 * a symbol table created from the same file.
@@ -148,21 +147,24 @@ public class SuffixArrayFactory {
 		LineReader lineReader = new LineReader(inputFilename);
 
 		for (String phraseString : lineReader) {
-			String[] wordStrings = phraseString.split("\\s+");
-			int[] words = new int[wordStrings.length];
-			for (int i = 0; i < wordStrings.length; i++) {
-				words[i] = vocab.getID(wordStrings[i]);
-			}
-
-			BasicPhrase sentence = new BasicPhrase(words, vocab);
+			int[] words = vocab.getIDs(phraseString);
+//			String[] wordStrings = phraseString.split("\\s+");
+//			int[] words = new int[wordStrings.length];
+//			for (int i = 0; i < wordStrings.length; i++) {
+//				words[i] = vocab.getID(wordStrings[i]);
+//			}
+//
+//			BasicPhrase sentence = new BasicPhrase(words, vocab);
 			sentenceIndexes[sentenceCounter] = wordCounter;
 			sentenceCounter++;
-
-			for(int i = 0; i < sentence.size(); i++) {
-				corpus[wordCounter] = sentence.getWordID(i);
-				wordCounter++;
-			}
-			if(SHOW_PROGRESS && sentenceCounter % 10000==0) logger.info(""+numWords);
+			System.arraycopy(words, 0, corpus, wordCounter, words.length);
+			wordCounter += words.length;
+//
+//			for(int i = 0; i < sentence.size(); i++) {
+//				corpus[wordCounter] = sentence.getWordID(i);
+//				wordCounter++;
+//			}
+//			if(SHOW_PROGRESS && sentenceCounter % 10000==0) logger.info(""+numWords);
 		}
 
 		return new CorpusArray(corpus, sentenceIndexes, vocab);

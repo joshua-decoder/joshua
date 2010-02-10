@@ -19,6 +19,8 @@ package joshua.decoder.ff;
 
 import joshua.decoder.ff.tm.Rule;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * 
@@ -27,6 +29,20 @@ import joshua.decoder.ff.tm.Rule;
  */
 public final class ArityPhrasePenaltyFF extends DefaultStatelessFF {
 	
+	/** Logger for this class. */
+	private static final Logger logger =
+		Logger.getLogger(ArityPhrasePenaltyFF.class.getName());
+	
+	/** 
+	 * Estimated log probability value 
+	 * of this feature function when active.
+	 * 
+	 * The value of this field should be equal to
+	 * <code>- Math.log10(Math.E)</code>.
+	 * <p>
+	 * This field is package-private to allow access
+	 * by unit tests for this class.
+	 */
 	static final double ALPHA = - Math.log10(Math.E);//-0.435
 	
 	// when the rule.arity is in the range, then this feature is activated
@@ -38,18 +54,17 @@ public final class ArityPhrasePenaltyFF extends DefaultStatelessFF {
 		super(weight, owner, featureID);
 		this.minArity = min;
 		this.maxArity = max;
-		System.out.println("ArityPhrasePenaltyFF feature with owner=" + this.owner +"; minArity=" + this.minArity+ "; maxArity="+this.maxArity);
+		if (logger.isLoggable(Level.FINE)) {
+			logger.fine("ArityPhrasePenaltyFF feature with owner=" + this.owner +"; minArity=" + this.minArity+ "; maxArity="+this.maxArity);
+		}
 	}
 	
-	
+	/* See Javadoc for FeatureFunction interface. */
 	public double estimateLogP(final Rule rule, int sentID) {
 		
 		if (this.owner == rule.getOwner()
-			&& rule.getArity() >= this.minArity 
-			&& rule.getArity() <= this.maxArity) {
-			//System.out.println("y");
-			//System.out.println(rule.getOwner() + "; " + rule.getArity() );
-			//System.out.println("ArityPhrasePenaltyFF feature with owner=" + this.owner +"; minArity=" + this.minArity+ "; maxArity="+this.maxArity);
+				&& rule.getArity() >= this.minArity 
+				&& rule.getArity() <= this.maxArity) {
 			return ALPHA;
 		} else {
 			

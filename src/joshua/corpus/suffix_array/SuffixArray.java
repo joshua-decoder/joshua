@@ -104,33 +104,33 @@ public class SuffixArray extends AbstractSuffixArray {
 	}
 	
 	
-	/**
-	 * Protected constructor takes in the already prepared
-	 * member variables.
-	 *
-	 * @see joshua.corpus.suffix_array.SuffixArrayFactory#createSuffixArray(Corpus,int)
-	 */	
-	protected SuffixArray(int[] suffixes, Corpus corpusArray) {
-		this(suffixes, corpusArray, DEFAULT_CACHE_CAPACITY);
-	}
-	
-	/**
-	 * Protected constructor takes in the already prepared
-	 * member variables.
-	 *
-	 * @see joshua.corpus.suffix_array.SuffixArrayFactory#createSuffixArray(Corpus,int)
-	 */
-	protected SuffixArray(int[] suffixes, Corpus corpusArray, int maxCacheSize) {
-		super(corpusArray, 
-				new Cache<Pattern,MatchedHierarchicalPhrases>(maxCacheSize),
-				new Cache<Pattern,List<Rule>>(maxCacheSize));
-//				(maxCacheSize > 0) ? 
-//						new Cache<Pattern,MatchedHierarchicalPhrases>(maxCacheSize) :
-//						null);
-		
-		this.suffixes = suffixes;
-		
-	}
+//	/**
+//	 * Protected constructor takes in the already prepared
+//	 * member variables.
+//	 *
+//	 * @see joshua.corpus.suffix_array.SuffixArrayFactory#createSuffixArray(Corpus,int)
+//	 */	
+//	protected SuffixArray(int[] suffixes, Corpus corpusArray) {
+//		this(suffixes, corpusArray, DEFAULT_CACHE_CAPACITY);
+//	}
+//	
+//	/**
+//	 * Protected constructor takes in the already prepared
+//	 * member variables.
+//	 *
+//	 * @see joshua.corpus.suffix_array.SuffixArrayFactory#createSuffixArray(Corpus,int)
+//	 */
+//	protected SuffixArray(int[] suffixes, Corpus corpusArray, int maxCacheSize) {
+//		super(corpusArray, 
+//				new Cache<Pattern,MatchedHierarchicalPhrases>(maxCacheSize),
+//				new Cache<Pattern,List<Rule>>(maxCacheSize));
+////				(maxCacheSize > 0) ? 
+////						new Cache<Pattern,MatchedHierarchicalPhrases>(maxCacheSize) :
+////						null);
+//		
+//		this.suffixes = suffixes;
+//		
+//	}
 	
 	
 //===============================================================
