@@ -147,7 +147,6 @@ public class Compile {
 
 		
 		
-		
 		// Write vocabulary to disk
 		{
 			String binaryVocabFilename = outputDirName + File.separator + "common.vocab";
@@ -180,26 +179,6 @@ public class Compile {
 			out.println("Source language corpus: " + binarySourceCorpusFilename);
 		}
 		
-		
-		
-		// Construct source language suffix array
-		if (logger.isLoggable(Level.INFO)) logger.info("Constructing suffix array from file " + sourceCorpusFileName);
-		SuffixArray sourceSuffixArray = SuffixArrayFactory.createSuffixArray(sourceCorpusArray, Cache.DEFAULT_CAPACITY);
-		
-		// Write source language suffix array to disk
-		{
-			String binarySourceSuffixesFilename = outputDirName + File.separator + "source.suffixes";
-			if (logger.isLoggable(Level.INFO)) logger.info("Writing binary source corpus to disk at " + binarySourceSuffixesFilename);
-			
-			BinaryOut suffixesOut = new BinaryOut(new FileOutputStream(binarySourceSuffixesFilename), false);
-			sourceSuffixArray.writeExternal(suffixesOut);	
-	    	suffixesOut.flush();
-	    	
-			out.println("Source language suffix array: " + binarySourceSuffixesFilename);
-		}
-		
-		
-		
 		// Construct target language corpus
 		if (logger.isLoggable(Level.INFO)) logger.info("Constructing corpus array from file " + targetCorpusFileName);
 		CorpusArray targetCorpusArray = SuffixArrayFactory.createCorpusArray(targetCorpusFileName, symbolTable, targetLengths[0], targetLengths[1]);
@@ -217,13 +196,64 @@ public class Compile {
 	    	out.println("Target language corpus: " + binaryTargetCorpusFilename);
 		}
 		
-		
-		// Construct target language suffix array
-		if (logger.isLoggable(Level.INFO)) logger.info("Constructing suffix array from file " + targetCorpusFileName);
-		SuffixArray targetSuffixArray = SuffixArrayFactory.createSuffixArray(targetCorpusArray, Cache.DEFAULT_CAPACITY);
+		{
+			// Construct alignments data structure
+			AlignmentGrids grids = new AlignmentGrids(
+					new Scanner(new File(alignmentsFileName)), 
+					sourceCorpusArray, 
+					targetCorpusArray,
+					numberOfSentences);
+
+			// Write alignments to disk
+			{
+				String binaryAlignmentsFilename = outputDirName + File.separator + "alignment.grids";
+				if (logger.isLoggable(Level.INFO)) logger.info("Writing binary alignment grids to disk at " + binaryAlignmentsFilename);
+
+				BinaryOut alignmentsOut = new BinaryOut(binaryAlignmentsFilename);
+				grids.writeExternal(alignmentsOut);
+				alignmentsOut.flush();
+				alignmentsOut.close();
+
+				out.println("Source-target alignment grids: " + binaryAlignmentsFilename);
+			}
+
+			// Write lexprobs to disk
+			{
+				ParallelCorpus parallelCorpus = new AlignedParallelCorpus(sourceCorpusArray, targetCorpusArray, grids);
+
+				if (logger.isLoggable(Level.INFO)) logger.info("Constructing lexprob table");
+				LexicalProbabilities lexProbs = 
+					new LexProbs(parallelCorpus, Float.MIN_VALUE);
+
+				String lexprobsFilename = outputDirName + File.separator + "lexprobs.txt";
+				FileOutputStream stream = new FileOutputStream(lexprobsFilename);
+				OutputStreamWriter lexprobsOut = new OutputStreamWriter(stream, charset);
+
+				String binaryLexCountFilename = outputDirName + File.separator + "lexicon.counts";
+				if (logger.isLoggable(Level.INFO)) logger.info("Writing binary lexicon counts to disk at " + binaryLexCountFilename);
+
+				//			BinaryOut lexCountOut = new BinaryOut(binaryLexCountFilename);
+				ObjectOutput lexCountOut = new ObjectOutputStream(new FileOutputStream(binaryLexCountFilename));
+				lexProbs.writeExternal(lexCountOut);
+				lexCountOut.close();
+
+				String s = lexProbs.toString();
+
+				if (logger.isLoggable(Level.INFO)) logger.info("Writing lexprobs at " + lexprobsFilename);
+				lexprobsOut.write(s);  
+				lexprobsOut.flush();
+				lexprobsOut.close();
+				out.println("Lexprobs at " + lexprobsFilename);
+
+			}
+		}
 		
 		// Write target language suffix array to disk
 		{
+			// Construct target language suffix array
+			if (logger.isLoggable(Level.INFO)) logger.info("Constructing suffix array from file " + targetCorpusFileName);
+			SuffixArray targetSuffixArray = SuffixArrayFactory.createSuffixArray(targetCorpusArray, Cache.DEFAULT_CAPACITY);
+			
 			String binaryTargetSuffixesFilename = outputDirName + File.separator + "target.suffixes";
 			if (logger.isLoggable(Level.INFO)) logger.info("Writing binary target corpus to disk at " + binaryTargetSuffixesFilename);
 			
@@ -235,67 +265,35 @@ public class Compile {
 		}
 		
 		
-		// Construct alignments data structure
-		AlignmentGrids grids = new AlignmentGrids(
-				new Scanner(new File(alignmentsFileName)), 
-				sourceCorpusArray, 
-				targetCorpusArray,
-				numberOfSentences);
-		
-		// Write alignments to disk
 		{
-			String binaryAlignmentsFilename = outputDirName + File.separator + "alignment.grids";
-			if (logger.isLoggable(Level.INFO)) logger.info("Writing binary alignment grids to disk at " + binaryAlignmentsFilename);
-			
-			BinaryOut alignmentsOut = new BinaryOut(binaryAlignmentsFilename);
-			grids.writeExternal(alignmentsOut);
-			alignmentsOut.flush();
-			alignmentsOut.close();
-			
-	    	out.println("Source-target alignment grids: " + binaryAlignmentsFilename);
-		}
-		
-		// Write lexprobs to disk
-		{
-	    	ParallelCorpus parallelCorpus = new AlignedParallelCorpus(sourceCorpusArray, targetCorpusArray, grids);
-	    	
-	    	if (logger.isLoggable(Level.INFO)) logger.info("Constructing lexprob table");
-	    	LexicalProbabilities lexProbs = 
-				new LexProbs(parallelCorpus, Float.MIN_VALUE);
-			
-	    	String lexprobsFilename = outputDirName + File.separator + "lexprobs.txt";
-	    	FileOutputStream stream = new FileOutputStream(lexprobsFilename);
-	    	OutputStreamWriter lexprobsOut = new OutputStreamWriter(stream, charset);
-	    	
-	    	String binaryLexCountFilename = outputDirName + File.separator + "lexicon.counts";
-			if (logger.isLoggable(Level.INFO)) logger.info("Writing binary lexicon counts to disk at " + binaryLexCountFilename);
-	    	
-//			BinaryOut lexCountOut = new BinaryOut(binaryLexCountFilename);
-			ObjectOutput lexCountOut = new ObjectOutputStream(new FileOutputStream(binaryLexCountFilename));
-			lexProbs.writeExternal(lexCountOut);
-			lexCountOut.close();
-			
-	    	String s = lexProbs.toString();
+			// Construct source language suffix array
+			if (logger.isLoggable(Level.INFO)) logger.info("Constructing suffix array from file " + sourceCorpusFileName);
+			SuffixArray sourceSuffixArray = SuffixArrayFactory.createSuffixArray(sourceCorpusArray, Cache.DEFAULT_CAPACITY);
 
-	    	if (logger.isLoggable(Level.INFO)) logger.info("Writing lexprobs at " + lexprobsFilename);
-	    	lexprobsOut.write(s);  
-	    	lexprobsOut.flush();
-	    	lexprobsOut.close();
-	    	out.println("Lexprobs at " + lexprobsFilename);
-	    	
-		}
-		
-		// Precompute and write frequent phrase locations to disk
-		{
-			if (logger.isLoggable(Level.INFO)) logger.info("Precomputing indices for most frequent phrases");
-	    	FrequentPhrases frequentPhrases = 
-				new FrequentPhrases(sourceSuffixArray, minFrequency, maxPhrases, maxPhraseLength, maxPhraseLength, maxPhraseSpan, minNonterminalSpan);
-			
-	    	String frequentPhrasesFilename = outputDirName + File.separator + "frequentPhrases";
-	    	if (logger.isLoggable(Level.INFO)) logger.info("Writing precomputing indices for most frequent phrases at " + frequentPhrasesFilename);
-	    	BinaryOut frequentPhrasesOut = new BinaryOut(frequentPhrasesFilename);
-			frequentPhrases.writeExternal(frequentPhrasesOut);
-			frequentPhrasesOut.close();
+			// Write source language suffix array to disk
+			{
+				String binarySourceSuffixesFilename = outputDirName + File.separator + "source.suffixes";
+				if (logger.isLoggable(Level.INFO)) logger.info("Writing binary source corpus to disk at " + binarySourceSuffixesFilename);
+
+				BinaryOut suffixesOut = new BinaryOut(new FileOutputStream(binarySourceSuffixesFilename), false);
+				sourceSuffixArray.writeExternal(suffixesOut);	
+				suffixesOut.flush();
+
+				out.println("Source language suffix array: " + binarySourceSuffixesFilename);
+			}
+
+			// Precompute and write frequent phrase locations to disk
+			{
+				if (logger.isLoggable(Level.INFO)) logger.info("Precomputing indices for most frequent phrases");
+				FrequentPhrases frequentPhrases = 
+					new FrequentPhrases(sourceSuffixArray, minFrequency, maxPhrases, maxPhraseLength, maxPhraseLength, maxPhraseSpan, minNonterminalSpan);
+
+				String frequentPhrasesFilename = outputDirName + File.separator + "frequentPhrases";
+				if (logger.isLoggable(Level.INFO)) logger.info("Writing precomputing indices for most frequent phrases at " + frequentPhrasesFilename);
+				BinaryOut frequentPhrasesOut = new BinaryOut(frequentPhrasesFilename);
+				frequentPhrases.writeExternal(frequentPhrasesOut);
+				frequentPhrasesOut.close();
+			}
 		}
 		
 		out.flush();
