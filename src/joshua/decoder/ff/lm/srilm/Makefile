@@ -61,7 +61,7 @@ libsrilm: $(SRI_LIB)
 
 $(SRI_LIB): srilm.o srilm_java_wrap.o
 	@# FIXME: is this really necessary?
-	@echo "# hi there $(64BIT_FLAG)"
+#	@echo "# hi there $(64BIT_FLAG)"
 	@# BUG: On OSX 10.4, g++ 4.0.1: "-fpic is not supported; -fPIC assumed"
 	g++ $(64BIT_FLAG) -fpic $(SRI_LFLAG) $^ -loolm -ldstruct -lmisc -L$(SRILM_LIBS) -o $@
 
