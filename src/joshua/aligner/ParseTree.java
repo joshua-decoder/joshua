@@ -294,7 +294,7 @@ public class ParseTree
       TreeSet<Integer> srcIndices = new TreeSet<Integer>();
       for (int srcI = leftIndex; srcI <= rightIndex-1; ++srcI) srcIndices.add(srcI);
 
-      String rangeStr = srcIndices.first() + "_" + srcIndices.last();
+//      String rangeStr = srcIndices.first() + "_" + srcIndices.last();
 
 //      print("  srcIndices(" + rangeStr + ")");
 

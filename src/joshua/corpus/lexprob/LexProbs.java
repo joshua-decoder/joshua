@@ -17,15 +17,11 @@
  */
 package joshua.corpus.lexprob;
 
-import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -37,8 +33,6 @@ import joshua.corpus.suffix_array.HierarchicalPhrase;
 import joshua.corpus.vocab.SymbolTable;
 import joshua.util.Counts;
 import joshua.util.Pair;
-import joshua.util.io.BinaryIn;
-import joshua.util.io.BinaryOut;
 
 /**
  * Represents lexical probability distributions in both directions.

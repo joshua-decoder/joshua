@@ -20,7 +20,6 @@ package joshua.decoder.ff.tm;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import joshua.corpus.vocab.SymbolTable;
@@ -175,7 +174,7 @@ public class MonolingualRule implements Rule {
 	
 	public final float getEstCost() {
 		if (est_cost <= Double.NEGATIVE_INFINITY) {
-			System.out.println("The est cost is neg infinity; must be bad rule; rule is:\n" + toString());
+			logger.warning("The est cost is neg infinity; must be bad rule; rule is:\n" + toString());
 		}
 		return est_cost;
 	}
