@@ -31,7 +31,7 @@ endif
 # SRILM includes and libraries
 SRILM_ROOT=$(SRILM)
 SRILM_LIBS=$(SRILM_ROOT)/lib/$(MTYPE)
-SRILM_INC=$(SRILM_ROOT)/include
+SRILM_INC=-I$(SRILM_ROOT)/include
 
 # Define where the installed library will go
 SRI_LIB_DIR:=../../../../../../lib
@@ -39,8 +39,11 @@ SRI_LIB_INSTALLED:=$(SRI_LIB_DIR)/$(notdir $(SRI_LIB))
 
 # Java headers
 # TODO: What's the behaviour on Windows?
-JAVA_INC=$(JAVA_HOME)/include/
-JAVA_INC_OS=$(JAVA_HOME)/include/linux 
+JAVA_INC=-I$(JAVA_HOME)/include/
+
+ifneq ($(realpath $(JAVA_HOME)/include/linux),)
+JAVA_INC_OS=-I$(JAVA_HOME)/include/linux 
+endif
 
 
 
@@ -64,14 +67,14 @@ $(SRI_LIB): srilm.o srilm_java_wrap.o
 
 srilm_java_wrap.o: srilm_java_wrap.cxx
 	@# BUG: On OSX 10.4, g++ 4.0.1: "-fpic is not supported; -fPIC assumed"
-	g++ $(64BIT_FLAG) -c -fpic $< -I/usr/local/include/ -I$(SRILM_INC) -I$(JAVA_INC) -I$(JAVA_INC_OS)
+	g++ $(64BIT_FLAG) -c -fpic $< -I/usr/local/include/ $(SRILM_INC) $(JAVA_INC) $(JAVA_INC_OS)
 
 srilm_java_wrap.cxx: srilm_java.i
 	swig -c++ -java -package joshua.decoder.ff.lm.srilm -outdir . $<
 
 srilm.o: srilm.c
 	@# BUG: On OSX 10.4, g++ 4.0.1: "-fpic is not supported; -fPIC assumed"
-	g++ $(64BIT_FLAG) -c -fpic $< -I/usr/local/include/ -I$(SRILM_INC)
+	g++ $(64BIT_FLAG) -c -fpic $< -I/usr/local/include/ $(SRILM_INC)
 
 
 clean:
