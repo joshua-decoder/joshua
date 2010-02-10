@@ -596,7 +596,7 @@ public class DiskHyperGraph {
 
 	static public int mergeDiskHyperGraphs(int ngramStateID, boolean saveModelCosts, int totalNumSent,
 			boolean useUniqueNbest, boolean useTreeNbest,
-			String filePrefix1, String filePrefix2, String filePrefixOut) throws IOException{
+			String filePrefix1, String filePrefix2, String filePrefixOut, boolean removeDuplicate) throws IOException{
 		
 		SymbolTable symbolTbl = new BuildinSymbol();
 		
@@ -621,9 +621,14 @@ public class DiskHyperGraph {
 			//System.out.println("#Process sentence " + sentID);
 			HyperGraph hg1 = diskHG1.readHyperGraph();
 			HyperGraph hg2 = diskHG2.readHyperGraph();
-			Set<String> uniqueHyps = new HashSet<String>();
-			kbestExtrator.filterKbestHypergraph(hg1, uniqueHyps);
-			kbestExtrator.filterKbestHypergraph(hg2, uniqueHyps);
+			
+			//filter hypergraphs by removing duplicate
+			if(removeDuplicate){
+				Set<String> uniqueHyps = new HashSet<String>();
+				kbestExtrator.filterKbestHypergraph(hg1, uniqueHyps);
+				kbestExtrator.filterKbestHypergraph(hg2, uniqueHyps);
+			}
+			
 			HyperGraph mergedHG = HyperGraph.mergeTwoHyperGraphs(hg1, hg2);
 			diskHGOut.saveHyperGraph(mergedHG);
 			

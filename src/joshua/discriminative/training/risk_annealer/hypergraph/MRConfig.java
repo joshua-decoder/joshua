@@ -94,9 +94,12 @@ public class MRConfig {
 	//nbest based training
 	public static boolean use_unique_nbest    = false;
 	public static boolean use_tree_nbest      = false;
+		
 	public static int topN = 500;
 	public static boolean use_kbest_hg = false;
 	public static double stop_hyp_ratio = 1e-2; //how many new hypotheses should be generated before converge
+	
+	public static int hyp_merge_mode  = 2; //0: no merge; 1: merge without de-duplicate; 2: merge with de-duplicate
 	
 	private static final Logger logger =
 		Logger.getLogger(MRConfig.class.getName());
@@ -292,6 +295,10 @@ public class MRConfig {
 					use_kbest_hg = Boolean.valueOf(fds[1]);
 					if (logger.isLoggable(Level.FINEST)) 
 						logger.finest(String.format("use_kbest_hg: %s", use_kbest_hg));					
+				} else if ("hyp_merge_mode".equals(fds[0])) {
+					hyp_merge_mode = new Integer(fds[1]);
+					if (logger.isLoggable(Level.FINEST)) 
+						logger.finest(String.format("hyp_merge_mode: %s", hyp_merge_mode));					
 				} else if ("stop_hyp_ratio".equals(fds[0])) {
 					stop_hyp_ratio = new Double( fds[1].trim() );
 					if (logger.isLoggable(Level.FINEST)) 
@@ -340,6 +347,11 @@ public class MRConfig {
 		
 		if(oneTimeHGRerank && maxNumIter!=1){
 			logger.info("oneTimeHGRerank=true, but maxNumIter!=1");
+			System.exit(1);
+		}
+		
+		if(use_kbest_hg==false && hyp_merge_mode==2){
+			logger.severe("wrong config: use_kbest_hg==false && hyp_merge_mode==2, cannot do dedup-merge for real hypergraph-based training");
 			System.exit(1);
 		}
 	}

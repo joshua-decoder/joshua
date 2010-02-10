@@ -56,10 +56,13 @@ parallel_files_prefix=.
 
 #disk hg
 save_disk_hg=true
-use_kbest_hg=true
+use_kbest_hg=false
 forest_pruning=false
 forest_pruning_threshold=150
 
+#0: no merge; 1: merge without de-dup; 2: merge with de-dup
+#note that if use_kbest_hg=false, then we cannot set hyp_merge_mode=2
+hyp_merge_mode=1
 
 ###### model weights
 #lm order weight
@@ -90,7 +93,7 @@ wordpenalty -2.844814
 #discriminative aexperiment/featureFile 1.0
 
 #general
-maxNumIter=10
+maxNumIter=4
 useSemiringV2=true
 maxNumHGInQueue=100
 numThreads=10

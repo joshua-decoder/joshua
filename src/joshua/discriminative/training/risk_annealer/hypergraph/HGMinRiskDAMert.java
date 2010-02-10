@@ -148,7 +148,7 @@ public class HGMinRiskDAMert extends AbstractMinRiskMERT {
 
         	
         	//==== merge hypergrphs and check convergency
-        	if(MRConfig.use_kbest_hg){
+        	if(MRConfig.hyp_merge_mode>0){
         		try {
 		        	String oldMergedFile = hypFilePrefix +".merged." + (iter-1);
 		        	String newMergedFile = hypFilePrefix +".merged." + (iter);
@@ -157,14 +157,18 @@ public class HGMinRiskDAMert extends AbstractMinRiskMERT {
 		        		FileUtility.copyFile(curHypFilePrefix+".hg.rules", newMergedFile+".hg.rules");
 		        	}else{
 		        		boolean saveModelCosts = true;
-			         
+		        		
+		        		boolean mergeWithDedup = false;
+		        		if(MRConfig.hyp_merge_mode==2){
+		        			mergeWithDedup = true;
+		        		}
 			            /**TODO: this assumes that the feature values for the same hypothesis does not change,
 			             * though the weights for these features can change. In particular, this means
 			             * we cannot tune the weight for the aggregate discriminative model while we are tunining the individual 
 			             * discriminative feature. This is also true for the bestHyperEdge pointer.*/
 			            int newTotalNumHyp = DiskHyperGraph.mergeDiskHyperGraphs(MRConfig.ngramStateID, saveModelCosts, this.numTrainingSentence, 
 			            		MRConfig.use_unique_nbest, MRConfig.use_tree_nbest,
-			            		oldMergedFile, curHypFilePrefix, newMergedFile);
+			            		oldMergedFile, curHypFilePrefix, newMergedFile, mergeWithDedup);
 			            this.curHypFilePrefix = newMergedFile;
 			            
 			     
