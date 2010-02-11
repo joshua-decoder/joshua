@@ -145,23 +145,17 @@ public abstract class AbstractHierarchicalPhrases implements
 			// * prefix occurs before suffix in the sentence
 			// * prefix and suffix are within maxPhraseSpan of each other
 			
-			boolean m_a_alpha_startsWithNonterminal = m_a_alpha.startsWithNonterminal();
 			boolean m_a_alpha_endsWithNonterminal = m_a_alpha.endsWithNonterminal();
 			boolean m_alpha_b_startsWithNonterminal = m_alpha_b.startsWithNonterminal();
-			boolean m_alpha_b_endsWithNonterminal = m_alpha_b.endsWithNonterminal();		
-
+			
 			// Does the prefix (m_a_alpha) overlap with
 			//      the suffix (m_alpha_b) on any words?
-			// we assume that the nonterminal symbols will be denoted with negative numbers
-			boolean matchesDontOverlap =
-				( m_a_alpha_endsWithNonterminal && 
-						m_alpha_b_startsWithNonterminal && 
-						m_a_alpha.arity()==1 &&
-						m_alpha_b.arity()==1 &&
-						m_a_alpha.getTerminalSequenceLength(0)==1 &&
-						m_alpha_b.getTerminalSequenceLength(0)==1);
-
-			if (matchesDontOverlap) {
+			if (m_a_alpha_endsWithNonterminal && 
+					m_alpha_b_startsWithNonterminal && 
+					m_a_alpha.arity()==1 &&
+					m_alpha_b.arity()==1 &&
+					m_a_alpha.getTerminalSequenceLength(0)==1 &&
+					m_alpha_b.getTerminalSequenceLength(0)==1) {
 				
 				return 0;
 			
@@ -173,6 +167,9 @@ public abstract class AbstractHierarchicalPhrases implements
 				int m_alpha_b_prefix_start = j*m_alpha_bTerminalSequenceLengths;
 				int m_alpha_b_prefix_end;
 
+				boolean m_a_alpha_startsWithNonterminal = m_a_alpha.startsWithNonterminal();
+				boolean m_alpha_b_endsWithNonterminal = m_alpha_b.endsWithNonterminal();		
+				
 				// If the m_alpha_b pattern ends with a nonterminal
 				if (m_alpha_b_endsWithNonterminal || 
 						// ...or if the m_alpha_b pattern ends with two terminals
