@@ -117,22 +117,34 @@ public abstract class AbstractHierarchicalPhrases implements
 			MatchedHierarchicalPhrases m_alpha_b, final int j, 
 			int minNonterminalSpan, int maxPhraseSpan) {
 	
-		int m_a_alphaTerminalSequenceLengths = m_a_alpha.getNumberOfTerminalSequences();//.terminalSequenceLengths.length;
-		int m_alpha_bTerminalSequenceLengths = m_alpha_b.getNumberOfTerminalSequences();//.terminalSequenceLengths.length;
+		// Try the cheapest check first: Are they in the same sentence?
+		{
+			int m_a_alpha_i_sentenceNumber = m_a_alpha.getSentenceNumber(i);
+			int m_alpha_b_j_sentenceNumber = m_alpha_b.getSentenceNumber(j);
+
+			if (m_a_alpha_i_sentenceNumber < m_alpha_b_j_sentenceNumber) {
+				return -1;
+			} else if (m_a_alpha_i_sentenceNumber > m_alpha_b_j_sentenceNumber) {
+				return 1;
+			}
+		}
+
 		
 		int prefixStartPosition = m_a_alpha.getStartPosition(i, 0);
 		int suffixStartPosition = m_alpha_b.getStartPosition(j, 0);
 		
-		if (m_a_alpha.getSentenceNumber(i) < m_alpha_b.getSentenceNumber(j)) {
-			return -1;
-		} else if (m_a_alpha.getSentenceNumber(i) > m_alpha_b.getSentenceNumber(j)) {
-			return 1;
-		} else if (prefixStartPosition > suffixStartPosition) {
+		if (prefixStartPosition > suffixStartPosition) {
 			return 1;
 		} else if (prefixStartPosition <= suffixStartPosition-maxPhraseSpan) {
 			return -1;
 		} else {
 
+			// If we get to this point, we know:
+			//
+			// * prefix and suffix are in the same sentence
+			// * prefix occurs before suffix in the sentence
+			// * prefix and suffix are within maxPhraseSpan of each other
+			
 			boolean m_a_alpha_startsWithNonterminal = m_a_alpha.startsWithNonterminal();
 			boolean m_a_alpha_endsWithNonterminal = m_a_alpha.endsWithNonterminal();
 			boolean m_alpha_b_startsWithNonterminal = m_alpha_b.startsWithNonterminal();
@@ -141,16 +153,23 @@ public abstract class AbstractHierarchicalPhrases implements
 			// Does the prefix (m_a_alpha) overlap with
 			//      the suffix (m_alpha_b) on any words?
 			// we assume that the nonterminal symbols will be denoted with negative numbers
-			boolean matchesOverlap =
-				! ( m_a_alpha_endsWithNonterminal && 
+			boolean matchesDontOverlap =
+				( m_a_alpha_endsWithNonterminal && 
 						m_alpha_b_startsWithNonterminal && 
 						m_a_alpha.arity()==1 &&
 						m_alpha_b.arity()==1 &&
 						m_a_alpha.getTerminalSequenceLength(0)==1 &&
 						m_alpha_b.getTerminalSequenceLength(0)==1);
 
-			if (matchesOverlap) {
-
+			if (matchesDontOverlap) {
+				
+				return 0;
+			
+			} else {
+				
+				int m_a_alphaTerminalSequenceLengths = m_a_alpha.getNumberOfTerminalSequences();//.terminalSequenceLengths.length;
+				int m_alpha_bTerminalSequenceLengths = m_alpha_b.getNumberOfTerminalSequences();//.terminalSequenceLengths.length;
+				
 				int m_alpha_b_prefix_start = j*m_alpha_bTerminalSequenceLengths;
 				int m_alpha_b_prefix_end;
 
@@ -238,24 +257,6 @@ public abstract class AbstractHierarchicalPhrases implements
 					return result;
 				}
 
-			} else {
-
-//				if (m_a_alpha.getSentenceNumber(i) < m_alpha_b.getSentenceNumber(j)) {
-//					return -1;
-//				} else if (m_a_alpha.getSentenceNumber(i) > m_alpha_b.getSentenceNumber(j)) {
-//					return 1;
-//				} else 
-				//XXX It's quite likely that this if block could be deleted, 
-				//    leaving just the return 0;
-				if (prefixStartPosition >= suffixStartPosition-1) {
-					return 1;
-				} 
-//					else if (prefixStartPosition <= suffixStartPosition-maxPhraseSpan) {
-//					return -1;
-//				} 
-				else {
-					return 0;
-				}
 			}
 		}
 	}
