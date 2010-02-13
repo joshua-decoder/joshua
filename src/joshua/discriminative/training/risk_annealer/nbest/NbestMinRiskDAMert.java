@@ -2,16 +2,19 @@ package joshua.discriminative.training.risk_annealer.nbest;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
 import joshua.discriminative.FileUtilityOld;
+import joshua.discriminative.training.NbestMerger;
 import joshua.discriminative.training.risk_annealer.AbstractMinRiskMERT;
 import joshua.discriminative.training.risk_annealer.DeterministicAnnealer;
 import joshua.discriminative.training.risk_annealer.GradientComputer;
 import joshua.discriminative.training.risk_annealer.hypergraph.MRConfig;
+import joshua.util.FileUtility;
 
 
 /** 
@@ -19,6 +22,7 @@ import joshua.discriminative.training.risk_annealer.hypergraph.MRConfig;
 * @version $LastChangedDate: 2008-10-20 00:12:30 -0400  $
 */
 public abstract class NbestMinRiskDAMert extends AbstractMinRiskMERT {		
+	int totalNumHyp = 0;
 	
 	String nbestPrefix;
 	boolean useShortestRef;
@@ -52,7 +56,16 @@ public abstract class NbestMinRiskDAMert extends AbstractMinRiskMERT {
         	if(iter ==1){
         		copyNbest(curNbestFile, newNbestMergedFile);
         	}else{
-	            boolean haveNewHyp = mergeNbest(oldNbestMergedFile, curNbestFile, newNbestMergedFile);
+        		boolean haveNewHyp = true;
+        		if(true){
+        			int newTotalNumHyp = NbestMerger.mergeNbest(oldNbestMergedFile, curNbestFile, newNbestMergedFile);
+        			if(newTotalNumHyp!=totalNumHyp)
+        				haveNewHyp = true;
+        			totalNumHyp = newTotalNumHyp;
+        		}else{
+        			haveNewHyp = mergeNbest(oldNbestMergedFile, curNbestFile, newNbestMergedFile);
+        		}
+	            
 	            if(haveNewHyp==false) {
 	            	System.out.println("No new hypotheses generated at iteration " + iter); 
 	            	break;
@@ -90,7 +103,7 @@ public abstract class NbestMinRiskDAMert extends AbstractMinRiskMERT {
 	//return false: if the nbest does not add any new hyp
 	//TODO: decide converged if the number of new hyp generate is very small
 	//TODO: terminate decoding when the weights does not change much; this one makes more sense, as if the weights do not change much; then new hypotheses will be rare
-	private boolean mergeNbest(String oldMergedNbestFile, String newNbestFile, String newMergedNbestFile){
+	public static boolean mergeNbest(String oldMergedNbestFile, String newNbestFile, String newMergedNbestFile){
 		boolean haveNewHyp =false;
 		BufferedReader oldMergedNbestReader = FileUtilityOld.getReadFileStream(oldMergedNbestFile);
 		BufferedReader newNbestReader = FileUtilityOld.getReadFileStream(newNbestFile);
@@ -99,22 +112,22 @@ public abstract class NbestMinRiskDAMert extends AbstractMinRiskMERT {
 		int oldSentID=-1;
 		String line;
 		String previousLineInNewNbest = FileUtilityOld.readLineLzf(newNbestReader);;
-		HashMap<String, String> nbests = new HashMap<String, String>();//key: hyp itself, value: remaining fds exlcuding sent_id
+		HashMap<String, String> oldNbests = new HashMap<String, String>();//key: hyp itself, value: remaining fds exlcuding sent_id
 		while((line=FileUtilityOld.readLineLzf(oldMergedNbestReader))!=null){
 			String[] fds = line.split("\\s+\\|{3}\\s+");
-			int new_sent_id = new Integer(fds[0]);
-			if(oldSentID!=-1 && oldSentID!=new_sent_id){
+			int newSentID = new Integer(fds[0]);
+			if(oldSentID!=-1 && oldSentID!=newSentID){
 				boolean[] t_have_new_hyp = new boolean[1];
-				previousLineInNewNbest = processNbest(newNbestReader, newMergedNbestReader, oldSentID, nbests, previousLineInNewNbest, t_have_new_hyp);
+				previousLineInNewNbest = processNbest(newNbestReader, newMergedNbestReader, oldSentID, oldNbests, previousLineInNewNbest, t_have_new_hyp);
 				if(t_have_new_hyp[0]==true) 
 					haveNewHyp = true;
 			}
-			oldSentID = new_sent_id;
-			nbests.put(fds[1], fds[2]);//last field is not needed
+			oldSentID = newSentID;
+			oldNbests.put(fds[1], fds[2]);//last field is not needed
 		}
 		//last nbest
 		boolean[] t_have_new_hyp = new boolean[1];
-		previousLineInNewNbest= processNbest(newNbestReader, newMergedNbestReader, oldSentID, nbests, previousLineInNewNbest, t_have_new_hyp);
+		previousLineInNewNbest= processNbest(newNbestReader, newMergedNbestReader, oldSentID, oldNbests, previousLineInNewNbest, t_have_new_hyp);
 		if(previousLineInNewNbest!=null){
 			System.out.println("last line is not null, must be wrong"); 
 			System.exit(0);
@@ -128,7 +141,7 @@ public abstract class NbestMinRiskDAMert extends AbstractMinRiskMERT {
 		return haveNewHyp;
 	}
 	
-	private String processNbest(BufferedReader newNbestReader, BufferedWriter newMergedNbestReader, int oldSentID, HashMap<String, String> nbests,
+	private static String processNbest(BufferedReader newNbestReader, BufferedWriter newMergedNbestReader, int oldSentID, HashMap<String, String> oldNbests,
 			String previousLine, boolean[] have_new_hyp){
 		have_new_hyp[0] = false;
 		String previousLineInNewNbest = previousLine;
@@ -137,9 +150,9 @@ public abstract class NbestMinRiskDAMert extends AbstractMinRiskMERT {
 			String[] t_fds = previousLineInNewNbest.split("\\s+\\|{3}\\s+");
 			int t_new_id = new Integer(t_fds[0]); 
 			if( t_new_id == oldSentID){
-				if(nbests.containsKey(t_fds[1])==false){//new hyp
+				if(oldNbests.containsKey(t_fds[1])==false){//new hyp
 					have_new_hyp[0] = true;
-					nbests.put(t_fds[1], t_fds[2]);//merge into nbests
+					oldNbests.put(t_fds[1], t_fds[2]);//merge into nbests
 				}
 			}else{
 				break;
@@ -149,15 +162,16 @@ public abstract class NbestMinRiskDAMert extends AbstractMinRiskMERT {
 				break;
 		}
 		//#### print the nbest: order is not important; and the last field is ignored
-		for (Map.Entry<String, String> entry : nbests.entrySet()){ 
+		for (Map.Entry<String, String> entry : oldNbests.entrySet()){ 
 		    FileUtilityOld.writeLzf(newMergedNbestReader, oldSentID + " ||| " + entry.getKey() + " ||| " + entry.getValue() + "\n");
 		}				
-		nbests.clear();
+		oldNbests.clear();
 		return previousLineInNewNbest;
 	}
 	
 	//return false: if the nbest does not add any new hyp
-	private void copyNbest(String newNbestFile, String newMergedNbestFile){
+	public static void copyNbest(String newNbestFile, String newMergedNbestFile){
+		/*
 		BufferedReader newNbestReader = FileUtilityOld.getReadFileStream(newNbestFile);
 		BufferedWriter newMergedNbestReader =	FileUtilityOld.getWriteFileStream(newMergedNbestFile);		
 		
@@ -167,7 +181,13 @@ public abstract class NbestMinRiskDAMert extends AbstractMinRiskMERT {
 		    FileUtilityOld.writeLzf(newMergedNbestReader, fds[0] + " ||| " + fds[1] + " ||| " + fds[2] + "\n");		
 		}
 		FileUtilityOld.closeReadFile(newNbestReader);
-		FileUtilityOld.closeWriteFile(newMergedNbestReader);
+		FileUtilityOld.closeWriteFile(newMergedNbestReader);*/
+		try {
+			FileUtility.copyFile(newNbestFile, newMergedNbestFile);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 	

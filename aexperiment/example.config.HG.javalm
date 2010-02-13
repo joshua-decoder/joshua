@@ -56,7 +56,7 @@ parallel_files_prefix=.
 
 #disk hg
 save_disk_hg=true
-use_kbest_hg=true
+use_kbest_hg=false
 forest_pruning=false
 forest_pruning_threshold=150
 
@@ -93,7 +93,7 @@ wordpenalty -2.844814
 #discriminative aexperiment/featureFile 1.0
 
 #general
-maxNumIter=4
+maxNumIter=15
 useSemiringV2=true
 maxNumHGInQueue=100
 numThreads=10

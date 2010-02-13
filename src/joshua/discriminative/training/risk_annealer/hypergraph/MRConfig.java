@@ -351,8 +351,8 @@ public class MRConfig {
 		}
 		
 		if(use_kbest_hg==false && hyp_merge_mode==2){
-			logger.severe("wrong config: use_kbest_hg==false && hyp_merge_mode==2, cannot do dedup-merge for real hypergraph-based training");
-			System.exit(1);
+			logger.warning("use_kbest_hg==false && hyp_merge_mode==2, cannot do dedup-merge for real hypergraph-based training, back to nbest merge, but trained on hg");
+			//System.exit(1);
 		}
 	}
 

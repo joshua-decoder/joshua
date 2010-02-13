@@ -28,9 +28,11 @@ import joshua.discriminative.feature_related.feature_template.NgramFT;
 import joshua.discriminative.feature_related.feature_template.TMFT;
 import joshua.discriminative.feature_related.feature_template.TargetTMFT;
 import joshua.discriminative.ranker.HGRanker;
+import joshua.discriminative.training.NbestMerger;
 import joshua.discriminative.training.risk_annealer.AbstractMinRiskMERT;
 import joshua.discriminative.training.risk_annealer.DeterministicAnnealer;
 import joshua.discriminative.training.risk_annealer.GradientComputer;
+import joshua.discriminative.training.risk_annealer.nbest.NbestMinRiskDAMert;
 import joshua.util.FileUtility;
 
 public class HGMinRiskDAMert extends AbstractMinRiskMERT {
@@ -54,7 +56,7 @@ public class HGMinRiskDAMert extends AbstractMinRiskMERT {
 	
 	boolean haveRefereces = true;
 	
-	int totalNumHyp = 0;
+	int oldTotalNumHyp = 0;
 	
 	
 	//== for loss-augmented pruning
@@ -152,33 +154,46 @@ public class HGMinRiskDAMert extends AbstractMinRiskMERT {
         		try {
 		        	String oldMergedFile = hypFilePrefix +".merged." + (iter-1);
 		        	String newMergedFile = hypFilePrefix +".merged." + (iter);
-		        	if(iter ==1){		        		
-						FileUtility.copyFile(curHypFilePrefix+".hg.items", newMergedFile+".hg.items");						
-		        		FileUtility.copyFile(curHypFilePrefix+".hg.rules", newMergedFile+".hg.rules");
-		        	}else{
-		        		boolean saveModelCosts = true;
-		        		
-		        		boolean mergeWithDedup = false;
-		        		if(MRConfig.hyp_merge_mode==2){
-		        			mergeWithDedup = true;
-		        		}
-			            /**TODO: this assumes that the feature values for the same hypothesis does not change,
-			             * though the weights for these features can change. In particular, this means
-			             * we cannot tune the weight for the aggregate discriminative model while we are tunining the individual 
-			             * discriminative feature. This is also true for the bestHyperEdge pointer.*/
-			            int newTotalNumHyp = DiskHyperGraph.mergeDiskHyperGraphs(MRConfig.ngramStateID, saveModelCosts, this.numTrainingSentence, 
-			            		MRConfig.use_unique_nbest, MRConfig.use_tree_nbest,
-			            		oldMergedFile, curHypFilePrefix, newMergedFile, mergeWithDedup);
-			            this.curHypFilePrefix = newMergedFile;
-			            
-			     
-			            if((newTotalNumHyp-totalNumHyp)*1.0/totalNumHyp<MRConfig.stop_hyp_ratio ) {
-			            	System.out.println("No new hypotheses generated at iteration " + iter + " for stop_hyp_ratio=" + MRConfig.stop_hyp_ratio); 
-			            	break;
-			            }else{
-			            	totalNumHyp = newTotalNumHyp;
+		        	int newTotalNumHyp =0;
+		        	
+		        	if(MRConfig.use_kbest_hg==false && MRConfig.hyp_merge_mode==2){
+		        		System.out.println("use_kbest_hg==false && MRConfig.hyp_merge_mode; we will look at the nbest");
+		            	if(iter ==1){
+		            		FileUtility.copyFile(curHypFilePrefix, newMergedFile);
+		            		newTotalNumHyp = FileUtilityOld.numberLinesInFile(newMergedFile);
+		            	}else{
+		            		newTotalNumHyp = NbestMerger.mergeNbest(oldMergedFile, curHypFilePrefix, newMergedFile);
+		                }		            	
+	        		}else{		        	
+			        	if(iter ==1){		        		
+							FileUtility.copyFile(curHypFilePrefix+".hg.items", newMergedFile+".hg.items");						
+			        		FileUtility.copyFile(curHypFilePrefix+".hg.rules", newMergedFile+".hg.rules");
+			        	}else{
+			        		boolean saveModelCosts = true;
+			        		
+				            /**TODO: this assumes that the feature values for the same hypothesis does not change,
+				             * though the weights for these features can change. In particular, this means
+				             * we cannot tune the weight for the aggregate discriminative model while we are tunining the individual 
+				             * discriminative feature. This is also true for the bestHyperEdge pointer.*/
+				            newTotalNumHyp = DiskHyperGraph.mergeDiskHyperGraphs(MRConfig.ngramStateID, saveModelCosts, this.numTrainingSentence, 
+				            		MRConfig.use_unique_nbest, MRConfig.use_tree_nbest,
+				            		oldMergedFile, curHypFilePrefix, newMergedFile, (MRConfig.hyp_merge_mode==2));
+				            
 			            }
+			        	
+			        	this.curHypFilePrefix = newMergedFile;
+		        	}
+		        	
+		        	//check convergence
+		        	double newRatio = (newTotalNumHyp-oldTotalNumHyp)*1.0/oldTotalNumHyp;
+		        	if(iter <=2 || newRatio > MRConfig.stop_hyp_ratio) {
+		        		System.out.println("oldTotalNumHyp=" + oldTotalNumHyp + "; newTotalNumHyp=" + newTotalNumHyp + "; newRatio="+ newRatio +";  at iteration " + iter);
+		        		oldTotalNumHyp = newTotalNumHyp; 
+		            }else{
+		            	System.out.println("No new hypotheses generated at iteration " + iter + " for stop_hyp_ratio=" + MRConfig.stop_hyp_ratio); 
+		            	break;
 		            }
+		        	
         		} catch (IOException e) {
 					e.printStackTrace();
 				}
