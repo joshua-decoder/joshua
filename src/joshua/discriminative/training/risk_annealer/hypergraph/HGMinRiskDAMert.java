@@ -32,7 +32,6 @@ import joshua.discriminative.training.NbestMerger;
 import joshua.discriminative.training.risk_annealer.AbstractMinRiskMERT;
 import joshua.discriminative.training.risk_annealer.DeterministicAnnealer;
 import joshua.discriminative.training.risk_annealer.GradientComputer;
-import joshua.discriminative.training.risk_annealer.nbest.NbestMinRiskDAMert;
 import joshua.util.FileUtility;
 
 public class HGMinRiskDAMert extends AbstractMinRiskMERT {

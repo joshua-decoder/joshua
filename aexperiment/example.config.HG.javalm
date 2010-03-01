@@ -63,7 +63,7 @@ forest_pruning_threshold=150
 #0: no merge; 1: merge without de-dup; 2: merge with de-dup
 #note that if use_kbest_hg=false, then we cannot set hyp_merge_mode=2
 hyp_merge_mode=2
-
+stop_hyp_ratio=0.01
 ###### model weights
 #lm order weight
 lm 1.000000
