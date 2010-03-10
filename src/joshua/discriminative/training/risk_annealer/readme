@@ -41,3 +41,7 @@ useBaseline=true
 
 
 
+(4) rerank only
+set oneTimeHGRerank=true
+and use the prefix (excluding .hg.items and .hg.rules)
+
