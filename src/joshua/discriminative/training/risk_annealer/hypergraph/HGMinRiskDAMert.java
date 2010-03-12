@@ -210,7 +210,7 @@ public class HGMinRiskDAMert extends AbstractMinRiskMERT {
         	}
 
         	//=====compute onebest BLEU
-        	computeOneBestBLEU(curHypFilePrefix);
+        	//computeOneBestBLEU(curHypFilePrefix);
         	
         	//==== run DA annealer to obtain optimal weight vector using the hypergraphs as training data 	
         	HyperGraphFactory hgFactory = new HyperGraphFactory(curHypFilePrefix, referenceFiles, MRConfig.ngramStateID,  symbolTbl, this.haveRefereces);   

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 
 import joshua.corpus.vocab.SymbolTable;
 import joshua.decoder.ff.state_maintenance.DPState;
@@ -11,6 +12,7 @@ import joshua.decoder.ff.state_maintenance.NgramDPState;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.hypergraph.HGNode;
 import joshua.decoder.hypergraph.HyperEdge;
+import joshua.discriminative.training.risk_annealer.hypergraph.HGMinRiskDAMert;
 import joshua.util.Ngram;
 
 public class NgramExtractor {
@@ -25,6 +27,8 @@ public class NgramExtractor {
 	private static String STOP_SYM="</s>";
 	private int STOP_SYM_ID;
 	
+	static private Logger logger = 
+		Logger.getLogger(NgramExtractor.class.getSimpleName());
 	
 	//default is useIntegerNgram 
 	public NgramExtractor(SymbolTable symbolTable, int ngramStateID, int baselineLMOrder){
@@ -141,7 +145,25 @@ public class NgramExtractor {
 	    		if(oldNgramCounts.containsKey(ngram)){
 	    			finalCount -= oldNgramCounts.get(ngram);
 	    			if(finalCount<0){
-	    				System.out.println("error: negative count for ngram: "+ entry.getValue() +"; old: " +oldNgramCounts.get(ngram) ); 
+	    				logger.severe("error: negative count for ngram: "+ entry.getValue() +"; old: " +oldNgramCounts.get(ngram) ); 
+	    				System.out.println(" is: " + rule.toString(symbolTable));
+	    				
+	    				for(int i=0; i< antNodes.size(); i++){
+		    				HGNode antNode =  antNodes.get(i);
+			    			NgramDPState state     = (NgramDPState) antNode.getDPState(this.ngramStateID);
+			    			//System.out.println("lm_feat_is: " + this.lm_feat_id + " ; state is: " + state);
+			    			
+			    			List<Integer>   leftContext = state.getLeftLMStateWords();
+			    			for(int wrd : leftContext)
+			    				System.out.print(symbolTable.getWord(wrd) + " ");
+			    			System.out.println();
+			    			
+			    			List<Integer>   rightContext = state.getRightLMStateWords();
+			    			for(int wrd : rightContext)
+			    				System.out.print(symbolTable.getWord(wrd) + " ");
+			    			System.out.println();
+			    			
+	    				}
 	    				System.exit(0);
 	    			}
 	    		}
