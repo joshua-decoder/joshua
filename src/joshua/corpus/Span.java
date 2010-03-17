@@ -88,6 +88,11 @@ public class Span implements Iterable<Integer>, Comparable<Span> {
 		}
 		return result;
 	}
+
+	public boolean strictlyContainedIn(Span o)
+	{
+		return (start >= o.start) && (end <= o.end) && !(start == o.start && end == o.end);
+	}
 	
 	public boolean disjointFrom(Span o)
 	{
