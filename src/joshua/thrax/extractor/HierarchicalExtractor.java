@@ -16,7 +16,7 @@ import joshua.corpus.vocab.SymbolTable;
 import joshua.thrax.corpus.AlignedBitext;
 import joshua.thrax.corpus.AlignedParallelPhrase;
 
-public class HierarchicalExtractor implements Extractor {
+public abstract class HierarchicalExtractor implements Extractor {
 
 	private int ruleLengthLimit;
 	private AlignedBitext bitext;
@@ -74,16 +74,73 @@ public class HierarchicalExtractor implements Extractor {
 		int sourceRhsSize = h.sourceRhsSize;
 		int targetRhsSize = h.targetRhsSize;
 		SymbolTable sourceVocab = bitext.getSourceCorpus().getVocabulary();
-		int lhs = sourceVocab.X;
-		int [] sourceRhs = new int[sourceRhsSize];
-		int [] targetRhs = new int[targetRhsSize];
+		int lhs = getLhsNonterminal(h);
+		int [] nts = getRhsNonterminals(h);
 		Corpus sourceCorpus = bitext.getSourceCorpus();
 		Corpus targetCorpus = bitext.getTargetCorpus();
+		int [] sourceRhs = getRhsWords(h.sourceRoot, h.sourceNonTerminals, sourceCorpus, sourceRhsSize, nts);
+		int [] targetRhs = getRhsWords(h.targetRoot, h.targetNonTerminals, targetCorpus, targetRhsSize, nts);
+
 
 		// TODO: deal with scores.
+		// want to calculate
+		// a) relative frequency estimate p(rule | root)
+		// b) lexical probability scores
 		float [] scores = new float[1];
 	
 
 		return new BilingualRule(lhs, sourceRhs, targetRhs, scores, arity);
 	}
+
+	/**
+	 * Populates an array of int with the appropriate terminal and
+	 * nonterminal symbols for a rule.
+	 *
+	 * @param root the root span of the rule
+	 * @param ntSpans an array of spans, on for each NT in the rule
+	 * @param c the corpus from whose vocabulary the symbols should be taken
+	 * @param rhsSize the size of the right hand side of the rule
+	 * @param nts an array holding the nonterminal symbols for the right
+	 * hand side
+	 *
+	 * @return an array representing the entire right hand side
+	 */
+	private int [] getRhsWords(Span root, Span [] ntSpans, Corpus c, 
+	                         int rhsSize, int [] nts)
+	{
+		int [] rhs = new int[rhsSize];
+		int ntCount = 0;
+		for (int i = 0; i < rhsSize; i++) {
+			if (ntCount >= nts.length) {
+				// replace with terminal symbol
+				continue;
+			}
+			if (i == ntSpans[ntCount].start) {
+				rhs[i] = nts[ntCount];
+				ntCount++;
+				continue;
+			}
+
+		}
+		return rhs;
+	}
+
+	/**
+	 * Determines the nonterminal label for the left hand side of the rule
+	 * represented by a HierarchicalSpan.
+	 *
+	 * @param h a HierarchicalSpan representing a rule
+	 * @return the int value of the LHS nonterminal label for the rule
+	 */
+	abstract int getLhsNonterminal(HierarchicalSpan h);
+
+	/**
+	 * Determines the nonterminal label for each NT in the right hand side
+	 * of the rule represented by a HierarchicalSpan.
+	 *
+	 * @param h a HierarchicalSpan representing a rule
+	 * @return a list of int values for the label for each nonterminal on
+	 * the right hand side of the rule
+	 */
+	abstract int [] getRhsNonterminals(HierarchicalSpan h);
 }

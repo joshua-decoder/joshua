@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.util.List;
 
 import joshua.thrax.corpus.AlignedBitext;
-import joshua.thrax.extractor.HierarchicalExtractor;
+import joshua.thrax.extractor.HieroExtractor;
 
 import joshua.corpus.Corpus;
 import joshua.corpus.alignment.Alignments;
@@ -38,7 +38,7 @@ public class HieroMain {
 
 			AlignedBitext bt = new AlignedBitext(src, tgt, al);
 
-			HierarchicalExtractor ex = new HierarchicalExtractor(bt, RULE_LENGTH);
+			HieroExtractor ex = new HieroExtractor(bt, RULE_LENGTH);
 
 			List<Rule> rules = ex.getAllRules();
 
