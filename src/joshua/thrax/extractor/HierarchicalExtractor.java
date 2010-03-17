@@ -21,6 +21,12 @@ public abstract class HierarchicalExtractor implements Extractor {
 	private int ruleLengthLimit;
 	private AlignedBitext bitext;
 
+	/**
+	 * Constructor.
+	 *
+	 * @param bt an aligned bitext to extract rules from
+	 * @param len limit on the length of the extracted rules
+	 */
 	public HierarchicalExtractor(AlignedBitext bt, int len)
 	{
 		this.bitext = bt;
@@ -39,6 +45,12 @@ public abstract class HierarchicalExtractor implements Extractor {
 		return result;
 	}
 
+	/**
+	 * Extracts all possible rules from a parallel phrase.
+	 *
+	 * @param p the parallel phrase
+	 * @return a set of rules extracted
+	 */
 	private Set<Rule> allRules(AlignedParallelPhrase p)
 	{
 		Alignments alignments = p.getAlignment();
@@ -66,6 +78,13 @@ public abstract class HierarchicalExtractor implements Extractor {
 		return result;
 	}
 
+	/**
+	 * Converts a HierarchicalSpan (the internal representation of a
+	 * hierarchical SCFG rule) into a joshua.decoder.ff.tm.Rule object.
+	 *
+	 * @param h the internal representation of this rule
+	 * @return a Rule
+	 */
 	private Rule createRule(HierarchicalSpan h)
 	{
 
