@@ -19,6 +19,9 @@ package joshua.corpus;
 
 import java.util.Iterator;
 
+import java.util.List;
+import java.util.ArrayList;
+
 /**
  * Represents a span with an inclusive starting index and an exclusive
  * ending index.
@@ -57,7 +60,45 @@ public class Span implements Iterable<Integer>, Comparable<Span> {
 	public int size() {
 		return end-start;
 	}
+
+	/**
+	 * Returns all subspans of the given Span.
+	 *
+	 * @return a list of all subspans.
+	 */
+	public List<Span> getSubSpans()
+	{
+		return getSubSpans(size());
+	}
+
+	/**
+	 * Returns all subspans of the given Span, up to a specified Span size.
+	 *
+	 * @param max the maximum Span size to return
+	 * @return a list all subspans up to the given size
+	 */
+	public List<Span> getSubSpans(int max)
+	{
+		int spanSize = size();
+		ArrayList<Span> result = new ArrayList<Span>(max * spanSize);
+		for (int len = 1; len <= max; len++) {
+			for (int i = start; i < end - len + 1; i++) {
+				result.add(new Span(i, i + len));
+			}
+		}
+		return result;
+	}
 	
+	public boolean disjointFrom(Span o)
+	{
+		if (start < o.start) {
+			return end <= o.start;
+		}
+		if (end > o.end) {
+			return start >= o.end;
+		}
+		return false;
+	}
 	
 	public String toString() {
 		return "["+start+"-"+end+")";
