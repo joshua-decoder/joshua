@@ -145,8 +145,8 @@ public class NgramExtractor {
 	    		if(oldNgramCounts.containsKey(ngram)){
 	    			finalCount -= oldNgramCounts.get(ngram);
 	    			if(finalCount<0){
-	    				logger.severe("error: negative count for ngram: "+ entry.getValue() +"; old: " +oldNgramCounts.get(ngram) ); 
-	    				System.out.println(" is: " + rule.toString(symbolTable));
+	    				logger.warning("negative count for ngram: "+ ngram + "; new: " + entry.getValue() +"; old: " +oldNgramCounts.get(ngram) ); 
+	    				System.out.println(" rule is: " + rule.toString(symbolTable));
 	    				
 	    				for(int i=0; i< antNodes.size(); i++){
 		    				HGNode antNode =  antNodes.get(i);
@@ -164,7 +164,7 @@ public class NgramExtractor {
 			    			System.out.println();
 			    			
 	    				}
-	    				System.exit(0);
+	    				//System.exit(0);//TODO
 	    			}
 	    		}
 	    		if(finalCount>0)
