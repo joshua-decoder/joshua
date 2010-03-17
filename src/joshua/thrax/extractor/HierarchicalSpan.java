@@ -89,17 +89,6 @@ public class HierarchicalSpan {
 			}
 			i++;
 		}
-		/*
-		if (sourceX1 == null) {
-			return true;
-		}
-		if (!s.disjointFrom(sourceX1)) {
-			return false;
-		}
-		if (!t.disjointFrom(targetX1)) {
-			return false;
-		}
-		*/
 		return true;
 	}
 

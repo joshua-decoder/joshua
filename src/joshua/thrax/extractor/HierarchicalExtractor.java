@@ -16,6 +16,14 @@ import joshua.corpus.vocab.SymbolTable;
 import joshua.thrax.corpus.AlignedBitext;
 import joshua.thrax.corpus.AlignedParallelPhrase;
 
+/**
+ * A class for extracting heirarchical rules from an aligned parallel corpus.
+ * This class may not be instantiated; you need to define a subclass that
+ * assigns nonterminal symbols to the heirarchical rules extracted.
+ *
+ * Hiero and SAMT style extractors are natural subclasses of this class,
+ * since they differ only in the assignment of nonterminal symbols.
+ */
 public abstract class HierarchicalExtractor implements Extractor {
 
 	private int ruleLengthLimit;
@@ -129,17 +137,30 @@ public abstract class HierarchicalExtractor implements Extractor {
 	{
 		int [] rhs = new int[rhsSize];
 		int ntCount = 0;
-		for (int i = 0; i < rhsSize; i++) {
+		int rhsPos = 0;
+		for (int i: root) {
+			if (rhsPos >= rhs.length) {
+				// this should never happen
+				System.err.println("rhs of a rule was not long enough!");
+				return rhs;
+			}
 			if (ntCount >= nts.length) {
 				// replace with terminal symbol
+				rhs[rhsPos] = c.getWordID(i);
+				rhsPos++;
 				continue;
 			}
 			if (i == ntSpans[ntCount].start) {
-				rhs[i] = nts[ntCount];
-				ntCount++;
+				rhs[rhsPos] = nts[ntCount];
+				rhsPos++;
 				continue;
 			}
-
+			if (i == ntSpans[ntCount].end) {
+				ntCount++;
+			}
+			// replace with terminal symbol
+			rhs[rhsPos] = c.getWordID(i);
+			rhsPos++;
 		}
 		return rhs;
 	}
