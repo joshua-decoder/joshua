@@ -5,7 +5,7 @@ import joshua.corpus.Span;
 
 import java.util.Iterator;
 
-public class Bitext implements Iterable<ParallelSpan> {
+public class Bitext implements Iterable<ParallelPhrase> {
 
 	private Corpus sourceCorpus;
 	private Corpus targetCorpus;
@@ -16,20 +16,19 @@ public class Bitext implements Iterable<ParallelSpan> {
 		this.targetCorpus = tgt;
 	}
 
-	public Iterator<ParallelSpan> iterator() {
+	public Iterator<ParallelPhrase> iterator() {
 		final int numSentences = sourceCorpus.getNumSentences() < targetCorpus.getNumSentences() ? sourceCorpus.getNumSentences() : targetCorpus.getNumSentences();
-		return new Iterator<ParallelSpan>() {
+		return new Iterator<ParallelPhrase>() {
 			int curr = 0;
 
 			public boolean hasNext() {
 				return curr < numSentences;
 			}
 
-			public ParallelSpan next() {
-				Span src = new Span(sourceCorpus.getSentencePosition(curr), sourceCorpus.getSentenceEndPosition(curr));
-				Span tgt = new Span(targetCorpus.getSentencePosition(curr), targetCorpus.getSentenceEndPosition(curr));
+			public ParallelPhrase next() {
+				ParallelPhrase result = new ParallelPhrase(sourceCorpus.getSentence(curr), targetCorpus.getSentence(curr));
 				curr++;
-				return new ParallelSpan(src, tgt);
+				return result;
 			}
 
 			public void remove() {
