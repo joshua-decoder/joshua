@@ -25,6 +25,8 @@ public class HierarchicalSpan {
 	public int sourceRhsSize;
 	public int targetRhsSize;
 
+	public int [] targetNonTerminalOrder;
+
 	public HierarchicalSpan(Span s, Span t)
 	{
 		this.sourceRoot = s;
@@ -37,6 +39,7 @@ public class HierarchicalSpan {
 */
 		this.sourceNonTerminals = new Span[ARITY_LIMIT];
 		this.targetNonTerminals = new Span[ARITY_LIMIT];
+		this.targetNonTerminalOrder = new int[ARITY_LIMIT];
 
 		this.sourceRhsSize = s.size();
 		this.targetRhsSize = t.size();
@@ -55,6 +58,7 @@ public class HierarchicalSpan {
 */
 		this.sourceNonTerminals = new Span[ARITY_LIMIT];
 		this.targetNonTerminals = new Span[ARITY_LIMIT];
+		this.targetNonTerminalOrder = new int[ARITY_LIMIT];
 
 		this.sourceRhsSize = hs.sourceRhsSize;
 		this.targetRhsSize = hs.targetRhsSize;
@@ -63,6 +67,8 @@ public class HierarchicalSpan {
 		                 this.sourceNonTerminals, 0, ARITY_LIMIT);
 		System.arraycopy(hs.targetNonTerminals, 0,
 		                 this.targetNonTerminals, 0, ARITY_LIMIT);
+		System.arraycopy(hs.targetNonTerminalOrder, 0,
+		                 this.targetNonTerminalOrder, 0, ARITY_LIMIT);
 		this.arity = hs.arity;
 	}
 

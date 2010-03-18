@@ -160,6 +160,40 @@ public class BilingualRule extends MonolingualRule {
 	}
 	
 	
+	/**
+	 * Two BilingualRules are equal of they have the same LHS, the same
+	 * source RHS and the same target RHS.
+	 *
+	 * @param o the object to check for equality
+	 * @return true if o is the same BilingualRule as this rule, false
+	 * otherwise
+	 */
+	public boolean equals(Object o)
+	{
+		if (!(o instanceof BilingualRule)) {
+			return false;
+		}
+		BilingualRule other = (BilingualRule) o;
+		if (getLHS() != other.getLHS()) {
+			return false;
+		}
+		if (!Arrays.equals(getFrench(), other.getFrench())) {
+			return false;
+		}
+		if (!Arrays.equals(english, other.getEnglish())) {
+			return false;
+		}
+		return true;
+	}
+
+	public int hashCode()
+	{
+		// I just made this up. If two rules are equal they'll have the
+		// same hashcode. Maybe someone else can do a better job though?
+		int frHash = Arrays.hashCode(getFrench());
+		int enHash = Arrays.hashCode(english);
+		return frHash ^ enHash ^ getLHS();
+	}
 	
 	
 

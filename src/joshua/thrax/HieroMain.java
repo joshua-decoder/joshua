@@ -1,10 +1,11 @@
 package joshua.thrax;
 
 import java.io.IOException;
-import java.util.List;
+import java.util.Set;
 
 import joshua.thrax.corpus.AlignedBitext;
 import joshua.thrax.extractor.HieroExtractor;
+import joshua.thrax.features.RelativeFrequencyFeature;
 
 import joshua.corpus.Corpus;
 import joshua.corpus.alignment.Alignments;
@@ -39,8 +40,9 @@ public class HieroMain {
 			AlignedBitext bt = new AlignedBitext(src, tgt, al);
 
 			HieroExtractor ex = new HieroExtractor(bt, RULE_LENGTH);
+			ex.registerFeature(new RelativeFrequencyFeature());
 
-			List<Rule> rules = ex.getAllRules();
+			Set<Rule> rules = ex.getAllRules();
 
 			for (Rule r : rules) {
 				System.out.println(r.toString(src.getVocabulary() /*, src.getVocabulary(), tgt.getVocabulary() */));

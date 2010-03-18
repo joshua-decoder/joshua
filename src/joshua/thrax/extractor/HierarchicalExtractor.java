@@ -15,6 +15,7 @@ import joshua.corpus.Corpus;
 import joshua.corpus.vocab.SymbolTable;
 import joshua.thrax.corpus.AlignedBitext;
 import joshua.thrax.corpus.AlignedParallelPhrase;
+import joshua.thrax.features.Feature;
 
 /**
  * A class for extracting heirarchical rules from an aligned parallel corpus.
@@ -29,6 +30,8 @@ public abstract class HierarchicalExtractor implements Extractor {
 	private int ruleLengthLimit;
 	private AlignedBitext bitext;
 
+	private ArrayList<Feature> features;
+
 	/**
 	 * Constructor.
 	 *
@@ -39,18 +42,34 @@ public abstract class HierarchicalExtractor implements Extractor {
 	{
 		this.bitext = bt;
 		this.ruleLengthLimit = len;
+		this.features = new ArrayList<Feature>();
 	}
 
-	public List<Rule> getAllRules()
+	public Set<Rule> getAllRules()
 	{
-		ArrayList<Rule> result = new ArrayList<Rule>();
+		HashSet<Rule> result = new HashSet<Rule>();
 
 		for (AlignedParallelPhrase p : bitext) {
 			for (Rule r : allRules(p)) {
+				for (Feature f : features) {
+					f.noteExtraction(r);
+				}
 				result.add(r);
 			}
 		}
+		for (Rule r : result) {
+			float [] scores = r.getFeatureScores();
+			for (int i = 0; i < features.size(); i++) {
+				scores[i] = features.get(i).score(r);
+			}
+		}
 		return result;
+	}
+
+	public void registerFeature(Feature f)
+	{
+		features.add(f);
+		return;
 	}
 
 	/**
@@ -108,13 +127,7 @@ public abstract class HierarchicalExtractor implements Extractor {
 		int [] sourceRhs = getRhsWords(h.sourceRoot, h.sourceNonTerminals, sourceCorpus, sourceRhsSize, nts);
 		int [] targetRhs = getRhsWords(h.targetRoot, h.targetNonTerminals, targetCorpus, targetRhsSize, nts);
 
-
-		// TODO: deal with scores.
-		// want to calculate
-		// a) relative frequency estimate p(rule | root)
-		// b) lexical probability scores
-		float [] scores = new float[1];
-	
+		float [] scores = new float[features.size()];
 
 		return new BilingualRule(lhs, sourceRhs, targetRhs, scores, arity);
 	}
