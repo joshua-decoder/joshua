@@ -97,10 +97,10 @@ public class Span implements Iterable<Integer>, Comparable<Span> {
 	public boolean disjointFrom(Span o)
 	{
 		if (start < o.start) {
-			return end <= o.start;
+			return end < o.start;
 		}
 		if (end > o.end) {
-			return start >= o.end;
+			return start > o.end;
 		}
 		return false;
 	}

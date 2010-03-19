@@ -4,6 +4,9 @@ import joshua.corpus.Span;
 
 public class HierarchicalSpan {
 
+	// TODO:
+	// factor this away from here and hiero extractor
+	// should only be set once.
 	public static final int ARITY_LIMIT = 2;
 	public static final int MAX_NT_COVERAGE = 1;
 	public static final int MAX_RHS_LENGTH = 7;

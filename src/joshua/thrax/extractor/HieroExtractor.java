@@ -16,7 +16,13 @@ public class HieroExtractor extends HierarchicalExtractor {
 	/**
 	 * The nonterminal!
 	 */
-	private int X;
+	private static String X = "[X]";
+	private static String NT_TEMPLATE = "[X,%d]";
+
+	// TODO:
+	// factor this out of here and hierarchical span. should only be
+	// given once.
+	public static final int ARITY_LIMIT = 2;
 
 	/**
 	 * Constructor. Finds the appropriate X value from the source
@@ -28,7 +34,13 @@ public class HieroExtractor extends HierarchicalExtractor {
 	public HieroExtractor(AlignedBitext bt, int len)
 	{
 		super(bt, len);
-		X = bt.getSourceCorpus().getVocabulary().X;
+		bt.getSourceCorpus().getVocabulary().addNonterminal(X);
+		bt.getTargetCorpus().getVocabulary().addNonterminal(X);
+		for (int i = 0; i < ARITY_LIMIT; i++) {
+			bt.getSourceCorpus().getVocabulary().addNonterminal(String.format(NT_TEMPLATE, i + 1));
+			bt.getTargetCorpus().getVocabulary().addNonterminal(String.format(NT_TEMPLATE, i + 1));
+		}
+		
 	}
 
 	Set<Rule> createRules(HierarchicalSpan h)
@@ -45,7 +57,7 @@ public class HieroExtractor extends HierarchicalExtractor {
 		populate(h.arity, h.targetRoot, h.targetRhs, tgt, bitext.getTargetCorpus());
 
 		float [] scores = new float[features.size()];
-		ret.add(new BilingualRule(X, src, tgt, scores, h.arity));
+		ret.add(new BilingualRule(bitext.getSourceCorpus().getVocabulary().getID(X), src, tgt, scores, h.arity));
 		return ret;
 	}
 
@@ -54,31 +66,24 @@ public class HieroExtractor extends HierarchicalExtractor {
 	{
 		int resultIndex = 0;
 		int start = root.start;
-		boolean inNonterminal = false;
+		int currSym = 0;
 		for (int i : root) {
 			// for each entry in the NT template
 			int nt = nts[i-start];
 			if (nt == 0) {
 				// terminal symbol case
-				inNonterminal = false;
+				currSym = 0;
 				result[resultIndex] = cor.getWordID(i);
 				resultIndex++;
 			}
 			else {
 				// skip over the rest of this span,
 				// because it's been replaced with one NT
-				if (inNonterminal) {
+				if (nt == currSym) {
 					continue;
 				}
-				inNonterminal = true;
-				int ntSym = X;
-				// if arity < 2, the only NT is X again
-				if (arity >= 2) {
-					// FIXME:
-					// this is a terrible hack.
-					// we need the new Vocabulary.
-					ntSym = nt - 1;
-				}
+				currSym = nt;
+				int ntSym = cor.getVocabulary().getID(String.format(NT_TEMPLATE, -nt));
 				result[resultIndex] = ntSym;
 				resultIndex++;
 			}
@@ -91,7 +96,7 @@ public class HieroExtractor extends HierarchicalExtractor {
 	 */
 	int getLhsNonterminal(HierarchicalSpan h)
 	{
-		return X;
+		return 0; //X; TODO: remove these methods
 	}
 
 	/**
@@ -102,7 +107,7 @@ public class HieroExtractor extends HierarchicalExtractor {
 	{
 		int [] ret = new int[h.arity];
 		for (int i = 0; i < ret.length; i++) {
-			ret[i] = X;
+			ret[i] = 0; //X; TODO: remove these methods
 		}
 		return ret;
 	}

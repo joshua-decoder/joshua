@@ -6,6 +6,7 @@ import java.util.Set;
 import joshua.thrax.corpus.AlignedBitext;
 import joshua.thrax.extractor.HieroExtractor;
 import joshua.thrax.features.RelativeFrequencyFeature;
+import joshua.thrax.features.TranslationProbabilityFeature;
 
 import joshua.corpus.Corpus;
 import joshua.corpus.alignment.Alignments;
@@ -40,7 +41,7 @@ public class HieroMain {
 			AlignedBitext bt = new AlignedBitext(src, tgt, al);
 
 			HieroExtractor ex = new HieroExtractor(bt, RULE_LENGTH);
-			ex.registerFeature(new RelativeFrequencyFeature());
+			ex.registerFeature(new TranslationProbabilityFeature());
 
 			Set<Rule> rules = ex.getAllRules();
 
