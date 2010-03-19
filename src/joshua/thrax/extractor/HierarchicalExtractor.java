@@ -27,10 +27,10 @@ import joshua.thrax.features.Feature;
  */
 public abstract class HierarchicalExtractor implements Extractor {
 
-	private int ruleLengthLimit;
-	private AlignedBitext bitext;
+	protected int ruleLengthLimit;
+	protected AlignedBitext bitext;
 
-	private ArrayList<Feature> features;
+	protected ArrayList<Feature> features;
 
 	/**
 	 * Constructor.
@@ -100,10 +100,12 @@ public abstract class HierarchicalExtractor implements Extractor {
 		}
 
 		for (HierarchicalSpan hs : rulePatterns) {
-			result.add(createRule(hs));
+			result.addAll(createRules(hs));
 		}
 		return result;
 	}
+
+	abstract Set<Rule> createRules(HierarchicalSpan h);
 
 	/**
 	 * Converts a HierarchicalSpan (the internal representation of a

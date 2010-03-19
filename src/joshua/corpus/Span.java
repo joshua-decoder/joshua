@@ -81,7 +81,7 @@ public class Span implements Iterable<Integer>, Comparable<Span> {
 	{
 		int spanSize = size();
 		ArrayList<Span> result = new ArrayList<Span>(max * spanSize);
-		for (int len = 1; len <= max; len++) {
+		for (int len = max; len > 0; len--) {
 			for (int i = start; i < end - len + 1; i++) {
 				result.add(new Span(i, i + len));
 			}

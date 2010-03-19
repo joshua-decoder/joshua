@@ -11,13 +11,7 @@ public class HierarchicalSpan {
 	Span sourceRoot;
 	Span targetRoot;
 
-/*
-	Span sourceX1;
-	Span targetX1;
 
-	Span sourceX2;
-	Span targetX2;
-*/
 	Span sourceNonTerminals[];
 	Span targetNonTerminals[];
 
@@ -25,24 +19,29 @@ public class HierarchicalSpan {
 	public int sourceRhsSize;
 	public int targetRhsSize;
 
-	public int [] targetNonTerminalOrder;
+	public int [] sourceRhs;
+	public int [] targetRhs;
+
 
 	public HierarchicalSpan(Span s, Span t)
 	{
 		this.sourceRoot = s;
 		this.targetRoot = t;
-/*
-		this.sourceX1 = null;
-		this.targetX1 = null;
-		this.sourceX2 = null;
-		this.targetX2 = null;
-*/
 		this.sourceNonTerminals = new Span[ARITY_LIMIT];
 		this.targetNonTerminals = new Span[ARITY_LIMIT];
-		this.targetNonTerminalOrder = new int[ARITY_LIMIT];
 
 		this.sourceRhsSize = s.size();
 		this.targetRhsSize = t.size();
+
+		this.sourceRhs = new int[sourceRhsSize];
+		this.targetRhs = new int[targetRhsSize];
+
+		for (int i = 0; i < sourceRhs.length; i++) {
+			this.sourceRhs[i] = 0;
+		}
+		for (int i = 0; i < targetRhs.length; i++) {
+			this.targetRhs[i] = 0;
+		}
 
 		this.arity = 0;
 	}
@@ -51,50 +50,56 @@ public class HierarchicalSpan {
 	{
 		this.sourceRoot = hs.sourceRoot;
 		this.targetRoot = hs.targetRoot;
-/*		this.sourceX1 = hs.sourceX1;
-		this.targetX1 = hs.targetX1;
-		this.sourceX2 = hs.sourceX2;
-		this.targetX2 = hs.targetX2;
-*/
 		this.sourceNonTerminals = new Span[ARITY_LIMIT];
 		this.targetNonTerminals = new Span[ARITY_LIMIT];
-		this.targetNonTerminalOrder = new int[ARITY_LIMIT];
 
 		this.sourceRhsSize = hs.sourceRhsSize;
 		this.targetRhsSize = hs.targetRhsSize;
+		this.sourceRhs = new int[hs.sourceRhs.length];
+		this.targetRhs = new int[hs.targetRhs.length];
 
 		System.arraycopy(hs.sourceNonTerminals, 0,
 		                 this.sourceNonTerminals, 0, ARITY_LIMIT);
 		System.arraycopy(hs.targetNonTerminals, 0,
 		                 this.targetNonTerminals, 0, ARITY_LIMIT);
-		System.arraycopy(hs.targetNonTerminalOrder, 0,
-		                 this.targetNonTerminalOrder, 0, ARITY_LIMIT);
+		System.arraycopy(hs.sourceRhs, 0, sourceRhs, 0, hs.sourceRhs.length);
+		System.arraycopy(hs.targetRhs, 0, targetRhs, 0, hs.targetRhs.length);
 		this.arity = hs.arity;
+
 	}
 
 	public boolean consistentWith(Span s, Span t)
 	{
+	//	System.err.println("curr:" + this);
+	//	System.err.println("s:" + s);
+	//	System.err.println("t:" + t);
 		if (arity >= ARITY_LIMIT) {
+	//		System.err.println("arity");
 			return false;
 		}
-		if (sourceRhsSize - s.size() + 1 < MAX_NT_COVERAGE ||
-		    targetRhsSize - t.size() + 1 < MAX_NT_COVERAGE) {
+		if (sourceRhsSize - s.size() - arity < MAX_NT_COVERAGE ||
+		    targetRhsSize - t.size() - arity < MAX_NT_COVERAGE) {
+	//		System.err.println("NT coverage");
 			return false;
 		}
 		if (!s.strictlyContainedIn(sourceRoot)) {
+	//		System.err.println("s not contained");
 			return false;
 		}
 		if (!t.strictlyContainedIn(targetRoot)) {
+	//		System.err.println("t not contained");
 			return false;
 		}
 		int i = 0;
 		while (sourceNonTerminals[i] != null) {
 			if (!(s.disjointFrom(sourceNonTerminals[i]) &&
 			      t.disjointFrom(targetNonTerminals[i]))) {
+	//			System.err.println("not disjoint from " + i);
 				return false;
 			}
 			i++;
 		}
+	//	System.err.println("OK");
 		return true;
 	}
 
@@ -108,18 +113,10 @@ public class HierarchicalSpan {
 		ret.sourceRhsSize -= (s.size() - 1);
 		ret.targetRhsSize -= (t.size() - 1);
 		ret.arity++;
-		/*
-		if (sourceX1 == null) {
-			ret.sourceX1 = s;
-			ret.targetX1 = t;
-			return ret;
-		}
-		else {
-			ret.sourceX2 = s;
-			ret.targetX2 = t;
-			return ret;
-		}
-		*/
+		for (int i : s)
+			ret.sourceRhs[i - ret.sourceRoot.start] = -ret.arity;
+		for (int i : t)
+			ret.targetRhs[i - ret.targetRoot.start] = -ret.arity;
 		return ret;
 	}
 
@@ -130,6 +127,22 @@ public class HierarchicalSpan {
 		for (Span s : sourceNonTerminals) {
 			sb.append(s);
 		}
+		sb.append("//");
+		sb.append(targetRoot);
+		for (Span t : targetNonTerminals) {
+			sb.append(t);
+		}
+		return sb.toString();
+	}
+
+	public String ntTemplate()
+	{
+		StringBuilder sb = new StringBuilder();
+		for (int i : sourceRhs)
+			sb.append(i + " ");
+		sb.append("// ");
+		for (int i : targetRhs)
+			sb.append(i + " ");
 		return sb.toString();
 	}
 
