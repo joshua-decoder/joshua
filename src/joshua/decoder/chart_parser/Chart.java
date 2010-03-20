@@ -163,7 +163,7 @@ public class Chart {
 		SymbolTable                symbolTable,
 		int                        segmentID,
 		Grammar[]                  grammars,
-		boolean                    hasLM,
+		boolean                    useMaxLMCostForOOV,
 		String                     goalSymbol,
 		List<ConstraintSpan>       constraintSpans
 		)
@@ -212,7 +212,7 @@ public class Chart {
 				int sourceWord = arc.getLabel();
 				int targetWord = symbolTable.addTerminal( symbolTable.getWord(sourceWord)+"_OOV");
 				Rule rule = this.grammars[1].constructOOVRule(
-					this.featureFunctions.size(), sourceWord, targetWord, hasLM);
+					this.featureFunctions.size(), sourceWord, targetWord, useMaxLMCostForOOV);
 			
 				if (manualConstraintsHandler.containHardRuleConstraint(node.getNumber(), arc.getTail().getNumber())) {
 					//do not add the oov axiom

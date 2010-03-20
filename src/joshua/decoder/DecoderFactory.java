@@ -48,7 +48,7 @@ public class DecoderFactory {
 	private List<GrammarFactory>  grammarFactories = null;
 	private List<FeatureFunction> featureFunctions = null;
 	private List<StateComputer> stateComputers;
-	private boolean                    hasLanguageModel = false;
+	private boolean                    useMaxLMCostForOOV = false;
 	
 	/**
 	 * Shared symbol table for source language terminals, target
@@ -62,10 +62,10 @@ public class DecoderFactory {
 		Logger.getLogger(DecoderFactory.class.getName());
 	
 	
-	public DecoderFactory(List<GrammarFactory> grammarFactories, boolean hasLanguageModel, List<FeatureFunction> featureFunctions, 
+	public DecoderFactory(List<GrammarFactory> grammarFactories, boolean useMaxLMCostForOOV, List<FeatureFunction> featureFunctions, 
 			List<StateComputer> stateComputers, SymbolTable symbolTable) {
 		this.grammarFactories = grammarFactories;
-		this.hasLanguageModel = hasLanguageModel;
+		this.useMaxLMCostForOOV = useMaxLMCostForOOV;
 		this.featureFunctions = featureFunctions;
 		this.stateComputers = stateComputers;
 		this.symbolTable      = symbolTable;
@@ -81,7 +81,7 @@ public class DecoderFactory {
 		try {
 			if (JoshuaConfiguration.num_parallel_decoders == 1) {
 				DecoderThread pdecoder = new DecoderThread(
-					this.grammarFactories, this.hasLanguageModel,
+					this.grammarFactories, this.useMaxLMCostForOOV,
 					this.featureFunctions, this.stateComputers, this.symbolTable,
 					testFile, nbestFile, oracleFile, 0);
 				
@@ -112,7 +112,7 @@ public class DecoderFactory {
 	{
 		try {
 			DecoderThread pdecoder = new DecoderThread(
-				this.grammarFactories, this.hasLanguageModel,
+				this.grammarFactories, this.useMaxLMCostForOOV,
 				this.featureFunctions, this.stateComputers, this.symbolTable,
 				sentence, null, null, 0);
 			return pdecoder.getHyperGraph(sentence);
@@ -200,7 +200,7 @@ public class DecoderFactory {
 					
 					DecoderThread pdecoder = new DecoderThread(
 						this.grammarFactories,
-						this.hasLanguageModel,
+						this.useMaxLMCostForOOV,
 						this.featureFunctions,
 						this.stateComputers,
 						this.symbolTable,
@@ -228,7 +228,7 @@ public class DecoderFactory {
 		
 		DecoderThread pdecoder = new DecoderThread(
 			this.grammarFactories,
-			this.hasLanguageModel,
+			this.useMaxLMCostForOOV,
 			this.featureFunctions,
 			this.stateComputers,
 			this.symbolTable,

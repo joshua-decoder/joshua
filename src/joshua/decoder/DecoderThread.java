@@ -65,7 +65,7 @@ public class DecoderThread extends Thread {
 	 * just copy from DecoderFactory), or differ from thread
 	 * to thread */
 	private final List<GrammarFactory>  grammarFactories;
-	private final boolean                    hasLanguageModel;
+	private final boolean                    useMaxLMCostForOOV;
 	private final List<FeatureFunction> featureFunctions;
 	private final List<StateComputer> stateComputers;
 	
@@ -101,7 +101,7 @@ public class DecoderThread extends Thread {
 //===============================================================
 	public DecoderThread(
 		List<GrammarFactory>  grammarFactories,
-		boolean                    hasLanguageModel,
+		boolean                    useMaxLMCostForOOV,
 		List<FeatureFunction> featureFunctions,
 		List<StateComputer> stateComputers,
 		SymbolTable                symbolTable,
@@ -110,7 +110,7 @@ public class DecoderThread extends Thread {
 	) throws IOException {
 		
 		this.grammarFactories = grammarFactories;
-		this.hasLanguageModel = hasLanguageModel;
+		this.useMaxLMCostForOOV = useMaxLMCostForOOV;
 		this.featureFunctions = featureFunctions;
 		this.stateComputers = stateComputers;
 		this.symbolTable      = symbolTable;
@@ -338,7 +338,7 @@ public class DecoderThread extends Thread {
 				this.symbolTable,
 				Integer.parseInt(segment.id()),
 				grammars,
-				this.hasLanguageModel,
+				this.useMaxLMCostForOOV,
 				JoshuaConfiguration.goal_symbol,
 				segment.constraints());
 			
@@ -439,7 +439,7 @@ public class DecoderThread extends Thread {
 				this.symbolTable,
 				0,
 				grammars,
-				this.hasLanguageModel,
+				this.useMaxLMCostForOOV,
 				JoshuaConfiguration.goal_symbol,
 				null);
 		

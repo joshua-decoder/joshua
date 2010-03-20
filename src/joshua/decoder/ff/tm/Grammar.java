@@ -111,11 +111,11 @@ public interface Grammar  {
 	 * source. Only called when creating oov rule in Chart or
 	 * DiskHypergraph, all the transition cost for phrase model,
 	 * arity penalty, word penalty are all zero, except the LM
-	 * cost or the first feature if no LM feature is used.
+	 * cost or the first feature if useMaxLMCost==false.
 	 *
 	 * TODO: will try to get rid of owner, have_lm_model, and num_feats
 	 */
-	Rule constructOOVRule(int num_feats, int sourceWord, int targetWord, boolean have_lm_model);
+	Rule constructOOVRule(int num_feats, int sourceWord, int targetWord, boolean useMaxLMCost);
 	
 	
 	/**

@@ -363,7 +363,7 @@ public class JoshuaDecoder {
 			
 			this.decoderFactory = new DecoderFactory(
 				this.grammarFactories,
-				JoshuaConfiguration.have_lm_model,
+				JoshuaConfiguration.useMaxLMCostForOOV,
 				this.featureFunctions,
 				this.stateComputers,
 				this.symbolTable);

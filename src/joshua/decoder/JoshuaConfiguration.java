@@ -145,6 +145,9 @@ public class JoshuaConfiguration {
 	//do we use a LM feature?
 	public static boolean have_lm_model = false;
 	
+	public static boolean useMaxLMCostForOOV = false;
+
+	
 	public static String segmentFileParserClass = null;//PlainSegmentParser, HackishSegmentParser, SAXSegmentParser
 	
 	
@@ -594,9 +597,13 @@ public class JoshuaConfiguration {
 				
 			} else { // feature function
 				String[] fds = Regex.spaces.split(line);
-				if ("lm".equals(fds[0]) && fds.length == 2) { // lm order weight
+				if ("lm".equals(fds[0]) && fds.length == 2) { // lm  weight
 					have_lm_model = true;
+					if(new Double(fds[1].trim())!=0){
+						useMaxLMCostForOOV = true;
+					}
 					logger.info("you use a LM feature function, so make sure you have a LM grammar");
+					logger.info("useMaxLMCostForOOV=" + useMaxLMCostForOOV);
 				} 
 			}
 			
