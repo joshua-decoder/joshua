@@ -209,12 +209,17 @@ public class MRConfig {
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("useIndividualBaselines: %s", useIndividualBaselines));					
 				}else if ("baselineFeatIDsToTune".equals(fds[0])) {
-					String[] ids = fds[1].trim().split(";");
-					baselineFeatIDsToTune = new ArrayList<Integer>();
-					for(String id : ids){
-						baselineFeatIDsToTune.add(new Integer(id.trim()));
-					}
-					System.out.println(String.format("baselineFeatIDsToTune: %s", baselineFeatIDsToTune));					
+					if(fds[1].trim().equals("none")){
+						baselineFeatIDsToTune = new ArrayList<Integer>();
+						logger.warning("baselineFeatIDsToTune=none");
+					}else{					
+						String[] ids = fds[1].trim().split(";");
+						baselineFeatIDsToTune = new ArrayList<Integer>();
+						for(String id : ids){
+							baselineFeatIDsToTune.add(new Integer(id.trim()));
+						}
+						System.out.println(String.format("baselineFeatIDsToTune: %s", baselineFeatIDsToTune));	
+					}				
 				} else if ("useSparseFeature".equals(fds[0])) {
 					useSparseFeature = new Boolean(fds[1].trim());
 					if (logger.isLoggable(Level.FINEST))
