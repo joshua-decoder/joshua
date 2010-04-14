@@ -25,7 +25,7 @@ import joshua.discriminative.FileUtilityOld;
 * Johns Hopkins University
 */
 
-public class ConfusionExtractor {
+public class ConfusionExtractorFromHG {
 	
 	/**TODO: [X,1]  should be synchronized with TMGrammar
 	 * */
@@ -55,7 +55,7 @@ public class ConfusionExtractor {
 	
 	
 	
-	public ConfusionExtractor(SymbolTable symbol_){
+	public ConfusionExtractorFromHG(SymbolTable symbol_){
 		symbolTbl = symbol_;
 	}
 	
@@ -510,7 +510,7 @@ public class ConfusionExtractor {
 				f_confusion_grammar="C:\\Users\\zli\\Documents\\cellspecific.confusion.grammar";
 			*/
 			
-			ConfusionExtractor g_con = new ConfusionExtractor(p_symbol);
+			ConfusionExtractorFromHG g_con = new ConfusionExtractorFromHG(p_symbol);
 			DiskHyperGraph dhg = new DiskHyperGraph(p_symbol, baseline_lm_feat_id, saveModelCosts, null); 
 			dhg.initRead(f_hypergraphs, f_rule_tbl, null);
 			//int total_num_sent = 5;

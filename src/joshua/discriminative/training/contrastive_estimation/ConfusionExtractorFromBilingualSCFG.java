@@ -12,12 +12,12 @@ import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.Trie;
 import joshua.decoder.ff.tm.hiero.MemoryBasedBatchGrammar;
 
-public class ConfusionDeriver extends ConfusionExtractor{
+public class ConfusionExtractorFromBilingualSCFG extends ConfusionExtractorFromHG{
 	
 	ArrayList<Double> featureWeights;
 	double scale=1.0;
 	
-	public ConfusionDeriver(SymbolTable symbol_, ArrayList<Double> featureWeights_, double scale_) {
+	public ConfusionExtractorFromBilingualSCFG(SymbolTable symbol_, ArrayList<Double> featureWeights_, double scale_) {
 		super(symbol_);
 		
 		this.featureWeights = featureWeights_;
@@ -105,7 +105,7 @@ public class ConfusionDeriver extends ConfusionExtractor{
 			*/
 			
 			
-			ConfusionDeriver confusionDeriver = new ConfusionDeriver(symbolTbl, featureWeights, 1.0);
+			ConfusionExtractorFromBilingualSCFG confusionDeriver = new ConfusionExtractorFromBilingualSCFG(symbolTbl, featureWeights, 1.0);
 			
 			Grammar inputGrammar = new MemoryBasedBatchGrammar(
 					"hiero",

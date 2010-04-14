@@ -16,7 +16,7 @@ public class ComputeLinearCorpusGainThetas {
 				" numUnigramTokens unigramPrecision unigramPrecision");
 			
 			System.out.println("num of args is " + args.length);
-			for (int i = 0; i < args.length; i++) {
+			for (int i = 0; i < args.length; i++) {	
 				System.out.println("arg is: " + args[i]);
 			}
 			System.exit(1);
