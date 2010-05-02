@@ -165,7 +165,11 @@ public class DecoderThread extends Thread {
 		try {
 			this.decodeTestFile();
 			//this.hypergraphSerializer.closeReaders();
-		} catch (IOException e) {
+		} catch (Throwable e) {
+			// if we throw anything (e.g. OutOfMemoryError)
+			// we should stop all threads
+			// because it is impossible for decoding
+			// to finish successfully
 			e.printStackTrace();
 			System.exit(1);
 		}
