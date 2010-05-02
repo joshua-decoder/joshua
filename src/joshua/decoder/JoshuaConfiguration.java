@@ -114,6 +114,7 @@ public class JoshuaConfiguration {
 	public static boolean include_align_index = false;
 	public static boolean add_combined_cost   = true; //in the nbest file, compute the final score
 	public static int topN = 500;
+	public static boolean escape_trees = false;
 	
 	//remote lm server
 	public static boolean use_remote_lm_server = false;
@@ -443,6 +444,11 @@ public class JoshuaConfiguration {
 					use_tree_nbest = Boolean.valueOf(fds[1]);
 					if (logger.isLoggable(Level.FINEST)) 
 						logger.finest(String.format("use_tree_nbest: %s", use_tree_nbest));
+					
+				} else if ("escape_trees".equals(fds[0])) {
+					escape_trees = Boolean.valueOf(fds[1]);
+					if (logger.isLoggable(Level.FINEST)) 
+						logger.finest(String.format("escape_trees: %s", escape_trees));
 					
 				} else if ("include_align_index".equals(fds[0])) {
 					include_align_index = Boolean.valueOf(fds[1]);

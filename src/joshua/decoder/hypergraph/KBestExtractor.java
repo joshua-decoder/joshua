@@ -29,6 +29,7 @@ import java.util.Set;
 import java.util.logging.Logger;
 
 import joshua.corpus.vocab.SymbolTable;
+import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.chart_parser.ComputeNodeResult;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.tm.Rule;
@@ -341,10 +342,13 @@ public class KBestExtractor {
 					int firstBracketPos = tem[t].indexOf(')');//TODO: assume the tag/terminal does not have ')'
 					String tag = this.symbolTable.getWord(Integer.parseInt(tem[t].substring(0,firstBracketPos)));
 					strHyp.append(tag);
-					strHyp.append(tem[t].substring(firstBracketPos));
+					String terminal = tem[t].substring(firstBracketPos);
+					strHyp.append(escapeTerminalForTree(terminal));
 				}
 			} else { // terminal symbol
-				strHyp.append(this.symbolTable.getWord(Integer.parseInt(tem[t])));
+				String terminal = this.symbolTable.getWord(Integer.parseInt(tem[t]));
+				terminal = escapeTerminalForTree(terminal);
+				strHyp.append(terminal);
 			}
 			if (t < tem.length-1) {
 				strHyp.append(' ');
@@ -389,6 +393,16 @@ public class KBestExtractor {
 //		System.err.println("Writing hyp");
 		
 		return strHyp.toString();
+	}
+
+
+	private String escapeTerminalForTree(String terminal) {
+		if(JoshuaConfiguration.escape_trees) {
+			// any paren that is not part of the tree structure
+			// can cause an error when parsing the resulting tree
+			terminal = terminal.replace("(", "-LRB-").replace(")", "-RRB-");
+		}
+		return terminal;
 	}
 		
 	
