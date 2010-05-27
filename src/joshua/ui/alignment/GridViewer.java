@@ -18,7 +18,6 @@
 package joshua.ui.alignment;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.FileDialog;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -207,7 +206,7 @@ public class GridViewer extends JFrame implements ActionListener {
 				new Runnable() {
 			public void run() {
 				//splashScreen = new components.SplashScreen("Alignment Viewer", Color.BLACK, 5);
-				splashScreen = new StartupWindow("Alignment Viewer", Color.BLACK, 5);
+				splashScreen = new StartupWindow("Alignment Viewer");
 			}
 		}).start();
 		

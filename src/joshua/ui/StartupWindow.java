@@ -43,11 +43,12 @@ public class StartupWindow extends JWindow {
 	 * Constructs a splash screen.
 	 * 
 	 * @param title Title to be displayed
-	 * @param borderColor Color for border
-	 * @param borderWidth Width of border
 	 */
-	public StartupWindow(String title, Color borderColor, int borderWidth) {
-
+	public StartupWindow(String title) {
+		this(title,"Joshua Developers","2010",Color.BLACK, 5);
+	}
+	
+	public StartupWindow(String title, String author, String year, Color borderColor, int borderWidth) {
 		JPanel content = (JPanel) getContentPane();
 		content.setBackground(Color.WHITE);
 
