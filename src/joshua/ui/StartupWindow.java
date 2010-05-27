@@ -62,7 +62,7 @@ public class StartupWindow extends JWindow {
 		titleLabel.setFont(new Font("Sans-Serif", Font.BOLD, 24));
 		content.add(titleLabel, BorderLayout.NORTH);	        
 
-		JLabel copyright = new JLabel("\u24D2 2009 - Joshua developers", JLabel.CENTER);
+		JLabel copyright = new JLabel("\u24D2 " + year + " - " + author, JLabel.CENTER);
 		copyright.setFont(new Font("Sans-Serif", Font.PLAIN, 8));
 		content.add(copyright, BorderLayout.SOUTH);
 
