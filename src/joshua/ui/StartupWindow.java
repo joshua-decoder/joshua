@@ -21,9 +21,11 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.GraphicsEnvironment;
+import java.awt.Image;
 import java.awt.Point;
 
 import javax.swing.BorderFactory;
+import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JWindow;
@@ -48,7 +50,7 @@ public class StartupWindow extends JWindow {
 		this(title,"Joshua Developers","2010",Color.BLACK, 5);
 	}
 	
-	public StartupWindow(String title, String author, String year, Color borderColor, int borderWidth) {
+	public StartupWindow(String title, String author, String year, Image image, Color borderColor, int borderWidth) {
 		JPanel content = (JPanel) getContentPane();
 		content.setBackground(Color.WHITE);
 
@@ -66,10 +68,18 @@ public class StartupWindow extends JWindow {
 		copyright.setFont(new Font("Sans-Serif", Font.PLAIN, 8));
 		content.add(copyright, BorderLayout.SOUTH);
 
+		if (image != null) {
+			content.add(new JLabel(new ImageIcon(image)));
+		}
+		
 		content.setBorder(BorderFactory.createLineBorder(borderColor, borderWidth));
 
 		// Display it
 		setVisible(true);
+	}
+	
+	public StartupWindow(String title, String author, String year, Color borderColor, int borderWidth) {
+		this(title,author,year,null,borderColor,borderWidth);
 	}
 
 }
