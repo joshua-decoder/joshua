@@ -210,7 +210,12 @@ public class Chart {
 				// TODO: which grammar should we use to create an OOV rule?
 //				this is the regular grammar
 				int sourceWord = arc.getLabel();
-				int targetWord = symbolTable.addTerminal( symbolTable.getWord(sourceWord)+"_OOV");
+				final int targetWord;
+				if (JoshuaConfiguration.mark_oovs) {
+					targetWord = symbolTable.addTerminal(symbolTable.getWord(sourceWord) + "_OOV");
+				} else {
+					targetWord = sourceWord;
+				}
 				Rule rule = this.grammars[1].constructOOVRule(
 					this.featureFunctions.size(), sourceWord, targetWord, useMaxLMCostForOOV);
 			

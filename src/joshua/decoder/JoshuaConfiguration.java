@@ -169,6 +169,7 @@ public class JoshuaConfiguration {
 	//=== use goolge linear corpus gain?
 	public static boolean useGoogleLinearCorpusGain = false;
 	public static double[] linearCorpusGainThetas = null;
+	public static boolean mark_oovs = true;
 	
 	
 	private static final Logger logger =
@@ -394,7 +395,7 @@ public class JoshuaConfiguration {
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("default_non_terminal: %s", default_non_terminal));
 					
-				} else if ("goalSymbol".equals(fds[0])) {
+				} else if ("goalSymbol".equals(fds[0]) || "goal_symbol".equals(fds[0]) ) {
 					goal_symbol = "[" + fds[1].trim() + "]";
 //					goal_symbol = fds[1].trim();
 					if (logger.isLoggable(Level.FINEST))
@@ -522,6 +523,12 @@ public class JoshuaConfiguration {
 					visualize_hypergraph = Boolean.valueOf(fds[1]);
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("visualize_hypergraph: %s", visualize_hypergraph));
+					
+				} else if ("mark_oovs".equals(fds[0])) {
+					mark_oovs = Boolean.valueOf(fds[1]);
+					if (logger.isLoggable(Level.FINEST))
+						logger.finest(String.format("mark_oovs: %s", mark_oovs));
+					
 				} else if ("segment_file_parser_class".equals(fds[0])) {
 					segmentFileParserClass = fds[1].trim();
 					if (logger.isLoggable(Level.FINEST))
