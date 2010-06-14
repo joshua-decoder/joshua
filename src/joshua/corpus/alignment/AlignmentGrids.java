@@ -43,10 +43,10 @@ public class AlignmentGrids extends AbstractAlignmentGrids {
 	/** Logger for this class. */
 	private static final Logger logger = 
 		Logger.getLogger(AlignmentGrids.class.getName()); 
-	
+
 	/** List of individual alignment grids. */
 	private final List<AlignmentGrid> alignments;
-	
+
 	/**
 	 * Constructs a list of AlignmentGrid objects.
 	 * <p>
@@ -68,7 +68,7 @@ public class AlignmentGrids extends AbstractAlignmentGrids {
 	public AlignmentGrids(Scanner alignmentScanner, Corpus sourceCorpus, Corpus targetCorpus, int expectedSize) {
 		this(alignmentScanner, sourceCorpus, targetCorpus, expectedSize, true);
 	}
-	
+
 	/**
 	 * Constructs a list of AlignmentGrid objects.
 	 * <p>
@@ -87,51 +87,51 @@ public class AlignmentGrids extends AbstractAlignmentGrids {
 	 */
 	public AlignmentGrids(Scanner alignmentScanner, Corpus sourceCorpus, Corpus targetCorpus, int expectedSize, boolean requireTightSpans) {
 		super(sourceCorpus, targetCorpus, requireTightSpans);
-		
+
 		this.alignments = new ArrayList<AlignmentGrid>(expectedSize);
-		
+
 		boolean finest = logger.isLoggable(Level.FINEST);
 		int tenthSize = expectedSize / 10;
-		
+
 		int lineNumber = 0;
 		while (alignmentScanner.hasNextLine()) {
-			
+
 			String line = alignmentScanner.nextLine();
-			
+
 			try {
-			    AlignmentGrid grid = new AlignmentGrid(line);
-			    alignments.add(grid);
+				AlignmentGrid grid = new AlignmentGrid(line);
+				alignments.add(grid);
 			} catch (Exception e) {
-			    logger.warning("Sentence pair number " + lineNumber + " was too long, skipping this item");
-			    alignments.add(null);
+				logger.warning("Sentence pair number " + lineNumber + " was too long, skipping this item");
+				alignments.add(null);
 			}
-			
+
 			lineNumber++;
 			if (finest && (lineNumber%tenthSize==0)) {
 				logger.finest("AlignmentGrids construction " + 
 						(lineNumber/tenthSize)+"0% complete");
 			}
-			
+
 		}
 	}
-	
+
 	/* See Javadoc for AbstractAlignmentGrids. */
 	protected int[] getSourcePoints(int sentenceID, int targetSpanStart, int targetSpanEnd) {
 		AlignmentGrid grid = alignments.get(sentenceID);
 		if(grid != null) {
-		    return grid.getSourcePoints(targetSpanStart, targetSpanEnd);
+			return grid.getSourcePoints(targetSpanStart, targetSpanEnd);
 		} else {
-		    return new int[0];
+			return new int[0];
 		}
 	}
-	
+
 	/* See Javadoc for AbstractAlignmentGrids. */
 	protected int[] getTargetPoints(int sentenceID, int sourceSpanStart, int sourceSpanEnd) {
 		AlignmentGrid grid = alignments.get(sentenceID);
 		if(grid != null) {
-		    return grid.getTargetPoints(sourceSpanStart, sourceSpanEnd);
+			return grid.getTargetPoints(sourceSpanStart, sourceSpanEnd);
 		} else {
-                    return new int[0];
+			return new int[0];
 		}
 	}
 
@@ -143,75 +143,73 @@ public class AlignmentGrids extends AbstractAlignmentGrids {
 	 * @see java.io.Externalizable#writeExternal
 	 */
 	public void writeExternal(ObjectOutput out) throws IOException {
-		
+
 		// Start by writing the number of alignments
 		int size = alignments.size();
 		logger.fine("Exporting size = " + size + ": 1 integer (4 bytes)");
 		out.writeInt(size);
-		
+
 		// Write the widths of each grid
 		logger.fine("Exporting widths: " + size + " integers (" + size*4 + ") bytes");
 		for (AlignmentGrid grid : alignments) {
-		    if(grid != null) {
-			out.writeInt(grid.width);
-		    } else {
-			out.writeInt(0);
-		    }
+			if (grid != null) {
+				out.writeInt(grid.width);
+			} else {
+				out.writeInt(0);
+			}
 		}
-		
+
 		// Write the heights of each grid
 		logger.fine("Exporting heights: " + size + " integers (" + size*4 + ") bytes");
 		for (AlignmentGrid grid : alignments) {
-		    if(grid != null) {
-			out.writeInt(grid.height);
-		    } else {
-			out.writeInt(0);
-		    }
+			if (grid != null) {
+				out.writeInt(grid.height);
+			} else {
+				out.writeInt(0);
+			}
 		}
-		
+
 		// Write the number of alignment points in each grid
 		logger.fine("Exporting pointCounters: " + (size+1) + " integers (" + (size+1)*4 + ") bytes");
 		int pointCounter = 0;
 		out.writeInt(pointCounter);
 		for (AlignmentGrid grid : alignments) {
-		    if(grid != null) {
-			pointCounter += grid.coordinates.length; 
+			if (grid != null) {
+				pointCounter += grid.coordinates.length; 
+			}
+
 			out.writeInt(pointCounter);
-		    } else {
-		    	out.writeInt(pointCounter);
-			//out.writeInt(0);
-		    }
 		}
 		logger.finer("\tfinal pointCounter value was: " + pointCounter);
 
-		
+
 		// Write the alignment points
 		logger.fine("Exporting grid coordinates: " + pointCounter + " shorts (" + pointCounter*2 + ") bytes");
 		for (AlignmentGrid grid : alignments) {
-		    if(grid != null) {
-			for (short point : grid.coordinates) {
-				out.writeShort(point);
+			if (grid != null) {
+				for (short point : grid.coordinates) {
+					out.writeShort(point);
+				}
 			}
-		    }
 		}
-		
+
 		// Write the reverse alignment points
 		logger.fine("Exporting reverse grid coordinates: " + pointCounter + " shorts (" + pointCounter*2 + ") bytes");
 		for (AlignmentGrid grid : alignments) {
-		    if(grid != null) {
-			for (short point : grid.transposedCoordinates) {
-				out.writeShort(point);
+			if (grid != null) {
+				for (short point : grid.transposedCoordinates) {
+					out.writeShort(point);
+				}
 			}
-		    }
 		}
-		
+
 	}
 
 	/* See Javadoc for Alignments interface. */
 	public int size() {
 		return this.alignments.size();
 	}
-	
+
 	/**
 	 * Main method used to read a human-readable alignments
 	 * file and write it to disk as binary data.
@@ -222,24 +220,24 @@ public class AlignmentGrids extends AbstractAlignmentGrids {
 	 * @throws IOException Includes any I/O exceptions that may occur
 	 */
 	public static void main(String[] args) throws IOException {
-		
+
 		if (args.length != 2) {
 			System.err.println("Usage: java " + AlignmentGrids.class.getName() + " alignments alignments.bin");
 			System.exit(0);
 		}
-		
+
 		String alignmentsFileName = args[0];
 		String binaryAlignmentsFileName = args[1];
 
 		File alignmentsFile = new File(alignmentsFileName);
 		Scanner scanner = new Scanner(alignmentsFile);
-		
+
 		AlignmentGrids grids = new AlignmentGrids(scanner, null, null, 10);
-		
+
 		BinaryOut out = new BinaryOut(binaryAlignmentsFileName);
 		grids.writeExternal(out);
 		out.flush();
 		out.close();
 	}
-	
+
 }
