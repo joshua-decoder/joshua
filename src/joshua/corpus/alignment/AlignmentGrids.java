@@ -159,8 +159,8 @@ public class AlignmentGrids extends AbstractAlignmentGrids {
 		    }
 		}
 		
-		// Write the widths of each grid
-		logger.fine("Exporting widths: " + size + " integers (" + size*4 + ") bytes");
+		// Write the heights of each grid
+		logger.fine("Exporting heights: " + size + " integers (" + size*4 + ") bytes");
 		for (AlignmentGrid grid : alignments) {
 		    if(grid != null) {
 			out.writeInt(grid.height);
@@ -178,7 +178,8 @@ public class AlignmentGrids extends AbstractAlignmentGrids {
 			pointCounter += grid.coordinates.length; 
 			out.writeInt(pointCounter);
 		    } else {
-			out.writeInt(0);
+		    	out.writeInt(pointCounter);
+			//out.writeInt(0);
 		    }
 		}
 		logger.finer("\tfinal pointCounter value was: " + pointCounter);
