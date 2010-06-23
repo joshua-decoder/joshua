@@ -1,0 +1,24 @@
+package joshua.discriminative.training.expbleu;
+
+import joshua.discriminative.semiring_parsingv2.SignedValue;
+import joshua.discriminative.semiring_parsingv2.bilinear_operator.BilinearOperator;
+import joshua.discriminative.semiring_parsingv2.pmodule.ListPM;
+import joshua.discriminative.semiring_parsingv2.pmodule.SparseMap;
+
+public class ExpbleuBO implements BilinearOperator<NgramMatchPM, ListPM, MultiListPM> {
+
+	@Override
+	public MultiListPM bilinearMulti(NgramMatchPM r, ListPM s) {
+		// TODO Auto-generated method stub
+		ListPM[] product = new ListPM[4];
+		for(int i = 0; i < 4; ++i){
+			SparseMap vectorTimesSigned = s.getValue().duplicate();
+			for(SignedValue v : vectorTimesSigned.getValues()){
+				v.multi(r.getNgramMatchExp()[i]);
+			}
+			product[i] = new ListPM(vectorTimesSigned);
+		}
+		return new MultiListPM(product);
+	}
+
+}

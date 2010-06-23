@@ -1,0 +1,183 @@
+package joshua.discriminative.training.expbleu;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.logging.Logger;
+
+import joshua.corpus.vocab.SymbolTable;
+import joshua.discriminative.feature_related.feature_template.FeatureTemplate;
+import joshua.discriminative.training.expbleu.parallel.GradientConsumer;
+import joshua.discriminative.training.parallel.ProducerConsumerModel;
+import joshua.discriminative.training.risk_annealer.GradientComputer;
+import joshua.discriminative.training.risk_annealer.hypergraph.HGAndReferences;
+import joshua.discriminative.training.risk_annealer.hypergraph.HyperGraphFactory;
+import joshua.discriminative.training.risk_annealer.hypergraph.MRConfig;
+import joshua.discriminative.training.risk_annealer.hypergraph.parallel.HGProducer;
+
+public class ExpbleuGradientComputer extends GradientComputer {
+	/*
+	 * In this class, we need to compute the gradient for theta and the function value given 
+	 * current theta. We use temperature 0 and no scaling.(maybe added later)
+	 * Store function value in functionValue
+	 * Store gradient values in gradientsForTheta
+	 */
+	private int numSentence;     
+	private boolean fixFirstFeature = false;
+	HyperGraphFactory hgFactory;  
+
+	private  double sumGain = 0; //negative risk
+
+	int numCalls = 0;	    
+	int maxNumHGInQueue = 100;
+	int numThreads = 5;
+
+	boolean useSemiringV2 = true;
+
+	// feature related
+	SymbolTable symbolTbl;
+	HashMap<String, Integer> featureStringToIntegerMap;
+	List<FeatureTemplate> featTemplates;	  
+
+	boolean haveRefereces = true;	    
+	double minFactor = 1.0; //minimize conditional entropy: 1; minimum risk: -1
+	int numFeats;
+	
+	// Ngram Matches Stats and gradients
+	double [] ngramMatches = new double[4];
+	ArrayList<ArrayList<Double>> ngramMatchesGradients = new ArrayList<ArrayList<Double>>(); 
+
+	/** Logger for this class. */
+	static final private Logger logger = 
+		Logger.getLogger(ExpbleuGradientComputer.class.getSimpleName());
+	public ExpbleuGradientComputer(int numFeatures, double gainFactor,
+			double scalingFactor, double temperature,
+			boolean shouldComputeGradientForScalingFactor, boolean useSemiringV2, int numSentence, HyperGraphFactory hgFactory,  SymbolTable symbolTbl, HashMap<String, Integer> featureStringToIntegerMap, List<FeatureTemplate> featTemplates, boolean haveRefereces, int maxNumHGInQueue, int numThreads) {
+		super(numFeatures, gainFactor, scalingFactor, temperature,
+				shouldComputeGradientForScalingFactor);
+		this.useSemiringV2 = useSemiringV2;
+		this.numSentence = numSentence;
+		this.hgFactory = hgFactory;
+		this.maxNumHGInQueue = maxNumHGInQueue;
+		this.numThreads = numThreads;
+		// System.out.println("use HGRiskGradientComputer====");
+
+
+
+		this.symbolTbl = symbolTbl;               
+
+		this.featureStringToIntegerMap = featureStringToIntegerMap;
+		this.featTemplates = featTemplates;
+		this.haveRefereces = haveRefereces;
+		this.numFeats = featureStringToIntegerMap.size();
+		for(int i = 0; i < 4; ++i){
+			this.ngramMatches[i] = 0; 
+			ArrayList<Double> row = new ArrayList<Double>(10);
+			for(int j = 0; j < this.numFeats ; ++j){
+				row.add(Double.valueOf(0));
+			}
+			this.ngramMatchesGradients.add(row);
+		}
+
+	}
+
+	@Override
+	public void printLastestStatistics() {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void reComputeFunctionValueAndGradient(double[] theta) {
+		// TODO Auto-generated method stub
+		if(this.numThreads == 1){
+			reComputeFunctionValueAndGradientNonparellel(theta);
+		}
+		else{
+			BlockingQueue<HGAndReferences> queue = new ArrayBlockingQueue<HGAndReferences>(maxNumHGInQueue);
+			this.hgFactory.startLoop();
+			HGProducer producer = new HGProducer(hgFactory, queue, numThreads, numSentence);
+			List<GradientConsumer> consumers = new ArrayList<GradientConsumer>();
+			for(int i = 0; i < this.numThreads; ++i){
+				GradientConsumer consumer = new GradientConsumer(
+						queue, this.featTemplates, this.featureStringToIntegerMap, theta, this.symbolTbl,this);
+				consumers.add(consumer);
+			}
+			//== create model, and start parallel computing
+			ProducerConsumerModel<HGAndReferences, HGProducer, GradientConsumer> 
+			model =	new ProducerConsumerModel<HGAndReferences, HGProducer, GradientConsumer>(queue, producer, consumers);
+
+			model.runParallel();
+			this.hgFactory.endLoop();
+		}
+		finalizeFunAndGradients();
+	}
+
+	private void finalizeFunAndGradients() {
+		// TODO Auto-generated method stub
+		for(int i = 0; i < 4; ++i){
+			this.functionValue += 1.0/4.0 * Math.log(ngramMatches[i]);				
+		}
+		for(int i = 0; i < this.numFeatures ; ++i){
+			for(int j = 0; j < 4; ++j){
+				this.gradientsForTheta[i] += 1.0/4.0/ngramMatches[j]*ngramMatchesGradients.get(j).get(i);
+			}
+		}
+		this.logger.info("Function Value :" + this.functionValue);
+		String diffinfo = "Derivatives :";
+		for(int i = 0; i < MRConfig.printFirstN; ++i){
+			diffinfo += " ";
+			diffinfo += this.gradientsForTheta[i];
+		}
+		this.logger.info(diffinfo);
+	}
+
+	public void reComputeFunctionValueAndGradientNonparellel(double[] theta){
+
+		for(int i = 0; i < 4; ++i){
+			ngramMatches[i] = 0;
+			ArrayList<Double> row = new ArrayList<Double>(this.numFeats);
+			for(int j = 0; j < this.numFeats; ++j){
+				row.add(Double.valueOf(0));
+			}
+			ngramMatchesGradients.add(row);
+		}
+		this.hgFactory.startLoop();
+		for(int cursent = 0; cursent < this.numSentence; ++ cursent){
+			HGAndReferences hgres = this.hgFactory.nextHG();
+			ExpbleuSemiringParser parser =  new ExpbleuSemiringParser(
+					hgres.referenceSentences,
+					this.featTemplates,
+					this.featureStringToIntegerMap,
+					theta,
+					new HashSet<String>(this.featureStringToIntegerMap.keySet()),
+					this.symbolTbl);
+			parser.setHyperGraph(hgres.hg);
+			parser.parseOverHG();
+			double [] matches = parser.getNgramMatches();
+			for(int i = 0; i < 4; ++i){
+				ngramMatches[i] += matches[i];
+				double[] matchGradient = parser.getGradients(i);
+				for(int j = 0; j < this.numFeatures ; ++j){
+					ngramMatchesGradients.get(i).set(j, ngramMatchesGradients.get(i).get(j) + matchGradient[j]);
+				}
+			}
+			System.out.println(matches[0]);
+		}
+		this.hgFactory.endLoop();
+
+	}
+	
+	public synchronized void accumulate(ArrayList<ArrayList<Double>> ngramMatchesGradients, double [] Matchs){
+		for(int i = 0; i < 4; ++i){
+			this.ngramMatches[i] += Matchs[i];
+			for(int j = 0; j < this.numFeats; ++j){
+				this.ngramMatchesGradients.get(i).set(j, this.ngramMatchesGradients.get(i).get(j) + ngramMatchesGradients.get(i).get(j));
+			}
+		}
+	}
+	
+}
