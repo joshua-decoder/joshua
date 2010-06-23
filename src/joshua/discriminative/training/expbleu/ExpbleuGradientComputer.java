@@ -17,6 +17,7 @@ import joshua.discriminative.training.risk_annealer.hypergraph.HGAndReferences;
 import joshua.discriminative.training.risk_annealer.hypergraph.HyperGraphFactory;
 import joshua.discriminative.training.risk_annealer.hypergraph.MRConfig;
 import joshua.discriminative.training.risk_annealer.hypergraph.parallel.HGProducer;
+import joshua.util.Regex;
 
 public class ExpbleuGradientComputer extends GradientComputer {
 	/*
@@ -98,6 +99,18 @@ public class ExpbleuGradientComputer extends GradientComputer {
 	@Override
 	public void reComputeFunctionValueAndGradient(double[] theta) {
 		// TODO Auto-generated method stub
+		// initialize all counts to 0
+		for(int i = 0; i < 5; ++i){
+			this.ngramMatches[i] = 0;
+			for(int j = 0; j < this.numFeats; ++j ){
+				this.ngramMatchesGradients.get(i).set(j, 0.0);
+			}
+		}
+		this.avgRefLen = 0; 
+		this.functionValue = 0; 
+		for(int i = 0; i < this.numFeats; ++i){
+			this.gradientsForTheta[i] = 0;  
+		}
 		if(this.numThreads == 1){
 			reComputeFunctionValueAndGradientNonparellel(theta);
 		}
@@ -148,19 +161,13 @@ public class ExpbleuGradientComputer extends GradientComputer {
 
 	public void reComputeFunctionValueAndGradientNonparellel(double[] theta){
 
-		for(int i = 0; i < 5; ++i){
-			ngramMatches[i] = 0;
-			ArrayList<Double> row = new ArrayList<Double>(this.numFeats);
-			for(int j = 0; j < this.numFeats; ++j){
-				row.add(Double.valueOf(0));
-			}
-			ngramMatchesGradients.add(row);
-		}
+		
 		this.hgFactory.startLoop();
 		for(int cursent = 0; cursent < this.numSentence; ++ cursent){
 			HGAndReferences hgres = this.hgFactory.nextHG();
 			for(String ref : hgres.referenceSentences){
-				this.avgRefLen += ref.length()/hgres.referenceSentences.length;
+				String [] words = Regex.spaces.split(ref);
+				this.avgRefLen += 1.0 * words.length/hgres.referenceSentences.length;
 			}
 			ExpbleuSemiringParser parser =  new ExpbleuSemiringParser(
 					hgres.referenceSentences,
@@ -180,19 +187,20 @@ public class ExpbleuGradientComputer extends GradientComputer {
 					ngramMatchesGradients.get(i).set(j, ngramMatchesGradients.get(i).get(j) + matchGradient[j]);
 				}
 			}
-			System.out.println(matches[0]);
+//			System.out.println(matches[0]);
 		}
 		this.hgFactory.endLoop();
 
 	}
 	
-	public synchronized void accumulate(ArrayList<ArrayList<Double>> ngramMatchesGradients, double [] Matchs){
+	public synchronized void accumulate(ArrayList<ArrayList<Double>> ngramMatchesGradients, double [] Matchs, double avgRefLen){
 		for(int i = 0; i < 5; ++i){
 			this.ngramMatches[i] += Matchs[i];
 			for(int j = 0; j < this.numFeats; ++j){
 				this.ngramMatchesGradients.get(i).set(j, this.ngramMatchesGradients.get(i).get(j) + ngramMatchesGradients.get(i).get(j));
 			}
 		}
+		this.avgRefLen += avgRefLen;
 	}
 	
 }

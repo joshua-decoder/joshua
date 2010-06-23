@@ -106,7 +106,13 @@ ExpectationSemiringPM<LogSemiring,NgramMatchPM,ListPM,MultiListPM,ExpbleuBO>> {
 		for(int i = 1; i <= 4; ++i){
 			me[i-1] = SignedValue.createSignedValueFromRealNumber(ngramMatchesOnEdge[i]);
 		}
-		me[4] = SignedValue.createSignedValueFromRealNumber(dt.getRule().getEnglish().length);
+		int numOfTerms = 0;
+		for(int s : dt.getRule().getEnglish()){
+			if(!this.symtbl.isNonterminal(s)){
+				numOfTerms ++;
+			}
+		}
+		me[4] = SignedValue.createSignedValueFromRealNumber(numOfTerms);
 		NgramMatchPM mePM = new NgramMatchPM(me);
 		MultiListPM te = pBO.bilinearMulti(mePM, deltaPe);
 		return new ExpectationSemiringPM<LogSemiring,NgramMatchPM,ListPM,MultiListPM,ExpbleuBO>(deltaPe,te,this.pBO);
@@ -170,7 +176,13 @@ ExpectationSemiringPM<LogSemiring,NgramMatchPM,ListPM,MultiListPM,ExpbleuBO>> {
 				peme[i-1].multiLogNumber(pe.getLogValue());
 //				peme[i-1].printInfor();
 			}
-			peme[4] = SignedValue.createSignedValueFromRealNumber(dt.getRule().getEnglish().length);
+			int numOfTerms = 0;
+			for(int s : dt.getRule().getEnglish()){
+				if(!this.symtbl.isNonterminal(s)){
+					numOfTerms ++;
+				}
+			}
+			peme[4] = SignedValue.createSignedValueFromRealNumber(numOfTerms);
 			peme[4].multiLogNumber(pe.getLogValue());
 			NgramMatchPM re = new NgramMatchPM(peme);
 
@@ -208,9 +220,9 @@ ExpectationSemiringPM<LogSemiring,NgramMatchPM,ListPM,MultiListPM,ExpbleuBO>> {
 	public double [] getNgramMatches(){
 		// m(i) = m'(i)/Z
 		// note here, only 4grams matches are returned, the 5th value is the length expectation
-		double [] ngramMatch = new double[4];
+		double [] ngramMatch = new double[5];
 		double logZ = this.getGoalK().getP().getLogValue();
-		for(int i = 0; i < 4; ++i){
+		for(int i = 0; i < 5; ++i){
 			SignedValue normalizedNgramMatch = this.getGoalK().getR().getNgramMatchExp()[i].duplicate();
 			normalizedNgramMatch.multiLogNumber(-logZ);
 			ngramMatch[i] = normalizedNgramMatch.convertToRealValue();
