@@ -10,7 +10,9 @@ public class ListPM implements PModule<LogSemiring, ListPM>{
 	
 	private SparseMap value;
 
-
+	public ListPM(){
+		this.value = new SparseMap();
+	}
 	public ListPM(SparseMap v_){
 		this.value = v_;
 	}

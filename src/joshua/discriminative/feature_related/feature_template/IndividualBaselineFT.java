@@ -10,6 +10,7 @@ import joshua.decoder.hypergraph.HGNode;
 import joshua.decoder.hypergraph.HyperEdge;
 import joshua.decoder.hypergraph.WithModelLogPsHyperEdge;
 import joshua.discriminative.DiscriminativeSupport;
+import joshua.discriminative.training.risk_annealer.hypergraph.FeatureHyperEdge;
 
 /**This implement individual baseline feature, for example, the baseline LM model*/
 
@@ -42,8 +43,9 @@ public class IndividualBaselineFT extends AbstractFeatureTemplate {
 	}
  	
 	private final double getFeatureLogP(HyperEdge dt, int columnID){
-		if(useDiskHyperGraph)
+		if(useDiskHyperGraph){
 			return ((WithModelLogPsHyperEdge)dt).modeLogPs[columnID];//TODO
+			}
 		else{
 			System.out.println("we only support disk HG with stored feature scores");
 			System.exit(1);

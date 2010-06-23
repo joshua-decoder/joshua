@@ -235,7 +235,7 @@ public class HGMaxExpbleu extends AbstractMinRiskMERT {
 		 * solved by LBFGS which itself involves many iterations (of computing
 		 * gradients)
 		 * */
-		for (int iter = 1; iter <= 1; iter++) {
+		for (int iter = 1; iter <= 10; iter++) {
 
 			// ==== re-normalize weights, and save config files
 			this.curConfigFile = configFile + "." + iter;

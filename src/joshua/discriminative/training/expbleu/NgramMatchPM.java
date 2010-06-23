@@ -11,21 +11,22 @@ public class NgramMatchPM implements PModule<LogSemiring, NgramMatchPM> {
 	private SignedValue[] ngramMatchExp = null; 
 	
 	public NgramMatchPM(){
-		ngramMatchExp = new SignedValue[4];
-		for(int i = 0; i < 4; ++i){
+		ngramMatchExp = new SignedValue[5];
+		for(int i = 0; i < 5; ++i){
+			// note here , ngramMatch[4] stores the value of the hyp's length
 			ngramMatchExp[i] = new SignedValue();
 		}
 	}
 	public NgramMatchPM(SignedValue[] matchesexp){
-		this.ngramMatchExp = new SignedValue[4];
-		for(int i = 0; i < 4; ++i){
+		this.ngramMatchExp = new SignedValue[5];
+		for(int i = 0; i < 5; ++i){
 			this.ngramMatchExp[i]  = matchesexp[i];
 		}
 	}
 	@Override
 	public void add(NgramMatchPM b) {
 		// TODO Auto-generated method stub
-		for(int i = 0; i < 4; ++i){
+		for(int i = 0; i < 5; ++i){
 			this.ngramMatchExp[i].add(b.ngramMatchExp[i]);
 		}
 	}
@@ -33,8 +34,8 @@ public class NgramMatchPM implements PModule<LogSemiring, NgramMatchPM> {
 	@Override
 	public NgramMatchPM duplicate() {
 		// TODO Auto-generated method stub
-		SignedValue[] copied = new SignedValue[4];
-		for(int i = 0; i < 4; ++i){
+		SignedValue[] copied = new SignedValue[5];
+		for(int i = 0; i < 5; ++i){
 			copied[i] = this.ngramMatchExp[i].duplicate();
 		}
 		return new  NgramMatchPM(copied);
@@ -43,7 +44,7 @@ public class NgramMatchPM implements PModule<LogSemiring, NgramMatchPM> {
 	@Override
 	public void multiSemiring(LogSemiring p) {
 		// TODO Auto-generated method stub
-		for(int i = 0; i < 4; ++i){
+		for(int i = 0; i < 5; ++i){
 			ngramMatchExp[i].multiLogNumber(p.getLogValue());
 		}
 	}
@@ -51,7 +52,7 @@ public class NgramMatchPM implements PModule<LogSemiring, NgramMatchPM> {
 	@Override
 	public void printInfor() {
 		// TODO Auto-generated method stub
-		for(int i = 0; i < 4; ++i){
+		for(int i = 0; i < 5; ++i){
 			ngramMatchExp[i].printInfor();
 		}
 	}
@@ -59,7 +60,7 @@ public class NgramMatchPM implements PModule<LogSemiring, NgramMatchPM> {
 	@Override
 	public void setToZero() {
 		// TODO Auto-generated method stub
-		for(int i = 0; i < 4; ++i){
+		for(int i = 0; i < 5; ++i){
 			ngramMatchExp[i].setToZero();
 		}
 	}

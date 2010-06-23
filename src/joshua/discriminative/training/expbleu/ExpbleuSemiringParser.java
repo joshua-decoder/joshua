@@ -102,10 +102,11 @@ ExpectationSemiringPM<LogSemiring,NgramMatchPM,ListPM,MultiListPM,ExpbleuBO>> {
 				this.getNgramHelper.getTransitionNgrams(dt, 1, bleuOrder),
 				BLEU.constructMaxRefCountTable(this.refs,bleuOrder),
 				bleuOrder);
-		SignedValue[] me = new SignedValue[4];
+		SignedValue[] me = new SignedValue[5];
 		for(int i = 1; i <= 4; ++i){
 			me[i-1] = SignedValue.createSignedValueFromRealNumber(ngramMatchesOnEdge[i]);
 		}
+		me[4] = SignedValue.createSignedValueFromRealNumber(dt.getRule().getEnglish().length);
 		NgramMatchPM mePM = new NgramMatchPM(me);
 		MultiListPM te = pBO.bilinearMulti(mePM, deltaPe);
 		return new ExpectationSemiringPM<LogSemiring,NgramMatchPM,ListPM,MultiListPM,ExpbleuBO>(deltaPe,te,this.pBO);
@@ -162,13 +163,15 @@ ExpectationSemiringPM<LogSemiring,NgramMatchPM,ListPM,MultiListPM,ExpbleuBO>> {
 					edgeNgramTbl,
 					BLEU.constructMaxRefCountTable(refs,bleuOrder),
 					bleuOrder);
-			SignedValue[] peme = new SignedValue[4];
+			SignedValue[] peme = new SignedValue[5];
 			for(int i = 1; i <= bleuOrder; ++i){
 //				System.out.println(i + " " + ngramMatchesOnEdge[i]);
 				peme[i-1] = SignedValue.createSignedValueFromRealNumber(ngramMatchesOnEdge[i]);
 				peme[i-1].multiLogNumber(pe.getLogValue());
 //				peme[i-1].printInfor();
 			}
+			peme[4] = SignedValue.createSignedValueFromRealNumber(dt.getRule().getEnglish().length);
+			peme[4].multiLogNumber(pe.getLogValue());
 			NgramMatchPM re = new NgramMatchPM(peme);
 
 			return new ExpectationSemiring<LogSemiring,NgramMatchPM>(pe,re);
@@ -204,6 +207,7 @@ ExpectationSemiringPM<LogSemiring,NgramMatchPM,ListPM,MultiListPM,ExpbleuBO>> {
 	}
 	public double [] getNgramMatches(){
 		// m(i) = m'(i)/Z
+		// note here, only 4grams matches are returned, the 5th value is the length expectation
 		double [] ngramMatch = new double[4];
 		double logZ = this.getGoalK().getP().getLogValue();
 		for(int i = 0; i < 4; ++i){
@@ -215,6 +219,7 @@ ExpectationSemiringPM<LogSemiring,NgramMatchPM,ListPM,MultiListPM,ExpbleuBO>> {
 	}
 	public double [] getGradients(int ngram){
 		// d m(i) = d(m'(i)/Z) = dm'(i)Z - m'(i)dZ/ Z^2 
+		//note here, when ngram == 4, the returned value is the gradients of the length expactation function. 
 		int numOfFeats = this.featureWeights.length;
 		double [] gradients = new double[numOfFeats];
 		double logZ = this.getGoalK().getP().getLogValue();

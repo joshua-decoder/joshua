@@ -27,6 +27,7 @@ public class ExpbleuGradientComputer extends GradientComputer {
 	 */
 	private int numSentence;     
 	private boolean fixFirstFeature = false;
+
 	HyperGraphFactory hgFactory;  
 
 	private  double sumGain = 0; //negative risk
@@ -34,6 +35,9 @@ public class ExpbleuGradientComputer extends GradientComputer {
 	int numCalls = 0;	    
 	int maxNumHGInQueue = 100;
 	int numThreads = 5;
+	
+	//constant 
+	private double N = 10000;
 
 	boolean useSemiringV2 = true;
 
@@ -47,7 +51,8 @@ public class ExpbleuGradientComputer extends GradientComputer {
 	int numFeats;
 	
 	// Ngram Matches Stats and gradients
-	double [] ngramMatches = new double[4];
+	double [] ngramMatches = new double[5];
+	private double avgRefLen = 0; 
 	ArrayList<ArrayList<Double>> ngramMatchesGradients = new ArrayList<ArrayList<Double>>(); 
 
 	/** Logger for this class. */
@@ -73,7 +78,7 @@ public class ExpbleuGradientComputer extends GradientComputer {
 		this.featTemplates = featTemplates;
 		this.haveRefereces = haveRefereces;
 		this.numFeats = featureStringToIntegerMap.size();
-		for(int i = 0; i < 4; ++i){
+		for(int i = 0; i < 5; ++i){
 			this.ngramMatches[i] = 0; 
 			ArrayList<Double> row = new ArrayList<Double>(10);
 			for(int j = 0; j < this.numFeats ; ++j){
@@ -121,11 +126,17 @@ public class ExpbleuGradientComputer extends GradientComputer {
 		for(int i = 0; i < 4; ++i){
 			this.functionValue += 1.0/4.0 * Math.log(ngramMatches[i]);				
 		}
+		double x = 1 - this.avgRefLen/this.ngramMatches[4];
+		this.functionValue += 1/(Math.exp(N*x) + 1) * x; 
+		double y = ((1 - N * x)*Math.exp(N*x) + 1)/(Math.exp(N*x) + 1)/(Math.exp(N*x)+1);
 		for(int i = 0; i < this.numFeatures ; ++i){
 			for(int j = 0; j < 4; ++j){
 				this.gradientsForTheta[i] += 1.0/4.0/ngramMatches[j]*ngramMatchesGradients.get(j).get(i);
 			}
+			double dx = - this.avgRefLen/this.ngramMatches[4]/this.ngramMatches[4]*this.ngramMatchesGradients.get(4).get(i);
+			this.gradientsForTheta[i] += y*dx;
 		}
+		
 		this.logger.info("Function Value :" + this.functionValue);
 		String diffinfo = "Derivatives :";
 		for(int i = 0; i < MRConfig.printFirstN; ++i){
@@ -137,7 +148,7 @@ public class ExpbleuGradientComputer extends GradientComputer {
 
 	public void reComputeFunctionValueAndGradientNonparellel(double[] theta){
 
-		for(int i = 0; i < 4; ++i){
+		for(int i = 0; i < 5; ++i){
 			ngramMatches[i] = 0;
 			ArrayList<Double> row = new ArrayList<Double>(this.numFeats);
 			for(int j = 0; j < this.numFeats; ++j){
@@ -148,6 +159,9 @@ public class ExpbleuGradientComputer extends GradientComputer {
 		this.hgFactory.startLoop();
 		for(int cursent = 0; cursent < this.numSentence; ++ cursent){
 			HGAndReferences hgres = this.hgFactory.nextHG();
+			for(String ref : hgres.referenceSentences){
+				this.avgRefLen += ref.length()/hgres.referenceSentences.length;
+			}
 			ExpbleuSemiringParser parser =  new ExpbleuSemiringParser(
 					hgres.referenceSentences,
 					this.featTemplates,
@@ -155,10 +169,11 @@ public class ExpbleuGradientComputer extends GradientComputer {
 					theta,
 					new HashSet<String>(this.featureStringToIntegerMap.keySet()),
 					this.symbolTbl);
+
 			parser.setHyperGraph(hgres.hg);
 			parser.parseOverHG();
 			double [] matches = parser.getNgramMatches();
-			for(int i = 0; i < 4; ++i){
+			for(int i = 0; i < 5; ++i){
 				ngramMatches[i] += matches[i];
 				double[] matchGradient = parser.getGradients(i);
 				for(int j = 0; j < this.numFeatures ; ++j){
@@ -172,7 +187,7 @@ public class ExpbleuGradientComputer extends GradientComputer {
 	}
 	
 	public synchronized void accumulate(ArrayList<ArrayList<Double>> ngramMatchesGradients, double [] Matchs){
-		for(int i = 0; i < 4; ++i){
+		for(int i = 0; i < 5; ++i){
 			this.ngramMatches[i] += Matchs[i];
 			for(int j = 0; j < this.numFeats; ++j){
 				this.ngramMatchesGradients.get(i).set(j, this.ngramMatchesGradients.get(i).get(j) + ngramMatchesGradients.get(i).get(j));
