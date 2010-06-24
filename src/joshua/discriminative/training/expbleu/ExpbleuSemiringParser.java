@@ -19,7 +19,6 @@ import joshua.discriminative.semiring_parsingv2.pmodule.SparseMap;
 import joshua.discriminative.semiring_parsingv2.semiring.ExpectationSemiring;
 import joshua.discriminative.semiring_parsingv2.semiring.LogSemiring;
 import joshua.discriminative.training.risk_annealer.hypergraph.MRConfig;
-import joshua.util.Regex;
 
 /*
  * ExpBleu Semiring compute <p_e,p_e*m_e,\Delta P_e, \Delta P_e * m_e>, where m_e is the ngram matches function. 
@@ -99,27 +98,21 @@ ExpectationSemiringPM<LogSemiring,NgramMatchPM,ListPM,MultiListPM,ExpbleuBO>> {
 		}
 		// t = \Delta P_e * r_e
 		int bleuOrder = 4;
-		HashMap<String,Integer> edgeNgramTbl = this.getNgramHelper.getTransitionNgrams(dt, 1, bleuOrder);
 		int[] ngramMatchesOnEdge = BLEU.computeNgramMatches(0, 
-				edgeNgramTbl,
+				this.getNgramHelper.getTransitionNgrams(dt, 1, bleuOrder),
 				BLEU.constructMaxRefCountTable(this.refs,bleuOrder),
 				bleuOrder);
-		SignedValue[] me = new SignedValue[8];
+		SignedValue[] me = new SignedValue[5];
 		for(int i = 1; i <= 4; ++i){
 			me[i-1] = SignedValue.createSignedValueFromRealNumber(ngramMatchesOnEdge[i]);
 		}
-		int [] ngramCnts = new int[5];
-		for(int i = 1; i <= 4; ++i){
-			ngramCnts[i] = 0;
+		int numOfTerms = 0;
+		for(int s : dt.getRule().getEnglish()){
+			if(!this.symtbl.isNonterminal(s)){
+				numOfTerms ++;
+			}
 		}
-		for(Map.Entry<String,Integer> ngramAndCnt : edgeNgramTbl.entrySet()){
-			String [] ngram = Regex.spaces.split(ngramAndCnt.getKey());
-			ngramCnts[ngram.length] += ngramAndCnt.getValue();
-		}
-		
-		for(int i = 4; i < 8; ++i){
-			me[i] = SignedValue.createSignedValueFromRealNumber(ngramCnts[i-3]);
-		}
+		me[4] = SignedValue.createSignedValueFromRealNumber(numOfTerms);
 		NgramMatchPM mePM = new NgramMatchPM(me);
 		MultiListPM te = pBO.bilinearMulti(mePM, deltaPe);
 		return new ExpectationSemiringPM<LogSemiring,NgramMatchPM,ListPM,MultiListPM,ExpbleuBO>(deltaPe,te,this.pBO);
@@ -176,26 +169,21 @@ ExpectationSemiringPM<LogSemiring,NgramMatchPM,ListPM,MultiListPM,ExpbleuBO>> {
 					edgeNgramTbl,
 					BLEU.constructMaxRefCountTable(refs,bleuOrder),
 					bleuOrder);
-			SignedValue[] peme = new SignedValue[8];
+			SignedValue[] peme = new SignedValue[5];
 			for(int i = 1; i <= bleuOrder; ++i){
 //				System.out.println(i + " " + ngramMatchesOnEdge[i]);
 				peme[i-1] = SignedValue.createSignedValueFromRealNumber(ngramMatchesOnEdge[i]);
 				peme[i-1].multiLogNumber(pe.getLogValue());
 //				peme[i-1].printInfor();
 			}
-	
-			int [] ngramCnts = new int[5];
-			for(int i = 1; i <= 4; ++i){
-				ngramCnts[i] = 0;
+			int numOfTerms = 0;
+			for(int s : dt.getRule().getEnglish()){
+				if(!this.symtbl.isNonterminal(s)){
+					numOfTerms ++;
+				}
 			}
-			for(Map.Entry<String,Integer> ngramAndCnt : edgeNgramTbl.entrySet()){
-				String [] ngram = Regex.spaces.split(ngramAndCnt.getKey());
-				ngramCnts[ngram.length] += ngramAndCnt.getValue();
-			}
-			for(int i = 4; i < 8; ++i){
-				peme[i] = SignedValue.createSignedValueFromRealNumber(ngramCnts[i-3]);
-				peme[i].multiLogNumber(pe.getLogValue());
-			}
+			peme[4] = SignedValue.createSignedValueFromRealNumber(numOfTerms);
+			peme[4].multiLogNumber(pe.getLogValue());
 			NgramMatchPM re = new NgramMatchPM(peme);
 
 			return new ExpectationSemiring<LogSemiring,NgramMatchPM>(pe,re);
@@ -232,9 +220,9 @@ ExpectationSemiringPM<LogSemiring,NgramMatchPM,ListPM,MultiListPM,ExpbleuBO>> {
 	public double [] getNgramMatches(){
 		// m(i) = m'(i)/Z
 		// note here, only 4grams matches are returned, the 5th value is the length expectation
-		double [] ngramMatch = new double[8];
+		double [] ngramMatch = new double[5];
 		double logZ = this.getGoalK().getP().getLogValue();
-		for(int i = 0; i < 8; ++i){
+		for(int i = 0; i < 5; ++i){
 			SignedValue normalizedNgramMatch = this.getGoalK().getR().getNgramMatchExp()[i].duplicate();
 			normalizedNgramMatch.multiLogNumber(-logZ);
 			ngramMatch[i] = normalizedNgramMatch.convertToRealValue();
