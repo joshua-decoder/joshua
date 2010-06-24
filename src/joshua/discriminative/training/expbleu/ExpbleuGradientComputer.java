@@ -55,7 +55,7 @@ public class ExpbleuGradientComputer extends GradientComputer {
 	double [] ngramMatches = new double[5];
 	private double avgRefLen = 0; 
 	ArrayList<ArrayList<Double>> ngramMatchesGradients = new ArrayList<ArrayList<Double>>(); 
-
+	private int consumed = 0;
 	/** Logger for this class. */
 	static final private Logger logger = 
 		Logger.getLogger(ExpbleuGradientComputer.class.getSimpleName());
@@ -100,6 +100,7 @@ public class ExpbleuGradientComputer extends GradientComputer {
 	public void reComputeFunctionValueAndGradient(double[] theta) {
 		// TODO Auto-generated method stub
 		// initialize all counts to 0
+
 		for(int i = 0; i < 5; ++i){
 			this.ngramMatches[i] = 0;
 			for(int j = 0; j < this.numFeats; ++j ){
@@ -117,6 +118,8 @@ public class ExpbleuGradientComputer extends GradientComputer {
 		else{
 			BlockingQueue<HGAndReferences> queue = new ArrayBlockingQueue<HGAndReferences>(maxNumHGInQueue);
 			this.hgFactory.startLoop();
+			System.out.println("Compute function value and gradients for expbleu");
+			System.out.print("[");
 			HGProducer producer = new HGProducer(hgFactory, queue, numThreads, numSentence);
 			List<GradientConsumer> consumers = new ArrayList<GradientConsumer>();
 			for(int i = 0; i < this.numThreads; ++i){
@@ -129,8 +132,11 @@ public class ExpbleuGradientComputer extends GradientComputer {
 			model =	new ProducerConsumerModel<HGAndReferences, HGProducer, GradientConsumer>(queue, producer, consumers);
 
 			model.runParallel();
+			this.consumed = 0;
+			System.out.print("]\n");
 			this.hgFactory.endLoop();
 		}
+
 		finalizeFunAndGradients();
 	}
 
@@ -163,6 +169,8 @@ public class ExpbleuGradientComputer extends GradientComputer {
 
 		
 		this.hgFactory.startLoop();
+		System.out.println("Compute function value and gradients for expbleu");
+		System.out.print("[");
 		for(int cursent = 0; cursent < this.numSentence; ++ cursent){
 			HGAndReferences hgres = this.hgFactory.nextHG();
 			for(String ref : hgres.referenceSentences){
@@ -188,7 +196,11 @@ public class ExpbleuGradientComputer extends GradientComputer {
 				}
 			}
 //			System.out.println(matches[0]);
+			if(cursent % 100 == 0){
+				System.out.print(".");
+			}
 		}
+		System.out.print("]\n");
 		this.hgFactory.endLoop();
 
 	}
@@ -201,6 +213,10 @@ public class ExpbleuGradientComputer extends GradientComputer {
 			}
 		}
 		this.avgRefLen += avgRefLen;
+		consumed ++;
+		if(consumed % 100 == 0){
+			System.out.print(".");
+		}
 	}
 	
 }
