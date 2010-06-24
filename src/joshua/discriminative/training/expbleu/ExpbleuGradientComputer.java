@@ -145,8 +145,9 @@ public class ExpbleuGradientComputer extends GradientComputer {
 		for(int i = 0; i < 4; ++i){
 			this.functionValue += 1.0/4.0 * Math.log(ngramMatches[i]);				
 		}
+		System.out.println(this.functionValue);
 		for(int i = 0; i < 4; ++i){
-			this.functionValue -= 1.0/4.0 * Math.log(ngramMatches[4] - i );
+			this.functionValue -= 1.0/4.0 * Math.log(ngramMatches[4] - i * this.numSentence );
 		}
 		double x = 1 - this.avgRefLen/this.ngramMatches[4];
 		this.functionValue += 1/(Math.exp(N*x) + 1) * x; 
