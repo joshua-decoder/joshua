@@ -22,7 +22,7 @@ public abstract class LBFGSWrapper {
 	private boolean provideDiagonalMatrix =false;
 	private  double[] diag;
 	private int numCorrections = 21;//number of histories used to approximate hessian, our problem is small, so we can use a large value
-	private  double epsilon =  1.0e-4; //determines the accuracy with which the solution is to be found: gnorm < eps*xnorm.
+	private  double epsilon =  1.0e-5; //determines the accuracy with which the solution is to be found: gnorm < eps*xnorm.
 	private double xtol = 1.0e-16; //machine precision
 	private int[] iprint;
 	private int[] iflag;
