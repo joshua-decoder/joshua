@@ -46,7 +46,7 @@ public class GradientConsumer extends Consumer<HGAndReferences> {
 		parser.parseOverHG();
 		double [] ngramMatches = parser.getNgramMatches();
 		ArrayList<ArrayList<Double>> ngramMatchesGradients = new ArrayList<ArrayList<Double>>();
-		for(int i = 0; i < 8; ++i){
+		for(int i = 0; i < 5; ++i){
 			ArrayList<Double>	row = new ArrayList<Double>(this.featureStringToIntegerMap.size());
 			double [] gradientsForNgramMatches = parser.getGradients(i);
 			for(int j = 0; j < this.featureStringToIntegerMap.size(); ++j){
