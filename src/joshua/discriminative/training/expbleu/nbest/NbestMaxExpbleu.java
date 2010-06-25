@@ -1,5 +1,4 @@
-package joshua.discriminative.training.expbleu;
-
+package joshua.discriminative.training.expbleu.nbest;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.util.ArrayList;
@@ -35,7 +34,7 @@ import joshua.discriminative.training.risk_annealer.hypergraph.HyperGraphFactory
 import joshua.discriminative.training.risk_annealer.hypergraph.MRConfig;
 import joshua.util.FileUtility;
 
-public class HGMaxExpbleu extends AbstractMinRiskMERT {
+public class NbestMaxExpbleu extends AbstractMinRiskMERT {
 
 	private SymbolTable symbolTbl;
 	private boolean haveRefereces = true;
@@ -51,17 +50,19 @@ public class HGMaxExpbleu extends AbstractMinRiskMERT {
 	private String curFeatureFile;
 	private HashMap<String, Integer> featureStringToIntegerMap;
 	private String curHypFilePrefix;
+	private String[] devRefs;
 
 	static private Logger logger = Logger.getLogger(HGMinRiskDAMert.class
 			.getSimpleName());
 
-	public HGMaxExpbleu(String configFile, int numTrainingSentence,
+	public NbestMaxExpbleu(String configFile, int numTrainingSentence,
 			String[] devRefs, String hypFilePrefix, SymbolTable symbolTbl,
 			String sourceTrainingFile) {
 		super(configFile, numTrainingSentence, devRefs);
 		// TODO Auto-generated constructor stub
 		this.symbolTbl = symbolTbl;
-
+		this.devRefs = devRefs;
+		
 		if (devRefs != null) {
 			for (String refFile : devRefs) {
 				logger.info("add symbols for file " + refFile);
@@ -293,9 +294,7 @@ public class HGMaxExpbleu extends AbstractMinRiskMERT {
         	else{
         		logger.severe("unsorported anneal mode, " + MRConfig.annealingMode);
         		System.exit(0);
-        	}*/
-        	HyperGraphFactory hgFactory = new HyperGraphFactory(curHypFilePrefix, referenceFiles, MRConfig.ngramStateID,  symbolTbl, this.haveRefereces);
-        	
+        	}*/        	
         	
         	
 //        	//=====re-compute onebest BLEU
@@ -306,20 +305,15 @@ public class HGMaxExpbleu extends AbstractMinRiskMERT {
 //        	computeOneBestBLEU(curHypFilePrefix);
 
         	//@todo: check convergency
-        	ExpbleuGradientComputer comp = new ExpbleuGradientComputer(
-        			this.numPara, 
+        	NbestExpbleuGradientComputer comp = new NbestExpbleuGradientComputer(
+        			this.curHypFilePrefix,
+        			devRefs,
+        			this.numPara,
         			MRConfig.gainFactor,
         			1.0, 0.0,
-        			false, false, 
-        			this.numTrainingSentence, 
-        			hgFactory, 
-        			this.symbolTbl, 
-        			this.featureStringToIntegerMap, 
-        			this.featTemplates, 
-        			haveRefereces, 
-        			MRConfig.maxNumHGInQueue, 
-        			MRConfig.numThreads);
-//        	comp.reComputeFunctionValueAndGradient(lastWeightVector);
+        			false, 
+        			this.numTrainingSentence);
+        	//        	comp.reComputeFunctionValueAndGradient(lastWeightVector);
         	GradientOptimizer lbfgsRunner = new GradientOptimizer(this.numPara, lastWeightVector, false, comp, 
         			MRConfig.useL2Regula, MRConfig.varianceForL2, MRConfig.useModelDivergenceRegula, MRConfig.lambda, MRConfig.printFirstN);
         	lastWeightVector = lbfgsRunner.runLBFGS();
@@ -541,7 +535,7 @@ private double[] getIndividualBaselineWeights(){
 		int numSentInDevSet = FileUtilityOld
 				.numberLinesInFile(sourceTrainingFile);
 
-		HGMaxExpbleu trainer = new HGMaxExpbleu(joshuaConfigFile,
+		NbestMaxExpbleu trainer = new NbestMaxExpbleu(joshuaConfigFile,
 				numSentInDevSet, devRefs, hypFilePrefix, symbolTbl,
 				sourceTrainingFile);
 		

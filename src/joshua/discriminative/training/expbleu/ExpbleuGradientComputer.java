@@ -158,7 +158,7 @@ public class ExpbleuGradientComputer extends GradientComputer {
 			for(int j = 0; j < 4; ++j){
 				this.gradientsForTheta[i] -= 1.0/4.0/(ngramMatches[4] - j*this.numSentence)*ngramMatchesGradients.get(4).get(i);
 			}
-			double dx = - this.avgRefLen/this.ngramMatches[4]/this.ngramMatches[4]*this.ngramMatchesGradients.get(4).get(i);
+			double dx =  this.avgRefLen/this.ngramMatches[4]/this.ngramMatches[4]*this.ngramMatchesGradients.get(4).get(i);
 			this.gradientsForTheta[i] += y*dx;
 		}
 		
