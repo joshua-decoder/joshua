@@ -20,7 +20,7 @@ public class SamtFormatReader extends GrammarReader<BilingualRule> {
 	static {
 		fieldDelimiter = "#";
 		nonTerminalRegEx = "^@[^\\s]+";
-		nonTerminalCleanRegEx = "[\\,0-9\\s]+";
+		nonTerminalCleanRegEx = ",[0-9\\s]+";
 		
 		samtNonTerminalMarkup = "@";
 		
