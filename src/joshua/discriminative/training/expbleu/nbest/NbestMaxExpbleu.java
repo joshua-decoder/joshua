@@ -1,6 +1,7 @@
 package joshua.discriminative.training.expbleu.nbest;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -225,7 +226,70 @@ public class NbestMaxExpbleu extends AbstractMinRiskMERT {
 		joshuaDecoder.decodeTestSet(sourceTrainingFile, nbestFile);
 
 	}
-
+	public static boolean mergeNbest(String oldMergedNbestFile, String newNbestFile, String newMergedNbestFile){
+		boolean haveNewHyp =false;
+		BufferedReader newNbestReader = FileUtilityOld.getReadFileStream(newNbestFile);
+		BufferedReader oldMergedNbestReader = FileUtilityOld.getReadFileStream(oldMergedNbestFile);
+		BufferedWriter newMergedNbestReader =	FileUtilityOld.getWriteFileStream(newMergedNbestFile);		
+		
+		int oldSentID=-1;
+		String line;
+		String previousLineInNewNbest = FileUtilityOld.readLineLzf(newNbestReader);;
+		HashMap<String, String> oldNbests = new HashMap<String, String>();//key: hyp itself, value: remaining fds exlcuding sent_id
+		while((line=FileUtilityOld.readLineLzf(oldMergedNbestReader))!=null){
+			String[] fds = line.split("\\s+\\|{3}\\s+");
+			int newSentID = new Integer(fds[0]);
+			if(oldSentID!=-1 && oldSentID!=newSentID){
+				boolean[] t_have_new_hyp = new boolean[1];
+				previousLineInNewNbest = processNbest(newNbestReader, newMergedNbestReader, oldSentID, oldNbests, previousLineInNewNbest, t_have_new_hyp);
+				if(t_have_new_hyp[0]==true) 
+					haveNewHyp = true;
+			}
+			oldSentID = newSentID;
+			oldNbests.put(fds[1], fds[2]);//last field is not needed
+		}
+		//last nbest
+		boolean[] t_have_new_hyp = new boolean[1];
+		previousLineInNewNbest= processNbest(newNbestReader, newMergedNbestReader, oldSentID, oldNbests, previousLineInNewNbest, t_have_new_hyp);
+		if(previousLineInNewNbest!=null){
+			System.out.println("last line is not null, must be wrong"); 
+			System.exit(0);
+		}
+		if(t_have_new_hyp[0]==true) 
+			haveNewHyp = true;
+		
+		FileUtilityOld.closeReadFile(oldMergedNbestReader);
+		FileUtilityOld.closeReadFile(newNbestReader);
+		FileUtilityOld.closeWriteFile(newMergedNbestReader);
+		return haveNewHyp;
+	}
+	private static String processNbest(BufferedReader newNbestReader, BufferedWriter newMergedNbestReader, int oldSentID, HashMap<String, String> oldNbests,
+			String previousLine, boolean[] have_new_hyp){
+		have_new_hyp[0] = false;
+		String previousLineInNewNbest = previousLine;
+//		#### read new nbest and merge into nbests
+		while(true){
+			String[] t_fds = previousLineInNewNbest.split("\\s+\\|{3}\\s+");
+			int t_new_id = new Integer(t_fds[0]); 
+			if( t_new_id == oldSentID){
+				if(oldNbests.containsKey(t_fds[1])==false){//new hyp
+					have_new_hyp[0] = true;
+					oldNbests.put(t_fds[1], t_fds[2]);//merge into nbests
+				}
+			}else{
+				break;
+			}
+			previousLineInNewNbest = FileUtilityOld.readLineLzf(newNbestReader);
+			if(previousLineInNewNbest==null) 
+				break;
+		}
+		//#### print the nbest: order is not important; and the last field is ignored
+		for (Map.Entry<String, String> entry : oldNbests.entrySet()){ 
+		    FileUtilityOld.writeLzf(newMergedNbestReader, oldSentID + " ||| " + entry.getKey() + " ||| " + entry.getValue() + "\n");
+		}				
+		oldNbests.clear();
+		return previousLineInNewNbest;
+	}
 	@Override
 	public void mainLoop() {
 		// TODO Auto-generated method stub
@@ -236,7 +300,10 @@ public class NbestMaxExpbleu extends AbstractMinRiskMERT {
 		 * solved by LBFGS which itself involves many iterations (of computing
 		 * gradients)
 		 * */
-		for (int iter = 1; iter <= 10; iter++) {
+		
+		String oldmergedNbest = hypFilePrefix + ".merged";
+		String newmergedNbest = "";
+		for (int iter = 1; iter <= 20; iter++) {
 
 			// ==== re-normalize weights, and save config files
 			this.curConfigFile = configFile + "." + iter;
@@ -255,17 +322,33 @@ public class NbestMaxExpbleu extends AbstractMinRiskMERT {
 				this.curHypFilePrefix = hypFilePrefix + "." + iter;
 				decodingTestSet(null, curHypFilePrefix);
 				System.out.println("Decoded: " + curHypFilePrefix);
+				newmergedNbest = hypFilePrefix + ".merged" + "." + iter;
+				if(iter == 1){
+					try {
+						FileUtility.copyFile(curHypFilePrefix, newmergedNbest);
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}
+				else if(!mergeNbest(oldmergedNbest,curHypFilePrefix,newmergedNbest)){
+					break;
+				}
+				oldmergedNbest = newmergedNbest;
+				this.curHypFilePrefix = newmergedNbest;
 			}
-      	Map<String, Integer>  ruleStringToIDTable = DiskHyperGraph.obtainRuleStringToIDTable(curHypFilePrefix+".hg.rules");
+			
+
+//      	Map<String, Integer>  ruleStringToIDTable = DiskHyperGraph.obtainRuleStringToIDTable(curHypFilePrefix+".hg.rules");
         	
         	//try to abbrevate the featuers if possible
 //        	addAbbreviatedNames(ruleStringToIDTable);
         	
         	
         	//micro rule features
-        	if(MRConfig.useSparseFeature && MRConfig.useMicroTMFeat){	        	
-	        	this.microRuleFeatureTemplate.setupTbl(ruleStringToIDTable, featureStringToIntegerMap.keySet());
-        	}
+//        	if(MRConfig.useSparseFeature && MRConfig.useMicroTMFeat){	        	
+//	        	this.microRuleFeatureTemplate.setupTbl(ruleStringToIDTable, featureStringToIntegerMap.keySet());
+//        	}
 
 //        	//=====compute onebest BLEU
 //        	computeOneBestBLEU(curHypFilePrefix);

@@ -20,6 +20,7 @@ public class GradientConsumer extends Consumer<HGAndReferences> {
 	private double [] theta;
 	private SymbolTable symbolTbl;
 	private ExpbleuGradientComputer computer;
+//	private static int id = 0;
 	
 	public GradientConsumer(BlockingQueue<HGAndReferences> q, List<FeatureTemplate> featTemplates, HashMap<String, Integer> featureStringToIntegerMap, double[] theta, SymbolTable symbolTbl,ExpbleuGradientComputer computer) {
 		super(q);
@@ -29,7 +30,7 @@ public class GradientConsumer extends Consumer<HGAndReferences> {
 		this.symbolTbl = symbolTbl;
 		this.featureStringToIntegerMap = featureStringToIntegerMap;
 		this.computer = computer;
-		
+//		++id;
 	}
 
 	@Override

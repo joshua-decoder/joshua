@@ -15,8 +15,8 @@ public class NbestExpbleuGradientComputer extends GradientComputer {
 
 	private int numSentence;
 	private int numFeats;
-	private int[] ngramMatches;
-	private ArrayList<ArrayList<Double>> ngramMatchesGradients;
+	private double[] ngramMatches = new double[5];
+	private ArrayList<ArrayList<Double>> ngramMatchesGradients = new ArrayList<ArrayList<Double>>(5);
 	private String[] refFiles;
 	private ArrayList<ArrayList<String>> nbestlines;
 	private ArrayList<ArrayList<String>> refs; 
@@ -55,6 +55,10 @@ public class NbestExpbleuGradientComputer extends GradientComputer {
 			this.nbestlines.add(nbestForOneSent);
 		}
 		this.refs = new ArrayList<ArrayList<String>>(this.numSentence + 1);
+		for(int i = 0; i < this.numSentence; ++i){
+			ArrayList<String> refsForOneSent = new ArrayList<String>();
+			this.refs.add(refsForOneSent);
+		}
 		BufferedReader nbestReader = FileUtilityOld.getReadFileStream(nbestFile, "UTF-8");
 		BufferedReader [] refsReader = new BufferedReader[refFiles.length];
 		for(int i = 0; i < refFiles.length; ++i){
@@ -62,16 +66,16 @@ public class NbestExpbleuGradientComputer extends GradientComputer {
 		}
 		String line;
 		int index = 0; 
+		
 		try {
-			
 			while((line = nbestReader.readLine()) != null){
 				String [] fds = line.split("\\s+\\|{3}\\s+");
-				index = Integer.getInteger(fds[0]);
-				System.out.println("Add nbest line " + index + " " + line);
+				index = Integer.valueOf(fds[0]);
+//				System.out.println("Add nbest line " + index + " " + line);
 				this.nbestlines.get(index).add(line);
 			}
-			index = 1; 
 			for(int i = 0; i < refFiles.length; ++i){
+				index = 0; 
 				while((line = refsReader[i].readLine()) != null){
 					this.refs.get(index).add(line);
 					++ index;
@@ -119,33 +123,32 @@ public class NbestExpbleuGradientComputer extends GradientComputer {
 			matches[i] = 0;
 			ArrayList<Double> row = new ArrayList<Double>(this.numFeats);
 			for(int j = 0; j < this.numFeats; ++j){
-				row.set(j, 0.0);
+				row.add(0.0);
 			}
 			dm.add(row);
 		}
-		for(int i = 1; i <= this.numSentence; ++i){
+		for(int i = 0; i < this.numSentence; ++i){
 			String [] sentRefs = new String[refFiles.length];
 			
 			this.refs.get(i).toArray(sentRefs);
 			for(String nbestline : this.nbestlines.get(i)){
 				String fds [] = nbestline.split("\\s+\\|{3}\\s+");
-				double p =  Math.exp(Double.valueOf(fds[3]));
+				String [] feats = fds[2].split("\\s+");
+				double score = 0; 
+				for(int j = 0; j < this.numFeats; ++j){
+					score += Double.valueOf(feats[j]) * theta[j];
+				}
+				double p =  Math.exp(Double.valueOf(score));
 				Z += p;
 				int[] hypNgramMatches = BLEU.computeNgramMatches(sentRefs, fds[1]);
-				String [] feats = fds[2].split("\\s+");
-				for(int j = 0; j < 4; ++j){
+
+				for(int j = 0; j < 5; ++j){
 					matches[j] += hypNgramMatches[j] * p;
 					for(int k = 0; k < this.numFeats; ++k){
-						System.out.println("feature " + j + " " + feats[j]);
 						dm.get(j).set(k, dm.get(j).get(k) + Double.valueOf(feats[k]) * p * hypNgramMatches[j]);
 					}
 				}
-				String [] wds = fds[1].split("\\s+");
-				matches[4] += wds.length * p;
-				for(int j = 0; j < this.numFeats; ++j){
-					
-					dm.get(4).set(j, dm.get(4).get(j) + wds.length * Double.valueOf(feats[j]) * p);
-				}
+			
 				for(int j = 0; j < this.numFeats; ++j){
 					dz[j] += Double.valueOf(feats[j]) * p;
 				}
@@ -169,23 +172,23 @@ public class NbestExpbleuGradientComputer extends GradientComputer {
 	}
 	private void finalizeFunAndGradients() {
 		// TODO Auto-generated method stub
-		for(int i = 0; i < 4; ++i){
+		for(int i = 1; i <= 4; ++i){
 			this.functionValue += 1.0/4.0 * Math.log(ngramMatches[i]);				
 		}
 		for(int i = 0; i < 4; ++i){
-			this.functionValue -= 1.0/4.0 * Math.log(ngramMatches[4] - i * this.numSentence );
+			this.functionValue -= 1.0/4.0 * Math.log(ngramMatches[0] - i * this.numSentence );
 		}
-		double x = 1 - this.avgRefLen/this.ngramMatches[4];
+		double x = 1 - this.avgRefLen/this.ngramMatches[0];
 		this.functionValue += 1/(Math.exp(N*x) + 1) * x; 
 		double y = ((1 - N * x)*Math.exp(N*x) + 1)/(Math.exp(N*x) + 1)/(Math.exp(N*x)+1);
 		for(int i = 0; i < this.numFeatures ; ++i){
-			for(int j = 0; j < 4; ++j){
+			for(int j = 1; j <= 4; ++j){
 				this.gradientsForTheta[i] += 1.0/4.0/ngramMatches[j]*ngramMatchesGradients.get(j).get(i);
 			}
 			for(int j = 0; j < 4; ++j){
-				this.gradientsForTheta[i] -= 1.0/4.0/(ngramMatches[4] - j*this.numSentence)*ngramMatchesGradients.get(4).get(i);
+				this.gradientsForTheta[i] -= 1.0/4.0/(ngramMatches[0] - j*this.numSentence)*ngramMatchesGradients.get(0).get(i);
 			}
-			double dx = - this.avgRefLen/this.ngramMatches[4]/this.ngramMatches[4]*this.ngramMatchesGradients.get(4).get(i);
+			double dx = this.avgRefLen/this.ngramMatches[0]/this.ngramMatches[0]*this.ngramMatchesGradients.get(0).get(i);
 			this.gradientsForTheta[i] += y*dx;
 		}
 		
