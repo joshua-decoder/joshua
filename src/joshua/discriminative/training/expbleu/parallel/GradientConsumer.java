@@ -56,12 +56,14 @@ public class GradientConsumer extends Consumer<HGAndReferences> {
 			}
 			ngramMatchesGradients.add(row);
 		}
-		double avgRefLen = 0;
+		double minlen = 10000;
 		for(String ref : x.referenceSentences){
 			String [] wds = Regex.spaces.split(ref);
-			avgRefLen += 1.0 * wds.length/x.referenceSentences.length;
+			if(wds.length < minlen){
+				minlen = wds.length;
+			}
 		}
-		computer.accumulate(ngramMatchesGradients, ngramMatches,avgRefLen);
+		computer.accumulate(ngramMatchesGradients, ngramMatches,minlen);
 	}
 
 	@Override

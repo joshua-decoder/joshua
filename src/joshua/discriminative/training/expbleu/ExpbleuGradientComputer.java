@@ -53,7 +53,7 @@ public class ExpbleuGradientComputer extends GradientComputer {
 	
 	// Ngram Matches Stats and gradients
 	double [] ngramMatches = new double[5];
-	private double avgRefLen = 0; 
+	private double minlen = 0; 
 	ArrayList<ArrayList<Double>> ngramMatchesGradients = new ArrayList<ArrayList<Double>>(); 
 	private int consumed = 0;
 	/** Logger for this class. */
@@ -107,7 +107,7 @@ public class ExpbleuGradientComputer extends GradientComputer {
 				this.ngramMatchesGradients.get(i).set(j, 0.0);
 			}
 		}
-		this.avgRefLen = 0; 
+		this.minlen = 0; 
 		this.functionValue = 0; 
 		for(int i = 0; i < this.numFeats; ++i){
 			this.gradientsForTheta[i] = 0;  
@@ -148,7 +148,7 @@ public class ExpbleuGradientComputer extends GradientComputer {
 		for(int i = 0; i < 4; ++i){
 			this.functionValue -= 1.0/4.0 * Math.log(ngramMatches[4] - i * this.numSentence );
 		}
-		double x = 1 - this.avgRefLen/this.ngramMatches[4];
+		double x = 1 - this.minlen/this.ngramMatches[4];
 		this.functionValue += 1/(Math.exp(N*x) + 1) * x; 
 		double y;
 		if(x > 0){
@@ -165,7 +165,7 @@ public class ExpbleuGradientComputer extends GradientComputer {
 			for(int j = 0; j < 4; ++j){
 				this.gradientsForTheta[i] -= 1.0/4.0/(ngramMatches[4] - j*this.numSentence)*ngramMatchesGradients.get(4).get(i);
 			}
-			double dx =  this.avgRefLen/this.ngramMatches[4]/this.ngramMatches[4]*this.ngramMatchesGradients.get(4).get(i);
+			double dx =  this.minlen/this.ngramMatches[4]/this.ngramMatches[4]*this.ngramMatchesGradients.get(4).get(i);
 			System.out.println(dx);
 			this.gradientsForTheta[i] += y*dx;
 		}
@@ -189,7 +189,7 @@ public class ExpbleuGradientComputer extends GradientComputer {
 			HGAndReferences hgres = this.hgFactory.nextHG();
 			for(String ref : hgres.referenceSentences){
 				String [] words = Regex.spaces.split(ref);
-				this.avgRefLen += 1.0 * words.length/hgres.referenceSentences.length;
+				this.minlen += 1.0 * words.length/hgres.referenceSentences.length;
 			}
 			ExpbleuSemiringParser parser =  new ExpbleuSemiringParser(
 					hgres.referenceSentences,
@@ -219,14 +219,14 @@ public class ExpbleuGradientComputer extends GradientComputer {
 
 	}
 	
-	public synchronized void accumulate(ArrayList<ArrayList<Double>> ngramMatchesGradients, double [] Matchs, double avgRefLen){
+	public synchronized void accumulate(ArrayList<ArrayList<Double>> ngramMatchesGradients, double [] Matchs, double minlen){
 		for(int i = 0; i < 5; ++i){
 			this.ngramMatches[i] += Matchs[i];
 			for(int j = 0; j < this.numFeats; ++j){
 				this.ngramMatchesGradients.get(i).set(j, this.ngramMatchesGradients.get(i).get(j) + ngramMatchesGradients.get(i).get(j));
 			}
 		}
-		this.avgRefLen += avgRefLen;
+		this.minlen += minlen;
 		consumed ++;
 		if(consumed % 100 == 0){
 			System.out.print(".");
