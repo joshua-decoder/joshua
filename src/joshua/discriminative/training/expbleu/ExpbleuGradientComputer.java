@@ -150,15 +150,23 @@ public class ExpbleuGradientComputer extends GradientComputer {
 		}
 		double x = 1 - this.avgRefLen/this.ngramMatches[4];
 		this.functionValue += 1/(Math.exp(N*x) + 1) * x; 
-		double y = ((1 - N * x)*Math.exp(N*x) + 1)/(Math.exp(N*x) + 1)/(Math.exp(N*x)+1);
+		double y;
+		if(x > 0){
+			y = ((1 - N * x)*myexp(-N*x) + myexp(-2*N*x))/(myexp(-N*x) + 1)/(myexp(-N*x)+1);
+		}
+		else{
+			y = ((1 - N * x)*myexp(N*x) + 1)/(myexp(N*x) + 1)/(myexp(N*x)+1);
+		}
 		for(int i = 0; i < this.numFeatures ; ++i){
 			for(int j = 0; j < 4; ++j){
+				
 				this.gradientsForTheta[i] += 1.0/4.0/ngramMatches[j]*ngramMatchesGradients.get(j).get(i);
 			}
 			for(int j = 0; j < 4; ++j){
 				this.gradientsForTheta[i] -= 1.0/4.0/(ngramMatches[4] - j*this.numSentence)*ngramMatchesGradients.get(4).get(i);
 			}
 			double dx =  this.avgRefLen/this.ngramMatches[4]/this.ngramMatches[4]*this.ngramMatchesGradients.get(4).get(i);
+			System.out.println(dx);
 			this.gradientsForTheta[i] += y*dx;
 		}
 		
@@ -222,6 +230,14 @@ public class ExpbleuGradientComputer extends GradientComputer {
 		consumed ++;
 		if(consumed % 100 == 0){
 			System.out.print(".");
+		}
+	}
+	private double myexp(double x){
+		if(Double.isInfinite(Math.exp(x))){
+			return 0;
+		}
+		else{
+			return Math.exp(x);
 		}
 	}
 	

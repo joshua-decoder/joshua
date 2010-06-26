@@ -522,7 +522,6 @@ private double[] getIndividualBaselineWeights(){
 			System.out.println("Wrong number of parameters!");
 			System.exit(1);
 		}
-
 		// long start_time = System.currentTimeMillis();
 		String joshuaConfigFile = args[0].trim();
 		String sourceTrainingFile = args[1].trim();
@@ -544,7 +543,6 @@ private double[] getIndividualBaselineWeights(){
 		HGMaxExpbleu trainer = new HGMaxExpbleu(joshuaConfigFile,
 				numSentInDevSet, devRefs, hypFilePrefix, symbolTbl,
 				sourceTrainingFile);
-		
 		trainer.mainLoop();
 	}
 
