@@ -12,6 +12,7 @@ import joshua.discriminative.training.expbleu.ExpbleuGradientComputer;
 import joshua.discriminative.training.expbleu.ExpbleuSemiringParser;
 import joshua.discriminative.training.parallel.Consumer;
 import joshua.discriminative.training.risk_annealer.hypergraph.HGAndReferences;
+import joshua.util.Regex;
 
 public class GradientConsumer extends Consumer<HGAndReferences> {
 
@@ -57,7 +58,8 @@ public class GradientConsumer extends Consumer<HGAndReferences> {
 		}
 		double avgRefLen = 0;
 		for(String ref : x.referenceSentences){
-			avgRefLen += ref.length()/x.referenceSentences.length;
+			String [] wds = Regex.spaces.split(ref);
+			avgRefLen  += wds.length/x.referenceSentences.length;
 		}
 		computer.accumulate(ngramMatchesGradients, ngramMatches,avgRefLen);
 	}
