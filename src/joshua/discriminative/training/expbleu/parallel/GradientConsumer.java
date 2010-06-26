@@ -59,7 +59,7 @@ public class GradientConsumer extends Consumer<HGAndReferences> {
 		double avgRefLen = 0;
 		for(String ref : x.referenceSentences){
 			String [] wds = Regex.spaces.split(ref);
-			avgRefLen  += wds.length/x.referenceSentences.length;
+			avgRefLen += 1.0 * wds.length/x.referenceSentences.length;
 		}
 		computer.accumulate(ngramMatchesGradients, ngramMatches,avgRefLen);
 	}
