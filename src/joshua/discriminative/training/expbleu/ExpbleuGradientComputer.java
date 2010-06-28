@@ -38,7 +38,7 @@ public class ExpbleuGradientComputer extends GradientComputer {
 	int numThreads = 5;
 	
 	//constant 
-	private double N = 10000;
+	private double N = 1000;
 
 	boolean useSemiringV2 = true;
 
@@ -166,7 +166,7 @@ public class ExpbleuGradientComputer extends GradientComputer {
 				this.gradientsForTheta[i] -= 1.0/4.0/(ngramMatches[4] - j*this.numSentence)*ngramMatchesGradients.get(4).get(i);
 			}
 			double dx =  this.minlen/this.ngramMatches[4]/this.ngramMatches[4]*this.ngramMatchesGradients.get(4).get(i);
-			System.out.println(dx);
+//			System.out.println(dx);
 			this.gradientsForTheta[i] += y*dx;
 		}
 		
