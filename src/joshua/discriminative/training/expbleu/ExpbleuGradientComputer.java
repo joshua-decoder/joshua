@@ -143,7 +143,7 @@ public class ExpbleuGradientComputer extends GradientComputer {
 	private void finalizeFunAndGradients() {
 		// TODO Auto-generated method stub
 		for(int i = 0; i < 4; ++i){
-			this.functionValue += 1.0/4.0 * Math.log(ngramMatches[i]);				
+			this.functionValue += 1.0/4.0 * Math.log(ngramMatches[i]);
 		}
 		for(int i = 0; i < 4; ++i){
 			this.functionValue -= 1.0/4.0 * Math.log(ngramMatches[4] - i * this.numSentence );
@@ -187,10 +187,13 @@ public class ExpbleuGradientComputer extends GradientComputer {
 		System.out.print("[");
 		for(int cursent = 0; cursent < this.numSentence; ++ cursent){
 			HGAndReferences hgres = this.hgFactory.nextHG();
+			int minlenForOne = 10000;
 			for(String ref : hgres.referenceSentences){
 				String [] words = Regex.spaces.split(ref);
-				this.minlen += 1.0 * words.length/hgres.referenceSentences.length;
+				if(words.length < minlenForOne)
+					minlenForOne = words.length;
 			}
+			this.minlen += 1.0 * minlenForOne;
 			ExpbleuSemiringParser parser =  new ExpbleuSemiringParser(
 					hgres.referenceSentences,
 					this.featTemplates,

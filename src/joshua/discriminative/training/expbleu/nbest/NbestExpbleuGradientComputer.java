@@ -20,8 +20,8 @@ public class NbestExpbleuGradientComputer extends GradientComputer {
 	private String[] refFiles;
 	private ArrayList<ArrayList<String>> nbestlines;
 	private ArrayList<ArrayList<String>> refs; 
-	private double avgRefLen;
-	private double N = 10000;
+	private double minLen;
+	private double N = 1000;
 	static final private Logger logger = 
 		Logger.getLogger(ExpbleuGradientComputer.class.getSimpleName());
 
@@ -74,16 +74,25 @@ public class NbestExpbleuGradientComputer extends GradientComputer {
 //				System.out.println("Add nbest line " + index + " " + line);
 				this.nbestlines.get(index).add(line);
 			}
+			ArrayList<Integer> minLens = new ArrayList<Integer>(this.numSentence);
+			for(int i = 0; i < this.numSentence; ++i){
+				minLens.add(10000);
+			}
 			for(int i = 0; i < refFiles.length; ++i){
 				index = 0; 
 				while((line = refsReader[i].readLine()) != null){
 					this.refs.get(index).add(line);
-					++ index;
 					String [] wds = line.split("\\s+");
-					this.avgRefLen += wds.length;
+					if(wds.length < minLens.get(index)){
+						minLens.set(index, wds.length);
+					}
+					++ index;	
+
 				}
 			}
-			this.avgRefLen = this.avgRefLen/refFiles.length;
+			for(int i = 0; i < this.numSentence; ++i){
+				this.minLen += minLens.get(i);
+			}
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -173,12 +182,12 @@ public class NbestExpbleuGradientComputer extends GradientComputer {
 	private void finalizeFunAndGradients() {
 		// TODO Auto-generated method stub
 		for(int i = 1; i <= 4; ++i){
-			this.functionValue += 1.0/4.0 * Math.log(ngramMatches[i]);				
+			this.functionValue += 1.0/4.0 * Math.log(ngramMatches[i]);	
 		}
 		for(int i = 0; i < 4; ++i){
 			this.functionValue -= 1.0/4.0 * Math.log(ngramMatches[0] - i * this.numSentence );
 		}
-		double x = 1 - this.avgRefLen/this.ngramMatches[0];
+		double x = 1 - this.minLen/this.ngramMatches[0];
 		this.functionValue += 1/(Math.exp(N*x) + 1) * x; 
 		double y = ((1 - N * x)*Math.exp(N*x) + 1)/(Math.exp(N*x) + 1)/(Math.exp(N*x)+1);
 		for(int i = 0; i < this.numFeatures ; ++i){
@@ -188,7 +197,7 @@ public class NbestExpbleuGradientComputer extends GradientComputer {
 			for(int j = 0; j < 4; ++j){
 				this.gradientsForTheta[i] -= 1.0/4.0/(ngramMatches[0] - j*this.numSentence)*ngramMatchesGradients.get(0).get(i);
 			}
-			double dx = this.avgRefLen/this.ngramMatches[0]/this.ngramMatches[0]*this.ngramMatchesGradients.get(0).get(i);
+			double dx = this.minLen/this.ngramMatches[0]/this.ngramMatches[0]*this.ngramMatchesGradients.get(0).get(i);
 			this.gradientsForTheta[i] += y*dx;
 		}
 		
