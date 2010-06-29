@@ -23,7 +23,6 @@ public class NgramMatchPM implements PModule<LogSemiring, NgramMatchPM> {
 			this.ngramMatchExp[i]  = matchesexp[i];
 		}
 	}
-	@Override
 	public void add(NgramMatchPM b) {
 		// TODO Auto-generated method stub
 		for(int i = 0; i < 5; ++i){
@@ -31,7 +30,6 @@ public class NgramMatchPM implements PModule<LogSemiring, NgramMatchPM> {
 		}
 	}
 
-	@Override
 	public NgramMatchPM duplicate() {
 		// TODO Auto-generated method stub
 		SignedValue[] copied = new SignedValue[5];
@@ -41,7 +39,6 @@ public class NgramMatchPM implements PModule<LogSemiring, NgramMatchPM> {
 		return new  NgramMatchPM(copied);
 	}
 
-	@Override
 	public void multiSemiring(LogSemiring p) {
 		// TODO Auto-generated method stub
 		for(int i = 0; i < 5; ++i){
@@ -49,7 +46,6 @@ public class NgramMatchPM implements PModule<LogSemiring, NgramMatchPM> {
 		}
 	}
 
-	@Override
 	public void printInfor() {
 		// TODO Auto-generated method stub
 		for(int i = 0; i < 5; ++i){
@@ -57,7 +53,6 @@ public class NgramMatchPM implements PModule<LogSemiring, NgramMatchPM> {
 		}
 	}
 
-	@Override
 	public void setToZero() {
 		// TODO Auto-generated method stub
 		for(int i = 0; i < 5; ++i){

@@ -20,7 +20,6 @@ public class MultiListPM implements PModule<LogSemiring, MultiListPM> {
 			this.listPMs[i] = listPMs[i];
 		}
 	}
-	@Override
 	public void add(MultiListPM b) {
 		// TODO Auto-generated method stub
 		for(int i = 0; i < 5; ++i){
@@ -28,7 +27,6 @@ public class MultiListPM implements PModule<LogSemiring, MultiListPM> {
 		}
 	}
 
-	@Override
 	public MultiListPM duplicate() {
 		// TODO Auto-generated method stub
 		ListPM[] copied = new ListPM[5];
@@ -38,7 +36,6 @@ public class MultiListPM implements PModule<LogSemiring, MultiListPM> {
 		return new MultiListPM(copied);
 	}
 
-	@Override
 	public void multiSemiring(LogSemiring p) {
 		// TODO Auto-generated method stub
 		for(int i = 0; i < 5; ++i){
@@ -46,7 +43,6 @@ public class MultiListPM implements PModule<LogSemiring, MultiListPM> {
 		}
 	}
 
-	@Override
 	public void printInfor() {
 		// TODO Auto-generated method stub
 		for(int i = 0; i < 5; ++i){
@@ -54,7 +50,6 @@ public class MultiListPM implements PModule<LogSemiring, MultiListPM> {
 		}
 	}
 
-	@Override
 	public void setToZero() {
 		// TODO Auto-generated method stub
 		for(int i = 0; i < 5; ++i){

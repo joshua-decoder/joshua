@@ -7,7 +7,6 @@ import joshua.discriminative.semiring_parsingv2.pmodule.SparseMap;
 
 public class ExpbleuBO implements BilinearOperator<NgramMatchPM, ListPM, MultiListPM> {
 
-	@Override
 	public MultiListPM bilinearMulti(NgramMatchPM r, ListPM s) {
 		// TODO Auto-generated method stub
 		ListPM[] product = new ListPM[5];
