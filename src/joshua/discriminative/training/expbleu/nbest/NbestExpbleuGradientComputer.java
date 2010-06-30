@@ -147,7 +147,7 @@ public class NbestExpbleuGradientComputer extends GradientComputer {
 				for(int j = 0; j < this.numFeats; ++j){
 					score += Double.valueOf(feats[j]) * theta[j];
 				}
-				double p =  Math.exp(Double.valueOf(score));
+				double p =  myexp(score);
 				Z += p;
 				int[] hypNgramMatches = BLEU.computeNgramMatches(sentRefs, fds[1]);
 
@@ -189,7 +189,13 @@ public class NbestExpbleuGradientComputer extends GradientComputer {
 		}
 		double x = 1 - this.minLen/this.ngramMatches[0];
 		this.functionValue += 1/(Math.exp(N*x) + 1) * x; 
-		double y = ((1 - N * x)*Math.exp(N*x) + 1)/(Math.exp(N*x) + 1)/(Math.exp(N*x)+1);
+		double y;
+		if(x > 0){
+			y = ((1 - N * x)*myexp(-N*x) + myexp(-2*N*x))/(myexp(-N*x) + 1)/(myexp(-N*x)+1);
+		}
+		else{
+			y = ((1 - N * x)*myexp(N*x) + 1)/(myexp(N*x) + 1)/(myexp(N*x)+1);
+		}
 		for(int i = 0; i < this.numFeatures ; ++i){
 			for(int j = 1; j <= 4; ++j){
 				this.gradientsForTheta[i] += 1.0/4.0/ngramMatches[j]*ngramMatchesGradients.get(j).get(i);
@@ -208,5 +214,13 @@ public class NbestExpbleuGradientComputer extends GradientComputer {
 			diffinfo += this.gradientsForTheta[i];
 		}
 		this.logger.info(diffinfo);
+	}
+	private double myexp(double x){
+		if(Double.isInfinite(Math.exp(x))){
+			return 0;
+		}
+		else{
+			return Math.exp(x);
+		}
 	}
 }
