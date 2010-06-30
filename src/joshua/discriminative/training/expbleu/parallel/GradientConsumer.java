@@ -23,6 +23,8 @@ public class GradientConsumer extends Consumer<HGAndReferences> {
 	private ExpbleuGradientComputer computer;
 //	private static int id = 0;
 	
+	private double lambda = 1.2;
+	
 	public GradientConsumer(BlockingQueue<HGAndReferences> q, List<FeatureTemplate> featTemplates, HashMap<String, Integer> featureStringToIntegerMap, double[] theta, SymbolTable symbolTbl,ExpbleuGradientComputer computer) {
 		super(q);
 		// TODO Auto-generated constructor stub
@@ -63,7 +65,7 @@ public class GradientConsumer extends Consumer<HGAndReferences> {
 				minlen = wds.length;
 			}
 		}
-		computer.accumulate(ngramMatchesGradients, ngramMatches,minlen);
+		computer.accumulate(ngramMatchesGradients, ngramMatches,minlen * lambda);
 	}
 
 	@Override
