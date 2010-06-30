@@ -101,6 +101,8 @@ public class MRConfig {
 	
 	public static int hyp_merge_mode  = 2; //0: no merge; 1: merge without de-duplicate; 2: merge with de-duplicate
 	
+	// exbleu related
+	public static double expbleuLambda = 1.2;
 	private static final Logger logger =
 		Logger.getLogger(MRConfig.class.getName());
 	
@@ -308,7 +310,12 @@ public class MRConfig {
 					stop_hyp_ratio = new Double( fds[1].trim() );
 					if (logger.isLoggable(Level.FINEST)) 
 						logger.finest(String.format("stop_hyp_ratio: %s", stop_hyp_ratio));					
+				} else if ("expbleu_lambda".equals(fds[1].trim())){
+					expbleuLambda = new Double(fds[1].trim());
+					if(logger.isLoggable(Level.FINEST))
+						logger.finest(String.format("stop_hyp_ratio: %s", expbleuLambda));	
 				}
+				
 									
 				
 			}else{//models

@@ -12,6 +12,7 @@ import joshua.discriminative.training.expbleu.ExpbleuGradientComputer;
 import joshua.discriminative.training.expbleu.ExpbleuSemiringParser;
 import joshua.discriminative.training.parallel.Consumer;
 import joshua.discriminative.training.risk_annealer.hypergraph.HGAndReferences;
+import joshua.discriminative.training.risk_annealer.hypergraph.MRConfig;
 import joshua.util.Regex;
 
 public class GradientConsumer extends Consumer<HGAndReferences> {
@@ -23,7 +24,7 @@ public class GradientConsumer extends Consumer<HGAndReferences> {
 	private ExpbleuGradientComputer computer;
 //	private static int id = 0;
 	
-	private double lambda = 1.3;
+	private double lambda ;
 	
 	public GradientConsumer(BlockingQueue<HGAndReferences> q, List<FeatureTemplate> featTemplates, HashMap<String, Integer> featureStringToIntegerMap, double[] theta, SymbolTable symbolTbl,ExpbleuGradientComputer computer) {
 		super(q);
@@ -34,6 +35,7 @@ public class GradientConsumer extends Consumer<HGAndReferences> {
 		this.featureStringToIntegerMap = featureStringToIntegerMap;
 		this.computer = computer;
 //		++id;
+		lambda = MRConfig.expbleuLambda;
 	}
 
 	@Override
