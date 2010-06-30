@@ -23,7 +23,7 @@ public class GradientConsumer extends Consumer<HGAndReferences> {
 	private ExpbleuGradientComputer computer;
 //	private static int id = 0;
 	
-	private double lambda = 1.2;
+	private double lambda = 1.3;
 	
 	public GradientConsumer(BlockingQueue<HGAndReferences> q, List<FeatureTemplate> featTemplates, HashMap<String, Integer> featureStringToIntegerMap, double[] theta, SymbolTable symbolTbl,ExpbleuGradientComputer computer) {
 		super(q);
