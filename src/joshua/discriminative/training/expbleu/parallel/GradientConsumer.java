@@ -70,16 +70,19 @@ public class GradientConsumer extends Consumer<HGAndReferences> {
 //				closest_len = wds.length;
 //			}
 //		}
-		double minLen = 10000;
-		for(String ref: x.referenceSentences){
-			String [] wds = Regex.spaces.split(ref);
-			if(wds.length < minLen){
-				minLen = wds.length;
-			}
-				
-		}
-			
-		computer.accumulate(ngramMatchesGradients, ngramMatches, minLen*lambda);
+//		double minLen = 10000;
+//		for(String ref: x.referenceSentences){
+//			String [] wds = Regex.spaces.split(ref);
+//			if(wds.length < minLen){
+//				minLen = wds.length;
+//			}
+//				
+//		}
+		String ref = x.referenceSentences[0];
+		String [] wds = Regex.spaces.split(ref);
+		double firstLen = wds.length;
+		
+		computer.accumulate(ngramMatchesGradients, ngramMatches, firstLen);
 	}
 
 	@Override
