@@ -143,11 +143,28 @@ public class SuffixArrayFactory {
 		// instantiate them.
 		int wordCounter = 0;
 		int sentenceCounter = 0;
-
+//		logger.info("I have seen " + wordCounter + " words. I expect to see " + (numWords-wordCounter) + " more");
 		LineReader lineReader = new LineReader(inputFilename);
 
 		for (String phraseString : lineReader) {
+			
+			//if (sentenceCounter%1000 == 0) 
+			//if (sentenceCounter>=70000 && sentenceCounter<=71000)
+//			if (sentenceCounter==70623)
+//			{
+//				System.out.println(sentenceCounter + "\t" + wordCounter);
+//			}
+			
+//			int numSpaces = 0;
+//			for (int i=0, n=phraseString.length(); i<n; i+=1) {
+//				if (' ' == phraseString.charAt(i)) {
+//					numSpaces += 1;
+//				}
+//			}
 			int[] words = vocab.getIDs(phraseString);
+//			if (numSpaces+1 != words.length) {
+//				throw new RuntimeException("In line " + sentenceCounter);
+//			}
 //			String[] wordStrings = phraseString.split("\\s+");
 //			int[] words = new int[wordStrings.length];
 //			for (int i = 0; i < wordStrings.length; i++) {
@@ -155,10 +172,17 @@ public class SuffixArrayFactory {
 //			}
 //
 //			BasicPhrase sentence = new BasicPhrase(words, vocab);
+//
+//			if (sentenceCounter >= numSentences-2) {
+//				System.out.println("Debugging");
+//			}
 			sentenceIndexes[sentenceCounter] = wordCounter;
-			sentenceCounter++;
+			
 			System.arraycopy(words, 0, corpus, wordCounter, words.length);
 			wordCounter += words.length;
+			
+			sentenceCounter++;
+//			logger.info("I have seen " + wordCounter + " words. I expect to see " + (numWords-wordCounter) + " more");
 //
 //			for(int i = 0; i < sentence.size(); i++) {
 //				corpus[wordCounter] = sentence.getWordID(i);

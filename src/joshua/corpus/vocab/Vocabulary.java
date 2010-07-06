@@ -27,6 +27,7 @@ import java.util.logging.Logger;
 
 import joshua.corpus.suffix_array.BasicPhrase;
 import joshua.decoder.ff.tm.hiero.HieroFormatReader;
+import joshua.util.Regex;
 import joshua.util.io.BinaryIn;
 import joshua.util.io.LineReader;
 
@@ -268,7 +269,7 @@ public class Vocabulary extends AbstractExternalizableSymbolTable
 		if (sentence==null || sentence.trim().length()==0) {
 			return new int[]{};
 		} else {
-			String[] words = sentence.trim().split(" ");
+			String[] words = Regex.spaces.split(sentence.trim());
 			int[] wordIDs = new int[words.length];
 
 			for (int i=0; i<words.length; i++) {
