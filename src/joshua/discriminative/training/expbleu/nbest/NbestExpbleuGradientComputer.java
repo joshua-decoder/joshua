@@ -10,6 +10,7 @@ import joshua.discriminative.FileUtilityOld;
 import joshua.discriminative.training.expbleu.ExpbleuGradientComputer;
 import joshua.discriminative.training.risk_annealer.GradientComputer;
 import joshua.discriminative.training.risk_annealer.hypergraph.MRConfig;
+import joshua.util.Regex;
 
 public class NbestExpbleuGradientComputer extends GradientComputer {
 
@@ -22,6 +23,7 @@ public class NbestExpbleuGradientComputer extends GradientComputer {
 	private ArrayList<ArrayList<String>> refs; 
 	private double minLen;
 	private double N = 1000;
+	private int numRefs = 4;
 	static final private Logger logger = 
 		Logger.getLogger(ExpbleuGradientComputer.class.getSimpleName());
 
@@ -38,7 +40,8 @@ public class NbestExpbleuGradientComputer extends GradientComputer {
 				shouldComputeGradientForScalingFactor);
 		this.numSentence = numSentence;
 		// System.out.println("use HGRiskGradientComputer====");
-
+		
+		this.numRefs = refFiles.length;
 		this.refFiles = refFiles;
 		this.numFeats = numFeatures;
 		for(int i = 0; i < 5; ++i){
@@ -136,6 +139,7 @@ public class NbestExpbleuGradientComputer extends GradientComputer {
 			}
 			dm.add(row);
 		}
+		double closestLen = 0;
 		for(int i = 0; i < this.numSentence; ++i){
 			String [] sentRefs = new String[refFiles.length];
 			
@@ -163,8 +167,11 @@ public class NbestExpbleuGradientComputer extends GradientComputer {
 				}
 				
 			}
+			double lengthExp = matches[0]/Z;
 			for(int j = 0; j < 5; ++j){
 				this.ngramMatches[j] += matches[j]/Z;
+
+						
 				for(int k = 0; k < this.numFeats; ++k){
 					double grad = (dm.get(j).get(k)*Z - matches[j] * dz[k])/Z/Z;
 					this.ngramMatchesGradients.get(j).set(k, this.ngramMatchesGradients.get(j).get(k) + grad);
@@ -172,11 +179,24 @@ public class NbestExpbleuGradientComputer extends GradientComputer {
 				}
 				matches[j] = 0;
 			}
+			double closestLenForOneSent = 0; 
+			double minDiff = 10000;
+			for(int k = 0; k < numRefs; ++k){
+				String[] wds = Regex.spaces.split(sentRefs[k]);
+				double diff = Math.abs(wds.length - lengthExp);
+				if( diff < minDiff){
+					minDiff = diff;
+					closestLenForOneSent = wds.length;
+				}
+					
+			}
+			closestLen += closestLenForOneSent;
 			Z = 0; 
 			for(int j = 0; j < this.numFeats; ++j){
 				dz[j] = 0; 
 			}
 		}
+		this.minLen = closestLen; // use closest length, instead of the minimum length to compute the length penalty; 
 		finalizeFunAndGradients();
 	}
 	private void finalizeFunAndGradients() {
