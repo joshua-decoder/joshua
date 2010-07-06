@@ -60,17 +60,26 @@ public class GradientConsumer extends Consumer<HGAndReferences> {
 			}
 			ngramMatchesGradients.add(row);
 		}
-		double mindiff = 100000;
-		double closest_len = 0;
-		for(String ref : x.referenceSentences){
+//		double mindiff = 100000;
+//		double closest_len = 0;
+//		for(String ref : x.referenceSentences){
+//			String [] wds = Regex.spaces.split(ref);
+//			double diff = Math.abs(wds.length - ngramMatches[4]);
+//			if(diff < mindiff){
+//				mindiff = diff;
+//				closest_len = wds.length;
+//			}
+//		}
+		double minLen = 10000;
+		for(String ref: x.referenceSentences){
 			String [] wds = Regex.spaces.split(ref);
-			double diff = Math.abs(wds.length - ngramMatches[4]);
-			if(diff < mindiff){
-				mindiff = diff;
-				closest_len = wds.length;
+			if(wds.length < minLen){
+				minLen = wds.length;
 			}
+				
 		}
-		computer.accumulate(ngramMatchesGradients, ngramMatches, closest_len);
+			
+		computer.accumulate(ngramMatchesGradients, ngramMatches, minLen*lambda);
 	}
 
 	@Override
