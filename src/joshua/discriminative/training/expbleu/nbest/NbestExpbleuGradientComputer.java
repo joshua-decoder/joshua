@@ -167,6 +167,9 @@ public class NbestExpbleuGradientComputer extends GradientComputer {
 				}
 				
 			}
+			if(Z == 0){
+				continue;
+			}			
 			double lengthExp = matches[0]/Z;
 			for(int j = 0; j < 5; ++j){
 				this.ngramMatches[j] += matches[j]/Z;
