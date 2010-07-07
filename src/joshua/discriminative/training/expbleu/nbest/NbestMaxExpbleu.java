@@ -403,10 +403,10 @@ public class NbestMaxExpbleu extends AbstractMinRiskMERT {
 		}
 
 		//final output
-//		if(MRConfig.normalizeByFirstFeature)
-//			normalizeWeightsByFirstFeature(lastWeightVector, 0);        	     	
-//		saveLastModel(configFile, configFile + ".final", MRConfig.featureFile, MRConfig.featureFile + ".final");
-		//writeConfigFile(lastWeightVector, configFile, configFile+".final");
+		if(MRConfig.normalizeByFirstFeature)
+			normalizeWeightsByFirstFeature(lastWeightVector, 0);        	     	
+		saveLastModel(configFile, configFile + ".final", MRConfig.featureFile, MRConfig.featureFile + ".final");
+//		writeConfigFile(lastWeightVector, configFile, configFile+".final");
 
 		//System.out.println("#### Final weights are: ");
 		//annealer.getLBFGSRunner().printStatistics(-1, -1, null, lastWeightVector);
