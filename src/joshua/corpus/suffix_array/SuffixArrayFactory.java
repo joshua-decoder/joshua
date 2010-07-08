@@ -137,8 +137,8 @@ public class SuffixArrayFactory {
 	 */
 	public static CorpusArray createCorpusArray(String inputFilename, ExternalizableSymbolTable vocab, int numWords, int numSentences) throws IOException {
 		// initialize the arrays.
-		int[] corpus = new int[numWords+1];
-		int[] sentenceIndexes = new int[numSentences+1];
+		int[] corpus = new int[numWords];
+		int[] sentenceIndexes = new int[numSentences];
 
 		// instantiate them.
 		int wordCounter = 0;

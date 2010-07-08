@@ -8,7 +8,7 @@ fi
 
 MOSES="/home/hltcoe/ccallison/Moses/trunk/"
 SAMT="/home/hltcoe/ccallison/SAMT/"
-TMP="/tmp/"
+TMP="/tmp"
 
 export MALLOC_CHECK_=0
 
@@ -42,7 +42,7 @@ export MALLOC_CHECK_=0
 #     useful.
 
 # TODO: dynamic chunking
-chunki.py 20000 $1 $2 $3 $4
+chunki.py 200 $1 $2 $3 $4
 
 HOLD_FOR=""
 
@@ -102,8 +102,8 @@ RUN_RULE_FILTER="${TMP}/samt.rule_filter.${C}.sh"
 echo "((zcat mergedrules.gz | \
 		$SAMT/scripts/filterrules.pl --cachesize 4000 \
 		--PhrasalFeatureCount 0 \
-		--LexicalWeightFile data.lexprobs.samt.sgt \
-		--LexicalWeightFileReversed data.lexprobs.samt.tgs \
+		--LexicalWeightFile data.lexprobs.giza.sgt \
+		--LexicalWeightFileReversed data.lexprobs.giza.tgs \
 		--MinOccurrenceCountLexicalrules 0 --MinOccurrenceCountNonlexicalrules 0 \
 		--noUsePerlHashForRules | \
 		gzip > filteredrules.gz ) >& filteredrules.log)" > \
