@@ -38,7 +38,7 @@ public class ExpbleuGradientComputer extends GradientComputer {
 	int numThreads = 5;
 	
 	//constant 
-	private double N = 1000;
+	private double N = 100000;
 
 	boolean useSemiringV2 = true;
 
