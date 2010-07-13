@@ -67,8 +67,7 @@ public class HGMaxExpbleu extends AbstractMinRiskMERT {
 				addAllWordsIntoSymbolTbl(refFile, symbolTbl);
 			}
 		} else {
-			logger
-					.info("Must include reference files in Max Expected Bleu Training");
+			logger.info("Must include reference files in Max Expected Bleu Training");
 			System.exit(1);
 		}
 
@@ -234,7 +233,7 @@ public class HGMaxExpbleu extends AbstractMinRiskMERT {
 		 * solved by LBFGS which itself involves many iterations (of computing
 		 * gradients)
 		 * */
-		for (int iter = 1; iter <= 10; iter++) {
+		for (int iter = 1; iter <= 10; iter++) {//TODO: change 10 to a config variable
 
 			// ==== re-normalize weights, and save config files
 			this.curConfigFile = configFile + "." + iter;
@@ -464,7 +463,8 @@ public class HGMaxExpbleu extends AbstractMinRiskMERT {
 		FileUtilityOld.closeReadFile(template);
 		FileUtilityOld.closeWriteFile(writer);
 	}
-private double[] getIndividualBaselineWeights(){
+	
+	private double[] getIndividualBaselineWeights(){
 		
 		double baselineWeight = 1.0;
 		if(MRConfig.useBaseline)

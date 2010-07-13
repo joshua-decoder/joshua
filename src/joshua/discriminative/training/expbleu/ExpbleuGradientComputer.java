@@ -71,8 +71,6 @@ public class ExpbleuGradientComputer extends GradientComputer {
 		this.numThreads = numThreads;
 		// System.out.println("use HGRiskGradientComputer====");
 
-
-
 		this.symbolTbl = symbolTbl;               
 
 		this.featureStringToIntegerMap = featureStringToIntegerMap;
@@ -98,9 +96,7 @@ public class ExpbleuGradientComputer extends GradientComputer {
 
 	@Override
 	public void reComputeFunctionValueAndGradient(double[] theta) {
-		// TODO Auto-generated method stub
 		// initialize all counts to 0
-
 		for(int i = 0; i < 5; ++i){
 			this.ngramMatches[i] = 0;
 			for(int j = 0; j < this.numFeats; ++j ){
@@ -114,8 +110,7 @@ public class ExpbleuGradientComputer extends GradientComputer {
 		}
 		if(this.numThreads == 1){
 			reComputeFunctionValueAndGradientNonparellel(theta);
-		}
-		else{
+		} else{
 			BlockingQueue<HGAndReferences> queue = new ArrayBlockingQueue<HGAndReferences>(maxNumHGInQueue);
 			this.hgFactory.startLoop();
 			System.out.println("Compute function value and gradients for expbleu");
@@ -141,7 +136,6 @@ public class ExpbleuGradientComputer extends GradientComputer {
 	}
 
 	private void finalizeFunAndGradients() {
-		// TODO Auto-generated method stub
 		for(int i = 0; i < 4; ++i){
 			this.functionValue += 1.0/4.0 * Math.log(ngramMatches[i]);
 		}
@@ -153,8 +147,7 @@ public class ExpbleuGradientComputer extends GradientComputer {
 		double y;
 		if(x > 0){
 			y = ((1 - N * x)*myexp(-N*x) + myexp(-2*N*x))/(myexp(-N*x) + 1)/(myexp(-N*x)+1);
-		}
-		else{
+		}else{
 			y = ((1 - N * x)*myexp(N*x) + 1)/(myexp(N*x) + 1)/(myexp(N*x)+1);
 		}
 		for(int i = 0; i < this.numFeatures ; ++i){
@@ -179,9 +172,7 @@ public class ExpbleuGradientComputer extends GradientComputer {
 		this.logger.info(diffinfo);
 	}
 
-	public void reComputeFunctionValueAndGradientNonparellel(double[] theta){
-
-		
+	public void reComputeFunctionValueAndGradientNonparellel(double[] theta){		
 		this.hgFactory.startLoop();
 		System.out.println("Compute function value and gradients for expbleu");
 		System.out.print("[");
@@ -222,11 +213,12 @@ public class ExpbleuGradientComputer extends GradientComputer {
 
 	}
 	
-	public synchronized void accumulate(ArrayList<ArrayList<Double>> ngramMatchesGradients, double [] Matchs, double minlen){
+	public synchronized void accumulate(ArrayList<ArrayList<Double>> ngramMatchesGradients, double [] matchs, double minlen){
 		for(int i = 0; i < 5; ++i){
-			this.ngramMatches[i] += Matchs[i];
+			this.ngramMatches[i] += matchs[i];
 			for(int j = 0; j < this.numFeats; ++j){
-				this.ngramMatchesGradients.get(i).set(j, this.ngramMatchesGradients.get(i).get(j) + ngramMatchesGradients.get(i).get(j));
+				this.ngramMatchesGradients.get(i).set(j, 
+							this.ngramMatchesGradients.get(i).get(j) + ngramMatchesGradients.get(i).get(j));
 			}
 		}
 		this.minlen += minlen;
@@ -235,6 +227,7 @@ public class ExpbleuGradientComputer extends GradientComputer {
 			System.out.print(".");
 		}
 	}
+	
 	private double myexp(double x){
 		if(Double.isInfinite(Math.exp(x))){
 			return 0;

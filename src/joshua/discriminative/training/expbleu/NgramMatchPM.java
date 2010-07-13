@@ -4,6 +4,9 @@ import joshua.discriminative.semiring_parsingv2.SignedValue;
 import joshua.discriminative.semiring_parsingv2.pmodule.PModule;
 import joshua.discriminative.semiring_parsingv2.semiring.LogSemiring;
 
+/** This remembers the vector of ngram expectations.
+ * */
+
 public class NgramMatchPM implements PModule<LogSemiring, NgramMatchPM> {
 
 	private SignedValue[] ngramMatchExp = null; 

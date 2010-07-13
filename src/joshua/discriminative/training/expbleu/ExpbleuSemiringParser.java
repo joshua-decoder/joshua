@@ -22,7 +22,7 @@ import joshua.discriminative.semiring_parsingv2.semiring.LogSemiring;
 import joshua.discriminative.training.risk_annealer.hypergraph.MRConfig;
 
 /*
- * ExpBleu Semiring compute <p_e,p_e*m_e,\Delta P_e, \Delta P_e * m_e>, where m_e is the ngram matches function. 
+ * ExpBleu Semiring compute <p_e,p_e*m_e,\Delta P_e, (\Delta P_e) * m_e>, where m_e is the ngram matches function. 
  * Static Methods Used from MRConfig, SignedValue
  */
 public class ExpbleuSemiringParser extends
@@ -67,8 +67,6 @@ ExpectationSemiringPM<LogSemiring,NgramMatchPM,ListPM,MultiListPM,ExpbleuBO>> {
 	@Override
 	protected ExpectationSemiringPM<LogSemiring,NgramMatchPM,ListPM,MultiListPM,ExpbleuBO>
 	getEdgeXWeight(HyperEdge dt, HGNode parentItem) {
-
-
 		// s = \Delta P_e = f_e * p_e
 		HashMap<Integer,SignedValue> dpe= new HashMap<Integer,SignedValue>();
 		double logProb = 0;
@@ -134,7 +132,6 @@ ExpectationSemiringPM<LogSemiring,NgramMatchPM,ListPM,MultiListPM,ExpbleuBO>> {
 	@Override
 	protected ExpectationSemiring<LogSemiring,NgramMatchPM>
 	createNewKWeight() {
-		// TODO Auto-generated method stub
 		LogSemiring p = new LogSemiring();
 		NgramMatchPM r= new NgramMatchPM();
 
