@@ -38,9 +38,8 @@ ExpectationSemiringPM<LogSemiring,NgramMatchPM,ListPM,MultiListPM,ExpbleuBO>> {
 	private double[] featureWeights;
 	private HashSet<String> featureSet; 
 	private NgramExtractor getNgramHelper;
-	private SymbolTable symtbl;
-	
-	private HashMap<HyperEdge, ArrayList<Integer>> edgeAnnotationTbl = new HashMap<HyperEdge,ArrayList<Integer>>();
+	private HashMap<HyperEdge, ArrayList<Integer>> edgeAnnotationTbl 
+		= new HashMap<HyperEdge,ArrayList<Integer>>();
 
 	public ExpbleuSemiringParser(
 			String[] references, 
@@ -55,7 +54,6 @@ ExpectationSemiringPM<LogSemiring,NgramMatchPM,ListPM,MultiListPM,ExpbleuBO>> {
 		this.featureTemplates = fts;
 		this.featureWeights = weights;
 		this.featureSet = fs;
-		this.symtbl = symtbl;
 		this.getNgramHelper = new NgramExtractor(symtbl, MRConfig.ngramStateID,false,MRConfig.baselineLMOrder);
 	}
 	@Override

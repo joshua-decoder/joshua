@@ -14,10 +14,8 @@ public class MinRiskDABO  implements BilinearOperator<RiskAndEntropyPM, ListPM, 
 		for(SignedValue signedVal : res.getValues())
 			signedVal.multi(r.getValue());		
 		
-		
 		return new ListPM(res);
 	}
-	
 	
 	public ListPM bilinearMulti(SignedValue r, ListPM s) {
 		
@@ -28,7 +26,4 @@ public class MinRiskDABO  implements BilinearOperator<RiskAndEntropyPM, ListPM, 
 		
 		return new ListPM(res);
 	}
-	
-
-	
 }

@@ -1,0 +1,4 @@
+This package implements a very basic (and ugly) Hiero grammar extractor.
+
+It also implements a preReorder function, which reorder the input sentence (with
+a syntax tree) by using some reordering rules

@@ -8,7 +8,6 @@ import joshua.discriminative.semiring_parsingv2.pmodule.SparseMap;
 public class ExpbleuBO implements BilinearOperator<NgramMatchPM, ListPM, MultiListPM> {
 
 	public MultiListPM bilinearMulti(NgramMatchPM r, ListPM s) {
-		// TODO Auto-generated method stub
 		ListPM[] product = new ListPM[5];
 		for(int i = 0; i < 5; ++i){
 			SparseMap vectorTimesSigned = s.getValue().duplicate();

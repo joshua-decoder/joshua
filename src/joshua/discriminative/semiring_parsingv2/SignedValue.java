@@ -12,8 +12,6 @@ public class SignedValue {
 	public SignedValue(){
 	}
 	
-	
-	
 	public SignedValue(boolean isPostive_, double logValue_){
 		this.isPostive = isPostive_;
 		this.logValue = logValue_;

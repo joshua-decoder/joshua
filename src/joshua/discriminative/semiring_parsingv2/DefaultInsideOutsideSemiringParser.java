@@ -27,17 +27,19 @@ extends DefaultInsideSemiringParser<K> {
 	 * hyperedges to do outside-estimation only after it itself
 	 * is done with outside estimation, this is necessary
 	 * because the outside estimation of the node's incoding edges 
-	 * require the node's outside value
+	 * require the node's outside value.
+	 * 
+	 * TODO: A better approach is to first get topological order of the hypergraph
+	 * and then run inside in topological order, and outside in inverse-topological
+	 * order.
 	 */
 	private HashMap<HGNode,Integer> numParentHyperedgesTable;
 	
-
 	public DefaultInsideOutsideSemiringParser() {
 		super();
 		outsideSemiringWeightsTable =  new HashMap<HGNode, K>();
 		numParentHyperedgesTable = new HashMap<HGNode,Integer>();
 	}
-
 	
 	/**for correctness and saving memory, 
 	 * external class should call this method*/
@@ -114,7 +116,6 @@ extends DefaultInsideSemiringParser<K> {
 		}
 	}
 	
-	
 	protected void outsideEstimationOverHyperedge(HyperEdge dt, HGNode parentNode, K parentNodeOutsideWeight){
 	
 		//we do not need to compute outside prob if no ant items
@@ -129,8 +130,6 @@ extends DefaultInsideSemiringParser<K> {
 		}
 	}
 	//=============================== end outside estimation	
-	
-	
 	
 	//================ get number of hyperedges that point to me
 	/**This function will be used to get the number of parent hyperedges, 

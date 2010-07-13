@@ -33,7 +33,6 @@ import joshua.discriminative.training.risk_annealer.hypergraph.HGAndReferences;
 import joshua.discriminative.training.risk_annealer.hypergraph.HGMinRiskDAMert;
 import joshua.discriminative.training.risk_annealer.hypergraph.HyperGraphFactory;
 import joshua.discriminative.training.risk_annealer.hypergraph.MRConfig;
-import joshua.util.FileUtility;
 
 public class HGMaxExpbleu extends AbstractMinRiskMERT {
 

@@ -49,8 +49,7 @@ extends  DefaultIOParserWithXLinearCombinator<
 	//TODO
 	boolean computeEntropy = true;
 	boolean computeRisk = true;
-	 
-	
+	 	
 	public MinRiskDADenseFeaturesSemiringParser(double temperature) {
 		
 		super();						 
@@ -102,9 +101,6 @@ extends  DefaultIOParserWithXLinearCombinator<
 		return new ExpectationSemiring<LogSemiring, RiskAndEntropyPM>(p,r);
 	}
 	
-	
-	
-	
 	@Override
 	protected ExpectationSemiringPM<LogSemiring, RiskAndEntropyPM, ListPM, ListPM, MinRiskDABO> 
 	
@@ -147,9 +143,7 @@ extends  DefaultIOParserWithXLinearCombinator<
 	}
 	
 	
-	
 	//============== additional functions ========
-	
 	public final void setTemperature(double temperature_){
 		this.temperature = temperature_;
 	}
