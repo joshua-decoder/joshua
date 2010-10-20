@@ -62,6 +62,7 @@ public abstract class EvaluationMetric
       // the "TER-BLEU" metric expects an options array of length 7
 //    metricOptionCount.put("WER",0);
       // the "WER" metric expects an options array of length 0
+    metricOptionCount.put("PP_BLEU",4);
   }
 
   public static EvaluationMetric getMetric(String metricName, String[] metricOptions)
@@ -84,6 +85,8 @@ public abstract class EvaluationMetric
       retMetric = new TERMinusBLEU(metricOptions);  // the "TER-BLEU" metric corresponds to the TERMinusBLEU class
 //    } else if (metricName.equals("WER")) {
 //      retMetric = new WordErrorRate(metricOptions); // the "WER" metric corresponds to the WordErrorRate class
+    } else if (metricName.equals("PP_BLEU")) {
+      retMetric = new ParaphraseBLEU(metricOptions);   // the "PP_BLEU" metric corresponds to the ParaphraseBLEU class
     }
 
     return retMetric;
