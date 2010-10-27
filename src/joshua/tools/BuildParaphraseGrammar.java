@@ -164,21 +164,26 @@ class ParaphraseSourceRule {
 		this.feature_vector = feature_vector;
 		this.NTs = NTs;
 		
+		StringBuffer source_side_buffer = new StringBuffer(tgt.length() + 10);
 		for (int j = 0; j < tgt_tokens.length; j++) {
-			if (tgt_tokens[j].equals("@1"))
+			if (tgt_tokens[j].equals("@1")) {
 				first_nt_pos = j;
-			else if (tgt_tokens[j].equals("@2"))
+				source_side_buffer.append(NTs.get(0));
+			}
+			else if (tgt_tokens[j].equals("@2")) {
 				second_nt_pos = j;
+				source_side_buffer.append(NTs.get(1));
+			}
+			else
+				source_side_buffer.append(tgt_tokens[j]);
+			source_side_buffer.append(" ");
 		}
+		source_side_buffer.deleteCharAt(source_side_buffer.length() - 1);
+		source_side = source_side_buffer.toString();
+		
 		no_lexical_tokens = (tgt_tokens.length == NTs.size());
 		adjacent_nts = (first_nt_pos >= 0 && second_nt_pos >= 0 && Math.abs(first_nt_pos - second_nt_pos) == 1);
 		non_monotonic = (first_nt_pos >= 0 && second_nt_pos >= 0 && first_nt_pos > second_nt_pos);
-		
-		source_side = tgt;
-		if (first_nt_pos >= 0)
-			source_side = source_side.replaceFirst("@1", NTs.get(0));
-		if (second_nt_pos >= 0)
-			source_side = source_side.replaceFirst("@2", NTs.get(1));
 	}
 	
 
@@ -192,7 +197,7 @@ class ParaphraseSourceRule {
 		
 		if (src.length != 23) {
 			// TODO: more graceful and flexible handling of this
-			logger.severe("Number of features doesn't match up: expecting 23, seeing " + src.length);
+			logger.severe("number of features doesn't match up: expecting 23, seeing " + src.length);
 			System.exit(1);
 		}
 		
@@ -280,13 +285,16 @@ class ParaphraseSourceRule {
 			rule_buffer.append(value);
 			rule_buffer.append(" ");
 		}
-		rule_buffer.deleteCharAt(rule_buffer.length() - 1);
+		if (this.source_side.equals(map_to.source_side))
+			rule_buffer.append(1);
+		else
+			rule_buffer.append(0);
 		
 		return rule_buffer.toString();
 	}
 	
 
-	// Reduced SAMT feature set (used in SCALE Urdu-English) only makes use of 
+	// Reduced SAMT feature set (used in SCALE Urdu-English) only makes use of
 	// features 0-4 10 16-22
 	protected String buildReducedGrammarRuleMappingTo(ParaphraseSourceRule map_to, String rule_head) {
 		
@@ -298,7 +306,7 @@ class ParaphraseSourceRule {
 		
 		if (src.length != 13) {
 			// TODO: more graceful and flexible handling of this
-			logger.severe("Number of features doesn't match up: expecting reduced set of 13, seeing " + src.length);
+			logger.severe("number of features doesn't match up: expecting reduced set of 13, seeing " + src.length);
 			System.exit(1);
 		}
 		
@@ -361,7 +369,10 @@ class ParaphraseSourceRule {
 			rule_buffer.append(value);
 			rule_buffer.append(" ");
 		}
-		rule_buffer.deleteCharAt(rule_buffer.length() - 1);
+		if (this.source_side.equals(map_to.source_side))
+			rule_buffer.append(1);
+		else
+			rule_buffer.append(0);
 		
 		return rule_buffer.toString();
 	}
