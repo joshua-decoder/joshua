@@ -34,6 +34,9 @@ public class ParaphraseBLEU extends BLEU {
 		toBeMinimized = false;
 		// adding 1 to the sufficient stats for regular BLEU
 		suffStatsCount = 2 * maxGramLength + 3;
+		
+    set_weightsArray();
+    set_maxNgramCounts();
 	}
 	
 
@@ -90,17 +93,23 @@ public class ParaphraseBLEU extends BLEU {
 	public int[] suffStats(String cand_str, int i) {
 		int[] stats = new int[suffStatsCount];
 		
-		String[] words;
+		String[] candidate_words;
 		if (!cand_str.equals(""))
-			words = cand_str.split("\\s+");
+			candidate_words = cand_str.split("\\s+");
 		else
-			words = new String[0];
+			candidate_words = new String[0];
 		
-		set_prec_suffStats(stats, words, i);
+		// dropping "_OOV" marker
+		for (int j=0; j<candidate_words.length; j++) {
+			if (candidate_words[j].endsWith("_OOV"))
+				candidate_words[j] = candidate_words[j].substring(0, candidate_words[j].length() - 4); 
+		}
+
+		set_prec_suffStats(stats, candidate_words, i);
 		String[] source_words = refSentences[i][sourceReferenceIndex].split("\\s+");
-		stats[suffStatsCount - 1] = getEditDistance(words, source_words);
-		stats[suffStatsCount - 2] = effLength(words.length, i);
-		stats[suffStatsCount - 3] = words.length;
+		stats[suffStatsCount - 1] = getEditDistance(candidate_words, source_words);
+		stats[suffStatsCount - 2] = effLength(candidate_words.length, i);
+		stats[suffStatsCount - 3] = candidate_words.length;
 		
 		return stats;
 	}
