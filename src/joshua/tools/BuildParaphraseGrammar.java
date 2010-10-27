@@ -33,7 +33,9 @@ import joshua.util.io.LineReader;
 public class BuildParaphraseGrammar {
 	
 	/** Logger for this class. */
-	private static final Logger	logger	= Logger.getLogger(BuildParaphraseGrammar.class.getName());
+	private static final Logger	logger			= Logger.getLogger(BuildParaphraseGrammar.class.getName());
+	
+	private static boolean			reducedSAMT	= false;
 	
 	
 	/**
@@ -46,12 +48,15 @@ public class BuildParaphraseGrammar {
 	 */
 	public static void main(String[] args) throws NumberFormatException, IOException {
 		
-		if (args.length != 1) {
-			logger.severe("Usage: " + BuildParaphraseGrammar.class.toString() + " grammar_file");
+		if (args.length < 1) {
+			logger.severe("Usage: " + BuildParaphraseGrammar.class.toString() + " grammar_file [reduced?]");
 			System.exit(-1);
 		}
 		
 		LineReader grammarReader = new LineReader(args[0]);
+		
+		if (args.length > 1)
+			reducedSAMT = Boolean.parseBoolean(args[1]);
 		
 		String source_pivot = null;
 		String head_pivot = null;
@@ -115,12 +120,22 @@ public class BuildParaphraseGrammar {
 		
 		for (int i = 0; i < num; i++)
 			rules.add(new ParaphraseSourceRule(targets.get(i), feature_vectors.get(i), NTs));
-			
-		for (int i = 0; i < num; i++) {
-			System.out.println(rules.get(i).buildGrammarRuleMappingTo(rules.get(i), head));
-			for (int j = i + 1; j < num; j++) {
-				System.out.println(rules.get(i).buildGrammarRuleMappingTo(rules.get(j), head));
-				System.out.println(rules.get(j).buildGrammarRuleMappingTo(rules.get(i), head));
+		
+		if (reducedSAMT) {
+			for (int i = 0; i < num; i++) {
+				System.out.println(rules.get(i).buildReducedGrammarRuleMappingTo(rules.get(i), head));
+				for (int j = i + 1; j < num; j++) {
+					System.out.println(rules.get(i).buildReducedGrammarRuleMappingTo(rules.get(j), head));
+					System.out.println(rules.get(j).buildReducedGrammarRuleMappingTo(rules.get(i), head));
+				}
+			}
+		} else {
+			for (int i = 0; i < num; i++) {
+				System.out.println(rules.get(i).buildGrammarRuleMappingTo(rules.get(i), head));
+				for (int j = i + 1; j < num; j++) {
+					System.out.println(rules.get(i).buildGrammarRuleMappingTo(rules.get(j), head));
+					System.out.println(rules.get(j).buildGrammarRuleMappingTo(rules.get(i), head));
+				}
 			}
 		}
 	}
@@ -233,6 +248,87 @@ class ParaphraseSourceRule {
 		merged[20] = src[20] + tgt[20];
 		merged[21] = src[21] + tgt[21];
 		merged[22] = src[22] + tgt[22];
+		
+		// build rule output
+		StringBuffer rule_buffer = new StringBuffer();
+		rule_buffer.append(source_side);
+		rule_buffer.append("#");
+		
+		// build rule target side
+		for (int i = 0; i < map_to.tgt_tokens.length; i++) {
+			if (i == map_to.first_nt_pos) {
+				if (!this.non_monotonic && map_to.non_monotonic)
+					rule_buffer.append("@1");
+				else
+					rule_buffer.append("@2");
+			} else if (i == map_to.second_nt_pos) {
+				if (!this.non_monotonic && map_to.non_monotonic)
+					rule_buffer.append("@2");
+				else
+					rule_buffer.append("@1");
+			} else
+				rule_buffer.append(map_to.tgt_tokens[i]);
+			rule_buffer.append(" ");
+		}
+		rule_buffer.deleteCharAt(rule_buffer.length() - 1);
+		rule_buffer.append("#");
+		
+		rule_buffer.append(rule_head);
+		rule_buffer.append("#");
+		
+		for (double value : merged) {
+			rule_buffer.append(value);
+			rule_buffer.append(" ");
+		}
+		rule_buffer.deleteCharAt(rule_buffer.length() - 1);
+		
+		return rule_buffer.toString();
+	}
+	
+
+	// Reduced SAMT feature set (used in SCALE Urdu-English) only makes use of 
+	// features 0-4 10 16-22
+	protected String buildReducedGrammarRuleMappingTo(ParaphraseSourceRule map_to, String rule_head) {
+		
+		// merge feature vectors
+		double[] src = this.feature_vector;
+		double[] tgt = map_to.feature_vector;
+		
+		double[] merged = new double[src.length];
+		
+		if (src.length != 13) {
+			// TODO: more graceful and flexible handling of this
+			logger.severe("Number of features doesn't match up: expecting reduced set of 13, seeing " + src.length);
+			System.exit(1);
+		}
+		
+		// glue rule feature - we don't produce glue grammars
+		merged[0] = 0;
+		// rule application counter
+		merged[1] = (src[1] + tgt[1]) / 2;
+		// target word counter
+		merged[2] = tgt[2];
+		// -log($frequency/$undilutedresultcount)
+		merged[3] = src[3] + tgt[3];
+		// -log($rulebodyfrequency/$sourcefrequency)
+		merged[4] = src[4] + tgt[4];
+		// _X rule feature
+		merged[5] = tgt[5];
+		
+		// rareness penalty (we stack if both rules are rare)
+		merged[6] = src[6] + tgt[6];
+		
+		// -log($simpleFreq/$undilutedresultcount), result-conditioned RF
+		merged[7] = src[7] + tgt[7];
+		
+		// null rule feature
+		merged[8] = (src[8] + tgt[8] >= 1) ? 1 : 0;
+		
+		// various IBM1 scores.. ..or something like that
+		merged[9] = src[9] + tgt[9];
+		merged[10] = src[10] + tgt[10];
+		merged[11] = src[11] + tgt[11];
+		merged[12] = src[12] + tgt[12];
 		
 		// build rule output
 		StringBuffer rule_buffer = new StringBuffer();
