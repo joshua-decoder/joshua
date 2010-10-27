@@ -19,6 +19,7 @@ package joshua.tools;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -36,6 +37,7 @@ public class BuildParaphraseGrammar {
 	private static final Logger	logger			= Logger.getLogger(BuildParaphraseGrammar.class.getName());
 	
 	private static boolean			reducedSAMT	= false;
+	private static FilterCache	filterCache	= null;
 	
 	
 	/**
@@ -48,15 +50,34 @@ public class BuildParaphraseGrammar {
 	 */
 	public static void main(String[] args) throws NumberFormatException, IOException {
 		
-		if (args.length < 1) {
-			logger.severe("Usage: " + BuildParaphraseGrammar.class.toString() + " grammar_file [reduced?]");
+		if (args.length < 1 || args[0].equals("-h")) {
+			System.err.println("Usage: " + BuildParaphraseGrammar.class.toString());
+			System.err.println("    -g grammar_file     SAMT grammar to process");
+			System.err.println("   [-urdu               reduced feature set]");
+			System.err.println("   [-filter             dev/test set to filter by]");
+			System.err.println();
 			System.exit(-1);
 		}
 		
-		LineReader grammarReader = new LineReader(args[0]);
+		String grammar_file_name = null;
+		String filter_file_name = null;
 		
-		if (args.length > 1)
-			reducedSAMT = Boolean.parseBoolean(args[1]);
+		for (int i = 0; i < args.length; i++) {
+			if ("-g".equals(args[i]))
+				grammar_file_name = args[++i];
+			else if ("-urdu".equals(args[i]))
+				reducedSAMT = true;
+			else if ("-filter".equals(args[i]))
+				filter_file_name = args[++i];
+		}
+		if (grammar_file_name == null) {
+			logger.severe("a grammar file is required for operation");
+			System.exit(-1);
+		}
+		
+		filterCache = new FilterCache(filter_file_name);
+		
+		LineReader grammarReader = new LineReader(grammar_file_name);
 		
 		String source_pivot = null;
 		String head_pivot = null;
@@ -169,12 +190,10 @@ class ParaphraseSourceRule {
 			if (tgt_tokens[j].equals("@1")) {
 				first_nt_pos = j;
 				source_side_buffer.append(NTs.get(0));
-			}
-			else if (tgt_tokens[j].equals("@2")) {
+			} else if (tgt_tokens[j].equals("@2")) {
 				second_nt_pos = j;
 				source_side_buffer.append(NTs.get(1));
-			}
-			else
+			} else
 				source_side_buffer.append(tgt_tokens[j]);
 			source_side_buffer.append(" ");
 		}
@@ -182,8 +201,8 @@ class ParaphraseSourceRule {
 		source_side = source_side_buffer.toString();
 		
 		no_lexical_tokens = (tgt_tokens.length == NTs.size());
-		adjacent_nts = (first_nt_pos >= 0 && second_nt_pos >= 0 && Math.abs(first_nt_pos - second_nt_pos) == 1);
-		non_monotonic = (first_nt_pos >= 0 && second_nt_pos >= 0 && first_nt_pos > second_nt_pos);
+		adjacent_nts = (first_nt_pos >= 0) && (second_nt_pos >= 0) && (Math.abs(first_nt_pos - second_nt_pos) == 1);
+		non_monotonic = (first_nt_pos >= 0) && (second_nt_pos >= 0) && (first_nt_pos > second_nt_pos);
 	}
 	
 
@@ -262,12 +281,12 @@ class ParaphraseSourceRule {
 		// build rule target side
 		for (int i = 0; i < map_to.tgt_tokens.length; i++) {
 			if (i == map_to.first_nt_pos) {
-				if (!this.non_monotonic && map_to.non_monotonic)
+				if (!this.non_monotonic)
 					rule_buffer.append("@1");
 				else
 					rule_buffer.append("@2");
 			} else if (i == map_to.second_nt_pos) {
-				if (!this.non_monotonic && map_to.non_monotonic)
+				if (!this.non_monotonic)
 					rule_buffer.append("@2");
 				else
 					rule_buffer.append("@1");
@@ -346,17 +365,20 @@ class ParaphraseSourceRule {
 		// build rule target side
 		for (int i = 0; i < map_to.tgt_tokens.length; i++) {
 			if (i == map_to.first_nt_pos) {
-				if (!this.non_monotonic && map_to.non_monotonic)
+				if (!this.non_monotonic) {
 					rule_buffer.append("@1");
-				else
+				} else {
 					rule_buffer.append("@2");
+				}
 			} else if (i == map_to.second_nt_pos) {
-				if (!this.non_monotonic && map_to.non_monotonic)
+				if (!this.non_monotonic) {
 					rule_buffer.append("@2");
-				else
+				} else {
 					rule_buffer.append("@1");
-			} else
+				}
+			} else {
 				rule_buffer.append(map_to.tgt_tokens[i]);
+			}
 			rule_buffer.append(" ");
 		}
 		rule_buffer.deleteCharAt(rule_buffer.length() - 1);
@@ -375,5 +397,28 @@ class ParaphraseSourceRule {
 			rule_buffer.append(0);
 		
 		return rule_buffer.toString();
+	}
+}
+
+class FilterCache {
+	
+	FilterCacheNode	root;
+	
+	boolean					active	= false;
+	
+	
+	public FilterCache(String file_name) {
+		if (file_name != null) {
+			// TODO: abandoned for now, will use Jonny's test set filtering script.
+		}
+	}
+	
+	class FilterCacheNode {
+		protected HashMap<String, FilterCacheNode>	children;
+		
+		
+		public FilterCacheNode() {
+			children = new HashMap<String, FilterCacheNode>();
+		}
 	}
 }
