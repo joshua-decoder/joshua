@@ -91,7 +91,7 @@ public class BuildParaphraseGrammar {
 			String[] fields = line.split("#");
 			
 			String source = fields[0];
-			if (source.equals("@_COUNT"))
+			if (source.equals("@_COUNT") || fields.length != 4)
 				continue;
 			
 			String target = fields[1];
