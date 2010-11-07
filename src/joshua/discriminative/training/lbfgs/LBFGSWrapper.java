@@ -1,6 +1,4 @@
 package joshua.discriminative.training.lbfgs;
-
-
 /** 
 * @author Zhifei Li, <zhifei.work@gmail.com>
 * @version $LastChangedDate: 2008-10-20 00:12:30 -0400  $
@@ -8,38 +6,41 @@ package joshua.discriminative.training.lbfgs;
 public abstract class LBFGSWrapper {
 	//==== configurable variables
 	private int numPara;
-	private double[] weightsVector;//we can initiate this
+	private double[] weightsVector; //this can be initialized in the constructor
 	private double lastFunctionVal;
 	
 	private  boolean isMinimizer = true;
-	private  int maxNumCall = 100;//run at most 100 iterations (i.e., number of funcion and gradient evaluation) for this particular run
+	//run at most 100 iterations (i.e., number of funcion and gradient evaluation) for this particular run
+	private  int maxNumCall = 100;
 	
 	//==== stop criterion
-	private double relativeFuncThreshold = 1e-3;//if the relative change of the function value is smaller than this value, then we terminate
+	//if the relative change of the function value is smaller than this value, then we terminate
+	private double relativeFuncThreshold = 1e-3;
 	private int maxPassConverge = 3;
 	
 	//==== default values, required by LBFGS optimization
-	private boolean provideDiagonalMatrix =false;
+	private boolean provideDiagonalMatrix = false;
 	private  double[] diag;
-	private int numCorrections = 21;//number of histories used to approximate hessian, our problem is small, so we can use a large value
-	private  double epsilon =  1.0e-5; //determines the accuracy with which the solution is to be found: gnorm < eps*xnorm.
+	//	number of histories used to approximate hessian, our problem is small, so we can use a large value
+	private int numCorrections = 21;
+	//	determines the accuracy with which the solution is to be found: gnorm < eps*xnorm.
+	private  double epsilon =  1.0e-5;
 	private double xtol = 1.0e-16; //machine precision
 	private int[] iprint;
 	private int[] iflag;
 	
-	
+	//==== RProp related
 	private boolean useRProp = false;
 	private RProp rProp = null;		
-	
-	
 
-	boolean useL2Regula = false;
-	double varianceForL2 = 1;
+	//==== L2 regulization
+	private boolean useL2Regula = false;
+	private double varianceForL2 = 1;
 	
-	//to regular that the current model does not derivate from the orignal model too much
-	boolean useModelDivergenceRegula = false;
-	double lambda = 1;
-	double[] initWeights;
+	//to regularize that the current model does not derivate from the orignal model too much.
+	private boolean useModelDivergenceRegula = false;
+	private double lambda = 1;
+	private double[] initWeights;
 	
 	//print debug information
 	int printFirstN = 0;
@@ -58,11 +59,12 @@ public abstract class LBFGSWrapper {
 	 * */
 	public abstract double[] computeFuncValAndGradient(double[] curWeights, double[] resFuncVal);
 	
-	public LBFGSWrapper(int numPara, double[] initWeights,  boolean isMinimizer, boolean useL2Regula, double varianceForL2, boolean useModelDivergenceRegula, double lambda, int printFirstN){
+	public LBFGSWrapper(int numPara, double[] initWeights, boolean isMinimizer, boolean useL2Regula,
+			double varianceForL2, boolean useModelDivergenceRegula, double lambda, int printFirstN){
 		this.isMinimizer = isMinimizer;
 		this.useL2Regula = useL2Regula;
 		this.varianceForL2 = varianceForL2;
-		//System.out.println("Minimize the function: " + isMinimizer);
+		System.out.println("Minimize the function: " + isMinimizer);
 			
 		//### set the weight vectors
 		this.numPara = numPara;
@@ -74,16 +76,21 @@ public abstract class LBFGSWrapper {
 				weightsVector[i] = 1.0/numPara;//TODO
 		}
 		
-		//for model divergence regularization
+		// For model divergence regularization
 		this.useModelDivergenceRegula = useModelDivergenceRegula;
 		this.lambda = lambda;
 		if(useModelDivergenceRegula){
+			System.out.println("===========useModelDivergenceRegula=============");
 			this.initWeights = copyInitWeights(initWeights);
 		}
 		
+		if(useRProp){
+			System.out.println("===========using RProp =============");
+			rProp = new RProp(initWeights, numPara, isMinimizer);
+		}
 		
+		// For lbfgs itself.
 		this.diag = new double[numPara];//lbfgs requires this even we do not set the values
-		
 		//### set the print option
 		this.iprint = new int[2];
 		this.iprint[0] = -1; //specifies the frequency of the output: output at each iterations
@@ -92,27 +99,18 @@ public abstract class LBFGSWrapper {
 		//### set the status flag
 		this.iflag = new int[1];
 		this.iflag[0]=0;//this will make sure the LBFGS clear all the state information
-		
-		//num_corrections = num_para<7 ? num_para:7;
-		
-		if(useRProp){
-			System.out.println("===========using RProp =============");
-			rProp = new RProp(initWeights, numPara, isMinimizer);
-		}
-		
+			
+		// Print the first n weight at each iteration.
 		this.printFirstN = printFirstN;
 	}
 	
-	 
-	
-	/*call LBFGS for multiple iteratons to get the best weights
-	 **/
+	/*call LBFGS for multiple iteratons to get the best weights**/
 	public double[] runLBFGS(){
-		//System.out.println("================ beging to run LBFGS =======================");
+		System.out.println("================ beging to run LBFGS =======================");
         int numCalls=0;
         double bestFunctionVal=0;
         lastFunctionVal=0;
-        double[]  gradientVector=null;
+        double[] gradientVector=null;
         double[] resFuncVal = new double[1];
         int checkConverge=0;
        
@@ -161,7 +159,8 @@ public abstract class LBFGSWrapper {
             else
             	success = runOneIterLBFGSTraining(lastFunctionVal, gradientVector);//auto change weights_vector
             
-            //TODO: should we maitain the best function value and weight vector since the lbfgs-line-search might fails (but even it fails, it seems the func is maximum among all iterations)
+            //TODO: should we maitain the best function value and weight vector since the 
+            // lbfgs-line-search might fails (but even it fails, it seems the func is maximum among all iterations)?
 
             if(success!=true) { 
             	System.out.println("Line search fail after number of calls " + numCalls);
@@ -169,7 +168,6 @@ public abstract class LBFGSWrapper {
             };
             numCalls++;
             printStatistics(numCalls, lastFunctionVal, gradientVector, weightsVector);
-            //System.exit(1);//????????????
         }
         printStatistics(numCalls, lastFunctionVal, gradientVector, weightsVector);
        
@@ -188,10 +186,8 @@ public abstract class LBFGSWrapper {
 		return lastFunctionVal;
 	}
 	
-	
 	public void printStatistics(int iter_num, double func_val, double[] gradient_vector, double[] weights_vector){
-		System.out.println("=======Func value: " + func_val + " at iteration number " + iter_num);
-		
+		System.out.println("=======Func value: " + func_val + " at iteration number " + iter_num);		
 		if(printFirstN<=0)
 			return;
 		if(gradient_vector!=null){
@@ -199,7 +195,6 @@ public abstract class LBFGSWrapper {
 			for(int i=0; i<gradient_vector.length && i<this.printFirstN; i++){
 				//System.out.print(" " + gradient_vector[i]);
 				System.out.print(String.format(" %.4f", gradient_vector[i]));
-				
 			}
 			System.out.print("\n");
 		}
@@ -214,9 +209,8 @@ public abstract class LBFGSWrapper {
 		}
 	}
 	
-
-	/*the default LBFGS minimizes the function; so we need to negate the function and graident_vector if we want to maximize the funciton
-	 * */
+	/*the default LBFGS minimizes the function; so we need to negate the function 
+	 * and graident_vector if we want to maximize the funciton*/
 	private boolean runOneIterLBFGSTraining(double functionValue, double[] gradientVector){	
 		if(gradientVector.length!=numPara){
 			System.out.println("the number of elements in graident vector does not equal to num of parameters to be tuned");
@@ -242,12 +236,10 @@ public abstract class LBFGSWrapper {
             if (e.iflag == -1) {
                // System.err.println("Possible reasons could be: \n \t 1. Bug in the feature generation or data handling code\n\t 2. Not enough features tO make observed feature value==expected value\n");
             }
-            //System.exit(1);//TODO
             return false;
         }
         return true;
 	}
-	
 	
 	/*the default LBFGS minimizes the function; so we need to negate the function and graident_vector if we want to maximize the funciton
 	 * */
@@ -262,7 +254,6 @@ public abstract class LBFGSWrapper {
         return true;
 	}
 	
-	
 	private double[] getCurWeightVector(){
 		return weightsVector;
 	}
@@ -272,8 +263,8 @@ public abstract class LBFGSWrapper {
 		return ( (iflag[0] == 0)? true: false );
 	}
 	
-	/**TODO: This rely on 
-	 * the corrctness of weightsVector*/
+	/**TODO: This rely on the corrctness of weightsVector*/
+	// Change gradientVector and resFuncVal.
 	private void doL2(double[]  gradientVector,  double[] resFuncVal){
 		double l2Norm = 0;
 		for(int k=0; k<gradientVector.length; k++){
@@ -290,10 +281,7 @@ public abstract class LBFGSWrapper {
 		System.out.println("l2Norm is " + l2Norm + " for isMinimizer=" + this.isMinimizer);
 	}
 	
-	
-	  
     //===================== for regularization of minimum conditional entropy
-	
 	private double[] copyInitWeights(double[] weights){
 		double[] initWeights = new double[weights.length];
 		for(int i=0; i<weights.length; i++)
@@ -301,13 +289,13 @@ public abstract class LBFGSWrapper {
 		return initWeights;
 	}
     
-
     // f + lambda*l2
-	private void doL2ForConditionalEntropy(double[] initWeights, double[] curWeights, double[]  gradientVector,  double[] resFuncVal, double lambda){
+	// Change gradientVector and resFuncVal.
+	private void doL2ForConditionalEntropy(double[] initWeights, double[] curWeights, double[] gradientVector, double[] resFuncVal, double lambda){
 		double l2Norm = 0;
 		
 		for(int k=0; k<gradientVector.length; k++){
-			double difference = curWeights[k]  - initWeights[k];
+			double difference = curWeights[k] - initWeights[k];
 			l2Norm += difference*difference;		
 			gradientVector[k] += 2*lambda*difference;
 		}

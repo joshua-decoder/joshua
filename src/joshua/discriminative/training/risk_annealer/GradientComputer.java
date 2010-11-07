@@ -1,5 +1,7 @@
 package joshua.discriminative.training.risk_annealer;
-
+/** 
+* @author Zhifei Li, <zhifei.work@gmail.com>
+*/
 
 /** we assume the objective function is: 
  * gainFactor*gain(\theta, scalingFactor) + temperature*Entropy(p(y))

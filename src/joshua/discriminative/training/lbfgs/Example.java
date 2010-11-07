@@ -1,12 +1,15 @@
 package joshua.discriminative.training.lbfgs;
-
+/** 
+* @author Zhifei Li, <zhifei.work@gmail.com>
+* @version $LastChangedDate: 2008-10-20 00:12:30 -0400  $
+*/
 public class Example extends LBFGSWrapper{
 	double[] gradients = new double[2];
-	
 	
 	public Example(int numPara, double[] initWeights,  boolean isMinimizer){
 		super(numPara, initWeights, isMinimizer, false, 1, false, 1, 2);
 	}
+	
 	//optimize y=-((x-3)^2+(y-4)^2)+10
 	public double[] computeFuncValAndGradient(double[] curWeights, double[] resFuncVal) {
 		gradients[0] = -2*(curWeights[0]-3);

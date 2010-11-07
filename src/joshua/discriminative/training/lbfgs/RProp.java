@@ -1,4 +1,8 @@
 package joshua.discriminative.training.lbfgs;
+/** 
+* @author Zhifei Li, <zhifei.work@gmail.com>
+* @version $LastChangedDate: 2008-10-20 00:12:30 -0400  $
+*/
 
 public class RProp {
 	
@@ -7,14 +11,14 @@ public class RProp {
 	
 	private double deltaPlus = 1.2;
 	private double deltaMinus = 0.5;
-	private double initUpdateValue = 0.1;//TODO: this should be set according to the initial weights
+	//	TODO: this should be set according to the initial weights
+	private double initUpdateValue = 0.1;
 	private double maxUpdateValue = 50; //Double.MAX_VALUE;//50
 	private double minUpdateValue = 1e-6; //Double.MIN_VALUE; //2^1074; 1e-6 
 	
 	private double[] oldGradients;
 	private double[] oldWeights;	
 	private double[] updateValues;
-	
 	
 	public RProp(double[] initWeights, int numParameters, double deltaPlus, double deltaMinus, double initUpdateValue,  boolean isMinimize){
 		this.isMinimize = isMinimize;
@@ -25,8 +29,7 @@ public class RProp {
 		
 		initializeGradients();
 		initializeUpdateValues();
-		initializeWeights(initWeights);
-				
+		initializeWeights(initWeights);				
 	}
 	
 	public RProp(double[] initWeights, int numParameters, boolean isMinimize){
@@ -38,10 +41,7 @@ public class RProp {
 		initializeWeights(initWeights);		
 	}
 	
-	
-	
 	public double[] computeWeight(double[] curGradients){	
-		
 		double[] newWeights = new double[numParameters];
 		
 		for(int i=0; i<numParameters; i++){
@@ -59,8 +59,6 @@ public class RProp {
 				oldWeights[i] = newWeights[i];
 				oldGradients[i] = curGradients[i];
 			}
-			
-			
 		}
 		//System.out.println("weights: " + newWeights);
 		return newWeights;
@@ -107,7 +105,6 @@ public class RProp {
 			oldGradients[i] = 0;
 		}
 	}
-	
 	
 	/*
 	public double[] updateWeight(double[] curGradients){	
