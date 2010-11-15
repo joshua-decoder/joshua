@@ -1,5 +1,6 @@
 package joshua.discriminative.training.lbfgs;
-/** 
+/** This implements an abstract LBFGS wrapper.
+* A concret implementation should implement computeFuncValAndGradient.
 * @author Zhifei Li, <zhifei.work@gmail.com>
 * @version $LastChangedDate: 2008-10-20 00:12:30 -0400  $
 */
