@@ -19,7 +19,8 @@ package joshua.tools;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -34,10 +35,7 @@ import joshua.util.io.LineReader;
 public class BuildParaphraseGrammar {
 	
 	/** Logger for this class. */
-	private static final Logger	logger			= Logger.getLogger(BuildParaphraseGrammar.class.getName());
-	
-	private static boolean			reducedSAMT	= false;
-	private static FilterCache	filterCache	= null;
+	private static final Logger	logger	= Logger.getLogger(BuildParaphraseGrammar.class.getName());
 	
 	
 	/**
@@ -54,123 +52,175 @@ public class BuildParaphraseGrammar {
 			System.err.println("Usage: " + BuildParaphraseGrammar.class.toString());
 			System.err.println("    -g grammar_file     SAMT grammar to process");
 			System.err.println("   [-urdu               reduced feature set]");
-			System.err.println("   [-filter             dev/test set to filter by]");
 			System.err.println();
 			System.exit(-1);
 		}
 		
 		String grammar_file_name = null;
-		String filter_file_name = null;
+		
+		boolean reduced_samt = false;
 		
 		for (int i = 0; i < args.length; i++) {
 			if ("-g".equals(args[i]))
 				grammar_file_name = args[++i];
 			else if ("-urdu".equals(args[i]))
-				reducedSAMT = true;
-			else if ("-filter".equals(args[i]))
-				filter_file_name = args[++i];
+				reduced_samt = true;
 		}
 		if (grammar_file_name == null) {
 			logger.severe("a grammar file is required for operation");
 			System.exit(-1);
 		}
 		
-		filterCache = new FilterCache(filter_file_name);
-		
 		LineReader grammarReader = new LineReader(grammar_file_name);
-		
-		String source_pivot = null;
-		String head_pivot = null;
-		
-		ArrayList<String> targets = new ArrayList<String>();
-		ArrayList<double[]> feature_vectors = new ArrayList<double[]>();
+		RuleBatch current_batch = new RuleBatch(reduced_samt);
 		
 		while (grammarReader.ready()) {
 			String line = grammarReader.readLine();
 			
 			String[] fields = line.split("#");
-			
-			String source = fields[0];
-			if (source.equals("@_COUNT") || fields.length != 4)
+			if (fields[0].equals("@_COUNT") || fields.length != 4)
 				continue;
 			
-			String target = fields[1];
+			String src = fields[0];
+			String tgt = fields[1];
 			String head = fields[2];
+			String feature_values = fields[3];
 			
-			String[] feature_strings = fields[3].split("\\s");
-			double[] features = new double[feature_strings.length];
-			for (int i = 0; i < feature_strings.length; i++)
-				features[i] = Double.parseDouble(feature_strings[i]);
-			
-			if (source_pivot == null || head_pivot == null) {
-				source_pivot = source;
-				head_pivot = head;
+			if (current_batch.fits(src, tgt, head, feature_values))
+				current_batch.addRule(tgt, feature_values);
+			else {
+				current_batch.process();
+				current_batch = new RuleBatch(src, tgt, head, feature_values, reduced_samt);
 			}
-			
-			if (!source.equals(source_pivot) || !head.equals(head_pivot)) {
-				prepareRuleBatch(source_pivot, head_pivot, targets, feature_vectors);
-				
-				targets.clear();
-				feature_vectors.clear();
-				
-				source_pivot = source;
-				head_pivot = head;
-			}
-			
-			targets.add(target);
-			feature_vectors.add(features);
 		}
-		prepareRuleBatch(source_pivot, head_pivot, targets, feature_vectors);
+		current_batch.process();
+	}
+}
+
+class RuleBatch {
+	
+	boolean								reducedSAMT	= false;
+	
+	String								src					= null;
+	String								head				= null;
+	String[]							NTs					= { null, null };
+	
+	List<TranslationRule>	translationRules;
+	List<List<ParaphraseRule>>	paraphraseRules;
+	
+	
+	public RuleBatch(boolean reduced_samt) {
+		reducedSAMT = reduced_samt;
+		
+		translationRules = new ArrayList<TranslationRule>();
+		paraphraseRules = new ArrayList<List<ParaphraseRule>>();
 	}
 	
 
-	private static void prepareRuleBatch(String source_pivot, String head_pivot, ArrayList<String> targets, ArrayList<double[]> feature_vectors) {
-		String[] tokens = source_pivot.split("\\s");
-		ArrayList<String> NTs = new ArrayList<String>();
-		for (String token : tokens)
-			if (token.startsWith("@"))
-				NTs.add(token);
+	public RuleBatch(String src, String tgt, String head, String feature_values, boolean reduced_samt) {
+		this(reduced_samt);
 		
-		mergeRuleBatch(targets, feature_vectors, head_pivot, NTs);
+		this.src = src;
+		this.head = head;
+		
+		extractNTs();
+		
+		addRule(tgt, feature_values);
 	}
 	
 
-	private static void mergeRuleBatch(ArrayList<String> targets, ArrayList<double[]> feature_vectors, String head, ArrayList<String> NTs) {
-		int num = targets.size();
-		List<ParaphraseSourceRule> rules = new ArrayList<ParaphraseSourceRule>(num);
+	private void extractNTs() {
+		String[] src_tokens = src.split("\\s");
+		int nt_count = 0;
+		for (String src_token : src_tokens)
+			if (src_token.startsWith("@"))
+				NTs[nt_count++] = src_token;
+	}
+	
+
+	public boolean fits(String src, String tgt, String head, String feature_values) {
+		if (this.src == null || this.head == null) {
+			this.src = src;
+			this.head = head;
+			extractNTs();
+			return true;
+		} else
+			return src.equals(this.src) && head.equals(this.head);
+	}
+	
+
+	public void addRule(String tgt, String feature_values) {
+		TranslationRule candidate = new TranslationRule(tgt, feature_values, NTs);
 		
-		for (int i = 0; i < num; i++)
-			rules.add(new ParaphraseSourceRule(targets.get(i), feature_vectors.get(i), NTs));
+		// pre-pruning - at least a count of ten and a translation prob. of 0.001
+		if ((Math.exp(-candidate.feature_vector[6]) > 10 || reducedSAMT) && Math.exp(-candidate.feature_vector[4]) > 0.0001)
+			translationRules.add(candidate);
+	}
+	
+
+	public void process() {
+		int num = translationRules.size();
+		
+		for (int i=0; i<num; i++)
+			paraphraseRules.add(new ArrayList<ParaphraseRule>());
 		
 		if (reducedSAMT) {
 			for (int i = 0; i < num; i++) {
-				System.out.println(rules.get(i).buildReducedGrammarRuleMappingTo(rules.get(i), head));
+				paraphraseRules.get(i).add(translationRules.get(i).pivotToReduced(translationRules.get(i), head));
 				for (int j = i + 1; j < num; j++) {
-					System.out.println(rules.get(i).buildReducedGrammarRuleMappingTo(rules.get(j), head));
-					System.out.println(rules.get(j).buildReducedGrammarRuleMappingTo(rules.get(i), head));
+					paraphraseRules.get(i).add(translationRules.get(i).pivotToReduced(translationRules.get(j), head));
+					paraphraseRules.get(j).add(translationRules.get(j).pivotToReduced(translationRules.get(i), head));
 				}
 			}
 		} else {
 			for (int i = 0; i < num; i++) {
-				System.out.println(rules.get(i).buildGrammarRuleMappingTo(rules.get(i), head));
+				paraphraseRules.get(i).add(translationRules.get(i).pivotTo(translationRules.get(i), head));
 				for (int j = i + 1; j < num; j++) {
-					System.out.println(rules.get(i).buildGrammarRuleMappingTo(rules.get(j), head));
-					System.out.println(rules.get(j).buildGrammarRuleMappingTo(rules.get(i), head));
+					paraphraseRules.get(i).add(translationRules.get(i).pivotTo(translationRules.get(j), head));
+					paraphraseRules.get(j).add(translationRules.get(j).pivotTo(translationRules.get(i), head));
 				}
 			}
+		}
+		
+		Comparator<ParaphraseRule> c;
+		if (reducedSAMT) {
+			c = new Comparator<ParaphraseRule>() {
+				public int compare(ParaphraseRule a, ParaphraseRule b) {
+					double a_value = a.feature_values[4] + a.feature_values[9] + a.feature_values[10];
+					double b_value = b.feature_values[4] + b.feature_values[9] + b.feature_values[10];
+					return (a_value - b_value >= 0) ? 1 : -1;
+				}
+			};
+		}
+		else {
+			c = new Comparator<ParaphraseRule>() {
+				public int compare(ParaphraseRule a, ParaphraseRule b) {
+					double a_value = a.feature_values[4] + a.feature_values[19] + a.feature_values[20];
+					double b_value = b.feature_values[4] + b.feature_values[19] + b.feature_values[20];
+					if (a.feature_values[23] == 1.0)
+						return -1;
+					return (a_value - b_value >= 0) ? 1 : -1;
+				}
+			};
+		}
+		
+		for (List<ParaphraseRule> rule_list : paraphraseRules) {
+			Collections.sort(rule_list, c);
+			for (int i = 0; i < Math.min(25, rule_list.size()); i++)
+				System.out.println(rule_list.get(i));
 		}
 	}
 }
 
-class ParaphraseSourceRule {
+class TranslationRule {
 	
-	private static final Logger	logger						= Logger.getLogger(ParaphraseSourceRule.class.getName());
+	private static final Logger	logger						= Logger.getLogger(TranslationRule.class.getName());
 	
 	String[]										tgt_tokens;
-	List<String>								NTs;
+	String[]										NTs;
 	double[]										feature_vector;
 	
-	String											source_side;
+	String											sourceSide;
 	
 	int													first_nt_pos			= -1;
 	int													second_nt_pos			= -1;
@@ -180,39 +230,44 @@ class ParaphraseSourceRule {
 	boolean											no_lexical_tokens	= false;
 	
 	
-	public ParaphraseSourceRule(String tgt, double[] feature_vector, List<String> NTs) {
-		this.tgt_tokens = tgt.split("\\s");
-		this.feature_vector = feature_vector;
+	public TranslationRule(String tgt, String feature_values, String[] NTs) {
 		this.NTs = NTs;
+		
+		tgt_tokens = tgt.split("\\s");
+		
+		String[] feature_strings = feature_values.split("\\s");
+		feature_vector = new double[feature_strings.length];
+		for (int i = 0; i < feature_strings.length; i++)
+			feature_vector[i] = Double.parseDouble(feature_strings[i]);
 		
 		StringBuffer source_side_buffer = new StringBuffer(tgt.length() + 10);
 		for (int j = 0; j < tgt_tokens.length; j++) {
 			if (tgt_tokens[j].equals("@1")) {
 				first_nt_pos = j;
-				source_side_buffer.append(NTs.get(0));
+				source_side_buffer.append(NTs[0]);
 			} else if (tgt_tokens[j].equals("@2")) {
 				second_nt_pos = j;
-				source_side_buffer.append(NTs.get(1));
+				source_side_buffer.append(NTs[1]);
 			} else
 				source_side_buffer.append(tgt_tokens[j]);
 			source_side_buffer.append(" ");
 		}
 		source_side_buffer.deleteCharAt(source_side_buffer.length() - 1);
-		source_side = source_side_buffer.toString();
+		sourceSide = source_side_buffer.toString();
 		
-		no_lexical_tokens = (tgt_tokens.length == NTs.size());
+		no_lexical_tokens = (tgt_tokens.length == NTs.length);
 		adjacent_nts = (first_nt_pos >= 0) && (second_nt_pos >= 0) && (Math.abs(first_nt_pos - second_nt_pos) == 1);
 		non_monotonic = (first_nt_pos >= 0) && (second_nt_pos >= 0) && (first_nt_pos > second_nt_pos);
 	}
 	
 
-	protected String buildGrammarRuleMappingTo(ParaphraseSourceRule map_to, String rule_head) {
+	protected ParaphraseRule pivotTo(TranslationRule map_to, String rule_head) {
 		
 		// merge feature vectors
 		double[] src = this.feature_vector;
 		double[] tgt = map_to.feature_vector;
 		
-		double[] merged = new double[src.length];
+		double[] merged = new double[src.length + 1];
 		
 		if (src.length != 23) {
 			// TODO: more graceful and flexible handling of this
@@ -273,55 +328,37 @@ class ParaphraseSourceRule {
 		merged[21] = src[21] + tgt[21];
 		merged[22] = src[22] + tgt[22];
 		
-		// build rule output
-		StringBuffer rule_buffer = new StringBuffer();
-		rule_buffer.append(source_side);
-		rule_buffer.append("#");
+		if (this.sourceSide.equals(map_to.sourceSide))
+			merged[23] = 1;
+		else
+			merged[23] = 0;
 		
 		// build rule target side
+		StringBuffer tgt_buffer = new StringBuffer();
 		for (int i = 0; i < map_to.tgt_tokens.length; i++) {
-			if (i == map_to.first_nt_pos) {
-				if (!this.non_monotonic)
-					rule_buffer.append("@1");
-				else
-					rule_buffer.append("@2");
-			} else if (i == map_to.second_nt_pos) {
-				if (!this.non_monotonic)
-					rule_buffer.append("@2");
-				else
-					rule_buffer.append("@1");
-			} else
-				rule_buffer.append(map_to.tgt_tokens[i]);
-			rule_buffer.append(" ");
+			if (i == map_to.first_nt_pos)
+				tgt_buffer.append(!this.non_monotonic ? "@1" : "@2");
+			else if (i == map_to.second_nt_pos)
+				tgt_buffer.append(!this.non_monotonic ? "@2" : "@1");
+			else
+				tgt_buffer.append(map_to.tgt_tokens[i]);
+			tgt_buffer.append(" ");
 		}
-		rule_buffer.deleteCharAt(rule_buffer.length() - 1);
-		rule_buffer.append("#");
+		tgt_buffer.deleteCharAt(tgt_buffer.length() - 1);
 		
-		rule_buffer.append(rule_head);
-		rule_buffer.append("#");
-		
-		for (double value : merged) {
-			rule_buffer.append(value);
-			rule_buffer.append(" ");
-		}
-		if (this.source_side.equals(map_to.source_side))
-			rule_buffer.append(1);
-		else
-			rule_buffer.append(0);
-		
-		return rule_buffer.toString();
+		return new ParaphraseRule(sourceSide, tgt_buffer.toString(), rule_head, merged);
 	}
 	
 
 	// Reduced SAMT feature set (used in SCALE Urdu-English) only makes use of
 	// features 0-4 10 16-22
-	protected String buildReducedGrammarRuleMappingTo(ParaphraseSourceRule map_to, String rule_head) {
+	protected ParaphraseRule pivotToReduced(TranslationRule map_to, String rule_head) {
 		
 		// merge feature vectors
 		double[] src = this.feature_vector;
 		double[] tgt = map_to.feature_vector;
 		
-		double[] merged = new double[src.length];
+		double[] merged = new double[src.length + 1];
 		
 		if (src.length != 13) {
 			// TODO: more graceful and flexible handling of this
@@ -357,68 +394,58 @@ class ParaphraseSourceRule {
 		merged[11] = src[11] + tgt[11];
 		merged[12] = src[12] + tgt[12];
 		
-		// build rule output
-		StringBuffer rule_buffer = new StringBuffer();
-		rule_buffer.append(source_side);
-		rule_buffer.append("#");
+		if (this.sourceSide.equals(map_to.sourceSide))
+			merged[13] = 1;
+		else
+			merged[13] = 0;
 		
 		// build rule target side
+		StringBuffer tgt_buffer = new StringBuffer();
 		for (int i = 0; i < map_to.tgt_tokens.length; i++) {
-			if (i == map_to.first_nt_pos) {
-				if (!this.non_monotonic) {
-					rule_buffer.append("@1");
-				} else {
-					rule_buffer.append("@2");
-				}
-			} else if (i == map_to.second_nt_pos) {
-				if (!this.non_monotonic) {
-					rule_buffer.append("@2");
-				} else {
-					rule_buffer.append("@1");
-				}
-			} else {
-				rule_buffer.append(map_to.tgt_tokens[i]);
-			}
-			rule_buffer.append(" ");
+			if (i == map_to.first_nt_pos)
+				tgt_buffer.append(!this.non_monotonic ? "@1" : "@2");
+			else if (i == map_to.second_nt_pos)
+				tgt_buffer.append(!this.non_monotonic ? "@2" : "@1");
+			else
+				tgt_buffer.append(map_to.tgt_tokens[i]);
+			tgt_buffer.append(" ");
 		}
-		rule_buffer.deleteCharAt(rule_buffer.length() - 1);
-		rule_buffer.append("#");
+		tgt_buffer.deleteCharAt(tgt_buffer.length() - 1);
 		
-		rule_buffer.append(rule_head);
-		rule_buffer.append("#");
-		
-		for (double value : merged) {
-			rule_buffer.append(value);
-			rule_buffer.append(" ");
-		}
-		if (this.source_side.equals(map_to.source_side))
-			rule_buffer.append(1);
-		else
-			rule_buffer.append(0);
-		
-		return rule_buffer.toString();
+		return new ParaphraseRule(sourceSide, tgt_buffer.toString(), rule_head, merged);
 	}
 }
 
-class FilterCache {
+class ParaphraseRule {
 	
-	FilterCacheNode	root;
+	String		src;
+	String		tgt;
+	String		head;
+	double[]	feature_values;
 	
-	boolean					active	= false;
 	
-	
-	public FilterCache(String file_name) {
-		if (file_name != null) {
-			// TODO: abandoned for now, will use Jonny's test set filtering script.
-		}
+	public ParaphraseRule(String src, String tgt, String head, double[] feature_values) {
+		this.src = src;
+		this.tgt = tgt;
+		this.head = head;
+		this.feature_values = feature_values;
 	}
 	
-	class FilterCacheNode {
-		protected HashMap<String, FilterCacheNode>	children;
-		
-		
-		public FilterCacheNode() {
-			children = new HashMap<String, FilterCacheNode>();
+
+	public String toString() {
+		// build rule output
+		StringBuffer rule_buffer = new StringBuffer();
+		rule_buffer.append(src);
+		rule_buffer.append("#");
+		rule_buffer.append(tgt);
+		rule_buffer.append("#");
+		rule_buffer.append(head);
+		rule_buffer.append("#");
+		for (double value : feature_values) {
+			rule_buffer.append(value);
+			rule_buffer.append(" ");
 		}
+		rule_buffer.deleteCharAt(rule_buffer.length() - 1);
+		return rule_buffer.toString();
 	}
 }
