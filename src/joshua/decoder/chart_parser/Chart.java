@@ -18,6 +18,7 @@
 package joshua.decoder.chart_parser;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -390,9 +391,12 @@ public class Chart {
 		}
 		int qtyAdditionsToQueue = 0;
 		ArrayList<HGNode> queue	= new ArrayList<HGNode>( chartBin.getSortedNodes() );
+		HashSet<Integer> seen_lhs = new HashSet<Integer>();
 		
 		while (queue.size() > 0) {
 			HGNode node = queue.remove(0);
+			seen_lhs.add(node.lhs);
+			
 			for(Grammar gr : grs){
 				if (! gr.hasRuleForSpan(i, j, foreignSentenceLength))
 					continue;
@@ -409,7 +413,7 @@ public class Chart {
 					for (Rule rule : rules) { // for each unary rules								
 						ComputeNodeResult states = new ComputeNodeResult(this.featureFunctions, rule, antecedents, i, j, new SourcePath(), stateComputers, this.segmentID);
 						HGNode resNode = chartBin.addHyperEdgeInCell(states, rule, i, j, antecedents, new SourcePath(), true);
-						if (null != resNode) {
+						if (null != resNode && !seen_lhs.contains(resNode.lhs)) {
 							queue.add(resNode);
 							qtyAdditionsToQueue++;
 						}
