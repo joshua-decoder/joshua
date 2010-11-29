@@ -27,7 +27,8 @@ def main():
   cur_txt = ""
   
   for line in sgml.readlines():
-    line = line.strip().lower()
+    line_tc = line.strip()
+    line = line_tc.lower()
     if ("<doc " in line):
       cur_doc = doc_pattern.search(line).groups()[0]      
 
@@ -38,7 +39,7 @@ def main():
 
     if ("<seg " in line):
       cur_seg = seg_pattern.search(line).groups()[0]
-      cur_txt = re.sub("<[^>]*>", "", line)
+      cur_txt = re.sub("<[^>]*>", "", line_tc)
       cur_ref_set.append((cur_doc, cur_seg, cur_txt))
   
   ref_files = []
