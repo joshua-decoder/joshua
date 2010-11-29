@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.logging.Logger;
 
 import joshua.corpus.vocab.SymbolTable;
+import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.ff.tm.BilingualRule;
 import joshua.decoder.ff.tm.GrammarReader;
 
@@ -18,12 +19,16 @@ public class HieroFormatReader extends GrammarReader<BilingualRule> {
 		nonTerminalCleanRegEx = ",[0-9\\s]+";
 //		nonTerminalRegEx = "^\\[[A-Z]+\\,[0-9]*\\]$";
 //		nonTerminalCleanRegEx = "[\\[\\]\\,0-9\\s]+";
-		
 		description = "Original Hiero format";
 	}
 	
+	// TODO: all this is very terrible and will go away.. ..soon.
+	private static int GOAL_ID;
+	
 	public HieroFormatReader(String grammarFile, SymbolTable vocabulary) {
 		super(grammarFile, vocabulary);
+		
+		GOAL_ID = symbolTable.addNonterminal(JoshuaConfiguration.goal_symbol);
 	}
 
 	@Override
@@ -48,6 +53,14 @@ public class HieroFormatReader extends GrammarReader<BilingualRule> {
 			}
 		}
 
+		// HACK: avoid source-side loop rules
+		// TODO: global lookup for goal symbol id would really help here
+		if ((french.length == 1) && (arity == 1)  
+				&& lhs != GOAL_ID) 
+		{
+			return null;
+		}
+		
 		// english side
 		String[] englishWords = fields[2].split("\\s+");
 		int[] english = new int[englishWords.length];

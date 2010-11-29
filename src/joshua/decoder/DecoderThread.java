@@ -57,7 +57,7 @@ import joshua.util.io.UncheckedIOException;
  *     decoding
  *
  * @author Zhifei Li, <zhifei.work@gmail.com>
- * @version $LastChangedDate$
+ * @version $LastChangedDate: 2010-05-02 11:19:17 -0400 (Sun, 02 May 2010) $
  */
 // BUG: known synchronization problem: LM cache; srilm call;
 public class DecoderThread extends Thread {
@@ -293,13 +293,14 @@ public class DecoderThread extends Thread {
 	private void translate(Segment segment, String oracleSentence)
 	throws IOException {
 		long startTime = 0;
-		if (logger.isLoggable(Level.FINER)) {
+		if (logger.isLoggable(Level.FINER))
 			startTime = System.currentTimeMillis();
-		}
 		if (logger.isLoggable(Level.FINE))
 			logger.fine("now translating\n" + segment.sentence());
 		
-		Chart chart; {
+		Chart chart; 
+		
+		{
 			//TODO: we should not use "(((" to decide whether it is a lattice input
 			final boolean looksLikeLattice = segment.sentence().startsWith("(((");
 			Lattice<Integer> inputLattice = null;

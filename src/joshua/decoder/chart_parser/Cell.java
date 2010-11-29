@@ -44,7 +44,7 @@ import joshua.decoder.hypergraph.HyperEdge;
  * hyper-graph
  *
  * @author Zhifei Li, <zhifei.work@gmail.com>
- * @version $LastChangedDate$
+ * @version $LastChangedDate: 2010-02-03 15:58:06 -0500 (Wed, 03 Feb 2010) $
  */
 class Cell {
 	
@@ -56,7 +56,7 @@ class Cell {
 	public BeamPruner<HGNode> beamPruner;//TODO: CubePruneCombiner access this
 	
 	private int goalSymID;
-	
+	private int constraintSymbolId;
 		
 	// to maintain uniqueness of nodes
 	private HashMap<String,HGNode> nodesSigTbl = new HashMap<String,HGNode>();
@@ -89,6 +89,11 @@ class Cell {
 			PriorityQueue<HGNode> nodesHeap = new PriorityQueue<HGNode>(1, HGNode.logPComparator);		
 			beamPruner = new BeamPruner<HGNode>(nodesHeap, JoshuaConfiguration.relative_threshold, JoshuaConfiguration.max_n_items);
 		}
+	}
+	
+	public Cell(Chart chart, int goal_sym_id, int constraint_symbol_id) {
+		this(chart, goal_sym_id);
+		this.constraintSymbolId = constraint_symbol_id;
 	}
 	
 	

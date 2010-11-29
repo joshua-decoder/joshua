@@ -42,30 +42,32 @@ public class JoshuaConfiguration {
 	public static double  lm_ceiling_cost            = 100;
 	public static boolean use_left_equivalent_state  = false;
 	public static boolean use_right_equivalent_state = true;
-	public static int     lmOrder                 = 3;
+	public static int     lmOrder                    = 3;
 	public static boolean use_sent_specific_lm       = false;
 	public static String  g_sent_lm_file_name_prefix = "lm.";
 	public static String  lm_file                    = null;//TODO
-	public static int ngramStateID = 0;//TODO?????????????
+	public static int ngramStateID                   = 0;//TODO?????????????
 	
 	//tm config
 	public static int span_limit = 10;
 	//note: owner should be different from each other, it can have same value as a word in LM/TM
 	public static String  phrase_owner               = "pt";
-	public static String  glue_owner           = "glue_owner";//if such a rule is get applied, then no reordering is possible
+	public static String  glue_owner                 = "glue_owner";//if such a rule is get applied, then no reordering is possible
 	public static String  default_non_terminal       = "PHRASE";
 	public static String  goal_symbol                = "S";
 	public static boolean use_sent_specific_tm       = false;
 	public static String  g_sent_tm_file_name_prefix = "tm.";
-	public static float   oovFeatureCost = 100;
+	public static float   oovFeatureCost             = 100;
 	
 	public static String  tm_file                    = null;
+	public static String  tm_format                  = null;
+	
 	// TODO: default to glue grammar provided with Joshua
 	// TODO: support multiple glue grammars
 	public static String  glue_file                  = null;
+	public static String  glue_format                = null;
 	
-	public static String tm_format                   = null;
-	public static String glue_format                 = null;
+	public static boolean constrained_parse           = false;
 	
 	// Parameters for suffix array grammar
 //	/** File name prefix for source language binary training files. */
@@ -401,6 +403,8 @@ public class JoshuaConfiguration {
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("goalSymbol: %s", goal_symbol));
 					
+				} else if ("constrained_parse".equals(fds[0])) {
+					constrained_parse = Boolean.parseBoolean(fds[1]);
 				} else if ("fuzz1".equals(fds[0])) {
 					fuzz1 = Double.parseDouble(fds[1]);
 					if (logger.isLoggable(Level.FINEST))

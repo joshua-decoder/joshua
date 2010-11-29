@@ -58,14 +58,14 @@ import joshua.lattice.Node;
  * where i is in [0,n-1] and j is in [1,n]
  *
  * @author Zhifei Li, <zhifei.work@gmail.com>
- * @version $LastChangedDate$
+ * @version $LastChangedDate: 2010-06-08 11:19:03 -0700 (Tue, 08 Jun 2010) $
  */
 
 public class Chart {
 		
 
 	//===========================================================
-	// Satistics
+	// Statistics
 	//===========================================================
 	
 	/**
@@ -73,15 +73,15 @@ public class Chart {
 	 * is greater than the cutoff in calling
 	 * chart.add_deduction_in_chart()
 	 */
-	int nPreprunedEdges           = 0;
+	int nPreprunedEdges     = 0;
 	
 	int nPreprunedFuzz1     = 0;
 	int nPreprunedFuzz2     = 0;
-	int nPrunedItems              = 0;
-	int nMerged              = 0;
-	int nAdded               = 0;
+	int nPrunedItems        = 0;
+	int nMerged             = 0;
+	int nAdded              = 0;
 	int nDotitemAdded       = 0; // note: there is no pruning in dot-item
-	int nCalledComputeNode = 0;
+	int nCalledComputeNode  = 0;
 	
 	int              segmentID;
 	
@@ -148,7 +148,7 @@ public class Chart {
 // Constructors
 //===============================================================
 	
-	/**TODO: Once the Segment interface is adjusted to provide a Latice<String> for the sentence() method, 
+	/**TODO: Once the Segment interface is adjusted to provide a Lattice<String> for the sentence() method, 
 	 * we should just accept a Segment instead of the sentence, segmentID, and constraintSpans parameters.
 	 * We have the symbol table already, so we can do the integerization here instead of in DecoderThread. 
 	 * GrammarFactory.getGrammarForSentence will want the integerized sentence as well, 
@@ -298,7 +298,8 @@ public class Chart {
 				if (logger.isLoggable(Level.FINEST))
 					logger.finest("Adding unary items into chart");
 				
-				/**zhifei replaced the following code to address an interaction problem between different grammars
+				/**
+				 * zhifei replaced the following code to address an interaction problem between different grammars
 				 * the problem is: if [X]->[NT,1],[NT,1] in a regular grammar, but  [S]->[X,1],[X,1] is in a glue grammar; 
 				 * then [S]->[NT,1],[NT,1] may not be achievable, depending on which grammar is processed first.
 				 */

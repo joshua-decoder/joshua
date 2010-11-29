@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import os, sys, codecs
+import gzip
 
 def usage():
   print "Usage info for chunki.py"
@@ -24,7 +25,10 @@ def main():
   outputFiles = []
   
   for fileName in fileNames:
-    inputFiles.append(codecs.open(fileName, "r", "utf-8"))
+    if (fileName.endswith(".gz")):
+      inputFiles.append(gzip.open(fileName, "r"))
+    else:
+      inputFiles.append(codecs.open(fileName, "r", "utf-8"))
   
   ongoing = True
   numLines = 0
