@@ -171,7 +171,8 @@ public abstract class MonolingualDecoderThread extends Thread {
 			grammars,
 			this.haveLMModel,
 			JoshuaConfiguration.goal_symbol,
-			null);
+			null, null);
+		
 		if (logger.isLoggable(Level.FINER)) 
 			logger.finer("after seed, time: "
 				+ (System.currentTimeMillis() - start) / 1000);

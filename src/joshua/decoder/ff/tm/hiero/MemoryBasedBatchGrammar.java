@@ -17,6 +17,7 @@
  */
 package joshua.decoder.ff.tm.hiero;
 
+import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.ff.tm.BatchGrammar;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.BilingualRule;
@@ -155,26 +156,46 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
 		return this.qtyRulesRead;
 	}
 
-
-	public Rule constructOOVRule(int qtyFeatures, int sourceWord, int targetWord, boolean hasLM) {
-		int[] french      = new int[1];
-		french[0]         = sourceWord;
-		int[] english       = new int[1];
-		english[0]          = targetWord;
-		float[] feat_scores = new float[qtyFeatures];
+	public Rule constructOOVRule(int num_features, int source_word, int target_word, boolean use_max_lm_cost) {
+		int[]   french      = { source_word };
+		int[]   english     = { target_word };
+		float[] feat_scores = new float[num_features];
 		
 		// TODO: This is a hack to make the decoding without a LM works
-		/**when a ngram LM is used, the OOV word will have a cost 100.
+		/* When a ngram LM is used, the OOV word will have a cost 100.
 		 * if no LM is used for decoding, so we should set the cost of some
 		 * TM feature to be maximum
-		 * */
-		if ( (!hasLM) && qtyFeatures > 0) { 
+		 */
+		if (JoshuaConfiguration.oov_feature_index != -1) {
+			feat_scores[JoshuaConfiguration.oov_feature_index] = 1.0f;
+		}
+		else if ((!use_max_lm_cost) && num_features > 0) {
 			feat_scores[0] = oovFeatureCost;
 		}
 		
 		return new BilingualRule(this.defaultLHS, french, english, feat_scores, 0, this.defaultOwner, 0, getOOVRuleID());
 	}
 
+	public Rule constructLabeledOOVRule(int num_features, int source_word, int target_word, int lhs, boolean use_max_lm_cost) {
+		int[]   french      = { source_word };
+		int[]   english     = { target_word };
+		float[] feat_scores = new float[num_features];
+		
+		// TODO: This is a hack to make the decoding without a LM works
+		/* When a ngram LM is used, the OOV word will have a cost 100.
+		 * if no LM is used for decoding, so we should set the cost of some
+		 * TM feature to be maximum
+		 */
+		if (JoshuaConfiguration.oov_feature_index != -1) {
+			feat_scores[JoshuaConfiguration.oov_feature_index] = 1.0f;
+		}
+		else if ((!use_max_lm_cost) && num_features > 0) {
+			feat_scores[0] = oovFeatureCost;
+		}
+		
+		return new BilingualRule(lhs, french, english, feat_scores, 0, this.defaultOwner, 0, getOOVRuleID());
+	}
+	
 	public int getOOVRuleID() {
 		return OOV_RULE_ID;
 	}

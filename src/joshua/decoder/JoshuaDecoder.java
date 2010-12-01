@@ -86,13 +86,13 @@ public class JoshuaDecoder {
 	 */
 	/** The DecoderFactory is the main thread of decoding */
 	private DecoderFactory             decoderFactory;
-	private List<GrammarFactory>  grammarFactories;
+	private List<GrammarFactory>       grammarFactories;
 	private ArrayList<FeatureFunction> featureFunctions;
 	private NGramLanguageModel         languageModel;
 	
-	private List<StateComputer> stateComputers;
+	private List<StateComputer>        stateComputers;
 	
-	private Map<String,Integer> ruleStringToIDTable;
+	private Map<String,Integer>        ruleStringToIDTable;
 	
 	/**
 	 * Shared symbol table for source language terminals, target
@@ -344,7 +344,7 @@ public class JoshuaDecoder {
 					// again
 					this.initializeFeatureFunctions(configFile);
 					
-					this.initializeStateComputers(symbolTable, JoshuaConfiguration.lmOrder, JoshuaConfiguration.ngramStateID);
+					this.initializeStateComputers(symbolTable, JoshuaConfiguration.lm_order, JoshuaConfiguration.ngramStateID);
 
 				}
 			} else {
@@ -363,7 +363,7 @@ public class JoshuaDecoder {
 			
 			this.decoderFactory = new DecoderFactory(
 				this.grammarFactories,
-				JoshuaConfiguration.useMaxLMCostForOOV,
+				JoshuaConfiguration.use_max_lm_cost_for_oov,
 				this.featureFunctions,
 				this.stateComputers,
 				this.symbolTable);
@@ -387,10 +387,10 @@ public class JoshuaDecoder {
 		} else if (JoshuaConfiguration.use_srilm) {
 			logger.finest("Using SRILM symbol table");
 			if (null == existingSymbols) {
-				this.symbolTable = new SrilmSymbol(JoshuaConfiguration.lmOrder);
+				this.symbolTable = new SrilmSymbol(JoshuaConfiguration.lm_order);
 			} else {
 				logger.finest("Populating SRILM symbol table with symbols from existing symbol table");
-				this.symbolTable = new SrilmSymbol(existingSymbols, JoshuaConfiguration.lmOrder);
+				this.symbolTable = new SrilmSymbol(existingSymbols, JoshuaConfiguration.lm_order);
 			}
 		} else {
 			if (null == existingSymbols) {
@@ -420,7 +420,7 @@ public class JoshuaDecoder {
 			}
 			this.languageModel = new LMGrammarRemote(
 				this.symbolTable,
-				JoshuaConfiguration.lmOrder,
+				JoshuaConfiguration.lm_order,
 				JoshuaConfiguration.f_remote_server_list,
 				JoshuaConfiguration.num_remote_lm_servers);
 			
@@ -431,7 +431,7 @@ public class JoshuaDecoder {
 			}
 			this.languageModel = new LMGrammarSRILM(
 				(SrilmSymbol)this.symbolTable,
-				JoshuaConfiguration.lmOrder,
+				JoshuaConfiguration.lm_order,
 				JoshuaConfiguration.lm_file);
 			
 		} else if (JoshuaConfiguration.use_bloomfilter_lm) {
@@ -441,7 +441,7 @@ public class JoshuaDecoder {
 			}
 			this.languageModel = new BloomFilterLanguageModel(
 					this.symbolTable,
-					JoshuaConfiguration.lmOrder,
+					JoshuaConfiguration.lm_order,
 					JoshuaConfiguration.lm_file);
 		} else if (JoshuaConfiguration.use_trie_lm) {
 			if (JoshuaConfiguration.use_left_equivalent_state
@@ -463,7 +463,7 @@ public class JoshuaDecoder {
 			// using the built-in JAVA implementation of LM, may not be as scalable as SRILM
 			this.languageModel = new LMGrammarJAVA(
 				this.symbolTable,
-				JoshuaConfiguration.lmOrder,
+				JoshuaConfiguration.lm_order,
 				JoshuaConfiguration.lm_file,
 				JoshuaConfiguration.use_left_equivalent_state,
 				JoshuaConfiguration.use_right_equivalent_state);
@@ -481,7 +481,7 @@ public class JoshuaDecoder {
 				JoshuaConfiguration.glue_owner,
 				JoshuaConfiguration.default_non_terminal,
 				-1,
-				JoshuaConfiguration.oovFeatureCost);
+				JoshuaConfiguration.oov_feature_cost);
 		
 		this.grammarFactories.add(gr);
 		
@@ -506,7 +506,7 @@ public class JoshuaDecoder {
 				JoshuaConfiguration.phrase_owner,
 				JoshuaConfiguration.default_non_terminal,
 				JoshuaConfiguration.span_limit,
-				JoshuaConfiguration.oovFeatureCost);
+				JoshuaConfiguration.oov_feature_cost);
 		this.grammarFactories.add(gr);
 		
 		if(JoshuaConfiguration.useRuleIDName){
@@ -570,7 +570,7 @@ public class JoshuaDecoder {
 		// again
 		this.initializeFeatureFunctions(configFile);
 		
-		this.initializeStateComputers(symbolTable, JoshuaConfiguration.lmOrder, JoshuaConfiguration.ngramStateID);
+		this.initializeStateComputers(symbolTable, JoshuaConfiguration.lm_order, JoshuaConfiguration.ngramStateID);
 		
 		if (logger.isLoggable(Level.INFO))
 			logger.info("Reading source language corpus from " +
@@ -630,7 +630,7 @@ public class JoshuaDecoder {
 				JoshuaConfiguration.sa_max_nonterminals,
 				JoshuaConfiguration.sa_min_nonterminal_span,
 				JoshuaConfiguration.sa_lex_floor_prob, 
-				JoshuaConfiguration.phrase_owner, JoshuaConfiguration.default_non_terminal, JoshuaConfiguration.oovFeatureCost);
+				JoshuaConfiguration.phrase_owner, JoshuaConfiguration.default_non_terminal, JoshuaConfiguration.oov_feature_cost);
 		
 		return parallelCorpus;
 	}
@@ -664,12 +664,12 @@ public class JoshuaDecoder {
 						new LanguageModelFF(
 							JoshuaConfiguration.ngramStateID,	
 							this.featureFunctions.size(),
-							JoshuaConfiguration.lmOrder,
+							JoshuaConfiguration.lm_order,
 							this.symbolTable, this.languageModel, weight));
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format(
 							"Line: %s\nAdd LM, order: %d; weight: %.3f;",
-							line, JoshuaConfiguration.lmOrder, weight));
+							line, JoshuaConfiguration.lm_order, weight));
 					
 				} else if ("oracle".equals(fds[0]) && fds.length >= 3) { //oracle files weight
 					if (null == this.languageModel) {
@@ -681,12 +681,12 @@ public class JoshuaDecoder {
 					double weight = Double.parseDouble(fds[fds.length-1].trim());
 					
 					this.featureFunctions.add(
-						new BLEUOracleModel(JoshuaConfiguration.ngramStateID, JoshuaConfiguration.lmOrder, 
+						new BLEUOracleModel(JoshuaConfiguration.ngramStateID, JoshuaConfiguration.lm_order, 
 								this.featureFunctions.size(), this.symbolTable, weight, referenceFiles, JoshuaConfiguration.linearCorpusGainThetas));
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format(
 							"Line: %s\nAdd BLEUOracleModel, order: %d; weight: %.3f;",
-							line, JoshuaConfiguration.lmOrder, weight));
+							line, JoshuaConfiguration.lm_order, weight));
 					
 				} else if ("discriminative".equals(fds[0]) && fds.length == 3) { //discriminative weight modelFile
 					if (null == this.languageModel) {
@@ -702,12 +702,12 @@ public class JoshuaDecoder {
 							JoshuaConfiguration.useTMFeat, JoshuaConfiguration.useLMFeat, JoshuaConfiguration.useEdgeNgramOnly, JoshuaConfiguration.useTMTargetFeat,
 							JoshuaConfiguration.useMicroTMFeat, JoshuaConfiguration.wordMapFile,
 							JoshuaConfiguration.ngramStateID, 
-							JoshuaConfiguration.lmOrder, JoshuaConfiguration.startNgramOrder, JoshuaConfiguration.endNgramOrder, featureFile, modelFile, this.ruleStringToIDTable) );
+							JoshuaConfiguration.lm_order, JoshuaConfiguration.startNgramOrder, JoshuaConfiguration.endNgramOrder, featureFile, modelFile, this.ruleStringToIDTable) );
 					
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format(
 							"Line: %s\nAdd FeatureTemplateBasedFF, order: %d; weight: %.3f;",
-							line, JoshuaConfiguration.lmOrder, weight));
+							line, JoshuaConfiguration.lm_order, weight));
 					
 				} else if ("latticecost".equals(fds[0]) && fds.length == 2) {
 					double weight = Double.parseDouble(fds[1].trim());

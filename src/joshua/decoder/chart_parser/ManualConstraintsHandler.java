@@ -16,7 +16,7 @@ import joshua.decoder.segment_file.ConstraintSpan;
 
 /**
  * @author Zhifei Li, <zhifei.work@gmail.com>
- * @version $LastChangedDate: 2009-12-31 11:37:41 -0500 (星期四, 31 十二月 2009) $
+ * @version $LastChangedDate: 2009-12-31 11:37:41 -0500 $
  */
 
 public class ManualConstraintsHandler {

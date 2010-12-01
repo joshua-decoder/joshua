@@ -18,11 +18,13 @@
 package joshua.decoder.chart_parser;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import joshua.corpus.syntax.SyntaxTree;
 import joshua.corpus.vocab.SymbolTable;
 import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.chart_parser.DotChart.DotNode;
@@ -95,10 +97,11 @@ public class Chart {
 	private List<StateComputer> stateComputers;	
 	private  Grammar[]       grammars;
 	private  DotChart[]      dotcharts; // each grammar should have a dotchart associated with it
-	private Cell              goalBin;
+	private Cell             goalBin;
 	private int              goalSymbolID = -1;
 	private Lattice<Integer> sentence; // a list of foreign words
 	
+	private SyntaxTree       parseTree;
 	
 		
 	private Combiner combiner = null;
@@ -149,7 +152,8 @@ public class Chart {
 // Constructors
 //===============================================================
 	
-	/**TODO: Once the Segment interface is adjusted to provide a Lattice<String> for the sentence() method, 
+	/* TODO: 
+	 * Once the Segment interface is adjusted to provide a Lattice<String> for the sentence() method, 
 	 * we should just accept a Segment instead of the sentence, segmentID, and constraintSpans parameters.
 	 * We have the symbol table already, so we can do the integerization here instead of in DecoderThread. 
 	 * GrammarFactory.getGrammarForSentence will want the integerized sentence as well, 
@@ -159,21 +163,23 @@ public class Chart {
 	
 	public Chart(
 		Lattice<Integer>           sentence,
-		List<FeatureFunction> featureFunctions,
-		List<StateComputer> stateComputers,
+		List<FeatureFunction>      featureFunctions,
+		List<StateComputer>        stateComputers,
 		SymbolTable                symbolTable,
 		int                        segmentID,
 		Grammar[]                  grammars,
 		boolean                    useMaxLMCostForOOV,
 		String                     goalSymbol,
-		List<ConstraintSpan>       constraintSpans
+		List<ConstraintSpan>       constraintSpans,
+		SyntaxTree                 parse_tree
 		)
 	{
-		this.sentence         = sentence;
-		this.foreignSentenceLength   = sentence.size() - 1;
-		this.featureFunctions = featureFunctions;
-		this.stateComputers = stateComputers;
-		this.symbolTable      = symbolTable;
+		this.sentence              = sentence;
+		this.foreignSentenceLength = sentence.size() - 1;
+		this.featureFunctions      = featureFunctions;
+		this.stateComputers        = stateComputers;
+		this.symbolTable           = symbolTable;
+		this.parseTree             = parse_tree;
 		
 		// TODO: this is very memory-expensive
 		this.cells         = new Cell[foreignSentenceLength][foreignSentenceLength+1];
@@ -188,28 +194,26 @@ public class Chart {
 		for (int i = 0; i < this.grammars.length; i++)
 			this.dotcharts[i] = new DotChart(this.sentence, this.grammars[i], this);
 		
-		
-		if(JoshuaConfiguration.useCubePrune)//TODO: should not directly refer to JoshuaConfiguration
+		if (JoshuaConfiguration.useCubePrune) // TODO: should not directly refer to JoshuaConfiguration
 			combiner = new CubePruneCombiner(this.featureFunctions, this.stateComputers);
 		else
 			combiner = new ExhaustiveCombiner(this.featureFunctions, this.stateComputers);
 
-		//============== begin to do initialization work
+		// Begin to do initialization work
 
-		//TODO: which grammar should we use to create a mannual rule?, grammar[1] is the regular grammar
+		//TODO: which grammar should we use to create a manual rule?, grammar[1] is the regular grammar
 		manualConstraintsHandler = new ManualConstraintsHandler(symbolTable, this, grammars[1], constraintSpans);
 		
-		
-		/**add OOV rules; 
-		 * this should be called after the manual constraints have been set up
+		/* Add OOV rules; 
+		 * This should be called after the manual constraints have been set up.
 		 * Different grammar differ in hasRuleForSpan, defaultOwner, and defaultLHSSymbol
-		 **/
+		 */
+
 		// TODO: the transition cost for phrase model, arity penalty, word penalty are all zero, except the LM cost
 		for (Node<Integer> node : sentence) {
 			for (Arc<Integer> arc : node.getOutgoingArcs()) {
 				// create a rule, but do not add into the grammar trie
 				// TODO: which grammar should we use to create an OOV rule?
-//				this is the regular grammar
 				int sourceWord = arc.getLabel();
 				final int targetWord;
 				if (JoshuaConfiguration.mark_oovs) {
@@ -217,21 +221,26 @@ public class Chart {
 				} else {
 					targetWord = sourceWord;
 				}
-				Rule rule = this.grammars[1].constructOOVRule(
-					this.featureFunctions.size(), sourceWord, targetWord, useMaxLMCostForOOV);
+				Rule oov_rule = null;
+				if (parse_tree != null && (JoshuaConfiguration.constrain_parse || JoshuaConfiguration.use_pos_labels)) {
+					Collection<Integer> labels = parse_tree.getConstituentLabels(node.getNumber(), node.getNumber() + 1);
+					for (int l : labels)
+						oov_rule = this.grammars[1].constructLabeledOOVRule(this.featureFunctions.size(), sourceWord, targetWord, l, useMaxLMCostForOOV);
+				}
+				else
+					oov_rule = this.grammars[1].constructOOVRule(this.featureFunctions.size(), sourceWord, targetWord, useMaxLMCostForOOV);
 			
 				if (manualConstraintsHandler.containHardRuleConstraint(node.getNumber(), arc.getTail().getNumber())) {
 					//do not add the oov axiom
 					if (logger.isLoggable(Level.FINE))
 						logger.fine("Using hard rule constraint for span " + node.getNumber() + ", " + arc.getTail().getNumber());
 				} else {
-					//System.out.println(rule.toString(symbolTable));
-					addAxiom(node.getNumber(), arc.getTail().getNumber(), rule, new SourcePath().extend(arc));
+					addAxiom(node.getNumber(), arc.getTail().getNumber(), oov_rule, new SourcePath().extend(arc));
+					
+					logger.info("Adding OOV rule:\t" + oov_rule.toString(symbolTable));
 				}
 			}
 		}
-		
-	
 		
 		if (logger.isLoggable(Level.FINE))
 			logger.fine("Finished seeding chart.");
@@ -298,21 +307,7 @@ public class Chart {
 				//(3)=== process unary rules (e.g., S->X, NP->NN), just add these items in chart, assume acyclic
 				if (logger.isLoggable(Level.FINEST))
 					logger.finest("Adding unary items into chart");
-				
-				/**
-				 * zhifei replaced the following code to address an interaction problem between different grammars
-				 * the problem is: if [X]->[NT,1],[NT,1] in a regular grammar, but  [S]->[X,1],[X,1] is in a glue grammar; 
-				 * then [S]->[NT,1],[NT,1] may not be achievable, depending on which grammar is processed first.
-				 */
-				if(false){//behavior depend on the order of the grammars got processed, which is bad 
-					for (int k = 0; k < this.grammars.length; k++) {
-						if (this.grammars[k].hasRuleForSpan(i, j, foreignSentenceLength)) {
-							addUnaryNodesPerGrammar(this.grammars[k],i,j);//single-branch path
-						}
-					}
-				}else{//behavior does not depend on the order of the grammars got processed
-					addUnaryNodes(this.grammars,i,j);
-				}				
+				addUnaryNodes(this.grammars,i,j);
 				
 				
 				//(4)=== in dot_cell(i,j), add dot-nodes that start from the /complete/ superIterms in chart_cell(i,j)
@@ -424,45 +419,6 @@ public class Chart {
 		return qtyAdditionsToQueue;
 	}
 	
-	/**
-     * agenda based extension: this is necessary in case more than two unary rules can be applied in topological order s->x; ss->s
-     * for unary rules like s->x, once x is complete, then s is also complete
-     */
-    private int addUnaryNodesPerGrammar(Grammar gr, int i, int j) {
-    	
-            Cell chartCell = this.cells[i][j];
-            if (null == chartCell) {
-                    return 0;
-            }
-            int qtyAdditionsToQueue = 0;
-            ArrayList<HGNode> queue
-                    = new ArrayList<HGNode>(chartCell.getSortedNodes());
-
-
-            while (queue.size() > 0) {
-            	HGNode item = (HGNode)queue.remove(0);
-                Trie child_tnode = gr.getTrieRoot().matchOne(item.lhs);//match rule and complete part
-                if (child_tnode != null
-                && child_tnode.getRules() != null
-                && child_tnode.getRules().getArity() == 1) {//have unary rules under this trienode
-                        ArrayList<HGNode> l_ants = new ArrayList<HGNode>();
-                        l_ants.add(item);
-                        List<Rule> rules =
-                                child_tnode.getRules().getSortedRules();
-
-                        for (Rule rule : rules){//for each unary rules
-                        	ComputeNodeResult states = new ComputeNodeResult(this.featureFunctions, rule, l_ants, i, j, new SourcePath(), stateComputers, this.segmentID);
-                            HGNode res_item = chartCell.addHyperEdgeInCell(states, rule, i, j, l_ants, new SourcePath(), false);
-                            if (null != res_item) {
-                                    queue.add(res_item);
-                                    qtyAdditionsToQueue++;
-                            }
-                        }
-                }
-            }
-            return qtyAdditionsToQueue;
-    }
-
 	
 	/** axiom is for rules with zero-arity */
 	public void addAxiom(int i, int j, Rule rule, SourcePath srcPath) {
@@ -478,16 +434,28 @@ public class Chart {
 		
 		if (manualConstraintsHandler.containHardRuleConstraint(i, j)) {
 			if (logger.isLoggable(Level.FINE)) 
-				logger.fine("Hard rule constraint for span " +i +", " + j);
+				logger.fine("Hard rule constraint for span " + i +", " + j);
 			return; //do not add any nodes
 		}
 		
 		if (null == this.cells[i][j]) {
 			this.cells[i][j] = new Cell(this, this.goalSymbolID);
 		}
-		// combinations: rules, antecent items
-		List<Rule> filteredRules =  manualConstraintsHandler.filterRules(i,j, sortedRules);
-		if(arity==0)
+		List<Rule> filteredRules;
+		if (JoshuaConfiguration.constrain_parse) {
+			Collection<Integer> labels = parseTree.getConstituentLabels(i, j);
+			labels.addAll(parseTree.getConcatenatedLabels(i, j));
+			labels.addAll(parseTree.getCcgLabels(i, j));
+			
+			filteredRules = new ArrayList<Rule>(sortedRules.size());
+			for (Rule r : sortedRules)
+				if (labels.contains(r.getLHS()))
+					filteredRules.add(r);
+		} else {
+			// combinations: rules, antecent items
+			filteredRules =  manualConstraintsHandler.filterRules(i,j, sortedRules);
+		}
+		if (arity==0)
 			combiner.addAxioms(this, this.cells[i][j], i, j, filteredRules, srcPath);
 		else
 			//this.cells[i][j].completeCell(i, j, dt.l_ant_super_items, filterRules(i,j,rb.getSortedRules()), rb.getArity(), srcPath);

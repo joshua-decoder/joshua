@@ -2,7 +2,7 @@ package joshua.corpus.syntax;
 
 import java.util.Collection;
 
-public interface ParseLattice {
+public interface SyntaxTree {
 
 	public Collection<Integer> getConstituentLabels(int from, int to);
 	
@@ -10,4 +10,7 @@ public interface ParseLattice {
 	
 	public Collection<Integer> getCcgLabels(int from, int to);
 	
+	public int[] getTerminals();
+	
+	public int[] getTerminals(int from, int to);	
 }

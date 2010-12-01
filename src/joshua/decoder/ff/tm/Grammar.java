@@ -115,7 +115,9 @@ public interface Grammar  {
 	 *
 	 * TODO: will try to get rid of owner, have_lm_model, and num_feats
 	 */
-	Rule constructOOVRule(int num_feats, int sourceWord, int targetWord, boolean useMaxLMCost);
+	Rule constructOOVRule(int num_feats, int source_word, int target_word, boolean use_max_lm_cost);
+	
+	Rule constructLabeledOOVRule(int num_feats, int source_word, int target_word, int lhs, boolean use_max_lm_cost);
 	
 	
 	/**

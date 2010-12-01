@@ -284,7 +284,7 @@ public class PrefixTree extends AbstractGrammar {
 	 * @param maxNonterminals
 	 */
 	PrefixTree(SymbolTable vocab, int maxPhraseSpan, int maxPhraseLength, int maxNonterminals) {
-		this(new ParallelCorpusGrammarFactory((Suffixes) null, (Suffixes) null, (Alignments) null, null, Integer.MAX_VALUE, maxPhraseSpan, maxPhraseLength, maxNonterminals, 2, Float.MIN_VALUE, JoshuaConfiguration.phrase_owner, JoshuaConfiguration.default_non_terminal, JoshuaConfiguration.oovFeatureCost));
+		this(new ParallelCorpusGrammarFactory((Suffixes) null, (Suffixes) null, (Alignments) null, null, Integer.MAX_VALUE, maxPhraseSpan, maxPhraseLength, maxNonterminals, 2, Float.MIN_VALUE, JoshuaConfiguration.phrase_owner, JoshuaConfiguration.default_non_terminal, JoshuaConfiguration.oov_feature_cost));
 	}
 
 
@@ -860,6 +860,32 @@ public class PrefixTree extends AbstractGrammar {
 
 	}
 
+	
+	public Rule constructLabeledOOVRule(int numFeatures, int sourceWord, int targetWord,
+			int lhs, boolean hasLM) {
+		int[] french      = new int[1];
+		french[0]         = sourceWord;
+		int[] english       = new int[1];
+		english[0]          = targetWord;
+		float[] feat_scores = new float[numFeatures];
+		
+		// TODO: This is a hack to make the decoding without a LM works
+		/**when a ngram LM is used, the OOV word will have a cost 100.
+		 * if no LM is used for decoding, so we should set the cost of some
+		 * TM feature to be maximum
+		 * */
+		if ( (!hasLM) && numFeatures > 0) {
+			feat_scores[0] = oovFeatureCost;
+		}
+		
+		return new BilingualRule(
+				lhs, french, english, 
+				feat_scores, 0, this.ruleOwner, 
+				0, getOOVRuleID());
+
+	}
+	
+	
 	public int getNumRules() {
 		return root.getNumRules();
 	}

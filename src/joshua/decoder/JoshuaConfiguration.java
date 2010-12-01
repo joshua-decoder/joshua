@@ -42,14 +42,14 @@ public class JoshuaConfiguration {
 	public static double  lm_ceiling_cost            = 100;
 	public static boolean use_left_equivalent_state  = false;
 	public static boolean use_right_equivalent_state = true;
-	public static int     lmOrder                    = 3;
+	public static int     lm_order                   = 3;
 	public static boolean use_sent_specific_lm       = false;
 	public static String  g_sent_lm_file_name_prefix = "lm.";
-	public static String  lm_file                    = null;//TODO
-	public static int ngramStateID                   = 0;//TODO?????????????
+	public static String  lm_file                    = null; // TODO
+	public static int     ngramStateID               = 0;    // TODO ?????????????
 	
 	//tm config
-	public static int span_limit = 10;
+	public static int     span_limit 								 = 10;
 	//note: owner should be different from each other, it can have same value as a word in LM/TM
 	public static String  phrase_owner               = "pt";
 	public static String  glue_owner                 = "glue_owner";//if such a rule is get applied, then no reordering is possible
@@ -57,7 +57,6 @@ public class JoshuaConfiguration {
 	public static String  goal_symbol                = "S";
 	public static boolean use_sent_specific_tm       = false;
 	public static String  g_sent_tm_file_name_prefix = "tm.";
-	public static float   oovFeatureCost             = 100;
 	
 	public static String  tm_file                    = null;
 	public static String  tm_format                  = null;
@@ -67,7 +66,15 @@ public class JoshuaConfiguration {
 	public static String  glue_file                  = null;
 	public static String  glue_format                = null;
 	
-	public static boolean constrained_parse           = false;
+	// syntax-constrained decoding
+	public static boolean constrain_parse            = false;
+	public static boolean use_pos_labels             = false;
+	
+	// oov-specific
+  public static float   oov_feature_cost           = 100;
+	public static boolean use_max_lm_cost_for_oov    = false;
+	public static int     oov_feature_index          = -1;
+
 	
 	// Parameters for suffix array grammar
 //	/** File name prefix for source language binary training files. */
@@ -101,28 +108,28 @@ public class JoshuaConfiguration {
 	
 	//pruning config
 	//note we can use both cube pruning and "beamAndThreshold" pruning
-	public static boolean useCubePrune          = true;
+	public static boolean useCubePrune             = true;
 	public static boolean useBeamAndThresholdPrune = true;
-	public static double  fuzz1                   = 0.1;
-	public static double  fuzz2                   = 0.1;
-	public static int     max_n_items             = 30;
-	public static double  relative_threshold      = 10.0;
-	public static int     max_n_rules             = 50;
-	public static double  rule_relative_threshold = 10.0;
+	public static double  fuzz1                    = 0.1;
+	public static double  fuzz2                    = 0.1;
+	public static int     max_n_items              = 30;
+	public static double  relative_threshold       = 10.0;
+	public static int     max_n_rules              = 50;
+	public static double  rule_relative_threshold  = 10.0;
 	
 	//nbest config
 	public static boolean use_unique_nbest    = false;
 	public static boolean use_tree_nbest      = false;
 	public static boolean include_align_index = false;
 	public static boolean add_combined_cost   = true; //in the nbest file, compute the final score
-	public static int topN = 500;
-	public static boolean escape_trees = false;
+	public static int     topN                = 500;
+	public static boolean escape_trees        = false;
 	
 	//remote lm server
-	public static boolean use_remote_lm_server = false;
-	public static String  remote_symbol_tbl    = "null"; //this file will first be created by remote_lm_server, and read by remote_suffix_server and the decoder
-	public static int    num_remote_lm_servers = 1;
-	public static String f_remote_server_list  = "null";
+	public static boolean use_remote_lm_server  = false;
+	public static String  remote_symbol_tbl     = "null"; //this file will first be created by remote_lm_server, and read by remote_suffix_server and the decoder
+	public static int     num_remote_lm_servers = 1;
+	public static String  f_remote_server_list  = "null";
 	
 	//parallel decoding
 	public static String parallel_files_prefix = "/tmp/temp.parallel"; // C:\\Users\\zli\\Documents\\temp.parallel; used for parallel decoding
@@ -142,19 +149,17 @@ public class JoshuaConfiguration {
 	
 	//debug
 	public static boolean extract_confusion_grammar = false; //non-parallel version
-	public static String f_confusion_grammar = "C:\\Users\\zli\\Documents\\confusion.hg.grammar";
+	public static String  f_confusion_grammar       = "C:\\Users\\zli\\Documents\\confusion.hg.grammar";
 	//debug end
 	
-	//do we use a LM feature?
+	// do we use a LM feature?
 	public static boolean have_lm_model = false;
-	
-	public static boolean useMaxLMCostForOOV = false;
 
 	
 	public static String segmentFileParserClass = null;//PlainSegmentParser, HackishSegmentParser, SAXSegmentParser
 	
 	
-	//discriminative model options
+	// discriminative model options
 	public static boolean useTMFeat = true;
 	public static boolean useRuleIDName = false;
 	public static boolean useLMFeat = true;
@@ -168,7 +173,7 @@ public class JoshuaConfiguration {
 
 	
 	
-	//=== use goolge linear corpus gain?
+	// use google linear corpus gain?
 	public static boolean useGoogleLinearCorpusGain = false;
 	public static double[] linearCorpusGainThetas = null;
 	public static boolean mark_oovs = true;
@@ -352,9 +357,9 @@ public class JoshuaConfiguration {
 						logger.finest(String.format("use_right_equivalent_state: %s", use_right_equivalent_state));
 					
 				} else if ("order".equals(fds[0])) {
-					lmOrder = Integer.parseInt(fds[1]);
+					lm_order = Integer.parseInt(fds[1]);
 					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format("g_lm_order: %s", lmOrder));
+						logger.finest(String.format("g_lm_order: %s", lm_order));
 					
 				} else if ("use_sent_specific_lm".equals(fds[0])) {
 					use_sent_specific_lm = Boolean.valueOf(fds[1]);
@@ -403,8 +408,15 @@ public class JoshuaConfiguration {
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("goalSymbol: %s", goal_symbol));
 					
-				} else if ("constrained_parse".equals(fds[0])) {
-					constrained_parse = Boolean.parseBoolean(fds[1]);
+				} else if ("constrain_parse".equals(fds[0])) {
+					constrain_parse = Boolean.parseBoolean(fds[1]);
+				} else if ("oov_feature_index".equals(fds[0])) {
+					oov_feature_index = Integer.parseInt(fds[1]);
+				} else if ("use_pos_labels".equals(fds[0])) {
+					use_pos_labels = Boolean.parseBoolean(fds[1]);
+					
+					
+					
 				} else if ("fuzz1".equals(fds[0])) {
 					fuzz1 = Double.parseDouble(fds[1]);
 					if (logger.isLoggable(Level.FINEST))
@@ -551,9 +563,9 @@ public class JoshuaConfiguration {
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("useBeamAndThresholdPrune: %s", useBeamAndThresholdPrune));				
 				} else if ("oovFeatureCost".equals(fds[0])) {
-					oovFeatureCost = Float.parseFloat(fds[1]);
+					oov_feature_cost = Float.parseFloat(fds[1]);
 					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format("oovFeatureCost: %s", oovFeatureCost));
+						logger.finest(String.format("oovFeatureCost: %s", oov_feature_cost));
 				} else if ("useTMFeat".equals(fds[0])) {
 					useTMFeat = Boolean.valueOf(fds[1]);
 					if (logger.isLoggable(Level.FINEST))
@@ -617,10 +629,10 @@ public class JoshuaConfiguration {
 				if ("lm".equals(fds[0]) && fds.length == 2) { // lm  weight
 					have_lm_model = true;
 					if(new Double(fds[1].trim())!=0){
-						useMaxLMCostForOOV = true;
+						use_max_lm_cost_for_oov = true;
 					}
 					logger.info("you use a LM feature function, so make sure you have a LM grammar");
-					logger.info("useMaxLMCostForOOV=" + useMaxLMCostForOOV);
+					logger.info("useMaxLMCostForOOV=" + use_max_lm_cost_for_oov);
 				} 
 			}
 			

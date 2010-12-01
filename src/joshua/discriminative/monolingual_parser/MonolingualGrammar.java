@@ -161,6 +161,29 @@ public class MonolingualGrammar  extends BatchGrammar {
 		return new MonolingualRule(this.defaultLHS, p_french, feat_scores,  0, this.defaultOwner, 0, getOOVRuleID());
 	}
 	
+	
+	public Rule constructLabeledOOVRule(int num_feats, int sourceWord, int targetWord, int lhs, boolean have_lm_model) {
+		int[] p_french     = new int[1];
+	   	p_french[0]  = sourceWord;
+	   
+	   	float[] feat_scores;
+		if(addFakeFeatScoreForEM)
+			feat_scores = new float[num_feats+1];
+		else
+			feat_scores = new float[num_feats];
+		
+	   	/**TODO
+	   	 * This is a hack to make the decoding without a LM works
+	   	 * */
+	   	if(have_lm_model==false){//no LM is used for decoding, so we should set the stateless cost
+	   		//this.feat_scores[0]=100.0/((FeatureFunction)p_l_models.get(0)).getWeight();//TODO
+	   		feat_scores[0]=100;//TODO
+	   	}
+	   	
+		return new MonolingualRule(lhs, p_french, feat_scores,  0, this.defaultOwner, 0, getOOVRuleID());
+	}
+	
+	
 	public int getOOVRuleID() {
 		return OOV_RULE_ID;
 	}

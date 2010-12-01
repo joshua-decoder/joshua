@@ -1,0 +1,13 @@
+bin/
+lib/libsrilm.dylib
+src/joshua/decoder/ff/lm/srilm/SWIGTYPE_p_Ngram.java
+src/joshua/decoder/ff/lm/srilm/SWIGTYPE_p_Vocab.java
+src/joshua/decoder/ff/lm/srilm/SWIGTYPE_p_unsigned_int.java
+src/joshua/decoder/ff/lm/srilm/libsrilm.dylib
+src/joshua/decoder/ff/lm/srilm/srilm.java
+src/joshua/decoder/ff/lm/srilm/srilm.o
+src/joshua/decoder/ff/lm/srilm/srilmJNI.java
+src/joshua/decoder/ff/lm/srilm/srilm_java_wrap.cxx
+src/joshua/decoder/ff/lm/srilm/srilm_java_wrap.o
+example/example.nbest.srilm.out
+example_constrained/

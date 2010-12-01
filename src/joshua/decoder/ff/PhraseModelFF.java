@@ -18,6 +18,7 @@
 package joshua.decoder.ff;
 
 
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import joshua.decoder.ff.tm.Rule;
@@ -62,7 +63,8 @@ public final class PhraseModelFF extends DefaultStatelessFF {
 			if (this.columnIndex < featScores.length) {				
 				return  - featScores[this.columnIndex];//negate it
 			} else {
-				logger.warning("In PhraseModelFF: columnIndex is not right, model columnIndex: " + columnIndex + "; num of features in rul is :" + featScores.length);
+				if (logger.isLoggable(Level.FINEST))
+					logger.finest("In PhraseModelFF: columnIndex is not right, model columnIndex: " + columnIndex + "; num of features in rul is :" + featScores.length);
 				/*for (int i = 0; i < rule.feat_scores.length; i++) {
 					System.out.println(String.format(" %.4f", rule.feat_scores[i]));
 				}

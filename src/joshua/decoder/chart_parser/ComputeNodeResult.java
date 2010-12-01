@@ -15,7 +15,7 @@ import joshua.decoder.hypergraph.HyperEdge;
 /**
  *
  * @author Zhifei Li, <zhifei.work@gmail.com>
- * @version $LastChangedDate: 2009-12-22 14:00:36 -0500 (星期二, 22 十二月 2009) $
+ * @version $LastChangedDate: 2009-12-22 14:00:36 -0500 $
  */
 
 public class ComputeNodeResult {
@@ -31,7 +31,7 @@ public class ComputeNodeResult {
 	
 	
 	/** 
-	 * Compute logPs and the states of thE node
+	 * Compute logPs and the states of the node
 	 */
 	public ComputeNodeResult(List<FeatureFunction> featureFunctions, Rule rule,
 			List<HGNode> antNodes, int i, int j, SourcePath srcPath, 

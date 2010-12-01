@@ -19,13 +19,14 @@ package joshua.decoder;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import joshua.corpus.suffix_array.Pattern;
+import joshua.corpus.syntax.ArraySyntaxTree;
+import joshua.corpus.syntax.SyntaxTree;
 import joshua.corpus.vocab.SymbolTable;
 import joshua.decoder.chart_parser.Chart;
 import joshua.decoder.ff.FeatureFunction;
@@ -65,9 +66,9 @@ public class DecoderThread extends Thread {
 	 * just copy from DecoderFactory), or differ from thread
 	 * to thread */
 	private final List<GrammarFactory>  grammarFactories;
-	private final boolean                    useMaxLMCostForOOV;
+	private final boolean               useMaxLMCostForOOV;
 	private final List<FeatureFunction> featureFunctions;
-	private final List<StateComputer> stateComputers;
+	private final List<StateComputer>   stateComputers;
 	
 	
 	/**
@@ -109,11 +110,11 @@ public class DecoderThread extends Thread {
 		int startSentenceID
 	) throws IOException {
 		
-		this.grammarFactories = grammarFactories;
+		this.grammarFactories   = grammarFactories;
 		this.useMaxLMCostForOOV = useMaxLMCostForOOV;
-		this.featureFunctions = featureFunctions;
-		this.stateComputers = stateComputers;
-		this.symbolTable      = symbolTable;
+		this.featureFunctions   = featureFunctions;
+		this.stateComputers     = stateComputers;
+		this.symbolTable        = symbolTable;
 		
 		this.testFile        = testFile;
 		this.nbestFile       = nbestFile;
@@ -183,7 +184,10 @@ public class DecoderThread extends Thread {
 		// BUG: As written, this will need duplicating in DecoderFactory
 		// TODO: Fix JoshuaConfiguration so we can make this less gross.
 		//
-		// TODO: maybe using real reflection would be cleaner. If it weren't for the argument for HackishSegmentParser then we could do all this over in the JoshuaConfiguration class instead
+		// TODO: maybe using real reflection would be cleaner. If it weren't for 
+		// the argument for HackishSegmentParser then we could do all this over 
+		// in the JoshuaConfiguration class instead
+		
 		final String className = JoshuaConfiguration.segmentFileParserClass;
 		if (null == className) {
 			// Use old behavior by default
@@ -204,8 +208,12 @@ public class DecoderThread extends Thread {
 		}
 		
 		
-		// TODO: we need to run the segmentParser over the file once in order to catch any errors before we do the actual translation. Getting formatting errors asynchronously after a long time is a Bad Thing(tm). Some errors may be recoverable (e.g. by skipping the sentence that's invalid), but we're going to call all exceptions errors for now.
-		//
+		// TODO: we need to run the segmentParser over the file once in order to
+		// catch any errors before we do the actual translation. Getting formatting 
+		// errors asynchronously after a long time is a Bad Thing(tm). Some errors 
+		// may be recoverable (e.g. by skipping the sentence that's invalid), but 
+		// we're going to call all exceptions errors for now.
+
 		// TODO: we should unwrapper SAXExceptions and give good error messages
 		segmentParser.parseSegmentFile(
 			LineReader.getInputStream(this.testFile),
@@ -218,7 +226,9 @@ public class DecoderThread extends Thread {
 				}
 			});
 		
-		// TODO: we should also have the CoIterator<Segment> test compatibility with a given grammar, e.g. count of grammatical feature functions match, nonterminals match,...
+		// TODO: we should also have the CoIterator<Segment> test compatibility with 
+		// a given grammar, e.g. count of grammatical feature functions match, 
+		// nonterminals match,...
 		
 		// TODO: we may also want to validate that all segments have different ids
 		
@@ -227,7 +237,8 @@ public class DecoderThread extends Thread {
 		this.nbestWriter = FileUtility.getWriteFileStream(this.nbestFile);		
 		try {
 			try {
-				//this method will analyze the input file (to generate segments), and then translate segments one by one 
+				// This method will analyze the input file (to generate segments), and 
+				// then translate segments one by one 
 				segmentParser.parseSegmentFile(
 					LineReader.getInputStream(this.testFile),
 					new TranslateCoiterator(
@@ -253,7 +264,11 @@ public class DecoderThread extends Thread {
 	 * it's possible.
 	 */
 	private class TranslateCoiterator implements CoIterator<Segment> {
-		// TODO: it would be nice if we could somehow push this into the parseSegmentFile call and use a coiterator over some subclass of Segment which has another method for returning the oracular senence. That may take some work though, since Java hates mixins so much.
+		// TODO: it would be nice if we could somehow push this into the 
+		// parseSegmentFile call and use a coiterator over some subclass 
+		// of Segment which has another method for returning the oracular 
+		// sentence. That may take some work though, since Java hates 
+		// mixins so much.
 		private Reader<String> oracleReader;
 		
 		public TranslateCoiterator(Reader<String> oracleReader) {
@@ -301,43 +316,47 @@ public class DecoderThread extends Thread {
 		Chart chart; 
 		
 		{
-			//TODO: we should not use "(((" to decide whether it is a lattice input
-			final boolean looksLikeLattice = segment.sentence().startsWith("(((");
-			Lattice<Integer> inputLattice = null;
+			// TODO: we should not use strings to decide what the input type is
+			final boolean looks_like_lattice   = segment.sentence().startsWith("(((");
+			final boolean looks_like_parse_tree = segment.sentence().startsWith("(TOP");
+			
+			Lattice<Integer> input_lattice = null;
+			SyntaxTree syntax_tree = null;
 			Pattern sentence = null;
-			if (looksLikeLattice) {
-				inputLattice = Lattice.createFromString(segment.sentence(),
-									this.symbolTable);
-				sentence = null; // TODO SA needs to accept lattices!
-			} else {
-				int[] intSentence = this.symbolTable.getIDs(segment.sentence());
+			
+			if (!looks_like_lattice) {
+				int[] int_sentence;
+				if (looks_like_parse_tree) {
+					syntax_tree = new ArraySyntaxTree(segment.sentence(), symbolTable);
+					int_sentence = syntax_tree.getTerminals();
+				} else {
+					int_sentence = this.symbolTable.getIDs(segment.sentence());
+				}
 				if (logger.isLoggable(Level.FINEST)) 
-					logger.finest("Converted \"" + segment.sentence() + "\" into " + Arrays.toString(intSentence));
-				inputLattice = Lattice.createLattice(intSentence);
-				sentence = new Pattern(this.symbolTable, intSentence);
+					logger.finest("Converted \"" + segment.sentence() + "\" into " + Arrays.toString(int_sentence));
+				input_lattice = Lattice.createLattice(int_sentence);
+				sentence = new Pattern(this.symbolTable, int_sentence);
+			} else {
+				input_lattice = Lattice.createFromString(segment.sentence(), this.symbolTable);
+				sentence = null; // TODO: suffix array needs to accept lattices!
 			}
 			if (logger.isLoggable(Level.FINEST)) 
-				logger.finest("Translating input lattice:\n" + inputLattice.toString());
+				logger.finest("Translating input lattice:\n" + input_lattice.toString());
 
 			Grammar[] grammars = new Grammar[grammarFactories.size()];
-			int i = 0;
-			for (GrammarFactory factory : this.grammarFactories) {
-				grammars[i] = factory.getGrammarForSentence(sentence);
-				
+			for (int i = 0; i<grammarFactories.size(); i++) {
+				grammars[i] = grammarFactories.get(i).getGrammarForSentence(sentence);
 				// For batch grammar, we do not want to sort it every time
-				if (! grammars[i].isSorted()) {
+				if (!grammars[i].isSorted()) {
 					System.out.println("!!!!!!!!!!!! called again");
-					// TODO Check to see if this is ever called here. It probably is not
+					// TODO: check to see if this is ever called here. It probably is not
 					grammars[i].sortGrammar(this.featureFunctions);
 				}
-				
-				i++;
 			}
-			
 			
 			/* Seeding: the chart only sees the grammars, not the factories */
 			chart = new Chart(
-				inputLattice,
+				input_lattice,
 				this.featureFunctions,
 				this.stateComputers,
 				this.symbolTable,
@@ -345,7 +364,8 @@ public class DecoderThread extends Thread {
 				grammars,
 				this.useMaxLMCostForOOV,
 				JoshuaConfiguration.goal_symbol,
-				segment.constraints());
+				segment.constraints(),
+				syntax_tree);
 			
 			if (logger.isLoggable(Level.FINER))
 				logger.finer("after seed, time: "
@@ -446,7 +466,7 @@ public class DecoderThread extends Thread {
 				grammars,
 				this.useMaxLMCostForOOV,
 				JoshuaConfiguration.goal_symbol,
-				null);
+				null, null);
 		
 		return chart.expand();
 	}
