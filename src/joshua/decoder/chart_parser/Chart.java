@@ -432,8 +432,6 @@ public class Chart {
 	
 	private void completeCell(int i, int j, DotNode dotNode, List<Rule> sortedRules, int arity, SourcePath srcPath) {
 		
-		System.out.println("\n\n CELL (" + i + ", " + j + ")");
-			
 		if (manualConstraintsHandler.containHardRuleConstraint(i, j)) {
 			if (logger.isLoggable(Level.FINE)) 
 				logger.fine("Hard rule constraint for span " + i +", " + j);
@@ -450,12 +448,12 @@ public class Chart {
 			labels.addAll(parseTree.getConcatenatedLabels(i, j));
 			labels.addAll(parseTree.getCcgLabels(i, j));
 			
-			for (int l : labels)
-				System.out.println("LABEL  " + symbolTable.getWord(l));
+//			for (int l : labels)
+//				System.out.println("LABEL  " + symbolTable.getWord(l));
 			
 			filteredRules = new ArrayList<Rule>(sortedRules.size());
 			for (Rule r : sortedRules)
-				if (labels.contains(r.getLHS()))
+				if (r.getLHS() == goalSymbolID || labels.contains(r.getLHS()))
 					filteredRules.add(r);
 		} else {
 			// combinations: rules, antecent items
