@@ -433,7 +433,7 @@ public class Chart {
 	private void completeCell(int i, int j, DotNode dotNode, List<Rule> sortedRules, int arity, SourcePath srcPath) {
 		
 		System.out.println("\n\n CELL (" + i + ", " + j + ")");
-		
+			
 		if (manualConstraintsHandler.containHardRuleConstraint(i, j)) {
 			if (logger.isLoggable(Level.FINE)) 
 				logger.fine("Hard rule constraint for span " + i +", " + j);

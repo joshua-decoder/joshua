@@ -117,7 +117,7 @@ public class ArraySyntaxTree implements SyntaxTree, Externalizable {
 					break;
 				
 				// create and look up concatenated label
-				int concatenated_nt = symbolTable.addNonterminal(addMarkup(symbolTable.getWord(nt) + "+" + symbolTable.getWord(forwardLattice.get(i))));
+				int concatenated_nt = symbolTable.addNonterminal(adjustMarkup(symbolTable.getWord(nt) + "+" + symbolTable.getWord(forwardLattice.get(i))));
 				if (current_span < remaining_span) {
 					nt_stack.push(concatenated_nt);
 					pos_stack.push(pos + current_span);
@@ -158,7 +158,7 @@ public class ArraySyntaxTree implements SyntaxTree, Externalizable {
 				Set<Integer> main_set = main_constituents.get(to + forwardLattice.get(i + 1));
 				if (main_set != null) {
 					for (int main : main_set)
-						labels.add(symbolTable.addNonterminal(addMarkup(symbolTable.getWord(main) + "/" + symbolTable.getWord(forwardLattice.get(i)))));
+						labels.add(symbolTable.addNonterminal(adjustMarkup(symbolTable.getWord(main) + "/" + symbolTable.getWord(forwardLattice.get(i)))));
 				}
 			}
 		}
@@ -189,7 +189,7 @@ public class ArraySyntaxTree implements SyntaxTree, Externalizable {
 					Set<Integer> main_set = main_constituents.get(from - backwardLattice.get(i + 1));
 					if (main_set != null) {
 						for (int main : main_set)
-							labels.add(symbolTable.addNonterminal(addMarkup(symbolTable.getWord(main) + "\\" + symbolTable.getWord(backwardLattice.get(i)))));
+							labels.add(symbolTable.addNonterminal(adjustMarkup(symbolTable.getWord(main) + "\\" + symbolTable.getWord(backwardLattice.get(i)))));
 					}
 				}
 			} else {
@@ -313,7 +313,7 @@ public class ArraySyntaxTree implements SyntaxTree, Externalizable {
 			}
 			if (next_nt) {
 				// get NT id
-				current_id = symbolTable.addNonterminal(addMarkup(token));
+				current_id = symbolTable.addNonterminal(adjustMarkup(token));
 				// add into lattice
 				forwardLattice.add(current_id);
 				// push NT span field onto stack (added hereafter, we're just saving the "- 1")
@@ -332,8 +332,8 @@ public class ArraySyntaxTree implements SyntaxTree, Externalizable {
 		}
 	}
 	
-	private String addMarkup(String nt) {
-		return "[" + nt + "]";
+	private String adjustMarkup(String nt) {
+		return "[" + nt.replaceAll("[\\[\\]]", "") + "]";
 	}
 	
 
