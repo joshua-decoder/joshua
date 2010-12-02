@@ -463,7 +463,7 @@ public class Chart {
 		}
 		
 		for (Rule r : filteredRules)
-			System.out.println(r.toStringWithoutFeatScores(symbolTable));
+			System.out.println(r.toString(symbolTable));
 		
 		if (arity==0)
 			combiner.addAxioms(this, this.cells[i][j], i, j, filteredRules, srcPath);
