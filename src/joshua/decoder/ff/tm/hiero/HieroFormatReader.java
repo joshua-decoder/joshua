@@ -53,14 +53,6 @@ public class HieroFormatReader extends GrammarReader<BilingualRule> {
 			}
 		}
 
-		// HACK: avoid source-side loop rules
-		// TODO: global lookup for goal symbol id would really help here
-//		if ((french.length == 1) && (arity == 1)  
-//				&& lhs != GOAL_ID) 
-//		{
-//			return null;
-//		}
-		
 		// english side
 		String[] englishWords = fields[2].split("\\s+");
 		int[] english = new int[englishWords.length];

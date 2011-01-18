@@ -11,3 +11,10 @@ src/joshua/decoder/ff/lm/srilm/srilm_java_wrap.cxx
 src/joshua/decoder/ff/lm/srilm/srilm_java_wrap.o
 example/example.nbest.srilm.out
 example_constrained/
+.DS_Store
+src/.DS_Store
+src/joshua/.DS_Store
+src/joshua/decoder/.DS_Store
+src/joshua/decoder/ff/.DS_Store
+src/joshua/decoder/ff/lm/.DS_Store
+

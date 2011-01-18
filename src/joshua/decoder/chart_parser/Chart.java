@@ -236,8 +236,7 @@ public class Chart {
 						logger.fine("Using hard rule constraint for span " + node.getNumber() + ", " + arc.getTail().getNumber());
 				} else {
 					addAxiom(node.getNumber(), arc.getTail().getNumber(), oov_rule, new SourcePath().extend(arc));
-					
-					logger.info("Adding OOV rule:\t" + oov_rule.toString(symbolTable));
+					logger.finer("Adding OOV rule:\t" + oov_rule.toString(symbolTable));
 				}
 			}
 		}
@@ -388,6 +387,8 @@ public class Chart {
 		ArrayList<HGNode> queue	= new ArrayList<HGNode>( chartBin.getSortedNodes() );
 		HashSet<Integer> seen_lhs = new HashSet<Integer>();
 		
+		logger.finest("Adding unary to [" + i + ", " + j + "]");
+		
 		while (queue.size() > 0) {
 			HGNode node = queue.remove(0);
 			seen_lhs.add(node.lhs);
@@ -408,6 +409,9 @@ public class Chart {
 					for (Rule rule : rules) { // for each unary rules								
 						ComputeNodeResult states = new ComputeNodeResult(this.featureFunctions, rule, antecedents, i, j, new SourcePath(), stateComputers, this.segmentID);
 						HGNode resNode = chartBin.addHyperEdgeInCell(states, rule, i, j, antecedents, new SourcePath(), true);
+						
+						logger.finest(rule.toString(symbolTable));
+						
 						if (null != resNode && !seen_lhs.contains(resNode.lhs)) {
 							queue.add(resNode);
 							qtyAdditionsToQueue++;
@@ -432,7 +436,7 @@ public class Chart {
 	
 	private void completeCell(int i, int j, DotNode dotNode, List<Rule> sortedRules, int arity, SourcePath srcPath) {
 		
-		System.out.println("\n\n CELL (" + i + ", " + j + ")");
+		logger.finest("\n\n CELL (" + i + ", " + j + ")");
 			
 		if (manualConstraintsHandler.containHardRuleConstraint(i, j)) {
 			if (logger.isLoggable(Level.FINE)) 
@@ -463,7 +467,7 @@ public class Chart {
 		}
 		
 		for (Rule r : filteredRules)
-			System.out.println(r.toString(symbolTable));
+			logger.finest(r.toString(symbolTable));
 		
 		if (arity==0)
 			combiner.addAxioms(this, this.cells[i][j], i, j, filteredRules, srcPath);
