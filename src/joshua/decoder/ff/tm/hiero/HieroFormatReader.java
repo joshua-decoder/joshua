@@ -64,6 +64,11 @@ public class HieroFormatReader extends GrammarReader<BilingualRule> {
 			}
 		}
 
+		// TODO: temporary filter to remove unlicensed terminal insertions or deletions 
+		if ((english.length == arity || french.length == arity) && english.length != french.length) {
+			return null;
+		}
+		
 		// feature scores
 		String[] scores = fields[3].split("\\s+");
 		float[] feature_scores = new float[scores.length];
