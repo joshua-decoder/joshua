@@ -645,6 +645,7 @@ public class JoshuaDecoder {
 	private void initializeFeatureFunctions(String configFile)
 	throws IOException {
 		this.featureFunctions = new ArrayList<FeatureFunction>();
+		JoshuaConfiguration.num_phrasal_features = 0;	
 		
 		LineReader reader = new LineReader(configFile);
 		try { for (String line : reader) {
@@ -727,6 +728,7 @@ public class JoshuaDecoder {
 						new PhraseModelFF(
 							this.featureFunctions.size(),
 							weight, owner, column));
+					JoshuaConfiguration.num_phrasal_features += 1;
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format(
 							"Process Line: %s\nAdd PhraseModel, owner: %s; column: %d; weight: %.3f",

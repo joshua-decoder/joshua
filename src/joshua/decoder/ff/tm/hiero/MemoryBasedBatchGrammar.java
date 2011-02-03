@@ -159,7 +159,7 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
 	public Rule constructOOVRule(int num_features, int source_word, int target_word, boolean use_max_lm_cost) {
 		int[]   french      = { source_word };
 		int[]   english     = { target_word };
-		float[] feat_scores = new float[num_features];
+		float[] feat_scores = new float[JoshuaConfiguration.num_phrasal_features];
 		
 		// TODO: This is a hack to make the decoding without a LM works
 		/* When a ngram LM is used, the OOV word will have a cost 100.
@@ -179,9 +179,10 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
 	public Rule constructLabeledOOVRule(int num_features, int source_word, int target_word, int lhs, boolean use_max_lm_cost) {
 		int[]   french      = { source_word };
 		int[]   english     = { target_word };
-		float[] feat_scores = new float[num_features];
+		// HACK: this is making sure the OOV rules get the right number of feature values
+		float[] feat_scores = new float[JoshuaConfiguration.num_phrasal_features];
 		
-		// TODO: This is a hack to make the decoding without a LM works
+		// TODO: This is a hack to make the decoding without a LM work
 		/* When a ngram LM is used, the OOV word will have a cost 100.
 		 * if no LM is used for decoding, so we should set the cost of some
 		 * TM feature to be maximum

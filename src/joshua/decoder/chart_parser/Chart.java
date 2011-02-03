@@ -467,7 +467,7 @@ public class Chart {
 		}
 		
 		for (Rule r : filteredRules)
-			logger.finest(r.toString(symbolTable));
+			logger.finest(r.toString(symbolTable) + " num_feats: " + r.getFeatureScores().length);
 		
 		if (arity==0)
 			combiner.addAxioms(this, this.cells[i][j], i, j, filteredRules, srcPath);

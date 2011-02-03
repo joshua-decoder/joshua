@@ -75,6 +75,8 @@ public class JoshuaConfiguration {
 	public static boolean use_max_lm_cost_for_oov    = false;
 	public static int     oov_feature_index          = -1;
 
+	// number of phrasal features, for correct oov rule creation
+	public static int     num_phrasal_features       = 0;
 	
 	// Parameters for suffix array grammar
 //	/** File name prefix for source language binary training files. */
