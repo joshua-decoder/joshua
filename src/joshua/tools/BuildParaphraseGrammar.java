@@ -39,7 +39,7 @@ public class BuildParaphraseGrammar {
 	
 	private static boolean			REDUCED_SAMT	= false;
 	
-	private static int          MIN_COUNT     = 10;
+	private static int          MIN_COUNT     = 3;
 	private static double       MIN_PROB      = -Math.log(0.0001);
 	private static int          TOP_K         = 25;
 	
