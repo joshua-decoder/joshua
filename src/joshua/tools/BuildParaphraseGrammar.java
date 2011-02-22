@@ -37,7 +37,7 @@ public class BuildParaphraseGrammar {
 	/** Logger for this class. */
 	private static final Logger	logger				= Logger.getLogger(BuildParaphraseGrammar.class.getName());
 	
-	private static boolean			REDUCED_SAMT	= false;
+	private static boolean			HIERO_MODE	= false;
 	
 	private static int          MIN_COUNT     = 3;
 	private static double       MIN_PROB      = -Math.log(0.0001);
@@ -55,8 +55,8 @@ public class BuildParaphraseGrammar {
 		
 		if (args.length < 1 || args[0].equals("-h")) {
 			System.err.println("Usage: " + BuildParaphraseGrammar.class.toString());
-			System.err.println("    -g grammar_file     SAMT grammar to process");
-			System.err.println("   [-urdu               reduced feature set]");
+			System.err.println("    -g grammar_file     translation grammar to process");
+			System.err.println("   [-hiero              Hiero grammar mode]");
 			System.err.println("   [-top k              k best paraphrases per source (25)]");
 			System.err.println("   [-min_p              minimum translation prob (0.0001)]");
 			System.err.println("   [-min_c              minimum rule count (10)]");
@@ -69,8 +69,8 @@ public class BuildParaphraseGrammar {
 		for (int i = 0; i < args.length; i++) {
 			if ("-g".equals(args[i]))
 				grammar_file_name = args[++i];
-			else if ("-urdu".equals(args[i]))
-				REDUCED_SAMT = true;
+			else if ("-hiero".equals(args[i]))
+				HIERO_MODE = true;
 			else if ("-top".equals(args[i]))
 				TOP_K = Integer.parseInt(args[++i]);
 			else if ("-min_p".equals(args[i]))
@@ -158,7 +158,7 @@ public class BuildParaphraseGrammar {
 			TranslationRule candidate = new TranslationRule(tgt, feature_values, NTs);
 			
 			// pre-pruning - at least a count of ten and a translation prob. of 0.001
-			if ((Math.exp(-candidate.feature_vector[6]) > MIN_COUNT || REDUCED_SAMT) && candidate.feature_vector[4] < MIN_PROB)
+			if ((Math.exp(-candidate.feature_vector[6]) > MIN_COUNT || HIERO_MODE) && candidate.feature_vector[4] < MIN_PROB)
 				translationRules.add(candidate);
 		}
 		
