@@ -455,7 +455,8 @@ public class Chart {
 			labels.addAll(parseTree.getCcgLabels(i, j));
 			
 			for (int l : labels)
-				System.out.println("LABEL  " + symbolTable.getWord(l));
+				if (logger.isLoggable(Level.FINE)) 
+					logger.finest("Allowing label: " + symbolTable.getWord(l));
 			
 			filteredRules = new ArrayList<Rule>(sortedRules.size());
 			for (Rule r : sortedRules)

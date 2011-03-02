@@ -72,8 +72,10 @@ public class LabelPhrases {
 			String line = phrase_reader.readLine();
 			
 			String[] fields = line.split("\\t");
-			if (fields.length != 3 || fields[2].equals("()"))
+			if (fields.length != 3 || fields[2].equals("()")) {
+				System.err.println("[FAIL] Empty parse in line:\t" + line);
 				continue;
+			}
 			
 			String[] phrase_strings = fields[0].split("\\s");
 			int[] phrase_ids = new int[phrase_strings.length];
@@ -106,8 +108,10 @@ public class LabelPhrases {
 				label = syntax.getOneLeftSideCCG(match_start, match_end);
 			if (label == 0)
 				label = syntax.getOneDoubleConcatenation(match_start, match_end);
-			if (label == 0)
+			if (label == 0) {
+				System.err.println("[FAIL] No label found in line:\t" + line);
 				continue;
+			}
 			
 			System.out.println(vocabulary.getWord(label) + "\t" + line);
 		}
