@@ -28,6 +28,7 @@
 package joshua.subsample;
 
 import joshua.corpus.Phrase;
+import joshua.corpus.BasicPhrase;
 import joshua.corpus.vocab.Vocabulary;
 
 import java.io.BufferedReader;
@@ -174,7 +175,7 @@ public class Subsampler {
 				
 				BiCorpus bc = bcFactory.fromFiles(f);
 				
-				Set<PhrasePair> set = new HashSet<PhrasePair>();
+				HashMap<PhrasePair,PhrasePair> set = new HashMap<PhrasePair,PhrasePair>();
 				
 				int binsize = 10; // BUG: Magic-Number
 				int max_k   = MAX_SENTENCE_LENGTH / binsize;
@@ -198,12 +199,12 @@ public class Subsampler {
 				
 				float ff = 0.0f;
 				float ef = 0.0f;
-				for (PhrasePair pp : set) {
+				for (PhrasePair pp : set.keySet()) {
 					// Get pp.ratioFtoE() for all pp
 					ff += pp.getF().size();
 					ef += pp.getE().size();
 					
-					out.write(pp);
+					out.write(set.get(pp));
 					out.newLine();
 				}
 				out.flush();
@@ -237,13 +238,15 @@ public class Subsampler {
 	 *                  E length
 	 */
 	private void subsample(
-		Set<PhrasePair> set,
+		HashMap<PhrasePair,PhrasePair> set,
 		BiCorpus bc,
 		int minLength,
 		int maxLength,
 		float targetFtoERatio
 	) {
 		for (PhrasePair pp : bc) {
+			PhrasePair lowercase_pp = new PhrasePair(new BasicPhrase((byte)1,pp.getF().toString().toLowerCase()), new BasicPhrase((byte)1,pp.getE().toString().toLowerCase()), pp.getAlignment());
+
 			{ int eLength = pp.getE().size();
 			if (eLength == 0
 			||  eLength >  MAX_SENTENCE_LENGTH)             continue; }
@@ -260,7 +263,7 @@ public class Subsampler {
 					&& (   ratio > 1.3f * targetFtoERatio
 						|| ratio * 1.3f < targetFtoERatio)) continue;
 			}
-			if (set.contains(pp))                           continue;
+			if (set.containsKey(lowercase_pp))              continue;
 			
 			// at this point, length checks out and the sentence hasn't
 			// been selected yet
@@ -276,7 +279,7 @@ public class Subsampler {
 					this.ngramCounts.put(ng, count);
 				}
 			}
-			if (useSentence) set.add(pp);
+			if (useSentence) set.put(lowercase_pp,pp);
 		}
 	}
 	
