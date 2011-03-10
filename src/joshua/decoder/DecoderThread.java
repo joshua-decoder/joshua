@@ -373,10 +373,24 @@ public class DecoderThread extends Thread {
 					+ " seconds");
 		}
 		
-		
-		
 		/* Parsing */
 		HyperGraph hypergraph = chart.expand();
+		
+		// unsuccessful parse, pass through input
+		if (hypergraph == null) {
+			StringBuffer passthrough_buffer = new StringBuffer();
+			passthrough_buffer.append(Integer.parseInt(segment.id()));
+			passthrough_buffer.append(" ||| ");
+			passthrough_buffer.append(segment.sentence());
+			passthrough_buffer.append(" ||| ");
+			for (int i=0; i<this.featureFunctions.size(); i++)
+				passthrough_buffer.append("0.0 ");
+			passthrough_buffer.append("||| 0.0\n");
+			
+			this.nbestWriter.write(passthrough_buffer.toString());
+			
+			return;
+		}
 		
 		if (JoshuaConfiguration.visualize_hypergraph) {
 			HyperGraphViewer.visualizeHypergraphInFrame(hypergraph, symbolTable);
