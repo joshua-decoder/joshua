@@ -780,21 +780,26 @@ public class JoshuaDecoder {
 			startTime = System.currentTimeMillis();
 		}
 		
-		if (args.length != 3 && args.length != 4) {
+		if (args.length < 1 || args.length > 4) {
 			System.out.println("Usage: java " +
 				JoshuaDecoder.class.getName() +
-				" configFile testFile outputFile (oracleFile)");
+				" configFile [testFile [outputFile [oracleFile]]]");
 			
-			System.out.println("num of args is " + args.length);
-			for (int i = 0; i < args.length; i++) {
-				System.out.println("arg is: " + args[i]);
-			}
+			System.out.println("  testFile defaults to standard input");
+			System.out.println("  outputFile defaults to standard output");
+			System.out.println("  oracleFile defaults to null");
 			System.exit(1);
 		}
-		String configFile = args[0].trim();
-		String testFile   = args[1].trim();
-		String nbestFile  = args[2].trim();
-		String oracleFile = (4 == args.length ? args[3].trim() : null);
+		String configFile  = args[0].trim();
+		String testFile    = "-";
+		String nbestFile   = "-";
+		String oracleFile  = null;
+		if (args.length >= 2)
+			testFile   = args[1].trim();
+		if (args.length >= 3)
+			nbestFile  = args[2].trim();
+		if (args.length == 4)
+			oracleFile = args[3].trim();
 		
 		
 		/* Step-1: initialize the decoder, test-set independent */

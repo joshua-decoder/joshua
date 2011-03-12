@@ -20,6 +20,7 @@ package joshua.util;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileDescriptor;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -73,7 +74,10 @@ public class FileUtility {
 		return new BufferedWriter(
 					new OutputStreamWriter(
 						// TODO: add GZIP
-						new FileOutputStream(filename, false), FILE_ENCODING));
+						filename.equals("-")
+  						  ? new FileOutputStream(FileDescriptor.out)
+						  : new FileOutputStream(filename, false), 
+						FILE_ENCODING));
 	}
 	
 	

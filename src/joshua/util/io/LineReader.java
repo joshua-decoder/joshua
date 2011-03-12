@@ -22,6 +22,7 @@ import java.util.NoSuchElementException;
 
 import java.nio.charset.Charset;
 import java.io.BufferedReader;
+import java.io.FileDescriptor;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.IOException;
@@ -105,7 +106,9 @@ public class LineReader implements Reader<String> {
 	@Deprecated
 	public static final InputStream getInputStream(String filename)
 	throws IOException {
-		FileInputStream fis = new FileInputStream(filename);
+		FileInputStream fis = (filename.equals("-"))
+			? new FileInputStream(FileDescriptor.in)
+			: new FileInputStream(filename);
 		return (filename.endsWith(".gz") ? new GZIPInputStream(fis) : fis);
 	}
 	

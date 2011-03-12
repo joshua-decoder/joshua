@@ -215,16 +215,19 @@ public class DecoderThread extends Thread {
 		// we're going to call all exceptions errors for now.
 
 		// TODO: we should unwrapper SAXExceptions and give good error messages
-		segmentParser.parseSegmentFile(
-			LineReader.getInputStream(this.testFile),
-			new CoIterator<Segment>() {
-				public void coNext(Segment seg) {
-					// Consume Segment and do nothing (for now)
-				}
-				public void finish() {
-					// Nothing to clean up
-				}
-			});
++               // March 2011: reading from STDIN does not permit two passes ove
++               if (! testFile.equals("-")) {
+			segmentParser.parseSegmentFile(
+				LineReader.getInputStream(this.testFile),
+				new CoIterator<Segment>() {
+					public void coNext(Segment seg) {
+						// Consume Segment and do nothing (for now)
+					}
+					public void finish() {
+						// Nothing to clean up
+					}
+				});
+		}
 		
 		// TODO: we should also have the CoIterator<Segment> test compatibility with 
 		// a given grammar, e.g. count of grammatical feature functions match, 
