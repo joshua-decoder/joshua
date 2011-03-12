@@ -37,11 +37,11 @@ public class BuildParaphraseGrammar {
 	/** Logger for this class. */
 	private static final Logger	logger				= Logger.getLogger(BuildParaphraseGrammar.class.getName());
 	
-	private static boolean			REDUCED_SAMT	= false;
+	private static boolean			HIERO_MODE	= false;
 	
-	private static int					MIN_COUNT			= 10;
-	private static double				MIN_PROB			= 0.0001;
-	private static int					TOP_K					= 25;
+	private static int          MIN_COUNT     = 3;
+	private static double       MIN_PROB      = -Math.log(0.0001);
+	private static int          TOP_K         = 25;
 	
 	/**
 	 * Main method.
@@ -55,8 +55,8 @@ public class BuildParaphraseGrammar {
 		
 		if (args.length < 1 || args[0].equals("-h")) {
 			System.err.println("Usage: " + BuildParaphraseGrammar.class.toString());
-			System.err.println("    -g grammar_file     SAMT grammar to process");
-			System.err.println("   [-urdu               reduced feature set]");
+			System.err.println("    -g grammar_file     translation grammar to process");
+			System.err.println("   [-hiero              Hiero grammar mode]");
 			System.err.println("   [-top k              k best paraphrases per source (25)]");
 			System.err.println("   [-min_p              minimum translation prob (0.0001)]");
 			System.err.println("   [-min_c              minimum rule count (10)]");
@@ -69,12 +69,12 @@ public class BuildParaphraseGrammar {
 		for (int i = 0; i < args.length; i++) {
 			if ("-g".equals(args[i]))
 				grammar_file_name = args[++i];
-			else if ("-urdu".equals(args[i]))
-				REDUCED_SAMT = true;
+			else if ("-hiero".equals(args[i]))
+				HIERO_MODE = true;
 			else if ("-top".equals(args[i]))
 				TOP_K = Integer.parseInt(args[++i]);
 			else if ("-min_p".equals(args[i]))
-				MIN_PROB = Double.parseDouble(args[++i]);
+				MIN_PROB = -Math.log(Double.parseDouble(args[++i]));
 			else if ("-min_c".equals(args[i]))
 				MIN_COUNT = Integer.parseInt(args[++i]);
 		}
@@ -158,7 +158,7 @@ public class BuildParaphraseGrammar {
 			TranslationRule candidate = new TranslationRule(tgt, feature_values, NTs);
 			
 			// pre-pruning - at least a count of ten and a translation prob. of 0.001
-			if ((Math.exp(-candidate.feature_vector[6]) > MIN_COUNT || REDUCED_SAMT) && Math.exp(-candidate.feature_vector[4]) > MIN_PROB)
+			if ((Math.exp(-candidate.feature_vector[6]) > MIN_COUNT || HIERO_MODE) && candidate.feature_vector[4] < MIN_PROB)
 				translationRules.add(candidate);
 		}
 		
@@ -166,11 +166,10 @@ public class BuildParaphraseGrammar {
 		public void process() {
 			List<ParaphraseRule> paraphraseRules = new ArrayList<ParaphraseRule>();
 
-			final int lex_offset = (REDUCED_SAMT ? 9 : 19);
 			Comparator<ParaphraseRule> c = new Comparator<ParaphraseRule>() {
 				public int compare(ParaphraseRule a, ParaphraseRule b) {
-					double a_value = a.feature_values[4] + a.feature_values[lex_offset] + a.feature_values[lex_offset + 1];
-					double b_value = b.feature_values[4] + b.feature_values[lex_offset] + b.feature_values[lex_offset + 1];
+					double a_value = a.feature_values[3] + a.feature_values[4] + a.feature_values[13] + a.feature_values[14];
+					double b_value = b.feature_values[3] + b.feature_values[4] + b.feature_values[13] + b.feature_values[14];
 					return (a_value - b_value >= 0) ? 1 : -1;
 				}
 			};
@@ -235,98 +234,59 @@ public class BuildParaphraseGrammar {
 		
 
 		protected ParaphraseRule pivotToParaphraseRule(TranslationRule map_to, String rule_head) {
-			
+		
 			// merge feature vectors
 			double[] src = this.feature_vector;
 			double[] tgt = map_to.feature_vector;
 			
-			double[] merged = new double[src.length + 1];
+			double[] merged = new double[18];
 			
 			// TODO: more graceful and flexible handling of this
-			if (!REDUCED_SAMT && src.length != 23) {
+			if (src.length != 23) {
 				logger.severe("number of features doesn't match up: expecting 23, seeing " + src.length);
-				System.exit(1);
-			}
-			if (REDUCED_SAMT && src.length != 13) {
-				logger.severe("number of features doesn't match up: expecting reduced set of 13, seeing " + src.length);
 				System.exit(1);
 			}
 			
 			// glue rule feature - we don't produce glue grammars
 			merged[0] = 0;
 			// rule application counter
-			merged[1] = (src[1] + tgt[1]) / 2;
+			merged[1] = 1;
 			// target word counter
 			merged[2] = tgt[2];
-			// -log($frequency/$undilutedresultcount)
-			merged[3] = src[3] + tgt[3];
-			// -log($rulebodyfrequency/$sourcefrequency)
-			merged[4] = src[4] + tgt[4];
 			
-			// Reduced SAMT feature set (used in SCALE Urdu-English) only makes use of
-			// features 0-4 10 16-22
-			if (REDUCED_SAMT) {
-				// _X rule feature
-				merged[5] = tgt[5];
-				
-				// rareness penalty (we stack if both rules are rare)
-				merged[6] = src[6] + tgt[6];
-				
-				// -log($simpleFreq/$undilutedresultcount), result-conditioned RF
-				merged[7] = src[7] + tgt[7];
-				
-				// null rule feature
-				merged[8] = (src[8] + tgt[8] >= 1) ? 1 : 0;
-				
-				// various IBM1 scores.. ..or something like that
-				merged[9] = src[9] + tgt[9];
-				merged[10] = src[10] + tgt[10];
-				merged[11] = src[11] + tgt[11];
-				merged[12] = src[12] + tgt[12];
-			} else {
-				// -log($frequency/$source_and_arg_frequency)
-				merged[5] = src[5] + tgt[5];
-				// -log($frequency)
-				merged[6] = src[6] + tgt[6];
-				// -log($frequencySimple)
-				merged[7] = src[7] + tgt[7];
-				
-				// purely-lexical feature (rule body consists only of terminals)
-				merged[8] = tgt[8];
-				// adjacent-NT feature
-				merged[9] = adjacent_nts ? 1 : 0;
-				// _X rule feature
-				merged[10] = tgt[10];
-				// unbalancedness penalty 1
-				merged[11] = src[11] + tgt[11];
-				// unbalancedness penalty 2
-				merged[12] = src[12] + tgt[12];
-				
-				// source terminals but no target terminals feature
-				merged[13] = (!this.no_lexical_tokens && map_to.no_lexical_tokens) ? 1 : 0;
-				
-				// source-punctuation-was-removed feature
-				// TODO: lacks some precision in case of multi-punctuation
-				merged[14] = (src[14] == 0 && tgt[14] == 1) ? 1 : 0;
-				
-				// non-monotonicity penalty - verified
-				merged[15] = (this.non_monotonic == map_to.non_monotonic) ? 0 : 1;
-				
-				// rareness penalty (we stack if both rules are rare)
-				merged[16] = src[16] + tgt[16];
-				
-				// -log($simpleFreq/$undilutedresultcount), result-conditioned RF
-				merged[17] = src[17] + tgt[17];
-				
-				// null rule feature
-				merged[18] = (src[18] + tgt[18] >= 1) ? 1 : 0;
-				
-				// various IBM1 scores.. ..or something like that
-				merged[19] = src[19] + tgt[19];
-				merged[20] = src[20] + tgt[20];
-				merged[21] = src[21] + tgt[21];
-				merged[22] = src[22] + tgt[22];
-			}
+			// -log p(e2 | e1)
+			merged[3] = src[3] + tgt[5];
+			// -log p(e1 | e2)			
+			merged[4] = src[5] + tgt[3];
+			
+			// purely-lexical feature (rule body consists only of terminals)
+			merged[5] = tgt[8];
+			// adjacent-NT feature
+			merged[6] = adjacent_nts ? 1 : 0;
+			// _X rule feature
+			merged[7] = tgt[10];
+			
+			// source terminals but no target terminals feature
+			merged[8] = (!this.no_lexical_tokens && map_to.no_lexical_tokens) ? 1 : 0;
+			
+			// source-punctuation-was-removed feature
+			// TODO: lacks some precision in case of multi-punctuation
+			merged[9] = (src[14] == 0 && tgt[14] == 1) ? 1 : 0;
+			
+			// non-monotonicity penalty - verified
+			merged[10] = (this.non_monotonic == map_to.non_monotonic) ? 0 : 1;
+			
+			// rareness penalty (we use the one for the rarer rule)
+			merged[11] = Math.max(src[16], tgt[16]);
+						
+			// null rule feature
+			merged[12] = (src[18] + tgt[18] >= 1) ? 1 : 0;
+			
+			// various IBM1 scores
+			merged[13] = src[19] + tgt[21];
+			merged[14] = src[21] + tgt[19];
+			merged[15] = src[20] + tgt[22];
+			merged[16] = src[22] + tgt[20];
 			
 			if (this.sourceSide.equals(map_to.sourceSide))
 				merged[merged.length - 1] = 1;

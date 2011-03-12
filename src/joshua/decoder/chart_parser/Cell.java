@@ -107,8 +107,8 @@ class Cell {
 	 * the goal bin has only one Item, which itself has many
 	 * hyperedges only "goal bin" should call this function
 	 */
-	//note that thei nput bin is  bin[0][n], not the goal bin
-	void transitToGoal(Cell bin, List<FeatureFunction> featureFunctions, int sentenceLength) { 
+	//note that the input bin is bin[0][n], not the goal bin
+	boolean transitToGoal(Cell bin, List<FeatureFunction> featureFunctions, int sentenceLength) { 
 		this.sortedNodes = new ArrayList<HGNode>();
 		HGNode goalItem = null;
 		
@@ -138,6 +138,7 @@ class Cell {
 		if (logger.isLoggable(Level.INFO)) {
 			if (null == goalItem) {
 				logger.severe("goalItem is null!");
+				return false;
 			} else {
 				logger.info(String.format("Sentence id=" + this.chart.segmentID +"; BestlogP=%.3f",
 					goalItem.bestHyperedge.bestDerivationLogP));
@@ -147,8 +148,11 @@ class Cell {
 		
 		int itemsInGoalBin = getSortedNodes().size();
 		if (1 != itemsInGoalBin) {		
-			throw new RuntimeException("the goal_bin does not have exactly one item");
+			logger.severe("the goal_bin does not have exactly one item");
+			return false;
 		}
+		
+		return true;
 	}
 	
 	

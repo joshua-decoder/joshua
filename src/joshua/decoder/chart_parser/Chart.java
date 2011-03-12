@@ -331,14 +331,13 @@ public class Chart {
 		logStatistics(Level.INFO);
 
 		// transition_final: setup a goal item, which may have many deductions
-		if (null != this.cells[0][foreignSentenceLength]) {
-			this.goalBin.transitToGoal(this.cells[0][foreignSentenceLength], this.featureFunctions, this.foreignSentenceLength);				
-		} else {
-			logger.severe(
-				"No complete item in the cell(0," + foreignSentenceLength + "); possible reasons: " +
+		if (null == this.cells[0][foreignSentenceLength] || !this.goalBin.transitToGoal(this.cells[0][foreignSentenceLength], 
+				this.featureFunctions, this.foreignSentenceLength)) 
+		{
+			logger.severe("No complete item in the Cell[0," + foreignSentenceLength + "]; possible reasons: " +
 				"(1) your grammar does not have any valid derivation for the source sentence; " +
-				"(2) too aggressive pruning");
-			System.exit(1);
+				"(2) too aggressive pruning.");
+			return null;
 		}
 		
 		if(logger.isLoggable(Level.FINE))
@@ -455,7 +454,8 @@ public class Chart {
 			labels.addAll(parseTree.getCcgLabels(i, j));
 			
 			for (int l : labels)
-				System.out.println("LABEL  " + symbolTable.getWord(l));
+				if (logger.isLoggable(Level.FINE)) 
+					logger.finest("Allowing label: " + symbolTable.getWord(l));
 			
 			filteredRules = new ArrayList<Rule>(sortedRules.size());
 			for (Rule r : sortedRules)
