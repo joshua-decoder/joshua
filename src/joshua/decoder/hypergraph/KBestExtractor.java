@@ -251,6 +251,7 @@ public class KBestExtractor {
 						try {
 							writer.write(hypStr);
 							writer.write("\n");
+							writer.flush();
 						} catch (IOException e) {
 							throw new UncheckedIOException(e);
 						}
