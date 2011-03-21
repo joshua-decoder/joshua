@@ -425,10 +425,8 @@ public class BuildParaphraseGrammar {
 				System.exit(1);
 			}
 			
-			if (from.no_lexical_tokens || from.adjacent_nts) {
-				System.err.println("ARR");
+			if (from.no_lexical_tokens || from.adjacent_nts)
 				return null;
-			}
 				
 			// glue rule feature - we don't produce glue grammars
 			merged[0] = 0;
