@@ -74,13 +74,13 @@ public class AggregateParaphraseGrammar {
 		while (grammarReader.ready()) {
 			String line = grammarReader.readLine();
 			
-			String[] fields = line.split("#");
-			if (fields[0].equals("@_COUNT") || fields.length != 4)
+			String[] fields = line.split(" \\|\\|\\| ");
+			if (fields.length != 4)
 				continue;
 			
-			String src = fields[0];
-			String tgt = fields[1];
-			String head = fields[2];
+			String head = fields[0];
+			String src = fields[1];
+			String tgt = fields[2];
 			
 			String[] feature_strings = fields[3].split("\\s");
 			double[] feature_values = new double[feature_strings.length];
@@ -140,37 +140,44 @@ public class AggregateParaphraseGrammar {
 		public void process() {
 			double[] a;
 			if (!HIERO_MODE)
-				a = new double[18];
+				a = new double[16];
 			else
-				a = new double[10];
+				a = new double[14];
+			
+			// initialize to neg-log zero / very high penalty.
+			a[3]  = 150;
+			a[4]  = 150;
+			a[5]  = 150;
+			a[6]  = 150;
+			if (!HIERO_MODE)
+				a[14] = 150;
 			
 			for (double[] fv : featureValues) {
-				a[0] = fv[0];
-				a[1] = fv[1];
-				a[2] = fv[2];
-				a[3] = logAdd(a[3], fv[3]);
-				a[4] = logAdd(a[4], fv[4]);
-				a[5] = fv[5];
-				a[6] = fv[6];
-				a[7] = fv[7];
-				a[8] = fv[8];
-				a[9] = fv[9];
+				a[0]  = fv[0];
+				a[1]  = fv[1];
+				a[2]  = fv[2];
+				a[3]  = negLogAdd(a[3], fv[3]);
+				a[4]  = negLogAdd(a[4], fv[4]);
+				a[5]  = negLogAdd(a[5], fv[5]);
+				a[6]  = negLogAdd(a[6], fv[6]);
+				a[7]  = fv[7];
+				a[8]  = fv[8];
+				a[9]  = fv[9];
 				a[10] = fv[10];
-				a[11] = Math.min(a[11], fv[11]);
+				a[11] = fv[11];
 				a[12] = fv[12];
+				a[13] = fv[13];
 				
-				a[13] = logAdd(a[13], fv[13]);
-				a[14] = logAdd(a[14], fv[14]);
-				a[15] = logAdd(a[15], fv[15]);
-				a[16] = logAdd(a[16], fv[16]);
-				
-				a[17] = fv[17];
+				if (!HIERO_MODE) {
+					a[14] = Math.min(a[14], fv[14]);
+					a[15] = fv[15];
+				}
 			}
 			
 			System.out.println(new ParaphraseRule(src, tgt, head, a));
 		}
 		
-		private double logAdd(double nlog_a, double nlog_b) {
+		private double negLogAdd(double nlog_a, double nlog_b) {
 			double log_a = -nlog_a;
 			double log_b = -nlog_b;
 			
@@ -200,12 +207,12 @@ public class AggregateParaphraseGrammar {
 		public String toString() {
 			// build rule output
 			StringBuffer rule_buffer = new StringBuffer();
-			rule_buffer.append(src);
-			rule_buffer.append("#");
-			rule_buffer.append(tgt);
-			rule_buffer.append("#");
 			rule_buffer.append(head);
-			rule_buffer.append("#");
+			rule_buffer.append(" ||| ");
+			rule_buffer.append(src);
+			rule_buffer.append(" ||| ");
+			rule_buffer.append(tgt);
+			rule_buffer.append(" ||| ");
 			for (double value : feature_values) {
 				rule_buffer.append(value);
 				rule_buffer.append(" ");
