@@ -220,10 +220,9 @@ public class BuildParaphraseGrammar {
 				}
 					
 				Collections.sort(paraphraseRules, c);
-				for (int k = 0; k < Math.min(TOP_K, paraphraseRules.size()); k++) {
-					ParaphraseRule a = paraphraseRules.get(k);
-					System.out.println(a.feature_values[3] + a.feature_values[4] + a.feature_values[5] + a.feature_values[6] + "\t" + paraphraseRules.get(k));
-				}
+				for (int k = 0; k < Math.min(TOP_K, paraphraseRules.size()); k++) 
+					System.out.println(paraphraseRules.get(k));
+				
 				GENERATED += Math.min(TOP_K, paraphraseRules.size());
 				if (paraphraseRules.size() > TOP_K) 
 					PRUNED_TOP_K += paraphraseRules.size() - TOP_K;
