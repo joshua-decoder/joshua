@@ -358,9 +358,9 @@ public class BuildParaphraseGrammar {
 				merged[2] = 0;
 			
 			// -log p(e2 | e1)
-			merged[3] = src[3] + tgt[5];
+			merged[3] = src[4] + tgt[5];
 			// -log p(e1 | e2)
-			merged[4] = src[5] + tgt[3];
+			merged[4] = src[5] + tgt[4];
 			
 			// -log lex(e2 | e1)
 			merged[5] = src[19] + tgt[21];
