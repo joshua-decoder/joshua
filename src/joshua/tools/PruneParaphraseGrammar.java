@@ -19,6 +19,8 @@ package joshua.tools;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -30,12 +32,14 @@ import joshua.util.io.LineReader;
  * 
  * @author Juri Ganitkevitch
  */
-public class AggregateParaphraseGrammar {
+public class PruneParaphraseGrammar {
 	
 	/** Logger for this class. */
-	private static final Logger	logger			= Logger.getLogger(AggregateParaphraseGrammar.class.getName());
+	private static final Logger	logger			= Logger.getLogger(PruneParaphraseGrammar.class.getName());
 	
-	private static boolean			HIERO_MODE	= false;
+	private static int          TOP_K				= 10;
+	private static int          ADMITTED		= 0;
+	private static int          PRUNED			= 0;
 	
 	/**
 	 * Main method.
@@ -48,9 +52,9 @@ public class AggregateParaphraseGrammar {
 	public static void main(String[] args) throws NumberFormatException, IOException {
 		
 		if (args.length < 1 || args[0].equals("-h")) {
-			System.err.println("Usage: " + AggregateParaphraseGrammar.class.toString());
+			System.err.println("Usage: " + PruneParaphraseGrammar.class.toString());
 			System.err.println("    -g grammar_file     paraphrase grammar to process");
-			System.err.println("   [-hiero              Hiero grammar mode]");
+			System.err.println("   [-k <int>            max number of alternatives for each rule ]");
 			System.err.println();
 			System.exit(-1);
 		}
@@ -60,8 +64,8 @@ public class AggregateParaphraseGrammar {
 		for (int i = 0; i < args.length; i++) {
 			if ("-g".equals(args[i]))
 				grammar_file_name = args[++i];
-			else if ("-hiero".equals(args[i]))
-				HIERO_MODE = true;
+			else if ("-k".equals(args[i]))
+				TOP_K = Integer.parseInt(args[++i]);
 		}
 		if (grammar_file_name == null) {
 			logger.severe("a grammar file is required for operation");
@@ -87,103 +91,73 @@ public class AggregateParaphraseGrammar {
 			for (int i = 0; i < feature_strings.length; i++)
 				feature_values[i] = Double.parseDouble(feature_strings[i]);
 			
+			ParaphraseRule pr = new ParaphraseRule(src, tgt, head, feature_values);
+			
 			if (current_batch.fits(src, tgt, head))
-				current_batch.add(feature_values);
+				current_batch.add(pr);
 			else {
 				current_batch.process();
-				current_batch = new RuleBatch(src, tgt, head, feature_values);
+				current_batch = new RuleBatch(pr);
 			}
 		}
 		current_batch.process();
+		System.err.println("Pruning completed. Statistics: \n" +
+				"\t" + PRUNED + " via top " + TOP_K + ".\n" +
+				"Total rules remaining: " + ADMITTED);
 	}
 	
 	static class RuleBatch {
 		
 		String											src		= null;
-		String											tgt   = null;
 		String											head	= null;
 		
-		List<double[]> featureValues;
+		List<ParaphraseRule> paraphraseRules;
 		
 		
 		public RuleBatch() {
-			featureValues = new ArrayList<double[]>();
+			paraphraseRules = new ArrayList<ParaphraseRule>();
 		}
 		
 
-		public RuleBatch(String src, String tgt, String head, double[] feature_values) {
+		public RuleBatch(ParaphraseRule pr) {
 			this();
 			
-			this.src = src;
-			this.tgt = tgt;
-			this.head = head;
+			this.src = pr.src;
+			this.head = pr.head;
 			
-			add(feature_values);
+			add(pr);
 		}
 
 		public boolean fits(String src, String tgt, String head) {
-			if (this.src == null || this.head == null || this.tgt == null) {
+			if (this.src == null || this.head == null) {
 				this.src = src;
-				this.tgt= tgt;
 				this.head = head;
 				
 				return true;
 			} else
-				return src.equals(this.src) && tgt.equals(this.tgt) && head.equals(this.head);
+				return src.equals(this.src) && head.equals(this.head);
 		}
 
-		public void add(double[] fv) {
-			featureValues.add(fv);
+		public void add(ParaphraseRule pr) {
+			paraphraseRules.add(pr);
 		}
 		
 		public void process() {
-			double[] a;
-			if (!HIERO_MODE)
-				a = new double[16];
-			else
-				a = new double[14];
-			
-			// initialize to neg-log zero / very high penalty.
-			a[3]  = 150;
-			a[4]  = 150;
-			a[5]  = 150;
-			a[6]  = 150;
-			if (!HIERO_MODE)
-				a[14] = 150;
-			
-			for (double[] fv : featureValues) {
-				a[0]  = fv[0];
-				a[1]  = fv[1];
-				a[2]  = fv[2];
-				a[3]  = negLogAdd(a[3], fv[3]);
-				a[4]  = negLogAdd(a[4], fv[4]);
-				a[5]  = negLogAdd(a[5], fv[5]);
-				a[6]  = negLogAdd(a[6], fv[6]);
-				a[7]  = fv[7];
-				a[8]  = fv[8];
-				a[9]  = fv[9];
-				a[10] = fv[10];
-				a[11] = fv[11];
-				a[12] = fv[12];
-				a[13] = fv[13];
-				
-				if (!HIERO_MODE) {
-					a[14] = Math.min(a[14], fv[14]);
-					a[15] = fv[15];
+			Comparator<ParaphraseRule> c = new Comparator<ParaphraseRule>() {
+				public int compare(ParaphraseRule a, ParaphraseRule b) {
+					double a_value = a.feature_values[3] + a.feature_values[4] + a.feature_values[5] + a.feature_values[6];
+					double b_value = b.feature_values[3] + b.feature_values[4] + b.feature_values[5] + b.feature_values[6];
+					return (a_value - b_value <= 0) ? -1 : 1;
 				}
-			}
-			
-			System.out.println(new ParaphraseRule(src, tgt, head, a));
-		}
-		
-		private double negLogAdd(double nlog_a, double nlog_b) {
-			double log_a = -nlog_a;
-			double log_b = -nlog_b;
-			
-			if (log_a < log_b)
-				return -(log_b + Math.log(1.0 + Math.exp(log_a - log_b)));
-			else
-				return -(log_a + Math.log(1.0 + Math.exp(log_b - log_a)));
+			};
+					
+			Collections.sort(paraphraseRules, c);
+			for (int k = 0; k < Math.min(TOP_K, paraphraseRules.size()); k++) 
+				System.out.println(paraphraseRules.get(k));
+				
+			ADMITTED += Math.min(TOP_K, paraphraseRules.size());
+			if (paraphraseRules.size() > TOP_K) 
+				PRUNED += paraphraseRules.size() - TOP_K;
 		}
 	}
 	
