@@ -4,7 +4,6 @@ import java.util.Arrays;
 import java.util.logging.Logger;
 
 import joshua.corpus.vocab.SymbolTable;
-import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.ff.tm.BilingualRule;
 import joshua.decoder.ff.tm.GrammarReader;
 
@@ -62,14 +61,6 @@ public class SamtFormatReader extends GrammarReader<BilingualRule> {
 			} else {
 				french[i] = symbolTable.addTerminal(foreignWords[i]);
 			}
-		}
-
-		// HACK: avoid source-side loop rules
-		// TODO: global lookup for goal symbol id would really help here
-		if ((french.length == 1) && (arity == 1)  
-				&& !adaptNonTerminalMarkup(fields[2]).equals(JoshuaConfiguration.goal_symbol)) 
-		{
-			return null;
 		}
 		
 		// english side
