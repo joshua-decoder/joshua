@@ -89,6 +89,11 @@ public class BuildParaphraseGrammar {
 			System.exit(-1);
 		}
 		
+		if (HIERO_MODE) {
+			MIN_COUNT = Math.exp(-MIN_COUNT);
+			MIN_COUNT = Math.exp(1 - MIN_COUNT);
+		}
+		
 		LineReader grammarReader = new LineReader(grammar_file_name);
 		RuleBatch current_batch = new RuleBatch();
 		
@@ -193,7 +198,9 @@ public class BuildParaphraseGrammar {
 				else					
 					translationRules.add(candidate);
 			} else {
-				if (candidate.feature_vector[9] > MIN_PROB)
+				if (candidate.feature_vector[9] > MIN_COUNT)
+					PRUNED_COUNT++;
+				else if (candidate.feature_vector[10] > MIN_PROB)
 					PRUNED_PROB++;
 				else
 					translationRules.add(candidate);
@@ -416,11 +423,11 @@ public class BuildParaphraseGrammar {
 			double[] src = from.feature_vector;
 			double[] tgt = to.feature_vector;
 			
-			double[] merged = new double[14];
+			double[] merged = new double[15];
 			
 			// TODO: more graceful and flexible handling of this
-			if (src.length != 13) {
-				logger.severe("number of features doesn't match up: expecting 13, seeing " + src.length);
+			if (src.length != 17) {
+				logger.severe("number of features doesn't match up: expecting 17, seeing " + src.length);
 				System.exit(1);
 			}
 			
@@ -438,9 +445,9 @@ public class BuildParaphraseGrammar {
 				merged[2] = 0;
 			
 			// -log p(e2 | e1)
-			merged[3] = src[9] + tgt[11];
+			merged[3] = src[10] + tgt[12];
 			// -log p(e1 | e2)
-			merged[4] = src[11] + tgt[9];
+			merged[4] = src[12] + tgt[10];
 			
 			// -log lex(e2 | e1)
 			merged[5] = src[5] + tgt[6];
@@ -465,6 +472,8 @@ public class BuildParaphraseGrammar {
 			merged[12] = (from.non_monotonic == to.non_monotonic) ? 0 : 1;
 			
 			merged[13] = to.avg_word_length - from.avg_word_length;
+			
+			merged[14] = Math.max(src[9], tgt[9]);
 			
 			// build rule target side
 			StringBuffer tgt_buffer = new StringBuffer();

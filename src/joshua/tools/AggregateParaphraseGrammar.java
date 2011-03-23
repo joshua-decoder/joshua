@@ -141,15 +141,14 @@ public class AggregateParaphraseGrammar {
 			if (!HIERO_MODE)
 				a = new double[16];
 			else
-				a = new double[14];
+				a = new double[15];
 			
 			// initialize to neg-log zero / very high penalty.
 			a[3]  = 150;
 			a[4]  = 150;
 			a[5]  = 150;
 			a[6]  = 150;
-			if (!HIERO_MODE)
-				a[14] = 150;
+			a[14] = 150;
 			
 			for (double[] fv : featureValues) {
 				a[0]  = fv[0];
@@ -166,11 +165,10 @@ public class AggregateParaphraseGrammar {
 				a[11] = fv[11];
 				a[12] = fv[12];
 				a[13] = fv[13];
+				a[14] = Math.min(a[14], fv[14]);
 				
-				if (!HIERO_MODE) {
-					a[14] = Math.min(a[14], fv[14]);
+				if (!HIERO_MODE)
 					a[15] = fv[15];
-				}
 			}
 			
 			System.out.println(new ParaphraseRule(src, tgt, head, a));
