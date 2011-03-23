@@ -37,9 +37,13 @@ public class PruneParaphraseGrammar {
 	/** Logger for this class. */
 	private static final Logger	logger			= Logger.getLogger(PruneParaphraseGrammar.class.getName());
 	
-	private static int          TOP_K				= 10;
-	private static int          ADMITTED		= 0;
-	private static int          PRUNED			= 0;
+	private static int					TOP_K				= 10;
+	private static double				EXP_CUTOFF	= 2.0;
+	
+	private static int					ADMITTED		= 0;
+	private static int					PRUNED			= 0;
+	private static int					PRUNED_EXP	= 0;
+	
 	
 	/**
 	 * Main method.
@@ -55,6 +59,7 @@ public class PruneParaphraseGrammar {
 			System.err.println("Usage: " + PruneParaphraseGrammar.class.toString());
 			System.err.println("    -g grammar_file     paraphrase grammar to process");
 			System.err.println("   [-k <int>            max number of alternatives for each rule ]");
+			System.err.println("   [-e <double>         exponential cutoff ]");
 			System.err.println();
 			System.exit(-1);
 		}
@@ -66,6 +71,8 @@ public class PruneParaphraseGrammar {
 				grammar_file_name = args[++i];
 			else if ("-k".equals(args[i]))
 				TOP_K = Integer.parseInt(args[++i]);
+			else if ("-e".equals(args[i]))
+				EXP_CUTOFF = Double.parseDouble(args[++i]);
 		}
 		if (grammar_file_name == null) {
 			logger.severe("a grammar file is required for operation");
@@ -101,17 +108,18 @@ public class PruneParaphraseGrammar {
 			}
 		}
 		current_batch.process();
-		System.err.println("Pruning completed. Statistics: \n" +
-				"\t" + PRUNED + " via top " + TOP_K + ".\n" +
-				"Total rules remaining: " + ADMITTED);
+		System.err.println("Pruning completed. Statistics: \n" 
+				+ "\t" + PRUNED + " pruned overall.\n" 
+				+ "\t" + PRUNED_EXP + " pruned via exp. " + EXP_CUTOFF + ".\n" 
+				+ "Total rules remaining: " + ADMITTED);
 	}
 	
 	static class RuleBatch {
 		
-		String											src		= null;
-		String											head	= null;
+		String								src		= null;
+		String								head	= null;
 		
-		List<ParaphraseRule> paraphraseRules;
+		List<ParaphraseRule>	paraphraseRules;
 		
 		
 		public RuleBatch() {
@@ -127,6 +135,7 @@ public class PruneParaphraseGrammar {
 			
 			add(pr);
 		}
+		
 
 		public boolean fits(String src, String tgt, String head) {
 			if (this.src == null || this.head == null) {
@@ -137,27 +146,34 @@ public class PruneParaphraseGrammar {
 			} else
 				return src.equals(this.src) && head.equals(this.head);
 		}
+		
 
 		public void add(ParaphraseRule pr) {
 			paraphraseRules.add(pr);
 		}
 		
+
 		public void process() {
 			Comparator<ParaphraseRule> c = new Comparator<ParaphraseRule>() {
 				public int compare(ParaphraseRule a, ParaphraseRule b) {
-					double a_value = a.feature_values[3] + a.feature_values[4] + a.feature_values[5] + a.feature_values[6];
-					double b_value = b.feature_values[3] + b.feature_values[4] + b.feature_values[5] + b.feature_values[6];
-					return (a_value - b_value <= 0) ? -1 : 1;
+					return (a.value() - b.value() <= 0) ? -1 : 1;
 				}
 			};
-					
+			
 			Collections.sort(paraphraseRules, c);
-			for (int k = 0; k < Math.min(TOP_K, paraphraseRules.size()); k++) 
+			
+			int k;
+			double best_val = paraphraseRules.get(0).value();
+			for (k = 0; k < Math.min(TOP_K, paraphraseRules.size()); k++) {
+				if (paraphraseRules.get(k).value() >= EXP_CUTOFF * best_val) {
+					PRUNED_EXP += paraphraseRules.size() - k;
+					break;
+				}
 				System.out.println(paraphraseRules.get(k));
-				
-			ADMITTED += Math.min(TOP_K, paraphraseRules.size());
-			if (paraphraseRules.size() > TOP_K) 
-				PRUNED += paraphraseRules.size() - TOP_K;
+			}
+			
+			ADMITTED += k;
+			PRUNED += paraphraseRules.size() - k;
 		}
 	}
 	
@@ -174,6 +190,11 @@ public class PruneParaphraseGrammar {
 			this.tgt = tgt;
 			this.head = head;
 			this.feature_values = feature_values;
+		}
+		
+
+		public double value() {
+			return feature_values[3] + feature_values[4] + feature_values[5] + feature_values[6];
 		}
 		
 
