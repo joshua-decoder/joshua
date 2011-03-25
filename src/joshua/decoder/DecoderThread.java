@@ -321,7 +321,7 @@ public class DecoderThread extends Thread {
 		{
 			// TODO: we should not use strings to decide what the input type is
 			final boolean looks_like_lattice   = segment.sentence().startsWith("(((");
-			final boolean looks_like_parse_tree = segment.sentence().startsWith("(TOP");
+			final boolean looks_like_parse_tree = segment.sentence().matches("^\\(+[A-Z]+ .*");
 			
 			Lattice<Integer> input_lattice = null;
 			SyntaxTree syntax_tree = null;
