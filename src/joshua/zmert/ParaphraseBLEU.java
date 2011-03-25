@@ -155,6 +155,9 @@ public class ParaphraseBLEU extends BLEU {
 	
 
 	public double score(int[] stats) {
+		
+		System.err.println("FITDFJFDIFIFKHGFHGFKHGFKHGFKH ");
+		
 		if (stats.length != suffStatsCount) {
 			logger.severe("Mismatch between stats.length and " +
 					"suffStatsCount (" + stats.length + " vs. " + suffStatsCount + 
@@ -168,6 +171,9 @@ public class ParaphraseBLEU extends BLEU {
 		double r_len = stats[suffStatsCount - 2];
 		
 		double wer = stats[suffStatsCount - 1] / c_len;
+		
+		System.err.println("WER: " + wer);
+		
 		double wer_penalty = (wer >= thresholdWER) ? 1.0 : (wer / thresholdWER);
 		
 		double correctGramCount, totalGramCount;
@@ -203,7 +209,7 @@ public class ParaphraseBLEU extends BLEU {
 		double wer_penalty = (wer >= thresholdWER) ? 1.0 : (wer / thresholdWER);
 		
 		System.out.println("WER_penalty = " + wer_penalty);
-		super.printDetailedScore_fromStats(stats, oneLiner);
+		System.out.println("PP_BLEU= " + score(stats));
 	}
 	
 
@@ -216,6 +222,17 @@ public class ParaphraseBLEU extends BLEU {
 	 * 
 	 */
 	private int getEditDistance(String[] candidate, String[] source) {
+		
+		System.err.print("HYP: ");
+		for (String c : candidate)
+			System.err.print(c + " ");
+		System.err.println();
+		
+		System.err.print("SRC: ");
+		for (String c : source)
+			System.err.print(c + " ");
+		System.err.println();
+		
 		// First check to see wheter either of the arrays
 		// is empty, in which case the least cost is simply
 		// the length of the other array (which would correspond
@@ -255,6 +272,9 @@ public class ParaphraseBLEU extends BLEU {
 				distances[i][j] = minimum(insertionCost, deletionCost, substitutionCost);
 			}
 		}
+		
+		System.err.println("DIST: " + distances[source.length][candidate.length]);
+		
 		// The point at the end will be the minimum edit distance.
 		return distances[source.length][candidate.length];
 	}
