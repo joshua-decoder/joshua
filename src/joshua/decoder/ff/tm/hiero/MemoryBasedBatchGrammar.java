@@ -188,7 +188,7 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
 		 * TM feature to be maximum
 		 */
 		if (JoshuaConfiguration.oov_feature_index != -1) {
-			feat_scores[JoshuaConfiguration.oov_feature_index] = 1.0f;
+			feat_scores[JoshuaConfiguration.oov_feature_index] = oovFeatureCost; //1.0f;
 		}
 		else if ((!use_max_lm_cost) && num_features > 0) {
 			feat_scores[0] = oovFeatureCost;
