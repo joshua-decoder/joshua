@@ -4,8 +4,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.logging.Logger;
 
-public class ParaphraseBLEU extends BLEU {
-	private static final Logger	logger	= Logger.getLogger(ParaphraseBLEU.class.getName());
+public class MinimumRequiredChangeBLEU extends BLEU {
+	private static final Logger	logger	= Logger.getLogger(MinimumRequiredChangeBLEU.class.getName());
 	
 	// we assume that the source for the paraphrasing run is
 	// part of the set of references
@@ -13,7 +13,7 @@ public class ParaphraseBLEU extends BLEU {
 	private double							thresholdWER;
 	
 	
-	public ParaphraseBLEU() {
+	public MinimumRequiredChangeBLEU() {
 		super();
 		this.sourceReferenceIndex = 0;
 		this.thresholdWER = 0.3;
@@ -21,7 +21,7 @@ public class ParaphraseBLEU extends BLEU {
 	}
 	
 
-	public ParaphraseBLEU(String[] options) {
+	public MinimumRequiredChangeBLEU(String[] options) {
 		super(options);
 		this.sourceReferenceIndex = Integer.parseInt(options[2]);
 		this.thresholdWER = Double.parseDouble(options[3]);
@@ -30,7 +30,7 @@ public class ParaphraseBLEU extends BLEU {
 	
 
 	protected void initialize() {
-		metricName = "PP_BLEU";
+		metricName = "MRC_BLEU";
 		toBeMinimized = false;
 		// adding 1 to the sufficient stats for regular BLEU
 		suffStatsCount = 2 * maxGramLength + 3;
@@ -208,8 +208,8 @@ public class ParaphraseBLEU extends BLEU {
 		double wer = stats[suffStatsCount - 1] / stats[suffStatsCount - 3];
 		double wer_penalty = (wer >= thresholdWER) ? 1.0 : (wer / thresholdWER);
 		
-//		System.out.println("WER_penalty = " + wer_penalty);
-//		System.out.println("PP_BLEU= " + score(stats));
+		System.out.println("WER_penalty = " + wer_penalty);
+		System.out.println("MRC_BLEU= " + score(stats));
 	}
 	
 
