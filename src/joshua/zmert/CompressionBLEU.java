@@ -172,7 +172,7 @@ public class CompressionBLEU extends BLEU {
 		
 		double cr = c_len / stats[suffStatsCount - 1];
 		
-		double compression_penalty = (cr > compressionRate) ? 0.0 : 1.0;
+		double compression_penalty = getCompressionPenalty(cr);
 		
 		double correctGramCount, totalGramCount;
 		
@@ -204,9 +204,21 @@ public class CompressionBLEU extends BLEU {
 	
 	public void printDetailedScore_fromStats(int[] stats, boolean oneLiner) {
 		double cr = (double) stats[suffStatsCount - 3] / stats[suffStatsCount - 1];
-		double compression_penalty = (cr > compressionRate) ? 0.0 : 1.0;
+		double compression_penalty = getCompressionPenalty(cr);
 		
 		System.out.println("CR_penalty = " + compression_penalty);
-		System.out.println("COMP_BLEU = " + score(stats));
+		System.out.println("COMP_BLEU  = " + score(stats));
 	}	
+	
+	protected double getCompressionPenalty(double cr) {
+		if (cr > 1.0)
+			return 0.0;
+		else if (cr <= compressionRate)
+			return 1.0;
+		else {
+			// linear option: (1 - cr) / (1 - compressionRate);
+			// doesn't penalize insufficient compressions hard enough
+			return Math.exp(10 * (compressionRate - cr));
+		}
+	}
 }
