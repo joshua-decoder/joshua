@@ -216,8 +216,8 @@ public class DecoderThread extends Thread {
 
 		// TODO: we should unwrapper SAXExceptions and give good error messages
                 // March 2011: reading from STDIN does not permit two passes ove
-                if (! testFile.equals("-")) {
-			segmentParser.parseSegmentFile(
+            if (! testFile.equals("-")) {
+                    segmentParser.parseSegmentFile(
 				LineReader.getInputStream(this.testFile),
 				new CoIterator<Segment>() {
 					public void coNext(Segment seg) {
