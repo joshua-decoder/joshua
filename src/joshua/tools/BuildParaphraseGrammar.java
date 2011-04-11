@@ -35,19 +35,20 @@ import joshua.util.io.LineReader;
 public class BuildParaphraseGrammar {
 	
 	/** Logger for this class. */
-	private static final Logger	logger			= Logger.getLogger(BuildParaphraseGrammar.class.getName());
+	private static final Logger	logger				= Logger.getLogger(BuildParaphraseGrammar.class.getName());
 	
-	private static boolean			HIERO_MODE	= false;
+	private static boolean			HIERO_MODE		= false;
 	
-	private static double 			MIN_COUNT		= -Math.log(3.0);
-	private static double				MIN_PROB		= -Math.log(0.0001);
-	private static int					TOP_K				= 25;
+	private static double				MIN_COUNT			= -Math.log(3.0);
+	private static double				MIN_PROB			= -Math.log(0.0001);
+	private static int					TOP_K					= 25;
 	
 	private static long					PRUNED_COUNT	= 0;
-	private static long         PRUNED_PROB		= 0;
+	private static long					PRUNED_PROB		= 0;
 	private static long					PRUNED_TOP_K	= 0;
 	
-	private static long					GENERATED    	= 0;
+	private static long					GENERATED			= 0;
+	
 	
 	/**
 	 * Main method.
@@ -113,8 +114,7 @@ public class BuildParaphraseGrammar {
 				tgt = fields[2];
 				head = fields[0];
 				feature_values = fields[3];
-			}
-			else {
+			} else {
 				src = fields[0];
 				tgt = fields[1];
 				head = adaptNonterminalMarkup(fields[2]);
@@ -130,25 +130,25 @@ public class BuildParaphraseGrammar {
 		}
 		current_batch.process();
 		
-		System.err.println("Pivoting completed. Pruning statistics: \n" +
-				"\t" + PRUNED_PROB + " via probability threshold (" + Math.exp(-MIN_PROB) + ").\n" +
-				"\t" + PRUNED_TOP_K + " via top " + TOP_K + ".\n" +
-				"\t" + PRUNED_COUNT + " via count threshold (" + Math.exp(-MIN_COUNT) + ").\n" +
+		System.err.println("Pivoting completed. Pruning statistics: \n" + 
+				"\t" + PRUNED_PROB + " via probability threshold (" + Math.exp(-MIN_PROB) + ").\n" + 
+				"\t" + PRUNED_TOP_K + " via top " + TOP_K + ".\n" + 
+				"\t" + PRUNED_COUNT + " via count threshold (" + Math.exp(-MIN_COUNT) + ").\n" + 
 				"Total rules generated: " + GENERATED);
 	}
 	
 	static class RuleBatch {
 		
-		String								src			= null;
-		String								head		= null;
-		String[]							NTs			= { null, null };
-		int										ntCount	= 0;
+		String									src			= null;
+		String									head		= null;
+		String[][]							NTs			= { { null, null }, { null, null } };
+		int											ntCount	= 0;
 		
-		List<TranslationRule>	translationRules;
+		List<PreParaphraseRule>	preParaphraseRules;
 		
 		
 		public RuleBatch() {
-			translationRules = new ArrayList<TranslationRule>();
+			preParaphraseRules = new ArrayList<PreParaphraseRule>();
 		}
 		
 
@@ -167,11 +167,21 @@ public class BuildParaphraseGrammar {
 		private void extractNTs() {
 			String[] src_tokens = src.split("\\s");
 			ntCount = 0;
-			for (String src_token : src_tokens)
-				if (!HIERO_MODE && src_token.startsWith("@"))
-					NTs[ntCount++] = adaptNonterminalMarkup(src_token, ntCount);
-				else if (HIERO_MODE && src_token.startsWith("[X,"))
-					NTs[ntCount++] = src_token;
+			if (HIERO_MODE) {
+				for (String src_token : src_tokens)
+					if (src_token.startsWith("[X,")) {
+						NTs[ntCount][0] = "[X,1]";
+						NTs[ntCount][1] = "[X,2]";
+						ntCount++;
+					}
+			} else {
+				for (String src_token : src_tokens)
+					if (src_token.startsWith("@")) {
+						NTs[ntCount][0] = adaptNonterminalMarkup(src_token, 1);
+						NTs[ntCount][1] = adaptNonterminalMarkup(src_token, 2);
+						ntCount++;
+					}
+			}
 		}
 		
 
@@ -187,7 +197,7 @@ public class BuildParaphraseGrammar {
 		
 
 		public void addRule(String tgt, String feature_values) {
-			TranslationRule candidate = new TranslationRule(tgt, feature_values, NTs, ntCount);
+			PreParaphraseRule candidate = new PreParaphraseRule(tgt, feature_values, NTs, ntCount);
 			
 			// pre-pruning - minimum count (for SAMT) and probability threshold
 			if (!HIERO_MODE) {
@@ -195,15 +205,15 @@ public class BuildParaphraseGrammar {
 					PRUNED_COUNT++;
 				else if (candidate.feature_vector[4] > MIN_PROB)
 					PRUNED_PROB++;
-				else					
-					translationRules.add(candidate);
+				else
+					preParaphraseRules.add(candidate);
 			} else {
 				if (candidate.feature_vector[9] > MIN_COUNT)
 					PRUNED_COUNT++;
 				else if (candidate.feature_vector[10] > MIN_PROB)
 					PRUNED_PROB++;
 				else
-					translationRules.add(candidate);
+					preParaphraseRules.add(candidate);
 			}
 		}
 		
@@ -219,45 +229,45 @@ public class BuildParaphraseGrammar {
 				}
 			};
 			
-			for (TranslationRule from : translationRules) {
-				for (TranslationRule to : translationRules) {
-					ParaphraseRule new_rule = (HIERO_MODE ? ParaphraseRule.pivotHieroStyle(from, to, head) : ParaphraseRule.pivotSamtStyle(from, to, head)); 
+			for (PreParaphraseRule from : preParaphraseRules) {
+				for (PreParaphraseRule to : preParaphraseRules) {
+					ParaphraseRule new_rule = (HIERO_MODE ? ParaphraseRule.pivotHieroStyle(from, to, head) : ParaphraseRule.pivotSamtStyle(from, to, head));
 					if (new_rule != null)
 						paraphraseRules.add(new_rule);
 				}
-					
+				
 				Collections.sort(paraphraseRules, c);
-				for (int k = 0; k < Math.min(TOP_K, paraphraseRules.size()); k++) 
+				for (int k = 0; k < Math.min(TOP_K, paraphraseRules.size()); k++)
 					System.out.println(paraphraseRules.get(k));
 				
 				GENERATED += Math.min(TOP_K, paraphraseRules.size());
-				if (paraphraseRules.size() > TOP_K) 
+				if (paraphraseRules.size() > TOP_K)
 					PRUNED_TOP_K += paraphraseRules.size() - TOP_K;
 				paraphraseRules.clear();
 			}
 		}
 	}
 	
-	static class TranslationRule {
+	static class PreParaphraseRule {
 		
-		String[]	tgt_tokens;
-		String[]	NTs;
-		double[]	feature_vector;
-		int				arity;
+		String[]		tgt_tokens;
+		String[][]	NTs;
+		double[]		feature_vector;
+		int					arity;
 		
-		String		sourceSide;
+		String			sourceSide;
 		
-		int				first_nt_pos			= -1;
-		int				second_nt_pos			= -1;
+		int					first_nt_pos			= -1;
+		int					second_nt_pos			= -1;
 		
-		boolean		non_monotonic			= false;
-		boolean		adjacent_nts			= false;
-		boolean		no_lexical_tokens	= false;
+		boolean			non_monotonic			= false;
+		boolean			adjacent_nts			= false;
+		boolean			no_lexical_tokens	= false;
 		
-		double    avg_word_length   = 0.0;
+		double			avg_word_length		= 0.0;
 		
 		
-		public TranslationRule(String tgt, String feature_values, String[] NTs, int nt_count) {
+		public PreParaphraseRule(String tgt, String feature_values, String[][] NTs, int nt_count) {
 			this.NTs = NTs;
 			this.arity = nt_count;
 			
@@ -268,15 +278,16 @@ public class BuildParaphraseGrammar {
 			for (int i = 0; i < feature_strings.length; i++)
 				feature_vector[i] = Double.parseDouble(feature_strings[i]);
 			
+			int nt_counter = 0;
 			StringBuffer source_side_buffer = new StringBuffer(tgt.length() + 10);
 			for (int j = 0; j < tgt_tokens.length; j++) {
 				if (HIERO_MODE) {
 					if (tgt_tokens[j].equals("[X,1]")) {
 						first_nt_pos = j;
-						source_side_buffer.append(NTs[0]);
+						source_side_buffer.append(NTs[0][nt_counter++]);
 					} else if (tgt_tokens[j].equals("[X,2]")) {
 						second_nt_pos = j;
-						source_side_buffer.append(NTs[1]);
+						source_side_buffer.append(NTs[1][nt_counter++]);
 					} else {
 						source_side_buffer.append(tgt_tokens[j]);
 						avg_word_length += tgt_tokens[j].length();
@@ -284,10 +295,10 @@ public class BuildParaphraseGrammar {
 				} else {
 					if (tgt_tokens[j].equals("@1")) {
 						first_nt_pos = j;
-						source_side_buffer.append(NTs[0]);
+						source_side_buffer.append(NTs[0][nt_counter++]);
 					} else if (tgt_tokens[j].equals("@2")) {
 						second_nt_pos = j;
-						source_side_buffer.append(NTs[1]);
+						source_side_buffer.append(NTs[1][nt_counter++]);
 					} else {
 						source_side_buffer.append(tgt_tokens[j]);
 						avg_word_length += tgt_tokens[j].length();
@@ -335,12 +346,12 @@ public class BuildParaphraseGrammar {
 				rule_buffer.append(" ");
 			}
 			rule_buffer.deleteCharAt(rule_buffer.length() - 1);
-
+			
 			return rule_buffer.toString();
 		}
 		
 
-		public static ParaphraseRule pivotSamtStyle(TranslationRule from, TranslationRule to, String rule_head) {
+		public static ParaphraseRule pivotSamtStyle(PreParaphraseRule from, PreParaphraseRule to, String rule_head) {
 			
 			// merge feature vectors
 			double[] src = from.feature_vector;
@@ -384,14 +395,14 @@ public class BuildParaphraseGrammar {
 			
 			// purely-lexical feature (rule body consists only of terminals)
 			merged[10] = (to.arity == 0 ? 1 : 0);
-
+			
 			// source terminals but no target terminals indicator
 			merged[11] = (!from.no_lexical_tokens && to.no_lexical_tokens) ? 1 : 0;
 			
 			// non-monotonicity penalty
 			merged[12] = (from.non_monotonic == to.non_monotonic) ? 0 : 1;
 			
-			merged[13] = to.avg_word_length - from.avg_word_length ;
+			merged[13] = to.avg_word_length - from.avg_word_length;
 			
 			// rareness penalty (we use the one for the rarer rule)
 			merged[14] = Math.max(src[17], tgt[17]);
@@ -399,25 +410,30 @@ public class BuildParaphraseGrammar {
 			// adjacent-NT feature
 			merged[15] = from.adjacent_nts ? 1 : 0;
 			
-			
+			String tgt_side;
 			// build rule target side
-			StringBuffer tgt_buffer = new StringBuffer();
-			for (int i = 0; i < to.tgt_tokens.length; i++) {
-				if (i == to.first_nt_pos)
-					tgt_buffer.append(!from.non_monotonic ? from.NTs[0] : from.NTs[1]);
-				else if (i == to.second_nt_pos)
-					tgt_buffer.append(!from.non_monotonic ? from.NTs[1] : from.NTs[0]);
-				else
-					tgt_buffer.append(to.tgt_tokens[i]);
-				tgt_buffer.append(" ");
+			if (from.non_monotonic == to.non_monotonic) {
+				tgt_side = to.sourceSide;
+			} else {
+				StringBuffer tgt_buffer = new StringBuffer();
+				for (int i = 0; i < to.tgt_tokens.length; i++) {
+					if (i == to.first_nt_pos)
+						tgt_buffer.append(from.NTs[0][1]);
+					else if (i == to.second_nt_pos)
+						tgt_buffer.append(from.NTs[1][1]);
+					else
+						tgt_buffer.append(to.tgt_tokens[i]);
+					tgt_buffer.append(" ");
+				}
+				tgt_buffer.deleteCharAt(tgt_buffer.length() - 1);
+				tgt_side = tgt_buffer.toString();
 			}
-			tgt_buffer.deleteCharAt(tgt_buffer.length() - 1);
 			
-			return new ParaphraseRule(from.sourceSide, tgt_buffer.toString(), rule_head, merged);
+			return new ParaphraseRule(from.sourceSide, tgt_side, rule_head, merged);
 		}
 		
 
-		public static ParaphraseRule pivotHieroStyle(TranslationRule from, TranslationRule to, String rule_head) {
+		public static ParaphraseRule pivotHieroStyle(PreParaphraseRule from, PreParaphraseRule to, String rule_head) {
 			
 			// merge feature vectors
 			double[] src = from.feature_vector;
@@ -433,7 +449,7 @@ public class BuildParaphraseGrammar {
 			
 			if (from.no_lexical_tokens || from.adjacent_nts)
 				return null;
-				
+			
 			// glue rule feature - we don't produce glue grammars
 			merged[0] = 0;
 			// rule application counter
@@ -492,17 +508,21 @@ public class BuildParaphraseGrammar {
 		}
 	}
 	
+	
 	protected static String adaptNonterminalMarkup(String nt, int index) {
 		// changes SAMT markup to Hiero-style
-		return "[" + nt.replaceAll(",", "_COMMA_")
-			.replaceAll("\\$", "_DOLLAR_")
-			.replaceAll("@", "") + "," + index + "]";
+		return "[" + nt.replaceAll(",", "_COMMA_").replaceAll("\\$", "_DOLLAR_").replaceAll("@", "") + "," + index + "]";
 	}
 	
+
 	protected static String adaptNonterminalMarkup(String nt) {
 		// changes SAMT markup to Hiero-style
-		return "[" + nt.replaceAll(",", "_COMMA_")
-			.replaceAll("\\$", "_DOLLAR_")
-			.replaceAll("@", "") + "]";
+		return "[" + nt.replaceAll(",", "_COMMA_").replaceAll("\\$", "_DOLLAR_").replaceAll("@", "") + "]";
+	}
+	
+
+	protected static String stripNonterminalMarkup(String nt) {
+		// changes SAMT markup to Hiero-style
+		return nt.replaceAll(",", "_COMMA_").replaceAll("\\$", "_DOLLAR_").replaceAll("@", "");
 	}
 }
