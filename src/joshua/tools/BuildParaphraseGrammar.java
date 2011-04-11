@@ -418,9 +418,9 @@ public class BuildParaphraseGrammar {
 				StringBuffer tgt_buffer = new StringBuffer();
 				for (int i = 0; i < to.tgt_tokens.length; i++) {
 					if (i == to.first_nt_pos)
-						tgt_buffer.append(from.NTs[0][1]);
+						tgt_buffer.append(from.NTs[0][(from.non_monotonic ? 1 : 0)]);
 					else if (i == to.second_nt_pos)
-						tgt_buffer.append(from.NTs[1][1]);
+						tgt_buffer.append(from.NTs[1][(from.non_monotonic ? 0 : 1)]);
 					else
 						tgt_buffer.append(to.tgt_tokens[i]);
 					tgt_buffer.append(" ");
@@ -495,9 +495,9 @@ public class BuildParaphraseGrammar {
 			StringBuffer tgt_buffer = new StringBuffer();
 			for (int i = 0; i < to.tgt_tokens.length; i++) {
 				if (i == to.first_nt_pos)
-					tgt_buffer.append(!from.non_monotonic ? "[X,1]" : "[X,2]");
+					tgt_buffer.append(from.non_monotonic ? "[X,2]" : "[X,1]");
 				else if (i == to.second_nt_pos)
-					tgt_buffer.append(!from.non_monotonic ? "[X,2]" : "[X,1]");
+					tgt_buffer.append(from.non_monotonic ? "[X,1]" : "[X,2]");
 				else
 					tgt_buffer.append(to.tgt_tokens[i]);
 				tgt_buffer.append(" ");
