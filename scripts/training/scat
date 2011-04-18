@@ -1,0 +1,14 @@
+#!/bin/bash
+
+# Smart cat: calls cat, zcat, or bzcat on each of a list of files, as
+# appropriate.
+
+for file in $@; do
+	if [[ "$file" =~ "\.gz$" ]]; then
+		zcat $file
+	elif [[ "$file" =~ "\.bz2$" ]]; then
+		bzcat $file
+	else
+		cat $file
+	fi
+done
