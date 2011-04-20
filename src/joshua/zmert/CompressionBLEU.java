@@ -10,13 +10,13 @@ public class CompressionBLEU extends BLEU {
 	// we assume that the source for the paraphrasing run is
 	// part of the set of references
 	private int									sourceReferenceIndex;
-	private double							compressionRate;
+	private double							targetCompressionRate;
 	
 	
 	public CompressionBLEU() {
 		super();
 		this.sourceReferenceIndex = 0;
-		this.compressionRate = 0.8;
+		this.targetCompressionRate = -1.0;
 		initialize();
 	}
 	
@@ -24,7 +24,7 @@ public class CompressionBLEU extends BLEU {
 	public CompressionBLEU(String[] options) {
 		super(options);
 		this.sourceReferenceIndex = Integer.parseInt(options[2]);
-		this.compressionRate = Double.parseDouble(options[3]);
+		this.targetCompressionRate = Double.parseDouble(options[3]);
 		initialize();
 	}
 	
@@ -35,8 +35,8 @@ public class CompressionBLEU extends BLEU {
 		// adding 1 to the sufficient stats for regular BLEU
 		suffStatsCount = 2 * maxGramLength + 3;
 		
-    set_weightsArray();
-    set_maxNgramCounts();
+		set_weightsArray();
+		set_maxNgramCounts();
 	}
 	
 
@@ -100,11 +100,11 @@ public class CompressionBLEU extends BLEU {
 			candidate_words = new String[0];
 		
 		// dropping "_OOV" marker
-		for (int j=0; j<candidate_words.length; j++) {
+		for (int j = 0; j < candidate_words.length; j++) {
 			if (candidate_words[j].endsWith("_OOV"))
-				candidate_words[j] = candidate_words[j].substring(0, candidate_words[j].length() - 4); 
+				candidate_words[j] = candidate_words[j].substring(0, candidate_words[j].length() - 4);
 		}
-
+		
 		set_prec_suffStats(stats, candidate_words, i);
 		String[] source_words = refSentences[i][sourceReferenceIndex].split("\\s+");
 		stats[suffStatsCount - 1] = source_words.length;
@@ -155,13 +155,9 @@ public class CompressionBLEU extends BLEU {
 	
 
 	public double score(int[] stats) {
-		
-//		System.err.println("YAY");
-		
+				
 		if (stats.length != suffStatsCount) {
-			logger.severe("Mismatch between stats.length and " +
-					"suffStatsCount (" + stats.length + " vs. " + suffStatsCount + 
-					") in COMP_BLEU.score(int[])");
+			logger.severe("Mismatch between stats.length and " + "suffStatsCount (" + stats.length + " vs. " + suffStatsCount + ") in COMP_BLEU.score(int[])");
 			System.exit(2);
 		}
 		
@@ -169,10 +165,11 @@ public class CompressionBLEU extends BLEU {
 		double smooth_addition = 1.0; // following bleu-1.04.pl
 		double c_len = stats[suffStatsCount - 3];
 		double r_len = stats[suffStatsCount - 2];
+		double i_len = stats[suffStatsCount - 1];
 		
-		double cr = c_len / stats[suffStatsCount - 1];
+		double cr = c_len / i_len;
 		
-		double compression_penalty = getCompressionPenalty(cr);
+		double compression_penalty = getCompressionPenalty(cr, (targetCompressionRate < 0 ? r_len/i_len : targetCompressionRate));
 		
 		double correctGramCount, totalGramCount;
 		
@@ -201,24 +198,30 @@ public class CompressionBLEU extends BLEU {
 		return compression_penalty * brevity_penalty * Math.exp(accuracy);
 	}
 	
-	
+
 	public void printDetailedScore_fromStats(int[] stats, boolean oneLiner) {
-		double cr = (double) stats[suffStatsCount - 3] / stats[suffStatsCount - 1];
-		double compression_penalty = getCompressionPenalty(cr);
+		double c_len = stats[suffStatsCount - 3];
+		double r_len = stats[suffStatsCount - 2];
+		double i_len = stats[suffStatsCount - 1];
+		
+		double cr = c_len / i_len;
+		
+		double compression_penalty = getCompressionPenalty(cr, (targetCompressionRate < 0 ? r_len/i_len : targetCompressionRate));
 		
 		System.out.println("CR_penalty = " + compression_penalty);
 		System.out.println("COMP_BLEU  = " + score(stats));
-	}	
+	}
 	
-	protected double getCompressionPenalty(double cr) {
+
+	protected static double getCompressionPenalty(double cr, double target_rate) {
 		if (cr > 1.0)
 			return 0.0;
-		else if (cr <= compressionRate)
+		else if (cr <= target_rate)
 			return 1.0;
 		else {
 			// linear option: (1 - cr) / (1 - compressionRate);
 			// doesn't penalize insufficient compressions hard enough
-			return Math.exp(10 * (compressionRate - cr));
+			return Math.exp(10 * (target_rate - cr));
 		}
 	}
 }

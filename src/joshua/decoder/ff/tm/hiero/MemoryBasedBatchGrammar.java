@@ -206,9 +206,6 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
 		return new BilingualRule(lhs, sourceWords, targetWords, scores, arity, this.defaultOwner, 0, getOOVRuleID());
 	}
 	
-	
-	
-	
 	/** 
 	 * if the span covered by the chart bin is greater than the
 	 * limit, then return false
