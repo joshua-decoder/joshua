@@ -63,7 +63,7 @@ public abstract class EvaluationMetric
 //    metricOptionCount.put("WER",0);
       // the "WER" metric expects an options array of length 0
     metricOptionCount.put("MRC_BLEU",4);
-    metricOptionCount.put("COMP_BLEU",4);
+    metricOptionCount.put("COMP_BLEU",5);
   }
 
   public static EvaluationMetric getMetric(String metricName, String[] metricOptions)

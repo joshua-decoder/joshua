@@ -11,12 +11,14 @@ public class CompressionBLEU extends BLEU {
 	// part of the set of references
 	private int									sourceReferenceIndex;
 	private double							targetCompressionRate;
+	private boolean             characterBased;
 	
 	
 	public CompressionBLEU() {
 		super();
 		this.sourceReferenceIndex = 0;
 		this.targetCompressionRate = -1.0;
+		this.characterBased = false;
 		initialize();
 	}
 	
@@ -25,6 +27,8 @@ public class CompressionBLEU extends BLEU {
 		super(options);
 		this.sourceReferenceIndex = Integer.parseInt(options[2]);
 		this.targetCompressionRate = Double.parseDouble(options[3]);
+		this.characterBased = Boolean.parseBoolean(options[4]);
+		
 		initialize();
 	}
 	
@@ -32,8 +36,8 @@ public class CompressionBLEU extends BLEU {
 	protected void initialize() {
 		metricName = "COMP_BLEU";
 		toBeMinimized = false;
-		// adding 1 to the sufficient stats for regular BLEU
-		suffStatsCount = 2 * maxGramLength + 3;
+		// adding 1 to the sufficient stats for regular BLEU - character-based compression requires extra stats
+		suffStatsCount = 2 * maxGramLength + 3 + (this.characterBased ? 2 : 0);
 		
 		set_weightsArray();
 		set_maxNgramCounts();
@@ -82,8 +86,6 @@ public class CompressionBLEU extends BLEU {
 		refWordCount = new int[numSentences][refsPerSen];
 		for (int i = 0; i < numSentences; ++i) {
 			for (int r = 0; r < refsPerSen; ++r) {
-				if (r == this.sourceReferenceIndex)
-					continue;
 				refWordCount[i][r] = wordCount(refSentences[i][r]);
 			}
 		}
@@ -106,16 +108,31 @@ public class CompressionBLEU extends BLEU {
 		}
 		
 		set_prec_suffStats(stats, candidate_words, i);
-		String[] source_words = refSentences[i][sourceReferenceIndex].split("\\s+");
-		stats[suffStatsCount - 1] = source_words.length;
-		stats[suffStatsCount - 2] = effLength(candidate_words.length, i);
-		stats[suffStatsCount - 3] = candidate_words.length;
+		if (this.characterBased) {
+			stats[suffStatsCount - 5] = candidate_words.length;
+			stats[suffStatsCount - 4] = effLength(candidate_words.length, i);
+
+			// candidate character length
+			stats[suffStatsCount - 3] = cand_str.length() - candidate_words.length + 1;
+			// reference character length
+			stats[suffStatsCount - 2] = effLength(stats[suffStatsCount - 3], i, true);
+			// source character length
+			stats[suffStatsCount - 1] = refSentences[i][sourceReferenceIndex].length() - refWordCount[i][sourceReferenceIndex] + 1;
+		}
+		else {
+			stats[suffStatsCount - 3] = candidate_words.length;
+			stats[suffStatsCount - 2] = effLength(candidate_words.length, i);
+			stats[suffStatsCount - 1] = refWordCount[i][sourceReferenceIndex];
+		}
 		
 		return stats;
 	}
 	
-
 	public int effLength(int candLength, int i) {
+		return effLength(candLength, i, false);
+	}
+
+	public int effLength(int candLength, int i, boolean character_length) {
 		if (effLengthMethod == EffectiveLengthMethod.CLOSEST) {
 			int closestRefLength = Integer.MIN_VALUE;
 			int minDiff = Math.abs(candLength - closestRefLength);
@@ -123,7 +140,7 @@ public class CompressionBLEU extends BLEU {
 			for (int r = 0; r < refsPerSen; ++r) {
 				if (r == this.sourceReferenceIndex)
 					continue;
-				int nextRefLength = refWordCount[i][r];
+				int nextRefLength = (character_length ? refSentences[i][r].length() - refWordCount[i][r] + 1 : refWordCount[i][r]);
 				int nextDiff = Math.abs(candLength - nextRefLength);
 				
 				if (nextDiff < minDiff) {
@@ -142,7 +159,7 @@ public class CompressionBLEU extends BLEU {
 				if (r == this.sourceReferenceIndex)
 					continue;
 				
-				int nextRefLength = refWordCount[i][r];
+				int nextRefLength = (character_length ? refSentences[i][r].length() - refWordCount[i][r] + 1 : refWordCount[i][r]);
 				if (nextRefLength < shortestRefLength) {
 					shortestRefLength = nextRefLength;
 				}
@@ -165,11 +182,11 @@ public class CompressionBLEU extends BLEU {
 		double smooth_addition = 1.0; // following bleu-1.04.pl
 		double c_len = stats[suffStatsCount - 3];
 		double r_len = stats[suffStatsCount - 2];
-		double i_len = stats[suffStatsCount - 1];
+		double s_len = stats[suffStatsCount - 1];
+				
+		double cr = c_len / s_len;
 		
-		double cr = c_len / i_len;
-		
-		double compression_penalty = getCompressionPenalty(cr, (targetCompressionRate < 0 ? r_len/i_len : targetCompressionRate));
+		double compression_penalty = getCompressionPenalty(cr, (targetCompressionRate < 0 ? r_len/s_len : targetCompressionRate));
 		
 		double correctGramCount, totalGramCount;
 		
@@ -192,6 +209,9 @@ public class CompressionBLEU extends BLEU {
 			accuracy += weights[n] * Math.log(prec_n);
 		}
 		double brevity_penalty = 1.0;
+		c_len = stats[2 * maxGramLength];
+		r_len = stats[2 * maxGramLength + 1];
+		
 		if (c_len < r_len)
 			brevity_penalty = Math.exp(1 - (r_len / c_len));
 		
