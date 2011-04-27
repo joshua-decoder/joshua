@@ -71,7 +71,7 @@ public class JoshuaConfiguration {
 	public static boolean use_pos_labels             = false;
 	
 	// oov-specific
-  public static float   oov_feature_cost           = 100;
+    public static float   oov_feature_cost           = 100;
 	public static boolean use_max_lm_cost_for_oov    = false;
 	public static int     oov_feature_index          = -1;
 
@@ -231,7 +231,6 @@ public class JoshuaConfiguration {
 						
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("glue format: %s", glue_format));
-					
 //				} else if ("sa_source".equals(fds[0])) {
 //					sa_source = fds[1].trim();
 //					if (logger.isLoggable(Level.FINEST))

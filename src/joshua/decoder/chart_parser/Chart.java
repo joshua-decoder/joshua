@@ -52,6 +52,7 @@ import joshua.lattice.Node;
  * 
  * Signatures of class:
  * Cell: i, j
+
  * SuperNode (used for CKY check): i,j, lhs
  * HGNode ("or" node): i,j, lhs, edge ngrams
  * HyperEdge ("and" node)
@@ -342,6 +343,7 @@ public class Chart {
 		
 		if(logger.isLoggable(Level.FINE))
 			logger.fine("Finished expand");
+
 		return new HyperGraph(this.goalBin.getSortedNodes().get(0), -1, -1, this.segmentID, foreignSentenceLength);
 	}
 	
