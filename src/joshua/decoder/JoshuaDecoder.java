@@ -207,7 +207,7 @@ public class JoshuaDecoder {
 	 * Decode a whole test set. This may be parallel.
 	 *
 	 * @param testFile
-	 * @param nbestFile
+	 * @param nbestFileD
 	 * @param oracleFile
 	 */
 	public void decodeTestSet(String testFile, String nbestFile, String oracleFile) throws IOException {
@@ -499,21 +499,23 @@ public class JoshuaDecoder {
 		if (logger.isLoggable(Level.INFO))
 			logger.info("Using grammar read from file " + JoshuaConfiguration.tm_file);
 		
-		MemoryBasedBatchGrammar gr = new MemoryBasedBatchGrammar(
-				JoshuaConfiguration.tm_format,
-				JoshuaConfiguration.tm_file,
-				this.symbolTable,
-				JoshuaConfiguration.phrase_owner,
-				JoshuaConfiguration.default_non_terminal,
-				JoshuaConfiguration.span_limit,
-				JoshuaConfiguration.oov_feature_cost);
-		this.grammarFactories.add(gr);
+        if (! JoshuaConfiguration.use_sent_specific_tm) {
+            MemoryBasedBatchGrammar gr = new MemoryBasedBatchGrammar(
+					JoshuaConfiguration.tm_format,
+                    JoshuaConfiguration.tm_file,
+                    this.symbolTable,
+                    JoshuaConfiguration.phrase_owner,
+                    JoshuaConfiguration.default_non_terminal,
+                    JoshuaConfiguration.span_limit,
+                    JoshuaConfiguration.oov_feature_cost);
+            this.grammarFactories.add(gr);
 		
-		if(JoshuaConfiguration.useRuleIDName){
-			if(this.ruleStringToIDTable==null)
-				this.ruleStringToIDTable = new HashMap<String,Integer>();
-			gr.obtainRulesIDTable(this.ruleStringToIDTable, this.symbolTable);			
-		}
+            if(JoshuaConfiguration.useRuleIDName){
+                if(this.ruleStringToIDTable==null)
+                    this.ruleStringToIDTable = new HashMap<String,Integer>();
+                gr.obtainRulesIDTable(this.ruleStringToIDTable, this.symbolTable);			
+            }
+        }
 	}
 	
 	
