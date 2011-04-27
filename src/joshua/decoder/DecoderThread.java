@@ -391,6 +391,7 @@ public class DecoderThread extends Thread {
 			passthrough_buffer.append("||| 0.0\n");
 			
 			this.nbestWriter.write(passthrough_buffer.toString());
+			this.nbestWriter.flush();
 			
 			return;
 		}
