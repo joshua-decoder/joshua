@@ -4,13 +4,21 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.logging.Logger;
 
+// The metric re-uses most of the BLEU code
 public class CompressionBLEU extends BLEU {
 	private static final Logger	logger	= Logger.getLogger(CompressionBLEU.class.getName());
 	
 	// we assume that the source for the paraphrasing run is
-	// part of the set of references
+	// part of the set of references, this is its index
 	private int									sourceReferenceIndex;
+	
+	// a global target compression rate to achieve
+	// if negative, we default to locally aiming for the compression
+	// rate given by the (closest) reference compression
 	private double							targetCompressionRate;
+	
+	// are we optimizing for character-based compression (as opposed
+	// to token-based)
 	private boolean             characterBased;
 	
 	
@@ -22,7 +30,9 @@ public class CompressionBLEU extends BLEU {
 		initialize();
 	}
 	
-
+  // we're requiring the BLEU arguments (that's 2) plus
+	// 3 of our own (see above) - the total is registered with
+	// ZMERT in EvaluationMetric, line ~66
 	public CompressionBLEU(String[] options) {
 		super(options);
 		this.sourceReferenceIndex = Integer.parseInt(options[2]);
@@ -32,7 +42,11 @@ public class CompressionBLEU extends BLEU {
 		initialize();
 	}
 	
-
+  // in addition to BLEU's statistics, we store some length info;
+	// for character-based compression we need to store more (for token-based
+	// BLEU already has us partially covered by storing some num_of_words)
+	//
+	// here's where you'd make additional room for statistics of your own
 	protected void initialize() {
 		metricName = "COMP_BLEU";
 		toBeMinimized = false;
@@ -43,7 +57,8 @@ public class CompressionBLEU extends BLEU {
 		set_maxNgramCounts();
 	}
 	
-
+	// the only difference to BLEU here is that we're excluding the input from 
+	// the collection of ngram statistics - that's actually up for debate
 	protected void set_maxNgramCounts() {
 		@SuppressWarnings("unchecked")
 		HashMap<String, Integer>[] temp_HMA = new HashMap[numSentences];
@@ -91,7 +106,7 @@ public class CompressionBLEU extends BLEU {
 		}
 	}
 	
-
+  // computation of statistics
 	public int[] suffStats(String cand_str, int i) {
 		int[] stats = new int[suffStatsCount];
 		
@@ -109,6 +124,7 @@ public class CompressionBLEU extends BLEU {
 		
 		set_prec_suffStats(stats, candidate_words, i);
 		if (this.characterBased) {
+			// same as BLEU
 			stats[suffStatsCount - 5] = candidate_words.length;
 			stats[suffStatsCount - 4] = effLength(candidate_words.length, i);
 
@@ -120,8 +136,11 @@ public class CompressionBLEU extends BLEU {
 			stats[suffStatsCount - 1] = refSentences[i][sourceReferenceIndex].length() - refWordCount[i][sourceReferenceIndex] + 1;
 		}
 		else {
+			// same as BLEU
 			stats[suffStatsCount - 3] = candidate_words.length;
 			stats[suffStatsCount - 2] = effLength(candidate_words.length, i);
+			
+			// one more for the source length
 			stats[suffStatsCount - 1] = refWordCount[i][sourceReferenceIndex];
 		}
 		
@@ -132,6 +151,7 @@ public class CompressionBLEU extends BLEU {
 		return effLength(candLength, i, false);
 	}
 
+  // hacked to be able to return character length upon request
 	public int effLength(int candLength, int i, boolean character_length) {
 		if (effLengthMethod == EffectiveLengthMethod.CLOSEST) {
 			int closestRefLength = Integer.MIN_VALUE;
@@ -170,7 +190,7 @@ public class CompressionBLEU extends BLEU {
 		return candLength; // should never get here anyway
 	}
 	
-
+  // calculate the actual score from the statistics
 	public double score(int[] stats) {
 				
 		if (stats.length != suffStatsCount) {
@@ -188,8 +208,8 @@ public class CompressionBLEU extends BLEU {
 		
 		double compression_penalty = getCompressionPenalty(cr, (targetCompressionRate < 0 ? r_len/s_len : targetCompressionRate));
 		
+		// this part matches BLEU
 		double correctGramCount, totalGramCount;
-		
 		for (int n = 1; n <= maxGramLength; ++n) {
 			correctGramCount = stats[2 * (n - 1)];
 			totalGramCount = stats[2 * (n - 1) + 1];
@@ -215,10 +235,11 @@ public class CompressionBLEU extends BLEU {
 		if (c_len < r_len)
 			brevity_penalty = Math.exp(1 - (r_len / c_len));
 		
+		// we tack on our penalty on top of BLEU
 		return compression_penalty * brevity_penalty * Math.exp(accuracy);
 	}
 	
-
+  // somewhat not-so-detailed, this is used in the JoshuaEval tool
 	public void printDetailedScore_fromStats(int[] stats, boolean oneLiner) {
 		double c_len = stats[suffStatsCount - 3];
 		double r_len = stats[suffStatsCount - 2];
@@ -232,7 +253,8 @@ public class CompressionBLEU extends BLEU {
 		System.out.println("COMP_BLEU  = " + score(stats));
 	}
 	
-
+	// returns the score penalty as a function of the achieved and target compression rates
+	// currently an exponential fall-off to make sure the not compressing enough is costly
 	protected static double getCompressionPenalty(double cr, double target_rate) {
 		if (cr > 1.0)
 			return 0.0;
