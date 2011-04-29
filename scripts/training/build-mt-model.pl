@@ -20,10 +20,14 @@ my $RUNDIR = $STARTDIR = getcwd;
 my $GRAMMAR = "hiero";
 my $HADOOP = $ENV{HADOOP};
 
+# this file should exist in the Joshua mert templates file; it contains
+# the Joshua command invoked by MERT
+my $DECODER_COMMAND_FILE = "decoder_command.qsub";
+
 # for hadoop java subprocesses (heap amount)
 # you really just have to play around to find out how much is enough 
 my $HADOOP_MEM = "8G";  
-my $JOSHUA_MEM = "32g";
+my $JOSHUA_MEM = "3400m";
 
 my $options = GetOptions(
   "corpus=s" => \@CORPORA,
@@ -246,30 +250,81 @@ $cachepipe->cmd("filter-tune",
 				"tune/tune.$FR.tok.lc", 
 				"tune/grammar.filtered.gz");
 
+$cachepipe->cmd("filter-tune-sentence-level",
+				"rundir=tune corpus=tune.$FR.tok.lc grammar=grammar.filtered.gz $SCRIPTDIR/filter_grammar_to_sentences.sh",
+				"tune/grammar.filtered.gz");
+
 $cachepipe->cmd("glue-tune",
 				"$SCRIPTDIR/training/scat tune/grammar.filtered.gz | $ENV{THRAX}/scripts/create_glue_grammar.sh thrax-$GRAMMAR.conf > tune/grammar.glue",
 				"tune/grammar.filtered.gz",
 				"tune/grammar.glue");
 
 mkdir("mert") unless -d "mert";
-my @mertfiles = qw(decoder_command joshua.config mert.config params.txt);
+my @mertfiles = ($DECODER_COMMAND_FILE,'joshua.config','mert.config','params.txt');
 foreach my $file (@mertfiles) {
-  open FROM, "$MERTCONFDIR/$file" or die;
-  open TO, ">mert/$file" or die;
+  open FROM, "$MERTCONFDIR/$file" or die "can't find file '$MERTCONFDIR/$file'";
+  open TO, ">mert/$file" or die "can't write to file 'mert/$file'";
   while (<FROM>) {
 	s/<FR>/$FR/g;
+	s/<EN>/$EN/g;
 	s/<LMFILE>/$LMFILE/g;
 	s/<MEM>/$JOSHUA_MEM/g;
 	s/<GRAMMAR>/$GRAMMAR/g;
 	s/<OOV>/$OOV/g;
-
+	s/<NUMJOBS>/50/g;
 	print TO;
   }
 }
+system("mv mert/$DECODER_COMMAND_FILE mert/decoder_command") 
+	if ($DECODER_COMMAND_FILE ne "decoder_command");
 chmod(0755,"mert/decoder_command");
 
 $cachepipe->cmd("mert",
-				"java -d64 -cp $ENV{JOSHUA}/bin joshua.zmert.ZMERT -maxMem 1500 mert/mert.config",
+				"java -d64 -cp $ENV{JOSHUA}/bin joshua.zmert.ZMERT -maxMem 1500 mert/mert.config > mert.log 2>&1",
 				map { "mert/$_" } @mertfiles);
 
+## Decode the dev set
+DEV:
 
+# make sure the data is prepared; was called above already if the
+# script was run all the way through, but it's cached, so it doesn't
+# hurt to call it again
+prepare_data("dev",[$DEV]);
+
+# filter the development grammar
+$cachepipe->cmd("filter-dev",
+				"$SCRIPTDIR/training/scat grammar.gz | $ENV{THRAX}/scripts/filter_rules.sh 12 dev/dev.$FR.tok.lc | gzip -9 > dev/grammar.filtered.gz",
+				"grammar.gz", 
+				"dev/dev.$FR.tok.lc", 
+				"dev/grammar.filtered.gz");
+
+$cachepipe->cmd("filter-dev-sentence-level",
+				"rundir=dev corpus=dev.$FR.tok.lc grammar=grammar.filtered.gz $SCRIPTDIR/filter_grammar_to_sentences.sh",
+				"dev/grammar.filtered.gz");
+
+$cachepipe->cmd("glue-dev",
+				"$SCRIPTDIR/training/scat tune/grammar.filtered.gz | $ENV{THRAX}/scripts/create_glue_grammar.sh thrax-$GRAMMAR.conf > tune/grammar.glue",
+				"tune/grammar.filtered.gz",
+				"tune/grammar.glue");
+
+# copy the config file
+$cachepipe->cmd("dev-joshua-config",
+				"cat mert/joshua.config.ZMERT.final | perl -pe 's#tune/#dev/#' > dev/joshua.config",
+				"mert/joshua.config.ZMERT.final",
+				"dev/joshua.config");
+
+# decode development set
+$cachepipe->cmd("dev-decoder-cmd",
+				"cat mert/decoder_command | perl -pe 's#tune/tune#dev/dev#; s#mert/#dev/#g;' > dev/decoder_command",
+				"mert/decoder_command",
+				"dev/decoder_command");
+
+$cachepipe->cmd("dev-decode",
+				"./dev/decoder_command",
+				"dev/decoder_command",
+				"dev/dev.output.nbest");
+
+# java -cp $JOSHUA/bin -Dfile.encoding=utf8 joshua.util.ExtractTopCand devtest.out.nbest devtest.out
+
+# # score
+#  java -cp $JOSHUA/bin -Djava.library.path=lib -Xmx1000m -Xms1000m      -Djava.util.logging.config.file=logging.properties      joshua.util.JoshuaEval      -cand dev.out      -ref ../tune/tune.en.tok.lc     -m BLEU 4 closest
