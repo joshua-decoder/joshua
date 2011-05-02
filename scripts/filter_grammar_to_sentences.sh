@@ -49,9 +49,18 @@ else
 	# start all the qsub jobs
 	[[ ! -d "filtered" ]] && mkdir filtered
 	numlines=$(cat $corpus | wc -l)
-	# for sentno in $(seq 1 $numlines); do
 	for sentno in $(seq 1 $numlines); do
-		qsub -cwd -l num_proc=2 -q cpu.q -v sentno=$sentno,corpus=$corpus ./filter.sh
+		qsub -cwd -l num_proc=2 -q cpu.q -v sentno=$sentno,corpus=$corpus $JOSHUA/scripts/filter_grammar_to_sentences.sh
 	done
 
+	# wait for the last grammar to be finished (note: presents a
+	# slight but unlikely race condition, since the last sentence
+	# won't necessarily be the last grammar to be finished writing,
+	# and it might not be done)
+	numfound=$(ls filtered/ | wc -l)
+	while test $numfound -ne $numlines; do
+		echo "waiting for all subprocesses to finish (have $numfound / $numlines)..."
+		sleep 60
+		numfound=$(ls filtered/ | wc -l)
+	done
 fi
