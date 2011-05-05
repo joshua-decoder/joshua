@@ -22,6 +22,14 @@ set -u
 : ${corpus=tune.de.tok.lc}
 : ${grammar=../grammar.filtered.gz}
 
+startdir=$(pwd)
+if test "$corpus" !~ "^/"; then
+	corpus="$startdir/$corpus"
+fi
+if test "$grammar" !~ "^/"; then
+	grammar="$startdir/$grammar"
+fi
+
 cd $rundir
 
 if ! test -e "$corpus"; then
