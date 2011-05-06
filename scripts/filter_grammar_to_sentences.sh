@@ -23,10 +23,10 @@ set -u
 : ${grammar=../grammar.filtered.gz}
 
 startdir=$(pwd)
-if test "$corpus" !~ "^/"; then
+if [[ ! $corpus =~ "^/" ]]; then
 	corpus="$startdir/$corpus"
 fi
-if test "$grammar" !~ "^/"; then
+if [[ ! $grammar =~ "^/" ]]; then
 	grammar="$startdir/$grammar"
 fi
 
