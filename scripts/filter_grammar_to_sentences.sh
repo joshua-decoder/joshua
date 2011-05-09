@@ -22,6 +22,7 @@ set -u
 : ${corpus=tune.de.tok.lc}
 : ${grammar=../grammar.filtered.gz}
 
+# make $corpus and $grammar into complete path names (if not already)
 startdir=$(pwd)
 if [[ ! $corpus =~ "^/" ]]; then
 	corpus="$startdir/$corpus"
@@ -30,6 +31,7 @@ if [[ ! $grammar =~ "^/" ]]; then
 	grammar="$startdir/$grammar"
 fi
 
+# chdir to $rundir
 cd $rundir
 
 if ! test -e "$corpus"; then
@@ -47,7 +49,7 @@ if test $sentno -gt -1; then
 
 	# cache the filtering step
 	tmpfile=.tmp.$sentno
-	/home/hltcoe/mpost/bin/mid $sentno ../$corpus > $tmpfile
+	/home/hltcoe/mpost/bin/mid $sentno $corpus > $tmpfile
 	cachecmd filter-$sentno "gzip -cd $grammar | $THRAX/scripts/filter_rules.sh 12 $tmpfile | gzip -9 > grammar.filtered.$minus.gz" $grammar grammar.filtered.$minus.gz
 	rm -f $tmpfile
 
@@ -58,7 +60,7 @@ else
 	[[ ! -d "filtered" ]] && mkdir filtered
 	numlines=$(cat $corpus | wc -l)
 	for sentno in $(seq 1 $numlines); do
-		qsub -cwd -l num_proc=2 -q cpu.q -v sentno=$sentno,corpus=$corpus $JOSHUA/scripts/filter_grammar_to_sentences.sh
+		qsub -cwd -l num_proc=2 -q cpu.q -v sentno=$sentno,corpus=$corpus,grammar=$grammar $JOSHUA/scripts/filter_grammar_to_sentences.sh
 	done
 
 	# wait for the last grammar to be finished (note: presents a
