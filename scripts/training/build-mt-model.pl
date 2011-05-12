@@ -44,7 +44,15 @@ my $HADOOP = $ENV{HADOOP};
 
 # this file should exist in the Joshua mert templates file; it contains
 # the Joshua command invoked by MERT
-my $DECODER_COMMAND_FILE = "decoder_command.qsub";
+my $JOSHUA_CONFIG_ORIG   = "$MERTCONFDIR/joshua.config";
+my %MERTFILES = (
+  'decoder_command' => "$MERTCONFDIR/decoder_command",
+  'joshua.config'   => $JOSHUA_CONFIG_ORIG,
+  'params.txt'      => "$MERTCONFDIR/params.txt",
+  'mert.config'     => "$MERTCONFDIR/mert.config"
+);
+
+my $DO_MBR = 1;
 
 # for hadoop java subprocesses (heap amount)
 # you really just have to play around to find out how much is enough 
@@ -53,22 +61,25 @@ my $JOSHUA_MEM = "3400m";
 my $QSUB_ARGS  = "-l num_proc=2";
 
 my $options = GetOptions(
-  "corpus=s" 	 => \@CORPORA,
-  "tune=s"   	 => \$TUNE,
-  "test=s"        => \$TEST,
-  "alignment=s"  => \$ALIGNMENT,
-  "fr=s"     	 => \$FR,
-  "en=s"     	 => \$EN,
-  "rundir=s" 	 => \$RUNDIR,
-  "lmfile=s" 	 => \$LMFILE,
-  "grammar=s"    => \$GRAMMAR_FILE,
-  "type=s"       => \$GRAMMAR_TYPE,
-  "maxlen=i" 	 => \$MAXLEN,
-  "tokenizer=s"  => \$TOKENIZER,
-  "subsample!"   => \$DO_SUBSAMPLE,
-  "qsub-args=s"  => \$QSUB_ARGS,
-  "first-step=s" => \$FIRST_STEP,
-  "last-step=s"  => \$LAST_STEP,
+  "corpus=s" 	 	  => \@CORPORA,
+  "tune=s"   	 	  => \$TUNE,
+  "test=s"            => \$TEST,
+  "alignment=s"  	  => \$ALIGNMENT,
+  "fr=s"     	 	  => \$FR,
+  "en=s"     	 	  => \$EN,
+  "rundir=s" 	 	  => \$RUNDIR,
+  "lmfile=s" 	 	  => \$LMFILE,
+  "grammar=s"    	  => \$GRAMMAR_FILE,
+  "mbr!"              => \$DO_MBR,
+  "type=s"       	  => \$GRAMMAR_TYPE,
+  "maxlen=i" 	 	  => \$MAXLEN,
+  "tokenizer=s"  	  => \$TOKENIZER,
+  "joshua-config=s"   => \$MERTFILES{'joshua.config'},
+  "decoder-command=s" => \$MERTFILES{'decoder_command'},
+  "subsample!"   	  => \$DO_SUBSAMPLE,
+  "qsub-args=s"  	  => \$QSUB_ARGS,
+  "first-step=s" 	  => \$FIRST_STEP,
+  "last-step=s"  	  => \$LAST_STEP,
 );
 
 $| = 1;
@@ -320,12 +331,12 @@ $cachepipe->cmd("glue-tune",
 				"tune/grammar.glue");
 
 mkdir("mert") unless -d "mert";
-my @mertfiles = ($DECODER_COMMAND_FILE,'joshua.config','mert.config','params.txt');
-foreach my $file (@mertfiles) {
-  open FROM, "$MERTCONFDIR/$file" or die "can't find file '$MERTCONFDIR/$file'";
-  open TO, ">mert/$file" or die "can't write to file 'mert/$file'";
+foreach my $key (keys %MERTFILES) {
+  my $file = $MERTFILES{$key};
+  open FROM, $file or die "can't find file '$file'";
+  open TO, ">mert/$key" or die "can't write to file 'mert/$key'";
   while (<FROM>) {
-	s/<TUNE>/$TUNE{fr}/g;
+	s/<INPUT>/$TUNE{fr}/g;
 	s/<FR>/$FR/g;
 	s/<EN>/$EN/g;
 	s/<LMFILE>/$LMFILE/g;
@@ -334,26 +345,55 @@ foreach my $file (@mertfiles) {
 	s/<OOV>/$OOV/g;
 	s/<NUMJOBS>/50/g;
 	s/<QSUB_ARGS>/$QSUB_ARGS/g;
+	s/<OUTPUT>/mert\/tune.output.nbest/g;
 	print TO;
   }
+  close(FROM);
+  close(TO);
 }
-system("mv mert/$DECODER_COMMAND_FILE mert/decoder_command") 
-	if ($DECODER_COMMAND_FILE ne "decoder_command");
 chmod(0755,"mert/decoder_command");
 
 # run MERT
 $cachepipe->cmd("mert",
 				"java -d64 -cp $ENV{JOSHUA}/bin joshua.zmert.ZMERT -maxMem 4500 mert/mert.config > mert.log 2>&1",
 				"tune/grammar.filtered.gz",
-				map { "mert/$_" } @mertfiles);
+				map { "mert/$_" } (keys %MERTFILES));
 
 # remove sentence-level Joshua files
 #system("rm -rf tune/filtered/");
 
 maybe_quit("MERT");
 
+# set joshua config file location for testing
+# $JOSHUA_CONFIG = "mert/joshua.config.ZMERT.final";
+
+# copy the config file for testing (since we know we're not quitting
+# at the MERT step)
+if ($LAST_STEP ne "MERT") {
+  $cachepipe->cmd("test-joshua-config",
+				  "cat mert/joshua.config | perl -pe 's#tune/#test/#; s/mark_oovs=false/mark_oovs=true/' > test/joshua.config",
+				  $MERTFILES{'joshua.config'},
+				  "test/joshua.config");
+}
+
 ## Decode the test set
 TEST:
+
+mkdir("test") unless -d "test";
+
+## sanity checking
+# if we jumped in here, make sure a joshua.config file was specified
+if ($FIRST_STEP eq "TEST") {
+  if ($MERTFILES{'joshua.config'} eq $JOSHUA_CONFIG_ORIG) {
+	print "* FATAL: you need to specify a joshua.config (--joshua-config)\n";
+	exit 1;
+  }
+
+  $cachepipe->cmd("test-joshua-config",
+				  "cp $MERTFILES{'joshua.config'} test/joshua.config",
+				  $MERTFILES{'joshua.config'},
+				  "test/joshua.config");
+}
 
 # filter the test grammar
 $cachepipe->cmd("filter-test",
@@ -363,8 +403,9 @@ $cachepipe->cmd("filter-test",
 				"test/grammar.filtered.gz");
 
 $cachepipe->cmd("filter-test-sentence-level",
-				"rundir=test corpus=test/test.$FR.tok.lc grammar=test/grammar.filtered.gz $SCRIPTDIR/filter_grammar_to_sentences.sh",
-				"test/grammar.filtered.gz");
+				"rundir=test corpus=$TEST{fr} grammar=test/grammar.filtered.gz $SCRIPTDIR/filter_grammar_to_sentences.sh",
+				"test/grammar.filtered.gz",
+				"test/filtered/grammar.filtered.0.gz");
 
 copy_thrax_file();
 $cachepipe->cmd("glue-test",
@@ -372,17 +413,28 @@ $cachepipe->cmd("glue-test",
 				"test/grammar.filtered.gz",
 				"test/grammar.glue");
 
-# copy the config file
-$cachepipe->cmd("test-joshua-config",
-				"cat mert/joshua.config.ZMERT.final | perl -pe 's#tune/#test/#; s/mark_oovs=false/mark_oovs=true/' > test/joshua.config",
-				"mert/joshua.config.ZMERT.final",
-				"test/joshua.config");
+# decode test set
+foreach my $key (qw(decoder_command)) {
+  my $file = $MERTFILES{$key};
+  open FROM, $file or die "can't find file '$file'";
+  open TO, ">test/$key" or die "can't write to 'test/$key'";
+  while (<FROM>) {
+	s/<INPUT>/$TEST{fr}/g;
+	s/<NUMJOBS>/50/g;
+	s/<QSUB_ARGS>/$QSUB_ARGS/g;
+	s/<OUTPUT>/test\/test.output.nbest/g;
+	s/<FR>/$FR/g;
+	s/<EN>/$EN/g;
+	s/<LMFILE>/$LMFILE/g;
+	s/<MEM>/$JOSHUA_MEM/g;
+	s/<GRAMMAR>/$GRAMMAR_TYPE/g;
+	s/<OOV>/$OOV/g;
 
-# decode development set
-$cachepipe->cmd("test-decoder-cmd",
-				"cat mert/decoder_command | perl -pe 's#$TUNE{fr}#$TEST{fr}#; s#mert/#test/#g; s#lm_file=.*#lm_file=$LMFILE' > test/decoder_command",
-				"mert/decoder_command",
-				"test/decoder_command");
+	print TO;
+  }
+  close(FROM);
+  close(TO);
+}
 chmod(0755,"test/decoder_command");
 
 $cachepipe->cmd("test-decode",
@@ -392,13 +444,20 @@ $cachepipe->cmd("test-decode",
 				"test/grammar.filtered.gz",
 				"test/test.output.nbest");
 
-$cachepipe->cmd("test-extract-onebest",
-				"java -cp $ENV{JOSHUA}/bin -Dfile.encoding=utf8 joshua.util.ExtractTopCand test/test.output.nbest test/test.output.1best",
-				"test/test.output.nbest", "test/test.output.1best");
+if ($DO_MBR) {
+  $cachepipe->cmd("test-onebest-mbr", "java -cp $ENV{JOSHUA}/bin -Xmx1700m -Xms1700m joshua.decoder.NbestMinRiskReranker test/test.output.nbest test/test.output.1best false 1",
+				  "test/test.output.nbest", "test/test.output.1best");
+} else {
+  $cachepipe->cmd("test-extract-onebest",
+				  "java -cp $ENV{JOSHUA}/bin -Dfile.encoding=utf8 joshua.util.ExtractTopCand test/test.output.nbest test/test.output.1best",
+				  "test/test.output.nbest", "test/test.output.1best");
+}
 
 $cachepipe->cmd("test-bleu",
 				"java -cp $ENV{JOSHUA}/bin -Djava.library.path=lib -Xmx1000m -Xms1000m -Djava.util.logging.config.file=logging.properties joshua.util.JoshuaEval -cand test/test.output.1best -ref $TEST{en} -m BLEU 4 closest > test/test.output.1best.bleu",
 				"test/test.output.1best", "test/test.output.1best.bleu");
+
+system("cat test/test.output.1best.bleu");
 				
 ######################################################################
 ## SUBROUTINES #######################################################
