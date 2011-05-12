@@ -28,7 +28,9 @@ use File::Basename;
 use Cwd;
 use CachePipe;
 
-my (@CORPORA,$TUNE,$TEST,$ALIGNMENT,$FR,$EN,$LMFILE,$FIRST_STEP,$LAST_STEP,$GRAMMAR_FILE);
+my (@CORPORA,$TUNE,$TEST,$ALIGNMENT,$FR,$EN,$LMFILE,$GRAMMAR_FILE);
+my $FIRST_STEP = "FIRST";
+my $LAST_STEP  = "LAST";
 my $LMFILTER = "$ENV{HOME}/code/filter/filter";
 my $MAXLEN = 50;
 my $DO_SUBSAMPLE = ''; # default false
@@ -60,6 +62,15 @@ my $HADOOP_MEM = "8G";
 my $JOSHUA_MEM = "3400m";
 my $QSUB_ARGS  = "-l num_proc=2";
 
+my %STEPS = (
+  FIRST => 1,
+  GIZA => 2,
+  THRAX => 3,
+  MERT => 4,
+  TEST => 5,
+  LAST => 6,
+);
+
 my $options = GetOptions(
   "corpus=s" 	 	  => \@CORPORA,
   "tune=s"   	 	  => \$TUNE,
@@ -88,12 +99,14 @@ my $cachepipe = new CachePipe();
 
 ## Sanity Checking ###################################################
 
-if (! defined $TUNE) {
+if (! defined $TUNE and ($STEPS{$FIRST_STEP} > $STEPS{MERT}
+						 or $STEPS{$LAST_STEP} < $STEPS{MERT})) { 
   print "* FATAL: need a tuning set (--tune)\n";
   exit 1;
 }
 
-if (! defined $TEST) {
+if (! defined $TEST and ($STEPS{$FIRST_STEP} <= $STEPS{TEST}
+						 and $STEPS{$LAST_STEP} >= $STEPS{TEST})) {
   print "* FATAL: need a test set (--test)\n";
   exit 1;
 }
@@ -136,7 +149,7 @@ $TUNE{en} = "$TUNE.$EN";
 $TEST{fr} = "$TEST.$FR";
 $TEST{en} = "$TEST.$EN";
 
-if ($FIRST_STEP) {
+if ($FIRST_STEP > $STEPS{FIRST_STEP}) {
   if (@CORPORA > 1) {
 	print "* FATAL: you can't skip steps if you specify more than one --corpus\n";
 	exit(1);
@@ -152,6 +165,7 @@ if ($FIRST_STEP) {
 }
 
 ## STEP 1: filter and preprocess corpora #############################
+FIRST:
 
 if (@CORPORA == 0) {
   print "* FATAL: need at least one training corpus (--corpus)\n";
@@ -462,6 +476,8 @@ system("cat test/test.output.1best.bleu");
 ######################################################################
 ## SUBROUTINES #######################################################
 ######################################################################
+LAST:
+1;
 
 sub copy_thrax_file {
   $cachepipe->cmd("thrax-config",
