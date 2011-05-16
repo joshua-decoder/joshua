@@ -146,10 +146,12 @@ if (@CORPORA) {
 $TUNE{fr} = "$TUNE.$FR";
 $TUNE{en} = "$TUNE.$EN";
 
-$TEST{fr} = "$TEST.$FR";
-$TEST{en} = "$TEST.$EN";
+if ($TEST) {
+  $TEST{fr} = "$TEST.$FR";
+  $TEST{en} = "$TEST.$EN";
+}
 
-if ($FIRST_STEP > $STEPS{FIRST_STEP}) {
+if ($FIRST_STEP ne "FIRST") {
   if (@CORPORA > 1) {
 	print "* FATAL: you can't skip steps if you specify more than one --corpus\n";
 	exit(1);
@@ -180,12 +182,12 @@ $TRAIN{en} = "train/corpus.$EN";
 
 # prepare the tuning and development data
 prepare_data("tune",[$TUNE]);
-$TUNE{fr} = "tune/tune.$FR.tok.lc";
-$TUNE{en} = "tune/tune.$EN.tok.lc";
+$TUNE{fr} = "tune/tune..tok.lc.$FR";
+$TUNE{en} = "tune/tune.tok.lc.$EN";
 
 prepare_data("test",[$TEST]);
-$TEST{fr} = "test/test.$FR.tok.lc";
-$TEST{en} = "test/test.$EN.tok.lc";
+$TEST{fr} = "test/test.tok.lc.$FR";
+$TEST{en} = "test/test.tok.lc.$EN";
 
 # subsample
 if ($DO_SUBSAMPLE) {
@@ -219,7 +221,7 @@ if ($DO_SUBSAMPLE) {
 } else {
   foreach my $lang ($EN,$FR) {
 	$cachepipe->cmd("link-corpus-$lang",
-					"ln -sf train.$lang.tok.$MAXLEN.lc train/corpus.$lang",
+					"ln -sf train.tok.$MAXLEN.lc.$lang train/corpus.$lang",
 					"train/corpus.$lang");
   }
 }
@@ -310,10 +312,12 @@ if (! defined $LMFILE) {
 	exit(1);
   }
 
-  $cachepipe->cmd("cp-lmfile",
-				  "cp $LMFILE lm.gz",
-				  $LMFILE, "lm.gz");
-  $LMFILE = "lm.gz";
+  if ($LMFILE ne "lm.gz") {
+	$cachepipe->cmd("cp-lmfile",
+					"cp $LMFILE lm.gz",
+					$LMFILE, "lm.gz");
+	$LMFILE = "lm.gz";
+  }
 }
 
 # filter the tuning LM to the training side of the data (if possible)
@@ -344,6 +348,16 @@ $cachepipe->cmd("glue-tune",
 				"tune/grammar.filtered.gz",
 				"tune/grammar.glue");
 
+# figure out how many references there are
+my $numrefs = 1;
+if (! -e $TUNE{en}) {
+  my $index = 0;
+  while (-e "$TUNE{en}.$index") {
+	$index++;
+  }
+  $numrefs = $index;
+}
+
 mkdir("mert") unless -d "mert";
 foreach my $key (keys %MERTFILES) {
   my $file = $MERTFILES{$key};
@@ -360,6 +374,8 @@ foreach my $key (keys %MERTFILES) {
 	s/<NUMJOBS>/50/g;
 	s/<QSUB_ARGS>/$QSUB_ARGS/g;
 	s/<OUTPUT>/mert\/tune.output.nbest/g;
+	s/<REF>/$TUNE{en}/g;
+	s/<NUMREFS>/$numrefs/g;
 	print TO;
   }
   close(FROM);
@@ -371,6 +387,7 @@ chmod(0755,"mert/decoder_command");
 $cachepipe->cmd("mert",
 				"java -d64 -cp $ENV{JOSHUA}/bin joshua.zmert.ZMERT -maxMem 4500 mert/mert.config > mert.log 2>&1",
 				"tune/grammar.filtered.gz",
+				"mert/joshua.config.ZMERT.final",
 				map { "mert/$_" } (keys %MERTFILES));
 
 # remove sentence-level Joshua files
@@ -517,39 +534,45 @@ sub prepare_data {
   mkdir $label unless -d $label;
 
   # copy the data from its original location to our location
-  foreach my $lang ($EN,$FR) {
-	my @files = map { "$_.$lang" } @$corpora;
-	my $files = join(" ",@files);
-	$cachepipe->cmd("$label-copy-$lang",
-					"cat $files > $label/$label.$lang",
-					@files, "$label/$label.$lang");
+  foreach my $lang ($EN,$FR,"$EN.0","$EN.1","$EN.2","$EN.3") {
+	  my @files = map { "$_.$lang" } @$corpora;
+	  my $files = join(" ",@files);
+	  if (-e $files[0]) {
+		$cachepipe->cmd("$label-copy-$lang",
+						"cat $files > $label/$label.$lang",
+						@files, "$label/$label.$lang");
+	  }
   }
 
   # tokenize the data
-  foreach my $lang ($EN,$FR) {
-	$cachepipe->cmd("$label-tokenize-$lang",
-					"$SCRIPTDIR/training/scat $label/$label.$lang | $TOKENIZER -l $lang > $label/$label.$lang.tok 2> /dev/null",
-					"$label/$label.$lang", "$label/$label.$lang.tok"
-		);
+  foreach my $lang ($EN,$FR,"$EN.0","$EN.1","$EN.2","$EN.3") {
+	if (-e "$label/$label.$lang") {
+	  $cachepipe->cmd("$label-tokenize-$lang",
+					  "$SCRIPTDIR/training/scat $label/$label.$lang | $TOKENIZER -l $lang > $label/$label.tok.$lang 2> /dev/null",
+					  "$label/$label.$lang", "$label/$label.tok.$lang"
+		  );
+	}
   }
 
-  my $affix = "";
+  my $infix = "";
   if ($maxlen and $label eq "train") {
 	# trim training data
 	$cachepipe->cmd("train-trim",
-					"$SCRIPTDIR/training/trim_parallel_corpus.pl $label/$label.$EN.tok $label/$label.$FR.tok $maxlen > $label/$label.$EN.tok.$maxlen 2> $label/$label.$FR.tok.$maxlen",
-					"$label/$label.$EN.tok", "$label/$label.$FR.tok",
-					"$label/$label.$EN.tok.$maxlen", "$label/$label.$FR.tok.$maxlen",
+					"$SCRIPTDIR/training/trim_parallel_corpus.pl $label/$label.tok.$EN $label/$label.tok.$FR $maxlen > $label/$label.tok.$maxlen.$EN 2> $label/$label.tok.$maxlen.$FR",
+					"$label/$label.tok.$EN", "$label/$label.tok.$FR",
+					"$label/$label.tok.$maxlen.$EN", "$label/$label.tok.$maxlen.$FR",
 		);
-	$affix = ".$maxlen";
+	$infix = ".$maxlen";
   }
 
   # lowercase
-  foreach my $lang ($EN,$FR) {
-	$cachepipe->cmd("$label-lowercase-$lang",
- 					"cat $label/$label.$lang.tok$affix | $SCRIPTDIR/lowercase.perl > $label/$label.$lang.tok$affix.lc",
-					"$label/$label.$lang.tok$affix",
-					"$label/$label.$lang.tok$affix.lc");
+  foreach my $lang ($EN,$FR,"$EN.0","$EN.1","$EN.2","$EN.3") {
+	if (-e "$label/$label.$lang") {
+	  $cachepipe->cmd("$label-lowercase-$lang",
+					  "cat $label/$label.tok$infix.$lang | $SCRIPTDIR/lowercase.perl > $label/$label.tok$infix.lc.$lang",
+					  "$label/$label.tok$infix.$lang",
+					  "$label/$label.tok$infix.lc.$lang");
+	}
   }
 }
 
