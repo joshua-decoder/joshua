@@ -50,7 +50,7 @@ if test $sentno -gt -1; then
 	# cache the filtering step
 	tmpfile=.tmp.$sentno
 	/home/hltcoe/mpost/bin/mid $sentno $corpus > $tmpfile
-	cachecmd filter-$sentno "gzip -cd $grammar | $THRAX/scripts/filter_rules.sh 12 $tmpfile | gzip -9 > grammar.filtered.$minus.gz" $grammar grammar.filtered.$minus.gz
+	cachecmd filter-$sentno "gzip -cd $grammar | $THRAX/scripts/filter_rules.sh $tmpfile | gzip -9 > grammar.filtered.$minus.gz" $grammar grammar.filtered.$minus.gz
 	rm -f $tmpfile
 
 else
