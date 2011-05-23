@@ -4,7 +4,6 @@ import java.util.Arrays;
 import java.util.logging.Logger;
 
 import joshua.corpus.vocab.SymbolTable;
-import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.ff.tm.BilingualRule;
 import joshua.decoder.ff.tm.GrammarReader;
 
@@ -22,13 +21,9 @@ public class HieroFormatReader extends GrammarReader<BilingualRule> {
 		description = "Original Hiero format";
 	}
 	
-	// TODO: all this is very terrible and will go away.. ..soon.
-	private static int GOAL_ID;
 	
 	public HieroFormatReader(String grammarFile, SymbolTable vocabulary) {
 		super(grammarFile, vocabulary);
-		
-		GOAL_ID = symbolTable.addNonterminal(JoshuaConfiguration.goal_symbol);
 	}
 
 	@Override
@@ -64,11 +59,6 @@ public class HieroFormatReader extends GrammarReader<BilingualRule> {
 			}
 		}
 
-		// TODO: temporary filter to remove unlicensed terminal insertions or deletions 
-		if ((english.length == arity || french.length == arity) && english.length != french.length) {
-			return null;
-		}
-		
 		// feature scores
 		String[] scores = fields[3].split("\\s+");
 		float[] feature_scores = new float[scores.length];

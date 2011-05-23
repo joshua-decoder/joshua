@@ -418,6 +418,157 @@ public class DecoderThread extends Thread {
 					+ ((double)(System.currentTimeMillis() - startTime) / 1000.0)
 					+ " seconds");
 		}
+
+		
+		// TODO: we should also have the CoIterator<Segment> test compatibility with 
+		// a given grammar, e.g. count of grammatical feature functions match, 
+		// nonterminals match,...
+		
+		// TODO: we may also want to validate that all segments have different ids
+		
+	
+		//=== Translate the test file
+		this.nbestWriter = FileUtility.getWriteFileStream(this.nbestFile);		
+		try {
+			try {
+				// This method will analyze the input file (to generate segments), and 
+				// then translate segments one by one 
+				segmentParser.parseSegmentFile(
+					LineReader.getInputStream(this.testFile),
+					new TranslateCoiterator(
+						null == this.oracleFile
+							? new NullReader<String>()
+							: new LineReader(this.oracleFile)
+					)
+				);
+			} catch (UncheckedIOException e) {
+				e.throwCheckedException();
+			}
+		} finally {
+			this.nbestWriter.flush();
+			this.nbestWriter.close();
+		}
+	}
+	
+	/**
+	 * This coiterator is for calling the DecoderThread.translate
+	 * method on each Segment to be translated. All interface
+	 * methods can throw {@link UncheckedIOException}, which
+	 * should be converted back into a {@link IOException} once
+	 * it's possible.
+	 */
+	private class TranslateCoiterator implements CoIterator<Segment> {
+		// TODO: it would be nice if we could somehow push this into the 
+		// parseSegmentFile call and use a coiterator over some subclass 
+		// of Segment which has another method for returning the oracular 
+		// sentence. That may take some work though, since Java hates 
+		// mixins so much.
+		private Reader<String> oracleReader;
+		
+		public TranslateCoiterator(Reader<String> oracleReader) {
+			this.oracleReader = oracleReader;
+		}
+		
+		public void coNext(Segment segment) {
+			try {
+
+				if (logger.isLoggable(Level.FINE))
+					logger.fine("Segment id: " + segment.id());
+				
+				DecoderThread.this.translate(
+					segment, this.oracleReader.readLine());
+				
+			} catch (IOException ioe) {
+				throw new UncheckedIOException(ioe);
+			}
+		}
+		
+		public void finish() {
+			try {
+				this.oracleReader.close();
+			} catch (IOException ioe) {
+				throw new UncheckedIOException(ioe);
+			}
+		}
+	} // End inner class TranslateCoiterator
+	
+	
+	/**
+	 * Translate a sentence.
+	 *
+	 * @param segment The sentence to be translated.
+	 * @param oracleSentence
+	 */
+	private void translate(Segment segment, String oracleSentence)
+	throws IOException {
+		long startTime = 0;
+		if (logger.isLoggable(Level.FINER))
+			startTime = System.currentTimeMillis();
+		if (logger.isLoggable(Level.FINE))
+			logger.fine("now translating\n" + segment.sentence());
+		
+		Chart chart; 
+		
+		final boolean looks_like_lattice;
+		final boolean looks_like_parse_tree;
+		
+		Lattice<Integer> input_lattice = null;
+		SyntaxTree syntax_tree = null;
+		Pattern sentence = null;
+		
+		{
+			// TODO: we should not use strings to decide what the input type is
+			looks_like_lattice    = segment.sentence().startsWith("(((");
+			looks_like_parse_tree = segment.sentence().matches("^\\(+[A-Z]+ .*");
+			
+			if (!looks_like_lattice) {
+				int[] int_sentence;
+				if (looks_like_parse_tree) {
+					syntax_tree = new ArraySyntaxTree(segment.sentence(), symbolTable);
+					int_sentence = syntax_tree.getTerminals();
+				} else {
+					int_sentence = this.symbolTable.getIDs(segment.sentence());
+				}
+				if (logger.isLoggable(Level.FINEST)) 
+					logger.finest("Converted \"" + segment.sentence() + "\" into " + Arrays.toString(int_sentence));
+				input_lattice = Lattice.createLattice(int_sentence);
+				sentence = new Pattern(this.symbolTable, int_sentence);
+			} else {
+				input_lattice = Lattice.createFromString(segment.sentence(), this.symbolTable);
+				sentence = null; // TODO: suffix array needs to accept lattices!
+			}
+			if (logger.isLoggable(Level.FINEST)) 
+				logger.finest("Translating input lattice:\n" + input_lattice.toString());
+
+			Grammar[] grammars = new Grammar[grammarFactories.size()];
+			for (int i = 0; i<grammarFactories.size(); i++) {
+				grammars[i] = grammarFactories.get(i).getGrammarForSentence(sentence);
+				// For batch grammar, we do not want to sort it every time
+				if (!grammars[i].isSorted()) {
+					System.out.println("!!!!!!!!!!!! called again");
+					// TODO: check to see if this is ever called here. It probably is not
+					grammars[i].sortGrammar(this.featureFunctions);
+				}
+			}
+			
+			/* Seeding: the chart only sees the grammars, not the factories */
+			chart = new Chart(
+				input_lattice,
+				this.featureFunctions,
+				this.stateComputers,
+				this.symbolTable,
+				Integer.parseInt(segment.id()),
+				grammars,
+				this.useMaxLMCostForOOV,
+				JoshuaConfiguration.goal_symbol,
+				segment.constraints(),
+				syntax_tree);
+			
+			if (logger.isLoggable(Level.FINER))
+				logger.finer("after seed, time: "
+					+ ((double)(System.currentTimeMillis() - startTime) / 1000.0)
+					+ " seconds");
+		}
 		
 		/* Parsing */
 		HyperGraph hypergraph = chart.expand();
@@ -427,7 +578,18 @@ public class DecoderThread extends Thread {
 			StringBuffer passthrough_buffer = new StringBuffer();
 			passthrough_buffer.append(Integer.parseInt(segment.id()));
 			passthrough_buffer.append(" ||| ");
-			passthrough_buffer.append(segment.sentence());
+			
+			if (looks_like_parse_tree) {
+				int[] word_ids = syntax_tree.getTerminals();
+				for (int i=0; i<word_ids.length-1; i++) {
+					passthrough_buffer.append(symbolTable.getWord(word_ids[i]));
+					passthrough_buffer.append(" ");
+				}
+				passthrough_buffer.append(symbolTable.getWord(word_ids[word_ids.length-1]));
+			}
+			else		
+				passthrough_buffer.append(segment.sentence());
+			
 			passthrough_buffer.append(" ||| ");
 			for (int i=0; i<this.featureFunctions.size(); i++)
 				passthrough_buffer.append("0.0 ");
@@ -467,7 +629,6 @@ public class DecoderThread extends Thread {
 				hypergraph, this.featureFunctions,
 				JoshuaConfiguration.topN,
 				Integer.parseInt(segment.id()), this.nbestWriter);
-
 			if (logger.isLoggable(Level.FINER))
 				logger.finer("after k-best, time: "
 				+ ((double)(System.currentTimeMillis() - startTime) / 1000.0)

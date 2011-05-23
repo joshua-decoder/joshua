@@ -4,8 +4,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.logging.Logger;
 
-public class ParaphraseBLEU extends BLEU {
-	private static final Logger	logger	= Logger.getLogger(ParaphraseBLEU.class.getName());
+public class MinimumRequiredChangeBLEU extends BLEU {
+	private static final Logger	logger	= Logger.getLogger(MinimumRequiredChangeBLEU.class.getName());
 	
 	// we assume that the source for the paraphrasing run is
 	// part of the set of references
@@ -13,7 +13,7 @@ public class ParaphraseBLEU extends BLEU {
 	private double							thresholdWER;
 	
 	
-	public ParaphraseBLEU() {
+	public MinimumRequiredChangeBLEU() {
 		super();
 		this.sourceReferenceIndex = 0;
 		this.thresholdWER = 0.3;
@@ -21,7 +21,7 @@ public class ParaphraseBLEU extends BLEU {
 	}
 	
 
-	public ParaphraseBLEU(String[] options) {
+	public MinimumRequiredChangeBLEU(String[] options) {
 		super(options);
 		this.sourceReferenceIndex = Integer.parseInt(options[2]);
 		this.thresholdWER = Double.parseDouble(options[3]);
@@ -30,7 +30,7 @@ public class ParaphraseBLEU extends BLEU {
 	
 
 	protected void initialize() {
-		metricName = "PP_BLEU";
+		metricName = "MRC_BLEU";
 		toBeMinimized = false;
 		// adding 1 to the sufficient stats for regular BLEU
 		suffStatsCount = 2 * maxGramLength + 3;
@@ -155,6 +155,9 @@ public class ParaphraseBLEU extends BLEU {
 	
 
 	public double score(int[] stats) {
+		
+//		System.err.println("YAY");
+		
 		if (stats.length != suffStatsCount) {
 			logger.severe("Mismatch between stats.length and " +
 					"suffStatsCount (" + stats.length + " vs. " + suffStatsCount + 
@@ -168,6 +171,9 @@ public class ParaphraseBLEU extends BLEU {
 		double r_len = stats[suffStatsCount - 2];
 		
 		double wer = stats[suffStatsCount - 1] / c_len;
+		
+//		System.err.println("WER: " + wer);
+		
 		double wer_penalty = (wer >= thresholdWER) ? 1.0 : (wer / thresholdWER);
 		
 		double correctGramCount, totalGramCount;
@@ -203,7 +209,7 @@ public class ParaphraseBLEU extends BLEU {
 		double wer_penalty = (wer >= thresholdWER) ? 1.0 : (wer / thresholdWER);
 		
 		System.out.println("WER_penalty = " + wer_penalty);
-		super.printDetailedScore_fromStats(stats, oneLiner);
+		System.out.println("MRC_BLEU= " + score(stats));
 	}
 	
 
@@ -216,6 +222,17 @@ public class ParaphraseBLEU extends BLEU {
 	 * 
 	 */
 	private int getEditDistance(String[] candidate, String[] source) {
+		
+//		System.err.print("HYP: ");
+//		for (String c : candidate)
+//			System.err.print(c + " ");
+//		System.err.println();
+//		
+//		System.err.print("SRC: ");
+//		for (String c : source)
+//			System.err.print(c + " ");
+//		System.err.println();
+		
 		// First check to see wheter either of the arrays
 		// is empty, in which case the least cost is simply
 		// the length of the other array (which would correspond
@@ -255,6 +272,9 @@ public class ParaphraseBLEU extends BLEU {
 				distances[i][j] = minimum(insertionCost, deletionCost, substitutionCost);
 			}
 		}
+		
+//		System.err.println("DIST: " + distances[source.length][candidate.length]);
+		
 		// The point at the end will be the minimum edit distance.
 		return distances[source.length][candidate.length];
 	}
