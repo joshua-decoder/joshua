@@ -19,7 +19,6 @@ package joshua.decoder;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
-import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
@@ -35,7 +34,6 @@ import joshua.decoder.ff.lm.LanguageModelFF;
 import joshua.decoder.ff.state_maintenance.StateComputer;
 import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.GrammarFactory;
-import joshua.decoder.ff.tm.hiero.MemoryBasedBatchGrammar;
 import joshua.decoder.hypergraph.DiskHyperGraph;
 import joshua.decoder.hypergraph.HyperGraph;
 import joshua.decoder.hypergraph.KBestExtractor;
@@ -218,17 +216,17 @@ public class DecoderThread extends Thread {
 
 		// TODO: we should unwrapper SAXExceptions and give good error messages
                 // March 2011: reading from STDIN does not permit two passes ove
-            if (! testFile.equals("-")) {
-                segmentParser.parseSegmentFile(
-				  LineReader.getInputStream(this.testFile),
-				  new CoIterator<Segment>() {
-                      public void coNext(Segment seg) {
-                          // Consume Segment and do nothing (for now)
-                      }
-                      public void finish() {
-                          // Nothing to clean up
-                      }
-                  });
+                if (! testFile.equals("-")) {
+			segmentParser.parseSegmentFile(
+				LineReader.getInputStream(this.testFile),
+				new CoIterator<Segment>() {
+					public void coNext(Segment seg) {
+						// Consume Segment and do nothing (for now)
+					}
+					public void finish() {
+						// Nothing to clean up
+					}
+				});
 		}
 		
 		// TODO: we should also have the CoIterator<Segment> test compatibility with 
@@ -238,195 +236,6 @@ public class DecoderThread extends Thread {
 		// TODO: we may also want to validate that all segments have different ids
 		
 		
-		//=== Translate the test file
-		this.nbestWriter = FileUtility.getWriteFileStream(this.nbestFile);		
-		try {
-			try {
-				// This method will analyze the input file (to generate segments), and 
-				// then translate segments one by one 
-				segmentParser.parseSegmentFile(
-					LineReader.getInputStream(this.testFile),
-					new TranslateCoiterator(
-						null == this.oracleFile
-							? new NullReader<String>()
-							: new LineReader(this.oracleFile)
-					)
-				);
-			} catch (UncheckedIOException e) {
-				e.throwCheckedException();
-			}
-		} finally {
-			this.nbestWriter.flush();
-			this.nbestWriter.close();
-		}
-	}
-	
-	/**
-	 * This coiterator is for calling the DecoderThread.translate
-	 * method on each Segment to be translated. All interface
-	 * methods can throw {@link UncheckedIOException}, which
-	 * should be converted back into a {@link IOException} once
-	 * it's possible.
-	 */
-	private class TranslateCoiterator implements CoIterator<Segment> {
-		// TODO: it would be nice if we could somehow push this into the 
-		// parseSegmentFile call and use a coiterator over some subclass 
-		// of Segment which has another method for returning the oracular 
-		// sentence. That may take some work though, since Java hates 
-		// mixins so much.
-		private Reader<String> oracleReader;
-		
-		public TranslateCoiterator(Reader<String> oracleReader) {
-			this.oracleReader = oracleReader;
-		}
-		
-		public void coNext(Segment segment) {
-			try {
-
-				if (logger.isLoggable(Level.FINE))
-					logger.fine("Segment id: " + segment.id());
-				
-				DecoderThread.this.translate(
-					segment, this.oracleReader.readLine());
-				
-			} catch (IOException ioe) {
-				throw new UncheckedIOException(ioe);
-			}
-		}
-		
-		public void finish() {
-			try {
-				this.oracleReader.close();
-			} catch (IOException ioe) {
-				throw new UncheckedIOException(ioe);
-			}
-		}
-	} // End inner class TranslateCoiterator
-	
-	
-	/**
-	 * Translate a sentence.
-	 *
-	 * @param segment The sentence to be translated.
-	 * @param oracleSentence
-	 */
-	private void translate(Segment segment, String oracleSentence)
-	throws IOException {
-		long startTime = 0;
-		if (logger.isLoggable(Level.FINER))
-			startTime = System.currentTimeMillis();
-		if (logger.isLoggable(Level.FINE))
-			logger.fine("now translating\n" + segment.sentence());
-		
-		Chart chart; 
-		
-		{
-			// TODO: we should not use strings to decide what the input type is
-			final boolean looks_like_lattice   = segment.sentence().startsWith("(((");
-			final boolean looks_like_parse_tree = segment.sentence().startsWith("(TOP");
-			
-			Lattice<Integer> input_lattice = null;
-			SyntaxTree syntax_tree = null;
-			Pattern sentence = null;
-			
-			if (!looks_like_lattice) {
-				int[] int_sentence;
-				if (looks_like_parse_tree) {
-					syntax_tree = new ArraySyntaxTree(segment.sentence(), symbolTable);
-					int_sentence = syntax_tree.getTerminals();
-				} else {
-					int_sentence = this.symbolTable.getIDs(segment.sentence());
-				}
-				if (logger.isLoggable(Level.FINEST)) 
-					logger.finest("Converted \"" + segment.sentence() + "\" into " + Arrays.toString(int_sentence));
-				input_lattice = Lattice.createLattice(int_sentence);
-				sentence = new Pattern(this.symbolTable, int_sentence);
-			} else {
-				input_lattice = Lattice.createFromString(segment.sentence(), this.symbolTable);
-				sentence = null; // TODO: suffix array needs to accept lattices!
-			}
-			if (logger.isLoggable(Level.FINEST)) 
-				logger.finest("Translating input lattice:\n" + input_lattice.toString());
-
-            int numGrammars = (JoshuaConfiguration.use_sent_specific_tm)
-                ? grammarFactories.size() + 1
-                : grammarFactories.size();
-			Grammar[] grammars = new Grammar[numGrammars];
-            
-            // load the grammars common to all sentences
-			for (int i = 0; i<grammarFactories.size(); i++) {
-				grammars[i] = grammarFactories.get(i).getGrammarForSentence(sentence);
-				// For batch grammar, we do not want to sort it every time
-				if (!grammars[i].isSorted()) {
-					System.out.println("!!!!!!!!!!!! called again");
-					// TODO: check to see if this is ever called here. It probably is not
-					grammars[i].sortGrammar(this.featureFunctions);
-				}
-			}
-
-            // load the sentence-specific grammar
-            if (JoshuaConfiguration.use_sent_specific_tm) {
-                // figure out the sentence-level file name
-                String tmFile = JoshuaConfiguration.tm_file;
-                tmFile = tmFile.endsWith(".gz")
-                    ? tmFile.substring(0, tmFile.length()-3) + "." + segment.id() + ".gz"
-                    : tmFile + "." + segment.id();
-
-                // look in a subdirectory named "filtered" e.g.,
-                // /some/path/grammar.gz will have sentence-level
-                // grammars in /some/path/filtered/grammar.SENTNO.gz
-                int lastSlash = tmFile.lastIndexOf('/');
-                if (lastSlash != -1) {
-                    String dirPart = tmFile.substring(0,lastSlash);
-                    String filePart = tmFile.substring(lastSlash + 1);
-                    tmFile = dirPart + "/filtered/" + filePart;
-                }
-
-                if (! new File(tmFile).exists()) {
-                    System.err.println("* FATAL: couldn't find sentence-specific grammar file '" + tmFile + "'");
-                    System.exit(1);
-                }
-
-                grammars[numGrammars-1] = new MemoryBasedBatchGrammar(
-					JoshuaConfiguration.tm_format,
-                    tmFile,
-                    this.symbolTable,
-                    JoshuaConfiguration.phrase_owner,
-                    JoshuaConfiguration.default_non_terminal,
-                    JoshuaConfiguration.span_limit,
-                    JoshuaConfiguration.oov_feature_cost);
-
-                grammars[numGrammars-1].sortGrammar(this.featureFunctions);
-                
-            }
-
-			/* Seeding: the chart only sees the grammars, not the factories */
-			chart = new Chart(
-				input_lattice,
-				this.featureFunctions,
-				this.stateComputers,
-				this.symbolTable,
-				Integer.parseInt(segment.id()),
-				grammars,
-				this.useMaxLMCostForOOV,
-				JoshuaConfiguration.goal_symbol,
-				segment.constraints(),
-				syntax_tree);
-			
-			if (logger.isLoggable(Level.FINER))
-				logger.finer("after seed, time: "
-					+ ((double)(System.currentTimeMillis() - startTime) / 1000.0)
-					+ " seconds");
-		}
-
-		
-		// TODO: we should also have the CoIterator<Segment> test compatibility with 
-		// a given grammar, e.g. count of grammatical feature functions match, 
-		// nonterminals match,...
-		
-		// TODO: we may also want to validate that all segments have different ids
-		
-	
 		//=== Translate the test file
 		this.nbestWriter = FileUtility.getWriteFileStream(this.nbestFile);		
 		try {
