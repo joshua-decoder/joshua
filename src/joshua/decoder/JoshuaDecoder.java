@@ -207,7 +207,7 @@ public class JoshuaDecoder {
 	 * Decode a whole test set. This may be parallel.
 	 *
 	 * @param testFile
-	 * @param nbestFileD
+	 * @param nbestFile
 	 * @param oracleFile
 	 */
 	public void decodeTestSet(String testFile, String nbestFile, String oracleFile) throws IOException {

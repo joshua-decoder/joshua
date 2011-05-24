@@ -19,6 +19,7 @@ package joshua.decoder;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
+import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
@@ -34,6 +35,7 @@ import joshua.decoder.ff.lm.LanguageModelFF;
 import joshua.decoder.ff.state_maintenance.StateComputer;
 import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.GrammarFactory;
+import joshua.decoder.ff.tm.hiero.MemoryBasedBatchGrammar;
 import joshua.decoder.hypergraph.DiskHyperGraph;
 import joshua.decoder.hypergraph.HyperGraph;
 import joshua.decoder.hypergraph.KBestExtractor;
@@ -216,17 +218,17 @@ public class DecoderThread extends Thread {
 
 		// TODO: we should unwrapper SAXExceptions and give good error messages
                 // March 2011: reading from STDIN does not permit two passes ove
-                if (! testFile.equals("-")) {
-			segmentParser.parseSegmentFile(
-				LineReader.getInputStream(this.testFile),
-				new CoIterator<Segment>() {
-					public void coNext(Segment seg) {
-						// Consume Segment and do nothing (for now)
-					}
-					public void finish() {
-						// Nothing to clean up
-					}
-				});
+            if (! testFile.equals("-")) {
+                segmentParser.parseSegmentFile(
+				  LineReader.getInputStream(this.testFile),
+				  new CoIterator<Segment>() {
+                      public void coNext(Segment seg) {
+                          // Consume Segment and do nothing (for now)
+                      }
+                      public void finish() {
+                          // Nothing to clean up
+                      }
+                  });
 		}
 		
 		// TODO: we should also have the CoIterator<Segment> test compatibility with 
@@ -349,7 +351,12 @@ public class DecoderThread extends Thread {
 			if (logger.isLoggable(Level.FINEST)) 
 				logger.finest("Translating input lattice:\n" + input_lattice.toString());
 
-			Grammar[] grammars = new Grammar[grammarFactories.size()];
+            int numGrammars = (JoshuaConfiguration.use_sent_specific_tm)
+                ? grammarFactories.size() + 1
+                : grammarFactories.size();
+			Grammar[] grammars = new Grammar[numGrammars];
+            
+            // load the grammars common to all sentences
 			for (int i = 0; i<grammarFactories.size(); i++) {
 				grammars[i] = grammarFactories.get(i).getGrammarForSentence(sentence);
 				// For batch grammar, we do not want to sort it every time
@@ -359,7 +366,43 @@ public class DecoderThread extends Thread {
 					grammars[i].sortGrammar(this.featureFunctions);
 				}
 			}
-			
+
+            // load the sentence-specific grammar
+            if (JoshuaConfiguration.use_sent_specific_tm) {
+                // figure out the sentence-level file name
+                String tmFile = JoshuaConfiguration.tm_file;
+                tmFile = tmFile.endsWith(".gz")
+                    ? tmFile.substring(0, tmFile.length()-3) + "." + segment.id() + ".gz"
+                    : tmFile + "." + segment.id();
+
+                // look in a subdirectory named "filtered" e.g.,
+                // /some/path/grammar.gz will have sentence-level
+                // grammars in /some/path/filtered/grammar.SENTNO.gz
+                int lastSlash = tmFile.lastIndexOf('/');
+                if (lastSlash != -1) {
+                    String dirPart = tmFile.substring(0,lastSlash);
+                    String filePart = tmFile.substring(lastSlash + 1);
+                    tmFile = dirPart + "/filtered/" + filePart;
+                }
+
+                if (! new File(tmFile).exists()) {
+                    System.err.println("* FATAL: couldn't find sentence-specific grammar file '" + tmFile + "'");
+                    System.exit(1);
+                }
+
+                grammars[numGrammars-1] = new MemoryBasedBatchGrammar(
+					JoshuaConfiguration.tm_format,
+                    tmFile,
+                    this.symbolTable,
+                    JoshuaConfiguration.phrase_owner,
+                    JoshuaConfiguration.default_non_terminal,
+                    JoshuaConfiguration.span_limit,
+                    JoshuaConfiguration.oov_feature_cost);
+
+                grammars[numGrammars-1].sortGrammar(this.featureFunctions);
+                
+            }
+
 			/* Seeding: the chart only sees the grammars, not the factories */
 			chart = new Chart(
 				input_lattice,
@@ -405,6 +448,7 @@ public class DecoderThread extends Thread {
 			passthrough_buffer.append("||| 0.0\n");
 			
 			this.nbestWriter.write(passthrough_buffer.toString());
+			this.nbestWriter.flush();
 			
 			return;
 		}
@@ -438,6 +482,7 @@ public class DecoderThread extends Thread {
 				hypergraph, this.featureFunctions,
 				JoshuaConfiguration.topN,
 				Integer.parseInt(segment.id()), this.nbestWriter);
+
 			if (logger.isLoggable(Level.FINER))
 				logger.finer("after k-best, time: "
 				+ ((double)(System.currentTimeMillis() - startTime) / 1000.0)
