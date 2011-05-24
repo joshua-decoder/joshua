@@ -62,7 +62,7 @@ my $DO_MBR = 1;
 # for hadoop java subprocesses (heap amount)
 # you really just have to play around to find out how much is enough 
 my $HADOOP_MEM = "8G";  
-my $JOSHUA_MEM = "3400m";
+my $JOSHUA_MEM = "3100m";
 my $QSUB_ARGS  = "-l num_proc=2";
 
 my %STEPS = (
@@ -453,6 +453,7 @@ foreach my $key (qw(decoder_command)) {
 	s/<NUMJOBS>/50/g;
 	s/<QSUB_ARGS>/$QSUB_ARGS/g;
 	s/<OUTPUT>/test\/test.output.nbest/g;
+	s/<NUMREFS>/$numrefs/g;
 	s/<FR>/$FR/g;
 	s/<EN>/$EN/g;
 	s/<LMFILE>/$LMFILE/g;
