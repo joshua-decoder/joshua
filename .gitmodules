@@ -1,6 +1,6 @@
 [submodule "cachepipe"]
 	path = cachepipe
-	url = git@github.com:joshua-decoder/CachePipe.git
+	url = git@github.com:joshua-decoder/cachepipe.git
 [submodule "thrax"]
 	path = thrax
 	url = git@github.com:joshua-decoder/thrax.git
