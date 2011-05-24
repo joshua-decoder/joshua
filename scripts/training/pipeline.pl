@@ -51,7 +51,7 @@ my $GRAMMAR_TYPE = "hiero";
 # the Joshua command invoked by MERT
 my $JOSHUA_CONFIG_ORIG   = "$MERTCONFDIR/joshua.config";
 my %MERTFILES = (
-  'decoder_command' => "$MERTCONFDIR/decoder_command",
+  'decoder_command' => "$MERTCONFDIR/decoder_command.qsub",
   'joshua.config'   => $JOSHUA_CONFIG_ORIG,
   'params.txt'      => "$MERTCONFDIR/params.txt",
   'mert.config'     => "$MERTCONFDIR/mert.config"

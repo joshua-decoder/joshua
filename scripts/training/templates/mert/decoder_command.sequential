@@ -1,0 +1,1 @@
+cat <INPUT> | java -Xmx<MEM> -cp /home/hltcoe/mpost/code/joshua/bin/ -Djava.library.path=/home/hltcoe/mpost/code/joshua/lib -Dfile.encoding=utf8 joshua.decoder.JoshuaDecoder mert/joshua.config > <OUTPUT> 2> mert/joshua.log
