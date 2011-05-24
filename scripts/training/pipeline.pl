@@ -28,21 +28,24 @@ use File::Basename;
 use Cwd;
 use CachePipe;
 
+my $HADOOP = $ENV{HADOOP};
+my $JOSHUA = $ENV{JOSHUA};
+my $THRAX  = $ENV{THRAX};
+
 my (@CORPORA,$TUNE,$TEST,$ALIGNMENT,$FR,$EN,$LMFILE,$GRAMMAR_FILE);
 my $FIRST_STEP = "FIRST";
 my $LAST_STEP  = "LAST";
 my $LMFILTER = "$ENV{HOME}/code/filter/filter";
 my $MAXLEN = 50;
 my $DO_SUBSAMPLE = ''; # default false
-my $SCRIPTDIR = "$ENV{JOSHUA}/scripts";
+my $SCRIPTDIR = "$JOSHUA/scripts";
 my $TOKENIZER = "$SCRIPTDIR/training/penn-treebank-tokenizer.perl";
 my $MOSES_TRAINER = "/home/hltcoe/airvine/bin/moses/tools/moses-scripts/scripts-20100922-0942/training/train-factored-phrase-model.perl";
-my $MERTCONFDIR = "$ENV{JOSHUA}/scripts/training/templates/mert";
+my $MERTCONFDIR = "$JOSHUA/scripts/training/templates/mert";
 my $SRILM = "$ENV{SRILM}/bin/i686-m64/ngram-count";
 my $STARTDIR;
 my $RUNDIR = $STARTDIR = getcwd;
 my $GRAMMAR_TYPE = "hiero";
-my $HADOOP = $ENV{HADOOP};
 
 # this file should exist in the Joshua mert templates file; it contains
 # the Joshua command invoked by MERT
@@ -182,7 +185,7 @@ $TRAIN{en} = "train/corpus.$EN";
 
 # prepare the tuning and development data
 prepare_data("tune",[$TUNE]);
-$TUNE{fr} = "tune/tune..tok.lc.$FR";
+$TUNE{fr} = "tune/tune.tok.lc.$FR";
 $TUNE{en} = "tune/tune.tok.lc.$EN";
 
 prepare_data("test",[$TEST]);
@@ -205,7 +208,7 @@ if ($DO_SUBSAMPLE) {
 				  "$TUNE.$FR", "$TEST.$FR", "train/subsampled/test-data");
 
   $cachepipe->cmd("subsample",
-				  "java -Xmx4g -Dfile.encoding=utf8 -cp $ENV{JOSHUA}/bin:$ENV{JOSHUA}/lib/commons-cli-2.0-SNAPSHOT.jar joshua.subsample.Subsampler -e $EN.tok.$MAXLEN -f $FR.tok.$MAXLEN -epath train/ -fpath train/ -output train/subsampled/subsampled.$MAXLEN -ratio 1.04 -test train/subsampled/test-data -training train/subsampled/manifest",
+				  "java -Xmx4g -Dfile.encoding=utf8 -cp $JOSHUA/bin:$JOSHUA/lib/commons-cli-2.0-SNAPSHOT.jar joshua.subsample.Subsampler -e $EN.tok.$MAXLEN -f $FR.tok.$MAXLEN -epath train/ -fpath train/ -output train/subsampled/subsampled.$MAXLEN -ratio 1.04 -test train/subsampled/test-data -training train/subsampled/manifest",
 				  "train/subsampled/manifest",
 				  "train/subsampled/test-data",
 				  "train/corpus.$EN.tok.$MAXLEN",
@@ -277,11 +280,7 @@ if (! defined $GRAMMAR_FILE) {
   copy_thrax_file();
 
   $cachepipe->cmd("thrax-run",
-				  "$HADOOP/bin/hadoop jar $ENV{THRAX}/bin/thrax.jar -D mapred.child.java.opts='-Xmx$HADOOP_MEM' thrax-$GRAMMAR_TYPE.conf $THRAXDIR > thrax.log 2>&1",
-				  "train/thrax-input-file");
-
-  $cachepipe->cmd("thrax-get",
-				  "rm -f grammar grammar.gz; $HADOOP/bin/hadoop fs -getmerge $THRAXDIR/final/ grammar; gzip -9 grammar",
+				  "$HADOOP/bin/hadoop jar $THRAX/bin/thrax.jar -D mapred.child.java.opts='-Xmx$HADOOP_MEM' thrax-$GRAMMAR_TYPE.conf $THRAXDIR > thrax.log 2>&1; rm -f grammar grammar.gz; $HADOOP/bin/hadoop fs -getmerge $THRAXDIR/final/ grammar; gzip -9 grammar",
 				  "train/thrax-input-file",
 				  "grammar.gz");
 
@@ -332,7 +331,7 @@ mkdir("tune") unless -d "tune";
 
 # filter the tuning grammar
 $cachepipe->cmd("filter-tune",
-				"$SCRIPTDIR/training/scat $GRAMMAR_FILE | $ENV{THRAX}/scripts/filter_rules.sh 12 $TUNE{fr} | gzip -9 > tune/grammar.filtered.gz",
+				"$SCRIPTDIR/training/scat $GRAMMAR_FILE | $THRAX/scripts/filter_rules.sh $TUNE{fr} | gzip -9 > tune/grammar.filtered.gz",
 				$GRAMMAR_FILE,
 				$TUNE{fr},
 				"tune/grammar.filtered.gz");
@@ -344,7 +343,7 @@ $cachepipe->cmd("filter-tune-sentence-level",
 
 copy_thrax_file();
 $cachepipe->cmd("glue-tune",
-				"$SCRIPTDIR/training/scat tune/grammar.filtered.gz | $ENV{THRAX}/scripts/create_glue_grammar.sh thrax-$GRAMMAR_TYPE.conf > tune/grammar.glue",
+				"$SCRIPTDIR/training/scat tune/grammar.filtered.gz | $THRAX/scripts/create_glue_grammar.sh thrax-$GRAMMAR_TYPE.conf > tune/grammar.glue",
 				"tune/grammar.filtered.gz",
 				"tune/grammar.glue");
 
@@ -385,7 +384,7 @@ chmod(0755,"mert/decoder_command");
 
 # run MERT
 $cachepipe->cmd("mert",
-				"java -d64 -cp $ENV{JOSHUA}/bin joshua.zmert.ZMERT -maxMem 4500 mert/mert.config > mert.log 2>&1",
+				"java -d64 -cp $JOSHUA/bin joshua.zmert.ZMERT -maxMem 4500 mert/mert.config > mert.log 2>&1",
 				"tune/grammar.filtered.gz",
 				"mert/joshua.config.ZMERT.final",
 				map { "mert/$_" } (keys %MERTFILES));
@@ -428,7 +427,7 @@ if ($FIRST_STEP eq "TEST") {
 
 # filter the test grammar
 $cachepipe->cmd("filter-test",
-				"$SCRIPTDIR/training/scat $GRAMMAR_FILE | $ENV{THRAX}/scripts/filter_rules.sh 12 $TEST{fr} | gzip -9 > test/grammar.filtered.gz",
+				"$SCRIPTDIR/training/scat $GRAMMAR_FILE | $THRAX/scripts/filter_rules.sh $TEST{fr} | gzip -9 > test/grammar.filtered.gz",
 				$GRAMMAR_FILE,
 				$TEST{fr},
 				"test/grammar.filtered.gz");
@@ -440,7 +439,7 @@ $cachepipe->cmd("filter-test-sentence-level",
 
 copy_thrax_file();
 $cachepipe->cmd("glue-test",
-				"$SCRIPTDIR/training/scat test/grammar.filtered.gz | $ENV{THRAX}/scripts/create_glue_grammar.sh thrax-$GRAMMAR_TYPE.conf > test/grammar.glue",
+				"$SCRIPTDIR/training/scat test/grammar.filtered.gz | $THRAX/scripts/create_glue_grammar.sh thrax-$GRAMMAR_TYPE.conf > test/grammar.glue",
 				"test/grammar.filtered.gz",
 				"test/grammar.glue");
 
@@ -476,16 +475,16 @@ $cachepipe->cmd("test-decode",
 				"test/test.output.nbest");
 
 if ($DO_MBR) {
-  $cachepipe->cmd("test-onebest-mbr", "java -cp $ENV{JOSHUA}/bin -Xmx1700m -Xms1700m joshua.decoder.NbestMinRiskReranker test/test.output.nbest test/test.output.1best false 1",
+  $cachepipe->cmd("test-onebest-mbr", "java -cp $JOSHUA/bin -Xmx1700m -Xms1700m joshua.decoder.NbestMinRiskReranker test/test.output.nbest test/test.output.1best false 1",
 				  "test/test.output.nbest", "test/test.output.1best");
 } else {
   $cachepipe->cmd("test-extract-onebest",
-				  "java -cp $ENV{JOSHUA}/bin -Dfile.encoding=utf8 joshua.util.ExtractTopCand test/test.output.nbest test/test.output.1best",
+				  "java -cp $JOSHUA/bin -Dfile.encoding=utf8 joshua.util.ExtractTopCand test/test.output.nbest test/test.output.1best",
 				  "test/test.output.nbest", "test/test.output.1best");
 }
 
 $cachepipe->cmd("test-bleu",
-				"java -cp $ENV{JOSHUA}/bin -Djava.library.path=lib -Xmx1000m -Xms1000m -Djava.util.logging.config.file=logging.properties joshua.util.JoshuaEval -cand test/test.output.1best -ref $TEST{en} -m BLEU 4 closest > test/test.output.1best.bleu",
+				"java -cp $JOSHUA/bin -Djava.library.path=lib -Xmx1000m -Xms1000m -Djava.util.logging.config.file=logging.properties joshua.util.JoshuaEval -cand test/test.output.1best -ref $TEST{en} -m BLEU 4 closest > test/test.output.1best.bleu",
 				"test/test.output.1best", "test/test.output.1best.bleu");
 
 system("cat test/test.output.1best.bleu");
@@ -498,8 +497,8 @@ LAST:
 
 sub copy_thrax_file {
   $cachepipe->cmd("thrax-config",
-				  "cp $ENV{JOSHUA}/scripts/training/templates/thrax-$GRAMMAR_TYPE.conf .; echo input-file $THRAXDIR/input-file >> thrax-$GRAMMAR_TYPE.conf",
-				  "$ENV{JOSHUA}/scripts/training/templates/thrax-$GRAMMAR_TYPE.conf",
+				  "cp $JOSHUA/scripts/training/templates/thrax-$GRAMMAR_TYPE.conf .; echo input-file $THRAXDIR/input-file >> thrax-$GRAMMAR_TYPE.conf",
+				  "$JOSHUA/scripts/training/templates/thrax-$GRAMMAR_TYPE.conf",
 				  "thrax-$GRAMMAR_TYPE.conf");
 }
 
