@@ -331,7 +331,7 @@ mkdir("tune") unless -d "tune";
 
 # filter the tuning grammar
 $cachepipe->cmd("filter-tune",
-				"$SCRIPTDIR/training/scat $GRAMMAR_FILE | $THRAX/scripts/filter_rules.sh $TUNE{fr} | gzip -9 > tune/grammar.filtered.gz",
+				"$SCRIPTDIR/training/scat $GRAMMAR_FILE | $THRAX/scripts/filter_rules.sh -v $TUNE{fr} | gzip -9 > tune/grammar.filtered.gz",
 				$GRAMMAR_FILE,
 				$TUNE{fr},
 				"tune/grammar.filtered.gz");
@@ -427,7 +427,7 @@ if ($FIRST_STEP eq "TEST") {
 
 # filter the test grammar
 $cachepipe->cmd("filter-test",
-				"$SCRIPTDIR/training/scat $GRAMMAR_FILE | $THRAX/scripts/filter_rules.sh $TEST{fr} | gzip -9 > test/grammar.filtered.gz",
+				"$SCRIPTDIR/training/scat $GRAMMAR_FILE | $THRAX/scripts/filter_rules.sh -v $TEST{fr} | gzip -9 > test/grammar.filtered.gz",
 				$GRAMMAR_FILE,
 				$TEST{fr},
 				"test/grammar.filtered.gz");
