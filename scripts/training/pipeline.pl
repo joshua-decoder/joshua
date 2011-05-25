@@ -28,6 +28,11 @@ use File::Basename;
 use Cwd;
 use CachePipe;
 
+$SIG{INT} = sub { 
+  print "* Got C-c, quitting\n";
+  exit 1; 
+};
+
 my $HADOOP = $ENV{HADOOP};
 my $JOSHUA = $ENV{JOSHUA};
 my $THRAX  = $ENV{THRAX};
