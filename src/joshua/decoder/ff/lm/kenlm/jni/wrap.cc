@@ -1,3 +1,4 @@
+#include "lm/enumerate_vocab.hh"
 #include "lm/model.hh"
 
 #include <iostream>
@@ -10,6 +11,31 @@ namespace {
 template <bool> struct StaticCheck {};
 template <> struct StaticCheck<true> { typedef bool StaticAssertionPassed; };
 typedef StaticCheck<sizeof(jint) == sizeof(lm::WordIndex)>::StaticAssertionPassed FloatSize;
+
+class SendToJava : public lm::ngram::EnumerateVocab {
+  public:
+    SendToJava(JNIEnv *env, jobject obj) : copy_(), env_(env), obj_(obj), 
+      mid_(env_->GetMethodID(env_->GetObjectClass(obj_), "set", "(ILjava/lang/String;)V")) {
+      if (!mid_) UTIL_THROW(util::Exception, "Failed to get method id for set callback.");
+    }
+
+    ~SendToJava() {}
+
+    void Add(lm::WordIndex index, const StringPiece &str) {
+      copy_.assign(str.data(), str.size());
+      jstring j_str = env_->NewStringUTF(copy_.c_str());
+      // Java will throw an exception.
+      if (!j_str) return;
+      env_->CallVoidMethod(obj_, mid_, static_cast<jint>(index), j_str);
+    }
+
+  private:
+    std::string copy_;
+    JNIEnv *env_;
+    jobject obj_;
+    jmethodID mid_;
+};
+
 } // namespace
 
 extern "C" {
@@ -30,12 +56,15 @@ JNIEXPORT jint JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenLM_classify(JNIEnv
 }
 
 /* Probing */
-JNIEXPORT jlong JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenProbing_create(JNIEnv *env, jclass, jstring file_name) {
+JNIEXPORT jlong JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenProbing_create(JNIEnv *env, jclass, jstring file_name, jobject vocab_callback) {
   const char *str = env->GetStringUTFChars(file_name, 0);
   if (!str) return 0;
   jlong ret;
   try {
-    ret = reinterpret_cast<jlong>(new lm::ngram::ProbingModel(str));
+    lm::ngram::Config config;
+    SendToJava callback(env, vocab_callback);
+    if (vocab_callback) config.enumerate_vocab = &callback;
+    ret = reinterpret_cast<jlong>(new lm::ngram::ProbingModel(str, config));
   } catch (std::exception &e) {
     std::cerr << e.what() << std::endl;
     abort();
@@ -102,13 +131,16 @@ JNIEXPORT jfloat JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenProbing_probStri
   return prob;
 }
 
-/* Duplicate of the above with s/Probing/Trie/g */
-JNIEXPORT jlong JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenTrie_create(JNIEnv *env, jclass, jstring file_name) {
+/* Duplicate of the above with s/Trie/Trie/g */
+JNIEXPORT jlong JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenTrie_create(JNIEnv *env, jclass, jstring file_name, jobject vocab_callback) {
   const char *str = env->GetStringUTFChars(file_name, 0);
   if (!str) return 0;
   jlong ret;
   try {
-    ret = reinterpret_cast<jlong>(new lm::ngram::TrieModel(str));
+    lm::ngram::Config config;
+    SendToJava callback(env, vocab_callback);
+    if (vocab_callback) config.enumerate_vocab = &callback;
+    ret = reinterpret_cast<jlong>(new lm::ngram::TrieModel(str, config));
   } catch (std::exception &e) {
     std::cerr << e.what() << std::endl;
     abort();

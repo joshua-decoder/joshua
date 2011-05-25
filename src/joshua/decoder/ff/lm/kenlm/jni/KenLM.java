@@ -17,11 +17,11 @@ public abstract class KenLM implements NGramLanguageModel {
 
   private final static native int classify(String file_name);
 
-  static public KenLM Load(String file_name) {
+  static public KenLM Load(String file_name, VocabCallback vocab) {
     if (classify(file_name) == 2) {
-      return new KenTrie(file_name);
+      return new KenTrie(file_name, vocab);
     } else {
-      return new KenProbing(file_name);
+      return new KenProbing(file_name, vocab);
     }
   }
 
@@ -70,7 +70,7 @@ public abstract class KenLM implements NGramLanguageModel {
   public double logProbOfBackoffState(List<Integer> ngram, int order, int qtyAdditionalBackoffWeight) {
     return 0;
   }
-  public double logProbOfBackoffState(int[] ngram, int order, int qtyAdditionalBackoffWeight) {
+  public double logProbabilityOfBackoffState(int[] ngram, int order, int qtyAdditionalBackoffWeight) {
     return 0;
   }
   public int[] leftEquivalentState(int[] originalState, int order, double[] cost) {

@@ -37,6 +37,7 @@ import java.io.IOException;
 public class JoshuaConfiguration {
 	//lm config
 	public static boolean use_srilm                  = false;
+	public static boolean use_kenlm                  = false;
 	public static boolean use_bloomfilter_lm         = false;
 	public static boolean use_trie_lm                = false;
 	public static double  lm_ceiling_cost            = 100;
@@ -314,6 +315,10 @@ public class JoshuaConfiguration {
 					use_srilm = Boolean.valueOf(fds[1]);
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("use_srilm: %s", use_srilm));
+				} else if ("use_kenlm".equals(fds[0])) {
+					use_kenlm = Boolean.valueOf(fds[1]);
+					if (logger.isLoggable(Level.FINEST))
+						logger.finest(String.format("use_kenlm: %s", use_kenlm));
 					
 				} else if ("use_bloomfilter_lm".equals(fds[0])) {
 					use_bloomfilter_lm = Boolean.valueOf(fds[1]);
