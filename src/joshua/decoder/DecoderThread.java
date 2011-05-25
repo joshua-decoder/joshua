@@ -54,6 +54,8 @@ import joshua.util.io.NullReader;
 import joshua.util.io.Reader;
 import joshua.util.io.UncheckedIOException;
 
+import edu.jhu.thrax.util.TestSetFilter;
+
 /**
  * this class implements:
  * (1) interact with the chart-parsing functions to do the true
@@ -385,15 +387,23 @@ public class DecoderThread extends Thread {
                     tmFile = dirPart + "/filtered/" + filePart;
                 }
 
+				boolean alreadyExisted = true;
+
                 if (! new File(tmFile).exists()) {
-					// TODO: generalize MemoryBasedBatchGrammar to
-					// take a FilteredGrammar instead of a tmFile,
-					// where FilteredGrammar would be seeded with a
-					// set of sentences and would only return grammar
-					// rules that matched
-                    System.err.println("* FATAL: couldn't find sentence-specific grammar file '" + tmFile + "'");
-                    System.exit(1);
-                }
+					alreadyExisted = false;
+
+					// filter grammar and write it to a file
+					if (logger.isLoggable(Level.INFO))
+						logger.info("Automatically producing file " + tmFile);
+
+					TestSetFilter.filterGrammarToFile(JoshuaConfiguration.tm_file,
+													  segment.sentence(),
+													  tmFile);
+                } else {
+					if (logger.isLoggable(Level.INFO))
+						logger.info("Using existing sentence-specific tm file " + tmFile);
+				}
+				
 
                 grammars[numGrammars-1] = new MemoryBasedBatchGrammar(
 					JoshuaConfiguration.tm_format,
@@ -405,7 +415,23 @@ public class DecoderThread extends Thread {
                     JoshuaConfiguration.oov_feature_cost);
 
                 grammars[numGrammars-1].sortGrammar(this.featureFunctions);
-                
+
+				// delete the sentence-specific grammar if it didn't
+				// already exist and we weren't asked to keep it around
+				if (! alreadyExisted && ! JoshuaConfiguration.keep_sent_specific_tm) {
+					File file = new File(tmFile);
+					file.delete();
+
+					if (logger.isLoggable(Level.INFO))
+						logger.info("Deleting sentence-level grammar file '" + tmFile + "'");
+
+				} else if (JoshuaConfiguration.keep_sent_specific_tm) {
+					if (logger.isLoggable(Level.INFO))
+						logger.info("Keeping sentence-level grammar (keep_sent_specific_tm=true)");
+				} else if (alreadyExisted) {
+					if (logger.isLoggable(Level.INFO))
+						logger.info("Keeping sentence-level grammar (already existed)");
+				}
             }
 
 			/* Seeding: the chart only sees the grammars, not the factories */

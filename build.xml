@@ -29,6 +29,7 @@
 			<include name="jung-algorithms-2.0.jar"/>
 			<include name="jung-visualization-2.0.jar"/>
 			<include name="collections-generic-4.01.jar"/>
+			<include name="thrax.jar"/>
 		</fileset>
 	</path>
 		
@@ -98,9 +99,19 @@
 	</target>
 	<!-- Create a JAR file -->
 	<target name="jar" depends="compile">
-		<jar destfile="${build}/joshua.jar">
+		<jar destfile="${build}/joshua.jar" index="true">
 			<fileset dir="${build}">
 				<include name="**/*.class"/>
+			</fileset>
+			<indexjars>
+			  <fileset dir="${lib}"/>
+			</indexjars>
+			<manifest>
+			  <attribute name="Class-Path" value="thrax.jar"/>
+			  <attribute name="Main-Class" value="joshua.decoder.JoshuaDecoder"/>
+			</manifest>
+			<fileset dir="${lib}">
+				<include name="thrax.jar"/>
 			</fileset>
 		</jar>
 	</target>

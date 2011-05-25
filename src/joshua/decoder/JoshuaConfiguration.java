@@ -56,6 +56,7 @@ public class JoshuaConfiguration {
 	public static String  default_non_terminal       = "PHRASE";
 	public static String  goal_symbol                = "S";
 	public static boolean use_sent_specific_tm       = false;
+	public static boolean keep_sent_specific_tm      = false;
 	public static String  g_sent_tm_file_name_prefix = "tm.";
 	
 	public static String  tm_file                    = null;
@@ -376,6 +377,11 @@ public class JoshuaConfiguration {
 					use_sent_specific_tm = Boolean.valueOf(fds[1]);
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("use_sent_specific_tm: %s", use_sent_specific_tm));
+
+				} else if ("keep_sent_specific_tm".equals(fds[0])) {
+					keep_sent_specific_tm = Boolean.valueOf(fds[1]);
+					if (logger.isLoggable(Level.FINEST))
+						logger.finest(String.format("keep_sent_specific_tm: %s", use_sent_specific_tm));
 					
 				} else if ("sent_tm_file_name_prefix".equals(fds[0])) {
 					g_sent_tm_file_name_prefix = fds[1].trim();

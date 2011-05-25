@@ -515,7 +515,7 @@ public class JoshuaDecoder {
                     this.ruleStringToIDTable = new HashMap<String,Integer>();
                 gr.obtainRulesIDTable(this.ruleStringToIDTable, this.symbolTable);			
             }
-        }
+		}
 	}
 	
 	
