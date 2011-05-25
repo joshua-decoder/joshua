@@ -372,6 +372,9 @@ foreach my $key (keys %MERTFILES) {
 	s/<OUTPUT>/mert\/tune.output.nbest/g;
 	s/<REF>/$TUNE{en}/g;
 	s/<NUMREFS>/$numrefs/g;
+	s/<CONFIG>/test\/joshua.config/g;
+	s/<LOG>/test\/mert.log/g;
+
 	print TO;
   }
   close(FROM);
@@ -453,6 +456,8 @@ foreach my $key (qw(decoder_command)) {
 	s/<MEM>/$JOSHUA_MEM/g;
 	s/<GRAMMAR>/$GRAMMAR_TYPE/g;
 	s/<OOV>/$OOV/g;
+	s/<CONFIG>/test\/joshua.config/g;
+	s/<LOG>/test\/mert.log/g;
 
 	print TO;
   }
