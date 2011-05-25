@@ -37,6 +37,7 @@ my $FIRST_STEP = "FIRST";
 my $LAST_STEP  = "LAST";
 my $LMFILTER = "$ENV{HOME}/code/filter/filter";
 my $MAXLEN = 50;
+my $DO_FILTER_LM = 1;
 my $DO_SUBSAMPLE = ''; # default false
 my $SCRIPTDIR = "$JOSHUA/scripts";
 my $TOKENIZER = "$SCRIPTDIR/training/penn-treebank-tokenizer.perl";
@@ -82,6 +83,7 @@ my $options = GetOptions(
   "fr=s"     	 	  => \$FR,
   "en=s"     	 	  => \$EN,
   "rundir=s" 	 	  => \$RUNDIR,
+  "filter-lm!"        => \$DO_FILTER_LM,
   "lmfile=s" 	 	  => \$LMFILE,
   "grammar=s"    	  => \$GRAMMAR_FILE,
   "mbr!"              => \$DO_MBR,
@@ -320,7 +322,7 @@ if (! defined $LMFILE) {
 }
 
 # filter the tuning LM to the training side of the data (if possible)
-if (-e $LMFILTER and exists $TRAIN{en}) {
+if (-e $LMFILTER and $DO_FILTER_LM and exists $TRAIN{en}) {
   $cachepipe->cmd("filter-lmfile",
 				  "$LMFILTER union arpa model:$LMFILE lm-filtered < $TRAIN{en}; gzip -9f lm-filtered",
 				  $LMFILE, "lm-filtered.gz");
@@ -384,7 +386,7 @@ chmod(0755,"mert/decoder_command");
 
 # run MERT
 $cachepipe->cmd("mert",
-				"java -d64 -cp $JOSHUA/bin joshua.zmert.ZMERT -maxMem 4500 mert/mert.config > mert.log 2>&1",
+				"java -d64 -cp $JOSHUA/bin joshua.zmert.ZMERT -maxMem 4500 mert/mert.config > mert/mert.log 2>&1",
 				"tune/grammar.filtered.gz",
 				"mert/joshua.config.ZMERT.final",
 				map { "mert/$_" } (keys %MERTFILES));
