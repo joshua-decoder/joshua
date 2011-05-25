@@ -386,6 +386,11 @@ public class DecoderThread extends Thread {
                 }
 
                 if (! new File(tmFile).exists()) {
+					// TODO: generalize MemoryBasedBatchGrammar to
+					// take a FilteredGrammar instead of a tmFile,
+					// where FilteredGrammar would be seeded with a
+					// set of sentences and would only return grammar
+					// rules that matched
                     System.err.println("* FATAL: couldn't find sentence-specific grammar file '" + tmFile + "'");
                     System.exit(1);
                 }
