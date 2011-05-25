@@ -338,10 +338,11 @@ $cachepipe->cmd("filter-tune",
 				$TUNE{fr},
 				"tune/grammar.filtered.gz");
 
-$cachepipe->cmd("filter-tune-sentence-level",
-				"rundir=tune corpus=$TUNE{fr} grammar=tune/grammar.filtered.gz $SCRIPTDIR/filter_grammar_to_sentences.sh",
-				"tune/grammar.filtered.gz",
-				"tune/filtered/grammar.filtered.0.gz");
+# no longer needed, since Joshua will do this itself
+# $cachepipe->cmd("filter-tune-sentence-level",
+# 				"rundir=tune corpus=$TUNE{fr} grammar=tune/grammar.filtered.gz $SCRIPTDIR/filter_grammar_to_sentences.sh",
+# 				"tune/grammar.filtered.gz",
+# 				"tune/filtered/grammar.filtered.0.gz");
 
 copy_thrax_file();
 $cachepipe->cmd("glue-tune",
