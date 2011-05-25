@@ -338,12 +338,6 @@ $cachepipe->cmd("filter-tune",
 				$TUNE{fr},
 				"tune/grammar.filtered.gz");
 
-# no longer needed, since Joshua will do this itself
-# $cachepipe->cmd("filter-tune-sentence-level",
-# 				"rundir=tune corpus=$TUNE{fr} grammar=tune/grammar.filtered.gz $SCRIPTDIR/filter_grammar_to_sentences.sh",
-# 				"tune/grammar.filtered.gz",
-# 				"tune/filtered/grammar.filtered.0.gz");
-
 copy_thrax_file();
 $cachepipe->cmd("glue-tune",
 				"$SCRIPTDIR/training/scat tune/grammar.filtered.gz | $THRAX/scripts/create_glue_grammar.sh thrax-$GRAMMAR_TYPE.conf > tune/grammar.glue",
@@ -404,7 +398,7 @@ maybe_quit("MERT");
 # at the MERT step)
 if ($LAST_STEP ne "MERT") {
   $cachepipe->cmd("test-joshua-config",
-				  "cat mert/joshua.config | perl -pe 's#tune/#test/#; s/mark_oovs=false/mark_oovs=true/' > test/joshua.config",
+				  "cat mert/joshua.config | perl -pe 's#tune/#test/#; s/mark_oovs=false/mark_oovs=true/; s/keep_sent_specific_tm=true/keep_sent_specific_tm=false/' > test/joshua.config",
 				  $MERTFILES{'joshua.config'},
 				  "test/joshua.config");
 }
@@ -418,7 +412,8 @@ mkdir("test") unless -d "test";
 # if we jumped in here, make sure a joshua.config file was specified
 if ($FIRST_STEP eq "TEST") {
   if ($MERTFILES{'joshua.config'} eq $JOSHUA_CONFIG_ORIG) {
-	print "* FATAL: you need to specify a joshua.config (--joshua-config)\n";
+	print "* FATAL: you need to explicitly specify a joshua.config (--joshua-config)\n";
+	print "         when starting at the TEST step\n";
 	exit 1;
   }
 
@@ -434,11 +429,6 @@ $cachepipe->cmd("filter-test",
 				$GRAMMAR_FILE,
 				$TEST{fr},
 				"test/grammar.filtered.gz");
-
-$cachepipe->cmd("filter-test-sentence-level",
-				"rundir=test corpus=$TEST{fr} grammar=test/grammar.filtered.gz $SCRIPTDIR/filter_grammar_to_sentences.sh",
-				"test/grammar.filtered.gz",
-				"test/filtered/grammar.filtered.0.gz");
 
 copy_thrax_file();
 $cachepipe->cmd("glue-test",
