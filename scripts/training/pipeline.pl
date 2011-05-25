@@ -104,8 +104,8 @@ my $cachepipe = new CachePipe();
 
 ## Sanity Checking ###################################################
 
-if (! defined $TUNE and ($STEPS{$FIRST_STEP} > $STEPS{MERT}
-						 or $STEPS{$LAST_STEP} < $STEPS{MERT})) { 
+if (! defined $TUNE and ($STEPS{$FIRST_STEP} <= $STEPS{MERT}
+						 and $STEPS{$LAST_STEP} >= $STEPS{MERT})) { 
   print "* FATAL: need a tuning set (--tune)\n";
   exit 1;
 }
