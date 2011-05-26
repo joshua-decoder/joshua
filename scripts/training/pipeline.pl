@@ -28,11 +28,6 @@ use File::Basename;
 use Cwd;
 use CachePipe;
 
-$SIG{INT} = sub { 
-  print "* Got C-c, quitting\n";
-  exit 1; 
-};
-
 my $HADOOP = $ENV{HADOOP};
 my $JOSHUA = $ENV{JOSHUA};
 my $THRAX  = $ENV{THRAX};
@@ -100,6 +95,12 @@ my $options = GetOptions(
 $| = 1;
 
 my $cachepipe = new CachePipe();
+
+$SIG{INT} = sub { 
+  print "* Got C-c, quitting\n";
+  $cachepipe->cleanup();
+  exit 1; 
+};
 
 ## Sanity Checking ###################################################
 
@@ -326,6 +327,7 @@ if (! defined $LMFILE) {
 
 # filter the tuning LM to the training side of the data (if possible)
 if (-e $LMFILTER and $DO_FILTER_LM and exists $TRAIN{en}) {
+  
   $cachepipe->cmd("filter-lmfile",
 				  "$LMFILTER union arpa model:$LMFILE lm-filtered < $TRAIN{en}; gzip -9f lm-filtered",
 				  $LMFILE, "lm-filtered.gz");
@@ -375,8 +377,8 @@ foreach my $key (keys %MERTFILES) {
 	s/<OUTPUT>/mert\/tune.output.nbest/g;
 	s/<REF>/$TUNE{en}/g;
 	s/<NUMREFS>/$numrefs/g;
-	s/<CONFIG>/test\/joshua.config/g;
-	s/<LOG>/test\/mert.log/g;
+	s/<CONFIG>/mert\/joshua.config/g;
+	s/<LOG>/mert\/mert.log/g;
 
 	print TO;
   }
