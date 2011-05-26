@@ -1,5 +1,6 @@
 #!/bin/bash
-set -e
+echo TODO\(juri\): Makefile to memoize instead of compiling kenlm every time.  
+ set -e
 base="$(dirname "$0")"
 output="$(readlink -f "$1")"
 pushd "$base" >/dev/null
