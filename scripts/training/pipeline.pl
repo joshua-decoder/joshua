@@ -10,7 +10,7 @@
 # Currently implemented:
 #
 # - decoding with Hiero grammars
-# - jump to GIZA, MERT, THRAX, and TEST points (using --first-step and
+# - jump to GIZA, PARSE, MERT, THRAX, and TEST points (using --first-step and
 #   (optionally) --last-step)
 # - built on top of CachePipe, so that intermediate results are cached
 #   and only re-run if necessary
@@ -54,8 +54,8 @@ my $JOSHUA_CONFIG_ORIG   = "$MERTCONFDIR/joshua.config";
 my %MERTFILES = (
   'decoder_command' => "$MERTCONFDIR/decoder_command.qsub",
   'joshua.config'   => $JOSHUA_CONFIG_ORIG,
+  'mert.config'     => "$MERTCONFDIR/mert.config",
   'params.txt'      => "$MERTCONFDIR/params.txt",
-  'mert.config'     => "$MERTCONFDIR/mert.config"
 );
 
 my $DO_MBR = 1;
@@ -219,15 +219,23 @@ if ($DO_SUBSAMPLE) {
 				  "train/subsampled/subsampled.$MAXLEN.$FR.tok.$MAXLEN");
 
   foreach my $lang ($EN,$FR) {
-	$cachepipe->cmd("link-corpus",
-					"ln -sf subsampled/subsampled.$MAXLEN.$lang.tok.$MAXLEN train/corpus.$lang",
+	$cachepipe->cmd("link-corpus-$lang",
+					"ln -sf subsampled/subsampled.tok.$MAXLEN.lc.$lang train/corpus.$lang",
 					"train/corpus.$lang");
+	$cachepipe->cmd("link-corpus-tok-$lang",
+					"ln -sf subsampled/subsampled.tok.$MAXLEN.lc.$lang train/corpus.tok.$lang",
+					"train/corpus.tok.$lang");
+
   }
 } else {
   foreach my $lang ($EN,$FR) {
 	$cachepipe->cmd("link-corpus-$lang",
 					"ln -sf train.tok.$MAXLEN.lc.$lang train/corpus.$lang",
 					"train/corpus.$lang");
+	$cachepipe->cmd("link-corpus-tok-$lang",
+					"ln -sf train.tok.$MAXLEN.$lang train/corpus.tok.$lang",
+					"train/corpus.tok.$lang");
+
   }
 }
 
@@ -243,19 +251,21 @@ $cachepipe->cmd("giza",
 				"$TRAIN{prefix}.$EN",
 				$ALIGNMENT);
 
+maybe_quit("GIZA");
 
 PARSE:
 
 if ($GRAMMAR_TYPE eq "samt") {
 
+  $cachepipe->cmd("parse",
+				  "~mpost/code/cdec/vest/parallelize.pl -j 50 -- java -cp /home/hltcoe/mpost/code/berkeleyParser edu.berkeley.nlp.PCFGLA.BerkeleyParser -gr /home/hltcoe/mpost/code/berkeleyParser/eng_sm5.gr < $TRAIN{tokenized}.$EN | sed s/^\(/\(TOP/ > $TRAIN{tokenized}.$EN.parsed",
+				  "$TRAIN{prefix}.tok.$EN",
+				  "$TRAIN{prefix}.tok.$EN.parsed");
 
-  # $cachepipe->cmd("parse",
-  # 				  "$PARALLELIZE -j 50 -- java -cp /home/hltcoe/mpost/code/berkeleyParser edu.berkeley.nlp.PCFGLA.BerkeleyParser -gr /home/hltcoe/mpost/code/berkeleyParser/eng_sm5.gr <subsampled/subsample.$pair.$maxlen.$en.tok | sed s/^\(/\(TOP/ >subsampled/subsample.$pair.$maxlen.$en.parsed" subsampled/subsample.$pair.$maxlen.$en.{tok,parsed}
-
-  $TRAIN{EN} = "$TRAIN{prefix}.$EN.parsed";
+  $TRAIN{EN} = "$TRAIN{prefix}.tok.$EN.parsed";
 }
 
-maybe_quit("GIZA");
+maybe_quit("PARSE");
 
 ## THRAX #############################################################
 
@@ -392,7 +402,9 @@ $cachepipe->cmd("mert",
 				"java -d64 -cp $JOSHUA/bin joshua.zmert.ZMERT -maxMem 4500 mert/mert.config > mert/mert.log 2>&1",
 				"tune/grammar.filtered.gz",
 				"mert/joshua.config.ZMERT.final",
-				map { "mert/$_" } (keys %MERTFILES));
+				"mert/decoder_command",
+				"mert/mert.config",
+				"mert/params.txt");
 
 # remove sentence-level Joshua files
 #system("rm -rf tune/filtered/");
@@ -462,7 +474,7 @@ foreach my $key (qw(decoder_command)) {
 	s/<GRAMMAR>/$GRAMMAR_TYPE/g;
 	s/<OOV>/$OOV/g;
 	s/<CONFIG>/test\/joshua.config/g;
-	s/<LOG>/test\/mert.log/g;
+	s/<LOG>/test\/test.log/g;
 
 	print TO;
   }
