@@ -44,6 +44,8 @@ public interface SymbolTable {
 	 * Negative IDs are reserved for non-terminals.
 	 *
 	 * Zero is reserved as the UNKNOWN_WORD.
+   *
+   * TODO: The above comments are wrong, and so is the code below.  Joshua devs should fix this.  KenLM uses 0 for unknown word.  --"Ken"
 	 */
 	int UNKNOWN_WORD = 1;
 	
