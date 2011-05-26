@@ -622,7 +622,7 @@ $cachepipe->cmd("test-decode",
 				"test/test.output.nbest");
 
 if ($DO_MBR) {
-  $cachepipe->cmd("test-onebest-mbr", "java -cp $JOSHUA/bin -Xmx1700m -Xms1700m joshua.decoder.NbestMinRiskReranker test/test.output.nbest test/test.output.1best false 1",
+  $cachepipe->cmd("test-onebest-mbr", "java -cp $JOSHUA/bin -Xmx1700m -Xms1700m joshua.decoder.NbestMinRiskReranker false 1 < test/test.output.nbest > test/test.output.1best",
 				  "test/test.output.nbest", "test/test.output.1best");
 } else {
   $cachepipe->cmd("test-extract-onebest",
