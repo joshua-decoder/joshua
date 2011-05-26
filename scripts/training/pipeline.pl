@@ -71,14 +71,8 @@ my $HADOOP_MEM = "8G";
 my $JOSHUA_MEM = "3100m";
 my $QSUB_ARGS  = "-l num_proc=2";
 
-my %STEPS = (
-  FIRST => 1,
-  GIZA => 2,
-  THRAX => 3,
-  MERT => 4,
-  TEST => 5,
-  LAST => 6,
-);
+my @STEPS = qw[FIRST GIZA PARSE THRAX MERT TEST LAST];
+my %STEPS = map { $STEPS[$_] => $_ + 1 } (0..$#STEPS);
 
 my $options = GetOptions(
   "corpus=s" 	 	  => \@CORPORA,
@@ -249,9 +243,13 @@ $cachepipe->cmd("giza",
 				$ALIGNMENT);
 
 
+PARSE:
+
 if ($GRAMMAR_TYPE eq "samt") {
 
-#   cachecmd parse "~mpost/code/cdec/vest/parallelize.pl -j 20 -- java -cp /home/hltcoe/mpost/code/berkeleyParser edu.berkeley.nlp.PCFGLA.BerkeleyParser -gr /home/hltcoe/mpost/code/berkeleyParser/eng_sm5.gr <subsampled/subsample.$pair.$maxlen.$en.tok | sed s/^\(/\(TOP/ >subsampled/subsample.$pair.$maxlen.$en.parsed" subsampled/subsample.$pair.$maxlen.$en.{tok,parsed}
+
+  # $cachepipe->cmd("parse",
+  # 				  "$PARALLELIZE -j 50 -- java -cp /home/hltcoe/mpost/code/berkeleyParser edu.berkeley.nlp.PCFGLA.BerkeleyParser -gr /home/hltcoe/mpost/code/berkeleyParser/eng_sm5.gr <subsampled/subsample.$pair.$maxlen.$en.tok | sed s/^\(/\(TOP/ >subsampled/subsample.$pair.$maxlen.$en.parsed" subsampled/subsample.$pair.$maxlen.$en.{tok,parsed}
 
   $TRAIN{EN} = "$TRAIN{prefix}.$EN.parsed";
 }
