@@ -36,6 +36,14 @@ class SendToJava : public lm::ngram::EnumerateVocab {
     jmethodID mid_;
 };
 
+// Vocab ids above what the vocabulary knows about are unknown and should be mapped to that.  
+template <class Model> void FixArray(const Model &model, jint *begin, jint *end) {
+  jint lm_bound = static_cast<jint>(model.GetVocabulary().Bound());
+  for (jint *i = begin; i < end; ++i) {
+    if (*i >= lm_bound) *i = 0;
+  }
+}
+
 } // namespace
 
 extern "C" {
@@ -62,8 +70,9 @@ JNIEXPORT jlong JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenProbing_create(JN
   jlong ret;
   try {
     lm::ngram::Config config;
+    if (!vocab_callback) UTIL_THROW(util::Exception, "Probing model requires you to enumerate vocab pending binary file format revision.");
     SendToJava callback(env, vocab_callback);
-    if (vocab_callback) config.enumerate_vocab = &callback;
+    config.enumerate_vocab = &callback;
     ret = reinterpret_cast<jlong>(new lm::ngram::ProbingModel(str, config));
   } catch (std::exception &e) {
     std::cerr << e.what() << std::endl;
@@ -96,6 +105,7 @@ JNIEXPORT jfloat JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenProbing_prob(JNI
   jint values[length];
   env->GetIntArrayRegion(arr, 0, length, values);
   const lm::ngram::ProbingModel &model = *reinterpret_cast<const lm::ngram::ProbingModel*>(pointer);
+  FixArray(model, values, values + length);
 
   std::reverse(values, values + length - 1);
   lm::ngram::State ignored;
@@ -109,6 +119,7 @@ JNIEXPORT jfloat JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenProbing_probStri
   jint values[length];
   env->GetIntArrayRegion(arr, 0, length, values);
   const lm::ngram::ProbingModel &model = *reinterpret_cast<const lm::ngram::ProbingModel*>(pointer);
+  FixArray(model, values, values + length);
 
   float prob = 0;
   lm::ngram::State state;
@@ -172,6 +183,7 @@ JNIEXPORT jfloat JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenTrie_prob(JNIEnv
   jint values[length];
   env->GetIntArrayRegion(arr, 0, length, values);
   const lm::ngram::TrieModel &model = *reinterpret_cast<const lm::ngram::TrieModel*>(pointer);
+  FixArray(model, values, values + length);
 
   std::reverse(values, values + length - 1);
   lm::ngram::State ignored;
@@ -185,6 +197,7 @@ JNIEXPORT jfloat JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenTrie_probString(
   jint values[length];
   env->GetIntArrayRegion(arr, 0, length, values);
   const lm::ngram::TrieModel &model = *reinterpret_cast<const lm::ngram::TrieModel*>(pointer);
+  FixArray(model, values, values + length);
 
   float prob = 0;
   lm::ngram::State state;

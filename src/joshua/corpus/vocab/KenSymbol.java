@@ -112,5 +112,12 @@ public class KenSymbol extends DefaultSymbol implements VocabCallback {
     if (old_id != null && !old_id.equals(id)) {
       throw new RuntimeException("Conflict for word " + str + " with ids " + old_id + " and " + id);
     }
+    // Kenlm always calls in order
+    if (id >= curTerminalID) {
+      curTerminalID = id + 1;
+			if (curTerminalID > lmEndSymID) {
+				throw new RuntimeException("curTerminalID is greater than lmEndSymID");
+			}
+    }
   }
 }
