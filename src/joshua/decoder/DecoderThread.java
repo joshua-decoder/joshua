@@ -385,6 +385,10 @@ public class DecoderThread extends Thread {
                     String dirPart = tmFile.substring(0,lastSlash);
                     String filePart = tmFile.substring(lastSlash + 1);
                     tmFile = dirPart + "/filtered/" + filePart;
+
+					File filteredDir = new File(dirPart + "/filtered");
+					if (! filteredDir.exists()) 
+						filteredDir.mkdirs();
                 }
 
 				boolean alreadyExisted = true;
