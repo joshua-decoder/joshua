@@ -257,12 +257,17 @@ PARSE:
 
 if ($GRAMMAR_TYPE eq "samt") {
 
-  $cachepipe->cmd("parse",
-				  "~mpost/code/cdec/vest/parallelize.pl -j 50 -- java -cp /home/hltcoe/mpost/code/berkeleyParser edu.berkeley.nlp.PCFGLA.BerkeleyParser -gr /home/hltcoe/mpost/code/berkeleyParser/eng_sm5.gr < $TRAIN{tokenized}.$EN | sed s/^\(/\(TOP/ > $TRAIN{tokenized}.$EN.parsed",
-				  "$TRAIN{prefix}.tok.$EN",
-				  "$TRAIN{prefix}.tok.$EN.parsed");
+  $cachepipe->cmd("build-vocab",
+				  "cat $TRAIN{prefix}.$EN | $SCRIPTDIR/training/build-vocab.pl > train/vocab.$EN",
+				  "$TRAIN{prefix}.$EN",
+				  "train/vocab.$EN");
 
-  $TRAIN{EN} = "$TRAIN{prefix}.tok.$EN.parsed";
+  $cachepipe->cmd("parse",
+				  "cat $TRAIN{prefix}.tok.$EN | /home/hltcoe/mpost/code/cdec/vest/parallelize.pl -j 50 -- java -cp /home/hltcoe/mpost/code/berkeleyParser edu.berkeley.nlp.PCFGLA.BerkeleyParser -gr /home/hltcoe/mpost/code/berkeleyParser/eng_sm5.gr | sed 's/^\(/\(TOP/' | tee $TRAIN{prefix}.$EN.parsed.mc | perl -pi -e 's/(\\S+)\\)/lc(\$1).\")\"/ge' | tee $TRAIN{prefix}.$EN.parsed | perl $SCRIPTDIR/training/add-OOVS.pl train/vocab.$EN > $TRAIN{prefix}.$EN.parsed.OOV",
+				  "$TRAIN{en}",
+				  "$TRAIN{en}.parsed.OOV");
+
+  $TRAIN{EN} = "$TRAIN{en}.parsed.OOV";
 }
 
 maybe_quit("PARSE");
