@@ -308,7 +308,7 @@ if (! defined $GRAMMAR_FILE) {
 				  "grammar.gz");
 
   # cache the thrax-prep step, which depends on grammar.gz
-  $cachepipe->cm("thrax-prep", "--cache-only");
+  $cachepipe->cmd("thrax-prep", "--cache-only");
 
   # set the grammar file
   $GRAMMAR_FILE = "grammar.gz";
