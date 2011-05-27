@@ -1,0 +1,17 @@
+This script describes how to setup and use the Joshua pipeline.pl
+script.
+
+== DEPENDENCIES ======================================================
+
+The Joshua pipeline has the following external dependencies:
+
+- Moses scripts (for running GIZA)
+  This dependency will be removed in the near future, in favor of the
+  Berkeley aligner.
+
+- Hadoop (for extracting grammars)
+
+- Berkeley Parser (for parsing for SAMT grammars)
+
+== INSTALLATION ======================================================
+

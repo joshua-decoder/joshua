@@ -1,0 +1,95 @@
+This directory contains files for running the complete Joshua
+pipeline, from corpus preparation to testing and evaluation.  The main
+entry point is =pipeline.pl=, a script designed in the spirit of the
+Moses decoder's =train-factored-phrase-model.perl=, but with a number
+of enhancements.  These are:
+
+- Run the complete pipeline from start to finish.
+
+- Caching of pipeline results (based on file contents, not file
+  existence or timestamps), so the pipeline can be debugged or shared
+  across similar runs with (almost) no time spent recomputing
+  expensive steps.
+ 
+- Jump into the pipeline at a set of predefined points.
+
+  This document describes how to use this pipeline.
+
+== QUICK START =======================================================
+
+1. See the INSTALL file to setup the pipeline.  If Joshua is
+   installed, this is mostly a matter of making sure that a few
+   dependencies are installed and environment variables are setup
+   pointing to them.
+
+2. Run the pipeline.  The following is the minimal invocation to run
+   the complete pipeline:
+
+   $JOSHUA/scripts/training/pipeline.pl  \
+       --corpus data/train               \
+	   --tune data/tune                  \
+	   --test data/test                  \
+	   --fr ur                           \
+	   --en en
+
+   (This assumes that a subdirectory data/ exists in the current
+   directory, that you are translating from a language identified by
+   the "ur" extension to a language identified by the "en" extension,
+   that the training data can be found at data/train.en and
+   data/train.ur, and so on).
+
+   The --corpus, --tune, and --test flags define file prefixes that
+   are concatened with the language extensions given by --en and
+   --fr.  The prefixes can be either absolute or relative pathnames. 
+     
+   This will run the complete pipeline, producing BLEU scores at the
+   end.  Read on for further information.
+
+== COMPLETE LIST OF COMMAND-LINE OPTIONS =============================
+
+pipeline.pl
+
+  --first-step STEP
+  --last-step STEP
+  
+    Allows starting and stopping at at of the following steps: 
+
+	- ALIGN (alignment of the training data)
+	- THRAX (grammar extraction, including parsing for SAMT grammars)
+	- MERT (tuning)
+	- TEST (decoding a test set)
+
+  --fr FR
+  --en EN
+
+    Specifies the source (fr) and target (en) languages.
+
+  --corpus CORPUS
+
+    Specifies a file prefix for a training corpus.  When running the
+    full script, any number of flags can be provided; the training
+    corpora are all concatenated together for alignment and grammar
+    extraction.  When skipping steps, only a single corpus can be
+    provided (so you must do the concatenation yourself, if you so
+    need). 
+
+  --tune TUNE
+  --test TEST
+  
+
+== MORE DETAIL =======================================================
+
+The Joshua pipeline provides support for two major use ca
+
+1. Running the pipeline from start to finish.  This is the use case
+   described in the Quick Start above.  In addition, the user can
+   specify the --last-step flag to quit early.  
+
+2. Running pieces of the pipeline.  
+
+   pipeline.pl allows early steps to be skipped over, in the event
+   that you already have (say) an alignment or a grammar and want to
+   proceed directly to later steps.
+
+
+
