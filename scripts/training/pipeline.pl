@@ -66,7 +66,7 @@ my $HADOOP_MEM = "8G";
 my $JOSHUA_MEM = "3100m";
 my $QSUB_ARGS  = "-l num_proc=2";
 
-my @STEPS = qw[FIRST GIZA PARSE THRAX MERT TEST LAST];
+my @STEPS = qw[FIRST ALIGN THRAX MERT TEST LAST];
 my %STEPS = map { $STEPS[$_] => $_ + 1 } (0..$#STEPS);
 
 my $options = GetOptions(
@@ -105,12 +105,20 @@ $SIG{INT} = sub {
 
 ## Sanity Checking ###################################################
 
+# make sure a corpus was provided if we're doing any step before MERT
+if (@CORPORA == 0 and $STEPS{$FIRST_STEP} < $STEPS{MERT}) {
+  print "* FATAL: need at least one training corpus (--corpus)\n";
+  exit 1;
+}
+
+# make sure a tuning corpus was provided if we're doing MERT
 if (! defined $TUNE and ($STEPS{$FIRST_STEP} <= $STEPS{MERT}
 						 and $STEPS{$LAST_STEP} >= $STEPS{MERT})) { 
   print "* FATAL: need a tuning set (--tune)\n";
   exit 1;
 }
 
+# make sure a test corpus was provided if we're decoding a test set
 if (! defined $TEST and ($STEPS{$FIRST_STEP} <= $STEPS{TEST}
 						 and $STEPS{$LAST_STEP} >= $STEPS{TEST})) {
   print "* FATAL: need a test set (--test)\n";
@@ -243,40 +251,64 @@ if ($DO_SUBSAMPLE) {
   }
 }
 
-## GIZA ##############################################################
+## ALIGN #############################################################
 
-GIZA:
+ALIGN:
 
 # alignment
 $ALIGNMENT = "giza/model/aligned.grow-diag-final";
 $cachepipe->cmd("giza",
 				"rm -f train/corpus.0-0.*; $MOSES_TRAINER -root-dir giza -e $EN -f $FR -corpus $TRAIN{prefix} -first-step 1 -last-step 3 > giza.log 2>&1",
-				"$TRAIN{prefix}.$FR",
-				"$TRAIN{prefix}.$EN",
+				$TRAIN{fr},
+				$TRAIN{en},
 				$ALIGNMENT);
 
-maybe_quit("GIZA");
-
-PARSE:
-
-if ($GRAMMAR_TYPE eq "samt") {
-
-  $cachepipe->cmd("build-vocab",
-				  "cat $TRAIN{prefix}.$EN | $SCRIPTDIR/training/build-vocab.pl > train/vocab.$EN",
-				  "$TRAIN{prefix}.$EN",
-				  "train/vocab.$EN");
-
-  $cachepipe->cmd("parse",
-				  "cat $TRAIN{prefix}.tok.$EN | /home/hltcoe/mpost/code/cdec/vest/parallelize.pl -j 50 -- java -cp /home/hltcoe/mpost/code/berkeleyParser edu.berkeley.nlp.PCFGLA.BerkeleyParser -gr /home/hltcoe/mpost/code/berkeleyParser/eng_sm5.gr | sed 's/^\(/\(TOP/' | tee $TRAIN{prefix}.$EN.parsed.mc | perl -pi -e 's/(\\S+)\\)/lc(\$1).\")\"/ge' | tee $TRAIN{prefix}.$EN.parsed | perl $SCRIPTDIR/training/add-OOVS.pl train/vocab.$EN > $TRAIN{prefix}.$EN.parsed.OOV",
-				  "$TRAIN{en}",
-				  "$TRAIN{en}.parsed.OOV");
-}
-
-maybe_quit("PARSE");
+maybe_quit("ALIGN");
 
 ## THRAX #############################################################
 
 THRAX:
+
+if ($GRAMMAR_TYPE eq "samt") {
+
+  # check whether we need to parse (might be already parsed if we
+  # jumped directly here)
+  if (already_parsed($TRAIN{en})) {
+	mkdir("train") unless -d "train";
+
+	# If parsing was already done, then copy the file to our training
+	# directory so we can use our local copy instead of the original
+	# one.  Thrax later in the script expects to find
+	# $TRAIN{en}.parsed.OOV, so that's where we copy it.  An important
+	# note here is that to get this, we set $TRAIN{en} to point to a
+	# file that doesn't exist.  This is okay because after the Thrax
+	# run we should never need to use the training data any more (and
+	# anyway we don't have it).  If that changes this will break
+	# things.
+
+	$cachepipe->cmd("cp-train-$EN",
+					"cp $TRAIN{en} train/corpus.$EN.parsed.OOV",
+					$TRAIN{en}, "train/corpus.$EN.parsed.OOV");
+	$TRAIN{en} = "train/corpus.$EN";
+
+	$cachepipe->cmd("cp-train-$FR",
+					"cp $TRAIN{fr} train/corpus.$FR",
+					$TRAIN{fr}, "train/corpus.$FR");
+	$TRAIN{fr} = "train/corpus.$FR";
+
+  } else {
+
+	$cachepipe->cmd("build-vocab",
+					"cat $TRAIN{en} | $SCRIPTDIR/training/build-vocab.pl > train/vocab.$EN",
+					$TRAIN{en},
+					"train/vocab.$EN");
+
+	$cachepipe->cmd("parse",
+					"cat $TRAIN{prefix}.tok.$EN | /home/hltcoe/mpost/code/cdec/vest/parallelize.pl -j 50 -- java -cp /home/hltcoe/mpost/code/berkeleyParser edu.berkeley.nlp.PCFGLA.BerkeleyParser -gr /home/hltcoe/mpost/code/berkeleyParser/eng_sm5.gr | sed 's/^\(/\(TOP/' | tee $TRAIN{prefix}.$EN.parsed.mc | perl -pi -e 's/(\\S+)\\)/lc(\$1).\")\"/ge' | tee $TRAIN{prefix}.$EN.parsed | perl $SCRIPTDIR/training/add-OOVS.pl train/vocab.$EN > $TRAIN{prefix}.$EN.parsed.OOV",
+					"$TRAIN{en}",
+					"$TRAIN{en}.parsed.OOV");
+  }
+}
 
 # we may have skipped directly to this step, in which case we need to
 # ensure an alignment was provided
@@ -586,3 +618,18 @@ sub maybe_quit {
   }
 }
 
+## returns 1 if every sentence in the corpus begins with an open paren,
+## false otherwise
+sub already_parsed {
+  my ($corpus) = @_;
+
+  open(CORPUS, $corpus) or die "can't read corpus file '$corpus'\n";
+  while (<CORPUS>) {
+	# if we see a line not beginning with an open paren, we consider
+	# the file not to be parsed
+	return 0 unless /^\(/;
+  }
+  close(CORPUS);
+
+  return 1;
+}
