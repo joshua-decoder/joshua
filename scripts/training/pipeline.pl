@@ -32,7 +32,7 @@ my $HADOOP = $ENV{HADOOP};
 my $JOSHUA = $ENV{JOSHUA};
 my $THRAX  = $ENV{THRAX};
 
-my (@CORPORA,$TUNE,$TEST,$ALIGNMENT,$FR,$EN,$LMFILE,$GRAMMAR_FILE);
+my (@CORPORA,$TUNE,$TEST,$ALIGNMENT,$FR,$EN,$LMFILE,$GRAMMAR_FILE,$THRAX_CONF_FILE);
 my $FIRST_STEP = "FIRST";
 my $LAST_STEP  = "LAST";
 my $LMFILTER = "$ENV{HOME}/code/filter/filter";
@@ -86,6 +86,7 @@ my $options = GetOptions(
   "tokenizer=s"  	  => \$TOKENIZER,
   "joshua-config=s"   => \$MERTFILES{'joshua.config'},
   "decoder-command=s" => \$MERTFILES{'decoder_command'},
+  "thrax-conf=s"      => \$THRAX_CONF_FILE,
   "subsample!"   	  => \$DO_SUBSAMPLE,
   "qsub-args=s"  	  => \$QSUB_ARGS,
   "first-step=s" 	  => \$FIRST_STEP,
@@ -135,6 +136,9 @@ foreach my $corpus (@CORPORA) {
 
 my $OOV = ($GRAMMAR_TYPE eq "samt") ? "OOV" : "X";
 my $THRAXDIR = "pipeline-$FR-$EN-$GRAMMAR_TYPE";
+
+# use this default unless it's already been defined by a command-line argument
+$THRAX_CONF_FILE = "$JOSHUA/scripts/training/templates/thrax-$GRAMMAR_TYPE.conf" unless defined $THRAX_CONF_FILE;
 
 mkdir $RUNDIR unless -d $RUNDIR;
 chdir($RUNDIR);
@@ -266,8 +270,6 @@ if ($GRAMMAR_TYPE eq "samt") {
 				  "cat $TRAIN{prefix}.tok.$EN | /home/hltcoe/mpost/code/cdec/vest/parallelize.pl -j 50 -- java -cp /home/hltcoe/mpost/code/berkeleyParser edu.berkeley.nlp.PCFGLA.BerkeleyParser -gr /home/hltcoe/mpost/code/berkeleyParser/eng_sm5.gr | sed 's/^\(/\(TOP/' | tee $TRAIN{prefix}.$EN.parsed.mc | perl -pi -e 's/(\\S+)\\)/lc(\$1).\")\"/ge' | tee $TRAIN{prefix}.$EN.parsed | perl $SCRIPTDIR/training/add-OOVS.pl train/vocab.$EN > $TRAIN{prefix}.$EN.parsed.OOV",
 				  "$TRAIN{en}",
 				  "$TRAIN{en}.parsed.OOV");
-
-  $TRAIN{EN} = "$TRAIN{en}.parsed.OOV";
 }
 
 maybe_quit("PARSE");
@@ -288,8 +290,8 @@ if (! defined $GRAMMAR_FILE) {
 
 # create the input file
   $cachepipe->cmd("thrax-input-file",
-				  "paste $TRAIN{fr} $TRAIN{en} $ALIGNMENT | perl -pe 's/\t/ ||| /g' | grep -v '(())' > train/thrax-input-file",
-				  $TRAIN{fr}, $TRAIN{en}, $ALIGNMENT,
+				  "paste $TRAIN{fr} $TRAIN{en}.parsed.OOV $ALIGNMENT | perl -pe 's/\t/ ||| /g' | grep -v '(())' > train/thrax-input-file",
+				  $TRAIN{fr}, "$TRAIN{en}.parsed.OOV", $ALIGNMENT,
 				  "train/thrax-input-file");
 
 # put the hadoop files in place
@@ -305,6 +307,10 @@ if (! defined $GRAMMAR_FILE) {
 				  "train/thrax-input-file",
 				  "grammar.gz");
 
+  # cache the thrax-prep step, which depends on grammar.gz
+  $cachepipe->cm("thrax-prep", "--cache-only");
+
+  # set the grammar file
   $GRAMMAR_FILE = "grammar.gz";
 }
 
@@ -312,8 +318,6 @@ maybe_quit("THRAX");
 
 ## MERT ##############################################################
 MERT:
-
-# maybe_copy_tuning_data();
 
 # If the language model file wasn't provided, build it from the target side of the training data.  Otherwise, copy it to location.
 if (! defined $LMFILE) {
@@ -344,7 +348,7 @@ if (! defined $LMFILE) {
 if (-e $LMFILTER and $DO_FILTER_LM and exists $TRAIN{en}) {
   
   $cachepipe->cmd("filter-lmfile",
-				  "$LMFILTER union arpa model:$LMFILE lm-filtered < $TRAIN{en}; gzip -9f lm-filtered",
+				  "cat $TRAIN{en} | $LMFILTER union arpa model:$LMFILE lm-filtered; gzip -9f lm-filtered",
 				  $LMFILE, "lm-filtered.gz");
   $LMFILE = "lm-filtered.gz";
 }
@@ -516,38 +520,15 @@ system("cat test/test.output.1best.bleu");
 LAST:
 1;
 
+# I don't know why this is a function
 sub copy_thrax_file {
   $cachepipe->cmd("thrax-config",
-				  "cp $JOSHUA/scripts/training/templates/thrax-$GRAMMAR_TYPE.conf .; echo input-file $THRAXDIR/input-file >> thrax-$GRAMMAR_TYPE.conf",
-				  "$JOSHUA/scripts/training/templates/thrax-$GRAMMAR_TYPE.conf",
+				  "cp $THRAX_CONF_FILE thrax-$GRAMMAR_TYPE.conf; echo input-file $THRAXDIR/input-file >> thrax-$GRAMMAR_TYPE.conf",
+				  $THRAX_CONF_FILE,
 				  "thrax-$GRAMMAR_TYPE.conf");
 }
 
-# applies if the early steps were skipped
-# sub maybe_copy_tuning_data {
-#   if (! -e "tune/tune.$FR.tok.lc") {
-# 	$cachepipe->cmd("cp-tuning-data",
-# 					"cp $TUNE{fr} tune/tune.$FR.tok.lc; cp $TUNE{en} tune/tune.$EN.tok.lc",
-# 					$TUNE{fr}, "tune/tune.$FR.tok.lc",
-# 					$TUNE{en}, "tune/tune.$EN.tok.lc");
-# 	$TUNE{fr} = "tune/tune.$FR.tok.lc";
-# 	$TUNE{en} = "tune/tune.$EN.tok.lc";
-#   }
-# }
-
-# # copies test data over if early stages were skipped
-# sub maybe_copy_test_data {
-#   if (! -e "test/test.$FR.tok.lc") {
-# 	$cachepipe->cmd("cp-test-data",
-# 					"cp $TEST{fr} test/test.$FR.tok.lc; cp $TEST{en} test/test.$EN.tok.lc",
-# 					$TEST{fr}, "test/test.$FR.tok.lc",
-# 					$TEST{en}, "test/test.$EN.tok.lc");
-# 	$TEST{fr} = "test/test.$FR.tok.lc";
-# 	$TEST{en} = "test/test.$EN.tok.lc";
-#   }
-# }
-
-
+# Does tokenization and normalization of training, tuning, and test data.
 sub prepare_data {
   my ($label,$corpora,$maxlen) = @_;
 
