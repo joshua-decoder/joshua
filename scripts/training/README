@@ -19,19 +19,40 @@ of enhancements.  These are:
 
 1. See the INSTALL file to setup the pipeline.  If Joshua is
    installed, this is mostly a matter of making sure that a few
-   dependencies are installed and environment variables are setup
+   dependencies are available and environment variables are setup
    pointing to them.
 
-2. Run the pipeline.  The following is the minimal invocation to run
+2. Prepare your data.  The pipeline script needs to be told where to
+   find the raw training, tuning, and test data.  A good convention is
+   to place these files in a data/ subdirectory of your run's working
+   directory.  The expected format (for each of training, tuning, and
+   test) is a pair of files that share a common path prefix and are
+   distinguished by their extension:
+
+   data/
+     train.SOURCE
+     train.TARGET
+     tune.SOURCE
+     tune.TARGET
+     test.SOURCE
+     test.TARGET
+
+   These files should be parallel at the sentence level, with one sentence
+   per line, should be in UTF-8, and should be untokenized
+   (tokenization occurs in the pipeline).
+   
+3. Run the pipeline.  The following is the minimal invocation to run
    the complete pipeline:
 
    $JOSHUA/scripts/training/pipeline.pl  \
        --corpus data/train               \
 	   --tune data/tune                  \
 	   --test data/test                  \
-	   --fr ur                           \
-	   --en en
+	   --source SOURCE
+	   --target TARGET
 
+   Note the correspondence between the files in the data/ subdirectory
+   and the 
    (This assumes that a subdirectory data/ exists in the current
    directory, that you are translating from a language identified by
    the "ur" extension to a language identified by the "en" extension,
@@ -39,8 +60,8 @@ of enhancements.  These are:
    data/train.ur, and so on).
 
    The --corpus, --tune, and --test flags define file prefixes that
-   are concatened with the language extensions given by --en and
-   --fr.  The prefixes can be either absolute or relative pathnames. 
+   are concatened with the language extensions given by --target and
+   --source.  The prefixes can be either absolute or relative pathnames. 
      
    This will run the complete pipeline, producing BLEU scores at the
    end.  Read on for further information.
@@ -64,10 +85,10 @@ pipeline.pl
 	- MERT (tuning)
 	- TEST (decoding a test set)
 
-  --fr FR
-  --en EN
+  --source SOURCE
+  --target TARGET
 
-    Specifies the source (fr) and target (en) languages.
+    Specifies the source and target languages.
 
   --corpus CORPUS
 
@@ -182,8 +203,8 @@ files:
   <JOSHUA> is the root of the Joshua installation ($JOSHUA env. var.)
   <INPUT> is the file being decoded
   <OUTPUT> is the output file that the decoder command creates
-  <FR> is the source language (--fr)
-  <EN> is the target language (--en)
+  <SOURCE> is the source language (--source)
+  <TARGET> is the target language (--target)
   <LMFILE> is the language model
   <MEM> is the amount of memory available to the Joshua decoder instances
   <OOV> is the OOV tag used in the grammar ("OOV" for SAMT, "X" for Hiero)

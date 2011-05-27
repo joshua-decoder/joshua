@@ -32,7 +32,7 @@ my $HADOOP = $ENV{HADOOP};
 my $JOSHUA = $ENV{JOSHUA};
 my $THRAX  = $ENV{THRAX};
 
-my (@CORPORA,$TUNE,$TEST,$ALIGNMENT,$FR,$EN,$LMFILE,$GRAMMAR_FILE,$THRAX_CONF_FILE);
+my (@CORPORA,$TUNE,$TEST,$ALIGNMENT,$SOURCE,$TARGET,$LMFILE,$GRAMMAR_FILE,$THRAX_CONF_FILE);
 my $FIRST_STEP = "FIRST";
 my $LAST_STEP  = "LAST";
 my $LMFILTER = "$ENV{HOME}/code/filter/filter";
@@ -74,8 +74,8 @@ my $options = GetOptions(
   "tune=s"   	 	  => \$TUNE,
   "test=s"            => \$TEST,
   "alignment=s"  	  => \$ALIGNMENT,
-  "fr=s"     	 	  => \$FR,
-  "en=s"     	 	  => \$EN,
+  "source=s"   	 	  => \$SOURCE,
+  "target=s"  	 	  => \$TARGET,
   "rundir=s" 	 	  => \$RUNDIR,
   "filter-lm!"        => \$DO_FILTER_LM,
   "lmfile=s" 	 	  => \$LMFILE,
@@ -132,7 +132,7 @@ map {
 } (0..$#CORPORA);
 
 foreach my $corpus (@CORPORA) {
-  foreach my $ext ($EN,$FR) {
+  foreach my $ext ($TARGET,$SOURCE) {
 	if (! -e "$corpus.$ext") {
 	  print "* FATAL: can't find '$corpus.$ext'";
 	  exit 1;
@@ -143,7 +143,7 @@ foreach my $corpus (@CORPORA) {
 ## Dependent variable setting ########################################
 
 my $OOV = ($GRAMMAR_TYPE eq "samt") ? "OOV" : "X";
-my $THRAXDIR = "pipeline-$FR-$EN-$GRAMMAR_TYPE";
+my $THRAXDIR = "pipeline-$SOURCE-$TARGET-$GRAMMAR_TYPE";
 
 # use this default unless it's already been defined by a command-line argument
 $THRAX_CONF_FILE = "$JOSHUA/scripts/training/templates/thrax-$GRAMMAR_TYPE.conf" unless defined $THRAX_CONF_FILE;
@@ -156,16 +156,16 @@ chdir($RUNDIR);
 my (%TRAIN,%TUNE,%TEST);
 if (@CORPORA) {
   $TRAIN{prefix} = $CORPORA[0];
-  $TRAIN{fr} = "$CORPORA[0].$FR";
-  $TRAIN{en} = "$CORPORA[0].$EN";
+  $TRAIN{source} = "$CORPORA[0].$SOURCE";
+  $TRAIN{target} = "$CORPORA[0].$TARGET";
 }
 
-$TUNE{fr} = "$TUNE.$FR";
-$TUNE{en} = "$TUNE.$EN";
+$TUNE{source} = "$TUNE.$SOURCE";
+$TUNE{target} = "$TUNE.$TARGET";
 
 if ($TEST) {
-  $TEST{fr} = "$TEST.$FR";
-  $TEST{en} = "$TEST.$EN";
+  $TEST{source} = "$TEST.$SOURCE";
+  $TEST{target} = "$TEST.$TARGET";
 }
 
 if ($FIRST_STEP ne "FIRST") {
@@ -194,17 +194,17 @@ if (@CORPORA == 0) {
 # prepare the training data
 prepare_data("train",\@CORPORA,$MAXLEN);
 $TRAIN{prefix} = "train/corpus";
-$TRAIN{fr} = "train/corpus.$FR";
-$TRAIN{en} = "train/corpus.$EN";
+$TRAIN{source} = "train/corpus.$SOURCE";
+$TRAIN{target} = "train/corpus.$TARGET";
 
 # prepare the tuning and development data
 prepare_data("tune",[$TUNE]);
-$TUNE{fr} = "tune/tune.tok.lc.$FR";
-$TUNE{en} = "tune/tune.tok.lc.$EN";
+$TUNE{source} = "tune/tune.tok.lc.$SOURCE";
+$TUNE{target} = "tune/tune.tok.lc.$TARGET";
 
 prepare_data("test",[$TEST]);
-$TEST{fr} = "test/test.tok.lc.$FR";
-$TEST{en} = "test/test.tok.lc.$EN";
+$TEST{source} = "test/test.tok.lc.$SOURCE";
+$TEST{target} = "test/test.tok.lc.$TARGET";
 
 # subsample
 if ($DO_SUBSAMPLE) {
@@ -218,19 +218,19 @@ if ($DO_SUBSAMPLE) {
 				  "train/subsampled/manifest");
 
   $cachepipe->cmd("subsample-testdata",
-				  "cat $TUNE.$FR $TEST.$FR > train/subsampled/test-data",
-				  "$TUNE.$FR", "$TEST.$FR", "train/subsampled/test-data");
+				  "cat $TUNE.$SOURCE $TEST.$SOURCE > train/subsampled/test-data",
+				  "$TUNE.$SOURCE", "$TEST.$SOURCE", "train/subsampled/test-data");
 
   $cachepipe->cmd("subsample",
-				  "java -Xmx4g -Dfile.encoding=utf8 -cp $JOSHUA/bin:$JOSHUA/lib/commons-cli-2.0-SNAPSHOT.jar joshua.subsample.Subsampler -e $EN.tok.$MAXLEN -f $FR.tok.$MAXLEN -epath train/ -fpath train/ -output train/subsampled/subsampled.$MAXLEN -ratio 1.04 -test train/subsampled/test-data -training train/subsampled/manifest",
+				  "java -Xmx4g -Dfile.encoding=utf8 -cp $JOSHUA/bin:$JOSHUA/lib/commons-cli-2.0-SNAPSHOT.jar joshua.subsample.Subsampler -e $TARGET.tok.$MAXLEN -f $SOURCE.tok.$MAXLEN -epath train/ -fpath train/ -output train/subsampled/subsampled.$MAXLEN -ratio 1.04 -test train/subsampled/test-data -training train/subsampled/manifest",
 				  "train/subsampled/manifest",
 				  "train/subsampled/test-data",
-				  "train/corpus.$EN.tok.$MAXLEN",
-				  "train/corpus.$FR.tok.$MAXLEN",
-				  "train/subsampled/subsampled.$MAXLEN.$EN.tok.$MAXLEN",
-				  "train/subsampled/subsampled.$MAXLEN.$FR.tok.$MAXLEN");
+				  "train/corpus.$TARGET.tok.$MAXLEN",
+				  "train/corpus.$SOURCE.tok.$MAXLEN",
+				  "train/subsampled/subsampled.$MAXLEN.$TARGET.tok.$MAXLEN",
+				  "train/subsampled/subsampled.$MAXLEN.$SOURCE.tok.$MAXLEN");
 
-  foreach my $lang ($EN,$FR) {
+  foreach my $lang ($TARGET,$SOURCE) {
 	$cachepipe->cmd("link-corpus-$lang",
 					"ln -sf subsampled/subsampled.tok.$MAXLEN.lc.$lang train/corpus.$lang",
 					"train/corpus.$lang");
@@ -240,7 +240,7 @@ if ($DO_SUBSAMPLE) {
 
   }
 } else {
-  foreach my $lang ($EN,$FR) {
+  foreach my $lang ($TARGET,$SOURCE) {
 	$cachepipe->cmd("link-corpus-$lang",
 					"ln -sf train.tok.$MAXLEN.lc.$lang train/corpus.$lang",
 					"train/corpus.$lang");
@@ -258,9 +258,9 @@ ALIGN:
 # alignment
 $ALIGNMENT = "giza/model/aligned.grow-diag-final";
 $cachepipe->cmd("giza",
-				"rm -f train/corpus.0-0.*; $MOSES_TRAINER -root-dir giza -e $EN -f $FR -corpus $TRAIN{prefix} -first-step 1 -last-step 3 > giza.log 2>&1",
-				$TRAIN{fr},
-				$TRAIN{en},
+				"rm -f train/corpus.0-0.*; $MOSES_TRAINER -root-dir giza -e $TARGET -f $SOURCE -corpus $TRAIN{prefix} -first-step 1 -last-step 3 > giza.log 2>&1",
+				$TRAIN{source},
+				$TRAIN{target},
 				$ALIGNMENT);
 
 maybe_quit("ALIGN");
@@ -273,40 +273,40 @@ if ($GRAMMAR_TYPE eq "samt") {
 
   # check whether we need to parse (might be already parsed if we
   # jumped directly here)
-  if (already_parsed($TRAIN{en})) {
+  if (already_parsed($TRAIN{target})) {
 	mkdir("train") unless -d "train";
 
 	# If parsing was already done, then copy the file to our training
 	# directory so we can use our local copy instead of the original
 	# one.  Thrax later in the script expects to find
-	# $TRAIN{en}.parsed.OOV, so that's where we copy it.  An important
-	# note here is that to get this, we set $TRAIN{en} to point to a
+	# $TRAIN{target}.parsed.OOV, so that's where we copy it.  An important
+	# note here is that to get this, we set $TRAIN{target} to point to a
 	# file that doesn't exist.  This is okay because after the Thrax
 	# run we should never need to use the training data any more (and
 	# anyway we don't have it).  If that changes this will break
 	# things.
 
-	$cachepipe->cmd("cp-train-$EN",
-					"cp $TRAIN{en} train/corpus.$EN.parsed.OOV",
-					$TRAIN{en}, "train/corpus.$EN.parsed.OOV");
-	$TRAIN{en} = "train/corpus.$EN";
+	$cachepipe->cmd("cp-train-$TARGET",
+					"cp $TRAIN{target} train/corpus.$TARGET.parsed.OOV",
+					$TRAIN{target}, "train/corpus.$TARGET.parsed.OOV");
+	$TRAIN{target} = "train/corpus.$TARGET";
 
-	$cachepipe->cmd("cp-train-$FR",
-					"cp $TRAIN{fr} train/corpus.$FR",
-					$TRAIN{fr}, "train/corpus.$FR");
-	$TRAIN{fr} = "train/corpus.$FR";
+	$cachepipe->cmd("cp-train-$SOURCE",
+					"cp $TRAIN{source} train/corpus.$SOURCE",
+					$TRAIN{source}, "train/corpus.$SOURCE");
+	$TRAIN{source} = "train/corpus.$SOURCE";
 
   } else {
 
 	$cachepipe->cmd("build-vocab",
-					"cat $TRAIN{en} | $SCRIPTDIR/training/build-vocab.pl > train/vocab.$EN",
-					$TRAIN{en},
-					"train/vocab.$EN");
+					"cat $TRAIN{target} | $SCRIPTDIR/training/build-vocab.pl > train/vocab.$TARGET",
+					$TRAIN{target},
+					"train/vocab.$TARGET");
 
 	$cachepipe->cmd("parse",
-					"cat $TRAIN{prefix}.tok.$EN | /home/hltcoe/mpost/code/cdec/vest/parallelize.pl -j 50 -- java -cp /home/hltcoe/mpost/code/berkeleyParser edu.berkeley.nlp.PCFGLA.BerkeleyParser -gr /home/hltcoe/mpost/code/berkeleyParser/eng_sm5.gr | sed 's/^\(/\(TOP/' | tee $TRAIN{prefix}.$EN.parsed.mc | perl -pi -e 's/(\\S+)\\)/lc(\$1).\")\"/ge' | tee $TRAIN{prefix}.$EN.parsed | perl $SCRIPTDIR/training/add-OOVS.pl train/vocab.$EN > $TRAIN{prefix}.$EN.parsed.OOV",
-					"$TRAIN{en}",
-					"$TRAIN{en}.parsed.OOV");
+					"cat $TRAIN{prefix}.tok.$TARGET | /home/hltcoe/mpost/code/cdec/vest/parallelize.pl -j 50 -- java -cp /home/hltcoe/mpost/code/berkeleyParser edu.berkeley.nlp.PCFGLA.BerkeleyParser -gr /home/hltcoe/mpost/code/berkeleyParser/eng_sm5.gr | sed 's/^\(/\(TOP/' | tee $TRAIN{prefix}.$TARGET.parsed.mc | perl -pi -e 's/(\\S+)\\)/lc(\$1).\")\"/ge' | tee $TRAIN{prefix}.$TARGET.parsed | perl $SCRIPTDIR/training/add-OOVS.pl train/vocab.$TARGET > $TRAIN{prefix}.$TARGET.parsed.OOV",
+					"$TRAIN{target}",
+					"$TRAIN{target}.parsed.OOV");
   }
 }
 
@@ -322,8 +322,8 @@ if (! defined $GRAMMAR_FILE) {
 
 # create the input file
   $cachepipe->cmd("thrax-input-file",
-				  "paste $TRAIN{fr} $TRAIN{en}.parsed.OOV $ALIGNMENT | perl -pe 's/\t/ ||| /g' | grep -v '(())' > train/thrax-input-file",
-				  $TRAIN{fr}, "$TRAIN{en}.parsed.OOV", $ALIGNMENT,
+				  "paste $TRAIN{source} $TRAIN{target}.parsed.OOV $ALIGNMENT | perl -pe 's/\t/ ||| /g' | grep -v '(())' > train/thrax-input-file",
+				  $TRAIN{source}, "$TRAIN{target}.parsed.OOV", $ALIGNMENT,
 				  "train/thrax-input-file");
 
 # put the hadoop files in place
@@ -353,10 +353,10 @@ MERT:
 
 # If the language model file wasn't provided, build it from the target side of the training data.  Otherwise, copy it to location.
 if (! defined $LMFILE) {
-  if (exists $TRAIN{en}) {
+  if (exists $TRAIN{target}) {
 	$LMFILE="lm.gz";
 	$cachepipe->cmd("srilm",
-					"$SRILM -interpolate -kndiscount -order 5 -text $TRAIN{en} -lm lm.gz",
+					"$SRILM -interpolate -kndiscount -order 5 -text $TRAIN{target} -lm lm.gz",
 					$LMFILE);
   } elsif (! defined $LMFILE) {
 	print "* FATAL: you skipped training and didn't specify a language model\n";
@@ -377,10 +377,10 @@ if (! defined $LMFILE) {
 }
 
 # filter the tuning LM to the training side of the data (if possible)
-if (-e $LMFILTER and $DO_FILTER_LM and exists $TRAIN{en}) {
+if (-e $LMFILTER and $DO_FILTER_LM and exists $TRAIN{target}) {
   
   $cachepipe->cmd("filter-lmfile",
-				  "cat $TRAIN{en} | $LMFILTER union arpa model:$LMFILE lm-filtered; gzip -9f lm-filtered",
+				  "cat $TRAIN{target} | $LMFILTER union arpa model:$LMFILE lm-filtered; gzip -9f lm-filtered",
 				  $LMFILE, "lm-filtered.gz");
   $LMFILE = "lm-filtered.gz";
 }
@@ -389,9 +389,9 @@ mkdir("tune") unless -d "tune";
 
 # filter the tuning grammar
 $cachepipe->cmd("filter-tune",
-				"$SCRIPTDIR/training/scat $GRAMMAR_FILE | $THRAX/scripts/filter_rules.sh -v $TUNE{fr} | gzip -9 > tune/grammar.filtered.gz",
+				"$SCRIPTDIR/training/scat $GRAMMAR_FILE | $THRAX/scripts/filter_rules.sh -v $TUNE{source} | gzip -9 > tune/grammar.filtered.gz",
 				$GRAMMAR_FILE,
-				$TUNE{fr},
+				$TUNE{source},
 				"tune/grammar.filtered.gz");
 
 copy_thrax_file();
@@ -402,9 +402,9 @@ $cachepipe->cmd("glue-tune",
 
 # figure out how many references there are
 my $numrefs = 1;
-if (! -e $TUNE{en}) {
+if (! -e $TUNE{target}) {
   my $index = 0;
-  while (-e "$TUNE{en}.$index") {
+  while (-e "$TUNE{target}.$index") {
 	$index++;
   }
   $numrefs = $index;
@@ -416,9 +416,9 @@ foreach my $key (keys %MERTFILES) {
   open FROM, $file or die "can't find file '$file'";
   open TO, ">mert/$key" or die "can't write to file 'mert/$key'";
   while (<FROM>) {
-	s/<INPUT>/$TUNE{fr}/g;
-	s/<FR>/$FR/g;
-	s/<EN>/$EN/g;
+	s/<INPUT>/$TUNE{source}/g;
+	s/<SOURCE>/$SOURCE/g;
+	s/$TARGET/$TARGET/g;
 	s/<LMFILE>/$LMFILE/g;
 	s/<MEM>/$JOSHUA_MEM/g;
 	s/<GRAMMAR>/$GRAMMAR_TYPE/g;
@@ -426,7 +426,7 @@ foreach my $key (keys %MERTFILES) {
 	s/<NUMJOBS>/50/g;
 	s/<QSUB_ARGS>/$QSUB_ARGS/g;
 	s/<OUTPUT>/mert\/tune.output.nbest/g;
-	s/<REF>/$TUNE{en}/g;
+	s/<REF>/$TUNE{target}/g;
 	s/<JOSHUA>/$JOSHUA/g;
 	s/<NUMREFS>/$numrefs/g;
 	s/<CONFIG>/mert\/joshua.config/g;
@@ -487,9 +487,9 @@ if ($FIRST_STEP eq "TEST") {
 
 # filter the test grammar
 $cachepipe->cmd("filter-test",
-				"$SCRIPTDIR/training/scat $GRAMMAR_FILE | $THRAX/scripts/filter_rules.sh -v $TEST{fr} | gzip -9 > test/grammar.filtered.gz",
+				"$SCRIPTDIR/training/scat $GRAMMAR_FILE | $THRAX/scripts/filter_rules.sh -v $TEST{source} | gzip -9 > test/grammar.filtered.gz",
 				$GRAMMAR_FILE,
-				$TEST{fr},
+				$TEST{source},
 				"test/grammar.filtered.gz");
 
 copy_thrax_file();
@@ -504,14 +504,14 @@ foreach my $key (qw(decoder_command)) {
   open FROM, $file or die "can't find file '$file'";
   open TO, ">test/$key" or die "can't write to 'test/$key'";
   while (<FROM>) {
-	s/<INPUT>/$TEST{fr}/g;
+	s/<INPUT>/$TEST{source}/g;
 	s/<NUMJOBS>/50/g;
 	s/<QSUB_ARGS>/$QSUB_ARGS/g;
 	s/<OUTPUT>/test\/test.output.nbest/g;
 	s/<JOSHUA>/$JOSHUA/g;
 	s/<NUMREFS>/$numrefs/g;
-	s/<FR>/$FR/g;
-	s/<EN>/$EN/g;
+	s/<SOURCE>/$SOURCE/g;
+	s/$TARGET/$TARGET/g;
 	s/<LMFILE>/$LMFILE/g;
 	s/<MEM>/$JOSHUA_MEM/g;
 	s/<GRAMMAR>/$GRAMMAR_TYPE/g;
@@ -543,7 +543,7 @@ if ($DO_MBR) {
 }
 
 $cachepipe->cmd("test-bleu",
-				"java -cp $JOSHUA/bin -Djava.library.path=lib -Xmx1000m -Xms1000m -Djava.util.logging.config.file=logging.properties joshua.util.JoshuaEval -cand test/test.output.1best -ref $TEST{en} -m BLEU 4 closest > test/test.output.1best.bleu",
+				"java -cp $JOSHUA/bin -Djava.library.path=lib -Xmx1000m -Xms1000m -Djava.util.logging.config.file=logging.properties joshua.util.JoshuaEval -cand test/test.output.1best -ref $TEST{target} -m BLEU 4 closest > test/test.output.1best.bleu",
 				"test/test.output.1best", "test/test.output.1best.bleu");
 
 system("cat test/test.output.1best.bleu");
@@ -569,7 +569,7 @@ sub prepare_data {
   mkdir $label unless -d $label;
 
   # copy the data from its original location to our location
-  foreach my $lang ($EN,$FR,"$EN.0","$EN.1","$EN.2","$EN.3") {
+  foreach my $lang ($TARGET,$SOURCE,"$TARGET.0","$TARGET.1","$TARGET.2","$TARGET.3") {
 	  my @files = map { "$_.$lang" } @$corpora;
 	  my $files = join(" ",@files);
 	  if (-e $files[0]) {
@@ -580,7 +580,7 @@ sub prepare_data {
   }
 
   # tokenize the data
-  foreach my $lang ($EN,$FR,"$EN.0","$EN.1","$EN.2","$EN.3") {
+  foreach my $lang ($TARGET,$SOURCE,"$TARGET.0","$TARGET.1","$TARGET.2","$TARGET.3") {
 	if (-e "$label/$label.$lang") {
 	  $cachepipe->cmd("$label-tokenize-$lang",
 					  "$SCRIPTDIR/training/scat $label/$label.$lang | $TOKENIZER -l $lang > $label/$label.tok.$lang 2> /dev/null",
@@ -593,15 +593,15 @@ sub prepare_data {
   if ($maxlen and $label eq "train") {
 	# trim training data
 	$cachepipe->cmd("train-trim",
-					"$SCRIPTDIR/training/trim_parallel_corpus.pl $label/$label.tok.$EN $label/$label.tok.$FR $maxlen > $label/$label.tok.$maxlen.$EN 2> $label/$label.tok.$maxlen.$FR",
-					"$label/$label.tok.$EN", "$label/$label.tok.$FR",
-					"$label/$label.tok.$maxlen.$EN", "$label/$label.tok.$maxlen.$FR",
+					"$SCRIPTDIR/training/trim_parallel_corpus.pl $label/$label.tok.$TARGET $label/$label.tok.$SOURCE $maxlen > $label/$label.tok.$maxlen.$TARGET 2> $label/$label.tok.$maxlen.$SOURCE",
+					"$label/$label.tok.$TARGET", "$label/$label.tok.$SOURCE",
+					"$label/$label.tok.$maxlen.$TARGET", "$label/$label.tok.$maxlen.$SOURCE",
 		);
 	$infix = ".$maxlen";
   }
 
   # lowercase
-  foreach my $lang ($EN,$FR,"$EN.0","$EN.1","$EN.2","$EN.3") {
+  foreach my $lang ($TARGET,$SOURCE,"$TARGET.0","$TARGET.1","$TARGET.2","$TARGET.3") {
 	if (-e "$label/$label.$lang") {
 	  $cachepipe->cmd("$label-lowercase-$lang",
 					  "cat $label/$label.tok$infix.$lang | $SCRIPTDIR/lowercase.perl > $label/$label.tok$infix.lc.$lang",
