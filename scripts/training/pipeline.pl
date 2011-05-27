@@ -523,7 +523,7 @@ LAST:
 # I don't know why this is a function
 sub copy_thrax_file {
   $cachepipe->cmd("thrax-config",
-				  "cp $THRAX_CONF_FILE thrax-$GRAMMAR_TYPE.conf; echo input-file $THRAXDIR/input-file >> thrax-$GRAMMAR_TYPE.conf",
+				  "grep -v input-file $THRAX_CONF_FILE > thrax-$GRAMMAR_TYPE.conf; echo input-file $THRAXDIR/input-file >> thrax-$GRAMMAR_TYPE.conf",
 				  $THRAX_CONF_FILE,
 				  "thrax-$GRAMMAR_TYPE.conf");
 }
