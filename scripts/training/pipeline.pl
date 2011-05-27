@@ -427,6 +427,7 @@ foreach my $key (keys %MERTFILES) {
 	s/<QSUB_ARGS>/$QSUB_ARGS/g;
 	s/<OUTPUT>/mert\/tune.output.nbest/g;
 	s/<REF>/$TUNE{en}/g;
+	s/<JOSHUA>/$JOSHUA/g;
 	s/<NUMREFS>/$numrefs/g;
 	s/<CONFIG>/mert\/joshua.config/g;
 	s/<LOG>/mert\/mert.log/g;
@@ -507,6 +508,7 @@ foreach my $key (qw(decoder_command)) {
 	s/<NUMJOBS>/50/g;
 	s/<QSUB_ARGS>/$QSUB_ARGS/g;
 	s/<OUTPUT>/test\/test.output.nbest/g;
+	s/<JOSHUA>/$JOSHUA/g;
 	s/<NUMREFS>/$numrefs/g;
 	s/<FR>/$FR/g;
 	s/<EN>/$EN/g;

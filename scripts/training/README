@@ -179,6 +179,7 @@ pipeline allows the Joshua configuration file and the Joshua decoder
 command to be templatized.  Here are the options available to those
 files:
 
+  <JOSHUA> is the root of the Joshua installation ($JOSHUA env. var.)
   <INPUT> is the file being decoded
   <OUTPUT> is the output file that the decoder command creates
   <FR> is the source language (--fr)
