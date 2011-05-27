@@ -69,7 +69,7 @@ my $QSUB_ARGS  = "-l num_proc=2";
 my @STEPS = qw[FIRST ALIGN THRAX MERT TEST LAST];
 my %STEPS = map { $STEPS[$_] => $_ + 1 } (0..$#STEPS);
 
-my $options = GetOptions(
+my $retval = GetOptions(
   "corpus=s" 	 	  => \@CORPORA,
   "tune=s"   	 	  => \$TUNE,
   "test=s"            => \$TEST,
@@ -92,6 +92,11 @@ my $options = GetOptions(
   "first-step=s" 	  => \$FIRST_STEP,
   "last-step=s"  	  => \$LAST_STEP,
 );
+
+if (! $retval) {
+  print "Invalid usage, quitting\n";
+  exit 1;
+}
 
 $| = 1;
 
