@@ -49,6 +49,11 @@ of enhancements.  These are:
 
 pipeline.pl
 
+  --rundir DIR
+
+    Place all files beneath the specified directory.  The default is
+    the current directory.
+
   --first-step STEP
   --last-step STEP
   
@@ -73,9 +78,81 @@ pipeline.pl
     provided (so you must do the concatenation yourself, if you so
     need). 
 
-  --tune TUNE
-  --test TEST
+  --tune PREFIX
+  --test PREFIX
   
+    Specify file prefixes for tuning and test data.  Unlike --corpus,
+    only one instance each of --tune or --test is allowed (if you
+    provide multiple ones, only the last value is used).
+
+  --type {hiero,samt}
+
+    Whether to learn a Hiero or SAMT grammar.  The default is Hiero.
+
+  --alignment FILE
+
+    Provide an alignment for the training data.  The format is the
+    standard format where 0-indexed many-many alignment pairs for a
+    sentence are provided on a line, source language first, e.g.,
+
+    0-0 0-1 1-2 1-7 ...
+
+	This value is required if you are skipping the alignment step.
+
+  --mbr [default]
+  --nombr
+
+    Do (not) do MBR reranking of the n-best output of the test data.
+
+  --lmfile FILE
+
+    Use the specified file as the language model for decoding (for
+    both tuning and decoding of the test set).  If not provided, a
+    SRILM is used to build a Kneser-Ney interpolated 5-gram language
+    model from the target side of the training data.
+
+  --filter-lm [default]
+  --no-filter-lm
+
+    Use Kenneth Heafield's "filter" program to filter the language
+    model to the training data.  This is only available if a training
+    corpus was provided.
+
+  --maxlen LEN [default=50]
+
+    Remove parallel sentences from the training data that are longer
+    than this length (on either side).
+
+  --grammar FILE
+
+    Use the specified grammar instead of learning one with Thrax.
+
+  --joshua-config TEMPLATE
+
+    Use the specified file as the Joshua config file instead of the
+    default template.  This file is a template into which are
+    substituted run-specific information; see the TEMPLATE section
+    below for more information.
+
+  --decoder-command TEMPLATE
+
+    Use the specified file as the decoding command.  This file is a
+    template into which are substituted run-specific information; see
+    the TEMPLATE section below for more information.
+
+  --thrax-conf FILE
+
+    Use the provided Thrax configuration file instead of the default.
+
+  --no-subsample [default]
+  --subsample
+
+    ** UNIMPLEMENTED ** Subsample the training data towards the tuning
+       (and test) data.
+
+  --qsub-args "ARGS"
+
+    Provide the specified qsub arguments to the Joshua decoder command.
 
 == MORE DETAIL =======================================================
 
@@ -92,4 +169,26 @@ The Joshua pipeline provides support for two major use ca
    proceed directly to later steps.
 
 
+
+== TEMPLATES =========================================================
+
+A few pieces of the pipeline are subject to enough variation across
+runs and across computing environment that it is easier to provide
+template files than to use command-line arguments.  The Joshua
+pipeline allows the Joshua configuration file and the Joshua decoder
+command to be templatized.  Here are the options available to those
+files:
+
+  <INPUT> is the file being decoded
+  <OUTPUT> is the output file that the decoder command creates
+  <FR> is the source language (--fr)
+  <EN> is the target language (--en)
+  <LMFILE> is the language model
+  <MEM> is the amount of memory available to the Joshua decoder instances
+  <OOV> is the OOV tag used in the grammar ("OOV" for SAMT, "X" for Hiero)
+  <NUMJOBS> is the degree of parallelization for the Joshua decoder command
+  <QSUB_ARGS> is the qsub arguments (--qsub-args)
+  <REF> is the reference file
+  <CONFIG> is the location of the joshua configuration file
+  <LOG> is where the Joshua decoder should put its log file
 
