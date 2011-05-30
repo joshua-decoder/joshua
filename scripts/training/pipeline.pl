@@ -58,6 +58,7 @@ my %MERTFILES = (
   'params.txt'      => "$MERTCONFDIR/params.txt",
 );
 
+my $DO_SENT_SPECIFIC_TM = 1;
 my $DO_MBR = 1;
 
 # for hadoop java subprocesses (heap amount)
@@ -91,6 +92,7 @@ my $retval = GetOptions(
   "qsub-args=s"  	  => \$QSUB_ARGS,
   "first-step=s" 	  => \$FIRST_STEP,
   "last-step=s"  	  => \$LAST_STEP,
+  "sentence-tm!"      => \$DO_SENT_SPECIFIC_TM,
 );
 
 if (! $retval) {
@@ -435,7 +437,7 @@ foreach my $key (keys %MERTFILES) {
 	s/<JOSHUA>/$JOSHUA/g;
 	s/<NUMREFS>/$numrefs/g;
 	s/<CONFIG>/mert\/joshua.config/g;
-	s/<LOG>/mert\/mert.log/g;
+	s/<LOG>/mert\/joshua.log/g;
 
 	print TO;
   }
@@ -522,7 +524,7 @@ foreach my $key (qw(decoder_command)) {
 	s/<GRAMMAR>/$GRAMMAR_TYPE/g;
 	s/<OOV>/$OOV/g;
 	s/<CONFIG>/test\/joshua.config/g;
-	s/<LOG>/test\/test.log/g;
+	s/<LOG>/test\/joshua.log/g;
 
 	print TO;
   }
