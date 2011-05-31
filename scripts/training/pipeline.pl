@@ -385,10 +385,14 @@ if (! defined $GRAMMAR_FILE) {
   mkdir("train") unless -d "train";
 
 # create the input file
+  my $target_corpus = ($GRAMMAR_TYPE eq "samt")
+	  ? $TRAIN{target} . ".parsed.OOV"
+      : $TRAIN{target};
+
   $cachepipe->cmd("thrax-input-file",
-				  "paste $TRAIN{source} $TRAIN{target}.parsed.OOV $ALIGNMENT | perl -pe 's/\t/ ||| /g' | grep -v '(())' > train/thrax-input-file",
-				  $TRAIN{source}, "$TRAIN{target}.parsed.OOV", $ALIGNMENT,
-				  "train/thrax-input-file");
+					"paste $TRAIN{source} $target_corpus $ALIGNMENT | perl -pe 's/\t/ ||| /g' | grep -v '(())' > train/thrax-input-file",
+					$TRAIN{source}, $target_corpus, $ALIGNMENT,
+					"train/thrax-input-file");
 
 # put the hadoop files in place
   $cachepipe->cmd("thrax-prep",
