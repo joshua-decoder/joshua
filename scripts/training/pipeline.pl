@@ -463,12 +463,15 @@ maybe_quit("MERT");
 # set joshua config file location for testing
 # $JOSHUA_CONFIG = "mert/joshua.config.ZMERT.final";
 
-# copy the config file for testing (since we know we're not quitting
-# at the MERT step)
+# If we're not quitting at this step, then copy the final Joshua
+# config file to the test directory.
 if ($LAST_STEP ne "MERT") {
-  $cachepipe->cmd("test-joshua-config",
-				  "cat mert/joshua.config | perl -pe 's#tune/#test/#; s/mark_oovs=false/mark_oovs=true/; s/keep_sent_specific_tm=true/keep_sent_specific_tm=false/' > test/joshua.config",
-				  $MERTFILES{'joshua.config'},
+  mkdir("test") unless -d "test";
+
+  # for testing, mark OOVs, don't keep sentence-specific grammars
+  $cachepipe->cmd("test-joshua-config-from-mert",
+				  "cat mert/joshua.config.ZMERT.final | perl -pe 's#tune/#test/#; s/mark_oovs=false/mark_oovs=true/; s/keep_sent_specific_tm=true/keep_sent_specific_tm=false/' > test/joshua.config",
+				  "mert/joshua.config.ZMERT.final",
 				  "test/joshua.config");
 }
 
@@ -477,8 +480,9 @@ TEST:
 
 mkdir("test") unless -d "test";
 
-## sanity checking
-# if we jumped in here, make sure a joshua.config file was specified
+# If we jumped directly to this step, then the caller is required to
+# have specified a Joshua config file (fully instantiated, not a
+# template), which we'll copy in place
 if ($FIRST_STEP eq "TEST") {
   if ($MERTFILES{'joshua.config'} eq $JOSHUA_CONFIG_ORIG) {
 	print "* FATAL: you need to explicitly specify a joshua.config (--joshua-config)\n";
