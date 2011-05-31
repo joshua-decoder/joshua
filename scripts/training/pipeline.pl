@@ -297,7 +297,7 @@ if ($FIRST_STEP eq "ALIGN") {
 }
 
 # skip this step if an alignment was provided
-if (defined $ALIGNMENT) {
+if (! defined $ALIGNMENT) {
 
   if ($ALIGNER eq "giza") {
 	$ALIGNMENT = "giza/model/aligned.grow-diag-final";
@@ -318,7 +318,7 @@ if (defined $ALIGNMENT) {
 	close(TO);
 	close(FROM);
 
-	$ALIGNMENT = "training/training.align";
+	$ALIGNMENT = "alignments/training.align";
 	$cachepipe->cmd("berkeley-aligner",
 					"java -d64 -Xmx10g -jar $BERKELEYALIGNER/berkeleyaligner.jar ++train/word-align.conf",
 					$TRAIN{source},
