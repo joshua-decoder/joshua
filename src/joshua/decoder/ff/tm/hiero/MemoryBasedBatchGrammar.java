@@ -132,7 +132,7 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
 	protected GrammarReader<BilingualRule> createReader(String formatKeyword,
 			String grammarFile, SymbolTable symbolTable){
 		
-		if ("hiero".equals(formatKeyword)) {
+		if ("hiero".equals(formatKeyword) || "thrax".equals(formatKeyword)) {
 			return new HieroFormatReader(grammarFile, symbolTable);
 		} else if ("samt".equals(formatKeyword)) {
 			return new SamtFormatReader(grammarFile, symbolTable);
