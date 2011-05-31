@@ -28,9 +28,11 @@ use File::Basename;
 use Cwd;
 use CachePipe;
 
-my $HADOOP = $ENV{HADOOP};
-my $JOSHUA = $ENV{JOSHUA};
-my $THRAX  = $ENV{THRAX};
+my $HADOOP = $ENV{HADOOP} or not_defined("HADOOP");
+my $JOSHUA = $ENV{JOSHUA} or not_defined("JOSHUA");
+my $THRAX  = $ENV{THRAX} or not_defined("THRAX");
+my $BERKELEYALIGNER = $ENV{BERKELEYALIGNER} or not_defined("BERKELEYALIGNER");
+my $BERKELEYPARSER = $ENV{BERKELEYPARSER};
 
 my (@CORPORA,$TUNE,$TEST,$ALIGNMENT,$SOURCE,$TARGET,$LMFILE,$GRAMMAR_FILE,$THRAX_CONF_FILE);
 my $FIRST_STEP = "FIRST";
@@ -61,6 +63,8 @@ my %MERTFILES = (
 my $DO_SENT_SPECIFIC_TM = 1;
 my $DO_MBR = 1;
 
+my $ALIGNER = "berkeley"; # or "giza"
+
 # for hadoop java subprocesses (heap amount)
 # you really just have to play around to find out how much is enough 
 my $HADOOP_MEM = "8G";  
@@ -74,6 +78,7 @@ my $retval = GetOptions(
   "corpus=s" 	 	  => \@CORPORA,
   "tune=s"   	 	  => \$TUNE,
   "test=s"            => \$TEST,
+  "aligner=s"         => \$ALIGNER,
   "alignment=s"  	  => \$ALIGNMENT,
   "source=s"   	 	  => \$SOURCE,
   "target=s"  	 	  => \$TARGET,
@@ -86,6 +91,7 @@ my $retval = GetOptions(
   "maxlen=i" 	 	  => \$MAXLEN,
   "tokenizer=s"  	  => \$TOKENIZER,
   "joshua-config=s"   => \$MERTFILES{'joshua.config'},
+  "joshua-mem=s"      => \$JOSHUA_MEM,
   "decoder-command=s" => \$MERTFILES{'decoder_command'},
   "thrax-conf=s"      => \$THRAX_CONF_FILE,
   "subsample!"   	  => \$DO_SUBSAMPLE,
@@ -147,6 +153,17 @@ foreach my $corpus (@CORPORA) {
   }
 }
 
+if ($ALIGNER ne "giza" and $ALIGNER ne "berkeley") {
+  print "* FATAL: aligner must be one of 'giza' or 'berkeley'\n";
+  exit 1;
+}
+
+if (! defined $BERKELEYPARSER and $GRAMMAR_TYPE eq "samt") {
+  not_defined("BERKELEYPARSER");
+  exit;
+}
+
+
 ## Dependent variable setting ########################################
 
 my $OOV = ($GRAMMAR_TYPE eq "samt") ? "OOV" : "X";
@@ -192,6 +209,13 @@ if ($FIRST_STEP ne "FIRST") {
 
 ## STEP 1: filter and preprocess corpora #############################
 FIRST:
+
+if (defined $ALIGNMENT) {
+  print "* FATAL: it doesn't make sense to provide an alignment and then do\n";
+  print "  tokenization.  Either remove --alignment or specify a first step\n";
+  print "  of Thrax (--first-step THRAX)\n";
+  exit 1;
+}
 
 if (@CORPORA == 0) {
   print "* FATAL: need at least one training corpus (--corpus)\n";
@@ -262,13 +286,46 @@ if ($DO_SUBSAMPLE) {
 
 ALIGN:
 
-# alignment
-$ALIGNMENT = "giza/model/aligned.grow-diag-final";
-$cachepipe->cmd("giza",
-				"rm -f train/corpus.0-0.*; $MOSES_TRAINER -root-dir giza -e $TARGET -f $SOURCE -corpus $TRAIN{prefix} -first-step 1 -last-step 3 > giza.log 2>&1",
-				$TRAIN{source},
-				$TRAIN{target},
-				$ALIGNMENT);
+# This basically means that we've skipped tokenization, in which case
+# we still want to move the input files into the canonical place
+if ($FIRST_STEP eq "ALIGN") {
+  # TODO: copy the files into the canonical place 
+
+  # Jumping straight to alignment is probably the same thing as
+  # skipping tokenization, and might also be implemented by a
+  # --no-tokenization flag
+}
+
+# skip this step if an alignment was provided
+if (defined $ALIGNMENT) {
+
+  if ($ALIGNER eq "giza") {
+	$ALIGNMENT = "giza/model/aligned.grow-diag-final";
+	$cachepipe->cmd("giza",
+					"rm -f train/corpus.0-0.*; $MOSES_TRAINER -root-dir giza -e $TARGET -f $SOURCE -corpus $TRAIN{prefix} -first-step 1 -last-step 3 > giza.log 2>&1",
+					$TRAIN{source},
+					$TRAIN{target},
+					$ALIGNMENT);
+  } elsif ($ALIGNER eq "berkeley") {
+	open FROM, "$JOSHUA/scripts/training/templates/alignment/word-align.conf" or die "can't read berkeley alignment template";
+	open TO, ">", "train/word-align.conf" or die "can't write to 'train/word-align.conf'";
+	while (<FROM>) {
+	  s/<SOURCE>/$SOURCE/g;
+	  s/<TARGET>/$TARGET/g;
+
+	  print TO;
+	}
+	close(TO);
+	close(FROM);
+
+	$ALIGNMENT = "training/training.align";
+	$cachepipe->cmd("berkeley-aligner",
+					"java -d64 -Xmx10g -jar $BERKELEYALIGNER/berkeleyaligner.jar ++train/word-align.conf",
+					$TRAIN{source},
+					$TRAIN{target},
+					$ALIGNMENT);
+  }
+}
 
 maybe_quit("ALIGN");
 
@@ -311,7 +368,7 @@ if ($GRAMMAR_TYPE eq "samt") {
 					"train/vocab.$TARGET");
 
 	$cachepipe->cmd("parse",
-					"cat $TRAIN{prefix}.tok.$TARGET | /home/hltcoe/mpost/code/cdec/vest/parallelize.pl -j 50 -- java -cp /home/hltcoe/mpost/code/berkeleyParser edu.berkeley.nlp.PCFGLA.BerkeleyParser -gr /home/hltcoe/mpost/code/berkeleyParser/eng_sm5.gr | sed 's/^\(/\(TOP/' | tee $TRAIN{prefix}.$TARGET.parsed.mc | perl -pi -e 's/(\\S+)\\)/lc(\$1).\")\"/ge' | tee $TRAIN{prefix}.$TARGET.parsed | perl $SCRIPTDIR/training/add-OOVS.pl train/vocab.$TARGET > $TRAIN{prefix}.$TARGET.parsed.OOV",
+					"cat $TRAIN{prefix}.tok.$TARGET | $SCRIPTDIR/training/parallelize/parallelize.pl -j 50 -- java -cp $BERKELEYPARSER edu.berkeley.nlp.PCFGLA.BerkeleyParser -gr $BERKELEYPARSER/eng_sm6.gr | sed 's/^\(/\(TOP/' | tee $TRAIN{prefix}.$TARGET.parsed.mc | perl -pi -e 's/(\\S+)\\)/lc(\$1).\")\"/ge' | tee $TRAIN{prefix}.$TARGET.parsed | perl $SCRIPTDIR/training/add-OOVS.pl train/vocab.$TARGET > $TRAIN{prefix}.$TARGET.parsed.OOV",
 					"$TRAIN{target}",
 					"$TRAIN{target}.parsed.OOV");
   }
@@ -645,4 +702,11 @@ sub already_parsed {
   close(CORPUS);
 
   return 1;
+}
+
+sub not_defined {
+  my ($var) = @_;
+
+  print "* FATAL: environment variable \$$var is not defined.\n";
+  exit;
 }
