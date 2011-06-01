@@ -25,6 +25,7 @@ import joshua.util.Regex;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
+import java.util.Scanner;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -73,7 +74,7 @@ public class NbestMinRiskReranker {
 	
 	
 	public String processOneSent( List<String> nbest, int sentID) {
-		System.out.println("Now process sentence " + sentID);
+		System.err.println("Now process sentence " + sentID);
 		
 		//step-0: preprocess
 		//assumption: each hyp has a formate: "sent_id ||| hyp_itself ||| feature scores ||| linear-combination-of-feature-scores(this should be logP)"
@@ -165,7 +166,7 @@ public class NbestMinRiskReranker {
 			*/
 		}
 		
-		System.out.println("best gain: " + bestGain);
+		System.err.println("best gain: " + bestGain);
 		if (null == bestHyp) {
 			throw new RuntimeException("mbr reranked one best is null, must be wrong");
 		}
@@ -298,61 +299,54 @@ public class NbestMinRiskReranker {
 		
 		// If you don't know what to use for scaling factor, try using 1
 		
-		if (args.length<4 || args.length>5) {
-			System.out.println("wrong command, correct command should be: java NbestMinRiskReranker f_nbest_in f_out produce_reranked_nbest scaling_factor [numThreads]");
-			System.out.println("num of args is "+ args.length);
-			for(int i = 0; i < args.length; i++) {
-				System.out.println("arg is: " + args[i]);
-			}
-			System.exit(-1);
+		if (args.length<2) {
+			System.err.println("usage: java NbestMinRiskReranker <produce_reranked_nbest> <scaling_factor> [numThreads]");
+			return;
 		}
 		long startTime = System.currentTimeMillis();
-		String inputNbest = args[0].trim();
-		String output = args[1].trim();
-		boolean produceRerankedNbest = Boolean.valueOf(args[2].trim());
-		double scalingFactor = Double.parseDouble(args[3].trim());
-		int numThreads = (args.length==5) ? Integer.parseInt(args[4].trim()) : 1;
+		boolean produceRerankedNbest = Boolean.valueOf(args[0].trim());
+		double scalingFactor = Double.parseDouble(args[1].trim());
+		int numThreads = (args.length > 2) ? Integer.parseInt(args[2].trim()) : 1;
 	
 		
-		BufferedWriter outWriter =	FileUtility.getWriteFileStream(output);
 		NbestMinRiskReranker mbrReranker =
 			new NbestMinRiskReranker(produceRerankedNbest, scalingFactor);
 		
-		System.out.println("##############running mbr reranking");
+		System.err.println("##############running mbr reranking");
 		
 		int oldSentID = -1;
-		LineReader nbestReader = new LineReader(inputNbest);
 		List<String> nbest = new ArrayList<String>();
+
+                Scanner scanner = new Scanner(System.in, "UTF-8");
 
 		if (numThreads==1) {
 			
-			try { for (String line : nbestReader) {
+                    while (scanner.hasNextLine()) {
+                        String line = scanner.nextLine();
 				String[] fds = Regex.threeBarsWithSpace.split(line);
 				int newSentID = Integer.parseInt(fds[0]);
 				if (oldSentID != -1 && oldSentID != newSentID) {
 					String best_hyp = mbrReranker.processOneSent(nbest, oldSentID);//nbest: list of unique strings
-					outWriter.write(best_hyp);
-					outWriter.newLine();
-					outWriter.flush();
+					System.out.println(best_hyp);
 					nbest.clear();
 				}
 				oldSentID = newSentID;
 				nbest.add(line);
-			} } finally { nbestReader.close(); }
+                    }
 
 			//last nbest
-			String bestHyp = mbrReranker.processOneSent(nbest, oldSentID);
-			outWriter.write(bestHyp);
-			outWriter.newLine();
-			outWriter.flush();
-			nbest.clear();
-			outWriter.close();
+                        if (oldSentID >= 0) {
+                            String bestHyp = mbrReranker.processOneSent(nbest, oldSentID);
+                            System.out.println(bestHyp);
+                            nbest.clear();
+                        }
 			
 		} else {
 			
 			ExecutorService threadPool = Executors.newFixedThreadPool(numThreads);
 			
-			for (String line : nbestReader) {			
+			while (scanner.hasNextLine()) {
+                            String line = scanner.nextLine();
 				String[] fds = Regex.threeBarsWithSpace.split(line);
 				int newSentID = Integer.parseInt(fds[0]);
 				if (oldSentID != -1 && oldSentID != newSentID) {
@@ -377,21 +371,17 @@ public class NbestMinRiskReranker {
 				while (! mbrReranker.resultsQueue.isEmpty()) {
 					RankerResult result = mbrReranker.resultsQueue.remove();
 					String best_hyp = result.toString();
-					outWriter.write(best_hyp);
-					outWriter.newLine();
+					System.out.println(best_hyp);
 				}
 				
-				outWriter.flush();
 				
 			} catch (InterruptedException e) {
 				e.printStackTrace();
-			} finally {
-				outWriter.close();
-			}
+                        }
 			
 		}
 		
-		System.out.println("Total running time (seconds) is "
+		System.err.println("Total running time (seconds) is "
 			+ (System.currentTimeMillis() - startTime) / 1000.0);
 	}
 	

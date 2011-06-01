@@ -5,13 +5,50 @@ script.
 
 The Joshua pipeline has the following external dependencies:
 
-- Moses scripts (for running GIZA)
-  This dependency will be removed in the near future, in favor of the
-  Berkeley aligner.
+- The Berkeley Aligner (2.1)
+  http://berkeleyaligner.googlecode.com/files/berkeleyaligner_unsupervised-2.1.tar.gz
 
-- Hadoop (for extracting grammars)
+- Hadoop (0.20.2)
+  http://www.apache.org/dist//hadoop/common/hadoop-0.20.2/hadoop-0.20.2.tar.gz
 
-- Berkeley Parser (for parsing for SAMT grammars)
+- Thrax
+  http://cs.jhu.edu/~jonny/thrax/
+
+  In the near future (summer 2011), Thrax will be distributed with Joshua.
+
+- Berkeley Parser
+  http://code.google.com/p/berkeleyparser/source/checkout
+
+  This is only needed if you plan to extract SAMT grammars.
 
 == INSTALLATION ======================================================
 
+1. Download and install the dependencies above.
+
+2. Download and install Joshua.
+
+   The best way to do this is to use git to clone the latest
+   stable release of the codebase:
+
+     cd /joshua/installation/dir
+     git clone git@github.com:joshua-decoder/joshua.git
+
+   Then compile it:
+
+     cd joshua
+     ant jar
+
+3. Define the following environment variables to point to the
+   installation directories you chose in Step 1.
+
+   In bash:
+
+   export HADOOP=/path/to/hadoop-0.20-2
+   export JOSHUA=/path/to/joshua
+   export THRAX=/path/to/thrax
+   export BERKELEYALIGNER=/path/to/berkeley-aligner
+   export BERKELEYPARSER=/path/to/berkeley-parser
+
+
+
+   
