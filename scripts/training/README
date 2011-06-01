@@ -81,7 +81,8 @@ pipeline.pl
     Allows starting and stopping at at of the following steps: 
 
 	- ALIGN (alignment of the training data)
-	- THRAX (grammar extraction, including parsing for SAMT grammars)
+	- PARSE (parsing of the target side for SAMT grammar extraction)
+	- THRAX (grammar extraction)
 	- MERT (tuning)
 	- TEST (decoding a test set)
 
@@ -171,6 +172,12 @@ pipeline.pl
     ** UNIMPLEMENTED ** Subsample the training data towards the tuning
        (and test) data.
 
+  --joshua-mem MEM [3100m]
+
+    Provide the maximum heap size available to instances of the Joshua
+    decoder.  Uses Java notation (the value here is passed to Java's
+    -Xmx flag).
+
   --qsub-args "ARGS"
 
     Provide the specified qsub arguments to the Joshua decoder command.
@@ -214,3 +221,19 @@ files:
   <CONFIG> is the location of the joshua configuration file
   <LOG> is where the Joshua decoder should put its log file
 
+== COMMON USE CASES AND PITFALLS =====================================
+
+Memory usage is a major consideration in decoding with Joshua and
+hierarchical grammars.  In particular, SAMT grammars often require a
+large amount of memory.  Many steps have been taken to reduce memory
+usage, including beam settings and test-set- and sentence-level
+filtering of grammars.  However, memory usage can still be in the tens
+of gigabytes.
+
+To accommodate this kind of variation, the pipeline script allows you
+to specify both (a) the amount of memory used by the Joshua decoder
+instance and (b) the amount of memory required of nodes obtained by
+the qsub command.  These are accomplished with the --joshua-mem MEM
+and --qsub-args ARGS commands.  For example,
+
+    pipeline.pl --joshua-mem 32g --qsub-args "-l pvmem=32g -q himem.q" ...

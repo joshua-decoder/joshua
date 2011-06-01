@@ -71,7 +71,7 @@ my $HADOOP_MEM = "8G";
 my $JOSHUA_MEM = "3100m";
 my $QSUB_ARGS  = "-l num_proc=2";
 
-my @STEPS = qw[FIRST ALIGN THRAX MERT TEST LAST];
+my @STEPS = qw[FIRST ALIGN PARSE THRAX MERT TEST LAST];
 my %STEPS = map { $STEPS[$_] => $_ + 1 } (0..$#STEPS);
 
 my $retval = GetOptions(
@@ -329,6 +329,25 @@ if (! defined $ALIGNMENT) {
 
 maybe_quit("ALIGN");
 
+PARSE:
+
+if ($GRAMMAR_TYPE eq "samt") {
+
+  # Thrax assumes the presence of a file named $TRAIN{target}.parsed.OOV.  
+  # This step produces that file
+
+  $cachepipe->cmd("build-vocab",
+				  "cat $TRAIN{target} | $SCRIPTDIR/training/build-vocab.pl > train/vocab.$TARGET",
+				  $TRAIN{target},
+				  "train/vocab.$TARGET");
+
+  $cachepipe->cmd("parse",
+				  "cat $TRAIN{prefix}.tok.$TARGET | $SCRIPTDIR/training/parallelize/parallelize.pl -j 50 -- java -cp $BERKELEYPARSER edu.berkeley.nlp.PCFGLA.BerkeleyParser -gr $BERKELEYPARSER/eng_sm6.gr | sed 's/^\(/\(TOP/' | tee $TRAIN{prefix}.$TARGET.parsed.mc | perl -pi -e 's/(\\S+)\\)/lc(\$1).\")\"/ge' | tee $TRAIN{prefix}.$TARGET.parsed | perl $SCRIPTDIR/training/add-OOVS.pl train/vocab.$TARGET > $TRAIN{prefix}.$TARGET.parsed.OOV",
+				  "$TRAIN{target}",
+				  "$TRAIN{target}.parsed.OOV");
+}
+
+
 ## THRAX #############################################################
 
 THRAX:
@@ -343,10 +362,11 @@ if ($GRAMMAR_TYPE eq "samt") {
 	# If parsing was already done, then copy the file to our training
 	# directory so we can use our local copy instead of the original
 	# one.  Thrax later in the script expects to find
-	# $TRAIN{target}.parsed.OOV, so that's where we copy it.  An important
-	# note here is that to get this, we set $TRAIN{target} to point to a
-	# file that doesn't exist.  This is okay because after the Thrax
-	# run we should never need to use the training data any more (and
+	# $TRAIN{target}.parsed.OOV, so that's where we copy it.  An
+	# important note here is that to get this, we set $TRAIN{target}
+	# to point to a file that doesn't exist (i.e.,
+	# train/corpus.$SOURCE).  This is okay because after the Thrax run
+	# we should never need to use the training data any more (and
 	# anyway we don't have it).  If that changes this will break
 	# things.
 
@@ -362,16 +382,12 @@ if ($GRAMMAR_TYPE eq "samt") {
 
   } else {
 
-	$cachepipe->cmd("build-vocab",
-					"cat $TRAIN{target} | $SCRIPTDIR/training/build-vocab.pl > train/vocab.$TARGET",
-					$TRAIN{target},
-					"train/vocab.$TARGET");
-
-	$cachepipe->cmd("parse",
-					"cat $TRAIN{prefix}.tok.$TARGET | $SCRIPTDIR/training/parallelize/parallelize.pl -j 50 -- java -cp $BERKELEYPARSER edu.berkeley.nlp.PCFGLA.BerkeleyParser -gr $BERKELEYPARSER/eng_sm6.gr | sed 's/^\(/\(TOP/' | tee $TRAIN{prefix}.$TARGET.parsed.mc | perl -pi -e 's/(\\S+)\\)/lc(\$1).\")\"/ge' | tee $TRAIN{prefix}.$TARGET.parsed | perl $SCRIPTDIR/training/add-OOVS.pl train/vocab.$TARGET > $TRAIN{prefix}.$TARGET.parsed.OOV",
-					"$TRAIN{target}",
-					"$TRAIN{target}.parsed.OOV");
+	print "* FATAL: You requested to build an SAMT grammar, but provided an\n";
+	print "  unparsed corpus.  Please re-run the pipeline and begin no later\n";
+	print "  than the PARSE step (--first-step PARSE)\n";
+	exit 1;
   }
+		
 }
 
 # we may have skipped directly to this step, in which case we need to
@@ -509,7 +525,7 @@ chmod(0755,"mert/decoder_command");
 
 # run MERT
 $cachepipe->cmd("mert",
-				"java -d64 -cp $JOSHUA/bin joshua.zmert.ZMERT -maxMem 4500 mert/mert.config > mert/mert.log 2>&1",
+				"rm -rf tune/filtered; java -d64 -cp $JOSHUA/bin joshua.zmert.ZMERT -maxMem 4500 mert/mert.config > mert/mert.log 2>&1",
 				"tune/grammar.filtered.gz",
 				"mert/joshua.config.ZMERT.final",
 				"mert/decoder_command",
