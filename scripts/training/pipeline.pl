@@ -615,7 +615,7 @@ $cachepipe->cmd("test-decode",
 				"test/test.output.nbest");
 
 $cachepipe->cmd("remove-oov",
-				"cat test/test.output.nbest | perl -pe 's/_OOV//g' > test/test.output.best.noOOV",
+				"cat test/test.output.nbest | perl -pe 's/_OOV//g' > test/test.output.nbest.noOOV",
 				"test/test.output.nbest",
 				"test/test.output.nbest.noOOV");
 
