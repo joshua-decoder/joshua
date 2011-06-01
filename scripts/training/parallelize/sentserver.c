@@ -238,7 +238,8 @@ void queue_finish(struct line *node, char *s, int fid) {
 
   if (log_mutex) fprintf(stderr, "  Flushing output %d\n", head->id);
   fflush(stdout);
-  fprintf(stderr, "%d sentences sent, %d sentences finished, %d sentences flushed\n", n_sent, n_received, n_flushed);
+  if (!quiet)
+      fprintf(stderr, "%d sentences sent, %d sentences finished, %d sentences flushed\n", n_sent, n_received, n_flushed);
 
   if (log_mutex) fprintf(stderr, "Unlocking queue mutex (%d)\n", fid);
   pthread_mutex_unlock(&queue_mutex);
