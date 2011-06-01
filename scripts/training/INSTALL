@@ -5,16 +5,23 @@ script.
 
 The Joshua pipeline has the following external dependencies:
 
-- The Berkeley Aligner (2.1)
-  http://berkeleyaligner.googlecode.com/files/berkeleyaligner_unsupervised-2.1.tar.gz
-
 - Hadoop (0.20.2)
   http://www.apache.org/dist//hadoop/common/hadoop-0.20.2/hadoop-0.20.2.tar.gz
+
+  Hadoop is used by Thrax for extracting Hiero- and SAMT-style grammars.
 
 - Thrax
   http://cs.jhu.edu/~jonny/thrax/
 
-  In the near future (summer 2011), Thrax will be distributed with Joshua.
+In the near future (summer 2011), both Thrax and Hadoop will be
+distributed with Joshua, but for now you will have to install them
+yourself.
+
+In addition, Joshua depends on the following externally-developed
+software which is included with the Joshua distribution:
+
+- The Berkeley Aligner (2.1)
+  http://berkeleyaligner.googlecode.com/files/berkeleyaligner_unsupervised-2.1.tar.gz
 
 - Berkeley Parser
   http://code.google.com/p/berkeleyparser/source/checkout
@@ -23,9 +30,24 @@ The Joshua pipeline has the following external dependencies:
 
 == INSTALLATION ======================================================
 
-1. Download and install the dependencies above.
+0. If it is not already installed, download and install Hadoop version
+   0.20.0 .  You may find the following document useful in setting up
+   a single-machine instance of Hadoop:
 
-2. Download and install Joshua.
+   http://hadoop.apache.org/common/docs/current/single_node_setup.html
+   http://wiki.apache.org/hadoop/GettingStartedWithHadoop
+
+   Make sure the following two environment variables are defined:
+
+   export HADOOP_VERSION="0.20.2"
+   export HADOOP=/path/to/hadoop-0.20.2
+
+0. Download and install Thrax.  Define the following environment
+   variable:
+
+    export THRAX=/path/to/thrax
+
+1. Download and install Joshua.  
 
    The best way to do this is to use git to clone the latest
    stable release of the codebase:
@@ -38,17 +60,6 @@ The Joshua pipeline has the following external dependencies:
      cd joshua
      ant jar
 
-3. Define the following environment variables to point to the
-   installation directories you chose in Step 1.
+== FEEDBACK ==========================================================
 
-   In bash:
-
-   export HADOOP=/path/to/hadoop-0.20-2
-   export JOSHUA=/path/to/joshua
-   export THRAX=/path/to/thrax
-   export BERKELEYALIGNER=/path/to/berkeley-aligner
-   export BERKELEYPARSER=/path/to/berkeley-parser
-
-
-
-   
+Problems?  Suggestions?  Email joshua_technical@googlegroups.com .

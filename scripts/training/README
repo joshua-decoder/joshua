@@ -30,26 +30,28 @@ of enhancements.  These are:
    distinguished by their extension:
 
    data/
-     train.SOURCE
-     train.TARGET
-     tune.SOURCE
-     tune.TARGET
-     test.SOURCE
-     test.TARGET
+     train.[SOURCE]
+     train.[TARGET]
+     tune.[SOURCE]
+     tune.[TARGET]
+     test.[SOURCE]
+     test.[TARGET]
 
    These files should be parallel at the sentence level, with one sentence
    per line, should be in UTF-8, and should be untokenized
-   (tokenization occurs in the pipeline).
+   (tokenization occurs in the pipeline).  [TARGET] and [SOURCE]
+   denote variables that should be replaced with the actual target and
+   source language abbreviations (e.g., "cz" and "en").
    
 3. Run the pipeline.  The following is the minimal invocation to run
    the complete pipeline:
 
    $JOSHUA/scripts/training/pipeline.pl  \
        --corpus data/train               \
-	   --tune data/tune                  \
-	   --test data/test                  \
-	   --source SOURCE
-	   --target TARGET
+       --tune data/tune                  \
+       --test data/test                  \
+       --source [SOURCE]                 \
+       --target [TARGET]
 
    Note the correspondence between the files in the data/ subdirectory
    and the 
@@ -184,19 +186,19 @@ pipeline.pl
 
 == MORE DETAIL =======================================================
 
-The Joshua pipeline provides support for two major use ca
+The Joshua pipeline provides support for two major use cases.
 
 1. Running the pipeline from start to finish.  This is the use case
    described in the Quick Start above.  In addition, the user can
-   specify the --last-step flag to quit early.  
+   specify the --last-step flag to quit early.  If problems arise
+   somewhere in the pipeline, it can be safely rerun due to
+   CachePipe. 
 
 2. Running pieces of the pipeline.  
 
    pipeline.pl allows early steps to be skipped over, in the event
    that you already have (say) an alignment or a grammar and want to
    proceed directly to later steps.
-
-
 
 == TEMPLATES =========================================================
 
@@ -223,17 +225,22 @@ files:
 
 == COMMON USE CASES AND PITFALLS =====================================
 
-Memory usage is a major consideration in decoding with Joshua and
-hierarchical grammars.  In particular, SAMT grammars often require a
-large amount of memory.  Many steps have been taken to reduce memory
-usage, including beam settings and test-set- and sentence-level
-filtering of grammars.  However, memory usage can still be in the tens
-of gigabytes.
+1. Memory usage is a major consideration in decoding with Joshua and
+   hierarchical grammars.  In particular, SAMT grammars often require
+   a large amount of memory.  Many steps have been taken to reduce
+   memory usage, including beam settings and test-set- and
+   sentence-level filtering of grammars.  However, memory usage can
+   still be in the tens of gigabytes.
 
-To accommodate this kind of variation, the pipeline script allows you
-to specify both (a) the amount of memory used by the Joshua decoder
-instance and (b) the amount of memory required of nodes obtained by
-the qsub command.  These are accomplished with the --joshua-mem MEM
-and --qsub-args ARGS commands.  For example,
+   To accommodate this kind of variation, the pipeline script allows
+   you to specify both (a) the amount of memory used by the Joshua
+   decoder instance and (b) the amount of memory required of nodes
+   obtained by the qsub command.  These are accomplished with the
+   --joshua-mem MEM and --qsub-args ARGS commands.  For example,
 
-    pipeline.pl --joshua-mem 32g --qsub-args "-l pvmem=32g -q himem.q" ...
+     pipeline.pl --joshua-mem 32g --qsub-args "-l pvmem=32g -q himem.q" ...
+
+== FEEDBACK ==========================================================
+
+Please email joshua_technical@googlegroups.com with problems or
+suggestions.  

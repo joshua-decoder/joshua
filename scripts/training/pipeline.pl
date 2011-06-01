@@ -31,8 +31,6 @@ use CachePipe;
 my $HADOOP = $ENV{HADOOP} or not_defined("HADOOP");
 my $JOSHUA = $ENV{JOSHUA} or not_defined("JOSHUA");
 my $THRAX  = $ENV{THRAX} or not_defined("THRAX");
-my $BERKELEYALIGNER = $ENV{BERKELEYALIGNER} or not_defined("BERKELEYALIGNER");
-my $BERKELEYPARSER = $ENV{BERKELEYPARSER};
 
 my (@CORPORA,$TUNE,$TEST,$ALIGNMENT,$SOURCE,$TARGET,$LMFILE,$GRAMMAR_FILE,$THRAX_CONF_FILE);
 my $FIRST_STEP = "FIRST";
@@ -156,11 +154,6 @@ foreach my $corpus (@CORPORA) {
 if ($ALIGNER ne "giza" and $ALIGNER ne "berkeley") {
   print "* FATAL: aligner must be one of 'giza' or 'berkeley'\n";
   exit 1;
-}
-
-if (! defined $BERKELEYPARSER and $GRAMMAR_TYPE eq "samt") {
-  not_defined("BERKELEYPARSER");
-  exit;
 }
 
 
@@ -320,7 +313,7 @@ if (! defined $ALIGNMENT) {
 
 	$ALIGNMENT = "alignments/training.align";
 	$cachepipe->cmd("berkeley-aligner",
-					"java -d64 -Xmx10g -jar $BERKELEYALIGNER/berkeleyaligner.jar ++train/word-align.conf",
+					"java -d64 -Xmx10g -jar $JOSHUA/lib/berkeleyaligner.jar ++train/word-align.conf",
 					$TRAIN{source},
 					$TRAIN{target},
 					$ALIGNMENT);
@@ -342,7 +335,7 @@ if ($GRAMMAR_TYPE eq "samt") {
 				  "train/vocab.$TARGET");
 
   $cachepipe->cmd("parse",
-				  "cat $TRAIN{prefix}.tok.$TARGET | $SCRIPTDIR/training/parallelize/parallelize.pl -j 50 -- java -cp $BERKELEYPARSER edu.berkeley.nlp.PCFGLA.BerkeleyParser -gr $BERKELEYPARSER/eng_sm6.gr | sed 's/^\(/\(TOP/' | tee $TRAIN{prefix}.$TARGET.parsed.mc | perl -pi -e 's/(\\S+)\\)/lc(\$1).\")\"/ge' | tee $TRAIN{prefix}.$TARGET.parsed | perl $SCRIPTDIR/training/add-OOVS.pl train/vocab.$TARGET > $TRAIN{prefix}.$TARGET.parsed.OOV",
+				  "cat $TRAIN{prefix}.tok.$TARGET | $SCRIPTDIR/training/parallelize/parallelize.pl -j 50 -- java -cp $JOSHUA/lib edu.berkeley.nlp.PCFGLA.BerkeleyParser -gr $JOSHUA/lib/eng_sm6.gr | sed 's/^\(/\(TOP/' | tee $TRAIN{prefix}.$TARGET.parsed.mc | perl -pi -e 's/(\\S+)\\)/lc(\$1).\")\"/ge' | tee $TRAIN{prefix}.$TARGET.parsed | perl $SCRIPTDIR/training/add-OOVS.pl train/vocab.$TARGET > $TRAIN{prefix}.$TARGET.parsed.OOV",
 				  "$TRAIN{target}",
 				  "$TRAIN{target}.parsed.OOV");
 }
