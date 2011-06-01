@@ -18,7 +18,7 @@
 
 #ANNOYANCE: if input is shorter than -j n lines, or at the very last few lines, repeatedly sleeps.  time cut down to 15s from 60s
 
-my $SCRIPT_DIR; BEGIN { use Cwd qw/ abs_path /; use File::Basename; $SCRIPT_DIR = dirname(abs_path($0)); push @INC, $SCRIPT_DIR, "$SCRIPT_DIR/../environment"; }
+my $SCRIPT_DIR; BEGIN { use Cwd qw/ abs_path /; use File::Basename; $SCRIPT_DIR = dirname(abs_path($0)); push @INC, $SCRIPT_DIR, "$SCRIPT_DIR"; }
 use LocalConfig;
 
 use File::Temp qw/ tempfile /;
@@ -30,6 +30,7 @@ use Cwd qw(getcwd);
 
 my $tailn=5; # +0 = concatenate all the client logs.  5 = last 5 lines
 my $recycle_clients;    # spawn new clients when previous ones terminate
+
 my $stay_alive;      # dont let server die when having zero clients
 my $joblist = "";
 my $errordir="";
