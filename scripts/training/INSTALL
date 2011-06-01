@@ -52,7 +52,6 @@ software which is included with the Joshua distribution:
    The best way to do this is to use git to clone the latest
    stable release of the codebase:
 
-     cd /joshua/installation/dir
      git clone git@github.com:joshua-decoder/joshua.git
 
    Then compile it:
