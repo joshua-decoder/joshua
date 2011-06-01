@@ -620,7 +620,11 @@ $cachepipe->cmd("remove-oov",
 				"test/test.output.nbest.noOOV");
 
 if ($DO_MBR) {
-  $cachepipe->cmd("test-onebest-mbr", "cat test/test.output.nbest.noOOV | java -cp $JOSHUA/bin -Xmx1700m -Xms1700m joshua.decoder.NbestMinRiskReranker false 1 > test/test.output.1best",
+  my $numlines = `cat $TEST{source} | wc -l`;
+  $numlines--;
+
+  $cachepipe->cmd("test-onebest-parmbr", 
+				  "seq 0 $numlines | $SCRIPTDIR/training/parallelize/parallelize.pl -j 50 -- $SCRIPTDIR/training/parmbr.sh test/test.output.nbest.noOOV > test/test.output.1best",
 				  "test/test.output.nbest.noOOV", 
 				  "test/test.output.1best");
 } else {
