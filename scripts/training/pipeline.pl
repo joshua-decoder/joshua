@@ -624,7 +624,7 @@ if ($DO_MBR) {
   $numlines--;
 
   $cachepipe->cmd("test-onebest-parmbr", 
-				  "seq 0 $numlines | $SCRIPTDIR/training/parallelize/parallelize.pl -j 50 -- $SCRIPTDIR/training/parmbr.sh test/test.output.nbest.noOOV > test/test.output.1best",
+				  "seq 0 $numlines | $SCRIPTDIR/training/parallelize/parallelize.pl -j 50 -- $SCRIPTDIR/training/parmbr.sh test/test.output.nbest.noOOV $JOSHUA/bin > test/test.output.1best",
 				  "test/test.output.nbest.noOOV", 
 				  "test/test.output.1best");
 } else {
