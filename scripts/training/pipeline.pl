@@ -485,14 +485,7 @@ $cachepipe->cmd("glue-tune",
 				"tune/grammar.glue");
 
 # figure out how many references there are
-my $numrefs = 1;
-if (! -e $TUNE{target}) {
-  my $index = 0;
-  while (-e "$TUNE{target}.$index") {
-	$index++;
-  }
-  $numrefs = $index;
-}
+my $numrefs = get_numrefs($TUNE{target});
 
 mkdir("mert") unless -d "mert";
 foreach my $key (keys %MERTFILES) {
@@ -621,17 +614,25 @@ $cachepipe->cmd("test-decode",
 				"test/grammar.filtered.gz",
 				"test/test.output.nbest");
 
+$cachepipe->cmd("remove-oov",
+				"cat test/test.output.nbest | perl -pe 's/_OOV//g' > test/test.output.best.noOOV",
+				"test/test.output.nbest",
+				"test/test.output.nbest.noOOV");
+
 if ($DO_MBR) {
-  $cachepipe->cmd("test-onebest-mbr", "java -cp $JOSHUA/bin -Xmx1700m -Xms1700m joshua.decoder.NbestMinRiskReranker test/test.output.nbest test/test.output.1best false 1",
-				  "test/test.output.nbest", "test/test.output.1best");
+  $cachepipe->cmd("test-onebest-mbr", "java -cp $JOSHUA/bin -Xmx1700m -Xms1700m joshua.decoder.NbestMinRiskReranker test/test.output.nbest.noOOV test/test.output.1best false 1",
+				  "test/test.output.nbest.noOOV", 
+				  "test/test.output.1best");
 } else {
   $cachepipe->cmd("test-extract-onebest",
 				  "java -cp $JOSHUA/bin -Dfile.encoding=utf8 joshua.util.ExtractTopCand test/test.output.nbest test/test.output.1best",
-				  "test/test.output.nbest", "test/test.output.1best");
+				  "test/test.output.nbest.noOOV", 
+				  "test/test.output.1best");
 }
 
+$numrefs = get_numrefs($TEST{target});
 $cachepipe->cmd("test-bleu",
-				"java -cp $JOSHUA/bin -Djava.library.path=lib -Xmx1000m -Xms1000m -Djava.util.logging.config.file=logging.properties joshua.util.JoshuaEval -cand test/test.output.1best -ref $TEST{target} -m BLEU 4 closest > test/test.output.1best.bleu",
+				"java -cp $JOSHUA/bin -Djava.library.path=lib -Xmx1000m -Xms1000m -Djava.util.logging.config.file=logging.properties joshua.util.JoshuaEval -cand test/test.output.1best -ref $TEST{target} -rps $numrefs -m BLEU 4 closest > test/test.output.1best.bleu",
 				"test/test.output.1best", "test/test.output.1best.bleu");
 
 system("cat test/test.output.1best.bleu");
@@ -730,3 +731,22 @@ sub not_defined {
   print "* FATAL: environment variable \$$var is not defined.\n";
   exit;
 }
+
+# Takes a prefix.  If that prefix exists, then all the references are
+# assumed to be in that file.  Otherwise, we successively append an
+# index, looking for parallel references.
+sub get_numrefs {
+  my ($prefix) = @_;
+
+  my $numrefs = 1;
+  if (! -e $prefix) {
+	my $index = 0;
+	while (-e "$prefix.$index") {
+	  $index++;
+	}
+	$numrefs = $index;
+  }
+
+  return $numrefs;
+}
+
