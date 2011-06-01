@@ -44,6 +44,7 @@ int s;
 int expect_multiline_output = 0;
 int log_mutex = 0;
 int stay_alive = 0;		/* dont panic and die with zero clients */
+int quiet = 0;
 
 void queue_finish(struct line *node, char *s, int fid);
 char * read_line(int fd, int multiline);
@@ -338,7 +339,8 @@ void * new_client(void *arg) {
 
     if (cur) {
       /* fprintf(stderr, "Sending to client: %s", cur->s); */
-      fprintf(stderr, "Sending data %d to client (fid %d)\n", cur->id, client->s);
+	  if (!quiet)
+		fprintf(stderr, "Sending data %d to client (fid %d)\n", cur->id, client->s);
       result = write(client->s, cur->s, strlen(cur->s));
       if (result < strlen(cur->s)){
         perror("write()");
@@ -369,7 +371,8 @@ void * new_client(void *arg) {
     s = read_line(client->s,expect_multiline_output);
     if (s) {
       /* fprintf(stderr, "Client (fid %d) returned: %s", client->s, s); */
-      fprintf(stderr, "Client (fid %d) returned data %d\n", client->s, cur->id);
+	  if (!quiet)
+		fprintf(stderr, "Client (fid %d) returned data %d\n", client->s, cur->id);
 //      queue_print();
       queue_finish(cur, s, client->s);
     } else {
@@ -428,6 +431,8 @@ int main (int argc, char *argv[]) {
       use_key = 1;
     } else if (strcmp(argv[argi], "--stay-alive")==0){
       stay_alive = 1;    /* dont panic and die with zero clients */
+	} else if (strcmp(argv[argi], "-q")==0) {
+	  quiet = 1;
     } else {
       port = atoi(argv[argi]);
     }

@@ -279,7 +279,8 @@ $cdcmd$sentclient $host:$port:$key $cmd
   cleanup();
 } else {
 #  my $todo = "$sentserver -k $key $multiflag $port ";
-  my $todo = "$sentserver -k $key $multiflag $port $stay_alive_flag ";
+  my $quiet = ($verbose > 0) ? "" : "-q";
+  my $todo = "$sentserver -k $key $multiflag $port $stay_alive_flag $quiet";
   if ($verbose){ print STDERR "Running: $todo\n"; }
   my $rc = system($todo);
   if ($rc){
