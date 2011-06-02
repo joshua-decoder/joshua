@@ -26,6 +26,7 @@ use warnings;
 use Getopt::Long;
 use File::Basename;
 use Cwd;
+use POSIX qw[ceil];
 use CachePipe;
 
 my $HADOOP = $ENV{HADOOP} or not_defined("HADOOP");
@@ -310,23 +311,65 @@ if (! defined $ALIGNMENT) {
 					$TRAIN{target},
 					$ALIGNMENT);
   } elsif ($ALIGNER eq "berkeley") {
-	open FROM, "$JOSHUA/scripts/training/templates/alignment/word-align.conf" or die "can't read berkeley alignment template";
-	open TO, ">", "train/word-align.conf" or die "can't write to 'train/word-align.conf'";
-	while (<FROM>) {
-	  s/<SOURCE>/$SOURCE/g;
-	  s/<TARGET>/$TARGET/g;
 
-	  print TO;
-	}
-	close(TO);
-	close(FROM);
+	# split up the data
+	mkdir("train/splits") unless -d "train/splits";
 
-	$ALIGNMENT = "alignments/training.align";
-	$cachepipe->cmd("berkeley-aligner",
-					"java -d64 -Xmx10g -jar $JOSHUA/lib/berkeleyaligner.jar ++train/word-align.conf",
+	my $BLOCKSIZE = 1000000;
+	chomp(my $numlines = `cat $TRAIN{source} | wc -l`);
+	my $numchunks = ceil($numlines / $BLOCKSIZE);
+
+	$cachepipe->cmd("split-$SOURCE",
+					"split -d -l $BLOCKSIZE $TRAIN{source} train/splits/corpus.$SOURCE.",
 					$TRAIN{source},
+					"train/splits/corpus.$SOURCE.00");
+	# group the last two chunks
+
+	$cachepipe->cmd("split-$TARGET",
+					"split -d -l $BLOCKSIZE $TRAIN{target} train/splits/corpus.$TARGET.",
 					$TRAIN{target},
-					$ALIGNMENT);
+					"train/splits/corpus.$TARGET.00");
+
+	mkdir("alignments") unless -d "alignments";
+
+	for my $chunkno (0..$numchunks-1) {
+	  # format to match split's output
+	  $chunkno = sprintf("%.2d",$chunkno);
+
+	  open FROM, "$JOSHUA/scripts/training/templates/alignment/word-align.conf" or die "can't read berkeley alignment template";
+	  open TO, ">", "train/splits/word-align.conf.$chunkno" or die "can't write to 'train/splits/word-align.conf.$chunkno'";
+	  while (<FROM>) {
+		s/<SOURCE>/$SOURCE.$chunkno/g;
+		s/<TARGET>/$TARGET.$chunkno/g;
+		s/<CHUNK>/$chunkno/g;
+
+		print TO;
+	  }
+	  close(TO);
+	  close(FROM);
+
+	  # run the job
+	  $cachepipe->cmd("berkeley-aligner-chunk-$chunkno",
+					  "java -d64 -Xmx10g -jar $JOSHUA/lib/berkeleyaligner.jar ++train/splits/word-align.conf.$chunkno",
+					  $TRAIN{source},
+					  $TRAIN{target},
+					  "alignments/$chunkno/training.align");
+
+	  
+	}
+
+	# combine the alignments
+	$cachepipe->cmd("berkeley-aligner-combine",
+					"cat alignments/*/training.align > alignments/training.align",
+					"alignments/00/training.align",
+					"alignments/training.align");
+
+	# $ALIGNMENT = "alignments/training.align";
+	# $cachepipe->cmd("berkeley-aligner",
+	# 				"java -d64 -Xmx10g -jar $JOSHUA/lib/berkeleyaligner.jar ++train/word-align.conf",
+	# 				$TRAIN{source},
+	# 				$TRAIN{target},
+	# 				$ALIGNMENT);
   }
 }
 
