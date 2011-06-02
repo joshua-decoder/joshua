@@ -104,6 +104,10 @@ if (! $retval) {
   exit 1;
 }
 
+# capitalize these to offset a common error:
+$FIRST_STEP = uc($FIRST_STEP);
+$LAST_STEP  = uc($LAST_STEP);
+
 $| = 1;
 
 my $cachepipe = new CachePipe();
@@ -177,8 +181,10 @@ if (@CORPORA) {
   $TRAIN{target} = "$CORPORA[0].$TARGET";
 }
 
-$TUNE{source} = "$TUNE.$SOURCE";
-$TUNE{target} = "$TUNE.$TARGET";
+if ($TUNE) {
+  $TUNE{source} = "$TUNE.$SOURCE";
+  $TUNE{target} = "$TUNE.$TARGET";
+}
 
 if ($TEST) {
   $TEST{source} = "$TEST.$SOURCE";
@@ -222,13 +228,17 @@ $TRAIN{source} = "train/corpus.$SOURCE";
 $TRAIN{target} = "train/corpus.$TARGET";
 
 # prepare the tuning and development data
-prepare_data("tune",[$TUNE]);
-$TUNE{source} = "tune/tune.tok.lc.$SOURCE";
-$TUNE{target} = "tune/tune.tok.lc.$TARGET";
+if (defined $TUNE) {
+  prepare_data("tune",[$TUNE]);
+  $TUNE{source} = "tune/tune.tok.lc.$SOURCE";
+  $TUNE{target} = "tune/tune.tok.lc.$TARGET";
+}
 
-prepare_data("test",[$TEST]);
-$TEST{source} = "test/test.tok.lc.$SOURCE";
-$TEST{target} = "test/test.tok.lc.$TARGET";
+if (defined $TEST) {
+  prepare_data("test",[$TEST]);
+  $TEST{source} = "test/test.tok.lc.$SOURCE";
+  $TEST{target} = "test/test.tok.lc.$TARGET";
+}
 
 # subsample
 if ($DO_SUBSAMPLE) {
