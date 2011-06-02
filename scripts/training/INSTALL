@@ -18,7 +18,7 @@ distributed with Joshua, but for now you will have to install them
 yourself.
 
 In addition, Joshua depends on the following externally-developed
-software which is included with the Joshua distribution:
+software, which is included with the Joshua distribution:
 
 - The Berkeley Aligner (2.1)
   http://berkeleyaligner.googlecode.com/files/berkeleyaligner_unsupervised-2.1.tar.gz
@@ -26,7 +26,7 @@ software which is included with the Joshua distribution:
 - Berkeley Parser
   http://code.google.com/p/berkeleyparser/source/checkout
 
-  This is only needed if you plan to extract SAMT grammars.
+  (Only used if you extract SAMT grammars)
 
 == INSTALLATION ======================================================
 
