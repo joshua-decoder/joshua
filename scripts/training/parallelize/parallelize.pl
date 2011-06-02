@@ -134,7 +134,7 @@ unless (GetOptions(
       "error-dir=s" => \$errordir,
       "multi-line" => \$multiline,
       "use-fork" => \$use_fork,
-      "verbose" => \$verbose,
+      "verbose!" => \$verbose,
       "jobs=i" => \$numnodes,
       "pmem=s" => \$pmem,
       "queue=s" => \$queue,
