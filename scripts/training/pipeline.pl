@@ -27,6 +27,7 @@ use Getopt::Long;
 use File::Basename;
 use Cwd;
 use POSIX qw[ceil];
+use List::Util qw[max];
 use CachePipe;
 
 my $HADOOP = $ENV{HADOOP} or not_defined("HADOOP");
@@ -319,22 +320,33 @@ if (! defined $ALIGNMENT) {
 	chomp(my $numlines = `cat $TRAIN{source} | wc -l`);
 	my $numchunks = ceil($numlines / $BLOCKSIZE);
 
-	$cachepipe->cmd("split-$SOURCE",
-					"split -d -l $BLOCKSIZE $TRAIN{source} train/splits/corpus.$SOURCE.",
-					$TRAIN{source},
-					"train/splits/corpus.$SOURCE.00");
-	# group the last two chunks
+	open TARGET, $TRAIN{target} or die "can't read $TRAIN{target}";
+	open SOURCE, $TRAIN{source} or die "can't read $TRAIN{source}";
 
-	$cachepipe->cmd("split-$TARGET",
-					"split -d -l $BLOCKSIZE $TRAIN{target} train/splits/corpus.$TARGET.",
-					$TRAIN{target},
-					"train/splits/corpus.$TARGET.00");
+	my $lastchunk = -1;
+	while (my $target = <TARGET>) {
+	  my $source = <SOURCE>;
 
-	mkdir("alignments") unless -d "alignments";
+	  # this folds together the last two chunks
+	  my $chunk = max($numchunks - 2,
+					  int(${.} / $BLOCKSIZE));
+	  
+	  if ($chunk != $lastchunk) {
+		close CHUNK_SOURCE;
+		close CHUNK_TARGET;
+		open CHUNK_SOURCE, ">", "train/splits/corpus.$SOURCE.$chunk" or die;
+		open CHUNK_TARGET, ">", "train/splits/corpus.$TARGET.$chunk" or die;
 
-	for my $chunkno (0..$numchunks-1) {
-	  # format to match split's output
-	  $chunkno = sprintf("%.2d",$chunkno);
+		$lastchunk = $chunk;
+	  }
+
+	  print CHUNK_SOURCE $source;
+	  print CHUNK_TARGET $target;
+	}
+	close CHUNK_SOURCE;
+	close CHUNK_TARGET;
+
+	for (my $chunkno = 0; $chunkno <= $lastchunk; $chunkno++) {
 
 	  open FROM, "$JOSHUA/scripts/training/templates/alignment/word-align.conf" or die "can't read berkeley alignment template";
 	  open TO, ">", "train/splits/word-align.conf.$chunkno" or die "can't write to 'train/splits/word-align.conf.$chunkno'";
@@ -348,28 +360,21 @@ if (! defined $ALIGNMENT) {
 	  close(TO);
 	  close(FROM);
 
+	  system("mkdir","-p","alignments/$chunkno");
+
 	  # run the job
 	  $cachepipe->cmd("berkeley-aligner-chunk-$chunkno",
 					  "java -d64 -Xmx10g -jar $JOSHUA/lib/berkeleyaligner.jar ++train/splits/word-align.conf.$chunkno",
-					  $TRAIN{source},
-					  $TRAIN{target},
+					  "train/splits/corpus.$SOURCE.$chunkno",
+					  "train/splits/corpus.$TARGET.$chunkno",
 					  "alignments/$chunkno/training.align");
-
-	  
 	}
 
 	# combine the alignments
 	$cachepipe->cmd("berkeley-aligner-combine",
 					"cat alignments/*/training.align > alignments/training.align",
-					"alignments/00/training.align",
+					"alignments/$lastchunk/training.align",
 					"alignments/training.align");
-
-	# $ALIGNMENT = "alignments/training.align";
-	# $cachepipe->cmd("berkeley-aligner",
-	# 				"java -d64 -Xmx10g -jar $JOSHUA/lib/berkeleyaligner.jar ++train/word-align.conf",
-	# 				$TRAIN{source},
-	# 				$TRAIN{target},
-	# 				$ALIGNMENT);
   }
 }
 
@@ -729,14 +734,16 @@ sub prepare_data {
   }
 
   my $infix = "";
-  if ($maxlen and $label eq "train") {
-	# trim training data
-	$cachepipe->cmd("train-trim",
-					"$SCRIPTDIR/training/trim_parallel_corpus.pl $label/$label.tok.$TARGET $label/$label.tok.$SOURCE $maxlen > $label/$label.tok.$maxlen.$TARGET 2> $label/$label.tok.$maxlen.$SOURCE",
-					"$label/$label.tok.$TARGET", "$label/$label.tok.$SOURCE",
-					"$label/$label.tok.$maxlen.$TARGET", "$label/$label.tok.$maxlen.$SOURCE",
-		);
-	$infix = ".$maxlen";
+  if ($label eq "train") {
+	if ($maxlen) {
+	  # trim training data
+	  $cachepipe->cmd("train-trim",
+					  "$SCRIPTDIR/training/trim_parallel_corpus.pl $label/$label.tok.$TARGET $label/$label.tok.$SOURCE $maxlen > $label/$label.tok.$maxlen.$TARGET 2> $label/$label.tok.$maxlen.$SOURCE",
+					  "$label/$label.tok.$TARGET", "$label/$label.tok.$SOURCE",
+					  "$label/$label.tok.$maxlen.$TARGET", "$label/$label.tok.$maxlen.$SOURCE",
+		  );
+	  $infix .= ".$maxlen";
+	}
   }
 
   # lowercase
