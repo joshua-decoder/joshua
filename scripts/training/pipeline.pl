@@ -167,7 +167,6 @@ if ($ALIGNER ne "giza" and $ALIGNER ne "berkeley") {
 ## Dependent variable setting ########################################
 
 my $OOV = ($GRAMMAR_TYPE eq "samt") ? "OOV" : "X";
-my $THRAXDIR = "pipeline-$SOURCE-$TARGET-$GRAMMAR_TYPE";
 
 # use this default unless it's already been defined by a command-line argument
 $THRAX_CONF_FILE = "$JOSHUA/scripts/training/templates/thrax-$GRAMMAR_TYPE.conf" unless defined $THRAX_CONF_FILE;
@@ -475,12 +474,17 @@ if (! defined $GRAMMAR_FILE) {
 					"train/thrax-input-file");
 
 # put the hadoop files in place
+  my $sha1 = $cachepipe->sha1hash("train/thrax-input-file");
+  my $THRAXDIR = "pipeline-$SOURCE-$TARGET-$GRAMMAR_TYPE-$sha1";
+
   $cachepipe->cmd("thrax-prep",
 				  "$HADOOP/bin/hadoop fs -rmr $THRAXDIR; $HADOOP/bin/hadoop fs -mkdir $THRAXDIR; $HADOOP/bin/hadoop fs -put train/thrax-input-file $THRAXDIR/input-file",
 				  "train/thrax-input-file", 
 				  "grammar.gz");
 
-  copy_thrax_file();
+  # copy the thrax config file
+  system("grep -v input-file $THRAX_CONF_FILE > thrax-$GRAMMAR_TYPE.conf");
+  system("echo input-file $THRAXDIR/input-file >> thrax-$GRAMMAR_TYPE.conf");
 
   $cachepipe->cmd("thrax-run",
 				  "$HADOOP/bin/hadoop jar $THRAX/bin/thrax.jar -D mapred.child.java.opts='-Xmx$HADOOP_MEM' thrax-$GRAMMAR_TYPE.conf $THRAXDIR > thrax.log 2>&1; rm -f grammar grammar.gz; $HADOOP/bin/hadoop fs -getmerge $THRAXDIR/final/ grammar; gzip -9 grammar",
@@ -542,7 +546,9 @@ $cachepipe->cmd("filter-tune",
 				$TUNE{source},
 				"tune/grammar.filtered.gz");
 
-copy_thrax_file();
+# copy the thrax config file if it's not already there
+system("grep -v input-file $THRAX_CONF_FILE > thrax-$GRAMMAR_TYPE.conf")
+	unless -e "thrax-$GRAMMAR_TYPE.conf";
 $cachepipe->cmd("glue-tune",
 				"$SCRIPTDIR/training/scat tune/grammar.filtered.gz | $THRAX/scripts/create_glue_grammar.sh thrax-$GRAMMAR_TYPE.conf > tune/grammar.glue",
 				"tune/grammar.filtered.gz",
@@ -637,7 +643,9 @@ $cachepipe->cmd("filter-test",
 				$TEST{source},
 				"test/grammar.filtered.gz");
 
-copy_thrax_file();
+# copy the thrax config file if it's not already there
+system("grep -v input-file $THRAX_CONF_FILE > thrax-$GRAMMAR_TYPE.conf")
+	unless -e "thrax-$GRAMMAR_TYPE.conf";
 $cachepipe->cmd("glue-test",
 				"$SCRIPTDIR/training/scat test/grammar.filtered.gz | $THRAX/scripts/create_glue_grammar.sh thrax-$GRAMMAR_TYPE.conf > test/grammar.glue",
 				"test/grammar.filtered.gz",
@@ -710,14 +718,6 @@ system("cat test/test.output.1best.bleu");
 ######################################################################
 LAST:
 1;
-
-# I don't know why this is a function
-sub copy_thrax_file {
-  $cachepipe->cmd("thrax-config",
-				  "grep -v input-file $THRAX_CONF_FILE > thrax-$GRAMMAR_TYPE.conf; echo input-file $THRAXDIR/input-file >> thrax-$GRAMMAR_TYPE.conf",
-				  $THRAX_CONF_FILE,
-				  "thrax-$GRAMMAR_TYPE.conf");
-}
 
 # Does tokenization and normalization of training, tuning, and test data.
 sub prepare_data {
