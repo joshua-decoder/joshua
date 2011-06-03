@@ -315,7 +315,7 @@ if (! defined $ALIGNMENT) {
   } elsif ($ALIGNER eq "berkeley") {
 
 	# split up the data
-	mkdir("train/splits") unless -d "train/splits";
+	sytem("mkdir","-p","train/splits") unless -d "train/splits";
 
 	my $BLOCKSIZE = 1000000;
 	$cachepipe->cmd("source-numlines",
