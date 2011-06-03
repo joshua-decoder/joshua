@@ -171,14 +171,24 @@ pipeline.pl
   --no-subsample [default]
   --subsample
 
-    ** UNIMPLEMENTED ** Subsample the training data towards the tuning
-       (and test) data.
+	Subsampling is a means of throwing away a portion of the training
+    data by only retaining sentence pairs that appear relevant to the
+    tuning and development data.  This makes the pipeline run
+    significantly faster (particularly alignment), and often comes at
+    only a small cost in accuracy on the development set.  Subsampling
+    works by comparing the training data to the tuning and test sets
+    passed in with --tune and --test.
 
   --joshua-mem MEM [3100m]
 
     Provide the maximum heap size available to instances of the Joshua
     decoder.  Uses Java notation (the value here is passed to Java's
     -Xmx flag).
+
+  --hadoop-mem MEM [8g]
+
+    Provide the maximum heap size for the hadoop instances used to
+    learn the grammar in Thrax.
 
   --qsub-args "ARGS"
 
