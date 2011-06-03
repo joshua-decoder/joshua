@@ -40,7 +40,7 @@ my $LAST_STEP  = "LAST";
 my $LMFILTER = "$ENV{HOME}/code/filter/filter";
 my $MAXLEN = 50;
 my $DO_FILTER_LM = 1;
-my $DO_SUBSAMPLE = ''; # default false
+my $DO_SUBSAMPLE = 1;
 my $SCRIPTDIR = "$JOSHUA/scripts";
 my $TOKENIZER = "$SCRIPTDIR/training/penn-treebank-tokenizer.perl";
 my $MOSES_TRAINER = "/home/hltcoe/airvine/bin/moses/tools/moses-scripts/scripts-20100922-0942/training/train-factored-phrase-model.perl";
@@ -71,7 +71,7 @@ my $HADOOP_MEM = "8G";
 my $JOSHUA_MEM = "3100m";
 my $QSUB_ARGS  = "-l num_proc=2";
 
-my @STEPS = qw[FIRST ALIGN PARSE THRAX MERT TEST LAST];
+my @STEPS = qw[FIRST SUBSAMPLE ALIGN PARSE THRAX MERT TEST LAST];
 my %STEPS = map { $STEPS[$_] => $_ + 1 } (0..$#STEPS);
 
 my $retval = GetOptions(
@@ -226,6 +226,9 @@ if (@CORPORA == 0) {
 # prepare the training data
 prepare_data("train",\@CORPORA,$MAXLEN);
 $TRAIN{prefix} = "train/corpus";
+foreach my $lang ($SOURCE,$TARGET) {
+  system("ln -sf train.tok.$MAXLEN.lc.$lang train/corpus.$lang");
+}
 $TRAIN{source} = "train/corpus.$SOURCE";
 $TRAIN{target} = "train/corpus.$TARGET";
 
@@ -242,50 +245,41 @@ if (defined $TEST) {
   $TEST{target} = "test/test.tok.lc.$TARGET";
 }
 
+## SUBSAMPLE #########################################################
+
+SUBSAMPLE:
+
 # subsample
 if ($DO_SUBSAMPLE) {
-  print "\n\n** DO_SUBSAMPLE UNIMPLEMENTED\n\n";
-  exit 1;
-
-  mkdir("train/subsampled");
+  mkdir("train/subsampled") unless -d "train/subsampled";
 
   $cachepipe->cmd("subsample-manifest",
-				  "echo train/corpus > train/subsampled/manifest",
+				  "echo corpus > train/subsampled/manifest",
 				  "train/subsampled/manifest");
 
   $cachepipe->cmd("subsample-testdata",
-				  "cat $TUNE.$SOURCE $TEST.$SOURCE > train/subsampled/test-data",
-				  "$TUNE.$SOURCE", "$TEST.$SOURCE", "train/subsampled/test-data");
+				  "cat $TUNE{source} $TEST{source} > train/subsampled/test-data",
+				  $TUNE{source},
+				  $TEST{source},
+				  "train/subsampled/test-data");
 
   $cachepipe->cmd("subsample",
-				  "java -Xmx4g -Dfile.encoding=utf8 -cp $JOSHUA/bin:$JOSHUA/lib/commons-cli-2.0-SNAPSHOT.jar joshua.subsample.Subsampler -e $TARGET.tok.$MAXLEN -f $SOURCE.tok.$MAXLEN -epath train/ -fpath train/ -output train/subsampled/subsampled.$MAXLEN -ratio 1.04 -test train/subsampled/test-data -training train/subsampled/manifest",
+				  "java -Xmx4g -Dfile.encoding=utf8 -cp $JOSHUA/bin:$JOSHUA/lib/commons-cli-2.0-SNAPSHOT.jar joshua.subsample.Subsampler -e $TARGET -f $SOURCE -epath train/ -fpath train/ -output train/subsampled/subsampled.$MAXLEN -ratio 1.04 -test train/subsampled/test-data -training train/subsampled/manifest",
 				  "train/subsampled/manifest",
 				  "train/subsampled/test-data",
-				  "train/corpus.$TARGET.tok.$MAXLEN",
-				  "train/corpus.$SOURCE.tok.$MAXLEN",
-				  "train/subsampled/subsampled.$MAXLEN.$TARGET.tok.$MAXLEN",
-				  "train/subsampled/subsampled.$MAXLEN.$SOURCE.tok.$MAXLEN");
+				  $TRAIN{source},
+				  $TRAIN{target},
+				  "train/subsampled/subsampled.$MAXLEN.$TARGET",
+				  "train/subsampled/subsampled.$MAXLEN.$SOURCE");
 
+  # rewrite the symlinks to point to the subsampled corpus
   foreach my $lang ($TARGET,$SOURCE) {
-	$cachepipe->cmd("link-corpus-$lang",
-					"ln -sf subsampled/subsampled.tok.$MAXLEN.lc.$lang train/corpus.$lang",
-					"train/corpus.$lang");
-	$cachepipe->cmd("link-corpus-tok-$lang",
-					"ln -sf subsampled/subsampled.tok.$MAXLEN.lc.$lang train/corpus.tok.$lang",
-					"train/corpus.tok.$lang");
-
-  }
-} else {
-  foreach my $lang ($TARGET,$SOURCE) {
-	$cachepipe->cmd("link-corpus-$lang",
-					"ln -sf train.tok.$MAXLEN.lc.$lang train/corpus.$lang",
-					"train/corpus.$lang");
-	$cachepipe->cmd("link-corpus-tok-$lang",
-					"ln -sf train.tok.$MAXLEN.$lang train/corpus.tok.$lang",
-					"train/corpus.tok.$lang");
-
+	system("ln -sf subsampled/subsampled.$MAXLEN.$lang train/corpus.$lang");
   }
 }
+
+maybe_quit("SUBSAMPLE");
+
 
 ## ALIGN #############################################################
 
@@ -294,6 +288,12 @@ ALIGN:
 # This basically means that we've skipped tokenization, in which case
 # we still want to move the input files into the canonical place
 if ($FIRST_STEP eq "ALIGN") {
+  if (defined $ALIGNMENT) {
+	print "* FATAL: It doesn't make sense to provide an alignment\n";
+	print "  but not to skip the tokenization and subsampling steps\n";
+	exit 1;
+  }
+
   # TODO: copy the files into the canonical place 
 
   # Jumping straight to alignment is probably the same thing as
@@ -311,13 +311,17 @@ if (! defined $ALIGNMENT) {
 					$TRAIN{source},
 					$TRAIN{target},
 					$ALIGNMENT);
+
   } elsif ($ALIGNER eq "berkeley") {
 
 	# split up the data
 	mkdir("train/splits") unless -d "train/splits";
 
 	my $BLOCKSIZE = 1000000;
-	chomp(my $numlines = `cat $TRAIN{source} | wc -l`);
+	$cachepipe->cmd("source-numlines",
+					"cat $TRAIN{source} | wc -l",
+					$TRAIN{source});
+	my $numlines = $cachepipe->stdout();
 	my $numchunks = ceil($numlines / $BLOCKSIZE);
 
 	open TARGET, $TRAIN{target} or die "can't read $TRAIN{target}";
@@ -345,6 +349,9 @@ if (! defined $ALIGNMENT) {
 	}
 	close CHUNK_SOURCE;
 	close CHUNK_TARGET;
+
+	close SOURCE;
+	close TARGET;
 
 	for (my $chunkno = 0; $chunkno <= $lastchunk; $chunkno++) {
 
@@ -375,10 +382,15 @@ if (! defined $ALIGNMENT) {
 					"cat alignments/*/training.align > alignments/training.align",
 					"alignments/$lastchunk/training.align",
 					"alignments/training.align");
+
+	$ALIGNMENT = "alignments/training.align";
   }
 }
 
 maybe_quit("ALIGN");
+
+
+## PARSE #############################################################
 
 PARSE:
 
