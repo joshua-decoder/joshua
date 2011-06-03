@@ -67,7 +67,7 @@ my $ALIGNER = "berkeley"; # or "giza"
 
 # for hadoop java subprocesses (heap amount)
 # you really just have to play around to find out how much is enough 
-my $HADOOP_MEM = "8G";  
+my $HADOOP_MEM = "8g";  
 my $JOSHUA_MEM = "3100m";
 my $QSUB_ARGS  = "-l num_proc=2";
 
@@ -92,6 +92,7 @@ my $retval = GetOptions(
   "tokenizer=s"  	  => \$TOKENIZER,
   "joshua-config=s"   => \$MERTFILES{'joshua.config'},
   "joshua-mem=s"      => \$JOSHUA_MEM,
+  "hadoop-mem=s"      => \$HADOOP_MEM,
   "decoder-command=s" => \$MERTFILES{'decoder_command'},
   "thrax-conf=s"      => \$THRAX_CONF_FILE,
   "subsample!"   	  => \$DO_SUBSAMPLE,
