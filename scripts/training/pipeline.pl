@@ -70,6 +70,7 @@ my $ALIGNER = "berkeley"; # or "giza"
 my $HADOOP_MEM = "8g";  
 my $JOSHUA_MEM = "3100m";
 my $QSUB_ARGS  = "-l num_proc=2";
+my $ALIGNER_BLOCKSIZE = 1000000;
 
 my @STEPS = qw[FIRST SUBSAMPLE ALIGN PARSE THRAX MERT TEST LAST];
 my %STEPS = map { $STEPS[$_] => $_ + 1 } (0..$#STEPS);
@@ -99,6 +100,7 @@ my $retval = GetOptions(
   "qsub-args=s"  	  => \$QSUB_ARGS,
   "first-step=s" 	  => \$FIRST_STEP,
   "last-step=s"  	  => \$LAST_STEP,
+  "aligner-chunk-size=s" => \$ALIGNER_BLOCKSIZE,
   "sentence-tm!"      => \$DO_SENT_SPECIFIC_TM,
 );
 
@@ -317,12 +319,11 @@ if (! defined $ALIGNMENT) {
 	# split up the data
 	system("mkdir","-p","train/splits") unless -d "train/splits";
 
-	my $BLOCKSIZE = 1000000;
 	$cachepipe->cmd("source-numlines",
 					"cat $TRAIN{source} | wc -l",
 					$TRAIN{source});
 	my $numlines = $cachepipe->stdout();
-	my $numchunks = ceil($numlines / $BLOCKSIZE);
+	my $numchunks = ceil($numlines / $ALIGNER_BLOCKSIZE);
 
 	open TARGET, $TRAIN{target} or die "can't read $TRAIN{target}";
 	open SOURCE, $TRAIN{source} or die "can't read $TRAIN{source}";
@@ -333,7 +334,7 @@ if (! defined $ALIGNMENT) {
 
 	  # this folds together the last two chunks
 	  my $chunk = max($numchunks - 2,
-					  int( (${.} - 1) / $BLOCKSIZE ));
+					  int( (${.} - 1) / $ALIGNER_BLOCKSIZE ));
 	  
 	  if ($chunk != $lastchunk) {
 		close CHUNK_SOURCE;
@@ -371,7 +372,7 @@ if (! defined $ALIGNMENT) {
 
 	  # run the job
 	  $cachepipe->cmd("berkeley-aligner-chunk-$chunkno",
-					  "java -d64 -Xmx10g -jar $JOSHUA/lib/berkeleyaligner.jar ++train/splits/word-align.conf.$chunkno",
+					  "java -d64 -Xmx7g -jar $JOSHUA/lib/berkeleyaligner.jar ++train/splits/word-align.conf.$chunkno",
 					  "train/splits/corpus.$SOURCE.$chunkno",
 					  "train/splits/corpus.$TARGET.$chunkno",
 					  "alignments/$chunkno/training.align");
