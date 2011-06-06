@@ -69,6 +69,7 @@ my $ALIGNER = "berkeley"; # or "giza"
 # you really just have to play around to find out how much is enough 
 my $HADOOP_MEM = "8g";  
 my $JOSHUA_MEM = "3100m";
+my $ALIGNER_MEM = "10g";
 my $QSUB_ARGS  = "-l num_proc=2";
 my $ALIGNER_BLOCKSIZE = 1000000;
 
@@ -81,6 +82,7 @@ my $retval = GetOptions(
   "test=s"            => \$TEST,
   "aligner=s"         => \$ALIGNER,
   "alignment=s"  	  => \$ALIGNMENT,
+  "aligner-mem=s"     => \$ALIGNER_MEM,
   "source=s"   	 	  => \$SOURCE,
   "target=s"  	 	  => \$TARGET,
   "rundir=s" 	 	  => \$RUNDIR,
@@ -372,7 +374,7 @@ if (! defined $ALIGNMENT) {
 
 	  # run the job
 	  $cachepipe->cmd("berkeley-aligner-chunk-$chunkno",
-					  "java -d64 -Xmx7g -jar $JOSHUA/lib/berkeleyaligner.jar ++train/splits/word-align.conf.$chunkno",
+					  "java -d64 -Xmx${ALIGNER_MEM} -jar $JOSHUA/lib/berkeleyaligner.jar ++train/splits/word-align.conf.$chunkno",
 					  "train/splits/corpus.$SOURCE.$chunkno",
 					  "train/splits/corpus.$TARGET.$chunkno",
 					  "alignments/$chunkno/training.align");
