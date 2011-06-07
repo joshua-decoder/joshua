@@ -27,7 +27,7 @@ use Getopt::Long;
 use File::Basename;
 use Cwd;
 use POSIX qw[ceil];
-use List::Util qw[max];
+use List::Util qw[max min];
 use CachePipe;
 
 my $HADOOP = $ENV{HADOOP} or not_defined("HADOOP");
