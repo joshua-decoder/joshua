@@ -9,17 +9,13 @@
 #
 # Currently implemented:
 #
-# - decoding with Hiero grammars
-# - jump to GIZA, PARSE, MERT, THRAX, and TEST points (using --first-step and
-#   (optionally) --last-step)
+# - decoding with Hiero grammars and SAMT grammars
+
+# - jump to SUBSAMPLE, ALIGN, PARSE, THRAX, MERT, and TEST points
+#   (using --first-step and (optionally) --last-step)
 # - built on top of CachePipe, so that intermediate results are cached
 #   and only re-run if necessary
 # - uses Thrax for grammar extraction
-#
-# Imminent:
-#
-# - support for subsampling the training corpus to a development set
-# - support for SAMT grammars
 
 use strict;
 use warnings;
@@ -308,58 +304,70 @@ if ($FIRST_STEP eq "ALIGN") {
 # skip this step if an alignment was provided
 if (! defined $ALIGNMENT) {
 
-  if ($ALIGNER eq "giza") {
-	$ALIGNMENT = "giza/model/aligned.grow-diag-final";
-	$cachepipe->cmd("giza",
-					"rm -f train/corpus.0-0.*; $MOSES_TRAINER -root-dir giza -e $TARGET -f $SOURCE -corpus $TRAIN{prefix} -first-step 1 -last-step 3 > giza.log 2>&1",
-					$TRAIN{source},
-					$TRAIN{target},
-					$ALIGNMENT);
+  # split up the data
+  system("mkdir","-p","train/splits") unless -d "train/splits";
 
-  } elsif ($ALIGNER eq "berkeley") {
+  $cachepipe->cmd("source-numlines",
+				  "cat $TRAIN{source} | wc -l",
+				  $TRAIN{source});
+  my $numlines = $cachepipe->stdout();
+  my $numchunks = ceil($numlines / $ALIGNER_BLOCKSIZE);
 
-	# split up the data
-	system("mkdir","-p","train/splits") unless -d "train/splits";
+  open TARGET, $TRAIN{target} or die "can't read $TRAIN{target}";
+  open SOURCE, $TRAIN{source} or die "can't read $TRAIN{source}";
 
-	$cachepipe->cmd("source-numlines",
-					"cat $TRAIN{source} | wc -l",
-					$TRAIN{source});
-	my $numlines = $cachepipe->stdout();
-	my $numchunks = ceil($numlines / $ALIGNER_BLOCKSIZE);
+  my $lastchunk = -1;
+  while (my $target = <TARGET>) {
+	my $source = <SOURCE>;
 
-	open TARGET, $TRAIN{target} or die "can't read $TRAIN{target}";
-	open SOURCE, $TRAIN{source} or die "can't read $TRAIN{source}";
+	# this folds together the last two chunks
+	my $chunk = min($numchunks - 2,
+					int( (${.} - 1) / $ALIGNER_BLOCKSIZE ));
+	
+	if ($chunk != $lastchunk) {
+	  close CHUNK_SOURCE;
+	  close CHUNK_TARGET;
+	  open CHUNK_SOURCE, ">", "train/splits/corpus.$SOURCE.$chunk" or die;
+	  open CHUNK_TARGET, ">", "train/splits/corpus.$TARGET.$chunk" or die;
 
-	my $lastchunk = -1;
-	while (my $target = <TARGET>) {
-	  my $source = <SOURCE>;
-
-	  # this folds together the last two chunks
-	  my $chunk = min($numchunks - 2,
-					  int( (${.} - 1) / $ALIGNER_BLOCKSIZE ));
-	  
-	  if ($chunk != $lastchunk) {
-		close CHUNK_SOURCE;
-		close CHUNK_TARGET;
-		open CHUNK_SOURCE, ">", "train/splits/corpus.$SOURCE.$chunk" or die;
-		open CHUNK_TARGET, ">", "train/splits/corpus.$TARGET.$chunk" or die;
-
-		$lastchunk = $chunk;
-	  }
-
-	  print CHUNK_SOURCE $source;
-	  print CHUNK_TARGET $target;
+	  $lastchunk = $chunk;
 	}
-	close CHUNK_SOURCE;
-	close CHUNK_TARGET;
 
-	close SOURCE;
-	close TARGET;
+	print CHUNK_SOURCE $source;
+	print CHUNK_TARGET $target;
+  }
+  close CHUNK_SOURCE;
+  close CHUNK_TARGET;
 
-	for (my $chunkno = 0; $chunkno <= $lastchunk; $chunkno++) {
+  close SOURCE;
+  close TARGET;
 
+  for (my $chunkno = 0; $chunkno <= $lastchunk; $chunkno++) {
+
+	# create the alignment subdirectory
+	my $chunkdir = "alignments/$chunkno";
+	system("mkdir","-p", $chunkdir);
+	  
+	if ($ALIGNER eq "giza") {
+
+	  # run the alignments commands
+	  $cachepipe->cmd("giza-$chunkno",
+					  "rm -f $chunkdir/corpus.0-0.*; $MOSES_TRAINER -root-dir $chunkdir -e $TARGET.$chunkno -f $SOURCE.$chunkno -corpus train/splits/corpus -first-step 1 -last-step 3 > $chunkdir/giza.log 2>&1",
+					  "train/splits/corpus.$SOURCE.$chunkno",
+					  "train/splits/corpus.$TARGET.$chunkno",
+					  "$chunkdir/model/aligned.grow-diag-final");
+
+	  # combine the alignments
+	  $cachepipe->cmd("giza-aligner-combine",
+					  "cat alignments/*/aligned.grow-diag-final > alignments/training.align",
+					  "alignments/$lastchunk/model/aligned.grow-diag-final",
+					  "alignments/training.align");
+
+	} elsif ($ALIGNER eq "berkeley") {
+
+	  # copy and modify the config file
 	  open FROM, "$JOSHUA/scripts/training/templates/alignment/word-align.conf" or die "can't read berkeley alignment template";
-	  open TO, ">", "train/splits/word-align.conf.$chunkno" or die "can't write to 'train/splits/word-align.conf.$chunkno'";
+	  open TO, ">", "alignments/$chunkno/word-align.conf" or die "can't write to 'alignments/$chunkno/word-align.conf'";
 	  while (<FROM>) {
 		s/<SOURCE>/$SOURCE.$chunkno/g;
 		s/<TARGET>/$TARGET.$chunkno/g;
@@ -370,21 +378,20 @@ if (! defined $ALIGNMENT) {
 	  close(TO);
 	  close(FROM);
 
-	  system("mkdir","-p","alignments/$chunkno");
-
 	  # run the job
 	  $cachepipe->cmd("berkeley-aligner-chunk-$chunkno",
-					  "java -d64 -Xmx${ALIGNER_MEM} -jar $JOSHUA/lib/berkeleyaligner.jar ++train/splits/word-align.conf.$chunkno",
+					  "java -d64 -Xmx${ALIGNER_MEM} -jar $JOSHUA/lib/berkeleyaligner.jar ++alignments/$chunkno/word-align.conf",
+					  "alignments/$chunkno/word-align.conf",
 					  "train/splits/corpus.$SOURCE.$chunkno",
 					  "train/splits/corpus.$TARGET.$chunkno",
-					  "alignments/$chunkno/training.align");
-	}
+					  "$chunkdir/training.align");
 
-	# combine the alignments
-	$cachepipe->cmd("berkeley-aligner-combine",
-					"cat alignments/*/training.align > alignments/training.align",
-					"alignments/$lastchunk/training.align",
-					"alignments/training.align");
+	  # combine the alignments
+	  $cachepipe->cmd("berkeley-aligner-combine",
+					  "cat alignments/*/training.align > alignments/training.align",
+					  "alignments/$lastchunk/training.align",
+					  "alignments/training.align");
+	}
 
 	$ALIGNMENT = "alignments/training.align";
   }
