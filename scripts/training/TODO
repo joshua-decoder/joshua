@@ -1,1 +1,7 @@
-- pipeline shold output a script that can be easily used to decode another test set
+- [ ] add recasing with recursive call to pipeline.pl (provide a 1-1
+  alignment) 
+- [ ] pipeline shold output a script that can be easily -
+  used to decode another test set
+- [ ] add tree output for test sets
+- [ ] run MERT multiple times
+- [ ] hadoop cluster roll-out
