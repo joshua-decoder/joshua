@@ -335,7 +335,7 @@ if (! defined $ALIGNMENT) {
 	  my $source = <SOURCE>;
 
 	  # this folds together the last two chunks
-	  my $chunk = max($numchunks - 2,
+	  my $chunk = min($numchunks - 2,
 					  int( (${.} - 1) / $ALIGNER_BLOCKSIZE ));
 	  
 	  if ($chunk != $lastchunk) {
