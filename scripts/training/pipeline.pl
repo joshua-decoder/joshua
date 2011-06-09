@@ -415,7 +415,7 @@ if ($GRAMMAR_TYPE eq "samt") {
 				  "train/vocab.$TARGET");
 
   $cachepipe->cmd("parse",
-				  "cat $TRAIN{prefix}.tok.$TARGET | $SCRIPTDIR/training/parallelize/parallelize.pl -j 50 -- java -cp $JOSHUA/lib edu.berkeley.nlp.PCFGLA.BerkeleyParser -gr $JOSHUA/lib/eng_sm6.gr | sed 's/^\(/\(TOP/' | tee $TRAIN{prefix}.$TARGET.parsed.mc | perl -pi -e 's/(\\S+)\\)/lc(\$1).\")\"/ge' | tee $TRAIN{prefix}.$TARGET.parsed | perl $SCRIPTDIR/training/add-OOVS.pl train/vocab.$TARGET > $TRAIN{prefix}.$TARGET.parsed.OOV",
+				  "cat $TRAIN{prefix}.tok.$TARGET | $SCRIPTDIR/training/parallelize/parallelize.pl -j 50 -- java -cp $JOSHUA/lib edu.berkeley.nlp.PCFGLA.BerkeleyParser -gr $JOSHUA/lib/eng_sm6.gr | sed 's/^\(/\(TOP/' | tee $TRAIN{prefix}.$TARGET.parsed.mc | perl -pi -e 's/(\\S+)\\)/lc(\$1).\")\"/ge' | tee $TRAIN{prefix}.$TARGET.parsed | perl $SCRIPTDIR/training/add-OOVs.pl train/vocab.$TARGET > $TRAIN{prefix}.$TARGET.parsed.OOV",
 				  "$TRAIN{target}",
 				  "$TRAIN{target}.parsed.OOV");
 }
