@@ -321,9 +321,12 @@ if (! defined $ALIGNMENT) {
   while (my $target = <TARGET>) {
 	my $source = <SOURCE>;
 
-	# this folds together the last two chunks
-	my $chunk = min($numchunks - 2,
-					int( (${.} - 1) / $ALIGNER_BLOCKSIZE ));
+	# We want to prevent a very small last chunk, which we accomplish
+	# by folding the last chunk into the penultimate chunk.
+	my $chunk = ($numchunks <= 2)
+		? 0 
+		: min($numchunks - 2,
+			  int( (${.} - 1) / $ALIGNER_BLOCKSIZE ));
 	
 	if ($chunk != $lastchunk) {
 	  close CHUNK_SOURCE;
@@ -360,7 +363,7 @@ if (! defined $ALIGNMENT) {
 
 	  # combine the alignments
 	  $cachepipe->cmd("giza-aligner-combine",
-					  "cat alignments/*/aligned.grow-diag-final > alignments/training.align",
+					  "cat alignments/*/model/aligned.grow-diag-final > alignments/training.align",
 					  "alignments/$lastchunk/model/aligned.grow-diag-final",
 					  "alignments/training.align");
 
