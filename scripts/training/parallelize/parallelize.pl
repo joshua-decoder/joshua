@@ -216,7 +216,7 @@ my $port = $basep+int(rand($randp));
 my $endp=$port+$tryp;
 sub listening_port_lines {
     my $quiet=$verbose?'':'2>/dev/null';
-    `netstat -a -n $quiet | grep LISTENING | grep -i tcp`
+    `netstat -a -n $quiet | grep LISTEN | grep -i tcp`
 }
 my $netstat=&listening_port_lines;
 
