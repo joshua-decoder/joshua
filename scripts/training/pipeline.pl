@@ -30,7 +30,7 @@ my $HADOOP = $ENV{HADOOP} or not_defined("HADOOP");
 my $JOSHUA = $ENV{JOSHUA} or not_defined("JOSHUA");
 my $THRAX  = $ENV{THRAX} or not_defined("THRAX");
 
-my (@CORPORA,$TUNE,$TEST,$ALIGNMENT,$SOURCE,$TARGET,$LMFILE,$GRAMMAR_FILE,$THRAX_CONF_FILE);
+my (@CORPORA,$TUNE,$TEST,$ALIGNMENT,$SOURCE,$TARGET,$LMFILE,$GRAMMAR_FILE,$GLUE_GRAMMAR_FILE,$THRAX_CONF_FILE);
 my $FIRST_STEP = "FIRST";
 my $LAST_STEP  = "LAST";
 my $LMFILTER = "$ENV{HOME}/code/filter/filter";
@@ -85,6 +85,7 @@ my $retval = GetOptions(
   "filter-lm!"        => \$DO_FILTER_LM,
   "lmfile=s" 	 	  => \$LMFILE,
   "grammar=s"    	  => \$GRAMMAR_FILE,
+  "glue-grammar=s" 	  => \$GLUE_GRAMMAR_FILE,
   "mbr!"              => \$DO_MBR,
   "type=s"       	  => \$GRAMMAR_TYPE,
   "maxlen=i" 	 	  => \$MAXLEN,
@@ -557,12 +558,21 @@ $cachepipe->cmd("filter-tune",
 				"tune/grammar.filtered.gz");
 
 # copy the thrax config file if it's not already there
-system("grep -v input-file $THRAX_CONF_FILE > thrax-$GRAMMAR_TYPE.conf")
-	unless -e "thrax-$GRAMMAR_TYPE.conf";
-$cachepipe->cmd("glue-tune",
-				"$SCRIPTDIR/training/scat tune/grammar.filtered.gz | $THRAX/scripts/create_glue_grammar.sh thrax-$GRAMMAR_TYPE.conf > tune/grammar.glue",
-				"tune/grammar.filtered.gz",
-				"tune/grammar.glue");
+if (! defined $GLUE_GRAMMAR_FILE) {
+  system("grep -v input-file $THRAX_CONF_FILE > thrax-$GRAMMAR_TYPE.conf")
+	  unless -e "thrax-$GRAMMAR_TYPE.conf";
+  $cachepipe->cmd("glue-tune",
+				  "$SCRIPTDIR/training/scat tune/grammar.filtered.gz | $THRAX/scripts/create_glue_grammar.sh thrax-$GRAMMAR_TYPE.conf > tune/grammar.glue",
+				  "tune/grammar.filtered.gz",
+				  "tune/grammar.glue");
+  $GLUE_GRAMMAR_FILE = "tune/grammar.glue";
+} else {
+  $cachepipe->cmd("glue-tune-copy",
+				  "cp $GLUE_GRAMMAR_FILE tune/grammar.glue",
+				  $GLUE_GRAMMAR_FILE,
+				  "tune/grammar.glue");
+}
+	 
 
 # figure out how many references there are
 my $numrefs = get_numrefs($TUNE{target});
@@ -654,12 +664,21 @@ $cachepipe->cmd("filter-test",
 				"test/grammar.filtered.gz");
 
 # copy the thrax config file if it's not already there
-system("grep -v input-file $THRAX_CONF_FILE > thrax-$GRAMMAR_TYPE.conf")
-	unless -e "thrax-$GRAMMAR_TYPE.conf";
-$cachepipe->cmd("glue-test",
-				"$SCRIPTDIR/training/scat test/grammar.filtered.gz | $THRAX/scripts/create_glue_grammar.sh thrax-$GRAMMAR_TYPE.conf > test/grammar.glue",
-				"test/grammar.filtered.gz",
-				"test/grammar.glue");
+if (! defined $GLUE_GRAMMAR_FILE) {
+  system("grep -v input-file $THRAX_CONF_FILE > thrax-$GRAMMAR_TYPE.conf")
+	  unless -e "thrax-$GRAMMAR_TYPE.conf";
+
+  $cachepipe->cmd("glue-test",
+				  "$SCRIPTDIR/training/scat test/grammar.filtered.gz | $THRAX/scripts/create_glue_grammar.sh thrax-$GRAMMAR_TYPE.conf > test/grammar.glue",
+				  "test/grammar.filtered.gz",
+				  "test/grammar.glue");
+  $GLUE_GRAMMAR_FILE = "test/grammar.glue";
+} else {
+  $cachepipe->cmd("glue-test-copy",
+				  "cp $GLUE_GRAMMAR_FILE test/grammar.glue",
+				  $GLUE_GRAMMAR_FILE,
+				  "test/grammar.glue");
+}
 
 # decode test set
 foreach my $key (qw(decoder_command)) {
