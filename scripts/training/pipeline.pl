@@ -68,6 +68,7 @@ my $JOSHUA_MEM = "3100m";
 my $ALIGNER_MEM = "10g";
 my $QSUB_ARGS  = "-l num_proc=2";
 my $ALIGNER_BLOCKSIZE = 1000000;
+my $NUMJOBS = 20;
 
 my @STEPS = qw[FIRST SUBSAMPLE ALIGN PARSE THRAX MERT TEST LAST];
 my %STEPS = map { $STEPS[$_] => $_ + 1 } (0..$#STEPS);
@@ -95,6 +96,7 @@ my $retval = GetOptions(
   "hadoop-mem=s"      => \$HADOOP_MEM,
   "decoder-command=s" => \$MERTFILES{'decoder_command'},
   "thrax-conf=s"      => \$THRAX_CONF_FILE,
+  "p=s"               => \$NUMJOBS,
   "subsample!"   	  => \$DO_SUBSAMPLE,
   "qsub-args=s"  	  => \$QSUB_ARGS,
   "first-step=s" 	  => \$FIRST_STEP,
@@ -593,7 +595,7 @@ foreach my $key (keys %MERTFILES) {
 	s/<MEM>/$JOSHUA_MEM/g;
 	s/<GRAMMAR>/$GRAMMAR_TYPE/g;
 	s/<OOV>/$OOV/g;
-	s/<NUMJOBS>/50/g;
+	s/<NUMJOBS>/$NUMJOBS/g;
 	s/<QSUB_ARGS>/$QSUB_ARGS/g;
 	s/<OUTPUT>/mert\/tune.output.nbest/g;
 	s/<REF>/$TUNE{target}/g;
@@ -690,7 +692,7 @@ foreach my $key (qw(decoder_command)) {
   open TO, ">test/$key" or die "can't write to 'test/$key'";
   while (<FROM>) {
 	s/<INPUT>/$TEST{source}/g;
-	s/<NUMJOBS>/50/g;
+	s/<NUMJOBS>/$NUMJOBS/g;
 	s/<QSUB_ARGS>/$QSUB_ARGS/g;
 	s/<OUTPUT>/test\/test.output.nbest/g;
 	s/<JOSHUA>/$JOSHUA/g;
