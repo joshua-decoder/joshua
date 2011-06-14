@@ -490,7 +490,7 @@ if (! defined $GRAMMAR_FILE) {
 					"train/thrax-input-file");
 
 # put the hadoop files in place
-  my $sha1 = $cachepipe->sha1hash("train/thrax-input-file");
+  my $sha1 = sha1hash("train/thrax-input-file");
   my $THRAXDIR = "pipeline-$SOURCE-$TARGET-$GRAMMAR_TYPE-$sha1";
 
   $cachepipe->cmd("thrax-prep",
