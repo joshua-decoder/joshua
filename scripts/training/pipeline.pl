@@ -83,6 +83,7 @@ my $retval = GetOptions(
   "source=s"   	 	  => \$SOURCE,
   "target=s"  	 	  => \$TARGET,
   "rundir=s" 	 	  => \$RUNDIR,
+  "filter-tm!"        => \$DO_SENT_SPECIFIC_TM,
   "filter-lm!"        => \$DO_FILTER_LM,
   "lmfile=s" 	 	  => \$LMFILE,
   "grammar=s"    	  => \$GRAMMAR_FILE,
@@ -96,13 +97,12 @@ my $retval = GetOptions(
   "hadoop-mem=s"      => \$HADOOP_MEM,
   "decoder-command=s" => \$MERTFILES{'decoder_command'},
   "thrax-conf=s"      => \$THRAX_CONF_FILE,
-  "p=s"               => \$NUMJOBS,
+  "jobs=i"            => \$NUMJOBS,
   "subsample!"   	  => \$DO_SUBSAMPLE,
   "qsub-args=s"  	  => \$QSUB_ARGS,
   "first-step=s" 	  => \$FIRST_STEP,
   "last-step=s"  	  => \$LAST_STEP,
   "aligner-chunk-size=s" => \$ALIGNER_BLOCKSIZE,
-  "sentence-tm!"      => \$DO_SENT_SPECIFIC_TM,
 );
 
 if (! $retval) {
@@ -363,12 +363,6 @@ if (! defined $ALIGNMENT) {
 					  "train/splits/corpus.$TARGET.$chunkno",
 					  "$chunkdir/model/aligned.grow-diag-final");
 
-	  # combine the alignments
-	  $cachepipe->cmd("giza-aligner-combine",
-					  "cat alignments/*/model/aligned.grow-diag-final > alignments/training.align",
-					  "alignments/$lastchunk/model/aligned.grow-diag-final",
-					  "alignments/training.align");
-
 	} elsif ($ALIGNER eq "berkeley") {
 
 	  # copy and modify the config file
@@ -392,15 +386,25 @@ if (! defined $ALIGNMENT) {
 					  "train/splits/corpus.$TARGET.$chunkno",
 					  "$chunkdir/training.align");
 
+	}
+  }
+
+  if ($ALIGNER eq "giza") {
+	  # combine the alignments
+	  $cachepipe->cmd("giza-aligner-combine",
+					  "cat alignments/*/model/aligned.grow-diag-final > alignments/training.align",
+					  "alignments/$lastchunk/model/aligned.grow-diag-final",
+					  "alignments/training.align");
+  } elsif ($ALIGNER eq "berkeley") {
+
 	  # combine the alignments
 	  $cachepipe->cmd("berkeley-aligner-combine",
 					  "cat alignments/*/training.align > alignments/training.align",
 					  "alignments/$lastchunk/training.align",
 					  "alignments/training.align");
-	}
-
-	$ALIGNMENT = "alignments/training.align";
   }
+
+  $ALIGNMENT = "alignments/training.align";
 }
 
 maybe_quit("ALIGN");
@@ -421,7 +425,7 @@ if ($GRAMMAR_TYPE eq "samt") {
 				  "train/vocab.$TARGET");
 
   $cachepipe->cmd("parse",
-				  "cat $TRAIN{prefix}.tok.$TARGET | $SCRIPTDIR/training/parallelize/parallelize.pl -j 50 -- java -cp $JOSHUA/lib edu.berkeley.nlp.PCFGLA.BerkeleyParser -gr $JOSHUA/lib/eng_sm6.gr | sed 's/^\(/\(TOP/' | tee $TRAIN{prefix}.$TARGET.parsed.mc | perl -pi -e 's/(\\S+)\\)/lc(\$1).\")\"/ge' | tee $TRAIN{prefix}.$TARGET.parsed | perl $SCRIPTDIR/training/add-OOVs.pl train/vocab.$TARGET > $TRAIN{prefix}.$TARGET.parsed.OOV",
+				  "cat $TRAIN{prefix}.tok.$TARGET | $SCRIPTDIR/training/parallelize/parallelize.pl -j $NUMJOBS -- java -cp $JOSHUA/lib edu.berkeley.nlp.PCFGLA.BerkeleyParser -gr $JOSHUA/lib/eng_sm6.gr | sed 's/^\(/\(TOP/' | tee $TRAIN{prefix}.$TARGET.parsed.mc | perl -pi -e 's/(\\S+)\\)/lc(\$1).\")\"/ge' | tee $TRAIN{prefix}.$TARGET.parsed | perl $SCRIPTDIR/training/add-OOVs.pl train/vocab.$TARGET > $TRAIN{prefix}.$TARGET.parsed.OOV",
 				  "$TRAIN{target}",
 				  "$TRAIN{target}.parsed.OOV");
 }
@@ -490,8 +494,8 @@ if (! defined $GRAMMAR_FILE) {
 					"train/thrax-input-file");
 
 # put the hadoop files in place
-  my $sha1 = sha1hash($RUNDIR);
-  my $THRAXDIR = "pipeline-$SOURCE-$TARGET-$GRAMMAR_TYPE-$sha1";
+  my $THRAXDIR = "pipeline-$SOURCE-$TARGET-$GRAMMAR_TYPE-$RUNDIR";
+  $THRAXDIR =~ s#/#_#g;
 
   $cachepipe->cmd("thrax-prep",
 				  "$HADOOP/bin/hadoop fs -rmr $THRAXDIR; $HADOOP/bin/hadoop fs -mkdir $THRAXDIR; $HADOOP/bin/hadoop fs -put train/thrax-input-file $THRAXDIR/input-file",
@@ -590,7 +594,8 @@ foreach my $key (keys %MERTFILES) {
   while (<FROM>) {
 	s/<INPUT>/$TUNE{source}/g;
 	s/<SOURCE>/$SOURCE/g;
-	s/$TARGET/$TARGET/g;
+	s/<RUNDIR>/$RUNDIR/g;
+	s/<TARGET>/$TARGET/g;
 	s/<LMFILE>/$LMFILE/g;
 	s/<MEM>/$JOSHUA_MEM/g;
 	s/<GRAMMAR>/$GRAMMAR_TYPE/g;
@@ -603,6 +608,7 @@ foreach my $key (keys %MERTFILES) {
 	s/<NUMREFS>/$numrefs/g;
 	s/<CONFIG>/mert\/joshua.config/g;
 	s/<LOG>/mert\/joshua.log/g;
+	s/use_sent_specific_tm=.*/use_sent_specific_tm=$DO_SENT_SPECIFIC_TM/;
 
 	print TO;
   }
@@ -613,7 +619,7 @@ chmod(0755,"mert/decoder_command");
 
 # run MERT
 $cachepipe->cmd("mert",
-				"rm -rf tune/filtered; java -d64 -cp $JOSHUA/bin joshua.zmert.ZMERT -maxMem 4500 mert/mert.config > mert/mert.log 2>&1",
+				"java -d64 -cp $JOSHUA/bin joshua.zmert.ZMERT -maxMem 4500 mert/mert.config > mert/mert.log 2>&1",
 				"tune/grammar.filtered.gz",
 				"mert/joshua.config.ZMERT.final",
 				"mert/decoder_command",
@@ -635,7 +641,7 @@ if ($LAST_STEP ne "MERT") {
 
   # for testing, mark OOVs, don't keep sentence-specific grammars
   $cachepipe->cmd("test-joshua-config-from-mert",
-				  "cat mert/joshua.config.ZMERT.final | perl -pe 's#tune/#test/#; s/mark_oovs=false/mark_oovs=true/; s/keep_sent_specific_tm=true/keep_sent_specific_tm=false/' > test/joshua.config",
+				  "cat mert/joshua.config.ZMERT.final | perl -pe 's#tune/#test/#; s/mark_oovs=false/mark_oovs=true/; s/use_sent_specific_tm=.*/use_sent_specific_tm=$DO_SENT_SPECIFIC_TM/; s/keep_sent_specific_tm=true/keep_sent_specific_tm=false/' > test/joshua.config",
 				  "mert/joshua.config.ZMERT.final",
 				  "test/joshua.config");
 }
@@ -698,7 +704,8 @@ foreach my $key (qw(decoder_command)) {
 	s/<JOSHUA>/$JOSHUA/g;
 	s/<NUMREFS>/$numrefs/g;
 	s/<SOURCE>/$SOURCE/g;
-	s/$TARGET/$TARGET/g;
+	s/<TARGET>/$TARGET/g;
+	s/<RUNDIR>/$TARGET/g;
 	s/<LMFILE>/$LMFILE/g;
 	s/<MEM>/$JOSHUA_MEM/g;
 	s/<GRAMMAR>/$GRAMMAR_TYPE/g;
@@ -730,7 +737,7 @@ if ($DO_MBR) {
   $numlines--;
 
   $cachepipe->cmd("test-onebest-parmbr", 
-				  "seq 0 $numlines | $SCRIPTDIR/training/parallelize/parallelize.pl -j 50 -- $SCRIPTDIR/training/parmbr.sh test/test.output.nbest.noOOV $JOSHUA/bin > test/test.output.1best",
+				  "seq 0 $numlines | $SCRIPTDIR/training/parallelize/parallelize.pl -j $NUMJOBS -- $SCRIPTDIR/training/parmbr.sh test/test.output.nbest.noOOV $JOSHUA/bin > test/test.output.1best",
 				  "test/test.output.nbest.noOOV", 
 				  "test/test.output.1best");
 } else {
