@@ -12,4 +12,4 @@ while (<>) {
 }
 
 $id = 1;
-map { print $id++ . " $_ $count{$_}\n" } (keys %count);
+map { print $id++ . " $_ $count{$_}\n" } (sort { $b <=> $a } keys %count);
