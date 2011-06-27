@@ -29,6 +29,7 @@ use CachePipe;
 my $HADOOP = $ENV{HADOOP} or not_defined("HADOOP");
 my $JOSHUA = $ENV{JOSHUA} or not_defined("JOSHUA");
 my $THRAX  = $ENV{THRAX} or not_defined("THRAX");
+not_defined("SCRIPTS_ROOTDIR") unless defined $ENV{SCRIPTS_ROOTDIR};
 
 my (@CORPORA,$TUNE,$TEST,$ALIGNMENT,$SOURCE,$TARGET,$LMFILE,$GRAMMAR_FILE,$GLUE_GRAMMAR_FILE,$THRAX_CONF_FILE);
 my $FIRST_STEP = "FIRST";
@@ -39,7 +40,7 @@ my $DO_FILTER_LM = 1;
 my $DO_SUBSAMPLE = 0;
 my $SCRIPTDIR = "$JOSHUA/scripts";
 my $TOKENIZER = "$SCRIPTDIR/training/penn-treebank-tokenizer.perl";
-my $MOSES_TRAINER = "/home/hltcoe/airvine/bin/moses/tools/moses-scripts/scripts-20100922-0942/training/train-factored-phrase-model.perl";
+my $MOSES_TRAINER = "$ENV{SCRIPTS_ROOTDIR}/training/train-model.perl";
 my $MERTCONFDIR = "$JOSHUA/scripts/training/templates/mert";
 my $SRILM = "$ENV{SRILM}/bin/i686-m64/ngram-count";
 my $STARTDIR;
@@ -772,17 +773,17 @@ sub prepare_data {
 	  my $files = join(" ",@files);
 	  if (-e $files[0]) {
 		$cachepipe->cmd("$label-copy-$lang",
-						"cat $files > $label/$label.$lang",
-						@files, "$label/$label.$lang");
+						"cat $files | gzip -9 > $label/$label.$lang.gz",
+						@files, "$label/$label.$lang.gz");
 	  }
   }
 
   # tokenize the data
   foreach my $lang ($TARGET,$SOURCE,"$TARGET.0","$TARGET.1","$TARGET.2","$TARGET.3") {
-	if (-e "$label/$label.$lang") {
+	if (-e "$label/$label.$lang.gz") {
 	  $cachepipe->cmd("$label-tokenize-$lang",
-					  "$SCRIPTDIR/training/scat $label/$label.$lang | $TOKENIZER -l $lang > $label/$label.tok.$lang 2> /dev/null",
-					  "$label/$label.$lang", "$label/$label.tok.$lang"
+					  "$SCRIPTDIR/training/scat $label/$label.$lang.gz | $TOKENIZER -l $lang 2> /dev/null | gzip -9 > $label/$label.tok.$lang.gz",
+					  "$label/$label.$lang.gz", "$label/$label.tok.$lang.gz"
 		  );
 	}
   }
@@ -792,9 +793,11 @@ sub prepare_data {
 	if ($maxlen) {
 	  # trim training data
 	  $cachepipe->cmd("train-trim",
-					  "$SCRIPTDIR/training/trim_parallel_corpus.pl $label/$label.tok.$TARGET $label/$label.tok.$SOURCE $maxlen > $label/$label.tok.$maxlen.$TARGET 2> $label/$label.tok.$maxlen.$SOURCE",
-					  "$label/$label.tok.$TARGET", "$label/$label.tok.$SOURCE",
-					  "$label/$label.tok.$maxlen.$TARGET", "$label/$label.tok.$maxlen.$SOURCE",
+					  "paste <(gzip -cd $label/$label.tok.$TARGET.gz) <(gzip -cd $label/$label.tok.$SOURCE.gz) | $SCRIPTDIR/training/trim_parallel_corpus.pl $maxlen > $label/$label.tok.$maxlen.$TARGET 2> $label/$label.tok.$maxlen.$SOURCE; gzip -9 $label/$label.tok.$maxlen.$TARGET $label/$label.tok.$maxlen.$SOURCE",
+					  "$label/$label.tok.$TARGET.gz", 
+					  "$label/$label.tok.$SOURCE.gz",
+					  "$label/$label.tok.$maxlen.$TARGET.gz", 
+					  "$label/$label.tok.$maxlen.$SOURCE.gz",
 		  );
 	  $infix .= ".$maxlen";
 	}
@@ -804,7 +807,7 @@ sub prepare_data {
   foreach my $lang ($TARGET,$SOURCE,"$TARGET.0","$TARGET.1","$TARGET.2","$TARGET.3") {
 	if (-e "$label/$label.$lang") {
 	  $cachepipe->cmd("$label-lowercase-$lang",
-					  "cat $label/$label.tok$infix.$lang | $SCRIPTDIR/lowercase.perl > $label/$label.tok$infix.lc.$lang",
+					  "gzip -cd $label/$label.tok$infix.$lang.gz | $SCRIPTDIR/lowercase.perl > $label/$label.tok$infix.lc.$lang",
 					  "$label/$label.tok$infix.$lang",
 					  "$label/$label.tok$infix.lc.$lang");
 	}
