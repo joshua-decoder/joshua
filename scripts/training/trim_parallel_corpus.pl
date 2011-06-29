@@ -20,6 +20,6 @@ while (<>) {
 
   next if (@tokens1 > $thresh || @tokens2 > $thresh) || @tokens1 == 0 || @tokens2 == 0;
 
-  print STDOUT $line1;
-  print STDERR $line2;
+  print STDOUT $line1 . $/;
+  print STDERR $line2 . $/;
 }
