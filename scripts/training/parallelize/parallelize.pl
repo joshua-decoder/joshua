@@ -25,7 +25,7 @@ use File::Temp qw/ tempfile /;
 use Getopt::Long;
 use IPC::Open2;
 use strict;
-use POSIX ":sys_wait_h";
+use POSIX ":sys_wait_h", "setsid";
 use Cwd qw(getcwd);
 
 my $tailn=5; # +0 = concatenate all the client logs.  5 = last 5 lines

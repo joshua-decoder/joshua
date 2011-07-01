@@ -53,6 +53,9 @@ int main (int argc, char *argv[]) {
   server.sin_family = hp->h_addrtype;
   server.sin_port = htons(port);
 
+  fprintf(stderr,"connecting to %s:%d\n", argv[1], port);
+  fflush(stderr);
+
   while (connect(sock, (struct sockaddr *)&server, sizeof(server)) < 0) {
     perror("connect()");
     sleep(1);
