@@ -249,6 +249,8 @@ if (defined $TEST) {
   $TEST{target} = "test/test.tok.lc.$TARGET";
 }
 
+maybe_quit("FIRST");
+
 ## SUBSAMPLE #########################################################
 
 SUBSAMPLE:
@@ -508,7 +510,7 @@ if (! defined $GRAMMAR_FILE) {
   system("echo input-file $THRAXDIR/input-file >> thrax-$GRAMMAR_TYPE.conf");
 
   $cachepipe->cmd("thrax-run",
-				  "$HADOOP/bin/hadoop jar $THRAX/bin/thrax.jar -D mapred.child.java.opts='-Xmx$HADOOP_MEM' thrax-$GRAMMAR_TYPE.conf $THRAXDIR > thrax.log 2>&1; rm -f grammar grammar.gz; $HADOOP/bin/hadoop fs -getmerge $THRAXDIR/final/ grammar; gzip -9 grammar",
+				  "$HADOOP/bin/hadoop jar $THRAX/bin/thrax.jar -D mapred.child.java.opts='-Xmx$HADOOP_MEM' thrax-$GRAMMAR_TYPE.conf $THRAXDIR > thrax.log 2>&1; rm -f grammar grammar.gz; $HADOOP/bin/hadoop fs -getmerge $THRAXDIR/final/ grammar; gzip -9f grammar",
 				  "train/thrax-input-file",
 				  "grammar.gz");
 
@@ -793,7 +795,7 @@ sub prepare_data {
 	if ($maxlen) {
 	  # trim training data
 	  $cachepipe->cmd("train-trim",
-					  "paste <(gzip -cd $label/$label.tok.$TARGET.gz) <(gzip -cd $label/$label.tok.$SOURCE.gz) | $SCRIPTDIR/training/trim_parallel_corpus.pl $maxlen > $label/$label.tok.$maxlen.$TARGET 2> $label/$label.tok.$maxlen.$SOURCE; gzip -9 $label/$label.tok.$maxlen.$TARGET $label/$label.tok.$maxlen.$SOURCE",
+					  "paste <(gzip -cd $label/$label.tok.$TARGET.gz) <(gzip -cd $label/$label.tok.$SOURCE.gz) | $SCRIPTDIR/training/trim_parallel_corpus.pl $maxlen | $SCRIPTDIR/training/split2files.pl $label/$label.tok.$maxlen.$TARGET $label/$label.tok.$maxlen.$SOURCE; gzip -9f $label/$label.tok.$maxlen.$TARGET $label/$label.tok.$maxlen.$SOURCE",
 					  "$label/$label.tok.$TARGET.gz", 
 					  "$label/$label.tok.$SOURCE.gz",
 					  "$label/$label.tok.$maxlen.$TARGET.gz", 
@@ -805,10 +807,10 @@ sub prepare_data {
 
   # lowercase
   foreach my $lang ($TARGET,$SOURCE,"$TARGET.0","$TARGET.1","$TARGET.2","$TARGET.3") {
-	if (-e "$label/$label.$lang") {
+	if (-e "$label/$label.$lang.gz") {
 	  $cachepipe->cmd("$label-lowercase-$lang",
 					  "gzip -cd $label/$label.tok$infix.$lang.gz | $SCRIPTDIR/lowercase.perl > $label/$label.tok$infix.lc.$lang",
-					  "$label/$label.tok$infix.$lang",
+					  "$label/$label.tok$infix.$lang.gz",
 					  "$label/$label.tok$infix.lc.$lang");
 	}
   }

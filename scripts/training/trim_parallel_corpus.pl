@@ -10,16 +10,15 @@
 
 my $thresh = shift || 100;
 
-while (<>) {
-  my ($line1,$line2) = split(/\t/,$_,2);
+while (my $line = <>) {
+  my ($line1,$line2) = split(/\t/,$line,2);
 
-  last unless $line1 and $line2;
+  next unless (defined $line1 and defined $line2);
 
   my @tokens1 = split(' ', $line1);
   my @tokens2 = split(' ', $line2);
 
   next if (@tokens1 > $thresh || @tokens2 > $thresh) || @tokens1 == 0 || @tokens2 == 0;
 
-  print STDOUT $line1 . $/;
-  print STDERR $line2 . $/;
+  print $line;
 }
