@@ -795,7 +795,7 @@ sub prepare_data {
 	if ($maxlen) {
 	  # trim training data
 	  $cachepipe->cmd("train-trim",
-					  "paste <(gzip -cd $label/$label.tok.$TARGET.gz) <(gzip -cd $label/$label.tok.$SOURCE.gz) | $SCRIPTDIR/training/trim_parallel_corpus.pl $maxlen | $SCRIPTDIR/training/split2files.pl $label/$label.tok.$maxlen.$TARGET $label/$label.tok.$maxlen.$SOURCE; gzip -9f $label/$label.tok.$maxlen.$TARGET $label/$label.tok.$maxlen.$SOURCE",
+					  "paste <(gzip -cd $label/$label.tok.$TARGET.gz) <(gzip -cd $label/$label.tok.$SOURCE.gz) | $SCRIPTDIR/training/trim_parallel_corpus.pl $maxlen | $SCRIPTDIR/training/split2files.pl $label/$label.tok.$maxlen.$TARGET.gz $label/$label.tok.$maxlen.$SOURCE.gz",
 					  "$label/$label.tok.$TARGET.gz", 
 					  "$label/$label.tok.$SOURCE.gz",
 					  "$label/$label.tok.$maxlen.$TARGET.gz", 
