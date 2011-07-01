@@ -11,7 +11,12 @@ my @files = @ARGV;
 
 my @fh;
 foreach my $file (@files) {
-  open my $fh, ">", $file or die "can't write to file '$file'";
+  my $fh;
+  if ($file =~ /gz$/) {
+	open $fh, "|gzip -9 > $file" or die "can't pipe through gzip";
+  } else {
+	open $fh, ">", $file or die "can't write to file '$file'";
+  }
   push(@fh, $fh);
 }
 
