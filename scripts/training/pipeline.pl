@@ -417,10 +417,9 @@ maybe_quit("ALIGN");
 
 PARSE:
 
-if ($GRAMMAR_TYPE eq "samt") {
+mkdir("train") unless -d "train";
 
-  # Thrax assumes the presence of a file named $TRAIN{target}.parsed.OOV.  
-  # This step produces that file
+if ($GRAMMAR_TYPE eq "samt") {
 
   $cachepipe->cmd("build-vocab",
 				  "cat $TRAIN{target} | $SCRIPTDIR/training/build-vocab.pl > train/vocab.$TARGET",
@@ -428,9 +427,11 @@ if ($GRAMMAR_TYPE eq "samt") {
 				  "train/vocab.$TARGET");
 
   $cachepipe->cmd("parse",
-				  "cat $TRAIN{prefix}.tok.$TARGET | $SCRIPTDIR/training/parallelize/parallelize.pl -j $NUMJOBS -- java -cp $JOSHUA/lib edu.berkeley.nlp.PCFGLA.BerkeleyParser -gr $JOSHUA/lib/eng_sm6.gr | sed 's/^\(/\(TOP/' | tee $TRAIN{prefix}.$TARGET.parsed.mc | perl -pi -e 's/(\\S+)\\)/lc(\$1).\")\"/ge' | tee $TRAIN{prefix}.$TARGET.parsed | perl $SCRIPTDIR/training/add-OOVs.pl train/vocab.$TARGET > $TRAIN{prefix}.$TARGET.parsed.OOV",
+				  "cat $TRAIN{target} | $SCRIPTDIR/training/parallelize/parallelize.pl -j $NUMJOBS -- java -jar $JOSHUA/lib/BerkeleyParser.jar -gr $JOSHUA/lib/eng_sm6.gr | sed 's/^\(/\(TOP/' | tee train/corpus.$TARGET.parsed.mc | perl -pi -e 's/(\\S+)\\)/lc(\$1).\")\"/ge' | tee train/corpus.$TARGET.parsed | perl $SCRIPTDIR/training/add-OOVs.pl train/vocab.$TARGET > train/corpus.$TARGET",
 				  "$TRAIN{target}",
-				  "$TRAIN{target}.parsed.OOV");
+				  "train/corpus.$TARGET");
+
+  $TRAIN{target} = "train/corpus.$TARGET";
 }
 
 
@@ -445,21 +446,14 @@ if ($GRAMMAR_TYPE eq "samt") {
   if (already_parsed($TRAIN{target})) {
 	mkdir("train") unless -d "train";
 
-	# If parsing was already done, then copy the file to our training
-	# directory so we can use our local copy instead of the original
-	# one.  Thrax later in the script expects to find
-	# $TRAIN{target}.parsed.OOV, so that's where we copy it.  An
-	# important note here is that to get this, we set $TRAIN{target}
-	# to point to a file that doesn't exist (i.e.,
-	# train/corpus.$SOURCE).  This is okay because after the Thrax run
-	# we should never need to use the training data any more (and
-	# anyway we don't have it).  If that changes this will break
-	# things.
-
-	$cachepipe->cmd("cp-train-$TARGET",
-					"cp $TRAIN{target} train/corpus.$TARGET.parsed.OOV",
-					$TRAIN{target}, "train/corpus.$TARGET.parsed.OOV");
-	$TRAIN{target} = "train/corpus.$TARGET";
+	# If the parsing was done in-script, then this step has already
+	# occurred
+	if ($TRAIN{target} ne "train/corpus.$TARGET") {
+	  $cachepipe->cmd("cp-train-$TARGET",
+					  "cp $TRAIN{target} train/corpus.$TARGET",
+					  $TRAIN{target}, "train/corpus.$TARGET");
+	  $TRAIN{target} = "train/corpus.$TARGET";
+	}
 
 	$cachepipe->cmd("cp-train-$SOURCE",
 					"cp $TRAIN{source} train/corpus.$SOURCE",
@@ -487,13 +481,9 @@ if (! defined $GRAMMAR_FILE) {
   mkdir("train") unless -d "train";
 
 # create the input file
-  my $target_corpus = ($GRAMMAR_TYPE eq "samt")
-	  ? $TRAIN{target} . ".parsed.OOV"
-      : $TRAIN{target};
-
   $cachepipe->cmd("thrax-input-file",
-					"paste $TRAIN{source} $target_corpus $ALIGNMENT | perl -pe 's/\t/ ||| /g' | grep -v '(())' > train/thrax-input-file",
-					$TRAIN{source}, $target_corpus, $ALIGNMENT,
+					"paste $TRAIN{source} $TRAIN{target} $ALIGNMENT | perl -pe 's/\t/ ||| /g' | grep -v '(())' > train/thrax-input-file",
+					$TRAIN{source}, $TRAIN{target}, $ALIGNMENT,
 					"train/thrax-input-file");
 
 # put the hadoop files in place
