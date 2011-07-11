@@ -5,6 +5,6 @@
   </property>
   <property>
     <name>fs.default.name</name>
-    <value><HOST>:<PORT1></value>
+    <value>hdfs://<HOST>:<PORT1></value>
   </property>
 </configuration>
