@@ -507,6 +507,8 @@ if (! defined $GRAMMAR_FILE) {
 				  "train/thrax-input-file",
 				  "grammar.gz");
 
+  teardown_hadoop_cluster() unless defined $HADOOP;
+
   # cache the thrax-prep step, which depends on grammar.gz
   $cachepipe->cmd("thrax-prep", "--cache-only");
 
@@ -860,15 +862,18 @@ sub get_numrefs {
 }
 
 sub launch_hadoop_cluster {
-  system("mkdir hadoop") unless -d "hadoop";
-  system("tar xzf $JOSHUA/lib/hadoop-0.20.203.0rc1.tar.gz hadoop/");
+  system("tar xzf $JOSHUA/lib/hadoop-0.20.203.0rc1.tar.gz");
+  system("ln -sf hadoop-0.20.203.0 hadoop");
+  $HADOOP = "hadoop";
+
+  chomp(my $hostname = `hostname --fqdn`);
 
   foreach my $file (qw/core-site.xml mapred-site.xml hdfs-site.xml/) {
 	open READ, "$JOSHUA/scripts/training/templates/hadoop/$file" or die $file;
 	open WRITE, ">", "hadoop/conf/$file" or die "write $file";
 	while (<READ>) {
 	  s/<HADOOP-TMP-DIR>/hadoop\/tmp/g;
-	  s/<HOST>/localhost/g;
+	  s/<HOST>/$hostname/g;
 	  s/<PORT1>/9000/g;
 	  s/<PORT2>/9001/g;
 	  s/<MAX-MAP-TASKS/1/g;
@@ -880,18 +885,16 @@ sub launch_hadoop_cluster {
 	close READ;
   }
 
-  system("echo localhost > hadoop/conf/masters");
-  system("echo localhost > hadoop/conf/slaves");
+  system("echo $hostname > hadoop/conf/masters");
+  system("echo $hostname > hadoop/conf/slaves");
 
   system("hadoop/bin/hadoop namenode -format");
   system("hadoop/bin/start-all.sh");
 
   sleep(30);
-
-  $HADOOP = "hadoop";
 }
 
-sub remove_hadoop_cluster {
-
-
+sub teardown_hadoop_cluster {
+  system("hadoop/bin/stop-all.sh");
+  system("rm -rf hadoop-0.20.203.0 hadoop");
 }
