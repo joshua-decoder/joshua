@@ -26,7 +26,7 @@ use POSIX qw[ceil];
 use List::Util qw[max min];
 use CachePipe;
 
-my $HADOOP = $ENV{HADOOP} or not_defined("HADOOP");
+my $HADOOP = $ENV{HADOOP}; # or not_defined("HADOOP");
 my $JOSHUA = $ENV{JOSHUA} or not_defined("JOSHUA");
 my $THRAX  = $ENV{THRAX} or not_defined("THRAX");
 not_defined("SCRIPTS_ROOTDIR") unless defined $ENV{SCRIPTS_ROOTDIR};
@@ -64,7 +64,7 @@ my $ALIGNER = "berkeley"; # or "giza"
 
 # for hadoop java subprocesses (heap amount)
 # you really just have to play around to find out how much is enough 
-my $HADOOP_MEM = "8g";  
+my $HADOOP_MEM = "4g";  
 my $JOSHUA_MEM = "3100m";
 my $ALIGNER_MEM = "10g";
 my $QSUB_ARGS  = "-l num_proc=2";
@@ -480,13 +480,16 @@ if (! defined $ALIGNMENT) {
 if (! defined $GRAMMAR_FILE) {
   mkdir("train") unless -d "train";
 
-# create the input file
+  # create the input file
   $cachepipe->cmd("thrax-input-file",
 					"paste $TRAIN{source} $TRAIN{target} $ALIGNMENT | perl -pe 's/\t/ ||| /g' | grep -v '(())' > train/thrax-input-file",
 					$TRAIN{source}, $TRAIN{target}, $ALIGNMENT,
 					"train/thrax-input-file");
 
-# put the hadoop files in place
+  # rollout the hadoop cluster if needed
+  launch_hadoop_cluster() unless defined $HADOOP;
+
+  # put the hadoop files in place
   my $THRAXDIR = "pipeline-$SOURCE-$TARGET-$GRAMMAR_TYPE-$RUNDIR";
   $THRAXDIR =~ s#/#_#g;
 
@@ -856,3 +859,39 @@ sub get_numrefs {
   return $numrefs;
 }
 
+sub launch_hadoop_cluster {
+  system("mkdir hadoop") unless -d "hadoop";
+  system("tar xzf $JOSHUA/lib/hadoop-0.20.203.0rc1.tar.gz hadoop/");
+
+  foreach my $file (qw/core-site.xml mapred-site.xml hdfs-site.xml/) {
+	open READ, "$JOSHUA/scripts/training/templates/hadoop/$file" or die $file;
+	open WRITE, ">", "hadoop/conf/$file" or die "write $file";
+	while (<READ>) {
+	  s/<HADOOP-TMP-DIR>/hadoop\/tmp/g;
+	  s/<HOST>/localhost/g;
+	  s/<PORT1>/9000/g;
+	  s/<PORT2>/9001/g;
+	  s/<MAX-MAP-TASKS/1/g;
+	  s/<MAX-REDUCE-TASKS/1/g;
+
+	  print WRITE;
+	}
+	close WRITE;
+	close READ;
+  }
+
+  system("echo localhost > hadoop/conf/masters");
+  system("echo localhost > hadoop/conf/slaves");
+
+  system("hadoop/bin/hadoop namenode -format");
+  system("hadoop/bin/start-all.sh");
+
+  sleep(30);
+
+  $HADOOP = "hadoop";
+}
+
+sub remove_hadoop_cluster {
+
+
+}

@@ -1,0 +1,10 @@
+<configuration>
+  <property>
+    <name>hadoop.tmp.dir</name>
+    <value><HADOOP-TMP-DIR></value>
+  </property>
+  <property>
+    <name>fs.default.name</name>
+    <value><HOST>:<PORT1></value>
+  </property>
+</configuration>
