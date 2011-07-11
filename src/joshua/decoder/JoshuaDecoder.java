@@ -496,10 +496,10 @@ public class JoshuaDecoder {
 	
 	private void initializeMainTranslationGrammar() throws IOException {
 				
-		if (logger.isLoggable(Level.INFO))
-			logger.info("Using grammar read from file " + JoshuaConfiguration.tm_file);
-		
         if (! JoshuaConfiguration.use_sent_specific_tm) {
+			if (logger.isLoggable(Level.INFO))
+				logger.info("Using grammar read from file " + JoshuaConfiguration.tm_file);
+
             MemoryBasedBatchGrammar gr = new MemoryBasedBatchGrammar(
 					JoshuaConfiguration.tm_format,
                     JoshuaConfiguration.tm_file,
@@ -515,6 +515,9 @@ public class JoshuaDecoder {
                     this.ruleStringToIDTable = new HashMap<String,Integer>();
                 gr.obtainRulesIDTable(this.ruleStringToIDTable, this.symbolTable);			
             }
+		} else {
+			if (logger.isLoggable(Level.INFO))
+				logger.info("Basing sentence-specific grammars on file " + JoshuaConfiguration.tm_file);
 		}
 	}
 	

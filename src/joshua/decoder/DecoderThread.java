@@ -380,16 +380,18 @@ public class DecoderThread extends Thread {
                 // look in a subdirectory named "filtered" e.g.,
                 // /some/path/grammar.gz will have sentence-level
                 // grammars in /some/path/filtered/grammar.SENTNO.gz
-                int lastSlash = tmFile.lastIndexOf('/');
-                if (lastSlash != -1) {
-                    String dirPart = tmFile.substring(0,lastSlash);
-                    String filePart = tmFile.substring(lastSlash + 1);
-                    tmFile = dirPart + "/filtered/" + filePart;
+                int lastSlashPos = tmFile.lastIndexOf('/');
+				String dirPart = tmFile.substring(0,lastSlashPos + 1);
+				String filePart = tmFile.substring(lastSlashPos + 1);
+				tmFile = dirPart + "filtered/" + filePart;
 
-					File filteredDir = new File(dirPart + "/filtered");
-					if (! filteredDir.exists()) 
-						filteredDir.mkdirs();
-                }
+				File filteredDir = new File(dirPart + "filtered");
+				if (! filteredDir.exists()) {
+					logger.info("Creating sentence-level grammar directory '" + dirPart + "filtered'");
+					filteredDir.mkdirs();
+				}
+
+				logger.info("Using sentence-specific TM file '" + tmFile + "'");
 
 				boolean alreadyExisted = true;
 
@@ -402,7 +404,8 @@ public class DecoderThread extends Thread {
 
 					TestSetFilter.filterGrammarToFile(JoshuaConfiguration.tm_file,
 													  segment.sentence(),
-													  tmFile);
+													  tmFile,
+													  true);
                 } else {
 					if (logger.isLoggable(Level.INFO))
 						logger.info("Using existing sentence-specific tm file " + tmFile);
