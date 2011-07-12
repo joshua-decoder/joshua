@@ -872,7 +872,7 @@ sub launch_hadoop_cluster {
 	open READ, "$JOSHUA/scripts/training/templates/hadoop/$file" or die $file;
 	open WRITE, ">", "hadoop/conf/$file" or die "write $file";
 	while (<READ>) {
-	  s/<HADOOP-TMP-DIR>/hadoop\/tmp/g;
+	  s/<HADOOP-TMP-DIR>/$RUNDIR\/hadoop\/tmp/g;
 	  s/<HOST>/$hostname/g;
 	  s/<PORT1>/9000/g;
 	  s/<PORT2>/9001/g;
@@ -888,9 +888,11 @@ sub launch_hadoop_cluster {
   system("echo $hostname > hadoop/conf/masters");
   system("echo $hostname > hadoop/conf/slaves");
 
-  system("hadoop/bin/hadoop namenode -format");
-  system("hadoop/bin/start-all.sh");
+  system("./hadoop/bin/hadoop namenode -format");
+  sleep(5);
 
+  # start the cluster and give it time to startup
+  system("./hadoop/bin/start-all.sh");
   sleep(30);
 }
 
