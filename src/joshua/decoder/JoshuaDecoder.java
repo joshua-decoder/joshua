@@ -35,6 +35,7 @@ import joshua.corpus.suffix_array.ParallelCorpusGrammarFactory;
 import joshua.corpus.suffix_array.Suffixes;
 import joshua.corpus.suffix_array.mm.MemoryMappedSuffixArray;
 import joshua.corpus.vocab.BuildinSymbol;
+import joshua.corpus.vocab.KenSymbol;
 import joshua.corpus.vocab.SrilmSymbol;
 import joshua.corpus.vocab.SymbolTable;
 import joshua.corpus.vocab.Vocabulary;
@@ -44,6 +45,7 @@ import joshua.decoder.ff.PhraseModelFF;
 import joshua.decoder.ff.SourcePathFF;
 import joshua.decoder.ff.WordPenaltyFF;
 import joshua.decoder.ff.lm.LanguageModelFF;
+import joshua.decoder.ff.lm.kenlm.jni.KenLM;
 import joshua.decoder.ff.lm.NGramLanguageModel;
 import joshua.decoder.ff.lm.bloomfilter_lm.BloomFilterLanguageModel;
 import joshua.decoder.ff.lm.buildin_lm.LMGrammarJAVA;
@@ -392,6 +394,13 @@ public class JoshuaDecoder {
 				logger.finest("Populating SRILM symbol table with symbols from existing symbol table");
 				this.symbolTable = new SrilmSymbol(existingSymbols, JoshuaConfiguration.lm_order);
 			}
+    } else if (JoshuaConfiguration.use_kenlm) {
+			logger.finest("Using KenLM symbol table");
+      if (null == existingSymbols) {
+        this.symbolTable = new KenSymbol();
+      } else {
+        throw new RuntimeException("TODO(juri): fix vocabulary identifiers.");
+      }
 		} else {
 			if (null == existingSymbols) {
 				//this.symbolTable = new Vocabulary();//new BuildinSymbol(null);
@@ -433,7 +442,13 @@ public class JoshuaDecoder {
 				(SrilmSymbol)this.symbolTable,
 				JoshuaConfiguration.lm_order,
 				JoshuaConfiguration.lm_file);
-			
+		} else if (JoshuaConfiguration.use_kenlm) {
+			if (JoshuaConfiguration.use_left_equivalent_state
+			|| JoshuaConfiguration.use_right_equivalent_state) {
+				throw new IllegalArgumentException("KenLM supports state.  Joshua should get around to using it.");
+			}
+      this.languageModel = KenLM.Load(JoshuaConfiguration.lm_file, (KenSymbol)this.symbolTable);
+    
 		} else if (JoshuaConfiguration.use_bloomfilter_lm) {
 			if (JoshuaConfiguration.use_left_equivalent_state
 			|| JoshuaConfiguration.use_right_equivalent_state) {

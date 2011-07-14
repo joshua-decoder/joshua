@@ -79,7 +79,14 @@
 			<arg value="install" />
 		</exec>
 	</target>
-	
+
+	<target name="kenlm" depends="init, set-java-home">
+		<!-- BUG: this is run twice for `ant compile test`, since the Makefile will clean before building (thus it must rebuild everything) -->
+		<exec executable="${src}/joshua/decoder/ff/lm/kenlm/compile_jni.sh">
+			<arg value="${lib}" />
+		</exec>
+	</target>
+		
 	
 	<target name="parallelize">
 		<exec executable="make">
@@ -90,7 +97,7 @@
 <!-- ~~~~~ Java build tasks ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 	
 	<!-- Compile the Java code. -->
-	<target name="compile" depends="init,srilm,parallelize">
+	<target name="compile" depends="init,srilm,kenlm,parallelize">
 		<javac compiler="javac1.5" srcdir="${src}" destdir="${build}" 
 			classpathref="compile.all.classpath" debug="on" encoding="utf8"
 			sourcepath="">
