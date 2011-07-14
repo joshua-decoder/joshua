@@ -28,8 +28,7 @@ use CachePipe;
 
 my $HADOOP = $ENV{HADOOP}; # or not_defined("HADOOP");
 my $JOSHUA = $ENV{JOSHUA} or not_defined("JOSHUA");
-my $THRAX  = $ENV{THRAX} or not_defined("THRAX");
-not_defined("SCRIPTS_ROOTDIR") unless defined $ENV{SCRIPTS_ROOTDIR};
+my $MOSES_SCRIPTS = $ENV{SCRIPTS_ROOTDIR} or not_defined("SCRIPTS_ROOTDIR");
 
 my (@CORPORA,$TUNE,$TEST,$ALIGNMENT,$SOURCE,$TARGET,$LMFILE,$GRAMMAR_FILE,$GLUE_GRAMMAR_FILE,$THRAX_CONF_FILE);
 my $FIRST_STEP = "FIRST";
@@ -40,7 +39,7 @@ my $DO_FILTER_LM = 1;
 my $DO_SUBSAMPLE = 0;
 my $SCRIPTDIR = "$JOSHUA/scripts";
 my $TOKENIZER = "$SCRIPTDIR/training/penn-treebank-tokenizer.perl";
-my $MOSES_TRAINER = "$ENV{SCRIPTS_ROOTDIR}/training/train-model.perl";
+my $MOSES_TRAINER = "$MOSES_SCRIPTS/training/train-model.perl";
 my $MERTCONFDIR = "$JOSHUA/scripts/training/templates/mert";
 my $SRILM = "$ENV{SRILM}/bin/i686-m64/ngram-count";
 my $STARTDIR;
@@ -487,7 +486,7 @@ if (! defined $GRAMMAR_FILE) {
 					"train/thrax-input-file");
 
   # rollout the hadoop cluster if needed
-  launch_hadoop_cluster() unless defined $HADOOP;
+  start_hadoop_cluster() unless defined $HADOOP;
 
   # put the hadoop files in place
   my $THRAXDIR = "pipeline-$SOURCE-$TARGET-$GRAMMAR_TYPE-$RUNDIR";
@@ -503,11 +502,11 @@ if (! defined $GRAMMAR_FILE) {
   system("echo input-file $THRAXDIR/input-file >> thrax-$GRAMMAR_TYPE.conf");
 
   $cachepipe->cmd("thrax-run",
-				  "$HADOOP/bin/hadoop jar $THRAX/bin/thrax.jar -D mapred.child.java.opts='-Xmx$HADOOP_MEM' thrax-$GRAMMAR_TYPE.conf $THRAXDIR > thrax.log 2>&1; rm -f grammar grammar.gz; $HADOOP/bin/hadoop fs -getmerge $THRAXDIR/final/ grammar; gzip -9f grammar",
+				  "$HADOOP/bin/hadoop jar $JOSHUA/lib/thrax.jar -D mapred.child.java.opts='-Xmx$HADOOP_MEM' thrax-$GRAMMAR_TYPE.conf $THRAXDIR > thrax.log 2>&1; rm -f grammar grammar.gz; $HADOOP/bin/hadoop fs -getmerge $THRAXDIR/final/ grammar; gzip -9f grammar",
 				  "train/thrax-input-file",
 				  "grammar.gz");
 
-  teardown_hadoop_cluster() unless defined $HADOOP;
+  stop_hadoop_cluster() if $HADOOP eq "hadoop";
 
   # cache the thrax-prep step, which depends on grammar.gz
   $cachepipe->cmd("thrax-prep", "--cache-only");
@@ -559,7 +558,7 @@ mkdir("tune") unless -d "tune";
 
 # filter the tuning grammar
 $cachepipe->cmd("filter-tune",
-				"$SCRIPTDIR/training/scat $GRAMMAR_FILE | $THRAX/scripts/filter_rules.sh -v $TUNE{source} | gzip -9 > tune/grammar.filtered.gz",
+				"$SCRIPTDIR/training/scat $GRAMMAR_FILE | java -Dfile.encoding=utf8 -cp $JOSHUA/lib/thrax.jar edu.jhu.thrax.util.TestSetFilter -v $TUNE{source} | gzip -9 > tune/grammar.filtered.gz",
 				$GRAMMAR_FILE,
 				$TUNE{source},
 				"tune/grammar.filtered.gz");
@@ -569,7 +568,7 @@ if (! defined $GLUE_GRAMMAR_FILE) {
   system("grep -v input-file $THRAX_CONF_FILE > thrax-$GRAMMAR_TYPE.conf")
 	  unless -e "thrax-$GRAMMAR_TYPE.conf";
   $cachepipe->cmd("glue-tune",
-				  "$SCRIPTDIR/training/scat tune/grammar.filtered.gz | $THRAX/scripts/create_glue_grammar.sh thrax-$GRAMMAR_TYPE.conf > tune/grammar.glue",
+				  "$SCRIPTDIR/training/scat tune/grammar.filtered.gz | java -cp $JOSHUA/lib/thrax.jar:$HADOOP/hadoop-core-0.20.203.0.jar:$HADOOP/lib/commons-logging-1.1.1.jar edu.jhu.thrax.util.CreateGlueGrammar thrax-$GRAMMAR_TYPE.conf > tune/grammar.glue",
 				  "tune/grammar.filtered.gz",
 				  "tune/grammar.glue");
   $GLUE_GRAMMAR_FILE = "tune/grammar.glue";
@@ -667,7 +666,7 @@ if ($FIRST_STEP eq "TEST") {
 
 # filter the test grammar
 $cachepipe->cmd("filter-test",
-				"$SCRIPTDIR/training/scat $GRAMMAR_FILE | $THRAX/scripts/filter_rules.sh -v $TEST{source} | gzip -9 > test/grammar.filtered.gz",
+				"$SCRIPTDIR/training/scat $GRAMMAR_FILE | java -Dfile.encoding=utf8 -cp $JOSHUA/lib/thrax.jar edu.jhu.thrax.util.TestSetFilter -v $TEST{source} | gzip -9 > test/grammar.filtered.gz",
 				$GRAMMAR_FILE,
 				$TEST{source},
 				"test/grammar.filtered.gz");
@@ -678,7 +677,7 @@ if (! defined $GLUE_GRAMMAR_FILE) {
 	  unless -e "thrax-$GRAMMAR_TYPE.conf";
 
   $cachepipe->cmd("glue-test",
-				  "$SCRIPTDIR/training/scat test/grammar.filtered.gz | $THRAX/scripts/create_glue_grammar.sh thrax-$GRAMMAR_TYPE.conf > test/grammar.glue",
+				  "$SCRIPTDIR/training/scat test/grammar.filtered.gz | java -cp $JOSHUA/lib/thrax.jar:$HADOOP/hadoop-core-20.203.0.jar:$HADOOP/lib/commons-logging-1.1.1.jar edu.jhu.thrax.util.CreateGlueGrammar thrax-$GRAMMAR_TYPE.conf > test/grammar.glue",
 				  "test/grammar.filtered.gz",
 				  "test/grammar.glue");
   $GLUE_GRAMMAR_FILE = "test/grammar.glue";
@@ -861,10 +860,18 @@ sub get_numrefs {
   return $numrefs;
 }
 
-sub launch_hadoop_cluster {
+sub start_hadoop_cluster {
+  rollout_hadoop_cluster() unless -d "hadoop";
+
+  # start the cluster
+  system("./hadoop/bin/start-all.sh");
+  sleep(30);
+}
+
+sub rollout_hadoop_cluster {
   system("tar xzf $JOSHUA/lib/hadoop-0.20.203.0rc1.tar.gz");
   system("ln -sf hadoop-0.20.203.0 hadoop");
-  $HADOOP = "hadoop";
+  $ENV{HADOOP} = $HADOOP = "hadoop";
 
   chomp(my $hostname = `hostname --fqdn`);
 
@@ -876,8 +883,8 @@ sub launch_hadoop_cluster {
 	  s/<HOST>/$hostname/g;
 	  s/<PORT1>/9000/g;
 	  s/<PORT2>/9001/g;
-	  s/<MAX-MAP-TASKS/1/g;
-	  s/<MAX-REDUCE-TASKS/1/g;
+	  s/<MAX-MAP-TASKS>/1/g;
+	  s/<MAX-REDUCE-TASKS>/1/g;
 
 	  print WRITE;
 	}
@@ -890,13 +897,13 @@ sub launch_hadoop_cluster {
 
   system("./hadoop/bin/hadoop namenode -format");
   sleep(5);
+}
 
-  # start the cluster and give it time to startup
-  system("./hadoop/bin/start-all.sh");
-  sleep(30);
+sub stop_hadoop_cluster {
+  system("hadoop/bin/stop-all.sh");
 }
 
 sub teardown_hadoop_cluster {
-  system("hadoop/bin/stop-all.sh");
+  stop_hadoop_cluster();
   system("rm -rf hadoop-0.20.203.0 hadoop");
 }
