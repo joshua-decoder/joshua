@@ -861,7 +861,7 @@ sub get_numrefs {
 }
 
 sub start_hadoop_cluster {
-  rollout_hadoop_cluster() unless -d "hadoop";
+  rollout_hadoop_cluster();
 
   # start the cluster
   system("./hadoop/bin/start-all.sh");
@@ -869,34 +869,37 @@ sub start_hadoop_cluster {
 }
 
 sub rollout_hadoop_cluster {
-  system("tar xzf $JOSHUA/lib/hadoop-0.20.203.0rc1.tar.gz");
-  system("ln -sf hadoop-0.20.203.0 hadoop");
-  $ENV{HADOOP} = $HADOOP = "hadoop";
+  if (! -d "hadoop") {
+	system("tar xzf $JOSHUA/lib/hadoop-0.20.203.0rc1.tar.gz");
+	system("ln -sf hadoop-0.20.203.0 hadoop");
 
-  chomp(my $hostname = `hostname --fqdn`);
+	chomp(my $hostname = `hostname --fqdn`);
 
-  foreach my $file (qw/core-site.xml mapred-site.xml hdfs-site.xml/) {
-	open READ, "$JOSHUA/scripts/training/templates/hadoop/$file" or die $file;
-	open WRITE, ">", "hadoop/conf/$file" or die "write $file";
-	while (<READ>) {
-	  s/<HADOOP-TMP-DIR>/$RUNDIR\/hadoop\/tmp/g;
-	  s/<HOST>/$hostname/g;
-	  s/<PORT1>/9000/g;
-	  s/<PORT2>/9001/g;
-	  s/<MAX-MAP-TASKS>/1/g;
-	  s/<MAX-REDUCE-TASKS>/1/g;
+	foreach my $file (qw/core-site.xml mapred-site.xml hdfs-site.xml/) {
+	  open READ, "$JOSHUA/scripts/training/templates/hadoop/$file" or die $file;
+	  open WRITE, ">", "hadoop/conf/$file" or die "write $file";
+	  while (<READ>) {
+		s/<HADOOP-TMP-DIR>/$RUNDIR\/hadoop\/tmp/g;
+		s/<HOST>/$hostname/g;
+		s/<PORT1>/9000/g;
+		s/<PORT2>/9001/g;
+		s/<MAX-MAP-TASKS>/1/g;
+		s/<MAX-REDUCE-TASKS>/1/g;
 
-	  print WRITE;
+		print WRITE;
+	  }
+	  close WRITE;
+	  close READ;
 	}
-	close WRITE;
-	close READ;
+
+	system("echo $hostname > hadoop/conf/masters");
+	system("echo $hostname > hadoop/conf/slaves");
+
+	system("./hadoop/bin/hadoop namenode -format");
+	sleep(5);
   }
 
-  system("echo $hostname > hadoop/conf/masters");
-  system("echo $hostname > hadoop/conf/slaves");
-
-  system("./hadoop/bin/hadoop namenode -format");
-  sleep(5);
+  $ENV{HADOOP} = $HADOOP = "hadoop";
 }
 
 sub stop_hadoop_cluster {
