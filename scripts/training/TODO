@@ -4,6 +4,7 @@
   used to decode another test set
 - [ ] add tree output for test sets
 - [ ] run MERT multiple times
-- [ ] hadoop cluster roll-out
-- [ ] rm -r hadoop directory after retrieving grammar successfully
+- [X] hadoop cluster roll-out
+- [X] rm -r hadoop directory after retrieving grammar successfully
 - [ ] change qsub arg defaults when doing SAMT
+
