@@ -320,14 +320,17 @@ public class DecoderThread extends Thread {
 		
 		Chart chart; 
 		
+		final boolean looks_like_lattice;
+		final boolean looks_like_parse_tree;
+		
+		Lattice<Integer> input_lattice = null;
+		SyntaxTree syntax_tree = null;
+		Pattern sentence = null;
+		
 		{
 			// TODO: we should not use strings to decide what the input type is
-			final boolean looks_like_lattice   = segment.sentence().startsWith("(((");
-			final boolean looks_like_parse_tree = segment.sentence().startsWith("(TOP");
-			
-			Lattice<Integer> input_lattice = null;
-			SyntaxTree syntax_tree = null;
-			Pattern sentence = null;
+			looks_like_lattice    = segment.sentence().startsWith("(((");
+			looks_like_parse_tree = segment.sentence().matches("^\\(+[A-Z]+ .*");
 			
 			if (!looks_like_lattice) {
 				int[] int_sentence;
@@ -427,13 +430,25 @@ public class DecoderThread extends Thread {
 			StringBuffer passthrough_buffer = new StringBuffer();
 			passthrough_buffer.append(Integer.parseInt(segment.id()));
 			passthrough_buffer.append(" ||| ");
-			passthrough_buffer.append(segment.sentence());
+			
+			if (looks_like_parse_tree) {
+				int[] word_ids = syntax_tree.getTerminals();
+				for (int i=0; i<word_ids.length-1; i++) {
+					passthrough_buffer.append(symbolTable.getWord(word_ids[i]));
+					passthrough_buffer.append(" ");
+				}
+				passthrough_buffer.append(symbolTable.getWord(word_ids[word_ids.length-1]));
+			}
+			else		
+				passthrough_buffer.append(segment.sentence());
+			
 			passthrough_buffer.append(" ||| ");
 			for (int i=0; i<this.featureFunctions.size(); i++)
 				passthrough_buffer.append("0.0 ");
 			passthrough_buffer.append("||| 0.0\n");
 			
 			this.nbestWriter.write(passthrough_buffer.toString());
+			this.nbestWriter.flush();
 			
 			return;
 		}
