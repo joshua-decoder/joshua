@@ -883,8 +883,8 @@ sub rollout_hadoop_cluster {
 		s/<HOST>/$hostname/g;
 		s/<PORT1>/9000/g;
 		s/<PORT2>/9001/g;
-		s/<MAX-MAP-TASKS>/1/g;
-		s/<MAX-REDUCE-TASKS>/1/g;
+		s/<MAX-MAP-TASKS>/2/g;
+		s/<MAX-REDUCE-TASKS>/2/g;
 
 		print WRITE;
 	  }
