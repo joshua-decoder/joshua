@@ -45,6 +45,9 @@ public final class WordPenaltyFF extends DefaultStatelessFF {
 		} else {
 			return 0.0;
 		}*/
-		return OMEGA * (rule.getEnglish().length - rule.getArity());
+
+        // MJP: why is the weight ignored here in favor of OMEGA?
+		//return OMEGA * (rule.getEnglish().length - rule.getArity());
+		return getWeight() * (rule.getEnglish().length - rule.getArity());
 	}
 }
