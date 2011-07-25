@@ -75,8 +75,6 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
 // Static Fields
 //===============================================================
 
-	public static final int OOV_RULE_ID = 0;
-
 	/* Three kinds of rules: 
 	 * 		regular rule (id>0)
 	 * 		oov rule (id=0)
@@ -167,7 +165,7 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
 		 * TM feature to be maximum
 		 */
 		if (JoshuaConfiguration.oov_feature_index != -1) {
-			feat_scores[JoshuaConfiguration.oov_feature_index] = 1.0f;
+			feat_scores[JoshuaConfiguration.oov_feature_index] = oovFeatureCost; //1.0f;
 		}
 		else if ((!use_max_lm_cost) && num_features > 0) {
 			feat_scores[0] = oovFeatureCost;
@@ -196,11 +194,6 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
 		
 		return new BilingualRule(lhs, french, english, feat_scores, 0, this.defaultOwner, 0, getOOVRuleID());
 	}
-	
-	public int getOOVRuleID() {
-		return OOV_RULE_ID;
-	}
-	
 	
 	public Rule constructManualRule(int lhs, int[] sourceWords, int[] targetWords, float[] scores, int arity) {
 		return new BilingualRule(lhs, sourceWords, targetWords, scores, arity, this.defaultOwner, 0, getOOVRuleID());

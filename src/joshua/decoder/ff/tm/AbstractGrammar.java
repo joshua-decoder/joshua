@@ -63,6 +63,12 @@ public abstract class AbstractGrammar implements Grammar {
 	public AbstractGrammar() {
 		this.sorted = false;
 	}
+
+	public static final int OOV_RULE_ID = 0;
+
+	public int getOOVRuleID() {
+		return OOV_RULE_ID;
+	}
 	
 	/**
 	 * Cube-pruning requires that the grammar be sorted based
