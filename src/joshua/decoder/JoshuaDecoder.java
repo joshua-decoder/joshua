@@ -44,6 +44,7 @@ import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.PhraseModelFF;
 import joshua.decoder.ff.SourcePathFF;
 import joshua.decoder.ff.WordPenaltyFF;
+import joshua.decoder.ff.OOVFF;
 import joshua.decoder.ff.lm.LanguageModelFF;
 import joshua.decoder.ff.lm.kenlm.jni.KenLM;
 import joshua.decoder.ff.lm.NGramLanguageModel;
@@ -783,6 +784,12 @@ public class JoshuaDecoder {
 		} } finally {
 			reader.close();
 		}
+
+        int owner  = this.symbolTable.addTerminal("pt");
+        int column = JoshuaConfiguration.num_phrasal_features;
+        this.featureFunctions.add(new OOVFF(this.featureFunctions.size(), -100, owner));
+        JoshuaConfiguration.oov_feature_index = column;
+        JoshuaConfiguration.num_phrasal_features += 1;
 	}
 	
 	
