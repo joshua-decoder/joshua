@@ -9,38 +9,37 @@
 #
 # Currently implemented:
 #
-# - decoding with Hiero grammars
-# - jump to GIZA, MERT, THRAX, and TEST points (using --first-step and
-#   (optionally) --last-step)
+# - decoding with Hiero grammars and SAMT grammars
+
+# - jump to SUBSAMPLE, ALIGN, PARSE, THRAX, MERT, and TEST points
+#   (using --first-step and (optionally) --last-step)
 # - built on top of CachePipe, so that intermediate results are cached
 #   and only re-run if necessary
 # - uses Thrax for grammar extraction
-#
-# Imminent:
-#
-# - support for subsampling the training corpus to a development set
-# - support for SAMT grammars
 
 use strict;
 use warnings;
 use Getopt::Long;
 use File::Basename;
 use Cwd;
+use POSIX qw[ceil];
+use List::Util qw[max min];
 use CachePipe;
 
-my $HADOOP = $ENV{HADOOP};
-my $JOSHUA = $ENV{JOSHUA};
-my $THRAX  = $ENV{THRAX};
+my $HADOOP = $ENV{HADOOP}; # or not_defined("HADOOP");
+my $JOSHUA = $ENV{JOSHUA} or not_defined("JOSHUA");
+my $MOSES_SCRIPTS = $ENV{SCRIPTS_ROOTDIR} or not_defined("SCRIPTS_ROOTDIR");
 
-my (@CORPORA,$TUNE,$TEST,$ALIGNMENT,$FR,$EN,$LMFILE,$GRAMMAR_FILE);
+my (@CORPORA,$TUNE,$TEST,$ALIGNMENT,$SOURCE,$TARGET,$LMFILE,$GRAMMAR_FILE,$GLUE_GRAMMAR_FILE,$THRAX_CONF_FILE);
 my $FIRST_STEP = "FIRST";
 my $LAST_STEP  = "LAST";
 my $LMFILTER = "$ENV{HOME}/code/filter/filter";
 my $MAXLEN = 50;
-my $DO_SUBSAMPLE = ''; # default false
+my $DO_FILTER_LM = 1;
+my $DO_SUBSAMPLE = 0;
 my $SCRIPTDIR = "$JOSHUA/scripts";
 my $TOKENIZER = "$SCRIPTDIR/training/penn-treebank-tokenizer.perl";
-my $MOSES_TRAINER = "/home/hltcoe/airvine/bin/moses/tools/moses-scripts/scripts-20100922-0942/training/train-factored-phrase-model.perl";
+my $MOSES_TRAINER = "$MOSES_SCRIPTS/training/train-model.perl";
 my $MERTCONFDIR = "$JOSHUA/scripts/training/templates/mert";
 my $SRILM = "$ENV{SRILM}/bin/i686-m64/ngram-count";
 my $STARTDIR;
@@ -51,63 +50,96 @@ my $GRAMMAR_TYPE = "hiero";
 # the Joshua command invoked by MERT
 my $JOSHUA_CONFIG_ORIG   = "$MERTCONFDIR/joshua.config";
 my %MERTFILES = (
-  'decoder_command' => "$MERTCONFDIR/decoder_command",
+  'decoder_command' => "$MERTCONFDIR/decoder_command.qsub",
   'joshua.config'   => $JOSHUA_CONFIG_ORIG,
+  'mert.config'     => "$MERTCONFDIR/mert.config",
   'params.txt'      => "$MERTCONFDIR/params.txt",
-  'mert.config'     => "$MERTCONFDIR/mert.config"
 );
 
+my $DO_SENT_SPECIFIC_TM = 1;
 my $DO_MBR = 1;
+
+my $ALIGNER = "berkeley"; # or "giza"
 
 # for hadoop java subprocesses (heap amount)
 # you really just have to play around to find out how much is enough 
-my $HADOOP_MEM = "8G";  
-my $JOSHUA_MEM = "3400m";
+my $HADOOP_MEM = "4g";  
+my $JOSHUA_MEM = "3100m";
+my $ALIGNER_MEM = "10g";
 my $QSUB_ARGS  = "-l num_proc=2";
+my $ALIGNER_BLOCKSIZE = 1000000;
+my $NUMJOBS = 20;
 
-my %STEPS = (
-  FIRST => 1,
-  GIZA => 2,
-  THRAX => 3,
-  MERT => 4,
-  TEST => 5,
-  LAST => 6,
-);
+my @STEPS = qw[FIRST SUBSAMPLE ALIGN PARSE THRAX MERT TEST LAST];
+my %STEPS = map { $STEPS[$_] => $_ + 1 } (0..$#STEPS);
 
-my $options = GetOptions(
+my $retval = GetOptions(
   "corpus=s" 	 	  => \@CORPORA,
   "tune=s"   	 	  => \$TUNE,
   "test=s"            => \$TEST,
+  "aligner=s"         => \$ALIGNER,
   "alignment=s"  	  => \$ALIGNMENT,
-  "fr=s"     	 	  => \$FR,
-  "en=s"     	 	  => \$EN,
+  "aligner-mem=s"     => \$ALIGNER_MEM,
+  "source=s"   	 	  => \$SOURCE,
+  "target=s"  	 	  => \$TARGET,
   "rundir=s" 	 	  => \$RUNDIR,
+  "filter-tm!"        => \$DO_SENT_SPECIFIC_TM,
+  "filter-lm!"        => \$DO_FILTER_LM,
   "lmfile=s" 	 	  => \$LMFILE,
   "grammar=s"    	  => \$GRAMMAR_FILE,
+  "glue-grammar=s" 	  => \$GLUE_GRAMMAR_FILE,
   "mbr!"              => \$DO_MBR,
   "type=s"       	  => \$GRAMMAR_TYPE,
   "maxlen=i" 	 	  => \$MAXLEN,
   "tokenizer=s"  	  => \$TOKENIZER,
   "joshua-config=s"   => \$MERTFILES{'joshua.config'},
+  "joshua-mem=s"      => \$JOSHUA_MEM,
+  "hadoop-mem=s"      => \$HADOOP_MEM,
   "decoder-command=s" => \$MERTFILES{'decoder_command'},
+  "thrax-conf=s"      => \$THRAX_CONF_FILE,
+  "jobs=i"            => \$NUMJOBS,
   "subsample!"   	  => \$DO_SUBSAMPLE,
   "qsub-args=s"  	  => \$QSUB_ARGS,
   "first-step=s" 	  => \$FIRST_STEP,
   "last-step=s"  	  => \$LAST_STEP,
+  "aligner-chunk-size=s" => \$ALIGNER_BLOCKSIZE,
 );
+
+if (! $retval) {
+  print "Invalid usage, quitting\n";
+  exit 1;
+}
+
+# capitalize these to offset a common error:
+$FIRST_STEP = uc($FIRST_STEP);
+$LAST_STEP  = uc($LAST_STEP);
 
 $| = 1;
 
 my $cachepipe = new CachePipe();
 
+$SIG{INT} = sub { 
+  print "* Got C-c, quitting\n";
+  $cachepipe->cleanup();
+  exit 1; 
+};
+
 ## Sanity Checking ###################################################
 
-if (! defined $TUNE and ($STEPS{$FIRST_STEP} > $STEPS{MERT}
-						 or $STEPS{$LAST_STEP} < $STEPS{MERT})) { 
+# make sure a corpus was provided if we're doing any step before MERT
+if (@CORPORA == 0 and $STEPS{$FIRST_STEP} < $STEPS{MERT}) {
+  print "* FATAL: need at least one training corpus (--corpus)\n";
+  exit 1;
+}
+
+# make sure a tuning corpus was provided if we're doing MERT
+if (! defined $TUNE and ($STEPS{$FIRST_STEP} <= $STEPS{MERT}
+						 and $STEPS{$LAST_STEP} >= $STEPS{MERT})) { 
   print "* FATAL: need a tuning set (--tune)\n";
   exit 1;
 }
 
+# make sure a test corpus was provided if we're decoding a test set
 if (! defined $TEST and ($STEPS{$FIRST_STEP} <= $STEPS{TEST}
 						 and $STEPS{$LAST_STEP} >= $STEPS{TEST})) {
   print "* FATAL: need a test set (--test)\n";
@@ -121,7 +153,7 @@ map {
 } (0..$#CORPORA);
 
 foreach my $corpus (@CORPORA) {
-  foreach my $ext ($EN,$FR) {
+  foreach my $ext ($TARGET,$SOURCE) {
 	if (! -e "$corpus.$ext") {
 	  print "* FATAL: can't find '$corpus.$ext'";
 	  exit 1;
@@ -129,10 +161,18 @@ foreach my $corpus (@CORPORA) {
   }
 }
 
+if ($ALIGNER ne "giza" and $ALIGNER ne "berkeley") {
+  print "* FATAL: aligner must be one of 'giza' or 'berkeley'\n";
+  exit 1;
+}
+
+
 ## Dependent variable setting ########################################
 
 my $OOV = ($GRAMMAR_TYPE eq "samt") ? "OOV" : "X";
-my $THRAXDIR = "pipeline-$FR-$EN-$GRAMMAR_TYPE";
+
+# use this default unless it's already been defined by a command-line argument
+$THRAX_CONF_FILE = "$JOSHUA/scripts/training/templates/thrax-$GRAMMAR_TYPE.conf" unless defined $THRAX_CONF_FILE;
 
 mkdir $RUNDIR unless -d $RUNDIR;
 chdir($RUNDIR);
@@ -142,16 +182,18 @@ chdir($RUNDIR);
 my (%TRAIN,%TUNE,%TEST);
 if (@CORPORA) {
   $TRAIN{prefix} = $CORPORA[0];
-  $TRAIN{fr} = "$CORPORA[0].$FR";
-  $TRAIN{en} = "$CORPORA[0].$EN";
+  $TRAIN{source} = "$CORPORA[0].$SOURCE";
+  $TRAIN{target} = "$CORPORA[0].$TARGET";
 }
 
-$TUNE{fr} = "$TUNE.$FR";
-$TUNE{en} = "$TUNE.$EN";
+if ($TUNE) {
+  $TUNE{source} = "$TUNE.$SOURCE";
+  $TUNE{target} = "$TUNE.$TARGET";
+}
 
 if ($TEST) {
-  $TEST{fr} = "$TEST.$FR";
-  $TEST{en} = "$TEST.$EN";
+  $TEST{source} = "$TEST.$SOURCE";
+  $TEST{target} = "$TEST.$TARGET";
 }
 
 if ($FIRST_STEP ne "FIRST") {
@@ -172,6 +214,13 @@ if ($FIRST_STEP ne "FIRST") {
 ## STEP 1: filter and preprocess corpora #############################
 FIRST:
 
+if (defined $ALIGNMENT) {
+  print "* FATAL: it doesn't make sense to provide an alignment and then do\n";
+  print "  tokenization.  Either remove --alignment or specify a first step\n";
+  print "  of Thrax (--first-step THRAX)\n";
+  exit 1;
+}
+
 if (@CORPORA == 0) {
   print "* FATAL: need at least one training corpus (--corpus)\n";
   exit 1;
@@ -180,80 +229,245 @@ if (@CORPORA == 0) {
 # prepare the training data
 prepare_data("train",\@CORPORA,$MAXLEN);
 $TRAIN{prefix} = "train/corpus";
-$TRAIN{fr} = "train/corpus.$FR";
-$TRAIN{en} = "train/corpus.$EN";
+foreach my $lang ($SOURCE,$TARGET) {
+  system("ln -sf train.tok.$MAXLEN.lc.$lang train/corpus.$lang");
+}
+$TRAIN{source} = "train/corpus.$SOURCE";
+$TRAIN{target} = "train/corpus.$TARGET";
 
 # prepare the tuning and development data
-prepare_data("tune",[$TUNE]);
-$TUNE{fr} = "tune/tune.tok.lc.$FR";
-$TUNE{en} = "tune/tune.tok.lc.$EN";
+if (defined $TUNE) {
+  prepare_data("tune",[$TUNE]);
+  $TUNE{source} = "tune/tune.tok.lc.$SOURCE";
+  $TUNE{target} = "tune/tune.tok.lc.$TARGET";
+}
 
-prepare_data("test",[$TEST]);
-$TEST{fr} = "test/test.tok.lc.$FR";
-$TEST{en} = "test/test.tok.lc.$EN";
+if (defined $TEST) {
+  prepare_data("test",[$TEST]);
+  $TEST{source} = "test/test.tok.lc.$SOURCE";
+  $TEST{target} = "test/test.tok.lc.$TARGET";
+}
+
+maybe_quit("FIRST");
+
+## SUBSAMPLE #########################################################
+
+SUBSAMPLE:
 
 # subsample
 if ($DO_SUBSAMPLE) {
-  print "\n\n** DO_SUBSAMPLE UNIMPLEMENTED\n\n";
-  exit 1;
-
-  mkdir("train/subsampled");
+  mkdir("train/subsampled") unless -d "train/subsampled";
 
   $cachepipe->cmd("subsample-manifest",
-				  "echo train/corpus > train/subsampled/manifest",
+				  "echo corpus > train/subsampled/manifest",
 				  "train/subsampled/manifest");
 
   $cachepipe->cmd("subsample-testdata",
-				  "cat $TUNE.$FR $TEST.$FR > train/subsampled/test-data",
-				  "$TUNE.$FR", "$TEST.$FR", "train/subsampled/test-data");
+				  "cat $TUNE{source} $TEST{source} > train/subsampled/test-data",
+				  $TUNE{source},
+				  $TEST{source},
+				  "train/subsampled/test-data");
 
   $cachepipe->cmd("subsample",
-				  "java -Xmx4g -Dfile.encoding=utf8 -cp $JOSHUA/bin:$JOSHUA/lib/commons-cli-2.0-SNAPSHOT.jar joshua.subsample.Subsampler -e $EN.tok.$MAXLEN -f $FR.tok.$MAXLEN -epath train/ -fpath train/ -output train/subsampled/subsampled.$MAXLEN -ratio 1.04 -test train/subsampled/test-data -training train/subsampled/manifest",
+				  "java -Xmx4g -Dfile.encoding=utf8 -cp $JOSHUA/bin:$JOSHUA/lib/commons-cli-2.0-SNAPSHOT.jar joshua.subsample.Subsampler -e $TARGET -f $SOURCE -epath train/ -fpath train/ -output train/subsampled/subsampled.$MAXLEN -ratio 1.04 -test train/subsampled/test-data -training train/subsampled/manifest",
 				  "train/subsampled/manifest",
 				  "train/subsampled/test-data",
-				  "train/corpus.$EN.tok.$MAXLEN",
-				  "train/corpus.$FR.tok.$MAXLEN",
-				  "train/subsampled/subsampled.$MAXLEN.$EN.tok.$MAXLEN",
-				  "train/subsampled/subsampled.$MAXLEN.$FR.tok.$MAXLEN");
+				  $TRAIN{source},
+				  $TRAIN{target},
+				  "train/subsampled/subsampled.$MAXLEN.$TARGET",
+				  "train/subsampled/subsampled.$MAXLEN.$SOURCE");
 
-  foreach my $lang ($EN,$FR) {
-	$cachepipe->cmd("link-corpus",
-					"ln -sf subsampled/subsampled.$MAXLEN.$lang.tok.$MAXLEN train/corpus.$lang",
-					"train/corpus.$lang");
-  }
-} else {
-  foreach my $lang ($EN,$FR) {
-	$cachepipe->cmd("link-corpus-$lang",
-					"ln -sf train.tok.$MAXLEN.lc.$lang train/corpus.$lang",
-					"train/corpus.$lang");
+  # rewrite the symlinks to point to the subsampled corpus
+  foreach my $lang ($TARGET,$SOURCE) {
+	system("ln -sf subsampled/subsampled.$MAXLEN.$lang train/corpus.$lang");
   }
 }
 
-## GIZA ##############################################################
+maybe_quit("SUBSAMPLE");
 
-GIZA:
 
-# alignment
-$ALIGNMENT = "giza/model/aligned.grow-diag-final";
-$cachepipe->cmd("giza",
-				"rm -f train/corpus.0-0.*; $MOSES_TRAINER -root-dir giza -e $EN -f $FR -corpus $TRAIN{prefix} -first-step 1 -last-step 3 > giza.log 2>&1",
-				"$TRAIN{prefix}.$FR",
-				"$TRAIN{prefix}.$EN",
-				$ALIGNMENT);
+## ALIGN #############################################################
 
+ALIGN:
+
+# This basically means that we've skipped tokenization, in which case
+# we still want to move the input files into the canonical place
+if ($FIRST_STEP eq "ALIGN") {
+  if (defined $ALIGNMENT) {
+	print "* FATAL: It doesn't make sense to provide an alignment\n";
+	print "  but not to skip the tokenization and subsampling steps\n";
+	exit 1;
+  }
+
+  # TODO: copy the files into the canonical place 
+
+  # Jumping straight to alignment is probably the same thing as
+  # skipping tokenization, and might also be implemented by a
+  # --no-tokenization flag
+}
+
+# skip this step if an alignment was provided
+if (! defined $ALIGNMENT) {
+
+  # split up the data
+  system("mkdir","-p","train/splits") unless -d "train/splits";
+
+  $cachepipe->cmd("source-numlines",
+				  "cat $TRAIN{source} | wc -l",
+				  $TRAIN{source});
+  my $numlines = $cachepipe->stdout();
+  my $numchunks = ceil($numlines / $ALIGNER_BLOCKSIZE);
+
+  open TARGET, $TRAIN{target} or die "can't read $TRAIN{target}";
+  open SOURCE, $TRAIN{source} or die "can't read $TRAIN{source}";
+
+  my $lastchunk = -1;
+  while (my $target = <TARGET>) {
+	my $source = <SOURCE>;
+
+	# We want to prevent a very small last chunk, which we accomplish
+	# by folding the last chunk into the penultimate chunk.
+	my $chunk = ($numchunks <= 2)
+		? 0 
+		: min($numchunks - 2,
+			  int( (${.} - 1) / $ALIGNER_BLOCKSIZE ));
+	
+	if ($chunk != $lastchunk) {
+	  close CHUNK_SOURCE;
+	  close CHUNK_TARGET;
+	  open CHUNK_SOURCE, ">", "train/splits/corpus.$SOURCE.$chunk" or die;
+	  open CHUNK_TARGET, ">", "train/splits/corpus.$TARGET.$chunk" or die;
+
+	  $lastchunk = $chunk;
+	}
+
+	print CHUNK_SOURCE $source;
+	print CHUNK_TARGET $target;
+  }
+  close CHUNK_SOURCE;
+  close CHUNK_TARGET;
+
+  close SOURCE;
+  close TARGET;
+
+  for (my $chunkno = 0; $chunkno <= $lastchunk; $chunkno++) {
+
+	# create the alignment subdirectory
+	my $chunkdir = "alignments/$chunkno";
+	system("mkdir","-p", $chunkdir);
+	  
+	if ($ALIGNER eq "giza") {
+
+	  # run the alignments commands
+	  $cachepipe->cmd("giza-$chunkno",
+					  "rm -f $chunkdir/corpus.0-0.*; $MOSES_TRAINER -root-dir $chunkdir -e $TARGET.$chunkno -f $SOURCE.$chunkno -corpus train/splits/corpus -first-step 1 -last-step 3 > $chunkdir/giza.log 2>&1",
+					  "train/splits/corpus.$SOURCE.$chunkno",
+					  "train/splits/corpus.$TARGET.$chunkno",
+					  "$chunkdir/model/aligned.grow-diag-final");
+
+	} elsif ($ALIGNER eq "berkeley") {
+
+	  # copy and modify the config file
+	  open FROM, "$JOSHUA/scripts/training/templates/alignment/word-align.conf" or die "can't read berkeley alignment template";
+	  open TO, ">", "alignments/$chunkno/word-align.conf" or die "can't write to 'alignments/$chunkno/word-align.conf'";
+	  while (<FROM>) {
+		s/<SOURCE>/$SOURCE.$chunkno/g;
+		s/<TARGET>/$TARGET.$chunkno/g;
+		s/<CHUNK>/$chunkno/g;
+
+		print TO;
+	  }
+	  close(TO);
+	  close(FROM);
+
+	  # run the job
+	  $cachepipe->cmd("berkeley-aligner-chunk-$chunkno",
+					  "java -d64 -Xmx${ALIGNER_MEM} -jar $JOSHUA/lib/berkeleyaligner.jar ++alignments/$chunkno/word-align.conf",
+					  "alignments/$chunkno/word-align.conf",
+					  "train/splits/corpus.$SOURCE.$chunkno",
+					  "train/splits/corpus.$TARGET.$chunkno",
+					  "$chunkdir/training.align");
+
+	}
+  }
+
+  if ($ALIGNER eq "giza") {
+	  # combine the alignments
+	  $cachepipe->cmd("giza-aligner-combine",
+					  "cat alignments/*/model/aligned.grow-diag-final > alignments/training.align",
+					  "alignments/$lastchunk/model/aligned.grow-diag-final",
+					  "alignments/training.align");
+  } elsif ($ALIGNER eq "berkeley") {
+
+	  # combine the alignments
+	  $cachepipe->cmd("berkeley-aligner-combine",
+					  "cat alignments/*/training.align > alignments/training.align",
+					  "alignments/$lastchunk/training.align",
+					  "alignments/training.align");
+  }
+
+  $ALIGNMENT = "alignments/training.align";
+}
+
+maybe_quit("ALIGN");
+
+
+## PARSE #############################################################
+
+PARSE:
+
+mkdir("train") unless -d "train";
 
 if ($GRAMMAR_TYPE eq "samt") {
 
-#   cachecmd parse "~mpost/code/cdec/vest/parallelize.pl -j 20 -- java -cp /home/hltcoe/mpost/code/berkeleyParser edu.berkeley.nlp.PCFGLA.BerkeleyParser -gr /home/hltcoe/mpost/code/berkeleyParser/eng_sm5.gr <subsampled/subsample.$pair.$maxlen.$en.tok | sed s/^\(/\(TOP/ >subsampled/subsample.$pair.$maxlen.$en.parsed" subsampled/subsample.$pair.$maxlen.$en.{tok,parsed}
+  $cachepipe->cmd("build-vocab",
+				  "cat $TRAIN{target} | $SCRIPTDIR/training/build-vocab.pl > train/vocab.$TARGET",
+				  $TRAIN{target},
+				  "train/vocab.$TARGET");
 
-  $TRAIN{EN} = "$TRAIN{prefix}.$EN.parsed";
+  $cachepipe->cmd("parse",
+				  "cat $TRAIN{target} | $SCRIPTDIR/training/parallelize/parallelize.pl -j $NUMJOBS -- java -jar $JOSHUA/lib/BerkeleyParser.jar -gr $JOSHUA/lib/eng_sm6.gr | sed 's/^\(/\(TOP/' | tee train/corpus.$TARGET.parsed.mc | perl -pi -e 's/(\\S+)\\)/lc(\$1).\")\"/ge' | tee train/corpus.$TARGET.parsed | perl $SCRIPTDIR/training/add-OOVs.pl train/vocab.$TARGET > train/corpus.$TARGET",
+				  "$TRAIN{target}",
+				  "train/corpus.$TARGET");
+
+  $TRAIN{target} = "train/corpus.$TARGET";
 }
 
-maybe_quit("GIZA");
 
 ## THRAX #############################################################
 
 THRAX:
+
+if ($GRAMMAR_TYPE eq "samt") {
+
+  # check whether we need to parse (might be already parsed if we
+  # jumped directly here)
+  if (already_parsed($TRAIN{target})) {
+	mkdir("train") unless -d "train";
+
+	# If the parsing was done in-script, then this step has already
+	# occurred
+	if ($TRAIN{target} ne "train/corpus.$TARGET") {
+	  $cachepipe->cmd("cp-train-$TARGET",
+					  "cp $TRAIN{target} train/corpus.$TARGET",
+					  $TRAIN{target}, "train/corpus.$TARGET");
+	  $TRAIN{target} = "train/corpus.$TARGET";
+	}
+
+	$cachepipe->cmd("cp-train-$SOURCE",
+					"cp $TRAIN{source} train/corpus.$SOURCE",
+					$TRAIN{source}, "train/corpus.$SOURCE");
+	$TRAIN{source} = "train/corpus.$SOURCE";
+
+  } else {
+
+	print "* FATAL: You requested to build an SAMT grammar, but provided an\n";
+	print "  unparsed corpus.  Please re-run the pipeline and begin no later\n";
+	print "  than the PARSE step (--first-step PARSE)\n";
+	exit 1;
+  }
+		
+}
 
 # we may have skipped directly to this step, in which case we need to
 # ensure an alignment was provided
@@ -265,25 +479,39 @@ if (! defined $ALIGNMENT) {
 if (! defined $GRAMMAR_FILE) {
   mkdir("train") unless -d "train";
 
-# create the input file
+  # create the input file
   $cachepipe->cmd("thrax-input-file",
-				  "paste $TRAIN{fr} $TRAIN{en} $ALIGNMENT | perl -pe 's/\t/ ||| /g' | grep -v '(())' > train/thrax-input-file",
-				  $TRAIN{fr}, $TRAIN{en}, $ALIGNMENT,
-				  "train/thrax-input-file");
+					"paste $TRAIN{source} $TRAIN{target} $ALIGNMENT | perl -pe 's/\t/ ||| /g' | grep -v '(())' > train/thrax-input-file",
+					$TRAIN{source}, $TRAIN{target}, $ALIGNMENT,
+					"train/thrax-input-file");
 
-# put the hadoop files in place
+  # rollout the hadoop cluster if needed
+  start_hadoop_cluster() unless defined $HADOOP;
+
+  # put the hadoop files in place
+  my $THRAXDIR = "pipeline-$SOURCE-$TARGET-$GRAMMAR_TYPE-$RUNDIR";
+  $THRAXDIR =~ s#/#_#g;
+
   $cachepipe->cmd("thrax-prep",
 				  "$HADOOP/bin/hadoop fs -rmr $THRAXDIR; $HADOOP/bin/hadoop fs -mkdir $THRAXDIR; $HADOOP/bin/hadoop fs -put train/thrax-input-file $THRAXDIR/input-file",
 				  "train/thrax-input-file", 
 				  "grammar.gz");
 
-  copy_thrax_file();
+  # copy the thrax config file
+  system("grep -v input-file $THRAX_CONF_FILE > thrax-$GRAMMAR_TYPE.conf");
+  system("echo input-file $THRAXDIR/input-file >> thrax-$GRAMMAR_TYPE.conf");
 
   $cachepipe->cmd("thrax-run",
-				  "$HADOOP/bin/hadoop jar $THRAX/bin/thrax.jar -D mapred.child.java.opts='-Xmx$HADOOP_MEM' thrax-$GRAMMAR_TYPE.conf $THRAXDIR > thrax.log 2>&1; rm -f grammar grammar.gz; $HADOOP/bin/hadoop fs -getmerge $THRAXDIR/final/ grammar; gzip -9 grammar",
+				  "$HADOOP/bin/hadoop jar $JOSHUA/lib/thrax.jar -D mapred.child.java.opts='-Xmx$HADOOP_MEM' thrax-$GRAMMAR_TYPE.conf $THRAXDIR > thrax.log 2>&1; rm -f grammar grammar.gz; $HADOOP/bin/hadoop fs -getmerge $THRAXDIR/final/ grammar; gzip -9f grammar",
 				  "train/thrax-input-file",
 				  "grammar.gz");
 
+  stop_hadoop_cluster() if $HADOOP eq "hadoop";
+
+  # cache the thrax-prep step, which depends on grammar.gz
+  $cachepipe->cmd("thrax-prep", "--cache-only");
+
+  # set the grammar file
   $GRAMMAR_FILE = "grammar.gz";
 }
 
@@ -292,14 +520,12 @@ maybe_quit("THRAX");
 ## MERT ##############################################################
 MERT:
 
-# maybe_copy_tuning_data();
-
 # If the language model file wasn't provided, build it from the target side of the training data.  Otherwise, copy it to location.
 if (! defined $LMFILE) {
-  if (exists $TRAIN{en}) {
+  if (exists $TRAIN{target}) {
 	$LMFILE="lm.gz";
 	$cachepipe->cmd("srilm",
-					"$SRILM -interpolate -kndiscount -order 5 -text $TRAIN{en} -lm lm.gz",
+					"$SRILM -interpolate -kndiscount -order 5 -text $TRAIN{target} -lm lm.gz",
 					$LMFILE);
   } elsif (! defined $LMFILE) {
 	print "* FATAL: you skipped training and didn't specify a language model\n";
@@ -320,9 +546,10 @@ if (! defined $LMFILE) {
 }
 
 # filter the tuning LM to the training side of the data (if possible)
-if (-e $LMFILTER and exists $TRAIN{en}) {
+if (-e $LMFILTER and $DO_FILTER_LM and exists $TRAIN{target}) {
+  
   $cachepipe->cmd("filter-lmfile",
-				  "$LMFILTER union arpa model:$LMFILE lm-filtered < $TRAIN{en}; gzip -9f lm-filtered",
+				  "cat $TRAIN{target} | $LMFILTER union arpa model:$LMFILE lm-filtered; gzip -9f lm-filtered",
 				  $LMFILE, "lm-filtered.gz");
   $LMFILE = "lm-filtered.gz";
 }
@@ -331,31 +558,30 @@ mkdir("tune") unless -d "tune";
 
 # filter the tuning grammar
 $cachepipe->cmd("filter-tune",
-				"$SCRIPTDIR/training/scat $GRAMMAR_FILE | $THRAX/scripts/filter_rules.sh $TUNE{fr} | gzip -9 > tune/grammar.filtered.gz",
+				"$SCRIPTDIR/training/scat $GRAMMAR_FILE | java -Dfile.encoding=utf8 -cp $JOSHUA/lib/thrax.jar edu.jhu.thrax.util.TestSetFilter -v $TUNE{source} | gzip -9 > tune/grammar.filtered.gz",
 				$GRAMMAR_FILE,
-				$TUNE{fr},
+				$TUNE{source},
 				"tune/grammar.filtered.gz");
 
-$cachepipe->cmd("filter-tune-sentence-level",
-				"rundir=tune corpus=$TUNE{fr} grammar=tune/grammar.filtered.gz $SCRIPTDIR/filter_grammar_to_sentences.sh",
-				"tune/grammar.filtered.gz",
-				"tune/filtered/grammar.filtered.0.gz");
-
-copy_thrax_file();
-$cachepipe->cmd("glue-tune",
-				"$SCRIPTDIR/training/scat tune/grammar.filtered.gz | $THRAX/scripts/create_glue_grammar.sh thrax-$GRAMMAR_TYPE.conf > tune/grammar.glue",
-				"tune/grammar.filtered.gz",
-				"tune/grammar.glue");
+# copy the thrax config file if it's not already there
+if (! defined $GLUE_GRAMMAR_FILE) {
+  system("grep -v input-file $THRAX_CONF_FILE > thrax-$GRAMMAR_TYPE.conf")
+	  unless -e "thrax-$GRAMMAR_TYPE.conf";
+  $cachepipe->cmd("glue-tune",
+				  "$SCRIPTDIR/training/scat tune/grammar.filtered.gz | java -cp $JOSHUA/lib/thrax.jar:$HADOOP/hadoop-core-0.20.203.0.jar:$HADOOP/lib/commons-logging-1.1.1.jar edu.jhu.thrax.util.CreateGlueGrammar thrax-$GRAMMAR_TYPE.conf > tune/grammar.glue",
+				  "tune/grammar.filtered.gz",
+				  "tune/grammar.glue");
+  $GLUE_GRAMMAR_FILE = "tune/grammar.glue";
+} else {
+  $cachepipe->cmd("glue-tune-copy",
+				  "cp $GLUE_GRAMMAR_FILE tune/grammar.glue",
+				  $GLUE_GRAMMAR_FILE,
+				  "tune/grammar.glue");
+}
+	 
 
 # figure out how many references there are
-my $numrefs = 1;
-if (! -e $TUNE{en}) {
-  my $index = 0;
-  while (-e "$TUNE{en}.$index") {
-	$index++;
-  }
-  $numrefs = $index;
-}
+my $numrefs = get_numrefs($TUNE{target});
 
 mkdir("mert") unless -d "mert";
 foreach my $key (keys %MERTFILES) {
@@ -363,18 +589,24 @@ foreach my $key (keys %MERTFILES) {
   open FROM, $file or die "can't find file '$file'";
   open TO, ">mert/$key" or die "can't write to file 'mert/$key'";
   while (<FROM>) {
-	s/<INPUT>/$TUNE{fr}/g;
-	s/<FR>/$FR/g;
-	s/<EN>/$EN/g;
+	s/<INPUT>/$TUNE{source}/g;
+	s/<SOURCE>/$SOURCE/g;
+	s/<RUNDIR>/$RUNDIR/g;
+	s/<TARGET>/$TARGET/g;
 	s/<LMFILE>/$LMFILE/g;
 	s/<MEM>/$JOSHUA_MEM/g;
 	s/<GRAMMAR>/$GRAMMAR_TYPE/g;
 	s/<OOV>/$OOV/g;
-	s/<NUMJOBS>/50/g;
+	s/<NUMJOBS>/$NUMJOBS/g;
 	s/<QSUB_ARGS>/$QSUB_ARGS/g;
 	s/<OUTPUT>/mert\/tune.output.nbest/g;
-	s/<REF>/$TUNE{en}/g;
+	s/<REF>/$TUNE{target}/g;
+	s/<JOSHUA>/$JOSHUA/g;
 	s/<NUMREFS>/$numrefs/g;
+	s/<CONFIG>/mert\/joshua.config/g;
+	s/<LOG>/mert\/joshua.log/g;
+	s/use_sent_specific_tm=.*/use_sent_specific_tm=$DO_SENT_SPECIFIC_TM/;
+
 	print TO;
   }
   close(FROM);
@@ -384,10 +616,12 @@ chmod(0755,"mert/decoder_command");
 
 # run MERT
 $cachepipe->cmd("mert",
-				"java -d64 -cp $JOSHUA/bin joshua.zmert.ZMERT -maxMem 4500 mert/mert.config > mert.log 2>&1",
+				"java -d64 -cp $JOSHUA/bin joshua.zmert.ZMERT -maxMem 4500 mert/mert.config > mert/mert.log 2>&1",
 				"tune/grammar.filtered.gz",
 				"mert/joshua.config.ZMERT.final",
-				map { "mert/$_" } (keys %MERTFILES));
+				"mert/decoder_command",
+				"mert/mert.config",
+				"mert/params.txt");
 
 # remove sentence-level Joshua files
 #system("rm -rf tune/filtered/");
@@ -397,12 +631,15 @@ maybe_quit("MERT");
 # set joshua config file location for testing
 # $JOSHUA_CONFIG = "mert/joshua.config.ZMERT.final";
 
-# copy the config file for testing (since we know we're not quitting
-# at the MERT step)
+# If we're not quitting at this step, then copy the final Joshua
+# config file to the test directory.
 if ($LAST_STEP ne "MERT") {
-  $cachepipe->cmd("test-joshua-config",
-				  "cat mert/joshua.config | perl -pe 's#tune/#test/#; s/mark_oovs=false/mark_oovs=true/' > test/joshua.config",
-				  $MERTFILES{'joshua.config'},
+  mkdir("test") unless -d "test";
+
+  # for testing, mark OOVs, don't keep sentence-specific grammars
+  $cachepipe->cmd("test-joshua-config-from-mert",
+				  "cat mert/joshua.config.ZMERT.final | perl -pe 's#tune/#test/#; s/mark_oovs=false/mark_oovs=true/; s/use_sent_specific_tm=.*/use_sent_specific_tm=$DO_SENT_SPECIFIC_TM/; s/keep_sent_specific_tm=true/keep_sent_specific_tm=false/' > test/joshua.config",
+				  "mert/joshua.config.ZMERT.final",
 				  "test/joshua.config");
 }
 
@@ -411,11 +648,13 @@ TEST:
 
 mkdir("test") unless -d "test";
 
-## sanity checking
-# if we jumped in here, make sure a joshua.config file was specified
+# If we jumped directly to this step, then the caller is required to
+# have specified a Joshua config file (fully instantiated, not a
+# template), which we'll copy in place
 if ($FIRST_STEP eq "TEST") {
   if ($MERTFILES{'joshua.config'} eq $JOSHUA_CONFIG_ORIG) {
-	print "* FATAL: you need to specify a joshua.config (--joshua-config)\n";
+	print "* FATAL: you need to explicitly specify a joshua.config (--joshua-config)\n";
+	print "         when starting at the TEST step\n";
 	exit 1;
   }
 
@@ -427,21 +666,27 @@ if ($FIRST_STEP eq "TEST") {
 
 # filter the test grammar
 $cachepipe->cmd("filter-test",
-				"$SCRIPTDIR/training/scat $GRAMMAR_FILE | $THRAX/scripts/filter_rules.sh $TEST{fr} | gzip -9 > test/grammar.filtered.gz",
+				"$SCRIPTDIR/training/scat $GRAMMAR_FILE | java -Dfile.encoding=utf8 -cp $JOSHUA/lib/thrax.jar edu.jhu.thrax.util.TestSetFilter -v $TEST{source} | gzip -9 > test/grammar.filtered.gz",
 				$GRAMMAR_FILE,
-				$TEST{fr},
+				$TEST{source},
 				"test/grammar.filtered.gz");
 
-$cachepipe->cmd("filter-test-sentence-level",
-				"rundir=test corpus=$TEST{fr} grammar=test/grammar.filtered.gz $SCRIPTDIR/filter_grammar_to_sentences.sh",
-				"test/grammar.filtered.gz",
-				"test/filtered/grammar.filtered.0.gz");
+# copy the thrax config file if it's not already there
+if (! defined $GLUE_GRAMMAR_FILE) {
+  system("grep -v input-file $THRAX_CONF_FILE > thrax-$GRAMMAR_TYPE.conf")
+	  unless -e "thrax-$GRAMMAR_TYPE.conf";
 
-copy_thrax_file();
-$cachepipe->cmd("glue-test",
-				"$SCRIPTDIR/training/scat test/grammar.filtered.gz | $THRAX/scripts/create_glue_grammar.sh thrax-$GRAMMAR_TYPE.conf > test/grammar.glue",
-				"test/grammar.filtered.gz",
-				"test/grammar.glue");
+  $cachepipe->cmd("glue-test",
+				  "$SCRIPTDIR/training/scat test/grammar.filtered.gz | java -cp $JOSHUA/lib/thrax.jar:$HADOOP/hadoop-core-20.203.0.jar:$HADOOP/lib/commons-logging-1.1.1.jar edu.jhu.thrax.util.CreateGlueGrammar thrax-$GRAMMAR_TYPE.conf > test/grammar.glue",
+				  "test/grammar.filtered.gz",
+				  "test/grammar.glue");
+  $GLUE_GRAMMAR_FILE = "test/grammar.glue";
+} else {
+  $cachepipe->cmd("glue-test-copy",
+				  "cp $GLUE_GRAMMAR_FILE test/grammar.glue",
+				  $GLUE_GRAMMAR_FILE,
+				  "test/grammar.glue");
+}
 
 # decode test set
 foreach my $key (qw(decoder_command)) {
@@ -449,16 +694,21 @@ foreach my $key (qw(decoder_command)) {
   open FROM, $file or die "can't find file '$file'";
   open TO, ">test/$key" or die "can't write to 'test/$key'";
   while (<FROM>) {
-	s/<INPUT>/$TEST{fr}/g;
-	s/<NUMJOBS>/50/g;
+	s/<INPUT>/$TEST{source}/g;
+	s/<NUMJOBS>/$NUMJOBS/g;
 	s/<QSUB_ARGS>/$QSUB_ARGS/g;
 	s/<OUTPUT>/test\/test.output.nbest/g;
-	s/<FR>/$FR/g;
-	s/<EN>/$EN/g;
+	s/<JOSHUA>/$JOSHUA/g;
+	s/<NUMREFS>/$numrefs/g;
+	s/<SOURCE>/$SOURCE/g;
+	s/<TARGET>/$TARGET/g;
+	s/<RUNDIR>/$TARGET/g;
 	s/<LMFILE>/$LMFILE/g;
 	s/<MEM>/$JOSHUA_MEM/g;
 	s/<GRAMMAR>/$GRAMMAR_TYPE/g;
 	s/<OOV>/$OOV/g;
+	s/<CONFIG>/test\/joshua.config/g;
+	s/<LOG>/test\/joshua.log/g;
 
 	print TO;
   }
@@ -474,17 +724,29 @@ $cachepipe->cmd("test-decode",
 				"test/grammar.filtered.gz",
 				"test/test.output.nbest");
 
+$cachepipe->cmd("remove-oov",
+				"cat test/test.output.nbest | perl -pe 's/_OOV//g' > test/test.output.nbest.noOOV",
+				"test/test.output.nbest",
+				"test/test.output.nbest.noOOV");
+
 if ($DO_MBR) {
-  $cachepipe->cmd("test-onebest-mbr", "java -cp $JOSHUA/bin -Xmx1700m -Xms1700m joshua.decoder.NbestMinRiskReranker test/test.output.nbest test/test.output.1best false 1",
-				  "test/test.output.nbest", "test/test.output.1best");
+  my $numlines = `cat $TEST{source} | wc -l`;
+  $numlines--;
+
+  $cachepipe->cmd("test-onebest-parmbr", 
+				  "seq 0 $numlines | $SCRIPTDIR/training/parallelize/parallelize.pl -j $NUMJOBS -- $SCRIPTDIR/training/parmbr.sh test/test.output.nbest.noOOV $JOSHUA/bin > test/test.output.1best",
+				  "test/test.output.nbest.noOOV", 
+				  "test/test.output.1best");
 } else {
   $cachepipe->cmd("test-extract-onebest",
 				  "java -cp $JOSHUA/bin -Dfile.encoding=utf8 joshua.util.ExtractTopCand test/test.output.nbest test/test.output.1best",
-				  "test/test.output.nbest", "test/test.output.1best");
+				  "test/test.output.nbest.noOOV", 
+				  "test/test.output.1best");
 }
 
+$numrefs = get_numrefs($TEST{target});
 $cachepipe->cmd("test-bleu",
-				"java -cp $JOSHUA/bin -Djava.library.path=lib -Xmx1000m -Xms1000m -Djava.util.logging.config.file=logging.properties joshua.util.JoshuaEval -cand test/test.output.1best -ref $TEST{en} -m BLEU 4 closest > test/test.output.1best.bleu",
+				"java -cp $JOSHUA/bin -Djava.library.path=lib -Xmx1000m -Xms1000m -Djava.util.logging.config.file=logging.properties joshua.util.JoshuaEval -cand test/test.output.1best -ref $TEST{target} -rps $numrefs -m BLEU 4 closest > test/test.output.1best.bleu",
 				"test/test.output.1best", "test/test.output.1best.bleu");
 
 system("cat test/test.output.1best.bleu");
@@ -495,81 +757,54 @@ system("cat test/test.output.1best.bleu");
 LAST:
 1;
 
-sub copy_thrax_file {
-  $cachepipe->cmd("thrax-config",
-				  "cp $JOSHUA/scripts/training/templates/thrax-$GRAMMAR_TYPE.conf .; echo input-file $THRAXDIR/input-file >> thrax-$GRAMMAR_TYPE.conf",
-				  "$JOSHUA/scripts/training/templates/thrax-$GRAMMAR_TYPE.conf",
-				  "thrax-$GRAMMAR_TYPE.conf");
-}
-
-# applies if the early steps were skipped
-# sub maybe_copy_tuning_data {
-#   if (! -e "tune/tune.$FR.tok.lc") {
-# 	$cachepipe->cmd("cp-tuning-data",
-# 					"cp $TUNE{fr} tune/tune.$FR.tok.lc; cp $TUNE{en} tune/tune.$EN.tok.lc",
-# 					$TUNE{fr}, "tune/tune.$FR.tok.lc",
-# 					$TUNE{en}, "tune/tune.$EN.tok.lc");
-# 	$TUNE{fr} = "tune/tune.$FR.tok.lc";
-# 	$TUNE{en} = "tune/tune.$EN.tok.lc";
-#   }
-# }
-
-# # copies test data over if early stages were skipped
-# sub maybe_copy_test_data {
-#   if (! -e "test/test.$FR.tok.lc") {
-# 	$cachepipe->cmd("cp-test-data",
-# 					"cp $TEST{fr} test/test.$FR.tok.lc; cp $TEST{en} test/test.$EN.tok.lc",
-# 					$TEST{fr}, "test/test.$FR.tok.lc",
-# 					$TEST{en}, "test/test.$EN.tok.lc");
-# 	$TEST{fr} = "test/test.$FR.tok.lc";
-# 	$TEST{en} = "test/test.$EN.tok.lc";
-#   }
-# }
-
-
+# Does tokenization and normalization of training, tuning, and test data.
 sub prepare_data {
   my ($label,$corpora,$maxlen) = @_;
 
   mkdir $label unless -d $label;
 
   # copy the data from its original location to our location
-  foreach my $lang ($EN,$FR,"$EN.0","$EN.1","$EN.2","$EN.3") {
+  foreach my $lang ($TARGET,$SOURCE,"$TARGET.0","$TARGET.1","$TARGET.2","$TARGET.3") {
 	  my @files = map { "$_.$lang" } @$corpora;
 	  my $files = join(" ",@files);
 	  if (-e $files[0]) {
 		$cachepipe->cmd("$label-copy-$lang",
-						"cat $files > $label/$label.$lang",
-						@files, "$label/$label.$lang");
+						"cat $files | gzip -9 > $label/$label.$lang.gz",
+						@files, "$label/$label.$lang.gz");
 	  }
   }
 
   # tokenize the data
-  foreach my $lang ($EN,$FR,"$EN.0","$EN.1","$EN.2","$EN.3") {
-	if (-e "$label/$label.$lang") {
+  foreach my $lang ($TARGET,$SOURCE,"$TARGET.0","$TARGET.1","$TARGET.2","$TARGET.3") {
+	if (-e "$label/$label.$lang.gz") {
 	  $cachepipe->cmd("$label-tokenize-$lang",
-					  "$SCRIPTDIR/training/scat $label/$label.$lang | $TOKENIZER -l $lang > $label/$label.tok.$lang 2> /dev/null",
-					  "$label/$label.$lang", "$label/$label.tok.$lang"
+					  "$SCRIPTDIR/training/scat $label/$label.$lang.gz | $TOKENIZER -l $lang 2> /dev/null | gzip -9 > $label/$label.tok.$lang.gz",
+					  "$label/$label.$lang.gz", "$label/$label.tok.$lang.gz"
 		  );
 	}
   }
 
   my $infix = "";
-  if ($maxlen and $label eq "train") {
-	# trim training data
-	$cachepipe->cmd("train-trim",
-					"$SCRIPTDIR/training/trim_parallel_corpus.pl $label/$label.tok.$EN $label/$label.tok.$FR $maxlen > $label/$label.tok.$maxlen.$EN 2> $label/$label.tok.$maxlen.$FR",
-					"$label/$label.tok.$EN", "$label/$label.tok.$FR",
-					"$label/$label.tok.$maxlen.$EN", "$label/$label.tok.$maxlen.$FR",
-		);
-	$infix = ".$maxlen";
+  if ($label eq "train") {
+	if ($maxlen) {
+	  # trim training data
+	  $cachepipe->cmd("train-trim",
+					  "paste <(gzip -cd $label/$label.tok.$TARGET.gz) <(gzip -cd $label/$label.tok.$SOURCE.gz) | $SCRIPTDIR/training/trim_parallel_corpus.pl $maxlen | $SCRIPTDIR/training/split2files.pl $label/$label.tok.$maxlen.$TARGET.gz $label/$label.tok.$maxlen.$SOURCE.gz",
+					  "$label/$label.tok.$TARGET.gz", 
+					  "$label/$label.tok.$SOURCE.gz",
+					  "$label/$label.tok.$maxlen.$TARGET.gz", 
+					  "$label/$label.tok.$maxlen.$SOURCE.gz",
+		  );
+	  $infix .= ".$maxlen";
+	}
   }
 
   # lowercase
-  foreach my $lang ($EN,$FR,"$EN.0","$EN.1","$EN.2","$EN.3") {
-	if (-e "$label/$label.$lang") {
+  foreach my $lang ($TARGET,$SOURCE,"$TARGET.0","$TARGET.1","$TARGET.2","$TARGET.3") {
+	if (-e "$label/$label.$lang.gz") {
 	  $cachepipe->cmd("$label-lowercase-$lang",
-					  "cat $label/$label.tok$infix.$lang | $SCRIPTDIR/lowercase.perl > $label/$label.tok$infix.lc.$lang",
-					  "$label/$label.tok$infix.$lang",
+					  "gzip -cd $label/$label.tok$infix.$lang.gz | $SCRIPTDIR/lowercase.perl > $label/$label.tok$infix.lc.$lang",
+					  "$label/$label.tok$infix.$lang.gz",
 					  "$label/$label.tok$infix.lc.$lang");
 	}
   }
@@ -584,3 +819,94 @@ sub maybe_quit {
   }
 }
 
+## returns 1 if every sentence in the corpus begins with an open paren,
+## false otherwise
+sub already_parsed {
+  my ($corpus) = @_;
+
+  open(CORPUS, $corpus) or die "can't read corpus file '$corpus'\n";
+  while (<CORPUS>) {
+	# if we see a line not beginning with an open paren, we consider
+	# the file not to be parsed
+	return 0 unless /^\(/;
+  }
+  close(CORPUS);
+
+  return 1;
+}
+
+sub not_defined {
+  my ($var) = @_;
+
+  print "* FATAL: environment variable \$$var is not defined.\n";
+  exit;
+}
+
+# Takes a prefix.  If that prefix exists, then all the references are
+# assumed to be in that file.  Otherwise, we successively append an
+# index, looking for parallel references.
+sub get_numrefs {
+  my ($prefix) = @_;
+
+  my $numrefs = 1;
+  if (! -e $prefix) {
+	my $index = 0;
+	while (-e "$prefix.$index") {
+	  $index++;
+	}
+	$numrefs = $index;
+  }
+
+  return $numrefs;
+}
+
+sub start_hadoop_cluster {
+  rollout_hadoop_cluster();
+
+  # start the cluster
+  system("./hadoop/bin/start-all.sh");
+  sleep(30);
+}
+
+sub rollout_hadoop_cluster {
+  if (! -d "hadoop") {
+	system("tar xzf $JOSHUA/lib/hadoop-0.20.203.0rc1.tar.gz");
+	system("ln -sf hadoop-0.20.203.0 hadoop");
+
+	chomp(my $hostname = `hostname --fqdn`);
+
+	foreach my $file (qw/core-site.xml mapred-site.xml hdfs-site.xml/) {
+	  open READ, "$JOSHUA/scripts/training/templates/hadoop/$file" or die $file;
+	  open WRITE, ">", "hadoop/conf/$file" or die "write $file";
+	  while (<READ>) {
+		s/<HADOOP-TMP-DIR>/$RUNDIR\/hadoop\/tmp/g;
+		s/<HOST>/$hostname/g;
+		s/<PORT1>/9000/g;
+		s/<PORT2>/9001/g;
+		s/<MAX-MAP-TASKS>/2/g;
+		s/<MAX-REDUCE-TASKS>/2/g;
+
+		print WRITE;
+	  }
+	  close WRITE;
+	  close READ;
+	}
+
+	system("echo $hostname > hadoop/conf/masters");
+	system("echo $hostname > hadoop/conf/slaves");
+
+	system("./hadoop/bin/hadoop namenode -format");
+	sleep(5);
+  }
+
+  $ENV{HADOOP} = $HADOOP = "hadoop";
+}
+
+sub stop_hadoop_cluster {
+  system("hadoop/bin/stop-all.sh");
+}
+
+sub teardown_hadoop_cluster {
+  stop_hadoop_cluster();
+  system("rm -rf hadoop-0.20.203.0 hadoop");
+}

@@ -1,0 +1,18 @@
+<configuration>
+  <property>
+    <name>mapred.job.tracker</name>
+    <value><HOST>:<PORT2></value>
+  </property>
+  <property>
+	<name>mapred.tasktracker.map.tasks.maximum</name>
+	<value><MAX-MAP-TASKS></value>
+  </property>
+  <property>
+	<name>mapred.tasktracker.reduce.tasks.maximum</name>
+	<value><MAX-REDUCE-TASKS></value>
+  </property>
+  <property>
+	<name>mapred.task.timeout</name>
+	<value>0</value>
+  </property>
+</configuration>

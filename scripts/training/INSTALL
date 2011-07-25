@@ -1,0 +1,90 @@
+The Joshua pipeline has the following external dependencies:
+
+- Moses scripts
+
+  You must download and install Moses and the Moses support scripts.  Moses, in turn, depends on 
+
+In addition, Joshua depends on the following externally-developed
+software, which is included with the Joshua distribution:
+
+- Hadoop (0.20.203.0)
+  http://www.apache.org/dist/hadoop/common/hadoop-0.20.203.0/hadoop-0.20.203.0rc1.tar.gz
+
+  Hadoop is used by Thrax for extracting Hiero- and SAMT-style
+  grammars.  You can use your own hadoop installation, but if you
+  don't have one, the pipeline script will set one up for you and tear
+  it down afterward.
+
+- The Berkeley Aligner (2.1)
+  http://berkeleyaligner.googlecode.com/files/berkeleyaligner_unsupervised-2.1.tar.gz
+
+  The pipeline supports both GIZA++ (the default) and the Berkeley
+  aligner for alignment.
+
+- Berkeley Parser
+  http://code.google.com/p/berkeleyparser/source/checkout
+
+  For SAMT grammar extraction, a parse of one side of the data is
+  required.
+
+
+== INSTALLATION ======================================================
+
+0. Set the following environment variables to point to their
+   installation locations:
+
+   Make sure the following environment variables are defined in your
+   ~/.profile (for tcsh) or ~/.bashrc (for bash):
+
+     export SCRIPTS_ROOTDIR=/path/to/moses/scripts
+
+   Optionally, if you have an existing Hadoop installation, set its
+   variable:
+   
+     export HADOOP=/path/to/hadoop/root
+
+   Important: make sure that $HADOOP is unset if you do not have a
+   Hadoop installation, since the pipeline script uses this setting to
+   determine whether to rollout its own cluster.
+
+1. Download and install Joshua.  
+
+   The best way to do this is to use git to clone the latest
+   stable release of the codebase:
+
+     git clone git@github.com:joshua-decoder/joshua.git
+
+     cd joshua
+     ant jar
+
+   Make sure to set the JOSHUA environment variable:
+
+     export JOSHUA=/path/to/joshua
+
+2. Test your installation
+
+     cd $JOSHUA/scripts/training/test
+     ./test.sh
+
+   This will build a Hiero model on a small Haitian/English corpus.  At the end, you should see this:
+
+     Processing 100 sentences...
+     Evaluating candidate translations in plain file test/test.output.1best...
+     BLEU_precision(1) = 163 / 2451 = 0.0665
+	 BLEU_precision(2) = 2 / 2351 = 0.0009
+	 BLEU_precision(3) = 0 / 2255 ==smoothed==> 0.0002
+	 BLEU_precision(4) = 0 / 2159 ==smoothed==> 0.0001
+	 BLEU_precision = 0.0010
+
+	 Length of candidate corpus = 2451
+	 Effective length of reference corpus = 2220
+	 BLEU_BP = 1.0000
+
+	   => BLEU = 0.0010
+     
+   That is a very bad score, but don't worry, it's because there isn't
+   very much training data.
+
+== FEEDBACK ==========================================================
+
+Problems?  Suggestions?  Email joshua_technical@googlegroups.com.

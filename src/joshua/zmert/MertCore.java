@@ -201,7 +201,7 @@ public class MertCore
   private String tmpDirPrefix;
     // prefix for the ZMERT.temp.* files
 
-  private int passIterationToDecoder;
+  private boolean passIterationToDecoder;
     // should the iteration number be passed as an argument to decoderCommandFileName?
     // If 1, iteration number is passed.  If 0, launch with no arguments.
 
@@ -1378,10 +1378,8 @@ public double[] run_single_iteration(
 
       try {
         Runtime rt = Runtime.getRuntime();
-        String cmd = decoderCommandFileName;
-        if (passIterationToDecoder == 1) {
-          cmd = cmd + " " + iteration;
-        }
+		String cmd[] = {"/usr/bin/setsid", decoderCommandFileName,
+						passIterationToDecoder ? Integer.toString(iteration) : ""};
         Process p = rt.exec(cmd);
 
         StreamGobbler errorGobbler = new StreamGobbler(p.getErrorStream(), decVerbosity);
@@ -2049,7 +2047,7 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
 //	useDisk = 2;
 	// Decoder specs
 	decoderCommandFileName = null;
-	passIterationToDecoder = 0;
+	passIterationToDecoder = false;
 	decoderOutFileName = "output.nbest";
 	validDecoderExitValue = 0;
 	decoderConfigFileName = "dec_cfg.txt";
@@ -2059,7 +2057,7 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
 	fakeFileNameSuffix = null;
 	// Output specs
 	verbosity = 1;
-	decVerbosity = 0;
+	decVerbosity = 1;
 	
 	damianos_method = 0;
 	damianos_param = 0.0;
@@ -2245,11 +2243,12 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
 		else if (option.equals("-cmd")) {
 			decoderCommandFileName = args[i+1];
 		} else if (option.equals("-passIt")) {
-			passIterationToDecoder = Integer.parseInt(args[i+1]);
-			if (passIterationToDecoder < 0 || passIterationToDecoder > 1) {
+			int val = Integer.parseInt(args[i+1]);
+			if (val < 0 || val > 1) {
 				println("passIterationToDecoder should be either 0 or 1"); 
 				System.exit(10);
 			}
+			passIterationToDecoder = (val == 1) ? true : false;
 		} else if (option.equals("-decOut")) {
 			decoderOutFileName = args[i+1];
 		} else if (option.equals("-decExit")) {
