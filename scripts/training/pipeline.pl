@@ -59,7 +59,7 @@ my %MERTFILES = (
 my $DO_SENT_SPECIFIC_TM = 1;
 my $DO_MBR = 1;
 
-my $ALIGNER = "berkeley"; # or "giza"
+my $ALIGNER = "giza"; # or "berkeley"
 
 # for hadoop java subprocesses (heap amount)
 # you really just have to play around to find out how much is enough 
@@ -454,10 +454,12 @@ if ($GRAMMAR_TYPE eq "samt") {
 	  $TRAIN{target} = "train/corpus.$TARGET";
 	}
 
-	$cachepipe->cmd("cp-train-$SOURCE",
-					"cp $TRAIN{source} train/corpus.$SOURCE",
-					$TRAIN{source}, "train/corpus.$SOURCE");
-	$TRAIN{source} = "train/corpus.$SOURCE";
+	if ($TRAIN{source} ne "train/corpus.$SOURCE") {
+	  $cachepipe->cmd("cp-train-$SOURCE",
+					  "cp $TRAIN{source} train/corpus.$SOURCE",
+					  $TRAIN{source}, "train/corpus.$SOURCE");
+	  $TRAIN{source} = "train/corpus.$SOURCE";
+	}
 
   } else {
 
@@ -865,16 +867,18 @@ sub start_hadoop_cluster {
 
   # start the cluster
   system("./hadoop/bin/start-all.sh");
-  sleep(30);
+  sleep(120);
 }
 
 sub rollout_hadoop_cluster {
+  # if it's not already unpacked, unpack it
   if (! -d "hadoop") {
 	system("tar xzf $JOSHUA/lib/hadoop-0.20.203.0rc1.tar.gz");
 	system("ln -sf hadoop-0.20.203.0 hadoop");
 
 	chomp(my $hostname = `hostname --fqdn`);
 
+	# copy configuration files
 	foreach my $file (qw/core-site.xml mapred-site.xml hdfs-site.xml/) {
 	  open READ, "$JOSHUA/scripts/training/templates/hadoop/$file" or die $file;
 	  open WRITE, ">", "hadoop/conf/$file" or die "write $file";
@@ -895,9 +899,24 @@ sub rollout_hadoop_cluster {
 	system("echo $hostname > hadoop/conf/masters");
 	system("echo $hostname > hadoop/conf/slaves");
 
-	system("./hadoop/bin/hadoop namenode -format");
-	sleep(5);
+  } else {
+
+	# if it exists, shut things down, just in case
+	system("./hadoop/bin/stop-all.sh");
+
   }
+  
+  # make sure hadoop isn't running already
+  my $running = `ps ax | grep hadoop | grep -v grep`;
+  if ($running) {
+	print "* WARNING: it looks like some Hadoop processes are already running\n";
+	$running =~ s/^/\t/gm;
+	print $running;
+  }
+
+  # format the name node
+  system("./hadoop/bin/hadoop namenode -format");
+  sleep(120);
 
   $ENV{HADOOP} = $HADOOP = "hadoop";
 }
