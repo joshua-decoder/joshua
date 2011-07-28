@@ -492,10 +492,13 @@ if (! defined $GRAMMAR_FILE) {
   mkdir("train") unless -d "train";
 
   # create the input file
+  my $target_file = ($GRAMMAR_TYPE eq "hiero") 
+	  ? $TRAIN{target} : $TRAIN{parsed};
   $cachepipe->cmd("thrax-input-file",
-					"paste $TRAIN{source} $TRAIN{parsed} $ALIGNMENT | perl -pe 's/\t/ ||| /g' | grep -v '(())' > train/thrax-input-file",
-					$TRAIN{source}, $TRAIN{parsed}, $ALIGNMENT,
+				  "paste $TRAIN{source} $target_file $ALIGNMENT | perl -pe 's/\t/ ||| /g' | grep -v '(())' > train/thrax-input-file",
+					$TRAIN{source}, $target_file, $ALIGNMENT,
 					"train/thrax-input-file");
+
 
   # rollout the hadoop cluster if needed
   start_hadoop_cluster() unless defined $HADOOP;
@@ -516,6 +519,7 @@ if (! defined $GRAMMAR_FILE) {
   $cachepipe->cmd("thrax-run",
 				  "$HADOOP/bin/hadoop jar $JOSHUA/lib/thrax.jar -D mapred.child.java.opts='-Xmx$HADOOP_MEM' thrax-$GRAMMAR_TYPE.conf $THRAXDIR > thrax.log 2>&1; rm -f grammar grammar.gz; $HADOOP/bin/hadoop fs -getmerge $THRAXDIR/final/ grammar; gzip -9f grammar",
 				  "train/thrax-input-file",
+				  "thrax-$GRAMMAR_TYPE.conf",
 				  "grammar.gz");
 
   stop_hadoop_cluster() if $HADOOP eq "hadoop";
