@@ -227,25 +227,25 @@ if (@CORPORA == 0) {
 }
 
 # prepare the training data
-prepare_data("train",\@CORPORA,$MAXLEN);
+my $prefix = prepare_data("train",\@CORPORA,$MAXLEN);
 $TRAIN{prefix} = "train/corpus";
 foreach my $lang ($SOURCE,$TARGET) {
-  system("ln -sf train.tok.$MAXLEN.lc.$lang train/corpus.$lang");
+  system("ln -sf $prefix.$lang train/corpus.$lang");
 }
 $TRAIN{source} = "train/corpus.$SOURCE";
 $TRAIN{target} = "train/corpus.$TARGET";
 
 # prepare the tuning and development data
 if (defined $TUNE) {
-  prepare_data("tune",[$TUNE]);
-  $TUNE{source} = "tune/tune.tok.lc.$SOURCE";
-  $TUNE{target} = "tune/tune.tok.lc.$TARGET";
+  my $prefix = prepare_data("tune",[$TUNE]);
+  $TUNE{source} = "tune/$prefix.$SOURCE";
+  $TUNE{target} = "tune/$prefix.$TARGET";
 }
 
 if (defined $TEST) {
-  prepare_data("test",[$TEST]);
-  $TEST{source} = "test/test.tok.lc.$SOURCE";
-  $TEST{target} = "test/test.tok.lc.$TARGET";
+  my $prefix = prepare_data("test",[$TEST]);
+  $TEST{source} = "test/$prefix.$SOURCE";
+  $TEST{target} = "test/$prefix.$TARGET";
 }
 
 maybe_quit("FIRST");
@@ -426,11 +426,11 @@ if ($GRAMMAR_TYPE eq "samt") {
 				  "train/vocab.$TARGET");
 
   $cachepipe->cmd("parse",
-				  "cat $TRAIN{target} | $SCRIPTDIR/training/parallelize/parallelize.pl -j $NUMJOBS -- java -jar $JOSHUA/lib/BerkeleyParser.jar -gr $JOSHUA/lib/eng_sm6.gr | sed 's/^\(/\(TOP/' | tee train/corpus.$TARGET.parsed.mc | perl -pi -e 's/(\\S+)\\)/lc(\$1).\")\"/ge' | tee train/corpus.$TARGET.parsed | perl $SCRIPTDIR/training/add-OOVs.pl train/vocab.$TARGET > train/corpus.$TARGET",
+				  "cat $TRAIN{target} | $SCRIPTDIR/training/parallelize/parallelize.pl -j $NUMJOBS -- java -jar $JOSHUA/lib/BerkeleyParser.jar -gr $JOSHUA/lib/eng_sm6.gr | sed 's/^\(/\(TOP/' | tee train/corpus.$TARGET.parsed.mc | perl -pi -e 's/(\\S+)\\)/lc(\$1).\")\"/ge' | tee train/corpus.$TARGET.parsed | perl $SCRIPTDIR/training/add-OOVs.pl train/vocab.$TARGET > train/corpus.parsed.$TARGET",
 				  "$TRAIN{target}",
-				  "train/corpus.$TARGET");
+				  "train/corpus.parsed.$TARGET");
 
-  $TRAIN{target} = "train/corpus.$TARGET";
+  $TRAIN{parsed} = "train/corpus.parsed.$TARGET";
 }
 
 
@@ -440,19 +440,29 @@ THRAX:
 
 if ($GRAMMAR_TYPE eq "samt") {
 
-  # check whether we need to parse (might be already parsed if we
-  # jumped directly here)
-  if (already_parsed($TRAIN{target})) {
+  # if we jumped right here, $TRAIN{target} should be parsed
+  if (exists $TRAIN{parsed}) {
+	# parsing step happened in-script, all is well
+
+  } elsif (already_parsed($TRAIN{target})) {
+	# skipped straight to this step, passing a parsed corpus
+
 	mkdir("train") unless -d "train";
 
-	# If the parsing was done in-script, then this step has already
-	# occurred
-	if ($TRAIN{target} ne "train/corpus.$TARGET") {
-	  $cachepipe->cmd("cp-train-$TARGET",
-					  "cp $TRAIN{target} train/corpus.$TARGET",
-					  $TRAIN{target}, "train/corpus.$TARGET");
-	  $TRAIN{target} = "train/corpus.$TARGET";
-	}
+	$TRAIN{parsed} = "train/corpus.parsed.$TARGET";
+	
+	$cachepipe->cmd("cp-train-$TARGET",
+					"cp $TRAIN{target} $TRAIN{parsed}",
+					$TRAIN{target}, 
+					$TRAIN{parsed});
+
+	$TRAIN{target} = "train/corpus.$TARGET";
+
+	# now extract the leaves of the parsed corpus
+	$cachepipe->("extract-leaves",
+				 "cat $TRAIN{parsed} | perl -pe 's/\(.*?(\\S+)\)+?/$1/g' | perl -pe 's/\)//g' > $TRAIN{target}",
+				 $TRAIN{parsed},
+				 $TRAIN{target});
 
 	if ($TRAIN{source} ne "train/corpus.$SOURCE") {
 	  $cachepipe->cmd("cp-train-$SOURCE",
@@ -483,8 +493,8 @@ if (! defined $GRAMMAR_FILE) {
 
   # create the input file
   $cachepipe->cmd("thrax-input-file",
-					"paste $TRAIN{source} $TRAIN{target} $ALIGNMENT | perl -pe 's/\t/ ||| /g' | grep -v '(())' > train/thrax-input-file",
-					$TRAIN{source}, $TRAIN{target}, $ALIGNMENT,
+					"paste $TRAIN{source} $TRAIN{parsed} $ALIGNMENT | perl -pe 's/\t/ ||| /g' | grep -v '(())' > train/thrax-input-file",
+					$TRAIN{source}, $TRAIN{parsed}, $ALIGNMENT,
 					"train/thrax-input-file");
 
   # rollout the hadoop cluster if needed
@@ -760,56 +770,67 @@ LAST:
 1;
 
 # Does tokenization and normalization of training, tuning, and test data.
+# $label: one of train, tune, or test
+# $corpora: arrayref of files (multiple allowed for training data)
+# $maxlen: maximum length (only applicable to training)
 sub prepare_data {
   my ($label,$corpora,$maxlen) = @_;
 
   mkdir $label unless -d $label;
 
   # copy the data from its original location to our location
-  foreach my $lang ($TARGET,$SOURCE,"$TARGET.0","$TARGET.1","$TARGET.2","$TARGET.3") {
-	  my @files = map { "$_.$lang" } @$corpora;
-	  my $files = join(" ",@files);
-	  if (-e $files[0]) {
-		$cachepipe->cmd("$label-copy-$lang",
-						"cat $files | gzip -9 > $label/$label.$lang.gz",
-						@files, "$label/$label.$lang.gz");
-	  }
-  }
-
-  # tokenize the data
-  foreach my $lang ($TARGET,$SOURCE,"$TARGET.0","$TARGET.1","$TARGET.2","$TARGET.3") {
-	if (-e "$label/$label.$lang.gz") {
-	  $cachepipe->cmd("$label-tokenize-$lang",
-					  "$SCRIPTDIR/training/scat $label/$label.$lang.gz | $TOKENIZER -l $lang 2> /dev/null | gzip -9 > $label/$label.tok.$lang.gz",
-					  "$label/$label.$lang.gz", "$label/$label.tok.$lang.gz"
-		  );
+  foreach my $ext ($TARGET,$SOURCE,"$TARGET.0","$TARGET.1","$TARGET.2","$TARGET.3") {
+	# append each extension to the corpora prefixes
+	my @files = map { "$_.$ext" } @$corpora;
+	# a list of all the files (in case of multiple corpora prefixes)
+	my $files = join(" ",@files);
+	if (-e $files[0]) {
+	  $cachepipe->cmd("$label-copy-$ext",
+					  "cat $files | gzip -9 > $label/$label.$ext.gz",
+					  @files, "$label/$label.$ext.gz");
 	}
   }
 
-  my $infix = "";
+  my $prefix = "$label";
+
+  # tokenize the data
+  foreach my $lang ($TARGET,$SOURCE,"$TARGET.0","$TARGET.1","$TARGET.2","$TARGET.3") {
+	if (-e "$label/$prefix.$lang.gz") {
+	  $cachepipe->cmd("$label-tokenize-$lang",
+					  "$SCRIPTDIR/training/scat $label/$prefix.$lang.gz | $TOKENIZER -l $lang 2> /dev/null | gzip -9 > $label/$prefix.tok.$lang.gz",
+					  "$label/$prefix.$lang.gz", "$label/$prefix.tok.$lang.gz"
+		  );
+	  # extend the prefix
+	}
+  }
+  $prefix .= ".tok";
+
   if ($label eq "train") {
 	if ($maxlen) {
 	  # trim training data
 	  $cachepipe->cmd("train-trim",
-					  "paste <(gzip -cd $label/$label.tok.$TARGET.gz) <(gzip -cd $label/$label.tok.$SOURCE.gz) | $SCRIPTDIR/training/trim_parallel_corpus.pl $maxlen | $SCRIPTDIR/training/split2files.pl $label/$label.tok.$maxlen.$TARGET.gz $label/$label.tok.$maxlen.$SOURCE.gz",
-					  "$label/$label.tok.$TARGET.gz", 
-					  "$label/$label.tok.$SOURCE.gz",
-					  "$label/$label.tok.$maxlen.$TARGET.gz", 
-					  "$label/$label.tok.$maxlen.$SOURCE.gz",
+					  "paste <(gzip -cd $label/$prefix.$TARGET.gz) <(gzip -cd $label/$prefix.$SOURCE.gz) | $SCRIPTDIR/training/trim_parallel_corpus.pl $maxlen | $SCRIPTDIR/training/split2files.pl $label/$prefix.$maxlen.$TARGET.gz $label/$prefix.$maxlen.$SOURCE.gz",
+					  "$label/$prefix.$TARGET.gz", 
+					  "$label/$prefix.$SOURCE.gz",
+					  "$label/$prefix.$maxlen.$TARGET.gz", 
+					  "$label/$prefix.$maxlen.$SOURCE.gz",
 		  );
-	  $infix .= ".$maxlen";
 	}
+	$prefix .= ".$maxlen";
   }
 
   # lowercase
   foreach my $lang ($TARGET,$SOURCE,"$TARGET.0","$TARGET.1","$TARGET.2","$TARGET.3") {
-	if (-e "$label/$label.$lang.gz") {
+	if (-e "$label/$prefix.$lang.gz") {
 	  $cachepipe->cmd("$label-lowercase-$lang",
-					  "gzip -cd $label/$label.tok$infix.$lang.gz | $SCRIPTDIR/lowercase.perl > $label/$label.tok$infix.lc.$lang",
-					  "$label/$label.tok$infix.$lang.gz",
-					  "$label/$label.tok$infix.lc.$lang");
+					  "gzip -cd $label/$prefix.$lang.gz | $SCRIPTDIR/lowercase.perl > $label/$prefix.lc.$lang",
+					  "$label/$prefix.$lang.gz",
+					  "$label/$prefix.lc.$lang");
 	}
   }
+  $prefix .= ".lc";
+
+  return $prefix;
 }
 
 sub maybe_quit {
