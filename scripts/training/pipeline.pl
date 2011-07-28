@@ -17,6 +17,13 @@
 #   and only re-run if necessary
 # - uses Thrax for grammar extraction
 
+my $JOSHUA;
+
+BEGIN {
+  $JOSHUA = $ENV{JOSHUA} or not_defined("JOSHUA");
+  unshift(@INC,"$ENV{JOSHUA}/scripts/training/cachepipe");
+}
+
 use strict;
 use warnings;
 use Getopt::Long;
@@ -27,7 +34,6 @@ use List::Util qw[max min];
 use CachePipe;
 
 my $HADOOP = $ENV{HADOOP}; # or not_defined("HADOOP");
-my $JOSHUA = $ENV{JOSHUA} or not_defined("JOSHUA");
 my $MOSES_SCRIPTS = $ENV{SCRIPTS_ROOTDIR} or not_defined("SCRIPTS_ROOTDIR");
 
 my (@CORPORA,$TUNE,$TEST,$ALIGNMENT,$SOURCE,$TARGET,$LMFILE,$GRAMMAR_FILE,$GLUE_GRAMMAR_FILE,$THRAX_CONF_FILE);
