@@ -779,6 +779,24 @@ public class JoshuaDecoder {
 						logger.finest(String.format(
 							"Process Line: %s\nAdd WordPenalty, weight: %.3f",
 							line, weight));
+
+				} else if ("oovpenalty".equals(fds[0]) && fds.length == 2) { // wordpenalty weight
+					double weight = Double.parseDouble(fds[1].trim());
+					int owner  = this.symbolTable.addTerminal("pt");
+					int column = JoshuaConfiguration.num_phrasal_features;
+
+					this.featureFunctions.add(
+						new OOVFF(
+							this.featureFunctions.size(), weight, owner));
+
+					JoshuaConfiguration.oov_feature_index = column;
+					JoshuaConfiguration.num_phrasal_features += 1;
+
+					if (logger.isLoggable(Level.FINEST))
+						logger.finest(String.format(
+							"Process Line: %s\nAdd OOVPenalty, weight: %.3f",
+							line, weight));
+					
 					
 				} else {
 					throw new IllegalArgumentException("Wrong config line: " + line);
@@ -787,12 +805,6 @@ public class JoshuaDecoder {
 		} } finally {
 			reader.close();
 		}
-
-        int owner  = this.symbolTable.addTerminal("pt");
-        int column = JoshuaConfiguration.num_phrasal_features;
-        this.featureFunctions.add(new OOVFF(this.featureFunctions.size(), -100, owner));
-        JoshuaConfiguration.oov_feature_index = column;
-        JoshuaConfiguration.num_phrasal_features += 1;
 	}
 	
 	
