@@ -88,6 +88,9 @@ sub build_signatures {
   # print STDERR "CMD: $cmd\n";
   # map { print STDERR "DEP: $_\n" } @deps;
 
+  # remove blocked off portion
+  $cmd =~ s/<<<.*?>>>//g;
+
   # generate git-style signatures for input and output files
   my @sigs = map { sha1hash($_) } @deps;
 
@@ -131,6 +134,12 @@ sub stdout {
   return $stdout;
 }
 
+# Use cases:
+# - Run the given command and cache the results if successful
+# - Rerun a previous command, cache the results upon success
+# - Recache an old command
+# - Cache a new command without running
+
 # Runs a command (if required)
 # name: the (unique) name assigned to this command
 # input_deps: an array ref of input file dependencies
@@ -145,6 +154,8 @@ sub cmd {
   die "no name provided" unless $name ne "";
 
   $self->{lastrun} = $name;
+
+  # Process command-line arguments
 
   my ($cmd,@deps);
   my ($cache_only) = 0;
@@ -255,6 +266,11 @@ sub cmd {
 
   my ($new_signature,$cmdsig,@sigs) = build_signatures($cmd,@deps);
 
+  # remove markers for portions of the command not incorporated in the
+  # signature; this is the actual string that gets executed
+  my $runcmd = $cmd;
+  $runcmd =~ s/<<<|>>>//g;
+
   # fill up @old_sigs so its as long as @sigs (to avoid complaints
   # about undefined comparisons)
   while (@old_sigs < @sigs) {
@@ -276,7 +292,7 @@ sub cmd {
 		$self->mylog("  dep=$dep [NOT FOUND]");
 	  }
 	}
-	$self->mylog("  cmd=$cmd");
+	$self->mylog("  cmd=$runcmd");
 
 	if ($cache_only) {
 
@@ -304,7 +320,7 @@ sub cmd {
 	  if ($use_qsub) {
 		system("qsub $self->{qsub_args} -cwd $namedir/cmd");
 	  } else {
-		system("/bin/bash","-c",$cmd);
+		system("/bin/bash","-c",$runcmd);
 	  }
 
 	  close(STDOUT);
@@ -344,6 +360,46 @@ sub cmd {
   }
 }
 
+# This function determines whether a command needs to be re-run.
+# There are two use cases:
+# - cached(step): returns true if the step was found and its signature
+#   is the same as the old one (this is a short-cut for use case #2)
+# - cached(step,cmd,deps): returns true if the step with given command
+#   and dependencies is the same as the cached one
+sub cached {
+  my ($self,$name,$cmd,@deps) = @_;
+
+  die "no name provided" unless $name ne "";
+
+  # the directory where cache information is written
+  my $dir = $self->{dir};
+  my $namedir = "$dir/$name";
+
+
+  # we definitely need to run if there's no previous run
+  if (! -e "$namedir/signature") {
+	return 1;
+  } else {
+
+	# check whether anything has changed
+	open(READ, "$namedir/signature") 
+		or die "no such file '$namedir/signature'";
+	chomp(my $old_signature = <READ>);
+	close(READ);
+
+	my ($new_signature) = build_signatures($cmd,@deps);
+
+	# if the old signature is different from the new one, we need to re-run
+	if ($old_signature ne $new_signature) {
+	  return 1;
+	}
+  }
+
+  # if we get here, the signature of the new command and old are the
+  # same, and we don't need to re-run
+  return 0;
+}
+
 sub write_cmd {
   my ($namedir,$cmd) = @_;
 
@@ -358,7 +414,7 @@ sub write_signature {
   my ($new_signature,$cmdsig,@sigs) = build_signatures($cmd,@deps);
 
   # regenerate signature
-  open(WRITE, ">$namedir/signature");
+  open(WRITE, ">$namedir/signature") or die "FATAL: can't write to '$namedir/signature'";
   print WRITE $new_signature . $/;
   
   print WRITE "$cmdsig CMD $cmd\n";

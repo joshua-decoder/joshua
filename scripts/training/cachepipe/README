@@ -24,7 +24,7 @@ CachePipe supports a number of options.  See below for more detail.
 # Put this in your init file
 
     export CACHEPIPE=/path/to/cachepipe
-    export PERL5LIB+=$CACHEPIPE
+    export PERL5LIB+=:$CACHEPIPE
     . $CACHEPIPE/bashrc
 
 You can now do the following:
