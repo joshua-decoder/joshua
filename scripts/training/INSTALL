@@ -1,8 +1,11 @@
-The Joshua pipeline has the following external dependencies:
+The Joshua pipeline has the following external dependence:
 
 - Moses scripts
 
-  You must download and install Moses and the Moses support scripts.  Moses, in turn, depends on 
+  You must download and install Moses and the Moses support scripts,
+  and set the environment variable SCRIPTS_ROOTDIR (as specified in
+  the Moses instructions).  Moses is used to run GIZA++ for alignment,
+  and this dependence will be removed in the near future.
 
 In addition, Joshua depends on the following externally-developed
 software, which is included with the Joshua distribution:
@@ -13,7 +16,8 @@ software, which is included with the Joshua distribution:
   Hadoop is used by Thrax for extracting Hiero- and SAMT-style
   grammars.  You can use your own hadoop installation, but if you
   don't have one, the pipeline script will set one up for you and tear
-  it down afterward.
+  it down afterward.  The decision is made based on whether the
+  environment variable $HADOOP is defined.
 
 - The Berkeley Aligner (2.1)
   http://berkeleyaligner.googlecode.com/files/berkeleyaligner_unsupervised-2.1.tar.gz
@@ -25,16 +29,14 @@ software, which is included with the Joshua distribution:
   http://code.google.com/p/berkeleyparser/source/checkout
 
   For SAMT grammar extraction, a parse of one side of the data is
-  required.
+  required.  The Joshua pipeline will parse the target side for you
+  using the Berkeley parser (so long as the target side is English).
 
 
 == INSTALLATION ======================================================
 
 0. Set the following environment variables to point to their
    installation locations:
-
-   Make sure the following environment variables are defined in your
-   ~/.profile (for tcsh) or ~/.bashrc (for bash):
 
      export SCRIPTS_ROOTDIR=/path/to/moses/scripts
 
@@ -84,6 +86,10 @@ software, which is included with the Joshua distribution:
      
    That is a very bad score, but don't worry, it's because there isn't
    very much training data.
+
+3. If the test completes successfully, you should be all set to go.
+Refer to the README file in this directory, or visit the Joshua wiki
+at https://github.com/joshua-decoder/joshua/wiki/Joshua-Pipeline .
 
 == FEEDBACK ==========================================================
 
