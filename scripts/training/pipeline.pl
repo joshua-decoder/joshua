@@ -175,6 +175,12 @@ if ($ALIGNER ne "giza" and $ALIGNER ne "berkeley") {
 
 ## Dependent variable setting ########################################
 
+# if parallelization is turned off, then use the sequential version of
+# the decoder command
+if ($NUMJOBS == 1) {
+  $MERTFILES{'decoder_command'} = "$MERTCONFDIR/decoder_command.sequential";
+}
+
 my $OOV = ($GRAMMAR_TYPE eq "samt") ? "OOV" : "X";
 
 # use this default unless it's already been defined by a command-line argument
