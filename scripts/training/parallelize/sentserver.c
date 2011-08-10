@@ -259,7 +259,7 @@ char * read_line(int fd, int multiline) {
     if (result < 0) {
       perror("read()");
       sprintf(errorbuf, "Error code: %d\n", errno);
-      fprintf(stderr, errorbuf);
+      fprintf(stderr, "%s", errorbuf);
       errors++;
       if (errors > 5) {
 	free(s);
@@ -346,7 +346,7 @@ void * new_client(void *arg) {
       if (result < strlen(cur->s)){
         perror("write()");
         sprintf(errorbuf, "Error code: %d\n", errno);
-        fprintf(stderr, errorbuf);
+        fprintf(stderr, "%s", errorbuf);
 
         pthread_mutex_lock(&clients_mutex);
         n_clients--;
