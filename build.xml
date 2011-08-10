@@ -82,8 +82,11 @@
 
 	<target name="kenlm" depends="init, set-java-home">
 		<!-- BUG: this is run twice for `ant compile test`, since the Makefile will clean before building (thus it must rebuild everything) -->
-		<exec executable="${src}/joshua/decoder/ff/lm/kenlm/compile_jni.sh">
-			<arg value="${lib}" />
+		<exec executable="make">
+            <arg value="-e libdir=${lib}" />
+            <arg value="libdir=${lib}" />
+			<arg value="-C" />
+            <arg value="${src}/joshua/decoder/ff/lm/kenlm/" />
 		</exec>
 	</target>
 		
@@ -91,7 +94,7 @@
 	<target name="parallelize">
 		<exec executable="make">
 			<arg value="-C" />
-                        <arg value="scripts/training/parallelize/" />
+            <arg value="scripts/training/parallelize/" />
 		</exec>
 	</target>
 <!-- ~~~~~ Java build tasks ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
