@@ -62,6 +62,10 @@
 		<fail message="Please set the $SRILM environmant variable to the directory where srilm is installed." />
 	</target>
 	
+	<!-- Check for environment variables -->
+	<target name="set-joshua-home" unless="env.JOSHUA">
+		<fail message="Please set the $JOSHUA environmant variable." />
+	</target>
 	
 	<!-- Check for environment variables -->
 	<target name="set-java-home" unless="env.JAVA_HOME">
@@ -80,10 +84,10 @@
 		</exec>
 	</target>
 
-	<target name="kenlm" depends="init, set-java-home">
+	<target name="kenlm" depends="init, set-joshua-home">
 		<exec executable="make">
 			<arg value="-e" /> 
-			<arg value="libdir=${lib}" />
+			<arg value="libdir=${env.JOSHUA}/${lib}" />
 			<arg value="-C" />
 			<arg value="${src}/joshua/decoder/ff/lm/kenlm/" />
 		</exec>
@@ -113,7 +117,7 @@
 		</javac>
 	</target>
 	<!-- Create a JAR file -->
-	<target name="jar" depends="compile">
+	<target name="jar" depends="compile,set-joshua-home">
 		<jar destfile="${build}/joshua.jar" index="true">
 			<fileset dir="${build}">
 				<include name="**/*.class"/>
