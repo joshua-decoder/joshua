@@ -33,7 +33,7 @@ use POSIX qw[ceil];
 use List::Util qw[max min];
 use CachePipe;
 
-my $HADOOP = $ENV{HADOOP}; # or not_defined("HADOOP");
+my $HADOOP = undef;
 my $MOSES_SCRIPTS = $ENV{SCRIPTS_ROOTDIR} or not_defined("SCRIPTS_ROOTDIR");
 
 my (@CORPORA,$TUNE,$TEST,$ALIGNMENT,$SOURCE,$TARGET,$LMFILE,$GRAMMAR_FILE,$GLUE_GRAMMAR_FILE,$THRAX_CONF_FILE);
@@ -62,7 +62,9 @@ my %MERTFILES = (
   'params.txt'      => "$MERTCONFDIR/params.txt",
 );
 
-my $DO_SENT_SPECIFIC_TM = 1;
+# whether to trim the grammars to each sentence
+my $DO_SENT_SPECIFIC_TM = 0;
+
 my $DO_MBR = 1;
 
 my $ALIGNER = "giza"; # or "berkeley"
@@ -109,6 +111,7 @@ my $retval = GetOptions(
   "first-step=s" 	  => \$FIRST_STEP,
   "last-step=s"  	  => \$LAST_STEP,
   "aligner-chunk-size=s" => \$ALIGNER_BLOCKSIZE,
+  "hadoop=s"          => \$HADOOP,
 );
 
 if (! $retval) {
@@ -131,6 +134,15 @@ $SIG{INT} = sub {
 };
 
 ## Sanity Checking ###################################################
+
+if (defined $ENV{HADOOP} and ! defined $HADOOP) {
+  print "* FATAL: \$HADOOP defined (suggesting an existing hadoop\n";
+  print "* FATAL: installation).  If you want to use this, pass the\n";
+  print "* FATAL: directory using the --hadoop flag; if you instead want to\n";
+  print "* FATAL: roll out a new cluster automatically, then unset \$HADOOP\n";
+  print "* FATAL: and re-run the script.\n";
+  exit;
+}
 
 # make sure a corpus was provided if we're doing any step before MERT
 if (@CORPORA == 0 and $STEPS{$FIRST_STEP} < $STEPS{MERT}) {
@@ -507,7 +519,7 @@ if (! defined $GRAMMAR_FILE) {
   my $target_file = ($GRAMMAR_TYPE eq "hiero") 
 	  ? $TRAIN{target} : $TRAIN{parsed};
   $cachepipe->cmd("thrax-input-file",
-				  "paste $TRAIN{source} $target_file $ALIGNMENT | perl -pe 's/\t/ ||| /g' | grep -v '(())' > train/thrax-input-file",
+				  "paste $TRAIN{source} $target_file $ALIGNMENT | perl -pe 's/\\t/ ||| /g' | grep -v '(())' > train/thrax-input-file",
 					$TRAIN{source}, $target_file, $ALIGNMENT,
 					"train/thrax-input-file");
 
