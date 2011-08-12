@@ -183,8 +183,7 @@ public class DecoderThread extends Thread {
 
             Sentence sentence = inputHandler.next();
 
-            System.out.println("[" + sentence.id() + "] " + sentence.sentence());
-
+            // System.out.println("[" + sentence.id() + "] " + sentence.sentence());
             HyperGraph hypergraph = translate(sentence, null);
             Translation translation = null;
 		
