@@ -154,9 +154,8 @@ public class InputHandler implements Iterator<Sentence> {
                     // update the last completed item
                     lastCompletedId++;
                 }
-
-            } else {
-                System.out.println("thread " + id + " waiting for thread " + (id-1));
+            // } else {
+            //     System.out.println("thread " + id + " waiting for thread " + (id-1));
             }
         }
     }
