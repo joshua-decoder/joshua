@@ -23,6 +23,8 @@ import joshua.decoder.segment_file.Sentence;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import java.nio.charset.Charset;
 import java.io.FileDescriptor;
@@ -52,6 +54,9 @@ import java.util.zip.GZIPInputStream;
  */
 
 public class InputHandler implements Iterator<Sentence> {
+
+	private static final Logger logger =
+		Logger.getLogger(InputHandler.class.getName());
 
     String corpusFile = null;
     int sentenceNo = -1;
@@ -137,6 +142,8 @@ public class InputHandler implements Iterator<Sentence> {
     public synchronized void register(Translation translation) {
         int id = translation.id();
 
+        logger.fine("thread " + id + " finished");
+
         // store this one
         synchronized(lock) {
             completed.set(id,translation);
@@ -147,6 +154,8 @@ public class InputHandler implements Iterator<Sentence> {
             if (lastCompletedId == id - 1) {
 
                 for (int i = id; i < completed.size() && completed.get(i) != null; i++) {
+                    logger.fine("thread " + id + " printing");
+
                     Translation t = completed.get(i);
                     t.print();
                     // delete it
@@ -154,8 +163,8 @@ public class InputHandler implements Iterator<Sentence> {
                     // update the last completed item
                     lastCompletedId++;
                 }
-            // } else {
-            //     System.out.println("thread " + id + " waiting for thread " + (id-1));
+            } else {
+                logger.fine("thread " + id + " waiting for thread " + (id-1));
             }
         }
     }
