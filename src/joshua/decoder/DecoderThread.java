@@ -22,8 +22,11 @@ import java.io.IOException;
 import java.io.File;
 import java.util.Arrays;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import joshua.decoder.segment_file.Sentence;
 
 import joshua.corpus.suffix_array.Pattern;
 import joshua.corpus.syntax.ArraySyntaxTree;
@@ -39,11 +42,6 @@ import joshua.decoder.ff.tm.hiero.MemoryBasedBatchGrammar;
 import joshua.decoder.hypergraph.DiskHyperGraph;
 import joshua.decoder.hypergraph.HyperGraph;
 import joshua.decoder.hypergraph.KBestExtractor;
-import joshua.decoder.segment_file.HackishSegmentParser;
-import joshua.decoder.segment_file.PlainSegmentParser;
-import joshua.decoder.segment_file.Segment;
-import joshua.decoder.segment_file.SegmentFileParser;
-import joshua.decoder.segment_file.sax_parser.SAXSegmentParser;
 import joshua.lattice.Lattice;
 import joshua.oracle.OracleExtractor;
 import joshua.ui.hypergraph_visualizer.HyperGraphViewer;
@@ -70,7 +68,6 @@ public class DecoderThread extends Thread {
 	 * just copy from DecoderFactory), or differ from thread
 	 * to thread */
 	private final List<GrammarFactory>  grammarFactories;
-	private final boolean               useMaxLMCostForOOV;
 	private final List<FeatureFunction> featureFunctions;
 	private final List<StateComputer>   stateComputers;
 	
@@ -88,11 +85,9 @@ public class DecoderThread extends Thread {
 	private final SymbolTable    symbolTable;
 	
 	//more test set specific
-	final String         testFile;
-	private final String         oracleFile;
-	        final String         nbestFile; // package-private for DecoderFactory
+    private final InputHandler   inputHandler;
+	//         final String         nbestFile; // package-private for DecoderFactory
 	private       BufferedWriter nbestWriter; // set in decodeTestFile
-	private final int            startSentenceID;
 	private final KBestExtractor kbestExtractor;
 	              DiskHyperGraph hypergraphSerializer; // package-private for DecoderFactory
 	
@@ -106,24 +101,18 @@ public class DecoderThread extends Thread {
 //===============================================================
 	public DecoderThread(
 		List<GrammarFactory>  grammarFactories,
-		boolean                    useMaxLMCostForOOV,
 		List<FeatureFunction> featureFunctions,
 		List<StateComputer> stateComputers,
 		SymbolTable                symbolTable,
-		String testFile, String nbestFile, String oracleFile,
-		int startSentenceID
+        InputHandler inputHandler
 	) throws IOException {
 		
 		this.grammarFactories   = grammarFactories;
-		this.useMaxLMCostForOOV = useMaxLMCostForOOV;
 		this.featureFunctions   = featureFunctions;
 		this.stateComputers     = stateComputers;
 		this.symbolTable        = symbolTable;
 		
-		this.testFile        = testFile;
-		this.nbestFile       = nbestFile;
-		this.oracleFile      = oracleFile;
-		this.startSentenceID = startSentenceID;
+        this.inputHandler    = inputHandler;
 		
 		this.kbestExtractor = new KBestExtractor(
 			this.symbolTable,
@@ -131,34 +120,34 @@ public class DecoderThread extends Thread {
 			JoshuaConfiguration.use_tree_nbest,
 			JoshuaConfiguration.include_align_index,
 			JoshuaConfiguration.add_combined_cost,
-			false, (oracleFile==null));
+			false, true);
 		
-		if (JoshuaConfiguration.save_disk_hg) {
-			FeatureFunction languageModel = null;
-			for (FeatureFunction ff : this.featureFunctions) {
-				if (ff instanceof LanguageModelFF) {
-					languageModel = ff;
-					break;
-				}
-			}
-			int lmFeatID = -1;
-			if (null == languageModel) {
-				logger.warning("No language model feature function found, but save disk hg");
-			}else{
-				lmFeatID = languageModel.getFeatureID();
-			}
+		// if (JoshuaConfiguration.save_disk_hg) {
+		// 	FeatureFunction languageModel = null;
+		// 	for (FeatureFunction ff : this.featureFunctions) {
+		// 		if (ff instanceof LanguageModelFF) {
+		// 			languageModel = ff;
+		// 			break;
+		// 		}
+		// 	}
+		// 	int lmFeatID = -1;
+		// 	if (null == languageModel) {
+		// 		logger.warning("No language model feature function found, but save disk hg");
+		// 	} else {
+		// 		lmFeatID = languageModel.getFeatureID();
+		// 	}
 			
-			this.hypergraphSerializer = new DiskHyperGraph(
-					this.symbolTable,
-					lmFeatID,
-					true, // always store model cost
-					this.featureFunctions);
+		// 	this.hypergraphSerializer = new DiskHyperGraph(
+		// 			this.symbolTable,
+		// 			lmFeatID,
+		// 			true, // always store model cost
+		// 			this.featureFunctions);
 				
-			this.hypergraphSerializer.initWrite(
-					this.nbestFile + ".hg.items",
-					JoshuaConfiguration.forest_pruning,
-					JoshuaConfiguration.forest_pruning_threshold);
-		}
+		// 	this.hypergraphSerializer.initWrite(
+        //             "out." + Integer.toString(sentence.id()) + ".hg.items",
+		// 			JoshuaConfiguration.forest_pruning,
+		// 			JoshuaConfiguration.forest_pruning_threshold);
+		// }
 	}
 	
 	
@@ -168,7 +157,7 @@ public class DecoderThread extends Thread {
 	// Overriding of Thread.run() cannot throw anything
 	public void run() {
 		try {
-			this.decodeTestFile();
+			this.translateAll();
 			//this.hypergraphSerializer.closeReaders();
 		} catch (Throwable e) {
 			// if we throw anything (e.g. OutOfMemoryError)
@@ -181,130 +170,67 @@ public class DecoderThread extends Thread {
 	}
 	
 	
-	// BUG: log file is not properly handled for parallel decoding
-	void decodeTestFile() throws IOException {
-		SegmentFileParser segmentParser;
-		
-		// BUG: As written, this will need duplicating in DecoderFactory
-		// TODO: Fix JoshuaConfiguration so we can make this less gross.
-		//
-		// TODO: maybe using real reflection would be cleaner. If it weren't for 
-		// the argument for HackishSegmentParser then we could do all this over 
-		// in the JoshuaConfiguration class instead
-		
-		final String className = JoshuaConfiguration.segmentFileParserClass;
-		if (null == className) {
-			// Use old behavior by default
-			segmentParser = new HackishSegmentParser(this.startSentenceID);
-			
-		} else if ("PlainSegmentParser".equals(className)) {
-			segmentParser = new PlainSegmentParser();
-			
-		} else if ("HackishSegmentParser".equals(className)) {
-			segmentParser = new HackishSegmentParser(this.startSentenceID);
-			
-		} else if ("SAXSegmentParser".equals(className)) {
-			segmentParser = new SAXSegmentParser();
-			
-		} else {
-			throw new IllegalArgumentException(
-				"Unknown SegmentFileParser class: " + className);
-		}
-		
-		
-		// TODO: we need to run the segmentParser over the file once in order to
-		// catch any errors before we do the actual translation. Getting formatting 
-		// errors asynchronously after a long time is a Bad Thing(tm). Some errors 
-		// may be recoverable (e.g. by skipping the sentence that's invalid), but 
-		// we're going to call all exceptions errors for now.
+    /**
+     * Repeatedly fetches input sentences and calls translate() on
+     * them, registering the results with the InputManager upon
+     * completion.
+     */
+	public void translateAll() throws IOException {
 
-		// TODO: we should unwrapper SAXExceptions and give good error messages
-                // March 2011: reading from STDIN does not permit two passes ove
-            if (! testFile.equals("-")) {
-                segmentParser.parseSegmentFile(
-				  LineReader.getInputStream(this.testFile),
-				  new CoIterator<Segment>() {
-                      public void coNext(Segment seg) {
-                          // Consume Segment and do nothing (for now)
-                      }
-                      public void finish() {
-                          // Nothing to clean up
-                      }
-                  });
-		}
+        while (inputHandler.hasNext()) {
+
+            long startTime = System.currentTimeMillis();			
+
+            Sentence sentence = inputHandler.next();
+
+            System.out.println("[" + sentence.id() + "] " + sentence.sentence());
+
+            HyperGraph hypergraph = translate(sentence, null);
+            Translation translation = null;
 		
-		// TODO: we should also have the CoIterator<Segment> test compatibility with 
-		// a given grammar, e.g. count of grammatical feature functions match, 
-		// nonterminals match,...
+            if (JoshuaConfiguration.visualize_hypergraph) {
+                HyperGraphViewer.visualizeHypergraphInFrame(hypergraph, symbolTable);
+            }
 		
-		// TODO: we may also want to validate that all segments have different ids
+            String oracleSentence = inputHandler.oracleSentence();
+
+            if (oracleSentence != null) {
+                OracleExtractor extractor = new OracleExtractor(this.symbolTable);
+                HyperGraph oracle = extractor.getOracle(hypergraph, 3, oracleSentence);
+			
+                translation = new Translation(sentence, oracle, featureFunctions);
+
+            } else {
+
+                translation = new Translation(sentence, hypergraph, featureFunctions);
+
+            // if (null != this.hypergraphSerializer) {
+            //     if(JoshuaConfiguration.use_kbest_hg){
+            //         HyperGraph kbestHG = this.kbestExtractor.extractKbestIntoHyperGraph(hypergraph, JoshuaConfiguration.topN);
+            //         this.hypergraphSerializer.saveHyperGraph(kbestHG);
+            //     }else{
+            //         this.hypergraphSerializer.saveHyperGraph(hypergraph);				
+            //     }
+            // }
+
+            }
+
+            inputHandler.register(translation);
+
+            /* //debug
+               if (JoshuaConfiguration.use_variational_decoding) {
+               ConstituentVariationalDecoder vd = new ConstituentVariationalDecoder();
+               vd.decoding(hypergraph);
+               System.out.println("#### new 1best is #####\n" + HyperGraph.extract_best_string(p_main_controller.p_symbol, hypergraph.goal_item));
+               }
+               // end */
 		
-		
-		//=== Translate the test file
-		this.nbestWriter = FileUtility.getWriteFileStream(this.nbestFile);		
-		try {
-			try {
-				// This method will analyze the input file (to generate segments), and 
-				// then translate segments one by one 
-				segmentParser.parseSegmentFile(
-					LineReader.getInputStream(this.testFile),
-					new TranslateCoiterator(
-						null == this.oracleFile
-							? new NullReader<String>()
-							: new LineReader(this.oracleFile)
-					)
-				);
-			} catch (UncheckedIOException e) {
-				e.throwCheckedException();
-			}
-		} finally {
-			this.nbestWriter.flush();
-			this.nbestWriter.close();
-		}
+            //debug
+            //g_con.get_confusion_in_hyper_graph_cell_specific(hypergraph, hypergraph.sent_len);
+            
+        }
 	}
-	
-	/**
-	 * This coiterator is for calling the DecoderThread.translate
-	 * method on each Segment to be translated. All interface
-	 * methods can throw {@link UncheckedIOException}, which
-	 * should be converted back into a {@link IOException} once
-	 * it's possible.
-	 */
-	private class TranslateCoiterator implements CoIterator<Segment> {
-		// TODO: it would be nice if we could somehow push this into the 
-		// parseSegmentFile call and use a coiterator over some subclass 
-		// of Segment which has another method for returning the oracular 
-		// sentence. That may take some work though, since Java hates 
-		// mixins so much.
-		private Reader<String> oracleReader;
-		
-		public TranslateCoiterator(Reader<String> oracleReader) {
-			this.oracleReader = oracleReader;
-		}
-		
-		public void coNext(Segment segment) {
-			try {
 
-				if (logger.isLoggable(Level.FINE))
-					logger.fine("Segment id: " + segment.id());
-				
-				DecoderThread.this.translate(
-					segment, this.oracleReader.readLine());
-				
-			} catch (IOException ioe) {
-				throw new UncheckedIOException(ioe);
-			}
-		}
-		
-		public void finish() {
-			try {
-				this.oracleReader.close();
-			} catch (IOException ioe) {
-				throw new UncheckedIOException(ioe);
-			}
-		}
-	} // End inner class TranslateCoiterator
-	
 	
 	/**
 	 * Translate a sentence.
@@ -312,242 +238,119 @@ public class DecoderThread extends Thread {
 	 * @param segment The sentence to be translated.
 	 * @param oracleSentence
 	 */
-	private void translate(Segment segment, String oracleSentence)
+	public HyperGraph translate(Sentence sentence, String oracleSentence)
 	throws IOException {
-		long startTime = 0;
-		if (logger.isLoggable(Level.FINER))
-			startTime = System.currentTimeMillis();
+
 		if (logger.isLoggable(Level.FINE))
-			logger.fine("now translating\n" + segment.sentence());
+			logger.fine("now translating\n" + sentence.sentence());
 		
 		Chart chart; 
 		
-		final boolean looks_like_lattice;
-		final boolean looks_like_parse_tree;
-		
-		Lattice<Integer> input_lattice = null;
-		SyntaxTree syntax_tree = null;
-		Pattern sentence = null;
-		
-		{
-			// TODO: we should not use strings to decide what the input type is
-			looks_like_lattice    = segment.sentence().startsWith("(((");
-			looks_like_parse_tree = segment.sentence().matches("^\\(+[A-Z]+ .*");
-			
-			if (!looks_like_lattice) {
-				int[] int_sentence;
-				if (looks_like_parse_tree) {
-					syntax_tree = new ArraySyntaxTree(segment.sentence(), symbolTable);
-					int_sentence = syntax_tree.getTerminals();
-				} else {
-					int_sentence = this.symbolTable.getIDs(segment.sentence());
-				}
-				if (logger.isLoggable(Level.FINEST)) 
-					logger.finest("Converted \"" + segment.sentence() + "\" into " + Arrays.toString(int_sentence));
-				input_lattice = Lattice.createLattice(int_sentence);
-				sentence = new Pattern(this.symbolTable, int_sentence);
-			} else {
-				input_lattice = Lattice.createFromString(segment.sentence(), this.symbolTable);
-				sentence = null; // TODO: suffix array needs to accept lattices!
-			}
-			if (logger.isLoggable(Level.FINEST)) 
-				logger.finest("Translating input lattice:\n" + input_lattice.toString());
+        Lattice<Integer> input_lattice = sentence.lattice();
 
-            int numGrammars = (JoshuaConfiguration.use_sent_specific_tm)
-                ? grammarFactories.size() + 1
-                : grammarFactories.size();
-			Grammar[] grammars = new Grammar[numGrammars];
-            
-            // load the grammars common to all sentences
-			for (int i = 0; i<grammarFactories.size(); i++) {
-				grammars[i] = grammarFactories.get(i).getGrammarForSentence(sentence);
-				// For batch grammar, we do not want to sort it every time
-				if (!grammars[i].isSorted()) {
-					System.out.println("!!!!!!!!!!!! called again");
-					// TODO: check to see if this is ever called here. It probably is not
-					grammars[i].sortGrammar(this.featureFunctions);
-				}
-			}
+        if (logger.isLoggable(Level.FINEST)) 
+            logger.finest("Translating input lattice:\n" + input_lattice.toString());
 
-            // load the sentence-specific grammar
-            if (JoshuaConfiguration.use_sent_specific_tm) {
-                // figure out the sentence-level file name
-                String tmFile = JoshuaConfiguration.tm_file;
-                tmFile = tmFile.endsWith(".gz")
-                    ? tmFile.substring(0, tmFile.length()-3) + "." + segment.id() + ".gz"
-                    : tmFile + "." + segment.id();
+        int numGrammars = (JoshuaConfiguration.use_sent_specific_tm)
+            ? grammarFactories.size() + 1
+            : grammarFactories.size();
 
-                // look in a subdirectory named "filtered" e.g.,
-                // /some/path/grammar.gz will have sentence-level
-                // grammars in /some/path/filtered/grammar.SENTNO.gz
-                int lastSlashPos = tmFile.lastIndexOf('/');
-				String dirPart = tmFile.substring(0,lastSlashPos + 1);
-				String filePart = tmFile.substring(lastSlashPos + 1);
-				tmFile = dirPart + "filtered/" + filePart;
+        Grammar[] grammars = new Grammar[numGrammars];
 
-				File filteredDir = new File(dirPart + "filtered");
-				if (! filteredDir.exists()) {
-					logger.info("Creating sentence-level grammar directory '" + dirPart + "filtered'");
-					filteredDir.mkdirs();
-				}
+        for (int i = 0; i< grammarFactories.size(); i++)
+            grammars[i] = grammarFactories.get(i).getGrammarForSentence(sentence.pattern());
 
-				logger.info("Using sentence-specific TM file '" + tmFile + "'");
+        // load the sentence-specific grammar
+        boolean alreadyExisted = true; // whether it already existed
+        String tmFile = null;
+        if (JoshuaConfiguration.use_sent_specific_tm) {
+            // figure out the sentence-level file name
+            tmFile = JoshuaConfiguration.tm_file;
+            tmFile = tmFile.endsWith(".gz")
+                ? tmFile.substring(0, tmFile.length()-3) + "." + sentence.id() + ".gz"
+                : tmFile + "." + sentence.id();
 
-				boolean alreadyExisted = true;
+            // look in a subdirectory named "filtered" e.g.,
+            // /some/path/grammar.gz will have sentence-level
+            // grammars in /some/path/filtered/grammar.SENTNO.gz
+            int lastSlashPos = tmFile.lastIndexOf('/');
+            String dirPart = tmFile.substring(0,lastSlashPos + 1);
+            String filePart = tmFile.substring(lastSlashPos + 1);
+            tmFile = dirPart + "filtered/" + filePart;
 
-                if (! new File(tmFile).exists()) {
-					alreadyExisted = false;
-
-					// filter grammar and write it to a file
-					if (logger.isLoggable(Level.INFO))
-						logger.info("Automatically producing file " + tmFile);
-
-					TestSetFilter.filterGrammarToFile(JoshuaConfiguration.tm_file,
-													  segment.sentence(),
-													  tmFile,
-													  true);
-                } else {
-					if (logger.isLoggable(Level.INFO))
-						logger.info("Using existing sentence-specific tm file " + tmFile);
-				}
-				
-
-                grammars[numGrammars-1] = new MemoryBasedBatchGrammar(
-					JoshuaConfiguration.tm_format,
-                    tmFile,
-                    this.symbolTable,
-                    JoshuaConfiguration.phrase_owner,
-                    JoshuaConfiguration.default_non_terminal,
-                    JoshuaConfiguration.span_limit,
-                    JoshuaConfiguration.oov_feature_cost);
-
-                grammars[numGrammars-1].sortGrammar(this.featureFunctions);
-
-				// delete the sentence-specific grammar if it didn't
-				// already exist and we weren't asked to keep it around
-				if (! alreadyExisted && ! JoshuaConfiguration.keep_sent_specific_tm) {
-					File file = new File(tmFile);
-					file.delete();
-
-					if (logger.isLoggable(Level.INFO))
-						logger.info("Deleting sentence-level grammar file '" + tmFile + "'");
-
-				} else if (JoshuaConfiguration.keep_sent_specific_tm) {
-					if (logger.isLoggable(Level.INFO))
-						logger.info("Keeping sentence-level grammar (keep_sent_specific_tm=true)");
-				} else if (alreadyExisted) {
-					if (logger.isLoggable(Level.INFO))
-						logger.info("Keeping sentence-level grammar (already existed)");
-				}
+            File filteredDir = new File(dirPart + "filtered");
+            if (! filteredDir.exists()) {
+                logger.info("Creating sentence-level grammar directory '" + dirPart + "filtered'");
+                filteredDir.mkdirs();
             }
 
-			/* Seeding: the chart only sees the grammars, not the factories */
-			chart = new Chart(
-				input_lattice,
-				this.featureFunctions,
-				this.stateComputers,
-				this.symbolTable,
-				Integer.parseInt(segment.id()),
-				grammars,
-				this.useMaxLMCostForOOV,
-				JoshuaConfiguration.goal_symbol,
-				segment.constraints(),
-				syntax_tree);
-			
-			if (logger.isLoggable(Level.FINER))
-				logger.finer("after seed, time: "
-					+ ((double)(System.currentTimeMillis() - startTime) / 1000.0)
-					+ " seconds");
-		}
+            logger.info("Using sentence-specific TM file '" + tmFile + "'");
+
+            if (! new File(tmFile).exists()) {
+                alreadyExisted = false;
+
+                // filter grammar and write it to a file
+                if (logger.isLoggable(Level.INFO))
+                    logger.info("Automatically producing file " + tmFile);
+
+                TestSetFilter.filterGrammarToFile(JoshuaConfiguration.tm_file,
+                                                  sentence.sentence(),
+                                                  tmFile,
+                                                  true);
+            } else {
+                if (logger.isLoggable(Level.INFO))
+                    logger.info("Using existing sentence-specific tm file " + tmFile);
+            }
+				
+
+            grammars[numGrammars-1] = new MemoryBasedBatchGrammar(JoshuaConfiguration.tm_format,
+                tmFile,
+                this.symbolTable,
+                JoshuaConfiguration.phrase_owner,
+                JoshuaConfiguration.default_non_terminal,
+                JoshuaConfiguration.span_limit,
+                JoshuaConfiguration.oov_feature_cost);
+
+            // sort the sentence-specific grammar
+            grammars[numGrammars-1].sortGrammar(this.featureFunctions);
+
+        }
+
+        /* Seeding: the chart only sees the grammars, not the factories */
+        chart = new Chart(input_lattice,
+            this.featureFunctions,
+            this.stateComputers,
+            this.symbolTable,
+            sentence.id(),
+            grammars,
+            false,
+            JoshuaConfiguration.goal_symbol,
+            sentence.constraints(),
+            sentence.syntax_tree());
 		
 		/* Parsing */
 		HyperGraph hypergraph = chart.expand();
-		
-		// unsuccessful parse, pass through input
-		if (hypergraph == null) {
-			StringBuffer passthrough_buffer = new StringBuffer();
-			passthrough_buffer.append(Integer.parseInt(segment.id()));
-			passthrough_buffer.append(" ||| ");
-			
-			if (looks_like_parse_tree) {
-				int[] word_ids = syntax_tree.getTerminals();
-				for (int i=0; i<word_ids.length-1; i++) {
-					passthrough_buffer.append(symbolTable.getWord(word_ids[i]));
-					passthrough_buffer.append(" ");
-				}
-				passthrough_buffer.append(symbolTable.getWord(word_ids[word_ids.length-1]));
-			}
-			else		
-				passthrough_buffer.append(segment.sentence());
-			
-			passthrough_buffer.append(" ||| ");
-			for (int i=0; i<this.featureFunctions.size(); i++)
-				passthrough_buffer.append("0.0 ");
-			passthrough_buffer.append("||| 0.0\n");
-			
-			this.nbestWriter.write(passthrough_buffer.toString());
-			this.nbestWriter.flush();
-			
-			return;
-		}
-		
-		if (JoshuaConfiguration.visualize_hypergraph) {
-			HyperGraphViewer.visualizeHypergraphInFrame(hypergraph, symbolTable);
-		}
-		
-		if (logger.isLoggable(Level.FINER))
-			logger.finer("after expand, time: "
-				+ ((double)(System.currentTimeMillis() - startTime) / 1000.0)
-				+ " seconds");
-		
-		if (oracleSentence != null) {
-			logger.fine("Creating oracle extractor");
-			OracleExtractor extractor = new OracleExtractor(this.symbolTable);
-			
-			logger.finer("Extracting oracle hypergraph...");
-			HyperGraph oracle = extractor.getOracle(hypergraph, 3, oracleSentence);
-			
-			logger.finer("... Done Extracting. Getting k-best...");
-			this.kbestExtractor.lazyKBestExtractOnHG(
-				oracle, this.featureFunctions, 
-				JoshuaConfiguration.topN,
-				Integer.parseInt(segment.id()), this.nbestWriter);
-			logger.finer("... Done getting k-best");
-			
-		} else {
-			/* k-best extraction */
-			this.kbestExtractor.lazyKBestExtractOnHG(
-				hypergraph, this.featureFunctions,
-				JoshuaConfiguration.topN,
-				Integer.parseInt(segment.id()), this.nbestWriter);
 
-			if (logger.isLoggable(Level.FINER))
-				logger.finer("after k-best, time: "
-				+ ((double)(System.currentTimeMillis() - startTime) / 1000.0)
-				+ " seconds");
-		}
+        // delete the sentence-specific grammar if it didn't
+        // already exist and we weren't asked to keep it around
+        if (! alreadyExisted && ! JoshuaConfiguration.keep_sent_specific_tm) {
+            File file = new File(tmFile);
+            file.delete();
+
+            if (logger.isLoggable(Level.INFO))
+                logger.info("Deleting sentence-level grammar file '" + tmFile + "'");
+
+        } else if (JoshuaConfiguration.keep_sent_specific_tm) {
+            if (logger.isLoggable(Level.INFO))
+                logger.info("Keeping sentence-level grammar (keep_sent_specific_tm=true)");
+        } else if (alreadyExisted) {
+            if (logger.isLoggable(Level.INFO))
+                logger.info("Keeping sentence-level grammar (already existed)");
+        }
 		
-		if (null != this.hypergraphSerializer) {
-			if(JoshuaConfiguration.use_kbest_hg){
-				HyperGraph kbestHG = this.kbestExtractor.extractKbestIntoHyperGraph(hypergraph, JoshuaConfiguration.topN);
-				this.hypergraphSerializer.saveHyperGraph(kbestHG);
-			}else{
-				this.hypergraphSerializer.saveHyperGraph(hypergraph);				
-			}
-		}
-		
-		/* //debug
-		if (JoshuaConfiguration.use_variational_decoding) {
-			ConstituentVariationalDecoder vd = new ConstituentVariationalDecoder();
-			vd.decoding(hypergraph);
-			System.out.println("#### new 1best is #####\n" + HyperGraph.extract_best_string(p_main_controller.p_symbol, hypergraph.goal_item));
-		}
-		// end */
-		
-		//debug
-		//g_con.get_confusion_in_hyper_graph_cell_specific(hypergraph, hypergraph.sent_len);
+        return hypergraph;
 	}
-	
+
 	
 	/**decode a sentence, and return a hypergraph*/
 	public HyperGraph getHyperGraph(String sentence)
@@ -578,7 +381,7 @@ public class DecoderThread extends Thread {
 				this.symbolTable,
 				0,
 				grammars,
-				this.useMaxLMCostForOOV,
+                false,
 				JoshuaConfiguration.goal_symbol,
 				null, null);
 		
