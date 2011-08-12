@@ -332,19 +332,16 @@ public class DecoderThread extends Thread {
 
         // delete the sentence-specific grammar if it didn't
         // already exist and we weren't asked to keep it around
-        if (! alreadyExisted && ! JoshuaConfiguration.keep_sent_specific_tm) {
+        if (! alreadyExisted && ! JoshuaConfiguration.keep_sent_specific_tm && JoshuaConfiguration.use_sent_specific_tm) {
             File file = new File(tmFile);
             file.delete();
 
-            if (logger.isLoggable(Level.INFO))
-                logger.info("Deleting sentence-level grammar file '" + tmFile + "'");
+            logger.info("Deleting sentence-level grammar file '" + tmFile + "'");
 
         } else if (JoshuaConfiguration.keep_sent_specific_tm) {
-            if (logger.isLoggable(Level.INFO))
-                logger.info("Keeping sentence-level grammar (keep_sent_specific_tm=true)");
+            logger.info("Keeping sentence-level grammar (keep_sent_specific_tm=true)");
         } else if (alreadyExisted) {
-            if (logger.isLoggable(Level.INFO))
-                logger.info("Keeping sentence-level grammar (already existed)");
+            logger.info("Keeping sentence-level grammar (already existed)");
         }
 		
         return hypergraph;
