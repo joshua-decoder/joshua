@@ -101,7 +101,7 @@ public class JoshuaDecoder {
 	 * Shared symbol table for source language terminals, target
 	 * language terminals, and shared nonterminals.
 	 */
-	private SymbolTable                symbolTable;
+	public static SymbolTable                symbolTable;
 	
 	/** Logger for this class. */
 	private static final Logger logger =
@@ -395,13 +395,13 @@ public class JoshuaDecoder {
 				logger.finest("Populating SRILM symbol table with symbols from existing symbol table");
 				this.symbolTable = new SrilmSymbol(existingSymbols, JoshuaConfiguration.lm_order);
 			}
-    } else if (JoshuaConfiguration.use_kenlm) {
+        } else if (JoshuaConfiguration.use_kenlm) {
 			logger.finest("Using KenLM symbol table");
-      if (null == existingSymbols) {
-        this.symbolTable = new KenSymbol();
-      } else {
-        throw new RuntimeException("TODO(juri): fix vocabulary identifiers.");
-      }
+            if (null == existingSymbols) {
+                this.symbolTable = new KenSymbol();
+            } else {
+                throw new RuntimeException("TODO(juri): fix vocabulary identifiers.");
+            }
 		} else {
 			if (null == existingSymbols) {
 				//this.symbolTable = new Vocabulary();//new BuildinSymbol(null);
@@ -524,6 +524,7 @@ public class JoshuaDecoder {
                     JoshuaConfiguration.default_non_terminal,
                     JoshuaConfiguration.span_limit,
                     JoshuaConfiguration.oov_feature_cost);
+
             this.grammarFactories.add(gr);
 		
             if(JoshuaConfiguration.useRuleIDName){
@@ -812,6 +813,7 @@ public class JoshuaDecoder {
 // Main
 //===============================================================
 	public static void main(String[] args) throws IOException {
+        logger.setLevel(Level.OFF);
 		logger.finest("Starting decoder");
 		
 		long startTime = 0;
