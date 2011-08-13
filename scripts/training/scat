@@ -4,9 +4,9 @@
 # appropriate.
 
 for file in $@; do
-	if [[ "$file" =~ "\.gz$" ]]; then
+	if [[ $file =~ \.gz$ ]]; then
 		zcat $file
-	elif [[ "$file" =~ "\.bz2$" ]]; then
+	elif [[ $file =~ \.bz2$ ]]; then
 		bzcat $file
 	else
 		cat $file
