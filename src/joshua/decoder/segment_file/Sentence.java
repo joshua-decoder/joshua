@@ -29,6 +29,17 @@ import java.util.LinkedList;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 
+/**
+ * This class represents a basic input sentence.  A sentence is a
+ * sequence of UTF-8 characters denoting a string of source language
+ * words.  The sequence can optionally be wrapped in <seg
+ * id=N>...</seg> tags, which are then used to set the sentence number
+ * (a 0-indexed ID).
+ *
+ * @author Matt Post <post@jhu.edu>
+ * @version $LastChangedDate$
+ */
+
 public class Sentence {
 
     /*

@@ -212,22 +212,22 @@ public class KBestExtractor {
 	//=========================== end kbestHypergraph
 	
 	
-	// public void lazyKBestExtractOnHG(
-	// 		HyperGraph hg, List<FeatureFunction> models, 
-	// 		int topN, int sentID, final List<String> out) {
+	public void lazyKBestExtractOnHG(
+        HyperGraph hg, List<FeatureFunction> models, 
+        int topN, int sentID, final List<String> out) {
 		
-	// 	CoIterator<String> coIt = new CoIterator<String>() {
+		CoIterator<String> coIt = new CoIterator<String>() {
 			
-	// 		public void coNext(String hypStr) {
-	// 			out.add(hypStr);
-	// 		}
+			public void coNext(String hypStr) {
+				out.add(hypStr);
+			}
 			
-	// 		public void finish() {					
-	// 		}
-	// 	};
+			public void finish() {					
+			}
+		};
 		
-	// 	this.lazyKBestExtractOnHG(hg, models, topN, sentID,	coIt);
-	// }
+		this.lazyKBestExtractOnHG(hg, models, topN, sentID,	coIt);
+	}
 	
 	
 	public void lazyKBestExtractOnHG(
