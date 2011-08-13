@@ -114,7 +114,8 @@ public class Translation {
 
             try {
                 kBestExtractor.lazyKBestExtractOnHG(hypergraph, 
-                    this.featureFunctions, JoshuaConfiguration.topN, id(), null);
+                    this.featureFunctions, JoshuaConfiguration.topN, id(), 
+                    (BufferedWriter)null);
             } catch (IOException e) {
                 e.printStackTrace();
             }
