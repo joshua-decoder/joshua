@@ -6,15 +6,13 @@
 
 rm -f test.nbest test.1best
 
-java \
+cat test.plf | java \
 	-classpath "../bin"          \
 	-Djava.library.path=../lib   \
 	-Xmx500m -Xms500m            \
 	-XX:MinHeapFreeRatio=10      \
 	joshua.decoder.JoshuaDecoder \
-	config.test                  \
-	test.plf                     \
-	test.nbest
+	config.test > test.nbest
 
 exitCode=$?
 if [ $exitCode -ne 0 ]; then
