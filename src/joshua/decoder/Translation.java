@@ -34,6 +34,17 @@ import java.util.List;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 
+/**
+ * This class represents translated input objects (sentences or
+ * lattices).  It is aware of the source sentence and id and contains
+ * the decoded hypergraph.  Translation objects are returned by
+ * DecoderThread instances to the InputHandler, where they are
+ * assembled in order for output.
+ *
+ * @author Matt Post <post@jhu.edu>
+ * @version $LastChangedDate: 2010-05-02 11:19:17 -0400 (Sun, 02 May 2010) $
+ */
+
 public class Translation {
     private int          id = -1;
     private Sentence     source;
@@ -61,6 +72,8 @@ public class Translation {
         return source.id();
     }
 
+    /* Returns the 1-best translation from the hypergraph object.
+     */
     public String translation() {
 
         if (this.hypergraph == null) {
@@ -88,6 +101,8 @@ public class Translation {
         }
     }
 
+    /* Prints the k-best list to standard output.
+     */
     public void print() {
         if (hypergraph != null) {
             KBestExtractor kBestExtractor = new KBestExtractor(JoshuaDecoder.symbolTable,
@@ -114,6 +129,8 @@ public class Translation {
             System.out.println(" ||| 0.0\n");
 
         }
+
+        System.out.flush();
     }
 
     public String toString() {

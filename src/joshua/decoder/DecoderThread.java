@@ -55,10 +55,17 @@ import joshua.util.io.UncheckedIOException;
 import edu.jhu.thrax.util.TestSetFilter;
 
 /**
- * this class implements:
- * (1) interact with the chart-parsing functions to do the true
- *     decoding
+ * This class handles decoding of individual Sentence objects (which
+ * can represent plain sentences or lattices).  A single sentence can
+ * be decoded by a call to translate() and, if an InputHandler is
+ * used, many sentences can be decoded in a thread-safe manner via a
+ * single call to translateAll(), which continually queries the
+ * InputHandler for sentences until they have all been consumed and
+ * translated.
  *
+ * The DecoderFactory class is responsible for launching the threads.
+ *
+ * @author Matt Post <post@jhu.edu>
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate: 2010-05-02 11:19:17 -0400 (Sun, 02 May 2010) $
  */

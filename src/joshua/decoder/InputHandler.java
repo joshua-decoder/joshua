@@ -19,6 +19,7 @@
 package joshua.decoder;
 
 import joshua.decoder.segment_file.Sentence;
+import joshua.decoder.segment_file.LatticeInput;
 
 import java.util.Iterator;
 import java.util.List;
@@ -38,10 +39,14 @@ import java.util.zip.GZIPInputStream;
 
 /**
  * This class represents input to the decoder.  It currently supports
- * two kinds of input: (1) plain sentences and (2) sentences wrapped
- * in a <seg> tag.  The latter is used to denote the sentences number
- * of each sentence.  It provides thread-safe sequential access to the
- * input sentences.
+ * three kinds of input: (1) plain sentences and (2) sentences wrapped
+ * in a <seg> tag (via the Sentence class) and (3) lattices (in Python
+ * Lattice Format, via the Lattice class).  Format (2) is used to
+ * denote the sentences number of each sentence.  
+ *
+ * The input handler provides thread-safe sequential access to the
+ * input sentences.  It also manages receiving and assembling decoded
+ * sentences in order (via calls to register()).
  *
  * Ideally, InputHandler objects could represent complicated
  * constraints and restrictions on the object being decoded.  This
@@ -50,7 +55,7 @@ import java.util.zip.GZIPInputStream;
  * job it would be to parse those constraints from the input.
  *
  * @author Matt Post <post@jhu.edu>
- * @version $LastChangedDate$
+ * @version $LastChangedDate: $
  */
 
 public class InputHandler implements Iterator<Sentence> {
@@ -98,15 +103,23 @@ public class InputHandler implements Iterator<Sentence> {
         prepareNextLine();
     }
 
-    private void prepareNextLine() {
+    private synchronized void prepareNextLine() {
+        // technically the synchronization is unnecessary because this
+        // is only called from the constructor and next(), but it
+        // feels like it should be synchronized
         try {
             String line = lineReader.readLine();
             sentenceNo++;
             if (line == null) {
                 nextSentence = null;
             } else {
-                synchronized(lock) {
+                if (line.startsWith("(((")) {
+                    nextSentence = new LatticeInput(line, sentenceNo);
+                } else {
                     nextSentence = new Sentence(line, sentenceNo);
+                }
+
+                synchronized(lock) {
                     issued.add(nextSentence);
                     completed.add(null);
                 }
