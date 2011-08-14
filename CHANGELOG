@@ -1,0 +1,23 @@
+3.1
+---
+- Fixed multithreading.  Use -threads N from the command line or
+  configuration file to spawn N parallel decoding threads.
+
+- Configuration file parameters can now be overridden from the command
+  line.  The format is
+
+  -parameter value
+
+  Among these must be the configuration file itself, which can be
+  referred to with -config, or -c for short.
+
+3.0
+---
+
+- Added the highly parameterizable Hadoop-based Thrax grammar
+  extractor, which extracts both Hiero and SAMT grammars.
+
+- Incorporated a black-box pipeline script at
+  $JOSHUA/scripts/training/pipeline.pl
+
+- Moved development to github.com.
