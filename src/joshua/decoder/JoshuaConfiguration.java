@@ -24,6 +24,9 @@ import joshua.util.io.LineReader;
 import java.util.Random;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.io.PrintWriter;
+import java.io.FileWriter;
+import java.io.File;
 import java.io.IOException;
 
 /**
@@ -191,6 +194,44 @@ public class JoshuaConfiguration {
 // Methods
 //===============================================================
 	
+    /**
+     * To process command-line options, we write them to a file that
+     * looks like the config file, and then call readConfigFile() on
+     * it.  It would be more general to define a class that sits on a
+     * stream and knows how to chop it up, but this was quicker to implement.
+     */
+    public static void processCommandLineOptions(String[] options) {
+        try { 
+            File tmpFile = File.createTempFile("options", null, null);
+            PrintWriter out = new PrintWriter(new FileWriter(tmpFile));
+
+            for (int i = 0; i < options.length; i++) {
+                String key = options[i].substring(1);
+                if (i + 1 == options.length || options[i+1].startsWith("-")) {
+                    // if this is the last item, or if the next item
+                    // is another flag, then this is an argument-less
+                    // flag
+                    out.println(key + "=true");
+
+                } else {
+                    out.println(key + "=" + options[i+1]);
+                    // skip the next item
+                    i++;
+                }
+            }
+            out.close();
+            JoshuaConfiguration.readConfigFile(tmpFile.getCanonicalPath());
+
+            System.out.println("***** " + tmpFile.getCanonicalPath());
+
+            // tmpFile.delete();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.exit(1);
+        }
+    }
+
 	// This is static instead of a constructor because all the fields are static. Yuck.
 	public static void readConfigFile(String configFile) throws IOException {
 		
@@ -519,7 +560,7 @@ public class JoshuaConfiguration {
 		            int v = random.nextInt(10000000);//make it random
 					parallel_files_prefix = fds[1] + v;
 					logger.info(String.format("parallel_files_prefix: %s", parallel_files_prefix));
-				} else if ("num_parallel_decoders".equals(fds[0])) {
+				} else if ("num_parallel_decoders".equals(fds[0]) || "threads".equals(fds[0]) ) {
 					num_parallel_decoders = Integer.parseInt(fds[1]);
 					if (num_parallel_decoders <= 0) {
 						throw new IllegalArgumentException("Must specify a positive number for num_parallel_decoders");
