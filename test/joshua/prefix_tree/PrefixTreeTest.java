@@ -92,7 +92,7 @@ public class PrefixTreeTest {
 
 		CorpusArray sourceCorpus = new CorpusArray(sentence, sentenceStartPositions, vocab);
 		SuffixArray sourceSuffixes = new SuffixArray(sourceCorpus);
-		ParallelCorpusGrammarFactory parallelCorpus = new ParallelCorpusGrammarFactory(sourceSuffixes, targetSuffixes, alignments, null, Integer.MAX_VALUE, maxPhraseSpan, maxPhraseLength, maxNonterminals, 2, Float.MIN_VALUE, JoshuaConfiguration.phrase_owner, JoshuaConfiguration.default_non_terminal, JoshuaConfiguration.oovFeatureCost);
+		ParallelCorpusGrammarFactory parallelCorpus = new ParallelCorpusGrammarFactory(sourceSuffixes, targetSuffixes, alignments, null, Integer.MAX_VALUE, maxPhraseSpan, maxPhraseLength, maxNonterminals, 2, Float.MIN_VALUE, JoshuaConfiguration.phrase_owner, JoshuaConfiguration.default_non_terminal, JoshuaConfiguration.oov_feature_cost);
 		
 //		tree = new PrefixTree(vocab, maxPhraseSpan, maxPhraseLength, maxNonterminals);
 		tree = new PrefixTree(parallelCorpus);
