@@ -222,9 +222,7 @@ public class JoshuaConfiguration {
             out.close();
             JoshuaConfiguration.readConfigFile(tmpFile.getCanonicalPath());
 
-            System.out.println("***** " + tmpFile.getCanonicalPath());
-
-            // tmpFile.delete();
+            tmpFile.delete();
 
         } catch (IOException e) {
             e.printStackTrace();
