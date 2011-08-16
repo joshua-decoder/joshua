@@ -930,7 +930,7 @@ sub rollout_hadoop_cluster {
 	system("tar xzf $JOSHUA/lib/hadoop-0.20.203.0rc1.tar.gz");
 	system("ln -sf hadoop-0.20.203.0 hadoop");
 
-	chomp(my $hostname = `hostname --fqdn`);
+	chomp(my $hostname = `hostname -f`);
 
 	# copy configuration files
 	foreach my $file (qw/core-site.xml mapred-site.xml hdfs-site.xml/) {
