@@ -77,7 +77,8 @@ my $JOSHUA_MEM = "3100m";
 my $ALIGNER_MEM = "10g";
 my $QSUB_ARGS  = "-l num_proc=2";
 my $ALIGNER_BLOCKSIZE = 1000000;
-my $NUMJOBS = 20;
+my $NUM_JOBS = 1;
+my $NUM_THREADS = 1;
 
 my @STEPS = qw[FIRST SUBSAMPLE ALIGN PARSE THRAX MERT TEST LAST];
 my %STEPS = map { $STEPS[$_] => $_ + 1 } (0..$#STEPS);
@@ -106,7 +107,8 @@ my $retval = GetOptions(
   "hadoop-mem=s"      => \$HADOOP_MEM,
   "decoder-command=s" => \$MERTFILES{'decoder_command'},
   "thrax-conf=s"      => \$THRAX_CONF_FILE,
-  "jobs=i"            => \$NUMJOBS,
+  "jobs=i"            => \$NUM_JOBS,
+  "threads=i"         => \$NUM_THREADS,
   "subsample!"   	  => \$DO_SUBSAMPLE,
   "qsub-args=s"  	  => \$QSUB_ARGS,
   "first-step=s" 	  => \$FIRST_STEP,
@@ -190,7 +192,7 @@ if ($ALIGNER ne "giza" and $ALIGNER ne "berkeley") {
 
 # if parallelization is turned off, then use the sequential version of
 # the decoder command
-if ($NUMJOBS == 1) {
+if ($NUM_JOBS == 1) {
   $MERTFILES{'decoder_command'} = "$MERTCONFDIR/decoder_command.sequential";
 }
 
@@ -451,7 +453,7 @@ if ($GRAMMAR_TYPE eq "samt") {
 				  "train/vocab.$TARGET");
 
   $cachepipe->cmd("parse",
-				  "cat $TRAIN{target} | $SCRIPTDIR/training/parallelize/parallelize.pl <<<-j $NUMJOBS>>> -- java -jar $JOSHUA/lib/BerkeleyParser.jar -gr $JOSHUA/lib/eng_sm6.gr | sed 's/^\(/\(TOP/' | tee train/corpus.$TARGET.parsed.mc | perl -pi -e 's/(\\S+)\\)/lc(\$1).\")\"/ge' | tee train/corpus.$TARGET.parsed | perl $SCRIPTDIR/training/add-OOVs.pl train/vocab.$TARGET > train/corpus.parsed.$TARGET",
+				  "cat $TRAIN{target} | $SCRIPTDIR/training/parallelize/parallelize.pl <<<-j $NUM_JOBS>>> -- java -jar $JOSHUA/lib/BerkeleyParser.jar -gr $JOSHUA/lib/eng_sm6.gr | sed 's/^\(/\(TOP/' | tee train/corpus.$TARGET.parsed.mc | perl -pi -e 's/(\\S+)\\)/lc(\$1).\")\"/ge' | tee train/corpus.$TARGET.parsed | perl $SCRIPTDIR/training/add-OOVs.pl train/vocab.$TARGET > train/corpus.parsed.$TARGET",
 				  "$TRAIN{target}",
 				  "train/corpus.parsed.$TARGET");
 
@@ -638,7 +640,8 @@ foreach my $key (keys %MERTFILES) {
 	s/<MEM>/$JOSHUA_MEM/g;
 	s/<GRAMMAR>/$GRAMMAR_TYPE/g;
 	s/<OOV>/$OOV/g;
-	s/<NUMJOBS>/$NUMJOBS/g;
+	s/<NUMJOBS>/$NUM_JOBS/g;
+	s/<NUMTHREADS>/$NUM_THREADS/g;
 	s/<QSUB_ARGS>/$QSUB_ARGS/g;
 	s/<OUTPUT>/mert\/tune.output.nbest/g;
 	s/<REF>/$TUNE{target}/g;
@@ -736,7 +739,8 @@ foreach my $key (qw(decoder_command)) {
   open TO, ">test/$key" or die "can't write to 'test/$key'";
   while (<FROM>) {
 	s/<INPUT>/$TEST{source}/g;
-	s/<NUMJOBS>/$NUMJOBS/g;
+	s/<NUMJOBS>/$NUM_JOBS/g;
+	s/<NUMTHREADS>/$NUM_THREADS/g;
 	s/<QSUB_ARGS>/$QSUB_ARGS/g;
 	s/<OUTPUT>/test\/test.output.nbest/g;
 	s/<JOSHUA>/$JOSHUA/g;
@@ -775,7 +779,7 @@ if ($DO_MBR) {
   $numlines--;
 
   $cachepipe->cmd("test-onebest-parmbr", 
-				  "seq 0 $numlines | $SCRIPTDIR/training/parallelize/parallelize.pl -j $NUMJOBS -- $SCRIPTDIR/training/parmbr.sh test/test.output.nbest.noOOV $JOSHUA/bin > test/test.output.1best",
+				  "seq 0 $numlines | $SCRIPTDIR/training/parallelize/parallelize.pl -j $NUM_JOBS -- $SCRIPTDIR/training/parmbr.sh test/test.output.nbest.noOOV $JOSHUA/bin > test/test.output.1best",
 				  "test/test.output.nbest.noOOV", 
 				  "test/test.output.1best");
 } else {
