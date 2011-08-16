@@ -167,6 +167,12 @@ if (! defined $TEST and ($STEPS{$FIRST_STEP} <= $STEPS{TEST}
   exit 1;
 }
 
+# make sure a grammar file was given if we're skipping training
+if (! defined $GRAMMAR_FILE and ($STEPS{$FIRST_STEP} >= $STEPS{MERT})) {
+  print "* FATAL: need a grammar (--grammar) if you're skipping that step\n";
+  exit 1;
+}
+
 # if $CORPUS was a relative path, prepend the starting directory
 # (under the assumption it was relative to there)
 map {
@@ -453,7 +459,7 @@ if ($GRAMMAR_TYPE eq "samt") {
 				  "train/vocab.$TARGET");
 
   $cachepipe->cmd("parse",
-				  "cat $TRAIN{target} | $SCRIPTDIR/training/parallelize/parallelize.pl <<<-j $NUM_JOBS>>> -- java -jar $JOSHUA/lib/BerkeleyParser.jar -gr $JOSHUA/lib/eng_sm6.gr | sed 's/^\(/\(TOP/' | tee train/corpus.$TARGET.parsed.mc | perl -pi -e 's/(\\S+)\\)/lc(\$1).\")\"/ge' | tee train/corpus.$TARGET.parsed | perl $SCRIPTDIR/training/add-OOVs.pl train/vocab.$TARGET > train/corpus.parsed.$TARGET",
+				  "cat $TRAIN{target} | java -jar $JOSHUA/lib/BerkeleyParser.jar -gr $JOSHUA/lib/eng_sm6.gr | sed 's/^\(/\(TOP/' | tee train/corpus.$TARGET.parsed.mc | perl -pi -e 's/(\\S+)\\)/lc(\$1).\")\"/ge' | tee train/corpus.$TARGET.parsed | perl $SCRIPTDIR/training/add-OOVs.pl train/vocab.$TARGET > train/corpus.parsed.$TARGET",
 				  "$TRAIN{target}",
 				  "train/corpus.parsed.$TARGET");
 
@@ -576,7 +582,7 @@ if (! defined $LMFILE) {
   }
 } else {
   if (! -e $LMFILE) {
-	print STDERR "* FATAL: can't file lmfile '$LMFILE'\n";
+	print STDERR "* FATAL: can't find lmfile '$LMFILE'\n";
 	exit(1);
   }
 
@@ -779,7 +785,7 @@ if ($DO_MBR) {
   $numlines--;
 
   $cachepipe->cmd("test-onebest-parmbr", 
-				  "seq 0 $numlines | $SCRIPTDIR/training/parallelize/parallelize.pl -j $NUM_JOBS -- $SCRIPTDIR/training/parmbr.sh test/test.output.nbest.noOOV $JOSHUA/bin > test/test.output.1best",
+				  "cat test/test.output.nbest.noOOV | java -Xmx1700m -cp $JOSHUA/bin joshua.decoder.NbestMinRiskReranker false 1 > test/test.output.1best",
 				  "test/test.output.nbest.noOOV", 
 				  "test/test.output.1best");
 } else {

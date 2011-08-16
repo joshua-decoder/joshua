@@ -1,8 +1,10 @@
+.PHONY: test
+
 all: test
 
 test:
 	./test.sh
 
 clean:
-	@rm -rf alignments hadoop* train test tune mert 
+	@rm -rf lm.gz alignments hadoop* thrax* grammar.gz tune mert test grammar.gz
 
