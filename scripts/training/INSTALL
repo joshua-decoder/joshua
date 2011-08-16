@@ -23,8 +23,9 @@
 
    - Moses
 
-     Moses is used to run GIZA++ (which is included with Joshua).  In
-     the future we plan to remove this dependence, but in the meantime,
+     Moses is used to run GIZA++.  GIZA++ is included with Joshua,
+     which simplifies the installation of Moses.  In the near future
+     we plan to eliminate the Moses dependence, but in the meantime,
      you must either install Moses, or use the Berkeley aligner.
   
      To install Moses, following these simplified steps:
@@ -33,41 +34,43 @@
 
         svn co https://mosesdecoder.svn.sourceforge.net/svnroot/mosesdecoder/trunk moses
 
-     2. Change directory to moses.  
+     2. (Optional) Compile moses.
 
-        cd moses
-		./regenerate-makefiles.sh
-		./configure
-		make -j3
+           cd moses
+		   ./regenerate-makefiles.sh
+		   ./configure
+		   make -j3
 
-      In your shell profile, Set the environment variable MOSES to
-      point to this directory.
+     3. In your shell profile, set the environment variable MOSES to
+        point to this directory.
 
-   3. Install the Moses scripts
+           export MOSES=/path/to/moses
 
-      Edit $MOSES/scripts/Makefile and change the following two lines:
+     4. Install the Moses scripts
 
-	    TARGETDIR=$MOSES
-		BINDIR=$JOSHUA/bin
+        Edit $MOSES/scripts/Makefile and change the following two lines:
 
-      Then make and install:
+	       TARGETDIR=$(MOSES)
+           BINDIR=$(JOSHUA)/bin
 
-        cd scripts
-		make
+        Then make and install:
 
-     Then set the following environment variable:
+           cd scripts
+           make release
 
-       export SCRIPTS_ROOTDIR=$MOSES/scripts-YYYYMMDD-0000
+        Then set the following environment variable:
 
-     where YYYYMMDD is the current date.
+           export SCRIPTS_ROOTDIR=$MOSES/scripts-YYYYMMDD-0000
 
-3. Test your installation
+        where YYYYMMDD is the current date.
 
-     cd $JOSHUA/scripts/training/test
-     ./test.sh
+3. Test your installation.
+
+      cd $JOSHUA/scripts/training/test
+      make test
 
    This will build a Hiero model on a small Haitian/English corpus.
-   At the end, you should see this:
+   At the end (an hour or so later), you should see this:
 
      Processing 100 sentences...
      Evaluating candidate translations in plain file test/test.output.1best...
