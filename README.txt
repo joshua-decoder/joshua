@@ -1,46 +1,61 @@
 Running the Joshua Decoder:
 ---------------------------
+If you wish to run the complete machine translation pipeline, Joshua
+includes a black-box implementation.  See the documentation at:
 
-First, make sure you have compiled the code.  If you go to your local copy of
-the trunk and try to run the Joshua decoder with no arguments:
+   - local: scripts/training/README
+   - web:   https://github.com/joshua-decoder/joshua/wiki/Joshua-Pipeline
 
-java -cp bin joshua.decoder.JoshuaDecoder
+Manually Running the Joshua Decoder:
+------------------------------------
 
-It will complain that you gave it 0 arguments, and inform you that it needs
-three of them:
+First, make sure you have compiled the code.  You can do this by
+typing:
 
-  (*) Name of the Joshua config file
-  (*) Name of the file containing the source (foreign) sentences to be translated
-  (*) Name of the output file, to be produced by the decoder
+    ant jar
 
-So let's try to decode the Chinese sentences in the trunk/example2 folder.
-First, cd to the example2 folder, and then type:
+The basic decoder invocation is:
 
-  java -Xmx1200m -Xms1200m -cp ../bin joshua.decoder.JoshuaDecoder example2.config.javalm example2.src example2.nbest.out
+    cat SOURCE | java -c CONFIG > OUTPUT
 
-The decoder output will first load the language model file example2.4gram.lm.gz,
-followed by the translation model example2.heiro.tm.gz.  The decoder will then start
-translating the 100 Chinese sentences one by one, producing for each sentence (up to)
-300 candidate translations.  The decoder will take a few minutes to finish, with the
-candidate translations written to the output file example2.nbest.out.  The output
-file also contains the feature values for each of those candidates, as well as the
-calculated score for that candidate, which is the dot product of the feature vector
-and the weight vector.
+That is, you need at minimum (1) a Joshua configuration file, which
+points to a trained model and defines a number of runtime parameters
+and (2) an input file containing source language sentences to decode.
+An example of such a model can be found in the example/ directory.  To
+run this example, type:
 
-Notice that the file names for the two models, the size of the N-best list, and the
-feature weights, are all specified in Joshua's config file.
+    cat example/example.test.in | java -Djava.library.path=$JOSHUA/lib \
+       -cp $JOSHUA/bin joshua.decoder.JoshuaDecoder -c example/example.config.kenlm
 
+The decoder output will load the language model and translation models
+defined in the configuration file, and will then decode the five
+sentences in the example file.
+
+You can enable multithreaded decoding with the -threads N flag:
+
+    cat example/example.test.in | java -Djava.library.path=$JOSHUA/lib \
+       -cp $JOSHUA/bin joshua.decoder.JoshuaDecoder -c example/example.config.kenlm \
+       -threads 5
+
+The configuration file defines many additional parameters, all of
+which can be overridden on the command line.  For example, to output
+the top 10 hypotheses instead of just the top 1 specified in the
+configuration file, use -top_n N:
+
+    cat example/example.test.in | java -Djava.library.path=$JOSHUA/lib \
+       -cp $JOSHUA/bin joshua.decoder.JoshuaDecoder -c example/example.config.kenlm \
+       -top_n 10
 
 Running Z-MERT, Joshua's MERT module:
 -------------------------------------
 
-((Section (1) in trunk/ZMERT_example/README_ZMERT.txt is an expanded version of this section))
+((Section (1) in ZMERT_example/README_ZMERT.txt is an expanded version of this section))
 
 Joshua's MERT module, called Z-MERT, can be used by launching the driver
 program (ZMERT.java), which expects a config file as its main argument.  This
 config file can be used to specify any subset of Z-MERT's 20-some parameters.
 For a full list of those parameters, and their default values, run ZMERT with
-a single -h argument as follows (assuming you're in the trunk folder):
+a single -h argument as follows:
 
   java -cp bin joshua.zmert.ZMERT -h
 
@@ -68,7 +83,7 @@ specifies the following "main" MERT parameters:
  this README, then this parameter is ignored.)
 
 To test Z-MERT on the 100-sentence test set of example2, provide this config
-file to Z-MERT as follows (assuming you're in the trunk folder):
+file to Z-MERT as follows:
 
   java -cp bin joshua.zmert.ZMERT -maxMem 500 ZMERT_example/ZMERT_config_ex2.txt > ZMERT_example/ZMERT.out
 
@@ -107,6 +122,4 @@ Notice that the Z-MERT arguments configFile and decoderOutFile (-cfg and
 command.  Also, the Z-MERT argument for N must match the value for top_n in
 Joshua's config file, indicated by the Z-MERT argument configFile (-cfg).
 
-*******************************************************************************
-** For more details on Z-MERT, refer to trunk/ZMERT_example/README_ZMERT.txt **
-*******************************************************************************
+For more details on Z-MERT, refer to ZMERT_example/README_ZMERT.txt
