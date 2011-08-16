@@ -1378,9 +1378,17 @@ public double[] run_single_iteration(
 
       try {
         Runtime rt = Runtime.getRuntime();
-		String cmd[] = {"/usr/bin/setsid", decoderCommandFileName,
-						passIterationToDecoder ? Integer.toString(iteration) : ""};
-        Process p = rt.exec(cmd);
+        File setsid = new File("/usr/bin/setsid");
+        Process p = null;
+        if (setsid.exists()) {
+            String cmd[] = {"/usr/bin/setsid", decoderCommandFileName,
+                            passIterationToDecoder ? Integer.toString(iteration) : ""};
+            p = rt.exec(cmd);
+        } else {
+            String cmd[] = {decoderCommandFileName,
+                            passIterationToDecoder ? Integer.toString(iteration) : ""};
+            p = rt.exec(cmd);
+        }            
 
         StreamGobbler errorGobbler = new StreamGobbler(p.getErrorStream(), decVerbosity);
         StreamGobbler outputGobbler = new StreamGobbler(p.getInputStream(), decVerbosity);
