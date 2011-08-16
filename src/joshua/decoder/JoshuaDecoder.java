@@ -466,7 +466,7 @@ public class JoshuaDecoder {
 					this.languageModel = new TrieLM(
 							this.symbolTable,
 							JoshuaConfiguration.lm_file);
-				} else {
+		} else {
 			
 //			logger.info("Reading language model from " + JoshuaConfiguration.lm_file + " into internal trie");
 //			this.languageModel = new TrieLM(
