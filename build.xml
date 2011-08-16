@@ -93,10 +93,12 @@
 		</exec>
 	</target>
 		
-	<target name="giza">
+	<target name="giza" depends="init">
 	  <exec executable="make">
 		<arg value="-C" />
 		<arg value="scripts/training/giza-pp/" />
+		<arg value="all" />
+		<arg value="install" />
 	  </exec>
 	</target>
 
@@ -159,6 +161,11 @@
 		<exec executable="make">
 			<arg value="-C" />
 			<arg value="${src}/joshua/decoder/ff/lm/srilm" />
+			<arg value="clean" />
+		</exec>
+		<exec executable="make">
+			<arg value="-C" />
+			<arg value="scripts/training/giza-pp" />
 			<arg value="clean" />
 		</exec>
 		<delete verbose="true" quiet="true">
