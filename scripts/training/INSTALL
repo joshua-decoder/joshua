@@ -1,74 +1,73 @@
-The Joshua pipeline has the following external dependence:
-
-- Moses scripts
-
-  You must download and install Moses and the Moses support scripts,
-  and set the environment variable SCRIPTS_ROOTDIR (as specified in
-  the Moses instructions).  Moses is used to run GIZA++ for alignment,
-  and this dependence will be removed in the near future.
-
-In addition, Joshua depends on the following externally-developed
-software, which is included with the Joshua distribution:
-
-- Hadoop (0.20.203.0)
-  http://www.apache.org/dist/hadoop/common/hadoop-0.20.203.0/hadoop-0.20.203.0rc1.tar.gz
-
-  Hadoop is used by Thrax for extracting Hiero- and SAMT-style
-  grammars.  You can use your own hadoop installation, but if you
-  don't have one, the pipeline script will set one up for you and tear
-  it down afterward.  The decision is made based on whether the
-  environment variable $HADOOP is defined.
-
-- The Berkeley Aligner (2.1)
-  http://berkeleyaligner.googlecode.com/files/berkeleyaligner_unsupervised-2.1.tar.gz
-
-  The pipeline supports both GIZA++ (the default) and the Berkeley
-  aligner for alignment.
-
-- Berkeley Parser
-  http://code.google.com/p/berkeleyparser/source/checkout
-
-  For SAMT grammar extraction, a parse of one side of the data is
-  required.  The Joshua pipeline will parse the target side for you
-  using the Berkeley parser (so long as the target side is English).
-
-
 == INSTALLATION ======================================================
-
-0. Set the following environment variables to point to their
-   installation locations:
-
-     export SCRIPTS_ROOTDIR=/path/to/moses/scripts
-
-   Optionally, if you have an existing Hadoop installation, set its
-   variable:
-   
-     export HADOOP=/path/to/hadoop/root
-
-   Important: make sure that $HADOOP is unset if you do not have a
-   Hadoop installation, since the pipeline script uses this setting to
-   determine whether to rollout its own cluster.
 
 1. Download and install Joshua.  
 
-   The best way to do this is to use git to clone the latest
-   stable release of the codebase:
+   The best way to do this is to use git to clone the latest stable
+   release of the codebase:
 
-     git clone git@github.com:joshua-decoder/joshua.git
-
-     cd joshua
-     ant jar
+      git clone git@github.com:joshua-decoder/joshua.git
+      cd joshua
+      ant jar
 
    Make sure to set the JOSHUA environment variable:
 
-     export JOSHUA=/path/to/joshua
+      export JOSHUA=/path/to/joshua
 
-2. Test your installation
+2. Install external depencies.
+
+   - SRILM
+     http://www-speech.sri.com/projects/srilm/download.html
+
+     You need SRILM to build a language model.  Make sure that SRILM
+     environment variable points to the root of the SRILM installation.
+
+   - Moses
+
+     Moses is used to run GIZA++ (which is included with Joshua).  In
+     the future we plan to remove this dependence, but in the meantime,
+     you must either install Moses, or use the Berkeley aligner.
+  
+     To install Moses, following these simplified steps:
+
+     1. Checkout the main branch from the SVN repository:
+
+        svn co https://mosesdecoder.svn.sourceforge.net/svnroot/mosesdecoder/trunk moses
+
+     2. Change directory to moses.  
+
+        cd moses
+		./regenerate-makefiles.sh
+		./configure
+		make -j3
+
+      In your shell profile, Set the environment variable MOSES to
+      point to this directory.
+
+   3. Install the Moses scripts
+
+      Edit $MOSES/scripts/Makefile and change the following two lines:
+
+	    TARGETDIR=$MOSES
+		BINDIR=$JOSHUA/bin
+
+      Then make and install:
+
+        cd scripts
+		make
+
+     Then set the following environment variable:
+
+       export SCRIPTS_ROOTDIR=$MOSES/scripts-YYYYMMDD-0000
+
+     where YYYYMMDD is the current date.
+
+3. Test your installation
 
      cd $JOSHUA/scripts/training/test
      ./test.sh
 
-   This will build a Hiero model on a small Haitian/English corpus.  At the end, you should see this:
+   This will build a Hiero model on a small Haitian/English corpus.
+   At the end, you should see this:
 
      Processing 100 sentences...
      Evaluating candidate translations in plain file test/test.output.1best...
@@ -87,9 +86,10 @@ software, which is included with the Joshua distribution:
    That is a very bad score, but don't worry, it's because there isn't
    very much training data.
 
-3. If the test completes successfully, you should be all set to go.
-Refer to the README file in this directory, or visit the Joshua wiki
-at https://github.com/joshua-decoder/joshua/wiki/Joshua-Pipeline .
+4. If the test completes successfully, you should be all set to go.
+   Refer to the README file in this directory, or visit the Joshua
+   wiki at
+   https://github.com/joshua-decoder/joshua/wiki/Joshua-Pipeline .
 
 == FEEDBACK ==========================================================
 
