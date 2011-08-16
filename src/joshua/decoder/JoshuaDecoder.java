@@ -307,7 +307,6 @@ public class JoshuaDecoder {
 	 */
 	public JoshuaDecoder initialize(String configFile) {
 		try {
-			JoshuaConfiguration.readConfigFile(configFile);
 
 			if (JoshuaConfiguration.tm_file != null) {
 
@@ -821,30 +820,63 @@ public class JoshuaDecoder {
 			startTime = System.currentTimeMillis();
 		}
 		
-		if (args.length < 1 || args.length > 4) {
+		if (args.length < 1) {
 			System.out.println("Usage: java " +
 				JoshuaDecoder.class.getName() +
-				" configFile [testFile [outputFile [oracleFile]]]");
+				" [args] configFile [testFile [outputFile [oracleFile]]]");
 			
 			System.out.println("  testFile defaults to standard input");
 			System.out.println("  outputFile defaults to standard output");
 			System.out.println("  oracleFile defaults to null");
 			System.exit(1);
 		}
-		String configFile  = args[0].trim();
+
+		String configFile  = null;
 		String testFile    = "-";
 		String nbestFile   = "-";
 		String oracleFile  = null;
-		if (args.length >= 2)
-			testFile   = args[1].trim();
-		if (args.length >= 3)
-			nbestFile  = args[2].trim();
-		if (args.length == 4)
-			oracleFile = args[3].trim();
+
+        // Step-0: Process the configuration file.  We accept two use
+        // cases. (1) For backwards compatility, Joshua can be called
+        // with as "Joshua configFile [testFile [outputFile
+        // [oracleFile]]]".  (2) Command-line options can be used, in
+        // which case we look for an argument to the "-config" flag.
+        // We can distinguish these two cases by looking at the first
+        // argument; if it starts with a hyphen, the new format has
+        // been invoked.
+
+        if (args[0].startsWith("-")) {
+
+            // Search for the configuration file
+            for (int i = 0; i < args.length; i++) {
+                if (args[i].equals("-c") || args[i].equals("-config")) {
+
+                    configFile = args[i+1].trim();
+                    JoshuaConfiguration.readConfigFile(configFile);
+                    JoshuaConfiguration.processCommandLineOptions(args);
+
+                    break;
+                }
+            }
+        } else {
+
+            configFile  = args[0].trim();
+
+            JoshuaConfiguration.readConfigFile(configFile);
+
+            if (args.length >= 2)
+                testFile   = args[1].trim();
+            if (args.length >= 3)
+                nbestFile  = args[2].trim();
+            if (args.length == 4)
+                oracleFile = args[3].trim();
+        }
 		
+
 		
 		/* Step-1: initialize the decoder, test-set independent */
 		JoshuaDecoder decoder = new JoshuaDecoder(configFile);
+
 		if (logger.isLoggable(Level.INFO)) {
 			logger.info("Before translation, loading time is "
 				+ ((double)(System.currentTimeMillis() - startTime) / 1000.0)
