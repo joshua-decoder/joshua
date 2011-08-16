@@ -93,7 +93,13 @@
 		</exec>
 	</target>
 		
-	
+	<target name="giza">
+	  <exec executable="make">
+		<arg value="-C" />
+		<arg value="scripts/training/giza-pp/" />
+	  </exec>
+	</target>
+
 	<target name="parallelize">
 		<exec executable="make">
 			<arg value="-C" />
@@ -103,7 +109,7 @@
 <!-- ~~~~~ Java build tasks ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 	
 	<!-- Compile the Java code. -->
-	<target name="compile" depends="init,srilm,kenlm,parallelize">
+	<target name="compile" depends="init, giza, srilm, kenlm, parallelize">
 		<javac compiler="javac1.5" srcdir="${src}" destdir="${build}" 
 			classpathref="compile.all.classpath" debug="on" encoding="utf8" 
             sourcepath="" includeantruntime="false">
