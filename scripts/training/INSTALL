@@ -70,21 +70,22 @@
       make test
 
    This will build a Hiero model on a small Haitian/English corpus.
-   At the end (an hour or so later), you should see this:
+   At the end (twenty minutes or so later), you should see this:
 
-     Processing 100 sentences...
-     Evaluating candidate translations in plain file test/test.output.1best...
-     BLEU_precision(1) = 163 / 2451 = 0.0665
-	 BLEU_precision(2) = 2 / 2351 = 0.0009
-	 BLEU_precision(3) = 0 / 2255 ==smoothed==> 0.0002
-	 BLEU_precision(4) = 0 / 2159 ==smoothed==> 0.0001
-	 BLEU_precision = 0.0010
+      Processing 100 sentences...
+      Evaluating candidate translations in plain file
+      test/test.output.1best...
+      BLEU_precision(1) = 165 / 8717 = 0.0189
+      BLEU_precision(2) = 2 / 8617 = 0.0002
+      BLEU_precision(3) = 0 / 8521 ==smoothed==> 0.0001
+      BLEU_precision(4) = 0 / 8425 ==smoothed==> 0.0000
+      BLEU_precision = 0.0003
 
-	 Length of candidate corpus = 2451
-	 Effective length of reference corpus = 2220
-	 BLEU_BP = 1.0000
+      Length of candidate corpus = 8717
+      Effective length of reference corpus = 2268
+      BLEU_BP = 1.0000
 
-	   => BLEU = 0.0010
+        => BLEU = 0.0003
      
    That is a very bad score, but don't worry, it's because there isn't
    very much training data.
