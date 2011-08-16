@@ -19,10 +19,12 @@ SRI_LIB = libsrilm.so
 ifeq ($(MTYPE), macosx)
 	SRI_LFLAG = -dynamiclib
 	SRI_LIB = libsrilm.dylib
+	SRI_INCLUDE = -I/System/Library/Frameworks/JavaVM.framework/Versions/A/Headers
 else
 ifeq ($(MTYPE), macosx-m64)
 	SRI_LFLAG = -dynamiclib
 	SRI_LIB = libsrilm.dylib
+	SRI_INCLUDE = -I/System/Library/Frameworks/JavaVM.framework/Versions/A/Headers
 	64BIT_FLAG=-m64
 endif
 endif
@@ -67,7 +69,7 @@ $(SRI_LIB): srilm.o srilm_java_wrap.o
 
 srilm_java_wrap.o: srilm_java_wrap.cxx
 	@# BUG: On OSX 10.4, g++ 4.0.1: "-fpic is not supported; -fPIC assumed"
-	g++ $(64BIT_FLAG) -c -fpic $< -I/usr/local/include/ $(SRILM_INC) $(JAVA_INC) $(JAVA_INC_OS)
+	g++ $(64BIT_FLAG) -c -fpic $< -I/usr/local/include/ $(SRILM_INC) $(SRI_INCLUDE) $(JAVA_INC) $(JAVA_INC_OS)
 
 srilm_java_wrap.cxx: srilm_java.i
 	swig -c++ -java -package joshua.decoder.ff.lm.srilm -outdir . $<
