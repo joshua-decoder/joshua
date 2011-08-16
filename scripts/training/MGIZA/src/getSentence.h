@@ -128,6 +128,7 @@ public:
 private:    
     pthread_mutex_t readsent_mutex; 
     pthread_mutex_t setprob_mutex;
+    void split(vector<string>&, const string&, const string&);
     bool readNextSentence(sentPair&);  // will be defined in the definition file, this
 };
 

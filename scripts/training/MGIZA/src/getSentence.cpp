@@ -35,7 +35,6 @@ USA.
 #include <strstream>
 #include <stdio.h>
 #include <stdlib.h>
-#include <boost/algorithm/string.hpp>
 #include <vector>
 #include <set>
 #include <pthread.h>
@@ -270,6 +269,29 @@ int sentenceHandler::getNextSentence(sentPair& sent, vcbList* elist, vcbList* fl
     pthread_mutex_unlock(&readsent_mutex);
     return 0;
 }
+
+/*
+ * Splits a string "str" into a vector of tokens delimited by ANY of
+ * the characters in "delim".  The delimiters are removed.
+ */
+void sentenceHandler::split(vector<string> &tokens, const string& str, const string& delim) {
+  string::size_type pos = str.find_first_not_of(delim);
+  string::size_type npos = 0;
+  while (pos != string::npos) {
+    npos = str.find_first_of(delim, pos);
+    if (npos == string::npos) break;
+    string tok = str.substr(pos, npos - pos);
+    tokens.push_back(tok);
+
+    pos = str.find_first_not_of(delim, npos);
+  }
+
+  if (pos != string::npos) {
+    string tok = str.substr(pos, npos - pos);
+    tokens.push_back(tok);
+  }
+}
+
 bool sentenceHandler::readNextSentence(sentPair& sent)
   /* This method reads in a new pair of sentences, each pair is read from the 
      corpus file as line triples. The first line the no of times this line 
@@ -285,7 +307,7 @@ bool sentenceHandler::readNextSentence(sentPair& sent)
   vector<string> splits;
   if (getline(*inputFile, line)){
 
-	  boost::algorithm::split(splits,line,boost::algorithm::is_any_of("|#*"));
+      split(splits, line, "|#*");
 
 	  if(splits.size() == 1 || splits.size() == 0){
 		  // continue, no problem
