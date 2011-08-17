@@ -122,7 +122,6 @@ public class JoshuaConfiguration {
 	public static int     max_n_items              = 30;
 	public static double  relative_threshold       = 10.0;
 	public static int     max_n_rules              = 50;
-	public static double  rule_relative_threshold  = 10.0;
 	
 	//nbest config
 	public static boolean use_unique_nbest    = false;
@@ -492,11 +491,6 @@ public class JoshuaConfiguration {
 					max_n_rules = Integer.parseInt(fds[1]);
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("max_n_rules: %s", max_n_rules));
-					
-				} else if ("rule_relative_threshold".equals(fds[0])) {
-					rule_relative_threshold = Double.parseDouble(fds[1]);
-					if (logger.isLoggable(Level.FINEST)) 
-						logger.finest(String.format("rule_relative_threshold: %s", rule_relative_threshold));
 					
 				} else if ("use_unique_nbest".equals(fds[0])) {
 					use_unique_nbest = Boolean.valueOf(fds[1]);
