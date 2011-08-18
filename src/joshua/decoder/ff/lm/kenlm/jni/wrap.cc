@@ -1,40 +1,21 @@
 #include "lm/enumerate_vocab.hh"
 #include "lm/model.hh"
+#include "util/murmur_hash.hh"
 
 #include <iostream>
 
+#include <string.h>
 #include <stdlib.h>
 #include <jni.h>
+
+// Grr.  Everybody's compiler is slightly different and I'm trying to not depend on boost.   
+#include <ext/hash_map>
 
 // Verify that jint and lm::ngram::WordIndex are the same size.  If this breaks for you, there's a need to revise probString.
 namespace {
 template <bool> struct StaticCheck {};
 template <> struct StaticCheck<true> { typedef bool StaticAssertionPassed; };
 typedef StaticCheck<sizeof(jint) == sizeof(lm::WordIndex)>::StaticAssertionPassed FloatSize;
-
-class SendToJava : public lm::ngram::EnumerateVocab {
-  public:
-    SendToJava(JNIEnv *env, jobject obj) : copy_(), env_(env), obj_(obj), 
-      mid_(env_->GetMethodID(env_->GetObjectClass(obj_), "set", "(ILjava/lang/String;)V")) {
-      if (!mid_) UTIL_THROW(util::Exception, "Failed to get method id for set callback.");
-    }
-
-    ~SendToJava() {}
-
-    void Add(lm::WordIndex index, const StringPiece &str) {
-      copy_.assign(str.data(), str.size());
-      jstring j_str = env_->NewStringUTF(copy_.c_str());
-      // Java will throw an exception.
-      if (!j_str) return;
-      env_->CallVoidMethod(obj_, mid_, static_cast<jint>(index), j_str);
-    }
-
-  private:
-    std::string copy_;
-    JNIEnv *env_;
-    jobject obj_;
-    jmethodID mid_;
-};
 
 // Vocab ids above what the vocabulary knows about are unknown and should be mapped to that.  
 template <class Model> void FixArray(const Model &model, jint *begin, jint *end) {
@@ -44,36 +25,160 @@ template <class Model> void FixArray(const Model &model, jint *begin, jint *end)
   }
 }
 
+char *PieceCopy(const StringPiece &str) {
+  char *ret = (char*)malloc(str.size() + 1);
+  memcpy(ret, str.data(), str.size());
+  ret[str.size()] = 0;
+  return ret;
+}
+
+// The normal kenlm vocab isn't growable (words can't be added to it).  However, Joshua requires this.  So I wrote this.  Not the most efficient thing in the world.  
+class GrowableVocab : public lm::ngram::EnumerateVocab {
+  public:
+    ~GrowableVocab() {
+      for (std::vector<char *>::const_iterator i = id_to_string_.begin(); i != id_to_string_.end(); ++i) {
+        free(*i);
+      }
+    }
+
+    void Add(lm::WordIndex index, const StringPiece &str) {
+      if (index < id_to_string_.size() && id_to_string_[index]) UTIL_THROW(lm::VocabLoadException, "Vocab id " << index << " already contains " << id_to_string_[index] << " and an attempt was made to insert " << str << ".  This is an error even if the strings are the same.");
+      std::pair<uint64_t, lm::WordIndex> to_ins;
+      to_ins.first = util::MurmurHashNative(str.data(), str.size());
+      to_ins.second = index;
+      if (!string_to_id_.insert(to_ins).second) {
+        UTIL_THROW(lm::VocabLoadException, "Duplicate word " << str);
+      }
+      if (id_to_string_.size() <= index) {
+        id_to_string_.resize(index + 1);
+      }
+      id_to_string_[index] = PieceCopy(str);
+    }
+
+    lm::WordIndex FindOrAdd(const StringPiece &str) {
+      std::pair<uint64_t, lm::WordIndex> to_ins;
+      to_ins.first = util::MurmurHashNative(str.data(), str.size());
+      to_ins.second = id_to_string_.size();
+      std::pair<__gnu_cxx::hash_map<uint64_t, lm::WordIndex>::iterator, bool> ret(string_to_id_.insert(to_ins));
+      // Found?
+      if (!ret.second) return ret.first->second;
+      id_to_string_.push_back(PieceCopy(str));
+      return to_ins.second;
+    }
+
+    const char *Word(lm::WordIndex index) const {
+      assert(index < in_to_string_.size());
+      return id_to_string_[index];
+    }
+
+  private:
+    __gnu_cxx::hash_map<uint64_t, lm::WordIndex> string_to_id_;
+    std::vector<char *> id_to_string_;
+};
+
+/* Rather than handle several different instantiations over JNI, we'll just do virtual calls C++-side. */
+class VirtualBase {
+  public:
+    virtual ~VirtualBase() {}
+
+    GrowableVocab &Vocab() { return vocab_; }
+
+    const GrowableVocab &Vocab() const { return vocab_; }
+
+    virtual float Prob(jint *begin, jint *end) const = 0;
+
+    virtual float ProbString(jint *const begin, jint *const end, jint start) const = 0;
+
+    virtual uint8_t Order() const = 0;
+
+  protected:
+    VirtualBase() {}
+
+  private:
+    GrowableVocab vocab_;
+};
+
+lm::ngram::Config MungeConfig(GrowableVocab &vocab) {
+  lm::ngram::Config ret;
+  ret.enumerate_vocab = &vocab;
+}
+
+template <class Model> class VirtualImpl : public VirtualBase {
+  public:
+    explicit VirtualImpl(const char *name) : m_(name, MungeConfig(Vocab())) {}
+
+    ~VirtualImpl() {}
+
+    float Prob(jint *const begin, jint *const end) const {
+      FixArray(m_, begin, end);
+
+      std::reverse(begin, end - 1);
+      lm::ngram::State ignored;
+      return m_.FullScoreForgotState(reinterpret_cast<const lm::WordIndex*>(begin), reinterpret_cast<const lm::WordIndex*>(end - 1), *(end - 1), ignored).prob;
+    }
+
+    float ProbString(jint *const begin, jint *const end, jint start) const {
+      FixArray(m_, begin, end);
+
+      float prob;
+      lm::ngram::State state;
+      if (start == 0) {
+        prob = 0;
+        state = m_.NullContextState();
+      } else {
+        // Yes this rearranges the values in the copy.  No we won't refer to them again.   
+        std::reverse(begin, begin + start);
+        prob = m_.FullScoreForgotState(reinterpret_cast<const lm::WordIndex*>(begin), reinterpret_cast<const lm::WordIndex*>(begin + start), begin[start], state).prob;
+        ++start;
+      }
+      lm::ngram::State state2;
+      for (const jint *i = begin + start; ;) {
+        if (i >= end) break;
+        prob += m_.FullScore(state, *(i++), state2).prob;
+        if (i >= end) break;
+        prob += m_.FullScore(state2, *(i++), state).prob;
+      }
+      return prob;
+    }
+
+    uint8_t Order() const {
+      return m_.Order();
+    }
+
+  private:
+    Model m_;
+};
+
+VirtualBase *ConstructModel(const char *file_name) {
+  using namespace lm::ngram;
+  ModelType model_type;
+  if (!RecognizeBinary(file_name, model_type)) model_type = HASH_PROBING;
+  switch (model_type) {
+    case HASH_PROBING:
+      return new VirtualImpl<ProbingModel>(file_name);
+    case TRIE_SORTED:
+      return new VirtualImpl<TrieModel>(file_name);
+    case ARRAY_TRIE_SORTED:
+      return new VirtualImpl<ArrayTrieModel>(file_name);
+    case QUANT_TRIE_SORTED:
+      return new VirtualImpl<QuantTrieModel>(file_name);
+    case QUANT_ARRAY_TRIE_SORTED:
+      return new VirtualImpl<QuantArrayTrieModel>(file_name);
+    default:
+      UTIL_THROW(lm::FormatLoadException, "Unrecognized file format " << (unsigned)model_type << " in file " << file_name);
+  }
+}
+
 } // namespace
 
 extern "C" {
 
-JNIEXPORT jint JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenLM_classify(JNIEnv *env, jclass, jstring file_name) {
-  const char *str = env->GetStringUTFChars(file_name, 0);
-  if (!str) return 0;
-  lm::ngram::ModelType model_type;
-  bool is_binary = false;
-  try {
-    is_binary = RecognizeBinary(str, model_type);
-  } catch (std::exception &e) {
-    std::cerr << e.what() << std::endl;
-    abort();
-  }
-  env->ReleaseStringUTFChars(file_name, str);
-  return is_binary ? -1 : static_cast<int>(model_type);
-}
-
-/* Probing */
-JNIEXPORT jlong JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenProbing_create(JNIEnv *env, jclass, jstring file_name, jobject vocab_callback) {
+JNIEXPORT jlong JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenLM_construct(JNIEnv *env, jclass, jstring file_name) {
   const char *str = env->GetStringUTFChars(file_name, 0);
   if (!str) return 0;
   jlong ret;
   try {
-    lm::ngram::Config config;
-    if (!vocab_callback) UTIL_THROW(util::Exception, "Probing model requires you to enumerate vocab pending binary file format revision.");
-    SendToJava callback(env, vocab_callback);
-    config.enumerate_vocab = &callback;
-    ret = reinterpret_cast<jlong>(new lm::ngram::ProbingModel(str, config));
+    ret = reinterpret_cast<jlong>(ConstructModel(str));
   } catch (std::exception &e) {
     std::cerr << e.what() << std::endl;
     abort();
@@ -82,142 +187,60 @@ JNIEXPORT jlong JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenProbing_create(JN
   return ret;
 }
 
-JNIEXPORT void JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenProbing_destroy(JNIEnv *env, jclass, jlong pointer) {
-  delete reinterpret_cast<lm::ngram::ProbingModel*>(pointer);
+JNIEXPORT void JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenLM_destroy(JNIEnv *env, jclass, jlong pointer) {
+  delete reinterpret_cast<VirtualBase*>(pointer);
 }
 
-JNIEXPORT jint JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenProbing_order(JNIEnv *env, jclass, jlong pointer) {
-  return reinterpret_cast<const lm::ngram::ProbingModel*>(pointer)->Order();
+JNIEXPORT jint JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenLM_order(JNIEnv *env, jclass, jlong pointer) {
+  return reinterpret_cast<VirtualBase*>(pointer)->Order();
 }
 
-JNIEXPORT jint JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenProbing_vocab(JNIEnv *env, jclass, jlong pointer, jstring word) {
+JNIEXPORT void JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenLM_vocabAdd(JNIEnv *env, jclass, jlong pointer, jint index, jstring word) {
+  const char *str = env->GetStringUTFChars(word, 0);
+  if (!str) return;
+  try {
+    reinterpret_cast<VirtualBase*>(pointer)->Vocab().Add(index, str);
+  } catch (std::exception &e) {
+    std::cerr << e.what() << std::endl;
+    abort();
+  }
+  env->ReleaseStringUTFChars(word, str);
+}
+
+JNIEXPORT jint JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenLM_vocabFindOrAdd(JNIEnv *env, jclass, jlong pointer, jstring word) {
   const char *str = env->GetStringUTFChars(word, 0);
   if (!str) return 0;
-  jint ret = reinterpret_cast<const lm::ngram::ProbingModel*>(pointer)->GetVocabulary().Index(str);
+  jint ret;
+  try {
+    ret = reinterpret_cast<VirtualBase*>(pointer)->Vocab().FindOrAdd(str);
+  } catch (std::exception &e) {
+    std::cerr << e.what() << std::endl;
+    abort();
+  }
   env->ReleaseStringUTFChars(word, str);
   return ret;
 }
 
-JNIEXPORT jfloat JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenProbing_prob(JNIEnv *env, jclass, jlong pointer, jintArray arr) {
+JNIEXPORT jstring JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenLM_vocabWord(JNIEnv *env, jclass, jlong pointer, jint index) {
+  return env->NewStringUTF(reinterpret_cast<const VirtualBase*>(pointer)->Vocab().Word(index));
+}
+
+JNIEXPORT jfloat JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenLM_prob(JNIEnv *env, jclass, jlong pointer, jintArray arr) {
   jint length = env->GetArrayLength(arr);
   if (length <= 0) return 0.0;
   // Yes it's gcc only.  Sue me.  
   jint values[length];
   env->GetIntArrayRegion(arr, 0, length, values);
-  const lm::ngram::ProbingModel &model = *reinterpret_cast<const lm::ngram::ProbingModel*>(pointer);
-  FixArray(model, values, values + length);
-
-  std::reverse(values, values + length - 1);
-  lm::ngram::State ignored;
-  return model.FullScoreForgotState(reinterpret_cast<const lm::WordIndex*>(values), reinterpret_cast<const lm::WordIndex*>(values + length - 1), values[length - 1], ignored).prob;
+  return reinterpret_cast<const VirtualBase*>(pointer)->Prob(values, values + length);
 }
 
-JNIEXPORT jfloat JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenProbing_probString(JNIEnv *env, jclass, jlong pointer, jintArray arr, jint start) {
+JNIEXPORT jfloat JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenLM_probString(JNIEnv *env, jclass, jlong pointer, jintArray arr, jint start) {
   jint length = env->GetArrayLength(arr);
   if (length <= start) return 0.0;
   // Yes it's gcc only.  Sue me.  
   jint values[length];
   env->GetIntArrayRegion(arr, 0, length, values);
-  const lm::ngram::ProbingModel &model = *reinterpret_cast<const lm::ngram::ProbingModel*>(pointer);
-  FixArray(model, values, values + length);
-
-  float prob = 0;
-  lm::ngram::State state;
-  if (start == 0) {
-    state = model.NullContextState();
-  } else {
-    // Yes this rearranges the values in the copy.  No we won't refer to them again.   
-    std::reverse(values, values + start);
-    prob += model.FullScoreForgotState(reinterpret_cast<const lm::WordIndex*>(values), reinterpret_cast<const lm::WordIndex*>(values + start), values[start], state).prob;
-    ++start;
-  }
-  lm::ngram::State state2;
-  const jint *const last = values + length;
-  for (const jint *i = values + start; ;) {
-    if (i >= last) break;
-    prob += model.FullScore(state, *(i++), state2).prob;
-    if (i >= last) break;
-    prob += model.FullScore(state2, *(i++), state).prob;
-  }
-  return prob;
-}
-
-/* Duplicate of the above with s/Trie/Trie/g */
-JNIEXPORT jlong JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenTrie_create(JNIEnv *env, jclass, jstring file_name, jobject vocab_callback) {
-  const char *str = env->GetStringUTFChars(file_name, 0);
-  if (!str) return 0;
-  jlong ret;
-  try {
-    lm::ngram::Config config;
-    SendToJava callback(env, vocab_callback);
-    if (vocab_callback) config.enumerate_vocab = &callback;
-    ret = reinterpret_cast<jlong>(new lm::ngram::TrieModel(str, config));
-  } catch (std::exception &e) {
-    std::cerr << e.what() << std::endl;
-    abort();
-  }
-  env->ReleaseStringUTFChars(file_name, str);
-  return ret;
-}
-
-JNIEXPORT void JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenTrie_destroy(JNIEnv *env, jclass, jlong pointer) {
-  delete reinterpret_cast<lm::ngram::TrieModel*>(pointer);
-}
-
-JNIEXPORT jint JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenTrie_order(JNIEnv *env, jclass, jlong pointer) {
-  return reinterpret_cast<const lm::ngram::TrieModel*>(pointer)->Order();
-}
-
-JNIEXPORT jint JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenTrie_vocab(JNIEnv *env, jclass, jlong pointer, jstring word) {
-  const char *str = env->GetStringUTFChars(word, 0);
-  if (!str) return 0;
-  jint ret = reinterpret_cast<const lm::ngram::TrieModel*>(pointer)->GetVocabulary().Index(str);
-  env->ReleaseStringUTFChars(word, str);
-  return ret;
-}
-
-JNIEXPORT jfloat JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenTrie_prob(JNIEnv *env, jclass, jlong pointer, jintArray arr) {
-  jint length = env->GetArrayLength(arr);
-  if (length <= 0) return 0.0;
-  // Yes it's gcc only.  Sue me.  
-  jint values[length];
-  env->GetIntArrayRegion(arr, 0, length, values);
-  const lm::ngram::TrieModel &model = *reinterpret_cast<const lm::ngram::TrieModel*>(pointer);
-  FixArray(model, values, values + length);
-
-  std::reverse(values, values + length - 1);
-  lm::ngram::State ignored;
-  return model.FullScoreForgotState(reinterpret_cast<const lm::WordIndex*>(values), reinterpret_cast<const lm::WordIndex*>(values + length - 1), values[length - 1], ignored).prob;
-}
-
-JNIEXPORT jfloat JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenTrie_probString(JNIEnv *env, jclass, jlong pointer, jintArray arr, jint start) {
-  jint length = env->GetArrayLength(arr);
-  if (length <= start) return 0.0;
-  // Yes it's gcc only.  Sue me.  
-  jint values[length];
-  env->GetIntArrayRegion(arr, 0, length, values);
-  const lm::ngram::TrieModel &model = *reinterpret_cast<const lm::ngram::TrieModel*>(pointer);
-  FixArray(model, values, values + length);
-
-  float prob = 0;
-  lm::ngram::State state;
-  if (start == 0) {
-    state = model.NullContextState();
-  } else {
-    // Yes this rearranges the values in the copy.  No we won't refer to them again.   
-    std::reverse(values, values + start);
-    prob += model.FullScoreForgotState(reinterpret_cast<const lm::WordIndex*>(values), reinterpret_cast<const lm::WordIndex*>(values + start), values[start], state).prob;
-    ++start;
-  }
-  lm::ngram::State state2;
-  const jint *const last = values + length;
-  for (const jint *i = values + start; ;) {
-    if (i >= last) break;
-    prob += model.FullScore(state, *(i++), state2).prob;
-    if (i >= last) break;
-    prob += model.FullScore(state2, *(i++), state).prob;
-  }
-  return prob;
+  return reinterpret_cast<const VirtualBase*>(pointer)->ProbString(values, values + length, start);
 }
 
 } // extern

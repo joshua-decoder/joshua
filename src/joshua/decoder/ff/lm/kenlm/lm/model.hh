@@ -1,10 +1,12 @@
 #ifndef LM_MODEL__
 #define LM_MODEL__
 
+#include "lm/bhiksha.hh"
 #include "lm/binary_format.hh"
 #include "lm/config.hh"
 #include "lm/facade.hh"
 #include "lm/max_order.hh"
+#include "lm/quantize.hh"
 #include "lm/search_hashed.hh"
 #include "lm/search_trie.hh"
 #include "lm/vocab.hh"
@@ -70,9 +72,13 @@ template <class Search, class VocabularyT> class GenericModel : public base::Mod
   private:
     typedef base::ModelFacade<GenericModel<Search, VocabularyT>, State, VocabularyT> P;
   public:
-    // Get the size of memory that will be mapped given ngram counts.  This
-    // does not include small non-mapped control structures, such as this class
-    // itself.  
+    // This is the model type returned by RecognizeBinary.
+    static const ModelType kModelType;
+
+    /* Get the size of memory that will be mapped given ngram counts.  This
+     * does not include small non-mapped control structures, such as this class
+     * itself.  
+     */
     static size_t Size(const std::vector<uint64_t> &counts, const Config &config = Config());
 
     /* Load the model from a file.  It may be an ARPA or binary file.  Binary
@@ -111,6 +117,11 @@ template <class Search, class VocabularyT> class GenericModel : public base::Mod
   private:
     friend void LoadLM<>(const char *file, const Config &config, GenericModel<Search, VocabularyT> &to);
 
+    static void UpdateConfigFromBinary(int fd, const std::vector<uint64_t> &counts, Config &config) {
+      AdvanceOrThrow(fd, VocabularyT::Size(counts[0], config));
+      Search::UpdateConfigFromBinary(fd, counts, config);
+    }
+
     float SlowBackoffLookup(const WordIndex *const context_rbegin, const WordIndex *const context_rend, unsigned char start) const;
 
     FullScoreReturn ScoreExceptBackoff(const WordIndex *context_rbegin, const WordIndex *context_rend, const WordIndex new_word, State &out_state) const;
@@ -124,15 +135,11 @@ template <class Search, class VocabularyT> class GenericModel : public base::Mod
 
     Backing &MutableBacking() { return backing_; }
 
-    static const ModelType kModelType = Search::kModelType;
-
     Backing backing_;
     
     VocabularyT vocab_;
 
-    typedef typename Search::Unigram Unigram;
     typedef typename Search::Middle Middle;
-    typedef typename Search::Longest Longest;
 
     Search search_;
 };
@@ -141,13 +148,17 @@ template <class Search, class VocabularyT> class GenericModel : public base::Mod
 
 // These must also be instantiated in the cc file.  
 typedef ::lm::ngram::ProbingVocabulary Vocabulary;
-typedef detail::GenericModel<detail::ProbingHashedSearch, Vocabulary> ProbingModel;
+typedef detail::GenericModel<detail::ProbingHashedSearch, Vocabulary> ProbingModel; // HASH_PROBING
 // Default implementation.  No real reason for it to be the default.  
 typedef ProbingModel Model;
 
 // Smaller implementation.
 typedef ::lm::ngram::SortedVocabulary SortedVocabulary;
-typedef detail::GenericModel<trie::TrieSearch, SortedVocabulary> TrieModel;
+typedef detail::GenericModel<trie::TrieSearch<DontQuantize, trie::DontBhiksha>, SortedVocabulary> TrieModel; // TRIE_SORTED
+typedef detail::GenericModel<trie::TrieSearch<DontQuantize, trie::ArrayBhiksha>, SortedVocabulary> ArrayTrieModel;
+
+typedef detail::GenericModel<trie::TrieSearch<SeparatelyQuantize, trie::DontBhiksha>, SortedVocabulary> QuantTrieModel; // QUANT_TRIE_SORTED
+typedef detail::GenericModel<trie::TrieSearch<SeparatelyQuantize, trie::ArrayBhiksha>, SortedVocabulary> QuantArrayTrieModel;
 
 } // namespace ngram
 } // namespace lm

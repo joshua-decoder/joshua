@@ -394,13 +394,14 @@ public class JoshuaDecoder {
 				logger.finest("Populating SRILM symbol table with symbols from existing symbol table");
 				this.symbolTable = new SrilmSymbol(existingSymbols, JoshuaConfiguration.lm_order);
 			}
-        } else if (JoshuaConfiguration.use_kenlm) {
+    } else if (JoshuaConfiguration.use_kenlm) {
 			logger.finest("Using KenLM symbol table");
-            if (null == existingSymbols) {
-                this.symbolTable = new KenSymbol();
-            } else {
-                throw new RuntimeException("TODO(juri): fix vocabulary identifiers.");
-            }
+      if (null == existingSymbols) {
+        // This will be set by initializeLanguageModel.  
+        this.symbolTable = null;
+       } else {
+         throw new RuntimeException("TODO(juri): fix vocabulary identifiers.");
+       }
 		} else {
 			if (null == existingSymbols) {
 				//this.symbolTable = new Vocabulary();//new BuildinSymbol(null);
@@ -447,8 +448,9 @@ public class JoshuaDecoder {
 			|| JoshuaConfiguration.use_right_equivalent_state) {
 				throw new IllegalArgumentException("KenLM supports state.  Joshua should get around to using it.");
 			}
-      this.languageModel = KenLM.Load(JoshuaConfiguration.lm_file, (KenSymbol)this.symbolTable);
-    
+      KenLM lm = new KenLM(JoshuaConfiguration.lm_file);
+      this.languageModel = lm;
+      this.symbolTable = new KenSymbol(lm);
 		} else if (JoshuaConfiguration.use_bloomfilter_lm) {
 			if (JoshuaConfiguration.use_left_equivalent_state
 			|| JoshuaConfiguration.use_right_equivalent_state) {

@@ -7,41 +7,42 @@ import java.util.List;
 
 // TODO(Joshua devs): include my state object with your LM state then update this API to pass state instead of int[].  
 
-public abstract class KenLM implements NGramLanguageModel {
+public class KenLM implements NGramLanguageModel {
   static {
     System.loadLibrary("ken");
   }
 
-  protected final long pointer;
-  protected final int N;
+  private final long pointer;
+  private final int N;
 
-  private final static native int classify(String file_name);
+  private final static native long construct(String file_name);
+  private final static native void destroy(long ptr);
+  private final static native int order(long ptr);
 
-  static public KenLM Load(String file_name, VocabCallback vocab) {
-    if (classify(file_name) == 2) {
-      return new KenTrie(file_name, vocab);
-    } else {
-      return new KenProbing(file_name, vocab);
-    }
+  private final static native void vocabAdd(long ptr, int index, String word);
+  private final static native int vocabFindOrAdd(long ptr, String word);
+  private final static native String vocabWord(long ptr, int index);
+
+  private final static native float prob(long ptr, int words[]);
+  private final static native float probString(long ptr, int words[], int start);
+
+  public KenLM(String file_name) {
+    pointer = construct(file_name);
+    N = order(pointer);
   }
 
-  protected KenLM(long point) {
-    pointer = point;
-    N = internalOrder();
+  public void destroy() {
+    destroy(pointer);
   }
 
-  /* API */
-  abstract protected int internalOrder();
+  public int getOrder() { return N; }
 
-  public final int getOrder() { return N; }
+  public void vocabAdd(int index, String word) { vocabAdd(pointer, index, word); }
+  public int vocabFindOrAdd(String word) { return vocabFindOrAdd(pointer, word); }
+  public String vocabWord(int index) { return vocabWord(pointer, index); }
 
-  abstract public int vocab(String word);
-
-  abstract public float prob(int[] words);
-
-  abstract float probString(int[] words, int start);
-
-  abstract public void destroy();
+  public float prob(int words[]) { return prob(pointer, words); }
+  public float probString(int words[], int start) { return probString(pointer, words, start); }
 
   /* implement NGramLanguageModel */
   /** @deprecated pass int arrays to prob instead.
@@ -52,6 +53,7 @@ public abstract class KenLM implements NGramLanguageModel {
   }
 
   public double ngramLogProbability(int[] ngram, int order) {
+    if (order != N && order != ngram.length) throw new RuntimeException("Lower order not supported.");
     return prob(ngram);
   }
 
