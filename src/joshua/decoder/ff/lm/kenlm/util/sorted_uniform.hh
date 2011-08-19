@@ -7,14 +7,12 @@
 #include <assert.h>
 #include <inttypes.h>
 
-#include <iostream>
-
 namespace util {
 
 template <class T> class IdentityAccessor {
   public:
     typedef T Key;
-    T operator()(const uint64_t *in) const { return *in; }
+    T operator()(const T *in) const { return *in; }
 };
 
 struct Pivot64 {
@@ -27,8 +25,8 @@ struct Pivot64 {
 
 // Use when off * width is <2^64.  This is guaranteed when each of them is actually a 32-bit value.   
 struct Pivot32 {
-  static inline std::size_t Calc(uint32_t off, uint32_t range, uint32_t width) {
-    return static_cast<std::size_t>((static_cast<uint64_t>(off) * static_cast<uint64_t>(width)) / (static_cast<uint64_t>(range) + 1));
+  static inline std::size_t Calc(uint64_t off, uint64_t range, uint64_t width) {
+    return static_cast<std::size_t>((off * width) / (range + 1));
   }
 };
 
@@ -101,6 +99,27 @@ template <class Iterator, class Accessor, class Pivot> bool SortedUniformFind(co
     return false;
   }
   return BoundedSortedUniformFind<Iterator, Accessor, Pivot>(accessor, begin, below, end, above, key, out);
+}
+
+// May return begin - 1.
+template <class Iterator, class Accessor> Iterator BinaryBelow(
+    const Accessor &accessor,
+    Iterator begin,
+    Iterator end,
+    const typename Accessor::Key key) {
+  while (end > begin) {
+    Iterator pivot(begin + (end - begin) / 2);
+    typename Accessor::Key mid(accessor(pivot));
+    if (mid < key) {
+      begin = pivot + 1;
+    } else if (mid > key) {
+      end = pivot;
+    } else {
+      for (++pivot; (pivot < end) && accessor(pivot) == mid; ++pivot) {}
+      return pivot - 1;
+    }
+  }
+  return begin - 1;
 }
 
 // To use this template, you need to define a Pivot function to match Key.  

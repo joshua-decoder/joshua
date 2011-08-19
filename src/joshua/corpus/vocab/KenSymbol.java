@@ -17,7 +17,8 @@
  */
 package joshua.corpus.vocab;
 
-import joshua.decoder.ff.lm.kenlm.jni.VocabCallback;
+import joshua.decoder.ff.lm.kenlm.jni.KenLM;
+import joshua.decoder.ff.tm.hiero.HieroFormatReader;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -31,65 +32,49 @@ import java.io.ObjectOutput;
 * @version $LastChangedDate$
 */
 
-public class KenSymbol extends DefaultSymbol implements VocabCallback {
+public class KenSymbol extends DefaultSymbol {
+		private static final Logger logger = Logger.getLogger(KenSymbol.class.getName());
+
+  private final KenLM backend;
 	
-	private static final Logger logger = Logger.getLogger(KenSymbol.class.getName());
-	
-	private HashMap<String,Integer> strToIntTbl = new HashMap<String,Integer>();
-	private HashMap<Integer,String> intToStrTbl = new HashMap<Integer,String>();
-	
-	private int curTerminalID = lmStartSymID ;//must be positive
-	
-	public KenSymbol() {}
-	
-	public int addTerminal(String terminal) {
-		return getID(terminal);
-	}
+	public KenSymbol(KenLM backend_in) {
+    backend = backend_in;
+    addNonterminal(X_STRING);
+    addNonterminal(X1_STRING);
+    addNonterminal(X2_STRING);
+    addNonterminal(S_STRING);
+    addNonterminal(S1_STRING);
+  }
 	
 	/** Get int for string (initial, or recover) */
-	public int getID(String str) {
-		Integer resID = strToIntTbl.get(str);
-		if (null != resID) { // already have this symbol
-			if (isNonterminal(resID)) {
-				throw new RuntimeException("terminal symbol mix with non-terminal, Sym: " + str + "; id: " + resID);
-			}
-			return resID;
-		} else {
-			strToIntTbl.put(str, curTerminalID);
-			intToStrTbl.put(curTerminalID, str);
-			curTerminalID++;
-			if (curTerminalID > lmEndSymID) {
-				throw new RuntimeException("curTerminalID is greater than lmEndSymID");
-			}
-			//logger.info("Sym: " + str + "; id: " + positive_id);
-			return (curTerminalID-1);
-		}
+	public int getID(String wordString) {
+    if (HieroFormatReader.isNonTerminal(wordString)) {
+      return addNonterminal(wordString);
+    } else {
+      return addTerminal(wordString);
+    }
 	}
+
+  public int addTerminal(String str) {
+    return backend.vocabFindOrAdd(str);
+  }
 	
 	
 	public String getTerminal(int id) {
-		String res = intToStrTbl.get(id);
-		if (res == null) {
-			//throw new RuntimeException("try to query the string for non exist id, must exit, id is " + id);
-			logger.warning("null string for id="+id);
-			//System.exit(1);
-		}
-		
-		return  res;
+    return backend.vocabWord(id);
 	}
 	
 	
 	public Collection<Integer> getAllIDs() {
-		return intToStrTbl.keySet();
+		throw new RuntimeException("Method not yet implemented");
 	}
-	
 	
 	public String getUnknownWord() {
     return "<unk>";
 	}
 
 	public int getUnknownWordID() {
-    return 0;
+    return lmStartSymID;
 	}
 
 	public void readExternal(ObjectInput in) throws IOException,
@@ -102,22 +87,4 @@ public class KenSymbol extends DefaultSymbol implements VocabCallback {
 		// TODO Auto-generated method stub
 		throw new RuntimeException("Method not yet implemented");
 	}
-
-  public void set(int id, String str) {
-    Integer old_id = strToIntTbl.put(str, id);
-    String old_word = intToStrTbl.put(id, str);
-    if (old_word != null && !old_word.equals(str)) {
-      throw new RuntimeException("Conflict for id " + id + " of " + old_word + " and " + str);
-    }
-    if (old_id != null && !old_id.equals(id)) {
-      throw new RuntimeException("Conflict for word " + str + " with ids " + old_id + " and " + id);
-    }
-    // Kenlm always calls in order
-    if (id >= curTerminalID) {
-      curTerminalID = id + 1;
-			if (curTerminalID > lmEndSymID) {
-				throw new RuntimeException("curTerminalID is greater than lmEndSymID");
-			}
-    }
-  }
 }
