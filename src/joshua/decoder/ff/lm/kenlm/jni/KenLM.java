@@ -1,6 +1,7 @@
 package joshua.decoder.ff.lm.kenlm.jni;
 
 import joshua.decoder.ff.lm.NGramLanguageModel;
+import joshua.decoder.JoshuaConfiguration;
 
 import joshua.decoder.Support;
 import java.util.List;
@@ -15,11 +16,10 @@ public class KenLM implements NGramLanguageModel {
   private final long pointer;
   private final int N;
 
-  private final static native long construct(String file_name);
+  private final static native long construct(String file_name, float fake_oov);
   private final static native void destroy(long ptr);
   private final static native int order(long ptr);
 
-  private final static native void vocabAdd(long ptr, int index, String word);
   private final static native int vocabFindOrAdd(long ptr, String word);
   private final static native String vocabWord(long ptr, int index);
 
@@ -27,7 +27,7 @@ public class KenLM implements NGramLanguageModel {
   private final static native float probString(long ptr, int words[], int start);
 
   public KenLM(String file_name) {
-    pointer = construct(file_name);
+    pointer = construct(file_name, (float)-JoshuaConfiguration.lm_ceiling_cost);
     N = order(pointer);
   }
 
@@ -37,12 +37,13 @@ public class KenLM implements NGramLanguageModel {
 
   public int getOrder() { return N; }
 
-  public void vocabAdd(int index, String word) { vocabAdd(pointer, index, word); }
   public int vocabFindOrAdd(String word) { return vocabFindOrAdd(pointer, word); }
   public String vocabWord(int index) { return vocabWord(pointer, index); }
 
   public float prob(int words[]) { return prob(pointer, words); }
-  public float probString(int words[], int start) { return probString(pointer, words, start); }
+
+  // Apparently Zhifei starts some array indices at 1.  Change to 0-indexing.  
+  public float probString(int words[], int start) { return probString(pointer, words, start - 1); }
 
   /* implement NGramLanguageModel */
   /** @deprecated pass int arrays to prob instead.

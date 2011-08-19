@@ -412,7 +412,7 @@ public class JoshuaDecoder {
 		}
 		
 		// Add the default nonterminal
-		this.symbolTable.addNonterminal(JoshuaConfiguration.default_non_terminal);
+		if (!JoshuaConfiguration.use_kenlm) this.symbolTable.addNonterminal(JoshuaConfiguration.default_non_terminal);
 	}
 	
 	
@@ -451,6 +451,7 @@ public class JoshuaDecoder {
       KenLM lm = new KenLM(JoshuaConfiguration.lm_file);
       this.languageModel = lm;
       this.symbolTable = new KenSymbol(lm);
+		  this.symbolTable.addNonterminal(JoshuaConfiguration.default_non_terminal);
 		} else if (JoshuaConfiguration.use_bloomfilter_lm) {
 			if (JoshuaConfiguration.use_left_equivalent_state
 			|| JoshuaConfiguration.use_right_equivalent_state) {

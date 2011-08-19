@@ -18,6 +18,7 @@
 package joshua.corpus.vocab;
 
 import joshua.decoder.ff.lm.kenlm.jni.KenLM;
+import joshua.decoder.ff.tm.hiero.HieroFormatReader;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -38,16 +39,25 @@ public class KenSymbol extends DefaultSymbol {
 	
 	public KenSymbol(KenLM backend_in) {
     backend = backend_in;
+    addNonterminal(X_STRING);
+    addNonterminal(X1_STRING);
+    addNonterminal(X2_STRING);
+    addNonterminal(S_STRING);
+    addNonterminal(S1_STRING);
   }
 	
-	public int addTerminal(String terminal) {
-		return backend.vocabFindOrAdd(terminal);
-	}
-	
 	/** Get int for string (initial, or recover) */
-	public int getID(String str) {
-    return backend.vocabFindOrAdd(str);
+	public int getID(String wordString) {
+    if (HieroFormatReader.isNonTerminal(wordString)) {
+      return addNonterminal(wordString);
+    } else {
+      return addTerminal(wordString);
+    }
 	}
+
+  public int addTerminal(String str) {
+    return backend.vocabFindOrAdd(str);
+  }
 	
 	
 	public String getTerminal(int id) {
@@ -64,7 +74,7 @@ public class KenSymbol extends DefaultSymbol {
 	}
 
 	public int getUnknownWordID() {
-    return 0;
+    return lmStartSymID;
 	}
 
 	public void readExternal(ObjectInput in) throws IOException,
@@ -77,8 +87,4 @@ public class KenSymbol extends DefaultSymbol {
 		// TODO Auto-generated method stub
 		throw new RuntimeException("Method not yet implemented");
 	}
-
-  public void set(int id, String str) {
-    backend.vocabAdd(id, str);
-  }
 }
