@@ -61,6 +61,16 @@ inline void WriteInt57(void *base, uint64_t bit_off, uint8_t length, uint64_t va
     (value << BitPackShift(bit_off & 7, length));
 }
 
+/* Same caveats as above, but for a 25 bit limit. */
+inline uint32_t ReadInt25(const void *base, uint64_t bit_off, uint8_t length, uint32_t mask) {
+  return (*reinterpret_cast<const uint32_t*>(reinterpret_cast<const uint8_t*>(base) + (bit_off >> 3)) >> BitPackShift(bit_off & 7, length)) & mask;
+}
+
+inline void WriteInt25(void *base, uint64_t bit_off, uint8_t length, uint32_t value) {
+  *reinterpret_cast<uint32_t*>(reinterpret_cast<uint8_t*>(base) + (bit_off >> 3)) |= 
+    (value << BitPackShift(bit_off & 7, length));
+}
+
 typedef union { float f; uint32_t i; } FloatEnc;
 
 inline float ReadFloat32(const void *base, uint64_t bit_off) {
@@ -97,9 +107,20 @@ void BitPackingSanity();
 uint8_t RequiredBits(uint64_t max_value);
 
 struct BitsMask {
+  static BitsMask ByMax(uint64_t max_value) {
+    BitsMask ret;
+    ret.FromMax(max_value);
+    return ret;
+  }
+  static BitsMask ByBits(uint8_t bits) {
+    BitsMask ret;
+    ret.bits = bits;
+    ret.mask = (1ULL << bits) - 1;
+    return ret;
+  }
   void FromMax(uint64_t max_value) {
     bits = RequiredBits(max_value);
-    mask = (1 << bits) - 1;
+    mask = (1ULL << bits) - 1;
   }
   uint8_t bits;
   uint64_t mask;
