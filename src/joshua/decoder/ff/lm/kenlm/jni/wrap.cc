@@ -11,6 +11,17 @@
 // Grr.  Everybody's compiler is slightly different and I'm trying to not depend on boost.   
 #include <ext/hash_map>
 
+// This is needed to compile on OS X Lion / gcc 4.2.1
+namespace __gnu_cxx {
+  template<>
+    struct hash<unsigned long long int>
+    {
+      size_t
+      operator()(unsigned long long int __x) const
+      { return __x; }
+    };
+}
+
 // Verify that jint and lm::ngram::WordIndex are the same size.  If this breaks for you, there's a need to revise probString.
 namespace {
 
@@ -39,6 +50,8 @@ char *PieceCopy(const StringPiece &str) {
   ret[str.size()] = 0;
   return ret;
 }
+
+
 
 // The normal kenlm vocab isn't growable (words can't be added to it).  However, Joshua requires this.  So I wrote this.  Not the most efficient thing in the world.  
 class GrowableVocab : public lm::ngram::EnumerateVocab {
