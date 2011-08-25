@@ -36,7 +36,6 @@ import joshua.corpus.suffix_array.Suffixes;
 import joshua.corpus.suffix_array.mm.MemoryMappedSuffixArray;
 import joshua.corpus.vocab.BuildinSymbol;
 import joshua.corpus.vocab.KenSymbol;
-import joshua.corpus.vocab.SrilmSymbol;
 import joshua.corpus.vocab.SymbolTable;
 import joshua.corpus.vocab.Vocabulary;
 import joshua.decoder.ff.ArityPhrasePenaltyFF;
@@ -51,8 +50,6 @@ import joshua.decoder.ff.lm.NGramLanguageModel;
 import joshua.decoder.ff.lm.bloomfilter_lm.BloomFilterLanguageModel;
 import joshua.decoder.ff.lm.buildin_lm.LMGrammarJAVA;
 import joshua.decoder.ff.lm.buildin_lm.TrieLM;
-import joshua.decoder.ff.lm.distributed_lm.LMGrammarRemote;
-import joshua.decoder.ff.lm.srilm.LMGrammarSRILM;
 import joshua.decoder.ff.state_maintenance.NgramStateComputer;
 import joshua.decoder.ff.state_maintenance.StateComputer;
 import joshua.decoder.ff.tm.Grammar;
@@ -379,29 +376,14 @@ public class JoshuaDecoder {
 	
 	// TODO: maybe move to JoshuaConfiguration to enable moving the featureFunction parsing there (Sets: symbolTable, defaultNonterminals)
 	private void initializeSymbolTable(SymbolTable existingSymbols) {
-		if (JoshuaConfiguration.use_remote_lm_server) {
-			if (null == existingSymbols) {
-				// Within the decoder, we assume BuildinSymbol when using the remote LM
-				this.symbolTable = new BuildinSymbol(JoshuaConfiguration.remote_symbol_tbl);
-			} else {
-				this.symbolTable = existingSymbols;
-			}
-		} else if (JoshuaConfiguration.use_srilm) {
-			logger.finest("Using SRILM symbol table");
-			if (null == existingSymbols) {
-				this.symbolTable = new SrilmSymbol(JoshuaConfiguration.lm_order);
-			} else {
-				logger.finest("Populating SRILM symbol table with symbols from existing symbol table");
-				this.symbolTable = new SrilmSymbol(existingSymbols, JoshuaConfiguration.lm_order);
-			}
-    } else if (JoshuaConfiguration.use_kenlm) {
+		if (JoshuaConfiguration.use_srilm || JoshuaConfiguration.use_kenlm) {
 			logger.finest("Using KenLM symbol table");
-      if (null == existingSymbols) {
-        // This will be set by initializeLanguageModel.  
-        this.symbolTable = null;
-       } else {
-         throw new RuntimeException("TODO(juri): fix vocabulary identifiers.");
-       }
+			if (null == existingSymbols) {
+				// This will be set by initializeLanguageModel.  
+				this.symbolTable = null;
+			} else {
+				throw new RuntimeException("TODO(juri): fix vocabulary identifiers.");
+			}
 		} else {
 			if (null == existingSymbols) {
 				//this.symbolTable = new Vocabulary();//new BuildinSymbol(null);
@@ -423,27 +405,7 @@ public class JoshuaDecoder {
 		// FIXME: And we should check only once for the default (which supports left/right equivalent state) vs everything else (which doesn't)
 		// TODO: maybe have a special exception type for BadConfigfileException instead of using IllegalArgumentException?
 		
-		if (JoshuaConfiguration.use_remote_lm_server) {
-			if (JoshuaConfiguration.use_left_equivalent_state
-			|| JoshuaConfiguration.use_right_equivalent_state) {
-				throw new IllegalArgumentException("using remote LM, we cannot use suffix/prefix stuff");
-			}
-			this.languageModel = new LMGrammarRemote(
-				this.symbolTable,
-				JoshuaConfiguration.lm_order,
-				JoshuaConfiguration.f_remote_server_list,
-				JoshuaConfiguration.num_remote_lm_servers);
-			
-		} else if (JoshuaConfiguration.use_srilm) {
-			if (JoshuaConfiguration.use_left_equivalent_state
-			|| JoshuaConfiguration.use_right_equivalent_state) {
-				throw new IllegalArgumentException("using SRILM, we cannot use suffix/prefix stuff");
-			}
-			this.languageModel = new LMGrammarSRILM(
-				(SrilmSymbol)this.symbolTable,
-				JoshuaConfiguration.lm_order,
-				JoshuaConfiguration.lm_file);
-		} else if (JoshuaConfiguration.use_kenlm) {
+	if (JoshuaConfiguration.use_srilm || JoshuaConfiguration.use_kenlm) {
 			if (JoshuaConfiguration.use_left_equivalent_state
 			|| JoshuaConfiguration.use_right_equivalent_state) {
 				throw new IllegalArgumentException("KenLM supports state.  Joshua should get around to using it.");

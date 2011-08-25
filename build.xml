@@ -54,14 +54,6 @@
 		<mkdir dir="${lib}"/>
 	</target>
 	
-	
-<!-- ~~~~~ SRILM build tasks ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-	
-	<!-- Check for environment variables -->
-	<target name="set-srilm" unless="env.SRILM">
-		<fail message="Please set the $SRILM environmant variable to the directory where srilm is installed." />
-	</target>
-	
 	<!-- Check for environment variables -->
 	<target name="set-joshua-home" unless="env.JOSHUA">
 		<fail message="Please set the $JOSHUA environmant variable." />
@@ -73,19 +65,6 @@
 		<!-- TODO: add suggestion to use /System/Library/Frameworks/JavaVM.framework/Home/ iff on OSX --> 
 	</target>
 	
-	
-	<!-- Compile and install SRILM wrapper -->
-	<target name="srilm" depends="init, set-srilm, set-java-home">
-		<!-- BUG: this is run twice for `ant compile test`, since the Makefile will clean before building (thus it must rebuild everything) -->
-		<exec executable="make">
-			<arg value="-j" />
-			<arg value="4" />
-			<arg value="-C" />
-			<arg value="${src}/joshua/decoder/ff/lm/srilm" />
-			<arg value="install" />
-		</exec>
-	</target>
-
 	<target name="kenlm" depends="init, set-joshua-home">
 		<exec executable="make">
 			<arg value="-j" />
@@ -126,7 +105,7 @@
 <!-- ~~~~~ Java build tasks ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 	
 	<!-- Compile the Java code. -->
-	<target name="compile" depends="init, giza, srilm, kenlm, parallelize">
+	<target name="compile" depends="init, giza, kenlm, parallelize">
 		<javac compiler="javac1.5" srcdir="${src}" destdir="${build}" 
 			classpathref="compile.all.classpath" debug="on" encoding="utf8" 
             sourcepath="" includeantruntime="false">
@@ -175,11 +154,6 @@
 	<target name="clean">
 		<exec executable="make">
 			<arg value="-C" />
-			<arg value="${src}/joshua/decoder/ff/lm/srilm" />
-			<arg value="clean" />
-		</exec>
-		<exec executable="make">
-			<arg value="-C" />
 			<arg value="scripts/training/giza-pp" />
 			<arg value="clean" />
 		</exec>
@@ -193,8 +167,6 @@
 	
 	<!-- EXPERIMENTAL: Delete *all* generated files -->
 	<target name="distclean" depends="clean">
-		<!-- TODO: call the srilm Makefile's distclean (once it exists) -->
-		
 		<!-- BUG: this doesn't delete empty folders (neither ${build} itself, nor the class dirs (the latter makes sense since we don't traverse them)) -->
 		<delete verbose="true" quiet="true" includeEmptyDirs="true">
 			<fileset dir="${build}">
