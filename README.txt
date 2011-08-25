@@ -22,7 +22,12 @@ That is, you need at minimum (1) a Joshua configuration file, which
 points to a trained model and defines a number of runtime parameters
 and (2) an input file containing source language sentences to decode.
 An example of such a model can be found in the example/ directory.  To
-run this example, type:
+run this example, first setup some environment variables:
+
+    export JOSHUA=/path/to/joshua
+	export LC_ALL=en_US.UTF-8
+
+Then type:
 
     cat example/example.test.in | java -Djava.library.path=$JOSHUA/lib \
        -cp $JOSHUA/bin joshua.decoder.JoshuaDecoder -c example/example.config.kenlm
