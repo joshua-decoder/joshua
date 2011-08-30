@@ -20,6 +20,7 @@ package joshua.decoder.chart_parser;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.PriorityQueue;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -28,6 +29,7 @@ import joshua.corpus.syntax.SyntaxTree;
 import joshua.corpus.vocab.SymbolTable;
 import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.chart_parser.DotChart.DotNode;
+import joshua.decoder.chart_parser.CubePruneCombiner.CubePruneState;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.state_maintenance.StateComputer;
 import joshua.decoder.ff.tm.Grammar;
@@ -254,6 +256,178 @@ public class Chart {
 	 * Construct the hypergraph with the help from DotChart.
 	 */
 	
+    private void completeSpan(int i, int j) {
+
+        if (JoshuaConfiguration.pop_limit > 0) {
+            /* We want to implement proper cube-pruning at the span level,
+             * with pruning controlled with the specification of a single
+             * parameter, a pop-limit on the number of items.  This
+             * pruning would be across all DotCharts (that is, across all
+             * grammars) and across all items in the span, regardless of
+             * other state (such as language model state or the lefthand
+             * side).
+             *
+             * The existing implementation prunes in a much less
+             * straightforward fashion.  Each Dotnode within each span is
+             * examined, and applicable rules compete amongst each other.
+             * The number of them that is kept is not absolute, but is
+             * determined by some combination of the maximum heap size and
+             * the score differences.  The score differences occur across
+             * items in the whole span.
+             */
+
+            /* STEP 1: create the heap, and seed it with all of the candidate states */
+            PriorityQueue<CubePruneState> candidates = new PriorityQueue<CubePruneState>();
+
+            // this records states we have already visited
+            HashSet<CubePruneState> visitedStates = new HashSet<CubePruneState>();
+
+            // seed it with the beginning states
+            // for each applicable grammar
+            for (int g = 0; g < grammars.length; g++) {
+                if (! grammars[g].hasRuleForSpan(i, j, foreignSentenceLength)
+                    || null == dotcharts[g].getDotCell(i,j))
+                    continue;
+                // for each rule with applicable rules
+                for (DotNode dotNode : dotcharts[g].getDotCell(i,j).getDotNodes()) {
+                    RuleCollection ruleCollection = dotNode.getApplicableRules();
+                    if (ruleCollection == null)
+                        continue;
+
+                    // create span if required
+                    if (cells[i][j] == null)
+                        cells[i][j] = new Cell(this, goalSymbolID);
+                
+                    List<Rule> sortedAndFilteredRules = manualConstraintsHandler.filterRules(i, j, ruleCollection.getSortedRules());
+                    SourcePath sourcePath = dotNode.getSourcePath();
+
+                    if (null == sortedAndFilteredRules || sortedAndFilteredRules.size() <= 0)
+                        continue;
+
+                    int arity = ruleCollection.getArity();
+                    // add all terminals rules with no pruning
+                    if (arity == 0) {
+                        for (Rule rule: sortedAndFilteredRules) {
+                            cells[i][j].addHyperEdgeInCell(new ComputeNodeResult(
+                                    this.featureFunctions, rule, null, i, j, sourcePath, stateComputers, this.segmentID), rule, i, j, null, sourcePath, false);
+                        }
+                    } else {
+
+                        Rule bestRule = sortedAndFilteredRules.get(0);
+                        List<HGNode> currentAntNodes = new ArrayList<HGNode>();
+                        List<SuperNode> superNodes = dotNode.getAntSuperNodes();
+                        for (SuperNode si : superNodes) {
+                            // TODO: si.nodes must be sorted
+                            currentAntNodes.add(si.nodes.get(0));
+                        }
+                        ComputeNodeResult result =	new ComputeNodeResult(featureFunctions, bestRule, currentAntNodes, i, j, sourcePath, this.stateComputers, this.segmentID); 
+
+                        int[] ranks = new int[1+superNodes.size()];
+                        for (int r = 0; r < ranks.length; r++)
+                            ranks[r] = 1;
+
+                        CubePruneState bestState =	new CubePruneState(result, ranks, bestRule, currentAntNodes);
+                        bestState.setDotNode(dotNode);
+                        candidates.add(bestState);
+                        visitedStates.add(bestState);
+                    }
+                }
+            }
+
+            int popCount = 0;
+            while (candidates.size() > 0 && ++popCount <= JoshuaConfiguration.pop_limit) {
+
+                CubePruneState state = candidates.poll();
+                DotNode dotNode = state.getDotNode();
+                Rule currentRule = state.rule;
+                SourcePath sourcePath = dotNode.getSourcePath();
+                List<SuperNode> superNodes = dotNode.getAntSuperNodes();
+                List<Rule> rules = manualConstraintsHandler.filterRules(i, j, dotNode.getApplicableRules().getSortedRules());
+
+                List<HGNode> currentAntNodes = new ArrayList<HGNode>(state.antNodes);
+
+                // add the hypothesis to the chart
+                cells[i][j].addHyperEdgeInCell(state.nodeStatesTbl, state.rule, i, j, state.antNodes, sourcePath, true);
+
+                // expand the hypothesis
+                for (int k = 0; k < state.ranks.length; k++) {
+
+                    // get new_ranks, which is the same as the old
+                    // ranks, with the current index extended
+                    int[] newRanks = new int[state.ranks.length];
+                    for (int d = 0; d < state.ranks.length; d++)
+                        newRanks[d] = state.ranks[d];
+
+                    newRanks[k] = state.ranks[k] + 1;
+				
+                    // can't extend
+                    if ( (k == 0 && newRanks[k] > rules.size())
+                        || (k != 0 && newRanks[k] > superNodes.get(k-1).nodes.size()) )
+                        continue;
+
+                    /* k = 0 means we extend the rule being used
+                     * k > 0 means we extend 
+                     */
+
+                    Rule oldRule = null;
+                    HGNode oldItem = null;
+                    if (k == 0) { // slide rule
+                        oldRule = currentRule;
+                        currentRule = rules.get(newRanks[k]-1);
+                    } else { // slide ant
+                        oldItem = currentAntNodes.get(k-1); // conside k == 0 is rule
+                        System.out.println("k =  " + k);
+                        System.out.println("antNodes: " + currentAntNodes.size());
+                        System.out.println("supernodes: " + superNodes.size());
+                        System.out.println("newranks: " + newRanks.length);
+                        currentAntNodes.set(k-1,
+                            superNodes.get(k-1).nodes.get(newRanks[k]-1));
+                    }
+
+                    CubePruneState nextState = new CubePruneState(
+						new ComputeNodeResult(featureFunctions, currentRule, currentAntNodes, i, j, sourcePath, stateComputers, this.segmentID),
+                        newRanks, currentRule, currentAntNodes);
+                    nextState.setDotNode(dotNode);
+
+                    if (visitedStates.contains(nextState)) // explored before
+                        continue;
+
+                    visitedStates.add(nextState);
+                    candidates.add(nextState);
+
+                    // recover
+                    if (k == 0)
+                        currentRule = oldRule;
+                    else
+                        currentAntNodes.set(k-1, oldItem);
+
+                }
+
+                // combiner.combine(this, this.cells[i][j], i, j,  dotNode.getAntSuperNodes(), filteredRules, arity, srcPath);
+            }
+
+        } else {
+            for (int k = 0; k < this.grammars.length; k++) {
+                // grammars have a maximum input span they'll apply to
+                if (this.grammars[k].hasRuleForSpan(i, j, foreignSentenceLength)
+                    && null != this.dotcharts[k].getDotCell(i, j)) {
+						
+                    // foreach dotnode in the span
+                    for (DotNode dotNode: this.dotcharts[k].getDotCell(i, j).getDotNodes()) {
+                        // foreach applicable rule (rules with the same source side)
+                        RuleCollection ruleCollection = dotNode.getTrieNode().getRules();
+                        if (ruleCollection != null) { // have rules under this trienode
+                            // TODO: filter the rule according to LHS constraint								
+                            // complete the cell
+                            completeCell(i, j, dotNode, ruleCollection.getSortedRules(), ruleCollection.getArity(), dotNode.getSourcePath());									
+								
+                        }
+                    }
+                }
+            }
+        }
+    }
+
 	/** a parser that can handle:
 	 * - multiple grammars
 	 * - on the fly binarization
@@ -261,7 +435,6 @@ public class Chart {
 	 * */
 	
 	public HyperGraph expand() {
-		
 		if (logger.isLoggable(Level.FINE))
 			logger.fine("Begin expand.");
 		
@@ -287,21 +460,8 @@ public class Chart {
 				//(2)=== populate COMPLETE rules into Chart: the regular CKY part
 				if (logger.isLoggable(Level.FINEST))
 					logger.finest("Adding complete items into chart");
-				for (int k = 0; k < this.grammars.length; k++) {
-					
-					if (this.grammars[k].hasRuleForSpan(i, j, foreignSentenceLength)
-						&& null != this.dotcharts[k].getDotCell(i, j)) {
-						
-						for (DotNode dotNode: this.dotcharts[k].getDotCell(i, j).getDotNodes()) {
-							RuleCollection ruleCollection = dotNode.getTrieNode().getRules();
-							if (ruleCollection != null) { // have rules under this trienode
-								// TODO: filter the rule according to LHS constraint								
-								completeCell(i, j, dotNode, ruleCollection.getSortedRules(), ruleCollection.getArity(), dotNode.getSourcePath());									
-								
-							}
-						}
-					}
-				}				
+
+                completeSpan(i,j);
 				
 				//(3)=== process unary rules (e.g., S->X, NP->NN), just add these items in chart, assume acyclic
 				if (logger.isLoggable(Level.FINEST))

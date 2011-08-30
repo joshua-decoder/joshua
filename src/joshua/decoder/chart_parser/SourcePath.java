@@ -20,7 +20,7 @@ package joshua.decoder.chart_parser;
 import joshua.lattice.Arc;
 
 /**
- * this class represents information about a path taken
+ * This class represents information about a path taken
  * through the source lattice.
  *
  * @note This implementation only tracks the source path cost

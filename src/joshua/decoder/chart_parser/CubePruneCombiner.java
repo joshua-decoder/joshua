@@ -10,6 +10,7 @@ import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.state_maintenance.StateComputer;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.hypergraph.HGNode;
+import joshua.decoder.chart_parser.DotChart.DotNode;
 
 public class CubePruneCombiner implements Combiner{
 	
@@ -40,7 +41,7 @@ public class CubePruneCombiner implements Combiner{
 				rule, i, j, null, srcPath, false);
 	}
 
-	
+
 	/** Add complete Items in Chart pruning inside this function */
 	// TODO: our implementation do the prunining for each DotItem
 	//       under each grammar, not aggregated as in the python
@@ -55,6 +56,7 @@ public class CubePruneCombiner implements Combiner{
 		
 		// rememeber which state has been explored
 		HashMap<String,Integer> cubeStateTbl = new HashMap<String,Integer>();
+
 		
 		if (null == rules || rules.size() <= 0) {
 			return;
@@ -113,9 +115,9 @@ public class CubePruneCombiner implements Combiner{
 				String new_sig = CubePruneState.getSignature(newRanks);
 				
 				if (cubeStateTbl.containsKey(new_sig) // explored before
-				|| (k == 0 && newRanks[k] > rules.size())
-				|| (k != 0 && newRanks[k] > superNodes.get(k-1).nodes.size())
-				) {
+                    || (k == 0 && newRanks[k] > rules.size())
+                    || (k != 0 && newRanks[k] > superNodes.get(k-1).nodes.size())
+                    ) {
 					continue;
 				}
 				
@@ -159,11 +161,12 @@ public class CubePruneCombiner implements Combiner{
 //	===============================================================
 //	 CubePruneState class
 //	===============================================================
-		private static class CubePruneState implements Comparable<CubePruneState> {
+		public static class CubePruneState implements Comparable<CubePruneState> {
 			int[]             ranks;
 			ComputeNodeResult nodeStatesTbl;
 			Rule              rule;
-			List<HGNode> antNodes;
+			List<HGNode>      antNodes;
+            private DotNode   dotNode;
 			
 			public CubePruneState(ComputeNodeResult state, int[] ranks, Rule rule, 
 					List<HGNode> antecedents)
@@ -174,8 +177,17 @@ public class CubePruneCombiner implements Combiner{
 				// create a new vector is critical, because
 				// currentAntecedents will change later
 				this.antNodes = new ArrayList<HGNode>(antecedents);
+                this.dotNode = null;
 			}
 			
+            public void setDotNode(DotNode node) {
+                this.dotNode = node;
+            }
+
+            public DotNode getDotNode() {
+                return this.dotNode;
+            }
+
 			
 			private static String getSignature(int[] ranks2) {
 				StringBuffer sb = new StringBuffer();

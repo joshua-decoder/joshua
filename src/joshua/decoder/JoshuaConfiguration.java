@@ -115,6 +115,7 @@ public class JoshuaConfiguration {
 	
 	//pruning config
 	//note we can use both cube pruning and "beamAndThreshold" pruning
+    public static int     pop_limit                = 0;
 	public static boolean useCubePrune             = true;
 	public static boolean useBeamAndThresholdPrune = true;
 	public static double  fuzz1                    = 0.1;
@@ -596,6 +597,9 @@ public class JoshuaConfiguration {
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest("segmentFileParserClass: " + segmentFileParserClass);
 					
+                } else if ("pop-limit".equals(fds[0])) {
+                    pop_limit = Integer.valueOf(fds[1]);
+                    logger.finest(String.format("pop-limit: %s", pop_limit)); 
 				} else if ("useCubePrune".equals(fds[0])) {
 					useCubePrune = Boolean.valueOf(fds[1]);
 					if(useCubePrune==false)
