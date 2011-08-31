@@ -351,7 +351,10 @@ public class JoshuaConfiguration {
 						logger.finest(String.format("floor value for probabilities returned as lexical transaltion probabilities: %s", sa_lex_floor_prob));
 				} else if ("use_srilm".equals(fds[0])) {
 					use_srilm = Boolean.valueOf(fds[1]);
-					System.err.println("WARNING: srilm no longer supported, will use KenLM instead");
+					if (use_srilm) {
+						use_kenlm = true;
+						System.err.println("WARNING: srilm no longer supported, will use KenLM instead");
+					}
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("use_srilm: %s", use_srilm));
 				} else if ("use_kenlm".equals(fds[0])) {
