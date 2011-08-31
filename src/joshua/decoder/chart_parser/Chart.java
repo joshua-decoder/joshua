@@ -195,8 +195,21 @@ public class Chart {
 		this.dotcharts = new DotChart[this.grammars.length];
 		for (int i = 0; i < this.grammars.length; i++)
 			this.dotcharts[i] = new DotChart(this.sentence, this.grammars[i], this);
+
+		/* The CubePruneCombiner defined here is fairly complicated.
+		 * It is designed to work both at the cell level and at the
+		 * span level, using a beam and threshold to have rules
+		 * compete amongst each other for a single node.  This can be
+		 * turned off in favor of a simple cube pruning pop-limit at
+		 * the span limit by setting pop-limit to a nonzero value.
+		 * Otherwise, if useBeamAndThresholdPrune is set to true, the
+		 * item-level cube-pruning + beam and threshold pruning is
+		 * used.  Finally, exhaustive pruning is used.
+		 */
 		
-		if (JoshuaConfiguration.useCubePrune) // TODO: should not directly refer to JoshuaConfiguration
+		if (JoshuaConfiguration.pop_limit > 0)
+			combiner = null;
+		else if (JoshuaConfiguration.useBeamAndThresholdPrune)
 			combiner = new CubePruneCombiner(this.featureFunctions, this.stateComputers);
 		else
 			combiner = new ExhaustiveCombiner(this.featureFunctions, this.stateComputers);
@@ -398,8 +411,6 @@ public class Chart {
                         currentAntNodes.set(k-1, oldItem);
 
                 }
-
-                // combiner.combine(this, this.cells[i][j], i, j,  dotNode.getAntSuperNodes(), filteredRules, arity, srcPath);
             }
 
         } else {
@@ -584,7 +595,12 @@ public class Chart {
 		if (null == this.cells[i][j]) {
 			this.cells[i][j] = new Cell(this, this.goalSymbolID);
 		}		
-		combiner.addAxiom(this, this.cells[i][j], i, j, rule, srcPath);
+
+		this.cells[i][j].addHyperEdgeInCell(
+				new ComputeNodeResult(this.featureFunctions, rule, null, i, j, srcPath, stateComputers, segmentID),
+				rule, i, j, null, srcPath, false);
+
+		// combiner.addAxiom(this, this.cells[i][j], i, j, rule, srcPath);
 	}
 	
 	
@@ -630,8 +646,5 @@ public class Chart {
 		else
 			//this.cells[i][j].completeCell(i, j, dt.l_ant_super_items, filterRules(i,j,rb.getSortedRules()), rb.getArity(), srcPath);
 			combiner.combine(this, this.cells[i][j], i, j,  dotNode.getAntSuperNodes(), filteredRules, arity, srcPath);
-	}	
-	
-	
-	
+	} 
 }

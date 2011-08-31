@@ -838,6 +838,8 @@ public class JoshuaDecoder {
         }
 		
 
+		/* Step-0: some sanity checking */
+		JoshuaConfiguration.sanityCheck();
 		
 		/* Step-1: initialize the decoder, test-set independent */
 		JoshuaDecoder decoder = new JoshuaDecoder(configFile);

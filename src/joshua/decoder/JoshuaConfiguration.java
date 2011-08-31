@@ -114,10 +114,14 @@ public class JoshuaConfiguration {
 	
 	
 	//pruning config
-	//note we can use both cube pruning and "beamAndThreshold" pruning
-    public static int     pop_limit                = 0;
-	public static boolean useCubePrune             = true;
-	public static boolean useBeamAndThresholdPrune = true;
+
+	// Cube pruning is always on, with a span-level pop limit of 1000.
+	// Beam and threshold pruning can be enabled, which also changes
+	// the nature of cube pruning so that the pop limit is no longer
+	// used.  If both are turned off, exhaustive pruning takes effect.
+    public static int     pop_limit                = 1000;
+    public static boolean useCubePrune             = true;
+    public static boolean useBeamAndThresholdPrune = false;
 	public static double  fuzz1                    = 0.1;
 	public static double  fuzz2                    = 0.1;
 	public static int     max_n_items              = 30;
@@ -698,6 +702,16 @@ public class JoshuaConfiguration {
 				logger.info("linearCorpusGainThetas does not have five values, did you set googleBLEUWeights properly?");
 				System.exit(1);
 			}
+		}
+	}
+
+	/**
+	 * Checks for invalid variable configurations
+	 */
+	public static void sanityCheck() {
+		if (pop_limit > 0 && useBeamAndThresholdPrune) {
+			System.err.println("* FATAL: 'pop-limit' >= 0 is incompatible with 'useBeamAndThresholdPrune'");
+			System.exit(0);
 		}
 	}
 }
