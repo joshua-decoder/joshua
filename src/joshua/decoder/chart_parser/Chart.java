@@ -376,10 +376,6 @@ public class Chart {
                         currentRule = rules.get(newRanks[k]-1);
                     } else { // slide ant
                         oldItem = currentAntNodes.get(k-1); // conside k == 0 is rule
-                        System.out.println("k =  " + k);
-                        System.out.println("antNodes: " + currentAntNodes.size());
-                        System.out.println("supernodes: " + superNodes.size());
-                        System.out.println("newranks: " + newRanks.length);
                         currentAntNodes.set(k-1,
                             superNodes.get(k-1).nodes.get(newRanks[k]-1));
                     }
