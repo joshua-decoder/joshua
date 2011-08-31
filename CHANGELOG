@@ -1,5 +1,23 @@
-3.1
----
+3.2 (development, "devel" branch)
+=================================
+
+- Pruning can now be specified with a single parameter "pop-limit",
+  which limits the number of pops from the cube pruning candidate list
+  (at the span level).  This replaces the beam and threshold pruning
+  that was governed by four parameters (fuzz1, fuzz2,
+  relative_threshold, and max_n_rules), whose performance and
+  interaction was somewhat difficult to characterize.  The pop-limit
+  allows a simple relationship between decoding time and model score
+  to be defined.  
+
+  Setting "pop-limit" in the configuration file or from the command
+  line turns off beam-and-threshold pruning, and its use is
+  recommended.
+
+
+3.1 (stable, "master" branch)
+=============================
+
 - Fixed multithreading.  Use -threads N from the command line or
   configuration file to spawn N parallel decoding threads.
 
@@ -12,7 +30,7 @@
   referred to with -config, or -c for short.
 
 3.0
----
+===
 
 - Added the highly parameterizable Hadoop-based Thrax grammar
   extractor, which extracts both Hiero and SAMT grammars.
