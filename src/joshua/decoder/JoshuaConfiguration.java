@@ -356,23 +356,19 @@ public class JoshuaConfiguration {
 						logger.finest(String.format("floor value for probabilities returned as lexical transaltion probabilities: %s", sa_lex_floor_prob));
 				} else if ("use_srilm".equals(fds[0])) {
 					use_srilm = Boolean.valueOf(fds[1]);
-					System.err.println("WARNING: srilm no longer supported, will use KenLM instead");
-					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format("use_srilm: %s", use_srilm));
+					logger.warning("WARNING: srilm no longer supported, will use KenLM instead");
+					logger.finest(String.format("use_srilm: %s", use_srilm));
 				} else if ("use_kenlm".equals(fds[0])) {
 					use_kenlm = Boolean.valueOf(fds[1]);
-					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format("use_kenlm: %s", use_kenlm));
+					logger.finest(String.format("use_kenlm: %s", use_kenlm));
 					
 				} else if ("use_bloomfilter_lm".equals(fds[0])) {
 					use_bloomfilter_lm = Boolean.valueOf(fds[1]);
-					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format("use_bloomfilter_lm: %s", use_bloomfilter_lm));
+					logger.finest(String.format("use_bloomfilter_lm: %s", use_bloomfilter_lm));
 					
 				} else if ("use_trie_lm".equals(fds[0])) {
 					use_trie_lm = Boolean.valueOf(fds[1]);
-					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format("use_trie_lm: %s", use_trie_lm));
+					logger.finest(String.format("use_trie_lm: %s", use_trie_lm));
 					
 				} else if ("lm_ceiling_cost".equals(fds[0])) {
 					lm_ceiling_cost = Double.parseDouble(fds[1]);
@@ -674,7 +670,8 @@ public class JoshuaConfiguration {
 					logger.finest(String.format("googleBLEUWeights: %s", linearCorpusGainThetas));		
 					
 				} else {
-					logger.warning("Maybe Wrong config line: " + line);
+					logger.warning("WARNING: unknown configuration parameter '" + fds[0] + "'");
+					// System.exit(1);
 				}
 				
 				
