@@ -1,6 +1,7 @@
 package joshua.decoder.chart_parser;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.PriorityQueue;
@@ -188,6 +189,24 @@ public class CubePruneCombiner implements Combiner{
                 return this.dotNode;
             }
 
+			public boolean equals(Object obj) {
+				if (obj == null) return false;
+				if (!this.getClass().equals(obj.getClass())) return false;
+				CubePruneState state = (CubePruneState) obj;
+				if (state.ranks.length != ranks.length) return false;
+				for (int i = 0; i < ranks.length; i++)
+					if (state.ranks[i] != ranks[i]) return false;
+				if (getDotNode() != state.getDotNode()) return false;
+
+				return true;
+			}
+
+			public int hashCode() {
+				int hash = (dotNode != null) ? dotNode.hashCode() : 0;
+				hash += Arrays.hashCode(ranks);
+
+				return hash;
+			}
 			
 			private static String getSignature(int[] ranks2) {
 				StringBuffer sb = new StringBuffer();

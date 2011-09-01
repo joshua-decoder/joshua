@@ -63,7 +63,7 @@ import joshua.lattice.Node;
  * where i is in [0,n-1] and j is in [1,n]
  *
  * @author Zhifei Li, <zhifei.work@gmail.com>
- * @version $LastChangedDate: 2010-06-08 11:19:03 -0700 (Tue, 08 Jun 2010) $
+ * @author Matt Post <post@jhu.edu>
  */
 
 public class Chart {
