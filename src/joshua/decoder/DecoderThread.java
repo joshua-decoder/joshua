@@ -186,8 +186,6 @@ public class DecoderThread extends Thread {
 
         while (inputHandler.hasNext()) {
 
-            long startTime = System.currentTimeMillis();			
-
             Sentence sentence = inputHandler.next();
 
             logger.info("[" + getId() + "] sent " + sentence.id() + ": " + sentence.sentence());
@@ -247,8 +245,9 @@ public class DecoderThread extends Thread {
 	public HyperGraph translate(Sentence sentence, String oracleSentence)
 	throws IOException {
 
-		if (logger.isLoggable(Level.FINE))
-			logger.fine("now translating\n" + sentence.sentence());
+		logger.info("[thread " + getId() + "] translating sentence " + sentence.id() + "\n" + sentence.sentence());
+
+		long startTime = System.currentTimeMillis();
 		
 		Chart chart; 
 		
@@ -350,7 +349,10 @@ public class DecoderThread extends Thread {
         } else if (alreadyExisted) {
             logger.info("Keeping sentence-level grammar (already existed)");
         }
-		
+
+		long seconds = (System.currentTimeMillis() - startTime) / 1000;
+		logger.info("[thread " + getId() + "] translation of sentence " + sentence.id() + " took " + seconds + " seconds");
+
         return hypergraph;
 	}
 

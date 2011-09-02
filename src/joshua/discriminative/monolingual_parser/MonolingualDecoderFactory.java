@@ -74,11 +74,6 @@ public abstract class MonolingualDecoderFactory {
 				pdecoder.decodeFile();//do not run *start*; so that we stay in the current main thread
 				
 			} else {
-				if (JoshuaConfiguration.use_remote_lm_server) {// TODO
-					if (logger.isLoggable(Level.SEVERE)) 
-						logger.severe("You cannot run parallel decoder and remote lm server together");
-					System.exit(1);
-				}
 				runParallelDecoder(test_file);
 			}
 			postProcess();
