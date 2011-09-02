@@ -492,8 +492,8 @@ if ($GRAMMAR_TYPE eq "samt") {
 	$TRAIN{target} = "train/corpus.$TARGET";
 
 	# now extract the leaves of the parsed corpus
-	$cachepipe->("extract-leaves",
-				 "cat $TRAIN{parsed} | perl -pe 's/\(.*?(\\S+)\)+?/$1/g' | perl -pe 's/\)//g' > $TRAIN{target}",
+	$cachepipe->cmd("extract-leaves",
+                 "cat $TRAIN{parsed} | perl -pe 's/\\(.*?(\\S\+)\\)\+?/\$1/g' | perl -pe 's/\\)//g' > $TRAIN{target}",
 				 $TRAIN{parsed},
 				 $TRAIN{target});
 
