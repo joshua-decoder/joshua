@@ -184,14 +184,15 @@ public class DecoderThread extends Thread {
      */
 	public void translateAll() throws IOException {
 
-        while (inputHandler.hasNext()) {
+		for (;;) {
 
             Sentence sentence = inputHandler.next();
+			if (sentence == null)
+				break;
 
-            logger.info("[" + getId() + "] sent " + sentence.id() + ": " + sentence.sentence());
             HyperGraph hypergraph = translate(sentence, null);
             Translation translation = null;
-		
+
             if (JoshuaConfiguration.visualize_hypergraph) {
                 HyperGraphViewer.visualizeHypergraphInFrame(hypergraph, symbolTable);
             }
@@ -245,16 +246,13 @@ public class DecoderThread extends Thread {
 	public HyperGraph translate(Sentence sentence, String oracleSentence)
 	throws IOException {
 
-		logger.info("[thread " + getId() + "] translating sentence " + sentence.id() + "\n" + sentence.sentence());
+		logger.info("[thread " + getId() + "] Translating sentence #" + sentence.id() + "\n" + sentence.sentence());
 
 		long startTime = System.currentTimeMillis();
 		
 		Chart chart; 
 		
         Lattice<Integer> input_lattice = sentence.lattice();
-
-        if (logger.isLoggable(Level.FINEST)) 
-            logger.finest("Translating input lattice:\n" + input_lattice.toString());
 
         int numGrammars = (JoshuaConfiguration.use_sent_specific_tm)
             ? grammarFactories.size() + 1
@@ -320,6 +318,8 @@ public class DecoderThread extends Thread {
             grammars[numGrammars-1].sortGrammar(this.featureFunctions);
 
         }
+
+		
 
         /* Seeding: the chart only sees the grammars, not the factories */
         chart = new Chart(input_lattice,
