@@ -17,8 +17,7 @@
  */
 package joshua.corpus.vocab;
 
-import java.util.HashMap;
-
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Partial basic implementation of a symbol table.
@@ -29,7 +28,14 @@ import java.util.HashMap;
  */
 public abstract class AbstractSymbolTable implements SymbolTable {	
 	/*a speed up trick*/
-	HashMap<Integer, Integer> targetNonterminalIntexCache = new HashMap<Integer, Integer> ();
+	/* This needs to be a concurrent map because it is accessed by
+	 * multiple threads that are undoing grammar rule symbol
+	 * conversion in order to do LM lookups.  With SAMT grammars,
+	 * there are thousands of these calls as maps for the huge
+	 * nonterminal set is created.  Without concurrency, the whole
+	 * process hangs nondeterministically
+	 */
+	ConcurrentHashMap<Integer, Integer> targetNonterminalIntexCache = new ConcurrentHashMap<Integer, Integer> ();
 	
 	/* See Javadoc for SymbolTable interface. */
 	final public int[] addTerminals(String sentence){
