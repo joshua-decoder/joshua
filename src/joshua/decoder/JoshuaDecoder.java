@@ -609,12 +609,8 @@ public class JoshuaDecoder {
 		
 		if (args.length < 1) {
 			System.out.println("Usage: java " +
-				JoshuaDecoder.class.getName() +
-				" [args] configFile [testFile [outputFile [oracleFile]]]");
-			
-			System.out.println("  testFile defaults to standard input");
-			System.out.println("  outputFile defaults to standard output");
-			System.out.println("  oracleFile defaults to null");
+							   JoshuaDecoder.class.getName() +
+							   " -c configFile [other args]");
 			System.exit(1);
 		}
 
