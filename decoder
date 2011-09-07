@@ -1,0 +1,23 @@
+#!/bin/bash
+
+set -u
+
+NUM_ARGS=0
+E_OPTERROR=1
+
+## memory usage; default is 4 GB
+mem=4g
+
+while getopts ":m:" option
+do
+	case $option in
+		m ) mem=${OPTIND};;
+	esac
+done
+
+shift $(($OPTIND - 1))
+
+java -Xmx$mem \
+	-cp $JOSHUA/bin \
+	-Djava.library.path=$JOSHUA/lib \
+	joshua.decoder.JoshuaDecoder $@
