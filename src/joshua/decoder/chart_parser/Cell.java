@@ -53,7 +53,7 @@ class Cell {
 //===============================================================	
 	private Chart chart = null;
 	
-	public BeamPruner<HGNode> beamPruner;//TODO: CubePruneCombiner access this
+	public BeamPruner<HGNode> beamPruner = null;
 	
 	private int goalSymID;
 	private int constraintSymbolId;

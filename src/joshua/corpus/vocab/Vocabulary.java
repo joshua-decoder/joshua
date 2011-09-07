@@ -25,7 +25,6 @@ import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import joshua.corpus.suffix_array.BasicPhrase;
 import joshua.decoder.ff.tm.hiero.HieroFormatReader;
 import joshua.util.Regex;
 import joshua.util.io.BinaryIn;
@@ -168,41 +167,6 @@ public class Vocabulary extends AbstractExternalizableSymbolTable
 	}
 	
 	
-	/**
-	 * Initializes a Vocabulary by adding all words from a
-	 * specified plain text file.
-	 *
-	 * @param inputFilename the plain text file
-	 * @param vocab         the Vocabulary to which words should
-	 *                      be added
-	 * @param fixVocabulary Should the vocabulary be fixed and
-	 *                      alphabetized at the end of
-	 *                      initialization
-	 * @return a tuple containing the number of words in the
-	 *         corpus and number of sentences in the corpus
-	 */
-	public static int[] initializeVocabulary(String inputFilename, Vocabulary vocab, boolean fixVocabulary) throws IOException {
-		int numSentences = 0;
-		int numWords = 0;
-		
-		LineReader lineReader = new LineReader(inputFilename);
-		
-		for (String line : lineReader) {
-			BasicPhrase sentence = new BasicPhrase(line, vocab);
-			numWords += sentence.size();
-			numSentences++;
-			if(logger.isLoggable(Level.FINE) && numSentences % 10000==0) logger.fine(""+numWords);
-		}
-		
-//		if (fixVocabulary) {
-//			vocab.fixVocabulary();
-//			vocab.alphabetize();
-//		}
-		
-		int[] numberOfWordsSentences = { numWords, numSentences };
-		return numberOfWordsSentences;
-	}
-	
 //===============================================================
 // Public
 //===============================================================
@@ -333,29 +297,6 @@ public class Vocabulary extends AbstractExternalizableSymbolTable
 	public int size() {
 		return intToString.size();
 	}
-	
-//	/** 
-//	 * Fixes the size of the vocabulary so that new words may
-//	 * not be added.
-//	 */
-//	public void fixVocabulary() {
-//		isFixed = true;
-//	}
-	
-	/**
-	 * Determines if the phrase contains any words that are not
-	 * in the vocabulary.
-	 * 
-	 * @return <code>true</code> if there are unknown words in
-	 *         the phrase, <code>false</code> otherwise
-	 */
-	public boolean containsUnknownWords(BasicPhrase phrase) {
-		for(int i = 0; i < phrase.size(); i++) {
-			if(phrase.getWordID(i) == UNKNOWN_WORD) return true;
-		}
-		return false;
-	}
-	
 	
 	/**
 	 * Checks that the Vocabularies are the same, by first

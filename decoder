@@ -1,0 +1,38 @@
+#!/bin/bash
+#
+# Joshua decoder invocation script.
+# 
+# This script takes care of passing arguments to Java and to the
+# Joshua decoder.  Usage:
+#
+# ./decoder [-m memory] [Joshua arguments]
+#
+# The default amount of memory is 4gb.
+
+set -u
+
+NUM_ARGS=0
+E_OPTERROR=1
+
+## memory usage; default is 4 GB
+mem=4g
+
+while getopts ":m:" option
+do
+	case $option in
+		m ) mem=${OPTARG}
+			;;
+		* ) break 2
+			;;
+	esac
+done
+
+# adjust the option index pointer (if any options were passed)
+if test $OPTIND -gt 1; then
+	shift $(($OPTIND - 2))
+fi
+
+java -Xmx${mem} \
+	-cp $JOSHUA/bin \
+	-Djava.library.path=$JOSHUA/lib \
+	joshua.decoder.JoshuaDecoder $@

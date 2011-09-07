@@ -19,6 +19,7 @@ package joshua.decoder;
 
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -28,13 +29,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import joshua.corpus.Corpus;
-import joshua.corpus.alignment.Alignments;
-import joshua.corpus.alignment.mm.MemoryMappedAlignmentGrids;
-import joshua.corpus.mm.MemoryMappedCorpusArray;
-import joshua.corpus.suffix_array.ParallelCorpusGrammarFactory;
-import joshua.corpus.suffix_array.Suffixes;
-import joshua.corpus.suffix_array.mm.MemoryMappedSuffixArray;
-import joshua.corpus.vocab.BuildinSymbol;
 import joshua.corpus.vocab.KenSymbol;
 import joshua.corpus.vocab.SymbolTable;
 import joshua.corpus.vocab.Vocabulary;
@@ -47,9 +41,7 @@ import joshua.decoder.ff.OOVFF;
 import joshua.decoder.ff.lm.LanguageModelFF;
 import joshua.decoder.ff.lm.kenlm.jni.KenLM;
 import joshua.decoder.ff.lm.NGramLanguageModel;
-import joshua.decoder.ff.lm.bloomfilter_lm.BloomFilterLanguageModel;
 import joshua.decoder.ff.lm.buildin_lm.LMGrammarJAVA;
-import joshua.decoder.ff.lm.buildin_lm.TrieLM;
 import joshua.decoder.ff.state_maintenance.NgramStateComputer;
 import joshua.decoder.ff.state_maintenance.StateComputer;
 import joshua.decoder.ff.tm.Grammar;
@@ -305,52 +297,30 @@ public class JoshuaDecoder {
 	public JoshuaDecoder initialize(String configFile) {
 		try {
 
-			if (JoshuaConfiguration.tm_file != null) {
-
-				//TODO: should not use file suffix to decide which kind of grammar we are using
-				if (JoshuaConfiguration.tm_file.endsWith(".josh")) {
-					
-					try {
-						// Use corpus-based grammar
-						//inside getParallelCorpus, we will initialize symboltable, lm, and feature functions
-						ParallelCorpusGrammarFactory parallelCorpus = getParallelCorpus(configFile);							
-						grammarFactories.add(parallelCorpus);
-						
-					} catch (Exception e) {
-						IOException ioe = new IOException("Error reading suffix array grammar.");
-						ioe.initCause(e);
-						throw ioe;
-					}
-
-				} else {
-
-					// Sets: symbolTable, defaultNonterminals
-					//symbol table may grow on the fly during decoding
-					this.initializeSymbolTable(null);
-
-					// Needs: symbolTable; Sets: languageModel
-					if (JoshuaConfiguration.have_lm_model)
-						initializeLanguageModel();
-
-
-					// initialize and load grammar
-					this.initializeGlueGrammar();					
-					this.initializeMainTranslationGrammar();
-					
-//					 Initialize the features: requires that
-					// LM model has been initialized. If an LM
-					// feature is used, need to read config file
-					// again
-					this.initializeFeatureFunctions(configFile);
-					
-					this.initializeStateComputers(symbolTable, JoshuaConfiguration.lm_order, JoshuaConfiguration.ngramStateID);
-
-				}
-			} else {
+			if (JoshuaConfiguration.tm_file == null)
 				throw new RuntimeException("No translation grammar or suffix array grammar was specified.");
-			}
-			
-						
+
+			// Sets: symbolTable, defaultNonterminals
+			//symbol table may grow on the fly during decoding
+			this.initializeSymbolTable(null);
+
+			// Needs: symbolTable; Sets: languageModel
+			if (JoshuaConfiguration.have_lm_model)
+				initializeLanguageModel();
+
+
+			// initialize and load grammar
+			this.initializeGlueGrammar();					
+			this.initializeMainTranslationGrammar();
+					
+			//					 Initialize the features: requires that
+			// LM model has been initialized. If an LM
+			// feature is used, need to read config file
+			// again
+			this.initializeFeatureFunctions(configFile);
+					
+			this.initializeStateComputers(symbolTable, JoshuaConfiguration.lm_order, JoshuaConfiguration.ngramStateID);
+
 			// Sort the TM grammars (needed to do cube pruning)
 			for (GrammarFactory grammarFactory : this.grammarFactories) {
 				if (grammarFactory instanceof Grammar) {
@@ -358,7 +328,6 @@ public class JoshuaDecoder {
 					batchGrammar.sortGrammar(this.featureFunctions);
 				}
 			}
-			
 			
 			this.decoderFactory = new DecoderFactory(
 				this.grammarFactories,
@@ -376,25 +345,15 @@ public class JoshuaDecoder {
 	
 	// TODO: maybe move to JoshuaConfiguration to enable moving the featureFunction parsing there (Sets: symbolTable, defaultNonterminals)
 	private void initializeSymbolTable(SymbolTable existingSymbols) {
-		if (JoshuaConfiguration.use_srilm || JoshuaConfiguration.use_kenlm) {
-			logger.finest("Using KenLM symbol table");
-			if (null == existingSymbols) {
-				// This will be set by initializeLanguageModel.  
-				this.symbolTable = null;
-			} else {
-				throw new RuntimeException("TODO(juri): fix vocabulary identifiers.");
-			}
-		} else {
-			if (null == existingSymbols) {
-				//this.symbolTable = new Vocabulary();//new BuildinSymbol(null);
-				this.symbolTable = new BuildinSymbol();
-			} else {
-				this.symbolTable = existingSymbols;
-			}
+		logger.finest("Using KenLM symbol table");
+		if (null == existingSymbols) {
+			// This will be set by initializeLanguageModel.  
+			this.symbolTable = null;
 		}
 		
 		// Add the default nonterminal
-		if (!JoshuaConfiguration.use_kenlm) this.symbolTable.addNonterminal(JoshuaConfiguration.default_non_terminal);
+		if (!JoshuaConfiguration.use_kenlm) 
+			this.symbolTable.addNonterminal(JoshuaConfiguration.default_non_terminal);
 	}
 	
 	
@@ -410,44 +369,21 @@ public class JoshuaDecoder {
 			|| JoshuaConfiguration.use_right_equivalent_state) {
 				throw new IllegalArgumentException("KenLM supports state.  Joshua should get around to using it.");
 			}
-      KenLM lm = new KenLM(JoshuaConfiguration.lm_file);
-      this.languageModel = lm;
-      this.symbolTable = new KenSymbol(lm);
-		  this.symbolTable.addNonterminal(JoshuaConfiguration.default_non_terminal);
-		} else if (JoshuaConfiguration.use_bloomfilter_lm) {
-			if (JoshuaConfiguration.use_left_equivalent_state
-			|| JoshuaConfiguration.use_right_equivalent_state) {
-				throw new IllegalArgumentException("using Bloomfilter LM, we cannot use suffix/prefix stuff");
-			}
-			this.languageModel = new BloomFilterLanguageModel(
-					this.symbolTable,
-					JoshuaConfiguration.lm_order,
-					JoshuaConfiguration.lm_file);
-		} else if (JoshuaConfiguration.use_trie_lm) {
-			if (JoshuaConfiguration.use_left_equivalent_state
-					|| JoshuaConfiguration.use_right_equivalent_state) {
-						throw new IllegalArgumentException("using Trie LM, we cannot use suffix/prefix stuff");
-					}
-					this.languageModel = new TrieLM(
-							this.symbolTable,
-							JoshuaConfiguration.lm_file);
-		} else {
+			KenLM lm = new KenLM(JoshuaConfiguration.lm_file);
+			this.languageModel = lm;
+			this.symbolTable = new KenSymbol(lm);
+			this.symbolTable.addNonterminal(JoshuaConfiguration.default_non_terminal);
+	} else {
+
+		logger.warning("WARNING: using built-in language model; you probably didn't intend this");
 			
-//			logger.info("Reading language model from " + JoshuaConfiguration.lm_file + " into internal trie");
-//			this.languageModel = new TrieLM(
-//					new ArpaFile(
-//							JoshuaConfiguration.lm_file,
-//							this.symbolTable
-//					));
-			
-			// using the built-in JAVA implementation of LM, may not be as scalable as SRILM
-			this.languageModel = new LMGrammarJAVA(
+		this.languageModel = new LMGrammarJAVA(
 				this.symbolTable,
 				JoshuaConfiguration.lm_order,
 				JoshuaConfiguration.lm_file,
 				JoshuaConfiguration.use_left_equivalent_state,
 				JoshuaConfiguration.use_right_equivalent_state);
-		}
+	}
 	}
 	
 	
@@ -500,125 +436,6 @@ public class JoshuaDecoder {
 			if (logger.isLoggable(Level.INFO))
 				logger.info("Basing sentence-specific grammars on file " + JoshuaConfiguration.tm_file);
 		}
-	}
-	
-	
-	private ParallelCorpusGrammarFactory getParallelCorpus(String configFile)
-	throws IOException, ClassNotFoundException {
-		
-		int maxCacheSize = JoshuaConfiguration.sa_rule_cache_size;
-		
-		String binaryVocabFileName =
-			JoshuaConfiguration.tm_file + 
-			File.separator + "common.vocab";
-		
-		String binarySourceCorpusFileName =
-			JoshuaConfiguration.tm_file + 
-			File.separator + "source.corpus";
-		
-		String binarySourceSuffixesFileName =
-			JoshuaConfiguration.tm_file + 
-			File.separator + "source.suffixes";
-		
-		String binaryTargetCorpusFileName =
-			JoshuaConfiguration.tm_file + 
-			File.separator + "target.corpus";
-		
-		String binaryTargetSuffixesFileName =
-			JoshuaConfiguration.tm_file + 
-			File.separator + "target.suffixes";
-		
-		{	// Load the symbol table from disk
-			// Keep this code in its own block
-			//      to ensure that this symbol table is not
-			//      accidentally used anywhere.
-			
-			if (logger.isLoggable(Level.INFO))
-				logger.info("Reading common vocabulary from " + 
-						binaryVocabFileName);
-			Vocabulary commonVocab = new Vocabulary();
-			commonVocab.readExternal(
-					BinaryIn.vocabulary(binaryVocabFileName));
-
-			// Initialize symbol table using suffix array's vocab
-			this.initializeSymbolTable(commonVocab);
-		}
-
-		initializeGlueGrammar();
-		
-		// Needs: symbolTable; Sets: languageModel
-		if (JoshuaConfiguration.have_lm_model) 
-			initializeLanguageModel();
-
-		// Initialize the features: requires that
-		// LM model has been initialized. If an LM
-		// feature is used, need to read config file
-		// again
-		this.initializeFeatureFunctions(configFile);
-		
-		this.initializeStateComputers(symbolTable, JoshuaConfiguration.lm_order, JoshuaConfiguration.ngramStateID);
-		
-		if (logger.isLoggable(Level.INFO))
-			logger.info("Reading source language corpus from " +
-				binarySourceCorpusFileName);
-		Corpus sourceCorpusArray =
-			new MemoryMappedCorpusArray(
-				this.symbolTable, binarySourceCorpusFileName);
-		
-		
-		if (logger.isLoggable(Level.INFO))
-			logger.info("Reading source language suffix array from " +
-				binarySourceSuffixesFileName);
-		Suffixes sourceSuffixArray =
-			new MemoryMappedSuffixArray(
-					binarySourceSuffixesFileName,
-					sourceCorpusArray,
-					maxCacheSize);
-
-		
-		if (logger.isLoggable(Level.INFO))
-			logger.info("Reading target language corpus from " +
-				binaryTargetCorpusFileName);
-		Corpus targetCorpusArray =
-			new MemoryMappedCorpusArray(
-				this.symbolTable, binaryTargetCorpusFileName);
-		
-		if (logger.isLoggable(Level.INFO))
-			logger.info("Reading target language suffix array from " +
-				binaryTargetSuffixesFileName);
-		Suffixes targetSuffixArray =
-			new MemoryMappedSuffixArray(
-					binaryTargetSuffixesFileName,
-					targetCorpusArray,
-					maxCacheSize);
-		
-		String binaryAlignmentFileName = 
-			JoshuaConfiguration.tm_file + 
-			File.separator + "alignment.grids";
-		if (logger.isLoggable(Level.INFO))
-			logger.info("Reading alignment grid data from " +
-				binaryAlignmentFileName);
-		Alignments alignments =
-			new MemoryMappedAlignmentGrids(
-					binaryAlignmentFileName,
-					sourceCorpusArray,
-					targetCorpusArray);
-				
-		// Finally, add the parallel corpus that will serve as a grammar
-		ParallelCorpusGrammarFactory parallelCorpus = new ParallelCorpusGrammarFactory(
-				sourceSuffixArray,
-				targetSuffixArray,
-				alignments,
-				this.featureFunctions,
-				JoshuaConfiguration.sa_rule_sample_size,
-				JoshuaConfiguration.sa_max_phrase_span,
-				JoshuaConfiguration.sa_max_phrase_length,
-				JoshuaConfiguration.sa_max_nonterminals,
-				JoshuaConfiguration.sa_min_nonterminal_span,
-				JoshuaConfiguration.sa_lex_floor_prob, 
-				JoshuaConfiguration.phrase_owner, JoshuaConfiguration.default_non_terminal, JoshuaConfiguration.oov_feature_cost);
-		
-		return parallelCorpus;
 	}
 	
 	private void initializeStateComputers(SymbolTable symbolTable, int nGramOrder, int ngramStateID){
@@ -777,9 +594,14 @@ public class JoshuaDecoder {
 // Main
 //===============================================================
 	public static void main(String[] args) throws IOException {
-        logger.setLevel(Level.OFF);
-		logger.finest("Starting decoder");
-		
+
+		String logFile = System.getenv().get("JOSHUA") + "/logging.properties";
+		try {
+			java.util.logging.LogManager.getLogManager().readConfiguration(new FileInputStream(logFile));
+		} catch (IOException e) {
+			logger.warning("Couldn't initialize logging properties from '" + logFile + "'");
+		}
+
 		long startTime = 0;
 		if (logger.isLoggable(Level.INFO)) {
 			startTime = System.currentTimeMillis();
@@ -787,12 +609,8 @@ public class JoshuaDecoder {
 		
 		if (args.length < 1) {
 			System.out.println("Usage: java " +
-				JoshuaDecoder.class.getName() +
-				" [args] configFile [testFile [outputFile [oracleFile]]]");
-			
-			System.out.println("  testFile defaults to standard input");
-			System.out.println("  outputFile defaults to standard output");
-			System.out.println("  oracleFile defaults to null");
+							   JoshuaDecoder.class.getName() +
+							   " -c configFile [other args]");
 			System.exit(1);
 		}
 

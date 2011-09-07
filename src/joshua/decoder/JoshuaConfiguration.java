@@ -136,12 +136,6 @@ public class JoshuaConfiguration {
 	public static int     topN                = 500;
 	public static boolean escape_trees        = false;
 	
-	//remote lm server
-	public static boolean use_remote_lm_server  = false;
-	public static String  remote_symbol_tbl     = "null"; //this file will first be created by remote_lm_server, and read by remote_suffix_server and the decoder
-	public static int     num_remote_lm_servers = 1;
-	public static String  f_remote_server_list  = "null";
-	
 	//parallel decoding
 	public static String parallel_files_prefix = "/tmp/temp.parallel"; // C:\\Users\\zli\\Documents\\temp.parallel; used for parallel decoding
 	public static int    num_parallel_decoders = 1; //number of threads should run
@@ -524,31 +518,6 @@ public class JoshuaConfiguration {
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("topN: %s", topN));
 					
-				} else if ("use_remote_lm_server".equals(fds[0])) {
-					use_remote_lm_server = Boolean.valueOf(fds[1]);
-					if (logger.isLoggable(Level.FINEST)) 
-						logger.finest(String.format("use_remote_lm_server: %s", use_remote_lm_server));
-					
-				} else if ("f_remote_server_list".equals(fds[0])) {
-					f_remote_server_list = fds[1];
-					if (logger.isLoggable(Level.FINEST)) 
-						logger.finest(String.format("f_remote_server_list: %s", f_remote_server_list));
-					
-				} else if ("num_remote_lm_servers".equals(fds[0])) {
-					num_remote_lm_servers = Integer.parseInt(fds[1]);
-					if (logger.isLoggable(Level.FINEST)) 
-						logger.finest(String.format("num_remote_lm_servers: %s", num_remote_lm_servers));
-					
-				} else if ("remote_symbol_tbl".equals(fds[0])) {
-					remote_symbol_tbl = fds[1]; 
-					if (logger.isLoggable(Level.FINEST)) 
-						logger.finest(String.format("remote_symbol_tbl: %s", remote_symbol_tbl));
-					
-				} else if ("remote_lm_server_port".equals(fds[0])) {
-					//port = Integer.parseInt(fds[1]);
-					if (logger.isLoggable(Level.FINEST)) 
-						logger.finest(String.format("remote_lm_server_port: not used"));
-					
 				} else if ("parallel_files_prefix".equals(fds[0])) {
 					Random random = new Random();
 		            int v = random.nextInt(10000000);//make it random
@@ -682,7 +651,6 @@ public class JoshuaConfiguration {
 					if(new Double(fds[1].trim())!=0){
 						use_max_lm_cost_for_oov = true;
 					}
-					logger.info("you use a LM feature function, so make sure you have a LM grammar");
 					logger.info("useMaxLMCostForOOV=" + use_max_lm_cost_for_oov);
 				} 
 			}

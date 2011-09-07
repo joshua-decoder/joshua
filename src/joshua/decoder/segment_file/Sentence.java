@@ -22,7 +22,6 @@ import joshua.decoder.JoshuaDecoder;
 import joshua.util.Regex;
 import joshua.lattice.Lattice;
 import joshua.corpus.syntax.SyntaxTree;
-// import joshua.corpus.suffix_array.Pattern;
 
 import java.util.List;
 import java.util.LinkedList;
@@ -104,10 +103,6 @@ public class Sentence {
 
     public List<ConstraintSpan> constraints() {
         return this.constraints;
-    }
-
-    public joshua.corpus.suffix_array.Pattern pattern() {
-        return new joshua.corpus.suffix_array.Pattern(JoshuaDecoder.symbolTable, int_sentence());
     }
 
     public Lattice lattice() {

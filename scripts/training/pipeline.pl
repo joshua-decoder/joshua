@@ -42,7 +42,7 @@ my $FIRST_STEP = "FIRST";
 my $LAST_STEP  = "LAST";
 my $LMFILTER = "$ENV{HOME}/code/filter/filter";
 my $MAXLEN = 50;
-my $DO_FILTER_LM = 1;
+my $DO_FILTER_LM = 0;
 my $DO_SUBSAMPLE = 0;
 my $SCRIPTDIR = "$JOSHUA/scripts";
 my $TOKENIZER = "$SCRIPTDIR/training/penn-treebank-tokenizer.perl";
@@ -492,8 +492,8 @@ if ($GRAMMAR_TYPE eq "samt") {
 	$TRAIN{target} = "train/corpus.$TARGET";
 
 	# now extract the leaves of the parsed corpus
-	$cachepipe->("extract-leaves",
-				 "cat $TRAIN{parsed} | perl -pe 's/\(.*?(\\S+)\)+?/$1/g' | perl -pe 's/\)//g' > $TRAIN{target}",
+	$cachepipe->cmd("extract-leaves",
+				 "cat $TRAIN{parsed} | perl -pe 's/\\(.*?(\\S\+)\\)\+?/\$1/g' | perl -pe 's/\\)//g' > $TRAIN{target}",
 				 $TRAIN{parsed},
 				 $TRAIN{target});
 

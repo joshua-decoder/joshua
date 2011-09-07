@@ -17,7 +17,7 @@
  */
 package joshua.decoder.ff.tm;
 
-import joshua.corpus.Phrase;
+import joshua.decoder.segment_file.Sentence;
 
 /**
  * This class provides an abstract factory that will return itself
@@ -45,7 +45,7 @@ public abstract class BatchGrammar extends AbstractGrammar implements GrammarFac
 	 * @return a grammar that represents a set of translation
 	 *         rules
 	 */
-	public Grammar getGrammarForSentence(Phrase sentence) {
+	public Grammar getGrammarForSentence(Sentence sentence) {
 		return this;
 	}
 	
