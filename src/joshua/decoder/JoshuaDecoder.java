@@ -19,6 +19,7 @@ package joshua.decoder;
 
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -593,9 +594,14 @@ public class JoshuaDecoder {
 // Main
 //===============================================================
 	public static void main(String[] args) throws IOException {
-        logger.setLevel(Level.OFF);
-		logger.finest("Starting decoder");
-		
+
+		String logFile = System.getenv().get("JOSHUA") + "/logging.properties";
+		try {
+			java.util.logging.LogManager.getLogManager().readConfiguration(new FileInputStream(logFile));
+		} catch (IOException e) {
+			logger.warning("Couldn't initialize logging properties from '" + logFile + "'");
+		}
+
 		long startTime = 0;
 		if (logger.isLoggable(Level.INFO)) {
 			startTime = System.currentTimeMillis();
