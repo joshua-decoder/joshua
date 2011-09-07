@@ -28,7 +28,6 @@ import java.util.logging.Logger;
 
 import joshua.decoder.segment_file.Sentence;
 
-import joshua.corpus.suffix_array.Pattern;
 import joshua.corpus.syntax.ArraySyntaxTree;
 import joshua.corpus.syntax.SyntaxTree;
 import joshua.corpus.vocab.SymbolTable;
@@ -261,7 +260,7 @@ public class DecoderThread extends Thread {
         Grammar[] grammars = new Grammar[numGrammars];
 
         for (int i = 0; i< grammarFactories.size(); i++)
-            grammars[i] = grammarFactories.get(i).getGrammarForSentence(sentence.pattern());
+            grammars[i] = grammarFactories.get(i).getGrammarForSentence(sentence);
 
         // load the sentence-specific grammar
         boolean alreadyExisted = true; // whether it already existed
@@ -352,42 +351,5 @@ public class DecoderThread extends Thread {
 		logger.info("translation of sentence " + sentence.id() + " took " + seconds + " seconds [" + getId() + "]");
 
         return hypergraph;
-	}
-
-	
-	/**decode a sentence, and return a hypergraph*/
-	public HyperGraph getHyperGraph(String sentence)
-	{
-		Chart chart;
-		
-		int[] intSentence = this.symbolTable.getIDs(sentence);
-		Lattice<Integer> inputLattice = Lattice.createLattice(intSentence);
-		
-		Grammar[] grammars = new Grammar[grammarFactories.size()];
-		int i = 0;
-		for (GrammarFactory factory : this.grammarFactories) {
-			grammars[i] = factory.getGrammarForSentence(
-					new Pattern(this.symbolTable, intSentence));
-			
-			// For batch grammar, we do not want to sort it every time
-			if (! grammars[i].isSorted()) {
-				grammars[i].sortGrammar(this.featureFunctions);
-			}
-			
-			i++;
-		}
-		
-		chart = new Chart(
-				inputLattice,
-				this.featureFunctions,
-				this.stateComputers,
-				this.symbolTable,
-				0,
-				grammars,
-                false,
-				JoshuaConfiguration.goal_symbol,
-				null, null);
-		
-		return chart.expand();
 	}
 }

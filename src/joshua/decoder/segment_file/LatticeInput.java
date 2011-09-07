@@ -20,7 +20,6 @@ package joshua.decoder.segment_file;
 
 import joshua.decoder.JoshuaDecoder;
 import joshua.lattice.Lattice;
-import joshua.corpus.suffix_array.Pattern;
 
 /**
  * This class represents lattice input.  The lattice is contained on a
@@ -36,13 +35,6 @@ public class LatticeInput extends Sentence {
 
     public LatticeInput(String input, int id) {
         super(input, id);
-    }
-
-    public Pattern pattern() {
-        System.err.println("* WARNING: I don't know how to prune grammars to lattices");
-
-        // TODO: suffix array needs to accept lattices!
-        return null;
     }
 
     public Lattice lattice() {

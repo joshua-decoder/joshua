@@ -17,7 +17,7 @@
  */
 package joshua.decoder.ff.tm;
 
-import joshua.corpus.Phrase;
+import joshua.decoder.segment_file.Sentence;
 import joshua.decoder.ff.tm.Grammar;
 
 /**
@@ -51,6 +51,6 @@ public interface GrammarFactory {
 	 * @return A grammar that represents a set of translation
 	 *         rules, relevant for translating (at least) the given sentence.
 	 */
-	Grammar getGrammarForSentence(Phrase sentence);
+	Grammar getGrammarForSentence(Sentence sentence);
 
 }
