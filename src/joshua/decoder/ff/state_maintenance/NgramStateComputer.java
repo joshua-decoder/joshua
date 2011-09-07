@@ -57,8 +57,8 @@ public class NgramStateComputer implements StateComputer<NgramDPState> {
 			if (symbolTable.isNonterminal(curID)) {
 
 				//== get left- and right-context
-				int index = symbolTable.getTargetNonterminalIndex(curID);								
-				NgramDPState antState = (NgramDPState)antNodes.get(index).getDPState(this.getStateID());//TODO    			    		     	  			
+				int index = symbolTable.getTargetNonterminalIndex(curID); 
+				NgramDPState antState = (NgramDPState)antNodes.get(index).getDPState(this.getStateID());//TODO 
     			List<Integer> leftContext = antState.getLeftLMStateWords();
     			List<Integer> rightContext = antState.getRightLMStateWords();
 				
