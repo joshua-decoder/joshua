@@ -269,7 +269,7 @@ public class Chart {
 	
     private void completeSpan(int i, int j) {
 
-		logger.fine("SPAN(" + i + "," + j + ")");
+		logger.fine("[" + segmentID + "] SPAN(" + i + "," + j + ")");
 
         if (JoshuaConfiguration.pop_limit > 0) {
             /* We want to implement proper cube-pruning at the span level,
@@ -318,11 +318,13 @@ public class Chart {
                         continue;
 
                     int arity = ruleCollection.getArity();
-                    // add all terminals rules with no pruning
+
+					// Rules that have no nonterminals in them so far
+					// are added to the chart with no pruning
                     if (arity == 0) {
                         for (Rule rule: sortedAndFilteredRules) {
                             cells[i][j].addHyperEdgeInCell(new ComputeNodeResult(
-                                    this.featureFunctions, rule, null, i, j, sourcePath, stateComputers, this.segmentID), rule, i, j, null, sourcePath, false);
+                                    this.featureFunctions, rule, null, i, j, sourcePath, stateComputers, this.segmentID), rule, i, j, null, sourcePath, true);
                         }
                     } else {
 
@@ -333,6 +335,7 @@ public class Chart {
                             // TODO: si.nodes must be sorted
                             currentAntNodes.add(si.nodes.get(0));
                         }
+
                         ComputeNodeResult result =	new ComputeNodeResult(featureFunctions, bestRule, currentAntNodes, i, j, sourcePath, this.stateComputers, this.segmentID); 
 
                         int[] ranks = new int[1+superNodes.size()];
@@ -349,7 +352,6 @@ public class Chart {
 
             int popCount = 0;
             while (candidates.size() > 0 && ++popCount <= JoshuaConfiguration.pop_limit) {
-
                 CubePruneState state = candidates.poll();
                 DotNode dotNode = state.getDotNode();
                 Rule currentRule = state.rule;
@@ -378,9 +380,8 @@ public class Chart {
                         || (k != 0 && newRanks[k] > superNodes.get(k-1).nodes.size()) )
                         continue;
 
-                    /* k = 0 means we extend the rule being used
-                     * k > 0 means we extend 
-                     */
+                    // k = 0 means we extend the rule being used
+                    // k > 0 means we extend one of the nodes
 
                     Rule oldRule = null;
                     HGNode oldItem = null;

@@ -410,16 +410,16 @@ public class JoshuaDecoder {
 			|| JoshuaConfiguration.use_right_equivalent_state) {
 				throw new IllegalArgumentException("KenLM supports state.  Joshua should get around to using it.");
 			}
-      KenLM lm = new KenLM(JoshuaConfiguration.lm_file);
-      this.languageModel = lm;
-      this.symbolTable = new KenSymbol(lm);
-		  this.symbolTable.addNonterminal(JoshuaConfiguration.default_non_terminal);
-		} else if (JoshuaConfiguration.use_bloomfilter_lm) {
-			if (JoshuaConfiguration.use_left_equivalent_state
+			KenLM lm = new KenLM(JoshuaConfiguration.lm_file);
+			this.languageModel = lm;
+			this.symbolTable = new KenSymbol(lm);
+			this.symbolTable.addNonterminal(JoshuaConfiguration.default_non_terminal);
+	} else if (JoshuaConfiguration.use_bloomfilter_lm) {
+		if (JoshuaConfiguration.use_left_equivalent_state
 			|| JoshuaConfiguration.use_right_equivalent_state) {
 				throw new IllegalArgumentException("using Bloomfilter LM, we cannot use suffix/prefix stuff");
 			}
-			this.languageModel = new BloomFilterLanguageModel(
+		this.languageModel = new BloomFilterLanguageModel(
 					this.symbolTable,
 					JoshuaConfiguration.lm_order,
 					JoshuaConfiguration.lm_file);

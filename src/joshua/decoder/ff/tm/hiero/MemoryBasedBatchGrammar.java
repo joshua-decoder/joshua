@@ -65,7 +65,8 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
 	 */ 
 	private int defaultLHS; 
 	
-	
+	private String grammarFile;
+
 	private int spanLimit = 10;
 	private final SymbolTable symbolTable;
 
@@ -111,6 +112,7 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
 		this.spanLimit    = spanLimit;
 		this.oovFeatureCost = oovFeatureCost_;
 		this.root = new MemoryBasedTrie();
+		this.grammarFile = grammarFile;
 		
 		//==== loading grammar
 		this.modelReader = createReader(formatKeyword, grammarFile, symbolTable);
@@ -264,15 +266,10 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
 	
 	// BUG: This always prints 0 for all fields
 	protected void printGrammar() {
-		if (logger.isLoggable(Level.INFO)) {
-			logger.info("###########Grammar###########");
-			logger.info(String.format(
-				"####num_rules: %d; num_bins: %d; num_pruned: %d; sumest_cost: %.5f",
+		logger.info("Grammar '" + grammarFile + "'");
+		logger.info(String.format(
+				"   num_rules: %d; num_bins: %d; num_pruned: %d; sumest_cost: %.5f",
 				this.qtyRulesRead, this.qtyRuleBins, 0, temEstcost));
-		}
-		/*if(root!=null)
-			root.print_info(Support.DEBUG);*/
 	}
 
-	
 }

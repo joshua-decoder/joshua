@@ -246,7 +246,7 @@ public class DecoderThread extends Thread {
 	public HyperGraph translate(Sentence sentence, String oracleSentence)
 	throws IOException {
 
-		logger.info("[thread " + getId() + "] Translating sentence #" + sentence.id() + "\n" + sentence.sentence());
+		logger.info("Translating sentence #" + sentence.id() + " [thread " + getId() + "]\n" + sentence.sentence());
 
 		long startTime = System.currentTimeMillis();
 		
@@ -319,8 +319,6 @@ public class DecoderThread extends Thread {
 
         }
 
-		
-
         /* Seeding: the chart only sees the grammars, not the factories */
         chart = new Chart(input_lattice,
             this.featureFunctions,
@@ -345,13 +343,13 @@ public class DecoderThread extends Thread {
             logger.info("Deleting sentence-level grammar file '" + tmFile + "'");
 
         } else if (JoshuaConfiguration.keep_sent_specific_tm) {
-            logger.info("Keeping sentence-level grammar (keep_sent_specific_tm=true)");
+            // logger.info("Keeping sentence-level grammar (keep_sent_specific_tm=true)");
         } else if (alreadyExisted) {
-            logger.info("Keeping sentence-level grammar (already existed)");
+            // logger.info("Keeping sentence-level grammar (already existed)");
         }
 
 		long seconds = (System.currentTimeMillis() - startTime) / 1000;
-		logger.info("[thread " + getId() + "] translation of sentence " + sentence.id() + " took " + seconds + " seconds");
+		logger.info("translation of sentence " + sentence.id() + " took " + seconds + " seconds [" + getId() + "]");
 
         return hypergraph;
 	}

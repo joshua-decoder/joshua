@@ -651,7 +651,6 @@ public class JoshuaConfiguration {
 					if(new Double(fds[1].trim())!=0){
 						use_max_lm_cost_for_oov = true;
 					}
-					logger.info("you use a LM feature function, so make sure you have a LM grammar");
 					logger.info("useMaxLMCostForOOV=" + use_max_lm_cost_for_oov);
 				} 
 			}
