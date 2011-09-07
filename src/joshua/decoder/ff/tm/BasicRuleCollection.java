@@ -122,7 +122,7 @@ public class BasicRuleCollection implements RuleCollection {
 	}
 	
 	/* See Javadoc comments for RuleCollection interface. */
-	public void sortRules(List<FeatureFunction> l_models) {	
+	public synchronized void sortRules(List<FeatureFunction> l_models) {	
 		sortRules(this.rules, l_models);
 		this.sorted = true;
 	}
