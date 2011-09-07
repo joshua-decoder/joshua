@@ -346,7 +346,6 @@ class DotChart {
 		private List<SuperNode> antSuperNodes = null; //pointer to SuperNode in Chart
 		private SourcePath srcPath;
 		
-		
 		public DotNode(int i, int j, Trie trieNode,  List<SuperNode> antSuperNodes, SourcePath srcPath) {
 			//i = i_in;
 			//j = j_in;
@@ -355,6 +354,30 @@ class DotChart {
 			this.srcPath = srcPath;
 		}
 		
+		public boolean equals(Object obj) {
+			if (obj == null) return false;
+			if (!this.getClass().equals(obj.getClass())) return false;
+			DotNode state = (DotNode) obj;
+
+			/* Technically, we should be comparing the span
+			 * inforamtion as well, but that would require us to store
+			 * it, increasing memory requirements, and we should be
+			 * able to guarantee that we won't be comparing DotNodes
+			 * across spans.
+			 */
+			// if (this.i != state.i || this.j != state.j)
+			// 	return false;
+
+			if (this.trieNode != state.trieNode)
+				return false;
+
+			return true;
+		}
+
+		public int hashCode() {
+			return this.trieNode.hashCode();
+		}
+
         // convenience function
         public RuleCollection getApplicableRules() {
             return getTrieNode().getRules();
