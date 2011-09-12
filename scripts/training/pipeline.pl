@@ -524,41 +524,44 @@ if (! defined $ALIGNMENT) {
 if (! defined $GRAMMAR_FILE) {
   mkdir("train") unless -d "train";
 
-  # create the input file
-  my $target_file = ($GRAMMAR_TYPE eq "hiero") 
-	  ? $TRAIN{target} : $TRAIN{parsed};
-  $cachepipe->cmd("thrax-input-file",
-				  "paste $TRAIN{source} $target_file $ALIGNMENT | perl -pe 's/\\t/ ||| /g' | grep -v '(())' > train/thrax-input-file",
+  if (! -e "grammar.gz") {
+
+	# create the input file
+	my $target_file = ($GRAMMAR_TYPE eq "hiero") 
+		? $TRAIN{target} : $TRAIN{parsed};
+	$cachepipe->cmd("thrax-input-file",
+					"paste $TRAIN{source} $target_file $ALIGNMENT | perl -pe 's/\\t/ ||| /g' | grep -v '(())' > train/thrax-input-file",
 					$TRAIN{source}, $target_file, $ALIGNMENT,
 					"train/thrax-input-file");
 
 
-  # rollout the hadoop cluster if needed
-  start_hadoop_cluster() unless defined $HADOOP;
+	# rollout the hadoop cluster if needed
+	start_hadoop_cluster() unless defined $HADOOP;
 
-  # put the hadoop files in place
-  my $THRAXDIR = "pipeline-$SOURCE-$TARGET-$GRAMMAR_TYPE-$RUNDIR";
-  $THRAXDIR =~ s#/#_#g;
+	# put the hadoop files in place
+	my $THRAXDIR = "pipeline-$SOURCE-$TARGET-$GRAMMAR_TYPE-$RUNDIR";
+	$THRAXDIR =~ s#/#_#g;
 
-  $cachepipe->cmd("thrax-prep",
-				  "$HADOOP/bin/hadoop fs -rmr $THRAXDIR; $HADOOP/bin/hadoop fs -mkdir $THRAXDIR; $HADOOP/bin/hadoop fs -put train/thrax-input-file $THRAXDIR/input-file",
-				  "train/thrax-input-file", 
-				  "grammar.gz");
+	$cachepipe->cmd("thrax-prep",
+					"$HADOOP/bin/hadoop fs -rmr $THRAXDIR; $HADOOP/bin/hadoop fs -mkdir $THRAXDIR; $HADOOP/bin/hadoop fs -put train/thrax-input-file $THRAXDIR/input-file",
+					"train/thrax-input-file", 
+					"grammar.gz");
 
-  # copy the thrax config file
-  system("grep -v input-file $THRAX_CONF_FILE > thrax-$GRAMMAR_TYPE.conf");
-  system("echo input-file $THRAXDIR/input-file >> thrax-$GRAMMAR_TYPE.conf");
+	# copy the thrax config file
+	system("grep -v input-file $THRAX_CONF_FILE > thrax-$GRAMMAR_TYPE.conf");
+	system("echo input-file $THRAXDIR/input-file >> thrax-$GRAMMAR_TYPE.conf");
 
-  $cachepipe->cmd("thrax-run",
-				  "$HADOOP/bin/hadoop jar $JOSHUA/lib/thrax.jar -D mapred.child.java.opts='-Xmx$HADOOP_MEM' thrax-$GRAMMAR_TYPE.conf $THRAXDIR > thrax.log 2>&1; rm -f grammar grammar.gz; $HADOOP/bin/hadoop fs -getmerge $THRAXDIR/final/ grammar; gzip -9f grammar",
-				  "train/thrax-input-file",
-				  "thrax-$GRAMMAR_TYPE.conf",
-				  "grammar.gz");
+	$cachepipe->cmd("thrax-run",
+					"$HADOOP/bin/hadoop jar $JOSHUA/lib/thrax.jar -D mapred.child.java.opts='-Xmx$HADOOP_MEM' thrax-$GRAMMAR_TYPE.conf $THRAXDIR > thrax.log 2>&1; rm -f grammar grammar.gz; $HADOOP/bin/hadoop fs -getmerge $THRAXDIR/final/ grammar; gzip -9f grammar",
+					"train/thrax-input-file",
+					"thrax-$GRAMMAR_TYPE.conf",
+					"grammar.gz");
 
-  stop_hadoop_cluster() if $HADOOP eq "hadoop";
+	stop_hadoop_cluster() if $HADOOP eq "hadoop";
 
-  # cache the thrax-prep step, which depends on grammar.gz
-  $cachepipe->cmd("thrax-prep", "--cache-only");
+	# cache the thrax-prep step, which depends on grammar.gz
+	$cachepipe->cmd("thrax-prep", "--cache-only");
+  }
 
   # set the grammar file
   $GRAMMAR_FILE = "grammar.gz";
@@ -617,7 +620,7 @@ if (! defined $GLUE_GRAMMAR_FILE) {
   system("grep -v input-file $THRAX_CONF_FILE > thrax-$GRAMMAR_TYPE.conf")
 	  unless -e "thrax-$GRAMMAR_TYPE.conf";
   $cachepipe->cmd("glue-tune",
-				  "$SCRIPTDIR/training/scat tune/grammar.filtered.gz | java -cp $JOSHUA/lib/thrax.jar:$HADOOP/hadoop-core-0.20.203.0.jar:$HADOOP/lib/commons-logging-1.1.1.jar edu.jhu.thrax.util.CreateGlueGrammar thrax-$GRAMMAR_TYPE.conf > tune/grammar.glue",
+				  "$SCRIPTDIR/training/scat tune/grammar.filtered.gz | java -cp $JOSHUA/lib/thrax.jar:$JOSHUA/lib/hadoop-core-0.20.203.0.jar:$JOSHUA/lib/commons-logging-1.1.1.jar edu.jhu.thrax.util.CreateGlueGrammar thrax-$GRAMMAR_TYPE.conf > tune/grammar.glue",
 				  "tune/grammar.filtered.gz",
 				  "tune/grammar.glue");
   $GLUE_GRAMMAR_FILE = "tune/grammar.glue";
@@ -727,7 +730,7 @@ if (! defined $GLUE_GRAMMAR_FILE) {
 	  unless -e "thrax-$GRAMMAR_TYPE.conf";
 
   $cachepipe->cmd("glue-test",
-				  "$SCRIPTDIR/training/scat test/grammar.filtered.gz | java -cp $JOSHUA/lib/thrax.jar:$HADOOP/hadoop-core-20.203.0.jar:$HADOOP/lib/commons-logging-1.1.1.jar edu.jhu.thrax.util.CreateGlueGrammar thrax-$GRAMMAR_TYPE.conf > test/grammar.glue",
+				  "$SCRIPTDIR/training/scat test/grammar.filtered.gz | java -cp $JOSHUA/lib/thrax.jar:$JOSHUA/lib/hadoop-core-20.203.0.jar:$JOSHUA/lib/commons-logging-1.1.1.jar edu.jhu.thrax.util.CreateGlueGrammar thrax-$GRAMMAR_TYPE.conf > test/grammar.glue",
 				  "test/grammar.filtered.gz",
 				  "test/grammar.glue");
   $GLUE_GRAMMAR_FILE = "test/grammar.glue";
