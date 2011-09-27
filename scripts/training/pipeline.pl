@@ -43,6 +43,7 @@ my $LAST_STEP  = "LAST";
 my $LMFILTER = "$ENV{HOME}/code/filter/filter";
 my $MAXLEN = 50;
 my $DO_FILTER_LM = 0;
+my $DO_FILTER_TM = 1;
 my $DO_SUBSAMPLE = 0;
 my $SCRIPTDIR = "$JOSHUA/scripts";
 my $TOKENIZER = "$SCRIPTDIR/training/penn-treebank-tokenizer.perl";
@@ -62,9 +63,6 @@ my %MERTFILES = (
   'mert.config'     => "$MERTCONFDIR/mert.config",
   'params.txt'      => "$MERTCONFDIR/params.txt",
 );
-
-# whether to trim the grammars to each sentence
-my $DO_SENT_SPECIFIC_TM = 0;
 
 my $DO_MBR = 1;
 
@@ -93,7 +91,7 @@ my $retval = GetOptions(
   "source=s"   	 	  => \$SOURCE,
   "target=s"  	 	  => \$TARGET,
   "rundir=s" 	 	  => \$RUNDIR,
-  "filter-tm!"        => \$DO_SENT_SPECIFIC_TM,
+  "filter-tm!"        => \$DO_FILTER_TM,
   "filter-lm!"        => \$DO_FILTER_LM,
   "lmfile=s" 	 	  => \$LMFILE,
   "grammar=s"    	  => \$GRAMMAR_FILE,
@@ -577,7 +575,7 @@ if (! defined $LMFILE) {
   if (exists $TRAIN{target}) {
 	$LMFILE="lm.gz";
 	$cachepipe->cmd("srilm",
-					"$SRILM -interpolate -kndiscount -order 5 -text $TRAIN{target} -lm lm.gz",
+					"$SRILM -interpolate -kndiscount -order 5 -text $TRAIN{target} -unk -lm lm.gz",
 					$LMFILE);
   } elsif (! defined $LMFILE) {
 	print "* FATAL: you skipped training and didn't specify a language model\n";
@@ -609,19 +607,23 @@ if (-e $LMFILTER and $DO_FILTER_LM and exists $TRAIN{target}) {
 mkdir("tune") unless -d "tune";
 
 # filter the tuning grammar
-$cachepipe->cmd("filter-tune",
-				"$SCRIPTDIR/training/scat $GRAMMAR_FILE | java -Dfile.encoding=utf8 -cp $JOSHUA/lib/thrax.jar edu.jhu.thrax.util.TestSetFilter -v $TUNE{source} | gzip -9 > tune/grammar.filtered.gz",
-				$GRAMMAR_FILE,
-				$TUNE{source},
-				"tune/grammar.filtered.gz");
+my $TUNE_GRAMMAR = $GRAMMAR_FILE;
+if ($DO_FILTER_TM) {
+  $TUNE_GRAMMAR = "tune/grammar.filtered.gz";
+  $cachepipe->cmd("filter-tune",
+				  "$SCRIPTDIR/training/scat $GRAMMAR_FILE | java -Dfile.encoding=utf8 -cp $JOSHUA/lib/thrax.jar edu.jhu.thrax.util.TestSetFilter -v $TUNE{source} | gzip -9 > $TUNE_GRAMMAR",
+				  $GRAMMAR_FILE,
+				  $TUNE{source},
+				  $TUNE_GRAMMAR);
+}
 
 # copy the thrax config file if it's not already there
 if (! defined $GLUE_GRAMMAR_FILE) {
   system("grep -v input-file $THRAX_CONF_FILE > thrax-$GRAMMAR_TYPE.conf")
 	  unless -e "thrax-$GRAMMAR_TYPE.conf";
   $cachepipe->cmd("glue-tune",
-				  "$SCRIPTDIR/training/scat tune/grammar.filtered.gz | java -cp $JOSHUA/lib/thrax.jar:$JOSHUA/lib/hadoop-core-0.20.203.0.jar:$JOSHUA/lib/commons-logging-1.1.1.jar edu.jhu.thrax.util.CreateGlueGrammar thrax-$GRAMMAR_TYPE.conf > tune/grammar.glue",
-				  "tune/grammar.filtered.gz",
+				  "$SCRIPTDIR/training/scat $TUNE_GRAMMAR | java -cp $JOSHUA/lib/thrax.jar:$JOSHUA/lib/hadoop-core-0.20.203.0.jar:$JOSHUA/lib/commons-logging-1.1.1.jar edu.jhu.thrax.util.CreateGlueGrammar thrax-$GRAMMAR_TYPE.conf > tune/grammar.glue",
+				  $TUNE_GRAMMAR,
 				  "tune/grammar.glue");
   $GLUE_GRAMMAR_FILE = "tune/grammar.glue";
 } else {
@@ -648,6 +650,7 @@ foreach my $key (keys %MERTFILES) {
 	s/<LMFILE>/$LMFILE/g;
 	s/<MEM>/$JOSHUA_MEM/g;
 	s/<GRAMMAR>/$GRAMMAR_TYPE/g;
+	s/<GRAMMAR_FILE>/$TUNE_GRAMMAR/g;
 	s/<OOV>/$OOV/g;
 	s/<NUMJOBS>/$NUM_JOBS/g;
 	s/<NUMTHREADS>/$NUM_THREADS/g;
@@ -658,7 +661,7 @@ foreach my $key (keys %MERTFILES) {
 	s/<NUMREFS>/$numrefs/g;
 	s/<CONFIG>/mert\/joshua.config/g;
 	s/<LOG>/mert\/joshua.log/g;
-	s/use_sent_specific_tm=.*/use_sent_specific_tm=$DO_SENT_SPECIFIC_TM/;
+	s/use_sent_specific_tm=.*/use_sent_specific_tm=0/g;
 
 	print TO;
   }
@@ -670,7 +673,7 @@ chmod(0755,"mert/decoder_command");
 # run MERT
 $cachepipe->cmd("mert",
 				"java -d64 -cp $JOSHUA/bin joshua.zmert.ZMERT -maxMem 4500 mert/mert.config > mert/mert.log 2>&1",
-				"tune/grammar.filtered.gz",
+	            $TUNE_GRAMMAR,
 				"mert/joshua.config.ZMERT.final",
 				"mert/decoder_command",
 				"mert/mert.config",
@@ -691,7 +694,7 @@ if ($LAST_STEP ne "MERT") {
 
   # for testing, mark OOVs, don't keep sentence-specific grammars
   $cachepipe->cmd("test-joshua-config-from-mert",
-				  "cat mert/joshua.config.ZMERT.final | perl -pe 's#tune/#test/#; s/mark_oovs=false/mark_oovs=true/; s/use_sent_specific_tm=.*/use_sent_specific_tm=$DO_SENT_SPECIFIC_TM/; s/keep_sent_specific_tm=true/keep_sent_specific_tm=false/' > test/joshua.config",
+				  "cat mert/joshua.config.ZMERT.final | perl -pe 's#tune/#test/#; s/mark_oovs=false/mark_oovs=true/; s/use_sent_specific_tm=.*/use_sent_specific_tm=0/; s/keep_sent_specific_tm=true/keep_sent_specific_tm=false/' > test/joshua.config",
 				  "mert/joshua.config.ZMERT.final",
 				  "test/joshua.config");
 }
@@ -718,11 +721,15 @@ if ($FIRST_STEP eq "TEST") {
 }
 
 # filter the test grammar
-$cachepipe->cmd("filter-test",
-				"$SCRIPTDIR/training/scat $GRAMMAR_FILE | java -Dfile.encoding=utf8 -cp $JOSHUA/lib/thrax.jar edu.jhu.thrax.util.TestSetFilter -v $TEST{source} | gzip -9 > test/grammar.filtered.gz",
-				$GRAMMAR_FILE,
-				$TEST{source},
-				"test/grammar.filtered.gz");
+my $TEST_GRAMMAR = $GRAMMAR_FILE;
+if ($DO_FILTER_TM) {
+	$TEST_GRAMMAR = "test/grammar.filtered.gz";
+	$cachepipe->cmd("filter-test",
+					"$SCRIPTDIR/training/scat $GRAMMAR_FILE | java -Dfile.encoding=utf8 -cp $JOSHUA/lib/thrax.jar edu.jhu.thrax.util.TestSetFilter -v $TEST{source} | gzip -9 > $TEST_GRAMMAR",
+					$GRAMMAR_FILE,
+					$TEST{source},
+					$TEST_GRAMMAR);
+}
 
 # copy the thrax config file if it's not already there
 if (! defined $GLUE_GRAMMAR_FILE) {
@@ -730,8 +737,8 @@ if (! defined $GLUE_GRAMMAR_FILE) {
 	  unless -e "thrax-$GRAMMAR_TYPE.conf";
 
   $cachepipe->cmd("glue-test",
-				  "$SCRIPTDIR/training/scat test/grammar.filtered.gz | java -cp $JOSHUA/lib/thrax.jar:$JOSHUA/lib/hadoop-core-20.203.0.jar:$JOSHUA/lib/commons-logging-1.1.1.jar edu.jhu.thrax.util.CreateGlueGrammar thrax-$GRAMMAR_TYPE.conf > test/grammar.glue",
-				  "test/grammar.filtered.gz",
+				  "$SCRIPTDIR/training/scat $TEST_GRAMMAR | java -cp $JOSHUA/lib/thrax.jar:$JOSHUA/lib/hadoop-core-0.20.203.0.jar:$JOSHUA/lib/commons-logging-1.1.1.jar edu.jhu.thrax.util.CreateGlueGrammar thrax-$GRAMMAR_TYPE.conf > test/grammar.glue",
+				  $TEST_GRAMMAR,
 				  "test/grammar.glue");
   $GLUE_GRAMMAR_FILE = "test/grammar.glue";
 } else {
@@ -775,7 +782,7 @@ $cachepipe->cmd("test-decode",
 				"./test/decoder_command",
 				"test/decoder_command",
 				"test/grammar.glue",
-				"test/grammar.filtered.gz",
+	            $TEST_GRAMMAR,
 				"test/test.output.nbest");
 
 $cachepipe->cmd("remove-oov",
@@ -936,6 +943,7 @@ sub start_hadoop_cluster {
 sub rollout_hadoop_cluster {
   # if it's not already unpacked, unpack it
   if (! -d "hadoop") {
+
 	system("tar xzf $JOSHUA/lib/hadoop-0.20.203.0rc1.tar.gz");
 	system("ln -sf hadoop-0.20.203.0 hadoop");
 
@@ -963,7 +971,6 @@ sub rollout_hadoop_cluster {
 	system("echo $hostname > hadoop/conf/slaves");
 
   } else {
-
 	# if it exists, shut things down, just in case
 	system("./hadoop/bin/stop-all.sh");
 

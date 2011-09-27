@@ -18,4 +18,4 @@ phrasemodel pt 15 |||     0.589793 Opt     -Inf    +Inf    -1      +1
 phrasemodel pt 16 |||     0.589793 Opt     -Inf    +Inf    -1      +1
 wordpenalty       |||     -2.844814 Opt    -Inf    +Inf    -5      0
 oovpenalty        |||     -100     Fix     0       0       0       0
-normalization = absval 1 lm
+normalization = none
