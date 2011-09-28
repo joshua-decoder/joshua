@@ -607,11 +607,16 @@ if (-e $LMFILTER and $DO_FILTER_LM and exists $TRAIN{target}) {
 mkdir("tune") unless -d "tune";
 
 # filter the tuning grammar
-my $TUNE_GRAMMAR = $GRAMMAR_FILE;
+my $TUNE_GRAMMAR = "tune/grammar.filtered.gz";
 if ($DO_FILTER_TM) {
-  $TUNE_GRAMMAR = "tune/grammar.filtered.gz";
   $cachepipe->cmd("filter-tune",
-				  "$SCRIPTDIR/training/scat $GRAMMAR_FILE | java -Dfile.encoding=utf8 -cp $JOSHUA/lib/thrax.jar edu.jhu.thrax.util.TestSetFilter -v $TUNE{source} | gzip -9 > $TUNE_GRAMMAR",
+				  "$SCRIPTDIR/training/scat $GRAMMAR_FILE | java -Dfile.encoding=utf8 -cp $JOSHUA/lib/thrax.jar edu.jhu.thrax.util.TestSetFilter -v $TUNE{source} | $SCRIPTDIR/training/remove-unary-abstract.pl | gzip -9 > $TUNE_GRAMMAR",
+				  $GRAMMAR_FILE,
+				  $TUNE{source},
+				  $TUNE_GRAMMAR);
+} else {
+  $cachepipe->cmd("filter-tune",
+				  "$SCRIPTDIR/training/scat $GRAMMAR_FILE | $SCRIPTDIR/training/remove-unary-abstract.pl | gzip -9 > $TUNE_GRAMMAR",
 				  $GRAMMAR_FILE,
 				  $TUNE{source},
 				  $TUNE_GRAMMAR);
@@ -721,14 +726,19 @@ if ($FIRST_STEP eq "TEST") {
 }
 
 # filter the test grammar
-my $TEST_GRAMMAR = $GRAMMAR_FILE;
+my	$TEST_GRAMMAR = "test/grammar.filtered.gz";
 if ($DO_FILTER_TM) {
-	$TEST_GRAMMAR = "test/grammar.filtered.gz";
 	$cachepipe->cmd("filter-test",
-					"$SCRIPTDIR/training/scat $GRAMMAR_FILE | java -Dfile.encoding=utf8 -cp $JOSHUA/lib/thrax.jar edu.jhu.thrax.util.TestSetFilter -v $TEST{source} | gzip -9 > $TEST_GRAMMAR",
+					"$SCRIPTDIR/training/scat $GRAMMAR_FILE | java -Dfile.encoding=utf8 -cp $JOSHUA/lib/thrax.jar edu.jhu.thrax.util.TestSetFilter -v $TEST{source} | $SCRIPTDIR/training/remove-unary-abstract.pl | gzip -9 > $TEST_GRAMMAR",
 					$GRAMMAR_FILE,
 					$TEST{source},
 					$TEST_GRAMMAR);
+} else {
+  $cachepipe->cmd("filter-tune",
+				  "$SCRIPTDIR/training/scat $GRAMMAR_FILE | $SCRIPTDIR/training/remove-unary-abstract.pl | gzip -9 > $TEST_GRAMMAR",
+				  $GRAMMAR_FILE,
+				  $TEST{source},
+				  $TEST_GRAMMAR);
 }
 
 # copy the thrax config file if it's not already there
