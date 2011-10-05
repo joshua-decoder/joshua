@@ -65,5 +65,19 @@ src/joshua/decoder/ff/lm/kenlm/util/file_piece.o
 src/joshua/decoder/ff/lm/kenlm/util/mmap.o
 src/joshua/decoder/ff/lm/kenlm/util/murmur_hash.o
 src/joshua/decoder/ff/lm/kenlm/util/scoped.o
+scripts/training/test/.cachepipe/
+scripts/training/test/.grammar.crc
+scripts/training/test/alignments/
+scripts/training/test/grammar.gz
+scripts/training/test/hadoop
+scripts/training/test/hadoop-0.20.203.0/
+scripts/training/test/lm.gz
+scripts/training/test/mert/
+scripts/training/test/test/
+scripts/training/test/thrax-hiero.conf
+scripts/training/test/thrax.log
+scripts/training/test/train/
+scripts/training/test/tune/
+
 
 
