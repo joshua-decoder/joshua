@@ -171,6 +171,16 @@ if (! defined $GRAMMAR_FILE and ($STEPS{$FIRST_STEP} >= $STEPS{MERT})) {
   exit 1;
 }
 
+# check for file presence
+if (defined $GRAMMAR_FILE and ! -e $GRAMMAR_FILE) {
+  print "* FATAL: couldn't find grammar file '$GRAMMAR_FILE'\n";
+  exit 1;
+}
+if (defined $ALIGNMENT and ! -e $ALIGNMENT) {
+  print "* FATAL: couldn't find alignment file '$ALIGNMENT'\n";
+  exit 1;
+}
+
 # if $CORPUS was a relative path, prepend the starting directory
 # (under the assumption it was relative to there)
 map {
