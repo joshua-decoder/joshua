@@ -2,9 +2,9 @@
 
 # build this separately since the data here is too small for Kneser-Ney
 if test $(uname -s) = "Darwin"; then
-  $SRILM/bin/macosx/ngram-count -order 3 -text train/corpus.en -lm lm.gz
+  $SRILM/bin/macosx/ngram-count -order 3 -text data/train.en -lm lm.gz
 else
-  $SRILM/bin/i686-m64/ngram-count -order 3 -text train/corpus.en -lm lm.gz
+  $SRILM/bin/i686-m64/ngram-count -order 3 -text data/train.en -lm lm.gz
 fi
 
 if [[ ! -e lm.gz ]]; then
