@@ -64,6 +64,30 @@ public class ViterbiExtractor  {
 		get1bestTreeNode(res.goalNode);
 		return res;
 	}
+
+	/**
+	 * This function recursively visits the nodes of the Viterbi
+	 * derivation in a depth-first traversal, applying the walker to
+	 * each of the nodes.  It provides a more general framework for
+	 * implementing operations on a tree.
+	 *
+	 * @param node the node to start traversal from
+	 * @param walker an implementation of the ViterbieWalker
+	 * interface, to be applied to each node in the tree
+	 */
+	public static void walk(HGNode node, ViterbiWalker walker) {
+		// apply the walking function to the node
+		walker.apply(node);
+
+		// recurse on the anterior nodes of the best hyperedge
+		HyperEdge bestEdge = node.bestHyperedge;
+		if (null != bestEdge.getAntNodes()) {
+			for (HGNode antNode : bestEdge.getAntNodes()) {
+				HGNode newNode = cloneNodeWithBestHyperedge(antNode);
+				walk(antNode, walker);
+			}
+		}
+	}
 	
 	private static void get1bestTreeNode(HGNode it) {
 		HyperEdge dt = it.bestHyperedge;
@@ -76,7 +100,7 @@ public class ViterbiExtractor  {
 			}
 		}
 	}
-	
+
 	// TODO: tbl_states
 	private static HGNode cloneNodeWithBestHyperedge(HGNode inNode) {
 		List<HyperEdge> hyperedges = new ArrayList<HyperEdge>(1);

@@ -15,14 +15,16 @@
  * Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  * MA 02111-1307 USA
  */
-package joshua.prefix_tree;
+package joshua.decoder.hypergraph;
 
-/**
- * Unit tests for HierarchicalRuleExtractor.
- * 
- * @author Lane Schwartz
- * @version $LastChangedDate$
- */
-public class HierarchicalRuleExtractorTest {
+import java.util.ArrayList;
+import java.util.List;
+
+import joshua.corpus.vocab.SymbolTable;
+import joshua.decoder.ff.tm.Rule;
+
+public interface ViterbiWalker {
+
+	void apply(HGNode node);
 
 }
