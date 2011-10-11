@@ -28,7 +28,6 @@ import java.util.logging.Logger;
 
 import joshua.corpus.vocab.SymbolTable;
 import joshua.decoder.ff.FeatureFunction;
-import joshua.discriminative.FileUtilityOld;
 
 /**
  * Partial implementation of the <code>Grammar</code> interface
@@ -174,27 +173,9 @@ public abstract class AbstractGrammar implements Grammar {
 	
 	//write grammar to disk
 	public void writeGrammarOnDisk(String file, SymbolTable symbolTable) {
-		BufferedWriter writer = FileUtilityOld.getWriteFileStream(file);
-		writeGrammarOnDisk(this.getTrieRoot(), writer, symbolTable);
-		FileUtilityOld.closeWriteFile(writer);
 	}
 	
 	private void writeGrammarOnDisk(Trie trie, BufferedWriter writer, SymbolTable symbolTable) {
-		if(trie.hasRules()){
-			RuleCollection rlCollection = trie.getRules();
-			for(Rule rl : rlCollection.getSortedRules()){
-				FileUtilityOld.writeLzf(writer, rl.toString(symbolTable));
-				FileUtilityOld.writeLzf(writer,"\n");
-			}
-		}
-		
-		if (trie.hasExtensions()) {
-			Object[] tem = trie.getExtensions().toArray();
-			
-			for (int i = 0; i < tem.length; i++) {
-				writeGrammarOnDisk((Trie)tem[i], writer, symbolTable);
-			}
-		}
 	}
 	
 

@@ -47,9 +47,6 @@ import joshua.decoder.ff.state_maintenance.StateComputer;
 import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.GrammarFactory;
 import joshua.decoder.ff.tm.hiero.MemoryBasedBatchGrammar;
-import joshua.discriminative.DiscriminativeSupport;
-import joshua.discriminative.feature_related.feature_function.BLEUOracleModel;
-import joshua.discriminative.feature_related.feature_function.FeatureTemplateBasedFF;
 import joshua.ui.hypergraph_visualizer.HyperGraphViewer;
 import joshua.util.FileUtility;
 import joshua.util.Regex;
@@ -169,28 +166,12 @@ public class JoshuaDecoder {
 			}
 		}
 		
-		if(discrminativeModelFile!=null)
-			changeDiscrminativeModelWeights(discrminativeModelFile);
-		
 		//FIXME: this works for Batch grammar only; not for sentence-specific grammars
 		for (GrammarFactory grammarFactory : this.grammarFactories) {
 //			if (grammarFactory instanceof Grammar) {
 			grammarFactory.getGrammarForSentence(null)
 				.sortGrammar(this.featureFunctions);
 //			}
-		}
-	}
-	
-	
-
-	private void changeDiscrminativeModelWeights(String discrminativeModelFile){
-		for (FeatureFunction ff : this.featureFunctions) {					
-			//== set the discriminative model
-			if(discrminativeModelFile!=null && ff instanceof FeatureTemplateBasedFF){
-				HashMap<String, Double> modelTable = new HashMap<String, Double>(); 
-				DiscriminativeSupport.loadModel(discrminativeModelFile, modelTable, this.ruleStringToIDTable);
-				((FeatureTemplateBasedFF) ff).setModel(modelTable);
-			}
 		}
 	}
 	
@@ -474,45 +455,7 @@ public class JoshuaDecoder {
 						logger.finest(String.format(
 							"Line: %s\nAdd LM, order: %d; weight: %.3f;",
 							line, JoshuaConfiguration.lm_order, weight));
-					
-				} else if ("oracle".equals(fds[0]) && fds.length >= 3) { //oracle files weight
-					if (null == this.languageModel) {
-						throw new IllegalArgumentException("LM model has not been properly initialized before setting order and weight");
-					}					
-					String[] referenceFiles = new String[fds.length-2];
-					for(int i=0; i< referenceFiles.length; i++)
-						referenceFiles[i] =  fds[i+1].trim();			
-					double weight = Double.parseDouble(fds[fds.length-1].trim());
-					
-					this.featureFunctions.add(
-						new BLEUOracleModel(JoshuaConfiguration.ngramStateID, JoshuaConfiguration.lm_order, 
-								this.featureFunctions.size(), this.symbolTable, weight, referenceFiles, JoshuaConfiguration.linearCorpusGainThetas));
-					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format(
-							"Line: %s\nAdd BLEUOracleModel, order: %d; weight: %.3f;",
-							line, JoshuaConfiguration.lm_order, weight));
-					
-				} else if ("discriminative".equals(fds[0]) && fds.length == 3) { //discriminative weight modelFile
-					if (null == this.languageModel) {
-						throw new IllegalArgumentException("LM model has not been properly initialized before setting order and weight");
-					}
-					
-					String featureFile = null;//TODO???????					
-					String modelFile = fds[1].trim();
-					
-					double weight = Double.parseDouble(fds[2].trim());
-					
-					this.featureFunctions.add (DiscriminativeSupport.setupRerankingFeature(this.featureFunctions.size(), weight, symbolTable, 
-							JoshuaConfiguration.useTMFeat, JoshuaConfiguration.useLMFeat, JoshuaConfiguration.useEdgeNgramOnly, JoshuaConfiguration.useTMTargetFeat,
-							JoshuaConfiguration.useMicroTMFeat, JoshuaConfiguration.wordMapFile,
-							JoshuaConfiguration.ngramStateID, 
-							JoshuaConfiguration.lm_order, JoshuaConfiguration.startNgramOrder, JoshuaConfiguration.endNgramOrder, featureFile, modelFile, this.ruleStringToIDTable) );
-					
-					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format(
-							"Line: %s\nAdd FeatureTemplateBasedFF, order: %d; weight: %.3f;",
-							line, JoshuaConfiguration.lm_order, weight));
-					
+                    
 				} else if ("latticecost".equals(fds[0]) && fds.length == 2) {
 					double weight = Double.parseDouble(fds[1].trim());
 					this.featureFunctions.add(
