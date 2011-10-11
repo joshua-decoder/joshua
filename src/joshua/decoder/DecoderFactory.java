@@ -31,7 +31,6 @@ import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.state_maintenance.StateComputer;
 import joshua.decoder.ff.tm.GrammarFactory;
 import joshua.decoder.hypergraph.HyperGraph;
-import joshua.discriminative.FileUtilityOld;
 import joshua.util.FileUtility;
 import joshua.util.Regex;
 import joshua.util.io.LineReader;
@@ -153,5 +152,4 @@ public class DecoderFactory {
 		// 	rulesWriter.flush();
 		// 	rulesWriter.close();
 		// }
-
 }
