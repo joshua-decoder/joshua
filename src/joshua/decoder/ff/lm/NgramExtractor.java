@@ -12,7 +12,6 @@ import joshua.decoder.ff.state_maintenance.NgramDPState;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.hypergraph.HGNode;
 import joshua.decoder.hypergraph.HyperEdge;
-import joshua.discriminative.training.risk_annealer.hypergraph.HGMinRiskDAMert;
 import joshua.util.Ngram;
 
 public class NgramExtractor {

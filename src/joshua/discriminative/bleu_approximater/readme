@@ -1,3 +1,0 @@
-This package inplements functions that can automatically learn
-a BLEU approximater (which is additively decomposable on hypergraph) by
-using nbest mert.
