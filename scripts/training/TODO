@@ -1,3 +1,5 @@
+- [ ] language model is built incorrectly when starting at MERT with
+  a parsed corpus (maybe SAMT should expect a plain corpus and a .parsed one)
 - [ ] add recasing with recursive call to pipeline.pl (provide a 1-1
   alignment) 
 - [ ] pipeline shold output a script that can be easily -
