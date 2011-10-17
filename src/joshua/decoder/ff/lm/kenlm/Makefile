@@ -9,13 +9,13 @@ HEADERS= lm/bhiksha.hh lm/binary_format.hh lm/blank.hh lm/config.hh lm/enumerate
 
 ifeq ($(shell uname -s),Darwin)
 libken.dylib: $(CORE) $(HEADERS)
-	g++ -I /System/Library/Frameworks/JavaVM.framework/Versions/A/Headers -I. -DNO_ICU -DNDEBUG -O3  jni/wrap.cc -I/System/Library/Frameworks/JavaVM.framework/Home/include{,/linux} util/{bit_packing,ersatz_progress,exception,file_piece,murmur_hash,scoped,mmap}.o lm/{bhiksha,binary_format,config,lm_exception,model,quantize,read_arpa,search_hashed,search_trie,trie,virtual_interface,vocab}.o -fpic -dynamiclib -Wl,-headerpad_max_install_names,-undefined,dynamic_lookup -o libken.dylib -lz -Wno-deprecated
+	g++ -I /System/Library/Frameworks/JavaVM.framework/Versions/A/Headers -I. -DNO_ICU -DNDEBUG -O3  jni/wrap.cc -I/System/Library/Frameworks/JavaVM.framework/Home/include{,/linux} util/{bit_packing,ersatz_progress,exception,file_piece,murmur_hash,scoped,mmap}.o lm/{bhiksha,binary_format,config,lm_exception,model,quantize,read_arpa,search_hashed,search_trie,trie,virtual_interface,vocab}.o -fpic -dynamiclib -Wl,-headerpad_max_install_names,-undefined,dynamic_lookup -o libken.dylib -lz -Wno-deprecated -pthread
 
 install: libken.dylib
 	cp -f libken.dylib "$(JOSHUA)"/lib/
 else
 libken.so: $(CORE) $(HEADERS) jni/wrap.cc
-	g++ -I. -DNO_ICU -DNDEBUG -O3 $(CXXFLAGS) jni/wrap.cc -I$(JAVA_HOME)/include{,/linux} util/{bit_packing,ersatz_progress,exception,file_piece,murmur_hash,scoped,mmap}.o lm/{bhiksha,binary_format,config,lm_exception,model,quantize,read_arpa,search_hashed,search_trie,trie,virtual_interface,vocab}.o -fpic -shared -Wl,-soname,libken.so -o libken.so -lz -Wno-deprecated
+	g++ -I. -DNO_ICU -DNDEBUG -O3 $(CXXFLAGS) jni/wrap.cc -I$(JAVA_HOME)/include{,/linux} util/{bit_packing,ersatz_progress,exception,file_piece,murmur_hash,scoped,mmap}.o lm/{bhiksha,binary_format,config,lm_exception,model,quantize,read_arpa,search_hashed,search_trie,trie,virtual_interface,vocab}.o -fpic -shared -Wl,-soname,libken.so -o libken.so -lz -Wno-deprecated -pthread
 
 install: libken.so
 	cp -f libken.so "$(libdir)"/libken.so
