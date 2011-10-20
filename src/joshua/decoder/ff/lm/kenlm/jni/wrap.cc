@@ -53,7 +53,7 @@ char *PieceCopy(const StringPiece &str) {
 }
 
 // The normal kenlm vocab isn't growable (words can't be added to it).  However, Joshua requires this.  So I wrote this.  Not the most efficient thing in the world.  
-class GrowableVocab : public lm::ngram::EnumerateVocab {
+class GrowableVocab : public lm::EnumerateVocab {
   public:
     GrowableVocab() {
       UTIL_THROW_IF(pthread_rwlock_init(&lock_, NULL), util::ErrnoException, "Failed to initialize phtread lock.");
