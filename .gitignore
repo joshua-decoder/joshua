@@ -76,7 +76,6 @@ src/joshua/decoder/ff/lm/kenlm/util/file_piece_test
 src/joshua/decoder/ff/lm/kenlm/util/joint_sort_test
 src/joshua/decoder/ff/lm/kenlm/util/key_value_packing_test
 src/joshua/decoder/ff/lm/kenlm/util/probing_hash_table_test
-src/joshua/decoder/ff/lm/kenlm/util/sized_iterator.hh
 src/joshua/decoder/ff/lm/kenlm/util/sorted_uniform_test
 src/joshua/decoder/ff/lm/kenlm/util/tokenize_piece_test
 scripts/training/test/.cachepipe/
