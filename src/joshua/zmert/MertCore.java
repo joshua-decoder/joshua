@@ -1449,6 +1449,10 @@ public double[] run_single_iteration(
 
       while (line != null) {
 
+		  // skip blank lines
+		  if (line.equals(""))
+			  continue;
+
 /*
 line format:
 
