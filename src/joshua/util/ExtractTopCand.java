@@ -56,8 +56,15 @@ public class ExtractTopCand {
 	 * {@link #extractOneBest(IndexedReader,BufferedWriter)}.
 	 */
 	public static void main(String[] args) {
-		if (2 != args.length) {
-			System.err.println("Usage: ExtractTopCand nbestInputFile 1bestOutputFile\n       (use \"-\" for stdin/stdout)");
+		String inFile = "-";
+		String outFile = "-";
+		if (args.length == 1) {
+			inFile = args[0];
+		} else if (args.length == 2) {
+			inFile = args[0];
+			outFile = args[1];
+		} else {
+			System.err.println("Usage: ExtractTopCand [nbestInputFile] [1bestOutputFile]\n       (default to stdin/stdout)");
 			System.exit(1);
 		}
 		
@@ -66,9 +73,9 @@ public class ExtractTopCand {
 			// regarding using an n-best SegmentFileParser.
 			IndexedReader<String> nbestReader =
 				new IndexedReader<String>("line",
-					"-".equals(args[0])
-						? new LineReader(System.in)
-						: new LineReader(args[0]));
+							  "-".equals(inFile)
+							  ? new LineReader(System.in)
+							  : new LineReader(inFile);
 			
 			/* TODO: This duplicates FileUtility.getWriteFileStream
 			 * but with the addition of defaulting to System.out;
@@ -85,9 +92,9 @@ public class ExtractTopCand {
 			BufferedWriter onebestWriter =
 				new BufferedWriter(
 					new OutputStreamWriter(
-						("-".equals(args[1])
-							? System.out
-							: new FileOutputStream(args[1], false)
+							   ("-".equals(outFile)
+								? System.out
+								: new FileOutputStream(outFile, false)
 						), "UTF-8"));
 			
 			extractOneBest(nbestReader, onebestWriter);
