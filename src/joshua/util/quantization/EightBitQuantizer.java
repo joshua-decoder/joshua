@@ -85,13 +85,18 @@ public class EightBitQuantizer implements Quantizer, Serializable {
 	public float read(ByteBuffer stream) {
 		return buckets[stream.get()];
 	}
-	
+
 	public void write(ByteBuffer stream, float value) {
 		byte index = 0;
+
+		// We search for the bucket best matching the value. Only zeroes will be
+		// mapped to the zero bucket.
 		if (value != 0.0f) {
 			index = 1;
-			while ((Math.abs(buckets[index] - value) >  (Math.abs(buckets[index + 1] - value))))
+			while ((Math.abs(buckets[index] - value) > (Math.abs(buckets[index + 1]
+					- value)))) {
 				index++;
+			}
 		}
 		stream.put(index);
 	}
