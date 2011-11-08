@@ -46,7 +46,7 @@ import joshua.decoder.ff.state_maintenance.NgramStateComputer;
 import joshua.decoder.ff.state_maintenance.StateComputer;
 import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.GrammarFactory;
-import joshua.decoder.ff.tm.hiero.MemoryBasedBatchGrammar;
+import joshua.decoder.ff.tm.hash_based.MemoryBasedBatchGrammar;
 import joshua.ui.hypergraph_visualizer.HyperGraphViewer;
 import joshua.util.FileUtility;
 import joshua.util.Regex;

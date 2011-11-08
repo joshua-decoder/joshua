@@ -40,8 +40,8 @@ import joshua.decoder.ff.tm.BilingualRule;
 import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.GrammarReader;
 import joshua.decoder.ff.tm.Rule;
-import joshua.decoder.ff.tm.hiero.DiskHyperGraphFormatReader;
-import joshua.decoder.ff.tm.hiero.MemoryBasedBatchGrammar;
+import joshua.decoder.ff.tm.format.DiskHyperGraphFormatReader;
+import joshua.decoder.ff.tm.hash_based.MemoryBasedBatchGrammar;
 import joshua.util.FileUtility;
 import joshua.util.Regex;
 

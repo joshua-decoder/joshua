@@ -556,7 +556,7 @@ public class Chart {
 				if (! gr.hasRuleForSpan(i, j, foreignSentenceLength))
 					continue;
 				
-				Trie childNode = gr.getTrieRoot().matchOne(node.lhs); // match rule and complete part
+				Trie childNode = gr.getTrieRoot().match(node.lhs); // match rule and complete part
 				if (childNode != null
 					&& childNode.getRules() != null
 					&& childNode.getRules().getArity() == 1) { // have unary rules under this trienode

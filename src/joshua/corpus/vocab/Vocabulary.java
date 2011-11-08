@@ -25,7 +25,7 @@ import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import joshua.decoder.ff.tm.hiero.HieroFormatReader;
+import joshua.decoder.ff.tm.format.HieroFormatReader;
 import joshua.util.Regex;
 import joshua.util.io.BinaryIn;
 import joshua.util.io.LineReader;

@@ -15,7 +15,7 @@
  * Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  * MA 02111-1307 USA
  */
-package joshua.decoder.ff.tm.hiero;
+package joshua.decoder.ff.tm.hash_based;
 
 import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.ff.tm.BatchGrammar;
@@ -23,6 +23,8 @@ import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.BilingualRule;
 import joshua.decoder.ff.tm.GrammarReader;
 import joshua.decoder.ff.tm.Trie;
+import joshua.decoder.ff.tm.format.HieroFormatReader;
+import joshua.decoder.ff.tm.format.SamtFormatReader;
 import joshua.corpus.vocab.SymbolTable;
 
 import java.io.IOException;
@@ -242,7 +244,7 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
 				curSymID = modelReader.cleanNonTerminal(french[k]);
 			}
 			
-			MemoryBasedTrie nextLayer = pos.matchOne(curSymID);
+			MemoryBasedTrie nextLayer = pos.match(curSymID);
 			if (null == nextLayer) {
 				nextLayer = new MemoryBasedTrie();
 				if (pos.hasExtensions() == false) {

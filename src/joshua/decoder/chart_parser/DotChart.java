@@ -205,7 +205,7 @@ class DotChart {
 						
 					} else {
 						// match the terminal
-						Trie child_tnode = dt.trieNode.matchOne(last_word);
+						Trie child_tnode = dt.trieNode.match(last_word);
 						if (null != child_tnode) {
 							// we do not have an ant for the terminal
 							addDotItem(child_tnode, i, j - 1 + arc_len, dt.antSuperNodes, null, dt.srcPath.extend(arc));
@@ -261,7 +261,7 @@ class DotChart {
 		for (DotNode dotNode : dotcells[i][k].dotNodes) {
 			// see if it matches what the dotitem is looking for
 			for (SuperNode superNode : t_ArrayList) {
-				Trie child_tnode = dotNode.trieNode.matchOne(superNode.lhs);
+				Trie child_tnode = dotNode.trieNode.match(superNode.lhs);
 				if (null != child_tnode) {
 					if (true == startDotItems && !child_tnode.hasExtensions()) {
 						continue; //TODO

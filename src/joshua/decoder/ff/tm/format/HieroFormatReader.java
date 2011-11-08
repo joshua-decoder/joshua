@@ -1,4 +1,4 @@
-package joshua.decoder.ff.tm.hiero;
+package joshua.decoder.ff.tm.format;
 
 import java.util.Arrays;
 import java.util.logging.Logger;
@@ -7,69 +7,53 @@ import joshua.corpus.vocab.SymbolTable;
 import joshua.decoder.ff.tm.BilingualRule;
 import joshua.decoder.ff.tm.GrammarReader;
 
-public class SamtFormatReader extends GrammarReader<BilingualRule> {
+public class HieroFormatReader extends GrammarReader<BilingualRule> {
 
 	private static final Logger logger = Logger
-			.getLogger(SamtFormatReader.class.getName());
-	
-	private static final String samtNonTerminalMarkup;
-	
-	private int[] nonTerminalCache;
+			.getLogger(HieroFormatReader.class.getName());
 	
 	static {
-		fieldDelimiter = "#";
-		nonTerminalRegEx = "^@[^\\s]+";
+		fieldDelimiter = "\\s\\|{3}\\s";
+		nonTerminalRegEx = "^\\[[^\\s]+\\,[0-9]*\\]$";
 		nonTerminalCleanRegEx = ",[0-9\\s]+";
-		
-		samtNonTerminalMarkup = "@";
-		
-		description = "Original SAMT format";
+//		nonTerminalRegEx = "^\\[[A-Z]+\\,[0-9]*\\]$";
+//		nonTerminalCleanRegEx = "[\\[\\]\\,0-9\\s]+";
+		description = "Original Hiero format";
 	}
 	
-	public SamtFormatReader(String grammarFile, SymbolTable vocabulary) {
+	
+	public HieroFormatReader(String grammarFile, SymbolTable vocabulary) {
 		super(grammarFile, vocabulary);
-		
-		// TODO: should be limited to maxNTs + 1 if defined in config.
-		// position 0 will never be used
-		nonTerminalCache = new int[30];
 	}
 
-	// Format example:
-	// @VZ-HD @APPR-DA+ART-DA minutes#@2 protokoll @1#@PP-MO+VZ-HD#0 1 1 -0 0.5 -0
-	
 	@Override
 	protected BilingualRule parseLine(String line) {
 		String[] fields = line.split(fieldDelimiter);
 		if (fields.length != 4) {
 			logger.severe("Rule line does not have four fields: " + line);
-			logger.severe("Skipped.");
-			return null;
 		}
-
-		int lhs = symbolTable.addNonterminal(adaptNonTerminalMarkup(fields[2]));
+		
+		int lhs = symbolTable.addNonterminal(cleanNonTerminal(fields[0]));
 
 		int arity = 0;
-		
 		// foreign side
-		String[] foreignWords = fields[0].split("\\s+");
+		String[] foreignWords = fields[1].split("\\s+");
 		int[] french = new int[foreignWords.length];
 		for (int i = 0; i < foreignWords.length; i++) {
 			if (isNonTerminal(foreignWords[i])) {
 				arity++;
-				french[i] = symbolTable.addNonterminal(adaptNonTerminalMarkup(foreignWords[i], arity));
-				nonTerminalCache[arity] = french[i];
+				french[i] = symbolTable.addNonterminal(foreignWords[i]);
 			} else {
 				french[i] = symbolTable.addTerminal(foreignWords[i]);
 			}
 		}
-		
+
 		// english side
-		String[] englishWords = fields[1].split("\\s+");
+		String[] englishWords = fields[2].split("\\s+");
 		int[] english = new int[englishWords.length];
 		for (int i = 0; i < englishWords.length; i++) {
 			if (isNonTerminal(englishWords[i])) {
-				english[i] = nonTerminalCache[Integer.
-						parseInt(cleanSamtNonTerminal(englishWords[i]))];
+				english[i] = symbolTable.addNonterminal(englishWords[i]);
 			} else {
 				english[i] = symbolTable.addTerminal(englishWords[i]);
 			}
@@ -83,29 +67,11 @@ public class SamtFormatReader extends GrammarReader<BilingualRule> {
 		for (String score : scores) {
 			feature_scores[i++] = Float.parseFloat(score);
 		}
-
+		
 		return new BilingualRule(lhs, french, english, feature_scores, arity);
 	}
 
-	protected String cleanSamtNonTerminal(String word) {
-		// changes SAMT markup to Hiero-style
-		return word.replaceAll(samtNonTerminalMarkup, "");
-	}
-	
-	protected String adaptNonTerminalMarkup(String word) {
-		// changes SAMT markup to Hiero-style
-		return "[" + word.replaceAll(",", "_COMMA_")
-			.replaceAll("\\$", "_DOLLAR_")
-			.replaceAll(samtNonTerminalMarkup, "") + "]";
-	}
-	
-	protected String adaptNonTerminalMarkup(String word, int ntIndex) {
-		// changes SAMT markup to Hiero-style
-		return "[" + word.replaceAll(",", "_COMMA_")
-		.replaceAll("\\$", "_DOLLAR_")
-		.replaceAll(samtNonTerminalMarkup, "") + "," + ntIndex + "]";
-	}
-	
+
 	@Override
 	public String toTokenIds(BilingualRule rule) {
 		StringBuffer sb = new StringBuffer();
@@ -136,7 +102,7 @@ public class SamtFormatReader extends GrammarReader<BilingualRule> {
 
 	@Override
 	public String toWords(BilingualRule rule) {
-		StringBuffer sb = new StringBuffer();
+		StringBuffer sb = new StringBuffer("");
 		sb.append(symbolTable.getWord(rule.getLHS()));
 		sb.append(" ||| ");
 		sb.append(symbolTable.getWords(rule.getFrench()));
@@ -154,7 +120,7 @@ public class SamtFormatReader extends GrammarReader<BilingualRule> {
 	@Override
 	public String toWordsWithoutFeatureScores(BilingualRule rule) {
 		StringBuffer sb = new StringBuffer();
-		sb.append(symbolTable.getWord(rule.getLHS()));
+		sb.append(rule.getLHS());
 		sb.append(" ||| ");
 		sb.append(symbolTable.getWords(rule.getFrench()));
 		sb.append(" ||| ");
@@ -162,5 +128,14 @@ public class SamtFormatReader extends GrammarReader<BilingualRule> {
 		sb.append(" |||");
 	
 		return sb.toString();
+	}
+	
+	
+	public static String getFieldDelimiter() {
+		return fieldDelimiter;
+	}
+	
+	public static boolean isNonTerminal(final String word) {
+		return GrammarReader.isNonTerminal(word);
 	}
 }

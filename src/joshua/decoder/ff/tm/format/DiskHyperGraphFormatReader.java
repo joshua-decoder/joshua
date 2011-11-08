@@ -1,4 +1,4 @@
-package joshua.decoder.ff.tm.hiero;
+package joshua.decoder.ff.tm.format;
 
 import java.util.Arrays;
 import java.util.logging.Logger;
@@ -10,7 +10,6 @@ import joshua.decoder.ff.tm.GrammarReader;
 /**
  * this class implements the grammar reader for disk hypergraph
  * @author Zhifei Li, <zhifei.work@gmail.com>
- * @version $LastChangedDate: 2009-11-30 23:52:12 -0500 (星期一, 30 十一月 2009) $
  */
 
 public class DiskHyperGraphFormatReader extends GrammarReader<BilingualRule> {

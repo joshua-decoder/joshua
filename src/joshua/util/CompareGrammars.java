@@ -25,7 +25,7 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import joshua.decoder.ff.tm.hiero.HieroFormatReader;
+import joshua.decoder.ff.tm.format.HieroFormatReader;
 
 /**
  * This class allows two grammars (loaded from disk) to be compared.

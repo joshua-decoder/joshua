@@ -18,7 +18,7 @@
 package joshua.corpus.vocab;
 
 import joshua.decoder.ff.lm.kenlm.jni.KenLM;
-import joshua.decoder.ff.tm.hiero.HieroFormatReader;
+import joshua.decoder.ff.tm.format.HieroFormatReader;
 
 import java.util.Collection;
 import java.util.HashMap;
