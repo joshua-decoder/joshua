@@ -70,7 +70,7 @@ my $ALIGNER = "giza"; # or "berkeley"
 
 # for hadoop java subprocesses (heap amount)
 # you really just have to play around to find out how much is enough 
-my $HADOOP_MEM = "4g";  
+my $HADOOP_MEM = "2g";  
 my $JOSHUA_MEM = "3100m";
 my $ALIGNER_MEM = "10g";
 my $QSUB_ARGS  = "-l num_proc=2";

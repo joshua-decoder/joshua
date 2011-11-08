@@ -14,6 +14,10 @@
   line turns off beam-and-threshold pruning, and its use is
   recommended.
 
+- Lots of reorganization and pruning
+
+  - removed discriminative code
+
 
 3.1 (stable, "master" branch)
 =============================
