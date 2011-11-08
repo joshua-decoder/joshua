@@ -73,10 +73,26 @@ public class EightBitQuantizer implements Quantizer, Serializable {
 			}
 			last_key = key;
 			entry = histogram.higherEntry(key);
+			done = (entry == null);
+		}
+		if (count >= size) {
+			buckets[index++] = (float) sum / count;
+			count = 0;
+			sum = 0.0;
 		}
 	}
 
-	public float retrieve(ByteBuffer stream) {
+	public float read(ByteBuffer stream) {
 		return buckets[stream.get()];
+	}
+	
+	public void write(ByteBuffer stream, float value) {
+		byte index = 0;
+		if (value != 0.0f) {
+			index = 1;
+			while ((Math.abs(buckets[index] - value) >  (Math.abs(buckets[index + 1] - value))))
+				index++;
+		}
+		stream.put(index);
 	}
 }

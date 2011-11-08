@@ -11,7 +11,11 @@ import java.nio.ByteBuffer;
  */
 public class BooleanQuantizer implements Quantizer {
 
-	public float retrieve(ByteBuffer stream) {
+	public float read(ByteBuffer stream) {
 		return ((stream.get() == 0) ? 0.0f : 1.0f);
+	}
+
+	public void write(ByteBuffer stream, float value) {
+		stream.put((byte) (value == 0.0f ? 0 : 1));		
 	}
 }

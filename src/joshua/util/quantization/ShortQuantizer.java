@@ -4,8 +4,12 @@ import java.nio.ByteBuffer;
 
 public class ShortQuantizer implements Quantizer {
 
-	public float retrieve(ByteBuffer stream) {
+	public float read(ByteBuffer stream) {
 		return (float) stream.getShort();
+	}
+
+	public void write(ByteBuffer stream, float value) {
+		stream.putShort((short) value);
 	}
 
 }

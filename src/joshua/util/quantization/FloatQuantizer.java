@@ -4,8 +4,12 @@ import java.nio.ByteBuffer;
 
 public class FloatQuantizer implements Quantizer {
 
-	public float retrieve(ByteBuffer stream) {
+	public float read(ByteBuffer stream) {
 		return stream.getFloat();
+	}
+
+	public void write(ByteBuffer stream, float value) {
+		stream.putFloat(value);
 	}
 
 }
