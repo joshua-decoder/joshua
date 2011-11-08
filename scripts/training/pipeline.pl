@@ -627,6 +627,29 @@ if (-e $LMFILTER and $DO_FILTER_LM and exists $TRAIN{target}) {
 
 mkdir("tune") unless -d "tune";
 
+# figure out how many references there are
+my $numrefs = get_numrefs($TUNE{target});
+
+# make sure the dev source exist
+if (! -e $TUNE{source}) {
+  print STDERR "* FATAL: couldn't fine tuning source file '$TUNE{source}'\n";
+  exit 1;
+}
+if ($numrefs > 1) {
+  for my $i (1..$numrefs) {
+	if (! -e "$TUNE{target}.$i") {
+	  print STDERR "* FATAL: couldn't find tuning reference file '$TUNE{target}.$i'\n";
+	  exit 1;
+	}
+  }
+} else {
+  if (! -e $TUNE{target}) {
+	print STDERR "* FATAL: couldn't find tuning reference file '$TUNE{target}'\n";
+	exit 1;
+  }
+}
+
+
 # filter the tuning grammar
 my $TUNE_GRAMMAR = "tune/grammar.filtered.gz";
 if ($DO_FILTER_TM) {
@@ -658,9 +681,6 @@ if (! defined $GLUE_GRAMMAR_FILE) {
 				  "tune/grammar.glue");
 }
 	 
-
-# figure out how many references there are
-my $numrefs = get_numrefs($TUNE{target});
 
 mkdir("mert") unless -d "mert";
 foreach my $key (keys %MERTFILES) {
