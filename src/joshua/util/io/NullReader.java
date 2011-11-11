@@ -17,9 +17,9 @@
  */
 package joshua.util.io;
 
-import joshua.util.NullIterator;
-
 import java.io.IOException;
+
+import joshua.util.NullIterator;
 
 
 /**

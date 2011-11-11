@@ -133,7 +133,7 @@ public class CompareGrammars {
 		}
 		
 		// Tell standard in and out to use UTF-8
-		FormatUtil.useUTF8();
+		FormatUtils.useUTF8();
 		logger.finest("Using UTF-8");
 		
 		logger.info("Comparing grammar files " + args[0] + " and " + args[1]);

@@ -17,10 +17,9 @@
  */
 
 package joshua.zmert;
-import java.util.*;
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.util.concurrent.Semaphore;
-import java.util.concurrent.ThreadPoolExecutor;
 
 public class TercomRunner implements Runnable
 {

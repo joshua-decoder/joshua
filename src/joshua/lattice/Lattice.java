@@ -28,7 +28,7 @@ import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import joshua.corpus.vocab.SymbolTable;
+import joshua.corpus.Vocabulary;
 
 /**
  * A lattice representation of a directed graph.
@@ -125,7 +125,7 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
 	 * @param linearChain 
 	 * @return  Lattice representation of the linear chain.
 	 */
-	public static Lattice<Integer> createLattice(int[] linearChain) {
+	public static Lattice<Integer> createIntLattice(int[] linearChain) {
 		Integer[] integerSentence = new Integer[linearChain.length];
 		for (int i = 0; i < linearChain.length; i++) {
 			integerSentence[i] = linearChain[i];
@@ -134,7 +134,7 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
 		return new Lattice<Integer>(integerSentence);
 	}
 	
-	public static Lattice<Integer> createFromString(String data, SymbolTable symbolTable) {
+	public static Lattice<Integer> createIntLatticeFromString(String data) {
 		Map<Integer,Node<Integer>> nodes = new HashMap<Integer,Node<Integer>>();
 		
 		Pattern nodePattern = Pattern.compile("(.+?)\\((\\(.+?\\),)\\)(.*)");
@@ -182,7 +182,7 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
 				String remainingArcs = arcMatcher.group(4);
 				
 				if (logger.isLoggable(Level.FINE)) logger.fine("\t" + arcLabel + " " + arcWeight + " " + destinationNodeID);
-				Integer intArcLabel = symbolTable.getID(arcLabel);
+				Integer intArcLabel = Vocabulary.id(arcLabel);
 				currentNode.addArc(destinationNode, arcWeight, intArcLabel);
 				
 				arcMatcher = arcPattern.matcher(remainingArcs);
@@ -206,7 +206,7 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
 	 * @param data String representation of a lattice.
 	 * @return A lattice that corresponds to the given string.
 	 */
-	public static Lattice<String> createFromString(String data) {
+	public static Lattice<String> createStringLatticeFromString(String data) {
 		
 		Map<Integer,Node<String>> nodes = new HashMap<Integer,Node<String>>();
 		

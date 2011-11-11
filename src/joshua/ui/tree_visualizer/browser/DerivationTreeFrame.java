@@ -29,11 +29,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import joshua.ui.tree_visualizer.DerivationTree;
-import joshua.ui.tree_visualizer.DerivationTreeEdge;
-import joshua.ui.tree_visualizer.DerivationTreeTransformer;
 import joshua.ui.tree_visualizer.DerivationViewer;
-import joshua.ui.tree_visualizer.Node;
-import edu.uci.ics.jung.algorithms.layout.StaticLayout;
 
 /**
  * A frame that displays a derivation tree.

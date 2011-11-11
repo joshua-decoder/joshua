@@ -17,30 +17,26 @@
  */
 package joshua.decoder.ff.lm.bloomfilter_lm;
 
-import java.util.logging.Logger;
-import java.util.Scanner;
-import java.util.zip.GZIPInputStream;
-import java.util.zip.GZIPOutputStream;
-import java.util.HashMap;
-import joshua.util.Regex;
-
-import java.io.File;
-import java.io.InputStream;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.io.Externalizable;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectInput;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
+import java.util.HashMap;
+import java.util.Scanner;
+import java.util.logging.Logger;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
+import joshua.corpus.Vocabulary;
 import joshua.decoder.ff.lm.AbstractLM;
-import joshua.decoder.ff.lm.DefaultNGramLanguageModel;
-import joshua.decoder.ff.lm.bloomfilter_lm.BloomFilter;
-import joshua.corpus.vocab.SymbolTable;
-import joshua.corpus.vocab.Vocabulary;
+import joshua.util.Regex;
 
 /**
  * An n-gram language model with linearly-interpolated Witten-Bell smoothing,
@@ -70,17 +66,6 @@ public class BloomFilterLanguageModel extends AbstractLM implements Externalizab
 	 */
 	public static final Logger logger = 
 		Logger.getLogger(BloomFilterLanguageModel.class.getName());
-
-	/**
-	 * A map from string to integer containing all types in the language
-	 * model. The Bloom filter LM needs to maintain an internal vocabulary
-	 * because the hashed values of n-grams are based on a vocabulary that
-	 * is populated when the LM is first constructed. The symbol table from
-	 * a later run of the Joshua decoder is not guaranteed to have the same
-	 * mappings, which would make it impossible to query the bloom filter
-	 * in a meaningful way.
-	 */
-	private SymbolTable vocabulary;
 
 	/**
 	 * The Bloom filter data structure itself.
@@ -135,12 +120,11 @@ public class BloomFilterLanguageModel extends AbstractLM implements Externalizab
 	 * that the LM has already been built, and takes the name of the file
 	 * where the LM is stored.
 	 *
-	 * @param symbols a symbol table used globally by the Joshua decoder
 	 * @param order the order of the language model
 	 * @param filename path to the file where the language model is stored
 	 */
-	public BloomFilterLanguageModel(SymbolTable symbols, int order, String filename) throws IOException {
-		super(symbols, order);
+	public BloomFilterLanguageModel(int order, String filename) throws IOException {
+		super(order);
 		try {
 			readExternal(new ObjectInputStream(new GZIPInputStream(new FileInputStream(filename))));
 		} catch (ClassNotFoundException e) {
@@ -149,7 +133,7 @@ public class BloomFilterLanguageModel extends AbstractLM implements Externalizab
 			throw ioe;
 		}
 
-		int vocabSize = vocabulary.size();
+		int vocabSize = Vocabulary.size();
 		p0 = -Math.log(vocabSize + 1);
 		double oneMinusLambda0 = numTokens - logAdd(Math.log(vocabSize), numTokens);
 		p0 += oneMinusLambda0;
@@ -168,9 +152,8 @@ public class BloomFilterLanguageModel extends AbstractLM implements Externalizab
 	 * @param base a double. The base of the logarithm for quantization.
 	 */
 	private BloomFilterLanguageModel(String filename, int order, int size, double base) {
-		super(null, order);
+		super(order);
 		quantizationBase = base;
-		vocabulary = new Vocabulary();
 		populateBloomFilter(size, filename);
 	}
 
@@ -453,7 +436,7 @@ public class BloomFilterLanguageModel extends AbstractLM implements Externalizab
 			String [] toks = Regex.spaces.split(history);
 			int [] hist = new int[toks.length];
 			for (int i = 0; i < toks.length; i++)
-				hist[i] = vocabulary.addTerminal(toks[i]);
+				hist[i] = Vocabulary.id(toks[i]);
 			add(hist, typesAfter.get(history), typesFuncs);
 		}
 		return;
@@ -517,7 +500,7 @@ public class BloomFilterLanguageModel extends AbstractLM implements Externalizab
 			int [] ngram = new int[toks.length - 1];
 			StringBuilder history = new StringBuilder();
 			for (int i = 0; i < toks.length - 1; i++) {
-				ngram[i] = vocabulary.addTerminal(toks[i]);
+				ngram[i] = Vocabulary.id(toks[i]);
 				if (i < toks.length - 2)
 					history.append(toks[i]).append(" ");
 			}
@@ -565,11 +548,10 @@ public class BloomFilterLanguageModel extends AbstractLM implements Externalizab
 	 */
 	public void readExternal(ObjectInput in)
 	throws IOException, ClassNotFoundException {
-		vocabulary = new Vocabulary();
 		int vocabSize = in.readInt();
 		for (int i = 0; i < vocabSize; i++) {
 			String line = in.readUTF();
-			vocabulary.addTerminal(line);
+			Vocabulary.id(line);
 		}
 		numTokens = in.readDouble();
 		countFuncs = new long[in.readInt()][2];
@@ -595,11 +577,11 @@ public class BloomFilterLanguageModel extends AbstractLM implements Externalizab
 	 * @throws IOException if an input or output exception occurred
 	 */
 	public void writeExternal(ObjectOutput out) throws IOException {
-		out.writeInt(vocabulary.size());
-		for (int i = 0; i < vocabulary.size(); i++) {
+		out.writeInt(Vocabulary.size());
+		for (int i = 0; i < Vocabulary.size(); i++) {
 		//	out.writeBytes(vocabulary.getWord(i));
 		//	out.writeChar('\n'); // newline
-			out.writeUTF(vocabulary.getWord(i));
+			out.writeUTF(Vocabulary.word(i));
 		}
 		out.writeDouble(numTokens);
 		out.writeInt(countFuncs.length);
@@ -634,7 +616,7 @@ public class BloomFilterLanguageModel extends AbstractLM implements Externalizab
 	protected double ngramLogProbability_helper(int[] ngram, int order) {
 		int [] lm_ngram = new int[ngram.length];
 		for (int i = 0; i < ngram.length; i++) {
-			lm_ngram[i] = vocabulary.getID(symbolTable.getWord(ngram[i]));
+			lm_ngram[i] = Vocabulary.id(Vocabulary.word(ngram[i]));
 		}
 		return wittenBell(lm_ngram, order);
 	}

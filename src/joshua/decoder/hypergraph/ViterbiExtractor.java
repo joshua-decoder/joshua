@@ -20,7 +20,7 @@ package joshua.decoder.hypergraph;
 import java.util.ArrayList;
 import java.util.List;
 
-import joshua.corpus.vocab.SymbolTable;
+import joshua.corpus.Vocabulary;
 import joshua.decoder.ff.tm.Rule;
 
 
@@ -32,7 +32,7 @@ import joshua.decoder.ff.tm.Rule;
 public class ViterbiExtractor  {
 
 //	get one-best string under item
-	public static String extractViterbiString(SymbolTable symbolTable, HGNode node) {
+	public static String extractViterbiString(HGNode node) {
 		StringBuffer res = new StringBuffer();
 		
 		HyperEdge edge = node.bestHyperedge;
@@ -42,16 +42,16 @@ public class ViterbiExtractor  {
 			if (edge.getAntNodes().size() != 1) {
 				throw new RuntimeException("deduction under goal item have not equal one item");
 			}
-			return extractViterbiString(symbolTable, edge.getAntNodes().get(0));
+			return extractViterbiString(edge.getAntNodes().get(0));
 		}
 		int[] english = rl.getEnglish();
 		for (int c = 0; c < english.length; c++) {
-			if (symbolTable.isNonterminal(english[c])) {
-				int id = symbolTable.getTargetNonterminalIndex(english[c]);
+			if (Vocabulary.nt(english[c])) {
+				int id = Vocabulary.getTargetNonterminalIndex(english[c]);
 				HGNode child = (HGNode)edge.getAntNodes().get(id);
-				res.append(extractViterbiString(symbolTable, child));
+				res.append(extractViterbiString(child));
 			} else {
-				res.append(symbolTable.getWord(english[c]));
+				res.append(Vocabulary.word(english[c]));
 			}
 			if (c < english.length-1) res.append(' ');
 		}

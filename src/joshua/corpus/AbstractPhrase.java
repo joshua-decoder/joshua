@@ -17,7 +17,6 @@
  */
 package joshua.corpus;
 
-import joshua.corpus.vocab.SymbolTable;
 
 
 /**
@@ -46,16 +45,15 @@ public abstract class AbstractPhrase implements Phrase {
 	 * symbol table.
 	 * 
 	 * @param sentence   White-space separated String of words.
-	 * @param vocabulary Symbol table for mapping tokens to
-	 *                   integers.
+	 * 
 	 * @return Array of integers corresponding to the words in
 	 *         the sentence.
 	 */
-	protected int[] splitSentence(String sentence, SymbolTable vocabulary) {
+	protected int[] splitSentence(String sentence) {
 		String[] w      = sentence.split("\\s+");
 		int[] words      = new int[w.length];
 		for (int i = 0; i < w.length; i++)
-			words[i] = vocabulary.addTerminal(w[i]);
+			words[i] = Vocabulary.id(w[i]);
 		return words;
 	}
 	
@@ -125,9 +123,7 @@ public abstract class AbstractPhrase implements Phrase {
 			return 0;
 		}
 	}
-	
-	
-	
+		
 	/**
 	 * Returns a string representation of the phrase.
 	 *
@@ -135,10 +131,9 @@ public abstract class AbstractPhrase implements Phrase {
 	 *         phrase.
 	 */
 	public String toString() {
-		SymbolTable vocab = getVocab();
 		StringBuffer buf = new StringBuffer();
         for (int i=0; i<size(); i++) {
-			String word = vocab.getWord(getWordID(i));
+			String word = Vocabulary.word(getWordID(i));
 			if (i != 0) buf.append(' ');
             buf.append(word);
         }

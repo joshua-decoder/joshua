@@ -17,7 +17,6 @@
  */
 package joshua.decoder.ff.tm;
 
-import java.io.BufferedWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -26,7 +25,6 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import joshua.corpus.vocab.SymbolTable;
 import joshua.decoder.ff.FeatureFunction;
 
 /**
@@ -149,7 +147,7 @@ public abstract class AbstractGrammar implements Grammar {
 	}
 
 	// write grammar to disk
-	public void writeGrammarOnDisk(String file, SymbolTable symbolTable) {
+	public void writeGrammarOnDisk(String file) {
 	}
 
 	// change the feature weight in the grammar
@@ -185,17 +183,15 @@ public abstract class AbstractGrammar implements Grammar {
 	}
 
 	// obtain RulesIDTable in the grammar, accumalative
-	public void obtainRulesIDTable(Map<String, Integer> rulesIDTable,
-			SymbolTable symbolTable) {
-		obtainRulesIDTable(this.getTrieRoot(), rulesIDTable, symbolTable);
+	public void obtainRulesIDTable(Map<String, Integer> rulesIDTable) {
+		obtainRulesIDTable(this.getTrieRoot(), rulesIDTable);
 	}
 
-	private void obtainRulesIDTable(Trie trie, Map<String, Integer> rulesIDTable,
-			SymbolTable symbolTable) {
+	private void obtainRulesIDTable(Trie trie, Map<String, Integer> rulesIDTable) {
 		if (trie.hasRules()) {
 			RuleCollection rlCollection = trie.getRules();
 			for (Rule rl : rlCollection.getRules()) {
-				rulesIDTable.put(rl.toStringWithoutFeatScores(symbolTable),
+				rulesIDTable.put(rl.toStringWithoutFeatScores(),
 						rl.getRuleID());
 			}
 		}
@@ -204,7 +200,7 @@ public abstract class AbstractGrammar implements Grammar {
 			Object[] tem = trie.getExtensions().toArray();
 
 			for (int i = 0; i < tem.length; i++) {
-				obtainRulesIDTable((Trie) tem[i], rulesIDTable, symbolTable);
+				obtainRulesIDTable((Trie) tem[i], rulesIDTable);
 			}
 		}
 	}

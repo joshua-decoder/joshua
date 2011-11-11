@@ -17,19 +17,17 @@
  */
 package joshua.ui.tree_visualizer;
 
-import java.util.Scanner;
-import java.util.LinkedList;
-
-import edu.uci.ics.jung.graph.DirectedOrderedSparseMultigraph;
-
 import java.awt.Color;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.LinkedList;
+import java.util.Scanner;
 
 import javax.swing.JFrame;
 import javax.swing.WindowConstants;
 
 import joshua.util.Regex;
+import edu.uci.ics.jung.graph.DirectedOrderedSparseMultigraph;
 
 public class DerivationTree extends DirectedOrderedSparseMultigraph<Node,DerivationTreeEdge> {
 	/**

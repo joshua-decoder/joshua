@@ -18,9 +18,9 @@
 package joshua.subsample;
 
 import java.io.BufferedWriter;
-import java.io.OutputStreamWriter;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionBuilder;

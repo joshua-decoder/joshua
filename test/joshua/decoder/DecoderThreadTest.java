@@ -77,12 +77,12 @@ public class DecoderThreadTest {
 			sourcePrintStream.close();
 			String sourceCorpusFileName = sourceFile.getAbsolutePath();
 			
-			Vocabulary symbolTable = new Vocabulary();
-			int[] sourceLengths = Vocabulary.initializeVocabulary(sourceCorpusFileName, symbolTable, true);
+			Vocabulary Vocabulary = new Vocabulary();
+			int[] sourceLengths = Vocabulary.initializeVocabulary(sourceCorpusFileName, Vocabulary, true);
 			Assert.assertEquals(sourceLengths.length, 2);
 			int numberOfSentences = sourceLengths[1];
 			
-			Corpus sourceCorpus = SuffixArrayFactory.createCorpusArray(sourceCorpusFileName, symbolTable, sourceLengths[0], sourceLengths[1]);
+			Corpus sourceCorpus = SuffixArrayFactory.createCorpusArray(sourceCorpusFileName, Vocabulary, sourceLengths[0], sourceLengths[1]);
 		
 			
 			// Set up target corpus
@@ -94,13 +94,13 @@ public class DecoderThreadTest {
 			targetPrintStream.close();
 			String targetCorpusFileName = targetFile.getAbsolutePath();
 			
-			int[] targetLengths = Vocabulary.initializeVocabulary(targetCorpusFileName, symbolTable, true);
+			int[] targetLengths = Vocabulary.initializeVocabulary(targetCorpusFileName, Vocabulary, true);
 			Assert.assertEquals(targetLengths.length, sourceLengths.length);
 			for (int i=0, n=targetLengths.length; i<n; i++) {
 				Assert.assertEquals(targetLengths[i], sourceLengths[i]);
 			}
 			
-			Corpus targetCorpus = SuffixArrayFactory.createCorpusArray(targetCorpusFileName, symbolTable, targetLengths[0], targetLengths[1]);
+			Corpus targetCorpus = SuffixArrayFactory.createCorpusArray(targetCorpusFileName, Vocabulary, targetLengths[0], targetLengths[1]);
 			
 			
 			// Construct alignments data structure

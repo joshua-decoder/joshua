@@ -17,10 +17,6 @@
  */
 package joshua.decoder.hypergraph;
 
-import joshua.decoder.chart_parser.Prunable;
-import joshua.decoder.ff.state_maintenance.DPState;
-
-
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -28,6 +24,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
+
+import joshua.decoder.chart_parser.Prunable;
+import joshua.decoder.ff.state_maintenance.DPState;
 
 /**
  * this class implement Hypergraph node (i.e., HGNode); also known

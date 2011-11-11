@@ -20,8 +20,8 @@ package joshua.tools;
 import java.io.IOException;
 import java.util.logging.Logger;
 
+import joshua.corpus.Vocabulary;
 import joshua.corpus.syntax.ArraySyntaxTree;
-import joshua.corpus.vocab.Vocabulary;
 import joshua.util.io.LineReader;
 
 /**
@@ -33,8 +33,6 @@ public class LabelPhrases {
 
 	/** Logger for this class. */
 	private static final Logger logger = Logger.getLogger(LabelPhrases.class.getName());
-
-	private static Vocabulary vocabulary;
 
 	/**
 	 * Main method.
@@ -49,7 +47,8 @@ public class LabelPhrases {
 
 		if (args.length < 1 || args[0].equals("-h")) {
 			System.err.println("Usage: " + LabelPhrases.class.toString());
-			System.err.println("    -p phrase_file     phrase-sentence file to process");
+			System.err
+					.println("    -p phrase_file     phrase-sentence file to process");
 			System.err.println();
 			System.exit(-1);
 		}
@@ -65,7 +64,6 @@ public class LabelPhrases {
 			System.exit(-1);
 		}
 
-		vocabulary = new Vocabulary();
 		LineReader phrase_reader = new LineReader(phrase_file_name);
 
 		while (phrase_reader.ready()) {
@@ -80,9 +78,9 @@ public class LabelPhrases {
 			String[] phrase_strings = fields[0].split("\\s");
 			int[] phrase_ids = new int[phrase_strings.length];
 			for (int i = 0; i < phrase_strings.length; i++)
-				phrase_ids[i] = vocabulary.addTerminal(phrase_strings[i]);
+				phrase_ids[i] = Vocabulary.id(phrase_strings[i]);
 
-			ArraySyntaxTree syntax = new ArraySyntaxTree(fields[2], vocabulary);
+			ArraySyntaxTree syntax = new ArraySyntaxTree(fields[2]);
 			int[] sentence_ids = syntax.getTerminals();
 
 			int match_start = -1;
@@ -115,7 +113,7 @@ public class LabelPhrases {
 				continue;
 			}
 
-			System.out.println(vocabulary.getWord(label) + "\t" + line);
+			System.out.println(Vocabulary.word(label) + "\t" + line);
 		}
 	}
 }

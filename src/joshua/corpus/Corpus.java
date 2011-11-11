@@ -17,7 +17,6 @@
  */
 package joshua.corpus;
 
-import joshua.corpus.vocab.SymbolTable;
 
 
 /**
@@ -146,15 +145,7 @@ public interface Corpus { //extends Externalizable {
 	 * @return
 	 */
 	int comparePhrase(int corpusStart, Phrase phrase);
-	
-	/**
-	 * Gets the symbol table associated with this corpus.
-	 * 
-	 * @return the symbol table associated with this corpus
-	 */
-	SymbolTable getVocabulary();
-	
-	
+		
 	/** 
 	 * Compares the suffixes starting a positions index1 and
 	 * index2.

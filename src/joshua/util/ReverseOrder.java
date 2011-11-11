@@ -18,7 +18,7 @@
 package joshua.util;
 
 import java.io.Serializable;
-import java.util.*;
+import java.util.Comparator;
 
 /**
  * ReverseOrder is a Comparator that reverses the natural order of

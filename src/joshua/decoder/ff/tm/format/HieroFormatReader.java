@@ -3,7 +3,7 @@ package joshua.decoder.ff.tm.format;
 import java.util.Arrays;
 import java.util.logging.Logger;
 
-import joshua.corpus.vocab.SymbolTable;
+import joshua.corpus.Vocabulary;
 import joshua.decoder.ff.tm.BilingualRule;
 import joshua.decoder.ff.tm.GrammarReader;
 
@@ -22,8 +22,8 @@ public class HieroFormatReader extends GrammarReader<BilingualRule> {
 	}
 	
 	
-	public HieroFormatReader(String grammarFile, SymbolTable vocabulary) {
-		super(grammarFile, vocabulary);
+	public HieroFormatReader(String grammarFile) {
+		super(grammarFile);
 	}
 
 	@Override
@@ -33,7 +33,7 @@ public class HieroFormatReader extends GrammarReader<BilingualRule> {
 			logger.severe("Rule line does not have four fields: " + line);
 		}
 		
-		int lhs = symbolTable.addNonterminal(cleanNonTerminal(fields[0]));
+		int lhs = Vocabulary.id(cleanNonTerminal(fields[0]));
 
 		int arity = 0;
 		// foreign side
@@ -42,9 +42,9 @@ public class HieroFormatReader extends GrammarReader<BilingualRule> {
 		for (int i = 0; i < foreignWords.length; i++) {
 			if (isNonTerminal(foreignWords[i])) {
 				arity++;
-				french[i] = symbolTable.addNonterminal(foreignWords[i]);
+				french[i] = Vocabulary.id(foreignWords[i]);
 			} else {
-				french[i] = symbolTable.addTerminal(foreignWords[i]);
+				french[i] = Vocabulary.id(foreignWords[i]);
 			}
 		}
 
@@ -53,9 +53,9 @@ public class HieroFormatReader extends GrammarReader<BilingualRule> {
 		int[] english = new int[englishWords.length];
 		for (int i = 0; i < englishWords.length; i++) {
 			if (isNonTerminal(englishWords[i])) {
-				english[i] = symbolTable.addNonterminal(englishWords[i]);
+				english[i] = Vocabulary.id(englishWords[i]);
 			} else {
-				english[i] = symbolTable.addTerminal(englishWords[i]);
+				english[i] = Vocabulary.id(englishWords[i]);
 			}
 		}
 
@@ -103,11 +103,11 @@ public class HieroFormatReader extends GrammarReader<BilingualRule> {
 	@Override
 	public String toWords(BilingualRule rule) {
 		StringBuffer sb = new StringBuffer("");
-		sb.append(symbolTable.getWord(rule.getLHS()));
+		sb.append(Vocabulary.word(rule.getLHS()));
 		sb.append(" ||| ");
-		sb.append(symbolTable.getWords(rule.getFrench()));
+		sb.append(Vocabulary.getWords(rule.getFrench()));
 		sb.append(" ||| ");
-		sb.append(symbolTable.getWords(rule.getEnglish()));
+		sb.append(Vocabulary.getWords(rule.getEnglish()));
 		sb.append(" |||");
 
 		float[] feature_scores = rule.getFeatureScores();
@@ -122,9 +122,9 @@ public class HieroFormatReader extends GrammarReader<BilingualRule> {
 		StringBuffer sb = new StringBuffer();
 		sb.append(rule.getLHS());
 		sb.append(" ||| ");
-		sb.append(symbolTable.getWords(rule.getFrench()));
+		sb.append(Vocabulary.getWords(rule.getFrench()));
 		sb.append(" ||| ");
-		sb.append(symbolTable.getWords(rule.getEnglish()));
+		sb.append(Vocabulary.getWords(rule.getEnglish()));
 		sb.append(" |||");
 	
 		return sb.toString();

@@ -17,23 +17,16 @@
  */
 package joshua.decoder;
 
-import java.io.BufferedWriter;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import joshua.corpus.vocab.SymbolTable;
-import joshua.decoder.segment_file.Sentence;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.state_maintenance.StateComputer;
 import joshua.decoder.ff.tm.GrammarFactory;
 import joshua.decoder.hypergraph.HyperGraph;
-import joshua.util.FileUtility;
-import joshua.util.Regex;
-import joshua.util.io.LineReader;
+import joshua.decoder.segment_file.Sentence;
 
 /**
  * this class implements:
@@ -48,13 +41,7 @@ public class DecoderFactory {
 	private List<GrammarFactory>  grammarFactories = null;
 	private List<FeatureFunction> featureFunctions = null;
 	private List<StateComputer> stateComputers;
-	private boolean                    useMaxLMCostForOOV = false;
-	
-	/**
-	 * Shared symbol table for source language terminals, target
-	 * language terminals, and shared nonterminals.
-	 */
-	private SymbolTable symbolTable = null;
+	private boolean useMaxLMCostForOOV = false;
 	
 	private DecoderThread[] decoderThreads;
 	
@@ -63,12 +50,11 @@ public class DecoderFactory {
 	
 	
 	public DecoderFactory(List<GrammarFactory> grammarFactories, boolean useMaxLMCostForOOV, List<FeatureFunction> featureFunctions, 
-			List<StateComputer> stateComputers, SymbolTable symbolTable) {
+			List<StateComputer> stateComputers) {
 		this.grammarFactories = grammarFactories;
 		this.useMaxLMCostForOOV = useMaxLMCostForOOV;
 		this.featureFunctions = featureFunctions;
 		this.stateComputers = stateComputers;
-		this.symbolTable      = symbolTable;
 	}
 	
 	
@@ -95,7 +81,7 @@ public class DecoderFactory {
             try {
                 DecoderThread thread = new DecoderThread(
                     this.grammarFactories, this.featureFunctions, this.stateComputers, 
-                    this.symbolTable, inputHandler);
+                    inputHandler);
 				
                 this.decoderThreads[threadno] = thread;
             } catch (IOException e) {
@@ -131,8 +117,8 @@ public class DecoderFactory {
 	public HyperGraph getHyperGraphForSentence(String sentence) {
 		try {
 			DecoderThread decoder = new DecoderThread(
-				this.grammarFactories, this.featureFunctions, this.stateComputers, 
-                this.symbolTable, null);
+					this.grammarFactories, this.featureFunctions, this.stateComputers, 
+					null);
 			return decoder.translate(new Sentence(sentence, 0), null);
 		}
 		catch (IOException e) {

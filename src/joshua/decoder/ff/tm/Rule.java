@@ -21,7 +21,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
-import joshua.corpus.vocab.SymbolTable;
 import joshua.decoder.ff.FeatureFunction;
 
 
@@ -105,15 +104,11 @@ public interface Rule {
 	};
 	
 	@Deprecated
-	String toString(Map<Integer,String> ntVocab, SymbolTable sourceVocab, SymbolTable targetVocab);
-	
-	/** Print the rule in terms of Ingeters. */
-	@Deprecated
-	String toString(); 
+	String toString(Map<Integer,String> ntVocab);
 	
 	@Deprecated
-	String toString(SymbolTable symbolTable);
+	String toString();
 	
 	@Deprecated
-	String toStringWithoutFeatScores(SymbolTable symbolTable);
+	String toStringWithoutFeatScores();
 }

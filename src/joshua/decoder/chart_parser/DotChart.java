@@ -23,8 +23,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import joshua.decoder.ff.tm.Grammar;
-import joshua.decoder.ff.tm.Trie;
 import joshua.decoder.ff.tm.RuleCollection;
+import joshua.decoder.ff.tm.Trie;
 import joshua.lattice.Arc;
 import joshua.lattice.Lattice;
 import joshua.lattice.Node;

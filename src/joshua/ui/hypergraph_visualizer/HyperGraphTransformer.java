@@ -17,16 +17,12 @@
  */
 package joshua.ui.hypergraph_visualizer;
 
+import java.awt.geom.Point2D;
+
 import org.apache.commons.collections15.Transformer;
 
 import edu.uci.ics.jung.algorithms.layout.TreeLayout;
-import edu.uci.ics.jung.graph.DelegateForest;
 import edu.uci.ics.jung.graph.DelegateTree;
-
-import java.awt.geom.Point2D;
-import java.util.HashMap;
-
-import joshua.decoder.hypergraph.HGNode;
 
 public class HyperGraphTransformer implements Transformer<Vertex,Point2D> {
 	private JungHyperGraph graph;

@@ -3,7 +3,6 @@ package joshua.ui.hypergraph_visualizer;
 import javax.swing.DefaultListModel;
 
 import joshua.decoder.hypergraph.HyperEdge;
-import edu.uci.ics.jung.algorithms.layout.StaticLayout;
 import edu.uci.ics.jung.visualization.picking.MultiPickedState;
 
 public class HyperGraphPickedState extends MultiPickedState<Vertex> {

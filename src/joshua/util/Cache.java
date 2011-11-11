@@ -39,6 +39,8 @@ import java.util.logging.Logger;
  */
 public class Cache<K,V> extends LinkedHashMap<K,V> {
 
+	private static final long serialVersionUID = 6073387072740892061L;
+
 	/** Logger for this class. */
 	private static Logger logger =
 		Logger.getLogger(Cache.class.getName());

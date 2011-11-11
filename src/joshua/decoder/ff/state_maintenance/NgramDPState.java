@@ -21,13 +21,12 @@ package joshua.decoder.ff.state_maintenance;
 import java.util.ArrayList;
 import java.util.List;
 
-import joshua.corpus.vocab.SymbolTable;
+import joshua.corpus.Vocabulary;
 
 
 /**
  * 
  * @author Zhifei Li, <zhifei.work@gmail.com>
- * @version $LastChangedDate: 2009-12-29 14:58:42 -0500 (星期二, 29 十二月 2009) $
  */
 public class NgramDPState implements DPState {
 	
@@ -45,11 +44,11 @@ public class NgramDPState implements DPState {
 	 
 	
 	//construct an instance from the signature string
-	public  NgramDPState(SymbolTable symbolTable, String sig) {
+	public  NgramDPState(String sig) {
 		this.sig = sig;
 		String[] states = sig.split(SIG_SEP); // TODO: use joshua.util.Regex				
-		this.leftLMStateWords = intArrayToList( symbolTable.getIDs(states[0]) );
-		this.rightLMStateWords = intArrayToList( symbolTable.getIDs(states[1]) );
+		this.leftLMStateWords = intArrayToList( Vocabulary.addAll(states[0]) );
+		this.rightLMStateWords = intArrayToList( Vocabulary.addAll(states[1]) );
 	}
 		
 
@@ -77,7 +76,7 @@ public class NgramDPState implements DPState {
 	/* BUG: now, the getSignature is also got called by diskgraph; 
 	 * this may change the this.sig from integers to strings
 	 * */
-	public String getSignature(SymbolTable symbolTable, boolean forceRecompute) {
+	public String getSignature(Vocabulary Vocabulary, boolean forceRecompute) {
 		if (forceRecompute || sig == null) {
 			StringBuffer sb = new StringBuffer();
 			//sb.append(SIG_PREAMBLE);//TODO: do we really need this
@@ -85,11 +84,11 @@ public class NgramDPState implements DPState {
 			/**we can not simply use sb.append(leftLMStateWords), 
 			 * as it will just add the address of leftLMStateWords.
 			 */
-			computeStateSig(symbolTable, leftLMStateWords, sb); 
+			computeStateSig(Vocabulary, leftLMStateWords, sb); 
 			
 			sb.append(SIG_SEP);//TODO: do we really need this
 			
-			computeStateSig(symbolTable, rightLMStateWords, sb);
+			computeStateSig(Vocabulary, rightLMStateWords, sb);
 			
 			this.sig = sb.toString();
 		}
@@ -99,7 +98,7 @@ public class NgramDPState implements DPState {
 	
 	
 	
-	private void computeStateSig(SymbolTable symbolTable,  List<Integer>  state, StringBuffer sb) {
+	private void computeStateSig(Vocabulary Vocabulary,  List<Integer>  state, StringBuffer sb) {
 		
 		if (null != state) {
 			for (int i = 0; i < state.size(); i++) {
@@ -109,8 +108,8 @@ public class NgramDPState implements DPState {
 					 * && states[i]!=Symbol.NULL_LEFT_LM_STATE_SYM_ID
 					 * && states[i]!=Symbol.LM_STATE_OVERLAP_SYM_ID*/
 				) {
-					if (null != symbolTable) {
-						sb.append(symbolTable.getWord(state.get(i)));
+					if (null != Vocabulary) {
+						sb.append(Vocabulary.word(state.get(i)));
 					} else {
 						sb.append(state.get(i));
 					}

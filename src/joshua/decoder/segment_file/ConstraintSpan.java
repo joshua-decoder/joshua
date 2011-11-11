@@ -19,6 +19,8 @@ package joshua.decoder.segment_file;
 
 import java.util.List;
 
+import javax.swing.text.Segment;
+
 /**
  * This interface represents a collection of constraints for a given
  * span in the associated segment. Intuitively, each constraint

@@ -19,8 +19,6 @@ package joshua.decoder.ff.tm;
 
 import java.util.Collection;
 
-import joshua.decoder.ff.tm.RuleCollection;
-
 
 /**
  * An interface for trie-like data structures.

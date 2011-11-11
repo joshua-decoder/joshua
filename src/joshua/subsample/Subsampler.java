@@ -27,10 +27,6 @@
  */
 package joshua.subsample;
 
-import joshua.corpus.Phrase;
-import joshua.corpus.BasicPhrase;
-import joshua.corpus.vocab.Vocabulary;
-
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.FileOutputStream;
@@ -38,11 +34,13 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.HashSet;
-import java.util.Set;
+
+import joshua.corpus.BasicPhrase;
+import joshua.corpus.Phrase;
+import joshua.corpus.Vocabulary;
 
 
 /**

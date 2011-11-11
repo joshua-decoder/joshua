@@ -1,19 +1,33 @@
 package joshua.ui.tree_visualizer;
 
-import javax.swing.*;
-import javax.swing.event.*;
-
-import java.io.InputStream;
-import java.io.FileInputStream;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.Scanner;
+import java.io.InputStream;
 import java.util.LinkedList;
+import java.util.Scanner;
 import java.util.zip.GZIPInputStream;
 
-import java.awt.*;
-import java.awt.event.*;
+import javax.swing.DefaultListModel;
+import javax.swing.JButton;
+import javax.swing.JFileChooser;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.ListSelectionModel;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 
 import edu.uci.ics.jung.algorithms.layout.StaticLayout;
 

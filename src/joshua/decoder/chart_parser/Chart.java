@@ -20,16 +20,16 @@ package joshua.decoder.chart_parser;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.PriorityQueue;
 import java.util.List;
+import java.util.PriorityQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import joshua.corpus.Vocabulary;
 import joshua.corpus.syntax.SyntaxTree;
-import joshua.corpus.vocab.SymbolTable;
 import joshua.decoder.JoshuaConfiguration;
-import joshua.decoder.chart_parser.DotChart.DotNode;
 import joshua.decoder.chart_parser.CubePruneCombiner.CubePruneState;
+import joshua.decoder.chart_parser.DotChart.DotNode;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.state_maintenance.StateComputer;
 import joshua.decoder.ff.tm.Grammar;
@@ -67,7 +67,6 @@ import joshua.lattice.Node;
  */
 
 public class Chart {
-		
 
 	//===========================================================
 	// Statistics
@@ -109,24 +108,6 @@ public class Chart {
 	private Combiner combiner = null;
 	private ManualConstraintsHandler manualConstraintsHandler;
 	
-	//===========================================================
-	// Decoder-wide fields
-	//===========================================================
-	
-	/**
-	 * Shared symbol table for source language terminals, target
-	 * language terminals, and shared nonterminals.
-	 * <p>
-	 * It may be that separate tables should be maintained for
-	 * the source and target languages.
-	 * <p>
-	 * This class adds an untranslated word ID to the symbol
-	 * table. The Bin class adds a goal symbol nonterminal to
-	 * the symbol table.
-	 * <p>
-	 */
-	private SymbolTable symbolTable;
-	
 	
 //===============================================================
 // Static fields
@@ -167,7 +148,6 @@ public class Chart {
 		Lattice<Integer>           sentence,
 		List<FeatureFunction>      featureFunctions,
 		List<StateComputer>        stateComputers,
-		SymbolTable                symbolTable,
 		int                        segmentID,
 		Grammar[]                  grammars,
 		boolean                    useMaxLMCostForOOV,
@@ -180,14 +160,13 @@ public class Chart {
 		this.foreignSentenceLength = sentence.size() - 1;
 		this.featureFunctions      = featureFunctions;
 		this.stateComputers        = stateComputers;
-		this.symbolTable           = symbolTable;
 		this.parseTree             = parse_tree;
 		
 		// TODO: this is very memory-expensive
 		this.cells         = new Cell[foreignSentenceLength][foreignSentenceLength+1];
 		
 		this.segmentID    = segmentID;
-		this.goalSymbolID = this.symbolTable.addNonterminal(goalSymbol);
+		this.goalSymbolID = Vocabulary.id(goalSymbol);
 		this.goalBin      = new Cell(this, this.goalSymbolID);
 		this.grammars = grammars;
 		
@@ -217,7 +196,7 @@ public class Chart {
 		// Begin to do initialization work
 
 		//TODO: which grammar should we use to create a manual rule?, grammar[1] is the regular grammar
-		manualConstraintsHandler = new ManualConstraintsHandler(symbolTable, this, grammars[1], constraintSpans);
+		manualConstraintsHandler = new ManualConstraintsHandler(this, grammars[1], constraintSpans);
 		
 		/* Add OOV rules; 
 		 * This should be called after the manual constraints have been set up.
@@ -232,7 +211,7 @@ public class Chart {
 				int sourceWord = arc.getLabel();
 				final int targetWord;
 				if (JoshuaConfiguration.mark_oovs) {
-					targetWord = symbolTable.addTerminal(symbolTable.getWord(sourceWord) + "_OOV");
+					targetWord = Vocabulary.id(Vocabulary.word(sourceWord) + "_OOV");
 				} else {
 					targetWord = sourceWord;
 				}
@@ -250,7 +229,7 @@ public class Chart {
 					logger.fine("Using hard rule constraint for span " + node.getNumber() + ", " + arc.getTail().getNumber());
 				} else {
 					addAxiom(node.getNumber(), arc.getTail().getNumber(), oov_rule, new SourcePath().extend(arc));
-					logger.finer("Adding OOV rule:\t" + oov_rule.toString(symbolTable));
+					logger.finer("Adding OOV rule:\t" + oov_rule.toString());
 				}
 			}
 		}
@@ -569,7 +548,7 @@ public class Chart {
 						ComputeNodeResult states = new ComputeNodeResult(this.featureFunctions, rule, antecedents, i, j, new SourcePath(), stateComputers, this.segmentID);
 						HGNode resNode = chartBin.addHyperEdgeInCell(states, rule, i, j, antecedents, new SourcePath(), true);
 						
-						logger.finest(rule.toString(symbolTable));
+						logger.finest(rule.toString());
 						
 						if (null != resNode && !seen_lhs.contains(resNode.lhs)) {
 							queue.add(resNode);
@@ -618,7 +597,7 @@ public class Chart {
 			labels.addAll(parseTree.getCcgLabels(i, j));
 			
 			for (int l : labels)
-				logger.finest("Allowing label: " + symbolTable.getWord(l));
+				logger.finest("Allowing label: " + Vocabulary.word(l));
 			
 			filteredRules = new ArrayList<Rule>(sortedRules.size());
 			for (Rule r : sortedRules)
@@ -630,7 +609,7 @@ public class Chart {
 		}
 		
 		for (Rule r : filteredRules)
-			logger.finest(r.toString(symbolTable) + " num_feats: " + r.getFeatureScores().length);
+			logger.finest(r.toString() + " num_feats: " + r.getFeatureScores().length);
 		
 		if (arity==0)
 			combiner.addAxioms(this, this.cells[i][j], i, j, filteredRules, srcPath);

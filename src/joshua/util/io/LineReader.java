@@ -17,16 +17,15 @@
  */
 package joshua.util.io;
 
-import java.util.Iterator;
-import java.util.NoSuchElementException;
-
-import java.nio.charset.Charset;
 import java.io.BufferedReader;
 import java.io.FileDescriptor;
 import java.io.FileInputStream;
-import java.io.InputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.Charset;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
 import java.util.zip.GZIPInputStream;
 
 /**

@@ -18,21 +18,15 @@
 
 package joshua.decoder;
 
-import joshua.decoder.ff.FeatureFunction;
-import joshua.decoder.segment_file.Sentence;
-import joshua.decoder.hypergraph.HyperGraph;
-import joshua.decoder.hypergraph.KBestExtractor;
-
-import joshua.util.Regex;
-
-import java.io.StringWriter;
 import java.io.BufferedWriter;
 import java.io.IOException;
-
+import java.io.StringWriter;
 import java.util.List;
 
-import java.util.regex.Pattern;
-import java.util.regex.Matcher;
+import joshua.decoder.ff.FeatureFunction;
+import joshua.decoder.hypergraph.HyperGraph;
+import joshua.decoder.hypergraph.KBestExtractor;
+import joshua.decoder.segment_file.Sentence;
 
 /**
  * This class represents translated input objects (sentences or
@@ -80,7 +74,7 @@ public class Translation {
             return getSourceSentence().sentence();
 
         } else {
-            KBestExtractor kBestExtractor = new KBestExtractor(JoshuaDecoder.symbolTable,
+            KBestExtractor kBestExtractor = new KBestExtractor(
                 JoshuaConfiguration.use_unique_nbest,
                 JoshuaConfiguration.use_tree_nbest,
                 JoshuaConfiguration.include_align_index,
@@ -105,7 +99,7 @@ public class Translation {
      */
     public void print() {
         if (hypergraph != null) {
-            KBestExtractor kBestExtractor = new KBestExtractor(JoshuaDecoder.symbolTable,
+            KBestExtractor kBestExtractor = new KBestExtractor(
                 JoshuaConfiguration.use_unique_nbest,
                 JoshuaConfiguration.use_tree_nbest,
                 JoshuaConfiguration.include_align_index,

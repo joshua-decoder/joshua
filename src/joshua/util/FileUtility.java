@@ -29,7 +29,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
-import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
 import java.util.zip.GZIPInputStream;
 
