@@ -24,9 +24,7 @@ public class KenLM implements NGramLanguageModel {
 
 	private final static native int order(long ptr);
 
-	private final static native int vocabFindOrAdd(long ptr, String word);
-
-	private final static native String vocabWord(long ptr, int index);
+	private final static native boolean registerWord(long ptr, String word, int id);
 
 	private final static native float prob(long ptr, int words[]);
 
@@ -34,8 +32,7 @@ public class KenLM implements NGramLanguageModel {
 			int start);
 
 	public KenLM(String file_name) {
-		pointer = construct(file_name, 
-				(float) - JoshuaConfiguration.lm_ceiling_cost);
+		pointer = construct(file_name, (float) - JoshuaConfiguration.lm_ceiling_cost);
 		N = order(pointer);
 	}
 
@@ -47,12 +44,8 @@ public class KenLM implements NGramLanguageModel {
 		return N;
 	}
 
-	public int vocabFindOrAdd(String word) {
-		return vocabFindOrAdd(pointer, word);
-	}
-
-	public String vocabWord(int index) {
-		return vocabWord(pointer, index);
+	public boolean registerWord(String word, int id) {
+		return registerWord(pointer, word, id);
 	}
 
 	public float prob(int words[]) {

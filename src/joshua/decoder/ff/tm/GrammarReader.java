@@ -1,6 +1,7 @@
 package joshua.decoder.ff.tm;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.util.Iterator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -128,8 +129,7 @@ implements Iterable<R>, Iterator<R> {
 	
 	public int cleanNonTerminal(int tokenID) {
 		// cleans NT of any markup, e.g., [X,1] may becomes [X], depending 
-		return Vocabulary.id(
-				cleanNonTerminal(Vocabulary.word(tokenID)));
+		return Vocabulary.id(cleanNonTerminal(Vocabulary.word(tokenID)));
 	}
 
 	public String cleanNonTerminal(String word) {

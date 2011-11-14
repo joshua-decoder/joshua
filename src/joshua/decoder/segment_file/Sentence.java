@@ -20,11 +20,13 @@ package joshua.decoder.segment_file;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import joshua.corpus.Vocabulary;
 import joshua.corpus.syntax.SyntaxTree;
+import joshua.decoder.DecoderThread;
 import joshua.lattice.Lattice;
 import joshua.util.Regex;
 
@@ -41,6 +43,9 @@ import joshua.util.Regex;
 
 public class Sentence {
 
+	private static final Logger logger =
+			Logger.getLogger(Sentence.class.getName());
+	
     /*
      * The distinction between sequenceId and id is important.  The
      * former is the identifier assigned by the input handler; these

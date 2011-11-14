@@ -1,5 +1,6 @@
 package joshua.util;
 
+import java.io.UnsupportedEncodingException;
 
 /** 
  * MurmurHash 2.0.
@@ -19,6 +20,8 @@ package joshua.util;
  */
 public final class MurmurHash {
 
+	private final static String ENCODING = "UTF-16";
+	
 	/** Generates 32 bit hash from byte array of the given length and
 	 * seed.
 	 * 
@@ -27,7 +30,7 @@ public final class MurmurHash {
 	 * @param seed initial seed value
 	 * @return 32 bit hash of the given array
 	 */
-	public static int hash32( final byte[] data, int length, int seed) {
+	public static int hash32(final byte[] data, int length, int seed) {
 		// 'm' and 'r' are mixing constants generated offline.
 		// They're not really 'magic', they just happen to work well.
 		final int m = 0x5bd1e995;
@@ -69,8 +72,8 @@ public final class MurmurHash {
 	 * @param length length of the array to hash
 	 * @return 32 bit hash of the given array
 	 */
-	public static int hash32( final byte[] data, int length) {
-		return hash32( data, length, 0x9747b28c); 
+	public static int hash32(final byte[] data, int length) {
+		return hash32(data, length, 0x9747b28c); 
 	}
 
 
@@ -78,10 +81,11 @@ public final class MurmurHash {
 	 * 
 	 * @param text string to hash
 	 * @return 32 bit hash of the given string
+	 * @throws UnsupportedEncodingException 
 	 */
-	public static int hash32( final String text) {
-		final byte[] bytes = text.getBytes(); 
-		return hash32( bytes, bytes.length);
+	public static int hash32(final String text) throws UnsupportedEncodingException {
+		final byte[] bytes = text.getBytes(ENCODING); 
+		return hash32(bytes, bytes.length);
 	}
 
 
@@ -91,9 +95,10 @@ public final class MurmurHash {
 	 * @param from starting index
 	 * @param length length of the substring to hash
 	 * @return 32 bit hash of the given string
+	 * @throws UnsupportedEncodingException 
 	 */
-	public static int hash32( final String text, int from, int length) {
-		return hash32( text.substring( from, from+length));
+	public static int hash32(final String text, int from, int length) throws UnsupportedEncodingException {
+		return hash32(text.substring(from, from+length));
 	}
 	
 
@@ -104,7 +109,7 @@ public final class MurmurHash {
 	 * @param seed initial seed value
 	 * @return 64 bit hash of the given array
 	 */
-	public static long hash64( final byte[] data, int length, int seed) {
+	public static long hash64(final byte[] data, int length, int seed) {
 		final long m = 0xc6a4a7935bd1e995L;
 		final int r = 47;
 
@@ -152,8 +157,8 @@ public final class MurmurHash {
 	 * @param length length of the array to hash
 	 * @return 64 bit hash of the given string
 	 */
-	public static long hash64( final byte[] data, int length) {
-		return hash64( data, length, 0xe17a1465);
+	public static long hash64(final byte[] data, int length) {
+		return hash64(data, length, 0xe17a1465);
 	}
 
 
@@ -161,10 +166,12 @@ public final class MurmurHash {
 	 * 
 	 * @param text string to hash
 	 * @return 64 bit hash of the given string
+	 * @throws UnsupportedEncodingException 
 	 */
-	public static long hash64( final String text) {
-		final byte[] bytes = text.getBytes(); 
-		return hash64( bytes, bytes.length);
+	public static long hash64(final String text) throws UnsupportedEncodingException {
+		byte[] bytes;
+		bytes = text.getBytes(ENCODING);
+		return hash64(bytes, bytes.length);
 	}
 
 
@@ -174,8 +181,9 @@ public final class MurmurHash {
 	 * @param from starting index
 	 * @param length length of the substring to hash
 	 * @return 64 bit hash of the given array
+	 * @throws UnsupportedEncodingException 
 	 */
-	public static long hash64( final String text, int from, int length) {
-		return hash64( text.substring( from, from+length));
+	public static long hash64(final String text, int from, int length) throws UnsupportedEncodingException {
+		return hash64(text.substring(from, from+length));
 	}
 }

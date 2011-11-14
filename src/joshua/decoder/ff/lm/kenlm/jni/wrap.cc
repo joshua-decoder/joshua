@@ -29,8 +29,6 @@ struct hash<unsigned long long int>
 // for you, there's a need to revise probString.
 namespace {
 
-const lm::WordIndex klmStartSymID = 10000;
-
 template<bool> struct StaticCheck {};
 
 template<> struct StaticCheck<true> {
@@ -41,16 +39,9 @@ typedef StaticCheck<sizeof(jint) == sizeof(lm::WordIndex)>::StaticAssertionPasse
 
 // Vocab ids above what the vocabulary knows about are unknown and should
 // be mapped to that.
-template<class Model> void FixArray(const Model &model, jint *begin,
-		jint *end) {
-	jint lm_bound = static_cast<jint>(model.GetVocabulary().Bound())
-			+ klmStartSymID;
+void MapArray(const std::vector<lm::WordIndex>& map, jint *begin, jint *end) {
 	for (jint *i = begin; i < end; ++i) {
-		if (*i < klmStartSymID || *i >= lm_bound) {
-			*i = 0;
-		} else {
-			*i -= klmStartSymID;
-		}
+		*i = map[*i];
 	}
 }
 
@@ -61,125 +52,11 @@ char *PieceCopy(const StringPiece &str) {
 	return ret;
 }
 
-// The normal kenlm vocab isn't growable (words can't be added to it).
-// However, Joshua requires this. So I wrote this. Not the most efficient
-// thing in the world.
-class GrowableVocab: public lm::ngram::EnumerateVocab {
-public:
-	GrowableVocab() {
-		UTIL_THROW_IF(pthread_rwlock_init(&lock_, NULL), util::ErrnoException,
-				"Failed to initialize phtread lock.");
-	}
-
-	~GrowableVocab() {
-		for (std::vector<char *>::const_iterator i = id_to_string_.begin();
-				i != id_to_string_.end(); ++i) {
-			free(*i);
-		}
-		if (pthread_rwlock_destroy(&lock_)) {
-			std::cerr << "Failed to destroy pthread lock." << std::endl;
-		}
-	}
-
-	// For enumerate vocab.  Adds klmStartSymID to the requested index.
-	void Add(lm::WordIndex index, const StringPiece &str) {
-		index += klmStartSymID;
-		if (index < id_to_string_.size() && id_to_string_[index])
-			UTIL_THROW(
-					lm::VocabLoadException,
-					"Vocab id " << index << " already contains "
-							<< id_to_string_[index]
-							<< " and an attempt was made to insert " << str
-							<< ".  This is an error even if the strings "
-							<< "are the same.");
-		std::pair < uint64_t, lm::WordIndex > to_ins;
-		to_ins.first = util::MurmurHashNative(str.data(), str.size());
-		to_ins.second = index;
-		if (!string_to_id_.insert(to_ins).second) {
-			UTIL_THROW(lm::VocabLoadException, "Duplicate word " << str);
-		}
-		if (id_to_string_.size() <= index) {
-			id_to_string_.resize(index + 1);
-		}
-		id_to_string_[index] = PieceCopy(str);
-	}
-
-	// For Java API.
-	lm::WordIndex FindOrAdd(const StringPiece &str) {
-		std::pair < uint64_t, lm::WordIndex > to_ins;
-		to_ins.first = util::MurmurHashNative(str.data(), str.size());
-		to_ins.second = id_to_string_.size();
-		ReadLockOrDie();
-		const __gnu_cxx ::hash_map<uint64_t, lm::WordIndex> &force_const =
-				string_to_id_;
-		__gnu_cxx ::hash_map<uint64_t, lm::WordIndex>::const_iterator i =
-				force_const.find(to_ins.first);
-		if (i != force_const.end()) {
-			UnlockOrDie();
-			return i->second;
-		}
-		UnlockOrDie();
-		WriteLockOrDie();
-		std::pair<__gnu_cxx ::hash_map<uint64_t, lm::WordIndex>::iterator, bool> ret(
-				string_to_id_.insert(to_ins));
-		// Found?
-		if (!ret.second) {
-			UnlockOrDie();
-			return ret.first->second;
-		}
-		id_to_string_.push_back(PieceCopy(str));
-		UnlockOrDie();
-		return to_ins.second;
-	}
-
-	const char *Word(lm::WordIndex index) const {
-		ReadLockOrDie();
-		assert(index < in_to_string_.size());
-		const char *ret = id_to_string_[index];
-		UnlockOrDie();
-		return ret;
-	}
-
-private:
-	void ReadLockOrDie() const {
-		if (pthread_rwlock_rdlock(&lock_)) {
-			std::cerr << "Failed to pthread read lock." << std::endl;
-			abort();
-		}
-	}
-	void WriteLockOrDie() const {
-		if (pthread_rwlock_wrlock(&lock_)) {
-			std::cerr << "Failed to pthread write lock." << std::endl;
-			abort();
-		}
-	}
-
-	void UnlockOrDie() const {
-		if (pthread_rwlock_unlock(&lock_)) {
-			std::cerr << "Failed to pthread unlock." << std::endl;
-			abort();
-		}
-	}
-
-	__gnu_cxx ::hash_map<uint64_t, lm::WordIndex> string_to_id_;
-	std::vector<char *> id_to_string_;
-
-	mutable pthread_rwlock_t lock_;
-};
-
 // Rather than handle several different instantiations over JNI, we'll just
 // do virtual calls C++-side.
 class VirtualBase {
 public:
 	virtual ~VirtualBase() {
-	}
-
-	GrowableVocab &Vocab() {
-		return vocab_;
-	}
-
-	const GrowableVocab &Vocab() const {
-		return vocab_;
 	}
 
 	virtual float Prob(jint *begin, jint *end) const = 0;
@@ -189,36 +66,32 @@ public:
 
 	virtual uint8_t Order() const = 0;
 
+	virtual bool RegisterWord(const StringPiece& word, const int joshua_id) = 0;
+
 protected:
 	VirtualBase() {
 	}
 
 private:
-	GrowableVocab vocab_;
 };
-
-lm::ngram::Config MungeConfig(GrowableVocab &vocab) {
-	lm::ngram::Config ret;
-	ret.enumerate_vocab = &vocab;
-	return ret;
-}
 
 template<class Model> class VirtualImpl: public VirtualBase {
 public:
 	VirtualImpl(const char *name, float fake_oov_cost) :
-			m_(name, MungeConfig(Vocab())), fake_oov_cost_(fake_oov_cost) {
+			m_(name), fake_oov_cost_(fake_oov_cost) {
+		// Insert unknown id mapping.
+		map_.push_back(0);
 	}
 
 	~VirtualImpl() {
 	}
 
 	float Prob(jint * const begin, jint * const end) const {
-		FixArray(m_, begin, end);
+		MapArray(map_, begin, end);
 
 		std::reverse(begin, end - 1);
 		lm::ngram::State ignored;
-		return
-		*(end - 1) ?
+		return *(end - 1) ?
 				m_.FullScoreForgotState(
 						reinterpret_cast<const lm::WordIndex*>(begin),
 						reinterpret_cast<const lm::WordIndex*>(end - 1), *(end - 1),
@@ -227,7 +100,7 @@ public:
 	}
 
 	float ProbString(jint * const begin, jint * const end, jint start) const {
-		FixArray(m_, begin, end);
+		MapArray(map_, begin, end);
 
 		float prob;
 		lm::ngram::State state;
@@ -262,9 +135,21 @@ public:
 		return m_.Order();
 	}
 
+	bool RegisterWord(const StringPiece& word, const int joshua_id) {
+		if (map_.size() <= joshua_id) {
+			map_.resize(joshua_id + 1, 0);
+		}
+		bool already_present = false;
+		if (map_[joshua_id] != 0)
+			already_present = true;
+		map_[joshua_id] = m_.GetVocabulary().Index(word);
+		return already_present;
+	}
+
 private:
 	Model m_;
 	float fake_oov_cost_;
+	std::vector<lm::WordIndex> map_;
 };
 
 VirtualBase *ConstructModel(const char *file_name, float fake_oov_cost) {
@@ -321,26 +206,20 @@ JNIEXPORT jint JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenLM_order(
 	return reinterpret_cast<VirtualBase*>(pointer)->Order();
 }
 
-JNIEXPORT jint JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenLM_vocabFindOrAdd(
-		JNIEnv *env, jclass, jlong pointer, jstring word) {
+JNIEXPORT jboolean JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenLM_registerWord(
+		JNIEnv *env, jclass, jlong pointer, jstring word, jint id) {
 	const char *str = env->GetStringUTFChars(word, 0);
 	if (!str)
-		return 0;
+		return false;
 	jint ret;
 	try {
-		ret = reinterpret_cast<VirtualBase*>(pointer)->Vocab().FindOrAdd(str);
+		ret = reinterpret_cast<VirtualBase*>(pointer)->RegisterWord(str, id);
 	} catch (std::exception &e) {
 		std::cerr << e.what() << std::endl;
 		abort();
 	}
 	env->ReleaseStringUTFChars(word, str);
 	return ret;
-}
-
-JNIEXPORT jstring JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenLM_vocabWord(
-		JNIEnv *env, jclass, jlong pointer, jint index) {
-	return env->NewStringUTF(
-			reinterpret_cast<const VirtualBase*>(pointer)->Vocab().Word(index));
 }
 
 JNIEXPORT jfloat JNICALL Java_joshua_decoder_ff_lm_kenlm_jni_KenLM_prob(
