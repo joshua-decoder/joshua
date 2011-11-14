@@ -75,7 +75,7 @@ public class ExtractTopCand {
 				new IndexedReader<String>("line",
 							  "-".equals(inFile)
 							  ? new LineReader(System.in)
-							  : new LineReader(inFile);
+							  : new LineReader(inFile));
 			
 			/* TODO: This duplicates FileUtility.getWriteFileStream
 			 * but with the addition of defaulting to System.out;
