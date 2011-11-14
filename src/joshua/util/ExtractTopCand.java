@@ -64,7 +64,7 @@ public class ExtractTopCand {
 			inFile = args[0];
 			outFile = args[1];
 		} else {
-			System.err.println("Usage: ExtractTopCand [nbestInputFile] [1bestOutputFile]\n       (default to stdin/stdout)");
+			System.err.println("Usage: ExtractTopCand [nbestInputFile [1bestOutputFile]]\n       (default to stdin/stdout)");
 			System.exit(1);
 		}
 		

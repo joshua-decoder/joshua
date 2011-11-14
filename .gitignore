@@ -19,16 +19,14 @@ src/joshua/decoder/ff/.DS_Store
 src/joshua/decoder/ff/lm/.DS_Store
 
 
+*.out
 *.o
-*.dylib
 *.dSYM
-/scripts/training/giza-pp/GIZA++-v2/GIZA++
-/scripts/training/giza-pp/GIZA++-v2/plain2snt.out
-/scripts/training/giza-pp/GIZA++-v2/snt2cooc.out
-/scripts/training/giza-pp/GIZA++-v2/snt2plain.out
-/scripts/training/giza-pp/mkcls-v2/mkcls
-/scripts/training/parallelize/sentclient
-/scripts/training/parallelize/sentserver
-/src/joshua/decoder/ff/lm/kenlm/build_binary
-/src/joshua/decoder/ff/lm/kenlm/ngram_query
-src/joshua/decoder/ff/lm/kenlm/query
+lib/libken.dylib
+scripts/training/giza-pp/GIZA++-v2/GIZA++
+scripts/training/giza-pp/mkcls-v2/mkcls
+scripts/training/parallelize/sentclient
+scripts/training/parallelize/sentserver
+src/joshua/decoder/ff/lm/kenlm/build_binary
+src/joshua/decoder/ff/lm/kenlm/libken.dylib
+src/joshua/decoder/ff/lm/kenlm/ngram_query
