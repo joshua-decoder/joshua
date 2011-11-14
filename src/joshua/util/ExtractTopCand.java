@@ -64,7 +64,7 @@ public class ExtractTopCand {
 			inFile = args[0];
 			outFile = args[1];
 		} else {
-			System.err.println("Usage: ExtractTopCand [nbestInputFile] [1bestOutputFile]\n       (default to stdin/stdout)");
+			System.err.println("Usage: ExtractTopCand [nbestInputFile [1bestOutputFile]]\n       (default to stdin/stdout)");
 			System.exit(1);
 		}
 		
@@ -75,7 +75,7 @@ public class ExtractTopCand {
 				new IndexedReader<String>("line",
 							  "-".equals(inFile)
 							  ? new LineReader(System.in)
-							  : new LineReader(inFile);
+										  : new LineReader(inFile));
 			
 			/* TODO: This duplicates FileUtility.getWriteFileStream
 			 * but with the addition of defaulting to System.out;
