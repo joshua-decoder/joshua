@@ -98,28 +98,20 @@ public class Vocabulary {
 			e.printStackTrace();
 		}
 		String hash_word = hash_to_string.get(hash);
-		int is_nt = (nt(token) ? -1 : 1);
-		
-//		System.err.println("Trying to add " + token + " with hash: " + hash);
-		
 		if (hash_word != null) {
 			if (!token.equals(hash_word)) {
 				logger.warning("MurmurHash for the following symbols collides: '"
 						+ hash_word + "', '" + token + "'");
 			}
-			return hashToId.get(hash) * is_nt;
+			return hashToId.get(hash);
 		} else {
-			int id = id_to_string.size();
+			int id = id_to_string.size() * (nt(token) ? -1 : 1);
+			
 			if (kenlm != null) 
-				kenlm.registerWord(token, id);
+				kenlm.registerWord(token, Math.abs(id));
 			id_to_string.add(token);
 			hash_to_string.put(hash, token);
-			
-			id *= is_nt;
 			hashToId.put(hash, id);
-			
-//			System.err.println("Added " + token + " as " + id + " with hash: " + hash);
-			
 			return id;
 		}
 	}
@@ -174,7 +166,7 @@ public class Vocabulary {
 	}
 
 	public static int getTargetNonterminalIndex(int id) {
-		return FormatUtils.getNonterminalIndex(word(id));
+		return FormatUtils.getNonterminalIndex(word(id)) - 1;
 	}
 }
 

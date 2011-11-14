@@ -31,3 +31,4 @@ src/joshua/decoder/ff/lm/.DS_Store
 /scripts/training/parallelize/sentserver
 /src/joshua/decoder/ff/lm/kenlm/build_binary
 /src/joshua/decoder/ff/lm/kenlm/ngram_query
+src/joshua/decoder/ff/lm/kenlm/query

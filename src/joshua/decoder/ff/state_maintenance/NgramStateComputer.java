@@ -2,6 +2,7 @@ package joshua.decoder.ff.state_maintenance;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import joshua.corpus.Vocabulary;
@@ -53,10 +54,13 @@ public class NgramStateComputer implements StateComputer<NgramDPState> {
 		for (int c = 0; c < enWords.length; c++) {
 			int curID = enWords[c];
 			if (Vocabulary.nt(curID)) {
-
 				//== get left- and right-context
-				int index = Vocabulary.getTargetNonterminalIndex(curID); 
-				NgramDPState antState = (NgramDPState)antNodes.get(index).getDPState(this.getStateID());//TODO 
+				int index = Vocabulary.getTargetNonterminalIndex(curID);
+				
+				if (logger.isLoggable(Level.FINEST))
+					logger.finest("Looking up state at: " + index);
+				
+				NgramDPState antState = (NgramDPState) antNodes.get(index).getDPState(this.getStateID());//TODO 
     			List<Integer> leftContext = antState.getLeftLMStateWords();
     			List<Integer> rightContext = antState.getRightLMStateWords();
 				

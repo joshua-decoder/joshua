@@ -23,6 +23,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import joshua.decoder.ff.tm.Grammar;
+import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.RuleCollection;
 import joshua.decoder.ff.tm.Trie;
 import joshua.lattice.Arc;
@@ -172,12 +173,13 @@ class DotChart {
 	 * ways to extend the dot postion.
 	 */
 	void expandDotCell(int i, int j) {
-		//if (logger.isLoggable(Level.FINEST)) logger.finest("Expanding dot cell ("+i+","+j+")");
+		if (logger.isLoggable(Level.FINEST))
+			logger.finest("Expanding dot cell ("+i+","+j+")");
 		
 		// (1) if the dot is just to the left of a non-terminal variable, 
 		//     looking for theorems or axioms in the Chart that may apply and 
 		//     extend the dot pos
-		for (int k = i + 1; k < j; k++) { //varying middle point k
+		for (int k = i + 1; k < j; k++) { // Varying middle point k.
 			extendDotItemsWithProvedItems(i,k,j,false);
 		}
 		
@@ -302,8 +304,16 @@ class DotChart {
 		dotcells[i][j].addDotNode(item);
 		dotChart.nDotitemAdded++;
 		
-		if (logger.isLoggable(Level.FINEST)) 
+		if (logger.isLoggable(Level.FINEST)) {
 			logger.finest(String.format("Add a dotitem in cell (%d, %d), n_dotitem=%d, %s", i, j, dotChart.nDotitemAdded, srcPath));
+			
+			RuleCollection rules = tnode.getRules();
+			if (rules != null) {
+				for (Rule r : rules.getRules()) {
+					logger.finest(r.toString());
+				}
+			}
+		}
 	}
 	
 	

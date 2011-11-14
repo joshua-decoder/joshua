@@ -233,11 +233,16 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
 		for (int k = 0; k < french.length; k++) {
 			int curSymID = french[k];
 			
+			if (logger.isLoggable(Level.FINEST))
+				logger.finest("Matching: " + curSymID);
+			
 			/**Note that the nonTerminal symbol in the french is not cleaned (i.e., will be sth 
 			 * like [X,1]), but the symbol in the Trie has to be cleaned, so that the match does
 			 * not care about the markup (i.e., [X,1] or [X,2] means the same thing, that is X)*/
 			if (Vocabulary.nt(french[k])) { 
 				curSymID = modelReader.cleanNonTerminal(french[k]);
+				if (logger.isLoggable(Level.FINEST))
+					logger.finest("Amended to: " + curSymID);
 			}
 			
 			MemoryBasedTrie nextLayer = pos.match(curSymID);
