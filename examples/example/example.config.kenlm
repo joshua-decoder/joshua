@@ -3,7 +3,7 @@ lm_file=example/example.trigram.lm.gz
 tm_file=example/example.hiero.tm.gz
 tm_format=hiero
 
-glue_file=grammars/hiero.glue
+glue_file=../grammars/hiero.glue
 glue_format=hiero
 
 #lm config
@@ -23,12 +23,8 @@ default_non_terminal=X
 goalSymbol=S
 
 #pruning config
-fuzz1=0.1
-fuzz2=0.1
-max_n_items=30
-relative_threshold=10.0
-max_n_rules=50
-rule_relative_threshold=10.0
+useCubePrune=false
+useBeamAndThresholdPrune=false
 
 #nbest config
 use_unique_nbest=true
