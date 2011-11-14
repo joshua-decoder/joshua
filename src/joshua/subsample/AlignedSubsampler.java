@@ -82,8 +82,7 @@ public class AlignedSubsampler extends Subsampler {
 				),
 			new BiCorpusFactory(
 				fpath, epath, apath,
-				extf,  exte,  exta,
-				this.vf, this.ve) { /* Local class definition */
+				extf,  exte,  exta) { /* Local class definition */
 					public BiCorpus fromFiles(String f) throws IOException {
 						return this.alignedFromFiles(f);
 					}

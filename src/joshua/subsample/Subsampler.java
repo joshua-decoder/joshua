@@ -54,8 +54,6 @@ import joshua.corpus.Vocabulary;
  * @version $LastChangedDate$
  */
 public class Subsampler {
-	protected Vocabulary ve = new Vocabulary();
-	protected Vocabulary vf = new Vocabulary();
 	protected Map<Phrase,Integer> ngramCounts;
 	protected int maxN;
 	protected int targetCount;
@@ -78,7 +76,7 @@ public class Subsampler {
 			System.err.println("Loading test set from " +fn+ "...");
 			
 			PhraseReader reader = new PhraseReader(
-					new FileReader(fn), this.vf, (byte)1);
+					new FileReader(fn), (byte) 1);
 			Phrase phrase;
 			int lineCount = 0;
 			try {
@@ -131,8 +129,7 @@ public class Subsampler {
 				),
 			new BiCorpusFactory(
 				fpath, epath, null,
-				extf,  exte,  null,
-				this.vf, this.ve)
+				extf,  exte,  null)
 			);
 	}
 	

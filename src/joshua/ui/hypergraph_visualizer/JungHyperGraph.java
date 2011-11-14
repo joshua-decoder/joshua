@@ -12,7 +12,6 @@ import edu.uci.ics.jung.graph.DirectedOrderedSparseMultigraph;
 
 public class JungHyperGraph extends DirectedOrderedSparseMultigraph<Vertex,Edge> {
 	private Vertex root;
-	private Vocabulary Vocabulary;
 	private int targetIndex;
 	
 	private boolean checkDuplicateVertices;

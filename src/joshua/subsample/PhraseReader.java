@@ -44,7 +44,7 @@ import joshua.corpus.Vocabulary;
 public class PhraseReader extends BufferedReader {
 	private byte       language;
 	
-	public PhraseReader(Reader r, Vocabulary v, byte language) {
+	public PhraseReader(Reader r, byte language) {
 		super(r);
 		this.language = language;
 	}
