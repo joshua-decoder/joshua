@@ -14,8 +14,6 @@ public class SamtFormatReader extends GrammarReader<BilingualRule> {
 	
 	private static final String samtNonTerminalMarkup;
 	
-	private int[] nonTerminalCache;
-	
 	static {
 		fieldDelimiter = "#";
 		nonTerminalRegEx = "^@[^\\s]+";
@@ -28,10 +26,6 @@ public class SamtFormatReader extends GrammarReader<BilingualRule> {
 	
 	public SamtFormatReader(String grammarFile) {
 		super(grammarFile);
-		
-		// TODO: should be limited to maxNTs + 1 if defined in config.
-		// position 0 will never be used
-		nonTerminalCache = new int[30];
 	}
 
 	// Format example:
@@ -57,7 +51,6 @@ public class SamtFormatReader extends GrammarReader<BilingualRule> {
 			if (isNonTerminal(foreignWords[i])) {
 				arity++;
 				french[i] = Vocabulary.id(adaptNonTerminalMarkup(foreignWords[i], arity));
-				nonTerminalCache[arity] = french[i];
 			} else {
 				french[i] = Vocabulary.id(foreignWords[i]);
 			}
@@ -68,8 +61,7 @@ public class SamtFormatReader extends GrammarReader<BilingualRule> {
 		int[] english = new int[englishWords.length];
 		for (int i = 0; i < englishWords.length; i++) {
 			if (isNonTerminal(englishWords[i])) {
-				english[i] = nonTerminalCache[Integer.
-						parseInt(cleanSamtNonTerminal(englishWords[i]))];
+				english[i] = -Integer.parseInt(cleanSamtNonTerminal(englishWords[i]));
 			} else {
 				english[i] = Vocabulary.id(englishWords[i]);
 			}

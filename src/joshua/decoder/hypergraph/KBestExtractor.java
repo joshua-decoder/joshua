@@ -665,9 +665,9 @@ public class KBestExtractor {
 				if (!isMonolingual) { // bilingual
 					int[] english = rl.getEnglish();
 					for (int c = 0; c < english.length; c++) {
-						if (Vocabulary.nt(english[c])) {
-							int id = Vocabulary.getTargetNonterminalIndex(english[c]);
-							res.append( getChildDerivationState(kbestExtator, edge, id).getHypothesis(kbestExtator, useTreeFormat, modelCost, models, numNodesAndEdges));
+						if (Vocabulary.idx(english[c])) {
+							int index = -(english[c] + 1);
+							res.append( getChildDerivationState(kbestExtator, edge, index).getHypothesis(kbestExtator, useTreeFormat, modelCost, models, numNodesAndEdges));
 						} else {
 							res.append(english[c]);
 						}

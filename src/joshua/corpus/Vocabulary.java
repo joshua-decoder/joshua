@@ -156,6 +156,10 @@ public class Vocabulary {
 	public static boolean nt(int id) {
 		return (id < 0);
 	}
+	
+	public static boolean idx(int id) {
+		return (id < 0);
+	}
 
 	public static boolean nt(String word) {
 		return FormatUtils.isNonterminal(word);
@@ -166,7 +170,7 @@ public class Vocabulary {
 	}
 
 	public static int getTargetNonterminalIndex(int id) {
-		return FormatUtils.getNonterminalIndex(word(id)) - 1;
+		return FormatUtils.getNonterminalIndex(word(id));
 	}
 }
 

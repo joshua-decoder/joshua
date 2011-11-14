@@ -99,9 +99,9 @@ public class NgramExtractor {
 			
 			for(int c=0; c<enWords.length; c++){
 	    		int curID = enWords[c];
-	    		if(Vocabulary.nt(curID)==true){//non-terminal words    			
+	    		if(Vocabulary.idx(curID)){//non-terminal words    			
 	    			//== get the left and right context
-	    			int index = Vocabulary.getTargetNonterminalIndex(curID);
+	    			int index = -(curID + 1);
 	    			HGNode antNode =  antNodes.get(index);
 	    			NgramDPState state     = (NgramDPState) antNode.getDPState(this.ngramStateID);
 	    			//System.out.println("lm_feat_is: " + this.lm_feat_id + " ; state is: " + state);

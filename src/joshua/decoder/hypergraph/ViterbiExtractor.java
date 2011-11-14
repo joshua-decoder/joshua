@@ -46,8 +46,8 @@ public class ViterbiExtractor  {
 		}
 		int[] english = rl.getEnglish();
 		for (int c = 0; c < english.length; c++) {
-			if (Vocabulary.nt(english[c])) {
-				int id = Vocabulary.getTargetNonterminalIndex(english[c]);
+			if (Vocabulary.idx(english[c])) {
+				int id = -(english[c] + 1);
 				HGNode child = (HGNode)edge.getAntNodes().get(id);
 				res.append(extractViterbiString(child));
 			} else {

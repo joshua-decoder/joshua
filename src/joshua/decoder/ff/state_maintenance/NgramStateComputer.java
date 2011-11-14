@@ -53,9 +53,9 @@ public class NgramStateComputer implements StateComputer<NgramDPState> {
 		
 		for (int c = 0; c < enWords.length; c++) {
 			int curID = enWords[c];
-			if (Vocabulary.nt(curID)) {
+			if (Vocabulary.idx(curID)) {
 				//== get left- and right-context
-				int index = Vocabulary.getTargetNonterminalIndex(curID);
+				int index = -(curID + 1);
 				
 				if (logger.isLoggable(Level.FINEST))
 					logger.finest("Looking up state at: " + index);

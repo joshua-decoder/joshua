@@ -48,8 +48,12 @@ public class HieroFormatReader extends GrammarReader<BilingualRule> {
 		// english side
 		String[] englishWords = fields[2].split("\\s+");
 		int[] english = new int[englishWords.length];
-		for (int i = 0; i < englishWords.length; i++)
+		for (int i = 0; i < englishWords.length; i++) {
 			english[i] = Vocabulary.id(englishWords[i]);
+			if (Vocabulary.nt(english[i])) {
+				english[i] = - Vocabulary.getTargetNonterminalIndex(english[i]);
+			}
+		}
 
 		// feature scores
 		String[] scores = fields[3].split("\\s+");
