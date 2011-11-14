@@ -18,7 +18,6 @@
 
 package joshua.decoder.ff.state_maintenance;
 
-import joshua.corpus.Vocabulary;
 
 
 /**
@@ -27,6 +26,5 @@ import joshua.corpus.Vocabulary;
  * @version $LastChangedDate$
  */
 public interface DPState {
-	String getSignature(boolean forceRecompute);
-	String getSignature(Vocabulary Vocabulary, boolean forceRecompute);
+	public int getSignature(boolean forceRecompute);
 }

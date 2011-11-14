@@ -54,12 +54,8 @@ public class HGNode implements Prunable<HGNode> {
 	// the key is the state id; remember the state required by each model, for example, edge-ngrams for LM model
 	HashMap<Integer,DPState> dpStates;
 	
-	
-	//============== auxiluary variables, no need to store on disk
-	// signature of this item: lhs, states
-	private String signature = null;
-	// seperator for the signature for each state
-	private static final String STATE_SIG_SEP = " -f- ";
+	// Signature hash code for the node.
+	private int signature = 0;
 	
 	//============== for pruning purpose
 	public boolean isDead        = false;
@@ -139,26 +135,10 @@ public class HGNode implements Prunable<HGNode> {
 	}
 	
 	
-	//signature of this item: lhs, states (we do not need i, j)
-	public String getSignature() {
-		if (null == this.signature) {
-			StringBuffer s = new StringBuffer();
-			s.append(lhs);
-			s.append(" ");
-			
-			if (null != this.dpStates && this.dpStates.size() > 0) {
-				Iterator<Map.Entry<Integer,DPState>> it = this.dpStates.entrySet().iterator();
-				while (it.hasNext()) {
-					Map.Entry<Integer,DPState> entry = it.next();					
-					s.append(entry.getValue().getSignature(false));
-					if (it.hasNext()) 
-						s.append(STATE_SIG_SEP);
-				}
-			}
-			
-			this.signature = s.toString();
-		}
-	
+	// Hash code of this item: lhs, states. We do not need i and j.
+	public int getSignature() {
+		if (this.signature == 0)
+			this.signature = Math.abs(lhs) * 31 + dpStates.hashCode();
 		return this.signature;
 	}
 	

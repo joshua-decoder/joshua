@@ -77,10 +77,6 @@ public class KBestExtractor {
 	private boolean isMonolingual = false;
 	private boolean performSanityCheck = true;
 	
-//	public KBestExtractor(Vocabulary Vocabulary) {
-//		this.p_Vocabulary = Vocabulary;
-//	}
-	
 	private int sentID;
 	
 	public KBestExtractor(boolean extractUniqueNbest, boolean 	extractNbestTree,  boolean includeAlign,

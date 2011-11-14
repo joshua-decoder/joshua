@@ -59,7 +59,7 @@ class Cell {
 	private int constraintSymbolId;
 		
 	// to maintain uniqueness of nodes
-	private HashMap<String,HGNode> nodesSigTbl = new HashMap<String,HGNode>();
+	private HashMap<Integer,HGNode> nodesSigTbl = new HashMap<Integer,HGNode>();
 	
 	// signature by lhs
 	private Map<Integer,SuperNode> superNodesTbl = new HashMap<Integer,SuperNode>();
@@ -196,7 +196,7 @@ class Cell {
 			 * need to check whether the node is already exist, 
 			 * if yes, just add the hyperedges, this may change the best logP of the node 
 			 * */
-			HGNode oldNode = this.nodesSigTbl.get( res.getSignature() );
+			HGNode oldNode = this.nodesSigTbl.get(res.getSignature());
 			if (null != oldNode) { // have an item with same states, combine items
 				this.chart.nMerged++;
 				

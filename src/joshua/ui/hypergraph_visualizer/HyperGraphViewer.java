@@ -120,7 +120,8 @@ public class HyperGraphViewer extends VisualizationViewer<Vertex,Edge> {
 					return String.format("%d other edges", otherEdges);
 				}
 				else if (v instanceof NodeVertex) {
-					return ((NodeVertex) v).getNode().getSignature();
+					// TODO: Returns meaningless hash rather than a serialization.
+					return String.valueOf(((NodeVertex) v).getNode().getSignature());
 				}
 				else {
 					return "";
