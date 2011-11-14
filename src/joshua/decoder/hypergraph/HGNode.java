@@ -20,7 +20,6 @@ package joshua.decoder.hypergraph;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
@@ -137,8 +136,11 @@ public class HGNode implements Prunable<HGNode> {
 	
 	// Hash code of this item: lhs, states. We do not need i and j.
 	public int getSignature() {
-		if (this.signature == 0)
-			this.signature = Math.abs(lhs) * 31 + dpStates.hashCode();
+		if (this.signature == 0) {
+			this.signature = Math.abs(lhs);
+			for (Map.Entry<Integer, DPState> e : dpStates.entrySet())
+				this.signature = this.signature * 31 + e.getValue().getSignature(false);
+		}
 		return this.signature;
 	}
 	
