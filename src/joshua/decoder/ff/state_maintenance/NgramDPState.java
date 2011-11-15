@@ -66,7 +66,7 @@ public class NgramDPState implements DPState {
 		if (forceRecompute || signature == 0) {
 			// We can not simply use sb.append(leftLMStateWords), as it will just
 			// add the address of leftLMStateWords.
-			signature = 27 + computeStateSig(leftLMStateWords);
+			signature = 29 + computeStateSig(leftLMStateWords);
 			signature = signature * 13 + computeStateSig(rightLMStateWords);
 		}
 		return this.signature;
