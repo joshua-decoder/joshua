@@ -119,13 +119,8 @@ public class Vocabulary {
 	public static int[] addAll(String sentence) {
 		String[] tokens = sentence.split("\\s+");
 		int[] ids = new int[tokens.length];
-		
-//		System.err.println("Sentence: " + sentence);
-		
-		for (int i = 0; i < tokens.length; i++) {
-//			System.err.println("Token: " + tokens[i]);
+		for (int i = 0; i < tokens.length; i++)
 			ids[i] = id(tokens[i]);
-		}
 		return ids;
 	}
 
@@ -145,6 +140,13 @@ public class Vocabulary {
 		return sb.append(word(ids[ids.length - 1])).toString();
 	}
 
+	public static String getWords(Iterable<Integer> ids) {
+		StringBuilder sb = new StringBuilder();
+		for (int id : ids)
+			sb.append(word(id)).append(" ");
+		return sb.deleteCharAt(sb.length() - 1).toString();
+	}
+	
 	public static int getUnknownId() {
 		return UNKNOWN_ID;
 	}

@@ -1,7 +1,6 @@
 
 package joshua.decoder.chart_parser;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.TreeMap;
 

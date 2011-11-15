@@ -129,10 +129,10 @@ public class HGNode implements Prunable<HGNode> {
 	// Hash signature of this item: includes lhs, states.
 	public int getSignature() {
 		if (this.signature == 0) {
-			this.signature = Math.abs(lhs);
+			this.signature = 31 + Math.abs(lhs);
 			if (this.dpStates != null)
 				for (DPState dps : dpStates.values())
-					this.signature = this.signature * 31 + dps.getSignature(false);
+					this.signature = this.signature * 17 + dps.getSignature(false);
 		}
 		return this.signature;
 	}
@@ -149,6 +149,41 @@ public class HGNode implements Prunable<HGNode> {
 		logger.severe("This compare function should never be called.");
 		System.exit(1);
 		return 0;
+	}
+	
+	@Override
+	public boolean equals(Object other) {
+		if (!(other instanceof HGNode))
+			return false;
+		HGNode o = (HGNode) other;
+		if (this.lhs != o.lhs)
+			return false;
+		if (this.dpStates == null && o.dpStates == null)
+			return true;
+		if ((this.dpStates != null && o.dpStates == null) ||
+				(this.dpStates == null && o.dpStates != null))
+			return false;
+		for (int key : dpStates.keySet()) {
+			if (!o.dpStates.containsKey(key))
+				return false;
+			if (!this.dpStates.get(key).equals(o.dpStates.get(key))) {
+				if (logger.isLoggable(Level.FINEST)) {
+					logger.finest("DPState hash collision:");
+					logger.finest("A: " + this.dpStates.get(key).toString());
+					logger.finest("B: " + o.dpStates.get(key).toString());
+				}
+				return false;
+			}
+		}
+		return true;
+	}
+	
+	public String toString() {
+		StringBuilder sb = new StringBuilder(lhs + "\n");
+		if (this.dpStates != null)
+			for (DPState dps : dpStates.values())
+				sb.append(dps.toString()).append("\n");
+		return sb.toString();
 	}
 
 	// Inverse order.

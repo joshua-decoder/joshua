@@ -20,6 +20,7 @@ java \
 	-classpath "../bin"          \
 	-Djava.library.path=../lib   \
 	-Dfile.encoding=utf8         \
+	-Djava.util.logging.config.file=${JOSHUA}/logging.properties \
 	-Xmx${MEM}m -Xms${MEM}m      \
 	-XX:MinHeapFreeRatio=10      \
 	joshua.decoder.JoshuaDecoder \
@@ -37,8 +38,8 @@ fi
 java \
 	-classpath "../bin"        \
 	joshua.util.ExtractTopCand \
-	example2.nbest             \
-	example2.1best
+	example2/example2.nbest             \
+	example2/example2.1best
 
 exitCode=$?
 if [ $exitCode -ne 0 ]; then

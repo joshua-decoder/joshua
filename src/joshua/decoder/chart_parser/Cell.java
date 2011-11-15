@@ -193,25 +193,31 @@ class Cell {
 			HyperEdge dt = new HyperEdge(rule, finalizedTotalLogP, transitionLogP, ants, srcPath);
 			res = new HGNode(i, j, rule.getLHS(), dpStates, dt, expectedTotalLogP);
 			
-			/** each node has a list of hyperedges,
-			 * need to check whether the node is already exist, 
-			 * if yes, just add the hyperedges, this may change the best logP of the node 
-			 * */
+			// Each node has a list of hyperedges, need to check whether the node
+			// is already exist, if yes, just add the hyperedges, this may change
+			// the best logP of the node.
 			HGNode oldNode = this.nodesSigTbl.get(res.getSignature());
 			if (null != oldNode) { // have an item with same states, combine items
 				this.chart.nMerged++;
 				
-				/** the position of oldItem in this.heapItems
-				 *  may change, basically, we should remove the
-				 *  oldItem, and re-insert it (linear time), this is too expense)
-				 **/
-				if ( res.getPruneLogP() > oldNode.getPruneLogP() ) {//merget old to new: semiring plus					
+				if (logger.isLoggable(Level.FINEST) && !oldNode.equals(res)) {
+					logger.finest("Node signature collision:");
+					logger.finest("SA: " + oldNode.getSignature());
+					logger.finest("NA: " + oldNode.toString());
+					logger.finest("SB: " + res.getSignature());
+					logger.finest("NB: " + res.toString());
+					logger.finest("========================");
+				}
 
+				// The position of oldItem in this.heapItems may change, basically, we 
+				// should remove the oldItem, and re-insert it (linear time), this is
+				// too expensive.
+				// Merged old to new: semiring plus.
+				if ( res.getPruneLogP() > oldNode.getPruneLogP() ) {					
 					if(beamPruner!=null){
 						oldNode.setDead();// this.heapItems.remove(oldItem);
 						beamPruner.incrementDeadObjs();
 					}
-					
 					res.addHyperedgesInNode(oldNode.hyperedges);
 					addNewNode(res, noPrune); //this will update the HashMap, so that the oldNode is destroyed
 					

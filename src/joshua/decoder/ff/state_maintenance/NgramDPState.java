@@ -66,8 +66,8 @@ public class NgramDPState implements DPState {
 		if (forceRecompute || signature == 0) {
 			// We can not simply use sb.append(leftLMStateWords), as it will just
 			// add the address of leftLMStateWords.
-			this.signature = computeStateSig(leftLMStateWords) * 31
-					+ computeStateSig(rightLMStateWords);
+			signature = 27 + computeStateSig(leftLMStateWords);
+			signature = signature * 13 + computeStateSig(rightLMStateWords);
 		}
 		return this.signature;
 	}
@@ -86,5 +86,17 @@ public class NgramDPState implements DPState {
 			res.add(wrd);
 		return res;
 	}
-
+	
+	@Override
+	public boolean equals(Object other) {
+		if (other instanceof NgramDPState)
+			return leftLMStateWords.equals(((NgramDPState) other).leftLMStateWords)
+					&& rightLMStateWords.equals(((NgramDPState) other).rightLMStateWords);
+		return false;
+	}
+	
+	public String toString() {
+		return Vocabulary.getWords(leftLMStateWords) 
+				+ " <> " + Vocabulary.getWords(rightLMStateWords);
+	}
 }
