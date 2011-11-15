@@ -18,8 +18,6 @@
 
 package joshua.decoder.ff.state_maintenance;
 
-
-
 /**
  * 
  * @author Zhifei Li, <zhifei.work@gmail.com>
