@@ -34,5 +34,6 @@ fi
 
 java -Xmx${mem} \
 	-cp $JOSHUA/bin \
+	-Dfile.encoding=utf8 \
 	-Djava.library.path=$JOSHUA/lib \
 	joshua.decoder.JoshuaDecoder $@
