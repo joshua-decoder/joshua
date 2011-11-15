@@ -3,15 +3,15 @@ package joshua.ui.hypergraph_visualizer;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import joshua.corpus.vocab.SymbolTable;
-import joshua.corpus.vocab.Vocabulary;
-import joshua.decoder.hypergraph.*;
-
+import joshua.corpus.Vocabulary;
+import joshua.decoder.hypergraph.DiskHyperGraph;
+import joshua.decoder.hypergraph.HGNode;
+import joshua.decoder.hypergraph.HyperEdge;
+import joshua.decoder.hypergraph.HyperGraph;
 import edu.uci.ics.jung.graph.DirectedOrderedSparseMultigraph;
 
 public class JungHyperGraph extends DirectedOrderedSparseMultigraph<Vertex,Edge> {
 	private Vertex root;
-	private SymbolTable vocab;
 	private int targetIndex;
 	
 	private boolean checkDuplicateVertices;
@@ -36,17 +36,15 @@ public class JungHyperGraph extends DirectedOrderedSparseMultigraph<Vertex,Edge>
 		for (int i = firstSentence; i < lastSentence; i++) {
 			chosenSentences.put(i, i);
 		}
-		Vocabulary vocab = new Vocabulary();
-		DiskHyperGraph dhg = new DiskHyperGraph(vocab, 0, true, null);
+		DiskHyperGraph dhg = new DiskHyperGraph(0, true, null);
 		dhg.initRead(itemsFile, rulesFile, chosenSentences);
-		JungHyperGraph hg = new JungHyperGraph(dhg.readHyperGraph(), vocab);
+		JungHyperGraph hg = new JungHyperGraph(dhg.readHyperGraph());
 		return;
 	}
 
-	public JungHyperGraph(HyperGraph hg, SymbolTable st)
+	public JungHyperGraph(HyperGraph hg)
 	{
 		checkDuplicateVertices = false;
-		vocab = st;
 		targetIndex = 0;
 		nonTreeEdgeEndpoints = new ArrayList<Vertex>();
 		addNode(hg.goalNode, null);
@@ -86,7 +84,7 @@ public class JungHyperGraph extends DirectedOrderedSparseMultigraph<Vertex,Edge>
 			if (e.getAntNodes() != null)
 				items = new ArrayList<HGNode>(e.getAntNodes());
 			for (int t : e.getRule().getEnglish()) {
-				if (vocab.isNonterminal(t)) {
+				if (Vocabulary.nt(t)) {
 					addNode(items.get(0), v);
 					items.remove(0);
 				}

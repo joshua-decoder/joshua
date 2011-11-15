@@ -18,9 +18,9 @@
 package joshua.subsample;
 
 import java.io.BufferedWriter;
-import java.io.OutputStreamWriter;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionBuilder;
@@ -82,8 +82,7 @@ public class AlignedSubsampler extends Subsampler {
 				),
 			new BiCorpusFactory(
 				fpath, epath, apath,
-				extf,  exte,  exta,
-				this.vf, this.ve) { /* Local class definition */
+				extf,  exte,  exta) { /* Local class definition */
 					public BiCorpus fromFiles(String f) throws IOException {
 						return this.alignedFromFiles(f);
 					}

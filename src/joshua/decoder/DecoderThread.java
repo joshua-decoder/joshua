@@ -18,39 +18,25 @@
 package joshua.decoder;
 
 import java.io.BufferedWriter;
-import java.io.IOException;
 import java.io.File;
-import java.util.Arrays;
+import java.io.IOException;
 import java.util.List;
-import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import joshua.decoder.segment_file.Sentence;
-
-import joshua.corpus.syntax.ArraySyntaxTree;
-import joshua.corpus.syntax.SyntaxTree;
-import joshua.corpus.vocab.SymbolTable;
 import joshua.decoder.chart_parser.Chart;
 import joshua.decoder.ff.FeatureFunction;
-import joshua.decoder.ff.lm.LanguageModelFF;
 import joshua.decoder.ff.state_maintenance.StateComputer;
 import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.GrammarFactory;
-import joshua.decoder.ff.tm.hiero.MemoryBasedBatchGrammar;
+import joshua.decoder.ff.tm.hash_based.MemoryBasedBatchGrammar;
 import joshua.decoder.hypergraph.DiskHyperGraph;
 import joshua.decoder.hypergraph.HyperGraph;
 import joshua.decoder.hypergraph.KBestExtractor;
+import joshua.decoder.segment_file.Sentence;
 import joshua.lattice.Lattice;
 import joshua.oracle.OracleExtractor;
 import joshua.ui.hypergraph_visualizer.HyperGraphViewer;
-import joshua.util.CoIterator;
-import joshua.util.FileUtility;
-import joshua.util.io.LineReader;
-import joshua.util.io.NullReader;
-import joshua.util.io.Reader;
-import joshua.util.io.UncheckedIOException;
-
 import edu.jhu.thrax.util.TestSetFilter;
 
 /**
@@ -76,20 +62,7 @@ public class DecoderThread extends Thread {
 	private final List<GrammarFactory>  grammarFactories;
 	private final List<FeatureFunction> featureFunctions;
 	private final List<StateComputer>   stateComputers;
-	
-	
-	/**
-	 * Shared symbol table for source language terminals, target
-	 * language terminals, and shared nonterminals.
-	 * <p>
-	 * It may be that separate tables should be maintained for
-	 * the source and target languages.
-	 * <p>
-	 * This class explicitly uses the symbol table to get integer
-	 * IDs for the source language sentence.
-	 */
-	private final SymbolTable    symbolTable;
-	
+		
 	//more test set specific
     private final InputHandler   inputHandler;
 	//         final String         nbestFile; // package-private for DecoderFactory
@@ -109,19 +82,16 @@ public class DecoderThread extends Thread {
 		List<GrammarFactory>  grammarFactories,
 		List<FeatureFunction> featureFunctions,
 		List<StateComputer> stateComputers,
-		SymbolTable                symbolTable,
-        InputHandler inputHandler
+		InputHandler inputHandler
 	) throws IOException {
 		
 		this.grammarFactories   = grammarFactories;
 		this.featureFunctions   = featureFunctions;
 		this.stateComputers     = stateComputers;
-		this.symbolTable        = symbolTable;
 		
         this.inputHandler    = inputHandler;
 		
 		this.kbestExtractor = new KBestExtractor(
-			this.symbolTable,
 			JoshuaConfiguration.use_unique_nbest,
 			JoshuaConfiguration.use_tree_nbest,
 			JoshuaConfiguration.include_align_index,
@@ -144,7 +114,7 @@ public class DecoderThread extends Thread {
 		// 	}
 			
 		// 	this.hypergraphSerializer = new DiskHyperGraph(
-		// 			this.symbolTable,
+		// 			Vocabulary,
 		// 			lmFeatID,
 		// 			true, // always store model cost
 		// 			this.featureFunctions);
@@ -193,13 +163,13 @@ public class DecoderThread extends Thread {
             Translation translation = null;
 
             if (JoshuaConfiguration.visualize_hypergraph) {
-                HyperGraphViewer.visualizeHypergraphInFrame(hypergraph, symbolTable);
+                HyperGraphViewer.visualizeHypergraphInFrame(hypergraph);
             }
 		
             String oracleSentence = inputHandler.oracleSentence();
 
             if (oracleSentence != null) {
-                OracleExtractor extractor = new OracleExtractor(this.symbolTable);
+                OracleExtractor extractor = new OracleExtractor();
                 HyperGraph oracle = extractor.getOracle(hypergraph, 3, oracleSentence);
 			
                 translation = new Translation(sentence, oracle, featureFunctions);
@@ -251,7 +221,7 @@ public class DecoderThread extends Thread {
 		
 		Chart chart; 
 		
-        Lattice<Integer> input_lattice = sentence.lattice();
+        Lattice<Integer> input_lattice = sentence.intLattice();
 
         int numGrammars = (JoshuaConfiguration.use_sent_specific_tm)
             ? grammarFactories.size() + 1
@@ -307,7 +277,6 @@ public class DecoderThread extends Thread {
 
             grammars[numGrammars-1] = new MemoryBasedBatchGrammar(JoshuaConfiguration.tm_format,
                 tmFile,
-                this.symbolTable,
                 JoshuaConfiguration.phrase_owner,
                 JoshuaConfiguration.default_non_terminal,
                 JoshuaConfiguration.span_limit,
@@ -322,7 +291,6 @@ public class DecoderThread extends Thread {
         chart = new Chart(input_lattice,
             this.featureFunctions,
             this.stateComputers,
-            this.symbolTable,
             sentence.id(),
             grammars,
             false,

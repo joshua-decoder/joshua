@@ -17,13 +17,12 @@
  */
 package joshua.decoder.ff.lm;
 
-import joshua.decoder.Support;
-import joshua.corpus.vocab.SymbolTable;
-
-
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import joshua.corpus.Vocabulary;
+import joshua.decoder.Support;
 
 /**
  * This class provides a default implementation for the Equivalent
@@ -44,14 +43,12 @@ public abstract class DefaultNGramLanguageModel implements NGramLanguageModel {
 	private static final Logger logger =
 		Logger.getLogger(DefaultNGramLanguageModel.class.getName());
 	
-	protected final SymbolTable symbolTable;
 	protected final int         ngramOrder;
 	
 //===============================================================
 // Constructors
 //===============================================================
-	public DefaultNGramLanguageModel(SymbolTable symbolTable, int order) {
-		this.symbolTable = symbolTable;
+	public DefaultNGramLanguageModel(int order) {
 		this.ngramOrder  = order;
 	}
 	
@@ -82,7 +79,7 @@ public abstract class DefaultNGramLanguageModel implements NGramLanguageModel {
 			int[] ngram = Support.subIntArray(sentence, 0, j);
 			double logProb = ngramLogProbability(ngram, order);
 			if (logger.isLoggable(Level.FINE)) {
-				String words = symbolTable.getWords(ngram);
+				String words = Vocabulary.getWords(ngram);
 				logger.fine("\tlogp ( " + words + " )  =  " + logProb);
 			}
 			probability += logProb;
@@ -93,7 +90,7 @@ public abstract class DefaultNGramLanguageModel implements NGramLanguageModel {
 			int[] ngram = Support.subIntArray(sentence, i, i + order);
 			double logProb = ngramLogProbability(ngram, order);
 			if (logger.isLoggable(Level.FINE)) {
-				String words = symbolTable.getWords(ngram);
+				String words = Vocabulary.getWords(ngram);
 				logger.fine("\tlogp ( " + words + " )  =  " + logProb);
 			}
 			probability += logProb;

@@ -31,8 +31,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
 
-import joshua.corpus.vocab.SymbolTable;
-import joshua.corpus.vocab.Vocabulary;
+import joshua.corpus.Vocabulary;
 import joshua.util.Regex;
 import joshua.util.io.LineReader;
 
@@ -65,54 +64,26 @@ public class ArpaFile implements Iterable<ArpaNgram> {
 	/** ARPA file for this object. */
 	private final File arpaFile;
 	
-	/** The symbol table associated with this object. */
-	private final SymbolTable vocab;
-	
 	/**
 	 * Constructs an object that represents an ARPA language model file.
 	 * 
 	 * @param arpaFileName File name of an ARPA language model file
 	 * @param vocab Symbol table to be used by this object
 	 */
-	public ArpaFile(String arpaFileName, SymbolTable vocab) {
-		this.arpaFile = new File(arpaFileName);
-		this.vocab = vocab;
-	}
-
 	public ArpaFile(String arpaFileName) throws IOException {
 		this.arpaFile = new File(arpaFileName);
-		this.vocab = new Vocabulary();
-		
-//		final Scanner scanner = new Scanner(arpaFile);
-		
-//		// Eat initial header lines
-//		while (scanner.hasNextLine()) {
-//			String line = scanner.nextLine();
-//			logger.finest("Discarding line: " + line);
-//			if (NGRAM_HEADER.matches(line)) {
-//				break;
-//			}
-//		}
-		
-//		int ngramOrder = 1;
 		
 		LineReader grammarReader = new LineReader(arpaFileName);
 		
 		try {
 			for (String line : grammarReader) {
-
-
-//		while (scanner.hasNext()) {
-//			
-//			String line = scanner.nextLine();
-
 				String[] parts = Regex.spaces.split(line);
 				if (parts.length > 1) {
 					String[] words = Regex.spaces.split(parts[1]);
 
 					for (String word : words) {
 						if (logger.isLoggable(Level.FINE)) logger.fine("Adding to vocab: " + word);
-						vocab.addTerminal(word);	
+						Vocabulary.id(word);	
 					}
 
 				} else {
@@ -122,51 +93,9 @@ public class ArpaFile implements Iterable<ArpaNgram> {
 			}
 		} finally { 
 			grammarReader.close(); 
-		}
-
-//			
-//			boolean lineIsHeader = NGRAM_HEADER.matches(line);
-//			
-//			while (lineIsHeader || BLANK_LINE.matches(line)) {
-//				
-//				if (lineIsHeader) {
-//					ngramOrder++;
-//				}
-//				
-//				if (scanner.hasNext()) {
-//					line = scanner.nextLine().trim();
-//					lineIsHeader = NGRAM_HEADER.matches(line);
-//				} else {
-//					logger.severe("Ran out of lines!");
-//					return;
-//				}
-//			}
-			
-			
-//			
-//			// Add word to vocab
-//			if (logger.isLoggable(Level.FINE)) logger.fine("Adding word to vocab: " + parts[ngramOrder]);
-//			vocab.addTerminal(parts[ngramOrder]);
-//			
-//			// Add context words to vocab
-//			for (int i=1; i<ngramOrder; i++) {
-//				if (logger.isLoggable(Level.FINE)) logger.fine("Adding context word to vocab: " + parts[i]);
-//				vocab.addTerminal(parts[i]);
-//			}
-			
-//		}
-		
+		}		
 		logger.info("Done constructing ArpaFile");
 		
-	}
-	
-	/**
-	 * Gets the symbol table associated with this object.
-	 * 
-	 * @return the symbol table associated with this object
-	 */
-	public SymbolTable getVocab() {
-		return vocab;
 	}
 	
 	/**
@@ -293,11 +222,11 @@ public class ArpaFile implements Iterable<ArpaNgram> {
 
 						float value = Float.valueOf(parts[0]);
 						
-						int word = vocab.getID(parts[ngramOrder]);
+						int word = Vocabulary.id(parts[ngramOrder]);
 						
 						int[] context = new int[ngramOrder-1];
 						for (int i=1; i<ngramOrder; i++) {
-							context[i-1] = vocab.getID(parts[i]);
+							context[i-1] = Vocabulary.id(parts[i]);
 						}
 						
 						float backoff;

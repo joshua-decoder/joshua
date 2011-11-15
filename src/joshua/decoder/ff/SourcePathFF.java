@@ -19,9 +19,9 @@ package joshua.decoder.ff;
 
 import java.util.List;
 
+import joshua.decoder.chart_parser.SourcePath;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.hypergraph.HGNode;
-import joshua.decoder.chart_parser.SourcePath;
 
 /**
  *

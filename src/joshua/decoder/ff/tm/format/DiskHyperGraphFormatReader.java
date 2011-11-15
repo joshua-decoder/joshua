@@ -1,16 +1,15 @@
-package joshua.decoder.ff.tm.hiero;
+package joshua.decoder.ff.tm.format;
 
 import java.util.Arrays;
 import java.util.logging.Logger;
 
-import joshua.corpus.vocab.SymbolTable;
+import joshua.corpus.Vocabulary;
 import joshua.decoder.ff.tm.BilingualRule;
 import joshua.decoder.ff.tm.GrammarReader;
 
 /**
  * this class implements the grammar reader for disk hypergraph
  * @author Zhifei Li, <zhifei.work@gmail.com>
- * @version $LastChangedDate: 2009-11-30 23:52:12 -0500 (星期一, 30 十一月 2009) $
  */
 
 public class DiskHyperGraphFormatReader extends GrammarReader<BilingualRule> {
@@ -29,8 +28,8 @@ public class DiskHyperGraphFormatReader extends GrammarReader<BilingualRule> {
 		description = "Joshua hypergraph rule file format";
 	}
 	
-	public DiskHyperGraphFormatReader(String grammarFile, SymbolTable symbolTable) {
-		super(grammarFile, symbolTable);
+	public DiskHyperGraphFormatReader(String grammarFile) {
+		super(grammarFile);
 	}
 
 	@Override
@@ -47,7 +46,7 @@ public class DiskHyperGraphFormatReader extends GrammarReader<BilingualRule> {
 		String[] header = blocks[0].split("\\s+");
 		
 		int id = Integer.parseInt(header[0]);
-		int owner = symbolTable.addTerminal(header[1]);
+		int owner = Vocabulary.id(header[1]);
 		
 		
 		
@@ -56,7 +55,7 @@ public class DiskHyperGraphFormatReader extends GrammarReader<BilingualRule> {
 			logger.severe("Rule line does not have four fields: " + line);
 		}
 
-		int lhs = symbolTable.addNonterminal(cleanNonTerminal(fields[0]));
+		int lhs = Vocabulary.id(cleanNonTerminal(fields[0]));
 		//System.out.println("original="+ fields[0] +"; lhs=" + cleanNonTerminal(fields[0]) + "; id=" +lhs);System.exit(1);
 		
 		int arity = 0;
@@ -66,9 +65,9 @@ public class DiskHyperGraphFormatReader extends GrammarReader<BilingualRule> {
 		for (int i = 0; i < foreignWords.length; i++) {
 			if (isNonTerminal(foreignWords[i])) {
 				arity++;
-				french[i] = symbolTable.addNonterminal(foreignWords[i]);
+				french[i] = Vocabulary.id(foreignWords[i]);
 			} else {
-				french[i] = symbolTable.addTerminal(foreignWords[i]);
+				french[i] = Vocabulary.id(foreignWords[i]);
 			}
 		}
 
@@ -77,9 +76,9 @@ public class DiskHyperGraphFormatReader extends GrammarReader<BilingualRule> {
 		int[] english = new int[englishWords.length];
 		for (int i = 0; i < englishWords.length; i++) {
 			if (isNonTerminal(englishWords[i])) {
-				english[i] = symbolTable.addNonterminal(englishWords[i]);
+				english[i] = Vocabulary.id(englishWords[i]);
 			} else {
-				english[i] = symbolTable.addTerminal(englishWords[i]);
+				english[i] = Vocabulary.id(englishWords[i]);
 			}
 		}
 
@@ -130,15 +129,15 @@ public class DiskHyperGraphFormatReader extends GrammarReader<BilingualRule> {
 
 		sb.append(rule.getRuleID());
 		sb.append(' ');
-		sb.append(symbolTable.getWord(rule.getOwner()));
+		sb.append(Vocabulary.word(rule.getOwner()));
 		sb.append(blockDelimiter);
 		
-		sb.append(symbolTable.getWord(rule.getLHS()));
+		sb.append(Vocabulary.word(rule.getLHS()));
 		
 		sb.append(" ||| ");
-		sb.append(symbolTable.getWords(rule.getFrench()));
+		sb.append(Vocabulary.getWords(rule.getFrench()));
 		sb.append(" ||| ");
-		sb.append(symbolTable.getWords(rule.getEnglish()));
+		sb.append(Vocabulary.getWords(rule.getEnglish()));
 		sb.append(" |||");
 
 		float[] feature_scores = rule.getFeatureScores();
@@ -151,11 +150,11 @@ public class DiskHyperGraphFormatReader extends GrammarReader<BilingualRule> {
 	@Override
 	public String toWordsWithoutFeatureScores(BilingualRule rule) {
 		StringBuffer sb = new StringBuffer();
-		sb.append(symbolTable.getWord(rule.getLHS()));
+		sb.append(Vocabulary.word(rule.getLHS()));
 		sb.append(" ||| ");
-		sb.append(symbolTable.getWords(rule.getFrench()));
+		sb.append(Vocabulary.getWords(rule.getFrench()));
 		sb.append(" ||| ");
-		sb.append(symbolTable.getWords(rule.getEnglish()));
+		sb.append(Vocabulary.getWords(rule.getEnglish()));
 	
 		return sb.toString();
 	}

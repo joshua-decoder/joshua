@@ -17,27 +17,27 @@
  */
 package joshua.ui.tree_visualizer;
 
+import java.awt.BasicStroke;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Paint;
-import java.awt.Color;
-import java.awt.Stroke;
-import java.awt.BasicStroke;
 import java.awt.Shape;
-import java.awt.geom.*;
+import java.awt.Stroke;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
 
 import javax.swing.JLabel;
+
+import org.apache.commons.collections15.Transformer;
 
 import edu.uci.ics.jung.algorithms.layout.CircleLayout;
 import edu.uci.ics.jung.algorithms.layout.StaticLayout;
 import edu.uci.ics.jung.visualization.VisualizationViewer;
 import edu.uci.ics.jung.visualization.control.DefaultModalGraphMouse;
-import edu.uci.ics.jung.visualization.control.ModalGraphMouse;
 import edu.uci.ics.jung.visualization.control.LayoutScalingControl;
-import edu.uci.ics.jung.visualization.control.ViewScalingControl;
+import edu.uci.ics.jung.visualization.control.ModalGraphMouse;
 import edu.uci.ics.jung.visualization.decorators.ToStringLabeller;
 import edu.uci.ics.jung.visualization.renderers.Renderer.VertexLabel.Position;
-
-import org.apache.commons.collections15.Transformer;
 
 public class DerivationViewer extends VisualizationViewer<Node,DerivationTreeEdge> {
 	public static final int DEFAULT_HEIGHT = 500;

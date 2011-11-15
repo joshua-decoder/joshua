@@ -17,8 +17,8 @@
  */
 package joshua.subsample;
 
-import java.io.IOException;
 import java.io.BufferedWriter;
+import java.io.IOException;
 
 
 /**

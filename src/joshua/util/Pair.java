@@ -105,9 +105,9 @@ public class Pair<First, Second> {
 	
 	@SuppressWarnings("unchecked")
 	public boolean equals(Object o) {
-		if (o instanceof Pair) {
+		if (o instanceof Pair<?, ?>) {
 			
-			Pair other = (Pair) o;
+			Pair<First, Second> other = (Pair<First, Second>) o;
 			
 			if (first==null) {
 				if (second==null) {

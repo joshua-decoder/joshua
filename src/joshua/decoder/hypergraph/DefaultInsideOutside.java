@@ -17,8 +17,6 @@
  */
 package joshua.decoder.hypergraph;
 
-import joshua.decoder.hypergraph.HyperGraph;
-
 import java.util.HashMap;
 
 

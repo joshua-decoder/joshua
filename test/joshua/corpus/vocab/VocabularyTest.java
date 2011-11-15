@@ -70,13 +70,13 @@ public class VocabularyTest {
 //		vocab1.fixVocabulary();
 //		Assert.assertTrue(vocab1.isFixed);
 		
-		Assert.assertEquals(vocab1.getID(SymbolTable.X_STRING), -1);
-		Assert.assertEquals(vocab1.getID(SymbolTable.X1_STRING), -2);
-		Assert.assertEquals(vocab1.getID(SymbolTable.X2_STRING), -3);
+		Assert.assertEquals(vocab1.getID(Vocabulary.X_STRING), -1);
+		Assert.assertEquals(vocab1.getID(Vocabulary.X1_STRING), -2);
+		Assert.assertEquals(vocab1.getID(Vocabulary.X2_STRING), -3);
 		
-		Assert.assertEquals(vocab1.getWord(-1), SymbolTable.X_STRING);
-		Assert.assertEquals(vocab1.getWord(-2), SymbolTable.X1_STRING);
-		Assert.assertEquals(vocab1.getWord(-3), SymbolTable.X2_STRING);
+		Assert.assertEquals(vocab1.getWord(-1), Vocabulary.X_STRING);
+		Assert.assertEquals(vocab1.getWord(-2), Vocabulary.X1_STRING);
+		Assert.assertEquals(vocab1.getWord(-3), Vocabulary.X2_STRING);
 		
 		
 		

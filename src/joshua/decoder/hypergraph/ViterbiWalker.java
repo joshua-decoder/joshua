@@ -17,11 +17,6 @@
  */
 package joshua.decoder.hypergraph;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import joshua.corpus.vocab.SymbolTable;
-import joshua.decoder.ff.tm.Rule;
 
 public interface ViterbiWalker {
 

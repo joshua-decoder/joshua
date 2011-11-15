@@ -20,8 +20,6 @@ package joshua.corpus;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
-import joshua.corpus.vocab.SymbolTable;
-
 /**
  * Iterator capable of iterating over those word identifiers
  * in a phrase which represent terminals.
@@ -33,7 +31,6 @@ import joshua.corpus.vocab.SymbolTable;
 public class TerminalIterator implements Iterator<Integer> {
 	
 	private final int[] words;
-	private final SymbolTable vocab;
 	
 	private int nextIndex = -1;
 	private int next = Integer.MIN_VALUE;
@@ -46,15 +43,14 @@ public class TerminalIterator implements Iterator<Integer> {
 	 * @param vocab 
 	 * @param words
 	 */
-	public TerminalIterator(SymbolTable vocab, int[] words) {
-		this.vocab = vocab;
+	public TerminalIterator(int[] words) {
 		this.words = words;
 	}
 	
 	/* See Javadoc for java.util.Iterator#next(). */
 	public boolean hasNext() {
 		
-		while (dirty || vocab.isNonterminal(next)) {
+		while (dirty || Vocabulary.nt(next)) {
 			nextIndex++;
 			if (nextIndex < words.length) {
 				next = words[nextIndex];

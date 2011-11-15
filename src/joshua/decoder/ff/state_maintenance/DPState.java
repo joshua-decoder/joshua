@@ -18,7 +18,6 @@
 
 package joshua.decoder.ff.state_maintenance;
 
-import joshua.corpus.vocab.SymbolTable;
 
 
 /**
@@ -27,6 +26,5 @@ import joshua.corpus.vocab.SymbolTable;
  * @version $LastChangedDate$
  */
 public interface DPState {
-	String getSignature(boolean forceRecompute);
-	String getSignature(SymbolTable symbolTable, boolean forceRecompute);
+	public int getSignature(boolean forceRecompute);
 }

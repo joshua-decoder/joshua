@@ -28,11 +28,6 @@ package joshua.corpus;
 
 import java.util.ArrayList;
 
-import joshua.corpus.vocab.SymbolTable;
-import joshua.corpus.vocab.Vocabulary;
-
-
-
 /**
  * The simplest concrete implementation of Phrase.
  *
@@ -41,23 +36,13 @@ import joshua.corpus.vocab.Vocabulary;
  */
 public class BasicPhrase extends AbstractPhrase {
 	private byte       language;
-	private SymbolTable vocabulary;
 	private int[]      words;
 	
 	
 	public BasicPhrase(byte language, String sentence) {
 		this.language   = language;
-		this.vocabulary = new Vocabulary();
-		this.words = splitSentence(sentence, vocabulary);
+		this.words = splitSentence(sentence);
 	}
-	
-	/** Note that the Vocabulary is shared, not cloned. */
-	public BasicPhrase(byte language, String sentence, Vocabulary vocabulary) {
-		this.language   = language;
-		this.vocabulary = vocabulary;
-		this.words = splitSentence(sentence, vocabulary);
-	}
-	
 	
 	private BasicPhrase() {}
 	
@@ -69,7 +54,6 @@ public class BasicPhrase extends AbstractPhrase {
 	public BasicPhrase subPhrase(int start, int end) {
 		BasicPhrase that = new BasicPhrase();
 		that.language    = this.language;
-		that.vocabulary  = this.vocabulary;
 		that.words       = new int[end-start+1];
 		System.arraycopy(this.words, start, that.words, 0, end-start+1);
 		return that;
@@ -96,9 +80,6 @@ public class BasicPhrase extends AbstractPhrase {
 	/* See Javadoc for Phrase interface. */
 	public int getWordID(int position) { return words[position]; }
 	
-	/* See Javadoc for Phrase interface. */
-	public SymbolTable getVocab()       { return vocabulary; }
-	
 	/**
 	 * Returns a human-readable String representation of the
 	 * phrase.
@@ -114,7 +95,7 @@ public class BasicPhrase extends AbstractPhrase {
 		if (words != null) {
 			for (int i = 0; i < words.length; ++i) {
 				if (i != 0) sb.append(' ');
-				sb.append(vocabulary.getWord(words[i]));
+				sb.append(Vocabulary.word(words[i]));
 			}
 		}
 		return sb.toString();

@@ -23,8 +23,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import joshua.decoder.ff.tm.Grammar;
-import joshua.decoder.ff.tm.Trie;
+import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.ff.tm.RuleCollection;
+import joshua.decoder.ff.tm.Trie;
 import joshua.lattice.Arc;
 import joshua.lattice.Lattice;
 import joshua.lattice.Node;
@@ -172,12 +173,13 @@ class DotChart {
 	 * ways to extend the dot postion.
 	 */
 	void expandDotCell(int i, int j) {
-		//if (logger.isLoggable(Level.FINEST)) logger.finest("Expanding dot cell ("+i+","+j+")");
+		if (logger.isLoggable(Level.FINEST))
+			logger.finest("Expanding dot cell ("+i+","+j+")");
 		
 		// (1) if the dot is just to the left of a non-terminal variable, 
 		//     looking for theorems or axioms in the Chart that may apply and 
 		//     extend the dot pos
-		for (int k = i + 1; k < j; k++) { //varying middle point k
+		for (int k = i + 1; k < j; k++) { // Varying middle point k.
 			extendDotItemsWithProvedItems(i,k,j,false);
 		}
 		
@@ -205,7 +207,7 @@ class DotChart {
 						
 					} else {
 						// match the terminal
-						Trie child_tnode = dt.trieNode.matchOne(last_word);
+						Trie child_tnode = dt.trieNode.match(last_word);
 						if (null != child_tnode) {
 							// we do not have an ant for the terminal
 							addDotItem(child_tnode, i, j - 1 + arc_len, dt.antSuperNodes, null, dt.srcPath.extend(arc));
@@ -261,7 +263,7 @@ class DotChart {
 		for (DotNode dotNode : dotcells[i][k].dotNodes) {
 			// see if it matches what the dotitem is looking for
 			for (SuperNode superNode : t_ArrayList) {
-				Trie child_tnode = dotNode.trieNode.matchOne(superNode.lhs);
+				Trie child_tnode = dotNode.trieNode.match(superNode.lhs);
 				if (null != child_tnode) {
 					if (true == startDotItems && !child_tnode.hasExtensions()) {
 						continue; //TODO
@@ -302,8 +304,16 @@ class DotChart {
 		dotcells[i][j].addDotNode(item);
 		dotChart.nDotitemAdded++;
 		
-		if (logger.isLoggable(Level.FINEST)) 
+		if (logger.isLoggable(Level.FINEST)) {
 			logger.finest(String.format("Add a dotitem in cell (%d, %d), n_dotitem=%d, %s", i, j, dotChart.nDotitemAdded, srcPath));
+			
+			RuleCollection rules = tnode.getRules();
+			if (rules != null) {
+				for (Rule r : rules.getRules()) {
+					logger.finest(r.toString());
+				}
+			}
+		}
 	}
 	
 	

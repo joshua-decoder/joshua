@@ -12,7 +12,7 @@ public class ParseTreeInput extends Sentence {
     // private SyntaxTree syntax_tree;
 
     // ParseTreeInput() {
-	// 	SyntaxTree syntax_tree = new ArraySyntaxTree(sentence.sentence(), symbolTable);
+	// 	SyntaxTree syntax_tree = new ArraySyntaxTree(sentence.sentence(), Vocabulary);
     // }
 
     // public int[] int_sentence() {

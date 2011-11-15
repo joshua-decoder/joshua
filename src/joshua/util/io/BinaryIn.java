@@ -8,15 +8,9 @@ import java.io.ObjectInput;
 import java.io.ObjectStreamConstants;
 import java.io.RandomAccessFile;
 
-import joshua.corpus.vocab.Vocabulary;
-
 public class BinaryIn<E extends Externalizable> extends RandomAccessFile implements DataInput, ObjectInput {
 
 	private final Class<E> type;
-	
-	public static BinaryIn<Vocabulary> vocabulary(String filename) throws FileNotFoundException {
-		return new BinaryIn<Vocabulary>(filename, Vocabulary.class);
-	}
 	
 	public BinaryIn(String filename, Class<E> type) throws FileNotFoundException {
 		super(filename, "r");

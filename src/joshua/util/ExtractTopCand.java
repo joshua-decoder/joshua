@@ -18,13 +18,13 @@
 
 package joshua.util;
 
-import joshua.util.io.LineReader;
-import joshua.util.io.IndexedReader;
-
 import java.io.BufferedWriter;
-import java.io.OutputStreamWriter;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
+
+import joshua.util.io.IndexedReader;
+import joshua.util.io.LineReader;
 
 
 /**

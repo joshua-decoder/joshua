@@ -17,7 +17,12 @@
  */
 
 package joshua.zmert;
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
 
 public class METEOR extends EvaluationMetric
 {

@@ -18,24 +18,22 @@
 
 package joshua.decoder;
 
-import joshua.decoder.segment_file.Sentence;
-import joshua.decoder.segment_file.LatticeInput;
-
-import java.util.Iterator;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
-import java.nio.charset.Charset;
+import java.io.BufferedReader;
 import java.io.FileDescriptor;
 import java.io.FileInputStream;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.logging.Logger;
 import java.util.zip.GZIPInputStream;
+
+import joshua.decoder.segment_file.LatticeInput;
+import joshua.decoder.segment_file.Sentence;
 
 /**
  * This class represents input to the decoder.  It currently supports

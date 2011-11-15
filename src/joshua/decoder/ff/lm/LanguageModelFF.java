@@ -21,7 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
-import joshua.corpus.vocab.SymbolTable;
+import joshua.corpus.Vocabulary;
 import joshua.decoder.chart_parser.SourcePath;
 import joshua.decoder.ff.DefaultStatefulFF;
 import joshua.decoder.ff.state_maintenance.DPState;
@@ -89,23 +89,18 @@ public class LanguageModelFF extends DefaultStatefulFF {
 	private final int ngramOrder;// = 3;
 	//boolean add_boundary=false; //this is needed unless the text already has <s> and </s>
 	
-	/** Symbol table that maps between Strings and integers. */
-	private final SymbolTable symbolTable;
-	
-	
 	/** stateID is any integer exept -1
 	 **/
-	public LanguageModelFF(int stateID, int featID, int ngramOrder, SymbolTable psymbol, NGramLanguageModel lmGrammar, double weight) {
+	public LanguageModelFF(int stateID, int featID, int ngramOrder, NGramLanguageModel lmGrammar, double weight) {
 		
 		super(stateID, weight, featID);
 		this.ngramOrder = ngramOrder;
 		this.lmGrammar  = lmGrammar;
-		this.symbolTable = psymbol;
-		this.START_SYM_ID = psymbol.addTerminal(START_SYM);
-		this.STOP_SYM_ID = psymbol.addTerminal(STOP_SYM);
+		this.START_SYM_ID = Vocabulary.id(START_SYM);
+		this.STOP_SYM_ID = Vocabulary.id(STOP_SYM);
 		
-		LanguageModelFF.BACKOFF_LEFT_LM_STATE_SYM_ID = symbolTable.addTerminal(BACKOFF_LEFT_LM_STATE_SYM);
-		LanguageModelFF.NULL_RIGHT_LM_STATE_SYM_ID = symbolTable.addTerminal(NULL_RIGHT_LM_STATE_SYM);
+		LanguageModelFF.BACKOFF_LEFT_LM_STATE_SYM_ID = Vocabulary.id(BACKOFF_LEFT_LM_STATE_SYM);
+		LanguageModelFF.NULL_RIGHT_LM_STATE_SYM_ID = Vocabulary.id(NULL_RIGHT_LM_STATE_SYM);
 		
 		logger.info("LM feature, with an order=" + ngramOrder);
 	}
@@ -151,8 +146,8 @@ public class LanguageModelFF extends DefaultStatefulFF {
 		
 		for (int c = 0; c < enWords.length; c++) {
 			int curID = enWords[c];
-			if (symbolTable.isNonterminal(curID)) {				
-				int index = symbolTable.getTargetNonterminalIndex(curID);
+			if (Vocabulary.idx(curID)) {				
+				int index = -(curID + 1);
 			
 				NgramDPState state = (NgramDPState) antNodes.get(index).getDPState(this.getStateID());
 				List<Integer> leftContext = state.getLeftLMStateWords();
@@ -287,7 +282,7 @@ public class LanguageModelFF extends DefaultStatefulFF {
 				//for the LM bonus function: this simply means the right state will not be considered at all because all the ngrams in right-context will be incomplete
 				words.clear();
 				skip_start = false;
-			} else*/ if( symbolTable.isNonterminal(curWrd) ) {
+			} else*/ if( Vocabulary.nt(curWrd) ) {
 				estimate += scoreChunkLogP(	words, considerIncompleteNgrams, skipStart);
 				considerIncompleteNgrams = true;
 				words.clear();

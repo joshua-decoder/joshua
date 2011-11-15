@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import joshua.corpus.vocab.SymbolTable;
+import joshua.corpus.Vocabulary;
 import joshua.util.Ngram;
 import joshua.util.Regex;
 
@@ -86,18 +86,10 @@ public class BLEU {
 			return res*1.0/refLens.length;
 		}
 	}
-	
-	
-	/**
-	 * construct maxRefCount tbl for multiple references
-	 */
-	public  static HashMap<String, Integer> constructMaxRefCountTable(String[] refSents, int bleuOrder){		
-		return constructMaxRefCountTable(null, refSents, bleuOrder);
-	}
-	
+		
 	/**words in the ngrams are using integer symbol ID
 	 * */
-	public  static HashMap<String, Integer> constructMaxRefCountTable(SymbolTable symbolTbl, String[] refSents, int bleuOrder){
+	public  static HashMap<String, Integer> constructMaxRefCountTable(String[] refSents, int bleuOrder){
 		
 		List<HashMap<String, Integer>> listRefNgramTbl = new ArrayList<HashMap<String, Integer>>();
 		for(int i=0; i<refSents.length; i++){
@@ -106,10 +98,7 @@ public class BLEU {
 			String[] refWords = Regex.spaces.split(refSents[i]);
 			
 			HashMap<String, Integer> refNgramTbl = new HashMap<String, Integer>();
-			if(symbolTbl!=null)
-				Ngram.getNgrams(symbolTbl, refNgramTbl, 1, bleuOrder, refWords);
-			else
-				Ngram.getNgrams(refNgramTbl, 1, bleuOrder, refWords);
+			Ngram.getNgrams(refNgramTbl, 1, bleuOrder, refWords);
 			listRefNgramTbl.add(refNgramTbl);			
 		}
 		

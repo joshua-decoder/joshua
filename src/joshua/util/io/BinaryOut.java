@@ -26,9 +26,9 @@ import java.io.FileOutputStream;
 import java.io.Flushable;
 import java.io.IOException;
 import java.io.ObjectOutput;
+import java.io.ObjectOutputStream;
 import java.io.ObjectStreamConstants;
 import java.io.OutputStream;
-import java.io.ObjectOutputStream;
 import java.io.UTFDataFormatException;
 import java.util.logging.Logger;
 

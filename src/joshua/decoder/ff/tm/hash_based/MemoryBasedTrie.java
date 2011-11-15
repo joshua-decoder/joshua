@@ -15,7 +15,7 @@
  * Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  * MA 02111-1307 USA
  */
-package joshua.decoder.ff.tm.hiero;
+package joshua.decoder.ff.tm.hash_based;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -33,7 +33,7 @@ public class MemoryBasedTrie implements Trie {
 	
 	
 	/* See Javadoc for Trie interface. */
-	public MemoryBasedTrie matchOne(int sym_id) {
+	public MemoryBasedTrie match(int sym_id) {
 		if (null == childrenTbl) {
 			return null;
 		} else {

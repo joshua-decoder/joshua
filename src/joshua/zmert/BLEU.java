@@ -17,7 +17,8 @@
  */
 
 package joshua.zmert;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.logging.Logger;
 
 public class BLEU extends EvaluationMetric

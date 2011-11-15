@@ -17,10 +17,10 @@
  */
 package joshua.decoder.ff;
 
-import joshua.decoder.ff.tm.Rule;
-
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import joshua.decoder.ff.tm.Rule;
 
 /**
  * 

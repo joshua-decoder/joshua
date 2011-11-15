@@ -1,6 +1,5 @@
 package joshua.ui.tree_visualizer.browser;
 
-import java.awt.Color;
 import java.awt.Component;
 import java.awt.GridLayout;
 

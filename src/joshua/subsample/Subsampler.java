@@ -27,10 +27,6 @@
  */
 package joshua.subsample;
 
-import joshua.corpus.Phrase;
-import joshua.corpus.BasicPhrase;
-import joshua.corpus.vocab.Vocabulary;
-
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.FileOutputStream;
@@ -38,11 +34,13 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.HashSet;
-import java.util.Set;
+
+import joshua.corpus.BasicPhrase;
+import joshua.corpus.Phrase;
+import joshua.corpus.Vocabulary;
 
 
 /**
@@ -56,8 +54,6 @@ import java.util.Set;
  * @version $LastChangedDate$
  */
 public class Subsampler {
-	protected Vocabulary ve = new Vocabulary();
-	protected Vocabulary vf = new Vocabulary();
 	protected Map<Phrase,Integer> ngramCounts;
 	protected int maxN;
 	protected int targetCount;
@@ -80,7 +76,7 @@ public class Subsampler {
 			System.err.println("Loading test set from " +fn+ "...");
 			
 			PhraseReader reader = new PhraseReader(
-					new FileReader(fn), this.vf, (byte)1);
+					new FileReader(fn), (byte) 1);
 			Phrase phrase;
 			int lineCount = 0;
 			try {
@@ -133,8 +129,7 @@ public class Subsampler {
 				),
 			new BiCorpusFactory(
 				fpath, epath, null,
-				extf,  exte,  null,
-				this.vf, this.ve)
+				extf,  exte,  null)
 			);
 	}
 	

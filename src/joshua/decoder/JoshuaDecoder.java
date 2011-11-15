@@ -18,7 +18,6 @@
 package joshua.decoder;
 
 import java.io.BufferedWriter;
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -28,29 +27,25 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import joshua.corpus.Corpus;
-import joshua.corpus.vocab.KenSymbol;
-import joshua.corpus.vocab.SymbolTable;
-import joshua.corpus.vocab.Vocabulary;
+import joshua.corpus.Vocabulary;
 import joshua.decoder.ff.ArityPhrasePenaltyFF;
 import joshua.decoder.ff.FeatureFunction;
+import joshua.decoder.ff.OOVFF;
 import joshua.decoder.ff.PhraseModelFF;
 import joshua.decoder.ff.SourcePathFF;
 import joshua.decoder.ff.WordPenaltyFF;
-import joshua.decoder.ff.OOVFF;
 import joshua.decoder.ff.lm.LanguageModelFF;
-import joshua.decoder.ff.lm.kenlm.jni.KenLM;
 import joshua.decoder.ff.lm.NGramLanguageModel;
 import joshua.decoder.ff.lm.buildin_lm.LMGrammarJAVA;
+import joshua.decoder.ff.lm.kenlm.jni.KenLM;
 import joshua.decoder.ff.state_maintenance.NgramStateComputer;
 import joshua.decoder.ff.state_maintenance.StateComputer;
 import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.GrammarFactory;
-import joshua.decoder.ff.tm.hiero.MemoryBasedBatchGrammar;
+import joshua.decoder.ff.tm.hash_based.MemoryBasedBatchGrammar;
 import joshua.ui.hypergraph_visualizer.HyperGraphViewer;
 import joshua.util.FileUtility;
 import joshua.util.Regex;
-import joshua.util.io.BinaryIn;
 import joshua.util.io.LineReader;
 
 /**
@@ -70,7 +65,7 @@ public class JoshuaDecoder {
 	 * they all share pointers to the same object. This is good
 	 * because it reduces overhead, but it can be problematic
 	 * because of unseen dependencies (for example, in the
-	 * SymbolTable shared by language model, translation grammar,
+	 * Vocabulary shared by language model, translation grammar,
 	 * etc).
 	 */
 	/** The DecoderFactory is the main thread of decoding */
@@ -82,12 +77,6 @@ public class JoshuaDecoder {
 	private List<StateComputer>        stateComputers;
 	
 	private Map<String,Integer>        ruleStringToIDTable;
-	
-	/**
-	 * Shared symbol table for source language terminals, target
-	 * language terminals, and shared nonterminals.
-	 */
-	public static SymbolTable                symbolTable;
 	
 	/** Logger for this class. */
 	private static final Logger logger =
@@ -205,7 +194,7 @@ public class JoshuaDecoder {
 	
 	public void visualizeHyperGraphForSentence(String sentence)
 	{
-		HyperGraphViewer.visualizeHypergraphInFrame(this.decoderFactory.getHyperGraphForSentence(sentence), this.symbolTable);
+		HyperGraphViewer.visualizeHypergraphInFrame(this.decoderFactory.getHyperGraphForSentence(sentence));
 	}
 	
 	
@@ -281,11 +270,7 @@ public class JoshuaDecoder {
 			if (JoshuaConfiguration.tm_file == null)
 				throw new RuntimeException("No translation grammar or suffix array grammar was specified.");
 
-			// Sets: symbolTable, defaultNonterminals
-			//symbol table may grow on the fly during decoding
-			this.initializeSymbolTable(null);
-
-			// Needs: symbolTable; Sets: languageModel
+			// Sets: languageModel
 			if (JoshuaConfiguration.have_lm_model)
 				initializeLanguageModel();
 
@@ -300,7 +285,7 @@ public class JoshuaDecoder {
 			// again
 			this.initializeFeatureFunctions(configFile);
 					
-			this.initializeStateComputers(symbolTable, JoshuaConfiguration.lm_order, JoshuaConfiguration.ngramStateID);
+			this.initializeStateComputers(JoshuaConfiguration.lm_order, JoshuaConfiguration.ngramStateID);
 
 			// Sort the TM grammars (needed to do cube pruning)
 			for (GrammarFactory grammarFactory : this.grammarFactories) {
@@ -314,8 +299,7 @@ public class JoshuaDecoder {
 				this.grammarFactories,
 				JoshuaConfiguration.use_max_lm_cost_for_oov,
 				this.featureFunctions,
-				this.stateComputers,
-				this.symbolTable);
+				this.stateComputers);
 			
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -323,22 +307,8 @@ public class JoshuaDecoder {
 		
 		return this;
 	}
-	
-	// TODO: maybe move to JoshuaConfiguration to enable moving the featureFunction parsing there (Sets: symbolTable, defaultNonterminals)
-	private void initializeSymbolTable(SymbolTable existingSymbols) {
-		logger.finest("Using KenLM symbol table");
-		if (null == existingSymbols) {
-			// This will be set by initializeLanguageModel.  
-			this.symbolTable = null;
-		}
 		
-		// Add the default nonterminal
-		if (!JoshuaConfiguration.use_kenlm) 
-			this.symbolTable.addNonterminal(JoshuaConfiguration.default_non_terminal);
-	}
-	
-	
-	// TODO: maybe move to JoshuaConfiguration to enable moving the featureFunction parsing there (Needs: symbolTable; Sets: languageModel)
+	// TODO: maybe move to JoshuaConfiguration to enable moving the featureFunction parsing there (Needs: Vocabulary; Sets: languageModel)
 	// TODO: check we actually have a feature that requires a language model
 	private void initializeLanguageModel() throws IOException {
 		// BUG: All these different boolean LM fields should just be an enum.
@@ -352,14 +322,13 @@ public class JoshuaDecoder {
 			}
 			KenLM lm = new KenLM(JoshuaConfiguration.lm_file);
 			this.languageModel = lm;
-			this.symbolTable = new KenSymbol(lm);
-			this.symbolTable.addNonterminal(JoshuaConfiguration.default_non_terminal);
+			Vocabulary.registerLanguageModel(lm);
+			Vocabulary.id(JoshuaConfiguration.default_non_terminal);
 	} else {
 
 		logger.warning("WARNING: using built-in language model; you probably didn't intend this");
 			
 		this.languageModel = new LMGrammarJAVA(
-				this.symbolTable,
 				JoshuaConfiguration.lm_order,
 				JoshuaConfiguration.lm_file,
 				JoshuaConfiguration.use_left_equivalent_state,
@@ -374,7 +343,6 @@ public class JoshuaDecoder {
 		MemoryBasedBatchGrammar gr = new MemoryBasedBatchGrammar(
 				JoshuaConfiguration.glue_format,
 				JoshuaConfiguration.glue_file,
-				this.symbolTable,
 				JoshuaConfiguration.glue_owner,
 				JoshuaConfiguration.default_non_terminal,
 				-1,
@@ -385,47 +353,46 @@ public class JoshuaDecoder {
 		if(JoshuaConfiguration.useRuleIDName){
 			if(this.ruleStringToIDTable==null)
 				this.ruleStringToIDTable = new HashMap<String,Integer>();
-			gr.obtainRulesIDTable(this.ruleStringToIDTable, this.symbolTable);			
+			gr.obtainRulesIDTable(this.ruleStringToIDTable);			
 		}
 		
 	}
 	
 	
 	private void initializeMainTranslationGrammar() throws IOException {
-				
-        if (! JoshuaConfiguration.use_sent_specific_tm) {
+
+		if (! JoshuaConfiguration.use_sent_specific_tm) {
 			if (logger.isLoggable(Level.INFO))
 				logger.info("Using grammar read from file " + JoshuaConfiguration.tm_file);
 
-            MemoryBasedBatchGrammar gr = new MemoryBasedBatchGrammar(
+			MemoryBasedBatchGrammar gr = new MemoryBasedBatchGrammar(
 					JoshuaConfiguration.tm_format,
-                    JoshuaConfiguration.tm_file,
-                    this.symbolTable,
-                    JoshuaConfiguration.phrase_owner,
-                    JoshuaConfiguration.default_non_terminal,
-                    JoshuaConfiguration.span_limit,
-                    JoshuaConfiguration.oov_feature_cost);
+					JoshuaConfiguration.tm_file,
+					JoshuaConfiguration.phrase_owner,
+					JoshuaConfiguration.default_non_terminal,
+					JoshuaConfiguration.span_limit,
+					JoshuaConfiguration.oov_feature_cost);
 
-            this.grammarFactories.add(gr);
-		
-            if(JoshuaConfiguration.useRuleIDName){
-                if(this.ruleStringToIDTable==null)
-                    this.ruleStringToIDTable = new HashMap<String,Integer>();
-                gr.obtainRulesIDTable(this.ruleStringToIDTable, this.symbolTable);			
-            }
+			this.grammarFactories.add(gr);
+
+			if(JoshuaConfiguration.useRuleIDName){
+				if(this.ruleStringToIDTable==null)
+					this.ruleStringToIDTable = new HashMap<String,Integer>();
+				gr.obtainRulesIDTable(this.ruleStringToIDTable);			
+			}
 		} else {
 			if (logger.isLoggable(Level.INFO))
 				logger.info("Basing sentence-specific grammars on file " + JoshuaConfiguration.tm_file);
 		}
 	}
 	
-	private void initializeStateComputers(SymbolTable symbolTable, int nGramOrder, int ngramStateID){
+	private void initializeStateComputers(int nGramOrder, int ngramStateID){
 		stateComputers = new ArrayList<StateComputer>();
-		StateComputer ngramStateComputer = new NgramStateComputer(symbolTable, nGramOrder, ngramStateID);
+		StateComputer ngramStateComputer = new NgramStateComputer(nGramOrder, ngramStateID);
 		stateComputers.add(ngramStateComputer);
 	}
 	
-	// BUG: why are we re-reading the configFile? JoshuaConfiguration should do this. (Needs: languageModel, symbolTable, (logger?); Sets: featureFunctions)
+	// BUG: why are we re-reading the configFile? JoshuaConfiguration should do this. (Needs: languageModel, Vocabulary, (logger?); Sets: featureFunctions)
 	private void initializeFeatureFunctions(String configFile)
 	throws IOException {
 		this.featureFunctions = new ArrayList<FeatureFunction>();
@@ -450,7 +417,7 @@ public class JoshuaDecoder {
 							JoshuaConfiguration.ngramStateID,	
 							this.featureFunctions.size(),
 							JoshuaConfiguration.lm_order,
-							this.symbolTable, this.languageModel, weight));
+							this.languageModel, weight));
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format(
 							"Line: %s\nAdd LM, order: %d; weight: %.3f;",
@@ -467,7 +434,7 @@ public class JoshuaDecoder {
 							line, weight));
 					
 				} else if ("phrasemodel".equals(fds[0]) && fds.length == 4) { // phrasemodel owner column(0-indexed) weight
-					int    owner  = this.symbolTable.addTerminal(fds[1]);
+					int    owner  = Vocabulary.id(fds[1]);
 					int    column = Integer.parseInt(fds[2].trim());
 					double weight = Double.parseDouble(fds[3].trim());
 					this.featureFunctions.add(
@@ -481,7 +448,7 @@ public class JoshuaDecoder {
 							line, owner, column, weight));
 					
 				} else if ("arityphrasepenalty".equals(fds[0]) && fds.length == 5) { // arityphrasepenalty owner start_arity end_arity weight
-					int owner      = this.symbolTable.addTerminal(fds[1]);
+					int owner      = Vocabulary.id(fds[1]);
 					int startArity = Integer.parseInt(fds[2].trim());
 					int endArity   = Integer.parseInt(fds[3].trim());
 					double weight  = Double.parseDouble(fds[4].trim());
@@ -507,7 +474,7 @@ public class JoshuaDecoder {
 
 				} else if ("oovpenalty".equals(fds[0]) && fds.length == 2) { // wordpenalty weight
 					double weight = Double.parseDouble(fds[1].trim());
-					int owner  = this.symbolTable.addTerminal("pt");
+					int owner  = Vocabulary.id("pt");
 					int column = JoshuaConfiguration.num_phrasal_features;
 
 					this.featureFunctions.add(

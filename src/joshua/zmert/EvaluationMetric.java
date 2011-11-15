@@ -17,9 +17,14 @@
  */
 
 package joshua.zmert;
-import java.util.*;
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.text.DecimalFormat;
-import java.io.*;
+import java.util.Arrays;
+import java.util.TreeMap;
 
 public abstract class EvaluationMetric
 {

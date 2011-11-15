@@ -1,11 +1,12 @@
 package joshua.decoder.ff.tm;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.util.Iterator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import joshua.corpus.vocab.SymbolTable;
+import joshua.corpus.Vocabulary;
 import joshua.util.io.LineReader;
 
 /**
@@ -24,8 +25,6 @@ implements Iterable<R>, Iterator<R> {
 
 	protected static String description;
 
-	protected SymbolTable symbolTable;
-
 	protected String fileName;
 	protected LineReader reader;
 	protected String lookAhead;
@@ -35,13 +34,11 @@ implements Iterable<R>, Iterator<R> {
 
 	// dummy constructor for
 	public GrammarReader() {
-		this.symbolTable = null;
 		this.fileName = null;
 	}
 	
-	public GrammarReader(String fileName, SymbolTable symbolTable) {
+	public GrammarReader(String fileName) {
 		this.fileName = fileName;
-		this.symbolTable = symbolTable;
 	}
 
 	public void initialize() {
@@ -132,8 +129,7 @@ implements Iterable<R>, Iterator<R> {
 	
 	public int cleanNonTerminal(int tokenID) {
 		// cleans NT of any markup, e.g., [X,1] may becomes [X], depending 
-		return symbolTable.addNonterminal(
-				cleanNonTerminal(symbolTable.getWord(tokenID)));
+		return Vocabulary.id(cleanNonTerminal(Vocabulary.word(tokenID)));
 	}
 
 	public String cleanNonTerminal(String word) {

@@ -36,7 +36,7 @@ import java.util.Set;
  * @author Lane O.B. Schwartz
  * @version $LastChangedDate$
  */
-@SuppressWarnings("unchecked")
+@SuppressWarnings("rawtypes")
 public class CommandLineParser {
 
 	private Map<Character,Option<Integer>> intShortForms;
@@ -382,7 +382,6 @@ public class CommandLineParser {
 		System.exit(1);
 	}
 	
-	
 	public Option parseLongForm(String key, String value) {
 		
 		if (intLongForms.containsKey(key)) {
@@ -522,7 +521,7 @@ public class CommandLineParser {
 		private final String comment;
 		private final OptionType defaultValue;
 		private final String valueVariable;
-		private final Set legalValues;
+		private final Set<OptionType> legalValues;
 		
 		public static final char MISSING_SHORT_FORM = '\u0000';
 		public static final String MISSING_LONG_FORM = "\u0000";

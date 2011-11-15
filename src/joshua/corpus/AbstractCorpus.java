@@ -19,8 +19,6 @@ package joshua.corpus;
 
 import java.util.Iterator;
 
-import joshua.corpus.vocab.SymbolTable;
-
 
 /**
  * This class provides a mostly-complete implementation of the
@@ -31,25 +29,13 @@ import joshua.corpus.vocab.SymbolTable;
  * @author Lane Schwartz
  * @author Chris Callison-Burch
  */
-public abstract class AbstractCorpus<Vocab extends SymbolTable> implements Corpus {
-
-	/** 
-	 * Symbol table for the corpus, responsible for mapping
-	 * between tokens in the corpus and the integer representations
-	 * of those tokens.
-	 */
-	protected Vocab symbolTable;
+public abstract class AbstractCorpus implements Corpus {
 	
 	/**
 	 * Constructs an abstract corpus with the specified symbol
 	 * table.
-	 *
-	 * @param symbolTable Symbol table for the corpus, responsible
-	 *            for mapping between tokens in the corpus and
-	 *            the integer representations of those tokens
 	 */
-	public AbstractCorpus(Vocab symbolTable) {
-		this.symbolTable = symbolTable;
+	public AbstractCorpus() {
 	}
 	
 	
@@ -139,11 +125,6 @@ public abstract class AbstractCorpus<Vocab extends SymbolTable> implements Corpu
 		return sentenceNumber;
 	}
 	
-	/* See Javadoc for Corpus interface. */
-	public SymbolTable getVocabulary() {
-		return symbolTable;
-	}
-
 	/* See Javadoc for Corpus interface. */
 	public abstract int getWordID(int position);
 

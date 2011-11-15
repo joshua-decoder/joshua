@@ -27,15 +27,15 @@
  */
 package joshua.subsample;
 
-import joshua.corpus.Phrase;
-import joshua.corpus.vocab.Vocabulary;
-
-import java.util.Iterator;
-import java.util.NoSuchElementException;
+import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
-import java.io.BufferedReader;
 import java.io.IOException;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
+
+import joshua.corpus.Phrase;
+import joshua.corpus.Vocabulary;
 
 
 /**
@@ -60,8 +60,6 @@ implements Iterable<PhrasePair> {
 	protected final String     foreignFileName;
 	protected final String     nativeFileName;
 	protected final String     alignmentFileName;
-	protected final Vocabulary foreignVocab;
-	protected final Vocabulary nativeVocab;
 	
 //===============================================================
 // Constructors
@@ -69,10 +67,9 @@ implements Iterable<PhrasePair> {
 	/**
 	 * Constructor for unaligned BiCorpus.
 	 */
-	public BiCorpus(String foreignFileName, String nativeFileName,
-		Vocabulary foreignVocab, Vocabulary nativeVocab)
+	public BiCorpus(String foreignFileName, String nativeFileName)
 	throws IOException {
-		this(foreignFileName, nativeFileName, null, foreignVocab, nativeVocab);
+		this(foreignFileName, nativeFileName, null);
 	}
 	
 	
@@ -80,14 +77,11 @@ implements Iterable<PhrasePair> {
 	 * Constructor for word-aligned BiCorpus.
 	 */
 	public BiCorpus(String foreignFileName, String nativeFileName,
-		String alignmentFileName,
-		Vocabulary foreignVocab, Vocabulary nativeVocab)
+		String alignmentFileName)
 	throws IOException, IllegalArgumentException, IndexOutOfBoundsException {
 		this.foreignFileName   = foreignFileName;
 		this.nativeFileName    = nativeFileName;
 		this.alignmentFileName = alignmentFileName;
-		this.foreignVocab      = foreignVocab;
-		this.nativeVocab       = nativeVocab;
 		
 		// Check for fileLengthMismatchException
 		// Of course, that will be checked for in each iteration
@@ -119,11 +113,9 @@ implements Iterable<PhrasePair> {
 		try {
 			closureRF = new PhraseReader(
 				new FileReader(this.foreignFileName),
-				this.foreignVocab,
 				(byte)1);
 			closureRE = new PhraseReader(
 				new FileReader(this.nativeFileName),
-				this.nativeVocab,
 				(byte)0);
 			closureRA = ( null == this.alignmentFileName
 				? null

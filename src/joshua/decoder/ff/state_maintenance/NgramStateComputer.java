@@ -2,9 +2,10 @@ package joshua.decoder.ff.state_maintenance;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import joshua.corpus.vocab.SymbolTable;
+import joshua.corpus.Vocabulary;
 import joshua.decoder.chart_parser.SourcePath;
 import joshua.decoder.ff.tm.Rule;
 import joshua.decoder.hypergraph.HGNode;
@@ -12,7 +13,6 @@ import joshua.decoder.hypergraph.HGNode;
 
 public class NgramStateComputer implements StateComputer<NgramDPState> {
 	
-	private SymbolTable symbolTable;
 	private int ngramOrder;
 	private int stateID;
 	
@@ -21,8 +21,7 @@ public class NgramStateComputer implements StateComputer<NgramDPState> {
 	
 	/**SateID should be any integer except -1
 	 * */
-	public NgramStateComputer(SymbolTable symbolTable, int nGramOrder, int stateID){
-		this.symbolTable = symbolTable;
+	public NgramStateComputer(int nGramOrder, int stateID){
 		this.ngramOrder = nGramOrder;
 		this.stateID = stateID;
 		logger.info("NgramStateComputer: stateID=" + stateID + "; ngramOrder=" + this.ngramOrder);
@@ -54,11 +53,14 @@ public class NgramStateComputer implements StateComputer<NgramDPState> {
 		
 		for (int c = 0; c < enWords.length; c++) {
 			int curID = enWords[c];
-			if (symbolTable.isNonterminal(curID)) {
-
+			if (Vocabulary.idx(curID)) {
 				//== get left- and right-context
-				int index = symbolTable.getTargetNonterminalIndex(curID); 
-				NgramDPState antState = (NgramDPState)antNodes.get(index).getDPState(this.getStateID());//TODO 
+				int index = -(curID + 1);
+				
+				if (logger.isLoggable(Level.FINEST))
+					logger.finest("Looking up state at: " + index);
+				
+				NgramDPState antState = (NgramDPState) antNodes.get(index).getDPState(this.getStateID());//TODO 
     			List<Integer> leftContext = antState.getLeftLMStateWords();
     			List<Integer> rightContext = antState.getRightLMStateWords();
 				

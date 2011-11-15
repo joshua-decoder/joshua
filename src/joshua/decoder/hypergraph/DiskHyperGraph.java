@@ -27,11 +27,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import joshua.corpus.vocab.BuildinSymbol;
-import joshua.corpus.vocab.SymbolTable;
+import joshua.corpus.Vocabulary;
 import joshua.decoder.chart_parser.ComputeNodeResult;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.state_maintenance.DPState;
@@ -40,8 +40,8 @@ import joshua.decoder.ff.tm.BilingualRule;
 import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.GrammarReader;
 import joshua.decoder.ff.tm.Rule;
-import joshua.decoder.ff.tm.hiero.DiskHyperGraphFormatReader;
-import joshua.decoder.ff.tm.hiero.MemoryBasedBatchGrammar;
+import joshua.decoder.ff.tm.format.DiskHyperGraphFormatReader;
+import joshua.decoder.ff.tm.hash_based.MemoryBasedBatchGrammar;
 import joshua.util.FileUtility;
 import joshua.util.Regex;
 
@@ -69,7 +69,6 @@ public class DiskHyperGraph {
 // Fields
 //===============================================================
 	private int         LMFeatureID          = 0;
-	private SymbolTable symbolTable;
 	
 	//when saving the hg, we simply compute all the model logP on the fly and store them on the disk
 	/*TODO: when reading the hg, we read thm into a WithModelCostsHyperEdge; 
@@ -142,10 +141,9 @@ public class DiskHyperGraph {
 	 * For reading purpose, one does not need to provide the
 	 * list.
 	 */
-	public DiskHyperGraph(SymbolTable symbolTable, int LMFeatureID,
+	public DiskHyperGraph(int LMFeatureID,
 		boolean storeModelCosts, List<FeatureFunction> featureFunctions) 
 	{
-		this.symbolTable      = symbolTable;
 		this.LMFeatureID      = LMFeatureID;
 		this.storeModelLogP  = storeModelCosts;
 		this.featureFunctions = featureFunctions;
@@ -173,10 +171,10 @@ public class DiskHyperGraph {
 			: FileUtility.getWriteFileStream(itemsFile);
 		
 		if (ruleReader == null)
-			ruleReader = new DiskHyperGraphFormatReader(null, this.symbolTable);
+			ruleReader = new DiskHyperGraphFormatReader(null);
 			
 		if (useForestPruning) {
-			this.pruner = new HyperGraphPruning(this.symbolTable, true, threshold, threshold);
+			this.pruner = new HyperGraphPruning(true, threshold, threshold);
 		}
 	}
 	
@@ -197,7 +195,7 @@ public class DiskHyperGraph {
 		this.associatedGrammar.clear();
 		
 		this.ruleReader = 
-			new DiskHyperGraphFormatReader(rulesFile, this.symbolTable);
+			new DiskHyperGraphFormatReader(rulesFile);
 			
 		if (ruleReader != null) {
 			ruleReader.initialize();
@@ -316,7 +314,7 @@ public class DiskHyperGraph {
 				.append(" ")
 				.append(item.j)
 				.append(" ")
-				.append(this.symbolTable.getWord(item.lhs))
+				.append(Vocabulary.word(item.lhs))
 				.append(" ")
 				.append(
 					null == item.hyperedges
@@ -328,7 +326,7 @@ public class DiskHyperGraph {
 					null != item.getDPStates()
 					? item.getDPStates()
 						.get(this.LMFeatureID)
-						.getSignature(this.symbolTable, true)
+						.getSignature(true)
 					: NULL_ITEM_STATE )
 				.append("\n")
 				.toString()
@@ -384,9 +382,9 @@ public class DiskHyperGraph {
 			//System.out.println("lhs id: " + deduction_rule.getLHS());
 			//System.out.println("rule words: " + deduction_rule.getEnglish());
 			s.append(' ')
-				.append(this.symbolTable.getWord(edgeRule.getLHS()))
+				.append(Vocabulary.word(edgeRule.getLHS()))
 				.append(' ')
-				.append(this.symbolTable.getWords(edgeRule.getEnglish()));
+				.append(Vocabulary.getWords(edgeRule.getEnglish()));
 		}
 		s.append('\n');
 		
@@ -486,16 +484,16 @@ public class DiskHyperGraph {
 		int itemID        = Integer.parseInt(words[1]);
 		int i             = Integer.parseInt(words[2]);
 		int j             = Integer.parseInt(words[3]);
-		int lhs           = this.symbolTable.addNonterminal(words[4]);
+		int lhs           = Vocabulary.id(words[4]);
 		int qtyDeductions = Integer.parseInt(words[5]);
 		
 		//item state: signature (created from HashMap tbl_states)
-		HashMap<Integer,DPState> dpStates = null;
+		TreeMap<Integer,DPState> dpStates = null;
 		
 		if (fds[1].compareTo(NULL_ITEM_STATE) != 0) {
 			// Assume the only stateful feature is lm feature
-			dpStates = new HashMap<Integer,DPState>();
-			dpStates.put(this.LMFeatureID,	new NgramDPState(this.symbolTable, fds[1]));
+			dpStates = new TreeMap<Integer,DPState>();
+			dpStates.put(this.LMFeatureID,	new NgramDPState(fds[1]));
 		}
 		
 		List<HyperEdge> edges = null;
@@ -550,10 +548,10 @@ public class DiskHyperGraph {
 					throw new RuntimeException("rule is null but id is " + ruleID);
 				}
 			} else {
-				rule = pGrammar.constructOOVRule(1,	this.symbolTable.addTerminal(fds[4+qtyAntecedents]), this.symbolTable.addTerminal(fds[4+qtyAntecedents]), false);
+				rule = pGrammar.constructOOVRule(1,	Vocabulary.id(fds[4+qtyAntecedents]), Vocabulary.id(fds[4+qtyAntecedents]), false);
 				
 				/**This is a hack. as the pGrammar does not set defaultLHS properly*/
-				int lhs = this.symbolTable.addNonterminal(fds[3+qtyAntecedents]);
+				int lhs = Vocabulary.id(fds[3+qtyAntecedents]);
 				rule.setLHS(lhs);
 			}
 		} else {
@@ -580,13 +578,12 @@ public class DiskHyperGraph {
 //===============================================================
 	static public Map<String,Integer> obtainRuleStringToIDTable(String rulesFile) {
 				
-		SymbolTable symbolTable = new BuildinSymbol(null);
-		GrammarReader<BilingualRule> ruleReader = new DiskHyperGraphFormatReader(rulesFile, symbolTable);
+		GrammarReader<BilingualRule> ruleReader = new DiskHyperGraphFormatReader(rulesFile);
 		Map<String,Integer> rulesIDTable = new HashMap<String,Integer>();
 		
 		ruleReader.initialize();
 		for (Rule rule : ruleReader) {				
-			rulesIDTable.put(rule.toStringWithoutFeatScores(symbolTable), rule.getRuleID());
+			rulesIDTable.put(rule.toStringWithoutFeatScores(), rule.getRuleID());
 		}			
 		ruleReader.close();			
 	
@@ -598,22 +595,20 @@ public class DiskHyperGraph {
 			boolean useUniqueNbest, boolean useTreeNbest,
 			String filePrefix1, String filePrefix2, String filePrefixOut, boolean removeDuplicate) throws IOException{
 		
-		SymbolTable symbolTbl = new BuildinSymbol();
-		
-		DiskHyperGraph diskHG1 = new DiskHyperGraph(symbolTbl, ngramStateID, saveModelCosts, null); 
+		DiskHyperGraph diskHG1 = new DiskHyperGraph(ngramStateID, saveModelCosts, null); 
 		diskHG1.initRead(filePrefix1+".hg.items", filePrefix1+".hg.rules", null);
 		
-		DiskHyperGraph diskHG2 = new DiskHyperGraph(symbolTbl, ngramStateID, saveModelCosts, null); 
+		DiskHyperGraph diskHG2 = new DiskHyperGraph(ngramStateID, saveModelCosts, null); 
 		diskHG2.initRead(filePrefix2+".hg.items", filePrefix2+".hg.rules", null);
 		
-		DiskHyperGraph diskHGOut = new DiskHyperGraph(symbolTbl, ngramStateID, saveModelCosts, null);
+		DiskHyperGraph diskHGOut = new DiskHyperGraph(ngramStateID, saveModelCosts, null);
 		
 		//TODO
 		boolean forestPruning = false;
 		double forestPruningThreshold = -1;		
 		diskHGOut.initWrite(filePrefixOut + ".hg.items", forestPruning, forestPruningThreshold);
 		
-		KBestExtractor kbestExtrator = new KBestExtractor(symbolTbl, useUniqueNbest, useTreeNbest,
+		KBestExtractor kbestExtrator = new KBestExtractor(useUniqueNbest, useTreeNbest,
 				false,	false,	false, false);
 		
 		int totalNumHyp = 0;
