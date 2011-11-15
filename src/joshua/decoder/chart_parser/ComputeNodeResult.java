@@ -3,6 +3,7 @@ package joshua.decoder.chart_parser;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.TreeMap;
 
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.state_maintenance.DPState;
@@ -25,10 +26,7 @@ public class ComputeNodeResult {
 	private double transitionTotalLogP;
 	
 	// the key is state id;
-	private HashMap<Integer,DPState> dpStates;
-	
-	
-	
+	private TreeMap<Integer,DPState> dpStates;
 	
 	/** 
 	 * Compute logPs and the states of the node
@@ -46,14 +44,14 @@ public class ComputeNodeResult {
 		}
 		
 		
-		HashMap<Integer,DPState> allDPStates = null;
+		TreeMap<Integer,DPState> allDPStates = null;
 		
 		if(stateComputers!=null){
 			for(StateComputer stateComputer : stateComputers){
 				DPState dpState = stateComputer.computeState(rule, antNodes, i, j, srcPath);					
 				
 				if(allDPStates==null)
-					allDPStates = new HashMap<Integer,DPState>();
+					allDPStates = new TreeMap<Integer,DPState>();
 				allDPStates.put(stateComputer.getStateID(), dpState);
 			}
 		}
@@ -188,11 +186,11 @@ public class ComputeNodeResult {
 		return this.transitionTotalLogP;
 	}
 	
-	void setDPStates(HashMap<Integer,DPState> states) {
+	void setDPStates(TreeMap<Integer,DPState> states) {
 		this.dpStates = states;
 	}
 	
-	HashMap<Integer,DPState> getDPStates() {
+	TreeMap<Integer,DPState> getDPStates() {
 		return this.dpStates;
 	}
 	

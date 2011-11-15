@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
+import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -178,7 +179,7 @@ class Cell {
 	) {
 		HGNode res = null;
 		
-		HashMap<Integer,DPState> dpStates = result.getDPStates();
+		TreeMap<Integer,DPState> dpStates = result.getDPStates();
 		double expectedTotalLogP  = result.getExpectedTotalLogP(); // including outside estimation
 		double transitionLogP    = result.getTransitionTotalLogP();
 		double finalizedTotalLogP = result.getFinalizedTotalLogP();
@@ -244,14 +245,15 @@ class Cell {
 // Private Methods
 //===============================================================
 
-	/**two cases this function gets called
-	 * (1) a new hyperedge leads to a non-existing node signature
-	 * (2) a new hyperedge's signature matches an old node's signature, but the best-logp of old node is worse than the new hyperedge's logP
+	/**
+	 * Two cases this function gets called:
+	 * (1) A new hyperedge leads to a non-existing node signature.
+	 * (2) A new hyperedge's signature matches an old node's signature, but
+	 *     the best-logP of old node is worse than the new hyperedge's logP.
 	 * */
 	private void addNewNode(HGNode node, boolean noPrune) {
 		this.nodesSigTbl.put(node.getSignature(), node); // add/replace the item
 		this.sortedNodes = null; // reset the list
-			
 	
 		if(beamPruner!=null){
 			if(noPrune==false){
@@ -272,17 +274,14 @@ class Cell {
 			this.superNodesTbl.put(node.lhs, si);
 		}
 		si.nodes.add(node);//TODO what about the dead items?
-		
-	
 	}
 
-	
-	
-	/** get a sorted list of Nodes in the cell, and also make
+	/** 
+	 * Get a sorted list of Nodes in the cell, and also make
 	 * sure the list of node in any SuperItem is sorted, this
 	 * will be called only necessary, which means that the list
 	 * is not always sorted, mainly needed for goal_bin and
-	 * cube-pruning
+	 * cube-pruning.
 	 */
 	private void ensureSorted() {
 		

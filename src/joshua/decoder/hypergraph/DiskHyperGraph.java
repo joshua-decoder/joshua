@@ -27,6 +27,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -487,11 +488,11 @@ public class DiskHyperGraph {
 		int qtyDeductions = Integer.parseInt(words[5]);
 		
 		//item state: signature (created from HashMap tbl_states)
-		HashMap<Integer,DPState> dpStates = null;
+		TreeMap<Integer,DPState> dpStates = null;
 		
 		if (fds[1].compareTo(NULL_ITEM_STATE) != 0) {
 			// Assume the only stateful feature is lm feature
-			dpStates = new HashMap<Integer,DPState>();
+			dpStates = new TreeMap<Integer,DPState>();
 			dpStates.put(this.LMFeatureID,	new NgramDPState(fds[1]));
 		}
 		

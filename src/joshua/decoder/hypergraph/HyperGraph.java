@@ -18,8 +18,8 @@
 package joshua.decoder.hypergraph;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
+import java.util.TreeMap;
 import java.util.logging.Logger;
 
 import joshua.decoder.ff.state_maintenance.DPState;
@@ -69,26 +69,24 @@ public class HyperGraph {
 	}
 	
 	public static HyperGraph mergeHyperGraphs(List<HyperGraph> hgs){
-
-	
-		//==== use the first hg to get i, j, lhs, sentID, sentLen
+		// Use the first hg to get i, j, lhs, sentID, sentLen.
 		HyperGraph hg1 = hgs.get(0);
 		int sentID = hg1.sentID;
 		int sentLen = hg1.sentLen;
 		
-		//create new goal node
+		// Create new goal node.
 		int goalI = hg1.goalNode.i;
 		int goalJ = hg1.goalNode.j;
 		int goalLHS = hg1.goalNode.lhs;		
-		HashMap<Integer,DPState> goalDPStates = null;//TODO
-		double goalEstTotalLogP = -1;//TODO
+		TreeMap<Integer,DPState> goalDPStates = null;
+		double goalEstTotalLogP = -1;
 		HGNode newGoalNode = new HGNode(goalI, goalJ, goalLHS, goalDPStates, null, goalEstTotalLogP);;
 		
-		//===== attach all edges under old goal nodes into the new goal node
+		// Attach all edges under old goal nodes into the new goal node.
 		int numNodes = 0;
 		int numEdges = 0;		
 		for(HyperGraph hg : hgs){
-			//saniy check if the hgs belongs to the same source input
+			// Sanity check if the hgs belongs to the same source input.
 			if(hg.sentID!=sentID || hg.sentLen!=sentLen || 
 			   hg.goalNode.i != goalI || hg.goalNode.j != goalJ || hg.goalNode.lhs != goalLHS){
 				logger.severe("hg belongs to different source sentences, must be wrong");
@@ -103,9 +101,6 @@ public class HyperGraph {
 				
 		return new HyperGraph(newGoalNode, numNodes, numEdges, sentID, sentLen);
 	}
-	
-	
-	
 	
 	//####### template to explore hypergraph #########################
 	/*
