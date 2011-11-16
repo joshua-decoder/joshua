@@ -175,14 +175,14 @@ public class JoshuaConfiguration {
 	
 	public static boolean useMicroTMFeat = true;
 	public static String wordMapFile;/*tbl for mapping rule words*/
-
-	
 	
 	// use google linear corpus gain?
 	public static boolean useGoogleLinearCorpusGain = false;
 	public static double[] linearCorpusGainThetas = null;
 	public static boolean mark_oovs = true;
 	
+	// used to extract oracle hypotheses from the forest
+	public static String oracleFile = "";
 	
 	private static final Logger logger =
 		Logger.getLogger(JoshuaConfiguration.class.getName());
@@ -638,6 +638,12 @@ public class JoshuaConfiguration {
 					
 					logger.finest(String.format("googleBLEUWeights: %s", linearCorpusGainThetas));		
 					
+				} else if ("oracleFile".equals(fds[0])) {
+					oracleFile = fds[1].trim();
+					if (! new File(oracleFile).exists()) {
+						logger.warning("FATAL: can't find oracle file '" + oracleFile + "'");
+						System.exit(1);
+					}
 				} else {
 					logger.warning("WARNING: unknown configuration parameter '" + fds[0] + "'");
 					// System.exit(1);
