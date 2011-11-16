@@ -2400,10 +2400,10 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
 
     if (refsPerSen > 1) {
       // the provided refFileName might be a prefix
-      File dummy = new File(refFileName);
-      if (!dummy.exists()) {
+      // File dummy = new File(refFileName);
+      // if (!dummy.exists()) {
         refFileName = createUnifiedRefFile(refFileName,refsPerSen);
-      }
+      // }
     } else {
       checkFile(refFileName);
     }

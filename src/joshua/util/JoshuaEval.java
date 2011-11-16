@@ -1,3 +1,4 @@
+
 /* This file is part of the Joshua Machine Translation System.
  * 
  * Joshua is free software; you can redistribute it and/or modify
@@ -354,11 +355,11 @@ line format:
 		} // while (i)
 		
 		if (refsPerSen > 1) {
-			// the provided refFileName might be a prefix
-			File dummy = new File(refFileName);
-			if (!dummy.exists()) {
+			// the provided refFileName must be a prefix
+			// File dummy = new File(refFileName);
+			// if (!dummy.exists()) {
 				refFileName = createUnifiedRefFile(refFileName,refsPerSen);
-			}
+			// }
 		} else {
 			checkFile(refFileName);
 		}
