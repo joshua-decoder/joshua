@@ -17,17 +17,17 @@
  */
 package joshua.decoder;
 
-import joshua.util.Cache;
-import joshua.util.Regex;
-import joshua.util.io.LineReader;
-
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.Random;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.io.PrintWriter;
-import java.io.FileWriter;
-import java.io.File;
-import java.io.IOException;
+
+import joshua.util.Cache;
+import joshua.util.Regex;
+import joshua.util.io.LineReader;
 
 /**
  * Configuration file for Joshua decoder.

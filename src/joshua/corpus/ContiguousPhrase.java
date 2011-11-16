@@ -18,9 +18,8 @@
 package joshua.corpus;
 
 
-import java.util.*;
-
-import joshua.corpus.vocab.SymbolTable;
+import java.util.ArrayList;
+import java.util.List;
 
 
 /**
@@ -64,15 +63,6 @@ public class ContiguousPhrase extends AbstractPhrase {
 	//===========================================================
 	// Accessor methods (set/get)
 	//===========================================================
-	
-	/**
-	 * @return the vocabulary that the words in this phrase are
-	 *         drawn from.
-	 */
-	public SymbolTable getVocab() {
-		return corpusArray.getVocabulary();
-	}
-	
 	
 	/**
 	 * This method copies the phrase into an array of ints.

@@ -15,20 +15,22 @@
  * Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  * MA 02111-1307 USA
  */
-package joshua.decoder.ff.tm.hiero;
-
-import joshua.decoder.JoshuaConfiguration;
-import joshua.decoder.ff.tm.BatchGrammar;
-import joshua.decoder.ff.tm.Rule;
-import joshua.decoder.ff.tm.BilingualRule;
-import joshua.decoder.ff.tm.GrammarReader;
-import joshua.decoder.ff.tm.Trie;
-import joshua.corpus.vocab.SymbolTable;
+package joshua.decoder.ff.tm.hash_based;
 
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import joshua.corpus.Vocabulary;
+import joshua.decoder.JoshuaConfiguration;
+import joshua.decoder.ff.tm.BatchGrammar;
+import joshua.decoder.ff.tm.BilingualRule;
+import joshua.decoder.ff.tm.GrammarReader;
+import joshua.decoder.ff.tm.Rule;
+import joshua.decoder.ff.tm.Trie;
+import joshua.decoder.ff.tm.format.HieroFormatReader;
+import joshua.decoder.ff.tm.format.SamtFormatReader;
 
 /**
  * This class implements a memory-based bilingual BatchGrammar.
@@ -68,7 +70,6 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
 	private String grammarFile;
 
 	private int spanLimit = 10;
-	private final SymbolTable symbolTable;
 
 	private GrammarReader<BilingualRule> modelReader;
 	
@@ -93,29 +94,26 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
 //===============================================================
 
 	public MemoryBasedBatchGrammar() {
-		symbolTable = null;
 	}
 	
 	public MemoryBasedBatchGrammar(
 			String formatKeyword,
 			String grammarFile, 
-			SymbolTable symbolTable, 
 			String defaultOwner,
 			String defaultLHSSymbol,
 			int spanLimit,
 			float oovFeatureCost_) throws IOException 
 	{
 		
-		this.symbolTable  = symbolTable;
-		this.defaultOwner = this.symbolTable.addTerminal(defaultOwner);
-		this.defaultLHS   = this.symbolTable.addNonterminal(defaultLHSSymbol);
+		this.defaultOwner = Vocabulary.id(defaultOwner);
+		this.defaultLHS   = Vocabulary.id(defaultLHSSymbol);
 		this.spanLimit    = spanLimit;
 		this.oovFeatureCost = oovFeatureCost_;
 		this.root = new MemoryBasedTrie();
 		this.grammarFile = grammarFile;
 		
 		//==== loading grammar
-		this.modelReader = createReader(formatKeyword, grammarFile, symbolTable);
+		this.modelReader = createReader(formatKeyword, grammarFile);
 		if (modelReader != null) {
 			modelReader.initialize();
 			for (BilingualRule rule : modelReader)
@@ -130,12 +128,12 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
 	}
 	
 	protected GrammarReader<BilingualRule> createReader(String formatKeyword,
-			String grammarFile, SymbolTable symbolTable){
+			String grammarFile){
 		
 		if ("hiero".equals(formatKeyword) || "thrax".equals(formatKeyword)) {
-			return new HieroFormatReader(grammarFile, symbolTable);
+			return new HieroFormatReader(grammarFile);
 		} else if ("samt".equals(formatKeyword)) {
-			return new SamtFormatReader(grammarFile, symbolTable);
+			return new SamtFormatReader(grammarFile);
 		} else {
 			// TODO: throw something?
 			// TODO: add special warning if "heiro" mispelling is used
@@ -235,14 +233,19 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
 		for (int k = 0; k < french.length; k++) {
 			int curSymID = french[k];
 			
+			if (logger.isLoggable(Level.FINEST))
+				logger.finest("Matching: " + curSymID);
+			
 			/**Note that the nonTerminal symbol in the french is not cleaned (i.e., will be sth 
 			 * like [X,1]), but the symbol in the Trie has to be cleaned, so that the match does
 			 * not care about the markup (i.e., [X,1] or [X,2] means the same thing, that is X)*/
-			if (this.symbolTable.isNonterminal(french[k])) { 
+			if (Vocabulary.nt(french[k])) { 
 				curSymID = modelReader.cleanNonTerminal(french[k]);
+				if (logger.isLoggable(Level.FINEST))
+					logger.finest("Amended to: " + curSymID);
 			}
 			
-			MemoryBasedTrie nextLayer = pos.matchOne(curSymID);
+			MemoryBasedTrie nextLayer = pos.match(curSymID);
 			if (null == nextLayer) {
 				nextLayer = new MemoryBasedTrie();
 				if (pos.hasExtensions() == false) {

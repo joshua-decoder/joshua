@@ -17,7 +17,6 @@
  */
 package joshua.oracle;
 
-import joshua.corpus.vocab.SymbolTable;
 import joshua.decoder.hypergraph.HyperGraph;
 
 /**
@@ -33,13 +32,11 @@ public class OracleExtractor {
 	/**
 	 * Constructs an object capable of extracting an oracle
 	 * hypergraph.
-	 *
-	 * @param symbolTable
 	 */
-	public OracleExtractor(SymbolTable symbolTable) {
+	public OracleExtractor() {
 		
 		int baselineLanguageModelFeatureID = 0;
-		this.extractor = new OracleExtractionHG(symbolTable, baselineLanguageModelFeatureID);
+		this.extractor = new OracleExtractionHG(baselineLanguageModelFeatureID);
 		
 	}
 	

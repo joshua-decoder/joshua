@@ -17,9 +17,9 @@
  */
 package joshua.util.io;
 
+import java.io.IOException;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
-import java.io.IOException;
 
 
 /**

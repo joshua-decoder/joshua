@@ -26,12 +26,12 @@
  */
 package joshua.subsample;
 
-import joshua.corpus.BasicPhrase;
-import joshua.corpus.vocab.Vocabulary;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
+
+import joshua.corpus.BasicPhrase;
+import joshua.corpus.Vocabulary;
 
 
 /**
@@ -42,12 +42,10 @@ import java.io.Reader;
  * @version $LastChangedDate$
  */
 public class PhraseReader extends BufferedReader {
-	private Vocabulary vocabulary;
 	private byte       language;
 	
-	public PhraseReader(Reader r, Vocabulary v, byte language) {
+	public PhraseReader(Reader r, byte language) {
 		super(r);
-		this.vocabulary = v;
 		this.language = language;
 	}
 	
@@ -55,7 +53,7 @@ public class PhraseReader extends BufferedReader {
 		String line = super.readLine();
 		return (line == null
 			? null
-			: new BasicPhrase(this.language, line, this.vocabulary)
+			: new BasicPhrase(this.language, line)
 			);
 	}
 }

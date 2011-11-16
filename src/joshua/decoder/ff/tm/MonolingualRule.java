@@ -17,12 +17,11 @@
  */
 package joshua.decoder.ff.tm;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
-import joshua.corpus.vocab.SymbolTable;
+import joshua.corpus.Vocabulary;
 import joshua.decoder.ff.FeatureFunction;
 
 /**
@@ -235,12 +234,12 @@ public class MonolingualRule implements Rule {
 		private transient String cachedToString = null;
 		
 		@Deprecated
-		public String toString(Map<Integer,String> ntVocab, SymbolTable sourceVocab, SymbolTable targetVocab) {
+		public String toString(Map<Integer,String> ntVocab) {
 			if (null == this.cachedToString) {
 				StringBuffer sb = new StringBuffer();
 				sb.append(ntVocab.get(this.lhs));
 				sb.append(" ||| ");
-				sb.append(sourceVocab.getWords(this.pFrench,true));
+				sb.append(Vocabulary.getWords(this.pFrench));
 				sb.append(" |||");
 				for (int i = 0; i < this.featScores.length; i++) {
 					//sb.append(String.format(" %.4f", this.feat_scores[i]));
@@ -251,32 +250,13 @@ public class MonolingualRule implements Rule {
 			return this.cachedToString;
 		}
 		
-		
-		//print the rule in terms of Ingeters
-		@Deprecated
-		public String toString() {
-			if (null == this.cachedToString) {
-				StringBuffer sb = new StringBuffer();
-				sb.append(this.lhs);
-				sb.append(" ||| ");
-				sb.append(Arrays.toString(this.pFrench));
-				sb.append(" |||");
-				for (int i = 0; i < this.featScores.length; i++) {
-					sb.append(String.format(" %.4f", this.featScores[i]));
-				}
-				this.cachedToString = sb.toString();
-			}
-			return this.cachedToString;
-		}
-		
-		
 		//do not use cachedToString
 		@Deprecated
-		public String toString(SymbolTable symbolTable) {
+		public String toString() {
 			StringBuffer sb = new StringBuffer();
-			sb.append(symbolTable.getWord(this.lhs));
+			sb.append(Vocabulary.word(this.lhs));
 			sb.append(" ||| ");
-			sb.append(symbolTable.getWords(this.pFrench));
+			sb.append(Vocabulary.getWords(this.pFrench));
 			sb.append(" |||");
 			for (int i = 0; i < this.featScores.length; i++) {
 				sb.append(String.format(" %.4f", this.featScores[i]));
@@ -286,27 +266,21 @@ public class MonolingualRule implements Rule {
 		
 		
 		@Deprecated
-		public String toStringWithoutFeatScores(SymbolTable symbolTable) {
+		public String toStringWithoutFeatScores() {
 			StringBuffer sb = new StringBuffer();
-			if(symbolTable==null)
-				sb.append(this.getLHS());
-			else
-				sb.append(symbolTable.getWord(this.getLHS()));
+			sb.append(Vocabulary.word(this.getLHS()));
 			
 			return sb.append(" ||| ")
-			  		 .append(convertToString(this.getFrench(), symbolTable))
+			  		 .append(convertToString(this.getFrench()))
 			  		 .toString();
 		}
 		
 		
 		
-		public String convertToString(int[] words, SymbolTable symbolTable){		
+		public String convertToString(int[] words){		
 			StringBuffer sb = new StringBuffer();
 			for (int i = 0; i < words.length; i++) {
-				if(symbolTable!=null)
-					sb.append( symbolTable.getWord(words[i]) );
-				else
-					sb.append(words[i]);
+				sb.append(Vocabulary.word(words[i]) );
 				
 				if(i<words.length-1)
 					sb.append(" ");

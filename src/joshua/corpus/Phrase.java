@@ -20,8 +20,6 @@ package joshua.corpus;
 import java.util.ArrayList;
 import java.util.List;
 
-import joshua.corpus.vocab.SymbolTable;
-
 
 /**
  * Representation of a sequence of tokens.
@@ -30,16 +28,6 @@ import joshua.corpus.vocab.SymbolTable;
  */
 public interface Phrase extends Comparable<Phrase> {
 
-	/**
-	 * Returns the vocabulary that the words in this phrase are
-	 * drawn from.
-	 *
-	 * @return the vocabulary that the words in this phrase are
-	 *         drawn from.
-	 */
-	SymbolTable getVocab();
-	
-	
 	/**
 	 * This method gets the integer IDs of the phrase as an
 	 * array of ints.

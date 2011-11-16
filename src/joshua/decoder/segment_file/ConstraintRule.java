@@ -17,6 +17,8 @@
  */
 package joshua.decoder.segment_file;
 
+import javax.swing.text.Segment;
+
 
 /**
  * This interface is for an individual (partial) item to seed the

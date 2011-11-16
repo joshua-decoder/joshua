@@ -16,13 +16,13 @@
  */
 package joshua.decoder.ff.lm.bloomfilter_lm;
 
-import java.util.Random;
-import java.util.BitSet;
-import java.math.BigInteger;
 import java.io.Externalizable;
+import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.io.IOException;
+import java.math.BigInteger;
+import java.util.BitSet;
+import java.util.Random;
 
 /**
  * A Bloom filter: a lossy data structure for set representation. A Bloom

@@ -17,11 +17,10 @@
  */
 package joshua.decoder.hypergraph;
 
-import joshua.corpus.vocab.SymbolTable;
-import joshua.decoder.JoshuaConfiguration;
-import joshua.decoder.hypergraph.HyperGraph;
-
 import java.util.HashMap;
+
+import joshua.corpus.Vocabulary;
+import joshua.decoder.JoshuaConfiguration;
 
 
 /**
@@ -49,15 +48,12 @@ public class HyperGraphPruning extends TrivialInsideOutside {
 	int glueGrammarOwner=0;//TODO
 	
 	
-	public HyperGraphPruning(SymbolTable symbolTable, boolean fixThreshold, double thresholdGeneral, double thresholdGlue){
+	public HyperGraphPruning(boolean fixThreshold, double thresholdGeneral, double thresholdGlue){
 		fixThresholdPruning = fixThreshold;
 		THRESHOLD_GENERAL = thresholdGeneral;
 		THRESHOLD_GLUE = thresholdGlue;
-		glueGrammarOwner = symbolTable.addTerminal(JoshuaConfiguration.glue_owner);//TODO
+		glueGrammarOwner = Vocabulary.id(JoshuaConfiguration.glue_owner);//TODO
 	}
-	
-	
-	
 	
 	public void clearState(){
 		processedNodesTbl.clear();

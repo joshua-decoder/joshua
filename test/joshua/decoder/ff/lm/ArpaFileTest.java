@@ -24,7 +24,7 @@ import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.Map;
 
-import joshua.corpus.vocab.SymbolTable;
+import joshua.corpus.Vocabulary;
 import joshua.corpus.vocab.Vocabulary;
 import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.ff.lm.buildin_lm.TrieLM;
@@ -40,20 +40,20 @@ import org.testng.annotations.Test;
 public class ArpaFileTest {
 
 	String arpaFileName;
-	SymbolTable vocab;
+	Vocabulary vocab;
 	
 	@Test
 	public void setup() {
 		
 		vocab = new Vocabulary();
-		vocab.addTerminal("a");
-		vocab.addTerminal("because");
-		vocab.addTerminal("boycott");
-		vocab.addTerminal("of");
-		vocab.addTerminal("parliament");
-		vocab.addTerminal("potato");
-		vocab.addTerminal("resumption");
-		vocab.addTerminal("the");
+		vocab.id("a");
+		vocab.id("because");
+		vocab.id("boycott");
+		vocab.id("of");
+		vocab.id("parliament");
+		vocab.id("potato");
+		vocab.id("resumption");
+		vocab.id("the");
 		
 		try {
 			File file = File.createTempFile("testLM", "arpa");

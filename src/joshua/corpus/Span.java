@@ -17,10 +17,9 @@
  */
 package joshua.corpus;
 
-import java.util.Iterator;
-
-import java.util.List;
 import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * Represents a span with an inclusive starting index and an exclusive

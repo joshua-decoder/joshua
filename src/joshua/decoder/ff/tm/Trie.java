@@ -19,19 +19,12 @@ package joshua.decoder.ff.tm;
 
 import java.util.Collection;
 
-import joshua.decoder.ff.tm.RuleCollection;
-
 
 /**
- * An interface for trie-like data structures. Remember that in the
- * mathematical definition of a trie, each node is isomorphic to
- * an entire trie (just like any subtree of a tree is itself also
- * a tree, and like any tail of a linked list is itself also a
- * linked list).
+ * An interface for trie-like data structures.
  *
  * @author wren ng thornton <wren@users.sourceforge.net>
  * @author Zhifei Li, <zhifei.work@gmail.com>
- * @version $LastChangedDate$
  */
 public interface Trie {
 	
@@ -42,14 +35,14 @@ public interface Trie {
 	 * @param wordID
 	 * @return Child node of this trie
 	 */
-	Trie matchOne(int wordID);
+	Trie match(int wordID);
 	
 	
 	/**
 	 * Returns whether matchOne(Symbol) could succeed for any
 	 * symbol.
 	 * 
-	 * @return <code>true</code> if {@link #matchOne(int)} could
+	 * @return <code>true</code> if {@link #match(int)} could
 	 *         succeed for some symbol, <code>false</code>
 	 *         otherwise
 	 */

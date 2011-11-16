@@ -17,13 +17,13 @@
  */
 package joshua.ui.tree_visualizer;
 
+import java.awt.Dimension;
+import java.awt.geom.Point2D;
+
 import org.apache.commons.collections15.Transformer;
 
 import edu.uci.ics.jung.algorithms.layout.TreeLayout;
 import edu.uci.ics.jung.graph.DelegateForest;
-
-import java.awt.Dimension;
-import java.awt.geom.Point2D;
 
 public class DerivationTreeTransformer implements Transformer<Node,Point2D> {
 	private TreeLayout<Node,DerivationTreeEdge> treeLayout;

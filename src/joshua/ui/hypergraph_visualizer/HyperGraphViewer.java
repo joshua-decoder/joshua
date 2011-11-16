@@ -17,46 +17,32 @@
  */
 package joshua.ui.hypergraph_visualizer;
 
-import java.awt.BorderLayout;
-import java.awt.Dimension;
-import java.awt.Paint;
-import java.awt.Color;
-import java.awt.Stroke;
 import java.awt.BasicStroke;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Paint;
 import java.awt.Shape;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-import java.awt.geom.*;
+import java.awt.Stroke;
+import java.awt.geom.Ellipse2D;
+import java.awt.geom.Rectangle2D;
+import java.util.HashMap;
 
 import javax.swing.DefaultListModel;
-import javax.swing.JLabel;
 import javax.swing.JFrame;
 import javax.swing.JList;
 import javax.swing.JScrollPane;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 
-import edu.uci.ics.jung.algorithms.layout.DAGLayout;
-import edu.uci.ics.jung.algorithms.layout.StaticLayout;
-import edu.uci.ics.jung.algorithms.layout.TreeLayout;
-import edu.uci.ics.jung.graph.DelegateTree;
-import edu.uci.ics.jung.visualization.VisualizationViewer;
-import edu.uci.ics.jung.visualization.control.DefaultModalGraphMouse;
-import edu.uci.ics.jung.visualization.control.ModalGraphMouse;
-import edu.uci.ics.jung.visualization.control.LayoutScalingControl;
-import edu.uci.ics.jung.visualization.decorators.ToStringLabeller;
-import edu.uci.ics.jung.visualization.renderers.Renderer.VertexLabel.Position;
+import joshua.corpus.Vocabulary;
+import joshua.decoder.ff.tm.Rule;
+import joshua.decoder.hypergraph.DiskHyperGraph;
+import joshua.decoder.hypergraph.HyperGraph;
 
 import org.apache.commons.collections15.Transformer;
 
-import joshua.corpus.vocab.SymbolTable;
-import joshua.corpus.vocab.Vocabulary;
-import joshua.decoder.hypergraph.*;
-import joshua.decoder.ff.tm.BilingualRule;
-import joshua.decoder.ff.tm.Rule;
-
-import java.util.ArrayList;
-import java.util.HashMap;
+import edu.uci.ics.jung.algorithms.layout.StaticLayout;
+import edu.uci.ics.jung.visualization.VisualizationViewer;
+import edu.uci.ics.jung.visualization.control.DefaultModalGraphMouse;
+import edu.uci.ics.jung.visualization.control.ModalGraphMouse;
 
 public class HyperGraphViewer extends VisualizationViewer<Vertex,Edge> {
 	public static final int DEFAULT_HEIGHT = 500;
@@ -67,18 +53,16 @@ public class HyperGraphViewer extends VisualizationViewer<Vertex,Edge> {
 	public static final String USAGE = "USAGE: HyperGraphViewer <items file> <rules file> <first sentence> <last sentence>";
 	public static final double EDGE_ELLIPSE_SIZE = 10;
 	
-	private SymbolTable vocab;
 	JungHyperGraph graph;
 	
 	JList edgeList;
 	
-	public HyperGraphViewer(JungHyperGraph g, SymbolTable vocab)
+	public HyperGraphViewer(JungHyperGraph g)
 	{
 		super(new StaticLayout<Vertex,Edge>(g, new HyperGraphTransformer(g)));
-		this.vocab = vocab;
 		this.graph = g;
 		this.edgeList = new JList(new DefaultListModel());
-		this.edgeList.setCellRenderer(new HyperEdgeListCellRenderer(vocab));
+		this.edgeList.setCellRenderer(new HyperEdgeListCellRenderer());
 		this.edgeList.addListSelectionListener(new HyperEdgeListSelectionListener(this));
 //		super(new DAGLayout<Vertex,Edge>(g));
 //		DelegateTree<Vertex,Edge> gtree = new DelegateTree<Vertex,Edge>(g);
@@ -105,18 +89,18 @@ public class HyperGraphViewer extends VisualizationViewer<Vertex,Edge> {
 		return new Transformer<Vertex,String>() {
 			public String transform(Vertex v) {
 				if (v instanceof LeafVertex) {
-					return vocab.getWord(((LeafVertex) v).getEnglish());
+					return Vocabulary.word(((LeafVertex) v).getEnglish());
 				}
 				else if (v instanceof NodeVertex) {
-					String nt = vocab.getWord(((NodeVertex) v).getNode().lhs);
+					String nt = Vocabulary.word(((NodeVertex) v).getNode().lhs);
 					return String.format("%s{%d-%d}", nt, ((NodeVertex) v).getNode().i, ((NodeVertex) v).getNode().j);
 				}
 				else {
 					Rule r = ((HyperEdgeVertex) v).getHyperEdge().getRule();
 					if (r != null) {
-						String lhs = vocab.getWord(r.getLHS());
-						String french = vocab.getWords(r.getFrench());
-						String english = vocab.getWords(r.getEnglish());
+						String lhs = Vocabulary.word(r.getLHS());
+						String french = Vocabulary.getWords(r.getFrench());
+						String english = Vocabulary.getWords(r.getEnglish());
 						return String.format("%s -> { %s ; %s }", lhs, french, english);
 					}
 					else
@@ -136,7 +120,8 @@ public class HyperGraphViewer extends VisualizationViewer<Vertex,Edge> {
 					return String.format("%d other edges", otherEdges);
 				}
 				else if (v instanceof NodeVertex) {
-					return ((NodeVertex) v).getNode().getSignature();
+					// TODO: Returns meaningless hash rather than a serialization.
+					return String.valueOf(((NodeVertex) v).getNode().getSignature());
 				}
 				else {
 					return "";
@@ -178,11 +163,11 @@ public class HyperGraphViewer extends VisualizationViewer<Vertex,Edge> {
 		}
 	};
 	
-	public static void visualizeHypergraphInFrame(HyperGraph hg, SymbolTable st)
+	public static void visualizeHypergraphInFrame(HyperGraph hg)
 	{
 		JFrame frame = new JFrame("Joshua Hypergraph");
 		frame.setLayout(new BorderLayout());
-		HyperGraphViewer vv = new HyperGraphViewer(new JungHyperGraph(hg, st), st);
+		HyperGraphViewer vv = new HyperGraphViewer(new JungHyperGraph(hg));
 		
 		frame.getContentPane().add(vv, BorderLayout.CENTER);
 		frame.getContentPane().add(new JScrollPane(vv.edgeList), BorderLayout.WEST);
@@ -206,12 +191,11 @@ public class HyperGraphViewer extends VisualizationViewer<Vertex,Edge> {
 		for (int i = firstSentence; i < lastSentence; i++) {
 			chosenSentences.put(i, i);
 		}
-		Vocabulary vocab = new Vocabulary();
-		DiskHyperGraph dhg = new DiskHyperGraph(vocab, 0, true, null);
+		DiskHyperGraph dhg = new DiskHyperGraph(0, true, null);
 		dhg.initRead(itemsFile, rulesFile, chosenSentences);
-		JungHyperGraph hg = new JungHyperGraph(dhg.readHyperGraph(), vocab);
+		JungHyperGraph hg = new JungHyperGraph(dhg.readHyperGraph());
 		JFrame frame = new JFrame("Joshua Hypergraph");
-		frame.getContentPane().add(new HyperGraphViewer(hg, vocab));
+		frame.getContentPane().add(new HyperGraphViewer(hg));
 		frame.setSize(500, 500);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.setVisible(true);

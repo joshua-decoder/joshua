@@ -24,8 +24,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import joshua.corpus.vocab.BuildinSymbol;
-import joshua.corpus.vocab.SymbolTable;
+import joshua.corpus.Vocabulary;
 import joshua.decoder.Support;
 import joshua.decoder.ff.state_maintenance.NgramDPState;
 import joshua.decoder.hypergraph.DiskHyperGraph;
@@ -78,10 +77,7 @@ public class OracleExtractionHG extends SplitHg {
 //	key: item; value: best_deduction, best_bleu, best_len, # of n-gram match where n is in [1,4]
 	protected HashMap<String, Integer> tbl_ref_ngrams = new HashMap<String, Integer>();
 	
-
 	static boolean always_maintain_seperate_lm_state = true; //if true: the virtual item maintain its own lm state regardless whether lm_order>=g_bleu_order
-	
-	SymbolTable p_symbolTable;
 	
 	int lm_feat_id=0; //the baseline LM feature id
 	
@@ -93,15 +89,13 @@ public class OracleExtractionHG extends SplitHg {
 	 * It seems that the symbol table here should only need to
 	 * represent monolingual terminals, plus nonterminals.
 	 * 
-	 * @param symbolTable 
 	 * @param lm_feat_id_
 	 */
-	public OracleExtractionHG(SymbolTable symbolTable, int lm_feat_id_){
-		this.p_symbolTable = symbolTable;
+	public OracleExtractionHG(int lm_feat_id_){
 		this.lm_feat_id = lm_feat_id_;
-		this.BACKOFF_LEFT_LM_STATE_SYM_ID = p_symbolTable.addTerminal(BACKOFF_LEFT_LM_STATE_SYM);
-		this.NULL_LEFT_LM_STATE_SYM_ID = p_symbolTable.addTerminal(NULL_RIGHT_LM_STATE_SYM);
-		this.NULL_RIGHT_LM_STATE_SYM_ID = p_symbolTable.addTerminal(NULL_RIGHT_LM_STATE_SYM);
+		this.BACKOFF_LEFT_LM_STATE_SYM_ID = Vocabulary.id(BACKOFF_LEFT_LM_STATE_SYM);
+		this.NULL_LEFT_LM_STATE_SYM_ID = Vocabulary.id(NULL_RIGHT_LM_STATE_SYM);
+		this.NULL_RIGHT_LM_STATE_SYM_ID = Vocabulary.id(NULL_RIGHT_LM_STATE_SYM);
 	}
 	
 	/*for 919 sent, time_on_reading: 148797
@@ -131,15 +125,13 @@ public class OracleExtractionHG extends SplitHg {
 		int baseline_lm_feat_id = 0; 
 		//??????????????????????????????????????
 		
-		SymbolTable p_symbolTable = new BuildinSymbol(null);
-		
 		KBestExtractor kbest_extractor = null;
 		int topN = 300;//TODO
 		boolean extract_unique_nbest = true;//TODO
 		boolean do_ngram_clip_nbest = true; //TODO
 		if (orc_extract_nbest) {
 			System.out.println("oracle extraction from nbest list");
-			kbest_extractor = new KBestExtractor(p_symbolTable, extract_unique_nbest, false, false, false,  false, true);
+			kbest_extractor = new KBestExtractor(extract_unique_nbest, false, false, false,  false, true);
 		}
 		
 		BufferedWriter orc_out = FileUtility.getWriteFileStream(f_orc_out);
@@ -148,11 +140,11 @@ public class OracleExtractionHG extends SplitHg {
 		long time_on_reading = 0;
 		long time_on_orc_extract = 0;
 		BufferedReader t_reader_ref = FileUtility.getReadFileStream(f_ref_files);
-		DiskHyperGraph dhg_read  = new DiskHyperGraph(p_symbolTable, baseline_lm_feat_id, true, null);
+		DiskHyperGraph dhg_read  = new DiskHyperGraph(baseline_lm_feat_id, true, null);
 	
 		dhg_read.initRead(f_hypergraphs, f_rule_tbl, null);
 		
-		OracleExtractionHG orc_extractor = new OracleExtractionHG(p_symbolTable, baseline_lm_feat_id);
+		OracleExtractionHG orc_extractor = new OracleExtractionHG(baseline_lm_feat_id);
 		String ref_sent= null;
 		long start_time = System.currentTimeMillis();
 		int sent_id=0;
@@ -177,7 +169,7 @@ public class OracleExtractionHG extends SplitHg {
 				orc_bleu = (Double) res[1];
 			}else{				
 				HyperGraph hg_oracle = orc_extractor.oracle_extract_hg(hg, hg.sentLen, lm_order, ref_sent);
-				orc_sent =  ViterbiExtractor.extractViterbiString(p_symbolTable, hg_oracle.goalNode);
+				orc_sent =  ViterbiExtractor.extractViterbiString(hg_oracle.goalNode);
 				orc_bleu = orc_extractor.get_best_goal_cost(hg, orc_extractor.g_tbl_split_virtual_items);
 				
 				time_on_orc_extract += System.currentTimeMillis()-start_time;
@@ -209,7 +201,7 @@ public class OracleExtractionHG extends SplitHg {
 		while(true){
 			String hyp_sent = kbest_extractor.getKthHyp(hg.goalNode, ++next_n, -1, null, null);//?????????
 			if(hyp_sent==null || next_n > n) break;
-			double t_bleu = compute_sentence_bleu(this.p_symbolTable, ref_sent, hyp_sent, do_ngram_clip, 4);
+			double t_bleu = compute_sentence_bleu(ref_sent, hyp_sent, do_ngram_clip, 4);
 			if(t_bleu>orc_bleu){
 				orc_bleu = t_bleu;
 				orc_sent = hyp_sent;
@@ -227,7 +219,7 @@ public class OracleExtractionHG extends SplitHg {
 	public HyperGraph oracle_extract_hg(HyperGraph hg, int src_sent_len_in, int lm_order,
 				String ref_sent_str)
 	{
-		int[] ref_sent = this.p_symbolTable.addTerminals(ref_sent_str.split("\\s+"));
+		int[] ref_sent = Vocabulary.addAll(ref_sent_str);
 		g_lm_order=lm_order;		
 		src_sent_len = src_sent_len_in;
 		ref_sent_len = ref_sent.length;		
@@ -376,8 +368,8 @@ public class OracleExtractionHG extends SplitHg {
 		//#### get left_state_sequence, right_state_sequence, total_hyp_len, num_ngram_match
 		for (int c = 0; c < en_words.length; c++) {
 			int c_id = en_words[c];
-			if (this.p_symbolTable.isNonterminal(c_id)) {
-				int index = this.p_symbolTable.getTargetNonterminalIndex(c_id);
+			if (Vocabulary.idx(c_id)) {
+				int index = -(c_id + 1);
 				DPStateOracle ant_state = (DPStateOracle) l_ant_virtual_item.get(index).dp_state;
 				total_hyp_len += ant_state.best_len;
 				for (int t = 0; t < g_bleu_order; t++) {
@@ -432,7 +424,7 @@ public class OracleExtractionHG extends SplitHg {
 					// BUG: Whoa, is that an actual hard-coded ID in there? :) 
 					if (final_count < 0) {
 						throw new RuntimeException("negative count for ngram: "
-							+ this.p_symbolTable.getWord(11844)
+							+ Vocabulary.word(11844)
 							+ "; new: " + new_ngram_counts.get(ngram)
 							+ "; old: " + old_ngram_counts.get(ngram) );
 					}
@@ -684,10 +676,10 @@ public class OracleExtractionHG extends SplitHg {
 	
 	
 	//do_ngram_clip: consider global n-gram clip
-	public  double compute_sentence_bleu(SymbolTable p_symbol, String ref_sent, String hyp_sent, boolean do_ngram_clip, int bleu_order) {
+	public  double compute_sentence_bleu(String ref_sent, String hyp_sent, boolean do_ngram_clip, int bleu_order) {
 		// BUG: use joshua.util.Regex.spaces.split(...)
-		int[] numeric_ref_sent = p_symbol.addTerminals(ref_sent.split("\\s+"));
-		int[] numeric_hyp_sent = p_symbol.addTerminals(hyp_sent.split("\\s+"));
+		int[] numeric_ref_sent = Vocabulary.addAll(ref_sent);
+		int[] numeric_hyp_sent = Vocabulary.addAll(hyp_sent);
 		return compute_sentence_bleu(numeric_ref_sent, numeric_hyp_sent, do_ngram_clip, bleu_order);
 	}
 	

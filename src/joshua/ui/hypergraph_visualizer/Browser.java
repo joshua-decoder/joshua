@@ -1,13 +1,10 @@
 package joshua.ui.hypergraph_visualizer;
 
 import java.awt.BorderLayout;
-import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Scanner;
 
@@ -17,9 +14,7 @@ import javax.swing.JFrame;
 import javax.swing.JList;
 import javax.swing.JScrollPane;
 
-import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.JoshuaDecoder;
-import joshua.decoder.hypergraph.HyperGraph;
 
 public class Browser {
 	private static ArrayList<String> sourceSentences;

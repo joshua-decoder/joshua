@@ -20,7 +20,7 @@ package joshua.subsample;
 import java.io.File;
 import java.io.IOException;
 
-import joshua.corpus.vocab.Vocabulary;
+import joshua.corpus.Vocabulary;
 
 
 /**
@@ -39,13 +39,10 @@ public class BiCorpusFactory {
 	protected final String extf;
 	protected final String exte;
 	protected final String exta;
-	protected final Vocabulary vf;
-	protected final Vocabulary ve;
 	
 	public BiCorpusFactory(
 		String fpath, String epath, String apath,
-		String extf,  String exte,  String exta,
-		Vocabulary vf, Vocabulary ve
+		String extf,  String exte,  String exta
 	) {
 		// The various concatenation has been moved up here
 		// to get it out of the loops where fromFiles is called.
@@ -55,8 +52,6 @@ public class BiCorpusFactory {
 		this.extf  = "." + extf;
 		this.exte  = "." + exte;
 		this.exta  = (exta == null ? null : "." + exta);
-		this.vf    = vf;
-		this.ve    = ve;
 	}
 	
 	
@@ -69,8 +64,7 @@ public class BiCorpusFactory {
 	public BiCorpus unalignedFromFiles(String f) throws IOException {
 		return new BiCorpus(
 			fpath + f + extf,
-			epath + f + exte,
-			vf, ve);
+			epath + f + exte);
 	}
 	
 	/** Generate aligned BiCorpus. */
@@ -78,7 +72,6 @@ public class BiCorpusFactory {
 		return new BiCorpus(
 			fpath + f + extf,
 			epath + f + exte,
-			apath + f + exta,
-			vf, ve);
+			apath + f + exta);
 	}
 }

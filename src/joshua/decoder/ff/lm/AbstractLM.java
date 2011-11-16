@@ -17,12 +17,10 @@
  */
 package joshua.decoder.ff.lm;
 
+import java.util.List;
+
 import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.Support;
-import joshua.corpus.vocab.SymbolTable;
-
-
-import java.util.List;
 
 /**
  * This class implements NGramLanguageModel by creating wrappers
@@ -35,8 +33,8 @@ import java.util.List;
  */
 public abstract class AbstractLM extends DefaultNGramLanguageModel {
 	
-	public AbstractLM(SymbolTable symbolTable, int order) {
-		super(symbolTable, order);
+	public AbstractLM(int order) {
+		super(order);
 	}
 	
 	
@@ -56,7 +54,7 @@ public abstract class AbstractLM extends DefaultNGramLanguageModel {
 		if (ngram.length > order) {
 			throw new RuntimeException("ngram length is greather than the max order");
 		}
-//		if (ngram.length==1 && "we".equals(symbolTable.getWord(ngram[0]))) {
+//		if (ngram.length==1 && "we".equals(Vocabulary.getWord(ngram[0]))) {
 //			System.err.println("Something weird is about to happen");
 //		}
 		

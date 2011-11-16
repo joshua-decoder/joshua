@@ -12,8 +12,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
 
-import joshua.corpus.vocab.SymbolTable;
-import joshua.corpus.vocab.Vocabulary;
+import joshua.corpus.Vocabulary;
 import joshua.util.io.LineReader;
 
 public class ArraySyntaxTree implements SyntaxTree, Externalizable {
@@ -35,24 +34,17 @@ public class ArraySyntaxTree implements SyntaxTree, Externalizable {
 	private static final int		MAX_CCG_SPAN				= 5;
 	private static final int		MAX_LABELS					= 100;
 	
-	private SymbolTable					vocabulary;
-	
-	
-	public ArraySyntaxTree(SymbolTable symbol_table) {
+	public ArraySyntaxTree() {
 		forwardIndex = null;
 		forwardLattice = null;
 		backwardIndex = null;
 		backwardLattice = null;
 		
 		terminals = null;
-		
-		vocabulary = symbol_table;
 	}
 	
 
-	public ArraySyntaxTree(String parsed_line, SymbolTable symbol_table) {
-		vocabulary = symbol_table;
-		
+	public ArraySyntaxTree(String parsed_line) {
 		initialize();
 		appendFromPennFormat(parsed_line);
 	}
@@ -91,13 +83,13 @@ public class ArraySyntaxTree implements SyntaxTree, Externalizable {
 			return 0;
 		StringBuilder sb = new StringBuilder();
 		while (!stack.isEmpty()) {
-			String w = vocabulary.getWord(stack.pop());
+			String w = Vocabulary.word(stack.pop());
 			if (sb.length() != 0)
 				sb.append(":");
 			sb.append(w);
 		}
 		String label = sb.toString();
-		return vocabulary.addNonterminal(adjustMarkup(label));
+		return Vocabulary.id(adjustMarkup(label));
 	}
 	
 
@@ -109,8 +101,8 @@ public class ArraySyntaxTree implements SyntaxTree, Externalizable {
 			int y = getOneConstituent(midpt, to);
 			if (y == 0)
 				continue;
-			String label = vocabulary.getWord(x) + "+" + vocabulary.getWord(y);
-			return vocabulary.addNonterminal(adjustMarkup(label));
+			String label = Vocabulary.word(x) + "+" + Vocabulary.word(y);
+			return Vocabulary.id(adjustMarkup(label));
 		}
 		return 0;
 	}
@@ -128,8 +120,8 @@ public class ArraySyntaxTree implements SyntaxTree, Externalizable {
 				int z = getOneConstituent(b, to);
 				if (z == 0)
 					continue;
-				String label = vocabulary.getWord(x) + "+" + vocabulary.getWord(y) + "+" + vocabulary.getWord(z);
-				return vocabulary.addNonterminal(adjustMarkup(label));
+				String label = Vocabulary.word(x) + "+" + Vocabulary.word(y) + "+" + Vocabulary.word(z);
+				return Vocabulary.id(adjustMarkup(label));
 			}
 		}
 		return 0;
@@ -144,8 +136,8 @@ public class ArraySyntaxTree implements SyntaxTree, Externalizable {
 			int y = getOneConstituent(to, end);
 			if (y == 0)
 				continue;
-			String label = vocabulary.getWord(x) + "/" + vocabulary.getWord(y);
-			return vocabulary.addNonterminal(adjustMarkup(label));
+			String label = Vocabulary.word(x) + "/" + Vocabulary.word(y);
+			return Vocabulary.id(adjustMarkup(label));
 		}
 		return 0;
 	}
@@ -159,8 +151,8 @@ public class ArraySyntaxTree implements SyntaxTree, Externalizable {
 			int y = getOneConstituent(start, from);
 			if (y == 0)
 				continue;
-			String label = vocabulary.getWord(y) + "\\" + vocabulary.getWord(x);
-			return vocabulary.addNonterminal(adjustMarkup(label));
+			String label = Vocabulary.word(y) + "\\" + Vocabulary.word(x);
+			return Vocabulary.id(adjustMarkup(label));
 		}
 		return 0;
 	}
@@ -207,7 +199,7 @@ public class ArraySyntaxTree implements SyntaxTree, Externalizable {
 					break;
 				
 				// create and look up concatenated label
-				int concatenated_nt = vocabulary.addNonterminal(adjustMarkup(vocabulary.getWord(nt) + "+" + vocabulary.getWord(forwardLattice.get(i))));
+				int concatenated_nt = Vocabulary.id(adjustMarkup(Vocabulary.word(nt) + "+" + Vocabulary.word(forwardLattice.get(i))));
 				if (current_span < remaining_span) {
 					nt_stack.push(concatenated_nt);
 					pos_stack.push(pos + current_span);
@@ -248,7 +240,7 @@ public class ArraySyntaxTree implements SyntaxTree, Externalizable {
 				Set<Integer> main_set = main_constituents.get(to + forwardLattice.get(i + 1));
 				if (main_set != null) {
 					for (int main : main_set)
-						labels.add(vocabulary.addNonterminal(adjustMarkup(vocabulary.getWord(main) + "/" + vocabulary.getWord(forwardLattice.get(i)))));
+						labels.add(Vocabulary.id(adjustMarkup(Vocabulary.word(main) + "/" + Vocabulary.word(forwardLattice.get(i)))));
 				}
 			}
 		}
@@ -279,7 +271,7 @@ public class ArraySyntaxTree implements SyntaxTree, Externalizable {
 					Set<Integer> main_set = main_constituents.get(from - backwardLattice.get(i + 1));
 					if (main_set != null) {
 						for (int main : main_set)
-							labels.add(vocabulary.addNonterminal(adjustMarkup(vocabulary.getWord(main) + "\\" + vocabulary.getWord(backwardLattice.get(i)))));
+							labels.add(Vocabulary.id(adjustMarkup(Vocabulary.word(main) + "\\" + Vocabulary.word(backwardLattice.get(i)))));
 					}
 				}
 			} else {
@@ -347,11 +339,11 @@ public class ArraySyntaxTree implements SyntaxTree, Externalizable {
 			sb.append("FI[" + i + "] =\t" + forwardIndex.get(i) + "\n");
 		sb.append("\n");
 		for (int i = 0; i < forwardLattice.size(); i += 2)
-			sb.append("F[" + i + "] =\t" + vocabulary.getWord(forwardLattice.get(i)) + " , " + forwardLattice.get(i + 1) + "\n");
+			sb.append("F[" + i + "] =\t" + Vocabulary.word(forwardLattice.get(i)) + " , " + forwardLattice.get(i + 1) + "\n");
 		
 		sb.append("\n");
 		for (int i = 0; i < terminals.size(); i += 1)
-			sb.append("T[" + i + "] =\t" + vocabulary.getWord(terminals.get(i)) + " , 1 \n");
+			sb.append("T[" + i + "] =\t" + Vocabulary.word(terminals.get(i)) + " , 1 \n");
 		
 		if (this.useBackwardLattice) {
 			sb.append("\n");
@@ -359,7 +351,7 @@ public class ArraySyntaxTree implements SyntaxTree, Externalizable {
 				sb.append("BI[" + i + "] =\t" + backwardIndex.get(i) + "\n");
 			sb.append("\n");
 			for (int i = 0; i < backwardLattice.size(); i += 2)
-				sb.append("B[" + i + "] =\t" + vocabulary.getWord(backwardLattice.get(i)) + " , " + backwardLattice.get(i + 1) + "\n");
+				sb.append("B[" + i + "] =\t" + Vocabulary.word(backwardLattice.get(i)) + " , " + backwardLattice.get(i + 1) + "\n");
 		}
 		return sb.toString();
 	}
@@ -403,7 +395,7 @@ public class ArraySyntaxTree implements SyntaxTree, Externalizable {
 			}
 			if (next_nt) {
 				// get NT id
-				current_id = vocabulary.addNonterminal(adjustMarkup(token));
+				current_id = Vocabulary.id(adjustMarkup(token));
 				// add into lattice
 				forwardLattice.add(current_id);
 				// push NT span field onto stack (added hereafter, we're just saving the "- 1")
@@ -411,7 +403,7 @@ public class ArraySyntaxTree implements SyntaxTree, Externalizable {
 				// add NT span field
 				forwardLattice.add(forwardIndex.size());
 			} else {
-				current_id = vocabulary.addTerminal(token);
+				current_id = Vocabulary.id(token);
 				terminals.add(current_id);
 				
 				forwardIndex.add(forwardLattice.size());
@@ -424,38 +416,5 @@ public class ArraySyntaxTree implements SyntaxTree, Externalizable {
 	
 	private String adjustMarkup(String nt) {
 		return "[" + nt.replaceAll("[\\[\\]]", "") + "]";
-	}
-	
-
-	// little test main.
-	public static void main(String[] args) {
-		Vocabulary vocabulary = new Vocabulary();
-		ArraySyntaxTree la = new ArraySyntaxTree(vocabulary);
-		
-		try {
-			la.readExternalText(args[0]);
-			
-			// System.err.println(la);
-			
-			int from = Integer.parseInt(args[1]);
-			int to = Integer.parseInt(args[2]);
-			
-			if (from < to) {
-				Collection<Integer> labels;
-				labels = la.getConstituentLabels(from, to);
-				for (int l : labels)
-					System.err.println(vocabulary.getWord(l));
-				
-				labels = la.getConcatenatedLabels(from, to);
-				for (int l : labels)
-					System.err.println(vocabulary.getWord(l));
-				
-				labels = la.getCcgLabels(from, to);
-				for (int l : labels)
-					System.err.println(vocabulary.getWord(l));
-			}
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
 	}
 }

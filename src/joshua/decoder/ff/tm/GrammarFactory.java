@@ -18,7 +18,6 @@
 package joshua.decoder.ff.tm;
 
 import joshua.decoder.segment_file.Sentence;
-import joshua.decoder.ff.tm.Grammar;
 
 /**
  * Factory capable of getting a grammar for use in translating a

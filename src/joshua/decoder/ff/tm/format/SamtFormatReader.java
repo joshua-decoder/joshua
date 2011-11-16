@@ -1,9 +1,9 @@
-package joshua.decoder.ff.tm.hiero;
+package joshua.decoder.ff.tm.format;
 
 import java.util.Arrays;
 import java.util.logging.Logger;
 
-import joshua.corpus.vocab.SymbolTable;
+import joshua.corpus.Vocabulary;
 import joshua.decoder.ff.tm.BilingualRule;
 import joshua.decoder.ff.tm.GrammarReader;
 
@@ -13,8 +13,6 @@ public class SamtFormatReader extends GrammarReader<BilingualRule> {
 			.getLogger(SamtFormatReader.class.getName());
 	
 	private static final String samtNonTerminalMarkup;
-	
-	private int[] nonTerminalCache;
 	
 	static {
 		fieldDelimiter = "#";
@@ -26,12 +24,8 @@ public class SamtFormatReader extends GrammarReader<BilingualRule> {
 		description = "Original SAMT format";
 	}
 	
-	public SamtFormatReader(String grammarFile, SymbolTable vocabulary) {
-		super(grammarFile, vocabulary);
-		
-		// TODO: should be limited to maxNTs + 1 if defined in config.
-		// position 0 will never be used
-		nonTerminalCache = new int[30];
+	public SamtFormatReader(String grammarFile) {
+		super(grammarFile);
 	}
 
 	// Format example:
@@ -46,7 +40,7 @@ public class SamtFormatReader extends GrammarReader<BilingualRule> {
 			return null;
 		}
 
-		int lhs = symbolTable.addNonterminal(adaptNonTerminalMarkup(fields[2]));
+		int lhs = Vocabulary.id(adaptNonTerminalMarkup(fields[2]));
 
 		int arity = 0;
 		
@@ -56,10 +50,9 @@ public class SamtFormatReader extends GrammarReader<BilingualRule> {
 		for (int i = 0; i < foreignWords.length; i++) {
 			if (isNonTerminal(foreignWords[i])) {
 				arity++;
-				french[i] = symbolTable.addNonterminal(adaptNonTerminalMarkup(foreignWords[i], arity));
-				nonTerminalCache[arity] = french[i];
+				french[i] = Vocabulary.id(adaptNonTerminalMarkup(foreignWords[i], arity));
 			} else {
-				french[i] = symbolTable.addTerminal(foreignWords[i]);
+				french[i] = Vocabulary.id(foreignWords[i]);
 			}
 		}
 		
@@ -68,10 +61,9 @@ public class SamtFormatReader extends GrammarReader<BilingualRule> {
 		int[] english = new int[englishWords.length];
 		for (int i = 0; i < englishWords.length; i++) {
 			if (isNonTerminal(englishWords[i])) {
-				english[i] = nonTerminalCache[Integer.
-						parseInt(cleanSamtNonTerminal(englishWords[i]))];
+				english[i] = -Integer.parseInt(cleanSamtNonTerminal(englishWords[i]));
 			} else {
-				english[i] = symbolTable.addTerminal(englishWords[i]);
+				english[i] = Vocabulary.id(englishWords[i]);
 			}
 		}
 
@@ -137,11 +129,11 @@ public class SamtFormatReader extends GrammarReader<BilingualRule> {
 	@Override
 	public String toWords(BilingualRule rule) {
 		StringBuffer sb = new StringBuffer();
-		sb.append(symbolTable.getWord(rule.getLHS()));
+		sb.append(Vocabulary.word(rule.getLHS()));
 		sb.append(" ||| ");
-		sb.append(symbolTable.getWords(rule.getFrench()));
+		sb.append(Vocabulary.getWords(rule.getFrench()));
 		sb.append(" ||| ");
-		sb.append(symbolTable.getWords(rule.getEnglish()));
+		sb.append(Vocabulary.getWords(rule.getEnglish()));
 		sb.append(" |||");
 
 		float[] feature_scores = rule.getFeatureScores();
@@ -154,11 +146,11 @@ public class SamtFormatReader extends GrammarReader<BilingualRule> {
 	@Override
 	public String toWordsWithoutFeatureScores(BilingualRule rule) {
 		StringBuffer sb = new StringBuffer();
-		sb.append(symbolTable.getWord(rule.getLHS()));
+		sb.append(Vocabulary.word(rule.getLHS()));
 		sb.append(" ||| ");
-		sb.append(symbolTable.getWords(rule.getFrench()));
+		sb.append(Vocabulary.getWords(rule.getFrench()));
 		sb.append(" ||| ");
-		sb.append(symbolTable.getWords(rule.getEnglish()));
+		sb.append(Vocabulary.getWords(rule.getEnglish()));
 		sb.append(" |||");
 	
 		return sb.toString();

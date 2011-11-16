@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
-import joshua.corpus.vocab.SymbolTable;
+import joshua.corpus.Vocabulary;
 import joshua.decoder.ff.state_maintenance.DPState;
 import joshua.decoder.ff.state_maintenance.NgramDPState;
 import joshua.decoder.ff.tm.Rule;
@@ -18,7 +18,6 @@ public class NgramExtractor {
 
 	private int ngramStateID;
 	private int baselineLMOrder;
-	private SymbolTable symbolTable;
 	private boolean useIntegerNgram;
 	
 	private static String START_SYM="<s>";
@@ -30,19 +29,18 @@ public class NgramExtractor {
 		Logger.getLogger(NgramExtractor.class.getSimpleName());
 	
 	//default is useIntegerNgram 
-	public NgramExtractor(SymbolTable symbolTable, int ngramStateID, int baselineLMOrder){
-		this(symbolTable, ngramStateID, true, baselineLMOrder);		
+	public NgramExtractor(int ngramStateID, int baselineLMOrder){
+		this(ngramStateID, true, baselineLMOrder);		
 	}
 	
-	public NgramExtractor(SymbolTable symbolTable, int ngramStateID, boolean useIntegerNgram, int baselineLMOrder){
+	public NgramExtractor(int ngramStateID, boolean useIntegerNgram, int baselineLMOrder){
 		
-		this.symbolTable = symbolTable;
 		this.ngramStateID = ngramStateID;
 		this.useIntegerNgram = useIntegerNgram;
 		this.baselineLMOrder = baselineLMOrder;
 		
-		this.START_SYM_ID = this.symbolTable.addTerminal(START_SYM);
-		this.STOP_SYM_ID = this.symbolTable.addTerminal(STOP_SYM);		
+		this.START_SYM_ID = Vocabulary.id(START_SYM);
+		this.STOP_SYM_ID = Vocabulary.id(STOP_SYM);		
 	}
 	
 	 /**for generative model, should set startNgramOrder=endNgramOrder*/ 
@@ -101,9 +99,9 @@ public class NgramExtractor {
 			
 			for(int c=0; c<enWords.length; c++){
 	    		int curID = enWords[c];
-	    		if(symbolTable.isNonterminal(curID)==true){//non-terminal words    			
+	    		if(Vocabulary.idx(curID)){//non-terminal words    			
 	    			//== get the left and right context
-	    			int index = symbolTable.getTargetNonterminalIndex(curID);
+	    			int index = -(curID + 1);
 	    			HGNode antNode =  antNodes.get(index);
 	    			NgramDPState state     = (NgramDPState) antNode.getDPState(this.ngramStateID);
 	    			//System.out.println("lm_feat_is: " + this.lm_feat_id + " ; state is: " + state);
@@ -145,21 +143,21 @@ public class NgramExtractor {
 	    			finalCount -= oldNgramCounts.get(ngram);
 	    			if(finalCount<0){
 	    				logger.warning("negative count for ngram: "+ ngram + "; new: " + entry.getValue() +"; old: " +oldNgramCounts.get(ngram) ); 
-	    				System.out.println(" rule is: " + rule.toString(symbolTable));
+	    				System.out.println(" rule is: " + rule.toString());
 	    				
 	    				for(int i=0; i< antNodes.size(); i++){
 		    				HGNode antNode =  antNodes.get(i);
 			    			NgramDPState state     = (NgramDPState) antNode.getDPState(this.ngramStateID);
 			    			//System.out.println("lm_feat_is: " + this.lm_feat_id + " ; state is: " + state);
 			    			
-			    			List<Integer>   leftContext = state.getLeftLMStateWords();
+			    			List<Integer> leftContext = state.getLeftLMStateWords();
 			    			for(int wrd : leftContext)
-			    				System.out.print(symbolTable.getWord(wrd) + " ");
+			    				System.out.print(Vocabulary.word(wrd) + " ");
 			    			System.out.println();
 			    			
 			    			List<Integer>   rightContext = state.getRightLMStateWords();
 			    			for(int wrd : rightContext)
-			    				System.out.print(symbolTable.getWord(wrd) + " ");
+			    				System.out.print(Vocabulary.word(wrd) + " ");
 			    			System.out.println();
 			    			
 	    				}
@@ -240,7 +238,7 @@ public class NgramExtractor {
 		List<Integer> words = new ArrayList<Integer>();	
 		for (int c = 0; c < enWords.length; c++) {
 			int curWrd = enWords[c];
-			if (symbolTable.isNonterminal(curWrd)) {
+			if (Vocabulary.nt(curWrd)) {
 				this.getNgrams(newNgramCounts, startNgramOrder, endNgramOrder, words);
 				words.clear();
 			} else {
@@ -311,7 +309,7 @@ public class NgramExtractor {
 		if(useIntegerNgram)
 			Ngram.getNgrams(tbl, startNgramOrder, endNgramOrder, wrds);
 		else
-			Ngram.getNgrams(symbolTable, tbl, startNgramOrder, endNgramOrder, wrds);
+			Ngram.getNgrams(Vocabulary, tbl, startNgramOrder, endNgramOrder, wrds);
 	}
 	*/
 	
@@ -319,7 +317,7 @@ public class NgramExtractor {
 		if(useIntegerNgram)
 			Ngram.getNgrams(tbl, startNgramOrder, endNgramOrder, wrds);
 		else
-			Ngram.getNgrams(symbolTable, tbl, startNgramOrder, endNgramOrder, wrds);
+			Ngram.getNgrams(tbl, startNgramOrder, endNgramOrder, wrds);
 		
 	}
 		

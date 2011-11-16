@@ -93,14 +93,14 @@ public class CorpusArrayTest {
 			sourcePrintStream.close();
 			String corpusFileName = sourceFile.getAbsolutePath();
 			
-			Vocabulary symbolTable;
+			Vocabulary Vocabulary;
 			
 			logger.fine("Constructing vocabulary from file " + corpusFileName);
-			symbolTable = new Vocabulary();
-			int[] lengths = Vocabulary.initializeVocabulary(corpusFileName, symbolTable, true);
+			Vocabulary = new Vocabulary();
+			int[] lengths = Vocabulary.initializeVocabulary(corpusFileName, Vocabulary, true);
 
 			logger.fine("Constructing corpus array from file " + corpusFileName);
-			Corpus corpus = SuffixArrayFactory.createCorpusArray(corpusFileName, symbolTable, lengths[0], lengths[1]);
+			Corpus corpus = SuffixArrayFactory.createCorpusArray(corpusFileName, Vocabulary, lengths[0], lengths[1]);
 
 			int expectedIndex = 0;
 			for (int actualIndex : corpus.corpusPositions()) {

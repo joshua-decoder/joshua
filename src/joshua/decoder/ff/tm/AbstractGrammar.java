@@ -17,7 +17,6 @@
  */
 package joshua.decoder.ff.tm;
 
-import java.io.BufferedWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -26,37 +25,34 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import joshua.corpus.vocab.SymbolTable;
 import joshua.decoder.ff.FeatureFunction;
 
 /**
- * Partial implementation of the <code>Grammar</code> interface
- * that provides logic for sorting a grammar.
+ * Partial implementation of the <code>Grammar</code> interface that provides
+ * logic for sorting a grammar.
  * <p>
- * <em>Note</em>: New classes implementing the <code>Grammar</code>
- * interface should probably inherit from this class, unless a
- * specific sorting technique different from that implemented by
- * this class is required.
- *
+ * <em>Note</em>: New classes implementing the <code>Grammar</code> interface
+ * should probably inherit from this class, unless a specific sorting technique
+ * different from that implemented by this class is required.
+ * 
  * @author Zhifei Li
  * @author Lane Schwartz
  */
 public abstract class AbstractGrammar implements Grammar {
- 
+
 	/** Logger for this class. */
-	private static final Logger logger =
-		Logger.getLogger(AbstractGrammar.class.getName());
-	
-	
-	/** 
-	 * Indicates whether the rules in this grammar have been
-	 * sorted based on the latest feature function values.
+	private static final Logger logger = Logger.getLogger(AbstractGrammar.class
+			.getName());
+
+	/**
+	 * Indicates whether the rules in this grammar have been sorted based on the
+	 * latest feature function values.
 	 */
 	protected boolean sorted;
-	
+
 	/**
 	 * Constructs an empty, unsorted grammar.
-	 *
+	 * 
 	 * @see Grammar#isSorted()
 	 */
 	public AbstractGrammar() {
@@ -68,16 +64,15 @@ public abstract class AbstractGrammar implements Grammar {
 	public int getOOVRuleID() {
 		return OOV_RULE_ID;
 	}
-	
+
 	/**
-	 * Cube-pruning requires that the grammar be sorted based
-	 * on the latest feature functions. To avoid synchronization,
-	 * this method should be called before multiple threads are
-	 * initialized for parallel decoding
+	 * Cube-pruning requires that the grammar be sorted based on the latest
+	 * feature functions. To avoid synchronization, this method should be called
+	 * before multiple threads are initialized for parallel decoding
 	 */
 	public void sortGrammar(List<FeatureFunction> models) {
 		Trie root = getTrieRoot();
-		if(root!=null){
+		if (root != null) {
 			sort(root, models);
 			setSorted(true);
 		}
@@ -87,16 +82,16 @@ public abstract class AbstractGrammar implements Grammar {
 	public boolean isSorted() {
 		return sorted;
 	}
-	
+
 	/**
 	 * Sets the flag indicating whether this grammar is sorted.
 	 * <p>
-	 * This method is called by {@link #sortGrammar(ArrayList)}
-	 * to indicate that the grammar has been sorted.
+	 * This method is called by {@link #sortGrammar(ArrayList)} to indicate that
+	 * the grammar has been sorted.
 	 * 
 	 * Its scope is protected so that child classes that override
-	 * <code>sortGrammar</code> will also be able to call this
-	 * method to indicate that the grammar has been sorted.
+	 * <code>sortGrammar</code> will also be able to call this method to indicate
+	 * that the grammar has been sorted.
 	 * 
 	 * @param sorted
 	 */
@@ -104,62 +99,44 @@ public abstract class AbstractGrammar implements Grammar {
 		this.sorted = sorted;
 		logger.fine("This grammar is now sorted: " + this);
 	}
-	
+
 	/**
-	 * Recursively sorts the grammar using the provided feature
-	 * functions.
+	 * Recursively sorts the grammar using the provided feature functions.
 	 * <p>
-	 * This method first sorts the rules stored at the provided
-	 * node, then recursively calls itself on the child nodes
-	 * of the provided node.
+	 * This method first sorts the rules stored at the provided node, then
+	 * recursively calls itself on the child nodes of the provided node.
 	 * 
-	 * @param node   Grammar node in the <code>Trie</code> whose
-	 *               rules should be sorted.
-	 * @param models Feature function models to use during
-	 *               sorting.
+	 * @param node
+	 *          Grammar node in the <code>Trie</code> whose rules should be
+	 *          sorted.
+	 * @param models
+	 *          Feature function models to use during sorting.
 	 */
 	private void sort(Trie node, List<FeatureFunction> models) {
-	
-		if (node != null) {			
-			if(node.hasRules()) {
+
+		if (node != null) {
+			if (node.hasRules()) {
 				RuleCollection rules = node.getRules();
-				if (logger.isLoggable(Level.FINE)) 
-					logger.fine("Sorting node " + Arrays.toString(rules.getSourceSide()));	
-				
+				if (logger.isLoggable(Level.FINE))
+					logger.fine("Sorting node " + Arrays.toString(rules.getSourceSide()));
+
 				rules.sortRules(models);
-				
+
 				if (logger.isLoggable(Level.FINEST)) {
 					StringBuilder s = new StringBuilder();
-					if (rules == null) {
-						s.append("\n\tNo rules");
-					} else {
-						
-						for (Rule r : rules.getSortedRules()) {
-							s.append(
-									"\n\t" 
-									+ r.getLHS()
-									+ " ||| "
-									+ Arrays.toString(r.getFrench())
-									+ " ||| "
-									+ Arrays.toString(r.getEnglish())
-									+ " ||| "
-									+ Arrays.toString(r.getFeatureScores())
-									+ " ||| " 
-									+ r.getEstCost()
-									+ "  "
-									+ r.getClass().getName() + "@" + Integer.toHexString(System.identityHashCode(r)));
-						}
+					for (Rule r : rules.getSortedRules()) {
+						s.append("\n\t" + r.getLHS() + " ||| "
+								+ Arrays.toString(r.getFrench()) + " ||| "
+								+ Arrays.toString(r.getEnglish()) + " ||| "
+								+ Arrays.toString(r.getFeatureScores()) + " ||| "
+								+ r.getEstCost() + "  " + r.getClass().getName() + "@"
+								+ Integer.toHexString(System.identityHashCode(r)));
 					}
 					logger.finest(s.toString());
 				}
 			}
-			
-			/*TODO: why is this necessary?
-			if (node instanceof AbstractGrammar) {
-				((AbstractGrammar) node).setSorted(true);
-			}*/
-			
-			if(node.hasExtensions()){
+
+			if (node.hasExtensions()) {
 				for (Trie child : node.getExtensions()) {
 					sort(child, models);
 				}
@@ -168,66 +145,64 @@ public abstract class AbstractGrammar implements Grammar {
 			}
 		}
 	}
-	
-	
-	
-	//write grammar to disk
-	public void writeGrammarOnDisk(String file, SymbolTable symbolTable) {
-	}
-	
-	private void writeGrammarOnDisk(Trie trie, BufferedWriter writer, SymbolTable symbolTable) {
-	}
-	
 
-	//change the feature weight in the grammar
-	public void changeGrammarCosts(Map<String, Double> weightTbl, HashMap<String, Integer> featureMap, double[] scores, String prefix, int column, boolean negate) {		
-		changeGrammarCosts(this.getTrieRoot(), featureMap, scores, prefix, column, negate);
+	// write grammar to disk
+	public void writeGrammarOnDisk(String file) {
 	}
-	
-	private void changeGrammarCosts(Trie trie, HashMap<String, Integer> featureMap, double[] scores, String prefix, int column, boolean negate) {
-		if(trie.hasRules()){
+
+	// change the feature weight in the grammar
+	public void changeGrammarCosts(Map<String, Double> weightTbl,
+			HashMap<String, Integer> featureMap, double[] scores, String prefix,
+			int column, boolean negate) {
+		changeGrammarCosts(this.getTrieRoot(), featureMap, scores, prefix, column,
+				negate);
+	}
+
+	private void changeGrammarCosts(Trie trie,
+			HashMap<String, Integer> featureMap, double[] scores, String prefix,
+			int column, boolean negate) {
+		if (trie.hasRules()) {
 			RuleCollection rlCollection = trie.getRules();
-			for(Rule rl : rlCollection.getSortedRules()){
+			for (Rule rl : rlCollection.getSortedRules()) {
 				String featName = prefix + rl.getRuleID();
-				float weight = (float)scores[featureMap.get(featName)];
-				if(negate)
+				float weight = (float) scores[featureMap.get(featName)];
+				if (negate)
 					weight *= -1.0;
-				rl.setFeatureCost(column, weight);				
+				rl.setFeatureCost(column, weight);
 			}
 		}
-		
-		if (trie.hasExtensions()) {
-			Object[] tem = trie.getExtensions().toArray();
-			
-			for (int i = 0; i < tem.length; i++) {
-				changeGrammarCosts((Trie)tem[i], featureMap, scores, prefix, column, negate);
-			}
-		}
-	}
-	
-	
-	//obtain RulesIDTable in the grammar, accumalative 
-	public void obtainRulesIDTable(Map<String, Integer> rulesIDTable,  SymbolTable symbolTable) {		
-		obtainRulesIDTable(this.getTrieRoot(), rulesIDTable, symbolTable);
-	}
-	
-	private void obtainRulesIDTable(Trie trie, Map<String, Integer> rulesIDTable,  SymbolTable symbolTable) {
-		if(trie.hasRules()){
-			RuleCollection rlCollection = trie.getRules();
-			for(Rule rl : rlCollection.getRules()){
-				rulesIDTable.put( rl.toStringWithoutFeatScores(symbolTable), rl.getRuleID());
-			}
-		}
-		
-		if (trie.hasExtensions()) {
-			Object[] tem = trie.getExtensions().toArray();
-			
-			for (int i = 0; i < tem.length; i++) {
-				obtainRulesIDTable((Trie)tem[i], rulesIDTable, symbolTable);
-			}
-		}
-	}
-	
-}
 
-	
+		if (trie.hasExtensions()) {
+			Object[] tem = trie.getExtensions().toArray();
+
+			for (int i = 0; i < tem.length; i++) {
+				changeGrammarCosts((Trie) tem[i], featureMap, scores, prefix, column,
+						negate);
+			}
+		}
+	}
+
+	// obtain RulesIDTable in the grammar, accumalative
+	public void obtainRulesIDTable(Map<String, Integer> rulesIDTable) {
+		obtainRulesIDTable(this.getTrieRoot(), rulesIDTable);
+	}
+
+	private void obtainRulesIDTable(Trie trie, Map<String, Integer> rulesIDTable) {
+		if (trie.hasRules()) {
+			RuleCollection rlCollection = trie.getRules();
+			for (Rule rl : rlCollection.getRules()) {
+				rulesIDTable.put(rl.toStringWithoutFeatScores(),
+						rl.getRuleID());
+			}
+		}
+
+		if (trie.hasExtensions()) {
+			Object[] tem = trie.getExtensions().toArray();
+
+			for (int i = 0; i < tem.length; i++) {
+				obtainRulesIDTable((Trie) tem[i], rulesIDTable);
+			}
+		}
+	}
+
+}

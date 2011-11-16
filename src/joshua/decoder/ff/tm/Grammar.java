@@ -21,7 +21,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import joshua.corpus.vocab.SymbolTable;
 import joshua.decoder.ff.FeatureFunction;
 
 /**
@@ -139,9 +138,9 @@ public interface Grammar  {
 	Rule constructManualRule(int lhs, int[] sourceWords, int[] targetWords, float[] scores, int aritity);
 	
 	
-	void writeGrammarOnDisk(String file, SymbolTable symbolTable);
+	void writeGrammarOnDisk(String file);
 	
 	void changeGrammarCosts(Map<String, Double> weightTbl, HashMap<String, Integer> featureMap, double[] scores, String prefix, int column, boolean negate);
 	
-	void obtainRulesIDTable(Map<String, Integer> rulesIDTable,  SymbolTable symbolTable); 
+	void obtainRulesIDTable(Map<String, Integer> rulesIDTable); 
 }
