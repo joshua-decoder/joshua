@@ -557,21 +557,15 @@ if (! defined $GRAMMAR_FILE) {
 					"grammar.gz");
 
 	# copy the thrax config file
-	my $tmpfile = mktemp("thrax");
-	open TMP, ">$tmpfile";
-	open READ, $THRAX_CONF_FILE;
-	while (my $line = <READ>) {
-	  print TMP $line unless /^input-file/;
-	}
-	close READ;
-	print TMP "input-file $THRAXDIR/input-file\n";
-	close(TMP);
-	system("mv $tmpfile thrax-$GRAMMAR_TYPE.conf");
+	my $thrax_file = "thrax-$GRAMMAR_TYPE.conf";
+	system("grep -v ^input-file $THRAX_CONF_FILE > $thrax_file.tmp");
+	system("echo input-file $THRAXDIR/input-file >> $thrax_file.tmp");
+	system("mv $thrax_file.tmp $thrax_file");
 
 	$cachepipe->cmd("thrax-run",
-					"$HADOOP/bin/hadoop jar $JOSHUA/lib/thrax.jar -D mapred.child.java.opts='-Xmx$HADOOP_MEM' thrax-$GRAMMAR_TYPE.conf $THRAXDIR > thrax.log 2>&1; rm -f grammar grammar.gz; $HADOOP/bin/hadoop fs -getmerge $THRAXDIR/final/ grammar; gzip -9f grammar",
+					"$HADOOP/bin/hadoop jar $JOSHUA/thrax/bin/thrax.jar -D mapred.child.java.opts='-Xmx$HADOOP_MEM' $thrax_file $THRAXDIR > thrax.log 2>&1; rm -f grammar grammar.gz; $HADOOP/bin/hadoop fs -getmerge $THRAXDIR/final/ grammar; gzip -9f grammar",
 					"train/thrax-input-file",
-					"thrax-$GRAMMAR_TYPE.conf",
+					$thrax_file,
 					"grammar.gz");
 
 	stop_hadoop_cluster() if $HADOOP eq "hadoop";
@@ -654,7 +648,7 @@ if ($numrefs > 1) {
 my $TUNE_GRAMMAR = "tune/grammar.filtered.gz";
 if ($DO_FILTER_TM) {
   $cachepipe->cmd("filter-tune",
-				  "$SCRIPTDIR/training/scat $GRAMMAR_FILE | java -Xmx2g -Dfile.encoding=utf8 -cp $JOSHUA/lib/thrax.jar edu.jhu.thrax.util.TestSetFilter -v $TUNE{source} | $SCRIPTDIR/training/remove-unary-abstract.pl | gzip -9 > $TUNE_GRAMMAR",
+				  "$SCRIPTDIR/training/scat $GRAMMAR_FILE | java -Xmx2g -Dfile.encoding=utf8 -cp $JOSHUA/thrax/bin/thrax.jar edu.jhu.thrax.util.TestSetFilter -v $TUNE{source} | $SCRIPTDIR/training/remove-unary-abstract.pl | gzip -9 > $TUNE_GRAMMAR",
 				  $GRAMMAR_FILE,
 				  $TUNE{source},
 				  $TUNE_GRAMMAR);
@@ -670,7 +664,7 @@ if (! defined $GLUE_GRAMMAR_FILE) {
   system("grep -v input-file $THRAX_CONF_FILE > thrax-$GRAMMAR_TYPE.conf")
 	  unless -e "thrax-$GRAMMAR_TYPE.conf";
   $cachepipe->cmd("glue-tune",
-				  "$SCRIPTDIR/training/scat $TUNE_GRAMMAR | java -Xmx2g -cp $JOSHUA/lib/thrax.jar:$JOSHUA/lib/hadoop-core-0.20.203.0.jar:$JOSHUA/lib/commons-logging-1.1.1.jar edu.jhu.thrax.util.CreateGlueGrammar thrax-$GRAMMAR_TYPE.conf > tune/grammar.glue",
+				  "$SCRIPTDIR/training/scat $TUNE_GRAMMAR | java -Xmx2g -cp $JOSHUA/thrax/bin/thrax.jar:$JOSHUA/lib/hadoop-core-0.20.203.0.jar:$JOSHUA/lib/commons-logging-1.1.1.jar edu.jhu.thrax.util.CreateGlueGrammar thrax-$GRAMMAR_TYPE.conf > tune/grammar.glue",
 				  $TUNE_GRAMMAR,
 				  "tune/grammar.glue");
   $GLUE_GRAMMAR_FILE = "tune/grammar.glue";
@@ -769,7 +763,7 @@ if ($FIRST_STEP eq "TEST") {
 my	$TEST_GRAMMAR = "test/grammar.filtered.gz";
 if ($DO_FILTER_TM) {
 	$cachepipe->cmd("filter-test",
-					"$SCRIPTDIR/training/scat $GRAMMAR_FILE | java -Xmx2g -Dfile.encoding=utf8 -cp $JOSHUA/lib/thrax.jar edu.jhu.thrax.util.TestSetFilter -v $TEST{source} | $SCRIPTDIR/training/remove-unary-abstract.pl | gzip -9 > $TEST_GRAMMAR",
+					"$SCRIPTDIR/training/scat $GRAMMAR_FILE | java -Xmx2g -Dfile.encoding=utf8 -cp $JOSHUA/thrax/bin/thrax.jar edu.jhu.thrax.util.TestSetFilter -v $TEST{source} | $SCRIPTDIR/training/remove-unary-abstract.pl | gzip -9 > $TEST_GRAMMAR",
 					$GRAMMAR_FILE,
 					$TEST{source},
 					$TEST_GRAMMAR);
@@ -786,7 +780,7 @@ if (! defined $GLUE_GRAMMAR_FILE) {
 	  unless -e "thrax-$GRAMMAR_TYPE.conf";
 
   $cachepipe->cmd("glue-test",
-				  "$SCRIPTDIR/training/scat $TEST_GRAMMAR | java -Xmx1g -cp $JOSHUA/lib/thrax.jar:$JOSHUA/lib/hadoop-core-0.20.203.0.jar:$JOSHUA/lib/commons-logging-1.1.1.jar edu.jhu.thrax.util.CreateGlueGrammar thrax-$GRAMMAR_TYPE.conf > test/grammar.glue",
+				  "$SCRIPTDIR/training/scat $TEST_GRAMMAR | java -Xmx1g -cp $JOSHUA/thrax/bin/thrax.jar:$JOSHUA/lib/hadoop-core-0.20.203.0.jar:$JOSHUA/lib/commons-logging-1.1.1.jar edu.jhu.thrax.util.CreateGlueGrammar thrax-$GRAMMAR_TYPE.conf > test/grammar.glue",
 				  $TEST_GRAMMAR,
 				  "test/grammar.glue");
   $GLUE_GRAMMAR_FILE = "test/grammar.glue";
