@@ -5,18 +5,18 @@
 # on the source language side.
 
 LINE: while (my $line = <>) {
-	my ($lhs, $source) = split(/ \|\|\| /, $line);
+  my ($lhs, $source) = split(/ \|\|\| /, $line);
 
-	$total++;
+  $total++;
 
-        my @symbols = split(' ', $source);
-        foreach my $symbol  (@symbols) {
-		if ($symbol !~ /^\[.*\]$/ or $symbol =~ /,2/) {
-			print $line;
-			next LINE;
-		}
+  my @symbols = split(' ', $source);
+  foreach my $symbol  (@symbols) {
+	if ($symbol !~ /^\[.*\]$/ or $symbol =~ /,2/) {
+	  print $line;
+	  next LINE;
 	}
-	$skipped++;
+  }
+  $skipped++;
 #	print STDERR "SKIPPING $line";
 }
 
