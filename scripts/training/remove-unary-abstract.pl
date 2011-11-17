@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 
 # Removes unary abstract rules from a grammar file (read from STDIN).
 # Unary abstract rules are unary CFG rules that have no terminals
@@ -10,14 +10,15 @@ LINE: while (my $line = <>) {
   $total++;
 
   my @symbols = split(' ', $source);
-  foreach my $symbol  (@symbols) {
-	if ($symbol !~ /^\[.*\]$/ or $symbol =~ /,2/) {
+  # rule passes the filter if (a) it has more than one symbol or (b)
+  # it has one symbol and that symbol is not a nonterminal
+  if (@symbols > 1 or $symbols[0] !~ /^\[.*,1\]$/) {
 	  print $line;
 	  next LINE;
 	}
   }
   $skipped++;
-#	print STDERR "SKIPPING $line";
+
 }
 
 print STDERR "skipped $skipped of $total\n";
