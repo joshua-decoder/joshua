@@ -72,7 +72,7 @@ public class HGNode implements Prunable<HGNode> {
 		addHyperedgeInNode(initHyperedge);
 	}
 
-	// used by disk hg
+	// Used by DiskHyperGraph.
 	public HGNode(int i,
 			int j,
 			int lhs,
@@ -98,7 +98,8 @@ public class HGNode implements Prunable<HGNode> {
 	}
 
 	public void semiringPlus(HyperEdge dt) {
-		if (null == bestHyperedge || bestHyperedge.bestDerivationLogP < dt.bestDerivationLogP) {
+		if ((null == bestHyperedge) || 
+				(bestHyperedge.bestDerivationLogP < dt.bestDerivationLogP)) {
 			bestHyperedge = dt; // no change when tied
 		}
 	}
@@ -132,7 +133,7 @@ public class HGNode implements Prunable<HGNode> {
 			this.signature = 31 + Math.abs(lhs);
 			if (this.dpStates != null)
 				for (DPState dps : dpStates.values())
-					this.signature = this.signature * 17 + dps.getSignature(false);
+					this.signature = this.signature * 31 + dps.getSignature(false);
 		}
 		return this.signature;
 	}
@@ -156,21 +157,21 @@ public class HGNode implements Prunable<HGNode> {
 		if (!(other instanceof HGNode))
 			return false;
 		HGNode o = (HGNode) other;
-		if (this.lhs != o.lhs)
+		if (lhs != o.lhs)
 			return false;
-		if (this.dpStates == null && o.dpStates == null)
+		if (dpStates == null && o.dpStates == null)
 			return true;
-		if ((this.dpStates != null && o.dpStates == null) ||
-				(this.dpStates == null && o.dpStates != null))
+		if ((dpStates != null && o.dpStates == null) ||
+				(dpStates == null && o.dpStates != null))
 			return false;
 		for (int key : dpStates.keySet()) {
 			if (!o.dpStates.containsKey(key))
 				return false;
-			if (!this.dpStates.get(key).equals(o.dpStates.get(key))) {
+			if (!dpStates.get(key).equals(o.dpStates.get(key))) {
 				if (logger.isLoggable(Level.FINEST)) {
 					logger.finest("DPState hash collision:");
-					logger.finest("A: " + this.dpStates.get(key).toString());
-					logger.finest("B: " + o.dpStates.get(key).toString());
+					logger.finest("A: " + dpStates.get(key).getSignature(false));
+					logger.finest("B: " + o.dpStates.get(key).getSignature(false));
 				}
 				return false;
 			}
