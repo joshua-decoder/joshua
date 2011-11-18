@@ -37,3 +37,8 @@ examples/example2/example2.refs.sgm
 examples/example2/example2.1best
 examples/example2/example2.1best.sgm
 examples/example2/example2.config.kenlm
+test/bn-en/hiero/diff
+test/bn-en/hiero/log
+test/bn-en/hiero/output
+test/bn-en/hiero/output.bleu
+test/bn-en/hiero/reference.en.all
