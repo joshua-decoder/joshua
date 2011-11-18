@@ -630,7 +630,7 @@ if (! -e $TUNE{source}) {
   exit 1;
 }
 if ($numrefs > 1) {
-  for my $i (0..$numrefs-1) {
+  for my $i (1..$numrefs) {
 	if (! -e "$TUNE{target}.$i") {
 	  print STDERR "* FATAL: couldn't find tuning reference file '$TUNE{target}.$i'\n";
 	  exit 1;
