@@ -19,8 +19,7 @@ public class NgramStateComputer implements StateComputer<NgramDPState> {
 	private static final Logger logger =
 		Logger.getLogger(NgramStateComputer.class.getName());
 	
-	/**SateID should be any integer except -1
-	 * */
+	// StateID should be any integer except -1.
 	public NgramStateComputer(int nGramOrder, int stateID){
 		this.ngramOrder = nGramOrder;
 		this.stateID = stateID;
