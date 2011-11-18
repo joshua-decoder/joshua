@@ -1,0 +1,14 @@
+Processing 100 sentences...
+Evaluating set of 1'th candidate translations from /dev/fd/63...
+BLEU_precision(1) = 1047 / 1708 = 0.6130
+BLEU_precision(2) = 491 / 1608 = 0.3053
+BLEU_precision(3) = 251 / 1514 = 0.1658
+BLEU_precision(4) = 134 / 1424 = 0.0941
+BLEU_precision = 0.2325
+
+Length of candidate corpus = 1708
+Effective length of reference corpus = 1532
+BLEU_BP = 1.0000
+
+  => BLEU = 0.2325
+

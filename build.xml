@@ -232,6 +232,14 @@
 		</javadoc>
 	</target>
 	
+
+<!-- ~~~~~ Tests ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+    <target name="test" depends="compile">
+	  <exec dir="test" executable="/bin/bash" failonerror="true">
+		<arg line="test-all.sh" />
+	  </exec>
+	</target>
 	
 <!-- ~~~~~ TestNG ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 	
@@ -248,7 +256,7 @@
 	
 	
 	<!-- Run the unit tests -->
-	<target name="test" depends="compile,compile-tests">
+	<target name="testng" depends="compile,compile-tests">
 		<testng classpath="${build}" sourcedir="${test}">
 			<jvmarg value="-Dfile.encoding=UTF8"/>
 			<jvmarg value="-Djava.util.logging.config.file=logging.tests.properties"/>
