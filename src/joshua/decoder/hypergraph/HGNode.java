@@ -128,12 +128,13 @@ public class HGNode implements Prunable<HGNode> {
 	}
 
 	// Hash signature of this item: includes lhs, states.
-	public int getSignature() {
+	@Override
+	public int hashCode() {
 		if (this.signature == 0) {
 			this.signature = 31 + Math.abs(lhs);
 			if (this.dpStates != null)
 				for (DPState dps : dpStates.values())
-					this.signature = this.signature * 31 + dps.getSignature(false);
+					this.signature = this.signature * 31 + dps.hashCode();
 		}
 		return this.signature;
 	}
@@ -171,7 +172,9 @@ public class HGNode implements Prunable<HGNode> {
 				if (logger.isLoggable(Level.FINEST)) {
 					logger.finest("DPState hash collision:");
 					logger.finest("A: " + dpStates.get(key).getSignature(false));
+					logger.finest("A: " + dpStates.get(key).toString());
 					logger.finest("B: " + o.dpStates.get(key).getSignature(false));
+					logger.finest("B: " + o.dpStates.get(key).toString());
 				}
 				return false;
 			}

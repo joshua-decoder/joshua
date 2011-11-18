@@ -27,7 +27,7 @@ import joshua.corpus.Vocabulary;
  * 
  * @author Zhifei Li, <zhifei.work@gmail.com>
  */
-public class NgramDPState implements DPState {
+public class NgramDPState extends DPState {
 
 	private List<Integer> leftLMStateWords;
 	private List<Integer> rightLMStateWords;

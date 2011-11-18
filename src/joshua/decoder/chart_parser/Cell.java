@@ -58,9 +58,8 @@ class Cell {
 	
 	private int goalSymID;
 	private int constraintSymbolId;
-		
-	// to maintain uniqueness of nodes
-	private HashMap<Integer,HGNode> nodesSigTbl = new HashMap<Integer,HGNode>();
+	
+	private HashMap<HGNode, HGNode> nodesSigTbl = new HashMap<HGNode, HGNode>();
 	
 	// signature by lhs
 	private Map<Integer,SuperNode> superNodesTbl = new HashMap<Integer,SuperNode>();
@@ -184,8 +183,6 @@ class Cell {
 		double transitionLogP    = result.getTransitionTotalLogP();
 		double finalizedTotalLogP = result.getFinalizedTotalLogP();
 		
-		
-		
 		if(noPrune==false && beamPruner!=null &&  beamPruner.relativeThresholdPrune(expectedTotalLogP)){//the hyperedge should be pruned
 			this.chart.nPreprunedEdges++;
 			res = null;
@@ -196,15 +193,15 @@ class Cell {
 			// Each node has a list of hyperedges, need to check whether the node
 			// is already exist, if yes, just add the hyperedges, this may change
 			// the best logP of the node.
-			HGNode oldNode = this.nodesSigTbl.get(res.getSignature());
+			HGNode oldNode = this.nodesSigTbl.get(res);
 			if (null != oldNode) { // have an item with same states, combine items
 				this.chart.nMerged++;
 				
 				if (logger.isLoggable(Level.FINEST) && !oldNode.equals(res)) {
 					logger.finest("Node signature collision:");
-					logger.finest("SA: " + oldNode.getSignature());
+					logger.finest("SA: " + oldNode.hashCode());
 					logger.finest("NA: " + oldNode.toString());
-					logger.finest("SB: " + res.getSignature());
+					logger.finest("SB: " + res.hashCode());
 					logger.finest("NB: " + res.toString());
 					logger.finest("========================");
 				}
@@ -258,7 +255,7 @@ class Cell {
 	 *     the best-logP of old node is worse than the new hyperedge's logP.
 	 * */
 	private void addNewNode(HGNode node, boolean noPrune) {
-		this.nodesSigTbl.put(node.getSignature(), node); // add/replace the item
+		this.nodesSigTbl.put(node, node); // add/replace the item
 		this.sortedNodes = null; // reset the list
 	
 		if(beamPruner!=null){
@@ -266,7 +263,7 @@ class Cell {
 				List<HGNode> prunedNodes = beamPruner.addOneObjInHeapWithPrune(node);
 				this.chart.nPrunedItems += prunedNodes.size();
 				for(HGNode prunedNode : prunedNodes)
-					nodesSigTbl.remove(prunedNode.getSignature());
+					nodesSigTbl.remove(prunedNode);
 			}else{
 				beamPruner.addOneObjInHeapWithoutPrune(node);
 			}
