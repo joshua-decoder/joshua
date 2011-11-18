@@ -58,8 +58,9 @@ class Cell {
 	
 	private int goalSymID;
 	private int constraintSymbolId;
-	
-	private HashMap<HGNode, HGNode> nodesSigTbl = new HashMap<HGNode, HGNode>();
+		
+	// to maintain uniqueness of nodes
+	private HashMap<String,HGNode> nodesSigTbl = new HashMap<String,HGNode>();
 	
 	// signature by lhs
 	private Map<Integer,SuperNode> superNodesTbl = new HashMap<Integer,SuperNode>();
@@ -183,6 +184,8 @@ class Cell {
 		double transitionLogP    = result.getTransitionTotalLogP();
 		double finalizedTotalLogP = result.getFinalizedTotalLogP();
 		
+		
+		
 		if(noPrune==false && beamPruner!=null &&  beamPruner.relativeThresholdPrune(expectedTotalLogP)){//the hyperedge should be pruned
 			this.chart.nPreprunedEdges++;
 			res = null;
@@ -190,31 +193,25 @@ class Cell {
 			HyperEdge dt = new HyperEdge(rule, finalizedTotalLogP, transitionLogP, ants, srcPath);
 			res = new HGNode(i, j, rule.getLHS(), dpStates, dt, expectedTotalLogP);
 			
-			// Each node has a list of hyperedges, need to check whether the node
-			// is already exist, if yes, just add the hyperedges, this may change
-			// the best logP of the node.
-			HGNode oldNode = this.nodesSigTbl.get(res);
+			/** each node has a list of hyperedges,
+			 * need to check whether the node is already exist, 
+			 * if yes, just add the hyperedges, this may change the best logP of the node 
+			 * */
+			HGNode oldNode = this.nodesSigTbl.get( res.getSignature() );
 			if (null != oldNode) { // have an item with same states, combine items
 				this.chart.nMerged++;
 				
-				if (logger.isLoggable(Level.FINEST) && !oldNode.equals(res)) {
-					logger.finest("Node signature collision:");
-					logger.finest("SA: " + oldNode.hashCode());
-					logger.finest("NA: " + oldNode.toString());
-					logger.finest("SB: " + res.hashCode());
-					logger.finest("NB: " + res.toString());
-					logger.finest("========================");
-				}
+				/** the position of oldItem in this.heapItems
+				 *  may change, basically, we should remove the
+				 *  oldItem, and re-insert it (linear time), this is too expense)
+				 **/
+				if ( res.getPruneLogP() > oldNode.getPruneLogP() ) {//merget old to new: semiring plus					
 
-				// The position of oldItem in this.heapItems may change, basically, we 
-				// should remove the oldItem, and re-insert it (linear time), this is
-				// too expensive.
-				// Merged old to new: semiring plus.
-				if ( res.getPruneLogP() > oldNode.getPruneLogP() ) {					
 					if(beamPruner!=null){
 						oldNode.setDead();// this.heapItems.remove(oldItem);
 						beamPruner.incrementDeadObjs();
 					}
+					
 					res.addHyperedgesInNode(oldNode.hyperedges);
 					addNewNode(res, noPrune); //this will update the HashMap, so that the oldNode is destroyed
 					
@@ -248,22 +245,21 @@ class Cell {
 // Private Methods
 //===============================================================
 
-	/**
-	 * Two cases this function gets called:
-	 * (1) A new hyperedge leads to a non-existing node signature.
-	 * (2) A new hyperedge's signature matches an old node's signature, but
-	 *     the best-logP of old node is worse than the new hyperedge's logP.
+	/**two cases this function gets called
+	 * (1) a new hyperedge leads to a non-existing node signature
+	 * (2) a new hyperedge's signature matches an old node's signature, but the best-logp of old node is worse than the new hyperedge's logP
 	 * */
 	private void addNewNode(HGNode node, boolean noPrune) {
-		this.nodesSigTbl.put(node, node); // add/replace the item
+		this.nodesSigTbl.put(node.getSignature(), node); // add/replace the item
 		this.sortedNodes = null; // reset the list
+			
 	
 		if(beamPruner!=null){
 			if(noPrune==false){
 				List<HGNode> prunedNodes = beamPruner.addOneObjInHeapWithPrune(node);
 				this.chart.nPrunedItems += prunedNodes.size();
 				for(HGNode prunedNode : prunedNodes)
-					nodesSigTbl.remove(prunedNode);
+					nodesSigTbl.remove(prunedNode.getSignature());
 			}else{
 				beamPruner.addOneObjInHeapWithoutPrune(node);
 			}
@@ -277,14 +273,17 @@ class Cell {
 			this.superNodesTbl.put(node.lhs, si);
 		}
 		si.nodes.add(node);//TODO what about the dead items?
+		
+	
 	}
 
-	/** 
-	 * Get a sorted list of Nodes in the cell, and also make
+	
+	
+	/** get a sorted list of Nodes in the cell, and also make
 	 * sure the list of node in any SuperItem is sorted, this
 	 * will be called only necessary, which means that the list
 	 * is not always sorted, mainly needed for goal_bin and
-	 * cube-pruning.
+	 * cube-pruning
 	 */
 	private void ensureSorted() {
 		

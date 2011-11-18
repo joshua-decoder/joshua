@@ -23,12 +23,6 @@ package joshua.decoder.ff.state_maintenance;
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate$
  */
-public abstract class DPState {
-	
-	@Override
-	public int hashCode() {
-		return getSignature(false);
-	}
-	
-	public abstract int getSignature(boolean forceRecompute);
+public interface DPState {
+	String getSignature(boolean forceRecompute);
 }

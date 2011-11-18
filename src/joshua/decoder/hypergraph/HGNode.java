@@ -19,76 +19,85 @@ package joshua.decoder.hypergraph;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.TreeMap;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import joshua.decoder.chart_parser.Prunable;
 import joshua.decoder.ff.state_maintenance.DPState;
 
 /**
- * This class implements a hypergraph node, also known as an item in parsing.
- * 
+ * this class implement Hypergraph node (i.e., HGNode); also known
+ * as Item in parsing.
+ *
  * @author Zhifei Li, <zhifei.work@gmail.com>
- * @author Juri Ganitkevitch
+ * @version $LastChangedDate$
  */
 
-// TODO: Handle the case that the hypergraph only maintains the one-best tree.
+//@todo: handle the case that the Hypergraph only maintains the one-best tree 
 public class HGNode implements Prunable<HGNode> {
-
-	private static final Logger logger = Logger.getLogger(HGNode.class.getName());
-
+	
 	public int i, j;
-
-	// The constituent label governing the span.
+	
+	// this is the symbol like: NP, VP, and so on
 	public int lhs;
-
-	// Each hyperedge is an "and" node.
+	
+	// each hyperedge is an "and" node
 	public List<HyperEdge> hyperedges = null;
-
+	
 	// used in pruning, compute_item, and transit_to_goal
 	public HyperEdge bestHyperedge = null;
+	
 
-	// The key is the state id; remember the state required by each model,
-	// for example, edge n-grams for LM model.
-	TreeMap<Integer, DPState> dpStates;
+	// the key is the state id; remember the state required by each model, for example, edge-ngrams for LM model
+	TreeMap<Integer,DPState> dpStates;
+	
+	
+	//============== auxiluary variables, no need to store on disk
+	// signature of this item: lhs, states
+	private String signature = null;
+	// seperator for the signature for each state
+	private static final String STATE_SIG_SEP = " -f- ";
+	
+	//============== for pruning purpose
+	public boolean isDead        = false;
+	private double  estTotalLogP = 0.0; //it includes the estimated LogP
+	
+	
+//===============================================================
+// Constructors
+//===============================================================
 
-	// Signature hash code for the node.
-	private int signature = 0;
-
-	public boolean isDead = false;
-	private double estTotalLogP = 0.0;
-
-	public HGNode(int i, int j, int lhs,
-			TreeMap<Integer, DPState> dpStates,
-			HyperEdge initHyperedge,
-			double estTotalLogP) {
-		this.i = i;
-		this.j = j;
+	public HGNode(int i, int j, int lhs, TreeMap<Integer,DPState> dpStates, HyperEdge initHyperedge, double estTotalLogP) {
+		this.i   = i;
+		this.j   = j;
 		this.lhs = lhs;
 		this.dpStates = dpStates;
-		this.estTotalLogP = estTotalLogP;
+		this.estTotalLogP  = estTotalLogP;
 		addHyperedgeInNode(initHyperedge);
 	}
-
-	// Used by DiskHyperGraph.
-	public HGNode(int i,
-			int j,
-			int lhs,
-			List<HyperEdge> hyperedges,
-			HyperEdge bestHyperedge,
-			TreeMap<Integer, DPState> states) {
-		this.i = i;
-		this.j = j;
+	
+	
+	//used by disk hg
+	public HGNode(int i, int j, int lhs, List<HyperEdge> hyperedges, HyperEdge bestHyperedge, TreeMap<Integer,DPState> states) {
+		this.i   = i;
+		this.j   = j;
 		this.lhs = lhs;
-		this.hyperedges = hyperedges;
-		this.bestHyperedge = bestHyperedge;
+		this.hyperedges    = hyperedges;
+		this.bestHyperedge  = bestHyperedge;
 		this.dpStates = states;
 	}
-
+	
+	
+//===============================================================
+// Methods
+//===============================================================
+	
 	public void addHyperedgeInNode(HyperEdge dt) {
-		if (dt != null) {
+		if(dt!=null){
 			if (null == hyperedges) {
 				hyperedges = new ArrayList<HyperEdge>();
 			}
@@ -96,23 +105,24 @@ public class HGNode implements Prunable<HGNode> {
 			semiringPlus(dt);
 		}
 	}
-
-	public void semiringPlus(HyperEdge dt) {
-		if ((null == bestHyperedge) || 
-				(bestHyperedge.bestDerivationLogP < dt.bestDerivationLogP)) {
-			bestHyperedge = dt; // no change when tied
+	
+	public void semiringPlus(HyperEdge dt){		
+		if (null == bestHyperedge || bestHyperedge.bestDerivationLogP < dt.bestDerivationLogP){//semiring + operation
+			bestHyperedge = dt; //no change when tied
 		}
 	}
-
+	
 	public void addHyperedgesInNode(List<HyperEdge> hyperedges) {
-		for (HyperEdge hyperEdge : hyperedges)
+		for(HyperEdge hyperEdge : hyperedges) 
 			addHyperedgeInNode(hyperEdge);
 	}
-
-	public TreeMap<Integer, DPState> getDPStates() {
+	
+	
+	public TreeMap<Integer,DPState> getDPStates() {
 		return dpStates;
 	}
-
+	
+	
 	public DPState getDPState(int stateID) {
 		if (null == this.dpStates) {
 			return null;
@@ -120,78 +130,68 @@ public class HGNode implements Prunable<HGNode> {
 			return this.dpStates.get(stateID);
 		}
 	}
-
+	
+	
 	public void printInfo(Level level) {
 		if (HyperGraph.logger.isLoggable(level))
-			HyperGraph.logger.log(level, String.format("lhs: %s; logP: %.3f", lhs,
-					bestHyperedge.bestDerivationLogP));
+			HyperGraph.logger.log(level,
+				String.format("lhs: %s; logP: %.3f",
+					lhs, bestHyperedge.bestDerivationLogP));
 	}
-
-	// Hash signature of this item: includes lhs, states.
-	@Override
-	public int hashCode() {
-		if (this.signature == 0) {
-			this.signature = 31 + Math.abs(lhs);
-			if (this.dpStates != null)
-				for (DPState dps : dpStates.values())
-					this.signature = this.signature * 31 + dps.hashCode();
+	
+	
+	//signature of this item: lhs, states (we do not need i, j)
+	public String getSignature() {
+		if (null == this.signature) {
+			StringBuffer s = new StringBuffer();
+			s.append(lhs);
+			s.append(" ");
+			
+			if (null != this.dpStates && this.dpStates.size() > 0) {
+				Iterator<Map.Entry<Integer,DPState>> it = this.dpStates.entrySet().iterator();
+				while (it.hasNext()) {
+					Map.Entry<Integer,DPState> entry = it.next();					
+					s.append(entry.getValue().getSignature(false));
+					if (it.hasNext()) 
+						s.append(STATE_SIG_SEP);
+				}
+			}
+			
+			this.signature = s.toString();
 		}
+	
 		return this.signature;
 	}
-
-	public void releaseDPStatesMemory() {
+	
+	public void releaseDPStatesMemory(){
 		dpStates = null;
 	}
-
-	public double getEstTotalLogP() {
+	
+	public double getEstTotalLogP(){
 		return this.estTotalLogP;
 	}
-
+	
+	
+	/*this will called by the sorting
+	 * in Cell.ensureSorted()*/
+	//sort by estTotalLogP: for pruning purpose
 	public int compareTo(HGNode anotherItem) {
-		logger.severe("This compare function should never be called.");
+		System.out.println("HGNode, compare functiuon should never be called");
 		System.exit(1);
 		return 0;
+		/*
+		if (this.estTotalLogP > anotherItem.estTotalLogP) {
+			return -1;
+		} else if (this.estTotalLogP == anotherItem.estTotalLogP) {
+			return 0;
+		} else {
+			return 1;
+		}*/
+		
 	}
 	
-	@Override
-	public boolean equals(Object other) {
-		if (!(other instanceof HGNode))
-			return false;
-		HGNode o = (HGNode) other;
-		if (lhs != o.lhs)
-			return false;
-		if (dpStates == null && o.dpStates == null)
-			return true;
-		if ((dpStates != null && o.dpStates == null) ||
-				(dpStates == null && o.dpStates != null))
-			return false;
-		for (int key : dpStates.keySet()) {
-			if (!o.dpStates.containsKey(key))
-				return false;
-			if (!dpStates.get(key).equals(o.dpStates.get(key))) {
-				if (logger.isLoggable(Level.FINEST)) {
-					logger.finest("DPState hash collision:");
-					logger.finest("A: " + dpStates.get(key).getSignature(false));
-					logger.finest("A: " + dpStates.get(key).toString());
-					logger.finest("B: " + o.dpStates.get(key).getSignature(false));
-					logger.finest("B: " + o.dpStates.get(key).toString());
-				}
-				return false;
-			}
-		}
-		return true;
-	}
 	
-	public String toString() {
-		StringBuilder sb = new StringBuilder(lhs + "\n");
-		if (this.dpStates != null)
-			for (DPState dps : dpStates.values())
-				sb.append(dps.toString()).append("\n");
-		return sb.toString();
-	}
-
-	// Inverse order.
-	public static Comparator<HGNode> inverseLogPComparator = new Comparator<HGNode>() {
+	public static Comparator<HGNode> inverseLogPComparator	= new Comparator<HGNode>() {			
 		public int compare(HGNode item1, HGNode item2) {
 			double logp1 = item1.estTotalLogP;
 			double logp2 = item2.estTotalLogP;
@@ -205,8 +205,9 @@ public class HGNode implements Prunable<HGNode> {
 		}
 	};
 
-	// Natural order.
-	public static Comparator<HGNode> logPComparator = new Comparator<HGNode>() {
+	/**natural order
+	 * */
+	public static Comparator<HGNode> logPComparator	= new Comparator<HGNode>() {			
 		public int compare(HGNode item1, HGNode item2) {
 			double logp1 = item1.estTotalLogP;
 			double logp2 = item2.estTotalLogP;
@@ -224,13 +225,16 @@ public class HGNode implements Prunable<HGNode> {
 		return this.isDead;
 	}
 
+
 	public double getPruneLogP() {
 		return this.estTotalLogP;
 	}
 
+
 	public void setDead() {
-		this.isDead = true;
+		this.isDead = true;		
 	}
+
 
 	public void setPruneLogP(double estTotalLogP) {
 		this.estTotalLogP = estTotalLogP;
