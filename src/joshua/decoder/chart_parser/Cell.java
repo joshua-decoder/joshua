@@ -60,7 +60,7 @@ class Cell {
 	private int constraintSymbolId;
 		
 	// to maintain uniqueness of nodes
-	private HashMap<Integer,HGNode> nodesSigTbl = new HashMap<Integer,HGNode>();
+	private HashMap<String,HGNode> nodesSigTbl = new HashMap<String,HGNode>();
 	
 	// signature by lhs
 	private Map<Integer,SuperNode> superNodesTbl = new HashMap<Integer,SuperNode>();
@@ -197,7 +197,7 @@ class Cell {
 			 * need to check whether the node is already exist, 
 			 * if yes, just add the hyperedges, this may change the best logP of the node 
 			 * */
-			HGNode oldNode = this.nodesSigTbl.get(res.getSignature());
+			HGNode oldNode = this.nodesSigTbl.get( res.getSignature() );
 			if (null != oldNode) { // have an item with same states, combine items
 				this.chart.nMerged++;
 				
@@ -245,15 +245,14 @@ class Cell {
 // Private Methods
 //===============================================================
 
-	/**
-	 * Two cases this function gets called:
-	 * (1) A new hyperedge leads to a non-existing node signature.
-	 * (2) A new hyperedge's signature matches an old node's signature, but
-	 *     the best-logP of old node is worse than the new hyperedge's logP.
+	/**two cases this function gets called
+	 * (1) a new hyperedge leads to a non-existing node signature
+	 * (2) a new hyperedge's signature matches an old node's signature, but the best-logp of old node is worse than the new hyperedge's logP
 	 * */
 	private void addNewNode(HGNode node, boolean noPrune) {
 		this.nodesSigTbl.put(node.getSignature(), node); // add/replace the item
 		this.sortedNodes = null; // reset the list
+			
 	
 		if(beamPruner!=null){
 			if(noPrune==false){
@@ -274,14 +273,17 @@ class Cell {
 			this.superNodesTbl.put(node.lhs, si);
 		}
 		si.nodes.add(node);//TODO what about the dead items?
+		
+	
 	}
 
-	/** 
-	 * Get a sorted list of Nodes in the cell, and also make
+	
+	
+	/** get a sorted list of Nodes in the cell, and also make
 	 * sure the list of node in any SuperItem is sorted, this
 	 * will be called only necessary, which means that the list
 	 * is not always sorted, mainly needed for goal_bin and
-	 * cube-pruning.
+	 * cube-pruning
 	 */
 	private void ensureSorted() {
 		

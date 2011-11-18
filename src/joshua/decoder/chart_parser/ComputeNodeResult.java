@@ -1,7 +1,6 @@
 
 package joshua.decoder.chart_parser;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.TreeMap;
 
@@ -43,14 +42,13 @@ public class ComputeNodeResult {
 			}
 		}
 		
-		
 		TreeMap<Integer,DPState> allDPStates = null;
 		
-		if(stateComputers!=null){
+		if (stateComputers != null) {
 			for(StateComputer stateComputer : stateComputers){
 				DPState dpState = stateComputer.computeState(rule, antNodes, i, j, srcPath);					
 				
-				if(allDPStates==null)
+				if (allDPStates == null)
 					allDPStates = new TreeMap<Integer,DPState>();
 				allDPStates.put(stateComputer.getStateID(), dpState);
 			}
@@ -61,15 +59,13 @@ public class ComputeNodeResult {
 		double futureLogPEstimation = 0.0;
 		
 		for (FeatureFunction ff : featureFunctions) {		
-			transitionLogPSum += 
-				ff.getWeight() * ff.transitionLogP(rule, antNodes, i, j, srcPath, sentID);
-			
+			transitionLogPSum += ff.getWeight() 
+					* ff.transitionLogP(rule, antNodes, i, j, srcPath, sentID);
 			DPState dpState = null;
-			if(allDPStates!=null)
+			if(allDPStates != null)
 				dpState = allDPStates.get(ff.getStateID());
-			futureLogPEstimation +=
-				ff.getWeight() * ff.estimateFutureLogP(rule, dpState, sentID);
-			
+			futureLogPEstimation += ff.getWeight() 
+					* ff.estimateFutureLogP(rule, dpState, sentID);
 		}
 		
 		/* if we use this one (instead of compute transition
@@ -94,7 +90,7 @@ public class ComputeNodeResult {
 		this.expectedTotalLogP = expectedTotalLogP;
 		this.finalizedTotalLogP = finalizedTotalLogP;
 		this.transitionTotalLogP = transitionLogPSum;
-		this.dpStates =  allDPStates;
+		this.dpStates = allDPStates;
 		
 		//System.out.println(rule.toString());
 		//printInfo();

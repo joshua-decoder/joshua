@@ -121,7 +121,7 @@ public class HyperGraphViewer extends VisualizationViewer<Vertex,Edge> {
 				}
 				else if (v instanceof NodeVertex) {
 					// TODO: Returns meaningless hash rather than a serialization.
-					return String.valueOf(((NodeVertex) v).getNode().getSignature());
+					return String.valueOf(((NodeVertex) v).getNode().hashCode());
 				}
 				else {
 					return "";
