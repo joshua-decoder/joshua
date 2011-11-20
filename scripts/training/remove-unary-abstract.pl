@@ -15,10 +15,8 @@ LINE: while (my $line = <>) {
   if (@symbols > 1 or $symbols[0] !~ /^\[.*,1\]$/) {
 	  print $line;
 	  next LINE;
-	}
   }
   $skipped++;
-
 }
 
 print STDERR "skipped $skipped of $total\n";
