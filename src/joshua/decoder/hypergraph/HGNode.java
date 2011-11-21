@@ -235,8 +235,11 @@ public class HGNode implements Prunable<HGNode> {
 		this.isDead = true;		
 	}
 
-
 	public void setPruneLogP(double estTotalLogP) {
 		this.estTotalLogP = estTotalLogP;
 	}
+
+    public List<HyperEdge> getHyperEdges() {
+        return this.hyperedges;
+    }
 }
