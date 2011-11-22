@@ -75,7 +75,7 @@ public class ViterbiExtractor  {
 	 * @param walker an implementation of the ViterbieWalker
 	 * interface, to be applied to each node in the tree
 	 */
-	public static void walk(HGNode node, ViterbiWalker walker) {
+	public static void walk(HGNode node, WalkerFunction walker) {
 		// apply the walking function to the node
 		walker.apply(node);
 
@@ -83,7 +83,6 @@ public class ViterbiExtractor  {
 		HyperEdge bestEdge = node.bestHyperedge;
 		if (null != bestEdge.getAntNodes()) {
 			for (HGNode antNode : bestEdge.getAntNodes()) {
-				HGNode newNode = cloneNodeWithBestHyperedge(antNode);
 				walk(antNode, walker);
 			}
 		}

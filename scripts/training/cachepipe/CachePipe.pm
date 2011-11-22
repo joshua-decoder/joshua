@@ -35,6 +35,7 @@ sub new {
 	running   => "",            # currently running command
 	lastrun   => "",            # last command run
 	qsub_args => "",            # qsub args
+	omit_cmd  => 0,             # whether to omit the command from the signature
 	email   => undef,
   };
 
@@ -44,6 +45,16 @@ sub new {
   STDERR->autoflush(1);
 
   return $self;
+}
+
+sub omit_cmd {
+  my ($self) = @_;
+  $self->{omit_cmd} = 1;
+}
+
+sub include_cmd {
+  my ($self) = @_;
+  $self->{omit_cmd} = 0;
 }
 
 # cleanup
@@ -83,10 +94,14 @@ sub cache_from_file {
 }
 
 sub build_signatures {
-  my ($cmd,@deps) = @_;
+  my ($self,$cmd,@deps) = @_;
 
   # print STDERR "CMD: $cmd\n";
   # map { print STDERR "DEP: $_\n" } @deps;
+
+  if ($self->{omit_cmd}) {
+	$cmd = "[omitted]";
+  }
 
   # remove blocked off portion
   $cmd =~ s/<<<.*?>>>//g;
@@ -264,7 +279,7 @@ sub cmd {
 	exit 1;
   }
 
-  my ($new_signature,$cmdsig,@sigs) = build_signatures($cmd,@deps);
+  my ($new_signature,$cmdsig,@sigs) = $self->build_signatures($cmd,@deps);
 
   # remove markers for portions of the command not incorporated in the
   # signature; this is the actual string that gets executed
@@ -296,7 +311,7 @@ sub cmd {
 
 	if ($cache_only) {
 
-	  write_signature($namedir,$cmd,@deps);
+	  $self->write_signature($namedir,$cmd,@deps);
 
 	  return 0;
 
@@ -332,7 +347,7 @@ sub cmd {
 	  my $retval = $? >> 8;
 
 	  if ($retval == $self->{retval}) {
-		write_signature($namedir,$cmd,@deps);
+		$self->write_signature($namedir,$cmd,@deps);
 
 		unlink("$namedir/running");
 		$self->{running} = "";
@@ -387,7 +402,7 @@ sub cached {
 	chomp(my $old_signature = <READ>);
 	close(READ);
 
-	my ($new_signature) = build_signatures($cmd,@deps);
+	my ($new_signature) = $self->build_signatures($cmd,@deps);
 
 	# if the old signature is different from the new one, we need to re-run
 	if ($old_signature ne $new_signature) {
@@ -409,9 +424,9 @@ sub write_cmd {
 }
 
 sub write_signature {
-  my ($namedir,$cmd,@deps) = @_;
+  my ($self,$namedir,$cmd,@deps) = @_;
 
-  my ($new_signature,$cmdsig,@sigs) = build_signatures($cmd,@deps);
+  my ($new_signature,$cmdsig,@sigs) = $self->build_signatures($cmd,@deps);
 
   # regenerate signature
   open(WRITE, ">$namedir/signature") or die "FATAL: can't write to '$namedir/signature'";
