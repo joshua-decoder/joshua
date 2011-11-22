@@ -78,6 +78,7 @@ my $QSUB_ARGS  = "-l num_proc=2";
 my $ALIGNER_BLOCKSIZE = 1000000;
 my $NUM_JOBS = 1;
 my $NUM_THREADS = 1;
+my $OMIT_CMD = 0;
 
 my @STEPS = qw[FIRST SUBSAMPLE ALIGN PARSE THRAX MERT TEST LAST];
 my %STEPS = map { $STEPS[$_] => $_ + 1 } (0..$#STEPS);
@@ -114,6 +115,7 @@ my $retval = GetOptions(
   "last-step=s"  	  => \$LAST_STEP,
   "aligner-chunk-size=s" => \$ALIGNER_BLOCKSIZE,
   "hadoop=s"          => \$HADOOP,
+  "omit-cmd!"         => \$OMIT_CMD,
 );
 
 if (! $retval) {
@@ -128,6 +130,12 @@ $LAST_STEP  = uc($LAST_STEP);
 $| = 1;
 
 my $cachepipe = new CachePipe();
+
+# This tells cachepipe not to include the command signature when
+# determining to run a command.  Note that this is not backwards
+# compatible!
+$cachepipe->omit_cmd()
+	if ($OMIT_CMD);
 
 $SIG{INT} = sub { 
   print "* Got C-c, quitting\n";
