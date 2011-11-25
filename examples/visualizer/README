@@ -1,0 +1,7 @@
+These examples demonstrate how to use the tree visualizer.  You
+can run the visualizer by using the visualizer invocation script:
+
+$JOSHUA/tree-visualizer tree.fr tree.ref tree.en
+
+Click on the sentence that displays, and you will be presented
+with the visualization in a second window.
