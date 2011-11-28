@@ -9,4 +9,6 @@
 - [X] hadoop cluster roll-out
 - [X] rm -r hadoop directory after retrieving grammar successfully
 - [ ] change qsub arg defaults when doing SAMT
-
+- [ ] don't put number in train files if maxlen == 0
+- [ ] should be easier to stop and start runs (locations of canonical files)
+- [ ] add in kenlm binarization of the language model

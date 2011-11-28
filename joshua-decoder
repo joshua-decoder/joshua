@@ -27,10 +27,8 @@ do
 	esac
 done
 
-# adjust the option index pointer (if any options were passed)
-if test $OPTIND -gt 1; then
-	shift $(($OPTIND - 2))
-fi
+# adjust the option index pointer
+shift $(($OPTIND-1))
 
 java -Xmx${mem} \
 	-cp $JOSHUA/bin \

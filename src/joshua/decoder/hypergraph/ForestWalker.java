@@ -37,9 +37,13 @@ class ForestWalker {
         // apply the function
         walker.apply(node);
 
-        for (HyperEdge edge : node.getHyperEdges()) {
-			for (HGNode tailNode : edge.getAntNodes()) {
-				walk(tailNode, walker);
+		if (node.getHyperEdges() != null) {
+			for (HyperEdge edge : node.getHyperEdges()) {
+				if (edge.getAntNodes() != null) {
+					for (HGNode tailNode : edge.getAntNodes()) {
+						walk(tailNode, walker);
+					}
+				}
 			}
 		}
     }
