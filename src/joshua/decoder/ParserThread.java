@@ -225,7 +225,7 @@ public class ParserThread extends Thread {
                 Sentence foreign = new Sentence(sentencePair[0], sentenceId);
                 Sentence english = new Sentence(sentencePair[1], sentenceId);
 		
-        Lattice<Integer> input_lattice = sentence.intLattice();
+        Lattice<Integer> input_lattice = foreign.intLattice();
 
         int numGrammars = (JoshuaConfiguration.use_sent_specific_tm)
             ? grammarFactories.size() + 1
@@ -234,7 +234,7 @@ public class ParserThread extends Thread {
         Grammar[] grammars = new Grammar[numGrammars];
 
         for (int i = 0; i< grammarFactories.size(); i++)
-            grammars[i] = grammarFactories.get(i).getGrammarForSentence(sentence);
+            grammars[i] = grammarFactories.get(i).getGrammarForSentence(foreign);
 
         // load the sentence-specific grammar
         boolean alreadyExisted = true; // whether it already existed
