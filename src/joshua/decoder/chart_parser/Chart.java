@@ -195,8 +195,9 @@ public class Chart {
 
 		// Begin to do initialization work
 
-		//TODO: which grammar should we use to create a manual rule?, grammar[1] is the regular grammar
-		manualConstraintsHandler = new ManualConstraintsHandler(this, grammars[1], constraintSpans);
+		//TODO: which grammar should we use to create a manual rule? 
+		manualConstraintsHandler = new ManualConstraintsHandler(this, 
+				grammars[grammars.length - 1], constraintSpans);
 		
 		/* Add OOV rules; 
 		 * This should be called after the manual constraints have been set up.
@@ -219,10 +220,12 @@ public class Chart {
 				if (parse_tree != null && (JoshuaConfiguration.constrain_parse || JoshuaConfiguration.use_pos_labels)) {
 					Collection<Integer> labels = parse_tree.getConstituentLabels(node.getNumber(), node.getNumber() + 1);
 					for (int l : labels)
-						oov_rule = this.grammars[1].constructLabeledOOVRule(this.featureFunctions.size(), sourceWord, targetWord, l, useMaxLMCostForOOV);
+						oov_rule = this.grammars[grammars.length - 1].constructLabeledOOVRule(
+								this.featureFunctions.size(), sourceWord, targetWord, l, useMaxLMCostForOOV);
 				}
 				else
-					oov_rule = this.grammars[1].constructOOVRule(this.featureFunctions.size(), sourceWord, targetWord, useMaxLMCostForOOV);
+					oov_rule = this.grammars[grammars.length - 1].constructOOVRule(
+							this.featureFunctions.size(), sourceWord, targetWord, useMaxLMCostForOOV);
 			
 				if (manualConstraintsHandler.containHardRuleConstraint(node.getNumber(), arc.getTail().getNumber())) {
 					//do not add the oov axiom
