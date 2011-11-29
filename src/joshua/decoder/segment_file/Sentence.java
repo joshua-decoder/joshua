@@ -94,6 +94,10 @@ public class Sentence {
         }
     }
 
+	public boolean isEmpty() {
+		return sentence.matches("^\\s*$");
+	}
+
     public int id() {
         return id;
     }

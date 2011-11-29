@@ -217,6 +217,9 @@ public class DecoderThread extends Thread {
 
 		logger.info("Translating sentence #" + sentence.id() + " [thread " + getId() + "]\n" + sentence.sentence());
 
+		if (sentence.isEmpty())
+			return null;
+
 		long startTime = System.currentTimeMillis();
 		
 		Chart chart; 

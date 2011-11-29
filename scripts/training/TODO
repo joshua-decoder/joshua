@@ -12,3 +12,4 @@
 - [ ] don't put number in train files if maxlen == 0
 - [ ] should be easier to stop and start runs (locations of canonical files)
 - [ ] add in kenlm binarization of the language model
+- [ ] better tokenization (url aware, e.g.,)
