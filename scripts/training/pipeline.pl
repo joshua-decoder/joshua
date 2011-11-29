@@ -38,7 +38,7 @@ my $HADOOP = undef;
 my $MOSES_SCRIPTS = $ENV{SCRIPTS_ROOTDIR} or not_defined("SCRIPTS_ROOTDIR");
 die not_defined("JAVA_HOME") unless exists $ENV{JAVA_HOME};
 
-my (@CORPORA,$TUNE,$TEST,$ALIGNMENT,$SOURCE,$TARGET,$LMFILE,$GRAMMAR_FILE,$GLUE_GRAMMAR_FILE,$THRAX_CONF_FILE);
+my (@CORPORA,$TUNE,$TEST,$ALIGNMENT,$SOURCE,$TARGET,$LMFILE,$GRAMMAR_FILE,$GLUE_GRAMMAR_FILE,$TUNE_GRAMMAR_FILE,$TEST_GRAMMAR_FILE,$THRAX_CONF_FILE);
 my $FIRST_STEP = "FIRST";
 my $LAST_STEP  = "LAST";
 my $LMFILTER = "$ENV{HOME}/code/filter/filter";
@@ -96,6 +96,8 @@ my $retval = GetOptions(
   "filter-tm!"        => \$DO_FILTER_TM,
   "filter-lm!"        => \$DO_FILTER_LM,
   "lmfile=s" 	 	  => \$LMFILE,
+  "tune-grammar=s"    => \$TUNE_GRAMMAR_FILE,
+  "test-grammar=s"    => \$TEST_GRAMMAR_FILE,
   "grammar=s"    	  => \$GRAMMAR_FILE,
   "glue-grammar=s" 	  => \$GLUE_GRAMMAR_FILE,
   "mbr!"              => \$DO_MBR,
@@ -175,7 +177,7 @@ if (! defined $TEST and ($STEPS{$FIRST_STEP} <= $STEPS{TEST}
 }
 
 # make sure a grammar file was given if we're skipping training
-if (! defined $GRAMMAR_FILE and ($STEPS{$FIRST_STEP} >= $STEPS{MERT})) {
+if (! defined $GRAMMAR_FILE and ! defined $TUNE_GRAMMAR_FILE and ($STEPS{$FIRST_STEP} >= $STEPS{MERT})) {
   print "* FATAL: need a grammar (--grammar) if you're skipping that step\n";
   exit 1;
 }
@@ -183,6 +185,14 @@ if (! defined $GRAMMAR_FILE and ($STEPS{$FIRST_STEP} >= $STEPS{MERT})) {
 # check for file presence
 if (defined $GRAMMAR_FILE and ! -e $GRAMMAR_FILE) {
   print "* FATAL: couldn't find grammar file '$GRAMMAR_FILE'\n";
+  exit 1;
+}
+if (defined $TUNE_GRAMMAR_FILE and ! -e $TUNE_GRAMMAR_FILE) {
+  print "* FATAL: couldn't find tuning grammar file '$TUNE_GRAMMAR_FILE'\n";
+  exit 1;
+}
+if (defined $TEST_GRAMMAR_FILE and ! -e $TEST_GRAMMAR_FILE) {
+  print "* FATAL: couldn't find test grammar file '$TEST_GRAMMAR_FILE'\n";
   exit 1;
 }
 if (defined $ALIGNMENT and ! -e $ALIGNMENT) {
@@ -653,18 +663,17 @@ if ($numrefs > 1) {
 
 
 # filter the tuning grammar
-my $TUNE_GRAMMAR = "tune/grammar.filtered.gz";
-if ($DO_FILTER_TM) {
+my $TUNE_GRAMMAR = (defined $TUNE_GRAMMAR_FILE)
+	? $TUNE_GRAMMAR_FILE
+	: $GRAMMAR_FILE;
+
+if ($DO_FILTER_TM and ! defined $TUNE_GRAMMAR_FILE) {
   $cachepipe->cmd("filter-tune",
 				  "$SCRIPTDIR/training/scat $GRAMMAR_FILE | java -Xmx2g -Dfile.encoding=utf8 -cp $JOSHUA/thrax/bin/thrax.jar edu.jhu.thrax.util.TestSetFilter -v $TUNE{source} | $SCRIPTDIR/training/remove-unary-abstract.pl | gzip -9 > $TUNE_GRAMMAR",
-				  $GRAMMAR_FILE,
+				  $TUNE_GRAMMAR,
 				  $TUNE{source},
-				  $TUNE_GRAMMAR);
-} else {
-  $cachepipe->cmd("copy-tune-grammar",
-				  "$SCRIPTDIR/training/scat $GRAMMAR_FILE | $SCRIPTDIR/training/remove-unary-abstract.pl | gzip -9 > $TUNE_GRAMMAR",
-				  $GRAMMAR_FILE,
-				  $TUNE_GRAMMAR);
+				  "tune/grammar.filtered.gz");
+  $TUNE_GRAMMAR = "tune/grammar.filtered.gz";
 }
 
 # copy the thrax config file if it's not already there
@@ -768,18 +777,17 @@ if ($FIRST_STEP eq "TEST") {
 }
 
 # filter the test grammar
-my	$TEST_GRAMMAR = "test/grammar.filtered.gz";
-if ($DO_FILTER_TM) {
+my $TEST_GRAMMAR = (defined $TEST_GRAMMAR_FILE)
+	? $TEST_GRAMMAR_FILE
+	: $GRAMMAR_FILE;
+
+if ($DO_FILTER_TM and ! defined $TEST_GRAMMAR_FILE) {
 	$cachepipe->cmd("filter-test",
 					"$SCRIPTDIR/training/scat $GRAMMAR_FILE | java -Xmx2g -Dfile.encoding=utf8 -cp $JOSHUA/thrax/bin/thrax.jar edu.jhu.thrax.util.TestSetFilter -v $TEST{source} | $SCRIPTDIR/training/remove-unary-abstract.pl | gzip -9 > $TEST_GRAMMAR",
 					$GRAMMAR_FILE,
 					$TEST{source},
-					$TEST_GRAMMAR);
-} else {
-  $cachepipe->cmd("copy-test-grammar",
-				  "$SCRIPTDIR/training/scat $GRAMMAR_FILE | $SCRIPTDIR/training/remove-unary-abstract.pl | gzip -9 > $TEST_GRAMMAR",
-				  $GRAMMAR_FILE,
-				  $TEST_GRAMMAR);
+					"test/grammar.filtered.gz");
+	$TEST_GRAMMAR = "test/grammar.filtered.gz";
 }
 
 # copy the thrax config file if it's not already there
