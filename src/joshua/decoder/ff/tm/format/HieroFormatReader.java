@@ -21,6 +21,10 @@ public class HieroFormatReader extends GrammarReader<BilingualRule> {
 		description = "Original Hiero format";
 	}
 	
+        public HieroFormatReader()
+        {
+            super();
+        }
 	
 	public HieroFormatReader(String grammarFile) {
 		super(grammarFile);
