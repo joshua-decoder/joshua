@@ -43,6 +43,8 @@ public class Vocabulary {
 	private static ArrayList<String> id_to_string;
 	private static TreeMap<Long, String> hash_to_string;
 
+	private static final Integer lock = new Integer(0);
+
 	private static final int UNKNOWN_ID;
 	private static final String UNKNOWN_WORD;
 
@@ -62,11 +64,13 @@ public class Vocabulary {
 	}
 
 	public static boolean registerLanguageModel(KenLM lm) {
-		kenlm = lm;
-		boolean collision = false;
-		for (int i = id_to_string.size() - 1; i > 0; i--)
-			collision = collision || kenlm.registerWord(id_to_string.get(i), i);
-		return collision;
+		synchronized(lock) {
+			kenlm = lm;
+			boolean collision = false;
+			for (int i = id_to_string.size() - 1; i > 0; i--)
+				collision = collision || kenlm.registerWord(id_to_string.get(i), i);
+			return collision;
+		}
 	}
 
 	public static void read() {
@@ -77,42 +81,46 @@ public class Vocabulary {
 
 	}
 
-	public static synchronized void freeze() {
-		int current_id = 1;
-		Map.Entry<Long, Integer> walker = hashToId.firstEntry();
-		while (walker != null) {
-			if (walker.getValue() < 0)
-				walker.setValue(-current_id);
-			String word = hash_to_string.get(walker.getKey());
-			id_to_string.add(current_id, word);
-			current_id++;
-			walker = hashToId.higherEntry(walker.getKey());
+	public static void freeze() {
+		synchronized(lock) {
+			int current_id = 1;
+			Map.Entry<Long, Integer> walker = hashToId.firstEntry();
+			while (walker != null) {
+				if (walker.getValue() < 0)
+					walker.setValue(-current_id);
+				String word = hash_to_string.get(walker.getKey());
+				id_to_string.add(current_id, word);
+				current_id++;
+				walker = hashToId.higherEntry(walker.getKey());
+			}
 		}
 	}
 
 	public static int id(String token) {
-		long hash = 0;
-		try {
-			hash = MurmurHash.hash64(token);
-		} catch (UnsupportedEncodingException e) {
-			e.printStackTrace();
-		}
-		String hash_word = hash_to_string.get(hash);
-		if (hash_word != null) {
-			if (!token.equals(hash_word)) {
-				logger.warning("MurmurHash for the following symbols collides: '"
-						+ hash_word + "', '" + token + "'");
+		synchronized(lock) {
+			long hash = 0;
+			try {
+				hash = MurmurHash.hash64(token);
+			} catch (UnsupportedEncodingException e) {
+				e.printStackTrace();
 			}
-			return hashToId.get(hash);
-		} else {
-			int id = id_to_string.size() * (nt(token) ? -1 : 1);
+			String hash_word = hash_to_string.get(hash);
+			if (hash_word != null) {
+				if (!token.equals(hash_word)) {
+					logger.warning("MurmurHash for the following symbols collides: '"
+								   + hash_word + "', '" + token + "'");
+				}
+				return hashToId.get(hash);
+			} else {
+				int id = id_to_string.size() * (nt(token) ? -1 : 1);
 			
-			if (kenlm != null) 
-				kenlm.registerWord(token, Math.abs(id));
-			id_to_string.add(token);
-			hash_to_string.put(hash, token);
-			hashToId.put(hash, id);
-			return id;
+				if (kenlm != null) 
+					kenlm.registerWord(token, Math.abs(id));
+				id_to_string.add(token);
+				hash_to_string.put(hash, token);
+				hashToId.put(hash, id);
+				return id;
+			}
 		}
 	}
 
@@ -125,10 +133,12 @@ public class Vocabulary {
 	}
 
 	public static String word(int id) {
-		id = Math.abs(id);
-		if (id >= id_to_string.size())
-			throw new UnknownSymbolException(id);
-		return id_to_string.get(id);
+		synchronized(lock) {
+			id = Math.abs(id);
+			if (id >= id_to_string.size())
+				throw new UnknownSymbolException(id);
+			return id_to_string.get(id);
+		}
 	}
 
 	public static String getWords(int[] ids) {
@@ -168,7 +178,9 @@ public class Vocabulary {
 	}
 	
 	public static int size() {
-		return id_to_string.size();
+		synchronized(lock) {
+			return id_to_string.size();
+		}
 	}
 
 	public static int getTargetNonterminalIndex(int id) {
