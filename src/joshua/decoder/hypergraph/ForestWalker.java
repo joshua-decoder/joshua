@@ -32,7 +32,7 @@ import joshua.decoder.ff.tm.Rule;
  * preorder traversal, applying the WalkerFunction to each node.  It
  * would be easy to add other traversals if the demand arose.
  */
-class ForestWalker {
+public class ForestWalker {
     public static void walk(HGNode node, WalkerFunction walker) {
         // apply the function
         walker.apply(node);
