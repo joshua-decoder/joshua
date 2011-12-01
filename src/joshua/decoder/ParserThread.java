@@ -32,6 +32,9 @@ import joshua.decoder.ff.tm.GrammarFactory;
 import joshua.decoder.ff.tm.hash_based.MemoryBasedBatchGrammar;
 import joshua.decoder.hypergraph.DiskHyperGraph;
 import joshua.decoder.hypergraph.HyperGraph;
+import joshua.decoder.hypergraph.ForestWalker;
+import joshua.decoder.hypergraph.WalkerFunction;
+import joshua.decoder.hypergraph.GrammarBuilderWalkerFunction;
 import joshua.decoder.hypergraph.KBestExtractor;
 import joshua.decoder.segment_file.Sentence;
 import joshua.lattice.Lattice;
@@ -319,9 +322,30 @@ public class ParserThread extends Thread {
             // logger.info("Keeping sentence-level grammar (already existed)");
         }
 
-		long seconds = (System.currentTimeMillis() - startTime) / 1000;
-		logger.info("translation of sentence " + sentence.id() + " took " + seconds + " seconds [" + getId() + "]");
+        Lattice<Integer> english_lattice = english.intLattice();
+        Grammar[] newGrammar = new Grammar[1];
+        newGrammar[0] = getGrammarFromHyperGraph(hypergraph);
+        newGrammar[0].sortGrammar(this.featureFunctions);
+        chart = new Chart(input_lattice,
+                          this.featureFunctions,
+                          this.stateComputers,
+                          english.id(),
+                          newGrammar,
+                          false,
+                          JoshuaConfiguration.goal_symbol,
+                          english.constraints(),
+                          english.syntax_tree());
 
-        return hypergraph;
+        /* Parsing */
+        HyperGraph englishParse = chart.expand();
+
+        return englishParse; // or do something else
 	}
+
+        private static Grammar getGrammarFromHyperGraph(HyperGraph hg)
+        {
+            GrammarBuilderWalkerFunction f = new GrammarBuilderWalkerFunction();
+            ForestWalker.walk(hg.goalNode, f);
+            return f.getGrammar();
+        }
 }
