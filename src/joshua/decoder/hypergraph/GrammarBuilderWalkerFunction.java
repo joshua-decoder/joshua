@@ -6,6 +6,8 @@ import joshua.decoder.ff.tm.hash_based.MemoryBasedBatchGrammar;
 import joshua.decoder.ff.tm.BilingualRule;
 import joshua.decoder.ff.tm.Rule;
 import joshua.corpus.Vocabulary;
+import java.util.Set;
+import java.util.HashSet;
 
 /**
  * This walker function builds up a new context-free grammar by visiting
@@ -26,14 +28,20 @@ public class GrammarBuilderWalkerFunction implements WalkerFunction
 {
     private MemoryBasedBatchGrammar grammar;
     private static HieroFormatReader reader = new HieroFormatReader();
+    private Set<HGNode> visitedNodes;
 
     public GrammarBuilderWalkerFunction()
     {
         grammar = new MemoryBasedBatchGrammar(reader);
+        visitedNodes = new HashSet<HGNode>();
     }
 
     public void apply(HGNode node)
     {
+        if (visitedNodes.contains(node))
+            return;
+        visitedNodes.add(node);
+//        System.err.printf("VISITING NODE: %s\n", getLabelWithSpan(node));
         for (HyperEdge e : node.hyperedges) {
             BilingualRule r = getRuleWithSpans(e, node);
             if (r != null)
@@ -52,19 +60,22 @@ public class GrammarBuilderWalkerFunction implements WalkerFunction
     private static BilingualRule getRuleWithSpans(HyperEdge edge, HGNode head)
     {
         Rule edgeRule = edge.getRule();
-        System.err.printf("EdgeRule: %s\n", edgeRule);
+//        System.err.printf("EdgeRule: %s\n", edgeRule);
         if (!(edgeRule instanceof BilingualRule)) {
-            System.err.println("edge rule is not a bilingual rule");
+//            System.err.println("edge rule is not a bilingual rule");
             return null;
         }
-        String headLabel = getLabelWithSpan(head);
-        System.err.printf("Head label: %s\n", headLabel);
-        if (edge.getAntNodes() != null) {
-            for (HGNode n : edge.getAntNodes())
-                System.err.printf("> %s\n", getLabelWithSpan(n));
-        }
-        getNewSource(edge);
-        return (BilingualRule) edgeRule;
+        String headLabel = String.format("[%s]", getLabelWithSpan(head));
+//        System.err.printf("Head label: %s\n", headLabel);
+//        if (edge.getAntNodes() != null) {
+//            for (HGNode n : edge.getAntNodes())
+//                System.err.printf("> %s\n", getLabelWithSpan(n));
+//        }
+        int [] source = getNewSource(edge);
+        int [] target = getNewTargetFromSource(source);
+        BilingualRule result = new BilingualRule(Vocabulary.id(headLabel), source, target, edgeRule.getFeatureScores(), edgeRule.getArity());
+//        System.err.printf("new rule is %s\n", result);
+        return result;
     }
 
     private static int [] getNewSource(HyperEdge edge)
@@ -74,7 +85,7 @@ public class GrammarBuilderWalkerFunction implements WalkerFunction
         int [] result = new int[english.length];
         for (int i = 0; i < english.length; i++) {
             int curr = english[i];
-            if (!Vocabulary.nt(curr)) {
+            if (curr >= 0) {
                 result[i] = curr;
             }
             else {
@@ -83,10 +94,51 @@ public class GrammarBuilderWalkerFunction implements WalkerFunction
                 result[i] = Vocabulary.id(String.format("[%s,%d]", label, -curr));
             }
         }
-        System.err.printf("source: %s\n", Vocabulary.getWords(result));
+//        System.err.printf("source: %s\n", Vocabulary.getWords(result));
         return result;
     }
 
+    private static int [] getNewTargetFromSource(int [] source)
+    {
+        int [] result = new int[source.length];
+        int ntIndex = 1;
+        for (int i = 0; i < source.length; i++) {
+            int curr = source[i];
+            if (!Vocabulary.nt(curr)) {
+                result[i] = curr;
+            }
+            else {
+                result[i] = -ntIndex;
+                ntIndex++;
+            }
+        }
+//        System.err.printf("target: %s\n", Vocabulary.getWords(result));
+        return result;
+    }
+
+    private static HGNode getGoalSymbolNode(HGNode root)
+    {
+        if (root.hyperedges == null || root.hyperedges.size() == 0) {
+            System.err.println("getGoalSymbolNode: root node has no hyperedges");
+            return null;
+        }
+        return root.hyperedges.get(0).getAntNodes().get(0);
+    }
+
+
+    public static String goalSymbol(HyperGraph hg)
+    {
+        if (hg.goalNode == null) {
+            System.err.println("goalSymbol: goalNode of hypergraph is null");
+            return "[S]";
+        }
+        HGNode symbolNode = getGoalSymbolNode(hg.goalNode);
+        if (symbolNode == null)
+            return "[S]";
+        String result = String.format("[%s]", getLabelWithSpan(symbolNode));
+//        System.err.printf("goalSymbol: %s\n", result);
+        return result;
+    }
 
     public Grammar getGrammar()
     {

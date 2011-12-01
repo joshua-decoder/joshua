@@ -326,13 +326,13 @@ public class ParserThread extends Thread {
         Grammar[] newGrammar = new Grammar[1];
         newGrammar[0] = getGrammarFromHyperGraph(hypergraph);
         newGrammar[0].sortGrammar(this.featureFunctions);
-        chart = new Chart(input_lattice,
+        chart = new Chart(english_lattice,
                           this.featureFunctions,
                           this.stateComputers,
                           english.id(),
                           newGrammar,
                           false,
-                          JoshuaConfiguration.goal_symbol,
+                          GrammarBuilderWalkerFunction.goalSymbol(hypergraph),
                           english.constraints(),
                           english.syntax_tree());
 
