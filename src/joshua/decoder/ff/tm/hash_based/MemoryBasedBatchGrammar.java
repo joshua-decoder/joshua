@@ -95,6 +95,14 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
 
 	public MemoryBasedBatchGrammar() {
 	}
+
+        public MemoryBasedBatchGrammar(GrammarReader<BilingualRule> gr)
+        {
+            // this.defaultOwner = Vocabulary.id(defaultOwner);
+            // this.defaultLHS   = Vocabulary.id(defaultLHSSymbol);
+            this.root = new MemoryBasedTrie();
+            modelReader = gr;
+        }
 	
 	public MemoryBasedBatchGrammar(
 			String formatKeyword,
@@ -215,7 +223,7 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
 		return this.root;
 	}
 
-	protected void addRule(BilingualRule rule) {
+	public void addRule(BilingualRule rule) {
 		
 		// TODO: Why two increments? 
 		this.qtyRulesRead++;
