@@ -23,7 +23,7 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.logging.Logger;
 
-import joshua.decoder.ff.lm.kenlm.jni.KenLM;
+import joshua.decoder.ff.lm.NGramLanguageModel;
 import joshua.util.FormatUtils;
 import joshua.util.MurmurHash;
 
@@ -37,7 +37,7 @@ public class Vocabulary {
 
 	private static final Logger logger;
 
-	private static KenLM kenlm;
+	private static ArrayList<NGramLanguageModel> lms;
 
 	private static TreeMap<Long, Integer> hashToId;
 	private static ArrayList<String> id_to_string;
@@ -54,7 +54,7 @@ public class Vocabulary {
 		UNKNOWN_ID = 0;
 		UNKNOWN_WORD = "<unk>";
 		
-		kenlm = null;
+        lms = new ArrayList<NGramLanguageModel>();
 		
 		hashToId = new TreeMap<Long, Integer>();
 		hash_to_string = new TreeMap<Long, String>();
@@ -63,12 +63,15 @@ public class Vocabulary {
 		id_to_string.add(UNKNOWN_ID, UNKNOWN_WORD);
 	}
 
-	public static boolean registerLanguageModel(KenLM lm) {
+	public static boolean registerLanguageModel(NGramLanguageModel lm) {
 		synchronized(lock) {
-			kenlm = lm;
+            // store the language model
+            lms.add(lm);
+
+            // notify it of all the existing words
 			boolean collision = false;
 			for (int i = id_to_string.size() - 1; i > 0; i--)
-				collision = collision || kenlm.registerWord(id_to_string.get(i), i);
+				collision = collision || lm.registerWord(id_to_string.get(i), i);
 			return collision;
 		}
 	}
@@ -114,8 +117,12 @@ public class Vocabulary {
 			} else {
 				int id = id_to_string.size() * (nt(token) ? -1 : 1);
 			
-				if (kenlm != null) 
-					kenlm.registerWord(token, Math.abs(id));
+                // register this (token,id) mapping with each language
+                // model, so that they can map it to their own private
+                // vocabularies
+                for (NGramLanguageModel lm: lms)
+					lm.registerWord(token, Math.abs(id));
+
 				id_to_string.add(token);
 				hash_to_string.put(hash, token);
 				hashToId.put(hash, id);

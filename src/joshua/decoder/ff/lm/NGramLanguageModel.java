@@ -44,6 +44,23 @@ public interface NGramLanguageModel {
 // Methods
 //===============================================================
 
+    /**
+     * Language models may have their own private vocabulary mapping
+     * strings to integers; for example, if they make use of a compile
+     * format (as KenLM and BerkeleyLM do).  This mapping is likely
+     * different from the global mapping containing in
+     * joshua.corpus.Vocabulary, which is used to convert the input
+     * string and grammars.  This function is used to tell the
+     * language model what the global mapping is, so that the language
+     * model can convert it into its own private mapping.
+     *
+     * @param word
+     * @param id
+     * @return Whether any collisions were detected.
+     */
+    boolean registerWord(String token, int id);
+
+
 	// BUG: why do we pass the order? Does this method reduce the order as well?
 	/**
 	 * @param sentence   the sentence to be scored

@@ -1,6 +1,6 @@
 Processing 100 sentences...
 Evaluating set of 1'th candidate translations from /dev/fd/63...
-BLEU_precision(1) = 1032 / 1723 = 0.5990
+BLEU_precision(1) = 1031 / 1723 = 0.5984
 BLEU_precision(2) = 496 / 1623 = 0.3056
 BLEU_precision(3) = 251 / 1529 = 0.1642
 BLEU_precision(4) = 135 / 1439 = 0.0938
