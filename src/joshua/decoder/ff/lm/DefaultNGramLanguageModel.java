@@ -65,6 +65,11 @@ public abstract class DefaultNGramLanguageModel implements NGramLanguageModel {
 // NGramLanguageModel Methods
 //===============================================================
 
+    public boolean registerWord(String token, int id) {
+        // No private LM ID mapping, do nothing
+        return false;
+    }
+
 	public double sentenceLogProbability(
 		List<Integer> sentence, int order, int startIndex
 	) {
