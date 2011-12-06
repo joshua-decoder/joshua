@@ -101,4 +101,8 @@ public abstract class DefaultStatelessFF implements FeatureFunction {
 	public double finalTransitionLogP(HyperEdge edge, int spanStart, int spanEnd, int sentID){
 		return  finalTransitionLogP(edge.getAntNodes().get(0), spanStart, spanEnd, edge.getSourcePath(), sentID );
 	}
+	
+	public FeatureFunction threadLocalCopyOf(){
+		return this;
+	}
 }

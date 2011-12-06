@@ -147,4 +147,8 @@ public abstract class DefaultNGramLanguageModel implements NGramLanguageModel {
 	public int[] rightEquivalentState(int[] originalState, int order) {
 		return originalState;
 	}
+	
+	public NGramLanguageModel threadLocalCopyOf(){
+		return this;
+	}
 }

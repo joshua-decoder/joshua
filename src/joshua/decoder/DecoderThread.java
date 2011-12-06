@@ -20,6 +20,7 @@ package joshua.decoder;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -86,9 +87,12 @@ public class DecoderThread extends Thread {
 	) throws IOException {
 		
 		this.grammarFactories   = grammarFactories;
-		this.featureFunctions   = featureFunctions;
-		this.stateComputers     = stateComputers;
+		this.featureFunctions   = new ArrayList<FeatureFunction>();
 		
+		this.stateComputers     = stateComputers;
+		for (FeatureFunction ff : featureFunctions) {
+			this.featureFunctions.add(ff.threadLocalCopyOf());
+		}
         this.inputHandler    = inputHandler;
 		
 		this.kbestExtractor = new KBestExtractor(

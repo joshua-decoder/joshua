@@ -35,6 +35,7 @@ import edu.berkeley.nlp.lm.io.LmReaders;
 import joshua.corpus.Vocabulary;
 import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.ff.lm.AbstractLM;
+import joshua.decoder.ff.lm.NGramLanguageModel;
 
 /**
  * This class wraps Berkeley LM.
@@ -48,13 +49,23 @@ public class LMGrammarBerkeley extends AbstractLM
 
 	private static final Logger logger = Logger.getLogger(LMGrammarBerkeley.class.getName());
 
-	private int[] vocabIdToMyIdMapping;
+	private VocabMapping vocabMapping;
 
-	private int mappingLength = 0;
+	private static class VocabMapping
+	{
+		int[] vocabIdToMyIdMapping = new int[10];
+
+		int mappingLength = 0;
+	}
+
+	private final boolean isCopy;
+
+	private static boolean madeCopy = false;
 
 	public LMGrammarBerkeley(int order, String lm_file, boolean fileIsBinary) {
 		super(order);
-		vocabIdToMyIdMapping = new int[10];
+		isCopy = false;
+		vocabMapping = new VocabMapping();
 
 		ConfigOptions opts = new ConfigOptions();
 		if (fileIsBinary) {
@@ -73,16 +84,28 @@ public class LMGrammarBerkeley extends AbstractLM
 
 	}
 
+	private LMGrammarBerkeley(ArrayEncodedNgramLanguageModel<String> lm, int order, VocabMapping vocabMapping) {
+		super(order);
+		madeCopy = true;
+		this.lm = lm;
+		isCopy = true;
+		this.vocabMapping = vocabMapping;
+	}
+
 	@Override
 	public boolean registerWord(String token, int id) {
 		int myid = lm.getWordIndexer().getIndexPossiblyUnk(token);
 		if (myid < 0) return false;
-		if (id >= vocabIdToMyIdMapping.length) {
-			vocabIdToMyIdMapping = Arrays.copyOf(vocabIdToMyIdMapping, Math.max(id + 1, vocabIdToMyIdMapping.length * 2));
+		synchronized (vocabMapping) {
+			if (id >= vocabMapping.vocabIdToMyIdMapping.length) {
 
+				vocabMapping.vocabIdToMyIdMapping = Arrays.copyOf(vocabMapping.vocabIdToMyIdMapping,
+					Math.max(id + 1, vocabMapping.vocabIdToMyIdMapping.length * 2));
+			}
+
+			vocabMapping.mappingLength = Math.max(vocabMapping.mappingLength, id + 1);
+			vocabMapping.vocabIdToMyIdMapping[id] = myid;
 		}
-		mappingLength = Math.max(mappingLength, id + 1);
-		vocabIdToMyIdMapping[id] = myid;
 
 		return false;
 	}
@@ -94,7 +117,7 @@ public class LMGrammarBerkeley extends AbstractLM
 		// of the lm interface to avoid the copy.
 		final int[] copyOf = Arrays.copyOf(ngram, ngram.length);
 		for (int i = 0; i < ngram.length; ++i) {
-			copyOf[i] = ngram[i] >= mappingLength ? -1 : vocabIdToMyIdMapping[ngram[i]];
+			copyOf[i] = ngram[i] >= vocabMapping.mappingLength ? -1 : vocabMapping.vocabIdToMyIdMapping[ngram[i]];
 		}
 		final float res = lm.getLogProb(copyOf, 0, copyOf.length);
 
@@ -106,4 +129,11 @@ public class LMGrammarBerkeley extends AbstractLM
 		throw new UnsupportedOperationException("probabilityOfBackoffState_helper undefined for Berkeley lm");
 	}
 
+	@Override
+	public NGramLanguageModel threadLocalCopyOf() {
+		if (lm instanceof ArrayEncodedCachingLmWrapper) { //
+			throw new IllegalStateException("Can't wrap a cached lm with a cached lm. This is Adam Pauls's fault.");
+		}
+		return new LMGrammarBerkeley(ArrayEncodedCachingLmWrapper.wrapWithCacheNotThreadSafe(lm), getOrder(), vocabMapping);
+	}
 }

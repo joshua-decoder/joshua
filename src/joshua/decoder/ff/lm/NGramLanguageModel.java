@@ -103,5 +103,11 @@ public interface NGramLanguageModel {
 	
 	int[] leftEquivalentState(int[] originalState, int order, double[] cost);
 	int[] rightEquivalentState(int[] originalState, int order);
+
+	/**
+	 * A language model can return a thread-local copy of itself for thread safety, or just return <code>this</code> if necessary. 
+	 * @return
+	 */
+	NGramLanguageModel threadLocalCopyOf();
 	
 }
