@@ -27,6 +27,7 @@ import edu.berkeley.nlp.lm.ArrayEncodedNgramLanguageModel;
 import edu.berkeley.nlp.lm.ConfigOptions;
 import edu.berkeley.nlp.lm.NgramLanguageModel;
 import edu.berkeley.nlp.lm.ArrayEncodedProbBackoffLm;
+import edu.berkeley.nlp.lm.StringWordIndexer;
 import edu.berkeley.nlp.lm.cache.ArrayEncodedCachingLmWrapper;
 import edu.berkeley.nlp.lm.io.LmReaders;
 
@@ -45,13 +46,13 @@ public class LMGrammarBerkeley extends AbstractLM
 
 	private static final Logger logger = Logger.getLogger(LMGrammarBerkeley.class.getName());
 
-	public LMGrammarBerkeley(int order, String lm_file) {
+	public LMGrammarBerkeley(int order, String lm_file, boolean fileIsBinary) {
 		super(order);
 		logger.info("Using Berkeley lm");
 
 		ConfigOptions opts = new ConfigOptions();
 
-		final SymbolTableWrapper wordIndexer = new SymbolTableWrapper();
+		final StringWordIndexer wordIndexer = new StringWordIndexer();
 		ArrayEncodedNgramLanguageModel<String> berkeleyLm = LmReaders.readArrayEncodedLmFromArpa(lm_file, false, wordIndexer, opts, order);
 
 		//this is how you would wrap with a cache
