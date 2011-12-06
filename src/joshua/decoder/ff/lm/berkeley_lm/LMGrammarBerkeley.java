@@ -19,6 +19,7 @@ package joshua.decoder.ff.lm.berkeley_lm;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Logger;
@@ -31,6 +32,7 @@ import edu.berkeley.nlp.lm.StringWordIndexer;
 import edu.berkeley.nlp.lm.cache.ArrayEncodedCachingLmWrapper;
 import edu.berkeley.nlp.lm.io.LmReaders;
 
+import joshua.corpus.Vocabulary;
 import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.ff.lm.AbstractLM;
 
@@ -46,25 +48,56 @@ public class LMGrammarBerkeley extends AbstractLM
 
 	private static final Logger logger = Logger.getLogger(LMGrammarBerkeley.class.getName());
 
+	private int[] vocabIdToMyIdMapping;
+
+	private int mappingLength = 0;
+
 	public LMGrammarBerkeley(int order, String lm_file, boolean fileIsBinary) {
 		super(order);
-		logger.info("Using Berkeley lm");
+		vocabIdToMyIdMapping = new int[10];
 
 		ConfigOptions opts = new ConfigOptions();
+		if (fileIsBinary) {
+			logger.info("Loading Berkeley LM from binary " + lm_file);
+			lm = (ArrayEncodedNgramLanguageModel<String>) LmReaders.<String> readLmBinary(lm_file);
+		} else {
 
-		final StringWordIndexer wordIndexer = new StringWordIndexer();
-		ArrayEncodedNgramLanguageModel<String> berkeleyLm = LmReaders.readArrayEncodedLmFromArpa(lm_file, false, wordIndexer, opts, order);
+			logger.info("Loading Berkeley LM from ARPA file " + lm_file);
+			final StringWordIndexer wordIndexer = new StringWordIndexer();
+			ArrayEncodedNgramLanguageModel<String> berkeleyLm = LmReaders.readArrayEncodedLmFromArpa(lm_file, false, wordIndexer, opts, order);
 
-		//this is how you would wrap with a cache
-		//		ArrayEncodedNgramLanguageModel<String> berkeleyLm = new ArrayEncodedCachingLmWrapper<String>(LmReaders.readArrayEncodedLmFromArpa(lm_file, false, wordIndexer, opts, order));
-
-		lm = berkeleyLm;
+			//this is how you would wrap with a cache
+			//		ArrayEncodedNgramLanguageModel<String> berkeleyLm = new ArrayEncodedCachingLmWrapper<String>(LmReaders.readArrayEncodedLmFromArpa(lm_file, false, wordIndexer, opts, order));
+			lm = berkeleyLm;
+		}
 
 	}
 
 	@Override
+	public boolean registerWord(String token, int id) {
+		int myid = lm.getWordIndexer().getIndexPossiblyUnk(token);
+		if (myid < 0) return false;
+		if (id >= vocabIdToMyIdMapping.length) {
+			vocabIdToMyIdMapping = Arrays.copyOf(vocabIdToMyIdMapping, Math.max(id + 1, vocabIdToMyIdMapping.length * 2));
+
+		}
+		mappingLength = Math.max(mappingLength, id + 1);
+		vocabIdToMyIdMapping[id] = myid;
+
+		return false;
+	}
+
+	@Override
 	protected double ngramLogProbability_helper(int[] ngram, int order) {
-		final float res = lm.getLogProb(ngram, 0, ngram.length);
+		// Adam Pauls: having to make a copy might be very inefficient
+		// if this shows up in the profiles, I might have to expose more 
+		// of the lm interface to avoid the copy.
+		final int[] copyOf = Arrays.copyOf(ngram, ngram.length);
+		for (int i = 0; i < ngram.length; ++i) {
+			copyOf[i] = ngram[i] >= mappingLength ? -1 : vocabIdToMyIdMapping[ngram[i]];
+		}
+		final float res = lm.getLogProb(copyOf, 0, copyOf.length);
+
 		return res;
 	}
 
