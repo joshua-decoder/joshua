@@ -58,13 +58,9 @@ public class LMGrammarBerkeley extends AbstractLM
 		int mappingLength = 0;
 	}
 
-	private final boolean isCopy;
-
-	private static boolean madeCopy = false;
 
 	public LMGrammarBerkeley(int order, String lm_file, boolean fileIsBinary) {
 		super(order);
-		isCopy = false;
 		vocabMapping = new VocabMapping();
 
 		ConfigOptions opts = new ConfigOptions();
@@ -86,9 +82,7 @@ public class LMGrammarBerkeley extends AbstractLM
 
 	private LMGrammarBerkeley(ArrayEncodedNgramLanguageModel<String> lm, int order, VocabMapping vocabMapping) {
 		super(order);
-		madeCopy = true;
 		this.lm = lm;
-		isCopy = true;
 		this.vocabMapping = vocabMapping;
 	}
 
@@ -112,8 +106,8 @@ public class LMGrammarBerkeley extends AbstractLM
 
 	@Override
 	protected double ngramLogProbability_helper(int[] ngram, int order) {
-		// Adam Pauls: having to make a copy might be very inefficient
-		// if this shows up in the profiles, I might have to expose more 
+		// Adam Pauls: having to make a copy might be very inefficient.
+		// If this shows up in the profiles, I might have to expose more 
 		// of the lm interface to avoid the copy.
 		final int[] copyOf = Arrays.copyOf(ngram, ngram.length);
 		for (int i = 0; i < ngram.length; ++i) {
