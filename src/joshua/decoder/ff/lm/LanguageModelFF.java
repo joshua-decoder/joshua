@@ -24,6 +24,7 @@ import java.util.logging.Logger;
 import joshua.corpus.Vocabulary;
 import joshua.decoder.chart_parser.SourcePath;
 import joshua.decoder.ff.DefaultStatefulFF;
+import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.state_maintenance.DPState;
 import joshua.decoder.ff.state_maintenance.NgramDPState;
 import joshua.decoder.ff.tm.Rule;
@@ -349,6 +350,11 @@ public class LanguageModelFF extends DefaultStatefulFF {
 			return this.lmGrammar.sentenceLogProbability(
 				words, this.ngramOrder, startIndex);
 		}
+	}
+	
+	@Override
+	public FeatureFunction threadLocalCopyOf() {
+		return new LanguageModelFF(getStateID(), getFeatureID(), ngramOrder, lmGrammar.threadLocalCopyOf(), getWeight());
 	}
 	
 }

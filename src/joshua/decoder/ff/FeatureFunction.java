@@ -85,4 +85,10 @@ public interface FeatureFunction {
 	
 	double finalTransitionLogP(HyperEdge edge, int spanStart, int spanEnd, int sentID);
 	
+	/**
+	 * A feature function can return a thread-local copy of itself for thread safety, or just return <code>this</code> if necessary. 
+	 * @return
+	 */
+	FeatureFunction threadLocalCopyOf();
+	
 }

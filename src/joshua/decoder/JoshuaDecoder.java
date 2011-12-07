@@ -36,6 +36,7 @@ import joshua.decoder.ff.SourcePathFF;
 import joshua.decoder.ff.WordPenaltyFF;
 import joshua.decoder.ff.lm.LanguageModelFF;
 import joshua.decoder.ff.lm.NGramLanguageModel;
+import joshua.decoder.ff.lm.berkeley_lm.LMGrammarBerkeley;
 import joshua.decoder.ff.lm.buildin_lm.LMGrammarJAVA;
 import joshua.decoder.ff.lm.kenlm.jni.KenLM;
 import joshua.decoder.ff.state_maintenance.NgramStateComputer;
@@ -324,6 +325,12 @@ public class JoshuaDecoder {
 			this.languageModel = lm;
 			Vocabulary.registerLanguageModel(lm);
 			Vocabulary.id(JoshuaConfiguration.default_non_terminal);
+	} else if (JoshuaConfiguration.use_berkeleylm) {
+		final boolean binarySpecified = JoshuaConfiguration.lm_binary_file != null;
+		this.languageModel = new LMGrammarBerkeley(JoshuaConfiguration.lm_order, binarySpecified ? JoshuaConfiguration.lm_binary_file
+			: JoshuaConfiguration.lm_file, binarySpecified);
+		Vocabulary.registerLanguageModel(this.languageModel);
+		Vocabulary.id(JoshuaConfiguration.default_non_terminal);
 	} else {
 
 		logger.warning("WARNING: using built-in language model; you probably didn't intend this");
