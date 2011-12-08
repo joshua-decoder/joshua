@@ -18,6 +18,12 @@
 package joshua.decoder.ff.lm.berkeley_lm;
 
 import java.io.IOException;
+import java.io.StreamCorruptedException;
+import java.io.ObjectInputStream;
+import java.io.File;
+import java.io.BufferedInputStream;
+import java.io.FileInputStream;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -52,11 +58,22 @@ public class LMGrammarBerkeley extends AbstractLM
 
 	private int mappingLength = 0;
 
-	public LMGrammarBerkeley(int order, String lm_file, boolean fileIsBinary) {
+	public LMGrammarBerkeley(int order, String lm_file) {
 		super(order);
 		vocabIdToMyIdMapping = new int[10];
 
 		ConfigOptions opts = new ConfigOptions();
+
+		// determine whether the file is in its binary format
+		boolean fileIsBinary = true;
+		try {
+			ObjectInputStream in = new ObjectInputStream(new BufferedInputStream(new FileInputStream(new File(lm_file))));
+		} catch (StreamCorruptedException e) {
+			fileIsBinary = false;
+		} catch (IOException e) {
+			System.err.println("Can't read file '" + lm_file + "'");
+		}
+
 		if (fileIsBinary) {
 			logger.info("Loading Berkeley LM from binary " + lm_file);
 			lm = (ArrayEncodedNgramLanguageModel<String>) LmReaders.<String> readLmBinary(lm_file);
@@ -70,7 +87,6 @@ public class LMGrammarBerkeley extends AbstractLM
 			//		ArrayEncodedNgramLanguageModel<String> berkeleyLm = new ArrayEncodedCachingLmWrapper<String>(LmReaders.readArrayEncodedLmFromArpa(lm_file, false, wordIndexer, opts, order));
 			lm = berkeleyLm;
 		}
-
 	}
 
 	@Override

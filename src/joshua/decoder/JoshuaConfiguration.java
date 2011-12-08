@@ -51,7 +51,6 @@ public class JoshuaConfiguration {
 	public static boolean use_sent_specific_lm       = false;
 	public static String  g_sent_lm_file_name_prefix = "lm.";
 	public static String  lm_file                    = null; // TODO
-	public static String  lm_binary_file             = null; // TODO
 	public static int     ngramStateID               = 0;    // TODO ?????????????
 	
 	//tm config
@@ -250,12 +249,6 @@ public class JoshuaConfiguration {
 					lm_file = fds[1].trim();
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("lm file: %s", lm_file));
-				} else if ("lm_binary_file".equals(fds[0])) {
-					lm_binary_file = fds[1].trim();
-					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format("lm_binary_file: %s", lm_binary_file));
-				
-					
 				} else if ("tm_file".equals(fds[0])) {
 					tm_file = fds[1].trim();
 					if (logger.isLoggable(Level.FINEST))

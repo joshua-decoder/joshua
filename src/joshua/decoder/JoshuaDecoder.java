@@ -326,9 +326,7 @@ public class JoshuaDecoder {
 			Vocabulary.registerLanguageModel(lm);
 			Vocabulary.id(JoshuaConfiguration.default_non_terminal);
 	} else if (JoshuaConfiguration.use_berkeleylm) {
-		final boolean binarySpecified = JoshuaConfiguration.lm_binary_file != null;
-		this.languageModel = new LMGrammarBerkeley(JoshuaConfiguration.lm_order, binarySpecified ? JoshuaConfiguration.lm_binary_file
-			: JoshuaConfiguration.lm_file, binarySpecified);
+		this.languageModel = new LMGrammarBerkeley(JoshuaConfiguration.lm_order, JoshuaConfiguration.lm_file);
 		Vocabulary.registerLanguageModel(this.languageModel);
 		Vocabulary.id(JoshuaConfiguration.default_non_terminal);
 	} else {
