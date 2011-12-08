@@ -54,6 +54,7 @@ my $SRILM = "$ENV{SRILM}/bin/i686-m64/ngram-count";
 my $STARTDIR;
 my $RUNDIR = $STARTDIR = getcwd;
 my $GRAMMAR_TYPE = "hiero";
+my $WITTEN_BELL = 0;
 
 # this file should exist in the Joshua mert templates file; it contains
 # the Joshua command invoked by MERT
@@ -80,6 +81,9 @@ my $NUM_JOBS = 1;
 my $NUM_THREADS = 1;
 my $OMIT_CMD = 0;
 
+# whether to tokenize and lowercase training, tuning, and test data
+my $DO_PREPARE_CORPORA = 1;
+
 my @STEPS = qw[FIRST SUBSAMPLE ALIGN PARSE THRAX MERT TEST LAST];
 my %STEPS = map { $STEPS[$_] => $_ + 1 } (0..$#STEPS);
 
@@ -87,6 +91,7 @@ my $retval = GetOptions(
   "corpus=s" 	 	  => \@CORPORA,
   "tune=s"   	 	  => \$TUNE,
   "test=s"            => \$TEST,
+  "prepare!"          => \$DO_PREPARE_CORPORA,
   "aligner=s"         => \$ALIGNER,
   "alignment=s"  	  => \$ALIGNMENT,
   "aligner-mem=s"     => \$ALIGNER_MEM,
@@ -96,6 +101,7 @@ my $retval = GetOptions(
   "filter-tm!"        => \$DO_FILTER_TM,
   "filter-lm!"        => \$DO_FILTER_LM,
   "lmfile=s" 	 	  => \$LMFILE,
+  "witten-bell!" 	  => \$WITTEN_BELL,
   "tune-grammar=s"    => \$TUNE_GRAMMAR_FILE,
   "test-grammar=s"    => \$TEST_GRAMMAR_FILE,
   "grammar=s"    	  => \$GRAMMAR_FILE,
@@ -287,25 +293,38 @@ if (@CORPORA == 0) {
 }
 
 # prepare the training data
-my $prefix = prepare_data("train",\@CORPORA,$MAXLEN);
-$TRAIN{prefix} = "train/corpus";
-foreach my $lang ($SOURCE,$TARGET) {
-  system("ln -sf $prefix.$lang train/corpus.$lang");
+my %PREPPED = (
+  TRAIN => 0,
+  TUNE => 0,
+  TEST => 0
+);
+
+
+if ($DO_PREPARE_CORPORA) {
+  my $prefix = prepare_data("train",\@CORPORA,$MAXLEN);
+
+  $TRAIN{prefix} = "train/corpus";
+  foreach my $lang ($SOURCE,$TARGET) {
+	system("ln -sf $prefix.$lang train/corpus.$lang");
+  }
+  $TRAIN{source} = "train/corpus.$SOURCE";
+  $TRAIN{target} = "train/corpus.$TARGET";
+  $PREPPED{TRAIN} = 1;
 }
-$TRAIN{source} = "train/corpus.$SOURCE";
-$TRAIN{target} = "train/corpus.$TARGET";
 
 # prepare the tuning and development data
-if (defined $TUNE) {
+if (defined $TUNE and $DO_PREPARE_CORPORA) {
   my $prefix = prepare_data("tune",[$TUNE]);
   $TUNE{source} = "tune/$prefix.$SOURCE";
   $TUNE{target} = "tune/$prefix.$TARGET";
+  $PREPPED{TUNE} = 1;
 }
 
-if (defined $TEST) {
+if (defined $TEST and $DO_PREPARE_CORPORA) {
   my $prefix = prepare_data("test",[$TEST]);
   $TEST{source} = "test/$prefix.$SOURCE";
   $TEST{target} = "test/$prefix.$TARGET";
+  $PREPPED{TEST} = 1;
 }
 
 maybe_quit("FIRST");
@@ -601,12 +620,23 @@ maybe_quit("THRAX");
 ## MERT ##############################################################
 MERT:
 
+# prep the tuning data, unless already prepped
+if (! $PREPPED{TUNE} and $DO_PREPARE_CORPORA) {
+  my $prefix = prepare_data("tune",[$TUNE]);
+  $TUNE{source} = "tune/$prefix.$SOURCE";
+  $TUNE{target} = "tune/$prefix.$TARGET";
+  $PREPPED{TUNE} = 1;
+}
+
 # If the language model file wasn't provided, build it from the target side of the training data.  Otherwise, copy it to location.
 if (! defined $LMFILE) {
   if (exists $TRAIN{target}) {
 	$LMFILE="lm.gz";
+
+	my $smoothing = ($WITTEN_BELL) ? "-wbdiscount" : "-kndiscount";
+
 	$cachepipe->cmd("srilm",
-					"$SRILM -interpolate -kndiscount -order 5 -text $TRAIN{target} -unk -lm lm.gz",
+					"$SRILM -interpolate $smoothing -order 5 -text $TRAIN{target} -unk -lm lm.gz",
 					$LMFILE);
   } elsif (! defined $LMFILE) {
 	print "* FATAL: you skipped training and didn't specify a language model\n";
@@ -668,12 +698,13 @@ my $TUNE_GRAMMAR = (defined $TUNE_GRAMMAR_FILE)
 	: $GRAMMAR_FILE;
 
 if ($DO_FILTER_TM and ! defined $TUNE_GRAMMAR_FILE) {
+  $TUNE_GRAMMAR = "tune/grammar.filtered.gz";
+
   $cachepipe->cmd("filter-tune",
 				  "$SCRIPTDIR/training/scat $GRAMMAR_FILE | java -Xmx2g -Dfile.encoding=utf8 -cp $JOSHUA/thrax/bin/thrax.jar edu.jhu.thrax.util.TestSetFilter -v $TUNE{source} | $SCRIPTDIR/training/remove-unary-abstract.pl | gzip -9 > $TUNE_GRAMMAR",
-				  $TUNE_GRAMMAR,
+				  $GRAMMAR_FILE,
 				  $TUNE{source},
-				  "tune/grammar.filtered.gz");
-  $TUNE_GRAMMAR = "tune/grammar.filtered.gz";
+				  $TUNE_GRAMMAR);
 }
 
 # copy the thrax config file if it's not already there
@@ -760,6 +791,14 @@ TEST:
 
 mkdir("test") unless -d "test";
 
+# prepare the testing data
+if (! $PREPPED{TEST} and $DO_PREPARE_CORPORA) {
+  my $prefix = prepare_data("test",[$TEST]);
+  $TEST{source} = "test/$prefix.$SOURCE";
+  $TEST{target} = "test/$prefix.$TARGET";
+  $PREPPED{TEST} = 1;
+}
+
 # If we jumped directly to this step, then the caller is required to
 # have specified a Joshua config file (fully instantiated, not a
 # template), which we'll copy in place
@@ -782,12 +821,12 @@ my $TEST_GRAMMAR = (defined $TEST_GRAMMAR_FILE)
 	: $GRAMMAR_FILE;
 
 if ($DO_FILTER_TM and ! defined $TEST_GRAMMAR_FILE) {
+	$TEST_GRAMMAR = "test/grammar.filtered.gz";
 	$cachepipe->cmd("filter-test",
 					"$SCRIPTDIR/training/scat $GRAMMAR_FILE | java -Xmx2g -Dfile.encoding=utf8 -cp $JOSHUA/thrax/bin/thrax.jar edu.jhu.thrax.util.TestSetFilter -v $TEST{source} | $SCRIPTDIR/training/remove-unary-abstract.pl | gzip -9 > $TEST_GRAMMAR",
 					$GRAMMAR_FILE,
 					$TEST{source},
-					"test/grammar.filtered.gz");
-	$TEST_GRAMMAR = "test/grammar.filtered.gz";
+					$TEST_GRAMMAR);
 }
 
 # copy the thrax config file if it's not already there
