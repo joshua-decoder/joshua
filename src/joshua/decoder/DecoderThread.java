@@ -221,8 +221,12 @@ public class DecoderThread extends Thread {
 			return null;
 
 		long startTime = System.currentTimeMillis();
-		
-		Chart chart; 
+
+		// skip blank sentences
+		if (sentence.sentence().matches("^\\s*$")) {
+			logger.info("translation of sentence " + sentence.id() + " took 0 seconds [" + getId() + "]");
+			return null;
+		}
 		
         Lattice<Integer> input_lattice = sentence.intLattice();
 
@@ -291,7 +295,7 @@ public class DecoderThread extends Thread {
         }
 
         /* Seeding: the chart only sees the grammars, not the factories */
-        chart = new Chart(input_lattice,
+        Chart chart = new Chart(input_lattice,
             this.featureFunctions,
             this.stateComputers,
             sentence.id(),
