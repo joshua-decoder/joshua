@@ -1,0 +1,5 @@
+To build a binary for Berkeley LM, you need to do the following:
+
+java -cp [berkelylm jar file] -server -mx[lots of memory] edu.berkeley.nlp.lm.io.MakeLmBinaryFromArpa [ARPA file] [output file]
+
+Both input and output will be appropriately GZipped if they have a .gz extension. Note that MakeLmBinaryFromArpa has options for e.g. enabling compression. 

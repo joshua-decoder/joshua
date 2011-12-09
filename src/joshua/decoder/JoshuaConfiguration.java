@@ -41,6 +41,7 @@ public class JoshuaConfiguration {
 	//lm config
 	public static boolean use_srilm                  = false;
 	public static boolean use_kenlm                  = false;
+	public static boolean use_berkeleylm             = false;
 	public static boolean use_bloomfilter_lm         = false;
 	public static boolean use_trie_lm                = false;
 	public static double  lm_ceiling_cost            = 100;
@@ -243,12 +244,11 @@ public class JoshuaConfiguration {
 					logger.severe("Wrong config line: " + line);
 					System.exit(1);
 				}
-				
+			
 				if ("lm_file".equals(fds[0])) {
 					lm_file = fds[1].trim();
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("lm file: %s", lm_file));
-					
 				} else if ("tm_file".equals(fds[0])) {
 					tm_file = fds[1].trim();
 					if (logger.isLoggable(Level.FINEST))
@@ -355,7 +355,9 @@ public class JoshuaConfiguration {
 				} else if ("use_kenlm".equals(fds[0])) {
 					use_kenlm = Boolean.valueOf(fds[1]);
 					logger.finest(String.format("use_kenlm: %s", use_kenlm));
-					
+				} else if ("use_berkeleylm".equals(fds[0])) {
+					use_berkeleylm = Boolean.valueOf(fds[1]);
+					logger.finest(String.format("use_berkeleylm: %s", use_berkeleylm));
 				} else if ("use_bloomfilter_lm".equals(fds[0])) {
 					use_bloomfilter_lm = Boolean.valueOf(fds[1]);
 					logger.finest(String.format("use_bloomfilter_lm: %s", use_bloomfilter_lm));

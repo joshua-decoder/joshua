@@ -1,1 +1,1 @@
-cat <INPUT> | java -Xmx<MEM> -Djava.library.path=<JOSHUA>/lib -Dfile.encoding=utf8 -cp <JOSHUA>/bin/:<JOSHUA>/lib/thrax.jar joshua.decoder.JoshuaDecoder -threads <NUMTHREADS> -c <CONFIG> > <OUTPUT> 2> <LOG>
+cat <INPUT> | <JOSHUA>/joshua-decoder -m <MEM> -threads <NUMTHREADS> -c <CONFIG> > <OUTPUT> 2> <LOG>

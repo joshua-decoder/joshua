@@ -31,7 +31,7 @@ done
 shift $(($OPTIND-1))
 
 java -Xmx${mem} \
-	-cp $JOSHUA/bin \
+	-cp $JOSHUA/bin:$JOSHUA/thrax/bin/thrax.jar:$JOSHUA/lib/berkeleylm.jar \
 	-Dfile.encoding=utf8 \
 	-Djava.util.logging.config.file=${JOSHUA}/logging.properties \
 	-Djava.library.path=$JOSHUA/lib \
