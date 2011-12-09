@@ -648,14 +648,15 @@ if (! defined $LMFILE) {
 	exit(1);
   }
 
-  my $lm_basedir = dirname($LMFILE);
-  if ($lm_basedir ne "." and $lm_basedir ne $RUNDIR) {
-	my $lmfile = basename($LMFILE);
-	$cachepipe->cmd("cp-lmfile",
-					"cp $LMFILE $lmfile",
-					$LMFILE, $lmfile);
-	$LMFILE = $lmfile;
-  }
+   # by default, we do not copy the lmfile over
+#  my $lm_basedir = dirname($LMFILE);
+#  if ($lm_basedir ne "." and $lm_basedir ne $RUNDIR) {
+#	my $lmfile = basename($LMFILE);
+#	$cachepipe->cmd("cp-lmfile",
+#					"cp $LMFILE $lmfile",
+#					$LMFILE, $lmfile);
+#	$LMFILE = $lmfile;
+#  }
 }
 
 # filter the tuning LM to the training side of the data (if possible)
