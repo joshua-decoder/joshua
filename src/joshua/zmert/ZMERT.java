@@ -56,7 +56,10 @@ public class ZMERT
 
         if (status == 90) { done = true; }
         else if (status == 91) { done = false; }
-        else { System.out.println("Z-MERT exiting prematurely (MertCore returned " + status + ")..."); break; }
+        else { 
+			System.out.println("Z-MERT exiting prematurely (MertCore returned " + status + ")..."); 
+			System.exit(status);
+		}
       }
     }
 
