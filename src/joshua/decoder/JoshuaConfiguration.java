@@ -45,8 +45,7 @@ public class JoshuaConfiguration {
 	public static boolean use_right_equivalent_state = true;
 	public static int     lm_order                   = 3;
 	public static boolean use_sent_specific_lm       = false;
-	public static String  g_sent_lm_file_name_prefix = "lm.";
-	public static String  lm_file                    = null; // TODO
+	public static String  lm_file                    = null;
 	public static int     ngramStateID               = 0;    // TODO ?????????????
 	
 	//tm config
@@ -58,7 +57,6 @@ public class JoshuaConfiguration {
 	public static String  goal_symbol                = "S";
 	public static boolean use_sent_specific_tm       = false;
 	public static boolean keep_sent_specific_tm      = false;
-	public static String  g_sent_tm_file_name_prefix = "tm.";
 	
 	public static String  tm_file                    = null;
 	public static String  tm_format                  = null;
@@ -79,36 +77,6 @@ public class JoshuaConfiguration {
 
 	// number of phrasal features, for correct oov rule creation
 	public static int     num_phrasal_features       = 0;
-	
-	// Parameters for suffix array grammar
-//	/** File name prefix for source language binary training files. */
-//	public static String sa_source = null;
-//	
-//	/** File name prefix for source language binary training files. */
-//	public static String sa_target = null;
-//	
-//	/** File name of source-target training corpus alignments. */
-//	public static String sa_alignment = null;
-	
-	public static int     sa_max_phrase_span       = 10;
-	public static int     sa_max_phrase_length     = 10;
-	public static int     sa_max_nonterminals      = 2;
-	public static int     sa_min_nonterminal_span  = 2;
-	public static int     sa_lex_sample_size       = 1000;
-	public static int     sa_lex_cache_size        = Cache.DEFAULT_CAPACITY;
-	public static boolean sa_precalculate_lexprobs = false;
-	public static int     sa_rule_sample_size      = 300;
-	public static int     sa_rule_cache_size       = 1000;
-	public static boolean sa_sentence_initial_X    = true;
-	public static boolean sa_sentence_final_X      = true;
-	public static boolean sa_edgeXMayViolatePhraseSpan = true;
-	public static float   sa_lex_floor_prob        = Float.MIN_VALUE;
-	
-	// TODO: introduce the various corpus/tm file package formats
-//	public static String sa_vocab_suffix = "vocab";
-//	public static String sa_corpus_suffix = "corpus";
-//	public static String sa_suffixes_suffix = "suffixes";
-	
 	
 	//pruning config
 
@@ -243,107 +211,24 @@ public class JoshuaConfiguration {
 			
 				if ("lm_file".equals(fds[0])) {
 					lm_file = fds[1].trim();
-					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format("lm file: %s", lm_file));
+					logger.finest(String.format("lm file: %s", lm_file));
 				} else if ("tm_file".equals(fds[0])) {
 					tm_file = fds[1].trim();
-					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format("tm file: %s", tm_file));
+					logger.finest(String.format("tm file: %s", tm_file));
 				
 				} else if ("glue_file".equals(fds[0])) {
 					glue_file = fds[1].trim();
-					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format("glue file: %s", glue_file));
+					logger.finest(String.format("glue file: %s", glue_file));
 				
 				} else if ("tm_format".equals(fds[0])) {
 					tm_format = fds[1].trim();
 						
-					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format("tm format: %s", tm_format));
+					logger.finest(String.format("tm format: %s", tm_format));
 
 				} else if ("glue_format".equals(fds[0])) {
 					glue_format = fds[1].trim();
 						
-					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format("glue format: %s", glue_format));
-//				} else if ("sa_source".equals(fds[0])) {
-//					sa_source = fds[1].trim();
-//					if (logger.isLoggable(Level.FINEST))
-//						logger.finest(String.format("suffix array source file: %s", sa_source));
-//					
-//				} else if ("sa_target".equals(fds[0])) {
-//					sa_target = fds[1].trim();
-//					if (logger.isLoggable(Level.FINEST))
-//						logger.finest(String.format("suffix array target file: %s", sa_target));
-//					
-//				} else if ("sa_alignment".equals(fds[0])) {
-//					sa_alignment = fds[1].trim();
-//					if (logger.isLoggable(Level.FINEST))
-//						logger.finest(String.format("suffix array alignment file: %s", sa_alignment));
-//					
-				} else if ("sa_max_phrase_span".equals(fds[0])) {
-					sa_max_phrase_span = Integer.parseInt(fds[1].trim());
-					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format("suffix array maximum phrase span: %s", sa_max_phrase_span));
-					
-				} else if ("sa_max_phrase_length".equals(fds[0])) {
-					sa_max_phrase_length = Integer.parseInt(fds[1].trim());
-					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format("suffix array maximum phrase length: %s", sa_max_phrase_length));
-					
-				} else if ("sa_max_phrase_length".equals(fds[0])) {
-					sa_max_phrase_length = Integer.parseInt(fds[1].trim());
-					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format("suffix array maximum phrase length: %s", sa_max_phrase_length));
-					
-				} else if ("sa_max_nonterminals".equals(fds[0])) {
-					sa_max_nonterminals = Integer.parseInt(fds[1].trim());
-					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format("suffix array maximum number of nonterminals: %s", sa_max_nonterminals));
-					
-				} else if ("sa_min_nonterminal_span".equals(fds[0])) {
-					sa_min_nonterminal_span = Integer.parseInt(fds[1].trim());
-					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format("suffix array minimun nonterminal span: %s", sa_min_nonterminal_span));
-					
-				} else if ("sa_lex_sample_size".equals(fds[0])) {
-					sa_lex_sample_size = Integer.parseInt(fds[1].trim());
-					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format("suffix array sample size for lexical probability calculation: %s", sa_lex_sample_size));
-					
-				} else if ("sa_precalculate_lexprobs".equals(fds[0])) {
-					sa_precalculate_lexprobs = Boolean.valueOf(fds[1].trim());
-					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format("should lexical probabilities be precalculated: %s", sa_precalculate_lexprobs));
-					
-				} else if ("sa_rule_sample_size".equals(fds[0])) {
-					sa_rule_sample_size = Integer.parseInt(fds[1].trim());
-					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format("suffix array sample size for rules: %s", sa_rule_sample_size));
-					
-				} else if ("sa_rule_cache_size".equals(fds[0])) {
-					sa_rule_cache_size = Integer.parseInt(fds[1].trim());
-					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format("suffix array cache size for rules: %s", sa_rule_cache_size));
-					
-				} else if ("sa_sentence_initial_X".equals(fds[0])) {
-					sa_sentence_initial_X = Boolean.valueOf(fds[1].trim());
-					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format("should suffix array rule extraction allow rules from sentence-initial X: %s", sa_sentence_initial_X));
-					
-				} else if ("sa_sentence_final_X".equals(fds[0])) {
-					sa_sentence_final_X = Boolean.valueOf(fds[1].trim());
-					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format("should suffix array rule extraction allow rules from sentence-final X: %s", sa_sentence_final_X));
-					
-				} else if ("sa_edgeXMayViolatePhraseSpan".equals(fds[0])) {
-					sa_edgeXMayViolatePhraseSpan = Boolean.valueOf(fds[1].trim());
-					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format("should suffix array rule extraction allow rules where sa_edgeXMayViolatePhraseSpan: %s", sa_edgeXMayViolatePhraseSpan));
-				} else if ("sa_lex_floor_prob".equals(fds[0])) {
-					sa_lex_floor_prob = Float.valueOf(fds[1].trim());
-					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format("floor value for probabilities returned as lexical transaltion probabilities: %s", sa_lex_floor_prob));
+					logger.finest(String.format("glue format: %s", glue_format));
 				} else if ("lm_type".equals(fds[0])) {
 					lm_type = String.valueOf(fds[1]);
 					if (! lm_type.equals("kenlm") && ! lm_type.equals("berkeleylm") && ! lm_type.equals("javalm")) {
@@ -354,275 +239,206 @@ public class JoshuaConfiguration {
 					
 				} else if ("lm_ceiling_cost".equals(fds[0])) {
 					lm_ceiling_cost = Double.parseDouble(fds[1]);
-					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format("lm_ceiling_cost: %s", lm_ceiling_cost));
-					
-				// BUG: accepting typos in config file is not acceptable
-				} else if ("use_left_euqivalent_state".equals(fds[0])) {
-					use_left_equivalent_state = Boolean.parseBoolean(fds[1]);
-					
-					logger.warning("Misspelling in configuration file: 'use_right_euqivalent_state'");
-					
-					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format("use_left_equivalent_state: %s", use_left_equivalent_state));
-				
-				// BUG: accepting typos in config file is not acceptable
-				} else if ("use_right_euqivalent_state".equals(fds[0])) {
-					use_right_equivalent_state = Boolean.parseBoolean(fds[1]);
-					
-					logger.warning("Misspelling in configuration file: 'use_right_euqivalent_state'");
-					
-					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format("use_right_equivalent_state: %s", use_right_equivalent_state));
+					logger.finest(String.format("lm_ceiling_cost: %s", lm_ceiling_cost));
 					
 				} else if ("use_left_equivalent_state".equals(fds[0])) {
 					use_left_equivalent_state = Boolean.valueOf(fds[1]);
-					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format("use_left_equivalent_state: %s", use_left_equivalent_state));
+					logger.finest(String.format("use_left_equivalent_state: %s", use_left_equivalent_state));
 				
 				} else if ("use_right_equivalent_state".equals(fds[0])) {
 					use_right_equivalent_state = Boolean.valueOf(fds[1]);
-					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format("use_right_equivalent_state: %s", use_right_equivalent_state));
+					logger.finest(String.format("use_right_equivalent_state: %s", use_right_equivalent_state));
 					
 				} else if ("order".equals(fds[0])) {
 					lm_order = Integer.parseInt(fds[1]);
-					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format("g_lm_order: %s", lm_order));
+					logger.finest(String.format("g_lm_order: %s", lm_order));
 					
 				} else if ("use_sent_specific_lm".equals(fds[0])) {
 					use_sent_specific_lm = Boolean.valueOf(fds[1]);
-					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format("use_sent_specific_lm: %s", use_sent_specific_lm));
-					
-				} else if ("sent_lm_file_name_prefix".equals(fds[0])) {
-					g_sent_lm_file_name_prefix = fds[1].trim();
-					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format("sent_lm_file_name_prefix: %s", g_sent_lm_file_name_prefix));
+					logger.finest(String.format("use_sent_specific_lm: %s", use_sent_specific_lm));
 					
 				} else if ("use_sent_specific_tm".equals(fds[0])) {
 					use_sent_specific_tm = Boolean.valueOf(fds[1]);
-					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format("use_sent_specific_tm: %s", use_sent_specific_tm));
+					logger.finest(String.format("use_sent_specific_tm: %s", use_sent_specific_tm));
 
 				} else if ("keep_sent_specific_tm".equals(fds[0])) {
 					keep_sent_specific_tm = Boolean.valueOf(fds[1]);
-					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format("keep_sent_specific_tm: %s", use_sent_specific_tm));
-					
-				} else if ("sent_tm_file_name_prefix".equals(fds[0])) {
-					g_sent_tm_file_name_prefix = fds[1].trim();
-					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format("sent_tm_file_name_prefix: %s", g_sent_tm_file_name_prefix));
+					logger.finest(String.format("keep_sent_specific_tm: %s", use_sent_specific_tm));
 					
 				} else if ("span_limit".equals(fds[0])) {
 					span_limit = Integer.parseInt(fds[1]);
-					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format("span_limit: %s", span_limit));
+					logger.finest(String.format("span_limit: %s", span_limit));
 					
 				} else if ("phrase_owner".equals(fds[0])) {
 					phrase_owner = fds[1].trim();
-					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format("phrase_owner: %s", phrase_owner));
+					logger.finest(String.format("phrase_owner: %s", phrase_owner));
 					
 				} else if ("glue_owner".equals(fds[0])) {
 					glue_owner = fds[1].trim();
-					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format("glue_owner: %s", glue_owner));
+					logger.finest(String.format("glue_owner: %s", glue_owner));
 					
 				}  else if ("default_non_terminal".equals(fds[0])) {
 					default_non_terminal = "[" + fds[1].trim() + "]";
 //					default_non_terminal = fds[1].trim();
-					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format("default_non_terminal: %s", default_non_terminal));
+					logger.finest(String.format("default_non_terminal: %s", default_non_terminal));
 					
 				} else if ("goalSymbol".equals(fds[0]) || "goal_symbol".equals(fds[0]) ) {
 					goal_symbol = "[" + fds[1].trim() + "]";
 //					goal_symbol = fds[1].trim();
-					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format("goalSymbol: %s", goal_symbol));
+					logger.finest("goalSymbol: " + goal_symbol);
 					
 				} else if ("constrain_parse".equals(fds[0])) {
 					constrain_parse = Boolean.parseBoolean(fds[1]);
+
 				} else if ("oov_feature_index".equals(fds[0])) {
 					oov_feature_index = Integer.parseInt(fds[1]);
+
 				} else if ("use_pos_labels".equals(fds[0])) {
 					use_pos_labels = Boolean.parseBoolean(fds[1]);
 					
-					
-					
 				} else if ("fuzz1".equals(fds[0])) {
 					fuzz1 = Double.parseDouble(fds[1]);
-					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format("fuzz1: %s", fuzz1));
+					logger.finest(String.format("fuzz1: %s", fuzz1));
 					
 				} else if ("fuzz2".equals(fds[0])) {
 					fuzz2 = Double.parseDouble(fds[1]);
-					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format("fuzz2: %s", fuzz2));
+					logger.finest(String.format("fuzz2: %s", fuzz2));
 					
 				} else if ("max_n_items".equals(fds[0])) {
 					max_n_items = Integer.parseInt(fds[1]);
-					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format("max_n_items: %s", max_n_items));
+					logger.finest(String.format("max_n_items: %s", max_n_items));
 					
 				} else if ("relative_threshold".equals(fds[0])) {
 					relative_threshold = Double.parseDouble(fds[1]);
-					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format("relative_threshold: %s", relative_threshold));
+					logger.finest(String.format("relative_threshold: %s", relative_threshold));
 					
 				} else if ("max_n_rules".equals(fds[0])) {
 					max_n_rules = Integer.parseInt(fds[1]);
-					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format("max_n_rules: %s", max_n_rules));
+					logger.finest(String.format("max_n_rules: %s", max_n_rules));
 					
 				} else if ("use_unique_nbest".equals(fds[0])) {
 					use_unique_nbest = Boolean.valueOf(fds[1]);
-					if (logger.isLoggable(Level.FINEST)) 
-						logger.finest(String.format("use_unique_nbest: %s", use_unique_nbest));
+					logger.finest(String.format("use_unique_nbest: %s", use_unique_nbest));
 					
 				} else if ("add_combined_cost".equals(fds[0])) {
 					add_combined_cost = Boolean.valueOf(fds[1]);
-					if (logger.isLoggable(Level.FINEST)) 
-						logger.finest(String.format("add_combined_cost: %s", add_combined_cost));
+					logger.finest(String.format("add_combined_cost: %s", add_combined_cost));
 					
 				} else if ("use_tree_nbest".equals(fds[0])) {
 					use_tree_nbest = Boolean.valueOf(fds[1]);
-					if (logger.isLoggable(Level.FINEST)) 
-						logger.finest(String.format("use_tree_nbest: %s", use_tree_nbest));
+					logger.finest(String.format("use_tree_nbest: %s", use_tree_nbest));
 					
 				} else if ("escape_trees".equals(fds[0])) {
 					escape_trees = Boolean.valueOf(fds[1]);
-					if (logger.isLoggable(Level.FINEST)) 
-						logger.finest(String.format("escape_trees: %s", escape_trees));
+					logger.finest(String.format("escape_trees: %s", escape_trees));
 					
 				} else if ("include_align_index".equals(fds[0])) {
 					include_align_index = Boolean.valueOf(fds[1]);
-					if (logger.isLoggable(Level.FINEST)) 
-						logger.finest(String.format("include_align_index: %s", include_align_index));
+					logger.finest(String.format("include_align_index: %s", include_align_index));
 					
 				} else if ("top_n".equals(fds[0])) {
 					topN = Integer.parseInt(fds[1]);
-					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format("topN: %s", topN));
+					logger.finest(String.format("topN: %s", topN));
 					
 				} else if ("parallel_files_prefix".equals(fds[0])) {
 					Random random = new Random();
 		            int v = random.nextInt(10000000);//make it random
 					parallel_files_prefix = fds[1] + v;
 					logger.info(String.format("parallel_files_prefix: %s", parallel_files_prefix));
+
 				} else if ("num_parallel_decoders".equals(fds[0]) || "threads".equals(fds[0]) ) {
 					num_parallel_decoders = Integer.parseInt(fds[1]);
 					if (num_parallel_decoders <= 0) {
 						throw new IllegalArgumentException("Must specify a positive number for num_parallel_decoders");
 					}
-					if (logger.isLoggable(Level.FINEST)) 
-						logger.finest(String.format("num_parallel_decoders: %s", num_parallel_decoders));
+					logger.finest(String.format("num_parallel_decoders: %s", num_parallel_decoders));
 					
 				} else if ("save_disk_hg".equals(fds[0])) {
 					save_disk_hg = Boolean.valueOf(fds[1]);
-					if (logger.isLoggable(Level.FINEST)) 
-						logger.finest(String.format("save_disk_hg: %s", save_disk_hg));
+					logger.finest(String.format("save_disk_hg: %s", save_disk_hg));
 					
 				} else if ("use_kbest_hg".equals(fds[0])) {
 					use_kbest_hg = Boolean.valueOf(fds[1]);
-					if (logger.isLoggable(Level.FINEST)) 
-						logger.finest(String.format("use_kbest_hg: %s", use_kbest_hg));
+					logger.finest(String.format("use_kbest_hg: %s", use_kbest_hg));
 					
 				} else if ("forest_pruning".equals(fds[0])) {
 					forest_pruning = Boolean.valueOf(fds[1]);
-					if (logger.isLoggable(Level.FINEST)) 
-						logger.finest(String.format("forest_pruning: %s", forest_pruning));
+					logger.finest(String.format("forest_pruning: %s", forest_pruning));
 					
 				} else if ("forest_pruning_threshold".equals(fds[0])) {
 					forest_pruning_threshold = Double.parseDouble(fds[1]);
-					if (logger.isLoggable(Level.FINEST)) 
-						logger.finest(String.format("forest_pruning_threshold: %s", forest_pruning_threshold));
+					logger.finest(String.format("forest_pruning_threshold: %s", forest_pruning_threshold));
 				
 				} else if ("visualize_hypergraph".equals(fds[0])) {
 					visualize_hypergraph = Boolean.valueOf(fds[1]);
-					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format("visualize_hypergraph: %s", visualize_hypergraph));
+					logger.finest(String.format("visualize_hypergraph: %s", visualize_hypergraph));
 					
 				} else if ("mark_oovs".equals(fds[0])) {
 					mark_oovs = Boolean.valueOf(fds[1]);
-					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format("mark_oovs: %s", mark_oovs));
+					logger.finest(String.format("mark_oovs: %s", mark_oovs));
 					
 				} else if ("segment_file_parser_class".equals(fds[0])) {
 					segmentFileParserClass = fds[1].trim();
-					if (logger.isLoggable(Level.FINEST))
-						logger.finest("segmentFileParserClass: " + segmentFileParserClass);
+					logger.finest("segmentFileParserClass: " + segmentFileParserClass);
 					
                 } else if ("pop-limit".equals(fds[0])) {
                     pop_limit = Integer.valueOf(fds[1]);
                     logger.finest(String.format("pop-limit: %s", pop_limit)); 
+
 				} else if ("useCubePrune".equals(fds[0])) {
 					useCubePrune = Boolean.valueOf(fds[1]);
 					if(useCubePrune==false)
 						logger.warning("useCubePrune=false");
-					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format("useCubePrune: %s", useCubePrune));				
+					logger.finest(String.format("useCubePrune: %s", useCubePrune));				
 				}else if ("useBeamAndThresholdPrune".equals(fds[0])) {
 					useBeamAndThresholdPrune = Boolean.valueOf(fds[1]);
 					if(useBeamAndThresholdPrune==false)
 						logger.warning("useBeamAndThresholdPrune=false");
-					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format("useBeamAndThresholdPrune: %s", useBeamAndThresholdPrune));				
+					logger.finest(String.format("useBeamAndThresholdPrune: %s", useBeamAndThresholdPrune));				
 				} else if ("oovFeatureCost".equals(fds[0])) {
 					oov_feature_cost = Float.parseFloat(fds[1]);
-					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format("oovFeatureCost: %s", oov_feature_cost));
+					logger.finest(String.format("oovFeatureCost: %s", oov_feature_cost));
 				} else if ("useTMFeat".equals(fds[0])) {
 					useTMFeat = Boolean.valueOf(fds[1]);
-					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format("useTMFeat: %s", useTMFeat));
+					logger.finest(String.format("useTMFeat: %s", useTMFeat));
+
 				} else if ("useLMFeat".equals(fds[0])) {
 					useLMFeat = Boolean.valueOf(fds[1]);
-					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format("useLMFeat: %s", useLMFeat));
+					logger.finest(String.format("useLMFeat: %s", useLMFeat));
+
 				} else if ("useMicroTMFeat".equals(fds[0])) {
 					useMicroTMFeat = new Boolean(fds[1].trim());
-					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format("useMicroTMFeat: %s", useMicroTMFeat));					
+					logger.finest(String.format("useMicroTMFeat: %s", useMicroTMFeat));					
 				} else if ("wordMapFile".equals(fds[0])) {
 					wordMapFile = fds[1].trim();
-					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format("wordMapFile: %s", wordMapFile));					
+					logger.finest(String.format("wordMapFile: %s", wordMapFile));					
 				} else if ("useRuleIDName".equals(fds[0])) {
 					useRuleIDName = new Boolean(fds[1].trim());
-					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format("useRuleIDName: %s", useRuleIDName));					
-				}else if ("startNgramOrder".equals(fds[0])) {
+					logger.finest(String.format("useRuleIDName: %s", useRuleIDName));					
+				} else if ("startNgramOrder".equals(fds[0])) {
 					startNgramOrder = Integer.parseInt(fds[1]);
-					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format("startNgramOrder: %s", startNgramOrder));
+					logger.finest(String.format("startNgramOrder: %s", startNgramOrder));
 				} else if ("endNgramOrder".equals(fds[0])) {
 					endNgramOrder = Integer.parseInt(fds[1]);
-					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format("endNgramOrder: %s", endNgramOrder));
+					logger.finest(String.format("endNgramOrder: %s", endNgramOrder));
 				}else if ("useEdgeNgramOnly".equals(fds[0])) {
 					useEdgeNgramOnly = Boolean.valueOf(fds[1]);
-					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format("useEdgeNgramOnly: %s", useEdgeNgramOnly));
+					logger.finest(String.format("useEdgeNgramOnly: %s", useEdgeNgramOnly));
 				}else if ("useTMTargetFeat".equals(fds[0])) {
 					useTMTargetFeat = Boolean.valueOf(fds[1]);
-					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format("useTMTargetFeat: %s", useTMTargetFeat));
+					logger.finest(String.format("useTMTargetFeat: %s", useTMTargetFeat));
 				} else if ("useGoogleLinearCorpusGain".equals(fds[0])) {
 					useGoogleLinearCorpusGain = new Boolean(fds[1].trim());
-					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format("useGoogleLinearCorpusGain: %s", useGoogleLinearCorpusGain));					
+					logger.finest(String.format("useGoogleLinearCorpusGain: %s", useGoogleLinearCorpusGain));					
 				} else if ("googleBLEUWeights".equals(fds[0])) {
 					String[] googleWeights = fds[1].trim().split(";");
-					if(googleWeights.length!=5){
+					if (googleWeights.length!=5){
 						logger.severe("wrong line=" + line);
 						System.exit(1);
 					}
 					linearCorpusGainThetas = new double[5];
 					for(int i=0; i<5; i++)
 						linearCorpusGainThetas[i] = new Double(googleWeights[i]);
-					
 					
 					logger.finest(String.format("googleBLEUWeights: %s", linearCorpusGainThetas));		
 					
@@ -642,22 +458,21 @@ public class JoshuaConfiguration {
 				String[] fds = Regex.spaces.split(line);
 				if ("lm".equals(fds[0]) && fds.length == 2) { // lm  weight
 					have_lm_model = true;
-					if(new Double(fds[1].trim())!=0){
+					if (new Double(fds[1].trim())!=0){
 						use_max_lm_cost_for_oov = true;
 					}
 					logger.info("useMaxLMCostForOOV=" + use_max_lm_cost_for_oov);
 				} 
 			}
 			
-			
-			
-		} } finally { configReader.close(); }
+			} 
+		} finally { configReader.close(); }
 		
-		if( useGoogleLinearCorpusGain  ){
-			if( linearCorpusGainThetas==null){
+		if (useGoogleLinearCorpusGain) {
+			if (linearCorpusGainThetas==null) {
 				logger.info("linearCorpusGainThetas is null, did you set googleBLEUWeights properly?");
 				System.exit(1);
-			}else if( linearCorpusGainThetas.length!=5){
+			} else if (linearCorpusGainThetas.length!=5) {
 				logger.info("linearCorpusGainThetas does not have five values, did you set googleBLEUWeights properly?");
 				System.exit(1);
 			}
