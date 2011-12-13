@@ -312,35 +312,33 @@ public class JoshuaDecoder {
 	// TODO: maybe move to JoshuaConfiguration to enable moving the featureFunction parsing there (Needs: Vocabulary; Sets: languageModel)
 	// TODO: check we actually have a feature that requires a language model
 	private void initializeLanguageModel() throws IOException {
-		// BUG: All these different boolean LM fields should just be an enum.
 		// FIXME: And we should check only once for the default (which supports left/right equivalent state) vs everything else (which doesn't)
 		// TODO: maybe have a special exception type for BadConfigfileException instead of using IllegalArgumentException?
 		
-	if (JoshuaConfiguration.use_srilm || JoshuaConfiguration.use_kenlm) {
+		if (JoshuaConfiguration.lm_type.equals("kenlm")) {
 			if (JoshuaConfiguration.use_left_equivalent_state
-			|| JoshuaConfiguration.use_right_equivalent_state) {
+				|| JoshuaConfiguration.use_right_equivalent_state) {
 				throw new IllegalArgumentException("KenLM supports state.  Joshua should get around to using it.");
 			}
 			KenLM lm = new KenLM(JoshuaConfiguration.lm_file);
 			this.languageModel = lm;
 			Vocabulary.registerLanguageModel(lm);
 			Vocabulary.id(JoshuaConfiguration.default_non_terminal);
-	} else if (JoshuaConfiguration.use_berkeleylm) {
-		this.languageModel = new LMGrammarBerkeley(JoshuaConfiguration.lm_order, JoshuaConfiguration.lm_file);
-		Vocabulary.registerLanguageModel(this.languageModel);
-		Vocabulary.id(JoshuaConfiguration.default_non_terminal);
-	} else {
+		} else if (JoshuaConfiguration.lm_type.equals("berkeleylm")) {
+			this.languageModel = new LMGrammarBerkeley(JoshuaConfiguration.lm_order, JoshuaConfiguration.lm_file);
+			Vocabulary.registerLanguageModel(this.languageModel);
+			Vocabulary.id(JoshuaConfiguration.default_non_terminal);
+		} else {
 
-		logger.warning("WARNING: using built-in language model; you probably didn't intend this");
+			logger.warning("WARNING: using built-in language model; you probably didn't intend this");
 			
-		this.languageModel = new LMGrammarJAVA(
+			this.languageModel = new LMGrammarJAVA(
 				JoshuaConfiguration.lm_order,
 				JoshuaConfiguration.lm_file,
 				JoshuaConfiguration.use_left_equivalent_state,
 				JoshuaConfiguration.use_right_equivalent_state);
+		}
 	}
-	}
-	
 	
 	private void initializeGlueGrammar() throws IOException {
 		logger.info("Constructing glue grammar...");
