@@ -39,11 +39,7 @@ import joshua.util.io.LineReader;
  */
 public class JoshuaConfiguration {
 	//lm config
-	public static boolean use_srilm                  = false;
-	public static boolean use_kenlm                  = false;
-	public static boolean use_berkeleylm             = false;
-	public static boolean use_bloomfilter_lm         = false;
-	public static boolean use_trie_lm                = false;
+	public static String lm_type                     = "kenlm";
 	public static double  lm_ceiling_cost            = 100;
 	public static boolean use_left_equivalent_state  = false;
 	public static boolean use_right_equivalent_state = true;
@@ -348,23 +344,13 @@ public class JoshuaConfiguration {
 					sa_lex_floor_prob = Float.valueOf(fds[1].trim());
 					if (logger.isLoggable(Level.FINEST))
 						logger.finest(String.format("floor value for probabilities returned as lexical transaltion probabilities: %s", sa_lex_floor_prob));
-				} else if ("use_srilm".equals(fds[0])) {
-					use_srilm = Boolean.valueOf(fds[1]);
-					logger.warning("WARNING: srilm no longer supported, will use KenLM instead");
-					logger.finest(String.format("use_srilm: %s", use_srilm));
-				} else if ("use_kenlm".equals(fds[0])) {
-					use_kenlm = Boolean.valueOf(fds[1]);
-					logger.finest(String.format("use_kenlm: %s", use_kenlm));
-				} else if ("use_berkeleylm".equals(fds[0])) {
-					use_berkeleylm = Boolean.valueOf(fds[1]);
-					logger.finest(String.format("use_berkeleylm: %s", use_berkeleylm));
-				} else if ("use_bloomfilter_lm".equals(fds[0])) {
-					use_bloomfilter_lm = Boolean.valueOf(fds[1]);
-					logger.finest(String.format("use_bloomfilter_lm: %s", use_bloomfilter_lm));
-					
-				} else if ("use_trie_lm".equals(fds[0])) {
-					use_trie_lm = Boolean.valueOf(fds[1]);
-					logger.finest(String.format("use_trie_lm: %s", use_trie_lm));
+				} else if ("lm_type".equals(fds[0])) {
+					lm_type = String.valueOf(fds[1]);
+					if (! lm_type.equals("kenlm") && ! lm_type.equals("berkeleylm") && ! lm_type.equals("javalm")) {
+						System.err.println("* FATAL: lm_type '" + lm_type + "' not supported");
+						System.err.println("* supported types are 'kenlm' (default), 'berkeleylm', and 'javalm' (not recommended)");
+						System.exit(1);
+					}
 					
 				} else if ("lm_ceiling_cost".equals(fds[0])) {
 					lm_ceiling_cost = Double.parseDouble(fds[1]);

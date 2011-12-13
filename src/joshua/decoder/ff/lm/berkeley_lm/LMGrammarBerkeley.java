@@ -72,6 +72,7 @@ public class LMGrammarBerkeley extends AbstractLM
 			fileIsBinary = false;
 		} catch (IOException e) {
 			System.err.println("Can't read file '" + lm_file + "'");
+			System.exit(1);
 		}
 
 		if (fileIsBinary) {
