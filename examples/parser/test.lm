@@ -1,0 +1,24 @@
+
+\data\
+ngram 1=6
+ngram 2=5
+ngram 3=0
+
+\1-grams:
+-0.69897	</s>
+-99	<s>	-0.20412
+-0.69897	france	-0.20412
+-0.69897	proposal	-0.20412
+-0.69897	supported	-0.20412
+-0.69897	the	-0.20412
+
+\2-grams:
+-0.30103	<s> france
+-0.30103	france supported
+-0.30103	proposal </s>
+-0.30103	supported the
+-0.30103	the proposal
+
+\3-grams:
+
+\end\
