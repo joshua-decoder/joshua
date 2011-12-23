@@ -2,6 +2,10 @@
 -----
 - Fixed race condition in checking for new sentences in translateAll()
 
+- Added removal of unary abstract rules to grammar filtering steps
+  (important since Joshua does not at the moment properly handle unary
+  chains when decoding)
+
 
 3.1
 ---
