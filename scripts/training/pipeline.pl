@@ -90,8 +90,10 @@ my $DO_PREPARE_CORPORA = 1;
 # how many optimizer runs to perform
 my $OPTIMIZER_RUNS = 1;
 
-my @STEPS = qw[FIRST SUBSAMPLE ALIGN PARSE THRAX MERT LAST];
+my @STEPS = qw[FIRST SUBSAMPLE ALIGN PARSE THRAX MERT TEST LAST];
 my %STEPS = map { $STEPS[$_] => $_ + 1 } (0..$#STEPS);
+
+my $NAME = undef;
 
 my $retval = GetOptions(
   "corpus=s" 	 	  => \@CORPORA,
@@ -99,6 +101,7 @@ my $retval = GetOptions(
   "test=s"            => \$TEST,
   "prepare!"          => \$DO_PREPARE_CORPORA,
   "data-dir=s"        => \$DATA_DIR,
+  "name=s"            => \$NAME,
   "aligner=s"         => \$ALIGNER,
   "alignment=s"  	  => \$ALIGNMENT,
   "aligner-mem=s"     => \$ALIGNER_MEM,
@@ -174,6 +177,16 @@ if (defined $ENV{HADOOP} and ! defined $HADOOP) {
   print "* FATAL: roll out a new cluster automatically, then unset \$HADOOP\n";
   print "* FATAL: and re-run the script.\n";
   exit;
+}
+
+# make sure source and target were specified
+if (! defined $SOURCE or $SOURCE eq "") {
+  print "* FATAL: I need a source language extension (--source)\n";
+  exit 1;
+}
+if (! defined $TARGET or $TARGET eq "") {
+  print "* FATAL: I need a target language extension (--target)\n";
+  exit 1;
 }
 
 # make sure a corpus was provided if we're doing any step before MERT
@@ -531,6 +544,8 @@ if ($GRAMMAR_TYPE eq "samt") {
 
 THRAX:
 
+system("mkdir -p $DATA_DIRS{train}") unless -d $DATA_DIRS{train};
+
 if ($GRAMMAR_TYPE eq "samt") {
 
   # if we jumped right here, $TRAIN{target} should be parsed
@@ -644,18 +659,31 @@ if (! $PREPPED{TUNE} and $DO_PREPARE_CORPORA) {
 
 # If the language model file wasn't provided, build it from the target side of the training data.  Otherwise, copy it to location.
 if (! defined $LMFILE) {
-  if (exists $TRAIN{target}) {
-	$LMFILE="lm.gz";
 
-	my $smoothing = ($WITTEN_BELL) ? "-wbdiscount" : "-kndiscount";
+  # make sure the training data is prepped
+  if (! $PREPPED{TRAIN} and $DO_PREPARE_CORPORA) {
+	my $prefix = prepare_data("train",\@CORPORA,$MAXLEN);
 
-	$cachepipe->cmd("srilm",
-					"$SRILM -interpolate $smoothing -order 5 -text $TRAIN{target} -unk -lm lm.gz",
-					$LMFILE);
-  } elsif (! defined $LMFILE) {
-	print "* FATAL: you skipped training and didn't specify a language model\n";
+	$TRAIN{prefix} = "$DATA_DIRS{train}/corpus";
+	foreach my $lang ($SOURCE,$TARGET) {
+	  system("ln -sf $prefix.$lang $DATA_DIRS{train}/corpus.$lang");
+	}
+	$TRAIN{source} = "$DATA_DIRS{train}/corpus.$SOURCE";
+	$TRAIN{target} = "$DATA_DIRS{train}/corpus.$TARGET";
+	$PREPPED{TRAIN} = 1;
+  }
+
+  if (! -e $TRAIN{target}) {
+	print "* FATAL: I need either a language model (--lmfile) or a training corpus to build it from (--corpus)\n";
 	exit(1);
   }
+
+  $LMFILE="lm.gz";
+  my $smoothing = ($WITTEN_BELL) ? "-wbdiscount" : "-kndiscount";
+  $cachepipe->cmd("srilm",
+				  "$SRILM -interpolate $smoothing -order 5 -text $TRAIN{target} -unk -lm lm.gz",
+				  $LMFILE);
+
 } else {
   if (! -e $LMFILE) {
 	print STDERR "* FATAL: can't find lmfile '$LMFILE'\n";
@@ -893,7 +921,7 @@ for my $run (1..$OPTIMIZER_RUNS) {
 	$numlines--;
 
 	$cachepipe->cmd("test-onebest-parmbr-$run", 
-					"cat $testrun/test.output.nbest.noOOV | java -Xmx1700m -cp $JOSHUA/bin joshua.decoder.NbestMinRiskReranker false 1 > $testrun/test.output.1best",
+					"cat $testrun/test.output.nbest.noOOV | java -Xmx1700m -cp $JOSHUA/bin -Dfile.encoding=utf8 joshua.decoder.NbestMinRiskReranker false 1 > $testrun/test.output.1best",
 					"$testrun/test.output.nbest.noOOV", 
 					"$testrun/test.output.1best");
   } else {
@@ -905,7 +933,7 @@ for my $run (1..$OPTIMIZER_RUNS) {
 
   $numrefs = get_numrefs($TEST{target});
   $cachepipe->cmd("test-bleu-$run",
-				  "java -cp $JOSHUA/bin -Djava.library.path=lib -Xmx1000m -Xms1000m -Djava.util.logging.config.file=logging.properties joshua.util.JoshuaEval -cand $testrun/test.output.1best -ref $TEST{target} -rps $numrefs -m BLEU 4 closest > $testrun/test.output.1best.bleu",
+				  "java -cp $JOSHUA/bin -Dfile.encoding=utf8 -Djava.library.path=lib -Xmx1000m -Xms1000m -Djava.util.logging.config.file=logging.properties joshua.util.JoshuaEval -cand $testrun/test.output.1best -ref $TEST{target} -rps $numrefs -m BLEU 4 closest > $testrun/test.output.1best.bleu",
 				  "$testrun/test.output.1best", 
 				  "$testrun/test.output.1best.bleu");
 
@@ -928,6 +956,73 @@ printf(BLEU "%s / %d = %.4f\n", join(" + ", @bleus), scalar @bleus, $final_bleu)
 close(BLEU);
 
 system("cat test/final-bleu");
+exit;
+
+
+# This target allows the pipeline to be used just for decoding new
+# data sets
+
+TEST:
+
+if (! defined $NAME) {
+  print "* FATAL: for direct tests, you must specify a unique run name\n";
+  exit 1;
+}
+
+if (-e "$DATA_DIRS{test}/$NAME") {
+  print "* FATAL: you specified a run name, but it already exists\n";
+  exit 1;
+}
+
+if (! $PREPPED{TEST} and $DO_PREPARE_CORPORA) {
+  my $prefix = prepare_data("test",[$TEST]);
+  $TEST{source} = "$DATA_DIRS{test}/$NAME/$prefix.$SOURCE";
+  $TEST{target} = "$DATA_DIRS{test}/$NAME/$prefix.$TARGET";
+  $PREPPED{TEST} = 1;
+}
+
+my $testrun = "test/$NAME";
+system("mkdir -p $testrun") unless -d $testrun;
+
+# this needs to be in a function since it is done all over the place
+my $file = $MERTFILES{decoder_command};
+open FROM, $file or die "can't find file '$file'";
+open TO, ">$testrun/decoder_command";
+print TO "cat $TEST{source} | \$JOSHUA/joshua-decoder -m $JOSHUA_MEM -threads $NUM_THREADS -tm_file $TEST_GRAMMAR -glue_file $GLUE_GRAMMAR_FILE -default_non_terminal $OOV -mark_oovs true -c $testrun/joshua.config > $testrun/test.output.nbest 2> $testrun/joshua.log\n";
+close(TO);
+chmod(0755,"$testrun/decoder_command");
+
+$cachepipe->cmd("$NAME-test-decode-run",
+				"./$testrun/decoder_command",
+				"$testrun/decoder_command",
+				$TEST_GRAMMAR,
+				$GLUE_GRAMMAR_FILE,
+				"$testrun/test.output.nbest");
+
+$cachepipe->cmd("$NAME-test-remove-oov",
+				"cat $testrun/test.output.nbest | perl -pe 's/_OOV//g' > $testrun/test.output.nbest.noOOV",
+				"$testrun/test.output.nbest",
+				"$testrun/test.output.nbest.noOOV");
+
+if ($DO_MBR) {
+  $cachepipe->cmd("$NAME-test-onebest-parmbr", 
+				  "cat $testrun/test.output.nbest.noOOV | java -Xmx1700m -cp $JOSHUA/bin -Dfile.encoding=utf8 joshua.decoder.NbestMinRiskReranker false 1 > $testrun/test.output.1best",
+				  "$testrun/test.output.nbest.noOOV", 
+				  "$testrun/test.output.1best");
+} else {
+  $cachepipe->cmd("$NAME-test-extract-onebest",
+				  "java -Xmx500m -cp $JOSHUA/bin -Dfile.encoding=utf8 joshua.util.ExtractTopCand $testrun/test.output.nbest $testrun/test.output.1best",
+				  "$testrun/test.output.nbest.noOOV", 
+				  "$testrun/test.output.1best");
+}
+
+$numrefs = get_numrefs($TEST{target});
+$cachepipe->cmd("$NAME-test-bleu",
+				"java -cp $JOSHUA/bin -Dfile.encoding=utf8 -Djava.library.path=lib -Xmx1000m -Xms1000m -Djava.util.logging.config.file=logging.properties joshua.util.JoshuaEval -cand $testrun/test.output.1best -ref $TEST{target} -rps $numrefs -m BLEU 4 closest > $testrun/test.output.1best.bleu",
+				"$testrun/test.output.1best", 
+				"$testrun/test.output.1best.bleu");
+
+system("cat $testrun/test.output.1best.bleu");
 
 				
 ######################################################################
@@ -943,8 +1038,13 @@ LAST:
 sub prepare_data {
   my ($label,$corpora,$maxlen) = @_;
 
-  mkdir $DATA_DIR unless -d $DATA_DIR;
-  mkdir $DATA_DIRS{$label} unless -d $DATA_DIRS{$label};
+  system("mkdir -p $DATA_DIR") unless -d $DATA_DIR;
+  system("mkdir -p $DATA_DIRS{$label}") unless -d $DATA_DIRS{$label};
+
+  my $datadir = $DATA_DIRS{$label};
+  if (defined $NAME) {
+	$datadir .= "/$NAME";
+  }
 
   # copy the data from its original location to our location
   foreach my $ext ($TARGET,$SOURCE,"$TARGET.0","$TARGET.1","$TARGET.2","$TARGET.3") {
