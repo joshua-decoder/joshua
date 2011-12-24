@@ -148,6 +148,10 @@ my %DATA_DIRS = (
   test  => "$DATA_DIR/test",
 );
 
+if (defined $NAME) {
+  map { $DATA_DIRS{$_} .= "/$NAME" } (keys %DATA_DIRS);
+}
+
 # capitalize these to offset a common error:
 $FIRST_STEP = uc($FIRST_STEP);
 $LAST_STEP  = uc($LAST_STEP);
@@ -843,23 +847,6 @@ if ($TEST_GRAMMAR_FILE) {
   }
 }
 
-# copy the thrax config file if it's not already there
-if (! defined $GLUE_GRAMMAR_FILE) {
-  system("grep -v input-file $THRAX_CONF_FILE > thrax-$GRAMMAR_TYPE.conf")
-	  unless -e "thrax-$GRAMMAR_TYPE.conf";
-
-  $cachepipe->cmd("glue-test",
-				  "$SCRIPTDIR/training/scat $TEST_GRAMMAR | java -Xmx1g -cp $JOSHUA/thrax/bin/thrax.jar:$JOSHUA/lib/hadoop-core-0.20.203.0.jar:$JOSHUA/lib/commons-logging-1.1.1.jar edu.jhu.thrax.util.CreateGlueGrammar thrax-$GRAMMAR_TYPE.conf > $DATA_DIRS{test}/grammar.glue",
-				  $TEST_GRAMMAR,
-				  "$DATA_DIRS{test}/grammar.glue");
-  $GLUE_GRAMMAR_FILE = "$DATA_DIRS{test}/grammar.glue";
-
-} else {
-  # just create a symlink to it
-  my $filename = $DATA_DIRS{test} . "/" . basename($GLUE_GRAMMAR_FILE);
-  system("ln -sf ../../$GLUE_GRAMMAR_FILE $filename");
-}
-
 # decode the test set once for each optimization run
 for my $run (1..$OPTIMIZER_RUNS) {
   my $testrun = "test/$run";
@@ -969,48 +956,81 @@ if (! defined $NAME) {
   exit 1;
 }
 
-if (-e "$DATA_DIRS{test}/$NAME") {
-  print "* FATAL: you specified a run name, but it already exists\n";
+if (! defined $GLUE_GRAMMAR_FILE) {
+  print "* FATAL: for direct tests, at the moment you must specify a glue grammar (sorry)\n";
   exit 1;
 }
 
+if ($MERTFILES{'joshua.config'} eq $JOSHUA_CONFIG_ORIG) {
+  print "* FATAL: for direct tests, I need a (tuned) Joshua config file\n";
+  exit 1;
+}
+
+# if (-e "$DATA_DIRS{test}/$NAME") {
+#   print "* FATAL: you specified a run name, but it already exists\n";
+#   exit 1;
+# }
+
 if (! $PREPPED{TEST} and $DO_PREPARE_CORPORA) {
   my $prefix = prepare_data("test",[$TEST]);
-  $TEST{source} = "$DATA_DIRS{test}/$NAME/$prefix.$SOURCE";
-  $TEST{target} = "$DATA_DIRS{test}/$NAME/$prefix.$TARGET";
+  $TEST{source} = "$DATA_DIRS{test}/$prefix.$SOURCE";
+  $TEST{target} = "$DATA_DIRS{test}/$prefix.$TARGET";
   $PREPPED{TEST} = 1;
 }
 
 my $testrun = "test/$NAME";
 system("mkdir -p $testrun") unless -d $testrun;
 
+# filter the test grammar
+if ($TEST_GRAMMAR_FILE) {
+  # if a specific test grammar was specified, use that (no filtering)
+  $TEST_GRAMMAR = $TEST_GRAMMAR_FILE;
+} else {
+  # otherwise, use the main grammar, and filter it if requested
+  $TEST_GRAMMAR = $GRAMMAR_FILE;
+  
+  if ($DO_FILTER_TM) {
+	$TEST_GRAMMAR = "$DATA_DIRS{test}/grammar.filtered.gz";
+
+	$cachepipe->cmd("filter-test",
+					"$SCRIPTDIR/training/scat $GRAMMAR_FILE | java -Xmx2g -Dfile.encoding=utf8 -cp $JOSHUA/thrax/bin/thrax.jar edu.jhu.thrax.util.TestSetFilter -v $TEST{source} | $SCRIPTDIR/training/remove-unary-abstract.pl | gzip -9 > $TEST_GRAMMAR",
+					$GRAMMAR_FILE,
+					$TEST{source},
+					$TEST_GRAMMAR);
+  }
+}
+
+
 # this needs to be in a function since it is done all over the place
-my $file = $MERTFILES{decoder_command};
-open FROM, $file or die "can't find file '$file'";
+open FROM, $MERTFILES{decoder_command} or die "can't find file '$MERTFILES{decoder_command}'";
 open TO, ">$testrun/decoder_command";
 print TO "cat $TEST{source} | \$JOSHUA/joshua-decoder -m $JOSHUA_MEM -threads $NUM_THREADS -tm_file $TEST_GRAMMAR -glue_file $GLUE_GRAMMAR_FILE -default_non_terminal $OOV -mark_oovs true -c $testrun/joshua.config > $testrun/test.output.nbest 2> $testrun/joshua.log\n";
 close(TO);
 chmod(0755,"$testrun/decoder_command");
 
-$cachepipe->cmd("$NAME-test-decode-run",
+# copy over the config file
+system("cp $MERTFILES{'joshua.config'} $testrun/joshua.config");
+
+# decode
+$cachepipe->cmd("test-$NAME-decode-run",
 				"./$testrun/decoder_command",
 				"$testrun/decoder_command",
 				$TEST_GRAMMAR,
 				$GLUE_GRAMMAR_FILE,
 				"$testrun/test.output.nbest");
 
-$cachepipe->cmd("$NAME-test-remove-oov",
+$cachepipe->cmd("test-$NAME-remove-oov",
 				"cat $testrun/test.output.nbest | perl -pe 's/_OOV//g' > $testrun/test.output.nbest.noOOV",
 				"$testrun/test.output.nbest",
 				"$testrun/test.output.nbest.noOOV");
 
 if ($DO_MBR) {
-  $cachepipe->cmd("$NAME-test-onebest-parmbr", 
+  $cachepipe->cmd("test-$NAME-onebest-parmbr", 
 				  "cat $testrun/test.output.nbest.noOOV | java -Xmx1700m -cp $JOSHUA/bin -Dfile.encoding=utf8 joshua.decoder.NbestMinRiskReranker false 1 > $testrun/test.output.1best",
 				  "$testrun/test.output.nbest.noOOV", 
 				  "$testrun/test.output.1best");
 } else {
-  $cachepipe->cmd("$NAME-test-extract-onebest",
+  $cachepipe->cmd("test-$NAME-extract-onebest",
 				  "java -Xmx500m -cp $JOSHUA/bin -Dfile.encoding=utf8 joshua.util.ExtractTopCand $testrun/test.output.nbest $testrun/test.output.1best",
 				  "$testrun/test.output.nbest.noOOV", 
 				  "$testrun/test.output.1best");
@@ -1040,11 +1060,6 @@ sub prepare_data {
 
   system("mkdir -p $DATA_DIR") unless -d $DATA_DIR;
   system("mkdir -p $DATA_DIRS{$label}") unless -d $DATA_DIRS{$label};
-
-  my $datadir = $DATA_DIRS{$label};
-  if (defined $NAME) {
-	$datadir .= "/$NAME";
-  }
 
   # copy the data from its original location to our location
   foreach my $ext ($TARGET,$SOURCE,"$TARGET.0","$TARGET.1","$TARGET.2","$TARGET.3") {
