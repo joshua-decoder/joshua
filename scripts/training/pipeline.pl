@@ -714,7 +714,7 @@ if (-e $LMFILTER and $DO_FILTER_LM and exists $TRAIN{target}) {
   $LMFILE = "lm-filtered.gz";
 }
 
-mkdir("tune") unless -d "tune";
+system("mkdir -p $DATA_DIRS{tune}") unless -d $DATA_DIRS{tune};
 
 # figure out how many references there are
 my $numrefs = get_numrefs($TUNE{target});
@@ -754,24 +754,21 @@ if ($DO_FILTER_TM and ! defined $TUNE_GRAMMAR_FILE) {
 				  $TUNE_GRAMMAR);
 }
 
-# copy the thrax config file if it's not already there
+# create the glue grammars
 if (! defined $GLUE_GRAMMAR_FILE) {
-  system("grep -v input-file $THRAX_CONF_FILE > thrax-$GRAMMAR_TYPE.conf")
-	  unless -e "thrax-$GRAMMAR_TYPE.conf";
   $cachepipe->cmd("glue-tune",
-				  "$SCRIPTDIR/training/scat $TUNE_GRAMMAR | java -Xmx2g -cp $JOSHUA/thrax/bin/thrax.jar:$JOSHUA/lib/hadoop-core-0.20.203.0.jar:$JOSHUA/lib/commons-logging-1.1.1.jar edu.jhu.thrax.util.CreateGlueGrammar thrax-$GRAMMAR_TYPE.conf > $DATA_DIRS{tune}/grammar.glue",
+				  "$SCRIPTDIR/training/scat $TUNE_GRAMMAR | java -Xmx2g -cp $JOSHUA/thrax/bin/thrax.jar:$JOSHUA/lib/hadoop-core-0.20.203.0.jar:$JOSHUA/lib/commons-logging-1.1.1.jar edu.jhu.thrax.util.CreateGlueGrammar $THRAX_CONF_FILE > $DATA_DIRS{tune}/grammar.glue",
 				  $TUNE_GRAMMAR,
 				  "$DATA_DIRS{tune}/grammar.glue");
   $GLUE_GRAMMAR_FILE = "$DATA_DIRS{tune}/grammar.glue";
 } else {
-  $cachepipe->cmd("glue-tune-copy",
-				  "cp $GLUE_GRAMMAR_FILE $DATA_DIRS{tune}/grammar.glue",
-				  $GLUE_GRAMMAR_FILE,
-				  "$DATA_DIRS{tune}/grammar.glue");
+  # just create a symlink to it
+  my $filename = $DATA_DIRS{tune} . "/" . basename($GLUE_GRAMMAR_FILE);
+  system("ln -sf $GLUE_GRAMMAR_FILE $filename");
 }
 
 for my $run (1..$OPTIMIZER_RUNS) {
-  my $mertdir = "mert/$run";
+  my $mertdir = (defined $NAME) ? "mert/$NAME/$run" : "mert/$run";
   system("mkdir -p $mertdir") unless -d $mertdir;
 
   foreach my $key (keys %MERTFILES) {
@@ -847,9 +844,28 @@ if ($TEST_GRAMMAR_FILE) {
   }
 }
 
+# create the glue file
+if (! defined $GLUE_GRAMMAR_FILE) {
+  $cachepipe->cmd("glue-test",
+				  "$SCRIPTDIR/training/scat $TEST_GRAMMAR | java -Xmx1g -cp $JOSHUA/thrax/bin/thrax.jar:$JOSHUA/lib/hadoop-core-0.20.203.0.jar:$JOSHUA/lib/commons-logging-1.1.1.jar edu.jhu.thrax.util.CreateGlueGrammar $THRAX_CONF_FILE > $DATA_DIRS{test}/grammar.glue",
+				  $TEST_GRAMMAR,
+				  "$DATA_DIRS{test}/grammar.glue");
+  $GLUE_GRAMMAR_FILE = "$DATA_DIRS{test}/grammar.glue";
+
+} else {
+  # just create a symlink to it
+  my $filename = $DATA_DIRS{test} . "/" . basename($GLUE_GRAMMAR_FILE);
+
+  if ($GLUE_GRAMMAR_FILE =~ /^\//) {
+	system("ln -sf $GLUE_GRAMMAR_FILE $filename"); 
+  } else {
+	system("ln -sf ../../$GLUE_GRAMMAR_FILE $filename"); 
+  }
+}
+
 # decode the test set once for each optimization run
 for my $run (1..$OPTIMIZER_RUNS) {
-  my $testrun = "test/$run";
+  my $testrun = (defined $NAME) ? "test/$NAME/$run" : "test/$run";
   
   system("mkdir -p $testrun") unless -d $testrun;
 
@@ -885,7 +901,7 @@ for my $run (1..$OPTIMIZER_RUNS) {
   chmod(0755,"$testrun/decoder_command");
 
   # copy the config file over
-  my $mertdir = "mert/$run";
+  my $mertdir = (defined $NAME) ? "mert/$NAME/$run" : "mert/$run";
   $cachepipe->cmd("test-joshua-config-from-mert-$run",
 				  "cat $mertdir/joshua.config.ZMERT.final | perl -pe 's#tune/#test/#; s/mark_oovs=false/mark_oovs=true/; s/use_sent_specific_tm=.*/use_sent_specific_tm=0/; s/keep_sent_specific_tm=true/keep_sent_specific_tm=false/' > $testrun/joshua.config",
 				  "$mertdir/joshua.config.ZMERT.final",
@@ -930,7 +946,8 @@ for my $run (1..$OPTIMIZER_RUNS) {
 # Now average the runs, report BLEU
 my @bleus;
 my $numrecs = 0;
-open CMD, "grep ' BLEU = ' test/*/*bleu |";
+my $dir = (defined $NAME) ? "test/$NAME" : "test";
+open CMD, "grep ' BLEU = ' $dir/*/*bleu |";
 while (<CMD>) {
   my @F = split;
   push(@bleus, $F[-1]);
@@ -938,11 +955,11 @@ while (<CMD>) {
 close(CMD);
 my $final_bleu = sum(@bleus) / (scalar @bleus);
 
-open BLEU, ">test/final-bleu" or die "Can't write to test/final-bleu";
+open BLEU, ">$dir/final-bleu" or die "Can't write to $dir/final-bleu";
 printf(BLEU "%s / %d = %.4f\n", join(" + ", @bleus), scalar @bleus, $final_bleu);
 close(BLEU);
 
-system("cat test/final-bleu");
+system("cat $dir/final-bleu");
 exit;
 
 
