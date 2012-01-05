@@ -825,6 +825,7 @@ if (! $PREPPED{TEST} and $DO_PREPARE_CORPORA) {
 }
 
 # filter the test grammar
+system("mkdir -p $DATA_DIRS{test}") unless -d $DATA_DIRS{test};
 my $TEST_GRAMMAR;
 if ($TEST_GRAMMAR_FILE) {
   # if a specific test grammar was specified, use that (no filtering)
@@ -967,6 +968,8 @@ exit;
 # data sets
 
 TEST:
+
+system("mkdir -p $DATA_DIRS{test}") unless -d $DATA_DIRS{test};
 
 if (! defined $NAME) {
   print "* FATAL: for direct tests, you must specify a unique run name\n";
