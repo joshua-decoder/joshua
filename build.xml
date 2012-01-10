@@ -157,6 +157,21 @@
 		</jar>
 	</target>
 	
+	<target name="tree_visualizer" depends="compile,set-joshua-home">
+		<jar destfile="tree_visualizer/tree_visualizer.jar" index="true">
+		        <zipgroupfileset dir="lib" includes="*.jar"/>
+			<fileset dir="${build}">
+				<include name="**/*.class"/>
+			</fileset>
+			<indexjars>
+			  <fileset dir="${lib}"/>
+			</indexjars>
+			<manifest>
+			  <attribute name="Class-Path" value="tree_visualizer.jar"/>
+			  <attribute name="Main-Class" value="joshua.ui.tree_visualizer.browser.Browser"/>
+			</manifest>
+		</jar>
+	</target>
 	
 	<!-- Create a JAR file of the source code -->
 	<target name="source-jar">
@@ -214,6 +229,12 @@
 		</delete>
 		
 		<delete verbose="true" quiet="true" file="joshua-fb.xml" />
+
+		<delete verbose="true" quiet="true" includeEmptyDirs="true">
+			<fileset dir="tree_visualizer">
+				<include name="tree_visualizer.jar"/>
+			</fileset>
+		</delete>
 	</target>
 	
 	
