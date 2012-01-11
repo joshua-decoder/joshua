@@ -467,10 +467,12 @@ if (! defined $ALIGNMENT) {
 	system("mkdir","-p", $chunkdir);
 	  
 	if ($ALIGNER eq "giza") {
+	  # if we have more than one thread to work with, parallelize GIZA
+	  my $do_parallel = ($NUM_THREADS > 1) ? "-parallel" : "";
 
 	  # run the alignments commands
 	  $cachepipe->cmd("giza-$chunkno",
-					  "rm -f $chunkdir/corpus.0-0.*; $MOSES_TRAINER -root-dir $chunkdir -e $TARGET.$chunkno -f $SOURCE.$chunkno -corpus $DATA_DIRS{train}/splits/corpus -first-step 1 -last-step 3 > $chunkdir/giza.log 2>&1",
+					  "rm -f $chunkdir/corpus.0-0.*; $MOSES_TRAINER -root-dir $chunkdir -e $TARGET.$chunkno -f $SOURCE.$chunkno -corpus $DATA_DIRS{train}/splits/corpus -first-step 1 -last-step 3 $do_parallel > $chunkdir/giza.log 2>&1",
 					  "$DATA_DIRS{train}/splits/corpus.$SOURCE.$chunkno",
 					  "$DATA_DIRS{train}/splits/corpus.$TARGET.$chunkno",
 					  "$chunkdir/model/aligned.grow-diag-final");
