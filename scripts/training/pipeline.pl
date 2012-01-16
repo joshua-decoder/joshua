@@ -79,6 +79,8 @@ my $HADOOP_MEM = "2g";
 my $JOSHUA_MEM = "3100m";
 my $ALIGNER_MEM = "10g";
 my $QSUB_ARGS  = "-l num_proc=2";
+
+# align corpus files a million lines at a time
 my $ALIGNER_BLOCKSIZE = 1000000;
 my $NUM_JOBS = 1;
 my $NUM_THREADS = 1;
@@ -620,22 +622,27 @@ if (! defined $GRAMMAR_FILE) {
 	start_hadoop_cluster() unless defined $HADOOP;
 
 	# put the hadoop files in place
-	my $THRAXDIR = "pipeline-$SOURCE-$TARGET-$GRAMMAR_TYPE-$RUNDIR";
-	$THRAXDIR =~ s#/#_#g;
+	my $THRAXDIR;
+	if ($HADOOP eq "hadoop") {
+	  $THRAXDIR = "thrax";
+	} else {
+	  $THRAXDIR = "pipeline-$SOURCE-$TARGET-$GRAMMAR_TYPE-$RUNDIR";
+	  $THRAXDIR =~ s#/#_#g;
 
-	$cachepipe->cmd("thrax-prep",
-					"$HADOOP/bin/hadoop fs -rmr $THRAXDIR; $HADOOP/bin/hadoop fs -mkdir $THRAXDIR; $HADOOP/bin/hadoop fs -put $DATA_DIRS{train}/thrax-input-file $THRAXDIR/input-file",
-					"$DATA_DIRS{train}/thrax-input-file", 
-					"grammar.gz");
+	  $cachepipe->cmd("thrax-prep",
+					  "$HADOOP/bin/hadoop fs -rmr $THRAXDIR; $HADOOP/bin/hadoop fs -mkdir $THRAXDIR; $HADOOP/bin/hadoop fs -put $DATA_DIRS{train}/thrax-input-file $THRAXDIR/input-file",
+					  "$DATA_DIRS{train}/thrax-input-file", 
+					  "grammar.gz");
+	}
 
 	# copy the thrax config file
 	my $thrax_file = "thrax-$GRAMMAR_TYPE.conf";
 	system("grep -v ^input-file $THRAX_CONF_FILE > $thrax_file.tmp");
-	system("echo input-file $THRAXDIR/input-file >> $thrax_file.tmp");
+	system("echo input-file $DATA_DIRS{train}/thrax-input-file >> $thrax_file.tmp");
 	system("mv $thrax_file.tmp $thrax_file");
 
 	$cachepipe->cmd("thrax-run",
-					"$HADOOP/bin/hadoop jar $JOSHUA/thrax/bin/thrax.jar -D mapred.child.java.opts='-Xmx$HADOOP_MEM' $thrax_file $THRAXDIR > thrax.log 2>&1; rm -f grammar grammar.gz; $HADOOP/bin/hadoop fs -getmerge $THRAXDIR/final/ grammar; gzip -9f grammar",
+					"$HADOOP/bin/hadoop jar $JOSHUA/thrax/bin/thrax.jar $thrax_file $THRAXDIR > thrax.log 2>&1; rm -f grammar grammar.gz; $HADOOP/bin/hadoop fs -getmerge $THRAXDIR/final/ grammar; gzip -9f grammar",
 					"$DATA_DIRS{train}/thrax-input-file",
 					$thrax_file,
 					"grammar.gz");
@@ -643,7 +650,15 @@ if (! defined $GRAMMAR_FILE) {
 	stop_hadoop_cluster() if $HADOOP eq "hadoop";
 
 	# cache the thrax-prep step, which depends on grammar.gz
-	$cachepipe->cmd("thrax-prep", "--cache-only");
+	if ($HADOOP ne "hadoop") {
+	  $cachepipe->cmd("thrax-prep", "--cache-only");
+	}
+
+	# clean up
+	# TODO: clean up real hadoop clusters too
+	if ($HADOOP eq "hadoop") {
+	  system("rm -rf $THRAXDIR hadoop hadoop-0.20.2");
+	}
   }
 
   # set the grammar file
@@ -1189,58 +1204,19 @@ sub start_hadoop_cluster {
   rollout_hadoop_cluster();
 
   # start the cluster
-  system("./hadoop/bin/start-all.sh");
-  sleep(120);
+  # system("./hadoop/bin/start-all.sh");
+  # sleep(120);
 }
 
 sub rollout_hadoop_cluster {
   # if it's not already unpacked, unpack it
   if (! -d "hadoop") {
 
-	system("tar xzf $JOSHUA/lib/hadoop-0.20.203.0rc1.tar.gz");
-	system("ln -sf hadoop-0.20.203.0 hadoop");
-
-	chomp(my $hostname = `hostname -f`);
-
-	# copy configuration files
-	foreach my $file (qw/core-site.xml mapred-site.xml hdfs-site.xml/) {
-	  open READ, "$JOSHUA/scripts/training/templates/hadoop/$file" or die $file;
-	  open WRITE, ">", "hadoop/conf/$file" or die "write $file";
-	  while (<READ>) {
-		s/<HADOOP-TMP-DIR>/$RUNDIR\/hadoop\/tmp/g;
-		s/<HOST>/$hostname/g;
-		s/<PORT1>/9000/g;
-		s/<PORT2>/9001/g;
-		s/<MAX-MAP-TASKS>/2/g;
-		s/<MAX-REDUCE-TASKS>/2/g;
-
-		print WRITE;
-	  }
-	  close WRITE;
-	  close READ;
-	}
-
-	system("echo $hostname > hadoop/conf/masters");
-	system("echo $hostname > hadoop/conf/slaves");
-
-  } else {
-	# if it exists, shut things down, just in case
-	system("./hadoop/bin/stop-all.sh");
+	system("tar xzf $JOSHUA/lib/hadoop-0.20.2.tar.gz");
+	system("ln -sf hadoop-0.20.2 hadoop");
 
   }
   
-  # make sure hadoop isn't running already
-  my $running = `ps ax | grep hadoop | grep -v grep`;
-  if ($running) {
-	print "* WARNING: it looks like some Hadoop processes are already running\n";
-	$running =~ s/^/\t/gm;
-	print $running;
-  }
-
-  # format the name node
-  system("./hadoop/bin/hadoop namenode -format");
-  sleep(120);
-
   $ENV{HADOOP} = $HADOOP = "hadoop";
 }
 
