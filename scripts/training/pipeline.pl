@@ -23,9 +23,10 @@ BEGIN {
   if (! exists $ENV{JOSHUA} || $ENV{JOSHUA} eq "") {
 	print "* FATAL: environment variable $JOSHUA must be set to the\n";
 	print "  root of the JOSHUA source code.\n";
-	$JOSHUA = $ENV{JOSHUA};
-	unshift(@INC,"$JOSHUA/scripts/training/cachepipe");
+	exit;
   }
+  $JOSHUA = $ENV{JOSHUA};
+  unshift(@INC,"$JOSHUA/scripts/training/cachepipe");
 }
 
 use strict;
