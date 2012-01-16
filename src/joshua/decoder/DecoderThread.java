@@ -184,11 +184,13 @@ public class DecoderThread extends Thread {
      */
 	public void translateAll() throws IOException {
 
-        while (inputHandler.hasNext()) {
+        for (;;) {
 
             long startTime = System.currentTimeMillis();			
 
             Sentence sentence = inputHandler.next();
+            if (sentence == null)
+                break;
 
             // System.out.println("[" + sentence.id() + "] " + sentence.sentence());
             HyperGraph hypergraph = translate(sentence, null);

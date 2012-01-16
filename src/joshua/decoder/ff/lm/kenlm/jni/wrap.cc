@@ -7,6 +7,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <jni.h>
+#include <pthread.h>
 
 // Grr.  Everybody's compiler is slightly different and I'm trying to not depend on boost.   
 #include <ext/hash_map>
@@ -51,14 +52,19 @@ char *PieceCopy(const StringPiece &str) {
   return ret;
 }
 
-
-
 // The normal kenlm vocab isn't growable (words can't be added to it).  However, Joshua requires this.  So I wrote this.  Not the most efficient thing in the world.  
-class GrowableVocab : public lm::ngram::EnumerateVocab {
+class GrowableVocab : public lm::EnumerateVocab {
   public:
+    GrowableVocab() {
+      UTIL_THROW_IF(pthread_rwlock_init(&lock_, NULL), util::ErrnoException, "Failed to initialize phtread lock.");
+    }
+
     ~GrowableVocab() {
       for (std::vector<char *>::const_iterator i = id_to_string_.begin(); i != id_to_string_.end(); ++i) {
         free(*i);
+      }
+      if (pthread_rwlock_destroy(&lock_)) {
+        std::cerr << "Failed to destroy pthread lock." << std::endl;
       }
     }
 
@@ -78,25 +84,62 @@ class GrowableVocab : public lm::ngram::EnumerateVocab {
       id_to_string_[index] = PieceCopy(str);
     }
 
+    // For Java API.  
     lm::WordIndex FindOrAdd(const StringPiece &str) {
       std::pair<uint64_t, lm::WordIndex> to_ins;
       to_ins.first = util::MurmurHashNative(str.data(), str.size());
       to_ins.second = id_to_string_.size();
+      ReadLockOrDie();
+      const __gnu_cxx::hash_map<uint64_t, lm::WordIndex> &force_const = string_to_id_;
+      __gnu_cxx::hash_map<uint64_t, lm::WordIndex>::const_iterator i = force_const.find(to_ins.first);
+      if (i != force_const.end()) {
+        UnlockOrDie();
+        return i->second;
+      }
+      UnlockOrDie();
+      WriteLockOrDie();
       std::pair<__gnu_cxx::hash_map<uint64_t, lm::WordIndex>::iterator, bool> ret(string_to_id_.insert(to_ins));
       // Found?
-      if (!ret.second) return ret.first->second;
+      if (!ret.second) { UnlockOrDie(); return ret.first->second; }
       id_to_string_.push_back(PieceCopy(str));
+      UnlockOrDie();
       return to_ins.second;
     }
 
     const char *Word(lm::WordIndex index) const {
+      ReadLockOrDie();
       assert(index < in_to_string_.size());
-      return id_to_string_[index];
+      const char *ret = id_to_string_[index];
+      UnlockOrDie();
+      return ret;
     }
 
   private:
+    // I really wish I had boost threads.  
+    void ReadLockOrDie() const {
+      if (pthread_rwlock_rdlock(&lock_)) {
+        std::cerr << "Failed to pthread read lock." << std::endl;
+        abort();
+      }
+    }
+    void WriteLockOrDie() const {
+      if (pthread_rwlock_wrlock(&lock_)) {
+        std::cerr << "Failed to pthread write lock." << std::endl;
+        abort();
+      }
+    }
+ 
+    void UnlockOrDie() const {
+      if (pthread_rwlock_unlock(&lock_)) {
+        std::cerr << "Failed to pthread unlock." << std::endl;
+        abort();
+      }
+    }
+
     __gnu_cxx::hash_map<uint64_t, lm::WordIndex> string_to_id_;
     std::vector<char *> id_to_string_;
+
+    mutable pthread_rwlock_t lock_;
 };
 
 /* Rather than handle several different instantiations over JNI, we'll just do virtual calls C++-side. */

@@ -127,7 +127,7 @@ public class Translation {
             for (FeatureFunction ff: featureFunctions)
                 System.out.print(" 0");
 
-            System.out.println(" ||| 0.0\n");
+            System.out.println(" ||| 0.0");
 
         }
 
