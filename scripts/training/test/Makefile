@@ -6,5 +6,5 @@ test:
 	./test.sh
 
 clean:
-	@rm -rf lm.gz alignments hadoop* thrax* grammar.gz tune mert test grammar.gz
+	@rm -rf lm.gz alignments hadoop* thrax* grammar.gz tune mert test train grammar.gz
 
