@@ -20,8 +20,12 @@
 my $JOSHUA;
 
 BEGIN {
-  $JOSHUA = $ENV{JOSHUA} or not_defined("JOSHUA");
-  unshift(@INC,"$ENV{JOSHUA}/scripts/training/cachepipe");
+  if (! exists $ENV{JOSHUA} || $ENV{JOSHUA} eq "") {
+	print "* FATAL: environment variable $JOSHUA must be set to the\n";
+	print "  root of the JOSHUA source code.\n";
+	$JOSHUA = $ENV{JOSHUA};
+	unshift(@INC,"$JOSHUA/scripts/training/cachepipe");
+  }
 }
 
 use strict;
@@ -1221,7 +1225,9 @@ sub rollout_hadoop_cluster {
 }
 
 sub stop_hadoop_cluster {
-  system("hadoop/bin/stop-all.sh");
+  if ($HADOOP ne "hadoop") {
+	system("hadoop/bin/stop-all.sh");
+  }
 }
 
 sub teardown_hadoop_cluster {
