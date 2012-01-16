@@ -91,6 +91,9 @@ my $NUM_JOBS = 1;
 my $NUM_THREADS = 1;
 my $OMIT_CMD = 0;
 
+# which LM to use (kenlm or berkeleylm)
+my $LM_TYPE = "kenlm";
+
 # whether to tokenize and lowercase training, tuning, and test data
 my $DO_PREPARE_CORPORA = 1;
 
@@ -117,6 +120,7 @@ my $retval = GetOptions(
   "rundir=s" 	 	  => \$RUNDIR,
   "filter-tm!"        => \$DO_FILTER_TM,
   "filter-lm!"        => \$DO_FILTER_LM,
+  "lm=s"              => \$LM_TYPE,
   "lmfile=s" 	 	  => \$LMFILE,
   "witten-bell!" 	  => \$WITTEN_BELL,
   "tune-grammar=s"    => \$TUNE_GRAMMAR_FILE,
@@ -261,6 +265,11 @@ foreach my $corpus (@CORPORA) {
 
 if ($ALIGNER ne "giza" and $ALIGNER ne "berkeley") {
   print "* FATAL: aligner must be one of 'giza' or 'berkeley'\n";
+  exit 1;
+}
+
+if ($LM_TYPE ne "kenlm" and $LM_TYPE ne "berkeleylm") {
+  print "* FATAL: lm type (--lm) must be one of 'kenlm' or 'berkeleylm'\n";
   exit 1;
 }
 
@@ -803,6 +812,7 @@ for my $run (1..$OPTIMIZER_RUNS) {
 	  s/<RUNDIR>/$RUNDIR/g;
 	  s/<TARGET>/$TARGET/g;
 	  s/<LMFILE>/$LMFILE/g;
+	  s/<LMTYPE>/$LM_TYPE/g;
 	  s/<MEM>/$JOSHUA_MEM/g;
 	  s/<GRAMMAR_TYPE>/$GRAMMAR_TYPE/g;
 	  s/<GRAMMAR_FILE>/$TUNE_GRAMMAR/g;
