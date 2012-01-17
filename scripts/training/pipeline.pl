@@ -55,7 +55,7 @@ my $SCRIPTDIR = "$JOSHUA/scripts";
 my $TOKENIZER = "$SCRIPTDIR/training/penn-treebank-tokenizer.perl";
 my $MOSES_TRAINER = "$MOSES_SCRIPTS/training/train-model.perl";
 my $MERTCONFDIR = "$JOSHUA/scripts/training/templates/mert";
-my $SRILM = "$ENV{SRILM}/bin/i686-m64/ngram-count";
+my $SRILM = ($ENV{SRILM}||"")."/bin/i686-m64/ngram-count";
 my $STARTDIR;
 my $RUNDIR = $STARTDIR = getcwd;
 my $GRAMMAR_TYPE = "hiero";
@@ -85,10 +85,19 @@ my $JOSHUA_MEM = "3100m";
 my $ALIGNER_MEM = "10g";
 my $QSUB_ARGS  = "-l num_proc=2";
 
-# align corpus files a million lines at a time
+# Align corpus files a million lines at a time.
 my $ALIGNER_BLOCKSIZE = 1000000;
+
+# The number of machines to decode on.  If you set this higher than 1,
+# you need to have qsub configured for your environment.
 my $NUM_JOBS = 1;
+
+# The number of threads to use at different pieces in the pipeline
+# (giza, decoding)
 my $NUM_THREADS = 1;
+
+# Cachepipe can include the actual command typed in its signature.
+# We disable this for development because it triggers too many reruns.
 my $OMIT_CMD = 0;
 
 # which LM to use (kenlm or berkeleylm)
@@ -652,7 +661,7 @@ if (! defined $GRAMMAR_FILE) {
 	system("mv $thrax_file.tmp $thrax_file");
 
 	$cachepipe->cmd("thrax-run",
-					"$HADOOP/bin/hadoop jar $JOSHUA/thrax/bin/thrax.jar $thrax_file $THRAXDIR > thrax.log 2>&1; rm -f grammar grammar.gz; $HADOOP/bin/hadoop fs -getmerge $THRAXDIR/final/ grammar; gzip -9f grammar",
+					"$HADOOP/bin/hadoop jar $JOSHUA/thrax/bin/thrax.jar $thrax_file $THRAXDIR > thrax.log 2>&1; rm -f grammar grammar.gz; $HADOOP/bin/hadoop fs -getmerge $THRAXDIR/final/ grammar; gzip -9nf grammar",
 					"$DATA_DIRS{train}/thrax-input-file",
 					$thrax_file,
 					"grammar.gz");
@@ -736,7 +745,7 @@ if (! defined $LMFILE) {
 if (-e $LMFILTER and $DO_FILTER_LM and exists $TRAIN{target}) {
   
   $cachepipe->cmd("filter-lmfile",
-				  "cat $TRAIN{target} | $LMFILTER union arpa model:$LMFILE lm-filtered; gzip -9f lm-filtered",
+				  "cat $TRAIN{target} | $LMFILTER union arpa model:$LMFILE lm-filtered; gzip -9nf lm-filtered",
 				  $LMFILE, "lm-filtered.gz");
   $LMFILE = "lm-filtered.gz";
 }
@@ -775,7 +784,7 @@ if ($DO_FILTER_TM and ! defined $TUNE_GRAMMAR_FILE) {
   $TUNE_GRAMMAR = "$DATA_DIRS{tune}/grammar.filtered.gz";
 
   $cachepipe->cmd("filter-tune",
-				  "$SCRIPTDIR/training/scat $GRAMMAR_FILE | java -Xmx2g -Dfile.encoding=utf8 -cp $JOSHUA/thrax/bin/thrax.jar edu.jhu.thrax.util.TestSetFilter -v $TUNE{source} | $SCRIPTDIR/training/remove-unary-abstract.pl | gzip -9 > $TUNE_GRAMMAR",
+				  "$SCRIPTDIR/training/scat $GRAMMAR_FILE | java -Xmx2g -Dfile.encoding=utf8 -cp $JOSHUA/thrax/bin/thrax.jar edu.jhu.thrax.util.TestSetFilter -v $TUNE{source} | $SCRIPTDIR/training/remove-unary-abstract.pl | gzip -9n > $TUNE_GRAMMAR",
 				  $GRAMMAR_FILE,
 				  $TUNE{source},
 				  $TUNE_GRAMMAR);
@@ -866,7 +875,7 @@ if ($TEST_GRAMMAR_FILE) {
 	$TEST_GRAMMAR = "$DATA_DIRS{test}/grammar.filtered.gz";
 
 	$cachepipe->cmd("filter-test",
-					"$SCRIPTDIR/training/scat $GRAMMAR_FILE | java -Xmx2g -Dfile.encoding=utf8 -cp $JOSHUA/thrax/bin/thrax.jar edu.jhu.thrax.util.TestSetFilter -v $TEST{source} | $SCRIPTDIR/training/remove-unary-abstract.pl | gzip -9 > $TEST_GRAMMAR",
+					"$SCRIPTDIR/training/scat $GRAMMAR_FILE | java -Xmx2g -Dfile.encoding=utf8 -cp $JOSHUA/thrax/bin/thrax.jar edu.jhu.thrax.util.TestSetFilter -v $TEST{source} | $SCRIPTDIR/training/remove-unary-abstract.pl | gzip -9n > $TEST_GRAMMAR",
 					$GRAMMAR_FILE,
 					$TEST{source},
 					$TEST_GRAMMAR);
@@ -1041,7 +1050,7 @@ if ($TEST_GRAMMAR_FILE) {
 	$TEST_GRAMMAR = "$DATA_DIRS{test}/grammar.filtered.gz";
 
 	$cachepipe->cmd("filter-test",
-					"$SCRIPTDIR/training/scat $GRAMMAR_FILE | java -Xmx2g -Dfile.encoding=utf8 -cp $JOSHUA/thrax/bin/thrax.jar edu.jhu.thrax.util.TestSetFilter -v $TEST{source} | $SCRIPTDIR/training/remove-unary-abstract.pl | gzip -9 > $TEST_GRAMMAR",
+					"$SCRIPTDIR/training/scat $GRAMMAR_FILE | java -Xmx2g -Dfile.encoding=utf8 -cp $JOSHUA/thrax/bin/thrax.jar edu.jhu.thrax.util.TestSetFilter -v $TEST{source} | $SCRIPTDIR/training/remove-unary-abstract.pl | gzip -9n > $TEST_GRAMMAR",
 					$GRAMMAR_FILE,
 					$TEST{source},
 					$TEST_GRAMMAR);
@@ -1117,7 +1126,7 @@ sub prepare_data {
 	my $files = join(" ",@files);
 	if (-e $files[0]) {
 	  $cachepipe->cmd("$label-copy-$ext",
-					  "cat $files | gzip -9 > $DATA_DIRS{$label}/$label.$ext.gz",
+					  "cat $files | gzip -9n > $DATA_DIRS{$label}/$label.$ext.gz",
 					  @files, "$DATA_DIRS{$label}/$label.$ext.gz");
 	}
   }
@@ -1128,7 +1137,7 @@ sub prepare_data {
   foreach my $lang ($TARGET,$SOURCE,"$TARGET.0","$TARGET.1","$TARGET.2","$TARGET.3") {
 	if (-e "$DATA_DIRS{$label}/$prefix.$lang.gz") {
 	  $cachepipe->cmd("$label-tokenize-$lang",
-					  "$SCRIPTDIR/training/scat $DATA_DIRS{$label}/$prefix.$lang.gz | $TOKENIZER -l $lang 2> /dev/null | gzip -9 > $DATA_DIRS{$label}/$prefix.tok.$lang.gz",
+					  "$SCRIPTDIR/training/scat $DATA_DIRS{$label}/$prefix.$lang.gz | $TOKENIZER -l $lang 2> /dev/null | gzip -9n > $DATA_DIRS{$label}/$prefix.tok.$lang.gz",
 					  "$DATA_DIRS{$label}/$prefix.$lang.gz", "$DATA_DIRS{$label}/$prefix.tok.$lang.gz"
 		  );
 	  # extend the prefix
