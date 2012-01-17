@@ -6,13 +6,7 @@
 
 rm -f test.nbest test.1best
 
-cat test.plf | java \
-	-classpath "../bin"          \
-	-Djava.library.path=../lib   \
-	-Xmx500m -Xms500m            \
-	-XX:MinHeapFreeRatio=10      \
-	joshua.decoder.JoshuaDecoder \
-	config.test > test.nbest
+cat test.plf | $JOSHUA/joshua-decoder -m 500m config.test > test.nbest
 
 exitCode=$?
 if [ $exitCode -ne 0 ]; then
@@ -21,11 +15,7 @@ if [ $exitCode -ne 0 ]; then
 fi
 
 
-java \
-	-classpath "../bin"        \
-	joshua.util.ExtractTopCand \
-	test.nbest             \
-	test.1best
+java -classpath $JOSHUA/bin joshua.util.ExtractTopCand test.nbest test.1best
 
 exitCode=$?
 if [ $exitCode -ne 0 ]; then
