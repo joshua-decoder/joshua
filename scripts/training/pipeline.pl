@@ -23,12 +23,16 @@ BEGIN {
   if (! exists $ENV{JOSHUA} || $ENV{JOSHUA} eq "" ||
       ! exists $ENV{SRILM} || $ENV{SRILM} eq "" ||
       ! exists $ENV{SCRIPTS_ROOTDIR} || $ENV{SCRIPTS_ROOTDIR} eq "" ||
-      ! exists $ENV{JAVA_HOME} || $ENV{JAVA_HOME} eq "" ||
+      ! exists $ENV{JAVA_HOME} || $ENV{JAVA_HOME} eq "") {
 	print "Several environment variables must be set before running the pipeline.  Please set:\n";
-	print "* $JOSHUA to the root of the Joshua source code.\n";
-	print "* $SRILM to the root of the SRILM installation.\n";
-	print "* $SCRIPTS_ROOTDIR to the mosesdecoder/scripts/scripts-2012... directory\n";
-	print "* $JAVA_HOME to the directory of your local java installation. \n";
+	print "* \$JOSHUA to the root of the Joshua source code.\n"
+		if (! exists $ENV{JOSHUA} || $ENV{JOSHUA} eq "");
+	print "* \$SRILM to the root of the SRILM installation.\n"
+		if (! exists $ENV{SRILM} || $ENV{SRILM} eq "");
+	print "* \$SCRIPTS_ROOTDIR to the mosesdecoder/scripts/scripts-2012... directory\n"
+		if (! exists $ENV{SCRIPTS_ROOTDIR} || $ENV{SCRIPTS_ROOTDIR} eq "");
+	print "* \$JAVA_HOME to the directory of your local java installation. \n"
+		if (! exists $ENV{JAVA_HOME} || $ENV{JAVA_HOME} eq "");
 	exit;
   }
   $JOSHUA = $ENV{JOSHUA};
