@@ -185,15 +185,6 @@ $SIG{INT} = sub {
 
 ## Sanity Checking ###################################################
 
-if (defined $ENV{HADOOP} and ! defined $HADOOP) {
-  print "* FATAL: \$HADOOP defined (suggesting an existing hadoop\n";
-  print "* FATAL: installation).  If you want to use this, pass the\n";
-  print "* FATAL: directory using the --hadoop flag; if you instead want to\n";
-  print "* FATAL: roll out a new cluster automatically, then unset \$HADOOP\n";
-  print "* FATAL: and re-run the script.\n";
-  exit;
-}
-
 # make sure source and target were specified
 if (! defined $SOURCE or $SOURCE eq "") {
   print "* FATAL: I need a source language extension (--source)\n";
@@ -228,6 +219,11 @@ if (! defined $TEST and ($STEPS{$FIRST_STEP} <= $STEPS{TEST}
 if (! defined $GRAMMAR_FILE and ! defined $TUNE_GRAMMAR_FILE and ($STEPS{$FIRST_STEP} >= $STEPS{MERT})) {
   print "* FATAL: need a grammar (--grammar) if you're skipping that step\n";
   exit 1;
+}
+
+# make sure SRILM is defined if we're building a language model
+if (! defined $LMFILE && $STEPS{$FIRST_STEP} <= $STEPS{MERT} && $STEPS{$LAST_STEP} >= $STEPS{MERT}) {
+  not_defined("SRILM") unless exists $ENV{SRILM};
 }
 
 # check for file presence
