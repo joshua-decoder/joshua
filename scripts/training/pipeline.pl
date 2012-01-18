@@ -21,16 +21,10 @@ my $JOSHUA;
 
 BEGIN {
   if (! exists $ENV{JOSHUA} || $ENV{JOSHUA} eq "" ||
-      ! exists $ENV{SRILM} || $ENV{SRILM} eq "" ||
-      ! exists $ENV{SCRIPTS_ROOTDIR} || $ENV{SCRIPTS_ROOTDIR} eq "" ||
       ! exists $ENV{JAVA_HOME} || $ENV{JAVA_HOME} eq "") {
 	print "Several environment variables must be set before running the pipeline.  Please set:\n";
 	print "* \$JOSHUA to the root of the Joshua source code.\n"
 		if (! exists $ENV{JOSHUA} || $ENV{JOSHUA} eq "");
-	print "* \$SRILM to the root of the SRILM installation.\n"
-		if (! exists $ENV{SRILM} || $ENV{SRILM} eq "");
-	print "* \$SCRIPTS_ROOTDIR to the mosesdecoder/scripts/scripts-2012... directory\n"
-		if (! exists $ENV{SCRIPTS_ROOTDIR} || $ENV{SCRIPTS_ROOTDIR} eq "");
 	print "* \$JAVA_HOME to the directory of your local java installation. \n"
 		if (! exists $ENV{JAVA_HOME} || $ENV{JAVA_HOME} eq "");
 	exit;
@@ -51,6 +45,7 @@ use CachePipe;
 
 my $HADOOP = undef;
 my $MOSES_SCRIPTS = $ENV{SCRIPTS_ROOTDIR} or not_defined("SCRIPTS_ROOTDIR");
+
 die not_defined("JAVA_HOME") unless exists $ENV{JAVA_HOME};
 
 my (@CORPORA,$TUNE,$TEST,$ALIGNMENT,$SOURCE,$TARGET,$LMFILE,$GRAMMAR_FILE,$GLUE_GRAMMAR_FILE,$TUNE_GRAMMAR_FILE,$TEST_GRAMMAR_FILE,$THRAX_CONF_FILE);
@@ -64,6 +59,7 @@ my $DO_SUBSAMPLE = 0;
 my $SCRIPTDIR = "$JOSHUA/scripts";
 my $TOKENIZER = "$SCRIPTDIR/training/penn-treebank-tokenizer.perl";
 my $MOSES_TRAINER = "$MOSES_SCRIPTS/training/train-model.perl";
+my $GIZA_TRAINER = "$JOSHUA/scripts/training/run-giza.pl";
 my $MERTCONFDIR = "$JOSHUA/scripts/training/templates/mert";
 my $SRILM = ($ENV{SRILM}||"")."/bin/i686-m64/ngram-count";
 my $STARTDIR;
@@ -119,8 +115,8 @@ my $DO_PREPARE_CORPORA = 1;
 # how many optimizer runs to perform
 my $OPTIMIZER_RUNS = 1;
 
-# what to use to create language models ("berkeley" or "srilm")
-my $LM_GEN = "srilm";
+# what to use to create language models ("berkeleylm" or "srilm")
+my $LM_GEN = "berkeleylm";
 
 my @STEPS = qw[FIRST SUBSAMPLE ALIGN PARSE THRAX MERT TEST LAST];
 my %STEPS = map { $STEPS[$_] => $_ + 1 } (0..$#STEPS);
@@ -245,8 +241,8 @@ if (! defined $GRAMMAR_FILE and ! defined $TUNE_GRAMMAR_FILE and ($STEPS{$FIRST_
 }
 
 # make sure SRILM is defined if we're building a language model
-if (! defined $LMFILE && $STEPS{$FIRST_STEP} <= $STEPS{MERT} && $STEPS{$LAST_STEP} >= $STEPS{MERT}) {
-  not_defined("SRILM") unless exists $ENV{SRILM};
+if (! defined $LMFILE && $STEPS{$FIRST_STEP} <= $STEPS{MERT} && $STEPS{$LAST_STEP} >= $STEPS{MERT} && $LM_GEN eq "srilm") {
+  not_defined("SRILM") unless exists $ENV{SRILM} and -d $ENV{SRILM};
 }
 
 # check for file presence
@@ -292,8 +288,8 @@ if ($LM_TYPE ne "kenlm" and $LM_TYPE ne "berkeleylm") {
   exit 1;
 }
 
-if ($LM_GEN ne "berkeley" and $LM_GEN ne "srilm") {
-  print "* FATAL: lm generating code (--lm-gen) must be one of 'berkeleylm' or 'srilm'\n";
+if ($LM_GEN ne "berkeleylm" and $LM_GEN ne "srilm") {
+  print "* FATAL: lm generating code (--lm-gen) must be one of 'berkeleylm' (default) or 'srilm'\n";
   exit 1;
 }
 
@@ -516,6 +512,13 @@ if (! defined $ALIGNMENT) {
 					  "$DATA_DIRS{train}/splits/corpus.$SOURCE.$chunkno",
 					  "$DATA_DIRS{train}/splits/corpus.$TARGET.$chunkno",
 					  "$chunkdir/model/aligned.grow-diag-final");
+
+	  # $cachepipe->cmd("giza-$chunkno",
+	  # 				  "rm -f $chunkdir/corpus.0-0.*; $GIZA_TRAINER --root-dir $chunkdir -e $TARGET.$chunkno -f $SOURCE.$chunkno -corpus $DATA_DIRS{train}/splits/corpus $do_parallel > $chunkdir/giza.log 2>&1",
+	  # 				  "$DATA_DIRS{train}/splits/corpus.$SOURCE.$chunkno",
+	  # 				  "$DATA_DIRS{train}/splits/corpus.$TARGET.$chunkno",
+	  # 				  "$chunkdir/model/aligned.grow-diag-final");
+
 
 	} elsif ($ALIGNER eq "berkeley") {
 
@@ -754,16 +757,6 @@ if (! defined $LMFILE) {
 	print STDERR "* FATAL: can't find lmfile '$LMFILE'\n";
 	exit(1);
   }
-
-   # by default, we do not copy the lmfile over
-#  my $lm_basedir = dirname($LMFILE);
-#  if ($lm_basedir ne "." and $lm_basedir ne $RUNDIR) {
-#	my $lmfile = basename($LMFILE);
-#	$cachepipe->cmd("cp-lmfile",
-#					"cp $LMFILE $lmfile",
-#					$LMFILE, $lmfile);
-#	$LMFILE = $lmfile;
-#  }
 }
 
 # filter the tuning LM to the training side of the data (if possible)
