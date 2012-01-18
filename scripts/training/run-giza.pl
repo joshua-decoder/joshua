@@ -8,8 +8,8 @@ use Getopt::Long;
 
 my $JOSHUA = $ENV{JOSHUA};
 
-my $BZCAT = `$(which bzcat)`;
-my $ZCAT  = `$(which zcat)`;
+my $ZCAT = "gzip -cd";
+my $BZCAT = "bzcat";
 my $SYMAL = "$JOSHUA/scripts/training/symal/symal";
 my $GIZA2BAL = "$JOSHUA/scripts/training/symal/giza2bal.pl";
 
