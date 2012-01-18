@@ -44,7 +44,6 @@ use File::Temp qw/ :mktemp /;
 use CachePipe;
 
 my $HADOOP = undef;
-my $MOSES_SCRIPTS = $ENV{SCRIPTS_ROOTDIR} or not_defined("SCRIPTS_ROOTDIR");
 
 die not_defined("JAVA_HOME") unless exists $ENV{JAVA_HOME};
 
@@ -58,7 +57,6 @@ my $DO_FILTER_TM = 1;
 my $DO_SUBSAMPLE = 0;
 my $SCRIPTDIR = "$JOSHUA/scripts";
 my $TOKENIZER = "$SCRIPTDIR/training/penn-treebank-tokenizer.perl";
-my $MOSES_TRAINER = "$MOSES_SCRIPTS/training/train-model.perl";
 my $GIZA_TRAINER = "$JOSHUA/scripts/training/run-giza.pl";
 my $MERTCONFDIR = "$JOSHUA/scripts/training/templates/mert";
 my $SRILM = ($ENV{SRILM}||"")."/bin/i686-m64/ngram-count";
@@ -82,7 +80,7 @@ my %MERTFILES = (
 
 my $DO_MBR = 1;
 
-my $ALIGNER = "moses"; # or "berkeley" or "giza"
+my $ALIGNER = "giza"; # "berkeley" or "giza"
 
 # for hadoop java subprocesses (heap amount)
 # you really just have to play around to find out how much is enough 
@@ -278,8 +276,8 @@ foreach my $corpus (@CORPORA) {
   }
 }
 
-if ($ALIGNER ne "giza" and $ALIGNER ne "berkeley" and $ALIGNER ne "moses") {
-  print "* FATAL: aligner must be one of 'moses', 'giza', or 'berkeley'\n";
+if ($ALIGNER ne "giza" and $ALIGNER ne "berkeley") {
+  print "* FATAL: aligner must be one of 'giza', or 'berkeley'\n";
   exit 1;
 }
 
@@ -502,18 +500,7 @@ if (! defined $ALIGNMENT) {
 	my $chunkdir = "alignments/$chunkno";
 	system("mkdir","-p", $chunkdir);
 	  
-	if ($ALIGNER eq "moses") {
-	  # if we have more than one thread to work with, parallelize GIZA
-	  my $do_parallel = ($NUM_THREADS > 1) ? "-parallel" : "";
-
-	  # run the alignments commands
-	  $cachepipe->cmd("giza-$chunkno",
-					  "rm -f $chunkdir/corpus.0-0.*; $MOSES_TRAINER -root-dir $chunkdir -e $TARGET.$chunkno -f $SOURCE.$chunkno -corpus $DATA_DIRS{train}/splits/corpus -first-step 1 -last-step 3 $do_parallel > $chunkdir/giza.log 2>&1",
-					  "$DATA_DIRS{train}/splits/corpus.$SOURCE.$chunkno",
-					  "$DATA_DIRS{train}/splits/corpus.$TARGET.$chunkno",
-					  "$chunkdir/model/aligned.grow-diag-final");
-
-	} elsif ($ALIGNER eq "giza") {
+	if ($ALIGNER eq "giza") {
 	  # if we have more than one thread to work with, parallelize GIZA
 	  my $do_parallel = ($NUM_THREADS > 1) ? "-parallel" : "";
 
@@ -549,7 +536,7 @@ if (! defined $ALIGNMENT) {
 	}
   }
 
-  if ($ALIGNER eq "giza" or $ALIGNER eq "moses") {
+  if ($ALIGNER eq "giza") {
 	  # combine the alignments
 	  $cachepipe->cmd("giza-aligner-combine",
 					  "cat alignments/*/model/aligned.grow-diag-final > alignments/training.align",
