@@ -1,6 +1,7 @@
 #!/usr/bin/perl
 
-# This file runs GIZA++ in both directions.  It was taken from the Moses decoder script train-model.perl.
+# This file runs GIZA++ in both directions.  It was taken from the
+# Moses decoder script train-model.perl.
 
 use strict;
 use warnings;
@@ -25,7 +26,7 @@ my $retval = GetOptions(
   "corpus=s"      => \$_CORPUS,
   "parallel!"     => \$_PARALLEL,
   "bindir=s"      => \$BINDIR,
-);
+	);
 
 if (! $retval) {
   print "Invalid usage, quitting\n";
@@ -47,25 +48,25 @@ die("ERROR: --final-alignment-model can be set to '1', '2', 'hmm', '3', '4' or '
 
 my $___GIZA_EXTENSION = 'A3.final';
 if(defined $___FINAL_ALIGNMENT_MODEL) {
-    $___GIZA_EXTENSION = 'A1.5' if $___FINAL_ALIGNMENT_MODEL eq '1';
-    $___GIZA_EXTENSION = 'A2.5' if $___FINAL_ALIGNMENT_MODEL eq '2';
-    $___GIZA_EXTENSION = 'Ahmm.5' if $___FINAL_ALIGNMENT_MODEL eq 'hmm';
+  $___GIZA_EXTENSION = 'A1.5' if $___FINAL_ALIGNMENT_MODEL eq '1';
+  $___GIZA_EXTENSION = 'A2.5' if $___FINAL_ALIGNMENT_MODEL eq '2';
+  $___GIZA_EXTENSION = 'Ahmm.5' if $___FINAL_ALIGNMENT_MODEL eq 'hmm';
 }
 $___GIZA_EXTENSION = $_GIZA_EXTENSION if $_GIZA_EXTENSION;
 
 my $MGIZA_MERGE_ALIGN = "$BINDIR/merge_alignment.py";
 my $GIZA;
 if(!defined $_MGIZA ){
-	$GIZA = "$BINDIR/GIZA++";
-	print STDERR "Using single-thread GIZA\n";
+  $GIZA = "$BINDIR/GIZA++";
+  print STDERR "Using single-thread GIZA\n";
 }
 else {
-    $GIZA = "$BINDIR/mgizapp";
-	print STDERR "Using multi-thread GIZA\n";	
-    if (!defined($_MGIZA_CPUS)) {
-        $_MGIZA_CPUS=4;
-    }
-    die("ERROR: Cannot find $MGIZA_MERGE_ALIGN") unless (-x $MGIZA_MERGE_ALIGN);
+  $GIZA = "$BINDIR/mgizapp";
+  print STDERR "Using multi-thread GIZA\n";	
+  if (!defined($_MGIZA_CPUS)) {
+	$_MGIZA_CPUS=4;
+  }
+  die("ERROR: Cannot find $MGIZA_MERGE_ALIGN") unless (-x $MGIZA_MERGE_ALIGN);
 }
 my $SNT2COOC = "$BINDIR/snt2cooc.out"; 
 my $MKCLS = "$BINDIR/mkcls";
@@ -148,70 +149,70 @@ sub run_giza {
 
 
 sub prepare {
-    print STDERR "(1) preparing corpus @ ".`date`;
-    safesystem("mkdir -p $___CORPUS_DIR") or die("ERROR: could not create corpus dir $___CORPUS_DIR");
-    
-    my $corpus = $___CORPUS;
+  print STDERR "(1) preparing corpus @ ".`date`;
+  safesystem("mkdir -p $___CORPUS_DIR") or die("ERROR: could not create corpus dir $___CORPUS_DIR");
+  
+  my $corpus = $___CORPUS;
 
-    my $VCB_F, my $VCB_E;
+  my $VCB_F, my $VCB_E;
 
-    if ($___NOFORK) {
-	  
+  if ($___NOFORK) {
+	
+	&make_classes($corpus.".".$___F,$___VCB_F.".classes");
+	&make_classes($corpus.".".$___E,$___VCB_E.".classes");
+	
+	$VCB_F = &get_vocabulary($corpus.".".$___F,$___VCB_F);
+	$VCB_E = &get_vocabulary($corpus.".".$___E,$___VCB_E);
+	
+	&numberize_txt_file($VCB_F,$corpus.".".$___F,
+						$VCB_E,$corpus.".".$___E,
+						$___CORPUS_DIR."/$___F-$___E-int-train.snt");
+	
+	&numberize_txt_file($VCB_E,$corpus.".".$___E,
+						$VCB_F,$corpus.".".$___F,
+						$___CORPUS_DIR."/$___E-$___F-int-train.snt");
+  } 
+  else {
+	print "Forking...\n";
+	my $pid = fork();
+	die "ERROR: couldn't fork" unless defined $pid;
+	if (!$pid) {
 	  &make_classes($corpus.".".$___F,$___VCB_F.".classes");
+	  exit 0;
+	} # parent
+	my $pid2 = fork();
+	die "ERROR: couldn't fork again" unless defined $pid2;
+	if (!$pid2) { #child
 	  &make_classes($corpus.".".$___E,$___VCB_E.".classes");
-	  
-	  $VCB_F = &get_vocabulary($corpus.".".$___F,$___VCB_F);
-	  $VCB_E = &get_vocabulary($corpus.".".$___E,$___VCB_E);
-	  
-	  &numberize_txt_file($VCB_F,$corpus.".".$___F,
-						  $VCB_E,$corpus.".".$___E,
-						  $___CORPUS_DIR."/$___F-$___E-int-train.snt");
-	  
-	  &numberize_txt_file($VCB_E,$corpus.".".$___E,
-						  $VCB_F,$corpus.".".$___F,
-						  $___CORPUS_DIR."/$___E-$___F-int-train.snt");
-    } 
-    else {
-	  print "Forking...\n";
-	  my $pid = fork();
-	  die "ERROR: couldn't fork" unless defined $pid;
-	  if (!$pid) {
-	    &make_classes($corpus.".".$___F,$___VCB_F.".classes");
-	    exit 0;
-	  } # parent
-	  my $pid2 = fork();
-	  die "ERROR: couldn't fork again" unless defined $pid2;
-	  if (!$pid2) { #child
-	    &make_classes($corpus.".".$___E,$___VCB_E.".classes");
-	    exit 0;
-	  }
-	  
-	  $VCB_F = &get_vocabulary($corpus.".".$___F,$___VCB_F);
-	  $VCB_E = &get_vocabulary($corpus.".".$___E,$___VCB_E);
-	  
-	  &numberize_txt_file($VCB_F,$corpus.".".$___F,
-						  $VCB_E,$corpus.".".$___E,
-						  $___CORPUS_DIR."/$___F-$___E-int-train.snt");
-	  
-	  &numberize_txt_file($VCB_E,$corpus.".".$___E,
-						  $VCB_F,$corpus.".".$___F,
-						  $___CORPUS_DIR."/$___E-$___F-int-train.snt");
-	  printf "Waiting for mkcls processes to finish...\n";
-	  waitpid($pid2, 0);
-	  waitpid($pid, 0);
-    }
-
-	if (defined $_DICTIONARY)
-	{
-		my $dict= &make_dicts_files($_DICTIONARY, $VCB_F,$VCB_E,
-                                    $___CORPUS_DIR."/gizadict.$___E-$___F",
-                                    $___CORPUS_DIR."/gizadict.$___F-$___E");
-		if (not $dict)
-		{
-			print STDERR "WARNING: empty dictionary\n";
-			undef $_DICTIONARY;
-		}
+	  exit 0;
 	}
+	
+	$VCB_F = &get_vocabulary($corpus.".".$___F,$___VCB_F);
+	$VCB_E = &get_vocabulary($corpus.".".$___E,$___VCB_E);
+	
+	&numberize_txt_file($VCB_F,$corpus.".".$___F,
+						$VCB_E,$corpus.".".$___E,
+						$___CORPUS_DIR."/$___F-$___E-int-train.snt");
+	
+	&numberize_txt_file($VCB_E,$corpus.".".$___E,
+						$VCB_F,$corpus.".".$___F,
+						$___CORPUS_DIR."/$___E-$___F-int-train.snt");
+	printf "Waiting for mkcls processes to finish...\n";
+	waitpid($pid2, 0);
+	waitpid($pid, 0);
+  }
+
+  if (defined $_DICTIONARY)
+  {
+	my $dict= &make_dicts_files($_DICTIONARY, $VCB_F,$VCB_E,
+								$___CORPUS_DIR."/gizadict.$___E-$___F",
+								$___CORPUS_DIR."/gizadict.$___F-$___E");
+	if (not $dict)
+	{
+	  print STDERR "WARNING: empty dictionary\n";
+	  undef $_DICTIONARY;
+	}
+  }
 }
 
 sub word_align {
@@ -269,25 +270,25 @@ sub word_align {
 }
 
 sub run_single_giza {
-    my($dir,$e,$f,$vcb_e,$vcb_f,$train) = @_;
+  my($dir,$e,$f,$vcb_e,$vcb_f,$train) = @_;
 
-    my %GizaDefaultOptions = 
-	(p0 => .999 ,
-	 m1 => 5 , 
-	 m2 => 0 , 
-	 m3 => 3 , 
-	 m4 => 3 , 
-	 o => "giza" ,
-	 nodumps => 1 ,
-	 onlyaldumps => 1 ,
-	 nsmooth => 4 , 
-         model1dumpfrequency => 1,
-	 model4smoothfactor => 0.4 ,
-	 t => $vcb_f,
-         s => $vcb_e,
+  my %GizaDefaultOptions = 
+	  (p0 => .999 ,
+	   m1 => 5 , 
+	   m2 => 0 , 
+	   m3 => 3 , 
+	   m4 => 3 , 
+	   o => "giza" ,
+	   nodumps => 1 ,
+	   onlyaldumps => 1 ,
+	   nsmooth => 4 , 
+	   model1dumpfrequency => 1,
+	   model4smoothfactor => 0.4 ,
+	   t => $vcb_f,
+	   s => $vcb_e,
 	 c => $train,
 	 CoocurrenceFile => "$dir/$f-$e.cooc",
-	 o => "$dir/$f-$e");
+	   o => "$dir/$f-$e");
 	
 	if (defined $_DICTIONARY)
 	{ $GizaDefaultOptions{d} = $___CORPUS_DIR."/gizadict.$f-$e"; }
@@ -305,124 +306,124 @@ sub run_single_giza {
 
     if ($___FINAL_ALIGNMENT_MODEL) {
         $GizaDefaultOptions{nodumps} =               ($___FINAL_ALIGNMENT_MODEL =~ /^[345]$/)? 1: 0;
-        $GizaDefaultOptions{model345dumpfrequency} = 0;
-        
-        $GizaDefaultOptions{model1dumpfrequency} =   ($___FINAL_ALIGNMENT_MODEL eq '1')? 5: 0;
-        
-        $GizaDefaultOptions{m2} =                    ($___FINAL_ALIGNMENT_MODEL eq '2')? 5: 0;
-        $GizaDefaultOptions{model2dumpfrequency} =   ($___FINAL_ALIGNMENT_MODEL eq '2')? 5: 0;
-        
-        $GizaDefaultOptions{hmmiterations} =         ($___FINAL_ALIGNMENT_MODEL =~ /^(hmm|[345])$/)? 5: 0;
-        $GizaDefaultOptions{hmmdumpfrequency} =      ($___FINAL_ALIGNMENT_MODEL eq 'hmm')? 5: 0;
-        
-        $GizaDefaultOptions{m3} =                    ($___FINAL_ALIGNMENT_MODEL =~ /^[345]$/)? 3: 0;
-        $GizaDefaultOptions{m4} =                    ($___FINAL_ALIGNMENT_MODEL =~ /^[45]$/)? 3: 0;
-        $GizaDefaultOptions{m5} =                    ($___FINAL_ALIGNMENT_MODEL eq '5')? 3: 0;
-    }
+	   $GizaDefaultOptions{model345dumpfrequency} = 0;
+	   
+	   $GizaDefaultOptions{model1dumpfrequency} =   ($___FINAL_ALIGNMENT_MODEL eq '1')? 5: 0;
+	   
+	   $GizaDefaultOptions{m2} =                    ($___FINAL_ALIGNMENT_MODEL eq '2')? 5: 0;
+	   $GizaDefaultOptions{model2dumpfrequency} =   ($___FINAL_ALIGNMENT_MODEL eq '2')? 5: 0;
+	   
+	   $GizaDefaultOptions{hmmiterations} =         ($___FINAL_ALIGNMENT_MODEL =~ /^(hmm|[345])$/)? 5: 0;
+	   $GizaDefaultOptions{hmmdumpfrequency} =      ($___FINAL_ALIGNMENT_MODEL eq 'hmm')? 5: 0;
+	   
+	   $GizaDefaultOptions{m3} =                    ($___FINAL_ALIGNMENT_MODEL =~ /^[345]$/)? 3: 0;
+	   $GizaDefaultOptions{m4} =                    ($___FINAL_ALIGNMENT_MODEL =~ /^[45]$/)? 3: 0;
+	   $GizaDefaultOptions{m5} =                    ($___FINAL_ALIGNMENT_MODEL eq '5')? 3: 0;
+	  }
 
-    if ($___GIZA_OPTION) {
+  if ($___GIZA_OPTION) {
 	foreach (split(/[ ,]+/,$___GIZA_OPTION)) {
-	    my ($option,$value) = split(/=/,$_,2);
-	    $GizaDefaultOptions{$option} = $value;
+	  my ($option,$value) = split(/=/,$_,2);
+	  $GizaDefaultOptions{$option} = $value;
 	}
-    }
+  }
 
-    my $GizaOptions;
-    foreach my $option (sort keys %GizaDefaultOptions){
+  my $GizaOptions;
+  foreach my $option (sort keys %GizaDefaultOptions){
 	my $value = $GizaDefaultOptions{$option} ;
 	$GizaOptions .= " -$option $value" ;
-    }
-    
-    &run_single_snt2cooc($dir,$e,$f,$vcb_e,$vcb_f,$train) if $___PARTS == 1;
+  }
+  
+  &run_single_snt2cooc($dir,$e,$f,$vcb_e,$vcb_f,$train) if $___PARTS == 1;
 
-    print STDERR "(2.1b) running giza $f-$e @ ".`date`."$GIZA $GizaOptions\n";
-
-
-    if (-e "$dir/$f-$e.$___GIZA_EXTENSION.gz") {
-      print "  $dir/$f-$e.$___GIZA_EXTENSION.gz seems finished, reusing.\n";
-      return;
-    }
-    print "$GIZA $GizaOptions\n";
-    return if  $___ONLY_PRINT_GIZA;
-    safesystem("$GIZA $GizaOptions");
- 
-	if (defined $_MGIZA and (!defined $___FINAL_ALIGNMENT_MODEL or $___FINAL_ALIGNMENT_MODEL ne '2')){
-		print STDERR "Merging $___GIZA_EXTENSION.part\* tables\n";
-		safesystem("$MGIZA_MERGE_ALIGN  $dir/$f-$e.$___GIZA_EXTENSION.part*>$dir/$f-$e.$___GIZA_EXTENSION");
-		#system("rm -f $dir/$f-$e/*.part*");
-	}
+  print STDERR "(2.1b) running giza $f-$e @ ".`date`."$GIZA $GizaOptions\n";
 
 
-    die "ERROR: Giza did not produce the output file $dir/$f-$e.$___GIZA_EXTENSION. Is your corpus clean (reasonably-sized sentences)?"
+  if (-e "$dir/$f-$e.$___GIZA_EXTENSION.gz") {
+	print "  $dir/$f-$e.$___GIZA_EXTENSION.gz seems finished, reusing.\n";
+	return;
+  }
+  print "$GIZA $GizaOptions\n";
+  return if  $___ONLY_PRINT_GIZA;
+  safesystem("$GIZA $GizaOptions");
+  
+  if (defined $_MGIZA and (!defined $___FINAL_ALIGNMENT_MODEL or $___FINAL_ALIGNMENT_MODEL ne '2')){
+	print STDERR "Merging $___GIZA_EXTENSION.part\* tables\n";
+	safesystem("$MGIZA_MERGE_ALIGN  $dir/$f-$e.$___GIZA_EXTENSION.part*>$dir/$f-$e.$___GIZA_EXTENSION");
+	#system("rm -f $dir/$f-$e/*.part*");
+  }
+
+
+  die "ERROR: Giza did not produce the output file $dir/$f-$e.$___GIZA_EXTENSION. Is your corpus clean (reasonably-sized sentences)?"
       if ! -e "$dir/$f-$e.$___GIZA_EXTENSION";
-    safesystem("rm -f $dir/$f-$e.$___GIZA_EXTENSION.gz") or die;
-    safesystem("gzip $dir/$f-$e.$___GIZA_EXTENSION") or die;
+  safesystem("rm -f $dir/$f-$e.$___GIZA_EXTENSION.gz") or die;
+  safesystem("gzip $dir/$f-$e.$___GIZA_EXTENSION") or die;
 }
 
 sub make_classes {
-    my ($corpus,$classes) = @_;
-    my $cmd = "$MKCLS -c50 -n2 -p$corpus -V$classes opt";
-    print STDERR "(1.1) running mkcls  @ ".`date`."$cmd\n";
-    if (-e $classes) {
-        print STDERR "  $classes already in place, reusing\n";
-        return;
-    }
-    safesystem("$cmd"); # ignoring the wrong exit code from mkcls (not dying)
+  my ($corpus,$classes) = @_;
+  my $cmd = "$MKCLS -c50 -n2 -p$corpus -V$classes opt";
+  print STDERR "(1.1) running mkcls  @ ".`date`."$cmd\n";
+  if (-e $classes) {
+	print STDERR "  $classes already in place, reusing\n";
+	return;
+  }
+  safesystem("$cmd"); # ignoring the wrong exit code from mkcls (not dying)
 }
 
 sub get_vocabulary {
-    return unless $___LEXICAL_WEIGHTING;
-    my($corpus,$vcb) = @_;
-    print STDERR "(1.2) creating vcb file $vcb @ ".`date`;
-    
-    my %WORD;
-    open(TXT,$corpus) or die "ERROR: Can't read $corpus";
-    while(<TXT>) {
+  return unless $___LEXICAL_WEIGHTING;
+  my($corpus,$vcb) = @_;
+  print STDERR "(1.2) creating vcb file $vcb @ ".`date`;
+  
+  my %WORD;
+  open(TXT,$corpus) or die "ERROR: Can't read $corpus";
+  while(<TXT>) {
 	chop;
 	foreach (split) { $WORD{$_}++; }
-    }
-    close(TXT);
-    
-    my @NUM;
-    foreach my $word (keys %WORD) {
+  }
+  close(TXT);
+  
+  my @NUM;
+  foreach my $word (keys %WORD) {
 	my $vcb_with_number = sprintf("%07d %s",$WORD{$word},$word);
 	push @NUM,$vcb_with_number;
-    }
-    
-    my %VCB;
-    open(VCB,">$vcb") or die "ERROR: Can't write $vcb";
-    print VCB "1\tUNK\t0\n";
-    my $id=2;
-    foreach (reverse sort @NUM) {
+  }
+  
+  my %VCB;
+  open(VCB,">$vcb") or die "ERROR: Can't write $vcb";
+  print VCB "1\tUNK\t0\n";
+  my $id=2;
+  foreach (reverse sort @NUM) {
 	my($count,$word) = split;
 	printf VCB "%d\t%s\t%d\n",$id,$word,$count;
 	$VCB{$word} = $id;
 	$id++;
-    }
-    close(VCB);
-    
-    return \%VCB;
+  }
+  close(VCB);
+  
+  return \%VCB;
 }
 
 sub run_single_snt2cooc {
-    my($dir,$e,$f,$vcb_e,$vcb_f,$train) = @_;
-    print STDERR "(2.1a) running snt2cooc $f-$e @ ".`date`."\n";
-    safesystem("mkdir -p $dir") or die("ERROR");
-    print "$SNT2COOC $vcb_e $vcb_f $train > $dir/$f-$e.cooc\n";
-    safesystem("$SNT2COOC $vcb_e $vcb_f $train > $dir/$f-$e.cooc") or die("ERROR");
+  my($dir,$e,$f,$vcb_e,$vcb_f,$train) = @_;
+  print STDERR "(2.1a) running snt2cooc $f-$e @ ".`date`."\n";
+  safesystem("mkdir -p $dir") or die("ERROR");
+  print "$SNT2COOC $vcb_e $vcb_f $train > $dir/$f-$e.cooc\n";
+  safesystem("$SNT2COOC $vcb_e $vcb_f $train > $dir/$f-$e.cooc") or die("ERROR");
 }
 
 sub safesystem {
   print STDERR "Executing: @_\n";
   system(@_);
   if ($? == -1) {
-      print STDERR "ERROR: Failed to execute: @_\n  $!\n";
-      exit(1);
+	print STDERR "ERROR: Failed to execute: @_\n  $!\n";
+	exit(1);
   }
   elsif ($? & 127) {
-      printf STDERR "ERROR: Execution of: @_\n  died with signal %d, %s coredump\n",
-          ($? & 127),  ($? & 128) ? 'with' : 'without';
-      exit(1);
+	printf STDERR "ERROR: Execution of: @_\n  died with signal %d, %s coredump\n",
+	($? & 127),  ($? & 128) ? 'with' : 'without';
+	exit(1);
   }
   else {
     my $exitcode = $? >> 8;
@@ -432,37 +433,37 @@ sub safesystem {
 }
 
 sub numberize_txt_file {
-    my ($VCB_DE,$in_de,$VCB_EN,$in_en,$out) = @_;
-    my %OUT;
-    print STDERR "(1.3) numberizing corpus $out @ ".`date`;
-    if (-e $out) {
-        print STDERR "  $out already in place, reusing\n";
-        return;
-    }
-    open(IN_DE,$in_de) or die "ERROR: Can't read $in_de";
-    open(IN_EN,$in_en) or die "ERROR: Can't read $in_en";
-    open(OUT,">$out") or die "ERROR: Can't write $out";
-    while(my $de = <IN_DE>) {
+  my ($VCB_DE,$in_de,$VCB_EN,$in_en,$out) = @_;
+  my %OUT;
+  print STDERR "(1.3) numberizing corpus $out @ ".`date`;
+  if (-e $out) {
+	print STDERR "  $out already in place, reusing\n";
+	return;
+  }
+  open(IN_DE,$in_de) or die "ERROR: Can't read $in_de";
+  open(IN_EN,$in_en) or die "ERROR: Can't read $in_en";
+  open(OUT,">$out") or die "ERROR: Can't write $out";
+  while(my $de = <IN_DE>) {
 	my $en = <IN_EN>;
 	print OUT "1\n";
 	print OUT &numberize_line($VCB_EN,$en);
 	print OUT &numberize_line($VCB_DE,$de);
-    }
-    close(IN_DE);
-    close(IN_EN);
-    close(OUT);
+  }
+  close(IN_DE);
+  close(IN_EN);
+  close(OUT);
 }
 
 sub numberize_line {
-    my ($VCB,$txt) = @_;
-    chomp($txt);
-    my $out = "";
-    my $not_first = 0;
-    foreach (split(/ /,$txt)) { 
+  my ($VCB,$txt) = @_;
+  chomp($txt);
+  my $out = "";
+  my $not_first = 0;
+  foreach (split(/ /,$txt)) { 
 	next if $_ eq '';
 	$out .= " " if $not_first++;
 	print STDERR "Unknown word '$_'\n" unless defined($$VCB{$_});
 	$out .= $$VCB{$_};
-    }
-    return $out."\n";
+  }
+  return $out."\n";
 }
