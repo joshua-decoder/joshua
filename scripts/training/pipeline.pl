@@ -119,6 +119,9 @@ my $DO_PREPARE_CORPORA = 1;
 # how many optimizer runs to perform
 my $OPTIMIZER_RUNS = 1;
 
+# what to use to create language models ("berkeley" or "srilm")
+my $LM_GEN = "srilm";
+
 my @STEPS = qw[FIRST SUBSAMPLE ALIGN PARSE THRAX MERT TEST LAST];
 my %STEPS = map { $STEPS[$_] => $_ + 1 } (0..$#STEPS);
 
@@ -141,6 +144,7 @@ my $retval = GetOptions(
   "filter-lm!"        => \$DO_FILTER_LM,
   "lm=s"              => \$LM_TYPE,
   "lmfile=s" 	 	  => \$LMFILE,
+  "lm-gen=s"          => \$LM_GEN,
   "witten-bell!" 	  => \$WITTEN_BELL,
   "tune-grammar=s"    => \$TUNE_GRAMMAR_FILE,
   "test-grammar=s"    => \$TEST_GRAMMAR_FILE,
@@ -285,6 +289,11 @@ if ($ALIGNER ne "giza" and $ALIGNER ne "berkeley") {
 
 if ($LM_TYPE ne "kenlm" and $LM_TYPE ne "berkeleylm") {
   print "* FATAL: lm type (--lm) must be one of 'kenlm' or 'berkeleylm'\n";
+  exit 1;
+}
+
+if ($LM_GEN ne "berkeley" and $LM_GEN ne "srilm") {
+  print "* FATAL: lm generating code (--lm-gen) must be one of 'berkeleylm' or 'srilm'\n";
   exit 1;
 }
 
@@ -729,10 +738,16 @@ if (! defined $LMFILE) {
   }
 
   $LMFILE="lm.gz";
-  my $smoothing = ($WITTEN_BELL) ? "-wbdiscount" : "-kndiscount";
-  $cachepipe->cmd("srilm",
-				  "$SRILM -interpolate $smoothing -order 5 -text $TRAIN{target} -unk -lm lm.gz",
-				  $LMFILE);
+  if ($LM_GEN eq "srilm") {
+	my $smoothing = ($WITTEN_BELL) ? "-wbdiscount" : "-kndiscount";
+	$cachepipe->cmd("srilm",
+					"$SRILM -interpolate $smoothing -order 5 -text $TRAIN{target} -unk -lm lm.gz",
+					$LMFILE);
+  } else {
+	$cachepipe->cmd("berkeleylm",
+					"java -ea -mx1000m -server -cp $JOSHUA/lib/berkeleylm.jar edu.berkeley.nlp.lm.io.MakeKneserNeyArpaFromText 5 lm.gz $TRAIN{target}",
+					$LMFILE);
+  }
 
 } else {
   if (! -e $LMFILE) {
