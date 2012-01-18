@@ -82,7 +82,7 @@ my %MERTFILES = (
 
 my $DO_MBR = 1;
 
-my $ALIGNER = "giza"; # or "berkeley"
+my $ALIGNER = "moses"; # or "berkeley" or "giza"
 
 # for hadoop java subprocesses (heap amount)
 # you really just have to play around to find out how much is enough 
@@ -278,8 +278,8 @@ foreach my $corpus (@CORPORA) {
   }
 }
 
-if ($ALIGNER ne "giza" and $ALIGNER ne "berkeley") {
-  print "* FATAL: aligner must be one of 'giza' or 'berkeley'\n";
+if ($ALIGNER ne "giza" and $ALIGNER ne "berkeley" and $ALIGNER ne "moses") {
+  print "* FATAL: aligner must be one of 'moses', 'giza', or 'berkeley'\n";
   exit 1;
 }
 
@@ -502,7 +502,7 @@ if (! defined $ALIGNMENT) {
 	my $chunkdir = "alignments/$chunkno";
 	system("mkdir","-p", $chunkdir);
 	  
-	if ($ALIGNER eq "giza") {
+	if ($ALIGNER eq "moses") {
 	  # if we have more than one thread to work with, parallelize GIZA
 	  my $do_parallel = ($NUM_THREADS > 1) ? "-parallel" : "";
 
@@ -513,12 +513,15 @@ if (! defined $ALIGNMENT) {
 					  "$DATA_DIRS{train}/splits/corpus.$TARGET.$chunkno",
 					  "$chunkdir/model/aligned.grow-diag-final");
 
-	  # $cachepipe->cmd("giza-$chunkno",
-	  # 				  "rm -f $chunkdir/corpus.0-0.*; $GIZA_TRAINER --root-dir $chunkdir -e $TARGET.$chunkno -f $SOURCE.$chunkno -corpus $DATA_DIRS{train}/splits/corpus $do_parallel > $chunkdir/giza.log 2>&1",
-	  # 				  "$DATA_DIRS{train}/splits/corpus.$SOURCE.$chunkno",
-	  # 				  "$DATA_DIRS{train}/splits/corpus.$TARGET.$chunkno",
-	  # 				  "$chunkdir/model/aligned.grow-diag-final");
+	} elsif ($ALIGNER eq "giza") {
+	  # if we have more than one thread to work with, parallelize GIZA
+	  my $do_parallel = ($NUM_THREADS > 1) ? "-parallel" : "";
 
+	  $cachepipe->cmd("giza-$chunkno",
+	  				  "rm -f $chunkdir/corpus.0-0.*; $GIZA_TRAINER --root-dir $chunkdir -e $TARGET.$chunkno -f $SOURCE.$chunkno -corpus $DATA_DIRS{train}/splits/corpus $do_parallel > $chunkdir/giza.log 2>&1",
+	  				  "$DATA_DIRS{train}/splits/corpus.$SOURCE.$chunkno",
+	  				  "$DATA_DIRS{train}/splits/corpus.$TARGET.$chunkno",
+	  				  "$chunkdir/model/aligned.grow-diag-final");
 
 	} elsif ($ALIGNER eq "berkeley") {
 
@@ -546,7 +549,7 @@ if (! defined $ALIGNMENT) {
 	}
   }
 
-  if ($ALIGNER eq "giza") {
+  if ($ALIGNER eq "giza" or $ALIGNER eq "moses") {
 	  # combine the alignments
 	  $cachepipe->cmd("giza-aligner-combine",
 					  "cat alignments/*/model/aligned.grow-diag-final > alignments/training.align",
