@@ -155,6 +155,6 @@ sub submit_job
     my ($script, $logfile, $grammar_piece, $corpus, $filtered_grammar_piece) = @_;
 
     unlink($logfile);
-    system("qsub -cwd -j y -o $logfile $script $grammar_piece $corpus $filtered_grammar_piece");
+    system("qsub -cwd -j y -o $logfile -v JOSHUA=$JOSHUA $script $grammar_piece $corpus $filtered_grammar_piece");
 }
 
