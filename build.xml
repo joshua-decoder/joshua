@@ -88,6 +88,11 @@
 		<arg value="all" />
 		<arg value="install" />
 	  </exec>
+	  <exec executable="make">
+		<arg value="-C" />
+		<arg value="scripts/training/symal/" />
+		<arg value="all" />
+	  </exec>
 <!-- 	  <exec executable="./configure" dir="scripts/training/MGIZA" /> -->
 <!-- 	  <exec executable="make"> -->
 <!-- 		<arg value="-C scripts/training/MGIZA/" /> -->
