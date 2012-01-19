@@ -1,6 +1,8 @@
 #!/bin/bash
 #$ -S /bin/bash
 
+# Author: Damianos Karakos <damianos@jhu.edu>
+
 input_grammar=$1
 corpus=$2
 output_grammar=$3

@@ -1,6 +1,8 @@
 #!/usr/bin/perl -w
 #$ -S /usr/bin/perl
 
+# Author: Damianos Karakos <damianos@jhu.edu>
+
 use strict;
 use warnings;
 use Getopt::Long;
@@ -148,6 +150,9 @@ foreach my $i (1..$num_pieces)
     }
     close F;
 }
+
+# remove the temporary directory
+system("rm -rf $tmp_dir");
     
 
 sub submit_job
