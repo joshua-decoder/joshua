@@ -136,9 +136,15 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
 	
 	public static Lattice<Integer> createIntLatticeFromString(String data) {
 		Map<Integer,Node<Integer>> nodes = new HashMap<Integer,Node<Integer>>();
-		
-		Pattern nodePattern = Pattern.compile("(.+?)\\((\\(.+?\\),)\\)(.*)");
-		Pattern arcPattern = Pattern.compile("\\('(.+?)',(-?\\d+\\.?\\d+?),(\\d+)\\),(.*)");
+
+		// this matches a sequence of tuples, which describe arcs
+		// leaving this node
+		Pattern nodePattern = Pattern.compile("(.+?)\\(\\s*(\\(.+?\\),\\s*)\\s*\\)(.*)");
+
+		// this matches a comma-delimited, parenthesized tuple of a
+		// (a) single-quoted word (b) a number (c) an offset (how many
+		// states to jump ahead)
+		Pattern arcPattern = Pattern.compile("\\s*\\('(.+?)',\\s*(-?\\d+\\.?\\d*?),\\s*(\\d+)\\),\\s*(.*)");
 		
 		Matcher nodeMatcher = nodePattern.matcher(data);
 		
@@ -160,7 +166,7 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
 				nodes.put(nodeID, currentNode);
 			}
 			
-			if (logger.isLoggable(Level.FINE)) logger.fine("Node " + nodeID + ":");
+			logger.fine("Node " + nodeID + ":");
 			
 			Matcher arcMatcher = arcPattern.matcher(nodeData);
 			int numArcs = 0;
@@ -181,7 +187,7 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
 				
 				String remainingArcs = arcMatcher.group(4);
 				
-				if (logger.isLoggable(Level.FINE)) logger.fine("\t" + arcLabel + " " + arcWeight + " " + destinationNodeID);
+				logger.fine("\t" + arcLabel + " " + arcWeight + " " + destinationNodeID);
 				Integer intArcLabel = Vocabulary.id(arcLabel);
 				currentNode.addArc(destinationNode, arcWeight, intArcLabel);
 				
@@ -195,7 +201,7 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
 		List<Node<Integer>> nodeList = new ArrayList<Node<Integer>>(nodes.values());
 		Collections.sort(nodeList, new NodeIdentifierComparator());
 		
-		if (logger.isLoggable(Level.FINE)) logger.fine(nodeList.toString());
+		logger.fine(nodeList.toString());
 		
 		return new Lattice<Integer>(nodeList, latticeIsAmbiguous);
 	}
@@ -232,7 +238,7 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
 				nodes.put(nodeID, currentNode);
 			}
 			
-			if (logger.isLoggable(Level.FINE)) logger.fine("Node " + nodeID + ":");
+			logger.fine("Node " + nodeID + ":");
 			
 			Matcher arcMatcher = arcPattern.matcher(nodeData);
 			
@@ -251,7 +257,7 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
 				
 				String remainingArcs = arcMatcher.group(4);
 				
-				if (logger.isLoggable(Level.FINE)) logger.fine("\t" + arcLabel + " " + arcWeight + " " + destinationNodeID);
+				logger.fine("\t" + arcLabel + " " + arcWeight + " " + destinationNodeID);
 				
 				currentNode.addArc(destinationNode, arcWeight, arcLabel);
 				
@@ -264,7 +270,7 @@ public class Lattice<Value> implements Iterable<Node<Value>> {
 		List<Node<String>> nodeList = new ArrayList<Node<String>>(nodes.values());
 		Collections.sort(nodeList, new NodeIdentifierComparator());
 		
-		if (logger.isLoggable(Level.FINE)) logger.fine(nodeList.toString());
+		logger.fine(nodeList.toString());
 		
 		return new Lattice<String>(nodeList);
 	}
