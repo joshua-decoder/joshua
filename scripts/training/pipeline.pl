@@ -236,9 +236,18 @@ if (! defined $TEST and ($STEPS{$FIRST_STEP} <= $STEPS{TEST}
 }
 
 # make sure a grammar file was given if we're skipping training
-if (! defined $GRAMMAR_FILE and ! defined $TUNE_GRAMMAR_FILE and ($STEPS{$FIRST_STEP} >= $STEPS{MERT})) {
-  print "* FATAL: need a grammar (--grammar) if you're skipping that step\n";
-  exit 1;
+if (! defined $GRAMMAR_FILE) {
+  if ($STEPS{$FIRST_STEP} >= $STEPS{TEST}) {
+	if (! defined $TEST_GRAMMAR_FILE) {
+	  print "* FATAL: need a grammar (--grammar or --test-grammar) if you're skipping to testing\n";
+	  exit 1;
+	}
+  } elsif ($STEPS{$FIRST_STEP} >= $STEPS{MERT}) {
+	if (! defined $TUNE_GRAMMAR_FILE) {
+	  print "* FATAL: need a grammar (--grammar or --tune-grammar) if you're skipping grammar learning\n";
+	  exit 1;
+	}
+  }
 }
 
 # make sure SRILM is defined if we're building a language model
@@ -1024,16 +1033,6 @@ if (! defined $NAME) {
   exit 1;
 }
 
-if (! defined $GLUE_GRAMMAR_FILE) {
-  print "* FATAL: for direct tests, at the moment you must specify a glue grammar (sorry)\n";
-  exit 1;
-}
-
-if ($MERTFILES{'joshua.config'} eq $JOSHUA_CONFIG_ORIG) {
-  print "* FATAL: for direct tests, I need a (tuned) Joshua config file\n";
-  exit 1;
-}
-
 # if (-e "$DATA_DIRS{test}/$NAME") {
 #   print "* FATAL: you specified a run name, but it already exists\n";
 #   exit 1;
@@ -1060,7 +1059,7 @@ if ($TEST_GRAMMAR_FILE) {
   if ($DO_FILTER_TM) {
 	$TEST_GRAMMAR = "$DATA_DIRS{test}/grammar.filtered.gz";
 
-	$cachepipe->cmd("filter-test",
+	$cachepipe->cmd("filter-test-$NAME",
 					"$SCRIPTDIR/training/scat $GRAMMAR_FILE | java -Xmx2g -Dfile.encoding=utf8 -cp $JOSHUA/thrax/bin/thrax.jar edu.jhu.thrax.util.TestSetFilter -v $TEST{source} | $SCRIPTDIR/training/remove-unary-abstract.pl | gzip -9n > $TEST_GRAMMAR",
 					$GRAMMAR_FILE,
 					$TEST{source},
@@ -1068,6 +1067,19 @@ if ($TEST_GRAMMAR_FILE) {
   }
 }
 
+# build the glue grammar if needed
+if (! defined $GLUE_GRAMMAR_FILE) {
+  $cachepipe->cmd("glue-test-$NAME",
+				  "$SCRIPTDIR/training/scat $TEST_GRAMMAR | java -Xmx2g -cp $JOSHUA/thrax/bin/thrax.jar:$JOSHUA/lib/hadoop-core-0.20.203.0.jar:$JOSHUA/lib/commons-logging-1.1.1.jar edu.jhu.thrax.util.CreateGlueGrammar $THRAX_CONF_FILE > $DATA_DIRS{test}/grammar.glue",
+				  $TEST_GRAMMAR,
+				  "$DATA_DIRS{test}/grammar.glue");
+  $GLUE_GRAMMAR_FILE = "$DATA_DIRS{test}/grammar.glue";
+}
+
+if ($MERTFILES{'joshua.config'} eq $JOSHUA_CONFIG_ORIG) {
+  print "* FATAL: for direct tests, I need a (tuned) Joshua config file\n";
+  exit 1;
+}
 
 # this needs to be in a function since it is done all over the place
 open FROM, $MERTFILES{decoder_command} or die "can't find file '$MERTFILES{decoder_command}'";
