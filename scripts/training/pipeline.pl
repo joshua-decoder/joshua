@@ -202,6 +202,9 @@ $SIG{INT} = sub {
 
 ## Sanity Checking ###################################################
 
+# case-normalize this
+$GRAMMAR_TYPE = lc $GRAMMAR_TYPE;
+
 # make sure source and target were specified
 if (! defined $SOURCE or $SOURCE eq "") {
   print "* FATAL: I need a source language extension (--source)\n";
