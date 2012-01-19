@@ -17,18 +17,11 @@ E_OPTERROR=1
 ## memory usage; default is 4 GB
 mem=4g
 
-while getopts ":m:" option
-do
-	case $option in
-		m ) mem=${OPTARG}
-			;;
-		* ) break 2
-			;;
-	esac
-done
-
-# adjust the option index pointer
-shift $(($OPTIND-1))
+if [[ $1 == "-m" ]]; then
+	mem=$2
+	shift
+	shift
+fi
 
 java -Xmx${mem} \
 	-cp $JOSHUA/bin:$JOSHUA/thrax/bin/thrax.jar:$JOSHUA/lib/berkeleylm.jar \
@@ -36,3 +29,5 @@ java -Xmx${mem} \
 	-Djava.util.logging.config.file=${JOSHUA}/logging.properties \
 	-Djava.library.path=$JOSHUA/lib \
 	joshua.decoder.JoshuaDecoder $@
+
+
