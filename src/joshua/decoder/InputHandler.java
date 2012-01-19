@@ -113,7 +113,7 @@ public class InputHandler implements Iterator<Sentence> {
 			if (line == null) {
 				nextSentence = null;
 			} else {
-				if (line.startsWith("(((")) {
+				if (line.replaceAll("\\s","").startsWith("(((")) {
 					nextSentence = new LatticeInput(line, sentenceNo);
 				} else {
 					nextSentence = new Sentence(line, sentenceNo);
