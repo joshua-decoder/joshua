@@ -80,11 +80,11 @@ public class JoshuaConfiguration {
 	
 	//pruning config
 
-	// Cube pruning is always on, with a span-level pop limit of 1000.
+	// Cube pruning is always on, with a span-level pop limit of 100.
 	// Beam and threshold pruning can be enabled, which also changes
 	// the nature of cube pruning so that the pop limit is no longer
 	// used.  If both are turned off, exhaustive pruning takes effect.
-    public static int     pop_limit                = 1000;
+    public static int     pop_limit                = 100;
     public static boolean useCubePrune             = true;
     public static boolean useBeamAndThresholdPrune = false;
 	public static double  fuzz1                    = 0.1;
