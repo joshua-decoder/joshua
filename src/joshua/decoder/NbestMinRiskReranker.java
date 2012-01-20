@@ -157,9 +157,9 @@ public class NbestMinRiskReranker {
 			//TOTO: sort the list and write the reranked nbest; Use Collections.sort(List list, Comparator c)
 		} else {
 			/*
-			this.out.write(best_hyp);
-			this.out.write("\n");
-			out.flush();
+			  this.out.write(best_hyp);
+			  this.out.write("\n");
+			  out.flush();
 			*/
 		}
 		
@@ -195,10 +195,10 @@ public class NbestMinRiskReranker {
 			
 			if (Double.isNaN(normalizedProb)) {
 				throw new RuntimeException(
-					"prob is NaN, must be wrong\nnbest_logps.get(i): "
-					+ nbestLogProbs.get(i)
-					+ "; scaling_factor: " + scalingFactor
-					+ "; normalization_constant:" + normalizationConstant );
+										   "prob is NaN, must be wrong\nnbest_logps.get(i): "
+										   + nbestLogProbs.get(i)
+										   + "; scaling_factor: " + scalingFactor
+										   + "; normalization_constant:" + normalizationConstant );
 			}
 			//logger.info("probability: " + normalized_prob);
 		}
@@ -215,7 +215,7 @@ public class NbestMinRiskReranker {
 	//curHyp: e
 	//trueHyp: e'
 	public double computeExpectedGain(int curHypLen, HashMap<String, Integer> curHypNgramTbl, List<HashMap<String,Integer>> ngramTbls, 
-			List<Integer> sentLens, List<Double> nbestProbs) {
+									  List<Integer> sentLens, List<Double> nbestProbs) {
 		
 		//### get noralization constant, remember features, remember the combined linear score
 		double gain = 0;
@@ -266,7 +266,7 @@ public class NbestMinRiskReranker {
 		return res;
 	}
 	
-//	OR: return Math.log(Math.exp(x) + Math.exp(y));
+	//	OR: return Math.log(Math.exp(x) + Math.exp(y));
 	static private double addInLogSemiring(double x, double y, int addMode){//prevent over-flow 
 		if (addMode == 0) { // sum
 			if (x == Double.NEGATIVE_INFINITY) {//if y is also n-infinity, then return n-infinity
@@ -314,12 +314,12 @@ public class NbestMinRiskReranker {
 		int oldSentID = -1;
 		List<String> nbest = new ArrayList<String>();
 
-                Scanner scanner = new Scanner(System.in, "UTF-8");
+		Scanner scanner = new Scanner(System.in, "UTF-8");
 
 		if (numThreads==1) {
 			
-                    while (scanner.hasNextLine()) {
-                        String line = scanner.nextLine();
+			while (scanner.hasNextLine()) {
+				String line = scanner.nextLine();
 				String[] fds = Regex.threeBarsWithSpace.split(line);
 				int newSentID = Integer.parseInt(fds[0]);
 				if (oldSentID != -1 && oldSentID != newSentID) {
@@ -329,21 +329,21 @@ public class NbestMinRiskReranker {
 				}
 				oldSentID = newSentID;
 				nbest.add(line);
-                    }
+			}
 
 			//last nbest
-                        if (oldSentID >= 0) {
-                            String bestHyp = mbrReranker.processOneSent(nbest, oldSentID);
-                            System.out.println(bestHyp);
-                            nbest.clear();
-                        }
+			if (oldSentID >= 0) {
+				String bestHyp = mbrReranker.processOneSent(nbest, oldSentID);
+				System.out.println(bestHyp);
+				nbest.clear();
+			}
 			
 		} else {
 			
 			ExecutorService threadPool = Executors.newFixedThreadPool(numThreads);
 			
 			while (scanner.hasNextLine()) {
-                            String line = scanner.nextLine();
+				String line = scanner.nextLine();
 				String[] fds = Regex.threeBarsWithSpace.split(line);
 				int newSentID = Integer.parseInt(fds[0]);
 				if (oldSentID != -1 && oldSentID != newSentID) {
@@ -374,12 +374,12 @@ public class NbestMinRiskReranker {
 				
 			} catch (InterruptedException e) {
 				e.printStackTrace();
-                        }
+			}
 			
 		}
 		
 		System.err.println("Total running time (seconds) is "
-			+ (System.currentTimeMillis() - startTime) / 1000.0);
+						   + (System.currentTimeMillis() - startTime) / 1000.0);
 	}
 	
 	private class RankerTask implements Runnable {
