@@ -484,7 +484,7 @@ if (! defined $ALIGNMENT) {
 		s/<SOURCE>/$SOURCE.$chunkno/g;
 		s/<TARGET>/$TARGET.$chunkno/g;
 		s/<CHUNK>/$chunkno/g;
-
+		s/<TRAIN_DIR>/$DATA_DIRS{train}/g;
 		print TO;
 	  }
 	  close(TO);
