@@ -323,12 +323,17 @@ public class NbestMinRiskReranker {
 				String[] fds = Regex.threeBarsWithSpace.split(line);
 				int newSentID = Integer.parseInt(fds[0]);
 				if (oldSentID != -1 && oldSentID != newSentID) {
-					String best_hyp = mbrReranker.processOneSent(nbest, oldSentID);//nbest: list of unique strings
-					System.out.println(best_hyp);
+					if (nbest.size() > 0) {
+						String best_hyp = mbrReranker.processOneSent(nbest, oldSentID);//nbest: list of unique strings
+						System.out.println(best_hyp);
+					} else {
+						System.out.println();
+					}
 					nbest.clear();
 				}
 				oldSentID = newSentID;
-				nbest.add(line);
+				if (! fds[1].matches("^\\s*$"))
+					nbest.add(line);
 			}
 
 			//last nbest
