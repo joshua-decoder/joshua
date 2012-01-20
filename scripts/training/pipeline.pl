@@ -1159,13 +1159,16 @@ sub prepare_data {
   # tokenize the data
   foreach my $lang ($TARGET,$SOURCE,"$TARGET.0","$TARGET.1","$TARGET.2","$TARGET.3") {
 	if (-e "$DATA_DIRS{$label}/$prefix.$lang.gz") {
-	  $cachepipe->cmd("$label-tokenize-$lang",
-					  "$SCRIPTDIR/training/scat $DATA_DIRS{$label}/$prefix.$lang.gz | $TOKENIZER -l $lang 2> /dev/null | gzip -9n > $DATA_DIRS{$label}/$prefix.tok.$lang.gz",
-					  "$DATA_DIRS{$label}/$prefix.$lang.gz", "$DATA_DIRS{$label}/$prefix.tok.$lang.gz"
-		  );
-	  # extend the prefix
+	  if (is_lattice("$DATA_DIRS{$label}/$prefix.$lang.gz")) { 
+		system("cp $DATA_DIRS{$label}/$prefix.$lang.gz $DATA_DIRS{$label}/$prefix.tok.$lang.gz");
+	  } else {
+		$cachepipe->cmd("$label-tokenize-$lang",
+						"$SCRIPTDIR/training/scat $DATA_DIRS{$label}/$prefix.$lang.gz | $TOKENIZER -l $lang 2> /dev/null | gzip -9n > $DATA_DIRS{$label}/$prefix.tok.$lang.gz",
+						"$DATA_DIRS{$label}/$prefix.$lang.gz", "$DATA_DIRS{$label}/$prefix.tok.$lang.gz");
+	  }
 	}
   }
+  # extend the prefix
   $prefix .= ".tok";
 
   if ($label eq "train" and $maxlen > 0) {
@@ -1183,10 +1186,14 @@ sub prepare_data {
   # lowercase
   foreach my $lang ($TARGET,$SOURCE,"$TARGET.0","$TARGET.1","$TARGET.2","$TARGET.3") {
 	if (-e "$DATA_DIRS{$label}/$prefix.$lang.gz") {
-	  $cachepipe->cmd("$label-lowercase-$lang",
-					  "gzip -cd $DATA_DIRS{$label}/$prefix.$lang.gz | $SCRIPTDIR/lowercase.perl > $DATA_DIRS{$label}/$prefix.lc.$lang",
-					  "$DATA_DIRS{$label}/$prefix.$lang.gz",
-					  "$DATA_DIRS{$label}/$prefix.lc.$lang");
+	  if (is_lattice("$DATA_DIRS{$label}/$prefix.$lang.gz")) { 
+		system("gzip -cd $DATA_DIRS{$label}/$prefix.$lang.gz > $DATA_DIRS{$label}/$prefix.lc.$lang");
+	  } else { 
+		$cachepipe->cmd("$label-lowercase-$lang",
+						"gzip -cd $DATA_DIRS{$label}/$prefix.$lang.gz | $SCRIPTDIR/lowercase.perl > $DATA_DIRS{$label}/$prefix.lc.$lang",
+						"$DATA_DIRS{$label}/$prefix.$lang.gz",
+						"$DATA_DIRS{$label}/$prefix.lc.$lang");
+	  }
 	}
   }
   $prefix .= ".lc";
@@ -1272,4 +1279,16 @@ sub stop_hadoop_cluster {
 sub teardown_hadoop_cluster {
   stop_hadoop_cluster();
   system("rm -rf hadoop-0.20.203.0 hadoop");
+}
+
+sub is_lattice {
+  my $file = shift;
+  open READ, "$JOSHUA/scripts/training/scat $file|" or die "can't read from potential lattice '$file'";
+  my $line = <READ>;
+  close(READ);
+  if ($line =~ /^\(\(\(/) {
+	return 1;
+  } else {
+	return 0;
+  }
 }
