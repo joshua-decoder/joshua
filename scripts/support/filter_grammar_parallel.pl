@@ -24,10 +24,10 @@ my $tmp_dir = "tmpdir.$hostname.$proc_id";
 
 if(@ARGV == 0)
 {
-    die "Usage: $0 --corpus=<corpus> --grammar=<grammar file> --n=<number of pieces> --output_grammar=<output grammar file> --lines=<number of lines of grammar>\n";
+    die "Usage: $0 --corpus=<corpus> --grammar=<grammar file> --n=<number of pieces> --output_grammar=<output grammar file> --lines=<number of lines of grammar> --fast --ngrams=<maximum n n-gram to compare to\n";
 }
 
-my ($corpus, $grammar_file, $num_pieces, $output_grammar, $num_lines) = ("","",0,"",0);
+my ($corpus, $grammar_file, $num_pieces, $output_grammar, $num_lines, $fast, $ngrams) = ("","",0,"",0,0,12);
 
 my $retval = GetOptions(
     "grammar=s"         => \$grammar_file,
@@ -35,6 +35,8 @@ my $retval = GetOptions(
     "output_grammar=s"  => \$output_grammar,
     "corpus=s"          => \$corpus,
     "lines=s"       => \$num_lines,
+    "fast!"      => \$fast,
+    "ngrams=i"   => \$ngrams,
 );
 
 if (! $retval) {
@@ -160,6 +162,6 @@ sub submit_job
     my ($script, $logfile, $grammar_piece, $corpus, $filtered_grammar_piece) = @_;
 
     unlink($logfile);
-    system("qsub -cwd -j y -o $logfile -v JOSHUA=$JOSHUA $script $grammar_piece $corpus $filtered_grammar_piece");
+    system("qsub -cwd -j y -o $logfile -v JOSHUA=$JOSHUA $script $grammar_piece $corpus $filtered_grammar_piece $fast $ngrams");
 }
 
