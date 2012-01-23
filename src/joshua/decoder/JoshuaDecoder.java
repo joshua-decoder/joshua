@@ -282,7 +282,7 @@ public class JoshuaDecoder {
 			// Initialize the features: requires that LM model has
 			// been initialized. If an LM feature is used, need to
 			// read config file again
-			this.initializeFeatureFunctions(configFile);
+			this.initializeFeatureFunctions();
 					
 			this.initializeStateComputers(JoshuaConfiguration.lm_order, JoshuaConfiguration.ngramStateID);
 
@@ -394,112 +394,93 @@ public class JoshuaDecoder {
 		stateComputers.add(ngramStateComputer);
 	}
 	
-	// BUG: why are we re-reading the configFile? JoshuaConfiguration should do this. (Needs: languageModel, Vocabulary, (logger?); Sets: featureFunctions)
-	private void initializeFeatureFunctions(String configFile)
-	throws IOException {
+    // iterate over the features that were discovered when the config file was read
+	private void initializeFeatureFunctions() {
 		this.featureFunctions = new ArrayList<FeatureFunction>();
 		JoshuaConfiguration.num_phrasal_features = 0;	
 		
-		LineReader reader = new LineReader(configFile);
-		try { for (String line : reader) {
-			line = line.trim();
-			if (Regex.commentOrEmptyLine.matches(line)) 
-				continue;
-			
-			if (line.indexOf("=") == -1) { // ignore lines with "="
-				String[] fds = Regex.spaces.split(line);
-				
-				if ("lm".equals(fds[0]) && fds.length == 2) { // lm weight
-					if (null == this.languageModel) {
-						throw new IllegalArgumentException("LM model has not been properly initialized before setting order and weight");
-					}
-					double weight = Double.parseDouble(fds[1].trim());
-					this.featureFunctions.add(
-						new LanguageModelFF(
-							JoshuaConfiguration.ngramStateID,	
-							this.featureFunctions.size(),
-							JoshuaConfiguration.lm_order,
-							this.languageModel, weight));
-					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format(
-							"Line: %s\nAdd LM, order: %d; weight: %.3f;",
-							line, JoshuaConfiguration.lm_order, weight));
-                    
-				} else if ("latticecost".equals(fds[0]) && fds.length == 2) {
-					double weight = Double.parseDouble(fds[1].trim());
-					this.featureFunctions.add(
-						new SourcePathFF(
-							this.featureFunctions.size(), weight));
-					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format(
-							"Line: %s\nAdd Source lattice cost, weight: %.3f",
-							line, weight));
-					
-				} else if ("phrasemodel".equals(fds[0]) && fds.length == 4) { // phrasemodel owner column(0-indexed) weight
-					int    owner  = Vocabulary.id(fds[1]);
-					int    column = Integer.parseInt(fds[2].trim());
-					double weight = Double.parseDouble(fds[3].trim());
-					this.featureFunctions.add(
+        for (String featureLine: JoshuaConfiguration.features) {
+
+            String fields[] = featureLine.split("\\s+");
+            String feature = fields[0];
+
+            // initialize the language model
+            if (feature.equals("lm") && ! JoshuaConfiguration.lm_type.equals("none")) {
+                double weight = Double.parseDouble(fields[1]);
+
+                this.featureFunctions.add(
+   				    new LanguageModelFF(
+					    JoshuaConfiguration.ngramStateID,	
+					    this.featureFunctions.size(),
+					    JoshuaConfiguration.lm_order,
+					    this.languageModel, weight));
+
+                logger.info(String.format("FEATURE: order %d language model (weight %.3f)", JoshuaConfiguration.lm_order, weight));
+            }
+
+            else if (feature.equals("latticecost")) {
+                double weight = Double.parseDouble(fields[1]);
+                this.featureFunctions.add(new SourcePathFF(this.featureFunctions.size(), weight));
+                logger.info(String.format("FEATURE: lattice cost (weight %.3f)", weight));
+            }
+
+            else if (feature.equals("phrasemodel")) {
+                // TODO: error-checking
+
+                int    owner  = Vocabulary.id(fields[1]);
+                int    column = Integer.parseInt(fields[2].trim());
+                double weight = Double.parseDouble(fields[3].trim());
+
+                this.featureFunctions.add( 
 						new PhraseModelFF(
-							this.featureFunctions.size(),
+                            this.featureFunctions.size(),
 							weight, owner, column));
-					JoshuaConfiguration.num_phrasal_features += 1;
-					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format(
-							"Process Line: %s\nAdd PhraseModel, owner: %s; column: %d; weight: %.3f",
-							line, owner, column, weight));
-					
-				} else if ("arityphrasepenalty".equals(fds[0]) && fds.length == 5) { // arityphrasepenalty owner start_arity end_arity weight
-					int owner      = Vocabulary.id(fds[1]);
-					int startArity = Integer.parseInt(fds[2].trim());
-					int endArity   = Integer.parseInt(fds[3].trim());
-					double weight  = Double.parseDouble(fds[4].trim());
-					this.featureFunctions.add(
-						new ArityPhrasePenaltyFF(
-							this.featureFunctions.size(),
-							weight, owner, startArity, endArity));
-					
-					if (logger.isLoggable(Level.INFO))
-						logger.finest(String.format(
-							"Process Line: %s\nAdd ArityPhrasePenalty, owner: %s; startArity: %d; endArity: %d; weight: %.3f",
-							line, owner, startArity, endArity, weight));
-					
-				} else if ("wordpenalty".equals(fds[0]) && fds.length == 2) { // wordpenalty weight
-					double weight = Double.parseDouble(fds[1].trim());
-					this.featureFunctions.add(
-						new WordPenaltyFF(
-							this.featureFunctions.size(), weight));
-					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format(
-							"Process Line: %s\nAdd WordPenalty, weight: %.3f",
-							line, weight));
+                JoshuaConfiguration.num_phrasal_features += 1;
 
-				} else if ("oovpenalty".equals(fds[0]) && fds.length == 2) { // wordpenalty weight
-					double weight = Double.parseDouble(fds[1].trim());
-					int owner  = Vocabulary.id("pt");
-					int column = JoshuaConfiguration.num_phrasal_features;
+                logger.info(String.format("FEATURE: phrase model %d, owner %s (weight %.3f", column, owner, weight));
+            }
 
-					this.featureFunctions.add(
-						new OOVFF(
-							this.featureFunctions.size(), weight, owner));
-
-					JoshuaConfiguration.oov_feature_index = column;
-					JoshuaConfiguration.num_phrasal_features += 1;
-
-					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format(
-							"Process Line: %s\nAdd OOVPenalty, weight: %.3f",
-							line, weight));
+            else if (feature.equals("arityphrasepenalty")) {
+                int owner      = Vocabulary.id(fields[1]);
+                int startArity = Integer.parseInt(fields[2].trim());
+                int endArity   = Integer.parseInt(fields[3].trim());
+                double weight  = Double.parseDouble(fields[4].trim());
+                this.featureFunctions.add(
+                    new ArityPhrasePenaltyFF(
+                        this.featureFunctions.size(),
+                        weight, owner, startArity, endArity));
 					
-					
-				} else {
-					throw new IllegalArgumentException("Wrong config line: " + line);
-				}
-			}
-		} } finally {
-			reader.close();
-		}
-	}
+                logger.info(String.format("FEATURE: arity phrase penalty: owner %s, start %d, end %d (weight %.3f)", owner, startArity, endArity, weight));
+            }
+
+            else if (feature.equals("wordpenalty")) {
+                double weight = Double.parseDouble(fields[1].trim());
+
+                this.featureFunctions.add(
+                    new WordPenaltyFF(
+                        this.featureFunctions.size(), weight));
+
+                logger.info(String.format("FEATURE: word penalty (weight %.3f)", weight));
+            }
+
+            else if (feature.equals("oovpenalty")) {
+                double weight = Double.parseDouble(fields[1].trim());
+                int owner  = Vocabulary.id("pt");
+                int column = JoshuaConfiguration.num_phrasal_features;
+
+                this.featureFunctions.add(
+                    new OOVFF(
+                        this.featureFunctions.size(), weight, owner));
+
+                JoshuaConfiguration.oov_feature_index = column;
+                JoshuaConfiguration.num_phrasal_features += 1;
+
+                logger.info(String.format("FEATURE: OOV penalty (weight %.3f)", weight));
+            } else {
+                System.err.println("* WARNING: invalid feature '" + featureLine + "'");
+            }
+        }
+    }
 	
 	
 //===============================================================
