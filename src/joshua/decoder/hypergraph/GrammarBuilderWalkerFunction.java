@@ -9,6 +9,8 @@ import joshua.corpus.Vocabulary;
 import java.util.Set;
 import java.util.HashSet;
 
+import java.io.PrintStream;
+
 /**
  * This walker function builds up a new context-free grammar by visiting
  * each node in a hypergraph. For a quick overview, see Chris Dyer's 2010
@@ -28,24 +30,32 @@ public class GrammarBuilderWalkerFunction implements WalkerFunction
 {
     private MemoryBasedBatchGrammar grammar;
     private static HieroFormatReader reader = new HieroFormatReader();
-    private Set<HGNode> visitedNodes;
+	private PrintStream outStream;
+	private int goalSymbol;
 
-    public GrammarBuilderWalkerFunction()
+    public GrammarBuilderWalkerFunction(String goal)
     {
         grammar = new MemoryBasedBatchGrammar(reader);
-        visitedNodes = new HashSet<HGNode>();
+		outStream = null;
+		goalSymbol = Vocabulary.id(goal);
     }
+
+	public GrammarBuilderWalkerFunction(String goal, PrintStream out)
+	{
+		this(goal);
+		outStream = out;
+	}
 
     public void apply(HGNode node)
     {
-        if (visitedNodes.contains(node))
-            return;
-        visitedNodes.add(node);
 //        System.err.printf("VISITING NODE: %s\n", getLabelWithSpan(node));
         for (HyperEdge e : node.hyperedges) {
             BilingualRule r = getRuleWithSpans(e, node);
-            if (r != null)
+            if (r != null) {
+				if (outStream != null)
+					outStream.println(r);
                 grammar.addRule(r);
+			}
         }
     }
 
@@ -57,7 +67,12 @@ public class GrammarBuilderWalkerFunction implements WalkerFunction
         return String.format("%d-%s-%d", node.i, label, node.j);
     }
 
-    private static BilingualRule getRuleWithSpans(HyperEdge edge, HGNode head)
+	private boolean nodeHasGoalSymbol(HGNode node)
+	{
+		return node.lhs == goalSymbol;
+	}
+
+    private BilingualRule getRuleWithSpans(HyperEdge edge, HGNode head)
     {
         Rule edgeRule = edge.getRule();
 //        System.err.printf("EdgeRule: %s\n", edgeRule);
@@ -71,17 +86,24 @@ public class GrammarBuilderWalkerFunction implements WalkerFunction
 //            for (HGNode n : edge.getAntNodes())
 //                System.err.printf("> %s\n", getLabelWithSpan(n));
 //        }
-        int [] source = getNewSource(edge);
+        int [] source = getNewSource(nodeHasGoalSymbol(head), edge);
+		// if this would be unary abstract, getNewSource will be null
+		if (source == null)
+			return null;
         int [] target = getNewTargetFromSource(source);
         BilingualRule result = new BilingualRule(Vocabulary.id(headLabel), source, target, edgeRule.getFeatureScores(), edgeRule.getArity());
 //        System.err.printf("new rule is %s\n", result);
         return result;
     }
 
-    private static int [] getNewSource(HyperEdge edge)
+    private static int [] getNewSource(boolean isGlue, HyperEdge edge)
     {
         BilingualRule rule = (BilingualRule) edge.getRule();
         int [] english = rule.getEnglish();
+		// if this is a unary abstract rule, just return null
+		// TODO: except glue rules!
+		if (english.length == 1 && english[0] < 0 && !isGlue)
+			return null;
         int [] result = new int[english.length];
         for (int i = 0; i < english.length; i++) {
             int curr = english[i];

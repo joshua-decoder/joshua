@@ -20,6 +20,7 @@ package joshua.decoder;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -223,8 +224,10 @@ public class ParserThread extends Thread {
 
                 String [] sentencePair = sentence.sentence().split("\\|\\|\\|");
                 int sentenceId = sentence.id();
-                System.err.printf("FOREIGN: %s\n", sentencePair[0]);
-                System.err.printf("ENGLISH: %s\n", sentencePair[1]);
+				for (int i = 0; i < sentencePair.length; i++)
+					sentencePair[i] = sentencePair[i].trim();
+                System.err.printf("FOREIGN: ``%s''\n", sentencePair[0]);
+                System.err.printf("ENGLISH: ``%s''\n", sentencePair[1]);
                 Sentence foreign = new Sentence(sentencePair[0], sentenceId);
                 Sentence english = new Sentence(sentencePair[1], sentenceId);
 		
@@ -324,8 +327,10 @@ public class ParserThread extends Thread {
 
         Lattice<Integer> english_lattice = english.intLattice();
         Grammar[] newGrammar = new Grammar[1];
-        newGrammar[0] = getGrammarFromHyperGraph(hypergraph);
+        newGrammar[0] = getGrammarFromHyperGraph(JoshuaConfiguration.goal_symbol, hypergraph);
+		System.err.println("Hypergraph traversal completed. Expanding new chart.");
         newGrammar[0].sortGrammar(this.featureFunctions);
+		System.err.printf("New grammar has %d rules.\n", newGrammar[0].getNumRules());
         chart = new Chart(english_lattice,
                           this.featureFunctions,
                           this.stateComputers,
@@ -338,14 +343,17 @@ public class ParserThread extends Thread {
 
         /* Parsing */
         HyperGraph englishParse = chart.expand();
+		System.err.println("Finished second chart expansion.");
 
         return englishParse; // or do something else
 	}
 
-        private static Grammar getGrammarFromHyperGraph(HyperGraph hg)
+        private static Grammar getGrammarFromHyperGraph(String goal, HyperGraph hg) throws IOException
         {
-            GrammarBuilderWalkerFunction f = new GrammarBuilderWalkerFunction();
-            ForestWalker.walk(hg.goalNode, f);
+			PrintStream out = new PrintStream(new File("hg.grammar"));
+            GrammarBuilderWalkerFunction f = new GrammarBuilderWalkerFunction(goal, out);
+			ForestWalker walker = new ForestWalker();
+            walker.walk(hg.goalNode, f);
             return f.getGrammar();
         }
 }
