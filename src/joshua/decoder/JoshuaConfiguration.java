@@ -148,6 +148,8 @@ public class JoshuaConfiguration {
 	
 	// used to extract oracle hypotheses from the forest
 	public static String oracleFile = "";
+
+        public static boolean parse = false; // perform synchronous parsing
 	
 	private static final Logger logger =
 		Logger.getLogger(JoshuaConfiguration.class.getName());
@@ -211,7 +213,13 @@ public class JoshuaConfiguration {
 			
 				if ("lm_file".equals(fds[0])) {
 					lm_file = fds[1].trim();
-					logger.finest(String.format("lm file: %s", lm_file));
+					if (logger.isLoggable(Level.FINEST))
+						logger.finest(String.format("lm file: %s", lm_file));
+                                } else if ("parse".equals(fds[0])) {
+                                    parse = Boolean.parseBoolean(fds[1]);
+                                    if (logger.isLoggable(Level.FINEST))
+                                        logger.finest(String.format("parse: %s", parse));
+					
 				} else if ("tm_file".equals(fds[0])) {
 					tm_file = fds[1].trim();
 					logger.finest(String.format("tm file: %s", tm_file));
