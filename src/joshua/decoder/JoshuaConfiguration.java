@@ -153,8 +153,7 @@ public class JoshuaConfiguration {
 	
 	private static final Logger logger =
 		Logger.getLogger(JoshuaConfiguration.class.getName());
-	
-	
+
 //===============================================================
 // Methods
 //===============================================================
@@ -195,15 +194,22 @@ public class JoshuaConfiguration {
         }
     }
 
-	// This is static instead of a constructor because all the fields are static. Yuck.
+	// This is static instead of a constructor because all the fields
+	// are static. 
 	public static void readConfigFile(String configFile) throws IOException {
 		
 		LineReader configReader = new LineReader(configFile);
 		try { for (String line : configReader) {
 			line = line.trim(); // .toLowerCase();
+
 			if (Regex.commentOrEmptyLine.matches(line)) continue;
 			
-			
+            /* There are two kinds of substantive (non-comment,
+             * non-blank) lines: parameters and feature values.
+             * Parameters match the pattern "key = value"; all other
+             * substantive lines are interpreted as features.
+             */
+
 			if (line.indexOf("=") != -1) { // parameters; (not feature function)
 				String[] fds = Regex.equalsWithSpaces.split(line);
 				if (fds.length != 2) {
@@ -239,9 +245,12 @@ public class JoshuaConfiguration {
 					logger.finest(String.format("glue format: %s", glue_format));
 				} else if ("lm_type".equals(fds[0])) {
 					lm_type = String.valueOf(fds[1]);
-					if (! lm_type.equals("kenlm") && ! lm_type.equals("berkeleylm") && ! lm_type.equals("javalm")) {
+					if (! lm_type.equals("kenlm")
+                        && ! lm_type.equals("berkeleylm")
+                        && ! lm_type.equals("none")
+                        && ! lm_type.equals("javalm")) {
 						System.err.println("* FATAL: lm_type '" + lm_type + "' not supported");
-						System.err.println("* supported types are 'kenlm' (default), 'berkeleylm', and 'javalm' (not recommended)");
+						System.err.println("* supported types are 'kenlm' (default), 'berkeleylm', and 'javalm' (not recommended), and 'none'");
 						System.exit(1);
 					}
 					
@@ -429,10 +438,10 @@ public class JoshuaConfiguration {
 				} else if ("endNgramOrder".equals(fds[0])) {
 					endNgramOrder = Integer.parseInt(fds[1]);
 					logger.finest(String.format("endNgramOrder: %s", endNgramOrder));
-				}else if ("useEdgeNgramOnly".equals(fds[0])) {
+				} else if ("useEdgeNgramOnly".equals(fds[0])) {
 					useEdgeNgramOnly = Boolean.valueOf(fds[1]);
 					logger.finest(String.format("useEdgeNgramOnly: %s", useEdgeNgramOnly));
-				}else if ("useTMTargetFeat".equals(fds[0])) {
+				} else if ("useTMTargetFeat".equals(fds[0])) {
 					useTMTargetFeat = Boolean.valueOf(fds[1]);
 					logger.finest(String.format("useTMTargetFeat: %s", useTMTargetFeat));
 				} else if ("useGoogleLinearCorpusGain".equals(fds[0])) {
@@ -465,7 +474,6 @@ public class JoshuaConfiguration {
 			} else { // feature function
 				String[] fds = Regex.spaces.split(line);
 				if ("lm".equals(fds[0]) && fds.length == 2) { // lm  weight
-					have_lm_model = true;
 					if (new Double(fds[1].trim())!=0){
 						use_max_lm_cost_for_oov = true;
 					}

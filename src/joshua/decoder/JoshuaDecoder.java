@@ -269,21 +269,19 @@ public class JoshuaDecoder {
 		try {
 
 			if (JoshuaConfiguration.tm_file == null)
-				throw new RuntimeException("No translation grammar or suffix array grammar was specified.");
+				throw new RuntimeException("No translation grammar was specified.");
 
-			// Sets: languageModel
-			if (JoshuaConfiguration.have_lm_model)
-				initializeLanguageModel();
-
+            // initialize the LM
+            initializeLanguageModel();
 
 			// initialize and load grammar
+            // TODO: this should be extended to allow any number of grammars
 			this.initializeGlueGrammar();					
 			this.initializeMainTranslationGrammar();
 					
-			//					 Initialize the features: requires that
-			// LM model has been initialized. If an LM
-			// feature is used, need to read config file
-			// again
+			// Initialize the features: requires that LM model has
+			// been initialized. If an LM feature is used, need to
+			// read config file again
 			this.initializeFeatureFunctions(configFile);
 					
 			this.initializeStateComputers(JoshuaConfiguration.lm_order, JoshuaConfiguration.ngramStateID);
@@ -309,8 +307,6 @@ public class JoshuaDecoder {
 		return this;
 	}
 		
-	// TODO: maybe move to JoshuaConfiguration to enable moving the featureFunction parsing there (Needs: Vocabulary; Sets: languageModel)
-	// TODO: check we actually have a feature that requires a language model
 	private void initializeLanguageModel() throws IOException {
 		// FIXME: And we should check only once for the default (which supports left/right equivalent state) vs everything else (which doesn't)
 		// TODO: maybe have a special exception type for BadConfigfileException instead of using IllegalArgumentException?
@@ -328,9 +324,12 @@ public class JoshuaDecoder {
 			this.languageModel = new LMGrammarBerkeley(JoshuaConfiguration.lm_order, JoshuaConfiguration.lm_file);
 			Vocabulary.registerLanguageModel(this.languageModel);
 			Vocabulary.id(JoshuaConfiguration.default_non_terminal);
-		} else {
+		} else if (JoshuaConfiguration.lm_type.equals("none")) {
+            this.languageModel = null;
 
+        } else {
 			logger.warning("WARNING: using built-in language model; you probably didn't intend this");
+			logger.warning("  Valid lm types are 'kenlm', 'berkeleylm', 'javalm' and 'none'");
 			
 			this.languageModel = new LMGrammarJAVA(
 				JoshuaConfiguration.lm_order,
