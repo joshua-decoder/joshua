@@ -19,6 +19,7 @@
 package joshua.zmert;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import joshua.util.FileUtility;
 
 public class ZMERT
 {
@@ -39,7 +40,7 @@ public class ZMERT
     } else {
       int maxMem = Integer.parseInt(args[1]);
       String configFileName = args[2];
-      String stateFileName = "ZMERT.temp.state";
+      String stateFileName = FileUtility.dirname(configFileName) + "/ZMERT.temp.state";
       String cp = System.getProperty("java.class.path");
       boolean done = false;
       int iteration = 0;

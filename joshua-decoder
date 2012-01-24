@@ -19,8 +19,9 @@ mem=4g
 
 if [[ $1 == "-m" ]]; then
 	mem=$2
-	shift
-	shift
+
+    shift
+    shift
 fi
 
 java -Xmx${mem} \

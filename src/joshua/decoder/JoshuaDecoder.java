@@ -269,22 +269,20 @@ public class JoshuaDecoder {
 		try {
 
 			if (JoshuaConfiguration.tm_file == null)
-				throw new RuntimeException("No translation grammar or suffix array grammar was specified.");
+				throw new RuntimeException("No translation grammar was specified.");
 
-			// Sets: languageModel
-			if (JoshuaConfiguration.have_lm_model)
-				initializeLanguageModel();
-
+            // initialize the LM
+            initializeLanguageModel();
 
 			// initialize and load grammar
+            // TODO: this should be extended to allow any number of grammars
 			this.initializeGlueGrammar();					
 			this.initializeMainTranslationGrammar();
 					
-			//					 Initialize the features: requires that
-			// LM model has been initialized. If an LM
-			// feature is used, need to read config file
-			// again
-			this.initializeFeatureFunctions(configFile);
+			// Initialize the features: requires that LM model has
+			// been initialized. If an LM feature is used, need to
+			// read config file again
+			this.initializeFeatureFunctions();
 					
 			this.initializeStateComputers(JoshuaConfiguration.lm_order, JoshuaConfiguration.ngramStateID);
 
@@ -309,8 +307,6 @@ public class JoshuaDecoder {
 		return this;
 	}
 		
-	// TODO: maybe move to JoshuaConfiguration to enable moving the featureFunction parsing there (Needs: Vocabulary; Sets: languageModel)
-	// TODO: check we actually have a feature that requires a language model
 	private void initializeLanguageModel() throws IOException {
 		// FIXME: And we should check only once for the default (which supports left/right equivalent state) vs everything else (which doesn't)
 		// TODO: maybe have a special exception type for BadConfigfileException instead of using IllegalArgumentException?
@@ -328,9 +324,12 @@ public class JoshuaDecoder {
 			this.languageModel = new LMGrammarBerkeley(JoshuaConfiguration.lm_order, JoshuaConfiguration.lm_file);
 			Vocabulary.registerLanguageModel(this.languageModel);
 			Vocabulary.id(JoshuaConfiguration.default_non_terminal);
-		} else {
+		} else if (JoshuaConfiguration.lm_type.equals("none")) {
+            this.languageModel = null;
 
+        } else {
 			logger.warning("WARNING: using built-in language model; you probably didn't intend this");
+			logger.warning("  Valid lm types are 'kenlm', 'berkeleylm', 'javalm' and 'none'");
 			
 			this.languageModel = new LMGrammarJAVA(
 				JoshuaConfiguration.lm_order,
@@ -365,8 +364,7 @@ public class JoshuaDecoder {
 	private void initializeMainTranslationGrammar() throws IOException {
 
 		if (! JoshuaConfiguration.use_sent_specific_tm) {
-			if (logger.isLoggable(Level.INFO))
-				logger.info("Using grammar read from file " + JoshuaConfiguration.tm_file);
+            logger.info("Using grammar read from file " + JoshuaConfiguration.tm_file);
 
 			MemoryBasedBatchGrammar gr = new MemoryBasedBatchGrammar(
 					JoshuaConfiguration.tm_format,
@@ -384,8 +382,7 @@ public class JoshuaDecoder {
 				gr.obtainRulesIDTable(this.ruleStringToIDTable);			
 			}
 		} else {
-			if (logger.isLoggable(Level.INFO))
-				logger.info("Basing sentence-specific grammars on file " + JoshuaConfiguration.tm_file);
+            logger.info("Basing sentence-specific grammars on file " + JoshuaConfiguration.tm_file);
 		}
 	}
 	
@@ -395,112 +392,93 @@ public class JoshuaDecoder {
 		stateComputers.add(ngramStateComputer);
 	}
 	
-	// BUG: why are we re-reading the configFile? JoshuaConfiguration should do this. (Needs: languageModel, Vocabulary, (logger?); Sets: featureFunctions)
-	private void initializeFeatureFunctions(String configFile)
-	throws IOException {
+    // iterate over the features that were discovered when the config file was read
+	private void initializeFeatureFunctions() {
 		this.featureFunctions = new ArrayList<FeatureFunction>();
 		JoshuaConfiguration.num_phrasal_features = 0;	
 		
-		LineReader reader = new LineReader(configFile);
-		try { for (String line : reader) {
-			line = line.trim();
-			if (Regex.commentOrEmptyLine.matches(line)) 
-				continue;
-			
-			if (line.indexOf("=") == -1) { // ignore lines with "="
-				String[] fds = Regex.spaces.split(line);
-				
-				if ("lm".equals(fds[0]) && fds.length == 2) { // lm weight
-					if (null == this.languageModel) {
-						throw new IllegalArgumentException("LM model has not been properly initialized before setting order and weight");
-					}
-					double weight = Double.parseDouble(fds[1].trim());
-					this.featureFunctions.add(
-						new LanguageModelFF(
-							JoshuaConfiguration.ngramStateID,	
-							this.featureFunctions.size(),
-							JoshuaConfiguration.lm_order,
-							this.languageModel, weight));
-					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format(
-							"Line: %s\nAdd LM, order: %d; weight: %.3f;",
-							line, JoshuaConfiguration.lm_order, weight));
-                    
-				} else if ("latticecost".equals(fds[0]) && fds.length == 2) {
-					double weight = Double.parseDouble(fds[1].trim());
-					this.featureFunctions.add(
-						new SourcePathFF(
-							this.featureFunctions.size(), weight));
-					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format(
-							"Line: %s\nAdd Source lattice cost, weight: %.3f",
-							line, weight));
-					
-				} else if ("phrasemodel".equals(fds[0]) && fds.length == 4) { // phrasemodel owner column(0-indexed) weight
-					int    owner  = Vocabulary.id(fds[1]);
-					int    column = Integer.parseInt(fds[2].trim());
-					double weight = Double.parseDouble(fds[3].trim());
-					this.featureFunctions.add(
+        for (String featureLine: JoshuaConfiguration.features) {
+
+            String fields[] = featureLine.split("\\s+");
+            String feature = fields[0];
+
+            // initialize the language model
+            if (feature.equals("lm") && ! JoshuaConfiguration.lm_type.equals("none")) {
+                double weight = Double.parseDouble(fields[1]);
+
+                this.featureFunctions.add(
+   				    new LanguageModelFF(
+					    JoshuaConfiguration.ngramStateID,	
+					    this.featureFunctions.size(),
+					    JoshuaConfiguration.lm_order,
+					    this.languageModel, weight));
+
+                logger.info(String.format("FEATURE: order %d language model (weight %.3f)", JoshuaConfiguration.lm_order, weight));
+            }
+
+            else if (feature.equals("latticecost")) {
+                double weight = Double.parseDouble(fields[1]);
+                this.featureFunctions.add(new SourcePathFF(this.featureFunctions.size(), weight));
+                logger.info(String.format("FEATURE: lattice cost (weight %.3f)", weight));
+            }
+
+            else if (feature.equals("phrasemodel")) {
+                // TODO: error-checking
+
+                int    owner  = Vocabulary.id(fields[1]);
+                int    column = Integer.parseInt(fields[2].trim());
+                double weight = Double.parseDouble(fields[3].trim());
+
+                this.featureFunctions.add( 
 						new PhraseModelFF(
-							this.featureFunctions.size(),
+                            this.featureFunctions.size(),
 							weight, owner, column));
-					JoshuaConfiguration.num_phrasal_features += 1;
-					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format(
-							"Process Line: %s\nAdd PhraseModel, owner: %s; column: %d; weight: %.3f",
-							line, owner, column, weight));
-					
-				} else if ("arityphrasepenalty".equals(fds[0]) && fds.length == 5) { // arityphrasepenalty owner start_arity end_arity weight
-					int owner      = Vocabulary.id(fds[1]);
-					int startArity = Integer.parseInt(fds[2].trim());
-					int endArity   = Integer.parseInt(fds[3].trim());
-					double weight  = Double.parseDouble(fds[4].trim());
-					this.featureFunctions.add(
-						new ArityPhrasePenaltyFF(
-							this.featureFunctions.size(),
-							weight, owner, startArity, endArity));
-					
-					if (logger.isLoggable(Level.INFO))
-						logger.finest(String.format(
-							"Process Line: %s\nAdd ArityPhrasePenalty, owner: %s; startArity: %d; endArity: %d; weight: %.3f",
-							line, owner, startArity, endArity, weight));
-					
-				} else if ("wordpenalty".equals(fds[0]) && fds.length == 2) { // wordpenalty weight
-					double weight = Double.parseDouble(fds[1].trim());
-					this.featureFunctions.add(
-						new WordPenaltyFF(
-							this.featureFunctions.size(), weight));
-					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format(
-							"Process Line: %s\nAdd WordPenalty, weight: %.3f",
-							line, weight));
+                JoshuaConfiguration.num_phrasal_features += 1;
 
-				} else if ("oovpenalty".equals(fds[0]) && fds.length == 2) { // wordpenalty weight
-					double weight = Double.parseDouble(fds[1].trim());
-					int owner  = Vocabulary.id("pt");
-					int column = JoshuaConfiguration.num_phrasal_features;
+                logger.info(String.format("FEATURE: phrase model %d, owner %s (weight %.3f", column, owner, weight));
+            }
 
-					this.featureFunctions.add(
-						new OOVFF(
-							this.featureFunctions.size(), weight, owner));
-
-					JoshuaConfiguration.oov_feature_index = column;
-					JoshuaConfiguration.num_phrasal_features += 1;
-
-					if (logger.isLoggable(Level.FINEST))
-						logger.finest(String.format(
-							"Process Line: %s\nAdd OOVPenalty, weight: %.3f",
-							line, weight));
+            else if (feature.equals("arityphrasepenalty")) {
+                int owner      = Vocabulary.id(fields[1]);
+                int startArity = Integer.parseInt(fields[2].trim());
+                int endArity   = Integer.parseInt(fields[3].trim());
+                double weight  = Double.parseDouble(fields[4].trim());
+                this.featureFunctions.add(
+                    new ArityPhrasePenaltyFF(
+                        this.featureFunctions.size(),
+                        weight, owner, startArity, endArity));
 					
-					
-				} else {
-					throw new IllegalArgumentException("Wrong config line: " + line);
-				}
-			}
-		} } finally {
-			reader.close();
-		}
-	}
+                logger.info(String.format("FEATURE: arity phrase penalty: owner %s, start %d, end %d (weight %.3f)", owner, startArity, endArity, weight));
+            }
+
+            else if (feature.equals("wordpenalty")) {
+                double weight = Double.parseDouble(fields[1].trim());
+
+                this.featureFunctions.add(
+                    new WordPenaltyFF(
+                        this.featureFunctions.size(), weight));
+
+                logger.info(String.format("FEATURE: word penalty (weight %.3f)", weight));
+            }
+
+            else if (feature.equals("oovpenalty")) {
+                double weight = Double.parseDouble(fields[1].trim());
+                int owner  = Vocabulary.id("pt");
+                int column = JoshuaConfiguration.num_phrasal_features;
+
+                this.featureFunctions.add(
+                    new OOVFF(
+                        this.featureFunctions.size(), weight, owner));
+
+                JoshuaConfiguration.oov_feature_index = column;
+                JoshuaConfiguration.num_phrasal_features += 1;
+
+                logger.info(String.format("FEATURE: OOV penalty (weight %.3f)", weight));
+            } else {
+                System.err.println("* WARNING: invalid feature '" + featureLine + "'");
+            }
+        }
+    }
 	
 	
 //===============================================================
@@ -515,10 +493,7 @@ public class JoshuaDecoder {
 			logger.warning("Couldn't initialize logging properties from '" + logFile + "'");
 		}
 
-		long startTime = 0;
-		if (logger.isLoggable(Level.INFO)) {
-			startTime = System.currentTimeMillis();
-		}
+		long startTime = System.currentTimeMillis();
 		
 		if (args.length < 1) {
 			System.out.println("Usage: java " +
@@ -554,6 +529,7 @@ public class JoshuaDecoder {
                     break;
                 }
             }
+
         } else {
 
             configFile  = args[0].trim();
@@ -568,30 +544,21 @@ public class JoshuaDecoder {
                 oracleFile = args[3].trim();
         }
 		
-
 		/* Step-0: some sanity checking */
 		JoshuaConfiguration.sanityCheck();
 		
 		/* Step-1: initialize the decoder, test-set independent */
 		JoshuaDecoder decoder = new JoshuaDecoder(configFile);
 
-		if (logger.isLoggable(Level.INFO)) {
-			logger.info("Before translation, loading time is "
-				+ ((double)(System.currentTimeMillis() - startTime) / 1000.0)
-				+ " seconds");
-		}
-		
-		
+        logger.info(String.format("Model loading took %d seconds",
+                (System.currentTimeMillis() - startTime) / 1000.0));
+        
 		/* Step-2: Decoding */
 		decoder.decodeTestSet(testFile, nbestFile, oracleFile);
 		
-		
 		/* Step-3: clean up */
-		decoder.cleanUp();
-		if (logger.isLoggable(Level.INFO)) {
-			logger.info("Total running time is "
-				+ ((double)(System.currentTimeMillis() - startTime) / 1000.0)
-				+ " seconds");
-		}
+        decoder.cleanUp();
+        logger.info(String.format("Total running time: %d seconds", 
+                (System.currentTimeMillis() - startTime) / 1000.0));
 	}
 }

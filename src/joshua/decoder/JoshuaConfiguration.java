@@ -22,6 +22,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Random;
+import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -151,7 +152,8 @@ public class JoshuaConfiguration {
 	
 	private static final Logger logger =
 		Logger.getLogger(JoshuaConfiguration.class.getName());
-	
+
+    public static ArrayList<String> features = new ArrayList<String>();
 	
 //===============================================================
 // Methods
@@ -193,244 +195,257 @@ public class JoshuaConfiguration {
         }
     }
 
-	// This is static instead of a constructor because all the fields are static. Yuck.
+	// This is static instead of a constructor because all the fields
+	// are static. 
 	public static void readConfigFile(String configFile) throws IOException {
 		
 		LineReader configReader = new LineReader(configFile);
 		try { for (String line : configReader) {
 			line = line.trim(); // .toLowerCase();
+
 			if (Regex.commentOrEmptyLine.matches(line)) continue;
 			
-			
+            /* There are two kinds of substantive (non-comment,
+             * non-blank) lines: parameters and feature values.
+             * Parameters match the pattern "key = value"; all other
+             * substantive lines are interpreted as features.
+             */
+
 			if (line.indexOf("=") != -1) { // parameters; (not feature function)
 				String[] fds = Regex.equalsWithSpaces.split(line);
 				if (fds.length != 2) {
 					logger.severe("Wrong config line: " + line);
 					System.exit(1);
 				}
+
+                String parameter = normalize_key(fds[0]);
 			
-				if ("lm_file".equals(fds[0])) {
+				if (parameter.equals(normalize_key("lm_file"))) {
 					lm_file = fds[1].trim();
 					logger.finest(String.format("lm file: %s", lm_file));
-				} else if ("tm_file".equals(fds[0])) {
+				} else if (parameter.equals(normalize_key("tm_file"))) {
 					tm_file = fds[1].trim();
 					logger.finest(String.format("tm file: %s", tm_file));
 				
-				} else if ("glue_file".equals(fds[0])) {
+				} else if (parameter.equals(normalize_key("glue_file"))) {
 					glue_file = fds[1].trim();
 					logger.finest(String.format("glue file: %s", glue_file));
 				
-				} else if ("tm_format".equals(fds[0])) {
+				} else if (parameter.equals(normalize_key("tm_format"))) {
 					tm_format = fds[1].trim();
 						
 					logger.finest(String.format("tm format: %s", tm_format));
 
-				} else if ("glue_format".equals(fds[0])) {
+				} else if (parameter.equals(normalize_key("glue_format"))) {
 					glue_format = fds[1].trim();
 						
 					logger.finest(String.format("glue format: %s", glue_format));
-				} else if ("lm_type".equals(fds[0])) {
+				} else if (parameter.equals(normalize_key("lm_type"))) {
 					lm_type = String.valueOf(fds[1]);
-					if (! lm_type.equals("kenlm") && ! lm_type.equals("berkeleylm") && ! lm_type.equals("javalm")) {
+					if (! lm_type.equals("kenlm")
+                        && ! lm_type.equals("berkeleylm")
+                        && ! lm_type.equals("none")
+                        && ! lm_type.equals("javalm")) {
 						System.err.println("* FATAL: lm_type '" + lm_type + "' not supported");
-						System.err.println("* supported types are 'kenlm' (default), 'berkeleylm', and 'javalm' (not recommended)");
+						System.err.println("* supported types are 'kenlm' (default), 'berkeleylm', and 'javalm' (not recommended), and 'none'");
 						System.exit(1);
 					}
 					
-				} else if ("lm_ceiling_cost".equals(fds[0])) {
+				} else if (parameter.equals(normalize_key("lm_ceiling_cost"))) {
 					lm_ceiling_cost = Double.parseDouble(fds[1]);
 					logger.finest(String.format("lm_ceiling_cost: %s", lm_ceiling_cost));
 					
-				} else if ("use_left_equivalent_state".equals(fds[0])) {
+				} else if (parameter.equals(normalize_key("use_left_equivalent_state"))) {
 					use_left_equivalent_state = Boolean.valueOf(fds[1]);
 					logger.finest(String.format("use_left_equivalent_state: %s", use_left_equivalent_state));
 				
-				} else if ("use_right_equivalent_state".equals(fds[0])) {
+				} else if (parameter.equals(normalize_key("use_right_equivalent_state"))) {
 					use_right_equivalent_state = Boolean.valueOf(fds[1]);
 					logger.finest(String.format("use_right_equivalent_state: %s", use_right_equivalent_state));
 					
-				} else if ("order".equals(fds[0])) {
+				} else if (parameter.equals(normalize_key("order"))) {
 					lm_order = Integer.parseInt(fds[1]);
 					logger.finest(String.format("g_lm_order: %s", lm_order));
 					
-				} else if ("use_sent_specific_lm".equals(fds[0])) {
+				} else if (parameter.equals(normalize_key("use_sent_specific_lm"))) {
 					use_sent_specific_lm = Boolean.valueOf(fds[1]);
 					logger.finest(String.format("use_sent_specific_lm: %s", use_sent_specific_lm));
 					
-				} else if ("use_sent_specific_tm".equals(fds[0])) {
+				} else if (parameter.equals(normalize_key("use_sent_specific_tm"))) {
 					use_sent_specific_tm = Boolean.valueOf(fds[1]);
 					logger.finest(String.format("use_sent_specific_tm: %s", use_sent_specific_tm));
 
-				} else if ("keep_sent_specific_tm".equals(fds[0])) {
+				} else if (parameter.equals(normalize_key("keep_sent_specific_tm"))) {
 					keep_sent_specific_tm = Boolean.valueOf(fds[1]);
 					logger.finest(String.format("keep_sent_specific_tm: %s", use_sent_specific_tm));
 					
-				} else if ("span_limit".equals(fds[0])) {
+				} else if (parameter.equals(normalize_key("span_limit"))) {
 					span_limit = Integer.parseInt(fds[1]);
 					logger.finest(String.format("span_limit: %s", span_limit));
 					
-				} else if ("phrase_owner".equals(fds[0])) {
+				} else if (parameter.equals(normalize_key("phrase_owner"))) {
 					phrase_owner = fds[1].trim();
 					logger.finest(String.format("phrase_owner: %s", phrase_owner));
 					
-				} else if ("glue_owner".equals(fds[0])) {
+				} else if (parameter.equals(normalize_key("glue_owner"))) {
 					glue_owner = fds[1].trim();
 					logger.finest(String.format("glue_owner: %s", glue_owner));
 					
-				}  else if ("default_non_terminal".equals(fds[0])) {
+				}  else if (parameter.equals(normalize_key("default_non_terminal"))) {
 					default_non_terminal = "[" + fds[1].trim() + "]";
 //					default_non_terminal = fds[1].trim();
 					logger.finest(String.format("default_non_terminal: %s", default_non_terminal));
 					
-				} else if ("goalSymbol".equals(fds[0]) || "goal_symbol".equals(fds[0]) ) {
+				} else if (parameter.equals(normalize_key("goalSymbol"))) {
 					goal_symbol = "[" + fds[1].trim() + "]";
 //					goal_symbol = fds[1].trim();
 					logger.finest("goalSymbol: " + goal_symbol);
 					
-				} else if ("constrain_parse".equals(fds[0])) {
+				} else if (parameter.equals(normalize_key("constrain_parse"))) {
 					constrain_parse = Boolean.parseBoolean(fds[1]);
 
-				} else if ("oov_feature_index".equals(fds[0])) {
+				} else if (parameter.equals(normalize_key("oov_feature_index"))) {
 					oov_feature_index = Integer.parseInt(fds[1]);
 
-				} else if ("use_pos_labels".equals(fds[0])) {
+				} else if (parameter.equals(normalize_key("use_pos_labels"))) {
 					use_pos_labels = Boolean.parseBoolean(fds[1]);
 					
-				} else if ("fuzz1".equals(fds[0])) {
+				} else if (parameter.equals(normalize_key("fuzz1"))) {
 					fuzz1 = Double.parseDouble(fds[1]);
 					logger.finest(String.format("fuzz1: %s", fuzz1));
 					
-				} else if ("fuzz2".equals(fds[0])) {
+				} else if (parameter.equals(normalize_key("fuzz2"))) {
 					fuzz2 = Double.parseDouble(fds[1]);
 					logger.finest(String.format("fuzz2: %s", fuzz2));
 					
-				} else if ("max_n_items".equals(fds[0])) {
+				} else if (parameter.equals(normalize_key("max_n_items"))) {
 					max_n_items = Integer.parseInt(fds[1]);
 					logger.finest(String.format("max_n_items: %s", max_n_items));
 					
-				} else if ("relative_threshold".equals(fds[0])) {
+				} else if (parameter.equals(normalize_key("relative_threshold"))) {
 					relative_threshold = Double.parseDouble(fds[1]);
 					logger.finest(String.format("relative_threshold: %s", relative_threshold));
 					
-				} else if ("max_n_rules".equals(fds[0])) {
+				} else if (parameter.equals(normalize_key("max_n_rules"))) {
 					max_n_rules = Integer.parseInt(fds[1]);
 					logger.finest(String.format("max_n_rules: %s", max_n_rules));
 					
-				} else if ("use_unique_nbest".equals(fds[0])) {
+				} else if (parameter.equals(normalize_key("use_unique_nbest"))) {
 					use_unique_nbest = Boolean.valueOf(fds[1]);
 					logger.finest(String.format("use_unique_nbest: %s", use_unique_nbest));
 					
-				} else if ("add_combined_cost".equals(fds[0])) {
+				} else if (parameter.equals(normalize_key("add_combined_cost"))) {
 					add_combined_cost = Boolean.valueOf(fds[1]);
 					logger.finest(String.format("add_combined_cost: %s", add_combined_cost));
 					
-				} else if ("use_tree_nbest".equals(fds[0])) {
+				} else if (parameter.equals(normalize_key("use_tree_nbest"))) {
 					use_tree_nbest = Boolean.valueOf(fds[1]);
 					logger.finest(String.format("use_tree_nbest: %s", use_tree_nbest));
 					
-				} else if ("escape_trees".equals(fds[0])) {
+				} else if (parameter.equals(normalize_key("escape_trees"))) {
 					escape_trees = Boolean.valueOf(fds[1]);
 					logger.finest(String.format("escape_trees: %s", escape_trees));
 					
-				} else if ("include_align_index".equals(fds[0])) {
+				} else if (parameter.equals(normalize_key("include_align_index"))) {
 					include_align_index = Boolean.valueOf(fds[1]);
 					logger.finest(String.format("include_align_index: %s", include_align_index));
 					
-				} else if ("top_n".equals(fds[0])) {
+				} else if (parameter.equals(normalize_key("top_n"))) {
 					topN = Integer.parseInt(fds[1]);
 					logger.finest(String.format("topN: %s", topN));
 					
-				} else if ("parallel_files_prefix".equals(fds[0])) {
+				} else if (parameter.equals(normalize_key("parallel_files_prefix"))) {
 					Random random = new Random();
 		            int v = random.nextInt(10000000);//make it random
 					parallel_files_prefix = fds[1] + v;
 					logger.info(String.format("parallel_files_prefix: %s", parallel_files_prefix));
 
-				} else if ("num_parallel_decoders".equals(fds[0]) || "threads".equals(fds[0]) ) {
+				} else if (parameter.equals(normalize_key("num_parallel_decoders"))
+                    || parameter.equals(normalize_key("threads"))) {
 					num_parallel_decoders = Integer.parseInt(fds[1]);
 					if (num_parallel_decoders <= 0) {
 						throw new IllegalArgumentException("Must specify a positive number for num_parallel_decoders");
 					}
 					logger.finest(String.format("num_parallel_decoders: %s", num_parallel_decoders));
 					
-				} else if ("save_disk_hg".equals(fds[0])) {
+				} else if (parameter.equals(normalize_key("save_disk_hg"))) {
 					save_disk_hg = Boolean.valueOf(fds[1]);
 					logger.finest(String.format("save_disk_hg: %s", save_disk_hg));
 					
-				} else if ("use_kbest_hg".equals(fds[0])) {
+				} else if (parameter.equals(normalize_key("use_kbest_hg"))) {
 					use_kbest_hg = Boolean.valueOf(fds[1]);
 					logger.finest(String.format("use_kbest_hg: %s", use_kbest_hg));
 					
-				} else if ("forest_pruning".equals(fds[0])) {
+				} else if (parameter.equals(normalize_key("forest_pruning"))) {
 					forest_pruning = Boolean.valueOf(fds[1]);
 					logger.finest(String.format("forest_pruning: %s", forest_pruning));
 					
-				} else if ("forest_pruning_threshold".equals(fds[0])) {
+				} else if (parameter.equals(normalize_key("forest_pruning_threshold"))) {
 					forest_pruning_threshold = Double.parseDouble(fds[1]);
 					logger.finest(String.format("forest_pruning_threshold: %s", forest_pruning_threshold));
 				
-				} else if ("visualize_hypergraph".equals(fds[0])) {
+				} else if (parameter.equals(normalize_key("visualize_hypergraph"))) {
 					visualize_hypergraph = Boolean.valueOf(fds[1]);
 					logger.finest(String.format("visualize_hypergraph: %s", visualize_hypergraph));
 					
-				} else if ("mark_oovs".equals(fds[0])) {
+				} else if (parameter.equals(normalize_key("mark_oovs"))) {
 					mark_oovs = Boolean.valueOf(fds[1]);
 					logger.finest(String.format("mark_oovs: %s", mark_oovs));
 					
-				} else if ("segment_file_parser_class".equals(fds[0])) {
+				} else if (parameter.equals(normalize_key("segment_file_parser_class"))) {
 					segmentFileParserClass = fds[1].trim();
 					logger.finest("segmentFileParserClass: " + segmentFileParserClass);
 					
-                } else if ("pop-limit".equals(fds[0])) {
+                } else if (parameter.equals(normalize_key("pop-limit"))) {
                     pop_limit = Integer.valueOf(fds[1]);
                     logger.finest(String.format("pop-limit: %s", pop_limit)); 
 
-				} else if ("useCubePrune".equals(fds[0])) {
+				} else if (parameter.equals(normalize_key("useCubePrune"))) {
 					useCubePrune = Boolean.valueOf(fds[1]);
 					if(useCubePrune==false)
 						logger.warning("useCubePrune=false");
 					logger.finest(String.format("useCubePrune: %s", useCubePrune));				
-				}else if ("useBeamAndThresholdPrune".equals(fds[0])) {
+				} else if (parameter.equals(normalize_key("useBeamAndThresholdPrune"))) {
 					useBeamAndThresholdPrune = Boolean.valueOf(fds[1]);
 					if(useBeamAndThresholdPrune==false)
 						logger.warning("useBeamAndThresholdPrune=false");
 					logger.finest(String.format("useBeamAndThresholdPrune: %s", useBeamAndThresholdPrune));				
-				} else if ("oovFeatureCost".equals(fds[0])) {
+				} else if (parameter.equals(normalize_key("oovFeatureCost"))) {
 					oov_feature_cost = Float.parseFloat(fds[1]);
 					logger.finest(String.format("oovFeatureCost: %s", oov_feature_cost));
-				} else if ("useTMFeat".equals(fds[0])) {
+				} else if (parameter.equals(normalize_key("useTMFeat"))) {
 					useTMFeat = Boolean.valueOf(fds[1]);
 					logger.finest(String.format("useTMFeat: %s", useTMFeat));
 
-				} else if ("useLMFeat".equals(fds[0])) {
+				} else if (parameter.equals(normalize_key("useLMFeat"))) {
 					useLMFeat = Boolean.valueOf(fds[1]);
 					logger.finest(String.format("useLMFeat: %s", useLMFeat));
 
-				} else if ("useMicroTMFeat".equals(fds[0])) {
+				} else if (parameter.equals(normalize_key("useMicroTMFeat"))) {
 					useMicroTMFeat = new Boolean(fds[1].trim());
 					logger.finest(String.format("useMicroTMFeat: %s", useMicroTMFeat));					
-				} else if ("wordMapFile".equals(fds[0])) {
+				} else if (parameter.equals(normalize_key("wordMapFile"))) {
 					wordMapFile = fds[1].trim();
 					logger.finest(String.format("wordMapFile: %s", wordMapFile));					
-				} else if ("useRuleIDName".equals(fds[0])) {
+				} else if (parameter.equals(normalize_key("useRuleIDName"))) {
 					useRuleIDName = new Boolean(fds[1].trim());
 					logger.finest(String.format("useRuleIDName: %s", useRuleIDName));					
-				} else if ("startNgramOrder".equals(fds[0])) {
+				} else if (parameter.equals(normalize_key("startNgramOrder"))) {
 					startNgramOrder = Integer.parseInt(fds[1]);
 					logger.finest(String.format("startNgramOrder: %s", startNgramOrder));
-				} else if ("endNgramOrder".equals(fds[0])) {
+				} else if (parameter.equals(normalize_key("endNgramOrder"))) {
 					endNgramOrder = Integer.parseInt(fds[1]);
 					logger.finest(String.format("endNgramOrder: %s", endNgramOrder));
-				}else if ("useEdgeNgramOnly".equals(fds[0])) {
+				} else if (parameter.equals(normalize_key("useEdgeNgramOnly"))) {
 					useEdgeNgramOnly = Boolean.valueOf(fds[1]);
 					logger.finest(String.format("useEdgeNgramOnly: %s", useEdgeNgramOnly));
-				}else if ("useTMTargetFeat".equals(fds[0])) {
+				} else if (parameter.equals(normalize_key("useTMTargetFeat"))) {
 					useTMTargetFeat = Boolean.valueOf(fds[1]);
 					logger.finest(String.format("useTMTargetFeat: %s", useTMTargetFeat));
-				} else if ("useGoogleLinearCorpusGain".equals(fds[0])) {
+				} else if (parameter.equals(normalize_key("useGoogleLinearCorpusGain"))) {
 					useGoogleLinearCorpusGain = new Boolean(fds[1].trim());
 					logger.finest(String.format("useGoogleLinearCorpusGain: %s", useGoogleLinearCorpusGain));					
-				} else if ("googleBLEUWeights".equals(fds[0])) {
+				} else if (parameter.equals(normalize_key("googleBLEUWeights"))) {
 					String[] googleWeights = fds[1].trim().split(";");
 					if (googleWeights.length!=5){
 						logger.severe("wrong line=" + line);
@@ -442,30 +457,38 @@ public class JoshuaConfiguration {
 					
 					logger.finest(String.format("googleBLEUWeights: %s", linearCorpusGainThetas));		
 					
-				} else if ("oracleFile".equals(fds[0])) {
+				} else if (parameter.equals(normalize_key("oracleFile"))) {
 					oracleFile = fds[1].trim();
 					if (! new File(oracleFile).exists()) {
 						logger.warning("FATAL: can't find oracle file '" + oracleFile + "'");
 						System.exit(1);
 					}
+
+                } else if (parameter.equals("c") || parameter.equals("config")) {
+                    // this was used to send in the config file, just ignore it
+                    ;
+
 				} else {
-					logger.warning("WARNING: unknown configuration parameter '" + fds[0] + "'");
-					// System.exit(1);
+					logger.warning("FATAL: unknown configuration parameter '" + fds[0] + "'");
+					System.exit(1);
 				}
 				
-				
-			} else { // feature function
-				String[] fds = Regex.spaces.split(line);
-				if ("lm".equals(fds[0]) && fds.length == 2) { // lm  weight
-					have_lm_model = true;
-					if (new Double(fds[1].trim())!=0){
-						use_max_lm_cost_for_oov = true;
-					}
-					logger.info("useMaxLMCostForOOV=" + use_max_lm_cost_for_oov);
-				} 
+			} else {
+                // Feature function.  These are processed a bit later
+                // in JoshuaDecoder initialization, so we just set
+                // them aside for now.
+
+                features.add(line);
+            }
+
+				// if ("lm".equals(fds[0]) && fds.length == 2) { // lm  weight
+				// 	if (new Double(fds[1].trim())!=0){
+				// 		use_max_lm_cost_for_oov = true;
+				// 	}
+				// 	logger.info("useMaxLMCostForOOV=" + use_max_lm_cost_for_oov);
+				// }
 			}
 			
-			} 
 		} finally { configReader.close(); }
 		
 		if (useGoogleLinearCorpusGain) {
@@ -488,4 +511,19 @@ public class JoshuaConfiguration {
 			System.exit(0);
 		}
 	}
+
+    /**
+     * Normalizes parameter names by removing underscores and hyphens
+     * and lowercasing.  This defines equivalence classes on external
+     * use of parameter names, permitting arbitrary_under_scores and
+     * camelCasing in paramter names without forcing the user to
+     * memorize them all.  Here are some examples of equivalent ways
+     * to refer to parameter names:
+     *
+     * {pop-limit, poplimit, PopLimit, popLimit, pop_lim_it}
+     * {lmfile, lm-file, LM-FILE, lm_file}
+     */
+    public static String normalize_key(String text) {
+        return text.replaceAll("[-_]", "").toLowerCase();
+    }
 }
