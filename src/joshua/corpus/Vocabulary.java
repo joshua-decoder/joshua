@@ -172,11 +172,24 @@ public class Vocabulary {
 		return UNKNOWN_WORD;
 	}
 
+    /**
+     * Returns true if the ID represents a nonterminal.
+     */
 	public static boolean nt(int id) {
 		return (id < 0);
 	}
 	
+    /**
+     * Returns true if the ID represents a nonterminal.
+     */
 	public static boolean idx(int id) {
+		return (id < 0);
+	}
+
+    /**
+     * Returns true if the ID represents a nonterminal.
+     */
+	public static boolean isNonterminal(int id) {
 		return (id < 0);
 	}
 

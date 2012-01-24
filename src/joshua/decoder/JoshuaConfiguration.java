@@ -40,6 +40,10 @@ import joshua.util.io.LineReader;
  */
 public class JoshuaConfiguration {
 	//lm config
+    // new format enabling multiple language models
+    public static ArrayList<String> lms              = new ArrayList<String>();
+
+    // old format specifying attributes of a single language model separately
 	public static String lm_type                     = "kenlm";
 	public static double  lm_ceiling_cost            = 100;
 	public static boolean use_left_equivalent_state  = false;
@@ -53,7 +57,7 @@ public class JoshuaConfiguration {
 	public static int     span_limit 								 = 10;
 	//note: owner should be different from each other, it can have same value as a word in LM/TM
 	public static String  phrase_owner               = "pt";
-	public static String  glue_owner                 = "glue_owner";//if such a rule is get applied, then no reordering is possible
+	public static String  glue_owner                 = "glue_owner";
 	public static String  default_non_terminal       = "PHRASE";
 	public static String  goal_symbol                = "S";
 	public static boolean use_sent_specific_tm       = false;
@@ -214,13 +218,17 @@ public class JoshuaConfiguration {
 			if (line.indexOf("=") != -1) { // parameters; (not feature function)
 				String[] fds = Regex.equalsWithSpaces.split(line);
 				if (fds.length != 2) {
-					logger.severe("Wrong config line: " + line);
+					logger.severe("* FATAL: bad config file line '" + line + "'");
 					System.exit(1);
 				}
 
                 String parameter = normalize_key(fds[0]);
 			
-				if (parameter.equals(normalize_key("lm_file"))) {
+                // store the line for later processing
+                if (parameter.equals(normalize_key("lm"))) {
+                    lms.add(fds[1]);
+
+                } else if (parameter.equals(normalize_key("lm_file"))) {
 					lm_file = fds[1].trim();
 					logger.finest(String.format("lm file: %s", lm_file));
 				} else if (parameter.equals(normalize_key("tm_file"))) {
@@ -491,6 +499,17 @@ public class JoshuaConfiguration {
 			
 		} finally { configReader.close(); }
 		
+        // This is for backwards compatibility of LM format.  If the
+        // config file did not contain lines of the form "lm = ...",
+        // then we create one from the handful of separately-specified
+        // parameters.  These combined lines are later processed in
+        // JoshuaDecoder as part of the multiple LM support
+        if (lms.size() == 0) {
+            String line = String.format("%s %d %b %b %.2f %s",
+                lm_type, lm_order, use_left_equivalent_state, use_right_equivalent_state, lm_ceiling_cost, lm_file);
+            lms.add(line);
+        }
+
 		if (useGoogleLinearCorpusGain) {
 			if (linearCorpusGainThetas==null) {
 				logger.info("linearCorpusGainThetas is null, did you set googleBLEUWeights properly?");

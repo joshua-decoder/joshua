@@ -135,10 +135,17 @@ public class LanguageModelFF extends DefaultStatefulFF {
 	}
 
 
-
-	
-	/**when calculate transition prob: when saw a <bo>, then need to add backoff weights, start from non-state words
-	 * */
+    /**
+     * Compute the cost of a rule application.  The cost of applying a
+     * rule is computed by determining the n-gram costs for all
+     * n-grams created by this rule application, and summing them.
+     * N-grams are created when (a) terminal words in the rule string
+     * are followed by a nonterminal (b) terminal words in the rule
+     * string are preceded by a nonterminal (c) we encounter adjacent
+     * nonterminals.  In all of these situations, the corresponding
+     * boundary words of the node in the hypergraph represented by the
+     * nonterminal must be retrieved.
+     */
 	private double computeTransition(int[] enWords,	List<HGNode> antNodes) {
 				
 		List<Integer> currentNgram   = new ArrayList<Integer>();
@@ -146,7 +153,8 @@ public class LanguageModelFF extends DefaultStatefulFF {
 		
 		for (int c = 0; c < enWords.length; c++) {
 			int curID = enWords[c];
-			if (Vocabulary.idx(curID)) {				
+
+			if (Vocabulary.isNonterminal(curID)) { 
 				int index = -(curID + 1);
 			
 				NgramDPState state = (NgramDPState) antNodes.get(index).getDPState(this.getStateID());
@@ -181,15 +189,13 @@ public class LanguageModelFF extends DefaultStatefulFF {
 				}
 				
 				//================  right context
-				//note: left_state_org_wrds will never take words from right context because it is either duplicate or out of range
-				//also, we will never score the right context probablity because they are either duplicate or partional ngram
 				int tSize = currentNgram.size();
 				for (int i = 0; i < rightContext.size(); i++) {
 					// replace context
 					currentNgram.set(tSize - rightContext.size() + i, rightContext.get(i) );
 				}
 			
-			} else {//terminal words
+			} else { // terminal words
 				currentNgram.add(curID);
 				if (currentNgram.size() == this.ngramOrder) {
 					// compute the current word probablity, and remove it

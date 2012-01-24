@@ -73,7 +73,7 @@ public class JoshuaDecoder {
 	private DecoderFactory             decoderFactory;
 	private List<GrammarFactory>       grammarFactories;
 	private ArrayList<FeatureFunction> featureFunctions;
-	private NGramLanguageModel         languageModel;
+	private ArrayList<NGramLanguageModel> languageModels;
 	
 	private List<StateComputer>        stateComputers;
 	
@@ -280,10 +280,10 @@ public class JoshuaDecoder {
 			this.initializeMainTranslationGrammar();
 					
 			// Initialize the features: requires that LM model has
-			// been initialized. If an LM feature is used, need to
-			// read config file again
+			// been initialized.
 			this.initializeFeatureFunctions();
 					
+            // initialize features that contribute to state (currently only n-grams)
 			this.initializeStateComputers(JoshuaConfiguration.lm_order, JoshuaConfiguration.ngramStateID);
 
 			// Sort the TM grammars (needed to do cube pruning)
@@ -308,36 +308,44 @@ public class JoshuaDecoder {
 	}
 		
 	private void initializeLanguageModel() throws IOException {
-		// FIXME: And we should check only once for the default (which supports left/right equivalent state) vs everything else (which doesn't)
-		// TODO: maybe have a special exception type for BadConfigfileException instead of using IllegalArgumentException?
-		
-		if (JoshuaConfiguration.lm_type.equals("kenlm")) {
-			if (JoshuaConfiguration.use_left_equivalent_state
-				|| JoshuaConfiguration.use_right_equivalent_state) {
-				throw new IllegalArgumentException("KenLM supports state.  Joshua should get around to using it.");
-			}
-			KenLM lm = new KenLM(JoshuaConfiguration.lm_file);
-			this.languageModel = lm;
-			Vocabulary.registerLanguageModel(lm);
-			Vocabulary.id(JoshuaConfiguration.default_non_terminal);
-		} else if (JoshuaConfiguration.lm_type.equals("berkeleylm")) {
-			this.languageModel = new LMGrammarBerkeley(JoshuaConfiguration.lm_order, JoshuaConfiguration.lm_file);
-			Vocabulary.registerLanguageModel(this.languageModel);
-			Vocabulary.id(JoshuaConfiguration.default_non_terminal);
-		} else if (JoshuaConfiguration.lm_type.equals("none")) {
-            this.languageModel = null;
 
-        } else {
-			logger.warning("WARNING: using built-in language model; you probably didn't intend this");
-			logger.warning("  Valid lm types are 'kenlm', 'berkeleylm', 'javalm' and 'none'");
+        // lm = kenlm 5 0 0 100 file
+        for (String lmLine: JoshuaConfiguration.lms) {
+            String tokens[] = lmLine.split("\\s+");
+            String lm_type        = tokens[0];
+            int lm_order             = Integer.parseInt(tokens[1]);
+            boolean left_equiv_state  = Boolean.parseBoolean(tokens[2]);
+            boolean right_equiv_state = Boolean.parseBoolean(tokens[3]);
+            int lm_ceiling_cost   = Integer.parseInt(tokens[4]);
+            String lm_file        = tokens[5];
+            
+            if (lm_type.equals("kenlm")) {
+                if (left_equiv_state || right_equiv_state) {
+                    throw new IllegalArgumentException("KenLM supports state.  Joshua should get around to using it.");
+                }
+
+                KenLM lm = new KenLM(lm_file);
+                this.languageModels.add(lm);
+                Vocabulary.registerLanguageModel(lm);
+                Vocabulary.id(JoshuaConfiguration.default_non_terminal);
+
+            } else if (lm_type.equals("berkeleylm")) {
+                LMGrammarBerkeley lm = new LMGrammarBerkeley(lm_order, lm_file);
+                this.languageModels.add(lm);
+                Vocabulary.registerLanguageModel(lm);
+                Vocabulary.id(JoshuaConfiguration.default_non_terminal);
+
+            } else if (lm_type.equals("none")) {
+                ; // do nothing
+
+            } else {
+                logger.warning("WARNING: using built-in language model; you probably didn't intend this");
+                logger.warning("  Valid lm types are 'kenlm', 'berkeleylm', 'javalm' and 'none'");
 			
-			this.languageModel = new LMGrammarJAVA(
-				JoshuaConfiguration.lm_order,
-				JoshuaConfiguration.lm_file,
-				JoshuaConfiguration.use_left_equivalent_state,
-				JoshuaConfiguration.use_right_equivalent_state);
-		}
-	}
+                this.languageModels.add(new LMGrammarJAVA(lm_order, lm_file, left_equiv_state, right_equiv_state));
+            }
+        }
+    }
 	
 	private void initializeGlueGrammar() throws IOException {
 		logger.info("Constructing glue grammar...");
@@ -386,7 +394,7 @@ public class JoshuaDecoder {
 		}
 	}
 	
-	private void initializeStateComputers(int nGramOrder, int ngramStateID){
+	private void initializeStateComputers(int nGramOrder, int ngramStateID) {
 		stateComputers = new ArrayList<StateComputer>();
 		StateComputer ngramStateComputer = new NgramStateComputer(nGramOrder, ngramStateID);
 		stateComputers.add(ngramStateComputer);
@@ -404,15 +412,20 @@ public class JoshuaDecoder {
 
             // initialize the language model
             if (feature.equals("lm") && ! JoshuaConfiguration.lm_type.equals("none")) {
-                double weight = Double.parseDouble(fields[1]);
+                int     index = Integer.parseInt(fields[1]);
+                double weight = Double.parseDouble(fields[2]);
 
                 this.featureFunctions.add(
    				    new LanguageModelFF(
+                        // TODO: check whether we need different state IDs (I think no)
 					    JoshuaConfiguration.ngramStateID,	
 					    this.featureFunctions.size(),
+                        // TODO: get order from language model to allow different ones
 					    JoshuaConfiguration.lm_order,
-					    this.languageModel, weight));
+                        // TODO: make sure the index exists
+					    this.languageModels.get(index), weight));
 
+                // TODO: lms should have a name or something
                 logger.info(String.format("FEATURE: order %d language model (weight %.3f)", JoshuaConfiguration.lm_order, weight));
             }
 
