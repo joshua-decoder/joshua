@@ -464,7 +464,7 @@ public class JoshuaConfiguration {
 						System.exit(1);
 					}
 
-                } else if (parameter.equals("c")) {
+                } else if (parameter.equals("c") || parameter.equals("config")) {
                     // this was used to send in the config file, just ignore it
                     ;
 

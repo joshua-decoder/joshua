@@ -364,8 +364,7 @@ public class JoshuaDecoder {
 	private void initializeMainTranslationGrammar() throws IOException {
 
 		if (! JoshuaConfiguration.use_sent_specific_tm) {
-			if (logger.isLoggable(Level.INFO))
-				logger.info("Using grammar read from file " + JoshuaConfiguration.tm_file);
+            logger.info("Using grammar read from file " + JoshuaConfiguration.tm_file);
 
 			MemoryBasedBatchGrammar gr = new MemoryBasedBatchGrammar(
 					JoshuaConfiguration.tm_format,
@@ -383,8 +382,7 @@ public class JoshuaDecoder {
 				gr.obtainRulesIDTable(this.ruleStringToIDTable);			
 			}
 		} else {
-			if (logger.isLoggable(Level.INFO))
-				logger.info("Basing sentence-specific grammars on file " + JoshuaConfiguration.tm_file);
+            logger.info("Basing sentence-specific grammars on file " + JoshuaConfiguration.tm_file);
 		}
 	}
 	
@@ -495,10 +493,7 @@ public class JoshuaDecoder {
 			logger.warning("Couldn't initialize logging properties from '" + logFile + "'");
 		}
 
-		long startTime = 0;
-		if (logger.isLoggable(Level.INFO)) {
-			startTime = System.currentTimeMillis();
-		}
+		long startTime = System.currentTimeMillis();
 		
 		if (args.length < 1) {
 			System.out.println("Usage: java " +
@@ -534,6 +529,7 @@ public class JoshuaDecoder {
                     break;
                 }
             }
+
         } else {
 
             configFile  = args[0].trim();
@@ -548,30 +544,21 @@ public class JoshuaDecoder {
                 oracleFile = args[3].trim();
         }
 		
-
 		/* Step-0: some sanity checking */
 		JoshuaConfiguration.sanityCheck();
 		
 		/* Step-1: initialize the decoder, test-set independent */
 		JoshuaDecoder decoder = new JoshuaDecoder(configFile);
 
-		if (logger.isLoggable(Level.INFO)) {
-			logger.info("Before translation, loading time is "
-				+ ((double)(System.currentTimeMillis() - startTime) / 1000.0)
-				+ " seconds");
-		}
-		
-		
+        logger.info(String.format("Model loading took %d seconds",
+                (System.currentTimeMillis() - startTime) / 1000.0));
+        
 		/* Step-2: Decoding */
 		decoder.decodeTestSet(testFile, nbestFile, oracleFile);
 		
-		
 		/* Step-3: clean up */
-		decoder.cleanUp();
-		if (logger.isLoggable(Level.INFO)) {
-			logger.info("Total running time is "
-				+ ((double)(System.currentTimeMillis() - startTime) / 1000.0)
-				+ " seconds");
-		}
+        decoder.cleanUp();
+        logger.info(String.format("Total running time: %d seconds", 
+                (System.currentTimeMillis() - startTime) / 1000.0));
 	}
 }
