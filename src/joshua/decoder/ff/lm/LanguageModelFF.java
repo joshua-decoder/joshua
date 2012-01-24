@@ -101,11 +101,8 @@ public class LanguageModelFF extends DefaultStatefulFF {
 		
 		LanguageModelFF.BACKOFF_LEFT_LM_STATE_SYM_ID = Vocabulary.id(BACKOFF_LEFT_LM_STATE_SYM);
 		LanguageModelFF.NULL_RIGHT_LM_STATE_SYM_ID = Vocabulary.id(NULL_RIGHT_LM_STATE_SYM);
-		
-		logger.info("LM feature, with an order=" + ngramOrder);
 	}
 	
-
 
 	public double transitionLogP(Rule rule, List<HGNode> antNodes, int spanStart, int spanEnd, SourcePath srcPath, int sentID) {
 		return computeTransition(rule.getEnglish(), antNodes);
@@ -115,7 +112,6 @@ public class LanguageModelFF extends DefaultStatefulFF {
 	public double finalTransitionLogP(HGNode antNode, int spanStart, int spanEnd, SourcePath srcPath, int sentID) {
 		return computeFinalTransitionLogP((NgramDPState)antNode.getDPState(this.getStateID()));
 	}
-	
 	
 
 	/**will consider all the complete ngrams, 

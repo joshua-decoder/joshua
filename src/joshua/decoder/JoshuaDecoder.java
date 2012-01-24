@@ -309,8 +309,11 @@ public class JoshuaDecoder {
 		
 	private void initializeLanguageModel() throws IOException {
 
+		this.languageModels = new ArrayList<NGramLanguageModel>();
+
         // lm = kenlm 5 0 0 100 file
         for (String lmLine: JoshuaConfiguration.lms) {
+
             String tokens[] = lmLine.split("\\s+");
             String lm_type        = tokens[0];
             int lm_order             = Integer.parseInt(tokens[1]);
@@ -324,7 +327,7 @@ public class JoshuaDecoder {
                     throw new IllegalArgumentException("KenLM supports state.  Joshua should get around to using it.");
                 }
 
-                KenLM lm = new KenLM(lm_file);
+                KenLM lm = new KenLM(lm_order, lm_file);
                 this.languageModels.add(lm);
                 Vocabulary.registerLanguageModel(lm);
                 Vocabulary.id(JoshuaConfiguration.default_non_terminal);
@@ -412,21 +415,28 @@ public class JoshuaDecoder {
 
             // initialize the language model
             if (feature.equals("lm") && ! JoshuaConfiguration.lm_type.equals("none")) {
-                int     index = Integer.parseInt(fields[1]);
-                double weight = Double.parseDouble(fields[2]);
+				int index;
+				double weight;
+
+				// new format
+				if (fields.length == 3) {
+					index = Integer.parseInt(fields[1]);
+					weight = Double.parseDouble(fields[2]);
+				} else {
+					index = 0;
+					weight = Double.parseDouble(fields[1]);
+				}
 
                 this.featureFunctions.add(
    				    new LanguageModelFF(
-                        // TODO: check whether we need different state IDs (I think no)
 					    JoshuaConfiguration.ngramStateID,	
 					    this.featureFunctions.size(),
-                        // TODO: get order from language model to allow different ones
-					    JoshuaConfiguration.lm_order,
+					    this.languageModels.get(index).getOrder(),
                         // TODO: make sure the index exists
 					    this.languageModels.get(index), weight));
 
                 // TODO: lms should have a name or something
-                logger.info(String.format("FEATURE: order %d language model (weight %.3f)", JoshuaConfiguration.lm_order, weight));
+                logger.info(String.format("FEATURE: language model #%d, order %d (weight %.3f)", (index+1), languageModels.get(index).getOrder(), weight));
             }
 
             else if (feature.equals("latticecost")) {
@@ -448,7 +458,7 @@ public class JoshuaDecoder {
 							weight, owner, column));
                 JoshuaConfiguration.num_phrasal_features += 1;
 
-                logger.info(String.format("FEATURE: phrase model %d, owner %s (weight %.3f", column, owner, weight));
+                logger.info(String.format("FEATURE: phrase model %d, owner %s (weight %.3f)", column, owner, weight));
             }
 
             else if (feature.equals("arityphrasepenalty")) {
@@ -564,7 +574,7 @@ public class JoshuaDecoder {
 		JoshuaDecoder decoder = new JoshuaDecoder(configFile);
 
         logger.info(String.format("Model loading took %d seconds",
-                (System.currentTimeMillis() - startTime) / 1000.0));
+                (System.currentTimeMillis() - startTime) / 1000));
         
 		/* Step-2: Decoding */
 		decoder.decodeTestSet(testFile, nbestFile, oracleFile);
@@ -572,6 +582,6 @@ public class JoshuaDecoder {
 		/* Step-3: clean up */
         decoder.cleanUp();
         logger.info(String.format("Total running time: %d seconds", 
-                (System.currentTimeMillis() - startTime) / 1000.0));
+                (System.currentTimeMillis() - startTime) / 1000));
 	}
 }
