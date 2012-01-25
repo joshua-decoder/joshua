@@ -29,8 +29,7 @@ run this example, first setup some environment variables:
 
 Then type:
 
-    cat example/example.test.in | java -Djava.library.path=$JOSHUA/lib \
-       -cp $JOSHUA/bin joshua.decoder.JoshuaDecoder -c example/example.config.kenlm
+    cat example/example.test.in | $JOSHUA/joshua-decoder -c example/example.config.kenlm
 
 The decoder output will load the language model and translation models
 defined in the configuration file, and will then decode the five
@@ -38,18 +37,27 @@ sentences in the example file.
 
 You can enable multithreaded decoding with the -threads N flag:
 
-    cat example/example.test.in | java -Djava.library.path=$JOSHUA/lib \
-       -cp $JOSHUA/bin joshua.decoder.JoshuaDecoder -c example/example.config.kenlm \
-       -threads 5
+    cat example/example.test.in | $JOSHUA/joshua-decoder -c example/example.config.kenlm -threads 5
 
 The configuration file defines many additional parameters, all of
-which can be overridden on the command line.  For example, to output
-the top 10 hypotheses instead of just the top 1 specified in the
-configuration file, use -top_n N:
+which can be overridden on the command line by using the format
+-PARAMETER value.  For example, to output the top 10 hypotheses
+instead of just the top 1 specified in the configuration file, use
+-top_n N:
 
-    cat example/example.test.in | java -Djava.library.path=$JOSHUA/lib \
-       -cp $JOSHUA/bin joshua.decoder.JoshuaDecoder -c example/example.config.kenlm \
-       -top_n 10
+    cat example/example.test.in | $JOSHUA/joshua-decoder -c example/example.config.kenlm -top_n 10
+
+Parameters, whether in the configuration file or on the command line,
+are converted to a canonical internal representation that ignores
+hyphens, underscores, and case.  So, for example, the following
+parameters are all equivalent:
+
+  {top-n, topN, top_n, TOP_N, t-o-p-N}
+  {poplimit, pop-limit, pop-limit, popLimit}
+
+and so on.  For an example of parameters, see the Joshua configuration
+file template in $JOSHUA/scripts/training/templates/mert/joshua.config.
+
 
 Running Z-MERT, Joshua's MERT module:
 -------------------------------------
