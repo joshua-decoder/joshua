@@ -319,7 +319,7 @@ public class JoshuaDecoder {
             int lm_order             = Integer.parseInt(tokens[1]);
             boolean left_equiv_state  = Boolean.parseBoolean(tokens[2]);
             boolean right_equiv_state = Boolean.parseBoolean(tokens[3]);
-            int lm_ceiling_cost   = Integer.parseInt(tokens[4]);
+            double lm_ceiling_cost   = Double.parseDouble(tokens[4]);
             String lm_file        = tokens[5];
             
             if (lm_type.equals("kenlm")) {

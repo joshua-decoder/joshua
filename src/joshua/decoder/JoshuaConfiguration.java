@@ -510,6 +510,16 @@ public class JoshuaConfiguration {
             lms.add(line);
         }
 
+		// Language model orders are particular to each LM, but for
+		// purposes of state maintenance, we set the global value to
+		// the maximum of any of the individual models
+		for (String lmLine : lms) {
+			String tokens[] = lmLine.split("\\s+");
+			int order = Integer.parseInt(tokens[1]);
+			if (order > JoshuaConfiguration.lm_order)
+				JoshuaConfiguration.lm_order = order;
+		}
+
 		if (useGoogleLinearCorpusGain) {
 			if (linearCorpusGainThetas==null) {
 				logger.info("linearCorpusGainThetas is null, did you set googleBLEUWeights properly?");
