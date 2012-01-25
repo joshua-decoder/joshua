@@ -363,12 +363,6 @@ public class JoshuaDecoder {
 		
 		this.grammarFactories.add(gr);
 		
-		if(JoshuaConfiguration.useRuleIDName){
-			if(this.ruleStringToIDTable==null)
-				this.ruleStringToIDTable = new HashMap<String,Integer>();
-			gr.obtainRulesIDTable(this.ruleStringToIDTable);			
-		}
-		
 	}
 	
 	
@@ -387,11 +381,6 @@ public class JoshuaDecoder {
 
 			this.grammarFactories.add(gr);
 
-			if(JoshuaConfiguration.useRuleIDName){
-				if(this.ruleStringToIDTable==null)
-					this.ruleStringToIDTable = new HashMap<String,Integer>();
-				gr.obtainRulesIDTable(this.ruleStringToIDTable);			
-			}
 		} else {
             logger.info("Basing sentence-specific grammars on file " + JoshuaConfiguration.tm_file);
 		}

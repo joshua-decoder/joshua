@@ -119,33 +119,6 @@ public class JoshuaConfiguration {
 	// hypergraph visualization
 	public static boolean visualize_hypergraph = false;
 	
-	//variational decoding
-	public static boolean use_variational_decoding = false;
-	
-	//debug
-	public static boolean extract_confusion_grammar = false; //non-parallel version
-	public static String  f_confusion_grammar       = "C:\\Users\\zli\\Documents\\confusion.hg.grammar";
-	//debug end
-	
-	// do we use a LM feature?
-	public static boolean have_lm_model = false;
-
-	
-	public static String segmentFileParserClass = null;//PlainSegmentParser, HackishSegmentParser, SAXSegmentParser
-	
-	
-	// discriminative model options
-	public static boolean useTMFeat = true;
-	public static boolean useRuleIDName = false;
-	public static boolean useLMFeat = true;
-	public static boolean useTMTargetFeat = true;
-	public static boolean useEdgeNgramOnly = false;
-	public static int startNgramOrder = 1;
-	public static int endNgramOrder = 2;
-	
-	public static boolean useMicroTMFeat = true;
-	public static String wordMapFile;/*tbl for mapping rule words*/
-	
 	// use google linear corpus gain?
 	public static boolean useGoogleLinearCorpusGain = false;
 	public static double[] linearCorpusGainThetas = null;
@@ -400,10 +373,6 @@ public class JoshuaConfiguration {
 					mark_oovs = Boolean.valueOf(fds[1]);
 					logger.finest(String.format("mark_oovs: %s", mark_oovs));
 					
-				} else if (parameter.equals(normalize_key("segment_file_parser_class"))) {
-					segmentFileParserClass = fds[1].trim();
-					logger.finest("segmentFileParserClass: " + segmentFileParserClass);
-					
                 } else if (parameter.equals(normalize_key("pop-limit"))) {
                     pop_limit = Integer.valueOf(fds[1]);
                     logger.finest(String.format("pop-limit: %s", pop_limit)); 
@@ -418,41 +387,15 @@ public class JoshuaConfiguration {
 					if(useBeamAndThresholdPrune==false)
 						logger.warning("useBeamAndThresholdPrune=false");
 					logger.finest(String.format("useBeamAndThresholdPrune: %s", useBeamAndThresholdPrune));				
+
 				} else if (parameter.equals(normalize_key("oovFeatureCost"))) {
 					oov_feature_cost = Float.parseFloat(fds[1]);
 					logger.finest(String.format("oovFeatureCost: %s", oov_feature_cost));
-				} else if (parameter.equals(normalize_key("useTMFeat"))) {
-					useTMFeat = Boolean.valueOf(fds[1]);
-					logger.finest(String.format("useTMFeat: %s", useTMFeat));
 
-				} else if (parameter.equals(normalize_key("useLMFeat"))) {
-					useLMFeat = Boolean.valueOf(fds[1]);
-					logger.finest(String.format("useLMFeat: %s", useLMFeat));
-
-				} else if (parameter.equals(normalize_key("useMicroTMFeat"))) {
-					useMicroTMFeat = new Boolean(fds[1].trim());
-					logger.finest(String.format("useMicroTMFeat: %s", useMicroTMFeat));					
-				} else if (parameter.equals(normalize_key("wordMapFile"))) {
-					wordMapFile = fds[1].trim();
-					logger.finest(String.format("wordMapFile: %s", wordMapFile));					
-				} else if (parameter.equals(normalize_key("useRuleIDName"))) {
-					useRuleIDName = new Boolean(fds[1].trim());
-					logger.finest(String.format("useRuleIDName: %s", useRuleIDName));					
-				} else if (parameter.equals(normalize_key("startNgramOrder"))) {
-					startNgramOrder = Integer.parseInt(fds[1]);
-					logger.finest(String.format("startNgramOrder: %s", startNgramOrder));
-				} else if (parameter.equals(normalize_key("endNgramOrder"))) {
-					endNgramOrder = Integer.parseInt(fds[1]);
-					logger.finest(String.format("endNgramOrder: %s", endNgramOrder));
-				} else if (parameter.equals(normalize_key("useEdgeNgramOnly"))) {
-					useEdgeNgramOnly = Boolean.valueOf(fds[1]);
-					logger.finest(String.format("useEdgeNgramOnly: %s", useEdgeNgramOnly));
-				} else if (parameter.equals(normalize_key("useTMTargetFeat"))) {
-					useTMTargetFeat = Boolean.valueOf(fds[1]);
-					logger.finest(String.format("useTMTargetFeat: %s", useTMTargetFeat));
 				} else if (parameter.equals(normalize_key("useGoogleLinearCorpusGain"))) {
 					useGoogleLinearCorpusGain = new Boolean(fds[1].trim());
 					logger.finest(String.format("useGoogleLinearCorpusGain: %s", useGoogleLinearCorpusGain));					
+
 				} else if (parameter.equals(normalize_key("googleBLEUWeights"))) {
 					String[] googleWeights = fds[1].trim().split(";");
 					if (googleWeights.length!=5){
