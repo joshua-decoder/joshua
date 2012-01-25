@@ -416,7 +416,7 @@ public class JoshuaDecoder {
 					weight = Double.parseDouble(fields[1]);
 				}
 
-				if (index >= this.languageModels.length) {
+				if (index >= this.languageModels.size()) {
 					System.err.println(String.format("* FATAL: there is no LM corresponding to LM feature index %d", index));
 					System.exit(1);
 				}
