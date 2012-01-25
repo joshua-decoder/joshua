@@ -666,8 +666,12 @@ if (! defined $GRAMMAR_FILE) {
 
 	# put the hadoop files in place
 	my $THRAXDIR;
+	my $thrax_input;
 	if ($HADOOP eq "hadoop") {
 	  $THRAXDIR = "thrax";
+
+	  $thrax_input = "$DATA_DIRS{train}/thrax-input-file"
+
 	} else {
 	  $THRAXDIR = "pipeline-$SOURCE-$TARGET-$GRAMMAR_TYPE-$RUNDIR";
 	  $THRAXDIR =~ s#/#_#g;
@@ -676,12 +680,15 @@ if (! defined $GRAMMAR_FILE) {
 					  "$HADOOP/bin/hadoop fs -rmr $THRAXDIR; $HADOOP/bin/hadoop fs -mkdir $THRAXDIR; $HADOOP/bin/hadoop fs -put $DATA_DIRS{train}/thrax-input-file $THRAXDIR/input-file",
 					  "$DATA_DIRS{train}/thrax-input-file", 
 					  "grammar.gz");
+
+
+	  $thrax_input = "$THRAXDIR/input-file";
 	}
 
 	# copy the thrax config file
 	my $thrax_file = "thrax-$GRAMMAR_TYPE.conf";
 	system("grep -v ^input-file $THRAX_CONF_FILE > $thrax_file.tmp");
-	system("echo input-file $DATA_DIRS{train}/thrax-input-file >> $thrax_file.tmp");
+	system("echo input-file $thrax_input >> $thrax_file.tmp");
 	system("mv $thrax_file.tmp $thrax_file");
 
 	$cachepipe->cmd("thrax-run",
