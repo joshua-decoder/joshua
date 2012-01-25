@@ -47,7 +47,7 @@ my $HADOOP = undef;
 
 die not_defined("JAVA_HOME") unless exists $ENV{JAVA_HOME};
 
-my (@CORPORA,$TUNE,$TEST,$ALIGNMENT,$SOURCE,$TARGET,$LMFILE,$GRAMMAR_FILE,$GLUE_GRAMMAR_FILE,$TUNE_GRAMMAR_FILE,$TEST_GRAMMAR_FILE,$THRAX_CONF_FILE);
+my (@CORPORA,$TUNE,$TEST,$ALIGNMENT,$SOURCE,$TARGET,@LMFILES,$GRAMMAR_FILE,$GLUE_GRAMMAR_FILE,$TUNE_GRAMMAR_FILE,$TEST_GRAMMAR_FILE,$THRAX_CONF_FILE);
 my $FIRST_STEP = "FIRST";
 my $LAST_STEP  = "LAST";
 my $LMFILTER = "$ENV{HOME}/code/filter/filter";
@@ -107,6 +107,13 @@ my $OMIT_CMD = 0;
 # which LM to use (kenlm or berkeleylm)
 my $LM_TYPE = "kenlm";
 
+# n-gram order
+my $LM_ORDER = 5;
+
+# Whether to build and include an LM from the target-side of the
+# corpus when manually-specified LM files are passed with --lmfile.
+my $DO_BUILD_LM_FROM_CORPUS = 1;
+
 # whether to tokenize and lowercase training, tuning, and test data
 my $DO_PREPARE_CORPORA = 1;
 
@@ -137,8 +144,9 @@ my $retval = GetOptions(
   "filter-tm!"        => \$DO_FILTER_TM,
   "filter-lm!"        => \$DO_FILTER_LM,
   "lm=s"              => \$LM_TYPE,
-  "lmfile=s" 	 	  => \$LMFILE,
+  "lmfile=s" 	 	  => \@LMFILES,
   "lm-gen=s"          => \$LM_GEN,
+  "corpus-lm!"        => \$DO_BUILD_LM_FROM_CORPUS,
   "witten-bell!" 	  => \$WITTEN_BELL,
   "tune-grammar=s"    => \$TUNE_GRAMMAR_FILE,
   "test-grammar=s"    => \$TEST_GRAMMAR_FILE,
@@ -200,7 +208,20 @@ $SIG{INT} = sub {
   exit 1; 
 };
 
+# if no LMs were specified, we need to build one from the target side of the corpus
+if (scalar @LMFILES == 0) {
+  $DO_BUILD_LM_FROM_CORPUS = 1;
+}
+
 ## Sanity Checking ###################################################
+
+# make sure the LMs exist
+foreach my $lmfile (@LMFILES) {
+  if (! -e $lmfile) {
+	print "* FATAL: couldn't find language model file '$lmfile'\n";
+	exit 1;
+  }
+}
 
 # case-normalize this
 $GRAMMAR_TYPE = lc $GRAMMAR_TYPE;
@@ -251,7 +272,7 @@ if (! defined $GRAMMAR_FILE) {
 }
 
 # make sure SRILM is defined if we're building a language model
-if (! defined $LMFILE && $STEPS{$FIRST_STEP} <= $STEPS{MERT} && $STEPS{$LAST_STEP} >= $STEPS{MERT} && $LM_GEN eq "srilm") {
+if ($LM_GEN eq "srilm" && (scalar @LMFILES == 0) && $STEPS{$FIRST_STEP} <= $STEPS{MERT} && $STEPS{$LAST_STEP} >= $STEPS{MERT}) {
   not_defined("SRILM") unless exists $ENV{SRILM} and -d $ENV{SRILM};
 }
 
@@ -728,8 +749,8 @@ if (! $PREPPED{TUNE} and $DO_PREPARE_CORPORA) {
   $PREPPED{TUNE} = 1;
 }
 
-# If the language model file wasn't provided, build it from the target side of the training data.  Otherwise, copy it to location.
-if (! defined $LMFILE) {
+# Build the language model if needed
+if ($DO_BUILD_LM_FROM_CORPUS) {
 
   # make sure the training data is prepped
   if (! $PREPPED{TRAIN} and $DO_PREPARE_CORPORA) {
@@ -749,32 +770,20 @@ if (! defined $LMFILE) {
 	exit(1);
   }
 
-  $LMFILE="lm.gz";
+  my $lmfile = "lm.gz";
   if ($LM_GEN eq "srilm") {
 	my $smoothing = ($WITTEN_BELL) ? "-wbdiscount" : "-kndiscount";
 	$cachepipe->cmd("srilm",
-					"$SRILM -interpolate $smoothing -order 5 -text $TRAIN{target} -unk -lm lm.gz",
-					$LMFILE);
+					"$SRILM -interpolate $smoothing -order $LM_ORDER -text $TRAIN{target} -unk -lm lm.gz",
+					$lmfile);
   } else {
 	$cachepipe->cmd("berkeleylm",
-					"java -ea -mx1000m -server -cp $JOSHUA/lib/berkeleylm.jar edu.berkeley.nlp.lm.io.MakeKneserNeyArpaFromText 5 lm.gz $TRAIN{target}",
-					$LMFILE);
+					"java -ea -mx1000m -server -cp $JOSHUA/lib/berkeleylm.jar edu.berkeley.nlp.lm.io.MakeKneserNeyArpaFromText $LM_ORDER lm.gz $TRAIN{target}",
+					$lmfile);
   }
 
-} else {
-  if (! -e $LMFILE) {
-	print STDERR "* FATAL: can't find lmfile '$LMFILE'\n";
-	exit(1);
-  }
-}
+  push (@LMFILES, $lmfile);
 
-# filter the tuning LM to the training side of the data (if possible)
-if (-e $LMFILTER and $DO_FILTER_LM and exists $TRAIN{target}) {
-  
-  $cachepipe->cmd("filter-lmfile",
-				  "cat $TRAIN{target} | $LMFILTER union arpa model:$LMFILE lm-filtered; gzip -9nf lm-filtered",
-				  $LMFILE, "lm-filtered.gz");
-  $LMFILE = "lm-filtered.gz";
 }
 
 system("mkdir -p $DATA_DIRS{tune}") unless -d $DATA_DIRS{tune};
@@ -830,6 +839,27 @@ if (! defined $GLUE_GRAMMAR_FILE) {
   system("ln -sf $GLUE_GRAMMAR_FILE $filename");
 }
 
+# For each language model, we need to create an entry in the Joshua
+# config file and in ZMert's params.txt file.  We use %lm_strings to
+# build the corresponding string substitutions
+my (@configstrings, @weightstrings, @paramstrings);
+for my $i (0..$#LMFILES) {
+  my $lmfile = $LMFILES[$i];
+
+  my $configstring = "lm = $LM_TYPE $LM_ORDER false false 100 $lmfile";
+  push (@configstrings, $configstring);
+
+  my $weightstring = "lm $i 1.0";
+  push (@weightstrings, $weightstring);
+
+  my $paramstring = "lm $i               |||     1.000000 Opt     0.1     +Inf    +0.5    +1.5";
+  push (@paramstrings, $paramstring);
+}
+
+my $lmlines   = join($/, @configstrings);
+my $lmweights = join($/, @weightstrings);
+my $lmparams  = join($/, @paramstrings);
+
 for my $run (1..$OPTIMIZER_RUNS) {
   my $mertdir = (defined $NAME) ? "mert/$NAME/$run" : "mert/$run";
   system("mkdir -p $mertdir") unless -d $mertdir;
@@ -843,7 +873,10 @@ for my $run (1..$OPTIMIZER_RUNS) {
 	  s/<SOURCE>/$SOURCE/g;
 	  s/<RUNDIR>/$RUNDIR/g;
 	  s/<TARGET>/$TARGET/g;
-	  s/<LMFILE>/$LMFILE/g;
+	  s/<LMLINES>/$lmlines/g;
+	  s/<LMWEIGHTS>/$lmweights/g;
+	  s/<LMPARAMS>/$lmparams/g;
+	  s/<LMFILE>/$LMFILES[0]/g;
 	  s/<LMTYPE>/$LM_TYPE/g;
 	  s/<MEM>/$JOSHUA_MEM/g;
 	  s/<GRAMMAR_TYPE>/$GRAMMAR_TYPE/g;
@@ -949,7 +982,7 @@ for my $run (1..$OPTIMIZER_RUNS) {
 	  s/<SOURCE>/$SOURCE/g;
 	  s/<TARGET>/$TARGET/g;
 	  s/<RUNDIR>/$TARGET/g;
-	  s/<LMFILE>/$LMFILE/g;
+	  s/<LMFILE>/$LMFILES[0]/g;
 	  s/<MEM>/$JOSHUA_MEM/g;
 	  s/<GRAMMAR_TYPE>/$GRAMMAR_TYPE/g;
 	  s/<GRAMMAR_FILE>/$TEST_GRAMMAR/g;

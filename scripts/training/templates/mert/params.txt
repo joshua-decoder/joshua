@@ -1,4 +1,4 @@
-lm                |||     1.000000 Opt     0.1     +Inf    +0.5    +1.5
+<LMPARAMS>
 phrasemodel pt 0  |||     1.066893 Opt     -Inf    +Inf    -1      +1
 phrasemodel pt 1  |||     0.752247 Opt     -Inf    +Inf    -1      +1
 phrasemodel pt 2  |||     0.589793 Opt     -Inf    +Inf    -1      +1
