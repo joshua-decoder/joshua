@@ -57,11 +57,10 @@ public class JoshuaConfiguration {
 	public static int     span_limit 								 = 10;
 	//note: owner should be different from each other, it can have same value as a word in LM/TM
 	public static String  phrase_owner               = "pt";
-	public static String  glue_owner                 = "glue_owner";
+	public static String  glue_owner                 = "pt";
 	public static String  default_non_terminal       = "PHRASE";
 	public static String  goal_symbol                = "S";
 	public static boolean use_sent_specific_tm       = false;
-	public static boolean keep_sent_specific_tm      = false;
 	
 	public static String  tm_file                    = null;
 	public static String  tm_format                  = null;
@@ -256,10 +255,6 @@ public class JoshuaConfiguration {
 					use_sent_specific_tm = Boolean.valueOf(fds[1]);
 					logger.finest(String.format("use_sent_specific_tm: %s", use_sent_specific_tm));
 
-				} else if (parameter.equals(normalize_key("keep_sent_specific_tm"))) {
-					keep_sent_specific_tm = Boolean.valueOf(fds[1]);
-					logger.finest(String.format("keep_sent_specific_tm: %s", use_sent_specific_tm));
-					
 				} else if (parameter.equals(normalize_key("span_limit"))) {
 					span_limit = Integer.parseInt(fds[1]);
 					logger.finest(String.format("span_limit: %s", span_limit));
