@@ -1,4 +1,5 @@
-# Matt Post <post@jhu.edu>
+
+# Matt Post <post@cs.jhu.edu>
 
 package CachePipe;
 
@@ -455,7 +456,7 @@ sub sha1hash {
 	my $content = $ENV{$env} || time();
 	return signature($content);
   } else {
-	  return file_signature($arg);
+	return file_signature($arg);
   }
 
   return signature($arg);
@@ -467,6 +468,12 @@ sub file_signature {
 
   if (-e $file) {
 	my $size = (stat($file))[7];
+	# my $header = "blob $size\\0";
+	# my $sha1 = new Digest::SHA1();
+	# $sha1->add($header);
+	# $sha1->addfile(FILE);
+	# my $hash = $sha1->hexdigest();
+	# return $hash;
 	chomp(my $sha1 = `(echo -ne "blob $size\\0"; cat $file) | sha1sum -b | awk '{print \$1}'`);
 
 	return $sha1;
@@ -499,11 +506,6 @@ sub signature {
   chomp(my $sha1 = `cat $tmpfile | sha1sum -b | awk '{ print \$1 }'`);
   unlink($tmpfile);
   return $sha1;
-
-  # my $git_blob = 'blob' . ' ' . length($content) . "\0" . $content;
-  # my $sha = new Digest::SHA1();
-  # $sha->add($git_blob);
-  # return $sha->hexdigest() . $/;
 }
 
 sub mylog {
