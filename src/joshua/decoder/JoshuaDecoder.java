@@ -416,12 +416,16 @@ public class JoshuaDecoder {
 					weight = Double.parseDouble(fields[1]);
 				}
 
+				if (index >= this.languageModels.length) {
+					System.err.println(String.format("* FATAL: there is no LM corresponding to LM feature index %d", index));
+					System.exit(1);
+				}
+
                 this.featureFunctions.add(
    				    new LanguageModelFF(
 					    JoshuaConfiguration.ngramStateID,	
 					    this.featureFunctions.size(),
 					    this.languageModels.get(index).getOrder(),
-                        // TODO: make sure the index exists
 					    this.languageModels.get(index), weight));
 
                 // TODO: lms should have a name or something
