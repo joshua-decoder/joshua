@@ -57,6 +57,7 @@ my $DO_FILTER_TM = 1;
 my $DO_SUBSAMPLE = 0;
 my $SCRIPTDIR = "$JOSHUA/scripts";
 my $TOKENIZER = "$SCRIPTDIR/training/penn-treebank-tokenizer.perl";
+my $NORMALIZER = "$SCRIPTDIR/training/normalize-punctuation.pl";
 my $GIZA_TRAINER = "$JOSHUA/scripts/training/run-giza.pl";
 my $MERTCONFDIR = "$JOSHUA/scripts/training/templates/mert";
 my $SRILM = ($ENV{SRILM}||"")."/bin/i686-m64/ngram-count";
@@ -706,6 +707,8 @@ if (! defined $GRAMMAR_FILE) {
 	  $thrax_input = "$THRAXDIR/input-file";
 	}
 
+
+
 	# copy the thrax config file
 	my $thrax_file = "thrax-$GRAMMAR_TYPE.conf";
 	system("grep -v ^input-file $THRAX_CONF_FILE > $thrax_file.tmp");
@@ -1203,7 +1206,7 @@ sub prepare_data {
 		system("cp $DATA_DIRS{$label}/$prefix.$lang.gz $DATA_DIRS{$label}/$prefix.tok.$lang.gz");
 	  } else {
 		$cachepipe->cmd("$label-tokenize-$lang",
-						"$SCRIPTDIR/training/scat $DATA_DIRS{$label}/$prefix.$lang.gz | $TOKENIZER -l $lang 2> /dev/null | gzip -9n > $DATA_DIRS{$label}/$prefix.tok.$lang.gz",
+						"$SCRIPTDIR/training/scat $DATA_DIRS{$label}/$prefix.$lang.gz | $NORMALIZER $lang | $TOKENIZER -l $lang 2> /dev/null | gzip -9n > $DATA_DIRS{$label}/$prefix.tok.$lang.gz",
 						"$DATA_DIRS{$label}/$prefix.$lang.gz", "$DATA_DIRS{$label}/$prefix.tok.$lang.gz");
 	  }
 	}
