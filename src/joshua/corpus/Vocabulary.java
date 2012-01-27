@@ -27,6 +27,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.logging.Logger;
@@ -296,5 +297,9 @@ public class Vocabulary {
 			super("MurmurHash for the following symbols collides: '" + first + "', '"
 					+ second + "'");
 		}
+	}
+
+	public static Iterator<String> wordIterator() {
+		return idToString.iterator();
 	}
 }
