@@ -328,9 +328,12 @@ public class ParserThread extends Thread {
         Lattice<Integer> english_lattice = english.intLattice();
         Grammar[] newGrammar = new Grammar[1];
         newGrammar[0] = getGrammarFromHyperGraph(JoshuaConfiguration.goal_symbol, hypergraph);
-		System.err.println("Hypergraph traversal completed. Expanding new chart.");
+		System.err.println("Hypergraph traversal completed.");
         newGrammar[0].sortGrammar(this.featureFunctions);
-		System.err.printf("New grammar has %d rules.\n", newGrammar[0].getNumRules());
+		System.err.println("Grammar sort completed.");
+		int numRules = newGrammar[0].getNumRules();
+		System.err.printf("New grammar has %d rules.\n", numRules);
+		System.err.println("Expanding second chart.\n");
         chart = new Chart(english_lattice,
                           this.featureFunctions,
                           this.stateComputers,
