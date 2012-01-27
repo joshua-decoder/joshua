@@ -96,11 +96,12 @@ public class Vocabulary {
 			DataInputStream vocab_stream = new DataInputStream(
 					new BufferedInputStream(new FileInputStream(vocab_file)));
 			int size = vocab_stream.readInt();
+			logger.info("Reading vocabulary: " + size + " tokens.");
 			clear();
 			for (int i = 0; i < size; i++) {
 				int id = vocab_stream.readInt();
 				String token = vocab_stream.readUTF();
-				if (id != id(token)) {
+				if (id != Math.abs(id(token))) {
 					vocab_stream.close();
 					return false;
 				}
@@ -181,8 +182,7 @@ public class Vocabulary {
 	
 	public static boolean hasId(int id) {
 		synchronized (lock) {
-			if (id < 0)
-				id = -id;
+			id = Math.abs(id);
 			return (id <= idToString.size());  
 		}
 	}
