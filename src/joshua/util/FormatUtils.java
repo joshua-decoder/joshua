@@ -18,6 +18,8 @@ package joshua.util;
 
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 /**
@@ -27,20 +29,35 @@ import java.util.regex.Pattern;
  * @author Lane Schwartz
  */
 public class FormatUtils {
+	
+	private static Map<String, String> cache;
 
+	static {
+		cache = new HashMap<String, String>();
+	}
+	
 	public static boolean isNonterminal(String token) {
 		return (token.charAt(0) == '[')
 				&& (token.charAt(token.length() - 1) == ']');
 	}
 
-	public static String stripNonterminal(String nt) {
+	public static String cleanNonterminal(String nt) {
 		return nt.substring(1, nt.length() - 1);
 	}
 
-	public static String stripIndexedNonterminal(String nt) {
+	public static String cleanIndexedNonterminal(String nt) {
 		return nt.substring(1, nt.length() - 3);
 	}
 
+	public static String stripNt(String nt) {
+		String stripped = cache.get(nt);
+		if (stripped == null) {
+			stripped = markup(cleanIndexedNonterminal(nt));
+			cache.put(nt, stripped);
+		}
+		return stripped;			
+	}
+	
 	public static int getNonterminalIndex(String nt) {
 		return Integer.parseInt(nt.substring(nt.length() - 2, nt.length() - 1));
 	}
