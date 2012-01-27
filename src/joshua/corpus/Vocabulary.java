@@ -117,6 +117,8 @@ public class Vocabulary {
 			DataOutputStream vocab_stream = new DataOutputStream(
 					new BufferedOutputStream(new FileOutputStream(vocab_file)));
 			vocab_stream.writeInt(idToString.size() - 1);
+			logger.info("Writing vocabulary: " + (idToString.size() - 1) +
+					" tokens.");
 			for (int i = 1; i < idToString.size(); i++) {
 				vocab_stream.writeInt(i);
 				vocab_stream.writeUTF(idToString.get(i));
@@ -183,7 +185,7 @@ public class Vocabulary {
 	public static boolean hasId(int id) {
 		synchronized (lock) {
 			id = Math.abs(id);
-			return (id <= idToString.size());  
+			return (id < idToString.size());  
 		}
 	}
 
