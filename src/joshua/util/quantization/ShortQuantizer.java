@@ -2,7 +2,7 @@ package joshua.util.quantization;
 
 import java.nio.ByteBuffer;
 
-public class ShortQuantizer implements Quantizer {
+public class ShortQuantizer extends StatelessQuantizer {
 
 	public float read(ByteBuffer stream) {
 		return (float) stream.getShort();
@@ -11,5 +11,9 @@ public class ShortQuantizer implements Quantizer {
 	public void write(ByteBuffer stream, float value) {
 		stream.putShort((short) value);
 	}
-
+	
+	@Override
+	public String getKey() {
+		return "short";
+	}
 }
