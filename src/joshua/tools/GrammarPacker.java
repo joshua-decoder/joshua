@@ -358,7 +358,7 @@ public class GrammarPacker {
 				source_position += child.size(true, false);
 				// Write the link.
 				source_stream.writeInt(k);
-				source_stream.write(child.address);
+				source_stream.writeInt(child.address);
 			}
 			// Write number of data items.
 			source_stream.writeInt(node.values.size());
