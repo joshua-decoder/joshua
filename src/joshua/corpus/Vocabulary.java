@@ -178,6 +178,14 @@ public class Vocabulary {
 			}
 		}
 	}
+	
+	public static boolean hasId(int id) {
+		synchronized (lock) {
+			if (id < 0)
+				id = -id;
+			return (id <= idToString.size());  
+		}
+	}
 
 	public static int[] addAll(String sentence) {
 		String[] tokens = sentence.split("\\s+");
