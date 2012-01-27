@@ -83,12 +83,16 @@ my $DO_MBR = 1;
 
 my $ALIGNER = "giza"; # "berkeley" or "giza"
 
-# for hadoop java subprocesses (heap amount)
-# you really just have to play around to find out how much is enough 
-my $HADOOP_MEM = "2g";  
+# This is the amount of memory made available to Joshua.  You'll need
+# a lot more than this for SAMT decoding (though really it depends
+# mostly on your grammar size)
 my $JOSHUA_MEM = "3100m";
+
+# When qsub is called for decoding, these arguments should be passed to it.
+my $QSUB_ARGS  = "";
+
+# Amount of memory for the Berkeley aligner.
 my $ALIGNER_MEM = "10g";
-my $QSUB_ARGS  = "-l num_proc=2";
 
 # Align corpus files a million lines at a time.
 my $ALIGNER_BLOCKSIZE = 1000000;
@@ -159,7 +163,6 @@ my $retval = GetOptions(
   "tokenizer=s"  	  => \$TOKENIZER,
   "joshua-config=s"   => \$MERTFILES{'joshua.config'},
   "joshua-mem=s"      => \$JOSHUA_MEM,
-  "hadoop-mem=s"      => \$HADOOP_MEM,
   "decoder-command=s" => \$MERTFILES{'decoder_command'},
   "thrax-conf=s"      => \$THRAX_CONF_FILE,
   "jobs=i"            => \$NUM_JOBS,
