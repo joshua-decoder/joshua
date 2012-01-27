@@ -42,3 +42,9 @@ test/bn-en/hiero/log
 test/bn-en/hiero/output
 test/bn-en/hiero/output.bleu
 test/bn-en/hiero/reference.en.all
+test/bn-en/samt/diff
+test/bn-en/samt/log
+test/bn-en/samt/output
+test/bn-en/samt/output.bleu
+test/bn-en/samt/reference.en.all
+scripts/training/symal/symal
