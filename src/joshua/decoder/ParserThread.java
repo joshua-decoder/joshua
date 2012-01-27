@@ -311,20 +311,6 @@ public class ParserThread extends Thread {
 		/* Parsing */
 		HyperGraph hypergraph = chart.expand();
 
-        // delete the sentence-specific grammar if it didn't
-        // already exist and we weren't asked to keep it around
-        if (! alreadyExisted && ! JoshuaConfiguration.keep_sent_specific_tm && JoshuaConfiguration.use_sent_specific_tm) {
-            File file = new File(tmFile);
-            file.delete();
-
-            logger.info("Deleting sentence-level grammar file '" + tmFile + "'");
-
-        } else if (JoshuaConfiguration.keep_sent_specific_tm) {
-            // logger.info("Keeping sentence-level grammar (keep_sent_specific_tm=true)");
-        } else if (alreadyExisted) {
-            // logger.info("Keeping sentence-level grammar (already existed)");
-        }
-
         Lattice<Integer> english_lattice = english.intLattice();
         Grammar[] newGrammar = new Grammar[1];
         newGrammar[0] = getGrammarFromHyperGraph(JoshuaConfiguration.goal_symbol, hypergraph);
