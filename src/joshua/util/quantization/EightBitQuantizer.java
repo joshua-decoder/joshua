@@ -1,30 +1,34 @@
 package joshua.util.quantization;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.io.Serializable;
 import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.TreeMap;
 
-public class EightBitQuantizer implements Quantizer, Serializable {
+public class EightBitQuantizer implements Quantizer {
 
-	private static final long serialVersionUID = -5677248576836311734L;
 	private float[] buckets;
 
-	private transient TreeMap<Double, Integer> histogram;
+	private transient TreeMap<Float, Integer> histogram;
 	private transient int total;
 
 	public EightBitQuantizer() {
 		buckets = new float[256];
 	}
 
+	@Override
 	public void initialize() {
 		if (histogram == null)
-			histogram = new TreeMap<Double, Integer>();
+			histogram = new TreeMap<Float, Integer>();
 		histogram.clear();
 		total = 0;
 	}
 
-	public void add(double key) {
+	@Override
+	public void add(float key) {
 		if (histogram.containsKey(key))
 			histogram.put(key, histogram.get(key) + 1);
 		else
@@ -32,6 +36,7 @@ public class EightBitQuantizer implements Quantizer, Serializable {
 		total++;
 	}
 
+	@Override
 	public void finalize() {
 		// We make sure that 0.0f always has its own bucket, so the bucket
 		// size is determined excluding the zero values.
@@ -39,14 +44,14 @@ public class EightBitQuantizer implements Quantizer, Serializable {
 		buckets[0] = 0.0f;
 
 		boolean done = false;
-		Map.Entry<Double, Integer> entry = histogram.firstEntry();
-		double last_key = entry.getKey();
+		Map.Entry<Float, Integer> entry = histogram.firstEntry();
+		float last_key = entry.getKey();
 
 		int index = 1;
 		int count = 0;
-		double sum = 0.0;
+		float sum = 0.0f;
 
-		double key;
+		float key;
 		int value;
 		while (!done) {
 			key = entry.getKey();
@@ -59,7 +64,7 @@ public class EightBitQuantizer implements Quantizer, Serializable {
 				if (count != 0) {
 					buckets[index++] = (float) sum / count;
 					count = 0;
-					sum = 0.0;
+					sum = 0.0f;
 				}
 				continue;
 			}
@@ -69,7 +74,7 @@ public class EightBitQuantizer implements Quantizer, Serializable {
 			if (count >= size) {
 				buckets[index++] = (float) sum / count;
 				count = 0;
-				sum = 0.0;
+				sum = 0.0f;
 			}
 			last_key = key;
 			entry = histogram.higherEntry(key);
@@ -78,7 +83,7 @@ public class EightBitQuantizer implements Quantizer, Serializable {
 		if (count >= size) {
 			buckets[index++] = (float) sum / count;
 			count = 0;
-			sum = 0.0;
+			sum = 0.0f;
 		}
 	}
 
@@ -99,5 +104,26 @@ public class EightBitQuantizer implements Quantizer, Serializable {
 			}
 		}
 		stream.put(index);
+	}
+	
+	@Override
+	public String getKey() {
+		return "8bit";
+	}
+
+	@Override
+	public void writeState(DataOutputStream out) throws IOException {
+		out.writeUTF(getKey());
+		out.writeInt(buckets.length);
+		for (int i = 0; i < buckets.length; i++)
+			out.writeFloat(buckets[i]);
+	}
+
+	@Override
+	public void readState(DataInputStream in) throws IOException {
+		int length = in.readInt();
+		buckets = new float[length];
+		for (int i = 0; i < buckets.length; i++)
+			buckets[i] = in.readFloat();
 	}
 }

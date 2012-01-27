@@ -2,8 +2,8 @@ package joshua.util.quantization;
 
 import java.nio.ByteBuffer;
 
-public class FloatQuantizer implements Quantizer {
-
+public class FloatQuantizer extends StatelessQuantizer {
+	
 	public float read(ByteBuffer stream) {
 		return stream.getFloat();
 	}
@@ -12,4 +12,8 @@ public class FloatQuantizer implements Quantizer {
 		stream.putFloat(value);
 	}
 
+	@Override
+	public String getKey() {
+		return "float";
+	}	
 }
