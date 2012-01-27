@@ -125,7 +125,7 @@ while($num_finished < $num_pieces)
         
         # print STDERR $log_lines[-1];
         
-        if((@log_lines > 0) && ($log_lines[-1] =~ m/FINISHED/))
+        if((@log_lines > 0) && ($log_lines[-1] =~ m/skipped/i))
         {
             $num_finished++;
         }

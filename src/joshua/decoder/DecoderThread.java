@@ -236,7 +236,7 @@ public class DecoderThread extends Thread {
 
         Grammar[] grammars = new Grammar[numGrammars];
 
-        for (int i = 0; i< grammarFactories.size(); i++)
+        for (int i = 0; i < grammarFactories.size(); i++)
             grammars[i] = grammarFactories.get(i).getGrammarForSentence(sentence);
 
         // load the sentence-specific grammar
@@ -307,20 +307,6 @@ public class DecoderThread extends Thread {
 		
 		/* Parsing */
 		HyperGraph hypergraph = chart.expand();
-
-        // delete the sentence-specific grammar if it didn't
-        // already exist and we weren't asked to keep it around
-        if (! alreadyExisted && ! JoshuaConfiguration.keep_sent_specific_tm && JoshuaConfiguration.use_sent_specific_tm) {
-            File file = new File(tmFile);
-            file.delete();
-
-            logger.info("Deleting sentence-level grammar file '" + tmFile + "'");
-
-        } else if (JoshuaConfiguration.keep_sent_specific_tm) {
-            // logger.info("Keeping sentence-level grammar (keep_sent_specific_tm=true)");
-        } else if (alreadyExisted) {
-            // logger.info("Keeping sentence-level grammar (already existed)");
-        }
 
 		long seconds = (System.currentTimeMillis() - startTime) / 1000;
 		logger.info("translation of sentence " + sentence.id() + " took " + seconds + " seconds [" + getId() + "]");

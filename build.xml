@@ -191,7 +191,7 @@
 <!-- ~~~~~ Cleaning tasks ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 	
 	<!-- Delete the compiled files -->
-	<target name="clean">
+	<target name="clean" depends="clean-java">
 		<exec executable="make">
 			<arg value="-C" />
 			<arg value="scripts/training/giza-pp" />
@@ -200,13 +200,16 @@
 		<exec executable="/bin/bash" dir="src/joshua/decoder/ff/lm/kenlm">
 			<arg value="clean.sh" />
 		</exec>
+	</target>
+
+	<!-- Delete just the java files -->
+	<target name="clean-java">
 		<delete verbose="true" quiet="true">
 			<fileset dir="${build}">
 				<include name="**/*.class"/>
 			</fileset>
 		</delete>
 	</target>
-	
 	
 	<!-- EXPERIMENTAL: Delete *all* generated files -->
 	<target name="distclean" depends="clean">

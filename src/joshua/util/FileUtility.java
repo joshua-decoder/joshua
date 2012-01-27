@@ -239,5 +239,14 @@ public class FileUtility {
         
      }
 
+    /**
+     * Returns the base directory of the file.  For example,
+     * dirname('/usr/local/bin/emacs') -> '/usr/local/bin'
+     */
+    static public String dirname(String fileName) {
+        if (fileName.indexOf(File.separator) != -1)
+            return fileName.substring(0,fileName.lastIndexOf(File.separator));
 
+        return ".";
+    }
 }

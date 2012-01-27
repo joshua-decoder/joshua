@@ -16,6 +16,9 @@ public class KenLM implements NGramLanguageModel {
 	}
 
 	private final long pointer;
+	// this is read from the config file, used to set maximum order
+	private final int ngramOrder;
+	// inferred from model file (may be larger than ngramOrder)
 	private final int N;
 
 	private final static native long construct(String file_name, float fake_oov);
@@ -31,7 +34,9 @@ public class KenLM implements NGramLanguageModel {
 	private final static native float probString(long ptr, int words[], 
 			int start);
 
-	public KenLM(String file_name) {
+	public KenLM(int order, String file_name) {
+		ngramOrder = order;
+
 		pointer = construct(file_name, (float) - JoshuaConfiguration.lm_ceiling_cost);
 		N = order(pointer);
 	}
