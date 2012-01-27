@@ -5,4 +5,4 @@ java  -classpath ${CLASSPATH}:${JOSHUA}/bin \
       -Dfile.encoding=utf8 \
       -Djava.util.logging.config.file=${JOSHUA}/logging.properties \
       -Xmx55g -Xms55g \
-      joshua.decoder.JoshuaDecoder parse.config <$INPUT 2>parse.log
+      joshua.decoder.JoshuaDecoder $CONF <$INPUT 2>$LOG
