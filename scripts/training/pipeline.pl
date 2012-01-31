@@ -88,6 +88,9 @@ my $ALIGNER = "giza"; # "berkeley" or "giza"
 # mostly on your grammar size)
 my $JOSHUA_MEM = "3100m";
 
+# memory available to the parser
+my $PARSER_MEM = "2g";
+
 # When qsub is called for decoding, these arguments should be passed to it.
 my $QSUB_ARGS  = "";
 
@@ -163,6 +166,7 @@ my $retval = GetOptions(
   "tokenizer=s"  	  => \$TOKENIZER,
   "joshua-config=s"   => \$MERTFILES{'joshua.config'},
   "joshua-mem=s"      => \$JOSHUA_MEM,
+  "parser-mem=s"      => \$PARSER_MEM,
   "decoder-command=s" => \$MERTFILES{'decoder_command'},
   "thrax-conf=s"      => \$THRAX_CONF_FILE,
   "jobs=i"            => \$NUM_JOBS,
@@ -607,14 +611,34 @@ if ($GRAMMAR_TYPE eq "samt") {
 				  $TRAIN{target},
 				  "$DATA_DIRS{train}/vocab.$TARGET");
 
-  $cachepipe->cmd("parse",
-				  "cat $TRAIN{target} | java -Xmx2g -jar $JOSHUA/lib/BerkeleyParser.jar -gr $JOSHUA/lib/eng_sm6.gr -nThreads $NUM_THREADS | sed 's/^\(/\(TOP/' | tee $DATA_DIRS{train}/corpus.$TARGET.parsed.mc | perl -pi -e 's/(\\S+)\\)/lc(\$1).\")\"/ge' | tee $DATA_DIRS{train}/corpus.$TARGET.parsed | perl $SCRIPTDIR/training/add-OOVs.pl $DATA_DIRS{train}/vocab.$TARGET > $DATA_DIRS{train}/corpus.parsed.$TARGET",
-				  "$TRAIN{target}",
-				  "$DATA_DIRS{train}/corpus.parsed.$TARGET");
+  if ($NUM_JOBS > 1) {
+	# the black-box parallelizer model doesn't work with multiple
+	# threads, so we're always spawning single-threaded instances here
+
+	# open PARSE, ">parse.sh" or die;
+	# print PARSE "cat $TRAIN{target} | $JOSHUA/scripts/training/parallelize/parallelize.pl --jobs $NUM_JOBS --qsub-args \"$QSUB_ARGS\" -- java -d64 -Xmx${PARSER_MEM} -jar $JOSHUA/lib/BerkeleyParser.jar -gr $JOSHUA/lib/eng_sm6.gr -nThreads 1 | sed 's/^\(/\(TOP/' | tee $DATA_DIRS{train}/corpus.$TARGET.parsed.mc | perl -pi -e 's/(\\S+)\\)/lc(\$1).\")\"/ge' | tee $DATA_DIRS{train}/corpus.$TARGET.parsed | perl $SCRIPTDIR/training/add-OOVs.pl $DATA_DIRS{train}/vocab.$TARGET > $DATA_DIRS{train}/corpus.parsed.$TARGET\n";
+	# close PARSE;
+	# chmod 0755, "parse.sh";
+	# $cachepipe->cmd("parse",
+	# 				"setsid ./parse.sh",
+	# 				"$TRAIN{target}",
+	# 				"$DATA_DIRS{train}/corpus.parsed.$TARGET");
+
+	$cachepipe->cmd("parse",
+					"cat $TRAIN{target} | $JOSHUA/scripts/training/parallelize/parallelize.pl --jobs $NUM_JOBS --qsub-args \"$QSUB_ARGS\" -- java -d64 -Xmx${PARSER_MEM} -jar $JOSHUA/lib/BerkeleyParser.jar -gr $JOSHUA/lib/eng_sm6.gr -nThreads 1 | sed 's/^\(/\(TOP/' | tee $DATA_DIRS{train}/corpus.$TARGET.parsed.mc | perl -pi -e 's/(\\S+)\\)/lc(\$1).\")\"/ge' | tee $DATA_DIRS{train}/corpus.$TARGET.parsed | perl $SCRIPTDIR/training/add-OOVs.pl $DATA_DIRS{train}/vocab.$TARGET > $DATA_DIRS{train}/corpus.parsed.$TARGET",
+					"$TRAIN{target}",
+					"$DATA_DIRS{train}/corpus.parsed.$TARGET");
+  } else {
+	$cachepipe->cmd("parse",
+					"cat $TRAIN{target} | java -Xmx${PARSER_MEM} -jar $JOSHUA/lib/BerkeleyParser.jar -gr $JOSHUA/lib/eng_sm6.gr -nThreads $NUM_THREADS | sed 's/^\(/\(TOP/' | tee $DATA_DIRS{train}/corpus.$TARGET.parsed.mc | perl -pi -e 's/(\\S+)\\)/lc(\$1).\")\"/ge' | tee $DATA_DIRS{train}/corpus.$TARGET.parsed | perl $SCRIPTDIR/training/add-OOVs.pl $DATA_DIRS{train}/vocab.$TARGET > $DATA_DIRS{train}/corpus.parsed.$TARGET",
+					"$TRAIN{target}",
+					"$DATA_DIRS{train}/corpus.parsed.$TARGET");
+  }
 
   $TRAIN{parsed} = "$DATA_DIRS{train}/corpus.parsed.$TARGET";
 }
 
+maybe_quit("PARSE");
 
 ## THRAX #############################################################
 
