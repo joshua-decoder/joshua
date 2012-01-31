@@ -38,7 +38,7 @@ my $multiline;
 my $default_numnodes = 8;
 my $numnodes = $default_numnodes;
 my $user = $ENV{"USER"};
-my $default_pmem = "8g";
+my $default_pmem = "2g";
 my $pmem = $default_pmem;
 my $default_queue = undef;
 my $queue = $default_queue;
