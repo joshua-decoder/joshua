@@ -3,10 +3,11 @@ package joshua.util.quantization;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.Serializable;
 import java.nio.ByteBuffer;
-import java.util.Map;
+import java.util.ArrayList;
 import java.util.TreeMap;
+
+import joshua.util.io.LineReader;
 
 public class EightBitQuantizer implements Quantizer {
 
@@ -17,13 +18,13 @@ public class EightBitQuantizer implements Quantizer {
 
 	public EightBitQuantizer() {
 		buckets = new float[256];
+		histogram = new TreeMap<Float, Integer>();
 	}
 
 	@Override
 	public void initialize() {
-		if (histogram == null)
-			histogram = new TreeMap<Float, Integer>();
 		histogram.clear();
+		histogram.put(0.0f, 0);
 		total = 0;
 	}
 
@@ -40,66 +41,73 @@ public class EightBitQuantizer implements Quantizer {
 	public void finalize() {
 		// We make sure that 0.0f always has its own bucket, so the bucket
 		// size is determined excluding the zero values.
-		int size = (total - histogram.get(0.0)) / buckets.length;
+		int size = (total - histogram.get(0.0f)) / (buckets.length - 1);
 		buckets[0] = 0.0f;
 
-		boolean done = false;
-		Map.Entry<Float, Integer> entry = histogram.firstEntry();
-		float last_key = entry.getKey();
+		int old_size = -1;
+		while (old_size != size) {
+			int sum = 0;
+			int count = 255;
+			for (float key : histogram.keySet()) {
+				int entry_count = histogram.get(key);
+				if (entry_count < size && key != 0)
+					sum += entry_count;
+				else
+					count--;
+			}
+			old_size = size;
+			size = sum / count;
+		}
+		
+		float last_key = Float.MAX_VALUE;
 
 		int index = 1;
 		int count = 0;
 		float sum = 0.0f;
 
-		float key;
 		int value;
-		while (!done) {
-			key = entry.getKey();
-			value = entry.getValue();
-
-			// Special handling of the zero value (or boundary) in the histogram.
-			if (key == 0.0 || (last_key < 0 && key > 0)) {
+		for (float key : histogram.keySet()) {
+			value = histogram.get(key);
+			// Special bucket termination cases: zero boundary and histogram spikes.
+			if (key == 0 || (last_key < 0 && key > 0) || (value >= size)) {
 				// If the count is not 0, i.e. there were negative values, we should
 				// not bucket them with the positive ones. Close out the bucket now.
-				if (count != 0) {
+				if (count != 0 && index < 254) {
 					buckets[index++] = (float) sum / count;
 					count = 0;
-					sum = 0.0f;
+					sum = 0;
 				}
-				continue;
+				if (key == 0)
+					continue;
 			}
 			count += value;
 			sum += key * value;
 			// Check if the bucket is full.
-			if (count >= size) {
+			if (count >= size && index < 254) {
 				buckets[index++] = (float) sum / count;
 				count = 0;
-				sum = 0.0f;
+				sum = 0;
 			}
 			last_key = key;
-			entry = histogram.higherEntry(key);
-			done = (entry == null);
 		}
-		if (count >= size) {
+		if (index < 255)
 			buckets[index++] = (float) sum / count;
-			count = 0;
-			sum = 0.0f;
-		}
 	}
 
 	public float read(ByteBuffer stream) {
-		return buckets[stream.get()];
+		byte index = stream.get();
+		return buckets[index + 128];
 	}
 
 	public void write(ByteBuffer stream, float value) {
-		byte index = 0;
+		byte index = -128;
 
 		// We search for the bucket best matching the value. Only zeroes will be
 		// mapped to the zero bucket.
-		if (value != 0.0f) {
-			index = 1;
-			while ((Math.abs(buckets[index] - value) > (Math.abs(buckets[index + 1]
-					- value)))) {
+		if (value != 0) {
+			index++;
+			while (index < 126 && (Math.abs(buckets[index + 128] - value) > 
+					(Math.abs(buckets[index + 129] - value)))) {
 				index++;
 			}
 		}
@@ -125,5 +133,47 @@ public class EightBitQuantizer implements Quantizer {
 		buckets = new float[length];
 		for (int i = 0; i < buckets.length; i++)
 			buckets[i] = in.readFloat();
+	}
+	
+	public static void main(String[] args) throws IOException {
+		LineReader reader = new LineReader(args[0]);
+		ArrayList<Float> s = new ArrayList<Float>();
+
+		System.out.println("Initialized.");
+		while (reader.hasNext())
+			s.add(Float.parseFloat(reader.next().trim()));
+		System.out.println("Data read.");
+		int n = s.size();
+		byte[] c = new byte[n];
+		ByteBuffer b = ByteBuffer.wrap(c);
+		EightBitQuantizer q = new EightBitQuantizer();
+
+		q.initialize();
+		for (int i = 0; i < n; i++)
+			q.add(s.get(i));
+		q.finalize();
+		System.out.println("Quantizer learned.");
+		
+		for (int i = 0; i < n; i++)
+			q.write(b, s.get(i));
+		b.rewind();
+		System.out.println("Quantization complete.");
+		
+		float avg_error = 0;
+		float error = 0;
+		int count = 0;
+		for (int i = 0; i < n; i++) {
+			float coded = q.read(b);
+			if (s.get(i) != 0) {
+				error = Math.abs(s.get(i) - coded);
+				avg_error += error;
+				count++;
+			}
+		}
+		avg_error /= count;
+		System.out.println("Evaluation complete.");
+		
+		System.out.println("Average quanitization error over " + n +
+				" samples is: " + avg_error);
 	}
 }
