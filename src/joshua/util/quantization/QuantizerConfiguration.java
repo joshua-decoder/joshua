@@ -39,6 +39,16 @@ public class QuantizerConfiguration {
 			quantizerByFeatureId.put(feature_id, index);
 	}
 	
+	public void initialize() {
+		for (Quantizer q : quantizers)
+			q.initialize();
+	}
+	
+	public void finalize() {
+		for (Quantizer q : quantizers)
+			q.finalize();
+	}
+	
 	public Quantizer get(int feature_id) {
 		Integer index = quantizerByFeatureId.get(feature_id);
 		return (index != null ? quantizers.get(index) : DEFAULT);

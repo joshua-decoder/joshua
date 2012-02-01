@@ -9,7 +9,7 @@ import java.io.IOException;
 import joshua.corpus.Vocabulary;
 
 /**
- * This progran reads a packed representation and prints out some
+ * This program reads a packed representation and prints out some
  * basic information about it.
  *
  * Usage: java CountRules PACKED_GRAMMAR_DIR

@@ -112,6 +112,8 @@ public class GrammarPacker {
 	public void pack() throws IOException {
 		logger.info("Beginning exploration pass.");
 		
+		quantization.initialize();
+		
 		// Explore pass. Learn vocabulary and quantizer histograms.
 		for (String grammar_file : grammars) {
 			logger.info("Exploring: " + grammar_file);
@@ -121,6 +123,8 @@ public class GrammarPacker {
 
 		logger.info("Exploration pass complete. Freezing vocabulary and " +
 				"finalizing quantizers.");
+
+		quantization.finalize();
 		
 		quantization.write(WORKING_DIRECTORY + File.separator + "quantization");
 		Vocabulary.freeze();
@@ -239,8 +243,10 @@ public class GrammarPacker {
 			features.clear();
 			for (String feature_entry : feature_entries) {
 				String[] parts = feature_entry.split("=");
-				features.put(Vocabulary.id(parts[0]),
-						Float.parseFloat(parts[1]));
+				int feature_id = Vocabulary.id(parts[0]);
+				float feature_value = Float.parseFloat(parts[1]);
+				if (feature_value != 0)
+					features.put(feature_id, feature_value);
 			}
 			int features_index = data_buffer.add(features);
 			
