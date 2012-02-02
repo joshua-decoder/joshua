@@ -388,7 +388,7 @@ public class JoshuaDecoder {
 	
 	private void initializeStateComputers(int nGramOrder, int ngramStateID) {
 		stateComputers = new ArrayList<StateComputer>();
-		if (ngramOrder > 0)
+		if (nGramOrder > 0)
 			stateComputers.add(new NgramStateComputer(nGramOrder, ngramStateID));
 	}
 	
