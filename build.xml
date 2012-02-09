@@ -51,7 +51,7 @@
 <!-- ~~~~~ Init build task ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 	<!-- Create the build directory for compiled class files -->
-	<target name="init">
+	<target name="init" depends="set-joshua-home">
 		<tstamp/>
 		<mkdir dir="${build}"/>
 		<mkdir dir="${lib}"/>
@@ -59,12 +59,12 @@
 	
 	<!-- Check for environment variables -->
 	<target name="set-joshua-home" unless="env.JOSHUA">
-		<fail message="Please set the $JOSHUA environmant variable." />
+		<fail message="Please set the $JOSHUA environment variable." />
 	</target>
 	
 	<!-- Check for environment variables -->
 	<target name="set-java-home" unless="env.JAVA_HOME">
-		<fail message="Please set the $JAVA_HOME environmant variable." />
+		<fail message="Please set the $JAVA_HOME environment variable." />
 		<!-- TODO: add suggestion to use /System/Library/Frameworks/JavaVM.framework/Home/ iff on OSX --> 
 	</target>
 	
@@ -79,7 +79,7 @@
 		</exec>
 	</target>
 		
-	<target name="giza" depends="init">
+	<target name="giza" depends="init, set-joshua-home">
 	  <exec executable="make">
 			<arg value="-j" />
 			<arg value="4" />
@@ -102,7 +102,7 @@
 <!--       </exec> -->
 	</target>
 
-	<target name="parallelize">
+	<target name="parallelize" depends="set-joshua-home">
 		<exec executable="make">
 			<arg value="-j" />
 			<arg value="4" />
@@ -111,7 +111,7 @@
 		</exec>
 	</target>
 
-	<target name="thrax">
+	<target name="thrax" depends="set-joshua-home">
 	  <exec executable="git">
 	    <arg value="submodule" />
 	    <arg value="init" />
