@@ -9,6 +9,6 @@ binmode(STDIN, ":utf8");
 binmode(STDOUT, ":utf8");
 
 while (<>) {
-  s/(\S+?)\)/uc $1 . ")"/ge;
+  s/(\S+?)\)/lc $1 . ")"/ge;
   print;
 }
