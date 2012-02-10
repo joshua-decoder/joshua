@@ -412,11 +412,14 @@ my %PREPPED = (
 
 
 if ($DO_PREPARE_CORPORA) {
-  my $prefix = prepare_data("train",\@CORPORA,$MAXLEN);
+  my $prefixes = prepare_data("train",\@CORPORA,$MAXLEN);
+
+  # used for parsing
+  $TRAIN{mixedcase} = "$DATA_DIRS{train}/$prefixes->{shortened}.$TARGET.gz";
 
   $TRAIN{prefix} = "$DATA_DIRS{train}/corpus";
   foreach my $lang ($SOURCE,$TARGET) {
-	system("ln -sf $prefix.$lang $DATA_DIRS{train}/corpus.$lang");
+	system("ln -sf $prefixes->{lowercased}.$lang $DATA_DIRS{train}/corpus.$lang");
   }
   $TRAIN{source} = "$DATA_DIRS{train}/corpus.$SOURCE";
   $TRAIN{target} = "$DATA_DIRS{train}/corpus.$TARGET";
@@ -425,16 +428,16 @@ if ($DO_PREPARE_CORPORA) {
 
 # prepare the tuning and development data
 if (defined $TUNE and $DO_PREPARE_CORPORA) {
-  my $prefix = prepare_data("tune",[$TUNE]);
-  $TUNE{source} = "$DATA_DIRS{tune}/$prefix.$SOURCE";
-  $TUNE{target} = "$DATA_DIRS{tune}/$prefix.$TARGET";
+  my $prefixes = prepare_data("tune",[$TUNE]);
+  $TUNE{source} = "$DATA_DIRS{tune}/$prefixes->{lowercased}.$SOURCE";
+  $TUNE{target} = "$DATA_DIRS{tune}/$prefixes->{lowercased}.$TARGET";
   $PREPPED{TUNE} = 1;
 }
 
 if (defined $TEST and $DO_PREPARE_CORPORA) {
-  my $prefix = prepare_data("test",[$TEST]);
-  $TEST{source} = "$DATA_DIRS{test}/$prefix.$SOURCE";
-  $TEST{target} = "$DATA_DIRS{test}/$prefix.$TARGET";
+  my $prefixes = prepare_data("test",[$TEST]);
+  $TEST{source} = "$DATA_DIRS{test}/$prefixes->{lowercased}.$SOURCE";
+  $TEST{target} = "$DATA_DIRS{test}/$prefixes->{lowercased}.$TARGET";
   $PREPPED{TEST} = 1;
 }
 
@@ -615,12 +618,12 @@ if ($GRAMMAR_TYPE eq "samt") {
 	# 				"$DATA_DIRS{train}/corpus.parsed.$TARGET");
 
 	$cachepipe->cmd("parse",
-					"cat $TRAIN{target} | $JOSHUA/scripts/training/parallelize/parallelize.pl --jobs $NUM_JOBS --qsub-args \"$QSUB_ARGS\" -- java -d64 -Xmx${PARSER_MEM} -jar $JOSHUA/lib/BerkeleyParser.jar -gr $JOSHUA/lib/eng_sm6.gr -nThreads 1 | sed 's/^\(/\(TOP/' | perl -pi -e 's/(\\S+)\\)/lc(\$1).\")\"/ge' | tee $DATA_DIRS{train}/corpus.$TARGET.parsed | perl $SCRIPTDIR/training/add-OOVs.pl $DATA_DIRS{train}/vocab.$TARGET > $DATA_DIRS{train}/corpus.parsed.$TARGET",
+					"$CAT $TRAIN{mixedcase} | $JOSHUA/scripts/training/parallelize/parallelize.pl --jobs $NUM_JOBS --qsub-args \"$QSUB_ARGS\" -- java -d64 -Xmx${PARSER_MEM} -jar $JOSHUA/lib/BerkeleyParser.jar -gr $JOSHUA/lib/eng_sm6.gr -nThreads 1 | sed 's/^\(/\(TOP/' | perl -pi -e 's/(\\S+)\\)/lc(\$1).\")\"/ge' | tee $DATA_DIRS{train}/corpus.$TARGET.parsed | perl $SCRIPTDIR/training/add-OOVs.pl $DATA_DIRS{train}/vocab.$TARGET | $SCRIPTDIR/training/lowercase-leaves.pl > $DATA_DIRS{train}/corpus.parsed.$TARGET",
 					"$TRAIN{target}",
 					"$DATA_DIRS{train}/corpus.parsed.$TARGET");
   } else {
 	$cachepipe->cmd("parse",
-					"cat $TRAIN{target} | java -Xmx${PARSER_MEM} -jar $JOSHUA/lib/BerkeleyParser.jar -gr $JOSHUA/lib/eng_sm6.gr -nThreads $NUM_THREADS | sed 's/^\(/\(TOP/' | perl -pi -e 's/(\\S+)\\)/lc(\$1).\")\"/ge' | tee $DATA_DIRS{train}/corpus.$TARGET.parsed | perl $SCRIPTDIR/training/add-OOVs.pl $DATA_DIRS{train}/vocab.$TARGET > $DATA_DIRS{train}/corpus.parsed.$TARGET",
+					"$CAT $TRAIN{mixedcase} | java -Xmx${PARSER_MEM} -jar $JOSHUA/lib/BerkeleyParser.jar -gr $JOSHUA/lib/eng_sm6.gr -nThreads $NUM_THREADS | sed 's/^\(/\(TOP/' | perl -pi -e 's/(\\S+)\\)/lc(\$1).\")\"/ge' | tee $DATA_DIRS{train}/corpus.$TARGET.parsed | perl $SCRIPTDIR/training/add-OOVs.pl $DATA_DIRS{train}/vocab.$TARGET | $SCRIPTDIR/training/lowercase-leaves.pl > $DATA_DIRS{train}/corpus.parsed.$TARGET",
 					"$TRAIN{target}",
 					"$DATA_DIRS{train}/corpus.parsed.$TARGET");
   }
@@ -763,9 +766,9 @@ MERT:
 
 # prep the tuning data, unless already prepped
 if (! $PREPPED{TUNE} and $DO_PREPARE_CORPORA) {
-  my $prefix = prepare_data("tune",[$TUNE]);
-  $TUNE{source} = "$DATA_DIRS{tune}/$prefix.$SOURCE";
-  $TUNE{target} = "$DATA_DIRS{tune}/$prefix.$TARGET";
+  my $prefixes = prepare_data("tune",[$TUNE]);
+  $TUNE{source} = "$DATA_DIRS{tune}/$prefixes->{lowercased}.$SOURCE";
+  $TUNE{target} = "$DATA_DIRS{tune}/$prefixes->{lowercased}.$TARGET";
   $PREPPED{TUNE} = 1;
 }
 
@@ -774,11 +777,11 @@ if ($DO_BUILD_LM_FROM_CORPUS) {
 
   # make sure the training data is prepped
   if (! $PREPPED{TRAIN} and $DO_PREPARE_CORPORA) {
-	my $prefix = prepare_data("train",\@CORPORA,$MAXLEN);
+	my $prefixes = prepare_data("train",\@CORPORA,$MAXLEN);
 
 	$TRAIN{prefix} = "$DATA_DIRS{train}/corpus";
 	foreach my $lang ($SOURCE,$TARGET) {
-	  system("ln -sf $prefix.$lang $DATA_DIRS{train}/corpus.$lang");
+	  system("ln -sf $prefixes->{lowercased}.$lang $DATA_DIRS{train}/corpus.$lang");
 	}
 	$TRAIN{source} = "$DATA_DIRS{train}/corpus.$SOURCE";
 	$TRAIN{target} = "$DATA_DIRS{train}/corpus.$TARGET";
@@ -935,9 +938,9 @@ maybe_quit("MERT");
 
 # prepare the testing data
 if (! $PREPPED{TEST} and $DO_PREPARE_CORPORA) {
-  my $prefix = prepare_data("test",[$TEST]);
-  $TEST{source} = "$DATA_DIRS{test}/$prefix.$SOURCE";
-  $TEST{target} = "$DATA_DIRS{test}/$prefix.$TARGET";
+  my $prefixes = prepare_data("test",[$TEST]);
+  $TEST{source} = "$DATA_DIRS{test}/$prefixes->{lowercased}.$SOURCE";
+  $TEST{target} = "$DATA_DIRS{test}/$prefixes->{lowercased}.$TARGET";
   $PREPPED{TEST} = 1;
 }
 
@@ -1099,9 +1102,9 @@ if (! defined $NAME) {
 # }
 
 if (! $PREPPED{TEST} and $DO_PREPARE_CORPORA) {
-  my $prefix = prepare_data("test",[$TEST]);
-  $TEST{source} = "$DATA_DIRS{test}/$prefix.$SOURCE";
-  $TEST{target} = "$DATA_DIRS{test}/$prefix.$TARGET";
+  my $prefixes = prepare_data("test",[$TEST]);
+  $TEST{source} = "$DATA_DIRS{test}/$prefixes->{lowercased}.$SOURCE";
+  $TEST{target} = "$DATA_DIRS{test}/$prefixes->{lowercased}.$TARGET";
   $PREPPED{TEST} = 1;
 }
 
@@ -1201,6 +1204,9 @@ sub prepare_data {
   system("mkdir -p $DATA_DIR") unless -d $DATA_DIR;
   system("mkdir -p $DATA_DIRS{$label}") unless -d $DATA_DIRS{$label};
 
+  # records the pieces that are produced
+  my %prefixes;
+
   # copy the data from its original location to our location
   foreach my $ext ($TARGET,$SOURCE,"$TARGET.0","$TARGET.1","$TARGET.2","$TARGET.3") {
 	# append each extension to the corpora prefixes
@@ -1226,10 +1232,12 @@ sub prepare_data {
 						"$CAT $DATA_DIRS{$label}/$prefix.$lang.gz | $NORMALIZER $lang | $TOKENIZER -l $lang 2> /dev/null | gzip -9n > $DATA_DIRS{$label}/$prefix.tok.$lang.gz",
 						"$DATA_DIRS{$label}/$prefix.$lang.gz", "$DATA_DIRS{$label}/$prefix.tok.$lang.gz");
 	  }
+
 	}
   }
   # extend the prefix
   $prefix .= ".tok";
+  $prefixes{tokenized} = $prefix;
 
   if ($label eq "train" and $maxlen > 0) {
 	# trim training data
@@ -1242,6 +1250,8 @@ sub prepare_data {
 		);
 	$prefix .= ".$maxlen";
   }
+  # record this whether we shortened or not
+  $prefixes{shortened} = $prefix;
 
   # lowercase
   foreach my $lang ($TARGET,$SOURCE,"$TARGET.0","$TARGET.1","$TARGET.2","$TARGET.3") {
@@ -1257,8 +1267,9 @@ sub prepare_data {
 	}
   }
   $prefix .= ".lc";
+  $prefixes{lowercased} = $prefix;
 
-  return $prefix;
+  return \%prefixes;
 }
 
 sub maybe_quit {
