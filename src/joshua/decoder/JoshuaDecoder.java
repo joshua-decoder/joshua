@@ -388,8 +388,8 @@ public class JoshuaDecoder {
 	
 	private void initializeStateComputers(int nGramOrder, int ngramStateID) {
 		stateComputers = new ArrayList<StateComputer>();
-		StateComputer ngramStateComputer = new NgramStateComputer(nGramOrder, ngramStateID);
-		stateComputers.add(ngramStateComputer);
+		if (nGramOrder > 0)
+			stateComputers.add(new NgramStateComputer(nGramOrder, ngramStateID));
 	}
 	
     // iterate over the features that were discovered when the config file was read
