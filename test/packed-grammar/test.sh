@@ -1,4 +1,5 @@
 #!/bin/bash
 
 # test the vocabulary
-java -cp .:/home/hltcoe/mpost/code/joshua/src VocabTest small_packed
+javac VocabTest.java
+java -cp .:${JOSHUA}/bin VocabTest small_packed
