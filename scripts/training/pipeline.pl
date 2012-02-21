@@ -93,6 +93,10 @@ my $ALIGNER = "giza"; # "berkeley" or "giza"
 # mostly on your grammar size)
 my $JOSHUA_MEM = "3100m";
 
+# the amount of memory available for hadoop processes (passed to
+# Hadoop via -Dmapred.child.java.opts
+my $HADOOP_MEM = "2g";
+
 # memory available to the parser
 my $PARSER_MEM = "2g";
 
@@ -171,6 +175,7 @@ my $retval = GetOptions(
   "tokenizer=s"  	  => \$TOKENIZER,
   "joshua-config=s"   => \$MERTFILES{'joshua.config'},
   "joshua-mem=s"      => \$JOSHUA_MEM,
+  "hadoop-mem=s"      => \$HADOOP_MEM,
   "parser-mem=s"      => \$PARSER_MEM,
   "decoder-command=s" => \$MERTFILES{'decoder_command'},
   "thrax-conf=s"      => \$THRAX_CONF_FILE,
@@ -727,8 +732,6 @@ if (! defined $GRAMMAR_FILE) {
 	  $thrax_input = "$THRAXDIR/input-file";
 	}
 
-
-
 	# copy the thrax config file
 	my $thrax_file = "thrax-$GRAMMAR_TYPE.conf";
 	system("grep -v ^input-file $THRAX_CONF_FILE > $thrax_file.tmp");
@@ -736,7 +739,7 @@ if (! defined $GRAMMAR_FILE) {
 	system("mv $thrax_file.tmp $thrax_file");
 
 	$cachepipe->cmd("thrax-run",
-					"$HADOOP/bin/hadoop jar $JOSHUA/thrax/bin/thrax.jar $thrax_file $THRAXDIR > thrax.log 2>&1; rm -f grammar grammar.gz; $HADOOP/bin/hadoop fs -getmerge $THRAXDIR/final/ grammar; gzip -9nf grammar",
+					"$HADOOP/bin/hadoop jar $JOSHUA/thrax/bin/thrax.jar -D mapred.child.java.opts='-Xmx$HADOOP_MEM' $thrax_file $THRAXDIR > thrax.log 2>&1; rm -f grammar grammar.gz; $HADOOP/bin/hadoop fs -getmerge $THRAXDIR/final/ grammar; $HADOOP/bin/hadoop fs -rmr $THRAXDIR; gzip -9nf grammar",
 					"$DATA_DIRS{train}/thrax-input-file",
 					$thrax_file,
 					"grammar.gz");
