@@ -10,7 +10,7 @@ import java.nio.ByteBuffer;
  */
 public class BooleanQuantizer extends StatelessQuantizer {
 
-	public float read(ByteBuffer stream) {
+	public float read(ByteBuffer stream, int position) {
 		return 1.0f;
 	}
 
@@ -20,6 +20,10 @@ public class BooleanQuantizer extends StatelessQuantizer {
 	@Override
 	public String getKey() {
 		return "boolean";
+	}
+	
+	public int size() {
+		return 0;
 	}
 }
 

@@ -94,8 +94,8 @@ public class EightBitQuantizer implements Quantizer {
 			buckets[index++] = (float) sum / count;
 	}
 
-	public float read(ByteBuffer stream) {
-		byte index = stream.get();
+	public float read(ByteBuffer stream, int position) {
+		byte index = stream.get(position + 4);
 		return buckets[index + 128];
 	}
 
@@ -135,6 +135,10 @@ public class EightBitQuantizer implements Quantizer {
 			buckets[i] = in.readFloat();
 	}
 	
+	public int size() {
+		return 1;
+	}
+	
 	public static void main(String[] args) throws IOException {
 		LineReader reader = new LineReader(args[0]);
 		ArrayList<Float> s = new ArrayList<Float>();
@@ -163,7 +167,7 @@ public class EightBitQuantizer implements Quantizer {
 		float error = 0;
 		int count = 0;
 		for (int i = 0; i < n; i++) {
-			float coded = q.read(b);
+			float coded = q.read(b, i);
 			if (s.get(i) != 0) {
 				error = Math.abs(s.get(i) - coded);
 				avg_error += error;

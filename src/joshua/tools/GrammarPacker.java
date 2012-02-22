@@ -29,6 +29,7 @@ public class GrammarPacker {
 
 	private static int FANOUT;
 	private static int CHUNK_SIZE;
+	private static int DATA_SIZE_LIMIT;
 	private static int AVERAGE_NUM_FEATURES;
 
 	private static String WORKING_DIRECTORY;
@@ -40,6 +41,7 @@ public class GrammarPacker {
 	static {
 		FANOUT = 2;
 		CHUNK_SIZE = 100000;
+		DATA_SIZE_LIMIT  = (int) (Integer.MAX_VALUE * 0.8);
 		AVERAGE_NUM_FEATURES = 20;
 		
 		WORKING_DIRECTORY = System.getProperty("user.dir") 
@@ -132,7 +134,7 @@ public class GrammarPacker {
 		quantization.read(WORKING_DIRECTORY + File.separator + "quantization");
 		
 		logger.info("Beginning chunking pass.");
-		Queue<PackedChunk> chunks = new PriorityQueue<PackedChunk>();
+		Queue<PackingFileTuple> chunks = new PriorityQueue<PackingFileTuple>();
 		// Chunking pass. Split and binarize source, target and features into
 		for (String grammar_file : grammars) {
 			LineReader reader = new LineReader(grammar_file);
@@ -143,7 +145,7 @@ public class GrammarPacker {
 		logger.info("Beginning merge phase.");
 		// Merge loop.
 		while (chunks.size() > 1) {
-			List<PackedChunk> to_merge = new ArrayList<PackedChunk>();
+			List<PackingFileTuple> to_merge = new ArrayList<PackingFileTuple>();
 			while (to_merge.size() < FANOUT && !chunks.isEmpty())
 				to_merge.add(chunks.poll());
 			chunks.add(merge(to_merge));
@@ -192,14 +194,14 @@ public class GrammarPacker {
 		}
 	}
 
-	private void binarize(LineReader grammar, Queue<PackedChunk> chunks) 
+	private void binarize(LineReader grammar, Queue<PackingFileTuple> chunks) 
 			throws IOException {
 		int counter = 0;
 		int chunk_counter = 0;
 		int num_chunks = 0;
 
 		boolean ready_to_flush = false;
-		String last_source = null;
+		String first_source_word = null;
 
 		PackingTrie<SourceValue> source_trie = new PackingTrie<SourceValue>();
 		PackingTrie<TargetValue> target_trie = new PackingTrie<TargetValue>();
@@ -222,12 +224,13 @@ public class GrammarPacker {
 			String[] feature_entries = fields[3].split("\\s");
 
 			// Reached chunk limit size, indicate that we're closing up.
-			if (!ready_to_flush && chunk_counter > CHUNK_SIZE) {
+			if (!ready_to_flush
+					&& (chunk_counter > CHUNK_SIZE || data_buffer.overflowing())) {
 				ready_to_flush = true;
-				last_source = fields[1];
+				first_source_word = source_words[0];
 			}
 			// Finished closing up.
-			if (ready_to_flush && !last_source.equals(fields[1])) {
+			if (ready_to_flush && !first_source_word.equals(source_words[0])) {
 				chunks.add(flush(source_trie, target_trie, data_buffer, num_chunks));
 				source_trie.clear();
 				target_trie.clear();
@@ -290,11 +293,11 @@ public class GrammarPacker {
 	 * @param id
 	 * @throws IOException
 	 */
-	private PackedChunk flush(PackingTrie<SourceValue> source_trie,
+	private PackingFileTuple flush(PackingTrie<SourceValue> source_trie,
 			PackingTrie<TargetValue> target_trie, PackingBuffer data_buffer, 
 			int id) throws IOException {
 		// Make a chunk object for this piece of the grammar.
-		PackedChunk chunk = new PackedChunk("chunk_" + String.format("%05d", id));
+		PackingFileTuple chunk = new PackingFileTuple("chunk_" + String.format("%05d", id));
 		// Pull out the streams for source, target and data output.
 		DataOutputStream source_stream = chunk.getSourceOutput();
 		DataOutputStream target_stream = chunk.getTargetOutput();
@@ -314,6 +317,12 @@ public class GrammarPacker {
 		target_queue = new LinkedList<PackingTrie<TargetValue>>();
 		target_queue.add(target_trie);
 		target_position = 0;
+		
+		// Target lookup table for trie levels.
+//		int level = 0;
+//		int current_level_size = 1;
+//		int next_level_size = 0;
+//		ArrayList<Integer> target_lookup = new ArrayList<Integer>();
 		
 		// Packing loop for upwards-pointing target trie.		
 		while (!target_queue.isEmpty()) {
@@ -336,6 +345,12 @@ public class GrammarPacker {
 				target_queue.add(child);
 			}
 			target_position += node.size(false, true);
+			
+			// TODO: Implement trie layer lookup construction.
+//			current_level_size--;
+//			if (current_level_size == 0) {
+//				// Layers switch.
+//			}
 		}
 		
 		// Setting up for source and data writing.
@@ -386,7 +401,7 @@ public class GrammarPacker {
 		return chunk;
 	}
 	
-	private PackedChunk merge(List<PackedChunk> chunks) {
+	private PackingFileTuple merge(List<PackingFileTuple> chunks) {
 		return null;
 	}
 
@@ -657,6 +672,10 @@ public class GrammarPacker {
 			onDiskOrder.clear();
 		}
 		
+		boolean overflowing() {
+			return (buffer.position() >= DATA_SIZE_LIMIT);
+		}
+		
 		private void writeHeader(DataOutputStream out) throws IOException {
 			if (out.size() == 0) {
 				out.writeInt(onDiskOrder.size());
@@ -683,12 +702,12 @@ public class GrammarPacker {
 		}
 	}
 
-	class PackedChunk implements Comparable<PackedChunk> {
+	class PackingFileTuple implements Comparable<PackingFileTuple> {
 		private File sourceFile;
 		private File targetFile;
 		private File dataFile;
 
-		PackedChunk(String prefix) {
+		PackingFileTuple(String prefix) {
 			sourceFile = new File(WORKING_DIRECTORY + File.separator
 					+ prefix + ".source");
 			targetFile = new File(WORKING_DIRECTORY + File.separator 
@@ -746,7 +765,7 @@ public class GrammarPacker {
 		}
 
 		@Override
-		public int compareTo(PackedChunk o) {
+		public int compareTo(PackingFileTuple o) {
 			if (getSize() > o.getSize()) {
 				return -1;
 			} else if (getSize() < o.getSize()) {

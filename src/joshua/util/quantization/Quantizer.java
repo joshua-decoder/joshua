@@ -7,7 +7,7 @@ import java.nio.ByteBuffer;
 
 public interface Quantizer {
 
-	public float read(ByteBuffer stream);
+	public float read(ByteBuffer stream, int position);
 	
 	public void write(ByteBuffer stream, float value);
 	
@@ -23,6 +23,7 @@ public interface Quantizer {
 	
 	public void readState(DataInputStream in) throws IOException;
 	
+	public int size();
 }
 
 
