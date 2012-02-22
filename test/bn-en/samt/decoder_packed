@@ -1,0 +1,1 @@
+cat input.bn | $JOSHUA/joshua-decoder -m 512m -threads 2 -c packed.config > output
