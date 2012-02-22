@@ -48,3 +48,4 @@ test/bn-en/samt/log
 test/bn-en/samt/output
 test/bn-en/samt/output.bleu
 test/bn-en/samt/reference.en.all
+*.class
