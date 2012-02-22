@@ -33,8 +33,8 @@ import joshua.util.Regex;
 /**
  * This class represents a basic input sentence.  A sentence is a
  * sequence of UTF-8 characters denoting a string of source language
- * words.  The sequence can optionally be wrapped in <seg
- * id=N>...</seg> tags, which are then used to set the sentence number
+ * words.  The sequence can optionally be wrapped in <seg id="N">...</seg> 
+ * tags, which are then used to set the sentence number
  * (a 0-indexed ID).
  *
  * @author Matt Post <post@jhu.edu>
@@ -66,23 +66,21 @@ public class Sentence {
 
     private List<ConstraintSpan> constraints;
 
-    // matches the opening and closing <seg> tags, e.g.,
-    // <seg id="72">this is a test input sentence</seg>
-	protected static final Pattern SEG_START =
-				Pattern.compile("^\\s*<seg\\s+id=\"?(\\d+)\"?[^>]*>\\s*");
-	protected static final Pattern SEG_END =
-				Pattern.compile("\\s*</seg\\s*>\\s*$");
+    // Matches the opening and closing <seg> tags, e.g.,
+    // <seg id="72">this is a test input sentence</seg>.
+    protected static final Pattern SEG_START =
+    		Pattern.compile("^\\s*<seg\\s+id=\"?(\\d+)\"?[^>]*>\\s*");
+    protected static final Pattern SEG_END =
+    		Pattern.compile("\\s*</seg\\s*>\\s*$");
 
     public Sentence(String sentence, int id) {
         this.sequenceId = id;
-
         this.constraints = new LinkedList<ConstraintSpan>();
-
+        sentence = Regex.spaces.replaceAll(sentence, " ").trim();
+        
         // Check if the sentence has SGML markings denoting the
         // sentence ID; if so, override the id passed in to the
         // constructor
-        sentence = Regex.spaces.replaceAll(sentence, " ").trim();
-
         Matcher start = SEG_START.matcher(sentence);
         if (start.find()) {
             this.sentence = SEG_END.matcher(start.replaceFirst("")).replaceFirst("");
@@ -94,9 +92,9 @@ public class Sentence {
         }
     }
 
-	public boolean isEmpty() {
-		return sentence.matches("^\\s*$");
-	}
+    public boolean isEmpty() {
+    	return sentence.matches("^\\s*$");
+    }
 
     public int id() {
         return id;
@@ -106,8 +104,8 @@ public class Sentence {
         return sentence;
     }
 
-    public int[] int_sentence() {
-        return Vocabulary.addAll(sentence());
+    public int[] intSentence() {
+    	return Vocabulary.addAll(sentence());
     }
 
     public List<ConstraintSpan> constraints() {
@@ -115,10 +113,6 @@ public class Sentence {
     }
 
     public Lattice<Integer> intLattice() {
-        return Lattice.createIntLattice(int_sentence());
-    }
-
-    public SyntaxTree syntax_tree() {
-        return null;
+        return Lattice.createIntLattice(intSentence());
     }
 }
