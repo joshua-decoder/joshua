@@ -24,5 +24,5 @@ endif
 build_binary: $(CORE) $(HEADERS) lm/build_binary.cc
 	g++ -I. -O3 $(CXXFLAGS) $(CORE) lm/build_binary.cc -o build_binary -lz
 ngram_query: $(CORE) $(HEADERS) lm/ngram_query.cc
-	g++ -I. -O3 $(CXXFLAGS) $(CORE) lm/build_binary.cc -o ngram_query -lz
+	g++ -I. -O3 $(CXXFLAGS) $(CORE) lm/ngram_query.cc -o ngram_query -lz
 
