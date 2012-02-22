@@ -2,7 +2,7 @@
 
 set -u
 
-./decoder_command 2> log
+./decoder_packed 2> log
 
 java -cp $JOSHUA/bin -Dfile.encoding=utf8 -Djava.library.path=lib -Xmx1000m -Xms1000m -Djava.util.logging.config.file=logging.properties joshua.util.JoshuaEval -cand output -format nbest -ref reference.en -rps 4 -m BLEU 4 closest > output.bleu
 
