@@ -295,15 +295,12 @@ public class DecoderThread extends Thread {
         }
 
         /* Seeding: the chart only sees the grammars, not the factories */
-        Chart chart = new Chart(input_lattice,
+        Chart chart = new Chart(sentence,
             this.featureFunctions,
             this.stateComputers,
-            sentence.id(),
             grammars,
             false,
-            JoshuaConfiguration.goal_symbol,
-            sentence.constraints(),
-            sentence.syntax_tree());
+            JoshuaConfiguration.goal_symbol);
 		
 		/* Parsing */
 		HyperGraph hypergraph = chart.expand();
