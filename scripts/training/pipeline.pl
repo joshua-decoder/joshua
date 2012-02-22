@@ -739,10 +739,11 @@ if (! defined $GRAMMAR_FILE) {
 	system("mv $thrax_file.tmp $thrax_file");
 
 	$cachepipe->cmd("thrax-run",
-					"$HADOOP/bin/hadoop jar $JOSHUA/thrax/bin/thrax.jar -D mapred.child.java.opts='-Xmx$HADOOP_MEM' $thrax_file $THRAXDIR > thrax.log 2>&1; rm -f grammar grammar.gz; $HADOOP/bin/hadoop fs -getmerge $THRAXDIR/final/ grammar; $HADOOP/bin/hadoop fs -rmr $THRAXDIR; perl -pi -e 's/\.?0+\b//g' grammar; gzip -9nf grammar",
+					"$HADOOP/bin/hadoop jar $JOSHUA/thrax/bin/thrax.jar -D mapred.child.java.opts='-Xmx$HADOOP_MEM' $thrax_file $THRAXDIR > thrax.log 2>&1; rm -f grammar grammar.gz; $HADOOP/bin/hadoop fs -getmerge $THRAXDIR/final/ grammar; $HADOOP/bin/hadoop fs -rmr $THRAXDIR; gzip -9nf grammar",
 					"$DATA_DIRS{train}/thrax-input-file",
 					$thrax_file,
 					"grammar.gz");
+#perl -pi -e 's/\.?0+\b//g' grammar; 
 
 	stop_hadoop_cluster() if $HADOOP eq "hadoop";
 
