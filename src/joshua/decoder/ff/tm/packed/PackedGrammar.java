@@ -355,10 +355,13 @@ public class PackedGrammar extends BatchGrammar {
 		private String name;
 
 		private MappedByteBuffer source;
+		
 		private MappedByteBuffer target;
+		private int[] targetLookup;
+		
 		private MappedByteBuffer data;
 		int dataSize;
-		private int[] lookup;
+		private int[] dataLookup;
 
 		private float[] cache;
 
@@ -367,15 +370,23 @@ public class PackedGrammar extends BatchGrammar {
 
 			File source_file = new File(prefix + ".source");
 			File target_file = new File(prefix + ".target");
+			File target_lookup_file = new File(prefix + ".target.lookup");
 			File data_file = new File(prefix + ".data");
 
 			// Get the channels etc.
 			FileChannel source_channel =
 					new RandomAccessFile(source_file, "rw").getChannel();
 			int source_size = (int) source_channel.size();
+			
 			FileChannel target_channel =
 					new RandomAccessFile(target_file, "rw").getChannel();
 			int target_size = (int) target_channel.size();
+			
+			// TODO: change this to read-only.
+			FileChannel target_lookup_channel =
+					new RandomAccessFile(target_lookup_file, "rw").getChannel();
+			int target_lookup_size = (int) target_channel.size();
+			
 			FileChannel data_channel =
 					new RandomAccessFile(data_file, "rw").getChannel();
 			int data_size = (int) data_channel.size();
@@ -385,31 +396,40 @@ public class PackedGrammar extends BatchGrammar {
 			data = data_channel.map(MapMode.READ_ONLY, 0, data_size);
 
 			int num_blocks = data.getInt(0);
-			lookup = new int[num_blocks];
+			dataLookup = new int[num_blocks];
 			cache = new float[num_blocks];
 			dataSize = data.getInt(4);
 			for (int i = 0; i < num_blocks; i++)
-				lookup[i] = data.getInt(8 + 4 * i);
+				dataLookup[i] = data.getInt(8 + 4 * i);
+			
+			MappedByteBuffer target_lookup =
+					target_lookup_channel.map(MapMode.READ_ONLY, 0, target_lookup_size);
+			targetLookup = new int[target_lookup.getInt()];
+			for (int i = 0; i < targetLookup.length; i++)
+				targetLookup[i] = target_lookup.getInt(4 * (i + 1));
 		}
 
 		private int[] getTarget(int pointer) {
-			ArrayList<Integer> dynamic_tgt = new ArrayList<Integer>();
+			// Figure out level.
+			int tgt_length = 1;
+			while (tgt_length < (targetLookup.length + 1)
+					&& targetLookup[tgt_length] <= pointer)
+				tgt_length++;
+			
+			int[] tgt = new int[tgt_length];
+			int index = 0;
 			int parent;
 			do {
 				parent = target.getInt(pointer);
 				if (parent != -1)
-					dynamic_tgt.add(target.getInt(pointer + 4));
+					tgt[index++] = target.getInt(pointer + 4);
 				pointer = parent;
 			} while (pointer != -1);
-
-			int[] tgt = new int[dynamic_tgt.size()];
-			for (int i = 0; i < tgt.length; i++)
-				tgt[i] = dynamic_tgt.get(dynamic_tgt.size() - 1 - i);
 			return tgt;
 		}
 
 		private float[] getFeatures(int block_id, float[] features) {
-			int data_position = lookup[block_id];
+			int data_position = dataLookup[block_id];
 			int num_features = data.getInt(data_position);
 			data_position += 4;
 			for (int i = 0; i < num_features; i++) {

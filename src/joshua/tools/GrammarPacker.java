@@ -268,11 +268,13 @@ public class GrammarPacker {
 			// Process target side.
 			TargetValue tv = new TargetValue(sv);
 			int[] target = new int[target_words.length];
-			for (int i = target_words.length - 1;  i >= 0; i--) {
-				if (FormatUtils.isNonterminal(target_words[i]))
-					target[i] = -FormatUtils.getNonterminalIndex(target_words[i]);
-				else
-					target[i] = Vocabulary.id(target_words[i]);
+			for (int i = 0; i < target_words.length; i++) {
+				if (FormatUtils.isNonterminal(target_words[i])) {
+					target[target_words.length - (i + 1)] = 
+							-FormatUtils.getNonterminalIndex(target_words[i]);
+				} else { 
+					target[target_words.length - (i + 1)] = Vocabulary.id(target_words[i]);
+				}
 			}
 			target_trie.add(target, tv);
 		}
@@ -302,6 +304,7 @@ public class GrammarPacker {
 		// Pull out the streams for source, target and data output.
 		DataOutputStream source_stream = chunk.getSourceOutput();
 		DataOutputStream target_stream = chunk.getTargetOutput();
+		DataOutputStream target_lookup_stream = chunk.getTargetLookupOutput();
 		DataOutputStream data_stream = chunk.getDataOutput();
 		
 		Queue<PackingTrie<TargetValue>> target_queue;
@@ -320,10 +323,9 @@ public class GrammarPacker {
 		target_position = 0;
 		
 		// Target lookup table for trie levels.
-//		int level = 0;
-//		int current_level_size = 1;
-//		int next_level_size = 0;
-//		ArrayList<Integer> target_lookup = new ArrayList<Integer>();
+		int current_level_size = 1;
+		int next_level_size = 0;
+		ArrayList<Integer> target_lookup = new ArrayList<Integer>();
 		
 		// Packing loop for upwards-pointing target trie.		
 		while (!target_queue.isEmpty()) {
@@ -346,13 +348,20 @@ public class GrammarPacker {
 				target_queue.add(child);
 			}
 			target_position += node.size(false, true);
+			next_level_size += node.children.descendingKeySet().size();
 			
-			// TODO: Implement trie layer lookup construction.
-//			current_level_size--;
-//			if (current_level_size == 0) {
-//				// Layers switch.
-//			}
+			current_level_size--;
+			if (current_level_size == 0) {
+				target_lookup.add(target_position);
+				current_level_size = next_level_size;
+				next_level_size = 0;
+			}
 		}
+		target_lookup_stream.writeInt(target_lookup.size());
+		for (int i : target_lookup)
+			target_lookup_stream.writeInt(i);
+		target_lookup_stream.close();
+		
 		
 		// Setting up for source and data writing.
 		source_queue = new LinkedList<PackingTrie<SourceValue>>();
@@ -693,6 +702,7 @@ public class GrammarPacker {
 
 	class PackingFileTuple implements Comparable<PackingFileTuple> {
 		private File sourceFile;
+		private File targetLookupFile;
 		private File targetFile;
 		private File dataFile;
 
@@ -701,6 +711,8 @@ public class GrammarPacker {
 					+ prefix + ".source");
 			targetFile = new File(WORKING_DIRECTORY + File.separator 
 					+ prefix + ".target");
+			targetLookupFile = new File(WORKING_DIRECTORY + File.separator 
+					+ prefix + ".target.lookup");
 			dataFile = new File(WORKING_DIRECTORY + File.separator 
 					+ prefix + ".data");
 			
@@ -713,6 +725,10 @@ public class GrammarPacker {
 		
 		DataOutputStream getTargetOutput() throws IOException {
 			return getOutput(targetFile);
+		}
+		
+		DataOutputStream getTargetLookupOutput() throws IOException {
+			return getOutput(targetLookupFile);
 		}
 		
 		DataOutputStream getDataOutput() throws IOException {
