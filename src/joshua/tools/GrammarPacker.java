@@ -70,7 +70,7 @@ public class GrammarPacker {
 				line = line.substring(0, line.indexOf('#'));
 			if (line.isEmpty())
 				continue;
-			String[] fields = line.split("[\t]+");
+			String[] fields = line.split("[\\s]+");
 
 			if (fields.length < 2) {
 				logger.severe("Incomplete line in config.");
@@ -91,10 +91,9 @@ public class GrammarPacker {
 					System.exit(0);
 				}
 				String quantizer_key = fields[1];
-				String[] feature_names = fields[2].split(",");
 				ArrayList<Integer> feature_ids = new ArrayList<Integer>();
-				for (String feature_name : feature_names)
-					feature_ids.add(Vocabulary.id(feature_name));
+				for (int i = 2; i < fields.length; i++)
+					feature_ids.add(Vocabulary.id(fields[i]));
 				quantization.add(quantizer_key, feature_ids);
 			}
 		}
@@ -409,7 +408,7 @@ public class GrammarPacker {
 	}
 
 	public static void main(String[] args) throws IOException {
-		if (args.length != 3) {
+		if (args.length == 3) {
 			String config_filename = args[0];
 			
 			WORKING_DIRECTORY = args[1];

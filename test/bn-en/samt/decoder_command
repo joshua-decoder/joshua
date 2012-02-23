@@ -1,0 +1,1 @@
+cat input.bn | $JOSHUA/joshua-decoder -m 1g -threads 2 -c joshua.config > output

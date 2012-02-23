@@ -1,0 +1,533 @@
+Reading vocabulary: grammar_packed/vocabulary
+Reading vocabulary: 8322 tokens.
+Reading quantization configuration: grammar_packed/quantization
+Constructing glue grammar...
+Grammar 'grammar.glue'
+   num_rules: 12662; num_bins: 12662; num_pruned: 0; sumest_cost: 0.00000
+Loading the LM will be faster if you build a binary file.
+Reading lm.gz
+----5---10---15---20---25---30---35---40---45---50---55---60---65---70---75---80---85---90---95--100
+****************************************************************************************************
+FEATURE: language model #1, order 5 (weight 1.320)
+FEATURE: phrase model 0, owner 8323 (weight 0.457)
+FEATURE: phrase model 1, owner 8323 (weight -0.174)
+FEATURE: phrase model 2, owner 8323 (weight -0.785)
+FEATURE: phrase model 3, owner 8323 (weight 0.763)
+FEATURE: phrase model 4, owner 8323 (weight -0.863)
+FEATURE: phrase model 5, owner 8323 (weight 0.043)
+FEATURE: phrase model 6, owner 8323 (weight 0.528)
+FEATURE: phrase model 7, owner 8323 (weight 0.926)
+FEATURE: phrase model 8, owner 8323 (weight 0.034)
+FEATURE: phrase model 9, owner 8323 (weight 0.992)
+FEATURE: phrase model 10, owner 8323 (weight 0.522)
+FEATURE: phrase model 11, owner 8323 (weight -0.787)
+FEATURE: phrase model 12, owner 8323 (weight -0.038)
+FEATURE: phrase model 13, owner 8323 (weight 0.371)
+FEATURE: phrase model 14, owner 8323 (weight 0.341)
+FEATURE: phrase model 15, owner 8323 (weight 0.008)
+FEATURE: phrase model 16, owner 8323 (weight 0.798)
+FEATURE: word penalty (weight -3.048)
+FEATURE: OOV penalty (weight -100.000)
+NgramStateComputer: stateID=0; ngramOrder=5
+Model loading took 1 seconds
+Translating sentence #0 [thread 12]
+রবীন্দ্রনাথের জন্ম হয়েছিল কলকাতার এক পিরালী ব্রাহ্মণ পরিবারে ।
+Translating sentence #1 [thread 13]
+সাম্প্রতিককালে ভারতের সঙ্গে যুক্তরাষ্ট্রের সম্পর্কের উন্নতি হয়েছে ।
+ADDED: 1589; MERGED: 343; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 2362
+Sentence id=0; BestlogP=-500.996
+translation of sentence 0 took 0 seconds [12]
+Translating sentence #2 [thread 12]
+গণিত তাই বিজ্ঞানের ভাষা ।
+ADDED: 2548; MERGED: 700; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 5061
+Sentence id=1; BestlogP=-43.423
+translation of sentence 1 took 0 seconds [13]
+ADDED: 1110; MERGED: 254; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 2206
+Sentence id=2; BestlogP=-25.944
+translation of sentence 2 took 0 seconds [12]
+Translating sentence #3 [thread 13]
+এ থেকে সহজেই বোঝা যায় যে এই মেট্রিকটি হবে এফআরডব্লিউ মেট্রিক ।
+Translating sentence #4 [thread 12]
+একই সঙ্গে বাংলার ভূমিকেন্দ্রিক সামন্ততন্ত্রের পতনের পূর্বাভাষও মেলে এই উপন্যাস থেকে ।
+ADDED: 2324; MERGED: 563; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 2655
+Sentence id=3; BestlogP=-733.987
+translation of sentence 3 took 0 seconds [13]
+ADDED: 3286; MERGED: 1078; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 7082
+Sentence id=4; BestlogP=-525.573
+translation of sentence 4 took 0 seconds [12]
+Translating sentence #5 [thread 13]
+নির্বচনে মুজিব ও তাঁর দল নিরঙ্কুষ সংখ্যাগরিষ্ঠতা অর্জন করে ।
+Translating sentence #6 [thread 12]
+হিটলারও বাভারিয়ার মিউনিখ শহরেই তার কাজ চালিয়ে যেতে থাকেন ।
+ADDED: 1459; MERGED: 446; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 1281
+Sentence id=6; BestlogP=-969.438
+translation of sentence 6 took 0 seconds [12]
+Translating sentence #7 [thread 12]
+টাক্স ছাড়াও ওএস-ট্যান ও আরও কিছু লিনাক্স প্রতিনিধিত্বকারী চরিত্র রয়েছে & # 44 ; তবে এগুলো খুব প্রচলিত নয় ।
+ADDED: 3211; MERGED: 1298; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 9221
+Sentence id=5; BestlogP=-492.935
+translation of sentence 5 took 0 seconds [13]
+Translating sentence #8 [thread 13]
+ইহা সামাজিক অবস্থার প্রেক্ষিতে সিদ্ধান্তগ্রহনকারী তার প্রতিপক্ষের সহিত ক্রীড়াক্ষেত্রে সিদ্ধান্ত গ্রহনে প্রচলিত নিয়ম ব্যাখ্যা করে থাকে ।
+ADDED: 8236; MERGED: 2651; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 29693
+Sentence id=8; BestlogP=-553.548
+translation of sentence 8 took 0 seconds [13]
+Translating sentence #9 [thread 13]
+বৃষ্টিপাতঃ বাৎসরিক ২৫৪০ মিলি মিটার
+ADDED: 103; MERGED: 5; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 69
+Sentence id=9; BestlogP=-717.015
+translation of sentence 9 took 0 seconds [13]
+Translating sentence #10 [thread 13]
+২০০৪ সালে ম্যাসাচুসেটস অঙ্গরাজ্যের বস্টন শহরে অনুষ্ঠিত ডেমোক্র্যাট দলের জাতীয় সম্মেলন তিনি মূল বক্তৃতা -lrb- keynote speech -rrb- প্রদান করেন ।
+ADDED: 8714; MERGED: 6404; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 50904
+Sentence id=7; BestlogP=-541.215
+translation of sentence 7 took 1 seconds [12]
+ADDED: 7652; MERGED: 3252; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 14214
+Sentence id=10; BestlogP=-1347.209
+translation of sentence 10 took 0 seconds [13]
+Translating sentence #11 [thread 12]
+জনসংখ্যার ভিত্তিতে ক্ষমতার বন্টন পূর্ব পাকিস্তানের অনুকূল হওয়ায় পশ্চিম পাকিস্তান & quot ; এক ইউনিট তত্ত্ব & quot ; নামে এক অভিনব ধারণার সূত্রপাত করে & # 44 ; যেখানে সমগ্র পশ্চিম পাকিস্তান একটি প্রদেশ হিসেবে বিবেচিত হয় ।
+Translating sentence #12 [thread 13]
+• পরিমাপন তত্ত্ব
+ADDED: 147; MERGED: 20; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 84
+Sentence id=12; BestlogP=-248.618
+translation of sentence 12 took 0 seconds [13]
+Translating sentence #13 [thread 13]
+বহিঃসংযোগ সমূহ
+ADDED: 185; MERGED: 91; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 55
+Sentence id=13; BestlogP=-15.712
+translation of sentence 13 took 0 seconds [13]
+Translating sentence #14 [thread 13]
+টাটা কমিউনিকেশনসের বিদেশ সঞ্চার নিগম লিমিটেড ভবন & # 44 ; এটি শহরের টেলিযোগাযোগ ব্যবস্থার একটি অন্যতম প্রধান সরবরাহকারী
+ADDED: 6869; MERGED: 4193; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 42113
+Sentence id=14; BestlogP=-318.623
+translation of sentence 14 took 1 seconds [13]
+Translating sentence #15 [thread 13]
+তিনি সেই বছরের ৪ই নভেম্বরের জাতীয় নির্বাচনে জয়ী হন এবং মার্কিন যুক্তরাষ্ট্রের ৪৪তম রাষ্ট্রপতি হিসেবে নির্বাচিত হন ।
+ADDED: 7445; MERGED: 3623; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 24952
+Sentence id=15; BestlogP=-744.896
+translation of sentence 15 took 0 seconds [13]
+Translating sentence #16 [thread 13]
+বহু ভারতীয় প্রজাতি গন্ডোয়ানায় জাত টেক্সা থেকে উদ্ভুত ।
+ADDED: 1099; MERGED: 249; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 726
+Sentence id=16; BestlogP=-737.341
+translation of sentence 16 took 0 seconds [13]
+Translating sentence #17 [thread 13]
+ব্রিটেনের লেখকদের রচিত নাটক & # 44 ; উপন্যাস & # 44 ; গল্প এবং সম্প্রতি চিত্রনাট্য বিশ্বব্যাপী আদৃত ।
+ADDED: 21572; MERGED: 13898; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 155875
+Sentence id=11; BestlogP=-380.484
+translation of sentence 11 took 3 seconds [12]
+ADDED: 8856; MERGED: 7224; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 115789
+Sentence id=17; BestlogP=-305.437
+translation of sentence 17 took 1 seconds [13]
+Translating sentence #18 [thread 12]
+১৯১৯ সালের মে মাসে এটি সওগাত পত্রিকায় প্রকাশিত হয় ।
+Translating sentence #19 [thread 13]
+২০০৫ সালে উইমেনস টেনিস অ্যাসোসিয়েশন ট্যুরের টায়ার-থ্রি টুর্নামেন্ট সানফিস্ট ওপেন নেতাজি ইন্ডোর স্টেডিয়ামে আয়োজিত হয়েছিল ।
+ADDED: 3662; MERGED: 1218; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 8879
+Sentence id=18; BestlogP=-41.223
+translation of sentence 18 took 0 seconds [12]
+Translating sentence #20 [thread 12]
+এই সম্ভাবনা দূরীকরণের জন্য নানাবিধ ব্যবস্থা গ্রহণ করা হয় ।
+ADDED: 3509; MERGED: 986; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 5494
+Sentence id=19; BestlogP=-995.707
+translation of sentence 19 took 0 seconds [13]
+ADDED: 3799; MERGED: 802; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 9372
+Sentence id=20; BestlogP=-28.388
+translation of sentence 20 took 0 seconds [12]
+Translating sentence #21 [thread 13]
+১৯৬৬ সালের ৫ ফেব্রুয়ারি লাহোরে বিরোধী দলসমূহের একটি জাতীয় সম্মেলন অনুষ্ঠিত হয় ।
+Translating sentence #22 [thread 12]
+বাংলাদেশ অর্গানাইজেশন অফ দি ইসলামিক কনফারেন্স ও ইসলামিক ডেভেলপমেণ্ট ব্যাংকের সদস্যপদ গ্রহণ করে ।
+ADDED: 2964; MERGED: 997; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 5321
+Sentence id=22; BestlogP=-759.734
+translation of sentence 22 took 0 seconds [12]
+Translating sentence #23 [thread 12]
+বিষয়শ্রেণী : বিশ্বকোষ
+ADDED: 320; MERGED: 217; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 304
+Sentence id=23; BestlogP=-8.340
+translation of sentence 23 took 0 seconds [12]
+Translating sentence #24 [thread 12]
+রাশিয়া & # 44 ; ফ্রান্স ও ইসরায়েল ভারতের প্রধান অস্ত্রসরবরাহকারী রাষ্ট্র ও প্রতিরক্ষা সহকারী দেশ ।
+ADDED: 5133; MERGED: 1866; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 14856
+Sentence id=21; BestlogP=-745.733
+translation of sentence 21 took 0 seconds [13]
+Translating sentence #25 [thread 13]
+এই হল আমাদের পরিচিত কাল্পনিক একক যার সাহায্যে গণিতের থিওরী সমুহ বাস্তব সংখ্যার সেট থেকে জটিল সংখ্যার সেটে উন্নীত হয় ।
+ADDED: 8044; MERGED: 4382; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 60092
+Sentence id=24; BestlogP=-292.978
+translation of sentence 24 took 1 seconds [12]
+ADDED: 11330; MERGED: 4339; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 38606
+Sentence id=25; BestlogP=-319.376
+translation of sentence 25 took 1 seconds [13]
+Translating sentence #26 [thread 12]
+& lt ; ঠিকানা & gt ;
+ADDED: 989; MERGED: 346; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 1599
+Sentence id=26; BestlogP=-27.612
+translation of sentence 26 took 0 seconds [12]
+Translating sentence #27 [thread 13]
+সেপ্টেম্বর
+ADDED: 12; MERGED: 6; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 13
+Sentence id=27; BestlogP=-5.625
+translation of sentence 27 took 0 seconds [13]
+Translating sentence #28 [thread 12]
+এই তত্ত্ব থেকে অবশ্য মহা বিস্ফোরণোর বিরোধিতা করা যায় না & # 44 ; বরং তা সমর্থন করা যেতে পারে ।
+Translating sentence #29 [thread 13]
+কৃষি উৎপাদনে ফ্রান্স ইউরোপের সবচেয়ে গুরুত্বপূর্ণ দেশ ; এটি মূলত খাদ্যশস্য & # 44 ; ওয়াইন & # 44 ; পনির ও অন্যান্য কৃষিদ্রব্য ইউরোপ ও সারা বিশ্বে রপ্তানি করে ।
+ADDED: 7954; MERGED: 4686; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 40785
+Sentence id=28; BestlogP=-303.198
+translation of sentence 28 took 0 seconds [12]
+Translating sentence #30 [thread 12]
+তাদের গণিতে পাটীগণিতের প্রাধান্য ছিল ।
+ADDED: 963; MERGED: 251; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 1041
+Sentence id=30; BestlogP=-257.639
+translation of sentence 30 took 0 seconds [12]
+Translating sentence #31 [thread 12]
+দেশগুলো হলোঃ ফ্রান্স & # 44 ; হংকং & # 44 ; চীন & # 44 ; বেলজিয়াম & # 44 ; সুইজারল্যান্ড & # 44 ; জার্মানী & # 44 ; ডেনমার্ক & # 44 ; সুইডেন & # 44 ; অস্ট্রিয়া & # 44 ; চেকোশ্লোভাকিয়া & # 44 ; আর্জেন্টিনা & # 44 ; ইতালি & # 44 ; নরওয়ে & # 44 ; হাঙ্গেরী & # 44 ; যুগোশ্লাভিয়া & # 44 ; বুলগেরিয়া & # 44 ; রুমানিয়া & # 44 ; গ্রীস & # 44 ; মিশর & # 44 ; সিঙ্গাপুর & # 44 ; ইন্দোনেশিয়া & # 44 ; থাইল্যান্ড & # 44 ; জাপান & # 44 ; বার্মা & # 44 ; হল্যান্ড & # 44 ; সোভিয়েট রাশিয়া & # 44 ; ইরান & # 44 ; ইরাক ও শ্রীলংকা ।
+ADDED: 15521; MERGED: 12936; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 221550
+Sentence id=29; BestlogP=-562.084
+translation of sentence 29 took 4 seconds [13]
+Translating sentence #32 [thread 13]
+এই ব্যাসিলিকার স্থানে এখন ব্যাংক অফ ইংল্যান্ড অবস্থিত ।
+ADDED: 2122; MERGED: 693; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 4530
+Sentence id=32; BestlogP=-262.403
+translation of sentence 32 took 0 seconds [13]
+Translating sentence #33 [thread 13]
+দেশটির উত্তরে বিস্কাই উপসাগর & # 44 ; দক্ষিণ দিকে জিব্রাল্টার প্রণালী & # 44 ; প্রণালীর দক্ষিণে মরক্কো & # 44 ; পশ্চিম ও দক্ষিণ-পশ্চিম দিকে আটলান্টিক মহাসাগর ।
+ADDED: 13146; MERGED: 10990; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 116608
+Sentence id=33; BestlogP=-1004.574
+translation of sentence 33 took 1 seconds [13]
+Translating sentence #34 [thread 13]
+তাছাড়া এ পরিস্থিতে বোঝা যায় জরুরি মুহূর্তে জাতিসংঘের দ্রুত সিদ্ধান্ত নেবার অক্ষমতা ।
+ADDED: 3993; MERGED: 1305; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 5685
+Sentence id=34; BestlogP=-549.124
+translation of sentence 34 took 0 seconds [13]
+Translating sentence #35 [thread 13]
+কার্ল মার্ক্সের কাজের মাধ্যমেই ইহা পরিচালিত হয় ।
+ADDED: 1506; MERGED: 435; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 1621
+Sentence id=35; BestlogP=-273.484
+translation of sentence 35 took 0 seconds [13]
+Translating sentence #36 [thread 13]
+এর বিষয়বস্তু কখনও পুরাণ থেকে & # 44 ; কখনও মধ্যযুগীয় প্রেমকাহিনিগুলি থেকে & # 44 ; কখনও আবার একালের সামাজিক ও রাজনৈতিক ঘটনাবলি থেকে গৃহীত ।
+ADDED: 11665; MERGED: 8464; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 71410
+Sentence id=36; BestlogP=-344.823
+translation of sentence 36 took 0 seconds [13]
+Translating sentence #37 [thread 13]
+তিনটি পরিমাপের উপর ভিত্তি করে মহাবিশ্বের যে বয়স পাওয়া গেছে তা হল প্রায় ১৩.৭ ± ০.২ বিলিয়ন বছর ।
+ADDED: 5807; MERGED: 2348; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 12959
+Sentence id=37; BestlogP=-771.017
+translation of sentence 37 took 0 seconds [13]
+Translating sentence #38 [thread 13]
+কাছেই রয়েছে পূর্ব রাশিয়া & # 44 ; যা ওখটস্ক সাগর ও জাপান সাগরের অপর পারে অবস্থিত ।
+ADDED: 8040; MERGED: 5369; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 46993
+Sentence id=38; BestlogP=-525.645
+translation of sentence 38 took 0 seconds [13]
+Translating sentence #39 [thread 13]
+কলকাতায় অবস্থিত ভারতের জাতীয় গ্রন্থাগার দেশের অগ্রণী পাবলিক লাইব্রেরি ।
+ADDED: 3493; MERGED: 877; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 9585
+Sentence id=39; BestlogP=-274.966
+translation of sentence 39 took 0 seconds [13]
+Translating sentence #40 [thread 13]
+ছত্রাকবিদ্যা
+ADDED: 2; MERGED: 0; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 5
+Sentence id=40; BestlogP=-234.828
+translation of sentence 40 took 0 seconds [13]
+Translating sentence #41 [thread 13]
+রাষ্ট্রসঙ্ঘের মহাসচিব বান কি মুন
+ADDED: 458; MERGED: 111; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 428
+Sentence id=41; BestlogP=-487.072
+translation of sentence 41 took 0 seconds [13]
+Translating sentence #42 [thread 13]
+মিনিক্সের রচয়িতা ছিলেন এন্ড্রু টানেনবম & # 44 ; এক প্রখ্যাত অপারেটিং সিস্টেম ডিজাইন প্রশিক্ষক ।
+ADDED: 5936; MERGED: 3094; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 26108
+Sentence id=42; BestlogP=-754.551
+translation of sentence 42 took 0 seconds [13]
+Translating sentence #43 [thread 13]
+দ্য টাইম্ ‌ স অফ ইন্ডিয়া-তে লেখা হয় যে & quot ; it is absurd to compare it with any other indian cinema ... pather panchali is pure cinema & quot ; -lrb- “ একে অন্য যেকোনও ভারতীয় চলচ্চিত্রের সাথে তুলনা করা অবাস্তব ... পথের পাঁচালী হল বিশুদ্ধ চলচ্চিত্র ” -rrb- ।
+ADDED: 20803; MERGED: 7196; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 113100
+Sentence id=43; BestlogP=-2231.918
+translation of sentence 43 took 1 seconds [13]
+Translating sentence #44 [thread 13]
+এরপর ১৯৫৩ খ্রিস্টাব্দের মে মাসে নজরুল ও প্রমীলা দেবীকে চিকিৎসার জন্য লন্ডন পাঠানো হয় ।
+ADDED: 3705; MERGED: 942; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 7145
+Sentence id=44; BestlogP=-753.928
+translation of sentence 44 took 0 seconds [13]
+Translating sentence #45 [thread 13]
+এর দক্ষিণ ও পূর্বে আছে বিস্তীর্ণ সমভূমি ; পশ্চিম ও উত্তরে আছে রুক্ষ পাহাড় ও পর্বত ।
+ADDED: 7366; MERGED: 3827; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 23693
+Sentence id=45; BestlogP=-532.510
+translation of sentence 45 took 0 seconds [13]
+Translating sentence #46 [thread 13]
+ট্রেডমার্ক
+ADDED: 2; MERGED: 0; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 5
+Sentence id=46; BestlogP=-234.828
+translation of sentence 46 took 0 seconds [13]
+Translating sentence #47 [thread 13]
+লর্ড ওয়েলেসলির -lrb- গভর্নর-জেনারেল ১৭৯৭-১৮০৫ -rrb- শাসনকালে শহরের উল্লেখযোগ্য বৃদ্ধি ঘটেছিল ।
+ADDED: 2806; MERGED: 1190; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 4788
+Sentence id=47; BestlogP=-982.243
+translation of sentence 47 took 0 seconds [13]
+Translating sentence #48 [thread 13]
+অনেক গুরুত্বপূর্ন ও বাস্তব সমস্যা সমাধানের জন্য জটিল সংখ্যা অপরিহার্য
+ADDED: 3648; MERGED: 1240; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 8054
+Sentence id=48; BestlogP=-50.825
+translation of sentence 48 took 0 seconds [13]
+Translating sentence #49 [thread 13]
+মহা বিস্ফোরণের একটি উল্লেখযোগ্য ফলাফল হল & # 44 ; বর্তমানকালে মহাবিশ্বের অবস্থা অতীত এবং ভবিষ্যতের অবস্থা থেকে সম্পূর্ণ পৃথক ।
+ADDED: 11516; MERGED: 6093; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 49436
+Sentence id=49; BestlogP=-90.501
+translation of sentence 49 took 0 seconds [13]
+Translating sentence #50 [thread 13]
+উইন্ডোজ মিলিনিয়াম
+ADDED: 16; MERGED: 2; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 19
+Sentence id=50; BestlogP=-239.792
+translation of sentence 50 took 0 seconds [13]
+Translating sentence #51 [thread 13]
+রবীন্দ্রনাথ অবশ্য একাধিক শৈলী আয়ত্ত্ব করেছিলেন ।
+ADDED: 920; MERGED: 161; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 868
+Sentence id=51; BestlogP=-493.988
+translation of sentence 51 took 0 seconds [13]
+Translating sentence #52 [thread 13]
+শ্রম অর্থনীতি
+ADDED: 141; MERGED: 74; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 158
+Sentence id=52; BestlogP=-8.631
+translation of sentence 52 took 0 seconds [13]
+Translating sentence #53 [thread 13]
+ব্রিটেন একসময় বিশ্বের প্রধান ও অগ্রগামী অর্থনৈতিক শক্তি ছিল ।
+ADDED: 3771; MERGED: 1218; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 8311
+Sentence id=53; BestlogP=-46.940
+translation of sentence 53 took 0 seconds [13]
+Translating sentence #54 [thread 13]
+পাকিস্তানের সামরিক শাসনের বিরুদ্ধে আন্দোলন এবং পাকিস্তানের গোষ্ঠীগত বৈষম্যের বিরুদ্ধে প্রতিবাদ ও বাঙালিদের আন্দোলনকে স্বাধীনতার পথে ধাবিত করার জন্য তিনি ব্যাপকভাবে প্রশংসিত ।
+ADDED: 9017; MERGED: 3939; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 25803
+Sentence id=54; BestlogP=-571.871
+translation of sentence 54 took 0 seconds [13]
+Translating sentence #55 [thread 13]
+এখানে উল্লেখ করা প্রয়োজন যে অনেকে ইন্টারনেট এবং ওয়ার্ল্ড ওয়াইড ওয়েবকে সমার্থক শব্দ হিসেবে গণ্য করলেও প্রকৃতপক্ষে শব্দদ্বয় ভিন্ন বিষয় নির্দেশ করে ।
+ADDED: 6575; MERGED: 2399; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 13683
+Sentence id=55; BestlogP=-361.499
+translation of sentence 55 took 0 seconds [13]
+Translating sentence #56 [thread 13]
+. z এর আনুসাঙ্গীক পোলার কো-অর্ডিনেট দুটি হচ্ছে r = -pipe-
+ADDED: 3553; MERGED: 1218; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 7530
+Sentence id=56; BestlogP=-66.854
+translation of sentence 56 took 0 seconds [13]
+Translating sentence #57 [thread 13]
+নভেম্বর
+ADDED: 20; MERGED: 8; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 18
+Sentence id=57; BestlogP=-5.628
+translation of sentence 57 took 0 seconds [13]
+Translating sentence #58 [thread 13]
+১৯৭২ খ্রীস্টাব্দে তদানিন্তন আরপানেটে সর্বপ্রথম ইলেক্ট্রনিক মেইল প্রেরণ করা হয় ।
+ADDED: 1933; MERGED: 489; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 2713
+Sentence id=58; BestlogP=-748.885
+translation of sentence 58 took 0 seconds [13]
+Translating sentence #59 [thread 13]
+জীব বিজ্ঞানের যে শাখায় ছত্রাক ও এর ব্যবহারিক বিষয় নিয়ে আলোচনা করা হয় তাকে ছত্রাকবিদ্যা -lrb- mycology -rrb-
+ADDED: 9545; MERGED: 3750; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 27013
+Sentence id=59; BestlogP=-874.274
+translation of sentence 59 took 0 seconds [13]
+Translating sentence #60 [thread 13]
+পানি নদী থেকে উঠানো হতো কয়েকটি পুর দিয়ে- দড়ি ও বালটির মাধ্যমে পানি পশু দ্বারা টেনে তোলার এক পদ্ধতি ।
+ADDED: 6370; MERGED: 2259; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 15483
+Sentence id=60; BestlogP=-1026.678
+translation of sentence 60 took 0 seconds [13]
+Translating sentence #61 [thread 13]
+এর মধ্যে রয়েছে উপজাতীয় নৃত্য & # 44 ; লোকজ নৃত্য & # 44 ; শাস্ত্রীয় নৃত্য & # 44 ; ইত্যাদি ।
+ADDED: 9823; MERGED: 10408; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 177204
+Sentence id=61; BestlogP=-66.897
+translation of sentence 61 took 2 seconds [13]
+Translating sentence #62 [thread 13]
+ভারতের প্রাচীনতম সাহিত্য প্রথমে মৌখিকভাবে ও পরে লিখিত আকারে প্রচলিত হয় ।
+ADDED: 4612; MERGED: 1189; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 14105
+Sentence id=62; BestlogP=-285.422
+translation of sentence 62 took 0 seconds [13]
+Translating sentence #63 [thread 13]
+১৯৮৯ সালে নির্মিত গণশত্রু ছবিটিতে তাঁর পরিচালনা তুলনামূলকভাবে দুর্বল এবং এটিকে দীর্ঘদিনের অসুস্থতাশেষে ফিরে আসার পর সত্যজিতের চলচ্চিত্র নির্মাণের পুনর্প্রচেষ্টা হিসেবেই গণ্য করা হয় ।
+ADDED: 4923; MERGED: 2024; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 6932
+Sentence id=63; BestlogP=-1505.808
+translation of sentence 63 took 0 seconds [13]
+Translating sentence #64 [thread 13]
+• বলবিদ্যা
+ADDED: 21; MERGED: 1; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 21
+Sentence id=64; BestlogP=-243.868
+translation of sentence 64 took 0 seconds [13]
+Translating sentence #65 [thread 13]
+অন্যান্য স্বত্ত্ব-সংরক্ষিত অপারেটিং সিস্টেম যেমন উইন্ডোজ এবং ম্যাক ওএস হতে লিনাক্স বিভিন্নভাবে আলাদা ।
+ADDED: 5870; MERGED: 1714; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 15325
+Sentence id=65; BestlogP=-287.690
+translation of sentence 65 took 0 seconds [13]
+Translating sentence #66 [thread 13]
+এশিয়া টাইমসের ভাষ্য অনুযায়ী & # 44 ;
+ADDED: 943; MERGED: 367; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 2539
+Sentence id=66; BestlogP=-485.954
+translation of sentence 66 took 0 seconds [13]
+Translating sentence #67 [thread 13]
+মুক্ত সোর্স বা ওপেন সোর্স -lrb- open source -rrb- এর অর্থ হলো কম্পিউটার সফটওয়্যার এর সোর্স কোড বা মূল সাংকেতিক ভাষাকে মুক্ত ভাবে বিতরণ করা ।
+ADDED: 13330; MERGED: 6743; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 48060
+Sentence id=67; BestlogP=-774.484
+translation of sentence 67 took 0 seconds [13]
+Translating sentence #68 [thread 13]
+বাংলাদেশ অনলাইনে ঢাকা
+ADDED: 142; MERGED: 75; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 161
+Sentence id=68; BestlogP=-243.160
+translation of sentence 68 took 0 seconds [13]
+Translating sentence #69 [thread 13]
+প্রথম বিশ্বযুদ্ধে জার্মানি হেরে যায় ।
+ADDED: 1155; MERGED: 286; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 1891
+Sentence id=69; BestlogP=-254.495
+translation of sentence 69 took 0 seconds [13]
+Translating sentence #70 [thread 13]
+তবে এ বিষয়টি বোঝার জন্য বর্তমানেও গবেষণা এগিয়ে চলছে ।
+ADDED: 3235; MERGED: 1018; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 6047
+Sentence id=70; BestlogP=-60.898
+translation of sentence 70 took 0 seconds [13]
+Translating sentence #71 [thread 13]
+সুপারএইচ
+ADDED: 2; MERGED: 0; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 5
+Sentence id=71; BestlogP=-234.828
+translation of sentence 71 took 0 seconds [13]
+Translating sentence #72 [thread 13]
+তাকে সামরিক বাহিনীর জন্য আনফিট ঘোষণা করা হয়েছিল ।
+ADDED: 2813; MERGED: 547; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 5502
+Sentence id=72; BestlogP=-267.173
+translation of sentence 72 took 0 seconds [13]
+Translating sentence #73 [thread 13]
+ভুট্টো এ্যাসেম্বলি বয়কট করার হুমকি দিয়ে ঘোষণা দেন যে & # 44 ; ইয়াহিয়া খান মুজিবকে সরকার গঠনের জন্য আহ্বান জানালে তিনি সে সরকারকে মেনে নেবেন না ।
+ADDED: 12148; MERGED: 6980; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 91971
+Sentence id=73; BestlogP=-1049.204
+translation of sentence 73 took 1 seconds [13]
+Translating sentence #74 [thread 13]
+আর computer শব্দের অর্থ গণনাকারী যন্ত্র ।
+ADDED: 1528; MERGED: 273; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 1872
+Sentence id=74; BestlogP=-365.525
+translation of sentence 74 took 0 seconds [13]
+Translating sentence #75 [thread 13]
+১৭৭৬ সালের ৪ জুলাই এই উপনিবেশগুলি একটি স্বাধীনতার ঘোষণাপত্র জারি করে ।
+ADDED: 4880; MERGED: 1634; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 12674
+Sentence id=75; BestlogP=-514.977
+translation of sentence 75 took 0 seconds [13]
+Translating sentence #76 [thread 13]
+জার্মানি -lrb- জার্মান ভাষায় : deutschland & # 44 ; ডয়চ্ ‌ লান্ট্ ‌ & # 44 ; আ-ধ্ব-ব : -lsb- dɔʏtʃlant -rsb- -rrb- & # 44 ; মধ্য ইউরোপের একটি রাষ্ট্র ।
+ADDED: 12379; MERGED: 10285; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 126734
+Sentence id=76; BestlogP=-886.186
+translation of sentence 76 took 1 seconds [13]
+Translating sentence #77 [thread 13]
+খ্রিস্টধর্ম রাশিয়ার প্রধান ধর্ম ।
+ADDED: 828; MERGED: 297; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 2162
+Sentence id=77; BestlogP=-248.703
+translation of sentence 77 took 0 seconds [13]
+Translating sentence #78 [thread 13]
+কিন্তু গলদের শিক্ষার রোমানীকরণের গতি ছিল ধীর ।
+ADDED: 771; MERGED: 151; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 398
+Sentence id=78; BestlogP=-723.032
+translation of sentence 78 took 0 seconds [13]
+Translating sentence #79 [thread 13]
+বিষয়শ্রেণী : গনু ফাউন্ডেশন
+ADDED: 530; MERGED: 354; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 637
+Sentence id=79; BestlogP=-16.529
+translation of sentence 79 took 0 seconds [13]
+Translating sentence #80 [thread 13]
+আর্থিক নীতি ও রাজস্ব নীতিকেও ইহা অধ্যয়ন করে ।
+ADDED: 2153; MERGED: 734; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 3379
+Sentence id=80; BestlogP=-270.435
+translation of sentence 80 took 0 seconds [13]
+Translating sentence #81 [thread 13]
+এর মধ্যে রয়েছে : হয়তো তোমার পাব দেখা & # 44 ; ওরে এ কোন স্নেহ-সুরধুনী ।
+ADDED: 3600; MERGED: 2182; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 7935
+Sentence id=81; BestlogP=-755.450
+translation of sentence 81 took 0 seconds [13]
+Translating sentence #82 [thread 13]
+১৯৯২ সালের ২৩ এপ্রিল সত্যজিৎ মৃত্যুবরণ করেন ।
+ADDED: 2347; MERGED: 721; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 5611
+Sentence id=82; BestlogP=-27.658
+translation of sentence 82 took 0 seconds [13]
+Translating sentence #83 [thread 13]
+এই সময় নজরুলের মেডিকেল রিপোর্ট ভিয়েনার বিখ্যাত চিকিৎসকদের কাছে পাঠানো হয় ।
+ADDED: 2281; MERGED: 632; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 3348
+Sentence id=83; BestlogP=-520.666
+translation of sentence 83 took 0 seconds [13]
+Translating sentence #84 [thread 13]
+অভিনয় ছাড়াও বিভিন্ন সময়ে রানী মুখার্জী বিভিন্ন দাতব্য সংস্থার সাথে যুক্ত থেকেছেন ।
+ADDED: 2761; MERGED: 588; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 1982
+Sentence id=84; BestlogP=-757.752
+translation of sentence 84 took 0 seconds [13]
+Translating sentence #85 [thread 13]
+বাংলা সাহিত্য এবং সংস্কৃতিতে তার বিশেষ অবদানের স্বীকৃতিস্বরুপ ১৯৭৪ খ্রিস্টাব্দের ৯ ডিসেম্বর তারিখে ঢাকা বিশ্ববিদ্যালয় তাকে সম্মানসূচক ডি.লিট উপাধিতে ভূষিত করে ।
+ADDED: 10245; MERGED: 3565; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 34449
+Sentence id=85; BestlogP=-792.632
+translation of sentence 85 took 0 seconds [13]
+Translating sentence #86 [thread 13]
+কলকাতার দুর্গাপূজা শহরের অন্যতম পর্যটন আকর্ষণও বটে ।
+ADDED: 1692; MERGED: 551; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 2283
+Sentence id=86; BestlogP=-280.299
+translation of sentence 86 took 0 seconds [13]
+Translating sentence #87 [thread 13]
+কিন্তু বহু লক্ষ পূর্ব জার্মান অর্থনৈতিকভাবে সমৃদ্ধ ও গণতান্ত্রিক পশ্চিম জার্মানিতে অভিবাসী হওয়া শুরু করলে ১৯৬১ সালে পূর্ব জার্মানি সরকার বার্লিনে একটি প্রাচীর তুলে দেয় এবং দেশের সীমান্ত জোরদার করে ।
+ADDED: 19497; MERGED: 8072; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 104968
+Sentence id=87; BestlogP=-84.105
+translation of sentence 87 took 1 seconds [13]
+Translating sentence #88 [thread 13]
+প্রথমটি হচ্ছে ছবিটির নির্বাক প্রথম সাত মিনিট & # 44 ; যা চারুর একঘেয়েমি জীবন ফুটিয়ে তোলে & # 44 ; এবং দ্বিতীয়টি হল & quot ; বাগানের দোলনার দৃশ্য & quot ; & # 44 ; যেখানে চারু অমলের জন্য তার ভালবাসার মুখোমুখি হয় ।
+ADDED: 19626; MERGED: 15519; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 169931
+Sentence id=88; BestlogP=-1991.425
+translation of sentence 88 took 2 seconds [13]
+Translating sentence #89 [thread 13]
+১৮ শতকের একদল চিন্তাবিদ ও লেখক আয় ও উৎপাদনের চক্রাকার প্রবাহের মাধ্যমে অর্থনৈতিক চিন্তাধারার উন্নয়ন ঘটান ।
+ADDED: 6837; MERGED: 3034; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 18557
+Sentence id=89; BestlogP=-544.696
+translation of sentence 89 took 0 seconds [13]
+Translating sentence #90 [thread 13]
+যোনীতে লিঙ্গ প্রবিষ্টকরণের পূর্বে কামোদ্দীপক কার্যকলাপকে বলা হয় শৃঙ্গার ।
+ADDED: 2033; MERGED: 594; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 3180
+Sentence id=90; BestlogP=-34.421
+translation of sentence 90 took 0 seconds [13]
+Translating sentence #91 [thread 13]
+এটি মূলত শূকরের মাঝেই পাওয়া যেত যা কিনা শূকরকে ইনফ্লুয়েঞ্জাতে আক্রান্ত করত ।
+ADDED: 2375; MERGED: 646; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 2577
+Sentence id=91; BestlogP=-759.134
+translation of sentence 91 took 0 seconds [13]
+Translating sentence #92 [thread 13]
+এগুলি একএ হয়ে mycelium গঠন করে ।
+ADDED: 1206; MERGED: 311; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 1770
+Sentence id=92; BestlogP=-491.105
+translation of sentence 92 took 0 seconds [13]
+Translating sentence #93 [thread 13]
+রাশিয়া বর্তমানে একটি গণতান্ত্রিক রাষ্ট্র ।
+ADDED: 1434; MERGED: 579; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 4653
+Sentence id=93; BestlogP=-20.912
+translation of sentence 93 took 0 seconds [13]
+Translating sentence #94 [thread 13]
+লিঙ্গ
+ADDED: 12; MERGED: 0; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 9
+Sentence id=94; BestlogP=-10.404
+translation of sentence 94 took 0 seconds [13]
+Translating sentence #95 [thread 13]
+এই অবস্থাকে বলা হয় রাগমোচন -lrb- অনগ্যাজম -rrb- ।
+ADDED: 2713; MERGED: 1239; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 9873
+Sentence id=95; BestlogP=-16.814
+translation of sentence 95 took 0 seconds [13]
+Translating sentence #96 [thread 13]
+ইতিহাসের বিভিন্ন পর্বে এখানেই স্থাপিত হয়েছিল বিশালাকার একাধিক সাম্রাজ্য ।
+ADDED: 3355; MERGED: 1039; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 5323
+Sentence id=96; BestlogP=-58.278
+translation of sentence 96 took 0 seconds [13]
+Translating sentence #97 [thread 13]
+ব্যাস্টিক অর্থনীতি
+ADDED: 143; MERGED: 58; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 109
+Sentence id=97; BestlogP=-8.019
+translation of sentence 97 took 0 seconds [13]
+Translating sentence #98 [thread 13]
+ব্যবহারকারীর কাছে অপারেটিং সিস্টেমের সবচেয়ে দৃশ্যমান রূপ হল কম্পিউটারের ইন্টারফেস ।
+ADDED: 4747; MERGED: 1248; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 16171
+Sentence id=98; BestlogP=-51.942
+translation of sentence 98 took 0 seconds [13]
+Translating sentence #99 [thread 13]
+বিস্তারিতঃ ১৯৭১ সালের অস্থায়ী বাংলাদেশ সরকার
+ADDED: 1080; MERGED: 438; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 2341
+Sentence id=99; BestlogP=-249.532
+translation of sentence 99 took 0 seconds [13]
+ADDED: 58319; MERGED: 100135; PRUNED: 0; PRE-PRUNED: 0, FUZZ1: 0, FUZZ2: 0; DOT-ITEMS ADDED: 2380664
+Sentence id=31; BestlogP=-1238.055
+translation of sentence 31 took 37 seconds [12]
+Total running time: 52 seconds
