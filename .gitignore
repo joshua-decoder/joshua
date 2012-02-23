@@ -49,3 +49,11 @@ test/bn-en/samt/output
 test/bn-en/samt/output.bleu
 test/bn-en/samt/reference.en.all
 *.class
+test/bn-en/samt/1best_default
+test/bn-en/samt/1best_packed
+test/bn-en/samt/log_default
+test/bn-en/samt/log_packed
+test/bn-en/samt/output_default
+test/bn-en/samt/output_default.bleu
+test/bn-en/samt/output_packed
+test/bn-en/samt/output_packed.bleu
