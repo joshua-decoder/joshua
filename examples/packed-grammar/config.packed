@@ -1,6 +1,6 @@
 lm_file=trigram.lm.gz
 
-tm_file=hiero_tm_quantized
+tm_file=hiero_tm_uncompressed
 tm_format=packed
 
 glue_file=hiero.glue
