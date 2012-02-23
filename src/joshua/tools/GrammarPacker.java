@@ -142,15 +142,17 @@ public class GrammarPacker {
 		}
 		logger.info("Chunking pass complete.");
 		
-		logger.info("Beginning merge phase.");
-		// Merge loop.
-		while (chunks.size() > 1) {
-			List<PackingFileTuple> to_merge = new ArrayList<PackingFileTuple>();
-			while (to_merge.size() < FANOUT && !chunks.isEmpty())
-				to_merge.add(chunks.poll());
-			chunks.add(merge(to_merge));
-		}
-		logger.info("Merge phase complete.");
+		logger.info("Packed grammar in: " + WORKING_DIRECTORY);
+		
+//		logger.info("Beginning merge phase.");
+//		// Merge loop.
+//		while (chunks.size() > 1) {
+//			List<PackingFileTuple> to_merge = new ArrayList<PackingFileTuple>();
+//			while (to_merge.size() < FANOUT && !chunks.isEmpty())
+//				to_merge.add(chunks.poll());
+//			chunks.add(merge(to_merge));
+//		}
+//		logger.info("Merge phase complete.");
 	}
 
 	// TODO: add javadoc.
@@ -401,26 +403,32 @@ public class GrammarPacker {
 		return chunk;
 	}
 	
+	// TODO: Evaluate whether an implementation of this is necessary.
 	private PackingFileTuple merge(List<PackingFileTuple> chunks) {
 		return null;
 	}
 
 	public static void main(String[] args) throws IOException {
-		if (args.length >= 3) {
+		if (args.length != 3) {
 			String config_filename = args[0];
 			
 			WORKING_DIRECTORY = args[1];
 			
 			List<String> grammar_files = new ArrayList<String>();
-			for (int i = 2; i < args.length; i++)
-				grammar_files.add(args[i]);
+
+			// Currently not supporting more than one grammar file due to our 
+			// assumption of sortedness.
+			// for (int i = 2; i < args.length; i++)
+			// 	grammar_files.add(args[i]);
+			
+			grammar_files.add(args[2]);
 			GrammarPacker packer = new GrammarPacker(config_filename, grammar_files);
 			packer.pack();
 
 		} else {
-			System.err.println("Expecting at least two arguments: ");
+			System.err.println("Expecting three arguments: ");
 			System.err.println("\tjoshua.tools.GrammarPacker config_file " +
-					"output_directory grammar_file ...");
+					"output_directory sorted_grammar_file");
 		}
 	}
 
@@ -472,10 +480,6 @@ public class GrammarPacker {
 			}
 		}
 
-		void pack(ByteBuffer out, boolean skeletal) {
-			
-		}
-
 		/**
 		 * Calculate the size (in bytes) of a packed trie node. Distinguishes
 		 * downwards pointing (parent points to children) from upwards pointing
@@ -513,8 +517,6 @@ public class GrammarPacker {
 	}
 	
 	interface PackingTrieValue {
-		void pack(ByteBuffer out);
-
 		int size();
 	}
 
@@ -535,12 +537,6 @@ public class GrammarPacker {
 			this.target = target;
 		}
 
-		@Override
-		public void pack(ByteBuffer out) {
-			// TODO Auto-generated method stub
-
-		}
-
 		public int size() {
 			return 3;
 		}
@@ -551,12 +547,6 @@ public class GrammarPacker {
 
 		TargetValue(SourceValue parent) {
 			this.parent = parent;
-		}
-
-		@Override
-		public void pack(ByteBuffer out) {
-			// TODO Auto-generated method stub
-
 		}
 
 		public int size() {
