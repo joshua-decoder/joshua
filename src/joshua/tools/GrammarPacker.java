@@ -45,7 +45,7 @@ public class GrammarPacker {
 		AVERAGE_NUM_FEATURES = 20;
 		
 		WORKING_DIRECTORY = System.getProperty("user.dir") 
-				+ File.separator	+ "packing";
+				+ File.separator	+ "packed";
 	}
 	
 	public GrammarPacker(String config_filename,
@@ -53,12 +53,7 @@ public class GrammarPacker {
 		this.grammars = grammars;
 		this.quantization = new QuantizerConfiguration();
 		
-		initialize();
 		readConfig(config_filename);
-	}
-
-	private void initialize() {
-		
 	}
 
 	private void readConfig(String config_filename) throws IOException {
@@ -421,6 +416,13 @@ public class GrammarPacker {
 			String config_filename = args[0];
 			
 			WORKING_DIRECTORY = args[1];
+			
+			if (new File(WORKING_DIRECTORY).exists()) {
+				System.err.println("File or directory already exists: "
+						+ WORKING_DIRECTORY);
+				System.err.println("Will not overwrite.");
+				return;
+			}
 			
 			List<String> grammar_files = new ArrayList<String>();
 
