@@ -58,3 +58,7 @@ test/bn-en/samt/output_default.bleu
 test/bn-en/samt/output_packed
 test/bn-en/samt/output_packed.bleu
 test/bn-en/packed/log
+examples/example2/example2.packed.nbest
+examples/example2/example2.packed.1best
+examples/example2/example2.kenlm.nbest
+examples/example2/example2.kenlm.1best
