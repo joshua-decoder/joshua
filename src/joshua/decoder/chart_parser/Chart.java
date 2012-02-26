@@ -194,6 +194,21 @@ public class Chart {
 				// create a rule, but do not add into the grammar trie
 				// TODO: which grammar should we use to create an OOV rule?
 				int sourceWord = arc.getLabel();
+				
+				// Determine if word is actual OOV.
+				if (JoshuaConfiguration.true_oovs_only) {
+					boolean true_oov = true;
+					for (Grammar g : grammars) {
+						if (g.getTrieRoot().match(sourceWord) != null && 
+								g.getTrieRoot().match(sourceWord).hasRules()) {
+							true_oov = false;
+							break;
+						}
+					}
+					if (!true_oov)
+						continue;
+				}
+				
 				final int targetWord;
 				if (JoshuaConfiguration.mark_oovs) {
 					targetWord = Vocabulary.id(Vocabulary.word(sourceWord) + "_OOV");
