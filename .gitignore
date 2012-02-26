@@ -42,3 +42,4 @@ test/bn-en/hiero/log
 test/bn-en/hiero/output
 test/bn-en/hiero/output.bleu
 test/bn-en/hiero/reference.en.all
+doxygen/build/
