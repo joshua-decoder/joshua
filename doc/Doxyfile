@@ -38,21 +38,21 @@ PROJECT_NUMBER         =
 # for a project that appears at the top of each page and should give viewer 
 # a quick idea about the purpose of the project. Keep the description short.
 
-PROJECT_BRIEF          = "Joshua is an open system, developed to produce high-quality, state-of-the-art results in statistical hierarchical phrase-based machine translation. Joshua development is centered at the Center for Language and Speech Processing at the Johns Hopkins University in Baltimore, Maryland."
+PROJECT_BRIEF          = "open source statistical hierarchical phrase-based machine translation system"
 
 # With the PROJECT_LOGO tag one can specify an logo or icon that is 
 # included in the documentation. The maximum height of the logo should not 
 # exceed 55 pixels and the maximum width should not exceed 200 pixels. 
 # Doxygen will copy the logo to the output directory.
 
-PROJECT_LOGO           = /Users/orluke/workspace/joshua/doc/project_logo.png
+PROJECT_LOGO           = doc/project_logo.png
 
 # The OUTPUT_DIRECTORY tag is used to specify the (relative or absolute) 
 # base path where the generated documentation will be put. 
 # If a relative path is entered, it will be relative to the location 
 # where doxygen was started. If left blank the current directory will be used.
 
-OUTPUT_DIRECTORY       = /Users/orluke/workspace/joshua/doxygen/build
+OUTPUT_DIRECTORY       = doc
 
 # If the CREATE_SUBDIRS tag is set to YES, then doxygen will create 
 # 4096 sub-directories (in 2 levels) under the output directory of each output 
@@ -671,8 +671,7 @@ WARN_LOGFILE           =
 # directories like "/usr/src/myproject". Separate the files or directories 
 # with spaces.
 
-INPUT                  = /Users/orluke/workspace/joshua/src \
-                         /Users/orluke/workspace/joshua/doc
+INPUT                  = src doc
 
 # This tag can be used to specify the character encoding of the source files 
 # that doxygen parses. Internally doxygen uses the UTF-8 encoding, which is 
@@ -708,6 +707,8 @@ FILE_PATTERNS          = *.c \
                          *.hpp \
                          *.h++ \
                          *.idl \
+                         *.markdown \
+                         *.md \
                          *.odl \
                          *.cs \
                          *.php \
@@ -721,9 +722,7 @@ FILE_PATTERNS          = *.c \
                          *.f \
                          *.for \
                          *.vhd \
-                         *.vhdl \
-                         *.markdown \
-                         *.md
+                         *.vhdl
 
 # The RECURSIVE tag can be used to turn specify whether or not subdirectories 
 # should be searched for input files as well. Possible values are YES and NO. 
