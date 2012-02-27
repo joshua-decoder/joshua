@@ -43,3 +43,6 @@ test/bn-en/hiero/output
 test/bn-en/hiero/output.bleu
 test/bn-en/hiero/reference.en.all
 doxygen/build/
+scripts/training/symal/symal
+test-output/
+test/joshua/decoder/hypergraph/
