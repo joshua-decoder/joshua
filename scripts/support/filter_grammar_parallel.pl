@@ -130,7 +130,7 @@ while($num_finished < $num_pieces)
             $num_finished++;
         }
     }
-    sleep(1);
+    sleep(10);
 }
 
 print STDERR "Grid jobs are done -- merging the filtered files\n";
