@@ -1,6 +1,6 @@
 #!/bin/bash
 #$ -S /bin/bash
-#$ -l h_vmem=4g
+#$ -l h_vmem=8g,h_rt=24:00:00,num_proc=2
 
 # Author: Damianos Karakos <damianos@jhu.edu>
 
@@ -17,7 +17,7 @@ else
 fi
 
 # extract the matching rules from the piece
-$JOSHUA/scripts/training/scat $input_grammar | java -Xmx2g -Dfile.encoding=utf8 -cp $JOSHUA/thrax/bin/thrax.jar edu.jhu.thrax.util.TestSetFilter -v $fast -n $ngrams $corpus | $JOSHUA/scripts/training/remove-unary-abstract.pl | gzip -9 > $output_grammar
+$JOSHUA/scripts/training/scat $input_grammar | java -Xmx6g -Dfile.encoding=utf8 -cp $JOSHUA/lib/thrax.jar edu.jhu.thrax.util.TestSetFilter -v $fast -n $ngrams $corpus | $JOSHUA/scripts/training/remove-unary-abstract.pl | gzip -9 > $output_grammar
 
 # clean up
 rm -f $input_grammar
