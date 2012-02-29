@@ -590,7 +590,11 @@ public class GrammarPacker {
 		
 		// Reallocate the backing array and buffer, copies data over.
 		private void reallocate() {
-			byte[] new_backing = new byte[backing.length * 2];
+			int new_length = backing.length * 2;
+			// Detect overflow.
+			if (new_length <= backing.length)
+				new_length = Integer.MAX_VALUE;
+			byte[] new_backing = new byte[new_length];
 			System.arraycopy(backing, 0, new_backing, 0, backing.length);
 			int old_position = buffer.position();
 			ByteBuffer new_buffer = ByteBuffer.wrap(new_backing);
