@@ -339,10 +339,11 @@ public class ParserThread extends Thread {
 
         private static Grammar getGrammarFromHyperGraph(String goal, HyperGraph hg) throws IOException
         {
-			PrintStream out = new PrintStream(new File("hg.grammar"));
-            GrammarBuilderWalkerFunction f = new GrammarBuilderWalkerFunction(goal, out);
+			// PrintStream out = new PrintStream(new File("hg.grammar"));
+            GrammarBuilderWalkerFunction f = new GrammarBuilderWalkerFunction(goal);
 			ForestWalker walker = new ForestWalker();
             walker.walk(hg.goalNode, f);
+			// out.close();
             return f.getGrammar();
         }
 }

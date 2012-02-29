@@ -6,6 +6,7 @@ import joshua.decoder.ff.tm.hash_based.MemoryBasedBatchGrammar;
 import joshua.decoder.ff.tm.BilingualRule;
 import joshua.decoder.ff.tm.Rule;
 import joshua.corpus.Vocabulary;
+import joshua.util.FormatUtils;
 import java.util.Set;
 import java.util.HashSet;
 
@@ -32,12 +33,14 @@ public class GrammarBuilderWalkerFunction implements WalkerFunction
     private static HieroFormatReader reader = new HieroFormatReader();
 	private PrintStream outStream;
 	private int goalSymbol;
+	private HashSet<Rule> rules;
 
     public GrammarBuilderWalkerFunction(String goal)
     {
         grammar = new MemoryBasedBatchGrammar(reader);
 		outStream = null;
 		goalSymbol = Vocabulary.id(goal);
+		rules = new HashSet<Rule>();
     }
 
 	public GrammarBuilderWalkerFunction(String goal, PrintStream out)
@@ -51,10 +54,11 @@ public class GrammarBuilderWalkerFunction implements WalkerFunction
 //        System.err.printf("VISITING NODE: %s\n", getLabelWithSpan(node));
         for (HyperEdge e : node.hyperedges) {
             BilingualRule r = getRuleWithSpans(e, node);
-            if (r != null) {
+            if (r != null && !rules.contains(r)) {
 				if (outStream != null)
 					outStream.println(r);
                 grammar.addRule(r);
+				rules.add(r);
 			}
         }
     }
@@ -104,37 +108,34 @@ public class GrammarBuilderWalkerFunction implements WalkerFunction
 		// TODO: except glue rules!
 		if (english.length == 1 && english[0] < 0 && !isGlue)
 			return null;
+		int currNT = 1;
         int [] result = new int[english.length];
         for (int i = 0; i < english.length; i++) {
             int curr = english[i];
-            if (curr >= 0) {
+            if (!Vocabulary.nt(curr)) {
                 result[i] = curr;
             }
             else {
                 int index = -curr - 1;
                 String label = getLabelWithSpan(edge.getAntNodes().get(index));
-                result[i] = Vocabulary.id(String.format("[%s,%d]", label, -curr));
+                result[i] = Vocabulary.id(String.format("[%s,%d]", label, currNT));
+				currNT++;
             }
         }
-//        System.err.printf("source: %s\n", Vocabulary.getWords(result));
+//        System.err.printf("source: %s\n", result);
         return result;
     }
 
     private static int [] getNewTargetFromSource(int [] source)
     {
         int [] result = new int[source.length];
-        int ntIndex = 1;
         for (int i = 0; i < source.length; i++) {
-            int curr = source[i];
-            if (!Vocabulary.nt(curr)) {
-                result[i] = curr;
-            }
-            else {
-                result[i] = -ntIndex;
-                ntIndex++;
+            result[i] = source[i];
+            if (Vocabulary.nt(result[i])) {
+                result[i] = -Vocabulary.getTargetNonterminalIndex(result[i]);
             }
         }
-//        System.err.printf("target: %s\n", Vocabulary.getWords(result));
+//        System.err.printf("target: %s\n", result);
         return result;
     }
 
