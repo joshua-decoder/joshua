@@ -41,18 +41,18 @@ public class GrammarPacker {
 	static {
 		FANOUT = 2;
 		CHUNK_SIZE = 100000;
-		DATA_SIZE_LIMIT  = (int) (Integer.MAX_VALUE * 0.8);
+		DATA_SIZE_LIMIT = (int) (Integer.MAX_VALUE * 0.8);
 		AVERAGE_NUM_FEATURES = 20;
-		
-		WORKING_DIRECTORY = System.getProperty("user.dir") 
-				+ File.separator	+ "packed";
+
+		WORKING_DIRECTORY = System.getProperty("user.dir")
+				+ File.separator + "packed";
 	}
-	
+
 	public GrammarPacker(String config_filename,
 			List<String> grammars) throws IOException {
 		this.grammars = grammars;
 		this.quantization = new QuantizerConfiguration();
-		
+
 		readConfig(config_filename);
 	}
 
@@ -93,7 +93,7 @@ public class GrammarPacker {
 			}
 		}
 		reader.close();
-		
+
 		File working_dir = new File(WORKING_DIRECTORY);
 		if (!working_dir.exists() && !working_dir.mkdirs()) {
 			logger.severe("Failed creating working directory.");
@@ -103,13 +103,14 @@ public class GrammarPacker {
 
 	/**
 	 * Executes the packing.
+	 * 
 	 * @throws IOException
 	 */
 	public void pack() throws IOException {
 		logger.info("Beginning exploration pass.");
-		
+
 		quantization.initialize();
-		
+
 		// Explore pass. Learn vocabulary and quantizer histograms.
 		for (String grammar_file : grammars) {
 			logger.info("Exploring: " + grammar_file);
@@ -121,12 +122,12 @@ public class GrammarPacker {
 				"finalizing quantizers.");
 
 		quantization.finalize();
-		
+
 		quantization.write(WORKING_DIRECTORY + File.separator + "quantization");
 		Vocabulary.freeze();
 		Vocabulary.write(WORKING_DIRECTORY + File.separator + "vocabulary");
 		quantization.read(WORKING_DIRECTORY + File.separator + "quantization");
-		
+
 		logger.info("Beginning chunking pass.");
 		Queue<PackingFileTuple> chunks = new PriorityQueue<PackingFileTuple>();
 		// Chunking pass. Split and binarize source, target and features into
@@ -135,18 +136,18 @@ public class GrammarPacker {
 			binarize(reader, chunks);
 		}
 		logger.info("Chunking pass complete.");
-		
+
 		logger.info("Packed grammar in: " + WORKING_DIRECTORY);
-		
-//		logger.info("Beginning merge phase.");
-//		// Merge loop.
-//		while (chunks.size() > 1) {
-//			List<PackingFileTuple> to_merge = new ArrayList<PackingFileTuple>();
-//			while (to_merge.size() < FANOUT && !chunks.isEmpty())
-//				to_merge.add(chunks.poll());
-//			chunks.add(merge(to_merge));
-//		}
-//		logger.info("Merge phase complete.");
+
+		// logger.info("Beginning merge phase.");
+		// // Merge loop.
+		// while (chunks.size() > 1) {
+		// List<PackingFileTuple> to_merge = new ArrayList<PackingFileTuple>();
+		// while (to_merge.size() < FANOUT && !chunks.isEmpty())
+		// to_merge.add(chunks.poll());
+		// chunks.add(merge(to_merge));
+		// }
+		// logger.info("Merge phase complete.");
 	}
 
 	// TODO: add javadoc.
@@ -190,7 +191,7 @@ public class GrammarPacker {
 		}
 	}
 
-	private void binarize(LineReader grammar, Queue<PackingFileTuple> chunks) 
+	private void binarize(LineReader grammar, Queue<PackingFileTuple> chunks)
 			throws IOException {
 		int counter = 0;
 		int chunk_counter = 0;
@@ -231,7 +232,7 @@ public class GrammarPacker {
 				source_trie.clear();
 				target_trie.clear();
 				data_buffer.clear();
-				
+
 				num_chunks++;
 				chunk_counter = 0;
 				ready_to_flush = false;
@@ -248,7 +249,7 @@ public class GrammarPacker {
 					features.put(feature_id, feature_value);
 			}
 			int features_index = data_buffer.add(features);
-			
+
 			// Process source side.
 			SourceValue sv = new SourceValue(Vocabulary.id(lhs_word), features_index);
 			int[] source = new int[source_words.length];
@@ -259,31 +260,32 @@ public class GrammarPacker {
 					source[i] = Vocabulary.id(source_words[i]);
 			}
 			source_trie.add(source, sv);
-			
+
 			// Process target side.
 			TargetValue tv = new TargetValue(sv);
 			int[] target = new int[target_words.length];
 			for (int i = 0; i < target_words.length; i++) {
 				if (FormatUtils.isNonterminal(target_words[i])) {
-					target[target_words.length - (i + 1)] = 
+					target[target_words.length - (i + 1)] =
 							-FormatUtils.getNonterminalIndex(target_words[i]);
-				} else { 
-					target[target_words.length - (i + 1)] = Vocabulary.id(target_words[i]);
+				} else {
+					target[target_words.length - (i + 1)] = Vocabulary
+							.id(target_words[i]);
 				}
 			}
 			target_trie.add(target, tv);
 		}
 		chunks.add(flush(source_trie, target_trie, data_buffer, num_chunks));
 	}
-	
+
 	/**
 	 * Serializes the source, target and feature data structures into interlinked
 	 * binary files. Target is written first, into a skeletal (node don't carry
-	 * any data) upward-pointing trie, updating the linking source trie nodes
-	 * with the position once it is known. Source and feature data are written 
-	 * simultaneously. The source structure is written into a downward-pointing 
-	 * trie and stores the rule's lhs as well as links to the target and feature 
-	 * stream. The feature stream is prompted to write out a block 
+	 * any data) upward-pointing trie, updating the linking source trie nodes with
+	 * the position once it is known. Source and feature data are written
+	 * simultaneously. The source structure is written into a downward-pointing
+	 * trie and stores the rule's lhs as well as links to the target and feature
+	 * stream. The feature stream is prompted to write out a block
 	 * 
 	 * @param source_trie
 	 * @param target_trie
@@ -292,37 +294,38 @@ public class GrammarPacker {
 	 * @throws IOException
 	 */
 	private PackingFileTuple flush(PackingTrie<SourceValue> source_trie,
-			PackingTrie<TargetValue> target_trie, PackingBuffer data_buffer, 
+			PackingTrie<TargetValue> target_trie, PackingBuffer data_buffer,
 			int id) throws IOException {
 		// Make a chunk object for this piece of the grammar.
-		PackingFileTuple chunk = new PackingFileTuple("chunk_" + String.format("%05d", id));
+		PackingFileTuple chunk = new PackingFileTuple("chunk_"
+				+ String.format("%05d", id));
 		// Pull out the streams for source, target and data output.
 		DataOutputStream source_stream = chunk.getSourceOutput();
 		DataOutputStream target_stream = chunk.getTargetOutput();
 		DataOutputStream target_lookup_stream = chunk.getTargetLookupOutput();
 		DataOutputStream data_stream = chunk.getDataOutput();
-		
+
 		Queue<PackingTrie<TargetValue>> target_queue;
 		Queue<PackingTrie<SourceValue>> source_queue;
-		
-		// The number of bytes both written into the source stream and 
+
+		// The number of bytes both written into the source stream and
 		// buffered in the source queue.
 		int source_position;
 		// The number of bytes written into the target stream.
 		int target_position;
-		
+
 		// Add trie root into queue, set target position to 0 and set cumulated
-		// size to size of trie root. 
+		// size to size of trie root.
 		target_queue = new LinkedList<PackingTrie<TargetValue>>();
 		target_queue.add(target_trie);
 		target_position = 0;
-		
+
 		// Target lookup table for trie levels.
 		int current_level_size = 1;
 		int next_level_size = 0;
 		ArrayList<Integer> target_lookup = new ArrayList<Integer>();
-		
-		// Packing loop for upwards-pointing target trie.		
+
+		// Packing loop for upwards-pointing target trie.
 		while (!target_queue.isEmpty()) {
 			// Pop top of queue.
 			PackingTrie<TargetValue> node = target_queue.poll();
@@ -334,7 +337,7 @@ public class GrammarPacker {
 			// Write link to parent.
 			if (node.parent != null)
 				target_stream.writeInt(node.parent.address);
-			else 
+			else
 				target_stream.writeInt(-1);
 			target_stream.writeInt(node.symbol);
 			// Enqueue children.
@@ -344,7 +347,7 @@ public class GrammarPacker {
 			}
 			target_position += node.size(false, true);
 			next_level_size += node.children.descendingKeySet().size();
-			
+
 			current_level_size--;
 			if (current_level_size == 0) {
 				target_lookup.add(target_position);
@@ -356,17 +359,16 @@ public class GrammarPacker {
 		for (int i : target_lookup)
 			target_lookup_stream.writeInt(i);
 		target_lookup_stream.close();
-		
-		
+
 		// Setting up for source and data writing.
 		source_queue = new LinkedList<PackingTrie<SourceValue>>();
 		source_queue.add(source_trie);
 		source_position = source_trie.size(true, false);
 		source_trie.address = target_position;
-		
+
 		// Ready data buffer for writing.
 		data_buffer.initialize();
-		
+
 		// Packing loop for downwards-pointing source trie.
 		while (!source_queue.isEmpty()) {
 			// Pop top of queue.
@@ -378,7 +380,7 @@ public class GrammarPacker {
 				PackingTrie<SourceValue> child = node.children.get(k);
 				// Enqueue child.
 				source_queue.add(child);
-				// Child's address will be at the current end of the queue. 
+				// Child's address will be at the current end of the queue.
 				child.address = source_position;
 				// Advance cumulated size by child's size.
 				source_position += child.size(true, false);
@@ -393,19 +395,19 @@ public class GrammarPacker {
 				sv.data = data_buffer.write(sv.data);
 				source_stream.writeInt(sv.lhs);
 				source_stream.writeInt(sv.target);
-				source_stream.writeInt(sv.data);			
+				source_stream.writeInt(sv.data);
 			}
 		}
 		// Flush the data stream.
 		data_buffer.flush(data_stream);
-		
+
 		target_stream.close();
 		source_stream.close();
 		data_stream.close();
-		
+
 		return chunk;
 	}
-	
+
 	// TODO: Evaluate whether an implementation of this is necessary.
 	private PackingFileTuple merge(List<PackingFileTuple> chunks) {
 		return null;
@@ -414,23 +416,23 @@ public class GrammarPacker {
 	public static void main(String[] args) throws IOException {
 		if (args.length == 3) {
 			String config_filename = args[0];
-			
+
 			WORKING_DIRECTORY = args[1];
-			
+
 			if (new File(WORKING_DIRECTORY).exists()) {
 				System.err.println("File or directory already exists: "
 						+ WORKING_DIRECTORY);
 				System.err.println("Will not overwrite.");
 				return;
 			}
-			
+
 			List<String> grammar_files = new ArrayList<String>();
 
-			// Currently not supporting more than one grammar file due to our 
+			// Currently not supporting more than one grammar file due to our
 			// assumption of sortedness.
 			// for (int i = 2; i < args.length; i++)
-			// 	grammar_files.add(args[i]);
-			
+			// grammar_files.add(args[i]);
+
 			grammar_files.add(args[2]);
 			GrammarPacker packer = new GrammarPacker(config_filename, grammar_files);
 			packer.pack();
@@ -444,25 +446,27 @@ public class GrammarPacker {
 
 	/**
 	 * Integer-labeled, doubly-linked trie with some provisions for packing.
+	 * 
 	 * @author Juri Ganitkevitch
-	 *
-	 * @param <D> The trie's value type.
+	 * 
+	 * @param <D>
+	 *          The trie's value type.
 	 */
 	class PackingTrie<D extends PackingTrieValue> {
 		int symbol;
 		PackingTrie<D> parent;
-		
+
 		TreeMap<Integer, PackingTrie<D>> children;
 		List<D> values;
-		
+
 		int address;
 
 		PackingTrie() {
 			address = -1;
-			
+
 			symbol = 0;
 			parent = null;
-			
+
 			children = new TreeMap<Integer, PackingTrie<D>>();
 			values = new ArrayList<D>();
 		}
@@ -496,10 +500,12 @@ public class GrammarPacker {
 		 * (children point to parent) tries, as well as skeletal (no data, just the
 		 * labeled links) and non-skeletal (nodes have a data block) packing.
 		 * 
-		 * @param downwards Are we packing into a downwards-pointing trie?
-		 * @param skeletal Are we packing into a skeletal trie?
+		 * @param downwards
+		 *          Are we packing into a downwards-pointing trie?
+		 * @param skeletal
+		 *          Are we packing into a skeletal trie?
 		 * 
-		 * @return Number of bytes the trie node would occupy. 
+		 * @return Number of bytes the trie node would occupy.
 		 */
 		int size(boolean downwards, boolean skeletal) {
 			int size = 0;
@@ -510,22 +516,22 @@ public class GrammarPacker {
 				// Link to parent.
 				size += 2;
 			}
-			// Non-skeletal packing: number of data items.  
+			// Non-skeletal packing: number of data items.
 			if (!skeletal)
 				size += 1;
 			// Non-skeletal packing: write size taken up by data items.
 			if (!skeletal && !values.isEmpty())
 				size += values.size() * values.get(0).size();
-			
+
 			return size * 4;
 		}
-		
+
 		void clear() {
 			children.clear();
 			values.clear();
 		}
 	}
-	
+
 	interface PackingTrieValue {
 		int size();
 	}
@@ -566,39 +572,39 @@ public class GrammarPacker {
 
 	// TODO: abstract away from features, use generic type for in-memory
 	// structure. PackingBuffers are to implement structure to in-memory bytes
-	// and flushing in-memory bytes to on-disk bytes. 
+	// and flushing in-memory bytes to on-disk bytes.
 	class PackingBuffer {
 		private byte[] backing;
 		private ByteBuffer buffer;
-		
+
 		private ArrayList<Integer> memoryLookup;
 		private int totalSize;
 		private ArrayList<Integer> onDiskOrder;
-		
+
 		PackingBuffer() throws IOException {
 			allocate();
 			memoryLookup = new ArrayList<Integer>();
-	    onDiskOrder = new ArrayList<Integer>();
-	    totalSize = 0;
+			onDiskOrder = new ArrayList<Integer>();
+			totalSize = 0;
 		}
-		
+
 		// Allocate a reasonably-sized buffer for the feature data.
 		private void allocate() {
 			backing = new byte[CHUNK_SIZE * AVERAGE_NUM_FEATURES];
 			buffer = ByteBuffer.wrap(backing);
 		}
-		
+
 		// Reallocate the backing array and buffer, copies data over.
 		private void reallocate() {
 			if (backing.length == Integer.MAX_VALUE)
 				return;
-			long attempted_length = backing.length * 2l; 
+			long attempted_length = backing.length * 2l;
 			int new_length;
 			// Detect overflow.
 			if (attempted_length >= Integer.MAX_VALUE)
 				new_length = Integer.MAX_VALUE;
 			else
-				new_length = (int) attempted_length; 
+				new_length = (int) attempted_length;
 			byte[] new_backing = new byte[new_length];
 			System.arraycopy(backing, 0, new_backing, 0, backing.length);
 			int old_position = buffer.position();
@@ -607,17 +613,19 @@ public class GrammarPacker {
 			buffer = new_buffer;
 			backing = new_backing;
 		}
-		
-		/** 
+
+		/**
 		 * Add a block of features to the buffer.
-		 * @param features TreeMap with the features for one rule.
+		 * 
+		 * @param features
+		 *          TreeMap with the features for one rule.
 		 * @return The index of the resulting data block.
 		 */
 		int add(TreeMap<Integer, Float> features) {
 			int data_position = buffer.position();
-			
+
 			// Over-estimate how much room this addition will need: 12 bytes per
-			// feature (4 for label, "upper bound" of 8 for the value), plus 4 for 
+			// feature (4 for label, "upper bound" of 8 for the value), plus 4 for
 			// the number of features. If this won't fit, reallocate the buffer.
 			int size_estimate = 12 * features.size() + 4;
 			if (buffer.capacity() - buffer.position() <= size_estimate)
@@ -640,27 +648,30 @@ public class GrammarPacker {
 			// Return block index.
 			return memoryLookup.size() - 1;
 		}
-		
+
 		/**
 		 * Prepare the data buffer for disk writing.
 		 */
 		void initialize() {
 			onDiskOrder.clear();
 		}
-		
+
 		/**
 		 * Enqueue a data block for later writing.
-		 * @param block_index The index of the data block to add to writing queue.
+		 * 
+		 * @param block_index
+		 *          The index of the data block to add to writing queue.
 		 * @return The to-be-written block's output index.
 		 */
 		int write(int block_index) {
 			onDiskOrder.add(block_index);
 			return onDiskOrder.size() - 1;
 		}
-		
+
 		/**
-		 * Performs the actual writing to disk in the order specified by calls to 
+		 * Performs the actual writing to disk in the order specified by calls to
 		 * write() since the last call to initialize().
+		 * 
 		 * @param out
 		 * @throws IOException
 		 */
@@ -674,17 +685,17 @@ public class GrammarPacker {
 				out.write(backing, block_address, size);
 			}
 		}
-		
+
 		void clear() {
 			buffer.clear();
 			memoryLookup.clear();
 			onDiskOrder.clear();
 		}
-		
+
 		boolean overflowing() {
 			return (buffer.position() >= DATA_SIZE_LIMIT);
 		}
-		
+
 		private void writeHeader(DataOutputStream out) throws IOException {
 			if (out.size() == 0) {
 				out.writeInt(onDiskOrder.size());
@@ -698,15 +709,15 @@ public class GrammarPacker {
 				throw new RuntimeException("Got a used stream for header writing.");
 			}
 		}
-		
+
 		private int headerSize() {
-			// One integer for each data block, plus number of blocks and total size. 
+			// One integer for each data block, plus number of blocks and total size.
 			return 4 * (onDiskOrder.size() + 2);
 		}
-		
+
 		private int blockSize(int block_index) {
 			int block_address = memoryLookup.get(block_index);
-			return (block_index < memoryLookup.size() - 1 ? 
+			return (block_index < memoryLookup.size() - 1 ?
 					memoryLookup.get(block_index + 1) : totalSize) - block_address;
 		}
 	}
@@ -720,32 +731,32 @@ public class GrammarPacker {
 		PackingFileTuple(String prefix) {
 			sourceFile = new File(WORKING_DIRECTORY + File.separator
 					+ prefix + ".source");
-			targetFile = new File(WORKING_DIRECTORY + File.separator 
+			targetFile = new File(WORKING_DIRECTORY + File.separator
 					+ prefix + ".target");
-			targetLookupFile = new File(WORKING_DIRECTORY + File.separator 
+			targetLookupFile = new File(WORKING_DIRECTORY + File.separator
 					+ prefix + ".target.lookup");
-			dataFile = new File(WORKING_DIRECTORY + File.separator 
+			dataFile = new File(WORKING_DIRECTORY + File.separator
 					+ prefix + ".data");
-			
+
 			logger.info("Allocated chunk: " + sourceFile.getAbsolutePath());
 		}
-		
+
 		DataOutputStream getSourceOutput() throws IOException {
 			return getOutput(sourceFile);
 		}
-		
+
 		DataOutputStream getTargetOutput() throws IOException {
 			return getOutput(targetFile);
 		}
-		
+
 		DataOutputStream getTargetLookupOutput() throws IOException {
 			return getOutput(targetLookupFile);
 		}
-		
+
 		DataOutputStream getDataOutput() throws IOException {
 			return getOutput(dataFile);
 		}
-		
+
 		private DataOutputStream getOutput(File file) throws IOException {
 			if (file.createNewFile()) {
 				return new DataOutputStream(new BufferedOutputStream(
@@ -754,19 +765,19 @@ public class GrammarPacker {
 				throw new RuntimeException("File doesn't exist: " + file.getName());
 			}
 		}
-		
+
 		ByteBuffer getSourceBuffer() throws IOException {
 			return getBuffer(sourceFile);
 		}
-		
+
 		ByteBuffer getTargetBuffer() throws IOException {
 			return getBuffer(targetFile);
 		}
-		
+
 		ByteBuffer getDataBuffer() throws IOException {
 			return getBuffer(dataFile);
 		}
-		
+
 		private ByteBuffer getBuffer(File file) throws IOException {
 			if (file.exists()) {
 				FileChannel channel = new RandomAccessFile(file, "rw").getChannel();
@@ -775,7 +786,7 @@ public class GrammarPacker {
 				throw new RuntimeException("File doesn't exist: " + file.getName());
 			}
 		}
-		
+
 		long getSize() {
 			return sourceFile.length() + targetFile.length() + dataFile.length();
 		}
