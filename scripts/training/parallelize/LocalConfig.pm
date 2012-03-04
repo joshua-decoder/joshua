@@ -38,7 +38,7 @@ my $CCONFIG = {
   },
   'HLTCOE' => {
     'HOST_REGEXP' => qr/hltcoe\.jhu\.edu/,
-    'QSubMemFlag' => '-l h_vmem=',
+    'QSubMemFlag' => '-l num_proc=1,h_vmem=',
     'QSubQueue' => '-q '
 #    'QSubQueue' => '-q mem.q'
   },
