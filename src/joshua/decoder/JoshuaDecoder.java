@@ -563,9 +563,17 @@ public class JoshuaDecoder {
 
         logger.info(String.format("Model loading took %d seconds",
                 (System.currentTimeMillis() - startTime) / 1000));
+        logger.info(String.format("Memory used %.1d MB", 
+  					((Runtime.getRuntime().totalMemory() 
+  							- Runtime.getRuntime().freeMemory()) / 1000000.0)));
         
 		/* Step-2: Decoding */
 		decoder.decodeTestSet(testFile, nbestFile, oracleFile);
+		
+		logger.info("Decoding completed.");
+		logger.info(String.format("Memory used %.1d MB", 
+				((Runtime.getRuntime().totalMemory() 
+						- Runtime.getRuntime().freeMemory()) / 1000000.0)));
 		
 		/* Step-3: clean up */
         decoder.cleanUp();
