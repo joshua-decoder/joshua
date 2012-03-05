@@ -563,7 +563,7 @@ public class JoshuaDecoder {
 
         logger.info(String.format("Model loading took %d seconds",
                 (System.currentTimeMillis() - startTime) / 1000));
-        logger.info(String.format("Memory used %.1d MB", 
+        logger.info(String.format("Memory used %.1f MB", 
   					((Runtime.getRuntime().totalMemory() 
   							- Runtime.getRuntime().freeMemory()) / 1000000.0)));
         
@@ -571,7 +571,7 @@ public class JoshuaDecoder {
 		decoder.decodeTestSet(testFile, nbestFile, oracleFile);
 		
 		logger.info("Decoding completed.");
-		logger.info(String.format("Memory used %.1d MB", 
+		logger.info(String.format("Memory used %.1f MB", 
 				((Runtime.getRuntime().totalMemory() 
 						- Runtime.getRuntime().freeMemory()) / 1000000.0)));
 		
