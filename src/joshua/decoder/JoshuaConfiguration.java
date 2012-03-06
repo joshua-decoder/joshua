@@ -78,6 +78,7 @@ public class JoshuaConfiguration {
 	public static float   oov_feature_cost           = 100;
 	public static boolean use_max_lm_cost_for_oov    = false;
 	public static int     oov_feature_index          = -1;
+	public static boolean true_oovs_only             = false;
 
 	// number of phrasal features, for correct oov rule creation
 	public static int     num_phrasal_features       = 0;
@@ -282,6 +283,9 @@ public class JoshuaConfiguration {
 
 				} else if (parameter.equals(normalize_key("oov_feature_index"))) {
 					oov_feature_index = Integer.parseInt(fds[1]);
+
+				} else if (parameter.equals(normalize_key("true_oovs_only"))) {
+					true_oovs_only = Boolean.parseBoolean(fds[1]);
 
 				} else if (parameter.equals(normalize_key("use_pos_labels"))) {
 					use_pos_labels = Boolean.parseBoolean(fds[1]);

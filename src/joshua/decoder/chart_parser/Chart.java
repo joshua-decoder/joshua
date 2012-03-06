@@ -38,7 +38,8 @@ import joshua.decoder.ff.tm.RuleCollection;
 import joshua.decoder.ff.tm.Trie;
 import joshua.decoder.hypergraph.HGNode;
 import joshua.decoder.hypergraph.HyperGraph;
-import joshua.decoder.segment_file.ConstraintSpan;
+import joshua.decoder.segment_file.ParsedSentence;
+import joshua.decoder.segment_file.Sentence;
 import joshua.lattice.Arc;
 import joshua.lattice.Lattice;
 import joshua.lattice.Node;
@@ -93,43 +94,29 @@ public class Chart {
 // Private instance fields (maybe could be protected instead)
 //===============================================================
 	private Cell[][] cells; // note that in some cell, it might be null
-	private int foreignSentenceLength;
+	private int sourceLength;
 	private List<FeatureFunction> featureFunctions;	
-	private List<StateComputer> stateComputers;	
-	private  Grammar[]       grammars;
-	private  DotChart[]      dotcharts; // each grammar should have a dotchart associated with it
-	private Cell             goalBin;
-	private int              goalSymbolID = -1;
-	private Lattice<Integer> sentence; // a list of foreign words
+	private List<StateComputer>   stateComputers;	
+	private Grammar[]             grammars;
+	private DotChart[]            dotcharts; // each grammar should have a dotchart associated with it
+	private Cell                  goalBin;
+	private int                   goalSymbolID = -1;
+	private Lattice<Integer>      inputLattice;
 	
 	private SyntaxTree       parseTree;
-	
 		
 	private Combiner combiner = null;
 	private ManualConstraintsHandler manualConstraintsHandler;
 	
-	
 //===============================================================
 // Static fields
 //===============================================================
-	
-	//===========================================================
-	// Time-profiling variables for debugging
-	//===========================================================
-	// These are only referenced in a commented out logger. They are never set.
-	//private static long g_time_lm                = 0;
-	//private static long g_time_score_sent        = 0;
-	//private static long g_time_check_nonterminal = 0;
-	
-	
+		
 	//===========================================================
 	// Logger
 	//===========================================================
 	private static final Logger logger = 
 		Logger.getLogger(Chart.class.getName());
-	
-	
-	
 	
 //===============================================================
 // Constructors
@@ -144,36 +131,33 @@ public class Chart {
 	 * we get passed the grammars too so we could move all of that into here.
 	 */
 	
-	public Chart(
-		Lattice<Integer>           sentence,
-		List<FeatureFunction>      featureFunctions,
-		List<StateComputer>        stateComputers,
-		int                        segmentID,
-		Grammar[]                  grammars,
-		boolean                    useMaxLMCostForOOV,
-		String                     goalSymbol,
-		List<ConstraintSpan>       constraintSpans,
-		SyntaxTree                 parse_tree
-		)
+	public Chart(Sentence     sentence,
+			List<FeatureFunction> featureFunctions,
+			List<StateComputer>   stateComputers,
+			Grammar[]             grammars,
+			boolean               useMaxLMCostForOOV,
+			String                goalSymbol)
 	{
-		this.sentence              = sentence;
-		this.foreignSentenceLength = sentence.size() - 1;
+		this.inputLattice = sentence.intLattice();
+		this.sourceLength = inputLattice.size() - 1;
 		this.featureFunctions      = featureFunctions;
 		this.stateComputers        = stateComputers;
-		this.parseTree             = parse_tree;
 		
-		// TODO: this is very memory-expensive
-		this.cells         = new Cell[foreignSentenceLength][foreignSentenceLength+1];
+		this.parseTree             = null;
+		if (sentence instanceof ParsedSentence)
+			this.parseTree = ((ParsedSentence) sentence).syntaxTree();
+
+		this.cells         = new Cell[sourceLength][sourceLength+1];
 		
-		this.segmentID    = segmentID;
+		this.segmentID    = sentence.id();
 		this.goalSymbolID = Vocabulary.id(goalSymbol);
 		this.goalBin      = new Cell(this, this.goalSymbolID);
-		this.grammars = grammars;
+		this.grammars     = grammars;
 		
 		// each grammar will have a dot chart
 		this.dotcharts = new DotChart[this.grammars.length];
 		for (int i = 0; i < this.grammars.length; i++)
-			this.dotcharts[i] = new DotChart(this.sentence, this.grammars[i], this);
+			this.dotcharts[i] = new DotChart(this.inputLattice, this.grammars[i], this);
 
 		/* The CubePruneCombiner defined here is fairly complicated.
 		 * It is designed to work both at the cell level and at the
@@ -197,7 +181,7 @@ public class Chart {
 
 		//TODO: which grammar should we use to create a manual rule? 
 		manualConstraintsHandler = new ManualConstraintsHandler(this, 
-				grammars[grammars.length - 1], constraintSpans);
+				grammars[grammars.length - 1], sentence.constraints());
 		
 		/* Add OOV rules; 
 		 * This should be called after the manual constraints have been set up.
@@ -205,11 +189,26 @@ public class Chart {
 		 */
 
 		// TODO: the transition cost for phrase model, arity penalty, word penalty are all zero, except the LM cost
-		for (Node<Integer> node : sentence) {
+		for (Node<Integer> node : inputLattice) {
 			for (Arc<Integer> arc : node.getOutgoingArcs()) {
 				// create a rule, but do not add into the grammar trie
 				// TODO: which grammar should we use to create an OOV rule?
 				int sourceWord = arc.getLabel();
+				
+				// Determine if word is actual OOV.
+				if (JoshuaConfiguration.true_oovs_only) {
+					boolean true_oov = true;
+					for (Grammar g : grammars) {
+						if (g.getTrieRoot().match(sourceWord) != null && 
+								g.getTrieRoot().match(sourceWord).hasRules()) {
+							true_oov = false;
+							break;
+						}
+					}
+					if (!true_oov)
+						continue;
+				}
+				
 				final int targetWord;
 				if (JoshuaConfiguration.mark_oovs) {
 					targetWord = Vocabulary.id(Vocabulary.word(sourceWord) + "_OOV");
@@ -217,8 +216,8 @@ public class Chart {
 					targetWord = sourceWord;
 				}
 				Rule oov_rule = null;
-				if (parse_tree != null && (JoshuaConfiguration.constrain_parse || JoshuaConfiguration.use_pos_labels)) {
-					Collection<Integer> labels = parse_tree.getConstituentLabels(node.getNumber(), node.getNumber() + 1);
+				if (parseTree != null && (JoshuaConfiguration.constrain_parse || JoshuaConfiguration.use_pos_labels)) {
+					Collection<Integer> labels = parseTree.getConstituentLabels(node.getNumber(), node.getNumber() + 1);
 					for (int l : labels)
 						oov_rule = this.grammars[grammars.length - 1].constructLabeledOOVRule(
 								this.featureFunctions.size(), sourceWord, targetWord, l, useMaxLMCostForOOV);
@@ -280,7 +279,7 @@ public class Chart {
             // seed it with the beginning states
             // for each applicable grammar
             for (int g = 0; g < grammars.length; g++) {
-                if (! grammars[g].hasRuleForSpan(i, j, foreignSentenceLength)
+                if (! grammars[g].hasRuleForSpan(i, j, sourceLength)
                     || null == dotcharts[g].getDotCell(i,j))
                     continue;
                 // for each rule with applicable rules
@@ -399,7 +398,7 @@ public class Chart {
         } else {
             for (int k = 0; k < this.grammars.length; k++) {
                 // grammars have a maximum input span they'll apply to
-                if (this.grammars[k].hasRuleForSpan(i, j, foreignSentenceLength)
+                if (this.grammars[k].hasRuleForSpan(i, j, sourceLength)
                     && null != this.dotcharts[k].getDotCell(i, j)) {
 						
                     // foreach dotnode in the span
@@ -427,8 +426,8 @@ public class Chart {
 	public HyperGraph expand() {
 		logger.fine("Begin expand.");
 		
-		for (int width = 1; width <= foreignSentenceLength; width++) {
-			for (int i = 0; i <= foreignSentenceLength - width; i++) {
+		for (int width = 1; width <= sourceLength; width++) {
+			for (int i = 0; i <= sourceLength - width; i++) {
 				int j = i + width;
 				if (logger.isLoggable(Level.FINEST)) 
 					logger.finest(String.format("Processing span (%d, %d)",i,j));
@@ -458,7 +457,7 @@ public class Chart {
 				//(4)=== in dot_cell(i,j), add dot-nodes that start from the /complete/ superIterms in chart_cell(i,j)
 				logger.finest("Initializing new dot-items that start from complete items in this cell");
 				for (int k = 0; k < this.grammars.length; k++) {
-					if (this.grammars[k].hasRuleForSpan(i, j, foreignSentenceLength)) {
+					if (this.grammars[k].hasRuleForSpan(i, j, sourceLength)) {
 						this.dotcharts[k].startDotItems(i,j);
 					}
 				}				
@@ -476,17 +475,17 @@ public class Chart {
 		logStatistics(Level.INFO);
 
 		// transition_final: setup a goal item, which may have many deductions
-		if (null == this.cells[0][foreignSentenceLength] || !this.goalBin.transitToGoal(this.cells[0][foreignSentenceLength], 
-				this.featureFunctions, this.foreignSentenceLength)) 
+		if (null == this.cells[0][sourceLength] || !this.goalBin.transitToGoal(this.cells[0][sourceLength], 
+				this.featureFunctions, this.sourceLength)) 
 		{
-			logger.severe("No complete item in the Cell[0," + foreignSentenceLength + "]; possible reasons: " +
+			logger.severe("No complete item in the Cell[0," + sourceLength + "]; possible reasons: " +
 				"(1) your grammar does not have any valid derivation for the source sentence; " +
 				"(2) too aggressive pruning.");
 			return null;
 		}
 		
 		logger.fine("Finished expand");
-		return new HyperGraph(this.goalBin.getSortedNodes().get(0), -1, -1, this.segmentID, foreignSentenceLength);
+		return new HyperGraph(this.goalBin.getSortedNodes().get(0), -1, -1, this.segmentID, sourceLength);
 	}
 	
 	
@@ -535,7 +534,7 @@ public class Chart {
 			seen_lhs.add(node.lhs);
 			
 			for(Grammar gr : grs){
-				if (! gr.hasRuleForSpan(i, j, foreignSentenceLength))
+				if (! gr.hasRuleForSpan(i, j, sourceLength))
 					continue;
 				
 				Trie childNode = gr.getTrieRoot().match(node.lhs); // match rule and complete part
