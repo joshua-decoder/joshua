@@ -33,6 +33,7 @@ import java.util.logging.Logger;
 import java.util.zip.GZIPInputStream;
 
 import joshua.decoder.segment_file.LatticeInput;
+import joshua.decoder.segment_file.ParsedSentence;
 import joshua.decoder.segment_file.Sentence;
 
 /**
@@ -66,7 +67,7 @@ public class InputHandler implements Iterator<Sentence> {
     Sentence nextSentence = null;
     BufferedReader lineReader = null;
 
-	private static final Charset FILE_ENCODING = Charset.forName("UTF-8");
+    private static final Charset FILE_ENCODING = Charset.forName("UTF-8");
 
     List<Sentence>    issued;
     List<Translation> completed;
@@ -115,6 +116,8 @@ public class InputHandler implements Iterator<Sentence> {
 			} else {
 				if (line.replaceAll("\\s","").startsWith("(((")) {
 					nextSentence = new LatticeInput(line, sentenceNo);
+				} else if (ParsedSentence.matches(line)) {
+					nextSentence = new ParsedSentence(line, sentenceNo);
 				} else {
 					nextSentence = new Sentence(line, sentenceNo);
 				}
