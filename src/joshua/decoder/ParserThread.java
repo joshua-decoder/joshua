@@ -298,15 +298,12 @@ public class ParserThread extends Thread {
         }
 
         /* Seeding: the chart only sees the grammars, not the factories */
-        chart = new Chart(input_lattice,
+        chart = new Chart(foreign,
             this.featureFunctions,
             this.stateComputers,
-            foreign.id(),
             grammars,
             false,
-            JoshuaConfiguration.goal_symbol,
-            foreign.constraints(),
-            foreign.syntax_tree());
+            JoshuaConfiguration.goal_symbol);
 		
 		/* Parsing */
 		HyperGraph hypergraph = chart.expand();
@@ -320,15 +317,12 @@ public class ParserThread extends Thread {
 		int numRules = newGrammar[0].getNumRules();
 		System.err.printf("New grammar has %d rules.\n", numRules);
 		System.err.println("Expanding second chart.\n");
-        chart = new Chart(english_lattice,
+        chart = new Chart(english,
                           this.featureFunctions,
                           this.stateComputers,
-                          english.id(),
                           newGrammar,
                           false,
-                          GrammarBuilderWalkerFunction.goalSymbol(hypergraph),
-                          english.constraints(),
-                          english.syntax_tree());
+                          GrammarBuilderWalkerFunction.goalSymbol(hypergraph));
 
         /* Parsing */
         HyperGraph englishParse = chart.expand();
