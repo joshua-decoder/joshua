@@ -69,7 +69,7 @@ public class MemoryBasedBatchGrammar extends BatchGrammar {
 	
 	private String grammarFile;
 
-	private int spanLimit = 10;
+	private int spanLimit = JoshuaConfiguration.span_limit;
 
 	private GrammarReader<BilingualRule> modelReader;
 	
