@@ -5,10 +5,7 @@ import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
-import java.nio.channels.FileChannel.MapMode;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -20,6 +17,7 @@ import java.util.logging.Logger;
 import joshua.corpus.Vocabulary;
 import joshua.util.FormatUtils;
 import joshua.util.io.LineReader;
+import joshua.util.quantization.Quantizer;
 import joshua.util.quantization.QuantizerConfiguration;
 
 public class GrammarPacker {
@@ -27,32 +25,43 @@ public class GrammarPacker {
 	private static final Logger logger =
 			Logger.getLogger(GrammarPacker.class.getName());
 
-	private static int FANOUT;
-	private static int CHUNK_SIZE;
+	private static int SLICE_SIZE;
 	private static int DATA_SIZE_LIMIT;
-	private static int AVERAGE_NUM_FEATURES;
+	private static int DATA_SIZE_ESTIMATE;
 
 	private static String WORKING_DIRECTORY;
 
-	private List<String> grammars;
+	private String grammar;
+	
+	private boolean have_alignments;
+	private String alignments;
 
 	private QuantizerConfiguration quantization;
 
 	static {
-		FANOUT = 2;
-		CHUNK_SIZE = 100000;
+		SLICE_SIZE = 5000000;
 		DATA_SIZE_LIMIT = (int) (Integer.MAX_VALUE * 0.8);
-		AVERAGE_NUM_FEATURES = 20;
+		DATA_SIZE_ESTIMATE = 20;
 
 		WORKING_DIRECTORY = System.getProperty("user.dir")
 				+ File.separator + "packed";
 	}
 
-	public GrammarPacker(String config_filename,
-			List<String> grammars) throws IOException {
-		this.grammars = grammars;
+	public GrammarPacker(String config_filename, 
+			String grammar_filename,
+			String alignments_filename) throws IOException {
+		this.grammar = grammar_filename;
 		this.quantization = new QuantizerConfiguration();
-
+		
+		this.alignments = alignments_filename;
+		have_alignments = (alignments != null);
+		if (!have_alignments) {
+			logger.info("No alignments file specified, skipping.");
+		} else if (!new File(alignments_filename).exists()) {
+			logger.severe("Alignements file does not exist: " + alignments);
+			System.exit(0);
+		}
+		
 		readConfig(config_filename);
 	}
 
@@ -71,13 +80,9 @@ public class GrammarPacker {
 				logger.severe("Incomplete line in config.");
 				System.exit(0);
 			}
-			if ("chunk_size".equals(fields[0])) {
+			if ("slice_size".equals(fields[0])) {
 				// Number of records to concurrently load into memory for sorting.
-				CHUNK_SIZE = Integer.parseInt(fields[1]);
-
-			} else if ("fanout".equals(fields[0])) {
-				// Number of sorted chunks to concurrently merge.
-				FANOUT = Integer.parseInt(fields[1]);
+				SLICE_SIZE = Integer.parseInt(fields[1]);
 
 			} else if ("quantizer".equals(fields[0])) {
 				// Adding a quantizer to the mix.
@@ -108,46 +113,39 @@ public class GrammarPacker {
 	 */
 	public void pack() throws IOException {
 		logger.info("Beginning exploration pass.");
-
+		LineReader grammar_reader = null;
+		LineReader alignment_reader = null;
+		
 		quantization.initialize();
 
 		// Explore pass. Learn vocabulary and quantizer histograms.
-		for (String grammar_file : grammars) {
-			logger.info("Exploring: " + grammar_file);
-			LineReader reader = new LineReader(grammar_file);
-			explore(reader);
-		}
+		logger.info("Exploring: " + grammar);
+		grammar_reader = new LineReader(grammar);
+		explore(grammar_reader);
 
 		logger.info("Exploration pass complete. Freezing vocabulary and " +
 				"finalizing quantizers.");
 
 		quantization.finalize();
-
 		quantization.write(WORKING_DIRECTORY + File.separator + "quantization");
 		Vocabulary.freeze();
 		Vocabulary.write(WORKING_DIRECTORY + File.separator + "vocabulary");
+		// Read previously written quantizer configuration to match up to changed 
+		// vocabulary id's.
 		quantization.read(WORKING_DIRECTORY + File.separator + "quantization");
 
-		logger.info("Beginning chunking pass.");
-		Queue<PackingFileTuple> chunks = new PriorityQueue<PackingFileTuple>();
-		// Chunking pass. Split and binarize source, target and features into
-		for (String grammar_file : grammars) {
-			LineReader reader = new LineReader(grammar_file);
-			binarize(reader, chunks);
-		}
-		logger.info("Chunking pass complete.");
+		logger.info("Beginning packing pass.");
+		Queue<PackingFileTuple> slices = new PriorityQueue<PackingFileTuple>();
+		// Actual binarization pass. Slice and pack source, target and data.
+		grammar_reader = new LineReader(grammar);
+		
+		if (have_alignments)
+			alignment_reader = new LineReader(alignments);
+		binarize(grammar_reader, alignment_reader, slices);
+		logger.info("Packing complete.");
 
 		logger.info("Packed grammar in: " + WORKING_DIRECTORY);
-
-		// logger.info("Beginning merge phase.");
-		// // Merge loop.
-		// while (chunks.size() > 1) {
-		// List<PackingFileTuple> to_merge = new ArrayList<PackingFileTuple>();
-		// while (to_merge.size() < FANOUT && !chunks.isEmpty())
-		// to_merge.add(chunks.poll());
-		// chunks.add(merge(to_merge));
-		// }
-		// logger.info("Merge phase complete.");
+		logger.info("Done.");
 	}
 
 	// TODO: add javadoc.
@@ -191,26 +189,30 @@ public class GrammarPacker {
 		}
 	}
 
-	private void binarize(LineReader grammar, Queue<PackingFileTuple> chunks)
-			throws IOException {
+	private void binarize(LineReader grammar_reader, LineReader alignment_reader, 
+			Queue<PackingFileTuple> slices) throws IOException {
 		int counter = 0;
-		int chunk_counter = 0;
-		int num_chunks = 0;
+		int slice_counter = 0;
+		int num_slices = 0;
 
 		boolean ready_to_flush = false;
 		String first_source_word = null;
 
 		PackingTrie<SourceValue> source_trie = new PackingTrie<SourceValue>();
 		PackingTrie<TargetValue> target_trie = new PackingTrie<TargetValue>();
-		PackingBuffer data_buffer = new PackingBuffer();
+		FeatureBuffer feature_buffer = new FeatureBuffer();
+		
+		AlignmentBuffer alignment_buffer = null;
+		if (have_alignments)
+			alignment_buffer = new AlignmentBuffer();
 
 		TreeMap<Integer, Float> features = new TreeMap<Integer, Float>();
-		while (grammar.hasNext()) {
-			String line = grammar.next().trim();
+		while (grammar_reader.hasNext()) {
+			String grammar_line = grammar_reader.next().trim();
 			counter++;
-			chunk_counter++;
+			slice_counter++;
 
-			String[] fields = line.split("\\s\\|{3}\\s");
+			String[] fields = grammar_line.split("\\s\\|{3}\\s");
 			if (fields.length < 4) {
 				logger.warning("Incomplete grammar line at line " + counter);
 				continue;
@@ -219,24 +221,51 @@ public class GrammarPacker {
 			String[] source_words = fields[1].split("\\s");
 			String[] target_words = fields[2].split("\\s");
 			String[] feature_entries = fields[3].split("\\s");
-
-			// Reached chunk limit size, indicate that we're closing up.
-			if (!ready_to_flush
-					&& (chunk_counter > CHUNK_SIZE || data_buffer.overflowing())) {
+			
+			// Reached slice limit size, indicate that we're closing up.
+			if (!ready_to_flush && (slice_counter > SLICE_SIZE
+					|| feature_buffer.overflowing()
+					|| (have_alignments && alignment_buffer.overflowing()))) {
 				ready_to_flush = true;
 				first_source_word = source_words[0];
 			}
 			// Finished closing up.
 			if (ready_to_flush && !first_source_word.equals(source_words[0])) {
-				chunks.add(flush(source_trie, target_trie, data_buffer, num_chunks));
+				slices.add(flush(source_trie, target_trie, feature_buffer,
+						alignment_buffer, num_slices));
 				source_trie.clear();
 				target_trie.clear();
-				data_buffer.clear();
+				feature_buffer.clear();
+				if (have_alignments)
+					alignment_buffer.clear();
 
-				num_chunks++;
-				chunk_counter = 0;
+				num_slices++;
+				slice_counter = 0;
 				ready_to_flush = false;
 			}
+			
+			int alignment_index = -1;
+			// If present, process alignments.
+			if (have_alignments) {
+				if (!alignment_reader.hasNext()) {
+					logger.severe("No more alignments starting in line " + counter);
+					throw new RuntimeException("No more alignments starting in line "
+							+ counter);
+				} else {
+					String alignment_line = alignment_reader.next().trim();
+					String[] alignment_entries = alignment_line.split("\\s");
+					byte[] alignments = new byte[alignment_entries.length * 2];
+					if (alignment_entries.length != 0) {
+						for (int i = 0; i < alignment_entries.length; i++) {
+							String[] parts = alignment_entries[i].split("-");
+							alignments[2 * i] = Byte.parseByte(parts[0]);
+							alignments[2 * i + 1] = Byte.parseByte(parts[1]);
+						}
+					}
+					alignment_index = alignment_buffer.add(alignments);
+				}
+			}
+			
 			// Process features.
 			// Implicitly sort via TreeMap, write to data buffer, remember position
 			// to pass on to the source trie node.
@@ -248,7 +277,15 @@ public class GrammarPacker {
 				if (feature_value != 0)
 					features.put(feature_id, feature_value);
 			}
-			int features_index = data_buffer.add(features);
+			int features_index = feature_buffer.add(features);
+			
+			// Sanity check on the data block index.
+			if (have_alignments && features_index != alignment_index) {
+				logger.severe("Block index mismatch between features ("
+						+ features_index + ") and alignments ("
+						+ alignment_index + ").");
+				throw new RuntimeException("Data block index mismatch.");
+			}
 
 			// Process source side.
 			SourceValue sv = new SourceValue(Vocabulary.id(lhs_word), features_index);
@@ -275,7 +312,8 @@ public class GrammarPacker {
 			}
 			target_trie.add(target, tv);
 		}
-		chunks.add(flush(source_trie, target_trie, data_buffer, num_chunks));
+		slices.add(flush(source_trie, target_trie, feature_buffer, 
+				alignment_buffer, num_slices));
 	}
 
 	/**
@@ -289,21 +327,24 @@ public class GrammarPacker {
 	 * 
 	 * @param source_trie
 	 * @param target_trie
-	 * @param data_buffer
+	 * @param feature_buffer
 	 * @param id
 	 * @throws IOException
 	 */
 	private PackingFileTuple flush(PackingTrie<SourceValue> source_trie,
-			PackingTrie<TargetValue> target_trie, PackingBuffer data_buffer,
+			PackingTrie<TargetValue> target_trie, 
+			FeatureBuffer feature_buffer,
+			AlignmentBuffer alignment_buffer,
 			int id) throws IOException {
-		// Make a chunk object for this piece of the grammar.
-		PackingFileTuple chunk = new PackingFileTuple("chunk_"
+		// Make a slice object for this piece of the grammar.
+		PackingFileTuple slice = new PackingFileTuple("slice_"
 				+ String.format("%05d", id));
 		// Pull out the streams for source, target and data output.
-		DataOutputStream source_stream = chunk.getSourceOutput();
-		DataOutputStream target_stream = chunk.getTargetOutput();
-		DataOutputStream target_lookup_stream = chunk.getTargetLookupOutput();
-		DataOutputStream data_stream = chunk.getDataOutput();
+		DataOutputStream source_stream = slice.getSourceOutput();
+		DataOutputStream target_stream = slice.getTargetOutput();
+		DataOutputStream target_lookup_stream = slice.getTargetLookupOutput();
+		DataOutputStream feature_stream = slice.getFeatureOutput();
+		DataOutputStream alignment_stream = slice.getAlignmentOutput();
 
 		Queue<PackingTrie<TargetValue>> target_queue;
 		Queue<PackingTrie<SourceValue>> source_queue;
@@ -366,8 +407,10 @@ public class GrammarPacker {
 		source_position = source_trie.size(true, false);
 		source_trie.address = target_position;
 
-		// Ready data buffer for writing.
-		data_buffer.initialize();
+		// Ready data buffers for writing.
+		feature_buffer.initialize();
+		if (have_alignments)
+			alignment_buffer.initialize();
 
 		// Packing loop for downwards-pointing source trie.
 		while (!source_queue.isEmpty()) {
@@ -392,56 +435,74 @@ public class GrammarPacker {
 			source_stream.writeInt(node.values.size());
 			// Write lhs and links to target and data.
 			for (SourceValue sv : node.values) {
-				sv.data = data_buffer.write(sv.data);
+				int feature_block_index = feature_buffer.write(sv.data);
+				if (have_alignments) {
+					int alignment_block_index = alignment_buffer.write(sv.data);
+					if (alignment_block_index != feature_block_index) {
+						logger.severe("Block index mismatch.");
+						throw new RuntimeException("Block index mismatch: alignment ("
+								+ alignment_block_index +") and features ("
+								+ feature_block_index + ") don't match.");
+					}
+				}
 				source_stream.writeInt(sv.lhs);
 				source_stream.writeInt(sv.target);
-				source_stream.writeInt(sv.data);
+				source_stream.writeInt(feature_block_index);
 			}
 		}
 		// Flush the data stream.
-		data_buffer.flush(data_stream);
+		feature_buffer.flush(feature_stream);
+		if (have_alignments)
+			alignment_buffer.flush(alignment_stream);
 
 		target_stream.close();
 		source_stream.close();
-		data_stream.close();
-
-		return chunk;
-	}
-
-	// TODO: Evaluate whether an implementation of this is necessary.
-	private PackingFileTuple merge(List<PackingFileTuple> chunks) {
-		return null;
+		feature_stream.close();
+		if (have_alignments)
+			alignment_stream.close();
+		
+		return slice;
 	}
 
 	public static void main(String[] args) throws IOException {
-		if (args.length == 3) {
-			String config_filename = args[0];
-
-			WORKING_DIRECTORY = args[1];
-
-			if (new File(WORKING_DIRECTORY).exists()) {
-				System.err.println("File or directory already exists: "
-						+ WORKING_DIRECTORY);
-				System.err.println("Will not overwrite.");
-				return;
+		String config_filename = null;
+		String grammar_filename = null;
+		String alignments_filename = null;
+		
+		for (int i = 0; i < args.length; i++) {
+			if ("-g".equals(args[i]) && (i < args.length - 1)) {
+				grammar_filename = args[++i];
+			} else if ("-p".equals(args[i]) && (i < args.length - 1)) {
+				WORKING_DIRECTORY  = args[++i];
+			} else if ("-c".equals(args[i]) && (i < args.length - 1)) {
+				config_filename = args[++i];
+			} else if ("-a".equals(args[i]) && (i < args.length - 1)) {
+				alignments_filename = args[++i];
 			}
-
-			List<String> grammar_files = new ArrayList<String>();
-
-			// Currently not supporting more than one grammar file due to our
-			// assumption of sortedness.
-			// for (int i = 2; i < args.length; i++)
-			// grammar_files.add(args[i]);
-
-			grammar_files.add(args[2]);
-			GrammarPacker packer = new GrammarPacker(config_filename, grammar_files);
-			packer.pack();
-
-		} else {
-			System.err.println("Expecting three arguments: ");
-			System.err.println("\tjoshua.tools.GrammarPacker config_file " +
-					"output_directory sorted_grammar_file");
 		}
+		if (grammar_filename == null) {
+			logger.severe("Grammar file not specified.");
+			return;
+		}
+		if (!new File(grammar_filename).exists()) {
+			logger.severe("Grammar file not found: " + grammar_filename);
+		}
+		if (config_filename == null) {
+			logger.severe("Config file not specified.");
+			return;
+		}
+		if (!new File(config_filename).exists()) {
+			logger.severe("Config file not found: " + config_filename);
+		}
+		if (new File(WORKING_DIRECTORY).exists()) {
+			logger.severe("File or directory already exists: " + WORKING_DIRECTORY);
+			logger.severe("Will not overwrite.");
+			return;
+		}
+		
+		GrammarPacker packer = new GrammarPacker(config_filename, grammar_filename, 
+				alignments_filename);
+		packer.pack();
 	}
 
 	/**
@@ -495,7 +556,7 @@ public class GrammarPacker {
 		}
 
 		/**
-		 * Calculate the size (in bytes) of a packed trie node. Distinguishes
+		 * Calculate the size (in ints) of a packed trie node. Distinguishes
 		 * downwards pointing (parent points to children) from upwards pointing
 		 * (children point to parent) tries, as well as skeletal (no data, just the
 		 * labeled links) and non-skeletal (nodes have a data block) packing.
@@ -523,7 +584,7 @@ public class GrammarPacker {
 			if (!skeletal && !values.isEmpty())
 				size += values.size() * values.get(0).size();
 
-			return size * 4;
+			return size;
 		}
 
 		void clear() {
@@ -570,16 +631,13 @@ public class GrammarPacker {
 		}
 	}
 
-	// TODO: abstract away from features, use generic type for in-memory
-	// structure. PackingBuffers are to implement structure to in-memory bytes
-	// and flushing in-memory bytes to on-disk bytes.
-	class PackingBuffer {
+	abstract class PackingBuffer<T> {
 		private byte[] backing;
-		private ByteBuffer buffer;
+		protected ByteBuffer buffer;
 
-		private ArrayList<Integer> memoryLookup;
-		private int totalSize;
-		private ArrayList<Integer> onDiskOrder;
+		protected ArrayList<Integer> memoryLookup;
+		protected int totalSize;
+		protected ArrayList<Integer> onDiskOrder;
 
 		PackingBuffer() throws IOException {
 			allocate();
@@ -588,14 +646,16 @@ public class GrammarPacker {
 			totalSize = 0;
 		}
 
+		abstract int add(T item);
+
 		// Allocate a reasonably-sized buffer for the feature data.
 		private void allocate() {
-			backing = new byte[CHUNK_SIZE * AVERAGE_NUM_FEATURES];
+			backing = new byte[SLICE_SIZE * DATA_SIZE_ESTIMATE];
 			buffer = ByteBuffer.wrap(backing);
 		}
 
 		// Reallocate the backing array and buffer, copies data over.
-		private void reallocate() {
+		protected void reallocate() {
 			if (backing.length == Integer.MAX_VALUE)
 				return;
 			long attempted_length = backing.length * 2l;
@@ -612,41 +672,6 @@ public class GrammarPacker {
 			new_buffer.position(old_position);
 			buffer = new_buffer;
 			backing = new_backing;
-		}
-
-		/**
-		 * Add a block of features to the buffer.
-		 * 
-		 * @param features
-		 *          TreeMap with the features for one rule.
-		 * @return The index of the resulting data block.
-		 */
-		int add(TreeMap<Integer, Float> features) {
-			int data_position = buffer.position();
-
-			// Over-estimate how much room this addition will need: 12 bytes per
-			// feature (4 for label, "upper bound" of 8 for the value), plus 4 for
-			// the number of features. If this won't fit, reallocate the buffer.
-			int size_estimate = 12 * features.size() + 4;
-			if (buffer.capacity() - buffer.position() <= size_estimate)
-				reallocate();
-
-			// Write features to buffer.
-			buffer.putInt(features.size());
-			for (Integer k : features.descendingKeySet()) {
-				float v = features.get(k);
-				// Sparse features.
-				if (v != 0.0) {
-					buffer.putInt(k);
-					quantization.get(k).write(buffer, v);
-				}
-			}
-			// Store position the block was written to.
-			memoryLookup.add(data_position);
-			// Update total size (in bytes).
-			totalSize = buffer.position();
-			// Return block index.
-			return memoryLookup.size() - 1;
 		}
 
 		/**
@@ -722,11 +747,88 @@ public class GrammarPacker {
 		}
 	}
 
+	class FeatureBuffer extends PackingBuffer<TreeMap<Integer, Float>> {
+
+		FeatureBuffer() throws IOException {
+			super();
+		}
+
+		/**
+		 * Add a block of features to the buffer.
+		 * 
+		 * @param features
+		 *          TreeMap with the features for one rule.
+		 * @return The index of the resulting data block.
+		 */
+		int add(TreeMap<Integer, Float> features) {
+			int data_position = buffer.position();
+
+			// Over-estimate how much room this addition will need: 12 bytes per
+			// feature (4 for label, "upper bound" of 8 for the value), plus 4 for
+			// the number of features. If this won't fit, reallocate the buffer.
+			int size_estimate = 12 * features.size() + 4;
+			if (buffer.capacity() - buffer.position() <= size_estimate)
+				reallocate();
+
+			// Write features to buffer.
+			buffer.putInt(features.size());
+			for (Integer k : features.descendingKeySet()) {
+				float v = features.get(k);
+				// Sparse features.
+				if (v != 0.0) {
+					buffer.putInt(k);
+					quantization.get(k).write(buffer, v);
+				}
+			}
+			// Store position the block was written to.
+			memoryLookup.add(data_position);
+			// Update total size (in bytes).
+			totalSize = buffer.position();
+			
+			// Return block index.
+			return memoryLookup.size() - 1;
+		}
+	}
+	
+	class AlignmentBuffer extends PackingBuffer<byte[]> {
+
+		AlignmentBuffer() throws IOException {
+			super();
+		}
+
+		/**
+		 * Add a rule alignments to the buffer.
+		 * 
+		 * @param alignments
+		 *          a byte array with the alignment points for one rule.
+		 * @return The index of the resulting data block.
+		 */
+		int add(byte[] alignments) {
+			int data_position = buffer.position();
+			int size_estimate = alignments.length + 1;
+			if (buffer.capacity() - buffer.position() <= size_estimate)
+				reallocate();
+
+			// Write alignment points to buffer.
+			buffer.put((byte) (alignments.length / 2));
+			buffer.put(alignments);
+
+			// Store position the block was written to.
+			memoryLookup.add(data_position);
+			// Update total size (in bytes).
+			totalSize = buffer.position();
+			// Return block index.
+			return memoryLookup.size() - 1;
+		}
+	}
+
 	class PackingFileTuple implements Comparable<PackingFileTuple> {
 		private File sourceFile;
 		private File targetLookupFile;
 		private File targetFile;
-		private File dataFile;
+		
+		private File featureFile;
+		private File alignmentFile;
 
 		PackingFileTuple(String prefix) {
 			sourceFile = new File(WORKING_DIRECTORY + File.separator
@@ -735,10 +837,15 @@ public class GrammarPacker {
 					+ prefix + ".target");
 			targetLookupFile = new File(WORKING_DIRECTORY + File.separator
 					+ prefix + ".target.lookup");
-			dataFile = new File(WORKING_DIRECTORY + File.separator
-					+ prefix + ".data");
+			featureFile = new File(WORKING_DIRECTORY + File.separator
+					+ prefix + ".features");
+			if (have_alignments)
+				alignmentFile = new File(WORKING_DIRECTORY + File.separator
+						+ prefix + ".alignments");
+			else
+				alignmentFile = null;
 
-			logger.info("Allocated chunk: " + sourceFile.getAbsolutePath());
+			logger.info("Allocated slice: " + sourceFile.getAbsolutePath());
 		}
 
 		DataOutputStream getSourceOutput() throws IOException {
@@ -753,8 +860,14 @@ public class GrammarPacker {
 			return getOutput(targetLookupFile);
 		}
 
-		DataOutputStream getDataOutput() throws IOException {
-			return getOutput(dataFile);
+		DataOutputStream getFeatureOutput() throws IOException {
+			return getOutput(featureFile);
+		}
+		
+		DataOutputStream getAlignmentOutput() throws IOException {
+			if (alignmentFile != null)
+				return getOutput(alignmentFile);
+			return null;
 		}
 
 		private DataOutputStream getOutput(File file) throws IOException {
@@ -766,29 +879,8 @@ public class GrammarPacker {
 			}
 		}
 
-		ByteBuffer getSourceBuffer() throws IOException {
-			return getBuffer(sourceFile);
-		}
-
-		ByteBuffer getTargetBuffer() throws IOException {
-			return getBuffer(targetFile);
-		}
-
-		ByteBuffer getDataBuffer() throws IOException {
-			return getBuffer(dataFile);
-		}
-
-		private ByteBuffer getBuffer(File file) throws IOException {
-			if (file.exists()) {
-				FileChannel channel = new RandomAccessFile(file, "rw").getChannel();
-				return channel.map(MapMode.READ_WRITE, 0, channel.size());
-			} else {
-				throw new RuntimeException("File doesn't exist: " + file.getName());
-			}
-		}
-
 		long getSize() {
-			return sourceFile.length() + targetFile.length() + dataFile.length();
+			return sourceFile.length() + targetFile.length() + featureFile.length();
 		}
 
 		@Override
