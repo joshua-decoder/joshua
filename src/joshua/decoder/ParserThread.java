@@ -307,13 +307,17 @@ public class ParserThread extends Thread {
 		
 		/* Parsing */
 		HyperGraph hypergraph = chart.expand();
+		long firstParseTime = System.currentTimeMillis();
+		System.err.printf("First-pass parse took %d seconds.\n", (firstParseTime - startTime) / 1000);
 
         Lattice<Integer> english_lattice = english.intLattice();
         Grammar[] newGrammar = new Grammar[1];
         newGrammar[0] = getGrammarFromHyperGraph(JoshuaConfiguration.goal_symbol, hypergraph);
-		System.err.println("Hypergraph traversal completed.");
+		long traversalTime = System.currentTimeMillis();
+		System.err.printf("Hypergraph traversal completed (%d seconds).\n", (traversalTime - firstParseTime) / 1000);
         newGrammar[0].sortGrammar(this.featureFunctions);
-		System.err.println("Grammar sort completed.");
+		long sortTime = System.currentTimeMillis();
+		System.err.printf("Grammar sort completed (%d seconds).\n", (sortTime - traversalTime) / 1000);
 		int numRules = newGrammar[0].getNumRules();
 		System.err.printf("New grammar has %d rules.\n", numRules);
 		System.err.println("Expanding second chart.\n");
@@ -326,7 +330,9 @@ public class ParserThread extends Thread {
 
         /* Parsing */
         HyperGraph englishParse = chart.expand();
-		System.err.println("Finished second chart expansion.");
+		long secondParseTime = System.currentTimeMillis();
+		System.err.printf("Finished second chart expansion (%d seconds).\n", (secondParseTime - sortTime) / 1000);
+		System.err.printf("Total time: %d seconds.\n", (secondParseTime - startTime) / 1000);
 
         return englishParse; // or do something else
 	}
