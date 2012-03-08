@@ -27,6 +27,8 @@ import joshua.decoder.ff.lm.NGramLanguageModel;
 import joshua.util.FormatUtils;
 import joshua.util.MurmurHash;
 
+import joshua.decoder.hypergraph.GrammarBuilderWalkerFunction;
+
 /**
  * Static singular vocabulary class. Supports vocabulary freezing.
  * 
@@ -142,8 +144,14 @@ public class Vocabulary {
 	public static String word(int id) {
 		synchronized(lock) {
 			id = Math.abs(id);
-			if (id >= id_to_string.size())
-				throw new UnknownSymbolException(id);
+			if (id >= id_to_string.size()) {
+				// there might be a better way to do this ...
+				// but really the only reason we should have unknown
+				// symbols is from the parsing case.
+				id = GrammarBuilderWalkerFunction.getLabelID(id);
+				if (id >= id_to_string.size())
+					throw new UnknownSymbolException(id);
+			}
 			return id_to_string.get(id);
 		}
 	}

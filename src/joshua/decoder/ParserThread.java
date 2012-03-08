@@ -326,8 +326,10 @@ public class ParserThread extends Thread {
                           this.stateComputers,
                           newGrammar,
                           false,
-                          GrammarBuilderWalkerFunction.goalSymbol(hypergraph));
-
+                          "GOAL");
+		int goalSymbol = GrammarBuilderWalkerFunction.goalSymbol(hypergraph);
+		System.err.printf("goal symbol is %d.\n", goalSymbol);
+		chart.setGoalSymbolID(goalSymbol);
         /* Parsing */
         HyperGraph englishParse = chart.expand();
 		long secondParseTime = System.currentTimeMillis();

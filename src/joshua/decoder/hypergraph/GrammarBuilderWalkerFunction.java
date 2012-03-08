@@ -63,13 +63,34 @@ public class GrammarBuilderWalkerFunction implements WalkerFunction
         }
     }
 
-    private static String getLabelWithSpan(HGNode node)
+	/*
+	 * TODO:
+	 * this can break silently and dangerously if we do try to parse
+	 * sentences longer than the max length. If a sentence is longer than
+	 * this length, then the IDs for labeled spans aren't guaranteed to
+	 * be unique.
+	 */
+	private static final int MAX_SENTENCE_LENGTH = 256;
+    private static int getLabelWithSpan(HGNode node)
     {
-        String lhs = Vocabulary.word(node.lhs);
-        String cleanLhs = reader.cleanNonTerminal(lhs);
-        String label = cleanLhs.substring(1, cleanLhs.length() - 1);
-        return String.format("%d-%s-%d", node.i, label, node.j);
+		return (node.lhs * MAX_SENTENCE_LENGTH - node.i) * MAX_SENTENCE_LENGTH - node.j;
     }
+
+	public static int getLabelID(int id)
+	{
+		int j = id % MAX_SENTENCE_LENGTH;
+		id = (id - j) / MAX_SENTENCE_LENGTH;
+		int i = id % MAX_SENTENCE_LENGTH;
+		return (id - i) / MAX_SENTENCE_LENGTH;
+	}
+
+	private static String getLabelWithSpanAsString(HGNode node)
+	{
+		String label = Vocabulary.word(node.lhs);
+		String cleanLabel = reader.cleanNonTerminal(label);
+		String unBracketedCleanLabel = cleanLabel.substring(1, cleanLabel.length() - 1);
+		return String.format("%d-%s-%d", node.i, unBracketedCleanLabel, node.j);
+	}
 
 	private boolean nodeHasGoalSymbol(HGNode node)
 	{
@@ -84,7 +105,7 @@ public class GrammarBuilderWalkerFunction implements WalkerFunction
 //            System.err.println("edge rule is not a bilingual rule");
             return null;
         }
-        String headLabel = String.format("[%s]", getLabelWithSpan(head));
+        int headLabel = getLabelWithSpan(head);
 //        System.err.printf("Head label: %s\n", headLabel);
 //        if (edge.getAntNodes() != null) {
 //            for (HGNode n : edge.getAntNodes())
@@ -95,7 +116,7 @@ public class GrammarBuilderWalkerFunction implements WalkerFunction
 		if (source == null)
 			return null;
         int [] target = getNewTargetFromSource(source);
-        BilingualRule result = new BilingualRule(Vocabulary.id(headLabel), source, target, edgeRule.getFeatureScores(), edgeRule.getArity());
+        BilingualRule result = new BilingualRule(headLabel, source, target, edgeRule.getFeatureScores(), edgeRule.getArity());
 //        System.err.printf("new rule is %s\n", result);
         return result;
     }
@@ -117,8 +138,8 @@ public class GrammarBuilderWalkerFunction implements WalkerFunction
             }
             else {
                 int index = -curr - 1;
-                String label = getLabelWithSpan(edge.getAntNodes().get(index));
-                result[i] = Vocabulary.id(String.format("[%s,%d]", label, currNT));
+                int label = getLabelWithSpan(edge.getAntNodes().get(index));
+                result[i] = label * 2 - currNT;
 				currNT++;
             }
         }
@@ -132,7 +153,10 @@ public class GrammarBuilderWalkerFunction implements WalkerFunction
         for (int i = 0; i < source.length; i++) {
             result[i] = source[i];
             if (Vocabulary.nt(result[i])) {
-                result[i] = -Vocabulary.getTargetNonterminalIndex(result[i]);
+                int currNT = (Math.abs(result[i]) % 2) - 2;
+				result[i] = currNT;
+				source[i] -= currNT;
+				source[i] /= 2;
             }
         }
 //        System.err.printf("target: %s\n", result);
@@ -149,18 +173,17 @@ public class GrammarBuilderWalkerFunction implements WalkerFunction
     }
 
 
-    public static String goalSymbol(HyperGraph hg)
+    public static int goalSymbol(HyperGraph hg)
     {
         if (hg.goalNode == null) {
             System.err.println("goalSymbol: goalNode of hypergraph is null");
-            return "[S]";
+            return -1;
         }
         HGNode symbolNode = getGoalSymbolNode(hg.goalNode);
         if (symbolNode == null)
-            return "[S]";
-        String result = String.format("[%s]", getLabelWithSpan(symbolNode));
+            return -1;
 //        System.err.printf("goalSymbol: %s\n", result);
-        return result;
+        return getLabelWithSpan(symbolNode);
     }
 
     public Grammar getGrammar()
