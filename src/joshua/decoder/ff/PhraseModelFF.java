@@ -47,17 +47,10 @@ public final class PhraseModelFF extends DefaultStatelessFF {
 		super(weight, owner, featureID);
 		this.columnIndex = columnIndex;
 	}
-	
-	
 
-	
-	
 	public double estimateLogP(final Rule rule, int sentID) {
-				
 		if (this.owner == rule.getOwner()) {
-
-			/**assume featScores are cost (i.e., - logP)
-			 * */
+			// Assume featScores are cost (i.e., - logP).
 			float[] featScores = rule.getFeatureScores();
 		 	
 			if (this.columnIndex < featScores.length) {				
@@ -65,13 +58,9 @@ public final class PhraseModelFF extends DefaultStatelessFF {
 			} else {
 				if (logger.isLoggable(Level.FINEST))
 					logger.finest("In PhraseModelFF: columnIndex is not right, model columnIndex: " + columnIndex + "; num of features in rul is :" + featScores.length);
-				/*for (int i = 0; i < rule.feat_scores.length; i++) {
-					System.out.println(String.format(" %.4f", rule.feat_scores[i]));
-				}
-				System.exit(0);*/
 				return 0.0;
 			}
-		} else {			
+		} else {
 			return 0.0;
 		}
 	}

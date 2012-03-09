@@ -13,6 +13,7 @@
 	<classpathentry kind="lib" path="lib/pmd-4.2.5.jar"/>
 	<classpathentry kind="lib" path="lib/testng-5.8-jdk15.jar"/>
 	<classpathentry kind="lib" path="thrax/bin/thrax.jar"/>
+	<classpathentry kind="lib" path="lib/berkeleyaligner.jar"/>
 	<classpathentry kind="lib" path="lib/berkeleylm.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
