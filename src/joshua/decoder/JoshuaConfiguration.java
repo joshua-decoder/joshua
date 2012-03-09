@@ -21,12 +21,10 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.Random;
 import java.util.ArrayList;
-import java.util.logging.Level;
+import java.util.Random;
 import java.util.logging.Logger;
 
-import joshua.util.Cache;
 import joshua.util.Regex;
 import joshua.util.io.LineReader;
 
@@ -61,6 +59,8 @@ public class JoshuaConfiguration {
 	public static String  default_non_terminal       = "PHRASE";
 	public static String  goal_symbol                = "S";
 	public static boolean use_sent_specific_tm       = false;
+	
+	public static boolean dense_features             = true;	
 	
 	public static String  tm_file                    = null;
 	public static String  tm_format                  = null;
@@ -214,13 +214,12 @@ public class JoshuaConfiguration {
 				
 				} else if (parameter.equals(normalize_key("tm_format"))) {
 					tm_format = fds[1].trim();
-						
 					logger.finest(String.format("tm format: %s", tm_format));
 
 				} else if (parameter.equals(normalize_key("glue_format"))) {
 					glue_format = fds[1].trim();
-						
 					logger.finest(String.format("glue format: %s", glue_format));
+
 				} else if (parameter.equals(normalize_key("lm_type"))) {
 					lm_type = String.valueOf(fds[1]);
 					if (! lm_type.equals("kenlm")

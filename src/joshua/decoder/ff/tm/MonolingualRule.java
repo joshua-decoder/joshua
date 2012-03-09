@@ -178,6 +178,13 @@ public class MonolingualRule implements Rule {
 		return est_cost;
 	}
 	
+	public final void setEstCost(float cost) {
+		if (cost <= Double.NEGATIVE_INFINITY) {
+			logger.warning("The cost is being set to -infinity in " +
+					"rule:\n" + toString());
+		}
+		est_cost = cost;
+	}
 	
 	/** 
 	 * Set a lower-bound estimate inside the rule returns full

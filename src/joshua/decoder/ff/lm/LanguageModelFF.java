@@ -150,7 +150,7 @@ public class LanguageModelFF extends DefaultStatefulFF {
 		for (int c = 0; c < enWords.length; c++) {
 			int curID = enWords[c];
 
-			if (Vocabulary.isNonterminal(curID)) { 
+			if (Vocabulary.nt(curID)) { 
 				int index = -(curID + 1);
 			
 				NgramDPState state = (NgramDPState) antNodes.get(index).getDPState(this.getStateID());

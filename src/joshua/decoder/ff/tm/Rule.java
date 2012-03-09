@@ -70,7 +70,7 @@ public interface Rule {
 	void  setLatticeCost(float cost);
 	float getLatticeCost();
 	
-	// How does this differ from estimateRuleCost ?
+	void  setEstCost(float cost);
 	float getEstCost();
 	
 	
