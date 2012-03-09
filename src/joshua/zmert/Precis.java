@@ -5,8 +5,8 @@ import java.util.Iterator;
 import java.util.logging.Logger;
 
 // The metric re-uses most of the BLEU code
-public class CompressionBLEU extends BLEU {
-	private static final Logger	logger	= Logger.getLogger(CompressionBLEU.class.getName());
+public class Precis extends BLEU {
+	private static final Logger	logger	= Logger.getLogger(Precis.class.getName());
 	
 	// we assume that the source for the paraphrasing run is
 	// part of the set of references, this is its index
@@ -22,7 +22,7 @@ public class CompressionBLEU extends BLEU {
 	private boolean             characterBased;
 	
 	
-	public CompressionBLEU() {
+	public Precis() {
 		super();
 		this.sourceReferenceIndex = 0;
 		this.targetCompressionRate = -1.0;
@@ -30,10 +30,10 @@ public class CompressionBLEU extends BLEU {
 		initialize();
 	}
 	
-  // we're requiring the BLEU arguments (that's 2) plus
+  // We require the BLEU arguments (that's 2) plus
 	// 3 of our own (see above) - the total is registered with
 	// ZMERT in EvaluationMetric, line ~66
-	public CompressionBLEU(String[] options) {
+	public Precis(String[] options) {
 		super(options);
 		this.sourceReferenceIndex = Integer.parseInt(options[2]);
 		this.targetCompressionRate = Double.parseDouble(options[3]);
@@ -48,7 +48,7 @@ public class CompressionBLEU extends BLEU {
 	//
 	// here's where you'd make additional room for statistics of your own
 	protected void initialize() {
-		metricName = "COMP_BLEU";
+		metricName = "PRECIS";
 		toBeMinimized = false;
 		// adding 1 to the sufficient stats for regular BLEU - character-based compression requires extra stats
 		suffStatsCount = 2 * maxGramLength + 3 + (this.characterBased ? 2 : 0);
@@ -249,8 +249,8 @@ public class CompressionBLEU extends BLEU {
 		
 		double compression_penalty = getCompressionPenalty(cr, (targetCompressionRate < 0 ? r_len/i_len : targetCompressionRate));
 		
-		System.out.println("CR_penalty = " + compression_penalty);
-		System.out.println("COMP_BLEU  = " + score(stats));
+		System.out.println("Verbosity Penalty = " + compression_penalty);
+		System.out.println("Precis            = " + score(stats));
 	}
 	
 	// returns the score penalty as a function of the achieved and target compression rates

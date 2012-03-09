@@ -68,7 +68,7 @@ public abstract class EvaluationMetric
 //    metricOptionCount.put("WER",0);
       // the "WER" metric expects an options array of length 0
     metricOptionCount.put("MRC_BLEU",4);
-    metricOptionCount.put("COMP_BLEU",5);
+    metricOptionCount.put("PRECIS",5);
   }
 
   public static EvaluationMetric getMetric(String metricName, String[] metricOptions)
@@ -93,8 +93,8 @@ public abstract class EvaluationMetric
 //      retMetric = new WordErrorRate(metricOptions); // the "WER" metric corresponds to the WordErrorRate class
     } else if (metricName.equals("MRC_BLEU")) {
       retMetric = new MinimumRequiredChangeBLEU(metricOptions);   // the "MRC_BLEU" metric corresponds to the ParaphraseBLEU class
-    } else if (metricName.equals("COMP_BLEU")) {
-    	retMetric = new CompressionBLEU(metricOptions);   // the "COMP_BLEU" metric corresponds to the CompressionBLEU class
+    } else if (metricName.equals("PRECIS")) {
+    	retMetric = new Precis(metricOptions);   // the "PRECIS" metric corresponds to the Precis class
     }
 
     return retMetric;
