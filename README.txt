@@ -12,11 +12,12 @@ Manually Running the Joshua Decoder:
 First, make sure you have compiled the code.  You can do this by
 typing:
 
+    export JOSHUA=/path/to/joshua
     ant jar
 
 The basic decoder invocation is:
 
-    cat SOURCE | java -c CONFIG > OUTPUT
+    cat SOURCE | $JOSHUA/joshua-decoder -c CONFIG > OUTPUT
 
 That is, you need at minimum (1) a Joshua configuration file, which
 points to a trained model and defines a number of runtime parameters
