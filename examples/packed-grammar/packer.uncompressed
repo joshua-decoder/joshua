@@ -1,0 +1,3 @@
+chunk_size	4000
+
+quantizer		float		p(e|f) lex(e|f) lex(f|e)

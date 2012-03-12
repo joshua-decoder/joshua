@@ -75,9 +75,9 @@ public interface Grammar  {
 	
 	/**
 	 * Returns whether this grammar has any valid rules for
-	 * covering a particular span of a sentence. Heiro's "glue"
+	 * covering a particular span of a sentence. Hiero's "glue"
 	 * grammar will only say True if the span is longer than
-	 * our span limit, and is anchored at startIndex==0. Heiro's
+	 * our span limit, and is anchored at startIndex==0. Hiero's
 	 * "regular" grammar will only say True if the span is less
 	 * than the span limit. Other grammars, e.g. for rule-based
 	 * systems, may have different behaviors.

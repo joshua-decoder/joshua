@@ -121,11 +121,17 @@ public class BilingualRule extends MonolingualRule {
 	public String toString() {
 		if (null == this.cachedToString) {
 			StringBuffer sb = new StringBuffer();
+			sb.append(this.getEstCost() + " | ");
 			sb.append(Vocabulary.word(this.getLHS()));
 			sb.append(" ||| ");
 			sb.append(Vocabulary.getWords(this.getFrench()));
-			sb.append(" ||| ");
-			sb.append(Vocabulary.getWords(this.english));
+			sb.append(" |||");
+			for (int i = 0; i < english.length; i++) {
+				if (english[i] < 0)
+					sb.append(" ").append("NT" + english[i]);
+				else
+					sb.append(" ").append(Vocabulary.word(english[i]));
+			}
 			sb.append(" |||");
 			for (int i = 0; i < this.getFeatureScores().length; i++) {
 				sb.append(String.format(" %.4f", this.getFeatureScores()[i]));

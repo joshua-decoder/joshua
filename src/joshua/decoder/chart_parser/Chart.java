@@ -404,7 +404,7 @@ public class Chart {
                     // foreach dotnode in the span
                     for (DotNode dotNode: this.dotcharts[k].getDotCell(i, j).getDotNodes()) {
                         // foreach applicable rule (rules with the same source side)
-                        RuleCollection ruleCollection = dotNode.getTrieNode().getRules();
+                        RuleCollection ruleCollection = dotNode.getTrieNode().getRuleCollection();
                         if (ruleCollection != null) { // have rules under this trienode
                             // TODO: filter the rule according to LHS constraint								
                             // complete the cell
@@ -539,12 +539,12 @@ public class Chart {
 				
 				Trie childNode = gr.getTrieRoot().match(node.lhs); // match rule and complete part
 				if (childNode != null
-					&& childNode.getRules() != null
-					&& childNode.getRules().getArity() == 1) { // have unary rules under this trienode
+					&& childNode.getRuleCollection() != null
+					&& childNode.getRuleCollection().getArity() == 1) { // have unary rules under this trienode
 					
 					ArrayList<HGNode> antecedents = new ArrayList<HGNode>();
 					antecedents.add(node);
-					List<Rule> rules = childNode.getRules().getSortedRules();
+					List<Rule> rules = childNode.getRuleCollection().getSortedRules();
 					
 					for (Rule rule : rules) { // for each unary rules								
 						ComputeNodeResult states = new ComputeNodeResult(this.featureFunctions, rule, antecedents, i, j, new SourcePath(), stateComputers, this.segmentID);

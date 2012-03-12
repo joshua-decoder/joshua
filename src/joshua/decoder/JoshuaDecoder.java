@@ -21,10 +21,8 @@ import java.io.BufferedWriter;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import joshua.corpus.Vocabulary;
@@ -44,6 +42,7 @@ import joshua.decoder.ff.state_maintenance.StateComputer;
 import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.GrammarFactory;
 import joshua.decoder.ff.tm.hash_based.MemoryBasedBatchGrammar;
+import joshua.decoder.ff.tm.packed.PackedGrammar;
 import joshua.ui.hypergraph_visualizer.HyperGraphViewer;
 import joshua.util.FileUtility;
 import joshua.util.Regex;
@@ -267,23 +266,20 @@ public class JoshuaDecoder {
 	 */
 	public JoshuaDecoder initialize(String configFile) {
 		try {
-
 			if (JoshuaConfiguration.tm_file == null)
 				throw new RuntimeException("No translation grammar was specified.");
 
-            // initialize the LM
-            initializeLanguageModel();
-
-			// initialize and load grammar
-            // TODO: this should be extended to allow any number of grammars
-			this.initializeGlueGrammar();					
+			// Initialize and load grammars.					
 			this.initializeMainTranslationGrammar();
-					
-			// Initialize the features: requires that LM model has
-			// been initialized.
+			this.initializeGlueGrammar();
+
+			// Initialize the LM.
+			initializeLanguageModel();
+
+			// Initialize the features: requires that LM model has been initialized.
 			this.initializeFeatureFunctions();
 					
-            // initialize features that contribute to state (currently only n-grams)
+			// Initialize features that contribute to state (currently only n-grams).
 			this.initializeStateComputers(JoshuaConfiguration.lm_order, JoshuaConfiguration.ngramStateID);
 
 			// Sort the TM grammars (needed to do cube pruning)
@@ -367,22 +363,21 @@ public class JoshuaDecoder {
 	
 	
 	private void initializeMainTranslationGrammar() throws IOException {
-
-		if (! JoshuaConfiguration.use_sent_specific_tm) {
-            logger.info("Using grammar read from file " + JoshuaConfiguration.tm_file);
-
-			MemoryBasedBatchGrammar gr = new MemoryBasedBatchGrammar(
+		if (JoshuaConfiguration.use_sent_specific_tm) {
+			logger.info("Basing sentence-specific grammars on file " + JoshuaConfiguration.tm_file);
+			return;
+		} else if ("packed".equals(JoshuaConfiguration.tm_format)) {
+			this.grammarFactories.add(new PackedGrammar(JoshuaConfiguration.tm_file,
+					JoshuaConfiguration.span_limit));
+		} else {
+			logger.info("Using grammar read from file " + JoshuaConfiguration.tm_file);
+			this.grammarFactories.add(new MemoryBasedBatchGrammar(
 					JoshuaConfiguration.tm_format,
 					JoshuaConfiguration.tm_file,
 					JoshuaConfiguration.phrase_owner,
 					JoshuaConfiguration.default_non_terminal,
 					JoshuaConfiguration.span_limit,
-					JoshuaConfiguration.oov_feature_cost);
-
-			this.grammarFactories.add(gr);
-
-		} else {
-            logger.info("Basing sentence-specific grammars on file " + JoshuaConfiguration.tm_file);
+					JoshuaConfiguration.oov_feature_cost));
 		}
 	}
 	
@@ -568,9 +563,17 @@ public class JoshuaDecoder {
 
         logger.info(String.format("Model loading took %d seconds",
                 (System.currentTimeMillis() - startTime) / 1000));
+        logger.info(String.format("Memory used %.1f MB", 
+  					((Runtime.getRuntime().totalMemory() 
+  							- Runtime.getRuntime().freeMemory()) / 1000000.0)));
         
 		/* Step-2: Decoding */
 		decoder.decodeTestSet(testFile, nbestFile, oracleFile);
+		
+		logger.info("Decoding completed.");
+		logger.info(String.format("Memory used %.1f MB", 
+				((Runtime.getRuntime().totalMemory() 
+						- Runtime.getRuntime().freeMemory()) / 1000000.0)));
 		
 		/* Step-3: clean up */
         decoder.cleanUp();

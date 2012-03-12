@@ -116,7 +116,7 @@ public abstract class AbstractGrammar implements Grammar {
 
 		if (node != null) {
 			if (node.hasRules()) {
-				RuleCollection rules = node.getRules();
+				RuleCollection rules = node.getRuleCollection();
 				if (logger.isLoggable(Level.FINE))
 					logger.fine("Sorting node " + Arrays.toString(rules.getSourceSide()));
 
@@ -162,7 +162,7 @@ public abstract class AbstractGrammar implements Grammar {
 			HashMap<String, Integer> featureMap, double[] scores, String prefix,
 			int column, boolean negate) {
 		if (trie.hasRules()) {
-			RuleCollection rlCollection = trie.getRules();
+			RuleCollection rlCollection = trie.getRuleCollection();
 			for (Rule rl : rlCollection.getSortedRules()) {
 				String featName = prefix + rl.getRuleID();
 				float weight = (float) scores[featureMap.get(featName)];
@@ -189,7 +189,7 @@ public abstract class AbstractGrammar implements Grammar {
 
 	private void obtainRulesIDTable(Trie trie, Map<String, Integer> rulesIDTable) {
 		if (trie.hasRules()) {
-			RuleCollection rlCollection = trie.getRules();
+			RuleCollection rlCollection = trie.getRuleCollection();
 			for (Rule rl : rlCollection.getRules()) {
 				rulesIDTable.put(rl.toStringWithoutFeatScores(),
 						rl.getRuleID());

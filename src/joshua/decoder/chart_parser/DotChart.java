@@ -307,7 +307,7 @@ class DotChart {
 		if (logger.isLoggable(Level.FINEST)) {
 			logger.finest(String.format("Add a dotitem in cell (%d, %d), n_dotitem=%d, %s", i, j, dotChart.nDotitemAdded, srcPath));
 			
-			RuleCollection rules = tnode.getRules();
+			RuleCollection rules = tnode.getRuleCollection();
 			if (rules != null) {
 				for (Rule r : rules.getRules()) {
 					logger.finest(r.toString());
@@ -390,7 +390,7 @@ class DotChart {
 
         // convenience function
         public RuleCollection getApplicableRules() {
-            return getTrieNode().getRules();
+            return getTrieNode().getRuleCollection();
         }
 
 		public Trie getTrieNode(){

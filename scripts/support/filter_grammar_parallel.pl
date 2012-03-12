@@ -3,6 +3,12 @@
 
 # Author: Damianos Karakos <damianos@jhu.edu>
 
+# This script parallelizes filtering of a grammar to a test set.  The
+# usage can be seen below.  If you do not specify --lines, a pass over
+# the grammar is made to count the number of lines, which is used to
+# split the file into chunks for filtering.  If you have already
+# counted the lines, you can pass it as this argument.
+
 use strict;
 use warnings;
 use Getopt::Long;
