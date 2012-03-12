@@ -67,7 +67,7 @@ public abstract class EvaluationMetric
       // the "TER-BLEU" metric expects an options array of length 7
 //    metricOptionCount.put("WER",0);
       // the "WER" metric expects an options array of length 0
-    metricOptionCount.put("MRC_BLEU",4);
+    metricOptionCount.put("MC_BLEU",4);
     metricOptionCount.put("PRECIS",5);
   }
 
@@ -91,8 +91,8 @@ public abstract class EvaluationMetric
       retMetric = new TERMinusBLEU(metricOptions);  // the "TER-BLEU" metric corresponds to the TERMinusBLEU class
 //    } else if (metricName.equals("WER")) {
 //      retMetric = new WordErrorRate(metricOptions); // the "WER" metric corresponds to the WordErrorRate class
-    } else if (metricName.equals("MRC_BLEU")) {
-      retMetric = new MinimumRequiredChangeBLEU(metricOptions);   // the "MRC_BLEU" metric corresponds to the ParaphraseBLEU class
+    } else if (metricName.equals("MC_BLEU")) {
+      retMetric = new MinimumChangeBLEU(metricOptions);   // the "MC_BLEU" metric corresponds to the ParaphraseBLEU class
     } else if (metricName.equals("PRECIS")) {
     	retMetric = new Precis(metricOptions);   // the "PRECIS" metric corresponds to the Precis class
     }

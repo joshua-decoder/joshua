@@ -4,8 +4,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.logging.Logger;
 
-public class MinimumRequiredChangeBLEU extends BLEU {
-	private static final Logger	logger	= Logger.getLogger(MinimumRequiredChangeBLEU.class.getName());
+public class MinimumChangeBLEU extends BLEU {
+	private static final Logger	logger	= Logger.getLogger(MinimumChangeBLEU.class.getName());
 	
 	// we assume that the source for the paraphrasing run is
 	// part of the set of references
@@ -13,7 +13,7 @@ public class MinimumRequiredChangeBLEU extends BLEU {
 	private double							thresholdWER;
 	
 	
-	public MinimumRequiredChangeBLEU() {
+	public MinimumChangeBLEU() {
 		super();
 		this.sourceReferenceIndex = 0;
 		this.thresholdWER = 0.3;
@@ -21,7 +21,7 @@ public class MinimumRequiredChangeBLEU extends BLEU {
 	}
 	
 
-	public MinimumRequiredChangeBLEU(String[] options) {
+	public MinimumChangeBLEU(String[] options) {
 		super(options);
 		this.sourceReferenceIndex = Integer.parseInt(options[2]);
 		this.thresholdWER = Double.parseDouble(options[3]);
@@ -30,7 +30,7 @@ public class MinimumRequiredChangeBLEU extends BLEU {
 	
 
 	protected void initialize() {
-		metricName = "MRC_BLEU";
+		metricName = "MC_BLEU";
 		toBeMinimized = false;
 		// adding 1 to the sufficient stats for regular BLEU
 		suffStatsCount = 2 * maxGramLength + 3;
@@ -155,9 +155,6 @@ public class MinimumRequiredChangeBLEU extends BLEU {
 	
 
 	public double score(int[] stats) {
-		
-//		System.err.println("YAY");
-		
 		if (stats.length != suffStatsCount) {
 			logger.severe("Mismatch between stats.length and " +
 					"suffStatsCount (" + stats.length + " vs. " + suffStatsCount + 
@@ -171,9 +168,6 @@ public class MinimumRequiredChangeBLEU extends BLEU {
 		double r_len = stats[suffStatsCount - 2];
 		
 		double wer = stats[suffStatsCount - 1] / c_len;
-		
-//		System.err.println("WER: " + wer);
-		
 		double wer_penalty = (wer >= thresholdWER) ? 1.0 : (wer / thresholdWER);
 		
 		double correctGramCount, totalGramCount;
@@ -209,7 +203,7 @@ public class MinimumRequiredChangeBLEU extends BLEU {
 		double wer_penalty = (wer >= thresholdWER) ? 1.0 : (wer / thresholdWER);
 		
 		System.out.println("WER_penalty = " + wer_penalty);
-		System.out.println("MRC_BLEU= " + score(stats));
+		System.out.println("MC_BLEU= " + score(stats));
 	}
 	
 
@@ -217,23 +211,12 @@ public class MinimumRequiredChangeBLEU extends BLEU {
 	 * Calculates the Levenshtein Distance for a candidate paraphrase given the
 	 * source.
 	 * 
-	 * The code for this method is based on the example by Michael Gilleland found
-	 * at http://www.merriampark.com/ld.htm.
+	 * The code is based on the example by Michael Gilleland found at
+	 * http://www.merriampark.com/ld.htm.
 	 * 
 	 */
 	private int getEditDistance(String[] candidate, String[] source) {
-		
-//		System.err.print("HYP: ");
-//		for (String c : candidate)
-//			System.err.print(c + " ");
-//		System.err.println();
-//		
-//		System.err.print("SRC: ");
-//		for (String c : source)
-//			System.err.print(c + " ");
-//		System.err.println();
-		
-		// First check to see wheter either of the arrays
+		// First check to see whether either of the arrays
 		// is empty, in which case the least cost is simply
 		// the length of the other array (which would correspond
 		// to inserting that many elements.
@@ -242,7 +225,7 @@ public class MinimumRequiredChangeBLEU extends BLEU {
 		if (candidate.length == 0)
 			return source.length;
 		
-		// Initalize a table to the minimum edit distances between
+		// Initialize a table to the minimum edit distances between
 		// any two points in the arrays. The size of the table is set
 		// to be one beyond the lengths of the two arrays, and the first
 		// row and first column are set to be zero to avoid complicated
@@ -272,9 +255,6 @@ public class MinimumRequiredChangeBLEU extends BLEU {
 				distances[i][j] = minimum(insertionCost, deletionCost, substitutionCost);
 			}
 		}
-		
-//		System.err.println("DIST: " + distances[source.length][candidate.length]);
-		
 		// The point at the end will be the minimum edit distance.
 		return distances[source.length][candidate.length];
 	}
