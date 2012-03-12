@@ -48,6 +48,8 @@ import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
 import joshua.decoder.JoshuaDecoder;
+import joshua.metrics.EvaluationMetric;
+import joshua.util.StreamGobbler;
 
 public class MertCore
 {
@@ -3244,31 +3246,6 @@ i ||| words of candidate translation . ||| feat-1_val feat-2_val ... feat-numPar
 
   }
 
-}
-
-// based on:
-// http://www.javaworld.com/javaworld/jw-12-2000/jw-1229-traps.html?page=4
-class StreamGobbler extends Thread {
-	InputStream istream;
-	boolean verbose;
-	
-	StreamGobbler(InputStream is, int p) {
-		istream = is;
-		verbose = (p != 0);
-	}
-	
-	public void run() {
-		try {
-			InputStreamReader isreader = new InputStreamReader(istream);
-			BufferedReader br = new BufferedReader(isreader);
-			String line = null;
-			while ((line = br.readLine()) != null) {
-				if (verbose) System.out.println(line);
-			}
-		} catch (IOException ioe) {
-			ioe.printStackTrace();
-		}
-	}
 }
 
 

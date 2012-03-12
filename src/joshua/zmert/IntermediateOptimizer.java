@@ -30,6 +30,8 @@ import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Semaphore;
 
+import joshua.metrics.EvaluationMetric;
+
 public class IntermediateOptimizer implements Runnable
 {
   /* non-static data members */

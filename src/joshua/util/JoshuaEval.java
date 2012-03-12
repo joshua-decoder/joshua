@@ -31,7 +31,7 @@ import java.io.PrintWriter;
 import java.text.DecimalFormat;
 import java.util.TreeSet;
 
-import joshua.zmert.EvaluationMetric;
+import joshua.metrics.EvaluationMetric;
 
 public class JoshuaEval {
 	final static DecimalFormat f4 = new DecimalFormat("###0.0000");

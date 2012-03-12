@@ -16,10 +16,13 @@
  * MA 02111-1307 USA
  */
 
-package joshua.zmert;
+package joshua.metrics;
 import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.Semaphore;
+
+import joshua.util.StreamGobbler;
+
 
 public class TercomRunner implements Runnable
 {

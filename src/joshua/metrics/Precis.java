@@ -1,4 +1,4 @@
-package joshua.zmert;
+package joshua.metrics;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -194,7 +194,8 @@ public class Precis extends BLEU {
 	public double score(int[] stats) {
 				
 		if (stats.length != suffStatsCount) {
-			logger.severe("Mismatch between stats.length and " + "suffStatsCount (" + stats.length + " vs. " + suffStatsCount + ") in COMP_BLEU.score(int[])");
+			logger.severe("Mismatch between stats.length and suffStatsCount (" +
+					stats.length + " vs. " + suffStatsCount + ") in Precis.score(int[])");
 			System.exit(2);
 		}
 		

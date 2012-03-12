@@ -16,13 +16,16 @@
  * MA 02111-1307 USA
  */
 
-package joshua.zmert;
+package joshua.metrics;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+
+import joshua.util.StreamGobbler;
+
 
 public class METEOR extends EvaluationMetric
 {

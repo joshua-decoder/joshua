@@ -9,9 +9,8 @@ import java.util.Random;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.Vector;
-import java.lang.Class;
 
-import joshua.zmert.*;
+import joshua.metrics.EvaluationMetric;
 
 //this class implements the PRO tuning method
 public class Optimizer 

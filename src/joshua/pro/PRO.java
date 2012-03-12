@@ -17,7 +17,6 @@
  */
 
 package joshua.pro;
-import java.io.*;
 
 public class PRO
 {

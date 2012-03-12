@@ -16,7 +16,7 @@
  * MA 02111-1307 USA
  */
 
-package joshua.zmert;
+package joshua.metrics;
 import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.IOException;

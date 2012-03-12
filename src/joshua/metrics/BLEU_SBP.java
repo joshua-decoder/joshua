@@ -16,7 +16,7 @@
  * MA 02111-1307 USA
  */
 
-package joshua.zmert;
+package joshua.metrics;
 
 public class BLEU_SBP extends BLEU
 {

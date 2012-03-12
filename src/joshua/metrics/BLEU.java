@@ -16,7 +16,7 @@
  * MA 02111-1307 USA
  */
 
-package joshua.zmert;
+package joshua.metrics;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.logging.Logger;
