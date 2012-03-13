@@ -85,6 +85,6 @@ public interface Trie {
 	 *     TMGrammar)</li>
 	 * </ol>
 	 */
-	RuleCollection getRules();
+	RuleCollection getRuleCollection();
 	
 }

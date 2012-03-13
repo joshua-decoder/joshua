@@ -1,0 +1,6 @@
+# This code generates the packed grammar representation from the grammar file
+rm -rf small_packed
+java -cp /home/hltcoe/mpost/code/joshua/bin:. joshua.tools.GrammarPacker packer.config small_packed small_grammar 
+
+# This compiles and reads the grammar file
+java -cp $JOSHUA/bin:. CountRules small_packed

@@ -65,7 +65,7 @@ public class MemoryBasedTrie implements Trie {
 	}
 	
 	/* See Javadoc for Trie interface. */
-	public RuleCollection getRules() {
+	public RuleCollection getRuleCollection() {
 //		if (this.rule_bin==null) {
 //			throw new Error("Uninitialized RuleCollection encountered. Instead of returning a null pointer, this error is being thrown.");
 //		} else {

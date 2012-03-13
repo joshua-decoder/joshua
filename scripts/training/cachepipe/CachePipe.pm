@@ -1,4 +1,3 @@
-
 # Matt Post <post@cs.jhu.edu>
 
 package CachePipe;
@@ -358,6 +357,7 @@ sub cmd {
 		my $seconds = ($stop_time - $start_time);
 		my $duration = pretty_print_time($seconds);
 		$self->mylog("  took $seconds seconds ($duration)");
+		system("echo $duration > $namedir/runtime");
 
 		return 1;
 
