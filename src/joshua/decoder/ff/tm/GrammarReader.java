@@ -113,17 +113,9 @@ implements Iterable<R>, Iterator<R> {
 	}
 
 	public R next() {
-
 		String line = lookAhead;
 		advanceReader();
-
-		try {
-			return parseLine(line);
-		} catch (StringIndexOutOfBoundsException e) {
-			System.err.println("WARNING: skipping bad line '" + line + "'");
-		}
-
-		return null;
+		return parseLine(line);
 	}
 
 	protected abstract R parseLine(String line);
