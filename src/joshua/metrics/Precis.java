@@ -4,29 +4,37 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.logging.Logger;
 
+import joshua.util.Algorithms;
+
 // The metric re-uses most of the BLEU code
 public class Precis extends BLEU {
-	private static final Logger	logger	= Logger.getLogger(Precis.class.getName());
+	private static final Logger	logger = Logger.getLogger(Precis.class.getName());
 	
-	// we assume that the source for the paraphrasing run is
-	// part of the set of references, this is its index
-	private int									sourceReferenceIndex;
+	private static final double REF_CR = -1.0;
 	
-	// a global target compression rate to achieve
+	// We assume that the source for the paraphrasing run is
+	// part of the set of references, this is its index.
+	private int sourceReferenceIndex;
+	
+	// A global target compression rate to achieve
 	// if negative, we default to locally aiming for the compression
-	// rate given by the (closest) reference compression
-	private double							targetCompressionRate;
+	// rate given by the (closest) reference compression?
+	private double targetCompressionRate;
 	
-	// are we optimizing for character-based compression (as opposed
-	// to token-based)
-	private boolean             characterBased;
+	// Are we optimizing for character-based compression (as opposed
+	// to token-based)?
+	private boolean characterBased;
 	
+	// Weight for factoring in Levenshtein distance to source as a penalty for
+	// insufficient change.
+	private double similarityWeight;
 	
 	public Precis() {
 		super();
 		this.sourceReferenceIndex = 0;
-		this.targetCompressionRate = -1.0;
+		this.targetCompressionRate = 0;
 		this.characterBased = false;
+		this.similarityWeight = 0;
 		initialize();
 	}
 	
@@ -36,8 +44,26 @@ public class Precis extends BLEU {
 	public Precis(String[] options) {
 		super(options);
 		this.sourceReferenceIndex = Integer.parseInt(options[2]);
-		this.targetCompressionRate = Double.parseDouble(options[3]);
-		this.characterBased = Boolean.parseBoolean(options[4]);
+		
+		if ("ref".equals(options[3])) {
+			targetCompressionRate = REF_CR;
+		} else {
+			targetCompressionRate = Double.parseDouble(options[3]);
+			if (targetCompressionRate > 1 || targetCompressionRate < 0)
+				throw new RuntimeException("Invalid compression ratio requested: "
+						+ options[3]);
+		}
+		
+		if ("chars".equals(options[4]))
+			this.characterBased = true;
+		else if ("words".equals(options[4]))
+			this.characterBased = false;
+		else
+			throw new RuntimeException("Unknown compression style: " + options[4]);
+		
+		similarityWeight = Double.parseDouble(options[5]);
+		if (similarityWeight < 0 || similarityWeight > 1)
+			throw new RuntimeException("Source penalty out of bounds: " + options[5]);
 		
 		initialize();
 	}
@@ -50,14 +76,17 @@ public class Precis extends BLEU {
 	protected void initialize() {
 		metricName = "PRECIS";
 		toBeMinimized = false;
-		// adding 1 to the sufficient stats for regular BLEU - character-based compression requires extra stats
-		suffStatsCount = 2 * maxGramLength + 3 + (this.characterBased ? 2 : 0);
+		// Adding 3 to the sufficient stats for regular BLEU - character-based
+		// compression requires extra stats. We additionally store the Levenshtein
+		// distance to the source, the source length in tokens and the source
+		// length relevant
+		suffStatsCount = 2 * maxGramLength + 4 + (this.characterBased ? 3 : 0);
 		
 		set_weightsArray();
 		set_maxNgramCounts();
 	}
 	
-	// the only difference to BLEU here is that we're excluding the input from 
+	// The only difference to BLEU here is that we're excluding the input from 
 	// the collection of ngram statistics - that's actually up for debate
 	protected void set_maxNgramCounts() {
 		@SuppressWarnings("unchecked")
@@ -96,7 +125,7 @@ public class Precis extends BLEU {
 			} // for (r)
 		} // for (i)
 		
-		// for efficiency, calculate the reference lenghts, which will be used
+		// for efficiency, calculate the reference lengths, which will be used
 		// in effLength...
 		refWordCount = new int[numSentences][refsPerSen];
 		for (int i = 0; i < numSentences; ++i) {
@@ -116,33 +145,32 @@ public class Precis extends BLEU {
 		else
 			candidate_words = new String[0];
 		
-		// dropping "_OOV" marker
-		for (int j = 0; j < candidate_words.length; j++) {
-			if (candidate_words[j].endsWith("_OOV"))
-				candidate_words[j] = candidate_words[j].substring(0, candidate_words[j].length() - 4);
+		// Set n-gram precision stats.
+		set_prec_suffStats(stats, candidate_words, i);
+		
+		// Same as BLEU.
+		stats[2 * maxGramLength] = candidate_words.length;
+		stats[2 * maxGramLength + 1] = effLength(candidate_words.length, i);
+	  
+		// Source length in tokens.
+		stats[2 * maxGramLength + 2] = refWordCount[i][sourceReferenceIndex];
+		
+		// Character-based compression requires stats in character counts.
+		if (this.characterBased) {
+			// Candidate length in characters.
+			stats[suffStatsCount - 4] = cand_str.length()
+					- candidate_words.length + 1;
+			// Reference length in characters.
+			stats[suffStatsCount - 3] = effLength(stats[suffStatsCount - 4], i, true);
+			// Source length in characters.
+			stats[suffStatsCount - 2] = refSentences[i][sourceReferenceIndex].length()
+					- refWordCount[i][sourceReferenceIndex] + 1;
 		}
 		
-		set_prec_suffStats(stats, candidate_words, i);
-		if (this.characterBased) {
-			// same as BLEU
-			stats[suffStatsCount - 5] = candidate_words.length;
-			stats[suffStatsCount - 4] = effLength(candidate_words.length, i);
-
-			// candidate character length
-			stats[suffStatsCount - 3] = cand_str.length() - candidate_words.length + 1;
-			// reference character length
-			stats[suffStatsCount - 2] = effLength(stats[suffStatsCount - 3], i, true);
-			// source character length
-			stats[suffStatsCount - 1] = refSentences[i][sourceReferenceIndex].length() - refWordCount[i][sourceReferenceIndex] + 1;
-		}
-		else {
-			// same as BLEU
-			stats[suffStatsCount - 3] = candidate_words.length;
-			stats[suffStatsCount - 2] = effLength(candidate_words.length, i);
-			
-			// one more for the source length
-			stats[suffStatsCount - 1] = refWordCount[i][sourceReferenceIndex];
-		}
+		// Levenshtein distance to source.
+		if (this.similarityWeight > 0)
+			stats[suffStatsCount - 1] = Algorithms.levenshtein(candidate_words,
+					refSentences[i][sourceReferenceIndex].split("\\s+"));
 		
 		return stats;
 	}
@@ -192,79 +220,100 @@ public class Precis extends BLEU {
 	
   // calculate the actual score from the statistics
 	public double score(int[] stats) {
-				
 		if (stats.length != suffStatsCount) {
 			logger.severe("Mismatch between stats.length and suffStatsCount (" +
 					stats.length + " vs. " + suffStatsCount + ") in Precis.score(int[])");
 			System.exit(2);
 		}
-		
+
 		double accuracy = 0.0;
 		double smooth_addition = 1.0; // following bleu-1.04.pl
-		double c_len = stats[suffStatsCount - 3];
-		double r_len = stats[suffStatsCount - 2];
-		double s_len = stats[suffStatsCount - 1];
-				
-		double cr = c_len / s_len;
 		
-		double compression_penalty = getCompressionPenalty(cr, (targetCompressionRate < 0 ? r_len/s_len : targetCompressionRate));
+		double cnd_len = stats[2 * maxGramLength];
+		double ref_len = stats[2 * maxGramLength + 1];
+		double src_len = stats[2 * maxGramLength + 2];
+		double compression_cnd_len = stats[suffStatsCount - 4];
+		double compression_ref_len = stats[suffStatsCount - 3];
+		double compression_src_len = stats[suffStatsCount - 2];
+		double src_lev = stats[suffStatsCount - 1];
+		
+		double compression_ratio = compression_cnd_len / compression_src_len;
+		
+		double verbosity_penalty = getVerbosityPenalty(compression_ratio, 
+				(targetCompressionRate == REF_CR 
+						? compression_ref_len/compression_src_len
+						: targetCompressionRate));
 		
 		// this part matches BLEU
 		double correctGramCount, totalGramCount;
 		for (int n = 1; n <= maxGramLength; ++n) {
 			correctGramCount = stats[2 * (n - 1)];
 			totalGramCount = stats[2 * (n - 1) + 1];
-			
 			double prec_n;
 			if (totalGramCount > 0) {
 				prec_n = correctGramCount / totalGramCount;
 			} else {
-				prec_n = 1; // following bleu-1.04.pl ???????
+				prec_n = 1;
 			}
-			
 			if (prec_n == 0) {
 				smooth_addition *= 0.5;
-				prec_n = smooth_addition / (c_len - n + 1);
-				// isn't c_len-n+1 just totalGramCount ???????
+				prec_n = smooth_addition / (cnd_len - n + 1);
 			}
 			accuracy += weights[n] * Math.log(prec_n);
 		}
 		double brevity_penalty = 1.0;
-		c_len = stats[2 * maxGramLength];
-		r_len = stats[2 * maxGramLength + 1];
+		double similarity_penalty = similarityWeight * (1 - src_lev / src_len);
 		
-		if (c_len < r_len)
-			brevity_penalty = Math.exp(1 - (r_len / c_len));
+		if (cnd_len < ref_len)
+			brevity_penalty = Math.exp(1 - (ref_len / cnd_len));
 		
-		// we tack on our penalty on top of BLEU
-		return compression_penalty * brevity_penalty * Math.exp(accuracy);
+		// We add on our penalties on top of BLEU.
+		return verbosity_penalty * brevity_penalty * Math.exp(accuracy)
+				- similarity_penalty;
 	}
 	
-  // somewhat not-so-detailed, this is used in the JoshuaEval tool
+  // Somewhat not-so-detailed, this is used in the JoshuaEval tool.
 	public void printDetailedScore_fromStats(int[] stats, boolean oneLiner) {
-		double c_len = stats[suffStatsCount - 3];
-		double r_len = stats[suffStatsCount - 2];
-		double i_len = stats[suffStatsCount - 1];
+		double cnd_len = stats[2 * maxGramLength];
+		double ref_len = stats[2 * maxGramLength + 1];
+		double src_len = stats[2 * maxGramLength + 2];
+		double compression_cnd_len = stats[suffStatsCount - 4];
+		double compression_ref_len = stats[suffStatsCount - 3];
+		double compression_src_len = stats[suffStatsCount - 2];
+		double src_lev = stats[suffStatsCount - 1];
 		
-		double cr = c_len / i_len;
+		double brevity_penalty = 1;
+		if (cnd_len < ref_len)
+			brevity_penalty = Math.exp(1 - (ref_len / cnd_len)); 
 		
-		double compression_penalty = getCompressionPenalty(cr, (targetCompressionRate < 0 ? r_len/i_len : targetCompressionRate));
+		double cr = compression_cnd_len / compression_src_len;
+		double similarity_penalty = 1 - src_lev / src_len;
 		
-		System.out.println("Verbosity Penalty = " + compression_penalty);
-		System.out.println("Precis            = " + score(stats));
+		double verbosity_penalty = getVerbosityPenalty(cr, 
+				(targetCompressionRate == REF_CR
+						? compression_ref_len/compression_src_len
+						: targetCompressionRate));
+		
+		System.out.println(String.format("Similarity Penalty = %.2f * %.4f", 
+				similarityWeight, similarity_penalty));
+		System.out.println(String.format("Verbosity Penalty  = %.4f", 
+				verbosity_penalty));
+		System.out.println(String.format("Brevity Penalty    = %.4f", 
+				brevity_penalty));
+		System.out.println(String.format("Precis             = %.4f",
+				score(stats)));
 	}
 	
-	// returns the score penalty as a function of the achieved and target compression rates
-	// currently an exponential fall-off to make sure the not compressing enough is costly
-	protected static double getCompressionPenalty(double cr, double target_rate) {
-		if (cr > 1.0)
-			return 0.0;
-		else if (cr <= target_rate)
+	// Returns the score penalty as a function of the achieved and target
+	// compression rates currently an exponential fall-off to make sure the not
+	// compressing enough is costly.
+	protected static double getVerbosityPenalty(double cr, double target_rate) {
+		if (cr <= target_rate)
 			return 1.0;
 		else {
 			// linear option: (1 - cr) / (1 - compressionRate);
 			// doesn't penalize insufficient compressions hard enough
-			return Math.exp(10 * (target_rate - cr));
+			return Math.exp(5 * (target_rate - cr));
 		}
 	}
 }

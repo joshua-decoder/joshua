@@ -4,6 +4,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.logging.Logger;
 
+import joshua.util.Algorithms;
+
 public class MinimumChangeBLEU extends BLEU {
 	private static final Logger	logger	= Logger.getLogger(MinimumChangeBLEU.class.getName());
 	
@@ -107,7 +109,8 @@ public class MinimumChangeBLEU extends BLEU {
 
 		set_prec_suffStats(stats, candidate_words, i);
 		String[] source_words = refSentences[i][sourceReferenceIndex].split("\\s+");
-		stats[suffStatsCount - 1] = getEditDistance(candidate_words, source_words);
+		stats[suffStatsCount - 1] = Algorithms.levenshtein(candidate_words,
+				source_words);
 		stats[suffStatsCount - 2] = effLength(candidate_words.length, i);
 		stats[suffStatsCount - 3] = candidate_words.length;
 		
@@ -205,70 +208,4 @@ public class MinimumChangeBLEU extends BLEU {
 		System.out.println("WER_penalty = " + wer_penalty);
 		System.out.println("MC_BLEU= " + score(stats));
 	}
-	
-
-	/**
-	 * Calculates the Levenshtein Distance for a candidate paraphrase given the
-	 * source.
-	 * 
-	 * The code is based on the example by Michael Gilleland found at
-	 * http://www.merriampark.com/ld.htm.
-	 * 
-	 */
-	private int getEditDistance(String[] candidate, String[] source) {
-		// First check to see whether either of the arrays
-		// is empty, in which case the least cost is simply
-		// the length of the other array (which would correspond
-		// to inserting that many elements.
-		if (source.length == 0)
-			return candidate.length;
-		if (candidate.length == 0)
-			return source.length;
-		
-		// Initialize a table to the minimum edit distances between
-		// any two points in the arrays. The size of the table is set
-		// to be one beyond the lengths of the two arrays, and the first
-		// row and first column are set to be zero to avoid complicated
-		// checks for out of bounds exceptions.
-		int distances[][] = new int[source.length + 1][candidate.length + 1];
-		
-		for (int i = 0; i <= source.length; i++)
-			distances[i][0] = i;
-		for (int j = 0; j <= candidate.length; j++)
-			distances[0][j] = j;
-		
-		// Walk through each item in the source and target arrays
-		// and find the minimum cost to move from the previous points
-		// to here.
-		for (int i = 1; i <= source.length; i++) {
-			Object sourceItem = source[i - 1];
-			for (int j = 1; j <= candidate.length; j++) {
-				Object targetItem = candidate[j - 1];
-				int cost;
-				if (sourceItem.equals(targetItem))
-					cost = 0;
-				else
-					cost = 1;
-				int deletionCost = distances[i - 1][j] + 1;
-				int insertionCost = distances[i][j - 1] + 1;
-				int substitutionCost = distances[i - 1][j - 1] + cost;
-				distances[i][j] = minimum(insertionCost, deletionCost, substitutionCost);
-			}
-		}
-		// The point at the end will be the minimum edit distance.
-		return distances[source.length][candidate.length];
-	}
-	
-
-	/** returns the minimum of the three values. */
-	private int minimum(int a, int b, int c) {
-		int minimum;
-		minimum = a;
-		if (b < minimum)
-			minimum = b;
-		if (c < minimum)
-			minimum = c;
-		return minimum;
-	}
-	
 }

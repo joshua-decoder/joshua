@@ -71,7 +71,7 @@ public class TercomRunner implements Runnable
       if (!withPunctuation) { cmd_str += " -P"; }
       /* From tercom's README:
            -s case sensitivity, optional, default is insensitive
-           -P no punctuations, default is with punctuations.
+           -P no punctuation, default is with punctuation.
       */
 
       Runtime rt = Runtime.getRuntime();
@@ -83,7 +83,7 @@ public class TercomRunner implements Runnable
       errorGobbler.start();
       outputGobbler.start();
 
-      int exitValue = p.waitFor();
+      p.waitFor();
 
       File fd;
       fd = new File(hypFileName); if (fd.exists()) fd.delete();
