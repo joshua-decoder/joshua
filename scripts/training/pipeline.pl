@@ -100,6 +100,9 @@ my $HADOOP_MEM = "2g";
 # memory available to the parser
 my $PARSER_MEM = "2g";
 
+# memory available for building the language model
+my $BUILDLM_MEM = "2g";
+
 # When qsub is called for decoding, these arguments should be passed to it.
 my $QSUB_ARGS  = "";
 
@@ -119,7 +122,7 @@ my $NUM_THREADS = 1;
 
 # Cachepipe can include the actual command typed in its signature.
 # We disable this for development because it triggers too many reruns.
-my $OMIT_CMD = 0;
+my $OMIT_CMD = 1;
 
 # which LM to use (kenlm or berkeleylm)
 my $LM_TYPE = "kenlm";
@@ -177,6 +180,7 @@ my $retval = GetOptions(
   "joshua-mem=s"      => \$JOSHUA_MEM,
   "hadoop-mem=s"      => \$HADOOP_MEM,
   "parser-mem=s"      => \$PARSER_MEM,
+  "buildlm-mem=s"     => \$BUILDLM_MEM,
   "decoder-command=s" => \$MERTFILES{'decoder_command'},
   "thrax-conf=s"      => \$THRAX_CONF_FILE,
   "jobs=i"            => \$NUM_JOBS,
@@ -805,7 +809,7 @@ if ($DO_BUILD_LM_FROM_CORPUS) {
 					$lmfile);
   } else {
 	$cachepipe->cmd("berkeleylm",
-					"java -ea -mx1000m -server -cp $JOSHUA/lib/berkeleylm.jar edu.berkeley.nlp.lm.io.MakeKneserNeyArpaFromText $LM_ORDER lm.gz $TRAIN{target}",
+					"java -ea -mx$BUILDLM_MEM -server -cp $JOSHUA/lib/berkeleylm.jar edu.berkeley.nlp.lm.io.MakeKneserNeyArpaFromText $LM_ORDER lm.gz $TRAIN{target}",
 					$lmfile);
   }
 
