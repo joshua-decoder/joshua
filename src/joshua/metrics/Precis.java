@@ -262,7 +262,8 @@ public class Precis extends BLEU {
 			accuracy += weights[n] * Math.log(prec_n);
 		}
 		double brevity_penalty = 1.0;
-		double similarity_penalty = similarityWeight * (1 - src_lev / src_len);
+		double similarity_penalty = similarityWeight 
+				* Math.max(0, 1 - src_lev / src_len);
 		
 		if (cnd_len < ref_len)
 			brevity_penalty = Math.exp(1 - (ref_len / cnd_len));
@@ -287,7 +288,7 @@ public class Precis extends BLEU {
 			brevity_penalty = Math.exp(1 - (ref_len / cnd_len)); 
 		
 		double cr = compression_cnd_len / compression_src_len;
-		double similarity_penalty = 1 - src_lev / src_len;
+		double similarity_penalty = Math.max(0, 1 - src_lev / src_len);
 		
 		double verbosity_penalty = getVerbosityPenalty(cr, 
 				(targetCompressionRate == REF_CR
