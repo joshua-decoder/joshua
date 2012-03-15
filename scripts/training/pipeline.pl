@@ -150,6 +150,9 @@ my %STEPS = map { $STEPS[$_] => $_ + 1 } (0..$#STEPS);
 
 my $NAME = undef;
 
+# Methods to use for merging alignments (see Koehn et al., 2003).
+my $GIZA_MERGE = "grow-diag-final";
+
 my $retval = GetOptions(
   "corpus=s" 	 	  => \@CORPORA,
   "tune=s"   	 	  => \$TUNE,
@@ -159,6 +162,7 @@ my $retval = GetOptions(
   "name=s"            => \$NAME,
   "aligner=s"         => \$ALIGNER,
   "alignment=s"  	  => \$ALIGNMENT,
+  "alignment-merge=s" => \$GIZA_MERGE,
   "aligner-mem=s"     => \$ALIGNER_MEM,
   "source=s"   	 	  => \$SOURCE,
   "target=s"  	 	  => \$TARGET,
