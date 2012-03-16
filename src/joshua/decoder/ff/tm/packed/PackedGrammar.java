@@ -179,21 +179,21 @@ public class PackedGrammar extends BatchGrammar {
 		}
 
 		public final Trie match(int token_id) {
-			int num_children = grammar.source.get(position);
+			int num_children = grammar.source[position];
 			if (num_children == 0)
 				return null;
-			if (num_children == 1 && token_id == grammar.source.get(position + 1))
-				return new PackedTrie(grammar, grammar.source.get(position + 2),
+			if (num_children == 1 && token_id == grammar.source[position + 1])
+				return new PackedTrie(grammar, grammar.source[position + 2],
 						src, arity, token_id);
 			int top = 0;
 			int bottom = num_children - 1;
 			while (true) {
 				int candidate = (top + bottom) / 2;
 				int candidate_position = position + 1 + 2 * candidate;
-				int read_token = grammar.source.get(candidate_position);
+				int read_token = grammar.source[candidate_position];
 				if (read_token == token_id) {
 					return new PackedTrie(grammar,
-							grammar.source.get(candidate_position + 1),
+							grammar.source[candidate_position + 1],
 							src, arity, token_id);
 				} else if (top == bottom) {
 					return null;
@@ -248,16 +248,16 @@ public class PackedGrammar extends BatchGrammar {
 //		}
 
 		public boolean hasExtensions() {
-			return (grammar.source.get(position) != 0);
+			return (grammar.source[position] != 0);
 		}
 
 		public Collection<? extends Trie> getExtensions() {
-			int num_children = grammar.source.get(position);
+			int num_children = grammar.source[position];
 			ArrayList<PackedTrie> tries = new ArrayList<PackedTrie>(num_children);
 
 			for (int i = 0; i < num_children; i++) {
-				int symbol = grammar.source.get(position + 1 + 2 * i);
-				int address = grammar.source.get(position + 2 + 2 * i);
+				int symbol = grammar.source[position + 1 + 2 * i];
+				int address = grammar.source[position + 2 + 2 * i];
 				tries.add(new PackedTrie(grammar, address, src, arity, symbol));
 			}
 
@@ -265,8 +265,8 @@ public class PackedGrammar extends BatchGrammar {
 		}
 
 		public boolean hasRules() {
-			int num_children = grammar.source.get(position);
-			return (grammar.source.get(position + 1 + 2 * num_children) != 0);
+			int num_children = grammar.source[position];
+			return (grammar.source[position + 1 + 2 * num_children] != 0);
 		}
 
 		public RuleCollection getRuleCollection() {
@@ -274,9 +274,9 @@ public class PackedGrammar extends BatchGrammar {
 		}
 
 		public List<Rule> getRules() {
-			int num_children = grammar.source.get(position);
+			int num_children = grammar.source[position];
 			int rule_position = position + 2 * (num_children + 1);
-			int num_rules = grammar.source.get(rule_position - 1);
+			int num_rules = grammar.source[rule_position - 1];
 
 			ArrayList<Rule> rules = new ArrayList<Rule>(num_rules);
 			for (int i = 0; i < num_rules; i++)
@@ -286,21 +286,21 @@ public class PackedGrammar extends BatchGrammar {
 
 		@Override
 		public void sortRules(List<FeatureFunction> models) {
-			int num_children = grammar.source.get(position);
+			int num_children = grammar.source[position];
 			int rule_position = position + 2 * (num_children + 1);
-			int num_rules = grammar.source.get(rule_position - 1);
+			int num_rules = grammar.source[rule_position - 1];
 
 			Integer[] rules = new Integer[num_rules];
 
 			int target_address;
 			int block_id;
 			for (int i = 0; i < num_rules; i++) {
-				target_address = grammar.source.get(rule_position + 1 + 3 * i);
+				target_address = grammar.source[rule_position + 1 + 3 * i];
 				rules[i] = rule_position + 2 + 3 * i;
-				block_id = grammar.source.get(rules[i]);
+				block_id = grammar.source[rules[i]];
 
 				BilingualRule rule = new BilingualRule(
-						grammar.source.get(rule_position + 3 * i),
+						grammar.source[rule_position + 3 * i],
 						src,
 						grammar.getTarget(target_address),
 						grammar.getFeatures(block_id),
@@ -313,24 +313,24 @@ public class PackedGrammar extends BatchGrammar {
 
 			Arrays.sort(rules, new Comparator<Integer>() {
 				public int compare(Integer a, Integer b) {
-					float a_cost = grammar.cache[grammar.source.get(a)];
-					float b_cost = grammar.cache[grammar.source.get(b)];
+					float a_cost = grammar.cache[grammar.source[a]];
+					float b_cost = grammar.cache[grammar.source[b]];
 					if (a_cost == b_cost)
 						return 0;
 					return (a_cost > b_cost ? 1 : -1);
 				}
 			});
 
-			int[] backing = new int[3 * num_rules];
-			IntBuffer sorted = IntBuffer.wrap(backing);
+			int[] sorted = new int[3 * num_rules];
+			int j = 0;
 			for (int i = 0; i < rules.length; i++) {
 				int address = rules[i];
-				sorted.put(grammar.source.get(address - 2));
-				sorted.put(grammar.source.get(address - 1));
-				sorted.put(grammar.source.get(address));
+				sorted[j++] = grammar.source[address - 2];
+				sorted[j++] = grammar.source[address - 1];
+				sorted[j++] = grammar.source[address];
 			}
-			for (int i = 0; i < backing.length; i++)
-				grammar.source.put(rule_position + i, backing[i]);
+			for (int i = 0; i < sorted.length; i++)
+				grammar.source[rule_position + i] = sorted[i];
 		}
 
 		@Override
@@ -357,9 +357,9 @@ public class PackedGrammar extends BatchGrammar {
 			lookup = new HashMap<Integer, PackedSlice>();
 
 			for (PackedSlice ps : grammar.slices) {
-				int num_children = ps.source.get(0);
+				int num_children = ps.source[0];
 				for (int i = 0; i < num_children; i++)
-					lookup.put(ps.source.get(2 * i + 1), ps);
+					lookup.put(ps.source[2 * i + 1], ps);
 			}
 		}
 
@@ -400,11 +400,9 @@ public class PackedGrammar extends BatchGrammar {
 	public final class PackedSlice {
 		private String name;
 
-		private MappedByteBuffer byteSource;
-		private IntBuffer source;
+		private int[] source;
 		
-		private MappedByteBuffer byteTarget;
-		private IntBuffer target;
+		private int[] target;
 		private int[] targetLookup;
 		
 		private MappedByteBuffer features;
@@ -422,25 +420,25 @@ public class PackedGrammar extends BatchGrammar {
 			File feature_file = new File(prefix + ".features");
 
 			// Get the channels etc.
-			FileChannel source_channel =
-					new RandomAccessFile(source_file, "rw").getChannel();
+			FileChannel source_channel = new FileInputStream(source_file).getChannel();
 			int source_size = (int) source_channel.size();
 			
-			FileChannel target_channel =
-					new RandomAccessFile(target_file, "r").getChannel();
+			FileChannel target_channel = new FileInputStream(target_file).getChannel();
 			int target_size = (int) target_channel.size();
-			
+
 			FileChannel feature_channel =
 					new RandomAccessFile(feature_file, "r").getChannel();
 			int feature_size = (int) feature_channel.size();
-
-			byteSource = source_channel.map(MapMode.PRIVATE, 0, source_size); 
-			byteSource.load();
-			source = byteSource.asIntBuffer();
 			
-			byteTarget = target_channel.map(MapMode.READ_ONLY, 0, target_size);
-			byteTarget.load();
-			target = byteTarget.asIntBuffer();
+			IntBuffer source_buffer = source_channel.map(MapMode.READ_ONLY, 0,
+					source_size).asIntBuffer();
+			source = new int[source_size / 4];
+			source_buffer.get(source);
+
+			IntBuffer target_buffer = target_channel.map(MapMode.READ_ONLY, 0,
+					target_size).asIntBuffer();
+			target = new int[target_size / 4];
+			target_buffer.get(target);
 			
 			features = feature_channel.map(MapMode.READ_ONLY, 0, feature_size);
 			features.load();
@@ -459,7 +457,7 @@ public class PackedGrammar extends BatchGrammar {
 				targetLookup[i] = target_lookup_stream.readInt();
 		}
 
-		private final int[] getTarget(int pointer) {
+		final int[] getTarget(int pointer) {
 			// Figure out level.
 			int tgt_length = 1;
 			while (tgt_length < (targetLookup.length + 1)
@@ -469,15 +467,15 @@ public class PackedGrammar extends BatchGrammar {
 			int index = 0;
 			int parent;
 			do {
-				parent = target.get(pointer);
+				parent = target[pointer];
 				if (parent != -1)
-					tgt[index++] = target.get(pointer + 1);
+					tgt[index++] = target[pointer + 1];
 				pointer = parent;
 			} while (pointer != -1);
 			return tgt;
 		}
 
-		private final float[] getFeatures(int block_id, float[] feature_vector) {
+		final float[] getFeatures(int block_id, float[] feature_vector) {
 			int feature_position = featureLookup[block_id];
 			int num_features = features.getInt(feature_position);
 			feature_position += 4;
@@ -491,15 +489,15 @@ public class PackedGrammar extends BatchGrammar {
 			return feature_vector;
 		}
 
-		private final float[] getFeatures(int block_id) {
+		final float[] getFeatures(int block_id) {
 			float[] feature_vector = new float[JoshuaConfiguration.num_phrasal_features];
 			return getFeatures(block_id, feature_vector);
 		}
 
-		private final Rule assembleRule(int address, int[] src, int arity) {
-			int lhs = source.get(address);
-			int tgt_address = source.get(address + 1);
-			int data_block = source.get(address + 2);
+		final Rule assembleRule(int address, int[] src, int arity) {
+			int lhs = source[address];
+			int tgt_address = source[address + 1];
+			int data_block = source[address + 2];
 			BilingualRule rule = new BilingualRule(lhs,
 					src,
 					getTarget(tgt_address),
