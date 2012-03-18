@@ -69,7 +69,7 @@ public abstract class EvaluationMetric
       // the "WER" metric expects an options array of length 0
     metricOptionCount.put("MC_BLEU", 4);
     metricOptionCount.put("PRECIS", 6);
-    metricOptionCount.put("SRC_BLEU", 3);
+    metricOptionCount.put("SRC_BLEU", 4);
     metricOptionCount.put("PRECIS-SRC_BLEU", 6);
   }
 

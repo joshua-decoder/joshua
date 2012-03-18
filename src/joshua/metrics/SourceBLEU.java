@@ -29,22 +29,27 @@ public class SourceBLEU extends BLEU {
 	private int sourceReferenceIndex;
 
 	private int[] sourceWordCount;
+	private boolean useBrevityPenalty;
 
 	public SourceBLEU() {
 		super();
 		this.sourceReferenceIndex = 0;
+		this.useBrevityPenalty = true;
 		initialize();
 	}
 
 	public SourceBLEU(String[] options) {
 		super(options);
 		this.sourceReferenceIndex = Integer.parseInt(options[2]);
+		this.useBrevityPenalty = Boolean.parseBoolean(options[3]);
 		initialize();
 	}
 	
-	public SourceBLEU(int num_references, String method, int source_index) {
+	public SourceBLEU(int num_references, String method, int source_index,
+			boolean use_brevity_penalty) {
 		super(num_references, method);
 		this.sourceReferenceIndex = source_index;
+		this.useBrevityPenalty = use_brevity_penalty;
 		initialize();
 	}
 
@@ -87,7 +92,10 @@ public class SourceBLEU extends BLEU {
 			candidate_words = new String[0];
 
 		set_prec_suffStats(stats, candidate_words, i);
-		stats[suffStatsCount - 1] = effLength(candidate_words.length, i);
+		if (this.useBrevityPenalty)
+			stats[suffStatsCount - 1] = effLength(candidate_words.length, i);
+		else
+			stats[suffStatsCount - 1] = candidate_words.length;
 		stats[suffStatsCount - 2] = candidate_words.length;
 
 		return stats;

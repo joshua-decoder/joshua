@@ -41,8 +41,8 @@ public class PrecisMinusSourceBLEU extends EvaluationMetric {
 		options[5] = "0";
 		
 		myPrecis = new Precis(options);
-		mySourceBLEU = new SourceBLEU(Integer.parseInt(options[0]), 
-				options[1], Integer.parseInt(options[2]));
+		mySourceBLEU = new SourceBLEU(Integer.parseInt(options[0]), options[1],
+				Integer.parseInt(options[2]), false);
 
 		initialize();
 	}
