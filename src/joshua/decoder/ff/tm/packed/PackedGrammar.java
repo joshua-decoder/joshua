@@ -398,12 +398,12 @@ public class PackedGrammar extends BatchGrammar {
 	}
 
 	public final class PackedSlice {
-		private String name;
+		private final String name;
 
-		private int[] source;
+		private final int[] source;
 		
-		private int[] target;
-		private int[] targetLookup;
+		private final int[] target;
+		private final int[] targetLookup;
 		
 		private MappedByteBuffer features;
 		int featureSize;

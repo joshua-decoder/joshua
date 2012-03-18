@@ -148,7 +148,6 @@ public class GrammarPacker {
 		logger.info("Done.");
 	}
 
-	// TODO: add javadoc.
 	private void explore(LineReader grammar) {
 		int counter = 0;
 		while (grammar.hasNext()) {
