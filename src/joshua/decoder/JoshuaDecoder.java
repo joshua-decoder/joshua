@@ -269,9 +269,12 @@ public class JoshuaDecoder {
 			if (JoshuaConfiguration.tm_file == null)
 				throw new RuntimeException("No translation grammar was specified.");
 
+			long pre_load_time = System.currentTimeMillis(); 
 			// Initialize and load grammars.					
 			this.initializeMainTranslationGrammar();
 			this.initializeGlueGrammar();
+			logger.info(String.format("Grammar loading took: %d seconds.", 
+					(System.currentTimeMillis() - pre_load_time) / 1000));
 
 			// Initialize the LM.
 			initializeLanguageModel();
@@ -282,6 +285,7 @@ public class JoshuaDecoder {
 			// Initialize features that contribute to state (currently only n-grams).
 			this.initializeStateComputers(JoshuaConfiguration.lm_order, JoshuaConfiguration.ngramStateID);
 
+			long pre_sort_time = System.currentTimeMillis() ;
 			// Sort the TM grammars (needed to do cube pruning)
 			for (GrammarFactory grammarFactory : this.grammarFactories) {
 				if (grammarFactory instanceof Grammar) {
@@ -289,6 +293,8 @@ public class JoshuaDecoder {
 					batchGrammar.sortGrammar(this.featureFunctions);
 				}
 			}
+			logger.info(String.format("Grammar sorting took: %d seconds.", 
+					(System.currentTimeMillis() - pre_sort_time) / 1000));
 			
 			this.decoderFactory = new DecoderFactory(
 				this.grammarFactories,
@@ -561,11 +567,11 @@ public class JoshuaDecoder {
 		/* Step-1: initialize the decoder, test-set independent */
 		JoshuaDecoder decoder = new JoshuaDecoder(configFile);
 
-        logger.info(String.format("Model loading took %d seconds",
-                (System.currentTimeMillis() - startTime) / 1000));
-        logger.info(String.format("Memory used %.1f MB", 
-  					((Runtime.getRuntime().totalMemory() 
-  							- Runtime.getRuntime().freeMemory()) / 1000000.0)));
+		logger.info(String.format("Model loading took %d seconds",
+				(System.currentTimeMillis() - startTime) / 1000));
+		logger.info(String.format("Memory used %.1f MB", 
+				((Runtime.getRuntime().totalMemory() 
+						- Runtime.getRuntime().freeMemory()) / 1000000.0)));
         
 		/* Step-2: Decoding */
 		decoder.decodeTestSet(testFile, nbestFile, oracleFile);
@@ -576,8 +582,8 @@ public class JoshuaDecoder {
 						- Runtime.getRuntime().freeMemory()) / 1000000.0)));
 		
 		/* Step-3: clean up */
-        decoder.cleanUp();
-        logger.info(String.format("Total running time: %d seconds", 
-                (System.currentTimeMillis() - startTime) / 1000));
+		decoder.cleanUp();
+		logger.info(String.format("Total running time: %d seconds", 
+				(System.currentTimeMillis() - startTime) / 1000));
 	}
 }
