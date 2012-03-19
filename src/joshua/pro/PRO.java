@@ -39,7 +39,7 @@ public class PRO
     	
       int maxMem = Integer.parseInt(args[1]);
       String configFileName = args[2];
-      String stateFileName = "PRO.temp.state";
+	  String stateFileName = FileUtility.dirname(configFileName) + "/PRO.temp.state";
       String cp = System.getProperty("java.class.path");
       boolean done = false;
       int iteration = 0;
