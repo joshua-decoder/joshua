@@ -26,7 +26,7 @@ def main():
   
   for fileName in fileNames:
     if (fileName.endswith(".gz")):
-      inputFiles.append(gzip.open(fileName, "r"))
+      inputFiles.append(codecs.getreader('utf-8')(gzip.open(fileName)))
     else:
       inputFiles.append(codecs.open(fileName, "r", "utf-8"))
   
