@@ -39,12 +39,12 @@ def main():
       chunkName = "./chunk_" + ('%03d' % numChunks)  + "/"
       if not os.path.isdir(chunkName):
         os.mkdir(chunkName)
-      numChunks += 1
       
       outputFiles = []
       for fileName in fileNames:
         outputFiles.append(codecs.open(chunkName + fileName, "w", "utf-8"))
       print "[INF]    Creating chunk " + ('%03d' % numChunks) + "."
+      numChunks += 1
     
     for inFile, outFile in zip(inputFiles, outputFiles):
       line = inFile.readline()
