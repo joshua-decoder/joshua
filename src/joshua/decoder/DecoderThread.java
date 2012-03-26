@@ -20,12 +20,14 @@ package joshua.decoder;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import joshua.decoder.chart_parser.Chart;
 import joshua.decoder.ff.FeatureFunction;
+import joshua.decoder.ff.SourceDependentFF;
 import joshua.decoder.ff.state_maintenance.StateComputer;
 import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.GrammarFactory;
@@ -79,18 +81,24 @@ public class DecoderThread extends Thread {
 // Constructor
 //===============================================================
 	public DecoderThread(
-		List<GrammarFactory>  grammarFactories,
-		List<FeatureFunction> featureFunctions,
-		List<StateComputer> stateComputers,
-		InputHandler inputHandler
-	) throws IOException {
-		
+			List<GrammarFactory>  grammarFactories,
+			List<FeatureFunction> featureFunctions,
+			List<StateComputer> stateComputers,
+			InputHandler inputHandler) throws IOException {
+
 		this.grammarFactories   = grammarFactories;
-		this.featureFunctions   = featureFunctions;
 		this.stateComputers     = stateComputers;
-		
-        this.inputHandler    = inputHandler;
-		
+		this.inputHandler       = inputHandler;
+
+		this.featureFunctions   = new ArrayList<FeatureFunction>();
+		for (FeatureFunction ff : featureFunctions) {
+			if (ff instanceof SourceDependentFF) {
+				this.featureFunctions.add(((SourceDependentFF) ff).clone());
+			} else {
+				this.featureFunctions.add(ff);
+			}
+		}
+
 		this.kbestExtractor = new KBestExtractor(
 			JoshuaConfiguration.use_unique_nbest,
 			JoshuaConfiguration.use_tree_nbest,

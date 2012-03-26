@@ -37,6 +37,7 @@ import joshua.decoder.ff.lm.NGramLanguageModel;
 import joshua.decoder.ff.lm.berkeley_lm.LMGrammarBerkeley;
 import joshua.decoder.ff.lm.buildin_lm.LMGrammarJAVA;
 import joshua.decoder.ff.lm.kenlm.jni.KenLM;
+import joshua.decoder.ff.similarity.EdgePhraseSimilarityFF;
 import joshua.decoder.ff.state_maintenance.NgramStateComputer;
 import joshua.decoder.ff.state_maintenance.StateComputer;
 import joshua.decoder.ff.tm.Grammar;
@@ -491,7 +492,21 @@ public class JoshuaDecoder {
                 JoshuaConfiguration.num_phrasal_features += 1;
 
                 logger.info(String.format("FEATURE: OOV penalty (weight %.3f)", weight));
-            } else {
+            } else if (feature.equals("edge-sim")) {
+            	double weight = Double.parseDouble(fields[1].trim());
+            	String host = fields[2].trim();
+            	int port = Integer.parseInt(fields[3].trim());
+            	try {
+								this.featureFunctions.add(
+										new EdgePhraseSimilarityFF(JoshuaConfiguration.ngramStateID,
+												weight, this.featureFunctions.size(), host, port));
+							} catch (Exception e) {
+								e.printStackTrace();
+								System.exit(1);
+							}
+            	logger.info(String.format("FEATURE: edge similarity (weight %.3f)", weight));
+            }
+            else {
                 System.err.println("* WARNING: invalid feature '" + featureLine + "'");
             }
         }

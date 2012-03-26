@@ -31,6 +31,7 @@ import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.chart_parser.CubePruneCombiner.CubePruneState;
 import joshua.decoder.chart_parser.DotChart.DotNode;
 import joshua.decoder.ff.FeatureFunction;
+import joshua.decoder.ff.SourceDependentFF;
 import joshua.decoder.ff.state_maintenance.StateComputer;
 import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.Rule;
@@ -235,6 +236,10 @@ public class Chart {
 				}
 			}
 		}
+		
+		for (FeatureFunction ff : this.featureFunctions)
+			if (ff instanceof SourceDependentFF)
+				((SourceDependentFF) ff).setSource(sentence);
 		
 		logger.fine("Finished seeding chart.");
 	}
