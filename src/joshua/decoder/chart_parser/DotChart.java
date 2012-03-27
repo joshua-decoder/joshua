@@ -31,17 +31,20 @@ import joshua.lattice.Lattice;
 import joshua.lattice.Node;
 
 /**
- * This class implements:
- * (1) seeding
- * (2) extend the dot by accessing the TM grammar, and create and
- *     remember DotItems
- * 
- * Note: the purpose of this class: (1) do CKY parsing in an efficient
- * way (i.e., identify the applicable rules fastly); (2) binarization
- * on the fly; (3) remember the partial application of rules
+ * The DotChart handles the building of the -LM forest.  The set of
+ * (Dot)Items over a span represent the rules that have been
+ * completely applied through the implicit binarization.  These
+ * DotItems are available to be incorporated into the main chart after
+ * the LM score has been applied (assuming they pass pruning).
+ *
+ * DotItem represent (possibly partial) application of synchronous
+ * rules that have been implicitly binarized.  As spans are
+ * considered, the next symbol in the rule's source right-hand side is
+ * matched against proved items (items in the +LM chart, Chart.java)
+ * or input symbols.  Once the rule is complete, it is entered into
+ * the DotChart.
  *
  * @author Zhifei Li, <zhifei.work@gmail.com>
- * @version $LastChangedDate$
  */
 class DotChart {
 	
@@ -49,7 +52,9 @@ class DotChart {
 // Package-protected instance fields
 //===============================================================
 	/** 
-	 * Two-dimensional chart of cells. Some cells might be null.
+	 * Two-dimensional chart of cells. Some cells might be null.  This
+     * could definitely be represented more efficiently, especially
+     * since access is already mitigated through an accessor function.
 	 */
 	private DotCell[][] dotcells;
 	
