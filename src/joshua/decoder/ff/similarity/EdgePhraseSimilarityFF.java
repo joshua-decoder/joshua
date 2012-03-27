@@ -70,8 +70,7 @@ public class EdgePhraseSimilarityFF extends DefaultStatefulFF implements SourceD
 		if (antNodes == null || antNodes.isEmpty())
 			return 0;
 
-		// System.err.println("RULE [" + spanStart + ", " + spanEnd + "]: " +
-		// rule.toString());
+//		System.err.println("RULE [" + spanStart + ", " + spanEnd + "]: " + rule.toString());
 
 		int[] target = ((BilingualRule) rule).getEnglish();
 		// Find where the antecedent nodes plug into the target string.
@@ -82,6 +81,7 @@ public class EdgePhraseSimilarityFF extends DefaultStatefulFF implements SourceD
 
 		for (int n = 0; n < antNodes.size(); n++) {
 			HGNode node = antNodes.get(n);
+
 			NgramDPState state = (NgramDPState) node.getDPState(getStateID());
 
 			int anchor = gap_positions[n];
@@ -95,38 +95,41 @@ public class EdgePhraseSimilarityFF extends DefaultStatefulFF implements SourceD
 					right_bound = Math.min(right_bound, other_anchor);
 			}
 
-			int[] i_target = getLeftTargetPhrase(target, state.getLeftLMStateWords(), anchor, left_bound);
-			int[] j_target = getRightTargetPhrase(target, state.getRightLMStateWords(), anchor,
-					right_bound);
+//			System.err.println("CHILD: [" + node.i + ", " + node.j + "]");
 
-			int[] i_source = getSourcePhrase(node.i);
-			int[] j_source = getSourcePhrase(node.j);
+			if (node.i != spanStart) {
+//				System.err.print("LEFT:  ");
+//				for (int w : state.getLeftLMStateWords()) System.err.print(Vocabulary.word(w) + " ");
+//				System.err.println();
+				
+				int[] i_target = getLeftTargetPhrase(target, state.getLeftLMStateWords(),
+						anchor, left_bound);
+				int[] i_source = getSourcePhrase(node.i);
+				
+//				System.err.println(n + " src_left: " + Vocabulary.getWords(i_source));
+//				System.err.println(n + " tgt_left: " + Vocabulary.getWords(i_target));
+				
+				similarity += getSimilarity(i_source, i_target);
+				count++;
+			}
+			if (node.j != spanEnd) {
+//				System.err.print("RIGHT: ");
+//				for (int w : state.getRightLMStateWords()) System.err.print(Vocabulary.word(w) + " ");
+//				System.err.println();
+				
+				int[] j_target = getRightTargetPhrase(target, state.getRightLMStateWords(),
+						anchor, right_bound);
+				int[] j_source = getSourcePhrase(node.j);
 
-			double ii = getSimilarity(i_source, i_target);
-			double jj = getSimilarity(j_source, j_target);
-
-			similarity += ii + jj;
-			count++;
-
-			// System.err.println("CHILD: [" + node.i + ", " + node.j + "]");
-			//
-			// System.err.print("LEFT:  ");
-			// for (int w : state.getLeftLMStateWords())
-			// System.err.print(Vocabulary.word(w) + " ");
-			// System.err.println();
-			//
-			// System.err.print("RIGHT: ");
-			// for (int w : state.getRightLMStateWords())
-			// System.err.print(Vocabulary.word(w) + " ");
-			// System.err.println();
-			//
-			// System.err.println(n + " src_left: " + Vocabulary.getWords(i_source));
-			// System.err.println(n + " tgt_left: " + Vocabulary.getWords(i_target));
-			//
-			// System.err.println(n + " src_rght: " + Vocabulary.getWords(j_source));
-			// System.err.println(n + " tgt_rght: " + Vocabulary.getWords(j_target));
+//				System.err.println(n + " src_rght: " + Vocabulary.getWords(j_source));
+//				System.err.println(n + " tgt_rght: " + Vocabulary.getWords(j_target));
+				
+				similarity += getSimilarity(j_source, j_target);
+				count++;
+			}
 		}
-
+		if (count == 0)
+			return 0;
 		return this.getWeight() * similarity / count;
 	}
 
@@ -166,15 +169,16 @@ public class EdgePhraseSimilarityFF extends DefaultStatefulFF implements SourceD
 			return 1.0;
 		String source_string = Vocabulary.getWords(source);
 		String target_string = Vocabulary.getWords(target);
-		
-		String both; 
+
+		String both;
 		if (source_string.compareTo(target_string) > 0)
 			both = source_string + target_string;
 		else
-			both = target_string + source_string;
-		
+			both = target_string + " ||| " + source_string;
+
 		Double cached = cache.get(both);
 		if (cached != null) {
+//			System.err.println("SIM: " + source_string + " X " + target_string + " = " + cached);
 			return cached;
 		} else {
 			try {
@@ -182,6 +186,9 @@ public class EdgePhraseSimilarityFF extends DefaultStatefulFF implements SourceD
 				String response = serverReply.readLine();
 				double similarity = Double.parseDouble(response);
 				cache.put(both, similarity);
+
+//				System.err.println("SIM: " + source_string + " X " + target_string + " = " + similarity);
+
 				return similarity;
 			} catch (Exception e) {
 				return 0;
