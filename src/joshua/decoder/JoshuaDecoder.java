@@ -493,9 +493,9 @@ public class JoshuaDecoder {
 
                 logger.info(String.format("FEATURE: OOV penalty (weight %.3f)", weight));
             } else if (feature.equals("edge-sim")) {
-            	double weight = Double.parseDouble(fields[1].trim());
-            	String host = fields[2].trim();
-            	int port = Integer.parseInt(fields[3].trim());
+            	String host = fields[1].trim();
+            	int port = Integer.parseInt(fields[2].trim());
+            	double weight = Double.parseDouble(fields[3].trim());
             	try {
 								this.featureFunctions.add(
 										new EdgePhraseSimilarityFF(JoshuaConfiguration.ngramStateID,
