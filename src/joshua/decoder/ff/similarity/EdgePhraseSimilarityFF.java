@@ -6,6 +6,7 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.List;
 
 import joshua.corpus.Vocabulary;
@@ -80,10 +81,12 @@ public class EdgePhraseSimilarityFF extends DefaultStatefulFF implements SourceD
 			lm_state_size += state.getLeftLMStateWords().size() + state.getRightLMStateWords().size();
 		}
 		
+		ArrayList<int[]> batch = new ArrayList<int[]>();
+		
 		// Build joined target string.
 		int[] join = new int[target.length + lm_state_size];
 		
-		int j = 0, num_gaps = 1, num_anchors = 0;
+		int idx = 0, num_gaps = 1, num_anchors = 0;
 		int[] anchors = new int[rule.getArity() * 2];
 		int[] indices = new int[rule.getArity() * 2];
 		int[] gaps = new int[rule.getArity() + 2];
@@ -93,27 +96,27 @@ public class EdgePhraseSimilarityFF extends DefaultStatefulFF implements SourceD
 				HGNode node = antNodes.get(-(target[t] + 1));
 				if (t != 0) {
 					indices[num_anchors] = node.i;
-					anchors[num_anchors++] = j;
+					anchors[num_anchors++] = idx;
 				}
 				NgramDPState state = (NgramDPState) node.getDPState(getStateID());
 //				System.err.print("LEFT:  ");
 //				for (int w : state.getLeftLMStateWords()) System.err.print(Vocabulary.word(w) + " ");
 //				System.err.println();
 				for (int w : state.getLeftLMStateWords()) 
-					join[j++] = w;
-				join[j++] = GAP;
-				gaps[num_gaps++] = j;
+					join[idx++] = w;
+				join[idx++] = GAP;
+				gaps[num_gaps++] = idx;
 //				System.err.print("RIGHT:  ");
 //				for (int w : state.getRightLMStateWords()) System.err.print(Vocabulary.word(w) + " ");
 //				System.err.println();
 				for (int w : state.getRightLMStateWords())
-					join[j++] = w;
+					join[idx++] = w;
 				if (t != target.length - 1) {
 					indices[num_anchors] = node.j;
-					anchors[num_anchors++] = j;
+					anchors[num_anchors++] = idx;
 				}
 			} else {
-				join[j++] = target[t];
+				join[idx++] = target[t];
 			}
 		}
 		gaps[gaps.length - 1] = join.length + 1;
@@ -142,20 +145,22 @@ public class EdgePhraseSimilarityFF extends DefaultStatefulFF implements SourceD
 			System.arraycopy(join, left, target_phrase, 0, target_phrase.length);
 			int[] source_phrase = getSourcePhrase(indices[a]);
 			
+			if (source_phrase != null && target_phrase.length != 0) {
 //			System.err.println("ANCHOR: " + indices[a]);
-			
-			similarity += getSimilarity(source_phrase, target_phrase);
-			count++;
+				batch.add(source_phrase);
+				batch.add(target_phrase);
+			}
 		}
-		if (count == 0)
-			return 0;
-		return this.getWeight() * similarity / count;
+		return this.getWeight() * getSimilarity(batch);
 	}
 
 	private final int[] getSourcePhrase(int anchor) {
 		int idx;
-		int[] phrase = new int[Math.min(anchor, MAX_PHRASE_LENGTH - 1)
-				+ Math.min(source.length - anchor, MAX_PHRASE_LENGTH - 1)];
+		int length = Math.min(anchor, MAX_PHRASE_LENGTH - 1)
+				+ Math.min(source.length - anchor, MAX_PHRASE_LENGTH - 1);
+		if (length <= 0)
+			return null;
+		int[] phrase = new int[length];
 		idx = 0;
 		for (int p = Math.max(0, anchor - MAX_PHRASE_LENGTH + 1); p < Math.min(source.length, anchor
 				+ MAX_PHRASE_LENGTH - 1); p++)
@@ -163,34 +168,57 @@ public class EdgePhraseSimilarityFF extends DefaultStatefulFF implements SourceD
 		return phrase;
 	}
 
-	private double getSimilarity(int[] source, int[] target) {
-		if (source.equals(target))
-			return 1.0;
-		String source_string = Vocabulary.getWords(source);
-		String target_string = Vocabulary.getWords(target);
-
-		String both;
-		if (source_string.compareTo(target_string) > 0)
-			both = source_string + target_string;
-		else
-			both = target_string + " ||| " + source_string;
-
-		Double cached = cache.get(both);
-		if (cached != null) {
-//			System.err.println("SIM: " + source_string + " X " + target_string + " = " + cached);
-			return cached;
-		} else {
+	private double getSimilarity(List<int[]> batch) {
+		double similarity = 0;
+		int count = 0;
+		StringBuilder query = new StringBuilder();
+		List<String> to_cache = new ArrayList<String>();
+		query.append("xb");
+		for (int i = 0; i < batch.size(); i += 2) {
+			int[] source = batch.get(i);
+			int[] target = batch.get(i + 1);
+			
+			if (source.equals(target)) {
+				similarity += 1;
+				count++;
+			} else {
+				String source_string = Vocabulary.getWords(source);
+				String target_string = Vocabulary.getWords(target);
+	
+				String both;
+				if (source_string.compareTo(target_string) > 0)
+					both = source_string + " ||| " + target_string;
+				else
+					both = target_string + " ||| " + source_string;
+	
+				Double cached = cache.get(both);
+				if (cached != null) {
+		//			System.err.println("SIM: " + source_string + " X " + target_string + " = " + cached);
+					similarity += cached;
+					count++;
+				} else {
+					query.append("\t").append(source_string);
+					query.append("\t").append(target_string);	
+					to_cache.add(both);
+				}
+			}
+		}
+		if (!to_cache.isEmpty()) {
 			try {
-				serverAsk.println("x\t" + source_string + "\t" + target_string);
+				serverAsk.println(query.toString());
 				String response = serverReply.readLine();
-				double similarity = Double.parseDouble(response);
-				cache.put(both, similarity);
-//				System.err.println("SIM: " + source_string + " X " + target_string + " = " + similarity);
-				return similarity;
+				String[] scores = response.split("\\s+");
+				for (int i = 0; i < scores.length; i++) {
+					Double score = Double.parseDouble(scores[i]);
+					cache.put(to_cache.get(i), score);
+					similarity += score;
+					count++;
+				}
 			} catch (Exception e) {
 				return 0;
 			}
 		}
+		return (count == 0 ? 0 : similarity / count);
 	}
 
 	@Override
