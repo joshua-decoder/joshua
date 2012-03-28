@@ -33,7 +33,8 @@ public class EdgePhraseSimilarityFF extends DefaultStatefulFF implements SourceD
 
 	private int[] source;
 
-	private final int MAX_PHRASE_LENGTH = 3;
+	private final int MAX_PHRASE_LENGTH = 4;
+	private final int GAP = 0;
 
 	public EdgePhraseSimilarityFF(int stateID, double weight, int featureID, String host, int port)
 			throws NumberFormatException, UnknownHostException, IOException {
@@ -73,60 +74,78 @@ public class EdgePhraseSimilarityFF extends DefaultStatefulFF implements SourceD
 //		System.err.println("RULE [" + spanStart + ", " + spanEnd + "]: " + rule.toString());
 
 		int[] target = ((BilingualRule) rule).getEnglish();
-		// Find where the antecedent nodes plug into the target string.
-		int[] gap_positions = new int[rule.getArity()];
-		for (int t = 0; t < target.length; t++)
-			if (target[t] < 0)
-				gap_positions[-target[t] - 1] = t;
-
-		for (int n = 0; n < antNodes.size(); n++) {
-			HGNode node = antNodes.get(n);
-
+		int lm_state_size = 0;
+		for (HGNode node : antNodes) {
 			NgramDPState state = (NgramDPState) node.getDPState(getStateID());
-
-			int anchor = gap_positions[n];
-			int left_bound = Math.max(0, anchor - MAX_PHRASE_LENGTH + 1);
-			int right_bound = Math.min(target.length, anchor + MAX_PHRASE_LENGTH);
-			if (rule.getArity() == 2) {
-				int other_anchor = gap_positions[Math.abs(n - 1)];
-				if (other_anchor < anchor)
-					left_bound = Math.max(left_bound, other_anchor + 1);
-				else
-					right_bound = Math.min(right_bound, other_anchor);
-			}
-
-//			System.err.println("CHILD: [" + node.i + ", " + node.j + "]");
-
-			if (node.i != spanStart) {
+			lm_state_size += state.getLeftLMStateWords().size() + state.getRightLMStateWords().size();
+		}
+		
+		// Build joined target string.
+		int[] join = new int[target.length + lm_state_size];
+		
+		int j = 0, num_gaps = 1, num_anchors = 0;
+		int[] anchors = new int[rule.getArity() * 2];
+		int[] indices = new int[rule.getArity() * 2];
+		int[] gaps = new int[rule.getArity() + 2];
+		gaps[0] = 0;
+		for (int t = 0; t < target.length; t++) {
+			if (target[t] < 0) {
+				HGNode node = antNodes.get(-(target[t] + 1));
+				if (t != 0) {
+					indices[num_anchors] = node.i;
+					anchors[num_anchors++] = j;
+				}
+				NgramDPState state = (NgramDPState) node.getDPState(getStateID());
 //				System.err.print("LEFT:  ");
 //				for (int w : state.getLeftLMStateWords()) System.err.print(Vocabulary.word(w) + " ");
 //				System.err.println();
-				
-				int[] i_target = getLeftTargetPhrase(target, state.getLeftLMStateWords(),
-						anchor, left_bound);
-				int[] i_source = getSourcePhrase(node.i);
-				
-//				System.err.println(n + " src_left: " + Vocabulary.getWords(i_source));
-//				System.err.println(n + " tgt_left: " + Vocabulary.getWords(i_target));
-				
-				similarity += getSimilarity(i_source, i_target);
-				count++;
-			}
-			if (node.j != spanEnd) {
-//				System.err.print("RIGHT: ");
+				for (int w : state.getLeftLMStateWords()) 
+					join[j++] = w;
+				join[j++] = GAP;
+				gaps[num_gaps++] = j;
+//				System.err.print("RIGHT:  ");
 //				for (int w : state.getRightLMStateWords()) System.err.print(Vocabulary.word(w) + " ");
 //				System.err.println();
-				
-				int[] j_target = getRightTargetPhrase(target, state.getRightLMStateWords(),
-						anchor, right_bound);
-				int[] j_source = getSourcePhrase(node.j);
-
-//				System.err.println(n + " src_rght: " + Vocabulary.getWords(j_source));
-//				System.err.println(n + " tgt_rght: " + Vocabulary.getWords(j_target));
-				
-				similarity += getSimilarity(j_source, j_target);
-				count++;
+				for (int w : state.getRightLMStateWords())
+					join[j++] = w;
+				if (t != target.length - 1) {
+					indices[num_anchors] = node.j;
+					anchors[num_anchors++] = j;
+				}
+			} else {
+				join[j++] = target[t];
 			}
+		}
+		gaps[gaps.length - 1] = join.length + 1;
+		
+//		int c = 0;
+//		System.err.print("> ");
+//		for (int k = 0; k < join.length; k++) {
+//			if (c < num_anchors && anchors[c] == k) {
+//				c++;
+//				System.err.print("| ");
+//			}
+//			System.err.print(Vocabulary.word(join[k]) + " ");
+//		}
+//		System.err.println("<");
+
+		int g = 0;
+		for (int a = 0; a < num_anchors; a++) {
+			if (a > 0 && anchors[a - 1] == anchors[a])
+				continue;
+			if (anchors[a] > gaps[g + 1])
+				g++;
+			int left = Math.max(gaps[g], anchors[a] - MAX_PHRASE_LENGTH + 1);
+			int right = Math.min(gaps[g + 1] - 1, anchors[a] + MAX_PHRASE_LENGTH - 1);
+			
+			int[] target_phrase = new int[right - left];
+			System.arraycopy(join, left, target_phrase, 0, target_phrase.length);
+			int[] source_phrase = getSourcePhrase(indices[a]);
+			
+//			System.err.println("ANCHOR: " + indices[a]);
+			
+			similarity += getSimilarity(source_phrase, target_phrase);
+			count++;
 		}
 		if (count == 0)
 			return 0;
@@ -141,26 +160,6 @@ public class EdgePhraseSimilarityFF extends DefaultStatefulFF implements SourceD
 		for (int p = Math.max(0, anchor - MAX_PHRASE_LENGTH + 1); p < Math.min(source.length, anchor
 				+ MAX_PHRASE_LENGTH - 1); p++)
 			phrase[idx++] = source[p];
-		return phrase;
-	}
-
-	private final int[] getLeftTargetPhrase(int[] target, List<Integer> state, int anchor, int bound) {
-		int[] phrase = new int[anchor - bound + Math.min(state.size(), MAX_PHRASE_LENGTH)];
-		int idx = 0;
-		for (int p = bound; p < anchor; p++)
-			phrase[idx++] = target[p];
-		for (int p = 0; p < state.size(); p++)
-			phrase[idx++] = state.get(p);
-		return phrase;
-	}
-
-	private final int[] getRightTargetPhrase(int[] target, List<Integer> state, int anchor, int bound) {
-		int[] phrase = new int[bound - anchor + Math.min(state.size(), MAX_PHRASE_LENGTH) - 1];
-		int idx = 0;
-		for (int p = 0; p < state.size(); p++)
-			phrase[idx++] = state.get(p);
-		for (int p = anchor + 1; p < bound; p++)
-			phrase[idx++] = target[p];
 		return phrase;
 	}
 
@@ -186,9 +185,7 @@ public class EdgePhraseSimilarityFF extends DefaultStatefulFF implements SourceD
 				String response = serverReply.readLine();
 				double similarity = Double.parseDouble(response);
 				cache.put(both, similarity);
-
 //				System.err.println("SIM: " + source_string + " X " + target_string + " = " + similarity);
-
 				return similarity;
 			} catch (Exception e) {
 				return 0;
