@@ -23,7 +23,7 @@ import joshua.util.Cache;
 
 public class EdgePhraseSimilarityFF extends DefaultStatefulFF implements SourceDependentFF {
 
-	private static Cache<String, Double> cache = new Cache<String, Double>(1000000);
+	private static Cache<String, Float> cache = new Cache<String, Float>(100000000);
 
 	private String host;
 	private int port;
@@ -191,7 +191,7 @@ public class EdgePhraseSimilarityFF extends DefaultStatefulFF implements SourceD
 				else
 					both = target_string + " ||| " + source_string;
 	
-				Double cached = cache.get(both);
+				Float cached = cache.get(both);
 				if (cached != null) {
 		//			System.err.println("SIM: " + source_string + " X " + target_string + " = " + cached);
 					similarity += cached;
@@ -209,7 +209,7 @@ public class EdgePhraseSimilarityFF extends DefaultStatefulFF implements SourceD
 				String response = serverReply.readLine();
 				String[] scores = response.split("\\s+");
 				for (int i = 0; i < scores.length; i++) {
-					Double score = Double.parseDouble(scores[i]);
+					Float score = Float.parseFloat(scores[i]);
 					cache.put(to_cache.get(i), score);
 					similarity += score;
 					count++;
