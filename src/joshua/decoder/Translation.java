@@ -21,9 +21,11 @@ package joshua.decoder;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.StringWriter;
+import java.util.ArrayList;
 import java.util.List;
 
 import joshua.decoder.ff.FeatureFunction;
+import joshua.decoder.ff.SourceDependentFF;
 import joshua.decoder.hypergraph.HyperGraph;
 import joshua.decoder.hypergraph.KBestExtractor;
 import joshua.decoder.segment_file.Sentence;
@@ -51,7 +53,17 @@ public class Translation {
     public Translation(Sentence source, HyperGraph hypergraph, List<FeatureFunction> featureFunctions) {
         this.source = source;
         this.hypergraph = hypergraph;
-        this.featureFunctions = featureFunctions;
+        
+        this.featureFunctions   = new ArrayList<FeatureFunction>();
+    		for (FeatureFunction ff : featureFunctions) {
+    			if (ff instanceof SourceDependentFF) {
+    				SourceDependentFF sdff = (SourceDependentFF) ((SourceDependentFF) ff).clone();
+    				sdff.setSource(source);
+    				this.featureFunctions.add((FeatureFunction) sdff);
+    			} else {
+    				this.featureFunctions.add(ff);
+    			}
+    		}
     }
 
     public HyperGraph hypergraph() {
