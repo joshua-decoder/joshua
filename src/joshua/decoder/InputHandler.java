@@ -54,7 +54,6 @@ import joshua.decoder.segment_file.Sentence;
  * job it would be to parse those constraints from the input.
  *
  * @author Matt Post <post@jhu.edu>
- * @version $LastChangedDate: $
  */
 
 public class InputHandler implements Iterator<Sentence> {
@@ -65,7 +64,10 @@ public class InputHandler implements Iterator<Sentence> {
     String corpusFile = null;
     int sentenceNo = -1;
     Sentence nextSentence = null;
-    BufferedReader lineReader = null;
+    BufferedReader lineReader = null;    
+
+    String nextOracleSentence = null;
+    BufferedReader oracleReader = null;
 
     private static final Charset FILE_ENCODING = Charset.forName("UTF-8");
 
@@ -73,7 +75,7 @@ public class InputHandler implements Iterator<Sentence> {
     List<Translation> completed;
     int lastCompletedId = -1;
 
-    InputHandler(String corpusFile) {
+    InputHandler(String corpusFile, String oracleFile) {
         this.corpusFile = corpusFile;
 
         InputStream inputStream = null;
@@ -90,6 +92,7 @@ public class InputHandler implements Iterator<Sentence> {
             System.exit(1);
         } catch (IOException e) {
             e.printStackTrace();
+
         }
 
         issued    = new ArrayList<Sentence>();
@@ -97,6 +100,16 @@ public class InputHandler implements Iterator<Sentence> {
 
         // load the first input item
         this.lineReader = new BufferedReader(new InputStreamReader(inputStream, FILE_ENCODING));
+
+        if (oracleFile != null) {
+            try {
+                this.oracleReader = new BufferedReader(new InputStreamReader(new FileInputStream(oracleFile), FILE_ENCODING));
+                System.err.println("Loading oracle file '" + oracleFile + "'");
+            } catch (FileNotFoundException e) {
+                System.err.println("Can't find oracle file '" + oracleFile + "'");
+                System.exit(1);
+            }
+        }
 
         prepareNextLine();
     }
@@ -125,6 +138,12 @@ public class InputHandler implements Iterator<Sentence> {
 				issued.add(nextSentence);
 				completed.add(null);
 			}
+
+            // oracle sentence
+            if (this.oracleReader != null) {
+                nextOracleSentence = oracleReader.readLine();
+            }
+
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -188,6 +207,6 @@ public class InputHandler implements Iterator<Sentence> {
      * this function should return the parallel oracle sentence.
      */
     public String oracleSentence() {
-        return null;
+        return nextOracleSentence;
     }
 }
