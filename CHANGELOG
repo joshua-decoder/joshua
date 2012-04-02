@@ -1,25 +1,69 @@
-3.2 (development, "devel" branch)
+3.2 (stable)
 =================================
 
-- Pruning can now be specified with a single parameter "pop-limit",
-  which limits the number of pops from the cube pruning candidate list
-  (at the span level).  This replaces the beam and threshold pruning
-  that was governed by four parameters (fuzz1, fuzz2,
-  relative_threshold, and max_n_rules), whose performance and
+- Pop-limit pruning.
+
+  Pruning can now be specified with a single parameter "pop-limit"
+  parameter, which limits the number of pops from the cube pruning
+  candidate list at the span level.  This replaces the beam and
+  threshold pruning that was governed by four parameters (fuzz1,
+  fuzz2, relative_threshold, and max_n_rules), whose performance and
   interaction was somewhat difficult to characterize.  The pop-limit
   allows a simple relationship between decoding time and model score
-  to be defined.  
+  to be defined.
 
   Setting "pop-limit" in the configuration file or from the command
   line turns off beam-and-threshold pruning, and its use is
-  recommended.
+  recommended.  The default setting is to use a pop-limit of 100.
 
-- Lots of reorganization and pruning
+- Multiple language model support
 
-  - removed discriminative code
+  You can now specify an arbitrary number of language models.  See the
+  documentation in
+
+    $JOSHUA/scripts/training/templates/mert/joshua.config 
+
+  for information on how to do this.  You can also specify multiple
+  --lmfile flags to the pipeline.pl script.
+
+- Multiple optimizer + test runs (--optimizer-runs N), averaging the
+  results at the end (Clark et al., ACL 2011)
+
+- Added support for BerkeleyLM (Pauls and Klein, ACL 2011)
+
+- Support for lattice decoding (thanks to Lane Schwartz and the
+  miniSCALE 2012 team)
+
+- Pipeline script:
+
+  - Removed all external dependencies (e.g., Moses, SRILM)
+
+  - Reorganized the training data
+
+  - Permit multiple test runs with subsequent --test FILE --name NAME
+    calls to the pipeline
+
+  - GIZA++ runs are parallelized if more than one thread is permitted
+    (--threads N, N >=2 )
+
+  - Numerous bugfixes
+
+  - Hadoop cluster rollout is now a single instance (slower but
+    doesn't require error-prone server setup)
+
+- Parameters
+
+  - Joshua now dies if it encounters unknown parameters on the command
+    line or config file
+
+  - Parameters are now normalized to remove hyphens (-) and
+    underscores (_) and to flatten case, permitting you to specify any
+    of, for example, {pop-limit, popLimit, pop_limit, ...}
+
+- Lots of reorganization and purging of old code
 
 
-3.1 (stable, "master" branch)
+3.1 
 =============================
 
 - Fixed multithreading.  Use -threads N from the command line or

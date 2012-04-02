@@ -125,7 +125,7 @@ public class JoshuaConfiguration {
 	public static boolean mark_oovs = true;
 	
 	// used to extract oracle hypotheses from the forest
-	public static String oracleFile = "";
+	public static String oracleFile = null;
 	
 	private static final Logger logger =
 		Logger.getLogger(JoshuaConfiguration.class.getName());
