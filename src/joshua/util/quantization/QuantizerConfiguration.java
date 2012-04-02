@@ -49,7 +49,7 @@ public class QuantizerConfiguration {
 			q.finalize();
 	}
 	
-	public Quantizer get(int feature_id) {
+	public final Quantizer get(int feature_id) {
 		Integer index = quantizerByFeatureId.get(feature_id);
 		return (index != null ? quantizers.get(index) : DEFAULT);
 	}
@@ -76,7 +76,7 @@ public class QuantizerConfiguration {
 			int quantizer_index = in_stream.readInt();
 			if (quantizer_index >= num_quantizers) {
 				throw new RuntimeException("Error deserializing QuanitzerConfig. " +
-						"Feature " + feature_name + " referrint to quantizer " + 
+						"Feature " + feature_name + " referring to quantizer " + 
 						quantizer_index + " when only " + num_quantizers + " known.");
 			}
 			this.quantizerByFeatureId.put(feature_id, quantizer_index);

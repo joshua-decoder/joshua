@@ -4,11 +4,11 @@ import java.nio.ByteBuffer;
 
 public class FloatQuantizer extends StatelessQuantizer {
 	
-	public float read(ByteBuffer stream, int position) {
+	public final float read(ByteBuffer stream, int position) {
 		return stream.getFloat(position + 4);
 	}
 
-	public void write(ByteBuffer stream, float value) {
+	public final void write(ByteBuffer stream, float value) {
 		stream.putFloat(value);
 	}
 
@@ -17,7 +17,7 @@ public class FloatQuantizer extends StatelessQuantizer {
 		return "float";
 	}
 	
-	public int size() {
+	public final int size() {
 		return 4;
 	}
 }

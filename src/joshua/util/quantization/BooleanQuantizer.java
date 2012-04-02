@@ -10,11 +10,11 @@ import java.nio.ByteBuffer;
  */
 public class BooleanQuantizer extends StatelessQuantizer {
 
-	public float read(ByteBuffer stream, int position) {
+	public final float read(ByteBuffer stream, int position) {
 		return 1.0f;
 	}
 
-	public void write(ByteBuffer stream, float value) {
+	public final void write(ByteBuffer stream, float value) {
 	}
 
 	@Override
@@ -22,7 +22,7 @@ public class BooleanQuantizer extends StatelessQuantizer {
 		return "boolean";
 	}
 	
-	public int size() {
+	public final int size() {
 		return 0;
 	}
 }

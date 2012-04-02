@@ -4,11 +4,11 @@ import java.nio.ByteBuffer;
 
 public class ShortQuantizer extends StatelessQuantizer {
 
-	public float read(ByteBuffer stream, int position) {
+	public final float read(ByteBuffer stream, int position) {
 		return (float) stream.getShort(position + 4);
 	}
 
-	public void write(ByteBuffer stream, float value) {
+	public final void write(ByteBuffer stream, float value) {
 		stream.putShort((short) value);
 	}
 	
@@ -17,7 +17,7 @@ public class ShortQuantizer extends StatelessQuantizer {
 		return "short";
 	}
 	
-	public int size() {
+	public final int size() {
 		return 2;
 	}
 }

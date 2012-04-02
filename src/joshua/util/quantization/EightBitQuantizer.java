@@ -94,12 +94,12 @@ public class EightBitQuantizer implements Quantizer {
 			buckets[index++] = (float) sum / count;
 	}
 
-	public float read(ByteBuffer stream, int position) {
+	public final float read(ByteBuffer stream, int position) {
 		byte index = stream.get(position + 4);
 		return buckets[index + 128];
 	}
 
-	public void write(ByteBuffer stream, float value) {
+	public final void write(ByteBuffer stream, float value) {
 		byte index = -128;
 
 		// We search for the bucket best matching the value. Only zeroes will be
@@ -135,7 +135,7 @@ public class EightBitQuantizer implements Quantizer {
 			buckets[i] = in.readFloat();
 	}
 	
-	public int size() {
+	public final int size() {
 		return 1;
 	}
 	
