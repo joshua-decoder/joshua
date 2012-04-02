@@ -585,8 +585,8 @@ public class Chart {
 	
 	
 	private void completeCell(int i, int j, DotNode dotNode, List<Rule> sortedRules, int arity, SourcePath srcPath) {
-		
-		logger.finest("\n\n CELL (" + i + ", " + j + ")");
+		if (logger.isLoggable(Level.FINEST))
+			logger.finest("\n\n CELL (" + i + ", " + j + ")");
 			
 		if (manualConstraintsHandler.containHardRuleConstraint(i, j)) {
 			logger.fine("Hard rule constraint for span " + i +", " + j);
@@ -611,17 +611,18 @@ public class Chart {
 				if (r.getLHS() == goalSymbolID || labels.contains(r.getLHS()))
 					filteredRules.add(r);
 		} else {
-			// combinations: rules, antecent items
+			// combinations: rules, antecedent items
 			filteredRules =  manualConstraintsHandler.filterRules(i,j, sortedRules);
 		}
 		
-		for (Rule r : filteredRules)
-			logger.finest(r.toString() + " num_feats: " + r.getFeatureScores().length);
+		if (logger.isLoggable(Level.FINEST))
+			for (Rule r : filteredRules)
+				logger.finest(r.toString() + " num_feats: " 
+						+ r.getFeatureScores().length);
 		
 		if (arity==0)
 			combiner.addAxioms(this, this.cells[i][j], i, j, filteredRules, srcPath);
 		else
-			//this.cells[i][j].completeCell(i, j, dt.l_ant_super_items, filterRules(i,j,rb.getSortedRules()), rb.getArity(), srcPath);
 			combiner.combine(this, this.cells[i][j], i, j,  dotNode.getAntSuperNodes(), filteredRules, arity, srcPath);
 	} 
 }
