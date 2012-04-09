@@ -272,10 +272,10 @@ public class DecoderThread extends Thread {
                 if (logger.isLoggable(Level.INFO))
                     logger.info("Automatically producing file " + tmFile);
 
-                TestSetFilter.filterGrammarToFile(JoshuaConfiguration.tm_file,
-                                                  sentence.sentence(),
-                                                  tmFile,
-                                                  true);
+                new TestSetFilter().filterGrammarToFile(JoshuaConfiguration.tm_file,
+                    sentence.sentence(),
+                    tmFile,
+                    true);
             } else {
                 if (logger.isLoggable(Level.INFO))
                     logger.info("Using existing sentence-specific tm file " + tmFile);
