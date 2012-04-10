@@ -209,7 +209,7 @@ public class DecoderThread extends Thread {
 	/**
 	 * Translate a sentence.
 	 *
-	 * @param segment The sentence to be translated.
+	 * @param sentence The sentence to be translated.
 	 * @param oracleSentence
 	 */
 	public HyperGraph translate(Sentence sentence, String oracleSentence)
