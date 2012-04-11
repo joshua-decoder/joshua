@@ -69,6 +69,7 @@ public abstract class EvaluationMetric
       // the "WER" metric expects an options array of length 0
     metricOptionCount.put("MRC_BLEU",4);
     metricOptionCount.put("COMP_BLEU",5);
+    metricOptionCount.put("GL_BLEU",3);
   }
 
   public static EvaluationMetric getMetric(String metricName, String[] metricOptions)
@@ -95,8 +96,9 @@ public abstract class EvaluationMetric
       retMetric = new MinimumRequiredChangeBLEU(metricOptions);   // the "MRC_BLEU" metric corresponds to the ParaphraseBLEU class
     } else if (metricName.equals("COMP_BLEU")) {
     	retMetric = new CompressionBLEU(metricOptions);   // the "COMP_BLEU" metric corresponds to the CompressionBLEU class
+    } else if (metricName.equals("GL_BLEU")) {
+    	retMetric = new GradeLevelBLEU(metricOptions);   // the "GL_BLEU" metric corresponds to the GradeLevelBLEU class
     }
-
     return retMetric;
   }
 
