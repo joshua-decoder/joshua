@@ -70,19 +70,19 @@ public class GrammarBuilderWalkerFunction implements WalkerFunction
 	 * this length, then the IDs for labeled spans aren't guaranteed to
 	 * be unique.
 	 */
-	private static final int MAX_SENTENCE_LENGTH = 256;
+	private static final int MAX_SENTENCE_LENGTH = 64;
+	public static final int MAX_NTS = 500000;
     private static int getLabelWithSpan(HGNode node)
     {
-		return (node.lhs * MAX_SENTENCE_LENGTH - node.i) * MAX_SENTENCE_LENGTH - node.j;
+		int x = node.i * MAX_SENTENCE_LENGTH;
+		x = (x + node.j) * MAX_NTS;
+		x = node.lhs - x;
+		if (x > 0) {
+			System.err.println("WARNING: integer overflow in node label!");
+			System.err.printf("lhs = %d, i = %d, j = %d, result = %d\n", node.lhs, node.i, node.j, x);
+		}
+		return x;
     }
-
-	public static int getLabelID(int id)
-	{
-		int j = id % MAX_SENTENCE_LENGTH;
-		id = (id - j) / MAX_SENTENCE_LENGTH;
-		int i = id % MAX_SENTENCE_LENGTH;
-		return (id - i) / MAX_SENTENCE_LENGTH;
-	}
 
 	private static String getLabelWithSpanAsString(HGNode node)
 	{
@@ -183,6 +183,8 @@ public class GrammarBuilderWalkerFunction implements WalkerFunction
         if (symbolNode == null)
             return -1;
 //        System.err.printf("goalSymbol: %s\n", result);
+//		System.err.printf("symbol node LHS is %d\n", symbolNode.lhs);
+//		System.err.printf("i = %d, j = %d\n", symbolNode.i, symbolNode.j);
         return getLabelWithSpan(symbolNode);
     }
 
