@@ -17,11 +17,8 @@
  */
 package joshua.decoder.hypergraph;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import joshua.corpus.Vocabulary;
-import joshua.decoder.ff.tm.Rule;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author Matt Post <post@cs.jhu.edu>
@@ -32,8 +29,25 @@ import joshua.decoder.ff.tm.Rule;
  * preorder traversal, applying the WalkerFunction to each node.  It
  * would be easy to add other traversals if the demand arose.
  */
-class ForestWalker {
-    public static void walk(HGNode node, WalkerFunction walker) {
+public class ForestWalker {
+
+	private Set<HGNode> visitedNodes;
+//	private int numVisited;
+
+	public ForestWalker()
+	{
+		visitedNodes = new HashSet<HGNode>();
+//		numVisited = 0;
+	}
+
+    public void walk(HGNode node, WalkerFunction walker) {
+		// short circuit
+		if (visitedNodes.contains(node))
+			return;
+		visitedNodes.add(node);
+//		numVisited++;
+//		if (numVisited % 1000 == 0)
+//			System.err.printf(" * Visited %d nodes\n", numVisited);
         // apply the function
         walker.apply(node);
 

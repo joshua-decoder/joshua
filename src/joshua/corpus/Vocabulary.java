@@ -36,6 +36,8 @@ import joshua.decoder.ff.lm.NGramLanguageModel;
 import joshua.util.FormatUtils;
 import joshua.util.MurmurHash;
 
+import joshua.decoder.hypergraph.GrammarBuilderWalkerFunction;
+
 /**
  * Static singular vocabulary class. Supports vocabulary freezing and
  * (de-)serialization into a vocabulary file.
@@ -200,8 +202,9 @@ public class Vocabulary {
 	public static String word(int id) {
 		synchronized (lock) {
 			id = Math.abs(id);
-			if (id >= idToString.size())
+			if (id >= idToString.size()) {
 				throw new UnknownSymbolException(id);
+			}
 			return idToString.get(id);
 		}
 	}

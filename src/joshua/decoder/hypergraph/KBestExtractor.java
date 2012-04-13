@@ -647,7 +647,16 @@ public class KBestExtractor {
 			} else {
 				if (useTreeFormat) {
 					res.append('(');
-					res.append(rl.getLHS());
+					int lhs = rl.getLHS();
+					if (lhs > 0) {
+						System.err.printf("k-best: WARNING: rule LHS is greater than 0: %d\n", lhs);
+					}
+					if (JoshuaConfiguration.parse) {
+						// hack to fix output labels in synchronous parsing
+						int max = GrammarBuilderWalkerFunction.MAX_NTS;
+						lhs = (lhs % max);
+					}
+					res.append(lhs);
 					if (includeAlign) {
 						// append "{i-j}"
 						res.append('{');
