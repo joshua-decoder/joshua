@@ -32,12 +32,12 @@ import java.util.Set;
 public class ForestWalker {
 
 	private Set<HGNode> visitedNodes;
-	private int numVisited;
+//	private int numVisited;
 
 	public ForestWalker()
 	{
 		visitedNodes = new HashSet<HGNode>();
-		numVisited = 0;
+//		numVisited = 0;
 	}
 
     public void walk(HGNode node, WalkerFunction walker) {
@@ -45,9 +45,9 @@ public class ForestWalker {
 		if (visitedNodes.contains(node))
 			return;
 		visitedNodes.add(node);
-		numVisited++;
-		if (numVisited % 1000 == 0)
-			System.err.printf(" * Visited %d nodes\n", numVisited);
+//		numVisited++;
+//		if (numVisited % 1000 == 0)
+//			System.err.printf(" * Visited %d nodes\n", numVisited);
         // apply the function
         walker.apply(node);
 
