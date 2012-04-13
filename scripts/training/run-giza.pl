@@ -15,7 +15,7 @@ my $SYMAL = "$JOSHUA/scripts/training/symal/symal";
 my $GIZA2BAL = "$JOSHUA/scripts/training/symal/giza2bal.pl";
 
 my ($_F,$_E,$_ROOT_DIR,$_CORPUS,$_PARALLEL);
-my ($_HMM_ALIGN,$_FINAL_ALIGNMENT_MODEL,$_GIZA_EXTENSION,$_DICTIONARY,$_MGIZA,$_MGIZA_CPUS,$_GIZA_E2F,$_GIZA_F2E,$_GIZA_OPTION,$_ONLY_PRINT_GIZA);
+my ($_HMM_ALIGN,$_FINAL_ALIGNMENT_MODEL,$_GIZA_EXTENSION,$_DICTIONARY,$_MGIZA,$_MGIZA_CPUS,$_GIZA_E2F,$_GIZA_F2E,$_GIZA_OPTION,$_ONLY_PRINT_GIZA,$_ALIGNMENT);
 
 my $BINDIR = "$JOSHUA/bin";
 
@@ -26,6 +26,7 @@ my $retval = GetOptions(
   "corpus=s"      => \$_CORPUS,
   "parallel!"     => \$_PARALLEL,
   "bindir=s"      => \$BINDIR,
+  "merge=s"   => \$_ALIGNMENT,  # union, {intersect, grow, srctotgt, tgttosrc}-{diag,final,final-and}, default "grow-diag-final"
 	);
 
 if (! $retval) {
@@ -91,6 +92,7 @@ $___GIZA_OPTION = $_GIZA_OPTION if $_GIZA_OPTION;
 
 # alignment heuristic
 my $___ALIGNMENT = "grow-diag-final";
+$___ALIGNMENT = $_ALIGNMENT if $_ALIGNMENT;
 my $___NOTE_ALIGNMENT_DROPS = 1;
 
 my $___LEXICAL_WEIGHTING = 1;

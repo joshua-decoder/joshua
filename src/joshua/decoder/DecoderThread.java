@@ -166,11 +166,10 @@ public class DecoderThread extends Thread {
                 HyperGraphViewer.visualizeHypergraphInFrame(hypergraph);
             }
 		
-            String oracleSentence = inputHandler.oracleSentence();
-
-            if (oracleSentence != null) {
+			String oracleSentence = inputHandler.oracleSentence(sentence.id());
+            if (! sentence.isEmpty() && oracleSentence != null) {
                 OracleExtractor extractor = new OracleExtractor();
-                HyperGraph oracle = extractor.getOracle(hypergraph, 3, oracleSentence);
+                HyperGraph oracle = extractor.getOracle(hypergraph, JoshuaConfiguration.lm_order, oracleSentence);
 			
                 translation = new Translation(sentence, oracle, featureFunctions);
 
@@ -209,7 +208,7 @@ public class DecoderThread extends Thread {
 	/**
 	 * Translate a sentence.
 	 *
-	 * @param segment The sentence to be translated.
+	 * @param sentence The sentence to be translated.
 	 * @param oracleSentence
 	 */
 	public HyperGraph translate(Sentence sentence, String oracleSentence)
@@ -272,10 +271,10 @@ public class DecoderThread extends Thread {
                 if (logger.isLoggable(Level.INFO))
                     logger.info("Automatically producing file " + tmFile);
 
-                TestSetFilter.filterGrammarToFile(JoshuaConfiguration.tm_file,
-                                                  sentence.sentence(),
-                                                  tmFile,
-                                                  true);
+                new TestSetFilter().filterGrammarToFile(JoshuaConfiguration.tm_file,
+                    sentence.sentence(),
+                    tmFile,
+                    true);
             } else {
                 if (logger.isLoggable(Level.INFO))
                     logger.info("Using existing sentence-specific tm file " + tmFile);

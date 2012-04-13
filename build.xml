@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!-- Build file for Joshua. Last changed: $LastChangedDate$ -->
-<project name="Joshua Machine Translation Toolkit" default="compile" basedir=".">
+<project name="Joshua Machine Translation Toolkit" default="compile" basedir="." xmlns:doxygen="antlib:org.doxygen.tools">
 	
 <!-- ~~~~~ Properties, Paths, etc ~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 	
@@ -11,7 +11,7 @@
 	<property name="build"  value="./bin" />
 	<property name="lib"    value="./lib" />
 	<property name="thraxlib"  value="./thrax/bin" />
-	<property name="doc"    value="./javadoc" />
+	<property name="doc"    value="./doc" />
 	<property name="pmd"    value="./pmd" />
 	<property name="pmdOUT" value="${pmd}-output" />
 	
@@ -121,9 +121,10 @@
 	    <arg value="update" />
 	  </exec>
 	  <subant buildpath="thrax">
-		<property name="env.HADOOP" value="../lib/" />
+		<property name="env.HADOOP" value="${env.JOSHUA}/${lib}" />
 		<property name="env.HADOOP_VERSION" value="0.20.203.0" />
-		<property name="env.AWS_SDK" value="../lib/" />
+		<property name="env.AWS_SDK" value="${env.JOSHUA}" />
+		<property name="env.AWS_VERSION" value="1.1.3" />
 	  </subant>
 	</target>
 
@@ -232,8 +233,11 @@
 		<delete verbose="true" quiet="true" includeEmptyDirs="true">
 			<fileset dir="${test}-output" />
 		</delete>
+
 		<delete verbose="true" quiet="true" includeEmptyDirs="true">
-			<fileset dir="${doc}" />
+			<fileset dir="${doc}" includes="**/*.tmp"/>
+			<fileset dir="${doc}/html"/>
+			<fileset dir="${doc}/latex"/>
 		</delete>
 		
 		<delete verbose="true" quiet="true" file="joshua-fb.xml" />
@@ -265,6 +269,16 @@
 		</javadoc>
 	</target>
 	
+<!-- ~~~~~ Doxygen ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+	<taskdef uri="antlib:org.doxygen.tools"
+		resource="org/doxygen/tools/antlib.xml"
+		classpath="${lib}/ant_doxygen.jar"/>
+
+	<!-- Compile the Javadocs and Markdown documentation into web pages -->
+	<target name="documentation">
+		<doxygen:doxygen configFilename="${doc}/Doxyfile" versionCompatible="1.8.0+" />
+	</target>
 
 <!-- ~~~~~ Tests ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
