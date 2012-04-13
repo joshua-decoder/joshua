@@ -408,6 +408,7 @@ public class JoshuaConfiguration {
 					
 				} else if (parameter.equals(normalize_key("oracleFile"))) {
 					oracleFile = fds[1].trim();
+					logger.info(String.format("oracle file: %s", oracleFile));
 					if (! new File(oracleFile).exists()) {
 						logger.warning("FATAL: can't find oracle file '" + oracleFile + "'");
 						System.exit(1);

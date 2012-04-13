@@ -541,6 +541,8 @@ public class JoshuaDecoder {
                 }
             }
 
+			oracleFile = JoshuaConfiguration.oracleFile;
+
         } else {
 
             configFile  = args[0].trim();

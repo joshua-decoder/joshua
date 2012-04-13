@@ -166,11 +166,10 @@ public class DecoderThread extends Thread {
                 HyperGraphViewer.visualizeHypergraphInFrame(hypergraph);
             }
 		
-            String oracleSentence = inputHandler.oracleSentence();
-
-            if (oracleSentence != null) {
+			String oracleSentence = inputHandler.oracleSentence(sentence.id());
+            if (! sentence.isEmpty() && oracleSentence != null) {
                 OracleExtractor extractor = new OracleExtractor();
-                HyperGraph oracle = extractor.getOracle(hypergraph, 3, oracleSentence);
+                HyperGraph oracle = extractor.getOracle(hypergraph, JoshuaConfiguration.lm_order, oracleSentence);
 			
                 translation = new Translation(sentence, oracle, featureFunctions);
 

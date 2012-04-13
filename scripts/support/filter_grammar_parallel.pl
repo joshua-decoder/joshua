@@ -22,18 +22,13 @@ my $JOSHUA = $ENV{JOSHUA};
 
 my $script = "$JOSHUA/scripts/support/filtering_script.sh";
 
-my $proc_id = $$;
-my $hostname = `hostname`;
-chomp($hostname);
-my $tmp_dir = "tmpdir.$hostname.$proc_id";
-
 
 if(@ARGV == 0)
 {
-    die "Usage: $0 --corpus=<corpus> --grammar=<grammar file> --n=<number of pieces> --output_grammar=<output grammar file> --lines=<number of lines of grammar> --fast --ngrams=<maximum n n-gram to compare to\n";
+    die "Usage: $0 --corpus=<corpus> --grammar=<grammar file> --n=<number of pieces> --output_grammar=<output grammar file> --lines=<number of lines of grammar> --fast --ngrams=<maximum n n-gram to compare to> --tmpdir=<tmpdir>\n";
 }
 
-my ($corpus, $grammar_file, $num_pieces, $output_grammar, $num_lines, $fast, $ngrams) = ("","",0,"",0,0,12);
+my ($corpus, $grammar_file, $num_pieces, $output_grammar, $num_lines, $fast, $ngrams, $tmp_dir) = ("","",0,"",0,0,12,"");
 
 my $retval = GetOptions(
     "grammar=s"         => \$grammar_file,
@@ -43,6 +38,7 @@ my $retval = GetOptions(
     "lines=s"       => \$num_lines,
     "fast!"      => \$fast,
     "ngrams=i"   => \$ngrams,
+    "tmpdir=s"   => \$tmp_dir,
 );
 
 if (! $retval) {
@@ -50,11 +46,19 @@ if (! $retval) {
     exit 1;
 }
 
+if (! defined $tmp_dir) {
+  my $proc_id = $$;
+  my $hostname = `hostname`;
+  chomp($hostname);
+  $tmp_dir = "tmpdir.$hostname.$proc_id";
+}
+
 print STDERR "Grammar file: $grammar_file\n";
 print STDERR "Number of pieces: $num_pieces\n";
 print STDERR "Output grammar: $output_grammar\n";
 print STDERR "Corpus: $corpus\n";
 print STDERR "Number of lines in grammar: $num_lines\n" if($num_lines > 0);
+print STDERR "Temporary work directory: $tmp_dir\n";
 
 if($num_lines == 0)
 {
@@ -77,7 +81,7 @@ if($num_lines_per_piece != int($num_lines_per_piece))
     $num_lines_per_piece = int($num_lines_per_piece+1);
 }
 
-mkdir $tmp_dir;
+mkdir $tmp_dir unless -d $tmp_dir;
 
 my $grammar_basename = basename($grammar_file);
 
@@ -108,7 +112,7 @@ foreach my $i (1..$num_pieces)
     
     &submit_job($script, $logfile, "$grammar_piece.gz", $corpus, $filtered_grammar_piece);
     
-    last if($lines_remaining == 0);
+    last if ($lines_remaining == 0);
 }
 
 $num_pieces = $actual_num_pieces;
@@ -136,7 +140,7 @@ while($num_finished < $num_pieces)
             $num_finished++;
         }
     }
-    sleep(10);
+    sleep(1);
 }
 
 print STDERR "Grid jobs are done -- merging the filtered files\n";
@@ -168,6 +172,11 @@ sub submit_job
     my ($script, $logfile, $grammar_piece, $corpus, $filtered_grammar_piece) = @_;
 
     unlink($logfile);
-    system("qsub -cwd -j y -o $logfile -v JOSHUA=$JOSHUA $script $grammar_piece $corpus $filtered_grammar_piece $fast $ngrams");
+
+    my $cmdfile = $logfile;
+	$cmdfile =~ s/log/cmd/;
+	my $cmd = "qsub -cwd -j y -o $logfile -v JOSHUA=$JOSHUA $script $grammar_piece $corpus $filtered_grammar_piece $fast $ngrams";
+	system("echo $cmd >> $cmdfile");
+    system($cmd);
 }
 

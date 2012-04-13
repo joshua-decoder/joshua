@@ -73,6 +73,7 @@ public class InputHandler implements Iterator<Sentence> {
 
     List<Sentence>    issued;
     List<Translation> completed;
+    List<String>      oracles;
     int lastCompletedId = -1;
 
     InputHandler(String corpusFile, String oracleFile) {
@@ -102,6 +103,7 @@ public class InputHandler implements Iterator<Sentence> {
         this.lineReader = new BufferedReader(new InputStreamReader(inputStream, FILE_ENCODING));
 
         if (oracleFile != null) {
+			oracles = new ArrayList<String>();
             try {
                 this.oracleReader = new BufferedReader(new InputStreamReader(new FileInputStream(oracleFile), FILE_ENCODING));
                 System.err.println("Loading oracle file '" + oracleFile + "'");
@@ -109,7 +111,9 @@ public class InputHandler implements Iterator<Sentence> {
                 System.err.println("Can't find oracle file '" + oracleFile + "'");
                 System.exit(1);
             }
-        }
+        } else {
+			System.err.println("oracle file is null");
+		}
 
         prepareNextLine();
     }
@@ -141,7 +145,7 @@ public class InputHandler implements Iterator<Sentence> {
 
             // oracle sentence
             if (this.oracleReader != null) {
-                nextOracleSentence = oracleReader.readLine();
+				oracles.add(oracleReader.readLine());
             }
 
 		} catch (IOException e) {
@@ -206,7 +210,10 @@ public class InputHandler implements Iterator<Sentence> {
      * When the ability to handle oracle sentences is added back in,
      * this function should return the parallel oracle sentence.
      */
-    public String oracleSentence() {
-        return nextOracleSentence;
+    public String oracleSentence(int id) {
+		if (oracles != null)
+			return oracles.get(id);
+
+		return null;
     }
 }

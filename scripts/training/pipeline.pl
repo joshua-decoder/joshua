@@ -2,20 +2,7 @@
 
 # This script implements the Joshua pipeline.  It can run a complete
 # pipeline --- from raw training corpora to bleu scores on a test set
-# --- and it allows jumping into arbitrary points of the pipeline.  It
-# is modeled on the train-factored-phrase-model.perl from the Moses
-# decoder, but it is built for hierarchical decoding, and handles
-# parameter tuning (via MERT) and test-set decoding, as well.
-#
-# Currently implemented:
-#
-# - decoding with Hiero grammars and SAMT grammars
-
-# - jump to SUBSAMPLE, ALIGN, PARSE, THRAX, MERT, and TEST points
-#   (using --first-step and (optionally) --last-step)
-# - built on top of CachePipe, so that intermediate results are cached
-#   and only re-run if necessary
-# - uses Thrax for grammar extraction
+# --- and it allows jumping into arbitrary points of the pipeline. 
 
 my $JOSHUA;
 
@@ -152,13 +139,18 @@ my %STEPS = map { $STEPS[$_] => $_ + 1 } (0..$#STEPS);
 my $NAME = undef;
 
 # Methods to use for merging alignments (see Koehn et al., 2003).
+# Options are union, {intersect, grow, srctotgt, tgttosrc}-{diag,final,final-and,diag-final,diag-final-and}
 my $GIZA_MERGE = "grow-diag-final";
 
 # Which tuner to use by default
 my $TUNER = "mert";  # or PRO
 
+# location of already-parsed corpus
+my $PARSED_CORPUS = undef;
+
 my $retval = GetOptions(
   "corpus=s" 	 	  => \@CORPORA,
+  "parsed-corpus=s"   => \$PARSED_CORPUS,
   "tune=s"   	 	  => \$TUNE,
   "test=s"            => \$TEST,
   "prepare!"          => \$DO_PREPARE_CORPORA,
@@ -166,7 +158,7 @@ my $retval = GetOptions(
   "name=s"            => \$NAME,
   "aligner=s"         => \$ALIGNER,
   "alignment=s"  	  => \$ALIGNMENT,
-  "alignment-merge=s" => \$GIZA_MERGE,
+  "giza-merge=s"      => \$GIZA_MERGE,
   "aligner-mem=s"     => \$ALIGNER_MEM,
   "source=s"   	 	  => \$SOURCE,
   "target=s"  	 	  => \$TARGET,
@@ -382,6 +374,11 @@ if (@CORPORA) {
   $TRAIN{prefix} = $CORPORA[0];
   $TRAIN{source} = "$CORPORA[0].$SOURCE";
   $TRAIN{target} = "$CORPORA[0].$TARGET";
+}
+
+# set the location of the parsed corpus if that was defined
+if (defined $PARSED_CORPUS) {
+  $TRAIN{parsed} = $PARSED_CORPUS;
 }
 
 if ($TUNE) {
@@ -618,36 +615,44 @@ PARSE:
 
 if ($GRAMMAR_TYPE eq "samt") {
 
-  $cachepipe->cmd("build-vocab",
-				  "cat $TRAIN{target} | $SCRIPTDIR/training/build-vocab.pl > $DATA_DIRS{train}/vocab.$TARGET",
-				  $TRAIN{target},
-				  "$DATA_DIRS{train}/vocab.$TARGET");
-
-  if ($NUM_JOBS > 1) {
-	# the black-box parallelizer model doesn't work with multiple
-	# threads, so we're always spawning single-threaded instances here
-
-	# open PARSE, ">parse.sh" or die;
-	# print PARSE "cat $TRAIN{target} | $JOSHUA/scripts/training/parallelize/parallelize.pl --jobs $NUM_JOBS --qsub-args \"$QSUB_ARGS\" -- java -d64 -Xmx${PARSER_MEM} -jar $JOSHUA/lib/BerkeleyParser.jar -gr $JOSHUA/lib/eng_sm6.gr -nThreads 1 | sed 's/^\(/\(TOP/' | tee $DATA_DIRS{train}/corpus.$TARGET.parsed.mc | perl -pi -e 's/(\\S+)\\)/lc(\$1).\")\"/ge' | tee $DATA_DIRS{train}/corpus.$TARGET.parsed | perl $SCRIPTDIR/training/add-OOVs.pl $DATA_DIRS{train}/vocab.$TARGET > $DATA_DIRS{train}/corpus.parsed.$TARGET\n";
-	# close PARSE;
-	# chmod 0755, "parse.sh";
-	# $cachepipe->cmd("parse",
-	# 				"setsid ./parse.sh",
-	# 				"$TRAIN{target}",
-	# 				"$DATA_DIRS{train}/corpus.parsed.$TARGET");
-
-	$cachepipe->cmd("parse",
-					"$CAT $TRAIN{mixedcase} | $JOSHUA/scripts/training/parallelize/parallelize.pl --jobs $NUM_JOBS --qsub-args \"$QSUB_ARGS\" -p 8g -- java -d64 -Xmx${PARSER_MEM} -jar $JOSHUA/lib/BerkeleyParser.jar -gr $JOSHUA/lib/eng_sm6.gr -nThreads 1 | sed 's/^\(/\(TOP/' | perl $SCRIPTDIR/training/add-OOVs.pl $DATA_DIRS{train}/vocab.$TARGET | tee $DATA_DIRS{train}/corpus.$TARGET.parsed | $SCRIPTDIR/training/lowercase-leaves.pl > $DATA_DIRS{train}/corpus.parsed.$TARGET",
-					"$TRAIN{target}",
-					"$DATA_DIRS{train}/corpus.parsed.$TARGET");
+  # If the user passed in the already-parsed corpus, use that (after copying it into place)
+  if (defined $TRAIN{parsed} && -e $TRAIN{parsed}) {
+	# copy and adjust the location of the file to its canonical location
+	system("cp $TRAIN{parsed} $DATA_DIRS{train}/corpus.parsed.$TARGET");
+	$TRAIN{parsed} = "$DATA_DIRS{train}/corpus.parsed.$TARGET";
   } else {
-	$cachepipe->cmd("parse",
-					"$CAT $TRAIN{mixedcase} | $JOSHUA/scripts/training/parallelize/parallelize.pl --jobs $NUM_THREADS --use-fork -- java -d64 -Xmx${PARSER_MEM} -jar $JOSHUA/lib/BerkeleyParser.jar -gr $JOSHUA/lib/eng_sm6.gr -nThreads 1 | sed 's/^\(/\(TOP/' | perl $SCRIPTDIR/training/add-OOVs.pl $DATA_DIRS{train}/vocab.$TARGET | tee $DATA_DIRS{train}/corpus.$TARGET.parsed | $SCRIPTDIR/training/lowercase-leaves.pl > $DATA_DIRS{train}/corpus.parsed.$TARGET",
-					"$TRAIN{target}",
-					"$DATA_DIRS{train}/corpus.parsed.$TARGET");
-  }
 
-  $TRAIN{parsed} = "$DATA_DIRS{train}/corpus.parsed.$TARGET";
+	$cachepipe->cmd("build-vocab",
+					"cat $TRAIN{target} | $SCRIPTDIR/training/build-vocab.pl > $DATA_DIRS{train}/vocab.$TARGET",
+					$TRAIN{target},
+					"$DATA_DIRS{train}/vocab.$TARGET");
+
+	if ($NUM_JOBS > 1) {
+	  # the black-box parallelizer model doesn't work with multiple
+	  # threads, so we're always spawning single-threaded instances here
+
+	  # open PARSE, ">parse.sh" or die;
+	  # print PARSE "cat $TRAIN{target} | $JOSHUA/scripts/training/parallelize/parallelize.pl --jobs $NUM_JOBS --qsub-args \"$QSUB_ARGS\" -- java -d64 -Xmx${PARSER_MEM} -jar $JOSHUA/lib/BerkeleyParser.jar -gr $JOSHUA/lib/eng_sm6.gr -nThreads 1 | sed 's/^\(/\(TOP/' | tee $DATA_DIRS{train}/corpus.$TARGET.parsed.mc | perl -pi -e 's/(\\S+)\\)/lc(\$1).\")\"/ge' | tee $DATA_DIRS{train}/corpus.$TARGET.parsed | perl $SCRIPTDIR/training/add-OOVs.pl $DATA_DIRS{train}/vocab.$TARGET > $DATA_DIRS{train}/corpus.parsed.$TARGET\n";
+	  # close PARSE;
+	  # chmod 0755, "parse.sh";
+	  # $cachepipe->cmd("parse",
+	  # 				"setsid ./parse.sh",
+	  # 				"$TRAIN{target}",
+	  # 				"$DATA_DIRS{train}/corpus.parsed.$TARGET");
+
+	  $cachepipe->cmd("parse",
+					  "$CAT $TRAIN{mixedcase} | $JOSHUA/scripts/training/parallelize/parallelize.pl --jobs $NUM_JOBS --qsub-args \"$QSUB_ARGS\" -p 8g -- java -d64 -Xmx${PARSER_MEM} -jar $JOSHUA/lib/BerkeleyParser.jar -gr $JOSHUA/lib/eng_sm6.gr -nThreads 1 | sed 's/^\(/\(TOP/' | perl $SCRIPTDIR/training/add-OOVs.pl $DATA_DIRS{train}/vocab.$TARGET | tee $DATA_DIRS{train}/corpus.$TARGET.parsed | $SCRIPTDIR/training/lowercase-leaves.pl > $DATA_DIRS{train}/corpus.parsed.$TARGET",
+					  "$TRAIN{target}",
+					  "$DATA_DIRS{train}/corpus.parsed.$TARGET");
+	} else {
+	  $cachepipe->cmd("parse",
+					  "$CAT $TRAIN{mixedcase} | $JOSHUA/scripts/training/parallelize/parallelize.pl --jobs $NUM_THREADS --use-fork -- java -d64 -Xmx${PARSER_MEM} -jar $JOSHUA/lib/BerkeleyParser.jar -gr $JOSHUA/lib/eng_sm6.gr -nThreads 1 | sed 's/^\(/\(TOP/' | perl $SCRIPTDIR/training/add-OOVs.pl $DATA_DIRS{train}/vocab.$TARGET | tee $DATA_DIRS{train}/corpus.$TARGET.parsed | $SCRIPTDIR/training/lowercase-leaves.pl > $DATA_DIRS{train}/corpus.parsed.$TARGET",
+					  "$TRAIN{target}",
+					  "$DATA_DIRS{train}/corpus.parsed.$TARGET");
+	}
+
+	$TRAIN{parsed} = "$DATA_DIRS{train}/corpus.parsed.$TARGET";
+  }
 }
 
 maybe_quit("PARSE");
@@ -662,12 +667,10 @@ if ($GRAMMAR_TYPE eq "samt") {
 
   # if we jumped right here, $TRAIN{target} should be parsed
   if (exists $TRAIN{parsed}) {
-	# parsing step happened in-script, all is well
+	# parsing step happened in-script or a parsed corpus was passed in explicitly, all is well
 
   } elsif (already_parsed($TRAIN{target})) {
 	# skipped straight to this step, passing a parsed corpus
-
-	mkdir("train") unless -d "train";
 
 	$TRAIN{parsed} = "$DATA_DIRS{train}/corpus.parsed.$TARGET";
 	
@@ -692,10 +695,10 @@ if ($GRAMMAR_TYPE eq "samt") {
 	}
 
   } else {
-
 	print "* FATAL: You requested to build an SAMT grammar, but provided an\n";
 	print "  unparsed corpus.  Please re-run the pipeline and begin no later\n";
-	print "  than the PARSE step (--first-step PARSE)\n";
+	print "  than the PARSE step (--first-step PARSE), or pass in a parsed corpus\n";
+	print "  using --parsed-corpus CORPUS.\n";
 	exit 1;
   }
 		
@@ -709,7 +712,6 @@ if (! defined $ALIGNMENT) {
 }
 
 if (! defined $GRAMMAR_FILE) {
-  mkdir("train") unless -d "train";
 
   if (! -e "grammar.gz") {
 
@@ -717,7 +719,7 @@ if (! defined $GRAMMAR_FILE) {
 	my $target_file = ($GRAMMAR_TYPE eq "hiero") 
 		? $TRAIN{target} : $TRAIN{parsed};
 	$cachepipe->cmd("thrax-input-file",
-					"paste $TRAIN{source} $target_file $ALIGNMENT | perl -pe 's/\\t/ ||| /g' | grep -v '(())' > $DATA_DIRS{train}/thrax-input-file",
+					"paste $TRAIN{source} $target_file $ALIGNMENT | perl -pe 's/\\t/ ||| /g' | grep -v '()' | grep -v '||| \\+\$' > $DATA_DIRS{train}/thrax-input-file",
 					$TRAIN{source}, $target_file, $ALIGNMENT,
 					"$DATA_DIRS{train}/thrax-input-file");
 
