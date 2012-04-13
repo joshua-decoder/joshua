@@ -309,6 +309,10 @@ public class ParserThread extends Thread {
 		HyperGraph hypergraph = chart.expand();
 		long firstParseTime = System.currentTimeMillis();
 		System.err.printf("First-pass parse took %d seconds.\n", (firstParseTime - startTime) / 1000);
+		if (hypergraph == null) {
+			// we couldn't even do the first-pass parse
+			return hypergraph;
+		}
 
         Lattice<Integer> english_lattice = english.intLattice();
         Grammar[] newGrammar = new Grammar[1];
