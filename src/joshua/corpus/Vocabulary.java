@@ -203,12 +203,7 @@ public class Vocabulary {
 		synchronized (lock) {
 			id = Math.abs(id);
 			if (id >= idToString.size()) {
-				// there might be a better way to do this ...
-				// but really the only reason we should have unknown
-				// symbols is from the parsing case.
-				id = GrammarBuilderWalkerFunction.getLabelID(id);
-				if (id >= idToString.size())
-					throw new UnknownSymbolException(id);
+				throw new UnknownSymbolException(id);
 			}
 			return idToString.get(id);
 		}
