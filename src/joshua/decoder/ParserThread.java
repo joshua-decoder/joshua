@@ -167,7 +167,7 @@ public class ParserThread extends Thread {
             HyperGraph hypergraph = parse(sentence, null);
             Translation translation = null;
 
-            String oracleSentence = inputHandler.oracleSentence();
+            String oracleSentence = inputHandler.oracleSentence(sentence.id());
 
             if (oracleSentence != null) {
                 OracleExtractor extractor = new OracleExtractor();
@@ -275,7 +275,7 @@ public class ParserThread extends Thread {
                 if (logger.isLoggable(Level.INFO))
                     logger.info("Automatically producing file " + tmFile);
 
-                TestSetFilter.filterGrammarToFile(JoshuaConfiguration.tm_file,
+                new TestSetFilter().filterGrammarToFile(JoshuaConfiguration.tm_file,
                                                   sentence.sentence(),
                                                   tmFile,
                                                   true);

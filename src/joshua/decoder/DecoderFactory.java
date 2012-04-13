@@ -73,7 +73,7 @@ public class DecoderFactory {
 	public void decodeTestSet(String testFile, String nbestFile, String oracleFile) {
 
         // create the input manager
-        InputHandler inputHandler = new InputHandler(testFile);
+        InputHandler inputHandler = new InputHandler(testFile,oracleFile);
         if (JoshuaConfiguration.parse)
             this.decoderThreads = new ParserThread[JoshuaConfiguration.num_parallel_decoders];
         else
