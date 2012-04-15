@@ -71,6 +71,7 @@ public abstract class EvaluationMetric
     metricOptionCount.put("PRECIS", 6);
     metricOptionCount.put("SRC_BLEU", 4);
     metricOptionCount.put("PRECIS-SRC_BLEU", 6);
+    metricOptionCount.put("GL_BLEU",3);
   }
 
   public static EvaluationMetric getMetric(String metricName, String[] metricOptions)
@@ -101,8 +102,9 @@ public abstract class EvaluationMetric
     	retMetric = new SourceBLEU(metricOptions);
     } else if (metricName.equals("PRECIS-SRC_BLEU")) {
     	retMetric = new PrecisMinusSourceBLEU(metricOptions);
+    } else if (metricName.equals("GL_BLEU")) {
+    	retMetric = new GradeLevelBLEU(metricOptions);   // the "GL_BLEU" metric corresponds to the GradeLevelBLEU class
     }
-
     return retMetric;
   }
 
