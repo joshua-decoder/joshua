@@ -1,37 +1,43 @@
-/* This file is part of the Joshua Machine Translation System.
+/*
+ * This file is part of the Joshua Machine Translation System.
  * 
- * Joshua is free software; you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as
- * published by the Free Software Foundation; either version 2.1
- * of the License, or (at your option) any later version.
- *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Joshua is free software; you can redistribute it and/or modify it under the terms of the GNU
+ * Lesser General Public License as published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ * 
+ * This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
+ * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free
- * Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
- * MA 02111-1307 USA
+ * 
+ * You should have received a copy of the GNU Lesser General Public License along with this library;
+ * if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
+ * 02111-1307 USA
  */
 
 package joshua.zmert;
+
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+
 import joshua.util.FileUtility;
 
-public class ZMERT
-{
-  public static void main(String[] args) throws Exception
-  {
+public class ZMERT {
+  public static void main(String[] args) throws Exception {
     boolean external = false; // should each MERT iteration be launched externally?
 
     if (args.length == 1) {
-      if (args[0].equals("-h")) { printZMERTUsage(args.length,true); System.exit(2); }
-      else { external = false; }
-    } else if (args.length == 3) { external = true; }
-    else { printZMERTUsage(args.length,false); System.exit(1); }
+      if (args[0].equals("-h")) {
+        printZMERTUsage(args.length, true);
+        System.exit(2);
+      } else {
+        external = false;
+      }
+    } else if (args.length == 3) {
+      external = true;
+    } else {
+      printZMERTUsage(args.length, false);
+      System.exit(1);
+    }
 
     if (!external) {
       MertCore myMert = new MertCore(args[0]);
@@ -47,20 +53,28 @@ public class ZMERT
       while (!done) {
         ++iteration;
         Runtime rt = Runtime.getRuntime();
-        Process p = rt.exec("java -Xmx" + maxMem + "m -cp " + cp + " joshua.zmert.MertCore " + configFileName + " " + stateFileName + " " + iteration);
+        Process p =
+            rt.exec("java -Xmx" + maxMem + "m -cp " + cp + " joshua.zmert.MertCore "
+                + configFileName + " " + stateFileName + " " + iteration);
         BufferedReader br_i = new BufferedReader(new InputStreamReader(p.getInputStream()));
         BufferedReader br_e = new BufferedReader(new InputStreamReader(p.getErrorStream()));
         String dummy_line = null;
-        while ((dummy_line = br_i.readLine()) != null) { System.out.println(dummy_line); }
-        while ((dummy_line = br_e.readLine()) != null) { System.out.println(dummy_line); }
+        while ((dummy_line = br_i.readLine()) != null) {
+          System.out.println(dummy_line);
+        }
+        while ((dummy_line = br_e.readLine()) != null) {
+          System.out.println(dummy_line);
+        }
         int status = p.waitFor();
 
-        if (status == 90) { done = true; }
-        else if (status == 91) { done = false; }
-        else { 
-			System.out.println("Z-MERT exiting prematurely (MertCore returned " + status + ")..."); 
-			System.exit(status);
-		}
+        if (status == 90) {
+          done = true;
+        } else if (status == 91) {
+          done = false;
+        } else {
+          System.out.println("Z-MERT exiting prematurely (MertCore returned " + status + ")...");
+          System.exit(status);
+        }
       }
     }
 
@@ -68,8 +82,7 @@ public class ZMERT
 
   } // main(String[] args)
 
-  public static void printZMERTUsage(int argsLen, boolean detailed)
-  {
+  public static void printZMERTUsage(int argsLen, boolean detailed) {
     if (!detailed) {
       println("Oops, you provided " + argsLen + " args!");
       println("");
@@ -115,7 +128,7 @@ public class ZMERT
       println("  -opi oncePerIt: modify a parameter only once per iteration (1) or not (0)\n    [[default: 0]]");
       println("  -rand randInit: choose initial point randomly (1) or from paramsFile (0)\n    [[default: 0]]");
       println("  -seed seed: seed used to initialize random number generator\n    [[default: time (i.e. value returned by System.currentTimeMillis()]]");
-//      println("  -ud useDisk: reliance on disk (0-2; higher value => more reliance)\n    [[default: 2]]");
+      // println("  -ud useDisk: reliance on disk (0-2; higher value => more reliance)\n    [[default: 2]]");
       println("");
       println("Decoder specs:");
       println("  -cmd commandFile: name of file containing commands to run the decoder\n    [[default: null string (i.e. decoder is a JoshuaDecoder object)]]");
@@ -132,6 +145,8 @@ public class ZMERT
     }
   }
 
-  private static void println(Object obj) { System.out.println(obj); }
+  private static void println(Object obj) {
+    System.out.println(obj);
+  }
 
 }
