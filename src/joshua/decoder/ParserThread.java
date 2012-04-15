@@ -20,20 +20,22 @@ package joshua.decoder;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.io.PrintStream;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import joshua.decoder.chart_parser.Chart;
 import joshua.decoder.ff.FeatureFunction;
-import joshua.decoder.ff.SourceDependentFF;
 import joshua.decoder.ff.state_maintenance.StateComputer;
 import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.GrammarFactory;
 import joshua.decoder.ff.tm.hash_based.MemoryBasedBatchGrammar;
 import joshua.decoder.hypergraph.DiskHyperGraph;
 import joshua.decoder.hypergraph.HyperGraph;
+import joshua.decoder.hypergraph.ForestWalker;
+import joshua.decoder.hypergraph.WalkerFunction;
+import joshua.decoder.hypergraph.GrammarBuilderWalkerFunction;
 import joshua.decoder.hypergraph.KBestExtractor;
 import joshua.decoder.segment_file.Sentence;
 import joshua.lattice.Lattice;
@@ -42,7 +44,7 @@ import joshua.ui.hypergraph_visualizer.HyperGraphViewer;
 import edu.jhu.thrax.util.TestSetFilter;
 
 /**
- * This class handles decoding of individual Sentence objects (which
+ * This class handles parsing of individual Sentence objects (which
  * can represent plain sentences or lattices).  A single sentence can
  * be decoded by a call to translate() and, if an InputHandler is
  * used, many sentences can be decoded in a thread-safe manner via a
@@ -52,12 +54,13 @@ import edu.jhu.thrax.util.TestSetFilter;
  *
  * The DecoderFactory class is responsible for launching the threads.
  *
+ * @author Jonny Weese <jonny@cs.jhu.edu>
  * @author Matt Post <post@jhu.edu>
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate: 2010-05-02 11:19:17 -0400 (Sun, 02 May 2010) $
  */
 // BUG: known synchronization problem: LM cache; srilm call;
-public class DecoderThread extends Thread {
+public class ParserThread extends Thread {
 	/* these variables may be the same across all threads (e.g.,
 	 * just copy from DecoderFactory), or differ from thread
 	 * to thread */
@@ -74,31 +77,25 @@ public class DecoderThread extends Thread {
 	
 	
 	private static final Logger logger =
-		Logger.getLogger(DecoderThread.class.getName());
+		Logger.getLogger(ParserThread.class.getName());
 	
 	
 //===============================================================
 // Constructor
 //===============================================================
-	public DecoderThread(
-			List<GrammarFactory>  grammarFactories,
-			List<FeatureFunction> featureFunctions,
-			List<StateComputer> stateComputers,
-			InputHandler inputHandler) throws IOException {
-
+	public ParserThread(
+		List<GrammarFactory>  grammarFactories,
+		List<FeatureFunction> featureFunctions,
+		List<StateComputer> stateComputers,
+		InputHandler inputHandler
+	) throws IOException {
+		
 		this.grammarFactories   = grammarFactories;
+		this.featureFunctions   = featureFunctions;
 		this.stateComputers     = stateComputers;
-		this.inputHandler       = inputHandler;
-
-		this.featureFunctions   = new ArrayList<FeatureFunction>();
-		for (FeatureFunction ff : featureFunctions) {
-			if (ff instanceof SourceDependentFF) {
-				this.featureFunctions.add(((SourceDependentFF) ff).clone());
-			} else {
-				this.featureFunctions.add(ff);
-			}
-		}
-
+		
+        this.inputHandler    = inputHandler;
+		
 		this.kbestExtractor = new KBestExtractor(
 			JoshuaConfiguration.use_unique_nbest,
 			JoshuaConfiguration.use_tree_nbest,
@@ -141,7 +138,7 @@ public class DecoderThread extends Thread {
 	// Overriding of Thread.run() cannot throw anything
 	public void run() {
 		try {
-			this.translateAll();
+			this.parseAll();
 			//this.hypergraphSerializer.closeReaders();
 		} catch (Throwable e) {
 			// if we throw anything (e.g. OutOfMemoryError)
@@ -159,7 +156,7 @@ public class DecoderThread extends Thread {
      * them, registering the results with the InputManager upon
      * completion.
      */
-	public void translateAll() throws IOException {
+	public void parseAll() throws IOException {
 
 		for (;;) {
 
@@ -167,17 +164,14 @@ public class DecoderThread extends Thread {
 			if (sentence == null)
 				break;
 
-            HyperGraph hypergraph = translate(sentence, null);
+            HyperGraph hypergraph = parse(sentence, null);
             Translation translation = null;
 
-            if (JoshuaConfiguration.visualize_hypergraph) {
-                HyperGraphViewer.visualizeHypergraphInFrame(hypergraph);
-            }
-		
-			String oracleSentence = inputHandler.oracleSentence(sentence.id());
-            if (! sentence.isEmpty() && oracleSentence != null) {
+            String oracleSentence = inputHandler.oracleSentence(sentence.id());
+
+            if (oracleSentence != null) {
                 OracleExtractor extractor = new OracleExtractor();
-                HyperGraph oracle = extractor.getOracle(hypergraph, JoshuaConfiguration.lm_order, oracleSentence);
+                HyperGraph oracle = extractor.getOracle(hypergraph, 3, oracleSentence);
 			
                 translation = new Translation(sentence, oracle, featureFunctions);
 
@@ -214,28 +208,30 @@ public class DecoderThread extends Thread {
 
 	
 	/**
-	 * Translate a sentence.
+	 * Parse a sentence.
 	 *
-	 * @param sentence The sentence to be translated.
+	 * @param segment The sentence to be parsed.
 	 * @param oracleSentence
 	 */
-	public HyperGraph translate(Sentence sentence, String oracleSentence)
+	public HyperGraph parse(Sentence sentence, String oracleSentence)
 	throws IOException {
 
-		logger.info("Translating sentence #" + sentence.id() + " [thread " + getId() + "]\n" + sentence.sentence());
-
-		if (sentence.isEmpty())
-			return null;
+		logger.info("Parsing sentence pair #" + sentence.id() + " [thread " + getId() + "]\n" + sentence.sentence());
 
 		long startTime = System.currentTimeMillis();
-
-		// skip blank sentences
-		if (sentence.sentence().matches("^\\s*$")) {
-			logger.info("translation of sentence " + sentence.id() + " took 0 seconds [" + getId() + "]");
-			return null;
-		}
 		
-        Lattice<Integer> input_lattice = sentence.intLattice();
+		Chart chart; 
+
+                String [] sentencePair = sentence.sentence().split("\\|\\|\\|");
+                int sentenceId = sentence.id();
+				for (int i = 0; i < sentencePair.length; i++)
+					sentencePair[i] = sentencePair[i].trim();
+                System.err.printf("FOREIGN: ``%s''\n", sentencePair[0]);
+                System.err.printf("ENGLISH: ``%s''\n", sentencePair[1]);
+                Sentence foreign = new Sentence(sentencePair[0], sentenceId);
+                Sentence english = new Sentence(sentencePair[1], sentenceId);
+		
+        Lattice<Integer> input_lattice = foreign.intLattice();
 
         int numGrammars = (JoshuaConfiguration.use_sent_specific_tm)
             ? grammarFactories.size() + 1
@@ -243,8 +239,8 @@ public class DecoderThread extends Thread {
 
         Grammar[] grammars = new Grammar[numGrammars];
 
-        for (int i = 0; i < grammarFactories.size(); i++)
-            grammars[i] = grammarFactories.get(i).getGrammarForSentence(sentence);
+        for (int i = 0; i< grammarFactories.size(); i++)
+            grammars[i] = grammarFactories.get(i).getGrammarForSentence(foreign);
 
         // load the sentence-specific grammar
         boolean alreadyExisted = true; // whether it already existed
@@ -280,9 +276,9 @@ public class DecoderThread extends Thread {
                     logger.info("Automatically producing file " + tmFile);
 
                 new TestSetFilter().filterGrammarToFile(JoshuaConfiguration.tm_file,
-                    sentence.sentence(),
-                    tmFile,
-                    true);
+                                                  sentence.sentence(),
+                                                  tmFile,
+                                                  true);
             } else {
                 if (logger.isLoggable(Level.INFO))
                     logger.info("Using existing sentence-specific tm file " + tmFile);
@@ -302,7 +298,7 @@ public class DecoderThread extends Thread {
         }
 
         /* Seeding: the chart only sees the grammars, not the factories */
-        Chart chart = new Chart(sentence,
+        chart = new Chart(foreign,
             this.featureFunctions,
             this.stateComputers,
             grammars,
@@ -311,10 +307,49 @@ public class DecoderThread extends Thread {
 		
 		/* Parsing */
 		HyperGraph hypergraph = chart.expand();
+		long firstParseTime = System.currentTimeMillis();
+		System.err.printf("First-pass parse took %d seconds.\n", (firstParseTime - startTime) / 1000);
+		if (hypergraph == null) {
+			// we couldn't even do the first-pass parse
+			return hypergraph;
+		}
 
-		long seconds = (System.currentTimeMillis() - startTime) / 1000;
-		logger.info("translation of sentence " + sentence.id() + " took " + seconds + " seconds [" + getId() + "]");
+        Lattice<Integer> english_lattice = english.intLattice();
+        Grammar[] newGrammar = new Grammar[1];
+        newGrammar[0] = getGrammarFromHyperGraph(JoshuaConfiguration.goal_symbol, hypergraph);
+		long traversalTime = System.currentTimeMillis();
+		System.err.printf("Hypergraph traversal completed (%d seconds).\n", (traversalTime - firstParseTime) / 1000);
+        newGrammar[0].sortGrammar(this.featureFunctions);
+		long sortTime = System.currentTimeMillis();
+		System.err.printf("Grammar sort completed (%d seconds).\n", (sortTime - traversalTime) / 1000);
+		int numRules = newGrammar[0].getNumRules();
+		System.err.printf("New grammar has %d rules.\n", numRules);
+		System.err.println("Expanding second chart.\n");
+        chart = new Chart(english,
+                          this.featureFunctions,
+                          this.stateComputers,
+                          newGrammar,
+                          false,
+                          "GOAL");
+		int goalSymbol = GrammarBuilderWalkerFunction.goalSymbol(hypergraph);
+		System.err.printf("goal symbol is %d.\n", goalSymbol);
+		chart.setGoalSymbolID(goalSymbol);
+        /* Parsing */
+        HyperGraph englishParse = chart.expand();
+		long secondParseTime = System.currentTimeMillis();
+		System.err.printf("Finished second chart expansion (%d seconds).\n", (secondParseTime - sortTime) / 1000);
+		System.err.printf("Total time: %d seconds.\n", (secondParseTime - startTime) / 1000);
 
-        return hypergraph;
+        return englishParse; // or do something else
 	}
+
+        private static Grammar getGrammarFromHyperGraph(String goal, HyperGraph hg) throws IOException
+        {
+			// PrintStream out = new PrintStream(new File("hg.grammar"));
+            GrammarBuilderWalkerFunction f = new GrammarBuilderWalkerFunction(goal);
+			ForestWalker walker = new ForestWalker();
+            walker.walk(hg.goalNode, f);
+			// out.close();
+            return f.getGrammar();
+        }
 }

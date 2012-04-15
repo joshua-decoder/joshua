@@ -126,6 +126,8 @@ public class JoshuaConfiguration {
 	
 	// used to extract oracle hypotheses from the forest
 	public static String oracleFile = null;
+
+        public static boolean parse = false; // perform synchronous parsing
 	
 	private static final Logger logger =
 		Logger.getLogger(JoshuaConfiguration.class.getName());
@@ -204,6 +206,10 @@ public class JoshuaConfiguration {
                 } else if (parameter.equals(normalize_key("lm_file"))) {
 					lm_file = fds[1].trim();
 					logger.finest(String.format("lm file: %s", lm_file));
+				} else if (parameter.equals(normalize_key("parse"))) {
+					parse = Boolean.parseBoolean(fds[1]);
+					logger.finest(String.format("parse: %s", parse));
+
 				} else if (parameter.equals(normalize_key("tm_file"))) {
 					tm_file = fds[1].trim();
 					logger.finest(String.format("tm file: %s", tm_file));
@@ -408,6 +414,7 @@ public class JoshuaConfiguration {
 					
 				} else if (parameter.equals(normalize_key("oracleFile"))) {
 					oracleFile = fds[1].trim();
+					logger.info(String.format("oracle file: %s", oracleFile));
 					if (! new File(oracleFile).exists()) {
 						logger.warning("FATAL: can't find oracle file '" + oracleFile + "'");
 						System.exit(1);

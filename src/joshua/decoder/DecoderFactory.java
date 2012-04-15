@@ -43,7 +43,7 @@ public class DecoderFactory {
 	private List<StateComputer> stateComputers;
 	private boolean useMaxLMCostForOOV = false;
 	
-	private DecoderThread[] decoderThreads;
+	private Thread[] decoderThreads;
 	
 	private static final Logger logger =
 		Logger.getLogger(DecoderFactory.class.getName());
@@ -73,15 +73,25 @@ public class DecoderFactory {
 	public void decodeTestSet(String testFile, String nbestFile, String oracleFile) {
 
         // create the input manager
-        InputHandler inputHandler = new InputHandler(testFile, oracleFile);
-
-		this.decoderThreads = new DecoderThread[JoshuaConfiguration.num_parallel_decoders];
+        InputHandler inputHandler = new InputHandler(testFile,oracleFile);
+        if (JoshuaConfiguration.parse)
+            this.decoderThreads = new ParserThread[JoshuaConfiguration.num_parallel_decoders];
+        else
+            this.decoderThreads = new DecoderThread[JoshuaConfiguration.num_parallel_decoders];
 
         for (int threadno = 0; threadno < decoderThreads.length; threadno++) {
             try {
-                DecoderThread thread = new DecoderThread(
+                Thread thread;
+                if (JoshuaConfiguration.parse) {
+                    thread = new ParserThread(
                     this.grammarFactories, this.featureFunctions, this.stateComputers, 
                     inputHandler);
+                }
+                else {
+                    thread = new DecoderThread(
+                    this.grammarFactories, this.featureFunctions, this.stateComputers, 
+                    inputHandler);
+                }
 				
                 this.decoderThreads[threadno] = thread;
             } catch (IOException e) {

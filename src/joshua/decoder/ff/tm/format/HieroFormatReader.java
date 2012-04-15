@@ -21,6 +21,10 @@ public class HieroFormatReader extends GrammarReader<BilingualRule> {
 		description = "Original Hiero format";
 	}
 	
+        public HieroFormatReader()
+        {
+            super();
+        }
 	
 	public HieroFormatReader(String grammarFile) {
 		super(grammarFile);
@@ -41,8 +45,10 @@ public class HieroFormatReader extends GrammarReader<BilingualRule> {
 		int[] french = new int[foreignWords.length];
 		for (int i = 0; i < foreignWords.length; i++) {
 			french[i] = Vocabulary.id(foreignWords[i]);
-			if (Vocabulary.nt(french[i]))
+			if (Vocabulary.nt(french[i])) {
 				arity++;
+				french[i] = cleanNonTerminal(french[i]);
+			}
 		}
 
 		// english side

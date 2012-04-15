@@ -247,6 +247,24 @@ public class Chart {
 		logger.fine("Finished seeding chart.");
 	}
 
+	/**
+	 * Manually set the goal symbol ID. The constructor expects a String
+	 * representing the goal symbol, but there may be time (say, for 
+	 * example, in the second pass of a synchronous parse) where we want
+	 * to set the goal symbol to a particular ID (regardless of String
+	 * representation).
+	 * <p>
+	 * This method should be called before expanding the chart, as chart
+	 * expansion depends on the goal symbol ID.
+	 *
+	 * @param i the id of the goal symbol to use
+	 */
+	public void setGoalSymbolID(int i)
+	{
+		this.goalSymbolID = i;
+		this.goalBin = new Cell(this, i);
+		return;
+	}
 	
 //===============================================================
 // The primary method for filling in the chart
@@ -558,7 +576,8 @@ public class Chart {
 						ComputeNodeResult states = new ComputeNodeResult(this.featureFunctions, rule, antecedents, i, j, new SourcePath(), stateComputers, this.segmentID);
 						HGNode resNode = chartBin.addHyperEdgeInCell(states, rule, i, j, antecedents, new SourcePath(), true);
 						
-						logger.finest(rule.toString());
+						if (logger.isLoggable(Level.FINEST))
+						  logger.finest(rule.toString());
 						
 						if (null != resNode && !seen_lhs.contains(resNode.lhs)) {
 							queue.add(resNode);
