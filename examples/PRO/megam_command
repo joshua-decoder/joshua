@@ -1,0 +1,1 @@
+./joshua/pro/classifier/megam_i686.opt -fvals -nobias binary ./PRO_test/megam_train.data > ./PRO_test/megam_weights

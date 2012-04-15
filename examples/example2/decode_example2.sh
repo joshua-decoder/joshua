@@ -6,7 +6,7 @@
 MEM=1g
 
 case "$1" in
-	javalm | kenlm ) : ;;
+	javalm | kenlm | packed ) : ;;
 	* )
 		echo "Usage: $0 javalm"
 		echo "       $0 kenlm"
@@ -18,8 +18,8 @@ rm -f example2/example2.nbest example2/example2.1best \
       example2/example2.1best.sgm example2/example2.refs.sgm
 
 cat example2/example2.src | \
-	$JOSHUA/joshua-decoder -m $MEM -c example2/example2.config.$1 > \
-	example2/example2.nbest
+	$JOSHUA/joshua-decoder -m $MEM -threads 2 -c example2/example2.config.$1 > \
+	example2/example2.${1}.nbest
 
 exitCode=$?
 if [ $exitCode -ne 0 ]; then
@@ -27,19 +27,6 @@ if [ $exitCode -ne 0 ]; then
 	exit $exitCode
 fi
 
-java \
-	-classpath $JOSHUA/bin     \
-	joshua.util.ExtractTopCand \
-	example2/example2.nbest    \
-	example2/example2.1best
+java -cp $JOSHUA/bin -Dfile.encoding=utf8 -Xmx256m -Xms256m \
+	joshua.util.JoshuaEval -cand example2/example2.${1}.nbest -format nbest -ref example2/example2.ref -rps 4 -m BLEU 4 closest
 
-exitCode=$?
-if [ $exitCode -ne 0 ]; then
-	echo "Something went wrong with the parser: $exitCode"
-	exit $exitCode
-fi
-
-# TODO: we should run our BLEU scoring script
-
-#./get_IBM_SGML_from_1best.pl example2
-#./bleu-1.04.pl -t example2.1best.sgm -r example2.refs.sgm -n 4 -ci

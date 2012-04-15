@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!-- Build file for Joshua. Last changed: $LastChangedDate$ -->
-<project name="Joshua Machine Translation Toolkit" default="compile" basedir=".">
+<project name="Joshua Machine Translation Toolkit" default="compile" basedir="." xmlns:doxygen="antlib:org.doxygen.tools">
 	
 <!-- ~~~~~ Properties, Paths, etc ~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 	
@@ -11,7 +11,7 @@
 	<property name="build"  value="./bin" />
 	<property name="lib"    value="./lib" />
 	<property name="thraxlib"  value="./thrax/bin" />
-	<property name="doc"    value="./javadoc" />
+	<property name="doc"    value="./doc" />
 	<property name="pmd"    value="./pmd" />
 	<property name="pmdOUT" value="${pmd}-output" />
 	
@@ -121,9 +121,10 @@
 	    <arg value="update" />
 	  </exec>
 	  <subant buildpath="thrax">
-		<property name="env.HADOOP" value="../lib/" />
+		<property name="env.HADOOP" value="${env.JOSHUA}/${lib}" />
 		<property name="env.HADOOP_VERSION" value="0.20.203.0" />
-		<property name="env.AWS_SDK" value="../lib/" />
+		<property name="env.AWS_SDK" value="${env.JOSHUA}" />
+		<property name="env.AWS_VERSION" value="1.1.3" />
 	  </subant>
 	</target>
 
@@ -232,8 +233,11 @@
 		<delete verbose="true" quiet="true" includeEmptyDirs="true">
 			<fileset dir="${test}-output" />
 		</delete>
+
 		<delete verbose="true" quiet="true" includeEmptyDirs="true">
-			<fileset dir="${doc}" />
+			<fileset dir="${doc}" includes="**/*.tmp"/>
+			<fileset dir="${doc}/html"/>
+			<fileset dir="${doc}/latex"/>
 		</delete>
 		
 		<delete verbose="true" quiet="true" file="joshua-fb.xml" />
@@ -265,6 +269,16 @@
 		</javadoc>
 	</target>
 	
+<!-- ~~~~~ Doxygen ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+	<taskdef uri="antlib:org.doxygen.tools"
+		resource="org/doxygen/tools/antlib.xml"
+		classpath="${lib}/ant_doxygen.jar"/>
+
+	<!-- Compile the Javadocs and Markdown documentation into web pages -->
+	<target name="documentation">
+		<doxygen:doxygen configFilename="${doc}/Doxyfile" versionCompatible="1.8.0+" />
+	</target>
 
 <!-- ~~~~~ Tests ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
@@ -297,93 +311,6 @@
 			<jvmarg value="-Xmx256m" />
 			<xmlfileset dir="." includes="testng.xml"/>
 		</testng>
-	</target>
-	
-	
-<!-- ~~~~~ PMD ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-	
-	<!-- Run the PMD tool for linting the source code.
-		http://pmd.sourceforge.net/ant-task.html
-	-->
-	<target name="pmd">
-		<taskdef
-			name="pmd"
-			classname="net.sourceforge.pmd.ant.PMDTask"
-			classpathref="pmd.classpath"
-			/>
-		
-		
-		<mkdir dir="${pmdOUT}"/>
-		
-		<echo message="Starting analysis, this will take a few seconds..."/>
-		
-		<!-- TODO: define a set of XSLT filters for searching and grepping through the output (which can be verbose) in type=xml format. -->
-		<!-- N.B. PMD is run in the same process as Ant and therefore produces no visible output by default. -->
-		<pmd shortFilenames="true" rulesetfiles="${pmd}/default-ruleset.xml">
-			<!-- BUG: the links to class files also go to pmd.sourceforge.net -->
-			<formatter
-				type="summaryhtml"
-				toFile="${pmdOUT}/report.html"
-				toConsole="false"
-				linkPrefix="http://pmd.sourceforge.net/xref/"
-				/>
-			<fileset dir="${src}">
-				<include name="**/*.java"/>
-			</fileset>
-		</pmd>
-		
-		<!-- Here's how to post-edit with XSLT
-		<xslt
-			in="${pmdOUT}/report.xml"
-			style="${pmd}/report.xslt"
-			out="${pmdOUT}/report.html"
-			/>
-		-->
-		
-		<!-- TODO: this should use a property to avoid duplication -->
-		<echo message="Report created at ${pmdOUT}/report.html"/>
-	</target>
-	
-	
-<!-- ~~~~~ FindBugs ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-
-	<!-- Check for environment variables -->
-	<target name="set-findbugs" unless="env.FINDBUGS_HOME">
-	<!-- Note the use of spaces instead of hard tabs, to get it to display nice -->
-		<fail>.
-    Please set the $FINDBUGS_HOME environment variable to
-    point to the directory where you have FindBugs installed.
-    
-    You can download the tool from http://findbugs.sourceforge.net/</fail>
-	</target>
-	
-	
-	<!-- Run the FindBugs tool for linting bytecode.
-		http://findbugs.sourceforge.net/manual/anttask.html
-		N.B. This task can take a *lot* of memory. 0.5Gb is the bare minimum for effort=default.
-		
-		We try to automatically find the Ant task within $FINDBUGS_HOME in order to ensure that things will work right. This path is correct for version 1.3.8 (and hopefully other versions as well).
-	-->
-	<target name="findbugs" depends="set-findbugs,jar">
-		<taskdef
-			name="findbugs"
-			classname="edu.umd.cs.findbugs.anttask.FindBugsTask"
-			classpath="${env.FINDBUGS_HOME}/lib/findbugs-ant.jar"
-			/>
-		
-		<!-- reportLevel = low,medium(default),high -->
-		<!-- effort = min,default,max; try using min to lower memory usage -->
-		<findbugs
-			home="${env.FINDBUGS_HOME}"
-			output="xml"
-			outputFile="joshua-fb.xml"
-			jvmargs="-Xmx1024m -Xms512m -XX:MinHeapFreeRatio=10"
-		>
-			<class location="${build}/joshua.jar" />
-			<sourcePath path="${src}" />
-			<auxClasspath path="${testng}" />
-			<auxClasspath path="${cli}" />
-		</findbugs>
 	</target>
 	
 </project>
