@@ -49,6 +49,7 @@ public class EdgePhraseSimilarityFF extends DefaultStatefulFF implements SourceD
 
 	private void initializeConnection() throws NumberFormatException, UnknownHostException,
 			IOException {
+		System.err.println("Opening connection.");
 		socket = new Socket(host, port);
 		serverAsk = new PrintWriter(socket.getOutputStream(), true);
 		serverReply = new BufferedReader(new InputStreamReader(socket.getInputStream()));
