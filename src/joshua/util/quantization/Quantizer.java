@@ -7,38 +7,37 @@ import java.nio.ByteBuffer;
 
 public interface Quantizer {
 
-	public float read(ByteBuffer stream, int position);
-	
-	public void write(ByteBuffer stream, float value);
-	
-	public void initialize();
-	
-	public void add(float key);
-	
-	public void finalize();
+  public float read(ByteBuffer stream, int position);
 
-	public String getKey();
-	
-	public void writeState(DataOutputStream out) throws IOException;
-	
-	public void readState(DataInputStream in) throws IOException;
-	
-	public int size();
+  public void write(ByteBuffer stream, float value);
+
+  public void initialize();
+
+  public void add(float key);
+
+  public void finalize();
+
+  public String getKey();
+
+  public void writeState(DataOutputStream out) throws IOException;
+
+  public void readState(DataInputStream in) throws IOException;
+
+  public int size();
 }
 
 
 abstract class StatelessQuantizer implements Quantizer {
-	
-	public void initialize() {}
-	
-	public void add(float key) {}
-	
-	public void finalize() {}
-	
-	public void writeState(DataOutputStream out) throws IOException {
-		out.writeUTF(getKey());
-	}
-	
-	public void readState(DataInputStream in) throws IOException {
-	}
+
+  public void initialize() {}
+
+  public void add(float key) {}
+
+  public void finalize() {}
+
+  public void writeState(DataOutputStream out) throws IOException {
+    out.writeUTF(getKey());
+  }
+
+  public void readState(DataInputStream in) throws IOException {}
 }

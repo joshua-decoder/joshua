@@ -1,8 +1,8 @@
+package packed;
+
 import java.io.IOException;
-import java.util.Iterator;
 
 import joshua.corpus.Vocabulary;
-import joshua.corpus.Vocabulary.UnknownSymbolException;
 
 public class VocabTest {
 	public static void main(String args[]) {
