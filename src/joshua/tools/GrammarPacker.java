@@ -17,7 +17,6 @@ import java.util.logging.Logger;
 import joshua.corpus.Vocabulary;
 import joshua.util.FormatUtils;
 import joshua.util.io.LineReader;
-import joshua.util.quantization.Quantizer;
 import joshua.util.quantization.QuantizerConfiguration;
 
 public class GrammarPacker {

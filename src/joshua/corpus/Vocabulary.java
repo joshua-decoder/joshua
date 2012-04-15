@@ -34,8 +34,6 @@ import joshua.decoder.ff.lm.NGramLanguageModel;
 import joshua.util.FormatUtils;
 import joshua.util.MurmurHash;
 
-import joshua.decoder.hypergraph.GrammarBuilderWalkerFunction;
-
 /**
  * Static singular vocabulary class. Supports vocabulary freezing and (de-)serialization into a
  * vocabulary file.

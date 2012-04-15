@@ -18,8 +18,6 @@ package joshua.subsample;
 import java.io.File;
 import java.io.IOException;
 
-import joshua.corpus.Vocabulary;
-
 
 /**
  * A callback closure for <code>Subsampler.subsample</code>. This class is used by

@@ -1,16 +1,14 @@
 package joshua.decoder.hypergraph;
 
-import joshua.decoder.ff.tm.Grammar;
-import joshua.decoder.ff.tm.format.HieroFormatReader;
-import joshua.decoder.ff.tm.hash_based.MemoryBasedBatchGrammar;
-import joshua.decoder.ff.tm.BilingualRule;
-import joshua.decoder.ff.tm.Rule;
-import joshua.corpus.Vocabulary;
-import joshua.util.FormatUtils;
-import java.util.Set;
+import java.io.PrintStream;
 import java.util.HashSet;
 
-import java.io.PrintStream;
+import joshua.corpus.Vocabulary;
+import joshua.decoder.ff.tm.BilingualRule;
+import joshua.decoder.ff.tm.Grammar;
+import joshua.decoder.ff.tm.Rule;
+import joshua.decoder.ff.tm.format.HieroFormatReader;
+import joshua.decoder.ff.tm.hash_based.MemoryBasedBatchGrammar;
 
 /**
  * This walker function builds up a new context-free grammar by visiting each node in a hypergraph.

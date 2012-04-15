@@ -18,8 +18,6 @@ package joshua.pro;
 
 import joshua.util.FileUtility;
 
-import joshua.util.FileUtility;
-
 public class PRO {
   public static void main(String[] args) throws Exception {
     boolean external = false; // should each PRO iteration be launched externally?

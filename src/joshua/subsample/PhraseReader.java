@@ -27,7 +27,6 @@ import java.io.IOException;
 import java.io.Reader;
 
 import joshua.corpus.BasicPhrase;
-import joshua.corpus.Vocabulary;
 
 
 /**

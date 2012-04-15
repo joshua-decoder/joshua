@@ -30,7 +30,6 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 import joshua.corpus.Phrase;
-import joshua.corpus.Vocabulary;
 
 
 /**

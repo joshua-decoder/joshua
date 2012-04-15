@@ -15,30 +15,20 @@
  */
 package joshua.decoder.ff.lm.berkeley_lm;
 
-import java.io.IOException;
-import java.io.StreamCorruptedException;
-import java.io.ObjectInputStream;
-import java.io.File;
 import java.io.BufferedInputStream;
+import java.io.File;
 import java.io.FileInputStream;
-
-import java.util.ArrayList;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.StreamCorruptedException;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
 import java.util.logging.Logger;
 
+import joshua.decoder.ff.lm.AbstractLM;
 import edu.berkeley.nlp.lm.ArrayEncodedNgramLanguageModel;
 import edu.berkeley.nlp.lm.ConfigOptions;
-import edu.berkeley.nlp.lm.NgramLanguageModel;
-import edu.berkeley.nlp.lm.ArrayEncodedProbBackoffLm;
 import edu.berkeley.nlp.lm.StringWordIndexer;
-import edu.berkeley.nlp.lm.cache.ArrayEncodedCachingLmWrapper;
 import edu.berkeley.nlp.lm.io.LmReaders;
-
-import joshua.corpus.Vocabulary;
-import joshua.decoder.JoshuaConfiguration;
-import joshua.decoder.ff.lm.AbstractLM;
 
 /**
  * This class wraps Berkeley LM.

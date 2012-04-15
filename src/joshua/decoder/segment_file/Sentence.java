@@ -23,8 +23,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import joshua.corpus.Vocabulary;
-import joshua.corpus.syntax.SyntaxTree;
-import joshua.decoder.DecoderThread;
 import joshua.lattice.Lattice;
 import joshua.util.Regex;
 

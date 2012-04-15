@@ -35,7 +35,6 @@ import java.util.Map;
 
 import joshua.corpus.BasicPhrase;
 import joshua.corpus.Phrase;
-import joshua.corpus.Vocabulary;
 
 
 /**

@@ -1,7 +1,6 @@
 package joshua.decoder.ff.tm;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.util.Iterator;
 import java.util.logging.Level;
 import java.util.logging.Logger;

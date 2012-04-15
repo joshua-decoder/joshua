@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import joshua.corpus.Vocabulary;
 import joshua.util.Ngram;
 import joshua.util.Regex;
 

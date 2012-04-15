@@ -18,7 +18,6 @@ package joshua.decoder;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -30,15 +29,13 @@ import joshua.decoder.ff.tm.Grammar;
 import joshua.decoder.ff.tm.GrammarFactory;
 import joshua.decoder.ff.tm.hash_based.MemoryBasedBatchGrammar;
 import joshua.decoder.hypergraph.DiskHyperGraph;
-import joshua.decoder.hypergraph.HyperGraph;
 import joshua.decoder.hypergraph.ForestWalker;
-import joshua.decoder.hypergraph.WalkerFunction;
 import joshua.decoder.hypergraph.GrammarBuilderWalkerFunction;
+import joshua.decoder.hypergraph.HyperGraph;
 import joshua.decoder.hypergraph.KBestExtractor;
 import joshua.decoder.segment_file.Sentence;
 import joshua.lattice.Lattice;
 import joshua.oracle.OracleExtractor;
-import joshua.ui.hypergraph_visualizer.HyperGraphViewer;
 import edu.jhu.thrax.util.TestSetFilter;
 
 /**
