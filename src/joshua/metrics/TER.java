@@ -1,22 +1,21 @@
-/* This file is part of the Joshua Machine Translation System.
+/*
+ * This file is part of the Joshua Machine Translation System.
  * 
- * Joshua is free software; you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as
- * published by the Free Software Foundation; either version 2.1
- * of the License, or (at your option) any later version.
- *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Joshua is free software; you can redistribute it and/or modify it under the terms of the GNU
+ * Lesser General Public License as published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ * 
+ * This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
+ * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free
- * Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
- * MA 02111-1307 USA
+ * 
+ * You should have received a copy of the GNU Lesser General Public License along with this library;
+ * if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
+ * 02111-1307 USA
  */
 
 package joshua.metrics;
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -34,8 +33,7 @@ import java.util.concurrent.Semaphore;
 import joshua.util.StreamGobbler;
 
 
-public class TER extends EvaluationMetric
-{
+public class TER extends EvaluationMetric {
   private boolean caseSensitive;
   private boolean withPunctuation;
   private int beamWidth;
@@ -43,8 +41,7 @@ public class TER extends EvaluationMetric
   private String tercomJarFileName;
   private int numScoringThreads;
 
-  public TER(String[] Metric_options)
-  {
+  public TER(String[] Metric_options) {
     // M_o[0]: case sensitivity, case/nocase
     // M_o[1]: with-punctuation, punc/nopunc
     // M_o[2]: beam width, positive integer
@@ -107,32 +104,35 @@ public class TER extends EvaluationMetric
     }
 
 
-    TercomRunner.set_TercomParams(caseSensitive, withPunctuation, beamWidth, maxShiftDist, tercomJarFileName);
+    TercomRunner.set_TercomParams(caseSensitive, withPunctuation, beamWidth, maxShiftDist,
+        tercomJarFileName);
 
 
     initialize(); // set the data members of the metric
   }
 
-  protected void initialize()
-  {
+  protected void initialize() {
     metricName = "TER";
     toBeMinimized = true;
     suffStatsCount = 2;
   }
 
-  public double bestPossibleScore() { return 0.0; }
-  public double worstPossibleScore() { return (+1.0 / 0.0); }
+  public double bestPossibleScore() {
+    return 0.0;
+  }
 
-  public int[] suffStats(String cand_str, int i)
-  {
+  public double worstPossibleScore() {
+    return (+1.0 / 0.0);
+  }
+
+  public int[] suffStats(String cand_str, int i) {
     // this method should never be used when the metric is TER,
     // because TER.java overrides createSuffStatsFile below,
     // which is the only method that calls suffStats(String,int).
     return null;
   }
 
-  public int[][] suffStats(String[] cand_strings, int[] cand_indices)
-  {
+  public int[][] suffStats(String[] cand_strings, int[] cand_indices) {
     // calculate sufficient statistics for each sentence in an arbitrary set of candidates
 
     int candCount = cand_strings.length;
@@ -148,12 +148,13 @@ public class TER extends EvaluationMetric
       // 1) Create input files for tercom
 
       // 1a) Create hypothesis file
-      FileOutputStream outStream = new FileOutputStream("hyp.txt.TER", false); // false: don't append
+      FileOutputStream outStream = new FileOutputStream("hyp.txt.TER", false); // false: don't
+                                                                               // append
       OutputStreamWriter outStreamWriter = new OutputStreamWriter(outStream, "utf8");
       BufferedWriter outFile = new BufferedWriter(outStreamWriter);
 
       for (int d = 0; d < candCount; ++d) {
-        writeLine(cand_strings[d] + " (ID" + d + ")",outFile);
+        writeLine(cand_strings[d] + " (ID" + d + ")", outFile);
       }
 
       outFile.close();
@@ -165,7 +166,7 @@ public class TER extends EvaluationMetric
 
       for (int d = 0; d < candCount; ++d) {
         for (int r = 0; r < refsPerSen; ++r) {
-          writeLine(refSentences[cand_indices[d]][r] + " (ID" + d + ")",outFile);
+          writeLine(refSentences[cand_indices[d]][r] + " (ID" + d + ")", outFile);
         }
       }
 
@@ -187,17 +188,20 @@ public class TER extends EvaluationMetric
         line = inFile.readLine(); // read info
         String[] strA = line.split("\\s+");
 
-        stats[d][0] = (int)Double.parseDouble(strA[1]);
-        stats[d][1] = (int)Double.parseDouble(strA[2]);
+        stats[d][0] = (int) Double.parseDouble(strA[1]);
+        stats[d][1] = (int) Double.parseDouble(strA[2]);
       }
 
 
       // 4) Delete TER files
 
       File fd;
-      fd = new File("hyp.txt.TER"); if (fd.exists()) fd.delete();
-      fd = new File("ref.txt.TER"); if (fd.exists()) fd.delete();
-      fd = new File("TER_out.ter"); if (fd.exists()) fd.delete();
+      fd = new File("hyp.txt.TER");
+      if (fd.exists()) fd.delete();
+      fd = new File("ref.txt.TER");
+      if (fd.exists()) fd.delete();
+      fd = new File("TER_out.ter");
+      if (fd.exists()) fd.delete();
 
     } catch (IOException e) {
       System.err.println("IOException in TER.suffStats(String[],int[]): " + e.getMessage());
@@ -207,22 +211,26 @@ public class TER extends EvaluationMetric
     return stats;
   }
 
-  public void createSuffStatsFile(String cand_strings_fileName, String cand_indices_fileName, String outputFileName, int maxBatchSize)
-  {
+  public void createSuffStatsFile(String cand_strings_fileName, String cand_indices_fileName,
+      String outputFileName, int maxBatchSize) {
 
     try {
       int batchCount = 0;
 
       FileInputStream inStream_cands = new FileInputStream(cand_strings_fileName);
-      BufferedReader inFile_cands = new BufferedReader(new InputStreamReader(inStream_cands, "utf8"));
+      BufferedReader inFile_cands =
+          new BufferedReader(new InputStreamReader(inStream_cands, "utf8"));
 
       FileInputStream inStream_indices = new FileInputStream(cand_indices_fileName);
-      BufferedReader inFile_indices = new BufferedReader(new InputStreamReader(inStream_indices, "utf8"));
+      BufferedReader inFile_indices =
+          new BufferedReader(new InputStreamReader(inStream_indices, "utf8"));
 
       while (true) {
         ++batchCount;
-        int readCount = createTercomHypFile(inFile_cands, tmpDirPrefix+"hyp.txt.TER.batch"+batchCount, 10000);
-        createTercomRefFile(inFile_indices, tmpDirPrefix+"ref.txt.TER.batch"+batchCount, 10000);
+        int readCount =
+            createTercomHypFile(inFile_cands, tmpDirPrefix + "hyp.txt.TER.batch" + batchCount,
+                10000);
+        createTercomRefFile(inFile_indices, tmpDirPrefix + "ref.txt.TER.batch" + batchCount, 10000);
 
         if (readCount == 0) {
           --batchCount;
@@ -237,26 +245,29 @@ public class TER extends EvaluationMetric
       Semaphore blocker = new Semaphore(0);
 
       for (int b = 1; b <= batchCount; ++b) {
-        pool.execute(new TercomRunner(blocker, tmpDirPrefix+"ref.txt.TER.batch"+b, tmpDirPrefix+"hyp.txt.TER.batch"+b, tmpDirPrefix+"TER_out.batch"+b, 500));
-          // Each thread scores the candidates, creating a tercom output file,
-          // and then deletes the .hyp. and .ref. files, which are not needed
-          // for other batches.
+        pool.execute(new TercomRunner(blocker, tmpDirPrefix + "ref.txt.TER.batch" + b, tmpDirPrefix
+            + "hyp.txt.TER.batch" + b, tmpDirPrefix + "TER_out.batch" + b, 500));
+        // Each thread scores the candidates, creating a tercom output file,
+        // and then deletes the .hyp. and .ref. files, which are not needed
+        // for other batches.
       }
 
       pool.shutdown();
 
       try {
         blocker.acquire(batchCount);
-      } catch(java.lang.InterruptedException e) {
-        System.err.println("InterruptedException in TER.createSuffStatsFile(...): " + e.getMessage());
+      } catch (java.lang.InterruptedException e) {
+        System.err.println("InterruptedException in TER.createSuffStatsFile(...): "
+            + e.getMessage());
         System.exit(99906);
       }
 
       PrintWriter outFile = new PrintWriter(outputFileName);
       for (int b = 1; b <= batchCount; ++b) {
-        copySS(tmpDirPrefix+"TER_out.batch"+b+".ter", outFile);
+        copySS(tmpDirPrefix + "TER_out.batch" + b + ".ter", outFile);
         File fd;
-        fd = new File(tmpDirPrefix+"TER_out.batch"+b+".ter"); if (fd.exists()) fd.delete();
+        fd = new File(tmpDirPrefix + "TER_out.batch" + b + ".ter");
+        if (fd.exists()) fd.delete();
         // .hyp. and .ref. already deleted by individual threads
       }
       outFile.close();
@@ -268,8 +279,7 @@ public class TER extends EvaluationMetric
 
   }
 
-  public int createTercomHypFile(BufferedReader inFile_cands, String hypFileName, int numCands)
-  {
+  public int createTercomHypFile(BufferedReader inFile_cands, String hypFileName, int numCands) {
     // returns # lines read
 
     int readCount = 0;
@@ -286,7 +296,7 @@ public class TER extends EvaluationMetric
           line_cand = inFile_cands.readLine();
           if (line_cand != null) {
             ++readCount;
-            writeLine(line_cand + " (ID" + d + ")",outFile);
+            writeLine(line_cand + " (ID" + d + ")", outFile);
           } else {
             break;
           }
@@ -297,7 +307,7 @@ public class TER extends EvaluationMetric
         while (line_cand != null) {
           ++readCount;
           ++d;
-          writeLine(line_cand + " (ID" + d + ")",outFile);
+          writeLine(line_cand + " (ID" + d + ")", outFile);
           line_cand = inFile_cands.readLine();
         }
       }
@@ -313,8 +323,7 @@ public class TER extends EvaluationMetric
 
   }
 
-  public int createTercomRefFile(BufferedReader inFile_indices, String refFileName, int numIndices)
-  {
+  public int createTercomRefFile(BufferedReader inFile_indices, String refFileName, int numIndices) {
     // returns # lines read
 
     int readCount = 0;
@@ -333,7 +342,7 @@ public class TER extends EvaluationMetric
             ++readCount;
             int index = Integer.parseInt(line_index);
             for (int r = 0; r < refsPerSen; ++r) {
-              writeLine(refSentences[index][r] + " (ID" + d + ")",outFile);
+              writeLine(refSentences[index][r] + " (ID" + d + ")", outFile);
             }
           } else {
             break;
@@ -347,7 +356,7 @@ public class TER extends EvaluationMetric
           ++d;
           int index = Integer.parseInt(line_index);
           for (int r = 0; r < refsPerSen; ++r) {
-            writeLine(refSentences[index][r] + " (ID" + d + ")",outFile);
+            writeLine(refSentences[index][r] + " (ID" + d + ")", outFile);
           }
           line_index = inFile_indices.readLine();
         }
@@ -364,21 +373,26 @@ public class TER extends EvaluationMetric
 
   }
 
-  public int runTercom(String refFileName, String hypFileName, String outFileNamePrefix, int memSize)
-  {
+  public int runTercom(String refFileName, String hypFileName, String outFileNamePrefix, int memSize) {
     int exitValue = -1;
 
     try {
 
-      String cmd_str = "java -Xmx" + memSize + "m -Dfile.encoding=utf8 -jar " + tercomJarFileName + " -r " + refFileName + " -h " + hypFileName + " -o ter -n " + outFileNamePrefix;
+      String cmd_str =
+          "java -Xmx" + memSize + "m -Dfile.encoding=utf8 -jar " + tercomJarFileName + " -r "
+              + refFileName + " -h " + hypFileName + " -o ter -n " + outFileNamePrefix;
       cmd_str += " -b " + beamWidth;
       cmd_str += " -d " + maxShiftDist;
-      if (caseSensitive) { cmd_str += " -s"; }
-      if (!withPunctuation) { cmd_str += " -P"; }
-      /* From tercom's README:
-           -s case sensitivity, optional, default is insensitive
-           -P no punctuations, default is with punctuations.
-      */
+      if (caseSensitive) {
+        cmd_str += " -s";
+      }
+      if (!withPunctuation) {
+        cmd_str += " -P";
+      }
+      /*
+       * From tercom's README: -s case sensitivity, optional, default is insensitive -P no
+       * punctuations, default is with punctuations.
+       */
 
       Runtime rt = Runtime.getRuntime();
       Process p = rt.exec(cmd_str);
@@ -403,8 +417,7 @@ public class TER extends EvaluationMetric
 
   }
 
-  public void copySS(String inputFileName, PrintWriter outFile)
-  {
+  public void copySS(String inputFileName, PrintWriter outFile) {
     try {
       BufferedReader inFile = new BufferedReader(new FileReader(inputFileName));
       String line = "";
@@ -416,7 +429,8 @@ public class TER extends EvaluationMetric
 
       while (line != null) {
         String[] strA = line.split("\\s+");
-        outFile.println((int)Double.parseDouble(strA[1]) + " " + (int)Double.parseDouble(strA[2]));
+        outFile
+            .println((int) Double.parseDouble(strA[1]) + " " + (int) Double.parseDouble(strA[2]));
         line = inFile.readLine(); // read info for next line
       }
     } catch (IOException e) {
@@ -425,22 +439,21 @@ public class TER extends EvaluationMetric
     }
   }
 
-  public double score(int[] stats)
-  {
+  public double score(int[] stats) {
     if (stats.length != suffStatsCount) {
-      System.out.println("Mismatch between stats.length and suffStatsCount (" + stats.length + " vs. " + suffStatsCount + ") in TER.score(int[])");
+      System.out.println("Mismatch between stats.length and suffStatsCount (" + stats.length
+          + " vs. " + suffStatsCount + ") in TER.score(int[])");
       System.exit(2);
     }
 
     double sc = 0.0;
 
-    sc = stats[0]/(double)stats[1];
+    sc = stats[0] / (double) stats[1];
 
     return sc;
   }
 
-  public void printDetailedScore_fromStats(int[] stats, boolean oneLiner)
-  {
+  public void printDetailedScore_fromStats(int[] stats, boolean oneLiner) {
     if (oneLiner) {
       System.out.println("TER = " + stats[0] + " / " + stats[1] + " = " + f4.format(score(stats)));
     } else {
@@ -450,13 +463,10 @@ public class TER extends EvaluationMetric
     }
   }
 
-  private void writeLine(String line, BufferedWriter writer) throws IOException
-  {
+  private void writeLine(String line, BufferedWriter writer) throws IOException {
     writer.write(line, 0, line.length());
     writer.newLine();
     writer.flush();
   }
 
 }
-
-

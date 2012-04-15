@@ -1,19 +1,17 @@
-/* This file is part of the Joshua Machine Translation System.
+/*
+ * This file is part of the Joshua Machine Translation System.
  * 
- * Joshua is free software; you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as
- * published by the Free Software Foundation; either version 2.1
- * of the License, or (at your option) any later version.
- *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Joshua is free software; you can redistribute it and/or modify it under the terms of the GNU
+ * Lesser General Public License as published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ * 
+ * This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
+ * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free
- * Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
- * MA 02111-1307 USA
+ * 
+ * You should have received a copy of the GNU Lesser General Public License along with this library;
+ * if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
+ * 02111-1307 USA
  */
 package joshua.corpus;
 
@@ -39,280 +37,270 @@ import joshua.util.MurmurHash;
 import joshua.decoder.hypergraph.GrammarBuilderWalkerFunction;
 
 /**
- * Static singular vocabulary class. Supports vocabulary freezing and
- * (de-)serialization into a vocabulary file.
+ * Static singular vocabulary class. Supports vocabulary freezing and (de-)serialization into a
+ * vocabulary file.
  * 
  * @author Juri Ganitkevitch
  */
 
 public class Vocabulary {
 
-	private static final Logger logger;
+  private static final Logger logger;
 
-	private static ArrayList<NGramLanguageModel> lms;
+  private static ArrayList<NGramLanguageModel> lms;
 
-	private static TreeMap<Long, Integer> hashToId;
-	private static ArrayList<String> idToString;
-	private static TreeMap<Long, String> hashToString;
+  private static TreeMap<Long, Integer> hashToId;
+  private static ArrayList<String> idToString;
+  private static TreeMap<Long, String> hashToString;
 
-	private static final Integer lock = new Integer(0);
+  private static final Integer lock = new Integer(0);
 
-	private static final int UNKNOWN_ID;
-	private static final String UNKNOWN_WORD;
+  private static final int UNKNOWN_ID;
+  private static final String UNKNOWN_WORD;
 
-	static {
-		logger = Logger.getLogger(Vocabulary.class.getName());
+  static {
+    logger = Logger.getLogger(Vocabulary.class.getName());
 
-		UNKNOWN_ID = 0;
-		UNKNOWN_WORD = "<unk>";
+    UNKNOWN_ID = 0;
+    UNKNOWN_WORD = "<unk>";
 
-		lms = new ArrayList<NGramLanguageModel>();
+    lms = new ArrayList<NGramLanguageModel>();
 
-		clear();
-	}
+    clear();
+  }
 
-	public static boolean registerLanguageModel(NGramLanguageModel lm) {
-		synchronized (lock) {
-			// Store the language model.
-			lms.add(lm);
-			// Notify it of all the existing words.
-			boolean collision = false;
-			for (int i = idToString.size() - 1; i > 0; i--)
-				collision = collision || lm.registerWord(idToString.get(i), i);
-			return collision;
-		}
-	}
+  public static boolean registerLanguageModel(NGramLanguageModel lm) {
+    synchronized (lock) {
+      // Store the language model.
+      lms.add(lm);
+      // Notify it of all the existing words.
+      boolean collision = false;
+      for (int i = idToString.size() - 1; i > 0; i--)
+        collision = collision || lm.registerWord(idToString.get(i), i);
+      return collision;
+    }
+  }
 
-	/**
-	 * Reads a vocabulary from file. This deletes any additions to the 
-	 * vocabulary made prior to reading the file.
-	 *  
-	 * @param file_name
-	 * @return Returns true if vocabulary was read without mismatches or
-	 * collisions.
-	 * @throws IOException
-	 */
-	public static boolean read(String file_name) throws IOException {
-		synchronized (lock) {
-			File vocab_file = new File(file_name);
-			DataInputStream vocab_stream = new DataInputStream(
-					new BufferedInputStream(new FileInputStream(vocab_file)));
-			int size = vocab_stream.readInt();
-			logger.info("Reading vocabulary: " + size + " tokens.");
-			clear();
-			for (int i = 0; i < size; i++) {
-				int id = vocab_stream.readInt();
-				String token = vocab_stream.readUTF();
-				if (id != Math.abs(id(token))) {
-					vocab_stream.close();
-					return false;
-				}
-			}
-			vocab_stream.close();
-			return (size + 1 == idToString.size());
-		}
-	}
+  /**
+   * Reads a vocabulary from file. This deletes any additions to the vocabulary made prior to
+   * reading the file.
+   * 
+   * @param file_name
+   * @return Returns true if vocabulary was read without mismatches or collisions.
+   * @throws IOException
+   */
+  public static boolean read(String file_name) throws IOException {
+    synchronized (lock) {
+      File vocab_file = new File(file_name);
+      DataInputStream vocab_stream =
+          new DataInputStream(new BufferedInputStream(new FileInputStream(vocab_file)));
+      int size = vocab_stream.readInt();
+      logger.info("Reading vocabulary: " + size + " tokens.");
+      clear();
+      for (int i = 0; i < size; i++) {
+        int id = vocab_stream.readInt();
+        String token = vocab_stream.readUTF();
+        if (id != Math.abs(id(token))) {
+          vocab_stream.close();
+          return false;
+        }
+      }
+      vocab_stream.close();
+      return (size + 1 == idToString.size());
+    }
+  }
 
-	public static void write(String file_name) throws IOException {
-		synchronized (lock) {
-			File vocab_file = new File(file_name);
-			DataOutputStream vocab_stream = new DataOutputStream(
-					new BufferedOutputStream(new FileOutputStream(vocab_file)));
-			vocab_stream.writeInt(idToString.size() - 1);
-			logger.info("Writing vocabulary: " + (idToString.size() - 1) +
-					" tokens.");
-			for (int i = 1; i < idToString.size(); i++) {
-				vocab_stream.writeInt(i);
-				vocab_stream.writeUTF(idToString.get(i));
-			}
-			vocab_stream.close();
-		}
-	}
+  public static void write(String file_name) throws IOException {
+    synchronized (lock) {
+      File vocab_file = new File(file_name);
+      DataOutputStream vocab_stream =
+          new DataOutputStream(new BufferedOutputStream(new FileOutputStream(vocab_file)));
+      vocab_stream.writeInt(idToString.size() - 1);
+      logger.info("Writing vocabulary: " + (idToString.size() - 1) + " tokens.");
+      for (int i = 1; i < idToString.size(); i++) {
+        vocab_stream.writeInt(i);
+        vocab_stream.writeUTF(idToString.get(i));
+      }
+      vocab_stream.close();
+    }
+  }
 
-	public static void freeze() {
-		synchronized (lock) {
-			int current_id = 1;
+  public static void freeze() {
+    synchronized (lock) {
+      int current_id = 1;
 
-			TreeMap<Long, Integer> hash_to_id = new TreeMap<Long, Integer>();
-			ArrayList<String> id_to_string = new ArrayList<String>(
-					idToString.size() + 1);
-			id_to_string.add(UNKNOWN_ID, UNKNOWN_WORD);
+      TreeMap<Long, Integer> hash_to_id = new TreeMap<Long, Integer>();
+      ArrayList<String> id_to_string = new ArrayList<String>(idToString.size() + 1);
+      id_to_string.add(UNKNOWN_ID, UNKNOWN_WORD);
 
-			Map.Entry<Long, Integer> walker = hashToId.firstEntry();
-			while (walker != null) {
-				String word = hashToString.get(walker.getKey());
-				hash_to_id.put(walker.getKey(),
-						(walker.getValue() < 0 ? -current_id : current_id));
-				id_to_string.add(current_id, word);
-				current_id++;
-				walker = hashToId.higherEntry(walker.getKey());
-			}
-			idToString = id_to_string;
-			hashToId = hash_to_id;
-		}
-	}
+      Map.Entry<Long, Integer> walker = hashToId.firstEntry();
+      while (walker != null) {
+        String word = hashToString.get(walker.getKey());
+        hash_to_id.put(walker.getKey(), (walker.getValue() < 0 ? -current_id : current_id));
+        id_to_string.add(current_id, word);
+        current_id++;
+        walker = hashToId.higherEntry(walker.getKey());
+      }
+      idToString = id_to_string;
+      hashToId = hash_to_id;
+    }
+  }
 
-	public static int id(String token) {
-		synchronized (lock) {
-			long hash = 0;
-			try {
-				hash = MurmurHash.hash64(token);
-			} catch (UnsupportedEncodingException e) {
-				e.printStackTrace();
-			}
-			String hash_word = hashToString.get(hash);
-			if (hash_word != null) {
-				if (!token.equals(hash_word)) {
-					logger.warning("MurmurHash for the following symbols collides: '"
-							+ hash_word + "', '" + token + "'");
-				}
-				return hashToId.get(hash);
-			} else {
-				int id = idToString.size() * (nt(token) ? -1 : 1);
+  public static int id(String token) {
+    synchronized (lock) {
+      long hash = 0;
+      try {
+        hash = MurmurHash.hash64(token);
+      } catch (UnsupportedEncodingException e) {
+        e.printStackTrace();
+      }
+      String hash_word = hashToString.get(hash);
+      if (hash_word != null) {
+        if (!token.equals(hash_word)) {
+          logger.warning("MurmurHash for the following symbols collides: '" + hash_word + "', '"
+              + token + "'");
+        }
+        return hashToId.get(hash);
+      } else {
+        int id = idToString.size() * (nt(token) ? -1 : 1);
 
-				// register this (token,id) mapping with each language
-				// model, so that they can map it to their own private
-				// vocabularies
-				for (NGramLanguageModel lm : lms)
-					lm.registerWord(token, Math.abs(id));
+        // register this (token,id) mapping with each language
+        // model, so that they can map it to their own private
+        // vocabularies
+        for (NGramLanguageModel lm : lms)
+          lm.registerWord(token, Math.abs(id));
 
-				idToString.add(token);
-				hashToString.put(hash, token);
-				hashToId.put(hash, id);
-				return id;
-			}
-		}
-	}
-	
-	public static boolean hasId(int id) {
-		synchronized (lock) {
-			id = Math.abs(id);
-			return (id < idToString.size());  
-		}
-	}
+        idToString.add(token);
+        hashToString.put(hash, token);
+        hashToId.put(hash, id);
+        return id;
+      }
+    }
+  }
 
-	public static int[] addAll(String sentence) {
-		String[] tokens = sentence.split("\\s+");
-		int[] ids = new int[tokens.length];
-		for (int i = 0; i < tokens.length; i++)
-			ids[i] = id(tokens[i]);
-		return ids;
-	}
+  public static boolean hasId(int id) {
+    synchronized (lock) {
+      id = Math.abs(id);
+      return (id < idToString.size());
+    }
+  }
 
-	public static String word(int id) {
-		synchronized (lock) {
-			id = Math.abs(id);
-			if (id >= idToString.size()) {
-				throw new UnknownSymbolException(id);
-			}
-			return idToString.get(id);
-		}
-	}
+  public static int[] addAll(String sentence) {
+    String[] tokens = sentence.split("\\s+");
+    int[] ids = new int[tokens.length];
+    for (int i = 0; i < tokens.length; i++)
+      ids[i] = id(tokens[i]);
+    return ids;
+  }
 
-	public static String getWords(int[] ids) {
-		if (ids.length == 0)
-			return "";
-		StringBuilder sb = new StringBuilder();
-		for (int i = 0; i < ids.length - 1; i++)
-			sb.append(word(ids[i])).append(" ");
-		return sb.append(word(ids[ids.length - 1])).toString();
-	}
+  public static String word(int id) {
+    synchronized (lock) {
+      id = Math.abs(id);
+      if (id >= idToString.size()) {
+        throw new UnknownSymbolException(id);
+      }
+      return idToString.get(id);
+    }
+  }
 
-	public static String getWords(Iterable<Integer> ids) {
-		StringBuilder sb = new StringBuilder();
-		for (int id : ids)
-			sb.append(word(id)).append(" ");
-		return sb.deleteCharAt(sb.length() - 1).toString();
-	}
+  public static String getWords(int[] ids) {
+    if (ids.length == 0) return "";
+    StringBuilder sb = new StringBuilder();
+    for (int i = 0; i < ids.length - 1; i++)
+      sb.append(word(ids[i])).append(" ");
+    return sb.append(word(ids[ids.length - 1])).toString();
+  }
 
-	public static int getUnknownId() {
-		return UNKNOWN_ID;
-	}
+  public static String getWords(Iterable<Integer> ids) {
+    StringBuilder sb = new StringBuilder();
+    for (int id : ids)
+      sb.append(word(id)).append(" ");
+    return sb.deleteCharAt(sb.length() - 1).toString();
+  }
 
-	public static String getUnknownWord() {
-		return UNKNOWN_WORD;
-	}
+  public static int getUnknownId() {
+    return UNKNOWN_ID;
+  }
 
-	public static boolean nt(int id) {
-		return (id < 0);
-	}
+  public static String getUnknownWord() {
+    return UNKNOWN_WORD;
+  }
 
-	public static boolean idx(int id) {
-		return (id < 0);
-	}
+  public static boolean nt(int id) {
+    return (id < 0);
+  }
 
-	public static boolean nt(String word) {
-		return FormatUtils.isNonterminal(word);
-	}
+  public static boolean idx(int id) {
+    return (id < 0);
+  }
 
-	public static int size() {
-		synchronized (lock) {
-			return idToString.size();
-		}
-	}
+  public static boolean nt(String word) {
+    return FormatUtils.isNonterminal(word);
+  }
 
-	public static int getTargetNonterminalIndex(int id) {
-		return FormatUtils.getNonterminalIndex(word(id));
-	}
-	
-	private static void clear() {
-		hashToId = new TreeMap<Long, Integer>();
-		hashToString = new TreeMap<Long, String>();
-		idToString = new ArrayList<String>();
+  public static int size() {
+    synchronized (lock) {
+      return idToString.size();
+    }
+  }
 
-		idToString.add(UNKNOWN_ID, UNKNOWN_WORD);
-	}
+  public static int getTargetNonterminalIndex(int id) {
+    return FormatUtils.getNonterminalIndex(word(id));
+  }
 
-	/**
-	 * Used to indicate that a query has been made for a symbol that is not known.
-	 * 
-	 * @author Lane Schwartz
-	 * @version $LastChangedDate$
-	 */
-	public static class UnknownSymbolException extends RuntimeException {
+  private static void clear() {
+    hashToId = new TreeMap<Long, Integer>();
+    hashToString = new TreeMap<Long, String>();
+    idToString = new ArrayList<String>();
 
-		private static final long serialVersionUID = 1L;
+    idToString.add(UNKNOWN_ID, UNKNOWN_WORD);
+  }
 
-		/**
-		 * Constructs an exception indicating that the specified identifier cannot be
-		 * found in the symbol table.
-		 * 
-		 * @param id
-		 *          Integer identifier
-		 */
-		public UnknownSymbolException(int id) {
-			super("Identifier " + id + " cannot be found in the symbol table");
-		}
+  /**
+   * Used to indicate that a query has been made for a symbol that is not known.
+   * 
+   * @author Lane Schwartz
+   */
+  public static class UnknownSymbolException extends RuntimeException {
 
-		/**
-		 * Constructs an exception indicating that the specified symbol cannot be
-		 * found in the symbol table.
-		 * 
-		 * @param symbol
-		 *          String symbol
-		 */
-		public UnknownSymbolException(String symbol) {
-			super("Symbol " + symbol + " cannot be found in the symbol table");
-		}
-	}
+    private static final long serialVersionUID = 1L;
 
-	/**
-	 * Used to indicate that word hashing has produced a collision.
-	 * 
-	 * @author Juri Ganitkevitch
-	 * @version $LastChangedDate$
-	 */
-	public static class HashCollisionException extends RuntimeException {
+    /**
+     * Constructs an exception indicating that the specified identifier cannot be found in the
+     * symbol table.
+     * 
+     * @param id Integer identifier
+     */
+    public UnknownSymbolException(int id) {
+      super("Identifier " + id + " cannot be found in the symbol table");
+    }
 
-		private static final long serialVersionUID = 1L;
+    /**
+     * Constructs an exception indicating that the specified symbol cannot be found in the symbol
+     * table.
+     * 
+     * @param symbol String symbol
+     */
+    public UnknownSymbolException(String symbol) {
+      super("Symbol " + symbol + " cannot be found in the symbol table");
+    }
+  }
 
-		public HashCollisionException(String first, String second) {
-			super("MurmurHash for the following symbols collides: '" + first + "', '"
-					+ second + "'");
-		}
-	}
+  /**
+   * Used to indicate that word hashing has produced a collision.
+   * 
+   * @author Juri Ganitkevitch
+   */
+  public static class HashCollisionException extends RuntimeException {
 
-	public static Iterator<String> wordIterator() {
-		return idToString.iterator();
-	}
+    private static final long serialVersionUID = 1L;
+
+    public HashCollisionException(String first, String second) {
+      super("MurmurHash for the following symbols collides: '" + first + "', '" + second + "'");
+    }
+  }
+
+  public static Iterator<String> wordIterator() {
+    return idToString.iterator();
+  }
 }

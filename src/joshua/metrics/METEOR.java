@@ -1,22 +1,21 @@
-/* This file is part of the Joshua Machine Translation System.
+/*
+ * This file is part of the Joshua Machine Translation System.
  * 
- * Joshua is free software; you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as
- * published by the Free Software Foundation; either version 2.1
- * of the License, or (at your option) any later version.
- *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Joshua is free software; you can redistribute it and/or modify it under the terms of the GNU
+ * Lesser General Public License as published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ * 
+ * This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
+ * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free
- * Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
- * MA 02111-1307 USA
+ * 
+ * You should have received a copy of the GNU Lesser General Public License along with this library;
+ * if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
+ * 02111-1307 USA
  */
 
 package joshua.metrics;
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.FileOutputStream;
@@ -27,15 +26,13 @@ import java.io.OutputStreamWriter;
 import joshua.util.StreamGobbler;
 
 
-public class METEOR extends EvaluationMetric
-{
+public class METEOR extends EvaluationMetric {
   protected String targetLanguage;
   protected boolean normalize;
   protected boolean keepPunctuation;
   private int maxComputations;
 
-  public METEOR(String[] Metric_options)
-  {
+  public METEOR(String[] Metric_options) {
     // M_o[0]: -l language, one of {en,cz,fr,de,es}
     // M_o[1]: -normalize, one of {norm_yes,norm_no}
     // M_o[2]: -keepPunctuation, one of {keepPunc,removePunc}
@@ -88,26 +85,28 @@ public class METEOR extends EvaluationMetric
     initialize(); // set the data members of the metric
   }
 
-  protected void initialize()
-  {
+  protected void initialize() {
     metricName = "METEOR";
     toBeMinimized = false;
     suffStatsCount = 5;
   }
 
-  public double bestPossibleScore() { return 1.0; }
-  public double worstPossibleScore() { return 0.0; }
+  public double bestPossibleScore() {
+    return 1.0;
+  }
 
-  public int[] suffStats(String cand_str, int i)
-  {
+  public double worstPossibleScore() {
+    return 0.0;
+  }
+
+  public int[] suffStats(String cand_str, int i) {
     // this method should never be used when the metric is METEOR,
     // because METEOR.java overrides suffStats(String[],int[]) below,
     // which is the only method that calls suffStats(Sting,int).
     return null;
   }
 
-  public int[][] suffStats(String[] cand_strings, int[] cand_indices)
-  {
+  public int[][] suffStats(String[] cand_strings, int[] cand_indices) {
     // calculate sufficient statistics for each sentence in an arbitrary set of candidates
 
     int candCount = cand_strings.length;
@@ -123,12 +122,13 @@ public class METEOR extends EvaluationMetric
       // 1) Create input files for meteor
 
       // 1a) Create hypothesis file
-      FileOutputStream outStream = new FileOutputStream("hyp.txt.METEOR", false); // false: don't append
+      FileOutputStream outStream = new FileOutputStream("hyp.txt.METEOR", false); // false: don't
+                                                                                  // append
       OutputStreamWriter outStreamWriter = new OutputStreamWriter(outStream, "utf8");
       BufferedWriter outFile = new BufferedWriter(outStreamWriter);
 
       for (int d = 0; d < candCount; ++d) {
-        writeLine(cand_strings[d],outFile);
+        writeLine(cand_strings[d], outFile);
       }
 
       outFile.close();
@@ -140,7 +140,7 @@ public class METEOR extends EvaluationMetric
 
       for (int d = 0; d < candCount; ++d) {
         for (int r = 0; r < refsPerSen; ++r) {
-          writeLine(refSentences[cand_indices[d]][r],outFile);
+          writeLine(refSentences[cand_indices[d]][r], outFile);
         }
       }
 
@@ -151,8 +151,12 @@ public class METEOR extends EvaluationMetric
       String cmd_str = "./meteor hyp.txt.METEOR ref.txt.METEOR";
       cmd_str += " -l " + targetLanguage;
       cmd_str += " -r " + refsPerSen;
-      if (normalize) { cmd_str += " -normalize"; }
-      if (keepPunctuation) { cmd_str += " -keepPunctuation"; }
+      if (normalize) {
+        cmd_str += " -normalize";
+      }
+      if (keepPunctuation) {
+        cmd_str += " -keepPunctuation";
+      }
       cmd_str += " -ssOut";
 
       Runtime rt = Runtime.getRuntime();
@@ -180,27 +184,28 @@ public class METEOR extends EvaluationMetric
         line = inFile.readLine(); // read info
         String[] strA = line.split("\\s+");
 
-        stats[d][0] = (int)Double.parseDouble(strA[0]);
-        stats[d][1] = (int)Double.parseDouble(strA[1]);
-        stats[d][2] = (int)Double.parseDouble(strA[2]);
-        stats[d][3] = (int)Double.parseDouble(strA[3]);
-        stats[d][4] = (int)Double.parseDouble(strA[4]);
+        stats[d][0] = (int) Double.parseDouble(strA[0]);
+        stats[d][1] = (int) Double.parseDouble(strA[1]);
+        stats[d][2] = (int) Double.parseDouble(strA[2]);
+        stats[d][3] = (int) Double.parseDouble(strA[3]);
+        stats[d][4] = (int) Double.parseDouble(strA[4]);
       }
     } catch (IOException e) {
       System.err.println("IOException in METEOR.suffStats(String[],int[]): " + e.getMessage());
       System.exit(99902);
     } catch (InterruptedException e) {
-      System.err.println("InterruptedException in METEOR.suffStats(String[],int[]): " + e.getMessage());
+      System.err.println("InterruptedException in METEOR.suffStats(String[],int[]): "
+          + e.getMessage());
       System.exit(99903);
     }
 
     return stats;
   }
 
-  public double score(int[] stats)
-  {
+  public double score(int[] stats) {
     if (stats.length != suffStatsCount) {
-      System.out.println("Mismatch between stats.length and suffStatsCount (" + stats.length + " vs. " + suffStatsCount + ") in METEOR.score(int[])");
+      System.out.println("Mismatch between stats.length and suffStatsCount (" + stats.length
+          + " vs. " + suffStatsCount + ") in METEOR.score(int[])");
       System.exit(1);
     }
 
@@ -211,10 +216,10 @@ public class METEOR extends EvaluationMetric
     return sc;
   }
 
-  public void printDetailedScore_fromStats(int[] stats, boolean oneLiner)
-  {
+  public void printDetailedScore_fromStats(int[] stats, boolean oneLiner) {
     if (oneLiner) {
-      System.out.println("METEOR = METEOR(" + stats[0] + "," + stats[1] + "," + stats[2] + "," + stats[3] + "," + stats[4] + " = " + score(stats));
+      System.out.println("METEOR = METEOR(" + stats[0] + "," + stats[1] + "," + stats[2] + ","
+          + stats[3] + "," + stats[4] + " = " + score(stats));
     } else {
       System.out.println("# matches = " + stats[0]);
       System.out.println("test length = " + stats[1]);
@@ -225,12 +230,10 @@ public class METEOR extends EvaluationMetric
     }
   }
 
-  private void writeLine(String line, BufferedWriter writer) throws IOException
-  {
+  private void writeLine(String line, BufferedWriter writer) throws IOException {
     writer.write(line, 0, line.length());
     writer.newLine();
     writer.flush();
   }
 
 }
-
