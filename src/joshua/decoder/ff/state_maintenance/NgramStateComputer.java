@@ -50,7 +50,7 @@ public class NgramStateComputer implements StateComputer<NgramDPState> {
 
     int hypLen = 0;
     int[] enWords = rule.getEnglish();
-
+    
     for (int c = 0; c < enWords.length; c++) {
       int curID = enWords[c];
       if (Vocabulary.idx(curID)) {

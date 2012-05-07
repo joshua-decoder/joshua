@@ -29,6 +29,7 @@ import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.chart_parser.CubePruneCombiner.CubePruneState;
 import joshua.decoder.chart_parser.DotChart.DotNode;
 import joshua.decoder.ff.FeatureFunction;
+import joshua.decoder.ff.PhraseModelFF;
 import joshua.decoder.ff.SourceDependentFF;
 import joshua.decoder.ff.state_maintenance.StateComputer;
 import joshua.decoder.ff.tm.Grammar;
@@ -88,6 +89,7 @@ public class Chart {
   private Cell[][] cells; // note that in some cell, it might be null
   private int sourceLength;
   private List<FeatureFunction> featureFunctions;
+  private List<FeatureFunction> nonPhrasalFeatureFunctions;
   private List<StateComputer> stateComputers;
   private Grammar[] grammars;
   private DotChart[] dotcharts; // each grammar should have a dotchart associated with it
@@ -129,6 +131,11 @@ public class Chart {
     this.sourceLength = inputLattice.size() - 1;
     this.featureFunctions = featureFunctions;
     this.stateComputers = stateComputers;
+
+    this.nonPhrasalFeatureFunctions = new ArrayList<FeatureFunction>();
+    for (FeatureFunction ff : this.featureFunctions) {
+      if (!(ff instanceof PhraseModelFF)) this.nonPhrasalFeatureFunctions.add(ff);
+    }
 
     this.parseTree = null;
     if (sentence instanceof ParsedSentence)

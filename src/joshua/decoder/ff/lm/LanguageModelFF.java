@@ -161,17 +161,16 @@ public class LanguageModelFF extends DefaultStatefulFF {
               "computeTransition: left and right contexts have unequal lengths");
         }
 
-        // ================ left context
+        // Left context.
         for (int i = 0; i < leftContext.size(); i++) {
           int t = leftContext.get(i);
           currentNgram.add(t);
 
-          // always calculate logP for <bo>: additional backoff weight
+          // Always calculate logP for <bo>: additional backoff weight
           if (t == BACKOFF_LEFT_LM_STATE_SYM_ID) {
-            int numAdditionalBackoffWeight = currentNgram.size() - (i + 1);// number of non-state
-                                                                           // words
-
-            // compute additional backoff weight
+            // Number of non-state words.
+            int numAdditionalBackoffWeight = currentNgram.size() - (i + 1);
+            // Compute additional backoff weight.
             transitionLogP +=
                 this.lmGrammar.logProbOfBackoffState(currentNgram, currentNgram.size(),
                     numAdditionalBackoffWeight);
@@ -188,7 +187,7 @@ public class LanguageModelFF extends DefaultStatefulFF {
 
         }
 
-        // ================ right context
+        // Right context.
         int tSize = currentNgram.size();
         for (int i = 0; i < rightContext.size(); i++) {
           // replace context
@@ -205,15 +204,6 @@ public class LanguageModelFF extends DefaultStatefulFF {
         }
       }
     }
-    // ===== create tabl
-
-    // ===== get left euquiv state
-    // double[] lmLeftCost = new double[2];
-    // int[] equivLeftState =
-    // this.lmGrammar.leftEquivalentState(Support.subIntArray(leftLMStateWrds, 0,
-    // leftLMStateWrds.size()), this.ngramOrder, lmLeftCost);
-
-    // transitionCost += lmLeftCost[0];//add finalized cost for the left state words
     return transitionLogP;
   }
 

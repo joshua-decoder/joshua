@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.TreeMap;
 
 import joshua.decoder.ff.FeatureFunction;
+import joshua.decoder.ff.PhraseModelFF;
 import joshua.decoder.ff.state_maintenance.DPState;
 import joshua.decoder.ff.state_maintenance.StateComputer;
 import joshua.decoder.ff.tm.Rule;
@@ -57,15 +58,18 @@ public class ComputeNodeResult {
     double futureLogPEstimation = 0.0;
 
     for (FeatureFunction ff : featureFunctions) {
-      transitionLogPSum +=
-          ff.getWeight() * ff.transitionLogP(rule, antNodes, i, j, srcPath, sentID);
-      DPState dpState = null;
-      if (allDPStates != null) dpState = allDPStates.get(ff.getStateID());
-      futureLogPEstimation += ff.getWeight() * ff.estimateFutureLogP(rule, dpState, sentID);
+      if (!(ff instanceof PhraseModelFF)) {
+        transitionLogPSum +=
+            ff.getWeight() * ff.transitionLogP(rule, antNodes, i, j, srcPath, sentID);
+        DPState dpState = null;
+        if (allDPStates != null) dpState = allDPStates.get(ff.getStateID());
+        futureLogPEstimation += ff.getWeight() * ff.estimateFutureLogP(rule, dpState, sentID);
+      }
     }
+    transitionLogPSum += -rule.getEstCost();
 
     /*
-     * if we use this one (instead of compute transition logP on the fly, we will rely on the
+     * If we use this one (instead of compute transition logP on the fly, we will rely on the
      * correctness of rule.statelesscost. This will cause a nasty bug for MERT. Specifically, even
      * we change the weight vector for features along the iteration, the HG cost does not reflect
      * that as the Grammar is not reestimated!!! Of course, compute it on the fly will slow down the
