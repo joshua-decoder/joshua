@@ -216,10 +216,12 @@ public class Chart {
             oov_rule =
                 this.grammars[grammars.length - 1].constructLabeledOOVRule(
                     this.featureFunctions.size(), sourceWord, targetWord, l, useMaxLMCostForOOV);
-        } else
+        } else {
           oov_rule =
               this.grammars[grammars.length - 1].constructOOVRule(this.featureFunctions.size(),
                   sourceWord, targetWord, useMaxLMCostForOOV);
+          oov_rule.estimateRuleCost(featureFunctions);
+        }
 
         if (manualConstraintsHandler.containHardRuleConstraint(node.getNumber(), arc.getTail()
             .getNumber())) {

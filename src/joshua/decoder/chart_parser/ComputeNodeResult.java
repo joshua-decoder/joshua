@@ -3,8 +3,8 @@ package joshua.decoder.chart_parser;
 import java.util.List;
 import java.util.TreeMap;
 
+import joshua.decoder.ff.DefaultStatefulFF;
 import joshua.decoder.ff.FeatureFunction;
-import joshua.decoder.ff.PhraseModelFF;
 import joshua.decoder.ff.state_maintenance.DPState;
 import joshua.decoder.ff.state_maintenance.StateComputer;
 import joshua.decoder.ff.tm.Rule;
@@ -53,21 +53,23 @@ public class ComputeNodeResult {
       }
     }
 
-    // === compute feature logPs
+    // Compute feature logPs.
     double transitionLogPSum = 0.0;
     double futureLogPEstimation = 0.0;
 
     for (FeatureFunction ff : featureFunctions) {
-      if (!(ff instanceof PhraseModelFF)) {
-        transitionLogPSum +=
-            ff.getWeight() * ff.transitionLogP(rule, antNodes, i, j, srcPath, sentID);
+      if ((ff instanceof DefaultStatefulFF)) {
+        double val = ff.transitionLogP(rule, antNodes, i, j, srcPath, sentID);
+        double fix = ff.estimateLogP(rule, sentID);
+        transitionLogPSum += ff.getWeight() * (val - fix);
+                
         DPState dpState = null;
         if (allDPStates != null) dpState = allDPStates.get(ff.getStateID());
         futureLogPEstimation += ff.getWeight() * ff.estimateFutureLogP(rule, dpState, sentID);
       }
     }
-    transitionLogPSum += -rule.getEstCost();
-
+    transitionLogPSum -= rule.getEstCost();
+    
     /*
      * If we use this one (instead of compute transition logP on the fly, we will rely on the
      * correctness of rule.statelesscost. This will cause a nasty bug for MERT. Specifically, even
