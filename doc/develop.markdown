@@ -1,11 +1,27 @@
 Information for Developers				{#develop}
 ==========================
 
+[TOC]
+
 ## Source code
 
 The Joshua source code repository is located at 
 [http://github.com/joshua-decoder/joshua](http://github.com/joshua-decoder/joshua).
 Active development is being done in the `devel` branch.
+
+## Discussion list
+
+[https://groups.google.com/forum/#!forum/joshua_developers](https://groups.google.com/forum/#!forum/joshua_developers)
+
+## GitHub issues
+
+[https://github.com/joshua-decoder/joshua/issues](https://github.com/joshua-decoder/joshua/issues)
+
+## Documentation
+
+Documenting Joshua is of great importance. The manual is automatically
+generated using Doxygen. Find out more on the [documentation](@ref documentation)
+page.
 
 ## Style guide
 
