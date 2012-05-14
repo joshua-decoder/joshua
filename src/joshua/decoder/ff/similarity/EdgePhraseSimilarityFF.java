@@ -66,6 +66,12 @@ public class EdgePhraseSimilarityFF extends DefaultStatefulFF implements SourceD
   }
 
   @Override
+  public double reEstimateTransitionLogP(Rule rule, List<HGNode> antNodes, int spanStart,
+      int spanEnd, SourcePath srcPath, int sentID) {
+    return this.transitionLogP(rule, antNodes, spanStart, spanEnd, srcPath, sentID);
+  }
+
+  @Override
   public double transitionLogP(Rule rule, List<HGNode> antNodes, int spanStart, int spanEnd,
       SourcePath srcPath, int sentID) {
     double similarity = 0;
