@@ -1,4 +1,43 @@
-3.2 (stable)
+4.0 (June 3, 2012)
+=================================
+
+The main features of this release are described in 
+
+  "Joshua 4.0: Packing, PRO, and Paraphrasing."
+  Juri Ganitkevitch, Yuan Cao, Jonny Weese, Matt Post, and Chris Callison-Burch. 
+  NAACL Workshop on Statistical Machine Translation, June, 2012.
+
+They include:
+
+- Improved documentation (both user and developer)
+
+  See doc/html/index.html
+
+- Synchronous parsing
+
+  Joshua will compute the best synchronous derivation over a pair of
+  sentences.  Pass the sentences in in the form 
+
+    source sentence ||| target sentence
+
+  and set the parameter "parse = true" (either from the config file or
+  command-line).
+
+- PRO implementation
+
+  We include an implementation of Pairwise Ranking Optimization (PRO,
+  Hopkins & May, EMNLP 2011).  It can be activated by passing "--tuner
+  pro" to the pipeline script.
+
+- Grammar packing
+
+  We include an efficient grammar representation that can be used to
+  greatly reduce the memory footprint of large grammars.
+
+- Numerous bugfixes
+
+
+3.2
 =================================
 
 - Pop-limit pruning.
