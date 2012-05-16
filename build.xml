@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!-- Build file for Joshua. Last changed: $LastChangedDate$ -->
-<project name="Joshua Machine Translation Toolkit" default="compile" basedir="." xmlns:doxygen="antlib:org.doxygen.tools">
+<project name="Joshua Machine Translation Toolkit" default="all" basedir="." xmlns:doxygen="antlib:org.doxygen.tools">
   
   <!-- ~~~~~ Properties, Paths, etc ~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
   
@@ -60,6 +60,10 @@
   <!-- Check for environment variables -->
   <target name="set-joshua-home" unless="env.JOSHUA">
 	<fail message="Please set the $JOSHUA environment variable." />
+  </target>
+
+  <target name="set-joshua-version" unless="env.JOSHUA_VERSION">
+	<fail message="Please set the $JOSHUA_VERSION environment variable." />
   </target>
   
   <!-- Check for environment variables -->
@@ -130,8 +134,11 @@
 
   <!-- ~~~~~ Java build tasks ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
   
+  <target name="all" depends="init,java,thrax,giza,kenlm,parallelize">
+  </target>
+
   <!-- Compile the Java code. -->
-  <target name="compile" depends="init, thrax, giza, kenlm, parallelize">
+  <target name="java" depends="init">
 	<javac compiler="javac1.5" srcdir="${src}" destdir="${build}" 
 		   classpathref="compile.all.classpath" debug="on" encoding="utf8" 
            sourcepath="" includeantruntime="false">
@@ -144,8 +151,9 @@
 		   -->
 	</javac>
   </target>
+
   <!-- Create a JAR file -->
-  <target name="jar" depends="compile,set-joshua-home">
+  <target name="jar" depends="java,set-joshua-home">
 	<jar destfile="${build}/joshua.jar" index="true">
 	  <fileset dir="${build}">
 		<include name="**/*.class"/>
@@ -163,7 +171,7 @@
 	</jar>
   </target>
   
-  <target name="tree_visualizer" depends="compile,set-joshua-home">
+  <target name="tree_visualizer" depends="java,set-joshua-home">
 	<jar destfile="tree_visualizer/tree_visualizer.jar" index="true">
 	  <zipgroupfileset dir="lib" includes="*.jar"/>
 	  <fileset dir="${build}">
@@ -179,6 +187,13 @@
 	</jar>
   </target>
   
+  <!-- Create a versioned release -->
+  <target name="release" depends="set-joshua-version">
+    <exec executable="./scripts/support/make-release.sh">
+      <arg value="${env.JOSHUA_VERSION}" />
+    </exec>
+  </target>
+
   <!-- Create a JAR file of the source code -->
   <target name="source-jar">
 	<jar destfile="${build}/joshua-src.jar">
@@ -187,7 +202,6 @@
 	  </fileset>
 	</jar>
   </target>
-  
   
   <!-- ~~~~~ Cleaning tasks ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
   
@@ -201,6 +215,10 @@
 	<exec executable="/bin/bash" dir="src/joshua/decoder/ff/lm/kenlm">
 	  <arg value="clean.sh" />
 	</exec>
+    <delete dir="bin/" />
+    <delete file="tree_visualizer/tree_visualizer.jar"/>
+    <delete dir="doc/html"/>
+    <delete dir="doc/latex"/>
   </target>
 
   <!-- Delete just the java files -->
@@ -282,7 +300,7 @@
 
   <!-- ~~~~~ Tests ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
-  <target name="test" depends="compile">
+  <target name="test" depends="all">
 	<exec dir="test" executable="/bin/bash" failonerror="true">
 	  <arg line="test-all.sh" />
 	</exec>
@@ -303,7 +321,7 @@
   
   
   <!-- Run the unit tests -->
-  <target name="testng" depends="compile,compile-tests">
+  <target name="testng" depends="all,compile-tests">
 	<testng classpath="${build}" sourcedir="${test}">
 	  <jvmarg value="-Dfile.encoding=UTF8"/>
 	  <jvmarg value="-Djava.util.logging.config.file=logging.tests.properties"/>
