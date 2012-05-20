@@ -19,6 +19,7 @@ tar czf release/joshua-$version.tgz \
     joshua-$version/lib/{*jar,eng_sm6.gr,README,LICENSES} \
     joshua-$version/scripts \
     joshua-$version/examples \
+    joshua-$version/thrax/bin/thrax.jar \
     joshua-$version/tree_visualizer
 
 # docs version
@@ -30,6 +31,7 @@ tar czf release/joshua-$version-with-docs.tgz \
     joshua-$version/doc \
     joshua-$version/scripts \
     joshua-$version/examples \
+    joshua-$version/thrax/bin/thrax.jar \
     joshua-$version/tree_visualizer
 
 rm -f joshua-$version
