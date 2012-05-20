@@ -1,5 +1,4 @@
-4.0 (June 3, 2012)
-=================================
+== 4.0 (June 3, 2012) ===========================================
 
 The main features of this release are described in 
 
@@ -36,9 +35,7 @@ They include:
 
 - Numerous bugfixes
 
-
-3.2
-=================================
+== 3.2 (February 17, 2012) ======================================
 
 - Pop-limit pruning.
 
