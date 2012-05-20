@@ -10,8 +10,20 @@ cd $JOSHUA
 ant clean java documentation
 [[ ! -d release ]] && mkdir release
 ln -s $JOSHUA joshua-$version
+
+# version without docs
 tar czf release/joshua-$version.tgz \
-    --exclude '*~ #*' \
+    --exclude='*~' --exclude='#*' \
+    joshua-$version/{README.txt,INSTALL.txt,build.xml,logging.properties} \
+    joshua-$version/bin \
+    joshua-$version/lib/{*jar,eng_sm6.gr,README,LICENSES} \
+    joshua-$version/scripts \
+    joshua-$version/examples \
+    joshua-$version/tree_visualizer
+
+# docs version
+tar czf release/joshua-$version-with-docs.tgz \
+    --exclude='*~' --exclude='#*' \
     joshua-$version/{README.txt,INSTALL.txt,build.xml,logging.properties} \
     joshua-$version/bin \
     joshua-$version/lib/{*jar,eng_sm6.gr,README,LICENSES} \
@@ -20,4 +32,4 @@ tar czf release/joshua-$version.tgz \
     joshua-$version/examples \
     joshua-$version/tree_visualizer
 
-rm -f joshua-version
+rm -f joshua-$version
