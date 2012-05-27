@@ -17,6 +17,8 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Stack;
 import java.util.logging.Logger;
 
 import joshua.corpus.Vocabulary;
@@ -112,6 +114,13 @@ public class PackedGrammar extends BatchGrammar {
       }
     }
   }
+
+  // @Override
+  // public void sortGrammar(List<FeatureFunction> models) {
+  // for (PackedSlice slice : slices) {
+  // slice.sort(models);
+  // }
+  // }
 
   @Override
   public Trie getTrieRoot() {
@@ -272,8 +281,10 @@ public class PackedGrammar extends BatchGrammar {
       int num_rules = grammar.source[rule_position - 1];
 
       ArrayList<Rule> rules = new ArrayList<Rule>(num_rules);
-      for (int i = 0; i < num_rules; i++)
-        rules.add(grammar.assembleRule(rule_position + 3 * i, src, arity));
+      for (int i = 0; i < num_rules; i++) {
+        rules.add(new PackedRule(this, rule_position + 3 * i));
+        // rules.add(grammar.assembleRule(rule_position + 3 * i, src, arity));
+      }
       return rules;
     }
 
@@ -384,6 +395,131 @@ public class PackedGrammar extends BatchGrammar {
     }
   }
 
+  public final class PackedRule implements Rule {
+
+    PackedTrie parent;
+    int address;
+
+    int[] tgt = null;
+    float[] features = null;
+
+    public PackedRule(PackedTrie parent, int address) {
+      this.parent = parent;
+      this.address = address;
+    }
+
+    @Override
+    public void setRuleID(int id) {}
+
+    @Override
+    public int getRuleID() {
+      // TODO: Doesn't factor in the slice.
+      return address;
+    }
+
+    @Override
+    public void setArity(int arity) {}
+
+    @Override
+    public int getArity() {
+      return parent.getArity();
+    }
+
+    @Override
+    public void setOwner(int ow) {}
+
+    @Override
+    public int getOwner() {
+      return owner;
+    }
+
+    @Override
+    public void setLHS(int lhs) {}
+
+    @Override
+    public int getLHS() {
+      return parent.grammar.source[address];
+    }
+
+    @Override
+    public void setEnglish(int[] eng) {}
+
+    @Override
+    public int[] getEnglish() {
+      if (tgt == null) {
+        tgt = parent.grammar.getTarget(parent.grammar.source[address + 1]);
+      }
+      return tgt;
+    }
+
+    @Override
+    public void setFrench(int[] french) {}
+
+    @Override
+    public int[] getFrench() {
+      return parent.src;
+    }
+
+    @Override
+    public void setFeatureScores(float[] scores) {}
+
+    @Override
+    public float[] getFeatureScores() {
+      if (features == null) {
+        features = parent.grammar.getFeatures(parent.grammar.source[address + 2]);
+      }
+      return features;
+    }
+
+    @Override
+    public void setFeatureCost(int column, float cost) {}
+
+    @Override
+    public float getFeatureCost(int column) {
+      return 0;
+    }
+
+    @Override
+    public float incrementFeatureScore(int column, double score) {
+      return 0;
+    }
+
+    @Override
+    public void setLatticeCost(float cost) {}
+
+    @Override
+    public float getLatticeCost() {
+      return 0;
+    }
+
+    @Override
+    public void setEstCost(float cost) {
+      parent.grammar.cache[parent.grammar.source[address + 2]] = cost;
+    }
+
+    @Override
+    public float getEstCost() {
+      return parent.grammar.cache[parent.grammar.source[address + 2]];
+    }
+
+    @Override
+    public float estimateRuleCost(List<FeatureFunction> featureFunctions) {
+      return parent.grammar.cache[parent.grammar.source[address + 2]];
+    }
+
+    @Override
+    @Deprecated
+    public String toString(Map<Integer, String> ntVocab) {
+      return null;
+    }
+
+    @Override
+    @Deprecated
+    public String toStringWithoutFeatScores() {
+      return null;
+    }
+  }
+
   public final class PackedSlice {
     private final String name;
 
@@ -439,6 +575,70 @@ public class PackedGrammar extends BatchGrammar {
       targetLookup = new int[target_lookup_stream.readInt()];
       for (int i = 0; i < targetLookup.length; i++)
         targetLookup[i] = target_lookup_stream.readInt();
+    }
+
+    final int[] makeArray(List<Integer> list) {
+      int[] array = new int[list.size()];
+      int i = 0;
+      for (int l : list) {
+        array[i++] = l;
+      }
+      return array;
+    }
+
+    void sort(List<FeatureFunction> models) {
+      Stack<Integer> positions = new Stack<Integer>();
+      Stack<Integer> src_path = new Stack<Integer>();
+      int arity = 0;
+
+      int current = 0;
+      while (current < source.length) {
+        sortRules(models, current, makeArray(src_path), arity);
+        int num_children = source[current];
+
+        // TODO: finish sort implementation.
+      }
+    }
+
+    public void sortRules(List<FeatureFunction> models, int position, int[] src, int arity) {
+      int num_children = source[position];
+      int rule_position = position + 2 * (num_children + 1);
+      int num_rules = source[rule_position - 1];
+
+      Integer[] rules = new Integer[num_rules];
+
+      int target_address;
+      int block_id;
+      for (int i = 0; i < num_rules; i++) {
+        target_address = source[rule_position + 1 + 3 * i];
+        rules[i] = rule_position + 2 + 3 * i;
+        block_id = source[rules[i]];
+
+        BilingualRule rule =
+            new BilingualRule(source[rule_position + 3 * i], src, getTarget(target_address),
+                getFeatures(block_id), arity, owner, 0, rule_position + 3 * i);
+        cache[block_id] = rule.estimateRuleCost(models);
+      }
+
+      Arrays.sort(rules, new Comparator<Integer>() {
+        public int compare(Integer a, Integer b) {
+          float a_cost = cache[source[a]];
+          float b_cost = cache[source[b]];
+          if (a_cost == b_cost) return 0;
+          return (a_cost > b_cost ? 1 : -1);
+        }
+      });
+
+      int[] sorted = new int[3 * num_rules];
+      int j = 0;
+      for (int i = 0; i < rules.length; i++) {
+        int address = rules[i];
+        sorted[j++] = source[address - 2];
+        sorted[j++] = source[address - 1];
+        sorted[j++] = source[address];
+      }
+      for (int i = 0; i < sorted.length; i++)
+        source[rule_position + i] = sorted[i];
     }
 
     final int[] getTarget(int pointer) {

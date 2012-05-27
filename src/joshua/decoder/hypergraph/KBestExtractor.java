@@ -338,7 +338,7 @@ public class KBestExtractor {
       x++;
 
       // sanity check
-      // if (false) {
+//       if (false) {
       if (performSanityCheck) {
         if (Math.abs(cur.cost - temSum) > 1e-2) {
           StringBuilder error = new StringBuilder();
