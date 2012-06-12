@@ -1,15 +1,13 @@
 package joshua.ui.hypergraph_visualizer;
 
 public class Edge {
-	private boolean isHighlighted;
+  private boolean isHighlighted;
 
-	public Edge(boolean hl)
-	{
-		isHighlighted = hl;
-	}
+  public Edge(boolean hl) {
+    isHighlighted = hl;
+  }
 
-	public boolean isHighlighted()
-	{
-		return isHighlighted;
-	}
+  public boolean isHighlighted() {
+    return isHighlighted;
+  }
 }
