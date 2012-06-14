@@ -65,3 +65,6 @@ test/bn-en/samt/output_packed.bleu
 test/bn-en/samt/reference.en.all
 *.class
 doxygen_*.tmp
+
+test/scripts/tokenization/diff
+test/scripts/tokenization/output
