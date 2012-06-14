@@ -3,7 +3,7 @@
 # Runs all the test cases (scripts named test.sh) beneath this
 # directory, reporting success or failure.
 
-for file in $(find . -name test.sh); do
+for file in $(find . -name test.sh -perm /+x); do
 	dir=$(dirname $file)
 
 	echo -n "Running test in $dir..."
