@@ -31,7 +31,7 @@ import joshua.util.Regex;
  * denoting a string of source language words. The sequence can optionally be wrapped in <seg
  * id="N">...</seg> tags, which are then used to set the sentence number (a 0-indexed ID).
  * 
- * @author Matt Post <post@jhu.edu>
+ * @author Matt Post <post@cs.jhu.edu>
  * @version $LastChangedDate$
  */
 

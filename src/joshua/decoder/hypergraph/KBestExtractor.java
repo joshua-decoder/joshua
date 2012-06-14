@@ -338,8 +338,7 @@ public class KBestExtractor {
       x++;
 
       // sanity check
-//       if (false) {
-      if (performSanityCheck) {
+			if (performSanityCheck) {
         if (Math.abs(cur.cost - temSum) > 1e-2) {
           StringBuilder error = new StringBuilder();
           error.append("\nIn nbest extraction, Cost does not match; cur.cost: " + cur.cost

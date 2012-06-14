@@ -1,5 +1,3 @@
-lm_file=test.lm
-
 tm_file=grammar.test
 tm_format=hiero
 
@@ -7,34 +5,23 @@ glue_file=../grammars/hiero.glue
 glue_format=hiero
 
 #lm config
-use_srilm=true
-lm_ceiling_cost=100
-use_left_equivalent_state=false
-use_right_equivalent_state=false
-order=3
-
+lm = berkeleylm 3 false false 100 test.lm
 
 #tm config
 span_limit=50
 phrase_owner=pt
-mono_owner=mono
-begin_mono_owner=begin_mono
 default_non_terminal=X
 goalSymbol=S
 
 #pruning config
-fuzz1=0.1
-fuzz2=0.1
-max_n_items=500
-relative_threshold=10.0
-max_n_rules=500
-rule_relative_threshold=10.0
+pop-limit = 100
 
 #nbest config
-use_unique_nbest=false
-use_tree_nbest=false
+use_unique_nbest = true 
+use_tree_nbest = false
+include-align-index = false
 add_combined_cost=true
-top_n=300
+top_n = 300
 
 #parallel deocoder: it cannot be used together with remote lm
 num_parallel_decoders=1
@@ -43,7 +30,7 @@ parallel_files_prefix=/tmp/
 
 ###### model weights
 #lm order weight
-lm 1.0
+lm 0 1.0
 
 #phrasemodel owner column(0-indexed) weight
 phrasemodel pt 0 1.0
@@ -59,4 +46,3 @@ phrasemodel pt 2 0.5
 #wordpenalty weight
 wordpenalty -1.0
 latticecost 1.0
-

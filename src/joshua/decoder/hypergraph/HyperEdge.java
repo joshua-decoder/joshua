@@ -59,7 +59,7 @@ public class HyperEdge {
     this.rule = rule;
     this.antNodes = antNodes;
     this.srcPath = srcPath;
-  }
+	 }
 
   public Rule getRule() {
     return rule;

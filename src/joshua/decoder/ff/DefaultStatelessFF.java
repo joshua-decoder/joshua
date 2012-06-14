@@ -74,7 +74,8 @@ public abstract class DefaultStatelessFF implements FeatureFunction {
 
   public double reEstimateTransitionLogP(Rule rule, List<HGNode> antNodes, int spanStart,
       int spanEnd, SourcePath srcPath, int sentID) {
-    return 0;
+    // return 0;
+		return transitionLogP(rule, antNodes, spanStart, spanEnd, srcPath, sentID);
   }
 
   public double transitionLogP(HyperEdge edge, int spanStart, int spanEnd, int sentID) {

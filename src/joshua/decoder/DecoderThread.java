@@ -96,7 +96,7 @@ public class DecoderThread extends Thread {
     this.kbestExtractor =
         new KBestExtractor(JoshuaConfiguration.use_unique_nbest,
             JoshuaConfiguration.use_tree_nbest, JoshuaConfiguration.include_align_index,
-            JoshuaConfiguration.add_combined_cost, false, true);
+            JoshuaConfiguration.add_combined_cost, false, false);
 
     // if (JoshuaConfiguration.save_disk_hg) {
     // FeatureFunction languageModel = null;
@@ -224,8 +224,6 @@ public class DecoderThread extends Thread {
       logger.info("translation of sentence " + sentence.id() + " took 0 seconds [" + getId() + "]");
       return null;
     }
-
-    Lattice<Integer> input_lattice = sentence.intLattice();
 
     int numGrammars =
         (JoshuaConfiguration.use_sent_specific_tm) ? grammarFactories.size() + 1 : grammarFactories

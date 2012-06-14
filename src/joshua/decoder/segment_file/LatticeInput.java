@@ -24,7 +24,7 @@ import joshua.lattice.Lattice;
  * 
  * ((('ein',0.1,1),('dieses',0.2,1),('haus',0.4,2),),(('haus',0.8,1),),)
  * 
- * @author Matt Post <post@jhu.edu>
+ * @author Matt Post <post@cs.jhu.edu>
  * @version $LastChangedDate$
  */
 

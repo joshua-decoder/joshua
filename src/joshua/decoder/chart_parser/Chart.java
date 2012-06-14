@@ -207,6 +207,7 @@ public class Chart {
         } else {
           targetWord = sourceWord;
         }
+
         Rule oov_rule = null;
         if (parseTree != null
             && (JoshuaConfiguration.constrain_parse || JoshuaConfiguration.use_pos_labels)) {
