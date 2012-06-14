@@ -82,6 +82,9 @@ public interface FeatureFunction {
 
   double transitionLogP(HyperEdge edge, int spanStart, int spanEnd, int sentID);
 
+  double reEstimateTransitionLogP(Rule rule, List<HGNode> antNodes, int spanStart, int spanEnd,
+      SourcePath srcPath, int sentID);
+
   /**
    * Edges calling finalTransition do not have concret rules associated with them.
    * */

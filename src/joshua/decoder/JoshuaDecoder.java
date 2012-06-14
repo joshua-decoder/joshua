@@ -147,7 +147,6 @@ public class JoshuaDecoder {
         i++;
       }
     }
-
     // FIXME: this works for Batch grammar only; not for sentence-specific grammars
     for (GrammarFactory grammarFactory : this.grammarFactories) {
       // if (grammarFactory instanceof Grammar) {
@@ -375,6 +374,8 @@ public class JoshuaDecoder {
           JoshuaConfiguration.default_non_terminal, JoshuaConfiguration.span_limit,
           JoshuaConfiguration.oov_feature_cost));
     }
+    logger.info(String.format("Memory used %.1f MB", ((Runtime.getRuntime().totalMemory() - Runtime
+        .getRuntime().freeMemory()) / 1000000.0)));
   }
 
   private void initializeStateComputers(int nGramOrder, int ngramStateID) {
