@@ -37,7 +37,7 @@ my $CCONFIG = {
     'QSubMemFlag' => '-l pmem=',
   },
   'HLTCOE' => {
-    'HOST_REGEXP' => qr/(test1|test2|test3|test4|r\d+n\d+|hltcoe\.jhu\.edu)/,
+    'HOST_REGEXP' => qr/(test1|test2|test3|test4|himem|r\d+n\d+|hltcoe\.jhu\.edu)/,
     'QSubMemFlag' => '-l num_proc=1,h_rt=24:00:00,mem_free=16g,h_vmem=',
 #    'QSubQueue' => '-q '
 #    'QSubQueue' => '-q mem.q'
