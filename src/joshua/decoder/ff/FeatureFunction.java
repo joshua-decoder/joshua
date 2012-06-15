@@ -36,6 +36,7 @@ import joshua.decoder.hypergraph.HyperEdge;
  */
 public interface FeatureFunction {
 
+<<<<<<< HEAD
   // ===============================================================
   // Attributes
   // ===============================================================
@@ -93,4 +94,58 @@ public interface FeatureFunction {
 
   double finalTransitionLogP(HyperEdge edge, int spanStart, int spanEnd, int sentID);
 
+=======
+//===============================================================
+// Attributes
+//===============================================================
+	
+	/** It is essential to make sure the feature ID is unique
+	 * for each feature. */
+	void    setFeatureID(int id);
+	int     getFeatureID();
+	
+	void    setWeight(double weight);
+	double  getWeight();
+	
+	boolean isStateful();
+	
+	void    setStateID(int stateID);
+	int     getStateID();
+	
+//===============================================================
+// Methods
+//===============================================================
+	/**sentID might be useful for sentence-specific features (e.g., oralce model)
+	 * */
+	
+	/**
+	 * It is used when initializing translation grammars (for
+	 * pruning purpose, and to get stateless logP for each rule).
+	 * This is also required to sort the rules (required by Cube-pruning).
+	 */
+	double estimateLogP(Rule rule, int sentID);
+	
+		
+	/**estimate future logP, e.g., the logPs of partial n-grams
+	 * asscociated with the left-edge ngram state
+	 * */
+	double estimateFutureLogP(Rule rule, DPState curDPState, int sentID);	
+	
+	double transitionLogP(Rule rule, List<HGNode> antNodes, int spanStart, int spanEnd, SourcePath srcPath, int sentID);
+	
+	double transitionLogP(HyperEdge edge, int spanStart, int spanEnd, int sentID);
+	
+	/**Edges calling finalTransition do not have concret rules associated with them. 
+	 * */
+	double finalTransitionLogP(HGNode antNode, int spanStart, int spanEnd, SourcePath srcPath, int sentID);
+	
+	double finalTransitionLogP(HyperEdge edge, int spanStart, int spanEnd, int sentID);
+	
+	/**
+	 * A feature function can return a thread-local copy of itself for thread safety, or just return <code>this</code> if necessary. 
+	 * @return
+	 */
+	FeatureFunction threadLocalCopyOf();
+	
+>>>>>>> branch 'devel' of https://github.com/adampauls/joshua.git
 }

@@ -29,6 +29,14 @@ import edu.berkeley.nlp.lm.ArrayEncodedNgramLanguageModel;
 import edu.berkeley.nlp.lm.ConfigOptions;
 import edu.berkeley.nlp.lm.StringWordIndexer;
 import edu.berkeley.nlp.lm.io.LmReaders;
+<<<<<<< HEAD
+=======
+
+import joshua.corpus.Vocabulary;
+import joshua.decoder.JoshuaConfiguration;
+import joshua.decoder.ff.lm.AbstractLM;
+import joshua.decoder.ff.lm.NGramLanguageModel;
+>>>>>>> branch 'devel' of https://github.com/adampauls/joshua.git
 
 /**
  * This class wraps Berkeley LM.
@@ -41,13 +49,33 @@ public class LMGrammarBerkeley extends AbstractLM {
 
   private static final Logger logger = Logger.getLogger(LMGrammarBerkeley.class.getName());
 
+<<<<<<< HEAD
   private int[] vocabIdToMyIdMapping;
+=======
+	private VocabMapping vocabMapping;
+>>>>>>> branch 'devel' of https://github.com/adampauls/joshua.git
 
+<<<<<<< HEAD
   private int mappingLength = 0;
+=======
+	private static class VocabMapping
+	{
+		int[] vocabIdToMyIdMapping = new int[10];
 
+		int mappingLength = 0;
+	}
+
+>>>>>>> branch 'devel' of https://github.com/adampauls/joshua.git
+
+<<<<<<< HEAD
   public LMGrammarBerkeley(int order, String lm_file) {
     super(order);
     vocabIdToMyIdMapping = new int[10];
+=======
+	public LMGrammarBerkeley(int order, String lm_file, boolean fileIsBinary) {
+		super(order);
+		vocabMapping = new VocabMapping();
+>>>>>>> branch 'devel' of https://github.com/adampauls/joshua.git
 
     ConfigOptions opts = new ConfigOptions();
 
@@ -73,6 +101,7 @@ public class LMGrammarBerkeley extends AbstractLM {
       ArrayEncodedNgramLanguageModel<String> berkeleyLm =
           LmReaders.readArrayEncodedLmFromArpa(lm_file, false, wordIndexer, opts, order);
 
+<<<<<<< HEAD
       // this is how you would wrap with a cache
       // ArrayEncodedNgramLanguageModel<String> berkeleyLm = new
       // ArrayEncodedCachingLmWrapper<String>(LmReaders.readArrayEncodedLmFromArpa(lm_file, false,
@@ -80,7 +109,22 @@ public class LMGrammarBerkeley extends AbstractLM {
       lm = berkeleyLm;
     }
   }
+=======
+	private LMGrammarBerkeley(ArrayEncodedNgramLanguageModel<String> lm, int order, VocabMapping vocabMapping) {
+		super(order);
+		this.lm = lm;
+		this.vocabMapping = vocabMapping;
+	}
 
+	@Override
+	public boolean registerWord(String token, int id) {
+		int myid = lm.getWordIndexer().getIndexPossiblyUnk(token);
+		if (myid < 0) return false;
+		synchronized (vocabMapping) {
+			if (id >= vocabMapping.vocabIdToMyIdMapping.length) {
+>>>>>>> branch 'devel' of https://github.com/adampauls/joshua.git
+
+<<<<<<< HEAD
   @Override
   public boolean registerWord(String token, int id) {
     int myid = lm.getWordIndexer().getIndexPossiblyUnk(token);
@@ -88,13 +132,35 @@ public class LMGrammarBerkeley extends AbstractLM {
     if (id >= vocabIdToMyIdMapping.length) {
       vocabIdToMyIdMapping =
           Arrays.copyOf(vocabIdToMyIdMapping, Math.max(id + 1, vocabIdToMyIdMapping.length * 2));
+=======
+				vocabMapping.vocabIdToMyIdMapping = Arrays.copyOf(vocabMapping.vocabIdToMyIdMapping,
+					Math.max(id + 1, vocabMapping.vocabIdToMyIdMapping.length * 2));
+			}
+
+			vocabMapping.mappingLength = Math.max(vocabMapping.mappingLength, id + 1);
+			vocabMapping.vocabIdToMyIdMapping[id] = myid;
+		}
+>>>>>>> branch 'devel' of https://github.com/adampauls/joshua.git
 
     }
     mappingLength = Math.max(mappingLength, id + 1);
     vocabIdToMyIdMapping[id] = myid;
 
+<<<<<<< HEAD
     return false;
   }
+=======
+	@Override
+	protected double ngramLogProbability_helper(int[] ngram, int order) {
+		// Adam Pauls: having to make a copy might be very inefficient.
+		// If this shows up in the profiles, I might have to expose more 
+		// of the lm interface to avoid the copy.
+		final int[] copyOf = Arrays.copyOf(ngram, ngram.length);
+		for (int i = 0; i < ngram.length; ++i) {
+			copyOf[i] = ngram[i] >= vocabMapping.mappingLength ? -1 : vocabMapping.vocabIdToMyIdMapping[ngram[i]];
+		}
+		final float res = lm.getLogProb(copyOf, 0, copyOf.length);
+>>>>>>> branch 'devel' of https://github.com/adampauls/joshua.git
 
   @Override
   protected double ngramLogProbability_helper(int[] ngram, int order) {
@@ -110,6 +176,7 @@ public class LMGrammarBerkeley extends AbstractLM {
     return res;
   }
 
+<<<<<<< HEAD
   @Override
   protected double logProbabilityOfBackoffState_helper(int[] ngram, int order,
       int qtyAdditionalBackoffWeight) {
@@ -118,3 +185,13 @@ public class LMGrammarBerkeley extends AbstractLM {
   }
 
 }
+=======
+	@Override
+	public NGramLanguageModel threadLocalCopyOf() {
+		if (lm instanceof ArrayEncodedCachingLmWrapper) { //
+			throw new IllegalStateException("Can't wrap a cached lm with a cached lm. This is Adam Pauls's fault.");
+		}
+		return new LMGrammarBerkeley(ArrayEncodedCachingLmWrapper.wrapWithCacheNotThreadSafe(lm), getOrder(), vocabMapping);
+	}
+}
+>>>>>>> branch 'devel' of https://github.com/adampauls/joshua.git
