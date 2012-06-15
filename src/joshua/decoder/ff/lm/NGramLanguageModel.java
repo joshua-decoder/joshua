@@ -55,7 +55,6 @@ public interface NGramLanguageModel {
   boolean registerWord(String token, int id);
 
 
-<<<<<<< HEAD
   // BUG: why do we pass the order? Does this method reduce the order as well?
   /**
    * @param sentence the sentence to be scored
@@ -95,55 +94,4 @@ public interface NGramLanguageModel {
 
   int[] rightEquivalentState(int[] originalState, int order);
 
-=======
-	// BUG: why do we pass the order? Does this method reduce the order as well?
-	/**
-	 * @param sentence   the sentence to be scored
-	 * @param order      the order of N-grams for the LM
-	 * @param startIndex the index of first event-word we want
-	 *                   to get its probability; if we want to
-	 *                   get the prob for the whole sentence,
-	 *                   then startIndex should be 1
-	 * @return the LogP of the whole sentence
-	 */
-	double sentenceLogProbability(List<Integer> sentence, int order, int startIndex);
-	
-	
-	/**
-	 * @param order used to temporarily reduce the order used
-	 *              by the model.
-	 */
-	double ngramLogProbability(List<Integer> ngram, int order);
-	double ngramLogProbability(int[] ngram, int order);
-	double ngramLogProbability(int[] ngram);
-	
-	
-//===============================================================
-// Equivalent LM State (use DefaultNGramLanguageModel if you don't care)
-//===============================================================
-	
-	/**
-	 * This returns the log probability of the special backoff
-	 * symbol used to fill out contexts which have been backed-off.
-	 * The LanguageModelFF implementation is to call this unigram
-	 * probability for each such token, and then call
-	 * ngramLogProbability for the remaining actual N-gram.
-	 */
-	//TODO Is this really the best interface?
-	double logProbOfBackoffState(
-		List<Integer> ngram, int order, int qtyAdditionalBackoffWeight);
-	
-	double logProbabilityOfBackoffState(
-		int[] ngram, int order, int qtyAdditionalBackoffWeight);
-	
-	int[] leftEquivalentState(int[] originalState, int order, double[] cost);
-	int[] rightEquivalentState(int[] originalState, int order);
-
-	/**
-	 * A language model can return a thread-local copy of itself for thread safety, or just return <code>this</code> if necessary. 
-	 * @return
-	 */
-	NGramLanguageModel threadLocalCopyOf();
-	
->>>>>>> branch 'devel' of https://github.com/adampauls/joshua.git
 }
