@@ -1245,6 +1245,7 @@ sub prepare_data {
   my %prefixes;
 
   # copy the data from its original location to our location
+	my $numlines = -1;
   foreach my $ext ($TARGET,$SOURCE,"$TARGET.0","$TARGET.1","$TARGET.2","$TARGET.3") {
     # append each extension to the corpora prefixes
     my @files = map { "$_.$ext" } @$corpora;
@@ -1255,6 +1256,12 @@ sub prepare_data {
                       "cat $files | gzip -9n > $DATA_DIRS{$label}/$label.$ext.gz",
                       @files, "$DATA_DIRS{$label}/$label.$ext.gz");
     }
+		chomp(my $lines = `$CAT $DATA_DIRS{$label}/$label.$ext.gz | wc -l`);
+		$numlines = $lines if ($numlines == -1);
+		if ($lines != $numlines) {
+			print STDERR "* FATAL: $DATA_DIRS{$label}/$label.$ext.gz has a different number of lines ($lines) than a 'parallel' file that preceded it ($numlines)\n";
+			exit(1);
+		}
   }
 
   my $prefix = "$label";
