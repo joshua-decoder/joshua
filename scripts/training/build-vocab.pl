@@ -5,6 +5,11 @@
 #
 # ID WORD COUNT
 
+use utf8;
+
+binmode(STDIN,  ":utf-8");
+binmode(STDOUT, ":utf-8");
+
 while (<>) {
   chomp;
   split;

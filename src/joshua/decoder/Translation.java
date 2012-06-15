@@ -86,7 +86,7 @@ public class Translation {
       KBestExtractor kBestExtractor =
           new KBestExtractor(JoshuaConfiguration.use_unique_nbest,
               JoshuaConfiguration.use_tree_nbest, JoshuaConfiguration.include_align_index,
-              JoshuaConfiguration.add_combined_cost, false, true);
+              JoshuaConfiguration.add_combined_cost, false, false);
 
       StringWriter sw = new StringWriter();
       BufferedWriter out = new BufferedWriter(sw);
@@ -110,7 +110,7 @@ public class Translation {
       KBestExtractor kBestExtractor =
           new KBestExtractor(JoshuaConfiguration.use_unique_nbest,
               JoshuaConfiguration.use_tree_nbest, JoshuaConfiguration.include_align_index,
-              JoshuaConfiguration.add_combined_cost, false, true);
+              JoshuaConfiguration.add_combined_cost, false, false);
 
       try {
         kBestExtractor.lazyKBestExtractOnHG(hypergraph, this.featureFunctions,

@@ -3,6 +3,7 @@ package joshua.decoder.chart_parser;
 import java.util.List;
 import java.util.TreeMap;
 
+import joshua.decoder.ff.DefaultStatefulFF;
 import joshua.decoder.ff.FeatureFunction;
 import joshua.decoder.ff.state_maintenance.DPState;
 import joshua.decoder.ff.state_maintenance.StateComputer;
@@ -52,40 +53,27 @@ public class ComputeNodeResult {
       }
     }
 
-    // === compute feature logPs
+    // Compute feature logPs.
     double transitionLogPSum = 0.0;
     double futureLogPEstimation = 0.0;
 
     for (FeatureFunction ff : featureFunctions) {
       transitionLogPSum +=
-          ff.getWeight() * ff.transitionLogP(rule, antNodes, i, j, srcPath, sentID);
+          ff.getWeight() * ff.reEstimateTransitionLogP(rule, antNodes, i, j, srcPath, sentID);
       DPState dpState = null;
       if (allDPStates != null) dpState = allDPStates.get(ff.getStateID());
       futureLogPEstimation += ff.getWeight() * ff.estimateFutureLogP(rule, dpState, sentID);
     }
-
-    /*
-     * if we use this one (instead of compute transition logP on the fly, we will rely on the
-     * correctness of rule.statelesscost. This will cause a nasty bug for MERT. Specifically, even
-     * we change the weight vector for features along the iteration, the HG cost does not reflect
-     * that as the Grammar is not reestimated!!! Of course, compute it on the fly will slow down the
-     * decoding (e.g., from 5 seconds to 6 seconds, for the example test set)
-     */
-    // transitionCostSum += rule.getStatelessCost();
-    // System.out.println(futureLogPEstimation);
+    transitionLogPSum -= rule.getEstCost();
 
     finalizedTotalLogP += transitionLogPSum;
     double expectedTotalLogP = finalizedTotalLogP + futureLogPEstimation;
 
-
-    // == set the final results
+    // Set the final results.
     this.expectedTotalLogP = expectedTotalLogP;
     this.finalizedTotalLogP = finalizedTotalLogP;
     this.transitionTotalLogP = transitionLogPSum;
     this.dpStates = allDPStates;
-
-    // System.out.println(rule.toString());
-    // printInfo();
   }
 
   public static double computeCombinedTransitionLogP(List<FeatureFunction> featureFunctions,

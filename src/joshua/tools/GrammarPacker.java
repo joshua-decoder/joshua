@@ -442,6 +442,16 @@ public class GrammarPacker {
     String config_filename = null;
     String grammar_filename = null;
     String alignments_filename = null;
+    
+    if (args.length < 1 || args[0].equals("-h")) {
+      System.err.println("Usage: " + GrammarPacker.class.toString());
+      System.err.println("    -g grammar_file     translation grammar to process");
+      System.err.println("    -p packed_dir       output directory for packed grammar");
+      System.err.println("    -c config_file      packing configuration file");
+      System.err.println("   [-a alignment_file   alignment_file]");
+      System.err.println();
+      System.exit(-1);
+    }
 
     for (int i = 0; i < args.length; i++) {
       if ("-g".equals(args[i]) && (i < args.length - 1)) {
