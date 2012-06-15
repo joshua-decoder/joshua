@@ -6,6 +6,9 @@
 
 use strict;
 
+binmode(STDIN, ":utf8");
+binmode(STDOUT, ":utf8");
+
 my ($language) = @ARGV;
 
 while(<STDIN>) {
