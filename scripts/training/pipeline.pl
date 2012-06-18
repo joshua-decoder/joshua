@@ -1262,12 +1262,13 @@ sub prepare_data {
       $cachepipe->cmd("$label-copy-$ext",
                       "cat $files | gzip -9n > $DATA_DIRS{$label}/$label.$ext.gz",
                       @files, "$DATA_DIRS{$label}/$label.$ext.gz");
-    }
-		chomp(my $lines = `$CAT $DATA_DIRS{$label}/$label.$ext.gz | wc -l`);
-		$numlines = $lines if ($numlines == -1);
-		if ($lines != $numlines) {
-			print STDERR "* FATAL: $DATA_DIRS{$label}/$label.$ext.gz has a different number of lines ($lines) than a 'parallel' file that preceded it ($numlines)\n";
-			exit(1);
+
+			chomp(my $lines = `$CAT $DATA_DIRS{$label}/$label.$ext.gz | wc -l`);
+			$numlines = $lines if ($numlines == -1);
+			if ($lines != $numlines) {
+				print STDERR "* FATAL: $DATA_DIRS{$label}/$label.$ext.gz has a different number of lines ($lines) than a 'parallel' file that preceded it ($numlines)\n";
+				exit(1);
+			}
 		}
   }
 
