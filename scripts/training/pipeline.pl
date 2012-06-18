@@ -32,7 +32,7 @@ use File::Temp qw/ :mktemp /;
 use CachePipe;
 # use Thread::Pool;
 
-my $HADOOP = undef;
+my $HADOOP = $ENV{HADOOP};
 
 my $THRAX = "$JOSHUA/thrax";
 
@@ -746,7 +746,7 @@ if (! defined $GRAMMAR_FILE) {
 
 
 			$thrax_input = "$THRAXDIR/input-file";
-}
+    }
 
 		# copy the thrax config file
 		my $thrax_file = "thrax-$GRAMMAR_TYPE.conf";
@@ -1387,7 +1387,6 @@ sub rollout_hadoop_cluster {
 
 		system("tar xzf $JOSHUA/lib/hadoop-0.20.2.tar.gz");
 		system("ln -sf hadoop-0.20.2 hadoop");
-
   }
   
   $ENV{HADOOP} = $HADOOP = "hadoop";
