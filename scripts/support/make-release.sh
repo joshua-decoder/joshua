@@ -14,7 +14,8 @@ ln -s $JOSHUA joshua-$version
 # version without docs
 tar czf release/joshua-$version.tgz \
     --exclude='*~' --exclude='#*' \
-    joshua-$version/{README.txt,INSTALL.txt,build.xml,logging.properties} \
+    joshua-$version/{README.txt,build.xml,logging.properties} \
+    joshua-$version/src \
     joshua-$version/bin \
     joshua-$version/lib/{*jar,eng_sm6.gr,README,LICENSES} \
     joshua-$version/scripts \
@@ -25,7 +26,8 @@ tar czf release/joshua-$version.tgz \
 # docs version
 tar czf release/joshua-$version-with-docs.tgz \
     --exclude='*~' --exclude='#*' \
-    joshua-$version/{README.txt,INSTALL.txt,build.xml,logging.properties} \
+    joshua-$version/{README.txt,build.xml,logging.properties} \
+    joshua-$version/src \
     joshua-$version/bin \
     joshua-$version/lib/{*jar,eng_sm6.gr,README,LICENSES} \
     joshua-$version/doc \
