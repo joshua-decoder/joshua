@@ -889,7 +889,7 @@ if (! defined $GLUE_GRAMMAR_FILE) {
 # For each language model, we need to create an entry in the Joshua
 # config file and in ZMert's params.txt file.  We use %lm_strings to
 # build the corresponding string substitutions
-my (@configstrings, @weightstrings, @paramstrings);
+my (@configstrings, @weightstrings, @lmparamstrings);
 for my $i (0..$#LMFILES) {
   my $lmfile = $LMFILES[$i];
 
@@ -899,13 +899,19 @@ for my $i (0..$#LMFILES) {
   my $weightstring = "lm $i 1.0";
   push (@weightstrings, $weightstring);
 
-  my $paramstring = "lm $i               |||     1.000000 Opt     0.1     +Inf    +0.5    +1.5";
-  push (@paramstrings, $paramstring);
+  my $lmparamstring = "lm $i               |||     1.000000 Opt     0.1     +Inf    +0.5    +1.5";
+  push (@lmparamstrings, $lmparamstring);
 }
 
 my $lmlines   = join($/, @configstrings);
 my $lmweights = join($/, @weightstrings);
-my $lmparams  = join($/, @paramstrings);
+my $lmparams  = join($/, @lmparamstrings);
+
+my $num_tm_features = count_num_features($TUNE_GRAMMAR);
+my @tmparamstrings = map {
+  "phrasemodel pt $i |||  1.0 Opt -Inf +Inf -1 +1"
+} (0..$num_tm_features - 1);
+my $tm_params = join('\n', $tmparamstrings);
 
 for my $run (1..$OPTIMIZER_RUNS) {
   my $tunedir = (defined $NAME) ? "tune/$NAME/$run" : "tune/$run";
@@ -923,6 +929,7 @@ for my $run (1..$OPTIMIZER_RUNS) {
 			s/<LMLINES>/$lmlines/g;
 			s/<LMWEIGHTS>/$lmweights/g;
 			s/<LMPARAMS>/$lmparams/g;
+			s/<TMPARAMS>/$tmparams/g;
 			s/<LMFILE>/$LMFILES[0]/g;
 			s/<LMTYPE>/$LM_TYPE/g;
 			s/<MEM>/$JOSHUA_MEM/g;
@@ -1442,4 +1449,18 @@ sub run_berkeley_aligner {
 									"$DATA_DIRS{train}/splits/corpus.$SOURCE.$chunkno",
 									"$DATA_DIRS{train}/splits/corpus.$TARGET.$chunkno",
 									"$chunkdir/training.align");
+}
+
+# This counts the number of TM features present in a grammar
+sub count_num_features {
+  my ($grammar) = @_;
+
+  open GRAMMAR, "$CAT $grammar|" or die "FATAL: can't read $grammar";
+  chomp(my $line = <GRAMMAR>);
+  close(GRAMMAR);
+
+  my @tokens = split(/ \|\|\| /, $line);
+  my @numfeatures = split(' ', $tokens[-1]);
+
+  return $numfeatures;
 }
