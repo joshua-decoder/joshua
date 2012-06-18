@@ -909,9 +909,9 @@ my $lmparams  = join($/, @lmparamstrings);
 
 my $num_tm_features = count_num_features($TUNE_GRAMMAR);
 my @tmparamstrings = map {
-  "phrasemodel pt $i |||  1.0 Opt -Inf +Inf -1 +1"
+  "phrasemodel pt $_ |||  1.0 Opt -Inf +Inf -1 +1"
 } (0..$num_tm_features - 1);
-my $tm_params = join('\n', $tmparamstrings);
+my $tmparams = join('\n', @tmparamstrings);
 
 for my $run (1..$OPTIMIZER_RUNS) {
   my $tunedir = (defined $NAME) ? "tune/$NAME/$run" : "tune/$run";
@@ -1463,5 +1463,5 @@ sub count_num_features {
   my @tokens = split(/ \|\|\| /, $line);
   my @numfeatures = split(' ', $tokens[-1]);
 
-  return $numfeatures;
+  return scalar @numfeatures;
 }
