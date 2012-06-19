@@ -78,7 +78,7 @@ public class LMGrammarBerkeley extends AbstractLM
             lm = (ArrayEncodedNgramLanguageModel<String>) LmReaders.<String> readLmBinary(lm_file);
         } else {
             ConfigOptions opts = new ConfigOptions();
-            opts.unknownWordLogProb = JoshuaConfiguration.lm_ceiling_cost;
+            opts.unknownWordLogProb = -1.0f * JoshuaConfiguration.lm_ceiling_cost;
             logger.info("Loading Berkeley LM from ARPA file " + lm_file);
             final StringWordIndexer wordIndexer = new StringWordIndexer();
             ArrayEncodedNgramLanguageModel<String> berkeleyLm = LmReaders.readArrayEncodedLmFromArpa(lm_file, false, wordIndexer, opts, order);
