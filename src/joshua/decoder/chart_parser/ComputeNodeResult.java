@@ -76,6 +76,10 @@ public class ComputeNodeResult {
     this.dpStates = allDPStates;
   }
 
+
+  /**
+   * This is called when making the final transition to the goal state.
+   */ 
   public static double computeCombinedTransitionLogP(List<FeatureFunction> featureFunctions,
       HyperEdge edge, int i, int j, int sentID) {
     double res = 0;
@@ -88,6 +92,10 @@ public class ComputeNodeResult {
     return res;
   }
 
+
+  /**
+   * This is called when making the final transition to the goal state.
+   */ 
   public static double computeCombinedTransitionLogP(List<FeatureFunction> featureFunctions,
       Rule rule, List<HGNode> antNodes, int i, int j, SourcePath srcPath, int sentID) {
     double res = 0;
@@ -100,6 +108,10 @@ public class ComputeNodeResult {
     return res;
   }
 
+
+  /**
+   *  This function is called in the hypergraph code for doing k-best extraction.
+   */
   public static double[] computeModelTransitionLogPs(List<FeatureFunction> featureFunctions,
       HyperEdge edge, int i, int j, int sentID) {
 
@@ -118,6 +130,9 @@ public class ComputeNodeResult {
     return res;
   }
 
+  /**
+   *  This function is called in the hypergraph code for doing k-best extraction.
+   */
   public static double[] computeModelTransitionLogPs(List<FeatureFunction> featureFunctions,
       Rule rule, List<HGNode> antNodes, int i, int j, SourcePath srcPath, int sentID) {
 
@@ -136,8 +151,7 @@ public class ComputeNodeResult {
     return res;
   }
 
-
-
+  // this function is never called
   void setExpectedTotalLogP(double logP) {
     this.expectedTotalLogP = logP;
   }
