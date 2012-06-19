@@ -1,0 +1,38 @@
+Thrax uses Apache hadoop (an open-source implementation of MapReduce) to
+efficiently extract a synchronous context-free grammar translation model
+for use in modern machine translation systems.
+
+Thrax currently has support for both Hiero-style grammars (with a single
+non-terminal symbol) and SAMT-style grammars (where non-terminal symbols are
+calculated by projecting onto the span from a target-side parse tree).
+
+COMPILING:
+
+First, you need to set two environment variables:
+$HADOOP should point to the directory where Hadoop is installed.
+$AWS_SDK should point to the directory where the Amazon Web Services SDK
+is installed.
+
+To compile, type
+
+    ant
+
+This will compile all classes and package them into a jar for use on a 
+Hadoop cluster.
+
+At the end of the compilation, ant should report that the build was successful.
+
+RUNNING THRAX:
+Thrax can be invoked with
+
+    hadoop jar $THRAX/bin/thrax.jar <configuration file>
+
+Some example configuration files have been included with this distribution:
+
+    example/hiero.conf
+    example/samt.conf
+
+COPYRIGHT AND LICENSE:
+Copyright (c) 2010-11 by Jonny Weese <jonny@cs.jhu.edu>
+
+See LICENSE.txt (included with this distribution) for the complete terms.

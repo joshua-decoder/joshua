@@ -1,0 +1,4 @@
+bin/
+test-output/
+doc/
+AwsCredentials.properties

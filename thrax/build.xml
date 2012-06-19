@@ -1,0 +1,92 @@
+<project name="Thrax" basedir="." default="jar">
+
+    <property environment="env"/>
+
+    <property name="src" value="./src"/>
+    <property name="build" value="./bin"/>
+    <property name="lib" value="./lib"/>
+    <property name="doc" value="./doc"/>
+    <property name="test" value="./test"/>
+    <property name="hadoop-src" value="edu/jhu/thrax/hadoop"/>
+
+    <property name="testng" value="${lib}/testng-5.8-jdk15.jar"/>
+    <property name="jarfiles" value="${env.HADOOP}/hadoop-core-${env.HADOOP_VERSION}.jar:${env.AWS_SDK}/lib/aws-java-sdk-${env.AWS_VERSION}.jar"/> 
+
+    <target name="init">
+        <tstamp/>
+        <mkdir dir="${build}"/>
+    </target>
+
+    <target name="init-hadoop">
+        <fail message="Please set the $HADOOP environment variable to point to your Hadoop installation." unless="env.HADOOP"/>
+        <fail message="Please set the $HADOOP_VERSION environment variable to identify to your Hadoop version." unless="env.HADOOP_VERSION"/>
+    </target>
+
+    <target name="init-amazon">
+        <fail message="Please set the $AWS_SDK environment variable to point to your Amazon Web Services SDK installation." unless="env.AWS_SDK"/>
+        <fail message="Please set the $AWS_VERSION environment variable to identify to your Amazon Web Services SDK version." unless="env.AWS_VERSION"/>
+    </target>
+
+    <target name="compile" depends="init,init-hadoop,init-amazon">
+        <javac srcdir="${src}" destdir="${build}"
+            classpath="${jarfiles}"
+            debug="on" includeantruntime="false">
+            <compilerarg value="-Xlint"/>
+        </javac>
+    </target>
+
+    <target name="jar" depends="compile">
+        <jar destfile="${build}/thrax.jar">
+            <fileset dir="${build}">
+                <include name="**/*.class"/>
+            </fileset>
+            <fileset dir=".">
+		<include name="AwsCredentials.properties"/>
+            </fileset>
+            <manifest>
+                <attribute name="Main-Class" value="edu.jhu.thrax.Thrax"/>
+            </manifest>
+        </jar>
+    </target>
+
+    <target name="source-jar">
+        <jar destfile="${build}/thrax-src.jar">
+            <fileset dir="${src}">
+                <include name="**/*.java"/>
+            </fileset>
+        </jar>
+    </target>
+
+    <target name="clean">
+        <delete verbose="true" quiet="true" dir="${build}"/>
+    </target>
+
+    <target name="compile-tests" depends="compile"> 
+        <javac srcdir="${test}" destdir="${build}" 
+            classpath="${testng}:${build}:${jarfiles}" debug="on"
+            includeantruntime="false"/>
+    </target>
+
+    <taskdef resource="testngtasks" classpath="${testng}"/>
+
+    <target name="test" depends="compile-tests">
+        <testng classpath="${build}:${jarfiles}:${env.HADOOP}/lib/*" sourcedir="${test}">
+            <xmlfileset dir="." includes="testng.xml"/>
+        </testng>
+    </target>
+
+    <target name="javadoc">
+        <mkdir dir="${doc}"/>
+        <javadoc packagenames="edu.jhu.thrax.*"
+            classpath="${cli}"
+            sourcepath="${src}"
+            destdir="${doc}"
+            charset="utf-8"
+            >
+            <link href="http://java.sun.com/j2se/1.5.0/docs/api" />
+            <link href="http://commons.apache.org/cli/api-release" />
+        </javadoc>
+    </target>
+
+
+</project>
