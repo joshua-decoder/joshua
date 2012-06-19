@@ -99,7 +99,7 @@ public class LMGrammarBerkeley extends AbstractLM
 
         }
         mappingLength = Math.max(mappingLength, id + 1);
-        vocabIdToMyIdMapping[id] = myid;
+        vocabIdToMyIdMapping[id] = myid == unkIndex ? -1 : myid;
 
         return false;
     }
