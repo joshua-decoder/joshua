@@ -57,6 +57,8 @@ public class LMGrammarBerkeley extends AbstractLM
 
     private int mappingLength = 0;
 
+    private final int unkIndex;
+
     public LMGrammarBerkeley(int order, String lm_file) {
         super(order);
         vocabIdToMyIdMapping = new int[10];
@@ -85,6 +87,7 @@ public class LMGrammarBerkeley extends AbstractLM
 
             lm = ArrayEncodedCachingLmWrapper.wrapWithCacheThreadSafe(berkeleyLm);
         }
+        this.unkIndex = lm.getWordIndexer().getOrAddIndex(lm.getWordIndexer().getUnkSymbol());
     }
 
     @Override
@@ -108,7 +111,7 @@ public class LMGrammarBerkeley extends AbstractLM
             arrayScratch.set(mappedNgram = new int[mappedNgram.length * 2]);
         }
         for (int i = 0; i < ngram.length; ++i) {
-            mappedNgram[i] = ngram[i] >= mappingLength ? -1 : vocabIdToMyIdMapping[ngram[i]];
+            mappedNgram[i] = (ngram[i] == unkIndex || ngram[i] >= mappingLength) ? -1 : vocabIdToMyIdMapping[ngram[i]];
         }
         final float res = lm.getLogProb(mappedNgram, 0, ngram.length);
 
