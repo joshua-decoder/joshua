@@ -24,6 +24,7 @@ import java.io.StreamCorruptedException;
 import java.util.Arrays;
 import java.util.logging.Logger;
 
+import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.ff.lm.AbstractLM;
 import edu.berkeley.nlp.lm.ArrayEncodedNgramLanguageModel;
 import edu.berkeley.nlp.lm.ConfigOptions;
@@ -60,7 +61,6 @@ public class LMGrammarBerkeley extends AbstractLM
         super(order);
         vocabIdToMyIdMapping = new int[10];
 
-        ConfigOptions opts = new ConfigOptions();
 
         // determine whether the file is in its binary format
         boolean fileIsBinary = true;
@@ -77,7 +77,8 @@ public class LMGrammarBerkeley extends AbstractLM
             logger.info("Loading Berkeley LM from binary " + lm_file);
             lm = (ArrayEncodedNgramLanguageModel<String>) LmReaders.<String> readLmBinary(lm_file);
         } else {
-
+            ConfigOptions opts = new ConfigOptions();
+            opts.unknownWordLogProb = JoshuaConfiguration.lm_ceiling_cost;
             logger.info("Loading Berkeley LM from ARPA file " + lm_file);
             final StringWordIndexer wordIndexer = new StringWordIndexer();
             ArrayEncodedNgramLanguageModel<String> berkeleyLm = LmReaders.readArrayEncodedLmFromArpa(lm_file, false, wordIndexer, opts, order);
