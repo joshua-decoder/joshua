@@ -87,6 +87,7 @@ public class LMGrammarBerkeley extends AbstractLM
 
             lm = ArrayEncodedCachingLmWrapper.wrapWithCacheThreadSafe(berkeleyLm);
         }
+        lm.setOovWordLogProb((float) (-1.0f * JoshuaConfiguration.lm_ceiling_cost));
         this.unkIndex = lm.getWordIndexer().getOrAddIndex(lm.getWordIndexer().getUnkSymbol());
     }
 
