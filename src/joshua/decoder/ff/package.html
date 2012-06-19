@@ -12,6 +12,25 @@
 Provides an implementation of the linear feature functions typically used in
 hierarchical phrase-based decoding for statistical machine translation.
 
+The following is a note from Juri describing some of the functionality of the feature functions
+interfaces and default abstract classes.
+
+<pre>
+The equality that I intended for is ff.transitionLogP() =
+ff.estimateLogP() + ff.reEstimateTransitionLogP(). The re-estimate
+fixes the estimate to be the true transition cost that takes into
+account the state. Before decoding the cost of applying a rule is
+estimated via estimateLogP() and yields the phrasal feature costs plus
+an LM estimate of the cost of the lexical portions of the rule.
+transitionLogP() takes rule and state and computes everything from
+scratch, whereas reEstimateTransitionLogP() adds in the cost of new
+n-grams that result from combining the rule with the LM states and
+subtracts out the cost of superfluous less-than-n-grams that were
+overridden by the updated cost calculation.
+
+Hope this helps.
+</pre>
+
 <!-- Put @see and @since tags down here. -->
 
 </body>
