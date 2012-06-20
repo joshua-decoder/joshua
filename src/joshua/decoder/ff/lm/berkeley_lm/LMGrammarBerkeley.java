@@ -87,6 +87,7 @@ public class LMGrammarBerkeley extends AbstractLM {
     if (logRequests) {
       logger.addHandler(logHandler);
       logger.setLevel(Level.FINEST);
+      logger.setUseParentHandlers(false);
     }
     if (fileIsBinary) {
       logger.info("Loading Berkeley LM from binary " + lm_file);
