@@ -24,6 +24,7 @@ import java.io.StreamCorruptedException;
 import java.util.Arrays;
 import java.util.logging.Logger;
 
+import joshua.decoder.JoshuaConfiguration;
 import joshua.decoder.ff.lm.AbstractLM;
 import edu.berkeley.nlp.lm.ArrayEncodedNgramLanguageModel;
 import edu.berkeley.nlp.lm.ConfigOptions;
@@ -56,11 +57,12 @@ public class LMGrammarBerkeley extends AbstractLM
 
     private int mappingLength = 0;
 
+    private final int unkIndex;
+
     public LMGrammarBerkeley(int order, String lm_file) {
         super(order);
         vocabIdToMyIdMapping = new int[10];
 
-        ConfigOptions opts = new ConfigOptions();
 
         // determine whether the file is in its binary format
         boolean fileIsBinary = true;
@@ -77,13 +79,16 @@ public class LMGrammarBerkeley extends AbstractLM
             logger.info("Loading Berkeley LM from binary " + lm_file);
             lm = (ArrayEncodedNgramLanguageModel<String>) LmReaders.<String> readLmBinary(lm_file);
         } else {
-
+            ConfigOptions opts = new ConfigOptions();
+            opts.unknownWordLogProb = -1.0f * JoshuaConfiguration.lm_ceiling_cost;
             logger.info("Loading Berkeley LM from ARPA file " + lm_file);
             final StringWordIndexer wordIndexer = new StringWordIndexer();
             ArrayEncodedNgramLanguageModel<String> berkeleyLm = LmReaders.readArrayEncodedLmFromArpa(lm_file, false, wordIndexer, opts, order);
 
             lm = ArrayEncodedCachingLmWrapper.wrapWithCacheThreadSafe(berkeleyLm);
         }
+        lm.setOovWordLogProb((float) (-1.0f * JoshuaConfiguration.lm_ceiling_cost));
+        this.unkIndex = lm.getWordIndexer().getOrAddIndex(lm.getWordIndexer().getUnkSymbol());
     }
 
     @Override
@@ -95,7 +100,7 @@ public class LMGrammarBerkeley extends AbstractLM
 
         }
         mappingLength = Math.max(mappingLength, id + 1);
-        vocabIdToMyIdMapping[id] = myid;
+        vocabIdToMyIdMapping[id] = myid == unkIndex ? -1 : myid;
 
         return false;
     }
@@ -107,7 +112,7 @@ public class LMGrammarBerkeley extends AbstractLM
             arrayScratch.set(mappedNgram = new int[mappedNgram.length * 2]);
         }
         for (int i = 0; i < ngram.length; ++i) {
-            mappedNgram[i] = ngram[i] >= mappingLength ? -1 : vocabIdToMyIdMapping[ngram[i]];
+            mappedNgram[i] = (ngram[i] == unkIndex || ngram[i] >= mappingLength) ? -1 : vocabIdToMyIdMapping[ngram[i]];
         }
         final float res = lm.getLogProb(mappedNgram, 0, ngram.length);
 
