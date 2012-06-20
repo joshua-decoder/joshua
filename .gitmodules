@@ -1,3 +1,3 @@
 [submodule "thrax"]
 	path = thrax
-	url = http://github.com/joshua-decoder/thrax
+	url = http://github.com/joshua-decoder/thrax.git
