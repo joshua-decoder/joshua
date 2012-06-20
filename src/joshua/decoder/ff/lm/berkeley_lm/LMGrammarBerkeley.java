@@ -33,7 +33,6 @@ import edu.berkeley.nlp.lm.StringWordIndexer;
 import edu.berkeley.nlp.lm.cache.ArrayEncodedCachingLmWrapper;
 import edu.berkeley.nlp.lm.io.LmReaders;
 import edu.berkeley.nlp.lm.util.StrUtils;
-import edu.berkeley.nlp.util.StringUtils;
 
 /**
  * This class wraps Berkeley LM.
