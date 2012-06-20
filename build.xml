@@ -302,7 +302,7 @@
 
   <target name="test" depends="all">
 	<exec dir="test" executable="/bin/bash" failonerror="true">
-	  <arg line="test-all.sh" />
+	  <arg line="run-all-tests.sh" />
 	</exec>
   </target>
   
