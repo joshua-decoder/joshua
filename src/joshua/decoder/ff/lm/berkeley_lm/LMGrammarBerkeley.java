@@ -124,7 +124,10 @@ public class LMGrammarBerkeley extends AbstractLM {
         }
         
         if (logRequests) {
-          logger.finest(StrUtils.join(WordIndexer.StaticMethods.toList(lm.getWordIndexer(),Arrays.copyOf(mappedNgram, ngram.length))));
+          final int[] copyOf = Arrays.copyOf(mappedNgram, ngram.length);
+          for (int i = 0; i < copyOf.length; ++i)
+            if (copyOf[i] < 0) copyOf[i] = unkIndex;
+          logger.finest(StrUtils.join(WordIndexer.StaticMethods.toList(lm.getWordIndexer(),copyOf)));
         }
         final float res = lm.getLogProb(mappedNgram, 0, ngram.length);
 
