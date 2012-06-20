@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.StreamCorruptedException;
 import java.util.Arrays;
+import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -64,6 +65,8 @@ public class LMGrammarBerkeley extends AbstractLM {
 
   private static boolean logRequests = false;
 
+  private static Handler logHandler = null;
+
   public LMGrammarBerkeley(int order, String lm_file) {
     super(order);
     vocabIdToMyIdMapping = new int[10];
@@ -81,6 +84,10 @@ public class LMGrammarBerkeley extends AbstractLM {
       System.exit(1);
     }
 
+    if (logRequests) {
+      logger.addHandler(logHandler);
+      logger.setLevel(Level.FINEST);
+    }
     if (fileIsBinary) {
       logger.info("Loading Berkeley LM from binary " + lm_file);
       lm = (ArrayEncodedNgramLanguageModel<String>) LmReaders.<String>readLmBinary(lm_file);
@@ -142,9 +149,10 @@ public class LMGrammarBerkeley extends AbstractLM {
         "probabilityOfBackoffState_helper undefined for Berkeley lm");
   }
 
-  public static void setLogRequests(boolean logRequests_) {
-    logRequests = logRequests_;
-    logger.setLevel(Level.FINEST);
+  public static void setLogRequests(Handler handler) {
+    logRequests = true;
+    logHandler = handler;
+    
   }
 
 
