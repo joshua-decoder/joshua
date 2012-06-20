@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.StreamCorruptedException;
 import java.util.Arrays;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import joshua.decoder.JoshuaConfiguration;
@@ -143,6 +144,7 @@ public class LMGrammarBerkeley extends AbstractLM {
 
   public static void setLogRequests(boolean logRequests_) {
     logRequests = logRequests_;
+    logger.setLevel(Level.FINEST);
   }
 
 
