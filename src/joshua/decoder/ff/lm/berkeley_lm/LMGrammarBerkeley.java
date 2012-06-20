@@ -32,6 +32,7 @@ import edu.berkeley.nlp.lm.WordIndexer;
 import edu.berkeley.nlp.lm.StringWordIndexer;
 import edu.berkeley.nlp.lm.cache.ArrayEncodedCachingLmWrapper;
 import edu.berkeley.nlp.lm.io.LmReaders;
+import edu.berkeley.nlp.lm.util.StrUtils;
 import edu.berkeley.nlp.util.StringUtils;
 
 /**
@@ -124,7 +125,7 @@ public class LMGrammarBerkeley extends AbstractLM {
         }
         
         if (logRequests) {
-          logger.finest(StringUtils.join(WordIndexer.StaticMethods.toList(lm.getWordIndexer(),Arrays.copyOf(mappedNgram, ngram.length))));
+          logger.finest(StrUtils.join(WordIndexer.StaticMethods.toList(lm.getWordIndexer(),Arrays.copyOf(mappedNgram, ngram.length))));
         }
         final float res = lm.getLogProb(mappedNgram, 0, ngram.length);
 
