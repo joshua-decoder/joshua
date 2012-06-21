@@ -261,8 +261,6 @@ public class JoshuaDecoder {
    */
   public JoshuaDecoder initialize(String configFile) {
     try {
-      if (JoshuaConfiguration.tm_file == null)
-        throw new RuntimeException("No translation grammar was specified.");
 
       long pre_load_time = System.currentTimeMillis();
       // Initialize and load grammars.
@@ -361,6 +359,11 @@ public class JoshuaDecoder {
 
 
   private void initializeMainTranslationGrammar() throws IOException {
+		if (JoshuaConfiguration.tm_file == null) {
+      logger.warning("* WARNING: no TM specified");
+			return;
+		}
+
     if (JoshuaConfiguration.use_sent_specific_tm) {
       logger.info("Basing sentence-specific grammars on file " + JoshuaConfiguration.tm_file);
       return;
