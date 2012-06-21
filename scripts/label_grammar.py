@@ -22,5 +22,7 @@ def main():
     dense_map.write(str(i) + "\t" + str(i) + "\n")
   dense_map.close()
         
+  sys.stderr.write("Writing dense map file to file 'dense_map'\n")
+
 if __name__ == "__main__":
     main()
