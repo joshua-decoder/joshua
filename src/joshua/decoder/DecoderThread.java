@@ -48,7 +48,7 @@ import edu.jhu.thrax.util.TestSetFilter;
  * 
  * The DecoderFactory class is responsible for launching the threads.
  * 
- * @author Matt Post <post@jhu.edu>
+ * @author Matt Post <post@cs.jhu.edu>
  * @author Zhifei Li, <zhifei.work@gmail.com>
  * @version $LastChangedDate: 2010-05-02 11:19:17 -0400 (Sun, 02 May 2010) $
  */

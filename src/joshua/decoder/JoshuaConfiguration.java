@@ -54,8 +54,11 @@ public class JoshuaConfiguration {
   // note: owner should be different from each other, it can have same value as a word in LM/TM
   public static String phrase_owner = "pt";
   public static String glue_owner = "pt";
-  public static String default_non_terminal = "PHRASE";
-  public static String goal_symbol = "S";
+
+	// Default symbols.  The symbol here should be enclosed in square brackets.
+  public static String default_non_terminal = "[X]";
+  public static String goal_symbol = "[S]";
+
   public static boolean use_sent_specific_tm = false;
 
   public static boolean dense_features = true;
@@ -96,17 +99,22 @@ public class JoshuaConfiguration {
   public static double relative_threshold = 10.0;
   public static int max_n_rules = 50;
 
-  // nbest config
+  /* N-best configuration.
+	 */
+	// make sure output strings are unique
   public static boolean use_unique_nbest = false;
+	// output the synchronous derivation tree
   public static boolean use_tree_nbest = false;
+	// include the phrasal alignments in the output
   public static boolean include_align_index = false;
-  public static boolean add_combined_cost = true; // in the nbest file, compute the final score
-  public static int topN = 500;
+	// include a final field that denotes the complete model score (the dot-product of the weight
+	// vector with the accumulated feature values
+  public static boolean add_combined_cost = true;
+	// The number of hypotheses to output by default
+  public static int topN = 1;
+
   public static boolean escape_trees = false;
 
-  // parallel decoding
-  public static String parallel_files_prefix = "/tmp/temp.parallel"; // C:\\Users\\zli\\Documents\\temp.parallel;
-                                                                     // used for parallel decoding
   public static int num_parallel_decoders = 1; // number of threads should run
 
   // disk hg
@@ -338,12 +346,6 @@ public class JoshuaConfiguration {
           } else if (parameter.equals(normalize_key("top_n"))) {
             topN = Integer.parseInt(fds[1]);
             logger.finest(String.format("topN: %s", topN));
-
-          } else if (parameter.equals(normalize_key("parallel_files_prefix"))) {
-            Random random = new Random();
-            int v = random.nextInt(10000000);// make it random
-            parallel_files_prefix = fds[1] + v;
-            logger.info(String.format("parallel_files_prefix: %s", parallel_files_prefix));
 
           } else if (parameter.equals(normalize_key("num_parallel_decoders"))
               || parameter.equals(normalize_key("threads"))) {
