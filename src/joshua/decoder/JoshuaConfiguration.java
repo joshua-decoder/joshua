@@ -457,7 +457,7 @@ public class JoshuaConfiguration {
     // then we create one from the handful of separately-specified
     // parameters. These combined lines are later processed in
     // JoshuaDecoder as part of the multiple LM support
-    if (lms.size() == 0) {
+    if (lms.size() == 0 && lm_file != null) {
       String line =
           String.format("%s %d %b %b %.2f %s", lm_type, lm_order, use_left_equivalent_state,
               use_right_equivalent_state, lm_ceiling_cost, lm_file);
