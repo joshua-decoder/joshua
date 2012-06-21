@@ -1,7 +1,7 @@
 tm_file=grammar.test
 tm_format=hiero
 
-glue_file=hiero.glue
+glue_file=../../data/glue-grammar
 glue_format=hiero
 
 #lm config
@@ -11,7 +11,7 @@ lm = berkeleylm 3 false false 100 test.lm
 span_limit=50
 phrase_owner=pt
 default_non_terminal=X
-goalSymbol=S
+goalSymbol=GOAL
 
 #pruning config
 pop-limit = 100
@@ -25,7 +25,6 @@ top_n = 300
 
 #parallel deocoder: it cannot be used together with remote lm
 num_parallel_decoders=1
-parallel_files_prefix=/tmp/
 
 
 ###### model weights
