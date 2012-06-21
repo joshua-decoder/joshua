@@ -348,8 +348,12 @@ public class JoshuaDecoder {
   private void initializeGlueGrammar() throws IOException {
     logger.info("Constructing glue grammar...");
 
-    MemoryBasedBatchGrammar gr =
-        new MemoryBasedBatchGrammar(JoshuaConfiguration.glue_format, JoshuaConfiguration.glue_file,
+    MemoryBasedBatchGrammar gr = (JoshuaConfiguration.glue_file == null) 
+      ? new MemoryBasedBatchGrammar(JoshuaConfiguration.glue_format, 
+            System.getenv().get("JOSHUA") + "/data/" + "glue-grammar",
+            JoshuaConfiguration.glue_owner, JoshuaConfiguration.default_non_terminal, -1,
+            JoshuaConfiguration.oov_feature_cost)
+      : new MemoryBasedBatchGrammar(JoshuaConfiguration.glue_format, JoshuaConfiguration.glue_file,
             JoshuaConfiguration.glue_owner, JoshuaConfiguration.default_non_terminal, -1,
             JoshuaConfiguration.oov_feature_cost);
 
@@ -511,11 +515,11 @@ public class JoshuaDecoder {
 
     long startTime = System.currentTimeMillis();
 
-    if (args.length < 1) {
-      System.out.println("Usage: java " + JoshuaDecoder.class.getName()
-          + " -c configFile [other args]");
-      System.exit(1);
-    }
+    // if (args.length < 1) {
+    //   System.out.println("Usage: java " + JoshuaDecoder.class.getName()
+    //       + " -c configFile [other args]");
+    //   System.exit(1);
+    // }
 
     String configFile = null;
     String testFile = "-";
@@ -531,32 +535,34 @@ public class JoshuaDecoder {
     // argument; if it starts with a hyphen, the new format has
     // been invoked.
 
-    if (args[0].startsWith("-")) {
+		if (args.length >= 1) {
+			if (args[0].startsWith("-")) {
 
-      // Search for the configuration file
-      for (int i = 0; i < args.length; i++) {
-        if (args[i].equals("-c") || args[i].equals("-config")) {
+				// Search for the configuration file
+				for (int i = 0; i < args.length; i++) {
+					if (args[i].equals("-c") || args[i].equals("-config")) {
 
-          configFile = args[i + 1].trim();
-          JoshuaConfiguration.readConfigFile(configFile);
-          JoshuaConfiguration.processCommandLineOptions(args);
+						configFile = args[i + 1].trim();
+						JoshuaConfiguration.readConfigFile(configFile);
+						JoshuaConfiguration.processCommandLineOptions(args);
 
-          break;
-        }
-      }
+						break;
+					}
+				}
 
-      oracleFile = JoshuaConfiguration.oracleFile;
+				oracleFile = JoshuaConfiguration.oracleFile;
 
-    } else {
+			} else {
 
-      configFile = args[0].trim();
+				configFile = args[0].trim();
 
-      JoshuaConfiguration.readConfigFile(configFile);
+				JoshuaConfiguration.readConfigFile(configFile);
 
-      if (args.length >= 2) testFile = args[1].trim();
-      if (args.length >= 3) nbestFile = args[2].trim();
-      if (args.length == 4) oracleFile = args[3].trim();
-    }
+				if (args.length >= 2) testFile = args[1].trim();
+				if (args.length >= 3) nbestFile = args[2].trim();
+				if (args.length == 4) oracleFile = args[3].trim();
+			}
+		}
 
     /* Step-0: some sanity checking */
     JoshuaConfiguration.sanityCheck();

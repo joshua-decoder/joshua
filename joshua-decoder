@@ -9,8 +9,6 @@
 #
 # The default amount of memory is 4gb.
 
-set -u
-
 NUM_ARGS=0
 E_OPTERROR=1
 
@@ -23,6 +21,8 @@ if [[ $1 == "-m" ]]; then
     shift
     shift
 fi
+
+set -u
 
 java -Xmx${mem} \
 	-cp $JOSHUA/bin:$JOSHUA/thrax/bin/thrax.jar:$JOSHUA/lib/berkeleylm.jar \

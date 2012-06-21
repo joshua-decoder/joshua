@@ -57,19 +57,18 @@ public class JoshuaConfiguration {
 
 	// Default symbols.  The symbol here should be enclosed in square brackets.
   public static String default_non_terminal = "[X]";
-  public static String goal_symbol = "[S]";
+  public static String goal_symbol = "[GOAL]";
 
   public static boolean use_sent_specific_tm = false;
 
   public static boolean dense_features = true;
 
   public static String tm_file = null;
-  public static String tm_format = null;
+  public static String tm_format = "thrax";
 
-  // TODO: default to glue grammar provided with Joshua
   // TODO: support multiple glue grammars
   public static String glue_file = null;
-  public static String glue_format = null;
+  public static String glue_format = "thrax";
 
   // syntax-constrained decoding
   public static boolean constrain_parse = false;
