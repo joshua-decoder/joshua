@@ -22,16 +22,22 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.StreamCorruptedException;
 import java.util.Arrays;
+import java.util.List;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import joshua.corpus.Vocabulary;
 import joshua.decoder.JoshuaConfiguration;
+import joshua.decoder.Support;
 import joshua.decoder.ff.lm.AbstractLM;
+import joshua.decoder.ff.lm.DefaultNGramLanguageModel;
+import joshua.decoder.ff.lm.NGramLanguageModel;
 import edu.berkeley.nlp.lm.ArrayEncodedNgramLanguageModel;
 import edu.berkeley.nlp.lm.ConfigOptions;
 import edu.berkeley.nlp.lm.WordIndexer;
 import edu.berkeley.nlp.lm.StringWordIndexer;
+import edu.berkeley.nlp.lm.ContextEncodedNgramLanguageModel.LmContextInfo;
 import edu.berkeley.nlp.lm.cache.ArrayEncodedCachingLmWrapper;
 import edu.berkeley.nlp.lm.io.LmReaders;
 import edu.berkeley.nlp.lm.util.StrUtils;
@@ -41,7 +47,7 @@ import edu.berkeley.nlp.lm.util.StrUtils;
  * 
  * @author adpauls@gmail.com
  */
-public class LMGrammarBerkeley extends AbstractLM {
+public class LMGrammarBerkeley extends DefaultNGramLanguageModel {
 
 
 
@@ -122,39 +128,94 @@ public class LMGrammarBerkeley extends AbstractLM {
   }
 
   @Override
-    protected double ngramLogProbability_helper(int[] ngram, int order) {
-     
-        int[] mappedNgram = arrayScratch.get();
-        if (mappedNgram.length < ngram.length) {
-            arrayScratch.set(mappedNgram = new int[mappedNgram.length * 2]);
-        }
-        for (int i = 0; i < ngram.length; ++i) {
-            mappedNgram[i] = (ngram[i] == unkIndex || ngram[i] >= mappingLength) ? -1 : vocabIdToMyIdMapping[ngram[i]];
-        }
-        
-        if (logRequests) {
-          final int[] copyOf = Arrays.copyOf(mappedNgram, ngram.length);
-          for (int i = 0; i < copyOf.length; ++i)
-            if (copyOf[i] < 0) copyOf[i] = unkIndex;
-          logger.finest(StrUtils.join(WordIndexer.StaticMethods.toList(lm.getWordIndexer(),copyOf)));
-        }
-        final float res = lm.getLogProb(mappedNgram, 0, ngram.length);
+  public double sentenceLogProbability(List<Integer> sentence, int order, int startIndex) {
+    if (sentence == null) return 0.0;
+    int sentenceLength = sentence.size();
+    if (sentenceLength <= 0) return 0.0;
 
-        return res;
+    double probability = 0.0;
+    // partial ngrams at the begining
+    for (int j = startIndex; j < order && j <= sentenceLength; j++) {
+      // TODO: startIndex dependents on the order, e.g., this.ngramOrder-1 (in srilm, for 3-gram lm,
+      // start_index=2. othercase, need to check)
+      int[] ngram = Support.subIntArray(sentence, 0, j);
+      double logProb = ngramLogProbability_helper(ngram, false);
+      if (logger.isLoggable(Level.FINE)) {
+        String words = Vocabulary.getWords(ngram);
+        logger.fine("\tlogp ( " + words + " )  =  " + logProb);
+      }
+      probability += logProb;
     }
 
-  @Override
-  protected double logProbabilityOfBackoffState_helper(int[] ngram, int order,
-      int qtyAdditionalBackoffWeight) {
-    throw new UnsupportedOperationException(
-        "probabilityOfBackoffState_helper undefined for Berkeley lm");
+    // regular-order ngrams
+    for (int i = 0; i <= sentenceLength - order; i++) {
+      int[] ngram = Support.subIntArray(sentence, i, i + order);
+      double logProb =  ngramLogProbability_helper(ngram, false);
+      if (logger.isLoggable(Level.FINE)) {
+        String words = Vocabulary.getWords(ngram);
+        logger.fine("\tlogp ( " + words + " )  =  " + logProb);
+      }
+      probability += logProb;
+    }
+
+    return probability;
   }
+
+  protected double ngramLogProbability_helper(int[] ngram, boolean log) {
+
+    int[] mappedNgram = arrayScratch.get();
+    if (mappedNgram.length < ngram.length) {
+      arrayScratch.set(mappedNgram = new int[mappedNgram.length * 2]);
+    }
+    for (int i = 0; i < ngram.length; ++i) {
+      mappedNgram[i] =
+          (ngram[i] == unkIndex || ngram[i] >= mappingLength) ? -1 : vocabIdToMyIdMapping[ngram[i]];
+    }
+
+    if (log && logRequests) {
+      final int[] copyOf = Arrays.copyOf(mappedNgram, ngram.length);
+      for (int i = 0; i < copyOf.length; ++i)
+        if (copyOf[i] < 0) copyOf[i] = unkIndex;
+      logger.finest(StrUtils.join(WordIndexer.StaticMethods.toList(lm.getWordIndexer(), copyOf)));
+    }
+    final float res = lm.getLogProb(mappedNgram, 0, ngram.length);
+
+    return res;
+  }
+
+
 
   public static void setLogRequests(Handler handler) {
     logRequests = true;
     logHandler = handler;
-    
+
   }
+
+  public double ngramLogProbability(int[] ngram) {
+    return ngramLogProbability_helper(ngram,true);
+  }
+
+  public double logProbOfBackoffState(List<Integer> ngram, int order, int qtyAdditionalBackoffWeight) {
+    return 0;
+  }
+
+  public double logProbabilityOfBackoffState(int[] ngram, int order, int qtyAdditionalBackoffWeight) {
+    return 0;
+  }
+
+  public int[] leftEquivalentState(int[] originalState, int order, double[] cost) {
+    return originalState;
+  }
+
+  public int[] rightEquivalentState(int[] originalState, int order) {
+    return originalState;
+  }
+
+  @Override
+  public double ngramLogProbability(int[] ngram, int order) {
+    return ngramLogProbability(ngram);
+  }
+
 
 
 }
