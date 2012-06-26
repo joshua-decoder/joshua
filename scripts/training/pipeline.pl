@@ -1256,6 +1256,15 @@ sub prepare_data {
   foreach my $ext ($TARGET,$SOURCE,"$TARGET.0","$TARGET.1","$TARGET.2","$TARGET.3") {
     # append each extension to the corpora prefixes
     my @files = map { "$_.$ext" } @$corpora;
+
+		# This block makes sure that the files have a nonzero file size
+		map {
+			if (-z $_) {
+				print "* FATAL: $label file '$_' is empty";
+				exit 1;
+			}
+		} @files;
+
     # a list of all the files (in case of multiple corpora prefixes)
     my $files = join(" ",@files);
     if (-e $files[0]) {
