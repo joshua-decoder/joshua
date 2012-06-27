@@ -35,6 +35,7 @@ public class GrammarPacker {
   private String alignments;
 
   private QuantizerConfiguration quantization;
+  private boolean autopack;
 
   static {
     SLICE_SIZE = 5000000;
@@ -44,7 +45,8 @@ public class GrammarPacker {
     WORKING_DIRECTORY = System.getProperty("user.dir") + File.separator + "packed";
   }
 
-  public GrammarPacker(String config_filename, String grammar_filename, String alignments_filename)
+  public GrammarPacker(String config_filename, String grammar_filename, String alignments_filename,
+                       boolean autopack)
       throws IOException {
     this.grammar = grammar_filename;
     this.quantization = new QuantizerConfiguration();
@@ -57,7 +59,11 @@ public class GrammarPacker {
       logger.severe("Alignements file does not exist: " + alignments);
       System.exit(0);
     }
-
+    
+    this.autopack = autopack;
+    if (this.autopack) {
+      logger.info("Packing automatically. Feature types will be auto-detected.");
+    }
     readConfig(config_filename);
   }
 
@@ -443,10 +449,13 @@ public class GrammarPacker {
     String grammar_filename = null;
     String alignments_filename = null;
     
+    boolean autopilot = false;
+    
     if (args.length < 1 || args[0].equals("-h")) {
       System.err.println("Usage: " + GrammarPacker.class.toString());
       System.err.println("    -g grammar_file     translation grammar to process");
       System.err.println("    -p packed_dir       output directory for packed grammar");
+      System.err.println("    -A                  autopilot");
       System.err.println("    -c config_file      packing configuration file");
       System.err.println("   [-a alignment_file   alignment_file]");
       System.err.println();
@@ -462,6 +471,8 @@ public class GrammarPacker {
         config_filename = args[++i];
       } else if ("-a".equals(args[i]) && (i < args.length - 1)) {
         alignments_filename = args[++i];
+      } else if ("-A".equals(args[i])) {
+        autopilot = true;
       }
     }
     if (grammar_filename == null) {
@@ -471,21 +482,21 @@ public class GrammarPacker {
     if (!new File(grammar_filename).exists()) {
       logger.severe("Grammar file not found: " + grammar_filename);
     }
-    if (config_filename == null) {
+    if (config_filename == null && !autopilot) {
       logger.severe("Config file not specified.");
       return;
     }
-    if (!new File(config_filename).exists()) {
+    if (config_filename != null && !new File(config_filename).exists()) {
       logger.severe("Config file not found: " + config_filename);
     }
     if (new File(WORKING_DIRECTORY).exists()) {
       logger.severe("File or directory already exists: " + WORKING_DIRECTORY);
       logger.severe("Will not overwrite.");
       return;
-    }
+    }    
 
-    GrammarPacker packer =
-        new GrammarPacker(config_filename, grammar_filename, alignments_filename);
+    GrammarPacker packer = new GrammarPacker(config_filename, grammar_filename,
+      alignments_filename, autopilot);
     packer.pack();
   }
 
