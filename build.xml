@@ -172,7 +172,7 @@
   </target>
   
   <target name="tree_visualizer" depends="java,set-joshua-home">
-	<jar destfile="tree_visualizer/tree_visualizer.jar" index="true">
+	<jar destfile="examples/tree_visualizer/tree_visualizer.jar" index="true">
 	  <zipgroupfileset dir="lib" includes="*.jar"/>
 	  <fileset dir="${build}">
 		<include name="**/*.class"/>
