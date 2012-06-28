@@ -286,8 +286,12 @@ public class JoshuaConfiguration {
             logger.finest(String.format("default_non_terminal: %s", default_non_terminal));
 
           } else if (parameter.equals(normalize_key("goalSymbol"))) {
-            goal_symbol = "[" + fds[1].trim() + "]";
-            // goal_symbol = fds[1].trim();
+            goal_symbol = fds[1].trim();
+
+            // If the goal symbol was not enclosed in square brackets, then add them
+            if (! goal_symbol.matches("\\[.*\\]"))
+              goal_symbol = "[" + goal_symbol + "]";
+
             logger.finest("goalSymbol: " + goal_symbol);
 
           } else if (parameter.equals(normalize_key("constrain_parse"))) {
