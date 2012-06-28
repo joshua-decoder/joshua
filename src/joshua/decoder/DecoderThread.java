@@ -240,9 +240,9 @@ public class DecoderThread extends Thread {
     if (JoshuaConfiguration.use_sent_specific_tm) {
       // figure out the sentence-level file name
       tmFile = JoshuaConfiguration.tm_file;
-      tmFile =
-          tmFile.endsWith(".gz") ? tmFile.substring(0, tmFile.length() - 3) + "." + sentence.id()
-              + ".gz" : tmFile + "." + sentence.id();
+      tmFile = tmFile.endsWith(".gz") 
+             ? tmFile.substring(0, tmFile.length() - 3) + "." + sentence.id()
+             + ".gz" : tmFile + "." + sentence.id();
 
       // look in a subdirectory named "filtered" e.g.,
       // /some/path/grammar.gz will have sentence-level
