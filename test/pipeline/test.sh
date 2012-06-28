@@ -5,10 +5,11 @@
 # aligner for alignment to avoid the dependency on compiling GIZA.
 
 $JOSHUA/scripts/training/pipeline.pl \
-    --corpus input/train \
-    --tune input/tune    \
-    --test input/devtest \
-    --source ur          \
-    --target en          \
-    --aligner berkeley   
+    --rundir 1                 \
+    --source ur                \
+    --target en                \
+    --corpus input/train       \
+    --tune input/tune          \
+    --test input/devtest       \
+    --aligner berkeley
 
