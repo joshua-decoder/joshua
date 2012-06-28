@@ -1,16 +1,14 @@
 #!/bin/bash
 
-# build this separately since the data here is too small for Kneser-Ney
-if test $(uname -s) = "Darwin"; then
-  $SRILM/bin/macosx/ngram-count -order 3 -text train/corpus.en -lm lm.gz
-else
-  $SRILM/bin/i686-m64/ngram-count -order 3 -text train/corpus.en -lm lm.gz
-fi
+# This script tests the Joshua pipeline, training on a 1000-sentence Urdu-English parallel corpus,
+# and tuning and testing on 100-sentence test sets with four references.  It uses the Berkeley
+# aligner for alignment to avoid the dependency on compiling GIZA.
 
-if [[ ! -e lm.gz ]]; then
-  echo "I wasn't able to build the LM file"
-  echo "You might have to adjust the path to SRILM's ngram-count in this script"
-  exit
-fi
+$JOSHUA/scripts/training/pipeline.pl \
+    --corpus input/train \
+    --tune input/tune    \
+    --test input/devtest \
+    --source ur          \
+    --target en          \
+    --aligner berkeley   
 
-$JOSHUA/scripts/training/pipeline.pl --corpus data/train --tune data/tune --test data/devtest --source ur --target en --aligner giza --lmfile lm.gz
