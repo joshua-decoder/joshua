@@ -110,8 +110,6 @@ public class InputHandler implements Iterator<Sentence> {
     } else {
       System.err.println("oracle file is null");
     }
-
-    prepareNextLine();
   }
 
   /**
@@ -155,15 +153,9 @@ public class InputHandler implements Iterator<Sentence> {
   /*
    * Returns the next sentence item.
    */
-  public Sentence next() {
-    Sentence sentence = null;
-
-    synchronized (this) {
-      sentence = nextSentence;
-      prepareNextLine();
-    }
-
-    return sentence;
+  public synchronized Sentence next() {
+    prepareNextLine();
+    return nextSentence;
   }
 
   public void remove() {
