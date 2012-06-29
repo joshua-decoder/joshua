@@ -320,11 +320,18 @@ if (defined $ALIGNMENT and ! -e $ALIGNMENT) {
   exit 1;
 }
 
-# if $CORPUS was a relative path, prepend the starting directory
-# (under the assumption it was relative to there)
+# If $CORPUS was a relative path, prepend the starting directory (under the assumption it was
+# relative to there).  This makes sure that everything will still work if we change the run
+# directory.
 map {
   $CORPORA[$_] = "$STARTDIR/$CORPORA[$_]" unless $CORPORA[$_] =~ /^\//;
 } (0..$#CORPORA);
+
+# Do the same for tuning and test data
+$TUNE = "$STARTDIR/$TUNE" unless $TUNE =~ /^\//;
+$TEST = "$STARTDIR/$TEST" unless $TEST =~ /^\//;
+
+# TODO: every file request should be passed through a wrapper that does this.
 
 foreach my $corpus (@CORPORA) {
   foreach my $ext ($TARGET,$SOURCE) {
@@ -1260,7 +1267,7 @@ sub prepare_data {
 		# This block makes sure that the files have a nonzero file size
 		map {
 			if (-z $_) {
-				print "* FATAL: $label file '$_' is empty";
+				print STDERR "* FATAL: $label file '$_' is empty";
 				exit 1;
 			}
 		} @files;
