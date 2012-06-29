@@ -11,7 +11,7 @@ ant clean java documentation
 [[ ! -d release ]] && mkdir release
 ln -s $JOSHUA joshua-$version
 
-wget -r joshua-decoder.org
+wget -qr joshua-decoder.org
 
 tar czf release/joshua-$version.tgz \
     --exclude='*~' --exclude='#*' \
