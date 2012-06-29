@@ -11,5 +11,16 @@ $JOSHUA/scripts/training/pipeline.pl \
     --corpus input/train       \
     --tune input/tune          \
     --test input/devtest       \
-    --aligner berkeley
+    --aligner berkeley > pipeline.log 2>&1
+
+diff -u 1/test/final-bleu final-bleu.gold
+
+if [ $? -eq 0 ]; then
+	echo PASSED
+	exit 0
+else
+	echo FAILED
+	cat diff
+	exit 1
+fi
 
