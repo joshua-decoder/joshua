@@ -7,7 +7,7 @@ set -u
 version=$1
 
 cd $JOSHUA
-ant clean java documentation
+ant clean java
 [[ ! -d release ]] && mkdir release
 ln -s $JOSHUA joshua-$version
 
