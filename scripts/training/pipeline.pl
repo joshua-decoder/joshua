@@ -920,10 +920,14 @@ my $lmweights = join($/, @weightstrings);
 my $lmparams  = join($/, @lmparamstrings);
 
 my $num_tm_features = count_num_features($TUNE_GRAMMAR);
-my @tmparamstrings = map {
-  "phrasemodel pt $_ |||  1.0 Opt -Inf +Inf -1 +1"
-} (0..$num_tm_features - 1);
+my (@tmparamstrings, @tmweightstrings);
+for my $i (0..($num_tm_features-1)) {
+  push (@tmparamstrings, "phrasemodel pt $i |||  1.0 Opt -Inf +Inf -1 +1");
+	push (@tmweightstrings, "phrasemodel pt $i 1.0");
+}
+
 my $tmparams = join($/, @tmparamstrings);
+my $tmweights = join($/, @tmweightstrings);
 
 for my $run (1..$OPTIMIZER_RUNS) {
   my $tunedir = (defined $NAME) ? "tune/$NAME/$run" : "tune/$run";
@@ -940,6 +944,7 @@ for my $run (1..$OPTIMIZER_RUNS) {
 			s/<TARGET>/$TARGET/g;
 			s/<LMLINES>/$lmlines/g;
 			s/<LMWEIGHTS>/$lmweights/g;
+			s/<TMWEIGHTS>/$tmweights/g;
 			s/<LMPARAMS>/$lmparams/g;
 			s/<TMPARAMS>/$tmparams/g;
 			s/<LMFILE>/$LMFILES[0]/g;
@@ -1482,6 +1487,7 @@ sub count_num_features {
 
   my @tokens = split(/ \|\|\| /, $line);
   my @numfeatures = split(' ', $tokens[-1]);
+	my $num = scalar(@numfeatures);
 
   return scalar @numfeatures;
 }
