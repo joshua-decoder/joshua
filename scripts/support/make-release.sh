@@ -9,7 +9,7 @@ version=$1
 cd $JOSHUA
 ant clean java
 [[ ! -d release ]] && mkdir release
-ln -s $JOSHUA joshua-$version
+rm -f joshua-$version && ln -s $JOSHUA joshua-$version
 
 wget -qr joshua-decoder.org
 
@@ -23,6 +23,6 @@ tar czf release/joshua-$version.tgz \
     joshua-$version/examples \
     joshua-$version/thrax/bin/thrax.jar \
 		joshua-$version/joshua-decoder.org \
-    joshua-$version/{joshua-decoder,extract-1best,visualize.sh} 
+    joshua-$version/joshua-decoder
 
 rm -f joshua-$version
