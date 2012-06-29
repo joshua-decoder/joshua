@@ -3,8 +3,8 @@ Running the Joshua Decoder:
 If you wish to run the complete machine translation pipeline, Joshua
 includes a black-box implementation.  See the documentation at:
 
-   - local: scripts/training/README
-   - web:   https://github.com/joshua-decoder/joshua/wiki/Joshua-Pipeline
+   - web:                  http://joshua-decoder.org/4.0/pipeline.html
+   - web (local mirror):   ./joshua-decoder.org/4.0/pipeline.html
 
 Manually Running the Joshua Decoder:
 ------------------------------------
@@ -16,7 +16,7 @@ typing:
 
 The basic decoder invocation is:
 
-    cat SOURCE | java -c CONFIG > OUTPUT
+    cat SOURCE | JOSHUA > OUTPUT
 
 That is, you need at minimum (1) a Joshua configuration file, which
 points to a trained model and defines a number of runtime parameters
@@ -25,7 +25,8 @@ An example of such a model can be found in the example/ directory.  To
 run this example, first setup some environment variables:
 
     export JOSHUA=/path/to/joshua
-	export LC_ALL=en_US.UTF-8
+    export LC_ALL=en_US.UTF-8
+    export LANG=en_US.UTF-8
 
 Then type:
 
@@ -135,4 +136,4 @@ Notice that the Z-MERT arguments configFile and decoderOutFile (-cfg and
 command.  Also, the Z-MERT argument for N must match the value for top_n in
 Joshua's config file, indicated by the Z-MERT argument configFile (-cfg).
 
-For more details on Z-MERT, refer to ZMERT_example/README_ZMERT.txt
+For more details on Z-MERT, refer to examples/ZMERT/README_ZMERT.txt
