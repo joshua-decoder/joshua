@@ -251,8 +251,8 @@ foreach my $lmfile (@LMFILES) {
 
 # absolutize LM file paths
 map {
-	$LMFILES[$_] = get_absolute_path($_);
-} @LMFILES;
+	$LMFILES[$_] = get_absolute_path($LMFILES[$_]);
+} 0..$#LMFILES;
 
 # case-normalize this
 $GRAMMAR_TYPE = lc $GRAMMAR_TYPE;
