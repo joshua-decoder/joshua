@@ -249,6 +249,11 @@ foreach my $lmfile (@LMFILES) {
   }
 }
 
+# absolutize LM file paths
+map {
+	$LMFILES[$_] = get_absolute_path($_);
+} @LMFILES;
+
 # case-normalize this
 $GRAMMAR_TYPE = lc $GRAMMAR_TYPE;
 
@@ -324,12 +329,12 @@ if (defined $ALIGNMENT and ! -e $ALIGNMENT) {
 # relative to there).  This makes sure that everything will still work if we change the run
 # directory.
 map {
-  $CORPORA[$_] = "$STARTDIR/$CORPORA[$_]" unless $CORPORA[$_] =~ /^\//;
+  $CORPORA[$_] = get_absolute_path("$CORPORA[$_]");
 } (0..$#CORPORA);
 
 # Do the same for tuning and test data
-$TUNE = "$STARTDIR/$TUNE" unless $TUNE =~ /^\//;
-$TEST = "$STARTDIR/$TEST" unless $TEST =~ /^\//;
+$TUNE = get_absolute_path($TUNE);
+$TEST = get_absolute_path($TEST);
 
 # TODO: every file request should be passed through a wrapper that does this.
 
@@ -1479,4 +1484,14 @@ sub count_num_features {
   my @numfeatures = split(' ', $tokens[-1]);
 
   return scalar @numfeatures;
+}
+
+# File names reflecting relative paths need to be absolute-ized for --rundir to work
+sub get_absolute_path {
+	my ($file) = @_;
+
+	# prepend startdir (which is absolute) unless the path is absolute.
+	$file = "$STARTDIR/$file" unless $file =~ /^\//;
+
+	return $file;
 }
