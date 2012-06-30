@@ -18,9 +18,8 @@ The basic decoder invocation is:
 
     cat SOURCE | JOSHUA -c CONFIG > OUTPUT
 
-An example of such a model can
-be found in the example/ directory.  To run this example, first setup some
-environment variables:
+Example invocations can be found within the example/ directory.  To run them,
+first setup some environment variables:
 
     export JOSHUA=/path/to/joshua
     export LC_ALL=en_US.UTF-8
@@ -28,7 +27,7 @@ environment variables:
 
 Then type:
 
-    cat example/example.test.in | $JOSHUA/joshua-decoder -c example/example.config.kenlm
+    cat examples/example/test.in | $JOSHUA/joshua-decoder -c examples/example/joshua.config
 
 The decoder output will load the language model and translation models defined
 in the configuration file, and will then decode the five sentences in the
@@ -36,14 +35,14 @@ example file.
 
 You can enable multithreaded decoding with the -threads N flag:
 
-    cat example/example.test.in | $JOSHUA/joshua-decoder -c example/example.config.kenlm -threads 5
+    cat examples/example/test.in | $JOSHUA/joshua-decoder -c examples/example/joshua.config -threads 5
 
 The configuration file defines many additional parameters, all of which can be
 overridden on the command line by using the format -PARAMETER value.  For
 example, to output the top 10 hypotheses instead of just the top 1 specified in
-the configuration file, use -top_n N:
+the configuration file, use -top-n N:
 
-    cat example/example.test.in | $JOSHUA/joshua-decoder -c example/example.config.kenlm -top_n 10
+    cat examples/example/test.in | $JOSHUA/joshua-decoder -c examples/example/joshua.config -top_n 10
 
 Parameters, whether in the configuration file or on the command line, are
 converted to a canonical internal representation that ignores hyphens,
@@ -55,4 +54,5 @@ equivalent:
 
 and so on.  For an example of parameters, see the Joshua configuration file
 template in $JOSHUA/scripts/training/templates/mert/joshua.config or the online
-documentation at joshua-decoder.org/4.0/decoder.html .
+documentation at joshua-decoder.org/4.0/decoder.html.  There is a wealth of
+information in the online documentation.
