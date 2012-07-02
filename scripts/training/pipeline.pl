@@ -420,12 +420,13 @@ if ($FIRST_STEP ne "FIRST") {
 
 ## STEP 1: filter and preprocess corpora #############################
 FIRST:
+    ;
 
-		if (defined $ALIGNMENT) {
-			print "* FATAL: it doesn't make sense to provide an alignment and then do\n";
-			print "  tokenization.  Either remove --alignment or specify a first step\n";
-			print "  of Thrax (--first-step THRAX)\n";
-			exit 1;
+if (defined $ALIGNMENT) {
+  print "* FATAL: it doesn't make sense to provide an alignment and then do\n";
+  print "  tokenization.  Either remove --alignment or specify a first step\n";
+  print "  of Thrax (--first-step THRAX)\n";
+  exit 1;
 }
 
 if (@CORPORA == 0) {
@@ -476,6 +477,7 @@ maybe_quit("FIRST");
 ## SUBSAMPLE #########################################################
 
 SUBSAMPLE:
+    ;
 
 # subsample
 		if ($DO_SUBSAMPLE) {
@@ -512,27 +514,29 @@ maybe_quit("SUBSAMPLE");
 ## ALIGN #############################################################
 
 ALIGN:
+    ;
 
 # This basically means that we've skipped tokenization, in which case
 # we still want to move the input files into the canonical place
-		if ($FIRST_STEP eq "ALIGN") {
-			if (defined $ALIGNMENT) {
-				print "* FATAL: It doesn't make sense to provide an alignment\n";
-				print "  but not to skip the tokenization and subsampling steps\n";
-				exit 1;
-			}
+if ($FIRST_STEP eq "ALIGN") {
+  if (defined $ALIGNMENT) {
+    print "* FATAL: It doesn't make sense to provide an alignment\n";
+    print "  but not to skip the tokenization and subsampling steps\n";
+    exit 1;
+  }
 
-			# TODO: copy the files into the canonical place 
+  # TODO: copy the files into the canonical place 
 
-			# Jumping straight to alignment is probably the same thing as
-			# skipping tokenization, and might also be implemented by a
-			# --no-tokenization flag
+  # Jumping straight to alignment is probably the same thing as
+  # skipping tokenization, and might also be implemented by a
+  # --no-tokenization flag
 }
 
 # skip this step if an alignment was provided
 if (! defined $ALIGNMENT) {
 
-  # split up the data
+  # We process the data in chunks which by default are 1,000,000 sentence pairs.  So first split up
+  # the data into those chunks.
   system("mkdir","-p","$DATA_DIRS{train}/splits") unless -d "$DATA_DIRS{train}/splits";
 
   $cachepipe->cmd("source-numlines",
@@ -579,6 +583,9 @@ if (! defined $ALIGNMENT) {
   # }
 
   # # With multi-threading, we can use a pool to set up concurrent GIZA jobs on the chunks.
+  #
+  # TODO: implement this.  There appears to be a problem with calling system() in threads.
+  #
   # my $pool = new Thread::Pool(Min => 1, Max => $max_aligner_threads);
 
   for (my $chunkno = 0; $chunkno <= $lastchunk; $chunkno++) {
@@ -615,6 +622,8 @@ if (! defined $ALIGNMENT) {
 										"alignments/training.align");
   }
 
+  # at the end, all the files are concatenated into a single alignment file parallel to the input
+  # corpora
   $ALIGNMENT = "alignments/training.align";
 }
 
@@ -624,47 +633,50 @@ maybe_quit("ALIGN");
 ## PARSE #############################################################
 
 PARSE:
+    ;
 
-		if ($GRAMMAR_TYPE eq "samt") {
+# Parsing only happens for SAMT grammars.
 
-			# If the user passed in the already-parsed corpus, use that (after copying it into place)
-			if (defined $TRAIN{parsed} && -e $TRAIN{parsed}) {
-				# copy and adjust the location of the file to its canonical location
-				system("cp $TRAIN{parsed} $DATA_DIRS{train}/corpus.parsed.$TARGET");
-				$TRAIN{parsed} = "$DATA_DIRS{train}/corpus.parsed.$TARGET";
-			} else {
+if ($GRAMMAR_TYPE eq "samt") {
 
-				$cachepipe->cmd("build-vocab",
-												"cat $TRAIN{target} | $SCRIPTDIR/training/build-vocab.pl > $DATA_DIRS{train}/vocab.$TARGET",
-												$TRAIN{target},
-												"$DATA_DIRS{train}/vocab.$TARGET");
+  # If the user passed in the already-parsed corpus, use that (after copying it into place)
+  if (defined $TRAIN{parsed} && -e $TRAIN{parsed}) {
+    # copy and adjust the location of the file to its canonical location
+    system("cp $TRAIN{parsed} $DATA_DIRS{train}/corpus.parsed.$TARGET");
+    $TRAIN{parsed} = "$DATA_DIRS{train}/corpus.parsed.$TARGET";
+  } else {
 
-				if ($NUM_JOBS > 1) {
-					# the black-box parallelizer model doesn't work with multiple
-					# threads, so we're always spawning single-threaded instances here
+    $cachepipe->cmd("build-vocab",
+                    "cat $TRAIN{target} | $SCRIPTDIR/training/build-vocab.pl > $DATA_DIRS{train}/vocab.$TARGET",
+                    $TRAIN{target},
+                    "$DATA_DIRS{train}/vocab.$TARGET");
 
-					# open PARSE, ">parse.sh" or die;
-					# print PARSE "cat $TRAIN{target} | $JOSHUA/scripts/training/parallelize/parallelize.pl --jobs $NUM_JOBS --qsub-args \"$QSUB_ARGS\" -- java -d64 -Xmx${PARSER_MEM} -jar $JOSHUA/lib/BerkeleyParser.jar -gr $JOSHUA/lib/eng_sm6.gr -nThreads 1 | sed 's/^\(/\(TOP/' | tee $DATA_DIRS{train}/corpus.$TARGET.parsed.mc | perl -pi -e 's/(\\S+)\\)/lc(\$1).\")\"/ge' | tee $DATA_DIRS{train}/corpus.$TARGET.parsed | perl $SCRIPTDIR/training/add-OOVs.pl $DATA_DIRS{train}/vocab.$TARGET > $DATA_DIRS{train}/corpus.parsed.$TARGET\n";
-					# close PARSE;
-					# chmod 0755, "parse.sh";
-					# $cachepipe->cmd("parse",
-					#         "setsid ./parse.sh",
-					#         "$TRAIN{target}",
-					#         "$DATA_DIRS{train}/corpus.parsed.$TARGET");
+    if ($NUM_JOBS > 1) {
+      # the black-box parallelizer model doesn't work with multiple
+      # threads, so we're always spawning single-threaded instances here
 
-					$cachepipe->cmd("parse",
-													"$CAT $TRAIN{mixedcase} | $JOSHUA/scripts/training/parallelize/parallelize.pl --jobs $NUM_JOBS --qsub-args \"$QSUB_ARGS\" -p 8g -- java -d64 -Xmx${PARSER_MEM} -jar $JOSHUA/lib/BerkeleyParser.jar -gr $JOSHUA/lib/eng_sm6.gr -nThreads 1 | sed 's/^\(/\(TOP/' | perl $SCRIPTDIR/training/add-OOVs.pl $DATA_DIRS{train}/vocab.$TARGET | tee $DATA_DIRS{train}/corpus.$TARGET.parsed | $SCRIPTDIR/training/lowercase-leaves.pl > $DATA_DIRS{train}/corpus.parsed.$TARGET",
-													"$TRAIN{target}",
-													"$DATA_DIRS{train}/corpus.parsed.$TARGET");
-				} else {
-					$cachepipe->cmd("parse",
-													"$CAT $TRAIN{mixedcase} | $JOSHUA/scripts/training/parallelize/parallelize.pl --jobs $NUM_THREADS --use-fork -- java -d64 -Xmx${PARSER_MEM} -jar $JOSHUA/lib/BerkeleyParser.jar -gr $JOSHUA/lib/eng_sm6.gr -nThreads 1 | sed 's/^\(/\(TOP/' | perl $SCRIPTDIR/training/add-OOVs.pl $DATA_DIRS{train}/vocab.$TARGET | tee $DATA_DIRS{train}/corpus.$TARGET.parsed | $SCRIPTDIR/training/lowercase-leaves.pl > $DATA_DIRS{train}/corpus.parsed.$TARGET",
-													"$TRAIN{target}",
-													"$DATA_DIRS{train}/corpus.parsed.$TARGET");
-				}
+      # open PARSE, ">parse.sh" or die;
+      # print PARSE "cat $TRAIN{target} | $JOSHUA/scripts/training/parallelize/parallelize.pl --jobs $NUM_JOBS --qsub-args \"$QSUB_ARGS\" -- java -d64 -Xmx${PARSER_MEM} -jar $JOSHUA/lib/BerkeleyParser.jar -gr $JOSHUA/lib/eng_sm6.gr -nThreads 1 | sed 's/^\(/\(TOP/' | tee $DATA_DIRS{train}/corpus.$TARGET.parsed.mc | perl -pi -e 's/(\\S+)\\)/lc(\$1).\")\"/ge' | tee $DATA_DIRS{train}/corpus.$TARGET.parsed | perl $SCRIPTDIR/training/add-OOVs.pl $DATA_DIRS{train}/vocab.$TARGET > $DATA_DIRS{train}/corpus.parsed.$TARGET\n";
+      # close PARSE;
+      # chmod 0755, "parse.sh";
+      # $cachepipe->cmd("parse",
+      #         "setsid ./parse.sh",
+      #         "$TRAIN{target}",
+      #         "$DATA_DIRS{train}/corpus.parsed.$TARGET");
 
-				$TRAIN{parsed} = "$DATA_DIRS{train}/corpus.parsed.$TARGET";
-			}
+      $cachepipe->cmd("parse",
+                      "$CAT $TRAIN{mixedcase} | $JOSHUA/scripts/training/parallelize/parallelize.pl --jobs $NUM_JOBS --qsub-args \"$QSUB_ARGS\" -p 8g -- java -d64 -Xmx${PARSER_MEM} -jar $JOSHUA/lib/BerkeleyParser.jar -gr $JOSHUA/lib/eng_sm6.gr -nThreads 1 | sed 's/^\(/\(TOP/' | perl $SCRIPTDIR/training/add-OOVs.pl $DATA_DIRS{train}/vocab.$TARGET | tee $DATA_DIRS{train}/corpus.$TARGET.parsed | $SCRIPTDIR/training/lowercase-leaves.pl > $DATA_DIRS{train}/corpus.parsed.$TARGET",
+                      "$TRAIN{target}",
+                      "$DATA_DIRS{train}/corpus.parsed.$TARGET");
+    } else {
+      $cachepipe->cmd("parse",
+                      "$CAT $TRAIN{mixedcase} | $JOSHUA/scripts/training/parallelize/parallelize.pl --jobs $NUM_THREADS --use-fork -- java -d64 -Xmx${PARSER_MEM} -jar $JOSHUA/lib/BerkeleyParser.jar -gr $JOSHUA/lib/eng_sm6.gr -nThreads 1 | sed 's/^\(/\(TOP/' | perl $SCRIPTDIR/training/add-OOVs.pl $DATA_DIRS{train}/vocab.$TARGET | tee $DATA_DIRS{train}/corpus.$TARGET.parsed | $SCRIPTDIR/training/lowercase-leaves.pl > $DATA_DIRS{train}/corpus.parsed.$TARGET",
+                      "$TRAIN{target}",
+                      "$DATA_DIRS{train}/corpus.parsed.$TARGET");
+    }
+
+    $TRAIN{parsed} = "$DATA_DIRS{train}/corpus.parsed.$TARGET";
+  }
 }
 
 maybe_quit("PARSE");
@@ -672,8 +684,9 @@ maybe_quit("PARSE");
 ## THRAX #############################################################
 
 THRAX:
+    ;
 
-		system("mkdir -p $DATA_DIRS{train}") unless -d $DATA_DIRS{train};
+system("mkdir -p $DATA_DIRS{train}") unless -d $DATA_DIRS{train};
 
 if ($GRAMMAR_TYPE eq "samt") {
 
@@ -795,11 +808,8 @@ maybe_quit("THRAX");
 
 ## TUNING ##############################################################
 TUNE:
-		;  
-MERT:
-		;
-PRO:
-		;
+    ;
+
 # prep the tuning data, unless already prepped
 if (! $PREPPED{TUNE} and $DO_PREPARE_CORPORA) {
   my $prefixes = prepare_data("tune",[$TUNE]);
@@ -1150,7 +1160,7 @@ exit;
 
 TEST:
 
-		system("mkdir -p $DATA_DIRS{test}") unless -d $DATA_DIRS{test};
+system("mkdir -p $DATA_DIRS{test}") unless -d $DATA_DIRS{test};
 
 if (! defined $NAME) {
   print "* FATAL: for direct tests, you must specify a unique run name\n";
