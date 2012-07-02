@@ -249,6 +249,15 @@ foreach my $lmfile (@LMFILES) {
   }
 }
 
+# If a language model was specified and no corpus was given to build another one from the target
+# side of the training data (which could happen, for example, when starting at the tuning step with
+# an existing LM), turn off building an LM from the corpus.  The user could have done this
+# explicitly with --no-corpus-lm, but might have forgotten to, and we con't want to pester them with
+# an error about easily-inferrable intentions.
+if (scalar @LMFILES && ! scalar(@CORPORA)) {
+  $DO_BUILD_LM_FROM_CORPUS = 0;
+}
+
 # absolutize LM file paths
 map {
 	$LMFILES[$_] = get_absolute_path($LMFILES[$_]);
@@ -832,7 +841,7 @@ if ($DO_BUILD_LM_FROM_CORPUS) {
   }
 
   if (! -e $TRAIN{target}) {
-		print "* FATAL: I need either a language model (--lmfile) or a training corpus to build it from (--corpus)\n";
+		print "* FATAL: I need a training corpus to build the language model from (--corpus)\n";
 		exit(1);
   }
 
