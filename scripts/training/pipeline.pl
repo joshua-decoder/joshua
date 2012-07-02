@@ -43,7 +43,6 @@ my $FIRST_STEP = "FIRST";
 my $LAST_STEP  = "LAST";
 my $LMFILTER = "$ENV{HOME}/code/filter/filter";
 my $MAXLEN = 50;
-my $DO_FILTER_LM = 0;
 my $DO_FILTER_TM = 1;
 my $DO_SUBSAMPLE = 0;
 my $SCRIPTDIR = "$JOSHUA/scripts";
@@ -164,7 +163,6 @@ my $retval = GetOptions(
   "target=s"         => \$TARGET,
   "rundir=s"        => \$RUNDIR,
   "filter-tm!"        => \$DO_FILTER_TM,
-  "filter-lm!"        => \$DO_FILTER_LM,
   "lm=s"              => \$LM_TYPE,
   "lmfile=s"        => \@LMFILES,
   "lm-gen=s"          => \$LM_GEN,
