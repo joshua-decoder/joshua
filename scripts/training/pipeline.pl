@@ -449,9 +449,6 @@ if ($DO_PREPARE_CORPORA) {
   $TRAIN{mixedcase} = "$DATA_DIRS{train}/$prefixes->{shortened}.$TARGET.gz";
 
   $TRAIN{prefix} = "$DATA_DIRS{train}/corpus";
-  foreach my $lang ($SOURCE,$TARGET) {
-		system("ln -sf $prefixes->{lowercased}.$lang $DATA_DIRS{train}/corpus.$lang");
-  }
   $TRAIN{source} = "$DATA_DIRS{train}/corpus.$SOURCE";
   $TRAIN{target} = "$DATA_DIRS{train}/corpus.$TARGET";
   $PREPPED{TRAIN} = 1;
@@ -1356,6 +1353,12 @@ sub prepare_data {
   }
   $prefix .= ".lc";
   $prefixes{lowercased} = $prefix;
+
+  foreach my $lang ($TARGET,$SOURCE,"$TARGET.0","$TARGET.1","$TARGET.2","$TARGET.3") {
+		if (-e "$DATA_DIRS{$label}/$prefixes{lowercased}.$lang") {
+      system("ln -sf $prefixes{lowercased}.$lang $DATA_DIRS{$label}/corpus.$lang");
+    }
+  }
 
   return \%prefixes;
 }
