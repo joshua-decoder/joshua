@@ -1,5 +1,18 @@
 #!/usr/bin/env perl
 
+# This script packs a grammar dense, unlabeled grammar, where we don't care what labels we give to
+# the feature functions.
+#
+# Usage:
+#
+#    grammar-packer.pl input-grammar [output-dir [packer-config]]
+#
+# where
+#
+#    input-grammar is the input grammar to be packed
+#    output-dir is the packed grammar directory to write to (default: grammar.packed)
+#    packer-config is the packer config file (default: all floats)
+
 use strict;
 use warnings;
 
