@@ -109,10 +109,6 @@ my $NUM_JOBS = 1;
 # (giza, decoding)
 my $NUM_THREADS = 1;
 
-# Cachepipe can include the actual command typed in its signature.
-# We disable this for development because it triggers too many reruns.
-my $OMIT_CMD = 1;
-
 # which LM to use (kenlm or berkeleylm)
 my $LM_TYPE = "kenlm";
 
@@ -157,7 +153,6 @@ my $retval = GetOptions(
   "name=s"            => \$NAME,
   "aligner=s"         => \$ALIGNER,
   "alignment=s"      => \$ALIGNMENT,
-  "giza-merge=s"      => \$GIZA_MERGE,
   "aligner-mem=s"     => \$ALIGNER_MEM,
   "source=s"          => \$SOURCE,
   "target=s"         => \$TARGET,
@@ -193,7 +188,6 @@ my $retval = GetOptions(
   "last-step=s"      => \$LAST_STEP,
   "aligner-chunk-size=s" => \$ALIGNER_BLOCKSIZE,
   "hadoop=s"          => \$HADOOP,
-  "omit-cmd!"         => \$OMIT_CMD,
   "optimizer-runs=i"  => \$OPTIMIZER_RUNS,
 		);
 
@@ -220,11 +214,9 @@ $| = 1;
 
 my $cachepipe = new CachePipe();
 
-# This tells cachepipe not to include the command signature when
-# determining to run a command.  Note that this is not backwards
-# compatible!
-$cachepipe->omit_cmd()
-		if ($OMIT_CMD);
+# This tells cachepipe not to include the command signature when determining to run a command.  Note
+# that this is not backwards compatible!
+$cachepipe->omit_cmd();
 
 $SIG{INT} = sub { 
   print "* Got C-c, quitting\n";
