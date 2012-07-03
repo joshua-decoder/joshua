@@ -732,9 +732,12 @@ if (! defined $ALIGNMENT) {
   exit(1);
 }
 
+# If the grammar file wasn't specified
 if (! defined $GRAMMAR_FILE) {
 
-  if (! -e "grammar.gz") {
+  # Since this is an expensive step, we short-circuit it if the grammar file is present.  I'm not
+  # sure that this is the right behavior.
+  if (! -e "grammar.gz" && ! -z "grammar.gz") {
 
 		# create the input file
 		my $target_file = ($GRAMMAR_TYPE eq "hiero") 
@@ -745,7 +748,8 @@ if (! defined $GRAMMAR_FILE) {
 										"$DATA_DIRS{train}/thrax-input-file");
 
 
-		# rollout the hadoop cluster if needed
+		# Rollout the hadoop cluster if needed.  This causes $HADOOP to be defined (pointing to the
+		# unrolled directory).
 		start_hadoop_cluster() unless defined $HADOOP;
 
 		# put the hadoop files in place
