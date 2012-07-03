@@ -18,7 +18,7 @@ tar czf release/joshua-$version.tgz \
     joshua-$version/{README,build.xml,logging.properties} \
     joshua-$version/src \
     joshua-$version/bin \
-    joshua-$version/lib/{*jar,eng_sm6.gr,README,LICENSES} \
+    joshua-$version/lib/{*jar,eng_sm6.gr,hadoop-0.20.2.tar.gz,README,LICENSES} \
     joshua-$version/scripts \
     joshua-$version/examples \
     joshua-$version/thrax/bin/thrax.jar \
