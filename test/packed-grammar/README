@@ -1,0 +1,2 @@
+The test in this directory tests packing the grammar and then decoding with it.
+It borrows from the test in ../bn-en/hiero/.
