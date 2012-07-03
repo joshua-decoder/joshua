@@ -134,7 +134,7 @@
 
   <!-- ~~~~~ Java build tasks ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
   
-  <target name="all" depends="init,thrax,java,giza,kenlm,parallelize">
+  <target name="all" depends="init,java,giza,kenlm,parallelize">
   </target>
 
   <!-- Compile the Java code. -->
