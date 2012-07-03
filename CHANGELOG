@@ -1,4 +1,4 @@
-== 4.0 (June 3, 2012) ===========================================
+== 4.0 (July 2, 2012) ===========================================
 
 The main features of this release are described in 
 
@@ -8,9 +8,9 @@ The main features of this release are described in
 
 They include:
 
-- Improved documentation (both user and developer)
+- Significantly improved and expanded documentation (both user and developer)
 
-  See doc/html/index.html
+  See http://joshua-decoder.org/4.0 or ./joshua-decoder.org/4.0/index.html (local mirror)
 
 - Synchronous parsing
 
