@@ -332,8 +332,10 @@ map {
 } (0..$#CORPORA);
 
 # Do the same for tuning and test data
-$TUNE = get_absolute_path($TUNE);
-$TEST = get_absolute_path($TEST);
+$TUNE = get_absolute_path($TUNE)
+    if (defined $TUNE);
+$TEST = get_absolute_path($TEST)
+    if (defined $TEST);
 
 # TODO: every file request should be passed through a wrapper that does this.
 
@@ -1051,7 +1053,7 @@ if (! defined $GLUE_GRAMMAR_FILE) {
   if ($GLUE_GRAMMAR_FILE =~ /^\//) {
 		system("ln -sf $GLUE_GRAMMAR_FILE $filename"); 
   } else {
-		system("ln -sf ../../$GLUE_GRAMMAR_FILE $filename"); 
+		system("ln -sf $STARTDIR/$GLUE_GRAMMAR_FILE $filename"); 
   }
 }
 
@@ -1066,7 +1068,7 @@ for my $run (1..$OPTIMIZER_RUNS) {
 		open FROM, $file or die "can't find file '$file'";
 		open TO, ">$testrun/$key" or die "can't write to '$testrun/$key'";
 		while (<FROM>) {
-			s/<INPUT>/$TEST{source}/g;
+ 			s/<INPUT>/$TEST{source}/g;
 			s/<NUMJOBS>/$NUM_JOBS/g;
 			s/<NUMTHREADS>/$NUM_THREADS/g;
 			s/<QSUB_ARGS>/$QSUB_ARGS/g;
@@ -1095,7 +1097,7 @@ for my $run (1..$OPTIMIZER_RUNS) {
   # copy the config file over
   my $tunedir = (defined $NAME) ? "tune/$NAME/$run" : "tune/$run";
   $cachepipe->cmd("test-joshua-config-from-tune-$run",
-									"cat $tunedir/joshua.config.final | $JOSHUA/scripts/copy-config.pl -tm-file $TEST_GRAMMAR -glue-file $GLUE_GRAMMAR_FILE -mark-oovs true -use-sent-specific-tm false > $testrun/joshua.config",
+									"cat $tunedir/joshua.config.final | perl -pe 's#tune/#test/#; s/mark_oovs=false/mark_oovs=true/; s/use_sent_specific_tm=.*/use_sent_specific_tm=0/; s/keep_sent_specific_tm=true/keep_sent_specific_tm=false/' > $testrun/joshua.config",
 									"$tunedir/joshua.config.final",
 									"$testrun/joshua.config");
 
@@ -1159,6 +1161,7 @@ exit;
 # data sets
 
 TEST:
+    ;
 
 system("mkdir -p $DATA_DIRS{test}") unless -d $DATA_DIRS{test};
 
@@ -1218,12 +1221,12 @@ if ($TUNEFILES{'joshua.config'} eq $JOSHUA_CONFIG_ORIG) {
 # this needs to be in a function since it is done all over the place
 open FROM, $TUNEFILES{decoder_command} or die "can't find file '$TUNEFILES{decoder_command}'";
 open TO, ">$testrun/decoder_command";
-print TO "cat $TEST{source} | \$JOSHUA/joshua-decoder -m $JOSHUA_MEM -c $testrun/joshua.config > $testrun/test.output.nbest 2> $testrun/joshua.log\n";
+print TO "cat $TEST{source} | \$JOSHUA/joshua-decoder -m $JOSHUA_MEM -threads $NUM_THREADS -tm_file $TEST_GRAMMAR -glue_file $GLUE_GRAMMAR_FILE -default_non_terminal $OOV -mark_oovs true -c $testrun/joshua.config > $testrun/test.output.nbest 2> $testrun/joshua.log\n";
 close(TO);
 chmod(0755,"$testrun/decoder_command");
 
 # copy over the config file
-system("cat $TUNEFILES{'joshua.config'} | $JOSHUA/scripts/copy-config.pl -threads $NUM_THREADS -tm-file $TEST_GRAMMAR -glue-file $GLUE_GRAMMAR_FILE -default-non-terminal $OOV -mark-oovs true > $testrun/joshua.config");
+system("cp $TUNEFILES{'joshua.config'} $testrun/joshua.config");
 
 # decode
 $cachepipe->cmd("test-$NAME-decode-run",
